@@ -10,14 +10,14 @@
 // own, held, moved, lit, eased off its path and back at the frame rate.
 
 import { now } from '../clock.js';
-import { P, FAUNA_ZONES, FAUNA_SPRITES, FAUNA_BASE, FAUNA_INK, FAUNA_BLINK, FAUNA_SIPHON, FAUNA_GULPER, FAUNA_SCARE, FAUNA_STARTLE, COIL_SEGS,
+import { P, FAUNA_SPRITES, FAUNA_BASE, FAUNA_INK, FAUNA_BLINK, FAUNA_SIPHON, FAUNA_GULPER, FAUNA_SCARE, FAUNA_STARTLE, COIL_SEGS,
          FAUNA_POSES, FAUNA_REACT_INK, FAUNA_SMEAR, FAUNA_SILT } from '../config.js';
 import { ctx } from './ctx.js';
 import { TONE, greyAt, purpleAt } from './deeptones.js';
 import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow } from './deep.js';
 import { COLS, ROWS, POPULATION, unit, unit2, schoolAt, frameOf, reachOf, addScare, scareOffset,
-         clearScares, SCARES, bolting, faunaPose, poseInset, heightOf } from '../deep/fauna.js';
+         clearScares, SCARES, bolting, faunaPose, poseInset, heightOf, zoneHere } from '../deep/fauna.js';
 import { coilAt, bellyAt } from '../deep/place.js';
 import { lashK, breaking } from '../deep/phases.js';
 
@@ -151,8 +151,6 @@ function silt(x, y, age) {
 }
 
 // --- the creatures ----------------------------------------------------------------
-// Each zone's own dim, looked up once.
-const DIM = new Map(FAUNA_ZONES.map(z => [z.key, z.dim]));
 
 // The frights the fight raises, seen from the drawing: the tip of a lash as
 // it sweeps the coil, and the belly as a defense breaks. Read off the
@@ -197,7 +195,8 @@ export function drawDeepFauna() {
   for (const c of POPULATION) {
     const p = faunaPose(c, t), reach = reachOf(c) + FAUNA_SCARE.break.push + K.far;
     if (p.x + reach < left || p.x - reach > right) continue;
-    const dim = DIM.get(c.zone) || 0;
+    // the dim of the zone it is crossing, not the one it set out from
+    const dim = zoneHere(c.kind, p.y).dim;
     // The smear: on the frame a table marks for it, where it was a moment
     // ago drawn under it, darker, if it has come far enough since.
     if (p.r && p.r.smear) {

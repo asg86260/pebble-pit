@@ -218,29 +218,17 @@ group('a creature drops its handful once a visit: not on a second click, not aft
   ];
 }, { reload: false });
 
-// The school's reaction is a bolt (the owner's B): the whole shoal turns
-// as one and holds, then streaks off the nearer end in held poses.
-group('a click on the school: it turns as one, holds, and bolts off the deep; its handful is carried to the crusher', async () => {
+// The handful a click shakes loose is the birds': it sinks where the
+// creature was, lies on the floor uncounted, and is money once a gatherer
+// has carried it to the crusher.
+group('a click on a creature: its handful sinks to the floor and is carried to the crusher', async () => {
   deep();
   let f = null;
-  runUntil(() => (f = target(g => g.kind === 'school')), 120);
-  const c = POPULATION[f.i];
+  runUntil(() => (f = target()), 120);
   const scales = S.scales, lying = deepBed.n, sinking = S.sinking.length;
   const hit = startleFauna(f.x, f.y);
   const shaken = S.sinking.length - sinking;
   const from = S.sinking.slice(sinking).map(s => ({ x: s.x, y: s.y }));
-  const turned = faunaReport()[f.i];
-  run(FAUNA_REACT.school.hold - 2 / 60);
-  const held = faunaReport()[f.i];
-  const step = Math.ceil(FAUNA_STARTLE.pace / FAUNA_STARTLE.rate) + 1;
-  let was = held, worst = 0, frames = 0, gone = false;
-  while (frames < 60 * 30) {
-    run(1 / 60); frames++;
-    const r = faunaReport()[f.i];
-    worst = Math.max(worst, Math.abs(r.cx - was.cx));
-    was = r;
-    if (!r.inside) { gone = true; break; }
-  }
   const landed = runUntil(() => S.sinking.length === sinking, 30);
   const onFloor = deepBed.n - lying, banked = S.scales - scales;
   let carried = 0;
@@ -252,9 +240,6 @@ group('a click on the school: it turns as one, holds, and bolts off the deep; it
     ok(hit, 'the click landed on it', `${f.kind} at ${Math.round(f.x)},${Math.round(f.y)}`),
     ok(shaken === FAUNA_SCALES, "it shakes loose the bird's handful", `${shaken} of ${FAUNA_SCALES}`),
     ok(from.every(s => Math.abs(s.x - f.x) <= P && Math.abs(s.y - f.y) <= P), 'from where it was', from.map(s => `${Math.round(s.x)},${Math.round(s.y)}`).join(' ')),
-    ok(turned.dir === c.ddir && Math.abs(held.cx - turned.cx) < 1, 'turned on the click to face its way, and held there', `${turned.dir} ${c.ddir}, ${held.cx - turned.cx}`),
-    ok(gone, 'then it leaves the deep', `${frames} frames, at ${was.cx}`),
-    ok(worst <= step, 'a held pose at a time, never a jump', `${worst} cells in a frame, ${step} at most`),
     ok(landed && onFloor >= shaken, 'the handful sinks to the floor', `${onFloor} lying`),
     ok(banked === 0, 'none of it is counted while it lies there', `${banked}`),
     ok(carried > 0, 'a gatherer carries it', `${carried} at most in arms`),
@@ -277,32 +262,6 @@ group('a click on empty water does nothing', async () => {
     ok(faunaReport().every((f, i) => (f.bolting || f.reacting) === before[i]), 'and nobody reacts')
   ];
 });
-
-// The school comes back in at the end it left, swimming, clickable again.
-group('the bolted school comes back: in at the end it left, swimming, and clickable again', async () => {
-  deep();
-  let f = null;
-  runUntil(() => (f = target(g => g.kind === 'school')), 120);
-  startleFauna(f.x, f.y);
-  const c = POPULATION[f.i];
-  const step = Math.ceil(FAUNA_STARTLE.pace / FAUNA_STARTLE.rate) + 1;
-  let was = faunaReport()[f.i], worst = 0, back = false;
-  for (let i = 0; i < 60 * 180 && !back; i++) {
-    run(1 / 60);
-    const r = faunaReport()[f.i];
-    if (r.inside && was.inside) worst = Math.max(worst, Math.abs(r.cx - was.cx));
-    back = !r.bolting && within(r);
-    was = r;
-  }
-  const r = faunaReport()[f.i];
-  const { r: again, shaken } = back ? shedBy(() => startleFauna(r.x, r.y)) : { r: false, shaken: 0 };
-  return [
-    ok(back, 'it swims back into the deep', `${c.kind}, back at ${c.back.toFixed(1)}s`),
-    ok(worst <= step, 'never jumping inside it', `${worst} cells in a frame`),
-    ok(again, 'and can be startled again'),
-    ok(shaken === FAUNA_SCALES, "a new visit: it drops its handful again", `${shaken}`)
-  ];
-}, { reload: false });
 
 // A save read back on the clock that wrote it: a reaction under way carries
 // on from the pose it was in.

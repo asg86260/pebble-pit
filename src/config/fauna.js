@@ -68,24 +68,53 @@ export const FAUNA_BLINK = { rate: 2.3, lit: 11, dark: 5 };
 // cells a second (one, or a range each draws from); every `flip`-th swims
 // the other way. A school is `school` sardines scattered over `spread`
 // cells; the amphipods `hop`, going in dashes. Same seeds every run.
+// A `wander`er is not held to its zone: it sets out from its row in `y` and
+// ranges the deep's whole height on a turning heading (FAUNA_WANDER); its
+// zone is only where it sets out.
 // Sparse, the way the birds are (the owner, 2026-10-13: "a little noisy",
 // then "still have too many creatures around", then "cut down on creatures
-// by 30% again"): one in each zone. A row at nought is a kind that zone
-// keeps for a busier deep.
+// by 30% again"); then three, each travelling the whole height (the owner,
+// 2026-10-14, option C of docs/mocks/deep-creatures-full-height-2026-10-14.html:
+// "travel the whole height of the window, and there should still be less of
+// them"). A floor creature cannot travel the height, so the amphipod went
+// with the school. A row at nought is a kind kept for a busier deep.
 export const FAUNA = [
-  { kind: 'school', zone: 'sun', n: 1, y: [5, 18], v: [5, 8], flip: 2, school: [9, 12], spread: [22, 8] },
+  { kind: 'school', zone: 'sun', n: 0, y: [5, 18], v: [5, 8], flip: 2, school: [9, 12], spread: [22, 8] },
   { kind: 'jelly', zone: 'sun', n: 0, y: [4, 17], v: 0.5, flip: 2 },
-  { kind: 'lantern', zone: 'twi', n: 1, y: [24, 45], v: [2.5, 5], flip: 2 },
+  { kind: 'lantern', zone: 'twi', n: 1, y: [24, 45], v: 3.5, flip: 2, wander: true },
   { kind: 'hatchet', zone: 'twi', n: 0, y: [25, 43], v: [1.5, 3], flip: 2 },
   { kind: 'siphon', zone: 'twi', n: 0, y: [30, 44], v: 0.7, flip: 2 },
-  { kind: 'angler', zone: 'mid', n: 1, y: [50, 82], v: 1.2, flip: 2 },
+  { kind: 'angler', zone: 'mid', n: 1, y: [50, 82], v: 1.6, flip: 2, wander: true },
   { kind: 'vampire', zone: 'mid', n: 0, y: [50, 80], v: 0.9, flip: 2 },
-  { kind: 'dumbo', zone: 'aby', n: 1, y: [92, 106], v: 0.8, flip: 2 },
+  { kind: 'dumbo', zone: 'aby', n: 1, y: [92, 106], v: 1.4, flip: 2, wander: true },
   { kind: 'tripod', zone: 'aby', n: 0, floor: true, v: 0, flip: 2 },
   { kind: 'cucumber', zone: 'aby', n: 0, floor: true, v: 0.25, flip: 2 },
-  { kind: 'amphipod', zone: 'had', n: 1, floor: true, v: 3.5, flip: 2, hop: true },
+  { kind: 'amphipod', zone: 'had', n: 0, floor: true, v: 3.5, flip: 2, hop: true },
   { kind: 'snail', zone: 'had', n: 0, low: true, v: 1.4, flip: 2 },
 ];
+
+// A wanderer's way (option C of the owner's mock): along at its pace on a
+// heading that turns gently at random -- the turn rate a damped random walk,
+// kicked up to `jitter` rad/s a second either way, eased off by `damp` a
+// second and held under `turn` rad/s -- so its path is long slow curves, not
+// a line or a zigzag. Within `edge` rows of the ceiling (row `top`) or of the
+// floor's clearance (FAUNA_MOTION.clear) it is turned away, up to `shove`
+// rad/s the nearer it is, unless it is already heading off by more than
+// `facing` (the sine of its heading); it is never let steeper than `steep`,
+// turned back at `level` rad/s, so it always reads as swimming along rather
+// than sinking. It faces the way it travels along, turning round only once
+// that is clearly one way, past `face` (the cosine), so a heading near the
+// vertical does not flicker it. It sets out `start` radians off level.
+// The heading is integrated on a fixed `step` from the clock's start off a
+// seeded noise, so where it is stays a function of its seed and the clock,
+// the same after a reload; a moment of the way is kept every `keep` seconds,
+// so a moment asked for out of order is walked from the one before it.
+export const FAUNA_WANDER = {
+  jitter: 0.9, damp: 0.25, turn: 0.3,
+  edge: 16, top: 1, shove: 0.8, facing: 0.35,
+  steep: 0.82, level: 0.6, face: 0.15, start: 0.3,
+  step: 1 / 60, keep: 2,
+};
 
 // The motions. A swimmer bobs a held cell or two on a slow sine (`bob`, per
 // second, `amp` rows); a jelly more slowly and further. A low hoverer sits

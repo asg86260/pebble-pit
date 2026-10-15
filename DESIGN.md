@@ -14880,6 +14880,25 @@ gatherer has carried them to the crusher. The serpent and the stations take
 a click first. No achievement, no hover word (none of them has a name in the
 index), and no pad stop: they move, and the birds are not pad stops either.
 
+**Three, and each the whole height** (built; the owner, 2026-10-14, option C
+of `docs/mocks/deep-creatures-full-height-2026-10-14.html`: "travel the whole
+height of the window, and there should still be less of them"). A creature
+held to its zone left most of the height empty at any moment, so the three
+left -- the lanternfish, the angler and the dumbo -- each wander all of it;
+the shoal and the amphipod are at nought (a floor creature cannot travel the
+height). Each swims at its pace (3.5, 1.6, 1.4 cells a second) on a heading
+that turns gently at random, steered off the ceiling and the floor's
+clearance and never steeper than about 55 degrees, so it reads as swimming
+along, not sinking (`FAUNA_WANDER`). The sprites cannot turn, so each faces
+left or right by the way it travels along, and changes only once that is
+clearly one way. The zones are now where it sets out from and the water it
+crosses: its dim is the band it is in at the moment, so it darkens through
+the midnight band and comes out of it. The turn answers where it is, so
+there is no closed form: the way is walked on a fixed step from the clock's
+start off a seeded noise, a moment kept every two seconds, and any moment
+comes out the same however it is asked for -- still nothing saved. Within a
+quarter hour each has been in the deep's top quarter and its bottom one.
+
 **Each kind its own click** (built; the owner's picks off
 docs/mocks/creature-clicks-2026-10-13.html, 2026-10-13: school B, every
 other kind A). A click plays the kind's own reaction in held poses, with a
@@ -14927,7 +14946,7 @@ creature the meal; it then plays its reaction out on the swim in rather
 than stop.
 
 **Nothing saved.** A creature's place is read off its seed and the clock
-(`faunaAt`, deep/fauna.js); a reaction or a bolt is kept for the session
+(`faunaAt`, deep/fauna.js; a wanderer's walked from the clock's start); a reaction or a bolt is kept for the session
 only. A save read back on the clock that wrote it carries one under way on
 from the pose it was in (`settleFauna`, `settleStream`), so nothing jumps;
 a new game finds every one home (`resetFauna`, `resetStream`), and a new

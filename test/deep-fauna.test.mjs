@@ -1,13 +1,14 @@
 // The deep's creatures (DESIGN.md, "The deep's zones"): sparse, read
-// off each one's seed and the clock. Each stays in its own zone's rows, none
-// swims into the ground, and none teleports: a creature moves a few cells a
-// second, and comes back in at the far end only out beyond the deep's walls.
+// off each one's seed and the clock. Each wanders the whole height, none
+// swims into the ground or out through the ceiling, and none teleports: a
+// creature moves a few cells a second, and comes back in at the far end only
+// out beyond the deep's walls.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import './helpers.mjs';                // the yard's page: the creatures now read the deep's floor
-import { FAUNA, FAUNA_MOTION, FAUNA_ZONES } from '../src/config.js';
-import { POPULATION, COLS, ROWS, faunaAt, heightOf, zoneOf } from '../src/deep/fauna.js';
+import { FAUNA, FAUNA_MOTION, FAUNA_WANDER } from '../src/config.js';
+import { POPULATION, COLS, ROWS, faunaAt, heightOf } from '../src/deep/fauna.js';
 
 const DT = 1 / 60;
 
@@ -17,31 +18,44 @@ test('the population is the table, and the same on every load', () => {
   assert.deepEqual(again, POPULATION.map(c => faunaAt(c, 12.5)));
 });
 
-// Sparse, the way the birds are (the owner, 2026-10-13, three times): five
-// of the seventy-six there were, one in every zone, each a kind of its own,
-// and the midnight band round the coil and the bar no busier than any.
-test('the deep is sparse: one in every zone, none busier round the coil', () => {
-  assert.ok(POPULATION.length <= 5, `${POPULATION.length} creatures`);
-  const per = new Map(FAUNA_ZONES.map(z => [z.key, 0]));
-  for (const c of POPULATION) per.set(c.zone, per.get(c.zone) + 1);
-  for (const [k, n] of per) assert.ok(n > 0, `nobody lives in ${k}`);
-  const mid = per.get('mid');
-  for (const [k, n] of per) assert.ok(n >= mid, `${k} (${n}) is quieter than the midnight band (${mid})`);
-  assert.ok(new Set(POPULATION.map(c => c.kind)).size === POPULATION.length, 'every one a kind of its own');
+// A wanderer's way is walked from the clock's start, so a moment asked for
+// out of order -- a reload, a look back for the smear -- must come out the
+// same as one reached frame by frame.
+test('where a creature is depends only on the clock, however it is asked', () => {
+  const T = [0, 3.2, 47.9, 48, 12.25, 300.5, 299.9, 5, 1000.01, 60];
+  const asked = POPULATION.map(c => T.map(t => faunaAt(c, t)));
+  for (const c of POPULATION) c.walk = null;        // a new page: nothing walked yet
+  const sorted = [...T].sort((a, b) => a - b);
+  const fresh = POPULATION.map(c => { const m = new Map(sorted.map(t => [t, faunaAt(c, t)])); return T.map(t => m.get(t)); });
+  assert.deepEqual(asked, fresh);
 });
 
-test('each creature stays in its zone, and nothing swims into the floor', () => {
+// Fewer, and each the whole height (the owner, 2026-10-14, option C of
+// docs/mocks/deep-creatures-full-height-2026-10-14.html): three of the five
+// there were, each a kind of its own, none kept to a zone.
+test('the deep is sparse: three, each a kind of its own, every one a wanderer', () => {
+  assert.equal(POPULATION.length, 3, `${POPULATION.length} creatures`);
+  assert.deepEqual(POPULATION.map(c => c.kind).sort(), ['angler', 'dumbo', 'lantern']);
+  assert.ok(POPULATION.every(c => c.wander), 'every one wanders the height');
+});
+
+// Within a quarter hour each has been up in the top quarter of the deep and
+// down in the bottom one, and never above the ceiling's row or nearer the
+// floor than its clearance.
+test('each creature travels the whole height, never into the ceiling or the floor', () => {
+  const W = 15 * 60;
   for (const c of POPULATION) {
-    const z = zoneOf(c.zone);
-    for (let t = 0; t < 120; t += 0.37) {
+    const h = heightOf(c.kind);
+    let top = null, bottom = null;
+    for (let t = 0; t < W; t += 0.25) {
       const { y } = faunaAt(c, t);
-      const h = heightOf(c.kind);
-      assert.ok(y + h <= ROWS, `${c.kind} ${c.i} is in the floor at ${t}s (row ${y})`);
-      if (c.floor || c.low) continue;
-      // a bob of a row or two either side of its seat
-      const slack = Math.max(FAUNA_MOTION.amp, FAUNA_MOTION.jellyAmp) + 1;
-      assert.ok(y >= z.from - slack && y < z.to + slack, `${c.kind} ${c.i} left its zone at ${t}s (row ${y})`);
+      assert.ok(y >= FAUNA_WANDER.top, `${c.kind} ${c.i} is over the ceiling at ${t}s (row ${y})`);
+      assert.ok(y + h <= ROWS - FAUNA_MOTION.clear, `${c.kind} ${c.i} is under the floor's clearance at ${t}s (row ${y})`);
+      if (top == null && y < ROWS / 4) top = t;
+      if (bottom == null && y + h > ROWS * 3 / 4) bottom = t;
     }
+    assert.ok(top != null, `${c.kind} ${c.i} never came up into the top quarter in ${W}s`);
+    assert.ok(bottom != null, `${c.kind} ${c.i} never went down into the bottom quarter in ${W}s`);
   }
 });
 
@@ -56,6 +70,8 @@ test('nothing teleports: a jump happens only off the deep, at the wrap', () => {
         const out = x => x < -M.wrap / 2 || x > COLS + M.wrap / 2;
         assert.ok(out(p.x) && out(was.x), `${c.kind} ${c.i} jumped ${dx.toFixed(2)} cells inside the deep at ${t.toFixed(2)}s`);
       }
+      // up and down a whole row at a time, never more
+      assert.ok(Math.abs(p.y - was.y) <= 1, `${c.kind} ${c.i} jumped ${p.y - was.y} rows at ${t.toFixed(2)}s`);
       was = p;
     }
   }

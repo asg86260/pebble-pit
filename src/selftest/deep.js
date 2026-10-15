@@ -626,9 +626,11 @@ TESTS.push(['deep: a click on a creature startles it, and it shakes loose a hand
   deepYard();
   window.__view('deep');
   run(VIEW_GLIDE_S + 0.5);
-  // One up in the light, clear of the coil's band and the stations' floor.
+  // One up in the light, clear of the coil's band and the stations' floor:
+  // they wander the whole height, so wait for one to come up there.
   const pickOne = () => window.__fauna().find(f => !f.bolting && !f.reacting && f.inside && (f.zone === 'sun' || f.zone === 'twi'));
-  const first = pickOne();
+  let first = null;
+  for (let i = 0; i < 300 && !(first = pickOne()); i++) run(2);
   window.__look(first.x - S.viewW / 2);
   run(0.1);
   const f = window.__fauna()[first.i];

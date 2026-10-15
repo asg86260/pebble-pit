@@ -1,6 +1,7 @@
 // The deep's creatures (DESIGN.md, "The deep's zones"): who lives where, and
 // where each one is at a moment. Everything is read off a creature's seed and
-// the clock, so there is nothing to step and nothing to save, and a reader
+// the clock (a wanderer's way is walked from the clock's start, the same
+// every time), so there is nothing to save, and a reader
 // other than the drawing -- a meal taken from a zone, a shoal parting round a
 // blow -- can ask the same function where a creature is without the drawing.
 // A click startles one (`startleFauna`): it plays its own reaction
@@ -15,7 +16,7 @@
 
 import { DEEP_W, DEEP_H, P, FAUNA, FAUNA_ZONES, FAUNA_SPRITES, FAUNA_MOTION, FAUNA_GULPER,
          FAUNA_SIPHON, FAUNA_SCARE, FAUNA_STARTLE, FAUNA_SCALES, FAUNA_REACT, FAUNA_POSES,
-         FAUNA_REACT_MOTION } from '../config.js';
+         FAUNA_REACT_MOTION, FAUNA_WANDER } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { now } from '../clock.js';
 import { rand } from '../rng.js';
@@ -31,6 +32,9 @@ export const unit2 = (a, b) => unit(a * 31.7 + b * 113.3);
 
 export const zoneOf = key => FAUNA_ZONES.find(z => z.key === key);
 export const zoneAtRow = y => FAUNA_ZONES.findIndex(z => y < z.to);
+// The zone a creature drawn with its top at row `y` is in now, by the middle
+// of its drawing: a wanderer takes the dim of whatever water it is crossing.
+export const zoneHere = (kind, y) => FAUNA_ZONES[zoneAtRow(y + heightOf(kind) / 2)] || FAUNA_ZONES[FAUNA_ZONES.length - 1];
 
 // The cells a creature's drawing spans, for the floor-dwellers' footing and
 // for the drawing's cull.
@@ -55,7 +59,7 @@ export const POPULATION = (() => {
         v: pick(row.v, i + 2),
         dir: s % row.flip ? -1 : 1,
         seed: unit(i * 1.7 + 5),
-        floor: !!row.floor, low: !!row.low, hop: !!row.hop,
+        floor: !!row.floor, low: !!row.low, hop: !!row.hop, wander: !!row.wander,
         n: row.school ? Math.round(pick(row.school, i + 11)) : 0,
         spread: row.spread || null,
         // a bolt: the second it came (-1 none), where from and which way,
@@ -75,6 +79,69 @@ function run(c, t) {
   if (!c.hop) return t;
   const { dash, step, burst } = FAUNA_MOTION.hop, beat = t * dash + c.seed * 9;
   return Math.floor(beat) * step + Math.min(1, (beat % 1) * burst) * step;
+}
+
+// --- a wanderer's way ------------------------------------------------------------
+// FAUNA_WANDER: the whole height, on a heading that turns at random. The
+// turn at each step answers where it is, so there is no closed form; it is
+// walked on a fixed step from the clock's start instead, off a noise keyed by
+// the creature and the step, so any moment comes out the same however and
+// whenever it is asked for -- a reload on the same clock finds it where it
+// was. Play only ever asks a little further on, one step a frame; a moment
+// asked for out of order (the smear looks a few frames back) is walked from
+// the kept moment before it.
+const wrapX = x => { const w = FAUNA_MOTION.wrap, span = COLS + 2 * w; return ((((x + w) % span) + span) % span) - w; };
+// Its rows, top-left of the drawing: from the ceiling's row to the floor's clearance.
+const wanderLo = () => FAUNA_WANDER.top;
+const wanderHi = c => ROWS - FAUNA_MOTION.clear - heightOf(c.kind);
+// A seeded noise in [0, 1), by creature and step, the same on every load:
+// integer hashing, since the steps run to the millions.
+function noise(a, n) {
+  let h = Math.imul(n | 0, 0x27d4eb2d) ^ Math.imul(a + 1, 0x9e3779b1);
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca77);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae3d);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+function wanderStart(c) {
+  const dir = c.i % 2 ? -1 : 1, K = FAUNA_WANDER;
+  return { x: wrapX(c.x0), y: Math.max(wanderLo(), Math.min(wanderHi(c), c.y)), th: dir > 0 ? K.start : Math.PI - K.start, om: 0, face: dir };
+}
+// One step on from `s`, the `n`th.
+function wanderStep(c, s, n) {
+  const K = FAUNA_WANDER, h = K.step, lo = wanderLo(), hi = wanderHi(c);
+  let om = s.om + (noise(c.i, n) - 0.5) * 2 * K.jitter * h;
+  om = Math.max(-K.turn, Math.min(K.turn, om * (1 - K.damp * h)));
+  let turn = om;
+  const cos = Math.cos(s.th), sin = Math.sin(s.th), down = cos >= 0 ? 1 : -1;
+  const nearTop = (lo + K.edge - s.y) / K.edge, nearBot = (s.y - (hi - K.edge)) / K.edge;
+  if (nearTop > 0 && sin < K.facing) turn += down * K.shove * Math.min(1, nearTop);
+  if (nearBot > 0 && sin > -K.facing) turn -= down * K.shove * Math.min(1, nearBot);
+  if (sin > K.steep) turn -= down * K.level;
+  if (sin < -K.steep) turn += down * K.level;
+  const th = s.th + turn * h, cc = Math.cos(th);
+  return { x: wrapX(s.x + cc * c.v * h), y: Math.max(lo, Math.min(hi, s.y + Math.sin(th) * c.v * h)), th, om,
+           face: cc > K.face ? 1 : cc < -K.face ? -1 : s.face };
+}
+// Its moment at step `n`, walked from the nearest moment it has.
+function wanderState(c, n) {
+  const per = Math.round(FAUNA_WANDER.keep / FAUNA_WANDER.step);
+  let w = c.walk;
+  if (!w) { const s0 = wanderStart(c); w = c.walk = { kept: [s0], n: 0, s: s0 }; }
+  if (n < w.n) { const k = Math.floor(n / per); w.n = k * per; w.s = w.kept[k]; }
+  while (w.n < n) {
+    w.s = wanderStep(c, w.s, w.n);
+    w.n++;
+    if (w.n % per === 0 && w.n / per === w.kept.length) w.kept.push(w.s);
+  }
+  return w.s;
+}
+// Where a wanderer is at `t` seconds, between its two steps either side, so
+// it glides rather than ticks; across the wrap, out past the ends, it takes
+// the later.
+export function wanderAt(c, t) {
+  const f = Math.max(0, t) / FAUNA_WANDER.step, n = Math.floor(f), a = wanderState(c, n), b = wanderStep(c, a, n), k = f - n;
+  const x = Math.abs(b.x - a.x) > COLS / 2 ? b.x : a.x + (b.x - a.x) * k;
+  return { x, y: a.y + (b.y - a.y) * k, dir: a.face };
 }
 
 // --- scares ---------------------------------------------------------------------
@@ -141,6 +208,14 @@ export function faunaAt(c, t, floorRow = () => ROWS, scares = SCARES) {
   const M = FAUNA_MOTION, span = COLS + 2 * M.wrap;
   const startled = c.t0 >= 0 && t >= c.t0;
   if (startled && t < c.back) return boltAt(c, t, floorRow);
+  if (c.wander) {
+    // Back from a bolt, its way carries on shifted to come in where the bolt left it.
+    const w = wanderAt(c, t), x = startled ? wrapX(w.x + c.bx0) : w.x;
+    const y = Math.min(Math.round(w.y), floorRow(Math.round(x)) - M.clear - heightOf(c.kind));
+    if (!scares.length) return { x, y, dir: w.dir };
+    const o = scareOffset(x, y, t, false, 1, scares);
+    return { x: x + o.x, y: Math.max(0, Math.min(y + o.y, floorRow(Math.round(x)) - M.clear - heightOf(c.kind))), dir: w.dir };
+  }
   const dir = startled ? c.bdir : c.dir;
   // One that never swims stands on its own spot, well inside the deep: the
   // wrap's shift is only for those that come back round.
@@ -245,7 +320,7 @@ export const overFauna = (wx, wy) => !!faunaUnder(wx, wy);
 export function faunaReport(t = now() / 1000) {
   return POPULATION.map(c => {
     const p = faunaPose(c, t), b = boxOf(c, p);
-    return { kind: c.kind, zone: c.zone, i: c.i, x: deepX0() + b.x * P, y: deepTop() + b.y * P,
+    return { kind: c.kind, zone: zoneHere(c.kind, p.y).key, home: c.zone, i: c.i, x: deepX0() + b.x * P, y: deepTop() + b.y * P,
              cx: p.x, cy: p.y, dir: p.dir, pose: p.r ? p.r.pose ?? null : null,
              // what the reaction holds besides its place, so a check can see one that only changes its drawing
              held: p.r ? [p.r.pose, p.r.turn, p.r.spacing, p.r.amp, p.r.lights, p.r.halo, p.r.vflip].join() : null,
@@ -279,7 +354,8 @@ function bolt(c, t, p, b) {
   c.dist = Math.abs(c.edge - c.sx);
   c.back = t + holdOf(c) + c.dist / K.pace + FAUNA_REACT_MOTION.ramp / 2 + K.away[0] + rand() * (K.away[1] - K.away[0]);
   c.bdir = -c.ddir;
-  c.bx0 = c.edge + M.wrap - c.bdir * c.v * run(c, c.back);
+  // a wanderer keeps its own way, shifted along to start where the bolt left it
+  c.bx0 = c.wander ? c.edge - wanderAt(c, c.back).x : c.edge + M.wrap - c.bdir * c.v * run(c, c.back);
 }
 
 // Every creature home, unstartled: a new game.
