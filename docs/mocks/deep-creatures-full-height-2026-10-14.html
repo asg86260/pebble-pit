@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep creatures, full height</title>
+<style>
+:root {
+  --bg: #f4f4f2; --fg: #111; --muted: #5a5a5a; --line: #c9c9c9; --card: #fff;
+  --on: #111; --on-fg: #fff;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161616; --fg: #e6e6e6; --muted: #9a9a9a; --line: #383838; --card: #1f1f1f;
+    --on: #e6e6e6; --on-fg: #111; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161616; --fg: #e6e6e6; --muted: #9a9a9a; --line: #383838; --card: #1f1f1f;
+  --on: #e6e6e6; --on-fg: #111; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg);
+  font: 14px/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace; }
+main { max-width: 1500px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 18px; margin: 0 0 6px; }
+p { margin: 4px 0; color: var(--muted); max-width: 80ch; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin: 14px 0; }
+.group { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.group > span { color: var(--muted); margin-right: 4px; }
+button { font: inherit; background: var(--card); color: var(--fg); border: 1px solid var(--line);
+  padding: 4px 10px; cursor: pointer; }
+button.on { background: var(--on); color: var(--on-fg); border-color: var(--on); }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid.one { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+figure { margin: 0; }
+figcaption { margin: 0 0 6px; }
+figcaption b { display: block; }
+figcaption small { color: var(--muted); }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges;
+  border: 3px solid var(--fg); background: #000; }
+.hide { display: none; }
+.hexes { color: var(--muted); font-size: 12px; margin-top: 4px; }
+ul { margin: 6px 0; padding-left: 20px; color: var(--muted); max-width: 90ch; }
+</style>
+</head>
+<body>
+<main>
+  <h1>The deep's creatures, the whole height (fifth pass)</h1>
+  <p>A mock drawn from plain shapes plus the game's real sprite grids (FAUNA_SPRITES) and the deep's
+     palette, at one cell per canvas pixel, scaled up. It is not the game. It cannot show: a click's
+     reaction or a fight's scare, the fight itself (the coil is a plain band), the zones' dim in the
+     midnight band, the water's stars, or the dark theme's mapping (every tone here is as the light
+     theme shows it).</p>
+  <p>Each frame is a window 232 cells wide and the deep's full 130 rows tall, the floor under it.
+     Creatures leave one end and come back in at the other, 30 cells past the edge, as today; they
+     move a whole cell at a time and stay at least 8 rows above the floor.</p>
+
+  <div class="bar">
+    <div class="group" id="count"><span>creatures</span>
+      <button data-v="2">2</button><button data-v="3" class="on">3</button><button data-v="4">4</button></div>
+    <div class="group" id="view"><span>show</span>
+      <button data-v="all" class="on">all three</button><button data-v="A">A</button>
+      <button data-v="B">B</button><button data-v="C">C</button></div>
+    <div class="group" id="speed"><span>time</span>
+      <button data-v="1" class="on">1x</button><button data-v="4">4x</button><button data-v="12">12x</button></div>
+    <div class="group"><button id="pause">pause</button><button id="amph">amphipod on floor: off</button>
+      <button id="restart">restart</button></div>
+  </div>
+  <div class="bar">
+    <div class="group" id="dark"><span>darkness</span>
+      <button data-v="0" class="on">1 today</button><button data-v="1">2 a rung darker</button>
+      <button data-v="2">3 black water</button><button data-v="3">4 black + darker bodies</button></div>
+  </div>
+  <div class="hexes" id="hexes"></div>
+  <p id="who"></p>
+
+  <div class="grid" id="grid">
+    <figure data-opt="A"><figcaption><b>A · long glide</b>
+      <small>swims across at its own pace while one slow sine carries it ceiling to floor: one window crossing is half a sine</small></figcaption>
+      <canvas width="232" height="134"></canvas></figure>
+    <figure data-opt="B"><figcaption><b>B · migration</b>
+      <small>rises and dives the full height, a little sideways drift; eases and turns at the ceiling and 8 rows over the floor</small></figcaption>
+      <canvas width="232" height="134"></canvas></figure>
+    <figure data-opt="C"><figcaption><b>C · wander</b>
+      <small>a heading that turns gently at random, never steeper than about 55 degrees, steered off the ceiling and floor</small></figcaption>
+      <canvas width="232" height="134"></canvas></figure>
+  </div>
+
+  <ul>
+    <li>The sprites cannot turn: they face left or right only, by the way they travel along. In B,
+        where travel is mostly up and down, they face their sideways drift, which may change at each turn.</li>
+    <li>The amphipod lives on the floor and cannot travel height: it is out of the count, shown
+        only by the toggle, hopping along the floor as today.</li>
+    <li>Darkness 2 needs grey rungs the deep does not keep today (ABYSS rungs 1, 3, 5, 7, 9): kept rung 0 is
+        already black, which is option 3. White eyes stay white and the purples stay put in every option.</li>
+  </ul>
+</main>
+<script>
+// ---- the real drawings (src/config/fauna.js FAUNA_SPRITES) -------------------------
+const SPR = {
+  sardine: { fps: 6, f: [['d.cbw', 'dcccb'], ['.dcbw', 'dcccb']] },
+  lantern: { fps: 5, f: [['..cccb.', 'dccccbw', 'd.L.L..'], ['d.cccb.', '.ccccbw', '..L.L..']] },
+  angler: { fps: 2, f: [
+    ['.....dddd.', '....d...dL', '..cccc....', 'dccccccw..', 'dcccccccc.', 'dcccwcwc..', '..ccccc...'],
+    ['.....dddd.', '....d...dL', '..cccc....', 'dccccccw..', 'dccccc....', 'dcccwcw...', '..cccccc..']] },
+  dumbo: { fps: 3, f: [
+    ['b.ccc.b', 'bbcccbb', '.cwcwc.', '.ccccc.', 'c.c.c.c', 'c.c.c.c', '.c...c.'],
+    ['..ccc..', 'bbcccbb', 'bcwcwcb', '.ccccc.', '.c.c.c.', 'c.c.c.c', 'c.....c'],
+    ['..ccc..', '.ccccc.', 'bcwcwcb', 'bcccccb', '.c.c.c.', '.c.c.c.', 'c.c.c.c']] },
+  amphipod: { fps: 6, f: [['.bb.', 'bccw', 'd.d.'], ['.bb.', 'bccw', '.d.d']] },
+};
+
+// ---- the palette, as seen on the light theme ----------------------------------------
+// ABYSS_TONES (src/config/rift.js) and the purple ramp's kept rungs.
+const ABYSS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+               '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+const PURP = { 5: '#2d1d47', 11: '#9b5de5' };
+// Each darkness: the water's rung, and the rung each body character is drawn in.
+// Today: water 2, d 6, c 8, b 10, eye-dark 4, white 11 (FAUNA_BASE, FAUNA_INK).
+const DARK = [
+  { name: '1 today', water: 2, d: 6, c: 8, b: 10, e: 4, w: 11, coil: 4, coilTop: 6, floor: 4 },
+  { name: '2 a rung darker', water: 1, d: 5, c: 7, b: 9, e: 3, w: 11, coil: 3, coilTop: 5, floor: 3 },
+  { name: '3 black water', water: 0, d: 6, c: 8, b: 10, e: 4, w: 11, coil: 4, coilTop: 6, floor: 4 },
+  { name: '4 black + darker bodies', water: 0, d: 4, c: 6, b: 8, e: 2, w: 11, coil: 4, coilTop: 6, floor: 4 },
+];
+let dark = 0;
+const tone = ch => ABYSS[DARK[dark][ch]];
+
+// ---- the window ----------------------------------------------------------------------
+const W = 232, ROWS = 130, FLOOR = 4, WRAP = 30, SPAN = W + 2 * WRAP, CLEAR = 8, TOP = 1;
+const unit = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a;
+  t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+// Who swims, in the order the count adds them. v: cells/s along (today's pace,
+// the slow two a touch quicker so a crossing is not five minutes), vy: cells/s up
+// and down in B. h: the rows the drawing spans (the school's spread for the school).
+const KINDS = [
+  { kind: 'angler', v: 1.6, vy: 0.9, h: 7, above: 0 },
+  { kind: 'lantern', v: 3.5, vy: 2.0, h: 3, above: 0 },
+  { kind: 'dumbo', v: 1.4, vy: 0.8, h: 7, above: 0 },
+  { kind: 'school', v: 6, vy: 3.0, h: 6, above: 4, n: 10, spread: [22, 8] },
+];
+const range = k => [TOP + k.above, ROWS - CLEAR - k.h];   // the top-left rows it may be on
+
+let count = 3, speed = 1, paused = false, amph = false, simT = 0;
+let creatures = [];
+function build() {
+  simT = 0;
+  creatures = KINDS.slice(0, count).map((k, i) => {
+    const seed = unit(i * 1.7 + 5), [lo, hi] = range(k), dir = i % 2 ? -1 : 1;
+    const x0 = (i + 0.3) / count * W, y0 = lo + unit(i + 7) * (hi - lo);
+    return { ...k, seed, lo, hi, dir, x0, i,
+      A: { ph: unit(i + 3) * Math.PI * 2, T: 2 * W / k.v },
+      B: { x: x0, y: y0, vdir: i % 2 ? 1 : -1, hdir: dir, r: rng(1000 + i) },
+      C: { x: x0, y: y0, th: dir > 0 ? 0.3 : Math.PI - 0.3, om: 0, face: dir, r: rng(2000 + i) } };
+  });
+  describe();
+}
+const wrapX = x => ((((x + WRAP) % SPAN) + SPAN) % SPAN) - WRAP;
+
+// ---- the three motions, stepped at a fixed 60 Hz ------------------------------------
+const DT = 1 / 60;
+function step() {
+  simT += DT;
+  for (const c of creatures) {
+    // B: up and down at vy, slowing to a fifth over the last 8 rows before a turn;
+    // the sideways drift a quarter of vy plus a tenth of a cell, maybe reversed at each turn.
+    const b = c.B, room = b.vdir > 0 ? c.hi - b.y : b.y - c.lo;
+    b.y += b.vdir * c.vy * Math.max(0.2, Math.min(1, room / 8)) * DT;
+    if (b.y >= c.hi) { b.y = c.hi; b.vdir = -1; if (b.r() < 0.5) b.hdir *= -1; }
+    if (b.y <= c.lo) { b.y = c.lo; b.vdir = 1; if (b.r() < 0.5) b.hdir *= -1; }
+    b.x = wrapX(b.x + b.hdir * (0.25 * c.vy + 0.1) * DT);
+
+    // C: heading th (radians, y down), its turn rate om a damped random walk held
+    // under 0.3 rad/s; within 16 rows of the ceiling or floor it is turned away at
+    // up to 0.8 rad/s; never steeper than |sin| 0.82.
+    const w = c.C;
+    w.om += (w.r() - 0.5) * 2 * 0.9 * DT;
+    w.om *= 1 - 0.25 * DT;
+    w.om = Math.max(-0.3, Math.min(0.3, w.om));
+    let turn = w.om;
+    const cos = Math.cos(w.th), sin = Math.sin(w.th), down = cos >= 0 ? 1 : -1;
+    const nearTop = (c.lo + 16 - w.y) / 16, nearBot = (w.y - (c.hi - 16)) / 16;
+    if (nearTop > 0 && sin < 0.35) turn += down * 0.8 * Math.min(1, nearTop);
+    if (nearBot > 0 && sin > -0.35) turn -= down * 0.8 * Math.min(1, nearBot);
+    if (sin > 0.82) turn -= down * 0.6;
+    if (sin < -0.82) turn += down * 0.6;
+    w.th += turn * DT;
+    w.x = wrapX(w.x + Math.cos(w.th) * c.v * DT);
+    w.y = Math.max(c.lo, Math.min(c.hi, w.y + Math.sin(w.th) * c.v * DT));
+    const cc = Math.cos(w.th);
+    if (cc > 0.15) w.face = 1; else if (cc < -0.15) w.face = -1;
+  }
+}
+// A: along at v; height on one sine whose half-period is one window crossing.
+function poseA(c, t) {
+  const a = c.A, x = wrapX(c.x0 + c.dir * c.v * t);
+  const y = c.lo + (c.hi - c.lo) * (0.5 - 0.5 * Math.cos(2 * Math.PI * t / a.T + a.ph));
+  return { x, y, dir: c.dir };
+}
+const pose = (opt, c, t) => opt === 'A' ? poseA(c, t)
+  : opt === 'B' ? { x: c.B.x, y: c.B.y, dir: c.B.hdir } : { x: c.C.x, y: c.C.y, dir: c.C.face };
+
+// ---- drawing ----------------------------------------------------------------------------
+function sprite(g, key, x, y, dir, seed, t) {
+  const s = SPR[key], f = s.f[Math.floor(t * s.fps + seed * 10) % s.f.length], w = f[0].length;
+  for (let r = 0; r < f.length; r++) for (let c = 0; c < w; c++) {
+    const ch = f[r][c];
+    if (ch === '.') continue;
+    let col;
+    if (ch === 'L') col = Math.floor(t * 2.3 + seed * 5 + c * 0.7) % 3 ? PURP[11] : PURP[5];
+    else col = tone(ch);
+    g.fillStyle = col;
+    g.fillRect(x + (dir > 0 ? c : w - 1 - c), y + r, 1, 1);
+  }
+}
+function scene(g, t) {
+  const D = DARK[dark];
+  g.fillStyle = ABYSS[D.water]; g.fillRect(0, 0, W, ROWS);
+  // the serpent's coil, a plain band through the midnight rows
+  for (let x = 0; x < W; x++) {
+    const y = 66 + Math.round(Math.sin(x * 0.045 + 0.6) * 7);
+    g.fillStyle = ABYSS[D.coil]; g.fillRect(x, y, 1, 5);
+    g.fillStyle = ABYSS[D.coilTop]; g.fillRect(x, y, 1, 1);
+  }
+  g.fillStyle = ABYSS[D.floor]; g.fillRect(0, ROWS, W, FLOOR);
+  g.fillStyle = PURP[5]; g.fillRect(0, ROWS, W, 1);
+  // the floor's clearance, a dotted rule 8 rows up
+  g.fillStyle = ABYSS[D.coil];
+  for (let x = 0; x < W; x += 4) g.fillRect(x, ROWS - CLEAR, 1, 1);
+}
+function drawOpt(g, opt, t) {
+  scene(g, t);
+  for (const c of creatures) {
+    const p = pose(opt, c, t), x = Math.round(p.x), y = Math.round(p.y);
+    if (c.kind === 'school') {
+      for (let m = 0; m < c.n; m++) {
+        const dx = Math.round((unit(m + c.seed * 50) - 0.5) * c.spread[0] + Math.sin(t * 1.7 + m) * 1.2);
+        const dy = Math.round((unit(m * 3 + c.seed * 70) - 0.5) * c.spread[1] + Math.sin(t * 2.1 + m * 1.7) * 0.8);
+        sprite(g, 'sardine', wrapX(x + dx * p.dir), y + dy, p.dir, c.seed + m * 0.13, t);
+      }
+    } else sprite(g, c.kind, x, y, p.dir, c.seed, t);
+  }
+  if (amph) {
+    // dashes and stops along the floor, today's pace (FAUNA_MOTION.hop)
+    const beat = t * 1.5 + 0.4 * 9, run = Math.floor(beat) * 0.45 + Math.min(1, (beat % 1) * 2.2) * 0.45;
+    const x = Math.round(wrapX(W * 0.6 + 3.5 * run));
+    sprite(g, 'amphipod', x, ROWS - 3, 1, 0.4, t);
+  }
+}
+
+// ---- the page ------------------------------------------------------------------------
+const figs = [...document.querySelectorAll('figure')];
+const ctxs = figs.map(f => { const g = f.querySelector('canvas').getContext('2d'); g.imageSmoothingEnabled = false; return g; });
+function describe() {
+  document.getElementById('who').textContent = 'Swimming: ' + KINDS.slice(0, count).map(k =>
+    k.kind === 'school' ? 'a school of 10 sardines' : k.kind).join(', ') + '. Today: five, one a zone (school, lantern, angler, dumbo, amphipod).';
+  const D = DARK[dark];
+  document.getElementById('hexes').textContent = `${D.name}: water ${ABYSS[D.water]} · body d ${ABYSS[D.d]}, c ${ABYSS[D.c]}, b ${ABYSS[D.b]} · eye-dark ${ABYSS[D.e]} · white ${ABYSS[D.w]} · lights ${PURP[11]} / ${PURP[5]} · coil ${ABYSS[D.coil]} · floor ${ABYSS[D.floor]}`;
+}
+function pick(id, fn) {
+  const box = document.getElementById(id);
+  box.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    fn(b.dataset.v);
+  });
+}
+pick('count', v => { count = +v; build(); });
+pick('speed', v => { speed = +v; });
+pick('dark', v => { dark = +v; describe(); });
+pick('view', v => {
+  document.getElementById('grid').classList.toggle('one', v !== 'all');
+  figs.forEach(f => f.classList.toggle('hide', v !== 'all' && f.dataset.opt !== v));
+});
+document.getElementById('pause').onclick = e => { paused = !paused; e.target.textContent = paused ? 'play' : 'pause'; };
+document.getElementById('amph').onclick = e => { amph = !amph; e.target.textContent = 'amphipod on floor: ' + (amph ? 'on' : 'off'); };
+document.getElementById('restart').onclick = build;
+
+build();
+let last = performance.now(), acc = 0;
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (!paused) { acc += dt * speed; while (acc >= DT) { step(); acc -= DT; } }
+  figs.forEach((f, i) => { if (!f.classList.contains('hide')) drawOpt(ctxs[i], f.dataset.opt, simT); });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
