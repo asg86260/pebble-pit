@@ -1,0 +1,13 @@
+{ "title": "Menu shadows and detail lines", "lede": "Your picks off the mock: shadows at 20% ink, detail lines B (full ink, 13px), bold achievement names.", "base": "fa177fac", "head": "af8ea849",
+  "items": [
+    { "id": "shadows", "title": "Shadows at 20% ink", "what": "Every floating card's shadow is the ink at a fifth, so the yard shows through; the corner counter on the canvas too.",
+      "shots": [ { "label": "light", "scene": "boards", "window": [1200, 800], "crop": [0, 0, 410, 380], "zoom": 1.5 },
+                 { "label": "dark", "scene": "boards", "theme": "dark", "window": [1200, 800], "crop": [0, 0, 410, 380], "zoom": 1.5 },
+                 { "label": "corner counter", "scene": "boards", "window": [1200, 800], "crop": [1080, 700, 120, 100], "zoom": 3 } ] },
+    { "id": "notice-line", "title": "The notice card's detail line", "what": "Full ink at 13px instead of grey.",
+      "shots": [ { "label": "light", "scene": "boards", "window": [1200, 800], "crop": [395, 0, 415, 80], "zoom": 2, "keepToasts": true },
+                 { "label": "dark", "scene": "boards", "theme": "dark", "window": [1200, 800], "crop": [395, 0, 415, 80], "zoom": 2, "keepToasts": true } ] },
+    { "id": "achievements", "title": "Achievement cards", "what": "Names bold; the line under each in full ink at 13px.",
+      "shots": [ { "label": "light", "scene": "notices2", "window": [1200, 800], "keys": ["Escape"], "setup": "(document.getElementById('recordbtn').click(), new Promise(r => setTimeout(r, 600)))", "crop": [355, 200, 490, 400], "zoom": 1.5 },
+                 { "label": "dark", "scene": "notices2", "theme": "dark", "window": [1200, 800], "keys": ["Escape"], "setup": "(document.getElementById('recordbtn').click(), new Promise(r => setTimeout(r, 600)))", "crop": [355, 200, 490, 400], "zoom": 1.5 } ] }
+  ] }
