@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Serpent constrict meal</title>
+<style>
+:root{--bg:#f3f2f6;--fg:#15131a;--mut:#5f5a6a;--line:#d5d1dc;--card:#ffffff;--acc:#5c2ba6;--btn:#ebe8f0;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0b0a0e;--fg:#ecebf0;--mut:#9b97a7;--line:#2a2733;--card:#141218;--acc:#9b5de5;--btn:#1f1c26;}}
+:root[data-theme="dark"]{--bg:#0b0a0e;--fg:#ecebf0;--mut:#9b97a7;--line:#2a2733;--card:#141218;--acc:#9b5de5;--btn:#1f1c26;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;}
+main{max-width:1560px;margin:0 auto;padding:16px;}
+h1{font-size:20px;margin:0 0 4px}
+.lede{color:var(--mut);margin:0 0 12px;max-width:80ch}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px}
+.bar .grp{display:flex;gap:4px;flex-wrap:wrap}
+button{font:inherit;font-size:13px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--btn);color:var(--fg);cursor:pointer}
+button.on{border-color:var(--acc);color:var(--acc);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:16px}
+.grid.single{grid-template-columns:1fr}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0}
+.panel.hide{display:none}
+.panel h2{font-size:16px;margin:0 0 4px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.panel p{margin:0 0 8px;color:var(--mut);font-size:13.5px}
+canvas{width:100%;display:block;image-rendering:pixelated;background:#000;border-radius:4px;aspect-ratio:200/110}
+.beat{font:12.5px/1.4 ui-monospace,Consolas,monospace;margin-top:6px;min-height:2.8em}
+.catch{font-size:13px;margin-top:6px;border-left:3px solid var(--acc);padding-left:8px}
+.note{color:var(--mut);font-size:13.5px;margin-top:16px;max-width:90ch}
+</style>
+</head>
+<body>
+<main>
+<h1>The serpent eats by constricting</h1>
+<p class="lede">Mock only, drawn from plain shapes on the deep's cell grid: not the game. Each panel runs the same deep from the same seed: the coil, its head at the left, three roaming creatures, and the serpent's health top-left draining between meals. A meal is due every 12 s from the last one; "meal now" makes one due at once. An eaten creature's slot stays empty a while, then the next kind swims in from an edge.</p>
+<div class="bar">
+  <div class="grp" id="view"><button data-v="all" class="on">side by side</button><button data-v="0">A</button><button data-v="1">B</button><button data-v="2">C</button></div>
+  <div class="grp" id="speed"><button data-s="1" class="on">1x</button><button data-s="0.5">0.5x</button></div>
+  <div class="grp" id="pace"><button data-p="1" class="on">creatures at game pace</button><button data-p="2">creatures 2x</button></div>
+  <div class="grp"><button id="pause">pause</button><button id="mealAll">meal now</button><button id="reset">restart</button></div>
+</div>
+<div class="grid" id="grid"></div>
+<p class="note">What the mock cannot show: the real coil's sway, lattice, ribs and wound; the deep's mote smoke, plinths and fighters; the camera and the deep's true 130-row height (this window is 200 by 110 cells, drawn one pixel a cell and scaled). Six of the roster's eight kinds are drawn from the game's own sprite grids (sardine school and siphon left out). The game's own constrict lights the comb head first and jags bolts from it before its orb closes; A and C borrow the lit comb and the bolts for their warning, then close a loop of coil instead of the orb. Faded things fade by opacity only. Timings are first guesses.</p>
+</main>
+<script>
+const W = 200, H = 110;
+const G = ['#000000','#0a0a0c','#121216','#1c1c21','#26262c','#333339','#42424a','#55555e','#6e6e78','#8b8b96','#b4b4c0','#ffffff'];
+const PA = ['#000000','#0b0614','#130b20','#1b112c','#241739','#2d1d47','#371f56','#412465','#4e2090','#5c2ba6','#6a2fbe','#8244d8','#9b5de5','#b79af2'];
+const PU = [...PA.slice(0, 11), PA[12]];
+// FAUNA_SPRITES, src/config/fauna.js
+const SPR = {
+  jelly: { fps: 2.5, f: [
+    ['.bbb.', 'bcwcb', 'b...b', 'd.d.d', '.d.d.', 'd.d.d'],
+    ['.bbb.', 'bcwcb', '.b.b.', '.ddd.', '.d.d.', '.d.d.'],
+    ['..b..', '.bwb.', 'bc.cb', 'd.d.d', 'd.d.d', '.d.d.']] },
+  lantern: { fps: 5, f: [['..cccb.', 'dccccbw', 'd.L.L..'], ['d.cccb.', '.ccccbw', '..L.L..']] },
+  hatchet: { fps: 4, f: [['..bbw', '.bbbb', 'dbbbb', '.bbbL', '..LL.'], ['..bbw', '.bbbb', '.bbbb', 'dbbbL', '..LL.']] },
+  angler: { fps: 2, f: [
+    ['.....dddd.', '....d...dL', '..cccc....', 'dccccccw..', 'dcccccccc.', 'dcccwcwc..', '..ccccc...'],
+    ['.....dddd.', '....d...dL', '..cccc....', 'dccccccw..', 'dccccc....', 'dcccwcw...', '..cccccc..']] },
+  vampire: { fps: 2, f: [
+    ['...rr...', '..rrrr..', '.rqqqqr.', '.qbqqbq.', 'qqqqqqqq', 'q.q..q.q', 'q.q..q.q', '..q..q..'],
+    ['...rr...', '..rrrr..', '.rqqqqr.', '.qbqqbq.', '.qqqqqq.', '..qqqq..', '..q..q..', '.q.qq.q.']] },
+  dumbo: { fps: 3, f: [
+    ['b.ccc.b', 'bbcccbb', '.cwcwc.', '.ccccc.', 'c.c.c.c', 'c.c.c.c', '.c...c.'],
+    ['..ccc..', 'bbcccbb', 'bcwcwcb', '.ccccc.', '.c.c.c.', 'c.c.c.c', 'c.....c'],
+    ['..ccc..', '.ccccc.', 'bcwcwcb', 'bcccccb', '.c.c.c.', '.c.c.c.', 'c.c.c.c']] },
+};
+const PACE = { jelly: 0.5, lantern: 3.5, hatchet: 2.2, angler: 1.6, vampire: 0.9, dumbo: 1.4 };
+const ROSTER = ['jelly', 'lantern', 'hatchet', 'angler', 'vampire', 'dumbo'];
+
+const MEAL_EVERY = 12, RANGE = 28, NECK = 56, LEN = 172, HINGE = 10, RESPAWN = 6;
+const JAW = v => v < 0.25 ? 0 : v < 0.75 ? 0.5 : 1;        // the jaw's held poses
+const ease = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const hash = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+const PH = {
+  reach: d => [['warn', 0.6], ['lunge', clamp(0.45 + d * 0.007, 0.5, 1.3)], ['bite', 0.25], ['wrap', 0.7], ['squeeze', 0.8], ['pull', clamp(0.6 + d * 0.011, 0.8, 1.9)], ['swallow', 0.6], ['lump', 2.4], ['heal', 1.8]],
+  lure: d => [['warn', 0.6], ['draw', clamp(1.2 + d * 0.02, 1.6, 3.6)], ['struggle', 1.2], ['snap', 0.35], ['lump', 2.4], ['heal', 1.8]],
+  wait: d => [['warn', 0.3], ['strike', 0.35], ['bite', 0.25], ['wrap', 0.5], ['squeeze', 0.6], ['pull', 0.7], ['swallow', 0.5], ['lump', 2.4], ['heal', 1.8]],
+};
+const LABEL = {
+  warn: 'comb lights head first', lunge: 'the head reaches out', strike: 'strike', bite: 'impact, held',
+  wrap: 'a loop of coil closes round it', squeeze: 'squeeze (three held steps)', pull: 'pulled back to the jaws',
+  swallow: 'swallowed', lump: 'the lump travels down the body', heal: 'heal lands',
+  draw: 'drawn in by the purple pull', struggle: 'it struggles at the mouth', snap: 'the jaws snap, held',
+};
+const OPTS = [
+  ['A', 'reach', 'The head lunges at the nearest creature wherever it is, a loop of coil closes round it and squeezes, the neck pulls it back to the jaws, and a lump travels down the body.', 'Catch: the neck reaches across the whole deep, so it stretches far past its length.', 'reach'],
+  ['B', 'lure', 'The nearest creature is drawn to the mouth on a stream of purple motes, struggles there, and the jaws snap; the coil only flexes.', 'Catch: reads less like the constrict attack; nothing wraps.', 'lure'],
+  ['C', 'wait and strike', 'The serpent waits until a creature swims inside its reach (the faint ring), then strikes and constricts it; the heal waits until one comes.', 'Catch: the heal can be delayed; the counter shows how long.', 'wait'],
+];
+
+let speed = 1, paused = false, pace = 1;
+
+class Panel {
+  constructor(opt, el) {
+    this.opt = opt; this.kind = opt[4]; this.el = el;
+    this.cv = el.querySelector('canvas'); this.g = this.cv.getContext('2d');
+    this.beat = el.querySelector('.beat');
+    this.own = new Float32Array(W * H); this.al = new Float32Array(W * H); this.ac = new Float32Array(W * H);
+    this.reset();
+  }
+  reset() {
+    this.rng = mulberry(11); this.t = 0; this.hp = 0.55; this.next = 3; this.meal = null; this.waiting = 0;
+    this.motes = []; this.crosses = []; this.rosterI = 3;
+    this.stars = Array.from({ length: 70 }, () => ({ x: Math.floor(this.rng() * W), y: Math.floor(this.rng() * H), ph: this.rng() * 6, rate: 0.6 + this.rng() * 0.8 }));
+    this.slots = [0, 1, 2].map(i => this.spawn(ROSTER[i], 40 + this.rng() * 150, 8 + this.rng() * 80, this.rng() < 0.5 ? 1 : -1));
+  }
+  spawn(kind, x, y, dir) {
+    const f = SPR[kind].f[0];
+    return { kind, x, y, dir, face: dir, a: (this.rng() - 0.5) * 0.6, turn: 0, bound: this.rng() < 0.5 ? -1 : 1, w: f[0].length, h: f.length, state: 'swim', ph: this.rng() * 5, back: 0 };
+  }
+  nextKind() {
+    const out = new Set(this.slots.filter(c => c.state !== 'gone').map(c => c.kind));
+    for (let n = 0; n < ROSTER.length; n++) { const k = ROSTER[(this.rosterI + n) % ROSTER.length]; if (!out.has(k)) { this.rosterI += n + 1; return k; } }
+    return ROSTER[this.rosterI++ % ROSTER.length];
+  }
+  replace(i, fromLeft) {
+    const kind = this.nextKind(), w = SPR[kind].f[0][0].length;
+    this.slots[i] = this.spawn(kind, fromLeft ? -w - 2 : W + 2, 8 + this.rng() * 80, fromLeft ? 1 : -1);
+  }
+  center(c) { return { x: c.x + c.w / 2, y: c.y + c.h / 2, r: Math.max(c.w, c.h) / 2 }; }
+  // the coil at rest: along the deep, head at the left end
+  restPt(s) {
+    const x = 24 + s * 0.98, amp = 4 * (this.flex || 1);
+    return { x, y: 66 + amp * Math.sin(x * 0.055 - this.t * 0.7) };
+  }
+  mouth() { return this.restPt(0); }
+  wander(c, dt) {
+    const sp = PACE[c.kind] * pace;
+    c.turn += (this.rng() - 0.5) * 2 * 0.9 * dt; c.turn -= c.turn * 0.25 * dt; c.turn = clamp(c.turn, -0.3, 0.3);
+    c.a += c.turn * dt + clamp(c.bound * 0.5 - c.a, -0.12 * dt, 0.12 * dt);
+    if (c.y < 5) c.a += dt; if (c.y + c.h > H - 12) c.a -= dt;
+    c.a = clamp(c.a, -0.82, 0.82);
+    if (c.bound < 0 && c.y < 5) c.bound = 1; if (c.bound > 0 && c.y + c.h > H - 12) c.bound = -1;
+    c.x += c.dir * sp * Math.cos(c.a) * dt; c.y = clamp(c.y + sp * Math.sin(c.a) * dt, 1, H - 8 - c.h);
+    c.face = c.dir;
+  }
+  attach(c) {
+    const m = this.center(c), A = this.restPt(NECK);
+    const dx = A.x - m.x, dy = A.y - m.y, d = Math.hypot(dx, dy) || 1;
+    return { x: m.x + dx / d * (m.r + 1), y: m.y + dy / d * (m.r + 1) };
+  }
+  tryMeal() {
+    const mo = this.mouth(); let best = null, bd = 1e9;
+    for (const c of this.slots) {
+      if (c.state !== 'swim' || c.x + c.w < 0 || c.x > W) continue;
+      const m = this.center(c), d = Math.hypot(m.x - mo.x, m.y - mo.y);
+      if (this.kind === 'wait' && d > RANGE + m.r) continue;
+      if (d < bd) { bd = d; best = c; }
+    }
+    if (!best) return false;
+    const m = this.center(best);
+    this.meal = { c: best, i: 0, pt: 0, ph: PH[this.kind](bd), d: bd, startC: { x: m.x, y: m.y } };
+    best.state = this.kind === 'lure' ? 'prey' : 'marked';
+    if (this.kind !== 'lure') this.meal.H = this.attach(best);
+    this.next = this.t + MEAL_EVERY; this.waiting = 0;
+    return true;
+  }
+  enterPhase(name) {
+    const m = this.meal, c = m.c, cc = this.center(c);
+    if (name === 'bite') { c.state = 'prey'; m.H = this.attach(c); m.biteOff = { x: cc.x - m.H.x, y: cc.y - m.H.y }; }
+    if (name === 'wrap') m.th0 = Math.atan2(m.H.y - cc.y, m.H.x - cc.x);
+    if (name === 'lump') { c.state = 'gone'; c.back = this.t + RESPAWN; m.sw = 2.2 + cc.r * 0.3; }
+    if (name === 'heal') {
+      m.healT = this.t; m.hp0 = this.hp;
+      for (let n = 0; n < 34; n++) { const s = 12 + n * 4.6; this.crosses.push({ s, born: this.t + Math.abs(s - 70) * 0.008, side: n % 2 }); }
+    }
+  }
+  step(dt) {
+    this.t += dt;
+    const m = this.meal;
+    this.slots.forEach((c, i) => {
+      if (c.state === 'swim' || c.state === 'marked') {
+        this.wander(c, dt);
+        if (c.state === 'swim' && ((c.dir < 0 && c.x < -c.w - 3) || (c.dir > 0 && c.x > W + 3))) this.replace(i, c.dir < 0);
+      } else if (c.state === 'gone' && this.t >= c.back) this.replace(i, this.rng() < 0.5);
+    });
+    if (!m) {
+      if (this.t >= this.next && !this.tryMeal()) this.waiting = this.t - this.next;
+    } else {
+      if (m.ph[m.i][0] === 'warn' || m.ph[m.i][0] === 'lunge' || m.ph[m.i][0] === 'strike') { if (m.c.state === 'marked') m.H = this.attach(m.c); }
+      m.pt += dt;
+      while (this.meal && m.pt >= m.ph[m.i][1]) {
+        m.pt -= m.ph[m.i][1]; m.i++;
+        if (m.i >= m.ph.length) { this.meal = null; break; }
+        this.enterPhase(m.ph[m.i][0]);
+      }
+    }
+    const mm = this.meal;
+    if (mm && mm.healT != null) this.hp = mm.hp0 + (1 - mm.hp0) * ease(Math.min(1, (this.t - mm.healT) / 1.8));
+    else this.hp = Math.max(0.08, this.hp - 0.03 * dt);
+    // the lure's motes
+    if (mm && this.kind === 'lure' && (mm.ph[mm.i][0] === 'draw' || mm.ph[mm.i][0] === 'struggle')) {
+      const rate = mm.ph[mm.i][0] === 'draw' ? 45 : 20;
+      this.moteAcc = (this.moteAcc || 0) + rate * dt;
+      while (this.moteAcc >= 1) { this.moteAcc--; this.motes.push({ born: this.t, life: 0.7 + this.rng() * 0.3, ox: (this.rng() - 0.5) * 6, oy: (this.rng() - 0.5) * 6, wig: this.rng() * 6, b: this.rng() < 0.4 }); }
+    }
+    this.motes = this.motes.filter(o => this.t - o.born < o.life);
+    this.crosses = this.crosses.filter(o => this.t - o.born < 0.6);
+    this.flex = 1;
+    if (mm && this.kind === 'lure') {
+      const [nm, dur] = mm.ph[mm.i], k = mm.pt / dur;
+      if (nm === 'draw') this.flex = 1 + 0.7 * Math.sin(k * Math.PI);
+      if (nm === 'struggle') this.flex = 1 + 0.25 * Math.sin(mm.pt * 6);
+    }
+  }
+  pose() {
+    const P = { e: 0, H: null, gape: 0, lit: 0, bolts: false, ring: null, lump: null, name: null, k: 0 };
+    const m = this.meal; if (!m) return P;
+    const [nm, dur] = m.ph[m.i], k = m.pt / dur; P.name = nm; P.k = k; P.H = m.H;
+    if (nm !== 'warn') P.lit = 1;
+    if (nm === 'warn') { P.lit = Math.floor(k * 6) / 6; P.bolts = this.kind !== 'lure' && k > 0.45; }
+    if (this.kind === 'lure') {
+      if (nm === 'draw') P.gape = JAW(k);
+      if (nm === 'struggle') P.gape = 1;
+      if (nm === 'snap') P.gape = k < 0.3 ? 0.5 : 0;
+      if (nm === 'lump') P.lump = k;
+      return P;
+    }
+    if (nm === 'lunge' || nm === 'strike') { P.e = ease(k); P.gape = JAW(k); }
+    if (nm === 'bite') { P.e = 1; P.gape = 1; }
+    if (nm === 'wrap') { P.e = 1; P.gape = 0.5; P.ring = { sweep: k, rr: 1 }; }
+    if (nm === 'squeeze') { P.e = 1; P.gape = 0.5; P.ring = { sweep: 1, rr: [1, 0.84, 0.7][Math.min(2, Math.floor(k * 3))] }; }
+    if (nm === 'pull') { P.e = 1 - ease(k); P.gape = 0.5; P.ring = { sweep: k < 0.5 ? 1 : 1 - (k - 0.5) * 2, rr: 0.7 }; }
+    if (nm === 'swallow') P.gape = k < 0.6 ? 1 : k < 0.8 ? 0.5 : 0;
+    if (nm === 'lump') P.lump = k;
+    return P;
+  }
+  rad(s, P) {
+    let r;
+    if (s < 6) r = 4 * (0.5 + 0.5 * s / 6);
+    else if (s < 40) r = 4 + 0.6 * (s - 6) / 34;
+    else r = Math.max(0.8, 4.6 * Math.pow(1 - (s - 40) / (LEN - 40), 0.7));
+    if (P.lump != null && this.meal) { const pos = 8 + P.lump * 72; r += this.meal.sw * Math.exp(-Math.pow((s - pos) / 2.6, 2)); }
+    return r;
+  }
+  samples(P) {
+    const pts = [], A = this.restPt(NECK); let C = null;
+    if (P.e > 0) {
+      const dx = A.x - P.H.x, dy = A.y - P.H.y, dl = Math.hypot(dx, dy) || 1;
+      let px = -dy / dl, py = dx / dl; if (py > 0) { px = -px; py = -py; }
+      C = { x: (P.H.x + A.x) / 2 + px * dl * 0.25, y: (P.H.y + A.y) / 2 + py * dl * 0.25 };
+    }
+    for (let s = 0; s <= LEN; s += 0.35) {
+      let p = this.restPt(s);
+      if (C && s < NECK) {
+        const u = s / NECK, a = (1 - u) * (1 - u), b = 2 * (1 - u) * u, c = u * u;
+        const qx = a * P.H.x + b * C.x + c * A.x, qy = a * P.H.y + b * C.y + c * A.y;
+        p = { x: p.x + (qx - p.x) * P.e, y: p.y + (qy - p.y) * P.e };
+      }
+      pts.push({ x: p.x, y: p.y, s });
+    }
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+      let tx = b.x - a.x, ty = b.y - a.y; const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l;
+      pts[i].nx = -ty; pts[i].ny = tx;
+    }
+    return pts;
+  }
+  stamp(x, y, r, s, nx, ny, half) {
+    const x0 = Math.floor(x - r), x1 = Math.ceil(x + r), y0 = Math.floor(y - r), y1 = Math.ceil(y + r);
+    for (let cy = y0; cy <= y1; cy++) {
+      if (cy < 0 || cy >= H) continue;
+      for (let cx = x0; cx <= x1; cx++) {
+        if (cx < 0 || cx >= W) continue;
+        const dx = cx + 0.5 - x, dy = cy + 0.5 - y, d2 = dx * dx + dy * dy;
+        if (d2 > r * r) continue;
+        const across = dx * nx + dy * ny;
+        if (half < 0 && across > 0.3) continue;
+        if (half > 0 && across < -0.3) continue;
+        const ratio = Math.sqrt(d2) / r, i = cy * W + cx;
+        if (ratio < this.own[i]) { this.own[i] = ratio; this.al[i] = s; this.ac[i] = across; }
+      }
+    }
+  }
+  cell(x, y, col, a = 1) { const g = this.g; g.globalAlpha = a; g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), 1, 1); }
+  line(x0, y0, x1, y1, col) {
+    const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+    for (let i = 0; i <= n; i++) this.cell(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, col);
+  }
+  sprite(c, cx, cy, face, k = 1, alpha = 1, fpsMul = 1) {
+    const sp = SPR[c.kind], tm = this.t + c.ph;
+    const fr = sp.f[Math.floor(tm * sp.fps * fpsMul) % sp.f.length], h = fr.length, w = fr[0].length;
+    const xi = Math.round(cx - w / 2), hk = Math.max(1, Math.round(h * k)), y0 = Math.round(cy - hk / 2);
+    const lit = Math.floor(tm * 2.3) % 3 < 2;
+    this.g.globalAlpha = alpha;
+    for (let r = 0; r < h; r++) {
+      const yy = y0 + Math.floor(r * hk / h);
+      for (let q = 0; q < w; q++) {
+        const ch = fr[r][q]; if (ch === '.') continue;
+        const col = ch === 'd' ? G[6] : ch === 'c' ? G[8] : ch === 'b' ? G[10] : ch === 'w' ? G[11] : ch === 'e' ? G[4]
+          : ch === 'q' ? (hash(q, r) < 0.25 ? PU[5] : PU[7]) : ch === 'r' ? PU[9] : ch === 'p' ? PU[11] : (lit ? PU[11] : PU[5]);
+        this.g.fillStyle = col;
+        this.g.fillRect(face > 0 ? xi + q : xi + w - 1 - q, yy, 1, 1);
+      }
+    }
+    this.g.globalAlpha = 1;
+  }
+  draw() {
+    const g = this.g, t = this.t;
+    g.globalAlpha = 1; g.fillStyle = G[0]; g.fillRect(0, 0, W, H);
+    // stars, each breathing through the purple rungs on its own clock
+    const BR = [0, 3, 5, 7, 9, 7, 5, 3];
+    for (const s of this.stars) { const r = BR[Math.floor(t * s.rate + s.ph * 8) % BR.length]; if (r) this.cell(s.x, s.y, PU[r]); }
+    const P = this.pose(), m = this.meal, mo = this.mouth();
+    // C's reach: a faint dotted ring round the mouth, brighter while the heal waits
+    if (this.kind === 'wait') {
+      const waiting = !m && this.t >= this.next;
+      const dots = Math.round(RANGE * 2 * Math.PI / 3);
+      for (let n = 0; n < dots; n++) { const th = n / dots * Math.PI * 2; this.cell(mo.x + Math.cos(th) * RANGE, mo.y + Math.sin(th) * RANGE, waiting ? PU[7] : PU[5], waiting ? 0.9 : 0.6); }
+    }
+    const pts = this.samples(P);
+    const tip = pts[0], o6 = pts[6]; let ox = tip.x - o6.x, oy = tip.y - o6.y; const ol = Math.hypot(ox, oy) || 1; ox /= ol; oy /= ol;
+    // the creatures
+    let prey = null;
+    for (const c of this.slots) {
+      if (c.state === 'gone') continue;
+      if (c.state === 'prey' || (m && m.c === c)) { prey = c; continue; }
+      const cc = this.center(c); this.sprite(c, cc.x, cc.y, c.face);
+    }
+    let preyC = null;
+    if (prey && m) {
+      const cc = this.center(prey), nm = P.name, k = P.k; let x = cc.x, y = cc.y, sq = 1, al = 1, face = prey.face, fm = 1;
+      if (this.kind === 'lure') {
+        const fx = tip.x + ox * (cc.r + 1), fy = tip.y + oy * (cc.r + 1);
+        face = m.startC.x > mo.x ? 1 : -1; fm = 3;
+        if (nm === 'warn') { x = m.startC.x; y = m.startC.y; fm = 1 + k * 2; }
+        if (nm === 'draw') { const e = k * k; x = m.startC.x + (fx - m.startC.x) * e; y = m.startC.y + (fy - m.startC.y) * e; }
+        if (nm === 'struggle') { const j = Math.floor(m.pt / 0.15) % 4, J = [[0, 0], [1, -1], [0, 1], [-1, 0]][j]; x = fx + J[0]; y = fy + J[1]; if (j % 2) face = -face; fm = 4; }
+        if (nm === 'snap') { const e = ease(Math.min(1, k * 2)); x = fx - ox * (cc.r + 4) * e; y = fy - oy * (cc.r + 4) * e; al = 1 - e; sq = 1 - 0.45 * e; }
+      } else {
+        if (nm === 'squeeze') sq = [1, 0.8, 0.6][Math.min(2, Math.floor(k * 3))];
+        if (nm === 'pull') { const e = ease(k); x = tip.x + m.biteOff.x + (ox * (cc.r + 1) - m.biteOff.x) * e; y = tip.y + m.biteOff.y + (oy * (cc.r + 1) - m.biteOff.y) * e; sq = 0.6; }
+        if (nm === 'swallow') { const d = (cc.r + 1) * (1 - k) - 3 * k; x = tip.x + ox * d; y = tip.y + oy * d; sq = 0.55; al = 1 - k; }
+        if (nm === 'bite' || nm === 'wrap' || nm === 'squeeze' || nm === 'pull' || nm === 'swallow') fm = 0.0001;
+      }
+      this.sprite(prey, x, y, face, sq, al, fm);
+      preyC = { x, y, r: cc.r };
+    }
+    // the lure's purple motes, streaming from the creature to the mouth
+    if (this.kind === 'lure' && preyC) {
+      for (const o of this.motes) {
+        const a = (t - o.born) / o.life, sx = preyC.x + o.ox, sy = preyC.y + o.oy;
+        const x = sx + (tip.x - sx) * a, y = sy + (tip.y - sy) * a + Math.sin(a * 6 + o.wig) * 1.5;
+        this.cell(x, y, o.b ? PU[11] : PU[9], a < 0.6 ? 1 : 1 - (a - 0.6) / 0.4);
+      }
+    }
+    // the coil, stamped then painted
+    this.own.fill(9);
+    for (const p of pts) {
+      const r = this.rad(p.s, P);
+      if (p.s < HINGE && P.gape > 0) {
+        const off = P.gape * 4 * (1 - p.s / HINGE);
+        this.stamp(p.x - p.nx * off, p.y - p.ny * off, r, p.s, p.nx, p.ny, -1);
+        this.stamp(p.x + p.nx * off, p.y + p.ny * off, r, p.s, p.nx, p.ny, 1);
+      } else this.stamp(p.x, p.y, r, p.s, p.nx, p.ny, 0);
+    }
+    // the loop round the prey
+    if (P.ring && preyC && P.ring.sweep > 0) {
+      const R0 = preyC.r + 2.6, rr = R0 * P.ring.rr, sweep = P.ring.sweep * Math.PI * 2;
+      const neck = pts[Math.round(16 / 0.35)];
+      const sx = preyC.x + Math.cos(m.th0) * rr, sy = preyC.y + Math.sin(m.th0) * rr;
+      const cn = Math.max(2, Math.ceil(Math.hypot(sx - neck.x, sy - neck.y) / 0.4));
+      for (let i = 0; i <= cn; i++) { const u = i / cn; this.stamp(neck.x + (sx - neck.x) * u, neck.y + (sy - neck.y) * u, 2.2, 300 + i * 0.4, 0, 1, 0); }
+      const steps = Math.ceil(sweep * rr / 0.4);
+      for (let i = 0; i <= steps; i++) { const th = m.th0 + sweep * i / steps; this.stamp(preyC.x + Math.cos(th) * rr, preyC.y + Math.sin(th) * rr, 2.2, 200 + i * 0.4, Math.cos(th), Math.sin(th), 0); }
+    }
+    g.globalAlpha = 1;
+    for (let i = 0; i < W * H; i++) {
+      const ratio = this.own[i]; if (ratio > 1) continue;
+      const s = this.al[i], a = this.ac[i];
+      let col;
+      if (ratio > 0.76) col = G[8];
+      else if (s < 9) col = G[11];
+      else col = ((Math.floor((s + a * 1.3) / 3) + Math.floor((s - a * 1.3) / 3)) & 1) ? G[11] : G[10];
+      g.fillStyle = col; g.fillRect(i % W, (i / W) | 0, 1, 1);
+    }
+    // the crest along the neck, lit head first
+    const tips = [];
+    for (let s = 10, n = 0; s <= 40; s += 2, n++) {
+      const p = pts[Math.round(s / 0.35)], base = [1, 2, 3, 2][n % 4], taper = Math.min(1, (s - 8) / 6, (42 - s) / 6);
+      const h = Math.max(1, Math.round(base * taper)), lit = s <= 10 + P.lit * 30 && P.lit > 0, r = this.rad(s, P);
+      for (let q = 1; q <= h; q++) {
+        const x = p.x - p.nx * (r + q - 0.4), y = p.y - p.ny * (r + q - 0.4);
+        this.cell(x, y, lit ? (q === h ? PU[11] : PU[9]) : (q === h ? PU[7] : PU[5]));
+        if (q === h) tips.push({ x, y });
+      }
+    }
+    // the eye, on the upper jaw
+    { const p = pts[Math.round(5 / 0.35)], off = P.gape * 4 * (1 - 5 / HINGE) + 1.8; this.cell(p.x - p.nx * off, p.y - p.ny * off, G[0]); }
+    // the warning's bolts, held two frames a shape
+    if (P.bolts && m && tips.length) {
+      const cc = this.center(m.c), shape = Math.floor(t * 6);
+      for (let n = 0; n < 3; n++) {
+        const from = tips[(n * 5 + shape * 3) % tips.length]; let px = from.x, py = from.y;
+        for (let j = 1; j <= 6; j++) {
+          const u = j / 6, jag = j < 6 ? (hash(shape * 7 + n, j) - 0.5) * 7 : 0;
+          const dx = cc.x - from.x, dy = cc.y - from.y, dl = Math.hypot(dx, dy) || 1;
+          const nx = from.x + dx * u - dy / dl * jag, ny = from.y + dy * u + dx / dl * jag;
+          this.line(px, py, nx, ny, n === 0 ? PU[11] : PU[9]); px = nx; py = ny;
+        }
+      }
+    }
+    // the heal's crosses, lifting off the body as they fade
+    for (const c of this.crosses) {
+      const a = (t - c.born) / 0.6; if (a < 0) continue;
+      const p = pts[Math.min(pts.length - 1, Math.round(c.s / 0.35))], r = this.rad(c.s, P);
+      const x = Math.round(p.x + (c.side ? 2 : -2)), y = Math.round(p.y - r - 2 - a * 8), al = 1 - a;
+      this.cell(x, y, PU[11], al); this.cell(x - 1, y, PU[9], al); this.cell(x + 1, y, PU[9], al); this.cell(x, y - 1, PU[9], al); this.cell(x, y + 1, PU[9], al);
+    }
+    // health, top left
+    g.globalAlpha = 1; g.fillStyle = G[4]; g.fillRect(3, 3, 42, 3); g.fillStyle = G[0]; g.fillRect(4, 4, 40, 1);
+    g.fillStyle = G[11]; g.fillRect(4, 4, Math.round(40 * this.hp), 1);
+    // C's wait, as a purple bar under the health while the heal is due
+    if (this.kind === 'wait' && !m && this.t >= this.next) { g.fillStyle = PU[9]; g.fillRect(4, 8, Math.min(40, Math.round(this.waiting * 2)), 1); }
+  }
+  updateBeat() {
+    const m = this.meal; let s;
+    if (m) {
+      const [nm, dur] = m.ph[m.i];
+      s = `${LABEL[nm]}  ${m.pt.toFixed(1)} / ${dur.toFixed(2)} s  (meal ${m.ph.reduce((a, p) => a + p[1], 0).toFixed(1)} s, reach ${Math.round(m.d)} cells)`;
+    } else if (this.t >= this.next) {
+      s = this.kind === 'wait' ? `heal due, waiting for a creature inside the ring: +${this.waiting.toFixed(1)} s` : `heal due, no creature on the glass: +${this.waiting.toFixed(1)} s`;
+    } else s = `swimming; next meal in ${(this.next - this.t).toFixed(1)} s`;
+    if (this.beat.textContent !== s) this.beat.textContent = s;
+  }
+}
+
+const grid = document.getElementById('grid');
+const panels = OPTS.map(o => {
+  const el = document.createElement('section'); el.className = 'panel';
+  el.innerHTML = `<h2><span>${o[0]} · ${o[1]}</span><button class="mealOne">meal now</button></h2><p>${o[2]}</p><canvas width="${W}" height="${H}"></canvas><div class="beat"></div><div class="catch">${o[3]}</div>`;
+  grid.appendChild(el);
+  const p = new Panel(o, el);
+  el.querySelector('.mealOne').onclick = () => { if (!p.meal) p.next = Math.min(p.next, p.t); };
+  return p;
+});
+const pick = (id, attr, fn) => document.getElementById(id).addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  for (const x of e.currentTarget.querySelectorAll('button')) x.classList.toggle('on', x === b);
+  fn(b.dataset[attr]);
+});
+pick('view', 'v', v => { grid.classList.toggle('single', v !== 'all'); panels.forEach((p, i) => p.el.classList.toggle('hide', v !== 'all' && +v !== i)); });
+pick('speed', 's', v => speed = +v);
+pick('pace', 'p', v => pace = +v);
+document.getElementById('pause').onclick = e => { paused = !paused; e.target.textContent = paused ? 'play' : 'pause'; e.target.classList.toggle('on', paused); };
+document.getElementById('mealAll').onclick = () => panels.forEach(p => { if (!p.meal) p.next = Math.min(p.next, p.t); });
+document.getElementById('reset').onclick = () => panels.forEach(p => p.reset());
+
+const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (still) {
+  for (const p of panels) { while (p.t < 5.4) p.step(1 / 60); p.draw(); p.updateBeat(); }
+} else {
+  let last = performance.now();
+  const frame = now => {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (!paused) { let sim = dt * speed; while (sim > 1e-6) { const h = Math.min(sim, 1 / 60); panels.forEach(p => p.step(h)); sim -= h; } }
+    panels.forEach(p => { if (!p.el.classList.contains('hide')) p.draw(); p.updateBeat(); });
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+</script>
+</body>
+</html>
