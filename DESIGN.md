@@ -15483,14 +15483,24 @@ grey for those to come. Answering the old mock's question 2: the defense.
   `docs/mocks/serpent-hp-bar-2026-10-12.html` on `mock/deep-hp`):* the fill
   slides down to each blow over a few hundredths of a second
   (`BAR_EASE_S`), so a stream of blows is one drain and not a pixel ticking
-  when the rounding tips. The stretch a blow took breaks into 3-pixel pieces,
-  held lit in the notch where it struck (longer, lifted and a column at a time
-  on a big blow), then falling on held poses and fading out whole. A meal
+  when the rounding tips. The drawn end crumbles behind the fill (the
+  owner's C, "crumble steps", 2026-10-15;
+  `docs/mocks/serpent-bar-chunks-2026-10-15.html`): it bites back
+  `BAR_BITE` pixels at a time, square bites half the bar's height, at most a
+  bite every `BAR_BITE_STEP_S`, so a big blow is a run of held steps; what
+  the blows have taken that is not yet a whole bite shows cracked, darker,
+  at the end. Each bite is held lit where it was, then leaves as its two
+  halves, chips thrown toward the empty track and falling, the bottom one
+  tumbling, fading by opacity at the end. The owner asked for the motion
+  smooth (the old 3-pixel pieces stepped on held poses, "like half frame
+  rate"), so a chip moves every frame to its whole pixel, and so does the
+  bar's knock as it settles. A heal raises the end with the fill. A break
+  crumbles whatever was left at once, a bite at a time from the end. A meal
   still closes the wound at once in the sim; the bar shows it flowing in at
   `BAR_HEAL_RATE` of the bar a second, purple over what came back, the purple
   fading over `BAR_HEAL_FADE_S` once it is in. A break's refill flows the same
   way at the break's own pace, with no purple. All of it -- the shown fill,
-  the purple, the pieces -- is the renderer's (render/serpentbar.js), not the
+  the end, the purple, the chips -- is the renderer's (render/serpentbar.js), not the
   sim's: nothing saves it, and a reload shows the bar as it stands.
 - *Stages are not to scale:* each stage is its own full bar, since the depths
   run 60 to 30,000 and a bar drawn to scale would hide the first three.

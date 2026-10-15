@@ -383,29 +383,42 @@ export const BAR_HEAL_RATE = 0.32;     // a share of the bar a second
 export const BAR_FLOW_EASE = 4;        // a second, against what is left to come
 export const BAR_FLOW_MIN = 0.05;      // a share of the bar a second
 export const BAR_STALE_S = 0.25;       // a gap between drawn frames longer than this (away from the deep) shows the bar as it stands
-// The stretch a blow took breaks into BAR_SHARD_PX-pixel pieces, held lit in
-// the notch where the blow struck for `hold` seconds (lifted `lift` screen
-// pixels, and on a big blow a column at a time, BAR_SHARD_STAGGER_S apart),
-// then falling on held poses, BAR_SHARD_POSES a second, under BAR_SHARD_GRAV
-// screen pixels a second a second. Each is thrown `side` px/s away from the
-// side the blow came from plus up to `sideRand`, spread outward by `spread`
-// across the stretch, and up by `up` plus up to `upRand` (less `row` for each
-// row down). It falls for BAR_SHARD_FALL_S and fades out whole over the last
-// BAR_SHARD_FADE_S of that. A big blow is one past NUM_KICK_BIG, as the knock.
-export const BAR_SHARD_PX = 3;
-export const BAR_SHARD_HOLD = { small: 0.06, big: 0.16 };
-export const BAR_SHARD_LIFT = { small: 1, big: 2 };
-export const BAR_SHARD_STAGGER_S = 0.012;
-export const BAR_SHARD_POSES = 15;
-export const BAR_SHARD_GRAV = 520;
-export const BAR_SHARD_KICK = { side: 10, sideRand: 26, spread: 40, up: 18, upRand: 40, row: 4 };
-export const BAR_SHARD_FALL_S = 0.85;
-export const BAR_SHARD_FADE_S = 0.4;
-export const BAR_CHIP = seenGrey('pale');     // a piece while it is held lit in the notch (white, as the fill, once it falls)
+// The bar's drawn end crumbles behind the fill (the owner's C, "crumble
+// steps", 2026-10-15; docs/mocks/serpent-bar-chunks-2026-10-15.html): it
+// bites back BAR_BITE screen pixels at a time, square bites half the bar's
+// height, so a blow reads as pieces of the bar and not a speck per pixel;
+// at most one bite every BAR_BITE_STEP_S, so a big blow crumbles as a run of
+// held steps. What the blows have taken that is not yet a whole bite stays
+// at the end in BAR_CRACKED, darker than the fill and the rim both. Each
+// bite is held lit in BAR_CHIP, lifted BAR_BITE_LIFT, for BAR_BITE_STEP_S,
+// then leaves as two chips, its top and bottom halves: thrown toward the
+// empty track `side` px/s (the top one 0.4 of it back, the bottom 0.4 on)
+// plus up to `sideRand` (from 0.3 of it under), up by `up` plus up to
+// `upRand` (the bottom one `row` less), and falling under BAR_BITE_GRAV
+// screen pixels a second a second. The owner asked for the motion smooth
+// (2026-10-15: the old pieces stepped on held poses, "like half frame
+// rate"), so a chip moves every frame to its whole pixel; the bottom one
+// tumbles, a quarter turn every BAR_BITE_TUMBLE_S as the square and the
+// diamond in turn. A chip falls for BAR_BITE_FALL_S and fades by opacity
+// over its last BAR_BITE_FADE_S. A break crumbles what was left at once, a
+// bite every BAR_BITE_BREAK_S from the end down.
+export const BAR_BITE = 7;
+export const BAR_BITE_STEP_S = 0.09;
+export const BAR_BITE_LIFT = 1;
+export const BAR_BITE_GRAV = 520;
+export const BAR_BITE_KICK = { side: 16, sideRand: 26, up: 34, upRand: 30, row: 8 };
+export const BAR_BITE_TUMBLE_S = 0.1;
+export const BAR_BITE_FALL_S = 0.85;
+export const BAR_BITE_FADE_S = 0.4;
+export const BAR_BITE_BREAK_S = 0.012;
+export const BAR_CHIP = seenGrey('pale');     // a bite while it is held lit at the end (white, as the fill, once it falls)
+// The mock's cracked grey was the abyss's rung 7, between two of the deep's
+// kept rungs; the darker one, so it reads apart from the rim.
+export const BAR_CRACKED = seenGrey('stone');
 // And the bar recoils from it, the whole of it and its pips, up and away from
 // the number that went into its underside: BAR_KNOCK screen pixels
-// (BAR_KNOCK_BIG for a blow past NUM_KICK_BIG) for half of BAR_KNOCK_S, half
-// that for the other half, then home.
+// (BAR_KNOCK_BIG for a blow past NUM_KICK_BIG), settling home over
+// BAR_KNOCK_S a whole pixel at a time, every frame (smooth, as the chips).
 export const BAR_KNOCK = 4;
 export const BAR_KNOCK_BIG = 8;
 export const BAR_KNOCK_S = 0.16;
