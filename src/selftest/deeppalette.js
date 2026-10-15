@@ -24,9 +24,9 @@
 import { ok, run } from './kit.js';
 import { draw, LAYERS } from '../render.js';
 import { countRect } from '../render/counter.js';
-import { DEEP_SEEN } from '../render/deeptones.js';
-import { darkPage } from '../ink.js';
-import { COIN_TONES, SHADES, P, CELL } from '../config.js';
+import { DEEP_SEEN, seen, LIGHT, TONE } from '../render/deeptones.js';
+import { darkPage, inkOf } from '../ink.js';
+import { COIN_TONES, SHADES, P, CELL, CRUSH_FIRE_TONE } from '../config.js';
 
 // The comparison pages' scenes (docs/mocks/deep-palette-ingame-2026-10-14.html,
 // docs/mocks/deep-background-2026-10-14.html).
@@ -78,6 +78,23 @@ function whose(off) {
 }
 
 export const TESTS = [
+  // The dark page's map squeezes and lifts what it is given; the deep is written
+  // so it lands each tone itself (ink.js, `landed`), so the furnace's fire, its
+  // door, its brick and its mortar are as apart there as on the light page.
+  ['deep palette: the deep lands its tones on the dark page as the light page has them', async () => {
+    if (!darkPage) return [ok(true, 'read on the dark page')];
+    const near = (a, b) => [1, 3, 5].every(k => Math.abs(parseInt(a.slice(k, k + 2), 16) - parseInt(b.slice(k, k + 2), 16)) <= 3);
+    const out = [];
+    for (const c of DEEP_SEEN) {
+      if (c === '#ffffff' || c === '#000000') continue;
+      const l = (parseInt(c.slice(1, 3), 16) + parseInt(c.slice(3, 5), 16) + parseInt(c.slice(5, 7), 16)) / 765;
+      if (l < 0.16) continue;   // darker than the dark page's paper: the map cannot reach it
+      out.push(ok(near(inkOf(seen(c)), c), `${c} lands as drawn`, inkOf(seen(c))));
+    }
+    const fire = inkOf(LIGHT[CRUSH_FIRE_TONE]), mouth = inkOf(TONE.hole), brick = inkOf(TONE.stone);
+    out.push(ok(fire !== mouth && fire !== brick, 'the fire is not the mouth or the brick', `${fire} ${mouth} ${brick}`));
+    return out;
+  }],
   ['deep palette: every deep scene draws from six greys, five purples and white', async () => {
     if (darkPage) return [ok(true, 'the dark page draws the deep unturned; read on the light page')];
     const out = [];

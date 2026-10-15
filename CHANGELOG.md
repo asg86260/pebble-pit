@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The furnace's fire, brick and mortar keep their steps on the dark theme as on the light, instead of being squeezed together and lifted toward grey (src/selftest/deeppalette.js).
 - The constriction is one steady solid beam from the comb to the orb, three cells wide at the comb with a white core, narrowing to the core alone, instead of jagged flickering bolts (src/selftest/deeppalette.js).
 - The big dim shadows crossing the deep's upper water are gone, the giant and the far and middle crossings; the creatures that swim the water stay (test/deep-creature-click.test.mjs).
 - The deep draws from six greys, five purples and white: one flat water with only purple stars in it, its stations, domes, pods and furnace flat silhouettes lit along their top edges, its creatures flat, and the portal a black hole in the water (src/selftest/deeppalette.js).

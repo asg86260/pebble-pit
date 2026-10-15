@@ -1,8 +1,8 @@
 // The deep's palette, inverted (render/deep.js, "The palette is the yard's,
 // inverted"): a tone as it is to be SEEN, turned into what is drawn to get
 // it. On the light page every channel flipped, which the deep's negative
-// flips back; on the dark page the lightness turned over with the hue kept,
-// which the page's own map turns back -- a channel flip there would come out
+// flips back; on the dark page the lightness chosen so the page's own map
+// lands it on the tone itself, the hue kept -- a channel flip there would come out
 // the complement, the purples green.
 //
 // The deep's ramps are the abyss's, capped (config DEEP_GREY_RUNGS,
@@ -19,10 +19,10 @@
 
 import { ABYSS_TONES, ABYSS_MAGIC_TONES, DEEP_GREY_RUNGS, DEEP_PURPLE_RUNGS, DEEP_GREY, DEEP_PURPLE,
          DEEP_BREATH } from '../config.js';
-import { darkPage, turned, raw } from '../ink.js';
+import { darkPage, landed, raw } from '../ink.js';
 
 const xor = h => '#' + (0xffffff ^ parseInt(h.slice(1), 16)).toString(16).padStart(6, '0');
-export const seen = darkPage ? turned : xor;
+export const seen = darkPage ? landed : xor;
 
 const WHITE = ABYSS_TONES.length - 1;
 const greyRung = i => (i >= WHITE ? WHITE : Math.max(...DEEP_GREY_RUNGS.filter(k => k <= i)));
