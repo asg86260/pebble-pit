@@ -1,0 +1,8 @@
+{ "title": "Creatures use the whole height of the water", "lede": "The deep's creatures swim from the top of the water the window shows down to just over the floor.",
+  "base": "f540713a", "head": "d93ad3c1f76a910de70067ae492dc0fab2d11fba",
+  "items": [ { "id": "height", "title": "Creatures use the whole height of the water", "what": "They swim from the top of the water the window shows down to just over the floor.",
+    "shots": [
+      { "scene": "deep-zones", "window": [800,600], "zoom": 0.6, "wait": 0, "label": "start" },
+      { "scene": "deep-zones", "window": [800,600], "zoom": 0.6, "wait": 120, "label": "2 min" },
+      { "scene": "deep-zones", "window": [800,600], "zoom": 0.6, "wait": 300, "label": "5 min" },
+      { "scene": "deep-zones", "window": [800,600], "zoom": 0.6, "wait": 480, "label": "8 min" } ] } ] }

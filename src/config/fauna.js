@@ -148,6 +148,7 @@ export const FAUNA_MOTION = {
   bob: 1.3, amp: 1, jellyBob: 0.9, jellyAmp: 2,
   low: { up: 6, bob: 1.1, amp: 1.5 },
   wrap: 30, clear: 8, stand: 60,
+  topGlide: 0.35,   // seconds: the stretch's top follows a resized window, a second to settle
   hop: { dash: 1.5, step: 0.45, burst: 2.2 },
   school: { drift: 1.7, driftAmp: 1.2, bob: 2.1, bobAmp: 0.8, seedStep: 0.13 },
 };

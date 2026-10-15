@@ -124,7 +124,18 @@ function bandOf(kind) {
 // The top of the water the deep's own frame shows, in rows: its ceiling, or
 // over it, where a window taller than the deep shows the water going on up
 // (render/fauna.js `drawDeepZones` lays it to the window's top).
-export const waterTop = () => Math.min(0, Math.floor((deepRestTop() - deepTop()) / P));
+// The top it is stretched from is eased: a resized window moves the top of
+// the water, and every creature's height is a fraction of the way down from
+// it, so reading the new top at once would jump them all. The drawing steps
+// `glideWaterTop` once a frame; nothing that does not draw (the node tier)
+// does, and reads the top itself. Drawing-side, never saved; the path stays
+// a pure function of the seed and the clock.
+let easedTop = null;
+export function glideWaterTop(dt) {
+  const to = deepRestTop();
+  easedTop = easedTop == null ? to : easedTop + (to - easedTop) * (1 - Math.exp(-Math.min(dt, 0.1) / FAUNA_MOTION.topGlide));
+}
+export const waterTop = () => Math.min(0, Math.floor(((easedTop ?? deepRestTop()) - deepTop()) / P));
 // The rows the walk is taken in, top-left of the drawing: from the ceiling's
 // row to the floor's clearance. Fixed, so the walk is the same in any window.
 const walkLo = kind => FAUNA_WANDER.top + bandOf(kind).up;
