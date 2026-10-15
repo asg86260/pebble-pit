@@ -14860,6 +14860,20 @@ it. It reaches as far as the window does, not a margin guessed round the
 deep: a tall window shows far over the ceiling and a wide one past the
 deep's far end.
 
+**The swell** (the owner, 2026-10-15: option D of
+docs/mocks/deep-water-waves-2026-10-15.html, with a mix of strengths). One
+wide band at a time crosses the deep left to right, every ten seconds or so,
+each wave dealt gentle, medium or now and then strong off a seeded sequence
+(`DEEP_WAVE`). It travels in the deep's own cells rather than across the
+glass, so panning under it does not drag it along: it is the water moving,
+not a wipe over the screen. The stars it passes are pushed a few cells right
+and lifted, brighten a little inside the band, and ease back left past where
+they were and home; the silt and the flecks ride the same push and keep half
+of it, so the motes creep right a little each wave. All of it is read off the
+clock (render/deepwave.js), nothing saved; a star is read where it is seated
+and drawn where it is carried, so each moves whole cells and none is lost or
+doubled on the way.
+
 **Sparse, and clickable like the birds** (the owner, 2026-10-13: "tone down
 the amount of creatures in the deep. its a little noisy ... the same
 treatment as the birds above. sparse, and able to click and drop scales").

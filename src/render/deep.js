@@ -28,11 +28,12 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          DEEP_SURFACE, DEEP_WATER_DEPTH,
          DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
          DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_MOTES_MAX, DEEP_PURPLE,
-         DEEP_STAR_THIN, DEEP_STAR_DIM, DEEP_MOTE_FADE_MS, DEEP_MOTE_RIM } from '../config.js';
+         DEEP_STAR_THIN, DEEP_STAR_DIM, DEEP_MOTE_FADE_MS, DEEP_MOTE_RIM, DEEP_WAVE } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, podAt,
          waterShift } from '../deep/place.js';
 import { paintAbyssField } from './abyssfield.js';
+import { shiftAt, WAVE_REACH } from './deepwave.js';
 import { abyssLine } from '../pit.js';
 import { CRUSHER_SPRITES } from '../deep/sprites.js';
 import { propCells, brewCells } from '../deep/props.js';
@@ -88,9 +89,14 @@ export function drawDeepWater() {
   // higher than the deep's own top, as a tall one does.
   const top = y0, bottom = Math.min(y1, deepFloor());
   if (bottom <= top) return;
+  // The swell carries the stars (render/deepwave.js): in from past the
+  // window's edges, but never up out of the floor, where no star is seated.
+  const tS = now() / 1000;
+  const reach = bottom < y1 ? { ...WAVE_REACH, down: 0 } : WAVE_REACH;
   paintAbyssField({ from: x0, to: x1, top, bottom, line: abyssLine(), rowShift: waterShift(),
                     deep: DEEP_WATER_DEPTH, tones: GREYS, magic: STARS, t: now(),
-                    veil: false, magicShare: STAR_SHARE, thin: DEEP_STAR_THIN, dim: DEEP_STAR_DIM, fade: true });
+                    veil: false, magicShare: STAR_SHARE, thin: DEEP_STAR_THIN, dim: DEEP_STAR_DIM, fade: true,
+                    shift: (c, out) => shiftAt(c, tS, 0, out), reach });
   ctx.fillStyle = '#000';
 }
 
@@ -435,6 +441,7 @@ export function drawDeepStations() {
 // Drawing only: they are stepped here, on the frame's own clock, never by the
 // sim, and live on `S.deepMotes` so a reload starts the water afresh.
 let motesAt = 0, fleckOwed = 0;
+const SWELL_NOW = new Float64Array(3), SWELL_WAS = new Float64Array(3);
 
 const current = (y, t) => DEEP_CURRENT * Math.sin(t / DEEP_CURRENT_MS * Math.PI * 2 + y / (P * 40));
 
@@ -472,12 +479,23 @@ function stepMotes() {
              0, 0.1, DEEP_FLECK_LIFE * 1000);
     }
   }
+  // The swell (render/deepwave.js) carries a mote by however much more it
+  // pushes and lifts a point there now than a frame ago: the band's push
+  // and its easing back, with the half the mote keeps left behind as part of
+  // where it is, so the silt creeps right a little each wave.
+  const tS = t / 1000, wasS = (t - dt) / 1000;
   let n = 0;
   for (const m of list) {
     m.life -= dt;
     m.age = (m.age || 0) + dt;
     if (m.life <= 0) continue;
     m.vx *= Math.pow(0.97, f); m.vy *= Math.pow(0.97, f);
+    if (dt > 0) {
+      shiftAt(m.x / P, tS, DEEP_WAVE.keep, SWELL_NOW);
+      shiftAt(m.x / P, wasS, DEEP_WAVE.keep, SWELL_WAS);
+      m.x += (SWELL_NOW[0] - SWELL_WAS[0]) * P;
+      m.y -= (SWELL_NOW[1] - SWELL_WAS[1]) * P;
+    }
     m.x += (m.vx + current(m.y, t)) * f;
     m.y += (m.vy + (m.kind === 'silt' ? DEEP_SILT_SINK * Math.sin(t / 3000 + m.x) : 0)) * f;
     if (m.kind === 'silt') {

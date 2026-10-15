@@ -622,3 +622,33 @@ export const LEVELUP_EMBER = [2, 1];   // an ember's cells square, flown out and
 // settles back the same way to land as the burst ends (deep/party.js `riseOf`).
 export const LEVELUP_RISE = 2;
 export const LEVELUP_RISE_STEP = 0.12;
+
+// The deep's water moves as water (the owner, 2026-10-15: option D of
+// docs/mocks/deep-water-waves-2026-10-15.html, with a mix of strengths): one
+// wide band of swell at a time crosses the deep left to right, in the deep's
+// own cells, so a camera moving under it does not move it. Each wave is dealt
+// a feel off a seeded sequence -- mostly gentle and medium, now and then a
+// strong one -- and pushes the stars and motes it passes `push` cells right
+// and lifts them `lift`, then lets them ease back left with a slight
+// overshoot; a mote keeps `keep` of the push, so the silt creeps right a
+// little each wave, and a star keeps none, so the field rests where it was.
+// The stars brighten by `bright` inside the band. `width` is in cells and
+// `cross` the seconds it takes over `span` cells of water and its own width,
+// the mock's window; `share` is how often a wave is dealt that feel. A wave
+// sets off every `slot` seconds, give or take `jitter`, so the gap between
+// two runs from slot - 2 jitter to slot + 2 jitter.
+export const DEEP_WAVE = {
+  feels: [
+    { width: 30, push: 2, lift: 0.5, cross: 6.0, bright: 0.2, share: 0.45 },    // gentle
+    { width: 40, push: 3, lift: 1.0, cross: 5.5, bright: 0.35, share: 0.4 },    // medium
+    { width: 50, push: 4, lift: 1.5, cross: 5.0, bright: 0.5, share: 0.15 }     // strong
+  ],
+  span: 200,        // cells: the window the crossing time is measured over
+  slot: 10,         // seconds between waves, on average
+  jitter: 1,        // seconds each wave's start may stand off its slot
+  keep: 0.5,        // the share of the push a mote keeps
+  settleS: 1.8,     // seconds the push takes to ease back
+  swingS: 5,        // seconds of the overshoot's one swing
+  tailS: 11,        // seconds after the band a wave is still asked of: six settles
+  seed: 3           // the strengths' sequence
+};
