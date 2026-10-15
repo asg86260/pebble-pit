@@ -1,0 +1,33 @@
+<!doctype html><title>Shadows and notes</title><style>
+:root{--bg:#fff;--fg:#111;--mute:#666;--line:#ddd}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#161616;--fg:#eee;--mute:#999;--line:#333}}
+:root[data-theme=dark]{--bg:#161616;--fg:#eee;--mute:#999;--line:#333}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 ui-monospace,Menlo,Consolas,monospace;margin:0;padding:16px}
+main{max-width:1300px;margin:auto}h1{font-size:20px}h2{font-size:16px;margin-top:32px;border-top:1px solid var(--line);padding-top:16px}
+p{color:var(--mute);max-width:70ch}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+figure{margin:0}img{max-width:100%;image-rendering:pixelated;display:block;border:1px solid var(--line)}figcaption{margin-top:4px}
+.t{display:flex;gap:8px;margin:8px 0}.t button{font:inherit;padding:4px 10px;border:1px solid var(--fg);background:none;color:inherit;cursor:pointer}.t button.on{background:var(--fg);color:var(--bg)}
+</style><main><h1>Menu shadows and detail lines</h1>
+<p>These are shots of the real game with the CSS changed in the page; no game code has changed. Vote on the decisions board.</p>
+<div class="t"><button class="on" data-th="light">light theme</button><button data-th="dark">dark theme</button></div>
+<h2>Menu shadows</h2><p>Every floating card's shadow, drawn in the ink at that strength so the yard shows through. The corner counter is drawn on the canvas and is not in this mock; it would follow.</p><div class="grid">
+<figure><img data-src="img/shadow-solid-" src="img/shadow-solid-light.png" alt="Today: solid grey"><figcaption>Today: solid grey</figcaption></figure>
+<figure><img data-src="img/shadow-a20-" src="img/shadow-a20-light.png" alt="20% ink"><figcaption>20% ink</figcaption></figure>
+<figure><img data-src="img/shadow-a35-" src="img/shadow-a35-light.png" alt="35% ink (same weight as today on white)"><figcaption>35% ink (same weight as today on white)</figcaption></figure>
+<figure><img data-src="img/shadow-a50-" src="img/shadow-a50-light.png" alt="50% ink"><figcaption>50% ink</figcaption></figure>
+</div>
+<h2>The notice card's detail line</h2><p>The line under a notice's name at the top of the screen.</p><div class="grid">
+<figure><img data-src="img/toast-now-" src="img/toast-now-light.png" alt="Today: grey, body size"><figcaption>Today: grey, body size</figcaption></figure>
+<figure><img data-src="img/toast-A-" src="img/toast-A-light.png" alt="A · full ink, same size"><figcaption>A · full ink, same size</figcaption></figure>
+<figure><img data-src="img/toast-B-" src="img/toast-B-light.png" alt="B · full ink, 13px"><figcaption>B · full ink, 13px</figcaption></figure>
+<figure><img data-src="img/toast-C-" src="img/toast-C-light.png" alt="C · full ink, 14px (the title's size)"><figcaption>C · full ink, 14px (the title's size)</figcaption></figure>
+</div>
+<h2>The achievements page's detail lines</h2><p>What the noticeboard opens: the line under each achievement. Same three options as the notice card, so one pick can cover both.</p><div class="grid">
+<figure><img data-src="img/notes-now-" src="img/notes-now-light.png" alt="Today: grey, body size"><figcaption>Today: grey, body size</figcaption></figure>
+<figure><img data-src="img/notes-A-" src="img/notes-A-light.png" alt="A · full ink, same size"><figcaption>A · full ink, same size</figcaption></figure>
+<figure><img data-src="img/notes-B-" src="img/notes-B-light.png" alt="B · full ink, 13px"><figcaption>B · full ink, 13px</figcaption></figure>
+<figure><img data-src="img/notes-C-" src="img/notes-C-light.png" alt="C · full ink, 14px"><figcaption>C · full ink, 14px</figcaption></figure>
+</div>
+</main><script>
+document.querySelectorAll('.t button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.t button').forEach(x=>x.classList.toggle('on',x===b));
+document.querySelectorAll('img[data-src]').forEach(i=>i.src=i.dataset.src+b.dataset.th+'.png')});</script>

@@ -62,11 +62,11 @@ html, body {
   /* The page's dot texture -- one cell in six, in the ink at a seventh -- as
      one value a mode, since a data URI cannot read a variable. */
   --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
-  /* The type scale: four sizes and four trackings. A tracking is always
+  /* The type scale: six sizes and four trackings. A tracking is always
      multiplied by --track, the knob a language or a phone turns:
      `letter-spacing: calc(var(--track-m) * var(--track))`. Two line heights:
      text, and a single-line chip. */
-  --fs-small: 10px; --fs-body: 12px; --fs-name: 14px; --fs-word: 17px; --fs-title: 34px;
+  --fs-small: 10px; --fs-body: 12px; --fs-note: 13px; --fs-name: 14px; --fs-word: 17px; --fs-title: 34px;
   --track-0: 0em; --track-s: .08em; --track-m: .14em; --track-l: .3em;
   --lh-text: 1.4; --lh-chip: 1;
   /* The two stack gaps: tight between the rows of one list, loose between
@@ -92,9 +92,9 @@ html, body {
   /* A card on a board: the cards' own, set to the bill's line. */
   --pad-card: 6px 8px;
   /* Every card that floats over the yard casts the same hard one-cell shadow,
-     down and right, in the palest gray (the counter on the canvas draws the
-     same one: FLOAT_SHADOW in config/view.js). */
-  --shadow-off: 6px;
+     down and right, in the ink at a fifth, so the yard shows through it (the
+     counter on the canvas draws the same one: FLOAT_SHADOW in config/view.js). */
+  --shadow-off: 6px; --shadow-ink: 20%;
   /* The type, as two knobs a language can turn (DESIGN.md, "Localization
      phase two", section 3): the face every rule writes as var(--face), and
      the tracking every rule that spaces words multiplies its own em by. One
@@ -124,7 +124,7 @@ html, body {
 /* Declared again wherever --ink-7 is: a custom property resolves its var()s
    where it is declared, so one inherited from the root would keep the root's
    gray on a card that inks itself the other way. */
-:root { --float-shadow: var(--shadow-off) var(--shadow-off) 0 var(--ink-7); }
+:root { --float-shadow: var(--shadow-off) var(--shadow-off) 0 color-mix(in srgb, var(--ink) var(--shadow-ink), transparent); }
 /* A phone tightens every tracking at once: the words are the same, the
    glass is narrower. */
 @media (max-width: 560px) { :root { --track: .6; } }
@@ -1104,8 +1104,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    different heights, and a row of cards reads as a row when its notes line up. */
 .record .card { display: flex; flex-direction: column; justify-content: space-between; gap: 3px;
                       padding: 5px 8px; border: 1px solid var(--ink); }
-.record .name { letter-spacing: calc(var(--track-s) * var(--track)); text-transform: uppercase; }
-.record .note { color: var(--ink-4); }
+.record .name { letter-spacing: calc(var(--track-s) * var(--track)); text-transform: uppercase; font-weight: bold; }
+.record .note { font-size: var(--fs-note); }
 .record .none { grid-column: 1 / -1; text-align: center; }   /* "nothing yet", on its own */
 /* The toast: the record's card, said out loud at the top edge as a notice
    lands (toast.js). The same card as the achievements page -- name in the
@@ -1154,7 +1154,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   .toast:hover .note { color: var(--ink); }
 }
 .toast .name { font-size: var(--fs-name); letter-spacing: calc(var(--track-m) * var(--track)); text-transform: uppercase; }
-.toast .note { color: var(--ink-7); }
+.toast .note { font-size: var(--fs-note); }
 /* the ring: a one-pixel edge that starts on the card's own and swells out as
    it fades. The card leaves the tree between two notices, so the animation
    starts fresh every time it goes up. */

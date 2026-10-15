@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { COIN, COIN_DARK, PURPLE, GREY } from '../src/config/palette.js';
-import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, FLOAT_SHADOW_INK } from '../src/config/view.js';
+import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, FLOAT_SHADOW_ALPHA } from '../src/config/view.js';
 import { PAD_ACCENT } from '../src/config/pad.js';
 
 const css = readFileSync('src/style.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -24,8 +24,7 @@ test('the light page draws the palette\'s coins, accent, ends and shadow', () =>
   assert.equal(token(light, 'accent'), PAD_ACCENT);
   assert.equal(token(light, 'c-paper'), LIGHT_PAPER.replace('#ffffff', '#fff'));
   assert.equal(token(light, 'c-ink'), LIGHT_INK.replace('#000000', '#000'));
-  assert.equal(token(light, 'ink-7'), FLOAT_SHADOW_INK);
-  assert.equal(FLOAT_SHADOW_INK, GREY[4]);
+  assert.equal(parseFloat(token(light, 'shadow-ink')) / 100, FLOAT_SHADOW_ALPHA);
 });
 
 test('the dark page draws the palette\'s dark coins, a rung of the purple, and the canvas\'s ends', () => {

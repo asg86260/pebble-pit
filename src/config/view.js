@@ -100,11 +100,11 @@ export const SHEET_FADE_MS = 180;
 // cap and a plus, since a storm lays hundreds and the figure is a nudge.
 export const MESS_TAG_CAP = 99;
 // The hard shadow every floating card casts, down and right, in screen
-// pixels, and its gray, a rung of the one ramp: the page's --shadow-off and
-// --ink-7 (style.css), for
-// the one card drawn on the canvas rather than the page (render/counter.js).
+// pixels, and how much of the ink it takes: the page's --shadow-off and
+// --shadow-ink (style.css), for the one card drawn on the canvas rather than
+// the page (render/counter.js).
 export const FLOAT_SHADOW = 6;
-export const FLOAT_SHADOW_INK = GREY[4];
+export const FLOAT_SHADOW_ALPHA = 0.2;
 // The most the landing page waits for its picture (the demo frame's first
 // drawn frame) before lifting its veil regardless: a frame that will not come
 // must not hold the page white.

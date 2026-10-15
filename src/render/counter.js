@@ -3,7 +3,7 @@
 
 import { openBoardRect } from '../board.js';
 import { fmt } from '../words.js';
-import { NUM_FONT_PX, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FANG_MARK, FLOAT_SHADOW, FLOAT_SHADOW_INK } from '../config.js';
+import { NUM_FONT_PX, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FANG_MARK, FLOAT_SHADOW, FLOAT_SHADOW_ALPHA } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawCoin, drawMark } from './marks.js';
@@ -128,8 +128,11 @@ export function drawCount() {
   }
   // the shadow first, as the page's floating cards cast it, so the card
   // covers all of it but the strip down its right and along its foot
-  ctx.fillStyle = FLOAT_SHADOW_INK;
+  ctx.fillStyle = '#000';
+  const was = ctx.globalAlpha;
+  ctx.globalAlpha = was * FLOAT_SHADOW_ALPHA;
   ctx.fillRect(box.x + FLOAT_SHADOW, box.y + FLOAT_SHADOW, box.w, box.h);
+  ctx.globalAlpha = was;
   ctx.fillStyle = '#fff';
   countBox = box;
   ctx.fillRect(box.x, box.y, box.w, box.h);

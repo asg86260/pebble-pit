@@ -10,7 +10,7 @@ new piece of chrome follows these; one that cannot is a question for the owner.
 
 - Black and white are the normal; purple is the one accent, for anything outside it. `--paper`, `--ink`, `--accent`.
 - The ends are named apart from their use, so a box can ink itself the other way without a cycle: `--c-paper`, `--c-ink` (`#objective.deep`, every section sign).
-- Greys are steps from ink to paper, by tenths: `--ink-2`, `--ink-4` (muted words), `--ink-5` (disabled, short), `--ink-7` (the float shadow, `GREY[4]`), `--ink-8` (a bill's fill).
+- Greys are steps from ink to paper, by tenths: `--ink-2`, `--ink-4` (muted words), `--ink-5` (disabled, short), `--ink-7`, `--ink-8` (a bill's fill).
 - Color appears only on coins and the accent: `--coin-ore`, `--coin-crop`, `--coin-spark` are `COIN` / `COIN_DARK` in `src/config/palette.js`; `--accent` is a rung of `PURPLE`. `test/ui-tokens.test.mjs` holds the stylesheet equal to the palette.
 - Dark mode swaps the tokens under `html.dark` and nothing else; a dark coin or accent keeps 3:1 on dark paper.
 - The page's dot texture is one value a mode: `--dots`. The scrim is shade, not ink, and stays dark in both modes.
@@ -19,7 +19,7 @@ new piece of chrome follows these; one that cannot is a question for the owner.
 ## Type
 
 - One face: `--face` (the language's own face is added after the mono under `:lang`). Never a `font:` shorthand on a component: it resets the line height; set `font-size`.
-- Four sizes: `--fs-small` 10 (small print, notes), `--fs-body` 12 (everything), `--fs-name` 14 (a display name: the toast, an index entry, a goal), `--fs-word` 17 (a page's word, a pairing code); `--fs-title` 34 is the game's name alone.
+- Six sizes: `--fs-small` 10 (small print, notes), `--fs-body` 12 (everything), `--fs-note` 13 (the line under a notice's or an achievement's name), `--fs-name` 14 (a display name: the toast, an index entry, a goal), `--fs-word` 17 (a page's word, a pairing code); `--fs-title` 34 is the game's name alone.
 - Four trackings, always times `--track`: `calc(var(--track-s) * var(--track))`. `--track-0` sentences, `--track-s` .08 labels, `--track-m` .14 buttons and titles, `--track-l` .3 words. Pictures (pips, codes) keep plain numbers.
 - `--track` is the one knob: a phone sets it to .6, so every tracking tightens at once.
 - Two line heights: `--lh-text` 1.4 for words, `--lh-chip` 1 for a one-line chip (a sign, a tag, a shelf).
@@ -40,7 +40,7 @@ new piece of chrome follows these; one that cannot is a question for the owner.
 - Paddings: `--pad-s` (3/6: tips, tags, small controls), `--pad-m` (8/12: floating cards, the cloud box), `--pad-l` (14/24: the held sheet), `--pad-btn` (3/12: a sheet button and a list row), `--pad-card` (6/8: a card on a board).
 - Glass edges: `--edge` 8 for the game's chrome; the landing column and its foot stand `--title-edge` 20 in, both sides.
 - The held sheet is one width on every page, `--held-w` 36em (its content box); the window alone narrows it, and a phone's sheet is the glass. The landing column is never narrower than `--col-w` 21em.
-- A 2px border floats over the yard and casts `--float-shadow` (6px, `--ink-7`, no blur): boards, the purse, windows, the queue, the story card, corner squares, the build buttons. A 1px border is a control, a line inside a panel, or a reading sheet (held sheet, landing column, tooltip, toast).
+- A 2px border floats over the yard and casts `--float-shadow` (6px, the ink at `--shadow-ink` 20% so the yard shows through, no blur): boards, the purse, windows, the queue, the story card, corner squares, the build buttons. A 1px border is a control, a line inside a panel, or a reading sheet (held sheet, landing column, tooltip, toast).
 
 ## Components
 
