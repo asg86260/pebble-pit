@@ -539,8 +539,8 @@ const glideAt = (to, k) => () => {
 };
 
 // Every prop on the floor (deep/props.js), four stations a scene, the most a
-// party holds: a base unit's crate beside classes at rung 4 and rung 8, so
-// one shot holds a prop plain and lit and the crate beside them. The serpent
+// party holds: a base unit's flag beside classes at rung 4 and rung 8, so
+// one shot holds a prop plain and lit and the flag beside them. The serpent
 // is left unwounded at the first stage so the ranged stay at their posts.
 const PROP_SCENES = {
   'party-props-a': [{ kind: 'altar', cls: null, rung: 0 }, cast('brawler', 4), cast('sword', 8), cast('monk', 8)],
@@ -903,7 +903,7 @@ const deepScenes = {
                                                           && f.cx > 0 && f.cx < DEEP_W / P - 12 && clearOfCoil(f.x, f.y, 16)),
                           f => startleFauna(f.x, f.y), at, f => window.__fauna()[f.i], kind) }])),
   ...Object.fromEntries(Object.entries(PROP_SCENES).map(([name, party]) => [name, {
-    about: 'the deep', say: `four stations' props: ${party.map(o => (o.cls || 'crate') + ' ' + o.rung).join(', ')}`,
+    about: 'the deep', say: `four stations' props: ${party.map(o => (o.cls || 'flag') + ' ' + o.rung).join(', ')}`,
     run: () => {
       deepYard({ stage: 0, run: 4, party });
       lookDeep((slotAt(0) + slotAt(3)) / 2);

@@ -37,7 +37,7 @@ import { paintAbyssField } from './abyssfield.js';
 import { shiftAt, WAVE_REACH } from './deepwave.js';
 import { abyssLine } from '../pit.js';
 import { CRUSHER_SPRITES } from '../deep/sprites.js';
-import { propCells, brewCells } from '../deep/props.js';
+import { PROPS, propCells, brewCells, clothCells } from '../deep/props.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
 import { raw, darkPage } from '../ink.js';
@@ -305,7 +305,7 @@ function drawPods() {
 // --- the party's stations, at their slots -----------------------------------------
 // A station is its fighter and a prop (DESIGN.md, "A station is its fighter
 // and a prop"): the fighter is the fighters' layer's (render/arms.js), and
-// here is the prop beside its post -- the crate below the fork, the class's
+// here is the prop beside its post -- the flag below the fork, the class's
 // own from it, its parts purple from rung 8. Where it stands is place.js's
 // (`propRect`), and what it is made of props.js's (`propCells`).
 const snap = v => Math.round(v / P) * P;
@@ -321,10 +321,11 @@ function propImage(key, lit) {
   const id = `${key}|${lit ? 8 : 0}`;
   let img = painted.get(id);
   if (img) return img;
-  const cells = propCells(key, lit);
+  const cells = propCells(key, lit), rows = PROPS[key].rows;
   img = document.createElement('canvas');
-  img.width = Math.max(...cells.map(c => c[0] + 1)) * P;
-  img.height = Math.max(...cells.map(c => c[1] + 1)) * P;
+  // sized by its rows, not its cells: the flag's cloth is drawn over it
+  img.width = rows[0].length * P;
+  img.height = rows.length * P;
   const g = img.getContext('2d');
   for (const [c, r, ramp, i] of cells) { g.fillStyle = toneOf(ramp, i); g.fillRect(c * P, r * P, P, P); }
   painted.set(id, img);
@@ -359,8 +360,8 @@ function drawPlinth(st) {
 function drawProp(st, t) {
   const p = place.propRect(st), lit = (st.rung || 0) >= CAPSTONE_RUNG;
   ctx.drawImage(propImage(p.key, lit), p.x, p.y);
-  // the one prop that moves: the hexer's brew, over its pot
-  for (const [c, r, ramp, i] of brewCells(p.key, lit, t)) {
+  // the props that move: the hexer's brew over its pot, the flag's cloth
+  for (const [c, r, ramp, i] of [...brewCells(p.key, lit, t), ...clothCells(p.key, lit, t, st.id)]) {
     ctx.fillStyle = toneOf(ramp, i);
     ctx.fillRect(p.x + c * P, p.y + r * P, P, P);
   }

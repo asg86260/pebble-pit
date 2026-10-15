@@ -113,7 +113,7 @@ export function plinthRect(st) {
 // down to the floor. What the pointer opens its board on, the build's
 // scaffold stands round and the works stack over: read off the prop the
 // station stands beside now, so it answers to the picture. A station still
-// going up has no class, so its scaffold stands round the crate's ground.
+// going up has no class, so its scaffold stands round the flag's ground.
 export function standOfStation(st) {
   const p = propRect(st), b = plinthRect(st), out = (PLINTH_H - 1) * b.step;
   const y = Math.min(p.y, postY());

@@ -1,5 +1,5 @@
 // A station is its fighter and a prop (DESIGN.md, "A station is its fighter
-// and a prop"): below the fork a crate of the gear, still packed; at the
+// and a prop"): below the fork a blank flag on a pole, its cloth waving; at the
 // fork the class's own prop; from rung 8 its parts in the capstone's purple.
 // The prop stands on the station's plinth, its right-hand column PROP_GAP
 // cells short of the fighter's body at its post (PROP_GAP_OF for the
@@ -12,13 +12,14 @@
 // bought where the player buys them, on the station's board (`pressBuy`).
 
 import { group, ok, yard } from './helpers.mjs';
-import { P, WORKER, DEEP_W, DEEP_SLOTS, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, PLINTH_H, HAND_PRESS } from '../src/config.js';
+import { FLAG_WAVE, P, WORKER, DEEP_W, DEEP_SLOTS, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, PLINTH_H, HAND_PRESS } from '../src/config.js';
 import { HANDS, handPressed } from '../src/render/hand.js';
 import { pressBuy, pressKind } from '../src/deep/rails.js';
 import { stationById } from '../src/deep/party.js';
 import { doneAt, markDoneSeen } from '../src/works.js';
 import { slotX, deepX0, deepFloor, plinthTop, postY, standOfStation } from '../src/deep/place.js';
-import { PROPS, propCells } from '../src/deep/props.js';
+import { PROPS, propCells, clothCells, clothLift } from '../src/deep/props.js';
+import { now } from '../src/clock.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawDeepStations, chooseMarkAt } from '../src/render/deep.js';
 import { GREYS, PURPLES } from '../src/render/deeptones.js';
@@ -80,12 +81,12 @@ const accents = key => PROPS[key].rows.join('').split('*').length - 1;
 // The body's left column at its post, which stands on the grid.
 const bodyCol = st => Math.round((slotX(st.slot) - WORKER / 2) / P);
 
-group("a station stands beside a crate below the fork, its class's prop from it, lit at 8", async () => {
+group("a station stands beside a flag below the fork, its class's prop from it, lit at 8", async () => {
   window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
   window.__scales(99999);
   window.__grant({ dust: 1e8, shards: 1e6, sparks: 1e5 });
   const st = S.stations[0];
-  const crate = propOf(st);
+  const flag = propOf(st);
   // A rung's level-up holds the next press back (test/rails.test.mjs); the
   // climb here lets each one go.
   const buy = (cls = null) => { const got = pressBuy(st.id, cls); stationById(st.id).lvlAt = null; return got; };
@@ -99,10 +100,10 @@ group("a station stands beside a crate below the fork, its class's prop from it,
   const g = standOfStation(top), post = bodyCol(top) * P;
   const right = p => (p.x + p.w) / P - 1;
   return [
-    ok(crate && same(crate.cells, want('crate', false)), 'a new station stands beside the crate, cell for cell'),
-    ok(crate && right(crate) === bodyCol(st) - PROP_GAP, `its right-hand column ${PROP_GAP} cells short of the body`,
-       crate && `${right(crate)} vs ${bodyCol(st)}`),
-    ok(packed && same(packed.cells, want('crate', false)), 'and still the crate at the last rung below the fork'),
+    ok(flag && same(flag.cells, want('flag', false)), "a new station stands beside the flag's pole, cell for cell"),
+    ok(flag && right(flag) === bodyCol(st) - PROP_GAP, `its right-hand column ${PROP_GAP} cells short of the body`,
+       flag && `${right(flag)} vs ${bodyCol(st)}`),
+    ok(packed && same(packed.cells, want('flag', false)), 'and still the flag at the last rung below the fork'),
     ok(rack && same(rack.cells, want('sword', false)) && purple('sword', false) === accents('sword'),
        "at the fork the Swordsman's rack, its only purple the class accent"),
     ok(rack && right(rack) === bodyCol(st) - PROP_GAP_OF.sword, `his rack ${PROP_GAP_OF.sword} cells short of him`,
@@ -160,12 +161,52 @@ group("every prop's station, scaffold and all, keeps clear of the next slot", as
   window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
   const st = S.stations[0], mid = slotX(st.slot), mids = DEEP_SLOTS.map((_, i) => slotX(i)).sort((a, b) => a - b);
   const pitch = Math.min(...mids.slice(1).map((m, i) => m - mids[i]));
-  const out = 5 * P, grounds = Object.keys(PROPS).map(k => standOfStation({ ...st, cls: k === 'crate' ? null : k }));
+  const out = 5 * P, grounds = Object.keys(PROPS).map(k => standOfStation({ ...st, cls: k === 'flag' ? null : k }));
   const left = Math.max(...grounds.map(g => mid - g.x)), right = Math.max(...grounds.map(g => g.x + g.w - mid));
   const water = pitch - left - right, scaffolded = water - 2 * out;
   return [
     ok(pitch === 49 * P, 'the slots stand 49 cells apart', `${pitch / P}`),
     ok(water >= 10 * P, 'built, ten cells of water or more between neighbors', `${water / P} cells`),
     ok(scaffolded >= 2 * P, 'and with both scaffolds up, still two cells between their posts', `${scaffolded / P} cells`)
+  ];
+});
+
+// The flag's cloth waves (the owner, 2026-10-15): drawn over the pole each
+// frame, every cell of it there on every frame, a column lifted a whole cell
+// at most and the hoist never, the crest travelling out from the pole a
+// column a frame; and two stations' flags are not on the same frame.
+group("the flag's cloth waves a cell at a time, out from the pole, each station on its own beat", async () => {
+  window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }, { kind: 'altar', cls: null, rung: 0 }] });
+  const [a, b] = S.stations, W = FLAG_WAVE, hold = W.period / W.length;
+  const cloth = PROPS.flag.rows.join('').split('').filter(ch => PROPS.flag.cloth.includes(ch)).length;
+  const cols = PROPS.flag.rows[0].length;
+  const keyOf = cells => cells.map(([c, r]) => `${c},${r}`).sort().join(' ');
+  const frames = Array.from({ length: W.length }, (_, i) => clothCells('flag', false, i * hold, a.id));
+  const lifts = Array.from({ length: cols }, (_, c) => Array.from({ length: W.length }, (_, k) => clothLift(c, k)));
+  const out = lifts.findIndex(row => row.some(d => d !== 0));
+  // past the swing's growth, a column on the next frame is the one inside it on this
+  const travels = lifts.every((row, c) => c <= W.grow || row.every((d, k) => lifts[c][(k + 1) % W.length] === lifts[c - 1][k]));
+  // what is drawn at the station: the cloth's cells where clothCells puts them
+  const sh = sheetOf(), p = propOf(a);
+  const drawnCloth = p && clothCells('flag', false, now() / 1000, a.id)
+    .filter(([c, r, , i]) => sh.cells.get(`${p.x / P + c},${p.y / P + r}`) === GREYS[i]).length;
+  // the cloth sampled at 60 frames a second over a period changes W.length times
+  let steps = 0;
+  for (let i = 1, was = keyOf(frames[0]); i <= W.period * 60; i++) {
+    const is = keyOf(clothCells('flag', false, i / 60, a.id));
+    if (is !== was) steps++;
+    was = is;
+  }
+  const together =Array.from({ length: W.length }, (_, i) =>
+    keyOf(clothCells('flag', false, i * hold, a.id)) === keyOf(clothCells('flag', false, i * hold, b.id)));
+  return [
+    ok(frames.every(f => f.length === cloth), 'every frame holds the whole cloth', frames.map(f => f.length).join(',')),
+    ok(new Set(frames.map(keyOf)).size > 1, 'and it moves from frame to frame'),
+    ok(lifts.flat().every(d => Math.abs(d) <= 1) && lifts[0].every(d => d === 0) && out > 0,
+       'a cell at most, the hoist held to the pole', `first moving column ${out}`),
+    ok(travels, 'the crest travels out from the pole a column a frame'),
+    ok(steps <= W.length, `a frame is held, not redrawn sub-cell: ${W.length} steps a period`, `${steps}`),
+    ok(drawnCloth === cloth, "the cloth is drawn at the station's flag", `${drawnCloth} of ${cloth}`),
+    ok(together.includes(false), "two stations' flags are not on the same frame")
   ];
 });

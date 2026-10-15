@@ -634,12 +634,20 @@ export const EXPOSED_LIFT_HZ = 1.5;  // how often a lifted scale lifts or settle
 export const FANG_SPRITE = ['###', '.#+', '.#.'];
 // Its mark on the counter card and the build button is FANG_MARK (config/deepboard.js).
 // The scaffold over a station not yet built: posts SCAFFOLD_OVER cells over
-// the top of the ground it stands round (the crate it will be), so it is as
-// tall as what goes up inside it, banded a cell on and a cell off, and the
-// tape at head height. Read off the ground rather than a count of bands
-// since the props doubled (option C, 2026-10-15): five bands stood half as
-// tall as the crate.
+// the top of the ground it stands round (the flag it will be: a station
+// going up has no class), so it is as tall as what goes up inside it, banded
+// a cell on and a cell off, and the tape at head height. Read off the ground
+// rather than a count of bands since the props doubled (option C,
+// 2026-10-15): five bands stood half as tall as the prop.
 export const SCAFFOLD_OVER = 2;
+// The default station's flag waves slowly (the owner, 2026-10-15: "have the
+// flag wave slowly"). A crest travels out along the cloth from the pole a
+// column a frame, `length` columns a wave, so a frame is held period/length
+// s (0.75) and the cloth steps a whole cell at a time, never shimmers: slow
+// enough to read as a breeze and not a flutter. A column is lifted a cell at
+// most, its swing growing from nothing at the pole to the whole cell `grow`
+// columns out, so the hoist stays tied on and the swallowtail's tips sway.
+export const FLAG_WAVE = { period: 6, length: 8, grow: 3 };
 // The mark over a station whose Recruit still waits on its first choice:
 // the pointing hand (HAND_STILL_S), pointing down at it, its fingertip
 // CHOOSE_MARK_UP cells over the station's top, two cells clear on the press.

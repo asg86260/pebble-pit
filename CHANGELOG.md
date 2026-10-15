@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- A station with no class yet stands beside a blank flag on a pole, waving slowly, instead of a packed crate (test/props.test.mjs).
 - The constrict's orb holds its fighter halfway between the serpent and the station, in open water clear of the coil, the prop and the floor, instead of carrying it up against the coil, and the serpent swims a little higher to leave it room (test/orb.test.mjs).
 - The deep's floor fades from its stone top course through the ground into the darker grey in a fixed dither, instead of two flat bands (`node tools/look.mjs deep-all,crusher`, src/selftest/deeppalette.js).
 - The constrict's orb, a station whose Recruit waits on its first choice and the way up at the portal are each marked by a pointing hand tapping at them, instead of an arrow; the orb's stands beside it, clear of the coil (`node tools/look.mjs phase-orb,recruit-mark,deep-portal`).
