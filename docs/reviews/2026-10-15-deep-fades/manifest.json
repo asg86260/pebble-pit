@@ -1,0 +1,27 @@
+{
+ "base": "ec51d37b3eedb3898c6766e667c760b35042f985",
+ "head": "a148116734925edbfd644fcb268688e08cf47d54",
+ "at": "2026-10-15T04:42:00.302Z",
+ "items": {
+  "fades": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "gif"
+    },
+    "after": {
+     "ext": "gif"
+    }
+   },
+   {
+    "n": 2,
+    "before": {
+     "ext": "gif"
+    },
+    "after": {
+     "ext": "gif"
+    }
+   }
+  ]
+ }
+}

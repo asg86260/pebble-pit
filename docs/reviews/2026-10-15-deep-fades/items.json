@@ -1,0 +1,3 @@
+{"title":"The deep's fades","lede":"Stars and drifting motes in the deep fade by opacity instead of blinking.","base":"ec51d37b","head":"a1481167","items":[{"id":"fades","title":"Stars and motes fade instead of popping","what":"Both fade in and out by opacity; nothing blinks on or off.","shots":[
+{"scene":"deep-all","window":[800,600],"wait":0,"zoom":0.75,"gif":{"seconds":4,"fps":20},"label":"the deep, 4 s"},
+{"scene":"deep-all","window":[800,600],"wait":0,"crop":[460,60,260,160],"zoom":2,"gif":{"seconds":4,"fps":20},"label":"close on the water"}]}]}
