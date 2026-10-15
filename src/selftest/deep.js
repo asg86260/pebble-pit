@@ -475,6 +475,39 @@ TESTS.push(['deep: a handful swept off the floor shows on the pointer, and let g
   ];
 }]);
 
+// A scale is the hand's on its way down as well as on the floor: a press held
+// where scales are sinking catches them out of the water, the way the yard's
+// hand catches dust in the air. The floor is bare, so whatever the hand holds
+// came from the water.
+import { shed } from '../deep/scales.js';
+import { deepBed } from '../state.js';
+TESTS.push(['deep: a press held in the water catches the scales sinking past it', async () => {
+  window.__fullSites();
+  window.__snatch({ played: true });
+  window.__crew(0, 4);
+  window.__levels({ carryLevel: 4 });
+  window.__view('deep');
+  run(VIEW_GLIDE_S + 0.5);
+  const c = crusherRect();
+  window.__look(c.x + c.w / 2 - S.viewW / 3);
+  run(0.2);
+  const bed = deepBed.n;
+  const x = c.x + c.w + P * 20, y = deepTop() + (deepFloor() - deepTop()) * 0.4;
+  shed(x, y, 12);
+  const sank = S.sinking.length;
+  run(0.1);
+  const one = S.sinking[0];
+  point('pointerdown', ...onScreen(one.x, one.y));
+  run(0.3);
+  const held = S.heldScales, left = S.sinking.length;
+  point('pointerup', ...onScreen(one.x, one.y));
+  return [
+    ok(held > 0, 'the held press caught scales out of the water', `${held} held, ${left} of ${sank} still sinking`),
+    ok(held + left === sank, 'each caught one left the water for the hand', `${held} + ${left} of ${sank}`),
+    ok(deepBed.n === bed, 'none of them off the floor', `${deepBed.n} on the floor, ${bed} before`)
+  ];
+}]);
+
 // The right button held looks at the crew (DESIGN.md, "Holding the right
 // button looks at the crew") in the deep as in the yard: what is behind the
 // bodies veiled, each body ringed. Pressed through the real pointer on a

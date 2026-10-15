@@ -34,6 +34,7 @@ export function throwVel() {
 
 // pixels still in flight are caught if they pass the cursor while it is held
 export function catchAir(mx, my) {
+  catchSinking(mx, my);
   let room = capacity() - S.held;
   if (room <= 0) return;
 
@@ -50,6 +51,31 @@ export function catchAir(mx, my) {
     noteCatch(ch);
     S.motes.push(mote(ch.s));
   }
+}
+
+// The deep's water is the same air to the hand: a scale sinking past the held
+// cursor is caught as a falling grain is, into the hand that sweeps the
+// floor. Only a free fall: one riding a toss's arc to the crusher (`arc`) is
+// already on its way in. A hand holding the yard's dust is not handed
+// scales on top of it: a let-go would drop only the one kind.
+function catchSinking(mx, my) {
+  if (S.held || !S.sinking.length) return;
+  let room = capacity() - S.heldScales;
+  if (room <= 0) return;
+  const reach = (BRUSH + 2) * P;
+  const sink = S.sinking;
+  let keep = 0;
+  for (let i = 0; i < sink.length; i++) {
+    const g = sink[i];
+    if (room > 0 && g.arc == null && Math.abs(g.x - mx) <= reach && Math.abs(g.y - my) <= reach) {
+      S.motes.push(mote(g.s));
+      S.heldScales++;
+      room--;
+      continue;
+    }
+    sink[keep++] = g;
+  }
+  sink.length = keep;
 }
 
 // One grain on the cursor.
