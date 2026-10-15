@@ -16,7 +16,7 @@ import { ctx } from './ctx.js';
 import { TONE, greyAt, purpleAt } from './deeptones.js';
 import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow } from './deep.js';
-import { COLS, ROWS, POPULATION, unit, unit2, schoolAt, frameOf, reachOf, addScare, scareOffset,
+import { COLS, ROWS, faunaOut, unit, unit2, schoolAt, frameOf, reachOf, addScare, scareOffset,
          clearScares, SCARES, bolting, faunaPose, poseInset, heightOf, zoneHere } from '../deep/fauna.js';
 import { coilAt, bellyAt } from '../deep/place.js';
 import { lashK, breaking } from '../deep/phases.js';
@@ -192,7 +192,7 @@ export function drawDeepFauna() {
   const left = (x0 - deepX0()) / P, right = (x1 - deepX0()) / P, K = FAUNA_SMEAR;
   const smooth = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
-  for (const c of POPULATION) {
+  for (const c of faunaOut(t)) {
     const p = faunaPose(c, t), reach = reachOf(c) + FAUNA_SCARE.break.push + K.far;
     if (p.x + reach < left || p.x - reach > right) continue;
     // the dim of the zone it is crossing, not the one it set out from

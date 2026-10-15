@@ -68,30 +68,43 @@ export const FAUNA_BLINK = { rate: 2.3, lit: 11, dark: 5 };
 // cells a second (one, or a range each draws from); every `flip`-th swims
 // the other way. A school is `school` sardines scattered over `spread`
 // cells; the amphipods `hop`, going in dashes. Same seeds every run.
-// A `wander`er is not held to its zone: it sets out from its row in `y` and
-// ranges the deep's whole height on a turning heading (FAUNA_WANDER); its
-// zone is only where it sets out.
+// The swimmers do not live by this table's `n` any more: they take turns
+// through a few slots (FAUNA_TURNS), each wandering the whole height on a
+// turning heading (FAUNA_WANDER), and a row's zone is only where its kind is
+// at home. `n` is left for a kind kept for a busier deep, swimming its own
+// zone as it did before.
 // Sparse, the way the birds are (the owner, 2026-10-13: "a little noisy",
 // then "still have too many creatures around", then "cut down on creatures
-// by 30% again"); then three, each travelling the whole height (the owner,
+// by 30% again"); then few, each travelling the whole height (the owner,
 // 2026-10-14, option C of docs/mocks/deep-creatures-full-height-2026-10-14.html:
 // "travel the whole height of the window, and there should still be less of
-// them"). A floor creature cannot travel the height, so the amphipod went
-// with the school. A row at nought is a kind kept for a busier deep.
+// them").
 export const FAUNA = [
   { kind: 'school', zone: 'sun', n: 0, y: [5, 18], v: [5, 8], flip: 2, school: [9, 12], spread: [22, 8] },
   { kind: 'jelly', zone: 'sun', n: 0, y: [4, 17], v: 0.5, flip: 2 },
-  { kind: 'lantern', zone: 'twi', n: 1, y: [24, 45], v: 3.5, flip: 2, wander: true },
+  { kind: 'lantern', zone: 'twi', n: 0, y: [24, 45], v: 3.5, flip: 2 },
   { kind: 'hatchet', zone: 'twi', n: 0, y: [25, 43], v: [1.5, 3], flip: 2 },
   { kind: 'siphon', zone: 'twi', n: 0, y: [30, 44], v: 0.7, flip: 2 },
-  { kind: 'angler', zone: 'mid', n: 1, y: [50, 82], v: 1.6, flip: 2, wander: true },
+  { kind: 'angler', zone: 'mid', n: 0, y: [50, 82], v: 1.6, flip: 2 },
   { kind: 'vampire', zone: 'mid', n: 0, y: [50, 80], v: 0.9, flip: 2 },
-  { kind: 'dumbo', zone: 'aby', n: 1, y: [92, 106], v: 1.4, flip: 2, wander: true },
+  { kind: 'dumbo', zone: 'aby', n: 0, y: [92, 106], v: 1.4, flip: 2 },
   { kind: 'tripod', zone: 'aby', n: 0, floor: true, v: 0, flip: 2 },
   { kind: 'cucumber', zone: 'aby', n: 0, floor: true, v: 0.25, flip: 2 },
   { kind: 'amphipod', zone: 'had', n: 0, floor: true, v: 3.5, flip: 2, hop: true },
   { kind: 'snail', zone: 'had', n: 0, low: true, v: 1.4, flip: 2 },
 ];
+
+// Taking turns (the owner, 2026-10-14: "i dont mind having the creature
+// variety, i mean just pure numbers of creatures on the screen at one time"):
+// `slots` swim at once, about one on screen at a time, and each time one
+// swims off an end of the deep the next kind of the `roster` not already out
+// comes in at that end, so every swimmer shows over time. The roster is the
+// swimmers, top of the deep to bottom: the floor's creatures cannot travel
+// the height. Each kind keeps its row's pace and its own drawing.
+export const FAUNA_TURNS = {
+  slots: 3,
+  roster: ['school', 'jelly', 'lantern', 'hatchet', 'siphon', 'angler', 'vampire', 'dumbo'],
+};
 
 // A wanderer's way (option C of the owner's mock): along at its pace on a
 // heading that turns gently at random -- the turn rate a damped random walk,
