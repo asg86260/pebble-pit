@@ -23,7 +23,7 @@ import { now } from '../clock.js';
 import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, has, clearStatuses } from './statuses.js';
-import { mealNow, turned, streamS } from './meals.js';
+import { mealDue, startMeal, stepMeal as stepTheMeal } from './meals.js';
 import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, orbOn, orbMiddle, settleResist,
          breakOrb, recoiling, recoilLen, recoilTickAt } from './phases.js';
 import { depthAt } from './depth.js';
@@ -189,7 +189,7 @@ export function onBreak(fn) {
 export const stepSerpent = c => {
   forget(c.now);
   if (S.snatched && S.serpentFreed && stepDown(c)) return;
-  if (!S.snatched || S.serpentStage > LAST) { S.serpentStun = S.serpentGrace = 0; return; }
+  if (!S.snatched || S.serpentStage > LAST) { S.serpentStun = S.serpentGrace = 0; landTurned(c); return; }
   if (S.recoilT != null) { stepRecoil(c); return; }
   const stunned = S.serpentStun > 0, secs = c.dt / 1000;
   if (stunned) {
@@ -209,6 +209,7 @@ export const stepSerpent = c => {
   S.serpentWound = 0;
   S.mealT = 0;                              // a new defense opens a new window
   S.meal++;
+  if (S.mealGo) S.mealGo.heals = false;     // and a meal under way heals nothing on it
   S.serpentStun = S.serpentGrace = 0;
   clearStatuses();
   resetMechanic();
@@ -258,7 +259,7 @@ function cleanSlate() {
   clearStatuses();
   resetMechanic();
   S.mealT = 0;
-  S.mealI = null;
+  if (S.mealGo) S.mealGo.heals = false;
   S.meal++;
 }
 
@@ -331,33 +332,27 @@ function forget(t) {
 
 // The heal is banked as it accrues (stopped, as it always was, by a stun or
 // Held) and closes the wound in one lump when the meal lands: the serpent
-// swallows what swam in, and the lump goes in at the belly. The clock runs
-// whatever is on the serpent, so a creature comes either way; only the bank
-// is what the stun and Held stop. A lump under a whole one is not said.
+// takes a creature with its constrict, and the swallow goes in at the belly
+// (deep/meals.js). The window's clock is what the stun and Held stop; a meal
+// under way plays out whatever is on the serpent. A lump under a whole one is
+// not said.
 function stepMeal(c, stopped) {
-  // The window's clock: stopped by a stun or Held, and let be once the
-  // creature has turned for the mouth.
-  const clock = streamS(c.now);
-  if (S.mealI == null) S.mealT += (stopped ? 0 : 1) * c.dt / 1000;
-  else S.mealT += c.dt / 1000;
-  const meal = mealNow(clock);
-  if (S.mealI == null && turned(meal.toLand)) S.mealI = meal.i;
-  if (meal.toLand <= 0) land(c, meal, true);
+  const secs = c.dt / 1000;
+  S.mealT += S.mealGo || !stopped ? secs : 0;
+  if (!S.mealGo && mealDue()) startMeal(c.now);
+  const heals = !!S.mealGo && S.mealGo.heals;
+  if (stepTheMeal(secs, c.now)) land(c, heals);
 }
-// A creature that turned for the mouth before a break is still eaten, during
-// it: the new defense is whole already, so it closes nothing.
+// A meal under way through a break, a recoil or the kill plays out; it lands
+// on a defense that is whole already, so it closes nothing.
 function landTurned(c) {
-  if (S.mealI == null) return;
-  const meal = mealNow(streamS(c.now));
-  if (meal.toLand <= 0) land(c, meal, false);
+  if (S.mealGo && stepTheMeal(c.dt / 1000, c.now)) land(c, false);
 }
 // The swallow at the belly: the wound closed whole (DESIGN.md, "The serpent
 // heals whole"), and the number said where it lands.
-function land(c, meal, heals) {
-  S.mealT = Math.max(0, -meal.toLand);
+function land(c, heals) {
+  S.mealT = 0;
   S.meal++;
-  S.eaten = [...(S.eaten || []), meal.i].slice(-EATEN_KEPT);
-  S.mealI = null;
   S.mealLandedAt = c.now;
   const closed = heals ? S.serpentWound : 0;
   S.serpentWound -= closed;
@@ -366,5 +361,3 @@ function land(c, meal, heals) {
   S.hits.push({ at: c.now, shut: c.now, fold: c.now, x: p.x, y: p.y + coilThick(seg) / 2, done: closed,
                 weapon: 'heal', key: null, side: S.meal });
 }
-// How many eaten creatures are remembered: more than can be in the water at once.
-const EATEN_KEPT = 12;

@@ -5,21 +5,17 @@
 // money only once a gatherer has carried it to the crusher; the reaction
 // plays in held poses over the creature's path and leaves it on that path,
 // and nothing pops: not at the click, not at the end, not across a save
-// read back. The stream's creatures are clicked the same way, and their
-// reactions never move a meal.
+// read back.
 //
-// `startleFauna` and `startleStream` are the calls the pointer makes in the
-// deep (input.js); the pointer's own way there is the browser tier's
-// (selftest/deep.js).
+// `startleFauna` is the call the pointer makes in the deep (input.js); the
+// pointer's own way there is the browser tier's (selftest/deep.js).
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { FAUNA, FAUNA_REACT, FAUNA_POSES, FAUNA_STARTLE, FAUNA_SCALES, BIRD_DUST, P, FLOW_REACT, FLOW_KINDS,
-         MEAL_SWIM_S, FAUNA_REACT_MOTION } from '../src/config.js';
+import { FAUNA, FAUNA_REACT, FAUNA_POSES, FAUNA_STARTLE, FAUNA_SCALES, BIRD_DUST, P,
+         FAUNA_REACT_MOTION } from '../src/config.js';
 import { deepBed } from '../src/state.js';
 import { POPULATION, COLS, startleFauna, faunaUnder, faunaReport, faunaAt, floorRowAt, visitAt, faunaOut } from '../src/deep/fauna.js';
-import { streamReport, startleStream } from '../src/deep/flow.js';
 import { poseAt } from '../src/deep/react.js';
-import { mealNow, nowS, BITE_BEFORE } from '../src/deep/meals.js';
 import { deepX0, deepTop, hopperRect } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 
@@ -34,13 +30,6 @@ function deep() {
   window.__view('deep');
   run(0.5);
 }
-// The stream swims only once the snatch has opened the way down, and is
-// drawn with the camera down there.
-function deepStream() {
-  window.__snatch({ played: true });
-  deep();
-  run(3);
-}
 
 // A creature well inside the deep, clear of both ends, to aim at; and clear
 // of the crusher's hopper, where a scale let go falls straight in.
@@ -53,7 +42,6 @@ const target = (want = () => true) => faunaReport().find(f => !f.bolting && !f.r
 const targetSoon = (want = () => true) => { let f = null; runUntil(() => (f = target(want)), 300); return f; };
 // The creature a slot holds now.
 const visitOf = i => visitAt(POPULATION[i], now() / 1000);
-const within = f => f.x > deepX0() && f.x < deepX0() + COLS * P;
 // What a creature holds when it is not reacting, as the report writes it.
 const HOME = [undefined, false, 1, undefined, undefined, false, false].join();
 const shedBy = fn => { const n = S.sinking.length; const r = fn(); return { r, shaken: S.sinking.length - n }; };
@@ -78,15 +66,12 @@ group('every kind has its own reaction, and each ends home', async () => {
   const zone = kinds.map(k => ({ k, R: FAUNA_REACT[k] }));
   const missing = zone.filter(z => !z.R).map(z => z.k);
   const plays = zone.filter(z => z.R && !z.R.bolt).map(z => ({ k: z.k, ...walk(z.R) }));
-  const stream = FLOW_REACT.map((R, k) => ({ k, ...walk(R) }));
   const poses = zone.flatMap(z => (z.R && z.R.pose ? z.R.pose.map(p => p[1]) : [])).filter(p => typeof p === 'string');
   return [
     ok(!missing.length, 'every kind in the table has one, those switched off too', missing.join(' ')),
     ok(FAUNA_REACT.school.bolt && Object.values(FAUNA_REACT).filter(R => R.bolt).length === 1, 'the school alone bolts'),
     ok(plays.every(p => p.off > 0), 'each moves or changes its drawing', plays.filter(p => !p.off).map(p => p.k).join(' ')),
     ok(plays.every(p => p.home), 'and is home by its end', plays.filter(p => !p.home).map(p => p.k).join(' ')),
-    ok(FLOW_REACT.length === FLOW_KINDS && stream.every(p => p.off > 0 && p.home), 'the stream\'s eight the same',
-       stream.filter(p => !p.off || !p.home).map(p => p.k).join(' ')),
     ok(poses.every(p => FAUNA_POSES[p]), 'and every pose a reaction holds is drawn', poses.filter(p => !FAUNA_POSES[p]).join(' '))
   ];
 });
@@ -96,7 +81,7 @@ group('every kind has its own reaction, and each ends home', async () => {
 // path at the click and is back on it at its end exactly, nothing to jump.
 group('every reaction moves a few cells a frame at most, and starts and ends on its path', async () => {
   const N = FAUNA_REACT_MOTION.step;
-  const tables = [...Object.entries(FAUNA_REACT).filter(([, R]) => !R.bolt), ...FLOW_REACT.map((R, k) => [`stream-${k}`, R])];
+  const tables = Object.entries(FAUNA_REACT).filter(([, R]) => !R.bolt);
   const out = tables.map(([k, R]) => {
     let worst = 0, was = poseAt(R, 0);
     for (let f = 1; f <= Math.ceil(R.end * 60) + 6; f++) {
@@ -125,8 +110,9 @@ group('a click on each creature plays its own reaction and drops a handful; it n
   for (const slot of POPULATION) {
     // wait for it to be somewhere it can be clicked
     let f = null;
-    // anywhere in the deep: the handful's way to the crusher is not this group's
-    const there = g => g.inside && g.cx > 2 && g.cx < COLS - 2 && !FAUNA_REACT[g.kind].bolt;
+    // anywhere in the deep, its middle too (a click past the deep's end is
+    // not in the water): the handful's way to the crusher is not this group's
+    const there = g => g.inside && g.cx > 2 && g.x < deepX0() + (COLS - 2) * P && !FAUNA_REACT[g.kind].bolt;
     runUntil(() => (f = faunaReport()[slot.i], there(f) && !f.reacting), 300);
     if (!there(f)) { out.push({ kind: f.kind, why: 'never in reach' }); continue; }
     const c = visitOf(slot.i);
@@ -183,10 +169,9 @@ group('a creature mid-reaction cannot be clicked again until it is done', async 
 
 // Its handful once a visit (the owner, 2026-10-13: "only have them drop
 // scales once"): a creature living in the deep has had its visit for good,
-// across a save read back; the school's bolt ends its visit, and every
-// stream creature that swims in is a visit of its own.
+// across a save read back; the school's bolt ends its visit.
 group('a creature drops its handful once a visit: not on a second click, not after a reload', async () => {
-  deepStream();
+  deep();
   const f = targetSoon(g => g.kind !== 'school');
   const c = visitOf(f.i);
   const first = shedBy(() => startleFauna(f.x, f.y));
@@ -199,27 +184,10 @@ group('a creature drops its handful once a visit: not on a second click, not aft
   const h = faunaReport()[f.i];
   const third = shedBy(() => startleFauna(h.x, h.y));
   const r3 = faunaReport()[f.i];
-  // a near creature, the same way
-  let s = null;
-  runUntil(() => (s = streamReport().find(x => x.near && x.clickable && within(x) && x.x > deepX0() + P * 30)), 60);
-  const sFirst = shedBy(() => startleStream(s.x, s.y));
-  runUntil(() => { const x = streamReport().find(y => y.key === s.key); return !x || !x.reacting; }, 10);
-  window.__reload();
-  const s2 = streamReport().find(y => y.key === s.key);
-  const sSecond = s2 && s2.clickable ? shedBy(() => startleStream(s2.x, s2.y)) : null;
-  const sPlayed = s2 && streamReport().find(y => y.key === s.key).reacting;
-  // and the next one to swim in is a new visit
-  let n = null;
-  runUntil(() => (n = streamReport().find(x => x.near && x.clickable && x.key !== s.key && within(x))), 60);
-  const sNew = n ? shedBy(() => startleStream(n.x, n.y)) : null;
   return [
     ok(first.r && first.shaken === FAUNA_SCALES, "the first click shakes loose the bird's handful", `${f.kind} ${first.shaken}`),
     ok(second.r && second.shaken === 0 && r0 > 0, 'a second plays its reaction and drops nothing', `${second.r} ${second.shaken}`),
-    ok(third.r && third.shaken === 0 && r3.reacting, 'nor does one after a reload', `${third.r} ${third.shaken} ${r3.reacting}`),
-    ok(sFirst.r && sFirst.shaken === FAUNA_SCALES, 'a stream creature drops its handful', `${s.key} ${sFirst.shaken}`),
-    ok(sSecond && sSecond.r && sSecond.shaken === 0 && sPlayed, 'and a click after a reload plays its reaction and drops nothing',
-       JSON.stringify({ s2: !!s2, sSecond, sPlayed })),
-    ok(sNew && sNew.r && sNew.shaken === FAUNA_SCALES, 'the next to swim in drops its own', JSON.stringify({ n: n && n.key, sNew }))
+    ok(third.r && third.shaken === 0 && r3.reacting, 'nor does one after a reload', `${third.r} ${third.shaken} ${r3.reacting}`)
   ];
 }, { reload: false });
 
@@ -285,14 +253,14 @@ group('a click on a creature: its handful sinks to the floor and is carried to t
 }, { reload: false });
 
 group('a click on empty water does nothing', async () => {
-  deepStream();
+  deep();
   let spot = null;
   for (let gx = 10; gx < COLS - 10 && !spot; gx += 7) for (let gy = 4; gy < 120 && !spot; gy += 5) {
     const x = deepX0() + gx * P, y = deepTop() + gy * P;
-    if (!faunaUnder(x, y) && !streamReport().some(s => Math.max(s.l - x, 0, x - s.r, s.top - y, y - s.bot) <= P * 6)) spot = { x, y };
+    if (!faunaUnder(x, y)) spot = { x, y };
   }
   const sinking = S.sinking.length, before = faunaReport().map(f => f.bolting || f.reacting);
-  const hit = startleFauna(spot.x, spot.y) || startleStream(spot.x, spot.y);
+  const hit = startleFauna(spot.x, spot.y);
   return [
     ok(!hit, 'no creature there, nothing startled'),
     ok(S.sinking.length === sinking, 'and no scales shaken loose', `${S.sinking.length - sinking}`),
@@ -303,25 +271,19 @@ group('a click on empty water does nothing', async () => {
 // A save read back on the clock that wrote it: a reaction under way carries
 // on from the pose it was in.
 group('read back mid-reaction, a creature carries on from where it was: nothing teleports', async () => {
-  deepStream();
+  deep();
   const f = targetSoon(g => g.kind !== 'school');
   startleFauna(f.x, f.y);
   run(0.4);
   const before = faunaReport()[f.i];
-  const s = streamReport().find(g => g.clickable && g.near);
-  if (s) startleStream(s.x, s.y);
   run(0.3);
-  const sBefore = s && streamReport().find(g => g.key === s.key);
   const fMid = faunaReport()[f.i];
   window.__reload();
   const after = faunaReport()[f.i];
-  const sAfter = s && streamReport().find(g => g.key === s.key);
   return [
     ok(before.reacting && fMid.reacting, 'it was mid-reaction', f.kind),
     ok(after.reacting && after.cx === fMid.cx && after.cy === fMid.cy && after.pose === fMid.pose, 'and is in the same pose after the reload',
-       `${fMid.cx},${fMid.cy} ${fMid.pose} then ${after.cx},${after.cy} ${after.pose}`),
-    ok(s && sBefore.reacting && sAfter && sAfter.reacting && Math.abs(sAfter.x - sBefore.x) < P && sAfter.y === sBefore.y,
-       'a stream creature too', s ? `${sBefore.x},${sBefore.y} then ${sAfter && sAfter.x},${sAfter && sAfter.y}` : 'none to click')
+       `${fMid.cx},${fMid.cy} ${fMid.pose} then ${after.cx},${after.cy} ${after.pose}`)
   ];
 }, { reload: false });
 
@@ -335,65 +297,6 @@ group('a new game finds every creature home', async () => {
   return [
     ok(was, 'it was reacting'),
     ok(faunaOut().every(c => c.t0 < 0 && c.r0 < 0), 'and after a new game nobody is'),
-    ok(!S.faunaShed.length && !S.streamShed.length, 'and every one has its handful to drop again', `${S.faunaShed} ${S.streamShed}`)
-  ];
-}, { reload: false });
-
-// --- the stream ---------------------------------------------------------------
-// Every near creature swimming past, clicked until each of the eight kinds
-// has been: its handful and its reaction, and it swims on along its path.
-group('a click on a stream creature: its handful and its own reaction, every kind', async () => {
-  deepStream();
-  const seen = new Map();
-  // the stream is sparse (one every FLOW_NEAR_EVERY_S), so all eight take a while to come by
-  for (let k = 0; k < 60 * 15 && seen.size < FLOW_KINDS; k++) {
-    for (const s of streamReport()) {
-      if (!s.clickable || seen.has(s.kind) || !within(s)) continue;
-      const { r: hit, shaken } = shedBy(() => startleStream(s.x, s.y));
-      const now0 = streamReport().find(g => g.key === s.key);
-      run(FLOW_REACT[s.kind].end * 0.4);
-      const mid = streamReport().find(g => g.key === s.key);
-      const entry = { kind: s.kind, hit, shaken, reacting: now0 && now0.reacting, mid: mid && mid.reacting };
-      seen.set(s.kind, entry);
-      break;
-    }
-    run(1);
-  }
-  const all = [...seen.values()], say = all.map(e => `${e.kind}: ${e.hit} ${e.shaken} ${e.reacting}`).join('; ');
-  return [
-    ok(seen.size === FLOW_KINDS, 'every one of the eight kinds came by and was clicked', [...seen.keys()].join(' ')),
-    ok(all.every(e => e.hit && e.shaken === FAUNA_SCALES), "each shakes loose the bird's handful", say),
-    ok(all.every(e => e.reacting && e.mid), 'and plays its reaction', say)
-  ];
-}, { reload: false });
-
-// The meals are picked off the near stream on the stream's clock; a click's
-// reaction is picture only, so every meal lands when it was due, and the one
-// about to turn for the mouth is let be.
-group('stream meals still arrive on time, however the stream is clicked', async () => {
-  deepStream();
-  window.__serpent({ stage: 0, wound: 0 });
-  S.mealT = 0; S.mealI = null;
-  const due = mealNow();
-  const land = nowS() + due.toLand;
-  let clicks = 0, refused = null, at = null;
-  const meal0 = S.meal;
-  for (let f = 0; f < 60 * (due.toLand + 5) && S.meal === meal0; f++) {
-    yard.fast(1 / 60);
-    // every half second, click everything there is to click
-    if (f % 30 === 0) for (const s of streamReport()) if (s.clickable && startleStream(s.x, s.y)) clicks++;
-    // the meal, once its turn is nearer than its reaction is long, is not clickable
-    const m = mealNow();
-    if (!refused && m.toLand - BITE_BEFORE - MEAL_SWIM_S < FLOW_REACT[m.kind].end && m.toLand > BITE_BEFORE + MEAL_SWIM_S) {
-      const s = streamReport().find(g => g.key === 'n' + m.i);
-      refused = s ? { clickable: s.clickable, took: startleStream(s.x, s.y) && streamReport().find(g => g.key === s.key).reacting && s.key } : { gone: true };
-    }
-    if (S.meal !== meal0) at = nowS();
-  }
-  return [
-    ok(clicks > 3, 'the stream was clicked', `${clicks} clicks`),
-    ok(S.meal === meal0 + 1, 'the meal landed', `${meal0} then ${S.meal}`),
-    ok(at != null && Math.abs(at - land) <= 2 / 60, 'when it was due', `due ${land.toFixed(3)}, landed ${at && at.toFixed(3)}`),
-    ok(refused && !refused.gone && !refused.clickable && !refused.took, 'and the creature it was could not be clicked near its turn', JSON.stringify(refused))
+    ok(!S.faunaShed.length, 'and every one has its handful to drop again', `${S.faunaShed}`)
   ];
 }, { reload: false });

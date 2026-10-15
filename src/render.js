@@ -51,8 +51,7 @@ import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMo
          drawSwimmers, drawDeepInvert } from './render/deep.js';
 import { ripple, deepCamera, canGoDown, gliding } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
-import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb, drawBarrier, drawFocusLines } from './render/serpent.js';
-import { drawFish, drawFishNear } from './render/fish.js';
+import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb, drawBarrier, drawFocusLines, drawMeal, drawMealUnder } from './render/serpent.js';
 import { drawDeepZones, drawDeepFauna } from './render/fauna.js';
 import { drawFightNumbers } from './render/fightnums.js';
 import { drawStationStatuses } from './render/statusicons.js';
@@ -220,10 +219,10 @@ const LAYERS = [
   { name: 'into crusher', draw: drawIntoCrusher }, // behind the furnace, dropping into its funnel
   { name: 'deep stations', draw: drawDeepStations },
   { name: 'hung kit', draw: drawHungKits },  // a station's gear hung up on it, with nobody wearing it
-  { name: 'deep fish', draw: drawFish },   // what the serpent eats, in front of the water and behind its head
+  { name: 'meal gulped', draw: drawMealUnder },   // the meal's orb going into the jaws, behind the head
   { name: 'serpent', draw: drawSerpent },
   { name: 'barrier', draw: drawBarrier },  // the explosive resist, floating under the coil
-  { name: 'deep stream near', draw: drawFishNear },   // the near crossings, in front of the serpent
+  { name: 'meal', draw: drawMeal },   // the meal's bolts and its orb with the creature in it, in front of the serpent
   { name: 'deep sight', draw: drawDeepSight },   // the right button held: the deep behind its crew veiled, each ringed
   { name: 'swimmers', draw: drawSwimmers },
   // The fighters in front of the coil they strike and the swimmers passing,
@@ -316,7 +315,7 @@ export { LAYERS };
 
 // The deep's fish are bystanders to every scene: they fade out with the
 // haulers while one holds.
-const FISH = new Set(['deep fauna', 'deep fish', 'deep stream near']);
+const FISH = new Set(['deep fauna', 'meal gulped', 'meal']);
 // The layers after the wash that are still the yard's background: drawn at
 // the receded share of their ink rather than washed.
 const AFTER_WASH = new Set(['fight numbers', 'status posts', 'air near', 'pot labels']);
@@ -341,7 +340,7 @@ export const asPicture = on => { picture = on; };
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep zones', 'deep water', 'deep fauna', 'deep motes', 'deep portal', 'focus lines', 'deep floor', 'deep stations', 'hung kit', 'finale deep', 'deep bed',
-                      'deep fish', 'deep stream near', 'deep sight', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'charge', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
+                      'meal gulped', 'meal', 'deep sight', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'charge', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site

@@ -17,7 +17,7 @@ import { TONE, greyAt, purpleAt } from './deeptones.js';
 import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow } from './deep.js';
 import { COLS, ROWS, faunaOut, unit, unit2, schoolAt, frameOf, reachOf, addScare, scareOffset,
-         clearScares, SCARES, bolting, faunaPose, poseInset, heightOf, zoneHere, waterTop, glideWaterTop } from '../deep/fauna.js';
+         clearScares, SCARES, bolting, faunaPose, poseInset, heightOf, zoneHere, waterTop, glideWaterTop, eatenNow } from '../deep/fauna.js';
 import { coilAt, bellyAt } from '../deep/place.js';
 import { lashK, breaking } from '../deep/phases.js';
 
@@ -114,6 +114,25 @@ function sprite(key, x, y, dir, seed, t, dim, r = null) {
   }
 }
 
+// One creature held in the serpent's meal orb (render/serpent.js): its
+// drawing on its own clock, its middle at world (x, y), each row moved in
+// toward the middle as the orb shrinks round it (`squash` of its height, in
+// whole cells, rows doubled up rather than drawn between cells).
+export function drawHeld(kind, x, y, dir, seed, t, squash = 1, dim = 0) {
+  const fr = frameImage(kind, frameOf(kind, seed, t), dir, seed, dim);
+  const tall = Math.max(1, Math.round(fr.h * squash));
+  const wx = Math.round(x / P - fr.w / 2) * P, wy = Math.round(y / P - tall / 2) * P;
+  const rowOf = r => wy + Math.floor(r * tall / fr.h) * P;
+  const smooth = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = false;
+  for (let r = 0; r < fr.h; r++) ctx.drawImage(fr.img, 0, r, fr.w, 1, wx, rowOf(r), fr.w * P, P);
+  ctx.imageSmoothingEnabled = smooth;
+  for (const [at, row, c] of fr.lights) {
+    ctx.fillStyle = lightTone(seed, c, t, dim);
+    ctx.fillRect(wx + at * P, rowOf(row), P, P);
+  }
+}
+
 // A cell of the deep, for the two creatures that move along their length.
 function put(x, y, tone) {
   ctx.fillStyle = tone;
@@ -197,6 +216,7 @@ export function drawDeepFauna() {
   const smooth = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
   for (const c of faunaOut(t)) {
+    if (eatenNow(c, t)) continue;          // in the serpent's orb, drawn with it (render/serpent.js)
     const p = faunaPose(c, t), reach = reachOf(c) + FAUNA_SCARE.break.push + K.far;
     if (p.x + reach < left || p.x - reach > right) continue;
     // the dim of the zone it is crossing, not the one it set out from

@@ -113,7 +113,7 @@ group('the heal says what a meal closed, once a meal, in its own entry', async (
   window.__deepCrew();
   S.portalOpen = true;
   window.__serpent({ stage: 0, wound: 1234 });
-  S.mealT = 0; S.mealI = null;
+  S.mealT = 0; S.mealGo = null;
   const said = [];
   frames(SERPENT_WINDOW[0] * 2 + 50, () => { for (const h of of('heal')) if (!said.includes(h)) said.push(h); });
   return [

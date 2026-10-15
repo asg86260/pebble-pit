@@ -142,14 +142,17 @@ written. Open:
 "The story's objectives" in DESIGN.md. Open: nobody has read the line
 through a whole game.
 
-## The serpent eats to heal -- BUILT (2026-09-30)
+## The serpent eats to heal -- BUILT (2026-09-30; the constrict 2026-10-15)
 
-"The serpent eats to heal" in DESIGN.md; mocks `docs/mocks/heal-fish-2026-09-30.html`
-and `docs/mocks/heal-bestiary-2026-09-30.html`. Meals 6-12 s apart, chosen
-fresh; scenes `meal-swim`, `meal-bite`, `meal-swallow`, `meal-land`. Open:
-- **Nobody has watched it in play.** The jaws' gape and the swallow's swell
-  are small at the game's scale; the creatures are the mock's, not retouched.
-- **The break can be gambled** to land just before a meal, a lump early.
+"The serpent eats to heal" in DESIGN.md; the meal is the constrict on the
+nearest creature, the owner's B of `docs/mocks/serpent-constrict-meal-2026-10-15.html`;
+scenes `deep-meal`, `meal-bolts`, `meal-reel`, `meal-gulp`, `meal-swallow`,
+`meal-land`. Open:
+- **Nobody has watched it in play.** The timings are the mock's first guesses;
+  the swallow's swell is small at the game's scale.
+- **A small window often has nobody on the glass**, so the bolts reach off
+  screen and the orb is hauled in from there (as the rule says).
+- **A meal through the kill** plays out on a dying head, healing nothing.
 
 ## Cloud saves -- BUILT AND RELEASED (2026-09-28)
 

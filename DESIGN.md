@@ -17138,116 +17138,94 @@ The Hexer, Sapper, Mage and Bard already breathe, and keep their beat.
 
 **The bargain: the rhythm never changes the damage a second.** Each quick gap in a string is a share of the class's `every` and banks the time it saves; the rest after the big hit (or after the string's last, where there is no combo bar) is a whole `every` and everything banked. So the average is exactly the even beat's, whatever the rung does to how many hits a bar takes -- Flow filling the Martial Artist's in fewer is paid for in the same rest. The rhythm is `rhythm` on each class (config/classes.js), stepped by `beat` in deep/classes.js; the fighter's place in its combo (`count`, `pips`, `combo`) is saved with the body, so a refresh does not start the string over.
 
-## The serpent eats to heal (built 2026-09-30)
+## The serpent eats to heal (built 2026-09-30; the constrict, built 2026-10-15)
 
-Approved by the owner in mocks, 2026-09-30: `docs/mocks/heal-fish-2026-09-30.html`
-(A, one fish a meal) and `docs/mocks/heal-bestiary-2026-09-30.html` (the eight
-creatures, as drawn there).
+First approved in mocks 2026-09-30 (`docs/mocks/heal-fish-2026-09-30.html`,
+`docs/mocks/heal-bestiary-2026-09-30.html`) as a stream of creatures swimming
+into the mouth; since 2026-10-15 the meal is the serpent's own constrict aimed
+at a creature, the owner's B, "drag", of
+`docs/mocks/serpent-constrict-meal-2026-10-15.html`. What a meal does -- heal
+the wound whole -- is "The serpent heals whole", below.
 
 ### The bargain
 
-The heal is a trickle today (`healNow`, wound a second), and its purple number
-is a report of the last second of it. It reads as nothing: no cause, no
-moment. It becomes a meal. The serpent's heal is **banked** as it accrues and
-lands in **one lump** when the serpent swallows a creature that has swum in
-from the left edge of the deep. The total a second is unchanged (`SERPENT_HEAL`
-is still the number that means what it says); only when it arrives changes.
-
-What the player gets is a beat to read: a creature in the water, the jaws
-opening, a swallow running down the neck, the wound closing in one step and one
-number. What it costs is one thing that can be gamed (see "What it must not
-break").
+The heal needs a cause and a moment: something in the water, the serpent
+reaching for it, a swallow running down the body, the wound closing in one
+step with one number. The stream gave it a creature but the creature was a
+thing that only existed to be eaten -- a fixed schedule of swimmers that did
+nothing else. The constrict gives it the serpent doing something: the same
+comb, bolts and orb the fight's fifth phase uses on a fighter, aimed at one of
+the deep's own roaming creatures. The player sees the attack they already know
+taking a creature they have been clicking, and the meal is a few seconds of
+warning they can read, not a swimmer to watch for.
 
 ### The rules
 
-- **The bank.** `healNow()` (after Weakened, the surge, Held and the stun, as
-  now) accrues into `S.healBank` instead of closing the wound. Stopped by a stun
-  or Held, it stops accruing, exactly as the heal stops today.
-- **The meal.** Every `MEAL_EVERY_S` seconds, a span of 6 to 12 chosen
-  afresh each meal (`hash(meal)` between the two ends, so it is not on a clock
-  a player can count), the serpent's next creature reaches its mouth. A meal is `MEAL_SWIM_S` in from the left edge (3.4),
-  `MEAL_GULP_S` going in the mouth (0.55), `MEAL_SWALLOW_S` down the neck to
-  the belly (0.85); when the swallow reaches the belly the bank closes the wound
-  and the heal's number is said there. The sim strikes the wound at that
-  moment, not before: the picture is the sim.
-- **Nothing interrupts it.** A stun or Held while a creature is in the water
-  changes only what is in the bank; the meal comes anyway, and a lump under one
-  is not said (the existing round-to-one rule).
-- **The creature never changes the heal.** Eight species (`config/fish.js`,
-  a written table: lantern angler, ribbon eel, glass jelly, skull fish,
-  wandering eye, spiral drifter, many-mouthed blob, toothed ring), each a
-  length, a path, a bob, a trail and a drawing. A big one is a longer gulp and a
-  fatter swallow; the same lump.
-- **Which one, and when.** A saved meal counter picks both the creature,
-  `hash(meal) % 8`, and the wait to the next, so a reload lands the same
-  creature on the same beat and a yard can be checked frame by frame.
-- **The surge** fills the bank three times as fast, so its meals are three times
-  as big; it does not bring them faster. The warning and the throb stay.
+- **When.** The window (`SERPENT_WINDOW`, the phase's) counts on `S.mealT`; a
+  meal begins `MEAL_LEAD_S` before it is up (the warning, the bolts, the gulp,
+  the swallow and a middling haul), so it lands within a second and a half of
+  the window's end. A stun or Held stops the window's count; a meal already
+  under way plays out whatever happens (`deep/serpent.js`, `stepMeal`).
+- **Which creature.** As the bolts leave, the nearest to the mouth of the
+  roaming slots' swimmers (`FAUNA_TURNS`), preferring one on the glass, then
+  one inside the deep, then any: a meal never waits for a creature to come
+  by; one off the glass has the longer haul. The school (a shoal of a dozen)
+  and the siphonophore (a colony 26 cells long) fit no orb and are never taken
+  (`MEAL_SKIP`); the roster puts no kind in two slots, so one of the three
+  always can be.
+- **The beats** (`deep/meals.js`, `beatOf`): the orb mechanic's warning (the
+  comb lit head first), `ORB_BOLT_S` of bolts while the orb closes over
+  `ORB_CLOSE_S`, the haul (`MEAL_REEL`: a second and one more every forty
+  cells, held between 1.6 and 4.5, eased), `MEAL_GULP_S` into the jaws,
+  `MEAL_SWALLOW_S` down the body, and the heal at the belly; then the aura.
+- **The haul.** The orb is dragged on a curve that swings out past the mouth
+  and up (`MEAL_SWING`), so it comes in to the jaws from in front; the bolts are
+  held the whole way while the comb goes dark tail first, so their roots
+  retreat toward the head; the orb shrinks 5, 4, 3 cells in held steps near
+  the mouth (`MEAL_SHRINK`), the creature inside squeezed with it; the jaws
+  open in their held poses as it comes within `MEAL_JAW_REACH`, hold the gape
+  through the gulp and shut on it.
+- **The creature leaves the walk, nothing teleports.** Taken, its slot is held
+  off the walk (`holdSlot` in `deep/fauna.js`): it is not drawn and not
+  clicked, and the orb draws it. `MEAL_BACK_S` after the gulp the slot lets its
+  next kind in from beyond an end of the deep, as at any lap's end. The holds
+  are the walk's only input besides its seeds, so the walk stays a function of
+  the clock and the holds, the same however a moment is asked for.
+- **A reload.** The meal under way is `S.mealGo`, saved: its seconds in, the
+  creature's kind and the spot the orb closed on, and the haul's length once
+  known. Where the orb is at a moment is read off that and the coil. A new page
+  holds the slot off its fresh walk again (`settleMeal`), so the creature is in
+  the orb and nowhere else, and the meal lands on its beat.
+- **Breaks and the kill.** A meal under way through a break, a recoil or the
+  kill plays out and heals nothing (`heals: false`); the new defense is whole.
+- **Where the roamers start.** With the stream gone the three roamers are the
+  deep's whole population; each sets out, and each kind comes in, at a random
+  height (seeded) anywhere in the water (the owner, 2026-10-15: "the creatures
+  should be totally random in their height band where they spawn").
 
 ### The picture
 
-- The stream (the owner's C, `docs/mocks/deep-flow-2026-10-03.html`): the eight
-  swim the world as drawn and in front of the serpent. The far and middle
-  crossings on the glass and the giant behind them are gone (the owner,
-  2026-10-15: "remove the big creature shadows from the sky"): scheduling,
-  drawing and config. No creature trails anything.
-- The near ones swim the world, end to end of the deep and in from beyond its
-  walls, a fixed schedule off the clock; a meal takes one of them (the owner,
-  2026-10-04: no creature spawned to be eaten, none dashing). A meal is the
-  first creature heading for the mouth to reach it once `MEAL_MIN_S` has
-  passed since the last landed: it keeps its own path and pace the whole way,
-  and only its height drifts to the mouth's over the last `MEAL_SWIM_S`. The
-  sim reads the same schedule (deep/meals.js, `nextMeal`), so the meal clock
-  is the stream's: the creatures come a slot apart (`FLOW_NEAR_EVERY_S`), all
-  bound for the mouth since 2026-10-14 (one swimming away took a slot and
-  doubled the longest wait), so a meal waits out its window and then at most a
-  slot and its jitter.
-- `render/fish.js` draws the creature from its local frame, cell by cell, over
-  the water and behind the serpent's head; it enters at the deep's left edge and
-  is clipped at the serpent's face while it goes in, so it is *eaten*, not
-  faded. The drawings are the mock's, ported verbatim.
-- The serpent's head is a wedge with hinged jaws (`render/serpent.js`): open
-  wide from a beat before the creature arrives, shut as the gulp ends. The
-  swallow is a smooth swelling of the neck that runs from the head to the belly
-  and scales with the creature's length.
-- The eating, redone (the owner's A with B's crosses,
-  `docs/mocks/heal-eat-2026-09-30.html`): the jaws swing apart from a hinge
-  `MEAL_HINGE` cells back, the head drawn wider by the gap and each half pushed
-  off the mouth's line; the creature is squeezed as it goes in and shows only
-  between the jaw lines (`jawGap`, shared by both). The swim is 2.8 s, the gulp
-  0.8, the swallow 2.4: the lump runs down the neck dark through the hide. On
-  landing purple crosses rise off the body, nearest the belly first.
-- With the serpent's head at `COIL_X0 = 0.28` there is open water to its left
-  for the swim.
+Drawn by `render/serpent.js` with the fight's own pieces: the comb's lighting
+(`combLit` takes the larger of the fight's and the meal's), the bolts
+(`drawBolts`, off the lit crest tips, a shape held a sixth of a second) and
+the ring (`orbRing`). The orb has no hit-point strip and no arrow: nobody fights
+it. The creature in it is its own drawing (`drawHeld` in `render/fauna.js`),
+rows doubled up toward its middle as the orb shrinks. Going into the jaws the
+orb is drawn behind the head (`meal gulped` layer) and fades; the swallow is a
+swelling of the body dark through the hide, sized by the creature's width; on
+landing purple crosses rise off the body, nearest the belly first.
 
 ### What it must not break
 
-- **Nothing teleports.** The creature is in the water and swims to the mouth,
-  and the swallow is a swelling that travels. The number is said where the
-  swallow lands.
-- **The average heal.** Over any whole number of meals the wound closes by
-  exactly what the old trickle closed; a test asserts it.
-- **The break.** The break is asked first, before the lump, as the heal is asked
-  after it today (`serpent.js`, the frame's order).
-- **A save mid-swim.** The meal counter, its phase and the bank are saved; a
-  reload puts the creature back where it was.
-
-### Open
-
-- **The interval** is 6 to 12 s, mean 9: a lump is nine seconds of heal on
-  average and twelve at most. A party that times its burst to end just before a
-  meal lands the break a lump early, but with the wait unpredictable it can only
-  gamble on it, and the creature in the water is the tell. That is the one
-  balance change.
-- **The bar** is as built: it takes a heal when its number lands in it
-  (`barflight.js`), so it shows the old wound until the lump's number goes in.
-- **The heal number's colors and size** stay as built.
+- **Nothing teleports**: the creature is on the walk or in the orb, never both
+  and never neither (`verify.js`); the orb moves a few cells a frame at most.
+- **The constrict as an attack** on a fighter is unchanged: its orb, its arrow,
+  its hit points.
 
 ## The serpent heals whole: a phase is a window (built 2026-10-04)
 
 Asked by the owner, 2026-10-04. Supersedes the heal half of "The serpent eats
-to heal": the meals, the stream and the eating stay as drawn; what a meal
-does changes.
+to heal": the meals and the eating stay as drawn; what a meal does changes.
 
 ### The bargain
 
@@ -17277,11 +17255,9 @@ not what it can do over the heal.
 - **No countdown is shown.** The fish swimming in is the cue (the owner,
   2026-10-04). The bar has no timer and the page has no number.
 - **The meal ends it.** The window has run out when `S.mealT` reaches the
-  phase's length. The meal is then the next creature of the near stream heading
-  for the mouth: `nextMeal` as now, with `MEAL_MIN_S` replaced by the phase's
-  window. So a window is its length plus however long that creature takes to
-  arrive (the stream brings one every several seconds). The creature is
-  already swimming when the window ends; nothing is spawned for it.
+  phase's length, and the meal lands then: since 2026-10-15 it begins
+  `MEAL_LEAD_S` short of it ("The serpent eats to heal", above). The creature
+  is one already swimming the deep; nothing is spawned for it.
 - **The meal heals to full.** When the swallow lands, the wound is closed
   completely: `S.serpentWound = 0`. The bank, `SERPENT_HEAL` and `healNow`
   go. The heal's number says what it closed, purple, where the swallow lands,
@@ -17348,11 +17324,10 @@ not what it can do over the heal.
   knobs; `MEAL_MIN_S`, `MEAL_MAX_S`, `SERPENT_HEAL`, the bank and
   `HEAL_CUT_MAX` are gone, and a migration (`2026-10-04-whole-heal.js`,
   `SAVE_V` 8) drops a save's bank and its Weakened.
-- **The turned creature.** Once the meal is in its swim it is kept on the
-  serpent (`S.mealI`, saved), so a stun, Held or the surge moves the window
-  but never a creature already swimming in; one chosen afresh is never one
-  already in its swim (`mealNow`'s floor). The creatures eaten are a saved
-  list (`S.eaten`), not worked out again from the windows.
+- **The meal under way** is kept on the serpent (`S.mealGo`, saved since
+  2026-10-15; before it the turned creature `S.mealI` and the eaten list
+  `S.eaten`, dropped by `2026-10-15-meal-orb.js`, `SAVE_V` 21), so a stun,
+  Held or the surge moves the window but never a meal already begun.
 - **Depths** are `tools/node/deep-pace.mjs --solve 8,22,40,60` with the default
   party, rounded: **4300 / 9400 / 6700 / 5100**. The quarter-of-today guess
   walled at phase 2: four fighters at full rungs cannot do 23,000 in a 32 s
@@ -17363,8 +17338,8 @@ not what it can do over the heal.
 
 - **Nobody has played it.** The depths are a model's, for four fighters; a
   real party is often bigger.
-- **The meal scenes** (`meal-swim` .. `meal-land`) commit their creature and
-  then run on the clock: the hold no longer pins a moment once it has turned.
+- **The meal scenes** (`deep-meal`, `meal-bolts` .. `meal-land`) run the meal
+  a frame at a time to their moment and hold it (`__holdShot`).
 - **The window can be gamed** the way the lumps could: a party that holds its
   capstones for the window's last seconds bursts best. That is the intended
   skill here, not an exploit.

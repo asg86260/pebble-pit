@@ -1,8 +1,7 @@
-// A creature's reaction to a click, read off its table (FAUNA_REACT for the
-// zones' kinds, FLOW_REACT for the stream's eight): the pose it holds `s`
-// seconds after the click. Pure, so the drawing, the report and the checks
-// all ask the same question and get the same answer; who is reacting, and
-// since when, is the caller's (deep/fauna.js, deep/flow.js).
+// A creature's reaction to a click, read off its table (FAUNA_REACT): the
+// pose it holds `s` seconds after the click. Pure, so the drawing, the report
+// and the checks all ask the same question and get the same answer; who is
+// reacting, and since when, is the caller's (deep/fauna.js).
 
 import { FAUNA_SILT, FAUNA_REACT_MOTION } from '../config.js';
 import { smoothstep as smooth } from '../motion.js';

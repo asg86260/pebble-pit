@@ -10,8 +10,9 @@ import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, SAVE as SMOG } from './smog.js';
 import { resetWeather } from './weather.js';
+import { now } from './clock.js';
 import { resetFauna, settleFauna } from './deep/fauna.js';
-import { resetStream, settleStream } from './deep/flow.js';
+import { settleMeal } from './deep/meals.js';
 import { slideLayers } from './smog/layer.js';
 import { SAVE as BALLOON } from './balloon.js';
 import { showPanel } from './board.js';
@@ -45,7 +46,6 @@ import { seed, reseed, rngState, setRngState } from './rng.js';
 import { migrate } from './migrations/index.js';
 import { snapShown } from './tween.js';
 import { SAVE as DEEP_BED } from './deep/scales.js';
-import { SAVE as STREAM } from './deep/meals.js';
 import { SAVE as FINALE } from './finale.js';
 import { mintYardId } from './yardid.js';
 
@@ -494,7 +494,6 @@ export const SAVERS = [
   PIT,
   // The deep's floor, laid under the world once the world has its size.
   DEEP_BED,
-  STREAM,
   // The finale after the crew and the beats: a reload mid-finale takes her
   // off the crew read back and marks the kill and the finale played.
   FINALE,
@@ -533,7 +532,7 @@ export function restore() {
   yardReads++;
   // A creature's reaction is this session's: read back on the clock that
   // wrote it, one under way carries on where it was rather than jump home.
-  settleFauna(); settleStream();
+  settleFauna();
   const s = load();
   // The raw save is brought up to today's shape before a field of it is read
   // (src/migrations/); everything below reads today's shape and nothing else.
@@ -566,6 +565,8 @@ export function restore() {
   // ground's.
   setPitGrain();
   for (const o of SAVERS) if (!FIRST.has(o)) o.read(s);
+  // A meal under way has its creature in its orb, not on the new page's walk.
+  settleMeal(now());
 }
 
 // A new game. `fresh` draws a new seed, before a single grain is laid down;
@@ -590,7 +591,7 @@ export function reset(fresh = true) {
   S.looPosts = LOO_POSTS;
   seedSmog();
   resetWeather();                  // a new run is a new sky, clouds and birds both
-  resetFauna(); resetStream();     // and every creature of the deep home
+  resetFauna();     // and every creature of the deep home
   S.boulderNo = 1;                 // the rock's blank builds it
   for (const o of SAVERS) o.blank();
   // The old crew walk off with empty hands: what they carried is the old
