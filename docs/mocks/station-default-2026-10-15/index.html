@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Default Station Prop</title>
+<style>
+  :root { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
+  .wrap { margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h3 { font-size: 14px; margin: 0 0 6px; }
+  p { margin: 0 0 8px; max-width: 110ch; }
+  .dim { color: var(--dim); }
+  canvas { image-rendering: pixelated; display: block; background: #000; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 10px 0; }
+  button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 3px 9px; cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .card { background: var(--card); border: 1px solid var(--rule); padding: 10px 12px 12px; }
+  .grid { display: grid; grid-template-columns: max-content repeat(7, max-content); gap: 6px 14px; align-items: start; overflow-x: auto; }
+  .grid .hd { font-size: 12px; max-width: 26ch; }
+  .grid .hd b { display: block; }
+  .grid .rl { font-size: 11px; color: var(--dim); writing-mode: vertical-rl; transform: rotate(180deg); align-self: center; }
+  .strip { margin: 14px 0 0; }
+  .strip .lbl { font-size: 12px; margin-bottom: 3px; }
+  .stripbox { display: flex; flex-wrap: wrap; gap: 6px; }
+  .stripbox canvas { border: 1px solid var(--rule); max-width: 100%; }
+  .sw { display: inline-flex; gap: 4px; align-items: center; margin-right: 12px; font-size: 12px; }
+  .sw i { width: 14px; height: 14px; display: inline-block; border: 1px solid var(--rule); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>The default station: away from the crate</h1>
+<p>The owner: "lets get away from the crate. lets try something else generic." The default prop stands beside every station whose Recruit has not picked a class yet, and its footprint is the ground the build's scaffold stands round. Here is today's crate and six replacements that say "a station waiting for a class" without belonging to any class. All keep A's register: three greys lit from the upper left by A's shading rule, unchanged, and no accent and no rung-8 parts, because the default has no class. Each is drawn standing on its plinth, and again going up inside the scaffold, with the scaffold derived from that option's footprint the way <code>drawScaffold</code> derives it today.</p>
+<p class="dim"><b>What this mock cannot show:</b> this page is drawn from plain cells, not the game. It cannot show the fighter at the post (the dotted 3x3 square marks where the body stands), the kits, the scale heaps, the motes, the pointing hand over an unchosen station or the light page. The scaffold row shows the prop as a faint ghost for reference; in the game the scaffold stands round empty ground. Colors are the abyss ramps' raw tones, not the dark page's mapped ones.</p>
+<div>
+  <span class="sw"><i style="background:#121216"></i>G1</span><span class="sw"><i style="background:#26262c"></i>G2</span>
+  <span class="sw"><i style="background:#42424a"></i>G3</span><span class="sw"><i style="background:#6e6e78"></i>G4</span>
+  <span class="sw"><i style="background:#b4b4c0"></i>G5</span>
+</div>
+<div class="bar">zoom
+  <button data-z="12">2x</button><button data-z="18" aria-pressed="true">3x</button><button data-z="24">4x</button>
+</div>
+<div class="card" id="card"></div>
+</div>
+
+<script id="props-data">
+// --- the data ----------------------------------------------------------------
+// Legend and shading as in docs/mocks/station-polish-2026-10-15/README.md.
+// A prop is rows of cells, the bottom row standing on the plinth.
+//   H trained-with thing  F frame  S straw/sacking/cloth  1-5 a grey by hand
+// Today, read from the live PROPS (src/deep/props.js at 4475a25b, main at 791ef2ec).
+const A = {
+  crate: { rows: [
+    '..S..S.S...S..',
+    '.SSSSSSSSSSS..',
+    'FFFFFFFFFFFFFF',
+    'FHHHHHHHHHHFFF',
+    'FHHHHHHHHHFFHF',
+    'F22222222FF22F',
+    'FHHHHHHHFFHHHF',
+    'FHHHHHHFFHHHHF',
+    'F22222FF22222F',
+    'FHHHHFFHHHHHHF',
+    'FHHHFFHHHHHHHF',
+    'FHHFFHHHHHHHHF',
+    'FFFFFFFFFFFFFF'] },
+  brawler: { rows: [
+    'FFFFFFFFFFFFFF..',
+    'FFFFFFFFFFFFFF..',
+    'FFFF.......g....',
+    'FFF........z....',
+    'FF........Q*Q...',
+    'FF......KKKKKKK.',
+    'FF.....HHHHHHHHH',
+    'FF.....KKKKKKKKK',
+    'FF.....HHHHHHHHH',
+    'FF.....HHHHHHHHH',
+    'FF.....HHHHHHHHH',
+    'FF.....HHHHHHHHH',
+    'FF.....HHHHHHHHH',
+    'FF.....KKKKKKKKK',
+    'FF.....HHHHHHHHH',
+    'FF......KKKKKKK.',
+    'FFFF............',
+    'FFFFFF..........'] },
+  sword: { rows: [
+    '....**....**........',
+    '....RR....RR........',
+    '....RR....RR........',
+    '...RRRR..RRRR.......',
+    '....HH....HH........',
+    '....HH....HH........',
+    'FFFFHHFFFFHHFFFF..FF',
+    'FFFFHHFFFFHHFFFFFFFF',
+    'FF..HH....HH......FF',
+    'FF..HH....HH......FF',
+    'FF..HH....HH......FF',
+    'FF..HH....HH......FF',
+    'FF...H.....H......FF',
+    'FFFFFFFFFFFFFFFFFFFF',
+    'FF................FF',
+    'FFF..............FFF'] },
+  monk: { rows: [
+    'FF..................FF',
+    'FFFFFFFFFFFFFFFFFFFFFF',
+    '.FFFFFFFFFFFFFFFFFFFF.',
+    '..FF......gg......FF..',
+    '..FF.....RRRR.....FF..',
+    '..FF....RRRRRR....FF..',
+    '..FF...RRRRRRRR...FF..',
+    '..FF...RRRRRRRR...FF..',
+    '..FF...RRRRRRRR...FF..',
+    '..FF...RRRRRRRR...FF..',
+    '..FF..RRRRRRRRRR..FF..',
+    '..FF.RRRRRRRRRRRR.FF..',
+    '..FF......**......FF..',
+    '..FF..............FF..',
+    '.4FF44444444444444FF4.',
+    '33FF33333333333333FF33'] },
+  martial: { rows: [
+    '..55..........',
+    '..RR..........',
+    '..RR......55..',
+    '.*RR......RR..',
+    '**RR......RR..',
+    '*.RR..55..RR..',
+    '..RR..RR..RR..',
+    '..RR..RR..RR..',
+    'FFRRFFRRFFRRFF',
+    'F.RR..RR..RR.F',
+    'F.RR..RR..RR.F',
+    'F.RR..RR..RR.F',
+    'FFFFFFFFFFFFFF',
+    'FFFFFFFFFFFFFF',
+    'FF..........FF',
+    'FF..........FF'] },
+  ranger: { rows: [
+    '....SSSSS..3....',
+    '..SSSSSSSSS.43..',
+    '.SSSKKKKKSS4.3..',
+    '.SSKSSSSS4SS....',
+    'SSKSSSSS4SKSS...',
+    'SSKSSS*SSSKSS...',
+    'SSKSS***SSKSS...',
+    'SSKSSS*SSSKSS...',
+    'SSKSSSSSSSKSS...',
+    '.SSKSSSSSKSSS...',
+    '.SSSKKKKKSSS....',
+    '..SSSSSSSSS.....',
+    '....SSSSS.......',
+    '....F.F.F.......',
+    '...F..F..F......',
+    '...FFFFFFF......',
+    '..F...F...F.....',
+    '.F....F....F....'] },
+  assassin: { rows: [
+    '.....HHHH...........',
+    '....HHHHHH..........',
+    '....HHHHHH..........',
+    '....HHHHHH..........',
+    '.....HHHH...........',
+    '......33............',
+    '3HHHHHHHHHHHH3......',
+    '3HHHHHHHHHHHH3......',
+    '..HHHHHHHHHH........',
+    '..HHHHHHHHHH..Q.....',
+    '..HHHHHHHHH2hhQrr*..',
+    '..HHHHHHHHHH..Q.....',
+    '...HHHHHHHH.........',
+    '...HHHHHHHH.........',
+    '...KKKKKKKK.........',
+    '....HHHHHH..........',
+    '......FF............',
+    '....FFFFFF..........'] },
+  hexer: { brew: 1, rows: [
+    '.HHHHHHHHHHHH.',
+    '.HBBBBBBBBBBH.',
+    'HHHHHHHHHHHHHH',
+    'R.HHHHHHHHHH.R',
+    'RRHHHHHHHHHHRR',
+    '.HHHHHHHHHHHH.',
+    '.HHHHHHHHHHHH.',
+    '.HHHHHHHHHHHH.',
+    '..HHHHHHHHHH..',
+    '...HHHHHHHH...',
+    '...F..FF..F...',
+    '..F...FF...F..'] },
+  sapper: { rows: [
+    '..........**......',
+    '.........4........',
+    '......KKKKKK......',
+    '.....HHHHHHHH.....',
+    '.....KKKKKKKK.....',
+    '.....HHHHHHHH.....',
+    '.....HHHHHHHH.....',
+    '.....KKKKKKKK.....',
+    '.....HHHHHHHH.....',
+    '......KKKKKK......',
+    '.KKKKKK....KKKKKK.',
+    'HHHHHHHH..HHHHHHHH',
+    'KKKKKKKK..KKKKKKKK',
+    'HHHHHHHH..HHHHHHHH',
+    'HHHHHHHH..HHHHHHHH',
+    'KKKKKKKK..KKKKKKKK',
+    'HHHHHHHH..HHHHHHHH',
+    '.KKKKKK....KKKKKK.'] },
+  mage: { rows: [
+    '..............*.',
+    '.HHHH..HHHH...*.',
+    'HHHHHFFHHHHH..1.',
+    'HKKKHFFHKKKH.HHH',
+    'HHHHHFFHHHHH.HHH',
+    'HKKHHFFHHKKH.HHH',
+    'HHHHHFFHHHHH.HHH',
+    'FFFFFFFFFFFFFFFF',
+    '.FFFFFFFFFFFFFF.',
+    '......FFFF......',
+    '.......FF.......',
+    '......FFFF......',
+    '.......FF.......',
+    '.......FF.......',
+    '.......FF.......',
+    '....FFFFFFFF....',
+    '..FFFFFFFFFFFF..'] },
+  bard: { rows: [
+    '.HHHHHHHHHH.',
+    '.HHHHHKKKHH.',
+    '.HHHHHKHKKH.',
+    '.HHHHHKHHHH.',
+    '.HHHHHKHHHH.',
+    '.HHH**KHHHH.',
+    '.HHH**HHHHH.',
+    '.HHHHHHHHHH.',
+    'FFFFFFFFFFFF',
+    '.....FF.....',
+    '.....FF.....',
+    '.....FF.....',
+    '.....FF.....',
+    '.....FF.....',
+    '....F..F....',
+    '...F....F...',
+    '..F......F..',
+    '.F........F.'] },
+};
+
+// The six replacements, each with its direction in one line.
+const OPTS = {
+  1: { name: 'bench', say: "A plain trestle bench with a folded blanket on it: somewhere to sit and wait, nothing on it that says a trade.",
+       rows: [
+    '...SSSSSSSS...',
+    '..SSSSSSSSSS..',
+    '..S44444444S..',
+    '..SSSSSSSSSS..',
+    'FFFFFFFFFFFFFF',
+    'F222222222222F',
+    '.FF........FF.',
+    '.FF........FF.',
+    '.FFFFFFFFFFFF.',
+    '.FF........FF.',
+    '.FF........FF.',
+    '.FF........FF.',
+    'FFF........FFF'] },
+  2: { name: 'anvil', say: "An anvil on a stump: horn to the left, a bark-streaked stump under it; the yard's workbench before anyone has a craft.",
+       rows: [
+    '..HHHHHHHHHHH.',
+    'HHHHHHHHHHHHH.',
+    '..HHHHHHHHHHH.',
+    '.....HHHHHH...',
+    '.....HHHHHH...',
+    '....HHHHHHHH..',
+    '.FFFFFFFFFFFF.',
+    '.FF2FFFFF2FFF.',
+    '.FF2FFFFF2FFF.',
+    '.FFFF2FFFF2FF.',
+    '.FFFF2FFFF2FF.',
+    '.FF2FFFFFFFFF.',
+    'FFFFFFFFFFFFFF'] },
+  3: { name: 'notice', say: "A notice board on two posts under a little cap, one blank sheet pinned to it, dog-eared: the posting nobody has answered yet.",
+       rows: [
+    'FFFFFFFFFFFFFF',
+    '.FFFFFFFFFFFF.',
+    '.F2222222222F.',
+    '.F22SS55SS22F.',
+    '.F22SSSSSS22F.',
+    '.F22SSSSSS22F.',
+    '.F22SSSSSS22F.',
+    '.F22SSSSS422F.',
+    '.F2222222222F.',
+    '.FFFFFFFFFFFF.',
+    '..FF......FF..',
+    '..FF......FF..',
+    '..FF......FF..'] },
+  4: { name: 'tent', say: "A pitched tent, poles crossed at the top and the flap open on a dark mouth: a camp made, its owner not arrived.",
+       rows: [
+    '....F....F....',
+    '.....F..F.....',
+    '......FF......',
+    '.....SSSS.....',
+    '.....SSSS.....',
+    '....SSSSSS....',
+    '....SSSSSS....',
+    '...SSS11SSS...',
+    '...SS1111SS...',
+    '..SSS1111SSS..',
+    '..SS111111SS..',
+    '.SSS111111SSS.',
+    'FSSS111111SSSF'] },
+  5: { name: 'cairn', say: "A cairn of stacked stones, three courses offset like brickwork: a marker that says someone will stand here.",
+       rows: [
+    '......HHH.....',
+    '.....HHHHH....',
+    '.....HHHHH....',
+    '......HHH.....',
+    '...HHHH.HHHH..',
+    '..HHHHH.HHHHH.',
+    '..HHHHH.HHHHH.',
+    '...HHH...HHH..',
+    '.HHHH.HHHH.HHH',
+    'HHHHH.HHHH.HHH',
+    'HHHHH.HHHH.HHH',
+    'HHHHH.HHHH.HHH'] },
+  6: { name: 'flag', say: "A blank flag on a pole, swallowtailed, flying toward the post: colors still to be painted, the pole set in a foot.",
+       rows: [
+    '.HH...........',
+    '.FFSSSSS4SSSSS',
+    '.FFSSSSS4SSSSS',
+    '.FFSSSSS4SSSS.',
+    '.FFSSSSS4SSS..',
+    '.FFSSSSS4SSSS.',
+    '.FFSSSSS4SSSSS',
+    '.FFSSSSS4SSSSS',
+    '.FF...........',
+    '.FF...........',
+    '.FF...........',
+    '.FF...........',
+    '.FF...........',
+    'FFFF..........',
+    'FFFFF.........'] },
+};
+const WHICH = ['A', '1', '2', '3', '4', '5', '6'];
+const NEIGHBORS = ['brawler', null, 'sword', 'mage'];
+const NAMES = { brawler: 'Brawler', sword: 'Swordsman', mage: 'Mage' };
+</script>
+
+<script id="shader">
+// --- the tones, and A's shading rule (station-polish, unchanged) -------------
+const G = ['#000000', '#121216', '#26262c', '#42424a', '#6e6e78', '#b4b4c0'];
+const PU = { a: '#1b112c', b: '#2d1d47', c: '#412465', d: '#5c2ba6', e: '#9b5de5' };
+const RAMP = {
+  H: [G[5], G[4], G[3], G[2]], F: [G[4], G[3], G[2], G[1]], S: [G[5], G[4], G[3], G[2]],
+  R: [G[5], G[4], G[3], G[2]], Q: [G[4], G[3], G[2], G[1]], K: [G[4], G[3], G[2], G[1]],
+  R8: [PU.e, PU.d, PU.c, PU.b], Q8: [PU.d, PU.c, PU.b, PU.a], K8: [PU.e, PU.d, PU.c, PU.b]
+};
+const MAT = new Set(['H', 'F', 'S', 'R', 'Q', 'K']);
+const PART = new Set(['R', 'Q', 'K']);
+
+function shadeIndex(rows, r, c) {
+  const at = (rr, cc) => (rows[rr] && rows[rr][cc]) || '.';
+  const empty = ch => ch === '.' || ch === '+';
+  const up = empty(at(r - 1, c)), lf = empty(at(r, c - 1)), rt = empty(at(r, c + 1)), dn = empty(at(r + 1, c));
+  if (up) return 0;
+  if (lf && rt) return 1;
+  if (lf) return 0;
+  if (rt || dn) return 2;
+  return 1;
+}
+
+function cellsOf(rows, lit) {
+  const out = [];
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    let col = null;
+    if (MAT.has(ch)) {
+      const ramp = lit && PART.has(ch) ? RAMP[ch + '8'] : RAMP[ch];
+      col = ramp[shadeIndex(rows, r, c)];
+    } else if (ch >= '1' && ch <= '5') col = G[+ch];
+    else if (ch === 'h') col = lit ? PU.e : G[5];
+    else if (ch === 'r') col = lit ? PU.c : G[3];
+    else if (ch === 'd') col = lit ? PU.b : G[2];
+    else if (ch === 'g') col = lit ? PU.d : G[4];
+    else if (ch === 'z') col = lit ? PU.b : G[2];
+    else if (ch === 'v') col = PU.d;
+    else if (ch === 'w') col = PU.c;
+    else if (ch === '*') col = lit ? PU.e : PU.c;
+    else if (ch === '+') col = lit ? PU.e : null;
+    else if (ch === 'B') col = lit ? PU.c : PU.b;
+    if (col) out.push([c, r, col]);
+  }));
+  return out;
+}
+</script>
+
+<script>
+// --- drawing ----------------------------------------------------------------
+for (const [n, o] of Object.entries(OPTS))
+  o.rows.forEach((row, i) => { if (row.length !== o.rows[0].length) console.error(`option ${n} row ${i} is ${row.length} wide`); });
+
+const GAP = k => (k === 'sword' ? 7 : 5);   // PROP_GAP, PROP_GAP_OF
+const rowsOf = w => (w === 'A' ? A.crate : OPTS[w]).rows;
+
+function plinth(g, s, x0, body, foot) {
+  g.fillStyle = G[3]; g.fillRect((x0 - 1) * s, (foot + 1) * s, (body + 3 + 1 - (x0 - 1)) * s, s);
+  g.fillStyle = G[2]; g.fillRect((x0 - 2) * s, (foot + 2) * s, (body + 3 + 2 - (x0 - 2)) * s, s);
+}
+function post(g, s, body, foot) {
+  g.fillStyle = '#ffffff';
+  const fx = body * s, fy = (foot - 2) * s, fw = 3 * s, d = Math.max(1, Math.round(s / 6));
+  for (let i = 0; i < fw; i += d * 3) { g.fillRect(fx + i, fy, d, d); g.fillRect(fx + i, fy + fw - d, d, d); g.fillRect(fx, fy + i, d, d); g.fillRect(fx + fw - d, fy + i, d, d); }
+}
+function drawStation(g, s, key, rows, x0, foot) {
+  const w = rows[0].length, h = rows.length, y0 = foot - h + 1, body = x0 + w - 1 + GAP(key);
+  plinth(g, s, x0, body, foot);
+  for (const [c, r, col] of cellsOf(rows, false)) { g.fillStyle = col; g.fillRect((x0 + c) * s, (y0 + r) * s, s, s); }
+  post(g, s, body, foot);
+}
+// drawScaffold in render/deep.js, in cells: the station's ground runs from a
+// cell left of the plinth's lower course to a cell right of it, and its top
+// is the taller of the prop and the post; the posts stand three cells out,
+// two wide, SCAFFOLD_OVER (2) cells over that top, banded a cell on and a
+// cell off down to the floor, and the tape three cells up, a cell every two,
+// two game pixels thick. The plinth and prop are not drawn while it goes up.
+function drawScaffold(g, s, rows, x0, foot, ghost) {
+  const w = rows[0].length, h = rows.length, body = x0 + w - 1 + GAP('crate');
+  const standX = x0 - 2, standR = body + 5, standY = Math.min(foot + 1 - h, foot - 2), floor = foot + 3;
+  const top = standY - 2, left = standX - 3 - 2, right = standR + 3;
+  if (ghost) {
+    g.globalAlpha = 0.22;
+    for (const [c, r, col] of cellsOf(rows, false)) { g.fillStyle = col; g.fillRect((x0 + c) * s, (foot - h + 1 + r) * s, s, s); }
+    g.globalAlpha = 1;
+  }
+  g.fillStyle = G[4];
+  for (const x of [left, right]) for (let i = 0; i < floor - top; i += 2) g.fillRect(x * s, (top + i) * s, 2 * s, s);
+  for (let x = left + 2; x < right; x += 2) g.fillRect(x * s, (floor - 3) * s, s, Math.max(1, Math.round(s / 3)));
+}
+
+let zoom = +(location.hash.match(/z=(\d+)/) || [0, 18])[1];
+for (const o of document.querySelectorAll('[data-z]')) o.setAttribute('aria-pressed', +o.dataset.z === zoom ? 'true' : 'false');
+const draws = [];
+const maxW = Math.max(...WHICH.map(k => rowsOf(k)[0].length));
+const maxH = Math.max(...WHICH.map(k => rowsOf(k).length));
+
+function closeup(which, scaffold) {
+  const rows = rowsOf(which), cv = document.createElement('canvas');
+  const L = 8, cols = L + maxW + GAP('crate') + 3 + 10, nrows = maxH + 8;
+  const x0 = L + (maxW - rows[0].length), foot = nrows - 4;
+  draws.push(() => {
+    cv.width = cols * zoom; cv.height = nrows * zoom;
+    const g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cv.width, cv.height);
+    g.fillStyle = G[2]; g.fillRect(0, (foot + 3) * zoom, cv.width, zoom);
+    if (scaffold) drawScaffold(g, zoom, rows, x0, foot, true);
+    else drawStation(g, zoom, 'crate', rows, x0, foot);
+  });
+  return cv;
+}
+
+// At game scale (a cell 6 px, slots 49 cells apart): the option between
+// three of today's class props, unlit, and the last slot going up inside
+// that option's scaffold.
+const SPACING = 49, S6 = 6;
+function stripCanvas(which) {
+  const cv = document.createElement('canvas');
+  const cols = NEIGHBORS.length * SPACING + 34 + 12, nrows = 32;
+  draws.push(() => {
+    cv.width = cols * S6; cv.height = nrows * S6;
+    const g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cv.width, cv.height);
+    const foot = nrows - 5;
+    g.fillStyle = G[2]; g.fillRect(0, (foot + 3) * S6, cv.width, 2 * S6);
+    g.fillStyle = '#ececf2'; g.font = `bold ${2 * S6}px ui-monospace, Consolas, monospace`;
+    g.fillText(which === 'A' ? 'today' : `${which} ${OPTS[which].name}`, S6, 3 * S6);
+    NEIGHBORS.forEach((k, i) => {
+      const rows = k ? A[k].rows : rowsOf(which), key = k || 'crate', body = 34 + i * SPACING;
+      drawStation(g, S6, key, rows, body - GAP(key) - rows[0].length + 1, foot);
+    });
+    const r = rowsOf(which), body = 34 + NEIGHBORS.length * SPACING;
+    drawScaffold(g, S6, r, body - GAP('crate') - r[0].length + 1, foot, false);
+  });
+  return cv;
+}
+
+const card = document.getElementById('card');
+card.innerHTML = `<h3>The default station's prop (PROPS.crate today)</h3>`;
+const grid = document.createElement('div'); grid.className = 'grid';
+grid.append(document.createElement('span'));
+for (const w of WHICH) {
+  const d = document.createElement('div'); d.className = 'hd';
+  const r = rowsOf(w), size = `${r[0].length}x${r.length}`;
+  d.innerHTML = w === 'A' ? `<b>today, the crate (${size})</b>as in the game` : `<b>${w} ${OPTS[w].name} (${size})</b>${OPTS[w].say}`;
+  grid.append(d);
+}
+for (const sc of [false, true]) {
+  const l = document.createElement('div'); l.className = 'rl'; l.textContent = sc ? 'going up (scaffold)' : 'standing'; grid.append(l);
+  for (const w of WHICH) grid.append(closeup(w, sc));
+}
+card.append(grid);
+const box = document.createElement('div'); box.className = 'strip';
+box.innerHTML = `<div class="lbl"><b>at game scale</b> (a cell is 6 px, slots 49 cells apart): ${NAMES.brawler} (today), <b>the default</b>, ${NAMES.sword} (today), ${NAMES.mage} (today), then a slot going up inside the default's scaffold</div>`;
+const sb = document.createElement('div'); sb.className = 'stripbox';
+for (const w of WHICH) sb.append(stripCanvas(w));
+box.append(sb); card.append(box);
+
+function drawAll() { for (const d of draws) d(); }
+drawAll();
+for (const b of document.querySelectorAll('[data-z]')) b.addEventListener('click', () => {
+  zoom = +b.dataset.z;
+  for (const o of document.querySelectorAll('[data-z]')) o.setAttribute('aria-pressed', o === b ? 'true' : 'false');
+  drawAll();
+});
+</script>
+</body>
+</html>
