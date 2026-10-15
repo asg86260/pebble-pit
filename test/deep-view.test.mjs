@@ -6,7 +6,6 @@
 // it, through view.js.
 
 import { group, ok, run, yard } from './helpers.mjs';
-import { standing } from './scenes-stand.mjs';
 
 const S = yard.S;
 const { goDeep, goUp } = await import('../src/view.js');
@@ -109,8 +108,8 @@ group('the yard runs the same frames whichever half is on the screen', async () 
              up === down ? '' : `${up.slice(0, 160)}... against ${down.slice(0, 160)}...`)];
 }, { reload: false });
 
-// Every scene about the deep stands a yard up, and survives a reload.
-standing(['the deep']);
+// Every scene about the deep stands a yard up, and survives a reload: in
+// scenes-stand-deep-{a,b,c}.test.mjs, a third each.
 
 // Every knock is the yard's (world.js, `stepShake`): a boulder landing while
 // the view is in the deep rings out unfelt there, and the same landing looked

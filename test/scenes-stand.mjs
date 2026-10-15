@@ -14,12 +14,17 @@ import { SCENES } from '../src/scenes.js';
 
 const S = yard.S;
 
-export function standing(parts) {
-  group(`every scene about ${parts.join(', ')} stands a yard up`, async () => {
+// `of = [k, n]` takes every nth scene of the parts from the kth: a part too big
+// for one file is dealt out round-robin, so the files split its cost evenly
+// and every scene is stood by exactly one of them, however the list grows.
+export function standing(parts, of = [0, 1]) {
+  const [k, n] = of;
+  const label = n > 1 ? ` (${k + 1} of ${n})` : '';
+  group(`every scene about ${parts.join(', ')} stands a yard up${label}`, async () => {
     window.__board = () => {};
     const fell = [];
-    for (const [name, sc] of Object.entries(SCENES)) {
-      if (sc.page || !parts.includes(sc.about)) continue;
+    const mine = Object.entries(SCENES).filter(([, sc]) => !sc.page && parts.includes(sc.about));
+    for (const [name, sc] of mine.filter((_, i) => i % n === k)) {
       try {
         sc.run();
         run(1);
