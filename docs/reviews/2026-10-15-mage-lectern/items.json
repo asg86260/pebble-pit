@@ -1,0 +1,80 @@
+{
+ "title": "Mage lectern and assassin dummy",
+ "lede": "A candle at the desks end; its flame is the accent.",
+ "items": [
+  {
+   "id": "mage-8",
+   "title": "mage-8",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-c",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      620,
+      764,
+      240,
+      166
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-c",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      620,
+      764,
+      240,
+      166
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "assassin-8",
+   "title": "assassin-8",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-b",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      1090,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-b",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      1090,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  }
+ ]
+}
