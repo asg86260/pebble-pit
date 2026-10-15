@@ -1,0 +1,6 @@
+{ "title": "The deep's creatures take turns", "lede": "Three swim at once; each time one swims off the end, the next kind comes in. Before is the three-creature version you saw last.", "base": "7dccd7e4", "head": "13a9cd4e",
+  "items": [ { "id": "turns", "title": "Every swimmer in its turn, about one on screen", "what": "The same deep at four moments of game time.",
+    "shots": [ { "label": "at the start", "scene": "deep-zones", "window": [1200, 800], "zoom": 0.6 },
+               { "label": "a minute on", "scene": "deep-zones", "wait": 60, "window": [1200, 800], "zoom": 0.6 },
+               { "label": "three minutes on", "scene": "deep-zones", "wait": 200, "window": [1200, 800], "zoom": 0.6 },
+               { "label": "eight minutes on", "scene": "deep-zones", "wait": 500, "window": [1200, 800], "zoom": 0.6 } ] } ] }
