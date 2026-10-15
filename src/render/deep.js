@@ -28,7 +28,8 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          DEEP_SURFACE, DEEP_WATER_DEPTH,
          DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
          DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_MOTES_MAX, DEEP_PURPLE,
-         DEEP_STAR_THIN, DEEP_STAR_DIM, DEEP_MOTE_FADE_MS, DEEP_MOTE_RIM, DEEP_WAVE } from '../config.js';
+         DEEP_STAR_THIN, DEEP_STAR_DIM, DEEP_MOTE_FADE_MS, DEEP_MOTE_RIM, DEEP_WAVE,
+         DEEP_FLOOR_TOP_RUNG, DEEP_FLOOR_BOTTOM_RUNG, DEEP_FLOOR_FADE_ROWS, DEEP_FLOOR_BAYER } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, podAt,
          waterShift } from '../deep/place.js';
@@ -106,15 +107,41 @@ export function drawDeepWater() {
 // bed's own painter (deep/scales.js lays it): a plot like the pit's. Deep
 // enough for the tallest window the deep is framed in, and as wide as the
 // deep or the window, whichever is wider: a window wider than the deep is
-// held at its left end and shows past its right one. Two flat fills.
+// held at its left end and shows past its right one.
 const GROUND_ROWS = 40;
+// The top course dithers down through the ground into the darker grey
+// (config DEEP_FLOOR_*). The band is one tile four cells wide, painted once
+// and laid as a pattern from the floor's top, so a cell is the same cell
+// whatever the camera does: the tile's x origin is the world's, and four
+// cells divide it. Below the band the floor is flat.
+let floorPat = null, floorBand = 0;
+function floorPattern() {
+  if (floorPat) return floorPat;
+  const top = DEEP_FLOOR_TOP_RUNG, bottom = DEEP_FLOOR_BOTTOM_RUNG, rows = DEEP_FLOOR_FADE_ROWS;
+  const off = document.createElement('canvas');
+  floorBand = rows + 1;
+  off.width = 4 * P; off.height = floorBand * P;
+  const g = off.getContext('2d');
+  for (let r = 0; r < floorBand; r++) for (let c = 0; c < 4; c++) {
+    const L = top - (top - bottom) * Math.min(1, r / rows);
+    const k = Math.max(bottom, Math.min(top - 2, 2 * Math.floor(L / 2)));
+    const rung = DEEP_FLOOR_BAYER[r & 3][c & 3] < (L - k) / 2 * 16 ? k + 2 : k;
+    g.fillStyle = GREYS[rung];
+    g.fillRect(c * P, r * P, P, P);
+  }
+  return (floorPat = ctx.createPattern(off, 'repeat'));
+}
 export function drawDeepFloor() {
   const win = deepWindow();
   const fy = deepFloor(), from = Math.min(win.x0, deepX0() - P * 4), to = Math.max(win.x1, deepX1() + P * 4);
-  ctx.fillStyle = TONE.stone;
-  ctx.fillRect(from, fy, to - from, P);
-  ctx.fillStyle = TONE.ground;
-  ctx.fillRect(from, fy + P, to - from, (GROUND_ROWS - 1) * P);
+  const pat = floorPattern();
+  ctx.save();
+  ctx.translate(0, fy);
+  ctx.fillStyle = pat;
+  ctx.fillRect(from, 0, to - from, floorBand * P);
+  ctx.fillStyle = GREYS[DEEP_FLOOR_BOTTOM_RUNG];
+  ctx.fillRect(from, floorBand * P, to - from, (GROUND_ROWS - floorBand) * P);
+  ctx.restore();
   ctx.fillStyle = '#000';
 }
 
