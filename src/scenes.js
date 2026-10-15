@@ -579,6 +579,11 @@ const deepScenes = {
   portal: { about: 'the deep', say: 'the wizards\' portal held open over the abyss, the way down',
     run: () => { rich(); window.__fullSites(); window.__snatch({ played: true });
                  window.__view('yard'); window.__look(portalX() - S.viewW / 2); } },
+  // The same after a round trip through it: the hands have faded and gone.
+  'portal-hand-gone': { about: 'the deep', say: 'the portal after the player has been down and back up: no hand beside it',
+    run: () => { rich(); window.__fullSites(); window.__snatch({ played: true });
+                 S.portalDown = S.portalRound = true; S.portalHand = 0;
+                 window.__view('yard'); window.__look(portalX() - S.viewW / 2); } },
   // Its other end in the deep, hanging in the water, the hand under it.
   'deep-portal': { about: 'the deep', say: 'the portal\'s deep end, the way back up to the yard',
     run: () => { rich(); window.__fullSites(); window.__snatch({ played: true }); window.__view('deep'); } },

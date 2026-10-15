@@ -19,7 +19,10 @@ const [UP_TIP_C] = handTip('up'), [, LEFT_TIP_R] = handTip('left');
 const WHITE = ABYSS_TONES.length - 1;
 
 const snap = v => Math.round(v / P) * P;
-export const arrowShown = () => !!S.portalOpen && !gliding();
+// Gone once the fade is spent: from then on the portal's own circle is the
+// click and the stop (input.js `onPortal`, stops.js `way:portal`), the hand's
+// box no longer is.
+export const arrowShown = () => !!S.portalOpen && !gliding() && S.portalHand > 0;
 const shown = arrowShown;
 
 // Where the hand rests in its half, top-left, on the grid, the fingertip's
@@ -43,15 +46,23 @@ export function onShaftArrow(x, y) {
   return x >= b.x - P && x < b.x + b.w + P && y >= b.y - P && y < b.y + b.h + P;
 }
 
+// Opacity, not a cut: the hands leave by fading once the round trip is made.
+function faded(draw) {
+  const was = ctx.globalAlpha;
+  ctx.globalAlpha = was * S.portalHand;
+  draw();
+  ctx.globalAlpha = was;
+}
+
 // The deep's line on both: the yard's hand stands in the same black liquid,
 // where a black line is lost. The yard draws its tones as seen, the deep
 // through its negative (deeptones.js), so each names its own.
 export function drawYardArrow() {
-  if (shown()) { const b = arrowBox(false); drawHand(b.x, b.y, 'left', ABYSS_MAGIC_TONES[PURPLE_RUNG[WHITE - 2]], ABYSS_TONES[WHITE]); }
+  if (shown()) { const b = arrowBox(false); faded(() => drawHand(b.x, b.y, 'left', ABYSS_MAGIC_TONES[PURPLE_RUNG[WHITE - 2]], ABYSS_TONES[WHITE])); }
   ctx.fillStyle = '#000';
 }
 
 export function drawDeepArrow() {
-  if (shown()) { const b = arrowBox(true); drawHand(b.x, b.y, 'up', PURPLES[WHITE - 2], GREYS[WHITE]); }
+  if (shown()) { const b = arrowBox(true); faded(() => drawHand(b.x, b.y, 'up', PURPLES[WHITE - 2], GREYS[WHITE])); }
   ctx.fillStyle = '#000';
 }

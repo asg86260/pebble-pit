@@ -15,7 +15,7 @@
 // roster in the band under that, and no surface or sky over it.
 
 import { S } from './state.js';
-import { CELL, P, VIEW_GLIDE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM } from './config.js';
+import { CELL, P, VIEW_GLIDE_S, SHAFT_HAND_FADE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM } from './config.js';
 import { clampCam, setZoom, yardCell } from './world.js';
 import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor, deepTop } from './deep/place.js';
 import { reducedMotion } from './prefs.js';
@@ -181,6 +181,9 @@ function backToYard() {
 function start(v) {
   if (S.view === v || gliding()) return;
   if (v === 'deep' && !canGoDown()) return;
+  // The hands over the portal have told what they had to once the player has
+  // gone down and come back up by their own click or key (render/shaftway.js).
+  if (v === 'deep') S.portalDown = true; else if (S.portalDown) S.portalRound = true;
   posed = false;
   if (reducedMotion()) { if (v === 'deep') { keepYard(); frameOn('deep'); landed = true; } else backToYard(); return; }
   // The yard is the half standing through the whole ripple: going down it
@@ -211,6 +214,7 @@ export function stepView(c) {
   // the shot, and its framing with it.
   if (shot && !S.shot) shot = null;
   if (gliding()) { glide(c.dt); return; }
+  if (S.portalRound && S.portalHand > 0) S.portalHand = Math.max(0, S.portalHand - c.dt / (SHAFT_HAND_FADE_S * 1000));
   // A save left in the deep from before the portal comes back to the yard.
   if (S.view === 'deep' && !canGoDown()) { setView('yard'); return; }
   // Held every frame, since a resize or a scene's zoom lets go of it.

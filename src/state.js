@@ -549,6 +549,9 @@ export const S = {
   deepCrew: 0,            // how many of the crew are the deep's: the sqwife, and a body a pod
   portalOpen: false,      // the wizards' portal over the abyss stands: the player's way down
   portalAt: 0,            // when it was conjured, for its opening
+  portalDown: false,      // the player has gone down through the portal by their own hand
+  portalRound: false,     // and come back up: the pointing hands have done their telling
+  portalHand: 1,          // the hands' opacity, 1 until the round trip, then fading to 0
   portalPour: 0,          // how much of it the wizard has poured, 0..1, while it is being summoned
   crushes: [],            // the scales lately into the crusher, for its fire: { at, id }, newest last
   heldScales: 0,          // scales in the hand, scooped off the deep's floor
@@ -732,7 +735,7 @@ export const SAVED = [
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'serpentLevel', 'serpentBest', 'killFangs', 'resistBy', 'scales', 'seenScale',
   'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'recoilT', 'meal', 'mealT', 'mealGo', 'faunaShed', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'orb', 'askedWizards', 'handChipped',
   'retired',              // the two of them at the yard's end after the finale (finale.js)
-  JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
+  JOB.GATHER, 'pods', 'portalOpen', 'portalPour', 'portalDown', 'portalRound', 'portalHand',
   // The party (docs/wave-party.md).
   'stations', 'stationsBuilt', 'fangs', 'seenFang', 'fangsDropped', 'fangsLoose',
   // The yard's name and length across devices (cloud.js).

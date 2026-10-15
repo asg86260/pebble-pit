@@ -114,6 +114,10 @@ export const DEEP_WATER_DEPTH = 1;
 // far under the bottom of the deep's own end, pointing up into it. Both tap
 // (HAND_STILL_S). Under the deep's end it is one cell, the press onto the
 // rim: the hand is ten cells tall and the serpent's bar is not far under.
+// The hands fade out this long once the player has been down the portal and back
+// up by their own hand: they only say the portal is there and clickable, which
+// a round trip has shown. Long enough to read as a fade, not a pop.
+export let SHAFT_HAND_FADE_S = 1.5;
 export const SHAFT_ARROW_SIDE = P * 3;
 export const SHAFT_ARROW_DOWN = P;
 // The deep's end of the portal, the way back up: a circle hanging in the
@@ -255,6 +259,8 @@ export const SNATCH_CREST = [PURPLE[10], PURPLE[12]];
 export const SNATCH_HIDE = ['#000', '#1c1c21', '#26262c', '#6e6e78'];   // edge, hide, the lattice, the brow
 
 export const DEEP_DRAW_KNOBS = [
+  { key: 'SHAFT_HAND_FADE_S', label: 'portal hands fade, s', min: 0.2, max: 5, step: 0.1,
+    get: () => SHAFT_HAND_FADE_S, set: v => { SHAFT_HAND_FADE_S = v; } },
   { key: 'VIEW_GLIDE_S', label: 'deep glide, s', min: 0.2, max: 5, step: 0.1,
     get: () => VIEW_GLIDE_S, set: v => { VIEW_GLIDE_S = v; } }
 ];
