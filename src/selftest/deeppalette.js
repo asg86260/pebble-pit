@@ -26,7 +26,7 @@ import { draw, LAYERS } from '../render.js';
 import { countRect } from '../render/counter.js';
 import { DEEP_SEEN, seen, LIGHT, TONE } from '../render/deeptones.js';
 import { darkPage, inkOf } from '../ink.js';
-import { COIN_TONES, SHADES, P, CELL, CRUSH_FIRE_TONE } from '../config.js';
+import { COIN_TONES, SHADES, P, CELL } from '../config.js';
 
 // The comparison pages' scenes (docs/mocks/deep-palette-ingame-2026-10-14.html,
 // docs/mocks/deep-background-2026-10-14.html).
@@ -91,7 +91,7 @@ export const TESTS = [
       if (l < 0.16) continue;   // darker than the dark page's paper: the map cannot reach it
       out.push(ok(near(inkOf(seen(c)), c), `${c} lands as drawn`, inkOf(seen(c))));
     }
-    const fire = inkOf(LIGHT[CRUSH_FIRE_TONE]), mouth = inkOf(TONE.hole), brick = inkOf(TONE.stone);
+    const fire = inkOf(LIGHT.mid), mouth = inkOf(TONE.hole), brick = inkOf(TONE.stone);
     out.push(ok(fire !== mouth && fire !== brick, 'the fire is not the mouth or the brick', `${fire} ${mouth} ${brick}`));
     return out;
   }],

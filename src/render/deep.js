@@ -16,7 +16,7 @@
 
 import { now } from '../clock.js';
 import { bodyInk } from './recede.js';
-import { CRUSH_FIRE, CRUSH_FIRE_TONE, CRUSH_STIR, CRUSH_HEAT, CRUSH_SPARKS, CRUSH_SPARK_MS,
+import { CRUSH_FIRE, CRUSH_STIR, CRUSH_HEAT, CRUSH_SPARKS, CRUSH_SPARK_MS,
          CRUSH_SPARK, SERPENT_PHASES } from '../config.js';
 import { invertByFilter } from './invert.js';
 import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW,
@@ -210,7 +210,8 @@ FURNACE.forEach((row, r) => {
 });
 const DOOR_FOOT = Math.max(...DOOR.map(([r]) => r));
 const DOOR_MID = DOOR.reduce((sum, [, c]) => sum + c, 0) / DOOR.length;
-const FIRE = LIGHT[CRUSH_FIRE_TONE], FIRE_WHITE = TONE.white, FIRE_GREY = TONE.pale;
+const FIRE_WHITE = TONE.white, FIRE_GREY = TONE.pale;
+const rung = k => PURPLES[Math.max(0, Math.min(PURPLES.length - 1, Math.round(k)))];
 
 // How warm the scales going in have made it, 0..1: each swells in and eases
 // back, summed and bent under one.
@@ -233,10 +234,9 @@ function stir(x, y, t) {
 }
 
 // The fire: every cell of the door reads a heat -- highest at the heart,
-// falling off upward and outward, stirred by the climbing noise -- and burns where it
-// is hot enough: white at the hottest, the palest grey under that, then
-// the one purple. The whole field breathes, and
-// burns up as scales go in, in its shape and never its color.
+// falling off upward and outward, stirred by the climbing noise -- and paints
+// the rung it reaches: white, the palest grey, then down the purple ramp.
+// The whole field breathes, and burns up as scales go in.
 function drawFire(c, t) {
   const F = CRUSH_FIRE, s = t / 1000;
   const breath = 0.5 + 0.5 * Math.sin(2 * Math.PI * s / F.breathS);
@@ -245,16 +245,16 @@ function drawFire(c, t) {
     const up = DOOR_FOOT - r, side = col - DOOR_MID;
     const v = base - up * F.rise - side * side * F.side + stir(col, r + s * F.climb, s) * F.stir;
     if (v < F.dark) continue;
-    ctx.fillStyle = v > F.white ? FIRE_WHITE : v > F.grey ? FIRE_GREY : FIRE;
+    ctx.fillStyle = v > F.white ? FIRE_WHITE : v > F.grey ? FIRE_GREY : rung(F.rampAt + v * F.rampPer);
     ctx.fillRect(c.x + col * P, c.y + r * P, P, P);
   }
 }
 
 // Each scale's sparks: out of the door's foot either way, over the brick and
-// down onto the floor at the drawing's foot, white as they leave, then the
-// fire's purple, fading out as they land.
+// down onto the floor at the drawing's foot, white as they leave and cooling
+// down the purple ramp as they land.
 function drawSparks(c, t) {
-  const K = CRUSH_SPARK, floor = FURNACE.length - 1, was = ctx.globalAlpha;
+  const K = CRUSH_SPARK, floor = FURNACE.length - 1;
   for (const q of S.crushes) {
     const u = (t - q.at) / CRUSH_SPARK_MS;
     if (u < 0 || u > 1) continue;
@@ -262,12 +262,11 @@ function drawSparks(c, t) {
       const dir = i % 2 ? 1 : -1, speed = K.speed + hash(q.id * 5 + i) * K.spread;
       const x = Math.round(DOOR_MID + dir * (K.out + speed * u));
       const y = Math.round(Math.min(DOOR_FOOT - K.up - K.rise * u + K.fall * u * u, floor));
-      ctx.fillStyle = u < K.whiteFor ? FIRE_WHITE : FIRE;
-      ctx.globalAlpha = was * Math.min(1, (1 - u) / (1 - K.fadeAfter));
+      ctx.fillStyle = u < K.whiteFor ? FIRE_WHITE
+        : rung(PURPLES.length - 1 - Math.max(0, u - K.coolAfter) * K.cool);
       ctx.fillRect(c.x + x * P, c.y + y * P, P, P);
     }
   }
-  ctx.globalAlpha = was;
 }
 
 function drawCrusher() {
