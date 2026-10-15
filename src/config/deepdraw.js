@@ -66,7 +66,29 @@ export const PLINTH_OVER = 1;
 // the eye landed on the slab and not on the prop). The plinth steps down a
 // rung a course toward the floor; the prop takes the rung the slab gave up.
 export const PLINTH_TONES = { top: DEEP_GREY.stone, body: DEEP_GREY.ground };   // flat, a rung each
-export const PROP_BODY = DEEP_GREY.lit;
+// A prop's tones (the owner, 2026-10-15, option A of
+// docs/mocks/station-polish-2026-10-15/): every part on a ramp of four,
+// [hi, body, shade, deep], lit from the upper left. The thing a class trains
+// with (`H`) and its straw (`S`) a step over the frame (`F`), so the pale
+// lit edge is the brightest a prop gets and still under the kits' white. The
+// rung-8 parts (`R` light, `Q` dark, `K` paint and hoops) are the grey ramps
+// before rung 8 and the purple ones from it. A ramp step is ['g', rung] or
+// ['p', rung], a rung of the deep's grey or purple ramp.
+const pg = k => ['g', k], pp = k => ['p', DEEP_PURPLE[k]];
+const PROP_G = DEEP_GREY_RUNGS.map(pg);          // G0..G5, the six kept grey rungs
+const PROP_HI = [PROP_G[5], PROP_G[4], PROP_G[3], PROP_G[2]];
+const PROP_LO = [PROP_G[4], PROP_G[3], PROP_G[2], PROP_G[1]];
+export const PROP_TONES = {
+  ramps: { H: PROP_HI, S: PROP_HI, R: PROP_HI, F: PROP_LO, Q: PROP_LO, K: PROP_LO },
+  lit: { R: [pp('bright'), pp('glow'), pp('mid'), pp('low')], Q: [pp('glow'), pp('mid'), pp('low'), pp('dim')],
+         K: [pp('bright'), pp('glow'), pp('mid'), pp('low')] },
+  // a cell toned by hand, [before rung 8, from it]; null is nothing
+  hand: { h: [PROP_G[5], pp('bright')], r: [PROP_G[3], pp('mid')], d: [PROP_G[2], pp('low')],
+          g: [PROP_G[4], pp('glow')], z: [PROP_G[2], pp('low')], v: [pp('glow'), pp('glow')], w: [pp('mid'), pp('mid')],
+          '*': [pp('mid'), pp('bright')], '+': [null, pp('bright')], B: [pp('low'), pp('mid')],
+          1: [PROP_G[1], PROP_G[1]], 2: [PROP_G[2], PROP_G[2]], 3: [PROP_G[3], PROP_G[3]],
+          4: [PROP_G[4], PROP_G[4]], 5: [PROP_G[5], PROP_G[5]] }
+};
 // The crusher's fire (docs/mocks/crusher-fire-2026-09-24.html, option C):
 // the door's inside is one heat field. A cell's heat is the base, raised by
 // the breath and by the scales going in, less CRUSH_FIRE.rise a row up from

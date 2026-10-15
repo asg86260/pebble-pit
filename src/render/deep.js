@@ -309,16 +309,16 @@ function drawPods() {
 // own from it, its parts purple from rung 8. Where it stands is place.js's
 // (`propRect`), and what it is made of props.js's (`propCells`).
 const snap = v => Math.round(v / P) * P;
-// A prop's cell as drawn: 'g' a grey rung, 'p' a purple one, 'top' the
-// breathing light along its top edges (deep/props.js, `propCells`).
-const toneOf = (ramp, i, lit) => (ramp === 'top' ? lit : (ramp === 'p' ? PURPLES : GREYS)[i]);
+// A prop's cell as drawn: 'g' a grey rung, 'p' a purple one (deep/props.js,
+// `propCells`).
+const toneOf = (ramp, i) => (ramp === 'p' ? PURPLES : GREYS)[i];
 
 // A prop never changes but at the fork and at rung 8, so each is painted
 // once into an image of its own, a cell a cell, and drawn from there. Kept by
 // the prop and whether it is lit; it is drawn at wherever its station stands.
 const painted = new Map();
-function propImage(key, lit, light) {
-  const id = `${key}|${lit ? 8 : 0}|${light}`;
+function propImage(key, lit) {
+  const id = `${key}|${lit ? 8 : 0}`;
   let img = painted.get(id);
   if (img) return img;
   const cells = propCells(key, lit);
@@ -326,7 +326,7 @@ function propImage(key, lit, light) {
   img.width = Math.max(...cells.map(c => c[0] + 1)) * P;
   img.height = Math.max(...cells.map(c => c[1] + 1)) * P;
   const g = img.getContext('2d');
-  for (const [c, r, ramp, i] of cells) { g.fillStyle = toneOf(ramp, i, light); g.fillRect(c * P, r * P, P, P); }
+  for (const [c, r, ramp, i] of cells) { g.fillStyle = toneOf(ramp, i); g.fillRect(c * P, r * P, P, P); }
   painted.set(id, img);
   return img;
 }
@@ -357,11 +357,11 @@ function drawPlinth(st) {
   ctx.drawImage(plinthImage(b), b.x - b.step * (PLINTH_H - 1), b.y);
 }
 function drawProp(st, t) {
-  const p = place.propRect(st), lit = (st.rung || 0) >= CAPSTONE_RUNG, light = breath(t * 1000);
-  ctx.drawImage(propImage(p.key, lit, light), p.x, p.y);
+  const p = place.propRect(st), lit = (st.rung || 0) >= CAPSTONE_RUNG;
+  ctx.drawImage(propImage(p.key, lit), p.x, p.y);
   // the one prop that moves: the hexer's brew, over its pot
   for (const [c, r, ramp, i] of brewCells(p.key, lit, t)) {
-    ctx.fillStyle = toneOf(ramp, i, light);
+    ctx.fillStyle = toneOf(ramp, i);
     ctx.fillRect(p.x + c * P, p.y + r * P, P, P);
   }
 }
