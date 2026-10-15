@@ -1,0 +1,567 @@
+{
+ "title": "Station polish, option A",
+ "lede": "Every prop shaded, lit from the upper left, one purple class accent before rung 8.",
+ "base": "4e57e01b",
+ "head": "7ba9b9a3",
+ "items": [
+  {
+   "id": "deep-all",
+   "title": "deep-all",
+   "what": "the deep floor",
+   "shots": [
+    {
+     "scene": "deep-all",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light"
+    },
+    {
+     "scene": "deep-all",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark"
+    }
+   ]
+  },
+  {
+   "id": "deep-seven",
+   "title": "deep-seven",
+   "what": "the deep floor",
+   "shots": [
+    {
+     "scene": "deep-seven",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light"
+    },
+    {
+     "scene": "deep-seven",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark"
+    }
+   ]
+  },
+  {
+   "id": "party-props-a",
+   "title": "party-props-a",
+   "what": "four stations, close",
+   "shots": [
+    {
+     "scene": "party-props-a",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light"
+    },
+    {
+     "scene": "party-props-a",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark"
+    }
+   ]
+  },
+  {
+   "id": "party-props-b",
+   "title": "party-props-b",
+   "what": "four stations, close",
+   "shots": [
+    {
+     "scene": "party-props-b",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light"
+    },
+    {
+     "scene": "party-props-b",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark"
+    }
+   ]
+  },
+  {
+   "id": "party-props-c",
+   "title": "party-props-c",
+   "what": "four stations, close",
+   "shots": [
+    {
+     "scene": "party-props-c",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light"
+    },
+    {
+     "scene": "party-props-c",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark"
+    }
+   ]
+  },
+  {
+   "id": "crate",
+   "title": "crate",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-a",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      140,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-a",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      140,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "brawler-4",
+   "title": "brawler-4",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-a",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      620,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-a",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      620,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "sword-8",
+   "title": "sword-8",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-a",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      1090,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-a",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      1090,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "monk-8",
+   "title": "monk-8",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-a",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      1580,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-a",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      1580,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "martial-4",
+   "title": "martial-4",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-b",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      140,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-b",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      140,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "ranger-8",
+   "title": "ranger-8",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-b",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      620,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-b",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      620,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "assassin-8",
+   "title": "assassin-8",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-b",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      1090,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-b",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      1090,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "hexer-8",
+   "title": "hexer-8",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-b",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      1580,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-b",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      1580,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "sapper-8",
+   "title": "sapper-8",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-c",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      140,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-c",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      140,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "mage-8",
+   "title": "mage-8",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-c",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      620,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-c",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      620,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "bard-8",
+   "title": "bard-8",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-c",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      1090,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-c",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      1090,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  },
+  {
+   "id": "hexer-4",
+   "title": "hexer-4",
+   "what": "the prop at 3x",
+   "shots": [
+    {
+     "scene": "party-props-c",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "light",
+     "crop": [
+      1580,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    },
+    {
+     "scene": "party-props-c",
+     "window": [
+      2000,
+      963
+     ],
+     "theme": "dark",
+     "crop": [
+      1580,
+      790,
+      240,
+      140
+     ],
+     "zoom": 3
+    }
+   ]
+  }
+ ]
+}
