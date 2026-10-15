@@ -1,0 +1,9 @@
+{ "title": "A spaced decimal point", "lede": "The dot in counts has a pixel of room each side.",
+  "base": "791fccf1", "head": "0661cc7a",
+  "items": [ { "id": "decimal", "title": "A spaced decimal point", "what": "The dot in counts has a pixel of room each side.",
+    "shots": [
+      { "scene": "boards", "window": [1200, 800], "crop": [1060, 640, 140, 160], "zoom": 4, "theme": "light", "label": "light",
+        "setup": "(window.__grant({ shards: 1100000, spores: 2300000, sparks: 450000, dust: 1000000 }), window.__fast(1))" },
+      { "scene": "boards", "window": [1200, 800], "crop": [1060, 640, 140, 160], "zoom": 4, "theme": "dark", "label": "dark",
+        "setup": "(window.__grant({ shards: 1100000, spores: 2300000, sparks: 450000, dust: 1000000 }), window.__fast(1))" }
+    ] } ] }
