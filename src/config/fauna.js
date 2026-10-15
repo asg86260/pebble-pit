@@ -110,10 +110,16 @@ export const FAUNA_TURNS = {
 // heading that turns gently at random -- the turn rate a damped random walk,
 // kicked up to `jitter` rad/s a second either way, eased off by `damp` a
 // second and held under `turn` rad/s -- so its path is long slow curves, not
-// a line or a zigzag. Within `edge` rows of the ceiling (row `top`) or of the
-// floor's clearance (FAUNA_MOTION.clear) it is turned away, up to `shove`
+// a line or a zigzag. Under the wander it is always bound for one edge, the
+// ceiling (row `top`) or the floor's clearance (FAUNA_MOTION.clear), turned
+// toward a slope of `aim` that way at up to `seek` rad/s, and bound for the
+// other once within `edge` rows of it: left to the wander alone a slot spent
+// minutes in the middle rows and the top and bottom tenths of the water
+// almost never (the owner, 2026-10-14: "creatures STILL do not take up the
+// whole height of the deep"). The edge is turned away from, up to `shove`
 // rad/s the nearer it is, unless it is already heading off by more than
-// `facing` (the sine of its heading); it is never let steeper than `steep`,
+// `facing` (the sine of its heading); the band is a few rows, so the turn is
+// made near the edge rather than a sixth of the deep short of it. It is never let steeper than `steep`,
 // turned back at `level` rad/s, so it always reads as swimming along rather
 // than sinking. It faces the way it travels along, turning round only once
 // that is clearly one way, past `face` (the cosine), so a heading near the
@@ -125,7 +131,7 @@ export const FAUNA_TURNS = {
 // last `held` of them are kept.
 export const FAUNA_WANDER = {
   jitter: 0.9, damp: 0.25, turn: 0.3,
-  edge: 16, top: 1, shove: 0.8, facing: 0.35,
+  edge: 4, top: 1, shove: 1, facing: 0.35, seek: 0.12, aim: 0.5,
   steep: 0.82, level: 0.6, face: 0.15, start: 0.3,
   step: 1 / 60, keep: 2, held: 64,
 };
