@@ -31,6 +31,7 @@ import { nextMeal, turned, windowS, nowS } from './deep/meals.js';
 import { startleFauna, faunaWhen } from './deep/fauna.js';
 import { startleStream } from './deep/flow.js';
 import { KINDS } from './render/fish.js';
+import { nextWave } from './render/deepwave.js';
 import { buildStation, nextSlot } from './deep/party.js';
 import { lookAt } from './deep/rails.js';
 import { press as pressBuildButton } from './deep/buildbutton.js';
@@ -847,6 +848,19 @@ const deepScenes = {
       deepYard({ stage: 1, wound: 0.33,
                  party: [cast('brawler', 2), cast('ranger', 2), cast('sapper', 2), cast('mage', 2)] });
       lookDeep((slotAt(0) + slotAt(3)) / 2);
+    } },
+  // The swell (render/deepwave.js): the clock turned on to just before the
+  // next medium or strong wave's middle reaches the window's middle, a
+  // second's run of the shot tool short of it (`window.__waveLead` seconds
+  // ahead, for a film from further off).
+  'deep-wave': { about: 'the deep', say: 'a wave of the swell about to cross the window\'s middle, pushing the stars and silt right',
+    run: () => {
+      deepYard({ stage: 1, wound: 0.33,
+                 party: [cast('brawler', 2), cast('ranger', 2), cast('sapper', 2), cast('mage', 2)] });
+      lookDeep((slotAt(0) + slotAt(3)) / 2);
+      const lead = window.__waveLead ?? 1.3, mid = (S.camX + S.viewW / 2) / P;
+      const w = nextWave(mid, now() / 1000 + lead, 1);
+      if (w) advance(w.at * 1000 - lead * 1000 - now());
     } },
   'deep-seven': { about: 'the deep', say: 'every slot on the deep floor taken: three, the middle one, three',
     run: () => {

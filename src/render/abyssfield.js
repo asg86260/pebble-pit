@@ -72,14 +72,17 @@ function surface(cols, rows) {
 }
 // A column's two waves' sines and cosines, and its halves of the cell's
 // hash and its patch's (`seeth` is the xor of a column's part and a row's),
-// kept between frames.
+// and the column and lift its stars are carried to and their brightening
+// (`shift`), kept between frames.
 let cols4 = null;
 function colScratch(n) {
   if (!cols4 || cols4.s.length < n)
     cols4 = { s: new Float64Array(n), c: new Float64Array(n), s2: new Float64Array(n), c2: new Float64Array(n),
-              h: new Int32Array(n), p: new Int32Array(n) };
+              h: new Int32Array(n), p: new Int32Array(n),
+              to: new Int32Array(n), up: new Int32Array(n), g: new Float64Array(n) };
   return cols4;
 }
+const SHIFT = new Float64Array(3);
 
 // Columns `from`..`to` and rows `top`..`bottom` of the screen's world, the
 // liquid's surface at `line` in the pit's own rows, and this place's rows
@@ -201,37 +204,49 @@ export function abyssRung(x, y, { line, t, rampLen, magicLen, deep = 0, magicSha
 // sky than the pit's; `fade` breathes each star by opacity at its top rung
 // instead of stepping it up the ramp. A rung a ramp holds as null is left
 // unpainted.
+// `shift(c, out)` carries the stars: for world column `c`, how many cells
+// right and up a star seated there is drawn, and how much brighter
+// (render/deepwave.js); `reach` is how far, in cells, left of, right of and
+// under the window a star may be carried in from. The field is read where
+// each star is seated and the star written where it is carried to, so every
+// star moves whole cells and none is lost or doubled on the way.
 export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, deep = 0, tones, magic, t,
-                                  veil = true, magicShare = 1, thin = 16, dim = 0, fade = false }) {
+                                  veil = true, magicShare = 1, thin = 16, dim = 0, fade = false,
+                                  shift = null, reach = null }) {
   const cols = Math.max(0, Math.round((to - from) / P)), rows = Math.max(0, Math.ceil((bottom - top) / P));
   if (!cols || !rows) return;
   const data = surface(cols, rows);
   FADE = fade && !globalThis.__pinInk;
   const a = flow(t);
   const grey = packed(tones), purple = packed(magic);
+  const L = shift ? reach.left : 0, R = shift ? reach.right : 0, D = shift ? reach.down : 0;
   // Both waves' phases are a column's part plus a row's part (the drags
   // each ride on one of the two), so each wave's sine and cosine are taken
   // once a column and once a row, and a cell puts its two waves together
   // from those: sin(u + v) = sin u cos v + cos u sin v.
-  const n = Math.ceil((to - from) / P);
+  const n = Math.ceil((to - from) / P) + L + R;
   const col = colScratch(n);
-  for (let x = from, i = 0; x < to; x += P, i++) {
+  for (let x = from - L * P, i = 0; i < n; x += P, i++) {
     const c = x / P, dragY = dragCol(c, a);
     const u = c * ABYSS_FLOW_COL + dragY * ABYSS_FLOW_ROW * ABYSS_FLOW_ASPECT;
     const u2 = c * ABYSS_FLOW_COL2 + dragY * ABYSS_FLOW_ROW2;
     col.s[i] = Math.sin(u); col.c[i] = Math.cos(u);
     col.s2[i] = Math.sin(u2); col.c2[i] = Math.cos(u2);
     col.h[i] = c * HASH_C; col.p[i] = (c >> 3) * HASH_C;
+    if (shift) {
+      shift(c, SHIFT);
+      col.to[i] = i - L + Math.round(SHIFT[0]); col.up[i] = Math.round(SHIFT[1]); col.g[i] = 1 + SHIFT[2];
+    } else { col.to[i] = i; col.up[i] = 0; col.g[i] = 1; }
   }
-  const { s: sU, c: cU, s2: sU2, c2: cU2, h: hU, p: pU } = col;
-  for (let y = top, j = 0; y < bottom; y += P, j++) {
+  const { s: sU, c: cU, s2: sU2, c2: cU2, h: hU, p: pU, to: toCol, up: lift, g: glow } = col;
+  for (let y = top, j = 0; j < rows + D; y += P, j++) {
     const py = y + rowShift;                     // where this row is in the pit's liquid
     const r = py / P, dragX = dragRow(r, a);
     const depth = Math.min(1, Math.max(0, (py - line) / (P * 32)) + deep);
     const v = dragX * ABYSS_FLOW_COL + r * ABYSS_FLOW_ROW * ABYSS_FLOW_ASPECT - a * ABYSS_FLOW_DRIFT;
     const v2 = dragX * ABYSS_FLOW_COL2 + r * ABYSS_FLOW_ROW2 - a * ABYSS_FLOW_DRIFT2;
     const sV = Math.sin(v), cV = Math.cos(v), sV2 = Math.sin(v2), cV2 = Math.cos(v2);
-    const at = j * cols, hV = (r * HASH_R) | 0, pV = ((r >> 3) * HASH_R) | 0;
+    const hV = (r * HASH_R) | 0, pV = ((r >> 3) * HASH_R) | 0;
     CELL[DEPTH] = depth; CELL[T] = t;
     for (let i = 0; i < n; i++) {
       // Most of the water is dark, and most of that is known dark from the
@@ -243,7 +258,11 @@ export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, dee
       STAR_A = 1;
       const rung = rungOf(h, PATCH_OF[Math.abs(pU[i] ^ pV) % 997], tones.length, magic.length, magicShare, thin, dim);
       const px = rung > 0 ? (veil ? grey[rung] : 0) : rung < 0 ? purple[-rung] : 0;
-      if (px) data[at + i] = STAR_A >= 1 ? px : ((px & 0x00ffffff) | (Math.round(STAR_A * ((px >>> 24) & 255)) << 24)) >>> 0;
+      if (!px) continue;
+      const ti = toCol[i], tj = j - lift[i];
+      if (ti < 0 || ti >= cols || tj < 0 || tj >= rows) continue;
+      const k = FADE ? Math.min(1, STAR_A * glow[i]) : STAR_A;
+      data[tj * cols + ti] = k >= 1 ? px : ((px & 0x00ffffff) | (Math.round(k * ((px >>> 24) & 255)) << 24)) >>> 0;
     }
   }
   octx.putImageData(buf, 0, 0);
