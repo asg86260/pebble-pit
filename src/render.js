@@ -52,7 +52,7 @@ import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMo
 import { ripple, deepCamera, canGoDown, gliding } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb, drawBarrier, drawFocusLines } from './render/serpent.js';
-import { drawFish, drawFishFar, drawFishNear } from './render/fish.js';
+import { drawFish, drawFishNear } from './render/fish.js';
 import { drawDeepZones, drawDeepFauna } from './render/fauna.js';
 import { drawFightNumbers } from './render/fightnums.js';
 import { drawStationStatuses } from './render/statusicons.js';
@@ -205,7 +205,6 @@ const LAYERS = [
   { name: 'deep zones', draw: drawDeepZones },
   { name: 'deep water', draw: drawDeepWater },
   { name: 'deep motes', draw: drawDeepMotes },
-  { name: 'deep stream far', draw: drawFishFar },   // the giant and the far and middle crossings, behind all of it
   // The zones' creatures, in the world in front of the far stream and behind
   // the portal, the stations, the serpent and the bar, so nothing fought or
   // read is ever under one.
@@ -317,7 +316,7 @@ export { LAYERS };
 
 // The deep's fish are bystanders to every scene: they fade out with the
 // haulers while one holds.
-const FISH = new Set(['deep stream far', 'deep fauna', 'deep fish', 'deep stream near']);
+const FISH = new Set(['deep fauna', 'deep fish', 'deep stream near']);
 // The layers after the wash that are still the yard's background: drawn at
 // the receded share of their ink rather than washed.
 const AFTER_WASH = new Set(['fight numbers', 'status posts', 'air near', 'pot labels']);
@@ -342,7 +341,7 @@ export const asPicture = on => { picture = on; };
 // the deep's are not. A glide draws whichever half the camera is in at that
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep zones', 'deep water', 'deep fauna', 'deep motes', 'deep portal', 'focus lines', 'deep floor', 'deep stations', 'hung kit', 'finale deep', 'deep bed',
-                      'deep fish', 'deep stream far', 'deep stream near', 'deep sight', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'charge', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
+                      'deep fish', 'deep stream near', 'deep sight', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'charge', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
                       'fight numbers', 'status posts']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site

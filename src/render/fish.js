@@ -12,13 +12,13 @@
 import { now } from '../clock.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
-import { GREYS, PURPLES, LIGHT, dimmed } from './deeptones.js';
+import { GREYS, PURPLES, dimmed } from './deeptones.js';
 import { coilLine } from '../deep/place.js';
 import { mealNow, nearAt, nearAll, eatenBefore, nowS, BITE_BEFORE, jawOpen, jawGap } from '../deep/meals.js';
 import { P, SNOUT, MEAL_SWIM_S, MEAL_GULP_S, MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SQUEEZE,
-         FLOW_MARGIN, FLOW_GIANT_S, FLOW_GIANT_SPEED, FLOW_GIANT_LEN, FLOW_GIANT_R, FLOW_GIANT_AT, FLOW_KINDS, FLOW_LENGTHS, SERPENT_PHASES,
-         FAUNA_SMEAR, FLOW_MIDDLE_DIM } from '../config.js';
-import { nearY, crossings, farCell, farY, water, streamPose, streamLead } from '../deep/flow.js';
+         FLOW_KINDS, FLOW_LENGTHS, SERPENT_PHASES,
+         FAUNA_SMEAR } from '../config.js';
+import { nearY, streamPose, streamLead } from '../deep/flow.js';
 import { smoothstep as ease } from '../motion.js';
 
 // The mock's tones, on the deep's own ramps.
@@ -256,55 +256,6 @@ export function drawFish() {
   drawReacting(meal.kind, put, t + streamLead('n' + meal.i, meal.kind, t), pose, then);
 }
 
-// --- the stream -----------------------------------------------------------------
-// Drawn on the glass rather than in the world (deep/flow.js places them).
-// The middle crossings a few rungs down their own tones, never under the
-// faintest mark the water shows; the far ones and the giant one flat dim
-// purple, far by their tone alone.
-const darker = new Map();
-for (const c of [...GREYS, ...PURPLES]) darker.set(c, dimmed(c, FLOW_MIDDLE_DIM));
-const FAR = LIGHT.dim, GIANT = LIGHT.dim;
-const toneAt = (d, c) => (d === 2 ? c : d === 1 ? (darker.get(c) || c) : FAR);
-
-function onGlass(draw) {
-  if (S.view !== 'deep' || !S.snatched) return;
-  ctx.save();
-  ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  draw();
-  ctx.restore();
-}
-
-function drawCrossing(c, t) {
-  const cell = farCell(c), y = farY(c, t);
-  const put = (lx, ly, tone) => {
-    ctx.fillStyle = toneAt(c.d, tone);
-    ctx.fillRect(Math.round((c.x - c.dir * lx * cell) / cell) * cell, Math.round((y + ly * cell) / cell) * cell, cell, cell);
-  };
-  const [pose, then] = posesOf('f' + c.i, c.kind, t);
-  drawReacting(c.kind, put, t + c.at + streamLead('f' + c.i, c.kind, t), pose, then);
-}
-
-// Behind everything in the deep: the giant, then the far and middle crossings.
-export function drawFishFar() {
-  onGlass(() => {
-    const t = now() / 1000, { top, bottom } = water();
-    const len = FLOW_GIANT_LEN, gx = -len - FLOW_MARGIN + (t % FLOW_GIANT_S) * FLOW_GIANT_SPEED;
-    if (gx < S.W + FLOW_MARGIN) {
-      // On the world's own cell, far by its tone alone.
-      const mid = top + (bottom - top) * FLOW_GIANT_AT, cell = Math.max(2, Math.round(P * S.zoom)), n = Math.ceil(len / cell);
-      const x0 = Math.round(gx / cell);
-      for (let i = 0; i < n; i++) {
-        const r = FLOW_GIANT_R * Math.sin(Math.PI * i / n);
-        const y0 = Math.round((mid - r / 2) / cell), y1 = Math.max(y0 + 1, Math.round((mid + r / 2) / cell));
-        for (let j = y0; j < y1; j++) {
-          ctx.fillStyle = GIANT;
-          ctx.fillRect((x0 + i) * cell, j * cell, cell, cell);
-        }
-      }
-    }
-    for (const c of crossings(d => d < 2, t)) drawCrossing(c, t);
-  });
-}
 // In front of the serpent: the near creatures, in the world, but the ones the
 // serpent has eaten and the one it is eating.
 export function drawFishNear() {

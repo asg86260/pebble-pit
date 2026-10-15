@@ -668,14 +668,13 @@ TESTS.push(['deep: a click on a creature startles it, and it shakes loose a hand
   ];
 }]);
 
-// A stream creature under a real pointer (deep/flow.js): one of the far
-// crossings, up over the fight where neither the serpent nor a station takes
-// the click first. It reacts, and shakes loose the same handful.
+// A stream creature under a real pointer (deep/flow.js): a near one, off
+// where neither the serpent nor a station takes the click first. It reacts, and shakes loose the same handful.
 TESTS.push(['deep: a click on a stream creature makes it react, and it shakes loose a handful of scales', async () => {
   deepYard();
   window.__view('deep');
   run(VIEW_GLIDE_S + 0.5);
-  const seen = s => !s.near && s.clickable && s.x > S.camX + P * 10 && s.x < S.camX + S.viewW - P * 10;
+  const seen = s => s.near && s.clickable && s.x > S.camX + P * 10 && s.x < S.camX + S.viewW - P * 10;
   let s = null;
   for (let i = 0; i < 60 && !(s = window.__stream().find(seen)); i++) run(4);
   const sinking = S.sinking.length;
@@ -683,7 +682,7 @@ TESTS.push(['deep: a click on a stream creature makes it react, and it shakes lo
   const shaken = S.sinking.length - sinking;
   const after = s && window.__stream().find(g => g.key === s.key);
   return [
-    ok(s, 'a crossing came by on the glass', s ? `kind ${s.kind} at ${Math.round(s.x)},${Math.round(s.y)}` : 'none'),
+    ok(s, 'a stream creature came by', s ? `kind ${s.kind} at ${Math.round(s.x)},${Math.round(s.y)}` : 'none'),
     ok(after && after.reacting, 'the click makes it react'),
     ok(shaken === BIRD_DUST, "and it shakes loose the bird's handful", `${shaken}`)
   ];

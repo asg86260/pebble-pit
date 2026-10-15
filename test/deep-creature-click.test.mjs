@@ -342,19 +342,19 @@ group('a new game finds every creature home', async () => {
 // --- the stream ---------------------------------------------------------------
 // Every near creature swimming past, clicked until each of the eight kinds
 // has been: its handful and its reaction, and it swims on along its path.
-group('a click on a stream creature: its handful and its own reaction, near and far, every kind', async () => {
+group('a click on a stream creature: its handful and its own reaction, every kind', async () => {
   deepStream();
-  const seen = new Map(), far = [];
+  const seen = new Map();
   // the stream is sparse (one every FLOW_NEAR_EVERY_S), so all eight take a while to come by
   for (let k = 0; k < 60 * 15 && seen.size < FLOW_KINDS; k++) {
     for (const s of streamReport()) {
-      if (!s.clickable || (s.near ? seen.has(s.kind) : far.length) || !within(s)) continue;
+      if (!s.clickable || seen.has(s.kind) || !within(s)) continue;
       const { r: hit, shaken } = shedBy(() => startleStream(s.x, s.y));
       const now0 = streamReport().find(g => g.key === s.key);
       run(FLOW_REACT[s.kind].end * 0.4);
       const mid = streamReport().find(g => g.key === s.key);
       const entry = { kind: s.kind, hit, shaken, reacting: now0 && now0.reacting, mid: mid && mid.reacting };
-      if (s.near) seen.set(s.kind, entry); else far.push(entry);
+      seen.set(s.kind, entry);
       break;
     }
     run(1);
@@ -363,8 +363,7 @@ group('a click on a stream creature: its handful and its own reaction, near and 
   return [
     ok(seen.size === FLOW_KINDS, 'every one of the eight kinds came by and was clicked', [...seen.keys()].join(' ')),
     ok(all.every(e => e.hit && e.shaken === FAUNA_SCALES), "each shakes loose the bird's handful", say),
-    ok(all.every(e => e.reacting && e.mid), 'and plays its reaction', say),
-    ok(far.length && far[0].hit && far[0].shaken === FAUNA_SCALES && far[0].reacting, 'a far crossing too', JSON.stringify(far[0] || null))
+    ok(all.every(e => e.reacting && e.mid), 'and plays its reaction', say)
   ];
 }, { reload: false });
 

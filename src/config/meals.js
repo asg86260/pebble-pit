@@ -43,29 +43,9 @@ export const MEAL_CROSS_RISE = 8;
 export const MEAL_KNOBS = [];
 
 // The deep's stream (the owner's C, docs/mocks/deep-flow-2026-10-03.html): the
-// eight creatures crossing the glass both ways at three depths, far to near --
-// how big a cell is against the deep's own, how fast they cross (screen pixels
-// a second), how much of the camera's pan they follow, and what share of the
-// stream each depth is. One sets off every FLOW_EVERY_S on average, from off
-// the glass: slow as they cross, a few at a time is already a busy deep (one
-// every 120 s had two or three on the glass at once, the slowest taking
-// minutes to cross; one every 240 s is about one). A
-// giant crosses far behind everything every FLOW_GIANT_S.
-export const FLOW_EVERY_S = 240;
-export const FLOW_CELL = [0.35, 0.55, 0.85];
-export const FLOW_SPEED = [5, 9, 14];
-export const FLOW_PARALLAX = [0.25, 0.55, 0.85];
-export const FLOW_SHARE = [0.55, 0.45, 0];   // the near depth is the world's stream, below
-export const FLOW_MARGIN = 160;       // screen pixels off the glass a crossing starts and ends
-export const FLOW_GIANT_S = 300;   // longer than its crossing (the glass and twice the margin, at FLOW_GIANT_SPEED)
-export const FLOW_GIANT_SPEED = 6;
-// Its body, in screen pixels: this long, this deep at its thickest (a sine
-// along its length), its middle this far down the water.
-export const FLOW_GIANT_LEN = 320;
-export const FLOW_GIANT_R = 46;
-export const FLOW_GIANT_AT = 0.3;
-// The middle depth's crossings are drawn this many rungs down their own tones.
-export const FLOW_MIDDLE_DIM = 4;
+// creatures that swim the water. The far and middle crossings on the glass and
+// the giant behind them were taken out (the owner, 2026-10-15: no big shadows
+// in the sky); what is left is the near stream, below.
 // The near creatures swim the world, not the glass, so the serpent can take
 // one that is passing (DESIGN.md, "The serpent eats to heal"): one sets off
 // every FLOW_NEAR_EVERY_S from FLOW_NEAR_OUT beyond a wall of the deep, at
@@ -82,7 +62,7 @@ export const FLOW_NEAR_EVERY_S = 25;
 export const FLOW_NEAR_SPEED = 40;
 // every this-many-th swims away from the mouth; 0, none: one going the other
 // way took the slot of one bound for the mouth, so it doubled the longest
-// wait for a meal, and the far crossings already go both ways
+// wait for a meal
 export const FLOW_NEAR_AWAY = 0;
 export const FLOW_NEAR_JITTER = 0.25;  // how far a start strays from its slot
 // Away from the mouth a near creature swims anywhere in the water the window
