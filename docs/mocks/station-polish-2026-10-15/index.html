@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Station Polish</title>
+<style>
+  :root { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
+  .wrap { margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; }
+  .wrap > p, .wrap > ul, .wrap > h1 { max-width: 110ch; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h2 { font-size: 15px; margin: 28px 0 8px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
+  h3 { font-size: 14px; margin: 0 0 6px; }
+  p, li { max-width: 110ch; }
+  p { margin: 0 0 8px; }
+  ul { margin: 0 0 8px; padding-left: 20px; }
+  .dim { color: var(--dim); }
+  canvas { image-rendering: pixelated; display: block; background: #000; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 10px 0; }
+  button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 3px 9px; cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .cards { display: grid; gap: 18px; }
+  .card { background: var(--card); border: 1px solid var(--rule); padding: 10px 12px 12px; }
+  .card .note { font-size: 12px; color: var(--dim); margin-bottom: 8px; }
+  .grid { display: grid; grid-template-columns: max-content repeat(3, max-content); gap: 6px 14px; align-items: start; overflow-x: auto; }
+  .grid .hd { font-size: 12px; font-weight: bold; }
+  .grid .rl { font-size: 11px; color: var(--dim); writing-mode: vertical-rl; transform: rotate(180deg); align-self: center; }
+  .strip { margin: 6px 0 14px; }
+  .strip .lbl { font-size: 12px; margin-bottom: 3px; }
+  .stripbox { overflow-x: auto; border: 1px solid var(--rule); }
+  .sw { display: inline-flex; gap: 4px; align-items: center; margin-right: 12px; font-size: 12px; }
+  .sw i { width: 14px; height: 14px; display: inline-block; border: 1px solid var(--rule); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Station polish: the eleven props, two directions</h1>
+<p>The deep's eleven props (src/deep/props.js <code>PROPS</code>, as on main at f4928882) next to two polished redraws. Each prop is drawn
+on its plinth, before rung 8 and at rung 8, on black water, in the deep palette only: six greys, five purples. White is left
+for the kits and bodies.</p>
+<ul>
+  <li><b>A, cleaner and iconic.</b> The same silhouettes, tidied up. Each part gets three tones: a lit edge on the top and left, the body, and a shadow edge on the right and bottom. The thing a class trains with (bag, bell, target, pot) is a step lighter than its frame. Each prop has one small purple class accent, and nothing else is drawn on it.</li>
+  <li><b>B, richer and more detailed.</b> A's silhouettes with a fourth tone: a deep corner, a cast shadow under an overhang, and a wider shadow side on round things. B also adds material detail (wood grain, nails, bolts, staves, straw texture, stitching, a ladle, staff lines, a folded page corner) and a little character (the dummy's painted target and stitched face, quillons on the swords, a ribbon with two tails).</li>
+</ul>
+<p>The light: both options are lit from the upper left with the grey rungs. Today's purple light along every top edge is gone, so purple stays the class accent.
+Before rung 8 the accent is the one small mid-purple mark each class carries: pommels, clapper, ribbon, bullseye, dagger pommel, brew, spark, bookmark, note head. At rung 8 that mark turns bright, and the parts that already turn purple today (tape, guards, bell, staves, rings, belt and dagger, handles, hoops, text, note) turn purple with their shading kept.</p>
+<p class="dim"><b>What this mock cannot show:</b> the fighter standing at the post (the dotted 3x3 square marks where the body stands, five cells right of the prop and seven for the Swordsman); the kits in their hands; the scale heaps beside a station; the kit marks, rung pips and the works stacked over a station; the build scaffold; the motes and weather drifting past; and the light page (the deep is drawn inverted there). Colors here are the abyss ramps' raw tones, not the dark page's mapped ones. Only the hexer's bubble moves, on the game's own beat (BREW).</p>
+<div>
+  <span class="sw"><i style="background:#121216"></i>G1</span><span class="sw"><i style="background:#26262c"></i>G2</span>
+  <span class="sw"><i style="background:#42424a"></i>G3</span><span class="sw"><i style="background:#6e6e78"></i>G4</span>
+  <span class="sw"><i style="background:#b4b4c0"></i>G5</span>
+  <span class="sw"><i style="background:#1b112c"></i>Pa</span><span class="sw"><i style="background:#2d1d47"></i>Pb</span>
+  <span class="sw"><i style="background:#412465"></i>Pc</span><span class="sw"><i style="background:#5c2ba6"></i>Pd</span>
+  <span class="sw"><i style="background:#9b5de5"></i>Pe</span>
+</div>
+
+<h2>The set, at game scale (a cell is 6 px, stations 49 cells apart)</h2>
+<div id="strips"></div>
+
+<h2>Each prop, close up</h2>
+<div class="bar">zoom
+  <button data-z="12">2x</button><button data-z="18" aria-pressed="true">3x</button><button data-z="24">4x</button>
+</div>
+<div class="cards" id="cards"></div>
+</div>
+
+<script id="props-data">
+// --- the data: the build copies this ---------------------------------------
+// A prop is rows of cells, the bottom row standing on the plinth.
+// Materials, shaded by the rule in `shade` below (light from the upper left):
+//   H  the trained-with thing (bag, bell, blade, target, pot)   ramp G5 G4 G3 G2
+//   F  frame, timber, iron stand                                ramp G4 G3 G2 G1
+//   S  straw or sacking (B dithers it)                          ramp as H
+//   R  a rung-8 part on H's ramp: from rung 8 the purple ramp   Pe Pd Pc Pb
+//   Q  a rung-8 part on F's ramp: from rung 8                   Pd Pc Pb Pa
+//   K  paint, tape, hoops: a rung-8 part dark on F's ramp,
+//      from rung 8 the bright purple ramp                       Pe Pd Pc Pb
+// Cells written by hand:
+//   1-5 a grey (G1..G5)       h r d  an R cell's hi / shade / deep
+//   g z a Q cell's hi / shade  v w   purple Pd / Pc, always
+//   *  the class accent: Pc, and Pe from rung 8
+//   +  nothing, and Pe from rung 8
+//   B  the brew (hexer): Pb, and Pc from rung 8; the bubble rises off it
+//   .  nothing
+const DATA = {
+  crate: {
+    note: 'Below the fork: a crate of the gear, still packed.',
+    A: { rows: [
+      '..S..S.S...S..',
+      '.SSSSSSSSSSS..',
+      'FFFFFFFFFFFFFF',
+      'FHHHHHHHHHHFFF',
+      'FHHHHHHHHHFFHF',
+      'F22222222FF22F',
+      'FHHHHHHHFFHHHF',
+      'FHHHHHHFFHHHHF',
+      'F22222FF22222F',
+      'FHHHHFFHHHHHHF',
+      'FHHHFFHHHHHHHF',
+      'FHHFFHHHHHHHHF',
+      'FFFFFFFFFFFFFF'] },
+    B: { rows: [
+      '..S....S...S..',
+      '..SS.S.SS.SS..',
+      '.SSS3SSSS3SSS.',
+      '5FFFFFFFFFFFF5',
+      'FHH3HHHHHHHFFF',
+      'FHHHHHH3HHFFHF',
+      'F11111111FF11F',
+      'FHH3HHHHFFHHHF',
+      'FHHHHHHFFH3HHF',
+      'F11111FF11111F',
+      'FHHHHFFHHH3HHF',
+      'FH3HFFHHHHHHHF',
+      'FHHFFHHHH3HHHF',
+      '5FFFFFFFFFFFF5'] }
+  },
+  brawler: {
+    note: 'A heavy bag on a chain from a gallows arm, taped at both ends.',
+    A: { rows: [
+      'FFFFFFFFFFFFFF..',
+      'FFFFFFFFFFFFFF..',
+      'FFFF.......g....',
+      'FFF........z....',
+      'FF........Q*Q...',
+      'FF......KKKKKKK.',
+      'FF.....HHHHHHHHH',
+      'FF.....KKKKKKKKK',
+      'FF.....HHHHHHHHH',
+      'FF.....HHHHHHHHH',
+      'FF.....HHHHHHHHH',
+      'FF.....HHHHHHHHH',
+      'FF.....HHHHHHHHH',
+      'FF.....KKKKKKKKK',
+      'FF.....HHHHHHHHH',
+      'FF......KKKKKKK.',
+      'FFFF............',
+      'FFFFFF..........'] },
+    B: { rows: [
+      'FFFFFFFFFFFFFF..',
+      'FFFF2FFFFF2FFF..',
+      'FFF5.......g....',
+      'FFF........z....',
+      'FF........Q*Q...',
+      'FF......KKKKKKK.',
+      'FF.....H55HHHH33',
+      'FF.....KKKKKKKKK',
+      'FF.....H5HHHHH33',
+      'FF.....H5HHHHH33',
+      'FF.....HHHHHHH33',
+      'FF.....HHHHHHH32',
+      'FF.....HHHHHHH32',
+      'FF.....KKKKKKKKK',
+      'FF.....HHHHHH332',
+      'FF......KKKKKKK.',
+      'FFFF............',
+      'FFFFFF..........'] }
+  },
+  sword: {
+    note: 'Two swords hilt-up in a rack, the third slot empty (his is in his hand).',
+    A: { rows: [
+      '....**....**........',
+      '....RR....RR........',
+      '....RR....RR........',
+      '...RRRR..RRRR.......',
+      '....HH....HH........',
+      '....HH....HH........',
+      'FFFFHHFFFFHHFFFF..FF',
+      'FFFFHHFFFFHHFFFFFFFF',
+      'FF..HH....HH......FF',
+      'FF..HH....HH......FF',
+      'FF..HH....HH......FF',
+      'FF..HH....HH......FF',
+      'FF...H.....H......FF',
+      'FFFFFFFFFFFFFFFFFFFF',
+      'FF................FF',
+      'FFF..............FFF'] },
+    B: { rows: [
+      '....**....**........',
+      '....Rr....Rr........',
+      '....rR....rR........',
+      '...RRRR..RRRR.......',
+      '...rHHr..rHHr.......',
+      '....H3....H3........',
+      'FFFFHHFFFFHHFFFF..FF',
+      'F5FFHHFF5FHHFFFF115F',
+      'FF..H3....H3......FF',
+      'FF..HH....HH......FF',
+      'FF..H3....H3......FF',
+      'FF..HH....HH......FF',
+      'FF...H.....H......FF',
+      'F5FFFFFFFFFFFFFFFF5F',
+      'FF................FF',
+      'FFF..............FFF'] }
+  },
+  monk: {
+    note: 'A bell hung in a little frame over a woven mat.',
+    A: { rows: [
+      'FF..................FF',
+      'FFFFFFFFFFFFFFFFFFFFFF',
+      '.FFFFFFFFFFFFFFFFFFFF.',
+      '..FF......gg......FF..',
+      '..FF.....RRRR.....FF..',
+      '..FF....RRRRRR....FF..',
+      '..FF...RRRRRRRR...FF..',
+      '..FF...RRRRRRRR...FF..',
+      '..FF...RRRRRRRR...FF..',
+      '..FF...RRRRRRRR...FF..',
+      '..FF..RRRRRRRRRR..FF..',
+      '..FF.RRRRRRRRRRRR.FF..',
+      '..FF......**......FF..',
+      '..FF..............FF..',
+      '.4FF44444444444444FF4.',
+      '33FF33333333333333FF33'] },
+    B: { rows: [
+      '4F..................F4',
+      'FFFFFFFFFFFFFFFFFFFFFF',
+      '.FF2FFFFFFFFFFFFFF2FF.',
+      '..FF......gz......FF..',
+      '..FF.....hhRr.....FF..',
+      '..FF....hhRRRr....FF..',
+      '..FF...RhRRRRrr...FF..',
+      '..FF...RhRRRRrr...FF..',
+      '..FF...RhRRRRrr...FF..',
+      '..FF...RhRRRRrd...FF..',
+      '..FF..rrrrrrrrrd..FF..',
+      '..FF.RhhRRRRRRRrd.FF..',
+      '..FF......**......FF..',
+      '..FF......33......FF..',
+      '.4FF43434343434343FF4.',
+      '34FF34343434343434FF34'] }
+  },
+  martial: {
+    note: 'Three staves stood in a rack, one short; a ribbon on the tall one.',
+    A: { rows: [
+      '..55..........',
+      '..RR..........',
+      '..RR......55..',
+      '.*RR......RR..',
+      '**RR......RR..',
+      '*.RR..55..RR..',
+      '..RR..RR..RR..',
+      '..RR..RR..RR..',
+      'FFRRFFRRFFRRFF',
+      'F.RR..RR..RR.F',
+      'F.RR..RR..RR.F',
+      'F.RR..RR..RR.F',
+      'FFFFFFFFFFFFFF',
+      'FFFFFFFFFFFFFF',
+      'FF..........FF',
+      'FF..........FF'] },
+    B: { rows: [
+      '..55..........',
+      '..Rr..........',
+      '..RR......55..',
+      '.*rr......Rr..',
+      '**RR......RR..',
+      '*+RR..55..rr..',
+      '+.rr..Rr..RR..',
+      '..RR..RR..RR..',
+      '5FRRFFrrFFRRF5',
+      'F.RR..RR..RR.F',
+      'F.Rr..RR..Rr.F',
+      'F.RR..rR..RR.F',
+      'FFFFFFFFFFFFFF',
+      'F2FFFF2FFFF2FF',
+      'FF..........FF',
+      'FFF........FFF'] }
+  },
+  ranger: {
+    note: 'A straw butt on an easel, painted rings, one arrow in it.',
+    A: { rows: [
+      '....SSSSS..3....',
+      '..SSSSSSSSS.43..',
+      '.SSSKKKKKSS4.3..',
+      '.SSKSSSSS4SS....',
+      'SSKSSSSS4SKSS...',
+      'SSKSSS*SSSKSS...',
+      'SSKSS***SSKSS...',
+      'SSKSSS*SSSKSS...',
+      'SSKSSSSSSSKSS...',
+      '.SSKSSSSSKSSS...',
+      '.SSSKKKKKSSS....',
+      '..SSSSSSSSS.....',
+      '....SSSSS.......',
+      '....F.F.F.......',
+      '...F..F..F......',
+      '...FFFFFFF......',
+      '..F...F...F.....',
+      '.F....F....F....'] },
+    B: { rows: [
+      '....SSSSS..3....',
+      '..SSSSSSSSS.43..',
+      '.SSSKKKKKSS4.3..',
+      '.SSKSSSSS4SS....',
+      'SSKSSSSS4SKSS...',
+      'SSKSSS*SSSKSS...',
+      'SSKSS*h*SSKSS...',
+      'SSKSSS*SSSKSS...',
+      'SSKSSSSSSSKSS...',
+      '.SSKSSSSSKSSS...',
+      '.SSSKKKKKSSS....',
+      '..SSSSSSSSS.....',
+      '....SSSSS.......',
+      '....F.F.F.......',
+      '...F..F..F......',
+      '...F22F22F......',
+      '..F...F...F.....',
+      '.FF...F...FF....'] }
+  },
+  assassin: {
+    note: 'A sacking dummy on a post, arms out, a dagger stuck in its side.',
+    A: { rows: [
+      '.....HHHH...........',
+      '....HHHHHH..........',
+      '....HHHHHH..........',
+      '....HHHHHH..........',
+      '.....HHHH...........',
+      '......33............',
+      '3HHHHHHHHHHHH3......',
+      '3HHHHHHHHHHHH3......',
+      '..HHHHHHHHHH........',
+      '..HHHHHHHHHH...*....',
+      '..HHHHHHHHHH..R.....',
+      '..HHHHHHHHHH.R......',
+      '...HHHHHHHHRR.......',
+      '...HHHHHHHHR........',
+      '...KKKKKKKK.........',
+      '....HHHHHH..........',
+      '......FF............',
+      '....FFFFFF..........'] },
+    B: { rows: [
+      '.....HHHH...........',
+      '....HHHHHH..........',
+      '....H3HH3H..........',
+      '....HHHHHH..........',
+      '.....H33H...........',
+      '......22............',
+      'S3HHHHHHHHHH3S......',
+      'S3HHHHHHHHHH3S......',
+      '..HHHHHHHHHH........',
+      '..HHHH33HHHH...*....',
+      '..HHH3HH3HHH..R.....',
+      '..HHH3HH3HHH.R......',
+      '...HHH33HHHRR.......',
+      '...HHHHHHHHR........',
+      '...KKKhhKKKK........',
+      '....HHHHHH..........',
+      '......FF............',
+      '....FFFFFF..........'] }
+  },
+  hexer: {
+    note: 'A little iron pot on three legs, the brew showing at its lip.',
+    A: { brew: 1, rows: [
+      '.HHHHHHHHHHHH.',
+      '.HBBBBBBBBBBH.',
+      'HHHHHHHHHHHHHH',
+      'R.HHHHHHHHHH.R',
+      'RRHHHHHHHHHHRR',
+      '.HHHHHHHHHHHH.',
+      '.HHHHHHHHHHHH.',
+      '.HHHHHHHHHHHH.',
+      '..HHHHHHHHHH..',
+      '...HHHHHHHH...',
+      '...F..FF..F...',
+      '..F...FF...F..'] },
+    B: { brew: 3, rows: [
+      '............R.',
+      '...........R..',
+      '.HHHHHHHHHRHH.',
+      '.HBBBBBBBRBBH.',
+      'HH3HHHH3HHHH3H',
+      'R.HHHHHHHHHH.R',
+      'RRH5HHHHHHH3RR',
+      '.H55HHHHHHH33.',
+      '.H5HHHHHHHH32.',
+      '.HHHHHHHHHH32.',
+      '..HHHHHHHH32..',
+      '...HHHHH322...',
+      '...F..FF..F...',
+      '..F...FF...F..'] }
+  },
+  sapper: {
+    note: 'Three powder kegs, two on the floor and one on them, a fuse off the top one.',
+    A: { rows: [
+      '..........**......',
+      '.........4........',
+      '......KKKKKK......',
+      '.....HHHHHHHH.....',
+      '.....KKKKKKKK.....',
+      '.....HHHHHHHH.....',
+      '.....HHHHHHHH.....',
+      '.....KKKKKKKK.....',
+      '.....HHHHHHHH.....',
+      '......KKKKKK......',
+      '.KKKKKK....KKKKKK.',
+      'HHHHHHHH..HHHHHHHH',
+      'KKKKKKKK..KKKKKKKK',
+      'HHHHHHHH..HHHHHHHH',
+      'HHHHHHHH..HHHHHHHH',
+      'KKKKKKKK..KKKKKKKK',
+      'HHHHHHHH..HHHHHHHH',
+      '.KKKKKK....KKKKKK.'] },
+    B: { rows: [
+      '...........*......',
+      '.........4*+......',
+      '......KKKKKK......',
+      '.....HH3HH3HH.....',
+      '.....KKKKKKKK.....',
+      '.....HH3HH3HH.....',
+      '.....HH32H3HH.....',
+      '.....KKKKKKKK.....',
+      '.....HH3HH3HH.....',
+      '......KKKKKK......',
+      '.KKKKKK....KKKKKK.',
+      'HH3HH3HH..HH3HH3HH',
+      'KKKKKKKK..KKKKKKKK',
+      'HH3HH3HH..HH3HH3HH',
+      'HH3HH3HH..HH32H3HH',
+      'KKKKKKKK..KKKKKKKK',
+      'HH3HH3HH..HH3HH3HH',
+      '.KKKKKK....KKKKKK.'] }
+  },
+  mage: {
+    note: 'A lectern, a book open on it, a ribbon hanging out.',
+    A: { rows: [
+      '.HHHHH....HHHHH.',
+      'HHHHHHH..HHHHHHH',
+      'HKKKKHHFFHHKKKKH',
+      'HHHHHHHFFHHHHHHH',
+      'HKKKHHHFFHHHKKKH',
+      'HHHHHHHFFHHHHHHH',
+      'FFFFFFFFFFFFFFFF',
+      '.FFFFFF**FFFFFF.',
+      '.....FF**FF.....',
+      '.......**.......',
+      '......FFFF......',
+      '.......FF.......',
+      '.......FF.......',
+      '.......FF.......',
+      '....FFFFFFFF....',
+      '..FFFFFFFFFFFF..'] },
+    B: { rows: [
+      '.HHHHH....HHHHH.',
+      'HHHHHHH..HHHHHHH',
+      'HKKKKHHFFHHKKKHH',
+      'HHHHHHHFFHHHHHHH',
+      'HKKKHHHFFHKKKKHH',
+      'HKKKKKHFFHHHHHHH',
+      '3333333FF3333333',
+      'FFFFFFFFFFFFFFFF',
+      '.FFFFFF**FFFFFF.',
+      '.....FF**FF.....',
+      '.......**.......',
+      '......FFFF......',
+      '.......FF.......',
+      '......FFFF......',
+      '.......FF.......',
+      '....FFFFFFFF....',
+      '..FF2FFFFFF2FF..'] }
+  },
+  bard: {
+    note: 'A music stand: a sheet with a note on it, a ledge, a thin tripod.',
+    A: { rows: [
+      '.HHHHHHHHHH.',
+      '.HHHHHKKKHH.',
+      '.HHHHHKHKKH.',
+      '.HHHHHKHHHH.',
+      '.HHHHHKHHHH.',
+      '.HHH**KHHHH.',
+      '.HHH**HHHHH.',
+      '.HHHHHHHHHH.',
+      'FFFFFFFFFFFF',
+      '.....FF.....',
+      '.....FF.....',
+      '.....FF.....',
+      '.....FF.....',
+      '.....FF.....',
+      '....F..F....',
+      '...F....F...',
+      '..F......F..',
+      '.F........F.'] },
+    B: { rows: [
+      '.HHHHHHHH3..',
+      '.HHHHHKKKH3.',
+      '.3333K3KK33.',
+      '.HHHHHKHHHH.',
+      '.33333K3333.',
+      '.HHH**KHHHH.',
+      '.333**33333.',
+      'FHHHHHHHHHHF',
+      'FFFFFFFFFFFF',
+      '.....FF.....',
+      '.....FF.....',
+      '....FFFF....',
+      '.....FF.....',
+      '.....FF.....',
+      '....F..F....',
+      '...F....F...',
+      '..F......F..',
+      '.FF......FF.'] }
+  }
+};
+
+// The props as on main today (src/deep/props.js PROPS, R8_PARTS), for the "today" column.
+const TODAY = {
+  crate: { under: 'E', rows: ['..S..S...S..','.SSS.SS.SSS.','EEEEEEEEEEEE','EppppppppEEE','EpppppppEEpE','E......EE..E','EppppEEppppE','EpppEEpppppE','E..EE......E','EpEEpppppppE','EEEppppppppp','EEEEEEEEEEEE'] },
+  brawler: { under: 'L', rows: ['WWWWWWWWWWWWWW..','WWWWWWWWWWWWWW..','WWWWW......K....','WWWW.......K....','WWW.......KKK...','WW........TTT...','WW......LLLLLLL.','WW.....LLLLLLLLL','WW.....LLLLL**LL','WW.....LLLLL**LL','WW.....LLLLLLLLL','WW.....LLLLLLLLL','WW......LLLLLLL.','WW........TTT...','WW..............','WW..............','WWWW............','WWWWWW..........'] },
+  sword: { under: 'i', rows: ['....**....ii........','....LL....LL........','....LL....LL........','...iiii..iiii.......','....MM....MM........','....MM....MM........','WWWWMMWWWWMMWWWW..WW','WWWWMMWWWWMMWWWWWWWW','WW..MM....MM......WW','WW..MM....MM......WW','WW..MM....MM......WW','WW..MM....MM......WW','WW...M....MM......WW','WW........M.......WW','WW................WW','WWW..............WWW'] },
+  monk: { under: 'B', rows: ['WWWWWWWWWWWWWWWWWWWWWW','.WWWWWWWWWWWWWWWWWWWW.','..WW......KK......WW..','..WW......KK......WW..','..WW....BBBBBB....WW..','..WW...BBBBBBBB...WW..','..WW...BBBBBBBB...WW..','..WW...BBBBBBBB...WW..','..WW...BBBBBBBB...WW..','..WW..BBBBBBBBBB..WW..','..WW.BBBBBBBBBBBB.WW..','..WW......**......WW..','..WW......**......WW..','..WW..............WW..','mmWWmm.mm.mm.mm.mmWWmm','mmmmmmmmmmmmmmmmmmmmmm'] },
+  martial: { under: 'v', rows: ['..v...........','..vv..........','..vv......v...','..vv......vv..','.*vv......vv..','.*vv..v...vv..','*.vv..vv..vv..','..vv..vv..vv..','WWWWWWWWWWWWWW','W.vv..vv..vv.W','W.vv..vv..vv.W','W.vv..vv..vv.W','W.vv..vv..vv.W','W.vv..vv..vv.W','WWWWWWWWWWWWWW','WW..........WW'] },
+  ranger: { under: 'I', rows: ['....SSSSS...MII.','..SSSSSSSSSM.I..','.SSSrrrrrSMS....','.SSrrSSSrMSS....','SSrrSSSSSrrSS...','SSrSSS*SSSrSS...','SSrSS***SSrSS...','SSrSSS*SSSrSS...','SSrrSSSSSrrSS...','.SSrrSSSrrSS....','.SSSrrrrrSSS....','..SSSSSSSSS.....','....SSSSS.......','....W.W.W.......','...W..W..W......','...W..W..W......','..W...W...W.....','.W....W....W....'] },
+  assassin: { under: 'i', rows: ['.....UUUU...........','....UUUUUU..........','....UUUUUU..........','....UUUUUU..........','.....UUUU...........','UUUUUUUUUUUUUU......','UUUUUUUUUUUUUU......','..UUUUUUUUUU......**','..UUUUUUUUUU.....i*.','..UUUUUUUUUU..I.i...','..UUUUUUUUUU.IIi....','..UUUUUUUUUUMMI.....','..UUUUUUUUUUMI......','..UUUUUUUUUU........','..UUrrrrrrUU........','......WW............','......WW............','....WWWWWW..........'] },
+  hexer: { under: 'b', rows: ['...IIIIIIII...','..IbbbbbbbbI..','.IIIIIIIIIIII.','..IIIIIIIIII..','ii.IIIIIIIIII.','i..IIIIIIIIII.','ii.IIIIIIIIII.','...IIIIIIIIII.','....IIIIIIII..','.....IIIIII...','....I..II..I..','...I...II...I.'] },
+  sapper: { under: 'f', rows: ['..........**......','.........f........','......IIIIII......','......vwvwvw......','.....IIIIIIII.....','.....vwvwvwvw.....','.....vwvwvwvw.....','.....IIIIIIII.....','......vwvwvw......','......IIIIII......','.IIIIII....IIIIII.','.vwvwvw....vwvwvw.','IIIIIIII..IIIIIIII','vwvwvwvw..vwvwvwvw','vwvwvwvw..vwvwvwvw','IIIIIIII..IIIIIIII','.vwvwvw....vwvwvw.','.IIIIII....IIIIII.'] },
+  mage: { under: '.', rows: ['.PPPPPP..PPPPPP.','PPPPPPPIIPPPPPPP','PkkkkPPIIPPkkkkP','PPPPPPPIIPPPPPPP','PkkkPPPIIPPPkkkP','WWWWWWWWWWWWWWWW','.WWWWWW**WWWWWW.','.....WW**WW.....','.......**.......','......WWWW......','.......WW.......','.......WW.......','.......WW.......','.......WW.......','....WWWWWWWW....','..WWWWWWWWWWWW..'] },
+  bard: { under: 'k', rows: ['.PPPPPPPP.','PPPPPkkkPP','PPPPPkPkkP','PPPPPkPPPP','PPPPPkPPPP','PPP**kPPPP','PPP**PPPPP','PPPPPPPPPP','IIIIIIIIII','....II....','....II....','....II....','....II....','....II....','...I..I...','..I....I..','.I......I.','I........I'] }
+};
+const TODAY_R8 = { brawler: ['T', 'K'], sword: ['i', 'L'], monk: ['B'], martial: ['v'], ranger: ['r'],
+                   assassin: ['r', 'M', 'I'], hexer: ['i'], sapper: ['I'], mage: ['k'], bard: ['k'] };
+const ORDER = ['crate', 'brawler', 'sword', 'monk', 'martial', 'ranger', 'assassin', 'hexer', 'sapper', 'mage', 'bard'];
+const NAMES = { crate: 'build site crate', brawler: 'Brawler', sword: 'Swordsman', monk: 'Monk', martial: 'Martial Artist',
+                ranger: 'Ranger', assassin: 'Assassin', hexer: 'Hexer', sapper: 'Sapper', mage: 'Mage', bard: 'Bard' };
+</script>
+
+<script id="shader">
+// --- the tones, and the shading rule ----------------------------------------
+const G = ['#000000', '#121216', '#26262c', '#42424a', '#6e6e78', '#b4b4c0'];
+const PU = { a: '#1b112c', b: '#2d1d47', c: '#412465', d: '#5c2ba6', e: '#9b5de5' };
+const RAMP = {
+  H: [G[5], G[4], G[3], G[2]], F: [G[4], G[3], G[2], G[1]], S: [G[5], G[4], G[3], G[2]],
+  R: [G[5], G[4], G[3], G[2]], Q: [G[4], G[3], G[2], G[1]], K: [G[4], G[3], G[2], G[1]],
+  R8: [PU.e, PU.d, PU.c, PU.b], Q8: [PU.d, PU.c, PU.b, PU.a], K8: [PU.e, PU.d, PU.c, PU.b]
+};
+const MAT = new Set(['H', 'F', 'S', 'R', 'Q', 'K']);
+const PART = new Set(['R', 'Q', 'K']);
+
+// Tone index into a material's ramp (0 hi, 1 body, 2 shade, 3 deep) for the
+// cell at (r, c), lit from the upper left. A: edges against open water only.
+// B: also a deep corner, a cast shadow under another material, a wider
+// shadow side on anything seven or more cells across, and straw dithered.
+function shadeIndex(rows, r, c, style) {
+  const at = (rr, cc) => (rows[rr] && rows[rr][cc]) || '.';
+  const m = at(r, c), empty = ch => ch === '.' || ch === '+';
+  const up = empty(at(r - 1, c)), lf = empty(at(r, c - 1)), rt = empty(at(r, c + 1)), dn = empty(at(r + 1, c));
+  if (style === 'B') {
+    const above = at(r - 1, c);
+    if (rt && dn && !up && !lf) return 3;
+    if (!up && (m === 'H' || m === 'S') && MAT.has(above) && above !== m && !PART.has(above)) return 2;
+  }
+  if (up) return 0;
+  if (lf && rt) return 1;
+  if (lf) return 0;
+  if (rt || dn) return 2;
+  if (style === 'B') {
+    let a = c, b = c;
+    while (!empty(at(r, a - 1))) a--;
+    while (!empty(at(r, b + 1))) b++;
+    if (b - a + 1 >= 7 && (m === 'H' || m === 'R' || m === 'S') && empty(at(r, c + 2))) return 2;
+    if (m === 'S' && (r * 2 + c * 3) % 5 === 0) return 2;
+  }
+  return 1;
+}
+
+// Every cell of an option's prop as [col, row, color], `lit` from rung 8.
+function cellsOf(opt, lit, style) {
+  const out = [], rows = opt.rows;
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    let col = null;
+    if (MAT.has(ch)) {
+      const ramp = lit && PART.has(ch) ? RAMP[ch + '8'] : RAMP[ch];
+      col = ramp[shadeIndex(rows, r, c, style)];
+    } else if (ch >= '1' && ch <= '5') col = G[+ch];
+    else if (ch === 'h') col = lit ? PU.e : G[5];
+    else if (ch === 'r') col = lit ? PU.c : G[3];
+    else if (ch === 'd') col = lit ? PU.b : G[2];
+    else if (ch === 'g') col = lit ? PU.d : G[4];
+    else if (ch === 'z') col = lit ? PU.b : G[2];
+    else if (ch === 'v') col = PU.d;
+    else if (ch === 'w') col = PU.c;
+    else if (ch === '*') col = lit ? PU.e : PU.c;
+    else if (ch === '+') col = lit ? PU.e : null;
+    else if (ch === 'B') col = lit ? PU.c : PU.b;
+    if (col) out.push([c, r, col]);
+  }));
+  return out;
+}
+
+// Today's cells (src/deep/props.js propCells): one body grey, the purple
+// light along every top edge, the rung-8 parts and accent.
+function todayCells(key, lit) {
+  const p = TODAY[key], parts = lit ? TODAY_R8[key] || [] : [], out = [];
+  const open = (c, r) => (p.rows[r] && p.rows[r][c] || '.') === '.';
+  p.rows.forEach((row, r) => [...row].forEach((ch0, c) => {
+    let ch = ch0;
+    if (ch === '*') { if (lit) { out.push([c, r, PU.e]); return; } ch = p.under; }
+    if (ch === '.') return;
+    if (parts.includes(ch)) out.push([c, r, PU.d]);
+    else if (open(c, r - 1)) out.push([c, r, PU.c]);
+    else out.push([c, r, G[4]]);
+  }));
+  return out;
+}
+
+// The hexer's brew (props.js BREW): a bubble over the surface on a
+// 1.8 s beat, a cell every 0.2 s for 1.2 s, in one of four lanes from column 5.
+const BREW = { pace: 0.9, period: 1.8, life: 1.2, step: 0.2, lane0: 5, lanes: 4 };
+function bubble(row, lit, t, todayStyle) {
+  const k = (t * BREW.pace) % BREW.period;
+  if (k >= BREW.life) return null;
+  const c = BREW.lane0 + Math.floor(t / BREW.period) % BREW.lanes, r = row - 1 - Math.floor(k / BREW.step);
+  return [c, r, lit ? PU.d : (todayStyle ? G[3] : PU.c)];
+}
+</script>
+
+<script>
+// --- drawing ----------------------------------------------------------------
+const GAP = k => (k === 'sword' ? 7 : 5);
+const HEAD = 7;           // rows of water over the tallest prop, room for the bubble
+const FLOOR = 2;
+
+function variant(key, which) {
+  if (which === 'today') return { rows: TODAY[key].rows, cells: lit => todayCells(key, lit), brew: key === 'hexer' ? 1 : null, today: true };
+  const opt = DATA[key][which];
+  return { rows: opt.rows, cells: lit => cellsOf(opt, lit, which), brew: key === 'hexer' ? opt.brew : null };
+}
+
+// One station drawn at cell `x0` (the prop's left column) with its foot on row `foot`.
+function drawStation(g, s, key, v, lit, x0, foot, t) {
+  const w = v.rows[0].length, h = v.rows.length, y0 = foot - h + 1;
+  const body = x0 + w - 1 + GAP(key);
+  // the plinth: a top course from a cell left of the prop to a cell right of the body, the next a cell wider each end
+  g.fillStyle = G[3]; g.fillRect((x0 - 1) * s, (foot + 1) * s, (body + 3 + 1 - (x0 - 1)) * s, s);
+  g.fillStyle = G[2]; g.fillRect((x0 - 2) * s, (foot + 2) * s, (body + 3 + 2 - (x0 - 2)) * s, s);
+  for (const [c, r, col] of v.cells(lit)) { g.fillStyle = col; g.fillRect((x0 + c) * s, (y0 + r) * s, s, s); }
+  if (v.brew != null) {
+    const b = bubble(v.brew, lit, t, v.today);
+    if (b) { g.fillStyle = b[2]; g.fillRect((x0 + b[0]) * s, (y0 + b[1]) * s, s, s); }
+  }
+  // where the fighter stands: a dotted 3x3 square (the mock cannot draw the fighter)
+  g.fillStyle = '#ffffff';
+  const fx = body * s, fy = (foot - 2) * s, fw = 3 * s, d = Math.max(1, Math.round(s / 6));
+  for (let i = 0; i < fw; i += d * 3) { g.fillRect(fx + i, fy, d, d); g.fillRect(fx + i, fy + fw - d, d, d); g.fillRect(fx, fy + i, d, d); g.fillRect(fx + fw - d, fy + i, d, d); }
+}
+
+let zoom = +(location.hash.match(/z=(\d+)/) || [0, 18])[1];
+for (const o of document.querySelectorAll('[data-z]')) o.setAttribute('aria-pressed', +o.dataset.z === zoom ? 'true' : 'false');
+const closeups = [];
+function closeup(key, which, lit) {
+  const v = variant(key, which), cv = document.createElement('canvas');
+  const maxW = Math.max(...['today', 'A', 'B'].map(k => variant(key, k).rows[0].length));
+  const maxH = Math.max(...['today', 'A', 'B'].map(k => variant(key, k).rows.length));
+  const cols = 3 + maxW + GAP(key) + 3 + 3, rows = (key === 'hexer' ? HEAD : 2) + maxH + 2 + 1;
+  const x0 = 3 + (maxW - v.rows[0].length), foot = rows - 4;
+  const item = { cv, draw: t => {
+    cv.width = cols * zoom; cv.height = rows * zoom;
+    const g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cv.width, cv.height);
+    g.fillStyle = G[2]; g.fillRect(0, (foot + 3) * zoom, cv.width, zoom);
+    drawStation(g, zoom, key, v, lit, x0, foot, t);
+  }, anim: key === 'hexer' };
+  closeups.push(item); return cv;
+}
+
+const cards = document.getElementById('cards');
+for (const key of ORDER) {
+  const card = document.createElement('div'); card.className = 'card';
+  card.innerHTML = `<h3>${NAMES[key]}</h3><div class="note">${DATA[key].note}</div>`;
+  const grid = document.createElement('div'); grid.className = 'grid';
+  grid.append(document.createElement('span'));
+  for (const h of ['today', 'A, cleaner', 'B, richer']) { const d = document.createElement('div'); d.className = 'hd'; d.textContent = h; grid.append(d); }
+  for (const lit of [false, true]) {
+    const l = document.createElement('div'); l.className = 'rl'; l.textContent = lit ? 'at rung 8' : 'before rung 8'; grid.append(l);
+    for (const w of ['today', 'A', 'B']) grid.append(closeup(key, w, lit));
+  }
+  card.append(grid); cards.append(card);
+}
+
+// The set: all eleven, 49 cells apart, at a cell of 6 px.
+const SPACING = 49, S6 = 6, strips = [];
+const stripsEl = document.getElementById('strips');
+for (const which of ['A', 'B', 'today']) for (const lit of [false, true]) {
+  const box = document.createElement('div'); box.className = 'strip';
+  const name = which === 'today' ? 'today' : which === 'A' ? 'A, cleaner' : 'B, richer';
+  box.innerHTML = `<div class="lbl"><b>${name}</b>, ${lit ? 'at rung 8' : 'before rung 8'}</div>`;
+  const sb = document.createElement('div'); sb.className = 'stripbox';
+  const cv = document.createElement('canvas'); sb.append(cv); box.append(sb); stripsEl.append(box);
+  const cols = ORDER.length * SPACING + 8, rows = 30;
+  strips.push({ cv, draw: t => {
+    cv.width = cols * S6; cv.height = rows * S6;
+    const g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cv.width, cv.height);
+    const foot = rows - 5;
+    g.fillStyle = G[2]; g.fillRect(0, (foot + 3) * S6, cv.width, 2 * S6);
+    ORDER.forEach((key, i) => {
+      const v = variant(key, which), body = 30 + i * SPACING;
+      drawStation(g, S6, key, v, lit, body - GAP(key) - v.rows[0].length + 1, foot, t);
+    });
+  } });
+}
+
+function drawAll(t) { for (const c of closeups) c.draw(t); for (const s of strips) s.draw(t); }
+drawAll(0.3);
+for (const b of document.querySelectorAll('[data-z]')) b.addEventListener('click', () => {
+  zoom = +b.dataset.z;
+  for (const o of document.querySelectorAll('[data-z]')) o.setAttribute('aria-pressed', o === b ? 'true' : 'false');
+  drawAll(performance.now() / 1000);
+});
+// Only the hexer's bubble moves: redraw its close-ups and the strips on a tick.
+setInterval(() => {
+  const t = performance.now() / 1000;
+  for (const c of closeups) if (c.anim) c.draw(t);
+  for (const s of strips) s.draw(t);
+}, 100);
+</script>
+</body>
+</html>
