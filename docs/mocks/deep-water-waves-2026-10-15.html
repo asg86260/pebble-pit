@@ -32,6 +32,9 @@
   button.on { background: var(--btn-on); color: var(--btn-on-fg); }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 14px; }
   .grid.one { grid-template-columns: 1fr; }
+  .grid + .grid { margin-top: 14px; }
+  h2 { font-size: 14px; margin: 22px 0 8px; color: var(--muted); font-weight: normal; }
+  h2.hide { display: none; }
   figure { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
   figure.hide { display: none; }
   canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #000; }
@@ -50,6 +53,7 @@
   <div class="bar" id="bar">
     <span>show</span>
     <button data-show="all" class="on">all</button>
+    <button data-show="D">D</button>
     <button data-show="now">today</button>
     <button data-show="A">A</button>
     <button data-show="B">B</button>
@@ -58,7 +62,13 @@
     <button data-speed="1" class="on">1x</button>
     <button data-speed="3">3x</button>
     <button id="pause">pause</button>
+    <span>D's feel</span>
+    <button data-feel="gentle">gentle</button>
+    <button data-feel="medium" class="on">medium</button>
+    <button data-feel="strong">strong</button>
   </div>
+  <div class="grid" id="top"></div>
+  <h2 id="earlier">the first three options</h2>
   <div class="grid" id="grid"></div>
 </main>
 <script>
@@ -90,7 +100,49 @@
   // Each returns, for a point and a time (s), the displacement in cells (dx, dy)
   // for motes and for stars, a velocity (cells/s) motes are carried by, and a
   // brightness factor for stars.
+  // D's three feels: band width (cells), push (cells), the gap between waves
+  // and the crossing (s), the lift as the band passes (cells), and how much the
+  // stars brighten inside it.
+  const FEELS = {
+    gentle: { name: 'gentle', width: 30, push: 2, period: 12, cross: 6.0, lift: 0.5, bright: 0.2 },
+    medium: { name: 'medium', width: 40, push: 3, period: 10, cross: 5.5, lift: 1.0, bright: 0.35 },
+    strong: { name: 'strong', width: 50, push: 4, period: 8,  cross: 5.0, lift: 1.5, bright: 0.5 }
+  };
+  let feel = FEELS.medium;
+  // After the band: the push eases back with a slight overshoot left. A mote
+  // keeps half of it (it is carried a little each wave); a star keeps none,
+  // so the field stays where it is.
+  const MOTE_KEEP = 0.5, SETTLE_S = 1.8, SWING_S = 5;
+  const smooth = u => u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u);
+  // One wave's push on a point, in cells, as a fraction of the push: rises as
+  // the band crosses it, then settles toward `keep`.
+  function waveAt(x, t, n, keep) {
+    const f = feel, v = (W + f.width) / f.cross, tb = f.width / v;
+    const tau = t - (n * f.period + (x + f.width / 2) / v);   // seconds since the band's middle crossed x
+    const u = tau / tb;
+    if (u <= -0.5) return [0, 0, 0];
+    const inBand = u < 0.5 ? Math.cos(Math.PI * u) ** 2 : 0;
+    if (u < 0.5) return [smooth(u + 0.5), Math.sin(Math.PI * (u + 0.5)), inBand];
+    const s = tau - tb / 2;
+    return [keep + (1 - keep) * Math.exp(-s / SETTLE_S) * Math.cos(TAU * s / SWING_S), 0, 0];
+  }
+  function waves(x, t, keep) {
+    const n = Math.floor(t / feel.period);
+    const a = waveAt(x, t, n, keep), b = waveAt(x, t, n - 1, keep);
+    // the older wave's kept share has not been folded into the mote yet
+    return [(a[0] + b[0]) * feel.push, -(a[1] + b[1]) * feel.lift, a[2] + b[2]];
+  }
+
   const OPT = {
+    D: {
+      name: 'D · the wave',
+      sub: () => `one wide band of swell crosses left to right, one at a time. ${feel.name}: ${feel.width} cells wide, crossing in ${feel.cross} s (${Math.round((W + feel.width) / feel.cross)} cells/s), one every ${feel.period} s. Everything it passes is pushed ${feel.push} cells right and lifted ${feel.lift}, then eases back left with a slight overshoot; motes keep half the push, stars none. Stars brighten inside the band.`,
+      wave: () => feel, residue: () => MOTE_KEEP * feel.push,
+      flow: () => [0.3, 0],
+      moteOff(x, y, t) { const [dx, dy] = waves(x, t, MOTE_KEEP); return [dx, dy]; },
+      starOff(x, y, t) { const [dx, dy] = waves(x, t, 0); return [dx, dy]; },
+      starLift(x, y, t) { return 0.85 + feel.bright * 1.5 * waves(x, t, 0)[2]; }
+    },
     now: {
       name: 'today', sub: 'stars breathe in place; silt drifts on the mild current (0.3 px a frame at its strongest, an 11 s turn)',
       flow: (x, y, t) => [3 * Math.sin(t / 11 * TAU + y * P / (P * 40)), 0],
@@ -148,16 +200,17 @@
   };
 
   // ---- one panel ------------------------------------------------------------------------
-  function panel(key) {
+  function panel(key, where = 'grid') {
     const o = OPT[key];
     const fig = document.createElement('figure');
     fig.dataset.key = key;
     const cv = document.createElement('canvas');
     cv.width = W * P; cv.height = H * P;
     const cap = document.createElement('figcaption');
-    cap.innerHTML = `<b>${o.name}</b><small>${o.sub}</small>`;
+    const caption = () => { cap.innerHTML = `<b>${o.name}</b><small>${typeof o.sub === 'function' ? o.sub() : o.sub}</small>`; };
+    caption();
     fig.append(cv, cap);
-    document.getElementById('grid').append(fig);
+    document.getElementById(where).append(fig);
     const ctx = cv.getContext('2d');
 
     const r = rng(7);
@@ -172,7 +225,16 @@
     };
     for (let i = 0; i < SILT; i++) motes.push(spawn({}, true));
 
+    let waveN = null, waveFeel = null;
     function step(t, dt) {
+      // D: when a new wave sets off, the one two back has long settled, so its
+      // leftover push becomes part of each mote's own position.
+      if (o.wave) {
+        if (o.wave() !== waveFeel) { waveFeel = o.wave(); waveN = null; }
+        const n = Math.floor(t / o.wave().period);
+        if (waveN !== null && n > waveN) for (const m of motes) m.x = (m.x + o.residue() * (n - waveN)) % W;
+        waveN = n;
+      }
       for (const m of motes) {
         m.age += dt * 1000;
         if (m.age >= m.life) { spawn(m, false); continue; }
@@ -214,10 +276,10 @@
         ctx.fillRect(x * P, y * P, P, P);
       }
     }
-    return { fig, step, draw };
+    return { fig, step, draw, caption };
   }
 
-  const panels = ['now', 'A', 'B', 'C'].map(panel);
+  const panels = [panel('D', 'top'), panel('now', 'top'), ...['A', 'B', 'C'].map(k => panel(k))];
 
   // ---- controls and clock -----------------------------------------------------------------
   let speed = 1, paused = false, t = 0, last = performance.now();
@@ -228,7 +290,12 @@
       bar.querySelectorAll('[data-show]').forEach(x => x.classList.toggle('on', x === b));
       const k = b.dataset.show;
       for (const p of panels) p.fig.classList.toggle('hide', k !== 'all' && p.fig.dataset.key !== k);
-      grid.classList.toggle('one', k !== 'all');
+      for (const g of document.querySelectorAll('.grid')) g.classList.toggle('one', k !== 'all');
+      document.getElementById('earlier').classList.toggle('hide', k !== 'all');
+    } else if (b.dataset.feel) {
+      feel = FEELS[b.dataset.feel];
+      bar.querySelectorAll('[data-feel]').forEach(x => x.classList.toggle('on', x === b));
+      panels[0].caption();
     } else if (b.dataset.speed) {
       speed = +b.dataset.speed;
       bar.querySelectorAll('[data-speed]').forEach(x => x.classList.toggle('on', x === b));
