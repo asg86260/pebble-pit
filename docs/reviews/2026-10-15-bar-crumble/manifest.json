@@ -1,0 +1,27 @@
+{
+ "base": "f540713a2f119afd2fa02d2b8d3df3a3165ba083",
+ "head": "82c2923fa10fdf13c2d40d98ebc3e96004321c01",
+ "at": "2026-10-15T05:00:29.423Z",
+ "items": {
+  "bar": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "gif"
+    },
+    "after": {
+     "ext": "gif"
+    }
+   },
+   {
+    "n": 2,
+    "before": {
+     "ext": "gif"
+    },
+    "after": {
+     "ext": "gif"
+    }
+   }
+  ]
+ }
+}

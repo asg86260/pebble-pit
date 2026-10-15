@@ -1,0 +1,49 @@
+{
+  "title": "The serpent's bar crumbles",
+  "lede": "The serpent's health bar crumbles in square bites and its chips move every frame.",
+  "base": "f540713a",
+  "head": "82c2923f",
+  "items": [
+    {
+      "id": "bar",
+      "title": "The bar crumbles in square bites, smoothly",
+      "what": "Blows bite the bar's end back in 7 px squares; each bite flicks off two chips that fall every frame and fade.",
+      "shots": [
+        {
+          "scene": "deep-chip",
+          "window": [
+            1200,
+            800
+          ],
+          "wait": 0,
+          "crop": [
+            520,
+            350,
+            240,
+            90
+          ],
+          "zoom": 3,
+          "gif": {
+            "seconds": 3,
+            "fps": 30
+          },
+          "label": "the bar's end"
+        },
+        {
+          "scene": "deep-chip",
+          "window": [
+            1200,
+            800
+          ],
+          "wait": 0,
+          "zoom": 0.6,
+          "gif": {
+            "seconds": 3,
+            "fps": 30
+          },
+          "label": "the fight"
+        }
+      ]
+    }
+  ]
+}
