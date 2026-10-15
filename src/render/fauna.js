@@ -17,7 +17,7 @@ import { TONE, greyAt, purpleAt } from './deeptones.js';
 import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow } from './deep.js';
 import { COLS, ROWS, faunaOut, unit, unit2, schoolAt, frameOf, reachOf, addScare, scareOffset,
-         clearScares, SCARES, bolting, faunaPose, poseInset, heightOf, zoneHere } from '../deep/fauna.js';
+         clearScares, SCARES, bolting, faunaPose, poseInset, heightOf, zoneHere, waterTop } from '../deep/fauna.js';
 import { coilAt, bellyAt } from '../deep/place.js';
 import { lashK, breaking } from '../deep/phases.js';
 
@@ -179,7 +179,7 @@ function drawOne(c, p, t, dim) {
     for (let m = 0; m < c.n; m++) {
       const s = schoolAt(c, m, ft), px = col + s.dx, py = y + s.dy;
       const o = SCARES.length && !bolt ? scareOffset(px, py, t, false, 1 + (unit(m * 2.3 + c.seed * 40) - 0.5) * 2 * FAUNA_SCARE.shoal) : STILL;
-      sprite('sardine', px + o.x, Math.max(0, py + o.y), dir, s.seed, ft, dim);
+      sprite('sardine', px + o.x, Math.max(waterTop(), py + o.y), dir, s.seed, ft, dim);
     }
   } else if (c.kind === 'siphon') siphon(col, y, dir, c.seed, ft, dim, r);
   else if (c.kind === 'gulper') gulper(col, y, dir, c.seed, ft, dim);

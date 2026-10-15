@@ -24,6 +24,7 @@ import { now } from '../clock.js';
 import { rand } from '../rng.js';
 import { topRow } from '../grid.js';
 import { deepTop, deepX0, deepFloor } from './place.js';
+import { deepRestTop } from '../view.js';
 import { shed } from './scales.js';
 import { poseAt, playing, leadOf } from './react.js';
 
@@ -120,10 +121,22 @@ function bandOf(kind) {
   if (kind === 'siphon') { const a = Math.ceil(FAUNA_SIPHON.amp); return { up: a, down: a }; }
   return { up: 0, down: 0 };
 }
-// A kind's rows, top-left of the drawing: from the ceiling's row to the floor's clearance.
-export const wanderLo = kind => FAUNA_WANDER.top + bandOf(kind).up;
+// The top of the water the deep's own frame shows, in rows: its ceiling, or
+// over it, where a window taller than the deep shows the water going on up
+// (render/fauna.js `drawDeepZones` lays it to the window's top).
+export const waterTop = () => Math.min(0, Math.floor((deepRestTop() - deepTop()) / P));
+// The rows the walk is taken in, top-left of the drawing: from the ceiling's
+// row to the floor's clearance. Fixed, so the walk is the same in any window.
+const walkLo = kind => FAUNA_WANDER.top + bandOf(kind).up;
+// The rows it is seen on: the walk stretched from the top of the water shown
+// down to the floor's clearance, so a tall window's water is swum to its top.
+export const wanderLo = kind => waterTop() + walkLo(kind);
 export const wanderHi = kind => ROWS - FAUNA_MOTION.clear - heightOf(kind) - bandOf(kind).down;
-const clampRow = (y, kind) => Math.max(wanderLo(kind), Math.min(wanderHi(kind), y));
+const clampRow = (y, kind) => Math.max(walkLo(kind), Math.min(wanderHi(kind), y));
+const seenRow = (y, kind) => {
+  const lo = walkLo(kind), hi = wanderHi(kind), top = wanderLo(kind);
+  return top + (y - lo) * (hi - top) / (hi - lo);
+};
 // A seeded noise in [0, 1), by slot and step, the same on every load:
 // integer hashing, since the steps run to the millions.
 function noise(a, n) {
@@ -138,13 +151,14 @@ function turnsStart() {
   const K = FAUNA_WANDER;
   const s = SLOTS.map((c, k) => {
     const kind = ROSTER[k % ROSTER.length], dir = c.i % 2 ? -1 : 1;
-    return { x: wrapX(c.x0), y: clampRow(c.y0, kind), th: dir > 0 ? K.start : Math.PI - K.start, om: 0, face: dir, lap: 0, kind };
+    const y = clampRow(c.y0, kind), goal = y < (walkLo(kind) + wanderHi(kind)) / 2 ? 1 : -1;
+    return { x: wrapX(c.x0), y, th: dir > 0 ? K.start : Math.PI - K.start, om: 0, face: dir, lap: 0, kind, goal };
   });
   return { s, next: (SLOTS.length - 1) % ROSTER.length };
 }
 // One slot a step on from `a`, the `n`th, and whether it went out past an end.
 function slotStep(c, a, n) {
-  const K = FAUNA_WANDER, h = K.step, lo = wanderLo(a.kind), hi = wanderHi(a.kind), v = paceOf(a.kind);
+  const K = FAUNA_WANDER, h = K.step, lo = walkLo(a.kind), hi = wanderHi(a.kind), v = paceOf(a.kind);
   let om = a.om + (noise(c.i, n) - 0.5) * 2 * K.jitter * h;
   om = Math.max(-K.turn, Math.min(K.turn, om * (1 - K.damp * h)));
   let turn = om;
@@ -152,11 +166,15 @@ function slotStep(c, a, n) {
   const nearTop = (lo + K.edge - a.y) / K.edge, nearBot = (a.y - (hi - K.edge)) / K.edge;
   if (nearTop > 0 && sin < K.facing) turn += down * K.shove * Math.min(1, nearTop);
   if (nearBot > 0 && sin > -K.facing) turn -= down * K.shove * Math.min(1, nearBot);
+  // bound for the far edge, turned gently toward a slope of `aim` that way,
+  // and for the other once within `edge` of it
+  const goal = nearBot > 0 ? -1 : nearTop > 0 ? 1 : a.goal;
+  turn += down * K.seek * Math.max(-1, Math.min(1, (goal * K.aim - sin) / K.aim));
   if (sin > K.steep) turn -= down * K.level;
   if (sin < -K.steep) turn += down * K.level;
   const th = a.th + turn * h, cc = Math.cos(th), raw = a.x + cc * v * h, w = FAUNA_MOTION.wrap;
   return { x: wrapX(raw), y: Math.max(lo, Math.min(hi, a.y + Math.sin(th) * v * h)), th, om,
-           face: cc > K.face ? 1 : cc < -K.face ? -1 : a.face, lap: a.lap, kind: a.kind,
+           face: cc > K.face ? 1 : cc < -K.face ? -1 : a.face, lap: a.lap, kind: a.kind, goal,
            out: raw < -w || raw >= COLS + w };
 }
 // Every slot a step on. One gone out past an end starts its next lap as the
@@ -214,8 +232,8 @@ function turnsState(n) {
 export function wanderAt(c, t) {
   const f = Math.max(0, t) / FAUNA_WANDER.step, n = Math.floor(f), w = turnsState(n), k = f - n;
   const a = w.s[c.slot], b = turnsStep(w, n).s[c.slot];
-  if (b.lap !== a.lap || Math.abs(b.x - a.x) > COLS / 2) return { x: b.x, y: b.y, dir: b.face, lap: b.lap, kind: b.kind };
-  return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k, dir: a.face, lap: a.lap, kind: a.kind };
+  if (b.lap !== a.lap || Math.abs(b.x - a.x) > COLS / 2) return { x: b.x, y: seenRow(b.y, b.kind), dir: b.face, lap: b.lap, kind: b.kind };
+  return { x: a.x + (b.x - a.x) * k, y: seenRow(a.y + (b.y - a.y) * k, a.kind), dir: a.face, lap: a.lap, kind: a.kind };
 }
 
 // The creature a slot holds at `t`: one of its own for every lap, so a new
@@ -331,10 +349,11 @@ export function faunaAt(c, t, floorRow = () => ROWS, scares = SCARES) {
     const jelly = c.kind === 'jelly', w = wanderAt(c.home, t), x = w.x;
     const floorY = floorRow(Math.round(x)) - M.clear - heightOf(c.kind) - bandOf(c.kind).down + (jelly ? M.jellyAmp : 0);
     const bob = jelly ? Math.sin(t * M.jellyBob + c.seed * 11) * M.jellyAmp : 0;
-    const y = Math.min(Math.round(w.y + bob), floorY);
+    // `|| 0`: a row rounded up to the ceiling from just over it is -0, which a scare's sum is not
+    const y = Math.min(Math.round(w.y + bob), floorY) || 0;
     if (!scares.length) return { x, y, dir: w.dir };
     const o = scareOffset(x, y, t, false, 1, scares);
-    return { x: x + o.x, y: Math.max(0, Math.min(y + o.y, floorY)), dir: w.dir };
+    return { x: x + o.x, y: Math.max(waterTop(), Math.min(y + o.y, floorY)), dir: w.dir };
   }
   const dir = startled ? c.bdir : c.dir;
   // One that never swims stands on its own spot, well inside the deep: the
@@ -374,7 +393,7 @@ function boltAt(c, t, floorRow) {
   const x = c.sx + c.ddir * went, col = Math.round(x);
   const y = c.floor ? floorRow(col + 2) - heightOf(c.kind)
     : c.low ? floorRow(col + 3) - M.low.up
-    : Math.max(0, Math.min(c.sy, floorRow(col) - M.clear));
+    : Math.max(c.wander ? waterTop() : 0, Math.min(c.sy, floorRow(col) - M.clear));
   return { x, y, dir: c.ddir };
 }
 
@@ -416,7 +435,7 @@ export function faunaPose(c, t, floorRow = floorRowAt) {
   if (!reacting(c, t)) return { ...p, by: p.y, ft: t + (c.lead || 0), r: null };
   const r = poseAt(FAUNA_REACT[c.kind], t - c.r0);
   const y = p.y + r.dy;
-  return { x: p.x + p.dir * r.dx, y: c.floor ? y : Math.max(0, y), dir: r.turn ? -p.dir : p.dir,
+  return { x: p.x + p.dir * r.dx, y: c.floor ? y : Math.max(c.wander ? waterTop() : 0, y), dir: r.turn ? -p.dir : p.dir,
            by: p.y, ft: t + (c.lead0 || 0) + r.gain, r };
 }
 
@@ -425,7 +444,7 @@ export function faunaPose(c, t, floorRow = floorRowAt) {
 // caught again until it is done.
 export function faunaUnder(wx, wy, t = now() / 1000) {
   const cx = (wx - deepX0()) / P, cy = (wy - deepTop()) / P, R = FAUNA_STARTLE.reach;
-  if (cx < 0 || cx > COLS || cy < 0 || cy > ROWS) return null;
+  if (cx < 0 || cx > COLS || cy < waterTop() || cy > ROWS) return null;
   let best = null, near = Infinity;
   for (const c of faunaOut(t)) {
     if (busy(c, t)) continue;

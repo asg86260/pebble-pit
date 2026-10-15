@@ -33,12 +33,14 @@ const yardZoom = () => yardCell() / P;
 // deep's water from under its surface to the floor. Snapped down to a whole
 // number of device pixels a cell, the rule `setZoom` keeps, so the fit is
 // never rounded back up past the window.
-function deepZoom() {
+// `rest` asks for the fit alone, no hold, kill or shot pulling it in.
+function deepZoom(rest = false) {
   const need = DEEP_H - DEEP_SURFACE - P * 2 + DEEP_FLOOR_MARGIN;
   // Against the desk's cell, not the yard's: a phone draws the yard smaller
   // (`yardCell`) but the deep stays the size it is, so its share of the yard's
   // zoom is scaled up by the difference.
-  const k = (held ?? Math.min(1, S.H / (need * CELL / P))) * (1 + KILL_ZOOM * killIn) * (shot ? shot.k : 1) * (CELL / yardCell());
+  const fit = Math.min(1, S.H / (need * CELL / P));
+  const k = (rest ? fit : (held ?? fit) * (1 + KILL_ZOOM * killIn) * (shot ? shot.k : 1)) * (CELL / yardCell());
   const unit = yardCell() * S.dpr;
   return Math.max(1, Math.floor(unit * k)) / unit;
 }
@@ -85,6 +87,11 @@ export function deepCamera() {
   const camX = Math.max(x0, Math.min(openX('deep') - viewW / 2, Math.max(x0, deepX1() - viewW)));
   return { zoom, viewW, viewH, camX, camY: deepFloor() + DEEP_FLOOR_MARGIN - viewH };
 }
+
+// The top edge of the deep's own frame, in world pixels: where a tall window
+// shows water over the deep's ceiling. Off the fit alone, so a kill's pull or
+// a scene's shot does not move what is measured against it (deep/fauna.js).
+export const deepRestTop = () => deepFloor() + DEEP_FLOOR_MARGIN - S.H / (yardZoom() * deepZoom(true));
 
 // The kill's frame (snatch.js): the deep's own, closer by `k` of KILL_ZOOM
 // (held in `deepZoom`, which the deep re-takes every frame), its middle on

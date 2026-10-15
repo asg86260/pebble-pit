@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import './helpers.mjs';                // the yard's page: the creatures now read the deep's floor
 import { FAUNA, FAUNA_MOTION, FAUNA_TURNS } from '../src/config.js';
-import { POPULATION, COLS, ROWS, faunaAt, visitAt, faunaOut, forgetWalk, reachOf, heightOf, wanderLo, wanderHi } from '../src/deep/fauna.js';
+import { POPULATION, COLS, ROWS, faunaAt, visitAt, faunaOut, forgetWalk, reachOf, heightOf, wanderLo, wanderHi, waterTop } from '../src/deep/fauna.js';
 
 const DT = 1 / 60;
 const kindAt = (c, t) => visitAt(c, t).kind;
@@ -48,23 +48,33 @@ test('the deep is sparse: three slots, every one a wanderer, every swimmer on th
   assert.ok(FAUNA_TURNS.roster.length > FAUNA_TURNS.slots, 'more kinds than slots, so they take turns');
 });
 
-// Over time each slot has been up in the top quarter of the deep and down in
-// the bottom one, and never drawn above the ceiling's row or nearer the floor
-// than its clearance, whichever kind it held.
-test('each slot travels the whole height, never into the ceiling or the floor', () => {
-  const W = 20 * 60;
-  for (const c of POPULATION) {
-    let top = null, bottom = null;
-    for (let t = 0; t < W; t += 0.25) {
-      const { y } = faunaAt(c, t), kind = kindAt(c, t), [lo, hi] = rowsOf(kind);
-      assert.ok(y >= lo, `${kind} in slot ${c.i} is over the ceiling at ${t}s (row ${y})`);
-      assert.ok(y <= hi, `${kind} in slot ${c.i} is under the floor's clearance at ${t}s (row ${y})`);
-      if (top == null && y < ROWS / 4) top = t;
-      if (bottom == null && y + heightOf(kind) > ROWS * 3 / 4) bottom = t;
+// Within ten minutes each slot's drawing has been up in the top tenth of the
+// water the deep's frame shows and down in the bottom tenth over the floor's
+// clearance (the owner, 2026-10-14: "creatures STILL do not take up the whole
+// height of the deep"), in the window the yard stands in and in one twice as
+// tall, whose water goes on up over the ceiling; and never over the water's
+// top or nearer the floor than its clearance, whichever kind it held.
+test('each slot travels the whole height of the water shown, never into the floor', async () => {
+  const { S } = await import('../src/state.js');
+  const W = 10 * 60, H = S.H;
+  for (const tall of [1, 2]) {
+    S.H = H * tall;
+    const top0 = waterTop(), bot0 = ROWS - FAUNA_MOTION.clear, tenth = (bot0 - top0) / 10;
+    if (tall > 1) assert.ok(top0 < -ROWS / 4, `a tall window shows water over the ceiling (top row ${top0})`);
+    for (const c of POPULATION) {
+      let top = null, bottom = null;
+      for (let t = 0; t < W; t += 0.25) {
+        const { y } = faunaAt(c, t), kind = kindAt(c, t), [lo, hi] = rowsOf(kind);
+        assert.ok(y >= lo, `${kind} in slot ${c.i} is over the water at ${t}s (row ${y})`);
+        assert.ok(y <= hi, `${kind} in slot ${c.i} is under the floor's clearance at ${t}s (row ${y})`);
+        if (top == null && y < top0 + tenth) top = t;
+        if (bottom == null && y + heightOf(kind) > bot0 - tenth) bottom = t;
+      }
+      assert.ok(top != null, `slot ${c.i} never came up into the top tenth (rows ${top0}..${bot0}) in ${W}s`);
+      assert.ok(bottom != null, `slot ${c.i} never went down into the bottom tenth (rows ${top0}..${bot0}) in ${W}s`);
     }
-    assert.ok(top != null, `slot ${c.i} never came up into the top quarter in ${W}s`);
-    assert.ok(bottom != null, `slot ${c.i} never went down into the bottom quarter in ${W}s`);
   }
+  S.H = H;
 });
 
 test('nothing teleports: a jump happens only off the deep, at the wrap', () => {
