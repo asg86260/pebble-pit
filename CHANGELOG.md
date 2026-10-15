@@ -27,13 +27,13 @@ this section; the release that switches it on moves these under Unreleased.
 - The deep's water and its floor reach the edges of a tall or ultrawide window instead of stopping in a hard line partway across it (test/deep-zones-reach.test.mjs).
 - The deep's creatures dart away from a lash and scatter harder when a defense breaks, then ease back to their own paths; floor-dwellers skitter along the floor and shoals scatter fish by fish (test/deep-fauna.test.mjs, `node tools/look.mjs deep-scatter-lash,deep-scatter-break`).
 - The deep's creatures are few now, like the birds: a click startles one off the end of the deep and shakes loose a handful of scales for the gatherers, and it drifts back in a while later (test/deep-creature-click.test.mjs).
-- Every creature in the deep, the stream's included, answers a click with its own move -- the lanternfish darts, the angler snaps, the amphipod back-flips, the shoal turns as one and flees -- and drops a handful of scales (test/deep-creature-click.test.mjs, `node tools/look.mjs deep-react-angler`).
+- Every creature in the deep answers a click with its own move -- the lanternfish darts, the angler snaps, the amphipod back-flips, the shoal turns as one and flees -- and drops a handful of scales (test/deep-creature-click.test.mjs, `node tools/look.mjs deep-react-angler`).
 - A creature in the deep drops its handful of scales only on the first click; later clicks still startle it, and a shoal that has fled and come back, or a new creature swimming in, has a handful of its own (test/deep-creature-click.test.mjs).
 - A clicked creature in the deep moves smoothly through its reaction, easing off its path and back onto it without a jump (test/deep-creature-click.test.mjs).
 - The serpent's eye holds still on its head instead of flickering between two pixels as it swims (`node tools/look.mjs deep-all`).
 - The deep's water is black, on the dark theme as on the light, with half the purple stars and motes in it, dimmer.
 - A swell rolls through the deep's water: one wide wave at a time, some gentle and some strong, pushes the stars and silt right and lifts them, and they ease back (`node tools/look.mjs deep-wave`).
-- The deep keeps three creatures at once, each swimming the whole height of the water the window shows, top to just over the floor, and each time one swims off the end the next kind comes in, so every swimmer turns up in its turn; the serpent's stream is a few at a time spread over the whole water, coming down to the serpent's level only by its mouth, and a reload finds them spread top to bottom (test/deep-fauna.test.mjs, test/meals.test.mjs).
+- The deep keeps three creatures at once, each swimming the whole height of the water the window shows, top to just over the floor, and each time one swims off the end the next kind comes in, so every swimmer turns up in its turn; each sets out and comes in at a random height anywhere in the water, so a reload finds them spread top to bottom (test/deep-fauna.test.mjs).
 - After the serpent dies she hangs her gear on her station for one of the deep's crew to take up, and the two of them go home through the portal and down the whole yard with everyone falling in behind, to a house the builders put up during the walk, where they live for good (test/finale.test.mjs).
 - The finale's crowd hops in held poses without flickering on and off, the quarry and the hill come and join it, and no firework opens as a hollow box (test/finale.test.mjs).
 - The first trip down into the deep plays a short scene: the camera finds him calling from the serpent's belly, then her under the portal, and she charges down and lands her first blow; her station stands, free, from the snatch (test/abyss-intro.test.mjs).
@@ -60,16 +60,13 @@ this section; the release that switches it on moves these under Unreleased.
 - A fighter's later rungs ask the deep's own price in dust, ore and sparks, sized for a yard that has reached the abyss (test/deep-board.test.mjs).
 - A blow knocks only its own sliver off the serpent's health bar, not a fixed chunk (`node tools/look.mjs deep-numbers`).
 - The serpent's health bar stands over the first third of its body from the head, with clear water between it and the coil, and shortens to fit a phone held upright (`node tools/look.mjs deep-numbers`).
-- The serpent eats a creature out of the passing stream, the one swimming its own way into the mouth when a meal is due, instead of one that dashes in only to be eaten (test/meals.test.mjs).
-- The deep has a steady stream of creatures crossing it at three depths, with a giant now and then far behind; every one comes in from off the screen, the serpent's meals included, and none trails a line of dots (`node tools/look.mjs party-four`).
 - The rescue's sheet has no button with the second half on: it stands a beat, rises and fades, and the camera pulls in on the plank as the snatch plays (test/serpent-flag.test.mjs).
 - The rescue's sheet says the story isn't over when the second half follows it, and the sheet for freeing him says it is the end (src/selftest/ending.js).
 - The serpent that comes up out of the pit has the deep's head: snout, purple crest and hinged jaws that open wide and shut on him, on a neck that leans out toward the plank (`node tools/look.mjs snatch`).
 - The story's line carries on into the second half: drown the pit, ask the wizards how to get down, buy the portal, free your sqhusband (test/objectives.test.mjs).
 - The deep's portal no longer pokes up through the water's surface, so a click on the roof is not a way up (src/selftest/deep.js).
-- The serpent's jaws swing wide open for a creature and it goes in between them, its lump travels slowly down the neck, and purple crosses rise off the body when the heal lands (`node tools/look.mjs meal-gulp`).
-- The serpent's bar centers over the stretch of serpent on screen instead of the middle of the window (`node tools/look.mjs meal-swim`).
-- The serpent eats to heal: eight abyss creatures swim in from the left, one a meal every 6 to 12 seconds, and the heal it banked lands in one lump as the swallow reaches its belly, at the same rate as before (test/meals.test.mjs, `node tools/look.mjs meal-swim`).
+- The serpent's bar centers over the stretch of serpent on screen instead of the middle of the window (`node tools/look.mjs deep-numbers`).
+- The serpent eats to heal with its constrict: as a window runs out its comb lights, bolts lock the nearest creature in an orb and drag it slowly to the jaws, the orb shrinking as it nears, and it is swallowed, a lump runs down to the belly and purple crosses rise as the heal lands; the creature's place in the water is taken by the next kind swimming in from the end (test/meals.test.mjs, `node tools/look.mjs meal-reel`).
 - A melee fighter hopping up to the hide is thrown off by the lash like one at it (test/phase-mechanics.test.mjs).
 - The serpent is shorter: its head hangs just past the first fighter, leaving open water to its left (`node tools/look.mjs party-four`).
 - The serpent rides lower in the deep, with more room between it, the bar and the portal (`node tools/look.mjs deep-fading`).
@@ -124,7 +121,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The deep's stars and drifting motes fade in and out instead of blinking on and off (src/selftest/deeppalette.js).
 - The deep's stations hold one steady purple: the lit top edge of their props, the pods and the hexer's brew no longer cycle through purples (`node tools/look.mjs deep-all`, test/props.test.mjs).
 
-- Refreshing the page no longer stops the serpent eating: a creature already swimming for its mouth still lands, and the heal comes at the end of every window however often the page reloads (test/serpent-reload.test.mjs).
+- Refreshing the page no longer stops the serpent eating: a meal already under way still lands, its creature still in the orb, and the heal comes at the end of every window however often the page reloads (test/serpent-reload.test.mjs).
 - The serpent no longer sheds more scales than the gatherers can ever carry to the crusher (test/serpent.test.mjs).
 - The deep's build button shows its price, one fang, instead of how many fangs you hold (src/selftest/deep.js).
 - A Swordsman's blow dents and wounds the serpent once, in one place, on the turn that lands it (test/sword-dent.test.mjs, test/classes.test.mjs).
