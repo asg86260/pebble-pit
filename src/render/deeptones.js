@@ -19,7 +19,7 @@
 
 import { ABYSS_TONES, ABYSS_MAGIC_TONES, DEEP_GREY_RUNGS, DEEP_PURPLE_RUNGS, DEEP_GREY, DEEP_PURPLE,
          DEEP_BREATH } from '../config.js';
-import { darkPage, turned } from '../ink.js';
+import { darkPage, turned, raw } from '../ink.js';
 
 const xor = h => '#' + (0xffffff ^ parseInt(h.slice(1), 16)).toString(16).padStart(6, '0');
 export const seen = darkPage ? turned : xor;
@@ -36,6 +36,10 @@ export const PURPLES = PURPLE_RUNG.map(k => seen(ABYSS_MAGIC_TONES[k])); // and 
 
 // Each role's tone as drawn (config DEEP_GREY, DEEP_PURPLE).
 export const TONE = Object.fromEntries(Object.entries(DEEP_GREY).map(([k, i]) => [k, GREYS[i]]));
+// On the dark page the darkest the page's map reaches is its own paper, a
+// charcoal; the water and a hole in it are written raw so the deep is as
+// black there as on the light page.
+if (darkPage) TONE.water = TONE.hole = raw('#000');
 export const LIGHT = Object.fromEntries(Object.entries(DEEP_PURPLE).map(([k, i]) => [k, PURPLES[i]]));
 
 // Every color the deep may draw, as seen: the kept rungs and white. The

@@ -17,9 +17,10 @@ import { ABYSS_TONES, ABYSS_MAGIC_TONES } from './rift.js';
 // there (docs/design-language/canvas.md, "The deep's palette").
 export const DEEP_GREY_RUNGS = [0, 2, 4, 6, 8, 10];
 export const DEEP_PURPLE_RUNGS = [3, 5, 7, 9, 11];
-// What each is for, as a rung. The water is the one grey kept over black, so
-// a hole in it -- the portal's mouth, the furnace's door -- reads as a hole.
-export const DEEP_GREY = { hole: 0, water: 2, ground: 4, stone: 6, lit: 8, pale: 10, white: 11 };
+// What each is for, as a rung. The water is black (the owner, 2026-10-14:
+// the deep read a little light), the same as a hole: the portal's mouth reads
+// by its purple rim, the furnace's door by the stone round it.
+export const DEEP_GREY = { hole: 0, water: 0, ground: 4, stone: 6, lit: 8, pale: 10, white: 11 };
 export const DEEP_PURPLE = { dim: 3, low: 5, mid: 7, glow: 9, bright: 11 };
 // The light from above along every top edge of what is built down there:
 // these rungs in turn, each held this long.
