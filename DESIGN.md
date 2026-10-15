@@ -16924,7 +16924,7 @@ fighter means nothing unless it is learned. The approved look is
 docs/mocks/station-props-2026-09-28.html (its `PROPS`, `MAT`, `R8_PARTS`
 and placement are the spec).
 
-A low dome came back behind every built station (docs/mocks/station-backdrop-2026-09-28.html, B), to keep the bed of scales and a grey kit apart. It went again on 2026-10-15 (docs/mocks/deep-stations-2026-10-15/, option C): the owner found the stations blending together, and the diagnosis was that the dome was the floor's own grey, the prop the plinth's, and the plinth's lit top the brightest thing in a station -- seven grey humps in a row with thin lines inside. Now there is no dome, and each prop is redrawn at twice its height and width, one cell a pixel as before, so its detail is in the holes between boards, staves and legs. Each station reads by its prop's outline, with black water between stations. The prop is the brightest grey of its station (`PROP_BODY`, rung 8), and the plinth steps down under it (rung 6 over rung 4). The cost the owner took with it: the scale bed heaped on the floor is no longer hidden behind anything.
+A low dome came back behind every built station (docs/mocks/station-backdrop-2026-09-28.html, B), to keep the bed of scales and a grey kit apart. It went again on 2026-10-15 (docs/mocks/deep-stations-2026-10-15/, option C): the owner found the stations blending together, and the diagnosis was that the dome was the floor's own grey, the prop the plinth's, and the plinth's lit top the brightest thing in a station -- seven grey humps in a row with thin lines inside. Now there is no dome, and each prop is redrawn at twice its height and width, one cell a pixel as before, so its detail is in the holes between boards, staves and legs. Each station reads by its prop's outline, with black water between stations. The prop is the brightest grey of its station, and the plinth steps down under it (rung 6 over rung 4). The cost the owner took with it: the scale bed heaped on the floor is no longer hidden behind anything.
 
 - **The props.** Brawler a heavy bag on a gallows arm; Swordsman a sword
   rack, one slot empty; Monk a bell in a frame over a mat; Martial Artist
@@ -16933,11 +16933,17 @@ A low dome came back behind every built station (docs/mocks/station-backdrop-202
   powder kegs; Mage a lectern with an open book; Bard a music stand. A base
   unit (below the fork) has a crate, its gear still packed; at the fork the
   crate is replaced by the class's prop.
-- **Rung 8.** Whole parts of the prop take the capstone's purple
-  (`R8_PARTS`), and its one accent cell is the brightest point.
-- **Tones.** A material is a short run of neighboring greys dealt a cell by
-  a hash, never one flat fill; nothing on a prop is brighter than GREYS[10],
-  so the kits' white weapons never land on a white prop.
+- **Shading** (the owner, 2026-10-15, option A of
+  docs/mocks/station-polish-2026-10-15/). Every part is on a ramp of four
+  tones, lit from the upper left: a lit top and left edge, the body, a
+  shadow on the right and bottom edges (`PROP_TONES`). The thing a class
+  trains with is a step lighter than its frame, and its lit edge, the pale
+  grey, is the brightest a prop gets, so the kits' white weapons never land
+  on a white prop. Each prop carries one small purple class accent.
+- **Rung 8.** The parts written as rung-8 letters in the rows (`R`, `Q`,
+  `K`) take the purple ramps, keeping their shading, and the accent turns
+  bright. The rows alone say how a prop is drawn, so a prop is redrawn by
+  swapping its rows.
 - **Placement.** The prop's right-hand column stands GAP cells short of the
   fighter's body (5; the Swordsman 7, so his sword is not read as the
   rack's third), its foot on the station's plinth. The station's ground --
