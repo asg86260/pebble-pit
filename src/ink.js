@@ -70,6 +70,18 @@ export function turned(c) {
   return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
 }
 
+// A color written so the page's map lands it on `c` itself: the lightness is
+// chosen to be the one whose map is `c`'s own, so the deep's tones come out on
+// the dark page as they do on the light one, steps and all. `turned` leaves
+// them squeezed into the paper-to-ink span and lifted off black, which folds
+// a brick's mortar, a fire and the floor together. A tone darker than the
+// paper cannot be reached by the map and lands on the paper.
+export function landed(c) {
+  const [h, s, l] = toHsl(...hex(c));
+  const [r, g, b] = fromHsl(h, s, Math.min(1, Math.max(0, 1 - (l - lp) / (li - lp))));
+  return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+}
+
 // A gray keeps its step: pure black lands on the ink, pure white on the
 // paper, and the rest in between in the same order.
 const mapRgb = (r, g, b) => {
