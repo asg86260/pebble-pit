@@ -46,7 +46,7 @@ import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
 import { drawBody, inTheDeep } from './crew.js';
 import * as place from '../deep/place.js';
-import { SCAFFOLD_BANDS, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES, DOME_TONES, CHOOSE_MARK_UP } from '../config.js';
+import { SCAFFOLD_OVER, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES, CHOOSE_MARK_UP } from '../config.js';
 import { drawHand, handSize, handTip } from './hand.js';
 import { unchosen } from '../deep/party.js';
 import { doneAt } from '../works.js';
@@ -331,8 +331,9 @@ function propImage(key, lit, light) {
   return img;
 }
 
-// The plinth under a station (`plinthRect`): a lit top course over flat
-// stone, each course a cell further out than the one over it. The same for
+// The plinth under a station (`plinthRect`): a top course over a darker
+// one, each a cell further out than the one over it, and both under the
+// prop's grey (PLINTH_TONES). The same for
 // every station of one width, so painted once a width.
 const plinths = new Map();
 function plinthImage(b) {
@@ -355,39 +356,6 @@ function drawPlinth(st) {
   const b = place.plinthRect(st);
   ctx.drawImage(plinthImage(b), b.x - b.step * (PLINTH_H - 1), b.y);
 }
-// The low dome behind a built station (`domeRect`): one flat rung over the
-// water, the floor's own, and along its top edge a dim purple, a few rungs
-// under the light the props breathe so the dome stays behind them. The same
-// for every dome of one size, so painted once a size.
-const domes = new Map();
-function domeImage(w, wall) {
-  const id = `${w}|${wall}`;
-  let img = domes.get(id);
-  if (img) return img;
-  const cols = w / P, r = cols / 2, rows = Math.ceil(r) + wall;
-  const inside = (c, y) => {
-    if (c < 0 || c >= cols || y < 0 || y >= rows) return false;
-    if (y >= rows - wall) return true;
-    const dx = c + 0.5 - r, dy = y + 0.5 - (rows - wall);
-    return dx * dx + dy * dy <= r * r;
-  };
-  img = document.createElement('canvas');
-  img.width = w; img.height = rows * P;
-  const g = img.getContext('2d');
-  for (let y = 0; y < rows; y++) for (let c = 0; c < cols; c++) {
-    if (!inside(c, y)) continue;
-    g.fillStyle = inside(c, y - 1) ? GREYS[DOME_TONES.wall] : PURPLES[DOME_TONES.edge];
-    g.fillRect(c * P, y * P, P, P);
-  }
-  domes.set(id, img);
-  return img;
-}
-function drawDome(st) {
-  const d = place.domeRect(st), wall = (deepFloor() - d.spring) / P, img = domeImage(d.w, wall);
-  ctx.drawImage(img, d.x, deepFloor() - img.height);
-}
-
-
 function drawProp(st, t) {
   const p = place.propRect(st), lit = (st.rung || 0) >= CAPSTONE_RUNG, light = breath(t * 1000);
   ctx.drawImage(propImage(p.key, lit, light), p.x, p.y);
@@ -399,14 +367,14 @@ function drawProp(st, t) {
 }
 
 // A station not built yet stands as a building site does (render/buildsites.js):
-// a striped post each side of the ground it will stand on and the tape
-// between them at head height, until a delver's work lands.
+// a striped post each side of the ground it will stand on, as tall as that
+// ground and SCAFFOLD_OVER cells more, and the tape between them at head
+// height, until a delver's work lands.
 function drawScaffold(stand) {
-  const postW = P * 2, postH = P * SCAFFOLD_BANDS;
+  const postW = P * 2, top = snap(stand.y) - P * SCAFFOLD_OVER, bands = (deepFloor() - top) / P;
   const left = snap(stand.x) - P * 3 - postW, right = snap(stand.x + stand.w) + P * 3;
-  const top = deepFloor() - postH;
   ctx.fillStyle = TONE.lit;
-  for (const x of [left, right]) for (let i = 0; i < SCAFFOLD_BANDS; i += 2) ctx.fillRect(x, top + i * P, postW, P);
+  for (const x of [left, right]) for (let i = 0; i < bands; i += 2) ctx.fillRect(x, top + i * P, postW, P);
   for (let x = left + postW; x < right; x += P * 2) ctx.fillRect(x, deepFloor() - P * 3, P, 2);
 }
 
@@ -441,12 +409,6 @@ export function drawDeepStations() {
   drawPods();
   const smooth = ctx.imageSmoothingEnabled, t = now() / 1000;
   ctx.imageSmoothingEnabled = false;
-  // every dome first, so no station's dome is over its neighbor's prop
-  for (const st of S.stations || []) {
-    if (st.slot == null || !st.built) continue;
-    const d = place.domeRect(st);
-    if (d.x <= x1 && d.x + d.w >= x0) drawDome(st);
-  }
   for (const st of S.stations || []) {
     if (st.slot == null) continue;
     const stand = place.standOfStation(st);

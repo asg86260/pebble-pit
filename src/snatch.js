@@ -34,7 +34,7 @@ import { P, WORKER, COMMUTE_PACE, INTRO_BEAT,
          DEEP_SURFACE, SERPENT_ON, STAGE_WAIT_S } from './config.js';
 import { S } from './state.js';
 import { frames } from './clock.js';
-import { mouthX, bellyAt, deepTop, deepFloor, deepX0, deepX1, coilLine, domeRect } from './deep/place.js';
+import { mouthX, bellyAt, deepTop, deepFloor, deepX0, deepX1, coilLine, standOfStation } from './deep/place.js';
 import { killFrame } from './view.js';
 import { now } from './clock.js';
 import { abyssLine } from './pit.js';
@@ -316,14 +316,14 @@ export const heldBodies = () =>
 const ease = k => 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3);
 const outAt = () => KILL.last + KILL.limp + KILL.apart;
 export function startFreed(t) { if (S.freedAt == null) S.freedAt = t; glide = null; }
-// Where he stops: beside her, out in the water past her station's glass on
+// Where he stops: beside her, out in the water past her station's ground on
 // his side (she comes out to its edge, stage.js `meetHim`), so the two of
 // them meet where they can be seen. With no station standing, beside the
 // deep's own body nearest, or a little way off.
 function herX(from) {
   const st = S.stations && S.stations[0];
   if (st && st.built) {
-    const d = domeRect(st), side = from < d.x + d.w / 2 ? -1 : 1;
+    const d = standOfStation(st), side = from < d.x + d.w / 2 ? -1 : 1;
     const her = side < 0 ? d.x - WORKER - KILL_MEET_GAP : d.x + d.w + KILL_MEET_GAP;
     return Math.max(deepX0() + P, Math.min(deepX1() - WORKER - P, her + side * (WORKER + KILL_MEET_GAP)));
   }

@@ -12,7 +12,7 @@
 // bought where the player buys them, on the station's board (`pressBuy`).
 
 import { group, ok, yard } from './helpers.mjs';
-import { P, WORKER, DEEP_W, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, PLINTH_H, HAND_PRESS } from '../src/config.js';
+import { P, WORKER, DEEP_W, DEEP_SLOTS, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, PLINTH_H, HAND_PRESS } from '../src/config.js';
 import { HANDS, handPressed } from '../src/render/hand.js';
 import { pressBuy, pressKind } from '../src/deep/rails.js';
 import { stationById } from '../src/deep/party.js';
@@ -58,17 +58,19 @@ function propOf(st) {
   return d && { x: d.x, y: d.y, w: d.img.width, cells: d.img.cells };
 }
 // What is drawn on the floor round station `st`'s slot, and its place in the
-// order: the plinth is PLINTH_H cells high, the dome behind it taller.
+// order: the plinth is PLINTH_H cells high, and nothing taller stands there
+// (the dome that stood behind it is gone: option C, 2026-10-15).
 const onFloor = st => drawn().map((o, i) => ({ ...o, i }))
   .filter(o => o.img.cells && o.y + o.img.height === deepFloor() && o.x < slotX(st.slot) && o.x + o.img.width > slotX(st.slot));
 function plinthOf(st) {
   const d = onFloor(st).find(o => o.img.height === PLINTH_H * P);
-  return d && { x: d.x, y: d.y, w: d.img.width, i: d.i };
+  return d && { x: d.x, y: d.y, w: d.img.width, i: d.i, cells: d.img.cells };
 }
-function domeOf(st) {
-  const d = onFloor(st).find(o => o.img.height > PLINTH_H * P);
-  return d && { x: d.x, y: d.y, w: d.img.width, i: d.i };
-}
+const behind = st => onFloor(st).filter(o => o.img.height > PLINTH_H * P);
+// The highest grey rung among an image's cells (its purples left out): the
+// one the eye lands on. Read as a rung, not a channel, since the deep is
+// written turned and seen through the page's map.
+const lightest = cells => Math.max(-1, ...[...cells.values()].map(c => GREYS.lastIndexOf(c)));
 // The prop `key`'s cells, as the drawing of it should hold them: a top edge
 // in the light from above as it breathes now.
 const want = (key, lit) => new Map(propCells(key, lit)
@@ -94,7 +96,7 @@ group("a station stands beside a crate below the fork, its class's prop from it,
   const rack = propOf(stationById(st.id));
   while (stationById(st.id).rung < LADDER && buy()) { /* climb */ }
   const top = stationById(st.id);
-  const lit = propOf(top), plinth = plinthOf(top), dome = domeOf(top);
+  const lit = propOf(top), plinth = plinthOf(top), backdrop = behind(top);
   const g = standOfStation(top), post = bodyCol(top) * P;
   const right = p => (p.x + p.w) / P - 1;
   return [
@@ -113,8 +115,9 @@ group("a station stands beside a crate below the fork, its class's prop from it,
        'the plinth on the floor under the prop and the post', JSON.stringify(plinth)),
     ok(g.x <= plinth?.x && g.x + g.w >= plinth?.x + plinth?.w && g.y <= lit.y, "and the station's ground spans the plinth, the prop and the post",
        `${g.x}..${g.x + g.w} over ${plinth?.x}..${plinth?.x + plinth?.w}`),
-    ok(dome && plinth && dome.i < plinth.i && dome.x < g.x && dome.x + dome.w > g.x + g.w && dome.y < postY() - WORKER,
-       "a low dome stands behind it all, wider than its ground and over the fighter's head", JSON.stringify(dome))
+    ok(backdrop.length === 0, 'nothing stands behind it: no dome', `${backdrop.length} drawn`),
+    ok(rack && plinth && lightest(rack.cells) > lightest(plinth.cells), "the prop's grey is lighter than any of its plinth's",
+       rack && plinth && `${lightest(rack.cells)} vs ${lightest(plinth.cells)}`)
   ];
 });
 
@@ -145,5 +148,25 @@ group('a Recruit waiting on its first choice has the hand over its station, unti
     ok(ticked === 0, "none while the build's done check still stands", `${ticked}`),
     ok(before.n === want && before.over, 'then the hand is drawn whole, over the station', JSON.stringify(before)),
     ok(chose && after.n === 0, 'and gone once the Recruit is chosen', JSON.stringify(after))
+  ];
+});
+
+// The props are drawn big (option C, 2026-10-15), so every prop is stood at
+// a slot and measured against the next slot along: its ground with the
+// build's scaffold round it (three cells out, two of post). The prop stands
+// left of the slot and the fighter on it, so the furthest any ground reaches
+// left of its slot and the furthest any reaches right, together, are short
+// of the pitch: two neighbors always have black water between them.
+group("every prop's station, scaffold and all, keeps clear of the next slot", async () => {
+  window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
+  const st = S.stations[0], mid = slotX(st.slot), mids = DEEP_SLOTS.map((_, i) => slotX(i)).sort((a, b) => a - b);
+  const pitch = Math.min(...mids.slice(1).map((m, i) => m - mids[i]));
+  const out = 5 * P, grounds = Object.keys(PROPS).map(k => standOfStation({ ...st, cls: k === 'crate' ? null : k }));
+  const left = Math.max(...grounds.map(g => mid - g.x)), right = Math.max(...grounds.map(g => g.x + g.w - mid));
+  const water = pitch - left - right, scaffolded = water - 2 * out;
+  return [
+    ok(pitch === 49 * P, 'the slots stand 49 cells apart', `${pitch / P}`),
+    ok(water >= 10 * P, 'built, ten cells of water or more between neighbors', `${water / P} cells`),
+    ok(scaffolded >= 2 * P, 'and with both scaffolds up, still two cells between their posts', `${scaffolded / P} cells`)
   ];
 });

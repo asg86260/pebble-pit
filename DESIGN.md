@@ -16924,7 +16924,7 @@ fighter means nothing unless it is learned. The approved look is
 docs/mocks/station-props-2026-09-28.html (its `PROPS`, `MAT`, `R8_PARTS`
 and placement are the spec).
 
-A low dome came back behind every built station (docs/mocks/station-backdrop-2026-09-28.html, B): the bed of scales heaps up behind the stations, and a grey kit -- the Ranger's bow above all -- was lost against it. The dome is only a dark ground behind the fighter and its prop, two cells of wall over his head and an arch, not a building: the station is still its fighter and its prop.
+A low dome came back behind every built station (docs/mocks/station-backdrop-2026-09-28.html, B), to keep the bed of scales and a grey kit apart. It went again on 2026-10-15 (docs/mocks/deep-stations-2026-10-15/, option C): the owner found the stations blending together, and the diagnosis was that the dome was the floor's own grey, the prop the plinth's, and the plinth's lit top the brightest thing in a station -- seven grey humps in a row with thin lines inside. Now there is no dome, and each prop is redrawn at twice its height and width, one cell a pixel as before, so its detail is in the holes between boards, staves and legs. Each station reads by its prop's outline, with black water between stations. The prop is the brightest grey of its station (`PROP_BODY`, rung 8), and the plinth steps down under it (rung 6 over rung 4). The cost the owner took with it: the scale bed heaped on the floor is no longer hidden behind anything.
 
 - **The props.** Brawler a heavy bag on a gallows arm; Swordsman a sword
   rack, one slot empty; Monk a bell in a frame over a mat; Martial Artist
@@ -16949,7 +16949,8 @@ A low dome came back behind every built station (docs/mocks/station-backdrop-202
   each course down. The fighter's post is on it, so it swims back up onto
   it between fights; it stands when the build lands, with the prop.
 - **The board.** Its title is the fighter's: "the Fighter", "the Brawler".
-- **Building.** The scaffold stays for the build; when it lands the crate
+- **Building.** The scaffold stays for the build, its posts as tall as the
+  crate's ground and `SCAFFOLD_OVER` cells more; when it lands the crate
   stands.
 - **Nothing teleports.** A prop changes at the fork and at rung 8 the way
   a kit does: the purchase is instant (decided 2026-09-28) and the drawing
