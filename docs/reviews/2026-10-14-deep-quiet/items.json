@@ -1,0 +1,4 @@
+{ "title": "Quieter deep", "lede": "Your A, plus dimmer: half the purple stars and drifting motes in the deep, each a step dimmer. The pit's liquid in the yard is unchanged.", "base": "fa244043", "head": "88eef23b",
+  "items": [ { "id": "quiet", "title": "Half the purple noise, dimmer", "what": "Light theme and dark theme.",
+    "shots": [ { "label": "light theme", "scene": "deep-all", "window": [800, 600] },
+               { "label": "dark theme", "scene": "deep-all", "theme": "dark", "window": [800, 600] } ] } ] }
