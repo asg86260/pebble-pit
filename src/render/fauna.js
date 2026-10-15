@@ -17,7 +17,7 @@ import { TONE, greyAt, purpleAt } from './deeptones.js';
 import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow } from './deep.js';
 import { COLS, ROWS, faunaOut, unit, unit2, schoolAt, frameOf, reachOf, addScare, scareOffset,
-         clearScares, SCARES, bolting, faunaPose, poseInset, heightOf, zoneHere, waterTop } from '../deep/fauna.js';
+         clearScares, SCARES, bolting, faunaPose, poseInset, heightOf, zoneHere, waterTop, glideWaterTop } from '../deep/fauna.js';
 import { coilAt, bellyAt } from '../deep/place.js';
 import { lashK, breaking } from '../deep/phases.js';
 
@@ -32,7 +32,11 @@ const purple = purpleAt;
 // not a margin guessed round it: the deep's zoom tops out at the yard's, so a
 // tall window reaches as far over the ceiling as it is tall, and one wider
 // than the deep past its far end.
+let glidedAt = 0;
 export function drawDeepZones() {
+  const wall = performance.now();
+  glideWaterTop(glidedAt ? (wall - glidedAt) / 1000 : 1);
+  glidedAt = wall;
   const win = deepWindow(), x0 = deepX0(), top = deepTop();
   const left = Math.min(x0, win.x0), right = Math.max(x0 + COLS * P, win.x1), from = Math.min(top, win.y0);
   ctx.fillStyle = TONE.water;

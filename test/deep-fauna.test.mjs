@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import './helpers.mjs';                // the yard's page: the creatures now read the deep's floor
 import { FAUNA, FAUNA_MOTION, FAUNA_TURNS } from '../src/config.js';
-import { POPULATION, COLS, ROWS, faunaAt, visitAt, faunaOut, forgetWalk, reachOf, heightOf, wanderLo, wanderHi, waterTop } from '../src/deep/fauna.js';
+import { POPULATION, COLS, ROWS, faunaAt, visitAt, faunaOut, forgetWalk, reachOf, heightOf, wanderLo, wanderHi, waterTop, glideWaterTop } from '../src/deep/fauna.js';
 
 const DT = 1 / 60;
 const kindAt = (c, t) => visitAt(c, t).kind;
@@ -158,4 +158,27 @@ test('a scare pushes outward, floor creatures only sideways, and a break harder 
   assert.ok(scareOffset(40, 60, 0.3, false, 1, lash).x < 0, 'the other side goes the other way');
   assert.equal(scareOffset(60, 70, 0.3, true, 1, brk).y, 0, 'the floor-dwellers keep the floor');
   assert.deepEqual(scareOffset(200, 60, 0.3, false, 1, brk), { x: 0, y: 0 }, 'beyond the reach nothing moves');
+});
+
+// A resized window moves the top the creatures are stretched from; they glide
+// to their new heights rather than jumping there.
+test('a resize glides every creature to its new height, a couple of rows a frame at most', async () => {
+  const { S } = await import('../src/state.js');
+  const H = S.H, t = 200;
+  glideWaterTop(1);
+  const heights = () => POPULATION.map(c => faunaAt(c, t).y);
+  const was0 = heights();
+  S.H = H * 1.5;
+  let was = was0, worst = 0;
+  for (let f = 0; f < 180; f++) {
+    glideWaterTop(1 / 60);
+    const now = heights();
+    worst = Math.max(worst, ...now.map((y, i) => Math.abs(y - was[i])));
+    was = now;
+  }
+  const total = Math.max(...was.map((y, i) => Math.abs(y - was0[i])));
+  assert.ok(total > 6, `the resize moved a creature only ${total} rows in all`);
+  assert.ok(worst <= 3, `a creature moved ${worst} rows in one frame of the glide`);
+  S.H = H;
+  for (let f = 0; f < 600; f++) glideWaterTop(1 / 60);
 });
