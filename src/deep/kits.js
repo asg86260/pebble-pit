@@ -34,9 +34,9 @@ export const R4 = R => R >= MOVE_RUNG, R8 = R => R >= CAPSTONE_RUNG;
 // The page's own noise, so a spray or a scatter falls where it fell there.
 export const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-export { lerp } from '../motion.js';
+import { lerp, smoothstep as ease } from '../motion.js';
+export { lerp, ease };
 export const along = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
-export { smoothstep as ease } from '../motion.js';
 
 // --- cells --------------------------------------------------------------------
 // A cell at world cell (cx, cy), laid at whole pixels. `fillRect` takes the

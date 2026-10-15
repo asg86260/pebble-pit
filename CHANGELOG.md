@@ -146,6 +146,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Holding the right button in the deep picks out the crew down there as it does in the yard, the water veiled behind them and each body ringed (src/selftest/deep.js).
 - Gatherers no longer stack into what looks like one worker: each goes for scales nobody else is on and they swim in file, a body apart (test/gather-spread.test.mjs).
 - The deep no longer hitches every few seconds during a fight (test/deep-alloc.test.mjs).
+- The game no longer stops in the deep when a station's crew climbs a rung (test/reexport-local.test.mjs).
 
 ## Unreleased
 
