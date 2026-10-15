@@ -17416,10 +17416,15 @@ pebbles do in the yard.
   serpent's comb lights up head first (the owner's call, mock "Serpent Orb
   Cast"), and then purple bolts jag from its lit tips to the target (the
   owner's A), the station with the highest rung, the first slot of those.
-  The orb closes round that fighter and lifts it, in held two-cell steps,
-  until its bottom clears the station's own hit box (the owner's A, mock
-  "bubble-lift", 2026-10-12): a click on the orb is never a click on the
-  station, so it never opens the board. It bobs there. Let go, the fighter
+  The orb closes round that fighter and carries it, in held two-cell steps,
+  to halfway between the coil's underside and the station's top (the owner,
+  2026-10-15: clearing the station's hit box, mock "bubble-lift", took it up
+  against the coil), always in open water -- a midpoint that would touch the
+  coil, the bar over the orb, the prop or the floor moves to the nearest
+  point on its vertical that does not (`orbHome`, a rule in verify.js). A
+  melee fighter caught up on the hide is carried down to it. The pointer
+  asks the orb before the station's board, so a click on it never opens the
+  board. It bobs there. Let go, the fighter
   hangs a beat, sinks home on the deep's gravity and lands squashed.
 - **In the orb:** the fighter does nothing. The orb has hit points,
   `CONSTRICT_HP` of the phase's depth (first guess 15%), its own bar over the

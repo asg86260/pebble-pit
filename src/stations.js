@@ -285,8 +285,7 @@ export function standRect(key) {
 }
 
 // A station's hit box: its ground padded by its reach, where the pointer
-// opens its board. The constrict's orb rises until it is clear of it
-// (deep/phases.js).
+// opens its board.
 export function hitRect(key) {
   const s = station(key);
   if (!s || !s.stand || !s.open()) return null;

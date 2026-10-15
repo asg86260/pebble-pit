@@ -13,6 +13,7 @@ import { ctx } from './ctx.js';
 import { now } from '../clock.js';
 import { darkPage, turned } from '../ink.js';
 import { coilCeiling, coilEnds } from '../deep/place.js';
+import { arrowBox } from './shaftway.js';
 import { barK } from '../abyssintro.js';
 import { owedWound, landsAt } from './barflight.js';
 import { drawFoeStatuses, statusRowH } from './statusicons.js';
@@ -20,7 +21,7 @@ import { blowK } from '../deep/serpent.js';
 import { breakKind, breakFill, rising, powerFill } from '../deep/phases.js';
 import { depthAt } from '../deep/depth.js';
 import { sheetOf, write, widthOf, sayNum, drawable } from './numfont.js';
-import { P, BAR_W, BAR_H, BAR_TOP, BAR_PAD, BAR_ALONG, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT,
+import { P, BAR_W, BAR_H, BAR_TOP, BAR_PAD, BAR_HAND_GAP, BAR_ALONG, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT,
          BAR_HEALED, BAR_TO_COME, BAR_STUN, BAR_STUN_RIM, BAR_HEAL_FADE_S,
          BAR_SETTLE, BAR_HEAL_RATE, BAR_FLOW_EASE, BAR_FLOW_MIN, BAR_STALE_S,
          BAR_BITE, BAR_BITE_MIN, BAR_BITE_HOLD_S, BAR_BITE_LIFT, BAR_BITE_GRAV, BAR_BITE_KICK, BAR_BITE_TUMBLE_S,
@@ -85,8 +86,19 @@ export function barRect() {
   const { x0, x1 } = coilEnds(), toScreen = x => (x - S.camX) * S.zoom;
   const glass = x => Math.max(0, Math.min(S.W, toScreen(x)));
   const mid = Math.max(glass(x0), Math.min(glass(x1), toScreen(x0 + (x1 - x0) * BAR_ALONG / 2)));
-  const x = Math.max(BAR_TOP, Math.min(S.W - whole - BAR_TOP, mid - whole / 2));
-  return { x: Math.round(x), y: Math.round(Math.max(BAR_TOP + row, over)), w, h: BAR_H };
+  // The hand under the deep's portal stands at the bar's height, and the
+  // portal does not move, so the bar keeps clear of it: its pips end
+  // BAR_HAND_GAP short of the hand, sliding left; where the glass leaves no
+  // room for that (a phone, or the portal dragged far left), the bar steps
+  // down under the hand as far as the two would overlap across, so it eases
+  // down as the hand comes over it and never jumps.
+  const hand = arrowBox(true), hx = toScreen(hand.x), hw = hand.w * S.zoom;
+  const x = Math.max(BAR_TOP, Math.min(S.W - whole - BAR_TOP, mid - whole / 2, hx - BAR_HAND_GAP - whole));
+  const handTop = (hand.y - S.camY) * S.zoom, under = handTop + hand.h * S.zoom + BAR_HAND_GAP;
+  const across = Math.min(x + whole, hx + hw) - Math.max(x, hx) + BAR_HAND_GAP;
+  const level = over + BAR_H + BAR_HAND_GAP > handTop && over < under;
+  const y = level ? over + Math.max(0, Math.min(1, across / hw)) * (under - over) : over;
+  return { x: Math.round(x), y: Math.round(Math.max(BAR_TOP + row, y)), w, h: BAR_H };
 }
 // The whole strip on the glass, screen pixels: the row of statuses over the
 // bar, the bar, its pips and its level, and the knock's room. What anything
@@ -286,3 +298,4 @@ export function drawSerpentBar() {
   drawFoeStatuses(x, rest - statusRowH() - STATUS_GAP);
   ctx.restore();
 }
+

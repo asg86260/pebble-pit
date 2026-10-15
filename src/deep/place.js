@@ -180,7 +180,7 @@ const waveLine = t => {
   const rp = recoilPose(), rk = rp ? rp.rk : 0, bump = rk ? rearPose() : null;
   const wind = rp ? rp.m : 1, waves = COIL_WAVES * (1 + (wind - 1) / 2), sag = rp ? rp.sag : 0;
   const amp = COIL_AMP * (1 - LASH_TAUT * taut) * killSway() * wind * (rp ? rp.amp : 1);
-  return x => {
+  const wave = x => {
     const k = (x - x0) / span;
     let y = base + amp * Math.sin(2 * Math.PI * (k * waves - t / COIL_SWAY_MS));
     if (split && renewed(k)) y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
@@ -192,6 +192,21 @@ const waveLine = t => {
     y += drop + lie;
     return y;
   };
+  // The lowest the line reaches over x as it sways in this pose: the same sum
+  // with every swing taken at its deepest and every lift left out, so nothing
+  // the sway does this pose can bring the line lower.
+  wave.low = x => {
+    const k = (x - x0) / span;
+    let y = base + Math.abs(amp);
+    if (split && renewed(k)) y += SPLIT_WRITHE;
+    if (lash != null) y += LASH_H * Math.exp(-((k - lash) ** 2) / (LASH_W * LASH_W));
+    if (sag) y += sag * (1 - NEAR_SAG_TAIL * Math.max(0, k));
+    return y + drop + lie;
+  };
+  // How much longer than its span the body's arc can run: the line's steepest
+  // slope in this pose, taken all along it.
+  wave.stretch = Math.hypot(1, 2 * Math.PI * amp * waves / span);
+  return wave;
 };
 const waveY = (x, t) => lineAt(t).wave(x);
 const coilX0 = () => deepX0() + COIL_X0 * DEEP_W;
@@ -248,14 +263,18 @@ function walk(t) {
   L.xs = xs;
   return xs;
 }
-export function coilLine(u, t) {
-  // The sway runs on the clock less what the stuns have held back, so a
-  // stunned coil holds its pose and the one after it carries on from there
-  // (`serpentStill`, deep/serpent.js).
+// The sway runs on the clock less what the stuns have held back, so a
+// stunned coil holds its pose and the one after it carries on from there
+// (`serpentStill`, deep/serpent.js). Struck down, the sway is held where the
+// last blow caught it, from the blow's own frame: the kill settles at once
+// (deep/phases.js, `killA`).
+function coilClock(t) {
   t -= S.serpentStill;
-  // Struck down, the sway is held where the last blow caught it, from the
-  // blow's own frame: the kill settles at once (deep/phases.js, `killA`).
   if (killA() != null) t = Math.min(t, S.freedAt - S.serpentStill);
+  return t;
+}
+export function coilLine(u, t) {
+  t = coilClock(t);
   const s = u / (COIL_SEGS - 1) * coilSpan();   // arc from the head
   if (s <= 0) {
     // The snout, run on past the head along the same wave.
@@ -275,6 +294,22 @@ export function coilCeiling() {
   for (let u = 0; u < COIL_SEGS; u++) thick = Math.max(thick, coilThick(u));
   const writhe = S.serpentStage === 2 && !S.serpentFreed ? SPLIT_WRITHE : 0;
   return deepTop() + COIL_Y * DEEP_H - COIL_AMP - writhe - thick / 2;
+}
+// The lowest the body's underside reaches over x as it sways, in the pose it
+// holds now: the line's deepest swing there and the thickest half of the body
+// that can lie over x. The body is laid along its arc from the head, so the
+// segment over x is further along than x's share of the span by at most the
+// arc's stretch; every segment in that reach, and one either side, counts.
+// Steady through the sway, so what is held under it (the constrict's orb,
+// deep/phases.js) does not ride it; it moves only when the pose does (a
+// recoil's sag and wind).
+export function coilUnder(x, t = now()) {
+  const wave = lineAt(coilClock(t)).wave;
+  const u0 = Math.max(0, Math.min(COIL_SEGS - 1, coilK(x) * (COIL_SEGS - 1)));
+  let thick = 0;
+  for (let u = Math.max(0, Math.floor(u0) - 1); u <= Math.min(COIL_SEGS - 1, Math.ceil(u0 * wave.stretch) + 1); u++)
+    thick = Math.max(thick, coilThick(u));
+  return wave.low(x) + thick / 2;
 }
 // Segment `i`, on the cell grid.
 export function coilAt(i, t) {

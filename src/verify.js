@@ -35,13 +35,14 @@ import { JOB, TYPE, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
 import { messCounts } from './smog/layer.js';
-import { SERPENT_PHASES, MECHANICS, MEAL_BACK_S, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
+import { SERPENT_PHASES, MECHANICS, MEAL_BACK_S, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS,
+         ORB_R, ORB_HOME_SLACK, COIL_SEGS } from './config.js';
 import { CALLED } from './deep/party.js';
 import { depthAt } from './deep/depth.js';
-import { cradled, recoilLen, recoilUnticked } from './deep/phases.js';
+import { cradled, recoilLen, recoilUnticked, orbOn, orbRisen, orbHome, orbMiddle } from './deep/phases.js';
 import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
-import { deepTop, deepFloor, deepX1 } from './deep/place.js';
+import { deepTop, deepFloor, deepX1, coilLine, coilThick, standOfStation } from './deep/place.js';
 import { yardReads } from './persist.js';
 
 // The jobs the roster is made of, and the count on S that owns each: every
@@ -565,6 +566,31 @@ export function verifyWorld() {
     const mech = stage < SERPENT_PHASES && !S.serpentFreed ? MECHANICS[stage] : null;
     if (!(S.mechAt >= 0) || (mech && S.mechAt >= mech.every))
       fail('the turn of the phase is outside itself', `${S.mechAt}s of ${mech ? mech.every : '-'}`);
+    // The constrict's orb, risen, holds its fighter halfway between the
+    // coil's underside and its station's top, in open air (the owner,
+    // 2026-10-15): its middle within ORB_HOME_SLACK cells of that midpoint,
+    // its ring clear of the coil, the station and the floor. The coil is
+    // asked where it is drawn this frame, half a segment at a time.
+    const orb = orbOn(), orbSt = orb && S.stations.find(o => o.id === orb.st);
+    if (orbSt && orbRisen(orbSt)) {
+      const c = orbMiddle(orb.st), home = orbHome(orbSt), R = ORB_R * P, t = now();
+      if (c && home != null) {
+        if (Math.abs(c.y - home) > ORB_HOME_SLACK * P + 1e-6)
+          fail('the orb holds its fighter off the midpoint between the coil and the station', `middle ${c.y}, midpoint ${home}`);
+        for (let u = 0; u < COIL_SEGS; u += 0.5) {
+          const p = coilLine(u, t);
+          if (Math.hypot(p.x - c.x, p.y - c.y) < R + coilThick(u) / 2) {
+            fail('the orb overlaps the coil', `middle ${c.x},${c.y}, segment ${u} at ${p.x},${p.y}`);
+            break;
+          }
+        }
+        const r = standOfStation(orbSt);
+        const nx = Math.max(r.x, Math.min(c.x, r.x + r.w)), ny = Math.max(r.y, Math.min(c.y, r.y + r.h));
+        if (Math.hypot(nx - c.x, ny - c.y) < R)
+          fail('the orb overlaps its station', `middle ${c.x},${c.y}, station top ${r.y}`);
+        if (c.y + R > deepFloor()) fail('the orb is in the floor', `bottom ${c.y + R}, floor ${deepFloor()}`);
+      }
+    }
     serpentWas = stage;
     woundWas = S.serpentWound;
     stunWas = S.serpentStun > 0;

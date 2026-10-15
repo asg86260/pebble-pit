@@ -78,7 +78,12 @@ export const DEEP_THROW = 0.25;
 export const COIL_SEGS = 56;         // segments, head to tail
 export const COIL_X0 = 0.28;         // the head's end, a fraction of DEEP_W
 export const COIL_X1 = 0.94;         // the tail's end
-export const COIL_Y = 0.58;          // its centerline, a fraction of DEEP_H down from the ceiling
+// Its centerline, a fraction of DEEP_H down from the ceiling. 0.58 until the
+// owner, 2026-10-15 ("raise the serpent up a bit more"): 0.54 lifts it about
+// five cells, so the constrict's orb, held halfway down to the stations
+// under it, has some eight cells of water each side rather than five, and
+// the bar over its highest reach still stands on the glass at 800x600.
+export const COIL_Y = 0.54;
 export const COIL_AMP = P * 9;       // how far it swings either side of that
 export const COIL_WAVES = 3;         // waves along its length
 export const COIL_SWAY_MS = 7000;    // one sway
@@ -258,9 +263,9 @@ export const MECHANICS = [
 // lights head first through the warning; a beam runs from its tips to the
 // strongest station's fighter for ORB_BOLT_S; an orb ORB_R cells across closes
 // round it over ORB_CLOSE_S, then rises over ORB_RISE_S in held ORB_STEP-cell
-// steps, fast at first with ORB_GHOSTS rings trailing, until its bottom is
-// ORB_CLEAR cells over its station's hit box, and bobs a cell every ORB_BOB_S;
-// broken, it bursts into motes over ORB_BURST_S.
+// steps, fast at first with ORB_GHOSTS rings trailing, to halfway between the
+// coil's underside and its station's top (`orbHome`, deep/phases.js), and bobs
+// a cell every ORB_BOB_S; broken, it bursts into motes over ORB_BURST_S.
 export const ORB_BOLT_S = 0.5;
 // The beam tapers toward the orb: three cells wide for the first BEAM_WIDE_TO
 // of its length, two to BEAM_THIN_TO, then the white core alone (owner
@@ -271,7 +276,18 @@ export const ORB_R = 5;
 export const ORB_CLOSE_S = 0.2;
 export const ORB_RISE_S = 1.4;
 export const ORB_STEP = 2;
-export const ORB_CLEAR = 2;
+// The owner, 2026-10-15: the orb carried its fighter until it cleared the
+// station's hit box, which took it up against the coil -- "way too high".
+// So it holds at the midpoint, always in open air: at least ORB_AIR cells
+// of water between its ring (and the bar ORB_BAR_UP cells over the ring,
+// render/serpent.js) and the coil's lowest reach, and between its ring and
+// the station's top. Two, so the bob's cell and the half cell of rounding to
+// the grid still leave water showing.
+export const ORB_AIR = 2;
+export const ORB_BAR_UP = 3;
+// How far, in cells, a held orb's middle may stand off its midpoint
+// (verify.js): the half cell the grid rounds it by and the cell it bobs.
+export const ORB_HOME_SLACK = 1.5;
 export const ORB_BOB_S = 0.5;
 export const ORB_GHOSTS = 2;
 export const ORB_GHOST_K = 0.5;        // the share of the rise that trails rings
