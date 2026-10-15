@@ -85,6 +85,16 @@ export const GLYPHS = {
   bench:      ['........', '........', '..##....', '..##....', '########', '########', '.##..##.', '.##..##.'],
   ledger:     ['.######.', '##....#.', '##.##.#.', '##....#.', '##.##.#.', '##....#.', '.######.', '........'],
   trophy:     ['########', '#.####.#', '.######.', '..####..', '...##...', '...##...', '..####..', '.######.'],
+  // The pointing hand that says "click this" (render/hand.js; the owner,
+  // 2026-10-15, option E of docs/mocks/hand-glyph-2-2026-10-15/): not a shelf
+  // drawing -- ten cells, '#' the line and 'o' the fill, so glyphs.html leaves
+  // it out. Its fingertip is the one line cell on the edge it points at. Up is
+  // the down hand flipped (the cursor hand, thumb on the left); left is it
+  // turned a quarter, so the thumb is on top as on a hand pointing left
+  // with its back to you. Neither is mirrored into the other hand.
+  hand:       ['..#####...', '..#ooo#...', '.#ooooo##.', '#o#ooooo##', '#o#oooooo#', '.##o#o#o#.', '..#o##.#..', '..#o#.....', '..#o#.....', '...#......'],
+  handup:     ['...#......', '..#o#.....', '..#o#.....', '..#o##.#..', '.##o#o#o#.', '#o#oooooo#', '#o#ooooo##', '.#ooooo##.', '..#ooo#...', '..#####...'],
+  handleft:   ['.....##...', '....#oo#..', '.######o##', '#oooooooo#', '.####oooo#', '...#ooooo#', '....#ooo##', '...#ooo#..', '....#o##..', '.....##...'],
 };
 
 // The badges, in the top-right corner, saying what is being done to the

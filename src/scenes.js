@@ -575,11 +575,11 @@ const deepScenes = {
                  window.__answered('props', 'net', 'arch'); window.__meteor();
                  window.__wizardHat(1); window.__assign(JOB.WIZARD, 1); window.__view('yard');
                  window.__grant({ dust: 1e7 }); window.__fast(20); window.__buy('portal'); window.__fast(13); window.__look(portalX() - S.viewW / 2); } },
-  // The wizards' portal, conjured and held open, the arrow over it.
+  // The wizards' portal, conjured and held open, the hand beside it.
   portal: { about: 'the deep', say: 'the wizards\' portal held open over the abyss, the way down',
     run: () => { rich(); window.__fullSites(); window.__snatch({ played: true });
                  window.__view('yard'); window.__look(portalX() - S.viewW / 2); } },
-  // Its other end in the deep, hanging in the water, the arrow under it.
+  // Its other end in the deep, hanging in the water, the hand under it.
   'deep-portal': { about: 'the deep', say: 'the portal\'s deep end, the way back up to the yard',
     run: () => { rich(); window.__fullSites(); window.__snatch({ played: true }); window.__view('deep'); } },
   // The first trip down (abyssintro.js): the way down taken, caught on the
@@ -816,7 +816,7 @@ const deepScenes = {
     } },
   // The mark over a station whose Recruit waits on its first choice, the
   // build's done check already read.
-  'recruit-mark': { about: 'the deep', say: "the chevron over a new station whose Recruit waits on its first choice",
+  'recruit-mark': { about: 'the deep', say: "the hand over a new station whose Recruit waits on its first choice",
     run: () => {
       deepYard({ stage: 1, wound: 0.33, run: 3, party: [{ kind: null }] });
       markDoneSeen(S.stations[0].id);

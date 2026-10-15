@@ -121,13 +121,14 @@ export const DEEP_SURFACE = P * 5;
 // (render/abyssfield.js), so the deep reads as deep from the window's top
 // edge to its floor, however tall the window.
 export const DEEP_WATER_DEPTH = 1;
-// The arrow that says the view goes through (render/shaftway.js): in the
-// yard in the liquid this far right of the torn portal's lip, level with its
-// middle, pointing left at it and bobbing toward it and back; in the deep
-// this far under the bottom of the deep's own end, pointing up into it and
-// bobbing up and down -- a cell each way (SHAFT_ARROW_BOB) over SHAFT_ARROW_MS.
+// The hand that says the view goes through (render/shaftway.js): in the
+// yard in the liquid, its fingertip this far right of the torn portal's lip,
+// level with its middle, pointing left at it; in the deep its fingertip this
+// far under the bottom of the deep's own end, pointing up into it. Both tap
+// (HAND_STILL_S). Under the deep's end it is one cell, the press onto the
+// rim: the hand is ten cells tall and the serpent's bar is not far under.
 export const SHAFT_ARROW_SIDE = P * 3;
-export const SHAFT_ARROW_DOWN = P * 2;
+export const SHAFT_ARROW_DOWN = P;
 // The deep's end of the portal, the way back up: a circle hanging in the
 // water, its top this far under the highest the deep's framing ever shows
 // (view.js, `deepZoom`), so it is on the glass whatever the window. Across,
@@ -137,8 +138,6 @@ export const SHAFT_ARROW_DOWN = P * 2;
 export const DEEP_PORTAL_R = P * 15;
 export const DEEP_PORTAL_DOWN = -P * 2;   // up two cells: its top on the surface, clear of the serpent's bar and still under the roof
 export const DEEP_PORTAL_AT = 0.5;
-export const SHAFT_ARROW_BOB = P;
-export const SHAFT_ARROW_MS = 1600;
 
 // --- the water ---------------------------------------------------------------------
 // The drowned pit's own liquid, carried on under its surface, with the pit's
@@ -613,13 +612,24 @@ export const FANG_SPRITE = ['###', '.#+', '.#.'];
 // The scaffold over a station not yet built: posts this many bands tall,
 // the tape at head height.
 export const SCAFFOLD_BANDS = 5;
-// The mark over a station whose Recruit still waits on its first choice
-// (docs/mocks/recruit-mark-2026-09-28.html, voted C): a white chevron pointing
-// down at it on a dark keyline, CHOOSE_MARK_UP cells over the station's top,
-// bobbing a cell every CHOOSE_MARK_BOB_MS, held between.
-export const CHOOSE_MARK = ['#.....#', '##...##', '.##.##.', '..###..', '...#...'];
+// The mark over a station whose Recruit still waits on its first choice:
+// the pointing hand (HAND_STILL_S), pointing down at it, its fingertip
+// CHOOSE_MARK_UP cells over the station's top -- two cells clear on the press,
+// so the tap never lands in the dome's crown.
 export const CHOOSE_MARK_UP = 3;
-export const CHOOSE_MARK_BOB_MS = 600;
+
+// The pointing hand, everywhere the game says "click this" (the owner,
+// 2026-10-15, option E of docs/mocks/hand-glyph-2-2026-10-15/; the rows are
+// GLYPHS.hand* in src/glyphs.js). It taps in held poses rather than bobbing
+// on a sine: still for HAND_STILL_S, then pressed HAND_PRESS cells toward
+// what it points at for HAND_PRESS_S -- long enough held to read as a press,
+// short enough that it is a tap and not a second pose.
+export const HAND_STILL_S = 0.6;
+export const HAND_PRESS_S = 0.2;
+export const HAND_PRESS = 1;
+// How far the fingertip stands off what it points at, in cells, at rest: one,
+// so the press brings it onto the edge and no further (the orb's ring).
+export const HAND_GAP = 1;
 
 // A fighter's level-up (render/levelup.js; the owner's vote, 2026-10-04): one
 // strand of flame tongues corkscrews up round the body for LEVELUP_S, and the

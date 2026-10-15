@@ -29,7 +29,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_SWELL_W, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
-         SERPENT_PHASES, ORB_BOLT_S, BEAM_WIDE_TO, BEAM_THIN_TO, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP, ORB_STEP, ORB_GHOSTS,
+         SERPENT_PHASES, ORB_BOLT_S, BEAM_WIDE_TO, BEAM_THIN_TO, ORB_R, ORB_BURST_S, ORB_STEP, HAND_GAP, ORB_GHOSTS,
          BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W,
          NEARDEATH, POWERUP, DEEP_MOTE_TINTS, DEEP_H, COIL_Y, SERPENT_EYE_HOLD } from '../config.js';
 import { S } from '../state.js';
@@ -49,6 +49,7 @@ import { hisHop, hisSay } from '../abyssintro.js';
 import { swellAt } from './cores.js';
 import { cellImage } from './cellimage.js';
 import { dentsNow } from './arms.js';
+import { drawHand, handSize, handTip } from './hand.js';
 
 const coil = cellImage();
 
@@ -59,6 +60,7 @@ const snap = v => Math.round(v / P) * P;
 // cell loop was most of the deep's frame.
 const lengthOf = (dx, dy) => Math.sqrt(dx * dx + dy * dy);
 const WHITE = GREYS.length - 1;
+const HAND_BOX = handSize('left'), [, HAND_TIP_R] = handTip('left');
 
 // How far the body reaches either side of its centerline at `u` segments
 // from the head: the coil's own girth (`coilThick`), and the snout, run on
@@ -711,10 +713,14 @@ export function drawOrb() {
       ctx.fillStyle = i < Math.round(bw * o.hp / o.max) ? PURPLES[WHITE - 1] : PURPLES[WHITE - 7];
       ctx.fillRect(bx + i * P, by, P, P);
     }
-    // and an arrow over that, bobbing, pointing at it: it can be clicked
-    const bob = Math.floor(t / 1000 / ORB_ARROW_S) % 2 ? ORB_ARROW_UP : 0, ay = by - (5 + bob) * P, ax = snap(c.x) - 2 * P;
-    ctx.fillStyle = GREYS[WHITE];
-    for (const [dx, dy] of [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [2, 1], [3, 1], [2, 2]]) ctx.fillRect(ax + dx * P, ay + dy * P, P, P);
+    // and the hand beside it, pointing in at its middle and tapping: it can be
+    // clicked. Beside rather than over it, since the orb rises to the coil's
+    // underside and the bar is over its head, and a hand over that ran into
+    // the coil; at the side it never stands higher than the orb itself. Never
+    // under the floor while the orb is still rising off it.
+    const hx = snap(c.x) + ORB_R * P + HAND_GAP * P;
+    const hy = Math.min(snap(c.y - P / 2) - HAND_TIP_R * P, deepFloor() - HAND_BOX.h);
+    drawHand(hx, hy, 'left', PURPLES[WHITE - 2], GREYS[WHITE], t);
   }
   const b = S.orbBurst;
   if (!b) return;

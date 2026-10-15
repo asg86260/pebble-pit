@@ -287,11 +287,8 @@ export const ORB_SQUASH_S = 0.15;
 export const ORB_SQUASH_WIDE = 0.16;
 export const ORB_SQUASH_FLAT = 0.26;
 // A click on the orb itself is a punch ORB_CLICK_X times over, so the hand can
-// crack it faster; an arrow bobs over it, ORB_ARROW_UP cells and back every
-// ORB_ARROW_S, to say it can be clicked.
+// crack it faster; the pointing hand (HAND_STILL_S) taps at it to say so.
 export const ORB_CLICK_X = 3;
-export const ORB_ARROW_S = 0.4;
-export const ORB_ARROW_UP = 1;
 // The lash's shape: the coil draws up to this share of its sway in the
 // warning, over `LASH_TAUT_S`, and the tail lifts; then a bump this deep and
 // this wide (a share of the body) runs down it.

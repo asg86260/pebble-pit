@@ -53,8 +53,8 @@ function every() {
     out.push({ id: `st:${row.key}`, kind: 'station', key: row.key, board: !!row.board, r, half: half(r) });
   }
   if (arrowShown()) {
-    out.push({ id: 'way:arrow:yard', kind: 'way', key: 'arrow', r: arrowBox(false, true), half: 'yard' });
-    out.push({ id: 'way:arrow:deep', kind: 'way', key: 'arrow', r: arrowBox(true, true), half: 'deep' });
+    out.push({ id: 'way:arrow:yard', kind: 'way', key: 'arrow', r: arrowBox(false), half: 'yard' });
+    out.push({ id: 'way:arrow:deep', kind: 'way', key: 'arrow', r: arrowBox(true), half: 'deep' });
   }
   for (const deep of [false, true]) {
     const r = portalRect(deep);
