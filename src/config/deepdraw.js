@@ -89,6 +89,25 @@ export const PROP_TONES = {
           1: [PROP_G[1], PROP_G[1]], 2: [PROP_G[2], PROP_G[2]], 3: [PROP_G[3], PROP_G[3]],
           4: [PROP_G[4], PROP_G[4]], 5: [PROP_G[5], PROP_G[5]] }
 };
+// The Mage's candle flame moves (the owner, 2026-10-15: option 4 of
+// docs/mocks/mage-candelabra-2026-10-15/, "with the flame animated as
+// well"). It is held poses, not a glow: one of `frames` at a time, each a
+// list of [col, row] cells from the flame's foot (the lowest, leftmost `*`
+// of the rows), in the `*` tone and nothing else, so it sways in shape and
+// never in brightness. Frame 0 is the rows' own flame, stood every other
+// beat, with a lean dealt by hash between, so it never holds one pose twice
+// running and never jumps from one lean straight to the other. A pose
+// is held `hold` s, each change nudged later by up to `jitter` of a hold by
+// a hash, so the beat never ticks evenly (0.15 to 0.29 s a pose), and each
+// station's flame is dealt from its own seed so no two candles sway together.
+export const PROP_FLAME = {
+  frames: [
+    [[0, -1], [0, 0], [1, 0]],     // upright, tip over the left of the wick
+    [[-1, -1], [0, 0], [1, 0]],    // leaning left
+    [[1, -1], [0, 0], [1, 0]]      // leaning right
+  ],
+  hold: 0.22, jitter: 0.3, seedStep: 37.7
+};
 // The crusher's fire (docs/mocks/crusher-fire-2026-09-24.html, option C):
 // the door's inside is one heat field. A cell's heat is the base, raised by
 // the breath and by the scales going in, less CRUSH_FIRE.rise a row up from
@@ -640,6 +659,11 @@ export const FANG_SPRITE = ['###', '.#+', '.#.'];
 // rather than a count of bands since the props doubled (option C,
 // 2026-10-15): five bands stood half as tall as the prop.
 export const SCAFFOLD_OVER = 2;
+// A station that stands while it is watched fades in, and its scaffold out,
+// over STATION_RISE_S seconds rather than swapping on one frame (the owner's
+// rule: nothing pops in or out). Long enough to read as a fade at a glance,
+// short enough that the fighter is not kept waiting at a ghost.
+export const STATION_RISE_S = 0.8;
 // The default station's flag waves slowly (the owner, 2026-10-15: "have the
 // flag wave slowly"). A crest travels out along the cloth from the pole a
 // column a frame, `length` columns a wave, so a frame is held period/length

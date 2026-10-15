@@ -545,7 +545,9 @@ const glideAt = (to, k) => () => {
 const PROP_SCENES = {
   'party-props-a': [{ kind: 'altar', cls: null, rung: 0 }, cast('brawler', 4), cast('sword', 8), cast('monk', 8)],
   'party-props-b': [cast('martial', 4), cast('ranger', 8), cast('assassin', 8), cast('hexer', 8)],
-  'party-props-c': [cast('sapper', 8), cast('mage', 8), cast('bard', 8), cast('hexer', 4)]
+  'party-props-c': [cast('sapper', 8), cast('mage', 8), cast('bard', 8), cast('hexer', 4)],
+  // the Mage's candle twice plain and twice lit, so the flames are seen out of step
+  'party-props-mage': [cast('mage', 4), cast('mage', 4), cast('mage', 8), cast('mage', 8)]
 };
 
 const deepScenes = {

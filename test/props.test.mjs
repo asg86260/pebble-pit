@@ -11,14 +11,14 @@
 // `drawDeepStations` put down, not what a helper says it would. The rungs are
 // bought where the player buys them, on the station's board (`pressBuy`).
 
-import { group, ok, yard } from './helpers.mjs';
-import { FLAG_WAVE, P, WORKER, DEEP_W, DEEP_SLOTS, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, PLINTH_H, HAND_PRESS } from '../src/config.js';
+import { group, ok, yard, run } from './helpers.mjs';
+import { FLAG_WAVE, P, WORKER, DEEP_W, DEEP_SLOTS, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, PLINTH_H, HAND_PRESS, PROP_FLAME, STATION_RISE_S } from '../src/config.js';
 import { HANDS, handPressed } from '../src/render/hand.js';
 import { pressBuy, pressKind } from '../src/deep/rails.js';
-import { stationById } from '../src/deep/party.js';
+import { stationById, stationLanded } from '../src/deep/party.js';
 import { doneAt, markDoneSeen } from '../src/works.js';
 import { slotX, deepX0, deepFloor, plinthTop, postY, standOfStation } from '../src/deep/place.js';
-import { PROPS, propCells, clothCells, clothLift } from '../src/deep/props.js';
+import { PROPS, propCells, flameCells, clothCells, clothLift } from '../src/deep/props.js';
 import { now } from '../src/clock.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawDeepStations, chooseMarkAt } from '../src/render/deep.js';
@@ -34,7 +34,7 @@ function sheet() {
   const g = {
     fillStyle: null, imageSmoothingEnabled: true, globalAlpha: 1,
     fillRect: (x, y) => cells.set(`${x / P},${y / P}`, g.fillStyle),
-    drawImage: (img, x, y) => draws.push({ img, x, y }),
+    drawImage: (img, x, y) => draws.push({ img, x, y, alpha: g.globalAlpha }),
     save() {}, restore() {}, translate() {}, setTransform() {}
   };
   const el = { width: 0, height: 0, cells, getContext: () => g };
@@ -197,7 +197,7 @@ group("the flag's cloth waves a cell at a time, out from the pole, each station 
     if (is !== was) steps++;
     was = is;
   }
-  const together =Array.from({ length: W.length }, (_, i) =>
+  const together = Array.from({ length: W.length }, (_, i) =>
     keyOf(clothCells('flag', false, i * hold, a.id)) === keyOf(clothCells('flag', false, i * hold, b.id)));
   return [
     ok(frames.every(f => f.length === cloth), 'every frame holds the whole cloth', frames.map(f => f.length).join(',')),
@@ -208,5 +208,55 @@ group("the flag's cloth waves a cell at a time, out from the pole, each station 
     ok(steps <= W.length, `a frame is held, not redrawn sub-cell: ${W.length} steps a period`, `${steps}`),
     ok(drawnCloth === cloth, "the cloth is drawn at the station's flag", `${drawnCloth} of ${cloth}`),
     ok(together.includes(false), "two stations' flags are not on the same frame")
+  ];
+});
+
+// The Mage's candle flame sways (the owner, 2026-10-15): held poses of the
+// `*` tone alone, out of the still image, upright every other pose, each
+// held 0.15 to 0.3 s, and two stations' flames not in step.
+group("the Mage's flame sways in held poses, each station's its own", async () => {
+  const at = (t, seed) => JSON.stringify(flameCells('mage', false, t, seed));
+  const holds = [], seen = new Set(), lo = PROP_FLAME.hold * (1 - PROP_FLAME.jitter), hi = PROP_FLAME.hold * (1 + PROP_FLAME.jitter);
+  let prev = at(0, 3), since = 0, apart = 0;
+  for (let i = 1; i < 60 * 20; i++) {
+    const t = i / 60, k = at(t, 3);
+    seen.add(k);
+    if (at(t, 3) !== at(t, 4)) apart++;
+    if (k !== prev) { if (since > 0) holds.push(t - since); since = t; prev = k; }
+  }
+  const tones = new Set([...flameCells('mage', false, 1, 0), ...flameCells('mage', false, 2, 0)].map(c => c[3]));
+  const still = propCells('mage', false).filter(([c, r]) => PROPS.mage.rows[r][c] === '*').length;
+  return [
+    ok(seen.size === PROP_FLAME.frames.length, 'every pose is struck', `${seen.size}`),
+    ok(Math.min(...holds) >= lo - 1 / 60 && Math.max(...holds) <= hi + 1 / 60, 'each held 0.15 to 0.3 s',
+       `${Math.min(...holds).toFixed(2)}..${Math.max(...holds).toFixed(2)}`),
+    ok(tones.size === 1 && still === 0, 'in the one accent tone, none of it in the still image', `${tones.size} tones, ${still} still`),
+    ok(apart > 60 * 20 * 0.3, 'two stations out of step', `${apart} frames apart`)
+  ];
+});
+
+// A station that stands while it is watched fades in, and its scaffold out,
+// over STATION_RISE_S, instead of swapping on one frame (nothing pops).
+group('a station that stands fades in over its scaffold, and the scaffold out', async () => {
+  window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
+  const st = S.stations[0];
+  st.built = false;
+  // the scaffold's left post, the only thing drawn left of the station's ground
+  const posts = () => [...sheetOf().cells.keys()].filter(k => +k.split(',')[0] * P < standOfStation(st).x).length;
+  const before = posts();
+  stationLanded(st.id);
+  const landed = drawn().some(o => o.img.cells && o.y + o.img.height === plinthTop() && o.x < slotX(st.slot));
+  run(STATION_RISE_S / 2);
+  const mid = propOf(st) && drawn().find(o => o.img.cells && o.y + o.img.height === plinthTop() && o.x < slotX(st.slot));
+  const midCells = posts();
+  run(STATION_RISE_S);
+  drawn();
+  const end = drawn().find(o => o.img.cells && o.y + o.img.height === plinthTop() && o.x < slotX(st.slot));
+  return [
+    ok(before > 0, 'a scaffold stands first', `${before} cells`),
+    ok(!landed, 'on the frame it lands, no prop yet'),
+    ok(mid && mid.alpha > 0 && mid.alpha < 1, 'halfway, the prop is part faded in', mid && `${mid.alpha}`),
+    ok(midCells > 0, 'and the scaffold still there, fading', `${midCells} cells`),
+    ok(end && end.alpha === 1, 'then the prop is whole', end && `${end.alpha}`)
   ];
 });

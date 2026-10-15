@@ -37,7 +37,7 @@ import { paintAbyssField } from './abyssfield.js';
 import { shiftAt, WAVE_REACH } from './deepwave.js';
 import { abyssLine } from '../pit.js';
 import { CRUSHER_SPRITES } from '../deep/sprites.js';
-import { PROPS, propCells, brewCells, clothCells } from '../deep/props.js';
+import { PROPS, propCells, brewCells, flameCells, clothCells } from '../deep/props.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
 import { raw, darkPage } from '../ink.js';
@@ -46,7 +46,7 @@ import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
 import { drawBody, inTheDeep } from './crew.js';
 import * as place from '../deep/place.js';
-import { SCAFFOLD_OVER, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES, CHOOSE_MARK_UP } from '../config.js';
+import { SCAFFOLD_OVER, STATION_RISE_S, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES, CHOOSE_MARK_UP } from '../config.js';
 import { drawHand, handSize, handTip } from './hand.js';
 import { unchosen } from '../deep/party.js';
 import { doneAt } from '../works.js';
@@ -360,8 +360,10 @@ function drawPlinth(st) {
 function drawProp(st, t) {
   const p = place.propRect(st), lit = (st.rung || 0) >= CAPSTONE_RUNG;
   ctx.drawImage(propImage(p.key, lit), p.x, p.y);
-  // the props that move: the hexer's brew over its pot, the flag's cloth
-  for (const [c, r, ramp, i] of [...brewCells(p.key, lit, t), ...clothCells(p.key, lit, t, st.id)]) {
+  // the parts that move, over the still image: the hexer's brew over its
+  // pot, the Mage's flame (seeded by the slot) and the flag's cloth (by the id)
+  for (const [c, r, ramp, i] of [...brewCells(p.key, lit, t), ...flameCells(p.key, lit, t, st.slot),
+                                 ...clothCells(p.key, lit, t, st.id)]) {
     ctx.fillStyle = toneOf(ramp, i);
     ctx.fillRect(p.x + c * P, p.y + r * P, P, P);
   }
@@ -404,18 +406,37 @@ function drawChooseMark(st) {
   drawHand(m.x, m.y, 'down', PURPLES[GREYS.length - 3], TONE.white);
 }
 
+// A station that stands while it is watched fades in over STATION_RISE_S as
+// its scaffold fades out, rather than popping in: how far it has come, 0 a
+// scaffold and 1 the station. Drawing only, kept here and never saved, so a
+// station that already stood when the yard was loaded is simply there.
+const going = new Set(), rose = new Map();
+function risen(st, t) {
+  if (!st.built) { going.add(st.id); rose.delete(st.id); return 0; }
+  if (going.delete(st.id)) rose.set(st.id, t);
+  const at = rose.get(st.id);
+  if (at == null) return 1;
+  const k = (t - at) / STATION_RISE_S;
+  if (k >= 1 || k < 0) { rose.delete(st.id); return 1; }
+  return k;
+}
+
 export function drawDeepStations() {
   const { x0, x1 } = deepWindow();
   if (S.snatched) drawCrusher();
   drawPods();
-  const smooth = ctx.imageSmoothingEnabled, t = now() / 1000;
+  const smooth = ctx.imageSmoothingEnabled, alpha = ctx.globalAlpha, t = now() / 1000;
   ctx.imageSmoothingEnabled = false;
   for (const st of S.stations || []) {
     if (st.slot == null) continue;
-    const stand = place.standOfStation(st);
+    const k = risen(st, t), stand = place.standOfStation(st);
     if (stand.x > x1 || stand.x + stand.w < x0) continue;
-    if (!st.built) drawScaffold(stand);
-    else { drawPlinth(st); drawProp(st, t); if (wearsMark(st)) drawChooseMark(st); }
+    if (k < 1) { ctx.globalAlpha = alpha * (1 - k); drawScaffold(stand); }
+    if (k > 0) {
+      ctx.globalAlpha = alpha * k;
+      drawPlinth(st); drawProp(st, t); if (wearsMark(st)) drawChooseMark(st);
+    }
+    ctx.globalAlpha = alpha;
   }
   ctx.imageSmoothingEnabled = smooth;
   ctx.fillStyle = '#000';
