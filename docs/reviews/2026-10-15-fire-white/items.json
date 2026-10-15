@@ -1,0 +1,5 @@
+{"title":"The furnace fire's white details","lede":"Before: the one-color pass (or the pre-cleanup fire). After: a white and grey heart over the one steady purple.","items":[{"id":"fire","title":"Crusher fire, 4x","what":"The fire in the crusher scene on the light page and the dark page.","shots":[
+{"scene":"crusher","window":[1200,800],"crop":[50,590,320,170],"zoom":4,"wait":1,"theme":"light","label":"light, 1s"},
+{"scene":"crusher","window":[1200,800],"crop":[50,590,320,170],"zoom":4,"wait":2.3,"theme":"light","label":"light, 2.3s"},
+{"scene":"crusher","window":[1200,800],"crop":[50,590,320,170],"zoom":4,"wait":1,"theme":"dark","label":"dark, 1s"},
+{"scene":"crusher","window":[1200,800],"crop":[50,590,320,170],"zoom":4,"wait":2.3,"theme":"dark","label":"dark, 2.3s"}]}]}
