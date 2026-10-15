@@ -156,6 +156,8 @@ export const DEEP_STAR_DIM = 2;
 // drawn on before it moves: under a cell, so it holds through the head's sway
 // instead of flipping between two cells (render/serpent.js).
 export const SERPENT_EYE_HOLD = 0.8;
+export const DEEP_MOTE_FADE_MS = 900; // how long a mote takes to fade in at birth and out at its end
+export const DEEP_MOTE_RIM = 6;         // cells in from the window's edge a silt mote fades over, where it wraps
 export const DEEP_SILT_SINK = 0.04;  // px a frame the silt settles, against the current's push
 export const DEEP_FLECK_EVERY = 0.35; // seconds between flecks off a swaying coil
 export const DEEP_FLECK_LIFE = 7;    // seconds a fleck drifts before it is gone

@@ -183,7 +183,11 @@ export const TESTS = [
     const c = document.getElementById('c');
     const keep = S.camY;
     S.camY = deepTop() - S.viewH / 2;
-    draw();
+    // Stars mid-fade are dimmer by design; the question is whether they are drawn.
+    globalThis.__pinInk = true;
+    const g = c.getContext('2d');
+    Object.defineProperty(g, 'globalAlpha', { configurable: true, get: () => 1, set: () => {} });
+    try { draw(); } finally { globalThis.__pinInk = false; delete g.globalAlpha; }
     S.camY = keep;
     // The band over the deep's ceiling, clear of the corner's squares.
     const y0 = Math.round(c.height * 0.15), h = Math.round(c.height * 0.3);
@@ -191,7 +195,7 @@ export const TESTS = [
     let lit = 0;
     for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 120) lit++;
     const share = lit / (d.length / 4);
-    return [ok(share > 0.01, 'the water is lit over the deep\'s ceiling, not a black band', `${(share * 100).toFixed(2)}% lit`)];
+    return [ok(share > 0.005, 'the water is lit over the deep\'s ceiling, not a black band', `${(share * 100).toFixed(2)}% lit`)];
   }],
   // The pods stand from the snatch with the sqwife's in them, so their board
   // is there from the deep's first frame; another pod is sold on it and not

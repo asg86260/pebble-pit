@@ -17,7 +17,9 @@
 // outside the cap. So the frame is read at full ink -- every draw made with
 // globalAlpha held at 1 for the one frame read -- and the cap is asked of
 // what is drawn, whatever is mid-fade in the scene. Only that frame: the
-// context's own alpha is never touched, so nothing after it is.
+// context's own alpha is never touched, so nothing after it is. The star
+// field's fade is per-pixel alpha in its image data, so it is held by the
+// same frame (`globalThis.__pinInk`).
 
 import { ok, run } from './kit.js';
 import { draw, LAYERS } from '../render.js';
@@ -43,7 +45,9 @@ function offPalette(hide = null) {
   off.forEach(l => { l.when = () => false; });
   const c = document.getElementById('c'), g = c.getContext('2d'), k = devicePixelRatio || 1;
   Object.defineProperty(g, 'globalAlpha', { configurable: true, get: () => 1, set: () => {} });
+  globalThis.__pinInk = true;
   try { draw(); } finally {
+    globalThis.__pinInk = false;
     delete g.globalAlpha;
     off.forEach((l, i) => { l.when = was[i]; });
   }
