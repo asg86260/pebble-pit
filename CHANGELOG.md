@@ -29,6 +29,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The constrict's orb is as easy to break at every level as at the first; only the serpent's defenses grow (test/endless.test.mjs).
 - The serpent's bar slides down under blows, each blow's stretch breaking off in pixel pieces that fall away, and a meal's heal flows back in instead of jumping (`node tools/look.mjs deep-numbers`).
 - A blow breaks its whole stretch off the serpent's bar at once, in square chips that all flick off together and fall smoothly instead of at half the frame rate, and the bar's knock settles smoothly too (test/serpent-bar-crumble.test.mjs).
+- On a narrow window the serpent's bar slides along as you scroll instead of snapping across to the serpent's other end (test/serpent-bar-pan.test.mjs).
 - The deep's water and its floor reach the edges of a tall or ultrawide window instead of stopping in a hard line partway across it (test/deep-zones-reach.test.mjs).
 - The deep's creatures dart away from a lash and scatter harder when a defense breaks, then ease back to their own paths; floor-dwellers skitter along the floor and shoals scatter fish by fish (test/deep-fauna.test.mjs, `node tools/look.mjs deep-scatter-lash,deep-scatter-break`).
 - The deep's creatures are few now, like the birds: a click startles one off the end of the deep and shakes loose a handful of scales for the gatherers, and it drifts back in a while later (test/deep-creature-click.test.mjs).

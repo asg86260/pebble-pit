@@ -66,9 +66,9 @@ export function barW() {
 }
 
 // Where the bar stands on the glass, in screen pixels: centered with its pips
-// over the first BAR_ALONG of the coil from the head, as much of it as is on
-// the glass (or over whatever of the coil is, with none of that), kept on the
-// glass, and held still BAR_PAD cells over the highest the coil ever sways.
+// over the middle of the first BAR_ALONG of the coil from the head, held over
+// the part of the coil on the glass when that is off it, kept on the glass,
+// and held still BAR_PAD cells over the highest the coil ever sways.
 export function barRect() {
   const w = barW();
   // measured with the level drawn after it, so the strip stays centered as
@@ -78,10 +78,13 @@ export function barRect() {
   // bar keeps room above it for the row, whether or not it has a status in it.
   const row = statusRowH() + STATUS_GAP;
   const over = (coilCeiling() - BAR_PAD * P - S.camY) * S.zoom - BAR_H;
+  // Every step of this is a clamp, so the bar slides with the camera and
+  // never jumps: a choice between placements (the head's third, else the
+  // coil, else the glass's middle) snapped it across the glass at the
+  // moment one part of the coil left it.
   const { x0, x1 } = coilEnds(), toScreen = x => (x - S.camX) * S.zoom;
-  const head = x0 + (x1 - x0) * BAR_ALONG;
-  const on = (l, r) => { const a = Math.max(0, toScreen(l)), b = Math.min(S.W, toScreen(r)); return b > a ? (a + b) / 2 : null; };
-  const mid = on(x0, head) ?? on(x0, x1) ?? S.W / 2;
+  const glass = x => Math.max(0, Math.min(S.W, toScreen(x)));
+  const mid = Math.max(glass(x0), Math.min(glass(x1), toScreen(x0 + (x1 - x0) * BAR_ALONG / 2)));
   const x = Math.max(BAR_TOP, Math.min(S.W - whole - BAR_TOP, mid - whole / 2));
   return { x: Math.round(x), y: Math.round(Math.max(BAR_TOP + row, over)), w, h: BAR_H };
 }
