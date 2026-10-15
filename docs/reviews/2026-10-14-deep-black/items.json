@@ -1,0 +1,4 @@
+{ "title": "Black water", "lede": "Your pick 3: the deep's water black, creatures as before, the same on both themes.", "base": "22a51c8e", "head": "e92037d7",
+  "items": [ { "id": "black", "title": "The deep's water is black", "what": "Light theme and dark theme.",
+    "shots": [ { "label": "light theme", "scene": "deep-all", "window": [800, 600] },
+               { "label": "dark theme", "scene": "deep-all", "theme": "dark", "window": [800, 600] } ] } ] }
