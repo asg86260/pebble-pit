@@ -134,7 +134,7 @@ for (const [k, v] of Object.entries(BADGES)) committed.badges[k] = saved.badges[
 // GLYPHS by the merge, so revert falls back to the crate for those)
 const store = () => localStorage.setItem(OVERRIDES_KEY, JSON.stringify(saved));
 
-const names = () => [...new Set([...Object.values(GLYPH_OF).map(([n]) => n), ...Object.keys(GLYPHS)])].filter(n => n !== 'crate' && n !== 'shield' && n !== 'hat');
+const names = () => [...new Set([...Object.values(GLYPH_OF).map(([n]) => n), ...Object.keys(GLYPHS)])].filter(n => n !== 'crate' && n !== 'shield' && n !== 'hat' && !n.startsWith('hand'));
 const rowsOf = name => Object.entries(GLYPH_OF).filter(([, [n]]) => n === name).map(([k, [, b]]) => [k, b]);
 
 let kind = 'glyphs', cur = null, cells = [];

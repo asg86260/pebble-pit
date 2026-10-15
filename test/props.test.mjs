@@ -12,7 +12,8 @@
 // bought where the player buys them, on the station's board (`pressBuy`).
 
 import { group, ok, yard } from './helpers.mjs';
-import { P, WORKER, DEEP_W, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, CHOOSE_MARK, PLINTH_H } from '../src/config.js';
+import { P, WORKER, DEEP_W, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, PLINTH_H, HAND_PRESS } from '../src/config.js';
+import { HANDS, handPressed } from '../src/render/hand.js';
 import { pressBuy, pressKind } from '../src/deep/rails.js';
 import { stationById } from '../src/deep/party.js';
 import { doneAt, markDoneSeen } from '../src/works.js';
@@ -118,16 +119,17 @@ group("a station stands beside a crate below the fork, its class's prop from it,
 });
 
 // A station whose Recruit still waits on its first choice wears the mark
-// (voted C): a white chevron over it, once the build's own done check has
-// been read (reading its board clears that), and gone once rung 1 is bought.
-group('a Recruit waiting on its first choice has the chevron over its station, until it is chosen', async () => {
+// (the pointing hand, option E): its white fill over it, once the build's own
+// done check has been read (reading its board clears that), and gone once
+// rung 1 is bought.
+group('a Recruit waiting on its first choice has the hand over its station, until it is chosen', async () => {
   window.__party({ stations: [{ kind: null }] });
   const st = S.stations[0];
   const inkAt = () => {
-    const out = sheetOf(), m = chooseMarkAt(st), cols = CHOOSE_MARK[0].length;
+    const out = sheetOf(), m = chooseMarkAt(st), cols = HANDS.down[0].length, dy = handPressed() ? HAND_PRESS : 0;
     let n = 0;
-    CHOOSE_MARK.forEach((row, r) => [...row].forEach((ch, c) => {
-      if (ch === '#' && out.cells.get(`${m.x / P + c},${m.y / P + r}`) === GREYS[11]) n++;
+    HANDS.down.forEach((row, r) => [...row].forEach((ch, c) => {
+      if (ch === 'o' && out.cells.get(`${m.x / P + c},${m.y / P + r + dy}`) === GREYS[11]) n++;
     }));
     return { n, over: m.y + m.h <= standOfStation(st).y, cols };
   };
@@ -138,10 +140,10 @@ group('a Recruit waiting on its first choice has the chevron over its station, u
   window.__grant({ dust: 1e8 });
   const chose = pressKind(st.id, 'altar');
   const after = inkAt();
-  const want = CHOOSE_MARK.join('').split('').filter(c => c === '#').length;
+  const want = HANDS.down.join('').split('').filter(c => c === 'o').length;
   return [
     ok(ticked === 0, "none while the build's done check still stands", `${ticked}`),
-    ok(before.n === want && before.over, 'then the chevron is drawn whole, over the station', JSON.stringify(before)),
+    ok(before.n === want && before.over, 'then the hand is drawn whole, over the station', JSON.stringify(before)),
     ok(chose && after.n === 0, 'and gone once the Recruit is chosen', JSON.stringify(after))
   ];
 });

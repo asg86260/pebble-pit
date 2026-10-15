@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The constrict's orb, a station whose Recruit waits on its first choice and the way up at the portal are each marked by a pointing hand tapping at them, instead of an arrow; the orb's stands beside it, clear of the coil (`node tools/look.mjs phase-orb,recruit-mark,deep-portal`).
 - The furnace's fire, brick and mortar keep their steps on the dark theme as on the light, instead of being squeezed together and lifted toward grey (src/selftest/deeppalette.js).
 - The constriction is one steady solid beam from the comb to the orb, three cells wide at the comb with a white core, narrowing to the core alone, instead of jagged flickering bolts (src/selftest/deeppalette.js).
 - The big dim shadows crossing the deep's upper water are gone, the giant and the far and middle crossings; the creatures that swim the water stay (test/deep-creature-click.test.mjs).
@@ -168,6 +169,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Menu shadows are see-through, the lines under notices and achievements are darker and larger, and achievement names are bold.
 - The farm shed wears a barn roof, so it no longer looks like the quarry shed or the bench; the farm's flag flies from the ridge.
 - The deep's stations stand spread evenly under the whole serpent, the first four already spanning it, instead of bunched to one side.
+- The way down at the portal is a pointing hand tapping at it, instead of an arrow.
 - A language page off settings, on the pause sheet and the title page, lists each language in its own name with the one in use marked, and the title page's foot names the language in use (src/selftest/language.js).
 - A feedback page on the pause sheet under settings, off settings on the title page, and under copy save when the game stops, sends your words and, if you tick it, your save (test/feedback.test.mjs).
 

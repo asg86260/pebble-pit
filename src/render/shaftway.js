@@ -1,69 +1,57 @@
 // The way through the portal, marked at it (DESIGN.md, "The way between the
-// halves"; "Two crews and a portal"): a pixel arrow in the liquid beside the
-// portal in the yard, pointing left at it and bobbing toward it and back, and
-// one under its deep end, pointing up into it and bobbing up and down. A click
+// halves"; "Two crews and a portal"): the pointing hand (render/hand.js) in
+// the liquid beside the portal in the yard, pointing left at it, and one
+// under its deep end, pointing up into it, each tapping toward it. A click
 // on either takes the view through. From the wizards' portal on, while the
 // camera is not already gliding.
 
-import { P, SHAFT_ARROW_SIDE, SHAFT_ARROW_DOWN, SHAFT_ARROW_BOB, SHAFT_ARROW_MS, ABYSS_TONES } from '../config.js';
+import { P, SHAFT_ARROW_SIDE, SHAFT_ARROW_DOWN, ABYSS_TONES, ABYSS_MAGIC_TONES } from '../config.js';
 import { S } from '../state.js';
-import { now } from '../clock.js';
 import { portalCircle, deepPortal } from '../deep/place.js';
 import { holeReach } from './portal.js';
 import { gliding } from '../view.js';
 import { ctx } from './ctx.js';
-import { GREYS } from './deep.js';
+import { GREYS, PURPLES, PURPLE_RUNG } from './deeptones.js';
+import { drawHand, handSize, handTip } from './hand.js';
 
-// The deep's chevron, five cells across and three deep, point up; the yard's
-// is the same chevron on its side, three across and five deep, point left at
-// the portal.
-const UP = ['..#..', '.###.', '#####'];
-const LEFT = ['..#', '.##', '###', '.##', '..#'];
-const size = rows => ({ w: rows[0].length * P, h: rows.length * P });
-const UP_BOX = size(UP), LEFT_BOX = size(LEFT);
+const UP_BOX = handSize('up'), LEFT_BOX = handSize('left');
+const [UP_TIP_C] = handTip('up'), [, LEFT_TIP_R] = handTip('left');
+const WHITE = ABYSS_TONES.length - 1;
 
 const snap = v => Math.round(v / P) * P;
 export const arrowShown = () => !!S.portalOpen && !gliding();
 const shown = arrowShown;
 
-// Where the arrow is in its half, top-left, on the grid. The bob is a whole
-// cell each way on a slow sine, so it moves a cell at a time and never sits
-// half off the grid: along the line each arrow points, up and down in the
-// deep, toward the portal's lip and back in the yard. `still` leaves the bob
-// out, for a pad's focus standing on the arrow (stops.js), which would
-// otherwise twitch a cell with it.
-const bob = () => snap(Math.sin(now() / SHAFT_ARROW_MS * Math.PI * 2) * SHAFT_ARROW_BOB);
-export function arrowBox(deep, still = false) {
-  const b = still ? 0 : bob();
+// Where the hand rests in its half, top-left, on the grid, the fingertip's
+// cell on the portal's middle line. The tap is drawn on top of this
+// (drawHand), so the box -- a click's, a pad's focus's (stops.js) -- holds
+// still.
+export function arrowBox(deep) {
   if (deep) {
     const c = deepPortal();
-    return { x: snap(c.x - UP_BOX.w / 2), y: snap(c.y + c.r + SHAFT_ARROW_DOWN) - b, ...UP_BOX };
+    return { x: snap(c.x - P / 2) - UP_TIP_C * P, y: snap(c.y + c.r + SHAFT_ARROW_DOWN), ...UP_BOX };
   }
   const c = portalCircle();
-  return { x: snap(c.x + holeReach() + SHAFT_ARROW_SIDE) + b, y: snap(c.y - LEFT_BOX.h / 2), ...LEFT_BOX };
+  return { x: snap(c.x + holeReach() + SHAFT_ARROW_SIDE), y: snap(c.y - P / 2) - LEFT_TIP_R * P, ...LEFT_BOX };
 }
 
-// A click near either: a cell of slack round the drawing, since it is small
-// and the sky round it does nothing else.
+// A click near either: a cell of slack round the drawing, since the sky round
+// it does nothing else.
 export function onShaftArrow(x, y) {
   if (!shown()) return false;
   const b = arrowBox(S.view === 'deep');
   return x >= b.x - P && x < b.x + b.w + P && y >= b.y - P && y < b.y + b.h + P;
 }
 
-function paint(b, rows, ink) {
-  ctx.fillStyle = ink;
-  rows.forEach((row, r) => [...row].forEach((ch, c) => {
-    if (ch === '#') ctx.fillRect(b.x + c * P, b.y + r * P, P, P);
-  }));
-}
-
+// The deep's line on both: the yard's hand stands in the same black liquid,
+// where a black line is lost. The yard draws its tones as seen, the deep
+// through its negative (deeptones.js), so each names its own.
 export function drawYardArrow() {
-  if (shown()) paint(arrowBox(false), LEFT, ABYSS_TONES[ABYSS_TONES.length - 1]);   // light, on the liquid
+  if (shown()) { const b = arrowBox(false); drawHand(b.x, b.y, 'left', ABYSS_MAGIC_TONES[PURPLE_RUNG[WHITE - 2]], ABYSS_TONES[WHITE]); }
   ctx.fillStyle = '#000';
 }
 
 export function drawDeepArrow() {
-  if (shown()) paint(arrowBox(true), UP, GREYS[GREYS.length - 1]);
+  if (shown()) { const b = arrowBox(true); drawHand(b.x, b.y, 'up', PURPLES[WHITE - 2], GREYS[WHITE]); }
   ctx.fillStyle = '#000';
 }
