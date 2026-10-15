@@ -3,9 +3,9 @@
 // serpent's bar"). Full at a closed wound, empty at the break; a pip after
 // it a defense, on the story's serpent only. It reads the sim and keeps only what the picture needs to
 // remember, all of it here and none of it saved, so a reload shows the bar as
-// it stands: where the fill is shown (it slides to the wound rather than
-// jumping), where its drawn end has crumbled to, where a heal began flowing
-// in (the purple), and the chips the end has bitten off.
+// it stands: where the fill is shown (it breaks off at a blow and flows up at
+// a heal), where a heal began flowing in (the purple), and the chips the
+// blows have broken off.
 
 import { msg } from '../lang.js';
 import { S } from '../state.js';
@@ -22,22 +22,20 @@ import { depthAt } from '../deep/depth.js';
 import { sheetOf, write, widthOf, sayNum, drawable } from './numfont.js';
 import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT,
          BAR_HEALED, BAR_TO_COME, BAR_STUN, BAR_STUN_RIM, BAR_HEAL_FADE_S,
-         BAR_EASE_S, BAR_SETTLE, BAR_HEAL_RATE, BAR_FLOW_EASE, BAR_FLOW_MIN, BAR_STALE_S,
-         BAR_BITE, BAR_BITE_STEP_S, BAR_BITE_LIFT, BAR_BITE_GRAV, BAR_BITE_KICK, BAR_BITE_TUMBLE_S,
-         BAR_BITE_FALL_S, BAR_BITE_FADE_S, BAR_BITE_BREAK_S, BAR_CHIP, BAR_CRACKED,
+         BAR_SETTLE, BAR_HEAL_RATE, BAR_FLOW_EASE, BAR_FLOW_MIN, BAR_STALE_S,
+         BAR_BITE, BAR_BITE_MIN, BAR_BITE_HOLD_S, BAR_BITE_LIFT, BAR_BITE_GRAV, BAR_BITE_KICK, BAR_BITE_TUMBLE_S,
+         BAR_BITE_FALL_S, BAR_BITE_FADE_S, BAR_CHIP,
          BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP,
          SERPENT_PHASES, BREAK_DIVE, BREAK_ROAR, BAR_LEVEL_GAP, NUM_FONT_PX, NUM_DROP, LEVEL_KNOCK_S } from '../config.js';
 
 // As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
 const seen = c => darkPage ? turned(c) : c;
 
-// The picture's memory. `shown` is the fill as drawn, 0..1; `end` where its
-// drawn end stands, crumbling down behind it a bite at a time, `bitAt` when
-// it last bit; `healLo` where the purple starts (null for none), `healIn` when
+// The picture's memory. `shown` is the fill as drawn, 0..1; `healLo` where the purple starts (null for none), `healIn` when
 // the heal finished flowing in (null while it still is); `refilling` while a
 // break's refill is coming up, which is the new defense or the next level and
 // not a heal, so it has no purple; `level` the level it was last drawn at.
-let level = -1, stage = -1, then = 0, shown = 1, end = 1, bitAt = -Infinity,
+let level = -1, stage = -1, then = 0, shown = 1,
     healLo = null, healIn = null, refilling = false, tickedAt = -Infinity;
 // The chips in the air, in screen pixels off the bar's resting top-left.
 let chips = [];
@@ -94,38 +92,38 @@ export function barLeft(t) {
   return d > 0 ? 1 - Math.max(0, Math.min(1, (S.serpentWound + owedWound(t)) / d)) : 1;
 }
 const isBig = h => blowK(h.done) > NUM_KICK_BIG;
-// A gap within this of a whole bite, in screen pixels, is one: the shares the
-// end steps in do not add back to whole pixels exactly.
-const BITE_EPS = 0.01;
 
-// The bite `w` pixels wide whose right edge is `x1` pixels along the bar
-// leaves as two chips, its top half and its bottom, each held lit where it
-// was for `hold` seconds and then thrown toward the empty track.
-function bite(t, x1, w, hold) {
+// The stretch of the bar from `lo` to `hi` (shares of it) breaks off at once,
+// at `t` seconds: cut from its end down into square bites BAR_BITE wide, the
+// last narrower, each leaving as two chips, its top half and its bottom, all
+// held lit where they were for BAR_BITE_HOLD_S and then thrown together. A
+// stretch under BAR_BITE_MIN pixels still breaks off that wide, from the end,
+// so every blow that lands is seen to chip the bar.
+function breakOff(t, lo, hi) {
   const k = BAR_BITE_KICK, h = BAR_H / 2;
-  for (let r = 0; r < 2; r++) {
-    const n = thrown++;
-    chips.push({ at: t, x: Math.round(x1 - w), y: r * h, w: Math.round(w), h, hold, base: null,
-      vx: (r ? 1 : -1) * k.side * 0.4 + (hash(n) - 0.3) * k.sideRand + k.side,
-      vy: -(k.up + hash(n + 5) * k.upRand) + r * k.row, tumble: r === 1 });
+  const b = Math.round(BAR_W * hi), a = Math.max(0, Math.min(Math.round(BAR_W * lo), b - BAR_BITE_MIN));
+  for (let x1 = b; x1 > a; x1 -= BAR_BITE) {
+    const w = Math.min(BAR_BITE, x1 - a);
+    for (let r = 0; r < 2; r++) {
+      const n = thrown++;
+      chips.push({ at: t, x: x1 - w, y: r * h, w, h, base: null,
+        vx: (r ? 1 : -1) * k.side * 0.4 + (hash(n) - 0.3) * k.sideRand + k.side,
+        vy: -(k.up + hash(n + 5) * k.upRand) + r * k.row, tumble: r === 1 });
+    }
   }
 }
 
 // One frame of the picture's memory, `dt` seconds on: the fill slides down to
-// the wound or flows up to it, the drawn end bites down behind it or rises
-// with it, and the purple fades once the heal is all in.
+// the wound or flows up to it, and the purple fades once the heal is all in.
 function step(t, dt, target) {
   const s = t / 1000;
   if (S.serpentStage !== stage) {
-    // A break: what was left crumbles all at once, a bite at a time from the
-    // end down. The bar first coming up has nothing to break, and a new
-    // defense stands where the sim has it (empty, under a break's refill).
-    if (then && S.serpentStage === stage + 1 && stage >= 0) {
-      for (let x1 = BAR_W * Math.max(end, shown), i = 0; x1 > 0; x1 -= BAR_BITE, i++)
-        bite(s, x1, Math.min(BAR_BITE, x1), BAR_BITE_STEP_S + i * BAR_BITE_BREAK_S);
-    }
+    // A break: whatever was left breaks off at once, as a blow's stretch does.
+    // The bar first coming up has nothing to break, and a new defense stands
+    // where the sim has it (empty, under a break's refill).
+    if (then && S.serpentStage === stage + 1 && stage >= 0 && shown > 0) breakOff(s, 0, shown);
     stage = S.serpentStage;
-    shown = end = target;
+    shown = target;
     healLo = healIn = null;
     refilling = false;
     level = S.serpentLevel;
@@ -134,16 +132,17 @@ function step(t, dt, target) {
   // notch a mote (deep/phases.js, `powerFill`); the number knocked up as it ticks.
   if (S.serpentLevel !== level) { if (level >= 0) tickedAt = s; level = S.serpentLevel; healLo = healIn = null; }
   // Away from the deep, the bar's memory is too old to tell: it shows the bar
-  // as it stands, with nothing breaking off it.
-  if (dt > BAR_STALE_S) { shown = end = target; healLo = healIn = null; refilling = false; chips = []; return; }
+  // as it stands, with nothing breaking off it; so is it on a clock that has
+  // gone back (a new game), where its chips would be held for the future.
+  if (dt > BAR_STALE_S || dt < 0) { shown = target; healLo = healIn = null; refilling = false; chips = []; return; }
   if (powerFill() != null) {
     // The power-up's notches are held steps, each mote's own.
     shown = target; healLo = healIn = null; refilling = false;
   } else if (target < shown) {
-    // Down: a slide over a few hundredths of a second, sub-pixel, and a blow
-    // ends any heal still showing.
-    shown += (target - shown) * (1 - Math.exp(-dt / BAR_EASE_S));
-    if (shown - target < BAR_SETTLE) shown = target;
+    // Down: the whole stretch the blow took breaks off in this frame, and the
+    // fill's end stands at the wound at once; a blow ends any heal showing.
+    breakOff(s, target, shown);
+    shown = target;
     healLo = healIn = null;
   } else if (target > shown + BAR_SETTLE) {
     // Up: a break's refill at the break's pace, or a heal at its own, easing
@@ -161,20 +160,7 @@ function step(t, dt, target) {
     }
   } else if (target > shown) shown = target;
   if (healIn != null && s - healIn >= BAR_HEAL_FADE_S) healLo = healIn = null;
-  // The drawn end: up with the fill at once (a heal's purple is the news
-  // there), down a whole bite at a time, a held step apart, once the fill is
-  // a bite or more under it -- or, the fill run out, whatever is left of it.
-  if (shown >= end) { end = shown; bitAt = -Infinity; }
-  else if (s - bitAt >= BAR_BITE_STEP_S) {
-    const gap = (end - shown) * BAR_W;
-    if (gap >= BAR_BITE - BITE_EPS || shown <= BAR_SETTLE) {
-      const w = Math.min(BAR_BITE, gap);
-      bite(s, end * BAR_W, w, BAR_BITE_STEP_S);
-      end -= w / BAR_W;
-      bitAt = s;
-    }
-  }
-  chips = chips.filter(p => s - p.at < p.hold + BAR_BITE_FALL_S);
+  chips = chips.filter(p => s - p.at < BAR_BITE_HOLD_S + BAR_BITE_FALL_S);
 }
 
 // A chip `side` pixels square turned an eighth, centered on (cx, cy): a
@@ -193,7 +179,7 @@ export function drawSerpentBar() {
   // mote (deep/phases.js).
   const t = now(), notch = powerFill();
   const target = notch != null ? notch : Math.min(barLeft(t), breakFill());
-  const dt = then ? Math.max(0, (t - then) / 1000) : 0;
+  const dt = then ? (t - then) / 1000 : 0;
   step(t, dt, target);
   then = t;
 
@@ -221,9 +207,6 @@ export function drawSerpentBar() {
   fill(BAR_EDGE, x - 1, y - 1, BAR_W + 2, BAR_H + 2);
   fill(BAR_TRACK, x, y, BAR_W, BAR_H);
   fill(BAR_LEFT, x, y, BAR_W * shown, BAR_H);
-  // What the blows have taken that is not yet a whole bite, cracked at the end.
-  const lo = Math.round(BAR_W * shown), hi = Math.round(BAR_W * end);
-  if (hi > lo) fill(BAR_CRACKED, x + lo, y, hi - lo, BAR_H);
   // What the heal has brought back, purple while it flows in and fading out
   // once it is all in.
   if (healLo != null && shown > healLo) {
@@ -266,23 +249,23 @@ export function drawSerpentBar() {
     write(sheetOf(px, BAR_LEFT, NUM_DROP), says, px, Math.round(lx * u), Math.round((y - up + BAR_H) * u));
     ctx.restore();
   }
-  // The chips: held lit where the bite was, on the bar as it stands, then
-  // thrown from there, moved every frame to the whole pixel, the tumbling one
+  // The chips: held lit where they broke off, on the bar as it stands, then
+  // thrown from there all together, moved every frame to the whole pixel, the tumbling one
   // a square and a diamond in turn, fading out whole.
   const s = t / 1000;
   for (const p of chips) {
     const a = s - p.at;
-    if (a < p.hold) {
+    if (a < BAR_BITE_HOLD_S) {
       fill(BAR_CHIP, x + p.x, y + p.y - BAR_BITE_LIFT, p.w, p.h);
       continue;
     }
     // where the bar stood as it let go, so a knock still settling does not
     // carry a chip already in the air
     if (p.base == null) p.base = y - rest - BAR_BITE_LIFT;
-    const f = a - p.hold;
+    const f = a - BAR_BITE_HOLD_S;
     const px = Math.round(x + p.x + p.vx * f);
     const py = Math.round(rest + p.base + p.y + p.vy * f + 0.5 * BAR_BITE_GRAV * f * f);
-    ctx.globalAlpha = alpha * Math.max(0, Math.min(1, (p.hold + BAR_BITE_FALL_S - a) / BAR_BITE_FADE_S));
+    ctx.globalAlpha = alpha * Math.max(0, Math.min(1, (BAR_BITE_HOLD_S + BAR_BITE_FALL_S - a) / BAR_BITE_FADE_S));
     if (p.tumble && Math.floor(f / BAR_BITE_TUMBLE_S) % 2) diamond(px + p.w / 2, py + p.h / 2, Math.min(p.w, p.h));
     else fill(BAR_LEFT, px, py, p.w, p.h);
     ctx.globalAlpha = alpha;

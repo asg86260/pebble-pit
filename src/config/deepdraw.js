@@ -372,52 +372,49 @@ export const BAR_STUN = seenPurple('bright');     // the defense's pip while a s
 export const BAR_STUN_RIM = 2;         // screen pixels, the ring's width
 export const BAR_HEAL_FADE_S = 0.9;    // the heal's purple fades out over this once it is all in
 // How the bar moves (docs/mocks/serpent-hp-bar-2026-10-12.html, the owner's B,
-// "pixel shards"). A blow is a fraction of a pixel to a few pixels of the
-// bar, so the fill slides down to it rather than ticking: it closes on the
-// wound with a time constant of BAR_EASE_S, and is let sit on it once within
+// "pixel shards"). A blow breaks its stretch off at once (below), so the fill
+// drops to it in the frame it lands; it is let sit on a heal's end once within
 // BAR_SETTLE of the bar. A heal flows in at BAR_HEAL_RATE of the bar a
 // second, slowed to BAR_FLOW_EASE times what is left to come (but never under
 // BAR_FLOW_MIN) so it eases into its end; a break's refill flows the same way
 // at the break's own pace. All of it is the picture's: the sim's wound moves
 // as it always did.
-export const BAR_EASE_S = 0.06;
 export const BAR_SETTLE = 0.0005;      // a share of the bar
 export const BAR_HEAL_RATE = 0.32;     // a share of the bar a second
 export const BAR_FLOW_EASE = 4;        // a second, against what is left to come
 export const BAR_FLOW_MIN = 0.05;      // a share of the bar a second
 export const BAR_STALE_S = 0.25;       // a gap between drawn frames longer than this (away from the deep) shows the bar as it stands
-// The bar's drawn end crumbles behind the fill (the owner's C, "crumble
-// steps", 2026-10-15; docs/mocks/serpent-bar-chunks-2026-10-15.html): it
-// bites back BAR_BITE screen pixels at a time, square bites half the bar's
-// height, so a blow reads as pieces of the bar and not a speck per pixel;
-// at most one bite every BAR_BITE_STEP_S, so a big blow crumbles as a run of
-// held steps. What the blows have taken that is not yet a whole bite stays
-// at the end in BAR_CRACKED, darker than the fill and the rim both. Each
-// bite is held lit in BAR_CHIP, lifted BAR_BITE_LIFT, for BAR_BITE_STEP_S,
-// then leaves as two chips, its top and bottom halves: thrown toward the
-// empty track `side` px/s (the top one 0.4 of it back, the bottom 0.4 on)
-// plus up to `sideRand` (from 0.3 of it under), up by `up` plus up to
-// `upRand` (the bottom one `row` less), and falling under BAR_BITE_GRAV
-// screen pixels a second a second. The owner asked for the motion smooth
-// (2026-10-15: the old pieces stepped on held poses, "like half frame
-// rate"), so a chip moves every frame to its whole pixel; the bottom one
-// tumbles, a quarter turn every BAR_BITE_TUMBLE_S as the square and the
-// diamond in turn. A chip falls for BAR_BITE_FALL_S and fades by opacity
-// over its last BAR_BITE_FADE_S. A break crumbles what was left at once, a
-// bite every BAR_BITE_BREAK_S from the end down.
+// A blow breaks off the whole stretch it took at once (the owner, 2026-10-15:
+// "the whole damage should be chipped off at the same time, instead of
+// gradually down the bar"; the crumble before it stepped a bite every 0.09 s).
+// The stretch is cut from its end down into square bites BAR_BITE screen
+// pixels wide, half the bar's height, the last one narrower, so a blow reads
+// as pieces of the bar and not a speck per pixel; a stretch under
+// BAR_BITE_MIN pixels still breaks off that wide, so every blow that lands is
+// seen to chip the bar (a blow is often under a pixel of it). Every bite is
+// held lit in BAR_CHIP, lifted BAR_BITE_LIFT, for BAR_BITE_HOLD_S -- the
+// moment of the hit, long enough to read the stretch as what it took -- then
+// all of them leave together, each as two chips, its top and bottom halves,
+// each with its own seeded kick: thrown toward the empty track `side` px/s
+// (the top one 0.4 of it back, the bottom 0.4 on) plus up to `sideRand`
+// (from 0.3 of it under), up by `up` plus up to `upRand` (the bottom one
+// `row` less), and falling under BAR_BITE_GRAV screen pixels a second a
+// second. The owner asked for the motion smooth (2026-10-15: the old pieces
+// stepped on held poses, "like half frame rate"), so a chip moves every frame
+// to its whole pixel; the bottom one tumbles, a quarter turn every
+// BAR_BITE_TUMBLE_S as the square and the diamond in turn. A chip falls for
+// BAR_BITE_FALL_S and fades by opacity over its last BAR_BITE_FADE_S. A break
+// breaks off whatever was left the same way, all at once.
 export const BAR_BITE = 7;
-export const BAR_BITE_STEP_S = 0.09;
+export const BAR_BITE_MIN = 2;
+export const BAR_BITE_HOLD_S = 0.09;
 export const BAR_BITE_LIFT = 1;
 export const BAR_BITE_GRAV = 520;
 export const BAR_BITE_KICK = { side: 16, sideRand: 26, up: 34, upRand: 30, row: 8 };
 export const BAR_BITE_TUMBLE_S = 0.1;
 export const BAR_BITE_FALL_S = 0.85;
 export const BAR_BITE_FADE_S = 0.4;
-export const BAR_BITE_BREAK_S = 0.012;
 export const BAR_CHIP = seenGrey('pale');     // a bite while it is held lit at the end (white, as the fill, once it falls)
-// The mock's cracked grey was the abyss's rung 7, between two of the deep's
-// kept rungs; the darker one, so it reads apart from the rim.
-export const BAR_CRACKED = seenGrey('stone');
 // And the bar recoils from it, the whole of it and its pips, up and away from
 // the number that went into its underside: BAR_KNOCK screen pixels
 // (BAR_KNOCK_BIG for a blow past NUM_KICK_BIG), settling home over

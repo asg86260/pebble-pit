@@ -15497,22 +15497,24 @@ grey for those to come. Answering the old mock's question 2: the defense.
   defense up. The toast shares that strip and is over it while it is up; the
   toast is the louder news and gone in seconds.
 - *How it moves (the owner's B, "pixel shards", 2026-10-12;
-  `docs/mocks/serpent-hp-bar-2026-10-12.html` on `mock/deep-hp`):* the fill
-  slides down to each blow over a few hundredths of a second
-  (`BAR_EASE_S`), so a stream of blows is one drain and not a pixel ticking
-  when the rounding tips. The drawn end crumbles behind the fill (the
-  owner's C, "crumble steps", 2026-10-15;
-  `docs/mocks/serpent-bar-chunks-2026-10-15.html`): it bites back
-  `BAR_BITE` pixels at a time, square bites half the bar's height, at most a
-  bite every `BAR_BITE_STEP_S`, so a big blow is a run of held steps; what
-  the blows have taken that is not yet a whole bite shows cracked, darker,
-  at the end. Each bite is held lit where it was, then leaves as its two
-  halves, chips thrown toward the empty track and falling, the bottom one
-  tumbling, fading by opacity at the end. The owner asked for the motion
-  smooth (the old 3-pixel pieces stepped on held poses, "like half frame
-  rate"), so a chip moves every frame to its whole pixel, and so does the
-  bar's knock as it settles. A heal raises the end with the fill. A break
-  crumbles whatever was left at once, a bite at a time from the end. A meal
+  `docs/mocks/serpent-hp-bar-2026-10-12.html` on `mock/deep-hp`):* a blow
+  breaks off the whole stretch it took at once (the owner, 2026-10-15: "the
+  whole damage should be chipped off at the same time, instead of gradually
+  down the bar"; the crumble before it, the owner's C,
+  `docs/mocks/serpent-bar-chunks-2026-10-15.html`, stepped a bite every
+  0.09 s with the rest cracked grey): the fill's end drops to the wound in
+  the frame the blow lands, and the stretch, cut into square bites
+  `BAR_BITE` pixels wide and half the bar high (the last one narrower), is
+  held lit where it was for `BAR_BITE_HOLD_S`, then all of it leaves
+  together, each bite as its two halves, chips each with its own kick toward
+  the empty track, falling, the bottom one tumbling, fading by opacity at
+  the end. A blow under a bite still breaks off one narrow bite
+  `BAR_BITE_MIN` pixels wide, so every blow that lands is seen to chip the
+  bar. The owner asked for the motion smooth (the old 3-pixel pieces
+  stepped on held poses, "like half frame rate"), so a chip moves every
+  frame to its whole pixel, and so does the bar's knock as it settles. A
+  heal raises the end with the fill. A break breaks off whatever was left
+  the same way, all at once. A meal
   still closes the wound at once in the sim; the bar shows it flowing in at
   `BAR_HEAL_RATE` of the bar a second, purple over what came back, the purple
   fading over `BAR_HEAL_FADE_S` once it is in. A break's refill flows the same
