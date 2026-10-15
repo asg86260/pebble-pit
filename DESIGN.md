@@ -14880,24 +14880,36 @@ gatherer has carried them to the crusher. The serpent and the stations take
 a click first. No achievement, no hover word (none of them has a name in the
 index), and no pad stop: they move, and the birds are not pad stops either.
 
-**Three, and each the whole height** (built; the owner, 2026-10-14, option C
-of `docs/mocks/deep-creatures-full-height-2026-10-14.html`: "travel the whole
-height of the window, and there should still be less of them"). A creature
-held to its zone left most of the height empty at any moment, so the three
-left -- the lanternfish, the angler and the dumbo -- each wander all of it;
-the shoal and the amphipod are at nought (a floor creature cannot travel the
-height). Each swims at its pace (3.5, 1.6, 1.4 cells a second) on a heading
-that turns gently at random, steered off the ceiling and the floor's
-clearance and never steeper than about 55 degrees, so it reads as swimming
-along, not sinking (`FAUNA_WANDER`). The sprites cannot turn, so each faces
-left or right by the way it travels along, and changes only once that is
-clearly one way. The zones are now where it sets out from and the water it
-crosses: its dim is the band it is in at the moment, so it darkens through
-the midnight band and comes out of it. The turn answers where it is, so
-there is no closed form: the way is walked on a fixed step from the clock's
-start off a seeded noise, a moment kept every two seconds, and any moment
-comes out the same however it is asked for -- still nothing saved. Within a
-quarter hour each has been in the deep's top quarter and its bottom one.
+**Three at once, taking turns, each the whole height** (built; the owner,
+2026-10-14, option C of `docs/mocks/deep-creatures-full-height-2026-10-14.html`:
+"travel the whole height of the window, and there should still be less of
+them"; then, the same day, "i dont mind having the creature variety, i mean
+just pure numbers of creatures on the screen at one time"). A creature held
+to its zone left most of the height empty at any moment, so three slots swim
+at once and each wanders all of it, about one on screen at a time. The slots
+take turns through every swimmer -- the shoal, the jelly, the lanternfish,
+the hatchetfish, the siphonophore, the angler, the vampire squid and the
+dumbo (`FAUNA_TURNS`); the floor's creatures cannot travel the height. Each
+time a slot's creature goes out past an end of the deep, at the wrap, the
+next kind on the roster that is not already out and is not the one leaving
+comes in there, so no two slots show the same kind, the roster goes round,
+and a kind never changes where it can be seen. Each kind keeps its own pace
+and drawing; the shoal's fish keep their spread about the wandering point,
+the jelly its slow bob. A lap is a visit: a new kind coming in has its own
+handful to drop, and the shoal's bolt holds it off the deep for the rest of
+its lap. Each swims on a heading that turns gently at random, steered off
+the ceiling and the floor's clearance and never steeper than about 55
+degrees, so it reads as swimming along, not sinking (`FAUNA_WANDER`). The
+sprites cannot turn, so each faces left or right by the way it travels
+along, and changes only once that is clearly one way. The zones are now
+where a kind is at home and the water it crosses: its dim is the band it is
+in at the moment, so it darkens through the midnight band and comes out of
+it. The turn answers where it is, so there is no closed form: the three are
+walked together on a fixed step from the clock's start off a seeded noise,
+kinds and laps with them, a moment kept every two seconds, and any moment
+comes out the same however it is asked for -- still nothing saved. Within
+twenty minutes each slot has been in the deep's top quarter and its bottom
+one, and within half an hour every kind has come by.
 
 **Each kind its own click** (built; the owner's picks off
 docs/mocks/creature-clicks-2026-10-13.html, 2026-10-13: school B, every
