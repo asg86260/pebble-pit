@@ -117,6 +117,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Fighters at the serpent's hide are no longer dragged under the deep's floor when it dives or lies down (test/party.test.mjs).
 - Hovering a fighter up at the serpent no longer drops it to the deep's floor (test/classes.test.mjs).
 - After the serpent's death the fighters stop attacking it and go back to their posts, the motes fade away instead of hanging in the water, and the head comes apart with the rest (test/snatch.test.mjs).
+- The deep's stars and drifting motes fade in and out instead of blinking on and off (src/selftest/deeppalette.js).
 
 - Refreshing the page no longer stops the serpent eating: a creature already swimming for its mouth still lands, and the heal comes at the end of every window however often the page reloads (test/serpent-reload.test.mjs).
 - The serpent no longer sheds more scales than the gatherers can ever carry to the crusher (test/serpent.test.mjs).
