@@ -134,8 +134,8 @@ group('the deep says a big number as the HUD does, every character of it drawn',
     ok(said.every((s, i) => s === fmt(SAMPLES[i])), 'sayNum is fmt over the samples', said.join(' ')),
     ok(said.join(' ') === '9 75 999 1k 1.2k 18.4k 181k 2m 21.6m', 'and reads 1.2k, 181k, 2m, 21.6m', said.join(' ')),
     ok(said.every(s => drawable('+' + s) === '+' + s), 'the font has a glyph for every character', said.join(' ')),
-    // m five wide, the point one and set tight: 4+1+1+4+1+4 and 4+1+5.
-    ok(widthOf('2.1k', 1) === 15 && widthOf('2m', 1) === 10, 'each glyph is its own width, the point tight',
+    // m five wide, the point one with a font pixel each side: 4+1+1+1+4+1+4 and 4+1+5.
+    ok(widthOf('2.1k', 1) === 16 && widthOf('2m', 1) === 10, 'each glyph is its own width, the point spaced',
        `${widthOf('2.1k', 1)} ${widthOf('2m', 1)}`)
   ];
 });

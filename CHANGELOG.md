@@ -166,6 +166,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A language page off settings, on the pause sheet and the title page, lists each language in its own name with the one in use marked, and the title page's foot names the language in use (src/selftest/language.js).
 - A feedback page on the pause sheet under settings, off settings on the title page, and under copy save when the game stops, sends your words and, if you tick it, your save (test/feedback.test.mjs).
 
+- The decimal point in counts has room around it, so 86.1k no longer reads as 861k (test/serpent-numbers.test.mjs).
 - The index reads as short descriptions in one list with no headings, and the clouds, rain, lightning, objective, rescue, cutscene and sqhusband entries are gone (test/index.test.mjs).
 - On a narrow window the game opens looking at the rock again, so the bigger rocks to come are not cut off at the right edge (src/selftest/view.js, "the opening view is looking at the rock").
 - With the conveyor belt running, a left click anywhere no longer puts a free handful of pebbles in your hand (src/selftest/dust.js, "a click on open sky over the belt's yard catches nothing"; test/belt-head.test.mjs).

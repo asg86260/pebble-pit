@@ -293,7 +293,8 @@ export const NUM_FONT = {
   't': ['.#..', '###.', '.#..', '.#..', '.#..', '..##'],
   ',': ['..', '..', '..', '..', '.#', '#.']
 };
-export const NUM_FONT_TIGHT = '.,';  // set against the glyph before, no gap
+export const NUM_FONT_TIGHT = ',';   // set against the glyph before, no gap; the point has room both sides
+// (docs/mocks/num-decimal-2026-10-15, option B), so 86.1k never reads as 861k
 export const NUM_FONT_PX = 2;        // screen pixels a font pixel
 // The tones as seen, after the deep's negative: the numbers are drawn over
 // the finished deep, not turned over with it.
