@@ -250,6 +250,15 @@ export function visitAt(c, t) {
 }
 // Every creature out at `t`, a slot's by its visit.
 export const faunaOut = (t = now() / 1000) => POPULATION.map(c => visitAt(c, t));
+// The first second from `from` on, in steps of `every`, that a slot holds
+// `kind` at least `inset` cells inside the deep's ends, or null within
+// `within` seconds: for the scenes, which want one kind on the deep and
+// would otherwise wait out the turns frame by frame.
+export function faunaWhen(kind, from, { every = 0.5, inset = 0, within = 3600 } = {}) {
+  for (let t = from; t < from + within; t += every)
+    for (const c of SLOTS) { const w = wanderAt(c, t); if (w.kind === kind && w.x > inset && w.x < COLS - inset) return t; }
+  return null;
+}
 
 // --- scares ---------------------------------------------------------------------
 // The recent frights, each a point of the deep (cells), the second it

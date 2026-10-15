@@ -21,14 +21,14 @@ import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DO
 import { dropMs, ramX } from './rock.js';
 import { buriedAt } from './intro.js';
 import { rockLeft, clampCam } from './world.js';
-import { now } from './clock.js';
+import { now, advance } from './clock.js';
 import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, RECOIL, NEARDEATH, POWERUP, rungValue } from './config.js';
 import { depthAt } from './deep/depth.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor, deepX0 } from './deep/place.js';
 import { sweep } from './hands.js';
 import { nextMeal, turned, windowS, nowS } from './deep/meals.js';
-import { startleFauna } from './deep/fauna.js';
+import { startleFauna, faunaWhen } from './deep/fauna.js';
 import { startleStream } from './deep/flow.js';
 import { KINDS } from './render/fish.js';
 import { buildStation, nextSlot } from './deep/party.js';
@@ -319,8 +319,12 @@ const clearOfCoil = (x, y, cells) => {
   for (let i = 0; i < COIL_SEGS; i++) { const p = coilAt(i, now()); if (Math.hypot(p.x - x, p.y - y) < P * cells) return false; }
   return true;
 };
-function reactScene(find, click, at, again) {
+function reactScene(find, click, at, again, kind = null) {
   deepYard({ run: 2 });
+  // The swimmers take turns, so a kind may be many minutes off: the clock is
+  // turned on to when it is next on the deep rather than run there.
+  const when = kind && faunaWhen(kind, now() / 1000, { inset: 70 });
+  if (when) advance((when - now() / 1000) * 1000);
   let f = null;
   for (let i = 0; i < 300 && !(f = find()); i++) window.__fast(0.5);
   if (!f) return;
@@ -882,7 +886,7 @@ const deepScenes = {
     about: 'the deep', say: `a ${kind} clicked, ${at}s into its reaction`,
     run: () => reactScene(() => window.__fauna().find(f => f.kind === kind && f.inside && !f.bolting && !f.reacting
                                                           && f.cx > 0 && f.cx < DEEP_W / P - 12 && clearOfCoil(f.x, f.y, 16)),
-                          f => startleFauna(f.x, f.y), at, f => window.__fauna()[f.i]) }])),
+                          f => startleFauna(f.x, f.y), at, f => window.__fauna()[f.i], kind) }])),
   ...Object.fromEntries(STREAM_AT.map((at, k) => [`deep-react-stream-${k}`, {
     about: 'the deep', say: `stream creature ${k} clicked, ${at}s into its reaction`,
     run: () => reactScene(() => window.__stream().find(s => s.near && s.kind === k && s.clickable
