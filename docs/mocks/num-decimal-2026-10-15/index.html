@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Counter decimal point</title>
+<style>
+  :root {
+    --bg: #f4f4f2; --fg: #111; --muted: #555; --line: #ccc; --card: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #161616; --fg: #eee; --muted: #aaa; --line: #333; --card: #222; }
+  }
+  :root[data-theme="dark"] { --bg: #161616; --fg: #eee; --muted: #aaa; --line: #333; --card: #222; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.45 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  p { margin: 0 0 18px; color: var(--muted); max-width: 70ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+  figure { margin: 0; background: var(--card); border: 1px solid var(--line); padding: 12px; }
+  figcaption { margin-bottom: 8px; }
+  figcaption b { display: block; }
+  figcaption span { color: var(--muted); font-size: 13px; }
+  .pair { display: flex; gap: 8px; flex-wrap: wrap; }
+  img { image-rendering: pixelated; max-width: 100%; height: auto; display: block; }
+</style>
+</head>
+<body>
+<main>
+  <h1>The decimal point in the counter's digits</h1>
+  <p>Shot off the real game: the counter card in the deep at 800x600, the glyph patched in
+     NUM_FONT for each shot, cropped and blown up 4x nearest-neighbor. Light theme on the left
+     of each pair, dark on the right. The counts are live, so the numbers differ shot to shot.
+     A glyph is 6 font pixels tall, each 2 screen pixels, with a 1-pixel paper keyline.</p>
+  <div class="grid">
+    <figure>
+      <figcaption><b>Today</b><span>1x1 dot on the baseline, set tight</span></figcaption>
+      <div class="pair"><img src="today-light.png" alt="today, light"><img src="today-dark.png" alt="today, dark"></div>
+    </figure>
+    <figure>
+      <figcaption><b>A: square dot</b><span>2x2 on the baseline, set tight (card +2px)</span></figcaption>
+      <div class="pair"><img src="a-light.png" alt="A, light"><img src="a-dark.png" alt="A, dark"></div>
+    </figure>
+    <figure>
+      <figcaption><b>B: spaced dot</b><span>1x1 on the baseline, a pixel of air each side (card +4px)</span></figcaption>
+      <div class="pair"><img src="b-light.png" alt="B, light"><img src="b-dark.png" alt="B, dark"></div>
+    </figure>
+    <figure>
+      <figcaption><b>C: spaced square</b><span>2x2 on the baseline, a pixel of air each side (card +6px)</span></figcaption>
+      <div class="pair"><img src="c-light.png" alt="C, light"><img src="c-dark.png" alt="C, dark"></div>
+    </figure>
+  </div>
+</main>
+</body>
+</html>
