@@ -368,9 +368,12 @@ export const BAR_H = 14;               // and its height
 // So it stands over the head's end, centered on the first BAR_ALONG of the
 // body from the head, with BAR_PAD cells of open water between its bottom
 // edge and the highest the coil ever reaches -- in the deep's cells, so the
-// gap keeps its look at any zoom.
+// gap keeps its look at any zoom. Raised from 6 to 12 the same day ("more
+// space between the snake and the bar"): at 2000x963, 1200x800, 800x600 and
+// 390x844 the bar and its status row stay on the glass and clear of the
+// portal, which does not move, so the twelve is the room that fits.
 export const BAR_ALONG = 1 / 3;
-export const BAR_PAD = 6;
+export const BAR_PAD = 12;
 export const BAR_TOP = 12;             // and never nearer the top of the glass than this
 export const BAR_PIP = 14;             // a defense's pip, square, after the bar
 export const BAR_PIP_GAP = 6;          // between the bar and a pip, and pip to pip
