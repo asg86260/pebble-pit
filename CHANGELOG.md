@@ -22,7 +22,6 @@ this section; the release that switches it on moves these under Unreleased.
 - Big numbers in the deep read short the way the yard's do, 18.4k, 181k, 2m (test/serpent-numbers.test.mjs).
 - The constrict's orb is as easy to break at every level as at the first; only the serpent's defenses grow (test/endless.test.mjs).
 - The serpent's bar slides down under blows, each blow's stretch breaking off in pixel pieces that fall away, and a meal's heal flows back in instead of jumping (`node tools/look.mjs deep-numbers`).
-- The deep is alive top to bottom: a shoal by the portal, a lanternfish under it, an angler round the fight, a dumbo octopus over the floor and an amphipod on it.
 - The deep's water and its floor reach the edges of a tall or ultrawide window instead of stopping in a hard line partway across it (test/deep-zones-reach.test.mjs).
 - The deep's creatures dart away from a lash and scatter harder when a defense breaks, then ease back to their own paths; floor-dwellers skitter along the floor and shoals scatter fish by fish (test/deep-fauna.test.mjs, `node tools/look.mjs deep-scatter-lash,deep-scatter-break`).
 - The deep's creatures are few now, like the birds: a click startles one off the end of the deep and shakes loose a handful of scales for the gatherers, and it drifts back in a while later (test/deep-creature-click.test.mjs).

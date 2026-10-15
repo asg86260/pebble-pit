@@ -122,16 +122,31 @@ function wanderStep(c, s, n) {
   return { x: wrapX(s.x + cc * c.v * h), y: Math.max(lo, Math.min(hi, s.y + Math.sin(th) * c.v * h)), th, om,
            face: cc > K.face ? 1 : cc < -K.face ? -1 : s.face };
 }
-// Its moment at step `n`, walked from the nearest moment it has.
+// Its moment at step `n`, walked from the nearest moment it has. Only the
+// last `held` kept moments stay (and the start), so a yard left running for
+// days holds a few hundred moments rather than one every `keep` seconds of
+// it; a moment asked for before them is walked again from the start, which
+// comes out the same.
 function wanderState(c, n) {
   const per = Math.round(FAUNA_WANDER.keep / FAUNA_WANDER.step);
   let w = c.walk;
-  if (!w) { const s0 = wanderStart(c); w = c.walk = { kept: [s0], n: 0, s: s0 }; }
-  if (n < w.n) { const k = Math.floor(n / per); w.n = k * per; w.s = w.kept[k]; }
+  if (!w) { const s0 = wanderStart(c); w = c.walk = { kept: new Map([[0, s0]]), n: 0, s: s0 }; }
+  if (n < w.n) {
+    let k = 0;
+    for (const key of w.kept.keys()) if (key * per <= n && key > k) k = key;
+    w.n = k * per; w.s = w.kept.get(k);
+  }
   while (w.n < n) {
     w.s = wanderStep(c, w.s, w.n);
     w.n++;
-    if (w.n % per === 0 && w.n / per === w.kept.length) w.kept.push(w.s);
+    if (w.n % per === 0 && !w.kept.has(w.n / per)) {
+      w.kept.set(w.n / per, w.s);
+      if (w.kept.size > FAUNA_WANDER.held + 1) {
+        let oldest = Infinity;
+        for (const key of w.kept.keys()) if (key > 0 && key < oldest) oldest = key;
+        w.kept.delete(oldest);
+      }
+    }
   }
   return w.s;
 }

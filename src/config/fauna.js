@@ -108,12 +108,13 @@ export const FAUNA = [
 // The heading is integrated on a fixed `step` from the clock's start off a
 // seeded noise, so where it is stays a function of its seed and the clock,
 // the same after a reload; a moment of the way is kept every `keep` seconds,
-// so a moment asked for out of order is walked from the one before it.
+// so a moment asked for out of order is walked from the one before it; the
+// last `held` of them are kept.
 export const FAUNA_WANDER = {
   jitter: 0.9, damp: 0.25, turn: 0.3,
   edge: 16, top: 1, shove: 0.8, facing: 0.35,
   steep: 0.82, level: 0.6, face: 0.15, start: 0.3,
-  step: 1 / 60, keep: 2,
+  step: 1 / 60, keep: 2, held: 64,
 };
 
 // The motions. A swimmer bobs a held cell or two on a slow sine (`bob`, per
