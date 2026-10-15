@@ -60,17 +60,13 @@ export const PROP_GAP_OF = { sword: 7 };
 // cells past the prop and the body at its top.
 export const PLINTH_H = 2;
 export const PLINTH_OVER = 1;
-export const PLINTH_TONES = { top: DEEP_GREY.lit, body: DEEP_GREY.stone };   // flat, a rung each
-// A low dome behind every built station (docs/mocks/station-backdrop-2026-09-28.html,
-// B), so the bed of scales heaped on the floor sits behind it and a grey kit
-// reads on dark: its walls rise DOME_WALL cells over the fighter's head
-// before the arch springs, and it spans the station's ground and the widest
-// kit held out from the fighter's middle (DOME_REACH: the rung-8 bow's tip
-// and the hand on it), DOME_PAD cells more either side.
-export const DOME_WALL = 2;
-export const DOME_REACH = 6;
-export const DOME_PAD = 1;
-export const DOME_TONES = { wall: DEEP_GREY.ground, edge: DEEP_PURPLE.low };   // flat, its top edge lit
+// The prop is the brightest grey of its station and the plinth sits under
+// it (the owner, 2026-10-15, option C of docs/mocks/deep-stations-2026-10-15/:
+// the old plinth's lit top course was the brightest thing in a station, so
+// the eye landed on the slab and not on the prop). The plinth steps down a
+// rung a course toward the floor; the prop takes the rung the slab gave up.
+export const PLINTH_TONES = { top: DEEP_GREY.stone, body: DEEP_GREY.ground };   // flat, a rung each
+export const PROP_BODY = DEEP_GREY.lit;
 // The crusher's fire (docs/mocks/crusher-fire-2026-09-24.html, option C):
 // the door's inside is one heat field. A cell's heat is the base, raised by
 // the breath and by the scales going in, less CRUSH_FIRE.rise a row up from
@@ -604,9 +600,13 @@ export const EXPOSED_LIFT_HZ = 1.5;  // how often a lifted scale lifts or settle
 // its point. '#' white, '+' a grey a step down.
 export const FANG_SPRITE = ['###', '.#+', '.#.'];
 // Its mark on the counter card and the build button is FANG_MARK (config/deepboard.js).
-// The scaffold over a station not yet built: posts this many bands tall,
-// the tape at head height.
-export const SCAFFOLD_BANDS = 5;
+// The scaffold over a station not yet built: posts SCAFFOLD_OVER cells over
+// the top of the ground it stands round (the crate it will be), so it is as
+// tall as what goes up inside it, banded a cell on and a cell off, and the
+// tape at head height. Read off the ground rather than a count of bands
+// since the props doubled (option C, 2026-10-15): five bands stood half as
+// tall as the crate.
+export const SCAFFOLD_OVER = 2;
 // The mark over a station whose Recruit still waits on its first choice
 // (docs/mocks/recruit-mark-2026-09-28.html, voted C): a white chevron pointing
 // down at it on a dark keyline, CHOOSE_MARK_UP cells over the station's top,

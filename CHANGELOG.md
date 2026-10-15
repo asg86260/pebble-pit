@@ -16,10 +16,11 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The deep's stations lose their domes, and each class's prop is drawn twice as big and in finer detail, the brightest thing at its station, so the stations tell apart by shape with black water between them (test/props.test.mjs).
 - The furnace's fire, brick and mortar keep their steps on the dark theme as on the light, instead of being squeezed together and lifted toward grey (src/selftest/deeppalette.js).
 - The constriction is one steady solid beam from the comb to the orb, three cells wide at the comb with a white core, narrowing to the core alone, instead of jagged flickering bolts (src/selftest/deeppalette.js).
 - The big dim shadows crossing the deep's upper water are gone, the giant and the far and middle crossings; the creatures that swim the water stay (test/deep-creature-click.test.mjs).
-- The deep draws from six greys, five purples and white: one flat water with only purple stars in it, its stations, domes, pods and furnace flat silhouettes lit along their top edges, its creatures flat, and the portal a black hole in the water (src/selftest/deeppalette.js).
+- The deep draws from six greys, five purples and white: one flat water with only purple stars in it, its stations, pods and furnace flat silhouettes lit along their top edges, its creatures flat, and the portal a black hole in the water (src/selftest/deeppalette.js).
 - After the story's kill the serpent comes back once and stays on its last phase: each health bar emptied is a new level -- it rears, cracks to the brink and draws the deep's motes in to fill the bar again a tenth tougher -- the level on its bar, and a fang drops each level until seven stations stand (test/endless.test.mjs).
 - Once he is rescued, the serpent's bar drops its row of phase pips and keeps only the level, and its belly loses the cage of ribs that held him (test/serpent-after-rescue.test.mjs).
 - Big numbers in the deep read short the way the yard's do, 18.4k, 181k, 2m (test/serpent-numbers.test.mjs).
