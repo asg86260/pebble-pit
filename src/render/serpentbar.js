@@ -20,7 +20,7 @@ import { blowK } from '../deep/serpent.js';
 import { breakKind, breakFill, rising, powerFill } from '../deep/phases.js';
 import { depthAt } from '../deep/depth.js';
 import { sheetOf, write, widthOf, sayNum, drawable } from './numfont.js';
-import { BAR_W, BAR_H, BAR_TOP, BAR_GAP, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT,
+import { P, BAR_W, BAR_H, BAR_TOP, BAR_PAD, BAR_ALONG, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT,
          BAR_HEALED, BAR_TO_COME, BAR_STUN, BAR_STUN_RIM, BAR_HEAL_FADE_S,
          BAR_SETTLE, BAR_HEAL_RATE, BAR_FLOW_EASE, BAR_FLOW_MIN, BAR_STALE_S,
          BAR_BITE, BAR_BITE_MIN, BAR_BITE_HOLD_S, BAR_BITE_LIFT, BAR_BITE_GRAV, BAR_BITE_KICK, BAR_BITE_TUMBLE_S,
@@ -58,30 +58,39 @@ const levelSays = () => S.serpentLevel > 1
   ? drawable(msg('serp-level', { n: sayNum(S.serpentLevel) })) : '';
 const levelW = str => (str ? BAR_LEVEL_GAP + widthOf(str, NUM_FONT_PX) : 0);
 
+// The bar's length on this glass: BAR_W, or shorter on a glass too narrow for
+// it, its pips and its level side by side (a phone held upright).
+export function barW() {
+  const after = pipRoom() * (BAR_PIP + BAR_PIP_GAP) + levelW(levelSays());
+  return Math.max(BAR_PIP, Math.min(BAR_W, S.W - 2 * BAR_TOP - after));
+}
+
 // Where the bar stands on the glass, in screen pixels: centered with its pips
-// over the stretch of the coil on the glass, so with open water beside the
-// head it stands over the serpent and not over the water, and held still
-// just over the highest the coil ever sways.
+// over the first BAR_ALONG of the coil from the head, as much of it as is on
+// the glass (or over whatever of the coil is, with none of that), kept on the
+// glass, and held still BAR_PAD cells over the highest the coil ever sways.
 export function barRect() {
+  const w = barW();
   // measured with the level drawn after it, so the strip stays centered as
   // the number grows
-  const whole = BAR_W + pipRoom() * (BAR_PIP + BAR_PIP_GAP) + levelW(levelSays());
+  const whole = w + pipRoom() * (BAR_PIP + BAR_PIP_GAP) + levelW(levelSays());
   // The row of statuses stands over the bar (render/statusicons.js), so the
   // bar keeps room above it for the row, whether or not it has a status in it.
   const row = statusRowH() + STATUS_GAP;
-  const over = (coilCeiling() - S.camY) * S.zoom - BAR_GAP - BAR_H;
+  const over = (coilCeiling() - BAR_PAD * P - S.camY) * S.zoom - BAR_H;
   const { x0, x1 } = coilEnds(), toScreen = x => (x - S.camX) * S.zoom;
-  const a = Math.max(0, toScreen(x0)), b = Math.min(S.W, toScreen(x1));
-  const mid = b > a ? (a + b) / 2 : S.W / 2;
+  const head = x0 + (x1 - x0) * BAR_ALONG;
+  const on = (l, r) => { const a = Math.max(0, toScreen(l)), b = Math.min(S.W, toScreen(r)); return b > a ? (a + b) / 2 : null; };
+  const mid = on(x0, head) ?? on(x0, x1) ?? S.W / 2;
   const x = Math.max(BAR_TOP, Math.min(S.W - whole - BAR_TOP, mid - whole / 2));
-  return { x: Math.round(x), y: Math.round(Math.max(BAR_TOP + row, over)), w: BAR_W, h: BAR_H };
+  return { x: Math.round(x), y: Math.round(Math.max(BAR_TOP + row, over)), w, h: BAR_H };
 }
 // The whole strip on the glass, screen pixels: the row of statuses over the
 // bar, the bar, its pips and its level, and the knock's room. What anything
 // drawn in the water keeps clear of (render/serpent.js, the focus lines).
 export function barZone() {
   const r = barRect(), row = statusRowH() + STATUS_GAP;
-  const w = BAR_W + pipRoom() * (BAR_PIP + BAR_PIP_GAP) + levelW(levelSays());
+  const w = r.w + pipRoom() * (BAR_PIP + BAR_PIP_GAP) + levelW(levelSays());
   return { x: r.x - BAR_KNOCK_BIG, y: r.y - row - BAR_KNOCK_BIG, w: w + BAR_KNOCK_BIG * 2, h: row + BAR_H + BAR_KNOCK_BIG * 2 };
 }
 const depthOf = st => depthAt(Math.min(st, SERPENT_PHASES - 1));
@@ -101,7 +110,7 @@ const isBig = h => blowK(h.done) > NUM_KICK_BIG;
 // so every blow that lands is seen to chip the bar.
 function breakOff(t, lo, hi) {
   const k = BAR_BITE_KICK, h = BAR_H / 2;
-  const b = Math.round(BAR_W * hi), a = Math.max(0, Math.min(Math.round(BAR_W * lo), b - BAR_BITE_MIN));
+  const b = Math.round(barW() * hi), a = Math.max(0, Math.min(Math.round(barW() * lo), b - BAR_BITE_MIN));
   for (let x1 = b; x1 > a; x1 -= BAR_BITE) {
     const w = Math.min(BAR_BITE, x1 - a);
     for (let r = 0; r < 2; r++) {
@@ -184,7 +193,7 @@ export function drawSerpentBar() {
   then = t;
 
   const pips = pipRoom();
-  const { x, y: rest } = barRect();
+  const { x, y: rest, w: bw } = barRect();
   // The number went in from underneath, so the bar recoils up the full
   // knock and settles home a whole pixel at a time, every frame.
   let knock = 0;
@@ -204,14 +213,14 @@ export function drawSerpentBar() {
   ctx.save();
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   ctx.globalAlpha = alpha;
-  fill(BAR_EDGE, x - 1, y - 1, BAR_W + 2, BAR_H + 2);
-  fill(BAR_TRACK, x, y, BAR_W, BAR_H);
-  fill(BAR_LEFT, x, y, BAR_W * shown, BAR_H);
+  fill(BAR_EDGE, x - 1, y - 1, bw + 2, BAR_H + 2);
+  fill(BAR_TRACK, x, y, bw, BAR_H);
+  fill(BAR_LEFT, x, y, bw * shown, BAR_H);
   // What the heal has brought back, purple while it flows in and fading out
   // once it is all in.
   if (healLo != null && shown > healLo) {
     const s = t / 1000, k = healIn == null ? 1 : Math.max(0, 1 - (s - healIn) / BAR_HEAL_FADE_S);
-    const a = Math.round(BAR_W * healLo), b = Math.round(BAR_W * shown);
+    const a = Math.round(bw * healLo), b = Math.round(bw * shown);
     ctx.globalAlpha = alpha * k;
     fill(BAR_HEALED, x + a, y, b - a, BAR_H);
     ctx.globalAlpha = alpha;
@@ -224,7 +233,7 @@ export function drawSerpentBar() {
   const boxes = Math.ceil(come);
   for (let s = 0; s < boxes; s++) {
     ctx.globalAlpha = alpha * Math.min(1, come - s);
-    const px = x + BAR_W + BAR_PIP_GAP + s * (BAR_PIP + BAR_PIP_GAP);
+    const px = x + bw + BAR_PIP_GAP + s * (BAR_PIP + BAR_PIP_GAP);
     const py = y + Math.round((BAR_H - BAR_PIP) / 2);
     fill(BAR_EDGE, px - 1, py - 1, BAR_PIP + 2, BAR_PIP + 2);
     fill(s < S.serpentStage ? BAR_TRACK : s === S.serpentStage ? BAR_LEFT : BAR_TO_COME, px, py, BAR_PIP, BAR_PIP);
@@ -242,7 +251,7 @@ export function drawSerpentBar() {
   const says = levelSays();
   if (says) {
     const u = S.dpr, px = Math.max(1, Math.round(NUM_FONT_PX * u));
-    const lx = x + BAR_W + pips * (BAR_PIP + BAR_PIP_GAP) + BAR_LEVEL_GAP;
+    const lx = x + bw + pips * (BAR_PIP + BAR_PIP_GAP) + BAR_LEVEL_GAP;
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     const up = t / 1000 - tickedAt < LEVEL_KNOCK_S ? BAR_KNOCK : 0;

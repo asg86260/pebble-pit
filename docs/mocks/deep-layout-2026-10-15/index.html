@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quieter deep</title>
+<style>
+  :root {
+    --bg: #f4f4f2; --ink: #161616; --muted: #5d5d5d; --card: #ffffff; --rule: #d6d6d2; --accent: #6b3fd1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #111113; --ink: #ececec; --muted: #9a9a9a; --card: #1b1b1e; --rule: #2e2e33; --accent: #a98bff;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #111113; --ink: #ececec; --muted: #9a9a9a; --card: #1b1b1e; --rule: #2e2e33; --accent: #a98bff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p { margin: 0 0 10px; color: var(--muted); max-width: 80ch; }
+  .opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 20px 0 8px; }
+  .opt { background: var(--card); border: 1px solid var(--rule); padding: 12px; }
+  .opt h2 { font-size: 15px; margin: 0 0 6px; }
+  .opt h2 b { color: var(--accent); }
+  .opt ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .opt li { margin: 2px 0; }
+  .row { margin-top: 26px; }
+  .row h3 { font-size: 14px; margin: 0 0 8px; color: var(--muted); font-weight: normal; }
+  .shots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  figure { margin: 0; }
+  figure img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); image-rendering: pixelated; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  @media (max-width: 760px) {
+    .opts, .shots { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>The deep, decluttered: two layouts against today's</h1>
+  <p>Shot in the real game with scratch config edits, nothing committed but these pictures. All three already
+     have the new bar (over the first third of the coil from the head, six cells clear of its highest sway, on branch
+     <code>bar-place</code>). Option B, the HUD bar, was dropped. Click any shot for full size.</p>
+  <p>What a still cannot show: the creatures drift, so one frame catches only some of them. The swim figures
+     below come from 120 samples, three game seconds apart, of deep-zones at 2000x963. They give the share of creature
+     sightings that fell between the top of the bar's status row and the bottom of the coil's sway.</p>
+
+  <div class="opts">
+    <div class="opt">
+      <h2><b>Now</b> · new bar, nothing else moved</h2>
+      <ul>
+        <li>Portal: 15-cell radius, middle at 0.5 of the deep's width, top on the surface</li>
+        <li>Coil: centerline at 0.58 of the deep's height</li>
+        <li>Creatures swim the full height (FAUNA_MOTION.clear 8 rows). Stream fish spread over all of the water
+            and come down to the coil within 200–560 px of the mouth.</li>
+        <li><b>25%</b> of sightings were in the fight band</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h2><b>A</b> · spread</h2>
+      <ul>
+        <li>Portal moved right to the coil's far half: DEEP_PORTAL_AT 0.5 → <b>0.66</b>
+            (+500 world px; about 415 screen px at 2000x963), clear of the bar over the head</li>
+        <li>Coil lowered: COIL_Y 0.58 → <b>0.64</b> (+47 world px; about 38 screen px). The bar drops with it.</li>
+        <li>Creatures unchanged, so a stream fish still crosses the bar (see 1200x800)</li>
+        <li>Cost: the deep's camera opens on the portal, so the head end starts further left of center. The coil also sits
+            nearer the stations' glyphs.</li>
+      </ul>
+    </div>
+    <div class="opt">
+      <h2><b>C</b> · quiet band</h2>
+      <ul>
+        <li>Portal shrunk: DEEP_PORTAL_R 15 → <b>11</b> cells (150 → 110 screen px across at 2000x963)</li>
+        <li>Creatures keep to the upper water: FAUNA_MOTION.clear 8 → <b>86</b> rows, so swimmers stay above
+            about row 40, over the bar's status row</li>
+        <li>Stream fish keep to the upper water too: FLOW_NEAR_EDGE [30, 90] → <b>[30, 520]</b>. They drop to the
+            coil only for the meal's last approach: FLOW_NEAR_DIP [200, 560] → <b>[80, 240]</b>.</li>
+        <li><b>7%</b> of sightings were in the fight band, all of them stream fish near the mouth; swimmers <b>0%</b></li>
+        <li>Cost: this undoes "every creature swims the whole height" (test/deep-fauna.test.mjs goes red).
+            The deep zones' lower kinds would all swim in the top third. Meals still land (test/meals.test.mjs is green).</li>
+      </ul>
+    </div>
+  </div>
+
+  <section class="row">
+    <h3>the fight · deep-numbers · 2000x963 (the owner's window)</h3>
+    <div class="shots">
+      <figure><a href="now-deep-numbers-2000x963.png"><img src="now-deep-numbers-2000x963.png" alt="Now, the fight at 2000 by 963"></a><figcaption>Now</figcaption></figure>
+      <figure><a href="a-deep-numbers-2000x963.png"><img src="a-deep-numbers-2000x963.png" alt="Option A, the fight at 2000 by 963"></a><figcaption>A · spread</figcaption></figure>
+      <figure><a href="c-deep-numbers-2000x963.png"><img src="c-deep-numbers-2000x963.png" alt="Option C, the fight at 2000 by 963"></a><figcaption>C · quiet band</figcaption></figure>
+    </div>
+  </section>
+  <section class="row">
+    <h3>the water · deep-zones · 2000x963</h3>
+    <div class="shots">
+      <figure><a href="now-deep-zones-2000x963.png"><img src="now-deep-zones-2000x963.png" alt="Now, the zones at 2000 by 963"></a><figcaption>Now</figcaption></figure>
+      <figure><a href="a-deep-zones-2000x963.png"><img src="a-deep-zones-2000x963.png" alt="Option A, the zones at 2000 by 963"></a><figcaption>A · spread</figcaption></figure>
+      <figure><a href="c-deep-zones-2000x963.png"><img src="c-deep-zones-2000x963.png" alt="Option C, the zones at 2000 by 963"></a><figcaption>C · quiet band</figcaption></figure>
+    </div>
+  </section>
+  <section class="row">
+    <h3>the fight · deep-numbers · 1200x800</h3>
+    <div class="shots">
+      <figure><a href="now-deep-numbers-1200x800.png"><img src="now-deep-numbers-1200x800.png" alt="Now, the fight at 1200 by 800"></a><figcaption>Now</figcaption></figure>
+      <figure><a href="a-deep-numbers-1200x800.png"><img src="a-deep-numbers-1200x800.png" alt="Option A, the fight at 1200 by 800"></a><figcaption>A · spread</figcaption></figure>
+      <figure><a href="c-deep-numbers-1200x800.png"><img src="c-deep-numbers-1200x800.png" alt="Option C, the fight at 1200 by 800"></a><figcaption>C · quiet band</figcaption></figure>
+    </div>
+  </section>
+  <section class="row">
+    <h3>the water · deep-zones · 1200x800</h3>
+    <div class="shots">
+      <figure><a href="now-deep-zones-1200x800.png"><img src="now-deep-zones-1200x800.png" alt="Now, the zones at 1200 by 800"></a><figcaption>Now</figcaption></figure>
+      <figure><a href="a-deep-zones-1200x800.png"><img src="a-deep-zones-1200x800.png" alt="Option A, the zones at 1200 by 800"></a><figcaption>A · spread</figcaption></figure>
+      <figure><a href="c-deep-zones-1200x800.png"><img src="c-deep-zones-1200x800.png" alt="Option C, the zones at 1200 by 800"></a><figcaption>C · quiet band</figcaption></figure>
+    </div>
+  </section>
+</main>
+</body>
+</html>

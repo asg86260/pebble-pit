@@ -15492,10 +15492,14 @@ under blows, refills at the heal, and starts full again at every break. Four
 pips after it are the four defenses -- black for broken, white for the one up,
 grey for those to come. Answering the old mock's question 2: the defense.
 
-- *Where:* screen pixels, top-center of the glass, after the counter and
-  pinned like it, only while the camera is in the deep and the serpent has a
-  defense up. The toast shares that strip and is over it while it is up; the
-  toast is the louder news and gone in seconds.
+- *Where:* screen pixels, only while the camera is in the deep and the
+  serpent has a defense up. Over the head's end of the coil (the owner,
+  2026-10-15: "the hp bar should scoot towards the first third of the snake.
+  and just add some padding between them"): centered on the first
+  `BAR_ALONG` of the body from the head as far as it is on the glass, kept on
+  the glass, and held still `BAR_PAD` cells over the highest the coil ever
+  sways. A glass too narrow for the bar, its pips and its level shortens the
+  bar (`barW`) rather than letting it run off the edge.
 - *How it moves (the owner's B, "pixel shards", 2026-10-12;
   `docs/mocks/serpent-hp-bar-2026-10-12.html` on `mock/deep-hp`):* a blow
   breaks off the whole stretch it took at once (the owner, 2026-10-15: "the

@@ -350,16 +350,23 @@ export const NUM_FOLD_S = 1;
 
 // --- the serpent's bar: what is left of the defense up -------------------------------
 // DESIGN.md, "The serpent's bar" (option B of four mocked, then the owner's A
-// of docs/mocks/serpent-bar-over-2026-09-28.html). In screen pixels, centered
-// on the glass and held still BAR_GAP over the highest the coil's top edge
-// ever sways: full at a closed wound, empty at the break. Tones as seen, over
-// the finished deep.
+// of docs/mocks/serpent-bar-over-2026-09-28.html). In screen pixels, over the
+// head's end of the coil and held still BAR_PAD over the highest the coil's
+// top edge ever sways: full at a closed wound, empty at the break. Tones as
+// seen, over the finished deep.
 export const BAR_LEVEL_GAP = 10;       // screen pixels between the last pip and the level
 // The level knocked up BAR_KNOCK as it ticks in a recoil's power-up, held this long.
 export const LEVEL_KNOCK_S = 0.1;
-export const BAR_W = 400;              // screen pixels, the bar's length
+export const BAR_W = 400;              // screen pixels, the bar's length, at most: a narrower glass shortens it
 export const BAR_H = 14;               // and its height
-export const BAR_GAP = 14;             // over the coil's highest reach, from the bottom of the status row
+// The owner, 2026-10-15: the bar sat on the coil's middle a few pixels over
+// its sway, and the serpent, the bar and the portal read as one crowded heap.
+// So it stands over the head's end, centered on the first BAR_ALONG of the
+// body from the head, with BAR_PAD cells of open water between its bottom
+// edge and the highest the coil ever reaches -- in the deep's cells, so the
+// gap keeps its look at any zoom.
+export const BAR_ALONG = 1 / 3;
+export const BAR_PAD = 6;
 export const BAR_TOP = 12;             // and never nearer the top of the glass than this
 export const BAR_PIP = 14;             // a defense's pip, square, after the bar
 export const BAR_PIP_GAP = 6;          // between the bar and a pip, and pip to pip
