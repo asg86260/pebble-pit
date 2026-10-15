@@ -141,12 +141,17 @@ export const SHAFT_ARROW_MS = 1600;
 // purple light hanging in the water, the flecks the hide's greys. Motes are
 // drawing only (render/deep.js steps them).
 export const DEEP_MOTE_TINTS = {
-  silt:  { tones: [DEEP_PURPLE.dim, DEEP_PURPLE.low, DEEP_PURPLE.low, DEEP_PURPLE.mid], purple: true },
+  silt:  { tones: [DEEP_PURPLE.dim, DEEP_PURPLE.dim, DEEP_PURPLE.low, DEEP_PURPLE.low], purple: true },
   fleck: { tones: [DEEP_GREY.lit, DEEP_GREY.pale, DEEP_GREY.stone, DEEP_GREY.lit] }
 };
 // A chip off a builder's blows in the deep, fading out by opacity as it goes (render/buildsites.js).
 export const DEEP_GRIT_RUNG = DEEP_PURPLE.mid;
-export const DEEP_SILT = 150;        // silt motes hanging in a window of the deep
+export const DEEP_SILT = 75;         // silt motes hanging in a window of the deep
+// The deep's stars, quieter than the pit's (the owner, 2026-10-14: the purple
+// noise toned down, half, and dimmer): how many in sixteen show, and how many
+// rungs each one's brightest is held under.
+export const DEEP_STAR_THIN = 8;
+export const DEEP_STAR_DIM = 2;
 export const DEEP_SILT_SINK = 0.04;  // px a frame the silt settles, against the current's push
 export const DEEP_FLECK_EVERY = 0.35; // seconds between flecks off a swaying coil
 export const DEEP_FLECK_LIFE = 7;    // seconds a fleck drifts before it is gone

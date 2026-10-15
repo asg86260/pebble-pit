@@ -112,6 +112,7 @@ const byHash = k => Int8Array.from({ length: 997 }, (_, h) => k(h));
 const STAR_OF = byHash(h => h % ABYSS_STAR_EVERY);
 const SEVEN_OF = byHash(h => h % 7);
 const VARY_OF = byHash(h => (h >> 3) % ABYSS_STAR_VARY);
+const THIN_OF = byHash(h => (h >> 5) % 16);
 const VEIL_OF = byHash(h => h % ABYSS_VEIL_EVERY);
 const JITTER_OF = byHash(h => h % 3 - 1);
 const PATCH_OF = byHash(h => h % 10);
@@ -128,10 +129,10 @@ const F = 0, WAVE2 = 1, DEPTH = 2, T = 3;
 // `patch` (0..2 empty, 3..6 ordinary, 7+ nebula) and, in `CELL`, its two
 // waves: `f` the current's own and `wave2` the slow one riding over it as a
 // strength.
-function rungOf(h, patch, rampLen, magicLen, magicShare) {
+function rungOf(h, patch, rampLen, magicLen, magicShare, thin = 16, dim = 0) {
   const f = CELL[F], wave2 = CELL[WAVE2], depth = CELL[DEPTH], t = CELL[T];
   const keep = patch >= 7 ? STAR_KEEP_MOST : 1;  // nebula patches keep four times the stars
-  if (patch >= 3 && STAR_OF[h] < keep) {
+  if (patch >= 3 && STAR_OF[h] < keep && THIN_OF[h] < thin) {
     // the breath, bent so a star spends most of its life dim, then lifted
     // or lowered by the current
     const swing = (Math.sin(t / ABYSS_STAR_MS * Math.PI * 2 * (0.6 + SEVEN_OF[h] * 0.1) + h) + 1) / 2;
@@ -143,7 +144,7 @@ function rungOf(h, patch, rampLen, magicLen, magicShare) {
     // family. At least two rungs, so even the dimmest star has a fade
     // rather than a switch.
     const allowed = ABYSS_STAR_FLOOR + Math.round(depth * (len - 1 - ABYSS_STAR_FLOOR));
-    const ceiling = allowed - VARY_OF[h];
+    const ceiling = allowed - VARY_OF[h] - dim;
     const rung = Math.min(len - 1, Math.round(k * ceiling));
     if (rung > 0) return purple ? -rung : rung;
   }
@@ -181,10 +182,12 @@ export function abyssRung(x, y, { line, t, rampLen, magicLen, deep = 0, magicSha
 // the pit's field darkens toward the surface it is seen through, and a place
 // with no surface on screen asks for the whole of its depth everywhere.
 // `veil` false paints the stars alone, and `magicShare` is how many stars in
-// seven are purple (the deep asks for its stars only, all purple: B4). A
-// rung a ramp holds as null is left unpainted.
+// seven are purple (the deep asks for its stars only, all purple: B4).
+// `thin` is how many stars in sixteen are shown at all and `dim` how many
+// rungs each one's brightest is held under, for a place that wants a quieter
+// sky than the pit's. A rung a ramp holds as null is left unpainted.
 export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, deep = 0, tones, magic, t,
-                                  veil = true, magicShare = 1 }) {
+                                  veil = true, magicShare = 1, thin = 16, dim = 0 }) {
   const cols = Math.max(0, Math.round((to - from) / P)), rows = Math.max(0, Math.ceil((bottom - top) / P));
   if (!cols || !rows) return;
   const data = surface(cols, rows);
@@ -221,7 +224,7 @@ export function paintAbyssField({ from, to, top, bottom, line, rowShift = 0, dee
       const f = sU[i] * cV + cU[i] * sV, h = Math.abs(hU[i] ^ hV) % 997;
       if (STAR_OF[h] >= STAR_KEEP_MOST && (!veil || Math.abs(f) > ABYSS_VEIL_AT)) continue;
       CELL[F] = f; CELL[WAVE2] = sU2[i] * cV2 + cU2[i] * sV2;
-      const rung = rungOf(h, PATCH_OF[Math.abs(pU[i] ^ pV) % 997], tones.length, magic.length, magicShare);
+      const rung = rungOf(h, PATCH_OF[Math.abs(pU[i] ^ pV) % 997], tones.length, magic.length, magicShare, thin, dim);
       if (rung > 0) { if (veil) data[at + i] = grey[rung]; }
       else if (rung < 0) data[at + i] = purple[-rung];
     }

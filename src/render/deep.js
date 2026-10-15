@@ -27,7 +27,8 @@ import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_CO
          DEEP_H, DEEP_CURRENT, DEEP_CURRENT_MS, COIL_SEGS,
          DEEP_SURFACE, DEEP_WATER_DEPTH,
          DEEP_MOTE_TINTS, DEEP_SILT, DEEP_SILT_SINK,
-         DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_MOTES_MAX, DEEP_PURPLE } from '../config.js';
+         DEEP_FLECK_EVERY, DEEP_FLECK_LIFE, DEEP_MOTES_MAX, DEEP_PURPLE,
+         DEEP_STAR_THIN, DEEP_STAR_DIM } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX, coilAt, crusherRect, podAt,
          waterShift } from '../deep/place.js';
@@ -89,7 +90,7 @@ export function drawDeepWater() {
   if (bottom <= top) return;
   paintAbyssField({ from: x0, to: x1, top, bottom, line: abyssLine(), rowShift: waterShift(),
                     deep: DEEP_WATER_DEPTH, tones: GREYS, magic: STARS, t: now(),
-                    veil: false, magicShare: STAR_SHARE });
+                    veil: false, magicShare: STAR_SHARE, thin: DEEP_STAR_THIN, dim: DEEP_STAR_DIM });
   ctx.fillStyle = '#000';
 }
 
