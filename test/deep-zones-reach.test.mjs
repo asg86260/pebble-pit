@@ -34,12 +34,25 @@ function windowOf(win) {
   window.__seed(SEED);
 }
 
-// The rect a layer fills or draws its image to, caught on a sheet of its own.
+// The rect a layer fills or draws its image to, caught on a sheet of its own:
+// the union of everything it lays down, since the floor lays its dithered
+// band and the flat grey under it as two fills.
 function drawnBy(layer) {
-  let rect = null;
+  let rect = null, dx = 0, dy = 0;
+  const stack = [];
+  const add = (x, y, w, h) => {
+    x += dx; y += dy;
+    if (!rect) { rect = { x, y, w, h }; return; }
+    const x0 = Math.min(rect.x, x), y0 = Math.min(rect.y, y);
+    const x1 = Math.max(rect.x + rect.w, x + w), y1 = Math.max(rect.y + rect.h, y + h);
+    rect = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+  };
   const g = { imageSmoothingEnabled: true, fillStyle: null,
-              fillRect: (x, y, w, h) => { rect = { x, y, w, h }; },
-              drawImage: (img, x, y, w = img.width, h = img.height) => { rect = { x, y, w, h }; } };
+              save: () => stack.push([dx, dy]), restore: () => { [dx, dy] = stack.pop(); },
+              translate: (x, y) => { dx += x; dy += y; },
+              createPattern: () => ({}),
+              fillRect: add,
+              drawImage: (img, x, y, w = img.width, h = img.height) => add(x, y, w, h) };
   paintOn({ getContext: () => g }, layer);
   return rect;
 }
