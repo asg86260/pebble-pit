@@ -9,7 +9,7 @@ import { countRect } from '../render/counter.js';
 import { portalNearEdge } from '../render/portal.js';
 import { S } from '../state.js';
 import { P, VIEW_GLIDE_S, PORTAL_RX, BIRD_DUST } from '../config.js';
-import { mouthX, portalX, portalCircle, deepPortal, deepTop, deepFloor, propRect, postX } from '../deep/place.js';
+import { mouthX, portalX, portalCircle, deepPortal, deepTop, deepFloor, deepX0, propRect, postX } from '../deep/place.js';
 import { abyssLine } from '../pit.js';
 import { arrowBox } from '../render/shaftway.js';
 import { refreshCorner } from '../corner.js';
@@ -88,6 +88,25 @@ export const TESTS = [
     await settle(2);                       // held open, all the way, and drawn
     const box = countRect(), edge = (portalNearEdge() - S.camX) * S.zoom;
     return [ok(box && box.x + box.w <= edge, 'the card stands clear of the hole', box && `${box.x + box.w} > ${edge}`)];
+  }],
+  // The camera walked from the deep's left end, where the furnace stands
+  // furthest into the glass, until it has gone off the left: the card is drawn
+  // at every stop and never on the furnace.
+  ['deep: the counter card never covers the furnace', async () => {
+    deepYard();
+    window.__view('deep');
+    run(VIEW_GLIDE_S + 0.5);
+    const bad = [];
+    for (let i = 0; i <= 10; i++) {
+      window.__look(deepX0() - S.viewW + i * S.viewW / 5);
+      await settle(0.1);
+      const box = countRect(), c = crusherRect();
+      const f = { x: (c.x - S.camX) * S.zoom, y: (c.y - S.camY) * S.zoom, w: c.w * S.zoom, h: c.h * S.zoom };
+      if (box && box.x < f.x + f.w && box.x + box.w > f.x && box.y < f.y + f.h && box.y + box.h > f.y)
+        bad.push(`card ${box.x},${box.y} ${box.w}x${box.h} on furnace ${Math.round(f.x)},${Math.round(f.y)} ${f.w}x${f.h}`);
+    }
+    return [ok(S.view === 'deep', 'the view is the deep', S.view),
+            ok(!bad.length, 'the card stands clear of the furnace at every stop', bad.join('; '))];
   }],
   ['deep: the corner square goes down and up, and only after the snatch', async () => {
     deepYard(false);
