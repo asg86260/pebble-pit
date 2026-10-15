@@ -24,7 +24,7 @@ function deepYard(stage = 1) {
   window.__deepCrew();
   S.portalOpen = true;
   window.__serpent({ stage, wound: 0 });
-  S.mealT = 0; S.mealI = null;          // a fresh window: no meal lands inside a check
+  S.mealT = 0; S.mealGo = null;          // a fresh window: no meal lands inside a check
 }
 const frame = () => yard.fast(1 / 60);
 const belly = () => bellyAt(now());
@@ -178,7 +178,7 @@ group('a Hexer at rung 8 Holds the serpent, and the window stops while it does',
   while (has('held') && wait < 30 * 60) { frame(); wait++; }
   while (!has('held') && wait < 60 * 60) { frame(); wait++; }
   const got = has('held');
-  const t0 = S.mealT, turnedAt = S.mealI;
+  const t0 = S.mealT, turnedAt = S.mealGo;
   let frames = 0;
   while (has('held') && frames < 600) { frame(); frames++; }
   const ran = S.mealT - t0;

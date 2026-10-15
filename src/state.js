@@ -562,13 +562,10 @@ export const S = {
   endingAt: 0,            // when the rescue's sheet came up, for its hold before the snatch (ephemeral)
   handChipped: false,     // a piece knocked off a rock by your own click: the intro quest's first item
   askedWizards: false,    // the wizards' board looked at since the snatch: the story's line moves on
-  mealI: null,            // the creature the next meal is, once it has turned for the mouth (deep/meals.js)
-  eaten: [],              // the last creatures eaten, which the stream does not draw again
+  mealGo: null,           // the meal under way: seconds in, and the creature in its orb (deep/meals.js)
   meal: 0,                // the meals the serpent has had: which creature is next, and how long it waits
   mealT: 0,               // seconds since the last meal landed
   faunaShed: [],          // the zone creatures that have shaken their handful loose, by key (deep/fauna.js)
-  streamShed: [],         // and the stream creatures in the water that have (deep/flow.js)
-  streamOff: 0,           // how far the stream's clock stands ahead of the page's (deep/meals.js)
   mealLandedAt: 0,        // when the last one landed, on the game's clock, for the ring at the belly (drawn only)
   deepMotes: [],          // silt and flecks hanging in the water (drawn only)
   podsBoardOpen: false,
@@ -733,7 +730,7 @@ export const SAVED = [
   'riftSwell',            // and the growth the rescue handed it on top
   // The deep (docs/wave-serpent.md).
   'view', 'snatched', 'serpentStage', 'serpentWound', 'serpentFreed', 'serpentLevel', 'serpentBest', 'killFangs', 'resistBy', 'scales', 'seenScale',
-  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'recoilT', 'meal', 'mealT', 'mealI', 'eaten', 'faunaShed', 'streamShed', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'orb', 'askedWizards', 'handChipped',
+  'serpentStun', 'serpentGrace', 'serpentStill', 'mechAt', 'mechSkip', 'phaseAt', 'breakT', 'recoilT', 'meal', 'mealT', 'mealGo', 'faunaShed', 'freedAt', 'freedFrom', 'freedTo', 'reformAt', 'orb', 'askedWizards', 'handChipped',
   'retired',              // the two of them at the yard's end after the finale (finale.js)
   JOB.GATHER, 'pods', 'portalOpen', 'portalPour',
   // The party (docs/wave-party.md).
@@ -772,7 +769,6 @@ export const SAVED_BY_HAND = [
   'beat',
   'abyss',                // the first trip down's scene, while it is owed (abyssintro.js)
   'finale',               // the finale's phase only: a reload mid-finale lands at its end (finale.js)
-  'streamOff',            // the deep's stream, written as its clock and read back against the new page's (deep/meals.js)
   'buried',
   'machines',             // facts only: bought, driven, tuned, took the kit
   'summon',               // three places, and only meaningful once the tower is open

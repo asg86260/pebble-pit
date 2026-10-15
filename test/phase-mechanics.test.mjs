@@ -22,7 +22,7 @@ function atStage(stage, into) {
   window.__snatch({ played: true });
   window.__deepCrew();
   window.__serpent({ stage, wound: SERPENT_WOUND[stage] / 2 });
-  S.mealT = 0; S.mealI = null;
+  S.mealT = 0; S.mealGo = null;
   const m = MECHANICS[stage];
   S.mechAt = m.every - m.last - into;
   return m;

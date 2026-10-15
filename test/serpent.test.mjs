@@ -39,7 +39,7 @@ const clickBelly = () => { const p = belly(); return clickDeep(p.x, p.y); };
 
 group('the wound opens under clicks on the coil and stands until the window ends', async () => {
   deepYard();
-  S.mealT = 0; S.mealI = null;
+  S.mealT = 0; S.mealGo = null;
   const p = belly();
   const missed = clickDeep(p.x, deepFloor() - 2);
   const woundMissed = S.serpentWound;
@@ -78,7 +78,7 @@ group("the click is always a punch, worth the first station's rung", async () =>
 
 group('a hand too slow for the window never breaks it, a fast one does inside one', async () => {
   deepYard();
-  S.mealT = 0; S.mealI = null;
+  S.mealT = 0; S.mealGo = null;
   const punch = clickDmg(), depth = SERPENT_WOUND[0], win = SERPENT_WINDOW[0];
   // Slow: a third of the depth over a whole window, so each meal undoes it.
   const slowEvery = Math.max(1, Math.round(60 * punch * win / (depth / 3)));
@@ -90,7 +90,7 @@ group('a hand too slow for the window never breaks it, a fast one does inside on
   }
   const slowStage = S.serpentStage, meals = S.meal;
   // Fast: the depth in half a window.
-  S.mealT = 0; S.mealI = null;
+  S.mealT = 0; S.mealGo = null;
   window.__serpent({ stage: 0, wound: 0 });
   const fastEach = Math.ceil(depth / (win / 2) / (punch * 60));
   let frames = 0;
@@ -208,7 +208,7 @@ group('a cold reload in the split comes back split, wounded and with its scales'
   deepYard();
   window.__serpent({ stage: 2, wound: 1234 });
   window.__scales(37);
-  S.meal = 5; S.mealT = 2.5; S.mealI = null;
+  S.meal = 5; S.mealT = 2.5; S.mealGo = null;
   window.__cold();
   const back = { stage: S.serpentStage, wound: S.serpentWound, scales: S.scales, meal: S.meal, at: S.mealT };
   run(SERPENT_WINDOW[2] + 45);

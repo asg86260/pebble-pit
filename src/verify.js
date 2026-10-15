@@ -14,7 +14,8 @@
 import { WORKER } from './config.js';
 import { S, pit, floor, cut, band } from './state.js';
 import { P } from './config.js';
-import { mealNow, SWIM_BEFORE } from './deep/meals.js';
+import { windowS, landAt } from './deep/meals.js';
+import { slotGone } from './deep/fauna.js';
 import { ways, wayAt, standTop, WORKINGS, belowYard } from './route.js';
 import { cutTop } from './quarry.js';
 import { rockDown } from './rock.js';
@@ -34,7 +35,7 @@ import { JOB, TYPE, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
 import { messCounts } from './smog/layer.js';
-import { SERPENT_PHASES, MECHANICS, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
+import { SERPENT_PHASES, MECHANICS, MEAL_BACK_S, STUN_MAX_S, ROOMBA_MAX, ROOMBA_BIN, FIGHT_STATIONS_MAX, FANG_BREAKS } from './config.js';
 import { CALLED } from './deep/party.js';
 import { depthAt } from './deep/depth.js';
 import { cradled, recoilLen, recoilUnticked } from './deep/phases.js';
@@ -546,12 +547,17 @@ export function verifyWorld() {
     // stun is longer than the longest.
     if (stunWas && stage === serpentWas && S.meal === mealWas && S.serpentWound < woundWas - 1e-9)
       fail('the serpent healed while it was stunned', `wound ${woundWas} then ${S.serpentWound} in stage ${stage}`);
-    // The meal: a bank that is never under nought, a clock inside its wait.
-    if (!(S.mealT >= 0) || (S.serpentWound < depth && S.snatched && stage < SERPENT_PHASES && mealNow().toLand < -1))
-      fail('the meal clock is outside its wait', `${S.mealT}s since the last, the next ${mealNow().toLand}s off`);
-    // and a creature turned for the mouth is never further off than its swim.
-    if (S.mealI != null && mealNow().toLand > SWIM_BEFORE() + 1)
-      fail('the turned meal is further off than its swim', `${mealNow().toLand}s off, a swim is ${SWIM_BEFORE()}s`);
+    // The meal: a window's clock never under nought, and never run past the
+    // window with no meal begun (it begins a little before the window is up).
+    if (!(S.mealT >= 0) || (!S.mealGo && S.serpentWound < depth && S.snatched && stage < SERPENT_PHASES && S.mealT > windowS() + 1))
+      fail('the meal clock is outside its wait', `${S.mealT}s since the last, a window of ${windowS()}s, no meal begun`);
+    // A meal under way is somewhere in its beats, and the creature in its orb
+    // is off the walk: never drawn twice.
+    const go = S.mealGo;
+    if (go && (!(go.t >= 0) || go.t > landAt(go) + MEAL_BACK_S + 1))
+      fail('the meal is past its end', `${go.t}s in`);
+    if (go && go.slot != null && !slotGone(go.slot, now() / 1000))
+      fail('the creature in the meal orb is still swimming', `slot ${go.slot}, ${go.kind}`);
     mealWas = S.meal;
     if (!(S.serpentStun >= 0) || S.serpentStun > STUN_MAX_S + 1e-9)
       fail('the stun is outside its bounds', `${S.serpentStun}s, at most ${STUN_MAX_S}`);

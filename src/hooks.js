@@ -54,6 +54,7 @@ import { holdSkip, skipScene } from './skip.js';
 import { sendBirds, BIRDS } from './weather.js';
 import { smogReport } from './smog.js';
 import { advance, restart as restartClock } from './clock.js';
+import { forgetWalk } from './deep/fauna.js';
 import { step, settleIntoWorld } from './game.js';
 import { rand, seedRng, seed } from './rng.js';
 import { verifyWorld, resetVerify } from './verify.js';
@@ -453,7 +454,7 @@ export const reload = () => { persist(); restore(); buildShop(); };
 // saved as a moment on the old page's clock is then read back wrong.
 export const coldReload = ({ clock } = {}) => {
   persist();
-  if (Number.isFinite(clock)) { restartClock(clock); S.lastFrame = 0; }   // and no last frame on it
+  if (Number.isFinite(clock)) { restartClock(clock); S.lastFrame = 0; forgetWalk(); }   // and no last frame on it, nor the deep's walk
   S.machines = null;
   S.works = {};
   restore();
@@ -1112,7 +1113,6 @@ HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
 // back is told the setup is a new starting point.
 import { layScales, looseScales } from './deep/scales.js';
 import { faunaReport } from './deep/fauna.js';
-import { streamReport } from './deep/flow.js';
 import { woundK } from './deep/serpent.js';
 import { shots } from './deep/arms.js';
 import { forgetSerpent, forgetFangs } from './verify.js';
@@ -1170,11 +1170,10 @@ HANDLES.__serpent = ({ stage, wound, level } = {}) => {
 HANDLES.__scales = n => layScales(n);                 // crushed: a purse to spend
 HANDLES.__looseScales = n => looseScales(n);          // lying on the floor, for the gatherers
 HANDLES.__fauna = () => faunaReport();                // the deep's creatures, in world pixels, to aim a click at
-HANDLES.__stream = () => streamReport();              // and the stream's, near and far
 HANDLES.__setScales = n => { S.scales = Math.max(0, Math.floor(n || 0)); return S.scales; };   // the crushed purse, set outright
 HANDLES.__deepState = () => ({
   stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(),
-  meal: { n: S.meal, t: S.mealT, i: S.mealI },
+  meal: { n: S.meal, t: S.mealT, go: S.mealGo && { ...S.mealGo } },
   freed: S.serpentFreed, scales: S.scales, sinking: S.sinking.length, lifting: S.lifting.length,
   mech: { at: S.mechAt, skip: S.mechSkip, ...phasePart() },
   statuses: JSON.parse(JSON.stringify(S.statuses)),

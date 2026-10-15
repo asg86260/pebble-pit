@@ -30,7 +30,7 @@ import { COIN_TONES, SHADES, P, CELL } from '../config.js';
 
 // The comparison pages' scenes (docs/mocks/deep-palette-ingame-2026-10-14.html,
 // docs/mocks/deep-background-2026-10-14.html).
-const SCENES = ['deep-all', 'deep-seven', 'deep-zones', 'deep-rest', 'deep-react-angler', 'deep-react-stream-0',
+const SCENES = ['deep-all', 'deep-seven', 'deep-zones', 'deep-rest', 'deep-react-angler', 'meal-reel',
                 'deep-stun', 'party-statuses', 'deep-numbers', 'deep-neardeath-light', 'deep-powerup-motes',
                 'deep-build', 'deep-kill-start', 'deep-freed', 'deep-endless', 'crusher', 'pods', 'finale-gear'];
 const MIN_PX = 12;   // a color counts once it covers this many pixels of the rows read

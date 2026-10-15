@@ -51,8 +51,8 @@ group("a Brawler's haymaker, at her capstone, stuns the ward, and the window sto
   const wound = S.serpentWound, stun = S.serpentStun;
   const hay = rungWorth(CLASSES.brawler, 8) * CLASSES.brawler.haymaker.x * guardOf('brawler');
   // Held for the stun's length, a frame short: the window does not run,
-  // though she punches on (unless a creature had already turned for the mouth).
-  const t0 = S.mealT, turnedAt = S.mealI;
+  // though she punches on (unless a meal had already begun).
+  const t0 = S.mealT, turnedAt = S.mealGo;
   for (let f = 0; f < Math.floor(stun * 60) - 1; f++) frame();
   const ran = S.mealT - t0;
   return [

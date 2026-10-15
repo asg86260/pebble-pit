@@ -23,7 +23,7 @@ const S = yard.S;
 // The names a blob spells differently from the field on S they hold; the
 // same table persist-roundtrip.test.mjs keeps.
 const ALIAS = { workers: ['who'],
-                danceUntil: ['danceLeft'], nextBoulderAt: ['nextBoulderIn'], streamOff: ['stream'] };
+                danceUntil: ['danceLeft'], nextBoulderAt: ['nextBoulderIn'] };
 const spelledAs = k => ALIAS[k] || [k];
 
 // A yard with something saved in every corner of it, stood up the player's

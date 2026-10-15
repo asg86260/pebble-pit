@@ -9,7 +9,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import './helpers.mjs';                // the yard's page: the creatures now read the deep's floor
 import { FAUNA, FAUNA_MOTION, FAUNA_TURNS } from '../src/config.js';
-import { POPULATION, COLS, ROWS, faunaAt, visitAt, faunaOut, forgetWalk, reachOf, heightOf, wanderLo, wanderHi, waterTop, glideWaterTop } from '../src/deep/fauna.js';
+import { POPULATION, COLS, ROWS, faunaAt, visitAt, faunaOut, forgetWalk, reachOf, heightOf, wanderLo, wanderHi, waterTop, glideWaterTop,
+         holdSlot, slotGone, SLOTS, eatenNow } from '../src/deep/fauna.js';
 
 const DT = 1 / 60;
 const kindAt = (c, t) => visitAt(c, t).kind;
@@ -181,4 +182,52 @@ test('a resize glides every creature to its new height, a couple of rows a frame
   assert.ok(worst <= 3, `a creature moved ${worst} rows in one frame of the glide`);
   S.H = H;
   for (let f = 0; f < 600; f++) glideWaterTop(1 / 60);
+});
+
+// Where a slot sets out and where every kind it lets in comes in are random
+// over the whole water (the owner, 2026-10-15: "the creatures should be
+// totally random in their height band where they spawn"), not a third of the
+// height a slot: over an hour of laps the comings-in reach both the top and
+// the bottom quarter of the water.
+test('every slot sets out, and every kind comes in, anywhere in the height', () => {
+  forgetWalk();
+  const share = (kind, y) => (y - wanderLo(kind)) / (wanderHi(kind) - wanderLo(kind));
+  const ins = SLOTS.map(c => share(kindAt(c, 0), faunaAt(c, 0).y));
+  let laps = SLOTS.map(c => visitAt(c, 0).lap);
+  for (let t = DT; t < 60 * 60; t += DT * 6) {
+    SLOTS.forEach((c, k) => {
+      const v = visitAt(c, t);
+      if (v.lap === laps[k]) return;
+      laps[k] = v.lap;
+      ins.push(share(v.kind, faunaAt(c, t).y));
+    });
+  }
+  assert.ok(ins.length > 12, `${ins.length} comings-in`);
+  assert.ok(ins.every(k => k > -0.1 && k < 1.1), `all inside the water: ${ins.map(k => k.toFixed(2))}`);
+  assert.ok(ins.some(k => k < 0.25) && ins.some(k => k > 0.75), `both the top and the bottom quarter: ${ins.map(k => k.toFixed(2))}`);
+});
+
+// The serpent's meal takes a slot's swimmer off the walk into its orb and,
+// later, lets the slot's next kind in from beyond an end (deep/meals.js). The
+// holds are the walk's input: asked again for any moment, the walk comes out
+// the same.
+test('a meal holds a slot off the walk, then lets its next kind in from beyond an end', () => {
+  forgetWalk();
+  const c = SLOTS[0], t0 = 100, t1 = 110;
+  const before = visitAt(c, t0), other = SLOTS.slice(1).map(o => kindAt(o, t1 + 0.1));
+  holdSlot(0, t0, true);
+  const gone = [t0 + 0.05, t0 + 5, t1].every(t => slotGone(0, t)), drawnGone = eatenNow(visitAt(c, t0 + 1), t0 + 1);
+  holdSlot(0, t1, false);
+  const back = visitAt(c, t1 + 0.1), p = faunaAt(c, t1 + 0.1);
+  const again = [50, t0 + 2, t1 + 3, 200].map(t => ({ ...faunaAt(c, t), gone: slotGone(0, t) }));
+  const askAgain = [200, 50, t1 + 3, t0 + 2].map(t => ({ ...faunaAt(c, t), gone: slotGone(0, t) }));
+  forgetWalk();
+  assert.ok(!slotGone(0, t0 - 0.1), 'not held before the meal');
+  assert.ok(gone && drawnGone, 'held from the meal on, and not drawn');
+  assert.ok(!slotGone(0, t1 + 0.1), 'let go');
+  assert.equal(back.lap, before.lap + 1, 'a new lap, a new visit');
+  assert.notEqual(back.kind, before.kind, 'of another kind');
+  assert.ok(!other.includes(back.kind), `not one already out (${other}, in came ${back.kind})`);
+  assert.ok(p.x < 0 || p.x > COLS, `in from beyond an end (x ${p.x.toFixed(1)})`);
+  assert.deepEqual(again, [askAgain[1], askAgain[3], askAgain[2], askAgain[0]], 'the same however the moments are asked');
 });

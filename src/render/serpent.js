@@ -27,14 +27,15 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          SNATCH_HEAD_W, SNATCH_HEAD_H, SNATCH_NECK_W, SNATCH_HINGE, SNATCH_GAPE, SNATCH_CREST, SNATCH_HIDE, SNATCH_RISE, SNATCH_HEAVE_MS, SNATCH_HEAVE_STEPS, CHIP_R, CHIP_HEAL_S, CHIP_RAGGED,
          STUN_RING, STUN_RING_UP, STUN_RING_BACK, STUN_RING_STEP_MS, STUN_RING_TONES,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
-         MEAL_SWALLOW_S, MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
+         MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_SWELL_W, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
          SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP, ORB_STEP, ORB_GHOSTS,
          BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W,
          NEARDEATH, POWERUP, DEEP_MOTE_TINTS, DEEP_H, COIL_Y, SERPENT_EYE_HOLD } from '../config.js';
 import { S } from '../state.js';
-import { mealNow, jawOpen, jawGap, jawPose } from '../deep/meals.js';
-import { lengthOfKind, mealKind } from './fish.js';
+import { jawGap, jawPose, orbOf, mealComb, mealBolts, mealJaw, mealLump, beatOf } from '../deep/meals.js';
+import { widthOf } from '../deep/fauna.js';
+import { drawHeld } from './fauna.js';
 import { coilLine, coilThick, mouthX, deepFloor, bellyAt, deepTop, deepX0, deepX1, coilEnds } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
 import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, bellyWhole, caged, killFreeA, orbOn, orbMiddle, orbAge, orbRising, orbSinking, orbLift, recoilGape, recoilPose, powerMotes } from '../deep/phases.js';
@@ -232,19 +233,20 @@ function drawCoil() {
     const d = Math.abs(p.along - bellyA);
     if (d < BELLY_LEN) p.r += BELLY_BULGE * Math.sqrt(1 - (d / BELLY_LEN) ** 2);
   }
-  // A meal (the owner's A, docs/mocks/heal-eat-2026-09-30.html): the jaws
-  // swing apart from their hinge for the creature and shut on it, and its
-  // swallow is a lump that runs from the head to the belly, fatter for a
-  // longer one, the creature dark through the hide. The jaws are the head
-  // drawn wider by the gap (`jawGap`), each half pushed off the mouth's line.
-  const meal = whole && S.view === 'deep' ? mealNow() : null;
-  const open = Math.max(meal ? jawOpen(meal.toLand) : 0, roarGape(), recoilGape());   // and a break's roar, a recoil's cry
+  // A meal (deep/meals.js): the jaws swing apart from their hinge as the orb
+  // is hauled in and shut on it, and its swallow is a lump that runs from the
+  // head to the belly, fatter for a wider creature, dark through the hide.
+  // The jaws are the head drawn wider by the gap (`jawGap`), each half pushed
+  // off the mouth's line.
+  const fed = whole && S.view === 'deep' && S.mealGo;
+  const open = Math.max(fed ? mealJaw(t) : 0, roarGape(), recoilGape());   // and a break's roar, a recoil's cry
   let lumpAt = null, lumpLen = 0;
-  if (meal && meal.toLand >= 0 && meal.toLand < MEAL_SWALLOW_S) {
-    const a = 1 - meal.toLand / MEAL_SWALLOW_S;
+  const a = fed ? mealLump() : null;   // the swallow's way down, 0..1
+  if (a != null) {
+    const w = S.mealGo.kind ? widthOf(S.mealGo.kind) / MEAL_SWELL_W : 1;
     lumpAt = headA + (a * a * (3 - 2 * a)) * (bellyA - headA);
-    lumpLen = MEAL_SWELL_LEN * P * (0.7 + lengthOfKind(mealKind(meal.n)) / 30);
-    const swell = MEAL_SWELL * P * (0.5 + lengthOfKind(mealKind(meal.n)) / 24);
+    lumpLen = MEAL_SWELL_LEN * P * (0.5 + w * 0.5);
+    const swell = MEAL_SWELL * P * (0.5 + w * 0.5);
     for (const p of pts) {
       const d = Math.abs(p.along - lumpAt);
       if (d < lumpLen) p.r += swell * Math.sqrt(1 - (d / lumpLen) ** 2);
@@ -577,11 +579,13 @@ function drawVeil(t, pts) {
 // How much of the comb is lit, head first, 0..1: through the orb's warning,
 // and held while the bolts fly.
 let crestTips = [];
+// The meal's constrict lights it the same way (deep/meals.js, `mealComb`).
 function combLit(t) {
+  const meal = S.view === 'deep' && bellyWhole() ? mealComb() : 0;
   const p = part();
-  if (p.m?.kind !== 'orb' || S.mechSkip && !orbOn()) return 0;
-  if (p.part === 'warn') return p.k;
-  return orbAge() < ORB_BOLT_S ? 1 : 0;
+  if (p.m?.kind !== 'orb' || S.mechSkip && !orbOn()) return meal;
+  if (p.part === 'warn') return Math.max(meal, p.k);
+  return Math.max(meal, orbAge() < ORB_BOLT_S ? 1 : 0);
 }
 // A ring of the orb's dots round (x, y), every `every`th one drawn.
 function orbRing(x, y, r, t, ink, every = 1) {
@@ -592,6 +596,56 @@ function orbRing(x, y, r, t, ink, every = 1) {
     ctx.fillStyle = ink(n);
     ctx.fillRect(snap(x + Math.cos(th) * r - P / 2), snap(y + Math.sin(th) * r * 0.9 - P / 2), P, P);
   }
+}
+const ORB_INK = n => (n % 4 === 0 ? PURPLES[WHITE] : PURPLES[WHITE - 2]);
+// The bolts off the lit comb's tips to (c.x, c.y), in shape `shape`: each a
+// jagged run, wide at the comb and closing on its end, every third step white.
+function drawBolts(c, shape) {
+  if (!crestTips.length) return;
+  for (let n = 0; n < ORB_BOLTS; n++) {
+    const from = crestTips[(n * 5 + shape * 3) % crestTips.length];
+    let x = from.x, y = from.y;
+    for (let s = 1; s <= 14; s++) {
+      const u = s / 14;
+      const nx = from.x + (c.x - from.x) * u + (unit(n * 31 + s + shape * 7) - 0.5) * P * 4 * (1 - u);
+      const ny = from.y + (c.y - from.y) * u;
+      ctx.fillStyle = s % 3 ? PURPLES[WHITE] : GREYS[WHITE];
+      for (let q = 0; q <= 2; q++) ctx.fillRect(snap(x + (nx - x) * q / 2), snap(y + (ny - y) * q / 2), P, P);
+      x = nx; y = ny;
+    }
+  }
+}
+
+// --- the meal ---------------------------------------------------------------------
+// The constrict aimed at a creature (deep/meals.js): the bolts held from the
+// comb to the orb, the orb turning round the creature, squeezing it as it
+// shrinks, all hauled to the jaws. Going in, it is drawn behind the head
+// (`drawMealUnder`), fading as the jaws close on it; until then in front.
+function drawMealOrb(t, bolts) {
+  const g = S.mealGo, o = orbOf(t);
+  if (!o) return;
+  const b = bolts ? mealBolts() : null;
+  if (b) { ctx.globalAlpha = b.alpha; drawBolts(o, b.shape); }
+  ctx.globalAlpha = o.alpha;
+  drawHeld(g.kind, o.x, o.y, g.dir, g.seed, t / 1000, o.squash);
+  orbRing(o.x, o.y, o.r * P, t, ORB_INK);
+  ctx.globalAlpha = 1;
+}
+const mealShown = () => S.view === 'deep' && S.snatched && !!S.mealGo && bellyWhole();
+export function drawMealUnder() {
+  if (!mealShown() || beatOf()?.name !== 'gulp') return;
+  const t = now();
+  drawMealOrb(t, false);
+}
+export function drawMeal() {
+  if (!mealShown()) return;
+  const t = now(), b = mealBolts();
+  if (beatOf()?.name === 'gulp') {
+    const o = orbOf(t);
+    if (b && o) { ctx.globalAlpha = b.alpha; drawBolts(o, b.shape); ctx.globalAlpha = 1; }
+    return;
+  }
+  drawMealOrb(t, true);
 }
 // The explosive resist's barrier: a row of floating cells under the coil's
 // underside, following it, a column of cells to each cell of the deep it
@@ -633,28 +687,14 @@ export function drawOrb() {
     const c = orbMiddle(o.st);
     if (!c) return;
     const age = orbAge(), st = S.stations.find(s => s.id === o.st);
-    if (age < ORB_BOLT_S && crestTips.length) {
-      const shape = Math.floor(age * 6);
-      for (let n = 0; n < ORB_BOLTS; n++) {
-        const from = crestTips[(n * 5 + shape * 3) % crestTips.length];
-        let x = from.x, y = from.y;
-        for (let s = 1; s <= 14; s++) {
-          const u = s / 14;
-          const nx = from.x + (c.x - from.x) * u + (unit(n * 31 + s + shape * 7) - 0.5) * P * 4 * (1 - u);
-          const ny = from.y + (c.y - from.y) * u;
-          ctx.fillStyle = s % 3 ? PURPLES[WHITE] : GREYS[WHITE];
-          for (let q = 0; q <= 2; q++) ctx.fillRect(snap(x + (nx - x) * q / 2), snap(y + (ny - y) * q / 2), P, P);
-          x = nx; y = ny;
-        }
-      }
-    }
+    if (age < ORB_BOLT_S) drawBolts(c, Math.floor(age * 6));
     // the orb, closing over the first beat of it, turning; while it rises
     // fast, fainter rings trailing a step apart under it
     const r = Math.min(ORB_R, 1 + age * 20) * P;
     if (orbRising(st)) {
       for (let g = ORB_GHOSTS; g >= 1; g--) orbRing(c.x, c.y + g * ORB_STEP * P, r, t, () => PURPLES[WHITE - 3 - 2 * g], 2);
     }
-    orbRing(c.x, c.y, r, t, n => (n % 4 === 0 ? PURPLES[WHITE] : PURPLES[WHITE - 2]));
+    orbRing(c.x, c.y, r, t, ORB_INK);
     // what is left of it, over its head
     const bw = ORB_R * 2 + 2, by = snap(c.y - r - P * 3), bx = snap(c.x) - Math.floor(bw / 2) * P;
     for (let i = 0; i < bw; i++) {

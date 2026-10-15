@@ -22,15 +22,14 @@ import { dropMs, ramX } from './rock.js';
 import { buriedAt } from './intro.js';
 import { rockLeft, clampCam } from './world.js';
 import { now, advance } from './clock.js';
-import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, RECOIL, NEARDEATH, POWERUP, rungValue } from './config.js';
+import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, PAIRS, CLASSES, FORK_RUNG, MECHANICS, LEVELUP_S, LEVELUP_BURST_S, KILL, KILL_REFORM_S, SERPENT_PHASES, RECOIL, NEARDEATH, POWERUP, rungValue,
+         MEAL_LEAD_S, MEAL_WARN_S, ORB_BOLT_S, MEAL_GULP_S, MEAL_SWALLOW_S } from './config.js';
 import { depthAt } from './deep/depth.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor, deepX0 } from './deep/place.js';
 import { sweep } from './hands.js';
-import { nextMeal, turned, windowS, nowS } from './deep/meals.js';
+import { windowS, startMeal, landAt } from './deep/meals.js';
 import { startleFauna, faunaWhen } from './deep/fauna.js';
-import { startleStream } from './deep/flow.js';
-import { KINDS } from './render/fish.js';
 import { nextWave } from './render/deepwave.js';
 import { buildStation, nextSlot } from './deep/party.js';
 import { lookAt } from './deep/rails.js';
@@ -314,7 +313,6 @@ const lookDeep = x => window.__look(x - S.viewW / 2);
 // `window.__reactSpot()` is where it is on the glass, to crop a shot to.
 const REACT_AT = { school: 0.3, jelly: 0.5, lantern: 0.2, siphon: 0.6, angler: 0.5, dumbo: 0.6, tripod: 0.5,
                    amphipod: 0.17, snail: 0.17 };
-const STREAM_AT = [0.5, 0.6, 0.5, 0.6, 0.5, 0.4, 0.5, 0.4];
 // Clear of the coil, which is drawn in front of the zones' creatures.
 const clearOfCoil = (x, y, cells) => {
   for (let i = 0; i < COIL_SEGS; i++) { const p = coilAt(i, now()); if (Math.hypot(p.x - x, p.y - y) < P * cells) return false; }
@@ -363,28 +361,24 @@ const stageScene = (stage, wound, stations = []) => () => {
   lookDeep(coilAt(bellySeg() - 4, now()).x);
 };
 
-// A meal caught at its moment: creature number `kind` of the eight, the
-// landing `to` seconds off (a second of the yard runs before the shot).
-const mealScene = (kind, to, atBelly = false) => () => {
+// A meal caught at its moment (deep/meals.js): `at(g)` seconds into it once
+// the scene's second of yard has run, the camera on the head (or the belly),
+// and the moment held against the frames the shot tool runs (`__holdShot`).
+// Null `at`: the window a moment short of the meal, left to run.
+const mealScene = (at, atBelly = false) => () => {
   deepYard({ stage: 1, wound: 0.4, party: [cast('ranger', 0)] });
-  // the time since the last meal that puts the next one `to` seconds off
-  // once the scene's second has run (the creature is whichever swims up)
-  // (a meal already turned for the mouth is the sim's to keep, so it is set so)
-  let n = 0, best = null, off = Infinity;
-  const clock = nowS();
-  for (let m = 0; m < windowS() + 30; m += 0.05) {
-    const meal = nextMeal(clock - m), d = Math.abs(meal.land - clock - 1 - to);
-    if (d < off) { off = d; best = { m, meal }; }
-  }
-  S.mealT = best.m;
-  S.mealI = turned(best.meal.land - clock) ? best.meal.i : null;
-  lookDeep(atBelly ? coilAt(bellySeg() - 6, now()).x : coilAt(0, now()).x - 150);
-  // A meal's moments are quicker than a shot takes, so the clock is held on
-  // the page's frames for a few seconds once the second of yard has run.
-  const at = S.mealT + 1, until = performance.now() + 4000;
-  const hold = () => { if (performance.now() < until && S.meal === n) { if (S.mealT > at) S.mealT = at; requestAnimationFrame(hold); } };
-  requestAnimationFrame(hold);
+  lookDeep(atBelly ? coilAt(bellySeg() - 6, now()).x : coilAt(0, now()).x - 60);
+  S.mealGo = null;
+  if (!at) { S.mealT = windowS() - MEAL_LEAD_S - 2; return; }
+  S.mealT = windowS() - MEAL_LEAD_S;
+  startMeal(now());
+  // through the beats a frame at a time, so the creature is taken and the
+  // haul timed as play does them (the moment is asked again each frame: a
+  // beat after the haul is not known until the haul is)
+  while (S.mealGo && S.mealGo.t < at(S.mealGo) - 1 / 60) window.__fast(1 / 60);
+  window.__holdShot();
 };
+const REEL_AT = () => MEAL_WARN_S + ORB_BOLT_S;   // the haul starts
 
 // The lash is a second long, shorter than a shot takes, so its moment is
 // held on the page's frames for a few seconds (as the glide's is, below).
@@ -652,16 +646,18 @@ const deepScenes = {
     run: stageScene(2, 0.25, [cast('sapper', 6), cast('hexer', 4)]) },
   'deep-fading': { about: 'the deep', say: 'the fourth defense: the coil faded, a Mage\'s beam held on it',
     run: stageScene(3, 0.27, [cast('mage', 4), cast('monk', 4)]) },
-  'meal-swim': { about: 'the deep', say: 'a Skull fish swimming in from the left to the serpent, its jaws opening',
-    run: mealScene(3, 4.4) },
-  'meal-bite': { about: 'the deep', say: 'a Wandering eye at the jaws, wide open',
-    run: mealScene(4, 3.3) },
-  'meal-gulp': { about: 'the deep', say: 'a Skull fish half into the jaws, cut by their lines',
-    run: mealScene(3, 2.75) },
-  'meal-swallow': { about: 'the deep', say: 'the swallow running down the neck after a Many-mouthed blob',
-    run: mealScene(6, 1.2, true) },
+  'deep-meal': { about: 'the deep', say: 'the window a moment short of a meal: the comb about to light for the nearest creature',
+    run: mealScene(null) },
+  'meal-bolts': { about: 'the deep', say: 'the meal bolts off the lit comb, the orb closed round the nearest creature',
+    run: mealScene(() => MEAL_WARN_S + 0.3) },
+  'meal-reel': { about: 'the deep', say: 'the meal orb hauled in on its bolts, halfway to the jaws',
+    run: mealScene(g => REEL_AT(g) + 1.2) },
+  'meal-gulp': { about: 'the deep', say: 'the shrunken orb going into the open jaws',
+    run: mealScene(g => landAt(g) - MEAL_SWALLOW_S - MEAL_GULP_S + 0.15) },
+  'meal-swallow': { about: 'the deep', say: 'the swallow running down the neck after the meal',
+    run: mealScene(g => landAt(g) - MEAL_SWALLOW_S * 0.5, true) },
   'meal-land': { about: 'the deep', say: 'the lump landed at the belly, purple crosses rising off the body',
-    run: mealScene(0, -0.6, true) },
+    run: mealScene(g => landAt(g) + 0.6, true) },
   // A phase's mechanic (deep/phases.js) caught at its moment: the turn set
   // `into` seconds short of the thing itself (negative: that far into it).
   'phase-taut': { about: 'the deep', say: 'the warning before the lash: the coil drawn up, its tail lifted',
@@ -895,17 +891,12 @@ const deepScenes = {
     } },
   // A creature's reaction to a click (the owner's picks,
   // docs/mocks/creature-clicks-2026-10-13.html), held at its moment: a zone
-  // kind's by name, a stream kind's by its number in render/fish.js.
+  // kind's by name.
   ...Object.fromEntries(Object.entries(REACT_AT).map(([kind, at]) => [`deep-react-${kind}`, {
     about: 'the deep', say: `a ${kind} clicked, ${at}s into its reaction`,
     run: () => reactScene(() => window.__fauna().find(f => f.kind === kind && f.inside && !f.bolting && !f.reacting
                                                           && f.cx > 0 && f.cx < DEEP_W / P - 12 && clearOfCoil(f.x, f.y, 16)),
                           f => startleFauna(f.x, f.y), at, f => window.__fauna()[f.i], kind) }])),
-  ...Object.fromEntries(STREAM_AT.map((at, k) => [`deep-react-stream-${k}`, {
-    about: 'the deep', say: `stream creature ${k} clicked, ${at}s into its reaction`,
-    run: () => reactScene(() => window.__stream().find(s => s.near && s.kind === k && s.clickable
-                                                           && s.x > deepX0() + P * 40 && s.x < deepX0() + DEEP_W - P * 40 && clearOfCoil(s.x, s.y, 12)),
-                          s => startleStream(s.x, s.y), at, s => window.__stream().find(g => g.key === s.key)) }])),
   ...Object.fromEntries(Object.entries(PROP_SCENES).map(([name, party]) => [name, {
     about: 'the deep', say: `four stations' props: ${party.map(o => (o.cls || 'crate') + ' ' + o.rung).join(', ')}`,
     run: () => {
