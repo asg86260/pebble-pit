@@ -677,3 +677,15 @@ export const DEEP_WAVE = {
   tailS: 11,        // seconds after the band a wave is still asked of: six settles
   seed: 3           // the strengths' sequence
 };
+
+// --- the deep's floor: a dithering fade (the owner, 2026-10-15, option A) ----------
+// "A simple pattern, like the surface": the ground's grammar (a fixed rule
+// per world cell, nothing moves), as an ordered dither. The floor's top
+// course is the stone rung and it thins through ground into the darker grey
+// over DEEP_FLOOR_FADE_ROWS rows, every cell chosen by a 4x4 Bayer threshold
+// so the band reads as a checker, then a thinning one, then flat. Kept grey
+// rungs only (DEEP_GREY_RUNGS). docs/mocks/deep-floor-dither-2026-10-15/.
+export const DEEP_FLOOR_TOP_RUNG = 6;
+export const DEEP_FLOOR_BOTTOM_RUNG = 2;
+export const DEEP_FLOOR_FADE_ROWS = 6;
+export const DEEP_FLOOR_BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
