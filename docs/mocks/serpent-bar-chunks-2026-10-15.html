@@ -1,0 +1,317 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serpent Bar Chunks</title>
+<style>
+/* One pane per way a blow breaks off the bar, the same stream of blows in each;
+   the pane is the strip of black deep water round the bar in either theme. */
+:root {
+  --bg: #f3f2f6; --panel: #ffffff; --fg: #17161c; --dim: #5f5c6b; --rule: #dcdae3; --accent: #6a2fbe;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0d12; --panel: #17161d; --fg: #ebe9f2; --dim: #a6a3b3; --rule: #2c2a35; --accent: #a979ef; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 20px 16px 64px; display: grid; gap: 16px; }
+h1 { font-size: 19px; margin: 0; }
+p { margin: 0; max-width: 92ch; color: var(--dim); }
+.bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+button { font: inherit; font-size: 12px; background: var(--panel); color: var(--fg); border: 1px solid var(--fg); padding: 4px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sep { width: 10px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 10px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.card h2 { margin: 0; font-size: 13px; }
+.card p { font-size: 12px; }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #000; }
+</style>
+
+<div class="wrap">
+  <div style="display:grid;gap:6px">
+    <h1>Serpent Bar Chunks</h1>
+    <p>Larger pieces off the serpent's bar. "Today" is the bar as built (400 by 14 screen pixels, its tones, its
+      3-pixel shards, the knock and the heal's purple). A, B and C break the same blows off in bigger pieces. Every pane
+      runs the same stream of blows: small ones, a big one now and then, and a meal's heal flowing back in.</p>
+    <p>This is a mock drawn from plain shapes, not the game. The numbers flying into the bar, the coil, the pips and the
+      status row are left out, and blows are larger than the game's (a real blow is often under a pixel of the bar) so
+      the loop goes somewhere. "Zoom" shows the bar's end at 3x so the pieces can be read.</p>
+  </div>
+  <div class="bar">
+    <button id="play" type="button">pause</button>
+    <span class="sep"></span>
+    <button data-speed="1" aria-pressed="true" type="button">1x</button>
+    <button data-speed="0.25" aria-pressed="false" type="button">0.25x</button>
+    <span class="sep"></span>
+    <button id="big" type="button">big hit</button>
+    <button id="heal" type="button">heal</button>
+    <span class="sep"></span>
+    <button id="zoom" type="button" aria-pressed="false">zoom 3x on the end</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+(() => {
+  // --- the game's numbers, copied from src/config/deepdraw.js ------------------------
+  const GREYS = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c', '#333339', '#42424a',
+                 '#55555e', '#6e6e78', '#8b8b96', '#b4b4c0', '#ffffff'];
+  const BAR_W = 400, BAR_H = 14;
+  const EDGE = GREYS[8], TRACK = GREYS[0], LEFT = GREYS[11], CHIP = GREYS[10];
+  const HEALED = '#9b5de5';
+  const HEAL_FADE_S = 0.9, EASE_S = 0.06, HEAL_RATE = 0.32, FLOW_EASE = 4, FLOW_MIN = 0.05;
+  const KNOCK = 4, KNOCK_BIG = 8, KNOCK_S = 0.16;
+  // today's shards
+  const SH_PX = 3, SH_HOLD = { small: 0.06, big: 0.16 }, SH_LIFT = { small: 1, big: 2 }, SH_STAGGER = 0.012;
+  const POSES = 15, GRAV = 520, KICK = { side: 10, sideRand: 26, spread: 40, up: 18, upRand: 40, row: 4 };
+  const FALL_S = 0.85, FADE_S = 0.4;
+
+  // --- the options' numbers -----------------------------------------------------------
+  // A: 2-4 blocks, each 2 or 3 of today's 3 px cells wide and half the bar tall,
+  //    a quarter turn every TUMBLE poses.
+  const A = { cell: 3, h: 7, hold: { small: 0.08, big: 0.18 }, lift: { small: 1, big: 2 }, tumble: 3,
+              kick: { side: 14, sideRand: 22, spread: 30, up: 30, upRand: 40 }, fall: 0.95, fade: 0.45 };
+  // B: the whole stretch as one slab (at least SLAB_MIN wide), cracking in two CRACK_S into its fall.
+  const B = { min: 6, hold: { small: 0.08, big: 0.18 }, lift: { small: 1, big: 2 }, crack: 0.22, apart: 14,
+              kick: { side: 10, sideRand: 14, up: 24, upRand: 20 }, fall: 1.0, fade: 0.45 };
+  // C: the end bitten off in BITE px steps, BITE_HOLD a step; the damage not yet a
+  //    whole bite shows cracked; each bite flicks two half-height chips.
+  const C = { bite: 7, holdStep: 0.09, lift: 1,
+              kick: { side: 16, sideRand: 26, up: 34, upRand: 30 }, fall: 0.85, fade: 0.4 };
+
+  const W = 440, H = 100, BX = 20, BY = 30;  // canvas, and the bar's resting top-left in it
+  const hash = n => { const v = Math.sin(n * 127.1 + 3.7) * 43758.5453; return v - Math.floor(v); };
+  const pose = a => Math.floor(a * POSES) / POSES;
+
+  // --- the stream of blows, shared by every pane --------------------------------------
+  // The fill in bar pixels; every pane reads the same events off it.
+  let fill = BAR_W * 0.92, nextAt = 0.4, n = 0, nextHealAt = 6;
+  const events = [];   // {t, kind:'blow'|'heal', from, to, big, dir}
+  function blow(t, big) {
+    const amt = big ? 22 + hash(n * 7 + 1) * 22 : 1.5 + hash(n * 7 + 2) * 6.5;
+    const to = Math.max(0, fill - amt);
+    events.push({ t, kind: 'blow', from: fill, to, big, dir: n % 2 ? 1 : -1, id: n++ });
+    fill = to;
+  }
+  function heal(t, amt) {
+    fill = Math.min(BAR_W, fill + amt);
+    events.push({ t, kind: 'heal', to: fill, id: n++ });
+  }
+  function feed(t) {
+    while (t >= nextAt) {
+      if (fill < 70) heal(nextAt, 200 + hash(n) * 80);
+      else if (nextAt >= nextHealAt) { heal(nextAt, 40 + hash(n + 9) * 50); nextHealAt = nextAt + 6 + hash(n) * 3; }
+      else blow(nextAt, hash(n * 3 + 5) < 0.16);
+      nextAt += 0.3 + hash(n * 5 + 11) * 0.5;
+    }
+  }
+
+  // --- one pane: the fill's slide and heal as built, and its own pieces ---------------
+  function makePane(kind) {
+    return { kind, seen: 0, shown: fill, target: fill, healLo: null, healIn: null, pieces: [], knocks: [],
+             edge: fill, bites: [] };
+  }
+  function land(p, e, t) {
+    if (e.kind === 'heal') { p.target = e.to; return; }
+    p.target = e.to;
+    p.knocks.push({ t, big: e.big });
+    if (p.kind === 'today') shatterToday(p, e, t);
+    if (p.kind === 'A') chunksA(p, e, t);
+    if (p.kind === 'B') slabB(p, e, t);
+  }
+  function shatterToday(p, e, t) {
+    const x0 = e.to, w = Math.max(1, e.from - e.to);
+    const cols = Math.max(1, Math.round(w / SH_PX)), cw = w / cols;
+    const hold = e.big ? SH_HOLD.big : SH_HOLD.small, k = KICK;
+    for (let c = 0; c < cols; c++) {
+      const wait = hold + (e.big ? c * SH_STAGGER : 0), out = (c + 0.5) / cols - 0.5;
+      for (let r = 0; r * SH_PX < BAR_H; r++) {
+        const m = e.id * 97 + c * 7 + r;
+        p.pieces.push({ at: t, x: x0 + c * cw, y: r * SH_PX, w: Math.max(1, Math.round(cw)),
+          h: Math.min(SH_PX, BAR_H - r * SH_PX), hold: wait, lift: e.big ? SH_LIFT.big : SH_LIFT.small,
+          vx: e.dir * (k.side + hash(m) * k.sideRand) + out * k.spread,
+          vy: -(k.up + hash(m + 3) * k.upRand) + r * k.row, fall: FALL_S, fade: FADE_S });
+      }
+    }
+  }
+  function chunksA(p, e, t) {
+    const count = e.big ? 4 : (e.from - e.to > 5 ? 3 : 2);
+    const mid = (e.from + e.to) / 2, k = A.kick;
+    // laid as two rows over the notch, centered on the stretch
+    const blocks = [];
+    for (let i = 0; i < count; i++) {
+      const cells = hash(e.id * 13 + i) < 0.5 ? 2 : 3;
+      blocks.push({ w: cells * A.cell, h: A.h, r: i % 2 });
+    }
+    const rows = [blocks.filter(b => b.r === 0), blocks.filter(b => b.r === 1)];
+    for (const row of rows) {
+      const span = row.reduce((s, b) => s + b.w, 0);
+      let x = Math.round(mid - span / 2);
+      row.forEach((b, j) => {
+        const m = e.id * 31 + j * 5 + b.r, out = (x + b.w / 2 - mid) / Math.max(6, span);
+        p.pieces.push({ at: t, x, y: b.r * A.h, w: b.w, h: b.h,
+          hold: (e.big ? A.hold.big : A.hold.small) + j * 0.03, lift: e.big ? A.lift.big : A.lift.small,
+          vx: e.dir * (k.side + hash(m) * k.sideRand) + out * k.spread,
+          vy: -(k.up + hash(m + 3) * k.upRand) + b.r * 6, tumble: true, fall: A.fall, fade: A.fade });
+        x += b.w;
+      });
+    }
+  }
+  function slabB(p, e, t) {
+    const w = Math.max(B.min, Math.round(e.from - e.to)), x = Math.round(e.from) - w, k = B.kick, m = e.id * 17;
+    p.pieces.push({ at: t, x, y: 0, w, h: BAR_H, hold: e.big ? B.hold.big : B.hold.small,
+      lift: e.big ? B.lift.big : B.lift.small, slab: true, split: w >= 10 ? 'v' : 'h',
+      vx: e.dir * (k.side + hash(m) * k.sideRand), vy: -(k.up + hash(m + 3) * k.upRand), fall: B.fall, fade: B.fade });
+  }
+
+  function stepPane(p, t, dt) {
+    for (; p.seen < events.length && events[p.seen].t <= t; p.seen++) land(p, events[p.seen], t);
+    const target = p.target;
+    if (target < p.shown) {
+      p.shown += (target - p.shown) * (1 - Math.exp(-dt / EASE_S));
+      if (p.shown - target < 0.2) p.shown = target;
+      p.healLo = p.healIn = null;
+    } else if (target > p.shown + 0.2) {
+      if (p.healLo == null || p.healIn != null) { p.healLo = p.shown; p.healIn = null; }
+      const left = (target - p.shown) / BAR_W;
+      p.shown = Math.min(target, p.shown + BAR_W * dt * Math.max(FLOW_MIN, Math.min(HEAL_RATE, left * FLOW_EASE)));
+      if (p.shown >= target - 0.2) { p.shown = target; p.healIn = t; }
+    }
+    if (p.healIn != null && t - p.healIn >= HEAL_FADE_S) p.healLo = p.healIn = null;
+    if (p.kind === 'C') stepC(p, t);
+    p.pieces = p.pieces.filter(q => t - q.at < q.hold + q.fall);
+    p.knocks = p.knocks.filter(k => t - k.t < KNOCK_S);
+  }
+  // C: the drawn edge follows a heal up at once, and bites down a whole bite at a
+  // time, a held step apart, while the true fill is a bite or more under it.
+  function stepC(p, t) {
+    if (p.shown > p.edge) { p.edge = p.shown; p.lastBite = -1; return; }
+    if (p.edge - p.shown >= C.bite - 0.01 && (p.lastBite == null || t - p.lastBite >= C.holdStep)) {
+      const x = p.edge - C.bite, m = p.pieces.length + Math.round(t * 1000);
+      // the bitten block held lit where it was, then two chips flicked off
+      for (let r = 0; r < 2; r++) {
+        p.pieces.push({ at: t, x: Math.round(x), y: r * C.bite, w: C.bite, h: C.bite, hold: C.holdStep, lift: C.lift,
+          vx: (r ? 1 : -1) * (C.kick.side * 0.4) + (hash(m + r) - 0.3) * C.kick.sideRand + C.kick.side,
+          vy: -(C.kick.up + hash(m + r + 5) * C.kick.upRand) + r * 8, tumble: r === 1, fall: C.fall, fade: C.fade });
+      }
+      p.edge -= C.bite;
+      p.lastBite = t;
+    }
+  }
+
+  // --- drawing --------------------------------------------------------------------------
+  function rect(g, x, y, w, h, c) { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+  function drawPane(p, g, t) {
+    g.globalAlpha = 1;
+    rect(g, 0, 0, W, H, '#000');
+    let knock = 0;
+    for (const k of p.knocks) {
+      const a = t - k.t, full = k.big ? KNOCK_BIG : KNOCK;
+      knock = Math.max(knock, a < KNOCK_S / 2 ? full : full / 2);
+    }
+    const y = BY - knock, x = BX;
+    rect(g, x - 1, y - 1, BAR_W + 2, BAR_H + 2, EDGE);
+    rect(g, x, y, BAR_W, BAR_H, TRACK);
+    if (p.kind === 'C') {
+      // cracked: what the blows have taken that is not yet a whole bite
+      rect(g, x, y, p.shown, BAR_H, LEFT);
+      if (p.edge > p.shown) {
+        rect(g, x + p.shown, y, p.edge - p.shown, BAR_H, GREYS[7]);
+      }
+    } else rect(g, x, y, p.shown, BAR_H, LEFT);
+    if (p.healLo != null && p.shown > p.healLo) {
+      const k = p.healIn == null ? 1 : Math.max(0, 1 - (t - p.healIn) / HEAL_FADE_S);
+      const a = Math.round(p.healLo), b = Math.round(p.shown);
+      g.globalAlpha = k; rect(g, x + a, y, b - a, BAR_H, HEALED); g.globalAlpha = 1;
+    }
+    for (const q of p.pieces) drawPiece(g, q, t, x, BY);
+    g.globalAlpha = 1;
+  }
+  function drawPiece(g, q, t, bx, rest) {
+    const a = t - q.at;
+    const life = q.hold + q.fall;
+    const alpha = Math.max(0, Math.min(1, (life - a) / q.fade));
+    if (a < q.hold) {
+      g.globalAlpha = 1;
+      rect(g, bx + q.x, rest + q.y - q.lift, q.w, q.h, CHIP);
+      return;
+    }
+    const f = pose(a - q.hold);
+    const px = q.x + q.vx * f, py = q.y + q.vy * f + 0.5 * GRAV * f * f;
+    g.globalAlpha = alpha;
+    if (q.slab) {
+      const cracked = f >= B.crack, d = cracked ? Math.round((f - B.crack) * B.apart) + 1 : 0;
+      if (!cracked) { rect(g, bx + px, rest + py, q.w, q.h, LEFT); return; }
+      if (q.split === 'v') {
+        const l = Math.floor(q.w / 2);
+        rect(g, bx + px - d, rest + py - d, l, q.h, LEFT);
+        rect(g, bx + px + l + d, rest + py + d, q.w - l, q.h, LEFT);
+      } else {
+        rect(g, bx + px - d, rest + py - d, q.w, 7, LEFT);
+        rect(g, bx + px + d, rest + py + 7 + d, q.w, q.h - 7, LEFT);
+      }
+      return;
+    }
+    let w = q.w, h = q.h;
+    if (q.tumble) {
+      const turns = Math.floor(f * POSES / A.tumble);
+      if (turns % 2) { w = q.h; h = q.w; }
+    }
+    rect(g, bx + px + (q.w - w) / 2, rest + py + (q.h - h) / 2, w, h, LEFT);
+  }
+
+  // --- the panes on the page -------------------------------------------------------------
+  const PANES = [
+    ['today', 'Today: pixel shards', 'As built. The stretch a blow took breaks into 3 px pieces, 5 rows down the 14 px bar (3,3,3,3,2) and a column per 3 px of the stretch; a small blow is 1 to 3 columns, so 5 to 15 specks. Held lit 0.06 s (big 0.16 s, a column at a time), then falling on 15 held poses a second, fading over the last 0.4 s of 0.85 s.'],
+    ['A', 'A · chunky', 'Each blow breaks off 2 to 4 blocks, each 2 or 3 cells (6 or 9 px) wide and half the bar (7 px) tall, laid in two rows over the notch. Held lit 0.08 s (big 0.18 s, one block after another), then thrown and falling, a quarter turn every 3 poses, fading over the last 0.45 s of 0.95 s. Blocks are bigger than a small blow\'s stretch on purpose.'],
+    ['B', 'B · slabs', 'The whole stretch drops as one full-height slab, at least 6 px wide. Held lit 0.08 s (big 0.18 s), then falls; 0.22 s into the fall it cracks into 2 halves (side by side if 10 px or wider, else top and bottom) that drift a pixel a pose apart, fading over the last 0.45 s of 1 s.'],
+    ['C', 'C · crumble steps', 'The bar\'s end bites back in 7 px steps (half the bar\'s height, square bites), a held step every 0.09 s; damage that is not yet a whole bite shows cracked (grey) at the end. Each bite is held lit, then flicks off as two 7 px chips, one tumbling, fading over the last 0.4 s of 0.85 s.'],
+  ];
+  const grid = document.getElementById('grid');
+  const panes = PANES.map(([kind, title, about]) => {
+    const card = document.createElement('div'); card.className = 'card';
+    card.innerHTML = `<h2>${title}</h2>`;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const pp = document.createElement('p'); pp.textContent = about;
+    card.append(cv, pp); grid.append(card);
+    const off = document.createElement('canvas'); off.width = W; off.height = H;
+    return { st: makePane(kind), cv, g: cv.getContext('2d'), off, og: off.getContext('2d') };
+  });
+
+  let T = 0, last = performance.now(), speed = 1, playing = true, zoom = false;
+  document.getElementById('play').onclick = e => { playing = !playing; e.target.textContent = playing ? 'pause' : 'play'; };
+  document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => {
+    speed = +b.dataset.speed;
+    document.querySelectorAll('[data-speed]').forEach(o => o.setAttribute('aria-pressed', o === b));
+  });
+  document.getElementById('big').onclick = () => { if (fill > 50) blow(T, true); else heal(T, 220); };
+  document.getElementById('heal').onclick = () => heal(T, 60);
+  document.getElementById('zoom').onclick = e => { zoom = !zoom; e.target.setAttribute('aria-pressed', zoom); };
+
+  function frame(nowMs) {
+    const dt = Math.min(0.05, (nowMs - last) / 1000) * (playing ? speed : 0);
+    last = nowMs;
+    T += dt;
+    feed(T);
+    for (const p of panes) {
+      stepPane(p.st, T, dt);
+      drawPane(p.st, p.og, T);
+      p.g.imageSmoothingEnabled = false;
+      if (!zoom) p.g.drawImage(p.off, 0, 0);
+      else {
+        // a third of the pane, centered on the fill's end
+        const cw = W / 3, ch = H / 3;
+        const cx = Math.max(0, Math.min(W - cw, BX + p.st.shown - cw / 2));
+        const cy = Math.max(0, Math.min(H - ch, BY - 10));
+        p.g.fillStyle = '#000'; p.g.fillRect(0, 0, W, H);
+        p.g.drawImage(p.off, Math.round(cx), Math.round(cy), cw, ch, 0, 0, W, H);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
