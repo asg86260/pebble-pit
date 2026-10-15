@@ -1,0 +1,8 @@
+{ "title": "The deep's creatures wander the whole height", "lede": "Option C: three creatures (lanternfish, angler, dumbo), each roaming top to bottom. The school and the amphipod are gone. Each row is the same deep a minute of game time later.", "base": "37780db7", "head": "d8204de4",
+  "items": [
+    { "id": "wander", "title": "Three creatures, the whole height", "what": "Shots a minute of game time apart: before, each keeps to its band; after, each wanders the whole water.",
+      "shots": [ { "label": "at the start", "scene": "deep-zones", "window": [1200, 800], "zoom": 0.6 },
+                 { "label": "a minute on", "scene": "deep-zones", "wait": 60, "window": [1200, 800], "zoom": 0.6 },
+                 { "label": "two minutes on", "scene": "deep-zones", "wait": 120, "window": [1200, 800], "zoom": 0.6 },
+                 { "label": "four minutes on", "scene": "deep-zones", "wait": 240, "window": [1200, 800], "zoom": 0.6 } ] }
+  ] }
