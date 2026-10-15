@@ -17,14 +17,14 @@ import { S } from '../state.js';
 import { now } from '../clock.js';
 import { MECHANICS, LASH_TAUT_S, LASH_W, DAMAGE_KIND, RESISTS, RESIST_K, RESIST_TURN_S, RESIST_WARN_S,
          BREAK_DIVE, BREAK_DIVE_STEPS, BREAK_ROAR, KILL, KILL_LIMP_STEPS, KILL_REFORM_S, BELLY_AT,
-         SERPENT_PHASES, P, WORKER, ORB_R, ORB_CLOSE_S, ORB_RISE_S, ORB_STEP, ORB_CLEAR,
+         SERPENT_PHASES, P, WORKER, ORB_R, ORB_CLOSE_S, ORB_RISE_S, ORB_STEP, ORB_AIR, ORB_BAR_UP,
          ORB_BOB_S, ORB_GHOST_K, ORB_HANG_S, ORB_SINK_S, ORB_SINK_EASE, ORB_SQUASH_S,
          RECOIL, RECOIL_SMEAR, RECOIL_POSES, RECOIL_POSE, NEARDEATH, POWERUP, CRACK_REACH } from '../config.js';
 import { CLASSES, PAIRS } from '../config/classes.js';
 import { has } from './statuses.js';
-import { hitRect } from '../stations.js';
 import { depthAt } from './depth.js';
 import { jawPose } from './meals.js';
+import { coilUnder, standOfStation, deepFloor } from './place.js';
 
 const LAST = SERPENT_PHASES - 1;
 export const mechOf = () => (S.snatched && !S.serpentFreed && S.serpentStage <= LAST ? MECHANICS[S.serpentStage] : null);
@@ -134,15 +134,29 @@ const sinkCurve = k => {
   const a = ORB_SINK_EASE;
   return (k < a ? k * k / (2 * a) : k - a / 2) / (1 - a / 2);
 };
-// How many cells the orb must rise for its bottom to clear its station's hit
-// box by ORB_CLEAR, in whole steps: none for a fighter already clear of it.
+// Where the orb holds its fighter (the owner, 2026-10-15): its middle halfway
+// between the coil's underside over it and its station's top, asked again
+// every frame of the live geometry. The underside is the lowest the coil
+// reaches there in its pose (`coilUnder`), not where it is this instant, so
+// the orb stays put through the sway and the sway can never bring the coil
+// down onto it. Always in open air: the ring and the bar over it ORB_AIR
+// clear of that underside, the ring ORB_AIR clear of the station's top and
+// the floor. A middle that would break that moves to the nearest point on
+// its vertical that does not; with no such point (a coil sunk onto the
+// station) it splits the difference. World px; null with no fighter.
+export function orbHome(st, w = fighterOf(st)) {
+  if (!st || !w) return null;
+  const x = w.x + WORKER / 2, under = coilUnder(x);
+  const top = Math.min(standOfStation(st).y, deepFloor());
+  // the highest and the lowest its middle may stand (world y grows downward)
+  const highest = under + (ORB_R + ORB_BAR_UP + ORB_AIR) * P, lowest = top - (ORB_R + ORB_AIR) * P;
+  return highest <= lowest ? Math.max(highest, Math.min(lowest, (under + top) / 2)) : (highest + lowest) / 2;
+}
+// How many cells over its spot the orb carries its fighter to be there; under
+// it (a negative lift) for a fighter caught up on the hide.
 function orbTop(st, w) {
-  const r = hitRect(st.id);
-  if (!r || !w) return 0;
-  const cx = w.x + WORKER / 2;
-  if (cx + ORB_R * P <= r.x || cx - ORB_R * P >= r.x + r.w) return 0;
-  const need = Math.ceil((w.y + WORKER / 2 + ORB_R * P - r.y) / P) + ORB_CLEAR;
-  return need <= 0 ? 0 : Math.ceil(need / ORB_STEP) * ORB_STEP;
+  const home = orbHome(st, w);
+  return home == null ? 0 : Math.round((w.y + WORKER / 2 - home) / P);
 }
 // The rise's progress, 0..1, or null with no orb `o` on this station.
 function riseK(st, o = orbOn()) {
@@ -155,7 +169,7 @@ function heldLift(st, o) {
   const k = riseK(st, o);
   if (k == null) return null;
   const top = orbTop(st, fighterOf(st));
-  if (k < 1) return ORB_STEP * Math.floor(easeOut(k) * top / ORB_STEP);
+  if (k < 1) return ORB_STEP * Math.trunc(easeOut(k) * top / ORB_STEP);
   // the bob counted from the top, so it does not add a cell to the last step
   const up = since(o.at) - ORB_CLOSE_S - ORB_RISE_S;
   return top + Math.floor((Number.isFinite(up) ? up : now() / 1000) / ORB_BOB_S) % 2;
@@ -183,6 +197,10 @@ export function orbMiddle(id) {
 // The drawing's beats: whether the rise is still fast enough to trail rings,
 // the sink fast enough to trail lines, and the landing's squash.
 export const orbRising = st => { const k = riseK(st); return k != null && k > 0 && k < ORB_GHOST_K; };
+// Whether the orb on this station has finished its rise and holds its fighter
+// at `orbHome`, and which way it went: up 1, down -1 (caught on the hide).
+export const orbRisen = st => riseK(st) === 1;
+export const orbWay = st => (orbTop(st, fighterOf(st)) < 0 ? -1 : 1);
 function sinkS(st) {
   const b = S.orbBurst;
   return b && st && b.st === st.id && b.from ? (since(b.at) - ORB_HANG_S) / ORB_SINK_S : null;

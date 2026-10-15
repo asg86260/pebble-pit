@@ -29,7 +29,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_SWELL_W, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
-         SERPENT_PHASES, ORB_BOLT_S, BEAM_WIDE_TO, BEAM_THIN_TO, ORB_R, ORB_BURST_S, ORB_STEP, HAND_GAP, ORB_GHOSTS,
+         SERPENT_PHASES, ORB_BOLT_S, BEAM_WIDE_TO, BEAM_THIN_TO, ORB_R, ORB_BURST_S, ORB_STEP, HAND_GAP, ORB_GHOSTS, ORB_BAR_UP,
          BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W,
          NEARDEATH, POWERUP, DEEP_MOTE_TINTS, DEEP_H, COIL_Y, SERPENT_EYE_HOLD } from '../config.js';
 import { S } from '../state.js';
@@ -38,7 +38,7 @@ import { widthOf } from '../deep/fauna.js';
 import { drawHeld } from './fauna.js';
 import { coilLine, coilThick, mouthX, deepFloor, bellyAt, deepTop, deepX0, deepX1, coilEnds } from '../deep/place.js';
 import { woundK } from '../deep/serpent.js';
-import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, bellyWhole, caged, killFreeA, orbOn, orbMiddle, orbAge, orbRising, orbSinking, orbLift, recoilGape, recoilPose, powerMotes } from '../deep/phases.js';
+import { part, sinkK, resistNow, resistNext, breaking, breakKind, resistAt, roarGape, apartK, reformK, killA, cradled, bellyWhole, caged, killFreeA, orbOn, orbMiddle, orbAge, orbRising, orbSinking, orbLift, orbWay, recoilGape, recoilPose, powerMotes } from '../deep/phases.js';
 import { freedBody, jawAt, headLeft } from '../snatch.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
@@ -700,15 +700,16 @@ export function drawOrb() {
     if (!c) return;
     const age = orbAge(), st = S.stations.find(s => s.id === o.st);
     if (age < ORB_BOLT_S) drawBeam(c);
-    // the orb, closing over the first beat of it, turning; while it rises
-    // fast, fainter rings trailing a step apart under it
-    const r = Math.min(ORB_R, 1 + age * 20) * P;
+    // the orb, closing over the first beat of it, turning; while it moves
+    // fast, fainter rings trailing a step apart behind it (under it rising,
+    // over it carried down off the hide)
+    const r = Math.min(ORB_R, 1 + age * 20) * P, way = orbWay(st);
     if (orbRising(st)) {
-      for (let g = ORB_GHOSTS; g >= 1; g--) orbRing(c.x, c.y + g * ORB_STEP * P, r, t, () => PURPLES[WHITE - 3 - 2 * g], 2);
+      for (let g = ORB_GHOSTS; g >= 1; g--) orbRing(c.x, c.y + way * g * ORB_STEP * P, r, t, () => PURPLES[WHITE - 3 - 2 * g], 2);
     }
     orbRing(c.x, c.y, r, t, ORB_INK);
     // what is left of it, over its head
-    const bw = ORB_R * 2 + 2, by = snap(c.y - r - P * 3), bx = snap(c.x) - Math.floor(bw / 2) * P;
+    const bw = ORB_R * 2 + 2, by = snap(c.y - r - P * ORB_BAR_UP), bx = snap(c.x) - Math.floor(bw / 2) * P;
     for (let i = 0; i < bw; i++) {
       ctx.fillStyle = i < Math.round(bw * o.hp / o.max) ? PURPLES[WHITE - 1] : PURPLES[WHITE - 7];
       ctx.fillRect(bx + i * P, by, P, P);
@@ -737,12 +738,13 @@ export function drawOrb() {
     }
   }
   // sinking home fast: lines trailing over its head
+  // (under its feet for one carried down off the hide, coming back up to it)
   if (orbSinking(st)) {
-    const top = snap(w.y - WORKER / 2);
+    const up = (b.from || 0) < 0, edge = up ? snap(w.y + WORKER / 2) - P : snap(w.y - WORKER / 2);
     ctx.fillStyle = GREYS[WHITE - 4];
     for (const dx of [-WORKER / 2, 0, WORKER / 2 - P]) {
       const len = dx ? 2 : 3;
-      for (let i = 1; i <= len; i++) ctx.fillRect(snap(w.x + dx), top - (i + 1) * P, P, P);
+      for (let i = 1; i <= len; i++) ctx.fillRect(snap(w.x + dx), edge + (up ? i + 1 : -(i + 1)) * P, P, P);
     }
   }
 }

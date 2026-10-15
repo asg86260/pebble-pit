@@ -366,6 +366,15 @@ export const BAR_H = 14;               // and its height
 // portal, which does not move, so the twelve is the room that fits.
 export const BAR_ALONG = 1 / 3;
 export const BAR_PAD = 12;
+// The serpent raised five cells (the owner, 2026-10-15, for the constrict's
+// orb) took the bar up level with the hand under the deep's portal, which
+// sat just under it before; at 800x600 its pips ran into the hand. So the
+// strip ends BAR_HAND_GAP screen pixels short of the hand, sliding left on a
+// narrow glass, or, with no room to, stands that far under it
+// (render/serpentbar.js): the knock's room (BAR_KNOCK_BIG) and a little. At
+// 1200 and 2000 wide it already stood thirteen off, so only a narrower glass
+// moves it.
+export const BAR_HAND_GAP = 12;
 export const BAR_TOP = 12;             // and never nearer the top of the glass than this
 export const BAR_PIP = 14;             // a defense's pip, square, after the bar
 export const BAR_PIP_GAP = 6;          // between the bar and a pip, and pip to pip
