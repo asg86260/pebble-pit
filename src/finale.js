@@ -61,7 +61,7 @@ import { rebalance } from './staffing.js';
 import { syncWorkers, retask } from './crew.js';
 import { onYard } from './crew/body.js';
 import { TYPE, isDeepType } from './jobs.js';
-import { markDone } from './beats.js';
+import { markDone, startBeat } from './beats.js';
 import { inBasket, bringDown } from './balloon.js';
 import { takeBuilders, planBuild, stepBuilder, builderPose, freeBuilders, finishHouse, houseDone,
          houseX, doorX, stepRetired, retiredIn, goInto, afterPair as afterOf } from './home.js';
@@ -696,6 +696,9 @@ export const SAVE = {
     const f = s.finale;
     if (!f || typeof f.phase !== 'string') return;
     land(typeof f.her === 'string' ? f.her : null);
+    // and its sheet up on the load itself, as its trigger would put it up on
+    // the first frame: a load is never a frame with neither
+    startBeat('freedsheet');
   },
   blank() { S.finale = null; }
 };

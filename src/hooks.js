@@ -1141,6 +1141,11 @@ HANDLES.__serpent = ({ stage, wound, level } = {}) => {
     // and a fang still in the water from a break taken back goes with it.
     if (S.fangsLoose.length > S.fangsDropped) S.fangsLoose = S.fangsLoose.slice(0, S.fangsDropped);
     resetMechanic();                    // a stage set opens calm, as a break's does
+    // and on a fresh window, as a break's does: a meal under way plays out
+    // but heals nothing, so a fight set deep is not closed by a meal the
+    // setup's own running had begun
+    S.mealT = 0;
+    if (S.mealGo) S.mealGo.heals = false;
     // and resists as a break into it would, from the party standing now;
     // the stages after it choose again when they are reached
     S.resistBy = Object.fromEntries(Object.entries(S.resistBy || {}).filter(([k]) => +k < S.serpentStage));
