@@ -12,13 +12,13 @@
 // bought where the player buys them, on the station's board (`pressBuy`).
 
 import { group, ok, yard } from './helpers.mjs';
-import { P, WORKER, DEEP_W, DEEP_SLOTS, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, PLINTH_H, HAND_PRESS } from '../src/config.js';
+import { P, WORKER, DEEP_W, DEEP_SLOTS, FORK_RUNG, LADDER, PROP_GAP, PROP_GAP_OF, PLINTH_H, HAND_PRESS, PROP_FLAME } from '../src/config.js';
 import { HANDS, handPressed } from '../src/render/hand.js';
 import { pressBuy, pressKind } from '../src/deep/rails.js';
 import { stationById } from '../src/deep/party.js';
 import { doneAt, markDoneSeen } from '../src/works.js';
 import { slotX, deepX0, deepFloor, plinthTop, postY, standOfStation } from '../src/deep/place.js';
-import { PROPS, propCells } from '../src/deep/props.js';
+import { PROPS, propCells, flameCells } from '../src/deep/props.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawDeepStations, chooseMarkAt } from '../src/render/deep.js';
 import { GREYS, PURPLES } from '../src/render/deeptones.js';
@@ -167,5 +167,29 @@ group("every prop's station, scaffold and all, keeps clear of the next slot", as
     ok(pitch === 49 * P, 'the slots stand 49 cells apart', `${pitch / P}`),
     ok(water >= 10 * P, 'built, ten cells of water or more between neighbors', `${water / P} cells`),
     ok(scaffolded >= 2 * P, 'and with both scaffolds up, still two cells between their posts', `${scaffolded / P} cells`)
+  ];
+});
+
+// The Mage's candle flame sways (the owner, 2026-10-15): held poses of the
+// `*` tone alone, out of the still image, upright every other pose, each
+// held 0.15 to 0.3 s, and two stations' flames not in step.
+group("the Mage's flame sways in held poses, each station's its own", async () => {
+  const at = (t, seed) => JSON.stringify(flameCells('mage', false, t, seed));
+  const holds = [], seen = new Set(), lo = PROP_FLAME.hold * (1 - PROP_FLAME.jitter), hi = PROP_FLAME.hold * (1 + PROP_FLAME.jitter);
+  let prev = at(0, 3), since = 0, apart = 0;
+  for (let i = 1; i < 60 * 20; i++) {
+    const t = i / 60, k = at(t, 3);
+    seen.add(k);
+    if (at(t, 3) !== at(t, 4)) apart++;
+    if (k !== prev) { if (since > 0) holds.push(t - since); since = t; prev = k; }
+  }
+  const tones = new Set([...flameCells('mage', false, 1, 0), ...flameCells('mage', false, 2, 0)].map(c => c[3]));
+  const still = propCells('mage', false).filter(([c, r]) => PROPS.mage.rows[r][c] === '*').length;
+  return [
+    ok(seen.size === PROP_FLAME.frames.length, 'every pose is struck', `${seen.size}`),
+    ok(Math.min(...holds) >= lo - 1 / 60 && Math.max(...holds) <= hi + 1 / 60, 'each held 0.15 to 0.3 s',
+       `${Math.min(...holds).toFixed(2)}..${Math.max(...holds).toFixed(2)}`),
+    ok(tones.size === 1 && still === 0, 'in the one accent tone, none of it in the still image', `${tones.size} tones, ${still} still`),
+    ok(apart > 60 * 20 * 0.3, 'two stations out of step', `${apart} frames apart`)
   ];
 });

@@ -37,7 +37,7 @@ import { paintAbyssField } from './abyssfield.js';
 import { shiftAt, WAVE_REACH } from './deepwave.js';
 import { abyssLine } from '../pit.js';
 import { CRUSHER_SPRITES } from '../deep/sprites.js';
-import { propCells, brewCells } from '../deep/props.js';
+import { propCells, brewCells, flameCells } from '../deep/props.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
 import { raw, darkPage } from '../ink.js';
@@ -359,8 +359,9 @@ function drawPlinth(st) {
 function drawProp(st, t) {
   const p = place.propRect(st), lit = (st.rung || 0) >= CAPSTONE_RUNG;
   ctx.drawImage(propImage(p.key, lit), p.x, p.y);
-  // the one prop that moves: the hexer's brew, over its pot
-  for (const [c, r, ramp, i] of brewCells(p.key, lit, t)) {
+  // the parts that move, over the still image: the hexer's brew over its
+  // pot, and the Mage's flame, seeded by the slot so no two sway together
+  for (const [c, r, ramp, i] of [...brewCells(p.key, lit, t), ...flameCells(p.key, lit, t, st.slot)]) {
     ctx.fillStyle = toneOf(ramp, i);
     ctx.fillRect(p.x + c * P, p.y + r * P, P, P);
   }

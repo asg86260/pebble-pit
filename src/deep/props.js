@@ -14,6 +14,7 @@
 //   h r d  an R cell toned by hand      g z  a Q cell toned by hand
 //   1-5  a grey by hand    v w  purple by hand    *  the class accent
 //   +  a cell only from rung 8          B  the hexer's brew    .  nothing
+// On a prop marked `flame`, its `*` cells are a flame that sways (`flameCells`).
 // Every part is shaded by where it stands, lit from the upper left
 // (`shadeAt`), so the rows alone say how a prop is drawn, and a prop is
 // swapped by swapping its rows.
@@ -23,7 +24,7 @@
 // a station is drawn as without a canvas. It imports only the config, so
 // place.js can read it without pulling the drawing in behind it.
 
-import { DEEP_PURPLE, PROP_TONES } from '../config.js';
+import { DEEP_PURPLE, PROP_TONES, PROP_FLAME } from '../config.js';
 
 export const PROPS = {
   // a crate of the gear, still packed: boards, a brace and straw at the lid
@@ -189,25 +190,27 @@ export const PROPS = {
     'KKKKKKKK..KKKKKKKK',
     'HHHHHHHH..HHHHHHHH',
     '.KKKKKK....KKKKKK.'] },
-  // a lectern, a book open on it, a candle at the desk's end, its flame the accent
-  mage: { rows: [
-    '..............*.',
-    '.HHHH..HHHH...*.',
-    'HHHHHFFHHHHH..1.',
-    'HKKKHFFHKKKH.HHH',
-    'HHHHHFFHHHHH.HHH',
-    'HKKHHFFHHKKH.HHH',
-    'HHHHHFFHHHHH.HHH',
-    'FFFFFFFFFFFFFFFF',
-    '.FFFFFFFFFFFFFF.',
-    '......FFFF......',
+  // a tall floor candle stand: one thick candle with wax drips in a shallow
+  // tray, drips off the rim, a knop on the shaft, a footed base (option 4 of
+  // docs/mocks/mage-candelabra-2026-10-15/); its flame the accent, and alive
+  mage: { flame: 1, rows: [
+    '.......*........',
+    '.......**.......',
+    '......HHHH......',
+    '......RHHH......',
+    '......RHHR......',
+    '......HHHR......',
+    '..F...HHHH...F..',
+    '..FFFFFFFFFFFF..',
+    '...FFFFFFFFFF...',
+    '...R...FF...R...',
     '.......FF.......',
-    '......FFFF......',
+    '......KKKK......',
     '.......FF.......',
     '.......FF.......',
     '.......FF.......',
-    '....FFFFFFFF....',
-    '..FFFFFFFFFFFF..'] },
+    '.....FFFFFF.....',
+    '...FF..FF..FF...'] },
   // a music stand: a sheet with a note on it, a ledge, a thin tripod
   bard: { rows: [
     '.HHHHHHHHHH.',
@@ -230,7 +233,8 @@ export const PROPS = {
     '.F........F.'] },
 };
 
-// The hexer's brew, the one prop that moves: its surface is the pot's `B`
+// The hexer's brew, one of the two props that move (the Mage's flame,
+// `flameCells`, is the other): its surface is the pot's `B`
 // cells (row `brew` of its rows), and a bubble rises over the lip on a
 // `period`-second beat, a cell every `step` s for `life` s, at one of `lanes`
 // columns from `lane0`; a dim purple `bubble` before 8, `bubbleLit` from it.
@@ -256,10 +260,12 @@ function shadeAt(rows, r, c) {
 
 // Every still cell of prop `key`, as [col, row, ramp, tone]: `ramp` 'g' for
 // the grey ramp and 'p' the purple, `tone` an index into it; `lit` from
-// rung 8. The brew's bubble is `brewCells`'.
+// rung 8. The brew's bubble is `brewCells`', and a flame's `*` cells are
+// `flameCells`', since they move.
 export function propCells(key, lit) {
-  const rows = PROPS[key].rows, T = PROP_TONES, out = [];
+  const rows = PROPS[key].rows, T = PROP_TONES, out = [], flame = PROPS[key].flame;
   rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (flame && ch === '*') return;
     const ramp = T.ramps[ch] && ((lit && T.lit[ch]) || T.ramps[ch]);
     const tone = ramp ? ramp[shadeAt(rows, r, c)] : T.hand[ch]?.[lit ? 1 : 0];
     if (tone) out.push([c, r, ...tone]);
@@ -275,5 +281,37 @@ export function brewCells(key, lit, t) {
   const k = (t * B.pace) % B.period;
   return k < B.life ? [[B.lane0 + Math.floor(t / B.period) % B.lanes, row - 1 - Math.floor(k / B.step),
                         'p', lit ? B.bubbleLit : B.bubble]] : [];
+}
+
+// A stateless 0..1 per beat and seed, so a pose is the same whichever frame
+// asks for it.
+const hash = n => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); };
+
+// The flame's pose at `t` seconds for the station seeded `seed`, in the same
+// shape as `propCells`: upright on even beats, a hashed lean on odd ones,
+// stood on the foot of the rows' `*` cells. Beat n starts at n holds plus a
+// hashed nudge, so finding it from `t` alone needs no clock kept anywhere.
+export function flameCells(key, lit, t, seed = 0) {
+  const prop = PROPS[key];
+  if (!prop.flame) return [];
+  const F = PROP_FLAME, s = seed * F.seedStep;
+  const start = n => (n + hash(n + s) * F.jitter) * F.hold;
+  let n = Math.floor(t / F.hold);
+  if (t < start(n)) n--;
+  const lean = 1 + Math.floor(hash(n * 1.618 + s + 0.5) * (F.frames.length - 1));
+  const frame = F.frames[n % 2 === 0 ? 0 : lean];
+  const foot = footOf(prop.rows), tone = PROP_TONES.hand['*'][lit ? 1 : 0];
+  return frame.map(([dc, dr]) => [foot.c + dc, foot.r + dr, ...tone]);
+}
+const feet = new WeakMap();
+function footOf(rows) {
+  if (!feet.has(rows)) {
+    let foot = null;
+    rows.forEach((row, r) => [...row].forEach((ch, c) => {
+      if (ch === '*' && (!foot || r > foot.r || (r === foot.r && c < foot.c))) foot = { c, r };
+    }));
+    feet.set(rows, foot);
+  }
+  return feet.get(rows);
 }
 
