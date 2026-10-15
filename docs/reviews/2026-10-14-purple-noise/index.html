@@ -1,0 +1,17 @@
+<!doctype html><title>Purple noise</title><style>
+:root{--bg:#fff;--fg:#111;--mute:#666;--line:#ddd}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#161616;--fg:#eee;--mute:#999;--line:#333}}
+:root[data-theme=dark]{--bg:#161616;--fg:#eee;--mute:#999;--line:#333}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 ui-monospace,Menlo,Consolas,monospace;margin:0;padding:16px}
+main{max-width:1300px;margin:auto}h1{font-size:20px}p{color:var(--mute);max-width:70ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:16px}figure{margin:0}
+img{max-width:100%;image-rendering:pixelated;display:block;border:1px solid var(--line)}
+.t{display:flex;gap:8px;margin:8px 0}.t button{font:inherit;padding:4px 10px;border:1px solid var(--fg);background:none;color:inherit;cursor:pointer}.t button.on{background:var(--fg);color:var(--bg)}
+</style><main><h1>The deep's purple noise</h1>
+<p>Shots of the real game with the star spacing and the drifting purple motes turned down; no game code has changed. The stars are the abyss's own, so the pit's liquid in the yard would follow unless it keeps today's. Reply in chat or on the decisions board.</p>
+<div class="t"><button class="on" data-th="light">light theme</button><button data-th="dark">dark theme</button></div><div class="grid">
+<figure><img data-src="img/today-" src="img/today-light.png" alt="Today: a star every 34 cells, 150 purple motes"><figcaption>Today: a star every 34 cells, 150 purple motes</figcaption></figure>
+<figure><img data-src="img/A-" src="img/A-light.png" alt="A · half: a star every 68 cells, 75 motes"><figcaption>A · half: a star every 68 cells, 75 motes</figcaption></figure>
+<figure><img data-src="img/B-" src="img/B-light.png" alt="B · a third: a star every 102 cells, 50 motes"><figcaption>B · a third: a star every 102 cells, 50 motes</figcaption></figure>
+<figure><img data-src="img/C-" src="img/C-light.png" alt="C · B, and only two stars in seven purple (the rest too faint to show): nearly bare"><figcaption>C · B, and only two stars in seven purple (the rest too faint to show): nearly bare</figcaption></figure>
+</div></main><script>document.querySelectorAll('.t button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.t button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('img[data-src]').forEach(i=>i.src=i.dataset.src+b.dataset.th+'.png')});</script>
