@@ -255,14 +255,18 @@ export const MECHANICS = [
   { kind: 'orb', every: 24, warn: 1.5, last: 12, hp: 0.15 }
 ];
 // The constrict's orb (DESIGN.md, "A fifth phase: the constrict"): the comb
-// lights head first through the warning; bolts jag from its tips to the
+// lights head first through the warning; a beam runs from its tips to the
 // strongest station's fighter for ORB_BOLT_S; an orb ORB_R cells across closes
 // round it over ORB_CLOSE_S, then rises over ORB_RISE_S in held ORB_STEP-cell
 // steps, fast at first with ORB_GHOSTS rings trailing, until its bottom is
 // ORB_CLEAR cells over its station's hit box, and bobs a cell every ORB_BOB_S;
 // broken, it bursts into motes over ORB_BURST_S.
 export const ORB_BOLT_S = 0.5;
-export const ORB_BOLTS = 3;
+// The beam tapers toward the orb: three cells wide for the first BEAM_WIDE_TO
+// of its length, two to BEAM_THIN_TO, then the white core alone (owner
+// 2026-10-15, option C): a wide root at the comb that narrows to a point.
+export const BEAM_WIDE_TO = 0.4;
+export const BEAM_THIN_TO = 0.75;
 export const ORB_R = 5;
 export const ORB_CLOSE_S = 0.2;
 export const ORB_RISE_S = 1.4;

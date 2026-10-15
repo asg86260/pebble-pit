@@ -99,14 +99,12 @@ export function mealComb(g = S.mealGo) {
   if (b.name === 'gulp') return b.k < MEAL_GULP_BOLTS ? MEAL_COMB_LEFT : 0;
   return 0;
 }
-// The bolts to the orb: how much of them shows (0 none), and their shape,
-// held a sixth of a second as the fight's are.
+// The beam to the orb: how much of it shows (0 none).
 export function mealBolts(g = S.mealGo) {
   const b = beatOf(g);
   if (!b || g.x == null) return null;
-  const shape = Math.floor((g.t - MEAL_WARN_S) * 6);
-  if (b.name === 'bolts' || b.name === 'reel') return { alpha: 1, shape };
-  if (b.name === 'gulp' && b.k < MEAL_GULP_BOLTS) return { alpha: 1 - b.k / MEAL_GULP_BOLTS, shape };
+  if (b.name === 'bolts' || b.name === 'reel') return { alpha: 1 };
+  if (b.name === 'gulp' && b.k < MEAL_GULP_BOLTS) return { alpha: 1 - b.k / MEAL_GULP_BOLTS };
   return null;
 }
 // How far open the jaws are for the meal, 0..1, in their held poses: opening

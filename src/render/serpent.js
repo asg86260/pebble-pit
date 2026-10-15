@@ -29,7 +29,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_SWELL_W, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
-         SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP, ORB_STEP, ORB_GHOSTS,
+         SERPENT_PHASES, ORB_BOLT_S, BEAM_WIDE_TO, BEAM_THIN_TO, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP, ORB_STEP, ORB_GHOSTS,
          BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W,
          NEARDEATH, POWERUP, DEEP_MOTE_TINTS, DEEP_H, COIL_Y, SERPENT_EYE_HOLD } from '../config.js';
 import { S } from '../state.js';
@@ -406,7 +406,7 @@ function drawCoil() {
   // taller, shortening to nothing at its end. Stood on the body's top edge
   // across the body, so it rides the bends with the rest.
   // Through the constrict's warning it lights up head first, and holds lit
-  // while the bolts leave it (`drawOrb`), which start from its tips.
+  // while the beam leaves it (`drawOrb`), which start from its tips.
   const crestFrom = headA - SNOUT / 2, crestTo = headA + CREST_LEN;
   const spiked = new Set(), lit = combLit(t);
   crestTips = [];
@@ -598,20 +598,30 @@ function orbRing(x, y, r, t, ink, every = 1) {
   }
 }
 const ORB_INK = n => (n % 4 === 0 ? PURPLES[WHITE] : PURPLES[WHITE - 2]);
-// The bolts off the lit comb's tips to (c.x, c.y), in shape `shape`: each a
-// jagged run, wide at the comb and closing on its end, every third step white.
-function drawBolts(c, shape) {
+// The beam off the lit comb to (c.x, c.y): one straight run of P cells from
+// the middle lit crest tip, steady, tapering toward the orb from three cells
+// wide (darker edges, white core) to two to the white core alone. The root is
+// the middle of the tips still lit, so as the comb goes dark tail-first it
+// slides toward the head and is gone with the last spike. It fades by the
+// caller's globalAlpha only.
+function drawBeam(c) {
   if (!crestTips.length) return;
-  for (let n = 0; n < ORB_BOLTS; n++) {
-    const from = crestTips[(n * 5 + shape * 3) % crestTips.length];
-    let x = from.x, y = from.y;
-    for (let s = 1; s <= 14; s++) {
-      const u = s / 14;
-      const nx = from.x + (c.x - from.x) * u + (unit(n * 31 + s + shape * 7) - 0.5) * P * 4 * (1 - u);
-      const ny = from.y + (c.y - from.y) * u;
-      ctx.fillStyle = s % 3 ? PURPLES[WHITE] : GREYS[WHITE];
-      for (let q = 0; q <= 2; q++) ctx.fillRect(snap(x + (nx - x) * q / 2), snap(y + (ny - y) * q / 2), P, P);
-      x = nx; y = ny;
+  const from = crestTips[Math.floor(crestTips.length / 2)];
+  const dx = c.x - from.x, dy = c.y - from.y, len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len, steps = Math.ceil(len / (P / 2));
+  const edge = PURPLES[WHITE - 2];
+  // Edges first so the core lies over them where the offsets meet.
+  const passes = [
+    { ink: edge, at: u => (u < BEAM_WIDE_TO ? -P : u < BEAM_THIN_TO ? -P / 2 : null) },
+    { ink: edge, at: u => (u < BEAM_WIDE_TO ? P : null) },
+    { ink: GREYS[WHITE], at: () => 0 },
+  ];
+  for (const pass of passes) {
+    ctx.fillStyle = pass.ink;
+    for (let q = 0; q <= steps; q++) {
+      const u = q / steps, o = pass.at(u);
+      if (o == null) continue;
+      ctx.fillRect(snap(from.x + dx * u + nx * o - P / 2), snap(from.y + dy * u + ny * o - P / 2), P, P);
     }
   }
 }
@@ -625,7 +635,7 @@ function drawMealOrb(t, bolts) {
   const g = S.mealGo, o = orbOf(t);
   if (!o) return;
   const b = bolts ? mealBolts() : null;
-  if (b) { ctx.globalAlpha = b.alpha; drawBolts(o, b.shape); }
+  if (b) { ctx.globalAlpha = b.alpha; drawBeam(o); }
   ctx.globalAlpha = o.alpha;
   drawHeld(g.kind, o.x, o.y, g.dir, g.seed, t / 1000, o.squash);
   orbRing(o.x, o.y, o.r * P, t, ORB_INK);
@@ -642,7 +652,7 @@ export function drawMeal() {
   const t = now(), b = mealBolts();
   if (beatOf()?.name === 'gulp') {
     const o = orbOf(t);
-    if (b && o) { ctx.globalAlpha = b.alpha; drawBolts(o, b.shape); ctx.globalAlpha = 1; }
+    if (b && o) { ctx.globalAlpha = b.alpha; drawBeam(o); ctx.globalAlpha = 1; }
     return;
   }
   drawMealOrb(t, true);
@@ -687,7 +697,7 @@ export function drawOrb() {
     const c = orbMiddle(o.st);
     if (!c) return;
     const age = orbAge(), st = S.stations.find(s => s.id === o.st);
-    if (age < ORB_BOLT_S) drawBolts(c, Math.floor(age * 6));
+    if (age < ORB_BOLT_S) drawBeam(c);
     // the orb, closing over the first beat of it, turning; while it rises
     // fast, fainter rings trailing a step apart under it
     const r = Math.min(ORB_R, 1 + age * 20) * P;

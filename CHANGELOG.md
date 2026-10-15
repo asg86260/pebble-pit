@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The constriction is one steady solid beam from the comb to the orb, three cells wide at the comb with a white core, narrowing to the core alone, instead of jagged flickering bolts (src/selftest/deeppalette.js).
 - The big dim shadows crossing the deep's upper water are gone, the giant and the far and middle crossings; the creatures that swim the water stay (test/deep-creature-click.test.mjs).
 - The deep draws from six greys, five purples and white: one flat water with only purple stars in it, its stations, domes, pods and furnace flat silhouettes lit along their top edges, its creatures flat, and the portal a black hole in the water (src/selftest/deeppalette.js).
 - After the story's kill the serpent comes back once and stays on its last phase: each health bar emptied is a new level -- it rears, cracks to the brink and draws the deep's motes in to fill the bar again a tenth tougher -- the level on its bar, and a fang drops each level until seven stations stand (test/endless.test.mjs).
