@@ -1,0 +1,8 @@
+{ "title": "The deep's swell", "lede": "A wave of swell crosses the deep's water, pushing the stars and motes right, then they ease back.",
+  "base": "277544c786d5e6b50c631808913a142879fdee6a", "head": "34e9972acaa212ce37befa50f10660b6f759b324",
+  "items": [ { "id": "wave", "title": "A swell crosses the deep",
+    "what": "One band at a time rolls across, mixed strengths; stars and motes are pushed right and ease back.",
+    "shots": [
+      { "scene": "deep-all", "window": [1200, 800], "wait": 11, "zoom": 0.6, "gif": { "seconds": 6, "fps": 20 }, "label": "the deep" },
+      { "scene": "deep-all", "window": [1200, 800], "wait": 11, "crop": [450, 250, 300, 180], "zoom": 2, "gif": { "seconds": 6, "fps": 20 }, "label": "close on the water" }
+    ] } ] }
