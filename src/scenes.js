@@ -746,7 +746,7 @@ const deepScenes = {
   crusher: { about: 'the deep', say: 'the crusher: gatherers tossing scales into the hopper, the fire burning up',
     run: () => {
       deepYard({ spare: 3, loose: 900, run: 12 });
-      lookDeep(spotX('crusher') + S.viewW * 0.3);
+      window.__look(deepX0());   // the deep's left end, where the card stands clear of the furnace
     } },
   // Your hand in the deep: a handful swept off the floor beside the crusher
   // and held over the furnace's door, on the pointer as the yard's dust is.
@@ -759,7 +759,7 @@ const deepScenes = {
       S.dragging = true;
       for (let i = 0; i < 6; i++) sweep(c.x + c.w + P * (6 + i * 2), deepFloor() - P);
       S.mouse = { x: c.x + c.w / 2, y: c.y + c.h * 0.6 };
-      lookDeep(spotX('crusher') + S.viewW * 0.3);
+      window.__look(deepX0());   // the deep's left end, where the card stands clear of the furnace
     } },
   // A storm over the yard and a strike at its flash while the view is in the
   // deep: under the water none of it shows.
@@ -783,7 +783,7 @@ const deepScenes = {
   'deep-rest': { about: 'the deep', say: 'the deep\'s crew at rest: gatherers on a bare floor, strolling, floating, hopping',
     run: () => {
       deepYard({ spare: 6, run: 30 });
-      lookDeep(spotX('crusher') + S.viewW * 0.35);
+      window.__look(deepX0());   // the deep's left end, where the card stands clear of the furnace
     } },
   // The pods between the crusher and the stations, a stack of them, some of
   // their people home.

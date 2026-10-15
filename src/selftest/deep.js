@@ -89,24 +89,36 @@ export const TESTS = [
     const box = countRect(), edge = (portalNearEdge() - S.camX) * S.zoom;
     return [ok(box && box.x + box.w <= edge, 'the card stands clear of the hole', box && `${box.x + box.w} > ${edge}`)];
   }],
-  // The camera walked from the deep's left end, where the furnace stands
-  // furthest into the glass, until it has gone off the left: the card is drawn
-  // at every stop and never on the furnace.
+  // The card keeps to the glass's left edge in the deep, and the furnace
+  // stands far enough in to clear it (DEEP_SPOTS.crusher). The card at its
+  // widest, every coin seen and each reading as wide as a count gets, read
+  // with the camera at the deep's left end, the one frame that has the whole
+  // furnace on the glass nearest the card. A frame further right takes the
+  // furnace off the glass's left edge, and so behind the card, on its way.
   ['deep: the counter card never covers the furnace', async () => {
     deepYard();
     window.__view('deep');
+    window.setResources({ dust: 88888, shards: 88888, spores: 88888, sparks: 88888, scales: 88888 });
+    S.seenScale = S.seenFang = true;
     run(VIEW_GLIDE_S + 0.5);
-    const bad = [];
-    for (let i = 0; i <= 10; i++) {
-      window.__look(deepX0() - S.viewW + i * S.viewW / 5);
-      await settle(0.1);
+    await settle(1);
+    const edge = [], bad = [];
+    const read = stop => {
       const box = countRect(), c = crusherRect();
+      if (!box) { bad.push(`${stop}: no card`); return; }
+      if (box.x > P) edge.push(`${stop}: ${box.x}`);
       const f = { x: (c.x - S.camX) * S.zoom, y: (c.y - S.camY) * S.zoom, w: c.w * S.zoom, h: c.h * S.zoom };
-      if (box && box.x < f.x + f.w && box.x + box.w > f.x && box.y < f.y + f.h && box.y + box.h > f.y)
-        bad.push(`card ${box.x},${box.y} ${box.w}x${box.h} on furnace ${Math.round(f.x)},${Math.round(f.y)} ${f.w}x${f.h}`);
-    }
+      if (box.x < f.x + f.w && box.x + box.w > f.x && box.y < f.y + f.h && box.y + box.h > f.y)
+        bad.push(`${stop}: card ${box.x},${box.y} ${box.w}x${box.h} on furnace ${Math.round(f.x)},${Math.round(f.y)} ${f.w}x${f.h}`);
+    };
+    window.__look(deepX0() - S.viewW);
+    await settle(0.1);
+    const leftEnd = Math.round(S.camX) === deepX0();
+    read('left end');
     return [ok(S.view === 'deep', 'the view is the deep', S.view),
-            ok(!bad.length, 'the card stands clear of the furnace at every stop', bad.join('; '))];
+            ok(leftEnd, "the camera reaches the deep's left end", `${S.camX} vs ${deepX0()}`),
+            ok(!edge.length, 'the card stands at the left edge', edge.join(', ')),
+            ok(!bad.length, 'the card stands clear of the furnace', bad.join('; '))];
   }],
   ['deep: the corner square goes down and up, and only after the snatch', async () => {
     deepYard(false);

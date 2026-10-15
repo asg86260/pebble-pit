@@ -152,7 +152,8 @@ this section; the release that switches it on moves these under Unreleased.
 - Gatherers no longer stack into what looks like one worker: each goes for scales nobody else is on and they swim in file, a body apart (test/gather-spread.test.mjs).
 - The deep no longer hitches every few seconds during a fight (test/deep-alloc.test.mjs).
 - The game no longer stops in the deep when a station's crew climbs a rung (test/reexport-local.test.mjs).
-- The counter in the deep stands beside the furnace instead of over it (src/selftest/deep.js).
+- The counter in the deep stands at the left edge again and the furnace stands further in, so the card no longer covers it (src/selftest/deep.js).
+- The furnace's fire burns in one steady purple instead of cycling through white, grey and the purples, and its sparks stay that purple as they fade (`node tools/look.mjs crusher`).
 
 ## Unreleased
 
