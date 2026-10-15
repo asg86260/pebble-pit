@@ -28,6 +28,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Every creature in the deep, the stream's included, answers a click with its own move -- the lanternfish darts, the angler snaps, the amphipod back-flips, the shoal turns as one and flees -- and drops a handful of scales (test/deep-creature-click.test.mjs, `node tools/look.mjs deep-react-angler`).
 - A creature in the deep drops its handful of scales only on the first click; later clicks still startle it, and a shoal that has fled and come back, or a new creature swimming in, has a handful of its own (test/deep-creature-click.test.mjs).
 - A clicked creature in the deep moves smoothly through its reaction, easing off its path and back onto it without a jump (test/deep-creature-click.test.mjs).
+- The serpent's eye holds still on its head instead of flickering between two pixels as it swims (`node tools/look.mjs deep-all`).
 - The deep's water is black, on the dark theme as on the light, with half the purple stars and motes in it, dimmer.
 - The deep keeps three creatures at once, each wandering the whole height of the water, and each time one swims off the end the next kind comes in, so every swimmer turns up in its turn (test/deep-fauna.test.mjs).
 - After the serpent dies she hangs her gear on her station for one of the deep's crew to take up, and the two of them go home through the portal and down the whole yard with everyone falling in behind, to a house the builders put up during the walk, where they live for good (test/finale.test.mjs).

@@ -31,7 +31,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
          SERPENT_PHASES, ORB_BOLT_S, ORB_BOLTS, ORB_R, ORB_BURST_S, ORB_ARROW_S, ORB_ARROW_UP, ORB_STEP, ORB_GHOSTS,
          BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W,
-         NEARDEATH, POWERUP, DEEP_MOTE_TINTS, DEEP_H, COIL_Y } from '../config.js';
+         NEARDEATH, POWERUP, DEEP_MOTE_TINTS, DEEP_H, COIL_Y, SERPENT_EYE_HOLD } from '../config.js';
 import { S } from '../state.js';
 import { mealNow, jawOpen, jawGap, jawPose } from '../deep/meals.js';
 import { lengthOfKind, mealKind } from './fish.js';
@@ -123,6 +123,8 @@ function dentAt(cx, t, dents) {
 // the hide the picture shows, give and bites and all. A column the coil was
 // not drawn over this frame is read off the centerline instead.
 let hide = { c0: 0, top: new Int32Array(0), bot: new Int32Array(0) };
+// The eye's cell off the snout's tip, held between frames (`drawCoil`).
+let eyeHeld = null;
 function laidAt(c) {
   const t = now(), x = (c + 0.5) * P;
   let best = null, bd = Infinity, bu = 0;
@@ -290,6 +292,36 @@ function drawCoil() {
     if (r < top[c]) top[c] = r;
     if (r > bot[c]) bot[c] = r;
   };
+  // The snout's jaw line and the eye behind it, laid once off the snout's tip
+  // rather than asked of each cell: picked cell by cell off the curve, the
+  // line broke into steps and the eye hopped about the head as it turned.
+  // The jaw is one unbroken run of cells from the tip back to the head's
+  // line; the eye keeps its offset from the tip's cell, so the two move
+  // together, a whole cell at a time.
+  const marks = new Set();
+  {
+    const at = (want, off) => {
+      let e = pts[0];
+      for (const q of pts) if (Math.abs(q.along - want) < Math.abs(e.along - want)) e = q;
+      const da = want - e.along;
+      return { x: e.x + e.tx * da + e.nx * off, y: e.y + e.ty * da + e.ny * off, r: e.r };
+    };
+    const cellOf = q => [Math.floor((q.x - minX) / P), Math.floor((q.y - minY) / P)];
+    const put = (c, rr) => { if (c >= 0 && c < cols && rr >= 0 && rr < rows) marks.add(rr * cols + c); };
+    const tipP = at(pts[0].along + P / 2, 0), [tc, tr] = cellOf(tipP);
+    const [hc, hr] = cellOf(at(headA, 0));
+    if (!open) {
+      const n = Math.max(Math.abs(hc - tc), Math.abs(hr - tr));
+      for (let k = 0; k <= n; k++) put(tc + Math.round((hc - tc) * k / (n || 1)), tr + Math.round((hr - tr) * k / (n || 1)));
+    }
+    // Its offset is held until the true one is most of a cell off it: rounded
+    // fresh each frame, an offset near a half flipped between two cells.
+    const head = at(headA + P, 0), eye = at(headA + P, -(head.r - P * 2));
+    const ox = (eye.x - tipP.x) / P, oy = (eye.y - tipP.y) / P;
+    if (!eyeHeld || Math.abs(ox - eyeHeld[0]) > SERPENT_EYE_HOLD || Math.abs(oy - eyeHeld[1]) > SERPENT_EYE_HOLD)
+      eyeHeld = [Math.round(ox), Math.round(oy)];
+    put(tc + eyeHeld[0], tr + eyeHeld[1]);
+  }
   for (let i = 0; i < own.length; i++) {
     if (own[i] < 0) continue;
     const p = pts[own[i]];
@@ -358,9 +390,8 @@ function drawCoil() {
     // Teeth along the open jaws' edges, and the lump dark through the hide.
     if (tooth && (aI & 1) === 0 && along < (MEAL_HINGE - 1) * P) { ramp = GREYS; rung = WHITE; }
     if (lumpAt != null && Math.abs(along - lumpAt) < lumpLen * 0.6 && Math.abs(across) < P * 1.6) { ramp = GREYS; rung = 2; }
-    // The snout's jaw, a line through it, and the eye behind it.
-    if (!g && along < headA && Math.abs(across) < P / 2) { ramp = GREYS; rung = 0; }
-    if (Math.abs(along - headA - P) < P / 2 && Math.abs(across + r - P * 2) < P / 2) { ramp = GREYS; rung = 0; }
+    // The snout's jaw line and the eye (`marks`, laid above).
+    if (marks.has(i)) { ramp = GREYS; rung = 0; }
     coil.put(i, ramp[rung]);
   }
   // Sinking into the abyss the whole of him dims, and flickers dim in the

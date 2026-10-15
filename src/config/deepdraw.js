@@ -152,6 +152,10 @@ export const DEEP_SILT = 75;         // silt motes hanging in a window of the de
 // rungs each one's brightest is held under.
 export const DEEP_STAR_THIN = 8;
 export const DEEP_STAR_DIM = 2;
+// How far, in cells, the serpent's true eye may drift off the cell it is
+// drawn on before it moves: under a cell, so it holds through the head's sway
+// instead of flipping between two cells (render/serpent.js).
+export const SERPENT_EYE_HOLD = 0.8;
 export const DEEP_SILT_SINK = 0.04;  // px a frame the silt settles, against the current's push
 export const DEEP_FLECK_EVERY = 0.35; // seconds between flecks off a swaying coil
 export const DEEP_FLECK_LIFE = 7;    // seconds a fleck drifts before it is gone
