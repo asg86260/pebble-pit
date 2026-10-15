@@ -23,10 +23,6 @@
 
 import { DEEP_GREY, DEEP_PURPLE } from '../config.js';
 
-// The mock's noise (deep/kits.js has the same), so each lit brew cell is
-// dealt the tone it was dealt on the approved page.
-const hash = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
-
 // A prop's rungs: the stone it is made of, the accent at rung 8, and a part
 // in the capstone's purple a step under it, so the '*' still reads as its
 // brightest point.
@@ -154,21 +150,16 @@ export const R8_PARTS = {
 };
 
 // The hexer's brew, the one prop that moves: dark and still before rung 8,
-// and from 8 its surface (row `row`, columns `from` to `to`) purple and
-// dealt afresh `rate` times a second. A bubble rises over the lip on a
+// and from 8 its surface (row `row`, columns `from` to `to`) one steady
+// purple, `lit`. A bubble rises over the lip on a
 // `period`-second beat, a cell every `step` s for `life` s, at one of `lanes`
 // columns from `lane0`; a dim purple `bubble` before 8, `bubbleLit` from it.
-export const BREW = { row: 1, from: 1, to: 5, lit: [DEEP_PURPLE.mid, DEEP_PURPLE.glow, DEEP_PURPLE.mid], rate: 2,
+export const BREW = { row: 1, from: 1, to: 5, lit: DEEP_PURPLE.mid,
                       period: 1.8, pace: 0.9, life: 1.2, step: 0.4, lane0: 2, lanes: 3,
                       bubble: DEEP_PURPLE.mid, bubbleLit: DEEP_PURPLE.glow };
 
 // Which prop a station stands beside: its class's, or the crate below the fork.
 export const propKey = st => (st && st.cls && PROPS[st.cls] ? st.cls : 'crate');
-
-// A seed a prop, as the mock deals it: the key's length, so each prop's
-// tones fall where the approved page's did.
-const seedOf = key => key.length * 3.1;
-const toneAt = (mat, c, r, seed) => mat[Math.floor(hash(c * 13.7 + r * 71.3 + seed) * mat.length)];
 
 // Every still cell of prop `key`, as [col, row, ramp, tone]: `ramp` 'g' for
 // the grey ramp and 'p' the purple, `tone` an index into it, or 'top' for a
@@ -195,8 +186,8 @@ export function propCells(key, lit) {
 // rung 8, and the bubble over the lip. Nothing for any other prop.
 export function brewCells(key, lit, t) {
   if (key !== 'hexer') return [];
-  const B = BREW, seed = seedOf(key), out = [];
-  if (lit) for (let c = B.from; c <= B.to; c++) out.push([c, B.row, 'p', toneAt(B.lit, c, Math.floor(t * B.rate), seed)]);
+  const B = BREW, out = [];
+  if (lit) for (let c = B.from; c <= B.to; c++) out.push([c, B.row, 'p', B.lit]);
   const k = (t * B.pace) % B.period;
   if (k < B.life) out.push([B.lane0 + Math.floor(t / B.period) % B.lanes, B.row - 1 - Math.floor(k / B.step),
                             lit ? 'p' : 'g', lit ? B.bubbleLit : B.bubble]);

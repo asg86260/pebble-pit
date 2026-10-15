@@ -23,8 +23,9 @@ export const DEEP_PURPLE_RUNGS = [3, 5, 7, 9, 11];
 export const DEEP_GREY = { hole: 0, water: 0, ground: 4, stone: 6, lit: 8, pale: 10, white: 11 };
 export const DEEP_PURPLE = { dim: 3, low: 5, mid: 7, glow: 9, bright: 11 };
 // The light from above along every top edge of what is built down there:
-// these rungs in turn, each held this long.
-export const DEEP_BREATH = { rungs: [DEEP_PURPLE.low, DEEP_PURPLE.mid, DEEP_PURPLE.glow, DEEP_PURPLE.mid], ms: 1100 };
+// one steady rung (the owner, 2026-10-15: no changing purples in the
+// stations), the one the old breath showed longest.
+export const DEEP_BREATH = { rung: DEEP_PURPLE.mid };
 // As seen, for what is drawn over the finished deep (the numbers, the bar,
 // the statuses) and not turned over with it.
 const seenGrey = k => ABYSS_TONES[DEEP_GREY[k]];

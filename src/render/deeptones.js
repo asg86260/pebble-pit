@@ -62,9 +62,9 @@ export function dimmed(c, n) {
   return r[0] === 'g' ? greyAt(r[1] - n) : purpleAt(r[1] - n);
 }
 
-// The light along every built top edge at `ms`, as a rung of the purple ramp:
-// held a step at a time, never between.
-export const breathAt = ms => DEEP_BREATH.rungs[Math.floor(ms / DEEP_BREATH.ms) % DEEP_BREATH.rungs.length];
+// The light along every built top edge, as a rung of the purple ramp. It
+// holds still: a station's purple does not change with time.
+export const breathAt = () => DEEP_BREATH.rung;
 
 // The abyss's whole ramps, turned: for the yard's rift, which draws them
 // all (render/riftlife.js).
