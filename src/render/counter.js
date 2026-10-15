@@ -3,7 +3,7 @@
 
 import { openBoardRect } from '../board.js';
 import { fmt } from '../words.js';
-import { NUM_FONT_PX, P, WORKER, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FANG_MARK, FLOAT_SHADOW, FLOAT_SHADOW_ALPHA } from '../config.js';
+import { NUM_FONT_PX, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FANG_MARK, FLOAT_SHADOW, FLOAT_SHADOW_ALPHA } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawCoin, drawMark } from './marks.js';
@@ -11,7 +11,6 @@ import { shown } from '../tween.js';
 import { safeBottom } from '../world.js';
 import { portalNearEdge } from './portal.js';
 import { drawable, widthOf, writeCount } from './numfont.js';
-import { tossX } from '../deep/place.js';
 
 // Drawn in **screen** pixels, so it stays the size it is however far the yard
 // has been scaled down to fit the window.
@@ -98,19 +97,10 @@ export function drawCount() {
   const oldX = (pit.x + P * 4 - S.camX) * S.zoom;
   let x = Math.min(oldX, S.W - wide, lip - CLEAR - wide);
   x = Math.max(EDGE, x);
-  // In the deep the pit is overhead, not beside the card, and the wall is the
-  // crusher instead: the card keeps to the left edge of the glass until the
-  // furnace comes into view, then rides along on its right, clear of the
-  // gatherer standing there to toss a load in. A wall that moves with the
-  // camera rather than a corner it jumps between, as the pit's lip is above.
-  // The gap left of the furnace never holds a card, even at the deep's end.
-  // `least` is the card's own left edge at its leftmost, for the dodge below.
-  let least = EDGE;
-  if (S.view === 'deep') {
-    const wall = (tossX() + WORKER / 2 - S.camX) * S.zoom + CLEAR;
-    x = Math.max(EDGE, wall + PAD);
-    least = Math.max(EDGE, wall);
-  }
+  // In the deep the pit is overhead, not beside the card: the card keeps to
+  // the left edge of the glass, and the crusher stands far enough in from the
+  // deep's left end to clear it (DEEP_SPOTS in config/deep.js).
+  if (S.view === 'deep') x = EDGE;
   x = Math.round(x);                // whole pixels, so the marks' cells stay crisp
   // `y` is the bottom row's baseline and the box hangs above it, so the card's
   // own bottom edge is `y + PAD`.
@@ -131,7 +121,7 @@ export function drawCount() {
       box.y < sheet.y + sheet.h && box.y + box.h > sheet.y) {
     const left = sheet.x - CLEAR - box.w;
     const right = sheet.x + sheet.w + CLEAR;
-    const put = left >= least ? left
+    const put = left >= EDGE ? left
               : right + box.w <= S.W - EDGE ? right
               : box.x;
     x += put - box.x;

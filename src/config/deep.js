@@ -31,7 +31,18 @@ export const DEEP_MOUTH = P * 40;    // the shaft, in from the pit's near lip: w
 // crusher they stand an even step apart, each step wider than a station and
 // the ground its crew stands on (DEEP_STAND_W) together, and the spire is
 // still well inside the deep's right end.
-export const DEEP_SPOTS = { crusher: 0.05, pods: 0.19, altar: 0.335, well: 0.475, font: 0.62, circle: 0.76, spire: 0.9 };
+// The crusher stands far enough in that the counter card, kept to the left
+// edge of the glass in the deep (render/counter.js), never covers it with the
+// camera at the deep's left end (the owner, 2026-10-15: "the furnace should
+// be scooted to the right and the card can be all the way to the left"). The
+// card is drawn in screen pixels and the furnace in world ones, so the
+// furthest-in it has to stand is at the smallest zoom the deep is played at:
+// a third, a landscape phone's (any window down to 375 tall); its widest card
+// (six rows reading 88.9k) is 79 screen pixels from the glass's edge, 237
+// world pixels at a third, and the furnace's left side stands at 252, two and a
+// half cells clear. The pods moved over with it, the same air between the
+// gatherers' ground beside the crusher (deep/rest.js) and the stack as before.
+export const DEEP_SPOTS = { crusher: 0.11, pods: 0.245, altar: 0.335, well: 0.475, font: 0.62, circle: 0.76, spire: 0.9 };
 // The pods: the deep's houses, a capsule a body, stacked POD_COLS abreast from
 // the floor up (DESIGN.md, "One crew, two homes").
 export const POD_W = P * 7;
