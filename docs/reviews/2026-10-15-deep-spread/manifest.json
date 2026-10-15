@@ -1,0 +1,45 @@
+{
+ "base": "f540713a2f119afd2fa02d2b8d3df3a3165ba083",
+ "head": "f022627e5ac859eabd9af5262db198546d39e0fe",
+ "at": "2026-10-15T05:13:08.591Z",
+ "items": {
+  "spread": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 2,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 3,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 4,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   }
+  ]
+ }
+}

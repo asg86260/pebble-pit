@@ -1,0 +1,8 @@
+{ "title": "Fewer creatures, the whole height", "lede": "The deep's creatures are fewer and spread over the whole water.",
+  "base": "f540713a2f119afd2fa02d2b8d3df3a3165ba083", "head": "f022627e5ac859eabd9af5262db198546d39e0fe",
+  "items": [ { "id": "spread", "title": "Fewer creatures, the whole height", "what": "The serpent's meal fish come half as often and swim the whole height, far crossings are rarer, and the three roamers start spread top to bottom.",
+    "shots": [
+      { "scene": "deep-zones", "window": [2000,963], "zoom": 0.5, "wait": 0, "label": "start" },
+      { "scene": "deep-zones", "window": [2000,963], "zoom": 0.5, "wait": 60, "label": "1 min" },
+      { "scene": "deep-zones", "window": [2000,963], "zoom": 0.5, "wait": 180, "label": "3 min" },
+      { "scene": "deep-zones", "window": [2000,963], "zoom": 0.5, "wait": 300, "label": "5 min" } ] } ] }
