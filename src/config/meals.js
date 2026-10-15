@@ -47,9 +47,11 @@ export const MEAL_KNOBS = [];
 // how big a cell is against the deep's own, how fast they cross (screen pixels
 // a second), how much of the camera's pan they follow, and what share of the
 // stream each depth is. One sets off every FLOW_EVERY_S on average, from off
-// the glass: slow as they cross, a few at a time is already a busy deep. A
+// the glass: slow as they cross, a few at a time is already a busy deep (one
+// every 120 s had two or three on the glass at once, the slowest taking
+// minutes to cross; one every 240 s is about one). A
 // giant crosses far behind everything every FLOW_GIANT_S.
-export const FLOW_EVERY_S = 120;
+export const FLOW_EVERY_S = 240;
 export const FLOW_CELL = [0.35, 0.55, 0.85];
 export const FLOW_SPEED = [5, 9, 14];
 export const FLOW_PARALLAX = [0.25, 0.55, 0.85];
@@ -69,11 +71,29 @@ export const FLOW_MIDDLE_DIM = 4;
 // every FLOW_NEAR_EVERY_S from FLOW_NEAR_OUT beyond a wall of the deep, at
 // FLOW_NEAR_SPEED world pixels a second, somewhere in the FLOW_NEAR_BAND over
 // the coil's middle. Dense enough that one is always near the mouth when a
-// meal is due.
-export const FLOW_NEAR_EVERY_S = 14;
-export const FLOW_NEAR_SPEED = 24;
-export const FLOW_NEAR_AWAY = 4;       // every this-many-th swims away from the mouth
-export const FLOW_NEAR_JITTER = 0.4;   // how far a start strays from its slot
+// meal is due, and no denser: at one every 14 s at 24 a second, ten were on
+// the deep at once in a band over the coil (the owner, 2026-10-14: "most of
+// the creatures on reload are in the bottom third of the screen"). Now about
+// two are: a crossing is the deep and its margins at FLOW_NEAR_SPEED, about
+// ninety seconds, so one every 25 s is three or four along the whole span.
+// The longest wait past a window is a slot and its jitter (25 x 1.25 s), under
+// the forty seconds a meal may wait past its window (test/meals.test.mjs).
+export const FLOW_NEAR_EVERY_S = 25;
+export const FLOW_NEAR_SPEED = 40;
+// every this-many-th swims away from the mouth; 0, none: one going the other
+// way took the slot of one bound for the mouth, so it doubled the longest
+// wait for a meal, and the far crossings already go both ways
+export const FLOW_NEAR_AWAY = 0;
+export const FLOW_NEAR_JITTER = 0.25;  // how far a start strays from its slot
+// Away from the mouth a near creature swims anywhere in the water the window
+// shows, its lane spread from FLOW_NEAR_EDGE world pixels under the top of
+// it to as far over the floor; within FLOW_NEAR_DIP world pixels of the
+// mouth ([fully, from]) it eases into its lane in the band, so the meal's
+// last swim to the jaws starts from the band as it always has. The dip is
+// short: kept to the band for a screen's width either side of the mouth,
+// the stream still sat over the coil most of the way across.
+export const FLOW_NEAR_EDGE = [30, 90];
+export const FLOW_NEAR_DIP = [200, 560];
 export const FLOW_KINDS = 8;           // the creatures render/fish.js draws
 // and how long each is, front tip to tail, in its own units: the deep's meal
 // and the rift's crossings (riftlife.js) both measure them by this

@@ -345,7 +345,8 @@ group('a new game finds every creature home', async () => {
 group('a click on a stream creature: its handful and its own reaction, near and far, every kind', async () => {
   deepStream();
   const seen = new Map(), far = [];
-  for (let k = 0; k < 60 * 6 && seen.size < FLOW_KINDS; k++) {
+  // the stream is sparse (one every FLOW_NEAR_EVERY_S), so all eight take a while to come by
+  for (let k = 0; k < 60 * 15 && seen.size < FLOW_KINDS; k++) {
     for (const s of streamReport()) {
       if (!s.clickable || (s.near ? seen.has(s.kind) : far.length) || !within(s)) continue;
       const { r: hit, shaken } = shedBy(() => startleStream(s.x, s.y));

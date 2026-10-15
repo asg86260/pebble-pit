@@ -14848,8 +14848,11 @@ fighters' walk, the hit tests, the camera and the phone's zoom are as they
 were. The creatures are behind the portal, the stations and the serpent
 (the `deep fauna` layer, after the far stream), so nothing fought or read is
 ever under one. The far stream's crossings are moved up into the sunlit and
-twilight; the near stream keeps its band over the coil, because the meals
-come out of it and its swim to the mouth is tuned.
+twilight; the near stream keeps its band over the coil only by the mouth,
+because the meals come out of it and its swim to the mouth is tuned, and
+away from it its creatures swim the whole water the window shows
+(`FLOW_NEAR_EDGE`, `FLOW_NEAR_DIP`; the owner, 2026-10-14: "most of the
+creatures on reload are in the bottom third of the screen").
 
 **The midnight band is kept quiet.** It holds the bar and the fight's
 numbers, so its creatures are few and drawn two rungs darker (`dim`).
@@ -17191,9 +17194,10 @@ break").
   passed since the last landed: it keeps its own path and pace the whole way,
   and only its height drifts to the mouth's over the last `MEAL_SWIM_S`. The
   sim reads the same schedule (deep/meals.js, `nextMeal`), so the meal clock
-  is the stream's: every fourth creature swims away and the rest come a slot
-  apart, so meals land about every thirteen seconds, never under six and under a
-  ceiling of `MEAL_MAX_S`.
+  is the stream's: the creatures come a slot apart (`FLOW_NEAR_EVERY_S`), all
+  bound for the mouth since 2026-10-14 (one swimming away took a slot and
+  doubled the longest wait), so a meal waits out its window and then at most a
+  slot and its jitter.
 - `render/fish.js` draws the creature from its local frame, cell by cell, over
   the water and behind the serpent's head; it enters at the deep's left edge and
   is clipped at the serpent's face while it goes in, so it is *eaten*, not

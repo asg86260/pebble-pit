@@ -162,11 +162,12 @@ export const FAUNA_GULPER = { tail: 24, wave: 0.35, beat: 3, amp: 3, thick: 8, d
   body: 8, under: 6, tip: 11 };
 
 // The far stream's crossings (render/fish.js) swim the zones above the fight
-// rather than across it: the farthest anywhere from the sunlit down through
-// the twilight, the middle depth in the twilight, each a zone key from first
-// to last. The near stream keeps its band over the coil, where the meals
-// come from.
-export const FLOW_FAR_ZONES = [['sun', 'twi'], ['twi', 'twi']];
+// rather than across it: both depths anywhere from the top of the water the
+// window shows down through the twilight (the middle depth kept to the
+// twilight alone put every crossing in one band), each a zone key from first
+// to last. The near stream comes down to its band over the coil only by the
+// mouth, where the meals come from (FLOW_NEAR_DIP).
+export const FLOW_FAR_ZONES = [['sun', 'twi'], ['sun', 'twi']];
 
 // --- a scare -----------------------------------------------------------------------
 // A lash sweeping the coil, or a defense breaking, frightens what lives near

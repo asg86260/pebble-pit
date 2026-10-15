@@ -78,8 +78,7 @@ export const POPULATION = (() => {
     }
   }
   for (let s = 0; s < FAUNA_TURNS.slots; s++, i++) {
-    const row = ROW[ROSTER[s % ROSTER.length]];
-    out.push({ turns: true, slot: s, i, x0: unit(i) * COLS, y0: Math.round(pick(row.y, i + 7)), visits: new Map() });
+    out.push({ turns: true, slot: s, i, x0: unit(i) * COLS, visits: new Map() });
   }
   return out;
 })();
@@ -162,7 +161,13 @@ function turnsStart() {
   const K = FAUNA_WANDER;
   const s = SLOTS.map((c, k) => {
     const kind = ROSTER[k % ROSTER.length], dir = c.i % 2 ? -1 : 1;
-    const y = clampRow(c.y0, kind), goal = y < (walkLo(kind) + wanderHi(kind)) / 2 ? 1 : -1;
+    // each slot sets out in its own share of the height, somewhere in it by
+    // its seed: the clock starts again with every page, so where they set out
+    // is where a reload finds them, and their kinds' home rows were all up
+    // top. It is bound first for the nearer edge, so one setting out in the
+    // middle has swum the whole height by the time it has crossed it twice.
+    const lo = walkLo(kind), share = (wanderHi(kind) - lo) / SLOTS.length;
+    const y = Math.round(lo + share * (k + unit(c.i + 7))), goal = y < (lo + wanderHi(kind)) / 2 ? -1 : 1;
     return { x: wrapX(c.x0), y, th: dir > 0 ? K.start : Math.PI - K.start, om: 0, face: dir, lap: 0, kind, goal };
   });
   return { s, next: (SLOTS.length - 1) % ROSTER.length };

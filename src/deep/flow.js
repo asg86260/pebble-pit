@@ -15,18 +15,30 @@
 
 import { S } from '../state.js';
 import { P, DEEP_H, COIL_Y, FLOW_EVERY_S, FLOW_CELL, FLOW_SPEED, FLOW_PARALLAX, FLOW_SHARE, FLOW_MARGIN,
-         FLOW_NEAR_BAND, FLOW_FAR_ZONES, FLOW_KINDS, FLOW_LENGTHS, FLOW_HEIGHTS, FLOW_REACT, FAUNA_SCALES, BIRD_REACH, SERPENT_PHASES, MEAL_SWIM_S } from '../config.js';
+         FLOW_NEAR_BAND, FLOW_NEAR_EDGE, FLOW_NEAR_DIP, FLOW_FAR_ZONES, FLOW_KINDS, FLOW_LENGTHS, FLOW_HEIGHTS, FLOW_REACT, FAUNA_SCALES, BIRD_REACH, SERPENT_PHASES, MEAL_SWIM_S } from '../config.js';
 import { now } from '../clock.js';
-import { unit, zoneOf, ROWS } from './fauna.js';
+import { unit, zoneOf, ROWS, waterTop, floorRowAt } from './fauna.js';
 import { deepTop, deepFloor, deepX0, deepX1 } from './place.js';
-import { nearAll, nowS, mealNow, eatenBefore, BITE_BEFORE } from './meals.js';
+import { nearAll, nowS, mealNow, eatenBefore, BITE_BEFORE, mouthX } from './meals.js';
+import { smoothstep as ease } from '../motion.js';
 import { shed } from './scales.js';
 import { poseAt, playing, leadOf } from './react.js';
 
 // --- the near stream ------------------------------------------------------------
-// A near creature's height, world pixels: its lane in the band over the
-// coil's middle, bobbing.
-export const nearY = (c, t) => deepTop() + COIL_Y * DEEP_H - FLOW_NEAR_BAND * (0.2 + c.lane) + Math.sin((t - c.at) * 1.3 + c.at) * P * 2;
+// A near creature's height, world pixels: by the mouth, its lane in the band
+// over the coil's middle, where a meal is taken from; away from it, the same
+// lane spread over the whole water the window shows (from the top the zones'
+// wanderers swim to, `waterTop`, to the floor), eased between over
+// FLOW_NEAR_DIP; bobbing.
+export function nearY(c, t) {
+  const band = deepTop() + COIL_Y * DEEP_H - FLOW_NEAR_BAND * (0.2 + c.lane);
+  const top = deepTop() + waterTop() * P + FLOW_NEAR_EDGE[0], bottom = deepFloor() - FLOW_NEAR_EDGE[1];
+  // and never down in the scales heaped on the floor, which the wanderers keep off too
+  const heap = deepTop() + floorRowAt((c.x - deepX0()) / P) * P - FLOW_NEAR_EDGE[1];
+  const wide = Math.min(bottom - (bottom - top) * c.lane, heap);
+  const [near, far] = FLOW_NEAR_DIP, k = ease((far - Math.abs(c.x - mouthX())) / (far - near));
+  return wide + (band - wide) * k + Math.sin((t - c.at) * 1.3 + c.at) * P * 2;
+}
 
 // --- the far and middle crossings -----------------------------------------------
 // On the glass: each depth slides with FLOW_PARALLAX of the camera's pan, and
@@ -65,9 +77,12 @@ export function crossings(want, now0) {
 export const farCell = c => Math.max(1, Math.round(P * S.zoom * FLOW_CELL[c.d]));
 export function farY(c, t) {
   const { top, bottom } = water(), band = bottom - top;
-  // each depth in its own zones (FLOW_FAR_ZONES), above the fight's band
-  const [hi, lo] = FLOW_FAR_ZONES[c.d].map(zoneOf), from = hi.from / ROWS, to = lo.to / ROWS;
-  return top + band * (from + c.y * (to - from)) + Math.sin((t - c.at) * 1.3 + c.at) * farCell(c) * 2;
+  // each depth in its own zones (FLOW_FAR_ZONES), above the fight's band; the
+  // first zone's top is the top of the water the window shows, as the
+  // wanderers' is, so a tall window's water over the ceiling is crossed too
+  const [hi, lo] = FLOW_FAR_ZONES[c.d].map(zoneOf);
+  const from = hi.from ? top + band * hi.from / ROWS : top + waterTop() * P * S.zoom, to = top + band * lo.to / ROWS;
+  return from + c.y * (to - from) + Math.sin((t - c.at) * 1.3 + c.at) * farCell(c) * 2;
 }
 
 // --- a click's reaction ---------------------------------------------------------

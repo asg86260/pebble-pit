@@ -60,7 +60,7 @@ const AHEAD = () => nearSpan() / (FLOW_NEAR_SPEED * 0.8);
 const startOf = i => i * FLOW_NEAR_EVERY_S + unit(i * 41) * FLOW_NEAR_EVERY_S * FLOW_NEAR_JITTER;
 // Every FLOW_NEAR_AWAY-th swims away from the mouth; the rest come at nearly
 // one pace, so they reach it about a slot apart.
-const dirOf = i => (i % FLOW_NEAR_AWAY === FLOW_NEAR_AWAY - 1 ? -1 : 1);
+const dirOf = i => (FLOW_NEAR_AWAY > 0 && i % FLOW_NEAR_AWAY === FLOW_NEAR_AWAY - 1 ? -1 : 1);
 const speedOf = i => FLOW_NEAR_SPEED * (dirOf(i) > 0 ? 0.95 + unit(i * 47) * 0.1 : 0.8 + unit(i * 47) * 0.4);
 export function nearAt(i, clock) {
   const t = clock + AHEAD(), at = startOf(i), speed = speedOf(i), dir = dirOf(i);
