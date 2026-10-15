@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Station Refine</title>
+<style>
+  :root { --ink: #ececf2; --paper: #0d0d10; --card: #16161b; --dim: #a2a2ae; --rule: #2b2b33; color-scheme: dark; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.45 ui-monospace, Consolas, monospace; }
+  .wrap { margin: 0 auto; padding-inline: 16px; padding-block: 20px 64px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h2 { font-size: 15px; margin: 28px 0 8px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
+  h3 { font-size: 14px; margin: 0 0 6px; }
+  p, li { max-width: 110ch; }
+  p { margin: 0 0 8px; }
+  ul { margin: 0 0 8px; padding-left: 20px; }
+  .dim { color: var(--dim); }
+  canvas { image-rendering: pixelated; display: block; background: #000; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 10px 0; }
+  button { font: inherit; font-size: 12px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 3px 9px; cursor: pointer; }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .cards { display: grid; gap: 18px; }
+  .card { background: var(--card); border: 1px solid var(--rule); padding: 10px 12px 12px; }
+  .card .note { font-size: 12px; color: var(--dim); margin-bottom: 8px; }
+  .grid { display: grid; grid-template-columns: max-content repeat(4, max-content); gap: 6px 14px; align-items: start; overflow-x: auto; }
+  .grid .hd { font-size: 12px; max-width: 26ch; }
+  .grid .hd b { display: block; }
+  .grid .rl { font-size: 11px; color: var(--dim); writing-mode: vertical-rl; transform: rotate(180deg); align-self: center; }
+  .strip { margin: 10px 0 0; }
+  .strip .lbl { font-size: 12px; margin-bottom: 3px; }
+  .stripbox { display: flex; flex-wrap: wrap; gap: 6px; }
+  .stripbox canvas { border: 1px solid var(--rule); max-width: 100%; }
+  .sw { display: inline-flex; gap: 4px; align-items: center; margin-right: 12px; font-size: 12px; }
+  .sw i { width: 14px; height: 14px; display: inline-block; border: 1px solid var(--rule); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Station refine: the lectern and the dummy</h1>
+<p>Option A of the station polish was voted in. The owner asked for the lectern (Mage) and the dummy (Assassin) to be refined. Each card shows A as voted, then three refined directions. All of them use A's register: three tones lit from the upper left (A's shading rule, unchanged), one small purple class accent, and the rung-8 parts turning purple from rung 8. Each prop keeps roughly A's footprint. The Bard's music stand is also shaped like a lectern, so it has a card too, in case "lectern" meant that one.</p>
+<p class="dim"><b>What this mock cannot show:</b> this page is drawn from plain cells, not the game. It cannot show the fighter at the post (the dotted 3x3 square marks where the body stands), the kits, the scale heaps, the kit marks and pips, the scaffold, the motes or the light page. Colors are the abyss ramps' raw tones, not the dark page's mapped ones.</p>
+<div>
+  <span class="sw"><i style="background:#121216"></i>G1</span><span class="sw"><i style="background:#26262c"></i>G2</span>
+  <span class="sw"><i style="background:#42424a"></i>G3</span><span class="sw"><i style="background:#6e6e78"></i>G4</span>
+  <span class="sw"><i style="background:#b4b4c0"></i>G5</span>
+  <span class="sw"><i style="background:#1b112c"></i>Pa</span><span class="sw"><i style="background:#2d1d47"></i>Pb</span>
+  <span class="sw"><i style="background:#412465"></i>Pc</span><span class="sw"><i style="background:#5c2ba6"></i>Pd</span>
+  <span class="sw"><i style="background:#9b5de5"></i>Pe</span>
+</div>
+<div class="bar">zoom
+  <button data-z="12">2x</button><button data-z="18" aria-pressed="true">3x</button><button data-z="24">4x</button>
+</div>
+<div class="cards" id="cards"></div>
+</div>
+
+<script id="props-data">
+// --- the data ----------------------------------------------------------------
+// Legend and shading as in docs/mocks/station-polish-2026-10-15/README.md.
+// A prop is rows of cells, the bottom row standing on the plinth.
+//   H trained-with thing  F frame  S straw/sacking  R/Q/K rung-8 parts
+//   1-5 a grey by hand  h r d / g z  rung-8 cells by hand  * the class accent
+// Option A as voted (PROPS_A), every station, for the neighbors in the strips.
+const A = {
+  crate: { rows: [
+    '..S..S.S...S..',
+    '.SSSSSSSSSSS..',
+    'FFFFFFFFFFFFFF',
+    'FHHHHHHHHHHFFF',
+    'FHHHHHHHHHFFHF',
+    'F22222222FF22F',
+    'FHHHHHHHFFHHHF',
+    'FHHHHHHFFHHHHF',
+    'F22222FF22222F',
+    'FHHHHFFHHHHHHF',
+    'FHHHFFHHHHHHHF',
+    'FHHFFHHHHHHHHF',
+    'FFFFFFFFFFFFFF'] },
+  brawler: { rows: [
+    'FFFFFFFFFFFFFF..',
+    'FFFFFFFFFFFFFF..',
+    'FFFF.......g....',
+    'FFF........z....',
+    'FF........Q*Q...',
+    'FF......KKKKKKK.',
+    'FF.....HHHHHHHHH',
+    'FF.....KKKKKKKKK',
+    'FF.....HHHHHHHHH',
+    'FF.....HHHHHHHHH',
+    'FF.....HHHHHHHHH',
+    'FF.....HHHHHHHHH',
+    'FF.....HHHHHHHHH',
+    'FF.....KKKKKKKKK',
+    'FF.....HHHHHHHHH',
+    'FF......KKKKKKK.',
+    'FFFF............',
+    'FFFFFF..........'] },
+  sword: { rows: [
+    '....**....**........',
+    '....RR....RR........',
+    '....RR....RR........',
+    '...RRRR..RRRR.......',
+    '....HH....HH........',
+    '....HH....HH........',
+    'FFFFHHFFFFHHFFFF..FF',
+    'FFFFHHFFFFHHFFFFFFFF',
+    'FF..HH....HH......FF',
+    'FF..HH....HH......FF',
+    'FF..HH....HH......FF',
+    'FF..HH....HH......FF',
+    'FF...H.....H......FF',
+    'FFFFFFFFFFFFFFFFFFFF',
+    'FF................FF',
+    'FFF..............FFF'] },
+  monk: { rows: [
+    'FF..................FF',
+    'FFFFFFFFFFFFFFFFFFFFFF',
+    '.FFFFFFFFFFFFFFFFFFFF.',
+    '..FF......gg......FF..',
+    '..FF.....RRRR.....FF..',
+    '..FF....RRRRRR....FF..',
+    '..FF...RRRRRRRR...FF..',
+    '..FF...RRRRRRRR...FF..',
+    '..FF...RRRRRRRR...FF..',
+    '..FF...RRRRRRRR...FF..',
+    '..FF..RRRRRRRRRR..FF..',
+    '..FF.RRRRRRRRRRRR.FF..',
+    '..FF......**......FF..',
+    '..FF..............FF..',
+    '.4FF44444444444444FF4.',
+    '33FF33333333333333FF33'] },
+  martial: { rows: [
+    '..55..........',
+    '..RR..........',
+    '..RR......55..',
+    '.*RR......RR..',
+    '**RR......RR..',
+    '*.RR..55..RR..',
+    '..RR..RR..RR..',
+    '..RR..RR..RR..',
+    'FFRRFFRRFFRRFF',
+    'F.RR..RR..RR.F',
+    'F.RR..RR..RR.F',
+    'F.RR..RR..RR.F',
+    'FFFFFFFFFFFFFF',
+    'FFFFFFFFFFFFFF',
+    'FF..........FF',
+    'FF..........FF'] },
+  ranger: { rows: [
+    '....SSSSS..3....',
+    '..SSSSSSSSS.43..',
+    '.SSSKKKKKSS4.3..',
+    '.SSKSSSSS4SS....',
+    'SSKSSSSS4SKSS...',
+    'SSKSSS*SSSKSS...',
+    'SSKSS***SSKSS...',
+    'SSKSSS*SSSKSS...',
+    'SSKSSSSSSSKSS...',
+    '.SSKSSSSSKSSS...',
+    '.SSSKKKKKSSS....',
+    '..SSSSSSSSS.....',
+    '....SSSSS.......',
+    '....F.F.F.......',
+    '...F..F..F......',
+    '...FFFFFFF......',
+    '..F...F...F.....',
+    '.F....F....F....'] },
+  assassin: { rows: [
+    '.....HHHH...........',
+    '....HHHHHH..........',
+    '....HHHHHH..........',
+    '....HHHHHH..........',
+    '.....HHHH...........',
+    '......33............',
+    '3HHHHHHHHHHHH3......',
+    '3HHHHHHHHHHHH3......',
+    '..HHHHHHHHHH........',
+    '..HHHHHHHHHH...*....',
+    '..HHHHHHHHHH..R.....',
+    '..HHHHHHHHHH.R......',
+    '...HHHHHHHHRR.......',
+    '...HHHHHHHHR........',
+    '...KKKKKKKK.........',
+    '....HHHHHH..........',
+    '......FF............',
+    '....FFFFFF..........'] },
+  hexer: { brew: 1, rows: [
+    '.HHHHHHHHHHHH.',
+    '.HBBBBBBBBBBH.',
+    'HHHHHHHHHHHHHH',
+    'R.HHHHHHHHHH.R',
+    'RRHHHHHHHHHHRR',
+    '.HHHHHHHHHHHH.',
+    '.HHHHHHHHHHHH.',
+    '.HHHHHHHHHHHH.',
+    '..HHHHHHHHHH..',
+    '...HHHHHHHH...',
+    '...F..FF..F...',
+    '..F...FF...F..'] },
+  sapper: { rows: [
+    '..........**......',
+    '.........4........',
+    '......KKKKKK......',
+    '.....HHHHHHHH.....',
+    '.....KKKKKKKK.....',
+    '.....HHHHHHHH.....',
+    '.....HHHHHHHH.....',
+    '.....KKKKKKKK.....',
+    '.....HHHHHHHH.....',
+    '......KKKKKK......',
+    '.KKKKKK....KKKKKK.',
+    'HHHHHHHH..HHHHHHHH',
+    'KKKKKKKK..KKKKKKKK',
+    'HHHHHHHH..HHHHHHHH',
+    'HHHHHHHH..HHHHHHHH',
+    'KKKKKKKK..KKKKKKKK',
+    'HHHHHHHH..HHHHHHHH',
+    '.KKKKKK....KKKKKK.'] },
+  mage: { rows: [
+    '.HHHHH....HHHHH.',
+    'HHHHHHH..HHHHHHH',
+    'HKKKKHHFFHHKKKKH',
+    'HHHHHHHFFHHHHHHH',
+    'HKKKHHHFFHHHKKKH',
+    'HHHHHHHFFHHHHHHH',
+    'FFFFFFFFFFFFFFFF',
+    '.FFFFFF**FFFFFF.',
+    '.....FF**FF.....',
+    '.......**.......',
+    '......FFFF......',
+    '.......FF.......',
+    '.......FF.......',
+    '.......FF.......',
+    '....FFFFFFFF....',
+    '..FFFFFFFFFFFF..'] },
+  bard: { rows: [
+    '.HHHHHHHHHH.',
+    '.HHHHHKKKHH.',
+    '.HHHHHKHKKH.',
+    '.HHHHHKHHHH.',
+    '.HHHHHKHHHH.',
+    '.HHH**KHHHH.',
+    '.HHH**HHHHH.',
+    '.HHHHHHHHHH.',
+    'FFFFFFFFFFFF',
+    '.....FF.....',
+    '.....FF.....',
+    '.....FF.....',
+    '.....FF.....',
+    '.....FF.....',
+    '....F..F....',
+    '...F....F...',
+    '..F......F..',
+    '.F........F.'] },
+};
+
+// The refined options, each with its direction in one line.
+const REFINE = {
+  mage: {
+    note: 'The lectern: a book open on a stand, the ribbon as the accent.',
+    opts: {
+      1: { say: 'A slanted reading desk: the book tilts toward you (narrower at the top), a lip holds it, the desk stands on two legs with a stretcher.',
+           rows: [
+        '..HHHHH..HHHHH..',
+        '.HHHHHHFFHHHHHH.',
+        '.HKKKKHFFHKKKKH.',
+        'HHHHHHHFFHHHHHHH',
+        'HKKKHHHFFHHHKKKH',
+        'HHHHHHHFFHHHHHHH',
+        'FFFFFFFFFFFFFFFF',
+        '.FFFFFF**FFFFFF.',
+        '.FF....**....FF.',
+        '.FF....*.....FF.',
+        '.FF..........FF.',
+        '.FFFFFFFFFFFFFF.',
+        '.FF..........FF.',
+        '.FF..........FF.',
+        '.FF..........FF.',
+        'FFFF........FFFF'] },
+      2: { say: 'A pedestal lectern: one turned column on a stepped foot, the book open flat, its fanned page edges showing under it as a stack.',
+           rows: [
+        '..HHHHH..HHHHH..',
+        '.HHHHHHHHHHHHHH.',
+        'HHKKKHHHHHHKKKHH',
+        'HHHHHHHHHHHHHHHH',
+        'KKKKKKKFFKKKKKKK',
+        '.KKKKKKFFKKKKKK.',
+        'FFFFFFFFFFFFF*FF',
+        '.....FFFFFF..*..',
+        '.......FF....*..',
+        '.......FF.......',
+        '.......FF.......',
+        '......FFFF......',
+        '.......FF.......',
+        '.......FF.......',
+        '.....FFFFFF.....',
+        '...FFFFFFFFFF...'] },
+      3: { say: "A's lectern with a candle: the book is a little narrower, a candle stands on the desk's right end, and its flame is the accent.",
+           rows: [
+        '..............*.',
+        '.HHHH..HHHH...*.',
+        'HHHHHFFHHHHH..1.',
+        'HKKKHFFHKKKH.HHH',
+        'HHHHHFFHHHHH.HHH',
+        'HKKHHFFHHKKH.HHH',
+        'HHHHHFFHHHHH.HHH',
+        'FFFFFFFFFFFFFFFF',
+        '.FFFFFFFFFFFFFF.',
+        '......FFFF......',
+        '.......FF.......',
+        '......FFFF......',
+        '.......FF.......',
+        '.......FF.......',
+        '.......FF.......',
+        '....FFFFFFFF....',
+        '..FFFFFFFFFFFF..'] }
+    }
+  },
+  assassin: {
+    note: 'The dummy: a sacking dummy on a post, a dagger stuck in it.',
+    opts: {
+      1: { say: 'A wooden training dummy: a padded body on a post, a crossbar for arms with pegs at the ends, the dagger stuck in its side.',
+           rows: [
+        '.......HHHH.........',
+        '......HHHHHH........',
+        '......HHHHHH........',
+        '.......HHHH.........',
+        '........FF..........',
+        'FFFFFFFFFFFFFFFFFF..',
+        'F.....HHHHHH.....F..',
+        '.....HHHHHHHH.......',
+        '.....HHHHHHHH....*..',
+        '.....HHHHHHHH...R...',
+        '.....HHHHHHHH.QR....',
+        '.....HHHHHHHHR.Q....',
+        '.....HHHHHHHH.......',
+        '.....KKKKKKKK.......',
+        '......HHHHHH........',
+        '........FF..........',
+        '........FF..........',
+        '.....FFFFFFFF.......'] },
+      2: { say: 'A straw-stuffed sack: straw tufts at the head and wrists, rope ties, a target painted on the chest (the bull is the accent), the dagger in its side.',
+           rows: [
+        '....S.S..S..........',
+        '.....SSSS...........',
+        '....SSSSSS..........',
+        '....SSSSSS..........',
+        '.....SSSS...........',
+        '......33............',
+        'S3SSSSSSSSSS3S......',
+        'S3SSSSSSSSSS3S......',
+        '..SSSSSSSSSS........',
+        '..SSSKKKKSSS...h....',
+        '..SSKSSSSKSS..R.....',
+        '..SSKS**SKSS.R......',
+        '...SKS**SKSRR.......',
+        '...SSKKKKSSR........',
+        '...33333333.........',
+        '....SSSSSS..........',
+        '......FF............',
+        '....FFFFFF..........'] },
+      3: { say: "A's post dummy with the dagger made legible: it sticks straight out of the chest, with a slit, a bright blade, a crossguard, a grip and the pommel as the accent.",
+           rows: [
+        '.....HHHH...........',
+        '....HHHHHH..........',
+        '....HHHHHH..........',
+        '....HHHHHH..........',
+        '.....HHHH...........',
+        '......33............',
+        '3HHHHHHHHHHHH3......',
+        '3HHHHHHHHHHHH3......',
+        '..HHHHHHHHHH........',
+        '..HHHHHHHHHH..Q.....',
+        '..HHHHHHHHH2hhQrr*..',
+        '..HHHHHHHHHH..Q.....',
+        '...HHHHHHHH.........',
+        '...HHHHHHHH.........',
+        '...KKKKKKKK.........',
+        '....HHHHHH..........',
+        '......FF............',
+        '....FFFFFF..........'] }
+    }
+  },
+  bard: {
+    note: 'In case "lectern" meant this: the music stand, a sheet with a note on a ledge.',
+    opts: {
+      1: { say: 'The sheet ruled: four staff lines across it, the note sitting on one, so it reads as music at a glance.',
+           rows: [
+        '.HHHHHHHHHH.',
+        '.HKKKKKKKKH.',
+        '.HHHHHKHHHH.',
+        '.HKKKKKKKKH.',
+        '.HHH**KHHHH.',
+        '.HKK**KKKKH.',
+        '.HHHHHHHHHH.',
+        '.HKKKKKKKKH.',
+        'FFFFFFFFFFFF',
+        '.....FF.....',
+        '.....FF.....',
+        '.....FF.....',
+        '.....FF.....',
+        '.....FF.....',
+        '....F..F....',
+        '...F....F...',
+        '..F......F..',
+        '.F........F.'] },
+      2: { say: 'A wooden music desk: the sheet framed in a board, one column with a collar (purple at rung 8), a stepped foot.',
+           rows: [
+        'FFFFFFFFFFFF',
+        'FHHHHHKKKHHF',
+        'FHHHHHKHKKHF',
+        'FHHHHHKHHHHF',
+        'FHHHHHKHHHHF',
+        'FHHH**KHHHHF',
+        'FHHH**HHHHHF',
+        'FFFFFFFFFFFF',
+        '.FFFFFFFFFF.',
+        '....FFFF....',
+        '.....FF.....',
+        '....QQQQ....',
+        '.....FF.....',
+        '.....FF.....',
+        '.....FF.....',
+        '....FFFF....',
+        '..FFFFFFFF..',
+        '.FFFFFFFFFF.'] },
+      3: { say: 'A lyre stand: the sheet held in a lyre-shaped frame whose horns flare at the top, on the column and tripod.',
+           rows: [
+        'F..........F',
+        'F.HHHHHHHH.F',
+        '.FHHHHHKKKF.',
+        '.FHHHHHKHKF.',
+        '.FHHHHHKHHF.',
+        '.FHHH**KHHF.',
+        '..FHH**HHF..',
+        '...FFFFFF...',
+        '.....FF.....',
+        '.....FF.....',
+        '.....FF.....',
+        '.....FF.....',
+        '.....FF.....',
+        '.....FF.....',
+        '....F..F....',
+        '...F....F...',
+        '..F......F..',
+        '.F........F.'] }
+    }
+  }
+};
+const SUBJECTS = ['mage', 'assassin', 'bard'];
+const ORDER = ['crate', 'brawler', 'sword', 'monk', 'martial', 'ranger', 'assassin', 'hexer', 'sapper', 'mage', 'bard'];
+const NAMES = { crate: 'build site crate', brawler: 'Brawler', sword: 'Swordsman', monk: 'Monk', martial: 'Martial Artist',
+                ranger: 'Ranger', assassin: 'Assassin', hexer: 'Hexer', sapper: 'Sapper', mage: 'Mage', bard: 'Bard' };
+const TITLES = { mage: 'Mage: the lectern', assassin: 'Assassin: the dummy', bard: 'Bard: the music stand (in case "lectern" meant this)' };
+</script>
+
+<script id="shader">
+// --- the tones, and A's shading rule (station-polish, unchanged) -------------
+const G = ['#000000', '#121216', '#26262c', '#42424a', '#6e6e78', '#b4b4c0'];
+const PU = { a: '#1b112c', b: '#2d1d47', c: '#412465', d: '#5c2ba6', e: '#9b5de5' };
+const RAMP = {
+  H: [G[5], G[4], G[3], G[2]], F: [G[4], G[3], G[2], G[1]], S: [G[5], G[4], G[3], G[2]],
+  R: [G[5], G[4], G[3], G[2]], Q: [G[4], G[3], G[2], G[1]], K: [G[4], G[3], G[2], G[1]],
+  R8: [PU.e, PU.d, PU.c, PU.b], Q8: [PU.d, PU.c, PU.b, PU.a], K8: [PU.e, PU.d, PU.c, PU.b]
+};
+const MAT = new Set(['H', 'F', 'S', 'R', 'Q', 'K']);
+const PART = new Set(['R', 'Q', 'K']);
+
+function shadeIndex(rows, r, c) {
+  const at = (rr, cc) => (rows[rr] && rows[rr][cc]) || '.';
+  const empty = ch => ch === '.' || ch === '+';
+  const up = empty(at(r - 1, c)), lf = empty(at(r, c - 1)), rt = empty(at(r, c + 1)), dn = empty(at(r + 1, c));
+  if (up) return 0;
+  if (lf && rt) return 1;
+  if (lf) return 0;
+  if (rt || dn) return 2;
+  return 1;
+}
+
+function cellsOf(rows, lit) {
+  const out = [];
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    let col = null;
+    if (MAT.has(ch)) {
+      const ramp = lit && PART.has(ch) ? RAMP[ch + '8'] : RAMP[ch];
+      col = ramp[shadeIndex(rows, r, c)];
+    } else if (ch >= '1' && ch <= '5') col = G[+ch];
+    else if (ch === 'h') col = lit ? PU.e : G[5];
+    else if (ch === 'r') col = lit ? PU.c : G[3];
+    else if (ch === 'd') col = lit ? PU.b : G[2];
+    else if (ch === 'g') col = lit ? PU.d : G[4];
+    else if (ch === 'z') col = lit ? PU.b : G[2];
+    else if (ch === 'v') col = PU.d;
+    else if (ch === 'w') col = PU.c;
+    else if (ch === '*') col = lit ? PU.e : PU.c;
+    else if (ch === '+') col = lit ? PU.e : null;
+    else if (ch === 'B') col = lit ? PU.c : PU.b;
+    if (col) out.push([c, r, col]);
+  }));
+  return out;
+}
+
+const BREW = { pace: 0.9, period: 1.8, life: 1.2, step: 0.2, lane0: 5, lanes: 4 };
+function bubble(row, lit, t) {
+  const k = (t * BREW.pace) % BREW.period;
+  if (k >= BREW.life) return null;
+  const c = BREW.lane0 + Math.floor(t / BREW.period) % BREW.lanes, r = row - 1 - Math.floor(k / BREW.step);
+  return [c, r, lit ? PU.d : PU.c];
+}
+</script>
+
+<script>
+// --- drawing ----------------------------------------------------------------
+for (const k of SUBJECTS) for (const [n, o] of Object.entries(REFINE[k].opts))
+  o.rows.forEach((row, i) => { if (row.length !== o.rows[0].length) console.error(`${k} ${n} row ${i} is ${row.length} wide`); });
+
+const GAP = k => (k === 'sword' ? 7 : 5);
+const FLOOR = 2;
+
+function variant(key, which) {
+  const o = which === 'A' ? A[key] : REFINE[key].opts[which];
+  return { rows: o.rows, brew: key === 'hexer' ? o.brew : null };
+}
+
+function drawStation(g, s, key, v, lit, x0, foot, t) {
+  const w = v.rows[0].length, h = v.rows.length, y0 = foot - h + 1;
+  const body = x0 + w - 1 + GAP(key);
+  g.fillStyle = G[3]; g.fillRect((x0 - 1) * s, (foot + 1) * s, (body + 3 + 1 - (x0 - 1)) * s, s);
+  g.fillStyle = G[2]; g.fillRect((x0 - 2) * s, (foot + 2) * s, (body + 3 + 2 - (x0 - 2)) * s, s);
+  for (const [c, r, col] of cellsOf(v.rows, lit)) { g.fillStyle = col; g.fillRect((x0 + c) * s, (y0 + r) * s, s, s); }
+  if (v.brew != null) {
+    const b = bubble(v.brew, lit, t);
+    if (b) { g.fillStyle = b[2]; g.fillRect((x0 + b[0]) * s, (y0 + b[1]) * s, s, s); }
+  }
+  g.fillStyle = '#ffffff';
+  const fx = body * s, fy = (foot - 2) * s, fw = 3 * s, d = Math.max(1, Math.round(s / 6));
+  for (let i = 0; i < fw; i += d * 3) { g.fillRect(fx + i, fy, d, d); g.fillRect(fx + i, fy + fw - d, d, d); g.fillRect(fx, fy + i, d, d); g.fillRect(fx + fw - d, fy + i, d, d); }
+}
+
+let zoom = +(location.hash.match(/z=(\d+)/) || [0, 18])[1];
+for (const o of document.querySelectorAll('[data-z]')) o.setAttribute('aria-pressed', +o.dataset.z === zoom ? 'true' : 'false');
+const closeups = [], strips = [];
+const WHICH = ['A', '1', '2', '3'];
+
+function closeup(key, which, lit) {
+  const v = variant(key, which), cv = document.createElement('canvas');
+  const maxW = Math.max(...WHICH.map(k => variant(key, k).rows[0].length));
+  const maxH = Math.max(...WHICH.map(k => variant(key, k).rows.length));
+  const cols = 3 + maxW + GAP(key) + 3 + 3, rows = 2 + maxH + 2 + 1;
+  const x0 = 3 + (maxW - v.rows[0].length), foot = rows - 4;
+  closeups.push({ draw: t => {
+    cv.width = cols * zoom; cv.height = rows * zoom;
+    const g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cv.width, cv.height);
+    g.fillStyle = G[2]; g.fillRect(0, (foot + 3) * zoom, cv.width, zoom);
+    drawStation(g, zoom, key, v, lit, x0, foot, t);
+  } });
+  return cv;
+}
+
+// The set at game scale: for each option, the subject between its A
+// neighbors (the two stations either side in the yard's order), 49 cells apart.
+const SPACING = 49, S6 = 6;
+function neighbors(key) {
+  const i = ORDER.indexOf(key);
+  const lo = Math.max(0, Math.min(i - 1, ORDER.length - 3));
+  return ORDER.slice(lo, lo + 3);
+}
+function strip(key, lit) {
+  const box = document.createElement('div'); box.className = 'strip';
+  const set = neighbors(key);
+  box.innerHTML = `<div class="lbl"><b>at game scale</b> (a cell is 6 px), ${lit ? 'at rung 8' : 'before rung 8'}: ` +
+    `${set.map(k => k === key ? `<b>${NAMES[k]}</b>` : NAMES[k] + ' (A)').join(', ')}, for each of A, 1, 2, 3</div>`;
+  const sb = document.createElement('div'); sb.className = 'stripbox';
+  box.append(sb);
+  const cols = (set.length - 1) * SPACING + 30 + 6, rows = 30;
+  for (const w of WHICH) {
+    const cv = document.createElement('canvas'); sb.append(cv);
+    strips.push({ draw: t => {
+      cv.width = cols * S6; cv.height = rows * S6;
+      const g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cv.width, cv.height);
+      const foot = rows - 5;
+      g.fillStyle = G[2]; g.fillRect(0, (foot + 3) * S6, cv.width, 2 * S6);
+      g.fillStyle = '#ececf2'; g.font = `bold ${2 * S6}px ui-monospace, Consolas, monospace`;
+      g.fillText(w, S6, 3 * S6);
+      set.forEach((k, i) => {
+        const v = variant(k, k === key ? w : 'A'), body = 30 + i * SPACING;
+        drawStation(g, S6, k, v, lit, body - GAP(k) - v.rows[0].length + 1, foot, t);
+      });
+    } });
+  }
+  return box;
+}
+
+const cards = document.getElementById('cards');
+for (const key of SUBJECTS) {
+  const card = document.createElement('div'); card.className = 'card';
+  card.innerHTML = `<h3>${TITLES[key]}</h3><div class="note">${REFINE[key].note}</div>`;
+  const grid = document.createElement('div'); grid.className = 'grid';
+  grid.append(document.createElement('span'));
+  for (const w of WHICH) {
+    const d = document.createElement('div'); d.className = 'hd';
+    d.innerHTML = w === 'A' ? '<b>A, as voted</b>' : `<b>${w}</b>${REFINE[key].opts[w].say}`;
+    grid.append(d);
+  }
+  for (const lit of [false, true]) {
+    const l = document.createElement('div'); l.className = 'rl'; l.textContent = lit ? 'at rung 8' : 'before rung 8'; grid.append(l);
+    for (const w of WHICH) grid.append(closeup(key, w, lit));
+  }
+  card.append(grid, strip(key, false), strip(key, true));
+  cards.append(card);
+}
+
+function drawAll(t) { for (const c of closeups) c.draw(t); for (const s of strips) s.draw(t); }
+drawAll(0.3);
+for (const b of document.querySelectorAll('[data-z]')) b.addEventListener('click', () => {
+  zoom = +b.dataset.z;
+  for (const o of document.querySelectorAll('[data-z]')) o.setAttribute('aria-pressed', o === b ? 'true' : 'false');
+  drawAll(performance.now() / 1000);
+});
+// The hexer's bubble (in the assassin's strip) is the only thing that moves.
+setInterval(() => { const t = performance.now() / 1000; for (const s of strips) s.draw(t); }, 100);
+</script>
+</body>
+</html>
