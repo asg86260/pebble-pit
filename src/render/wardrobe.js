@@ -14,6 +14,7 @@ import { P, WORKER, BODY_RIM, GREY, WARD_UNIT, WARD_GRID, WARD_GREY, WARD_PALE, 
          WARD_STEP_HZ, WARD_BOB_HZ, WARD_WAVE_HZ, WARD_STILL_S } from '../config.js';
 import { itemOf } from '../wardrobe.js';
 import { GREYS } from './deeptones.js';
+import { dressAura } from './wardaura.js';
 
 // The yard's inks, and the deep's: the deep is drawn as the yard is and
 // turned over after (render/deep.js), so its black and white are the yard's
@@ -26,7 +27,7 @@ export const DEEP_INKS = { ink: '#000', paper: '#fff', grey: GREYS[WARD_DEEP_GRE
 // of two inks at its edge, a grey the deep's palette does not hold. Never
 // narrower than one device pixel, so a two-pixel mark at a far zoom thins
 // rather than goes.
-function fill(g, x, y, w, h, tone) {
+export function fill(g, x, y, w, h, tone) {
   const m = g.getTransform ? g.getTransform() : null;
   const kx = m ? m.a : 1, ky = m ? m.d : 1, e = m ? m.e : 0, f = m ? m.f : 0;
   const sx = v => (Math.round(v * kx + e) - e) / kx, sy = v => (Math.round(v * ky + f) - f) / ky;
@@ -185,11 +186,13 @@ export function dressFlat(g, left, top, l) {
 // The whole of it: behind, the square, on it, and the head. For a body drawn
 // nowhere but here (the picker).
 export function drawDressed(g, x, y, l, hat = null) {
+  dressAura(g, x, y, l, 'back');
   dressBehind(g, x, y, l);
   fill(g, x, y, WORKER, WORKER, l.inks.ink);
   fill(g, x + BODY_RIM, y + BODY_RIM, WORKER - 2 * BODY_RIM, WORKER - 2 * BODY_RIM, l.inks.paper);
   dressOn(g, x, y, l);
   if (!dressHead(g, x, y, l) && hat) hat(g, x, y);
+  dressAura(g, x, y, l, 'front');
 }
 
 // Whether a body is walking, and which way, read off where it is drawn from

@@ -15,7 +15,7 @@
 // not you.
 //
 // What they are called is a name and a role apiece, `S.selves`, chosen at a
-// new yard and kept from the opening on. What they wear is five slots an
+// new yard and kept from the opening on. What they wear is six slots an
 // outfit, every one with nothing as its first item, as rows of data here;
 // render/wardrobe.js draws them and wardrobepage.js is the page that chooses
 // both. No DOM and no drawing in this file.
@@ -114,6 +114,22 @@ export const PATTERN = [
   { key: 'filled', name: 'ward-filled', rects: [[0, 0, 14, 14]], dark: true },
 ];
 
+// Auras: particles round the body, drawn by key (render/wardaura.js, its
+// numbers WARD_AURAS), since every one of them moves.
+export const AURA = [
+  { key: 'none', name: 'ward-none' },
+  { key: 'dust-motes', name: 'ward-dust-motes' },
+  { key: 'pebble-bits', name: 'ward-pebble-bits' },
+  { key: 'bubbles', name: 'ward-bubbles' },
+  { key: 'orbiting-pixel', name: 'ward-orbiting-pixel' },
+  { key: 'sparkle-glints', name: 'ward-sparkle-glints' },
+  { key: 'footprints', name: 'ward-footprints' },
+  { key: 'rain-cloud', name: 'ward-rain-cloud' },
+  { key: 'falling-petals', name: 'ward-falling-petals' },
+  { key: 'scale-swirl', name: 'ward-scale-swirl' },
+  { key: 'embers', name: 'ward-embers' },
+];
+
 // The slots, in the picker's order, each with its message.
 export const SLOTS = [
   { key: 'head', name: 'ward-slot-head', items: HEAD },
@@ -121,6 +137,7 @@ export const SLOTS = [
   { key: 'neck', name: 'ward-slot-neck', items: NECK },
   { key: 'back', name: 'ward-slot-back', items: BACK },
   { key: 'pattern', name: 'ward-slot-pattern', items: PATTERN },
+  { key: 'aura', name: 'ward-slot-aura', items: AURA },
 ];
 const SLOT = Object.fromEntries(SLOTS.map(s => [s.key, s]));
 export const itemOf = (slot, key) => SLOT[slot]?.items.find(i => i.key === key) || null;
@@ -138,8 +155,8 @@ export const WHO = ['you', 'sqouse'];
 // first frame without the picker ever being opened. Each stays on the body
 // that wore it before the keys were renamed: the top hat the survivor's.
 export const DEFAULTS = {
-  you: { head: 'top-hat', face: 'monocle', neck: 'none', back: 'none', pattern: 'plain' },
-  sqouse: { head: 'bow', face: 'eyes', neck: 'scarf', back: 'none', pattern: 'plain' },
+  you: { head: 'top-hat', face: 'monocle', neck: 'none', back: 'none', pattern: 'plain', aura: 'none' },
+  sqouse: { head: 'bow', face: 'eyes', neck: 'scarf', back: 'none', pattern: 'plain', aura: 'none' },
 };
 // An outfit made whole: every slot an item that exists. A slot never chosen
 // (a save from before the slot) takes the default; one holding an item since

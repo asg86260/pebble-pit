@@ -895,6 +895,16 @@ const deepScenes = {
       const him = freedBody();
       if (him) lookDeep(him.x);
     } },
+  // The same with an aura on each (render/wardaura.js): the rain cloud on
+  // you, the most rects, and the embers on your sqouse, the only purple, for
+  // the deep's palette check; `window.__auras` ({ you, sqouse }) to try others.
+  'pair-deep-aura': { about: 'the deep', say: 'the two of them on the deep floor in a rain cloud and embers',
+    run: () => {
+      SCENES['pair-meet'].run();
+      const a = window.__auras || {};
+      wear('you', { aura: a.you || 'rain-cloud' }); wear('sqouse', { aura: a.sqouse || 'embers' });
+      window.__fast(1);
+    } },
   // The same, in everything the wardrobe draws in its greys, for the deep's
   // palette check: the checked scarf, the freckles, over a filled pattern (its
   // greys the pale).
@@ -1388,6 +1398,15 @@ export const SCENES = {
       if (window.__outfits) for (const k of ['sqouse', 'you']) if (window.__outfits[k]) wear(k, window.__outfits[k]);
       window.__fast(12);
       window.__look((pairBody('sqouse').x + pairBody('you').x) / 2 - S.viewW / 2);
+    } },
+  // The same crowd, the two of them in auras (render/wardaura.js): the rain
+  // cloud and the embers, or `window.__auras` ({ you, sqouse }).
+  'pair-aura': { about: 'the crew', say: 'the two of them in auras, carrying among the haulers and the carters',
+    run: () => {
+      const a = window.__auras || {}, was = window.__outfits;
+      window.__outfits = { you: { ...(window.__outfits?.you || {}), aura: a.you || 'rain-cloud' },
+                           sqouse: { ...(window.__outfits?.sqouse || {}), aura: a.sqouse || 'embers' } };
+      try { SCENES.pair.run(); } finally { window.__outfits = was; }
     } },
   crew: { about: 'the crew', say: 'the crew, hats and all',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);

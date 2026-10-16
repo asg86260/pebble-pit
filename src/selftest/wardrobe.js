@@ -388,6 +388,55 @@ export const TESTS = [
     ];
   }],
 
+  // The sixth slot (render/wardaura.js): the aura row stepped to the rain
+  // cloud on the page, and the cloud drawn over you in the yard, where with
+  // none the air over the head is the bare floor's.
+  ['wardrobe: the aura row puts a rain cloud over you in the yard', async () => {
+    fresh();
+    window.__crew(2, 2);
+    run(2);
+    const w = pairBody('you') || S.workers.find(o => !wearing(o));
+    if (!w) return [ok(false, 'a body to be you', S.workers.length)];
+    namePair('you', w);
+    w.kitOf = null;
+    wear('you', { head: 'none' });
+    await openPicker();
+    byId('wardyou').click();
+    const row = !!document.querySelector('.wardrow[data-slot="aura"]');
+    for (let i = 0; i < 12 && outfitOf('you').aura !== 'rain-cloud'; i++) byId('ward-aura-next').click();
+    const said = shownText('aura'), worn = outfitOf('you').aura;
+    byId('wardrobeback').click();
+    await frames(2);
+    const all = S.workers, was = { x: w.x, y: w.y };
+    const x = Math.round(S.cx - 400), y = Math.round(S.groundY - WORKER);
+    window.__look(x - S.viewW / 2);
+    // the pixels over the head that are not the paper
+    const marked = () => {
+      Object.assign(w, { x, y, lunge: 0 });
+      S.workers = [w];
+      draw();
+      S.workers = all;
+      let n = 0;
+      for (let dy = -4 * P; dy < 0; dy += 2) for (let dx = 0; dx < WORKER; dx += 2) {
+        const [sx, sy] = onScreen(x + dx, y + dy), k = S.dpr;
+        const d = canvas().getContext('2d').getImageData(Math.round(sx * k), Math.round(sy * k) & ~1, 1, 1).data;
+        const lum = (d[0] + d[1] + d[2]) / 3;
+        if (darkPage ? lum > 60 : lum < 235) n++;
+      }
+      return n;
+    };
+    const cloud = marked();
+    wear('you', { aura: 'none' });
+    const none = marked();
+    Object.assign(w, was);
+    await hoverAway();
+    fresh();
+    return [
+      ok(row && worn === 'rain-cloud' && said === 'rain cloud', 'the page has an aura row, and next steps it to the rain cloud', `${row} "${said}"`),
+      ok(cloud > none + 6, 'the cloud is drawn over the head in the yard', `${cloud} marked, ${none} with none`)
+    ];
+  }],
+
   // The same way in by a pad alone: along the stops to the house, A its
   // board, down its rows to the two of you, A, and B the yard again.
   ['wardrobe: a pad reaches the picker through the house board', async () => {
