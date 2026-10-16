@@ -125,7 +125,7 @@ export function crewRows() {
 // here as the crew do, so it is the house's.
 const PAIR_ROW = {
   key: 'pairpage',
-  name: msg('ward-title'),
+  name: msg('ward-appearance'),
   buy: () => openWardrobe(),
   opens: true,
   price: () => '',

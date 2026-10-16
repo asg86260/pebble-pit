@@ -82,6 +82,7 @@ export const GLYPHS = {
   bird:       ['#.#.....', '.#......', '.....#.#', '......#.', '..#.#...', '...#....', '........', '........'],
   hole:       ['........', '........', '........', '........', '##....##', '.#....#.', '.#....#.', '.######.'],
   sqwife:     ['.#.#....', '#####...', '.###....', '..#.....', '........', '#####...', '#...#...', '#####...'],
+  pair:       ['........', '......#.', '#.#..###', '.#......', '###..###', '#.#..#.#', '###..###', '........'],
   bench:      ['........', '........', '..##....', '..##....', '########', '########', '.##..##.', '.##..##.'],
   ledger:     ['.######.', '##....#.', '##.##.#.', '##....#.', '##.##.#.', '##....#.', '.######.', '........'],
   trophy:     ['########', '#.####.#', '.######.', '..####..', '...##...', '...##...', '..####..', '.######.'],
@@ -146,7 +147,7 @@ export const GLYPH_OF = {
   unlockquarry: ['hoist'], unlockfarm: ['furrow'], unlockapothecary: ['pot'], unlockcasino: ['die'],
   unlockshack: ['hut'], unlockouthouse: ['bucket'], unlocktower: ['tower'], unlockfilter: ['balloon'],
   // the house and the closet
-  crewlist: ['door'], pairpage: ['sqwife'], house: ['house', 'plus'], loopost: ['cap', 'plus'],
+  crewlist: ['door'], pairpage: ['pair'], house: ['house', 'plus'], loopost: ['cap', 'plus'],
   roomba: ['roomba'], tuneroomba: ['roomba', 'plus'],
   // the shack
   rockhandpick: ['pickhead'], rockhandspeed: ['swing'], breaker: ['helmet'], ram: ['ram'], tuneram: ['ram', 'plus'],

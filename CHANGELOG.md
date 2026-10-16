@@ -174,7 +174,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New this release**
 - At a new yard you build who you are and then your sqouse -- a name, one of sqwife, sqouse or sqhusband, and what each wears, with a die on every row, a randomize all that leaves the name alone and a clear -- and every story line, card, sheet, the index and the books name the two of you that way; the rescue achievement now says "you saved your sqouse" (test/who-you-are.test.mjs; src/selftest/wardrobe.js).
-- The sqwife and the sqhusband can be dressed -- a hat, a face, something at the neck, something on the back, a pattern -- on a page of their own, "the two of you" on the house's board, offered once at a new yard; what they wear on their heads replaces their station hat, so the two of them can be found in any crowd (test/pair.test.mjs; src/selftest/wardrobe.js).
+- The sqwife and the sqhusband can be dressed -- a hat, a face, something at the neck, something on the back, a pattern -- on a page of their own, "appearance" on the house's board, offered once at a new yard; what they wear on their heads replaces their station hat, so the two of them can be found in any crowd (test/pair.test.mjs; src/selftest/wardrobe.js).
 
 - On a gamepad the focus brackets travel from one thing to the next where you can follow them, up to the corner buttons, onto a board's rows and back, while the camera glides to center each one, both eased in and out (test/pad-glide.test.mjs; src/selftest/pad.js, "the marker travels across to the corner").
 - A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).

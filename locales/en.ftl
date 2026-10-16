@@ -3147,8 +3147,11 @@ serp-level = { $n }
 
 ## The picker: who the two of them are and what they wear (wardrobepage.js)
 
-# the picker page's heading; at a new yard, the heading of its last step, the two of you side by side; and the house board's row that opens the picker
+# at a new yard, the heading of the picker's last step, the two of you side by side
 ward-title = the two of you
+
+# the picker page's heading and the house board's row that opens it
+ward-appearance = appearance
 
 # the picker's tab for choosing your own square
 ward-you = you
@@ -3172,7 +3175,7 @@ ward-step = { $n } / { $of }
 ward-name = name
 
 # the picker's row label over the role, stepped between the three words
-ward-role = role
+ward-role = title
 
 # the role, as the picker shows it and as an empty name field's hint
 ward-role-word = { $so ->
