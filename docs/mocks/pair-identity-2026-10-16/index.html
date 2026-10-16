@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pair Identity Mocks</title>
+<style>
+  :root {
+    --bg: #f4f4f1; --ink: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --warn: #8a5a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #141417; --ink: #e9e9ee; --muted: #9a9aa4; --card: #1d1d22; --line: #2e2e36; --warn: #e0b45a; }
+  }
+  :root[data-theme="dark"] { --bg: #141417; --ink: #e9e9ee; --muted: #9a9aa4; --card: #1d1d22; --line: #2e2e36; --warn: #e0b45a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  h3 { font-size: 13px; margin: 10px 0 4px; color: var(--muted); font-weight: normal; text-transform: uppercase; letter-spacing: .08em; }
+  p { margin: 0 0 10px; color: var(--muted); }
+  ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); }
+  .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+  .bar label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .bar button { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 16px; }
+  .tag { display: inline-block; min-width: 1.6em; font-weight: bold; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+  .row > figure { margin: 0; min-width: 0; max-width: 100%; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  canvas { display: block; image-rendering: pixelated; max-width: 100%; }
+  .scroll { max-width: 100%; overflow-x: auto; }
+  .warn { color: var(--warn); }
+  .ref { display: flex; gap: 12px; flex-wrap: wrap; }
+  .ref figure { margin: 0; }
+  .ref img { width: 300px; max-width: 100%; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 4px; display: block; }
+  .ph { border-bottom: 1px dashed currentColor; }
+  .ph::after { content: '*'; color: var(--warn); }
+
+  /* The game's sheet, copied by eye from src/style.css (.panel .sheet): paper, a
+     2px ink border, a hard offset shadow, uppercase monospace with a little
+     tracking. The game's own paper and ink stay white and black on a dark page,
+     as the game's do. */
+  .flows { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; margin-top: 14px; }
+  .sheet { background: #fff; color: #000; border: 2px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,.22);
+           font: 12px/1.4 ui-monospace, "Courier New", monospace; letter-spacing: .08em; text-transform: uppercase;
+           padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .sheet .t { font-weight: bold; display: flex; justify-content: space-between; }
+  .sheet .who { display: flex; gap: 10px; }
+  .sheet .who > div { flex: 1; border: 2px solid #000; padding: 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .sheet .who > div.on { box-shadow: inset 0 0 0 2px #000; }
+  .sheet .pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .sheet .pick > div { border: 2px solid #000; display: flex; flex-direction: column; align-items: center; padding: 3px 0 2px; font-size: 10px; text-align: center; letter-spacing: 0; }
+  .sheet .pick > div.sel { background: #000; color: #fff; }
+  .sheet .pick > div.lock { border-style: dashed; color: #8a8a8a; }
+  .sheet .btn { align-self: flex-end; border: 2px solid #000; padding: 2px 10px; }
+  .sheet .arrows { display: flex; gap: 10px; align-items: center; }
+  .sheet .line { display: flex; justify-content: space-between; border-top: 2px solid #000; padding-top: 6px; }
+  .sheet .muted { color: #8a8a8a; }
+  .sheet canvas { background: #fff; }
+  .flowcard p { margin-top: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>The two of you: telling them apart</h1>
+  <p>Mock, not the game. Every picture here is drawn from plain cells on a 6-pixel grid with the game's rules copied by hand: a body is the 3 x 3 cell square with a 2-pixel black rim and a white middle, and the station hats are the five in <code>HATS</code> (src/sprites.js), sitting on the head. The canvases loop. Ten other crew walk in every yard strip; the two you are looking for are always there, both of them wearing a station hat, because that is the worst case.</p>
+
+  <div class="card ref" id="refs">
+    <figure><img alt="the game now: the crew on the rock, three bodies with helmets" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAhwAAAFoCAIAAACTx7VhAAAOtklEQVR42u3dvW8cdR4G8Ge9dkKM44WLDpFLgaJDx0U6XYNEQ0UqJEQZKEKFRMOfQ0FDTWPR8A+EFlGeTgo5KQodBQc5x6+xvfYVS/Z88e7Y2ZfZefl8iihiwubx7NjZ7zzzm+mcnJyE5nr44z8Ktv75r3+3i57T7x+N/O+ddJIsdbt2ERRYsgsAmJXlJ0+e2AsNtrW9XbDVu392Rnny+NfRn7+6y0l6r16zo8CkAkApk8r6+rq90GBX19YKtnr3z04qJ0cHI7d2u8v2GJhUANCpEJ3KYiaVra2tgk6ls3zJjgKTCgA6FaJT0amASQWAVupsbm7aC0zg8OBpwdaVS5eHv9/ZfjL89ayX19aHvy7Wcb+fZOvJf0Z//lpaSnK196q3HkwqAJQyqbj3F5N59K9/Fmy9+Ze/PTepbG+NnonXrvYqMqkAJhUAYp0Kac8KmGedyuj1H8cnnST9Y3sUTCoAYJ0KKXEFTHcpSZY6J2M6lXWdCphUAECnQnQqgEkFAJ0KTXXtD9cu2Kk4xgYOnu4n2R6zYv/S5ZeSrK2/YkdhUgGAxL2/oORJZWfMnQUGd0szqWBSAYDoVKDkSeVSkqUcF3Yq9f5+3N/dSXJ8PPprfGn15eH9njGpAIB1KlCtTmX0ep2VpwdJjmv+Oe/xr78k6R8djtz6yrU/JlleXnEwmFQAQKcCOpUS9Q/2kxyNmVQGP21MKiYVAIh1KkB0KphUAIhOBWg1nQomFQCsUwGq5/Con2TMgvpsb+9YUW9SAYCL6pycnNgLAJhUAIhOBQCTCgBEp0JN/P4cjjHH5FK3axc1xsbGRpKPP/545NY7d+4M/wwmFQCiU4EF293ZKnhu4OrqmnmlOe/17m7B1sPDwyR+OplUAHDvL6jI4djtmFRaYnV1tWDryspKnt0rDJMKADoVmM7B/l6Sfv8o459s2C28Q21xp3J0dGxSiU4FkwoAOhV4MXvdTpLDg6cjt66uXU2yvHLp3E7l4cOHSe7evfvc1n7/JMn1P/0pyc8//zzyFa5fv16w9c0330zy7bfferOiU8GkAoBOhdZMKjtbSQ4PDkZuPTrOuZPK/t5ukt9+e5zk/v37z79C/yTJ7t5ekp9++injz9SP29rv9zPpmfperzen/ba5udnCo+X9998/92s/+04Vvwvt3JMmFQB0KszTvXv3hr+/fft2Tb+KlXM6lfVzJ5XB0fjLv38dziUjPgcVPjeweGu3263gmXrfg/akSQUAdCpVtbOzk/HnkdOaTiW/P8l8O+feyXiirdN0KvPje9CeNKkAgE6lqj788MMGfBUvr15JMu4JPd3ucpLO0vmfY9bW1iZuTXQq0algUgGgGTqu7KZqnj59muS1115LldaFWKdSBdapmFQA8Ix6WPih2enM6ZUnO+arlmdRBndm29/fL+i0xl2DV7x1cGe2y5cvO/hNKgCQWKdCLUx/rvz0uXjrVKbxwQcfJHnw4MHIrTdv3kzy6NGjCbZ+//33SW7duuWAN6kAgHUqpI3rD6Z/telbkNMNTb2+B7uFT96cZhXRYH2Sn0gmFQDQqZCW3tNp+lerWp4yDe6fljncmW1wzzc/kUwqAKBTITqVhuSJTgWTCgA6FYhOpc2dyhtvvJHxzcrrr7+eZHl5eYKth4eHNe1UNjY2nvsvH330kUkFAOLeXzT/3l+zXRcy/b2/qpDHPdmq4+uvv37uv9y9e9ekAgDRqRCdSnQq3uXF2dvb856aVACITgWdSnQq3hdMKgBEp8IkBk+beOutt+yK6FTS2C7BfsCkAkB0KmPdu3dv+Pvbt2/X9Pp9Z5OL96ROpTqrRnQqmFQAiE7lQnZ2duLcdHQqedEn3p+cjHu2R+fc++nOu0sYPHfkwYMfM6qZ63SW5jqjXPxr1KlgUgEgOpWG3xPJu1BOT3B6DnjRSaXMLuHZExLHtRr/m1R0KphUAIhOhehUmrS3p+lUZjsfjOtULjKp6FQwqQAQnQo6lYbsycGfmaZTyZzbC50KJhUA0Km8iF6vl+p1KvNLNVjPUbVU0+zJ4lSPHz8umACK98Y0X+/ZzM9mqdGf3Iv7njLnRZ0KJhUAdCqezi3VLDIXp1rU11vH/axTwaQCQHQqsU5FqnIyL+rrdc86nYpJBQCiU9GpRKeiU9GpYFIBIDoVolPRqTS1S5j3PdAwqQAQnQqN7QmgXmb7E+nOnTtJvvnmm5FbNzY2hn9mtv+vSQUAolOJxgUc7eMcHh4WbN3d3S34G6f5f00qADCLSWV9fb2Cse7fv5/k1q1b3qEk1XyPoPpH+8rKSsHW1dXVgr9xmv/XpAIAze1Ubty4Eecro1PB0R6dikkFAJ0K0amATiU6FZMKAJXQmeY55PEUeqBEfl6ZVABw7y939wLS8DuDYVIBINapAMSaLZMKAESnolOB6FQwqQAQnQpAdCqYVACITkUvAkSXY1IBIDoVgOhyMKkAEJ2KTgWITsWkAkB0KgBEp2JSASA6FZ0KEJ2KSQUAolMByGzPf2xubtpFJhUAdCo6FSAaF5MKANGpABCrWEwqAESnolMBolMxqQAQnYqzgQDRqZhUAIhORacCRKdiUgGA6FQAolMxqQAQnYpOBYhOxaQCANGpAESnYlIBIDoVnQpAEp2KSQWAeX2sr+PTlXu9nncOqIW2PcHepAJAuzsVrQkQjYtJBYBYpwJArGIxqQAQnYpOBYhOxaQCQHQqAESnYlIBIDoVrQkQnYpJBQCiUwGITsWkAkB0KjoVAJ0KAESnAhCdikkFgOhUdCoA0amYVACITgUgTbqrevOeYG9SAUCnAhCNi0kFgOhUAIhVLCYVAKJTAYhOxaQCQHQqAESnYlIBIDoVnQoQnYpJBQCiUwGITsWkAkB0KjoVgOhUACA6FYDoVEwqAESnolMBiE7FpAJAdCoA0amYVACITkWnAhCdikkFgOhUAKJTMakAEJ2KTgUgOhWTCgDRqQCgUwGA6FQAolMxqQAQnQoA0akAQHQqANGpmFQAiE4FgOhUTCoARKcCEJ2KSQWA6FQAiE7FpAJAdCo6FSA6FZMKAESnAhCdikkFgOhUdCoA0akAQHQqANGpmFQAiE5FpwKQ5nYqxT+fTSoARKcCEJ1KdCoARKeiUwGITkWnAkB0KgDRqUSnAkB0KjoVgOhUdCoApMWdSq/Xs/eB6FSqZ5qfzyYVAFL7TkVrAtC8VtukAkCsUwGITiXWqQAQnYpOBSA6FZMKANGpAESnEp0KAAAAAFRC591337UXAIhOBQDrVAAwqQBArFMBwKQCQHQqAJhUACAN7FS2trYKtl69elVmmWWWWeYKZjapADC7SWV9fT11u5t/Nf/1lllmmWWW2aQCQLs7lWpesSazzDLLLLNJBQCdiswyyyyzzDoVAHQqcZ5RZplllllmnQoAaf69v6x9lVlmmWVuXmaTCgCpfafi7KfMMsssc/Mym1QAqP86FVeUyyyzzDI3L7NJBQCdiswyyyyzzDoVAHQqcZ5RZplllllmnQoAJf6DtLm5GetIZZZZZpllnkVmkwoAqUGn4uynzDLLLHPbMptUAKjDOhVXlMsss8wyty2zSQUAnYrMMssss8w6FQB0KnGeUWaZZZZZZpMKAKnHM+qtI5W5XpmLzyNPY1GfRh0bMlcts0kFgFSiU3EmUeYmZZ6G5xLJLLNJBYAqrVNxdbbMTco8Dc8lkllmkwoAOpU4NypzdCqODZl1KgDoVOI8o8zRqUSnIrPMJhUAKvSMeutIZW5S5l6vN6dXLv4+cmzI3J7MJhUAUlKn4kyizNGaZJGdimND5nplNqkAUNY6FVdny5yGrkSZvgU53dB4LpHMMptUANCpxLlRmVO1FkSnIrPMJhUAdCpxblTmVO1uXToVmWU2qQAwY53iT1jWkcrcpMynm4/pP8edPqM9zas5NmRuUmaTCgApqVNxJlHmJmVOJTsVx4bMTcpsUgGgrHUqrs6WuUmZU8l1Ko4NmZuU2aQCgE5FZpl1Ko4NmU0qAOhU4jyjzNGpRKcis8wmFQAq8oz6WEcqc4Myn34Cymyfp1L8ao4NmduT2aQCQErqVJxJlLmpmcvsVBwbMrcns0kFgLLWqcTV2TI3NHOZ61QcGzK3J7NJBQCdiswyT5f59LVb0anILLNOBQCdSpwblbl5mXUqMstsUgFgxjqL+pfQ2leZZZZZ5uZlNqkAkNp3Ks5+yiyzzDI3L7NJBYD6r1NxRbnMMs/Pl19+Ofz9559/bj/LXFpmkwoAOhWZZZZ5vC+++GL4+08++cR+llmnAoBOJc4zyizz4jN3u92cd18y+1lmnQoAaekz6q19lXlWmcfdUXi2z5kvfuXqZL6Id955J8nx8XGS7777zvEsc2mZTSoApAadirOfMk+TufjPnJ0GLn4VzWSvvNjMmahTGeQZ9z3ueJbZpAJAW9epuKJc5jIzz+9IHrxyvTL3+/0861TG/S2OZ5nnkdmkAoBORebmZp7smBx0FcWfsC7SeYx75eKpYn6Zo1ORWacCgE4lzjO2OfNXX301/HW2Pvvss+GvF8mcuT0rvu6vfPH36NGjR8N3/+233x79iXJpqeA98j0os0kFgDp3KsX/1t24caN2/z63OfOVK1fy//eMmsbguqOcOnt7+hzu/Pbz/DrCKmQ++x6d3s/jZpGVlZULvnI5dwL0PdjszCYVAFKJe3+5443M88g87q5ZF1F8PNfxlSfbz++9995wUvnhhx8czzKXltmkAkAq0am4OlvmeWS+yL22JrteZbJXHlydtajMk+3nQe8ymFQW9cwkx3M7M5tUAKjGOhVXZ8tcnczzXkdSzczj9vPg3l+DzPPbM45nmU0qAOhU4txo6zKf/iQ17tUm+7R1kVc+++l+sZl1KjLrVACIdSpxdbbMMtc98+AZ9QPlr1NxbLQ5s0kFgJTUqTiTKLPMdcx8+v5g5Xcqjo02ZzapAFDWOhVXZ8sscx0zf/rpp5n/Ch77WWaTCgBz1Cn+18wVETLLLLPMMptUAIhOxblRmWWWWeboVAAg/wXh5PbNbxmAAAAAAABJRU5ErkJggg=="><figcaption>Now: the crew on the rock (<code>look.mjs crew</code>). Every body the same square.</figcaption></figure>
+    <figure><img alt="the game now: the finale parade, the pair walking at the head of the crew" src="data:image/png;base64,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"><figcaption>Now: the finale walk (<code>finale-parade</code>). The two at the front are the same square as the twenty behind.</figcaption></figure>
+    <figure><img alt="the game now: the deep, the sqwife alone fighting the serpent" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAFACAIAAADrqjgsAAAMgklEQVR42u3dTYxdZQEG4PfeaaftYFuoLKBIUl2YRhokGjdscGEICMSliUJiYly4gR3RhYk/C9kZZmOIC000EPYihOCikrgxKiJqdYEkpS0LrUyxQ5nO3OuiwQwz55R7Zs6Ze36eZ+fh9mb8OtWXt+98dxSAFrth8abC55fX/tP7/+5jv/0A7bTPEQBtNp1OB/vfXYIGkKABqhuNRhI0ABI0QHTQEjRAZ40cAezM/oWDhc+vblxxONfxqZsfLHz+13/90uFI0ADRQUN0o2yxMbnqECRoAAkaYp/LrBbG+x2CBA0gQUN00EQHLUEDxA4aaKNPH7+/8Pmfzj/vcCRoAKKDBrKtw113CBI0ABI0kNl3xP7YStAASNBAdNBI0ADp4g765PF7Cl905vxpJ8Vw/zVzvFj4fH2y5nCQoAEG30HrtiDu3ECCBqBCgravhMx+77NgjQQNIEHroEEHjQQNQLpwH/TDdzxd+PwXf/lKJ96ffrhh8abC55fX/lP4/PYbTxU+P/v2aw4TCRog7uJo1trGaqffnwyya55MNxwaEjSABD0niwtLnX5/0u+9c1m6GS04NCRoAAk6Omiig44OGgkagK520GX75TJlu2YdNLNYvfp2pdefW/lb4fO7jn+x8Pkr5381qPP86NLthc//vXq28PmRxVsLn19auzCoczt84GYJGkCCjg6aDOwzA686hCST6STV/g5g4tC2nIMEDSBBxw6aQVgY73cIScajccUdury49RycCIAEHR000UFHBx0dtA4aIAO4D7quT5Qou+ug6vuXvU9d9z5XfR/3TQPxk4QA0UFvdunSpUa/iLrev66uuer76LgBCRpAgv6gI0eONPpF1PX+de2dq76PnTUgQQNI0NFB66ABCRqAwgRd18Y5e7inrvo+z+brhc8fOfVM6tg7N83OGiRoANqUoJvul9usK12zjhskaADalKCb3ji3WVf2znbWIEEDoIOODjo6aECCBuik0aOPfuv//2F5+YlKv3jzr93sySd/OLDPEBs1upu2dwYJGoAW2ffee+/t+BeX/doh99rRHQMSNEDPE/SBAwd2/IvLfu2Qt9WxXwYkaAAddHTQ0UEDEjQA2b6DLlO2ay7b/1ZV15667OvZyzuvm9hNV72f+tdnv1/4/MKlM+6bZu4+fuyzhc//efH3DkeCBkh/OuimO+Wmu+yudOJ13Q0ymW7oymmtqt+fEjQA3dxBN71rbnpP3ZVddl33U49HC/batDcVVvz+lKAB0EFHBx0dNNFBI0EDdNdolj1ymXvvva+WL+LBBz+fOnbTqbjj7ut901V30/bOzOLg/sOFz69cfcfh7MChkvN8d9N5StAALbUvM3TBZVZXL8/li676dfb1bpCufKYi/dC2n8gdwnlK0ABdSNBV74ZeWrphLl901a+zr/dT17Wbhuzi70Jo7jwlaAAddHTQ0UETHTQ6aID0aQedmu5xTsO76QceuKfw+WOPfbuW97ebjt00xE8SApAZOug03AXX1VmXdcq7+XxFnXV01iBBA9B4gp7Xbrps11z167Gbjt00SNAA6KB10NFBgwQNQFq6g07L9tGZ056667vpR049kzr2znbTIEEDRAedbnXTmVOX3fXOuq6uWWcNEjSABJ2O7aMzpz1113fTde2d7aZBggaQoKOD1kFHBw0SNABpfAcdu+nYTQMSNEB00GnLZwzqrNOLzhqQoAEk6NhN200DEjSABB0ddHTQ0UGDBA1AWrSDTk376NhNpw+76bJ7pV9683uFz99a+bs/yUjQAGRYHXRq6qajs06fPwtxMt3wJxYJGgAJOnXuo2M3nT7spstePx4t+BOLBA2ABB0dtA5aBw0SNEDsoNPtPbXddFq5my7jHmr20snjxX9Oz5w/LUEDRAfdH+76iLs+oCYbk/XooAEk6P5z33TcNw01WRjvk6ABJOjooKODjg4aooMGIO3bQR9bur3w+cXVs7Gbjt30Tr+JRyN/kmmtfePFwud3n/hq4fPfvP5TCRpAB73JdDqJzjo6axiQ6XRa+Hx9shYdNIAEnRm6wrHddOymYUjK/o6krJuWoAEk6Oigo4OG6KCjgwaIHTTZ+W46c9pTD203XXavtPujiU9UASDu4ojPTozOOu70QIIGQIJOP++bzpz21EPbTbtXGgkaAAk6OujooKODRoIGIHbQsZtOn3fT6cie2m56mE4c+0zh8zcu/kGCBiA66OisM4/Ouitdts56mCbTjeigAZCgYzedNu2mu7KntpsepvFoQYIGQIKODjo66OigiQ4agNhB1+3O48U74lfPvxC76dhNZ2e76TL21EjQANFBd97GZD066+iso7NGggZAgp7Nwnif3XTspmM3jQQNgAQdHXR00NFBI0EDkMHtoE/d8oXC56+99ZLfuXR/N52G99Rt202PRsV/3B6+4+nYTfO+6XQqQQNEB53ed8TRWcdnJ0aXTe3f/xI0gASd3u6UYzedNu6p27abjj01Fb9vJWgACTo66Oigo4OODhodNEDsoInddNL93XQ6sqeuurMmje2U4ycJAaKDJjrrDLez7nqXzXy/3yRoAAma2E1naLvpru+pme/3mwQNIEETHXR00DpodNAAxA56d/9vNir+F47J1E88Jt3ZU9tN4xNVAIgOOv37CaLosqOzRoIGQILuurK7DgTrdGpPbTeNBA2ABB0ddHTQ0UEjQQMQO2hiT73J8vITteyv69pZN72njp11r83yfSJBA0QHDWmiy676+ro67qa7bB2373MJGkCChjSyp676+rp21k3vqe2sfZ9L0AASNEQHrYNGBw0QO2iIe6vTxJ46u9jPxv66NedW9Tyfe+60BA0QHTTs3MrKSqPv//jj38287wyp2ik33XH3tfue17lVPc/N31cSNIAEDdnh5rfsJu7s+g7C3WyWm95TN33v9tD21/M6t6rnufn7SoIGkKAhc+g9r/8Ou+klddDRQeugAWIHTb1u+8hdhc/P/fcVh5MqDXJzHfRu3rlte+r0dH+dlu24N++U4xNVAKKDpl6T6YZDSDs66N3sndPxz2Dsevfdtg59L3+/JGgACXp4xqMFh5B5b2+vvUMTG9i63rOuPXVf99dt23Hv5e+XBA0gQUcHTebVQTfRn+qgddASNIAETd0uXP6zQ0gda+W0soN+6qkfpct3RFTtUh966Eud/h57+eU/NnpuL774ggQNIEFD+nDPw7V3Xl5+Iu6ISCu67/gsTQkaQIKGtPmu4fbfYtyVDpq9/32UoAEkaMjcOui4pzg6aB00AHEfND1SdrdyXXf47ube56GdOTvTxFJIggaIDhpStb+TfIfzGX1I0AASNGRAdw07cyRoAAkaog915kjQAAAAAPGThHTDysrKh77m6NGje/b65S+f+dDXP/rsSb9xRAcNQKw4SBdufL72+rKfJNz+GYZVX39o8XCSb/z8tsLX/+SRc37LkKABkKBJl258vv7rt//Tqq9/d+2d67z++v8UJGgACZq9dWj/0eLUdnUlOujZXr/9n1Z9/bUOuvT36Lr/FCRoAAmavbV9URAdtA4aJGgACZr4fLzsuoOe/d82qr7+Wsts74wEDYC7OLrg4L7iLHll/ZLDASRoAAkaGKS7b/tm4fPfnvuxw5GgAWLFAbDV+mTNIUjQABI0wOz/4zJedAgSNIAEDRAdtAQNEDtoeuf+T/yg8Pnzr3/H4YAEDUB00GRb93fFIYAEDYAETYX96UGHABI0ABI00UGDBA1A7KCBmtxy+JOFz9965x8OR4IGIDpoYKvJdMMhSNAASNDA7GlrtOAQJGgAJGggOmgJGgAAAAAAAAAAAAAAAOI+aHZlafHGwuera287HIifJAQg7uJgi+l06hBAggZAgmZmo5G/igAJGgAJmuigQYIGQILmAw7tP1r4/N2rK9FB875jB08UPr945Q2HI0EDIEFHdxwdNNt+fycOQYIGQIImSX3dsQ66798ncpgEDYAETXTQ6KAlaADiPmjYmc/d+rXC57+78DOHgwQNQHTQsNXGZM0hIEEDIEHDzBbGiw4BCRoACRqig0aCBiB20HNybOljhc8vrr7Zqq/zzuP3FT5/9fwLvlNBggYgOui4iyBbu9R135GABA0gQcd9uJl5z2tUA0jQABJ0dNDRQQMSNEDsoNmFk8fvKXx+5vxphwNI0ADRQRNdMyBBA0jQxN4ZkKABJGiigwYkaACy+x30sYMnCp9fvPKGEwSQoAGig05H77IAkKABaEeC7sp9ygASNAA6aAAJGoBW+R/mG8yo/PCdEAAAAABJRU5ErkJggg=="><figcaption>Now: the deep (<code>party-one</code>). She is the one small white square under the serpent.</figcaption></figure>
+  </div>
+
+  <div class="card">
+    <h2>Where the two of them are, act by act</h2>
+    <ul>
+      <li><b>Act 1, the rock.</b> She is lodged in the ground under every rock (<code>drawBuried</code>, render/crew.js), sunk a cell at a time and mostly hidden by the rock's cells; he is the first digger, one of the crew. Once she is dug out she becomes <b>an ordinary crew body</b> (intro.js, <code>S.crew++</code> and a fresh worker): nothing in the save says which body she is.</li>
+      <li><b>The snatch.</b> The game takes <b>the two crew bodies nearest the mouth</b> (snatch.js, <code>takeOff</code>) and plays them as the pair. He is taken; she leaps in after him.</li>
+      <li><b>Act 2, the deep.</b> She is the deep's first body: the fighter at station one, living in the first pod, on a black ground. He is in the serpent's belly, unseen, until the fourth defense breaks.</li>
+      <li><b>The finale.</b> Both swim up, walk the whole yard at the head of two files of crew, and go into the house (finale.js); they live there for good (<code>S.retired</code>).</li>
+      <li><b>Act 3 (being designed).</b> Two square souls floating up into the clouds.</li>
+    </ul>
+    <p class="warn">So "always able to be seen" is not only a drawing. Today the pair are anonymous between the rescue and the snatch. Any option below needs the game to keep two named bodies across act 1 (her, and the digger as him) and give those two to the snatch, instead of whichever two stand nearest the mouth. That is a save-shape change (two uids on <code>S</code>).</p>
+  </div>
+
+  <div class="bar">
+    <label><input type="checkbox" id="reveal"> mark where the two are in the crowds</label>
+    <button id="pause">pause</button>
+  </div>
+
+  <h2 style="margin-top:22px">Part 1: five ways to mark them</h2>
+  <p>Each card: the pair close up at 3x walking; both under every station hat at 2x; the yard crowd at game scale (one world pixel to one screen pixel, as on an 800-pixel-wide window); the deep at game scale; and the act-3 souls at 2x.</p>
+  <div id="options"></div>
+
+  <h2 style="margin-top:28px">Part 2: choosing what they wear</h2>
+  <p>Three ways in, sketched as the game's sheets. Words marked <span class="ph">like this</span> are placeholder copy for the owner to word; the rest are plain labels. The eight drawings are the same in all three flows, and either of the two can wear any of them.</p>
+  <div class="card">
+    <h3>Eight things to wear (3x, on a body, and stacked on a helmet)</h3>
+    <div class="scroll"><canvas id="wardrobe"></canvas></div>
+    <p style="margin-top:8px">bow, top hat, crown, flower, sprout, ears, antenna, scarf. Seven sit on the head, so with a station hat on they stack on top of it (row two). The scarf hangs off the side and never meets a hat.</p>
+  </div>
+  <div class="flows" id="flows"></div>
+
+  <div class="card">
+    <h2>What this mock cannot show</h2>
+    <ul>
+      <li>The real zoom: the game's yard zoom changes with the window (a phone draws it smaller), so "game scale" here is one size of several.</li>
+      <li>The rest of the yard: rocks, heaps, carts, forklifts, dust in the air, falling grains, the crew's speech marks and dizzy stars, which compete with a floating mark (B) far more than ten plain bodies do.</li>
+      <li>Under the rock: she is mostly hidden by the rock's cells in act 1, so only what sticks out above the ground line (a tuft, an accessory on the head) can show there. Not drawn here.</li>
+      <li>The deep's real party: class kit (swords, staves, the mage's things) drawn on the fighters, the serpent over them, the deep's camera, which is wide and only pans.</li>
+      <li>How the game walks a body: here they slide a pixel at a time with held two-pose waves for the scarf and the bob; no hop, no stoop, no carrying pose.</li>
+      <li>The boards and the crew list, which draw the same square beside each count; whether the pair's mark shows there too is a separate call.</li>
+      <li>The menus are pictures of sheets, not the sheet's real stylesheet, and none of the controls work.</li>
+    </ul>
+  </div>
+</main>
+
+<script>
+// ---------------------------------------------------------------------------
+// The cell grid and the inks. One world pixel is drawn K device pixels at
+// game scale; a closeup multiplies that.
+const P = 6, W = P * 3, RIM = 2;
+const INK = '#000', PAPER = '#fff', GREY = '#8a8a8a', PALE = '#d6d6d6', FAINT = '#efefef';
+const PURPLE = '#8244d8', GREEN = '#2e9e4b', BLUE = '#2f5fd0';
+const DEEP_BG = '#0b0614', DEEP_FLOOR = '#2c2c2c';
+const DPR = Math.max(1, Math.round(window.devicePixelRatio || 1));
+
+// The station hats, as in src/sprites.js.
+const HATS = {
+  helmet: ['###'],
+  lamp: ['.#.', '###'],
+  brim: ['..###..', '#######'],
+  point: ['..#..', '.###.', '#####'],
+  cap: ['###', '###'],
+};
+const HAT_TINT = { brim: GREEN, lamp: BLUE };
+
+// The eight things to wear. `on: 'head'` sits on top of the head (or of a hat);
+// the scarf is its own drawing.
+const WEAR = {
+  bow:     { rows: ['##.##', '#####', '##.##'], on: 'head' },
+  tophat:  { rows: ['.###.', '.###.', '#####'], on: 'head' },
+  crown:   { rows: ['#.#.#', '#####'], on: 'head' },
+  flower:  { rows: ['.#.', '#.#', '.#.', '.#.'], on: 'head' },
+  sprout:  { rows: ['##.##', '..#..'], on: 'head' },
+  ears:    { rows: ['#.#'], on: 'head' },
+  antenna: { rows: ['#..', '.#.', '.#.'], on: 'head' },
+  scarf:   { on: 'scarf' },
+};
+const WEAR_ORDER = ['bow', 'tophat', 'crown', 'flower', 'sprout', 'ears', 'antenna', 'scarf'];
+
+function sprite(g, rows, x, y, color) {
+  g.fillStyle = color;
+  for (let r = 0; r < rows.length; r++)
+    for (let c = 0; c < rows[r].length; c++)
+      if (rows[r][c] === '#') g.fillRect(x + c * P, y + r * P, P, P);
+}
+const sw = rows => Math.max(...rows.map(r => r.length)) * P;
+const sh = rows => rows.length * P;
+
+// A body: the black square, the white middle. `w`/`h` let option C change the
+// silhouette; `rim` lets option E change the rim's ink.
+function body(g, x, y, o = {}) {
+  const w = o.w || W, h = o.h || W;
+  g.fillStyle = o.rim || INK; g.fillRect(x, y, w, h);
+  g.fillStyle = o.fill || PAPER; g.fillRect(x + RIM, y + RIM, w - 2 * RIM, h - 2 * RIM);
+}
+
+// A hat centered on a body `w` wide whose top is `y`. Returns the top of
+// whatever is now highest on the head.
+function hat(g, kind, x, y, w = W, ink = INK) {
+  if (!kind) return y;
+  const rows = HATS[kind];
+  sprite(g, rows, x + (w - sw(rows)) / 2, y - sh(rows), HAT_TINT[kind] && ink === INK ? HAT_TINT[kind] : ink);
+  return y - sh(rows);
+}
+function onHead(g, rows, x, top, w, color) {
+  sprite(g, rows, x + Math.round((w - sw(rows)) / 2 / P) * P, top - sh(rows), color);
+}
+
+// A scarf: one cell thick, out of the top row on the side away from where the
+// body faces. Walking, it streams out three cells in two held poses; stood
+// still, it hangs two cells down the side.
+function scarf(g, x, y, w, face, moving, t, color, checker) {
+  const back = face > 0 ? x - P : x + w;
+  const dir = face > 0 ? -1 : 1;
+  const cells = [];
+  if (moving) {
+    const pose = Math.floor(t * 4) % 2;
+    const lift = pose ? [0, 0, -1] : [0, 1, 0];
+    for (let i = 0; i < 3; i++) cells.push([back + dir * i * P, y + P + lift[i] * P]);
+  } else {
+    cells.push([back, y + P], [back, y + 2 * P]);
+  }
+  cells.forEach(([cx, cy], i) => { g.fillStyle = checker && i % 2 ? GREY : color; g.fillRect(cx, cy, P, P); });
+}
+
+// ---------------------------------------------------------------------------
+// The five options. Each draws one of the pair ("her" or "him") at (x, y),
+// facing `face`, wearing station hat `kit`, on a light or dark ground.
+const HEART3 = ['#.#', '###', '.#.'];
+const MOON3 = ['.##', '#..', '#..', '.##'];
+const HALO = ['.###.'];
+
+const OPTIONS = [
+  { key: 'A', name: 'A signature accessory each, worn for good',
+    line: 'Her a bow, him a top hat, always on, stacked on top of whatever station hat they wear.',
+    notes: ['Reads in every crowd once you know the two shapes; the stack makes a hatted pair the tallest bodies in the yard.',
+            'Stacking a hat on a hat is odd on the point and the brim; the top hat over a helmet reads as one tall hat.',
+            'Carries into act 3 untouched: a soul with a bow.',
+            'This is also the slot Part 2 fills: the bow and the top hat are just the defaults.'],
+    draw(g, who, x, y, face, kit, dark, t, moving) {
+      const ink = dark ? PAPER : INK;
+      body(g, x, y);
+      const top = hat(g, kit, x, y, W, dark ? PAPER : INK);
+      onHead(g, who === 'her' ? WEAR.bow.rows : WEAR.tophat.rows, x, top, W, ink);
+    } },
+  { key: 'B', name: 'A mark floating over each, bobbing',
+    line: 'A small heart over her and a crescent over him, two cells clear of the head or hat, bobbing a cell in two held poses.',
+    notes: ['The most findable at game scale: the only bodies with something floating over them.',
+            '<span class="warn">Clashes with the speech marks:</span> a heart over a body already means "the other thing" (drawSaying), dots are talking, a bang is help, stars are dizzy. A permanent heart would read as permanent flirting, and a body that talks has two marks at once.',
+            'Act 3: the mark could be the one thing that stays when the square fades.'],
+    draw(g, who, x, y, face, kit, dark, t, moving, phase = 0) {
+      const ink = dark ? PAPER : INK;
+      body(g, x, y);
+      const top = hat(g, kit, x, y, W, ink);
+      const bob = Math.floor(t * 1.6 + phase) % 2 ? -P : 0;
+      onHead(g, who === 'her' ? HEART3 : MOON3, x, top - 2 * P + bob, W, ink);
+    } },
+  { key: 'C', name: 'Their own silhouettes',
+    line: 'She is a cell taller with one cell of ponytail behind her; he is a cell wider. Same rim, same white, no extra mark.',
+    notes: ['The only option that is the body itself: nothing to collide with hats, speech, kit or the purple, and it is the soul in act 3 as it stands.',
+            'Hardest to find at game scale in a crowd: a cell of difference on an eighteen-pixel square is easy to miss while bodies cross.',
+            'Every place that assumes a body is WORKER square (hit boxes, doorways, seats, the forklift, the pods) would have to ask the body its size.'],
+    dims: who => who === 'her' ? { w: W, h: W + P } : { w: W + P, h: W },
+    draw(g, who, x, y, face, kit, dark, t, moving) {
+      const ink = dark ? PAPER : INK;
+      if (who === 'her') {
+        const yy = y - P;                       // a cell taller, feet on the same ground
+        body(g, x, yy, { w: W, h: W + P });
+        g.fillStyle = INK;                      // the ponytail, on the side away from the way she faces
+        g.fillRect(face > 0 ? x - P : x + W, yy + P, P, P);
+        hat(g, kit, x, yy, W, ink);
+      } else {
+        body(g, x, y, { w: W + P, h: W });
+        hat(g, kit, x, y, W + P, ink);
+      }
+      if (dark) {                               // the ponytail would vanish on black: give it the white
+        if (who === 'her') { g.fillStyle = PAPER; g.fillRect(face > 0 ? x - P : x + W, y, P, P); }
+      }
+    } },
+  { key: 'D', name: 'A scarf each, streaming behind',
+    line: 'One cell of scarf out of the top row: hers solid, his checked. It streams three cells behind as they walk and hangs down the side when they stop.',
+    notes: ['Never meets a station hat: it comes out of the side, not the top.',
+            'Motion makes it findable: a waving thing in a crowd of sliding squares. Stood still, two cells down the side is quieter.',
+            'On the deep\'s black it is drawn in white, or a black scarf disappears.',
+            'Act 3: a scarf trailing below a rising soul is the strongest picture of the five.'],
+    draw(g, who, x, y, face, kit, dark, t, moving) {
+      const ink = dark ? PAPER : INK;
+      body(g, x, y);
+      hat(g, kit, x, y, W, ink);
+      scarf(g, x, y, W, face, moving, t, ink, who === 'him');
+    } },
+  { key: 'E', name: 'Purple: a purple rim and a halo',
+    line: 'Their rims drawn in the game\'s purple instead of black, and a flat purple halo floating over the head.',
+    notes: ['<span class="warn">Clashes.</span> Purple is the game\'s one accent and it already means something: magic, the deep\'s light, the foe\'s state, the pad\'s marker and the finale\'s door (palette.js). In the yard the pair would read as selected (the pad marker) or under a spell; in the deep, where everything lit is purple, they stop standing out at all.',
+            'It would fit act 3, where the two are otherworldly, as the change that marks them becoming souls rather than as an identifier before then.'],
+    draw(g, who, x, y, face, kit, dark, t, moving) {
+      body(g, x, y, { rim: PURPLE });
+      const top = hat(g, kit, x, y, W, dark ? PAPER : INK);
+      onHead(g, HALO, x, top - P, W, PURPLE);
+    } },
+];
+
+// ---------------------------------------------------------------------------
+// Canvas helpers: a canvas `w` x `h` world pixels shown at `scale` CSS pixels
+// a world pixel, drawn crisp at the device's ratio.
+function makeCanvas(parent, w, h, scale, caption) {
+  const fig = document.createElement('figure');
+  const wrap = document.createElement('div'); wrap.className = 'scroll';
+  const c = document.createElement('canvas');
+  c.width = w * scale * DPR; c.height = h * scale * DPR;
+  c.style.width = (w * scale) + 'px';
+  const g = c.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.setTransform(scale * DPR, 0, 0, scale * DPR, 0, 0);
+  wrap.appendChild(c); fig.appendChild(wrap);
+  if (caption) { const fc = document.createElement('figcaption'); fc.innerHTML = caption; fig.appendChild(fc); }
+  parent.appendChild(fig);
+  return { c, g, w, h };
+}
+
+// The yard's ground: white sky, the black ground line, a faint hatch below.
+function yardGround(g, w, h, gy) {
+  g.fillStyle = PAPER; g.fillRect(0, 0, w, h);
+  g.fillStyle = FAINT;
+  for (let y = gy + 4; y < h; y += 6) for (let x = (y * 2) % 12; x < w; x += 12) g.fillRect(x, y, 6, 1);
+  g.fillStyle = INK; g.fillRect(0, gy, w, 1);
+}
+function cloud(g, x, y, s, color) {
+  g.fillStyle = color;
+  g.fillRect(x + 2 * s, y, 4 * s, s); g.fillRect(x + s, y + s, 7 * s, s); g.fillRect(x, y + 2 * s, 10 * s, s);
+}
+function deepGround(g, w, h, gy) {
+  g.fillStyle = DEEP_BG; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#371f56';
+  for (let i = 0; i < 40; i++) { const x = (i * 97) % w, y = (i * 53) % gy; g.fillRect(x, y, 2, 2); }
+  g.fillStyle = DEEP_FLOOR; g.fillRect(0, gy, w, h - gy);
+  g.fillStyle = '#464646'; for (let x = 0; x < w; x += 12) g.fillRect(x, gy, 6, 2);
+}
+
+// A plain crew body, maybe hatted, maybe carrying a grain over its head.
+function crewBody(g, b, dark) {
+  const x = Math.round(b.x), y = b.y;
+  body(g, x, y);
+  const top = hat(g, b.kit, x, y, W, dark ? PAPER : INK);
+  if (b.carry) { g.fillStyle = dark ? PALE : GREY; g.fillRect(x + P, top - P - 2, P, P); }
+}
+
+// A seeded walk for a crowd: bodies pace between two ends and turn, at their
+// own speeds; a few stand still.
+function rng(seed) { let s = seed; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+function crowd(seed, n, w, kits) {
+  const r = rng(seed), out = [];
+  for (let i = 0; i < n; i++) {
+    const a = 10 + r() * (w - 60), span = 40 + r() * (w * 0.5);
+    out.push({ a, b: Math.min(w - 30, a + span), v: r() < 0.2 ? 0 : 10 + r() * 22, ph: r() * 10,
+               kit: kits[Math.floor(r() * kits.length)], carry: r() < 0.35 });
+  }
+  return out;
+}
+// Where a pacer is at time t: x and the way it faces.
+function pace(p, t) {
+  if (!p.v) return { x: p.a, face: 1, moving: false };
+  const len = p.b - p.a, T = len / p.v, u = ((t + p.ph * T) % (2 * T + 2));
+  if (u < T) return { x: p.a + u * p.v, face: 1, moving: true };
+  if (u < T + 1) return { x: p.b, face: 1, moving: false };
+  if (u < 2 * T + 1) return { x: p.b - (u - T - 1) * p.v, face: -1, moving: true };
+  return { x: p.a, face: -1, moving: false };
+}
+
+let reveal = false, paused = false, clock = 0;
+const drawers = [];
+
+// ---------------------------------------------------------------------------
+// One card per option.
+const yardKits = [null, null, 'helmet', 'helmet', 'lamp', 'brim', 'point', 'cap'];
+const deepKits = [null];
+for (const opt of OPTIONS) {
+  const card = document.createElement('section');
+  card.className = 'card';
+  card.innerHTML = `<h2><span class="tag">${opt.key}</span>${opt.name}</h2><p>${opt.line}</p>`;
+  const row1 = document.createElement('div'); row1.className = 'row'; card.appendChild(row1);
+  const row2 = document.createElement('div'); row2.className = 'row'; row2.style.marginTop = '10px'; card.appendChild(row2);
+
+  // Close up, 3x: the two walking together, her in a helmet, him in a sun hat.
+  const close = makeCanvas(row1, 170, 64, 3, 'close up, 3x: her (helmet) and him (sun hat) walking, stopping, turning');
+  const walker = { a: 14, b: 96, v: 22, ph: 0 };
+  drawers.push(t => {
+    const g = close.g; yardGround(g, close.w, close.h, 56);
+    const p = pace(walker, t);
+    const x = Math.round(p.x / 1) ;
+    opt.draw(g, 'her', x, 56 - W, p.face, 'helmet', false, t, p.moving);
+    opt.draw(g, 'him', x + W + 5 * P, 56 - W, p.face, 'brim', false, t, p.moving, 0.5);
+  });
+
+  // Every station hat, 2x.
+  const kits = [null, 'helmet', 'lamp', 'brim', 'point', 'cap'];
+  const grid = makeCanvas(row1, kits.length * 42, 150, 2, 'under every station hat, 2x: bare, helmet, lamp, sun hat, point, cap; her above, him below');
+  drawers.push(t => {
+    const g = grid.g; yardGround(g, grid.w, grid.h, 200);
+    kits.forEach((k, i) => {
+      const x = 12 + i * 42;
+      g.fillStyle = INK; g.fillRect(i * 42, 72, 42, 1); g.fillRect(i * 42, 146, 42, 1);
+      opt.draw(g, 'her', x, 72 - W, 1, k, false, t, false);
+      opt.draw(g, 'him', x, 146 - W, 1, k, false, t, false, 0.5);
+    });
+  });
+
+  // The yard crowd at game scale.
+  const yard = makeCanvas(row2, 520, 110, 1, 'the yard at game scale: ten crew and the two of them, both hatted');
+  const people = crowd(opt.key.charCodeAt(0) * 7, 10, 520, yardKits);
+  const her = { a: 140, b: 380, v: 14, ph: 0.3 }, him = { a: 60, b: 470, v: 18, ph: 0.7 };
+  drawers.push(t => {
+    const g = yard.g; yardGround(g, yard.w, yard.h, 92);
+    cloud(g, 40, 14, 6, PALE); cloud(g, 330, 8, 5, FAINT); cloud(g, 420, 26, 4, PALE);
+    for (const b of people) { const p = pace(b, t); crewBody(g, { ...b, x: p.x, y: 92 - W }, false); }
+    const ph = pace(her, t), pm = pace(him, t);
+    opt.draw(g, 'her', Math.round(ph.x), 92 - W, ph.face, 'helmet', false, t, ph.moving);
+    opt.draw(g, 'him', Math.round(pm.x), 92 - W, pm.face, 'lamp', false, t, pm.moving, 0.5);
+    if (reveal) { g.fillStyle = '#e8503a'; g.fillRect(Math.round(ph.x), 96, W, 2); g.fillRect(Math.round(pm.x), 96, W, 2); }
+  });
+
+  // The deep at game scale: her with the deep's crew, then him once freed.
+  const deep = makeCanvas(row2, 300, 110, 1, 'the deep at game scale: the two of them among four of the deep\'s crew');
+  const deepers = crowd(opt.key.charCodeAt(0) * 13, 4, 300, deepKits);
+  const dh = { a: 40, b: 200, v: 12, ph: 0.1 }, dm = { a: 120, b: 260, v: 16, ph: 0.6 };
+  drawers.push(t => {
+    const g = deep.g; deepGround(g, deep.w, deep.h, 92);
+    for (const b of deepers) { const p = pace(b, t); crewBody(g, { ...b, x: p.x, y: 92 - W, carry: false }, true); }
+    const ph = pace(dh, t), pm = pace(dm, t);
+    opt.draw(g, 'her', Math.round(ph.x), 92 - W, ph.face, null, true, t, ph.moving);
+    opt.draw(g, 'him', Math.round(pm.x), 92 - W, pm.face, null, true, t, pm.moving, 0.5);
+    if (reveal) { g.fillStyle = '#e8503a'; g.fillRect(Math.round(ph.x), 96, W, 2); g.fillRect(Math.round(pm.x), 96, W, 2); }
+  });
+
+  // Act 3: the two rising as souls, 2x, faded to grey, the identifier kept.
+  const souls = makeCanvas(row2, 120, 110, 2, 'act 3, 2x: the two rising into the clouds in held steps, fading as they go');
+  drawers.push(t => {
+    const g = souls.g;
+    g.fillStyle = PAPER; g.fillRect(0, 0, souls.w, souls.h);
+    cloud(g, 6, 8, 6, PALE); cloud(g, 64, 20, 5, FAINT); cloud(g, 30, 30, 4, PALE);
+    const u = (t % 6) / 6, rise = Math.round(u * 120 / P) * P;   // held steps, a cell at a time
+    const sway = Math.floor(t * 1.5) % 2 ? P : 0;
+    const y = 112 - rise;
+    g.save();
+    g.globalAlpha = 1 - u * 0.55;
+    opt.draw(g, 'her', 24 + sway, y, 1, null, false, t, true);
+    opt.draw(g, 'him', 72 - sway, y - P * 2, -1, null, false, t, true, 0.5);
+    g.restore();
+  });
+
+  const ul = document.createElement('ul');
+  ul.innerHTML = opt.notes.map(n => `<li>${n}</li>`).join('');
+  card.appendChild(ul);
+  document.getElementById('options').appendChild(card);
+}
+
+// ---------------------------------------------------------------------------
+// The wardrobe: the eight, on a bare body and on a helmet, her and him.
+(() => {
+  const c = document.getElementById('wardrobe');
+  const cols = WEAR_ORDER.length, cw = 54, w = cols * cw, h = 120, k = 3;
+  c.width = w * k * DPR; c.height = h * k * DPR; c.style.width = (w * k) + 'px';
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.setTransform(k * DPR, 0, 0, k * DPR, 0, 0);
+  drawers.push(t => {
+    yardGround(g, w, h, 200);
+    WEAR_ORDER.forEach((key, i) => {
+      const x = i * cw + 18;
+      for (const [row, kit] of [[54, null], [114, 'helmet']]) {
+        g.fillStyle = INK; g.fillRect(i * cw + 4, row, cw - 8, 1);
+        drawWearing(g, key, x, row - W, kit, t, false);
+      }
+    });
+  });
+})();
+
+function drawWearing(g, key, x, y, kit, t, moving, face = 1) {
+  body(g, x, y);
+  const top = hat(g, kit, x, y);
+  const it = WEAR[key];
+  if (it.on === 'head') onHead(g, it.rows, x, top, W, INK);
+  else scarf(g, x, y, W, face, moving, t, INK, false);
+}
+
+// ---------------------------------------------------------------------------
+// Part 2: three flows, as sheets.
+function tileCanvas(key, kit = null, scale = 2) {
+  const w = 40, h = 46;
+  const c = document.createElement('canvas');
+  c.width = w * scale * DPR; c.height = h * scale * DPR; c.style.width = (w * scale) + 'px';
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.setTransform(scale * DPR, 0, 0, scale * DPR, 0, 0);
+  drawers.push(t => { g.fillStyle = PAPER; g.fillRect(0, 0, w, h); drawWearing(g, key, 11, h - W - 2, kit, t, false); });
+  return c;
+}
+function pairCanvas(herKey, himKey, scale = 3) {
+  const w = 80, h = 52;
+  const c = document.createElement('canvas');
+  c.width = w * scale * DPR; c.height = h * scale * DPR; c.style.width = (w * scale) + 'px';
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.setTransform(scale * DPR, 0, 0, scale * DPR, 0, 0);
+  drawers.push(t => {
+    g.fillStyle = PAPER; g.fillRect(0, 0, w, h);
+    g.fillStyle = INK; g.fillRect(0, h - 4, w, 1);
+    drawWearing(g, herKey, 12, h - 4 - W, null, t, false, 1);
+    drawWearing(g, himKey, 48, h - 4 - W, null, t, false, -1);
+  });
+  return c;
+}
+
+const flows = document.getElementById('flows');
+
+// Flow 1: at the start of a new game, and again on the settings sheet.
+(() => {
+  const card = document.createElement('div'); card.className = 'card flowcard';
+  card.innerHTML = `<h2><span class="tag">1</span>Pick at the start, change any time</h2>`;
+  const s = document.createElement('div'); s.className = 'sheet';
+  s.innerHTML = `<div class="t"><span class="ph">the two of you</span><span>x</span></div>`;
+  const who = document.createElement('div'); who.className = 'who';
+  const a = document.createElement('div'); a.className = 'on'; a.innerHTML = '<span>her</span>';
+  const b = document.createElement('div'); b.innerHTML = '<span>him</span>';
+  a.appendChild(tileCanvas('bow', null, 3)); b.appendChild(tileCanvas('tophat', null, 3));
+  who.append(a, b); s.appendChild(who);
+  const pick = document.createElement('div'); pick.className = 'pick';
+  WEAR_ORDER.forEach((k, i) => {
+    const d = document.createElement('div'); if (k === 'bow') d.className = 'sel';
+    d.appendChild(tileCanvas(k)); d.insertAdjacentHTML('beforeend', `<span>${k === 'tophat' ? 'top hat' : k}</span>`);
+    pick.appendChild(d);
+  });
+  s.appendChild(pick);
+  s.insertAdjacentHTML('beforeend', `<div class="btn">start</div>`);
+  card.appendChild(s);
+  // the settings row that brings the same sheet back
+  const s2 = document.createElement('div'); s2.className = 'sheet'; s2.style.marginTop = '12px';
+  s2.innerHTML = `<div class="t"><span>settings</span><span>x</span></div>
+    <div class="line"><span>motion</span><span>on</span></div>
+    <div class="line"><span class="ph">the two of you</span><span>change</span></div>
+    <div class="line"><span>save a copy</span><span>&gt;</span></div>`;
+  card.appendChild(s2);
+  card.insertAdjacentHTML('beforeend', `<p>Before the opening, the new-game sheet asks once: tap her or him, then a tile. All eight open from the start. The settings sheet keeps a row that brings the same picker back. Cheapest to build; the choice is made before the player has met either of them.</p>`);
+  flows.appendChild(card);
+})();
+
+// Flow 2: earned, like achievements.
+(() => {
+  const card = document.createElement('div'); card.className = 'card flowcard';
+  card.innerHTML = `<h2><span class="tag">2</span>Earned as you go</h2>`;
+  const s = document.createElement('div'); s.className = 'sheet';
+  s.innerHTML = `<div class="t"><span class="ph">wardrobe</span><span>3 / 8</span></div>`;
+  s.appendChild(pairCanvas('bow', 'crown'));
+  const pick = document.createElement('div'); pick.className = 'pick';
+  const open = { bow: 'start', tophat: 'start', crown: 'rescue her' };
+  const lockWords = { flower: 'first crop', sprout: '100 rocks', ears: 'first meteor', antenna: 'enter the deep', scarf: 'free him' };
+  WEAR_ORDER.forEach(k => {
+    const d = document.createElement('div');
+    if (open[k]) { d.appendChild(tileCanvas(k)); d.insertAdjacentHTML('beforeend', `<span>${k === 'tophat' ? 'top hat' : k}</span>`); if (k === 'crown') d.className = 'sel'; }
+    else {
+      d.className = 'lock';
+      const c = tileCanvas(k); c.style.opacity = '.25'; d.appendChild(c);
+      d.insertAdjacentHTML('beforeend', `<span class="ph">${lockWords[k]}</span>`);
+    }
+    pick.appendChild(d);
+  });
+  s.appendChild(pick);
+  s.insertAdjacentHTML('beforeend', `<div class="line"><span>her: bow</span><span>him: crown</span></div>`);
+  card.appendChild(s);
+  card.insertAdjacentHTML('beforeend', `<p>Two open at the start; the rest open on story beats or achievements (the game already keeps both, beats.js and achievements.js). A locked tile shows its drawing faint and what opens it. A new one opening gets a notice. Gives the player a reason to come back to the page; the unlock list is the owner's to write.</p>`);
+  flows.appendChild(card);
+})();
+
+// Flow 3: a wardrobe in the yard (or in the house), walked to.
+(() => {
+  const card = document.createElement('div'); card.className = 'card flowcard';
+  card.innerHTML = `<h2><span class="tag">3</span>A wardrobe they walk to</h2>`;
+  // the wardrobe drawn in the yard, one of them walking in and out wearing the new thing
+  const w = 150, h = 70, k = 2;
+  const c = document.createElement('canvas');
+  c.width = w * k * DPR; c.height = h * k * DPR; c.style.width = (w * k) + 'px';
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.setTransform(k * DPR, 0, 0, k * DPR, 0, 0);
+  const WARD = ['#######', '#.....#', '#.#.#.#', '#.#.#.#', '#.#.#.#', '#.....#', '#######', '#.....#'];
+  drawers.push(t => {
+    yardGround(g, w, h, 62);
+    const wx = 96, wy = 62 - sh(WARD);
+    // the wardrobe: a black box with its door slats; the door stands open while somebody is in it
+    const u = t % 8;
+    sprite(g, WARD, wx, wy, INK);
+    g.fillStyle = PAPER; g.fillRect(wx + P, wy + P, 5 * P, 5 * P);
+    sprite(g, ['#.#.#', '#.#.#', '#.#.#'], wx + P, wy + 2 * P, INK);
+    // walk in (0-3s), inside (3-4.5s), walk out wearing the crown (4.5-8s)
+    let x, key, show = true, face = 1;
+    if (u < 3) { x = 10 + u / 3 * (wx + P - 10); key = 'bow'; }
+    else if (u < 4.5) { show = false; }
+    else { x = wx + P - (u - 4.5) / 3.5 * (wx + P - 10); key = 'crown'; face = -1; }
+    if (!show) { g.fillStyle = INK; g.fillRect(wx + P, wy + P, 5 * P, 5 * P); g.fillStyle = PAPER; g.fillRect(wx + 2 * P, wy + 2 * P, 3 * P, 3 * P); }
+    if (show) drawWearing(g, key, Math.round(x), 62 - W, null, t, true, face);
+  });
+  const fig = document.createElement('div'); fig.className = 'scroll'; fig.appendChild(c); card.appendChild(fig);
+  const s = document.createElement('div'); s.className = 'sheet'; s.style.marginTop = '10px';
+  s.innerHTML = `<div class="t"><span class="ph">wardrobe</span><span>x</span></div>`;
+  const pick = document.createElement('div'); pick.className = 'pick';
+  WEAR_ORDER.forEach(k2 => {
+    const d = document.createElement('div'); if (k2 === 'crown') d.className = 'sel';
+    d.appendChild(tileCanvas(k2)); d.insertAdjacentHTML('beforeend', `<span>${k2 === 'tophat' ? 'top hat' : k2}</span>`);
+    pick.appendChild(d);
+  });
+  s.appendChild(pick);
+  s.insertAdjacentHTML('beforeend', `<div class="line"><span>her</span><span class="muted">him: in the deep</span></div>`);
+  card.appendChild(s);
+  card.insertAdjacentHTML('beforeend', `<p>A small building in the yard, clicked like any station; pick a tile and the body walks to it, goes in, and walks out wearing it (nothing teleports). The catch is who can walk there: she is under the rock for all of act 1 and in the deep for act 2, and he is in the belly, so the wardrobe has nobody to dress for long stretches. It fits best inside the house after the finale, or as the deep's own pod for her.</p>`);
+  flows.appendChild(card);
+})();
+
+// ---------------------------------------------------------------------------
+document.getElementById('reveal').addEventListener('change', e => { reveal = e.target.checked; });
+document.getElementById('pause').addEventListener('click', e => { paused = !paused; e.target.textContent = paused ? 'play' : 'pause'; });
+let last = performance.now();
+function frame(now) {
+  if (!paused) clock += Math.min(0.05, (now - last) / 1000);
+  last = now;
+  // held steps: the picture moves at 12 frames a second, as the game's poses hold
+  const t = Math.floor(clock * 12) / 12;
+  for (const d of drawers) d(t);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
