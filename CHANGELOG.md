@@ -177,28 +177,8 @@ this section; the release that switches it on moves these under Unreleased.
 - Menu shadows are see-through, the lines under notices and achievements are darker and larger, and achievement names are bold.
 - The farm shed wears a barn roof, so it no longer looks like the quarry shed or the bench; the farm's flag flies from the ridge.
 - The deep's stations stand spread evenly under the whole serpent, the first four already spanning it, instead of bunched to one side.
-- The way down at the portal is a pointing hand tapping at it, instead of an arrow.
 - A language page off settings, on the pause sheet and the title page, lists each language in its own name with the one in use marked, and the title page's foot names the language in use (src/selftest/language.js).
 - A feedback page on the pause sheet under settings, off settings on the title page, and under copy save when the game stops, sends your words and, if you tick it, your save (test/feedback.test.mjs).
-
-- The decimal point in counts has room around it, so 86.1k no longer reads as 861k (test/serpent-numbers.test.mjs).
-- The index reads as short descriptions in one list with no headings, and the clouds, rain, lightning, objective, rescue, cutscene and sqhusband entries are gone (test/index.test.mjs).
-- On a narrow window the game opens looking at the rock again, so the bigger rocks to come are not cut off at the right edge (src/selftest/view.js, "the opening view is looking at the rock").
-- With the conveyor belt running, a left click anywhere no longer puts a free handful of pebbles in your hand (src/selftest/dust.js, "a click on open sky over the belt's yard catches nothing"; test/belt-head.test.mjs).
-- In every cutscene the black bars frame what the scene is about instead of covering it, and notices and the corner buttons wait off the bars until the scene is over (test/letterbox-framing-desk.test.mjs).
-- A notice is always drawn on top, over a tall house or any building, instead of being pushed sideways out of the window (src/selftest/touch.js, "a notice is drawn over a building that reaches into the sky").
-- A rockhand on the hill no longer walks off and sinks into the ground when the serpent falls (test/freed-rockhand.test.mjs).
-- A worker caught mid-swing or mid-sway at ground level counts as up in the yard, so it still steps out from under a falling rock and still goes for the muck (test/hole-depth.test.mjs).
-- A yard already past the serpent retires the sqhusband along with her, instead of leaving him on the crew (test/finale.test.mjs).
-- With several things being built at once, finishing one no longer pulls a builder off another site and walks a different one across the yard to take its place (test/build-throughput.test.mjs).
-- The store links on the demo's and teaser's last sheets are drawn as buttons like "keep playing", no longer a blue underlined link (src/selftest/ending.js, "the store links ... drawn as the sheet buttons").
-
-- The rift's tearing and the pit's drowning wait for the camera to arrive before they happen, and a long pan to them is slower, no longer a whip across the yard (test/pit-arc.test.mjs).
-- A shield's rock waits in the sky until the camera has finished gliding to the shield (test/cutscene.test.mjs).
-- In Japanese and Korean the shield card's cancel button no longer sits on its sentence, and in German, French, Portuguese and Russian a queued card's cancel and "another" no longer run into each other and off the card (src/selftest/boardwords.js, "board words never overlap, in every language").
-- The deep's fifth, sixth and seventh party stations have their own names instead of all three reading "a undefined station" (src/selftest/stations.js, "every board says whose it is").
-- No bracketed note stands in for words anywhere in the game: the language and feedback pages, the controller rows, the serpent's achievements, the books and the demo carry-over all say plain words, and the feedback form's small print is the sheet's size (test/l10n.test.mjs, "no message is a placeholder").
-**New this release**
 - New words on the rescue sheet, the demo's store link and an empty achievements page.
 - The board of rescue times is gone: no name box or post on the rescue sheet, no times page, no name on the board in settings.
 - A controller plays the whole game: the d-pad hops between the places a click lands on, A does what the click does, and the Steam Deck's back buttons and trackpads come mapped (test/pad.test.mjs).
@@ -217,7 +197,6 @@ this section; the release that switches it on moves these under Unreleased.
 - While the dome bursts the rescue rock, the rest of the crew walk out of the shot so only the two of them are in it, and walk back to work after (test/ending-stage.test.mjs).
 - No new rock comes down from the rescue until the whole ending, the drowning of the pit included, is over (test/ending-stage.test.mjs).
 - A station's counter is a row of seats between its - and +: a filled pip for each body at work, a pip filling in thirds while one walks over, the specialist slots in a row of their own above (a brim each, grey ones on the outlines of hats not yet worn, and the next body sent takes a spare hat first) and only the seats left over below for plain workers, with a rule between the rows (none when every seat is a hat seat), whatever rows show centered on the - and +, and a click on a bottom pip sets the plain workers (src/selftest/crew.js).
-- The rock's diggers and the house's carriers are counted in pips too, breakers or carts on top, twelve to a row and the rest written after it as +N (src/selftest/crew.js).
 - Every counter in the yard is a sprite over round pips, six a row and three rows with +N under: the hatted beside the plain hands under a body in the station's hat, carters under a carter, forklifts under a forklift, one - and + framing the post level with the first row (src/selftest/crew.js).
 - The forklifts' garage stands on the far side of the house, with its own pip a forklift under it (test/forklift.test.mjs, src/selftest/crew.js).
 - Every miner and every farmer can wear a blaster or grower hat, not just three (test/hats-gate-machines.test.mjs).
@@ -239,7 +218,6 @@ this section; the release that switches it on moves these under Unreleased.
 - A controls page on the settings sheet, in the game and on the landing page, lists the mouse, the keys and the 1 – 9 jump.
 - Nobody goes for the muck while a storm is still raining it down; the clear-up starts once the last drop has landed.
 - The first muck a storm leaves gets a short scene: a worker walks up to it, asks what it is, pulls a face and shovels it up.
-- A controls page on the settings sheet lists the mouse buttons and what each does.
 - The barrier card's sign is a swallowtail ribbon that wraps the frame's edge and flaps its free end like the yard's flags (it holds still with motion off) (src/selftest/boards.js, "goal card").
 - The next barrier is bought from the story's card -- its bill ticking off coin by coin, then a cancel while it is built -- and no card is pinned in the corner any more.
 - Cores are gone: each barrier that falls opens the next place instead -- the props the farm, the net the quarry, the arch the tower -- and the dome is paid without them.
@@ -254,21 +232,22 @@ this section; the release that switches it on moves these under Unreleased.
 - The pictures over a station of what it is building, what is in line and what it has finished drift gently, the way a lifted shop tile does.
 - The props can be built after the first rock.
 
+- The decimal point in counts has room around it, so 86.1k no longer reads as 861k (test/serpent-numbers.test.mjs).
 - The index reads as short descriptions in one list with no headings, and the clouds, rain, lightning, objective, rescue, cutscene and sqhusband entries are gone (test/index.test.mjs).
 - On a narrow window the game opens looking at the rock again, so the bigger rocks to come are not cut off at the right edge (src/selftest/view.js, "the opening view is looking at the rock").
 - With the conveyor belt running, a left click anywhere no longer puts a free handful of pebbles in your hand (src/selftest/dust.js, "a click on open sky over the belt's yard catches nothing"; test/belt-head.test.mjs).
 - In every cutscene the black bars frame what the scene is about instead of covering it, and notices and the corner buttons wait off the bars until the scene is over (test/letterbox-framing-desk.test.mjs).
 - A notice is always drawn on top, over a tall house or any building, instead of being pushed sideways out of the window (src/selftest/touch.js, "a notice is drawn over a building that reaches into the sky").
 - A rockhand on the hill no longer walks off and sinks into the ground when the serpent falls (test/freed-rockhand.test.mjs).
+- A worker caught mid-swing or mid-sway at ground level counts as up in the yard, so it still steps out from under a falling rock and still goes for the muck (test/hole-depth.test.mjs).
 - A yard already past the serpent retires the sqhusband along with her, instead of leaving him on the crew (test/finale.test.mjs).
+- With several things being built at once, finishing one no longer pulls a builder off another site and walks a different one across the yard to take its place (test/build-throughput.test.mjs).
 - The store links on the demo's and teaser's last sheets are drawn as buttons like "keep playing", no longer a blue underlined link (src/selftest/ending.js, "the store links ... drawn as the sheet buttons").
-
 - The rift's tearing and the pit's drowning wait for the camera to arrive before they happen, and a long pan to them is slower, no longer a whip across the yard (test/pit-arc.test.mjs).
 - A shield's rock waits in the sky until the camera has finished gliding to the shield (test/cutscene.test.mjs).
 - In Japanese and Korean the shield card's cancel button no longer sits on its sentence, and in German, French, Portuguese and Russian a queued card's cancel and "another" no longer run into each other and off the card (src/selftest/boardwords.js, "board words never overlap, in every language").
 - The deep's fifth, sixth and seventh party stations have their own names instead of all three reading "a undefined station" (src/selftest/stations.js, "every board says whose it is").
 - No bracketed note stands in for words anywhere in the game: the language and feedback pages, the controller rows, the serpent's achievements, the books and the demo carry-over all say plain words, and the feedback form's small print is the sheet's size (test/l10n.test.mjs, "no message is a placeholder").
-
 - Putting the rescue's sheet down with the pit not yet torn gets the crew's dance again, before the hole tears (test/dance-once.test.mjs).
 - A balloon that was up when the game was reloaded comes back among the clouds instead of back at its post (test/balloon.test.mjs).
 - A quarrier saved digging against the cut's near wall comes back on the cut's floor, not stood up on the bank (test/cut-station.test.mjs).
@@ -305,7 +284,6 @@ this section; the release that switches it on moves these under Unreleased.
 - After a refresh, a carter halfway through gathering a heap finishes filling its hands instead of heading home with half a load (test/heap-fringe.test.mjs).
 - The ram's strike rungs queue over the shack, not over the boulder (test/shack.test.mjs).
 - The sqwife is always drawn behind the rock, showing wherever its cells are mined away, instead of popping in once the rock is gone (test/lodged.test.mjs).
-
 - The garage and the house stand far enough apart that their counters never touch, and a counter hugs its pips with the + staying under the pointer while you press it (test/counter-gap.test.mjs).
 - The muck and poop tags over the yard always show as many cells as lie on the ground, never one off while it rains or the crew sweep (test/mess-tags.test.mjs).
 - A cutscene's black bands are deep enough to read as a film's, and in the deep a pale rule edges each so they show against the water (test/cutscene-hold.test.mjs).
