@@ -525,8 +525,9 @@ export const S = {
   // and the turn they are on.
   finale: null,
   retired: null,
-  // The constrict's orb (deep/phases.js): the station its fighter is at, what
-  // is left of it, and when it closed.
+  // The constrict's orb (deep/phases.js): the station its fighter is at, the
+  // seconds it has left of the `max` it closed with (its time is its health),
+  // the seconds blows have cut off it, and when it closed.
   orb: null,
   orbBurst: null,        // the orb as it bursts, for the drawing
   // The bites single blows took out of the hide, closing: { u, side, k, at },

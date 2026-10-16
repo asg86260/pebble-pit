@@ -654,7 +654,7 @@ TESTS.push(['deep: a press on the constrict\'s orb hits the orb and opens no boa
   // up to the coil), and the orb moved onto that one, outlasting the party's
   // blows (they land on it first) and every press below.
   const turn = S.mechAt;
-  if (S.orb) S.orb.hp = S.orb.max = 1e9;
+  if (S.orb) S.orb.left = S.orb.max = 1e9;
   const onPost = () => S.workers.find(b => b.station && S.stations.some(s => s.id === b.station) && Math.abs(b.y - postY()) < P);
   for (let i = 0; i < 240 && !onPost(); i++) { run(0.25); S.mechAt = turn; }
   if (S.orb && onPost()) S.orb.st = onPost().station;
@@ -673,7 +673,7 @@ TESTS.push(['deep: a press on the constrict\'s orb hits the orb and opens no boa
     pointerType: kind, button: 0, buttons, bubbles: true }));
   const seen = [];
   const press = async (kind, hold) => {
-    const hp = o.hp;
+    const cut = o.cut;
     if (kind === 'mouse') {
       // up from the feet, across the station's ground, onto the orb
       for (const k of [0, 0.25, 0.5, 0.75, 1]) { ev(kind, 'pointermove', at(k), 0); await sleep(120); }
@@ -684,7 +684,7 @@ TESTS.push(['deep: a press on the constrict\'s orb hits the orb and opens no boa
     if (hold) await sleep(400);
     ev(kind, 'pointerup', at(), 0);
     await sleep(250); await raf();
-    seen.push({ kind, hold, hit: o.hp < hp, over, open: open() });
+    seen.push({ kind, hold, hit: o.cut > cut, over, open: open() });
     await hoverAway();
   };
   for (let i = 0; i < 3; i++) await press('mouse', false);
@@ -696,6 +696,37 @@ TESTS.push(['deep: a press on the constrict\'s orb hits the orb and opens no boa
     ok(orbOn() === o, 'the orb holds through the presses', JSON.stringify(S.orb)),
     ok(seen.every(s => s.hit), 'every press on the orb takes from it', say),
     ok(seen.every(s => !s.over && !s.open), 'and no board is up over it, on arrival or after the press', say)
+  ];
+}]);
+
+// The orb's bar is its time (render/serpent.js): a click on the orb, by a real
+// pointer, takes ORB_CLICK_S of it, and the stretch it took breaks off the bar
+// in chips that are held, thrown and gone inside a second.
+import { orbChipsNow } from '../render/serpent.js';
+import { ORB_CLICK_S, BAR_BITE_HOLD_S, BAR_BITE_FALL_S } from '../config.js';
+TESTS.push(['deep: a click on the constrict\'s orb breaks a chunk off its time bar, in chips that fall away', async () => {
+  SCENES['phase-orb'].run();
+  for (let i = 0; i < 40 && !orbOn(); i++) { window.__fast(0.1); await raf(); }
+  const o = orbOn();
+  if (!o) return [ok(false, 'an orb up', JSON.stringify(S.orb))];
+  o.at = now() - (ORB_CLOSE_S + ORB_RISE_S) * 1000;   // closed and risen all the way
+  o.left = o.max;
+  await raf(); await raf();                           // drawn, so the picture knows the orb
+  const c = orbMiddle(o.st), left0 = o.left, cut0 = o.cut, had = orbChipsNow().slice();
+  const [x, y] = onScreen(c.x, c.y);
+  point('pointerdown', x, y);
+  point('pointerup', x, y);
+  await raf(); await raf();
+  const chips = orbChipsNow().filter(p => !had.includes(p)), wide = chips.filter(p => p.y === 0).reduce((n, p) => n + p.w, 0);
+  const chunk = (ORB_CLICK_S / o.max) * (ORB_R * 2 + 2) * P;
+  window.__fast(BAR_BITE_HOLD_S + 0.1); await raf(); await raf();
+  const thrown = chips.every(p => p.base != null);
+  window.__fast(BAR_BITE_FALL_S); await raf(); await raf();
+  const gone = !orbChipsNow().some(p => chips.includes(p));
+  return [
+    ok(o.cut - cut0 >= ORB_CLICK_S - 1e-9 && left0 - o.left >= ORB_CLICK_S, `the click takes ${ORB_CLICK_S} s off it`, `${left0} then ${o.left}, cut ${cut0} then ${o.cut}`),
+    ok(chips.length >= 2 && Math.abs(wide - chunk) <= 2, 'and that stretch of the bar breaks off in chips', `${chips.length} chips ${wide}px wide, the chunk ${chunk.toFixed(1)}px`),
+    ok(thrown && gone, 'held, then thrown, then gone', `thrown ${thrown}, gone ${gone}`)
   ];
 }]);
 

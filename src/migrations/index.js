@@ -47,8 +47,9 @@ import noTimes from './2026-10-12-no-times.js';
 import endlessSerpent from './2026-10-12-endless-serpent.js';
 import endlessLevels from './2026-10-13-endless-levels.js';
 import mealOrb from './2026-10-15-meal-orb.js';
+import orbTimer from './2026-10-16-orb-timer.js';
 
-export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores, noPin, firstMuckSeen, filterBalloon, dropFourthPot, abyssIntro, smallerPit, finale, noTimes, endlessSerpent, endlessLevels, mealOrb];
+export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores, noPin, firstMuckSeen, filterBalloon, dropFourthPot, abyssIntro, smallerPit, finale, noTimes, endlessSerpent, endlessLevels, mealOrb, orbTimer];
 
 // The raw save, brought up to today's shape in place. Answers with the
 // migrations it ran, for a check.

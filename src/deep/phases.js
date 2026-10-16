@@ -75,29 +75,32 @@ export function stepMechanic(c) {
   if (S.mechAt >= m.every) { S.mechAt %= m.every; S.mechSkip = false; }
   const p = part();
   if (m.kind === 'lash' && p.part === 'warn' && has('held')) S.mechSkip = true;
-  if (m.kind === 'orb') stepOrb(p);
+  if (m.kind === 'orb') stepOrb(p, c.dt / 1000);
 }
 
 // --- the orb (the constrict) -----------------------------------------------------------
 // On its turn the serpent casts an orb round the strongest station's fighter
 // (the highest rung, the first slot of those), unless this turn's was broken
-// already. It holds until it is cracked, the fighter is lifted out of it, or
-// its turn runs out.
-export const orbOn = () => (S.orb && S.orb.hp > 0 && S.serpentStage === LAST && !S.serpentFreed ? S.orb : null);
-function stepOrb(p) {
+// already. Its time is its health (the owner, 2026-10-15: "the timer/health
+// is the same thing"): `left` seconds of it, `last` when it closes, running
+// down a second a second, and every blow and click takes seconds off it; at
+// nought it lets go. `cut` is how many of its seconds blows have taken, for
+// the bar to break off what they took. The fighter lifted out breaks it too.
+export const orbOn = () => (S.orb && S.orb.left > 0 && S.serpentStage === LAST && !S.serpentFreed ? S.orb : null);
+function stepOrb(p, dt) {
   if (p.part === 'on' && !S.orb && !S.mechSkip) {
     const manned = S.stations.filter(st => st.built && st.fighter);
     if (!manned.length) return;
     const st = manned.reduce((b, o) => ((o.rung || 0) > (b.rung || 0) ? o : b));
-    // The orb keeps the level-1 serpent's hit points at every level: only the
-    // defenses grow, so the squeeze stays a turn to answer, not a wall.
-    const hp = p.m.hp * depthAt(S.serpentStage, 1);
-    S.orb = { st: st.id, hp, max: hp, at: now() };
+    S.orb = { st: st.id, left: p.m.last, max: p.m.last, cut: 0, at: now() };
+    return;
   }
+  const o = orbOn();
+  if (o) { o.left -= dt; if (o.left <= 0) breakOrb(); }
   if (S.orb && p.part !== 'on') breakOrb();
 }
-// Broken -- cracked, lifted out of, or its turn over: it bursts, and the turn
-// is answered.
+// Broken -- cracked, lifted out of, or its time run out: it bursts, and the
+// turn is answered.
 export function breakOrb() {
   if (!S.orb) return;
   // `from`: the height it let go at, which its fighter sinks home from.
@@ -106,14 +109,26 @@ export function breakOrb() {
   S.orb = null;
   S.mechSkip = true;
 }
-// Blows land on the orb first: what is left of `done` after it, and whether
-// there was an orb to take it.
-export function hitOrb(done) {
+// Seconds `s` off the orb, at most what it has left: what it took.
+export function cutOrb(s) {
   const o = orbOn();
-  if (!o) return done;
-  const took = Math.min(o.hp, done);
-  o.hp -= took;
-  if (o.hp <= 0) breakOrb();
+  if (!o || !(s > 0)) return 0;
+  const took = Math.min(o.left, s);
+  o.left -= took;
+  o.cut += took;
+  if (o.left <= 0) breakOrb();
+  return took;
+}
+// The seconds a point of damage takes off the orb: its whole time is worth
+// `hp` of the level-1 serpent's last depth, at every level, so blows take
+// it apart as fast as they broke that many hit points, and only the defenses
+// grow with the levels.
+export const orbSecsPerHit = () => { const m = MECHANICS[LAST]; return m.last / (m.hp * depthAt(LAST, 1)); };
+// Blows land on the orb first, as seconds off it, and none of them carries
+// through: what is left of `done` after it (nought while there is an orb).
+export function hitOrb(done) {
+  if (!orbOn()) return done;
+  cutOrb(done * orbSecsPerHit());
   return 0;
 }
 // Whether this body is the one in the orb.

@@ -16,6 +16,7 @@ import { S } from './state.js';
 import { take } from './upgrades.js';
 import { subject, bandCells, liftArrived } from './cutscene.js';
 import { CELL } from './config.js';
+import { orbOn, orbMiddle } from './deep/phases.js';
 
 // Everything hooks.js offers, under the name the checks call it by.
 Object.assign(window, {
@@ -43,6 +44,13 @@ window.__framed = () => {
   const rect = box && { x: (box.x - S.camX) * S.zoom, y: (box.y - S.camY) * S.zoom,
                         w: box.w * S.zoom, h: box.h * S.zoom };
   return { hush: S.hush, band, W: S.W, H: S.H, rect, framed: !!box && S.hush >= 1 && liftArrived() };
+};
+
+// The constrict's orb's middle on the glass, in client pixels, for a tool to
+// press the pointer on it; null with no orb up.
+window.__orbAt = () => {
+  const o = orbOn(), c = o && orbMiddle(o.st);
+  return c && { x: (c.x - S.camX) * S.zoom, y: (c.y - S.camY) * S.zoom, left: o.left, max: o.max };
 };
 
 window.__state = () => ({
