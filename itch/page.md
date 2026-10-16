@@ -44,8 +44,10 @@ tick **This file will be played in the browser**. The build already uses relativ
 
 ## Cover
 
-`cover.png` — 630 × 500, itch's recommended size. Taken from the game: rock seven with
-four crew on it and the spoil bank beside it, roster and HUD hidden.
+`cover.png` — 630 × 500, itch's recommended size. The rock with four crew on it, her "!!"
+in the rock's dark and the spoil bank beside it, roster and HUD hidden, with "Pebble Pit"
+set above in the Steam capsules' 5×7 letters (docs/mocks/itch-cover-2026-10-16, option A,
+chosen 2026-10-16).
 
 ## Screenshots
 
