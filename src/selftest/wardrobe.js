@@ -17,7 +17,7 @@ import { S } from '../state.js';
 import { P, WORKER, NAME_MAX } from '../config.js';
 import { draw } from '../render.js';
 import { darkPage } from '../ink.js';
-import { namePair, outfitOf, wear, DEFAULTS, HEAD, SLOTS, bareOf, nameOf, roleOf, setName, pairBody, ROLE_START } from '../wardrobe.js';
+import { namePair, outfitOf, wear, DEFAULTS, HEAD, SLOTS, bareOf, nameOf, roleOf, setName, pairBody, ROLE_START, isOpen } from '../wardrobe.js';
 import { CREW_NAMES } from '../crew/names.js';
 import { objective } from '../objectives.js';
 import { wearing } from '../kit.js';
@@ -178,7 +178,8 @@ export const TESTS = [
     const eared = outfitOf('you').head === 'ears', earsOn = tile('head', 'ears').classList.contains('on')
       && !tile('head', DEFAULTS.you.head).classList.contains('on'), said = gridHead();
     // every slot a tab, its open count on it; a turn shows that slot's tiles alone
-    const tabs = SLOTS.every(sl => up(slotTab(sl.key)) && slotTab(sl.key).textContent.includes(`${sl.items.length}/${sl.items.length}`));
+    const openOf = sl => sl.items.filter(it => isOpen(sl.key, it.key)).length;
+    const tabs = SLOTS.every(sl => up(slotTab(sl.key)) && slotTab(sl.key).textContent.includes(`${openOf(sl)}/${sl.items.length}`));
     slotTab('back').click();
     await frames(1);
     const backShown = shownTiles().length === SLOTS.find(sl => sl.key === 'back').items.length
@@ -380,8 +381,8 @@ export const TESTS = [
     const typed = nameOf('you');
     byId('ward-role-next').click();
     const role = roleOf('you');
-    tile('head', 'crown').click();
-    const flowTile = outfitOf('you').head === 'crown' && up(byId('wardslotdie'));
+    tile('head', 'beanie').click();
+    const flowTile = outfitOf('you').head === 'beanie' && up(byId('wardslotdie'));
     byId('wardnext').click();
     await frames(1);
     const second = heading(), confirmed = page.querySelector('.wardshown')?.textContent || '';
@@ -446,6 +447,9 @@ export const TESTS = [
     fresh();
     run(0.5);
     plugIn();
+    // every item open, so a tile the d-pad lands on is one A wears (a locked
+    // one is tried on and not kept, its own check above)
+    lockForCheck(() => null);
     try {
       await press('b');                               // wakes the pad
       await openPicker();
@@ -494,6 +498,7 @@ export const TESTS = [
         ok(settings, 'B goes back to the yard')
       ];
     } finally {
+      lockForCheck(null);
       unplug();
       fresh();
     }
