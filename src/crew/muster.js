@@ -97,16 +97,16 @@ export function syncWorkers() {
   // is counted.
   bindFighters();
   const last = w => !!w.lentFrom || unbound(w);
-  const tiers = [...S.workers.filter(w => !last(w) && !away(w)),
-                 ...S.workers.filter(w => !last(w) && away(w)),
-                 ...S.workers.filter(last)];
   // A build landing makes one builder fewer, and the one given up is the one
   // whose work just landed: any other is hammering at a site of its own, and
   // the freed body would walk the yard to take over the work it left.
-  // The two of them are kept first, and if they must be stood down they are
-  // the first spare hands taken on again: a body that is one of them is not
-  // to be let go while there is work for it (wardrobe.js).
-  const ordered = pairFirst([...tiers.filter(w => !offWork(w)), ...tiers.filter(offWork)]);
+  // Within each of those ranks the two of them are kept first, and if they
+  // must be stood down they are the first spare hands taken on again
+  // (wardrobe.js). Only within a rank: a loan rides on the body lent, so the
+  // one named lent is the one stood down, whoever it is, or the debt sits on
+  // a body still at its station and another walks off to the build.
+  const rank = w => (offWork(w) ? 3 : 0) + (last(w) ? 2 : away(w) ? 1 : 0);
+  const ordered = [...S.workers].sort((a, b) => rank(a) - rank(b) || (whoIs(a) ? 0 : 1) - (whoIs(b) ? 0 : 1));
   const kept = new Set();
   for (const w of ordered) (room[w.type]-- > 0 ? kept.add(w) : stood.push(w));
   keep.push(...S.workers.filter(w => kept.has(w)));
