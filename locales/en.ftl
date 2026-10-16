@@ -546,6 +546,21 @@ ctl-pad-look = camera back to the focus
 # controls page, with a pad: L3
 ctl-pad-way = through the portal
 
+# controls page group heading: clicking things in the yard
+ctl-group-interact = interact
+
+# controls page group heading: the workers
+ctl-group-crew = crew
+
+# controls page group heading: the view
+ctl-group-camera = camera
+
+# controls page group heading: the boards
+ctl-group-boards = boards
+
+# controls page group heading: going from place to place
+ctl-group-travel = travel
+
 # settings fullscreen row
 set-fullscreen-on = fullscreen: on
 

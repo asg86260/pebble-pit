@@ -1218,6 +1218,41 @@
   "text": "through the portal"
  },
  {
+  "id": "ctl-group-interact",
+  "group": "Settings",
+  "where": "src/controls.js",
+  "context": "controls page group heading: clicking things in the yard",
+  "text": "interact"
+ },
+ {
+  "id": "ctl-group-crew",
+  "group": "Settings",
+  "where": "src/controls.js",
+  "context": "controls page group heading: the workers",
+  "text": "crew"
+ },
+ {
+  "id": "ctl-group-camera",
+  "group": "Settings",
+  "where": "src/controls.js",
+  "context": "controls page group heading: the view",
+  "text": "camera"
+ },
+ {
+  "id": "ctl-group-boards",
+  "group": "Settings",
+  "where": "src/controls.js",
+  "context": "controls page group heading: the boards",
+  "text": "boards"
+ },
+ {
+  "id": "ctl-group-travel",
+  "group": "Settings",
+  "where": "src/controls.js",
+  "context": "controls page group heading: going from place to place",
+  "text": "travel"
+ },
+ {
   "id": "set-fullscreen-on",
   "group": "Settings",
   "where": "src/fullscreen.js",

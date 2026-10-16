@@ -1081,6 +1081,10 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
      that narrows it. */
   width: var(--held-w);
   max-width: calc(100vw - 2 * var(--edge) - 2 * var(--pad-l-x));
+  /* Never past the window: a page with a long list lets that list give way
+     (`min-height: 0` on it, as the controls table has). */
+  max-height: calc(100vh - 2 * var(--edge) - 2 * var(--pad-l-y) - 2px);
+  overflow-y: auto; scrollbar-width: thin;
   padding: var(--pad-l);
   background: var(--paper);
   border: 1px solid var(--ink);
@@ -1172,20 +1176,55 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 }
 .held .word, .col .word { font-size: var(--fs-word); letter-spacing: calc(var(--track-l) * var(--track)); }
 .held .word { max-width: 100%; }
-/* the controls page: two columns sized by what is in them, not by a guessed
-   width, so a longer line the owner writes later still lines up. The card is
-   shrink-to-fit at half the viewport, so a column that may wrap is squeezed
-   to nothing: the cells stay max-content and the card grows around them. */
-.controls { display: grid; grid-template-columns: max-content max-content; gap: 8px 20px;
-                  max-width: 100%; text-align: left; }
-.controls > :nth-child(odd) { text-align: right; }
-/* a phone's card cannot hold the longest pair side by side without wrapping
-   the action: each pair stacks instead, input over action */
-@media (max-width: 520px) {
-  .controls { grid-template-columns: max-content; gap: 0; text-align: center; white-space: nowrap; }
-  .controls > :nth-child(odd) { text-align: center; }
-  .controls > :nth-child(even) { margin-bottom: 10px; }
-}
+/* The controls page (controls.js): one grid for the whole table, so every
+   row's cells share the column tracks and the row's height -- a group's
+   heading spans them all. The action takes what is left and wraps; each input
+   column is as narrow as its widest piece that cannot break (a glyph, a set
+   of key caps, one input's words), measured and not guessed, so a longer
+   word in another language widens it rather than spilling. The actions are
+   reading, not labels: lower case, untracked, the note size. Every cell
+   carries the row's rule and centers what is in it on the row, so a glyph
+   sits on its action's line. */
+.controls { --glyph-h: 22px; --col-gap: var(--pad-m-x);
+            display: grid; grid-template-columns: minmax(0, 1fr) min-content;
+            /* a row is as tall as what is in it, even when the table is
+               scrolled short: never squeezed to fit */
+            grid-auto-rows: max-content;
+            align-self: stretch; text-transform: none; letter-spacing: 0; text-align: left;
+            /* the one thing on the sheet that gives way to a short window:
+               scrolled inside, under its two drawings */
+            min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.controls.pad { grid-template-columns: minmax(0, 1fr) min-content min-content; }
+.controls > * { display: flex; align-items: center; min-width: 0;
+                padding: var(--gap-s) 0; border-bottom: 1px solid var(--ink-8); }
+.controls > .bymouse, .controls > .bypad, .controls > .colhead + .colhead { padding-left: var(--col-gap); }
+.controls .colhead { justify-content: center; border-bottom: 0; padding-top: 0;
+                     position: sticky; top: 0; z-index: 1; background: var(--paper); }
+.controls .group { grid-column: 1 / -1; font-size: var(--fs-small); font-weight: bold; text-transform: uppercase;
+                   letter-spacing: calc(var(--track-m) * var(--track));
+                   padding: 10px 0 3px; border-bottom-color: var(--ink); }
+.controls .do { font-size: var(--fs-note); line-height: var(--lh-text); overflow-wrap: anywhere; }
+.controls .bymouse, .controls .bypad { flex-direction: column; justify-content: center; gap: var(--gap-s); text-align: center; }
+.controls .in { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.controls .padin { display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+.controls .nw { white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; }
+.controls .cap { font-size: var(--fs-small); line-height: 1.2; color: var(--ink-2); }
+.controls .keys { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 3px; }
+.controls .key { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+                 min-width: var(--glyph-h); height: var(--glyph-h); padding: 0 4px;
+                 border: 1px solid var(--ink); border-bottom-width: 3px; border-radius: 3px;
+                 font: bold var(--fs-body) var(--face); text-transform: uppercase; }
+.controls .plus { color: var(--ink-4); font-size: var(--fs-small); }
+.controls .none { color: var(--ink-5); }
+/* the pad's buttons at the table's glyph height (.g is 1.6em tall) */
+.controls .g { font-size: calc(var(--glyph-h) / 1.6); }
+/* the drawn mouse and pad, in the page's ink */
+.controls svg.gm { display: block; flex: none; }
+.gm .mi { fill: var(--ink); }
+.gm .ms { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
+.gm .mt { fill: var(--paper); stroke: var(--ink); stroke-width: 1; }
+.gm .ml { fill: none; stroke: var(--ink); stroke-width: 1; }
+@media (max-width: 520px) { .controls { --col-gap: var(--gap-m); } }
 /* The index (indexpage.js): the list sized by its longest name, the entry
    the rest of the sheet's width beside it, the two as one boxed book with the
    list scrolled inside it past a screen's worth. The names are labels; the
@@ -2256,20 +2295,9 @@ body.still .fill::before { transition: none; }
 .g.trig { border-radius: .35em .35em .15em .15em; height: 1.9em; }
 .g.pad { color: var(--ink); background: var(--paper); }
 .g.stick { color: var(--ink); background: var(--paper); border-radius: 50%; padding: 0; width: 1.6em; border-width: 2px; }
-.controls .padkeys { white-space: nowrap; }
 /* The skip hint's words are drawn by difference over its own fill, so its
    glyph is drawn the other way round to come out ink on paper there too. */
 .skip .g { color: var(--ink); background: var(--paper); border-color: var(--paper); }
-/* With a pad seen, the controls page is three columns: the mouse, the pad,
-   what it does; each sized by what is in it. */
-.controls.pad { grid-template-columns: max-content max-content max-content; }
-.controls.pad > * { text-align: left; }
-.controls.pad > :nth-child(3n + 1) { text-align: right; }
-.controls.pad > :nth-child(3n + 2) { text-align: center; }
-@media (max-width: 520px) {
-  .controls.pad { grid-template-columns: max-content max-content max-content; gap: 6px 10px; white-space: normal; }
-  .controls.pad > :nth-child(even) { margin-bottom: 0; }
-}
 /* The marker over a page's rows: a sheet over everything, painted by
    padpage.js, that no press ever lands on. */
 #padmark, #focusmark { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 22; pointer-events: none;

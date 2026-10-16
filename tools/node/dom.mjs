@@ -40,6 +40,8 @@ function element(tag = 'div') {
     classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
     getContext: () => ctx2d(),
     appendChild: c => { el.children.push(c); return c; },
+    // Words in an append are text, which nothing here reads back.
+    append: (...c) => { for (const x of c) if (x && typeof x === 'object') el.children.push(x); },
     // A shelf tile puts its drawing in with this (`wearGlyph`).
     replaceChildren: (...c) => { el.children = c; },
     removeChild: noop, addEventListener: noop, removeEventListener: noop,
@@ -141,6 +143,7 @@ export function installDom({ W = 800, H = 600, dpr = 1 } = {}) {
       return byId.get(id);
     },
     createElement: tag => element(tag),
+    createElementNS: (ns, tag) => element(tag),
     querySelector: () => null,
     querySelectorAll: () => [],
     documentElement: { clientWidth: W, clientHeight: H, style: {} },

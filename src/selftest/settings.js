@@ -16,6 +16,7 @@ import { TOAST_MS, TOAST_GAP_MS, SHEET_FADE_MS } from '../config.js';
 import { msg } from '../lang.js';
 import { feedbackReady } from '../feedback.js';
 import { inForce } from '../langpage.js';
+import { controlGroups } from '../controls.js';
 
 const held = () => document.getElementById('held');
 // escape, and then a frame: the sheet puts itself in order when it sees itself
@@ -60,6 +61,49 @@ const lines = () => [...held().children]
            : el.id === 'slotsbtn' ? 'saves'
            : el.id === 'indexbtn' ? 'index'
            : el.textContent.replace(/\s+/g, ' ').trim());
+
+// The controls table without a pad, top to bottom: each group's heading, then
+// its actions.
+const MOUSE_TABLE = ['interact', 'interact', 'crew', 'focus workers', 'pick up workers',
+  'camera', 'move camera', 'travel', 'jump to a place'];
+
+// Whether the controls table lines up, read off the boxes in frame `w`: every
+// action, mouse and pad cell shares its column's left and right edge, the
+// three cells of a row share its top and bottom, a heading spans the columns,
+// a row's glyph is centered on its action's line, and nothing is wider than
+// its cell or the table. Lines of what is off; none when it lines up.
+function tableFaults(w) {
+  const list = w.document.getElementById('controlslist');
+  const box = el => el.getBoundingClientRect();
+  const r1 = v => Math.round(v);
+  const kids = [...list.children];
+  const rows = [];
+  kids.forEach((el, i) => { if (el.classList.contains('do')) rows.push(kids.slice(i, i + 3)); });
+  const out = [];
+  const cols = { do: 0, bymouse: 1, bypad: 2 };
+  for (const [name, i] of Object.entries(cols)) {
+    const lefts = new Set(rows.map(r => r1(box(r[i]).left))), rights = new Set(rows.map(r => r1(box(r[i]).right)));
+    if (lefts.size !== 1 || rights.size !== 1) out.push(`${name} column edges ${[...lefts]} / ${[...rights]}`);
+    if (rows.some(r => !r[i]?.classList.contains(name))) out.push(`a row without its ${name} cell`);
+  }
+  const heads = kids.filter(el => el.classList.contains('colhead'));
+  if (heads.length !== 3 || r1(box(heads[2]).left) !== r1(box(rows[0][2]).left)) out.push('the pad\'s head is not over its column');
+  for (const g of kids.filter(el => el.classList.contains('group')))
+    if (r1(box(g).left) !== r1(box(rows[0][0]).left) || r1(box(g).right) !== r1(box(rows[0][2]).right)) out.push(`heading ${g.textContent} does not span the table`);
+  for (const r of rows) {
+    const [a, m, p] = r.map(box);
+    if (Math.abs(a.top - m.top) > 0.5 || Math.abs(a.top - p.top) > 0.5 || Math.abs(a.bottom - m.bottom) > 0.5 || Math.abs(a.bottom - p.bottom) > 0.5)
+      out.push(`${r[0].textContent}: cells not one row`);
+    const g = r[2].querySelector('.padin');
+    const rg = w.document.createRange();
+    rg.selectNodeContents(r[0]);
+    const t = rg.getBoundingClientRect();
+    if (g && Math.abs((box(g).top + box(g).bottom) / 2 - (t.top + t.bottom) / 2) > 1.5) out.push(`${r[0].textContent}: glyph off its line`);
+    for (const c of r) if (c.scrollWidth > c.clientWidth + 1) out.push(`${r[0].textContent}: a cell spills`);
+  }
+  if (list.scrollWidth > list.clientWidth + 1) out.push('the table is wider than the sheet');
+  return { out, rows: rows.length, width: r1(box(list).width) };
+}
 
 export const TESTS = [
   // --- the landing page (DESIGN.md, "The landing page") ----------------------
@@ -153,7 +197,7 @@ export const TESTS = [
       d.getElementById('settingsbtn').click();
       d.getElementById('controlsbtn').click();
       page = [...d.querySelectorAll('.col > :not([hidden])')].map(el => el.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean);
-      list = [...d.querySelectorAll('#controlslist span')].map(el => el.textContent);
+      list = [...d.querySelectorAll('#controlslist > .group, #controlslist > .do')].map(el => el.textContent);
       settingsGone = d.getElementById('motion').hidden;
       const col = d.querySelector('.col').getBoundingClientRect();
       const cl = d.getElementById('controlslist');
@@ -167,8 +211,7 @@ export const TESTS = [
     return [
       ok(page.includes('controls') && page[page.length - 1] === 'back', 'the page has its word and back', JSON.stringify(page)),
       ok(settingsGone, 'and the settings are not on it'),
-      ok(list.length === 14 && list[0] === 'left click' && list[12] === '1 \u2013 9' && list[13] === 'jump to a place',
-        'the same rows as the held sheet', JSON.stringify(list)),
+      ok(list.join('|') === MOUSE_TABLE.join('|'), 'the same rows as the held sheet', JSON.stringify(list)),
       ok(fits, 'and the column grows to hold them'),
       ok(backOnSettings, 'back turns to the settings'),
     ];
@@ -337,19 +380,46 @@ export const TESTS = [
     settingsPage();
     document.getElementById('controlsbtn').click();
     const page = lines();
-    const list = [...document.querySelectorAll('#controlslist span')].map(el => el.textContent);
+    const list = [...document.querySelectorAll('#controlslist > .group, #controlslist > .do')].map(el => el.textContent);
     const settingsGone = document.getElementById('motion').hidden;
     document.getElementById('controlsback').click();
     const backOnSettings = !document.getElementById('motion').hidden && document.getElementById('controlslist').hidden;
     return [
       ok(page[0] === 'controls' && page.length === 3 && page[2] === 'back', 'the page has its word and back', JSON.stringify(page)),
       ok(settingsGone, 'and the settings are not on it'),
-      ok(list.join('|') === ['left click', 'interact', 'right click', 'focus workers',
-        'right click + left click', 'pick up workers', 'middle click', 'move camera',
-        'scroll wheel', 'move camera', '← → / a d', 'move camera', '1 – 9', 'jump to a place'].join('|'),
-        'seven rows, input then action, in order', JSON.stringify(list)),
+      ok(list.join('|') === MOUSE_TABLE.join('|'),
+        'without a pad, the mouse\'s actions under their groups, each once', JSON.stringify(list)),
       ok(backOnSettings, 'back turns to the settings'),
     ];
+  }],
+
+  // The table with a pad seen, in real frames: a desktop and a 360px phone in
+  // English, and the two longest languages on a phone and the desk. Every
+  // row's cells share the column tracks (one grid), so they line up whatever
+  // the words; and each action is there once.
+  ['the controls table lines up at the desk and on a phone, in every long language', async () => {
+    const want = controlGroups(true).reduce((n, [, rows]) => n + rows.length, 0);
+    const out = [];
+    for (const [width, lang] of [[960, 'en'], [360, 'en'], [360, 'de'], [960, 'fr']]) {
+      const f = document.createElement('iframe');
+      f.src = `./play.html?bench&lang=${lang}`;
+      f.style.cssText = `position:fixed;left:0;top:0;width:${width}px;height:800px;border:0;opacity:0;pointer-events:none;z-index:-1`;
+      document.body.appendChild(f);
+      try {
+        const t0 = performance.now();
+        const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__reset && x.__fast); };
+        while (!booted() && performance.now() - t0 < 20000) await sleep(50);
+        if (!booted()) { out.push(ok(false, `the game boots in a ${width}px frame (${lang})`)); continue; }
+        f.contentWindow.__scene('controlspad');
+        await sleep(400);
+        const d = f.contentDocument;
+        const words = [...d.querySelectorAll('#controlslist > .do')].map(el => el.textContent);
+        const { out: bad, rows, width: w } = tableFaults(f.contentWindow);
+        out.push(ok(rows === want && new Set(words).size === rows, `${lang} at ${width}px: every action once`, `${rows} rows of ${want}`),
+                 ok(bad.length === 0, `${lang} at ${width}px: every row's cells share the columns`, `${w}px wide; ${bad.join('; ')}`));
+      } finally { f.remove(); }
+    }
+    return out;
   }],
 
   ['motion is a switch that remembers', async () => {
