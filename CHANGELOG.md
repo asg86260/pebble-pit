@@ -170,6 +170,8 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+- On a gamepad the focus brackets travel from one thing to the next where you can follow them, up to the corner buttons, onto a board's rows and back, while the camera glides to center each one, both eased in and out (test/pad-glide.test.mjs; src/selftest/pad.js, "the marker travels across to the corner").
+
 ## v0.6.0 — 2026-10-16
 
 **New this release**
@@ -186,7 +188,6 @@ this section; the release that switches it on moves these under Unreleased.
 - On a gamepad, X hands back a queued copy (it was Y, which now does nothing) (src/selftest/pad.js, "X on a card with a copy waiting").
 - On a gamepad, every d-pad press goes to the nearest thing in that direction, in the yard, the deep, the boards and the sheets alike (test/pad-reach.test.mjs).
 - The focus brackets breathe a cell out and back while they sit still, from rest on each arrival, and the gamepad's fade in and out instead of popping.
-- On a gamepad the focus brackets travel from one thing to the next where you can follow them, up to the corner buttons, onto a board's rows and back, while the camera glides to center each one, both eased in and out (test/pad-glide.test.mjs; src/selftest/pad.js, "the marker travels across to the corner").
 - New words on the rescue sheet, the demo's store link and an empty achievements page.
 - The board of rescue times is gone: no name box or post on the rescue sheet, no times page, no name on the board in settings.
 - A controller plays the whole game: the d-pad hops between the places a click lands on, A does what the click does, and the Steam Deck's back buttons and trackpads come mapped (test/pad.test.mjs).
