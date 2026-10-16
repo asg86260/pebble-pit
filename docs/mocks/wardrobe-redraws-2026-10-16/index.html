@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wardrobe Redraws</title>
+<style>
+  /* A light page on purpose: the yard is drawn on white paper, and so are these. */
+  :root { color-scheme: light; --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --mark: #6a2fbe; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; } }
+  :root[data-theme="dark"] { --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 0 0 4px; }
+  p { margin: 0 0 10px; color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 18px; overflow-x: auto; }
+  table { border-collapse: collapse; }
+  th, td { padding: 6px 8px; vertical-align: middle; text-align: center; border-bottom: 1px solid var(--line); }
+  th { font-weight: normal; color: var(--muted); font-size: 12px; }
+  td.name { text-align: left; white-space: nowrap; }
+  td.note { text-align: left; color: var(--muted); font-size: 12px; max-width: 260px; }
+  .tag { display: inline-block; min-width: 1.8em; font-weight: bold; color: var(--mark); }
+  canvas { image-rendering: pixelated; display: block; margin: 0 auto; }
+  canvas.big { width: 216px; height: auto; }
+  canvas.small { width: 104px; height: auto; }
+  td > div > canvas.one { margin-top: 4px; }
+  canvas.one { width: auto; }
+  .redraw { color: #a3271b; }
+  .sub { font-size: 12px; color: var(--muted); }
+  .cant { margin-top: 18px; }
+  .cant li { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+<h1>Wardrobe redraws (mock)</h1>
+<p>Three of the owner's marks from the item review, drawn here from plain shapes on a bare 18-pixel body: the rim 2 px, the white middle 14 px, a cell 6 px, a face or neck mark a 2 px unit. The "today" rows are copied from the real item rows in src/wardrobe.js and src/render/wardrobe.js. Each picture is shown at 4x and at 1x (one world pixel to one screen pixel). Walking panels step their pose four times a second, as the game does.</p>
+
+<section class="card" id="faces">
+  <h2>1 · Faces: directional vs centered</h2>
+  <p>Today a face is drawn facing right and mirrored for a body facing left, so the eyes sit off to the side it walks toward. Centered: the face sits on the middle of the square's front and is the same whichever way the body faces. Asymmetric faces (monocle, eyepatch) keep one fixed side when centered rather than flipping.</p>
+  <div id="faceTable"></div>
+</section>
+
+<section class="card" id="scarves">
+  <h2>2 · Scarves: proportions</h2>
+  <p>Today the band is one 2 px row across the middle but the tail is drawn in whole 6 px cells (two hanging, three streaming), three times the band's weight: that is the mismatch. Each option is applied to all three scarves, standing and walking, facing right.</p>
+  <div id="scarfTable"></div>
+</section>
+
+<section class="card" id="bow">
+  <h2>3 · Bow: redraws</h2>
+  <p>Today the bow is three cells tall and five wide (30 x 18 px) over an 18 px body. The redraws are laid in 2 px units, as the headband already is, rather than whole cells.</p>
+  <div id="bowTable"></div>
+</section>
+
+<section class="card cant">
+  <h2>What this mock cannot show</h2>
+  <ul>
+    <li>The yard: no crowd, no station hats, no camera zoom. "1x" is one world pixel per screen pixel; the yard is usually drawn larger than that, so 1x is the worst case.</li>
+    <li>The deep's inks (the picture turned over, its own greys), a body knocked flat (where the head item is laid on its side), a crouched or seated body, or a load carried over the head.</li>
+    <li>The real walk: the body here stands in place while its pose steps; in the game it moves across the yard and the "walking" flag is read off its motion.</li>
+    <li>Device-pixel snapping at odd zooms, which the game does for every mark.</li>
+  </ul>
+</section>
+</main>
+
+<script>
+"use strict";
+// --- the game's numbers (src/config) ---------------------------------------
+const P = 6, WORKER = 18, RIM = 2, U = 2, GRIDN = 7, STEP_HZ = 4;
+const INK = "#000", PAPER = "#fff", GREYC = "#8a8a8a";
+const pose = (t, hz) => Math.floor(t * hz) % 2;
+const fill = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+const cell = (g, x, y, c) => fill(g, x, y, P, P, c);
+
+// A grid of 2 px marks on the middle, from its top-left; mirrored for dir < 0.
+function grid(g, rows, x0, y0, dir) {
+  for (let r = 0; r < rows.length; r++) {
+    const row = rows[r].padEnd(GRIDN, ".");
+    for (let c = 0; c < GRIDN; c++) {
+      const ch = row[dir < 0 ? GRIDN - 1 - c : c];
+      if (ch === ".") continue;
+      fill(g, x0 + c * U, y0 + r * U, U, U, ch === "g" ? GREYC : INK);
+    }
+  }
+}
+// Unit rects (2 px) off an origin, mirrored around the body for dir < 0.
+function units(g, rows, ox, oy, x, dir, color = INK) {
+  for (let r = 0; r < rows.length; r++) for (let c = 0; c < rows[r].length; c++) {
+    const ch = rows[r][c];
+    if (ch === ".") continue;
+    let px = ox + c * U;
+    if (dir < 0) px = WORKER - px - U;
+    fill(g, x + px, oy + r * U, U, U, ch === "g" ? GREYC : ch === "w" ? PAPER : color);
+  }
+}
+function body(g, x, y) {
+  fill(g, x, y, WORKER, WORKER, INK);
+  fill(g, x + RIM, y + RIM, WORKER - 2 * RIM, WORKER - 2 * RIM, PAPER);
+}
+
+// --- faces -------------------------------------------------------------------
+// [key, today's grid, centered grid, note, needs a redraw]
+const FACES = [
+  ["eyes", ["", "", "...#.#."], ["", "", "..#.#.."], "shifts one unit; symmetric already", false],
+  ["sleepy", ["", "", "..##.##"], ["", "", ".##.##."], "shifts one unit", false],
+  ["smile", ["", "", "...#.#.", "", "..#...#", "...###."], ["", "", "..#.#..", "", ".#...#.", "..###.."], "shifts one unit", false],
+  ["glasses", ["", "###.###", "#.###.#", "###.###"], ["", "###.###", "#.###.#", "###.###"], "already full width and centered: no change", false],
+  ["round glasses", ["", ".#...#.", "#.###.#", ".#...#."], ["", ".#...#.", "#.###.#", ".#...#."], "already centered: no change", false],
+  ["shades", ["", "#######", "###.###"], ["", "#######", "###.###"], "already centered: no change", false],
+  ["monocle", ["", ".....#.", "..#.#.#", ".....#.", "......#", "......#"], ["", "....#..", ".#.#.#.", "....#..", ".....#.", ".....#."], "shifts one unit; stays on the right eye whichever way the body faces", false],
+  ["eyepatch", ["", "#####..", "..#.###", "....###"], ["", "######.", ".#..###", "....###"], "redraw: today the eye and the patch center half a unit off; eye moved to col 1, strap one unit longer", true],
+  ["mustache", ["", "", "...#.#.", "..#...#", "..#####"], ["", "", "..#.#..", ".#...#.", ".#####."], "shifts one unit", false],
+  ["freckles", ["", "", "...#.#.", "...g.g.", "..g.g.."], ["", "", "..#.#..", ".g...g.", "g.g.g.g"], "redraw: four units wide today (even), cannot center; a dot under each eye and a row across the nose", true],
+  ["blush", ["", "", "...#.#.", "..gg.gg"], ["", "", "..#.#..", ".gg.gg."], "shifts one unit", false],
+];
+
+// --- scarves -----------------------------------------------------------------
+const KINDS = [["scarf", "solid"], ["checked scarf", "check"], ["striped scarf", "stripe"]];
+// A unit's color along a scarf, by kind and index.
+const tone = (kind, i) => kind === "check" ? (i % 2 ? GREYC : INK) : kind === "stripe" ? (i % 2 ? PAPER : INK) : INK;
+// The band's grid row for today (copied from NECK rows).
+const BAND = { solid: "#######", check: "#g#g#g#", stripe: "#.#.#.#" };
+
+const SCARF_OPTS = [
+  ["Today", "band one 2 px row across the middle; tail in whole 6 px cells: two hanging, three streaming", "today"],
+  ["A · Thin", "band as today; the tail drawn in 2 px units like the band, 4 px wide and two cells (12 px) long, its end flicking on the walk", "thin"],
+  ["B · Low and long", "band two rows deep, lower on the body (chest, not mid); a 4 px tail hanging to the floor, streaming three cells on the walk with a wave", "low"],
+  ["C · Knotted front", "band one row; a knot on the middle of the front and two short tails hanging from it that swing back on the walk; nothing out the back", "knot"],
+];
+
+function scarfToday(g, kind, x, y, moving, t) {
+  const ix = x + RIM, iy = y + RIM;
+  grid(g, ["", "", "", BAND[kind]], ix, iy, 1);
+  const bx = x - P, d = -1, cells = [];
+  if (moving) {
+    const lift = pose(t, STEP_HZ) ? [0, 0, -1] : [0, 1, 0];
+    for (let i = 0; i < 3; i++) cells.push([bx + d * i * P, y + P + lift[i] * P]);
+  } else cells.push([bx, y + P], [bx, y + 2 * P]);
+  cells.forEach(([cx, cy], i) => {
+    cell(g, cx, cy, kind === "check" && i % 2 ? GREYC : INK);
+    if (kind === "stripe") fill(g, cx + 2, cy, 2, P, PAPER);
+  });
+}
+function scarfThin(g, kind, x, y, moving, t) {
+  const ix = x + RIM, iy = y + RIM, by = iy + 3 * U;   // the band's row
+  grid(g, ["", "", "", BAND[kind]], ix, iy, 1);
+  if (!moving) {
+    // hangs from the band, two units wide, six units (12 px) long
+    for (let i = 0; i < 6; i++) { fill(g, x - 2 * U, by + i * U, 2 * U, U, tone(kind, i)); }
+  } else {
+    const p = pose(t, STEP_HZ);
+    for (let i = 0; i < 6; i++) {
+      const lift = i >= 4 ? (p ? -U : U) * (i - 3) / 2 : 0;
+      fill(g, x - (i + 1) * U, by + Math.round(lift / U) * U, U, 2 * U, tone(kind, i));
+    }
+  }
+}
+function scarfLow(g, kind, x, y, moving, t) {
+  const ix = x + RIM, iy = y + RIM, by = iy + 4 * U;   // two rows from row 4
+  const r1 = kind === "check" ? "#g#g#g#" : kind === "stripe" ? "#.#.#.#" : "#######";
+  const r2 = kind === "check" ? "g#g#g#g" : r1;
+  grid(g, ["", "", "", "", r1, r2], ix, iy, 1);
+  if (!moving) {
+    // down to the floor (the body's bottom), and one unit kicked back at the foot
+    const n = (y + WORKER - by) / U;
+    for (let i = 0; i < n; i++) fill(g, x - 2 * U, by + i * U, 2 * U, U, tone(kind, i));
+    fill(g, x - 3 * U, y + WORKER - U, U, U, tone(kind, n));
+  } else {
+    const p = pose(t, STEP_HZ);
+    const wave = p ? [0, 0, 0, 1, 1, 1, 0, 0, -1] : [0, 0, 1, 1, 0, 0, -1, -1, 0];
+    for (let i = 0; i < 9; i++) fill(g, x - (i + 1) * U, by + wave[i] * U, U, 2 * U, tone(kind, i));
+  }
+}
+function scarfKnot(g, kind, x, y, moving, t) {
+  const ix = x + RIM, iy = y + RIM;
+  grid(g, ["", "", "", BAND[kind]], ix, iy, 1);
+  // the knot: three units by two on the front's middle, over the band
+  fill(g, ix + 2 * U, iy + 3 * U, 3 * U, 2 * U, INK);
+  // two short tails splayed from under the knot; their ends swing back a unit on the walk
+  const sw = moving && pose(t, STEP_HZ) ? -U : 0;
+  for (const [c0, c1] of [[2, 1], [4, 5]]) {
+    fill(g, ix + c0 * U, iy + 5 * U, U, U, tone(kind, 0));
+    fill(g, ix + c1 * U + sw, iy + 6 * U, U, U, tone(kind, 1));
+  }
+}
+const SCARF_DRAW = { today: scarfToday, thin: scarfThin, low: scarfLow, knot: scarfKnot };
+
+// --- bows ----------------------------------------------------------------------
+const BOW_OPTS = [
+  ["Today", "rows ##.## / ##### / ##.## in whole cells: 30 x 18 px, centered over the head", "today"],
+  ["A · Neat top bow", "an outlined bow 18 x 8 px, the head's own width, a filled knot in the middle, sitting on top center", "top"],
+  ["B · Tilted side bow", "a smaller bow tilted across the head's back corner, half on the rim; it follows the back as the body turns", "side"],
+  ["C · Ribbon bow", "a small bow on top with two ribbon tails trailing down the back, streaming on the walk", "ribbon"],
+];
+function bowToday(g, x, y, dir) {
+  const rows = ["##.##", "#####", "##.##"], w = 5;
+  let ox = (3 - w) / 2;
+  if (dir < 0) ox = 3 - ox - w;
+  for (let r = 0; r < 3; r++) for (let c = 0; c < w; c++) {
+    const ch = rows[r][dir < 0 ? w - 1 - c : c];
+    if (ch !== ".") cell(g, x + (ox + c) * P, y - 3 * P + r * P, INK);
+  }
+}
+function bowTop(g, x, y, dir) {
+  units(g, ["##.....##", "#.##.##.#", "#..###..#", "#.##.##.#", "##.....##"], 0, y - 5 * U, x, dir);
+}
+function bowSide(g, x, y, dir) {
+  // tilted on the head's back top corner: the knot on the corner, a loop up
+  // and back, a loop down and onto the head
+  units(g, ["..#....", ".##....", "####...", "..###..", "...####", "....##.", "....#.."], -3 * U, y - 3 * U, x, dir);
+}
+function bowRibbon(g, x, y, dir, moving, t) {
+  units(g, ["##...##", "#.###.#", "##...##"], U, y - 3 * U, x, dir);
+  // two ribbon tails off the back of the head: hanging down its back side
+  // standing, streaming out behind on the walk
+  const p = pose(t, STEP_HZ);
+  if (!moving) {
+    units(g, ["##", "#.", "##", ".#", ".#", "#."], -2 * U, y - U, x, dir);
+  } else {
+    // streaming: two strands out behind the head at the top
+    units(g, p ? ["..####", "##....", "......"] : ["......", "######", "......"], -6 * U, y - U, x, dir);
+    units(g, p ? ["......", "...###", "###..."] : ["......", "......", "######"], -6 * U, y, x, dir);
+  }
+}
+const BOW_DRAW = { today: bowToday, top: bowTop, side: bowSide, ribbon: bowRibbon };
+
+// --- the panels ------------------------------------------------------------------
+// Every canvas registers a draw(t); one loop redraws them all.
+const PANELS = [];
+// world boxes, and where the body stands in each
+const BIG = { w: 54, h: 46, x: 24, y: 24 }, SMALL = { w: 26, h: 24, x: 4, y: 3 };
+let BODY_X = 0, BODY_Y = 0;
+function panel(draw, scale, B) {
+  const c = document.createElement("canvas");
+  c.width = B.w * scale; c.height = B.h * scale;
+  c.className = scale === 1 ? "one" : B === SMALL ? "small" : "big";
+  const g = c.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  PANELS.push(t => { g.setTransform(scale, 0, 0, scale, 0, 0); fill(g, 0, 0, B.w, B.h, PAPER);
+                     fill(g, 0, B.y + WORKER, B.w, 1, "#d6d6d6"); BODY_X = B.x; BODY_Y = B.y; draw(g, t); });
+  return c;
+}
+const pair = (draw, B = BIG) => { const d = document.createElement("div"); d.append(panel(draw, 4, B), document.createElement("br"), panel(draw, 1, B)); return d; };
+function table(head, rows) {
+  const tb = document.createElement("table");
+  const tr = document.createElement("tr");
+  for (const h of head) { const th = document.createElement("th"); th.innerHTML = h; tr.append(th); }
+  tb.append(tr);
+  for (const r of rows) {
+    const row = document.createElement("tr");
+    for (const v of r) { const td = document.createElement("td"); if (typeof v === "string") { td.innerHTML = v; td.className = "name"; } else if (v && v.note) { td.innerHTML = v.note; td.className = "note"; } else td.append(v); row.append(td); }
+    tb.append(row);
+  }
+  return tb;
+}
+
+// faces
+document.getElementById("faceTable").append(table(
+  ["item", "today, facing right", "today, facing left", "centered, facing right", "centered, facing left", "note"],
+  FACES.map(([name, today, cen, note, red]) => [
+    name,
+    pair(g => { body(g, BODY_X, BODY_Y); grid(g, today, BODY_X + RIM, BODY_Y + RIM, 1); }, SMALL),
+    pair(g => { body(g, BODY_X, BODY_Y); grid(g, today, BODY_X + RIM, BODY_Y + RIM, -1); }, SMALL),
+    pair(g => { body(g, BODY_X, BODY_Y); grid(g, cen, BODY_X + RIM, BODY_Y + RIM, 1); }, SMALL),
+    pair(g => { body(g, BODY_X, BODY_Y); grid(g, cen, BODY_X + RIM, BODY_Y + RIM, 1); }, SMALL),
+    { note: red ? '<span class="redraw">' + note + "</span>" : note },
+  ])));
+
+// scarves
+// One table a scarf, the four options down it, so each fits the page at 4x;
+// the options run side by side across standing and walking.
+for (const [label, k] of KINDS) {
+  const h = document.createElement("h3");
+  h.textContent = label;
+  h.style.margin = "16px 0 4px";
+  const head = ["option"];
+  for (const o of SCARF_OPTS) head.push('<span class="tag">' + o[0].split(" ")[0] + "</span>");
+  const rows = [false, true].map(moving => {
+    const row = [moving ? "walking" : "standing"];
+    for (const [, , kind] of SCARF_OPTS)
+      row.push(pair((g, t) => { body(g, BODY_X, BODY_Y); SCARF_DRAW[kind](g, k, BODY_X, BODY_Y, moving, t); }));
+    return row;
+  });
+  document.getElementById("scarfTable").append(h, table(head, rows));
+}
+const key = document.createElement("table");
+key.innerHTML = SCARF_OPTS.map(([name, cap]) => '<tr><td class="name"><span class="tag">' + name.split(" ")[0] + "</span>" + name.slice(name.split(" ")[0].length) + '</td><td class="note" style="max-width:none">' + cap + "</td></tr>").join("");
+document.getElementById("scarfTable").prepend(key);
+
+// bows
+document.getElementById("bowTable").append(table(
+  ["option", "facing right, standing", "facing left, standing", "facing right, walking", "what it is"],
+  BOW_OPTS.map(([name, cap, kind]) => [
+    '<span class="tag">' + name.split(" ")[0] + "</span>" + name.slice(name.split(" ")[0].length),
+    pair((g, t) => { body(g, BODY_X, BODY_Y); BOW_DRAW[kind](g, BODY_X, BODY_Y, 1, false, t); }),
+    pair((g, t) => { body(g, BODY_X, BODY_Y); BOW_DRAW[kind](g, BODY_X, BODY_Y, -1, false, t); }),
+    pair((g, t) => { body(g, BODY_X, BODY_Y); BOW_DRAW[kind](g, BODY_X, BODY_Y, 1, true, t); }),
+    { note: cap },
+  ])));
+
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const t0 = performance.now();
+function frame() {
+  const t = (performance.now() - t0) / 1000;
+  for (const p of PANELS) p(t);
+  if (!still) requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>
