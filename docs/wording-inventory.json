@@ -882,38 +882,38 @@
   "text": "volume"
  },
  {
-  "id": "set-controlsbtn",
-  "group": "Settings",
-  "where": "play.html",
-  "context": "settings button to controls page",
-  "text": "controls"
- },
- {
-  "id": "set-controls-word",
-  "group": "Settings",
-  "where": "play.html",
-  "context": "controls page heading",
-  "text": "controls"
- },
- {
   "id": "set-controlsback",
   "group": "Settings",
   "where": "play.html",
-  "context": "controls page back, and the language page's, the feedback page's and the picker's",
+  "context": "the feedback page's back, and the picker's",
   "text": "back"
  },
  {
-  "id": "set-langbtn",
+  "id": "set-tab-graphics",
   "group": "Settings",
-  "where": "src/selftest/settings.js",
-  "context": "settings button to the language page; $name is the language in force, in its own name",
-  "text": "language · ${name}"
+  "where": "index.html",
+  "context": "settings tab strip, on the held sheet and the landing page: motion, dark and fullscreen",
+  "text": "graphics"
  },
  {
-  "id": "set-lang-word",
+  "id": "set-tab-audio",
   "group": "Settings",
-  "where": "play.html",
-  "context": "language page heading",
+  "where": "index.html",
+  "context": "settings tab strip: sound and volume",
+  "text": "audio"
+ },
+ {
+  "id": "set-tab-controls",
+  "group": "Settings",
+  "where": "index.html",
+  "context": "settings tab strip: the touch switch and the controls table",
+  "text": "controls"
+ },
+ {
+  "id": "set-tab-language",
+  "group": "Settings",
+  "where": "index.html",
+  "context": "settings tab strip: the language list",
   "text": "language"
  },
  {
@@ -1414,13 +1414,6 @@
   "text": "settings"
  },
  {
-  "id": "title-controlsbtn",
-  "group": "Title page",
-  "where": "index.html",
-  "context": "landing settings to controls",
-  "text": "controls"
- },
- {
   "id": "title-settingsback",
   "group": "Title page",
   "where": "index.html",
@@ -1428,38 +1421,17 @@
   "text": "back"
  },
  {
-  "id": "title-controls-word",
-  "group": "Title page",
-  "where": "index.html",
-  "context": "landing controls page heading",
-  "text": "controls"
- },
- {
   "id": "title-controlsback",
   "group": "Title page",
   "where": "index.html",
-  "context": "landing controls back, and the language page's and the feedback page's",
+  "context": "landing feedback page back",
   "text": "back"
- },
- {
-  "id": "title-langbtn",
-  "group": "Title page",
-  "where": "src/title.js",
-  "context": "landing settings to the language page; $name is the language in force, in its own name",
-  "text": "language · ${name}"
- },
- {
-  "id": "title-lang-word",
-  "group": "Title page",
-  "where": "index.html",
-  "context": "landing language page heading",
-  "text": "language"
  },
  {
   "id": "title-fbbtn",
   "group": "Title page",
   "where": "index.html",
-  "context": "landing settings button to the feedback page, under controls",
+  "context": "landing settings button to the feedback page, at the foot beside back",
   "text": "feedback"
  },
  {

@@ -49,8 +49,9 @@ import { hold, pan, viewTaken, whatIsAt } from './input.js';
 import { aim, markAt, glideMs } from './padglide.js';
 import { fillControls } from './controls.js';
 import { wardrobePad, wardrobeHolds } from './wardrobepage.js';
+import { padTabs } from './settingstabs.js';
 import { scope, focused, dropFocus, keepFocus, move as pageMove, pressA, pressX,
-         enterBoard, enterCorner, paintPage, pickToward } from './padpage.js';
+         enterBoard, enterCorner, paintPage, pickToward, focusEl } from './padpage.js';
 
 const mid = r => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
 const half = () => (S.view === 'deep' ? 'deep' : 'yard');
@@ -447,6 +448,8 @@ function pagePresses(sc, dirs, pressed, t) {
   // Y, and through a new yard's steps B and menu (wardrobepage.js).
   let took = false;
   if (sc.kind === 'held') ({ dirs, took } = wardrobePad(dirs, pressed));
+  // The settings' tabs take LB and RB, and the arrows on their strip.
+  if (sc.kind === 'held') dirs = padTabs(dirs, pressed, focusEl);
   for (const d of dirs) {
     // Down past the corner's last row is the yard again, where the focus was.
     if (!pageMove(sc, d) && sc.kind === 'corner' && d === 'down') { enterCorner(false); dropFocus(); return; }

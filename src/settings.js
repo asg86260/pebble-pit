@@ -18,7 +18,8 @@ import { showCloud, CLOUD_LOOK_MS } from './cloudsheet.js';
 import { cloudReady, cloudStatus } from './cloud.js';
 import { cloudNoticeDue } from './notices.js';
 import { msg } from './lang.js';
-import { fillLanguages, inForce } from './langpage.js';
+import { fillLanguages } from './langpage.js';
+import { focusFirstRow, mountTabs } from './settingstabs.js';
 import { feedbackReady } from './feedback.js';
 import { mountFeedback } from './feedbackform.js';
 import { showWardrobe, leaveWardrobe, wardrobeOpener } from './wardrobepage.js';
@@ -86,18 +87,21 @@ indexBtn.addEventListener('click', () => showPane('index'));
 document.getElementById('indexback').addEventListener('click', () => { if (!leaveEntry(indexEl)) back(); });
 slotsBtn.addEventListener('click', () => showPane('slots'));
 document.getElementById('slotsback').addEventListener('click', back);
-document.getElementById('settingsbtn').addEventListener('click', () => showPane('settings'));
+// Opened by a key or the pad (a click with no pointer count), the focus goes
+// to the first row of the tab in force, so the next press goes on from there.
+document.getElementById('settingsbtn').addEventListener('click', e => {
+  showPane('settings');
+  if (!e.detail) focusFirstRow(sheet);
+});
 document.getElementById('settingsback').addEventListener('click', back);
 fillControls(document.getElementById('controlslist'));
-document.getElementById('controlsbtn').addEventListener('click', () => showPane('controls'));
-document.getElementById('controlsback').addEventListener('click', () => showPane('settings'));
-// The language, a page of its own: a pick of another language is a reload,
-// as the dark switch's is, since every module reads its words at load.
-const langBtn = document.getElementById('langbtn');
-langBtn.textContent = msg('set-langbtn', { name: inForce().name });
-fillLanguages(document.getElementById('langlist'), { reload: () => leave(location.href), stay: () => showPane('settings') });
-langBtn.addEventListener('click', () => showPane('language'));
-document.getElementById('langback').addEventListener('click', () => showPane('settings'));
+// The settings' tabs (settingstabs.js): graphics, audio, controls and the
+// languages, each a tab's rows on the one page.
+mountTabs(sheet);
+// A pick of another language is a reload, as the dark switch's is, since
+// every module reads its words at load; the one in force is a pick of
+// nothing.
+fillLanguages(document.getElementById('langlist'), { reload: () => leave(location.href), stay: () => {} });
 // The two of them, a page of the sheet of its own, brought up over the yard
 // by the house board's row (crewboard.js). Its way back is the yard again.
 wardrobeOpener(() => { hold(true); showPane('wardrobe'); });

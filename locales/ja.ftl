@@ -370,11 +370,8 @@ set-fullscreen-note = 全画面にするには、このページをホーム画�
 set-volume =
     .aria-label = 音量
 
-# settings button to controls page
-set-controlsbtn = 操作
-
-# controls page heading
-set-controls-word = 操作
+# settings tab strip: the touch switch and the controls table
+set-tab-controls = 操作
 
 # controls page back
 set-controlsback = 戻る
@@ -525,14 +522,8 @@ title-recordback = 戻る
 # landing settings page heading
 title-settings-word = 設定
 
-# landing settings to controls
-title-controlsbtn = 操作
-
 # landing settings back
 title-settingsback = 戻る
-
-# landing controls page heading
-title-controls-word = 操作
 
 # landing controls back
 title-controlsback = 戻る

@@ -1390,22 +1390,22 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 /* One disabled look for every menu control: the disabled grey and a dashed
    edge, the outline of a button rather than a button. */
 .held button:disabled, .col button:disabled { color: var(--ink-5); border-style: dashed; cursor: default; }
-/* The volume: the sheet's one slider, drawn in its ink -- a hairline for the
+/* The volume: the sheet's one slider (and the landing page's), drawn in its ink -- a hairline for the
    track and a square for the thumb, the same square everything else here is
    made of. Both engines want the parts named separately. */
-.held input[type=range] {
+.held input[type=range], .col input[type=range] {
   -webkit-appearance: none; appearance: none;
   height: 12px; margin: 0;
   background: none; cursor: pointer;
 }
-.held input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--ink); }
-.held input[type=range]::-moz-range-track { height: 1px; background: var(--ink); }
-.held input[type=range]::-webkit-slider-thumb {
+.held input[type=range]::-webkit-slider-runnable-track, .col input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--ink); }
+.held input[type=range]::-moz-range-track, .col input[type=range]::-moz-range-track { height: 1px; background: var(--ink); }
+.held input[type=range]::-webkit-slider-thumb, .col input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
   width: 12px; height: 12px; margin-top: -6px;
   background: var(--paper); border: 1px solid var(--ink); border-radius: 0;
 }
-.held input[type=range]::-moz-range-thumb {
+.held input[type=range]::-moz-range-thumb, .col input[type=range]::-moz-range-thumb {
   width: 12px; height: 12px;
   background: var(--paper); border: 1px solid var(--ink); border-radius: 0;
 }
@@ -2387,3 +2387,28 @@ body.still .fill::before { transition: none; }
 /* The crashed sheet has no seat of its own to scroll in, and the form makes
    it taller than a phone: held to the window, it scrolls inside itself. */
 #crashed { max-height: calc(100% - 2 * var(--edge)); overflow-y: auto; box-sizing: border-box; }
+
+/* The settings' tabs (settingstabs.js; option B of
+   docs/mocks/settings-sections-2026-10-16/), on the held sheet and the
+   landing page's column: a strip of tabs under the word, the one in force
+   inverted as the boards mark a chosen thing, each as wide as its word asks
+   and the slack shared. Under it every tab's rows stand in one grid cell, the
+   ones not in force kept in the layout but unseen, so the cell is the
+   tallest tab's height on every tab and the sheet never re-centers as they
+   turn. Short of the window, the controls table or the languages scroll
+   inside their tab. */
+.settabs { display: flex; align-self: stretch; border: 1px solid var(--ink); }
+.held .settabs button, .col .settabs button {
+  flex: 1 1 auto; min-width: 0; border: 0; border-left: 1px solid var(--ink);
+  font-size: var(--fs-small); overflow-wrap: anywhere;
+}
+.held .settabs button:first-child, .col .settabs button:first-child { border-left: 0; }
+.held .settabs button.on, .col .settabs button.on { color: var(--paper); background: var(--ink); }
+.tabbody { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); align-self: stretch; min-height: 0; }
+.tabpane { grid-area: 1 / 1; display: flex; flex-direction: column; gap: var(--gap-m); min-width: 0; min-height: 0; }
+.tabpane > * { flex-shrink: 0; }
+.tabpane > .controls, .tabpane > .langs { flex-shrink: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.tabpane:not(.on) { visibility: hidden; }
+/* a tab turned to comes in as a page turned does */
+.tabpane.on { animation: turn .16s ease-out; }
+body.still .tabpane.on { animation: none; }

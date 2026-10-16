@@ -15,8 +15,10 @@ import { toastUp, toastWaiting } from '../toast.js';
 import { TOAST_MS, TOAST_GAP_MS, SHEET_FADE_MS } from '../config.js';
 import { msg } from '../lang.js';
 import { feedbackReady } from '../feedback.js';
-import { inForce } from '../langpage.js';
+import { offered } from '../langpage.js';
 import { controlGroups } from '../controls.js';
+import { fullscreenAble } from '../fullscreen.js';
+import { TABS, turnTab, tabNow } from '../settingstabs.js';
 
 const held = () => document.getElementById('held');
 // escape, and then a frame: the sheet puts itself in order when it sees itself
@@ -55,12 +57,72 @@ function slotColumns(btns) {
 // What a player reads, top to bottom. The record's button carries a count
 // that is the yard's doing, and the saves button which yard, so each is read
 // as its name: what the check is about is that the line is there.
-const lines = () => [...held().children]
+// The settings' tab strip reads as its tabs, the one in force in brackets;
+// the tabs' rows are read a tab at a time (`tabRows`).
+const lines = (root = held()) => [...root.children]
   .filter(el => !el.hidden && !(el.classList.contains('said') && !el.textContent))
+  .filter(el => !el.classList.contains('tabbody'))
   .map(el => el.id === 'recordbtn' ? 'achievements'
            : el.id === 'slotsbtn' ? 'saves'
            : el.id === 'indexbtn' ? 'index'
+           : el.classList.contains('settabs') ? stripWords(el)
            : el.textContent.replace(/\s+/g, ' ').trim());
+const stripWords = el => [...el.querySelectorAll('button')].map(b => b.classList.contains('on') ? `[${b.textContent}]` : b.textContent).join(' ');
+
+// What a player sees under the tab in force, read off the glass: every row
+// that stands and is not hidden by its tab, as its words (the slider as its
+// label, the controls table and the languages as what they are).
+const seenEl = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility === 'visible';
+function tabRows(root) {
+  const out = [];
+  for (const pane of root.querySelectorAll('.tabpane')) for (const el of pane.children) {
+    if (!seenEl(el)) continue;
+    out.push(el.type === 'range' ? `slider ${el.getAttribute('aria-label')}`
+           : el.classList.contains('controls') ? 'the controls table'
+           : el.classList.contains('langs') ? 'the languages'
+           : el.textContent.replace(/\s+/g, ' ').trim());
+  }
+  return out;
+}
+// The rows each tab should show, on the held sheet or the landing page (which
+// has no touch or fullscreen row).
+function wantRows(tab, landing) {
+  if (tab === 'graphics') return ['motion: ' + (reducedMotion() ? 'less' : 'full'), 'dark: ' + (dark() ? 'on' : 'off'),
+    ...(landing ? [] : [fullscreenAble() ? 'fullscreen: off' : msg('set-fullscreen-note')])];
+  if (tab === 'audio') return ['sound: ' + (pref('muted') ? 'off' : 'on'), 'slider volume'];
+  if (tab === 'controls') return [...(landing ? [] : ['touch: ' + (coarse() ? 'on' : 'off')]), 'the controls table'];
+  return ['the languages'];
+}
+// Each tab clicked as a player clicks it, on `root` (the held sheet or the
+// landing page's column): what it shows, whether its strip button alone is
+// inverted, and the sheet's height and top with it up.
+function walkTabs(root, landing) {
+  const out = [];
+  for (const t of TABS) {
+    root.querySelector(`.settabs button[data-tab="${t}"]`).click();
+    const box = root.getBoundingClientRect();
+    out.push({ tab: t, rows: tabRows(root), want: wantRows(t, landing),
+               on: [...root.querySelectorAll('.settabs button.on')].map(b => b.dataset.tab).join(),
+               h: Math.round(box.height), top: Math.round(box.top),
+               table: t === 'controls' ? [...root.querySelectorAll('#controlslist > .group, #controlslist > .do')].map(el => el.textContent) : null,
+               langs: t === 'language' ? [...root.querySelectorAll('#langlist button')].map(b => b.textContent) : null });
+  }
+  return out;
+}
+// The checks a walk answers, the same on both pages.
+function tabChecks(walk, where) {
+  return [
+    ok(walk.every(w => w.rows.join('|') === w.want.join('|')), `${where}: each tab, clicked, shows its rows and no other tab's`,
+       JSON.stringify(walk.map(w => [w.tab, w.rows]))),
+    ok(walk.every(w => w.on === w.tab), `${where}: the tab clicked, alone, inverted`, walk.map(w => w.on).join(' ')),
+    ok(new Set(walk.map(w => w.h)).size === 1 && new Set(walk.map(w => w.top)).size === 1,
+       `${where}: the sheet holds one height and place across the tabs`, walk.map(w => `${w.tab} ${w.h}@${w.top}`).join(', ')),
+    ok(walk.find(w => w.tab === 'controls').table.join('|') === MOUSE_TABLE.join('|'),
+       `${where}: the controls tab is the table, the mouse's actions under their groups`, JSON.stringify(walk.find(w => w.tab === 'controls').table)),
+    ok(walk.find(w => w.tab === 'language').langs.join('|') === offered().map(r => r.name).join('|'),
+       `${where}: the language tab lists every language offered`),
+  ];
+}
 
 // The controls table without a pad, top to bottom: each group's heading, then
 // its actions.
@@ -146,7 +208,7 @@ export const TESTS = [
       // the settings page's slider among them, ends at one right edge (the
       // saves page is as wide as its rows, so the two pages may differ)
       const rights = () => [...d.querySelectorAll('.col > :not([hidden])')]
-        .filter(el => el.matches('button, input, .pair, .saves, .paste, .record') && el.getBoundingClientRect().width)
+        .filter(el => el.matches('button, input, .pair, .saves, .paste, .record, .settabs, .tabbody') && el.getBoundingClientRect().width)
         .map(el => `${el.id || el.className} ${Math.round(el.getBoundingClientRect().right)}`);
       edges.push(rights());
       d.getElementById('slotsback').click();
@@ -179,7 +241,7 @@ export const TESTS = [
     ];
   }],
 
-  ['the landing page opens the controls page and turns back to the settings', async () => {
+  ['the landing page\'s settings are four tabs, each with its rows', async () => {
     newRun();
     await settle();
     const wasStaged = S.staged;
@@ -187,7 +249,7 @@ export const TESTS = [
     const f = document.createElement('iframe');
     f.style.cssText = 'position:fixed;left:0;top:0;width:960px;height:600px;visibility:hidden';
     document.body.appendChild(f);
-    let list = [], page = [], settingsGone = false, backOnSettings = false, fits = false;
+    let walk = [], page = [], fits = false, back = false, foot = [];
     try {
       const loaded = new Promise(r => f.addEventListener('load', r, { once: true }));
       f.src = 'index.html';
@@ -195,25 +257,26 @@ export const TESTS = [
       const d = f.contentDocument;
       for (let i = 0; i < 40 && !d.getElementById('playlabel').textContent; i++) await sleep(50);
       d.getElementById('settingsbtn').click();
-      d.getElementById('controlsbtn').click();
-      page = [...d.querySelectorAll('.col > :not([hidden])')].map(el => el.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean);
-      list = [...d.querySelectorAll('#controlslist > .group, #controlslist > .do')].map(el => el.textContent);
-      settingsGone = d.getElementById('motion').hidden;
-      const col = d.querySelector('.col').getBoundingClientRect();
+      const col = d.querySelector('.col');
+      walk = walkTabs(col, true);
+      // the word, the strip, the tabs' cell, and the foot: back, with
+      // feedback beside it where there is a worker
+      page = [...col.children].filter(el => !el.hidden && !el.matches('.gamename, .line, .said:empty')).map(el => el.className || el.id);
+      foot = [...col.querySelector('.pair[data-pane="settings"]').children].filter(el => !el.hidden).map(el => el.id);
       const cl = d.getElementById('controlslist');
-      fits = col.right <= 960 && cl.scrollWidth <= cl.clientWidth + 1;
-      d.getElementById('controlsback').click();
-      backOnSettings = !d.getElementById('motion').hidden && cl.hidden;
+      fits = col.getBoundingClientRect().right <= 960 && cl.scrollWidth <= cl.clientWidth + 1;
+      d.getElementById('settingsback').click();
+      back = !d.getElementById('play').hidden && d.querySelector('.settabs').hidden;
     } finally {
       f.remove();
       S.staged = wasStaged;
     }
     return [
-      ok(page.includes('controls') && page[page.length - 1] === 'back', 'the page has its word and back', JSON.stringify(page)),
-      ok(settingsGone, 'and the settings are not on it'),
-      ok(list.join('|') === MOUSE_TABLE.join('|'), 'the same rows as the held sheet', JSON.stringify(list)),
-      ok(fits, 'and the column grows to hold them'),
-      ok(backOnSettings, 'back turns to the settings'),
+      ...tabChecks(walk, 'landing page'),
+      ok(page.join('|') === 'word|settabs|tabbody|pair', 'the word, the strip, the tabs, and the foot', JSON.stringify(page)),
+      ok(foot.join() === [...(feedbackReady() ? ['fbbtn'] : []), 'settingsback'].join(), 'feedback beside back at the foot', foot.join()),
+      ok(fits, 'and the column grows to hold the table'),
+      ok(back, 'back turns to the front'),
     ];
   }],
 
@@ -338,19 +401,12 @@ export const TESTS = [
       'esc holds · ← → look about · hold space to skip a scene',
       version(),
     ];
+    turnTab('graphics');
     settingsPage();
     const page = lines();
     const wantPage = [
       'settings',
-      'motion: ' + (reducedMotion() ? 'less' : 'full'),
-      'touch: ' + (coarse() ? 'on' : 'off'),  // the thumb switch -- see prefs.js
-      'dark: ' + (dark() ? 'on' : 'off'),     // the page turned over -- see ink.js
-      msg('set-langbtn', { name: inForce().name }),   // the language page -- see langpage.js
-      // the whole screen, where the platform can give it -- see fullscreen.js
-      ...(document.fullscreenEnabled || document.webkitFullscreenEnabled ? ['fullscreen: off'] : []),
-      'sound: on',                            // the mute, which remembers -- see audio.js
-      '',                                     // the volume: a slider has no words
-      'controls',                             // the page of mouse buttons
+      '[graphics] audio controls language',  // the tabs -- see settingstabs.js
       'back',
       version(),
     ];
@@ -373,23 +429,121 @@ export const TESTS = [
     ];
   }],
 
-  ['the controls page lists the mouse and turns back to the settings', async () => {
+  // The tabs on the held sheet, clicked as a player clicks them: each shows
+  // its own rows (the touch switch over the controls table, the languages
+  // inline), the sheet holds still across them, and the tab is remembered
+  // when the sheet comes up again.
+  ['the held sheet\'s settings are four tabs, each with its rows', async () => {
     newRun();
     await settle();
     await press();
     settingsPage();
-    document.getElementById('controlsbtn').click();
-    const page = lines();
-    const list = [...document.querySelectorAll('#controlslist > .group, #controlslist > .do')].map(el => el.textContent);
-    const settingsGone = document.getElementById('motion').hidden;
-    document.getElementById('controlsback').click();
-    const backOnSettings = !document.getElementById('motion').hidden && document.getElementById('controlslist').hidden;
+    const walk = walkTabs(held(), false);
+    held().querySelector('.settabs button[data-tab="audio"]').click();
+    document.getElementById('settingsback').click();
+    const front = onFront();
+    resume();
+    await sleep(SHEET_FADE_MS + 60);
+    await press();
+    settingsPage();
+    const kept = held().querySelector('.settabs button.on')?.dataset.tab;
+    const keptRows = tabRows(held());
+    document.getElementById('settingsback').click();
+    resume();
+    await sleep(SHEET_FADE_MS + 60);
+    turnTab('graphics');
     return [
-      ok(page[0] === 'controls' && page.length === 3 && page[2] === 'back', 'the page has its word and back', JSON.stringify(page)),
-      ok(settingsGone, 'and the settings are not on it'),
-      ok(list.join('|') === MOUSE_TABLE.join('|'),
-        'without a pad, the mouse\'s actions under their groups, each once', JSON.stringify(list)),
-      ok(backOnSettings, 'back turns to the settings'),
+      ...tabChecks(walk, 'held sheet'),
+      ok(front, 'back turns to the front'),
+      ok(kept === 'audio' && keptRows.join('|') === wantRows('audio').join('|'),
+         'the sheet comes up again on the tab it left', `${kept} ${keptRows}`),
+    ];
+  }],
+
+  // The pad on the tabs: A on settings lands on the first row of the tab in
+  // force, LB and RB turn the tab and land on its first row, up off the
+  // first row is the strip, left and right there turn it, down goes back
+  // into the rows, and B is the front.
+  ['the settings tabs with a pad: LB, RB and the strip', async () => {
+    const BUTTONS = { a: 0, b: 1, lb: 4, rb: 5, menu: 9, up: 12, down: 13, left: 14, right: 15 };
+    const fake = { id: 'Xbox Wireless Controller (STANDARD GAMEPAD)', connected: true, mapping: 'standard',
+                   buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })), axes: [0, 0, 0, 0] };
+    const own = Object.getOwnPropertyDescriptor(navigator, 'getGamepads');
+    const frames = async n => { for (let i = 0; i < n; i++) await raf(); };
+    const pad = async name => {
+      const b = fake.buttons[BUTTONS[name]];
+      b.pressed = true; b.value = 1; await frames(2);
+      b.pressed = false; b.value = 0; await frames(2);
+    };
+    const page = () => window.__pad.page();
+    const at = () => { const el = page(); return el?.closest?.('.settabs') ? `tab:${el.dataset.tab}` : el?.id || el?.tagName || 'none'; };
+    newRun();
+    await settle();
+    turnTab('graphics');
+    Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [fake] });
+    window.__motion(true);
+    const seen = [];
+    const log = async name => { await pad(name); seen.push(`${name}>${tabNow()}:${at()}`); };
+    let front = false;
+    try {
+      await pad('b');
+      await pad('menu');
+      await frames(3);
+      for (let i = 0; i < 16 && page()?.id !== 'settingsbtn'; i++) await pad('down');
+      for (const name of ['a', 'rb', 'rb', 'lb', 'lb', 'up', 'right', 'right', 'left', 'down', 'b']) await log(name);
+      front = onFront() && held().querySelector('.settabs').hidden;
+      await pad('b');
+    } finally {
+      window.__pad.off();
+      if (own) Object.defineProperty(navigator, 'getGamepads', own); else delete navigator.getGamepads;
+      window.__motion(null);
+      turnTab('graphics');
+    }
+    const want = ['a>graphics:motion', 'rb>audio:sound', 'rb>controls:touch', 'lb>audio:sound', 'lb>graphics:motion',
+                  'up>graphics:tab:graphics', 'right>audio:tab:audio', 'right>controls:tab:controls', 'left>audio:tab:audio',
+                  'down>audio:sound'];
+    const got = seen.slice(0, want.length);
+    return [
+      ok(got[0] === want[0], 'A on settings lands on the first row of the tab in force', seen.join(' ')),
+      ok(got.slice(1, 5).join() === want.slice(1, 5).join(), 'LB and RB turn the tab, the focus on its first row', seen.join(' ')),
+      ok(got[5] === want[5], 'up off the first row lands on the strip, on the tab in force', seen.join(' ')),
+      ok(got.slice(6, 9).join() === want.slice(6, 9).join(), 'left and right on the strip turn the tab', seen.join(' ')),
+      ok(got[9] === want[9], 'down from the strip goes into the rows', seen.join(' ')),
+      ok(front, 'B turns back to the front', seen.join(' ')),
+    ];
+  }],
+
+  // The keyboard reaches the strip the same way: up off the first row, left
+  // and right there turn the tab (and do not pan the yard), down goes back.
+  ['the settings tabs by keyboard: the arrows and the strip', async () => {
+    newRun();
+    await settle();
+    turnTab('graphics');
+    await press();
+    settingsPage();
+    const key = k => document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+    const at = () => { const el = document.activeElement; return el?.closest?.('.settabs') ? `tab:${el.dataset.tab}` : el?.id || 'none'; };
+    const camX = S.camX;
+    const seen = [];
+    document.getElementById('motion').focus();
+    for (const k of ['ArrowDown', 'ArrowUp', 'ArrowUp', 'ArrowRight', 'ArrowRight', 'ArrowLeft', 'ArrowDown']) {
+      key(k);
+      await raf();
+      seen.push(`${k.slice(5)}>${tabNow()}:${at()}`);
+    }
+    await raf();
+    const still = S.camX === camX;
+    document.getElementById('settingsback').click();
+    resume();
+    await sleep(SHEET_FADE_MS + 60);
+    turnTab('graphics');
+    const want = ['Down>graphics:dark', 'Up>graphics:motion', 'Up>graphics:tab:graphics', 'Right>audio:tab:audio',
+                  'Right>controls:tab:controls', 'Left>audio:tab:audio', 'Down>audio:sound'];
+    return [
+      ok(seen.slice(0, 3).join() === want.slice(0, 3).join(), 'up and down step the rows, and up off the first is the strip', seen.join(' ')),
+      ok(seen.slice(3, 6).join() === want.slice(3, 6).join(), 'left and right on the strip turn the tab', seen.join(' ')),
+      ok(seen[6] === want[6], 'down from the strip is the first row', seen.join(' ')),
+      ok(still, 'and the arrows on the strip do not pan the yard'),
     ];
   }],
 

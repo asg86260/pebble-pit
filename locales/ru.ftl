@@ -381,11 +381,8 @@ set-fullscreen-note = для полного экрана добавь эту с�
 set-volume =
     .aria-label = громкость
 
-# settings button to controls page
-set-controlsbtn = управление
-
-# controls page heading
-set-controls-word = управление
+# settings tab strip: the touch switch and the controls table
+set-tab-controls = управление
 
 # controls page back
 set-controlsback = назад
@@ -536,14 +533,8 @@ title-recordback = назад
 # landing settings page heading
 title-settings-word = настройки
 
-# landing settings to controls
-title-controlsbtn = управление
-
 # landing settings back
 title-settingsback = назад
-
-# landing controls page heading
-title-controls-word = управление
 
 # landing controls back
 title-controlsback = назад

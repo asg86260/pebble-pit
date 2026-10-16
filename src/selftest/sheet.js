@@ -294,7 +294,7 @@ export const TESTS = [
 
   ['the settings rows keep the desk\'s spacing on a phone', async () => {
     window.__nocine();
-    const pitchOf = () => { const a = document.getElementById('motion').getBoundingClientRect(), b = document.getElementById('sound').getBoundingClientRect(); return b.top - a.top; };
+    const pitchOf = () => { const a = document.getElementById('motion').getBoundingClientRect(), b = document.getElementById('dark').getBoundingClientRect(); return b.top - a.top; };
     // the desk: escape holds, and the settings page
     phone(false);
     await frames(2);

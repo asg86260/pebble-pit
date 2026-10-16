@@ -378,11 +378,8 @@ set-fullscreen-note = para la pantalla completa, agrega esta página a la pantal
 set-volume =
     .aria-label = volumen
 
-# settings button to controls page
-set-controlsbtn = controles
-
-# controls page heading
-set-controls-word = controles
+# settings tab strip: the touch switch and the controls table
+set-tab-controls = controles
 
 # controls page back
 set-controlsback = volver
@@ -533,14 +530,8 @@ title-recordback = volver
 # landing settings page heading
 title-settings-word = ajustes
 
-# landing settings to controls
-title-controlsbtn = controles
-
 # landing settings back
 title-settingsback = volver
-
-# landing controls page heading
-title-controls-word = controles
 
 # landing controls back
 title-controlsback = volver

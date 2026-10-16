@@ -7057,6 +7057,10 @@
   "title.motion": null,
   "title.dark": null,
   "title.sound": null,
+  "set.controlsbtn": null,
+  "set.controls.word": null,
+  "title.controlsbtn": null,
+  "title.controls.word": null,
   "ach.rock0.name": {
    "id": "ach-rocks-name",
    "args": {

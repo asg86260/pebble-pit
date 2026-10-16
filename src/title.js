@@ -14,6 +14,7 @@ import { showCloud, showFoot, showConflicts } from './cloudsheet.js';
 import { VEIL_MS, PICTURE_WAIT_MS, PICTURE_UP, LIGHT_PAPER, DARK_PAPER } from './config.js';
 import { msg } from './lang.js';
 import { fillLanguages, inForce } from './langpage.js';
+import { focusFirstRow, mountTabs, turnTab } from './settingstabs.js';
 import { feedbackReady } from './feedback.js';
 import { mountFeedback } from './feedbackform.js';
 import './focusmark.js';   // the keyboard's focus, drawn as the pad's brackets
@@ -70,21 +71,23 @@ function pick(n) { setSlot(n); showPane('main'); }
 
 document.getElementById('slotsbtn').addEventListener('click', () => showPane('slots'));
 document.getElementById('recordbtn').addEventListener('click', () => showPane('record'));
-document.getElementById('settingsbtn').addEventListener('click', () => showPane('settings'));
+// Opened by a key (a click with no pointer count), the focus goes to the
+// first row of the tab in force, as on the held sheet.
+document.getElementById('settingsbtn').addEventListener('click', e => {
+  showPane('settings');
+  if (!e.detail) focusFirstRow(col);
+});
 fillControls(document.getElementById('controlslist'));
-document.getElementById('controlsbtn').addEventListener('click', () => showPane('controls'));
-document.getElementById('controlsback').addEventListener('click', () => showPane('settings'));
-// The language, a page of its own, and the foot's name for the language in
-// force, which opens the same page. A pick is a reload behind the veil.
+// The settings' tabs, as on the held sheet (settingstabs.js).
+mountTabs(col);
+// The languages, a tab of the settings, and the foot's name for the language
+// in force, which turns to it. A pick is a reload behind the veil.
 const langName = inForce();
-document.getElementById('langbtn').textContent = msg('title-langbtn', { name: langName.name });
 const langFoot = document.getElementById('langfoot');
 langFoot.textContent = langName.name;
 langFoot.setAttribute('lang', langName.code);
-fillLanguages(document.getElementById('langlist'), { reload: reloadIn, stay: () => showPane('settings') });
-document.getElementById('langbtn').addEventListener('click', () => showPane('language'));
-langFoot.addEventListener('click', () => showPane('language'));
-document.getElementById('langback').addEventListener('click', () => showPane('settings'));
+fillLanguages(document.getElementById('langlist'), { reload: reloadIn, stay: () => {} });
+langFoot.addEventListener('click', () => { turnTab('language'); showPane('settings'); });
 document.getElementById('fbbtn').addEventListener('click', () => showPane('feedback'));
 document.getElementById('fbback').addEventListener('click', () => showPane('settings'));
 async function reloadIn() {
@@ -110,9 +113,10 @@ async function play() {
 }
 document.getElementById('play').addEventListener('click', play);
 // Not while typing: the paste box, and the cloud's code boxes; nor on the
-// feedback form, whose tick and send are not play.
+// feedback form, whose tick and send are not play; nor on a button with the
+// keyboard's focus, whose own press that key is.
 addEventListener('keydown', e => {
-  if (e.target.closest?.('textarea, input, .feedback')) return;
+  if (e.target.closest?.('textarea, input, .feedback, button')) return;
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(); }
 });
 

@@ -64,14 +64,15 @@ export function scope() {
 }
 
 // What the d-pad can stand on in a part of the page: the buttons, links and
-// sliders that can be seen. A text box is skipped (the design: a keyboard is
+// sliders that can be seen, and not in an inert part (a settings tab not in
+// force, which keeps its place in the layout). A text box is skipped (the design: a keyboard is
 // needed for those), and so is a button inside a closed part.
 const CAN = 'button, a[href], input[type="range"]';
 export function focusables(sc) {
   const out = [];
   for (const root of sc.el) {
     for (const el of root.querySelectorAll(CAN)) {
-      if (!shown(el)) continue;
+      if (!shown(el) || el.closest('[inert]')) continue;
       const r = el.getBoundingClientRect();
       if (r.width < 1 || r.height < 1) continue;
       out.push(el);
@@ -136,6 +137,10 @@ export function keepFocus(sc, t) {
   }
   const same = onKey && list.find(el => keyOf(el) === onKey);
   if (same) { focusEl(same, t); return same; }
+  // A page that put the focus somewhere as it turned (settings, on its
+  // first row) has it there.
+  const put = document.activeElement;
+  if (put && list.includes(put)) { focusEl(put, t); return put; }
   let best = list[0];
   if (onRect) {
     const c = center(onRect);

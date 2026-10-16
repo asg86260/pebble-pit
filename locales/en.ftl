@@ -419,20 +419,20 @@ set-fullscreen-note = for the whole screen, add this page to the home screen
 set-volume =
     .aria-label = volume
 
-# settings button to controls page
-set-controlsbtn = controls
-
-# controls page heading
-set-controls-word = controls
-
-# controls page back, and the language page's, the feedback page's and the picker's
+# the feedback page's back, and the picker's
 set-controlsback = back
 
-# settings button to the language page; $name is the language in force, in its own name
-set-langbtn = language · { $name }
+# settings tab strip, on the held sheet and the landing page: motion, dark and fullscreen
+set-tab-graphics = graphics
 
-# language page heading
-set-lang-word = language
+# settings tab strip: sound and volume
+set-tab-audio = audio
+
+# settings tab strip: the touch switch and the controls table
+set-tab-controls = controls
+
+# settings tab strip: the language list
+set-tab-language = language
 
 # feedback page heading
 set-fb-word = comments · concerns · bugs
@@ -653,25 +653,13 @@ title-recordback = back
 # landing settings page heading
 title-settings-word = settings
 
-# landing settings to controls
-title-controlsbtn = controls
-
 # landing settings back
 title-settingsback = back
 
-# landing controls page heading
-title-controls-word = controls
-
-# landing controls back, and the language page's and the feedback page's
+# landing feedback page back
 title-controlsback = back
 
-# landing settings to the language page; $name is the language in force, in its own name
-title-langbtn = language · { $name }
-
-# landing language page heading
-title-lang-word = language
-
-# landing settings button to the feedback page, under controls
+# landing settings button to the feedback page, at the foot beside back
 title-fbbtn = feedback
 
 # landing feedback page heading

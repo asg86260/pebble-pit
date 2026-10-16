@@ -50,6 +50,13 @@ import { freedBody } from './snatch.js';
 import { fillControls } from './controls.js';
 import { setFeedbackUrl } from './feedback.js';
 
+// The held sheet up on settings, turned to a tab by its button.
+const settingsTab = t => {
+  dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+  document.getElementById('settingsbtn').click();
+  document.querySelector(`#held .settabs button[data-tab="${t}"]`).click();
+};
+
 // The parts, in the order the sheet reads them.
 export const ABOUT = [
   'the story', 'the rock', 'the crew', 'the bench', 'the cut', 'the plots',
@@ -2206,18 +2213,25 @@ export const SCENES = {
     run: () => { window.__reset(); window.__fast(1); whoNamed(); S.rescued = true; S.buried = false; S.buriedMs = 252000; } },
   'who-index': { about: 'the story', say: 'the index open on your sqouse, named', page: true,
     run: () => { indexYard(); whoNamed(); pressI(); indexPick('sqwife'); } },
-  // The controls page of the settings sheet, opened by its button.
+  // The controls tab of the settings sheet, turned to by its tab.
   controlspage: { about: 'the story', say: 'the controls page on the held sheet', page: true,
     run: () => { dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
                  document.getElementById('settingsbtn').click();
-                 document.getElementById('controlsbtn').click(); } },
+                 document.querySelector('#held .settabs button[data-tab="controls"]').click(); } },
   // The same page once a pad has been seen: its column and its rows drawn in,
   // as pad.js's first press draws them.
   controlspad: { about: 'the story', say: 'the controls page with a pad seen', page: true,
     run: () => { fillControls(document.getElementById('controlslist'), true);
                  dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
                  document.getElementById('settingsbtn').click();
-                 document.getElementById('controlsbtn').click(); } },
+                 document.querySelector('#held .settabs button[data-tab="controls"]').click(); } },
+  // The settings sheet on each of its other tabs (settingstabs.js).
+  settingsgraphics: { about: 'the story', say: 'the settings on the held sheet, the graphics tab', page: true,
+    run: () => settingsTab('graphics') },
+  settingsaudio: { about: 'the story', say: 'the settings on the held sheet, the audio tab', page: true,
+    run: () => settingsTab('audio') },
+  settingslanguage: { about: 'the story', say: 'the settings on the held sheet, the language tab', page: true,
+    run: () => settingsTab('language') },
   // The index (indexpage.js): a mid-game yard with most things met, the book
   // opened by its key and muck picked; a few entries still unread, so their
   // dots show. On a phone (WINDOW=390,844) the list, then muck pushed over it.

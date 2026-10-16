@@ -376,11 +376,8 @@ set-fullscreen-note = 想要全屏，把此页添加到主屏幕
 set-volume =
     .aria-label = 音量
 
-# settings button to controls page
-set-controlsbtn = 操作
-
-# controls page heading
-set-controls-word = 操作
+# settings tab strip: the touch switch and the controls table
+set-tab-controls = 操作
 
 # controls page back
 set-controlsback = 返回
@@ -531,14 +528,8 @@ title-recordback = 返回
 # landing settings page heading
 title-settings-word = 设置
 
-# landing settings to controls
-title-controlsbtn = 操作
-
 # landing settings back
 title-settingsback = 返回
-
-# landing controls page heading
-title-controls-word = 操作
 
 # landing controls back
 title-controlsback = 返回

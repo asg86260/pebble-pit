@@ -370,11 +370,8 @@ set-fullscreen-note = 전체 화면으로 보려면 이 페이지를 홈 화면�
 set-volume =
     .aria-label = 볼륨
 
-# settings button to controls page
-set-controlsbtn = 조작
-
-# controls page heading
-set-controls-word = 조작
+# settings tab strip: the touch switch and the controls table
+set-tab-controls = 조작
 
 # controls page back
 set-controlsback = 뒤로
@@ -525,14 +522,8 @@ title-recordback = 뒤로
 # landing settings page heading
 title-settings-word = 설정
 
-# landing settings to controls
-title-controlsbtn = 조작
-
 # landing settings back
 title-settingsback = 뒤로
-
-# landing controls page heading
-title-controls-word = 조작
 
 # landing controls back
 title-controlsback = 뒤로

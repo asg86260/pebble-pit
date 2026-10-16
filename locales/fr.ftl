@@ -377,11 +377,8 @@ set-fullscreen-note = pour le plein écran, ajoute cette page à l'écran d'accu
 set-volume =
     .aria-label = volume
 
-# settings button to controls page
-set-controlsbtn = commandes
-
-# controls page heading
-set-controls-word = commandes
+# settings tab strip: the touch switch and the controls table
+set-tab-controls = commandes
 
 # controls page back
 set-controlsback = retour
@@ -532,14 +529,8 @@ title-recordback = retour
 # landing settings page heading
 title-settings-word = réglages
 
-# landing settings to controls
-title-controlsbtn = commandes
-
 # landing settings back
 title-settingsback = retour
-
-# landing controls page heading
-title-controls-word = commandes
 
 # landing controls back
 title-controlsback = retour

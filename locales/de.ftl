@@ -377,11 +377,8 @@ set-fullscreen-note = für den ganzen bildschirm diese seite zum startbildschirm
 set-volume =
     .aria-label = lautstärke
 
-# settings button to controls page
-set-controlsbtn = steuerung
-
-# controls page heading
-set-controls-word = steuerung
+# settings tab strip: the touch switch and the controls table
+set-tab-controls = steuerung
 
 # controls page back
 set-controlsback = zurück
@@ -532,14 +529,8 @@ title-recordback = zurück
 # landing settings page heading
 title-settings-word = einstellungen
 
-# landing settings to controls
-title-controlsbtn = steuerung
-
 # landing settings back
 title-settingsback = zurück
-
-# landing controls page heading
-title-controls-word = steuerung
 
 # landing controls back
 title-controlsback = zurück

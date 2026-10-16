@@ -71,6 +71,15 @@ function narrow(w, sheet, page) {
     if (el.hidden || el.matches(WORDS) || w.getComputedStyle(el).display === 'none') continue;
     const width = el.getBoundingClientRect().width;
     if (Math.abs(width - inner) > 1) out.push(`${page}: ${el.id || el.className || el.tagName} ${Math.round(width)} of ${Math.round(inner)}`);
+    // every settings tab's rows, the ones not in force too: they keep their
+    // place in the layout unseen (settingstabs.js), so each is measured
+    for (const pane of el.querySelectorAll(':scope > .tabpane')) {
+      for (const row of pane.children) {
+        if (row.hidden || row.matches(WORDS) || w.getComputedStyle(row).display === 'none') continue;
+        const rw = row.getBoundingClientRect().width;
+        if (Math.abs(rw - inner) > 1) out.push(`${page} (${pane.dataset.tab}): ${row.id || row.className || row.tagName} ${Math.round(rw)} of ${Math.round(inner)}`);
+      }
+    }
     // a block's own rows stand as wide as it does: the saves' cards
     for (const row of el.querySelectorAll(':scope > .saverow')) {
       const rw = row.getBoundingClientRect().width;
@@ -133,8 +142,7 @@ export const TESTS = [
             // the way to each page from the front, as a player turns to it;
             // a page with no button here (the feedback form without a
             // worker, the cloud's clash) is shown as the page turn shows it
-            const WAY = { main: [], slots: ['slotsbtn'], record: ['recordbtn'], settings: ['settingsbtn'],
-                          controls: ['settingsbtn', 'controlsbtn'], language: ['settingsbtn', 'langbtn'] };
+            const WAY = { main: [], slots: ['slotsbtn'], record: ['recordbtn'], settings: ['settingsbtn'] };
             const found = [];
             const names = panes(col);
             for (const name of names) {
