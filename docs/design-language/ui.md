@@ -10,7 +10,7 @@ new piece of chrome follows these; one that cannot is a question for the owner.
 
 - Black and white are the normal; purple is the one accent, for anything outside it. `--paper`, `--ink`, `--accent`.
 - The ends are named apart from their use, so a box can ink itself the other way without a cycle: `--c-paper`, `--c-ink` (`#objective.deep`, every section sign).
-- Greys are steps from ink to paper, by tenths: `--ink-2`, `--ink-4` (muted words), `--ink-5` (disabled, short), `--ink-7`, `--ink-8` (a bill's fill).
+- Greys are steps from ink to paper, by tenths: `--ink-2`, `--ink-4` (muted words), `--ink-5` (disabled, short), `--ink-7`, `--ink-8` (a bill's fill). The three words are set in (-2, -4, -5) are each at least WCAG AA's 4.5:1 on their own paper, light and dark; -7 and -8 are edges and fills, never words on the paper.
 - Color appears only on coins and the accent: `--coin-ore`, `--coin-crop`, `--coin-spark` are `COIN` / `COIN_DARK` in `src/config/palette.js`; `--accent` is a rung of `PURPLE`. `test/ui-tokens.test.mjs` holds the stylesheet equal to the palette.
 - Dark mode swaps the tokens under `html.dark` and nothing else; a dark coin or accent keeps 3:1 on dark paper.
 - The page's dot texture is one value a mode: `--dots`. The scrim is shade, not ink, and stays dark in both modes.
@@ -19,7 +19,8 @@ new piece of chrome follows these; one that cannot is a question for the owner.
 ## Type
 
 - One face: `--face` (the language's own face is added after the mono under `:lang`). Never a `font:` shorthand on a component: it resets the line height; set `font-size`.
-- Six sizes: `--fs-small` 10 (small print, notes), `--fs-body` 12 (everything), `--fs-note` 13 (the line under a notice's or an achievement's name), `--fs-name` 14 (a display name: the toast, an index entry, a goal), `--fs-word` 17 (a page's word, a pairing code); `--fs-title` 34 is the game's name alone.
+- Six sizes: `--fs-small` 12 (small print, notes: the floor, told from the body by its grey and case, not its size), `--fs-body` 12 (everything), `--fs-note` 13 (the line under a notice's or an achievement's name), `--fs-name` 14 (a display name: the toast, an index entry, a goal), `--fs-word` 17 (a page's word, a pairing code); `--fs-title` 34 is the game's name alone.
+- No word on any page is under 12px (`TEXT_FLOOR`), and every word is at AA against what it stands on (`TEXT_AA`; 3:1 for 24px, or 18.66px bold). `src/selftest/textaa.js` reads every page, desk and phone, light and dark.
 - Four trackings, always times `--track`: `calc(var(--track-s) * var(--track))`. `--track-0` sentences, `--track-s` .08 labels, `--track-m` .14 buttons and titles, `--track-l` .3 words. Pictures (pips, codes) keep plain numbers.
 - `--track` is the one knob: a phone sets it to .6, so every tracking tightens at once.
 - Two line heights: `--lh-text` 1.4 for words, `--lh-chip` 1 for a one-line chip (a sign, a tag, a shelf).

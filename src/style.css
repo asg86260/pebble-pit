@@ -6,7 +6,7 @@ html, body {
   overflow: hidden;
   /* on a phone: no rubber-banding or pull-to-refresh behind the game */
   overscroll-behavior: none;
-  font: 12px/1.4 var(--face);
+  font: var(--fs-body)/var(--lh-text) var(--face);
   /* The shape of a board, written once. A sheet is this wide (border and all),
      with this much border and side padding, and this much air between its two
      columns of cards. */
@@ -43,14 +43,18 @@ html, body {
    canvas (DARK_PAPER, DARK_INK), and its grays are the light page's put
    through ink.js's map -- the same step, from the other end:
    paper + (ink - paper) * (1 - v / 255). Scrims (rgba black) are shade, not
-   ink, and stay dark on both pages. */
+   ink, and stay dark on both pages. A gray that words are set in (-2, -4,
+   -5) is at least WCAG AA's 4.5:1 on its own paper, light and dark: -5 is
+   the lightest step that is (TEXT_AA in config/view.js; checked on every
+   page by src/selftest/textaa.js). -7 and -8 are for edges and fills, never
+   words on the paper. */
 :root {
   /* The two ends, named apart from what they are used as, so a box can ink
      itself the other way round (`--paper: var(--c-ink)`) without a cycle:
      the deep's story card and every section sign are that. */
   --c-paper: #fff; --c-ink: #000;
   --paper: var(--c-paper); --ink: var(--c-ink);
-  --ink-2: #333; --ink-4: #666; --ink-5: #8c8c8c; --ink-7: #a4a4a4; --ink-8: #cfcfcf;
+  --ink-2: #333; --ink-4: #666; --ink-5: #767676; --ink-7: #a4a4a4; --ink-8: #cfcfcf;
   /* The one accent: purple, for anything outside the black and white -- the
      keyboard's focus, the deep's capstones and asks. A rung of PURPLE in
      config/palette.js (the pad's marker's, PAD_ACCENT); the dark page takes
@@ -65,8 +69,10 @@ html, body {
   /* The type scale: six sizes and four trackings. A tracking is always
      multiplied by --track, the knob a language or a phone turns:
      `letter-spacing: calc(var(--track-m) * var(--track))`. Two line heights:
-     text, and a single-line chip. */
-  --fs-small: 10px; --fs-body: 12px; --fs-note: 13px; --fs-name: 14px; --fs-word: 17px; --fs-title: 34px;
+     text, and a single-line chip. No size is under the floor (TEXT_FLOOR in
+     config/view.js, the body's size): small print is the floor, and is told
+     from the body by its gray and its case rather than by being smaller. */
+  --fs-small: 12px; --fs-body: 12px; --fs-note: 13px; --fs-name: 14px; --fs-word: 17px; --fs-title: 34px;
   --track-0: 0em; --track-s: .08em; --track-m: .14em; --track-l: .3em;
   --lh-text: 1.4; --lh-chip: 1;
   /* The two stack gaps: tight between the rows of one list, loose between
@@ -131,7 +137,7 @@ html, body {
 html.dark {
   --c-paper: #1f1f1f; --c-ink: #e0e0e0;
   --paper: var(--c-paper); --ink: var(--c-ink);
-  --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-7: #5f5f5f; --ink-8: #434343;
+  --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #878787; --ink-7: #5f5f5f; --ink-8: #434343;
   --accent: #9b5de5;
   --coin-ore: #7d9cf0; --coin-crop: #6fd08a; --coin-spark: #f06a55;
   --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
@@ -1323,15 +1329,21 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 /* the slot tabs are the settings' strip (.settabs, below), each tab as wide
    as its word and its count and never squeezed: past the page's width the
    strip scrolls instead */
-.wardrobe .wardslots { overflow-x: auto; scrollbar-width: none; }
-.wardrobe .wardslots::-webkit-scrollbar { display: none; }
-.held .wardrobe .wardslots button { flex: 1 0 auto; white-space: nowrap; overflow-wrap: normal; letter-spacing: normal; padding-left: var(--gap-s); padding-right: var(--gap-s); display: inline-flex; gap: var(--gap-s); justify-content: center; align-items: baseline; }
+.held .wardrobe .wardslots button { letter-spacing: normal; display: inline-flex; gap: var(--gap-s); justify-content: center; align-items: baseline; }
 .wardrobe .wardn { color: var(--ink-5); }
 .wardrobe .wardslot.on .wardn { color: var(--ink-8); }
 .wardrobe .wardslothead { display: flex; justify-content: space-between; align-items: center; gap: var(--gap-m); border-bottom: 1px solid var(--ink); padding-bottom: var(--gap-s); }
 .wardrobe .wardr { display: inline-flex; align-items: center; gap: var(--gap-m); }
 .wardrobe .wardopen { color: var(--ink-5); font-size: var(--fs-small); white-space: nowrap; }
-.wardrobe .wardtiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--tile) + 4px), 1fr)); gap: var(--gap-s); }
+/* Every slot's grid in one cell, the ones not shown unseen but keeping their
+   space (as .tabpane does): the cell is the tallest slot's, measured by the
+   layout, so the page holds one height as the tabs turn. Past the window it
+   is the sheet that scrolls, as on every page: a grid that scrolled inside
+   itself was squeezed to a part of a row, and the row under it stood further
+   off than the buttons at the foot, so an arrow down left the grid. */
+.wardrobe .wardgrids { display: grid; grid-template-columns: minmax(0, 1fr); }
+.wardrobe .wardtiles { grid-area: 1 / 1; align-self: start; display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--tile) + 4px), 1fr)); gap: var(--gap-s); }
+.wardrobe .wardtiles:not(.on) { visibility: hidden; }
 .held .wardrobe .wardtile {
   position: relative; min-width: 0; padding: 0 0 2px; border: 2px solid transparent;
   display: flex; flex-direction: column; align-items: center; gap: 0; letter-spacing: normal;
@@ -2430,11 +2442,15 @@ body.still .fill::before { transition: none; }
    ones not in force kept in the layout but unseen, so the cell is the
    tallest tab's height on every tab and the sheet never re-centers as they
    turn. Short of the window, the controls table or the languages scroll
-   inside their tab. */
-.settabs, .wardslots { display: flex; align-self: stretch; border: 1px solid var(--ink); }
+   inside their tab. A tab's word is never broken: past the strip's width
+   (a phone, a long language) the strip scrolls sideways instead, as the
+   picker's slot tabs do. */
+.settabs, .wardslots { display: flex; flex-shrink: 0; align-self: stretch; border: 1px solid var(--ink); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.settabs::-webkit-scrollbar, .wardslots::-webkit-scrollbar { display: none; }
 .held .settabs button, .col .settabs button, .held .wardslots button {
-  flex: 1 1 auto; min-width: 0; border: 0; border-left: 1px solid var(--ink);
-  font-size: var(--fs-small); overflow-wrap: anywhere;
+  flex: 1 0 auto; border: 0; border-left: 1px solid var(--ink);
+  padding-left: var(--gap-s); padding-right: var(--gap-s);
+  font-size: var(--fs-small); white-space: nowrap; overflow-wrap: normal;
 }
 .held .settabs button:first-child, .col .settabs button:first-child, .held .wardslots button:first-child { border-left: 0; }
 .held .settabs button.on, .col .settabs button.on, .held .wardslots button.on { color: var(--paper); background: var(--ink); }

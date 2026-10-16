@@ -42,6 +42,7 @@ import { TESTS as feedback } from './selftest/feedback.js';   // the feedback fo
 import { TESTS as deeppalette } from './selftest/deeppalette.js';   // the deep's capped palette (B4)
 import { TESTS as sheetwidth } from './selftest/sheetwidth.js';   // every block the sheet's width
 import { TESTS as wardrobe } from './selftest/wardrobe.js';   // the two of them dressed, and the picker
+import { TESTS as textaa } from './selftest/textaa.js';   // every word above the floor and at AA
 
 // Every group there is, in file order.
 const TESTS = [
@@ -75,6 +76,7 @@ const TESTS = [
   ...deeppalette,
   ...sheetwidth,
   ...wardrobe,
+  ...textaa,
 ];
 
 // `__test()` runs the lot. `__test('casino')` runs the groups whose name says

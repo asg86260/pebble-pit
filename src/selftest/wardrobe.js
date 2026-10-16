@@ -58,7 +58,7 @@ async function closePicker() {
 // The grid's parts: a slot's tab, a tile, the tiles shown, the heading.
 const slotTab = slot => byId(`ward-${slot}-tab`);
 const tile = (slot, key) => byId(`ward-tile-${slot}-${key}`);
-const shownTiles = () => [...document.querySelectorAll('.wardtiles:not([hidden]) .wardtile')];
+const shownTiles = () => [...document.querySelectorAll('.wardtiles.on .wardtile')];
 const gridHead = () => document.querySelector('.wardslothead .wardworn')?.textContent || '';
 const tileOf = el => (el?.classList?.contains('wardtile') ? `${el.dataset.slot}:${el.dataset.item}` : null);
 // A key pressed on the focused button, as a keyboard does.
@@ -370,10 +370,10 @@ export const TESTS = [
       page.openWardrobe();
       await paint(3);
       const sheet = d.getElementById('held'), strip = d.querySelector('.wardslots');
-      const tiles = [...d.querySelectorAll('.wardtiles:not([hidden]) .wardtile')];
+      const tiles = [...d.querySelectorAll('.wardtiles.on .wardtile')];
       const tops = [...new Set(tiles.map(t => Math.round(t.getBoundingClientRect().top)))];
       const perRow = tiles.filter(t => Math.round(t.getBoundingClientRect().top) === tops[0]).length;
-      const grid = d.querySelector('.wardtiles:not([hidden])').getBoundingClientRect();
+      const grid = d.querySelector('.wardtiles.on').getBoundingClientRect();
       const inside = tiles.every(t => t.getBoundingClientRect().right <= grid.right + 1);
       return [
         ok(!!strip && strip.scrollWidth > strip.clientWidth && getComputedStyle(strip).overflowX === 'auto',
@@ -767,5 +767,73 @@ export const TESTS = [
       unplug();
       fresh();
     }
+  }],
+
+  // One height whatever is shown (the owner, 2026-10-16), as the settings
+  // tabs hold one: every slot tab and both squares on the page, and every
+  // slot tab on a new yard's two build steps, at a desk's size and a
+  // phone's. Read as the sheet's whole content height (scrollHeight), so a
+  // phone's sheet that scrolls is held to it too.
+  ['wardrobe: the sheet is one height across every slot tab, both squares and the build steps, desk and phone', async () => {
+    const checks = [];
+    for (const [size, w, h] of [['desk', 1280, 800], ['phone', 360, 740]]) {
+      const f = document.createElement('iframe');
+      f.style.cssText = `position:fixed;left:0;top:0;width:${w}px;height:${h}px;border:0;opacity:0;pointer-events:none;z-index:-1`;
+      document.body.appendChild(f);
+      const loaded = new Promise(r => f.addEventListener('load', r, { once: true }));
+      f.src = './play.html?bench';
+      await loaded;
+      try {
+        const win = f.contentWindow, d = f.contentDocument;
+        const paint = async n => { for (let i = 0; i < n; i++) await new Promise(r => win.requestAnimationFrame(r)); };
+        for (let i = 0; i < 400 && !(win.__scene && win.__fast); i++) await paint(1);
+        const mod = name => {
+          const at = win.performance.getEntriesByType('resource').map(e => e.name)
+            .filter(u => new URL(u).pathname === `/src/${name}.js`).pop() || `/src/${name}.js`;
+          return win.eval(`import(${JSON.stringify(at)})`);
+        };
+        const page = await mod('wardrobepage'), settings = await mod('settings'), state = await mod('state');
+        const sheet = d.getElementById('held');
+        const tall = () => Math.round(sheet.scrollHeight);
+        const walk = async (label, whos) => {
+          const seen = [];
+          for (const k of whos) {
+            if (k) { d.getElementById(`ward${k}`).click(); await paint(2); }
+            for (const s of SLOTS) {
+              d.getElementById(`ward-${s.key}-tab`).click();
+              await paint(2);
+              seen.push([`${label}${k ? ' ' + k : ''} ${s.key}`, tall()]);
+            }
+          }
+          return seen;
+        };
+        win.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+        await paint(3);
+        page.openWardrobe();
+        await paint(3);
+        const all = await walk('page', ['you', 'sqouse']);
+        page.leaveWardrobe();
+        await paint(2);
+        state.S.dressOffered = false;
+        settings.offerDress(true);
+        await paint(3);
+        all.push(...await walk('step 1', [null]));
+        d.getElementById('wardnext').click(); await paint(2);
+        d.getElementById('wardnext').click(); await paint(2);
+        all.push(...await walk('step 3', [null]));
+        page.leaveWardrobe();
+        // the page off the house's board and the new yard's build steps are
+        // two different pages (the steps carry their count and their way on),
+        // each held to its own one height
+        for (const kind of ['page', 'step']) {
+          const views = all.filter(([n]) => n.startsWith(kind));
+          const hs = [...new Set(views.map(([, v]) => v))];
+          checks.push(ok(views.length >= SLOTS.length * 2 && hs.length === 1,
+                         `${size}: the ${kind === 'page' ? 'page' : 'build steps'} hold one height across ${views.length} views`,
+                         hs.length === 1 ? `${hs[0]}px` : views.map(([n, v]) => `${n} ${v}`).join(', ')));
+        }
+      } finally { f.remove(); }
+    }
+    return checks;
   }],
 ];

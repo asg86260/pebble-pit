@@ -343,7 +343,11 @@ function say() {
     t.n.textContent = msg('ward-slot-open', { open: opened, all });
     t.b.classList.toggle('on', on);
     t.b.setAttribute('aria-selected', String(on));
-    b.gridOf[s.key].hidden = !on;
+    // every slot's grid stands in one cell, the others unseen but keeping
+    // their space (style.css, `.wardgrids`), so the page is the tallest
+    // slot's height whichever is shown, as the settings tabs are
+    b.gridOf[s.key].classList.toggle('on', on);
+    b.gridOf[s.key].inert = !on;
     if (on) {
       b.slotWorn.textContent = msg('ward-grid-head', { slot: msg(s.name), item: itemName(s.key, o[s.key]) });
       b.slotOpen.textContent = msg('ward-grid-open', { open: opened, all });
@@ -559,7 +563,7 @@ function keys(e) {
   if (dir) {
     if (!stepAt(e.target, dir)) {
       const from = e.target.getBoundingClientRect();
-      const list = [...built.el.querySelectorAll('button')].filter(b => b !== e.target && shownEl(b));
+      const list = [...built.el.querySelectorAll('button')].filter(b => b !== e.target && shownEl(b) && !b.closest('[inert]'));
       const to = nav.toward({ x: from.left, y: from.top, w: from.width, h: from.height }, dir,
                             list.map(b => { const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, b }; }));
       to?.b.focus();

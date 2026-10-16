@@ -126,3 +126,14 @@ export const VIEW_KNOBS = [
 
 // The wisp off the apothecary's fire.
 export const APOTH_SMOKE = GREY[8];
+
+// The page's words (style.css, the type scale): no word on any page smaller
+// than the floor, and every one at WCAG 2's AA contrast against what it
+// stands on -- 4.5:1, or 3:1 for large words (24px, or 18.66px bold). The
+// floor is the body's own size: a mono face's capitals at 12px stand about
+// eight pixels tall, the least a tracked, upper-case label reads at, and
+// the size the boards' words have always been set in. Checked on every page
+// by src/selftest/textaa.js.
+export const TEXT_FLOOR = 12;        // px
+export const TEXT_AA = 4.5, TEXT_AA_LARGE = 3;
+export const TEXT_LARGE = 24, TEXT_LARGE_BOLD = 18.66;   // px

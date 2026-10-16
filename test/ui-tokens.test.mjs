@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 import { COIN, COIN_DARK, PURPLE, GREY } from '../src/config/palette.js';
 import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, FLOAT_SHADOW_ALPHA } from '../src/config/view.js';
 import { PAD_ACCENT } from '../src/config/pad.js';
+import { TEXT_FLOOR, TEXT_AA } from '../src/config/view.js';
 
 const css = readFileSync('src/style.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 const block = sel => css.match(new RegExp(`(?:^|\\n)${sel}\\s*\\{([^}]*)\\}`))?.[1] || '';
@@ -43,5 +44,34 @@ test('no coin or purple is written outside the tokens', () => {
       .replace(/(?:^|\n)(:root|html\.dark)\s*\{[^}]*\}/g, '');
     const found = lit.filter(c => text.includes(c));
     assert.deepEqual(found, [], `${f} writes a palette color outside :root`);
+  }
+});
+
+// The type scale and the grays words are set in, read off the tokens: the
+// whole-page reading is src/selftest/textaa.js, and this is the same rule
+// held where a token is written, before any page is stood up.
+const hex = h => {
+  h = h.replace('#', '');
+  if (h.length === 3) h = [...h].map(c => c + c).join('');
+  return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+};
+const lum = rgb => {
+  const [r, g, b] = rgb.map(v => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const ratio = (a, b) => { const x = lum(hex(a)), y = lum(hex(b)); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+
+test('no size on the type scale is under the floor', () => {
+  const sizes = [...light.matchAll(/--fs-([a-z]+)\s*:\s*([\d.]+)px/g)];
+  assert.ok(sizes.length >= 6, 'the scale is read');
+  for (const [, n, px] of sizes) assert.ok(+px >= TEXT_FLOOR, `--fs-${n} is ${px}px, under ${TEXT_FLOOR}`);
+});
+
+test('every gray words are set in is AA on its own paper, light and dark', () => {
+  for (const [page, body] of [['light', light], ['dark', dark]]) {
+    for (const n of ['ink-2', 'ink-4', 'ink-5']) {
+      const r = ratio(token(body, n), token(body, 'c-paper'));
+      assert.ok(r >= TEXT_AA, `${page} --${n} is ${r.toFixed(2)}:1 on its paper`);
+    }
   }
 });
