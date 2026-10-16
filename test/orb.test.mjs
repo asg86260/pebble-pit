@@ -6,11 +6,12 @@
 // go when its time runs out.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { MECHANICS, SERPENT_PHASES, SERPENT_WOUND, ORB_CLICK_S, SAVE_V, WORKER, P, ORB_R, ORB_CLOSE_S, ORB_RISE_S, COIL_SEGS, COIL_SWAY_MS,
+import { MECHANICS, SERPENT_PHASES, SERPENT_WOUND, ORB_CLICK_S, WORKER, P, ORB_R, ORB_CLOSE_S, ORB_RISE_S, COIL_SEGS, COIL_SWAY_MS,
          ORB_HANG_S, ORB_SINK_S } from '../src/config.js';
 import { strike, clickDeep } from '../src/deep/serpent.js';
 import { orbOn, inOrb, orbLift, orbMiddle, orbSecsPerHit } from '../src/deep/phases.js';
 import { migrate } from '../src/migrations/index.js';
+import orbTimer from '../src/migrations/2026-10-16-orb-timer.js';
 import { lift, drop } from '../src/crew/pointer.js';
 import { bellyAt, coilLine, coilThick, standOfStation, deepFloor } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
@@ -142,7 +143,7 @@ group('a refresh mid-orb keeps the time it had left', async () => {
 }, { reload: false });
 
 group('an orb saved holding hit points is read as the same share of its time', async () => {
-  const raw = { saveV: SAVE_V - 1, orb: { st: 3, hp: 690.75, max: 2763, at: 5000 } };
+  const raw = { saveV: orbTimer.v - 1, orb: { st: 3, hp: 690.75, max: 2763, at: 5000 } };
   migrate(raw);
   const o = raw.orb;
   return [ok(o.max === M.last && Math.abs(o.left - M.last / 4) < 1e-9 && o.cut === 0 && o.st === 3 && o.at === 5000 && !('hp' in o),
