@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fang Counter Mocks</title>
+<style>
+  :root {
+    --bg: #f4f4f1; --ink: #1b1b1f; --muted: #66666e; --card: #ffffff; --line: #d8d8d2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #141417; --ink: #e9e9ee; --muted: #9a9aa4; --card: #1d1d22; --line: #2e2e36; }
+  }
+  :root[data-theme="dark"] { --bg: #141417; --ink: #e9e9ee; --muted: #9a9aa4; --card: #1d1d22; --line: #2e2e36; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  p { margin: 0 0 10px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+  canvas { display: block; image-rendering: pixelated; background: #000; max-width: 100%; height: auto; }
+  .live { width: 100%; }
+  .states { display: flex; gap: 8px; margin-top: 10px; }
+  .states figure { margin: 0; flex: 1; min-width: 0; }
+  .states canvas { width: 100%; }
+  figcaption { font-size: 12px; color: var(--muted); text-align: center; margin-top: 2px; }
+  .ref { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  .ref img { width: 320px; max-width: 100%; image-rendering: pixelated; border-radius: 4px; }
+  ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); }
+  .tag { display: inline-block; font-weight: bold; color: var(--ink); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Fang count above the furnace</h1>
+  <p>Three ways to show the fangs in hand on the furnace, in place of the counter card's fang row (now gone). This page is a mock drawn from plain cells in the deep's palette, the furnace copied cell for cell from its sprite. It is not the game. The big canvas loops: fangs fall into the hopper one at a time (the count goes up as each is crushed), then two stations are bought (the count goes down).</p>
+
+  <div class="card ref">
+    <img alt="The furnace as the game draws it now, cropped from the crusher scene and enlarged four times" src="data:image/png;base64,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">
+    <div>
+      <h2>Now, for reference</h2>
+      <p>The crusher scene (<code>node tools/look.mjs crusher</code>), cropped and blown up. Brick #42424a, mortar #26262c, the lit top edges purple #412465, the fire's purples and white.</p>
+      <p>Most fangs anyone can hold is six: seven slots, the first station free.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2><span class="tag">A</span> Mark and number over the hopper</h2>
+      <canvas class="live" data-opt="A"></canvas>
+      <div class="states">
+        <figure><canvas data-opt="A" data-n="0"></canvas><figcaption>0: hidden</figcaption></figure>
+        <figure><canvas data-opt="A" data-n="2"></canvas><figcaption>2</figcaption></figure>
+        <figure><canvas data-opt="A" data-n="6"></canvas><figcaption>6</figcaption></figure>
+      </div>
+      <ul>
+        <li>The build button's fang mark (9 x 9 screen pixels, as on the button) and the count in white, floating over the hopper's mouth.</li>
+        <li>At 0 the whole label fades out; the first fang fades it in.</li>
+        <li>A new count cross-fades over the old one; the mark glows purple and fades back.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2><span class="tag">B</span> A plaque on the furnace's face</h2>
+      <canvas class="live" data-opt="B"></canvas>
+      <div class="states">
+        <figure><canvas data-opt="B" data-n="0"></canvas><figcaption>0: faded</figcaption></figure>
+        <figure><canvas data-opt="B" data-n="2"></canvas><figcaption>2</figcaption></figure>
+        <figure><canvas data-opt="B" data-n="6"></canvas><figcaption>6</figcaption></figure>
+      </div>
+      <ul>
+        <li>A small dark plate set into the brick over the door, on the cell grid: the fang mark, then x N in cell digits.</li>
+        <li>The plate stays once a fang has been seen; at 0 its fang and number dim to the mortar's grey.</li>
+        <li>A new count cross-fades; the plate's frame catches the light for a moment.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2><span class="tag">C</span> One fang a fang, standing on the rim</h2>
+      <canvas class="live" data-opt="C"></canvas>
+      <div class="states">
+        <figure><canvas data-opt="C" data-n="0"></canvas><figcaption>0: nothing</figcaption></figure>
+        <figure><canvas data-opt="C" data-n="2"></canvas><figcaption>2</figcaption></figure>
+        <figure><canvas data-opt="C" data-n="6"></canvas><figcaption>6</figcaption></figure>
+      </div>
+      <ul>
+        <li>The fang as it lies in the water, stood root down, one for each held, along the hopper's rim from the left.</li>
+        <li>At 0 the rim is bare. A new one fades in where it stands; a spent one fades out from the right.</li>
+        <li>No number to read: six is the most, and six fit, the first standing a cell over the rim's corner.</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>What this mock cannot show</h2>
+    <ul>
+      <li>The game's camera and zoom: here a cell is 9 pixels, three screen pixels at 3x; in the game a cell is 3 to 4 screen pixels and moves with the deep's framing, so how big A and B read changes with the window.</li>
+      <li>The fire's heat field, the sparks, the water's motes and the breathing light on the top edges: the furnace here is still, the fire a fixed picture.</li>
+      <li>The gatherer who carries the fang to the hopper: here the fang just drops in.</li>
+      <li>The counter card and the build button beside it, and the dark/light page tones (this is the dark page's deep only).</li>
+      <li>The digits are a 3 x 5 cell font made for the mock; the game would use its own number font or a cell font of the same size.</li>
+    </ul>
+  </div>
+</main>
+
+<script>
+// The furnace, CRUSHER_SPRITES.rest from src/deep/sprites.js, copied verbatim.
+const F = [
+  "....#++++++++++++++++++++#....", ".....#oooooooooooooooooo#.....", "......#oooooooooooooooo#......",
+  ".......#ooooooooooooooo#......", ".......#oooooooooooooo#.......", "........#oooooooooooo#........",
+  ".........#oooooooooo#.........", ".############################.", "..#+++++-+++++++-+++++++-++#..",
+  "..#+++++-+++++++-+++++++-++#..", "..#+++++-+++++++-+++++++-++#..", "..#+++++-+++++++-+++++++-++#..",
+  "..#------------------------#..", "..#+-+++++++-+++++++-++++++#..", "..#+-+++++++-+++++++-++++++#..",
+  "..#+-+++++++########-++++++#..", "..#+-++++++##oooooo##++++++#..", "..#--------#oooooooo#------#..",
+  "..#+++++-++#oooooooo#+++-++#..", "..#+++++-++#oooooooo#+++-++#..", "..#+++++-++#oooooooo#+++-++#..",
+  "..#+++++-++#oooooooo#+++-++#..", "..#--------#oooooooo#------#..", "..#+-++++++#oooooooo#++++++#..",
+  "..#+-++++++#oooooooo#++++++#..", "..#+-++++++#oooooooo#++++++#..", "..#+-++++++#oooooooo#++++++#..",
+  "..#--------#oooooooo#------#..", ".############################.", "------------------------------"
+];
+const FANG_MARK = [" #####   ", " ######  ", "  #####  ", "   ####  ", "    ###  ", "    ###  ", "    ##   ", "   ##    ", "   #     "];
+const FANG_SPRITE = ["###", ".#+", ".#."];            // as it falls, point down
+const FANG_STAND = [".#.", ".#+", "###"];            // the same, stood root down on the rim
+// The deep's tones on the dark page, read off the crusher scene's pixels.
+const T = { water: "#000000", stone: "#42424a", mortar: "#26262c", lit: "#412465", ground: "#1e1e24",
+            white: "#f1f1f1", pale: "#b4b4c0", p1: "#2d1d47", p2: "#3d225f", p3: "#56289c", p4: "#7c4ad8" };
+const INK = { "#": T.stone, "+": T.stone, "-": T.mortar };
+const isBrick = ch => ch === "#" || ch === "+" || ch === "-";
+const DIG = {
+  0: ["###", "#.#", "#.#", "#.#", "###"], 1: [".#.", "##.", ".#.", ".#.", "###"], 2: ["###", "..#", "###", "#..", "###"],
+  3: ["###", "..#", ".##", "..#", "###"], 4: ["#.#", "#.#", "###", "..#", "..#"], 5: ["###", "#..", "###", "..#", "###"],
+  6: ["###", "#..", "###", "#.#", "###"], x: ["...", "#.#", ".#.", "#.#", "..."]
+};
+
+const C = 9;                       // a cell, 3 pixels at 3x
+const COLS = 36, ROWS = 46;        // the frame: room over the hopper for A
+const FX = 3, FY = ROWS - F.length - 1; // the furnace's top-left cell
+const HOP_X = FX + 15;             // the hopper's middle column
+
+function cell(g, c, r, color, a = 1) {
+  if (a <= 0) return;
+  g.globalAlpha = Math.min(1, a);
+  g.fillStyle = color;
+  g.fillRect(c * C, r * C, C, C);
+  g.globalAlpha = 1;
+}
+function rows(g, pic, c0, r0, color, a = 1, on = "#") {
+  pic.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === on) cell(g, c0 + c, r0 + r, color, a); }));
+}
+function number(g, n, c0, r0, color, a) {
+  String(n).split("").forEach((d, i) => rows(g, DIG[d], c0 + i * 4, r0, color, a));
+}
+const mix = (a, b, k) => {
+  const p = s => [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return "#" + x.map((v, i) => Math.round(v + (y[i] - v) * k).toString(16).padStart(2, "0")).join("");
+};
+
+function furnace(g) {
+  g.fillStyle = T.water; g.fillRect(0, 0, COLS * C, ROWS * C);
+  for (let c = 0; c < COLS; c++) cell(g, c, ROWS - 1, T.ground);
+  F.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (!isBrick(ch)) return;
+    const lit = !isBrick(F[r - 1]?.[c]);
+    cell(g, FX + c, FY + r, lit ? T.lit : INK[ch]);
+  }));
+  // the fire in the door, a still picture of it
+  const fire = [
+    "....pp..", "...pqp..", "..pqqqp.", "..pqrqq.", ".pqrrrqp", ".pqwwrqp", "pqwwwwqp"
+  ];
+  const tone = { p: T.p2, q: T.p3, r: T.p4, w: T.white };
+  fire.forEach((row, r) => [...row].forEach((ch, c) => { if (tone[ch]) cell(g, FX + 12 + c, FY + 20 + r, tone[ch]); }));
+}
+
+// A picture at screen pixels rather than cells (a cell is three of them at
+// the deep's framing): how the build button and the counter card draw the
+// fang's mark. (x, y) in mock pixels; `k` mock pixels a picture pixel.
+function pix(g, pic, x, y, k, color, a = 1, on = "#") {
+  if (a <= 0) return;
+  g.globalAlpha = Math.min(1, a);
+  g.fillStyle = color;
+  pic.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === on) g.fillRect(x + c * k, y + r * k, k, k); }));
+  g.globalAlpha = 1;
+}
+const SPX = C / 3;                 // one screen pixel, at 3x
+
+// Option A: the mark and the number floating over the hopper, at screen
+// pixels as the card's are: the mark 9 pixels, the digits 3 x 5 at 2.
+function drawA(g, s) {
+  const a = s.shown, n = s.count;
+  const x0 = HOP_X * C + C / 2 - Math.round((9 + 3 + 6) * SPX / 2), y0 = (FY - 5) * C;
+  pix(g, FANG_MARK, x0, y0, SPX, mix(T.white, T.p4, s.glow), a);
+  const dx = x0 + 12 * SPX, dy = y0 + 2 * SPX;
+  if (s.from != null && s.k < 1) pix(g, DIG[s.from], dx, dy, 2 * SPX, T.white, a * (1 - s.k));
+  pix(g, DIG[n], dx, dy, 2 * SPX, T.white, a * (s.from != null ? s.k : 1));
+}
+// Option B: a plate set into the brick over the door.
+function drawB(g, s) {
+  const c0 = FX + 8, r0 = FY + 8, w = 14, h = 7;
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+    const edge = r === 0 || c === 0 || r === h - 1 || c === w - 1;
+    cell(g, c0 + c, r0 + r, edge ? mix(T.mortar, T.lit, s.glow) : "#16161a");
+  }
+  const ink = s.count === 0 && s.from == null ? T.mortar : T.pale;
+  const fangInk = mix(ink, T.white, s.glow);
+  pix(g, FANG_MARK, (c0 + 1) * C + 2 * SPX, (r0 + 1) * C + 3 * SPX, SPX, fangInk);
+  rows(g, DIG.x, c0 + 6, r0 + 1, ink);
+  const show = (n, a) => rows(g, DIG[n], c0 + 10, r0 + 1, n === 0 ? mix(T.mortar, T.pale, 1 - a) : T.pale, a);
+  if (s.from != null && s.k < 1) show(s.from, 1 - s.k);
+  show(s.count, s.from != null ? s.k : 1);
+}
+// Option C: a fang a fang, stood on the rim.
+function drawC(g, s) {
+  const top = FY - FANG_STAND.length;
+  for (let i = 0; i < 6; i++) {
+    let a = i < s.count ? 1 : 0;
+    if (s.from != null && s.k < 1) {
+      const was = i < s.from ? 1 : 0;
+      a = was + (a - was) * s.k;
+    }
+    rows(g, FANG_STAND, FX + 3 + i * 4, top, T.white, a);
+    rows(g, FANG_STAND, FX + 3 + i * 4, top, T.pale, a, "+");
+  }
+}
+const DRAW = { A: drawA, B: drawB, C: drawC };
+
+// The loop: six fangs fall in one by one, then two are spent on stations,
+// then the count fades back to nothing over a held moment, and again.
+const FALL = 1.2, FADE = 0.5, HOLD = 0.9;
+const steps = [];
+{ let n = 0;
+  for (let i = 0; i < 6; i++) { steps.push({ kind: "in", from: n, to: n + 1 }); n++; }
+  steps.push({ kind: "wait" });
+  for (let i = 0; i < 2; i++) { steps.push({ kind: "out", from: n, to: n - 1 }); n--; }
+  steps.push({ kind: "wait" });
+  for (let i = 0; i < 4; i++) { steps.push({ kind: "out", from: n, to: n - 1 }); n--; }
+  steps.push({ kind: "wait" });
+}
+const stepLen = st => st.kind === "in" ? FALL + FADE + HOLD : st.kind === "out" ? FADE + HOLD : 1.6;
+const LOOP = steps.reduce((t, st) => t + stepLen(st), 0);
+const ease = k => k * k * (3 - 2 * k);
+
+function stateAt(t) {
+  t %= LOOP;
+  for (const st of steps) {
+    const len = stepLen(st);
+    if (t >= len) { t -= len; continue; }
+    if (st.kind === "wait") { const n = steps[steps.indexOf(st) - 1].to; return { count: n, from: null, k: 1, glow: 0, shown: n > 0 ? 1 : 0 }; }
+    const lead = st.kind === "in" ? FALL : 0;
+    const fall = st.kind === "in" && t < FALL ? t / FALL : null;
+    const k = t < lead ? 0 : Math.min(1, (t - lead) / FADE);
+    const e = ease(k);
+    const glow = t < lead ? 0 : Math.max(0, 1 - (t - lead) / (FADE + HOLD * 0.6));
+    // A's whole label fades in from nothing and out to nothing
+    let shown = 1;
+    if (st.from === 0) shown = e;
+    if (st.to === 0) shown = 1 - e;
+    return { count: st.to, from: st.from, k: e, glow: st.kind === "in" ? glow : 0, shown, fall };
+  }
+}
+
+function fallingFang(g, s) {
+  if (s.fall == null) return;
+  const r = Math.round(2 + (FY + 4 - 2) * s.fall * s.fall);
+  const a = s.fall > 0.85 ? (1 - s.fall) / 0.15 : 1;  // into the hopper, gone from sight
+  rows(g, FANG_SPRITE, HOP_X - 1, r, T.white, a);
+  rows(g, FANG_SPRITE, HOP_X - 1, r, T.pale, a, "+");
+}
+
+function setup(cv) {
+  cv.width = COLS * C; cv.height = ROWS * C;
+  return cv.getContext("2d");
+}
+for (const cv of document.querySelectorAll("canvas[data-n]")) {
+  const g = setup(cv), n = +cv.dataset.n;
+  furnace(g);
+  DRAW[cv.dataset.opt](g, { count: n, from: null, k: 1, glow: 0, shown: n > 0 ? 1 : 0 });
+}
+const live = [...document.querySelectorAll("canvas.live")].map(cv => ({ g: setup(cv), opt: cv.dataset.opt }));
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function frame(ms) {
+  const s = stateAt(still ? 4 * (FALL + FADE + HOLD) - 0.01 : ms / 1000);
+  for (const { g, opt } of live) {
+    furnace(g);
+    fallingFang(g, s);
+    DRAW[opt](g, s);
+  }
+  if (!still) requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
