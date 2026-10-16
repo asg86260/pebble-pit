@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controls page options</title>
+<style>
+:root {
+  --paper: #fff; --ink: #000; --ink-4: #666; --ink-5: #8c8c8c; --ink-8: #cfcfcf;
+  --face: ui-monospace, "Courier New", monospace;
+  --fs-small: 10px; --fs-body: 12px; --fs-note: 13px; --fs-name: 14px; --fs-word: 17px;
+  --track-s: .08em; --track-m: .14em; --track-l: .3em; --track: 1;
+  --gap-s: 4px; --gap-m: 8px;
+  --pad-l-y: 14px; --pad-l-x: 24px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #1f1f1f; --ink: #e0e0e0; --ink-4: #939393; --ink-5: #767676; --ink-8: #434343; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --paper: #1f1f1f; --ink: #e0e0e0; --ink-4: #939393; --ink-5: #767676; --ink-8: #434343; color-scheme: dark; }
+
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); font: 12px/1.4 var(--face); }
+body { padding: 16px; }
+h1 { font-size: var(--fs-word); letter-spacing: var(--track-l); text-transform: uppercase; margin: 0 0 4px; }
+.intro { max-width: 70ch; margin: 0 0 8px; }
+.top { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin-bottom: 20px; }
+.top button { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 3px 12px; cursor: pointer; letter-spacing: var(--track-m); text-transform: uppercase; }
+section.opt { border-top: 1px solid var(--ink); padding: 16px 0 28px; }
+section.opt h2 { font-size: var(--fs-name); letter-spacing: var(--track-s); text-transform: uppercase; margin: 0 0 4px; }
+section.opt p.cap { margin: 0 0 14px; max-width: 80ch; }
+.frames { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; overflow-x: auto; }
+.frame-wrap { display: flex; flex-direction: column; gap: 6px; }
+.frame-label { font-size: var(--fs-small); color: var(--ink-4); letter-spacing: var(--track-s); text-transform: uppercase; }
+.glass { width: 360px; border: 1px dashed var(--ink-5); padding: 16px 0; display: flex; justify-content: center; box-sizing: border-box; }
+
+/* the held sheet, as style.css draws it */
+.sheet { box-sizing: content-box; display: flex; flex-direction: column; align-items: center; gap: var(--gap-m);
+  padding: var(--pad-l-y) var(--pad-l-x); background: var(--paper); border: 1px solid var(--ink);
+  letter-spacing: calc(var(--track-m) * var(--track)); text-transform: uppercase; }
+.sheet.desk { width: 432px; }
+.sheet.phone { width: 296px; --track: .6; }
+.sheet .word { font-size: var(--fs-word); letter-spacing: calc(var(--track-l) * var(--track)); padding-left: calc(var(--track-l) * var(--track)); }
+.sheet button.back, .tabs button { font: inherit; letter-spacing: inherit; text-transform: uppercase; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--ink); padding: 3px 12px; align-self: stretch; cursor: pointer; }
+.tabs { display: flex; gap: var(--gap-m); align-self: stretch; }
+.tabs button { flex: 1; }
+.tabs button.on { color: var(--paper); background: var(--ink); }
+/* new words nobody has written yet: the owner's to name */
+.ph { text-decoration: underline dotted; text-underline-offset: 3px; }
+.ph::after { content: "*"; color: var(--ink-4); }
+
+/* the list body: lower case, no tracking -- the actions are reading, not labels */
+.list { align-self: stretch; text-transform: none; letter-spacing: 0; }
+.act { font-size: var(--fs-note); line-height: 1.3; }
+.act.todo { color: var(--ink-4); font-style: italic; }
+.inp { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.inp .t { font-size: var(--fs-body); text-align: right; }
+.plus { color: var(--ink-4); }
+svg.g { display: block; flex: none; }
+.gi { fill: var(--ink); } .gp { fill: var(--paper); }
+.gs { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
+.gl { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linecap: round; }
+.glp { fill: none; stroke: var(--paper); stroke-width: 1.5; stroke-linecap: round; }
+.gt { font: bold 11px var(--face); text-anchor: middle; dominant-baseline: central; }
+.gt.sm { font-size: 9px; }
+.key { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; box-sizing: border-box;
+  padding: 0 5px; border: 1px solid var(--ink); border-bottom-width: 3px; border-radius: 3px; font-weight: bold; font-size: 11px; text-transform: uppercase; }
+
+/* A: two clean two-column lists */
+.two { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 16px; align-items: center; }
+.two .inp { justify-content: flex-end; }
+.phone .two, .phone .mini { gap: 10px 12px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.phone .inp { row-gap: 2px; }
+
+/* B: one table, grouped */
+.grp { display: grid; grid-template-columns: minmax(0, 1fr) 96px 64px; column-gap: 12px; align-items: center; }
+.phone .grp { grid-template-columns: minmax(0, 1fr) 76px 52px; column-gap: 8px; }
+.grp .head { font-size: var(--fs-small); text-transform: uppercase; letter-spacing: var(--track-m); font-weight: bold;
+  grid-column: 1 / -1; border-bottom: 1px solid var(--ink); padding: 10px 0 3px; }
+.grp .colhead { padding-bottom: 2px; color: var(--ink-4); display: flex; justify-content: center; }
+.grp .cell { padding: 5px 0; border-bottom: 1px solid var(--ink-8); min-height: 22px; display: flex; align-items: center; }
+.grp .cell.m, .grp .cell.p { justify-content: center; flex-direction: column; gap: 4px; text-align: center; }
+.grp .cell.m .t { font-size: var(--fs-small); line-height: 1.2; }
+.grp .none { color: var(--ink-5); }
+.grp .stackrow { display: flex; align-items: center; gap: 4px; }
+
+/* C: the drawn pad */
+.diagram { align-self: stretch; }
+.diagram svg { display: block; width: 100%; height: auto; overflow: visible; }
+.lab { font: 12px var(--face); fill: var(--ink); }
+.lab.todo { fill: var(--ink-4); font-style: italic; }
+.lead { stroke: var(--ink); stroke-width: 1; fill: none; }
+.body { fill: var(--paper); stroke: var(--ink); stroke-width: 2; }
+.sub { font-size: var(--fs-small); text-transform: uppercase; letter-spacing: var(--track-m); font-weight: bold; align-self: stretch; border-bottom: 1px solid var(--ink); padding-bottom: 3px; margin-top: 4px; }
+.mini { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; align-items: center; }
+.mini .inp { justify-content: flex-end; }
+
+.notes { border-top: 1px solid var(--ink); padding-top: 14px; max-width: 80ch; }
+.notes li { margin-bottom: 6px; }
+@media (max-width: 560px) { .glass { width: auto; border: 0; padding: 0; } .sheet.phone { width: calc(100vw - 32px - 50px); } }
+</style>
+</head>
+<body>
+<h1>Controls page</h1>
+<p class="intro">Three ways to redo the settings sheet's controls page. Every input and action word is the game's existing message (locales/en.ftl, <code>ctl-*</code>); the actions drop the caps and wide tracking so they can wrap inside the sheet. Words marked with a dotted underline and * are new and are the owner's to name. Each option is drawn at the held sheet's desktop width (36em, 432px inside) and at a 360px phone.</p>
+<div class="top"><button id="theme">light / dark</button><span class="frame-label">tabs in option A can be clicked</span></div>
+
+<section class="opt" id="A"><h2>A · Two lists, two tabs</h2>
+<p class="cap">Mouse and keys on one tab, the controller on the other; each a plain two-column list, input then action. Pad buttons drawn at 22px as their real shapes.</p>
+<div class="frames"><div class="frame-wrap"><span class="frame-label">desktop sheet</span><div data-opt="A" data-w="desk" data-tab="pad"></div></div>
+<div class="frame-wrap"><span class="frame-label">phone, 360px</span><div class="glass"><div data-opt="A" data-w="phone" data-tab="mouse"></div></div></div></div></section>
+
+<section class="opt" id="B"><h2>B · One table, grouped by what you do</h2>
+<p class="cap">Each action once, under a group heading; its mouse/key input and its pad button in two narrow columns beside it, headed by a drawn mouse and a drawn pad.</p>
+<div class="frames"><div class="frame-wrap"><span class="frame-label">desktop sheet</span><div data-opt="B" data-w="desk"></div></div>
+<div class="frame-wrap"><span class="frame-label">phone, 360px</span><div class="glass"><div data-opt="B" data-w="phone"></div></div></div></div></section>
+
+<section class="opt" id="C"><h2>C · A drawn pad, and a short list</h2>
+<p class="cap">The controller drawn as a picture with a line from each button to what it does; mouse and keys as a compact list under it. On a phone the lines cannot fit, so the picture stands alone and its buttons are listed below it.</p>
+<div class="frames"><div class="frame-wrap"><span class="frame-label">desktop sheet</span><div data-opt="C" data-w="desk"></div></div>
+<div class="frame-wrap"><span class="frame-label">phone, 360px</span><div class="glass"><div data-opt="C" data-w="phone"></div></div></div></div></section>
+
+<div class="notes"><b>What the mock cannot show</b>
+<ul>
+<li>The real font on your machine, or other languages: German or French actions run longer and will wrap more, and CJK takes its own face.</li>
+<li>The PlayStation family: the game swaps the face letters for ✕ ○ □ △ (padread.js). Every option here keeps the same shapes, so that swap still works; only the mark inside changes.</li>
+<li>The pad's focus marker moving over the rows, the page's fade-in, or scrolling on a short window (option C's desktop page is the tallest).</li>
+<li>Group headings (B) and tab names (A) are new words with no message yet; the X row ("cancel a purchase") is a placeholder for an action another change is adding.</li>
+<li>The left stick has no row on the page today, so option C leaves it unlabeled.</li>
+<li>Whether the pad half should hide until a pad is seen, as the page does today. A and B could show it always; C is mostly pad.</li>
+</ul>
+<b>Flag:</b> Y already reads "hand back a queued copy". If the X "cancel a purchase" being added is the same act (handing back a queued copy refunds it), the page would list one action twice; either X replaces Y's row, or one of the two words changes.</div>
+
+<script>
+// ---- the game's words (locales/en.ftl) ----
+const W = {
+  leftclickIn: "left click", leftclickDo: "interact",
+  rightclickIn: "right click", rightclickDo: "focus workers",
+  rightleftIn: "right click + left click", rightleftDo: "pick up workers",
+  middleIn: "middle click", wheelIn: "scroll wheel", arrowsIn: "← → / a d", camera: "move camera",
+  digitsIn: "1 – 9", digitsDo: "jump to a place",
+  hop: "move between places", back: "back", handBack: "hand back a queued copy",
+  turn: "next or last board", hand: "hold for the hand: sweep and throw",
+  corner: "the corner cards", hold: "hold the yard", look: "camera back to the focus", way: "through the portal",
+  cancel: "cancel a purchase", // placeholder: being added by another change
+  word: "controls", backBtn: "back",
+};
+
+// ---- glyphs, as small svgs ----
+const svg = (w, h, inner) => `<svg class="g" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${inner}</svg>`;
+const G = {
+  face: L => svg(22, 22, `<circle cx="11" cy="11" r="10" class="gi"/><text x="11" y="11.5" class="gt gp">${L}</text>`),
+  bump: L => svg(32, 22, `<rect x="1" y="4" width="30" height="14" rx="7" class="gi"/><text x="16" y="11.5" class="gt sm gp">${L}</text>`),
+  trig: L => svg(28, 22, `<path d="M2 21V9Q2 1 10 1H18Q26 1 26 9V21Z" class="gi"/><text x="14" y="12" class="gt sm gp">${L}</text>`),
+  stick: L => svg(22, 22, `<circle cx="11" cy="11" r="10" class="gs"/><path d="M11 3.2l-2 2.3h4zM11 18.8l-2-2.3h4zM3.2 11l2.3-2v4zM18.8 11l-2.3-2v4z" class="gi"/><text x="11" y="11.5" class="gt sm gi">${L}</text>`),
+  press: L => svg(22, 22, `<circle cx="11" cy="11" r="10" class="gs"/><circle cx="11" cy="11" r="7" class="gi"/><text x="11" y="11.5" class="gt sm gp">${L}</text>`),
+  dpad: arms => {
+    const r = { up: "M8 1h6v7h-6z", down: "M8 14h6v7h-6z", left: "M1 8h7v6h-7z", right: "M14 8h7v6h-7z" };
+    const fill = arms.map(a => `<path d="${r[a]}" class="gi"/>`).join("");
+    return svg(22, 22, `<path d="M8 1h6v7h7v6h-7v7h-6v-7h-7v-6h7z" class="gs"/>${fill}`);
+  },
+  view: () => svg(22, 22, `<circle cx="11" cy="11" r="10" class="gi"/><rect x="5.5" y="6" width="7" height="6" class="glp"/><rect x="9.5" y="10" width="7" height="6" class="gi" style="stroke:var(--paper);stroke-width:1.5"/>`),
+  menu: () => svg(22, 22, `<circle cx="11" cy="11" r="10" class="gi"/><path d="M6 7.5h10M6 11h10M6 14.5h10" class="glp"/>`),
+  mouse: b => {
+    let fill = "";
+    if (b === "l") fill = `<path d="M8 1.5A6.5 6.5 0 0 0 1.5 8V9H8Z" class="gi"/>`;
+    if (b === "r") fill = `<path d="M8 1.5A6.5 6.5 0 0 1 14.5 8V9H8Z" class="gi"/>`;
+    let wheel = `<rect x="6.5" y="3.5" width="3" height="4" rx="1.5" class="${b === "m" || b === "w" ? "gi" : "gs"}" style="stroke-width:1"/>`;
+    let arrows = b === "w" ? `<path d="M19 4l-2.5 3h5zM19 18l-2.5-3h5z" class="gi"/>` : "";
+    return svg(b === "w" ? 22 : 16, 22, `<rect x="1" y="1" width="14" height="20" rx="7" class="gs"/>${fill}<path d="M8 1.5V9M1.5 9H14.5" class="gl" style="stroke-width:1"/>${wheel}${arrows}`);
+  },
+  padIcon: () => svg(30, 20, `<path d="M8 3Q15 2 22 3Q27 4 28 9L29 15Q29 19 26 18L22 14Q15 13 8 14L4 18Q1 19 1 15L2 9Q3 4 8 3Z" class="gs"/><circle cx="9" cy="8" r="1.6" class="gi"/><circle cx="21" cy="8" r="1.6" class="gi"/>`),
+};
+const P = {
+  a: () => G.face("A"), b: () => G.face("B"), x: () => G.face("X"), y: () => G.face("Y"),
+  lb: () => G.bump("LB"), rb: () => G.bump("RB"), lt: () => G.trig("LT"), rt: () => G.trig("RT"),
+  r: () => G.stick("R"), l: () => G.stick("L"), r3: () => G.press("R"), l3: () => G.press("L"),
+  lr: () => G.dpad(["left", "right"]), ud: () => G.dpad(["up", "down"]),
+  view: () => G.view(), menu: () => G.menu(),
+};
+const pad = names => names.map(n => P[n]()).join(`<span class="plus">+</span>`);
+const ARROW = { "←": `<svg class="g" width="10" height="10" viewBox="0 0 10 10"><path d="M9 5H2M5 1.5L1.5 5L5 8.5" class="gl"/></svg>`, "→": `<svg class="g" width="10" height="10" viewBox="0 0 10 10"><path d="M1 5H8M5 1.5L8.5 5L5 8.5" class="gl"/></svg>` };
+const keys = s => s.split(" ").map(k => ARROW[k] ? `<span class="key">${ARROW[k]}</span>` : k === "/" ? `<span class="plus">/</span>` : k === "–" ? `<span class="plus">–</span>` : `<span class="key">${k}</span>`).join("");
+
+// ---- the rows ----
+// mouse: [inputHTML, plainText, action]
+const MOUSE = [
+  [G.mouse("l"), W.leftclickIn, W.leftclickDo],
+  [G.mouse("r"), W.rightclickIn, W.rightclickDo],
+  [G.mouse("r") + `<span class="plus">+</span>` + G.mouse("l"), W.rightleftIn, W.rightleftDo],
+  [G.mouse("m"), W.middleIn, W.camera],
+  [G.mouse("w"), W.wheelIn, W.camera],
+  [keys(W.arrowsIn), "", W.camera],
+  [keys(W.digitsIn), "", W.digitsDo],
+];
+// A merges the three camera rows into one action
+const MOUSE_A = [
+  [G.mouse("l"), W.leftclickIn, W.leftclickDo],
+  [G.mouse("r"), W.rightclickIn, W.rightclickDo],
+  [G.mouse("r") + `<span class="plus">+</span>` + G.mouse("l"), W.rightleftIn, W.rightleftDo],
+  ["cam", "", W.camera],
+  [keys(W.digitsIn), "", W.digitsDo],
+];
+const PADROWS = [
+  [["a"], W.leftclickDo], [["lt"], W.rightclickDo], [["lt", "a"], W.rightleftDo],
+  [["r"], W.camera], [["r3"], W.look],
+  [["lr"], W.digitsDo], [["ud"], W.hop], [["l3"], W.way],
+  [["x"], W.cancel, true], [["y"], W.handBack], [["b"], W.back],
+  [["lb", "rb"], W.turn], [["rt"], W.hand], [["view"], W.corner], [["menu"], W.hold],
+];
+const camStack = phone => `<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+  <div class="inp">${G.mouse("m")}<span class="t">${W.middleIn}</span></div>
+  <div class="inp">${G.mouse("w")}<span class="t">${W.wheelIn}</span></div>
+  <div class="inp">${keys(W.arrowsIn)}</div></div>`;
+
+function optA(w, tab) {
+  const mouse = MOUSE_A.map(([g, t, a]) => g === "cam"
+    ? `${camStack()}<div class="act">${a}</div>`
+    : `<div class="inp">${g}${t ? `<span class="t">${t}</span>` : ""}</div><div class="act">${a}</div>`).join("");
+  const padl = PADROWS.map(([n, a, todo]) => `<div class="inp">${pad(n)}</div><div class="act${todo ? " todo" : ""}">${a}</div>`).join("");
+  return `<div class="tabs"><button data-t="mouse" class="${tab === "mouse" ? "on" : ""}"><span class="ph">mouse &amp; keys</span></button><button data-t="pad" class="${tab === "pad" ? "on" : ""}"><span class="ph">controller</span></button></div>
+  <div class="list two" data-pane="mouse" ${tab === "mouse" ? "" : "hidden"}>${mouse}</div>
+  <div class="list two" data-pane="pad" ${tab === "pad" ? "" : "hidden"}>${padl}</div>`;
+}
+
+function optB(w) {
+  const none = `<span class="none">·</span>`;
+  const m = (g, t) => `${g}${t ? `<span class="t">${t}</span>` : ""}`;
+  const L = G.mouse("l"), R = G.mouse("r");
+  const GROUPS = [
+    ["interact", [
+      [m(L, W.leftclickIn), pad(["a"]), W.leftclickDo],
+      [none, pad(["rt"]), W.hand],
+      [none, pad(["y"]), W.handBack],
+      [none, pad(["x"]), W.cancel, true],
+      [none, pad(["b"]), W.back],
+    ]],
+    ["crew", [
+      [m(R, W.rightclickIn), pad(["lt"]), W.rightclickDo],
+      [m(`<span class="stackrow">${R}<span class="plus">+</span>${L}</span>`, W.rightleftIn), `<span class="stackrow">${pad(["lt", "a"])}</span>`, W.rightleftDo],
+    ]],
+    ["camera", [
+      [`${m(G.mouse("m"), W.middleIn)}${m(G.mouse("w"), W.wheelIn)}<span class="stackrow">${keys(W.arrowsIn)}</span>`, pad(["r"]), W.camera],
+      [none, pad(["r3"]), W.look],
+    ]],
+    ["boards", [
+      [none, `<span class="stackrow">${pad(["lb", "rb"])}</span>`, W.turn],
+      [none, pad(["view"]), W.corner],
+      [none, pad(["menu"]), W.hold],
+    ]],
+    ["travel", [
+      [`<span class="stackrow">${keys(W.digitsIn)}</span>`, pad(["lr"]), W.digitsDo],
+      [none, pad(["ud"]), W.hop],
+      [none, pad(["l3"]), W.way],
+    ]],
+  ];
+  let h = `<div></div><div class="colhead">${G.mouse("")}</div><div class="colhead">${G.padIcon()}</div>`;
+  for (const [name, rows] of GROUPS) {
+    h += `<div class="head"><span class="ph">${name}</span></div>`;
+    for (const [mi, pi, a, todo] of rows) h += `<div class="cell act${todo ? " todo" : ""}">${a}</div><div class="cell m">${mi}</div><div class="cell p">${pi}</div>`;
+  }
+  return `<div class="list grp">${h}</div>`;
+}
+
+// ---- C: the pad picture ----
+function wrap(s, n) {
+  const out = []; let line = "";
+  for (const word of s.split(" ")) {
+    if (line && (line + " " + word).length > n) { out.push(line); line = word; } else line = line ? line + " " + word : word;
+  }
+  if (line) out.push(line);
+  return out;
+}
+const at = (x, y, gsvg) => gsvg.replace("<svg ", `<svg x="${x}" y="${y}" `);
+function padPicture(withLabels) {
+  const W0 = 432, cx = 216, cy = withLabels ? 168 : 120, s = 0.88;
+  const gx = lx => cx + s * lx, gy = ly => cy + s * ly;
+  const body = `<path class="body" transform="translate(${cx} ${cy}) scale(${s})" d="M-66 -60Q0 -70 66 -60Q96 -56 104 -20L120 52Q126 82 102 86Q84 88 70 66L54 44Q0 36 -54 44L-70 66Q-84 88 -102 86Q-126 82 -120 52L-104 -20Q-96 -56 -66 -60Z"/>`;
+  // button: [key, local x, local y, glyph w, glyph h]
+  const B = {
+    lt: [-70, -94, 28, 22], rt: [70, -94, 28, 22], lb: [-70, -72, 32, 22], rb: [70, -72, 32, 22],
+    l: [-64, -22, 22, 22], dpad: [-42, 24, 22, 22], r: [42, 24, 22, 22],
+    y: [64, -46, 22, 22], x: [40, -22, 22, 22], b: [88, -22, 22, 22], a: [64, 2, 22, 22],
+    view: [-18, -30, 22, 22], menu: [18, -30, 22, 22],
+  };
+  const glyphOf = { lt: P.lt(), rt: P.rt(), lb: P.lb(), rb: P.rb(), l: P.l(), dpad: G.dpad([]), r: P.r(), y: P.y(), x: P.x(), b: P.b(), a: P.a(), view: P.view(), menu: P.menu() };
+  let btns = "";
+  const pos = {};
+  for (const [k, [lx, ly, w, h]] of Object.entries(B)) {
+    const x = gx(lx), y = gy(ly);
+    pos[k] = [x, y, w, h];
+    btns += at((x - w / 2).toFixed(1), (y - h / 2).toFixed(1), glyphOf[k]);
+  }
+  if (!withLabels) return { svg: `<svg viewBox="0 0 ${W0} 240">${body}${btns}</svg>` };
+
+  // labels: [button, side, text, mini glyph, todo]
+  const LEFT = [
+    ["l", W.way, P.l3()],
+    ["dpad", W.digitsDo, P.lr()],
+    ["dpad", W.hop, P.ud()],
+  ];
+  const RIGHT = [
+    ["y", W.handBack, P.y()],
+    ["b", W.back, P.b()],
+    ["x", W.cancel, P.x(), true],
+    ["a", W.leftclickDo, P.a()],
+    ["r", W.camera, P.r()],
+    ["r", W.look, P.r3()],
+  ];
+  const N = 14, LH = 14;
+  let out = "";
+  const place = (list, side, y0) => {
+    let y = y0;
+    for (const [k, text, mini, todo] of list) {
+      const lines = wrap(text, N);
+      const h = Math.max(22, lines.length * LH);
+      const mid = y + h / 2;
+      const gxL = side === "L" ? 92 : 318;          // where the mini glyph sits
+      out += at(gxL, (mid - 11).toFixed(1), mini);
+      lines.forEach((ln, i) => {
+        const ty = mid - (lines.length * LH) / 2 + LH * i + 11;
+        out += side === "L"
+          ? `<text class="lab${todo ? " todo" : ""}" x="86" y="${ty}" text-anchor="end">${ln}</text>`
+          : `<text class="lab${todo ? " todo" : ""}" x="346" y="${ty}">${ln}</text>`;
+      });
+      const [bx, by, bw] = pos[k];
+      const sx = side === "L" ? gxL + 23 : gxL - 1;
+      const ex = side === "L" ? bx - bw / 2 - 1 : bx + bw / 2 + 1;
+      out += `<path class="lead" d="M${sx} ${mid}L${ex.toFixed(1)} ${by.toFixed(1)}"/><circle cx="${ex.toFixed(1)}" cy="${by.toFixed(1)}" r="1.8" class="gi"/>`;
+      y += h + 10;
+    }
+    return y;
+  };
+  const yl = place(LEFT, "L", 150);
+  const yr = place(RIGHT, "R", 112);
+  // the shoulders: labels across the top
+  const top = (k, text, x, anchor, mini) => {
+    const lines = wrap(text, 18);
+    let t = "";
+    lines.forEach((ln, i) => { t += `<text class="lab" x="${x}" y="${14 + i * LH}" text-anchor="${anchor}">${ln}</text>`; });
+    return t;
+  };
+  const [ltx, lty] = pos.lt, [rtx, rty] = pos.rt, [lbx, lby, lbw] = pos.lb, [rbx, rby, rbw] = pos.rb;
+  out += `<text class="lab" x="${ltx - 18}" y="34" text-anchor="end">${W.rightclickDo}</text><path class="lead" d="M${ltx - 16} 30L${ltx - 14} ${lty}"/>`;
+  out += top("rt", W.hand, rtx + 18, "start");
+  out += `<path class="lead" d="M${rtx + 16} 30L${rtx + 14} ${rty}"/>`;
+  out += `<text class="lab" x="${cx}" y="56" text-anchor="middle">${W.turn}</text><path class="lead" d="M${cx - 66} 52L${lbx + lbw / 2 + 1} ${lby}M${cx + 66} 52L${rbx - rbw / 2 - 1} ${rby}"/>`;
+  const [vx, vy] = pos.view, [mx, my] = pos.menu;
+  const by0 = cy + 0.88 * 86 + 22;
+  out += at(vx - 11, by0, P.view()) + at(mx - 11, by0 + 28, P.menu());
+  out += `<path class="lead" d="M${vx} ${by0}V${vy + 11}M${mx} ${by0 + 28}V${my + 11}"/>`;
+  out += `<text class="lab" x="${vx - 16}" y="${by0 + 15}" text-anchor="end">${W.corner}</text>`;
+  out += `<text class="lab" x="${vx - 16}" y="${by0 + 43}" text-anchor="end">${W.hold}</text><path class="lead" d="M${vx - 12} ${by0 + 39}H${mx - 12}" style="stroke-dasharray:1 3"/>`;
+  const H = Math.max(yl, yr, by0 + 56) + 4;
+  return { svg: `<svg viewBox="0 0 ${W0} ${H}">${body}${out}${btns}</svg>` };
+}
+function optC(w) {
+  const mouse = `<div class="sub ph">mouse &amp; keys</div><div class="list mini">${MOUSE_A.map(([g, t, a]) => g === "cam"
+    ? `${camStack()}<div class="act">${a}</div>`
+    : `<div class="inp">${g}${t ? `<span class="t">${t}</span>` : ""}</div><div class="act">${a}</div>`).join("")}</div>`;
+  const combo = `<div class="list mini"><div class="inp">${pad(["lt", "a"])}</div><div class="act">${W.rightleftDo}</div></div>`;
+  if (w === "desk") {
+    return `<div class="sub ph">controller</div><div class="diagram list">${padPicture(true).svg}</div>${combo}${mouse}`;
+  }
+  const padl = PADROWS.map(([n, a, todo]) => `<div class="inp">${pad(n)}</div><div class="act${todo ? " todo" : ""}">${a}</div>`).join("");
+  return `<div class="sub ph">controller</div><div class="diagram list">${padPicture(false).svg}</div><div class="list mini">${padl}</div>${mouse}`;
+}
+
+const BUILD = { A: optA, B: optB, C: optC };
+for (const el of document.querySelectorAll("[data-opt]")) {
+  const w = el.dataset.w;
+  el.innerHTML = `<div class="sheet ${w}"><div class="word">${W.word}</div>${BUILD[el.dataset.opt](w, el.dataset.tab)}<button class="back">${W.backBtn}</button></div>`;
+  el.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
+    el.querySelectorAll(".tabs button").forEach(o => o.classList.toggle("on", o === b));
+    el.querySelectorAll("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== b.dataset.t);
+  }));
+}
+const root = document.documentElement;
+const theme = new URLSearchParams(location.search).get("theme");
+if (theme) root.dataset.theme = theme;
+document.getElementById("theme").addEventListener("click", () => {
+  const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+});
+</script>
+</body>
+</html>
