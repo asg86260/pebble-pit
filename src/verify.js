@@ -686,7 +686,17 @@ export function verifyParty() {
   if (fangSurplus() > fangsGiven)
     fail('a station or a fang came from nowhere',
          `${stations.length} stations, ${S.fangs} held, ${S.fangsLoose.length} loose; ${S.fangsDropped} from breaks, ${S.killFangs} from kills`);
+  // A fang dropped only into a free slot: one that lands the party past the
+  // floor's slots is a fang that can never be spent.
+  const dropped = (S.fangsDropped | 0) + (S.killFangs | 0);
+  const promised = stations.length + (S.fangs | 0) + (S.fangsLoose || []).length;
+  if (droppedReads === yardReads && dropped > droppedWas && promised > FIGHT_STATIONS_MAX)
+    fail('a fang dropped with every slot promised',
+         `${stations.length} stations, ${S.fangs} held, ${S.fangsLoose.length} loose`);
+  droppedWas = dropped;
+  droppedReads = yardReads;
 }
+let droppedWas = 0, droppedReads = -1;
 
 // What the party holds past the first station and the fangs that have
 // dropped, and what a setup or a save was let start with.

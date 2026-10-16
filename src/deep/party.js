@@ -302,8 +302,10 @@ export function resetStation(id) {
 // Heard from the serpent's own break (`onBreak`), with the stage it reached;
 // `fangsDropped` is the guard, so a break heard twice, or one a hook set the
 // stage past, drops nothing it has dropped already.
+// A break drops only into the room a kill would (`fangRoom`), so a party
+// already standing near seven is not dropped fangs it can never spend.
 function dropFangs(stage, t = now()) {
-  const due = Math.min(FANG_BREAKS, stage | 0);
+  const due = Math.min(FANG_BREAKS, stage | 0, (S.fangsDropped | 0) + fangRoom());
   if (S.fangsDropped >= due) return;
   const add = [];
   while (S.fangsDropped < due) {
@@ -327,9 +329,12 @@ const fangAtBelly = t => {
 // drops its story kill's fang. A bar emptied counts from its recoil's first
 // frame; the level goes up as its first mote lands (deep/phases.js).
 export const killsHad = () => Math.max(0, (S.serpentLevel | 0) - 1) + (S.serpentFreed || recoilUnticked() ? 1 : 0);
+// The slots not yet promised: every station standing (the first counted
+// even before it stands, being free), every fang held, every fang falling.
+export const fangRoom = () =>
+  Math.max(0, FIGHT_STATIONS_MAX - Math.max(1, S.stations.length) - (S.fangs | 0) - S.fangsLoose.length);
 export function dropKillFang(t = now()) {
-  const room = FIGHT_STATIONS_MAX - S.stations.length - (S.fangs | 0) - S.fangsLoose.length;
-  const due = Math.min(killsHad(), (S.killFangs | 0) + Math.max(0, room));
+  const due = Math.min(killsHad(), (S.killFangs | 0) + fangRoom());
   if ((S.killFangs | 0) >= due) return;
   const add = [];
   while ((S.killFangs | 0) < due) {

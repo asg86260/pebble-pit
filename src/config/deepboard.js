@@ -55,8 +55,7 @@ export const SCALE_MARK = [
 // `.`, a blank outside the edge. A solid fang hanging from its root, its tip
 // hooked back as a snake's is (the owner's A, docs/mocks/fang-mark-2026-09-28.html):
 // a hollow tooth read as a triangle at nine pixels.
-// The floating build button wears it (deep/buildbutton.js); the counter's
-// card can lay the same pixels down beside the scale's.
+// The floating build button wears it (deep/buildbutton.js).
 export const FANG_MARK = [
   ' #####   ',
   ' ######  ',

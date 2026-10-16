@@ -651,7 +651,7 @@ export const EXPOSED_LIFT_HZ = 1.5;  // how often a lifted scale lifts or settle
 // sinking and carried like a scale: a root three cells across narrowing to
 // its point. '#' white, '+' a grey a step down.
 export const FANG_SPRITE = ['###', '.#+', '.#.'];
-// Its mark on the counter card and the build button is FANG_MARK (config/deepboard.js).
+// Its mark on the build button is FANG_MARK (config/deepboard.js).
 // The scaffold over a station not yet built: posts SCAFFOLD_OVER cells over
 // the top of the ground it stands round (the flag it will be: a station
 // going up has no class), so it is as tall as what goes up inside it, banded

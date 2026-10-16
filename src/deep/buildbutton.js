@@ -61,7 +61,7 @@ export function seatBuildButton() {
   const on = offer.shown && S.view === 'deep';
   btn.classList.toggle('on', on);
   if (!on) return;
-  // the price, not the purse: the fangs held are on the counter card
+  // the price, not the purse
   const count = offer.first ? msg('build-free') : '×1';
   const say = btn.querySelector('.count');
   if (say.textContent !== count) say.textContent = count;
