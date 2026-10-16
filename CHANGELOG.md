@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- An achievement, "sqouse freed", for freeing your sqouse from the serpent; a save already past it has it on load (test/finale.test.mjs).
 - The constrict's orb's bar over its head is its time: it runs down as the seconds go, a click on the orb knocks a chunk off it in falling chips, the party's blows wear it down too, and at nought the orb lets go (test/orb.test.mjs).
 - The serpent drops no fang once the stations standing and the fangs held or falling would fill all seven slots, at a break as at a kill (test/fangs-seven.test.mjs).
 - The fangs held show on a plate set in the furnace's brick over its door, fang × N, dimmed at none, instead of on the counter card (test/fang-plate.test.mjs).

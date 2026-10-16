@@ -76,5 +76,7 @@ export const CATALOG = [
   { key: 'shookload', name: msg('ach-shookload-name'), note: msg('ach-shookload-note') },
   { key: 'hatoff', name: msg('ach-hatoff-name'), note: msg('ach-hatoff-note') },
   { key: 'dizzy', name: msg('ach-dizzy-name'), note: msg('ach-dizzy-note') },   // the owner's
-  { key: 'muckrain', name: msg('ach-muckrain-name'), note: msg('ach-muckrain-note') }
+  { key: 'muckrain', name: msg('ach-muckrain-name'), note: msg('ach-muckrain-note') },
+  // The second half's finale; neutral, never the chosen name or role.
+  { key: 'freed', name: msg('ach-freed-name'), note: msg('ach-freed-note') }
 ];

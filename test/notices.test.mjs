@@ -41,7 +41,7 @@ group('the catalog is what the design approved', async () => {
 
   return [
     // forty-nine, and the endless serpent's five (DESIGN.md, "Endless serpent")
-    ok(NOTICES.length === 54, 'fifty-four notices, as approved', String(NOTICES.length)),
+    ok(NOTICES.length === 55, 'fifty-five notices, as approved', String(NOTICES.length)),
     ok(!dupes.length, 'every key is its own', dupes.map(n => n.key).join(',')),
     ok(!noName.length, 'every notice has a name', noName.map(n => n.key).join(',')),
     // The note says what you did. A blank one is the one failure mode that

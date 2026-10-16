@@ -85,7 +85,10 @@ const WHEN = {
   brew100: () => (S.brews || 0) >= NOTICE_BREWS,
   lived1h: () => eldest() >= NOTICE_LIVED_MS,
   everyjob: everyJobStaffed,
-  muckrain: () => (S.tally.muckRains | 0) >= 1
+  muckrain: () => (S.tally.muckRains | 0) >= 1,
+  // The story's kill (beats.js 'freed'), or the beat already done in a save
+  // that got past it before this notice existed.
+  freed: () => (S.serpentFreed && S.serpentLevel <= 1) || S.beatsDone.includes('freed')
 };
 
 export const NOTICES = CATALOG.map(n => (WHEN[n.key] ? { ...n, when: WHEN[n.key] } : { ...n }));
