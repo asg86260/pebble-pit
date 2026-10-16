@@ -217,6 +217,7 @@ export const TESTS = [
     await frames(1);
     const third = heading();
     typeName('lee');
+    const sqName = nameOf('sqouse');
     byId('wardnext').click();
     await frames(1);
     const fourth = heading(), both = page.querySelector('.wardshown')?.textContent || '';
@@ -251,7 +252,7 @@ export const TESTS = [
          `"${typed}" ${[...typed].length}/${NAME_MAX}`),
       ok(role !== ROLE_START.you, 'next on the role row steps it', role),
       ok(second === 'confirm your square' && confirmed.includes('Pat o\'Neil-2'), 'the second step shows your square named', `"${second}" "${confirmed}"`),
-      ok(third === 'build your sqouse' && nameOf('sqouse') === 'lee', 'the third builds your sqouse', `"${third}" ${nameOf('sqouse')}`),
+      ok(third === 'build your sqouse' && sqName === 'lee', 'the third builds your sqouse', `"${third}" ${sqName}`),
       ok(fourth === 'the two of you' && both.includes('lee') && both.includes('Pat'), 'the last shows the two of you', `"${fourth}" "${both}"`),
       ok(backed, 'back is the step before'),
       ok(let_go, 'done lets the yard go'),
@@ -310,6 +311,34 @@ export const TESTS = [
     }
   }],
 
+  // The rescue's sheet as it comes up (ending.js): its line names your
+  // sqouse as the player did, and reads the role word with no name.
+  ['wardrobe: the rescue sheet names your sqouse by the name, else by the role', async () => {
+    const seen = async self => {
+      window.__serpentOn(false);           // the sheet goes down with its button, not floating off
+      window.__reset();
+      run(0.5);
+      window.__self('sqouse', self);
+      S.rescued = true; S.buried = false; S.buriedMs = 600000;
+      run(1 / 60);
+      await raf();
+      const line = byId('savedwhy').textContent, time = byId('savedin').textContent;
+      window.__skipBeat('sheet');
+      run(1 / 60);
+      await raf();
+      return { line, time, down: byId('saved').hidden };
+    };
+    const named = await seen({ name: 'robin', role: 'husband' }), plain = await seen({ name: '', role: 'husband' });
+    S.selves = null;
+    window.__serpentOn(null);
+    window.__reset();
+    await raf();
+    return [
+      ok(named.line === 'you saved robin in 10:00!', 'named, the name', named.line),
+      ok(plain.line === 'you saved your sqhusband in 10:00!', 'unnamed, the role word chosen', plain.line)
+    ];
+  }],
+
   // A new yard by a pad, off Steam: the letter grid under the name, A a key,
   // X a letter back, Y the name's roll from the grid, B the step back and
   // menu the step on, never the sheet's let-go.
@@ -320,10 +349,10 @@ export const TESTS = [
       await press('b');                               // wakes the pad
       await newYard();
       await frames(2);
-      const grid = up(document.querySelector('.wardkeys'));
       // onto a letter: down from wherever the focus stands
       const onKey = () => window.__pad.page()?.classList?.contains('wardkey');
       for (let i = 0; i < 12 && !onKey(); i++) await press('down');
+      const grid = up(document.querySelector('.wardkeys'));
       const key = window.__pad.page()?.dataset.key;
       await press('a');
       await press('a');
@@ -342,7 +371,7 @@ export const TESTS = [
       const done = !S.paused && S.dressOffered;
       return [
         ok(grid, 'the letter grid is up under the name'),
-        ok(onKey() !== undefined && key && typed === key + key, 'A types the key the focus is on', `${key} "${typed}"`),
+        ok(key && typed === key + key, 'A types the key the focus is on', `${key} "${typed}"`),
         ok(deleted === key, 'X takes the last letter back', deleted),
         ok(CREW_NAMES.includes(rolled), 'Y from the grid rolls the name', rolled),
         ok(on, 'menu is the step on'),

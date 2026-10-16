@@ -214,6 +214,7 @@ function build(el) {
 // The page brought up to the two of them and to the step.
 function say() {
   if (!built) return;
+  built.said = JSON.stringify([S.selves, S.outfits, S.dressOffered]);
   const b = built, at = step >= 0 ? FLOW[step] : null;
   if (at) who = at.who;
   const kind = at ? at.kind : 'build';
@@ -444,6 +445,10 @@ const plainLook = { outfit: { head: 'none', face: 'none', neck: 'none', back: 'n
 // first two steps are about you alone, so you stand alone in the close-up.
 export function paintWardrobe(t = performance.now()) {
   if (!built || !shownEl(built.el)) return;
+  padKeys();                         // a pad seen or put down while the page is up
+  // the two of them changed from outside the page (a save come back, a hook)
+  const now = JSON.stringify([S.selves, S.outfits, S.dressOffered]);
+  if (now !== built.said) say();
   const s = t / 1000;
   const alone = step === 0 || step === 1;
   const barred = step < 0 || step === 2;

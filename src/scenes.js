@@ -82,6 +82,20 @@ const indexYard = () => {
   S.indexRead = ['dust', 'shard', 'spore', 'spark', 'rock', 'pit', 'house', TYPE.HAUL, 'sqwife'];
 };
 const pressI = () => dispatchEvent(new KeyboardEvent('keydown', { key: 'i', code: 'KeyI', bubbles: true }));
+// A new yard's steps (wardrobepage.js) stood at step `n`, the two of them
+// named and given roles first, and each step before it passed by its next.
+const whoSteps = n => {
+  window.__reset(); window.__fast(1);
+  S.dressOffered = false;
+  window.__self('you', { name: 'ada', role: 'wife' });
+  wear('you', { head: 'beret', face: 'round-glasses', neck: 'striped-scarf', back: 'cape', pattern: 'stripes' });
+  if (n >= 2) window.__self('sqouse', { name: 'bram', role: 'ouse' });
+  offerDress(true);
+  for (let i = 0; i < n; i++) document.getElementById('wardnext').click();
+};
+// The sqouse named for a story line's shot: `window.__whoName` and
+// `window.__whoRole`, else a name and the neutral role.
+const whoNamed = () => window.__self('sqouse', { name: window.__whoName ?? 'bram', role: window.__whoRole || 'ouse' });
 const indexPick = key => document.querySelector(`#index .it[data-key="${key}"]`)?.click();
 
 // The quarry bought with nothing else open past the farm, eight seconds into
@@ -2157,6 +2171,37 @@ export const SCENES = {
                  document.getElementById('wardrobebtn').click(); } },
   'wardrobe-offer': { about: 'the story', say: 'the picker offered at a new yard, before the opening', page: true,
     run: () => { window.__reset(); window.__fast(1); S.dressOffered = false; offerDress(true); } },
+  // Who you are (DESIGN.md): a new yard's four steps, the two of them named
+  // and given roles by the steps' own calls, each step stood by its next.
+  // And the first with a pad seen, off Steam: the letter grid.
+  'who-build': { about: 'the story', say: 'a new yard\'s first step: build who you are, named', page: true,
+    run: () => whoSteps(0) },
+  'who-confirm': { about: 'the story', say: 'a new yard\'s second step: confirm your square', page: true,
+    run: () => whoSteps(1) },
+  'who-sqouse': { about: 'the story', say: 'a new yard\'s third step: build your sqouse, named', page: true,
+    run: () => whoSteps(2) },
+  'who-both': { about: 'the story', say: 'a new yard\'s last step: the two of you', page: true,
+    run: () => whoSteps(3) },
+  'who-pad': { about: 'the story', say: 'a new yard\'s first step on a pad, off Steam: the letter grid', page: true,
+    run: () => { whoSteps(0); S.padOn = true; } },
+  // The settings page once the steps are behind a yard: the name and the
+  // role held, the outfits still the player's.
+  'who-locked': { about: 'the story', say: 'the two of you from settings, the name and the role held', page: true,
+    run: () => { window.__reset(); window.__fast(1); S.dressOffered = true;
+                 window.__self('you', { name: 'Ada', role: 'wife' }); window.__self('sqouse', { name: 'Bram', role: 'ouse' });
+                 dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+                 document.getElementById('settingsbtn').click();
+                 document.getElementById('wardrobebtn').click(); } },
+  // A few of the story's lines with the two of them named: the first step's
+  // card, the rescue's sheet, the index's entry. `window.__whoRole` the
+  // sqouse's role ('wife', 'ouse', 'husband'), `window.__whoName` its name
+  // ('' for none).
+  'who-card': { about: 'the story', say: 'the story card naming your sqouse',
+    run: () => { window.__reset(); whoNamed(); window.__fast(1); } },
+  'who-saved': { about: 'the shields', say: 'the rescue sheet naming your sqouse',
+    run: () => { window.__reset(); window.__fast(1); whoNamed(); S.rescued = true; S.buried = false; S.buriedMs = 252000; } },
+  'who-index': { about: 'the story', say: 'the index open on your sqouse, named', page: true,
+    run: () => { indexYard(); whoNamed(); pressI(); indexPick('sqwife'); } },
   // The controls page of the settings sheet, opened by its button.
   controlspage: { about: 'the story', say: 'the controls page on the held sheet', page: true,
     run: () => { dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
