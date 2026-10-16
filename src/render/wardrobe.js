@@ -10,17 +10,21 @@
 // three passes round the body's own square: what hangs behind it, what is
 // marked on its middle, and what sits on its head.
 
-import { P, WORKER, BODY_RIM, GREY, WARD_UNIT, WARD_GRID, WARD_GREY, WARD_PALE, WARD_DEEP_GREY, WARD_DEEP_PALE,
-         WARD_STEP_HZ, WARD_BOB_HZ, WARD_WAVE_HZ, WARD_STILL_S } from '../config.js';
+import { P, WORKER, BODY_RIM, GREY, GOLD, WARD_UNIT, WARD_GRID, WARD_GREY, WARD_PALE, WARD_DEEP_GREY, WARD_DEEP_PALE,
+         WARD_STEP_HZ, WARD_BOB_HZ, WARD_WAVE_HZ, WARD_STILL_S, WARD_HEADS } from '../config.js';
 import { itemOf } from '../wardrobe.js';
-import { GREYS } from './deeptones.js';
+import { GREYS, seen } from './deeptones.js';
 import { dressAura } from './wardaura.js';
+import { HEADS } from './wardheads.js';
+import { lampCone } from './lamplight.js';
 
 // The yard's inks, and the deep's: the deep is drawn as the yard is and
 // turned over after (render/deep.js), so its black and white are the yard's
-// and only its greys are its own capped ramp's.
-export const YARD_INKS = { ink: '#000', paper: '#fff', grey: GREY[WARD_GREY], pale: GREY[WARD_PALE] };
-export const DEEP_INKS = { ink: '#000', paper: '#fff', grey: GREYS[WARD_DEEP_GREY], pale: GREYS[WARD_DEEP_PALE] };
+// and only its greys are its own capped ramp's. The gold is the one hue,
+// for what is earned (GOLD), drawn so the deep's turning over shows its own.
+export const YARD_INKS = { ink: '#000', paper: '#fff', grey: GREY[WARD_GREY], pale: GREY[WARD_PALE], gold: GOLD.yard };
+export const DEEP_INKS = { ink: '#000', paper: '#fff', grey: GREYS[WARD_DEEP_GREY], pale: GREYS[WARD_DEEP_PALE],
+                           gold: seen(GOLD.deep) };
 
 // A rect laid on whole device pixels, as the body's own square is
 // (render/crew.js, `square`): a mark between device pixels comes out a blend
@@ -40,14 +44,49 @@ const cell = (g, x, y, tone) => fill(g, x, y, P, P, tone);
 const pose = (t, hz) => Math.floor((t || 0) * hz) % 2;
 const widthOf = rows => Math.max(...rows.map(r => r.length));
 
+// A drawing in WARD_UNIT marks, its characters mapped to tones, its top-left
+// at (x0, y0) and mirrored in its own box for a body facing left.
+export function art(g, rows, x0, y0, dir, tones) {
+  const w = widthOf(rows);
+  rows.forEach((r, ry) => {
+    for (let c = 0; c < w; c++) {
+      const ch = r[dir < 0 ? w - 1 - c : c];
+      if (ch && ch !== '.' && tones[ch]) fill(g, x0 + c * WARD_UNIT, y0 + ry * WARD_UNIT, WARD_UNIT, WARD_UNIT, tones[ch]);
+    }
+  });
+}
+
+// The cape's cells, a cell each: hanging when the body stands, two poses
+// streaming out behind as it walks.
+function capeCells(y, l, k) {
+  const { d, bx } = k, p = pose(l.t, WARD_STEP_HZ);
+  return l.moving ? [[bx, y], [bx + d * P, y + P], [bx + d * P * (p ? 2 : 1), y + (p ? P : 2 * P)], [bx, y + P]]
+    : [[bx, y], [bx, y + P], [bx, y + 2 * P]];
+}
+// A sack tied at the neck, a paper pebble on it, bouncing a unit with the step.
+const MONEYBAG = ['.#..#.', '..##..', '.####.', '##ee##', '##ee##', '.####.'];
 // --- behind the body -------------------------------------------------------------
 // Off the side away from the way the body faces: `bx` the column just past
 // its back, `d` a step further back.
 const BACKS = {
   cape(g, x, y, l, k) {
-    const { d, bx } = k, p = pose(l.t, WARD_STEP_HZ);
-    if (l.moving) { cell(g, bx, y, k.ink); cell(g, bx + d * P, y + P, k.ink); cell(g, bx + d * P * (p ? 2 : 1), y + (p ? P : 2 * P), k.ink); cell(g, bx, y + P, k.ink); }
-    else { cell(g, bx, y, k.ink); cell(g, bx, y + P, k.ink); cell(g, bx, y + 2 * P, k.ink); }
+    for (const [cx, cy] of capeCells(y, l, k)) cell(g, cx, cy, k.ink);
+  },
+  // the cape, hemmed in gold: the foot of every cell with nothing under it,
+  // and the outer side of the cell farthest out
+  'gold-cape'(g, x, y, l, k) {
+    const cells = capeCells(y, l, k), U = WARD_UNIT;
+    for (const [cx, cy] of cells) cell(g, cx, cy, k.ink);
+    const has = (cx, cy) => cells.some(([a, b]) => a === cx && b === cy);
+    const far = l.dir > 0 ? Math.min(...cells.map(c => c[0])) : Math.max(...cells.map(c => c[0]));
+    for (const [cx, cy] of cells) {
+      if (!has(cx, cy + P)) fill(g, cx, cy + P - U, P, U, k.gold);
+      if (cx === far) fill(g, l.dir > 0 ? cx : cx + P - U, cy, U, P, k.gold);
+    }
+  },
+  moneybag(g, x, y, l, k) {
+    const U = WARD_UNIT, w = MONEYBAG[0].length * U, bounce = l.moving && pose(l.t, WARD_STEP_HZ) ? U : 0;
+    art(g, MONEYBAG, l.dir > 0 ? x - w : x + WORKER, y + WORKER - w - bounce, l.dir, { '#': k.ink, e: k.paper });
   },
   'short-cape'(g, x, y, l, k) {
     const { d, bx } = k, p = pose(l.t, WARD_STEP_HZ);
@@ -91,8 +130,9 @@ function unitRects(rows, ox, oy) {
   return out;
 }
 
-// The scarf's tone a unit along it, from the band out.
-const scarfTone = (kind, i, k) => i % 2 ? (kind === 'check' ? k.grey : kind === 'stripe' ? k.paper : k.ink) : k.ink;
+// The scarf's tone a unit along it, from the band out; `check` the tone of
+// its checks (the gold scarf's gold).
+const scarfTone = (kind, i, k, check = k.grey) => i % 2 ? (kind === 'check' ? check : kind === 'stripe' ? k.paper : k.ink) : k.ink;
 // How far each unit of a scarf's streaming tail lifts, a pose each.
 const SCARF_WAVE = [[0, 0, 1, 1, 0, 0, -1, -1, 0], [0, 0, 0, 1, 1, 1, 0, 0, -1]];
 
@@ -105,16 +145,16 @@ const neckSink = h => (h - WORKER) / P * WARD_UNIT;
 // floor with its end kicked back when the body stands; a unit wide, streaming
 // in a wave as the body walks.
 function scarfTail(g, nk, x, y, l, k, h) {
-  const kind = nk.tail, band = nk.grid.findIndex(r => r.replace(/\./g, ''));
+  const kind = nk.tail, band = nk.grid.findIndex(r => r.replace(/\./g, '')), chk = nk.tone ? k[nk.tone] : k.grey;
   const U = WARD_UNIT, by = y + BODY_RIM + band * U + neckSink(h), floor = y + h;
   if (l.moving) {
     const wave = SCARF_WAVE[pose(l.t, WARD_STEP_HZ)];
-    wave.forEach((lift, i) => fill(g, across(x, l, -(i + 1) * U, U), by + lift * U, U, 2 * U, scarfTone(kind, i, k)));
+    wave.forEach((lift, i) => fill(g, across(x, l, -(i + 1) * U, U), by + lift * U, U, 2 * U, scarfTone(kind, i, k, chk)));
     return;
   }
   const n = Math.max(0, (floor - by) / U);
-  for (let i = 0; i < n; i++) fill(g, across(x, l, -2 * U, 2 * U), by + i * U, 2 * U, U, scarfTone(kind, i, k));
-  fill(g, across(x, l, -3 * U, U), floor - U, U, U, scarfTone(kind, n, k));
+  for (let i = 0; i < n; i++) fill(g, across(x, l, -2 * U, 2 * U), by + i * U, 2 * U, U, scarfTone(kind, i, k, chk));
+  fill(g, across(x, l, -3 * U, U), floor - U, U, U, scarfTone(kind, n, k, chk));
 }
 
 const sides = (x, l) => ({ d: l.dir > 0 ? -1 : 1, bx: l.dir > 0 ? x - P : x + WORKER });
@@ -122,6 +162,9 @@ const sides = (x, l) => ({ d: l.dir > 0 ? -1 : 1, bx: l.dir > 0 ? x - P : x + WO
 // `h` the body's height, short of WORKER when it is squashed (the crouch).
 export function dressBehind(g, x, y, l, h = WORKER) {
   const o = l.outfit, k = { ...l.inks, ...sides(x, l) };
+  // a lamp on the head lights the way ahead, behind everything it wears
+  const hd = itemOf('head', o.head);
+  lampCone(g, x, y + h - WORKER, l.dir, { on: !!(hd && hd.lamp), key: l.key, t: l.t, deep: l.deep, src: 'head' });
   if (l.back !== false && BACKS[o.back]) BACKS[o.back](g, x, y, l, k);
   const nk = itemOf('neck', o.neck);
   if (nk && nk.tail) scarfTail(g, nk, x, y, l, k, h);
@@ -160,7 +203,7 @@ export function dressOn(g, x, y, l, w = WORKER, h = WORKER) {
   // On a dark fill the marks are drawn in the paper, and the grey in the pale.
   const on = pat && pat.dark ? k.paper : k.ink, grey = pat && pat.dark ? k.pale : k.grey;
   if (face && face.grid) grid(g, face.grid, ix, iy, l.dir, on, grey);
-  if (neck && neck.grid) grid(g, neck.grid, ix, iy + neckSink(h), l.dir, on, grey);
+  if (neck && neck.grid) grid(g, neck.grid, ix, iy + neckSink(h), l.dir, on, neck.tone ? k[neck.tone] : grey);
   g.restore();
 }
 
@@ -170,8 +213,9 @@ export function dressOn(g, x, y, l, w = WORKER, h = WORKER) {
 // one: with nothing chosen the station hat is still worn.
 export function dressHead(g, x, y, l) {
   const it = itemOf('head', l.outfit.head);
+  if (it && it.draw && HEADS[it.key]) { HEADS[it.key](g, x, y, l); return true; }
   if (!it || (!it.rows && !it.rects)) return false;
-  const ink = l.inks.ink;
+  const ink = it.tone ? l.inks[it.tone] : l.inks.ink;
   if (it.rects) {
     for (const [rx, ry, rw, rh] of it.rects) fill(g, across(x, l, rx, rw), y + ry, rw, rh, ink);
     if (it.ribbon) for (const [rx, ry, rw, rh] of ribbonTails(l)) fill(g, across(x, l, rx, rw), y + ry, rw, rh, ink);
@@ -204,7 +248,18 @@ const ribbonTails = l => l.moving ? RIBBON_STREAM[pose(l.t, WARD_STEP_HZ)] : RIB
 // carried over it.
 export function headRows(l) {
   const it = itemOf('head', l.outfit.head);
-  return it && it.rows ? it.rows.length : it && it.rects ? 1 : 0;
+  return it && it.draw ? Math.ceil(WARD_HEADS[it.key].h / P) : it && it.rows ? it.rows.length : it && it.rects ? 1 : 0;
+}
+// And how tall in world pixels, for what floats over it (an aura over the
+// head): a piece drawn in units stands its own height, not whole cells.
+export function headHeight(l) {
+  const it = itemOf('head', l.outfit.head);
+  return it && it.draw ? WARD_HEADS[it.key].h : headRows(l) * P;
+}
+// Whether the look's head item is drawn, in place of any station hat.
+export function wearsHead(l) {
+  const it = l && itemOf('head', l.outfit.head);
+  return !!(it && (it.rows || it.rects || it.draw));
 }
 
 // The head item on a body knocked flat (render/crew.js, `drawFloored`): laid
@@ -223,7 +278,7 @@ export function dressFlat(g, left, top, l) {
   const y0 = top + P - Math.floor(w / 2) * P;
   for (let r = 0; r < n; r++) {
     const row = it.rows[r];
-    for (let c = 0; c < row.length; c++) if (row[c] !== '.') cell(g, left - (n - r) * P, y0 + c * P, l.inks.ink);
+    for (let c = 0; c < row.length; c++) if (row[c] !== '.') cell(g, left - (n - r) * P, y0 + c * P, it.tone ? l.inks[it.tone] : l.inks.ink);
   }
   return true;
 }

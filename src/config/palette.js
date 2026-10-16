@@ -39,3 +39,13 @@ export const COIN_TONES = {
 export const COIN = { ore: COIN_TONES.ore[2], crop: COIN_TONES.crop[2], spark: COIN_TONES.spark[1] };
 export const COIN_DARK = { ore: '#7d9cf0', crop: '#6fd08a', spark: '#f06a55' };
 
+
+// Gold: the one hue kept for what is earned (the owner, 2026-10-16,
+// treatment A on docs/mocks/wardrobe-aura-2026-10-16). Nothing a fresh yard
+// can wear or see is gold, so the only warm pixel in a black-and-white crowd
+// says "this one beat the game". None of the yard's hues could do it: blue,
+// green and red are the coins, purple the deep's magic. Pulled toward ochre
+// on the white paper, where a yellow would barely show, and lifted over the
+// deep's black, as the coins are on a dark page (`COIN_DARK`); `deep` is the
+// tone as it is seen there.
+export const GOLD = { yard: '#c99406', deep: '#f2c14e' };

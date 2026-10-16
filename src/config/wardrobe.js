@@ -95,6 +95,30 @@ export const WARD_AURAS = {
   'scale-swirl': { n: 4, speed: 1.8, rx: 14, ry: 3, mid: 7, bobHz: 1.1, bob: 3, every: 0.52, edge: 0.13, size: 4, rung: 7 },
   // the level-up's embers, small: from the feet on a turn, cooling
   embers: { n: 4, life: 1.7, seed: 7, lag: 0.5, turn: 4.2, spread: 2, r: 10, grow: 5, foot: 2, rise: 34, in: 0.1, out: 0.3 },
+  // --- the expansion's (the owner's vote on docs/mocks/wardrobe-expansion-2026-10-16)
+  // three flies looping round the body on their own clocks, darting, wings
+  // up and down a frame each
+  flies: { n: 3, speed: 2.6, step: 0.9, dartHz: 1.7, dart: 1.3, phase: 2.1, r: 11, rr: 3, rHz: 2.3, mid: 4,
+           loop: 6, lift: 2, sink: 3, flapHz: 12, rung: 10, wing: 4 },
+  // the yuck mark's risers, small: three wavy lines rising off the top
+  stink: { at: [-3, 8, 19], life: 1.9, seed: 11, from: 2, rise: 14, in: 0.2, out: 0.45, units: 4, gap: 3,
+           wave: 1.3, waveHz: 6, travel: 0.9, thin: 0.18, rung: 6 },
+  // a cascade over the head: a high throw one way, a low pass back
+  'juggling-balls': { n: 3, period: 1.3, size: 4, from: 4, high: 24, low: 5, half: 14, throw: 0.62, rung: 10, odd: 6 },
+  // a bubble off the head, swelling to a ring and popping into four specks
+  'potion-fizz': { n: 2, life: 1.6, seed: 12, at: 5, spread: 8, from: 2, rise: 18, grow: 0.45, ring: 0.75, fly: 4, in: 0.1, rung: 7 },
+  // the dizzy mark's two stars round the head, made pluses
+  'dizzy-stars': { speed: 6.25, r: 12, ry: 3, over: 7, rung: 10 },
+  // now and then a star streaks down past the head, four fading behind it
+  'shooting-star': { every: 2.8, for: 0.75, from: [34, -26], by: [-46, 30], trail: 4, gap: 0.035, in: 0.1, out: 0.25,
+                     thin: 0.2, rung: 10 },
+  // two of the sky's birds circling overhead, wings swapping V and caret
+  'flock-overhead': { n: 2, speed: 1.4, step: 0.3, r: 16, ry: 3, over: 14, apart: 4, flapHz: 5, rung: 7 },
+  // walking, three dashes behind, their lengths swapping a frame each
+  'speed-lines': { rows: [[4, 8, 12], [9, 12, 6], [14, 6, 10]], gap: 3, hz: 12, ink: 0.8, rung: 6 },
+  // the gold set's: a ring over the head breathing by opacity, two motes off it
+  'gold-halo': { over: 12, rows: ['..#####..', '##.....##', '##.....##', '..#####..'], back: 2, breath: 0.15, breathHz: 1.3,
+                 motes: 2, life: 2.2, seed: 8, spread: 12, sway: 2, swayHz: 5, lift: 2, rise: 12 },
 };
 // The embers' tones as they cool, first to last: a rung of the yard's grey
 // ramp or of its purple (PURPLE); the deep's are its own list, read as the
@@ -104,3 +128,29 @@ export const WARD_AURA_EMBERS = {
   yard: [['grey', 10], ['purple', 10], ['grey', 6], ['purple', 12], ['grey', 4]],
   deep: [['grey', 10], ['purple', 12], ['grey', 6], ['purple', 9], ['grey', 4]],
 };
+
+// --- the expansion's head pieces (render/wardheads.js; the owner's vote on
+// docs/mocks/wardrobe-expansion-2026-10-16) ------------------------------------------
+// Each one's numbers, in seconds and world pixels: `h` how tall it stands
+// over the head, for what rides over it; `rung` a tone on the grey ramp.
+export const WARD_HEADS = {
+  // hops every `every` seconds, a wing beating while it is up
+  bird: { h: 12, every: 3.4, hop: 0.55, high: 3, flapHz: 10, stepHz: 4, rung: 7 },
+  // the tassel swings with the step
+  mortarboard: { h: 10, stepHz: 4, rung: 6 },
+  // tips itself every `every` seconds: lifted and leaned
+  bowler: { h: 8, every: 3.6, tip: 0.8, high: 4 },
+  'hard-hat': { h: 6, rung: 5 },
+  // a ring a radius round the middle, see-through, two glints, one bubble
+  'diving-bowl': { h: 8, r: 14, edge: 1.1, ink: 0.9, rung: 5, glint: 2, life: 1.7, seed: 13, wobble: 8, rise: 12,
+                   in: 0.15, out: 0.4, bubble: 6 },
+};
+
+// --- the lamp's light (render/lamplight.js; the owner, 2026-10-16: "lamp
+// light all the time") ----------------------------------------------------------------
+// A wedge out of the front of a lamp hat, the way the body faces: `reach`
+// world pixels long, `from` half its height at the lamp and `spread` more
+// a pixel out, leaning `tilt` down a pixel out; in the yard a rung of its
+// grey ramp, in the deep a rung of the deep's. It fades in and out over
+// `fade` seconds as the lamp goes on and comes off.
+export const LAMP_CONE = { reach: 36, from: 2, spread: 0.28, tilt: 0.12, rung: 1, deepRung: 2, fade: 0.6 };

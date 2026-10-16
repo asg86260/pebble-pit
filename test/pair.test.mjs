@@ -14,7 +14,7 @@ import { startBeat } from '../src/beats.js';
 import { persist, restore } from '../src/persist.js';
 import { migrate } from '../src/migrations/index.js';
 import { AURA_KEYS } from '../src/render/wardaura.js';
-import { pairBody, outfitOf, DEFAULTS, stepItem, rollOutfit, bareOutfit, SLOTS } from '../src/wardrobe.js';
+import { pairBody, outfitOf, DEFAULTS, stepItem, rollOutfit, bareOutfit, SLOTS, isOpen } from '../src/wardrobe.js';
 
 const KEY = 'boulder-clicker/v4';
 const ids = () => ({ ...S.pairIds });
@@ -148,7 +148,8 @@ group('what they wear is kept by the save, item by item', async () => {
 // turns up), taken off by clear; and a save from before the slot is read
 // wearing none.
 group('the aura is a slot: kept by the save, rolled by randomize, taken off by clear', async () => {
-  const auras = SLOTS.find(s => s.key === 'aura').items.map(i => i.key);
+  // the ones a fresh yard can wear: the rest wait on what opens them (wardrobe-locks.test.mjs)
+  const all = SLOTS.find(s => s.key === 'aura').items.map(i => i.key), auras = all.filter(k => isOpen('aura', k));
   stepItem('you', 'aura', 7);
   stepItem('sqouse', 'aura', -1);
   const worn = { you: outfitOf('you').aura, sqouse: outfitOf('sqouse').aura };
@@ -170,9 +171,9 @@ group('the aura is a slot: kept by the save, rolled by randomize, taken off by c
   return [
     ok(worn.you === auras[7] && worn.sqouse === auras[auras.length - 1], 'the row steps the aura', JSON.stringify(worn)),
     ok(back.you === worn.you && back.sqouse === worn.sqouse, 'a save and a load hand it back', JSON.stringify(back)),
-    ok(auras.slice(1).every(k => AURA_KEYS.includes(k)) && AURA_KEYS.every(k => auras.includes(k)),
+    ok(all.slice(1).every(k => AURA_KEYS.includes(k)) && AURA_KEYS.every(k => all.includes(k)),
        'every aura on the row is one that is drawn', AURA_KEYS.join(' ')),
-    ok(auras.every(k => rolled.has(k)), 'randomize puts every aura on, and none', [...rolled].join(' ')),
+    ok(auras.every(k => rolled.has(k)) && [...rolled].every(k => auras.includes(k)), 'randomize puts every open aura on, and none, and no locked one', [...rolled].join(' ')),
     ok(cleared === 'none', 'clear takes it off', cleared),
     ok(ran.includes(26) && raw.outfits.you.aura === 'none' && outfitOf('sqouse').aura === 'none',
        'a save from before the slot wears none', `${ran} ${JSON.stringify(outfitOf('sqouse'))}`)

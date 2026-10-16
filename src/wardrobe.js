@@ -21,9 +21,12 @@
 // both. No DOM and no drawing in this file.
 
 import { S } from './state.js';
-import { WARD_NONE_ODDS, NAME_MAX } from './config.js';
-import { msgOr } from './lang.js';
+import { WARD_NONE_ODDS, NAME_MAX, NOTICE_TICK_S } from './config.js';
+import { msg, msgOr } from './lang.js';
 import { CREW_NAMES } from './crew/names.js';
+import { HATS } from './sprites.js';
+import { JOB } from './jobs.js';
+import { stockOf } from './kit.js';
 
 // --- the items ---------------------------------------------------------------------
 // Every item a row: `key` (what the save holds), `name` (its message), and
@@ -32,15 +35,26 @@ import { CREW_NAMES } from './crew/names.js';
 // (centered when not given) -- or `rects`, world pixels off the body's
 // top-left, drawn facing right and mirrored for a body facing left. `ribbon`
 // hangs two tails down the body's back (render/wardrobe.js, `ribbonTails`).
+// `draw` for the pieces that move, drawn by key (render/wardheads.js);
+// `tone` an ink other than the black (the gold set's gold); `lamp` for a hat
+// that casts its light (render/lamplight.js).
+//
+// `lock` is what opens an item that is not open from the start (the
+// owner's picks, 2026-10-16; `itemLock` below): `{ ach }` a notice earned,
+// `{ hatOf }` the first of that station's hats the yard owns, `{ fact }` a
+// thing that has happened in the yard (`FACTS`); the last two carry `words`,
+// the messages for what they wait on. What the two of them start
+// in is never locked, so the top hat is open whatever the owner's pick for
+// it says: the survivor wears it from the first frame.
 export const HEAD = [
   { key: 'none', name: 'ward-none' },
   // a small bow on top, the owner's pick at the redraws (option C)
   { key: 'bow', name: 'ward-bow', rects: [[2, -6, 4, 2], [12, -6, 4, 2], [2, -4, 2, 2], [6, -4, 6, 2], [14, -4, 2, 2],
                                           [2, -2, 4, 2], [12, -2, 4, 2]], ribbon: true },
   { key: 'top-hat', name: 'ward-top-hat', rows: ['.###.', '.###.', '#####'] },
-  { key: 'crown', name: 'ward-crown', rows: ['#.#.#', '#####'] },
-  { key: 'flower', name: 'ward-flower', rows: ['.#.', '#.#', '.#.', '.#.'] },
-  { key: 'sprout', name: 'ward-sprout', rows: ['##.##', '..#..'] },
+  { key: 'crown', name: 'ward-crown', rows: ['#.#.#', '#####'], lock: { ach: 'gotout' } },
+  { key: 'flower', name: 'ward-flower', rows: ['.#.', '#.#', '.#.', '.#.'], lock: { ach: 'firstspore' } },
+  { key: 'sprout', name: 'ward-sprout', rows: ['##.##', '..#..'], lock: { ach: 'firstgrain' } },
   { key: 'ears', name: 'ward-ears', rows: ['#.#'] },
   { key: 'antenna', name: 'ward-antenna', rows: ['..#', '.#.', '.#.'], ox: 0 },
   { key: 'beanie', name: 'ward-beanie', rows: ['.#.', '###', '###'] },
@@ -48,6 +62,21 @@ export const HEAD = [
   // a band across the top of the square, and its two ends out the back
   { key: 'headband', name: 'ward-headband', rects: [[0, 4, 18, 2], [-6, 2, 6, 2], [-4, 6, 4, 2]] },
   { key: 'mohawk', name: 'ward-mohawk', rows: ['#', '#'] },
+  // the station hats, the crew's own drawings (sprites.js), each opened by
+  // the first of them the yard owns
+  { key: 'helmet', name: 'ward-helmet', rows: HATS.helmet, lock: { hatOf: JOB.ROCK, words: ['ward-lock-rockhands', 'ward-lock-rockhands-note'] } },
+  { key: 'lamp', name: 'ward-lamp', rows: HATS.lamp, lamp: true, lock: { hatOf: JOB.QUARRY, words: ['ward-lock-quarriers', 'ward-lock-quarriers-note'] } },
+  { key: 'sun-hat', name: 'ward-sun-hat', rows: HATS.brim, lock: { hatOf: JOB.FARM, words: ['ward-lock-farmhands', 'ward-lock-farmhands-note'] } },
+  { key: 'wizard-hat', name: 'ward-wizard-hat', rows: HATS.point, lock: { hatOf: JOB.WIZARD, words: ['ward-lock-wizards', 'ward-lock-wizards-note'] } },
+  { key: 'cap', name: 'ward-cap', rows: HATS.cap, lock: { hatOf: JOB.JANITOR, words: ['ward-lock-janitors', 'ward-lock-janitors-note'] } },
+  // the expansion's
+  { key: 'bird', name: 'ward-bird', draw: true, lock: { ach: 'bird' } },
+  { key: 'mortarboard', name: 'ward-mortarboard', draw: true, lock: { ach: 'alltrades' } },
+  { key: 'bowler', name: 'ward-bowler', draw: true, lock: { ach: 'hatoff' } },
+  { key: 'hard-hat', name: 'ward-hard-hat', draw: true, lock: { ach: 'allbuilt' } },
+  { key: 'diving-bowl', name: 'ward-diving-bowl', draw: true, lock: { fact: 'portal', words: ['ward-lock-portal', 'ward-lock-portal-note'] } },
+  // the gold set
+  { key: 'gold-crown', name: 'ward-gold-crown', rows: ['#.#.#', '#####'], tone: 'gold', lock: { ach: 'freed' } },
 ];
 
 // Faces: marks on the white middle, a grid of WARD_GRID by WARD_GRID units
@@ -58,13 +87,15 @@ export const FACE = [
   { key: 'sleepy', name: 'ward-sleepy', grid: ['', '', '..##.##'] },
   { key: 'smile', name: 'ward-smile', grid: ['', '', '...#.#.', '', '..#...#', '...###.'] },
   { key: 'glasses', name: 'ward-glasses', grid: ['', '###.###', '#.###.#', '###.###'] },
-  { key: 'round-glasses', name: 'ward-round-glasses', grid: ['', '.#...#.', '#.###.#', '.#...#.'] },
+  { key: 'round-glasses', name: 'ward-round-glasses', grid: ['', '.#...#.', '#.###.#', '.#...#.'], lock: { ach: 'firstspark' } },
   { key: 'shades', name: 'ward-shades', grid: ['', '#######', '###.###'] },
   { key: 'monocle', name: 'ward-monocle', grid: ['', '.....#.', '..#.#.#', '.....#.', '......#', '......#'] },
   { key: 'eyepatch', name: 'ward-eyepatch', grid: ['', '#####..', '..#.###', '....###'] },
   { key: 'mustache', name: 'ward-mustache', grid: ['', '', '...#.#.', '..#...#', '..#####'] },
   { key: 'freckles', name: 'ward-freckles', grid: ['', '', '...#.#.', '...g.g.', '..g.g..'] },
   { key: 'blush', name: 'ward-blush', grid: ['', '', '...#.#.', '..gg.gg'] },
+  { key: 'surprised', name: 'ward-surprised', grid: ['', '...#.#.', '...#.#.', '', '...###.', '...#.#.', '...###.'],
+    lock: { ach: 'lifted' } },
 ];
 
 // Neck: marks on the lower half of the middle, and for the scarves a tail out
@@ -77,6 +108,9 @@ export const NECK = [
   { key: 'scarf', name: 'ward-scarf', grid: ['', '', '', '', '#######', '#######'], tail: 'solid' },
   { key: 'checked-scarf', name: 'ward-checked-scarf', grid: ['', '', '', '', '#g#g#g#', 'g#g#g#g'], tail: 'check' },
   { key: 'striped-scarf', name: 'ward-striped-scarf', grid: ['', '', '', '', '#.#.#.#', '#.#.#.#'], tail: 'stripe' },
+  // the gold set's: the checked scarf with gold for its grey checks
+  { key: 'gold-scarf', name: 'ward-gold-scarf', grid: ['', '', '', '', '#g#g#g#', 'g#g#g#g'], tail: 'check', tone: 'gold',
+    lock: { ach: 'freed' } },
 ];
 
 // Back: off the side away from the way the body faces, drawn by key
@@ -88,6 +122,8 @@ export const BACK = [
   { key: 'backpack', name: 'ward-backpack' },
   { key: 'balloon', name: 'ward-balloon' },
   { key: 'flag', name: 'ward-flag' },
+  { key: 'moneybag', name: 'ward-moneybag', lock: { ach: 'firstgrain' } },
+  { key: 'gold-cape', name: 'ward-gold-cape', lock: { ach: 'freed' } },
 ];
 
 // Patterns over the white middle, as rects in world pixels off its top-left
@@ -120,7 +156,8 @@ export const PATTERN = [
 ];
 
 // Auras: particles round the body, drawn by key (render/wardaura.js, its
-// numbers WARD_AURAS), since every one of them moves.
+// numbers WARD_AURAS), since every one of them moves. One at a time: the
+// owner wanted no second aura slot.
 export const AURA = [
   { key: 'none', name: 'ward-none' },
   { key: 'dust-motes', name: 'ward-dust-motes' },
@@ -133,6 +170,15 @@ export const AURA = [
   { key: 'falling-petals', name: 'ward-falling-petals' },
   { key: 'scale-swirl', name: 'ward-scale-swirl' },
   { key: 'embers', name: 'ward-embers' },
+  { key: 'flies', name: 'ward-flies', lock: { ach: 'muckrain' } },
+  { key: 'stink', name: 'ward-stink', lock: { ach: 'nobodyhired' } },
+  { key: 'juggling-balls', name: 'ward-juggling-balls', lock: { ach: 'catchall' } },
+  { key: 'potion-fizz', name: 'ward-potion-fizz', lock: { ach: 'firstbrew' } },
+  { key: 'dizzy-stars', name: 'ward-dizzy-stars', lock: { ach: 'dizzy' } },
+  { key: 'shooting-star', name: 'ward-shooting-star', lock: { ach: 'star' } },
+  { key: 'flock-overhead', name: 'ward-flock-overhead', lock: { ach: 'wholelot' } },
+  { key: 'speed-lines', name: 'ward-speed-lines', lock: { ach: 'underminute' } },
+  { key: 'gold-halo', name: 'ward-gold-halo', lock: { ach: 'freed' } },
 ];
 
 // The slots, in the picker's order, each with its message.
@@ -148,6 +194,57 @@ const SLOT = Object.fromEntries(SLOTS.map(s => [s.key, s]));
 export const itemOf = (slot, key) => SLOT[slot]?.items.find(i => i.key === key) || null;
 // The slot's "nothing": the first row, whatever it is called.
 export const bareOf = slot => SLOT[slot].items[0];
+
+// --- what opens them -----------------------------------------------------------------
+// The things in the yard an item can wait on, other than a notice or a hat.
+const FACTS = {
+  // the wizards' portal over the abyss stands (wizard.js): the way down
+  portal: () => !!S.portalOpen,
+};
+// A rule read off the yard, as the word it is latched under in
+// `S.wardOpened`: a hat's count can fall (the outhouse closes, an old save)
+// and a fact can be undone, and an item once opened never closes. A notice
+// needs no latch: `S.won` only ever grows.
+const latchOf = r => (r.hatOf ? 'hat:' + r.hatOf : r.fact ? 'fact:' + r.fact : null);
+const holds = r => (r.ach ? (S.won || []).includes(r.ach)
+  : r.hatOf ? stockOf(r.hatOf) >= 1 : r.fact ? !!(FACTS[r.fact] && FACTS[r.fact]()) : true);
+const isDefault = (slot, key) => WHO.some(w => DEFAULTS[w][slot] === key);
+const ruleOf = (slot, key) => {
+  const it = itemOf(slot, key);
+  return it && it.lock && !isDefault(slot, key) ? it.lock : null;
+};
+export function isOpen(slot, key) {
+  const r = ruleOf(slot, key);
+  if (!r) return true;
+  const l = latchOf(r);
+  return !!(l && (S.wardOpened || []).includes(l)) || holds(r);
+}
+// What an item waits on, for the page to say: null for one that is open,
+// else its kind, the notice, job or fact it waits on, and a name and a line
+// for it (a notice's are its own).
+export function itemLock(slot, key) {
+  if (isOpen(slot, key)) return null;
+  const r = ruleOf(slot, key);
+  if (r.ach) return { kind: 'ach', id: r.ach, name: msg(`ach-${r.ach}-name`), note: msg(`ach-${r.ach}-note`) };
+  const [name, note] = r.words.map(id => msg(id));
+  return r.hatOf ? { kind: 'hat', id: r.hatOf, name, note } : { kind: 'fact', id: r.fact, name, note };
+}
+// Every rule read off the yard that holds now, latched: asked as the
+// notices are, twice a second (game.js), and once a save is back.
+export function latchOpened() {
+  const had = S.wardOpened || [], got = [];
+  for (const s of SLOTS) for (const it of s.items) {
+    const l = it.lock && latchOf(it.lock);
+    if (l && !had.includes(l) && !got.includes(l) && holds(it.lock)) got.push(l);
+  }
+  if (got.length) S.wardOpened = [...had, ...got];
+}
+let latched = -Infinity;
+export function stepWardrobe(t) {
+  if (t >= latched && t - latched < NOTICE_TICK_S * 1000) return;
+  latched = t;
+  latchOpened();
+}
 
 // --- the outfits -------------------------------------------------------------------
 // The two of them by the part each plays: `you`, the survivor who digs and
@@ -177,21 +274,28 @@ export function wholeOutfit(o, who) {
 }
 export const outfitOf = who => (S.outfits && S.outfits[who]) || DEFAULTS[who] || DEFAULTS.you;
 
-// One slot stepped along its list, wrapping, nothing first.
+// One slot stepped along its list, wrapping, nothing first, past what is
+// still locked. `wear` itself asks nothing: an outfit a save brings back
+// keeps an item that is locked now, so nobody is undressed.
 export function stepItem(who, slot, by) {
-  const items = SLOT[slot].items, cur = outfitOf(who)[slot];
-  const i = Math.max(0, items.findIndex(it => it.key === cur));
-  wear(who, { [slot]: items[(i + by + items.length) % items.length].key });
+  const items = SLOT[slot].items, cur = outfitOf(who)[slot], n = items.length;
+  let i = Math.max(0, items.findIndex(it => it.key === cur));
+  for (let k = 0; k < n; k++) {
+    i = (i + by + n) % n;
+    if (isOpen(slot, items[i].key)) break;
+  }
+  wear(who, { [slot]: items[i].key });
 }
 export function wear(who, change) {
   S.outfits = { ...S.outfits, [who]: wholeOutfit({ ...outfitOf(who), ...change }, who) };
 }
-// One slot's item at random; nothing is WARD_NONE_ODDS times as likely as
-// any one item. The page's own chance, not the run's: a press on a menu is
-// no part of how the yard plays out.
+// One slot's item at random, of the ones open; nothing is WARD_NONE_ODDS
+// times as likely as any one item. The page's own chance, not the run's: a
+// press on a menu is no part of how the yard plays out.
 function rollItem(s, roll) {
-  const n = s.items.length - 1, r = roll() * (n + WARD_NONE_ODDS);
-  return r < WARD_NONE_ODDS ? s.items[0].key : s.items[1 + Math.min(n - 1, Math.floor(r - WARD_NONE_ODDS))].key;
+  const open = s.items.slice(1).filter(it => isOpen(s.key, it.key));
+  const n = open.length, r = roll() * (n + WARD_NONE_ODDS);
+  return r < WARD_NONE_ODDS || !n ? s.items[0].key : open[Math.min(n - 1, Math.floor(r - WARD_NONE_ODDS))].key;
 }
 export const rollSlot = (who, slot, roll = Math.random) => wear(who, { [slot]: rollItem(SLOT[slot], roll) });
 // A roll for the one being dressed only, so a good outfit on the other is
@@ -362,12 +466,13 @@ const readSelf = (s, who) => {
   return { name: cleanName(o.name), role: ROLES.includes(o.role) ? o.role : ROLE_START[who] };
 };
 export const SAVE = {
-  fields: ['pairIds', 'outfits', 'dressOffered', 'selves'],
+  fields: ['pairIds', 'outfits', 'dressOffered', 'selves', 'wardOpened'],
   write(out) {
     out.pairIds = { you: S.pairIds?.you || null, sqouse: S.pairIds?.sqouse || null };
     out.outfits = { you: outfitOf('you'), sqouse: outfitOf('sqouse') };
     out.dressOffered = !!S.dressOffered;
     out.selves = { you: { ...selfOf('you') }, sqouse: { ...selfOf('sqouse') } };
+    out.wardOpened = [...(S.wardOpened || [])];
   },
   read(s) {
     const ids = s.pairIds || {};
@@ -376,12 +481,17 @@ export const SAVE = {
     S.outfits = { you: wholeOutfit(s.outfits?.you, 'you'), sqouse: wholeOutfit(s.outfits?.sqouse, 'sqouse') };
     S.dressOffered = s.dressOffered !== false;
     S.selves = { you: readSelf(s.selves?.you, 'you'), sqouse: readSelf(s.selves?.sqouse, 'sqouse') };
+    S.wardOpened = Array.isArray(s.wardOpened) ? s.wardOpened.filter(l => typeof l === 'string') : [];
     keepPair();
+    // a save from before the latch: what its yard already owns opens now
+    latchOpened();
   },
   blank() {
     S.pairIds = { you: null, sqouse: null };
     S.outfits = { you: { ...DEFAULTS.you }, sqouse: { ...DEFAULTS.sqouse } };
     S.dressOffered = false;
     S.selves = { you: blankSelf('you'), sqouse: blankSelf('sqouse') };
+    S.wardOpened = [];
+    latched = -Infinity;
   }
 };

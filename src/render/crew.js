@@ -30,8 +30,9 @@ import { TYPE } from '../jobs.js';
 import { shown } from '../tween.js';
 import { poseAt, topOf } from '../motion.js';
 import { writeCount } from './numfont.js';
-import { dressBehind, dressOn, dressHead, dressFlat, headRows, motionOf, YARD_INKS, DEEP_INKS } from './wardrobe.js';
+import { dressBehind, dressOn, dressHead, dressFlat, headRows, wearsHead, motionOf, YARD_INKS, DEEP_INKS } from './wardrobe.js';
 import { dressAura } from './wardaura.js';
+import { lampCone } from './lamplight.js';
 import { outfitOf, whoIs, WHO } from '../wardrobe.js';
 
 // The bench is not in the yard until there is something on it worth buying.
@@ -730,6 +731,9 @@ function drawWorker(w, t0) {
     // the deep's inks where the deep is drawn over them, and no back item
     // where a cart hangs.
     const dress = lookFor(whoIs(w), w, w.x, { face: w.face || 1, deep: inTheDeep(w), back: !cart });
+    // A quarrier's lamp lights the way ahead whenever the lamp is the hat on
+    // show (a head item worn over it lights its own, render/wardrobe.js).
+    lampCone(ctx, x, y, w.face || 1, { on: kit === 'lamp' && !wearsHead(dress), key: w, t: t0 / 1000, src: 'hat' });
     const head = squat ? drawSquat(x, ground, dress) : drawBody(x, y, dress);
     if (pose && (pose.arms || pose.hold)) drawHeldPiece(x, y, pose.hold, pose.arms);
 

@@ -7343,6 +7343,258 @@
   "text": "embers"
  },
  {
+  "id": "ward-helmet",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "helmet"
+ },
+ {
+  "id": "ward-lamp",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "lamp"
+ },
+ {
+  "id": "ward-sun-hat",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "sun hat"
+ },
+ {
+  "id": "ward-wizard-hat",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "wizard hat"
+ },
+ {
+  "id": "ward-cap",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "cap"
+ },
+ {
+  "id": "ward-bird",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "bird"
+ },
+ {
+  "id": "ward-mortarboard",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "mortarboard"
+ },
+ {
+  "id": "ward-bowler",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "bowler"
+ },
+ {
+  "id": "ward-hard-hat",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "hard hat"
+ },
+ {
+  "id": "ward-diving-bowl",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "diving bowl"
+ },
+ {
+  "id": "ward-gold-crown",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "gold crown"
+ },
+ {
+  "id": "ward-surprised",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "surprised"
+ },
+ {
+  "id": "ward-gold-scarf",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "gold-checked scarf"
+ },
+ {
+  "id": "ward-moneybag",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "moneybag"
+ },
+ {
+  "id": "ward-gold-cape",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "gold-trim cape"
+ },
+ {
+  "id": "ward-flies",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "flies"
+ },
+ {
+  "id": "ward-stink",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "stink lines"
+ },
+ {
+  "id": "ward-juggling-balls",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "juggling balls"
+ },
+ {
+  "id": "ward-potion-fizz",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "potion fizz"
+ },
+ {
+  "id": "ward-dizzy-stars",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "dizzy stars"
+ },
+ {
+  "id": "ward-shooting-star",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "shooting star"
+ },
+ {
+  "id": "ward-flock-overhead",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "flock overhead"
+ },
+ {
+  "id": "ward-speed-lines",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "speed lines"
+ },
+ {
+  "id": "ward-gold-halo",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "gold halo"
+ },
+ {
+  "id": "ward-lock-rockhands",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "what a locked item waits on, where it is not a notice: a station's first hat, a name and a line (the line as the mock had it), and the portal",
+  "text": "first helmet"
+ },
+ {
+  "id": "ward-lock-rockhands-note",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "buy the rock its first helmet"
+ },
+ {
+  "id": "ward-lock-quarriers",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "first lamp"
+ },
+ {
+  "id": "ward-lock-quarriers-note",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "buy the quarry its first lamp"
+ },
+ {
+  "id": "ward-lock-farmhands",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "first sun hat"
+ },
+ {
+  "id": "ward-lock-farmhands-note",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "buy the farm its first sun hat"
+ },
+ {
+  "id": "ward-lock-wizards",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "first wizard hat"
+ },
+ {
+  "id": "ward-lock-wizards-note",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "make the tower its first wizard hat"
+ },
+ {
+  "id": "ward-lock-janitors",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "the outhouse"
+ },
+ {
+  "id": "ward-lock-janitors-note",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "open the outhouse"
+ },
+ {
+  "id": "ward-lock-portal",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "the portal"
+ },
+ {
+  "id": "ward-lock-portal-note",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "open the portal"
+ },
+ {
   "id": "shell-carry-title",
   "group": "The shell",
   "where": "electron/steam.cjs",

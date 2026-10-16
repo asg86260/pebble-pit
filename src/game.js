@@ -29,6 +29,7 @@ import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
 import { sampleRates } from './stats.js';
 import { stepNotices } from './notices.js';
+import { stepWardrobe } from './wardrobe.js';
 import { workFinished } from './works.js';
 import { stepGrit } from './grit.js';
 import { stepShocks } from './shock.js';
@@ -214,6 +215,7 @@ export const STEPS = [
   // after `clock`, which puts `now` on the frame.
   { name: 'books',   step: c => sampleBooks(c.now) },
   { name: 'notices', step: c => stepNotices(c.now) },   // and whether the yard did anything worth saying
+  { name: 'wardrobe', step: c => stepWardrobe(c.now) }, // and what it has opened in the wardrobe, latched (wardrobe.js)
   // The sky, the smog and the belt run on the background's clock, which
   // slows to a stop while a scene holds the yard (cutscene.js, `stepHush`)
   // and starts again after: deferred, never skipped.

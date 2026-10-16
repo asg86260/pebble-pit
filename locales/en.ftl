@@ -3255,6 +3255,45 @@ ward-rain-cloud = rain cloud
 ward-falling-petals = falling petals
 ward-scale-swirl = scale swirl
 ward-embers = embers
+ward-helmet = helmet
+ward-lamp = lamp
+ward-sun-hat = sun hat
+ward-wizard-hat = wizard hat
+ward-cap = cap
+ward-bird = bird
+ward-mortarboard = mortarboard
+ward-bowler = bowler
+ward-hard-hat = hard hat
+ward-diving-bowl = diving bowl
+ward-gold-crown = gold crown
+ward-surprised = surprised
+ward-gold-scarf = gold-checked scarf
+ward-moneybag = moneybag
+ward-gold-cape = gold-trim cape
+ward-flies = flies
+ward-stink = stink lines
+ward-juggling-balls = juggling balls
+ward-potion-fizz = potion fizz
+ward-dizzy-stars = dizzy stars
+ward-shooting-star = shooting star
+ward-flock-overhead = flock overhead
+ward-speed-lines = speed lines
+ward-gold-halo = gold halo
+
+# what a locked item waits on, where it is not a notice: a station's first
+# hat, a name and a line (the line as the mock had it), and the portal
+ward-lock-rockhands = first helmet
+ward-lock-rockhands-note = buy the rock its first helmet
+ward-lock-quarriers = first lamp
+ward-lock-quarriers-note = buy the quarry its first lamp
+ward-lock-farmhands = first sun hat
+ward-lock-farmhands-note = buy the farm its first sun hat
+ward-lock-wizards = first wizard hat
+ward-lock-wizards-note = make the tower its first wizard hat
+ward-lock-janitors = the outhouse
+ward-lock-janitors-note = open the outhouse
+ward-lock-portal = the portal
+ward-lock-portal-note = open the portal
 
 ## The shell
 

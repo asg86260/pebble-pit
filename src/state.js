@@ -65,6 +65,7 @@ export const S = {
   selves: null,           // each one's name and role, `{ you, sqouse }`; null is unnamed, today's roles (wardrobe.js)
   naming: false,          // a new yard's steps are up, where the names and roles are still chosen (wardrobepage.js)
   dressOffered: false,    // the page offered at the start of this yard, once (wardrobepage.js)
+  wardOpened: [],         // the wardrobe's locks read off the yard that have opened, latched so they never close (wardrobe.js)
   buried: false,          // somebody is under it, and still alive
   rescued: false,         // and, once the dome held one off them, they got out
   rescueTo: 0,            // where they are walking to while they do
@@ -824,7 +825,7 @@ export const SAVED_BY_HAND = [
   'floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft',
   'deepBed',              // the scales on the deep's floor, a plot like the pit (deep/scales.js)
   'refundOwed',           // a bill handed back still in the air, by coin, landed on the way in (pit.js)
-  'pairIds', 'outfits', 'dressOffered', 'selves',   // the two of them, what they are called and what they wear, checked item by item (wardrobe.js)
+  'pairIds', 'outfits', 'dressOffered', 'selves', 'wardOpened',   // the two of them, what they are called and what they wear, checked item by item (wardrobe.js)
 ];
 
 // And everything else: this session's own, deliberately thrown away on a
