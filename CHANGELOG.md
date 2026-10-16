@@ -297,6 +297,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The first trip down no longer jumps the picture up as its scene starts (`node tools/look.mjs abyss-intro`).
 - The net no longer hangs through the ground once the rock has ridden it down (the `net>` scene, run through).
 - The Windows app offers cloud saves like the Mac and Linux ones instead of shipping without them (test/release-workflow.test.mjs).
+- The saves page's rows, the volume slider and the controls list span the pause sheet's and the title page's full width, as the buttons under them do, instead of stopping short of them (src/selftest/sheetwidth.js).
 
 ## v0.5.2 — 2026-09-28
 

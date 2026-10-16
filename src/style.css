@@ -274,7 +274,6 @@ canvas {
   max-height: none; overflow-y: auto; overscroll-behavior: contain;
   /* the glass's width, not the desk's one width for every page */
   max-width: none;
-  align-items: center;
   padding: 6px var(--pad-l-x) calc(var(--pad-l-y) + var(--sheet-hidden, 0px) + env(safe-area-inset-bottom, 0px));
   opacity: 1;
   scrollbar-width: none;
@@ -1074,7 +1073,12 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* Every block on a page -- a row, a list, a button, a table, a form -- is
+     the sheet's whole inner width, as the buttons are: centered blocks each
+     sized to their own content stood at as many widths as there were pages.
+     Words are centered in their lines instead. */
+  align-items: stretch;
+  text-align: center;
   gap: var(--gap-m);
   /* One width for every page, so a page turns in place rather than the sheet
      resizing and re-centering under the hand; the window is the only thing
@@ -1258,14 +1262,14 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 /* what broke, in the browser's own words: lower case, since it is a quotation
    and not a label, and held to one line's width so a long stack does not turn
    the sheet into a page */
-.held .why { text-transform: none; letter-spacing: 0; max-width: 34em; text-align: center; }
+.held .why { text-transform: none; letter-spacing: 0; max-width: 34em; margin-inline: auto; text-align: center; }
 .held .said:empty { display: none; }
 /* the sheet's one-line reply is held to the same width as a quotation, so a
    long answer wraps under the buttons rather than stretching the card */
-.held .said { max-width: 34em; text-align: center; }
+.held .said { max-width: 34em; margin-inline: auto; text-align: center; }
 /* the line between the word and the rest: the top of the sheet is about the
    game being stopped, the bottom is about what you can do while it is */
-.held .rule { width: 60%; border-top: 1px solid var(--ink); }
+.held .rule { width: 60%; align-self: center; border-top: 1px solid var(--ink); }
 /* the sheet's small hand, for the lines that are said rather than offered:
    the keys, the build, the one sentence about there being no ending */
 .held .small { font-size: var(--fs-small); }
@@ -1330,7 +1334,6 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   text-decoration: none;
   text-align: center;
 }
-.held .slots, .held .saves { align-self: stretch; }
 /* The one that opens the game stands inverted on the landing page's front:
    the one thing the page is for. */
 .col button.play { color: var(--paper); background: var(--ink); }
@@ -1346,7 +1349,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    made of. Both engines want the parts named separately. */
 .held input[type=range] {
   -webkit-appearance: none; appearance: none;
-  width: 140px; height: 12px; margin: 0;
+  height: 12px; margin: 0;
   background: none; cursor: pointer;
 }
 .held input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--ink); }
@@ -1545,8 +1548,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 /* The saves page (slots.js), on the held sheet and the landing page alike: a
    line a yard -- the row's button carrying its words and its playtime, a
    dashed delete beside it -- and under each the confirm its delete fades
-   open. Every column is as wide as what is in it, so the widest row sets the
-   sheet's width; every item (number, rock, crew, when, playtime) is a column the rows share through the subgrid, the gap between them standing for the dots. The
+   open. Every row is the sheet's width, the slack going to the column before
+   the playtime; every item (number, rock, crew, when, playtime) is a column the rows share through the subgrid, the gap between them standing for the dots. The
    rows' gap is a margin rather than a row-gap, so a shut confirm takes no room
    at all. An empty row is armed before it starts a yard. */
 .saves { display: grid; grid-template-columns: repeat(3, max-content) minmax(max-content, 1fr) max-content max-content; column-gap: 6px; }
@@ -1592,8 +1595,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 body.still .saves .confirm { transition: none; }
 /* Too wide for the window across (slots.js, `fit`), a row's words take two
    lines -- number, rock, crew, then when and playtime -- and the ✕ stays in the
-   card at the right. */
-.saves.stacked { grid-template-columns: max-content 36px; }
+   card at the right, the words still taking the sheet's width. */
+.saves.stacked { grid-template-columns: minmax(max-content, 1fr) 36px; }
 .saves.stacked .saverow { column-gap: 0; }
 .saves.stacked .slot { grid-column: 1; grid-template-columns: auto auto 1fr; }
 .saves.stacked .slot .n { grid-column: 1; grid-row: 1; }
