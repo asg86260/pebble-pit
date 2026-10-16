@@ -151,7 +151,7 @@ export function startMeet(t) {
 
   // Not scripted people: one of the crew, on the roster's own walk, swinging
   // at the ground the way it swings at everything (`sendDigger`).
-  sendDigger(true);
+  sendDigger();
 }
 
 // --- and, once, somebody gets out ---------------------------------------------
@@ -624,9 +624,9 @@ export const buriedOut = () => Math.max(0, Math.min(1, S.buriedDug || 0));
 // Somebody goes to dig: the nearest free body on the ground, marked `dig`,
 // which is the stage in crew/step.js that has it swing at the ground once
 // it is there. True if somebody is on it, already or from now.
-// In the reunion's two beats, whose yard waits for the dig, he comes for
-// her whenever he is free to, however far off (`him`); between rocks there
-// is no time to cross the yard, and the nearest goes.
+// In the rescue, whose yard waits for the dig that gets her out, he comes
+// for her whenever he is free to, however far off (`him`); at the meeting
+// and between rocks the nearest goes, as the rock gives no time to cross.
 export function sendDigger(him = false) {
   if (S.workers.some(w => w.dig)) return true;
   const at = buriedAt();

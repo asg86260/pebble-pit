@@ -170,9 +170,8 @@ if (demo) {
   clampCam();
   if (bench) S.staged = true;
   // A yard nobody has played yet asks once what the two of them wear, the
-  // yard held under the sheet until it is done or skipped. Not under a
-  // browser driven by the checks or the tools, whose every yard is new.
-  if (!bench && !navigator.webdriver) offerDress();
+  // yard held under the sheet until it is done or skipped.
+  if (!bench) offerDress();
 }
 addEventListener('resize', relayout);
 addEventListener('load', relayout);

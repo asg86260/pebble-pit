@@ -106,9 +106,11 @@ document.getElementById('wardrobeback').addEventListener('click', () => {
 });
 let dressing = false;
 // Once, at a new yard: the sheet up on the picker before the opening walks
-// out, the yard held under it. Done or skip lets it go.
-export function offerDress() {
-  if (S.dressOffered) return;
+// out, the yard held under it. Done or skip lets it go. Not under a browser
+// driven by the checks or the tools, whose every yard is new, unless asked
+// for by name (`force`, the scene that shoots it).
+export function offerDress(force = false) {
+  if (S.dressOffered || (!force && typeof navigator !== 'undefined' && navigator.webdriver)) return;
   S.dressOffered = true;
   hold(true);
   dressing = true;

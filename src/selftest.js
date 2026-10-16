@@ -41,6 +41,7 @@ import { TESTS as language } from './selftest/language.js';   // the language pa
 import { TESTS as feedback } from './selftest/feedback.js';   // the feedback form
 import { TESTS as deeppalette } from './selftest/deeppalette.js';   // the deep's capped palette (B4)
 import { TESTS as sheetwidth } from './selftest/sheetwidth.js';   // every block the sheet's width
+import { TESTS as wardrobe } from './selftest/wardrobe.js';   // the two of them dressed, and the picker
 
 // Every group there is, in file order.
 const TESTS = [
@@ -73,6 +74,7 @@ const TESTS = [
   ...feedback,
   ...deeppalette,
   ...sheetwidth,
+  ...wardrobe,
 ];
 
 // `__test()` runs the lot. `__test('casino')` runs the groups whose name says

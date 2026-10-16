@@ -857,6 +857,15 @@ const deepScenes = {
       namePair('her', S.workers.find(w => w.uid === S.stations[0].fighter));
       lookAtStation(0);
     } },
+  // The same, in everything the wardrobe draws in its greys, for the deep's
+  // palette check: the checked scarf, the freckles, a grey pattern.
+  'pair-deep-greys': { about: 'the deep', say: 'her at the first station in the wardrobe greys, in the deep',
+    run: () => {
+      deepYard({ stage: 1, wound: 0.33, party: [cast('sword', 2), cast('ranger', 2)] });
+      namePair('her', S.workers.find(w => w.uid === S.stations[0].fighter));
+      wear('her', { head: 'crown', face: 'freckles', neck: 'checked-scarf', back: 'cape', pattern: 'grey' });
+      lookAtStation(0);
+    } },
   // Every station the floor holds at once, the camera on the middle of them.
   'deep-all': { about: 'the deep', say: 'the whole deep floor, four stations standing, a fighter at each',
     run: () => {
@@ -2135,7 +2144,7 @@ export const SCENES = {
                  document.getElementById('settingsbtn').click();
                  document.getElementById('wardrobebtn').click(); } },
   'wardrobe-offer': { about: 'the story', say: 'the picker offered at a new yard, before the opening', page: true,
-    run: () => { window.__reset(); window.__fast(1); S.dressOffered = false; offerDress(); } },
+    run: () => { window.__reset(); window.__fast(1); S.dressOffered = false; offerDress(true); } },
   // The controls page of the settings sheet, opened by its button.
   controlspage: { about: 'the story', say: 'the controls page on the held sheet', page: true,
     run: () => { dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
