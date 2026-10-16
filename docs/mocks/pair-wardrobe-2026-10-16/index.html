@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pair Wardrobe Mocks</title>
+<style>
+  :root {
+    --bg: #f4f4f1; --ink: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --warn: #8a5a00; --good: #2c6e3f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #141417; --ink: #e9e9ee; --muted: #9a9aa4; --card: #1d1d22; --line: #2e2e36; --warn: #e0b45a; --good: #7fcf95; }
+  }
+  :root[data-theme="dark"] { --bg: #141417; --ink: #e9e9ee; --muted: #9a9aa4; --card: #1d1d22; --line: #2e2e36; --warn: #e0b45a; --good: #7fcf95; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  h3 { font-size: 13px; margin: 12px 0 4px; color: var(--muted); font-weight: normal; text-transform: uppercase; letter-spacing: .08em; }
+  p { margin: 0 0 10px; color: var(--muted); }
+  ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); }
+  b, strong { color: var(--ink); }
+  .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+  .bar label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .bar button { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 16px; min-width: 0; }
+  .tag { display: inline-block; min-width: 1.6em; font-weight: bold; }
+  canvas { display: block; image-rendering: pixelated; max-width: 100%; }
+  .scroll { max-width: 100%; overflow-x: auto; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+  .row > figure { margin: 0; min-width: 0; max-width: 100%; }
+  figure { margin: 0; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .warn { color: var(--warn); }
+  .good { color: var(--good); }
+  .ph { border-bottom: 1px dashed currentColor; }
+  .ph::after { content: '*'; color: var(--warn); }
+  .verdict { margin-top: 8px; }
+  .verdict b { display: inline-block; min-width: 7em; }
+  .keyrow { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 4px 0 8px; }
+  .keyrow span b { color: var(--ink); }
+
+  /* the wardrobe galleries */
+  .tiles { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .tile { border: 1px solid var(--line); border-radius: 6px; padding: 6px; background: var(--bg); display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .tile .pair { display: flex; align-items: flex-end; gap: 8px; }
+  .tile .name { font-size: 12px; }
+  .slotgrade { font-size: 12px; padding: 1px 6px; border-radius: 4px; border: 1px solid currentColor; margin-left: 8px; }
+
+  /* The game's sheet, copied by eye from src/style.css (.panel .sheet): paper, a
+     2px ink border, a hard offset shadow, uppercase monospace with a little
+     tracking. The game's own paper and ink stay white and black on a dark page. */
+  .pickers { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; align-items: start; margin-top: 12px; }
+  @media (max-width: 900px) { .pickers { grid-template-columns: minmax(0, 1fr); } }
+  .sheet { background: #fff; color: #000; border: 2px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,.22);
+           font: 12px/1.4 ui-monospace, "Courier New", monospace; letter-spacing: .08em; text-transform: uppercase;
+           padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .sheet .t { font-weight: bold; display: flex; justify-content: space-between; }
+  .sheet canvas { background: #fff; cursor: pointer; }
+  .sheet .who { display: flex; gap: 8px; }
+  .sheet .who > div { flex: 1; border: 2px solid #000; padding: 4px; text-align: center; cursor: pointer; user-select: none; }
+  .sheet .who > div.on { background: #000; color: #fff; }
+  .sheet .slot { display: grid; grid-template-columns: 7em auto 1fr auto 4em; align-items: center; gap: 8px; border: 2px solid transparent; padding: 2px 4px; }
+  .sheet .slot.cur { border-color: #000; }
+  .sheet .slot .arr { border: 2px solid #000; width: 28px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; font-weight: bold; }
+  .sheet .slot .val { text-align: center; }
+  .sheet .slot .count { color: #8a8a8a; font-size: 10px; text-align: right; }
+  .sheet .btns { display: flex; justify-content: space-between; gap: 8px; }
+  .sheet .btn { border: 2px solid #000; padding: 4px 10px; cursor: pointer; user-select: none; }
+  .sheet .hint { color: #8a8a8a; font-size: 10px; letter-spacing: .04em; }
+  /* the phone: the same sheet in a 360-wide frame, rows two lines tall, every target 44px */
+  .phone { width: 360px; max-width: 100%; border: 10px solid #222; border-radius: 26px; padding: 14px 10px; background: #e9e9e4; }
+  .phone .sheet .slot { grid-template-columns: 44px 1fr 44px; grid-template-rows: auto auto; row-gap: 2px; }
+  .phone .sheet .slot .lab { grid-column: 1 / 4; font-size: 10px; color: #555; }
+  .phone .sheet .slot .count { display: none; }
+  .phone .sheet .slot .arr { width: 44px; height: 44px; font-size: 16px; }
+  .phone .sheet .btn { padding: 12px 14px; flex: 1; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <h1>The two of you: what they wear</h1>
+  <p>Mock, not the game. Drawn from plain cells the way the last mock (<code>docs/mocks/pair-identity-2026-10-16</code>) was: a body is the 3 x 3 cell square (WORKER, 18 world pixels) with a 2-pixel black rim and a white middle; the station hats are the five in <code>HATS</code> (src/sprites.js), in black as the game draws them. One cell is 6 world pixels. "Game scale" is one world pixel to one screen pixel, as on an 800-wide window. The canvases loop on held frames (12 a second).</p>
+  <p>Follows the owner's note on the last mock: <i>choosing what they wear, yes; ignore the hats on the main squares and show the chosen headwear, or overlay them; expand the clothes.</i></p>
+
+  <div class="bar">
+    <button id="theme">page: auto</button>
+    <button id="pause">pause</button>
+    <label><input type="checkbox" id="reveal"> mark the two in the crowds (mock-only mark)</label>
+  </div>
+
+  <!-- ===================================================================== -->
+  <h2 style="margin-top:22px">Part 1: the station hat on the two of them</h2>
+  <p>One card per station hat. In each: the plain crew body in that hat for reference, then four chosen headwear, each shown twice: <b>a</b> the chosen thing replaces the station hat, <b>b</b> the two drawn as one hat, the station hat's one telling detail kept (the helmet's bar, the lamp a cell proud at the front, the sun hat's brim, the wizard's point, the cap's block). Top row 3x, bottom row game scale.</p>
+  <div id="hatcards"></div>
+  <div class="card">
+    <h2>Verdict on the hats</h2>
+    <ul id="hatverdict">
+      <li><b class="good">Replace (a) is the rule.</b> The game already says the job by where a body stands (the comment on <code>drawBody</code>: "no job carries a mark of its own"), so the pair lose nothing they need, and their headwear stays one constant shape across every station, the deep and act 3, which is what makes them findable.</li>
+      <li><b class="good">Overlay reads well on two hats: the sun hat and the point.</b> A brim under a bow, a top hat or a crown is a sun hat with a ribbon or a crown on it, still farm at game scale. The point grows out of tall things (top hat, flower) well.</li>
+      <li><b class="warn">Overlay half-reads on the lamp.</b> The one cell proud at the front reads as a lamp on the top hat (it sits on the hat's face) and nowhere else; on the bow and the crown it is a stub.</li>
+      <li><b class="warn">Overlay does not read on the helmet and the cap.</b> Both are a black bar; merged, either one is "the headwear on a stripe", the two are the same picture a row apart, and the top hat swallows the cap whole. Merging there is really stacking.</li>
+      <li>Overlay also makes the pair the tallest bodies in the yard (point + flower is five cells on a three-cell body), which competes with loads carried over the head.</li>
+      <li>If the owner wants (b) anyway, the cheap shape is: sun hat and point merged by hand-drawn tables, the other three replaced.</li>
+    </ul>
+  </div>
+
+  <!-- ===================================================================== -->
+  <h2 style="margin-top:28px">Part 2: the wardrobe</h2>
+  <p>Five slots that combine on one body. Each item drawn at 3x and at game scale beside it. The tiles walk and stop on a four-second loop so the things that move (scarves, capes, tails) show both poses. Item names are plain labels, not final copy.</p>
+  <div class="card">
+    <h3>Does the body have a face?</h3>
+    <p>No. <code>drawBody</code> (src/render/crew.js) is one square: a black fill and a white fill inset by <code>BODY_RIM</code> (2). The face items below are therefore new marks on the square's white middle, which is 14 x 14 world pixels: <b>less than three cells</b>. They cannot sit on the 6-pixel cell grid, so they are drawn in 2-pixel units, the rim's own weight, front-biased toward the way the body faces. <span class="warn">That breaks "everything on the P = 6 grid"</span>; the same is true of the neck marks and the patterns. The head and back slots are whole cells.</p>
+  </div>
+  <div id="slots"></div>
+
+  <div class="card">
+    <h2>Which slots survive game scale</h2>
+    <ul>
+      <li><b class="good">Head: survives.</b> It is the silhouette. Every head item is a different outline over the crowd. Weakest: ears, mohawk and tiara (one or two cells), and beanie, which is the cap with one cell more.</li>
+      <li><b class="good">Back: survives, best in motion.</b> The cape and scarf tails stream; the balloon and flag stand above the crowd and are the easiest things on the page to find. <span class="warn">Clash:</span> a carter's cart hangs off the same side, and the balloon and flag sit where speech marks go.</li>
+      <li><b class="good">Pattern: survives as a tone.</b> Every crew body is white, so a grey, black, striped or overalled square is found at once, even with no head item. Fine patterns (dots, diagonal) read only as "grey".</li>
+      <li><b class="warn">Neck: half.</b> The scarves survive because their tails leave the square. On-body marks (bowtie, tie, necklace, collar, medal, bandana) are a dark smudge at game scale: you see "something on the front", not which thing.</li>
+      <li><b class="warn">Face: disappears in a crowd.</b> At game scale a face is three or four dark pixels. Shades and glasses survive as a dark bar; freckles and blush (grey) vanish. Faces are for the close-ups: the picker, the house, act 3. Face and pattern fight: a face on stripes or dots is lost at any scale.</li>
+    </ul>
+  </div>
+
+  <h3 style="margin-top:22px">Eight outfits (3x)</h3>
+  <div class="card"><div class="scroll"><canvas id="lineup"></canvas></div>
+    <p style="margin-top:6px" id="lineupnames"></p></div>
+  <h3>The same eight, as four pairs in the yard at game scale, and as act-3 souls (2x)</h3>
+  <p>Ten crew in station hats walk each strip; the pair wear their outfits with the headwear replacing any station hat (treatment a).</p>
+  <div id="crowds"></div>
+
+  <!-- ===================================================================== -->
+  <h2 style="margin-top:28px">Part 3: the picker</h2>
+  <p>A sheet in the game's menu style. Both squares large at the top; tap one (or the her / him tabs) to dress it. One row a slot with prev / next; a randomize. The strip under the squares is the two of them at game scale in a crowd, so the choice is made for findability, not only for the close-up. <b>The controls work in this mock:</b> click the arrows, or use the keyboard as a stand-in for a pad.</p>
+  <div class="keyrow">
+    <span><b>up / down</b> pick a row</span><span><b>left / right</b> prev / next</span><span><b>q / e</b> her / him (pad: shoulders)</span><span><b>r</b> randomize (pad: Y)</span><span><b>enter</b> done (pad: A)</span>
+  </div>
+  <div class="pickers">
+    <div><h3>desktop</h3><div id="pickerDesk"></div></div>
+    <div><h3>phone, 360 wide</h3><div class="phone"><div id="pickerPhone"></div></div></div>
+  </div>
+  <div class="card">
+    <h2>How it works</h2>
+    <ul>
+      <li><b>Desktop.</b> Click a square or a tab to choose who; click the arrows. The row under the cursor is boxed so the keyboard and the mouse share one cursor.</li>
+      <li><b>Phone.</b> The same sheet in the one sheet seat (as the settings sheet). Each row is two lines: its label, then a 44-pixel prev, the item's name, a 44-pixel next. Squares at 3x so both fit side by side; the crowd strip under them stays at game scale, which on a phone is smaller still. Swipe is not used: the yard already owns one-finger scroll.</li>
+      <li><b>Pad.</b> Up / down moves the boxed row, left / right cycles the item, shoulders swap her and him, Y randomizes the one being dressed, A is done, B closes without keeping. Every row wraps around, "none" first.</li>
+      <li><b>Randomize</b> dresses only the selected one, so a good outfit on the other is not lost. Held (or pressed twice) it could roll both; a call for the owner.</li>
+      <li>Where the sheet is opened from (new game, the settings row, earned items) is the last mock's Part 2 question, unchanged here.</li>
+      <li>Words marked <span class="ph">like this</span> are placeholders for the owner to word.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>What this mock cannot show</h2>
+    <ul>
+      <li>The real zoom: the yard's zoom changes with the window and a phone draws smaller, so "game scale" here is one size of several. Faces and neck marks are worse on a phone than shown.</li>
+      <li>The rest of the yard: rocks, heaps, carts, loads carried over the head, dust and grains in the air, speech marks and dizzy stars. A load over the head hides head items; a cart hides back items.</li>
+      <li>How the game snaps a moving body: here a body slides a pixel at a time; the game rounds rims to device pixels at fractional zooms, and 2-pixel face marks at a fractional zoom will blur or drop a column. Not tested.</li>
+      <li>The deep: the black ground, its palette rules (no greys it does not hold), class kit on the fighters. Patterns that use grey may not be allowed there.</li>
+      <li>Under the rock in act 1: she is mostly buried, so only head items show, if any.</li>
+      <li>The boards and the roster, which draw the same square beside each count.</li>
+      <li>Hop, stoop, squat (the squashed two-row body) and carrying poses: every slot here assumes the square is square.</li>
+      <li>The sheet is drawn by hand to look like the game's, not with its stylesheet.</li>
+    </ul>
+  </div>
+</main>
+
+<script>
+// ---------------------------------------------------------------------------
+// The grid and the inks.
+const P = 6, W = P * 3, RIM = 2;
+const INK = '#000', PAPER = '#fff', GREY = '#8a8a8a', PALE = '#d6d6d6', FAINT = '#efefef';
+const MARK = '#e08a00';   // the mock's own "here they are" underline, not a game color
+const DPR = Math.max(1, Math.round(window.devicePixelRatio || 1));
+
+const HATS = {
+  helmet: ['###'],
+  lamp: ['.#.', '###'],
+  brim: ['..###..', '#######'],
+  point: ['..#..', '.###.', '#####'],
+  cap: ['###', '###'],
+};
+const STATIONS = ['helmet', 'lamp', 'brim', 'point', 'cap'];
+const STATION_NAME = { helmet: 'helmet (rockhand)', lamp: 'lamp (quarrier)', brim: 'sun hat (farmhand)', point: 'point (wizard)', cap: 'cap (janitor)' };
+
+const cw = rows => Math.max(...rows.map(r => r.length));
+function mirrorRows(rows, w = cw(rows)) { return rows.map(r => r.padEnd(w, '.').split('').reverse().join('')); }
+// A sprite of cells with its top-left at (x, y). '#' ink, 'g' grey, 'w' paper.
+function spr(g, rows, x, y, ink, unit = P) {
+  for (let r = 0; r < rows.length; r++)
+    for (let c = 0; c < rows[r].length; c++) {
+      const ch = rows[r][c];
+      if (ch === '.') continue;
+      g.fillStyle = ch === '#' ? ink : ch === 'g' ? GREY : ch === 'G' ? PALE : PAPER;
+      g.fillRect(x + c * unit, y + r * unit, unit, unit);
+    }
+}
+// Something worn on the head: its bottom row sits on the body's top, `ox` cells
+// from the body's left (centered when not given), mirrored when the body faces left.
+function onTop(g, rows, ox, x, y, dir, ink) {
+  const w = cw(rows);
+  if (ox == null) ox = (3 - w) / 2;
+  if (dir < 0) { rows = mirrorRows(rows, w); ox = 3 - ox - w; }
+  spr(g, rows, x + ox * P, y - rows.length * P, ink);
+}
+
+// ---------------------------------------------------------------------------
+// The wardrobe. Every slot starts with none.
+const HEAD = {
+  'none': null,
+  'bow': { rows: ['##.##', '#####', '##.##'] },
+  'top hat': { rows: ['.###.', '.###.', '#####'] },
+  'crown': { rows: ['#.#.#', '#####'] },
+  'flower': { rows: ['.#.', '#.#', '.#.', '.#.'] },
+  'sprout': { rows: ['##.##', '..#..'] },
+  'ears': { rows: ['#.#'] },
+  'antenna': { rows: ['..#', '.#.', '.#.'], ox: 0 },
+  'beanie': { rows: ['.#.', '###', '###'] },
+  'beret': { rows: ['..#.', '####'], ox: -1 },
+  'tiara': { rows: ['.#.', '#.#'] },
+  // a band across the top of the square and its two ends out the back
+  'headband': { draw(g, x, y, dir, ink) {
+      g.fillStyle = INK; g.fillRect(x, y + 4, W, 2);
+      const bx = dir > 0 ? x - P : x + W;
+      g.fillStyle = ink; g.fillRect(bx, y + 2, P, 2); g.fillRect(dir > 0 ? bx + 2 : bx, y + 6, P - 2, 2);
+    } },
+  // a cell out each side of the top row
+  'pigtails': { draw(g, x, y, dir, ink) {
+      g.fillStyle = ink; g.fillRect(x - P, y + 2, P, P); g.fillRect(x + W, y + 2, P, P);
+    } },
+  'mohawk': { rows: ['#', '#'] },
+};
+
+// Faces: a 7 x 7 grid of 2-pixel marks on the white middle, drawn facing right.
+const FACE = {
+  'none': null,
+  'eyes':          ['', '', '...#.#.'],
+  'sleepy':        ['', '', '..##.##'],
+  'smile':         ['', '', '...#.#.', '', '..#...#', '...###.'],
+  'glasses':       ['', '###.###', '#.###.#', '###.###'],
+  'round glasses': ['', '.#...#.', '#.###.#', '.#...#.'],
+  'shades':        ['', '#######', '###.###'],
+  'monocle':       ['', '.....#.', '..#.#.#', '.....#.', '......#', '......#'],
+  'eyepatch':      ['', '#####..', '..#.###', '....###'],
+  'mustache':      ['', '', '...#.#.', '..#...#', '..#####'],
+  'freckles':      ['', '', '...#.#.', '...g.g.', '..g.g..'],
+  'blush':         ['', '', '...#.#.', '..gg.gg'],
+};
+
+// Neck: marks on the lower half of the middle, and for the scarves a tail.
+const NECK = {
+  'none': null,
+  'scarf':         { grid: ['', '', '', '#######'], tail: 'solid' },
+  'checked scarf': { grid: ['', '', '', '#g#g#g#'], tail: 'check' },
+  'striped scarf': { grid: ['', '', '', '#.#.#.#'], tail: 'stripe' },
+  'bowtie':        { grid: ['', '', '', '', '..#...#', '..#####', '..#...#'] },
+  'tie':           { grid: ['', '', '', '....#..', '...###.', '...###.', '....#..'] },
+  'bandana':       { grid: ['', '', '', '#######', '.#####.', '..###..', '...#...'] },
+  'necklace':      { grid: ['', '', '', '#.....#', '.#...#.', '..#.#..', '...#...'] },
+  'collar':        { grid: ['', '', '', '###.###', '.#...#.'] },
+  'medal':         { grid: ['', '', '', '..#.#..', '...#...', '..###..', '..###..'] },
+};
+
+// Back: cells off the side away from the way the body faces.
+const BACK = {
+  'none': null, 'cape': 1, 'short cape': 1, 'backpack': 1, 'small pack': 1,
+  'cat tail': 1, 'bushy tail': 1, 'balloon': 1, 'flag': 1,
+};
+
+// Patterns on the white middle, 14 x 14.
+const PATTERN = {
+  'plain': null,
+  'overalls': g => (x, y) => { g.fillStyle = INK; g.fillRect(x, y + 8, 14, 6); g.fillRect(x + 2, y, 2, 8); g.fillRect(x + 10, y, 2, 8); },
+  'stripes': g => (x, y) => { g.fillStyle = INK; for (const d of [2, 6, 10]) g.fillRect(x, y + d, 14, 2); },
+  'tall stripes': g => (x, y) => { g.fillStyle = INK; for (const d of [2, 6, 10]) g.fillRect(x + d, y, 2, 14); },
+  'dots': g => (x, y) => { g.fillStyle = INK; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) g.fillRect(x + 2 + i * 4 + (j % 2) * 2 - 1, y + 2 + j * 4, 2, 2); },
+  'diagonal': g => (x, y) => { g.fillStyle = INK; for (let k = -12; k < 14; k += 6) for (let i = 0; i < 7; i++) { const yy = i * 2 + k; if (yy >= 0 && yy < 14) g.fillRect(x + i * 2, y + yy, 2, 2); } },
+  'quarters': g => (x, y) => { g.fillStyle = INK; g.fillRect(x, y, 7, 7); g.fillRect(x + 7, y + 7, 7, 7); },
+  'pale': g => (x, y) => { g.fillStyle = PALE; g.fillRect(x, y, 14, 14); },
+  'grey': g => (x, y) => { g.fillStyle = GREY; g.fillRect(x, y, 14, 14); },
+  'black': g => (x, y) => { g.fillStyle = INK; g.fillRect(x, y, 14, 14); },
+};
+const DARK_PATTERN = { grey: 1, black: 1 };
+
+const SLOTS = [
+  { key: 'head', label: 'head', list: HEAD },
+  { key: 'face', label: 'face', list: FACE },
+  { key: 'neck', label: 'neck', list: NECK },
+  { key: 'back', label: 'back', list: BACK },
+  { key: 'pattern', label: 'pattern', list: PATTERN },
+];
+
+// The station hats merged with four headwear, treatment b. Drawn by hand, one
+// table entry a pair, facing right; `ox` in cells from the body's left.
+const MERGE = {
+  helmet: {
+    'bow':     { rows: ['##.##', '#####', '##.##', '.###.'] },
+    'top hat': { rows: ['.###.', '.###.', '#####', '.###.'] },
+    'crown':   { rows: ['#.#.#', '#####', '.###.'] },
+    'flower':  { rows: ['.#.', '#.#', '.#.', '###'] },
+  },
+  lamp: {
+    'bow':     { rows: ['##.##.', '######', '##.##.'], ox: -1 },
+    'top hat': { rows: ['.###.', '.####', '#####'] },
+    'crown':   { rows: ['#.#.#.', '######'], ox: -1 },
+    'flower':  { rows: ['.#..', '#.#.', '.#..', '####'], ox: 0 },
+  },
+  brim: {
+    'bow':     { rows: ['.##.##.', '.#####.', '#######'] },
+    'top hat': { rows: ['..###..', '..###..', '#######'] },
+    'crown':   { rows: ['.#.#.#.', '#######'] },
+    'flower':  { rows: ['...#...', '..#.#..', '...#...', '#######'] },
+  },
+  point: {
+    'bow':     { rows: ['.#.#.', '..#..', '.###.', '#####'] },
+    'top hat': { rows: ['..#..', '.###.', '.###.', '#####'] },
+    'crown':   { rows: ['..#..', '.###.', '#.#.#', '#####'] },
+    'flower':  { rows: ['..#..', '.#.#.', '..#..', '.###.', '#####'] },
+  },
+  cap: {
+    'bow':     { rows: ['##.##', '.###.', '.###.'] },
+    'top hat': { rows: ['.###.', '.###.', '#####'] },
+    'crown':   { rows: ['#.#', '###', '###'] },
+    'flower':  { rows: ['.#.', '#.#', '###', '###'] },
+  },
+};
+const MERGE_HW = ['bow', 'top hat', 'crown', 'flower'];
+
+// ---------------------------------------------------------------------------
+// Drawing one body in an outfit.
+//   o = { head, face, neck, back, pattern, station, treat ('a' | 'b' | 'crew'),
+//         dir, moving, t, dark }
+function grid2(g, rows, x0, y0, dir, ink, grey) {
+  for (let r = 0; r < rows.length; r++) {
+    const row = rows[r].padEnd(7, '.');
+    for (let c = 0; c < 7; c++) {
+      const ch = row[dir < 0 ? 6 - c : c];
+      if (ch === '.') continue;
+      g.fillStyle = ch === 'g' ? grey : ink;
+      g.fillRect(x0 + c * 2, y0 + r * 2, 2, 2);
+    }
+  }
+}
+function pose(t, rate = 4) { return Math.floor(t * rate) % 2; }
+
+function drawBack(g, key, x, y, dir, moving, t, ink) {
+  const d = dir > 0 ? -1 : 1;              // further back
+  const bx = dir > 0 ? x - P : x + W;
+  const cell = (cx, cy, c = ink) => { g.fillStyle = c; g.fillRect(cx, cy, P, P); };
+  const p = pose(t);
+  switch (key) {
+    case 'cape':
+      if (moving) { cell(bx, y); cell(bx + d * P, y + P); cell(bx + d * P * (p ? 2 : 1), y + (p ? P : 2 * P)); cell(bx, y + P); }
+      else { cell(bx, y); cell(bx, y + P); cell(bx, y + 2 * P); }
+      break;
+    case 'short cape':
+      if (moving) { cell(bx, y); cell(bx + d * P, y + (p ? 0 : P)); }
+      else { cell(bx, y); cell(bx, y + P); }
+      break;
+    case 'backpack':
+      cell(bx, y + 2); cell(bx, y + 2 + P);
+      g.fillStyle = PAPER; g.fillRect(bx + 2, y + 2 + P + 2, 2, 2);
+      break;
+    case 'small pack':
+      cell(bx, y + P);
+      g.fillStyle = PAPER; g.fillRect(bx + 2, y + P + 2, 2, 2);
+      break;
+    case 'cat tail': {
+      const w = pose(t, 2);
+      cell(bx, y + 2 * P); cell(bx + d * P, y + P);
+      if (w) cell(bx + d * P, y); else cell(bx + d * 2 * P, y);
+      break; }
+    case 'bushy tail': {
+      const w = pose(t, 2);
+      cell(bx, y + P); cell(bx, y + 2 * P); cell(bx + d * P, y + (w ? 0 : P)); cell(bx + d * P, y + P);
+      break; }
+    case 'balloon': {
+      const bob = pose(t, 1.2) ? -2 : 0;
+      const sx = dir > 0 ? x + 2 : x + W - 4;
+      g.fillStyle = ink; g.fillRect(sx, y - 3 * P + bob, 1, 3 * P - bob);
+      const bxl = sx - 5 + d * 4, byl = y - 3 * P - 12 + bob;
+      g.fillRect(bxl + 2, byl, 8, 12); g.fillRect(bxl, byl + 2, 12, 8);
+      break; }
+    case 'flag': {
+      const px = dir > 0 ? x : x + W - 2;
+      g.fillStyle = ink; g.fillRect(px, y - 4 * P, 2, 4 * P);
+      const fx = dir > 0 ? px - 2 * P : px + 2;
+      const wv = pose(t, 3);
+      g.fillRect(fx, y - 4 * P, 2 * P, P);
+      g.fillRect(dir > 0 ? fx + (wv ? 0 : P) : fx + (wv ? P : 0), y - 3 * P, P, P - 2);
+      break; }
+  }
+}
+
+function drawNeckTail(g, kind, x, y, dir, moving, t, ink) {
+  const d = dir > 0 ? -1 : 1, bx = dir > 0 ? x - P : x + W;
+  const cells = [];
+  if (moving) { const lift = pose(t) ? [0, 0, -1] : [0, 1, 0]; for (let i = 0; i < 3; i++) cells.push([bx + d * i * P, y + P + lift[i] * P]); }
+  else cells.push([bx, y + P], [bx, y + 2 * P]);
+  cells.forEach(([cx, cy], i) => {
+    g.fillStyle = kind === 'check' && i % 2 ? GREY : ink; g.fillRect(cx, cy, P, P);
+    if (kind === 'stripe') { g.fillStyle = ink === INK ? PAPER : INK; g.fillRect(cx + 2, cy, 2, P); }
+  });
+}
+
+function wear(g, x, y, o) {
+  const dir = o.dir || 1, t = o.t || 0, moving = !!o.moving;
+  const out = o.dark ? PAPER : INK;          // ink for anything off the white square
+  if (o.back && o.back !== 'none') drawBack(g, o.back, x, y, dir, moving, t, out);
+  const nk = o.neck && NECK[o.neck];
+  if (nk && nk.tail) drawNeckTail(g, nk.tail, x, y, dir, moving, t, out);
+  // the square
+  g.fillStyle = INK; g.fillRect(x, y, W, W);
+  g.fillStyle = PAPER; g.fillRect(x + RIM, y + RIM, W - 2 * RIM, W - 2 * RIM);
+  const pat = o.pattern && PATTERN[o.pattern];
+  if (pat) pat(g)(x + RIM, y + RIM);
+  const darkFill = DARK_PATTERN[o.pattern];
+  const onInk = darkFill ? PAPER : INK, onGrey = darkFill ? PALE : GREY;
+  if (o.face && FACE[o.face]) grid2(g, FACE[o.face], x + RIM, y + RIM, dir, onInk, onGrey);
+  if (nk) grid2(g, nk.grid, x + RIM, y + RIM, dir, onInk, onGrey);
+  // the head
+  const hw = o.head && HEAD[o.head];
+  if (o.treat === 'crew' || (!hw && o.station)) {
+    if (o.station) onTop(g, HATS[o.station], null, x, y, dir, out);
+  } else if (o.treat === 'b' && o.station && MERGE[o.station][o.head]) {
+    const m = MERGE[o.station][o.head];
+    onTop(g, m.rows, m.ox, x, y, dir, out);
+  } else if (hw) {
+    if (hw.draw) hw.draw(g, x, y, dir, out);
+    else onTop(g, hw.rows, hw.ox, x, y, dir, out);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Canvas helpers.
+function canvasOf(w, h, scale) {
+  const c = document.createElement('canvas');
+  c.width = w * scale * DPR; c.height = h * scale * DPR;
+  c.style.width = (w * scale) + 'px';
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.setTransform(scale * DPR, 0, 0, scale * DPR, 0, 0);
+  return { c, g, w, h };
+}
+function fig(parent, cv, caption) {
+  const f = document.createElement('figure');
+  const s = document.createElement('div'); s.className = 'scroll'; s.appendChild(cv.c); f.appendChild(s);
+  if (caption) { const fc = document.createElement('figcaption'); fc.innerHTML = caption; f.appendChild(fc); }
+  parent.appendChild(f); return f;
+}
+function yardGround(g, w, h, gy) {
+  g.fillStyle = PAPER; g.fillRect(0, 0, w, h);
+  g.fillStyle = FAINT;
+  for (let y = gy + 4; y < h; y += 6) for (let x = (y * 2) % 12; x < w; x += 12) g.fillRect(x, y, 6, 1);
+  g.fillStyle = INK; g.fillRect(0, gy, w, 1);
+}
+function cloud(g, x, y, s, color) {
+  g.fillStyle = color;
+  g.fillRect(x + 2 * s, y, 4 * s, s); g.fillRect(x + s, y + s, 7 * s, s); g.fillRect(x, y + 2 * s, 10 * s, s);
+}
+function rng(seed) { let s = seed; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+function crowd(seed, n, w, kits) {
+  const r = rng(seed), out = [];
+  for (let i = 0; i < n; i++) {
+    const a = 10 + r() * (w - 60), span = 40 + r() * (w * 0.5);
+    out.push({ a, b: Math.min(w - 30, a + span), v: r() < 0.2 ? 0 : 10 + r() * 22, ph: r() * 10,
+               kit: kits[Math.floor(r() * kits.length)], carry: r() < 0.35 });
+  }
+  return out;
+}
+function pace(p, t) {
+  if (!p.v) return { x: p.a, dir: 1, moving: false };
+  const len = p.b - p.a, T = len / p.v, u = ((t + p.ph * T) % (2 * T + 2));
+  if (u < T) return { x: p.a + u * p.v, dir: 1, moving: true };
+  if (u < T + 1) return { x: p.b, dir: 1, moving: false };
+  if (u < 2 * T + 1) return { x: p.b - (u - T - 1) * p.v, dir: -1, moving: true };
+  return { x: p.a, dir: -1, moving: false };
+}
+function crewBody(g, b, x, y, dir) {
+  wear(g, x, y, { station: b.kit, treat: 'crew', dir });
+  if (b.carry) {
+    const top = b.kit ? y - HATS[b.kit].length * P : y;
+    g.fillStyle = GREY; g.fillRect(x + P, top - P - 2, P, P);
+  }
+}
+
+let reveal = false, paused = false, clock = 0;
+const drawers = [];
+
+// ---------------------------------------------------------------------------
+// Part 1: one card per station hat.
+(() => {
+  const host = document.getElementById('hatcards');
+  const VERDICT = {
+    helmet: ['warn', 'Merged is "the headwear on a bar": a stack one row deep. Reads at 3x as bow-on-a-helmet; at game scale the bar just makes them a cell taller. The flower stuck in the helmet is the one that looks drawn as one thing.'],
+    lamp: ['warn', 'The lamp a cell proud at the front reads on the top hat (on its face, like a miner\'s lamp) and on the flower\'s band. On the bow and the crown it is a stub off one side.'],
+    brim: ['good', 'Reads best. Every headwear becomes a sun hat with something on it, the same height as the headwear alone, and at game scale the seven-cell brim still says farm.'],
+    point: ['good', 'Good for tall things: a pointed top hat, a flower on the tip, a bow on the tip. The crown-point is muddled. All are four or five cells tall.'],
+    cap: ['warn', 'Does not read. The cap is a block; the top hat already is one, so (b) is the top hat unchanged. The bow on a block is the best of them and it reads as a different hat, not a janitor.'],
+  };
+  for (const st of STATIONS) {
+    const card = document.createElement('section'); card.className = 'card';
+    card.innerHTML = `<h2>${STATION_NAME[st]}</h2>`;
+    const cols = 1 + MERGE_HW.length * 2, slot = 48, gap = 12;
+    const w = cols * slot + MERGE_HW.length * gap + 8, h = 72;
+    const big = canvasOf(w, h, 3), small = canvasOf(w, h, 1);
+    const draw = (cv, t) => {
+      const g = cv.g; g.fillStyle = PAPER; g.fillRect(0, 0, w, h);
+      const gy = h - 8;
+      g.fillStyle = INK; g.fillRect(0, gy, w, 1);
+      let x = 9;
+      wear(g, x, gy - W, { station: st, treat: 'crew', t });
+      x += slot + gap;
+      for (const hw of MERGE_HW) {
+        g.fillStyle = PALE; g.fillRect(x - 6, gy + 3, slot * 2 - 4, 2);
+        wear(g, x, gy - W, { head: hw, station: st, treat: 'a', t });
+        wear(g, x + slot, gy - W, { head: hw, station: st, treat: 'b', t });
+        x += slot * 2 + gap;
+      }
+    };
+    drawers.push(t => { draw(big, t); draw(small, t); });
+    const cap = 'crew in the hat · then bow, top hat, crown, flower, each as <b>a</b> replaced, <b>b</b> merged';
+    fig(card, big, '3x: ' + cap);
+    const r = document.createElement('div'); r.style.marginTop = '8px'; card.appendChild(r);
+    fig(r, small, 'game scale: the same');
+    const [cls, txt] = VERDICT[st];
+    card.insertAdjacentHTML('beforeend', `<p class="verdict"><b class="${cls}">${cls === 'good' ? 'overlay reads' : 'overlay struggles'}</b> ${txt}</p>`);
+    host.appendChild(card);
+  }
+})();
+
+// ---------------------------------------------------------------------------
+// Part 2: a gallery per slot.
+const SLOT_NOTE = {
+  head: ['good', 'survives', 'Whole cells, on the silhouette. Shown on a bare head; with a station hat see Part 1.'],
+  face: ['warn', 'close-ups only', 'Two-pixel marks on the 14-pixel middle, front-biased. At game scale: three or four dark pixels.'],
+  neck: ['warn', 'scarves only', 'The scarves keep their tail out the back; the rest are marks on the front.'],
+  back: ['good', 'survives', 'Off the back side; the cape, tails and scarf move. Balloon and flag stand above the crowd.'],
+  pattern: ['good', 'as a tone', 'Fills the white middle. Every crew body is white, so any tone is found; the detail is not.'],
+};
+(() => {
+  const host = document.getElementById('slots');
+  for (const s of SLOTS) {
+    const keys = Object.keys(s.list).filter(k => k !== 'none' && k !== 'plain');
+    const [cls, grade, note] = SLOT_NOTE[s.key];
+    const card = document.createElement('section'); card.className = 'card';
+    card.innerHTML = `<h2>${s.label} <span style="color:var(--muted);font-weight:normal">${keys.length} items</span><span class="slotgrade ${cls}">game scale: ${grade}</span></h2><p>${note}</p>`;
+    const tiles = document.createElement('div'); tiles.className = 'tiles';
+    keys.forEach((k, i) => {
+      const tile = document.createElement('div'); tile.className = 'tile';
+      const tw = 48, th = 56;
+      const big = canvasOf(tw, th, 3), small = canvasOf(tw, th, 1);
+      const draw = (cv, t) => {
+        const g = cv.g; g.fillStyle = PAPER; g.fillRect(0, 0, tw, th);
+        const gy = th - 4; g.fillStyle = INK; g.fillRect(0, gy, tw, 1);
+        const u = (t + i * 0.37) % 4, moving = u < 2;
+        const o = { t, moving, dir: 1 }; o[s.key] = k;
+        wear(g, 22, gy - W, o);
+      };
+      drawers.push(t => { draw(big, t); draw(small, t); });
+      const pair = document.createElement('div'); pair.className = 'pair';
+      pair.append(big.c, small.c);
+      tile.appendChild(pair);
+      tile.insertAdjacentHTML('beforeend', `<span class="name">${k}</span>`);
+      tiles.appendChild(tile);
+    });
+    card.appendChild(tiles);
+    host.appendChild(card);
+  }
+})();
+
+// ---------------------------------------------------------------------------
+// Eight outfits.
+const OUTFITS = [
+  { who: 'her', head: 'bow', face: 'eyes', neck: 'scarf', back: 'none', pattern: 'plain' },
+  { who: 'him', head: 'top hat', face: 'monocle', neck: 'bowtie', back: 'none', pattern: 'plain' },
+  { who: 'her', head: 'flower', face: 'blush', neck: 'necklace', back: 'cape', pattern: 'plain' },
+  { who: 'him', head: 'crown', face: 'mustache', neck: 'collar', back: 'short cape', pattern: 'overalls' },
+  { who: 'her', head: 'ears', face: 'sleepy', neck: 'bandana', back: 'cat tail', pattern: 'pale' },
+  { who: 'him', head: 'antenna', face: 'round glasses', neck: 'striped scarf', back: 'backpack', pattern: 'stripes' },
+  { who: 'her', head: 'beret', face: 'freckles', neck: 'checked scarf', back: 'balloon', pattern: 'plain' },
+  { who: 'him', head: 'beanie', face: 'shades', neck: 'none', back: 'flag', pattern: 'grey' },
+];
+const outfitLine = (o, i) => `${i + 1}. ${[o.head, o.face, o.neck, o.back, o.pattern].filter(v => v !== 'none' && v !== 'plain').join(', ')}`;
+(() => {
+  const n = OUTFITS.length, sw = 58, w = n * sw, h = 70;
+  const cv = canvasOf(w, h, 3);
+  document.getElementById('lineup').replaceWith(cv.c);
+  drawers.push(t => {
+    const g = cv.g; g.fillStyle = PAPER; g.fillRect(0, 0, w, h);
+    const gy = h - 6; g.fillStyle = INK; g.fillRect(0, gy, w, 1);
+    const moving = (t % 6) < 3;
+    OUTFITS.forEach((o, i) => wear(g, i * sw + 26, gy - W, { ...o, t, moving, dir: 1 }));
+  });
+  document.getElementById('lineupnames').textContent = OUTFITS.map(outfitLine).join(' · ');
+})();
+
+// Four crowds and four pairs of souls.
+(() => {
+  const host = document.getElementById('crowds');
+  const yardKits = [null, null, 'helmet', 'helmet', 'lamp', 'brim', 'point', 'cap'];
+  for (let k = 0; k < 4; k++) {
+    const her = OUTFITS[2 * k], him = OUTFITS[2 * k + 1];
+    const card = document.createElement('section'); card.className = 'card';
+    card.innerHTML = `<h2>pair ${k + 1}: outfits ${2 * k + 1} and ${2 * k + 2}</h2>`;
+    const row = document.createElement('div'); row.className = 'row'; card.appendChild(row);
+    const yw = 600, yh = 110, gy = 92;
+    const yard = canvasOf(yw, yh, 1);
+    const people = crowd(31 + k * 17, 10, yw, yardKits);
+    const ph = { a: 140 + k * 20, b: 420, v: 14, ph: 0.3 }, pm = { a: 60, b: 500 - k * 30, v: 18, ph: 0.7 };
+    drawers.push(t => {
+      const g = yard.g; yardGround(g, yw, yh, gy);
+      cloud(g, 40, 10, 6, PALE); cloud(g, 330, 6, 5, FAINT); cloud(g, 470, 22, 4, PALE);
+      for (const b of people) { const p = pace(b, t); crewBody(g, b, Math.round(p.x), gy - W, p.dir); }
+      const a = pace(ph, t), m = pace(pm, t);
+      wear(g, Math.round(a.x), gy - W, { ...her, station: 'helmet', treat: 'a', dir: a.dir, moving: a.moving, t });
+      wear(g, Math.round(m.x), gy - W, { ...him, station: 'lamp', treat: 'a', dir: m.dir, moving: m.moving, t });
+      if (reveal) { g.fillStyle = MARK; g.fillRect(Math.round(a.x), gy + 4, W, 2); g.fillRect(Math.round(m.x), gy + 4, W, 2); }
+    });
+    fig(row, yard, 'the yard at game scale: ten crew in station hats and the two of them');
+    const sv = canvasOf(130, 110, 2);
+    drawers.push(t => {
+      const g = sv.g; g.fillStyle = PAPER; g.fillRect(0, 0, sv.w, sv.h);
+      cloud(g, 6, 6, 6, PALE); cloud(g, 70, 18, 5, FAINT); cloud(g, 34, 30, 4, PALE);
+      const u = (t % 6) / 6, rise = Math.round(u * 84 / P) * P;
+      const sway = pose(t, 1.5) ? P : 0, y = 90 - rise;
+      g.save(); g.globalAlpha = 1 - u * 0.55;
+      wear(g, 28 + sway, y, { ...her, dir: 1, moving: true, t });
+      wear(g, 80 - sway, y - 2 * P, { ...him, dir: -1, moving: true, t });
+      g.restore();
+    });
+    fig(row, sv, 'act 3, 2x: the two rising, fading');
+    card.insertAdjacentHTML('beforeend', `<p style="margin-top:6px">her: ${outfitLine(her, 2 * k).slice(3)} · him: ${outfitLine(him, 2 * k + 1).slice(3)}</p>`);
+    host.appendChild(card);
+  }
+})();
+
+// ---------------------------------------------------------------------------
+// Part 3: the picker. One state, two sheets (desktop and phone) drawn from it.
+const pick = {
+  who: 'her', row: 0,
+  her: { head: 'bow', face: 'eyes', neck: 'scarf', back: 'none', pattern: 'plain' },
+  him: { head: 'top hat', face: 'monocle', neck: 'bowtie', back: 'none', pattern: 'plain' },
+};
+const pickers = [];
+function step(slot, by) {
+  const keys = Object.keys(SLOTS.find(s => s.key === slot).list);
+  const cur = pick[pick.who][slot], i = keys.indexOf(cur);
+  pick[pick.who][slot] = keys[(i + by + keys.length) % keys.length];
+  refresh();
+}
+function randomize() {
+  for (const s of SLOTS) {
+    const keys = Object.keys(s.list);
+    // none is twice as likely as any one item, so a roll is not a costume party
+    const r = Math.random();
+    pick[pick.who][s.key] = r < 2 / (keys.length + 1) ? keys[0] : keys[1 + Math.floor(Math.random() * (keys.length - 1))];
+  }
+  refresh();
+}
+function refresh() { for (const p of pickers) p.update(); }
+
+function makePicker(host, phone) {
+  const sheet = document.createElement('div'); sheet.className = 'sheet';
+  sheet.innerHTML = `<div class="t"><span class="ph">the two of you</span><span>x</span></div>`;
+  const scale = phone ? 3 : 5;
+  const big = canvasOf(phone ? 96 : 120, 62, scale);
+  big.c.style.alignSelf = 'center';
+  sheet.appendChild(big.c);
+  big.c.addEventListener('click', e => {
+    const r = big.c.getBoundingClientRect();
+    pick.who = (e.clientX - r.left) < r.width / 2 ? 'her' : 'him'; refresh();
+  });
+  const yard = canvasOf(phone ? 316 : 520, 46, 1);
+  sheet.appendChild(yard.c);
+  const who = document.createElement('div'); who.className = 'who';
+  const tabs = ['her', 'him'].map(k => {
+    const d = document.createElement('div'); d.textContent = k;
+    d.addEventListener('click', () => { pick.who = k; refresh(); });
+    who.appendChild(d); return d;
+  });
+  sheet.appendChild(who);
+  const rows = SLOTS.map((s, i) => {
+    const r = document.createElement('div'); r.className = 'slot';
+    const lab = document.createElement('span'); lab.className = 'lab ph'; lab.textContent = s.label;
+    const prev = document.createElement('div'); prev.className = 'arr'; prev.textContent = '<';
+    const val = document.createElement('span'); val.className = 'val';
+    const next = document.createElement('div'); next.className = 'arr'; next.textContent = '>';
+    const count = document.createElement('span'); count.className = 'count';
+    prev.addEventListener('click', () => { pick.row = i; step(s.key, -1); });
+    next.addEventListener('click', () => { pick.row = i; step(s.key, 1); });
+    r.addEventListener('mouseenter', () => { pick.row = i; refresh(); });
+    if (phone) r.append(lab, prev, val, next);
+    else r.append(lab, prev, val, next, count);
+    sheet.appendChild(r);
+    return { r, val, count, s };
+  });
+  const btns = document.createElement('div'); btns.className = 'btns';
+  const rnd = document.createElement('div'); rnd.className = 'btn'; rnd.innerHTML = '<span class="ph">randomize</span>';
+  rnd.addEventListener('click', randomize);
+  const done = document.createElement('div'); done.className = 'btn'; done.innerHTML = '<span class="ph">done</span>';
+  btns.append(rnd, done);
+  sheet.appendChild(btns);
+  sheet.insertAdjacentHTML('beforeend', `<div class="hint">${phone ? 'tap a square to dress it' : 'pad: d-pad rows and items · LB/RB her/him · Y randomize · A done'}</div>`);
+  host.appendChild(sheet);
+
+  const people = crowd(phone ? 5 : 9, phone ? 6 : 9, yard.w, [null, 'helmet', 'lamp', 'brim', 'point', 'cap']);
+  const wh = { a: 30, b: yard.w - 80, v: 13, ph: 0.2 }, wm = { a: 60, b: yard.w - 30, v: 17, ph: 0.6 };
+  drawers.push(t => {
+    const g = big.g; g.fillStyle = PAPER; g.fillRect(0, 0, big.w, big.h);
+    const gy = big.h - 10;
+    g.fillStyle = INK; g.fillRect(0, gy, big.w, 1);
+    const hx = phone ? 20 : 26, mx = phone ? 60 : 78;
+    const moving = (t % 6) >= 4;
+    wear(g, hx, gy - W, { ...pick.her, dir: 1, moving, t });
+    wear(g, mx, gy - W, { ...pick.him, dir: -1, moving, t });
+    // the one being dressed: a bar under its feet
+    g.fillStyle = INK; g.fillRect((pick.who === 'her' ? hx : mx) - 2, gy + 4, W + 4, 2);
+    const yg = yard.g; yardGround(yg, yard.w, yard.h, yard.h - 6);
+    for (const b of people) { const p = pace(b, t); crewBody(yg, b, Math.round(p.x), yard.h - 6 - W, p.dir); }
+    const a = pace(wh, t), m = pace(wm, t);
+    wear(yg, Math.round(a.x), yard.h - 6 - W, { ...pick.her, dir: a.dir, moving: a.moving, t });
+    wear(yg, Math.round(m.x), yard.h - 6 - W, { ...pick.him, dir: m.dir, moving: m.moving, t });
+  });
+
+  return { update() {
+    tabs.forEach(d => d.classList.toggle('on', d.textContent === pick.who));
+    rows.forEach(({ r, val, count, s }, i) => {
+      const keys = Object.keys(s.list), cur = pick[pick.who][s.key];
+      val.textContent = cur;
+      count.textContent = `${keys.indexOf(cur)} / ${keys.length - 1}`;
+      r.classList.toggle('cur', i === pick.row);
+    });
+  } };
+}
+pickers.push(makePicker(document.getElementById('pickerDesk'), false));
+pickers.push(makePicker(document.getElementById('pickerPhone'), true));
+refresh();
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const s = SLOTS[pick.row].key;
+  if (e.key === 'ArrowUp') { pick.row = (pick.row + SLOTS.length - 1) % SLOTS.length; refresh(); }
+  else if (e.key === 'ArrowDown') { pick.row = (pick.row + 1) % SLOTS.length; refresh(); }
+  else if (e.key === 'ArrowLeft') step(s, -1);
+  else if (e.key === 'ArrowRight') step(s, 1);
+  else if (e.key === 'q') { pick.who = 'her'; refresh(); }
+  else if (e.key === 'e') { pick.who = 'him'; refresh(); }
+  else if (e.key === 'r') randomize();
+  else return;
+  e.preventDefault();
+});
+
+// ---------------------------------------------------------------------------
+const themes = ['auto', 'light', 'dark'];
+// ?theme=dark or ?theme=light pins the page, for the saved snapshots
+const pinned = new URLSearchParams(location.search).get('theme');
+if (themes.includes(pinned) && pinned !== 'auto') document.documentElement.setAttribute('data-theme', pinned);
+document.getElementById('theme').addEventListener('click', e => {
+  const cur = themes.indexOf(e.target.dataset.v || 'auto'), next = themes[(cur + 1) % 3];
+  e.target.dataset.v = next; e.target.textContent = 'page: ' + next;
+  if (next === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', next);
+});
+document.getElementById('reveal').addEventListener('change', e => { reveal = e.target.checked; });
+document.getElementById('pause').addEventListener('click', e => { paused = !paused; e.target.textContent = paused ? 'play' : 'pause'; });
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let last = performance.now();
+function frame(now) {
+  if (!paused && !still) clock += Math.min(0.05, (now - last) / 1000);
+  last = now;
+  const t = Math.floor(clock * 12) / 12;
+  for (const d of drawers) d(t);
+  if (!still) requestAnimationFrame(frame);
+}
+if (still) clock = 2.5;
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
