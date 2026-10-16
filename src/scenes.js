@@ -46,6 +46,7 @@ import { riftCenter, riftRadius } from './rift.js';
 import { hold } from './input.js';
 import { showPane, offerDress } from './settings.js';
 import { namePair, wear, pairBody } from './wardrobe.js';
+import { lockForCheck } from './wardrobepage.js';
 import { freedBody } from './snatch.js';
 import { fillControls } from './controls.js';
 import { setFeedbackUrl } from './feedback.js';
@@ -97,12 +98,14 @@ function dressedPair(outfits) {
   try { SCENES.pair.run(); } finally { window.__outfits = was; }
 }
 function pairDoor() {
+  lockForCheck(null);                 // a stand-in lock left by 'wardrobe-locked'
   window.__board('house');
   document.querySelector('#crewshop button[data-key="pairpage"]')?.click();
 }
 // A new yard's steps (wardrobepage.js) stood at step `n`, the two of them
 // named and given roles first, and each step before it passed by its next.
 const whoSteps = n => {
+  lockForCheck(null);
   window.__reset(); window.__fast(1);
   S.dressOffered = false;
   window.__self('you', { name: 'ada', role: 'wife' });
@@ -2236,6 +2239,19 @@ export const SCENES = {
     run: () => { rich(); window.__crew(6, 5, 5, 4); window.__fast(1); window.__board('house'); window.__look(st().houses.door - 400); } },
   'wardrobe-offer': { about: 'the story', say: 'the picker offered at a new yard, before the opening', page: true,
     run: () => { window.__reset(); window.__fast(1); S.dressOffered = false; offerDress(true); } },
+  // The picker's grid with a few head items locked by a stand-in lock (the
+  // wardrobe's own are another branch's), one tried on the close-up and
+  // another's lock said under the grid as a hover says it.
+  'wardrobe-locked': { about: 'the story', say: 'the picker with locked head items, one tried on, another hovered', page: true,
+    run: () => {
+      window.__fast(1);
+      const lock = { kind: 'scene', id: 'scene', name: 'a stand-in lock', note: 'the wardrobe names what opens it' };
+      pairDoor();
+      lockForCheck((slot, key) => (slot === 'head' && ['crown', 'beret', 'mohawk', 'headband'].includes(key) ? lock : null));
+      wear('you', { head: 'none' });
+      document.getElementById('ward-tile-head-crown')?.click();
+      document.getElementById('ward-tile-head-beret')?.dispatchEvent(new PointerEvent('pointerenter'));
+    } },
   // Who you are (DESIGN.md): a new yard's four steps, the two of them named
   // and given roles by the steps' own calls, each step stood by its next.
   // And the first with a pad seen, off Steam: the letter grid.

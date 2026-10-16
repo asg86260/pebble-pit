@@ -2,10 +2,12 @@
 // "Who you are"): what the chosen head item does to a station hat, read off
 // the glass, and the page worked as a player works it -- by the mouse and
 // the keyboard on its buttons and its name field, and by a pad on the page
-// (padpage.js), with left and right on a row stepping it, the shoulders for
-// you and your sqouse, the letter grid for a name, X a letter back and Y a
-// row's roll; a new yard's four steps by both; and the name and the role
-// held on the page off the house's board once those steps are behind a yard.
+// (padpage.js), the d-pad across the grid's tiles and A picking
+// one, the triggers for the slot tabs, the shoulders for you and your
+// sqouse, the letter grid for a name, X a letter back and Y a slot's roll; a
+// locked tile tried on and not kept; the page at a phone's width; a new
+// yard's four steps by both; and the name and the role held on the page off
+// the house's board once those steps are behind a yard.
 //
 // The pad is a stand-in for the browser's, as in selftest/pad.js: the page's
 // own frame reads it exactly as it reads a real one.
@@ -15,12 +17,13 @@ import { S } from '../state.js';
 import { P, WORKER, NAME_MAX } from '../config.js';
 import { draw } from '../render.js';
 import { darkPage } from '../ink.js';
-import { namePair, outfitOf, wear, DEFAULTS, HEAD, SLOTS, bareOf, nameOf, roleOf, setName, pairBody, ROLE_START, isOpen } from '../wardrobe.js';
+import { namePair, outfitOf, wear, DEFAULTS, HEAD, SLOTS, bareOf, nameOf, roleOf, setName, pairBody, ROLE_START } from '../wardrobe.js';
 import { CREW_NAMES } from '../crew/names.js';
 import { objective } from '../objectives.js';
 import { wearing } from '../kit.js';
 import { TYPE } from '../jobs.js';
 import { offerDress } from '../settings.js';
+import { lockForCheck } from '../wardrobepage.js';
 
 const frames = async n => { for (let i = 0; i < n; i++) await raf(); };
 const byId = id => document.getElementById(id);
@@ -52,13 +55,24 @@ async function closePicker() {
   dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
   await frames(2);
 }
-const shownText = slot => document.querySelector(`.wardrow[data-slot="${slot}"] .wardval`)?.textContent;
-// The item a step lands on: the next one open, past what is locked.
-const nextKey = (list, key, by = 1) => {
-  let i = list.findIndex(it => it.key === key);
-  for (let k = 0; k < list.length; k++) { i = (i + by + list.length) % list.length; if (isOpen('head', list[i].key)) break; }
-  return list[i].key;
-};
+// The grid's parts: a slot's tab, a tile, the tiles shown, the heading.
+const slotTab = slot => byId(`ward-${slot}-tab`);
+const tile = (slot, key) => byId(`ward-tile-${slot}-${key}`);
+const shownTiles = () => [...document.querySelectorAll('.wardtiles:not([hidden]) .wardtile')];
+const gridHead = () => document.querySelector('.wardslothead .wardworn')?.textContent || '';
+const tileOf = el => (el?.classList?.contains('wardtile') ? `${el.dataset.slot}:${el.dataset.item}` : null);
+// A key pressed on the focused button, as a keyboard does.
+const key = (k, el = document.activeElement) =>
+  el.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+// How many pixels of the close-up are neither ink nor paper: a faint
+// try-on's greys, where the bare square has none.
+function greys() {
+  const c = byId('wardrobe').querySelector('.wardbig');
+  const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+  let n = 0;
+  for (let i = 0; i < d.length; i += 4) { const l = (d[i] + d[i + 1] + d[i + 2]) / 3; if (l > 40 && l < 215) n++; }
+  return n;
+}
 // The name typed into its field as a keyboard does: the value, and the
 // input event the field answers.
 function typeName(text) {
@@ -107,7 +121,6 @@ async function press(name) {
   b.pressed = false; b.value = 0;
   await frames(2);
 }
-const rowOf = el => el?.closest?.('.wardrow')?.dataset.slot || null;
 
 export const TESTS = [
   // The owner's vote on the mock: the chosen headwear replaces the station
@@ -149,39 +162,46 @@ export const TESTS = [
     ];
   }],
 
-  ['wardrobe: the picker by the mouse: a row\'s next, the two tabs, a row\'s die, the roll, the close-up', async () => {
+  ['wardrobe: the picker by the mouse: a tile worn, the two tabs, the slot tabs, the slot\'s die, the roll', async () => {
     fresh();
     run(0.5);
     await openPicker();
     const page = byId('wardrobe');
     const shown = up(page);
     byId('wardyou').click();
-    byId('ward-head-next').click();
-    const stepped = outfitOf('you').head, said = shownText('head');
+    slotTab('head').click();
+    // every head item a tile, the worn one inverted
+    const headFirst = slotTab('head').classList.contains('on') && shownTiles().length === HEAD.length;
+    const wornOn = tile('head', DEFAULTS.you.head).classList.contains('on');
+    tile('head', 'ears').click();
+    await frames(1);
+    const eared = outfitOf('you').head === 'ears', earsOn = tile('head', 'ears').classList.contains('on')
+      && !tile('head', DEFAULTS.you.head).classList.contains('on'), said = gridHead();
+    // every slot a tab, its open count on it; a turn shows that slot's tiles alone
+    const tabs = SLOTS.every(sl => up(slotTab(sl.key)) && slotTab(sl.key).textContent.includes(`${sl.items.length}/${sl.items.length}`));
+    slotTab('back').click();
+    await frames(1);
+    const backShown = shownTiles().length === SLOTS.find(sl => sl.key === 'back').items.length
+      && shownTiles().every(t => t.dataset.slot === 'back') && slotTab('back').classList.contains('on');
     byId('wardsqouse').click();
     const sqOn = byId('wardsqouse').classList.contains('on');
-    byId('ward-back-prev').click();
+    tile('back', 'flag').click();
     const sqBack = outfitOf('sqouse').back, youBack = outfitOf('you').back;
-    // the face row's own die: that row alone
+    // the slot's die, in the grid's heading: that slot alone
+    slotTab('face').click();
     const before = { ...outfitOf('sqouse') };
     let faced = false;
-    for (let i = 0; i < 8 && !faced; i++) {
-      document.querySelector('.wardrow[data-slot="face"] .warddie').click();
-      faced = outfitOf('sqouse').face !== before.face;
-    }
-    const others = ['head', 'neck', 'back', 'pattern'].every(k => outfitOf('sqouse')[k] === before[k]);
+    for (let i = 0; i < 12 && !faced; i++) { byId('wardslotdie').click(); faced = outfitOf('sqouse').face !== before.face; }
+    const others = ['head', 'neck', 'back', 'pattern', 'aura'].every(k => outfitOf('sqouse')[k] === before[k]);
     let rolled = false;
     const was = JSON.stringify(outfitOf('sqouse'));
     for (let i = 0; i < 6 && !rolled; i++) { byId('wardroll').click(); rolled = JSON.stringify(outfitOf('sqouse')) !== was; }
-    // the close-up's left half is you
-    const big = page.querySelector('canvas');
-    const r = big.getBoundingClientRect();
-    big.dispatchEvent(new MouseEvent('click', { clientX: r.left + r.width * 0.25, clientY: r.top + r.height / 2, bubbles: true }));
-    const youOn = byId('wardyou').classList.contains('on');
     // randomize all leaves the name alone
     setName('sqouse', 'quill');
     byId('wardroll').click();
     const nameKept = nameOf('sqouse') === 'quill';
+    // the old rows are gone: no previous or next but the role's
+    const rowsGone = !document.querySelector('#wardrobe .wardarr:not(#ward-role-prev):not(#ward-role-next)');
     byId('wardrobeback').click();
     await frames(2);
     const backTo = !S.paused;
@@ -189,16 +209,156 @@ export const TESTS = [
     fresh();
     return [
       ok(shown, "the house board's row opens the picker"),
-      ok(stepped === nextKey(HEAD, DEFAULTS.you.head) && said && said.length > 0,
-         'next on the head row puts the next head item on you, and the row says it', `${stepped} "${said}"`),
+      ok(headFirst && wornOn, 'the head tab shows a tile an item, the one worn inverted'),
+      ok(eared && earsOn && said.includes('ears'), 'a click on a tile wears it, and the heading says it', `${outfitOf('you').head} "${said}"`),
+      ok(tabs, 'a tab a slot, each with its open count'),
+      ok(backShown, 'a slot tab shows that slot\'s tiles alone'),
       ok(sqOn && sqBack === 'flag' && youBack === DEFAULTS.you.back, 'the sqouse tab dresses your sqouse, not you',
          `${sqOn} ${sqBack} ${youBack}`),
-      ok(faced && others, 'a row\'s die rolls that row alone', JSON.stringify(outfitOf('sqouse'))),
+      ok(faced && others, 'the slot\'s die rolls that slot alone', JSON.stringify(outfitOf('sqouse'))),
       ok(rolled, 'randomize all dresses the one being dressed'),
       ok(nameKept, 'and never renames them', nameOf('sqouse')),
-      ok(youOn, 'a press on the left half of the close-up picks you'),
+      ok(rowsGone, 'no previous and next rows for the slots'),
       ok(backTo, 'back is the yard')
     ];
+  }],
+
+  // The keyboard on the grid: the arrows the nearest tile that way, y the
+  // slot's roll, ] and [ the slot tabs.
+  ['wardrobe: the picker by the keyboard: the arrows across the tiles, y, [ and ]', async () => {
+    fresh();
+    run(0.5);
+    await openPicker();
+    byId('wardyou').click();
+    slotTab('head').click();
+    tile('head', 'none').focus();
+    const x0 = tile('head', 'none').getBoundingClientRect();
+    key('ArrowRight');
+    const right = document.activeElement, rx = right.getBoundingClientRect();
+    const along = !!tileOf(right) && Math.abs(rx.top - x0.top) < 2 && rx.left > x0.left;
+    key('ArrowDown');
+    const down = document.activeElement;
+    const below = !!tileOf(down) && down.getBoundingClientRect().top > rx.top;
+    key('ArrowUp');
+    const backUp = document.activeElement === right;
+    const was = outfitOf('you').head, faceWas = outfitOf('you').face;
+    let rolled = false;
+    for (let i = 0; i < 12 && !rolled; i++) { key('y'); rolled = outfitOf('you').head !== was; }
+    const slotOnly = outfitOf('you').face === faceWas;
+    key(']');
+    const turned = slotTab('face').classList.contains('on') && !!tileOf(document.activeElement)?.startsWith('face:');
+    key('[');
+    const turnedBack = slotTab('head').classList.contains('on');
+    await closePicker();
+    await hoverAway();
+    fresh();
+    return [
+      ok(along, 'right is the next tile along', tileOf(right)),
+      ok(below && backUp, 'down is the tile under, and up comes back', `${tileOf(down)}`),
+      ok(rolled && slotOnly, 'y rolls the slot the focus is in, and only it'),
+      ok(turned && turnedBack, '] turns to the next slot, the focus on its tiles, and [ back', tileOf(document.activeElement))
+    ];
+  }],
+
+  // A locked item (a lock of the check's own standing in for the
+  // wardrobe's): faint under its lock, saying what opens it; picked, it is
+  // tried on the close-up, faint, and not kept; a roll never lands on one.
+  ['wardrobe: a locked tile is tried on, faint, and not kept; a roll never wears one', async () => {
+    fresh();
+    run(0.5);
+    const LOCK = { kind: 'check', id: 'check', name: 'crown lock', note: 'a check holds it' };
+    lockForCheck((sl, k) => (sl === 'head' && k === 'crown' ? LOCK : null));
+    try {
+      await openPicker();
+      byId('wardyou').click();
+      byId('wardclear').click();
+      slotTab('head').click();
+      await frames(3);
+      const t = tile('head', 'crown');
+      const faint = t.classList.contains('lock') && +getComputedStyle(t.querySelector('canvas')).opacity < 0.5
+        && getComputedStyle(t.querySelector('.wardlk')).visibility === 'visible';
+      const told = t.title.includes('crown lock');
+      const count = slotTab('head').textContent.includes(`${HEAD.length - 1}/${HEAD.length}`);
+      t.dispatchEvent(new PointerEvent('pointerenter'));
+      const hover = byId('wardrobe').querySelector('.wardabout').textContent;
+      t.dispatchEvent(new PointerEvent('pointerleave'));
+      const plain = greys();
+      t.click();
+      await frames(3);
+      const kept = outfitOf('you').head === 'none';
+      const trying = byId('wardrobe').querySelector('.wardabout').textContent;
+      const faintOn = greys();
+      // anything open picked takes it off
+      tile('head', 'ears').click();
+      await frames(3);
+      const off = outfitOf('you').head === 'ears' && greys() <= plain && !t.classList.contains('tried');
+      // tried again, then the page left: nothing kept
+      t.click();
+      byId('wardrobeback').click();
+      await frames(2);
+      const left = outfitOf('you').head === 'ears';
+      // every head item but none locked: the slot's die and the whole roll wear none
+      lockForCheck((sl, k) => (sl === 'head' && k !== 'none' ? LOCK : null));
+      await openPicker();
+      byId('wardyou').click();
+      let shut = true;
+      for (let i = 0; i < 12; i++) {
+        byId('wardslotdie').click();
+        byId('wardroll').click();
+        if (outfitOf('you').head !== 'none') shut = false;
+      }
+      await closePicker();
+      return [
+        ok(faint && told && count, 'a locked tile is faint, under a lock, says its lock, and is not counted open', t.title),
+        ok(hover.includes('crown lock') && hover.includes('a check holds it'), 'its lock and note under the grid on hover', hover),
+        ok(kept && trying.includes('crown') && faintOn > plain + 20, 'picked, it is tried on the close-up, faint, and not worn',
+           `${outfitOf('you').head} "${trying}" ${plain} > ${faintOn} greys`),
+        ok(off, 'an open tile picked wears it and takes the try-on off'),
+        ok(left, 'leaving the page keeps nothing tried'),
+        ok(shut, 'a roll never wears a locked item')
+      ];
+    } finally {
+      lockForCheck(null);
+      await hoverAway();
+      fresh();
+    }
+  }],
+
+  // The page at a phone's width, in a frame of its own (as sheetwidth.js
+  // stands its pages): the slot tabs scroll sideways rather than squeeze,
+  // the tiles reflow to the width, and the sheet itself never scrolls
+  // sideways.
+  ['wardrobe: at a phone\'s width the slot tabs scroll sideways and the tiles reflow', async () => {
+    const f = document.createElement('iframe');
+    f.style.cssText = 'position:fixed;left:0;top:0;width:360px;height:740px;border:0;opacity:0;pointer-events:none;z-index:-1';
+    document.body.appendChild(f);
+    const loaded = new Promise(r => f.addEventListener('load', r, { once: true }));
+    f.src = './play.html?bench';
+    await loaded;
+    try {
+      const win = f.contentWindow, d = f.contentDocument;
+      const paint = async n => { for (let i = 0; i < n; i++) await new Promise(r => win.requestAnimationFrame(r)); };
+      for (let i = 0; i < 400 && !(win.__scene && win.__fast); i++) await paint(1);
+      const at = win.performance.getEntriesByType('resource').map(e => e.name)
+        .filter(u => new URL(u).pathname === '/src/wardrobepage.js').pop() || '/src/wardrobepage.js';
+      const page = await win.eval(`import(${JSON.stringify(at)})`);
+      win.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+      await paint(3);
+      page.openWardrobe();
+      await paint(3);
+      const sheet = d.getElementById('held'), strip = d.querySelector('.wardslots');
+      const tiles = [...d.querySelectorAll('.wardtiles:not([hidden]) .wardtile')];
+      const tops = [...new Set(tiles.map(t => Math.round(t.getBoundingClientRect().top)))];
+      const perRow = tiles.filter(t => Math.round(t.getBoundingClientRect().top) === tops[0]).length;
+      const grid = d.querySelector('.wardtiles:not([hidden])').getBoundingClientRect();
+      const inside = tiles.every(t => t.getBoundingClientRect().right <= grid.right + 1);
+      return [
+        ok(!!strip && strip.scrollWidth > strip.clientWidth && getComputedStyle(strip).overflowX === 'auto',
+           'the slot tabs run past the page and scroll sideways', strip && `${strip.scrollWidth} in ${strip.clientWidth}`),
+        ok(tops.length > 1 && perRow >= 3 && inside, 'the tiles reflow into rows inside the page', `${perRow} a row, ${tops.length} rows`),
+        ok(sheet.scrollWidth <= sheet.clientWidth + 1, 'the sheet does not scroll sideways', `${sheet.scrollWidth} in ${sheet.clientWidth}`)
+      ];
+    } finally { f.remove(); }
   }],
 
   // A new yard (settings.js, `offerDress`): the yard held on four steps.
@@ -220,6 +380,8 @@ export const TESTS = [
     const typed = nameOf('you');
     byId('ward-role-next').click();
     const role = roleOf('you');
+    tile('head', 'crown').click();
+    const flowTile = outfitOf('you').head === 'crown' && up(byId('wardslotdie'));
     byId('wardnext').click();
     await frames(1);
     const second = heading(), confirmed = page.querySelector('.wardshown')?.textContent || '';
@@ -240,7 +402,7 @@ export const TESTS = [
     const card = objective()?.say || '';
     // the page off the house keeps them open: a rename there mid-game shows on the story card
     await openPicker();
-    const editable = !byId('wardnamein').disabled && up(byId('ward-role-next'));
+    const editable = !byId('wardnamein').disabled && up(byId('ward-role-next')) && up(tile('head', 'none'));
     const before = roleOf('you') + roleOf('sqouse');
     byId('ward-role-next').click();
     const kept = roleOf('you') + roleOf('sqouse') !== before;
@@ -253,7 +415,7 @@ export const TESTS = [
     // and a skip from the first step, on another new yard
     fresh();
     await newYard();
-    byId('ward-head-next').click();
+    tile('head', 'ears').click();
     byId('wardskip').click();
     await frames(2);
     const skipped = !S.paused && outfitOf('you').head === DEFAULTS.you.head && !nameOf('you');
@@ -267,6 +429,7 @@ export const TESTS = [
       ok(typed === 'Pat o\'Neil-2', 'a name keeps letters, digits, space, - and \', trimmed, to NAME_MAX',
          `"${typed}" ${[...typed].length}/${NAME_MAX}`),
       ok(role !== ROLE_START.you, 'next on the role row steps it', role),
+      ok(flowTile, 'the step\'s grid wears a tile picked', outfitOf('you').head),
       ok(second === 'confirm your square' && confirmed.includes('Pat o\'Neil-2'), 'the second step shows your square named', `"${second}" "${confirmed}"`),
       ok(third === 'build your sqouse' && sqName === 'lee', 'the third builds your sqouse', `"${third}" ${sqName}`),
       ok(fourth === 'the two of you' && both.includes('lee') && both.includes('Pat'), 'the last shows the two of you', `"${fourth}" "${both}"`),
@@ -279,7 +442,7 @@ export const TESTS = [
     ];
   }],
 
-  ['wardrobe: the picker by a pad: up and down the rows, left and right the items, LB and RB, Y a row', async () => {
+  ['wardrobe: the picker by a pad: the d-pad across the tiles, A picks, LT and RT the slots, LB and RB, Y the slot', async () => {
     fresh();
     run(0.5);
     plugIn();
@@ -287,38 +450,47 @@ export const TESTS = [
       await press('b');                               // wakes the pad
       await openPicker();
       await frames(2);
-      // up the page to the head row
-      for (let i = 0; i < 16 && rowOf(window.__pad.page()) !== 'head'; i++)
-        await press(rowOf(window.__pad.page()) ? 'up' : 'down');
-      const onHead = rowOf(window.__pad.page()) === 'head';
+      slotTab('head').click();
+      // down the page onto the grid
+      for (let i = 0; i < 16 && !tileOf(window.__pad.page()); i++) await press('down');
+      const onTile = tileOf(window.__pad.page());
+      const r0 = window.__pad.page()?.getBoundingClientRect();
       await press('right');
-      const head = outfitOf('you').head;
-      const stayed = rowOf(window.__pad.page()) === 'head';
-      await press('down');
-      const onFace = rowOf(window.__pad.page()) === 'face';
-      await press('left');
-      const face = outfitOf('you').face;
+      const nextTile = window.__pad.page(), r1 = nextTile?.getBoundingClientRect();
+      const along = !!tileOf(nextTile) && tileOf(nextTile) !== onTile && Math.abs(r1.top - r0.top) < 2 && r1.left > r0.left;
+      await press('a');
+      const [sl, it] = (tileOf(nextTile) || ':').split(':');
+      const picked = outfitOf('you')[sl] === it && nextTile.classList.contains('on');
+      await press('rt');
+      const rt = slotTab('face').classList.contains('on') && !!tileOf(window.__pad.page())?.startsWith('face:');
+      await press('lt');
+      await press('lt');
+      const lt = slotTab('aura').classList.contains('on') && !!tileOf(window.__pad.page())?.startsWith('aura:');
+      await press('rt');
       await press('rb');
       const sq = byId('wardsqouse').classList.contains('on');
       await press('right');
-      const sqFace = outfitOf('sqouse').face;
+      const sqTile = tileOf(window.__pad.page());
+      await press('a');
+      const sqWorn = !!sqTile && outfitOf('sqouse')[sqTile.split(':')[0]] === sqTile.split(':')[1];
       await press('lb');
       const you = byId('wardyou').classList.contains('on');
-      const was = outfitOf('you').face, heads = outfitOf('you').head;
+      const heads = outfitOf('you').head, faces = outfitOf('you').face;
       let rolled = false;
-      for (let i = 0; i < 8 && !rolled; i++) { await press('y'); rolled = outfitOf('you').face !== was; }
-      const rowOnly = outfitOf('you').head === heads;
+      for (let i = 0; i < 12 && !rolled; i++) { await press('y'); rolled = outfitOf('you').head !== heads; }
+      const slotOnly = outfitOf('you').face === faces;
       await press('b');                               // back, to the yard
       const settings = !S.paused;
       await hoverAway();
       return [
-        ok(onHead, 'the d-pad reaches the head row', rowOf(window.__pad.page())),
-        ok(head === nextKey(HEAD, DEFAULTS.you.head) && stayed, 'right steps your head item and keeps the row', head),
-        ok(onFace, 'down is the next row'),
-        ok(face !== DEFAULTS.you.face, 'left steps that row back', face),
-        ok(sq && sqFace !== DEFAULTS.sqouse.face, 'RB dresses your sqouse', `${sq} ${sqFace}`),
+        ok(!!onTile, 'the d-pad reaches the grid', onTile),
+        ok(along, 'right is the next tile along', `${onTile} > ${tileOf(nextTile)}`),
+        ok(picked, 'A wears the tile', tileOf(nextTile)),
+        ok(rt, 'RT turns to the next slot tab, the focus on its tiles', tileOf(window.__pad.page())),
+        ok(lt, 'LT turns back, wrapping'),
+        ok(sq && sqWorn, 'RB dresses your sqouse, A wearing the tile on them', `${sq} ${sqTile}`),
         ok(you, 'LB is you again'),
-        ok(rolled && rowOnly, 'Y rolls the row the focus is on, and only it'),
+        ok(rolled && slotOnly, 'Y rolls the slot the focus is in, and only it'),
         ok(settings, 'B goes back to the yard')
       ];
     } finally {
@@ -328,7 +500,7 @@ export const TESTS = [
   }],
 
   // The way in the owner moved off settings (2026-10-16): the house's board,
-  // the row to the two of you, a head item stepped on and seen on the body
+  // the row to the two of you, a head item's tile picked and seen on the body
   // in the yard; then clear, and the body drawn as bare as anybody's.
   ['wardrobe: the house board opens the picker; a change is worn in the yard, and clear takes every slot bare', async () => {
     fresh();
@@ -342,8 +514,8 @@ export const TESTS = [
     const opened = S.paused && up(byId('wardrobe'));
     const settingsGone = !byId('wardrobebtn');
     byId('wardyou').click();
-    byId('ward-head-prev').click();              // off whatever it was, to be sure it moves
-    for (let i = 0; i < HEAD.length && outfitOf('you').head !== 'ears'; i++) byId('ward-head-next').click();
+    slotTab('head').click();
+    tile('head', 'ears').click();
     const eared = outfitOf('you').head === 'ears';
     byId('wardrobeback').click();
     await frames(2);
@@ -382,7 +554,7 @@ export const TESTS = [
     return [
       ok(opened, 'the row on the house board brings the picker up over the yard'),
       ok(settingsGone, 'and settings has no row for it'),
-      ok(eared && down, 'the head row stepped to the ears, and back lets the yard go', outfitOf('you').head),
+      ok(eared && down, 'the ears tile worn, and back lets the yard go', outfitOf('you').head),
       ok(earsSide && !earsMid, 'the ears are drawn on you in the yard', `${earsSide} ${earsMid}`),
       ok(allBare, 'clear takes every slot to none, the pattern to plain', JSON.stringify(o)),
       ok(named === nameOf('you') && role === roleOf('you'), 'and keeps the name and the role'),
@@ -390,8 +562,8 @@ export const TESTS = [
     ];
   }],
 
-  // The sixth slot (render/wardaura.js): the aura row stepped to the rain
-  // cloud on the page, and the cloud drawn over you in the yard, where with
+  // The sixth slot (render/wardaura.js): the aura tab's rain cloud tile
+  // picked on the page, and the cloud drawn over you in the yard, where with
   // none the air over the head is the bare floor's.
   ['wardrobe: the aura row puts a rain cloud over you in the yard', async () => {
     fresh();
@@ -404,9 +576,10 @@ export const TESTS = [
     wear('you', { head: 'none' });
     await openPicker();
     byId('wardyou').click();
-    const row = !!document.querySelector('.wardrow[data-slot="aura"]');
-    for (let i = 0; i < 12 && outfitOf('you').aura !== 'rain-cloud'; i++) byId('ward-aura-next').click();
-    const said = shownText('aura'), worn = outfitOf('you').aura;
+    slotTab('aura').click();
+    const row = up(tile('aura', 'rain-cloud'));
+    tile('aura', 'rain-cloud').click();
+    const said = gridHead(), worn = outfitOf('you').aura;
     byId('wardrobeback').click();
     await frames(2);
     const all = S.workers, was = { x: w.x, y: w.y };
@@ -434,7 +607,7 @@ export const TESTS = [
     await hoverAway();
     fresh();
     return [
-      ok(row && worn === 'rain-cloud' && said === 'rain cloud', 'the page has an aura row, and next steps it to the rain cloud', `${row} "${said}"`),
+      ok(row && worn === 'rain-cloud' && said.includes('rain cloud'), 'the page has an aura tab, and its rain cloud tile wears it', `${row} "${said}"`),
       ok(cloud > none + 6, 'the cloud is drawn over the head in the yard', `${cloud} marked, ${none} with none`)
     ];
   }],

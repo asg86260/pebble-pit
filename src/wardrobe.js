@@ -198,7 +198,6 @@ const SLOT = Object.fromEntries(SLOTS.map(s => [s.key, s]));
 export const itemOf = (slot, key) => SLOT[slot]?.items.find(i => i.key === key) || null;
 // The slot's "nothing": the first row, whatever it is called.
 export const bareOf = slot => SLOT[slot].items[0];
-
 // --- what opens them -----------------------------------------------------------------
 // The things in the yard an item can wait on, other than a notice or a hat.
 const FACTS = {

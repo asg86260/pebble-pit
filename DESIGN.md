@@ -19854,13 +19854,22 @@ in rain clouds cost the frame about 0.04 ms.
 
 **The picker** (src/wardrobepage.js; the mock's Part 3, titled with the
 mock's words "the two of you"). A page of the held sheet, at its full width:
-the two of them close up (a press on either half picks who), a strip at the
-yard's scale with a crowd in station hats walking it, her and him, a row a
-slot (label, previous, the item, next), a roll for the one being dressed
-only (nothing twice as likely as any one item). Under a thumb each row is
-two lines and every target 44 pixels. A pad moves between its buttons as on
-any page; on a row left and right step the item, LB and RB are her and him,
-Y the roll, B back. It is a row on the house's board, always ("the two of
+you and your sqouse as two tabs; the one being chosen close up, its name and
+role beside it; a tab a slot, each with how many of its items are open; and
+under them every item of the slot at once, a tile each of the bare square
+wearing it, walking in place under the pointer or the focus (the owner's
+vote, layout A of docs/mocks/wardrobe-expansion-2026-10-16, which replaced
+the row a slot with previous and next, and the crowd strip with it). The
+chosen tile is inverted; a locked one is faint under a lock, says what
+opens it, and picked is tried on the close-up faint and not kept; a roll
+never wears one. The slot's die is in the grid's heading, the roll of the
+whole square and the clear at the foot (nothing twice as likely as any one
+item). Under a thumb every target is 44 pixels, the slot tabs scroll
+sideways and the tiles reflow. A pad moves between its buttons as on any
+page, the nearest that way, so across the tiles; A picks, LT and RT are the
+slot tabs, LB and RB her and him, Y the slot's roll, B back; the keyboard
+the same, [ and ] for the slot tabs.
+It is a row on the house's board, always ("the two of
 you", over the yard on the held sheet; the owner moved it off settings,
 2026-10-16), and offered
 once at a new yard (`offerDress`: at boot, and when a slot is opened empty
