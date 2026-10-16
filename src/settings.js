@@ -105,13 +105,14 @@ document.getElementById('wardrobeback').addEventListener('click', () => {
   if (wardrobeOffer()) leaveWardrobe(); else showPane('settings');
 });
 let dressing = false;
-// Once, at a new yard: the sheet up on the picker before the opening walks
-// out, the yard held under it. Done or skip lets it go. Not under a browser
+// Once, at a new yard: the sheet up on the page's steps (who you are, your
+// square, your sqouse, the two of you) before the opening walks out, the
+// yard held under it. Done or skip lets it go, and only then is it offered;
+// a reload in the middle offers it again. Not under a browser
 // driven by the checks or the tools, whose every yard is new, unless asked
 // for by name (`force`, the scene that shoots it).
 export function offerDress(force = false) {
-  if (S.dressOffered || (!force && typeof navigator !== 'undefined' && navigator.webdriver)) return;
-  S.dressOffered = true;
+  if (S.dressOffered || S.naming || (!force && typeof navigator !== 'undefined' && navigator.webdriver)) return;
   hold(true);
   dressing = true;
   showPane('wardrobe');

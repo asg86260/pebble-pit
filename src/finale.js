@@ -118,11 +118,11 @@ export function finaleCast(w) {
 export function handOver(x, y) {
   if (S.retired) return false;
   const st0 = S.stations && S.stations[0];
-  const named = pairBody('her');
+  const named = pairBody('sqouse');
   const her = (named && isDeepType(named.type) ? named : null) || (st0 && fighterAt(st0))
            || S.workers.find(w => w.type === TYPE.FIGHTER) || S.workers.find(w => isDeepType(w.type) && belowYard(w));
   if (!her) return false;
-  namePair('her', her);
+  namePair('sqouse', her);
   const st = her.station ? stationById(her.station) : null;
   S.finale = { phase: 'swim', u: 0, T: 0, hurry: 1, st: st ? st.id : null, her: her.uid, heir: null,
                pair: [null, { x, y, face: -1 }], joined: 0, bursts: [], kit: null, glide: null, swum: null,

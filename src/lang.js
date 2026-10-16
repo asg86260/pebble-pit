@@ -148,6 +148,15 @@ export function msg(id, args) {
   const out = b.formatPattern(p, argsOf(args), []);
   return globalThis.__l10nMark ? globalThis.__l10nMark(out) : out;
 }
+// A line rewritten in English with more in it than a translation has caught
+// up with (the story lines that name the two of them, "Who you are"): `id`
+// where the player's language has it, else its `older` line in that
+// language, else English's `id`. A translation keeps its own words until it
+// writes the new message, rather than turning English mid-story.
+export function msgOr(id, older, args) {
+  if (active !== english && patternIn(active, id) == null && patternIn(active, older) != null) return msg(older, args);
+  return msg(id, args);
+}
 // `globalThis.__l10nMark`, set before the game's modules load, wraps every
 // message the game says: a pseudo-language for the checks, under which any
 // word on a board that came from somewhere else is plain to see

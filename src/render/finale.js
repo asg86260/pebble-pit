@@ -87,7 +87,7 @@ export function drawFinaleDeep() {
 // The two of them by their place in the pair, her first, and a key apiece to
 // read each one's walk off (`motionOf`): the pair's objects are made anew
 // every frame.
-const WHO = ['her', 'him'], KEYS = [{}, {}];
+const WHO = ['sqouse', 'you'], KEYS = [{}, {}];
 // A body drawn by one of the shapes below, with what it wears round it; the
 // square of (WORKER, h) stood with its top-left at (x, y).
 function dressed(x, y, look, draw, h = WORKER) {

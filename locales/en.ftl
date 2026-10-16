@@ -18,6 +18,16 @@ saved-word = It's Over?
 # rescue sheet line; the span is the time it took, filled in by the game
 saved-why = you saved your sqwife in <span data-l10n-name="time"></span>!
 
+# rescue sheet line, naming your sqouse by the name the player gave, else by their role; the span is the time it took, filled in by the game
+saved-why-who = you saved { $named ->
+        [yes] { $name }
+       *[no] your { $so ->
+            [wife] sqwife
+            [husband] sqhusband
+           *[ouse] sqouse
+        }
+    } in <span data-l10n-name="time"></span>!
+
 # rescue sheet dismiss button
 saved-keepplaying = Happily Ever After
 
@@ -26,6 +36,16 @@ demoend-word = thats it for the demo!
 
 # demo end sheet line
 demoend-why = cant save your sqwife just yet.
+
+# demo end sheet line, naming your sqouse by name, else by role
+demoend-why-who = cant save { $named ->
+        [yes] { $name }
+       *[no] your { $so ->
+            [wife] sqwife
+            [husband] sqhusband
+           *[ouse] sqouse
+        }
+    } just yet.
 
 # demo end store link (if STORE_URL)
 demoend-store = wishlist today!
@@ -47,6 +67,16 @@ freed-word = ok now its over
 
 # second-half end sheet line
 freed-why = you saved your sqhusband from the serpent's belly.
+
+# second-half end sheet line, naming you (the one the serpent swallowed) by name, else by role
+freed-why-who = you saved { $named ->
+        [yes] { $name }
+       *[no] your { $so ->
+            [wife] sqwife
+            [husband] sqhusband
+           *[ouse] sqouse
+        }
+    } from the serpent's belly.
 
 # second-half end sheet line
 freed-end = that's the end, feel free to keep slaying the serpent and farming on the surface!
@@ -688,6 +718,16 @@ obj-next = next
 # story line, first step
 obj-rock = dig the boulder to save your sqwife!
 
+# story line, first step, naming your sqouse by name, else by role
+obj-rock-who = dig the boulder to save { $named ->
+        [yes] { $name }
+       *[no] your { $so ->
+            [wife] sqwife
+            [husband] sqhusband
+           *[ouse] sqouse
+        }
+    }!
+
 # intro quest item
 obj-rock-q-chip = mine the boulder
 
@@ -715,6 +755,16 @@ obj-dome = out of options, lets see if the wizards can help.
 # story line before rescue
 obj-rescue = save your sqwife
 
+# story line: the rescue, naming your sqouse by name, else by role
+obj-rescue-who = save { $named ->
+        [yes] { $name }
+       *[no] your { $so ->
+            [wife] sqwife
+            [husband] sqhusband
+           *[ouse] sqouse
+        }
+    }
+
 # story line, second half
 obj-drown = drown the pit
 
@@ -729,6 +779,16 @@ obj-portal = conjure a portal to the abyss, what's down there?
 
 # story line, final step
 obj-free = free your sqhusband from the serpent's belly
+
+# story line, final step, naming you (the one in the belly) by name, else by role
+obj-free-who = free { $named ->
+        [yes] { $name }
+       *[no] your { $so ->
+            [wife] sqwife
+            [husband] sqhusband
+           *[ouse] sqouse
+        }
+    } from the serpent's belly
 
 # objective card cancel while building
 obj-barrier-cancel = cancel ×{ $n }
@@ -855,7 +915,7 @@ ach-firstrock-name = better keep digging
 ach-firstrock-note = clear the first rock
 
 # achievement name
-ach-gotout-name = you saved your sqwife
+ach-gotout-name = you saved your sqouse
 
 # achievement note
 ach-gotout-note = no more rocks, you did it.
@@ -1131,6 +1191,16 @@ idx-rock-name = the boulder
 
 # index entry text
 idx-rock-text = squished your sqwife, mined for valuable pebbles.
+
+# index entry text, naming your sqouse by name, else by role
+idx-rock-text-who = squished { $named ->
+        [yes] { $name }
+       *[no] your { $so ->
+            [wife] sqwife
+            [husband] sqhusband
+           *[ouse] sqouse
+        }
+    }, mined for valuable pebbles.
 
 # index entry name
 idx-pit-name = the pit
@@ -1432,8 +1502,25 @@ idx-party-text = brave party of adventurers willing to risk their life to defeat
 # index entry name
 idx-sqwife-name = sqwife
 
+# index entry name for your sqouse: the name the player gave, else the role word
+idx-sqwife-name-who = { $named ->
+        [yes] { $name }
+       *[no] { $so ->
+            [wife] sqwife
+            [husband] sqhusband
+           *[ouse] sqouse
+        }
+    }
+
 # index entry text
 idx-sqwife-text = living her life, until the incident(s), stuck under infinitely falling boulders from the sky. crazy.
+
+# index entry text for your sqouse, the pronoun by their role
+idx-sqwife-text-who = living { $so ->
+        [wife] her
+        [husband] his
+       *[ouse] their
+    } life, until the incident(s), stuck under infinitely falling boulders from the sky. crazy.
 
 
 
@@ -1734,6 +1821,16 @@ row-props = wooden barrier
 # the bench: the wooden barrier's line
 row-props-note = quickly try to build a barrier to save your sqwife
 
+# the bench: the wooden barrier's line, naming your sqouse by name, else by role
+row-props-note-who = quickly try to build a barrier to save { $named ->
+        [yes] { $name }
+       *[no] your { $so ->
+            [wife] sqwife
+            [husband] sqhusband
+           *[ouse] sqouse
+        }
+    }
+
 # the bench: the second barrier
 row-net = the net
 
@@ -1820,6 +1917,16 @@ row-house = another house
 
 # the ribbon on every goal card: the barrier the story is on
 goal-title = saving your sqwife
+
+# the ribbon on every goal card: the barrier the story is on, naming your sqouse by name, else by role
+goal-title-who = saving { $named ->
+        [yes] { $name }
+       *[no] your { $so ->
+            [wife] sqwife
+            [husband] sqhusband
+           *[ouse] sqouse
+        }
+    }
 
 # a card greyed out: its next rung costs crops, and there is no farm yet
 needs-spore = needs crops
@@ -2487,8 +2594,28 @@ books-tally-notes = notices earned
 # the books: a line
 books-tally-under = sqwife under the rock for
 
+# the books: a line, naming your sqouse by name, else by the role word
+books-tally-under-who = { $named ->
+        [yes] { $name }
+       *[no] { $so ->
+            [wife] sqwife
+            [husband] sqhusband
+           *[ouse] sqouse
+        }
+    } under the rock for
+
 # the books: a line
 books-tally-saved = sqwife saved in
+
+# the books: a line, naming your sqouse by name, else by the role word
+books-tally-saved-who = { $named ->
+        [yes] { $name }
+       *[no] { $so ->
+            [wife] sqwife
+            [husband] sqhusband
+           *[ouse] sqouse
+        }
+    } saved in
 
 # the books: the endless serpent's best level
 books-tally-serpent = deepest serpent
@@ -3021,25 +3148,65 @@ build-free = free
 # (NUM_FONT), which draws only the glyphs it has: words want their letters drawn into the font
 serp-level = { $n }
 
-## The picker: what the two of them wear (wardrobepage.js)
+## The picker: who the two of them are and what they wear (wardrobepage.js)
 
-# the picker page's heading
+# the picker page's heading; and at a new yard, the heading of its last step, the two of you side by side
 ward-title = the two of you
 
-# the picker's tab for dressing the sqwife
-ward-her = her
+# the picker's tab for choosing your own square
+ward-you = you
 
-# the picker's tab for dressing the sqhusband
-ward-him = him
+# the picker's tab for choosing your sqouse's square
+ward-sqouse = your sqouse
 
-# the picker's button that dresses the one being dressed at random
+# a new yard's first step: your name, role and outfit (the owner's words, 2026-10-16)
+ward-build-you = build who you are
+
+# a new yard's second step: your square shown back to you (the owner's words, 2026-10-16)
+ward-confirm-you = confirm your square
+
+# a new yard's third step: your sqouse's name, role and outfit (the owner's words, 2026-10-16)
+ward-build-sqouse = build your sqouse
+
+# a new yard's steps, counted: $n the step, $of how many
+ward-step = { $n } / { $of }
+
+# the picker's row label over the name field
+ward-name = name
+
+# the picker's row label over the role, stepped between the three words
+ward-role = role
+
+# the role, as the picker shows it and as an empty name field's hint
+ward-role-word = { $so ->
+        [wife] sqwife
+        [husband] sqhusband
+       *[ouse] sqouse
+    }
+
+# the picker, once the opening has played: why the name and role cannot be changed
+ward-locked = set at the start of a yard
+
+# the picker's button that dresses the one being dressed at random; and each row's die, as its label
 ward-randomize = randomize
+
+# the picker's button that rolls the whole square: name, role and outfit
+ward-randomize-all = randomize all
 
 # the picker's button, at a new yard, that keeps the outfits they start in and goes on
 ward-skip = skip
 
+# a new yard's button on to the next step
+ward-next = next
+
 # the picker's way off, at a new yard: the outfits as chosen, and on with the game
 ward-done = done
+
+# the pad's letter grid under the name: the key that types a space
+ward-key-space = space
+
+# the pad's letter grid under the name: the key that takes the last letter back
+ward-key-del = del
 
 # the picker's row labels, a slot a row
 ward-slot-head = head

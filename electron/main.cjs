@@ -40,6 +40,7 @@ function openSaves() {
   if (build.target !== 'steam' && !process.env.STEAM_APP_ID) return disk;
   const client = steam.startClient({ appId: steam.appIdFor({ demo: !!build.demo, packaged: app.isPackaged }) });
   achievements = steam.achievementsOf(client);
+  askText = steam.textInputOf(client);
   asked.steam = steam.languageOf(client);
   say = lang.sayer(lang.pickShellLanguage(asked));
   const remote = steam.startSteam({ client });
@@ -77,6 +78,8 @@ const asked = { steam: null, system: [] };
 let say = lang.sayer();
 // Steam's achievements, or ones that do nothing when this is not a Steam build.
 let achievements = steam.achievementsOf(null);
+// Steam's keyboard for a name typed on a pad, or one that answers null off Steam.
+let askText = steam.textInputOf(null);
 // Read before the app is ready: the demo's saves live in a folder of their own,
 // and the folder has to be named before anything is written to it.
 const build = readBuild();
@@ -127,6 +130,7 @@ function wire() {
   ipcMain.on('desk:achievement', (e, name) => { achievements.unlock(name); });
   ipcMain.on('desk:achievements', (e, names) => { achievements.sync(names); });
   ipcMain.handle('desk:write', (e, slot, raw) => store.write(slot, raw));
+  ipcMain.handle('desk:askText', (e, words, max, now) => askText(words, max, now));
   ipcMain.handle('desk:exportTo', async (e, raw) => {
     const win = BrowserWindow.fromWebContents(e.sender);
     const r = await dialog.showSaveDialog(win, { defaultPath: saveName(), filters: FILTERS });

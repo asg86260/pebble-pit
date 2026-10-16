@@ -5,6 +5,7 @@ import { lookAt } from '../world.js';
 import { raiseShield, shieldDone, shieldGround } from '../shield.js';
 import { offered } from '../stations.js';
 import { msg } from '../lang.js';
+import { storyLine } from '../wardrobe.js';
 
 // The shields: what the yard puts between itself and the sky. Data only;
 // upgrades.js strings the files together into UPGRADES.
@@ -22,7 +23,7 @@ export const SHIELD_ROWS = [
     kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround(),
     work: () => PROP_WORK,
     name: msg('row-props'),
-    note: () => msg('row-props-note'),
+    note: () => storyLine('row-props-note-who', 'row-props-note', 'sqouse'),
     cost: () => PROP_COST,
     buy: () => raiseShield('props'),
     show: () => offered('props')

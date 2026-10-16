@@ -46,16 +46,16 @@ group('he is the body the opening hands over, she the one dug out, and a reload 
   const fresh = S.workers.filter(w => !before.has(w.uid)).map(w => w.uid);
   const named = ids();
   persist();
-  S.pairIds = { her: null, him: null };
+  S.pairIds = { you: null, sqouse: null };
   restore();
   const back = ids();
   return [
-    ok(opened.him === first && !opened.her, 'the opening\'s survivor is him, and she is not one of the crew yet',
+    ok(opened.you === first && !opened.sqouse, 'the opening\'s survivor is him, and she is not one of the crew yet',
        JSON.stringify(opened)),
-    ok(digger === named.him, 'he is the one who digs her out', `digger ${digger}, him ${named.him}`),
-    ok(S.rescued && S.crew === crew + 1 && fresh.length === 1 && named.her === fresh[0],
+    ok(digger === named.you, 'he is the one who digs her out', `digger ${digger}, him ${named.you}`),
+    ok(S.rescued && S.crew === crew + 1 && fresh.length === 1 && named.sqouse === fresh[0],
        'she is the body she becomes as she joins the crew', `${JSON.stringify(named)}, new ${fresh}`),
-    ok(back.her === named.her && back.him === named.him && pairBody('her') && pairBody('him'),
+    ok(back.sqouse === named.sqouse && back.you === named.you && pairBody('sqouse') && pairBody('you'),
        'the save keeps both names, each on its body', JSON.stringify(back))
   ];
 });
@@ -79,18 +79,18 @@ group('the snatch takes the two of them, walked from where they stand, and she i
   }
   const after = ids();
   const st0 = S.stations[0];
-  const her = pairBody('her');
+  const her = pairBody('sqouse');
   window.__cold();
   const cold = ids();
   return [
-    ok(took && took.length === 2 && took.includes(named.her) && took.includes(named.him),
+    ok(took && took.length === 2 && took.includes(named.sqouse) && took.includes(named.you),
        'it takes those two and nobody else', `took ${took}, named ${JSON.stringify(named)}`),
-    ok(taken === named.him, 'him it takes into the water', `taken ${taken}`),
+    ok(taken === named.you, 'you it takes into the water', `taken ${taken}`),
     ok(jump < WORKER, 'they walk to the edge: nothing crosses a body\'s width in a frame', `${jump.toFixed(1)}px`),
-    ok(after.her === named.her && after.him === null, 'she is still her; he is not one of the crew', JSON.stringify(after)),
+    ok(after.sqouse === named.sqouse && after.you === null, 'your sqouse is still your sqouse; you are not one of the crew', JSON.stringify(after)),
     ok(her && st0 && st0.fighter === her.uid && her.station === st0.id, 'she is the first station\'s fighter',
-       `${st0?.fighter} ${after.her}`),
-    ok(cold.her === named.her && pairBody('her')?.type === 'fighter', 'and a cold reload keeps her there', JSON.stringify(cold))
+       `${st0?.fighter} ${after.sqouse}`),
+    ok(cold.sqouse === named.sqouse && pairBody('sqouse')?.type === 'fighter', 'and a cold reload keeps her there', JSON.stringify(cold))
   ];
 });
 
@@ -104,40 +104,40 @@ group('a body that is one of them is not the one stood down', async () => {
   run(2);
   const left = ids();
   return [
-    ok(S.workers.length === 2 && pairBody('her') && pairBody('him'),
+    ok(S.workers.length === 2 && pairBody('sqouse') && pairBody('you'),
        'the two kept when the crew is cut to two', `${S.workers.length} bodies`),
-    ok(left.her === named.her && left.him === named.him, 'under the same names', JSON.stringify(left))
+    ok(left.sqouse === named.sqouse && left.you === named.you, 'under the same names', JSON.stringify(left))
   ];
 });
 
 group('what they wear is kept by the save, item by item', async () => {
   // The picker's own steps (wardrobepage.js calls these on its rows).
-  stepItem('her', 'head', 1);           // bow -> top hat
-  stepItem('him', 'back', -1);          // none, back round to the last
-  stepItem('him', 'pattern', 2);
+  stepItem('sqouse', 'head', 1);           // bow -> top hat
+  stepItem('you', 'back', -1);          // none, back round to the last
+  stepItem('you', 'pattern', 2);
   let n = 0;
-  rollOutfit('her', () => [0.99, 0.5, 0.01, 0.7, 0.3][n++ % 5]);
-  const worn = { her: { ...outfitOf('her') }, him: { ...outfitOf('him') } };
+  rollOutfit('sqouse', () => [0.99, 0.5, 0.01, 0.7, 0.3][n++ % 5]);
+  const worn = { sqouse: { ...outfitOf('sqouse') }, you: { ...outfitOf('you') } };
   persist();
   S.outfits = null;
   restore();
-  const back = { her: { ...outfitOf('her') }, him: { ...outfitOf('him') } };
+  const back = { sqouse: { ...outfitOf('sqouse') }, you: { ...outfitOf('you') } };
   // An item the game no longer has (the necklace was cut at the vote) comes
   // back as the slot's default; the rest of the outfit stands.
   const raw = JSON.parse(localStorage.getItem(KEY));
-  raw.outfits.her.neck = 'necklace';
-  raw.outfits.him.head = 'no-such-hat';
+  raw.outfits.sqouse.neck = 'necklace';
+  raw.outfits.you.head = 'no-such-hat';
   localStorage.setItem(KEY, JSON.stringify(raw));
   restore();
-  const mended = { her: { ...outfitOf('her') }, him: { ...outfitOf('him') } };
+  const mended = { sqouse: { ...outfitOf('sqouse') }, you: { ...outfitOf('you') } };
   const slots = SLOTS.map(s => s.key);
   return [
-    ok(worn.him.back === 'flag' && worn.her.head !== DEFAULTS.her.head, 'the steps change what they wear',
+    ok(worn.you.back === 'flag' && worn.sqouse.head !== DEFAULTS.sqouse.head, 'the steps change what they wear',
        JSON.stringify(worn)),
-    ok(slots.every(k => back.her[k] === worn.her[k] && back.him[k] === worn.him[k]),
+    ok(slots.every(k => back.sqouse[k] === worn.sqouse[k] && back.you[k] === worn.you[k]),
        'and a save and a load hand back every slot', JSON.stringify(back)),
-    ok(mended.her.neck === DEFAULTS.her.neck && mended.him.head === DEFAULTS.him.head
-       && mended.her.head === worn.her.head && mended.him.back === worn.him.back,
+    ok(mended.sqouse.neck === DEFAULTS.sqouse.neck && mended.you.head === DEFAULTS.you.head
+       && mended.sqouse.head === worn.sqouse.head && mended.you.back === worn.you.back,
        'an item no longer in the wardrobe reads as the default, the rest as worn', JSON.stringify(mended))
   ];
 });
@@ -154,16 +154,16 @@ group('a save from before the names is given them, and is not offered the picker
   const ran = migrate(raw).map(m => m.v);
   const oldest = [...raw.who].filter(k => !k.deepHome).sort((a, b) => +a.uid.slice(1) - +b.uid.slice(1))[0].uid;
   localStorage.setItem(KEY, JSON.stringify(raw));
-  S.pairIds = { her: null, him: null };
+  S.pairIds = { you: null, sqouse: null };
   restore();
   return [
     ok(ran.includes(23), 'the migration runs', `${ran}`),
-    ok(raw.pairIds.him === oldest && raw.pairIds.her && raw.pairIds.her !== oldest,
+    ok(raw.pairIds.you === oldest && raw.pairIds.sqouse && raw.pairIds.sqouse !== oldest,
        'him the oldest body of the yard, her the oldest that is not him', JSON.stringify(raw.pairIds)),
-    ok(S.pairIds.him === raw.pairIds.him && pairBody('her') && pairBody('him'), 'and the yard reads them back',
+    ok(S.pairIds.you === raw.pairIds.you && pairBody('sqouse') && pairBody('you'), 'and the yard reads them back',
        JSON.stringify(S.pairIds)),
     ok(S.dressOffered === true, 'a yard already played is not offered the picker as a new one'),
-    ok(outfitOf('her').head === DEFAULTS.her.head && outfitOf('him').head === DEFAULTS.him.head,
+    ok(outfitOf('sqouse').head === DEFAULTS.sqouse.head && outfitOf('you').head === DEFAULTS.you.head,
        'they wear the defaults until it is opened')
   ];
 });
@@ -172,8 +172,8 @@ group('a new yard has the picker to offer, and wears the defaults from its first
   window.__reset();
   return [
     ok(S.dressOffered === false, 'a new yard has not been offered it yet'),
-    ok(outfitOf('her').head === DEFAULTS.her.head && outfitOf('him').head === DEFAULTS.him.head
-       && DEFAULTS.her.head !== DEFAULTS.him.head, 'the two start in two different outfits'),
-    ok(state() && S.pairIds.him === S.workers[0]?.uid, 'and he is named from the opening\'s hand-over')
+    ok(outfitOf('sqouse').head === DEFAULTS.sqouse.head && outfitOf('you').head === DEFAULTS.you.head
+       && DEFAULTS.sqouse.head !== DEFAULTS.you.head, 'the two start in two different outfits'),
+    ok(state() && S.pairIds.you === S.workers[0]?.uid, 'and he is named from the opening\'s hand-over')
   ];
 });

@@ -15,9 +15,14 @@ import { now } from './clock.js';
 import { beatRunning, skipBeat } from './beats.js';
 import { serpentOn } from './snatch.js';
 import { RESCUE_SHEET_LEAVE_S } from './config.js';
+import { writeInto } from './lang.js';
+import { storyLine } from './wardrobe.js';
 
 const sheet = document.getElementById('saved');
 const savedIn = document.getElementById('savedin');
+// Each sheet's line names the one it is about as it comes up, by the name
+// the player gave or by their role (wardrobe.js, `storyLine`).
+const say = (id, line) => writeInto(document.getElementById(id), line);
 const endOnly = [...sheet.querySelectorAll('.endonly')];
 const keepPlaying = document.getElementById('keepplaying');
 // With the half on the sheet has no button and floats away as its beat ends
@@ -37,7 +42,10 @@ export function syncEnding() {
     sheet.hidden = !up;
     // The clock stopped when they walked out (`stepUnder`), so this is the
     // same number the books read.
-    if (up) savedIn.textContent = sayClock(S.buriedMs);
+    if (up) {
+      say('savedwhy', storyLine('saved-why-who', 'saved-why', 'sqouse'));
+      savedIn.textContent = sayClock(S.buriedMs);
+    }
   }
   // With the second half on, the snatch follows this sheet, so it has no
   // button and goes by itself.
@@ -48,9 +56,15 @@ export function syncEnding() {
   }
   // The second half's end, the same way: up while its beat has the sheet.
   const freedUp = beatRunning('freedsheet') && !S.paused && !S.fatal;
-  if (freed.hidden === freedUp) freed.hidden = !freedUp;
+  if (freed.hidden === freedUp) {
+    freed.hidden = !freedUp;
+    if (freedUp) say('freedwhy', storyLine('freed-why-who', 'freed-why', 'you'));
+  }
   const demoUp = beatRunning('demoend') && !S.paused && !S.fatal;
-  if (demoEnd.hidden === demoUp) demoEnd.hidden = !demoUp;
+  if (demoEnd.hidden === demoUp) {
+    demoEnd.hidden = !demoUp;
+    if (demoUp) say('demowhy', storyLine('demoend-why-who', 'demoend-why', 'sqouse'));
+  }
   const teaseUp = beatRunning('teaseend') && !S.paused && !S.fatal;
   if (teaseEnd.hidden === teaseUp) teaseEnd.hidden = !teaseUp;
 }
@@ -72,7 +86,7 @@ document.getElementById('teasekeep').addEventListener('click', () => {
   skipBeat(now(), 'sheet');
 });
 
-// The sqhusband out of the belly (snatch.js). The second half is not timed,
+// You out of the belly (snatch.js). The second half is not timed,
 // so the sheet is the words and the button.
 const freed = document.getElementById('freed');
 document.getElementById('freedkeep').addEventListener('click', () => {

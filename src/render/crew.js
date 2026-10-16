@@ -515,7 +515,7 @@ function drawLodged(x, y, out) {
   ctx.clip();
   // her, under every rock: only what she wears on her head shows over the
   // ground while she is lodged deep
-  drawBody(x, y + depth, lookFor('her', S.boulder, x));
+  drawBody(x, y + depth, lookFor('sqouse', S.boulder, x));
   ctx.restore();
   drawDirt(x, y + WORKER, sunk);
   return depth;

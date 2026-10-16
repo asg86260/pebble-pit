@@ -156,6 +156,35 @@ group('a second store claims a pairing code and boots the yard', async () => {
   ];
 });
 
+// Who the two of them are rides in the yard (wardrobe.js, `S.selves`): named
+// on one device, the other boots them as named, roles and all.
+group('the names and roles of the two of them go with the yard to a second device', async () => {
+  wire();
+  const a = device();
+  await pick(a);
+  window.__reset();
+  window.__crew(2);
+  window.__self('you', { name: 'Ada', role: 'ouse' });
+  window.__self('sqouse', { name: 'Bram', role: 'husband' });
+  run(10);
+  persist();
+  await storeSettled();
+  await cloud.cloudBoot();
+  await cloud.startCloud();
+  const named = JSON.stringify(S.selves);
+  const pair = await cloud.makePair();
+  const b = device();
+  await pick(b);
+  await cloud.cloudBoot();
+  S.selves = null;
+  await cloud.claimPair(pair.pair);
+  S.yielded = false;
+  restore(); bootYard();
+  return [
+    ok(JSON.stringify(S.selves) === named, 'the second device reads both names and roles', `${JSON.stringify(S.selves)} vs ${named}`)
+  ];
+});
+
 group('a recovery code links a store with no other device', async () => {
   const { code } = await linked();
   const yardA = S.yardId;

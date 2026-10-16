@@ -1,23 +1,30 @@
-// The two of them dressed (wardrobe.js; DESIGN.md, "What the two of them
-// wear"): what the chosen head item does to a station hat, read off the
-// glass, and the picker worked as a player works it -- by the mouse on its
-// buttons, and by a pad on the page (padpage.js) with left and right on a
-// row stepping its item and the shoulders for her and him.
+// The two of them (wardrobe.js; DESIGN.md, "What the two of them wear" and
+// "Who you are"): what the chosen head item does to a station hat, read off
+// the glass, and the page worked as a player works it -- by the mouse and
+// the keyboard on its buttons and its name field, and by a pad on the page
+// (padpage.js), with left and right on a row stepping it, the shoulders for
+// you and your sqouse, the letter grid for a name, X a letter back and Y a
+// row's roll; a new yard's four steps by both; and the name and the role
+// held on the settings page once those steps are behind a yard.
 //
 // The pad is a stand-in for the browser's, as in selftest/pad.js: the page's
 // own frame reads it exactly as it reads a real one.
 
 import { ok, raf, run, canvas, onScreen } from './kit.js';
 import { S } from '../state.js';
-import { P, WORKER } from '../config.js';
+import { P, WORKER, NAME_MAX } from '../config.js';
 import { draw } from '../render.js';
 import { darkPage } from '../ink.js';
-import { namePair, outfitOf, wear, DEFAULTS, HEAD } from '../wardrobe.js';
+import { namePair, outfitOf, wear, DEFAULTS, HEAD, nameOf, roleOf, ROLE_START } from '../wardrobe.js';
+import { CREW_NAMES } from '../crew/names.js';
+import { objective } from '../objectives.js';
 import { wearing } from '../kit.js';
 import { TYPE } from '../jobs.js';
 import { offerDress } from '../settings.js';
 
 const frames = async n => { for (let i = 0; i < n; i++) await raf(); };
+const byId = id => document.getElementById(id);
+const up = el => !!el && !el.hidden && el.getClientRects().length > 0;
 
 // Whether the glass is ink at a world point: the device pixel under it, on
 // an even row (the press darkens the odd ones), ink being the dark end on
@@ -35,8 +42,8 @@ function inkAt(wx, wy) {
 async function openPicker() {
   dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
   await frames(2);
-  document.getElementById('settingsbtn').click();
-  document.getElementById('wardrobebtn').click();
+  byId('settingsbtn').click();
+  byId('wardrobebtn').click();
   await frames(3);
 }
 async function closePicker() {
@@ -47,6 +54,29 @@ const shownText = slot => document.querySelector(`.wardrow[data-slot="${slot}"] 
 const nextKey = (list, key, by = 1) => {
   const i = list.findIndex(it => it.key === key);
   return list[(i + by + list.length) % list.length].key;
+};
+// The name typed into its field as a keyboard does: the value, and the
+// input event the field answers.
+function typeName(text) {
+  const el = byId('wardnamein');
+  el.focus();
+  el.value = text;
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.blur();
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+const heading = () => byId('wardhead')?.textContent || '';
+// A new yard, its steps up as a first boot puts them.
+async function newYard() {
+  window.__reset();
+  run(0.5);
+  S.dressOffered = false;
+  offerDress(true);
+  await frames(3);
+}
+const fresh = () => {
+  wear('sqouse', DEFAULTS.sqouse); wear('you', DEFAULTS.you);
+  S.selves = null;
 };
 
 // The pad, as selftest/pad.js holds it.
@@ -77,24 +107,24 @@ const rowOf = el => el?.closest?.('.wardrow')?.dataset.slot || null;
 
 export const TESTS = [
   // The owner's vote on the mock: the chosen headwear replaces the station
-  // hat. A farmhand in a sun hat named him, read with nothing chosen (the
-  // brim's middle cell over his head is ink) and with the ears (two cells
+  // hat. A farmhand in a sun hat named you, read with nothing chosen (the
+  // brim's middle cell over the head is ink) and with the ears (two cells
   // either side, nothing over the middle: no brim under them), against the
   // glass with nobody drawn there.
-  ['wardrobe: his chosen head item is drawn in place of his station hat', async () => {
+  ['wardrobe: your chosen head item is drawn in place of your station hat', async () => {
     window.__crew(0, 0, 0, 3);
     window.__kit({ growers: 3 });
     run(6);
     const w = S.workers.find(o => o.type === TYPE.FARM && wearing(o) === 'brim');
     if (!w) return [ok(false, 'a farmhand in a sun hat', S.workers.map(o => `${o.type}:${wearing(o)}`).join(' '))];
-    namePair('him', w);
+    namePair('you', w);
     // drawn alone, stood on the bare floor left of the rock: the plots' crops
     // stand as high as a head, and nothing else is to be read there
     const all = S.workers, was = { x: w.x, y: w.y };
     const x = Math.round(S.cx - 400), y = Math.round(S.groundY - WORKER);
     window.__look(x - S.viewW / 2);
     const read = head => {
-      wear('him', { head });
+      wear('you', { head });
       Object.assign(w, { x, y, lunge: 0 });
       S.workers = [w];
       draw();
@@ -107,92 +137,133 @@ export const TESTS = [
     const ground = { mid: inkAt(x + WORKER / 2, y - P / 2), side: inkAt(x + P / 2, y - P / 2) };
     const bare = read('none'), ears = read('ears');
     Object.assign(w, was);
-    wear('him', DEFAULTS.him);
+    wear('you', DEFAULTS.you);
     return [
-      ok(!ground.mid && !ground.side, 'nothing else is drawn over his head', JSON.stringify(ground)),
-      ok(bare.mid && bare.side, 'with nothing chosen he wears the sun hat', JSON.stringify(bare)),
+      ok(!ground.mid && !ground.side, 'nothing else is drawn over the head', JSON.stringify(ground)),
+      ok(bare.mid && bare.side, 'with nothing chosen it wears the sun hat', JSON.stringify(bare)),
       ok(ears.side && !ears.mid, 'with the ears chosen they are drawn and the sun hat is not', JSON.stringify(ears))
     ];
   }],
 
-  ['wardrobe: the picker by the mouse: a row\'s next, her and him, the roll, the close-up', async () => {
-    wear('her', DEFAULTS.her); wear('him', DEFAULTS.him);
+  ['wardrobe: the picker by the mouse: a row\'s next, the two tabs, a row\'s die, the roll, the close-up', async () => {
+    fresh();
     run(0.5);
     await openPicker();
-    const page = document.getElementById('wardrobe');
-    const up = !page.hidden && page.getClientRects().length > 0;
-    document.getElementById('ward-head-next').click();
-    const stepped = outfitOf('her').head, said = shownText('head');
-    document.getElementById('wardhim').click();
-    const himOn = document.getElementById('wardhim').classList.contains('on');
-    document.getElementById('ward-back-prev').click();
-    const himBack = outfitOf('him').back, herBack = outfitOf('her').back;
+    const page = byId('wardrobe');
+    const shown = up(page);
+    byId('wardyou').click();
+    byId('ward-head-next').click();
+    const stepped = outfitOf('you').head, said = shownText('head');
+    byId('wardsqouse').click();
+    const sqOn = byId('wardsqouse').classList.contains('on');
+    byId('ward-back-prev').click();
+    const sqBack = outfitOf('sqouse').back, youBack = outfitOf('you').back;
+    // the face row's own die: that row alone
+    const before = { ...outfitOf('sqouse') };
+    let faced = false;
+    for (let i = 0; i < 8 && !faced; i++) {
+      document.querySelector('.wardrow[data-slot="face"] .warddie').click();
+      faced = outfitOf('sqouse').face !== before.face;
+    }
+    const others = ['head', 'neck', 'back', 'pattern'].every(k => outfitOf('sqouse')[k] === before[k]);
     let rolled = false;
-    const was = JSON.stringify(outfitOf('him'));
-    for (let i = 0; i < 6 && !rolled; i++) { document.getElementById('wardroll').click(); rolled = JSON.stringify(outfitOf('him')) !== was; }
-    // the close-up's left half is her
+    const was = JSON.stringify(outfitOf('sqouse'));
+    for (let i = 0; i < 6 && !rolled; i++) { byId('wardroll').click(); rolled = JSON.stringify(outfitOf('sqouse')) !== was; }
+    // the close-up's left half is you
     const big = page.querySelector('canvas');
     const r = big.getBoundingClientRect();
     big.dispatchEvent(new MouseEvent('click', { clientX: r.left + r.width * 0.25, clientY: r.top + r.height / 2, bubbles: true }));
-    const herOn = document.getElementById('wardher').classList.contains('on');
-    document.getElementById('wardrobeback').click();
-    const backTo = !document.getElementById('wardrobebtn').hidden;
+    const youOn = byId('wardyou').classList.contains('on');
+    byId('wardrobeback').click();
+    const backTo = !byId('wardrobebtn').hidden;
     await closePicker();
-    wear('her', DEFAULTS.her); wear('him', DEFAULTS.him);
+    fresh();
     return [
-      ok(up, 'the settings row opens the picker'),
-      ok(stepped === nextKey(HEAD, DEFAULTS.her.head) && said && said.length > 0,
-         'next on the head row puts the next head item on her, and the row says it', `${stepped} "${said}"`),
-      ok(himOn && himBack === 'flag' && herBack === DEFAULTS.her.back, 'the him tab dresses him, not her',
-         `${himOn} ${himBack} ${herBack}`),
-      ok(rolled, 'the roll dresses the one being dressed'),
-      ok(herOn, 'a press on her half of the close-up picks her'),
+      ok(shown, 'the settings row opens the picker'),
+      ok(stepped === nextKey(HEAD, DEFAULTS.you.head) && said && said.length > 0,
+         'next on the head row puts the next head item on you, and the row says it', `${stepped} "${said}"`),
+      ok(sqOn && sqBack === 'flag' && youBack === DEFAULTS.you.back, 'the sqouse tab dresses your sqouse, not you',
+         `${sqOn} ${sqBack} ${youBack}`),
+      ok(faced && others, 'a row\'s die rolls that row alone', JSON.stringify(outfitOf('sqouse'))),
+      ok(rolled, 'randomize all dresses the one being dressed'),
+      ok(youOn, 'a press on the left half of the close-up picks you'),
       ok(backTo, 'back is the settings page')
     ];
   }],
 
-  // A new yard's offer (settings.js, `offerDress`): the yard held on the
-  // picker, a skip that puts the defaults back, done that lets the yard go;
-  // and asked again it is not offered twice.
-  ['wardrobe: a new yard offers the picker once; done lets the yard go, skip puts the defaults back', async () => {
-    window.__reset();
-    run(0.5);
-    S.dressOffered = false;
-    offerDress(true);
-    await frames(3);
-    const page = document.getElementById('wardrobe');
-    const held = S.paused && !page.hidden && page.getClientRects().length > 0;
-    const skip = document.getElementById('wardskip');
-    const skipShown = !skip.hidden;
-    const doneSays = document.getElementById('wardrobeback').textContent;
-    document.getElementById('ward-head-next').click();
-    const changed = outfitOf('her').head !== DEFAULTS.her.head;
-    skip.click();
+  // A new yard (settings.js, `offerDress`): the yard held on four steps.
+  // Build who you are, by the field, the role's next and the name's die;
+  // confirm your square; build your sqouse; the two of you; done lets the
+  // yard go, and the story card names your sqouse as typed. A skip from the
+  // first step lets it go in the defaults, and it is offered once.
+  ['wardrobe: a new yard\'s steps by the mouse and the keyboard: who you are, your square, your sqouse, the two of you', async () => {
+    fresh();
+    await newYard();
+    const page = byId('wardrobe');
+    const held = S.paused && up(page);
+    const first = heading();
+    const skipShown = up(byId('wardskip')) && !up(byId('wardrobeback'));
+    // the name die: a name off the crew's list
+    document.querySelector('.wardname .warddie').click();
+    const rolledName = nameOf('you');
+    typeName('  Pat  o\'Neil-2<b>x</b>yz');
+    const typed = nameOf('you');
+    byId('ward-role-next').click();
+    const role = roleOf('you');
+    byId('wardnext').click();
+    await frames(1);
+    const second = heading(), confirmed = page.querySelector('.wardshown')?.textContent || '';
+    byId('wardnext').click();
+    await frames(1);
+    const third = heading();
+    typeName('lee');
+    byId('wardnext').click();
+    await frames(1);
+    const fourth = heading(), both = page.querySelector('.wardshown')?.textContent || '';
+    byId('wardflowprev').click();
+    const backed = heading() === third;
+    byId('wardnext').click();
+    byId('wardnext').click();
     await frames(2);
-    const skipped = !S.paused && outfitOf('her').head === DEFAULTS.her.head;
+    const let_go = !S.paused && S.dressOffered && !S.naming;
+    const card = objective()?.say || '';
+    // the settings page now holds them
+    await openPicker();
+    const lockedField = byId('wardnamein').disabled && up(document.querySelector('.wardlock'));
+    byId('ward-role-next').click();
+    const kept = roleOf('you') === role;
+    await closePicker();
+    // and a skip from the first step, on another new yard
+    fresh();
+    await newYard();
+    byId('ward-head-next').click();
+    byId('wardskip').click();
+    await frames(2);
+    const skipped = !S.paused && outfitOf('you').head === DEFAULTS.you.head && !nameOf('you');
     offerDress(true);
     await frames(2);
     const again = S.paused;
-    // and once more, a fresh yard, kept with done
-    S.dressOffered = false;
-    offerDress(true);
-    await frames(2);
-    document.getElementById('ward-head-next').click();
-    document.getElementById('wardrobeback').click();
-    await frames(2);
-    const kept = !S.paused && outfitOf('her').head !== DEFAULTS.her.head && S.dressOffered;
-    wear('her', DEFAULTS.her);
+    fresh();
     return [
-      ok(held && skipShown, 'the yard is held on the picker, with a skip', `${S.paused} ${skipShown}`),
-      ok(doneSays && doneSays !== document.getElementById('settingsback').textContent, 'its way off says done', doneSays),
-      ok(changed && skipped, 'skip lets the yard go in the defaults'),
-      ok(!again, 'it is offered once'),
-      ok(kept, 'done lets the yard go in what was chosen')
+      ok(held && first === 'build who you are' && skipShown, 'the yard is held on the first step, with a skip', `${S.paused} "${first}"`),
+      ok(CREW_NAMES.includes(rolledName), 'the name\'s die draws a crew name', rolledName),
+      ok(typed === 'Pat o\'Neil-2', 'a name keeps letters, digits, space, - and \', trimmed, to NAME_MAX',
+         `"${typed}" ${[...typed].length}/${NAME_MAX}`),
+      ok(role !== ROLE_START.you, 'next on the role row steps it', role),
+      ok(second === 'confirm your square' && confirmed.includes('Pat o\'Neil-2'), 'the second step shows your square named', `"${second}" "${confirmed}"`),
+      ok(third === 'build your sqouse' && nameOf('sqouse') === 'lee', 'the third builds your sqouse', `"${third}" ${nameOf('sqouse')}`),
+      ok(fourth === 'the two of you' && both.includes('lee') && both.includes('Pat'), 'the last shows the two of you', `"${fourth}" "${both}"`),
+      ok(backed, 'back is the step before'),
+      ok(let_go, 'done lets the yard go'),
+      ok(card.includes('lee'), 'and the story card names your sqouse', card),
+      ok(lockedField && kept, 'the settings page holds the name and the role once the steps are behind'),
+      ok(skipped, 'skip lets the yard go in the defaults, unnamed'),
+      ok(!again, 'the steps are offered once')
     ];
   }],
 
-  ['wardrobe: the picker by a pad: up and down the rows, left and right the items, LB and RB', async () => {
-    wear('her', DEFAULTS.her); wear('him', DEFAULTS.him);
+  ['wardrobe: the picker by a pad: up and down the rows, left and right the items, LB and RB, Y a row', async () => {
+    fresh();
     run(0.5);
     plugIn();
     try {
@@ -200,41 +271,88 @@ export const TESTS = [
       await openPicker();
       await frames(2);
       // up the page to the head row
-      for (let i = 0; i < 12 && rowOf(window.__pad.page()) !== 'head'; i++)
+      for (let i = 0; i < 16 && rowOf(window.__pad.page()) !== 'head'; i++)
         await press(rowOf(window.__pad.page()) ? 'up' : 'down');
       const onHead = rowOf(window.__pad.page()) === 'head';
       await press('right');
-      const head = outfitOf('her').head;
+      const head = outfitOf('you').head;
       const stayed = rowOf(window.__pad.page()) === 'head';
       await press('down');
       const onFace = rowOf(window.__pad.page()) === 'face';
       await press('left');
-      const face = outfitOf('her').face;
+      const face = outfitOf('you').face;
       await press('rb');
-      const him = document.getElementById('wardhim').classList.contains('on');
+      const sq = byId('wardsqouse').classList.contains('on');
       await press('right');
-      const hisFace = outfitOf('him').face;
+      const sqFace = outfitOf('sqouse').face;
       await press('lb');
-      const her = document.getElementById('wardher').classList.contains('on');
-      const was = JSON.stringify(outfitOf('her'));
+      const you = byId('wardyou').classList.contains('on');
+      const was = outfitOf('you').face, heads = outfitOf('you').head;
       let rolled = false;
-      for (let i = 0; i < 6 && !rolled; i++) { await press('y'); rolled = JSON.stringify(outfitOf('her')) !== was; }
+      for (let i = 0; i < 8 && !rolled; i++) { await press('y'); rolled = outfitOf('you').face !== was; }
+      const rowOnly = outfitOf('you').head === heads;
       await press('b');                               // back, to settings
-      const settings = !document.getElementById('wardrobebtn').hidden;
+      const settings = !byId('wardrobebtn').hidden;
       await closePicker();
       return [
         ok(onHead, 'the d-pad reaches the head row', rowOf(window.__pad.page())),
-        ok(head === nextKey(HEAD, DEFAULTS.her.head) && stayed, 'right steps her head item and keeps the row', head),
+        ok(head === nextKey(HEAD, DEFAULTS.you.head) && stayed, 'right steps your head item and keeps the row', head),
         ok(onFace, 'down is the next row'),
-        ok(face !== DEFAULTS.her.face, 'left steps that row back', face),
-        ok(him && hisFace !== DEFAULTS.him.face, 'RB dresses him', `${him} ${hisFace}`),
-        ok(her, 'LB is her again'),
-        ok(rolled, 'Y rolls her outfit'),
+        ok(face !== DEFAULTS.you.face, 'left steps that row back', face),
+        ok(sq && sqFace !== DEFAULTS.sqouse.face, 'RB dresses your sqouse', `${sq} ${sqFace}`),
+        ok(you, 'LB is you again'),
+        ok(rolled && rowOnly, 'Y rolls the row the focus is on, and only it'),
         ok(settings, 'B goes back to settings')
       ];
     } finally {
       unplug();
-      wear('her', DEFAULTS.her); wear('him', DEFAULTS.him);
+      fresh();
+    }
+  }],
+
+  // A new yard by a pad, off Steam: the letter grid under the name, A a key,
+  // X a letter back, Y the name's roll from the grid, B the step back and
+  // menu the step on, never the sheet's let-go.
+  ['wardrobe: a new yard\'s steps by a pad: the letter grid, X, Y, B and menu', async () => {
+    fresh();
+    plugIn();
+    try {
+      await press('b');                               // wakes the pad
+      await newYard();
+      await frames(2);
+      const grid = up(document.querySelector('.wardkeys'));
+      // onto a letter: down from wherever the focus stands
+      const onKey = () => window.__pad.page()?.classList?.contains('wardkey');
+      for (let i = 0; i < 12 && !onKey(); i++) await press('down');
+      const key = window.__pad.page()?.dataset.key;
+      await press('a');
+      await press('a');
+      const typed = nameOf('you');
+      await press('x');
+      const deleted = nameOf('you');
+      await press('y');
+      const rolled = nameOf('you');
+      await press('menu');
+      const on = heading() === 'confirm your square' && S.paused;
+      await press('b');
+      const back = heading() === 'build who you are' && S.paused;
+      await press('b');
+      const stays = heading() === 'build who you are' && S.paused;
+      for (let i = 0; i < 4; i++) await press('menu');
+      const done = !S.paused && S.dressOffered;
+      return [
+        ok(grid, 'the letter grid is up under the name'),
+        ok(onKey() !== undefined && key && typed === key + key, 'A types the key the focus is on', `${key} "${typed}"`),
+        ok(deleted === key, 'X takes the last letter back', deleted),
+        ok(CREW_NAMES.includes(rolled), 'Y from the grid rolls the name', rolled),
+        ok(on, 'menu is the step on'),
+        ok(back, 'B is the step back'),
+        ok(stays, 'B on the first step keeps the yard held'),
+        ok(done, 'and menu through the last lets the yard go')
+      ];
+    } finally {
+      unplug();
+      fresh();
     }
   }],
 ];

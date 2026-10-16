@@ -199,6 +199,12 @@
  },
  {
   "file": "src/style.css",
+  "sel": ".held .wardrobe .wardname input",
+  "prop": "font-family",
+  "value": "ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
   "sel": ".cloudsheet .head",
   "prop": "letter-spacing",
   "value": ".3em"

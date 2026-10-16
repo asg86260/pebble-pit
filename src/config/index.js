@@ -25,6 +25,7 @@
 
 import { TYPE, JOB, jobSaid } from '../jobs.js';
 import { msg } from '../lang.js';
+import { storyLine } from '../wardrobe.js';
 
 // The table's order, one run per group; nothing draws a heading for them.
 export const GROUPS = ['materials', 'yard', 'sky', 'places', 'crew', 'story'];
@@ -46,7 +47,7 @@ export const INDEX = [
 
   // --- the yard ---
   { key: 'rock', group: 'yard', name: msg('idx-rock-name'), glyph: null, met: 'start',
-    text: msg('idx-rock-text') },
+    get text() { return storyLine('idx-rock-text-who', 'idx-rock-text', 'sqouse'); } },
   { key: 'pit', group: 'yard', name: msg('idx-pit-name'), glyph: 'hole', met: 'start',
     text: msg('idx-pit-text') },
   { key: 'rift', group: 'yard', name: msg('idx-rift-name'), glyph: null, met: 'riftOpen',
@@ -157,8 +158,8 @@ export const INDEX = [
     text: msg('idx-party-text') },
 
   // --- the story ---
-  { key: 'sqwife', group: 'story', name: msg('idx-sqwife-name'), glyph: 'sqwife', met: 'start',
-    text: msg('idx-sqwife-text') },
+  { key: 'sqwife', group: 'story', get name() { return storyLine('idx-sqwife-name-who', 'idx-sqwife-name', 'sqouse'); }, glyph: 'sqwife', met: 'start',
+    get text() { return storyLine('idx-sqwife-text-who', 'idx-sqwife-text', 'sqouse'); } },
   { key: 'notices', group: 'story', name: msg('idx-notices-name'), glyph: 'trophy', met: 'won',
     text: msg('idx-notices-text') },
   { key: 'serpent', group: 'story', name: msg('idx-serpent-name'), glyph: null, met: 'beat:snatch', serpent: true,

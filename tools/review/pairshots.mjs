@@ -30,7 +30,7 @@ for (const name of list.split(',')) {
   await standScene(tab, name);
   if (name.startsWith('wardrobe')) { await tab.shot(`${out}/${name}.png`); console.log(`${name}: whole`); continue; }
   const at = (await tab.evaluate('JSON.stringify(window.__pairAt())')).result?.result?.value;
-  const { her, him } = JSON.parse(at || '{}');
+  const { sqouse: her, you: him } = JSON.parse(at || '{}');
   const on = o => o && o.x > -o.s && o.x < W && o.y > -o.s && o.y < H;
   const seen = [her, him].filter(on);
   if (!seen.length) { await tab.shot(`${out}/${name}.png`); console.log(`${name}: neither on the glass, shot whole`); continue; }

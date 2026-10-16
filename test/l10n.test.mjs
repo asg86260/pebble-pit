@@ -128,6 +128,8 @@ const standing = new Set();
 for (const f of SRC) {
   const src = readFileSync(f, 'utf8');
   for (const m of src.matchAll(/\bmsg\(\s*'([a-z][\w.-]*)'/g)) asked.push([f, m[1]]);
+  // a line and its older one, asked through lang.js's `msgOr` or wardrobe.js's `storyLine`
+  for (const m of src.matchAll(/\b(?:msgOr|storyLine)\(\s*'([a-z][\w.-]*)',\s*'([a-z][\w.-]*)'/g)) asked.push([f, m[1]], [f, m[2]]);
   for (const l of literals(src)) standing.add(l.text);
 }
 for (const p of PAGES) {

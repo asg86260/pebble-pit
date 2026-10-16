@@ -38,6 +38,9 @@ export function seatObjective(t) {
     say.classList.remove('done');
     el.classList.remove('going');
   }
+  // The same step reworded under it: a line that names the two of them, read
+  // again once a new yard's page has named them.
+  if (shown && key === shown.key && !leaving && want.say && say.textContent !== want.say) say.textContent = want.say;
   if (shown && key !== shown.key) {
     // the one done: struck through and faded, then the next
     if (!leaving) { leaving = t + STRIKE_MS; say.classList.add('done'); el.classList.add('going'); if (list) { list.hidden = true; listed = ''; } }

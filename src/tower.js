@@ -17,7 +17,8 @@ import { emptySky } from './meteor.js';
 import { registerRows, workOn, progressOf, ahead } from './works.js';
 import { TYPE, JOB } from './jobs.js';
 import { MACHINES, machine, buyMachine, canBuy, tuneRow } from './machines.js';
-import { GOAL_TITLE, KIT_MAX, SPHERE_BILL, SPHERE_WORK, SPHERE_TUNE_WORK, MACHINE_TUNE, PORTAL_BILL } from './config.js';
+import { KIT_MAX, SPHERE_BILL, SPHERE_WORK, SPHERE_TUNE_WORK, MACHINE_TUNE, PORTAL_BILL } from './config.js';
+import { goalTitle } from './wardrobe.js';
 import { stockOf } from './kit.js';
 import { sky } from './state.js';
 import { sphereUp } from './sphere.js';
@@ -226,7 +227,7 @@ export const TOWER_UPGRADES = [
 // The dome is this board's goal, as each shield before it is the bench's: the
 // wide card. The story's card sells it too (objbarrier.js).
 export const TOWER_SECTIONS = [
-  { title: GOAL_TITLE, goal: true, keys: ['dome'] },
+  { get title() { return goalTitle(); }, goal: true, keys: ['dome'] },
   { title: msg('station-tower'), keys: [TYPE.WIZARD, 'wizspeed', 'wizpower'] },
   { title: msg('machine-sphere'), keys: ['sphere', 'tunesphere'] },
   { title: msg('sect-enchantments'), keys: SPELLS.map(sp => 'spell' + sp.key) },

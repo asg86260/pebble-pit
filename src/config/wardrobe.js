@@ -43,3 +43,11 @@ export const WARD_STRIP_H = 46;
 // pace they walk at (world pixels a second).
 export const WARD_CROWD = 8;
 export const WARD_CROWD_PACE = [10, 22];
+
+// Who the two of them are (DESIGN.md, "Who you are"): the longest name the
+// player may give either square, in characters. The narrow places a name
+// stands are the story card's one line and the phone's sheet; "sqhusband",
+// the longest role word, is nine.
+export const NAME_MAX = 12;
+// The pad's letter grid under the name row: this many keys a row.
+export const NAME_GRID_COLS = 10;

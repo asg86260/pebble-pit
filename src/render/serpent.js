@@ -438,7 +438,7 @@ function drawCoil() {
     // The first trip down has him hop against the ribs and call over the
     // hide, a stand clear of it (abyssintro.js).
     const near = held && Math.abs(b.along - bellyA) < BELLY_LEN;
-    if (near) drawBody(snap(b.x) - WORKER / 2, snap(b.y) - WORKER / 2 - hisHop(t), lookFor('him', HIM, b.x, { face: 1, deep: true }));
+    if (near) drawBody(snap(b.x) - WORKER / 2, snap(b.y) - WORKER / 2 - hisHop(t), lookFor('you', HIM, b.x, { face: 1, deep: true }));
     ctx.fillStyle = GREYS[2];
     for (const c of ribs) ctx.fillRect(c.x, c.y, P, P);
     const say = near && hisSay(t);
@@ -823,12 +823,12 @@ function drawKillMotes(t, laid) {
 export function drawFreed() {
   if (S.view !== 'deep') return;
   const b = freedBody();
-  if (b) { drawBody(snap(b.x), snap(b.y), lookFor('him', HIM, b.x, { deep: true })); return; }
+  if (b) { drawBody(snap(b.x), snap(b.y), lookFor('you', HIM, b.x, { deep: true })); return; }
   const a = killA(), free = killFreeA();
   if (a == null || a < free) return;
   const at = bellyAt(now()), floor = deepFloor() - WORKER;
   const k = Math.min(1, Math.ceil((a - free) / KILL_DROP_S * KILL_DROP_STEPS) / KILL_DROP_STEPS);
-  drawBody(snap(at.x) - WORKER / 2, snap(at.y - WORKER / 2 + (floor - at.y + WORKER / 2) * k), lookFor('him', HIM, at.x, { face: 1, deep: true }));
+  drawBody(snap(at.x) - WORKER / 2, snap(at.y - WORKER / 2 + (floor - at.y + WORKER / 2) * k), lookFor('you', HIM, at.x, { face: 1, deep: true }));
 }
 
 // The dive's bubbles: up off the floor where he went under, while he is
@@ -970,7 +970,7 @@ export function drawSnatch() {
   }
   const eyeC = Math.round(cols * 0.62);
   cell(hx + eyeC * P, hy + (mid - 2 - gapAt(eyeC)) * P, '#fff');
-  if (sn.carried) { const j = jawAt(sn.headY); drawBody(j.x, j.y, lookFor('him', HIM, j.x, { face: -1 })); }
+  if (sn.carried) { const j = jawAt(sn.headY); drawBody(j.x, j.y, lookFor('you', HIM, j.x, { face: -1 })); }
   ctx.restore();
   // the surface broken either side of the neck
   ctx.fillStyle = '#fff';

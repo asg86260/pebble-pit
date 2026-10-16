@@ -842,7 +842,7 @@
   },
   {
    "id": "ach.gotout.name",
-   "text": "you saved your sqwife"
+   "text": "you saved your sqouse"
   },
   {
    "id": "ach.gotout.note",
@@ -2351,7 +2351,7 @@
    "from": "src/catalog.js:23"
   },
   "ach-gotout-name": {
-   "text": "you saved your sqwife",
+   "text": "you saved your sqouse",
    "from": "src/catalog.js:24"
   },
   "ach-gotout-note": {

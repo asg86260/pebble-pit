@@ -15,6 +15,7 @@ import { doing } from './crewboard.js';
 import { JOB, JOB_OF, jobSaid } from './jobs.js';
 import { showWindow } from './modal.js';
 import { registerBoard } from './boardrows.js';
+import { storyLine } from './wardrobe.js';
 
 // What the books show, in board order. A currency appears once you have seen
 // one.
@@ -43,9 +44,12 @@ const say = v =>
 // --- the board ----------------------------------------------------------------
 // Every row is a readout in the shape every other board uses; `read` takes the
 // cursor and the hover off in the stylesheet. A row's `note` is the dim line
-// under it on the ledger.
+// under it on the ledger. A name given as a function is read each time it is
+// shown: a line that names the two of them, who are named after the board
+// is built.
 const readout = (key, name, price, show, note) =>
-  ({ key, name, price, note, read: true, dead: () => false, cost: () => 0, buy: () => {}, show });
+  ({ key, get name() { return typeof name === 'function' ? name() : name; }, price, note, read: true,
+     dead: () => false, cost: () => 0, buy: () => {}, show });
 
 // The window the rates are taken over, pressed to step to the next. A
 // signpost's press: nothing is bought, and it carries no pushpin.
@@ -200,9 +204,9 @@ const TALLY_ROWS = [
   ...TALLY.map(t => readout(`tally${t.key}`, t.name,
                             () => `${t.mark ? MARK[t.mark] + ' ' : ''}${fmt(t.count() || 0)}`,
                             () => t.seen())),
-  readout('tallyunder', msg('books-tally-under'), () => `${MARK.time} ${sayClock(S.buriedMs)}`,
+  readout('tallyunder', () => storyLine('books-tally-under-who', 'books-tally-under', 'sqouse'), () => `${MARK.time} ${sayClock(S.buriedMs)}`,
           () => S.buried),
-  readout('tallysaved', msg('books-tally-saved'), () => `${MARK.time} ${sayClock(S.buriedMs)}`,
+  readout('tallysaved', () => storyLine('books-tally-saved-who', 'books-tally-saved', 'sqouse'), () => `${MARK.time} ${sayClock(S.buriedMs)}`,
           () => S.rescued),
   // The record of the endless serpent (DESIGN.md, "Endless serpent"), shown
   // once it has risen past the story's.

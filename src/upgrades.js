@@ -10,7 +10,8 @@
 // through the shop.
 
 import { msg } from './lang.js';
-import { P, SHELF_INK, GOAL_TITLE } from './config.js';
+import { P, SHELF_INK } from './config.js';
+import { goalTitle } from './wardrobe.js';
 import { S } from './state.js';
 import { maxed, rungOf, rungsOf } from './words.js';
 import { spend, spendHeld, payTo, refund } from './pit.js';
@@ -128,7 +129,7 @@ export const lodgers = board => UPGRADES.filter(u => u.board === board);
 // same whatever language its `title` is in: the English titles the saves have
 // always held.
 export const SECTIONS = [
-  { key: 'saving your sqwife', title: GOAL_TITLE, goal: true, keys: ['props', 'net', 'arch', 'askwizards'] },
+  { key: 'saving your sqwife', get title() { return goalTitle(); }, goal: true, keys: ['props', 'net', 'arch', 'askwizards'] },
   { key: 'you', title: msg('sect-you'), keys: ['carry', 'autotoss', 'toss', 'reach', 'auto', 'speed', 'pick'] },
   { key: 'lucky swings', title: msg('sect-luck'), keys: ['critchance', 'critmult'] },
   { key: 'the haulers', title: msg('sect-haulers'), keys: ['haulcarry', 'haulpace', 'carter', 'driver', 'liftload', 'liftpace', 'belt'] },

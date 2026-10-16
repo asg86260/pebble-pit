@@ -13,6 +13,7 @@ import { serpentOn, deepOn } from './snatch.js';
 import { beatDone } from './beats.js';
 import { open } from './stations.js';
 import { msg } from './lang.js';
+import { storyLine } from './wardrobe.js';
 
 // In the order they come. `done` is the fact that finishes a step, and it
 // must imply every step before it (a fact that can come early, like the pit
@@ -21,7 +22,7 @@ import { msg } from './lang.js';
 // step not done is the line. `row` is the shop row the step is bought
 // through: the card under the line sells it (objbarrier.js).
 export const STEPS = [
-  { key: 'rock', say: msg('obj-rock'), done: () => S.boulderNo > 1 || beatDone('meet'),
+  { key: 'rock', get say() { return storyLine('obj-rock-who', 'obj-rock', 'sqouse'); }, done: () => S.boulderNo > 1 || beatDone('meet'),
     // the intro's quest (DESIGN.md, "Quests under the story's line")
     quest: [
       { key: 'chip', say: msg('obj-rock-q-chip'), done: () => !!S.handChipped },
@@ -40,7 +41,7 @@ export const STEPS = [
   { key: 'arch', row: 'arch', say: msg('obj-arch'), done: () => shieldDone('arch') || S.rescued },
   { key: 'buytower', row: 'unlocktower', place: 'tower', say: '', done: () => open('tower') || shieldDone('dome') || !!S.rescued },
   { key: 'dome', row: 'dome', say: msg('obj-dome'), done: () => shieldDone('dome') || S.rescued },
-  { key: 'rescue', say: msg('obj-rescue'), done: () => !!S.rescued },
+  { key: 'rescue', get say() { return storyLine('obj-rescue-who', 'obj-rescue', 'sqouse'); }, done: () => !!S.rescued },
   // The second half: the snatch waits on the pit drowning, then the way down
   // is the wizards', and the portal is a row on their board.
   { key: 'drown', say: msg('obj-drown'), when: serpentOn, done: () => (!!S.drowned && !!S.rescued) || !!S.snatched },
@@ -53,7 +54,7 @@ export const STEPS = [
   { key: 'portal', say: msg('obj-portal'), when: deepOn, done: () => !!S.snatched && (S.portalPour > 0 || !!S.portalOpen) },
   // Done for good on the story's kill: `serpentFreed` goes false again on
   // every rise (deep/serpent.js).
-  { key: 'free', say: msg('obj-free'), when: deepOn,
+  { key: 'free', get say() { return storyLine('obj-free-who', 'obj-free', 'you'); }, when: deepOn,
     done: () => beatDone('freed') || !!S.serpentFreed || S.serpentLevel > 1 },
 ];
 

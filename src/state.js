@@ -60,9 +60,11 @@ export const S = {
   introHeart: 0,          // when the opening's heart last beat (intro.js)
   introSaid: 0,
   pair: [],               // the two of them, before the rock
-  pairIds: { her: null, him: null },   // which bodies are the sqwife and the sqhusband, by uid (wardrobe.js)
+  pairIds: { you: null, sqouse: null },   // which bodies are you and your sqouse, by uid (wardrobe.js)
   outfits: null,          // what each of them wears, a slot an item; null is the defaults (wardrobe.js)
-  dressOffered: false,    // the picker offered at the start of this yard, once (wardrobepage.js)
+  selves: null,           // each one's name and role, `{ you, sqouse }`; null is unnamed, today's roles (wardrobe.js)
+  naming: false,          // a new yard's steps are up, where the names and roles are still chosen (wardrobepage.js)
+  dressOffered: false,    // the page offered at the start of this yard, once (wardrobepage.js)
   buried: false,          // somebody is under it, and still alive
   rescued: false,         // and, once the dome held one off them, they got out
   rescueTo: 0,            // where they are walking to while they do
@@ -822,7 +824,7 @@ export const SAVED_BY_HAND = [
   'floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft',
   'deepBed',              // the scales on the deep's floor, a plot like the pit (deep/scales.js)
   'refundOwed',           // a bill handed back still in the air, by coin, landed on the way in (pit.js)
-  'pairIds', 'outfits', 'dressOffered',   // the two of them and what they wear, checked item by item (wardrobe.js)
+  'pairIds', 'outfits', 'dressOffered', 'selves',   // the two of them, what they are called and what they wear, checked item by item (wardrobe.js)
 ];
 
 // And everything else: this session's own, deliberately thrown away on a
@@ -855,6 +857,8 @@ export const EPHEMERAL = [
   // A pad's focus, whether it was the last input, and its hand: a reload
   // starts with the focus on the rock and the mouse in charge.
   'padFocus', 'padOn', 'padHand',
+  // A new yard's naming steps up: a reload offers them again (wardrobepage.js).
+  'naming',
   // Only read for the spread a rock does on arriving.
   'landAt',
   // Worked out again from the shield that is standing.

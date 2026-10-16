@@ -1,4 +1,4 @@
-// The bridge: one object, nine functions, no events.
+// The bridge: one object, ten functions, no events.
 //
 // `window.desk` is the whole of what the page knows about the shell. The save
 // is read and written by slot number (1 to 3; see DESIGN.md, "Save slots"). No
@@ -24,5 +24,8 @@ contextBridge.exposeInMainWorld('desk', {
   // Steam achievements: one won now, and the save's whole list at launch. The
   // shell does nothing with either off Steam.
   achievement: name => ipcRenderer.send('desk:achievement', name),
-  achievements: names => ipcRenderer.send('desk:achievements', names)
+  achievements: names => ipcRenderer.send('desk:achievements', names),
+  // Steam's own keyboard for a name typed on a pad: the text, or null for
+  // one put away or one Steam could not show, and always null off Steam.
+  askText: (words, max, now) => ipcRenderer.invoke('desk:askText', words, max, now)
 });

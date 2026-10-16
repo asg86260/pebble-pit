@@ -17,13 +17,10 @@ import { busyBuilderSites, busyDeepSites } from '../works.js';
 import { hushNotices } from '../notices.js';
 import { heldBodies } from '../snatch.js';
 import { standTop, rockTop, footing, solidNear, SOLID, belowYard } from '../route.js';
+import { CREW_NAMES } from './names.js';
 
 // --- who they are --------------------------------------------------------------
-const NAMES = ['ada', 'bel', 'cass', 'dot', 'edie', 'fen', 'gil', 'hal', 'ivy',
-               'jax', 'kit', 'lom', 'mo', 'nell', 'ora', 'pip', 'rue', 'sid',
-               'tam', 'vic', 'wren', 'yaz', 'zeb', 'bram', 'cleo', 'flo', 'gus',
-               'hex', 'iso', 'jom', 'lark', 'mel', 'nix', 'obe', 'quin', 'ros',
-               'tess', 'vim', 'wick', 'yew'];
+const NAMES = CREW_NAMES;
 
 // A name nobody in the yard already has, while there are any left; after that
 // the yard is big enough that two of a name is the two of them, not a bug.

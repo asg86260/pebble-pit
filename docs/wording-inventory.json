@@ -14,6 +14,13 @@
   "text": "you saved your sqwife in <span data-l10n-name=\"time\"></span>!"
  },
  {
+  "id": "saved-why-who",
+  "group": "Sheets",
+  "where": "src/ending.js",
+  "context": "rescue sheet line, naming your sqouse by the name the player gave, else by their role; the span is the time it took, filled in by the game",
+  "text": "you saved your sqouse in <span data-l10n-name=\"time\"></span>!"
+ },
+ {
   "id": "saved-keepplaying",
   "group": "Sheets",
   "where": "play.html",
@@ -33,6 +40,13 @@
   "where": "play.html",
   "context": "demo end sheet line",
   "text": "cant save your sqwife just yet."
+ },
+ {
+  "id": "demoend-why-who",
+  "group": "Sheets",
+  "where": "src/ending.js",
+  "context": "demo end sheet line, naming your sqouse by name, else by role",
+  "text": "cant save your sqouse just yet."
  },
  {
   "id": "demoend-store",
@@ -82,6 +96,13 @@
   "where": "play.html",
   "context": "second-half end sheet line",
   "text": "you saved your sqhusband from the serpent's belly."
+ },
+ {
+  "id": "freed-why-who",
+  "group": "Sheets",
+  "where": "src/ending.js",
+  "context": "second-half end sheet line, naming you (the one the serpent swallowed) by name, else by role",
+  "text": "you saved your sqouse from the serpent's belly."
  },
  {
   "id": "freed-end",
@@ -1540,6 +1561,13 @@
   "text": "dig the boulder to save your sqwife!"
  },
  {
+  "id": "obj-rock-who",
+  "group": "Objectives",
+  "where": "src/objectives.js",
+  "context": "story line, first step, naming your sqouse by name, else by role",
+  "text": "dig the boulder to save your sqouse!"
+ },
+ {
   "id": "obj-rock-q-chip",
   "group": "Objectives",
   "where": "src/objectives.js",
@@ -1603,6 +1631,13 @@
   "text": "save your sqwife"
  },
  {
+  "id": "obj-rescue-who",
+  "group": "Objectives",
+  "where": "src/objectives.js",
+  "context": "story line: the rescue, naming your sqouse by name, else by role",
+  "text": "save your sqouse"
+ },
+ {
   "id": "obj-drown",
   "group": "Objectives",
   "where": "src/objectives.js",
@@ -1636,6 +1671,13 @@
   "where": "src/objectives.js",
   "context": "story line, final step",
   "text": "free your sqhusband from the serpent's belly"
+ },
+ {
+  "id": "obj-free-who",
+  "group": "Objectives",
+  "where": "src/objectives.js",
+  "context": "story line, final step, naming you (the one in the belly) by name, else by role",
+  "text": "free your sqouse from the serpent's belly"
  },
  {
   "id": "obj-barrier-cancel",
@@ -1901,7 +1943,7 @@
   "group": "Achievements",
   "where": "src/catalog.js",
   "context": "achievement name",
-  "text": "you saved your sqwife"
+  "text": "you saved your sqouse"
  },
  {
   "id": "ach-gotout-note",
@@ -2539,6 +2581,13 @@
   "where": "src/config/index.js",
   "context": "index entry text",
   "text": "squished your sqwife, mined for valuable pebbles."
+ },
+ {
+  "id": "idx-rock-text-who",
+  "group": "Index",
+  "where": "src/config/index.js",
+  "context": "index entry text, naming your sqouse by name, else by role",
+  "text": "squished your sqouse, mined for valuable pebbles."
  },
  {
   "id": "idx-pit-name",
@@ -3227,11 +3276,25 @@
   "text": "sqwife"
  },
  {
+  "id": "idx-sqwife-name-who",
+  "group": "Index",
+  "where": "src/config/index.js",
+  "context": "index entry name for your sqouse: the name the player gave, else the role word",
+  "text": "sqouse"
+ },
+ {
   "id": "idx-sqwife-text",
   "group": "Index",
   "where": "src/config/index.js",
   "context": "index entry text",
   "text": "living her life, until the incident(s), stuck under infinitely falling boulders from the sky. crazy."
+ },
+ {
+  "id": "idx-sqwife-text-who",
+  "group": "Index",
+  "where": "src/config/index.js",
+  "context": "index entry text for your sqouse, the pronoun by their role",
+  "text": "living their life, until the incident(s), stuck under infinitely falling boulders from the sky. crazy."
  },
  {
   "id": "idx-notices-name",
@@ -3843,6 +3906,13 @@
   "text": "quickly try to build a barrier to save your sqwife"
  },
  {
+  "id": "row-props-note-who",
+  "group": "Boards",
+  "where": "src/upgrades/rows-shields.js",
+  "context": "the bench: the wooden barrier's line, naming your sqouse by name, else by role",
+  "text": "quickly try to build a barrier to save your sqouse"
+ },
+ {
   "id": "row-net",
   "group": "Boards",
   "where": "src/upgrades/rows-shields.js",
@@ -4041,9 +4111,16 @@
  {
   "id": "goal-title",
   "group": "Boards",
-  "where": "src/config/shields.js",
+  "where": "src/wardrobe.js",
   "context": "the ribbon on every goal card: the barrier the story is on",
   "text": "saving your sqwife"
+ },
+ {
+  "id": "goal-title-who",
+  "group": "Boards",
+  "where": "src/wardrobe.js",
+  "context": "the ribbon on every goal card: the barrier the story is on, naming your sqouse by name, else by role",
+  "text": "saving your sqouse"
  },
  {
   "id": "needs-spore",
@@ -5537,11 +5614,25 @@
   "text": "sqwife under the rock for"
  },
  {
+  "id": "books-tally-under-who",
+  "group": "The books",
+  "where": "src/stats.js",
+  "context": "the books: a line, naming your sqouse by name, else by the role word",
+  "text": "sqouse under the rock for"
+ },
+ {
   "id": "books-tally-saved",
   "group": "The books",
   "where": "src/stats.js",
   "context": "the books: a line",
   "text": "sqwife saved in"
+ },
+ {
+  "id": "books-tally-saved-who",
+  "group": "The books",
+  "where": "src/stats.js",
+  "context": "the books: a line, naming your sqouse by name, else by the role word",
+  "text": "sqouse saved in"
  },
  {
   "id": "books-tally-serpent",
@@ -6770,427 +6861,511 @@
  },
  {
   "id": "ward-title",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "play.html",
-  "context": "the picker page's heading",
+  "context": "the picker page's heading; and at a new yard, the heading of its last step, the two of you side by side",
   "text": "the two of you"
  },
  {
-  "id": "ward-her",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "id": "ward-you",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobepage.js",
-  "context": "the picker's tab for dressing the sqwife",
-  "text": "her"
+  "context": "the picker's tab for choosing your own square",
+  "text": "you"
  },
  {
-  "id": "ward-him",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "id": "ward-sqouse",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobepage.js",
-  "context": "the picker's tab for dressing the sqhusband",
-  "text": "him"
+  "context": "the picker's tab for choosing your sqouse's square",
+  "text": "your sqouse"
+ },
+ {
+  "id": "ward-build-you",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "a new yard's first step: your name, role and outfit (the owner's words, 2026-10-16)",
+  "text": "build who you are"
+ },
+ {
+  "id": "ward-confirm-you",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "a new yard's second step: your square shown back to you (the owner's words, 2026-10-16)",
+  "text": "confirm your square"
+ },
+ {
+  "id": "ward-build-sqouse",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "a new yard's third step: your sqouse's name, role and outfit (the owner's words, 2026-10-16)",
+  "text": "build your sqouse"
+ },
+ {
+  "id": "ward-step",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "a new yard's steps, counted: $n the step, $of how many",
+  "text": "${n} / ${of}"
+ },
+ {
+  "id": "ward-name",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the picker's row label over the name field",
+  "text": "name"
+ },
+ {
+  "id": "ward-role",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the picker's row label over the role, stepped between the three words",
+  "text": "role"
+ },
+ {
+  "id": "ward-role-word",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the role, as the picker shows it and as an empty name field's hint",
+  "text": "sqouse"
+ },
+ {
+  "id": "ward-locked",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the picker, once the opening has played: why the name and role cannot be changed",
+  "text": "set at the start of a yard"
  },
  {
   "id": "ward-randomize",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobepage.js",
-  "context": "the picker's button that dresses the one being dressed at random",
+  "context": "the picker's button that dresses the one being dressed at random; and each row's die, as its label",
   "text": "randomize"
  },
  {
+  "id": "ward-randomize-all",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the picker's button that rolls the whole square: name, role and outfit",
+  "text": "randomize all"
+ },
+ {
   "id": "ward-skip",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobepage.js",
   "context": "the picker's button, at a new yard, that keeps the outfits they start in and goes on",
   "text": "skip"
  },
  {
+  "id": "ward-next",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "a new yard's button on to the next step",
+  "text": "next"
+ },
+ {
   "id": "ward-done",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobepage.js",
   "context": "the picker's way off, at a new yard: the outfits as chosen, and on with the game",
   "text": "done"
  },
  {
+  "id": "ward-key-space",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the pad's letter grid under the name: the key that types a space",
+  "text": "space"
+ },
+ {
+  "id": "ward-key-del",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the pad's letter grid under the name: the key that takes the last letter back",
+  "text": "del"
+ },
+ {
   "id": "ward-slot-head",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "the picker's row labels, a slot a row",
   "text": "head"
  },
  {
   "id": "ward-slot-face",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "face"
  },
  {
   "id": "ward-slot-neck",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "neck"
  },
  {
   "id": "ward-slot-back",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "back"
  },
  {
   "id": "ward-slot-pattern",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "pattern"
  },
  {
   "id": "ward-none",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "an item on the picker, shown between a row's previous and next; a plain label",
   "text": "none"
  },
  {
   "id": "ward-plain",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "plain"
  },
  {
   "id": "ward-bow",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "bow"
  },
  {
   "id": "ward-top-hat",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "top hat"
  },
  {
   "id": "ward-crown",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "crown"
  },
  {
   "id": "ward-flower",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "flower"
  },
  {
   "id": "ward-sprout",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "sprout"
  },
  {
   "id": "ward-ears",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "ears"
  },
  {
   "id": "ward-antenna",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "antenna"
  },
  {
   "id": "ward-beanie",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "beanie"
  },
  {
   "id": "ward-beret",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "beret"
  },
  {
   "id": "ward-tiara",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "tiara"
  },
  {
   "id": "ward-headband",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "headband"
  },
  {
   "id": "ward-pigtails",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "pigtails"
  },
  {
   "id": "ward-mohawk",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "mohawk"
  },
  {
   "id": "ward-eyes",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "eyes"
  },
  {
   "id": "ward-sleepy",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "sleepy"
  },
  {
   "id": "ward-smile",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "smile"
  },
  {
   "id": "ward-glasses",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "glasses"
  },
  {
   "id": "ward-round-glasses",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "round glasses"
  },
  {
   "id": "ward-shades",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "shades"
  },
  {
   "id": "ward-monocle",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "monocle"
  },
  {
   "id": "ward-eyepatch",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "eyepatch"
  },
  {
   "id": "ward-mustache",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "mustache"
  },
  {
   "id": "ward-freckles",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "freckles"
  },
  {
   "id": "ward-blush",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "blush"
  },
  {
   "id": "ward-scarf",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "scarf"
  },
  {
   "id": "ward-checked-scarf",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "checked scarf"
  },
  {
   "id": "ward-striped-scarf",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "striped scarf"
  },
  {
   "id": "ward-bowtie",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "bowtie"
  },
  {
   "id": "ward-tie",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "tie"
  },
  {
   "id": "ward-collar",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "collar"
  },
  {
   "id": "ward-medal",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "medal"
  },
  {
   "id": "ward-cape",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "cape"
  },
  {
   "id": "ward-short-cape",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "short cape"
  },
  {
   "id": "ward-backpack",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "backpack"
  },
  {
   "id": "ward-small-pack",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "small pack"
  },
  {
   "id": "ward-cat-tail",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "cat tail"
  },
  {
   "id": "ward-bushy-tail",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "bushy tail"
  },
  {
   "id": "ward-balloon",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "balloon"
  },
  {
   "id": "ward-flag",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "flag"
  },
  {
   "id": "ward-overalls",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "overalls"
  },
  {
   "id": "ward-stripes",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "stripes"
  },
  {
   "id": "ward-tall-stripes",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "tall stripes"
  },
  {
   "id": "ward-dots",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "dots"
  },
  {
   "id": "ward-diagonal",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "diagonal"
  },
  {
   "id": "ward-quarters",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "quarters"
  },
  {
   "id": "ward-pale",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "pale"
  },
  {
   "id": "ward-grey",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "grey"
  },
  {
   "id": "ward-black",
-  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "black"

@@ -98,7 +98,7 @@ export function startIntro() {
   // She is the one on the left, whom the rock comes down on; he is thrown
   // clear and is the first body of the crew (`begin`).
   S.pair = [0, 1].map(i => ({ x: door - (i ? 0 : WORKER * 1.3), y: 0, vx: 0, vy: 0,
-                              say: null, turn: i === 0, who: i ? 'him' : 'her' }));
+                              say: null, turn: i === 0, who: i ? 'you' : 'sqouse' }));
   for (const b of S.pair) b.y = walkY(b.x + WORKER / 2);
   // and the view is on the door before the first frame, so the walk out is
   // watched from the house rather than glided to from wherever the seat was
@@ -129,7 +129,7 @@ export function skipIntro(played = true) {
   if (played) S.seenDrag = true;
   finish();
   const w = S.workers[0];
-  namePair('him', w);
+  namePair('you', w);
   // Not a move: this body takes the survivor's place, height and all. Cut
   // mid-throw it is still in the air and comes down from there.
   if (from != null && w) { w.x = from.x; plant(w, from.y); }
@@ -185,7 +185,7 @@ function getOut(t) {
   S.buried = false;
   S.buriedSay = null;
   S.rescued = true;
-  S.pair = [{ x: at.x, y: at.y, say: null, who: 'her' }];
+  S.pair = [{ x: at.x, y: at.y, say: null, who: 'sqouse' }];
 
   // Whoever dug them out goes with them, or if nobody could come, whoever is
   // nearest comes to meet them.
@@ -260,7 +260,7 @@ export function stepRescue(t) {
   const fresh = S.workers.find(w => !had.has(w));
   // and still the scene's, drawn in full, until the yard is back (stage.js)
   if (fresh) { fresh.x = b.x; fresh.y = walkY(b.x + WORKER / 2); fresh.cast = true; }
-  namePair('her', fresh);                      // and she is this body from now on
+  namePair('sqouse', fresh);                      // and she is this body from now on
   for (const w of S.workers) { w.met = false; w.say = null; }
   S.pair = [];
   return false;
@@ -510,7 +510,7 @@ export function begin(t) {
   syncWorkers();
 
   const w = S.workers[0];
-  namePair('him', w);                          // he is this body from now on
+  namePair('you', w);                          // he is this body from now on
   if (w) {
     // The watched body's own height, not the ground's: this is a hand-over,
     // not a move. With nobody to take over from it is stood up where it is.
@@ -637,7 +637,7 @@ export function sendDigger(him = false) {
     // rock it is holding, and a body that came down off that would climb
     // through the air under a hill for as long as the climb took.
     if (wayAt(w.x, w.y).key !== 'yard') continue;
-    const d = him && whoIs(w) === 'him' ? -1 : Math.abs(w.x - at.x);
+    const d = him && whoIs(w) === 'you' ? -1 : Math.abs(w.x - at.x);
     if (d < near) { near = d; who = w; }
   }
   if (!who) return false;

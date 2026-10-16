@@ -139,6 +139,25 @@ function achievementsOf(client) {
   };
 }
 
+// Steam's own keyboard, for a name typed on a pad (src/wardrobepage.js): one
+// call that answers the text typed, or null for a keyboard put away, one
+// Steam could not show (outside Big Picture and the Deck), or no client at
+// all. Single line, plain text, at most `max` characters, opened on `now`.
+// steamworks.js 0.4.0's `utils.showGamepadTextInput`.
+function textInputOf(client) {
+  const utils = client && client.utils;
+  return async (words, max, now) => {
+    if (!utils || typeof utils.showGamepadTextInput !== 'function') return null;
+    const n = Math.max(1, Math.min(64, Number(max) || 1));
+    try {
+      const got = await utils.showGamepadTextInput(0, 0, String(words || ''), n, String(now || ''));
+      return typeof got === 'string' ? got : null;
+    } catch {
+      return null;
+    }
+  };
+}
+
 // A slot's name in remote storage: the store's own file name for it, so the
 // two lists read the same. Only the current save is mirrored; last-good is
 // this disk's backup, not a second save to sync.
@@ -247,5 +266,5 @@ function offerDemoSave({ store, demoSaves, demoRemote = null, marker, ask, words
 
 module.exports = {
   APPS, DEV_APP, SLOTS, CARRY_WORDS, carryWords,
-  loadSdk, languageOf, appIdFor, startClient, startSteam, achievementsOf, ACH_NAME, nameOf, playedOf, mirror, demoDirOf, demoSave, offerDemoSave
+  loadSdk, languageOf, appIdFor, startClient, startSteam, achievementsOf, textInputOf, ACH_NAME, nameOf, playedOf, mirror, demoDirOf, demoSave, offerDemoSave
 };

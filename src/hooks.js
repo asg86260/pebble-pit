@@ -1358,17 +1358,25 @@ HANDLES.__deepZoom = k => { holdDeepZoom(k); return S.zoom; };
 // body's job and place if it is one of the crew, and the outfits. `__dress`
 // sets an outfit for the setup a check is not about; the picker's own rows
 // are how a player does it (wardrobepage.js).
-import { pairBody, outfitOf, wear } from './wardrobe.js';
+import { pairBody, outfitOf, wear, selfOf, cleanName, ROLES } from './wardrobe.js';
 import { freedBody } from './snatch.js';
-HANDLES.__pair = () => Object.fromEntries(['her', 'him'].map(k => {
+HANDLES.__pair = () => Object.fromEntries(['sqouse', 'you'].map(k => {
   const w = pairBody(k);
   return [k, { uid: S.pairIds[k], body: w ? { type: w.type, x: w.x, y: w.y, station: w.station || null } : null,
                outfit: { ...outfitOf(k) } }];
 }));
 HANDLES.__dress = (who, outfit) => { wear(who, outfit); return { ...outfitOf(who) }; };
+// A name and a role for one of them, past the lock the opening puts on them,
+// for a scene or a check whose subject is a line that names them rather
+// than the page that chooses it.
+HANDLES.__self = (who, { name = selfOf(who).name, role = selfOf(who).role } = {}) => {
+  S.selves = { you: { ...selfOf('you') }, sqouse: { ...selfOf('sqouse') },
+               [who]: { name: cleanName(name), role: ROLES.includes(role) ? role : selfOf(who).role } };
+  return { ...S.selves[who] };
+};
 // Where each of them is on the glass, in page pixels, wherever they are drawn
 // from (a body of the crew, the finale's pair): for a shot framed on them.
-HANDLES.__pairAt = () => Object.fromEntries(['her', 'him'].map((k, i) => {
-  const o = pairBody(k) || (S.finale && S.finale.pair[i]) || (k === 'him' && freedBody()) || null;
+HANDLES.__pairAt = () => Object.fromEntries(['sqouse', 'you'].map((k, i) => {
+  const o = pairBody(k) || (S.finale && S.finale.pair[i]) || (k === 'you' && freedBody()) || null;
   return [k, o ? { x: (o.x - S.camX) * S.zoom, y: (o.y - S.camY) * S.zoom, s: WORKER * S.zoom } : null];
 }));

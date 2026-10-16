@@ -16,6 +16,7 @@ import { POINT_MS } from './config.js';
 import { WORKER } from './config.js';
 import { JOB } from './jobs.js';
 import { minding } from './crew/tenders.js';
+import { bodyName } from './wardrobe.js';
 
 // Where a body is, in the yard's words. Every job needs a line here: one
 // without reads as `undefined` on its row.
@@ -90,7 +91,7 @@ export function doing(w) {
 export function card(w) {
   const mins = Math.floor((w.lived || 0) / 60000);
   return [
-    w.name || msg('crew-somebody'),
+    bodyName(w) || msg('crew-somebody'),
     row(msg('crew-card-age'), mins < 1 ? msg('crew-card-new') : msg('crew-card-mins', { mins })),
     row(msg('crew-card-doing'), doing(w))
   ].join(NL);
@@ -152,7 +153,7 @@ const whoIn = deep => S.workers.flatMap((w, i) => !!w.deepHome === deep ? [`who$
 function people() {
   return S.workers.map((w, i) => ({
     key: `who${i}`,
-    name: w.name || msg('crew-somebody'),
+    name: bodyName(w) || msg('crew-somebody'),
     note: () => card(w),
     price: () => whereIs(w),
     dead: () => false,

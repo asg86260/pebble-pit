@@ -48,7 +48,7 @@ import { hear } from './audio.js';
 import { hold, pan, viewTaken, whatIsAt } from './input.js';
 import { aim, markAt, glideMs } from './padglide.js';
 import { fillControls } from './controls.js';
-import { wardrobePad } from './wardrobepage.js';
+import { wardrobePad, wardrobeHolds } from './wardrobepage.js';
 import { scope, focused, dropFocus, keepFocus, move as pageMove, pressA, pressX,
          enterBoard, enterCorner, paintPage, pickToward } from './padpage.js';
 
@@ -413,7 +413,8 @@ export function stepPad(t = performance.now()) {
   // Menu holds the yard and lets it go, wherever the focus is, as Escape
   // does; a story's sheet is put away only by its own buttons.
   const sc = scope();
-  if (pressed('menu') && !(sc && sc.kind === 'sheet')) { hold(!S.paused); return; }
+  // A new yard's steps take the menu as their own step on (wardrobepage.js).
+  if (pressed('menu') && !(sc && sc.kind === 'sheet') && !wardrobeHolds()) { hold(!S.paused); return; }
 
   // A scene has the yard: A held is the space bar held, and nothing else
   // answers (skip.js).
@@ -442,9 +443,10 @@ export function stepPad(t = performance.now()) {
 
 function pagePresses(sc, dirs, pressed, t) {
   keepFocus(sc, t);
-  // The picker's rows take left and right as their own, and LB, RB and Y
-  // (wardrobepage.js).
-  if (sc.kind === 'held') dirs = wardrobePad(dirs, pressed);
+  // The picker's rows take left and right as their own, and LB, RB, X and
+  // Y, and through a new yard's steps B and menu (wardrobepage.js).
+  let took = false;
+  if (sc.kind === 'held') ({ dirs, took } = wardrobePad(dirs, pressed));
   for (const d of dirs) {
     // Down past the corner's last row is the yard again, where the focus was.
     if (!pageMove(sc, d) && sc.kind === 'corner' && d === 'down') { enterCorner(false); dropFocus(); return; }
@@ -452,7 +454,7 @@ function pagePresses(sc, dirs, pressed, t) {
   if (pressed('a')) pressA();
   if (pressed('x')) pressX();
   if (sc.kind === 'board' && (pressed('lb') || pressed('rb'))) { turnBoard(pressed('rb') ? 1 : -1); return; }
-  if (pressed('b') || (sc.kind === 'corner' && pressed('view'))) back(sc);
+  if (!took && (pressed('b') || (sc.kind === 'corner' && pressed('view')))) back(sc);
 }
 
 // B, one layer at a time.

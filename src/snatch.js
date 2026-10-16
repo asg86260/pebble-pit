@@ -84,7 +84,7 @@ export function snatchDue() {
 const takeable = w => !w.lifted && !w.falling && !w.aloft && !w.craft && !w.lentFrom
                    && w.type !== TYPE.BUILD && !belowYard(w);
 function pairReady() {
-  const her = pairBody('her'), him = pairBody('him');
+  const her = pairBody('sqouse'), him = pairBody('you');
   return (!her || takeable(her)) && (S.snatched || !him || takeable(him));
 }
 
@@ -116,7 +116,7 @@ function takeOff(n) {
   const mx = mouthX();
   // These two, from wherever they are: him (the one it takes) first, as the
   // nearest is below. Past the take only she is left to walk.
-  const her = pairBody('her'), him = pairBody('him');
+  const her = pairBody('sqouse'), him = pairBody('you');
   let took = n === 1 ? [her] : [him, her];
   if (took.some(w => !w || !takeable(w))) {
     // Nobody by those names to take: the nearest, as before, and the names
@@ -129,8 +129,8 @@ function takeOff(n) {
     let pool = S.workers.filter(free);
     if (pool.length < n) pool = S.workers.filter(w => !w.lifted && !w.craft && !belowYard(w));
     took = pool.sort((a, b) => Math.abs(a.x - mx) - Math.abs(b.x - mx)).slice(0, n);
-    if (n === 1) namePair('her', took[0]);
-    else { namePair('him', took[0]); namePair('her', took[1]); }
+    if (n === 1) namePair('sqouse', took[0]);
+    else { namePair('you', took[0]); namePair('sqouse', took[1]); }
   }
   for (const w of took) {
     if (!w) continue;

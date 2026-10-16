@@ -855,7 +855,7 @@ const deepScenes = {
     run: () => {
       deepYard({ stage: 0, wound: 0.33, party: [cast('sword', 2), cast('ranger', 2)] });
       // the hooks' party seats whoever is spare; in play the snatch seats her
-      namePair('her', S.workers.find(w => w.uid === S.stations[0].fighter));
+      namePair('sqouse', S.workers.find(w => w.uid === S.stations[0].fighter));
       lookAtStation(0);
     } },
   // The kill's meeting on the deep's floor: him out of the belly and walked
@@ -863,7 +863,7 @@ const deepScenes = {
   'pair-meet': { about: 'the deep', say: 'him out of the belly beside her on the deep floor, both dressed',
     run: () => {
       deepYard({ stage: SERPENT_PHASES - 1, party: [cast('sword', 8)] });
-      namePair('her', S.workers.find(w => w.uid === S.stations[0].fighter));
+      namePair('sqouse', S.workers.find(w => w.uid === S.stations[0].fighter));
       window.__serpent({ stage: SERPENT_PHASES });
       for (let i = 0; i < 60 * 60 && !(freedBody() && freedBody().cheering); i++) window.__fast(1 / 60);
       const him = freedBody();
@@ -874,8 +874,8 @@ const deepScenes = {
   'pair-deep-greys': { about: 'the deep', say: 'her at the first station in the wardrobe greys, in the deep',
     run: () => {
       deepYard({ stage: 1, wound: 0.33, party: [cast('sword', 2), cast('ranger', 2)] });
-      namePair('her', S.workers.find(w => w.uid === S.stations[0].fighter));
-      wear('her', { head: 'crown', face: 'freckles', neck: 'checked-scarf', back: 'cape', pattern: 'grey' });
+      namePair('sqouse', S.workers.find(w => w.uid === S.stations[0].fighter));
+      wear('sqouse', { head: 'crown', face: 'freckles', neck: 'checked-scarf', back: 'cape', pattern: 'grey' });
       lookAtStation(0);
     } },
   // Every station the floor holds at once, the camera on the middle of them.
@@ -1350,17 +1350,17 @@ export const SCENES = {
   // The two of them in the yard's crowd (wardrobe.js): a dozen haulers and
   // carters carrying between the rock and the hole, two of the haulers named
   // the pair, so they are found by what they wear alone;
-  // `window.__outfits` an outfit pair ({ her, him }) to try others.
+  // `window.__outfits` an outfit pair ({ you, sqouse }) to try others.
   pair: { about: 'the crew', say: 'the two of them dressed, carrying among the haulers and the carters',
     run: () => {
       window.__reset(); window.__crew(3, 12);
       window.__kit({ breakers: 3, carters: 3 });
       S.buried = false;
       const haul = S.workers.filter(w => w.type === TYPE.HAUL && !w.trained);
-      namePair('him', haul[1]); namePair('her', haul[2]);
-      if (window.__outfits) for (const k of ['her', 'him']) if (window.__outfits[k]) wear(k, window.__outfits[k]);
+      namePair('you', haul[1]); namePair('sqouse', haul[2]);
+      if (window.__outfits) for (const k of ['sqouse', 'you']) if (window.__outfits[k]) wear(k, window.__outfits[k]);
       window.__fast(12);
-      window.__look((pairBody('her').x + pairBody('him').x) / 2 - S.viewW / 2);
+      window.__look((pairBody('sqouse').x + pairBody('you').x) / 2 - S.viewW / 2);
     } },
   crew: { about: 'the crew', say: 'the crew, hats and all',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);
