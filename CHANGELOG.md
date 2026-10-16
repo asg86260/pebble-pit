@@ -173,6 +173,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 - On a gamepad the focus brackets travel from one thing to the next where you can follow them, up to the corner buttons, onto a board's rows and back, while the camera glides to center each one, both eased in and out (test/pad-glide.test.mjs; src/selftest/pad.js, "the marker travels across to the corner").
+- A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).
 
 ## v0.6.0 — 2026-10-16
 
@@ -243,7 +244,6 @@ this section; the release that switches it on moves these under Unreleased.
 - The pictures over a station of what it is building, what is in line and what it has finished drift gently, the way a lifted shop tile does.
 - The props can be built after the first rock.
 
-- A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).
 - Dust going into the pit is heard again once the pit has torn open, and the first click on the rock is heard too (test/sound-events.test.mjs, "a torn pit is heard taking the dust").
 - The decimal point in counts has room around it, so 86.1k no longer reads as 861k (test/serpent-numbers.test.mjs).
 - The index reads as short descriptions in one list with no headings, and the clouds, rain, lightning, objective, rescue, cutscene and sqhusband entries are gone (test/index.test.mjs).
