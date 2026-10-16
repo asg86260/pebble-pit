@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wardrobe Auras</title>
+<style>
+  :root {
+    --bg: #f4f4f1; --ink: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --warn: #8a5a00; --good: #2c6e3f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #141417; --ink: #e9e9ee; --muted: #9a9aa4; --card: #1d1d22; --line: #2e2e36; --warn: #e0b45a; --good: #7fcf95; }
+  }
+  :root[data-theme="dark"] { --bg: #141417; --ink: #e9e9ee; --muted: #9a9aa4; --card: #1d1d22; --line: #2e2e36; --warn: #e0b45a; --good: #7fcf95; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  h3 { font-size: 13px; margin: 12px 0 4px; color: var(--muted); font-weight: normal; text-transform: uppercase; letter-spacing: .08em; }
+  p { margin: 0 0 10px; color: var(--muted); }
+  ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); }
+  b, strong { color: var(--ink); }
+  code { font-size: 12px; }
+  .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+  .bar button, .bar select { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 16px; min-width: 0; }
+  canvas { display: block; image-rendering: pixelated; max-width: 100%; }
+  .scroll { max-width: 100%; overflow-x: auto; }
+  figure { margin: 0; }
+  figcaption { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .warn { color: var(--warn); }
+  .good { color: var(--good); }
+  .ph { border-bottom: 1px dashed currentColor; }
+  .ph::after { content: '*'; color: var(--warn); }
+
+  /* the aura tiles */
+  .auras { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; margin-top: 10px; }
+  .aura { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
+  .aura h2 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .aura h2 small { font-weight: normal; font-size: 11px; color: var(--muted); }
+  .aura .line { color: var(--ink); margin: 0 0 8px; font-size: 13px; }
+  .aura .views { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .aura dl { display: grid; grid-template-columns: 6.5em 1fr; gap: 2px 8px; margin: 8px 0 0; font-size: 12px; }
+  .aura dt { color: var(--muted); }
+  .aura dd { margin: 0; }
+  .lockchip { font-size: 11px; color: var(--muted); display: inline-flex; gap: 4px; align-items: center; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 4px 8px 4px 0; vertical-align: top; }
+  th { color: var(--muted); font-weight: normal; text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
+  td.free { color: var(--muted); }
+  .earned { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; margin-top: 6px; }
+  .earned label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+
+  /* The game's sheet, copied by eye from src/style.css: paper, a 2px ink
+     border, a hard offset shadow, uppercase monospace. The game's own paper
+     and ink stay white and black on a dark page. */
+  .pickers { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 20px; align-items: start; margin-top: 12px; }
+  .sheet { background: #fff; color: #000; border: 2px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,.22);
+           font: 12px/1.4 ui-monospace, "Courier New", monospace; letter-spacing: .08em; text-transform: uppercase;
+           padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .sheet .t { font-weight: bold; display: flex; justify-content: space-between; }
+  .sheet canvas { background: #fff; align-self: center; }
+  .sheet .slot { display: grid; grid-template-columns: 5.5em 28px 1fr 28px 6.5em; align-items: center; gap: 6px; border: 2px solid transparent; padding: 2px 4px; }
+  .sheet .slot.cur { border-color: #000; }
+  .sheet .arr { font: inherit; font-weight: bold; background: #fff; color: #000; border: 2px solid #000; width: 28px; height: 24px; padding: 0; cursor: pointer; }
+  .sheet .arr:focus-visible, .sheet .val:focus-visible { outline: 2px dashed #000; outline-offset: 2px; }
+  .sheet .val { text-align: center; display: inline-flex; gap: 5px; justify-content: center; align-items: center; min-height: 20px; }
+  .sheet .val.locked { color: #b5b5b5; }
+  .sheet .count { color: #8a8a8a; font-size: 10px; text-align: right; display: inline-flex; gap: 3px; justify-content: flex-end; align-items: center; }
+  .sheet .lockline { grid-column: 2 / 6; font-size: 10px; color: #5f5f5f; text-transform: none; letter-spacing: .02em; min-height: 0; }
+  .sheet .lockline:empty { display: none; }
+  .sheet .btns { display: flex; justify-content: space-between; gap: 8px; }
+  .sheet .btn { font: inherit; background: #fff; color: #000; border: 2px solid #000; padding: 4px 10px; cursor: pointer; text-transform: uppercase; letter-spacing: .08em; }
+  .sheet .hint { color: #8a8a8a; font-size: 10px; letter-spacing: .04em; text-transform: none; }
+  .lk { width: 7px; height: 8px; flex: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>The two of you: auras, earned color, and locked items</h1>
+  <p>Mock, not the game. Drawn from plain rects on canvas the way the wardrobe mock was (<code>docs/mocks/pair-wardrobe-2026-10-16</code>): a body is the 3 x 3 cell square (18 world pixels) with a 2-pixel rim; one cell is 6 world pixels; the particles are laid in 2-pixel units, the wardrobe's own <code>WARD_UNIT</code>, on a world-anchored 2-pixel grid. "4x" is four screen pixels to a world pixel; "game scale" is one to one. Every particle fades in and out by opacity; nothing appears or leaves at full strength. The canvases run on held frames, 12 a second.</p>
+  <p>The items already cut on <code>wardrobe-cuts</code> (pigtails, tiara, bowtie, tie, collar, medal, small pack, cat tail, bushy tail, grey, pale; black is "filled") are left out here.</p>
+
+  <div class="bar">
+    <button id="theme">page: auto</button>
+    <button id="pause">pause</button>
+    <label>close-ups on <select id="ground"><option value="yard">the yard</option><option value="deep">the deep</option></select></label>
+    <label>the body <select id="motion"><option value="loop">walks, then stands</option><option value="stand">stands</option><option value="walk">walks</option></select></label>
+  </div>
+
+  <!-- ===================================================================== -->
+  <h2 style="margin-top:22px">Part 1: an aura slot</h2>
+  <p>A sixth slot, <b>aura</b>, after pattern; "none" first, as every slot. Each tile: the bare body at 4x on the ground chosen above, then at game scale on the yard and in the deep. "Cost" is the most particles one body has alive at once and the rects it fills a frame; the live number under it is counted off this page's own draw. Only the two of you wear one, so the yard pays it twice: against the sky's 420 motes (<code>AIR_CAP</code>) every aura here is small change.</p>
+  <div class="auras" id="auras"></div>
+
+  <div class="card">
+    <h2>The two of you in a crowd, at game scale</h2>
+    <p>Ten crew in station hats walk each strip; the two of you wear the auras chosen here. The 2x strip is for reading the page, not a game size.</p>
+    <div class="bar">
+      <label>you <select id="auraYou"></select></label>
+      <label>your sqouse <select id="auraSq"></select></label>
+    </div>
+    <h3>the yard, game scale</h3><div class="scroll" id="crowdYard"></div>
+    <h3>the deep, game scale</h3><div class="scroll" id="crowdDeep"></div>
+    <h3>the yard, 2x</h3><div class="scroll" id="crowdYard2"></div>
+  </div>
+
+  <div class="card">
+    <h2>What I would keep, and the one I cut before drawing</h2>
+    <ul>
+      <li><b class="good">Reads in a crowd:</b> the rain cloud, the orbit, the embers, the footprints (walking only) and the scale swirl. Each is either a shape over the head or a thing that moves on its own clock round the body, which is what the eye finds at one to one.</li>
+      <li><b class="warn">Reads only close up:</b> dust motes and petals at game scale are a few grey pixels; the yard already has dust and grains in the air, so they are found only if you know to look. Glints read as glints but are easy to miss between their rests.</li>
+      <li><b class="warn">Pebble bits</b> read best walking (shaken off a step at a time) and look like a body dropping its load, which a carter really does: a false signal in the yard.</li>
+      <li><b>Smoke wisps were cut before drawing:</b> grey rising off a body is what a machine's stack puts up (<code>SMOG_TINTS.mach</code>); on a square it would read as "this one is polluting".</li>
+      <li><b>Purple:</b> only the embers use it, because they are the level-up's own embers, and the level-up is the deep's magic. On the yard they are still purple; whether that belongs up there is the owner's call. Every other aura is grey on the yard and the deep's turned-over grey below.</li>
+      <li><b>Name clash for the build:</b> <code>render/aura.js</code> and <code>AURA_BREATH</code> / <code>AURA_IN</code> already exist (the offer flag's ring). The slot's code would want another file name, e.g. <code>render/wardaura.js</code>.</li>
+    </ul>
+  </div>
+
+  <!-- ===================================================================== -->
+  <h2 style="margin-top:28px">Part 2: colored items, earned</h2>
+  <p>The owner (2026-10-16): <i>some color for some of the appearance options, like a gold crown for beating the game, some aura for beating the game.</i> Color is new to the wardrobe, so the colored items are only ever earned: nothing a fresh yard can wear has a hue. The yard's hues are already spoken for (blue the ore, green the crops, red the spark, purple the deep's magic, <code>config/palette.js</code>), so the earned color is <b>gold</b>, which nothing in the game uses yet. The item-to-achievement mapping is being collected on the decisions board; only the colored ones are named here.</p>
+  <div class="bar">
+    <button id="treat">treatment: A, one gold</button>
+    <span style="color:var(--muted);font-size:12px">A: one flat gold, reserved for earned items, nothing else in the game. B: a small earned palette, gold and a rose, still flat, one tone an item.</span>
+  </div>
+  <div class="auras" id="colored"></div>
+
+  <div class="card">
+    <h2>The colored two in a crowd</h2>
+    <p>You in the gold crown and the halo (the game beaten), your sqouse in the gold scarf and the second-color petals; ten plain crew round them.</p>
+    <h3>the yard, game scale</h3><div class="scroll" id="goldYard"></div>
+    <h3>the deep, game scale</h3><div class="scroll" id="goldDeep"></div>
+    <h3>the yard, 2x</h3><div class="scroll" id="goldYard2"></div>
+  </div>
+
+  <div class="card">
+    <h2>How each treatment reads</h2>
+    <ul>
+      <li><b class="good">A, one gold:</b> the strongest signal. In a black-and-white crowd the only warm pixel on the screen is the one who beat the game; it reads at one to one even as a single crown. It keeps the rule simple to say: gold means earned, and nothing else is gold. The cost: every colored item is the same gold, so a gold scarf and a gold crown say the same thing ("earned") and not which.</li>
+      <li><b class="warn">B, gold and a rose:</b> more variety, but the second hue is where it starts to cost. Rose sits between the spark's red and the deep's purple and at game scale reads as one of them (a spark-colored petal, a magic-colored scarf). Any second hue has to dodge four taken ones; the only clean gaps left are gold and a pale cyan, and cyan sits on the ore's blue. If B is wanted, the cheaper second "color" is a silver: a bright pale grey with no hue at all.</li>
+      <li><b class="warn">Gold on the yard's white paper</b> is the weakest pairing on the page: yellow has little contrast against white, so a gold crown is a lighter shape than the ink crown it replaces. The gold here is pulled toward ochre to keep it visible on white; in the deep, over black, it is lifted (as the coins are lifted on a dark page, <code>COIN_DARK</code>) and reads best of anywhere.</li>
+      <li><b>Flat, one tone an item:</b> no shading, no glint highlights, no gradient. The halo breathes only by opacity, slowly, and never flashes.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Which achievement is "beating the game"</h2>
+    <ul>
+      <li><b>None of the existing ones.</b> <code>gotout</code> ("you saved your sqouse") is the act-1 rescue, fired on <code>S.rescued</code>, hours before the end. <code>allstations</code> ("full party") is a deep milestone. The <code>serpent</code> ladder (levels 2, 5, 10, 25) reads <code>S.serpentBest</code>, the endless serpent's.</li>
+      <li><b>The moment the game is beaten</b> is the finale: the serpent killed, the two of you walked home and into the house (src/finale.js), written down as <code>S.retired</code>. No notice fires there (src/notices.js has no rule on <code>S.retired</code> or <code>S.finale</code>).</li>
+      <li><b>A new notice is needed</b>, one line in the catalog and one rule (<code>() =&gt; S.retired</code>), and a Steam twin comes free with it (src/achievements.js). Its name and note are the owner's: shown here as <span class="ph">home</span>.</li>
+    </ul>
+  </div>
+
+  <h2 style="margin-top:28px">Part 3: the locked look</h2>
+  <p>The locks on the picker below are examples so the look can be seen; the real mapping is the decisions board's. Achievement names are the game's (<code>locales/en.ftl</code>); the lock line's wording is a placeholder. Unlocks would be the save's, shared by both squares.</p>
+
+  <div class="card">
+    <h2>The locked look, on the picker</h2>
+    <p>Two ways to cycle past a locked item, side by side. In both: the item is drawn faint with a small lock, and the achievement's name shows under the row on hover or focus. <b>Randomize never picks a locked item.</b> The controls work: arrows, or up / down / left / right on the keyboard for the sheet under the pointer, r to randomize. Tick an achievement below to pretend it is earned.</p>
+    <div class="earned" id="earned"></div>
+    <div class="pickers">
+      <div><h3>A: skipped when cycling</h3><div id="pickA"></div>
+        <ul><li>Prev / next step over a locked item; the row never lands on one.</li><li>The count says how many are behind locks (the lock and the number); hovering or focusing the count lists them with their achievements.</li><li>Nothing to undo: the outfit can only ever hold what is open.</li></ul></div>
+      <div><h3>B: shown, but not kept</h3><div id="pickB"></div>
+        <ul><li>Prev / next land on a locked item: it is drawn on the body faint, as a try-on, with the lock and the achievement's name under the row.</li><li>Done keeps the last open item in that slot; a locked one is never saved.</li><li>Shows the player what there is to win, at the cost of a sheet that holds a thing it will not keep.</li></ul></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>What this mock cannot show</h2>
+    <ul>
+      <li>The real yard: rocks, heaps, the sky's motes and grains, rain, carts and loads over the head. Dust motes and petals will be harder to find against the air than here, and a rain cloud sits where the weather's clouds and the speech marks are.</li>
+      <li>The deep's real palette: the deep is drawn as the yard and turned over, with its own capped grey ramp (<code>render/deeptones.js</code>). Here the deep is the yard's greys flipped by hand, and a faded particle over black is an alpha blend the deep's ramp may not hold.</li>
+      <li>The real zoom. The yard's zoom follows the window, and a 2-pixel unit at a fractional zoom is snapped to device pixels by the game's <code>fill</code>; at a far zoom a particle thins to one device pixel or doubles. Not tested.</li>
+      <li>The poses: crouched, carried, knocked flat, under the rock in act 1, the snatch and the finale. Each would need its aura held, hidden or let go; that is a build question.</li>
+      <li>Cost in the game: the counts here are rects per body per frame from this page, not a profile of <code>render.js</code>.</li>
+      <li>The real sheet: drawn by hand to look like the game's, not with its stylesheet; the phone layout is not drawn.</li>
+      <li>How an unlock is told: a notice, a mark on the settings row, nothing. Not drawn.</li>
+    </ul>
+  </div>
+</main>
+
+<script>
+// ---------------------------------------------------------------------------
+// The grid and the inks (src/config/palette.js).
+const P = 6, W = P * 3, RIM = 2, U = 2;
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const PURPLE = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#8244d8', '#9b5de5', '#b79af2'];
+const DPR = Math.max(1, Math.round(window.devicePixelRatio || 1));
+const inv = h => '#' + (0xffffff ^ parseInt(h.slice(1), 16)).toString(16).padStart(6, '0');
+// The deep is the yard turned over: its ink is white and its paper black.
+// The earned colors: one gold (A), or gold and a rose (B). Flat; pulled
+// toward ochre on the white paper, lifted over the deep's black.
+let treat = 'A';
+function palette(deep) {
+  const gold = deep ? '#f2c14e' : '#c99406', rose = deep ? '#f08aae' : '#d24f7c';
+  return Object.assign(palette0(deep), { gold, second: treat === 'B' ? rose : gold });
+}
+function palette0(deep) {
+  return deep
+    ? { deep, ground: '#000', rim: '#fff', mid: '#000', line: '#5f5f5f', faint: '#141414', grey: r => inv(GREY[r]),
+        ember: ['#ffffff', PURPLE[12], inv(GREY[6]), PURPLE[9], inv(GREY[4])] }
+    : { deep, ground: '#fff', rim: '#000', mid: '#fff', line: '#000', faint: '#efefef', grey: r => GREY[r],
+        ember: ['#000000', PURPLE[10], GREY[6], PURPLE[12], GREY[4]] };
+}
+
+function hash(i, j) { const s = Math.sin(i * 12.9898 + j * 78.233) * 43758.5453; return s - Math.floor(s); }
+const snap = v => Math.round(v / U) * U;
+let RECTS = 0, FADE = 1;
+// One particle: a rect on the world's 2-pixel grid, its strength an opacity.
+function dot(g, x, y, tone, a = 1, w = U, h = U) {
+  a = Math.min(1, a) * FADE;
+  if (a <= 0.02) return;
+  g.globalAlpha = a; g.fillStyle = tone; g.fillRect(snap(x), snap(y), w, h); g.globalAlpha = 1;
+  RECTS++;
+}
+// Life of particle i of n, each on its own phase: the age in seconds, the
+// share of its life gone, and which life it is on (a new place each life).
+function life(t, i, n, L, seed = 0) {
+  const u = t + i * L / n + hash(i, seed) * 0.37 * L, cyc = Math.floor(u / L), a = u - cyc * L;
+  return { a, k: a / L, cyc };
+}
+const fadeInOut = (k, i = 0.12, o = 0.25) => Math.min(1, k / i, (1 - k) / o);
+
+// ---------------------------------------------------------------------------
+// The auras. `b.at(t)` is where the body was at a time: { x, y, dir, moving },
+// x and y its top-left. Particles that leave the body (motes, bits, petals,
+// embers, prints) are placed where it was when they were born, so a walking
+// body leaves them behind; the rest ride with it. `pass` is 'back' (before
+// the body is drawn) or 'front'.
+const AURAS = [
+  { key: 'none', name: 'none' },
+  { key: 'dust', name: 'dust motes', n: 4, rects: 4,
+    line: 'Four motes lift off the body, drift and thin away, each in one of the dust\'s greys.',
+    scale: ['warn', 'barely: four grey pixels, lost in the yard\'s own air'], deep: ['good', 'better: pale specks on black'],
+    draw(g, b, t, pass, k) {
+      for (let i = 0; i < 4; i++) {
+        const l = life(t, i, 4, 2.4, 1);
+        if ((hash(i, l.cyc) < 0.5) !== (pass === 'back')) continue;
+        const p = b.at(t - l.a);
+        const x = p.x + 9 + (hash(i, l.cyc + 0.5) - 0.5) * 30 + Math.sin(l.k * 6.28 + i) * 3;
+        const y = p.y + 2 + hash(i, l.cyc + 0.7) * 14 - l.k * 10;
+        dot(g, x, y, k.grey(4 + Math.floor(hash(i, l.cyc + 0.9) * 3)), Math.sin(Math.PI * l.k));
+      }
+    } },
+  { key: 'pebbles', name: 'pebble bits', n: 3, rects: 3,
+    line: 'Dark bits shake off the sides and drop to the ground: three at a time walking, one at a time standing.',
+    scale: ['warn', 'reads walking, and reads as a body spilling its load'], deep: ['good', 'reads: pale grit falling'],
+    draw(g, b, t, pass, k) {
+      if (pass !== 'front') return;
+      for (let i = 0; i < 3; i++) {
+        const l = life(t, i, 3, 0.9, 2), p = b.at(t - l.a);
+        if (!p.moving && i > 0) continue;
+        const side = hash(i, l.cyc) < 0.5 ? -U - 1 : W + 1;
+        const x = p.x + side + hash(i, l.cyc + 0.2) * 3, y0 = p.y + 6 + hash(i, l.cyc + 0.3) * 6, foot = p.y + W - U;
+        const f = Math.min(1, l.k / 0.6), y = y0 + (foot - y0) * f * f;
+        dot(g, x, y, k.grey(7 + Math.floor(hash(i, l.cyc + 0.6) * 3)), Math.min(1, l.k / 0.08, l.k > 0.6 ? (1 - l.k) / 0.4 : 1));
+      }
+    } },
+  { key: 'bubbles', name: 'bubbles', n: 3, rects: 9,
+    line: 'Small rings rise off the shoulders, wobbling a unit side to side, and thin out at the top.',
+    scale: ['good', 'reads: the ring shape survives one to one'], deep: ['good', 'reads best here, in the water'],
+    draw(g, b, t, pass, k) {
+      if (pass !== 'front') return;
+      for (let i = 0; i < 3; i++) {
+        const l = life(t, i, 3, 2.2, 3), p = b.at(t - l.a * 0.4);
+        const x = p.x + (i % 2 ? -5 : W + 1) + hash(i, l.cyc) * 3 + Math.round(Math.sin(l.k * 9 + i)) * U;
+        const y = p.y + 10 - l.k * 28, a = fadeInOut(l.k, 0.15, 0.3), tone = k.grey(6);
+        if (i === 2) { dot(g, x, y, tone, a); continue; }
+        dot(g, x + U, y, tone, a); dot(g, x, y + U, tone, a); dot(g, x + 2 * U, y + U, tone, a); dot(g, x + U, y + 2 * U, tone, a);
+      }
+    } },
+  { key: 'orbit', name: 'orbiting pixel', n: 1, rects: 3,
+    line: 'One pixel circles the middle on a flat ellipse, behind the body for half its turn, two fading pixels behind it.',
+    scale: ['good', 'reads: the one thing moving round a body'], deep: ['good', 'reads: a white point'],
+    draw(g, b, t, pass, k) {
+      const c = b.at(t), cx = c.x + 9 - U / 2;
+      [1, 0.5, 0.22].forEach((al, j) => {
+        const an = t * 2.6 - j * 0.3, s = Math.sin(an);
+        if ((s < 0) !== (pass === 'back')) return;
+        dot(g, cx + Math.cos(an) * 15, c.y + 8 + s * 4, k.grey(10), al);
+      });
+    } },
+  { key: 'glints', name: 'sparkle glints', n: 2, rects: 10,
+    line: 'Now and then a point fades in beside the body, holds a plus for two frames\' worth, and fades out. No flash: it is ink, not light.',
+    scale: ['warn', 'reads when it is up; easy to miss between rests'], deep: ['good', 'reads: white stars, the deep\'s own'],
+    draw(g, b, t, pass, k) {
+      if (pass !== 'front') return;
+      const c = b.at(t), tone = k.grey(9);
+      for (let i = 0; i < 2; i++) {
+        const l = life(t, i, 2, 1.9, 4);
+        if (l.k > 0.7) continue;           // resting
+        const q = l.k / 0.7, an = hash(i, l.cyc) * 6.28, r = 14 + hash(i, l.cyc + 0.4) * 5;
+        const x = c.x + 9 - U / 2 + Math.cos(an) * r, y = c.y + 8 + Math.sin(an) * r * 0.8;
+        if (q < 0.15) dot(g, x, y, tone, q / 0.15);
+        else if (q < 0.55) { dot(g, x, y, tone); dot(g, x - U, y, tone); dot(g, x + U, y, tone); dot(g, x, y - U, tone); dot(g, x, y + U, tone); }
+        else dot(g, x, y, tone, Math.min(1, (1 - q) / 0.3));
+      }
+    } },
+  { key: 'prints', name: 'footprints', n: 8, rects: 8,
+    line: 'Walking, a print is left a step at a time, left and right, and each fades over two seconds. Standing, nothing.',
+    scale: ['good', 'reads walking: a dotted line behind one body'], deep: ['warn', 'half: the deep\'s floor is busy with its bed'],
+    draw(g, b, t, pass, k) {
+      if (pass !== 'back') return;
+      const STEP = 0.3, LIFE = 2.4, n0 = Math.floor(t / STEP);
+      for (let j = 0; j < 9; j++) {
+        const n = n0 - j, ts = n * STEP, age = t - ts, p = b.at(ts);
+        if (age > LIFE || !p.moving) continue;
+        dot(g, p.x + (n % 2 ? 3 : 11), p.y + W + 2, k.grey(6), 1 - age / LIFE, 2 * U, U);
+      }
+    } },
+  { key: 'cloud', name: 'rain cloud', n: 4, rects: 25,
+    line: 'A little cloud trails a beat behind over the head, each cell its own pale grey, bobbing a unit; three drops fall to the head and fade.',
+    scale: ['good', 'reads best of all: a shape over the crowd'], deep: ['good', 'reads, though there is no weather down there'],
+    draw(g, b, t, pass, k) {
+      if (pass !== 'front') return;
+      const c = b.at(t), lag = b.at(t - 0.4), bob = Math.floor(t * 1.2) % 2 ? -U : 0;
+      const top = c.y - 18 + bob, left = lag.x + 1;
+      const rows = ['..####..', '.######.', '########'];
+      rows.forEach((r, ry) => [...r].forEach((ch, rx) => {
+        if (ch === '#') dot(g, left + rx * U, top + ry * U, k.grey(3 + Math.floor(hash(rx, ry + 9) * 3)));
+      }));
+      for (let i = 0; i < 3; i++) {
+        const l = life(t, i, 3, 0.55, 5), y0 = top + 3 * U, y1 = c.y - 3;
+        dot(g, left + 2 + hash(i, l.cyc) * 12, y0 + l.k * (y1 - y0), k.grey(7), Math.min(1, (1 - l.k) / 0.3), U, 3);
+      }
+    } },
+  { key: 'petals', name: 'falling petals', n: 3, rects: 3,
+    line: 'Petals fall from over the head, swaying, turning edge-on and back on a held clock, and lie on the ground a moment before fading.',
+    scale: ['warn', 'barely: grey flecks, like the air\'s grains'], deep: ['warn', 'half: pale flecks, nothing growing to drop them'],
+    draw(g, b, t, pass, k) {
+      for (let i = 0; i < 3; i++) {
+        const l = life(t, i, 3, 2.8, 6);
+        if ((hash(i, l.cyc + 0.1) < 0.4) !== (pass === 'back')) continue;
+        const p = b.at(t - l.a), x0 = p.x - 5 + hash(i, l.cyc) * 28, y0 = p.y - 12, foot = p.y + W + 1;
+        const tone = k.grey(5 + Math.floor(hash(i, l.cyc + 0.3) * 2));
+        const a = Math.min(1, l.k / 0.1, (1 - l.k) / 0.15);
+        if (l.k < 0.8) {
+          const f = l.k / 0.8, flat = Math.floor(t * 4 + i) % 2;
+          dot(g, x0 + Math.sin(l.k * 7 + i * 2) * 4, y0 + (foot - y0) * f, tone, a, flat ? 2 * U : U, U);
+        } else dot(g, x0 + Math.sin(0.8 * 7 + i * 2) * 4, foot, tone, a, 2 * U, U);
+      }
+    } },
+  { key: 'scales', name: 'scale swirl', n: 4, rects: 4,
+    line: 'Four scales circle the body, rising and falling a little, each turning edge-on a moment on its own clock, as the serpent\'s scales flutter as they sink.',
+    scale: ['good', 'reads: a ring of grey round one body'], deep: ['good', 'reads, and belongs there'],
+    draw(g, b, t, pass, k) {
+      const c = b.at(t), cx = c.x + 9 - 2;
+      for (let i = 0; i < 4; i++) {
+        const an = t * 1.8 + i * Math.PI / 2, s = Math.sin(an);
+        if ((s < 0) !== (pass === 'back')) continue;
+        const edge = ((t * 1000 + i * 130) % 520) < 130;
+        const y = c.y + 7 + s * 3 + Math.sin(t * 1.1 + i * 1.7) * 3;
+        dot(g, cx + Math.cos(an) * 14, y + (edge ? 1 : 0), k.grey(7), 1, 4, edge ? 2 : 4);
+      }
+    } },
+  { key: 'embers', name: 'embers', n: 4, rects: 4,
+    line: 'The level-up\'s embers, small: they climb from the feet on a turn round the body, cooling ink, purple, grey, purple, grey as they go.',
+    scale: ['good', 'reads: purple is the only hue on the yard'], deep: ['good', 'reads best: the deep\'s magic'],
+    draw(g, b, t, pass, k) {
+      for (let i = 0; i < 4; i++) {
+        const l = life(t, i, 4, 1.7, 7), an = i * 1.57 + l.k * 4.2 + hash(i, l.cyc) * 2, s = Math.sin(an);
+        if ((s < 0) !== (pass === 'back')) continue;
+        const p = b.at(t - l.a * 0.5);
+        const tone = k.ember[Math.min(k.ember.length - 1, Math.floor(l.k * k.ember.length))];
+        dot(g, p.x + 9 - U / 2 + Math.cos(an) * (10 + 5 * l.k), p.y + W - 2 - l.k * 34, tone, fadeInOut(l.k, 0.1, 0.3));
+      }
+    } },
+  // --- earned, in color (Part 2) ---
+  { key: 'halo', name: 'gold halo', n: 3, rects: 22, earned: true,
+    line: 'A flat gold ring over the head, breathing slowly by opacity, two gold motes lifting off it. For beating the game.',
+    draw(g, b, t, pass, k) {
+      // a ring seen from a little above: its far half behind the head, its
+      // near half in front
+      const c = b.at(t), top = c.y - 12 - (b.headRows || 0) * P, left = c.x;
+      const ring = ['..#####..', '##.....##', '##.....##', '..#####..'], a = 0.85 + 0.15 * Math.sin(t * 1.3);
+      ring.forEach((r, ry) => {
+        if ((ry < 2) !== (pass === 'back')) return;
+        [...r].forEach((ch, rx) => { if (ch === '#') dot(g, left + rx * U, top + ry * U, k.gold, a); });
+      });
+      if (pass === 'back') return;
+      for (let i = 0; i < 2; i++) {
+        const l = life(t, i, 2, 2.2, 8);
+        dot(g, left + 1 + hash(i, l.cyc) * 12 + Math.sin(l.k * 5 + i) * 2, top - 2 - l.k * 12, k.gold, Math.sin(Math.PI * l.k));
+      }
+    } },
+  { key: 'gold-glints', name: 'gold glints', n: 2, rects: 10, earned: true,
+    line: 'The glints, in gold.',
+    draw(g, b, t, pass, k) { AURA.glints.draw(g, b, t, pass, { ...k, grey: () => k.gold }); } },
+  { key: 'tint-petals', name: 'petals, second color', n: 3, rects: 3, earned: true,
+    line: 'The petals, in the second color: gold in A, rose in B.',
+    draw(g, b, t, pass, k) { AURA.petals.draw(g, b, t, pass, { ...k, grey: () => k.second }); } },
+];
+const AURA = Object.fromEntries(AURAS.map(a => [a.key, a]));
+
+// ---------------------------------------------------------------------------
+// The wardrobe, as on main after the cuts (src/wardrobe.js).
+const HEAD = {
+  none: null,
+  bow: { rows: ['##.##', '#####', '##.##'] }, 'top hat': { rows: ['.###.', '.###.', '#####'] }, crown: { rows: ['#.#.#', '#####'] },
+  flower: { rows: ['.#.', '#.#', '.#.', '.#.'] }, sprout: { rows: ['##.##', '..#..'] }, ears: { rows: ['#.#'] },
+  antenna: { rows: ['..#', '.#.', '.#.'], ox: 0 }, beanie: { rows: ['.#.', '###', '###'] }, beret: { rows: ['..#.', '####'], ox: -1 },
+  headband: { rects: [[0, 4, 18, 2], [-6, 2, 6, 2], [-4, 6, 4, 2]] }, mohawk: { rows: ['#', '#'] },
+  'gold crown': { rows: ['#.#.#', '#####'], tone: 'gold' },
+};
+const FACE = {
+  none: null, eyes: ['', '', '...#.#.'], sleepy: ['', '', '..##.##'], smile: ['', '', '...#.#.', '', '..#...#', '...###.'],
+  glasses: ['', '###.###', '#.###.#', '###.###'], 'round glasses': ['', '.#...#.', '#.###.#', '.#...#.'], shades: ['', '#######', '###.###'],
+  monocle: ['', '.....#.', '..#.#.#', '.....#.', '......#', '......#'], eyepatch: ['', '#####..', '..#.###', '....###'],
+  mustache: ['', '', '...#.#.', '..#...#', '..#####'], freckles: ['', '', '...#.#.', '...g.g.', '..g.g..'], blush: ['', '', '...#.#.', '..gg.gg'],
+};
+const NECK = { none: null, scarf: { grid: ['', '', '', '#######'], tail: 'solid' }, 'checked scarf': { grid: ['', '', '', '#g#g#g#'], tail: 'check' }, 'striped scarf': { grid: ['', '', '', '#.#.#.#'], tail: 'stripe' },
+  'gold scarf': { grid: ['', '', '', '#g#g#g#'], tail: 'check', tone: 'gold' } };
+const BACK = { none: 1, cape: 1, 'short cape': 1, backpack: 1, balloon: 1, flag: 1 };
+const lines = along => [2, 6, 10].map(d => (along ? [d, 0, 2, 14] : [0, d, 14, 2]));
+const dots = () => { const o = []; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) o.push([1 + i * 4 + (j % 2) * 2, 2 + j * 4, 2, 2]); return o; };
+const diagonal = () => { const o = []; for (let q = -12; q < 14; q += 6) for (let i = 0; i < 7; i++) { const y = i * 2 + q; if (y >= 0 && y < 14) o.push([i * 2, y, 2, 2]); } return o; };
+const PATTERN = { plain: null, overalls: [[0, 8, 14, 6], [2, 0, 2, 8], [10, 0, 2, 8]], stripes: lines(false), 'tall stripes': lines(true), dots: dots(), diagonal: diagonal(), quarters: [[0, 0, 7, 7], [7, 7, 7, 7]], filled: [[0, 0, 14, 14]] };
+const SLOTS = [
+  { key: 'head', list: HEAD }, { key: 'face', list: FACE }, { key: 'neck', list: NECK },
+  { key: 'back', list: BACK }, { key: 'pattern', list: PATTERN }, { key: 'aura', list: AURA },
+];
+
+const pose = (t, hz) => Math.floor(t * hz) % 2;
+function rect(g, x, y, w, h, tone) { g.globalAlpha = FADE; g.fillStyle = tone; g.fillRect(x, y, w, h); g.globalAlpha = 1; }
+const cellAt = (g, x, y, tone) => rect(g, x, y, P, P, tone);
+function backOf(g, key, x, y, o, ink) {
+  const d = o.dir > 0 ? -1 : 1, bx = o.dir > 0 ? x - P : x + W, p = pose(o.t, 4);
+  if (key === 'cape') {
+    if (o.moving) { cellAt(g, bx, y, ink); cellAt(g, bx + d * P, y + P, ink); cellAt(g, bx + d * P * (p ? 2 : 1), y + (p ? P : 2 * P), ink); cellAt(g, bx, y + P, ink); }
+    else { cellAt(g, bx, y, ink); cellAt(g, bx, y + P, ink); cellAt(g, bx, y + 2 * P, ink); }
+  } else if (key === 'short cape') {
+    if (o.moving) { cellAt(g, bx, y, ink); cellAt(g, bx + d * P, y + (p ? 0 : P), ink); } else { cellAt(g, bx, y, ink); cellAt(g, bx, y + P, ink); }
+  } else if (key === 'backpack') {
+    cellAt(g, bx, y + 2, ink); cellAt(g, bx, y + 2 + P, ink);
+  } else if (key === 'balloon') {
+    const bob = pose(o.t, 1.2) ? -2 : 0, sx = o.dir > 0 ? x + 2 : x + W - 4;
+    rect(g, sx, y - 3 * P + bob, 1, 3 * P - bob, ink);
+    const bxl = sx - 5 + d * 4, byl = y - 3 * P - 12 + bob;
+    rect(g, bxl + 2, byl, 8, 12, ink); rect(g, bxl, byl + 2, 12, 8, ink);
+  } else if (key === 'flag') {
+    const px = o.dir > 0 ? x : x + W - 2, wv = pose(o.t, 3);
+    rect(g, px, y - 4 * P, 2, 4 * P, ink);
+    const fx = o.dir > 0 ? px - 2 * P : px + 2;
+    rect(g, fx, y - 4 * P, 2 * P, P, ink);
+    rect(g, o.dir > 0 ? fx + (wv ? 0 : P) : fx + (wv ? P : 0), y - 3 * P, P, P - 2, ink);
+  }
+}
+function tailOf(g, kind, x, y, o, k, tone) {
+  const d = o.dir > 0 ? -1 : 1, bx = o.dir > 0 ? x - P : x + W, cells = [];
+  if (o.moving) { const lift = pose(o.t, 4) ? [0, 0, -1] : [0, 1, 0]; for (let i = 0; i < 3; i++) cells.push([bx + d * i * P, y + P + lift[i] * P]); }
+  else cells.push([bx, y + P], [bx, y + 2 * P]);
+  cells.forEach(([cx, cy], i) => { cellAt(g, cx, cy, kind === 'check' && i % 2 ? (tone ? k[tone] : k.grey(5)) : k.rim); if (kind === 'stripe') rect(g, cx + 2, cy, 2, P, k.mid); });
+}
+function grid(g, rows, x0, y0, dir, ink, grey) {
+  for (let r = 0; r < rows.length; r++) { const row = rows[r].padEnd(7, '.');
+    for (let c = 0; c < 7; c++) { const ch = row[dir < 0 ? 6 - c : c]; if (ch !== '.') rect(g, x0 + c * 2, y0 + r * 2, 2, 2, ch === 'g' ? grey : ink); } }
+}
+function headOf(g, it, x, y, dir, ink) {
+  if (it.rects) { for (const [rx, ry, rw, rh] of it.rects) rect(g, x + (dir < 0 ? W - rx - rw : rx), y + ry, rw, rh, ink); return; }
+  const w = Math.max(...it.rows.map(r => r.length));
+  let ox = it.ox ?? (3 - w) / 2; if (dir < 0) ox = 3 - ox - w;
+  const top = y - it.rows.length * P;
+  it.rows.forEach((row, r) => { for (let c = 0; c < row.length; c++) { const ch = row[dir < 0 ? w - 1 - c : c]; if (ch && ch !== '.') cellAt(g, x + (ox + c) * P, top + r * P, ink); } });
+}
+const HATS = { helmet: ['###'], lamp: ['.#.', '###'], brim: ['..###..', '#######'], point: ['..#..', '.###.', '#####'], cap: ['###', '###'] };
+
+// A body, dressed. `o` = { outfit, dir, moving, t, hat, locked }, where
+// `locked` names the slots drawn faint (the picker's try-on).
+function drawBody(g, b, t, k, o = {}) {
+  const at = b.at(t), x = Math.round(at.x), y = Math.round(at.y), out = o.outfit || {};
+  const look = { dir: at.dir, moving: at.moving, t };
+  const faint = s => { FADE = o.locked && o.locked.includes(s) ? 0.3 : 1; };
+  const aura = AURA[out.aura];
+  b.headRows = HEAD[out.head] && HEAD[out.head].rows ? HEAD[out.head].rows.length : 0;
+  if (aura && aura.draw) { faint('aura'); aura.draw(g, b, t, 'back', k); }
+  faint('back'); if (out.back && out.back !== 'none') backOf(g, out.back, x, y, look, k.rim);
+  const nk = NECK[out.neck]; faint('neck'); if (nk) tailOf(g, nk.tail, x, y, look, k, nk.tone);
+  FADE = 1;
+  rect(g, x, y, W, W, k.rim); rect(g, x + RIM, y + RIM, W - 2 * RIM, W - 2 * RIM, k.mid);
+  const pat = PATTERN[out.pattern]; faint('pattern');
+  if (pat) for (const [rx, ry, rw, rh] of pat) rect(g, x + RIM + (at.dir < 0 ? 14 - rx - rw : rx), y + RIM + ry, rw, rh, k.rim);
+  const on = out.pattern === 'filled' ? k.mid : k.rim, grey = out.pattern === 'filled' ? k.grey(2) : k.grey(5);
+  faint('face'); if (FACE[out.face]) grid(g, FACE[out.face], x + RIM, y + RIM, at.dir, on, grey);
+  faint('neck'); if (nk) grid(g, nk.grid, x + RIM, y + RIM, at.dir, on, nk.tone ? k[nk.tone] : grey);
+  faint('head');
+  if (HEAD[out.head]) headOf(g, HEAD[out.head], x, y, at.dir, HEAD[out.head].tone ? k[HEAD[out.head].tone] : k.rim);
+  else if (o.hat) headOf(g, { rows: HATS[o.hat] }, x, y, at.dir, k.rim);
+  if (o.carry && !HEAD[out.head]) { FADE = 1; rect(g, x + P, y - (o.hat ? HATS[o.hat].length * P : 0) - P - 2, P, P, k.grey(5)); }
+  if (aura && aura.draw) { faint('aura'); aura.draw(g, b, t, 'front', k); }
+  FADE = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Paths. A walker between a and b at speed v, standing `rest` seconds at
+// each end; v 0 stands.
+function walker(a, b, v, ph = 0, rest = 1, y = 0) {
+  return { at(t) {
+    if (!v) return { x: a, y, dir: 1, moving: false };
+    const T = (b - a) / v, C = 2 * T + 2 * rest;
+    const u = (((t + ph * C) % C) + C) % C;
+    if (u < T) return { x: a + u * v, y, dir: 1, moving: true };
+    if (u < T + rest) return { x: b, y, dir: 1, moving: false };
+    if (u < 2 * T + rest) return { x: b - (u - T - rest) * v, y, dir: -1, moving: true };
+    return { x: a, y, dir: -1, moving: false };
+  } };
+}
+let motion = 'loop';
+function tileWalker(y) {
+  const loop = walker(18, 38, 8, 0, 2.5, y), walk = walker(18, 38, 8, 0, 0.001, y);
+  return { at(t) { return motion === 'stand' ? { x: 28, y, dir: 1, moving: false } : motion === 'walk' ? walk.at(t) : loop.at(t); } };
+}
+
+// ---------------------------------------------------------------------------
+// Canvas helpers.
+function canvasOf(w, h, scale) {
+  const c = document.createElement('canvas');
+  c.width = w * scale * DPR; c.height = h * scale * DPR;
+  c.style.width = (w * scale) + 'px';
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.setTransform(scale * DPR, 0, 0, scale * DPR, 0, 0);
+  return { c, g, w, h };
+}
+function fig(parent, cv, caption) {
+  const f = document.createElement('figure'); f.appendChild(cv.c);
+  if (caption) { const fc = document.createElement('figcaption'); fc.innerHTML = caption; f.appendChild(fc); }
+  parent.appendChild(f); return f;
+}
+function groundOf(g, w, h, gy, k) {
+  g.fillStyle = k.ground; g.fillRect(0, 0, w, h);
+  g.fillStyle = k.faint;
+  for (let y = gy + 4; y < h; y += 6) for (let x = (y * 2) % 12; x < w; x += 12) g.fillRect(x, y, 6, 1);
+  g.fillStyle = k.line; g.fillRect(0, gy, w, 1);
+}
+let groundDeep = false, paused = false, clock = 0;
+const drawers = [];
+
+// ---------------------------------------------------------------------------
+// A tile: one outfit on the bare body at 4x on the chosen ground, and at
+// game scale on the yard and in the deep.
+function tile(host, title, sub, line, outfit, rows) {
+  const card = document.createElement('section'); card.className = 'aura';
+  card.innerHTML = `<h2>${title}<small>${sub}</small></h2><p class="line">${line}</p>`;
+  const views = document.createElement('div'); views.className = 'views'; card.appendChild(views);
+  const BW = 74, BH = 66, gy = BH - 10;
+  const big = canvasOf(BW, BH, 4), yard = canvasOf(BW, BH, 1), deep = canvasOf(BW, BH, 1);
+  fig(views, big, '4x');
+  const smalls = document.createElement('div'); smalls.style.display = 'flex'; smalls.style.gap = '6px'; views.appendChild(smalls);
+  fig(smalls, yard, 'yard 1x'); fig(smalls, deep, 'deep 1x');
+  const dl = document.createElement('dl'), live = document.createElement('dd');
+  for (const [dt, dd, cls] of rows) dl.insertAdjacentHTML('beforeend', `<dt>${dt}</dt><dd class="${cls || ''}">${dd}</dd>`);
+  dl.insertAdjacentHTML('beforeend', '<dt>measured</dt>'); dl.appendChild(live);
+  card.appendChild(dl);
+  host.appendChild(card);
+  const body = tileWalker(gy - W);
+  drawers.push(t => {
+    const kb = palette(groundDeep);
+    groundOf(big.g, BW, BH, gy, kb); RECTS = 0; drawBody(big.g, body, t, kb, { outfit });
+    live.textContent = `${RECTS} particle rects this frame`;
+    const ky = palette(false), kd = palette(true);
+    groundOf(yard.g, BW, BH, gy, ky); drawBody(yard.g, body, t, ky, { outfit });
+    groundOf(deep.g, BW, BH, gy, kd); drawBody(deep.g, body, t, kd, { outfit });
+  });
+}
+// A strip: ten crew in station hats and the two of you, `pair()` giving
+// their two outfits.
+function strip(hostId, deep, scale, w, pair) {
+  const H = 64, gy = H - 8, cv = canvasOf(w, H, scale);
+  document.getElementById(hostId).appendChild(cv.c);
+  let r = 7; const rnd = () => (r = (r * 1664525 + 1013904223) >>> 0) / 4294967296;
+  const kits = [null, 'helmet', 'lamp', 'brim', 'point', 'cap'];
+  const crew = [];
+  for (let i = 0; i < 10; i++) {
+    const a = 10 + rnd() * (w - 70), span = 40 + rnd() * (w * 0.45);
+    crew.push({ b: walker(a, Math.min(w - 30, a + span), rnd() < 0.2 ? 0 : 10 + rnd() * 12, rnd(), 1, gy - W), hat: kits[Math.floor(rnd() * kits.length)], carry: rnd() < 0.3 });
+  }
+  const you = walker(40, w - 120, 13, 0.1, 1.2, gy - W), sq = walker(90, w - 40, 16, 0.55, 1.2, gy - W);
+  drawers.push(t => {
+    const k = palette(deep), [o1, o2] = pair();
+    groundOf(cv.g, w, H, gy, k);
+    for (const c of crew) drawBody(cv.g, c.b, t, k, { hat: c.hat, carry: c.carry });
+    drawBody(cv.g, you, t, k, { outfit: o1 });
+    drawBody(cv.g, sq, t, k, { outfit: o2 });
+  });
+}
+
+// Part 1: one tile an aura.
+for (const a of AURAS.slice(1).filter(a => !a.earned))
+  tile(document.getElementById('auras'), a.name, '', a.line, { aura: a.key }, [
+    ['cost', `up to ${a.n} particle${a.n > 1 ? 's' : ''}, ~${a.rects} rects a frame`],
+    ['game scale', a.scale[1], a.scale[0]], ['in the deep', a.deep[1], a.deep[0]]]);
+
+const crowdPick = { you: 'cloud', sq: 'embers' };
+for (const [id, who] of [['auraYou', 'you'], ['auraSq', 'sq']]) {
+  const s = document.getElementById(id);
+  for (const a of AURAS.filter(a => !a.earned)) s.insertAdjacentHTML('beforeend', `<option value="${a.key}">${a.name}</option>`);
+  s.value = crowdPick[who];
+  s.addEventListener('change', () => { crowdPick[who] = s.value; });
+}
+const plainPair = () => [{ head: 'bow', face: 'eyes', neck: 'scarf', aura: crowdPick.you }, { head: 'top hat', face: 'monocle', aura: crowdPick.sq }];
+strip('crowdYard', false, 1, 560, plainPair);
+strip('crowdDeep', true, 1, 560, plainPair);
+strip('crowdYard2', false, 2, 560, plainPair);
+
+// Part 2: the colored items, earned.
+const COLORED = [
+  ['gold crown', 'for the new <span class="ph">home</span> notice', 'The crown\'s cells in gold. For beating the game.', { head: 'gold crown', face: 'eyes' },
+   [['reads', 'the only warm shape in a crowd; on white a lighter shape than the ink crown', 'warn']]],
+  ['gold halo', 'for the new <span class="ph">home</span> notice', AURA.halo.line, { aura: 'halo', face: 'eyes' },
+   [['cost', 'a ring of 20 units and up to 2 motes, ~22 rects a frame'], ['reads', 'yes, over the head; best in the deep', 'good']]],
+  ['both: the game beaten', 'for the new <span class="ph">home</span> notice', 'The crown and the halo together, the halo riding over the crown.', { head: 'gold crown', aura: 'halo', face: 'smile' },
+   [['reads', 'the strongest picture on the page; a lot of gold on one body', 'good']]],
+  ['gold scarf', 'a candidate', 'The checked scarf with gold for its grey checks: half ink, half gold, so it holds on white.', { neck: 'gold scarf', face: 'eyes' },
+   [['reads', 'yes walking (the tail streams); a band of gold standing', 'good']]],
+  ['petals, second color', 'a candidate', AURA['tint-petals'].line, { aura: 'tint-petals', head: 'flower' },
+   [['reads', 'gold petals read better than grey ones; rose reads as the spark\'s red', 'warn']]],
+  ['gold glints', 'a candidate', AURA['gold-glints'].line, { aura: 'gold-glints', face: 'eyes' },
+   [['reads', 'better than ink glints: a warm point is found between rests', 'good']]],
+];
+for (const [name, sub, line, outfit, rows] of COLORED) tile(document.getElementById('colored'), name, sub, line, outfit, rows);
+const goldPair = () => [{ head: 'gold crown', face: 'eyes', aura: 'halo' }, { head: 'top hat', neck: 'gold scarf', face: 'monocle', aura: 'tint-petals' }];
+strip('goldYard', false, 1, 560, goldPair);
+strip('goldDeep', true, 1, 560, goldPair);
+strip('goldYard2', false, 2, 560, goldPair);
+document.getElementById('treat').addEventListener('click', e => {
+  treat = treat === 'A' ? 'B' : 'A';
+  e.target.textContent = treat === 'A' ? 'treatment: A, one gold' : 'treatment: B, gold and a rose';
+});
+
+// ---------------------------------------------------------------------------
+// Part 3: example locks, so the picker's locked look can be seen; the real
+// mapping is the owner's, on the decisions board. The achievements are the
+// game's (src/catalog.js keys, locales/en.ftl names); "home" is the new one.
+var ACH = {
+  home: { name: 'home' },
+  gotout: { name: 'you saved your sqouse' },
+  tablebeaten: { name: "we're so back" },
+  underminute: { name: 'a rock off in under a minute' },
+  star: { name: 'conjure a star' },
+  wholelot: { name: 'not one of you' },
+  firstspark: { name: 'magic in the air' },
+  muckrain: { name: 'it never rains but it pours' },
+  serpent0: { name: 'serpent level 2' },
+  allstations: { name: 'full party' },
+  allbuilt: { name: 'building complete' },
+};
+var LOCKS = {
+  'head:gold crown': 'home', 'head:crown': 'gotout', 'face:monocle': 'tablebeaten', 'face:shades': 'underminute',
+  'back:cape': 'star', 'back:balloon': 'wholelot', 'neck:gold scarf': 'allbuilt',
+  'aura:halo': 'home', 'aura:gold-glints': 'home', 'aura:tint-petals': 'allbuilt',
+  'aura:orbit': 'firstspark', 'aura:cloud': 'muckrain', 'aura:scales': 'serpent0', 'aura:embers': 'allstations',
+};
+function lockSvg(c = 'currentColor') {
+  return `<svg class="lk" viewBox="0 0 7 8" aria-hidden="true"><g fill="${c}"><rect x="1" y="0" width="5" height="1"/><rect x="1" y="1" width="1" height="3"/><rect x="5" y="1" width="1" height="3"/><rect x="0" y="3" width="7" height="5"/></g><rect x="3" y="5" width="1" height="2" fill="#fff"/></svg>`;
+}
+
+// The pretend-earned toggles.
+const earned = new Set();
+(() => {
+  const host = document.getElementById('earned');
+  for (const id of new Set(Object.values(LOCKS))) {
+    const l = document.createElement('label');
+    l.innerHTML = `<input type="checkbox"> ${ACH[id].name}`;
+    l.querySelector('input').addEventListener('change', e => { e.target.checked ? earned.add(id) : earned.delete(id); refresh(); });
+    host.appendChild(l);
+  }
+})();
+const isLocked = (slot, key) => { const id = LOCKS[slot + ':' + key]; return !!id && !earned.has(id); };
+// The owner's words: a placeholder line for a locked item.
+const lockLine = (slot, key) => `<span class="ph">earn "${ACH[LOCKS[slot + ':' + key]].name}"</span>`;
+
+const pickers = [];
+function refresh() { for (const p of pickers) p.update(); }
+function makePicker(host, mode) {
+  const st = { row: 0, outfit: { head: 'bow', face: 'eyes', neck: 'scarf', back: 'none', pattern: 'plain', aura: 'dust' }, hover: null };
+  st.kept = { ...st.outfit };
+  const sheet = document.createElement('div'); sheet.className = 'sheet';
+  sheet.innerHTML = `<div class="t"><span class="ph">appearance</span><span>x</span></div>`;
+  const BW = 80, BH = 64, gy = BH - 10, big = canvasOf(BW, BH, 4);
+  sheet.appendChild(big.c);
+  const rows = SLOTS.map((s, i) => {
+    const r = document.createElement('div'); r.className = 'slot';
+    const lab = document.createElement('span'); lab.textContent = s.key;
+    const prev = document.createElement('button'); prev.className = 'arr'; prev.textContent = '<';
+    const val = document.createElement('span'); val.className = 'val'; val.tabIndex = 0;
+    const next = document.createElement('button'); next.className = 'arr'; next.textContent = '>';
+    const count = document.createElement('span'); count.className = 'count'; count.tabIndex = 0;
+    const line = document.createElement('div'); line.className = 'lockline';
+    prev.addEventListener('click', () => { st.row = i; step(s, -1); });
+    next.addEventListener('click', () => { st.row = i; step(s, 1); });
+    const over = what => () => { st.row = i; st.hover = what; refresh(); };
+    const out = () => { st.hover = null; refresh(); };
+    r.addEventListener('mouseenter', () => { st.row = i; refresh(); });
+    val.addEventListener('mouseenter', over('val')); val.addEventListener('focus', over('val'));
+    val.addEventListener('mouseleave', out); val.addEventListener('blur', out);
+    count.addEventListener('mouseenter', over('count')); count.addEventListener('focus', over('count'));
+    count.addEventListener('mouseleave', out); count.addEventListener('blur', out);
+    r.append(lab, prev, val, next, count, line);
+    sheet.appendChild(r);
+    return { r, val, count, line, s };
+  });
+  const btns = document.createElement('div'); btns.className = 'btns';
+  const rnd = document.createElement('button'); rnd.className = 'btn'; rnd.innerHTML = '<span class="ph">randomize</span>';
+  rnd.addEventListener('click', randomize);
+  const done = document.createElement('button'); done.className = 'btn'; done.innerHTML = '<span class="ph">done</span>';
+  done.addEventListener('click', () => { st.outfit = { ...st.kept }; refresh(); });
+  btns.append(rnd, done);
+  sheet.appendChild(btns);
+  const hint = document.createElement('div'); hint.className = 'hint'; sheet.appendChild(hint);
+  host.appendChild(sheet);
+  sheet.addEventListener('mouseenter', () => { activePicker = api; });
+
+  function step(s, by) {
+    const keys = Object.keys(s.list);
+    let i = keys.indexOf(st.outfit[s.key]);
+    for (let n = 0; n < keys.length; n++) {
+      i = (i + by + keys.length) % keys.length;
+      if (mode === 'show' || !isLocked(s.key, keys[i])) break;
+    }
+    st.outfit[s.key] = keys[i];
+    if (!isLocked(s.key, keys[i])) st.kept[s.key] = keys[i];
+    refresh();
+  }
+  // None is twice as likely as any one item; a locked item is never rolled.
+  function randomize() {
+    for (const s of SLOTS) {
+      const keys = Object.keys(s.list), open = keys.slice(1).filter(k => !isLocked(s.key, k));
+      st.outfit[s.key] = Math.random() < 2 / (open.length + 2) || !open.length ? keys[0] : open[Math.floor(Math.random() * open.length)];
+      st.kept[s.key] = st.outfit[s.key];
+    }
+    refresh();
+  }
+  const body = walker(30, 42, 6, 0, 2.5, gy - W);
+  drawers.push(t => {
+    const k = palette(false);
+    groundOf(big.g, BW, BH, gy, k);
+    const locked = SLOTS.map(s => s.key).filter(s => isLocked(s, st.outfit[s]));
+    drawBody(big.g, body, t, k, { outfit: st.outfit, locked });
+  });
+  const api = {
+    key(e) {
+      const s = SLOTS[st.row];
+      if (e.key === 'ArrowUp') { st.row = (st.row + SLOTS.length - 1) % SLOTS.length; refresh(); }
+      else if (e.key === 'ArrowDown') { st.row = (st.row + 1) % SLOTS.length; refresh(); }
+      else if (e.key === 'ArrowLeft') step(s, -1);
+      else if (e.key === 'ArrowRight') step(s, 1);
+      else if (e.key === 'r') randomize();
+      else return false;
+      return true;
+    },
+    update() {
+      let anyLocked = false;
+      rows.forEach(({ r, val, count, line, s }, i) => {
+        const keys = Object.keys(s.list), cur = st.outfit[s.key], lk = isLocked(s.key, cur);
+        const shut = keys.filter(k => isLocked(s.key, k));
+        anyLocked = anyLocked || lk;
+        val.innerHTML = (lk ? lockSvg() : '') + `<span>${AURA[cur] && s.key === 'aura' ? AURA[cur].name : cur}</span>`;
+        val.classList.toggle('locked', lk);
+        val.title = lk ? `earn "${ACH[LOCKS[s.key + ':' + cur]].name}"` : '';
+        if (mode === 'skip') {
+          const open = keys.filter(k => !isLocked(s.key, k));
+          count.innerHTML = `${open.indexOf(cur)} / ${open.length - 1}` + (shut.length ? ` ${lockSvg('#8a8a8a')}${shut.length}` : '');
+          count.title = shut.map(k => `${k}: ${ACH[LOCKS[s.key + ':' + k]].name}`).join('\n');
+        } else count.textContent = `${keys.indexOf(cur)} / ${keys.length - 1}`;
+        r.classList.toggle('cur', i === st.row);
+        let ln = '';
+        if (lk && (i === st.row)) ln = lockLine(s.key, cur) + ' <span style="color:#8a8a8a">(trying it on; done keeps ' + (s.key === 'aura' ? AURA[st.kept[s.key]].name : st.kept[s.key]) + ')</span>';
+        else if (mode === 'skip' && st.hover === 'count' && i === st.row && shut.length)
+          ln = 'locked: ' + shut.map(k => `${s.key === 'aura' ? AURA[k].name : k} <span class="ph">earn "${ACH[LOCKS[s.key + ':' + k]].name}"</span>`).join(', ');
+        line.innerHTML = ln;
+      });
+      hint.textContent = mode === 'skip'
+        ? 'arrows step over locked items; hover the lock count to see them'
+        : (anyLocked ? 'a faint item is locked: shown, not kept' : 'arrows land on locked items too, drawn faint');
+    },
+  };
+  return api;
+}
+let activePicker = null;
+pickers.push(makePicker(document.getElementById('pickA'), 'skip'));
+pickers.push(makePicker(document.getElementById('pickB'), 'show'));
+activePicker = pickers[0];
+// B starts on a locked try-on so the look is on the page from the first frame.
+pickers[1].key({ key: 'ArrowLeft' }); pickers[1].key({ key: 'ArrowLeft' });
+refresh();
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT' || !activePicker) return;
+  if (activePicker.key(e)) e.preventDefault();
+});
+
+// ---------------------------------------------------------------------------
+const themes = ['auto', 'light', 'dark'];
+const q = new URLSearchParams(location.search);
+// ?theme=dark|light pins the page and ?t= the clock, for the saved snapshots
+if (themes.includes(q.get('theme')) && q.get('theme') !== 'auto') document.documentElement.setAttribute('data-theme', q.get('theme'));
+document.getElementById('theme').addEventListener('click', e => {
+  const cur = themes.indexOf(e.target.dataset.v || 'auto'), next = themes[(cur + 1) % 3];
+  e.target.dataset.v = next; e.target.textContent = 'page: ' + next;
+  if (next === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', next);
+});
+document.getElementById('ground').addEventListener('change', e => { groundDeep = e.target.value === 'deep'; });
+document.getElementById('motion').addEventListener('change', e => { motion = e.target.value; });
+document.getElementById('pause').addEventListener('click', e => { paused = !paused; e.target.textContent = paused ? 'play' : 'pause'; });
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches || q.has('t');
+if (q.get('treat') === 'B') document.getElementById('treat').click();
+if (q.has('t')) clock = +q.get('t'); else if (still) clock = 1.3;
+let last = performance.now();
+function frame(now) {
+  if (!paused && !still) clock += Math.min(0.05, (now - last) / 1000);
+  last = now;
+  const t = Math.floor(clock * 12) / 12;
+  for (const d of drawers) d(t);
+  if (!still) requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
