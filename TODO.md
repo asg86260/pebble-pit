@@ -4,6 +4,16 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## Act 3: heaven -- DESIGNED, WAITING ON THE OWNER (2026-10-16)
+
+"Act 3: heaven (design, not built)" in DESIGN.md: the spine (lifespans,
+lineage, the house's beat, the greeting), three loops for heaven, B (the
+roll call: souls rebuilt a rim piece a click, lines as the currency)
+recommended. Look: docs/mocks/act3-heaven-2026-10-16. Blocked on the owner's
+pick of loop and three calls: does the yard keep running below; do
+lifespans ship first (and the serpent's kill with them); what sets the beat
+off, behind a flag or not, and are the pair mortal. No code until then.
+
 ## Who you are: Steam names, translations -- WAITING ON THE OWNER (2026-10-16)
 
 "Who you are (built)" in DESIGN.md. The English words were read and approved
