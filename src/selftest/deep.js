@@ -520,27 +520,35 @@ import { isFighter } from '../render/arms.js';
 import { WORKER, SIGHT_IN_MS, SIGHT_GAP, SIGHT_RING, DEEP_SURFACE } from '../config.js';
 TESTS.push(['deep: the right button held veils the deep and rings its crew, as in the yard', async () => {
   const c = document.getElementById('c'), g = c.getContext('2d'), k = devicePixelRatio || 1;
-  const px = (wx, wy) => {
-    const [x, y] = onScreen(wx, wy);
-    return [...g.getImageData(Math.floor(x * k), Math.floor(y * k), 1, 1).data].slice(0, 3).join(',');
+  // The tones of every device pixel a world box touches, a pixel more on each
+  // side: zoomed out, a ring two pixels wide is under two on the glass and
+  // lands across pixels wherever the body's fraction of a pixel puts it, so
+  // no one pixel picked by arithmetic is sure to be on it.
+  const tones = ([x0, y0, x1, y1]) => {
+    const [ax, ay] = onScreen(x0, y0), [bx, by] = onScreen(x1, y1);
+    const l = Math.floor(ax * k) - 1, t = Math.floor(ay * k) - 1;
+    const d = g.getImageData(l, t, Math.ceil(bx * k) + 1 - l, Math.ceil(by * k) + 1 - t).data;
+    const o = []; for (let i = 0; i < d.length; i += 4) o.push(d[i]);
+    return o;
   };
-  // Zoomed out, a ring two pixels wide is under two on the glass and comes
-  // out part-toned, and the page's press shades it too: the ring is a pixel
-  // well over toward the body's ink from what is there with the sight let go.
-  const tone = p => +p.split(',')[0];
-  const toward = (held, free, ink) => Math.abs(tone(held) - tone(ink)) + 64 < Math.abs(tone(free) - tone(ink));
+  // The page's press shades the ring too: the ring is read where it went
+  // furthest over toward the body's ink from what is there with the sight let
+  // go -- the yard's ink is the darkest of the body's own pixels.
+  const toward = (held, free, ink) => Math.abs(held - ink) + 64 < Math.abs(free - ink);
   // The ring is read along one side of the body, chosen when the frame is
   // drawn: a body stands over its neighbor's ring where they rest together
   // (the crusher's gatherers do), so the side read is one no other body, nor
-  // the stack it carries over its head, reaches into.
+  // the stack it carries over its head, reaches into. Each point along it is
+  // the band across the ring's width there, where render/crew.js's `ring`
+  // stands it: off the body's corner rounded to a whole pixel.
   const ringSides = w => {
-    const g0 = SIGHT_GAP, r = SIGHT_RING, W = WORKER, mid = r / 2;
+    const g0 = SIGHT_GAP, r = SIGHT_RING, W = WORKER, X = Math.round(w.x), Y = Math.round(w.y);
     const along = a => { const o = []; for (let d = P; d < W - P; d += 2) o.push(a(d)); return o; };
     return [
-      { box: [w.x - g0 - r, w.y, r, W], pts: along(d => [w.x - g0 - mid, w.y + d]) },
-      { box: [w.x + W + g0, w.y, r, W], pts: along(d => [w.x + W + g0 + mid, w.y + d]) },
-      { box: [w.x, w.y + W + g0, W, r], pts: along(d => [w.x + d, w.y + W + g0 + mid]) },
-      { box: [w.x, w.y - g0 - r, W, r], pts: along(d => [w.x + d, w.y - g0 - mid]) }
+      { box: [X - g0 - r, Y, r, W], pts: along(d => [X - g0 - r, Y + d, X - g0, Y + d]) },
+      { box: [X + W + g0, Y, r, W], pts: along(d => [X + W + g0, Y + d, X + W + g0 + r, Y + d]) },
+      { box: [X, Y + W + g0, W, r], pts: along(d => [X + d, Y + W + g0, X + d, Y + W + g0 + r]) },
+      { box: [X, Y - g0 - r, W, r], pts: along(d => [X + d, Y - g0 - r, X + d, Y - g0]) }
     ];
   };
   const covered = (w, [x, y, bw, bh]) => S.workers.some(o => o !== w && !o.lifted &&
@@ -552,9 +560,9 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
     run(SIGHT_IN_MS / 1000 + 0.2);
     const read = () => {
       draw();
-      const ink = px(w.x + 1, w.y + WORKER / 2);
+      const ink = Math.min(...tones([w.x + 1, w.y + WORKER / 2, w.x + WORKER - 1, w.y + WORKER / 2]));
       const sides = ringSides(w), use = sides.find(o => !covered(w, o.box)) || sides[0];
-      const side = use.pts.map(([wx, wy]) => px(wx, wy));
+      const side = use.pts.map(tones);
       return { ink, side, all: g.getImageData(0, 0, c.width, c.height).data };
     };
     const on = read();
@@ -565,12 +573,18 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
     point('pointerup', x, y, 0, 2);
     let differ = 0, n = 0;
     for (let i = 0; i < on.all.length; i += 64, n++) if (on.all[i] !== off.all[i]) differ++;
+    // Each point's band, held against let go, at the pixel that moved most:
+    // in the yard toward the body's ink; in the deep, which is drawn
+    // inverted so its ink is the paper's tone, either way at all.
+    const moved = half === 'deep' ? (h, f) => Math.abs(h - f) : (h, f) => Math.abs(f - on.ink) - Math.abs(h - on.ink);
+    const most = on.side.map((band, i) => band.reduce((b, h, j) => {
+      const f = off.side[i][j];
+      return moved(h, f) > moved(b[0], b[1]) ? [h, f] : b;
+    }, [band[0], off.side[i][0]]));
     return [
       ok(held, `${half}: the right button down on a body holds the sight`, String(held)),
-      // The deep is drawn inverted, so its ink is the paper's tone: the ring
-      // is a pixel far from what is there with the sight let go.
-      ok(on.side.every((p, i) => (half === 'deep' ? Math.abs(tone(p) - tone(off.side[i])) > 64 : toward(p, off.side[i], on.ink))),
-         `${half}: and the body wears a ring`, `ink ${on.ink}; held ${on.side.join(' ')}; let go ${off.side.join(' ')}`),
+      ok(most.every(([h, f]) => (half === 'deep' ? Math.abs(h - f) > 64 : toward(h, f, on.ink))),
+         `${half}: and the body wears a ring`, `ink ${on.ink}; held/let go ${most.map(([h, f]) => `${h}/${f}`).join(' ')}`),
       ok(differ > n / 10, `${half}: and what is behind it is veiled`, `${differ} of ${n} samples`)
     ];
   };
