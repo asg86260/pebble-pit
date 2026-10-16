@@ -175,6 +175,13 @@ export function dressHead(g, x, y, l) {
   return true;
 }
 
+// How many cells over the head the chosen head item stands, for what is
+// carried over it.
+export function headRows(l) {
+  const it = itemOf('head', l.outfit.head);
+  return it && it.rows ? it.rows.length : it && it.rects ? 1 : 0;
+}
+
 // The head item on a body knocked flat (render/crew.js, `drawFloored`): laid
 // on its side at the body's left end, its top pointing away.
 export function dressFlat(g, left, top, l) {

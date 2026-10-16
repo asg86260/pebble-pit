@@ -30,7 +30,7 @@ import { TYPE } from '../jobs.js';
 import { shown } from '../tween.js';
 import { poseAt, topOf } from '../motion.js';
 import { writeCount } from './numfont.js';
-import { dressBehind, dressOn, dressHead, dressFlat, motionOf, YARD_INKS, DEEP_INKS } from './wardrobe.js';
+import { dressBehind, dressOn, dressHead, dressFlat, headRows, motionOf, YARD_INKS, DEEP_INKS } from './wardrobe.js';
 import { outfitOf, whoIs } from '../wardrobe.js';
 
 // The bench is not in the yard until there is something on it worth buying.
@@ -756,7 +756,9 @@ function drawWorker(w, t0) {
     // abreast, or in the cart four abreast. (A forklift's is `drawForklifts`.)
     const abreast = cart ? CART_ABREAST : 2;
     const left = cart ? cart.x : x + (WORKER - P * 2) / 2;
-    const top = cart ? cart.y : y;
+    // Over the head it rides on what they wear there, not through it: a
+    // load drawn over a bow is a bow nobody sees (render/wardrobe.js).
+    const top = cart ? cart.y : y - (head ? headRows(dress) * P : 0);
     const cap = cart ? CART_SHOWN : HAND_SHOWN;
     for (let i = 0; i < Math.min(w.carry, cap); i++) {
       drawMark(w.load?.[i] || 1,

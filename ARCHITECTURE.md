@@ -78,6 +78,8 @@ field or two on `S` and a constant or two in `config.js`.
 | `crash.js` | a throw: the stopped sheet, the save offered out of it, the feedback form under it (fetched at the click, so the file stays light), and the `S.fatal` flag that stops `persist` writing after one | rarely; imported first by `main.js` on purpose |
 | `met.js` | what the player has met, for the index: each entry's `met` fact read, `S.seen` kept, `meet(key)` for the things with no fact; no DOM | yes |
 | `indexpage.js` | the index's page on the held sheet: the list by group, the entry beside it or pushed over it on a phone; every word is `config/index.js`'s | yes |
+| `wardrobe.js` | the two of them: which bodies are the sqwife and the sqhusband (`S.pairIds`, `whoIs`, `pairBody`, `namePair`, and `keepPair`, which mends a name whose body is gone), the five slots' items as rows of data, the outfits and their defaults, and their saver; no DOM, no drawing. `render/wardrobe.js` draws an outfit on any context, in three passes round the body (`dressBehind`, `dressOn`, `dressHead`); `drawBody(x, y, look)` in render/crew.js takes one, and `lookFor(who, ...)` makes it (DESIGN.md, "What the two of them wear") | yes |
+| `wardrobepage.js` | the picker on the held sheet: the close-up and the crowd strip (`paintWardrobe`, a frame at a time while it is up), her and him, a row a slot, the roll; `wardrobePad` is the pad's left, right, LB, RB and Y on it; settings.js turns to it and offers it once at a new yard (`offerDress`) | yes |
 | `selftest.js` | the order the browser groups run in; the checks themselves are in `selftest/`, one file to a subject | grows with every feature |
 
 What was one `upgrades.js` is four files, split by who reads them.

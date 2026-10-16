@@ -1359,9 +1359,16 @@ HANDLES.__deepZoom = k => { holdDeepZoom(k); return S.zoom; };
 // sets an outfit for the setup a check is not about; the picker's own rows
 // are how a player does it (wardrobepage.js).
 import { pairBody, outfitOf, wear } from './wardrobe.js';
+import { freedBody } from './snatch.js';
 HANDLES.__pair = () => Object.fromEntries(['her', 'him'].map(k => {
   const w = pairBody(k);
   return [k, { uid: S.pairIds[k], body: w ? { type: w.type, x: w.x, y: w.y, station: w.station || null } : null,
                outfit: { ...outfitOf(k) } }];
 }));
 HANDLES.__dress = (who, outfit) => { wear(who, outfit); return { ...outfitOf(who) }; };
+// Where each of them is on the glass, in page pixels, wherever they are drawn
+// from (a body of the crew, the finale's pair): for a shot framed on them.
+HANDLES.__pairAt = () => Object.fromEntries(['her', 'him'].map((k, i) => {
+  const o = pairBody(k) || (S.finale && S.finale.pair[i]) || (k === 'him' && freedBody()) || null;
+  return [k, o ? { x: (o.x - S.camX) * S.zoom, y: (o.y - S.camY) * S.zoom, s: WORKER * S.zoom } : null];
+}));

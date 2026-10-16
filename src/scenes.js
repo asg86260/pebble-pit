@@ -45,7 +45,8 @@ import { ABYSS_AT, RIFTLIFE_SPEED, RIFTLIFE_COIL, DEEP_W } from './config.js';
 import { riftCenter, riftRadius } from './rift.js';
 import { hold } from './input.js';
 import { showPane, offerDress } from './settings.js';
-import { namePair, wear } from './wardrobe.js';
+import { namePair, wear, pairBody } from './wardrobe.js';
+import { freedBody } from './snatch.js';
 import { fillControls } from './controls.js';
 import { setFeedbackUrl } from './feedback.js';
 
@@ -852,10 +853,21 @@ const deepScenes = {
   // second station beside her.
   'pair-deep': { about: 'the deep', say: 'her at the first station, dressed, in the deep',
     run: () => {
-      deepYard({ stage: 1, wound: 0.33, party: [cast('sword', 2), cast('ranger', 2)] });
+      deepYard({ stage: 0, wound: 0.33, party: [cast('sword', 2), cast('ranger', 2)] });
       // the hooks' party seats whoever is spare; in play the snatch seats her
       namePair('her', S.workers.find(w => w.uid === S.stations[0].fighter));
       lookAtStation(0);
+    } },
+  // The kill's meeting on the deep's floor: him out of the belly and walked
+  // to her, both dressed in the deep's inks, cheering.
+  'pair-meet': { about: 'the deep', say: 'him out of the belly beside her on the deep floor, both dressed',
+    run: () => {
+      deepYard({ stage: SERPENT_PHASES - 1, party: [cast('sword', 8)] });
+      namePair('her', S.workers.find(w => w.uid === S.stations[0].fighter));
+      window.__serpent({ stage: SERPENT_PHASES });
+      for (let i = 0; i < 60 * 60 && !(freedBody() && freedBody().cheering); i++) window.__fast(1 / 60);
+      const him = freedBody();
+      if (him) lookDeep(him.x);
     } },
   // The same, in everything the wardrobe draws in its greys, for the deep's
   // palette check: the checked scarf, the freckles, a grey pattern.
@@ -1335,20 +1347,20 @@ export const SCENES = {
                  window.__next(); window.__fast(1.2); window.__look(st().rockLeftX - 300); } },
 
   // --- the crew ---------------------------------------------------------------
-  // The two of them among the rock's crew (wardrobe.js): six rockhands in
-  // helmets, two of them named the pair, so the chosen headwear is seen in
-  // place of the helmet in a crowd that all wears one; `window.__outfits` an
-  // outfit pair ({ her, him }) to try others.
-  pair: { about: 'the crew', say: 'the two of them dressed, among the rock\'s crew in helmets',
+  // The two of them in the yard's crowd (wardrobe.js): a dozen haulers and
+  // carters carrying between the rock and the hole, two of the haulers named
+  // the pair, so they are found by what they wear alone;
+  // `window.__outfits` an outfit pair ({ her, him }) to try others.
+  pair: { about: 'the crew', say: 'the two of them dressed, carrying among the haulers and the carters',
     run: () => {
-      window.__reset(); window.__crew(6, 3);
-      window.__kit({ breakers: 6 });
+      window.__reset(); window.__crew(3, 12);
+      window.__kit({ breakers: 3, carters: 3 });
       S.buried = false;
-      const hands = S.workers.filter(w => w.type === TYPE.ROCK);
-      namePair('him', hands[1]); namePair('her', hands[4]);
+      const haul = S.workers.filter(w => w.type === TYPE.HAUL && !w.trained);
+      namePair('him', haul[1]); namePair('her', haul[2]);
       if (window.__outfits) for (const k of ['her', 'him']) if (window.__outfits[k]) wear(k, window.__outfits[k]);
-      window.__fast(8);
-      window.__look(S.cx - S.viewW / 2);
+      window.__fast(12);
+      window.__look((pairBody('her').x + pairBody('him').x) / 2 - S.viewW / 2);
     } },
   crew: { about: 'the crew', say: 'the crew, hats and all',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);

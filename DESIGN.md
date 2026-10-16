@@ -19759,3 +19759,93 @@ locale files untouched.
 - **Not built**: deploying it. feedback/README.md has the steps; the
   release workflow passes the repository variable `FEEDBACK_URL` to every
   build, the Steam cuts included.
+
+
+## What the two of them wear (built 2026-10-16)
+
+The owner's two votes: docs/mocks/pair-identity-2026-10-16 ("choosing what
+they wear, yes; ignore the hats on the main squares and show the chosen
+headwear ... expand the clothes") and docs/mocks/pair-wardrobe-2026-10-16
+("the necklace and bandana look like underwear. other than that, it looks
+good. lets build it."). The bargain: every body in this game is the same
+square, and the two the story is about were strangers in their own crew --
+the snatch took whoever stood nearest the mouth. Now the game knows which
+two they are, and the player gives them something to be found by. It costs
+nothing and buys nothing; it is not a sink and never will be.
+
+**Who they are** (src/wardrobe.js, `S.pairIds`). Two uids, each written
+when that body first appears: him the body the opening hands the yard to
+(`begin`, `skipIntro` -- the one thrown clear, who is also the one the
+rescue's dig sends for her, `sendDigger(true)`), her the body she becomes as
+she joins the crew at her rescue (`stepRescue`). The opening's two squares
+and the rescue's walk-out carry `who` so they are dressed before either is a
+body. The names hold through everything that moves bodies about:
+
+- the crew's stand-down (`syncWorkers`) keeps the two of them first, takes
+  them on first as spare hands, and a pair body still left over takes a
+  stranger's place, who goes instead (never a fighter's, which a station
+  names);
+- the snatch takes these two and nobody else, walked out from wherever they
+  stand -- it waits (`snatchDue`, `pairReady`) until both can be walked: not
+  in a hand, a basket, the air, a loan to a build or down the cut;
+- the deep's first station binds her (`bindFighters`), and the finale's
+  `f.pair` is her body and him out of the belly;
+- a uid one of them held is never handed out again (`newUid`).
+
+`keepPair` mends a name whose body is gone, by the same rule the migration
+uses for a save from before names (SAVE_V 23,
+src/migrations/2026-10-16-the-pair.js): him the oldest body of the yard
+(lowest uid, the first made), her the first station's fighter once she is
+in the deep, else the oldest body that is not him. He is let go at the
+snatch (he is in the belly, drawn there as 'him'), she at the finale.
+
+**What they wear.** Five slots, every one led by nothing: head (13), face
+(11), neck (7: the mock's nine less the necklace and the bandana), back (8),
+pattern (9). The items are rows of data in src/wardrobe.js, copied from the
+mock; render/wardrobe.js draws them in three passes round the body's own
+square (behind it, on its middle, on its head), wherever either of them is
+drawn: the crew, the one lodged under the rock (only the head shows over the
+ground), the opening and the rescue, the snatch's walk and the jaws, the
+deep's swimmers and fighters (`dressAs`, under the class kit), the belly,
+the kill's walk-out, the finale in both halves -- under the liquid in its
+inverted inks, going into the house in the door's purples, sat at the bench
+-- and a balloon's basket. Rules taken from the mock's verdicts:
+
+- **The chosen headwear replaces the station hat** (verdict (a)): with a head
+  item chosen no station hat is drawn on them; with none, the hat is worn.
+  The job is said by where a body stands, so they lose nothing.
+- **Face, neck and pattern marks are two-pixel units** (WARD_UNIT) on the
+  fourteen-pixel middle, off the cell grid, laid on whole device pixels as
+  the rim is. The owner accepted it.
+- **The deep's inks.** Black and white as the yard's, turned over with the
+  deep; the two greys are rungs of the deep's capped ramp (WARD_DEEP_GREY,
+  WARD_DEEP_PALE). The deep palette check stands her dressed, in the greys
+  too (`pair-deep`, `pair-deep-greys`).
+- **A load rides over the head item**, not through it: a carried handful is
+  stacked from the top of the hat, so a bow is not hidden under dust.
+- **A cart is a carter's back**: no back item is drawn on a body hauling one.
+- Things that hang move on the walk (cape, scarf tails) or on their own
+  clock (tails, balloon, flag), held poses, read off where the body is drawn
+  frame to frame (`motionOf`).
+
+**The picker** (src/wardrobepage.js; the mock's Part 3, titled with the
+mock's words "the two of you"). A page of the held sheet, at its full width:
+the two of them close up (a press on either half picks who), a strip at the
+yard's scale with a crowd in station hats walking it, her and him, a row a
+slot (label, previous, the item, next), a roll for the one being dressed
+only (nothing twice as likely as any one item). Under a thumb each row is
+two lines and every target 44 pixels. A pad moves between its buttons as on
+any page; on a row left and right step the item, LB and RB are her and him,
+Y the roll, B back. It is a row on the settings page, always, and offered
+once at a new yard (`offerDress`: at boot, and when a slot is opened empty
+or the open one deleted) before the opening walks out, the yard held under
+it, its way off saying done and a skip that puts the defaults back. A save
+from before is a yard already played and is not offered it.
+
+**Defaults** are the mock's outfits 1 and 2: her a bow, eyes and a scarf;
+him a top hat, a monocle and a bowtie. Two different outlines, so the two
+are findable from the first frame without the picker ever being opened.
+
+**Not built**: act 3's souls (not built at all); the roster's and the boards'
+squares stay plain; items earned on story beats (the identity mock's flow 2)
+and a wardrobe they walk to (flow 3).

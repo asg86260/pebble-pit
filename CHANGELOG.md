@@ -172,6 +172,9 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+**New this release**
+- The sqwife and the sqhusband can be dressed -- a hat, a face, something at the neck, something on the back, a pattern -- on a settings page of their own, offered once at a new yard; what they wear on their heads replaces their station hat, so the two of them can be found in any crowd (test/pair.test.mjs; src/selftest/wardrobe.js).
+
 - On a gamepad the focus brackets travel from one thing to the next where you can follow them, up to the corner buttons, onto a board's rows and back, while the camera glides to center each one, both eased in and out (test/pad-glide.test.mjs; src/selftest/pad.js, "the marker travels across to the corner").
 - A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).
 

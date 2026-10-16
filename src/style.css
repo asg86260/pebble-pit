@@ -1294,7 +1294,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   .wardrobe .wardrow { grid-template-columns: 44px 1fr 44px; row-gap: 2px; }
   .wardrobe .wardlabel { grid-column: 1 / 4; font-size: var(--fs-small); }
   .held .wardrobe .wardarr { min-width: 44px; min-height: 44px; padding: 0; }
-  .held .wardrobe .pair button { min-height: 44px; }
+  .held .wardrobe .pair button, .held #wardrobeback { min-height: 44px; }
 }
 /* The paste, for a save coming back in: as wide as the sheet, one hand, and
    no resize handle, because a corner that stretched it would stretch

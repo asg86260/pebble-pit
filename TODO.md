@@ -4,6 +4,17 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## A stirrer stood 21px over the yard -- SEEN, NOT FIXED (2026-10-16)
+
+Found while building the wardrobe: with the meeting's digger sent as the
+sqhusband rather than the nearest body (`sendDigger(true)` in `startMeet`,
+intro.js), test/scenes-stand-d.test.mjs goes red on the `everything` scene
+after its reload: "a body is standing on nothing: wick (stirrer) at
+4077,1959 has its feet 21px over the yard (goal in ...) for 61 frames". The
+digger was changed back, so the suite is green, but the stirrer's footing is
+a real hole that a different crew history reaches. Repro: put
+`sendDigger(true)` back in `startMeet` and run that one file. Not diagnosed.
+
 ## Feedback form -- DEPLOYED, FIRST SHIPS WITH THE NEXT RELEASE (2026-10-13)
 
 "Feedback form (built)" in DESIGN.md. The worker is live at
