@@ -24,7 +24,7 @@ group('a fresh yard: the starting outfits and the plain items are open, the rest
        JSON.stringify(hat)),
     ok(bowl && bowl.kind === 'fact' && bowl.id === 'portal' && bowl.name && bowl.note, 'the diving bowl waits on the portal',
        JSON.stringify(bowl)),
-    ok(['head:crown', 'head:flower', 'head:sprout', 'head:gold-crown', 'neck:gold-scarf', 'back:gold-cape', 'aura:gold-halo',
+    ok(['head:serpent-comb', 'head:crown', 'head:flower', 'head:sprout', 'head:gold-crown', 'neck:gold-scarf', 'back:gold-cape', 'aura:gold-halo',
         'aura:flies', 'head:bird', 'face:surprised', 'back:moneybag'].every(k => locked().includes(k)),
        'the earned items are locked', locked().join(' '))
   ];
@@ -92,6 +92,21 @@ group('sqouse freed opens the gold set', async () => {
   return [
     ok(!was, 'locked before'),
     ok(gold.every(([s, k]) => isOpen(s, k)), 'all four open after')
+  ];
+});
+
+// The serpent's best level is set; the notice is the game's own, earned on
+// its tick, and the comb opens off it.
+group('the serpent comb opens at the serpent\'s level 25, not before', async () => {
+  S.serpentBest = 24;
+  run(1);
+  const at24 = isOpen('head', 'serpent-comb'), lk = itemLock('head', 'serpent-comb');
+  S.serpentBest = 25;
+  run(1);
+  return [
+    ok(!at24 && lk && lk.kind === 'ach' && lk.id === 'serpent3' && lk.name, 'locked at level 24, waiting on the notice for 25',
+       JSON.stringify(lk)),
+    ok(S.won.includes('serpent3') && isOpen('head', 'serpent-comb'), 'open at 25', S.won.join(' '))
   ];
 });
 

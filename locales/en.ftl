@@ -3279,6 +3279,7 @@ ward-shooting-star = shooting star
 ward-flock-overhead = flock overhead
 ward-speed-lines = speed lines
 ward-gold-halo = gold halo
+ward-serpent-comb = serpent comb
 
 # what a locked item waits on, where it is not a notice: a station's first
 # hat, a name and a line (the line as the mock had it), and the portal

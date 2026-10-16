@@ -26,7 +26,7 @@ import { draw, LAYERS } from '../render.js';
 import { countRect } from '../render/counter.js';
 import { DEEP_SEEN, seen, LIGHT, TONE } from '../render/deeptones.js';
 import { darkPage, inkOf } from '../ink.js';
-import { COIN_TONES, SHADES, P, CELL } from '../config.js';
+import { COIN_TONES, SHADES, P, CELL, GOLD } from '../config.js';
 
 // The comparison pages' scenes (docs/mocks/deep-palette-ingame-2026-10-14.html,
 // docs/mocks/deep-background-2026-10-14.html).
@@ -35,14 +35,18 @@ const SCENES = ['deep-all', 'deep-seven', 'deep-zones', 'deep-rest', 'deep-react
                 'deep-build', 'deep-kill-start', 'deep-freed', 'deep-endless', 'crusher', 'pods', 'finale-gear',
                 'fang-plate', 'fang-plate-none',
                 // her, dressed, at the first station (wardrobe.js), in its greys, and the two in auras
-                'pair-deep', 'pair-deep-greys', 'pair-deep-aura'];
+                'pair-deep', 'pair-deep-greys', 'pair-deep-aura',
+                // the gold set, the lamp's light on the black and the serpent's comb
+                'pair-deep-gold', 'pair-deep-lamp'];
 const MIN_PX = 12;   // a color counts once it covers this many pixels of the rows read
 
 const xor = h => '#' + (0xffffff ^ parseInt(h.slice(1), 16)).toString(16).padStart(6, '0');
 const hex = (d, k) => '#' + ((1 << 24) | (d[k] << 16) | (d[k + 1] << 8) | d[k + 2]).toString(16).slice(1);
 
 function offPalette(hide = null) {
-  const allowed = new Set([...DEEP_SEEN, ...Object.values(COIN_TONES).flat(), ...SHADES.map(xor)]
+  // and gold, the one hue for what is earned (config/palette.js, GOLD): let
+  // into the deep as the coins are, a color that is what it is
+  const allowed = new Set([...DEEP_SEEN, ...Object.values(COIN_TONES).flat(), ...SHADES.map(xor), GOLD.deep]
     .map(c => c.toLowerCase()));
   const off = LAYERS.filter(l => l.name === 'deep bed' || l === hide), was = off.map(l => l.when);
   off.forEach(l => { l.when = () => false; });

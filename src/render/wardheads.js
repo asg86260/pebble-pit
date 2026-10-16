@@ -5,8 +5,9 @@
 // Placed off the body's top-left (x, y), facing the way it faces, on the
 // look's clock; its numbers are WARD_HEADS.
 
-import { WORKER, WARD_UNIT as U, WARD_HEADS as H } from '../config.js';
+import { WORKER, WARD_UNIT as U, WARD_HEADS as H, ABYSS_MAGIC_TONES } from '../config.js';
 import { art, fill } from './wardrobe.js';
+import { seen } from './deeptones.js';
 import { rampOf } from './wardaura.js';
 
 const pose = (t, hz) => Math.floor((t || 0) * hz) % 2;
@@ -75,5 +76,22 @@ export const HEADS = {
     const L = c.life, u = t + hash(0, c.seed) * 0.37 * L, k = (u % L) / L;
     faint(g, cx + 2 + Math.round(Math.sin(k * c.wobble)) * U, cy - c.r - 2 - k * c.rise, U, U, grey(c.bubble),
           Math.min(1, k / c.in, (1 - k) / c.out));
+  },
+  // the serpent's comb, by its own rule (render/serpent.js, the crest):
+  // spike, a unit of nothing, spike, every other one a unit taller and the
+  // last shortening to one, along the top from the front and on down the back
+  'serpent-comb'(g, x, y, l) {
+    const c = H['serpent-comb'], n = c.top + c.down;
+    const tone = l.deep ? seen(ABYSS_MAGIC_TONES[c.rung]) : ABYSS_MAGIC_TONES[c.rung];
+    for (let i = 0; i < n; i++) {
+      const left = 1 - i / n, tall = Math.max(1, Math.round((i % 2 ? c.tall - 1 : c.tall) * Math.min(1, left * 1.6))) * U;
+      if (i < c.top) {
+        const col = 2 * i * U;
+        fill(g, l.dir > 0 ? x + WORKER - col - U : x + col, y - tall, U, tall, tone);
+      } else {
+        const row = 2 * (i - c.top + 1) * U;
+        fill(g, l.dir > 0 ? x - tall : x + WORKER, y + row, tall, U, tone);
+      }
+    }
   },
 };

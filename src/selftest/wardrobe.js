@@ -15,7 +15,7 @@ import { S } from '../state.js';
 import { P, WORKER, NAME_MAX } from '../config.js';
 import { draw } from '../render.js';
 import { darkPage } from '../ink.js';
-import { namePair, outfitOf, wear, DEFAULTS, HEAD, SLOTS, bareOf, nameOf, roleOf, setName, pairBody, ROLE_START } from '../wardrobe.js';
+import { namePair, outfitOf, wear, DEFAULTS, HEAD, SLOTS, bareOf, nameOf, roleOf, setName, pairBody, ROLE_START, isOpen } from '../wardrobe.js';
 import { CREW_NAMES } from '../crew/names.js';
 import { objective } from '../objectives.js';
 import { wearing } from '../kit.js';
@@ -53,9 +53,11 @@ async function closePicker() {
   await frames(2);
 }
 const shownText = slot => document.querySelector(`.wardrow[data-slot="${slot}"] .wardval`)?.textContent;
+// The item a step lands on: the next one open, past what is locked.
 const nextKey = (list, key, by = 1) => {
-  const i = list.findIndex(it => it.key === key);
-  return list[(i + by + list.length) % list.length].key;
+  let i = list.findIndex(it => it.key === key);
+  for (let k = 0; k < list.length; k++) { i = (i + by + list.length) % list.length; if (isOpen('head', list[i].key)) break; }
+  return list[i].key;
 };
 // The name typed into its field as a keyboard does: the value, and the
 // input event the field answers.

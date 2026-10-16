@@ -90,6 +90,12 @@ const indexYard = () => {
 };
 const pressI = () => dispatchEvent(new KeyboardEvent('keydown', { key: 'i', code: 'KeyI', bubbles: true }));
 // The house board's row to the two of you (crewboard.js), pressed.
+// The crowd of the `pair` scene, the two of them in what is handed in.
+function dressedPair(outfits) {
+  const was = window.__outfits;
+  window.__outfits = outfits;
+  try { SCENES.pair.run(); } finally { window.__outfits = was; }
+}
 function pairDoor() {
   window.__board('house');
   document.querySelector('#crewshop button[data-key="pairpage"]')?.click();
@@ -905,6 +911,20 @@ const deepScenes = {
       wear('you', { aura: a.you || 'rain-cloud' }); wear('sqouse', { aura: a.sqouse || 'embers' });
       window.__fast(1);
     } },
+  // The meeting in the gold set, and in the lamp, for the deep's palette
+  // check (gold is the one hue it lets in) and the light on the black.
+  'pair-deep-gold': { about: 'the deep', say: 'the two of them on the deep floor in the gold set',
+    run: () => {
+      SCENES['pair-meet'].run();
+      wear('you', { head: 'gold-crown', aura: 'gold-halo' }); wear('sqouse', { neck: 'gold-scarf', back: 'gold-cape' });
+      window.__fast(1);
+    } },
+  'pair-deep-lamp': { about: 'the deep', say: 'the two of them on the deep floor, you in the lamp, its light on the black, your sqouse in the comb',
+    run: () => {
+      SCENES['pair-meet'].run();
+      wear('you', { head: 'lamp' }); wear('sqouse', { head: 'serpent-comb' });
+      window.__fast(1);
+    } },
   // The same, in everything the wardrobe draws in its greys, for the deep's
   // palette check: the checked scarf, the freckles, over a filled pattern (its
   // greys the pale).
@@ -1408,6 +1428,18 @@ export const SCENES = {
                            sqouse: { ...(window.__outfits?.sqouse || {}), aura: a.sqouse || 'embers' } };
       try { SCENES.pair.run(); } finally { window.__outfits = was; }
     } },
+  // The same crowd in the expansion's pieces (wardrobe.js; the owner's vote
+  // on docs/mocks/wardrobe-expansion-2026-10-16): the gold set, two of the
+  // station hats, and the lamp's light ahead of you.
+  'pair-gold': { about: 'the crew', say: 'the two of them in the gold set among the haulers and the carters',
+    run: () => dressedPair({ you: { head: 'gold-crown', aura: 'gold-halo', face: 'eyes' },
+                             sqouse: { neck: 'gold-scarf', back: 'gold-cape' } }) },
+  'pair-hats': { about: 'the crew', say: 'the two of them in station hats, a wizard\'s point and a sun hat',
+    run: () => dressedPair({ you: { head: 'wizard-hat' }, sqouse: { head: 'sun-hat' } }) },
+  'pair-comb': { about: 'the crew', say: 'you in the serpent comb, your sqouse in the diving bowl',
+    run: () => dressedPair({ you: { head: 'serpent-comb' }, sqouse: { head: 'diving-bowl' } }) },
+  'pair-lamp': { about: 'the crew', say: 'you in the lamp, its light ahead of you, your sqouse in the helmet',
+    run: () => dressedPair({ you: { head: 'lamp' }, sqouse: { head: 'helmet' } }) },
   crew: { about: 'the crew', say: 'the crew, hats and all',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);
                  window.__kit({ breakers: 3, blasters: 2, growers: 2, carters: 2 });

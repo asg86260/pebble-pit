@@ -27,6 +27,7 @@ import { CREW_NAMES } from './crew/names.js';
 import { HATS } from './sprites.js';
 import { JOB } from './jobs.js';
 import { stockOf } from './kit.js';
+import { CATALOG } from './catalog.js';
 
 // --- the items ---------------------------------------------------------------------
 // Every item a row: `key` (what the save holds), `name` (its message), and
@@ -75,6 +76,9 @@ export const HEAD = [
   { key: 'bowler', name: 'ward-bowler', draw: true, lock: { ach: 'hatoff' } },
   { key: 'hard-hat', name: 'ward-hard-hat', draw: true, lock: { ach: 'allbuilt' } },
   { key: 'diving-bowl', name: 'ward-diving-bowl', draw: true, lock: { fact: 'portal', words: ['ward-lock-portal', 'ward-lock-portal-note'] } },
+  // the serpent's own comb, in its purple, for the serpent at level 25 (the
+  // owner, 2026-10-16): the last rung of its ladder (NOTICE_SERPENT)
+  { key: 'serpent-comb', name: 'ward-serpent-comb', draw: true, lock: { ach: 'serpent3' } },
   // the gold set
   { key: 'gold-crown', name: 'ward-gold-crown', rows: ['#.#.#', '#####'], tone: 'gold', lock: { ach: 'freed' } },
 ];
@@ -225,7 +229,10 @@ export function isOpen(slot, key) {
 export function itemLock(slot, key) {
   if (isOpen(slot, key)) return null;
   const r = ruleOf(slot, key);
-  if (r.ach) return { kind: 'ach', id: r.ach, name: msg(`ach-${r.ach}-name`), note: msg(`ach-${r.ach}-note`) };
+  if (r.ach) {
+    const n = CATALOG.find(c => c.key === r.ach);
+    return { kind: 'ach', id: r.ach, name: n ? n.name : r.ach, note: n ? n.note : '' };
+  }
   const [name, note] = r.words.map(id => msg(id));
   return r.hatOf ? { kind: 'hat', id: r.hatOf, name, note } : { kind: 'fact', id: r.fact, name, note };
 }

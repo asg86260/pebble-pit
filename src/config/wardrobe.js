@@ -144,6 +144,11 @@ export const WARD_HEADS = {
   // a ring a radius round the middle, see-through, two glints, one bubble
   'diving-bowl': { h: 8, r: 14, edge: 1.1, ink: 0.9, rung: 5, glint: 2, life: 1.7, seed: 13, wobble: 8, rise: 12,
                    in: 0.15, out: 0.4, bubble: 6 },
+  // the serpent's crest made small (render/serpent.js): a spike every other
+  // unit along the top from the front and down the back, every other spike
+  // a unit taller, `tall` units at the most, shortening to its end; in the
+  // crest's own purple, a rung of the abyss's magic ramp (ABYSS_MAGIC_TONES)
+  'serpent-comb': { h: 6, tall: 3, top: 5, down: 2, rung: 9 },
 };
 
 // --- the lamp's light (render/lamplight.js; the owner, 2026-10-16: "lamp
@@ -153,4 +158,4 @@ export const WARD_HEADS = {
 // a pixel out, leaning `tilt` down a pixel out; in the yard a rung of its
 // grey ramp, in the deep a rung of the deep's. It fades in and out over
 // `fade` seconds as the lamp goes on and comes off.
-export const LAMP_CONE = { reach: 36, from: 2, spread: 0.28, tilt: 0.12, rung: 1, deepRung: 2, fade: 0.6 };
+export const LAMP_CONE = { reach: 36, from: 2, spread: 0.28, tilt: 0.12, rung: 2, deepRung: 2, fade: 0.6 };

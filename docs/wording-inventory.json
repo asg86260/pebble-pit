@@ -7511,6 +7511,13 @@
   "text": "gold halo"
  },
  {
+  "id": "ward-serpent-comb",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "serpent comb"
+ },
+ {
   "id": "ward-lock-rockhands",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
