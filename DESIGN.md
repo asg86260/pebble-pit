@@ -19849,3 +19849,79 @@ are findable from the first frame without the picker ever being opened.
 **Not built**: act 3's souls (not built at all); the roster's and the boards'
 squares stay plain; items earned on story beats (the identity mock's flow 2)
 and a wardrobe they walk to (flow 3).
+
+## Who you are (built 2026-10-16)
+
+The owner's vote on docs/mocks/who-you-are-2026-10-16, and the calls made
+after it the same day: the player builds their own square -- a name, a role
+and an outfit -- confirms it, then builds their sqouse the same way, before
+the opening walks out. The bargain is the wardrobe's, carried one step on:
+the two the story is about become the player's own two, named, and the
+story says their names. It costs nothing and buys nothing.
+
+**Who is who.** The survivor who digs is *you*; the one under the rock is
+*your sqouse*. The serpent swallows you; your sqouse leaps in after you and
+is the deep's first fighter; the finale brings the two of you home. That is
+the story as it already ran (the snatch took the survivor), so nothing about
+who is drawn where changes. The code keys are the parts they play, `you`
+and `sqouse` (`S.pairIds`, `S.outfits`, the look keys), never her and him;
+migration v24 moves an old save's `him` to `you` and `her` to `sqouse`, and
+each keeps its outfit (the top hat stays the survivor's).
+
+**Roles.** Exactly three words: sqwife, sqouse, sqhusband (`ROLES` in
+wardrobe.js, keys `wife`, `ouse`, `husband`). They start as today's story,
+you the sqhusband and your sqouse the sqwife, so a yard that never opens
+the page reads word for word as it did.
+
+**Names.** Up to `NAME_MAX` (12) characters: letters with their marks and
+digits of any script, space, `-` and `'`; runs of space made one; trimmed
+(`cleanName`). Nothing else survives, so a name is never markup and never a
+line break when it goes into a line as a Fluent variable. Empty is no name:
+the line reads its role word. A name is DOM text wherever it shows, never the
+pixel number font. The die on the name row draws off the crew's own names
+(crew/names.js), one that fits and is not the other square's.
+
+**The lines.** Every story line that names either of them is a `-who`
+message in en.ftl beside its older line, selecting on `$so` (the role key)
+and `$named` (yes or no), with `$name` the name: the story card (obj-rock,
+obj-rescue, obj-free), the goal ribbon (goal-title), the bench's barrier
+note, the books' two tallies, the index's entry (its name, and "her / his /
+their life" by role), the rock's index text, and the three sheets (rescue,
+demo end, the end). `$named` rather than an empty `$name`, because Fluent
+cannot select on an empty string and a square called "none" must not read
+as nameless. Each is read when shown (`storyLine`), so a name set on the
+steps reads at once on a card already up. The lines about your sqouse are
+act 1's and the rescue's; obj-free and freed-why name you, the one in the
+belly. The achievement for the rescue is neutral, "you saved your sqouse",
+and follows neither the role nor the name: Steam's achievement names are
+written once for every player. play.html's three sheet lines say the
+neutral line in the page's own fallback.
+
+**Other languages.** English only for now (the owner, 2026-10-16: "lets not
+worry about other languages"). A translation keeps its older line until it
+writes the `-who` one (lang.js, `msgOr`), so German still says "deine frau"
+whatever role was chosen, rather than turning English mid-story.
+
+**The steps.** A new yard holds on the page's four steps: build who you are
+(name, role, the five slots, a die on every row, randomize all), confirm
+your square, build your sqouse (the same rows), and the two of you side by
+side; done lets the opening go. Skip on the first step leaves both unnamed
+in today's roles and outfits. The steps are offered once, marked only when
+done or skipped, so a reload in the middle offers them again. From then on
+(or from the opening, for a yard that never saw them) the name and the role
+are held: the settings page "the two of you" shows them dimmed, with "set at
+the start of a yard", and the outfits stay the player's to change
+(`selvesLocked`).
+
+**A pad.** The page's buttons as on every page; left and right on the role
+or a slot step it; Y rolls the row the focus is on (the whole square off
+any row); LB and RB the tabs on the settings page; through the steps B is
+the step back and menu the step on, never the sheet's let-go. For the name:
+on the Steam build, Steam's own keyboard behind a button on the name row
+(`desk.askText`, steamworks.js's `showGamepadTextInput`); anywhere else, or
+when Steam cannot show one (outside Big Picture and the Deck), a grid of the
+source language's letters under the name: A types, X takes a letter back.
+
+**Not built.** A finale line naming the two of you: the finale has no words
+of its own, and the end sheet's line is where the names show. Translations
+of the `-who` lines.

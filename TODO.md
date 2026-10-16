@@ -4,6 +4,23 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## Who you are: owner wording, Steam names, translations -- WAITING ON THE OWNER (2026-10-16)
+
+"Who you are (built)" in DESIGN.md. Built in English with plain labels the
+owner has not read yet: `ward-you`, `ward-sqouse`, `ward-name`, `ward-role`,
+`ward-locked` ("set at the start of a yard"), `ward-randomize-all`,
+`ward-next`, `ward-step`, `ward-key-space`, `ward-key-del`, and the thirteen
+`-who` story lines (each the old line with the name or role word in place).
+Open:
+- **The owner's read of those words** on the wording board.
+- **Steamworks:** ACH_GOTOUT's display name to "you saved your sqouse", by
+  hand on the dashboard (the game's own notice already says it).
+- **Translations** of the `-who` lines and the role word: deferred by the
+  owner ("lets not worry about other languages"). Until a language writes
+  them it keeps its older line (lang.js, `msgOr`), so de/fr/es/pt-BR/ru/ja/
+  ko/zh-CN still say wife or husband whatever role was chosen and never say
+  a name; the new `ward-*` labels show in English there.
+
 ## A stirrer stood 21px over the yard -- SEEN, NOT FIXED (2026-10-16)
 
 Found while building the wardrobe: with the meeting's digger sent as the
