@@ -20,8 +20,16 @@ import { storeSettled } from '../save.js';
 const WORKER = 'http://feedback.test';
 const WORDS = 'the crew all stand still by the quarry';
 
-const until = async (fn, tries = 60) => {
-  for (let i = 0; i < tries; i++) { if (fn()) return true; await sleep(50); }
+// Everything waited on here is the browser's own work, not the yard's -- the
+// save gzipped for the tick, a frame loading, a fade, the scripted worker's
+// answer -- so there is no game clock to turn, and the bound is wall time.
+// It is a ceiling for a wait that never ends, not a guess at how fast the
+// machine is: three seconds was a guess, and a machine running the other
+// shards beside this one gzipped the save after the walk had pressed a grey
+// tick and sent without it.
+const until = async (fn, ms = 20000) => {
+  const t0 = performance.now();
+  while (performance.now() - t0 < ms) { if (fn()) return true; await sleep(50); }
   return !!fn();
 };
 
@@ -58,13 +66,19 @@ function press(d, el) {
   top.click();
   return true;
 }
-// The held sheet up, escape's way, on its front with settings there to press:
-// escape is a toggle, and a page that has just booted may be holding already.
+// The held sheet up, escape's way, on its front with settings there to press.
+// Escape is a toggle on whether the yard is held, not on whether the sheet
+// shows: the group before may have let go a moment ago, its sheet still
+// fading out and not yet hidden, or left it held on another page. So a held
+// yard is let go first, and then held afresh, which turns the sheet to its
+// front; an open window answers escape before the yard does, so it is
+// pressed until the yard is held.
 async function holdSheet() {
   const held = document.getElementById('held');
-  if (held.hidden) dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+  const esc = () => dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+  if (S.paused) esc();
+  for (let i = 0; i < 3 && !S.paused; i++) esc();
   await until(() => !held.hidden && held.classList.contains('on'));
-  document.getElementById('settingsback')?.click();
   missed = '';
   return until(() => document.getElementById('settingsbtn').getClientRects().length > 0);
 }
@@ -193,7 +207,7 @@ async function framed(src, { width = 960, height = 600 } = {}) {
   // server stamps it, and the bare path would be a second instance.
   const loadedAs = name => w.performance.getEntriesByType('resource')
     .map(e => e.name).filter(u => new URL(u).pathname === `/src/${name}.js`).pop() || `/src/${name}.js`;
-  await until(() => w.performance.getEntriesByType('resource').some(e => new URL(e.name).pathname === '/src/feedback.js'), 80);
+  await until(() => w.performance.getEntriesByType('resource').some(e => new URL(e.name).pathname === '/src/feedback.js'));
   const mod = await w.eval(`import(${JSON.stringify(loadedAs('feedback'))})`);
   const stub = worker();
   mod.setFeedbackUrl(WORKER);

@@ -227,12 +227,32 @@ export const TESTS = [
     await haveBench();
     await settled();                  // a sheet the last check put away is all the way down
     phone(true);
-    // the way in, a frame at a time: the y of the computed transform for the
-    // first twenty frames after each is opened
+    // The way in, read off the slide itself: the stylesheet's transition,
+    // caught paused in the microtask after the write that starts it and
+    // stepped through its own timeline, twenty steps from start to end. Read
+    // a frame at a time off the page's clock instead, a slow frame skips half
+    // the slide and the two sheets are compared on whichever frames each got.
     const yOf = el => { const m = getComputedStyle(el).transform.match(/matrix\(([^)]*)\)/); return m ? Math.round(+m[1].split(',')[5]) : 0; };
-    const enterOf = async el => { const ys = []; for (let i = 0; i < 20; i++) { ys.push(yOf(el)); await raf(); } return ys; };
-    window.__board('bench');
-    const boardIn = await enterOf(panel());
+    const enterOf = async (el, open) => {
+      let slide = null;
+      const grab = () => {
+        if (slide) return;
+        slide = el.getAnimations().find(a => a.transitionProperty === 'transform') || null;
+        slide?.pause();
+      };
+      const watch = new MutationObserver(grab);
+      watch.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+      await open();
+      grab();
+      for (let i = 0; i < 30 && !slide; i++) await raf();   // the board's `open` comes a frame later
+      watch.disconnect();
+      if (!slide) return [];
+      const end = slide.effect.getComputedTiming().endTime, ys = [];
+      for (let i = 0; i <= 20; i++) { slide.currentTime = end * i / 20; ys.push(yOf(el)); }
+      slide.finish();
+      return ys;
+    };
+    const boardIn = await enterOf(panel(), () => window.__board('bench'));
     await settled();
     // the bench, dragged tall then back, and the transforms it lands on
     const tf = () => panel().style.transform;
@@ -245,18 +265,14 @@ export const TESTS = [
     await settled();
     // the settings sheet, the very same gestures on its own handle
     const held = document.getElementById('held'), hh = document.getElementById('heldhandle');
-    tap(document.getElementById('pause'));
-    await sleep(40);
-    const heldIn = await enterOf(held);
+    const heldIn = await enterOf(held, () => tap(document.getElementById('pause')));
     await sleep(SHEET_MS + 60);
     const seatHeld = held.style.transform;
-    // the same way in: from below the foot, up to the seat, frame for frame
-    // (aligned on the first frame each moves: the board's `open` comes a
-    // frame or two after the settings' `on`)
-    const from = ys => { const i = ys.findIndex((y, k) => k > 0 && y !== ys[0]); return i < 0 ? ys : ys.slice(i - 1); };
-    const bi = from(boardIn), hi = from(heldIn), n = Math.min(bi.length, hi.length);
-    const slid = boardIn[0] > boardIn[boardIn.length - 1] && heldIn[0] > heldIn[heldIn.length - 1];
-    const same = n >= 8 && bi.slice(0, n).every((y, i) => Math.abs(y - hi[i]) <= 8);
+    // the same way in: from below the foot -- the whole box off it -- up to
+    // the seat, step for step
+    const foot = Math.round(state().H * SHEET_TALL);
+    const slid = boardIn.length === 21 && boardIn[0] === foot && boardIn[0] > boardIn[20];
+    const same = slid && heldIn.length === 21 && boardIn.every((y, i) => Math.abs(y - heldIn[i]) <= 1);
     await dragHandle(-160, hh);
     const tallHeld = held.style.transform;
     await slow(pastSeat(), hh);
@@ -271,8 +287,8 @@ export const TESTS = [
       ok(tallBoard === tallHeld && tallBoard !== seatBoard, 'dragged up, both reach the same tall stop', `${tallBoard} vs ${tallHeld}`),
       ok(backBoard === backHeld && backBoard === seatBoard, 'and dragged slowly down past the seat, both come back to it', `${backBoard} vs ${backHeld}`),
       ok(gone, 'and from the seat the same flick puts the settings away'),
-      ok(slid && same, 'and both come in the same way, from below the foot up to the seat, frame for frame',
-         `board ${boardIn.join(' ')} | settings ${heldIn.join(' ')}`),
+      ok(slid && same, 'and both come in the same way, from below the foot up to the seat, step for step',
+         `board ${boardIn.join(' ')} | settings ${heldIn.join(' ')} (foot ${Math.round(state().H * SHEET_TALL)})`),
     ];
   }],
 
