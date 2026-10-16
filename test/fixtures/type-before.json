@@ -163,6 +163,24 @@
  },
  {
   "file": "src/style.css",
+  "sel": ".controls",
+  "prop": "letter-spacing",
+  "value": "0"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".controls .group",
+  "prop": "letter-spacing",
+  "value": ".14em"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".controls .key",
+  "prop": "font",
+  "value": "bold var(--fs-body) ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
   "sel": ".index",
   "prop": "letter-spacing",
   "value": "0"
