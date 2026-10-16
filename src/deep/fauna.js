@@ -204,11 +204,17 @@ function nextKind(s, k, next) {
   }
   return { kind: s[k].kind, next };
 }
+// How far a kind's drawing reaches either side of its x, facing `dir`, and
+// the gap kept between it and the glass as it comes in: a school's fish
+// drift about their places, so theirs is that drift wider.
+export const spanOf = (kind, dir) => boxOf({ kind, spread: ROW[kind].spread }, { x: 0, y: 0, dir });
+const offOf = kind => FAUNA_REFILL.off + (kind === 'school' ? Math.ceil(FAUNA_MOTION.school.driftAmp) : 0);
 // Every slot a step on. One gone out past an end starts its next lap as the
 // next kind, somewhere new in the height (out past the end, where nobody sees
 // it change). A slot whose swimmer the serpent has taken (`gone`) stands
 // still and unseen until the meal lets its next kind in (`holdSlot`), which
-// fades in somewhere in the water (FAUNA_REFILL), its step kept as `inAt`.
+// swims in from just off one side of the glass (FAUNA_REFILL), its step kept
+// as `inAt`.
 function turnsStep(w, n) {
   let next = w.next;
   const s = w.s.map((a, k) => (a.gone ? a : slotStep(SLOTS[k], a, n)));
@@ -224,11 +230,12 @@ function turnsStep(w, n) {
     const k = e.slot;
     if (e.eat) { s[k] = { ...s[k], gone: true }; continue; }
     if (!s[k].gone) continue;
-    // the next kind, faded in anywhere along the water and up it, either way
-    const got = nextKind(s, k, next), dir = noise(SLOTS[k].i + 50, n) < 0.5 ? 1 : -1, K = FAUNA_WANDER, R = FAUNA_REFILL;
+    // the next kind, just off the side of the glass the meal named, its
+    // whole drawing out of sight, heading in at its own pace
+    const got = nextKind(s, k, next), dir = e.dir, K = FAUNA_WANDER;
     next = got.next;
-    const y = anyRow(got.kind, noise(SLOTS[k].i + 90, n));
-    const x = R.inset + noise(SLOTS[k].i + 70, n) * (COLS - 2 * R.inset);
+    const y = anyRow(got.kind, noise(SLOTS[k].i + 90, n)), span = spanOf(got.kind, dir), off = offOf(got.kind);
+    const x = dir > 0 ? e.l - span.r - off : e.r - span.l + off;
     s[k] = { x, y, th: dir > 0 ? K.start : Math.PI - K.start, om: 0, face: dir,
              lap: s[k].lap + 1, kind: got.kind, goal: goalOf(got.kind, y), inAt: n + 1 };
   }
@@ -247,12 +254,14 @@ const EATS = new Map();
 // A new page, as far as the walk goes: nothing walked yet (for the checks).
 export const forgetWalk = () => { WALK = null; EATS.clear(); };
 // The meal takes slot `slot`'s swimmer at `t` seconds (`eat`), or lets the
-// slot's next kind in: from the next step on. Anything walked past that step
-// is walked again from the kept moment before it.
-export function holdSlot(slot, t, eat) {
+// slot's next kind in: from the next step on, from just off the `side` (-1
+// left, 1 right) of the glass `at` ({ l, r }, the deep's cells it spans).
+// Anything walked past that step is walked again from the kept moment before it.
+export function holdSlot(slot, t, eat, at = null, side = 1) {
   const m = Math.floor(Math.max(0, t) / FAUNA_WANDER.step) + 1;
   if (!EATS.has(m)) EATS.set(m, []);
-  EATS.get(m).push({ slot, eat });
+  const g = at || { l: 0, r: COLS };
+  EATS.get(m).push(eat ? { slot, eat } : { slot, eat, l: g.l, r: g.r, dir: side > 0 ? -1 : 1 });
   const w = WALK;
   if (!w || w.n < m) return;
   const per = Math.round(FAUNA_WANDER.keep / FAUNA_WANDER.step);
@@ -286,8 +295,9 @@ function turnsState(n) {
   }
   return w.s;
 }
-// How far a slot's swimmer let in after a meal has faded in at `t`, 0..1.
-const fadeOf = (a, t) => (a.inAt == null ? 1 : Math.max(0, Math.min(1, (t - a.inAt * FAUNA_WANDER.step) / FAUNA_REFILL.fade)));
+// How long ago a slot's swimmer was let in after a meal, in seconds, or
+// Infinity for one that came in on its lap.
+const sinceIn = (a, t) => (a.inAt == null ? Infinity : t - a.inAt * FAUNA_WANDER.step);
 // Where a slot's swimmer is at `t` seconds, between its two steps either
 // side, so it glides rather than ticks; across the wrap, out past the ends,
 // it takes the later, its new lap and kind with it.
@@ -295,9 +305,9 @@ export function wanderAt(c, t) {
   const f = Math.max(0, t) / FAUNA_WANDER.step, n = Math.floor(f), w = turnsState(n), k = f - n;
   const a = w.s[c.slot], b = turnsStep(w, n).s[c.slot];
   if (b.lap !== a.lap || Math.abs(b.x - a.x) > COLS / 2)
-    return { x: b.x, y: seenRow(b.y, b.kind), dir: b.face, lap: b.lap, kind: b.kind, gone: !!b.gone, fade: fadeOf(b, t) };
+    return { x: b.x, y: seenRow(b.y, b.kind), dir: b.face, lap: b.lap, kind: b.kind, gone: !!b.gone, since: sinceIn(b, t) };
   return { x: a.x + (b.x - a.x) * k, y: seenRow(a.y + (b.y - a.y) * k, a.kind), dir: a.face, lap: a.lap, kind: a.kind,
-           gone: !!(a.gone || b.gone), fade: fadeOf(a, t) };
+           gone: !!(a.gone || b.gone), since: sinceIn(a, t) };
 }
 
 // The creature a slot holds at `t`: one of its own for every lap, so a new
@@ -333,9 +343,9 @@ export function visitAt(c, t) {
 // Whether a creature is in the serpent's keeping (deep/meals.js): not drawn,
 // not clicked; the meal draws it in its orb.
 export const eatenNow = (c, t) => !!c.wander && wanderAt(c.home, t).gone;
-// How much of a creature shows at `t`, 0..1: one let into an eaten slot
-// fades in (FAUNA_REFILL); every other is whole.
-export const faunaFade = (c, t) => (c.wander ? wanderAt(c.home, t).fade : 1);
+// Whether a creature is a newcomer let into an eaten slot within the last
+// FAUNA_REFILL.grace seconds: the meal passes it over for any other.
+export const newcomer = (c, t) => !!c.wander && wanderAt(c.home, t).since < FAUNA_REFILL.grace;
 // Every creature out at `t`, a slot's by its visit.
 export const faunaOut = (t = now() / 1000) => POPULATION.map(c => visitAt(c, t));
 // The first second from `from` on, in steps of `every`, that a slot holds

@@ -88,6 +88,15 @@ export function deepCamera() {
   return { zoom, viewW, viewH, camX, camY: deepFloor() + DEEP_FLOOR_MARGIN - viewH };
 }
 
+// The deep's columns the glass spans, in world pixels: the camera's own view
+// while the deep is on screen, else the view it rests at on the way down
+// (the meal's newcomers swim in from just off it, deep/meals.js).
+export function deepGlass() {
+  if (S.view === 'deep' && !gliding()) return { x0: S.camX, x1: S.camX + S.viewW };
+  const c = deepCamera();
+  return { x0: c.camX, x1: c.camX + c.viewW };
+}
+
 // The top edge of the deep's own frame, in world pixels: where a tall window
 // shows water over the deep's ceiling. Off the fit alone, so a kill's pull or
 // a scene's shot does not move what is measured against it (deep/fauna.js).
