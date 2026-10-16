@@ -5,7 +5,7 @@
 // a press on either picks who is being chosen -- and under them the yard's
 // own scale with a crowd walking it, so a choice is made for being found in
 // the yard and not only for the close-up. Then a row each: the name, the
-// role, and the five slots, each slot and the role with its previous and
+// role, and the six slots, each slot and the role with its previous and
 // next, and every row with a die that rolls it alone; a roll for the whole
 // square but its name, and a clear that takes every slot back to bare.
 //
@@ -449,6 +449,8 @@ function pace(p, t, w) {
   return { x: a, dir: -1, moving: false };
 }
 const hatOn = kit => kit && ((g, x, y) => drawSprite(g, HATS[kit], x + (WORKER - spriteW(HATS[kit]) * P) / 2, y - spriteH(HATS[kit]) * P));
+// the close-up's two, a key apiece for an aura to remember their walk by
+const CLOSE = [{}, {}];
 const plainLook = { outfit: { head: 'none', face: 'none', neck: 'none', back: 'none', pattern: 'plain' }, inks: YARD_INKS };
 
 // Once a frame while the page is up: the close-up and the strip, walking on
@@ -475,7 +477,8 @@ export function paintWardrobe(t = performance.now()) {
     WHO.forEach((k, i) => {
       if (alone && k !== 'you') return;
       const x = Math.round(w * (alone ? 0.5 : i ? 0.66 : 0.34) - WORKER / 2);
-      drawDressed(g, x, ground - WORKER, { outfit: outfitOf(k), dir: alone || !i ? 1 : -1, moving, t: s, inks: YARD_INKS });
+      drawDressed(g, x, ground - WORKER, { outfit: outfitOf(k), dir: alone || !i ? 1 : -1, moving, t: s, inks: YARD_INKS,
+                                           key: CLOSE[i], seed: i });
       // the one being chosen: a bar under its feet
       if (barred && k === who) { g.fillStyle = YARD_INKS.ink; g.fillRect(x - 2, ground + 3, WORKER + 4, 2); }
     });
@@ -489,7 +492,7 @@ export function paintWardrobe(t = performance.now()) {
     g.fillRect(0, ground, w, 1);
     for (const p of built.crowd) {
       const at = pace(p, s, w - WORKER), x = Math.round(at.x);
-      const look = p.who ? { outfit: outfitOf(p.who), dir: at.dir, moving: at.moving, t: s, inks: YARD_INKS }
+      const look = p.who ? { outfit: outfitOf(p.who), dir: at.dir, moving: at.moving, t: s, inks: YARD_INKS, key: p, seed: WHO.indexOf(p.who) }
                          : { ...plainLook, dir: at.dir };
       drawDressed(g, x, ground - WORKER, look, hatOn(p.kit));
     }

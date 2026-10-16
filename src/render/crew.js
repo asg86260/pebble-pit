@@ -31,7 +31,8 @@ import { shown } from '../tween.js';
 import { poseAt, topOf } from '../motion.js';
 import { writeCount } from './numfont.js';
 import { dressBehind, dressOn, dressHead, dressFlat, headRows, motionOf, YARD_INKS, DEEP_INKS } from './wardrobe.js';
-import { outfitOf, whoIs } from '../wardrobe.js';
+import { dressAura } from './wardaura.js';
+import { outfitOf, whoIs, WHO } from '../wardrobe.js';
 
 // The bench is not in the yard until there is something on it worth buying.
 // It is built rather than delivered (raise.js), so while it is going up it is
@@ -59,7 +60,7 @@ export function drawBench() {
 // (render/wardrobe.js), handed in as `look` (`lookFor`). True when what they
 // wear on their head was drawn, which is then worn in place of a station hat.
 export function drawBody(x, y, look = null) {
-  if (look) dressBehind(ctx, x, y, look);
+  if (look) { dressAura(ctx, x, y, look, 'back'); dressBehind(ctx, x, y, look); }
   // Filled, not see-through: an outlined square on a black rock shows the rock
   // through its middle and reads as a hole in whatever is behind it. The page
   // is white, so a body is white.
@@ -67,6 +68,7 @@ export function drawBody(x, y, look = null) {
   if (!look) return false;
   dressOn(ctx, x, y, look);
   const head = dressHead(ctx, x, y, look);
+  dressAura(ctx, x, y, look, 'front');
   ctx.fillStyle = '#000';
   return head;
 }
@@ -74,11 +76,13 @@ export function drawBody(x, y, look = null) {
 // The same square squashed to two rows, its feet on the ground of a body
 // stood at (x, y): the crouch before a hop and the landing after it.
 export function drawSquat(x, y, look = null) {
-  if (look) dressBehind(ctx, x, y + P, look, WORKER - P);
+  // the aura stays round the body as it stands: a crouch is its feet where they were
+  if (look) { dressAura(ctx, x, y, look, 'back'); dressBehind(ctx, x, y + P, look, WORKER - P); }
   square(x, y + P, WORKER, WORKER - P);
   if (!look) return false;
   dressOn(ctx, x, y + P, look, WORKER, WORKER - P);
   const head = dressHead(ctx, x, y + P, look);
+  dressAura(ctx, x, y, look, 'front');
   ctx.fillStyle = '#000';
   return head;
 }
@@ -87,11 +91,14 @@ export function drawSquat(x, y, look = null) {
 // (or for nobody: `who` null). `key` is the object the body is drawn from,
 // which its walk is read off (`motionOf`); `face` its own facing where it
 // keeps one; `deep` for a body drawn in the deep's inks; `back` false where
-// something else hangs off its back (a carter's cart).
-export function lookFor(who, key, x, { face = null, deep = false, back = true } = {}) {
+// something else hangs off its back (a carter's cart); `aura` false where
+// the body is somewhere its aura cannot be (under the rock). The key is the
+// aura's too, which remembers the walk off it (render/wardaura.js).
+export function lookFor(who, key, x, { face = null, deep = false, back = true, aura = true } = {}) {
   if (!who) return null;
   const t = now() / 1000, m = motionOf(key, x, t, face);
-  return { outfit: outfitOf(who), dir: m.dir, moving: m.moving, t, inks: deep ? DEEP_INKS : YARD_INKS, back };
+  return { outfit: outfitOf(who), dir: m.dir, moving: m.moving, t, inks: deep ? DEEP_INKS : YARD_INKS, back,
+           deep, aura, key, seed: WHO.indexOf(who) };
 }
 
 // A body's square: a black rim BODY_RIM world pixels thick round a white
@@ -515,7 +522,7 @@ function drawLodged(x, y, out) {
   ctx.clip();
   // her, under every rock: only what she wears on her head shows over the
   // ground while she is lodged deep
-  drawBody(x, y + depth, lookFor('sqouse', S.boulder, x));
+  drawBody(x, y + depth, lookFor('sqouse', S.boulder, x, { aura: false }));
   ctx.restore();
   drawDirt(x, y + WORKER, sunk);
   return depth;

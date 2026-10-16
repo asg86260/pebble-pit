@@ -51,3 +51,56 @@ export const NAME_MAX = 12;
 // The pad's key grid under the name row: columns are half keys, so a key is
 // two and the home rows can sit offset like a keyboard's.
 export const NAME_GRID_COLS = 20;
+
+// --- the aura (render/wardaura.js; the owner's vote on
+// docs/mocks/wardrobe-aura-2026-10-16) ---------------------------------------------
+// The particles change pose this many times a second, held between (the
+// mock's own frames).
+export const WARD_AURA_FPS = 12;
+// How long a body's walk is remembered, in seconds: the particles it leaves
+// behind (motes, prints, petals, embers) stand where it was when each was
+// born, and the longest of them lives under this.
+export const WARD_AURA_KEEP_S = 3;
+// How far apart the two of them's particles are, as a seed: the same aura on
+// both is not the same particles in step.
+export const WARD_AURA_SEED = 17;
+// And their turning things (the orbit, the scales), in radians.
+export const WARD_AURA_TURN = 2.1;
+// Each aura's numbers, in seconds and world pixels off the body's top-left
+// (its square is WORKER across): `n` particles, each living `life`, `seed`
+// its own throw of the dice; `rung` a tone on the yard's grey ramp (GREY),
+// `rungs` how many rungs on it a particle may be drawn darker; `in` and
+// `out` the shares of a life spent fading in and out; `back` the share drawn
+// behind the body.
+export const WARD_AURAS = {
+  // lift off the body, drift and thin away
+  'dust-motes': { n: 4, life: 2.4, seed: 1, spread: 30, sway: 3, top: 2, band: 14, rise: 10, rung: 4, rungs: 3, back: 0.5 },
+  // shaken off the sides to the ground: three walking, one standing
+  'pebble-bits': { n: 3, life: 0.9, seed: 2, jitter: 3, from: 6, band: 6, fall: 0.6, rung: 7, rungs: 3, in: 0.08 },
+  // rings rising off the shoulders, wobbling a unit
+  bubbles: { n: 3, life: 2.2, seed: 3, lag: 0.4, off: 5, jitter: 3, wobble: 9, from: 10, rise: 28, in: 0.15, out: 0.3, rung: 6 },
+  // one pixel round the middle on a flat ellipse, two fading behind it
+  'orbiting-pixel': { speed: 2.6, trail: [1, 0.5, 0.22], gap: 0.3, rx: 15, ry: 4, mid: 8, rung: 10 },
+  // a point fades in, holds a plus, fades out, rests
+  'sparkle-glints': { n: 2, life: 1.9, seed: 4, up: 0.7, r: 14, rr: 5, squash: 0.8, mid: 8, in: 0.15, hold: 0.55, out: 0.3, rung: 9 },
+  // a print a step, right foot and left, walking only
+  footprints: { step: 0.3, life: 2.4, below: 2, feet: [11, 3], rung: 6 },
+  // a cloud a beat behind over the head, bobbing; drops to the head
+  'rain-cloud': { lag: 0.4, bob: 1.2, over: 18, inset: 1, rows: ['..####..', '.######.', '########'], rung: 3, rungs: 3,
+                  drops: 3, dropLife: 0.55, seed: 5, dropIn: 2, dropSpan: 12, dropTo: 3, dropLen: 3, out: 0.3, dropRung: 7 },
+  // falling from over the head, swaying and turning, a moment on the ground
+  'falling-petals': { n: 3, life: 2.8, seed: 6, back: 0.4, from: -5, spread: 28, over: 12, below: 1, sway: 4, swayHz: 7,
+                      turnHz: 4, land: 0.8, in: 0.1, out: 0.15, rung: 5, rungs: 2 },
+  // four scales round the body, each edge-on a moment on its own clock
+  'scale-swirl': { n: 4, speed: 1.8, rx: 14, ry: 3, mid: 7, bobHz: 1.1, bob: 3, every: 0.52, edge: 0.13, size: 4, rung: 7 },
+  // the level-up's embers, small: from the feet on a turn, cooling
+  embers: { n: 4, life: 1.7, seed: 7, lag: 0.5, turn: 4.2, spread: 2, r: 10, grow: 5, foot: 2, rise: 34, in: 0.1, out: 0.3 },
+};
+// The embers' tones as they cool, first to last: a rung of the yard's grey
+// ramp or of its purple (PURPLE); the deep's are its own list, read as the
+// yard's rungs seen turned over (render/deeptones.js), so the cooling still
+// reads as cooling on the black.
+export const WARD_AURA_EMBERS = {
+  yard: [['grey', 10], ['purple', 10], ['grey', 6], ['purple', 12], ['grey', 4]],
+  deep: [['grey', 10], ['purple', 12], ['grey', 6], ['purple', 9], ['grey', 4]],
+};

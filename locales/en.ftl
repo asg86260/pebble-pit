@@ -3203,6 +3203,7 @@ ward-slot-face = face
 ward-slot-neck = neck
 ward-slot-back = back
 ward-slot-pattern = pattern
+ward-slot-aura = aura
 
 # an item on the picker, shown between a row's previous and next; a plain label
 ward-none = none
@@ -3244,6 +3245,16 @@ ward-dots = dots
 ward-diagonal = diagonal
 ward-quarters = quarters
 ward-filled = filled
+ward-dust-motes = dust motes
+ward-pebble-bits = pebble bits
+ward-bubbles = bubbles
+ward-orbiting-pixel = orbiting pixel
+ward-sparkle-glints = sparkle glints
+ward-footprints = footprints
+ward-rain-cloud = rain cloud
+ward-falling-petals = falling petals
+ward-scale-swirl = scale swirl
+ward-embers = embers
 
 ## The shell
 

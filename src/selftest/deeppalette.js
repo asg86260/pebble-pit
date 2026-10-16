@@ -34,8 +34,8 @@ const SCENES = ['deep-all', 'deep-seven', 'deep-zones', 'deep-rest', 'deep-react
                 'deep-stun', 'party-statuses', 'deep-numbers', 'deep-neardeath-light', 'deep-powerup-motes',
                 'deep-build', 'deep-kill-start', 'deep-freed', 'deep-endless', 'crusher', 'pods', 'finale-gear',
                 'fang-plate', 'fang-plate-none',
-                // her, dressed, at the first station (wardrobe.js), and in its greys
-                'pair-deep', 'pair-deep-greys'];
+                // her, dressed, at the first station (wardrobe.js), in its greys, and the two in auras
+                'pair-deep', 'pair-deep-greys', 'pair-deep-aura'];
 const MIN_PX = 12;   // a color counts once it covers this many pixels of the rows read
 
 const xor = h => '#' + (0xffffff ^ parseInt(h.slice(1), 16)).toString(16).padStart(6, '0');

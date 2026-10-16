@@ -13,7 +13,8 @@ import { WORKER } from '../src/config.js';
 import { startBeat } from '../src/beats.js';
 import { persist, restore } from '../src/persist.js';
 import { migrate } from '../src/migrations/index.js';
-import { pairBody, outfitOf, DEFAULTS, stepItem, rollOutfit, SLOTS } from '../src/wardrobe.js';
+import { AURA_KEYS } from '../src/render/wardaura.js';
+import { pairBody, outfitOf, DEFAULTS, stepItem, rollOutfit, bareOutfit, SLOTS } from '../src/wardrobe.js';
 
 const KEY = 'boulder-clicker/v4';
 const ids = () => ({ ...S.pairIds });
@@ -139,6 +140,42 @@ group('what they wear is kept by the save, item by item', async () => {
     ok(mended.sqouse.neck === 'none' && mended.you.head === 'none'
        && mended.sqouse.head === worn.sqouse.head && mended.you.back === worn.you.back,
        'an item no longer in the wardrobe is taken off, the rest as worn', JSON.stringify(mended))
+  ];
+});
+
+// The sixth slot, the aura (render/wardaura.js): stepped on as the picker's
+// row does, kept by a save and a load, rolled by randomize (every aura
+// turns up), taken off by clear; and a save from before the slot is read
+// wearing none.
+group('the aura is a slot: kept by the save, rolled by randomize, taken off by clear', async () => {
+  const auras = SLOTS.find(s => s.key === 'aura').items.map(i => i.key);
+  stepItem('you', 'aura', 7);
+  stepItem('sqouse', 'aura', -1);
+  const worn = { you: outfitOf('you').aura, sqouse: outfitOf('sqouse').aura };
+  persist();
+  S.outfits = null;
+  restore();
+  const back = { you: outfitOf('you').aura, sqouse: outfitOf('sqouse').aura };
+  const rolled = new Set();
+  for (let i = 0; i < 300; i++) { rollOutfit('you'); rolled.add(outfitOf('you').aura); }
+  bareOutfit('you');
+  const cleared = outfitOf('you').aura;
+  persist();
+  const raw = JSON.parse(localStorage.getItem(KEY));
+  delete raw.outfits.you.aura; delete raw.outfits.sqouse.aura;
+  raw.saveV = 25;
+  const ran = migrate(raw).map(m => m.v);
+  localStorage.setItem(KEY, JSON.stringify(raw));
+  restore();
+  return [
+    ok(worn.you === auras[7] && worn.sqouse === auras[auras.length - 1], 'the row steps the aura', JSON.stringify(worn)),
+    ok(back.you === worn.you && back.sqouse === worn.sqouse, 'a save and a load hand it back', JSON.stringify(back)),
+    ok(auras.slice(1).every(k => AURA_KEYS.includes(k)) && AURA_KEYS.every(k => auras.includes(k)),
+       'every aura on the row is one that is drawn', AURA_KEYS.join(' ')),
+    ok(auras.every(k => rolled.has(k)), 'randomize puts every aura on, and none', [...rolled].join(' ')),
+    ok(cleared === 'none', 'clear takes it off', cleared),
+    ok(ran.includes(26) && raw.outfits.you.aura === 'none' && outfitOf('sqouse').aura === 'none',
+       'a save from before the slot wears none', `${ran} ${JSON.stringify(outfitOf('sqouse'))}`)
   ];
 });
 

@@ -6993,6 +6993,13 @@
   "text": "pattern"
  },
  {
+  "id": "ward-slot-aura",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "aura"
+ },
+ {
   "id": "ward-none",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
@@ -7264,6 +7271,76 @@
   "where": "src/wardrobe.js",
   "context": "",
   "text": "filled"
+ },
+ {
+  "id": "ward-dust-motes",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "dust motes"
+ },
+ {
+  "id": "ward-pebble-bits",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "pebble bits"
+ },
+ {
+  "id": "ward-bubbles",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "bubbles"
+ },
+ {
+  "id": "ward-orbiting-pixel",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "orbiting pixel"
+ },
+ {
+  "id": "ward-sparkle-glints",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "sparkle glints"
+ },
+ {
+  "id": "ward-footprints",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "footprints"
+ },
+ {
+  "id": "ward-rain-cloud",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "rain cloud"
+ },
+ {
+  "id": "ward-falling-petals",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "falling petals"
+ },
+ {
+  "id": "ward-scale-swirl",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "scale swirl"
+ },
+ {
+  "id": "ward-embers",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "embers"
  },
  {
   "id": "shell-carry-title",

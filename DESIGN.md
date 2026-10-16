@@ -19799,8 +19799,8 @@ src/migrations/2026-10-16-the-pair.js): him the oldest body of the yard
 in the deep, else the oldest body that is not him. He is let go at the
 snatch (he is in the belly, drawn there as 'him'), she at the finale.
 
-**What they wear.** Five slots, every one led by nothing: head (11), face
-(11), neck (3, the scarves), back (5), pattern (7). The item review
+**What they wear.** Six slots, every one led by nothing: head (11), face
+(11), neck (3, the scarves), back (5), pattern (7), aura (10). The item review
 (docs/reviews/2026-10-16-wardrobe-items) cut the pigtails and the tiara; the
 bowtie, tie, collar and medal; the small pack and both tails; the grey and
 pale patterns; and renamed the black pattern "filled". A save wearing a cut
@@ -19832,6 +19832,25 @@ inverted inks, going into the house in the door's purples, sat at the bench
 - Things that hang move on the walk (cape, scarf tails) or on their own
   clock (balloon, flag), held poses, read off where the body is drawn
   frame to frame (`motionOf`).
+
+**The aura** (built 2026-10-16; the owner's vote on
+docs/mocks/wardrobe-aura-2026-10-16, "i like all of this"). A sixth slot,
+none first: dust motes, pebble bits, bubbles, an orbiting pixel, sparkle
+glints, footprints (walking only), a rain cloud, falling petals, a scale
+swirl and embers, drawn as the mock draws them (render/wardaura.js, not
+render/aura.js, which is the offer flag's ring; numbers WARD_AURAS). Every
+particle is a two-pixel unit on the world's grid, placed by a seed and the
+held clock (WARD_AURA_FPS), never thrown at random; what leaves the body
+stands where the body was when it was born, off a few seconds of its walk
+remembered against the object it is drawn from. It fades by opacity
+(docs/design-language/canvas.md, "Fades"); at full ink it is a rung of the
+yard's greys, or in the deep the same rung turned over and folded onto the
+deep's kept ones, so the deep's cap holds (`pair-deep-aura` in its check).
+Only the embers have a hue, the level-up's purple. Departures from the mock,
+both small: the rain cloud stands over the head item rather than on it (the
+mock's body was bare), and the body under the rock wears none. A save from
+before the slot wears none (SAVE_V 26). Two of them, a few rects each: both
+in rain clouds cost the frame about 0.04 ms.
 
 **The picker** (src/wardrobepage.js; the mock's Part 3, titled with the
 mock's words "the two of you"). A page of the held sheet, at its full width:
