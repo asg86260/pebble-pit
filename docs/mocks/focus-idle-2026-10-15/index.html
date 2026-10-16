@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Focus bracket idle - mock</title>
+<style>
+body{font:14px/1.45 system-ui,sans-serif;margin:0;padding:20px 16px 60px;background:#e9e9e9;color:#111;max-width:1320px}
+h1{font-size:20px;margin:0 0 4px}
+p{margin:4px 0}
+.note{background:#fff;border:1px solid #bbb;padding:8px 12px;margin:12px 0}
+.opt{margin:22px 0;border-top:2px solid #111;padding-top:8px}
+.opt h2{font-size:16px;margin:0}
+.dir{margin:2px 0 4px}
+.t{font:12px ui-monospace,Consolas,monospace;color:#333;margin-bottom:6px}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.cell{display:flex;gap:2px}
+.cell figure{margin:0}
+figcaption{font:11px ui-monospace,Consolas,monospace;color:#444}
+canvas{display:block;image-rendering:pixelated;border:1px solid #888}
+</style></head><body>
+<h1>Focus bracket idle - five directions plus none</h1>
+<p>Mock of the purple corner brackets standing still on a focus. Drawn from plain shapes on a 3x canvas (one cell = 18 px, the P = 6 grid at 3x). Every state is a whole-cell step held for the stated time; no tween, no fade of the bracket, no brightness change. The one-cell halo round the brackets is drawn as <code>haloCells</code> does.</p>
+<div class="note"><b>What this cannot show:</b> the real target art (the actual row card, real station sprites, the live deep water and its drift), the bracket's glide between stops (another agent's work; the idle here just loops from its rest pose, and should restart from rest on arrival), other zoom levels of the menu pixel grid, and how an idle reads after ten seconds of looking rather than three. The deep is black water in both themes, so its light and dark panels differ only in the page around them being the same: both use the bright accent rung.</div>
+<div id="app"></div>
+<script>
+const U=18, W=13, H=9;
+const ACC={light:'#6a2fbe',dark:'#9b5de5'};
+const T={x0:3,y0:3,x1:9,y1:6};
+const BASE={outs:[1,1,1,1],dy:0,L:3,gap:-1};
+const OPTS=[
+ {k:'A',n:'Breathe',d:'All four corners step out one cell together and back.',
+  tm:['cycle 1.0 s','in (out=1): 0.5 s','out (out=2): 0.5 s'],
+  f:t=>({...BASE,outs:t%1.0<0.5?[1,1,1,1]:[2,2,2,2]})},
+ {k:'B',n:'Corner tick',d:'Each corner in turn nudges out one cell, clockwise from top-left.',
+  tm:['cycle 2.0 s','each corner out 0.25 s (TL, TR, BR, BL)','rest 1.0 s, all in'],
+  f:t=>{const s=Math.floor((t%2.0)/0.25);const o=[1,1,1,1];if(s<4)o[s]=2;return{...BASE,outs:o}}},
+ {k:'C',n:'Bob',d:'The whole frame steps down one cell and back, like the pointing hand tap.',
+  tm:['cycle 1.2 s','up (rest): 0.9 s','down one cell: 0.3 s'],
+  f:t=>({...BASE,dy:(t%1.2)<0.9?0:1})},
+ {k:'D',n:'March',d:'A one-cell gap runs along each bracket, arm end to corner to other arm end.',
+  tm:['cycle 1.5 s','gap steps every 0.15 s over 5 cells = 0.75 s','rest 0.75 s, bracket whole'],
+  f:t=>{const s=Math.floor((t%1.5)/0.15);return{...BASE,gap:s<5?s:-1}}},
+ {k:'E',n:'Grow',d:'Each arm lengthens by one cell and shrinks back; corners stay put.',
+  tm:['cycle 1.0 s','arm 3 cells: 0.5 s','arm 4 cells: 0.5 s'],
+  f:t=>({...BASE,L:(t%1.0)<0.5?3:4})},
+ {k:'-',n:'None',d:'The brackets stand still (today). For comparison.',tm:['no cycle'],f:t=>BASE}
+];
+
+function hash(x,y){let h=(x*374761393+y*668265263)^0x5bd1e995;h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967295}
+
+function bracket(st){
+  const o=st.outs;
+  const c=[[T.x0-o[0],T.y0-o[0]+st.dy],[T.x1+o[1],T.y0-o[1]+st.dy],[T.x1+o[2],T.y1+o[2]+st.dy],[T.x0-o[3],T.y1+o[3]+st.dy]];
+  const sx=[1,-1,-1,1],sy=[1,1,-1,-1],L=st.L;
+  const cells=[];
+  c.forEach(([cx,cy],i)=>{
+    const p=[];
+    for(let k=L-1;k>=1;k--)p.push([cx+sx[i]*k,cy]);
+    p.push([cx,cy]);
+    for(let k=1;k<=L-1;k++)p.push([cx,cy+sy[i]*k]);
+    p.forEach((q,j)=>{ if(j!==st.gap) cells.push(q) });
+  });
+  return cells;
+}
+function halo(cells){const s=new Set(cells.map(c=>c+''));const m=new Map();
+  for(const[x,y]of cells)for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const k=(x+a)+','+(y+b);if(!s.has(k))m.set(k,[x+a,y+b])}return[...m.values()]}
+
+const SCENES=['shop row','yard station','deep station'];
+function drawScene(g,scene,theme){
+  const dark=theme==='dark';
+  const paper=dark?'#16161a':'#fff', ink=dark?'#e8e8e8':'#000', grey=dark?'#55555c':'#a4a4a4', mid=dark?'#33333a':'#cfcfcf';
+  const R=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x*U,y*U,w*U,h*U)};
+  if(scene===0){
+    R(0,0,W,H,paper);
+    g.strokeStyle=ink;g.lineWidth=3;g.strokeRect(T.x0*U+1.5,T.y0*U+1.5,7*U-3,4*U-3);
+    R(T.x0+1,T.y0+1,2,2,ink);
+    R(T.x0+3,T.y0+1,3,1,ink); R(T.x0+3,T.y0+2,2,1,grey);
+    R(T.x0+6,T.y0+1,1,2,mid);
+  } else if(scene===1){
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){const h=hash(x,y);R(x,y,1,1,dark?(h<.3?'#2a2a2e':h<.7?'#222226':'#1b1b1f'):(h<.3?'#d8d8d8':h<.7?'#e6e6e6':'#f0f0f0'))}
+    R(T.x0,T.y0+1,7,3,ink);R(T.x0+1,T.y0,5,1,ink);
+    R(T.x0+1,T.y0+2,1,2,paper);R(T.x0+3,T.y0+2,2,1,grey);R(T.x0+5,T.y0+1,1,1,paper);
+    R(T.x0+5,T.y0-1,1,1,grey);
+  } else {
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){const h=hash(x+9,y+4);R(x,y,1,1,h<.06?'#1c1c26':'#000')}
+    g.strokeStyle='#e8e8e8';g.lineWidth=3;g.strokeRect(T.x0*U+1.5,(T.y0+1)*U+1.5,7*U-3,3*U-3);
+    R(T.x0+1,T.y0+2,1,2,'#e8e8e8');R(T.x0+3,T.y0+2,2,1,'#666');R(T.x0+2,T.y0,3,1,'#e8e8e8');
+  }
+}
+function drawFrame(g,scene,theme,opt,t){
+  drawScene(g,scene,theme);
+  const cells=bracket(opt.f(t));
+  const dk=(theme==='dark'||scene===2);
+  g.fillStyle=dk?'#000':'#fff';
+  for(const[x,y]of halo(cells))g.fillRect(x*U,y*U,U,U);
+  g.fillStyle=dk?ACC.dark:ACC.light;
+  for(const[x,y]of cells)g.fillRect(x*U,y*U,U,U);
+}
+
+const app=document.getElementById('app'),draws=[];
+for(const o of OPTS){
+  const sec=document.createElement('section');sec.className='opt';
+  sec.innerHTML=`<h2>${o.k} - ${o.n}</h2><p class="dir">${o.d}</p><div class="t">${o.tm.join(' | ')}</div><div class="row"></div>`;
+  const row=sec.querySelector('.row');
+  SCENES.forEach((sn,si)=>{
+    const cell=document.createElement('div');cell.className='cell';
+    ['light','dark'].forEach(th=>{
+      const fig=document.createElement('figure'),cv=document.createElement('canvas');
+      cv.width=W*U;cv.height=H*U;
+      const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+      fig.appendChild(cv);fig.insertAdjacentHTML('beforeend',`<figcaption>${sn} / ${th}</figcaption>`);
+      cell.appendChild(fig);draws.push([g,si,th,o]);
+    });
+    row.appendChild(cell);
+  });
+  app.appendChild(sec);
+}
+const t0=performance.now();
+let last=-1;
+function loop(){
+  const step=Math.floor((performance.now()-t0)/50);
+  if(step!==last){last=step;for(const[g,si,th,o]of draws)drawFrame(g,si,th,o,step*0.05+0.001)}
+  requestAnimationFrame(loop);
+}
+loop();
+</script></body></html>
