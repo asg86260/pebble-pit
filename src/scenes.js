@@ -1078,6 +1078,26 @@ const deepScenes = {
     } },
   'party-button': { about: 'the deep', say: 'a fang held: the build button over the next free slot, wearing the fang\'s mark',
     run: () => { deepYard({ party: [cast('brawler', 2)], fangs: 1, run: 6 }); lookDeep(slotAt(freeSlot())); } },
+  // The plate in the furnace's brick over the door: the fangs held (FANG_PLATE).
+  'fang-plate': { about: 'the deep', say: 'two fangs held: the plate over the furnace\'s door reads fang x 2',
+    run: () => { deepYard({ party: [cast('brawler', 2)], fangs: 2, run: 6 }); window.__look(deepX0()); } },
+  // The last fang spent on a station: the plate stays, its words in the mortar's grey.
+  'fang-plate-none': { about: 'the deep', say: 'the last fang spent: the plate over the door dimmed at x 0',
+    run: () => {
+      deepYard({ party: [cast('brawler', 2)], fangs: 1, run: 4 });
+      pressBuildButton();
+      window.__fast(2);
+      window.__look(deepX0());
+    } },
+  // A fang carried to the hopper, a moment from going in: the plate's count
+  // cross-fades up and its frame catches the light (a GIF's opening frame).
+  'fang-plate-arrive': { about: 'the deep', say: 'a fang carried to the furnace: the plate counts it, its frame catching the light',
+    run: () => {
+      deepYard({ party: [cast('brawler', 8)], fangs: 1 });
+      window.__serpent({ stage: 0, wound: Math.max(0, depthAt(0) - 1) });
+      for (let i = 0; i < 60 * 60 && !S.fangsLoose.some(f => f.held); i++) window.__fast(1 / 60);
+      window.__look(deepX0());
+    } },
   // Every status the serpent can wear, at once: a Swordsman's Bleeding, a
   // Sapper's Exposed, a Hexer's Weakened and Held, laid long so the shot
   // catches all four whatever the fighters' timing.
