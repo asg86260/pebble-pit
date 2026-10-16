@@ -17,7 +17,7 @@
 // nothing is a setting.
 
 import { P, WORKER, MINE_DELAY, TOSS_DELAY, HOVER_SLOW_MS, PAD_DEAD, PAD_FLICK, PAD_REPEAT_WAIT_MS,
-         PAD_REPEAT_MS, PAD_TRIGGER, PAD_HAND_SPEED, PAD_PAN, PAD_COIL_RATE, PAD_TIP_MS, PAD_HAND_BOX,
+         PAD_REPEAT_MS, PAD_TRIGGER, PAD_HAND_SPEED, PAD_PAN, PAD_COIL_RATE, PAD_TIP_MS, PAD_HAND_BOX, PAD_VIEW_MARGIN,
          ARM_LENGTH, ARM_SWING, COIL_SEGS } from './config.js';
 import { S } from './state.js';
 import { now } from './clock.js';
@@ -155,12 +155,26 @@ function setFocus(id, look = false) {
   showTipAt(null);
   tipAsked = false;
   focusAt = performance.now();
-  if (look) { const r = focusBox(id); if (r) lookTo(mid(r).x); }
+  if (look) bringIntoView(focusBox(id));
 }
 function lookTo(x) {
   unfollow();
   lookAt(x);
   viewTaken();
+}
+// The camera only as far as it must go to have the thing on the glass, a
+// margin clear of the edge, and not at all when it already is. A camera
+// that put every hop in the middle carried the old thing out and the new one
+// in under a marker standing still, and the marker's own travel was never
+// seen (the owner, 2026-10-16).
+function bringIntoView(r) {
+  if (!r) return;
+  const cam = S.camTo ?? S.camX, m = PAD_VIEW_MARGIN * S.viewW;
+  let to = cam;
+  if (r.w > S.viewW - 2 * m) to = r.x + r.w / 2 - S.viewW / 2;
+  else if (r.x < cam + m) to = r.x - m;
+  else if (r.x + r.w > cam + S.viewW - m) to = r.x + r.w + m - S.viewW;
+  if (to !== cam) lookTo(to + S.viewW / 2);
 }
 
 // The stop nearest the middle of the window: where the focus lands first,
@@ -207,7 +221,7 @@ function land(it, from) {
   if (it.seg == null) { setFocus(it.id, true); return; }
   seg = it.seg;
   if (!(S.padFocus || '').startsWith('coil|')) setFocus(`coil|${from}`);
-  if (!onGlassX({ x: it.x - 1, y: it.y, w: 2, h: 2 })) lookTo(it.x);
+  bringIntoView({ x: it.x - 1, y: it.y - 1, w: 2, h: 2 });
 }
 // Up past the top of the yard: the corner cards over it, the row nearest the
 // thing the focus stood on. Down from there comes back (`pagePresses`).
@@ -361,7 +375,7 @@ function sleep() {
   S.padOn = false;
   document.body?.classList?.remove('pad');
   dropFocus();
-  aim(null);                // the yard's marker fades out where it stood
+  aim(null);                // the marker fades out where it stood
   showTipAt(null);
 }
 addEventListener('pointermove', e => { if (e.isTrusted && e.pointerType !== 'touch') sleep(); }, true);
@@ -691,6 +705,8 @@ export const PAD_HANDLE = {
   hand: () => S.padHand && { ...S.padHand },
   box: () => focusBox(),
   mark: () => markAt(fakeT),
+  // The marker as the page's own frames draw it, on the wall clock.
+  markNow: () => markAt(performance.now()),
   page: () => focused(),
   scope: () => scope()?.kind || null,
   inner: id => innerRows(findStop(id)).map(row => row.map(c => c.id)),

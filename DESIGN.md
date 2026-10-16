@@ -18445,9 +18445,22 @@ crit's rumble exists at all.
   cells, from rest on every arrival. The keyboard's focus brackets
   (focusmark.js) breathe by the same count (`breathOut`, padglide.js).
 - **Fade, never pop**: the marker fades in over `PAD_FADE_MS` when it comes
-  up from nothing or crosses from the yard to a page, and fades out where it
-  stood when it is put away (a mouse move, the held sheet, a scene). A hop
-  along the coil is a glide of its own, since each segment is a place.
+  up from nothing, and fades out where it stood when it is put away (a mouse
+  move, the held sheet, a scene). A hop along the coil is a glide of its
+  own, since each segment is a place.
+- **The glide is on the glass** (the owner, 2026-10-16: "camera glide is
+  good, i also want to see the corner bracket transition between
+  elements"). It runs in CSS pixels from where the old thing was seen at
+  the press to where the new one is seen each frame, so it crosses from the
+  yard to the corner cards or a board's rows and back as one marker, never
+  a fade out and in. Eased in and out, never shorter than `PAD_GLIDE_MS` and
+  long enough that no frame moves it faster than `PAD_GLIDE_SPEED`. A hop
+  moves the camera only as far as it must to have the new thing
+  `PAD_VIEW_MARGIN` clear of the window's edge, and not at all when it
+  already is: a camera that centered every hop carried the world under a
+  marker standing still, and the marker's travel was never seen. Measured
+  frame by frame in test/pad-glide.test.mjs and src/selftest/pad.js ("the
+  marker travels across to the corner").
 - **The controls page** gains a pad column once a pad has been seen in the
   session, and rows for what the pad does that the mouse has no row for;
   those rows' words are the owner's, placeholders until written

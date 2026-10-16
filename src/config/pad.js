@@ -14,9 +14,16 @@ export const PAD_DEEP_ACCENT = PURPLE[13];
 // paper in the yard, the deep's own dark down there (the mock's `--deep`).
 export const PAD_HALO = '#ffffff';
 export const PAD_DEEP_HALO = '#08070c';
-// The glide between stops, fast out and soft in, on whole cells (the
-// owner, 2026-10-12: "about 0.25 s").
+// The glide between stops, eased in and out, on whole cells: never shorter
+// than this (the owner, 2026-10-12: "about 0.25 s"), and longer for a far
+// trip, so that no frame of it moves faster than PAD_GLIDE_SPEED, CSS pixels
+// a second on the glass -- a marker that crossed the window in a frame or two
+// read as one that jumped (the owner, 2026-10-16).
 export const PAD_GLIDE_MS = 250;
+export const PAD_GLIDE_SPEED = 1800;
+// A hop moves the camera only to bring the new thing this share of the
+// window clear of its edge, and not at all when it already is.
+export const PAD_VIEW_MARGIN = 0.15;
 // The landing: two cells out, then one, then home, each held this long.
 export const PAD_SETTLE_STEP_MS = 60;
 export const PAD_SETTLE_CELLS = 2;

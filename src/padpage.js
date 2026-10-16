@@ -17,7 +17,7 @@
 import { PAD_ACCENT, PAD_HALO, PAD_ARM_MIN, PAD_ARM_MAX, PAD_TIP_MS, PAD_ACROSS } from './config.js';
 import { S } from './state.js';
 import { openBoard } from './board.js';
-import { aim, markAt, bracketCells, haloCells, aimedSpace } from './padglide.js';
+import { aim, markAt, bracketCells, haloCells } from './padglide.js';
 
 // The story's sheets, which stand over the held sheet and the yard and are
 // put away only by their own buttons.
@@ -121,7 +121,6 @@ export const focused = () => on;
 export function dropFocus() {
   if (on && asked) hover(on, 'out');
   on = null; onKey = null; onRect = null; asked = false;
-  if (aimedSpace() === 'page') aim(null);
 }
 
 // Keep the focus on something that is there: the same row after a rebuild
