@@ -13,6 +13,7 @@
 import { group, ok, state, run, runUntil, haveRock, quickCrew, openSites } from './helpers.mjs';
 import { rockhandMs } from '../src/levels.js';
 import { wakeAudio, audioDecisions } from '../src/audio.js';
+import { SOUNDS, RECIPES } from '../src/config.js';
 
 const snap = () => {
   const d = audioDecisions();
@@ -115,5 +116,31 @@ group("the ram is heard at a rockhand's pace, once per strike", async () => {
        `${beats} beats in ${secs}s, a rockhand would swing ${pace.toFixed(1)} times`),
     ok(swings === 0, 'and its strike is not heard a second time from the rock',
        `${swings} rock-swing`)
+  ];
+});
+
+// The pit is heard by every grain that goes into it, not only those the pile
+// keeps. A torn pit takes the crew's dust at the mouth (`riftCatch`) and a
+// full one through the rift (`throughRift`), and both used to be silent: a
+// yard past the tear never heard its pit again. The event must also play
+// something, or a counted call is still silence.
+group('a torn pit is heard taking the dust', async () => {
+  wakeAudio();
+  quickCrew();
+  haveRock();
+  window.__rift();
+  window.__crew(3, 3);
+  const pitLands = () => audioDecisions().byEvent['pit-land'] || 0;
+  const before = pitLands(), stored = state().stored;
+  run(30);
+  const heard = pitLands() - before, took = state().stored - stored;
+  window.__crew(0, 0);
+  const plays = n => { const r = SOUNDS[n] && SOUNDS[n].recipe; return typeof r === 'string' ? !!RECIPES[r] : !!r; };
+  return [
+    ok(state().riftOpen, 'the pit is torn'),
+    ok(took > 0, 'and the crew carried dust into it', `${took} dust`),
+    ok(heard > 0, 'and the dust going in is heard', `${heard} pit-land for ${took} dust`),
+    ok(plays('pit-land') && plays('rock-hit') && plays('rock-crit'),
+       'and the pit and the hand on the rock each play a recipe')
   ];
 });

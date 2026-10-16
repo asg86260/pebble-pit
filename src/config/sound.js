@@ -182,7 +182,7 @@ export const SOUNDS = {
   'belt-load':    { label: 'the scoop sets a chunk on the belt',        cls: 'fold',  recipe: null },
   'belt-catch':   { label: 'a thrown chunk lands on the belt',          cls: 'fold',  recipe: null },
   'grain-land':   { label: 'a grain comes to rest on the ground',       cls: 'fold',  recipe: null },
-  'pit-land':     { label: 'a grain comes to rest in the pit',          cls: 'each',  recipe: 'dust-gain' },
+  'pit-land':     { label: 'a grain goes into the pit, pile or rift',   cls: 'each',  recipe: 'dust-gain' },
   'meteor-call':  { label: 'the sky is summoned',                       cls: 'punct', recipe: 'sun summon' },
   'bolt-throw':   { label: 'a wizard throws a bolt at the star',        cls: 'fold',  recipe: 'bolt throw' },
   'bolt-strike':  { label: 'a bolt lands on the star',                  cls: 'fold',  recipe: 'worker mine' },

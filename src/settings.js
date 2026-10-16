@@ -285,7 +285,11 @@ volumeEl.addEventListener('input', () => {
   setVolume(pref('volume'));
 });
 setVolume(pref('volume'));
-window.addEventListener('pointerdown', wakeAudio, { once: true });
+// Captured, so the press that wakes it is heard: bubbling, the canvas took
+// the swing before the context existed. And on every press, not once: a
+// context the browser suspended later (a phone's call, a hidden tab) is
+// resumed by the next gesture, which `wakeAudio` does when already awake.
+window.addEventListener('pointerdown', wakeAudio, { capture: true });
 if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
   if (!sheet.hidden) { saySound(); volumeEl.value = pref('volume'); }
 }).observe(sheet, { attributes: true, attributeFilter: ['hidden'] });
