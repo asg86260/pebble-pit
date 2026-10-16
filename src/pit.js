@@ -255,6 +255,7 @@ function enterDrain(x, y, vx, vy) {
 // grain past it is counted and not drawn.
 export function riftCatch(x, y, shade, vx = 0, vy = 0) {
   if (!throughRift(x, shade)) return false;
+  sfx('pit-land', { x });
   if (S.gulped.length < SHOWN) {
     // It keeps the speed it arrived with: the rift pulls (`orbit` in
     // game.js) and what the grain does about it depends on how fast it was
@@ -275,6 +276,9 @@ export function bankDust(x, shade = 1, n = 1, income = true) {
   // The pile is asked, never the count: the first grain it has no cell for
   // is what tears the hole open (`throughRift`). So this never answers
   // false, and nothing carrying dust ever needs to ask the hole first.
+  // Heard on arrival, whichever way the grain goes: a full or torn hole
+  // takes it as surely as the pile does.
+  if (n > 0) sfx('pit-land', { x });
   const c0 = colOf(pit, x);
   let laid = 0;
   for (; laid < n; laid++) {
@@ -283,7 +287,6 @@ export function bankDust(x, shade = 1, n = 1, income = true) {
     if (!addGrain(pit, laid ? pit.x + c * pit.p : x, null, shade)) break;
   }
   if (laid) {
-    sfx('pit-land', { x });
     let coin = null;
     if (isDust(shade)) {
       S.stored += laid;                      // every pixel is worth one
