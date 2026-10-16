@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings sections</title>
+<style>
+:root {
+  --paper: #fff; --ink: #000; --ink-2: #333; --ink-4: #666; --ink-5: #8c8c8c; --ink-8: #cfcfcf;
+  --accent: #6a2fbe; --wash: #8f8f8f;
+  --face: ui-monospace, "Courier New", monospace;
+  --fs-small: 10px; --fs-body: 12px; --fs-note: 13px; --fs-name: 14px; --fs-word: 17px;
+  --track-s: .08em; --track-m: .14em; --track-l: .3em; --track: 1;
+  --gap-s: 4px; --gap-m: 8px;
+  --pad-l-y: 14px; --pad-l-x: 24px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #1f1f1f; --ink: #e0e0e0; --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-8: #434343; --accent: #9b5de5; --wash: #0e0e0e; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --paper: #1f1f1f; --ink: #e0e0e0; --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #767676; --ink-8: #434343; --accent: #9b5de5; --wash: #0e0e0e; color-scheme: dark; }
+
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); font: 12px/1.4 var(--face); }
+body { padding: 16px; max-width: 1180px; }
+h1 { font-size: var(--fs-word); letter-spacing: var(--track-l); text-transform: uppercase; margin: 0 0 4px; }
+.intro { max-width: 80ch; margin: 0 0 8px; }
+.top { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; margin-bottom: 20px; }
+.top button { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 3px 12px; cursor: pointer; letter-spacing: var(--track-m); text-transform: uppercase; }
+section.opt { border-top: 1px solid var(--ink); padding: 16px 0 28px; }
+section.opt h2 { font-size: var(--fs-name); letter-spacing: var(--track-s); text-transform: uppercase; margin: 0 0 4px; }
+section.opt p.cap { margin: 0 0 6px; max-width: 90ch; }
+p.path { margin: 0 0 14px; max-width: 90ch; color: var(--ink-2); }
+p.path b { color: var(--ink); }
+.frames { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.frame-wrap { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.frame-label { font-size: var(--fs-small); color: var(--ink-4); letter-spacing: var(--track-s); text-transform: uppercase; }
+/* the yard behind the sheet, washed as the held sheet washes it */
+.desk-glass { width: 528px; max-width: 100%; height: 470px; background: var(--wash); display: flex; align-items: center; justify-content: center; box-sizing: border-box; overflow: hidden; }
+.phone-glass { width: 360px; max-width: 100%; height: 640px; background: var(--wash); display: flex; flex-direction: column; justify-content: flex-end; box-sizing: border-box; overflow: hidden; border: 1px dashed var(--ink-5); }
+
+/* the held sheet, as style.css draws it: paper, a one-pixel ink edge, every
+   block the sheet's whole width, words centered, caps and tracking */
+.sheet { box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; text-align: center; gap: var(--gap-m);
+  padding: var(--pad-l-y) var(--pad-l-x); background: var(--paper); border: 1px solid var(--ink); color: var(--ink);
+  letter-spacing: calc(var(--track-m) * var(--track)); text-transform: uppercase; overflow-y: auto; scrollbar-width: thin; }
+.desk-glass .sheet { width: 480px; max-height: 440px; }
+/* on a phone the held sheet is a sheet from the bottom, full width, with a handle */
+.phone-glass .sheet { width: 100%; max-height: 560px; border-width: 1px 0 0; --track: .6; padding: 8px 20px 16px; }
+.handle { align-self: center; width: 36px; height: 4px; background: var(--ink); margin-bottom: 6px; }
+.sheet .word { font-size: var(--fs-word); letter-spacing: calc(var(--track-l) * var(--track)); padding-left: calc(var(--track-l) * var(--track)); }
+.sheet button { font: inherit; letter-spacing: inherit; text-transform: uppercase; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--ink); padding: 3px 12px; cursor: pointer; position: relative; }
+.phone-glass .sheet button { padding: 9px 12px; }
+@media (hover: hover) { .sheet button:hover { color: var(--paper); background: var(--ink); } }
+.sheet button.go::after { content: "›"; position: absolute; right: 10px; }
+.sheet .small { font-size: var(--fs-small); color: var(--ink-2); }
+.sheet .build { font-size: var(--fs-small); }
+.sheet .note { font-size: var(--fs-small); color: var(--ink-2); text-transform: none; letter-spacing: 0; }
+.sheet .dashed { border-style: dashed; }
+/* the volume, the sheet's one slider: a hairline and a square thumb */
+.vol { position: relative; height: 12px; }
+.vol::before { content: ""; position: absolute; left: 0; right: 0; top: 5.5px; border-top: 1px solid var(--ink); }
+.vol i { position: absolute; top: 0; width: 12px; height: 12px; box-sizing: border-box; background: var(--paper); border: 1px solid var(--ink); }
+.volrow { display: grid; grid-template-columns: max-content 1fr; gap: 12px; align-items: center; }
+.volrow .lab { font-size: var(--fs-small); }
+
+/* the pad's focus: four corner brackets in the accent, round the row */
+.f { position: relative; }
+.f::before { content: ""; position: absolute; inset: -5px; pointer-events: none;
+  --b: var(--accent);
+  background:
+    linear-gradient(var(--b), var(--b)) left top / 8px 2px no-repeat,
+    linear-gradient(var(--b), var(--b)) left top / 2px 8px no-repeat,
+    linear-gradient(var(--b), var(--b)) right top / 8px 2px no-repeat,
+    linear-gradient(var(--b), var(--b)) right top / 2px 8px no-repeat,
+    linear-gradient(var(--b), var(--b)) left bottom / 8px 2px no-repeat,
+    linear-gradient(var(--b), var(--b)) left bottom / 2px 8px no-repeat,
+    linear-gradient(var(--b), var(--b)) right bottom / 8px 2px no-repeat,
+    linear-gradient(var(--b), var(--b)) right bottom / 2px 8px no-repeat; }
+
+/* new words nobody has written yet: the owner's to name */
+.ph { text-decoration: underline dotted; text-underline-offset: 3px; }
+.ph::after { content: "*"; color: var(--ink-4); }
+
+/* A: the landing list. The section rows carry a count of what is behind them. */
+.sheet .crumb { font-size: var(--fs-small); color: var(--ink-4); margin-top: -6px; }
+
+/* B: tabs across the top, the one in force inverted as the boards mark a chosen thing */
+.tabs { display: flex; gap: 0; border: 1px solid var(--ink); }
+.tabs button { flex: 1 1 auto; border: 0; border-left: 1px solid var(--ink); padding: 3px 4px; font-size: var(--fs-small); }
+.tabs button:first-child { border-left: 0; }
+.tabs button.on { color: var(--paper); background: var(--ink); }
+.tabs .bump { flex: none; display: flex; align-items: center; padding: 0 4px; }
+.phone-glass .tabs button { padding: 8px 2px; }
+
+/* C: headings inside one page, the controls table's own heading rule */
+.sec { font-size: var(--fs-small); letter-spacing: calc(var(--track-m) * var(--track)); font-weight: bold; text-align: left;
+  border-bottom: 1px solid var(--ink); padding: 8px 0 3px; }
+.sec:first-of-type { padding-top: 0; }
+
+/* the controls table (today's grouped table, option B of the controls mock) */
+.ctl { display: grid; grid-template-columns: minmax(0, 1fr) min-content min-content; column-gap: 12px; text-align: left;
+  text-transform: none; letter-spacing: 0; }
+.ctl .head { grid-column: 1 / -1; font-size: var(--fs-small); text-transform: uppercase; letter-spacing: var(--track-m); font-weight: bold; border-bottom: 1px solid var(--ink); padding: 8px 0 3px; }
+.ctl .cell { padding: 4px 0; border-bottom: 1px solid var(--ink-8); display: flex; align-items: center; min-height: 22px; }
+.ctl .act { font-size: var(--fs-note); line-height: 1.25; }
+.ctl .m, .ctl .p { justify-content: center; white-space: nowrap; font-size: var(--fs-small); gap: 3px; }
+.ctl .none { color: var(--ink-5); }
+svg.g { display: block; flex: none; }
+.gi { fill: var(--ink); } .gp { fill: var(--paper); }
+.gs { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
+.gl { fill: none; stroke: var(--ink); stroke-width: 1; }
+.gt { font: bold 10px var(--face); text-anchor: middle; dominant-baseline: central; }
+.gt.sm { font-size: 8px; }
+.key { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 18px; box-sizing: border-box;
+  padding: 0 4px; border: 1px solid var(--ink); border-bottom-width: 3px; border-radius: 3px; font-weight: bold; font-size: 10px; }
+
+.notes { border-top: 1px solid var(--ink); padding-top: 14px; max-width: 92ch; }
+.notes li { margin-bottom: 6px; }
+table.inv { border-collapse: collapse; width: 100%; margin: 8px 0 18px; font-size: 11px; }
+table.inv th, table.inv td { border-bottom: 1px solid var(--ink-8); padding: 3px 8px 3px 0; text-align: left; vertical-align: top; }
+table.inv th { border-bottom: 1px solid var(--ink); font-size: var(--fs-small); text-transform: uppercase; letter-spacing: var(--track-s); }
+table.inv code { font-size: 11px; }
+.scroll-x { overflow-x: auto; }
+@media (max-width: 600px) { .desk-glass { height: auto; padding: 12px 0; } .desk-glass .sheet { width: calc(100% - 24px); } }
+</style>
+</head>
+<body>
+<h1>Settings, in sections</h1>
+<p class="intro">Three ways to break the settings page into <b>graphics</b>, <b>audio</b> and <b>controls</b> (the owner's three words). Every row is a row the game has today, with its own words (<code>locales/en.ftl</code>); "the two of you" is left out, since it is moving to the house board. One extra section was needed for the rows that are none of the three: it is drawn as <span class="ph">other</span> -- a dotted underline and * mark a name nobody has written yet. Each option is drawn on the held sheet at the desk's width and as the phone's sheet from the bottom; the purple corners are where a pad's focus stands. This page is drawn from plain shapes, not the game. Click the rows: A's sections open and go back, B's tabs switch.</p>
+<div class="top"><button id="theme">light / dark</button><span class="frame-label">today's sheet, for comparison: today-*.png beside this page</span></div>
+
+<section class="opt" id="A"><h2>A · A list of sections, each a page</h2>
+<p class="cap">Settings opens on a short list -- graphics, audio, controls, <span class="ph">other</span> -- and each opens its own page with its rows and a back. The controls page is the controls section itself: the touch switch over the grouped table. Back returns to the list; back on the list returns to the front.</p>
+<p class="path"><b>Pad:</b> front ↓ settings, <b>A</b> → the list (↓↑ between four rows) → <b>A</b> on a section → its rows (↓↑, ←→ on the volume) → <b>B</b> back to the list, the focus on the section you left → <b>B</b> to the front. Two presses deeper than today for every switch.</p>
+<div class="frames">
+  <div class="frame-wrap"><span class="frame-label">desk · the list</span><div class="desk-glass"><div class="sheet" data-opt="A" data-w="desk" data-at="list"></div></div></div>
+  <div class="frame-wrap"><span class="frame-label">desk · graphics, opened</span><div class="desk-glass"><div class="sheet" data-opt="A" data-w="desk" data-at="graphics"></div></div></div>
+  <div class="frame-wrap"><span class="frame-label">phone · the list</span><div class="phone-glass"><div class="sheet" data-opt="A" data-w="phone" data-at="list"></div></div></div>
+  <div class="frame-wrap"><span class="frame-label">phone · controls, opened</span><div class="phone-glass"><div class="sheet" data-opt="A" data-w="phone" data-at="controls"></div></div></div>
+</div></section>
+
+<section class="opt" id="B"><h2>B · Tabs across the top</h2>
+<p class="cap">One settings page; a strip of tabs under the word, the rows of the tab in force below it. The controls tab is the touch switch over the grouped table. One back at the foot goes to the front. The tab strip is the boards' marking: the chosen one inverted.</p>
+<p class="path"><b>Pad:</b> front ↓ settings, <b>A</b> → graphics, the focus on its first row → <b>LB / RB</b> turn the tab (the same buttons turn a board in the yard), the focus to the new tab's first row → ↓↑ rows, ←→ on the volume → <b>B</b> to the front. ↑ off the first row lands on the tab strip, where ←→ also turn it, so a keyboard gets there too.</p>
+<div class="frames">
+  <div class="frame-wrap"><span class="frame-label">desk · graphics</span><div class="desk-glass"><div class="sheet" data-opt="B" data-w="desk" data-at="graphics"></div></div></div>
+  <div class="frame-wrap"><span class="frame-label">desk · audio</span><div class="desk-glass"><div class="sheet" data-opt="B" data-w="desk" data-at="audio"></div></div></div>
+  <div class="frame-wrap"><span class="frame-label">phone · graphics</span><div class="phone-glass"><div class="sheet" data-opt="B" data-w="phone" data-at="graphics"></div></div></div>
+  <div class="frame-wrap"><span class="frame-label">phone · controls</span><div class="phone-glass"><div class="sheet" data-opt="B" data-w="phone" data-at="controls"></div></div></div>
+</div></section>
+
+<section class="opt" id="C"><h2>C · One page, with headings</h2>
+<p class="cap">Today's page with every row put under a heading, in the controls table's own heading style; the controls table sits inline under its heading rather than behind a button. Taller than the window on a phone and on a short desk: the page scrolls, as the controls page does today.</p>
+<p class="path"><b>Pad:</b> front ↓ settings, <b>A</b> → the first row → ↓↑ step every row in order, the headings skipped, the sheet scrolling to keep the focus in sight → ←→ on the volume → <b>B</b> to the front. (Optionally LB / RB jump to the next or last heading.) The controls table's rows are read, not pressed, so ↓ steps over them to back.</p>
+<div class="frames">
+  <div class="frame-wrap"><span class="frame-label">desk · top of the page</span><div class="desk-glass"><div class="sheet" data-opt="C" data-w="desk" data-at="top"></div></div></div>
+  <div class="frame-wrap"><span class="frame-label">desk · scrolled to controls</span><div class="desk-glass"><div class="sheet" data-opt="C" data-w="desk" data-at="ctl"></div></div></div>
+  <div class="frame-wrap"><span class="frame-label">phone · top</span><div class="phone-glass"><div class="sheet" data-opt="C" data-w="phone" data-at="top"></div></div></div>
+  <div class="frame-wrap"><span class="frame-label">phone · scrolled to controls</span><div class="phone-glass"><div class="sheet" data-opt="C" data-w="phone" data-at="ctl"></div></div></div>
+</div></section>
+
+<div class="notes"><b>Where every row goes</b> (the same in all three options)
+<div class="scroll-x"><table class="inv">
+<tr><th>row (message id)</th><th>does</th><th>shows today</th><th>section</th></tr>
+<tr><td>motion: full / less (<code>set-motion-full</code>, <code>set-motion-less</code>)</td><td>every fade and slide on or off; follows the system until pressed</td><td>pause sheet, title page</td><td>graphics</td></tr>
+<tr><td>dark: on / off (<code>set-dark-on</code>, <code>set-dark-off</code>)</td><td>white on black; a reload under the veil</td><td>pause sheet, title page</td><td>graphics</td></tr>
+<tr><td>fullscreen: on / off (<code>set-fullscreen-on</code>, <code>-off</code>)</td><td>the whole screen; hidden where the platform cannot (an iPhone)</td><td>pause sheet only; desk, browser, Android, iPad</td><td>graphics</td></tr>
+<tr><td>"for the whole screen, add this page to the home screen" (<code>set-fullscreen-note</code>)</td><td>stands in for the fullscreen row</td><td>pause sheet, iPhone only</td><td>graphics</td></tr>
+<tr><td>sound: on / off (<code>set-sound-on</code>, <code>set-sound-off</code>)</td><td>the mute</td><td>pause sheet, title page</td><td>audio</td></tr>
+<tr><td>volume slider (<code>set-volume</code>, its label)</td><td>a share of the designed level</td><td>pause sheet, title page (unstyled there: a native blue slider)</td><td>audio</td></tr>
+<tr><td>touch: on / off (<code>set-touch-on</code>, <code>set-touch-off</code>)</td><td>the hop, the bottom sheet and the tap gate; follows the pointer until pressed, so a phone reads "on"</td><td>pause sheet only</td><td>controls</td></tr>
+<tr><td>controls (<code>set-controlsbtn</code> / <code>title-controlsbtn</code>) and its page (<code>set-controls-word</code>, <code>ctl-*</code>)</td><td>the grouped table: action, mouse/keys, pad</td><td>pause sheet, title page</td><td>controls -- the section is the page</td></tr>
+<tr><td>language · English (<code>set-langbtn</code> / <code>title-langbtn</code>) and its page (<code>set-lang-word</code>)</td><td>a language a button; a pick is a reload</td><td>pause sheet, title page (also the title's foot link)</td><td><span class="ph">other</span> -- flag: fits none of the three</td></tr>
+<tr><td>feedback (<code>title-fbbtn</code>; page <code>title-fb-word</code>)</td><td>the comments form; only where the build has a worker</td><td>title page's settings only; on the pause sheet it is on the front (<code>held-fbbtn</code>)</td><td><span class="ph">other</span> on the title page -- flag: the two pages disagree today</td></tr>
+<tr><td>back (<code>set-settingsback</code> / <code>title-settingsback</code>)</td><td>to the front</td><td>both</td><td>foot of the page (A: on every page)</td></tr>
+<tr><td>build line (<code>#build</code>, the version)</td><td>which build</td><td>pause sheet (front and settings)</td><td>foot of the page, unsorted</td></tr>
+<tr><td>the two of you (<code>set-wardrobebtn</code>)</td><td>the picker</td><td>pause sheet</td><td>left out: moving to the house board</td></tr>
+</table></div>
+<b>Not settings today, left where they are:</b> saves, copy a save, load a save, the paste box and the cloud are the <i>saves</i> page off the front (both pages); achievements and the index are the front's; return to title and exit to desktop (the desk only) are the front's. A <span class="ph">saves</span> section was considered and left out -- it is already a page of its own one row up.
+<br><br><b>What the mock cannot show</b>
+<ul>
+<li>The real font, the page-turn fade, or the pad's brackets moving: the corners here are drawn on one row, still.</li>
+<li>Other languages: section names and tab names run longer in German or French; four tabs (B) on a phone are already at the small size and would wrap or need to scroll.</li>
+<li>The landing page's column (index.html): it is narrower than the held sheet and stands at the left. The same sections would go there; the column has no touch or fullscreen row today, so its graphics and controls are a row shorter.</li>
+<li>How the controls table grows when a pad has been seen (its pad column and pad-only rows are drawn here as if one has).</li>
+<li>The iPhone's graphics section, where the fullscreen row is the one-line note instead.</li>
+<li>A dev build's panel (backtick): it is not on the sheet and stays out of this.</li>
+</ul>
+<b>Flags</b>
+<ul>
+<li>Language fits none of the owner's three; it is drawn under a placeholder <span class="ph">other</span>. With "the two of you" gone it is the only row there on the pause sheet (plus feedback on the title page), so a section of one row -- the owner may prefer it under graphics, or a fourth word.</li>
+<li>A and B change the sheet's height page to page (audio is two rows, controls a table), and the desk's sheet is centered, so it would re-center as you turn; holding one height for every section (the tallest) would need deciding at build.</li>
+<li>Touch is sorted under controls (it changes how a press is taken), though what it changes is partly layout (the bottom sheet).</li>
+<li>The held sheet today is a one-pixel edge with no shadow (see today-*.png); the mock follows the shot rather than a two-pixel edge and hard shadow.</li>
+</ul></div>
+
+<script>
+// ---- glyphs, small svgs (the controls table) ----
+const svg = (w, h, inner) => `<svg class="g" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${inner}</svg>`;
+const G = {
+  face: L => svg(18, 18, `<circle cx="9" cy="9" r="8" class="gi"/><text x="9" y="9.5" class="gt gp">${L}</text>`),
+  bump: L => svg(26, 18, `<rect x="1" y="3" width="24" height="12" rx="6" class="gi"/><text x="13" y="9.5" class="gt sm gp">${L}</text>`),
+  trig: L => svg(22, 18, `<path d="M2 17V8Q2 1 8 1H14Q20 1 20 8V17Z" class="gi"/><text x="11" y="10" class="gt sm gp">${L}</text>`),
+  stick: L => svg(18, 18, `<circle cx="9" cy="9" r="8" class="gs"/><text x="9" y="9.5" class="gt sm gi">${L}</text>`),
+  dpad: () => svg(18, 18, `<path d="M6.5 1h5v5.5h5.5v5h-5.5v5.5h-5v-5.5h-5.5v-5h5.5z" class="gs"/>`),
+  mouse: b => {
+    let fill = "";
+    if (b === "l") fill = `<path d="M7 1.5A5.5 5.5 0 0 0 1.5 7V8H7Z" class="gi"/>`;
+    if (b === "r") fill = `<path d="M7 1.5A5.5 5.5 0 0 1 12.5 7V8H7Z" class="gi"/>`;
+    return svg(14, 18, `<rect x="1" y="1" width="12" height="16" rx="6" class="gs"/>${fill}<path d="M7 1.5V8M1.5 8H12.5" class="gl"/>`);
+  },
+};
+const CTL = [
+  ["interact", [["interact", G.mouse("l"), G.face("A")], ["hold for the hand: sweep and throw", "·", G.trig("RT")], ["back", "·", G.face("B")]]],
+  ["crew", [["focus workers", G.mouse("r"), G.trig("LT")], ["pick up workers", G.mouse("r") + "+" + G.mouse("l"), G.trig("LT") + "+" + G.face("A")]]],
+  ["camera", [["move camera", `<span class="key">←</span><span class="key">→</span>`, G.stick("R")]]],
+  ["boards", [["next or last board", "·", G.bump("LB") + G.bump("RB")], ["hold the yard", `<span class="key">esc</span>`, G.face("≡")]]],
+  ["travel", [["jump to a place", `<span class="key">1</span>–<span class="key">9</span>`, G.dpad()], ["move between places", "·", G.dpad()]]],
+];
+const ctlTable = () => {
+  let h = "";
+  for (const [g, rows] of CTL) {
+    h += `<div class="head">${g}</div>`;
+    for (const [a, m, p] of rows) h += `<div class="cell act">${a}</div><div class="cell m${m === "·" ? " none" : ""}">${m}</div><div class="cell p">${p}</div>`;
+  }
+  return `<div class="ctl">${h}</div>`;
+};
+
+// ---- the rows, each a section's, in today's words ----
+const vol = (lab) => `<div class="volrow">${lab ? `<span class="lab">volume</span>` : ""}<div class="vol"><i style="left:calc(80% - 6px)"></i></div></div>`;
+const btn = (t, cls = "") => `<button class="${cls}">${t}</button>`;
+const ROWS = (w) => ({
+  graphics: [btn("motion: full"), btn(w === "phone" ? "dark: on" : "dark: off"), btn("fullscreen: off")],
+  audio: [btn("sound: on"), vol(true)],
+  controls: [btn(w === "phone" ? "touch: on" : "touch: off"), ctlTable()],
+  other: [btn("language · English", "go"), btn("feedback", "dashed") + `<div class="note">feedback: the title page's settings only, as today</div>`],
+});
+const NAMES = { graphics: "graphics", audio: "audio", controls: "controls", other: `<span class="ph">other</span>` };
+const ORDER = ["graphics", "audio", "controls", "other"];
+const head = (w) => (w === "phone" ? `<div class="handle"></div>` : "");
+const foot = () => `<div class="build">v0.6.0</div>`;
+// put the focus brackets on the first focusable thing matching `sel`, or the nth button
+const focus = (html, n) => {
+  let i = -1;
+  return html.replace(/<button class="([^"]*)"/g, (m, c) => (++i === n ? `<button class="${c} f"` : m));
+};
+
+function A(w, at) {
+  const R = ROWS(w);
+  if (at === "list") {
+    const list = ORDER.map(k => `<button class="go">${NAMES[k]}</button>`).join("");
+    return head(w) + `<div class="word">settings</div>` + focus(list, 0) + btn("back") + foot();
+  }
+  const body = R[at].join("");
+  return head(w) + `<div class="word">${NAMES[at]}</div><div class="crumb">settings</div>` + focus(body, 0) + btn("back") + foot();
+}
+
+function B(w, at) {
+  const R = ROWS(w);
+  const short = w === "phone";
+  const tabs = `<div class="tabs">${short ? "" : `<span class="bump">${G.bump("LB")}</span>`}` +
+    ORDER.map(k => `<button data-tab="${k}" class="${k === at ? "on" : ""}">${NAMES[k]}</button>`).join("") +
+    `${short ? "" : `<span class="bump">${G.bump("RB")}</span>`}</div>`;
+  const body = R[at].join("");
+  return head(w) + `<div class="word">settings</div>` + tabs + focus(body, 0) + btn("back") + foot();
+}
+
+function C(w, at) {
+  const R = ROWS(w);
+  let h = head(w) + `<div class="word">settings</div>`;
+  for (const k of ORDER) h += `<div class="sec" data-sec="${k}">${NAMES[k]}</div>` + R[k].join("");
+  h += btn("back") + foot();
+  // the focus: the first row at the top; touch when scrolled to controls
+  return at === "top" ? focus(h, 0) : focus(h, 4);
+}
+
+const OPT = { A, B, C };
+function draw(el) {
+  const { opt, w, at } = el.dataset;
+  el.innerHTML = OPT[opt](w, at);
+  if (opt === "C" && at === "ctl") requestAnimationFrame(() => {
+    const s = el.querySelector('[data-sec="controls"]');
+    el.scrollTop = s.offsetTop - el.offsetTop - 8;
+  });
+}
+document.querySelectorAll(".sheet[data-opt]").forEach(draw);
+
+// A: a section opens its page and back returns to the list. B: a tab switches.
+document.addEventListener("click", e => {
+  const sheet = e.target.closest(".sheet[data-opt]");
+  if (!sheet) return;
+  const b = e.target.closest("button");
+  if (!b) return;
+  const { opt, at } = sheet.dataset;
+  if (opt === "A") {
+    if (at === "list") {
+      const i = [...sheet.querySelectorAll("button.go")].indexOf(b);
+      if (i >= 0) { sheet.dataset.at = ORDER[i]; draw(sheet); }
+    } else if (b.textContent === "back") { sheet.dataset.at = "list"; draw(sheet); }
+  }
+  if (opt === "B" && b.dataset.tab) { sheet.dataset.at = b.dataset.tab; draw(sheet); }
+});
+
+document.getElementById("theme").addEventListener("click", () => {
+  const r = document.documentElement;
+  const darkNow = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = darkNow ? "light" : "dark";
+});
+// ?theme=dark or ?theme=light, for the snapshots
+const q = new URLSearchParams(location.search).get("theme");
+if (q) document.documentElement.dataset.theme = q;
+</script>
+</body>
+</html>
