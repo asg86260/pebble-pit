@@ -74,7 +74,7 @@ export function drawBody(x, y, look = null) {
 // The same square squashed to two rows, its feet on the ground of a body
 // stood at (x, y): the crouch before a hop and the landing after it.
 export function drawSquat(x, y, look = null) {
-  if (look) dressBehind(ctx, x, y + P, look);
+  if (look) dressBehind(ctx, x, y + P, look, WORKER - P);
   square(x, y + P, WORKER, WORKER - P);
   if (!look) return false;
   dressOn(ctx, x, y + P, look, WORKER, WORKER - P);

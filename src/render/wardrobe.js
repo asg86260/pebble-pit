@@ -75,27 +75,55 @@ const BACKS = {
   },
 };
 
-// A scarf's tail, out the back: streaming as the body walks, hanging when it
-// stands.
-function scarfTail(g, kind, x, y, l, k) {
-  const cells = [];
+// A mark `rx` world pixels in from the body's left facing right, `w` wide,
+// read the other way round the body for a body facing left.
+const across = (x, l, rx, w) => x + (l.dir < 0 ? WORKER - rx - w : rx);
+
+// Rows of WARD_UNIT marks off a body facing right, its top-left (ox, oy) in
+// units from the body's, mirrored for a body facing left; as [x, y, w, h]
+// world pixels off the body's top-left, facing right.
+function unitRects(rows, ox, oy) {
+  const out = [];
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch !== '.') out.push([(ox + c) * WARD_UNIT, (oy + r) * WARD_UNIT, WARD_UNIT, WARD_UNIT]);
+  }));
+  return out;
+}
+
+// The scarf's tone a unit along it, from the band out.
+const scarfTone = (kind, i, k) => i % 2 ? (kind === 'check' ? k.grey : kind === 'stripe' ? k.paper : k.ink) : k.ink;
+// How far each unit of a scarf's streaming tail lifts, a pose each.
+const SCARF_WAVE = [[0, 0, 1, 1, 0, 0, -1, -1, 0], [0, 0, 0, 1, 1, 1, 0, 0, -1]];
+
+// How far the neck's marks ride up on a body squashed below its height (the
+// crouch), a unit for every cell, so the band stays on the squashed middle
+// rather than being clipped off it.
+const neckSink = h => (h - WORKER) / P * WARD_UNIT;
+
+// A scarf's tail, out the back from the band: two units wide, hanging to the
+// floor with its end kicked back when the body stands; a unit wide, streaming
+// in a wave as the body walks.
+function scarfTail(g, nk, x, y, l, k, h) {
+  const kind = nk.tail, band = nk.grid.findIndex(r => r.replace(/\./g, ''));
+  const U = WARD_UNIT, by = y + BODY_RIM + band * U + neckSink(h), floor = y + h;
   if (l.moving) {
-    const lift = pose(l.t, WARD_STEP_HZ) ? [0, 0, -1] : [0, 1, 0];
-    for (let i = 0; i < 3; i++) cells.push([k.bx + k.d * i * P, y + P + lift[i] * P]);
-  } else cells.push([k.bx, y + P], [k.bx, y + 2 * P]);
-  cells.forEach(([cx, cy], i) => {
-    cell(g, cx, cy, kind === 'check' && i % 2 ? k.grey : k.ink);
-    if (kind === 'stripe') fill(g, cx + 2, cy, 2, P, k.paper);
-  });
+    const wave = SCARF_WAVE[pose(l.t, WARD_STEP_HZ)];
+    wave.forEach((lift, i) => fill(g, across(x, l, -(i + 1) * U, U), by + lift * U, U, 2 * U, scarfTone(kind, i, k)));
+    return;
+  }
+  const n = Math.max(0, (floor - by) / U);
+  for (let i = 0; i < n; i++) fill(g, across(x, l, -2 * U, 2 * U), by + i * U, 2 * U, U, scarfTone(kind, i, k));
+  fill(g, across(x, l, -3 * U, U), floor - U, U, U, scarfTone(kind, n, k));
 }
 
 const sides = (x, l) => ({ d: l.dir > 0 ? -1 : 1, bx: l.dir > 0 ? x - P : x + WORKER });
 
-export function dressBehind(g, x, y, l) {
+// `h` the body's height, short of WORKER when it is squashed (the crouch).
+export function dressBehind(g, x, y, l, h = WORKER) {
   const o = l.outfit, k = { ...l.inks, ...sides(x, l) };
   if (l.back !== false && BACKS[o.back]) BACKS[o.back](g, x, y, l, k);
   const nk = itemOf('neck', o.neck);
-  if (nk && nk.tail) scarfTail(g, nk.tail, x, y, l, k);
+  if (nk && nk.tail) scarfTail(g, nk, x, y, l, k, h);
 }
 
 // --- on the body's middle ------------------------------------------------------------
@@ -131,7 +159,7 @@ export function dressOn(g, x, y, l, w = WORKER, h = WORKER) {
   // On a dark fill the marks are drawn in the paper, and the grey in the pale.
   const on = pat && pat.dark ? k.paper : k.ink, grey = pat && pat.dark ? k.pale : k.grey;
   if (face && face.grid) grid(g, face.grid, ix, iy, l.dir, on, grey);
-  if (neck && neck.grid) grid(g, neck.grid, ix, iy, l.dir, on, grey);
+  if (neck && neck.grid) grid(g, neck.grid, ix, iy + neckSink(h), l.dir, on, grey);
   g.restore();
 }
 
@@ -144,7 +172,8 @@ export function dressHead(g, x, y, l) {
   if (!it || (!it.rows && !it.rects)) return false;
   const ink = l.inks.ink;
   if (it.rects) {
-    for (const [rx, ry, rw, rh] of it.rects) fill(g, x + (l.dir < 0 ? WORKER - rx - rw : rx), y + ry, rw, rh, ink);
+    for (const [rx, ry, rw, rh] of it.rects) fill(g, across(x, l, rx, rw), y + ry, rw, rh, ink);
+    if (it.ribbon) for (const [rx, ry, rw, rh] of ribbonTails(l)) fill(g, across(x, l, rx, rw), y + ry, rw, rh, ink);
     return true;
   }
   const w = widthOf(it.rows);
@@ -161,6 +190,15 @@ export function dressHead(g, x, y, l) {
   return true;
 }
 
+// A ribbon's two tails off the back of the head: hanging down the body's back
+// when it stands, streaming out behind the head as it walks.
+const RIBBON_HANG = unitRects(['##', '#.', '##', '.#', '.#', '#.'], -2, -1);
+const RIBBON_STREAM = [
+  [...unitRects(['......', '######', '......'], -6, -1), ...unitRects(['......', '......', '######'], -6, 0)],
+  [...unitRects(['..####', '##....', '......'], -6, -1), ...unitRects(['......', '...###', '###...'], -6, 0)],
+];
+const ribbonTails = l => l.moving ? RIBBON_STREAM[pose(l.t, WARD_STEP_HZ)] : RIBBON_HANG;
+
 // How many cells over the head the chosen head item stands, for what is
 // carried over it.
 export function headRows(l) {
@@ -172,6 +210,13 @@ export function headRows(l) {
 // on its side at the body's left end, its top pointing away.
 export function dressFlat(g, left, top, l) {
   const it = itemOf('head', l.outfit.head);
+  if (it && it.rects) {
+    // Turned a quarter, up the body left along the ground and across it down:
+    // what stands over the head, and a ribbon's tails.
+    const laid = [...it.rects.filter(r => r[1] < 0), ...(it.ribbon ? RIBBON_HANG : [])];
+    for (const [rx, ry, rw, rh] of laid) fill(g, left + ry, top + rx, rh, rw, l.inks.ink);
+    return laid.length > 0;
+  }
   if (!it || !it.rows) return false;
   const n = it.rows.length, w = widthOf(it.rows);
   const y0 = top + P - Math.floor(w / 2) * P;

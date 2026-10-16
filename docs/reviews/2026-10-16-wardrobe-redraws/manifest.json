@@ -1,0 +1,54 @@
+[
+  {
+    "slot": "neck",
+    "key": "scarf",
+    "name": "scarf",
+    "before": "neck-scarf-before.png",
+    "after": "neck-scarf-after.png",
+    "afterLeft": "neck-scarf-after-left.png"
+  },
+  {
+    "slot": "neck",
+    "key": "checked-scarf",
+    "name": "checked scarf",
+    "before": "neck-checked-scarf-before.png",
+    "after": "neck-checked-scarf-after.png",
+    "afterLeft": "neck-checked-scarf-after-left.png"
+  },
+  {
+    "slot": "neck",
+    "key": "striped-scarf",
+    "name": "striped scarf",
+    "before": "neck-striped-scarf-before.png",
+    "after": "neck-striped-scarf-after.png",
+    "afterLeft": "neck-striped-scarf-after-left.png"
+  },
+  {
+    "slot": "head",
+    "key": "bow",
+    "name": "bow",
+    "before": "head-bow-before.png",
+    "after": "head-bow-after.png",
+    "afterLeft": "head-bow-after-left.png"
+  },
+  {
+    "walk": "scarf",
+    "file": "walk-scarf.gif",
+    "what": "walking right, standing, walking left, standing; 12 fps of game time"
+  },
+  {
+    "walk": "checked-scarf",
+    "file": "walk-checked-scarf.gif",
+    "what": "walking right, standing, walking left, standing; 12 fps of game time"
+  },
+  {
+    "walk": "striped-scarf",
+    "file": "walk-striped-scarf.gif",
+    "what": "walking right, standing, walking left, standing; 12 fps of game time"
+  },
+  {
+    "walk": "bow",
+    "file": "walk-bow.gif",
+    "what": "walking right, standing, walking left, standing; 12 fps of game time"
+  }
+]

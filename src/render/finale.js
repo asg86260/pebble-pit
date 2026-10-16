@@ -91,7 +91,7 @@ const WHO = ['sqouse', 'you'], KEYS = [{}, {}];
 // A body drawn by one of the shapes below, with what it wears round it; the
 // square of (WORKER, h) stood with its top-left at (x, y).
 function dressed(x, y, look, draw, h = WORKER) {
-  if (look) dressBehind(ctx, x, y, look);
+  if (look) dressBehind(ctx, x, y, look, h);
   draw();
   if (look) { dressOn(ctx, x, y, look, WORKER, h); dressHead(ctx, x, y, look); }
   ctx.fillStyle = INK;

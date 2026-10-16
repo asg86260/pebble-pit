@@ -30,10 +30,13 @@ import { CREW_NAMES } from './crew/names.js';
 // what it is drawn from. Head items are whole cells on the body's top --
 // `rows` with their bottom row on it, `ox` cells in from the body's left
 // (centered when not given) -- or `rects`, world pixels off the body's
-// top-left, drawn facing right and mirrored for a body facing left.
+// top-left, drawn facing right and mirrored for a body facing left. `ribbon`
+// hangs two tails down the body's back (render/wardrobe.js, `ribbonTails`).
 export const HEAD = [
   { key: 'none', name: 'ward-none' },
-  { key: 'bow', name: 'ward-bow', rows: ['##.##', '#####', '##.##'] },
+  // a small bow on top, the owner's pick at the redraws (option C)
+  { key: 'bow', name: 'ward-bow', rects: [[2, -6, 4, 2], [12, -6, 4, 2], [2, -4, 2, 2], [6, -4, 6, 2], [14, -4, 2, 2],
+                                          [2, -2, 4, 2], [12, -2, 4, 2]], ribbon: true },
   { key: 'top-hat', name: 'ward-top-hat', rows: ['.###.', '.###.', '#####'] },
   { key: 'crown', name: 'ward-crown', rows: ['#.#.#', '#####'] },
   { key: 'flower', name: 'ward-flower', rows: ['.#.', '#.#', '.#.', '.#.'] },
@@ -65,13 +68,15 @@ export const FACE = [
 ];
 
 // Neck: marks on the lower half of the middle, and for the scarves a tail out
-// the back. The necklace and the bandana were cut at the vote ("they look
-// like underwear"); the bowtie, tie, collar and medal at the item review.
+// the back: a band two rows deep low on the chest, its tail to the floor (the
+// owner's pick at the redraws, option B). The necklace and the bandana were
+// cut at the vote ("they look like underwear"); the bowtie, tie, collar and
+// medal at the item review.
 export const NECK = [
   { key: 'none', name: 'ward-none' },
-  { key: 'scarf', name: 'ward-scarf', grid: ['', '', '', '#######'], tail: 'solid' },
-  { key: 'checked-scarf', name: 'ward-checked-scarf', grid: ['', '', '', '#g#g#g#'], tail: 'check' },
-  { key: 'striped-scarf', name: 'ward-striped-scarf', grid: ['', '', '', '#.#.#.#'], tail: 'stripe' },
+  { key: 'scarf', name: 'ward-scarf', grid: ['', '', '', '', '#######', '#######'], tail: 'solid' },
+  { key: 'checked-scarf', name: 'ward-checked-scarf', grid: ['', '', '', '', '#g#g#g#', 'g#g#g#g'], tail: 'check' },
+  { key: 'striped-scarf', name: 'ward-striped-scarf', grid: ['', '', '', '', '#.#.#.#', '#.#.#.#'], tail: 'stripe' },
 ];
 
 // Back: off the side away from the way the body faces, drawn by key
