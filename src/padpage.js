@@ -154,18 +154,23 @@ export function keepFocus(sc, t) {
 // The one rule for every d-pad press, on a page's rows, the yard's stops, the
 // coil and the bodies alike (the owner, 2026-10-15: "things should just jump
 // to the nearest thing that direction"): of the things whose middle stands
-// ahead of `from` that way, the least of how far ahead plus PAD_ACROSS times
-// how far off the line, so a thing straight below beats one nearer but off
-// to the side. No cone: anything in that half of the glass can be the
-// answer, so nothing that stands is left with no way to it. `items` are
-// { x, y } middles, with whatever else the caller wants back.
+// past the edge of `from` that way, the least of how far past plus
+// PAD_ACROSS times how far off its middle line, so a thing straight below
+// beats one nearer but off to the side. Past the edge, not the middle: a
+// thing standing over this one is up from it, never left for being a few
+// pixels that side. No cone: anything in that part of the glass can be the
+// answer, so nothing that stands is left with no way to it. `from` is a box
+// ({ x, y, w, h }, top-left; a point has no w and h); `items` are { x, y }
+// middles, with whatever else the caller wants back.
 const DIRS = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 export function pickToward(from, dir, items) {
   const [dx, dy] = DIRS[dir];
+  const hw = (from.w || 0) / 2, hh = (from.h || 0) / 2;
+  const cx = from.x + hw, cy = from.y + hh;
   let best = null, score = Infinity;
   for (const it of items) {
-    const ex = it.x - from.x, ey = it.y - from.y;
-    const ahead = ex * dx + ey * dy;
+    const ex = it.x - cx, ey = it.y - cy;
+    const ahead = ex * dx + ey * dy - (dx ? hw : hh);
     if (ahead <= 1) continue;
     const s = ahead + PAD_ACROSS * Math.abs(ex * dy + ey * dx);
     if (s < score) { score = s; best = it; }
@@ -186,8 +191,8 @@ export function move(sc, dir) {
     on.dispatchEvent(new Event('change', { bubbles: true }));
     return true;
   }
-  const c = center(on.getBoundingClientRect());
-  const best = pickToward(c, dir, list.filter(el => el !== on).map(el => ({ ...center(el.getBoundingClientRect()), el })));
+  const a = on.getBoundingClientRect();
+  const best = pickToward({ x: a.left, y: a.top, w: a.width, h: a.height }, dir, list.filter(el => el !== on).map(el => ({ ...center(el.getBoundingClientRect()), el })));
   if (!best) return false;
   focusEl(best.el);
   return true;
@@ -249,10 +254,12 @@ export function paintPage(t, live) {
   const u = m.unit;
   const cells = bracketCells(m.r, m.out, u, PAD_ARM_MIN, PAD_ARM_MAX);
   sheetCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  sheetCtx.globalAlpha = m.alpha;
   sheetCtx.fillStyle = PAD_HALO;
   for (const [x, y] of haloCells(cells)) sheetCtx.fillRect(x * u, y * u, u, u);
   sheetCtx.fillStyle = PAD_ACCENT;
   for (const [x, y] of cells) sheetCtx.fillRect(x * u, y * u, u, u);
+  sheetCtx.globalAlpha = 1;
   wiped = false;
   if (!asked && m.landed && t - since >= PAD_TIP_MS) { asked = true; hover(on, 'in'); }
 }

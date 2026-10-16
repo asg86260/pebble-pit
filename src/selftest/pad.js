@@ -280,7 +280,7 @@ export const TESTS = [
   // The owner, 2026-10-15: "i cant get from the serpent to the portal to the
   // top corner buttons." Up off the top of the yard is the corner's row
   // nearest the thing below, and down off the corner's last row is the yard.
-  ['pad: up from the serpent reaches the portal and then a corner button, and down comes back', async () => {
+  ['pad: the serpent is up from a station, a corner button up from there, and down comes back', async () => {
     window.__fullSites();
     window.__snatch({ played: true });
     window.__crew(0, 4);
@@ -293,7 +293,7 @@ export const TESTS = [
     try {
       await press('b');
       await hopTo('st:s1');
-      await press('up');
+      for (let i = 0; i < 4 && !(window.__pad.focus() || '').startsWith('coil|'); i++) await press('up');
       const coil = window.__pad.focus();
       const path = [coil];
       for (let i = 0; i < 8 && window.__pad.scope() !== 'corner'; i++) {
@@ -305,7 +305,7 @@ export const TESTS = [
       for (let i = 0; i < 6 && window.__pad.scope() === 'corner'; i++) await press('down');
       const back = window.__pad.scope();
       return [
-        ok(coil && coil.startsWith('coil|'), 'up from a station is the serpent', coil),
+        ok(coil && coil.startsWith('coil|'), 'up from a station reaches the serpent', coil),
         ok(inCorner, 'and up from there reaches a corner button', `${path.join(' > ')} ${el && el.id}`),
         ok(back === null, 'and down off the corner is the yard again', `${back} ${window.__pad.focus()}`),
       ];

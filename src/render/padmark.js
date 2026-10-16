@@ -14,20 +14,23 @@ import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { darkPage, turned } from '../ink.js';
 import { markAt, bracketCells, haloCells } from '../padglide.js';
-import { skippable } from '../skip.js';
 
 const seen = c => (darkPage ? turned(c) : c);
 
+// Drawn whenever padglide.js has a mark, a fading one included: put away (a
+// mouse move, the held sheet, a scene), it fades out where it stood.
 export function drawPadMark() {
-  if (!S.padOn || S.paused || skippable()) return;
   const m = markAt(performance.now());
-  if (!m || m.space !== 'yard' || !m.r) return;
+  if (!m || m.space !== 'yard' || !m.r || !(m.alpha > 0)) return;
   const deep = S.view === 'deep';
   const cells = bracketCells(m.r, m.out, m.unit, PAD_ARM_MIN, PAD_ARM_MAX);
   const u = m.unit;
+  const was = ctx.globalAlpha;
+  ctx.globalAlpha = was * m.alpha;
   ctx.fillStyle = deep ? seen(PAD_DEEP_HALO) : PAD_HALO;
   for (const [x, y] of haloCells(cells)) ctx.fillRect(x * u, y * u, u, u);
   ctx.fillStyle = deep ? seen(PAD_DEEP_ACCENT) : PAD_ACCENT;
   for (const [x, y] of cells) ctx.fillRect(x * u, y * u, u, u);
+  ctx.globalAlpha = was;
   ctx.fillStyle = '#000';
 }

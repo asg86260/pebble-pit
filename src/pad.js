@@ -207,6 +207,7 @@ function land(it, from) {
   if (it.seg == null) { setFocus(it.id, true); return; }
   seg = it.seg;
   if (!(S.padFocus || '').startsWith('coil|')) setFocus(`coil|${from}`);
+  if (!onGlassX({ x: it.x - 1, y: it.y, w: 2, h: 2 })) lookTo(it.x);
 }
 // Up past the top of the yard: the corner cards over it, the row nearest the
 // thing the focus stood on. Down from there comes back (`pagePresses`).
@@ -239,8 +240,12 @@ function hop(dir) {
   if (!onCoil && (!cur || !onGlassX(cur.r))) { const s = nearestStop(); if (s) setFocus(s.id); return; }
   // Down into a station's own controls first: they stand inside it.
   if (!onCoil && dir === 'down') { const rows = innerRows(cur); if (rows.length) { setFocus(rows[0][0].id); return; } }
-  const from = onCoil ? coilAt(Math.round(seg), now()) : mid(cur.r);
-  const it = pickToward(from, dir, places().filter(p => (onCoil ? p.seg !== Math.round(seg) : p.id !== id)));
+  const from = onCoil ? coilAt(Math.round(seg), now()) : cur.r;
+  // The coil is one thing, lying along the deep: left and right travel it,
+  // segment by segment, and up and down leave it for what stands over or
+  // under it, as a press leaves any other thing.
+  const across = dir === 'up' || dir === 'down';
+  const it = pickToward(from, dir, places().filter(p => (onCoil ? (across ? p.seg == null : p.seg !== Math.round(seg)) : p.id !== id)));
   if (it) { land(it, onCoil ? parentOf(id) : id); return; }
   // Nothing over it: up past the top of the yard is the corner cards, so
   // every stop and the corner are a path of presses from every other.
@@ -356,6 +361,7 @@ function sleep() {
   S.padOn = false;
   document.body?.classList?.remove('pad');
   dropFocus();
+  aim(null);                // the yard's marker fades out where it stood
   showTipAt(null);
 }
 addEventListener('pointermove', e => { if (e.isTrusted && e.pointerType !== 'touch') sleep(); }, true);
@@ -539,7 +545,7 @@ function yardPresses(p, dirs, pressed, released, lx, ly, dt) {
   if (sight) {
     for (const d of dirs) {
       const r = focusBox();
-      const w = nearestBody(r ? mid(r) : { x: S.camX + S.viewW / 2, y: S.groundY }, d);
+      const w = nearestBody(r || { x: S.camX + S.viewW / 2, y: S.groundY }, d);
       if (w) focusBody(w);
     }
     if (pressed('a') && S.padFocus === 'body' && body && lift(body)) {
@@ -626,7 +632,9 @@ export function paintPad(t = performance.now()) {
     id = carried ? 'carry' : 'hand';
   } else {
     box = focusBox();
-    id = S.padFocus === 'body' ? `body:${S.workers.indexOf(body)}` : S.padFocus;
+    // A segment of the coil is a place of its own, so a hop along it glides.
+    id = S.padFocus === 'body' ? `body:${S.workers.indexOf(body)}`
+       : (S.padFocus || '').startsWith('coil|') ? `${S.padFocus}#${Math.round(seg)}` : S.padFocus;
   }
   aim(id, box, 'yard', t);
   const m = markAt(t);

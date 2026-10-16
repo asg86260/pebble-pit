@@ -49,19 +49,22 @@ function replay(start, path) {
 // while the serpent is there to be struck.
 function middles() {
   const half = S.view === 'deep' ? 'deep' : 'yard';
-  const out = stops(half).map(s => ({ id: s.id, x: s.r.x + s.r.w / 2, y: s.r.y + s.r.h / 2 }));
+  const out = stops(half).map(s => ({ id: s.id, x: s.r.x + s.r.w / 2, y: s.r.y + s.r.h / 2, hw: s.r.w / 2, hh: s.r.h / 2 }));
   if (half === 'deep' && S.snatched && !S.serpentFreed)
-    for (let i = 0; i < COIL_SEGS; i++) { const p = coilAt(i, now()); out.push({ id: `coil#${i}`, x: p.x, y: p.y }); }
+    for (let i = 0; i < COIL_SEGS; i++) { const p = coilAt(i, now()); out.push({ id: `coil#${i}`, x: p.x, y: p.y, hw: 0, hh: 0 }); }
   return out;
 }
-// The nearest that way: ahead of it, least ahead plus PAD_ACROSS times off.
+// The nearest that way: its middle past this one's edge that way, the least
+// distance past plus PAD_ACROSS times its distance off the middle line.
 function nearest(fromId, dir, list) {
   const from = list.find(m => m.id === fromId);
   const [ux, uy] = V[dir];
   let best = null, score = Infinity;
+  // The coil is one thing: up and down leave it, left and right travel it.
+  const leaving = fromId.startsWith('coil#') && !ux;
   for (const m of list) {
-    if (m === from) continue;
-    const dx = m.x - from.x, dy = m.y - from.y, ahead = dx * ux + dy * uy;
+    if (m === from || (leaving && m.id.startsWith('coil#'))) continue;
+    const dx = m.x - from.x, dy = m.y - from.y, ahead = dx * ux + dy * uy - (ux ? from.hw : from.hh);
     if (ahead <= 1) continue;
     const s = ahead + PAD_ACROSS * Math.abs(dx * uy + dy * ux);
     if (s < score) { score = s; best = m; }

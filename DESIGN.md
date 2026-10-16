@@ -18415,10 +18415,14 @@ crit's rumble exists at all.
   2026-10-15; Y is unbound since.
 - **Every press goes to the nearest thing that way** (the owner, 2026-10-15:
   "things should just jump to the nearest thing that direction"): of the
-  things whose middle stands ahead, the least of distance ahead plus
-  `PAD_ACROSS` (2) times distance off the line, with no cone (`pickToward`,
-  padpage.js). One rule for the yard's stops, the coil's segments in the
-  deep, the bodies under sight, and a page's rows. Up with nothing over the
+  things whose middle stands past the focused box's edge that way, the least
+  of distance past it plus `PAD_ACROSS` (2) times distance off the middle
+  line, with no cone (`pickToward`, padpage.js). Past the edge rather than
+  the middle, so a thing standing over another is up from it, never "left"
+  for being a few pixels that side. One rule for the yard's stops, the coil
+  in the deep, the bodies under sight, and a page's rows. The coil is one
+  thing lying along the deep: its segments are candidates from a stop, left
+  and right travel it, and up and down leave it. Up with nothing over the
   focus is the corner cards, the row nearest it; down off their last row is
   the yard again, so every stop and the corner are a path of presses from
   every other (test/pad-reach.test.mjs). Kept apart from the rule: down
@@ -18431,6 +18435,15 @@ crit's rumble exists at all.
   mouse and the left onto the wheel (electron/steam-input/).
 - **Reduced motion**: the marker is there at once and does not breathe, as
   the camera is there at once.
+- **The idle breath** (the owner's vote, 2026-10-15, option A of
+  docs/mocks/focus-idle-2026-10-15/): once landed, all four corners step a
+  cell out together and back, each pose held `PAD_BREATH_MS` (0.5 s), whole
+  cells, from rest on every arrival. The keyboard's focus brackets
+  (focusmark.js) breathe by the same count (`breathOut`, padglide.js).
+- **Fade, never pop**: the marker fades in over `PAD_FADE_MS` when it comes
+  up from nothing or crosses from the yard to a page, and fades out where it
+  stood when it is put away (a mouse move, the held sheet, a scene). A hop
+  along the coil is a glide of its own, since each segment is a place.
 - **The controls page** gains a pad column once a pad has been seen in the
   session, and rows for what the pad does that the mouse has no row for;
   those rows' words are the owner's, placeholders until written

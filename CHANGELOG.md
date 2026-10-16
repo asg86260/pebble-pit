@@ -182,6 +182,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A feedback page on the pause sheet under settings, off settings on the title page, and under copy save when the game stops, sends your words and, if you tick it, your save (test/feedback.test.mjs).
 - On a gamepad, X hands back a queued copy (it was Y, which now does nothing) (src/selftest/pad.js, "X on a card with a copy waiting").
 - On a gamepad, every d-pad press goes to the nearest thing in that direction, in the yard, the deep, the boards and the sheets alike (test/pad-reach.test.mjs).
+- The focus brackets breathe a cell out and back while they sit still, from rest on each arrival, and the gamepad's fade in and out instead of popping.
 
 - The decimal point in counts has room around it, so 86.1k no longer reads as 861k (test/serpent-numbers.test.mjs).
 - The index reads as short descriptions in one list with no headings, and the clouds, rain, lightning, objective, rescue, cutscene and sqhusband entries are gone (test/index.test.mjs).
@@ -194,7 +195,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A yard already past the serpent retires the sqhusband along with her, instead of leaving him on the crew (test/finale.test.mjs).
 - With several things being built at once, finishing one no longer pulls a builder off another site and walks a different one across the yard to take its place (test/build-throughput.test.mjs).
 - The store links on the demo's and teaser's last sheets are drawn as buttons like "keep playing", no longer a blue underlined link (src/selftest/ending.js, "the store links ... drawn as the sheet buttons").
-- On a gamepad the d-pad gets from the serpent to the portal and up to the corner buttons, and down from the corner back to the yard (test/pad-reach.test.mjs; src/selftest/pad.js, "up from the serpent reaches the portal").
+- On a gamepad the d-pad gets from the serpent to the portal and up to the corner buttons, and down from the corner back to the yard (test/pad-reach.test.mjs; src/selftest/pad.js, "the serpent is up from a station").
 
 - The rift's tearing and the pit's drowning wait for the camera to arrive before they happen, and a long pan to them is slower, no longer a whip across the yard (test/pit-arc.test.mjs).
 - A shield's rock waits in the sky until the camera has finished gliding to the shield (test/cutscene.test.mjs).
