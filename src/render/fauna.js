@@ -17,7 +17,7 @@ import { TONE, greyAt, purpleAt } from './deeptones.js';
 import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow } from './deep.js';
 import { COLS, ROWS, faunaOut, unit, unit2, schoolAt, frameOf, reachOf, addScare, scareOffset,
-         clearScares, SCARES, bolting, faunaPose, poseInset, heightOf, zoneHere, waterTop, glideWaterTop, eatenNow, faunaFade } from '../deep/fauna.js';
+         clearScares, SCARES, bolting, faunaPose, poseInset, heightOf, zoneHere, waterTop, glideWaterTop, eatenNow } from '../deep/fauna.js';
 import { coilAt, bellyAt } from '../deep/place.js';
 import { lashK, breaking } from '../deep/phases.js';
 
@@ -220,10 +220,7 @@ export function drawDeepFauna() {
     const p = faunaPose(c, t), reach = reachOf(c) + FAUNA_SCARE.break.push + K.far;
     if (p.x + reach < left || p.x - reach > right) continue;
     // the dim of the zone it is crossing, not the one it set out from
-    const dim = zoneHere(c.kind, p.y).dim, fade = faunaFade(c, t);
-    if (fade <= 0) continue;
-    // one let into an eaten slot fades in, never pops (FAUNA_REFILL)
-    ctx.globalAlpha = fade;
+    const dim = zoneHere(c.kind, p.y).dim;
     // The smear: on the frame a table marks for it, where it was a moment
     // ago drawn under it, darker, if it has come far enough since.
     if (p.r && p.r.smear) {
@@ -237,7 +234,6 @@ export function drawDeepFauna() {
       for (const age of p.r.silt) silt(mid, bed, age);
     }
   }
-  ctx.globalAlpha = 1;
   ctx.imageSmoothingEnabled = smooth;
   ctx.fillStyle = '#000';
 }

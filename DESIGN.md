@@ -17195,10 +17195,14 @@ warning they can read, not a swimmer to watch for.
 - **The creature leaves the walk, nothing teleports.** Taken, its slot is held
   off the walk (`holdSlot` in `deep/fauna.js`): it is not drawn and not
   clicked, and the orb draws it. As the haul begins (`S.mealGo.freed`) the
-  slot lets its next kind in, faded in over `FAUNA_REFILL.fade` somewhere in
-  the water rather than from beyond an end: at the deep's paces one coming in
-  at an end took longer than a window to reach the glass, and the meal took
-  each newcomer at the edge, so the deep ran a swimmer or two short. A new
+  slot lets its next kind in, swimming in at its own pace from just off the
+  side of the glass away from the mouth (the camera's view, or the deep's rest
+  view from the yard), `FAUNA_REFILL.off` cells out of sight, rather than from
+  beyond an end: at the deep's paces one coming in at an end took longer than
+  a window to reach the glass, and the meal took each newcomer at the edge, so
+  the deep ran a swimmer or two short. Nothing fades in (the owner,
+  2026-10-16). The meal passes a newcomer over for `FAUNA_REFILL.grace`
+  seconds while it has anyone else to take. A new
   page with the orb already hauling holds and lets go whichever slot set out
   as its kind. The holds
   are the walk's only input besides its seeds, so the walk stays a function of

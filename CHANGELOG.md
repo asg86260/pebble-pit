@@ -44,7 +44,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The deep's water is black, on the dark theme as on the light, with half the purple stars and motes in it, dimmer.
 - A swell rolls through the deep's water: one wide wave at a time, some gentle and some strong, pushes the stars and silt right and lifts them, and they ease back (`node tools/look.mjs deep-wave`).
 - The deep keeps three creatures at once, each swimming the whole height of the water the window shows, top to just over the floor, and each time one swims off the end the next kind comes in, so every swimmer turns up in its turn; each sets out and comes in at a random height anywhere in the water, so a reload finds them spread top to bottom (test/deep-fauna.test.mjs).
-- The serpent's meals no longer empty the deep: a creature it eats is replaced at once by the next one fading in, so the water keeps its three (test/fauna-refill.test.mjs).
+- The serpent's meals no longer empty the deep: a creature it eats is replaced at once by the next one swimming in from just off the side of the screen, never fading in, so the water keeps its three (test/fauna-refill.test.mjs).
 - After the serpent dies she hangs her gear on her station for one of the deep's crew to take up, and the two of them go home through the portal and down the whole yard with everyone falling in behind, to a house the builders put up during the walk, where they live for good (test/finale.test.mjs).
 - The finale's crowd hops in held poses without flickering on and off, the quarry and the hill come and join it, and no firework opens as a hollow box (test/finale.test.mjs).
 - Refreshing the page during the finale brings its closing sheet up at once instead of a moment later (test/finale.test.mjs).

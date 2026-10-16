@@ -10,8 +10,9 @@
 // began, so a reload finds it where it was: the creature's kind and the spot
 // the orb closed on are written down, and the creature is kept off the new
 // page's walk (`settleMeal`). Its slot is held empty only until the haul
-// begins (`freed`); then the slot's next kind fades in (FAUNA_REFILL), so the
-// deep keeps its turns through the meals. Where the orb is at a moment is read
+// begins (`freed`); then the slot's next kind swims in from just off the side
+// of the glass away from the mouth (FAUNA_REFILL), so the deep keeps its turns
+// through the meals. Where the orb is at a moment is read
 // off that and the coil, never stored. Drawn in render/serpent.js.
 
 import { S } from '../state.js';
@@ -19,7 +20,8 @@ import { SERPENT_WINDOW, MEAL_WARN_S, ORB_BOLT_S, ORB_R, ORB_CLOSE_S, MEAL_GULP_
          MEAL_FRONT, MEAL_SWING, MEAL_SHRINK, MEAL_COMB_LEFT, MEAL_GULP_BOLTS, MEAL_JAW_REACH, MEAL_GULP_SHUT,
          MEAL_GULP_IN, MEAL_SKIP, MEAL_LEAD_S, MEAL_BACK_S, MEAL_GAPE, MEAL_HINGE, JAW_POSES, SNOUT, P } from '../config.js';
 import { coilLine, deepX0, deepTop } from './place.js';
-import { SLOTS, COLS, visitAt, faunaPose, eatenNow, holdSlot, slotGone, widthOf, heightOf, waterTop, bolting } from './fauna.js';
+import { SLOTS, COLS, visitAt, faunaPose, eatenNow, holdSlot, slotGone, widthOf, heightOf, waterTop, bolting, newcomer } from './fauna.js';
+import { deepGlass } from '../view.js';
 import { held, smoothstep as ease } from '../motion.js';
 
 // The jaw's held poses (JAW_POSES: shut, ajar, gape): how far open `k` (0..1)
@@ -130,8 +132,8 @@ export function mealLump(g = S.mealGo) {
 // --- choosing the creature -----------------------------------------------------
 // The nearest the mouth of the slots' swimmers the meal can take: of those on
 // the glass if any are, else of those in the deep, else of any (one out past
-// an end has the longer haul). One mid-bolt is not taken. Null if every slot
-// is already held.
+// an end has the longer haul), and a newcomer only when there is nobody else.
+// One mid-bolt is not taken. Null if every slot is already held.
 function pick(ms) {
   const t = ms / 1000, tip = mouthAt(ms).tip, deep = S.view === 'deep';
   let best = null;
@@ -141,7 +143,7 @@ function pick(ms) {
     const p = faunaPose(v, t);
     const x = deepX0() + (p.x + widthOf(v.kind) / 2) * P, y = deepTop() + (p.y + heightOf(v.kind) / 2) * P;
     const seen = deep && x > S.camX && x < S.camX + S.viewW && y > S.camY && y < S.camY + S.viewH;
-    const rank = seen ? 0 : p.x > 0 && p.x < COLS ? 1 : 2;
+    const rank = (newcomer(v, t) ? 3 : 0) + (seen ? 0 : p.x > 0 && p.x < COLS ? 1 : 2);
     const d = Math.hypot(x - tip.x, y - tip.y);
     if (!best || rank < best.rank || (rank === best.rank && d < best.d)) best = { rank, d, slot: c.slot, v, p, x, y };
   }
@@ -155,10 +157,18 @@ export function startMeal(ms) {
   freeHeld(ms);
   S.mealGo = { t: 0, slot: null, kind: null, seed: 0, dir: 1, x: null, y: null, reel: null, freed: false, heals: true };
 }
+// Where a slot's next kind comes in: the glass's span in the deep's cells,
+// and the side of it away from the serpent's mouth, so the newcomer is seen
+// arriving across the water rather than straight into the jaws.
+function entry(ms) {
+  const g = deepGlass(), at = { l: (g.x0 - deepX0()) / P, r: (g.x1 - deepX0()) / P };
+  return { at, side: mouthAt(ms).tip.x < (g.x0 + g.x1) / 2 ? 1 : -1 };
+}
+const letIn = (slot, ms) => { const e = entry(ms); holdSlot(slot, ms / 1000, false, e.at, e.side); };
 // A slot held with no meal to hold it (a meal dropped by a check or a hook
 // setting the fight) lets its next kind in, as the meal would have.
 function freeHeld(ms) {
-  for (const c of SLOTS) if ((!S.mealGo || S.mealGo.slot !== c.slot) && slotGone(c.slot, ms / 1000)) holdSlot(c.slot, ms / 1000, false);
+  for (const c of SLOTS) if ((!S.mealGo || S.mealGo.slot !== c.slot) && slotGone(c.slot, ms / 1000)) letIn(c.slot, ms);
 }
 // The meal `secs` on at `ms`: the creature taken as the bolts leave, the haul
 // timed as it starts and its slot let go then. True on the frame it lands at
@@ -182,15 +192,15 @@ export function stepMeal(secs, ms) {
     g.reel = reelOf(Math.hypot(g.x - f.x, g.y - f.y) / P);
   }
   // The orb has closed and is hauled off the spot: the creature is the orb's
-  // now, drawn from `g`, and its slot lets its next kind fade in
-  // (FAUNA_REFILL), so the deep is a swimmer short only while the orb closes.
+  // now, drawn from `g`, and its slot lets its next kind swim in (FAUNA_REFILL),
+  // so the deep is a swimmer short only while the orb closes.
   if (!g.freed && g.reel != null) {
-    holdSlot(g.slot, ms / 1000, false);
+    letIn(g.slot, ms);
     g.freed = true;
   }
   const landed = cross(landAt(g));
   if (g.t >= backAt(g)) {
-    if (!g.freed) holdSlot(g.slot, ms / 1000, false);
+    if (!g.freed) letIn(g.slot, ms);
     S.mealGo = null;
   }
   return landed;
@@ -198,11 +208,11 @@ export function stepMeal(secs, ms) {
 // A save read back: the creature in the orb is not on the new page's walk,
 // whose slots set out again as the roster's first kinds. Before the haul its
 // slot is held; once its slot has been let go, a slot that comes out holding
-// its kind is held and let go at once, so its next kind fades in instead.
+// its kind is held and let go at once, so its next kind swims in instead.
 export function settleMeal(ms) {
   freeHeld(ms);
   const g = S.mealGo, t = ms / 1000;
   if (!g || g.slot == null || !SLOTS[g.slot]) return;
   if (!g.freed) { if (!slotGone(g.slot, t)) holdSlot(g.slot, t, true); return; }
-  for (const c of SLOTS) if (visitAt(c, t).kind === g.kind) { holdSlot(c.slot, t, true); holdSlot(c.slot, t, false); }
+  for (const c of SLOTS) if (visitAt(c, t).kind === g.kind) { holdSlot(c.slot, t, true); letIn(c.slot, ms); }
 }
