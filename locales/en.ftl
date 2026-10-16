@@ -525,7 +525,7 @@ ctl-pad-hop = move between places
 # controls page, with a pad: B
 ctl-pad-back = back
 
-# controls page, with a pad: Y
+# controls page, with a pad: X
 ctl-pad-handback = hand back a queued copy
 
 # controls page, with a pad: LB / RB

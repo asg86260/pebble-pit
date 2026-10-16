@@ -7,7 +7,7 @@
 // with a pad this file holds, and the page's own frame (main.js) reads it
 // exactly as it reads a real one. Nothing here sets the focus by hand.
 
-import { ok, raf, run, sleep, haveBench, state } from './kit.js';
+import { ok, raf, run, runUntil, sleep, haveBench, state } from './kit.js';
 import { S } from '../state.js';
 import { P, PAD_PAGE_CELL } from '../config.js';
 
@@ -110,6 +110,51 @@ export const TESTS = [
         ok(reached && S.boardOpen === false, 'the bench was reached and is put away again', window.__pad.focus()),
         ok(buyable(row), 'the d-pad found a row the purse covers', key),
         ok(spent, 'and A on it bought it', `${Math.round(before)} -> ${Math.round(S.stored)}`),
+      ];
+    } finally { unplug(); }
+  }],
+
+  // The owner, 2026-10-15: X cancels a queued purchase (it was Y).
+  ['pad: X on a card with a copy waiting hands it back, and its coins come home', async () => {
+    await haveBench();
+    window.__give(5000);
+    run(0.5);
+    plugIn();
+    try {
+      await press('b');
+      const waiting = el => el && el.querySelector?.('.strip:not([hidden]) .refund:not(.dead)');
+      const stands = el => el && el.classList?.contains('stripped');
+      let row = null, key = null;
+      // The bench's rows one by one: buy a row that takes time, and buy it
+      // again on its strip's other half, so one copy is building and one waits.
+      const reached = await hopTo('st:bench');
+      await press('a');
+      await frames(3);
+      const tried = new Set();
+      for (let i = 0; i < 40 && !row; i++) {
+        const el = window.__pad.page();
+        const k = el?.dataset?.key;
+        if (k && !tried.has(k) && !el.disabled && document.getElementById('shop').contains(el)) {
+          tried.add(k);
+          await press('a');
+          await frames(2);
+          if (stands(window.__pad.page())) { await press('a'); await frames(2); }
+          if (waiting(window.__pad.page())) { row = window.__pad.page(); key = k; break; }
+        }
+        await press(i % 6 < 5 ? 'right' : 'down');
+      }
+      const before = S.stored;
+      await press('x');
+      await frames(2);
+      const gone = !waiting(document.querySelector(`#shop [data-key="${key}"]`));
+      // The coins walk home (upgrades.js, `refund`): nothing teleports.
+      runUntil(() => S.stored > before, 30);
+      const after = S.stored;
+      await press('b');
+      return [
+        ok(!!row, 'a card with a copy waiting was found by the pad', `${key}; the bench reached: ${reached}`),
+        ok(after > before, 'X handed the copy back and its coins came home', `${Math.round(before)} -> ${Math.round(after)}`),
+        ok(gone, 'and nothing waits on that card now'),
       ];
     } finally { unplug(); }
   }],
@@ -228,6 +273,63 @@ export const TESTS = [
       return [
         ok(scope === 'corner' && inCorner, 'View took the focus to the corner cards', `${scope} ${el && el.id}`),
         ok(window.__pad.scope() === null && window.__pad.focus() === was, 'and View again put it back where it was', window.__pad.focus()),
+      ];
+    } finally { unplug(); }
+  }],
+
+  // The owner, 2026-10-15: "i cant get from the serpent to the portal to the
+  // top corner buttons." Up off the top of the yard is the corner's row
+  // nearest the thing below, and down off the corner's last row is the yard.
+  ['pad: up from the serpent reaches the portal and then a corner button, and down comes back', async () => {
+    window.__fullSites();
+    window.__snatch({ played: true });
+    window.__crew(0, 4);
+    window.__deepCrew({ spare: 1 });
+    window.__serpent({ level: 1, stage: 0 });
+    S.beatsDone.push('abyss');
+    window.__view('deep');
+    run(3);
+    plugIn();
+    try {
+      await press('b');
+      await hopTo('st:s1');
+      await press('up');
+      const coil = window.__pad.focus();
+      const path = [coil];
+      for (let i = 0; i < 8 && window.__pad.scope() !== 'corner'; i++) {
+        await press('up');
+        path.push(window.__pad.scope() === 'corner' ? 'corner' : window.__pad.focus());
+      }
+      const el = window.__pad.page();
+      const inCorner = ['topleft', 'corner', 'toast'].some(id => document.getElementById(id)?.contains(el));
+      for (let i = 0; i < 6 && window.__pad.scope() === 'corner'; i++) await press('down');
+      const back = window.__pad.scope();
+      return [
+        ok(coil && coil.startsWith('coil|'), 'up from a station is the serpent', coil),
+        ok(inCorner, 'and up from there reaches a corner button', `${path.join(' > ')} ${el && el.id}`),
+        ok(back === null, 'and down off the corner is the yard again', `${back} ${window.__pad.focus()}`),
+      ];
+    } finally { unplug(); }
+  }],
+
+  // The pad's way through the portal is the click's: the ripple plays.
+  ['pad: L3 goes through the portal by the ripple, as the click does', async () => {
+    window.__fullSites();
+    window.__snatch({ played: true });
+    window.__crew(0, 4);
+    S.beatsDone.push('abyss');
+    run(1);
+    plugIn();
+    window.__motion(null);           // the ripple is a motion; this check is about it
+    try {
+      await press('b');
+      const before = S.view;
+      await press('l3');
+      const mid = { view: S.view, to: S.viewTo, fade: S.viewFade };
+      return [
+        ok(before === 'yard', 'the pad starts in the yard', before),
+        ok(mid.to === 'deep' && mid.fade > 0 && mid.fade < 1, 'a few frames after L3 the ripple is under way', JSON.stringify(mid)),
+        ok(S.portalDown, 'and it counts as a trip down for the hands'),
       ];
     } finally { unplug(); }
   }],

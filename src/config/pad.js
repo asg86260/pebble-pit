@@ -43,6 +43,10 @@ export const PAD_FLICK = 0.6;
 // A held d-pad repeats the hop: the first after this wait, then one a step.
 export const PAD_REPEAT_WAIT_MS = 380;
 export const PAD_REPEAT_MS = 140;
+// A d-pad press goes to the nearest thing that way, a thing off the line
+// counting this many times its distance off it against its distance ahead
+// (padpage.js, `pickToward`).
+export const PAD_ACROSS = 2;
 // A trigger is down past this much of its pull.
 export const PAD_TRIGGER = 0.5;
 

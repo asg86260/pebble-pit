@@ -18249,8 +18249,7 @@ deliberate mode, the hand on a held trigger.
 | hop along / into a stop | d-pad; a left-stick flick | |
 | the click | A (held on the rock: held mining; held in a scene: skip) | |
 | back | B | |
-| a card's second action | X | |
-| hand a queued copy back | Y | |
+| hand a queued copy back; else a card's second action | X | |
 | neighbor station, board open | LB / RB | |
 | crew sight (the right button) | LT held; with A, lift | L4 held |
 | the hand (a free cursor) | RT held; left stick moves it, A sweeps, a flick throws | R4 held; the right trackpad as a mouse |
@@ -18410,8 +18409,22 @@ crit's rumble exists at all.
   front where A acts on it. On a row, the row's own hover is raised
   (`pointerenter`, then `pointerleave` when the focus goes), so every word
   is the hover's.
-- **X** opens a dial's list where the card has one; nothing else yet (the
-  deep's rails have no second action wired).
+- **X** hands back the newest queued copy (the card's refund half, the
+  barrier card's cancel, a line on the queue card), and on a card with none
+  opens a dial's list where it has one. It was Y until the owner moved it,
+  2026-10-15; Y is unbound since.
+- **Every press goes to the nearest thing that way** (the owner, 2026-10-15:
+  "things should just jump to the nearest thing that direction"): of the
+  things whose middle stands ahead, the least of distance ahead plus
+  `PAD_ACROSS` (2) times distance off the line, with no cone (`pickToward`,
+  padpage.js). One rule for the yard's stops, the coil's segments in the
+  deep, the bodies under sight, and a page's rows. Up with nothing over the
+  focus is the corner cards, the row nearest it; down off their last row is
+  the yard again, so every stop and the corner are a path of presses from
+  every other (test/pad-reach.test.mjs). Kept apart from the rule: down
+  into a station's own controls (stepping into a thing), a control's own
+  rows, the first press after a pan (lands where you look), LB / RB (the
+  boards in yard order) and a carried body's hop (the drop spots in order).
 - **L3** is the way through the portal from either half; the Deck's L5 is
   mapped onto it by the Steam Input config, and its R5 onto the `i` key
   (the index), the L4 and R4 onto the triggers, the right trackpad onto the
