@@ -3,7 +3,7 @@
   "file": "src/style.css",
   "sel": "html, body",
   "prop": "font",
-  "value": "12px/1.4 ui-monospace, \"Courier New\", monospace"
+  "value": "var(--fs-body)/var(--lh-text) ui-monospace, \"Courier New\", monospace"
  },
  {
   "file": "src/style.css",
@@ -202,6 +202,24 @@
   "sel": ".held .wardrobe .wardname input",
   "prop": "font-family",
   "value": "ui-monospace, \"Courier New\", monospace"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held .wardrobe .wardslots button",
+  "prop": "letter-spacing",
+  "value": "normal"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".held .wardrobe .wardtile",
+  "prop": "letter-spacing",
+  "value": "normal"
+ },
+ {
+  "file": "src/style.css",
+  "sel": ".wardrobe .wardtu",
+  "prop": "letter-spacing",
+  "value": "normal"
  },
  {
   "file": "src/style.css",

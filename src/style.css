@@ -1348,7 +1348,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   position: relative; min-width: 0; padding: 0 0 2px; border: 2px solid transparent;
   display: flex; flex-direction: column; align-items: center; gap: 0; letter-spacing: normal;
 }
-.held .wardrobe .wardtile:hover, .held .wardrobe .wardtile:focus-visible { border-color: var(--ink-7); }
+.held .wardrobe .wardtile:focus-visible { border-color: var(--ink-7); }
+@media (hover: hover) { .held .wardrobe .wardtile:hover { border-color: var(--ink-7); } }
 .held .wardrobe .wardtile.on { color: var(--paper); background: var(--ink); border-color: var(--ink); }
 .held .wardrobe .wardtile.tried { border-style: dashed; border-color: var(--ink); }
 .wardrobe .wardtn { font-size: var(--fs-small); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

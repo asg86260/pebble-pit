@@ -5,6 +5,9 @@
 // The subjects live beside this file, one per file, and src/selftest.js is
 // the index that puts them in order and runs them.
 
+import { S } from '../state.js';
+import { claimSave } from '../persist.js';
+
 // Real wall time, and the only thing in the suite that costs any. Dust in
 // flight, the counter tween, the board sliding and the save's debounce are
 // all hung off real frames, and a check that reads them early reads them
@@ -23,8 +26,14 @@ export const SEED = 20250830;
 // clearing are one act (`seedGame` in hooks.js): a seed handed to a yard
 // already standing is a run that is half one seed and half another. And the
 // view where the page opens it: `__seed` leaves the camera at nought, the far
-// end of the world, and four groups look through the camera.
+// end of the world, and four groups look through the camera. And the page
+// owns its save again: a group that played the game in a frame (the language
+// tab) leaves that frame's name on the slot, this page stands aside and stops
+// writing, and a group after it that reads the save back (the feedback
+// form's tick) finds the slot as the seed cleared it.
 export const newRun = () => {
+  claimSave();
+  S.yielded = false;
   window.__seed(SEED);
   window.__verify(true);
   window.__look(window.__state().openCamX);

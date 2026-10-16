@@ -14,7 +14,7 @@ import { msg } from '../lang.js';
 import { fatal } from '../crash.js';
 import * as here from '../feedback.js';
 import { mountFeedback } from '../feedbackform.js';
-import { persist, claimSave } from '../persist.js';
+import { persist } from '../persist.js';
 import { storeSettled } from '../save.js';
 
 const WORKER = 'http://feedback.test';
@@ -316,10 +316,8 @@ export const TESTS = [
     newRun();
     await settle();
     // The open slot holds this yard before the page reads it, whatever the
-    // groups before this one left there (a frame that played the game holds
-    // the save's claim; it is taken back first): the tick has a save to offer.
-    claimSave();
-    S.yielded = false;
+    // groups before this one left there (newRun has taken the save's claim
+    // back from any frame that played the game): the tick has a save to offer.
     persist();
     await storeSettled();
     const draft = pref('feedbackDraft');

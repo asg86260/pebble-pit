@@ -596,7 +596,11 @@ export const TESTS = [
     const kept = pref('motion');
     const readKept = motion().textContent;
     resume();
+    // Put back as the switch would: the preference and the page's `still`
+    // with it, or every sheet after this slides in with no transition to
+    // watch (the settings sheet's way in, sheet.js).
     setPref('motion', null);
+    document.body.classList.toggle('still', reducedMotion());
     return [
       ok(readBefore === (was ? 'motion: less' : 'motion: full'),
          'the switch reads what is in force', readBefore),
