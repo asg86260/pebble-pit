@@ -1,0 +1,352 @@
+<title>Orb Release Timer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* One look on purpose: the deep is black water, so the page is too. Four
+   stages side by side, each a canvas drawn cell by cell at 3x. */
+:root {
+  color-scheme: dark;
+  --bg: #08070b; --panel: #000000; --fg: #d9d6e2; --dim: #8b8b96; --line: #26262c; --accent: #9b5de5;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; }
+h1 { font: 600 20px/1.2 var(--sans); margin: 0 0 6px; text-wrap: balance; }
+h2 { font: 600 15px/1.2 var(--sans); margin: 0; }
+p { margin: 0; max-width: 72ch; }
+.top { display: grid; gap: 10px; margin-bottom: 18px; }
+.nums { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; font-family: var(--mono); font-size: 13px; }
+.nums label { display: flex; gap: 8px; align-items: center; }
+.nums output { min-width: 4ch; color: #fff; font-variant-numeric: tabular-nums; }
+button { font: inherit; background: var(--line); color: var(--fg); border: 1px solid #42424a; padding: 3px 10px; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.grid { display: flex; flex-wrap: wrap; gap: 18px; }
+.opt { display: grid; gap: 6px; min-width: 0; max-width: 100%; }
+.opt canvas { display: block; background: var(--panel); max-width: 100%; height: auto; image-rendering: pixelated; cursor: pointer; border: 1px solid var(--line); }
+.opt .cap { color: var(--dim); font-size: 13px; max-width: 486px; }
+.opt .read { font-family: var(--mono); font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.notes { display: grid; gap: 8px; margin-top: 22px; max-width: 78ch; }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+code { font-family: var(--mono); font-size: 12.5px; color: #fff; }
+</style>
+
+<div class="top">
+  <h1>The constrict's orb: a release timer</h1>
+  <p><b>Today</b> the orb has two ways out, and the bar shows only one of them. It lets go silently when the constrict's turn ends (<code>MECHANICS[4].last</code> = <b>12 s</b> from the cast, no timer drawn). Or it breaks when its hit points run out (<code>hp: 0.15</code> of the level-1 serpent's depth): every party blow lands on the orb first, and a click on it is a punch <code>ORB_CLICK_X</code> = 3 times over. Lifting the fighter out also breaks it. The 12-cell bar over its head is <b>hit points</b>, not time. So this is a mechanic change: time becomes what the bar shows, and a click takes seconds off it.</p>
+  <p>In each stage the orb closes and rises with the fighter, the time drains, two scripted clicks knock chunks off, and at zero it bursts and the fighter sinks home as it does today. Click a stage to knock off another chunk yourself.</p>
+  <div class="nums">
+    <label for="drain">drain <input id="drain" type="range" min="4" max="14" step="0.5" value="8"><output id="drainV">8 s</output></label>
+    <label for="chunk">chunk a click <input id="chunk" type="range" min="0.5" max="3" step="0.25" value="1.5"><output id="chunkV">1.5 s</output></label>
+    <button id="pause" type="button">pause</button>
+    <span style="color:var(--dim)">today: 12 s, no timer drawn; a click is hit points, not seconds</span>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="notes">
+  <h2>What the mock cannot show</h2>
+  <ul>
+    <li>It is drawn from plain cells in the deep's tones, not the game. The coil, the station and the fighter are stand-ins, and the beam, the comb and the party fighting around it are left out.</li>
+    <li>How the party's own blows would count. Today they wear down the orb's hit points. With a timer, they could take seconds off too, or only clicks could. That is the owner's call.</li>
+    <li>The real heights: the orb's middle sits halfway between the coil and the station, so the room around it changes with the station and the sway. Option A stays over its head because that is where the game already keeps water clear (<code>ORB_BAR_UP</code>, <code>ORB_AIR</code>). Under the orb is the station's top, two cells away.</li>
+    <li>The chips are the serpent bar's rules (<code>BAR_BITE_*</code>: hold lit 0.09 s, two halves thrown toward the empty track, falling 0.85 s, fading the last 0.4 s), scaled to this bar by eye.</li>
+  </ul>
+</div>
+
+<script>
+// ---- palette (the deep's, as seen) ----
+const G = ['#000000', '#121216', '#26262c', '#42424a', '#6e6e78', '#b4b4c0', '#ffffff']; // six greys + white
+const PU = { 3: '#1b112c', 5: '#2d1d47', 7: '#412465', 9: '#5c2ba6', 11: '#9b5de5' };    // five purples
+const PR = [3, 5, 7, 9, 11];
+const purple = i => PU[i <= 0 ? 3 : PR.reduce((b, k) => (Math.abs(k - i) < Math.abs(b - i) ? k : b), 3)];
+
+// ---- game numbers ----
+const P = 6, Z = 3, C = P * Z;            // a cell, in world px and in screen px
+const ORB_R = 5, ORB_RISE_S = 1.4, ORB_STEP = 2, ORB_BOB_S = 0.5, ORB_BURST_S = 0.6;
+const ORB_HANG_S = 0.25, ORB_SINK_S = 2.2, ORB_SINK_EASE = 0.4, ORB_SQUASH_S = 0.15;
+const HAND_STILL_S = 0.6, HAND_PRESS_S = 0.2;
+const BITE_HOLD = 0.09, BITE_FALL = 0.85, BITE_FADE = 0.4, GRAV = 520;
+const HAND = ['.....##...', '....#oo#..', '.######o##', '#oooooooo#', '.####oooo#', '...#ooooo#', '....#ooo##', '...#ooo#..', '....#o##..', '.....##...'];
+
+// ---- stage layout, in cells ----
+const W = 27, H = 32, CX = 9, HOME = 17, SPOT = 25.5, ST_TOP = 27;
+const PRE = 0.8, CLICKS = [2.0, 3.6], TAIL = 1.4;
+let DRAIN = 8, CHUNK = 1.5, paused = false, clock = 0, last = performance.now();
+const FROZEN = new URLSearchParams(location.search).get('t');
+
+const hash = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+
+const OPTS = [
+  { id: 'A', name: 'A. The bar over its head, as time', cap: 'Today\'s bar, in today\'s place, drains right to left with the seconds. A click breaks the stretch off in square chips that fall toward the empty end, as the serpent\'s bar does.' },
+  { id: 'B', name: 'B. A clock ring round the orb', cap: 'A pale ring two cells outside the orb, emptied clockwise from twelve. A click snaps that arc out; its dots fly off outward. The hand stands two cells further out to clear it.' },
+  { id: 'C', name: 'C. A column beside it, opposite the hand', cap: 'One cell wide, the orb\'s height, left of the orb. It empties from the top down, like a level. A click chips the top off, thrown away from the orb.' },
+  { id: 'D', name: 'D. The orb is the clock', cap: 'No bar. The orb\'s own ring goes dark clockwise from twelve, leaving a faint outline. A click cracks a piece of the ring off and it falls. At zero what is left bursts.' },
+];
+
+const stages = OPTS.map(o => {
+  const wrap = document.createElement('div'); wrap.className = 'opt';
+  wrap.innerHTML = `<h2>${o.name}</h2>`;
+  const cv = document.createElement('canvas'); cv.width = W * C; cv.height = H * C;
+  cv.setAttribute('aria-label', o.name);
+  const read = document.createElement('div'); read.className = 'read';
+  const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = o.cap;
+  wrap.append(cv, read, cap); document.getElementById('grid').append(wrap);
+  const st = { ...o, cv, ctx: cv.getContext('2d'), read, extra: [], loopN: -1 };
+  cv.addEventListener('click', () => {
+    const tl = timeline(st, clock);
+    if (tl.held) st.extra.push(tl.age);
+  });
+  return st;
+});
+
+// ---- the timeline of one loop ----
+function clicksOf(st) { return [...CLICKS, ...st.extra].sort((a, b) => a - b); }
+// Walks the drain and the clicks; returns the age it hits zero and each chunk taken.
+function plan(st) {
+  const chunks = [];
+  let rem = DRAIN, at = 0;
+  for (const c of clicksOf(st)) {
+    if (DRAIN - c - chunks.reduce((s, k) => s + (k.from - k.to), 0) <= 0) break;
+    const before = DRAIN - c - chunks.reduce((s, k) => s + (k.from - k.to), 0);
+    const after = Math.max(0, before - CHUNK);
+    chunks.push({ at: c, from: before, to: after });
+    if (after <= 0) return { zero: c, chunks };
+  }
+  const spent = chunks.reduce((s, k) => s + (k.from - k.to), 0);
+  return { zero: DRAIN - spent, chunks };
+}
+function loopLen(st) { return PRE + plan(st).zero + ORB_HANG_S + ORB_SINK_S + ORB_SQUASH_S + TAIL; }
+function timeline(st, t) {
+  const L = PRE + plan(st).zero + ORB_HANG_S + ORB_SINK_S + ORB_SQUASH_S + TAIL;
+  return at(st, ((t % L) + L) % L);
+}
+function at(st, tl) {
+  const pl = plan(st), age = tl - PRE;
+  const out = { tl, age, pl, held: age >= 0 && age < pl.zero };
+  if (age >= 0) {
+    const spent = pl.chunks.filter(k => k.at <= age).reduce((s, k) => s + (k.from - k.to), 0);
+    out.rem = Math.max(0, Math.min(DRAIN, DRAIN - age - spent));
+  } else out.rem = DRAIN;
+  out.since = age - pl.zero;    // seconds since release
+  return out;
+}
+
+// how many cells over its spot the fighter is drawn
+function liftOf(tl) {
+  const top = SPOT - HOME;
+  if (tl.age < 0) return 0;
+  if (tl.held) {
+    const k = Math.min(1, tl.age / ORB_RISE_S);
+    const eased = 1 - (1 - k) * (1 - k);            // fast at first
+    const stepped = Math.min(top, Math.floor(eased * top / ORB_STEP) * ORB_STEP + (k >= 1 ? top % ORB_STEP : 0));
+    const bob = k >= 1 && Math.floor(tl.age / ORB_BOB_S) % 2 ? -1 : 0;
+    return (k >= 1 ? top : stepped) + bob;
+  }
+  const from = top, s = (tl.since - ORB_HANG_S) / ORB_SINK_S;
+  if (s < 0) return from;
+  if (s >= 1) return 0;
+  // speeding up over the first ORB_SINK_EASE, then steady
+  const e = ORB_SINK_EASE, v = 1 / (1 - e / 2), d = s < e ? v * s * s / (2 * e) : v * (e / 2 + (s - e));
+  return from * (1 - Math.min(1, d));
+}
+
+// ---- drawing helpers (cell coords) ----
+function cell(ctx, x, y, ink) { ctx.fillStyle = ink; ctx.fillRect(Math.round(x) * C, Math.round(y) * C, C, C); }
+function drawCoil(ctx, t) {
+  for (let x = 0; x < W; x++) {
+    const mid = Math.round(3.5 + 1.4 * Math.sin(x * 0.33 + Math.floor(t * 4) / 4 * 0.7));
+    for (let y = mid - 2; y <= mid + 1; y++) cell(ctx, x, y, y === mid - 2 ? G[4] : y === mid + 1 ? G[2] : G[3]);
+    if (x % 2 === 0) cell(ctx, x, mid - 3, PU[3]);
+  }
+}
+function drawStation(ctx) {
+  for (let x = 4; x <= 14; x++) for (let y = ST_TOP; y < H; y++) cell(ctx, x, y, y === ST_TOP ? G[4] : (x + y) % 5 === 0 ? G[3] : G[2]);
+  for (let x = 0; x < W; x++) cell(ctx, x, H - 1, G[1]);
+}
+function drawFighter(ctx, cx, cy, squash) {
+  // 3x3 cells, white, one dark eye; squashed on landing (screen px)
+  const w = 3 * C * (squash ? 1.16 : 1), h = 3 * C * (squash ? 0.74 : 1);
+  const x = Math.round(cx * C - w / 2), y = Math.round((cy + 1.5) * C - h);
+  ctx.fillStyle = G[6]; ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = G[1]; ctx.fillRect(x + Math.round(w * 0.55), y + Math.round(h * 0.2), C * 0.6, C * 0.6);
+}
+function ringDots(r) { return Math.max(16, Math.round(r * 2 * Math.PI)); }
+function ringPos(cx, cy, r, th) { return [Math.round(cx + Math.cos(th) * r - 0.5), Math.round(cy + Math.sin(th) * r * 0.9 - 0.5)]; }
+// clockwise share from twelve, 0..1, of a screen angle
+const clockOf = th => { let a = (th + Math.PI / 2) / (Math.PI * 2); return a - Math.floor(a); };
+function drawHand(ctx, hx, hy, t, pressed) {
+  const press = pressed || (t % (HAND_STILL_S + HAND_PRESS_S)) >= HAND_STILL_S ? -1 : 0;
+  HAND.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '#') cell(ctx, hx + c + press, hy + r, PU[9]);
+    else if (ch === 'o') cell(ctx, hx + c + press, hy + r, G[6]);
+  }));
+}
+// chips in screen px: one rectangle split in two halves thrown toward `dir`
+function drawChip(ctx, x, y, w, h, dt, seed, dir, upish) {
+  if (dt < 0) return;
+  if (dt < BITE_HOLD) { ctx.fillStyle = G[5]; ctx.fillRect(x, y - Z, w, h); return; }
+  const f = dt - BITE_HOLD;
+  if (f > BITE_FALL) return;
+  const a = f > BITE_FALL - BITE_FADE ? (BITE_FALL - f) / BITE_FADE : 1;
+  ctx.globalAlpha = a; ctx.fillStyle = G[6];
+  for (let half = 0; half < 2; half++) {
+    const side = (16 + hash(seed + half) * 26) * (half ? 1.4 : 0.6) * 1.6;
+    const up = (34 + hash(seed + 7 + half) * 30 - (half ? 8 : 0)) * 1.6 * (upish || 1);
+    const vx = dir[0] * side + dir[1] * (hash(seed + 3) - 0.5) * 20;
+    const vy = dir[1] * side - up;
+    const px = Math.round(x + vx * f), py = Math.round(y + half * h / 2 + vy * f + 0.5 * GRAV * 1.5 * f * f);
+    if (half && Math.floor(f / 0.1) % 2) {      // the bottom one tumbles, square then diamond
+      const s = h / 2, cxp = px + s / 2, cyp = py + s / 2;
+      ctx.beginPath(); ctx.moveTo(cxp, cyp - s * 0.7); ctx.lineTo(cxp + s * 0.7, cyp); ctx.lineTo(cxp, cyp + s * 0.7); ctx.lineTo(cxp - s * 0.7, cyp); ctx.fill();
+    } else ctx.fillRect(px, py, w, h / 2);
+  }
+  ctx.globalAlpha = 1;
+}
+// a dot flung outward from a ring, screen px
+function drawFlung(ctx, x, y, dt, ang, seed, ink) {
+  if (dt < 0) return;
+  if (dt < BITE_HOLD) { ctx.fillStyle = G[6]; ctx.fillRect(x * C, y * C, C, C); return; }
+  const f = dt - BITE_HOLD; if (f > BITE_FALL) return;
+  ctx.globalAlpha = f > BITE_FALL - BITE_FADE ? (BITE_FALL - f) / BITE_FADE : 1;
+  const sp = 70 + hash(seed) * 60, vx = Math.cos(ang) * sp, vy = Math.sin(ang) * sp - 40;
+  ctx.fillStyle = ink;
+  const s = Math.round(C * 0.5);
+  ctx.fillRect(Math.round(x * C + C / 4 + vx * f), Math.round(y * C + C / 4 + vy * f + 0.5 * GRAV * 1.5 * f * f), s, s);
+  ctx.globalAlpha = 1;
+}
+
+// ---- one stage, one frame ----
+function draw(st, t) {
+  const { ctx } = st, tl = timeline(st, t);
+  ctx.fillStyle = G[0]; ctx.fillRect(0, 0, W * C, H * C);
+  drawCoil(ctx, t);
+  drawStation(ctx);
+  const lift = liftOf(tl), fy = SPOT - lift, cy = Math.round(fy);
+  const squash = tl.since > ORB_HANG_S + ORB_SINK_S && tl.since < ORB_HANG_S + ORB_SINK_S + ORB_SQUASH_S;
+  const frac = tl.rem / DRAIN;
+  const pressed = tl.pl.chunks.some(k => tl.age >= k.at && tl.age < k.at + 0.15);
+
+  // sinking fast: lines over its head
+  const s = (tl.since - ORB_HANG_S) / ORB_SINK_S;
+  if (!tl.held && tl.since > 0 && s > ORB_SINK_EASE && s < 1) {
+    [[-1.5, 2], [0, 3], [0.5, 2]].forEach(([dx, len]) => { for (let i = 1; i <= len; i++) cell(ctx, Math.floor(CX + dx), Math.floor(fy - 1.5) - i - 1, G[3]); });
+  }
+  drawFighter(ctx, CX, tl.held ? cy : fy, squash);
+
+  if (tl.held) {
+    const r = Math.min(ORB_R, 1 + tl.age * 20), turn = Math.floor(t * 8) / 8 * 0.6, n = ringDots(r);
+    const rising = tl.age < ORB_RISE_S * 0.5;
+    if (rising) for (let g = 2; g >= 1; g--) for (let i = 0; i < n; i += 2) { const [x, y] = ringPos(CX, cy + g * ORB_STEP, r, i / n * Math.PI * 2 + turn); cell(ctx, x, y, purple(11 - 3 - 2 * g)); }
+    for (let i = 0; i < n; i++) {
+      const th = i / n * Math.PI * 2 + turn, [x, y] = ringPos(CX, cy, r, th);
+      let ink = i % 4 === 0 ? PU[11] : PU[9];
+      if (st.id === 'D') {
+        const a = clockOf(th);
+        const inChunk = tl.pl.chunks.find(k => tl.age >= k.at && a >= 1 - k.from / DRAIN && a < 1 - k.to / DRAIN);
+        if (inChunk) continue;                       // cracked off
+        if (a < 1 - frac) ink = PU[3];               // spent: a faint outline
+      }
+      cell(ctx, x, y, ink);
+    }
+    // the timers
+    if (st.id === 'A') drawBarA(ctx, tl, cy, r);
+    if (st.id === 'B') drawRingB(ctx, tl, cy);
+    if (st.id === 'C') drawColC(ctx, tl, cy);
+    if (st.id === 'D') drawCrackD(ctx, tl, cy, t);
+    const hx = CX + (st.id === 'B' ? ORB_R + 3 : ORB_R + 1) + 1, hy = Math.round(cy - 0.5) - 3;
+    drawHand(ctx, hx, hy, t, pressed);
+  } else if (tl.since >= 0) {
+    // chips of the last chunk still falling
+    if (st.id === 'A') drawBarA(ctx, tl, Math.round(SPOT - (SPOT - HOME)), ORB_R, true);
+    if (st.id === 'C') drawColC(ctx, tl, HOME, true);
+    if (st.id === 'B') drawRingB(ctx, tl, HOME, true);
+    if (st.id === 'D') drawCrackD(ctx, tl, HOME, t, true);
+    // the burst where it let go
+    if (tl.since < ORB_BURST_S) {
+      const k = tl.since / ORB_BURST_S, rr = ORB_R + Math.floor(k * 6) * 1.5;
+      for (let i = 0; i < 16; i++) { const th = i / 16 * Math.PI * 2; cell(ctx, Math.round(CX + Math.cos(th) * rr - 0.5), Math.round(HOME + Math.sin(th) * rr * 0.9 - 0.5), purple(10 - Math.min(6, Math.floor(k * 7)))); }
+    }
+  }
+  st.read.textContent = tl.age < 0 ? `cast in ${(-tl.age).toFixed(1)} s` : tl.held ? `left ${tl.rem.toFixed(1)} s of ${DRAIN} s` : `let go; sinking home`;
+}
+
+// A: 12 cells over its head, one tall, draining in world pixels from the right
+function drawBarA(ctx, tl, cy, r, gone) {
+  const bw = ORB_R * 2 + 2, bx = CX - Math.floor(bw / 2), by = Math.round(cy - r - 3);
+  const wpx = bw * P;
+  if (!gone) {
+    ctx.fillStyle = PU[3]; ctx.fillRect(bx * C, by * C, bw * C, C);
+    ctx.fillStyle = PU[9]; ctx.fillRect(bx * C, by * C, Math.round(wpx * tl.rem / DRAIN) * Z, C);
+  }
+  for (const k of tl.pl.chunks) {
+    const x0 = bx * C + Math.round(wpx * k.to / DRAIN) * Z, x1 = bx * C + Math.round(wpx * k.from / DRAIN) * Z;
+    for (let x = x0, j = 0; x < x1; x += C / 2, j++) drawChip(ctx, x, by * C, Math.min(C / 2, x1 - x), C, tl.age - k.at, k.at * 10 + j, [1, 0]);
+  }
+}
+// B: a pale ring two cells outside, emptied clockwise from twelve
+function drawRingB(ctx, tl, cy, gone) {
+  const R = ORB_R + 2, n = ringDots(R);
+  for (let i = 0; i < n; i++) {
+    const th = -Math.PI / 2 + i / n * Math.PI * 2, a = i / n, [x, y] = ringPos(CX, cy, R, th);
+    const k = tl.pl.chunks.find(k => a >= 1 - k.from / DRAIN && a < 1 - k.to / DRAIN);
+    if (k && tl.age >= k.at) { drawFlung(ctx, x, y, tl.age - k.at, th, k.at * 10 + i, G[5]); continue; }
+    if (gone) continue;
+    cell(ctx, x, y, a >= 1 - tl.rem / DRAIN ? G[5] : G[2]);
+  }
+}
+// C: one cell wide, ten tall, left of the orb, emptied from the top
+function drawColC(ctx, tl, cy, gone) {
+  const hgt = ORB_R * 2, x = CX - ORB_R - 2, top = Math.round(cy - ORB_R), hpx = hgt * P;
+  if (!gone) {
+    ctx.fillStyle = PU[3]; ctx.fillRect(x * C, top * C, C, hgt * C);
+    const fill = Math.round(hpx * tl.rem / DRAIN) * Z;
+    ctx.fillStyle = PU[9]; ctx.fillRect(x * C, top * C + hgt * C - fill, C, fill);
+  }
+  for (const k of tl.pl.chunks) {
+    const y0 = top * C + hgt * C - Math.round(hpx * k.from / DRAIN) * Z, y1 = top * C + hgt * C - Math.round(hpx * k.to / DRAIN) * Z;
+    for (let y = y0, j = 0; y < y1; y += C / 2, j++) drawChip(ctx, x * C, y, C, Math.min(C, (y1 - y) * 2), tl.age - k.at, k.at * 10 + j, [-1, 0], 0.6);
+  }
+}
+// D: the cracked-off pieces of the ring itself, falling
+function drawCrackD(ctx, tl, cy, t) {
+  const turn = Math.floor(t * 8) / 8 * 0.6, n = ringDots(ORB_R);
+  for (const k of tl.pl.chunks) {
+    if (tl.age < k.at) continue;
+    const turnAt = Math.floor((t - (tl.age - k.at)) * 8) / 8 * 0.6;
+    for (let i = 0; i < n; i++) {
+      const th = i / n * Math.PI * 2 + turnAt, a = clockOf(th);
+      if (a >= 1 - k.from / DRAIN && a < 1 - k.to / DRAIN) {
+        const [x, y] = ringPos(CX, cy, ORB_R, th);
+        drawFlung(ctx, x, y, tl.age - k.at, th, k.at * 10 + i, i % 4 === 0 ? PU[11] : PU[9]);
+      }
+    }
+  }
+}
+
+// ---- controls and the clock ----
+const drain = document.getElementById('drain'), chunk = document.getElementById('chunk');
+function sync() {
+  DRAIN = +drain.value; CHUNK = +chunk.value;
+  document.getElementById('drainV').textContent = DRAIN + ' s';
+  document.getElementById('chunkV').textContent = CHUNK + ' s';
+  stages.forEach(s => (s.extra = []));
+}
+drain.oninput = chunk.oninput = sync;
+document.getElementById('pause').onclick = e => { paused = !paused; e.target.textContent = paused ? 'play' : 'pause'; };
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame(now) {
+  if (!paused && !still) clock += (now - last) / 1000;
+  last = now;
+  if (FROZEN != null) clock = +FROZEN;
+  for (const st of stages) {
+    // a viewer's own clicks last one loop
+    const n = Math.floor(clock / loopLen(st));
+    if (n !== st.loopN) { st.loopN = n; if (FROZEN == null) st.extra = []; }
+    draw(st, clock);
+  }
+  requestAnimationFrame(frame);
+}
+if (still) clock = PRE + 3.0;
+requestAnimationFrame(frame);
+</script>
