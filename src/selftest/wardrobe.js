@@ -353,7 +353,21 @@ export const TESTS = [
       const onKey = () => window.__pad.page()?.classList?.contains('wardkey');
       for (let i = 0; i < 12 && !onKey(); i++) await press('down');
       const grid = up(document.querySelector('.wardkeys'));
-      const key = window.__pad.page()?.dataset.key;
+      // QWERTY: the rows read as a keyboard's, and down lands on the key nearest across
+      const rowsTxt = [...document.querySelectorAll('.wardkeys .wardkey')].map(b => b.dataset.key).join('');
+      const qwerty = rowsTxt === "1234567890qwertyuiopasdfghjklzxcvbnm-'" + ' ' + 'del';
+      const at = k => document.querySelector(`.wardkeys .wardkey[data-key="${k}"]`).getBoundingClientRect();
+      const offset = at('a').left > at('q').left && at('z').left > at('a').left;
+      // from the first key reached, down lands on a key within one key's width across
+      const cx = r => r.left + r.width / 2;
+      const from = window.__pad.page();
+      const fx = cx(from.getBoundingClientRect());
+      await press('down');
+      const to = window.__pad.page();
+      const near = to !== from && to.classList.contains('wardkey') && Math.abs(cx(to.getBoundingClientRect()) - fx) <= from.getBoundingClientRect().width;
+      await press('up');
+      const home = window.__pad.page() === from;
+      const key = from.dataset.key;
       await press('a');
       await press('a');
       const typed = nameOf('you');
@@ -371,6 +385,9 @@ export const TESTS = [
       const done = !S.paused && S.dressOffered;
       return [
         ok(grid, 'the letter grid is up under the name'),
+        ok(qwerty, 'the keys sit in QWERTY rows', rowsTxt),
+        ok(near && home, 'down lands on the key nearest across, and up comes back', `${from.dataset.key}>${to.dataset.key}`),
+        ok(offset, 'the home and bottom rows are offset like a keyboard'),
         ok(key && typed === key + key, 'A types the key the focus is on', `${key} "${typed}"`),
         ok(deleted === key, 'X takes the last letter back', deleted),
         ok(CREW_NAMES.includes(rolled), 'Y from the grid rolls the name', rolled),

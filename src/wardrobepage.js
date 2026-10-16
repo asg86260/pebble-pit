@@ -39,9 +39,15 @@ const FLOW = [
   { title: 'ward-build-sqouse', who: 'sqouse', kind: 'build' },
   { title: 'ward-title', who: 'sqouse', kind: 'both' },
 ];
-// The pad's letters: the source language's, a key apiece, then space and
-// the one that takes a letter back.
-const KEYS = [...'abcdefghijklmnopqrstuvwxyz0123456789', '-', "'"];
+// The pad's keys in QWERTY rows (the owner, 2026-10-16), each row's offset in
+// half keys, as on a real keyboard; space and the one that takes a letter
+// back close it.
+const KEY_ROWS = [
+  { keys: [...'1234567890'], at: 0 },
+  { keys: [...'qwertyuiop'], at: 0 },
+  { keys: [...'asdfghjkl'], at: 1 },
+  { keys: [...'zxcvbnm', '-', "'"], at: 2 },
+];
 
 let who = 'you';
 let step = -1;                  // the new yard's step, or -1 for the settings page
@@ -137,18 +143,21 @@ function build(el) {
   const grid = document.createElement('div');
   grid.className = 'wardkeys';
   grid.style.setProperty('--cols', NAME_GRID_COLS);
-  for (const k of KEYS) {
+  for (const r of KEY_ROWS) r.keys.forEach((k, i) => {
     const b = button(k, 'wardkey');
     b.dataset.key = k;
+    b.style.gridColumn = `${r.at + i * 2 + 1} / span 2`;
     b.addEventListener('click', () => typeKey(k));
     grid.appendChild(b);
-  }
+  });
   const space = button(msg('ward-key-space'), 'wardkey', 'wide');
   space.dataset.key = ' ';
   space.addEventListener('click', () => typeKey(' '));
   const del = button(msg('ward-key-del'), 'wardkey', 'wide');
   del.dataset.key = 'del';
   del.addEventListener('click', () => unType());
+  space.style.gridColumn = '3 / span 10';
+  del.style.gridColumn = '13 / span 6';
   grid.append(space, del);
 
   const roleRow = document.createElement('div');

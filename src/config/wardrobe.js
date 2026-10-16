@@ -49,5 +49,6 @@ export const WARD_CROWD_PACE = [10, 22];
 // stands are the story card's one line and the phone's sheet; "sqhusband",
 // the longest role word, is nine.
 export const NAME_MAX = 12;
-// The pad's letter grid under the name row: this many keys a row.
-export const NAME_GRID_COLS = 10;
+// The pad's key grid under the name row: columns are half keys, so a key is
+// two and the home rows can sit offset like a keyboard's.
+export const NAME_GRID_COLS = 20;
