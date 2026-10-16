@@ -82,6 +82,11 @@ const indexYard = () => {
   S.indexRead = ['dust', 'shard', 'spore', 'spark', 'rock', 'pit', 'house', TYPE.HAUL, 'sqwife'];
 };
 const pressI = () => dispatchEvent(new KeyboardEvent('keydown', { key: 'i', code: 'KeyI', bubbles: true }));
+// The house board's row to the two of you (crewboard.js), pressed.
+function pairDoor() {
+  window.__board('house');
+  document.querySelector('#crewshop button[data-key="pairpage"]')?.click();
+}
 // A new yard's steps (wardrobepage.js) stood at step `n`, the two of them
 // named and given roles first, and each step before it passed by its next.
 const whoSteps = n => {
@@ -2163,12 +2168,13 @@ export const SCENES = {
   // noughts.
   books: { about: 'the pit and the rift', say: 'the books over the pit',
     run: () => { rich(); window.__fast(60); window.__board('stats'); window.__look(st().pitX - 300); } },
-  // The picker (wardrobepage.js), opened from settings by its row; and the
-  // same page as a new yard offers it, before the opening walks out.
-  wardrobe: { about: 'the story', say: 'the picker on the held sheet, opened from settings', page: true,
-    run: () => { dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
-                 document.getElementById('settingsbtn').click();
-                 document.getElementById('wardrobebtn').click(); } },
+  // The picker (wardrobepage.js), opened by its row on the house's board; the
+  // board with that row on it; and the same page as a new yard offers it,
+  // before the opening walks out.
+  wardrobe: { about: 'the story', say: 'the picker on the held sheet, opened from the house board', page: true,
+    run: () => { window.__fast(1); pairDoor(); } },
+  'house-pair': { about: 'the story', say: 'the house board, its row to the two of you on top',
+    run: () => { rich(); window.__crew(6, 5, 5, 4); window.__fast(1); window.__board('house'); window.__look(st().houses.door - 400); } },
   'wardrobe-offer': { about: 'the story', say: 'the picker offered at a new yard, before the opening', page: true,
     run: () => { window.__reset(); window.__fast(1); S.dressOffered = false; offerDress(true); } },
   // Who you are (DESIGN.md): a new yard's four steps, the two of them named
@@ -2184,14 +2190,12 @@ export const SCENES = {
     run: () => whoSteps(3) },
   'who-pad': { about: 'the story', say: 'a new yard\'s first step on a pad, off Steam: the letter grid', page: true,
     run: () => { whoSteps(0); S.padOn = true; } },
-  // The settings page once the steps are behind a yard: the name and the
-  // role still open to change.
-  'who-settings': { about: 'the story', say: 'the two of you from settings, mid-game, the name and the role editable', page: true,
+  // The page once the steps are behind a yard: the name and the role still
+  // open to change.
+  'who-settings': { about: 'the story', say: 'the two of you off the house board, mid-game, the name and the role editable', page: true,
     run: () => { window.__reset(); window.__fast(1); S.dressOffered = true;
                  window.__self('you', { name: 'Ada', role: 'wife' }); window.__self('sqouse', { name: 'Bram', role: 'ouse' });
-                 dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
-                 document.getElementById('settingsbtn').click();
-                 document.getElementById('wardrobebtn').click(); } },
+                 pairDoor(); } },
   // A few of the story's lines with the two of them named: the first step's
   // card, the rescue's sheet, the index's entry. `window.__whoRole` the
   // sqouse's role ('wife', 'ouse', 'husband'), `window.__whoName` its name

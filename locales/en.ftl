@@ -428,9 +428,6 @@ set-controls-word = controls
 # controls page back, and the language page's, the feedback page's and the picker's
 set-controlsback = back
 
-# settings button to the picker, where the two of them are dressed
-set-wardrobebtn = the two of you
-
 # settings button to the language page; $name is the language in force, in its own name
 set-langbtn = language · { $name }
 
@@ -3150,7 +3147,7 @@ serp-level = { $n }
 
 ## The picker: who the two of them are and what they wear (wardrobepage.js)
 
-# the picker page's heading; and at a new yard, the heading of its last step, the two of you side by side
+# the picker page's heading; at a new yard, the heading of its last step, the two of you side by side; and the house board's row that opens the picker
 ward-title = the two of you
 
 # the picker's tab for choosing your own square
@@ -3188,8 +3185,11 @@ ward-role-word = { $so ->
 # the picker's button that dresses the one being dressed at random; and each row's die, as its label
 ward-randomize = randomize
 
-# the picker's button that rolls the whole square: name, role and outfit
+# the picker's button that rolls the whole square: its role and outfit, never its name
 ward-randomize-all = randomize all
+
+# the picker's button that takes every slot of the square's outfit back to none (and the pattern to plain); the name and role stay
+ward-clear = clear
 
 # the picker's button, at a new yard, that keeps the outfits they start in and goes on
 ward-skip = skip

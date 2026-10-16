@@ -5,17 +5,17 @@
 // (padpage.js), with left and right on a row stepping it, the shoulders for
 // you and your sqouse, the letter grid for a name, X a letter back and Y a
 // row's roll; a new yard's four steps by both; and the name and the role
-// held on the settings page once those steps are behind a yard.
+// held on the page off the house's board once those steps are behind a yard.
 //
 // The pad is a stand-in for the browser's, as in selftest/pad.js: the page's
 // own frame reads it exactly as it reads a real one.
 
-import { ok, raf, run, canvas, onScreen } from './kit.js';
+import { ok, raf, run, canvas, onScreen, hoverHouse, hoverAway } from './kit.js';
 import { S } from '../state.js';
 import { P, WORKER, NAME_MAX } from '../config.js';
 import { draw } from '../render.js';
 import { darkPage } from '../ink.js';
-import { namePair, outfitOf, wear, DEFAULTS, HEAD, nameOf, roleOf, ROLE_START } from '../wardrobe.js';
+import { namePair, outfitOf, wear, DEFAULTS, HEAD, SLOTS, bareOf, nameOf, roleOf, setName, pairBody, ROLE_START } from '../wardrobe.js';
 import { CREW_NAMES } from '../crew/names.js';
 import { objective } from '../objectives.js';
 import { wearing } from '../kit.js';
@@ -38,12 +38,14 @@ function inkAt(wx, wy) {
   return darkPage ? lum > 128 : lum < 128;
 }
 
-// The held sheet up on the picker, by its buttons: escape, settings, the row.
+// The held sheet up on the picker as a player brings it: the pointer to the
+// house, its board out, the row to the two of you pressed.
+const pairRow = () => document.querySelector('#crewshop button[data-key="pairpage"]');
 async function openPicker() {
-  dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+  if (!S.crew) { window.__crew(2, 2); run(1); }
+  await hoverHouse();
   await frames(2);
-  byId('settingsbtn').click();
-  byId('wardrobebtn').click();
+  pairRow()?.click();
   await frames(3);
 }
 async function closePicker() {
@@ -174,20 +176,26 @@ export const TESTS = [
     const r = big.getBoundingClientRect();
     big.dispatchEvent(new MouseEvent('click', { clientX: r.left + r.width * 0.25, clientY: r.top + r.height / 2, bubbles: true }));
     const youOn = byId('wardyou').classList.contains('on');
+    // randomize all leaves the name alone
+    setName('sqouse', 'quill');
+    byId('wardroll').click();
+    const nameKept = nameOf('sqouse') === 'quill';
     byId('wardrobeback').click();
-    const backTo = !byId('wardrobebtn').hidden;
-    await closePicker();
+    await frames(2);
+    const backTo = !S.paused;
+    await hoverAway();
     fresh();
     return [
-      ok(shown, 'the settings row opens the picker'),
+      ok(shown, "the house board's row opens the picker"),
       ok(stepped === nextKey(HEAD, DEFAULTS.you.head) && said && said.length > 0,
          'next on the head row puts the next head item on you, and the row says it', `${stepped} "${said}"`),
       ok(sqOn && sqBack === 'flag' && youBack === DEFAULTS.you.back, 'the sqouse tab dresses your sqouse, not you',
          `${sqOn} ${sqBack} ${youBack}`),
       ok(faced && others, 'a row\'s die rolls that row alone', JSON.stringify(outfitOf('sqouse'))),
       ok(rolled, 'randomize all dresses the one being dressed'),
+      ok(nameKept, 'and never renames them', nameOf('sqouse')),
       ok(youOn, 'a press on the left half of the close-up picks you'),
-      ok(backTo, 'back is the settings page')
+      ok(backTo, 'back is the yard')
     ];
   }],
 
@@ -228,7 +236,7 @@ export const TESTS = [
     await frames(2);
     const let_go = !S.paused && S.dressOffered && !S.naming;
     const card = objective()?.say || '';
-    // the settings page keeps them open: a rename there mid-game shows on the story card
+    // the page off the house keeps them open: a rename there mid-game shows on the story card
     await openPicker();
     const editable = !byId('wardnamein').disabled && up(byId('ward-role-next'));
     const before = roleOf('you') + roleOf('sqouse');
@@ -263,7 +271,7 @@ export const TESTS = [
       ok(backed, 'back is the step before'),
       ok(let_go, 'done lets the yard go'),
       ok(card.includes('lee'), 'and the story card names your sqouse', card),
-      ok(editable && kept && renamed, 'the settings page still edits the name and the role once the steps are behind, and the story card follows', `${editable} ${kept} ${renamed}`),
+      ok(editable && kept && renamed, 'the page off the house still edits the name and the role once the steps are behind, and the story card follows', `${editable} ${kept} ${renamed}`),
       ok(skipped, 'skip lets the yard go in the defaults, unnamed'),
       ok(!again, 'the steps are offered once')
     ];
@@ -298,9 +306,9 @@ export const TESTS = [
       let rolled = false;
       for (let i = 0; i < 8 && !rolled; i++) { await press('y'); rolled = outfitOf('you').face !== was; }
       const rowOnly = outfitOf('you').head === heads;
-      await press('b');                               // back, to settings
-      const settings = !byId('wardrobebtn').hidden;
-      await closePicker();
+      await press('b');                               // back, to the yard
+      const settings = !S.paused;
+      await hoverAway();
       return [
         ok(onHead, 'the d-pad reaches the head row', rowOf(window.__pad.page())),
         ok(head === nextKey(HEAD, DEFAULTS.you.head) && stayed, 'right steps your head item and keeps the row', head),
@@ -309,10 +317,112 @@ export const TESTS = [
         ok(sq && sqFace !== DEFAULTS.sqouse.face, 'RB dresses your sqouse', `${sq} ${sqFace}`),
         ok(you, 'LB is you again'),
         ok(rolled && rowOnly, 'Y rolls the row the focus is on, and only it'),
-        ok(settings, 'B goes back to settings')
+        ok(settings, 'B goes back to the yard')
       ];
     } finally {
       unplug();
+      fresh();
+    }
+  }],
+
+  // The way in the owner moved off settings (2026-10-16): the house's board,
+  // the row to the two of you, a head item stepped on and seen on the body
+  // in the yard; then clear, and the body drawn as bare as anybody's.
+  ['wardrobe: the house board opens the picker; a change is worn in the yard, and clear takes every slot bare', async () => {
+    fresh();
+    window.__crew(2, 2);
+    run(2);
+    const w = pairBody('you') || S.workers.find(o => !wearing(o));
+    if (!w) return [ok(false, 'a body to be you', S.workers.length)];
+    namePair('you', w);
+    w.kitOf = null;                              // no station hat under what is chosen
+    await openPicker();
+    const opened = S.paused && up(byId('wardrobe'));
+    const settingsGone = !byId('wardrobebtn');
+    byId('wardyou').click();
+    byId('ward-head-prev').click();              // off whatever it was, to be sure it moves
+    for (let i = 0; i < HEAD.length && outfitOf('you').head !== 'ears'; i++) byId('ward-head-next').click();
+    const eared = outfitOf('you').head === 'ears';
+    byId('wardrobeback').click();
+    await frames(2);
+    const down = !S.paused;
+    // drawn alone on the bare floor left of the rock, as the first check does
+    const all = S.workers, was = { x: w.x, y: w.y };
+    const x = Math.round(S.cx - 400), y = Math.round(S.groundY - WORKER);
+    window.__look(x - S.viewW / 2);
+    const look = () => {
+      Object.assign(w, { x, y, lunge: 0 });
+      S.workers = [w];
+      draw();
+      S.workers = all;
+      const out = [];
+      for (let dy = -3 * P; dy < WORKER; dy += 2) for (let dx = -2 * P; dx < WORKER + 2 * P; dx += 2) out.push(inkAt(x + dx, y + dy) ? 1 : 0);
+      return out.join('');
+    };
+    const ears = look(), earsMid = inkAt(x + WORKER / 2, y - P / 2), earsSide = inkAt(x + P / 2, y - P / 2);
+    // clear, from the page
+    await openPicker();
+    byId('wardyou').click();
+    byId('wardclear').click();
+    const o = outfitOf('you');
+    const allBare = SLOTS.every(s => o[s.key] === bareOf(s.key).key);
+    const named = nameOf('you'), role = roleOf('you');
+    byId('wardrobeback').click();
+    await frames(2);
+    const cleared = look();
+    const ids = S.pairIds;
+    S.pairIds = { ...ids, you: null };
+    const anybody = look();
+    S.pairIds = ids;
+    Object.assign(w, was);
+    await hoverAway();
+    fresh();
+    return [
+      ok(opened, 'the row on the house board brings the picker up over the yard'),
+      ok(settingsGone, 'and settings has no row for it'),
+      ok(eared && down, 'the head row stepped to the ears, and back lets the yard go', outfitOf('you').head),
+      ok(earsSide && !earsMid, 'the ears are drawn on you in the yard', `${earsSide} ${earsMid}`),
+      ok(allBare, 'clear takes every slot to none, the pattern to plain', JSON.stringify(o)),
+      ok(named === nameOf('you') && role === roleOf('you'), 'and keeps the name and the role'),
+      ok(cleared !== ears && cleared === anybody, 'you are drawn bare, as anybody is')
+    ];
+  }],
+
+  // The same way in by a pad alone: along the stops to the house, A its
+  // board, down its rows to the two of you, A, and B the yard again.
+  ['wardrobe: a pad reaches the picker through the house board', async () => {
+    fresh();
+    window.__crew(2, 2);
+    run(1);
+    const pad = window.__pad;
+    pad.on();
+    try {
+      pad.press('b');
+      for (let i = 0; i < 16 && pad.focus() !== 'st:house'; i++)
+        pad.press(pad.stops().indexOf('st:house') < pad.stops().indexOf(pad.focus()) ? 'left' : 'right');
+      const atHouse = pad.focus() === 'st:house';
+      pad.press('a');
+      await frames(2);
+      const boardUp = !!S.houseBoardOpen;
+      const onRow = () => pad.page()?.dataset?.key === 'pairpage';
+      for (let i = 0; i < 6 && !onRow(); i++) pad.press('up');
+      for (let i = 0; i < 6 && !onRow(); i++) pad.press('down');
+      const stop = onRow();
+      pad.press('a');
+      await frames(2);
+      const picker = S.paused && up(byId('wardrobe'));
+      pad.press('b');
+      await frames(2);
+      const back = !S.paused;
+      return [
+        ok(atHouse, 'the focus gets to the house', pad.focus()),
+        ok(boardUp, 'A opens its board'),
+        ok(stop, 'the row to the two of you is a stop on it', pad.page()?.dataset?.key || pad.focus()),
+        ok(picker, 'A on it brings the picker up'),
+        ok(back, 'B lets the yard go again')
+      ];
+    } finally {
+      pad.off();
       fresh();
     }
   }],

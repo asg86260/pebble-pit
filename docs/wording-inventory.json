@@ -903,13 +903,6 @@
   "text": "back"
  },
  {
-  "id": "set-wardrobebtn",
-  "group": "Settings",
-  "where": "play.html",
-  "context": "settings button to the picker, where the two of them are dressed",
-  "text": "the two of you"
- },
- {
   "id": "set-langbtn",
   "group": "Settings",
   "where": "src/selftest/settings.js",
@@ -6863,7 +6856,7 @@
   "id": "ward-title",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "play.html",
-  "context": "the picker page's heading; and at a new yard, the heading of its last step, the two of you side by side",
+  "context": "the picker page's heading; at a new yard, the heading of its last step, the two of you side by side; and the house board's row that opens the picker",
   "text": "the two of you"
  },
  {
@@ -6940,8 +6933,15 @@
   "id": "ward-randomize-all",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobepage.js",
-  "context": "the picker's button that rolls the whole square: name, role and outfit",
+  "context": "the picker's button that rolls the whole square: its role and outfit, never its name",
   "text": "randomize all"
+ },
+ {
+  "id": "ward-clear",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the picker's button that takes every slot of the square's outfit back to none (and the pattern to plain); the name and role stay",
+  "text": "clear"
  },
  {
   "id": "ward-skip",

@@ -17,6 +17,7 @@ import { WORKER } from './config.js';
 import { JOB } from './jobs.js';
 import { minding } from './crew/tenders.js';
 import { bodyName } from './wardrobe.js';
+import { openWardrobe } from './wardrobepage.js';
 
 // Where a body is, in the yard's words. Every job needs a line here: one
 // without reads as `undefined` on its row.
@@ -109,15 +110,31 @@ function point(w) {
   closeWindow();
 }
 
-// Two rows only: the way through to the people at the top, the thing you buy
-// at the bottom. The board comes out above the house and the cursor arrives
-// from the house, so the bottom row is what the cursor crosses first, and a
-// row that only puts a list up is fine to reach for while a row you came to
-// press is not. Nothing the crew *use* is sold here; that is the bench
-// (`SECTIONS` in upgrades.js).
+// The ways through at the top -- to the two of you, then to the people --
+// the thing you buy at the bottom. The board comes out above the house and
+// the cursor arrives from the house, so the bottom row is what the cursor
+// crosses first, and a row that only puts a page up is fine to reach for
+// while a row you came to press is not. Nothing the crew *use* is sold here;
+// that is the bench (`SECTIONS` in upgrades.js).
 export function crewRows() {
-  return [CREW_ROW, HOUSE_ROW];
+  return [PAIR_ROW, CREW_ROW, HOUSE_ROW];
 }
+
+// The door through to who the two of you are and what you wear
+// (wardrobepage.js), on the held sheet over the yard. The two of them live
+// here as the crew do, so it is the house's.
+const PAIR_ROW = {
+  key: 'pairpage',
+  name: msg('ward-title'),
+  buy: () => openWardrobe(),
+  opens: true,
+  price: () => '',
+  dead: () => false,
+  show: () => true,
+  from: null,
+  unit: null,
+  cost: () => 0
+};
 
 // The door through to them. Where the cost would go it says how many there are.
 const CREW_ROW = {
@@ -169,5 +186,5 @@ function people() {
 // that opens off the door wears the same word, which is how a submenu says
 // which heading it came out of.
 export const crewSections = () => [
-  { title: msg('crew-sect-crew'), keys: [CREW_ROW.key, HOUSE_ROW.key] }
+  { title: msg('crew-sect-crew'), keys: [PAIR_ROW.key, CREW_ROW.key, HOUSE_ROW.key] }
 ];
