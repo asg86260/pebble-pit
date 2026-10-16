@@ -44,6 +44,7 @@ import { ABYSS_AT, RIFTLIFE_SPEED, RIFTLIFE_COIL, DEEP_W } from './config.js';
 import { riftCenter, riftRadius } from './rift.js';
 import { hold } from './input.js';
 import { showPane } from './settings.js';
+import { fillControls } from './controls.js';
 import { setFeedbackUrl } from './feedback.js';
 
 // The parts, in the order the sheet reads them.
@@ -2082,6 +2083,13 @@ export const SCENES = {
   // The controls page of the settings sheet, opened by its button.
   controlspage: { about: 'the story', say: 'the controls page on the held sheet', page: true,
     run: () => { dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+                 document.getElementById('settingsbtn').click();
+                 document.getElementById('controlsbtn').click(); } },
+  // The same page once a pad has been seen: its column and its rows drawn in,
+  // as pad.js's first press draws them.
+  controlspad: { about: 'the story', say: 'the controls page with a pad seen', page: true,
+    run: () => { fillControls(document.getElementById('controlslist'), true);
+                 dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
                  document.getElementById('settingsbtn').click();
                  document.getElementById('controlsbtn').click(); } },
   // The index (indexpage.js): a mid-game yard with most things met, the book

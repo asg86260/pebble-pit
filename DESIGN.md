@@ -18295,8 +18295,13 @@ Xbox letters by default, drawn ✕ ○ □ △ for a PlayStation pad read off th
 pad's id. Prompts follow the last input: "hold space to skip" (skiphint.js)
 shows the pad's A while a pad was the last thing touched. The controls
 page (`CONTROLS`, controls.js) gains a pad column, shown once a pad has
-been seen. **Every prompt's words are the owner's**; the mocks' are
-placeholders.
+been seen. Since 2026-10-16 it is one table grouped by what you do
+(interact, crew, camera, boards, travel; option B of
+docs/mocks/controls-page-2026-10-15/): each action once, its mouse or keys
+and its pad buttons drawn in two narrow columns under a drawn mouse and a
+drawn pad, all of it one grid so every row's cells share the columns.
+Without a pad only the mouse's actions show. **Every prompt's words are
+the owner's**; the mocks' are placeholders.
 
 ### What it costs
 
