@@ -249,9 +249,11 @@ function build(el) {
       c.style.width = `${WARD_TILE_W * WARD_TILE_K}px`;
       c.style.height = `${WARD_TILE_H * WARD_TILE_K}px`;
       const lk = glyph(7, 8, LOCK, 'wardlk');
-      b.append(c, span('wardtn', msg(it.name)), lk);
+      // under a locked tile's name, what opens it, there without a hover
+      const u = span('wardtu', '');
+      b.append(c, span('wardtn', msg(it.name)), u, lk);
       b.addEventListener('click', () => wearTile(s.key, it.key));
-      const t = { b, c, lk, slot: s.key, key: it.key, aura: {} };
+      const t = { b, c, lk, u, slot: s.key, key: it.key, aura: {} };
       const on = () => { hot.add(t); sayAbout(); }, off = () => { hot.delete(t); sayAbout(); };
       b.addEventListener('pointerenter', on);
       b.addEventListener('pointerleave', off);
@@ -356,6 +358,8 @@ function say() {
     t.b.classList.toggle('tried', !!tried && tried.slot === t.slot && tried.key === t.key);
     t.b.setAttribute('aria-pressed', String(on));
     t.lk.style.visibility = lock ? 'visible' : 'hidden';
+    t.u.textContent = lock ? lockWords(lock.name) : '';
+    t.u.hidden = !lock;
     const nm = itemName(t.slot, t.key);
     t.b.title = lock ? msg('ward-locked', { item: nm, lock: lockWords(lock.name) }) : nm;
   }

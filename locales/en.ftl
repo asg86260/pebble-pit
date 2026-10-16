@@ -3297,19 +3297,20 @@ ward-gold-halo = gold halo
 ward-serpent-comb = serpent comb
 
 # what a locked item waits on, where it is not a notice: a station's first
-# hat, a name and a line (the line as the mock had it), and the portal
-ward-lock-rockhands = first helmet
+# hat, or the portal; the first a short line shown on the item's tile, the
+# second the fuller one under the grid (the line as the mock had it)
+ward-lock-rockhands = first helmet at the rock
 ward-lock-rockhands-note = buy the rock its first helmet
-ward-lock-quarriers = first lamp
+ward-lock-quarriers = first lamp at the quarry
 ward-lock-quarriers-note = buy the quarry its first lamp
-ward-lock-farmhands = first sun hat
+ward-lock-farmhands = first sun hat at the farm
 ward-lock-farmhands-note = buy the farm its first sun hat
-ward-lock-wizards = first wizard hat
+ward-lock-wizards = first wizard hat at the tower
 ward-lock-wizards-note = make the tower its first wizard hat
-ward-lock-janitors = the outhouse
+ward-lock-janitors = the outhouse opens
 ward-lock-janitors-note = open the outhouse
-ward-lock-portal = the portal
-ward-lock-portal-note = open the portal
+ward-lock-portal = the portal opens
+ward-lock-portal-note = conjure the portal over the abyss
 
 ## The shell
 

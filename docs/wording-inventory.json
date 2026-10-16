@@ -7556,8 +7556,8 @@
   "id": "ward-lock-rockhands",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
-  "context": "what a locked item waits on, where it is not a notice: a station's first hat, a name and a line (the line as the mock had it), and the portal",
-  "text": "first helmet"
+  "context": "what a locked item waits on, where it is not a notice: a station's first hat, or the portal; the first a short line shown on the item's tile, the second the fuller one under the grid (the line as the mock had it)",
+  "text": "first helmet at the rock"
  },
  {
   "id": "ward-lock-rockhands-note",
@@ -7571,7 +7571,7 @@
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
-  "text": "first lamp"
+  "text": "first lamp at the quarry"
  },
  {
   "id": "ward-lock-quarriers-note",
@@ -7585,7 +7585,7 @@
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
-  "text": "first sun hat"
+  "text": "first sun hat at the farm"
  },
  {
   "id": "ward-lock-farmhands-note",
@@ -7599,7 +7599,7 @@
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
-  "text": "first wizard hat"
+  "text": "first wizard hat at the tower"
  },
  {
   "id": "ward-lock-wizards-note",
@@ -7613,7 +7613,7 @@
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
-  "text": "the outhouse"
+  "text": "the outhouse opens"
  },
  {
   "id": "ward-lock-janitors-note",
@@ -7627,14 +7627,14 @@
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
-  "text": "the portal"
+  "text": "the portal opens"
  },
  {
   "id": "ward-lock-portal-note",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
-  "text": "open the portal"
+  "text": "conjure the portal over the abyss"
  },
  {
   "id": "shell-carry-title",

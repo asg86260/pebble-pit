@@ -1340,7 +1340,12 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .held .wardrobe .wardtile.on { color: var(--paper); background: var(--ink); border-color: var(--ink); }
 .held .wardrobe .wardtile.tried { border-style: dashed; border-color: var(--ink); }
 .wardrobe .wardtn { font-size: var(--fs-small); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wardrobe .wardtile.lock canvas, .wardrobe .wardtile.lock .wardtn { opacity: .32; }
+/* a locked tile: the drawing faint, its words at full ink, and what opens it
+   under the name, wrapping rather than cut (the owner: show how to unlock) */
+.wardrobe .wardtile.lock canvas { opacity: .32; }
+.wardrobe .wardtu { font-size: var(--fs-body); line-height: 1.2; max-width: 100%; padding: 0 2px;
+                    white-space: normal; overflow-wrap: break-word; hyphens: auto; text-align: center;
+                    text-transform: none; letter-spacing: normal; }
 .wardrobe .wardlk { position: absolute; top: 3px; right: 3px; width: 7px; height: 8px; }
 .wardrobe .wardabout { min-height: 2.6em; display: flex; flex-direction: column; color: var(--ink-4); font-size: var(--fs-small); text-align: left; }
 @media (max-width: 560px), (pointer: coarse) {

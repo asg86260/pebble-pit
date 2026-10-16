@@ -17,7 +17,7 @@ import { S } from '../state.js';
 import { P, WORKER, NAME_MAX } from '../config.js';
 import { draw } from '../render.js';
 import { darkPage } from '../ink.js';
-import { namePair, outfitOf, wear, DEFAULTS, HEAD, SLOTS, bareOf, nameOf, roleOf, setName, pairBody, ROLE_START, isOpen } from '../wardrobe.js';
+import { namePair, outfitOf, wear, DEFAULTS, HEAD, SLOTS, bareOf, nameOf, roleOf, setName, pairBody, ROLE_START, isOpen, itemLock } from '../wardrobe.js';
 import { CREW_NAMES } from '../crew/names.js';
 import { objective } from '../objectives.js';
 import { wearing } from '../kit.js';
@@ -264,6 +264,28 @@ export const TESTS = [
   // A locked item (a lock of the check's own standing in for the
   // wardrobe's): faint under its lock, saying what opens it; picked, it is
   // tried on the close-up, faint, and not kept; a roll never lands on one.
+  // The yard's own locks (wardrobe.js, `itemLock`): every item a tile, and a
+  // locked one says on its face what opens it, at full ink, no hover needed.
+  ['wardrobe: a locked tile shows what opens it, on the tile; an open one shows nothing', async () => {
+    fresh();
+    await openPicker();
+    byId('wardyou').click();
+    slotTab('head').click();
+    await frames(1);
+    const line = k => tile('head', k)?.querySelector('.wardtu');
+    const want = itemLock('head', 'crown'), crown = line('crown'), ears = line('ears'), lamp = line('lamp');
+    const all = HEAD.every(it => up(tile('head', it.key)));
+    const full = crown && getComputedStyle(crown).opacity === '1' && getComputedStyle(crown.parentElement).opacity === '1';
+    await closePicker();
+    return [
+      ok(all, 'every head item is a tile, locked or not'),
+      ok(want && up(crown) && crown.textContent === want.name && full, 'the crown\'s tile says what opens it, at full ink',
+         crown?.textContent),
+      ok(up(lamp) && lamp.textContent === itemLock('head', 'lamp').name, 'a station hat\'s tile names its station\'s first hat',
+         lamp?.textContent),
+      ok(!up(ears), 'an open tile has no such line')
+    ];
+  }],
   ['wardrobe: a locked tile is tried on, faint, and not kept; a roll never wears one', async () => {
     fresh();
     run(0.5);
