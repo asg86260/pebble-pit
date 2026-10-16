@@ -117,7 +117,9 @@ export function chimneyAt() {
 // yard standing idle. Rooms are lit from the bottom up, in the order built;
 // room zero is the doorway, so there is exactly one window a body.
 export const homeCount = () => S.workers.filter(w => w.inside).length;
-export const lit = i => i > 0 && i <= homeCount();
+// `home` is the count, for a caller asking of every window: the count is a
+// walk of the whole crew.
+export const lit = (i, home = homeCount()) => i > 0 && i <= home;
 
 // One lit window changes its mind every so often. Which one walks the
 // settlement by the golden ratio: a whole-number stride shares a factor with
@@ -130,7 +132,7 @@ export function stepShutters(now) {
   const home = homeCount();
   // a curtain across an empty room is nothing; drop any that are left over from
   // when somebody lived in it
-  if (S.shutters.some(i => !lit(i))) S.shutters = S.shutters.filter(lit);
+  if (S.shutters.some(i => !lit(i, home))) S.shutters = S.shutters.filter(i => lit(i, home));
   if (home < 2 || now < S.shutterAt) return;
   S.shutterAt = now + HOUSE_FLIP_MS;
 
@@ -190,9 +192,10 @@ export function drawHouses(ctx) {
   // is white when somebody is behind it and grey when not, and grey is also
   // what a drawn curtain looks like; either way the color says whether there
   // is anything to see.
+  const home = homeCount();
   for (const h of holes()) {
     ctx.fillStyle = h.door ? '#fff'
-      : lit(h.i) && !S.shutters.includes(h.i) ? '#fff'
+      : lit(h.i, home) && !S.shutters.includes(h.i) ? '#fff'
       : HOUSE_CURTAIN;
     ctx.fillRect(h.x, h.y, h.w, h.h);
   }
@@ -207,10 +210,11 @@ export function houseReport() {
   const cs = cubes();
   const left = cs.length ? Math.min(...cs.map(c => c.x)) : null;
   const right = cs.length ? Math.max(...cs.map(c => c.x)) + HOUSE_CUBE : null;
+  const home = homeCount();
   return {
     cubes: cs.length,
-    home: homeCount(),
-    lights: holes().filter(h => !h.door && lit(h.i) && !S.shutters.includes(h.i)).length,
+    home,
+    lights: holes().filter(h => !h.door && lit(h.i, home) && !S.shutters.includes(h.i)).length,
     cube: HOUSE_CUBE,
     left, right,
     top: cs.length ? Math.min(...cs.map(c => c.y)) : null,

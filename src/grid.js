@@ -178,6 +178,10 @@ export const BARRED_REACH = 96;
 // `region` can answer.
 const ANYWHERE = Symbol('anywhere');
 
+// Where the last grain `addGrain` took went in, for a caller keeping its own
+// reading of the columns' tops between grains (`stepChips`).
+export const landed = { c: -1, r: -1 };
+
 // drop one grain in at x. If that column is full or barred it goes in the
 // nearest one that is not; false means there was nowhere at all.
 // `free` ignores the ceiling: what a bank may stand at is about heaps of dust,
@@ -230,7 +234,7 @@ export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
   }
   if (col < 0) return false;
   for (let r = 0; r < b.rows; r++) {
-    if (!at(b, col, r)) { put(b, col, r, shade); return true; }
+    if (!at(b, col, r)) { landed.c = col; landed.r = r; put(b, col, r, shade); return true; }
   }
   return false;
 }

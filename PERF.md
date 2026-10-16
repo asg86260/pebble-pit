@@ -254,6 +254,55 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   Firefox has let the coil's compiled code go, so the first frames of the
   next ripple draw in 17-23 ms (worst frame 27).
 
+- **The thirty-hour yard (2026-10-16).** The owner saw ~30 fps in the yard
+  and 50-60 in the deep at rock 31621 with 170 crew. Measured on the `late`
+  scene (everything bought, seven stations in the deep, the serpent up, rock
+  31621, 170 crew) with `tools/node/late-perf.mjs` for the sim, crits
+  rolling as in play -- the crit-free node yard has hundreds of grains in the
+  air where a late yard has three to six thousand -- and a GPU Chrome
+  (`--headless=new`, 1904x985) with per-step and per-layer timers on
+  `globalThis` for the frame, base and branch served side by side and run
+  alternately, min of six 2 s segments. The machine had other agents on it
+  throughout; pairs were run back to back and the cleanest pair is quoted.
+
+  | | before | after |
+  |---|---:|---:|
+  | node sim, yard, median of ten segments (three pairs) | 4.0-4.5 ms | 3.2-3.4 ms |
+  | node sim, yard, processor min | 3.1-3.5 ms | 2.6-2.8 ms |
+  | browser yard, step / draw | 3.20 / 4.41 ms | 2.68 / 3.59 ms |
+  | browser deep, step / draw | 3.14 / 3.75 ms | 2.54 / 3.42 ms |
+
+  What it was, by self time: `stepChips` walked each grain's column down
+  from the top of the floor grid every frame (`surfaceY`), four thousand
+  grains a frame -- the column tops are now read once a frame a column and
+  kept up to date as this step's own grains land (`landed` in grid.js), the
+  sim grain for grain the same (chips 1.24 -> 0.6 ms). Every idle carter
+  scanned the yard's 1,029 columns through `at()` and a Set lookup per
+  column (`anyDust`, `firstPick`), and `keptBy`/`nextNear` rebuilt the
+  carters' list per column asked; the bottom row is read straight, the set
+  asked only of a column with something on it, the claimant found without
+  making a list, and `firstPick` finds the nearest other carter by a
+  halving search. On the drawing side, the settlement asked `homeCount()`
+  (a filter of the whole crew) once per window (0.27 -> 0.06 ms); the
+  roster filtered the crew per post four or five times a frame (roster
+  0.43 -> 0.28, counts 0.35 -> 0.19), and drew the yard's posts in the deep
+  where they are clipped away; bodies off the glass were drawn (workers
+  0.45 -> 0.17); the clouds the whole sky's width, the portal's hole and the
+  abyss's field every cell whether on the window or not; and every flag
+  worked out its cloth from strings each frame (now one of its eight poses,
+  kept).
+
+  What is left: the yard is the slow half because of the GPU, not the main
+  thread. At a device pixel ratio of 2 the yard ran 54-73 fps against the
+  deep's 105-117 with main-thread frames of 12 and 8.5 ms, so the yard has
+  several milliseconds of raster the timers cannot see. The crew pass (1.4
+  ms at 170 bodies, ~8 us a body spread over every stage), the coil's line
+  walked once a frame for the fighters (~0.3 ms in the serpent's split
+  stage) and `ways()` scanning the rock's columns per call are the sim's
+  rest; the portal's hole (0.47 ms, all of it on the window in this view)
+  and the clouds' per-cell tones (0.33) the drawing's. A one-off 10 ms
+  serpent step at a phase change is the only spike in 90 s of the deep.
+
 ## 1. The frame budget
 
 The busy yard costs ~0.80 ms/frame bare, ~0.89 under the profiler. Broken down

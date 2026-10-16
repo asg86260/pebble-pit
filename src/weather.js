@@ -614,6 +614,9 @@ export function drawClouds() {
   // fills meeting there blend into a hairline of page through the cloud.
   const k = S.zoom * S.dpr, snap = v => Math.round(v * k) / k;
   const order = CLOUDS.slice().sort((a, b) => a.far - b.far);
+  // Where the glass is, for leaving out a cloud wholly off it: the sky runs
+  // the world's whole width, and a cloud is hundreds of cells to tone.
+  const glass = ctx.getTransform(), glassW = ctx.canvas.width;
   const visitors = GUESTS.list().slice().sort((a, b) => a.far - b.far);
   let g = 0;
   for (const c of order) {
@@ -625,6 +628,11 @@ export function drawClouds() {
       : cloudTones(crown, base, c.far, fade(c));
     const cp = P * CLOUD_LAYERS[c.sheet].cell;      // the sheet's cell, in pixels
     const x = skyAt(c), y = cloudY(c);
+    // The farthest any bump can reach at the fullest swell (`columnsOf`),
+    // a cell over: the widest the cloud is ever drawn.
+    let reach = 0;
+    for (const b of c.bumps) reach = Math.max(reach, Math.abs(b.x) + b.r * (1 + CLOUD_GROW_R) + 2);
+    if (glass.a * (x + reach * cp) + glass.e < 0 || glass.a * (x - reach * cp) + glass.e > glassW) continue;
     const { lo, hi, h, under: u } = columnsOf(c, sw);
     let peak = 0;
     for (let cx = lo; cx <= hi; cx++) if ((h[cx] || 0) > peak) peak = h[cx];
