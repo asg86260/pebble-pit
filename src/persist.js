@@ -26,6 +26,7 @@ import { at, fillFlat, isDust, recount, wakeGrid } from './grid.js';
 import { openingCamX, clampCam, SAVE as VIEW } from './world.js';
 import { SAVE as CASINO } from './casino.js';
 import { SAVE as INTRO } from './intro.js';
+import { SAVE as PAIR } from './wardrobe.js';
 import { SAVE as BEATS } from './beats.js';
 import { SAVE as ABYSS } from './abyssintro.js';
 import { SAVE as ROCK } from './rock.js';
@@ -499,9 +500,12 @@ export const SAVERS = [
   FINALE,
   // The cut after `resetCut`, which reads the depth the quarry put back.
   CUT,
-  // Last: the opening's pair are stood at the door after everything else is
+  // The opening's pair are stood at the door after everything else is
   // back and before the first frame is drawn.
-  INTRO
+  INTRO,
+  // Last of all: which bodies are the two of them, mended against a yard
+  // that is wholly back (the beats, the crew, the stations, the finale).
+  PAIR
 ];
 const FIRST = new Set([RNG, VIEW, ROCK]);
 

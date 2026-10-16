@@ -1,6 +1,7 @@
 // The crew, kept to the counts: who the yard has, who it is short of, and who is
 // actually standing at a site rather than merely assigned to one.
 
+import { keepPair, whoIs } from '../wardrobe.js';
 import { WORKER } from '../config.js';
 import { S } from '../state.js';
 import { spawnChip, bell } from '../dust.js';
@@ -102,7 +103,10 @@ export function syncWorkers() {
   // A build landing makes one builder fewer, and the one given up is the one
   // whose work just landed: any other is hammering at a site of its own, and
   // the freed body would walk the yard to take over the work it left.
-  const ordered = [...tiers.filter(w => !offWork(w)), ...tiers.filter(offWork)];
+  // The two of them are kept first, and if they must be stood down they are
+  // the first spare hands taken on again: a body that is one of them is not
+  // to be let go while there is work for it (wardrobe.js).
+  const ordered = pairFirst([...tiers.filter(w => !offWork(w)), ...tiers.filter(offWork)]);
   const kept = new Set();
   for (const w of ordered) (room[w.type]-- > 0 ? kept.add(w) : stood.push(w));
   keep.push(...S.workers.filter(w => kept.has(w)));
@@ -124,6 +128,7 @@ export function syncWorkers() {
     unbook(w);                     // and the room it had booked goes back
   }
   S.workers = keep;
+  stood.splice(0, stood.length, ...pairFirst(stood));
 
   // count what is missing first: pushing while re-reading the length only ever
   // creates half of them
@@ -168,7 +173,14 @@ export function syncWorkers() {
 
   // Nothing here hands out hats: a hat is on a head because that body walked
   // over and picked it up (`retask`, `stepKit`).
+
+  // And the two of them still named, whoever was stood down.
+  keepPair();
 }
+
+// The two of them to the front of a list of bodies, everybody else in the
+// order they had.
+const pairFirst = list => [...list.filter(w => whoIs(w)), ...list.filter(w => !whoIs(w))];
 
 // --- coming back to it --------------------------------------------------------
 // Bodies are not saved, so neither is who was wearing what. You left them at

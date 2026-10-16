@@ -154,3 +154,6 @@ export * from './config/pad.js';
 
 // the feedback form: its worker's address, its caps and its short lists
 export * from './config/feedback.js';
+
+// the two of them's wardrobe: its marks, its greys and its picker
+export * from './config/wardrobe.js';

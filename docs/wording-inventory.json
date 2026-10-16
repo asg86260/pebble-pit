@@ -878,8 +878,15 @@
   "id": "set-controlsback",
   "group": "Settings",
   "where": "play.html",
-  "context": "controls page back, and the language page's and the feedback page's",
+  "context": "controls page back, and the language page's, the feedback page's and the picker's",
   "text": "back"
+ },
+ {
+  "id": "set-wardrobebtn",
+  "group": "Settings",
+  "where": "play.html",
+  "context": "settings button to the picker, where the two of them are dressed",
+  "text": "the two of you"
  },
  {
   "id": "set-langbtn",
@@ -6760,6 +6767,433 @@
   "where": "src/render/serpentbar.js",
   "context": "the serpent's level after the pips on its bar, from level 2 on; $n is the level. drawn as the bare number, in the pixel number font (NUM_FONT), which draws only the glyphs it has: words want their letters drawn into the font",
   "text": "${n}"
+ },
+ {
+  "id": "ward-title",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "play.html",
+  "context": "the picker page's heading",
+  "text": "the two of you"
+ },
+ {
+  "id": "ward-her",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the picker's tab for dressing the sqwife",
+  "text": "her"
+ },
+ {
+  "id": "ward-him",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the picker's tab for dressing the sqhusband",
+  "text": "him"
+ },
+ {
+  "id": "ward-randomize",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the picker's button that dresses the one being dressed at random",
+  "text": "randomize"
+ },
+ {
+  "id": "ward-skip",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the picker's button, at a new yard, that keeps the outfits they start in and goes on",
+  "text": "skip"
+ },
+ {
+  "id": "ward-done",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the picker's way off, at a new yard: the outfits as chosen, and on with the game",
+  "text": "done"
+ },
+ {
+  "id": "ward-slot-head",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "the picker's row labels, a slot a row",
+  "text": "head"
+ },
+ {
+  "id": "ward-slot-face",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "face"
+ },
+ {
+  "id": "ward-slot-neck",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "neck"
+ },
+ {
+  "id": "ward-slot-back",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "back"
+ },
+ {
+  "id": "ward-slot-pattern",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "pattern"
+ },
+ {
+  "id": "ward-none",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "an item on the picker, shown between a row's previous and next; a plain label",
+  "text": "none"
+ },
+ {
+  "id": "ward-plain",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "plain"
+ },
+ {
+  "id": "ward-bow",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "bow"
+ },
+ {
+  "id": "ward-top-hat",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "top hat"
+ },
+ {
+  "id": "ward-crown",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "crown"
+ },
+ {
+  "id": "ward-flower",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "flower"
+ },
+ {
+  "id": "ward-sprout",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "sprout"
+ },
+ {
+  "id": "ward-ears",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "ears"
+ },
+ {
+  "id": "ward-antenna",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "antenna"
+ },
+ {
+  "id": "ward-beanie",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "beanie"
+ },
+ {
+  "id": "ward-beret",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "beret"
+ },
+ {
+  "id": "ward-tiara",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "tiara"
+ },
+ {
+  "id": "ward-headband",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "headband"
+ },
+ {
+  "id": "ward-pigtails",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "pigtails"
+ },
+ {
+  "id": "ward-mohawk",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "mohawk"
+ },
+ {
+  "id": "ward-eyes",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "eyes"
+ },
+ {
+  "id": "ward-sleepy",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "sleepy"
+ },
+ {
+  "id": "ward-smile",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "smile"
+ },
+ {
+  "id": "ward-glasses",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "glasses"
+ },
+ {
+  "id": "ward-round-glasses",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "round glasses"
+ },
+ {
+  "id": "ward-shades",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "shades"
+ },
+ {
+  "id": "ward-monocle",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "monocle"
+ },
+ {
+  "id": "ward-eyepatch",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "eyepatch"
+ },
+ {
+  "id": "ward-mustache",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "mustache"
+ },
+ {
+  "id": "ward-freckles",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "freckles"
+ },
+ {
+  "id": "ward-blush",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "blush"
+ },
+ {
+  "id": "ward-scarf",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "scarf"
+ },
+ {
+  "id": "ward-checked-scarf",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "checked scarf"
+ },
+ {
+  "id": "ward-striped-scarf",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "striped scarf"
+ },
+ {
+  "id": "ward-bowtie",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "bowtie"
+ },
+ {
+  "id": "ward-tie",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "tie"
+ },
+ {
+  "id": "ward-collar",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "collar"
+ },
+ {
+  "id": "ward-medal",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "medal"
+ },
+ {
+  "id": "ward-cape",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "cape"
+ },
+ {
+  "id": "ward-short-cape",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "short cape"
+ },
+ {
+  "id": "ward-backpack",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "backpack"
+ },
+ {
+  "id": "ward-small-pack",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "small pack"
+ },
+ {
+  "id": "ward-cat-tail",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "cat tail"
+ },
+ {
+  "id": "ward-bushy-tail",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "bushy tail"
+ },
+ {
+  "id": "ward-balloon",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "balloon"
+ },
+ {
+  "id": "ward-flag",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "flag"
+ },
+ {
+  "id": "ward-overalls",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "overalls"
+ },
+ {
+  "id": "ward-stripes",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "stripes"
+ },
+ {
+  "id": "ward-tall-stripes",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "tall stripes"
+ },
+ {
+  "id": "ward-dots",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "dots"
+ },
+ {
+  "id": "ward-diagonal",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "diagonal"
+ },
+ {
+  "id": "ward-quarters",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "quarters"
+ },
+ {
+  "id": "ward-pale",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "pale"
+ },
+ {
+  "id": "ward-grey",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "grey"
+ },
+ {
+  "id": "ward-black",
+  "group": "The picker: what the two of them wear (wardrobepage.js)",
+  "where": "src/wardrobe.js",
+  "context": "",
+  "text": "black"
  },
  {
   "id": "shell-carry-title",

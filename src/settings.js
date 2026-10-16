@@ -21,6 +21,7 @@ import { msg } from './lang.js';
 import { fillLanguages, inForce } from './langpage.js';
 import { feedbackReady } from './feedback.js';
 import { mountFeedback } from './feedbackform.js';
+import { showWardrobe, wardrobeOffer, leaveWardrobe } from './wardrobepage.js';
 // input.js imports this file; `hold` is a declaration, so it is there to
 // call however the ring is entered.
 import { hold } from './input.js';
@@ -63,13 +64,18 @@ export function showPane(name) {
   slotsBtn.textContent = slotsLabel();
   sayIndexButton(indexBtn);
   if (name === 'record') showRecord(recordEl);
+  // The two of them's picker: from settings, or once at a new yard (`offerDress`).
+  if (name === 'wardrobe') showWardrobe(document.getElementById('wardrobe'), { start: dressing, leave: () => hold(false) });
+  dressing = false;
   if (name === 'index') showIndex(indexEl);
   // A new form every time the page is turned to: the tick off, the words the
   // draft, the save the open slot's blob as the store holds it now.
   if (name === 'feedback') mountFeedback(document.getElementById('fbform'), { page: 'game', raw: () => slotRaw(openSlot()), back: document.getElementById('fbback') });
   if (name === 'slots') {
     // Deleting the open slot is the reset it replaced: a new yard, standing.
-    showSlots(slotsEl, line => { said.textContent = line; }, n => { switchSlot(n); back(); }, true, () => reset());
+    // A slot opened empty, or the open one deleted, is a new yard: the
+    // picker is offered as it is at a first boot.
+    showSlots(slotsEl, line => { said.textContent = line; }, n => { switchSlot(n); back(); offerDress(); }, true, () => { reset(); offerDress(); });
     showCloud(cloudEl, line => { said.textContent = line; }, { took: tookCloud });
   }
 }
@@ -92,6 +98,22 @@ langBtn.textContent = msg('set-langbtn', { name: inForce().name });
 fillLanguages(document.getElementById('langlist'), { reload: () => leave(location.href), stay: () => showPane('settings') });
 langBtn.addEventListener('click', () => showPane('language'));
 document.getElementById('langback').addEventListener('click', () => showPane('settings'));
+// The two of them, a page of its own off settings. Its way back is the
+// offer's done when it came up at the start of a yard.
+document.getElementById('wardrobebtn').addEventListener('click', () => showPane('wardrobe'));
+document.getElementById('wardrobeback').addEventListener('click', () => {
+  if (wardrobeOffer()) leaveWardrobe(); else showPane('settings');
+});
+let dressing = false;
+// Once, at a new yard: the sheet up on the picker before the opening walks
+// out, the yard held under it. Done or skip lets it go.
+export function offerDress() {
+  if (S.dressOffered) return;
+  S.dressOffered = true;
+  hold(true);
+  dressing = true;
+  showPane('wardrobe');
+}
 fbBtn.addEventListener('click', () => showPane('feedback'));
 document.getElementById('fbback').addEventListener('click', back);
 document.getElementById('titlebtn').addEventListener('click', () => leave('index.html'));

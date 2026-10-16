@@ -30,6 +30,8 @@ import { TYPE } from '../jobs.js';
 import { shown } from '../tween.js';
 import { poseAt, topOf } from '../motion.js';
 import { writeCount } from './numfont.js';
+import { dressBehind, dressOn, dressHead, dressFlat, motionOf, YARD_INKS, DEEP_INKS } from './wardrobe.js';
+import { outfitOf, whoIs } from '../wardrobe.js';
 
 // The bench is not in the yard until there is something on it worth buying.
 // It is built rather than delivered (raise.js), so while it is going up it is
@@ -52,17 +54,44 @@ export function drawBench() {
 // The body: one hollow square, whoever it is. Where somebody is standing says
 // what they are doing, so no job carries a mark of its own. Drawn here because
 // the roster under each station draws the same square beside its count.
-export function drawBody(x, y) {
+//
+// The two of them are the one exception: they wear what was chosen for them
+// (render/wardrobe.js), handed in as `look` (`lookFor`). True when what they
+// wear on their head was drawn, which is then worn in place of a station hat.
+export function drawBody(x, y, look = null) {
+  if (look) dressBehind(ctx, x, y, look);
   // Filled, not see-through: an outlined square on a black rock shows the rock
   // through its middle and reads as a hole in whatever is behind it. The page
   // is white, so a body is white.
   square(x, y, WORKER, WORKER);
+  if (!look) return false;
+  dressOn(ctx, x, y, look);
+  const head = dressHead(ctx, x, y, look);
+  ctx.fillStyle = '#000';
+  return head;
 }
 
 // The same square squashed to two rows, its feet on the ground of a body
 // stood at (x, y): the crouch before a hop and the landing after it.
-export function drawSquat(x, y) {
+export function drawSquat(x, y, look = null) {
+  if (look) dressBehind(ctx, x, y + P, look);
   square(x, y + P, WORKER, WORKER - P);
+  if (!look) return false;
+  dressOn(ctx, x, y + P, look, WORKER, WORKER - P);
+  const head = dressHead(ctx, x, y + P, look);
+  ctx.fillStyle = '#000';
+  return head;
+}
+
+// How one of the two of them is drawn this frame, or null for anybody else
+// (or for nobody: `who` null). `key` is the object the body is drawn from,
+// which its walk is read off (`motionOf`); `face` its own facing where it
+// keeps one; `deep` for a body drawn in the deep's inks; `back` false where
+// something else hangs off its back (a carter's cart).
+export function lookFor(who, key, x, { face = null, deep = false, back = true } = {}) {
+  if (!who) return null;
+  const t = now() / 1000, m = motionOf(key, x, t, face);
+  return { outfit: outfitOf(who), dir: m.dir, moving: m.moving, t, inks: deep ? DEEP_INKS : YARD_INKS, back };
 }
 
 // A body's square: a black rim BODY_RIM world pixels thick round a white
@@ -454,8 +483,9 @@ export function drawIntro() {
   for (const b of S.pair) {
     if (b.under) continue;              // gone into the portal after him
     const x = Math.round(b.x), y = Math.round(b.y);
-    if (b.down) drawFloored(x, y);
-    else drawBody(x, y);
+    const look = lookFor(b.who || whoIs(b.body), b, b.x);
+    if (b.down) { drawFloored(x, y); if (look) dressFlat(ctx, x - P, y + WORKER - P * 2, look); ctx.fillStyle = '#000'; }
+    else drawBody(x, y, look);
     if (b.say) drawSaying(x, y, b.say);
   }
 
@@ -483,7 +513,9 @@ function drawLodged(x, y, out) {
   ctx.beginPath();
   ctx.rect(x - P, y - P * 8, WORKER + P * 2, WORKER + P * 8);  // down to the ground line
   ctx.clip();
-  drawBody(x, y + depth);
+  // her, under every rock: only what she wears on her head shows over the
+  // ground while she is lodged deep
+  drawBody(x, y + depth, lookFor('her', S.boulder, x));
   ctx.restore();
   drawDirt(x, y + WORKER, sunk);
   return depth;
@@ -687,12 +719,17 @@ function drawWorker(w, t0) {
     const y = ground + squat;
     if (pose) drawHopMarks(x, Math.round(w.y), pose);
 
-    if (squat) drawSquat(x, ground); else drawBody(x, y);
+    // One of the two of them wears what was chosen (render/wardrobe.js), in
+    // the deep's inks where the deep is drawn over them, and no back item
+    // where a cart hangs.
+    const dress = lookFor(whoIs(w), w, w.x, { face: w.face || 1, deep: inTheDeep(w), back: !cart });
+    const head = squat ? drawSquat(x, ground, dress) : drawBody(x, y, dress);
     if (pose && (pose.arms || pose.hold)) drawHeldPiece(x, y, pose.hold, pose.arms);
 
     // One line, for everybody: the whole of what "hats are always shown" means.
+    // Their chosen headwear is worn in place of it (the owner's vote).
     const hat = kit;
-    if (hat && hat !== 'cart') drawHat(x, y, hat);
+    if (hat && hat !== 'cart' && !head) drawHat(x, y, hat);
 
     // The tonic is not drawn on the body: it is a plume of motes let go from
     // the head into the yard (`stepDoseMotes` in apothecary.js), so a walking

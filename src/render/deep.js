@@ -44,7 +44,8 @@ import { raw, darkPage } from '../ink.js';
 import { ctx } from './ctx.js';
 import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
-import { drawBody, inTheDeep } from './crew.js';
+import { drawBody, inTheDeep, lookFor } from './crew.js';
+import { whoIs } from '../wardrobe.js';
 import * as place from '../deep/place.js';
 import { SCAFFOLD_OVER, STATION_RISE_S, CAPSTONE_RUNG, PLINTH_H, PLINTH_TONES, CHOOSE_MARK_UP } from '../config.js';
 import { drawHand, handSize, handTip } from './hand.js';
@@ -562,7 +563,7 @@ export function drawSwimmers() {
     if (ink <= 0) continue;
     ctx.globalAlpha = was * ink;
     const x = Math.round(w.x), y = Math.round(w.y);
-    drawBody(x, y);
+    drawBody(x, y, lookFor(whoIs(w), w, w.x, { face: w.face || null, deep: true }));
     // A gatherer's handful, overhead two abreast, each scale as it is. A
     // fang in its arms is the fang's own to draw, over its head
     // (render/scales.js).

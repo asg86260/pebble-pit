@@ -395,8 +395,11 @@ set-controlsbtn = controls
 # controls page heading
 set-controls-word = controls
 
-# controls page back, and the language page's and the feedback page's
+# controls page back, and the language page's, the feedback page's and the picker's
 set-controlsback = back
+
+# settings button to the picker, where the two of them are dressed
+set-wardrobebtn = the two of you
 
 # settings button to the language page; $name is the language in force, in its own name
 set-langbtn = language · { $name }
@@ -3017,6 +3020,85 @@ build-free = free
 # drawn as the bare number, in the pixel number font
 # (NUM_FONT), which draws only the glyphs it has: words want their letters drawn into the font
 serp-level = { $n }
+
+## The picker: what the two of them wear (wardrobepage.js)
+
+# the picker page's heading
+ward-title = the two of you
+
+# the picker's tab for dressing the sqwife
+ward-her = her
+
+# the picker's tab for dressing the sqhusband
+ward-him = him
+
+# the picker's button that dresses the one being dressed at random
+ward-randomize = randomize
+
+# the picker's button, at a new yard, that keeps the outfits they start in and goes on
+ward-skip = skip
+
+# the picker's way off, at a new yard: the outfits as chosen, and on with the game
+ward-done = done
+
+# the picker's row labels, a slot a row
+ward-slot-head = head
+ward-slot-face = face
+ward-slot-neck = neck
+ward-slot-back = back
+ward-slot-pattern = pattern
+
+# an item on the picker, shown between a row's previous and next; a plain label
+ward-none = none
+ward-plain = plain
+ward-bow = bow
+ward-top-hat = top hat
+ward-crown = crown
+ward-flower = flower
+ward-sprout = sprout
+ward-ears = ears
+ward-antenna = antenna
+ward-beanie = beanie
+ward-beret = beret
+ward-tiara = tiara
+ward-headband = headband
+ward-pigtails = pigtails
+ward-mohawk = mohawk
+ward-eyes = eyes
+ward-sleepy = sleepy
+ward-smile = smile
+ward-glasses = glasses
+ward-round-glasses = round glasses
+ward-shades = shades
+ward-monocle = monocle
+ward-eyepatch = eyepatch
+ward-mustache = mustache
+ward-freckles = freckles
+ward-blush = blush
+ward-scarf = scarf
+ward-checked-scarf = checked scarf
+ward-striped-scarf = striped scarf
+ward-bowtie = bowtie
+ward-tie = tie
+ward-collar = collar
+ward-medal = medal
+ward-cape = cape
+ward-short-cape = short cape
+ward-backpack = backpack
+ward-small-pack = small pack
+ward-cat-tail = cat tail
+ward-bushy-tail = bushy tail
+ward-balloon = balloon
+ward-flag = flag
+ward-overalls = overalls
+ward-stripes = stripes
+ward-tall-stripes = tall stripes
+ward-dots = dots
+ward-diagonal = diagonal
+ward-quarters = quarters
+ward-pale = pale
+ward-grey = grey
+ward-black = black
 
 ## The shell
 

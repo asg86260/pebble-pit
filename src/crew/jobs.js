@@ -185,6 +185,9 @@ export const newUid = () => {
   let m = 0;
   for (const w of S.workers) m = Math.max(m, uidNum(w.uid));
   for (const st of S.stations) m = Math.max(m, uidNum(st.fighter));
+  // nor a name one of the two of them held (wardrobe.js): handed to a
+  // stranger, that one would be wearing her clothes
+  for (const u of Object.values(S.pairIds || {})) m = Math.max(m, uidNum(u));
   return `u${m + 1}`;
 };
 

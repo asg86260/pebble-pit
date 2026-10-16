@@ -48,6 +48,7 @@ import { hear } from './audio.js';
 import { hold, pan, viewTaken, whatIsAt } from './input.js';
 import { aim, markAt, glideMs } from './padglide.js';
 import { fillControls } from './controls.js';
+import { wardrobePad } from './wardrobepage.js';
 import { scope, focused, dropFocus, keepFocus, move as pageMove, pressA, pressX,
          enterBoard, enterCorner, paintPage, pickToward } from './padpage.js';
 
@@ -441,6 +442,9 @@ export function stepPad(t = performance.now()) {
 
 function pagePresses(sc, dirs, pressed, t) {
   keepFocus(sc, t);
+  // The picker's rows take left and right as their own, and LB, RB and Y
+  // (wardrobepage.js).
+  if (sc.kind === 'held') dirs = wardrobePad(dirs, pressed);
   for (const d of dirs) {
     // Down past the corner's last row is the yard again, where the focus was.
     if (!pageMove(sc, d) && sc.kind === 'corner' && d === 'down') { enterCorner(false); dropFocus(); return; }

@@ -221,6 +221,10 @@ export function bindFighters() {
     if (!waiting(st)) continue;
     let best = -1, dist = Infinity;
     loose.forEach((w, i) => { const d = Math.abs(mid(w) - stationMid(st)); if (d < dist) { dist = d; best = i; } });
+    // The first station is hers (snatch.js, `giveBack`): she answers to it
+    // whoever else is nearer.
+    const hers = st === S.stations[0] ? loose.findIndex(w => S.pairIds && w.uid === S.pairIds.her) : -1;
+    if (hers >= 0) best = hers;
     if (best < 0) break;
     take(st, loose.splice(best, 1)[0]);
   }

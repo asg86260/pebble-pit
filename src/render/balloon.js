@@ -2,15 +2,16 @@
 // craft themselves among the clouds.
 
 import { BALLOON_BASKET, BALLOON_LINES, BALLOON_H, BALLOON_W, CRAFT,
-         aboard, craftAt, mastX, postY, sizeAt, skyX } from '../balloon.js';
+         aboard, inBasket, craftAt, mastX, postY, sizeAt, skyX } from '../balloon.js';
 import { drawDoseMote } from './effects.js';
 import { DRAWN } from '../craftair.js';
 import { fadeAt, murkTone } from '../weather.js';
 import { BALLOON_HANG, P, WORKER } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
-import { drawBody } from './crew.js';
+import { drawBody, lookFor } from './crew.js';
 import { GUESTS } from '../skyguests.js';
+import { whoIs } from '../wardrobe.js';
 
 // The row of moorings beside the filter's dial, one a craft: a stake in the
 // ground to the left of where the basket rests, the craft's tether tied off
@@ -64,7 +65,11 @@ function drawCraft(i, a) {
   ctx.globalAlpha = 1 - Math.max(0, fadeAt(a.far));
   drawDrawnIn(i);
   drawEnvelope(i);
-  if (aboard(i)) drawBody(-WORKER / 2, -P - WORKER);
+  if (aboard(i)) {
+    // one of the two of them may be the one riding: dressed, in the sky too
+    const w = S.workers.find(o => o.craft === i && inBasket(o));
+    drawBody(-WORKER / 2, -P - WORKER, lookFor(whoIs(w), w || CRAFT[i], 0, { face: 1 }));
+  }
   drawBasket();
   ctx.restore();
   ctx.globalAlpha = 1;

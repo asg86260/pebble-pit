@@ -49,6 +49,7 @@ import { beatDone, beatRunning } from './beats.js';
 import { stageClear } from './stage.js';
 import { standFirst } from './deep/party.js';
 import { handOver } from './finale.js';
+import { pairBody, namePair, whoIs } from './wardrobe.js';
 
 // --- whether ---------------------------------------------------------------------
 // Two switches (DESIGN.md, "Three builds"). The snatch plays in every build
@@ -71,7 +72,20 @@ export function forceDeep(on) { forcedDeep = on; }
 // Every function beats.js names is a declaration, not a const: beats.js reads
 // them at load and imports this file in a ring.
 export function snatchDue() {
-  return serpentOn() && S.rescued && S.drowned && beatDone('ending') && !S.beat.camera;
+  return serpentOn() && S.rescued && S.drowned && beatDone('ending') && !S.beat.camera && pairReady();
+}
+
+// It takes the two of them and nobody else (wardrobe.js), so it waits until
+// both can be walked out to the edge from where they stand: not in a hand,
+// in the air, in a basket, lent to a build or down the cut. Every one of
+// those ends on its own. A name with no body (nobody to take) does not hold
+// it up: the beat takes whoever is nearest, as it did before there were
+// names.
+const takeable = w => !w.lifted && !w.falling && !w.aloft && !w.craft && !w.lentFrom
+                   && w.type !== TYPE.BUILD && !belowYard(w);
+function pairReady() {
+  const her = pairBody('her'), him = pairBody('him');
+  return (!her || takeable(her)) && (S.snatched || !him || takeable(him));
 }
 
 // --- where ------------------------------------------------------------------------
@@ -100,15 +114,32 @@ const onPlank = x => walkY(x + WORKER / 2);
 // goes with them, so the crew is not made up again behind them.
 function takeOff(n) {
   const mx = mouthX();
-  // Stood on the yard's own floor, so the walk to the edge starts from the
-  // ground it is walked on: not on the hill, not down the cut.
-  const free = w => !w.lifted && !w.falling && !w.aloft && !w.craft && !w.inside
-                 && !w.lentFrom && w.type !== TYPE.BUILD && onYard(w)
-                 && Math.abs(w.y - onPlank(w.x)) < 1;
-  let pool = S.workers.filter(free);
-  if (pool.length < n) pool = S.workers.filter(w => !w.lifted && !w.craft && !belowYard(w));
-  const took = pool.sort((a, b) => Math.abs(a.x - mx) - Math.abs(b.x - mx)).slice(0, n);
+  // These two, from wherever they are: him (the one it takes) first, as the
+  // nearest is below. Past the take only she is left to walk.
+  const her = pairBody('her'), him = pairBody('him');
+  let took = n === 1 ? [her] : [him, her];
+  if (took.some(w => !w || !takeable(w))) {
+    // Nobody by those names to take: the nearest, as before, and the names
+    // go to the bodies taken. Stood on the yard's own floor, so the walk to
+    // the edge starts from the ground it is walked on: not on the hill, not
+    // down the cut.
+    const free = w => !w.lifted && !w.falling && !w.aloft && !w.craft && !w.inside
+                   && !w.lentFrom && w.type !== TYPE.BUILD && onYard(w)
+                   && Math.abs(w.y - onPlank(w.x)) < 1;
+    let pool = S.workers.filter(free);
+    if (pool.length < n) pool = S.workers.filter(w => !w.lifted && !w.craft && !belowYard(w));
+    took = pool.sort((a, b) => Math.abs(a.x - mx) - Math.abs(b.x - mx)).slice(0, n);
+    if (n === 1) namePair('her', took[0]);
+    else { namePair('him', took[0]); namePair('her', took[1]); }
+  }
   for (const w of took) {
+    if (!w) continue;
+    // Out of whatever it was doing where it stood: through the door if it
+    // was indoors, its spade down if it was digging.
+    w.inside = false;
+    w.dig = false;
+    w.met = false;
+    w.say = null;
     for (let i = 0; i < (w.carry || 0); i++)
       spawnChip(w.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, w.load?.[i] || 1);
     w.carry = 0;
@@ -122,7 +153,7 @@ function takeOff(n) {
   }
   rebalance();
   syncWorkers();
-  return took;
+  return took.filter(Boolean);
 }
 
 // --- the beat ---------------------------------------------------------------------
@@ -132,10 +163,13 @@ export function startSnatch(t) {
   // Past the take (a reload after he went under): only the one left standing
   // is off the crew, and the beat is the surface closing over him.
   const after = !!S.snatched;
+  // The beat has them from here: with it standing, the crew's stand-down
+  // inside the take does not hand their names to somebody else (`keepPair`).
+  S.snatch = { phase: 'walk' };
   const took = takeOff(after ? 1 : 2);
   // Nearest first, so the one nearer the water is the one taken.
   took.reverse();
-  S.pair = took.map(w => ({ x: w.x, y: w.y, say: null, body: w }));
+  S.pair = took.map(w => ({ x: w.x, y: w.y, say: null, body: w, who: whoIs(w) }));
   const surface = abyssLine();
   S.snatch = { phase: after ? 'close' : 'walk', at: t, headY: surface, carried: after, hurry: 1,
                him: null, stood: null, portal: after ? 1 : 0 };

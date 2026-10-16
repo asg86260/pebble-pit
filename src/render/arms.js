@@ -32,9 +32,10 @@ import * as fight from '../deep/arms.js';
 import { deepFloor, deepTop, deepX0, postX } from '../deep/place.js';
 import { ctx } from './ctx.js';
 import { bodyInk, inFront } from './recede.js';
-import { inTheDeep } from './crew.js';
+import { inTheDeep, lookFor } from './crew.js';
+import { whoIs } from '../wardrobe.js';
 import { GREYS, PURPLES, WHITE, BODY, R4, R8, hash, lerp, ease, cell, ring, body, pips, dagger, charge,
-         blades } from '../deep/kits.js';
+         blades, dressAs } from '../deep/kits.js';
 import { ATTACKS, SEGMENTS, REST, liftOf, loopOf, sauceOf, dentsOf, sparksOf, starAt, speedLines,
          streakAt, MOTE_TONES } from './attacks.js';
 import { hideBot } from './serpent.js';
@@ -262,6 +263,8 @@ export function drawFighters() {
       ctx.translate(-fx, -fy);
     }
     let at = [f.x + f.dx, f.restY + f.dy];
+    // her, at the first station: what she wears, under her kit
+    dressAs(f.w ? lookFor(whoIs(f.w), f.w, f.x * P, { face: 1, deep: true }) : null);
     if (!f.key) body(f.x, f.restY);             // no class to draw: the plain square
     else if (f.c) {
       const w = f.w, beam = f.sim && w.beam;
@@ -288,6 +291,7 @@ export function drawFighters() {
     if (b.inspired) paintInspired(t, at[0], at[1], b.inspired);
     if (b.hasted) paintHasted(t, at[0], at[1]);
     if (squash) ctx.restore();
+    dressAs(null);
   }
   ctx.globalAlpha = was;
   ctx.restore();

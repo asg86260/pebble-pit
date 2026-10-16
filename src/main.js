@@ -37,7 +37,8 @@ document.body.classList.toggle('still', reducedMotion());
 
 import { OWNER_KEY, TAB, primeStore } from './save.js';
 import { hold, stepPan } from './input.js';   // the mouse, the wheel and the keyboard -- and the hold the boot stops on
-import './settings.js';              // the held sheet's shelf
+import { offerDress } from './settings.js';   // the held sheet's shelf, and the picker offered at a new yard
+import { paintWardrobe } from './wardrobepage.js';   // the two of them, walking on the picker while it is up
 import { syncEnding } from './ending.js';   // the sheet at the end of the story
 import { stepToast } from './toast.js';    // a notice said out loud as it lands
 import { stepSkipHint } from './skiphint.js';   // the hint under a scene, and its bar
@@ -107,6 +108,7 @@ function frame() {
     stepToast();
     stepSkipHint();
     stepMessTags();
+    paintWardrobe();
     paintPad();                               // the pad's marker, over the frame and the page as written
     const t3 = mark();
     if (DEV) record(t0, t1, t2, t3);
@@ -167,6 +169,10 @@ if (demo) {
   S.camX = S.camWas ?? openingCamX();
   clampCam();
   if (bench) S.staged = true;
+  // A yard nobody has played yet asks once what the two of them wear, the
+  // yard held under the sheet until it is done or skipped. Not under a
+  // browser driven by the checks or the tools, whose every yard is new.
+  if (!bench && !navigator.webdriver) offerDress();
 }
 addEventListener('resize', relayout);
 addEventListener('load', relayout);

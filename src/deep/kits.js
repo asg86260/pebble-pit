@@ -59,7 +59,11 @@ export function ring(g, cx, cy, r, tone, every = 1) {
   }
 }
 // The body, the same square every body in the deep is, at a cell position.
-export const body = (cx, cy) => { if (!bare) drawBody(Math.round(cx * P), Math.round(cy * P)); };
+// One of the two of them is dressed (render/wardrobe.js): the fighters'
+// layer says which body the kit is drawn on (`dressAs`) before it draws it.
+export const body = (cx, cy) => { if (!bare) drawBody(Math.round(cx * P), Math.round(cy * P), dressed); };
+let dressed = null;
+export const dressAs = look => { dressed = look; };
 // A kit drawn with no body in it: the gear hung on a station, or on its way
 // there or back (render/finale.js). `REST` as ever, for the length of `fn`.
 let bare = false;

@@ -12,7 +12,8 @@ import { P, WORKER, FINALE_LIFT_S, FINALE_LIFT_CELLS, FINALE_HANG_S, FINALE_HANG
          FINALE_GREYS, FINALE_PURPLE, FINALE_PURPLE_DARK, FINALE_PURPLE_LIGHT } from '../config.js';
 import { now } from '../clock.js';
 import { ctx } from './ctx.js';
-import { drawBody, drawSaying } from './crew.js';
+import { drawBody, drawSaying, lookFor } from './crew.js';
+import { dressBehind, dressOn, dressHead } from './wardrobe.js';
 import { inFront } from './recede.js';
 import { recede } from '../cutscene.js';
 import { REST, kitOnly, PURPLES, ring } from '../deep/kits.js';
@@ -69,7 +70,7 @@ export function drawFinaleDeep() {
   }
   const deepPhase = ['swim', 'lift', 'hang', 'heart', 'heir', 'up', 'ring', 'through'].includes(f.phase);
   if (!deepPhase) return;
-  for (const o of f.pair) if (o) drawBody(snap(o.x), snap(o.y));
+  f.pair.forEach((o, i) => { if (o) drawBody(snap(o.x), snap(o.y), lookFor(WHO[i], KEYS[i], o.x, { face: o.face, deep: true })); });
   const [a, b] = f.pair;
   if (f.phase === 'heart' && a && b) drawSaying(snap((a.x + b.x) / 2), snap(Math.min(a.y, b.y)), { mark: 'heart' });
   if (f.phase === 'ring') {
@@ -83,6 +84,21 @@ export function drawFinaleDeep() {
 }
 
 // --- in the yard -----------------------------------------------------------------------
+// The two of them by their place in the pair, her first, and a key apiece to
+// read each one's walk off (`motionOf`): the pair's objects are made anew
+// every frame.
+const WHO = ['her', 'him'], KEYS = [{}, {}];
+// A body drawn by one of the shapes below, with what it wears round it; the
+// square of (WORKER, h) stood with its top-left at (x, y).
+function dressed(x, y, look, draw, h = WORKER) {
+  if (look) dressBehind(ctx, x, y, look);
+  draw();
+  if (look) { dressOn(ctx, x, y, look, WORKER, h); dressHead(ctx, x, y, look); }
+  ctx.fillStyle = INK;
+}
+// Under the liquid the body is drawn as the deep draws one, and so is what
+// it wears: white marks on its black.
+const UNDER = { ink: WHITE, paper: INK, grey: G4, pale: G2 };
 // A body sat down: the same square, two cells tall.
 function drawSat(x, y) {
   ctx.fillStyle = WHITE;
@@ -155,14 +171,18 @@ export function drawFinaleYard() {
   const f = S.finale, r = S.retired;
   const mode = !f && r ? r.mode : null;
   const line = abyssLine();
-  for (const o of pair) {
-    if (!o) continue;
+  pair.forEach((o, i) => {
+    if (!o) return;
     const x = Math.round(o.x), y = Math.round(o.y);
-    if (f && f.phase === 'out' && y + WORKER > line) drawUnder(x, y);
-    else if (o.dim) drawDim(x, y, o.dim);
-    else if (o.sit) drawSat(x, y);
-    else drawBody(x, y);
-  }
+    // What they wear goes with them through each of these (render/wardrobe.js):
+    // in the liquid's inks under the surface, in the door's as they go in,
+    // on the squashed square sat down.
+    const look = lookFor(WHO[i], KEYS[i], o.x, { face: o.face || null });
+    if (f && f.phase === 'out' && y + WORKER > line) dressed(x, y, look && { ...look, inks: UNDER }, () => drawUnder(x, y));
+    else if (o.dim) dressed(x, y, look && { ...look, inks: { ...look.inks, ink: [INK, G2, PUD, PUL][o.dim] || PUD, paper: PUL } }, () => drawDim(x, y, o.dim));
+    else if (o.sit) dressed(x, y + P, look, () => drawSat(x, y), WORKER - P);
+    else drawBody(x, y, look);
+  });
   const [a, b] = pair;
   // hand in hand across the cell between them
   if (a && b && !a.dim && !b.dim && !a.sit && Math.abs(b.x - a.x - WORKER - FINALE_PAIR_GAP) < 1

@@ -1278,6 +1278,24 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    either is the sheet's whole width. */
 .held .pair, .col .pair { display: flex; gap: var(--gap-m); align-self: stretch; }
 .held .pair button, .col .pair button { flex: 1; }
+/* The picker (wardrobepage.js): the two of them close up and in a crowd at
+   the sheet's whole width, the her and him tabs a pair with the one being
+   dressed inverted, and a row a slot -- its label, its previous, the item,
+   its next. Under a thumb each row is two lines, its label over the three,
+   and every target the platform's 44 pixels (TOUCH_TARGET). */
+.held .wardrobe { display: flex; flex-direction: column; gap: var(--gap-m); }
+.wardrobe canvas { display: block; width: 100%; image-rendering: pixelated; cursor: pointer; }
+.wardrobe .wardstrip { cursor: default; }
+.held .wardrobe .wardtab.on { color: var(--paper); background: var(--ink); }
+.wardrobe .wardrow { display: grid; grid-template-columns: 7em auto 1fr auto; align-items: center; gap: var(--gap-m); text-align: left; }
+.held .wardrobe .wardarr { align-self: auto; min-width: 2.6em; padding: 2px 8px; }
+.wardrobe .wardval { text-align: center; }
+@media (max-width: 560px), (pointer: coarse) {
+  .wardrobe .wardrow { grid-template-columns: 44px 1fr 44px; row-gap: 2px; }
+  .wardrobe .wardlabel { grid-column: 1 / 4; font-size: var(--fs-small); }
+  .held .wardrobe .wardarr { min-width: 44px; min-height: 44px; padding: 0; }
+  .held .wardrobe .pair button { min-height: 44px; }
+}
 /* The paste, for a save coming back in: as wide as the sheet, one hand, and
    no resize handle, because a corner that stretched it would stretch
    everything. It folds away entirely when it is not asked for rather than
