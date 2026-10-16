@@ -55,12 +55,14 @@ export function aim(newId, box, sp, t) {
   at = t;
   id = newId;
   space = sp;
-  // Long enough that no frame of it moves further than the speed allows, the
-  // ease's steepest middle included (half again as fast as its average).
   const end = onGlass(to, space);
   const far = from ? Math.max(Math.hypot(end.x - from.x, end.y - from.y), Math.abs(end.w - from.w), Math.abs(end.h - from.h)) : 0;
-  dur = from ? Math.max(PAD_GLIDE_MS, (far * Math.PI / 2) / PAD_GLIDE_SPEED * 1000) : 0;
+  dur = from ? glideMs(far) : 0;
 }
+// How long a glide `far` CSS pixels takes: long enough that no frame of it
+// moves further than the speed allows, the ease's steepest middle included
+// (half again as fast as its average), and never under PAD_GLIDE_MS.
+export const glideMs = far => Math.max(PAD_GLIDE_MS, (far * Math.PI / 2) / PAD_GLIDE_SPEED * 1000);
 // Put away: the pose it stood in is kept for its fade (`markAt`).
 export function clear(t = performance.now()) {
   if (to) { const m = markAt(t); ghost = m && { ...m, landed: false, at: t, alpha0: m.alpha }; }

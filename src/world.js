@@ -769,11 +769,40 @@ export function stepCamera(t) {
   const w = following(t);
   if (w) lookAt(w.x + WORKER / 2);
   else if (S.follow) S.follow = null;
-  if (S.camTo === null) return;
+  if (S.camTo === null) { pan = null; return; }
+  // A timed pan (`panTo`) while its end is still the one sent: eased in and
+  // out over its length. Anything that sends the view elsewhere meanwhile
+  // (a follow, a door, a hop arrow) takes it over with the old chase.
+  if (pan && pan.to === S.camTo) {
+    if (pan.at == null) pan.at = t;
+    const k = Math.min(1, (t - pan.at) / pan.ms);
+    S.camX = pan.from + (pan.to - pan.from) * (1 - Math.cos(Math.PI * k)) / 2;
+    if (k >= 1) { S.camTo = null; pan = null; }
+    clampCam();
+    return;
+  }
+  pan = null;
   const d = S.camTo - S.camX;
   if (Math.abs(d) < 1) { S.camX = S.camTo; S.camTo = null; }
   else S.camX += d * 0.12;
   clampCam();
+}
+
+// A pan to put `x` in the middle of the window over `ms` of the yard's
+// clock, eased in and out (the pad's hops: the owner, 2026-10-16, "it should
+// also ease-in-out"). The end is the one the camera can reach, so the ease is
+// never cut short against the world's edge.
+let pan = null;
+export function panTo(x, ms) {
+  const was = S.camX;
+  S.camX = x - S.viewW / 2;
+  clampCam();
+  const to = S.camX;
+  S.camX = was;
+  sent = true;
+  if (reducedMotion() || Math.abs(to - was) < 1) { S.camX = to; S.camTo = null; pan = null; clampCam(); return; }
+  S.camTo = to;
+  pan = { from: was, to, ms, at: null };
 }
 
 // The view, pulled in or let back out: the one exception to a cell being a

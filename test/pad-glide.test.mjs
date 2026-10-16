@@ -31,79 +31,73 @@ function wake() {
 }
 const done = () => { pad().off(); performance.now = realNow; };
 
-// The marker's box on the glass, as padglide.js reports it.
-const glass = m => m.seen;
+const mid = s => ({ x: s.x + s.w / 2, y: s.y + s.h / 2 });
 
-// A press, and the marker's box on the glass every frame until it has
-// landed: the most any frame moved it, how many frames it was between, and
-// whether it ended on the new thing.
+// A press, and every frame after it until the marker has landed and the
+// camera has stopped: the marker on the glass and in the yard, and the
+// camera.
 function follow(dir) {
   const was = pad().focus();
-  const start = glass(pad().mark());
+  const m0 = pad().mark();
+  const frames = [{ seen: m0.seen, at: mid(m0.r), cam: S.camX }];
   pad().down(dir);
   frame();
   pad().up(dir);
-  const seen = [start];
   for (let i = 0; i < 150; i++) {
     const m = pad().mark();
-    seen.push(glass(m));
-    if (m.landed) break;
+    frames.push({ seen: m.seen, at: mid(m.r), cam: S.camX });
+    if (m.landed && S.camTo === null) break;
     frame();
   }
-  const mid = s => ({ x: s.x + s.w / 2, y: s.y + s.h / 2 });
-  let worst = 0, between = 0;
-  const end = mid(seen[seen.length - 1]), from = mid(start);
-  const far = Math.hypot(end.x - from.x, end.y - from.y);
-  for (let i = 1; i < seen.length; i++) {
-    const a = mid(seen[i - 1]), b = mid(seen[i]);
-    worst = Math.max(worst, Math.hypot(b.x - a.x, b.y - a.y));
-    const d = Math.hypot(b.x - from.x, b.y - from.y);
+  const first = frames[0], last = frames[frames.length - 1];
+  // Through the places between, in the yard: the marker going from the old
+  // thing to the new one, whatever the camera does under it.
+  const far = Math.hypot(last.at.x - first.at.x, last.at.y - first.at.y);
+  let between = 0, worst = 0, out = 0;
+  const g0 = mid(first.seen);
+  for (let i = 1; i < frames.length; i++) {
+    const d = Math.hypot(frames[i].at.x - first.at.x, frames[i].at.y - first.at.y);
     if (d > far * 0.1 && d < far * 0.9) between++;
+    const a = mid(frames[i - 1].seen), b = mid(frames[i].seen);
+    worst = Math.max(worst, Math.hypot(b.x - a.x, b.y - a.y));
+    out = Math.max(out, Math.hypot(b.x - g0.x, b.y - g0.y));
   }
-  return { was, now: pad().focus(), worst, between, far };
+  // The camera's steps, frame by frame, while it moved.
+  const steps = [];
+  for (let i = 1; i < frames.length; i++) { const s = Math.abs(frames[i].cam - frames[i - 1].cam); if (s > 0.01) steps.push(s); }
+  return { was, now: pad().focus(), far, between, worst, out, steps,
+           centered: Math.abs(mid(pad().box()).x - (S.camX + S.viewW / 2)) };
 }
 
 // A few cells a frame: the speed the glide is held to, and the camera's own
 // share as it carries the end along, at most as much again.
-const CELLS = () => (PAD_GLIDE_SPEED / 60) * 2 / (P * S.zoom);
+const cell = () => P * S.zoom;
+const LIMIT = () => (PAD_GLIDE_SPEED / 60) * 2;
 
-group('the marker travels between neighbors, a few cells a frame', async () => {
+group('a hop: the camera pans to center the new thing, eased in and out, and the marker is seen to travel there', async () => {
   window.__crew(3, 3, 5, 7);
   window.__fullSites();
   run(1);
   wake();
   const out = [];
-  for (const d of ['left', 'left', 'right']) {
+  let hops = 0;
+  for (const d of ['left', 'left', 'left', 'right', 'right']) {
     const f = follow(d);
-    out.push(ok(f.now !== f.was && f.between >= 3, `${f.was} ${d} -> ${f.now}: through the places between`,
-                `${f.between} frames between, ${Math.round(f.far)} px`));
-    out.push(ok(f.worst / (P * S.zoom) <= CELLS(), 'and no frame carried it more than a few cells',
-                `${(f.worst / (P * S.zoom)).toFixed(1)} cells of ${CELLS().toFixed(1)}`));
-  }
+    if (f.now === f.was) continue;
+    hops++;
+    const peak = Math.max(0, ...f.steps);
+    const pan = f.steps.length > 0;
+    const eased = f.steps.length >= 4 && f.steps[0] < peak / 2 && f.steps[f.steps.length - 1] < peak / 2;
+    out.push(ok(f.between >= 3, `${f.was} ${d} -> ${f.now}: the marker passes through the places between`,
+                `${f.between} frames between, ${Math.round(f.far)} world px`));
+    out.push(ok(f.out >= cell() * 3, 'and is seen to move on the glass while the camera pans',
+                `${(f.out / cell()).toFixed(1)} cells out from where it stood`));
+    out.push(ok(f.worst <= LIMIT(), 'and no frame carried it more than a few cells',
+                `${(f.worst / cell()).toFixed(1)} cells of ${(LIMIT() / cell()).toFixed(1)}`));
+    out.push(ok(!pan || eased, 'the camera eases in and out', f.steps.map(s => s.toFixed(1)).join(' ')));
+    out.push(ok(!pan || f.centered <= cell() * 2, 'and ends with the new thing in the middle', `${Math.round(f.centered)} px off`));  }
   done();
+  out.unshift(ok(hops >= 3, 'the focus hopped', `${hops}`));
   return out;
 }, { reload: false });
 
-group('the marker travels on the glass while the camera glides after it', async () => {
-  window.__crew(3, 3, 5, 7);
-  window.__fullSites();
-  run(1);
-  wake();
-  // To the far end, a press at a time, each hop a pan.
-  const out = [];
-  let pans = 0;
-  for (let i = 0; i < 6; i++) {
-    const cam = S.camX;
-    const f = follow('left');
-    if (f.now === f.was) break;
-    const panned = Math.abs(S.camX - cam) > P;
-    pans += panned;
-    out.push(ok(f.between >= 3, `${f.was} -> ${f.now}${panned ? ', panning' : ''}: through the places between`,
-                `${f.between} frames between, ${Math.round(f.far)} px`));
-    out.push(ok(f.worst / (P * S.zoom) <= CELLS(), 'and no frame carried it more than a few cells',
-                `${(f.worst / (P * S.zoom)).toFixed(1)} cells of ${CELLS().toFixed(1)}`));
-  }
-  done();
-  out.unshift(ok(pans > 0, 'the camera panned on some of the hops', `${pans}`));
-  return out;
-}, { reload: false });

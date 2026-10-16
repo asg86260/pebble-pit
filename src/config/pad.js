@@ -18,12 +18,16 @@ export const PAD_DEEP_HALO = '#08070c';
 // than this (the owner, 2026-10-12: "about 0.25 s"), and longer for a far
 // trip, so that no frame of it moves faster than PAD_GLIDE_SPEED, CSS pixels
 // a second on the glass -- a marker that crossed the window in a frame or two
-// read as one that jumped (the owner, 2026-10-16).
-export const PAD_GLIDE_MS = 250;
-export const PAD_GLIDE_SPEED = 1800;
-// A hop moves the camera only to bring the new thing this share of the
-// window clear of its edge, and not at all when it already is.
-export const PAD_VIEW_MARGIN = 0.15;
+// read as one that jumped (the owner, 2026-10-16). A fifth quicker than first
+// built (250 ms, 1800 px/s): "just a bit quicker", the owner, 2026-10-16.
+export const PAD_GLIDE_MS = 200;
+export const PAD_GLIDE_SPEED = 2300;
+// The camera's pan to the focus on a hop, eased in and out: never shorter
+// than this (about a fifth quicker than the old chase, which took some
+// 0.4 s to get most of the way), and PAD_PAN_LEAD times the marker's own
+// glide, so the marker gets to the new thing first and rides in with it.
+export const PAD_PAN_MS = 320;
+export const PAD_PAN_LEAD = 1.6;
 // The landing: two cells out, then one, then home, each held this long.
 export const PAD_SETTLE_STEP_MS = 60;
 export const PAD_SETTLE_CELLS = 2;

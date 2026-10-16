@@ -18453,14 +18453,17 @@ crit's rumble exists at all.
   elements"). It runs in CSS pixels from where the old thing was seen at
   the press to where the new one is seen each frame, so it crosses from the
   yard to the corner cards or a board's rows and back as one marker, never
-  a fade out and in. Eased in and out, never shorter than `PAD_GLIDE_MS` and
-  long enough that no frame moves it faster than `PAD_GLIDE_SPEED`. A hop
-  moves the camera only as far as it must to have the new thing
-  `PAD_VIEW_MARGIN` clear of the window's edge, and not at all when it
-  already is: a camera that centered every hop carried the world under a
-  marker standing still, and the marker's travel was never seen. Measured
-  frame by frame in test/pad-glide.test.mjs and src/selftest/pad.js ("the
-  marker travels across to the corner").
+  a fade out and in. Eased in and out, never shorter than `PAD_GLIDE_MS`
+  (200 ms) and long enough that no frame moves it faster than
+  `PAD_GLIDE_SPEED` (2300 px/s). The owner then asked for both glides,
+  eased, "just a bit quicker": a hop centers the new thing by a pan of its
+  own (`panTo`, world.js), eased in and out over `PAD_PAN_MS` (320 ms) or
+  `PAD_PAN_LEAD` (1.6) times the marker's glide, whichever is longer. The
+  marker, quicker than the camera, reaches the new thing while the camera
+  is still on its way and rides in with it, so the bracket is seen to go
+  out to the new thing and the view to follow. Measured frame by frame in
+  test/pad-glide.test.mjs and src/selftest/pad.js ("the marker travels
+  across to the corner").
 - **The controls page** gains a pad column once a pad has been seen in the
   session, and rows for what the pad does that the mouse has no row for;
   those rows' words are the owner's, placeholders until written
