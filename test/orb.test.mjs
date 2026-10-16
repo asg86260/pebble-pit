@@ -1,13 +1,16 @@
 // The constrict (DESIGN.md, "A fifth phase: the constrict"): on its turn the
 // serpent casts an orb round the strongest station's fighter; that fighter does
-// nothing; blows crack the orb before the defense takes any; lifting the
-// fighter out breaks it at once; and it lets go when its turn runs out.
+// nothing; the orb's time is its health (the owner, 2026-10-15), running down
+// a second a second, with blows and clicks taking seconds off it before the
+// defense takes any; lifting the fighter out breaks it at once; and it lets
+// go when its time runs out.
 
 import { group, ok, yard, run, runUntil } from './helpers.mjs';
-import { MECHANICS, SERPENT_PHASES, SERPENT_WOUND, ORB_CLICK_X, WORKER, P, ORB_R, ORB_CLOSE_S, ORB_RISE_S, COIL_SEGS, COIL_SWAY_MS,
+import { MECHANICS, SERPENT_PHASES, SERPENT_WOUND, ORB_CLICK_S, SAVE_V, WORKER, P, ORB_R, ORB_CLOSE_S, ORB_RISE_S, COIL_SEGS, COIL_SWAY_MS,
          ORB_HANG_S, ORB_SINK_S } from '../src/config.js';
-import { strike, clickDeep, clickDmg } from '../src/deep/serpent.js';
-import { orbOn, inOrb, part, orbLift, orbMiddle } from '../src/deep/phases.js';
+import { strike, clickDeep } from '../src/deep/serpent.js';
+import { orbOn, inOrb, orbLift, orbMiddle, orbSecsPerHit } from '../src/deep/phases.js';
+import { migrate } from '../src/migrations/index.js';
 import { lift, drop } from '../src/crew/pointer.js';
 import { bellyAt, coilLine, coilThick, standOfStation, deepFloor } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
@@ -28,6 +31,11 @@ function party(into) {
 }
 const body = id => S.workers.find(w => w.station === id);
 const hit = n => { const p = bellyAt(now()); return strike('punch', n, p.x, p.y); };
+// What the whole of the orb's time is worth in hit points: the share of the
+// level-1 last depth the table gives.
+const WORTH = M.hp * SERPENT_WOUND[LAST];
+// A click on the orb, where the player's pointer lands on it: its middle.
+const clickOrb = () => { const c = orbMiddle(orbOn().st); return clickDeep(c.x, c.y); };
 
 group('the orb closes round the strongest fighter, who does nothing in it', async () => {
   const id = party(0.5);
@@ -39,19 +47,20 @@ group('the orb closes round the strongest fighter, who does nothing in it', asyn
   return [
     ok(!before && o && o.st === id, 'on its turn an orb closes, round the strongest', JSON.stringify(o)),
     ok(inOrb(w) && poses.length === 0, 'and the fighter in it starts nothing', `${poses.length} poses`),
-    ok(Math.abs(o.max - M.hp * SERPENT_WOUND[LAST]) < 1e-6, 'it is the share of the depth the table gives', `${o.max}`)
+    ok(o.max === M.last && o.left < M.last && o.left > 0, 'it closes holding its turn\'s seconds, and they run down', JSON.stringify(o)),
+    ok(Math.abs(orbSecsPerHit() * WORTH - M.last) < 1e-9, 'and the whole of them is worth the share of the depth the table gives', `${orbSecsPerHit()} s a point`)
   ];
 });
 
-group('blows crack the orb first, and the defense takes nothing till it breaks', async () => {
+group('blows take seconds off the orb first, and the defense takes nothing till it breaks', async () => {
   party(0.05);
   run(0.1);
-  const o = orbOn(), wound0 = S.serpentWound;
-  hit(o.max / 2);
-  const half = { hp: o.hp, wound: S.serpentWound };
-  hit(o.max);
+  const o = orbOn(), wound0 = S.serpentWound, left0 = o.left;
+  hit(WORTH / 2);
+  const half = { left: o.left, wound: S.serpentWound };
+  hit(WORTH);
   return [
-    ok(o && Math.abs(half.hp - o.max / 2) < 1e-6 && half.wound === wound0, 'half its worth of blows takes half the orb, and none of the defense', JSON.stringify(half)),
+    ok(o && Math.abs(left0 - half.left - M.last / 2) < 1e-6 && half.wound === wound0, 'half its worth of blows takes half its seconds, and none of the defense', `${left0} then ${JSON.stringify(half)}`),
     ok(!orbOn() && S.mechSkip, 'the rest breaks it, and the turn is answered', `${JSON.stringify(S.orb)} ${S.mechSkip}`)
   ];
 });
@@ -66,21 +75,78 @@ group('lifted out of the orb, the fighter is free at once', async () => {
   return [ok(had && freed && S.mechSkip, 'picked up, the orb breaks', `had ${had}, freed ${freed}`)];
 });
 
-group('left alone, the orb lets go when its turn runs out', async () => {
-  party(0.05);
-  run(0.1);
-  const had = !!orbOn();
-  runUntil(() => part().part !== 'on', M.last + 2);
-  return [ok(had && !orbOn(), 'gone at the end of its turn', `${had} ${JSON.stringify(S.orb)}`)];
-});
-
-group('a click on the orb cracks it harder than a punch', async () => {
+group('the orb runs down a second a second, less what blows have cut off it, and lets go at nought', async () => {
   const id = party(0.05);
   run(0.1);
-  const o = orbOn(), w = body(id), st = S.stations.find(s => s.id === id);
-  const hp = o.hp;
-  const took = clickDeep(w.x + WORKER / 2, w.y + WORKER / 2 - orbLift(st) * P);
-  return [ok(took && Math.abs((hp - o.hp) - clickDmg() * ORB_CLICK_X) < 1e-6, `a click on it takes ${ORB_CLICK_X} punches' worth`, `${hp} then ${o.hp}`)];
+  const had = !!orbOn(), cast = orbOn().at;
+  // the party fights on, so its blows cut seconds too: what is left is what
+  // it closed with, less the time since and the cut (read off the orb as it
+  // stands, since the harness's reloads read it back as a new object)
+  const at = [];
+  for (let i = 0; i < 4; i++) { run(1); const o = orbOn(); if (o) at.push({ age: (now() - cast) / 1000, left: o.left, cut: o.cut }); }
+  const off = Math.max(...at.map(a => Math.abs(M.last - a.age - a.cut - a.left)));
+  const falling = at.every((a, i) => !i || a.left < at[i - 1].left);
+  let o = orbOn();
+  for (let f = 0; f < (M.last + 2) * 60 && orbOn(); f++) { o = orbOn(); run(1 / 60); }
+  const age = (now() - cast) / 1000;
+  return [
+    ok(had && at.length === 4 && falling, 'its time falls every second', JSON.stringify(at)),
+    ok(off < 2 / 60, 'by the seconds gone and the seconds cut, no more and no less', `${off.toFixed(4)} s off`),
+    ok(!orbOn() && o.left <= 0 && S.orbBurst && S.orbBurst.st === id && age <= M.last + 2 / 60, 'at nought it lets go, inside its turn, and its fighter sinks home', `${o.left} at ${age.toFixed(2)}s`)
+  ];
+});
+
+group('a click on the orb, as a player clicks it, takes a chunk of its time', async () => {
+  party(0.05);
+  run(0.1);
+  const o = orbOn(), before = { left: o.left, cut: o.cut };
+  const took = clickOrb();
+  const k1 = { left: o.left, cut: o.cut };
+  clickOrb();
+  return [
+    ok(took && Math.abs(before.left - k1.left - ORB_CLICK_S) < 1e-9 && Math.abs(k1.cut - before.cut - ORB_CLICK_S) < 1e-9,
+       `a click takes ${ORB_CLICK_S} s off it, cut`, `${JSON.stringify(before)} then ${JSON.stringify(k1)}`),
+    ok(Math.abs(k1.left - o.left - ORB_CLICK_S) < 1e-9, 'and the next as much again', `${k1.left} then ${o.left}`),
+    ok(ORB_CLICK_S / M.last >= 0.1, 'a chunk a player sees go: a tenth of the bar or more', `${ORB_CLICK_S} of ${M.last}`)
+  ];
+});
+
+group('clicked down to nought, the orb breaks', async () => {
+  party(0.05);
+  run(0.1);
+  const o = orbOn();
+  let n = 0;
+  while (orbOn() && n < 20) { clickOrb(); n++; }
+  return [ok(!orbOn() && o.left <= 0 && S.mechSkip && n <= Math.ceil(M.last / ORB_CLICK_S), 'it breaks on the click that empties it', `${n} clicks, ${o.left}`)];
+});
+
+// A refresh mid-orb: the page's clock starts again near nought, and the orb
+// holds the time it had, no more and no less. Its own refresh, at a chosen
+// point, so the harness's are kept out.
+group('a refresh mid-orb keeps the time it had left', async () => {
+  party(0.05);
+  run(0.1);
+  run(3);
+  clickOrb();
+  const was = { ...orbOn() };
+  window.__cold({ clock: 1000 });
+  const back = orbOn();
+  const read = back && { ...back };
+  run(1);
+  const after = orbOn();
+  return [
+    ok(read && Math.abs(read.left - was.left) < 1e-9 && read.max === was.max && Math.abs(read.cut - was.cut) < 1e-9 && read.st === was.st,
+       'read back, it has the seconds it had', `${JSON.stringify(was)} then ${JSON.stringify(read)}`),
+    ok(after && was.left - after.left >= 1 - 2 / 60, 'and runs down from there (the new page\'s first frame has no time in it)', `${was.left} then ${after && after.left}`)
+  ];
+}, { reload: false });
+
+group('an orb saved holding hit points is read as the same share of its time', async () => {
+  const raw = { saveV: SAVE_V - 1, orb: { st: 3, hp: 690.75, max: 2763, at: 5000 } };
+  migrate(raw);
+  const o = raw.orb;
+  return [ok(o.max === M.last && Math.abs(o.left - M.last / 4) < 1e-9 && o.cut === 0 && o.st === 3 && o.at === 5000 && !('hp' in o),
+             'a quarter of its hit points is a quarter of its seconds', JSON.stringify(o))];
 });
 
 // Held, the orb stands halfway between the coil's underside and its station's
@@ -97,7 +163,7 @@ for (const [kind, cls] of [['armory', 'ranger'], ['altar', 'brawler']]) group(`a
   window.__serpent({ stage: LAST, wound: 0 });
   S.mechAt = M.every - M.last - 0.05;
   const id = S.stations[0].id, st = S.stations[0], R = ORB_R * P;
-  const frame = () => { run(1 / 60); if (orbOn()) orbOn().hp = orbOn().max; };
+  const frame = () => { run(1 / 60); if (orbOn()) orbOn().left = orbOn().max; };
   for (let f = 0; f < (ORB_CLOSE_S + ORB_RISE_S + 0.1) * 60; f++) frame();
   let under = -Infinity, touch = null;
   const mids = [];
@@ -136,11 +202,11 @@ group('the orb rises off its post, and its fighter sinks home without a jump', a
   const drawn = () => w.y - orbLift(st) * P;
   const home = drawn();
   const ys = [home];
-  const frames = s => { for (let f = 0; f < s * 60; f++) { run(1 / 60); if (orbOn()) orbOn().hp = orbOn().max; ys.push(drawn()); } };
+  const frames = s => { for (let f = 0; f < s * 60; f++) { run(1 / 60); if (orbOn()) orbOn().left = orbOn().max; ys.push(drawn()); } };
   frames(ORB_CLOSE_S + ORB_RISE_S + 0.2);
   const o = orbOn(), mid = orbMiddle(id);
-  // freed the player's way: clicks on it until it breaks
-  o.hp = clickDmg() * ORB_CLICK_X;
+  // freed the player's way: a click on it that empties it
+  o.left = ORB_CLICK_S;
   const took = clickDeep(mid.x, mid.y);
   const at = ys.length;
   frames(ORB_HANG_S + ORB_SINK_S + 0.5);

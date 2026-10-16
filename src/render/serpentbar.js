@@ -21,11 +21,11 @@ import { blowK } from '../deep/serpent.js';
 import { breakKind, breakFill, rising, powerFill } from '../deep/phases.js';
 import { depthAt } from '../deep/depth.js';
 import { sheetOf, write, widthOf, sayNum, drawable } from './numfont.js';
+import { breakOff as chipOff, liveChips, drawChips } from './barchips.js';
 import { P, BAR_W, BAR_H, BAR_TOP, BAR_PAD, BAR_HAND_GAP, BAR_ALONG, BAR_PIP, BAR_PIP_GAP, BAR_EDGE, BAR_TRACK, BAR_LEFT,
          BAR_HEALED, BAR_TO_COME, BAR_STUN, BAR_STUN_RIM, BAR_HEAL_FADE_S,
          BAR_SETTLE, BAR_HEAL_RATE, BAR_FLOW_EASE, BAR_FLOW_MIN, BAR_STALE_S,
-         BAR_BITE, BAR_BITE_MIN, BAR_BITE_HOLD_S, BAR_BITE_LIFT, BAR_BITE_GRAV, BAR_BITE_KICK, BAR_BITE_TUMBLE_S,
-         BAR_BITE_FALL_S, BAR_BITE_FADE_S, BAR_CHIP,
+         BAR_CHIP,
          BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP,
          SERPENT_PHASES, BREAK_DIVE, BREAK_ROAR, BAR_LEVEL_GAP, NUM_FONT_PX, NUM_DROP, LEVEL_KNOCK_S } from '../config.js';
 
@@ -40,8 +40,6 @@ let level = -1, stage = -1, then = 0, shown = 1,
     healLo = null, healIn = null, refilling = false, tickedAt = -Infinity;
 // The chips in the air, in screen pixels off the bar's resting top-left.
 let chips = [];
-let thrown = 0;
-const hash = n => { const v = Math.sin(n * 127.1 + 3.7) * 43758.5453; return v - Math.floor(v); };
 
 // Not while the first trip down has the camera, and faded back in as it lets
 // go (abyssintro.js).
@@ -118,24 +116,8 @@ export function barLeft(t) {
 const isBig = h => blowK(h.done) > NUM_KICK_BIG;
 
 // The stretch of the bar from `lo` to `hi` (shares of it) breaks off at once,
-// at `t` seconds: cut from its end down into square bites BAR_BITE wide, the
-// last narrower, each leaving as two chips, its top half and its bottom, all
-// held lit where they were for BAR_BITE_HOLD_S and then thrown together. A
-// stretch under BAR_BITE_MIN pixels still breaks off that wide, from the end,
-// so every blow that lands is seen to chip the bar.
-function breakOff(t, lo, hi) {
-  const k = BAR_BITE_KICK, h = BAR_H / 2;
-  const b = Math.round(barW() * hi), a = Math.max(0, Math.min(Math.round(barW() * lo), b - BAR_BITE_MIN));
-  for (let x1 = b; x1 > a; x1 -= BAR_BITE) {
-    const w = Math.min(BAR_BITE, x1 - a);
-    for (let r = 0; r < 2; r++) {
-      const n = thrown++;
-      chips.push({ at: t, x: x1 - w, y: r * h, w, h, base: null,
-        vx: (r ? 1 : -1) * k.side * 0.4 + (hash(n) - 0.3) * k.sideRand + k.side,
-        vy: -(k.up + hash(n + 5) * k.upRand) + r * k.row, tumble: r === 1 });
-    }
-  }
-}
+// at `t` seconds (render/barchips.js).
+const breakOff = (t, lo, hi) => chipOff(chips, t, barW() * lo, barW() * hi, BAR_H);
 
 // One frame of the picture's memory, `dt` seconds on: the fill slides down to
 // the wound or flows up to it, and the purple fades once the heal is all in.
@@ -184,18 +166,7 @@ function step(t, dt, target) {
     }
   } else if (target > shown) shown = target;
   if (healIn != null && s - healIn >= BAR_HEAL_FADE_S) healLo = healIn = null;
-  chips = chips.filter(p => s - p.at < BAR_BITE_HOLD_S + BAR_BITE_FALL_S);
-}
-
-// A chip `side` pixels square turned an eighth, centered on (cx, cy): a
-// diamond whose half-diagonal is the square's, in whole pixels, a row at a time.
-function diamond(cx, cy, side) {
-  const n = Math.floor(side / Math.SQRT2), x0 = Math.round(cx), y0 = Math.round(cy);
-  ctx.fillStyle = seen(BAR_LEFT);
-  for (let i = -n; i <= n; i++) {
-    const half = n - Math.abs(i);
-    ctx.fillRect(x0 - half, y0 + i, half * 2 + 1, 1);
-  }
+  chips = liveChips(chips, s);
 }
 
 export function drawSerpentBar() {
@@ -273,27 +244,8 @@ export function drawSerpentBar() {
     write(sheetOf(px, BAR_LEFT, NUM_DROP), says, px, Math.round(lx * u), Math.round((y - up + BAR_H) * u));
     ctx.restore();
   }
-  // The chips: held lit where they broke off, on the bar as it stands, then
-  // thrown from there all together, moved every frame to the whole pixel, the tumbling one
-  // a square and a diamond in turn, fading out whole.
-  const s = t / 1000;
-  for (const p of chips) {
-    const a = s - p.at;
-    if (a < BAR_BITE_HOLD_S) {
-      fill(BAR_CHIP, x + p.x, y + p.y - BAR_BITE_LIFT, p.w, p.h);
-      continue;
-    }
-    // where the bar stood as it let go, so a knock still settling does not
-    // carry a chip already in the air
-    if (p.base == null) p.base = y - rest - BAR_BITE_LIFT;
-    const f = a - BAR_BITE_HOLD_S;
-    const px = Math.round(x + p.x + p.vx * f);
-    const py = Math.round(rest + p.base + p.y + p.vy * f + 0.5 * BAR_BITE_GRAV * f * f);
-    ctx.globalAlpha = alpha * Math.max(0, Math.min(1, (BAR_BITE_HOLD_S + BAR_BITE_FALL_S - a) / BAR_BITE_FADE_S));
-    if (p.tumble && Math.floor(f / BAR_BITE_TUMBLE_S) % 2) diamond(px + p.w / 2, py + p.h / 2, Math.min(p.w, p.h));
-    else fill(BAR_LEFT, px, py, p.w, p.h);
-    ctx.globalAlpha = alpha;
-  }
+  // The chips, held lit and then thrown (render/barchips.js).
+  drawChips(chips, t / 1000, x, y, rest, { fill, held: BAR_CHIP, ink: BAR_LEFT, alpha });
   // what the fighters have laid on the serpent, in a row under the bar
   drawFoeStatuses(x, rest - statusRowH() - STATUS_GAP);
   ctx.restore();

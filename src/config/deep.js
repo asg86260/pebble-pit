@@ -250,8 +250,9 @@ export const DOT_TICK_S = 0.5;
 //          Held in the warning stops it
 //   sink   he dims into the abyss for `last`, in and out over `fade`;
 //          nothing strikes him past half gone, and the heal runs
-//   orb    an orb round the strongest station's fighter for `last`, `hp` of
-//          the depth; blows crack it first, and a fighter lifted out is free
+//   orb    an orb round the strongest station's fighter for `last`, its
+//          time its health: blows take seconds off it first, the whole of
+//          it worth `hp` of the level-1 depth; a fighter lifted out is free
 export const MECHANICS = [
   null,
   null,
@@ -302,9 +303,10 @@ export const ORB_SINK_EASE = 0.4;
 export const ORB_SQUASH_S = 0.15;
 export const ORB_SQUASH_WIDE = 0.16;
 export const ORB_SQUASH_FLAT = 0.26;
-// A click on the orb itself is a punch ORB_CLICK_X times over, so the hand can
-// crack it faster; the pointing hand (HAND_STILL_S) taps at it to say so.
-export const ORB_CLICK_X = 3;
+// A click on the orb itself takes ORB_CLICK_S of its seconds, at any rung and
+// level, a chunk of the bar a player sees go (the owner's vote on the orb
+// timer, 2026-10-15); the pointing hand (HAND_STILL_S) taps at it to say so.
+export const ORB_CLICK_S = 1.5;
 // The lash's shape: the coil draws up to this share of its sway in the
 // warning, over `LASH_TAUT_S`, and the tail lifts; then a bump this deep and
 // this wide (a share of the body) runs down it.

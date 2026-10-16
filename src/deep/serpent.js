@@ -14,7 +14,7 @@
 // Track FIGHT owns this file (docs/wave-party.md).
 
 import { S } from '../state.js';
-import { SERPENT_PHASES, SCALE_PER_DECADE, SCALE_BASE, ORB_R, ORB_CLICK_X, P,
+import { SERPENT_PHASES, SCALE_PER_DECADE, SCALE_BASE, ORB_R, ORB_CLICK_S, P,
          KILL, KILL_REFORM_S,
          NUM_HELD_S, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_FOLD_S,
          STUN_SHARE, STUN_BASE_S, STUN_MAX_S, STUN_GRACE_S, BLOW_FULL, CHIP_HEAL_S, CHIPS_MAX,
@@ -24,7 +24,7 @@ import { nearestSeg, coilAt, coilThick, bellySeg, bellyAt } from './place.js';
 import { shed } from './scales.js';
 import { ampOf, has, clearStatuses } from './statuses.js';
 import { mealDue, startMeal, stepMeal as stepTheMeal } from './meals.js';
-import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, orbOn, orbMiddle, settleResist,
+import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, cutOrb, orbOn, orbMiddle, settleResist,
          breakOrb, recoiling, recoilLen, recoilTickAt } from './phases.js';
 import { depthAt } from './depth.js';
 
@@ -155,9 +155,8 @@ export function onOrb(x, y) {
 export function clickDeep(x, y) {
   if (!S.snatched) return false;
   const t = now();
-  // On the constrict's orb, a punch several times over (deep/phases.js).
-  const c = onOrb(x, y);
-  if (c) { strike('punch', clickDmg() * ORB_CLICK_X, c.x, c.y); return true; }
+  // On the constrict's orb, seconds off its time (deep/phases.js).
+  if (onOrb(x, y)) { cutOrb(ORB_CLICK_S); return true; }
   const near = nearestSeg(x, y, t);
   if (near.d > coilThick(near.seg)) return false;
   const p = coilAt(near.seg, t);

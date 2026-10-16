@@ -187,19 +187,25 @@ group('the orb keeps the hit points of level one at every level', async () => {
   window.__snatch({ played: true });
   window.__party({ stations: FOUR });
   runUntil(() => S.workers.filter(w => w.station).every(w => w.goal === 'fight' || w.goal === null), 30);
-  const M = MECHANICS[LAST];
+  const M = MECHANICS[LAST], worth = M.hp * SERPENT_WOUND[LAST];
+  // The seconds a blow of a quarter of the level-1 share takes off it: the
+  // orb's time is its health, so this is how hard it is to break.
   const orbAt = level => {
     window.__serpent({ level, stage: LAST, wound: 0 });
     S.orb = null;
     S.mechAt = M.every - M.last - 0.5;               // half a second short of its turn
     run(0.6);
     const o = orbOn();
-    return o && o.max;
+    if (!o) return null;
+    const left = o.left, p = bellyAt(now());
+    strike('punch', worth / 4, p.x, p.y);
+    return { max: o.max, took: left - o.left };
   };
   const at1 = orbAt(1), at7 = orbAt(7);
   return [
-    ok(at1 > 0 && Math.abs(at1 - M.hp * SERPENT_WOUND[LAST]) < 1e-6, 'at level 1 it is the share of the depth', `${at1}`),
-    ok(at7 === at1 && depthAt(LAST, 7) > depthAt(LAST, 1), 'and at level 7 the same, though the defense is deeper', `${at7} against ${at1}`)
+    ok(at1 && at1.max === M.last && Math.abs(at1.took - M.last / 4) < 1e-6, 'at level 1 a quarter of the share takes a quarter of its time', JSON.stringify(at1)),
+    ok(at7 && at7.max === at1.max && Math.abs(at7.took - at1.took) < 1e-9 && depthAt(LAST, 7) > depthAt(LAST, 1),
+       'and at level 7 the same, though the defense is deeper', `${JSON.stringify(at7)} against ${JSON.stringify(at1)}`)
   ];
 });
 

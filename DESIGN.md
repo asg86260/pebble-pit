@@ -17470,6 +17470,22 @@ pebbles do in the yard.
   cast, the blows on it, the lift and the timeout. Scenes `phase-orb-cast`,
   `phase-orb`.
 
+### The orb's time is its health (built 2026-10-16)
+
+The owner voted option A of `docs/mocks/orb-timer-2026-10-15/` and said "the
+timer/health is the same thing". So the orb has one quantity, its seconds:
+`S.orb` is `{ st, left, max, cut, at }`, `left` starting at `last` (12 s) and
+running down a second a second. Its bar over its head shows `left / max`,
+emptying from the right a world pixel at a time. A blow takes
+`done x last / (hp x level-1 last depth)` seconds off it (`orbSecsPerHit`),
+so the party's blows take it apart as fast as they broke the old hit points,
+at every level; with the clock running too, it lets go sooner than either
+alone. A click on it takes `ORB_CLICK_S` (1.5 s, the mock's chunk) at any
+rung. What a blow or a click cut breaks off the bar in the serpent bar's
+chips at the orb bar's height (`render/barchips.js`). Blows still do not
+carry through to the serpent while it is up. A save holding hit points is
+read as the same share of the time (`2026-10-16-orb-timer.js`, `SAVE_V` 22).
+
 ### The owner's words needed
 
 - The constrict's status lines: its badge's hover while it is coming, while a

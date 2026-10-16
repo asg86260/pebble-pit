@@ -29,7 +29,7 @@ import { P, WORKER, COIL_SEGS, COIL_HEAD, COIL_GIRTH, WARD_MS, WARD_AT,
          STUN_RING_DIM, PLATE_EVERY, PLATE_W, PLATE_TONE, PLATE_EDGE, RESIST_FLICKER_HZ, THROB_HZ, SINK_DIM, SINK_WARN_DIM, SINK_VEIL_EVERY,
          MEAL_HINGE, MEAL_SWELL_LEN, MEAL_SWELL, MEAL_SWELL_W, MEAL_AURA_S, MEAL_CROSSES, MEAL_CROSS_S, MEAL_CROSS_RISE,
          BREAK_DIVE, BREAK_BUBBLES, BREAK_BUBBLE_RISE, KILL, KILL_MOTE_S, KILL_MOTE_RISE, KILL_DROP_S, KILL_DROP_STEPS,
-         SERPENT_PHASES, ORB_BOLT_S, BEAM_WIDE_TO, BEAM_THIN_TO, ORB_R, ORB_BURST_S, ORB_STEP, HAND_GAP, ORB_GHOSTS, ORB_BAR_UP,
+         SERPENT_PHASES, ORB_BOLT_S, BEAM_WIDE_TO, BEAM_THIN_TO, ORB_R, ORB_BURST_S, ORB_STEP, HAND_GAP, ORB_GHOSTS, ORB_BAR_UP, BAR_H,
          BARRIER_GAP, BARRIER_EVERY, BARRIER_FLARE_MS, BARRIER_FLARE_W,
          NEARDEATH, POWERUP, DEEP_MOTE_TINTS, DEEP_H, COIL_Y, SERPENT_EYE_HOLD } from '../config.js';
 import { S } from '../state.js';
@@ -50,6 +50,7 @@ import { swellAt } from './cores.js';
 import { cellImage } from './cellimage.js';
 import { dentsNow } from './arms.js';
 import { drawHand, handSize, handTip } from './hand.js';
+import { breakOff, liveChips, drawChips } from './barchips.js';
 
 const coil = cellImage();
 
@@ -690,11 +691,36 @@ export function drawBarrier() {
   }
 }
 
+// The orb's bar over its head is its time (deep/phases.js): world pixels of
+// it, running down from the right as the seconds go, and what a blow or a
+// click cut off breaking away in chips, the serpent's bar's at this bar's
+// height (render/barchips.js). The picture's memory: the orb last drawn and
+// how much had been cut off it then, the chips in the air, and where the bar
+// stood, for chips still falling once the orb has gone.
+const ORB_BAR_W = (ORB_R * 2 + 2) * P, ORB_CHIP_K = P / BAR_H;
+let orbSeen = null, orbCutSeen = 0, orbChips = [], orbBar = null;
+export const orbChipsNow = () => orbChips;     // for the browser check
+const orbFill = (c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+function stepOrbBar(o, s) {
+  // the cut since last drawn breaks off, whether the orb is still up or that
+  // cut has just broken it (an orb new to the picture, or read back from a
+  // save, has nothing to break)
+  const was = orbSeen;
+  if (was && was.cut > orbCutSeen && orbBar) {
+    const left = Math.max(0, was.left);
+    breakOff(orbChips, s, ORB_BAR_W * left / was.max, ORB_BAR_W * Math.min(1, (left + was.cut - orbCutSeen) / was.max), P, ORB_CHIP_K);
+  }
+  orbSeen = o;
+  orbCutSeen = o ? o.cut : 0;
+  orbChips = liveChips(orbChips, s);
+}
+
 // The bolts off the lit comb to it, held two frames a shape; the orb turning
-// round it, with what is left of it over its head; and its burst when it goes.
+// round it, with its time over its head; and its burst when it goes.
 export function drawOrb() {
   if (S.view !== 'deep') return;
-  const t = now(), o = orbOn();
+  const t = now(), o = orbOn(), s = t / 1000;
+  stepOrbBar(o, s);
   if (o) {
     const c = orbMiddle(o.st);
     if (!c) return;
@@ -708,12 +734,12 @@ export function drawOrb() {
       for (let g = ORB_GHOSTS; g >= 1; g--) orbRing(c.x, c.y + way * g * ORB_STEP * P, r, t, () => PURPLES[WHITE - 3 - 2 * g], 2);
     }
     orbRing(c.x, c.y, r, t, ORB_INK);
-    // what is left of it, over its head
-    const bw = ORB_R * 2 + 2, by = snap(c.y - r - P * ORB_BAR_UP), bx = snap(c.x) - Math.floor(bw / 2) * P;
-    for (let i = 0; i < bw; i++) {
-      ctx.fillStyle = i < Math.round(bw * o.hp / o.max) ? PURPLES[WHITE - 1] : PURPLES[WHITE - 7];
-      ctx.fillRect(bx + i * P, by, P, P);
-    }
+    // its time, over its head, emptying from the right a world pixel at a time
+    const by = snap(c.y - r - P * ORB_BAR_UP), bx = snap(c.x) - Math.floor(ORB_BAR_W / P / 2) * P;
+    const fw = Math.round(ORB_BAR_W * Math.max(0, Math.min(1, o.left / o.max)));
+    orbFill(PURPLES[WHITE - 7], bx + fw, by, ORB_BAR_W - fw, P);
+    orbFill(PURPLES[WHITE - 1], bx, by, fw, P);
+    orbBar = { x: bx, y: by };
     // and the hand beside it, pointing in at its middle and tapping: it can be
     // clicked. Beside rather than over it, since the orb rises to the coil's
     // underside and the bar is over its head, and a hand over that ran into
@@ -723,6 +749,9 @@ export function drawOrb() {
     const hy = Math.min(snap(c.y - P / 2) - HAND_TIP_R * P, deepFloor() - HAND_BOX.h);
     drawHand(hx, hy, 'left', PURPLES[WHITE - 2], GREYS[WHITE], t);
   }
+  // what blows and clicks cut off it, held lit pale and then falling white
+  // toward the empty end (the voted mock's tones), on after the orb has gone
+  if (orbBar && orbChips.length) drawChips(orbChips, s, orbBar.x, orbBar.y, 0, { k: ORB_CHIP_K, fill: orbFill, held: GREYS[WHITE - 1], ink: GREYS[WHITE] });
   const b = S.orbBurst;
   if (!b) return;
   const st = S.stations.find(s => s.id === b.st), w = orbMiddle(b.st);
