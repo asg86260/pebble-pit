@@ -4,15 +4,18 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Act 3: heaven -- DESIGNED, WAITING ON THE OWNER (2026-10-16)
+## Act 3: the afterlife -- DESIGNED, WAITING ON THE OWNER (2026-10-16)
 
-"Act 3: heaven (design, not built)" in DESIGN.md: the spine (lifespans,
-lineage, the house's beat, the greeting), three loops for heaven, B (the
-roll call: souls rebuilt a rim piece a click, lines as the currency)
-recommended. Look: docs/mocks/act3-heaven-2026-10-16. Blocked on the owner's
-pick of loop and three calls: does the yard keep running below; do
-lifespans ship first (and the serpent's kill with them); what sets the beat
-off, behind a flag or not, and are the pair mortal. No code until then.
+"Act 3: the afterlife (design, not built)" in DESIGN.md, revised for the
+owner's theme (the afterlife is like real life and you keep working): the
+spine (lifespans, lineage, the house's beat, the greeting with a pick held
+out), three loops judged against that joke, and a hybrid recommended -- A's
+yard in the clouds, staffed by B's roll call of the dead, who keep their
+trade. Look: docs/mocks/act3-afterlife-2026-10-16. Blocked on the owner's
+pick of loop and six calls: does the yard keep running below; how literal
+the mirror is; what the dead keep; do lifespans ship first (and the
+serpent's kill with them); what sets the beat off, behind a flag or not, and
+are the pair mortal; does the work ever end. No code until then.
 
 ## Who you are: Steam names, translations -- WAITING ON THE OWNER (2026-10-16)
 
