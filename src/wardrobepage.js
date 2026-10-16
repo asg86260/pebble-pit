@@ -145,7 +145,8 @@ function build(el) {
   for (const r of KEY_ROWS) r.keys.forEach((k, i) => {
     const b = button(k, 'wardkey');
     b.dataset.key = k;
-    b.style.gridColumn = `${r.at + i * 2 + 1} / span 2`;
+    b.style.gridColumnStart = r.at + i * 2 + 1;
+    b.style.gridColumnEnd = 'span 2';
     b.addEventListener('click', () => typeKey(k));
     grid.appendChild(b);
   });
