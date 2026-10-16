@@ -32,16 +32,22 @@ export const WARD_STILL_S = 0.25;
 export const WARD_NONE_ODDS = 2;
 
 // The picker's close-up: how many screen pixels a world pixel is, and how
-// tall it is in world pixels (room over the two of them for a flag or a
-// balloon); and the crowd strip under it, at the yard's own scale, in screen
-// pixels.
+// wide and tall it is in world pixels (room over the square for a flag or a
+// balloon, and behind it for a cape). Where the page is too narrow for that
+// and the fields beside it, a world pixel is a screen pixel less.
 export const WARD_BIG = 3;
+export const WARD_BIG_W = 64;
 export const WARD_BIG_H = 60;
-export const WARD_STRIP_H = 46;
-// The strip's crowd: how many crew walk it with the two of them, and the
-// pace they walk at (world pixels a second).
-export const WARD_CROWD = 8;
-export const WARD_CROWD_PACE = [10, 22];
+// A tile of the picker's grid (option A of
+// docs/mocks/wardrobe-expansion-2026-10-16): the bare square wearing one
+// item, this many world pixels wide and tall at this many screen pixels a
+// world pixel, its feet this far over the tile's bottom.
+export const WARD_TILE_W = 36;
+export const WARD_TILE_H = 50;
+export const WARD_TILE_K = 2;
+export const WARD_TILE_FOOT = 5;
+// How strong a locked item is drawn on the close-up while it is tried on.
+export const WARD_TRY_ALPHA = 0.35;
 
 // Who the two of them are (DESIGN.md, "Who you are"): the longest name the
 // player may give either square, in characters. The narrow places a name

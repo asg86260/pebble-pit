@@ -148,6 +148,11 @@ const SLOT = Object.fromEntries(SLOTS.map(s => [s.key, s]));
 export const itemOf = (slot, key) => SLOT[slot]?.items.find(i => i.key === key) || null;
 // The slot's "nothing": the first row, whatever it is called.
 export const bareOf = slot => SLOT[slot].items[0];
+// What keeps an item shut, or null for one anybody can wear; and whether it
+// is open. A stand-in for the locks the wardrobe-expansion branch brings
+// (an achievement or a station's hat): until it lands, every item is open.
+export const itemLock = (slot, key) => null;
+export const isOpen = (slot, key) => !itemLock(slot, key);
 
 // --- the outfits -------------------------------------------------------------------
 // The two of them by the part each plays: `you`, the survivor who digs and

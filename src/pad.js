@@ -48,10 +48,14 @@ import { hear } from './audio.js';
 import { hold, pan, viewTaken, whatIsAt } from './input.js';
 import { aim, markAt, glideMs } from './padglide.js';
 import { fillControls } from './controls.js';
-import { wardrobePad, wardrobeHolds } from './wardrobepage.js';
+import { wardrobePad, wardrobeHolds, wardrobeNav } from './wardrobepage.js';
 import { padTabs } from './settingstabs.js';
 import { scope, focused, dropFocus, keepFocus, move as pageMove, pressA, pressX,
          enterBoard, enterCorner, paintPage, pickToward, focusEl } from './padpage.js';
+
+// The picker's grid moves by the page's one rule, and its focus is the pad's
+// (wardrobepage.js, which cannot import them: it sits on a board).
+wardrobeNav({ focus: focusEl, toward: pickToward });
 
 const mid = r => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
 const half = () => (S.view === 'deep' ? 'deep' : 'yard');

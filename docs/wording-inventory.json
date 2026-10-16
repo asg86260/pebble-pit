@@ -6905,7 +6905,7 @@
   "id": "ward-randomize",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobepage.js",
-  "context": "the picker's button that dresses the one being dressed at random; and each row's die, as its label",
+  "context": "the label on the picker's dice: the name's, the role's and the slot's, each a roll of that alone",
   "text": "randomize"
  },
  {
@@ -6961,7 +6961,7 @@
   "id": "ward-slot-head",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
-  "context": "the picker's row labels, a slot a row",
+  "context": "the picker's slot tabs, a slot a tab",
   "text": "head"
  },
  {
@@ -7000,10 +7000,45 @@
   "text": "aura"
  },
  {
+  "id": "ward-slot-open",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the picker's slot tabs: how many of a slot's items are open to wear, of all of them",
+  "text": "${open}/${all}"
+ },
+ {
+  "id": "ward-grid-head",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "the heading over the picker's grid of items, and the line under it for the item under the pointer: $slot the slot, $item its item",
+  "text": "${slot}: ${item}"
+ },
+ {
+  "id": "ward-grid-open",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "beside the heading over the picker's grid: how many of the slot's items are open to wear",
+  "text": "${open} of ${all} open"
+ },
+ {
+  "id": "ward-locked",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "a locked item in the picker's grid, on its hover: $item the item, $lock what opens it",
+  "text": "${item}: ${lock}"
+ },
+ {
+  "id": "ward-trying",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/wardrobepage.js",
+  "context": "under the picker's grid while a locked item is tried on the close-up: $item the item; it is not kept",
+  "text": "trying on ${item}: not kept"
+ },
+ {
   "id": "ward-none",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
-  "context": "an item on the picker, shown between a row's previous and next; a plain label",
+  "context": "an item on the picker, under its tile in the slot's grid; a plain label",
   "text": "none"
  },
  {

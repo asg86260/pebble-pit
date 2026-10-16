@@ -3173,7 +3173,7 @@ ward-role-word = { $so ->
     }
 
 
-# the picker's button that dresses the one being dressed at random; and each row's die, as its label
+# the label on the picker's dice: the name's, the role's and the slot's, each a roll of that alone
 ward-randomize = randomize
 
 # the picker's button that rolls the whole square: its role and outfit, never its name
@@ -3197,7 +3197,7 @@ ward-key-space = space
 # the pad's letter grid under the name: the key that takes the last letter back
 ward-key-del = del
 
-# the picker's row labels, a slot a row
+# the picker's slot tabs, a slot a tab
 ward-slot-head = head
 ward-slot-face = face
 ward-slot-neck = neck
@@ -3205,7 +3205,22 @@ ward-slot-back = back
 ward-slot-pattern = pattern
 ward-slot-aura = aura
 
-# an item on the picker, shown between a row's previous and next; a plain label
+# the picker's slot tabs: how many of a slot's items are open to wear, of all of them
+ward-slot-open = { $open }/{ $all }
+
+# the heading over the picker's grid of items, and the line under it for the item under the pointer: $slot the slot, $item its item
+ward-grid-head = { $slot }: { $item }
+
+# beside the heading over the picker's grid: how many of the slot's items are open to wear
+ward-grid-open = { $open } of { $all } open
+
+# a locked item in the picker's grid, on its hover: $item the item, $lock what opens it
+ward-locked = { $item }: { $lock }
+
+# under the picker's grid while a locked item is tried on the close-up: $item the item; it is not kept
+ward-trying = trying on { $item }: not kept
+
+# an item on the picker, under its tile in the slot's grid; a plain label
 ward-none = none
 ward-plain = plain
 ward-bow = bow
