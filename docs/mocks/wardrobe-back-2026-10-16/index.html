@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wardrobe Back Slots</title>
+<style>
+  /* A light page on purpose: the yard is drawn on white paper. One deep panel at the foot. */
+  :root { color-scheme: light; --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --mark: #6a2fbe; --deep: #111114; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; } }
+  :root[data-theme="dark"] { --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 0 0 2px; }
+  p { margin: 0 0 10px; color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 18px; }
+  .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .opt h3 { font-size: 14px; margin: 6px 0 2px; }
+  .opt .cap { font-size: 12px; color: var(--muted); min-height: 3.2em; margin-bottom: 6px; }
+  .tag { font-weight: bold; color: var(--mark); }
+  canvas { image-rendering: pixelated; display: block; }
+  canvas.big { width: 100%; height: auto; border: 1px solid var(--line); }
+  canvas.one { margin-top: 6px; }
+  .beat { font-size: 12px; color: var(--mark); }
+  .deep { background: var(--deep); color: #e8e8ea; border-color: #333; }
+  .deep p, .deep .cap { color: #a8a8b0; }
+  .deep canvas { filter: invert(1); border-color: #cfcfd8; }
+  .deep .grid { display: grid; grid-template-columns: 7em repeat(3, minmax(0, 1fr)); gap: 8px 12px; align-items: center; }
+  .deep .grid .h { font-size: 12px; color: #a8a8b0; }
+  .cant li { color: var(--muted); }
+  @media (max-width: 720px) { .row { grid-template-columns: 1fr; } .deep .grid { grid-template-columns: 5em repeat(3, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<main>
+<h1>Wardrobe back slots (mock)</h1>
+<p>The scarf's treatment (the voted B, "low and long") carried to the back slots: marks in 2 px units rather than whole 6 px cells, held poses that stream behind on the walk and hang when standing, proportions fitted to the 18 px body. Drawn from plain shapes on a bare body, not the game; the "today" column is copied from the real draws in src/render/wardrobe.js (the gold-trim cape from the wardrobe-expansion branch). Each panel loops: walk right, stand, walk left, stand. Poses step at the game's own clocks: the walk at 4 a second (WARD_STEP_HZ), the balloon's bob at 1.2 (WARD_BOB_HZ), a flag at the yard flags' FLAG_WAVE (8 frames over 6 s). Big canvas 4x, small one 1x.</p>
+<div id="items"></div>
+
+<section class="card deep">
+  <h2>In the deep</h2>
+  <p>The same, drawn in the yard's inks and turned over, as the deep turns its picture over (render/deep.js); the gold is drawn so the turned picture shows the deep's own gold. At 2x.</p>
+  <div class="grid" id="deepGrid"></div>
+</section>
+
+<section class="card cant">
+  <h2>What this mock cannot show</h2>
+  <ul>
+    <li>The yard: no crowd, no camera zoom, no station hats, no head items or scarf worn with these (a scarf's tail and a cape share the back; that pairing is a call for the build).</li>
+    <li>A carter: its cart is its back, so none of these are drawn on one.</li>
+    <li>The real walk: here the body slides at a steady 12 px a second and the "walking" flag flips the moment it stops; the game reads walking off motion with a 0.25 s hold (WARD_STILL_S), and bodies walk at their own speeds.</li>
+    <li>A crouched, seated or knocked-flat body, a load over the head (which the balloon and the flag would have to clear), the picker's tiles, and device-pixel snapping at odd zooms.</li>
+    <li>The deep panel's turn is a CSS invert of black, white and one gold; the deep's own greys are not in play because none of these options uses a grey.</li>
+    <li>The moneybag (wardrobe-expansion) is not shown; it already bounces a unit on the step.</li>
+  </ul>
+</section>
+</main>
+
+<script>
+"use strict";
+// --- the game's numbers (src/config) ---------------------------------------
+const P = 6, WORKER = 18, RIM = 2, U = 2;
+const STEP_HZ = 4, BOB_HZ = 1.2, WAVE_HZ = 3;
+const FLAG_WAVE = { period: 6, length: 8, grow: 3 };
+const INK = "#000", PAPER = "#fff", GOLD = "#c99406";
+// The deep's gold as seen (#f2c14e), drawn as its inverse so the turned panel shows it.
+const GOLD_TURNED = "#0d3eb1";
+const pose = (t, hz, n = 2) => Math.floor(t * hz) % n;
+const fill = (g, x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+const cell = (g, x, y, c) => fill(g, x, y, P, P, c);
+
+// A unit (2 px) at (ux, uy) off the body's top-left, facing right; mirrored
+// round the body for a body facing left. Negative ux is behind the body.
+function unit(g, x, y, dir, ux, uy, c) {
+  const px = dir > 0 ? x + ux * U : x + WORKER - (ux + 1) * U;
+  fill(g, px, y + uy * U, U, U, c);
+}
+// Rows of art, '#' ink, 'w' paper, 'g' gold, its top-left at (ux, uy).
+function art(g, x, y, dir, rows, ux, uy, k) {
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === ".") return;
+    unit(g, x, y, dir, ux + c, uy + r, ch === "w" ? PAPER : ch === "g" ? k.gold : INK);
+  }));
+}
+function body(g, x, y) {
+  fill(g, x, y, WORKER, WORKER, INK);
+  fill(g, x + RIM, y + RIM, WORKER - 2 * RIM, WORKER - 2 * RIM, PAPER);
+}
+
+// --- capes -------------------------------------------------------------------
+// A cape is a set of units; the gold-trim one hems every unit with nothing
+// under it and the column farthest out, as the expansion's gold cape does.
+function drawUnits(g, x, y, dir, set, k, trim) {
+  const has = new Set(set.map(([a, b]) => a + "," + b));
+  const far = Math.min(...set.map(s => s[0]));
+  for (const [ux, uy] of set) {
+    const hem = !has.has(ux + "," + (uy + 1)) || ux === far;
+    unit(g, x, y, dir, ux, uy, trim && hem ? k.gold : INK);
+  }
+}
+// Columns behind the back, i = 0 the one against the body: [top, bottom) in units.
+function columns(cols) {
+  const out = [];
+  cols.forEach(([top, bot], i) => { for (let v = top; v < Math.min(bot, 9); v++) out.push([-(i + 1), v]); });
+  return out;
+}
+// Today's cells (render/wardrobe.js, capeCells and short-cape), as units.
+function cellsToUnits(cells) {
+  const out = [];
+  for (const [cx, cy] of cells) for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) out.push([cx * 3 + a, cy * 3 + b]);
+  return out;
+}
+const CAPE_TODAY = (short, moving, t) => {
+  const p = pose(t, STEP_HZ);
+  if (short) return cellsToUnits(moving ? [[-1, 0], [-2, p ? 0 : 1]] : [[-1, 0], [-1, 1]]);
+  return cellsToUnits(moving ? [[-1, 0], [-2, 1], [p ? -3 : -2, p ? 1 : 2], [-1, 1]] : [[-1, 0], [-1, 1], [-1, 2]]);
+};
+// A: hangs from the shoulders to the floor, an A-line with a rippled hem;
+// streams back in two poses with a wave along its top and a hem that ripples.
+const A_WAVE = [[0, 0, 1, 1, 0, 0, -1, -1, 0, 0], [0, 0, 0, 1, 1, 1, 0, 0, -1, -1]];
+const CAPE_A = (short, moving, t) => {
+  if (!moving) return columns(short ? [[0, 5], [0, 4], [2, 5]] : [[0, 9], [0, 8], [2, 9], [5, 8]]);
+  const p = pose(t, STEP_HZ), len = short ? [5, 5, 4, 4, 3, 3] : [9, 8, 7, 6, 6, 5, 5, 4, 4, 3];
+  return columns(len.map((n, i) => { const top = A_WAVE[p][i]; return [top, top + n - (i >= 2 ? (i + p) % 2 : 0)]; }));
+};
+// B: shorter (to the knee), smooth-hemmed; billows in three held poses:
+// filling, full, falling.
+const B_TOP = [[0, 0, 0, 1, 1, 2, 3], [0, -1, -1, -1, 0, 0, 1], [0, 0, 1, 2, 2, 3, 4]];
+const B_LEN = [[7, 6, 6, 5, 4, 3, 2], [7, 7, 7, 6, 5, 4, 3], [7, 7, 6, 5, 4, 3, 2]];
+const CAPE_B = (short, moving, t) => {
+  if (!moving) return columns(short ? [[0, 4], [1, 4], [2, 4]] : [[0, 7], [1, 7], [3, 7]]);
+  const p = pose(t, STEP_HZ, 3), n = short ? 5 : 7;
+  return columns(B_TOP[p].slice(0, n).map((top, i) => [top, top + (short ? Math.max(1, Math.round(B_LEN[p][i] * 4 / 7)) : B_LEN[p][i])]));
+};
+const cape = (fn, short, trim) => (g, x, y, dir, moving, t, k) => drawUnits(g, x, y, dir, fn(short, moving, t), k, trim);
+
+// --- backpack -----------------------------------------------------------------
+function packToday(g, x, y, dir) {
+  const bx = dir > 0 ? x - P : x + WORKER;
+  cell(g, bx, y + 2, INK); cell(g, bx, y + 2 + P, INK);
+  fill(g, bx + 2, y + 2 + P + 2, 2, 2, PAPER);
+}
+function packBob(g, x, y, dir, moving, t) { packToday(g, x, y - (moving && pose(t, STEP_HZ) ? U : 0), dir); }
+// The same pack redrawn in units: a flap line and a buckle, bobbing on the step.
+function packUnits(g, x, y, dir, moving, t, k) {
+  const b = moving && pose(t, STEP_HZ) ? -1 : 0;
+  art(g, x, y, dir, [".##", "###", "www", "###", "#w#", "###", "###"], -3, 1 + b, k);
+}
+
+// --- balloon -------------------------------------------------------------------
+function balloonToday(g, x, y, dir, moving, t) {
+  const bob = pose(t, BOB_HZ) ? -2 : 0, d = dir > 0 ? -1 : 1;
+  const sx = dir > 0 ? x + 2 : x + WORKER - 4;
+  fill(g, sx, y - 3 * P + bob, 1, 3 * P - bob, INK);
+  const bxl = sx - 5 + d * 4, byl = y - 3 * P - 12 + bob;
+  fill(g, bxl + 2, byl, 8, 12, INK); fill(g, bxl, byl + 2, 12, 8, INK);
+}
+// Shapes with the knot as the last row; `kc` the knot's column.
+const ROUND = { rows: [".###.", "#####", "#w###", "#####", ".###.", "..#.."], kc: 2 };
+const SQUASH = { rows: [".####.", "######", "#w####", ".####.", "..#..."], kc: 2 };
+const STRETCH = { rows: [".##.", "####", "#w##", "####", "####", ".##.", ".#.."], kc: 1 };
+// A string in units from the tie at (0, -1) up to just under the knot.
+function string(g, x, y, dir, kx, ky) {
+  const n = Math.max(Math.abs(kx), Math.abs(ky));
+  for (let i = 0; i <= n; i++) unit(g, x, y, dir, Math.round(kx * i / n), -1 + Math.round((ky + 1) * i / n), INK);
+}
+function balloonOpt(squash) {
+  return (g, x, y, dir, moving, t, k) => {
+    let kx, ky, shape = ROUND;
+    if (moving) {
+      // lags behind the body, swinging a unit further back and down on the other step
+      const p = pose(t, STEP_HZ);
+      kx = p ? -5 : -4; ky = p ? -7 : -8;
+      if (squash && !p) shape = STRETCH;
+    } else {
+      const b = pose(t, BOB_HZ);
+      kx = -1; ky = b ? -8 : -7;
+      if (squash && !b) shape = SQUASH;
+    }
+    string(g, x, y, dir, kx, ky + 1);
+    art(g, x, y, dir, shape.rows, kx - shape.kc, ky - shape.rows.length + 1, k);
+  };
+}
+
+// --- flag ----------------------------------------------------------------------
+function flagToday(g, x, y, dir, moving, t) {
+  const px = dir > 0 ? x : x + WORKER - 2;
+  fill(g, px, y - 4 * P, 2, 4 * P, INK);
+  const fx = dir > 0 ? px - 2 * P : px + 2, wv = pose(t, WAVE_HZ);
+  fill(g, fx, y - 4 * P, 2 * P, P, INK);
+  fill(g, dir > 0 ? fx + (wv ? 0 : P) : fx + (wv ? P : 0), y - 3 * P, P, P - 2, INK);
+}
+// The yard flags' wave (deep/props.js, clothLift), in units rather than cells.
+const clothLift = (c, k) => Math.round(Math.sin(2 * Math.PI * (k - c) / FLAG_WAVE.length) * Math.min(1, c / FLAG_WAVE.grow)) || 0;
+// A: a pole up the back and a 7 x 4 unit cloth waving as the yard flags do;
+// standing it keeps the yard's slow beat, walking the frames step at the walk's.
+function flagA(g, x, y, dir, moving, t, k) {
+  for (let v = -12; v < 6; v++) unit(g, x, y, dir, -1, v, INK);
+  const f = moving ? Math.floor(t * STEP_HZ) : Math.floor(t / FLAG_WAVE.period * FLAG_WAVE.length);
+  const kk = f % FLAG_WAVE.length;
+  for (let c = 0; c < 7; c++) {
+    const lift = clothLift(c, kk);
+    for (let r = 0; r < 4; r++) unit(g, x, y, dir, -2 - c, -12 + r - lift, INK);
+  }
+  unit(g, x, y, dir, -1, -13, INK);
+}
+// B: a pennant on a shorter pole, tapering to a point; streaming straight
+// back in the scarf's two-pose wave, drooping and swaying a unit when standing.
+const PEN_H = [4, 4, 3, 3, 3, 2, 2, 1, 1];
+const PEN_WAVE = [[0, 0, 0, 1, 1, 0, 0, -1, -1], [0, 0, 0, 0, 1, 1, 1, 0, 0]];
+function flagB(g, x, y, dir, moving, t, k) {
+  for (let v = -10; v < 6; v++) unit(g, x, y, dir, -1, v, INK);
+  unit(g, x, y, dir, -1, -11, INK);
+  if (moving) {
+    const p = pose(t, STEP_HZ);
+    PEN_H.forEach((h, i) => { const top = -10 + Math.floor((4 - h) / 2) + PEN_WAVE[p][i]; for (let r = 0; r < h; r++) unit(g, x, y, dir, -2 - i, top + r, INK); });
+  } else {
+    // drooping: each column sags a unit further, the tip swinging on the bob
+    const s = pose(t, BOB_HZ);
+    const DH = [4, 4, 3, 3, 2, 2, 1];
+    DH.forEach((h, i) => { const top = -10 + Math.round(i * 1.5) + (i >= 5 ? s : 0); for (let r = 0; r < h; r++) unit(g, x, y, dir, -2 - i, top + r, INK); });
+  }
+}
+
+// --- the items ---------------------------------------------------------------------
+const ITEMS = [
+  ["cape", [
+    ["Today", "three whole cells hanging; two streaming poses of whole cells", cape(CAPE_TODAY, false, false)],
+    ["A · To the floor", "hangs from the shoulders to the floor, wider at the foot, a notched hem; streams back ten units in a two-pose wave, the hem rippling", cape(CAPE_A, false, false)],
+    ["B · Billow", "shorter, to the knee, smooth hem; billows behind in three held poses (filling, full, falling)", cape(CAPE_B, false, false)],
+  ]],
+  ["short cape", [
+    ["Today", "two cells hanging; one cell flicking", cape(CAPE_TODAY, true, false)],
+    ["A · To the floor, cut short", "A's shape to the waist: three units of A-line, six columns streaming", cape(CAPE_A, true, false)],
+    ["B · Billow, cut short", "B's three poses to the waist", cape(CAPE_B, true, false)],
+  ]],
+  ["gold-trim cape (wardrobe-expansion)", [
+    ["Today", "the cape's cells with a gold unit along every foot and the outer side", cape(CAPE_TODAY, false, true)],
+    ["A · To the floor, gold hem", "A's cape, the same gold rule: every unit with nothing under it and the outer column", cape(CAPE_A, false, true)],
+    ["B · Billow, gold hem", "B's cape, the same gold rule", cape(CAPE_B, false, true)],
+  ]],
+  ["balloon", [
+    ["Today", "a 12 x 12 balloon on a 1 px string from the back of the head, bobbing; no change on the walk", balloonToday],
+    ["A · Lags behind", "a 10 x 12 balloon with a highlight on a 2 px string: walking it lags back, swinging a unit on the step; standing it hangs over the back and bobs", balloonOpt(false)],
+    ["B · Lags and squashes", "as A, and the balloon squashes wide at the foot of each bob and stretches tall on the walk's back-swing", balloonOpt(true)],
+  ]],
+  ["flag", [
+    ["Today", "a four-cell pole, a two-cell cloth flipping its lower half", flagToday],
+    ["A · Yard flag", "a pole up the back, a 14 x 8 px cloth waving as the yard flags do (FLAG_WAVE's travelling crest); standing at the yard's slow beat, walking at the step's", flagA],
+    ["B · Pennant", "a shorter pole, a tapering pennant: streaming straight back in a two-pose wave on the walk, drooping with its tip swaying when standing", flagB],
+  ]],
+  ["backpack", [
+    ["Today", "two cells and a paper buckle, still", (g, x, y, dir) => packToday(g, x, y, dir)],
+    ["Today + bob", "the same pack, up a unit on every other step", packBob],
+    ["Bob, in units", "redrawn in 2 px units (a flap line and a buckle), bobbing the same", packUnits],
+  ]],
+];
+
+// --- the stage ---------------------------------------------------------------------
+// One loop: walk right 2.5 s, stand 1.5 s, walk left 2.5 s, stand 1.5 s.
+const W = 104, H = 60, X0 = 28, TRAVEL = 30, BY = 36, LOOP = 8;
+function where(t) {
+  const s = t % LOOP;
+  if (s < 2.5) return { x: X0 + Math.round(TRAVEL * s / 2.5), dir: 1, moving: true, beat: "walking right" };
+  if (s < 4) return { x: X0 + TRAVEL, dir: 1, moving: false, beat: "standing" };
+  if (s < 6.5) return { x: X0 + TRAVEL - Math.round(TRAVEL * (s - 4) / 2.5), dir: -1, moving: true, beat: "walking left" };
+  return { x: X0, dir: -1, moving: false, beat: "standing" };
+}
+const PANELS = [], BEATS = [];
+function canvas(draw, scale, cls, k) {
+  const c = document.createElement("canvas");
+  c.width = W * scale; c.height = H * scale;
+  c.className = cls;
+  if (cls === "one") c.style.width = W + "px";
+  const g = c.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  PANELS.push(t => {
+    const w = where(t);
+    g.setTransform(scale, 0, 0, scale, 0, 0);
+    fill(g, 0, 0, W, H, PAPER);
+    fill(g, 0, BY + WORKER, W, 1, "#d6d6d6");
+    draw(g, w.x, BY, w.dir, w.moving, t, k);
+    body(g, w.x, BY);
+  });
+  return c;
+}
+const YARD = { gold: GOLD }, DEEP = { gold: GOLD_TURNED };
+const items = document.getElementById("items"), deep = document.getElementById("deepGrid");
+deep.append(Object.assign(document.createElement("div"), { className: "h", textContent: "" }));
+for (const h of ["today", "A", "B"]) deep.append(Object.assign(document.createElement("div"), { className: "h", textContent: h }));
+for (const [name, opts] of ITEMS) {
+  const sec = document.createElement("section");
+  sec.className = "card";
+  const h = document.createElement("h2"); h.textContent = name;
+  const beat = document.createElement("div"); beat.className = "beat"; BEATS.push(beat);
+  const row = document.createElement("div"); row.className = "row";
+  for (const [label, cap, draw] of opts) {
+    const o = document.createElement("div"); o.className = "opt";
+    const first = label.split(" ")[0];
+    o.innerHTML = '<h3><span class="tag">' + first + "</span>" + label.slice(first.length) + '</h3><div class="cap">' + cap + "</div>";
+    o.append(canvas(draw, 4, "big", YARD), canvas(draw, 1, "one", YARD));
+    row.append(o);
+  }
+  sec.append(h, beat, row);
+  items.append(sec);
+  deep.append(Object.assign(document.createElement("div"), { className: "h", textContent: name.split(" (")[0] }));
+  for (const [, , draw] of opts) {
+    const c = canvas(draw, 2, "big", DEEP);
+    deep.append(c);
+  }
+}
+
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const t0 = performance.now();
+const shot = location.hash.match(/t=([\d.]+)/);
+function frame() {
+  const t = shot ? +shot[1] : still ? 1.1 : (performance.now() - t0) / 1000;
+  for (const p of PANELS) p(t);
+  const b = where(t).beat;
+  for (const e of BEATS) e.textContent = "now: " + b;
+  if (!still && !shot) requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>
