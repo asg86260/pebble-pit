@@ -57,6 +57,18 @@ function fakeSdk({ account = true, app = true, throwOn = null, files = {} } = {}
   };
 }
 
+// Steam's keyboard for a name typed on a pad (src/wardrobepage.js): the text
+// back, or null for one put away, one that threw, or no Steam at all.
+test('Steam\'s keyboard answers the text typed, and null for every way it can fail', async () => {
+  const asked = [];
+  const client = text => ({ utils: { showGamepadTextInput: async (...a) => { asked.push(a); if (text instanceof Error) throw text; return text; } } });
+  assert.equal(await steam.textInputOf(client('ada'))('name', 12, 'ad'), 'ada');
+  assert.deepEqual(asked[0], [0, 0, 'name', 12, 'ad'], 'single line, plain text, the cap and the name so far');
+  assert.equal(await steam.textInputOf(client(null))('name', 12, ''), null);
+  assert.equal(await steam.textInputOf(client(new Error('no big picture')))('name', 12, ''), null);
+  assert.equal(await steam.textInputOf(null)('name', 12, ''), null);
+});
+
 test('every save that lands on disk lands in Steam, slots included', () => {
   const remote = fakeRemote();
   const store = steam.mirror(openStore(fresh()), remote);
