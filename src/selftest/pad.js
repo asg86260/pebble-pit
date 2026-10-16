@@ -9,7 +9,7 @@
 
 import { ok, raf, run, runUntil, sleep, haveBench, state } from './kit.js';
 import { S } from '../state.js';
-import { P, PAD_PAGE_CELL } from '../config.js';
+import { P, PAD_PAGE_CELL, PAD_GLIDE_SPEED } from '../config.js';
 
 const BUTTONS = { a: 0, b: 1, x: 2, y: 3, lb: 4, rb: 5, lt: 6, rt: 7, view: 8, menu: 9,
                   l3: 10, r3: 11, up: 12, down: 13, left: 14, right: 15 };
@@ -309,6 +309,73 @@ export const TESTS = [
         ok(inCorner, 'and up from there reaches a corner button', `${path.join(' > ')} ${el && el.id}`),
         ok(back === null, 'and down off the corner is the yard again', `${back} ${window.__pad.focus()}`),
       ];
+    } finally { unplug(); }
+  }],
+
+  // The owner, 2026-10-16: "i also want to see the corner bracket transition
+  // between elements". The marker's box on the glass, frame by frame over a
+  // press, across from the yard to the corner cards and back, into a board,
+  // between its rows and out again: through the places between, and never
+  // more than a few cells in a frame (the yard's own hops are
+  // test/pad-glide.test.mjs).
+  ['pad: the marker travels across to the corner, a board\'s rows and back', async () => {
+    window.__crew(3, 3, 5, 7);
+    window.__fullSites();
+    run(1);
+    plugIn();
+    window.__motion(null);           // the glide is a motion; this check is about it
+    const mid = s => ({ x: s.x + s.w / 2, y: s.y + s.h / 2 });
+    const limit = PAD_GLIDE_SPEED / 60 * 2;
+    // One press, and the marker on the glass each frame the page draws until
+    // it has landed.
+    const G = m => m && m.seen;      // the box on the glass, CSS pixels
+    const follow = async name => {
+      const start = G(window.__pad.markNow());
+      const b = fake.buttons[BUTTONS[name]];
+      b.pressed = true; b.value = 1;
+      await raf();
+      b.pressed = false; b.value = 0;
+      const seen = [start];
+      for (let i = 0; i < 120; i++) {
+        await raf();
+        const m = window.__pad.markNow();
+        if (!m) break;
+        seen.push(G(m));
+        if (m.landed) break;
+      }
+      const a = mid(seen[0]), z = mid(seen[seen.length - 1]);
+      const far = Math.hypot(z.x - a.x, z.y - a.y);
+      let worst = 0, between = 0;
+      for (let i = 1; i < seen.length; i++) {
+        const p = mid(seen[i - 1]), q = mid(seen[i]);
+        worst = Math.max(worst, Math.hypot(q.x - p.x, q.y - p.y));
+        const d = Math.hypot(q.x - a.x, q.y - a.y);
+        if (d > far * 0.1 && d < far * 0.9) between++;
+      }
+      return { name, far: Math.round(far), worst: Math.round(worst), between, scope: window.__pad.scope() };
+    };
+    const say = f => `${f.name}: ${f.far} px in ${f.between} frames between, the most a frame ${f.worst} px of ${Math.round(limit)}`;
+    const travels = f => f.far > 0 && f.between >= 2 && f.worst <= limit;
+    try {
+      await press('b');
+      await hopTo('st:farm');
+      await frames(30);
+      let up = null;
+      for (let i = 0; i < 6 && window.__pad.scope() !== 'corner'; i++) up = await follow('up');
+      await frames(10);
+      const down = await follow('down');
+      await frames(10);
+      const into = await follow('a');
+      await frames(10);
+      const row = await follow('down');
+      await frames(10);
+      const out = await follow('b');
+      return [
+        ok(up && up.scope === 'corner' && travels(up), 'up to the corner cards, it travels there', up && say(up)),
+        ok(down.scope === null && travels(down), 'and down again, back to the yard', say(down)),
+        ok(into.scope === 'board' && travels(into), 'A at the farm: down onto its board\'s row', say(into)),
+        ok(travels(row), 'between the board\'s rows', say(row)),
+        ok(out.scope === null && travels(out), 'and B: back to the farm', say(out)),      ];
     } finally { unplug(); }
   }],
 

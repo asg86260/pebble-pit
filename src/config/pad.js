@@ -14,9 +14,20 @@ export const PAD_DEEP_ACCENT = PURPLE[13];
 // paper in the yard, the deep's own dark down there (the mock's `--deep`).
 export const PAD_HALO = '#ffffff';
 export const PAD_DEEP_HALO = '#08070c';
-// The glide between stops, fast out and soft in, on whole cells (the
-// owner, 2026-10-12: "about 0.25 s").
-export const PAD_GLIDE_MS = 250;
+// The glide between stops, eased in and out, on whole cells: never shorter
+// than this (the owner, 2026-10-12: "about 0.25 s"), and longer for a far
+// trip, so that no frame of it moves faster than PAD_GLIDE_SPEED, CSS pixels
+// a second on the glass -- a marker that crossed the window in a frame or two
+// read as one that jumped (the owner, 2026-10-16). A fifth quicker than first
+// built (250 ms, 1800 px/s): "just a bit quicker", the owner, 2026-10-16.
+export const PAD_GLIDE_MS = 200;
+export const PAD_GLIDE_SPEED = 2300;
+// The camera's pan to the focus on a hop, eased in and out: never shorter
+// than this (about a fifth quicker than the old chase, which took some
+// 0.4 s to get most of the way), and PAD_PAN_LEAD times the marker's own
+// glide, so the marker gets to the new thing first and rides in with it.
+export const PAD_PAN_MS = 320;
+export const PAD_PAN_LEAD = 1.6;
 // The landing: two cells out, then one, then home, each held this long.
 export const PAD_SETTLE_STEP_MS = 60;
 export const PAD_SETTLE_CELLS = 2;

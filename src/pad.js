@@ -17,7 +17,7 @@
 // nothing is a setting.
 
 import { P, WORKER, MINE_DELAY, TOSS_DELAY, HOVER_SLOW_MS, PAD_DEAD, PAD_FLICK, PAD_REPEAT_WAIT_MS,
-         PAD_REPEAT_MS, PAD_TRIGGER, PAD_HAND_SPEED, PAD_PAN, PAD_COIL_RATE, PAD_TIP_MS, PAD_HAND_BOX,
+         PAD_REPEAT_MS, PAD_TRIGGER, PAD_HAND_SPEED, PAD_PAN, PAD_COIL_RATE, PAD_TIP_MS, PAD_HAND_BOX, PAD_PAN_MS, PAD_PAN_LEAD,
          ARM_LENGTH, ARM_SWING, COIL_SEGS } from './config.js';
 import { S } from './state.js';
 import { now } from './clock.js';
@@ -25,7 +25,7 @@ import { readPads, seeFamily, glyph, rumble, fakePad, BUTTON } from './padread.j
 import { stops, stopById, stopMid } from './stops.js';
 import { station } from './stations.js';
 import { showPanel, openBoard, showTip, showTipAt } from './board.js';
-import { lookAt, unfollow } from './world.js';
+import { panTo, unfollow } from './world.js';
 import { knockOff, topOfRock, overBoulder } from './rock.js';
 import { sweep, release, track } from './hands.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
@@ -46,7 +46,7 @@ import { card } from './crewboard.js';
 import { crewView } from './prefs.js';
 import { hear } from './audio.js';
 import { hold, pan, viewTaken, whatIsAt } from './input.js';
-import { aim, markAt } from './padglide.js';
+import { aim, markAt, glideMs } from './padglide.js';
 import { fillControls } from './controls.js';
 import { scope, focused, dropFocus, keepFocus, move as pageMove, pressA, pressX,
          enterBoard, enterCorner, paintPage, pickToward } from './padpage.js';
@@ -157,9 +157,14 @@ function setFocus(id, look = false) {
   focusAt = performance.now();
   if (look) { const r = focusBox(id); if (r) lookTo(mid(r).x); }
 }
+// The camera to the focus, in the middle of the window, by a pan eased in
+// and out over PAD_PAN_MS. The marker's own glide is shorter (padglide.js),
+// so it reaches the new thing while the camera is still on its way and rides
+// in with it: both are seen to move (the owner, 2026-10-16: "i want both the
+// camera glide and the bracket glide").
 function lookTo(x) {
   unfollow();
-  lookAt(x);
+  panTo(x, Math.max(PAD_PAN_MS, PAD_PAN_LEAD * glideMs(Math.abs(x - S.camX - S.viewW / 2) * S.zoom)));
   viewTaken();
 }
 
@@ -361,7 +366,7 @@ function sleep() {
   S.padOn = false;
   document.body?.classList?.remove('pad');
   dropFocus();
-  aim(null);                // the yard's marker fades out where it stood
+  aim(null);                // the marker fades out where it stood
   showTipAt(null);
 }
 addEventListener('pointermove', e => { if (e.isTrusted && e.pointerType !== 'touch') sleep(); }, true);
@@ -691,6 +696,8 @@ export const PAD_HANDLE = {
   hand: () => S.padHand && { ...S.padHand },
   box: () => focusBox(),
   mark: () => markAt(fakeT),
+  // The marker as the page's own frames draw it, on the wall clock.
+  markNow: () => markAt(performance.now()),
   page: () => focused(),
   scope: () => scope()?.kind || null,
   inner: id => innerRows(findStop(id)).map(row => row.map(c => c.id)),
