@@ -37,7 +37,7 @@ import { canDrop } from './casino.js';
 import { potBox } from './apothecary.js';
 import { potPick } from './potpick.js';
 import { clickDeep } from './deep/serpent.js';
-import { coilAt, coilThick, nearestSeg } from './deep/place.js';
+import { coilAt, coilThick } from './deep/place.js';
 import { goDeep, goUp, gliding } from './view.js';
 import { skippable, holdSkip } from './skip.js';
 import { shutOpts } from './shop.js';
@@ -48,12 +48,13 @@ import { hear } from './audio.js';
 import { hold, pan, viewTaken, whatIsAt } from './input.js';
 import { aim, markAt } from './padglide.js';
 import { fillControls } from './controls.js';
-import { scope, focused, dropFocus, keepFocus, move as pageMove, pressA, pressX, pressY,
-         enterBoard, enterCorner, paintPage } from './padpage.js';
+import { scope, focused, dropFocus, keepFocus, move as pageMove, pressA, pressX,
+         enterBoard, enterCorner, paintPage, pickToward } from './padpage.js';
 
 const mid = r => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
 const half = () => (S.view === 'deep' ? 'deep' : 'yard');
 const onScreen = r => !!r && r.x + r.w > S.camX && r.x < S.camX + S.viewW && r.y + r.h > S.camY && r.y < S.camY + S.viewH;
+const onGlassX = r => !!r && r.x + r.w > S.camX && r.x < S.camX + S.viewW;
 
 // --- the stops, and what stands inside each ------------------------------------
 // The build call (raise.js) stands over the yard as a button of its own until
@@ -187,15 +188,38 @@ function settleFocus() {
 }
 
 // --- moving the focus ---------------------------------------------------------
+// Everything a d-pad press can land on in the yard, as middles for the one
+// rule (padpage.js, `pickToward`): the stops, and in the deep while the
+// serpent is there to be struck, every segment of its coil, so the coil is
+// as near or as far as it stands and no press is routed through it.
+const coilLive = () => half() === 'deep' && S.snatched && !S.serpentFreed;
+function places() {
+  const out = yardStops().map(s => ({ ...mid(s.r), id: s.id }));
+  if (coilLive()) {
+    const t = now();
+    for (let i = 0; i < COIL_SEGS; i++) out.push({ ...coilAt(i, t), seg: i });
+  }
+  return out;
+}
+// The focus on what a press picked: a stop, or a segment of the coil, which
+// keeps the stop it was come to from as its parent.
+function land(it, from) {
+  if (it.seg == null) { setFocus(it.id, true); return; }
+  seg = it.seg;
+  if (!(S.padFocus || '').startsWith('coil|')) setFocus(`coil|${from}`);
+  if (!onGlassX({ x: it.x - 1, y: it.y, w: 2, h: 2 })) lookTo(it.x);
+}
+// Up past the top of the yard: the corner cards over it, the row nearest the
+// thing the focus stood on. Down from there comes back (`pagePresses`).
+function upToCorner(r) {
+  const c = r ? mid(r) : { x: S.camX + S.viewW / 2, y: S.camY };
+  enterCorner(true, { x: (c.x - S.camX) * S.zoom, y: (c.y - S.camY) * S.zoom });
+}
+
 function hop(dir) {
   const id = S.padFocus;
-  // On a control: along its row, and up and down its station's rows.
-  if (id && id.startsWith('coil|')) {
-    if (dir === 'left' || dir === 'right') seg = Math.max(0, Math.min(COIL_SEGS - 1, Math.round(seg) + (dir === 'right' ? 1 : -1)));
-    else if (dir === 'down') setFocus(id.split('|')[1]);
-    return;
-  }
-  if (id && id.includes('|')) {
+  // On a station's own control: along its row, and up and down its rows.
+  if (id && id.includes('|') && !id.startsWith('coil|')) {
     const stop = findStop(parentOf(id));
     const rows = innerRows(stop);
     const ri = rows.findIndex(row => row.some(c => c.id === id));
@@ -208,47 +232,39 @@ function hop(dir) {
     else if (rows[ri + 1]) setFocus(rows[ri + 1][Math.min(ci, rows[ri + 1].length - 1)].id);
     return;
   }
-  const list = yardStops();
-  const cur = findStop(id);
+  const onCoil = !!id && id.startsWith('coil|');
+  const cur = onCoil ? null : findStop(id);
   // Off the glass since a pan: the first press lands where you are looking.
-  if (!cur || !onScreen(cur.r)) { const s = nearestStop(); if (s) setFocus(s.id); return; }
-  if (dir === 'down') { const rows = innerRows(cur); if (rows.length) setFocus(rows[0][0].id); return; }
-  if (dir === 'up') {
-    // In the deep, up from a station is the coil over it, its nearest segment.
-    if (half() === 'deep' && S.snatched && !S.serpentFreed && cur.kind === 'station') {
-      const c = mid(cur.r);
-      seg = nearestSeg(c.x, c.y - P * 20, now()).seg;
-      setFocus(`coil|${cur.id}`);
-    }
-    return;
-  }
-  const i = list.findIndex(s => s.id === cur.id);
-  const next = list[i + (dir === 'right' ? 1 : -1)];
-  if (next) setFocus(next.id, true);
+  // Only along the yard, since a pan only moves the view along it: a stop
+  // standing over the top of a short window is still the one the focus is on.
+  if (!onCoil && (!cur || !onGlassX(cur.r))) { const s = nearestStop(); if (s) setFocus(s.id); return; }
+  // Down into a station's own controls first: they stand inside it.
+  if (!onCoil && dir === 'down') { const rows = innerRows(cur); if (rows.length) { setFocus(rows[0][0].id); return; } }
+  const from = onCoil ? coilAt(Math.round(seg), now()) : cur.r;
+  // The coil is one thing, lying along the deep: left and right travel it,
+  // segment by segment, and up and down leave it for what stands over or
+  // under it, as a press leaves any other thing.
+  const across = dir === 'up' || dir === 'down';
+  const it = pickToward(from, dir, places().filter(p => (onCoil ? (across ? p.seg == null : p.seg !== Math.round(seg)) : p.id !== id)));
+  if (it) { land(it, onCoil ? parentOf(id) : id); return; }
+  // Nothing over it: up past the top of the yard is the corner cards, so
+  // every stop and the corner are a path of presses from every other.
+  if (dir === 'up') upToCorner(focusBox());
 }
 
 // Under crew sight the focus hops between bodies instead: the nearest one
 // on the glass in the pressed direction.
-const DIRV = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 const pickable = w => !w.inside && !w.lifted && workerAt(w.x + WORKER / 2, w.y + WORKER / 2 - orbLiftOf(w) * P) === w;
 function bodiesOnGlass() {
   if (crewView() === 'hide') return [];
   return S.workers.filter(w => onScreen({ x: w.x, y: w.y, w: WORKER, h: WORKER }) && pickable(w));
 }
 function nearestBody(from, dir = null) {
-  let best = null, score = Infinity;
-  for (const w of bodiesOnGlass()) {
-    if (w === body) continue;
-    const dx = w.x + WORKER / 2 - from.x, dy = w.y + WORKER / 2 - from.y;
-    let s;
-    if (dir) {
-      const [ux, uy] = DIRV[dir];
-      const ahead = dx * ux + dy * uy;
-      if (ahead <= 1) continue;
-      s = ahead + 2 * Math.abs(dx * uy + dy * ux);
-    } else s = Math.hypot(dx, dy);
-    if (s < score) { score = s; best = w; }
-  }
+  const list = bodiesOnGlass().filter(w => w !== body)
+    .map(w => ({ x: w.x + WORKER / 2, y: w.y + WORKER / 2, w }));
+  if (dir) return pickToward(from, dir, list)?.w || null;
+  let best = null, d = Infinity;
+  for (const it of list) { const e = Math.hypot(it.x - from.x, it.y - from.y); if (e < d) { d = e; best = it.w; } }
   return best;
 }
 function focusBody(w) {
@@ -345,6 +361,7 @@ function sleep() {
   S.padOn = false;
   document.body?.classList?.remove('pad');
   dropFocus();
+  aim(null);                // the yard's marker fades out where it stood
   showTipAt(null);
 }
 addEventListener('pointermove', e => { if (e.isTrusted && e.pointerType !== 'touch') sleep(); }, true);
@@ -419,10 +436,12 @@ export function stepPad(t = performance.now()) {
 
 function pagePresses(sc, dirs, pressed, t) {
   keepFocus(sc, t);
-  for (const d of dirs) pageMove(sc, d);
+  for (const d of dirs) {
+    // Down past the corner's last row is the yard again, where the focus was.
+    if (!pageMove(sc, d) && sc.kind === 'corner' && d === 'down') { enterCorner(false); dropFocus(); return; }
+  }
   if (pressed('a')) pressA();
   if (pressed('x')) pressX();
-  if (pressed('y')) pressY();
   if (sc.kind === 'board' && (pressed('lb') || pressed('rb'))) { turnBoard(pressed('rb') ? 1 : -1); return; }
   if (pressed('b') || (sc.kind === 'corner' && pressed('view'))) back(sc);
 }
@@ -526,7 +545,7 @@ function yardPresses(p, dirs, pressed, released, lx, ly, dt) {
   if (sight) {
     for (const d of dirs) {
       const r = focusBox();
-      const w = nearestBody(r ? mid(r) : { x: S.camX + S.viewW / 2, y: S.groundY }, d);
+      const w = nearestBody(r || { x: S.camX + S.viewW / 2, y: S.groundY }, d);
       if (w) focusBody(w);
     }
     if (pressed('a') && S.padFocus === 'body' && body && lift(body)) {
@@ -613,7 +632,9 @@ export function paintPad(t = performance.now()) {
     id = carried ? 'carry' : 'hand';
   } else {
     box = focusBox();
-    id = S.padFocus === 'body' ? `body:${S.workers.indexOf(body)}` : S.padFocus;
+    // A segment of the coil is a place of its own, so a hop along it glides.
+    id = S.padFocus === 'body' ? `body:${S.workers.indexOf(body)}`
+       : (S.padFocus || '').startsWith('coil|') ? `${S.padFocus}#${Math.round(seg)}` : S.padFocus;
   }
   aim(id, box, 'yard', t);
   const m = markAt(t);
@@ -656,7 +677,7 @@ export const PAD_HANDLE = {
   // Unplugged, and the pad put to sleep as a mouse move would, so a check
   // after this one finds no marker over its picture.
   off() { fakePad(null); for (const b of fake.buttons) { b.pressed = false; b.value = 0; } fake.axes = [0, 0, 0, 0];
-          letAllGo(); was = null; sleep(); return true; },
+          letAllGo(); was = null; enterCorner(false); enterBoard(false); sleep(); return true; },
   down(name) { fakePad(fake); const b = fake.buttons[BUTTON[name]]; b.pressed = true; b.value = 1; },
   up(name) { const b = fake.buttons[BUTTON[name]]; b.pressed = false; b.value = 0; },
   stick(x = 0, y = 0, right = false) { fakePad(fake); fake.axes[right ? 2 : 0] = x; fake.axes[right ? 3 : 1] = y; },
@@ -664,6 +685,7 @@ export const PAD_HANDLE = {
   press(name) { this.down(name); fakeStep(); this.up(name); fakeStep(); },
   step: fakeStep,
   focus: () => S.padFocus,
+  seg: () => Math.round(seg),
   body: () => body,
   carried: () => carried,
   hand: () => S.padHand && { ...S.padHand },

@@ -39,6 +39,7 @@ import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { pref, setPref } from './prefs.js';
+import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
 import { ABYSS_AT, RIFTLIFE_SPEED, RIFTLIFE_COIL, DEEP_W } from './config.js';
 import { riftCenter, riftRadius } from './rift.js';
@@ -2395,9 +2396,18 @@ function padTo(id) {
   setPref('motion', true);
   pad.on();
   pad.press('b');
+  // A press toward it along whichever way it lies further, the other way if
+  // that goes nowhere; off the coil by going down.
   for (let i = 0; i < 24 && id && pad.focus() !== id; i++) {
-    const list = pad.stops();
-    pad.press(list.indexOf(id) < list.indexOf(pad.focus()) ? 'left' : 'right');
+    const f = pad.focus() || '';
+    if (f.startsWith('coil|')) { pad.press('down'); continue; }
+    const a = stopById(f)?.r, b = stopById(id)?.r;
+    if (!a || !b) break;
+    const dx = b.x + b.w / 2 - a.x - a.w / 2, dy = b.y + b.h / 2 - a.y - a.h / 2;
+    const h = dx < 0 ? 'left' : 'right', v = dy < 0 ? 'up' : 'down';
+    const [first, then] = Math.abs(dx) >= Math.abs(dy) ? [h, v] : [v, h];
+    pad.press(first);
+    if (pad.focus() === f) pad.press(then);
   }
   setPref('motion', was);
 }

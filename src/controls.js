@@ -48,7 +48,7 @@ export const PAD_WORDS = {
 const PAD_ONLY = [
   [['up', 'down'], PAD_WORDS.hop],
   [['b'], PAD_WORDS.back],
-  [['y'], PAD_WORDS.handBack],
+  [['x'], PAD_WORDS.handBack],
   [['lb', 'rb'], PAD_WORDS.turn],
   [['rt'], PAD_WORDS.hand],
   [['view'], PAD_WORDS.corner],

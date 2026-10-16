@@ -1172,7 +1172,7 @@
   "id": "ctl-pad-handback",
   "group": "Settings",
   "where": "src/controls.js",
-  "context": "controls page, with a pad: Y",
+  "context": "controls page, with a pad: X",
   "text": "hand back a queued copy"
  },
  {

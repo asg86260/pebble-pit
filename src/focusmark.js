@@ -13,10 +13,13 @@
 // in hand (`body.pad`) the pad's marker is the one drawn.
 
 import './ink.js';   // the dark page's map, on this context as on the yard's
-import { bracketCells, haloCells } from './padglide.js';
+import { bracketCells, haloCells, breathOut } from './padglide.js';
 import { PAD_ACCENT, PAD_HALO, PAD_ARM_MIN, PAD_ARM_MAX, PAD_PAGE_CELL } from './config.js';
 
 let canvas = null, ctx = null, looping = false;
+// The control the mark is on and when it got there: it breathes from rest on
+// each arrival, as the pad's marker does (padglide.js, `breathOut`).
+let markedEl = null, markedAt = 0;
 
 function mount() {
   if (canvas || !document.body) return;
@@ -45,9 +48,11 @@ function paint() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, W, H);
   const b = el.getBoundingClientRect();
+  const t = performance.now();
+  if (el !== markedEl) { markedEl = el; markedAt = t; }
   if (b.width && b.height) {
     const u = PAD_PAGE_CELL;
-    const cells = bracketCells({ x: b.left, y: b.top, w: b.width, h: b.height }, 1, u, PAD_ARM_MIN, PAD_ARM_MAX);
+    const cells = bracketCells({ x: b.left, y: b.top, w: b.width, h: b.height }, 1 + breathOut(t - markedAt), u, PAD_ARM_MIN, PAD_ARM_MAX);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // The pad's own colors, which ink.js turns for the dark page on every
     // context, this one with them.

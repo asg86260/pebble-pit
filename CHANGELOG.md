@@ -179,6 +179,9 @@ this section; the release that switches it on moves these under Unreleased.
 - The deep's stations stand spread evenly under the whole serpent, the first four already spanning it, instead of bunched to one side.
 - A language page off settings, on the pause sheet and the title page, lists each language in its own name with the one in use marked, and the title page's foot names the language in use (src/selftest/language.js).
 - A feedback page on the pause sheet under settings, off settings on the title page, and under copy save when the game stops, sends your words and, if you tick it, your save (test/feedback.test.mjs).
+- On a gamepad, X hands back a queued copy (it was Y, which now does nothing) (src/selftest/pad.js, "X on a card with a copy waiting").
+- On a gamepad, every d-pad press goes to the nearest thing in that direction, in the yard, the deep, the boards and the sheets alike (test/pad-reach.test.mjs).
+- The focus brackets breathe a cell out and back while they sit still, from rest on each arrival, and the gamepad's fade in and out instead of popping.
 - New words on the rescue sheet, the demo's store link and an empty achievements page.
 - The board of rescue times is gone: no name box or post on the rescue sheet, no times page, no name on the board in settings.
 - A controller plays the whole game: the d-pad hops between the places a click lands on, A does what the click does, and the Steam Deck's back buttons and trackpads come mapped (test/pad.test.mjs).
@@ -244,6 +247,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A yard already past the serpent retires the sqhusband along with her, instead of leaving him on the crew (test/finale.test.mjs).
 - With several things being built at once, finishing one no longer pulls a builder off another site and walks a different one across the yard to take its place (test/build-throughput.test.mjs).
 - The store links on the demo's and teaser's last sheets are drawn as buttons like "keep playing", no longer a blue underlined link (src/selftest/ending.js, "the store links ... drawn as the sheet buttons").
+- On a gamepad the d-pad gets from the serpent to the portal and up to the corner buttons, and down from the corner back to the yard (test/pad-reach.test.mjs; src/selftest/pad.js, "the serpent is up from a station").
 - The rift's tearing and the pit's drowning wait for the camera to arrive before they happen, and a long pan to them is slower, no longer a whip across the yard (test/pit-arc.test.mjs).
 - A shield's rock waits in the sky until the camera has finished gliding to the shield (test/cutscene.test.mjs).
 - In Japanese and Korean the shield card's cancel button no longer sits on its sentence, and in German, French, Portuguese and Russian a queued card's cancel and "another" no longer run into each other and off the card (src/selftest/boardwords.js, "board words never overlap, in every language").

@@ -14,7 +14,7 @@
 // a sheet of its own over everything (`#padmark`), since a row stands over
 // the yard's canvas and a bracket drawn there would be under it.
 
-import { PAD_ACCENT, PAD_HALO, PAD_ARM_MIN, PAD_ARM_MAX, PAD_TIP_MS } from './config.js';
+import { PAD_ACCENT, PAD_HALO, PAD_ARM_MIN, PAD_ARM_MAX, PAD_TIP_MS, PAD_ACROSS } from './config.js';
 import { S } from './state.js';
 import { openBoard } from './board.js';
 import { aim, markAt, bracketCells, haloCells, aimedSpace } from './padglide.js';
@@ -30,7 +30,21 @@ const shown = el => !!el && !el.hidden && typeof el.getClientRects === 'function
 // station is the mouse's until the pad presses A there.
 let inBoard = false, inCorner = false;
 export const enterBoard = on => { inBoard = on; if (on) inCorner = false; };
-export const enterCorner = on => { inCorner = on; if (on) inBoard = false; };
+// `near`, a point on the page, puts the focus on the corner's row nearest it,
+// the one over the thing the d-pad came up from.
+export function enterCorner(on, near = null) {
+  inCorner = on;
+  if (!on) return;
+  inBoard = false;
+  const sc = near && scope();
+  if (!sc || sc.kind !== 'corner') return;
+  let best = null, d = Infinity;
+  for (const el of focusables(sc)) {
+    const e = center(el.getBoundingClientRect()), dd = Math.hypot(e.x - near.x, e.y - near.y);
+    if (dd < d) { d = dd; best = el; }
+  }
+  if (best) focusEl(best);
+}
 export const boardEntered = () => inBoard && !!openBoard();
 export const cornerEntered = () => inCorner;
 
@@ -137,12 +151,36 @@ export function keepFocus(sc, t) {
   return best;
 }
 
-// The nearest row in a direction: ahead of this one that way, scored by how
-// far ahead plus twice how far off the line, so a row straight below beats
-// one nearer but off to the side.
+// The one rule for every d-pad press, on a page's rows, the yard's stops, the
+// coil and the bodies alike (the owner, 2026-10-15: "things should just jump
+// to the nearest thing that direction"): of the things whose middle stands
+// past the edge of `from` that way, the least of how far past plus
+// PAD_ACROSS times how far off its middle line, so a thing straight below
+// beats one nearer but off to the side. Past the edge, not the middle: a
+// thing standing over this one is up from it, never left for being a few
+// pixels that side. No cone: anything in that part of the glass can be the
+// answer, so nothing that stands is left with no way to it. `from` is a box
+// ({ x, y, w, h }, top-left; a point has no w and h); `items` are { x, y }
+// middles, with whatever else the caller wants back.
 const DIRS = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
+export function pickToward(from, dir, items) {
+  const [dx, dy] = DIRS[dir];
+  const hw = (from.w || 0) / 2, hh = (from.h || 0) / 2;
+  const cx = from.x + hw, cy = from.y + hh;
+  let best = null, score = Infinity;
+  for (const it of items) {
+    const ex = it.x - cx, ey = it.y - cy;
+    const ahead = ex * dx + ey * dy - (dx ? hw : hh);
+    if (ahead <= 1) continue;
+    const s = ahead + PAD_ACROSS * Math.abs(ex * dy + ey * dx);
+    if (s < score) { score = s; best = it; }
+  }
+  return best;
+}
+
 export function move(sc, dir) {
   const list = focusables(sc);
+  if (!list.length) return false;
   if (!on || !list.includes(on)) { keepFocus(sc); return true; }
   // A slider takes left and right as its own.
   if (on.type === 'range' && (dir === 'left' || dir === 'right')) {
@@ -153,28 +191,10 @@ export function move(sc, dir) {
     on.dispatchEvent(new Event('change', { bubbles: true }));
     return true;
   }
-  const [dx, dy] = DIRS[dir];
-  const a = on.getBoundingClientRect(), c = center(a);
-  // Ahead within a cone first (more that way than off to the side); only up
-  // and down fall back to anything below or above, since a sheet is a column
-  // and its last button may stand off to one side of the row over it.
-  const pick = cone => {
-    let best = null, score = Infinity;
-    for (const el of list) {
-      if (el === on) continue;
-      const e = center(el.getBoundingClientRect());
-      const ahead = (e.x - c.x) * dx + (e.y - c.y) * dy;
-      if (ahead <= 1) continue;
-      const off = Math.abs((e.x - c.x) * dy) + Math.abs((e.y - c.y) * dx);
-      if (cone && off > ahead * 2) continue;
-      const s = ahead + off * 2;
-      if (s < score) { score = s; best = el; }
-    }
-    return best;
-  };
-  const best = pick(true) || (dy ? pick(false) : null);
+  const a = on.getBoundingClientRect();
+  const best = pickToward({ x: a.left, y: a.top, w: a.width, h: a.height }, dir, list.filter(el => el !== on).map(el => ({ ...center(el.getBoundingClientRect()), el })));
   if (!best) return false;
-  focusEl(best);
+  focusEl(best.el);
   return true;
 }
 
@@ -188,18 +208,16 @@ export function pressA() {
   (another || on).click();
   return true;
 }
-// Y: hand back the newest copy still waiting -- the card's refund half, or
-// a line on the queue card, whose click is the hand-back.
-export function pressY() {
-  if (!on) return false;
-  const back = on.querySelector?.('.strip:not([hidden]) .refund');
-  if (back) { back.click(); return true; }
-  if (on.closest?.('#queue')) { on.click(); return true; }
-  return false;
-}
-// X: a card's second thing, where it has one: the list a dial opens.
+// X (the owner, 2026-10-15: X cancels, not Y): hand back the newest copy
+// still waiting -- the card's refund half, the barrier card's cancel, or a
+// line on the queue card, whose click is the hand-back. On a card with none,
+// its second thing where it has one: the list a dial opens.
 export function pressX() {
   if (!on) return false;
+  const back = on.querySelector?.('.strip:not([hidden]) .refund')
+    || on.closest?.('.track, [data-mode="build"]')?.querySelector('.cancel');
+  if (back && back !== on) { back.click(); return true; }
+  if (on.closest?.('#queue')) { on.click(); return true; }
   const list = on.closest?.('.pickrow')?.querySelector('.chosen');
   if (list && list !== on) { list.click(); return true; }
   return false;
@@ -236,10 +254,12 @@ export function paintPage(t, live) {
   const u = m.unit;
   const cells = bracketCells(m.r, m.out, u, PAD_ARM_MIN, PAD_ARM_MAX);
   sheetCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  sheetCtx.globalAlpha = m.alpha;
   sheetCtx.fillStyle = PAD_HALO;
   for (const [x, y] of haloCells(cells)) sheetCtx.fillRect(x * u, y * u, u, u);
   sheetCtx.fillStyle = PAD_ACCENT;
   for (const [x, y] of cells) sheetCtx.fillRect(x * u, y * u, u, u);
+  sheetCtx.globalAlpha = 1;
   wiped = false;
   if (!asked && m.landed && t - since >= PAD_TIP_MS) { asked = true; hover(on, 'in'); }
 }

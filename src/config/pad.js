@@ -20,8 +20,12 @@ export const PAD_GLIDE_MS = 250;
 // The landing: two cells out, then one, then home, each held this long.
 export const PAD_SETTLE_STEP_MS = 60;
 export const PAD_SETTLE_CELLS = 2;
-// The slow two-pose breath once landed: out a cell and back, a pose this long.
-export const PAD_BREATH_MS = 700;
+// The idle breath once landed, from rest: all four corners out a cell and
+// back, a pose this long (the owner's vote, 2026-10-15: option A, a 1.0 s
+// cycle; docs/mocks/focus-idle-2026-10-15/).
+export const PAD_BREATH_MS = 500;
+// The marker fades in from nothing and out to nothing over this long.
+export const PAD_FADE_MS = 200;
 // An arm of a bracket, in cells: never more than this, never under the least,
 // and half the short side between.
 export const PAD_ARM_MAX = 3;
@@ -43,6 +47,10 @@ export const PAD_FLICK = 0.6;
 // A held d-pad repeats the hop: the first after this wait, then one a step.
 export const PAD_REPEAT_WAIT_MS = 380;
 export const PAD_REPEAT_MS = 140;
+// A d-pad press goes to the nearest thing that way, a thing off the line
+// counting this many times its distance off it against its distance ahead
+// (padpage.js, `pickToward`).
+export const PAD_ACROSS = 2;
 // A trigger is down past this much of its pull.
 export const PAD_TRIGGER = 0.5;
 
