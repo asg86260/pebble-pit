@@ -44,7 +44,8 @@ import { INDEX } from './config/index.js';
 import { ABYSS_AT, RIFTLIFE_SPEED, RIFTLIFE_COIL, DEEP_W } from './config.js';
 import { riftCenter, riftRadius } from './rift.js';
 import { hold } from './input.js';
-import { showPane } from './settings.js';
+import { showPane, offerDress } from './settings.js';
+import { namePair, wear } from './wardrobe.js';
 import { fillControls } from './controls.js';
 import { setFeedbackUrl } from './feedback.js';
 
@@ -847,6 +848,15 @@ const deepScenes = {
       lookAtStation(0);
       window.__board(S.stations[0].id);
     } },
+  // Her at the first station in the deep, dressed in the deep's inks, a
+  // second station beside her.
+  'pair-deep': { about: 'the deep', say: 'her at the first station, dressed, in the deep',
+    run: () => {
+      deepYard({ stage: 1, wound: 0.33, party: [cast('sword', 2), cast('ranger', 2)] });
+      // the hooks' party seats whoever is spare; in play the snatch seats her
+      namePair('her', S.workers.find(w => w.uid === S.stations[0].fighter));
+      lookAtStation(0);
+    } },
   // Every station the floor holds at once, the camera on the middle of them.
   'deep-all': { about: 'the deep', say: 'the whole deep floor, four stations standing, a fighter at each',
     run: () => {
@@ -1316,6 +1326,21 @@ export const SCENES = {
                  window.__next(); window.__fast(1.2); window.__look(st().rockLeftX - 300); } },
 
   // --- the crew ---------------------------------------------------------------
+  // The two of them among the rock's crew (wardrobe.js): six rockhands in
+  // helmets, two of them named the pair, so the chosen headwear is seen in
+  // place of the helmet in a crowd that all wears one; `window.__outfits` an
+  // outfit pair ({ her, him }) to try others.
+  pair: { about: 'the crew', say: 'the two of them dressed, among the rock\'s crew in helmets',
+    run: () => {
+      window.__reset(); window.__crew(6, 3);
+      window.__kit({ breakers: 6 });
+      S.buried = false;
+      const hands = S.workers.filter(w => w.type === TYPE.ROCK);
+      namePair('him', hands[1]); namePair('her', hands[4]);
+      if (window.__outfits) for (const k of ['her', 'him']) if (window.__outfits[k]) wear(k, window.__outfits[k]);
+      window.__fast(8);
+      window.__look(S.cx - S.viewW / 2);
+    } },
   crew: { about: 'the crew', say: 'the crew, hats and all',
     run: () => { window.__reset(); window.__crew(3, 2, 2, 2);
                  window.__kit({ breakers: 3, blasters: 2, growers: 2, carters: 2 });
@@ -2103,6 +2128,14 @@ export const SCENES = {
   // noughts.
   books: { about: 'the pit and the rift', say: 'the books over the pit',
     run: () => { rich(); window.__fast(60); window.__board('stats'); window.__look(st().pitX - 300); } },
+  // The picker (wardrobepage.js), opened from settings by its row; and the
+  // same page as a new yard offers it, before the opening walks out.
+  wardrobe: { about: 'the story', say: 'the picker on the held sheet, opened from settings', page: true,
+    run: () => { dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+                 document.getElementById('settingsbtn').click();
+                 document.getElementById('wardrobebtn').click(); } },
+  'wardrobe-offer': { about: 'the story', say: 'the picker offered at a new yard, before the opening', page: true,
+    run: () => { window.__reset(); window.__fast(1); S.dressOffered = false; offerDress(); } },
   // The controls page of the settings sheet, opened by its button.
   controlspage: { about: 'the story', say: 'the controls page on the held sheet', page: true,
     run: () => { dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));

@@ -1352,3 +1352,16 @@ HANDLES.__view = v => { setView(v); return S.view; };
 // The deep held at a zoom step instead of its fit (null lets go), and the
 // step it came out at: the station editor's pull-in on one station.
 HANDLES.__deepZoom = k => { holdDeepZoom(k); return S.zoom; };
+
+// --- the two of them (wardrobe.js) ---
+// Who they are and what they wear, read for a check: each one's uid, the
+// body's job and place if it is one of the crew, and the outfits. `__dress`
+// sets an outfit for the setup a check is not about; the picker's own rows
+// are how a player does it (wardrobepage.js).
+import { pairBody, outfitOf, wear } from './wardrobe.js';
+HANDLES.__pair = () => Object.fromEntries(['her', 'him'].map(k => {
+  const w = pairBody(k);
+  return [k, { uid: S.pairIds[k], body: w ? { type: w.type, x: w.x, y: w.y, station: w.station || null } : null,
+               outfit: { ...outfitOf(k) } }];
+}));
+HANDLES.__dress = (who, outfit) => { wear(who, outfit); return { ...outfitOf(who) }; };

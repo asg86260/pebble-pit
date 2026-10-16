@@ -156,6 +156,23 @@ export function syncWorkers() {
     }
   }
 
+  // One of the two of them still left over, every short job filled, takes
+  // the place of a body nobody named, which goes instead: the crew keeps its
+  // counts and the yard keeps her and him. Not a fighter's place, which a
+  // station names, nor one just taken on.
+  for (const p of stood.filter(w => whoIs(w))) {
+    const can = w => !whoIs(w) && w.type !== TYPE.FIGHTER && !joined.has(w);
+    const other = S.workers.find(w => can(w) && away(w) === away(p)) || S.workers.find(can);
+    if (!other) continue;
+    if (other.y + WORKER <= deepTop())
+      for (let i = 0; i < (other.carry || 0); i++)
+        spawnChip(other.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, other.load?.[i] || 1);
+    other.carry = 0; other.load = []; other.claim = -1;
+    unbook(other);
+    S.workers[S.workers.indexOf(other)] = p;
+    retask(p, other.type);
+  }
+
   // A body lives in the half its job is in: the half it is sent to next
   // prefers the same (`away` above), and the shaft's count is what moves it.
   for (const w of S.workers) w.deepHome = isDeepType(w.type);

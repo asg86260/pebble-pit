@@ -66,7 +66,7 @@ import { inBasket, bringDown } from './balloon.js';
 import { takeBuilders, planBuild, stepBuilder, builderPose, freeBuilders, finishHouse, houseDone,
          houseX, doorX, stepRetired, retiredIn, goInto, afterPair as afterOf } from './home.js';
 import { lerp } from './motion.js';
-import { pairBody } from './wardrobe.js';
+import { pairBody, namePair } from './wardrobe.js';
 
 const F = () => S.finale;
 const clamp01 = k => Math.max(0, Math.min(1, k));
@@ -110,17 +110,19 @@ export function finaleCast(w) {
 
 // --- the hand-over from the kill -----------------------------------------------------
 // Him out of the belly at (x, y), beside her. Her: the body named hers
-// (wardrobe.js), else the first station's fighter, or failing that whoever
-// of the deep's crew is first; with nobody, or the two of them already gone
-// home, there is no finale. The yard's
+// (wardrobe.js) while she is in the deep, else the first station's fighter,
+// or failing that whoever of the deep's crew is first, named hers from here;
+// with nobody, or the two of them already gone home, there is no finale. The yard's
 // builders are taken off their work here and set off down the yard with the
 // pile for the house.
 export function handOver(x, y) {
   if (S.retired) return false;
   const st0 = S.stations && S.stations[0];
-  const her = pairBody('her') || (st0 && fighterAt(st0)) || S.workers.find(w => w.type === TYPE.FIGHTER)
-           || S.workers.find(w => isDeepType(w.type) && belowYard(w));
+  const named = pairBody('her');
+  const her = (named && isDeepType(named.type) ? named : null) || (st0 && fighterAt(st0))
+           || S.workers.find(w => w.type === TYPE.FIGHTER) || S.workers.find(w => isDeepType(w.type) && belowYard(w));
   if (!her) return false;
+  namePair('her', her);
   const st = her.station ? stationById(her.station) : null;
   S.finale = { phase: 'swim', u: 0, T: 0, hurry: 1, st: st ? st.id : null, her: her.uid, heir: null,
                pair: [null, { x, y, face: -1 }], joined: 0, bursts: [], kit: null, glide: null, swum: null,

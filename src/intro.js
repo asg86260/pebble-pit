@@ -151,7 +151,7 @@ export function startMeet(t) {
 
   // Not scripted people: one of the crew, on the roster's own walk, swinging
   // at the ground the way it swings at everything (`sendDigger`).
-  sendDigger();
+  sendDigger(true);
 }
 
 // --- and, once, somebody gets out ---------------------------------------------
@@ -162,7 +162,7 @@ export function startRescue(t) {
   S.introSaid = 0;
   S.introCut = false;
   S.rescueTo = 0;                              // nobody walks anywhere until it is dug out
-  sendDigger();
+  sendDigger(true);
 }
 
 // Dug out, and up out of the ground: the walk out from under, and the two of
@@ -226,7 +226,7 @@ export function stepRescue(t) {
   // nobody can come (the whole crew aloft, or through a door) it works
   // itself loose, slower, rather than hanging the rock there forever.
   if (S.buried) {
-    if (!sendDigger())
+    if (!sendDigger(true))
       S.buriedDug = Math.min(1, buriedOut() + (frames() / 60) * BURIED_DIG_LONE / BURIED_DIG_S);
     if (buriedOut() < 1) { S.introAt = t; return true; }
     getOut(t);
@@ -624,7 +624,10 @@ export const buriedOut = () => Math.max(0, Math.min(1, S.buriedDug || 0));
 // Somebody goes to dig: the nearest free body on the ground, marked `dig`,
 // which is the stage in crew/step.js that has it swing at the ground once
 // it is there. True if somebody is on it, already or from now.
-export function sendDigger() {
+// In the reunion's two beats, whose yard waits for the dig, he comes for
+// her whenever he is free to, however far off (`him`); between rocks there
+// is no time to cross the yard, and the nearest goes.
+export function sendDigger(him = false) {
   if (S.workers.some(w => w.dig)) return true;
   const at = buriedAt();
   let who = null, near = Infinity;
@@ -634,8 +637,7 @@ export function sendDigger() {
     // rock it is holding, and a body that came down off that would climb
     // through the air under a hill for as long as the climb took.
     if (wayAt(w.x, w.y).key !== 'yard') continue;
-    // He comes for her whenever he is free to, however far off he is.
-    const d = whoIs(w) === 'him' ? -1 : Math.abs(w.x - at.x);
+    const d = him && whoIs(w) === 'him' ? -1 : Math.abs(w.x - at.x);
     if (d < near) { near = d; who = w; }
   }
   if (!who) return false;
