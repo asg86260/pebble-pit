@@ -14,7 +14,8 @@
 
 import { ok, raf, run, canvas, onScreen, hoverHouse, hoverAway } from './kit.js';
 import { S } from '../state.js';
-import { P, WORKER, NAME_MAX } from '../config.js';
+import { P, WORKER, NAME_MAX, WARD_AURAS, WARD_AURA_FPS } from '../config.js';
+import { advance } from '../clock.js';
 import { draw } from '../render.js';
 import { darkPage } from '../ink.js';
 import { namePair, outfitOf, wear, DEFAULTS, HEAD, SLOTS, bareOf, nameOf, roleOf, setName, pairBody, ROLE_START, isOpen, itemLock } from '../wardrobe.js';
@@ -616,7 +617,11 @@ export const TESTS = [
     const marked = () => {
       Object.assign(w, { x, y, lunge: 0 });
       S.workers = [w];
-      draw();
+      // the cloud trails the body by a lag read off the game's clock: stand
+      // here, drawing, until the whole lag is spent here and none of it was
+      // spent where the body stood before
+      const held = Math.ceil(WARD_AURAS['rain-cloud'].lag * WARD_AURA_FPS) + 2;
+      for (let i = 0; i < held; i++) { advance(1000 / WARD_AURA_FPS); draw(); }
       S.workers = all;
       let n = 0;
       for (let dy = -4 * P; dy < 0; dy += 2) for (let dx = 0; dx < WORKER; dx += 2) {
