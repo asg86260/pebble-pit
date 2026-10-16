@@ -2185,8 +2185,8 @@ export const SCENES = {
   'who-pad': { about: 'the story', say: 'a new yard\'s first step on a pad, off Steam: the letter grid', page: true,
     run: () => { whoSteps(0); S.padOn = true; } },
   // The settings page once the steps are behind a yard: the name and the
-  // role held, the outfits still the player's.
-  'who-locked': { about: 'the story', say: 'the two of you from settings, the name and the role held', page: true,
+  // role still open to change.
+  'who-settings': { about: 'the story', say: 'the two of you from settings, mid-game, the name and the role editable', page: true,
     run: () => { window.__reset(); window.__fast(1); S.dressOffered = true;
                  window.__self('you', { name: 'Ada', role: 'wife' }); window.__self('sqouse', { name: 'Bram', role: 'ouse' });
                  dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));

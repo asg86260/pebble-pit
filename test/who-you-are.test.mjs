@@ -15,7 +15,7 @@ import { NAME_MAX } from '../src/config.js';
 import { persist, restore } from '../src/persist.js';
 import { migrate } from '../src/migrations/index.js';
 import { msg } from '../src/lang.js';
-import { setName, setRole, stepRole, rollName, rollSquare, nameOf, roleOf, selfOf, cleanName, selvesLocked,
+import { setName, setRole, stepRole, rollName, rollSquare, nameOf, roleOf, selfOf, cleanName,
          storyLine, outfitOf, ROLES, ROLE_START, DEFAULTS } from '../src/wardrobe.js';
 import { CREW_NAMES } from '../src/crew/names.js';
 import { STEPS } from '../src/objectives.js';
@@ -26,7 +26,7 @@ const KEY = 'boulder-clicker/v4';
 const steps = on => { S.naming = on; };
 const reload = () => { persist(); S.selves = null; S.outfits = null; S.pairIds = { you: null, sqouse: null }; restore(); };
 
-group('a name and a role chosen on the steps are kept by the save, and held once the steps are done', async () => {
+group('a name and a role chosen on the steps are kept by the save, and stay editable once the steps are done', async () => {
   steps(true);
   setName('you', '  Ada  Lovelace-the-1st ');
   setRole('you', 'ouse');
@@ -36,20 +36,20 @@ group('a name and a role chosen on the steps are kept by the save, and held once
   const chosen = { you: { ...selfOf('you') }, sqouse: { ...selfOf('sqouse') } };
   reload();
   const back = { you: { ...selfOf('you') }, sqouse: { ...selfOf('sqouse') } };
-  const openBack = !selvesLocked();
   steps(false);
   S.dressOffered = true;
-  setName('you', 'somebody else');
+  setName('you', 'Grace');
   setRole('sqouse', 'wife');
-  const held = nameOf('you') === back.you.name && roleOf('sqouse') === back.sqouse.role;
+  const edited = nameOf('you') === 'Grace' && roleOf('sqouse') === 'wife';
+  reload();
+  const editedBack = nameOf('you') === 'Grace' && roleOf('sqouse') === 'wife';
   return [
     ok(chosen.you.name === 'Ada Lovelace' && [...chosen.you.name].length <= NAME_MAX,
        'a name is trimmed, its spaces made one, and cut to NAME_MAX', JSON.stringify(chosen.you.name)),
     ok(chosen.sqouse.name === 'Мария' && chosen.sqouse.role === 'husband' && chosen.you.role === 'ouse',
        'a name in any script, and each role as stepped', JSON.stringify(chosen)),
     ok(JSON.stringify(back) === JSON.stringify(chosen), 'a save and a load hand both back', JSON.stringify(back)),
-    ok(openBack, 'while the steps are up they can still be changed'),
-    ok(held, 'once the steps are done, neither the name nor the role changes', JSON.stringify(selfOf('you')))
+    ok(edited && editedBack, 'once the steps are done, the name and the role can still be changed, and the change is saved', JSON.stringify(selfOf('you')))
   ];
 });
 

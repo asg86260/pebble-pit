@@ -223,12 +223,6 @@ export const typedName = raw => {
   return [...kept].slice(0, NAME_MAX).join('');
 };
 
-// The names and roles are chosen at the start of a yard and kept from then
-// on (the owner, 2026-10-16): once its steps have been taken or skipped, or
-// once the opening has played, whichever is first, and the story has named
-// them. Never while the steps are up (`S.naming`).
-export const selvesLocked = () => (!!S.dressOffered || S.beatsDone.includes('show')) && !S.naming;
-
 function be(who, change) {
   const cur = selfOf(who);
   const next = { ...cur, ...change };
@@ -236,8 +230,8 @@ function be(who, change) {
   if (!S.selves.you) S.selves.you = blankSelf('you');
   if (!S.selves.sqouse) S.selves.sqouse = blankSelf('sqouse');
 }
-export function setName(who, raw) { if (!selvesLocked()) be(who, { name: raw }); }
-export function setRole(who, role) { if (!selvesLocked()) be(who, { role }); }
+export function setName(who, raw) { be(who, { name: raw }); }
+export function setRole(who, role) { be(who, { role }); }
 export function stepRole(who, by) {
   const i = Math.max(0, ROLES.indexOf(roleOf(who)));
   setRole(who, ROLES[(i + by + ROLES.length) % ROLES.length]);
@@ -250,10 +244,11 @@ export function rollName(who, roll = Math.random) {
   const from = CREW_NAMES.filter(n => [...n].length <= NAME_MAX && n !== other && n !== now);
   if (from.length) setName(who, from[Math.floor(roll() * from.length) % from.length]);
 }
-// The whole square at random: its name and role while they are still its
-// to choose, and every slot of what it wears.
+// The whole square at random: its name, its role and every slot of what it
+// wears.
 export function rollSquare(who, roll = Math.random) {
-  if (!selvesLocked()) { rollName(who, roll); rollRole(who, roll); }
+  rollName(who, roll);
+  rollRole(who, roll);
   rollOutfit(who, roll);
 }
 

@@ -6930,13 +6930,6 @@
   "text": "sqouse"
  },
  {
-  "id": "ward-locked",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobepage.js",
-  "context": "the picker, once the opening has played: why the name and role cannot be changed",
-  "text": "set at the start of a yard"
- },
- {
   "id": "ward-randomize",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobepage.js",

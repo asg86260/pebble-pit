@@ -3184,8 +3184,6 @@ ward-role-word = { $so ->
        *[ouse] sqouse
     }
 
-# the picker, once the opening has played: why the name and role cannot be changed
-ward-locked = set at the start of a yard
 
 # the picker's button that dresses the one being dressed at random; and each row's die, as its label
 ward-randomize = randomize

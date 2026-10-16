@@ -19907,11 +19907,11 @@ whatever role was chosen, rather than turning English mid-story.
 your square, build your sqouse (the same rows), and the two of you side by
 side; done lets the opening go. Skip on the first step leaves both unnamed
 in today's roles and outfits. The steps are offered once, marked only when
-done or skipped, so a reload in the middle offers them again. From then on
-(or from the opening, for a yard that never saw them) the name and the role
-are held: the settings page "the two of you" shows them dimmed, with "set at
-the start of a yard", and the outfits stay the player's to change
-(`selvesLocked`).
+done or skipped, so a reload in the middle offers them again. The name
+and the role are never locked (the owner, 2026-10-16: "let them update it at
+anytime, it doesnt matter"): the settings page "the two of you" edits them
+mid-game as at the steps, and the story lines are read when shown, so a
+rename shows on the next card.
 
 **A pad.** The page's buttons as on every page; left and right on the role
 or a slot step it; Y rolls the row the focus is on (the whole square off

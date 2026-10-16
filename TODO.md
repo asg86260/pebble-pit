@@ -8,7 +8,7 @@ and CHANGELOG.md; the old entries are in git history.
 
 "Who you are (built)" in DESIGN.md. Built in English with plain labels the
 owner has not read yet: `ward-you`, `ward-sqouse`, `ward-name`, `ward-role`,
-`ward-locked` ("set at the start of a yard"), `ward-randomize-all`,
+`ward-randomize-all`,
 `ward-next`, `ward-step`, `ward-key-space`, `ward-key-del`, and the thirteen
 `-who` story lines (each the old line with the name or role word in place).
 Open:

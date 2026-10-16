@@ -228,12 +228,18 @@ export const TESTS = [
     await frames(2);
     const let_go = !S.paused && S.dressOffered && !S.naming;
     const card = objective()?.say || '';
-    // the settings page now holds them
+    // the settings page keeps them open: a rename there mid-game shows on the story card
     await openPicker();
-    const lockedField = byId('wardnamein').disabled && up(document.querySelector('.wardlock'));
+    const editable = !byId('wardnamein').disabled && up(byId('ward-role-next'));
+    const before = roleOf('you') + roleOf('sqouse');
     byId('ward-role-next').click();
-    const kept = roleOf('you') === role;
+    const kept = roleOf('you') + roleOf('sqouse') !== before;
+    document.querySelectorAll('.wardtab')[1].click();
+    await frames(1);
+    typeName('mo');
     await closePicker();
+    await frames(2);
+    const renamed = nameOf('sqouse') === 'mo' && (objective()?.say || '').includes('mo');
     // and a skip from the first step, on another new yard
     fresh();
     await newYard();
@@ -257,7 +263,7 @@ export const TESTS = [
       ok(backed, 'back is the step before'),
       ok(let_go, 'done lets the yard go'),
       ok(card.includes('lee'), 'and the story card names your sqouse', card),
-      ok(lockedField && kept, 'the settings page holds the name and the role once the steps are behind'),
+      ok(editable && kept && renamed, 'the settings page still edits the name and the role once the steps are behind, and the story card follows', `${editable} ${kept} ${renamed}`),
       ok(skipped, 'skip lets the yard go in the defaults, unnamed'),
       ok(!again, 'the steps are offered once')
     ];

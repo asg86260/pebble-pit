@@ -1310,8 +1310,6 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .wardrobe .warddie svg { width: 14px; height: 14px; display: block; }
 .wardrobe .wardkeys { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 3px; }
 .held .wardrobe .wardkey { min-width: 0; padding: 3px 0; }
-.wardrobe .wardedit.locked [data-row="name"], .wardrobe .wardedit.locked [data-row="role"] { opacity: .45; }
-.wardrobe .wardlock { color: var(--ink-5); font-size: var(--fs-small); text-transform: none; }
 .wardrobe .wardshown { display: flex; justify-content: space-around; gap: var(--gap-m); flex-wrap: wrap; }
 .wardrobe .wardone { display: flex; flex-direction: column; align-items: center; gap: var(--gap-s); min-width: 0; overflow-wrap: anywhere; }
 .wardrobe .wardnm { font-size: var(--fs-word); font-weight: bold; }

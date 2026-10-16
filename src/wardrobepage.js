@@ -13,8 +13,7 @@
 // (`offerDress`), as four steps: build who you are, confirm your square,
 // build your sqouse, and a last look at the two of you; done there lets the
 // opening go. And always as a row on the settings page, with a tab for each;
-// from the opening on the name and the role are kept as chosen (wardrobe.js,
-// `selvesLocked`) and only the outfits change.
+// the name and the role can be changed there at any time.
 //
 // Mouse, finger and keyboard type the name into its field. A pad moves
 // between the page's buttons as on every page (padpage.js): left and right
@@ -28,7 +27,7 @@ import { msg, writeInto } from './lang.js';
 import { S } from './state.js';
 import { P, WORKER, WARD_BIG, WARD_BIG_H, WARD_STRIP_H, WARD_CROWD, WARD_CROWD_PACE, NAME_MAX, NAME_GRID_COLS } from './config.js';
 import { SLOTS, WHO, DEFAULTS, itemOf, outfitOf, stepItem, rollSlot, nameOf, setName, stepRole, rollName,
-         rollRole, rollSquare, selvesLocked, typedName, storyArgs } from './wardrobe.js';
+         rollRole, rollSquare, typedName, storyArgs } from './wardrobe.js';
 import { drawDressed, YARD_INKS } from './render/wardrobe.js';
 import { HATS, drawSprite, spriteH, spriteW } from './sprites.js';
 
@@ -172,7 +171,6 @@ function build(el) {
   rNext.addEventListener('click', () => { stepRole(who, 1); say(); });
   const roleDie = die(() => rollRole(who));
   roleRow.append(span('wardlabel', msg('ward-role')), rPrev, rVal, rNext, roleDie);
-  const lockNote = span('wardlock', msg('ward-locked'));
 
   const rows = SLOTS.map(s => {
     const row = document.createElement('div');
@@ -191,7 +189,7 @@ function build(el) {
   });
   const edit = document.createElement('div');
   edit.className = 'wardedit';
-  edit.append(nameRow, grid, roleRow, lockNote, ...rows.map(r => r.row));
+  edit.append(nameRow, grid, roleRow, ...rows.map(r => r.row));
 
   // the confirm steps: the name, or the role word with none, and the role
   const shown = document.createElement('div');
@@ -217,7 +215,7 @@ function build(el) {
   foot.append(skip, back, roll, next);
   el.append(stepEl, big, strip, tabs, edit, shown, foot);
   built = { el, stepEl, big, strip, tabs, tab, input, count, askBtn, grid, roleRow, rVal, rPrev, rNext, roleDie,
-            nameDie: nameRow.querySelector('.warddie'), lockNote, rows, edit, shown, back, skip, roll, next, crowd: crowdOf() };
+            nameDie: nameRow.querySelector('.warddie'), rows, edit, shown, back, skip, roll, next, crowd: crowdOf() };
 }
 
 // The page brought up to the two of them and to the step.
@@ -240,20 +238,14 @@ function say() {
   b.edit.hidden = kind !== 'build';
   b.shown.hidden = kind === 'build';
 
-  // the name and the role, held from the opening on
-  const locked = selvesLocked(), name = nameOf(who);
+  const name = nameOf(who);
   if (document.activeElement !== b.input || typedName(b.input.value).trim() !== name) b.input.value = typing ?? name;
   b.input.placeholder = roleWord(who);
   b.input.maxLength = NAME_MAX * 2;            // the cap is counted in characters (`typedName`), not UTF-16
-  b.input.disabled = locked;
   b.count.textContent = String(NAME_MAX - [...name].length);
   b.askBtn.textContent = name || roleWord(who);
   padKeys();
   b.rVal.textContent = roleWord(who);
-  for (const el of [b.rPrev, b.rNext]) el.disabled = locked;
-  b.nameDie.hidden = b.roleDie.hidden = locked;
-  b.lockNote.hidden = !locked;
-  b.edit.classList.toggle('locked', locked);
   const o = outfitOf(who);
   for (const { val, s } of b.rows) val.textContent = msg(itemOf(s.key, o[s.key])?.name || s.items[0].name);
 
@@ -286,9 +278,9 @@ function showSquares(list) {
 
 // The pad's way to the name: Steam's keyboard behind a button where Steam
 // can be asked, else the grid; neither without a pad, where the field is
-// typed into, nor once the name is held.
+// typed into.
 function padKeys() {
-  const b = built, pad = !!S.padOn && !selvesLocked() && !b.edit.hidden;
+  const b = built, pad = !!S.padOn && !b.edit.hidden;
   const steam = pad && !!steamAsk() && !gridAsked;
   b.askBtn.hidden = !steam;
   b.input.hidden = steam;
@@ -309,7 +301,6 @@ async function askSteam() {
 // has changed the name.
 let typing = null;
 function typeKey(k) {
-  if (selvesLocked()) return;
   const now = typing ?? nameOf(who), t = typedName(now + k);
   if (t === now) return;
   typing = t;
@@ -317,7 +308,6 @@ function typeKey(k) {
   say();
 }
 function unType() {
-  if (selvesLocked()) return;
   typing = [...(typing ?? nameOf(who))].slice(0, -1).join('');
   setName(who, typing);
   say();
@@ -334,7 +324,7 @@ function go(by) {
 
 let onClose = null;
 // Done, or skip: the yard has been offered its steps, and the names and roles
-// are kept from here (wardrobe.js, `selvesLocked`).
+// stay open to change on the settings page.
 const close = () => {
   if (step >= 0) S.dressOffered = true;
   step = -1;
