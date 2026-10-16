@@ -8,8 +8,10 @@
 //
 // The meal under way is `S.mealGo`, saved, and counted in seconds since it
 // began, so a reload finds it where it was: the creature's kind and the spot
-// the orb closed on are written down, and its slot of the walk is held empty
-// again on the new page (`settleMeal`). Where the orb is at a moment is read
+// the orb closed on are written down, and the creature is kept off the new
+// page's walk (`settleMeal`). Its slot is held empty only until the haul
+// begins (`freed`); then the slot's next kind fades in (FAUNA_REFILL), so the
+// deep keeps its turns through the meals. Where the orb is at a moment is read
 // off that and the coil, never stored. Drawn in render/serpent.js.
 
 import { S } from '../state.js';
@@ -41,7 +43,7 @@ function beats(g) {
 }
 const startOf = (g, name) => { let at = 0; for (const [n, d] of beats(g)) { if (n === name) return at; at += d; } return at; };
 export const landAt = g => startOf(g, 'lump') + MEAL_SWALLOW_S;
-const backAt = g => startOf(g, 'lump') + MEAL_BACK_S;
+const backAt = g => landAt(g) + MEAL_BACK_S;
 // Which beat meal `g` is on, and how far through it (0..1): `done` once it has landed.
 export function beatOf(g = S.mealGo) {
   if (!g) return null;
@@ -151,7 +153,7 @@ function pick(ms) {
 // leave, wherever it has swum by then.
 export function startMeal(ms) {
   freeHeld(ms);
-  S.mealGo = { t: 0, slot: null, kind: null, seed: 0, dir: 1, x: null, y: null, reel: null, heals: true };
+  S.mealGo = { t: 0, slot: null, kind: null, seed: 0, dir: 1, x: null, y: null, reel: null, freed: false, heals: true };
 }
 // A slot held with no meal to hold it (a meal dropped by a check or a hook
 // setting the fight) lets its next kind in, as the meal would have.
@@ -159,8 +161,8 @@ function freeHeld(ms) {
   for (const c of SLOTS) if ((!S.mealGo || S.mealGo.slot !== c.slot) && slotGone(c.slot, ms / 1000)) holdSlot(c.slot, ms / 1000, false);
 }
 // The meal `secs` on at `ms`: the creature taken as the bolts leave, the haul
-// timed as it starts, its slot let go once the meal is well down. True on the
-// frame it lands at the belly.
+// timed as it starts and its slot let go then. True on the frame it lands at
+// the belly.
 export function stepMeal(secs, ms) {
   const g = S.mealGo;
   if (!g) return false;
@@ -179,17 +181,28 @@ export function stepMeal(secs, ms) {
     const f = mouthAt(ms);
     g.reel = reelOf(Math.hypot(g.x - f.x, g.y - f.y) / P);
   }
+  // The orb has closed and is hauled off the spot: the creature is the orb's
+  // now, drawn from `g`, and its slot lets its next kind fade in
+  // (FAUNA_REFILL), so the deep is a swimmer short only while the orb closes.
+  if (!g.freed && g.reel != null) {
+    holdSlot(g.slot, ms / 1000, false);
+    g.freed = true;
+  }
   const landed = cross(landAt(g));
   if (g.t >= backAt(g)) {
-    holdSlot(g.slot, ms / 1000, false);
+    if (!g.freed) holdSlot(g.slot, ms / 1000, false);
     S.mealGo = null;
   }
   return landed;
 }
-// A save read back: the creature in the orb is not on the new page's walk.
+// A save read back: the creature in the orb is not on the new page's walk,
+// whose slots set out again as the roster's first kinds. Before the haul its
+// slot is held; once its slot has been let go, a slot that comes out holding
+// its kind is held and let go at once, so its next kind fades in instead.
 export function settleMeal(ms) {
   freeHeld(ms);
-  const g = S.mealGo;
+  const g = S.mealGo, t = ms / 1000;
   if (!g || g.slot == null || !SLOTS[g.slot]) return;
-  if (!slotGone(g.slot, ms / 1000)) holdSlot(g.slot, ms / 1000, true);
+  if (!g.freed) { if (!slotGone(g.slot, t)) holdSlot(g.slot, t, true); return; }
+  for (const c of SLOTS) if (visitAt(c, t).kind === g.kind) { holdSlot(c.slot, t, true); holdSlot(c.slot, t, false); }
 }

@@ -18,7 +18,7 @@
 
 import { DEEP_W, DEEP_H, P, FAUNA, FAUNA_ZONES, FAUNA_SPRITES, FAUNA_MOTION, FAUNA_GULPER,
          FAUNA_SIPHON, FAUNA_SCARE, FAUNA_STARTLE, FAUNA_SCALES, FAUNA_REACT, FAUNA_POSES,
-         FAUNA_REACT_MOTION, FAUNA_WANDER, FAUNA_TURNS } from '../config.js';
+         FAUNA_REACT_MOTION, FAUNA_WANDER, FAUNA_TURNS, FAUNA_REFILL } from '../config.js';
 import { S, deepBed } from '../state.js';
 import { now } from '../clock.js';
 import { rand } from '../rng.js';
@@ -191,7 +191,7 @@ function slotStep(c, a, n) {
   if (sin < -K.steep) turn += down * K.level;
   const th = a.th + turn * h, cc = Math.cos(th), raw = a.x + cc * v * h, w = FAUNA_MOTION.wrap;
   return { x: wrapX(raw), y: Math.max(lo, Math.min(hi, a.y + Math.sin(th) * v * h)), th, om,
-           face: cc > K.face ? 1 : cc < -K.face ? -1 : a.face, lap: a.lap, kind: a.kind, goal,
+           face: cc > K.face ? 1 : cc < -K.face ? -1 : a.face, lap: a.lap, kind: a.kind, goal, inAt: a.inAt,
            out: raw < -w || raw >= COLS + w };
 }
 // The kind slot `k` takes next: the roster's next after the last handed out
@@ -207,7 +207,8 @@ function nextKind(s, k, next) {
 // Every slot a step on. One gone out past an end starts its next lap as the
 // next kind, somewhere new in the height (out past the end, where nobody sees
 // it change). A slot whose swimmer the serpent has taken (`gone`) stands
-// still and unseen until the meal lets its next kind in (`holdSlot`).
+// still and unseen until the meal lets its next kind in (`holdSlot`), which
+// fades in somewhere in the water (FAUNA_REFILL), its step kept as `inAt`.
 function turnsStep(w, n) {
   let next = w.next;
   const s = w.s.map((a, k) => (a.gone ? a : slotStep(SLOTS[k], a, n)));
@@ -216,19 +217,20 @@ function turnsStep(w, n) {
     const got = nextKind(s, k, next);
     next = got.next;
     const y = anyRow(got.kind, noise(SLOTS[k].i + 90, n));
-    s[k] = { ...s[k], kind: got.kind, lap: s[k].lap + 1, y, goal: goalOf(got.kind, y) };
+    s[k] = { ...s[k], kind: got.kind, lap: s[k].lap + 1, y, goal: goalOf(got.kind, y), inAt: undefined };
   }
   const ev = EATS.get(n + 1);
   if (ev) for (const e of ev) {
     const k = e.slot;
     if (e.eat) { s[k] = { ...s[k], gone: true }; continue; }
     if (!s[k].gone) continue;
-    // let in from beyond an end, either, heading in, as the next kind
-    const got = nextKind(s, k, next), dir = noise(SLOTS[k].i + 50, n) < 0.5 ? 1 : -1, K = FAUNA_WANDER, wr = FAUNA_MOTION.wrap;
+    // the next kind, faded in anywhere along the water and up it, either way
+    const got = nextKind(s, k, next), dir = noise(SLOTS[k].i + 50, n) < 0.5 ? 1 : -1, K = FAUNA_WANDER, R = FAUNA_REFILL;
     next = got.next;
     const y = anyRow(got.kind, noise(SLOTS[k].i + 90, n));
-    s[k] = { x: dir > 0 ? -wr : COLS + wr - 0.5, y, th: dir > 0 ? K.start : Math.PI - K.start, om: 0, face: dir,
-             lap: s[k].lap + 1, kind: got.kind, goal: goalOf(got.kind, y) };
+    const x = R.inset + noise(SLOTS[k].i + 70, n) * (COLS - 2 * R.inset);
+    s[k] = { x, y, th: dir > 0 ? K.start : Math.PI - K.start, om: 0, face: dir,
+             lap: s[k].lap + 1, kind: got.kind, goal: goalOf(got.kind, y), inAt: n + 1 };
   }
   return { s, next };
 }
@@ -284,14 +286,18 @@ function turnsState(n) {
   }
   return w.s;
 }
+// How far a slot's swimmer let in after a meal has faded in at `t`, 0..1.
+const fadeOf = (a, t) => (a.inAt == null ? 1 : Math.max(0, Math.min(1, (t - a.inAt * FAUNA_WANDER.step) / FAUNA_REFILL.fade)));
 // Where a slot's swimmer is at `t` seconds, between its two steps either
 // side, so it glides rather than ticks; across the wrap, out past the ends,
 // it takes the later, its new lap and kind with it.
 export function wanderAt(c, t) {
   const f = Math.max(0, t) / FAUNA_WANDER.step, n = Math.floor(f), w = turnsState(n), k = f - n;
   const a = w.s[c.slot], b = turnsStep(w, n).s[c.slot];
-  if (b.lap !== a.lap || Math.abs(b.x - a.x) > COLS / 2) return { x: b.x, y: seenRow(b.y, b.kind), dir: b.face, lap: b.lap, kind: b.kind, gone: !!b.gone };
-  return { x: a.x + (b.x - a.x) * k, y: seenRow(a.y + (b.y - a.y) * k, a.kind), dir: a.face, lap: a.lap, kind: a.kind, gone: !!(a.gone || b.gone) };
+  if (b.lap !== a.lap || Math.abs(b.x - a.x) > COLS / 2)
+    return { x: b.x, y: seenRow(b.y, b.kind), dir: b.face, lap: b.lap, kind: b.kind, gone: !!b.gone, fade: fadeOf(b, t) };
+  return { x: a.x + (b.x - a.x) * k, y: seenRow(a.y + (b.y - a.y) * k, a.kind), dir: a.face, lap: a.lap, kind: a.kind,
+           gone: !!(a.gone || b.gone), fade: fadeOf(a, t) };
 }
 
 // The creature a slot holds at `t`: one of its own for every lap, so a new
@@ -327,6 +333,9 @@ export function visitAt(c, t) {
 // Whether a creature is in the serpent's keeping (deep/meals.js): not drawn,
 // not clicked; the meal draws it in its orb.
 export const eatenNow = (c, t) => !!c.wander && wanderAt(c.home, t).gone;
+// How much of a creature shows at `t`, 0..1: one let into an eaten slot
+// fades in (FAUNA_REFILL); every other is whole.
+export const faunaFade = (c, t) => (c.wander ? wanderAt(c.home, t).fade : 1);
 // Every creature out at `t`, a slot's by its visit.
 export const faunaOut = (t = now() / 1000) => POPULATION.map(c => visitAt(c, t));
 // The first second from `from` on, in steps of `every`, that a slot holds

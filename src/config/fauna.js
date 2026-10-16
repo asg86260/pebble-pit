@@ -106,6 +106,18 @@ export const FAUNA_TURNS = {
   roster: ['school', 'jelly', 'lantern', 'hatchet', 'siphon', 'angler', 'vampire', 'dumbo'],
 };
 
+// A slot the serpent has eaten out of is filled again as soon as the orb
+// has closed on its swimmer and the haul begins (the orb draws the creature
+// from then on): its next kind fades in over `fade` seconds somewhere in the
+// water, at least `inset` cells in from either end, rather than swimming back
+// in from beyond an end. At the deep's paces, a cell or two a second over 520
+// cells, one coming in at an end took longer than a window to reach the
+// glass, and the meal took each newcomer at the edge before it got there
+// (the owner, 2026-10-15: "theres only one i see and all of them are getting
+// eaten"). So a slot is empty only while the orb closes (ORB_BOLT_S), never
+// longer than `emptyS` seconds.
+export const FAUNA_REFILL = { fade: 1.5, inset: 40, emptyS: 2 };
+
 // A wanderer's way (option C of the owner's mock): along at its pace on a
 // heading that turns gently at random -- the turn rate a damped random walk,
 // kicked up to `jitter` rad/s a second either way, eased off by `damp` a

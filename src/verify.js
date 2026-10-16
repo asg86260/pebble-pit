@@ -557,7 +557,7 @@ export function verifyWorld() {
     const go = S.mealGo;
     if (go && (!(go.t >= 0) || go.t > landAt(go) + MEAL_BACK_S + 1))
       fail('the meal is past its end', `${go.t}s in`);
-    if (go && go.slot != null && !slotGone(go.slot, now() / 1000))
+    if (go && go.slot != null && !go.freed && !slotGone(go.slot, now() / 1000))
       fail('the creature in the meal orb is still swimming', `slot ${go.slot}, ${go.kind}`);
     mealWas = S.meal;
     if (!(S.serpentStun >= 0) || S.serpentStun > STUN_MAX_S + 1e-9)

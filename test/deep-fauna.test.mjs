@@ -8,9 +8,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import './helpers.mjs';                // the yard's page: the creatures now read the deep's floor
-import { FAUNA, FAUNA_MOTION, FAUNA_TURNS } from '../src/config.js';
+import { FAUNA, FAUNA_MOTION, FAUNA_TURNS, FAUNA_REFILL } from '../src/config.js';
 import { POPULATION, COLS, ROWS, faunaAt, visitAt, faunaOut, forgetWalk, reachOf, heightOf, wanderLo, wanderHi, waterTop, glideWaterTop,
-         holdSlot, slotGone, SLOTS, eatenNow } from '../src/deep/fauna.js';
+         holdSlot, slotGone, SLOTS, eatenNow, faunaFade } from '../src/deep/fauna.js';
 
 const DT = 1 / 60;
 const kindAt = (c, t) => visitAt(c, t).kind;
@@ -208,10 +208,10 @@ test('every slot sets out, and every kind comes in, anywhere in the height', () 
 });
 
 // The serpent's meal takes a slot's swimmer off the walk into its orb and,
-// later, lets the slot's next kind in from beyond an end (deep/meals.js). The
+// later, lets the slot's next kind fade in inside the deep (deep/meals.js). The
 // holds are the walk's input: asked again for any moment, the walk comes out
 // the same.
-test('a meal holds a slot off the walk, then lets its next kind in from beyond an end', () => {
+test('a meal holds a slot off the walk, then lets its next kind fade in inside the deep', () => {
   forgetWalk();
   const c = SLOTS[0], t0 = 100, t1 = 110;
   const before = visitAt(c, t0), other = SLOTS.slice(1).map(o => kindAt(o, t1 + 0.1));
@@ -219,6 +219,7 @@ test('a meal holds a slot off the walk, then lets its next kind in from beyond a
   const gone = [t0 + 0.05, t0 + 5, t1].every(t => slotGone(0, t)), drawnGone = eatenNow(visitAt(c, t0 + 1), t0 + 1);
   holdSlot(0, t1, false);
   const back = visitAt(c, t1 + 0.1), p = faunaAt(c, t1 + 0.1);
+  const fadeIn = [0.05, FAUNA_REFILL.fade / 2, FAUNA_REFILL.fade + 0.1].map(d => faunaFade(back, t1 + d));
   const again = [50, t0 + 2, t1 + 3, 200].map(t => ({ ...faunaAt(c, t), gone: slotGone(0, t) }));
   const askAgain = [200, 50, t1 + 3, t0 + 2].map(t => ({ ...faunaAt(c, t), gone: slotGone(0, t) }));
   forgetWalk();
@@ -228,6 +229,7 @@ test('a meal holds a slot off the walk, then lets its next kind in from beyond a
   assert.equal(back.lap, before.lap + 1, 'a new lap, a new visit');
   assert.notEqual(back.kind, before.kind, 'of another kind');
   assert.ok(!other.includes(back.kind), `not one already out (${other}, in came ${back.kind})`);
-  assert.ok(p.x < 0 || p.x > COLS, `in from beyond an end (x ${p.x.toFixed(1)})`);
+  assert.ok(p.x >= FAUNA_REFILL.inset - 1 && p.x <= COLS - FAUNA_REFILL.inset + 1, `in inside the deep (x ${p.x.toFixed(1)})`);
+  assert.ok(fadeIn[0] < 0.1 && fadeIn[1] > 0.3 && fadeIn[1] < 0.7 && fadeIn[2] === 1, `fading in, never popping (${fadeIn})`);
   assert.deepEqual(again, [askAgain[1], askAgain[3], askAgain[2], askAgain[0]], 'the same however the moments are asked');
 });

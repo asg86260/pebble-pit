@@ -11,7 +11,7 @@
 
 import { group, ok, yard } from './helpers.mjs';
 import { windowS, landAt } from '../src/deep/meals.js';
-import { slotGone } from '../src/deep/fauna.js';
+import { SLOTS, visitAt, slotGone } from '../src/deep/fauna.js';
 import { now } from '../src/clock.js';
 
 const S = yard.S;
@@ -47,11 +47,13 @@ group('a refresh mid-meal finishes the meal: the creature still in the orb, on i
   const before = { t: S.mealT, at: S.phaseAt, meal: S.meal, clock: now() };
   refresh();
   const after = { t: S.mealT, at: S.phaseAt, clock: now(), go: S.mealGo && { ...S.mealGo } };
-  const held = g && slotGone(g.slot, now() / 1000);
+  // whether a slot of the new page's walk shows the creature in the orb
+  const swimming = () => SLOTS.some(c => visitAt(c, now() / 1000).kind === g.kind && !slotGone(c.slot, now() / 1000));
+  const held = g && !swimming();
   let seen = false, f = 0;
   for (; f < 60 * 30 && S.meal === before.meal; f++) {
     frame();
-    if (!slotGone(g.slot, now() / 1000)) seen = true;
+    if (swimming()) seen = true;
   }
   return [
     ok(ate, 'a meal lands before the refresh'),

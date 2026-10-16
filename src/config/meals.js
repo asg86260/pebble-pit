@@ -53,9 +53,10 @@ export const MEAL_GULP_IN = 8;
 // across. The roster puts no kind in two slots, so of three slots at least one
 // always holds something the meal can take.
 export const MEAL_SKIP = ['school', 'siphon'];
-// The eaten creature's slot stays empty this long after the gulp, then its
-// next kind swims in from beyond an end of the deep, as at any lap's end.
-export const MEAL_BACK_S = 6;
+// The meal is over this long after the heal lands. The eaten creature's slot
+// is let go earlier, as the haul begins: its next kind fades in somewhere in
+// the deep (FAUNA_REFILL, config/fauna.js).
+export const MEAL_BACK_S = 0;
 // The jaw's held poses, how far open: shut, ajar, the full gape. Every
 // opening of the mouth steps through these (deep/meals.js, `jawPose`).
 export const JAW_POSES = [0, 0.5, 1];

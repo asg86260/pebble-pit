@@ -7,12 +7,12 @@
 // Setup is the serpent's own (test/serpent.test.mjs).
 
 import { group, ok, yard, run } from './helpers.mjs';
-import { SERPENT_WOUND, SERPENT_WINDOW, MEAL_WARN_S, ORB_BOLT_S, ORB_R, MEAL_REEL, MEAL_SKIP, MEAL_BACK_S, P } from '../src/config.js';
+import { SERPENT_WOUND, SERPENT_WINDOW, MEAL_WARN_S, ORB_BOLT_S, ORB_R, MEAL_REEL, MEAL_SKIP, MEAL_BACK_S, FAUNA_REFILL, P } from '../src/config.js';
 import { beatOf, orbOf, mouthAt, mealJaw, landAt } from '../src/deep/meals.js';
 import { strike } from '../src/deep/serpent.js';
 import { lay } from '../src/deep/statuses.js';
 import { bellyAt, coilAt } from '../src/deep/place.js';
-import { SLOTS, COLS, visitAt, faunaAt, slotGone, faunaReport } from '../src/deep/fauna.js';
+import { SLOTS, COLS, visitAt, faunaAt, slotGone, faunaReport, faunaFade } from '../src/deep/fauna.js';
 import { now } from '../src/clock.js';
 
 const S = yard.S;
@@ -47,8 +47,8 @@ group('a meal lands as the window runs out: each phase its own, shorter as the f
 // The meal the way it is seen: the comb, the bolts and the orb closing on the
 // nearest creature on the glass, which leaves the walk for the orb; the orb
 // hauled to the mouth without a jump, shrinking in held steps, the jaws
-// opening as it nears, the gulp, the swallow, the heal; and the slot's next
-// kind coming in from beyond an end of the deep.
+// opening as it nears, the gulp, the swallow, the heal; and, as the haul
+// begins, the slot's next kind fading in somewhere in the deep.
 group('the meal is the constrict on the nearest creature: taken off the walk, hauled in, swallowed, and its slot filled again', async () => {
   deepYard(1, SERPENT_WOUND[1] / 2);
   window.__view('deep');
@@ -63,9 +63,11 @@ group('the meal is the constrict on the nearest creature: taken off the walk, ha
     && f.x > S.camX && f.x < S.camX + S.viewW && f.y > S.camY && f.y < S.camY + S.viewH);
   const offWalk = slotGone(g.slot, now() / 1000) && faunaReport().find(f => f.slot === g.slot).eaten;
   // through the haul and the gulp, a frame at a time
-  let jump = 0, was = orbOf(now()), radii = [], opened = 0, end = null;
+  let jump = 0, was = orbOf(now()), radii = [], opened = 0, end = null, freedIn = null;
   while (S.mealGo && ['bolts', 'reel', 'gulp'].includes(beatOf().name)) {
     frame();
+    if (freedIn == null && !slotGone(g.slot, now() / 1000))
+      freedIn = { beat: beatOf().name, t: now() / 1000, v: visitAt(SLOTS[g.slot], now() / 1000), p: faunaAt(SLOTS[g.slot], now() / 1000) };
     const o = orbOf(now());
     if (!o) break;
     if (was) jump = Math.max(jump, Math.hypot(o.x - was.x, o.y - was.y));
@@ -76,9 +78,10 @@ group('the meal is the constrict on the nearest creature: taken off the walk, ha
   const wound = S.serpentWound, n = S.meal, lumpAt = S.mealGo && beatOf().name, reel = S.mealGo && S.mealGo.reel;
   until(() => S.meal > n, 5);
   const healed = S.meal === n + 1 && S.serpentWound === 0 && wound > 0;
-  // and the slot let go, its next kind swimming in from beyond an end
   until(() => !S.mealGo, MEAL_BACK_S + 1);
-  const back = visitAt(SLOTS[g.slot], now() / 1000), p = faunaAt(SLOTS[g.slot], now() / 1000);
+  // the slot let go as the haul began, its next kind fading in somewhere in the deep
+  const back = freedIn ? freedIn.v : visitAt(SLOTS[g.slot], now() / 1000), p = freedIn ? freedIn.p : { x: NaN };
+  const fadeAt = freedIn ? faunaFade(back, freedIn.t) : 1, fadeTo = faunaFade(back, now() / 1000);
   return [
     ok(began, 'a meal begins'),
     ok(g.slot != null && !MEAL_SKIP.includes(g.kind) && taken.kind === g.kind, 'the bolts take a creature that fits the orb', `${g.kind}`),
@@ -91,8 +94,9 @@ group('the meal is the constrict on the nearest creature: taken off the walk, ha
     ok(lumpAt === 'lump', 'then the swallow runs down the body', `${lumpAt}`),
     ok(healed, 'and the heal lands', `meal ${n} then ${S.meal}, wound ${wound} then ${S.serpentWound}`),
     ok(reel >= MEAL_REEL.min && reel <= MEAL_REEL.max, 'the haul took its time', `${reel}s`),
-    ok(!slotGone(g.slot, now() / 1000) && back.kind !== g.kind && (p.x < 0 || p.x > COLS), 'the slot\'s next kind comes in from beyond an end',
-       `${back.kind} at x ${p.x.toFixed(1)}`)
+    ok(freedIn && freedIn.beat === 'reel' && back.kind !== g.kind && p.x >= FAUNA_REFILL.inset - 1 && p.x <= COLS - FAUNA_REFILL.inset + 1,
+       'the slot\'s next kind comes in as the haul begins, in the deep', `${freedIn && freedIn.beat}: ${back.kind} at x ${p.x.toFixed(1)}`),
+    ok(fadeAt < 0.1 && fadeTo === 1, 'fading in, never popping', `${fadeAt.toFixed(3)} then ${fadeTo}`)
   ];
 });
 
