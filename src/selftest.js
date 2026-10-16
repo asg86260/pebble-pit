@@ -40,6 +40,7 @@ import { TESTS as pad } from './selftest/pad.js';       // controller support
 import { TESTS as language } from './selftest/language.js';   // the language page
 import { TESTS as feedback } from './selftest/feedback.js';   // the feedback form
 import { TESTS as deeppalette } from './selftest/deeppalette.js';   // the deep's capped palette (B4)
+import { TESTS as sheetwidth } from './selftest/sheetwidth.js';   // every block the sheet's width
 
 // Every group there is, in file order.
 const TESTS = [
@@ -71,6 +72,7 @@ const TESTS = [
   ...language,
   ...feedback,
   ...deeppalette,
+  ...sheetwidth,
 ];
 
 // `__test()` runs the lot. `__test('casino')` runs the groups whose name says

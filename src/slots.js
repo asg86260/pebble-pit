@@ -66,8 +66,8 @@ export const slotsLabel = () => msg('held-slotsbtn-label', { n: slotLabels(Date.
 
 // One card a slot on a grid: the row's button (its words and its playtime,
 // the open one inert) and a ✕ delete inside the same border, and under it the confirm
-// that `delete` fades open. The columns are the content's own (`.slots` in
-// style.css), so the widest row sets the sheet's width; a row with nothing to
+// that `delete` fades open. The columns are shared by every row (`.saves` in
+// style.css) and the rows are the sheet's width; a row with nothing to
 // delete keeps an unseen ✕, so the column does not come and go.
 //
 // An empty row is armed first (`start a new yard?` for four seconds) because
