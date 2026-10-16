@@ -1,0 +1,1190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wardrobe Expansion</title>
+<style>
+  :root {
+    --bg: #f4f4f1; --ink: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --warn: #8a5a00; --good: #2c6e3f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #141417; --ink: #e9e9ee; --muted: #9a9aa4; --card: #1d1d22; --line: #2e2e36; --warn: #e0b45a; --good: #7fcf95; }
+  }
+  :root[data-theme="dark"] { --bg: #141417; --ink: #e9e9ee; --muted: #9a9aa4; --card: #1d1d22; --line: #2e2e36; --warn: #e0b45a; --good: #7fcf95; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  h3 { font-size: 13px; margin: 14px 0 4px; color: var(--muted); font-weight: normal; text-transform: uppercase; letter-spacing: .08em; }
+  p { margin: 0 0 10px; color: var(--muted); }
+  ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); }
+  b, strong { color: var(--ink); }
+  code { font-size: 12px; }
+  .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+  .bar button, .bar select { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 16px; min-width: 0; }
+  canvas { display: block; image-rendering: pixelated; max-width: 100%; }
+  .scroll { max-width: 100%; overflow-x: auto; }
+  figure { margin: 0; }
+  figcaption { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .warn { color: var(--warn); }
+  .good { color: var(--good); }
+  .ph { border-bottom: 1px dashed currentColor; }
+  .ph::after { content: '*'; color: var(--warn); }
+
+  .pieces { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; margin-top: 10px; }
+  .piece { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
+  .piece h2 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .piece h2 small { font-weight: normal; font-size: 11px; color: var(--muted); }
+  .piece .for { font-size: 12px; margin: 0 0 4px; color: var(--ink); }
+  .piece .for i { color: var(--muted); }
+  .piece .line { color: var(--ink); margin: 0 0 8px; font-size: 13px; }
+  .piece .views { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .piece dl { display: grid; grid-template-columns: 6.5em 1fr; gap: 2px 8px; margin: 8px 0 0; font-size: 12px; }
+  .piece dt { color: var(--muted); }
+  .piece dd { margin: 0; }
+  .gold-tag { display: inline-block; font-size: 10px; padding: 0 5px; border: 1px solid #c99406; color: #c99406; border-radius: 3px; margin-left: 4px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 4px 8px 4px 0; vertical-align: top; }
+  th { color: var(--muted); font-weight: normal; text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
+  .earned { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; margin-top: 6px; }
+  .earned label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+
+  /* ---- the sheet: the game's held sheet, copied by eye (src/style.css) ---- */
+  .layouts { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; margin-top: 12px; }
+  .layouts > div { min-width: 0; max-width: 100%; }
+  .sheet { background: #fff; color: #000; border: 2px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,.22);
+           font: 12px/1.4 ui-monospace, "Courier New", monospace; letter-spacing: .06em; text-transform: uppercase;
+           padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .sheet.desk { width: 640px; max-width: 100%; }
+  .phone { width: 360px; height: 680px; overflow-y: auto; overflow-x: hidden; border: 10px solid #222; border-radius: 22px; background: #fff; max-width: 100%; }
+  .phone .sheet { border: 0; box-shadow: none; padding: 8px 10px; }
+  .sheet button { font: inherit; text-transform: inherit; letter-spacing: inherit; color: #000; background: #fff; border: 2px solid #000; cursor: pointer; }
+  .sheet > *, .sheet .stick > *, .sheet .left > * { flex: none; }
+  .sheet .t { font-weight: bold; display: flex; justify-content: space-between; }
+  .sheet .who, .sheet .tabs { display: flex; gap: 4px; }
+  .sheet .tabs { overflow-x: auto; scrollbar-width: none; }
+  .sheet .tab { padding: 3px 8px; white-space: nowrap; display: inline-flex; gap: 5px; align-items: center; }
+  .sheet .tab small { font-size: 9px; color: #8a8a8a; }
+  .sheet .tab.on { background: #000; color: #fff; }
+  .sheet .tab.on small { color: #bdbdbd; }
+  .sheet .id { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .sheet .id .fields { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px; }
+  .sheet .frow { display: grid; grid-template-columns: 4.2em 1fr auto auto; gap: 4px; align-items: center; }
+  .sheet .frow.role { grid-template-columns: 4.2em 26px 1fr 26px auto; }
+  .sheet input { width: 100%; font: inherit; text-transform: none; border: 2px solid #000; padding: 2px 5px; min-width: 0; background: #fff; color: #000; }
+  .sheet .arr { width: 26px; height: 24px; padding: 0; font-weight: bold; }
+  .sheet .rv { text-align: center; }
+  .sheet .die { width: 26px; height: 24px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+  .sheet .die svg { width: 14px; height: 14px; }
+  .sheet .slothead { display: flex; justify-content: space-between; align-items: center; gap: 6px; border-bottom: 2px solid #000; padding-bottom: 3px; }
+  .sheet .slothead b { color: #000; }
+  .sheet .slothead small { color: #8a8a8a; font-size: 10px; }
+  .sheet .slothead .r { display: inline-flex; gap: 6px; align-items: center; }
+  .sheet .tiles { display: grid; grid-template-columns: repeat(auto-fill, 76px); gap: 4px; justify-content: start; }
+  .sheet .tile { position: relative; padding: 0; border: 2px solid #fff; background: #fff; width: 76px; display: flex; flex-direction: column; align-items: center; }
+  .sheet .tile span { font-size: 9px; letter-spacing: .02em; width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; padding: 1px 0 2px; }
+  .sheet .tile:hover { border-color: #bdbdbd; }
+  .sheet .tile.on { background: #000; color: #fff; border-color: #000; }
+  .sheet .tile.lock canvas, .sheet .tile.lock span { opacity: .32; }
+  .sheet .tile .lk { position: absolute; top: 3px; right: 3px; width: 7px; height: 8px; }
+  .sheet .tile.on .lk { color: #fff; }
+  .sheet .pf { outline: 3px dashed #000; outline-offset: 1px; z-index: 1; }
+  .sheet .tile.on.pf { outline-color: #000; }
+  .sheet .status { min-height: 2.8em; font-size: 10px; color: #5f5f5f; text-transform: none; letter-spacing: .02em; border-top: 1px solid #d6d6d6; padding-top: 4px; }
+  .sheet .btns { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .sheet .btn { padding: 4px 10px; }
+  .sheet .hint { color: #8a8a8a; font-size: 10px; letter-spacing: .02em; text-transform: none; }
+  .sheet .sec { display: flex; flex-direction: column; gap: 4px; }
+  /* B on the desk: the two of you and the buttons held on the left, the slots
+     scrolling on the right. */
+  .sheet.B.desk .cols { display: grid; grid-template-columns: 210px 1fr; gap: 12px; }
+  .sheet.B.desk .left { display: flex; flex-direction: column; gap: 8px; }
+  .sheet.B.desk .right { height: 560px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
+  .sheet.B.desk .id { flex-direction: column; align-items: stretch; }
+  /* B on the phone: the two of you held at the top, the buttons at the foot. */
+  .sheet.B.phone .stick { position: sticky; top: 0; background: #fff; z-index: 2; padding-bottom: 4px; border-bottom: 2px solid #000; display: flex; flex-direction: column; gap: 4px; }
+  .sheet.B.phone .foot { position: sticky; bottom: 0; background: #fff; z-index: 2; border-top: 2px solid #000; padding-top: 4px; }
+  .sheet.phone .id { flex-wrap: nowrap; }
+  .sheet.phone .id .fields { min-width: 0; }
+  .sheet.phone .frow { grid-template-columns: 3.4em 1fr auto auto; }
+  .sheet.phone .frow.role { grid-template-columns: 3.4em 26px 1fr 26px auto; }
+  .sheet.phone .rv { overflow: hidden; text-overflow: ellipsis; }
+  .sheet.B.phone .mini { display: flex; gap: 8px; align-items: center; }
+  .pad { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; font-size: 11px; align-items: center; color: var(--muted); }
+  .pad button { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 2px 7px; cursor: pointer; min-width: 30px; }
+  .lk { width: 7px; height: 8px; flex: none; }
+
+  /* today's sheet, for the comparison */
+  .today .row { display: grid; grid-template-columns: 5.5em 26px 1fr 26px 26px; gap: 4px; align-items: center; }
+  .today .row .v { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <h1>The wardrobe, more: pieces earned by achievements, and a grid to pick from</h1>
+  <p>Mock, not the game. The same drawing code as the aura mock (<code>docs/mocks/wardrobe-aura-2026-10-16</code>): a body is the 3 x 3 cell square (18 world pixels) with a 2-pixel rim, a cell is 6 world pixels, small parts and particles are laid in 2-pixel units (<code>WARD_UNIT</code>) on a world-anchored grid. "4x" is four screen pixels to a world pixel; "game scale" is one to one. Every particle fades by opacity; the canvases run on held frames, 12 a second. Names marked <span class="ph">like this</span> are placeholders for the owner: every new item name and every lock line.</p>
+
+  <div class="bar">
+    <button id="theme">page: auto</button>
+    <button id="pause">pause</button>
+    <label>close-ups on <select id="ground"><option value="yard">the yard</option><option value="deep">the deep</option></select></label>
+    <label>the body <select id="motion"><option value="loop">walks, then stands</option><option value="stand">stands</option><option value="walk">walks</option></select></label>
+  </div>
+
+  <!-- ===================================================================== -->
+  <h2 style="margin-top:22px">Part 1: new pieces, each opened by an achievement</h2>
+  <p>Nineteen pieces across all six slots, each with the achievement that would open it (name and note are the game's, <code>locales/en.ftl</code>). Where the game already draws the thing, the piece is that drawing made small: the dizzy stars are the dizzy mark's two cells going round the head (<code>render/crew.js</code>), the stink is the "yuck" mark's wafting risers, the birds are the sky's birds (a body and two wingtips that swap from V to caret, <code>BIRD_TONE</code>), the shooting star is the glints' plus. Gold is used once, on the piece for <b>sqouse freed</b>, the serpent kill (treatment A: one gold, earned only).</p>
+  <div id="slotsNew"></div>
+
+  <h2 id="hats1b" style="margin-top:28px">Part 1b: the station hats, wearable</h2>
+  <p>The owner: <i>each of the station hats should be an option to wear</i>, and each opens when that hat is unlocked for its station, not by an achievement. These are the real sprites (<code>HATS</code> in <code>src/sprites.js</code>) on the bare body, placed as the crew's are (centered on the body, <code>drawHat</code> in <code>render/crew.js</code>). The carter's is not a hat (the cart, <code>KIT[HAUL].mark</code>), and the deep's classes wear nothing on the head (the "inspired" chevron is a buff mark over a body, not kit), so these five are all of them.</p>
+  <div class="pieces" id="hats"></div>
+  <div class="card">
+    <h2>The game fact each hat waits on</h2>
+    <p>The kit table (<code>KIT</code> in <code>src/kit.js</code>) says where each station's hats come from, and the rule here is the first one of them the yard owns: <code>stockOf(job) &gt;= 1</code>. For the four bought hats that is the first hat bought on the station's kit row; for the janitor's cap, which nobody buys, it is the outhouse opening (its shed hangs one on the stand for every post).</p>
+    <table><thead><tr><th>hat</th><th>station</th><th>opens when</th><th>lock line (placeholder)</th></tr></thead><tbody id="hatRules"></tbody></table>
+    <ul>
+      <li><b>Why the first bought and not the row showing:</b> a kit row is on the board before anyone can afford it, and the yard has never seen the hat on a head. The first one bought is the first one a body walks to the stand and puts on, so the hat is opened by the moment the player first sees it worn. The other reading (the row opening) is one line to change.</li>
+      <li><b>"First hat" overlaps:</b> the achievement <code>firsttrade</code> ("first hat") fires on the first of the four bought hats, any station; this rule is per station. The wizard's point opens at the same moment as "you're a wizard squarey" (<code>firsthat</code>), so no separate wizard hat is drawn for that achievement.</li>
+      <li><b>A stock is not kept:</b> the outhouse can close and the counts can fall (a forklift displacing carts, an old save). Once a hat is opened for the wardrobe it should stay opened: a flag kept in the save, set the first time the rule holds, not read off the count each time.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>The two of you in a crowd, at game scale</h2>
+    <p>Ten crew in station hats walk each strip; the two of you wear the looks chosen here.</p>
+    <div class="bar">
+      <label>you <select id="lookYou"></select></label>
+      <label>your sqouse <select id="lookSq"></select></label>
+    </div>
+    <h3>the yard, game scale</h3><div class="scroll" id="crowdYard"></div>
+    <h3>the deep, game scale</h3><div class="scroll" id="crowdDeep"></div>
+    <h3>the yard, 2x</h3><div class="scroll" id="crowdYard2"></div>
+  </div>
+
+  <div class="card">
+    <h2>What reads, and what I would watch</h2>
+    <ul>
+      <li><b class="good">Read at game scale:</b> the flies (the only thing in the yard that moves that fast round one body), the stink risers, the juggled balls, the dizzy stars, the bird on the head, the mortarboard, the diving bowl, the gold-trimmed cape.</li>
+      <li><b class="warn">Read only close up:</b> the pocket watch and the surprised face (both are a few units inside the body), the patches; the speed lines read only while walking, which is the point of them.</li>
+      <li><b class="warn">Flies and stink belong together.</b> Both are for muck; worn as one look they read at once as "this one smells". They are two slots' worth of one idea only if the aura slot holds one thing: worn together they need two auras, or one piece "flies and stink". Drawn here as two, opened by two achievements; the crowd's "muck" look shows them combined.</li>
+      <li><b class="warn">The flock</b> sits where the sky's real birds fly; at game scale two small birds over one head is read, but next to a passing lot of real ones it may be taken for one of them.</li>
+      <li><b>Brown was not used.</b> The muck has its own tone (<code>MUCK_TONE</code>, a brown, <code>config/weather.js</code>); flies or stink in it would read as muck at once, but that is a second hue on a wardrobe that keeps hue for earned gold. Grey here; the brown is one line if wanted.</li>
+      <li><b>The potion fizz is grey.</b> The apothecary's brews each have a color; a fizz in a brew's color would say "potion" better and break the same rule.</li>
+    </ul>
+  </div>
+
+  <!-- ===================================================================== -->
+  <h2 id="part2" style="margin-top:28px">Part 2: the appearance page as a grid</h2>
+  <p>Every option in a slot at once, each a small tile of the bare body wearing it (2x, standing; walking in place while hovered, focused or chosen, so a cape streams). The chosen one is inverted: black tile, the body drawn in the deep's turned-over inks. A locked one is faint with a lock; hovering or focusing it puts its achievement (or its station's rule) on the line under the grid. Picking a locked tile tries it on, faint, on the close-up, and is not kept, as option B of the aura mock's locked look; randomize never rolls one. Tick an achievement to pretend it is earned.</p>
+  <div class="bar"><button id="earnAll">earn all</button><button id="earnNone">earn none</button></div>
+  <div class="earned" id="earned"></div>
+
+  <h3>A: slot tabs across the top, one grid below</h3>
+  <div class="layouts"><div><div id="aDesk"></div><div class="pad" id="aDeskPad"></div></div><div><div class="phone" id="aPhone"></div></div></div>
+
+  <h3 id="layoutB">B: every slot stacked as a section, one scrolling page</h3>
+  <div class="layouts"><div><div id="bDesk"></div><div class="pad" id="bDeskPad"></div></div><div><div class="phone" id="bPhone"></div></div></div>
+
+  <h3>today, for comparison: previous and next on a row</h3>
+  <div class="layouts"><div id="today"></div></div>
+
+  <div class="card">
+    <h2>How a pad moves in the grid</h2>
+    <p>Try it with the pad buttons under each desk sheet, or the keyboard with the pointer over a sheet: arrows the d-pad, Enter A, y Y, q / e LB / RB, [ / ] LT / RT.</p>
+    <ul>
+      <li><b>The d-pad goes to the nearest button in that direction</b>, measured off the page as drawn, not off a list: of everything whose middle lies that way, the one nearest along the direction, with anything lined up with the current one (overlapping across) preferred over anything off to the side. So right along a row of tiles, down to the tile under, down off the last row to the line of buttons, up off the first row to the tabs. It works the same in both layouts and on any width, because it never knows the grid has columns.</li>
+      <li><b>No wrap:</b> right off the end of a row goes nowhere. Wrapping to the next row is what a list does and a grid should not; the next row is down.</li>
+      <li><b>A</b> picks the tile under the focus (a locked one is tried on, not kept). <b>Y</b> rolls the slot the focus is in. <b>LB / RB</b> are you and your sqouse, as today. <b>LT / RT</b> are the slot tabs in A, and in B jump the focus to the first tile of the previous or next section, scrolling it into view.</li>
+      <li><b>The name and the role:</b> unchanged from today. The name field takes A to type (Steam's keyboard, or the letter grid, under it); the role keeps its previous and next. Both sit beside the close-up in the head of the page, so the grid below is all wardrobe.</li>
+      <li><b>Randomize and clear:</b> the whole-square roll and the clear sit at the foot, as today; the per-slot die moves from each row to the slot's heading (A: beside the tabs, B: on each section's head).</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>The two layouts, side by side</h2>
+    <ul>
+      <li><b>A, tabs:</b> one slot at a time, so the page is short and the close-up and the grid are always on the glass together; the cost is a tab press to see another slot, and the tab bar on a phone (six tabs) has to scroll sideways. On a pad, LT / RT is a natural "next slot".</li>
+      <li><b>B, sections:</b> everything at once, so a player sees all there is to earn in one scroll, and the page reads as a catalog; the cost is length (about eighty tiles), so the close-up has to be held (left column on the desk, a sticky strip on the phone) or the player loses sight of what they are wearing while choosing. On a pad the d-pad alone walks the whole page.</li>
+      <li><b>Both drop the counts</b> ("3 / 12"): the grid shows the count.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>What this mock cannot show</h2>
+    <ul>
+      <li>The real yard: rocks, heaps, the sky's motes, grains, rain and real birds, carts and loads over the head. The flock and the flies will be harder to find against a real sky; the stink rises where speech marks and status icons sit.</li>
+      <li>The deep's real palette: here it is the yard's greys flipped by hand, not <code>render/deeptones.js</code>'s capped ramp.</li>
+      <li>The real zoom and its snapping of 2-pixel units at fractional zooms.</li>
+      <li>Poses: crouched, carried, knocked flat, the snatch, the finale; the bird would need to fly off a body that is knocked flat, the bowler to fall with a shaken hat.</li>
+      <li>Two auras at once (flies and stink together) is drawn in the crowd only; the slot model holds one.</li>
+      <li>The real sheet: drawn by hand to look like the game's, not with <code>src/style.css</code>; the real pad's focus look (<code>padpage.js</code>) and its scroll-into-view; the letter grid for the name; the new yard's four steps (build, confirm, build, both).</li>
+      <li>Cost in the game: the counts are rects per body per frame from this page; about eighty tile canvases drawn at once in B is a page cost the game would pay only while the sheet is up.</li>
+      <li>How an unlock is told to the player (a notice, a mark on the board's row). Not drawn.</li>
+    </ul>
+  </div>
+</main>
+
+<script>
+// ---------------------------------------------------------------------------
+// The grid and the inks (src/config/palette.js).
+const P = 6, W = P * 3, RIM = 2, U = 2;
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const PURPLE = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#8244d8', '#9b5de5', '#b79af2'];
+const DPR = Math.max(1, Math.round(window.devicePixelRatio || 1));
+const inv = h => '#' + (0xffffff ^ parseInt(h.slice(1), 16)).toString(16).padStart(6, '0');
+// The deep is the yard turned over. Gold: one flat gold, earned only (A),
+// pulled toward ochre on white and lifted over black.
+function palette(deep) {
+  return deep
+    ? { deep, ground: '#000', rim: '#fff', mid: '#000', line: '#5f5f5f', faint: '#141414', grey: r => inv(GREY[r]), gold: '#f2c14e',
+        ember: ['#ffffff', PURPLE[12], inv(GREY[6]), PURPLE[9], inv(GREY[4])] }
+    : { deep, ground: '#fff', rim: '#000', mid: '#fff', line: '#000', faint: '#efefef', grey: r => GREY[r], gold: '#c99406',
+        ember: ['#000000', PURPLE[10], GREY[6], PURPLE[12], GREY[4]] };
+}
+function hash(i, j) { const s = Math.sin(i * 12.9898 + j * 78.233) * 43758.5453; return s - Math.floor(s); }
+const snap = v => Math.round(v / U) * U;
+let RECTS = 0, FADE = 1;
+function dot(g, x, y, tone, a = 1, w = U, h = U) {
+  a = Math.min(1, a) * FADE;
+  if (a <= 0.02) return;
+  g.globalAlpha = a; g.fillStyle = tone; g.fillRect(snap(x), snap(y), w, h); g.globalAlpha = 1;
+  RECTS++;
+}
+function life(t, i, n, L, seed = 0) {
+  const u = t + i * L / n + hash(i, seed) * 0.37 * L, cyc = Math.floor(u / L), a = u - cyc * L;
+  return { a, k: a / L, cyc };
+}
+const fadeInOut = (k, i = 0.12, o = 0.25) => Math.min(1, k / i, (1 - k) / o);
+const pose = (t, hz) => Math.floor(t * hz) % 2;
+function rect(g, x, y, w, h, tone, a = 1) { g.globalAlpha = FADE * a; g.fillStyle = tone; g.fillRect(x, y, w, h); g.globalAlpha = 1; RECTS++; }
+const cellAt = (g, x, y, tone) => rect(g, x, y, P, P, tone);
+// A drawing in 2-pixel units, its chars mapped to tones, mirrored in its own
+// box when the body faces left.
+function art(g, rows, x0, y0, dir, tones, a = 1) {
+  const w = Math.max(...rows.map(r => r.length));
+  rows.forEach((r, ry) => {
+    for (let c = 0; c < w; c++) {
+      const ch = r[dir < 0 ? w - 1 - c : c];
+      if (!ch || ch === '.' || !tones[ch]) continue;
+      rect(g, x0 + c * U, y0 + ry * U, U, U, tones[ch], a);
+    }
+  });
+}
+const plus = (g, x, y, tone, a = 1) => { dot(g, x, y, tone, a); dot(g, x - U, y, tone, a); dot(g, x + U, y, tone, a); dot(g, x, y - U, tone, a); dot(g, x, y + U, tone, a); };
+
+// ---------------------------------------------------------------------------
+// The auras: the aura mock's, then the new ones. `b.at(t)` is where the body
+// was at a time; `pass` is 'back' or 'front'; `b.headH` the height of what is
+// on its head, so a thing over the head clears a hat.
+const AURAS = [
+  { key: 'none', name: 'none' },
+  { key: 'dust', name: 'dust motes', draw(g, b, t, pass, k) {
+      for (let i = 0; i < 4; i++) {
+        const l = life(t, i, 4, 2.4, 1);
+        if ((hash(i, l.cyc) < 0.5) !== (pass === 'back')) continue;
+        const p = b.at(t - l.a);
+        dot(g, p.x + 9 + (hash(i, l.cyc + 0.5) - 0.5) * 30 + Math.sin(l.k * 6.28 + i) * 3, p.y + 2 + hash(i, l.cyc + 0.7) * 14 - l.k * 10,
+          k.grey(4 + Math.floor(hash(i, l.cyc + 0.9) * 3)), Math.sin(Math.PI * l.k));
+      }
+    } },
+  { key: 'pebbles', name: 'pebble bits', draw(g, b, t, pass, k) {
+      if (pass !== 'front') return;
+      for (let i = 0; i < 3; i++) {
+        const l = life(t, i, 3, 0.9, 2), p = b.at(t - l.a);
+        if (!p.moving && i > 0) continue;
+        const side = hash(i, l.cyc) < 0.5 ? -U - 1 : W + 1;
+        const x = p.x + side + hash(i, l.cyc + 0.2) * 3, y0 = p.y + 6 + hash(i, l.cyc + 0.3) * 6, foot = p.y + W - U;
+        const f = Math.min(1, l.k / 0.6);
+        dot(g, x, y0 + (foot - y0) * f * f, k.grey(7 + Math.floor(hash(i, l.cyc + 0.6) * 3)), Math.min(1, l.k / 0.08, l.k > 0.6 ? (1 - l.k) / 0.4 : 1));
+      }
+    } },
+  { key: 'bubbles', name: 'bubbles', draw(g, b, t, pass, k) {
+      if (pass !== 'front') return;
+      for (let i = 0; i < 3; i++) {
+        const l = life(t, i, 3, 2.2, 3), p = b.at(t - l.a * 0.4);
+        const x = p.x + (i % 2 ? -5 : W + 1) + hash(i, l.cyc) * 3 + Math.round(Math.sin(l.k * 9 + i)) * U;
+        const y = p.y + 10 - l.k * 28, a = fadeInOut(l.k, 0.15, 0.3), tone = k.grey(6);
+        if (i === 2) { dot(g, x, y, tone, a); continue; }
+        dot(g, x + U, y, tone, a); dot(g, x, y + U, tone, a); dot(g, x + 2 * U, y + U, tone, a); dot(g, x + U, y + 2 * U, tone, a);
+      }
+    } },
+  { key: 'orbit', name: 'orbiting pixel', draw(g, b, t, pass, k) {
+      const c = b.at(t), cx = c.x + 9 - U / 2;
+      [1, 0.5, 0.22].forEach((al, j) => {
+        const an = t * 2.6 - j * 0.3, s = Math.sin(an);
+        if ((s < 0) !== (pass === 'back')) return;
+        dot(g, cx + Math.cos(an) * 15, c.y + 8 + s * 4, k.grey(10), al);
+      });
+    } },
+  { key: 'glints', name: 'sparkle glints', draw(g, b, t, pass, k) {
+      if (pass !== 'front') return;
+      const c = b.at(t), tone = k.grey(9);
+      for (let i = 0; i < 2; i++) {
+        const l = life(t, i, 2, 1.9, 4);
+        if (l.k > 0.7) continue;
+        const q = l.k / 0.7, an = hash(i, l.cyc) * 6.28, r = 14 + hash(i, l.cyc + 0.4) * 5;
+        const x = c.x + 9 - U / 2 + Math.cos(an) * r, y = c.y + 8 + Math.sin(an) * r * 0.8;
+        if (q < 0.15) dot(g, x, y, tone, q / 0.15);
+        else if (q < 0.55) plus(g, x, y, tone);
+        else dot(g, x, y, tone, Math.min(1, (1 - q) / 0.3));
+      }
+    } },
+  { key: 'prints', name: 'footprints', draw(g, b, t, pass, k) {
+      if (pass !== 'back') return;
+      const STEP = 0.3, LIFE = 2.4, n0 = Math.floor(t / STEP);
+      for (let j = 0; j < 9; j++) {
+        const n = n0 - j, ts = n * STEP, age = t - ts, p = b.at(ts);
+        if (age > LIFE || !p.moving) continue;
+        dot(g, p.x + (n % 2 ? 3 : 11), p.y + W + 2, k.grey(6), 1 - age / LIFE, 2 * U, U);
+      }
+    } },
+  { key: 'cloud', name: 'rain cloud', draw(g, b, t, pass, k) {
+      if (pass !== 'front') return;
+      const c = b.at(t), lag = b.at(t - 0.4), bob = Math.floor(t * 1.2) % 2 ? -U : 0;
+      const top = c.y - 18 - (b.headH || 0) + bob, left = lag.x + 1;
+      ['..####..', '.######.', '########'].forEach((r, ry) => [...r].forEach((ch, rx) => {
+        if (ch === '#') dot(g, left + rx * U, top + ry * U, k.grey(3 + Math.floor(hash(rx, ry + 9) * 3)));
+      }));
+      for (let i = 0; i < 3; i++) {
+        const l = life(t, i, 3, 0.55, 5), y0 = top + 3 * U, y1 = c.y - 3 - (b.headH || 0);
+        dot(g, left + 2 + hash(i, l.cyc) * 12, y0 + l.k * (y1 - y0), k.grey(7), Math.min(1, (1 - l.k) / 0.3), U, 3);
+      }
+    } },
+  { key: 'petals', name: 'falling petals', draw(g, b, t, pass, k) {
+      for (let i = 0; i < 3; i++) {
+        const l = life(t, i, 3, 2.8, 6);
+        if ((hash(i, l.cyc + 0.1) < 0.4) !== (pass === 'back')) continue;
+        const p = b.at(t - l.a), x0 = p.x - 5 + hash(i, l.cyc) * 28, y0 = p.y - 12, foot = p.y + W + 1;
+        const tone = k.grey(5 + Math.floor(hash(i, l.cyc + 0.3) * 2)), a = Math.min(1, l.k / 0.1, (1 - l.k) / 0.15);
+        if (l.k < 0.8) { const f = l.k / 0.8, flat = Math.floor(t * 4 + i) % 2;
+          dot(g, x0 + Math.sin(l.k * 7 + i * 2) * 4, y0 + (foot - y0) * f, tone, a, flat ? 2 * U : U, U); }
+        else dot(g, x0 + Math.sin(0.8 * 7 + i * 2) * 4, foot, tone, a, 2 * U, U);
+      }
+    } },
+  { key: 'scales', name: 'scale swirl', draw(g, b, t, pass, k) {
+      const c = b.at(t), cx = c.x + 9 - 2;
+      for (let i = 0; i < 4; i++) {
+        const an = t * 1.8 + i * Math.PI / 2, s = Math.sin(an);
+        if ((s < 0) !== (pass === 'back')) continue;
+        const edge = ((t * 1000 + i * 130) % 520) < 130, y = c.y + 7 + s * 3 + Math.sin(t * 1.1 + i * 1.7) * 3;
+        dot(g, cx + Math.cos(an) * 14, y + (edge ? 1 : 0), k.grey(7), 1, 4, edge ? 2 : 4);
+      }
+    } },
+  { key: 'embers', name: 'embers', draw(g, b, t, pass, k) {
+      for (let i = 0; i < 4; i++) {
+        const l = life(t, i, 4, 1.7, 7), an = i * 1.57 + l.k * 4.2 + hash(i, l.cyc) * 2, s = Math.sin(an);
+        if ((s < 0) !== (pass === 'back')) continue;
+        const p = b.at(t - l.a * 0.5), tone = k.ember[Math.min(k.ember.length - 1, Math.floor(l.k * k.ember.length))];
+        dot(g, p.x + 9 - U / 2 + Math.cos(an) * (10 + 5 * l.k), p.y + W - 2 - l.k * 34, tone, fadeInOut(l.k, 0.1, 0.3));
+      }
+    } },
+  { key: 'halo', name: 'gold halo', gold: true, draw(g, b, t, pass, k) {
+      const c = b.at(t), top = c.y - 12 - (b.headH || 0), left = c.x;
+      const a = 0.85 + 0.15 * Math.sin(t * 1.3);
+      ['..#####..', '##.....##', '##.....##', '..#####..'].forEach((r, ry) => {
+        if ((ry < 2) !== (pass === 'back')) return;
+        [...r].forEach((ch, rx) => { if (ch === '#') dot(g, left + rx * U, top + ry * U, k.gold, a); });
+      });
+      if (pass === 'back') return;
+      for (let i = 0; i < 2; i++) {
+        const l = life(t, i, 2, 2.2, 8);
+        dot(g, left + 1 + hash(i, l.cyc) * 12 + Math.sin(l.k * 5 + i) * 2, top - 2 - l.k * 12, k.gold, Math.sin(Math.PI * l.k));
+      }
+    } },
+
+  // --- new: opened by achievements -------------------------------------
+  // Flies: three, each on its own looping path round the body, darting; the
+  // wings two held poses, up and down, swapped every frame.
+  { key: 'flies', name: 'flies', isNew: true, draw(g, b, t, pass, k) {
+      const c = b.at(t), cx = c.x + 9 - U / 2, cy = c.y + 4;
+      for (let i = 0; i < 3; i++) {
+        const w = 2.6 + i * 0.9, an = t * w * (i % 2 ? -1 : 1) + Math.sin(t * 1.7 + i * 2) * 1.3 + i * 2.1;
+        if ((Math.sin(an) < 0) !== (pass === 'back')) continue;
+        const r = 11 + 3 * Math.sin(t * 2.3 + i);
+        const x = cx + Math.cos(an) * r, y = cy + Math.sin(an * 2 + i) * 6 - 2 + Math.sin(an) * 3;
+        const up = (Math.floor(t * 12) + i) % 2;
+        dot(g, x, y, k.grey(10));
+        dot(g, x - U, y + (up ? -U : U), k.grey(4));
+        dot(g, x + U, y + (up ? -U : U), k.grey(4));
+      }
+    } },
+  // Stink: the yuck mark's risers, small: three wavy lines of units rising off
+  // the top of the body, the wave travelling up them, fading as they go.
+  { key: 'stink', name: 'stink lines', isNew: true, draw(g, b, t, pass, k) {
+      if (pass !== 'front') return;
+      const c = b.at(t);
+      [-3, 8, 19].forEach((ox, i) => {
+        const l = life(t, i, 3, 1.9, 11), base = c.y + 2 - l.k * 14, a = fadeInOut(l.k, 0.2, 0.45);
+        for (let j = 0; j < 4; j++) {
+          const wob = Math.round(Math.sin(j * 1.3 - Math.floor(t * 6) * 0.9 + i)) * U;
+          dot(g, c.x + ox + wob, base - j * 3, k.grey(6), a * (1 - j * 0.18));
+        }
+      });
+    } },
+  // Juggling: three balls in a cascade over the head, a high throw one way and
+  // a low pass back, on the held frames.
+  { key: 'juggle', name: 'juggling balls', isNew: true, draw(g, b, t, pass, k) {
+      if (pass !== 'front') return;
+      const c = b.at(t), cx = c.x + 9 - 2, base = c.y + 4, H = 24 + (b.headH || 0);
+      for (let i = 0; i < 3; i++) {
+        const s = ((t / 1.3) + i / 3) % 1;
+        let x, y;
+        if (s < 0.62) { const u = s / 0.62; x = cx - 14 + 28 * u; y = base - 4 * H * u * (1 - u); }
+        else { const u = (s - 0.62) / 0.38; x = cx + 14 - 28 * u; y = base - 4 * 5 * u * (1 - u); }
+        dot(g, x, y, i === 1 ? k.grey(6) : k.grey(10), 1, 4, 4);
+      }
+    } },
+  // Potion fizz: a bubble rises off the top of the head, swells to a ring and
+  // pops into four specks that fade.
+  { key: 'fizz', name: 'potion fizz', isNew: true, draw(g, b, t, pass, k) {
+      if (pass !== 'front') return;
+      const c = b.at(t), tone = k.grey(7);
+      for (let i = 0; i < 2; i++) {
+        const l = life(t, i, 2, 1.6, 12), x = c.x + 5 + hash(i, l.cyc) * 8, y = c.y - 2 - (b.headH || 0) - l.k * 18;
+        if (l.k < 0.45) dot(g, x, y, tone, l.k / 0.1);
+        else if (l.k < 0.75) { dot(g, x + U, y, tone); dot(g, x, y + U, tone); dot(g, x + 2 * U, y + U, tone); dot(g, x + U, y + 2 * U, tone); }
+        else { const q = (l.k - 0.75) / 0.25, d = U + q * 4;
+          for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) dot(g, x + U + sx * d, y + U + sy * d, tone, 1 - q); }
+      }
+    } },
+  // Dizzy stars: the dizzy mark, two stars going round the head, made pluses.
+  { key: 'dizzy', name: 'dizzy stars', isNew: true, draw(g, b, t, pass, k) {
+      const c = b.at(t), cx = c.x + 9 - U / 2, cy = c.y - 7 - (b.headH || 0);
+      for (const off of [0, Math.PI]) {
+        const an = t * 6.25 + off, s = Math.sin(an);
+        if ((s < 0) !== (pass === 'back')) continue;
+        plus(g, cx + Math.cos(an) * 12, cy + s * 3, k.grey(10));
+      }
+    } },
+  // A shooting star: now and then a star streaks down past the head, a fading
+  // trail of four behind it.
+  { key: 'shoot', name: 'shooting star', isNew: true, draw(g, b, t, pass, k) {
+      if (pass !== 'front') return;
+      const c = b.at(t), s = t % 2.8;
+      if (s > 0.75) return;
+      const u = s / 0.75, x0 = c.x + 34, y0 = c.y - 26 - (b.headH || 0), dx = -46, dy = 30;
+      const a = Math.min(1, u / 0.1, (1 - u) / 0.25);
+      for (let j = 4; j >= 1; j--) { const v = u - j * 0.035; dot(g, x0 + dx * v, y0 + dy * v, k.grey(10 - j * 2), a * (1 - j * 0.2)); }
+      plus(g, x0 + dx * u, y0 + dy * u, k.grey(10), a);
+    } },
+  // The flock: two of the sky's birds circling overhead, wings swapping V and
+  // caret.
+  { key: 'flock', name: 'flock overhead', isNew: true, draw(g, b, t, pass, k) {
+      const c = b.at(t), cx = c.x + 9 - U / 2, cy = c.y - 14 - (b.headH || 0);
+      for (let i = 0; i < 2; i++) {
+        const an = t * (1.4 + i * 0.3) + i * Math.PI, s = Math.sin(an);
+        if ((s < 0) !== (pass === 'back')) continue;
+        const x = cx + Math.cos(an) * 16, y = cy + s * 3 + (i ? -4 : 0), up = (Math.floor(t * 5) + i) % 2 ? -U : U;
+        dot(g, x, y, k.grey(7)); dot(g, x - U, y + up, k.grey(7)); dot(g, x + U, y + up, k.grey(7));
+      }
+    } },
+  // Speed lines: walking, three dashes trail behind, their lengths swapping
+  // on the held frames; standing, none.
+  { key: 'speed', name: 'speed lines', isNew: true, draw(g, b, t, pass, k) {
+      if (pass !== 'back') return;
+      const c = b.at(t);
+      if (!c.moving) return;
+      const f = Math.floor(t * 12) % 2;
+      [[4, 8, 12], [9, 12, 6], [14, 6, 10]].forEach(([dy, l0, l1]) => {
+        const len = f ? l1 : l0, x = c.dir > 0 ? c.x - 3 - len : c.x + W + 3;
+        rect(g, snap(x), c.y + dy, snap(len), U, k.grey(6), 0.8);
+      });
+    } },
+];
+const AURA = Object.fromEntries(AURAS.map(a => [a.key, a]));
+
+// ---------------------------------------------------------------------------
+// Heads. `rows` in whole cells (the game's head items and the crew's hats),
+// or `draw` for a piece laid in units; `h` its height above the body.
+function headOf(g, it, x, y, dir, ink, k) {
+  if (it.rects) { for (const [rx, ry, rw, rh] of it.rects) rect(g, x + (dir < 0 ? W - rx - rw : rx), y + ry, rw, rh, ink); return; }
+  const w = Math.max(...it.rows.map(r => r.length));
+  let ox = it.ox ?? (3 - w) / 2; if (dir < 0) ox = 3 - ox - w;
+  const top = y - it.rows.length * P - (it.lift || 0);
+  it.rows.forEach((row, r) => { for (let c = 0; c < row.length; c++) { const ch = row[dir < 0 ? w - 1 - c : c]; if (ch && ch !== '.') cellAt(g, x + (ox + c) * P, top + r * P, ink); } });
+}
+const HEAD = {
+  none: null,
+  bow: { rows: ['##.##', '#####', '##.##'] }, 'top hat': { rows: ['.###.', '.###.', '#####'] }, crown: { rows: ['#.#.#', '#####'] },
+  flower: { rows: ['.#.', '#.#', '.#.', '.#.'] }, sprout: { rows: ['##.##', '..#..'] }, ears: { rows: ['#.#'] },
+  antenna: { rows: ['..#', '.#.', '.#.'], ox: 0 }, beanie: { rows: ['.#.', '###', '###'] }, beret: { rows: ['..#.', '####'], ox: -1 },
+  headband: { rects: [[0, 4, 18, 2], [-6, 2, 6, 2], [-4, 6, 4, 2]], h: 0 }, mohawk: { rows: ['#', '#'] },
+  // the station hats, from src/sprites.js HATS, as the crew wear them
+  helmet: { rows: ['###'], hat: true }, lamp: { rows: ['.#.', '###'], hat: true }, 'sun hat': { rows: ['..###..', '#######'], hat: true },
+  point: { rows: ['..#..', '.###.', '#####'], hat: true }, cap: { rows: ['###', '###'], hat: true },
+  // new
+  bird: { isNew: true, h: 12, draw(g, x, y, dir, k, t, mv) {
+      const s = t % 3.4, hop = s < 0.55, lift = hop ? Math.round(Math.sin(Math.PI * s / 0.55) * 3) * U : (mv && pose(t, 4) ? U : 0);
+      const tones = { '#': k.grey(7), e: k.mid, b: k.rim, l: k.rim };
+      const x0 = x + 1, y0 = y - 5 * U - lift;
+      art(g, ['.....##.', '....#e#b', '#######.', '.#####..', hop ? '........' : '..l..l..'], x0, y0, dir, tones);
+      // hopping, a wing beats from over the back to under it, two held poses
+      if (hop) Math.floor(t * 10) % 2 ? art(g, ['.#......', '..##....'], x0, y0 - 2 * U, dir, tones) : art(g, ['..##....', '.#......'], x0, y0 + 4 * U, dir, tones);
+    } },
+  mortarboard: { isNew: true, h: 10, draw(g, x, y, dir, k, t, mv) {
+      const x0 = x - 3, y0 = y - 5 * U, ink = k.rim;
+      art(g, ['....####....', '############', '....####....', '.##########.', '.##########.'], x0, y0, dir, { '#': ink });
+      const sw = mv && pose(t, 4) ? 1 : 0, col = c => (dir < 0 ? 11 - c : c);
+      dot(g, x0 + col(10) * U, y0 + U, k.grey(6)); dot(g, x0 + col(11) * U, y0 + 2 * U, k.grey(6));
+      dot(g, x0 + col(11 + sw) * U, y0 + 3 * U, k.grey(6)); dot(g, x0 + col(11 + sw) * U, y0 + 4 * U, k.grey(6), 1, U, U * 2);
+    } },
+  bowler: { isNew: true, h: 8, draw(g, x, y, dir, k, t) {
+      const s = t % 3.6, tip = s < 0.8, u = s / 0.8, lift = tip ? Math.round(Math.sin(Math.PI * u) * 4) * U : 0, lean = tip && lift > U ? dir * U : 0;
+      const x0 = x - 1, y0 = y - 4 * U - lift;
+      art(g, ['...####...', '..######..', '..######..'], x0 + lean, y0, dir, { '#': k.rim });
+      art(g, ['##########'], x0, y0 + 3 * U, dir, { '#': k.rim });
+    } },
+  'hard hat': { isNew: true, h: 6, draw(g, x, y, dir, k) {
+      art(g, ['..##g##....', '.###g###...', '###########'], dir > 0 ? x : x - 4, y - 3 * U, dir, { '#': k.rim, g: k.grey(5) });
+    } },
+  'diving bowl': { isNew: true, h: 8, front: true, draw(g, x, y, dir, k, t) {
+      const cx = x + 9, cy = y + 7, R = 14;
+      for (let ux = -9; ux < 9; ux++) for (let uy = -9; uy < 9; uy++) {
+        const px = cx + ux * U, py = cy + uy * U, d = Math.hypot(px + 1 - cx, py + 1 - cy);
+        if (Math.abs(d - R) < 1.1 && py < y + W - 2) rect(g, px, py, U, U, k.grey(5), 0.9);
+      }
+      dot(g, cx - 8, cy - 9, k.grey(2)); dot(g, cx - 10, cy - 7, k.grey(2));
+      const l = life(t, 0, 1, 1.7, 13);
+      dot(g, cx + 2 + Math.round(Math.sin(l.k * 8)) * U, cy - R - 2 - l.k * 12, k.grey(6), fadeInOut(l.k, 0.15, 0.4));
+    } },
+  'gold crown': { rows: ['#.#.#', '#####'], tone: 'gold' },
+};
+const headH = it => !it ? 0 : it.h != null ? it.h : it.rows ? it.rows.length * P : 0;
+
+const FACE = {
+  none: null, eyes: ['', '', '...#.#.'], sleepy: ['', '', '..##.##'], smile: ['', '', '...#.#.', '', '..#...#', '...###.'],
+  glasses: ['', '###.###', '#.###.#', '###.###'], 'round glasses': ['', '.#...#.', '#.###.#', '.#...#.'], shades: ['', '#######', '###.###'],
+  monocle: ['', '.....#.', '..#.#.#', '.....#.', '......#', '......#'], eyepatch: ['', '#####..', '..#.###', '....###'],
+  mustache: ['', '', '...#.#.', '..#...#', '..#####'], freckles: ['', '', '...#.#.', '...g.g.', '..g.g..'], blush: ['', '', '...#.#.', '..gg.gg'],
+  surprised: ['', '...#.#.', '...#.#.', '', '...###.', '...#.#.', '...###.'],
+};
+const NEW_FACE = new Set(['surprised']);
+// Neck items: the scarf's band (a grid inside the body) and its tail. The
+// watch's grid is a function of the clock: its hand ticks once a second.
+const NECK = {
+  none: null, scarf: { grid: ['', '', '', '#######'], tail: 'solid' }, 'checked scarf': { grid: ['', '', '', '#g#g#g#'], tail: 'check' },
+  'striped scarf': { grid: ['', '', '', '#.#.#.#'], tail: 'stripe' },
+  'gold scarf': { grid: ['', '', '', '#g#g#g#'], tail: 'check', tone: 'gold' },
+  'pocket watch': { isNew: true, grid: t => ['', '', '', '#.#.#..', '....###', Math.floor(t) % 2 ? '....#g#' : '....#.#', '....###'] },
+};
+const BACK = { none: 1, cape: 1, 'short cape': 1, backpack: 1, balloon: 1, flag: 1, moneybag: { isNew: true }, 'gold-trim cape': { isNew: true, gold: true } };
+const lines = along => [2, 6, 10].map(d => (along ? [d, 0, 2, 14] : [0, d, 14, 2]));
+const dots = () => { const o = []; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) o.push([1 + i * 4 + (j % 2) * 2, 2 + j * 4, 2, 2]); return o; };
+const diagonal = () => { const o = []; for (let q = -12; q < 14; q += 6) for (let i = 0; i < 7; i++) { const y = i * 2 + q; if (y >= 0 && y < 14) o.push([i * 2, y, 2, 2]); } return o; };
+const PATTERN = {
+  plain: null, overalls: [[0, 8, 14, 6], [2, 0, 2, 8], [10, 0, 2, 8]], stripes: lines(false), 'tall stripes': lines(true), dots: dots(), diagonal: diagonal(),
+  quarters: [[0, 0, 7, 7], [7, 7, 7, 7]], filled: [[0, 0, 14, 14]],
+  patches: Object.assign([[0, 0, 6, 6, 'g'], [0, 0, 2, 2], [4, 0, 2, 2], [0, 4, 2, 2], [4, 4, 2, 2], [8, 8, 6, 2], [8, 12, 6, 2], [8, 10, 2, 2], [12, 10, 2, 2]], { isNew: true }),
+  pockets: Object.assign([], { isNew: true, draw(g, x, y, o, k) {
+      for (const side of [0, 1]) {
+        const sway = o.moving && pose(o.t + side * 0.125, 4) ? U : 0, px = side ? x + W - 2 : x - 4, py = y + 9 + sway;
+        rect(g, px, py, 6, 8, k.rim); rect(g, px + 2, py + 2, 2, 4, k.mid);
+      }
+    } }),
+};
+
+const SLOTS = [
+  { key: 'head', list: HEAD }, { key: 'face', list: FACE }, { key: 'neck', list: NECK },
+  { key: 'back', list: BACK }, { key: 'pattern', list: PATTERN }, { key: 'aura', list: AURA },
+];
+const isNewItem = (slot, key) => slot === 'face' ? NEW_FACE.has(key) : !!(SLOTS.find(s => s.key === slot).list[key] || {}).isNew;
+
+function backOf(g, key, x, y, o, k) {
+  const ink = k.rim, d = o.dir > 0 ? -1 : 1, bx = o.dir > 0 ? x - P : x + W, p = pose(o.t, 4);
+  if (key === 'cape' || key === 'gold-trim cape') {
+    const cells = o.moving ? [[bx, y], [bx + d * P, y + P], [bx + d * P * (p ? 2 : 1), y + (p ? P : 2 * P)], [bx, y + P]] : [[bx, y], [bx, y + P], [bx, y + 2 * P]];
+    cells.forEach(([cx, cy]) => cellAt(g, cx, cy, ink));
+    if (key === 'gold-trim cape') {
+      // the hem: the bottom of every cell with nothing under it, and the
+      // outer side of the cell farthest out
+      const has = (cx, cy) => cells.some(([a, b]) => a === cx && b === cy);
+      const far = o.dir > 0 ? Math.min(...cells.map(c => c[0])) : Math.max(...cells.map(c => c[0]));
+      cells.forEach(([cx, cy]) => {
+        if (!has(cx, cy + P)) rect(g, cx, cy + P - U, P, U, k.gold);
+        if (cx === far) rect(g, o.dir > 0 ? cx : cx + P - U, cy, U, P, k.gold);
+      });
+    }
+  } else if (key === 'short cape') {
+    if (o.moving) { cellAt(g, bx, y, ink); cellAt(g, bx + d * P, y + (p ? 0 : P), ink); } else { cellAt(g, bx, y, ink); cellAt(g, bx, y + P, ink); }
+  } else if (key === 'backpack') {
+    cellAt(g, bx, y + 2, ink); cellAt(g, bx, y + 2 + P, ink);
+  } else if (key === 'balloon') {
+    const bob = pose(o.t, 1.2) ? -2 : 0, sx = o.dir > 0 ? x + 2 : x + W - 4;
+    rect(g, sx, y - 3 * P + bob, 1, 3 * P - bob, ink);
+    const bxl = sx - 5 + d * 4, byl = y - 3 * P - 12 + bob;
+    rect(g, bxl + 2, byl, 8, 12, ink); rect(g, bxl, byl + 2, 12, 8, ink);
+  } else if (key === 'flag') {
+    const px = o.dir > 0 ? x : x + W - 2, wv = pose(o.t, 3);
+    rect(g, px, y - 4 * P, 2, 4 * P, ink);
+    const fx = o.dir > 0 ? px - 2 * P : px + 2;
+    rect(g, fx, y - 4 * P, 2 * P, P, ink);
+    rect(g, o.dir > 0 ? fx + (wv ? 0 : P) : fx + (wv ? P : 0), y - 3 * P, P, P - 2, ink);
+  } else if (key === 'moneybag') {
+    // a tied sack with a paper pebble on it, bouncing a unit with the step
+    const bounce = o.moving && p ? U : 0, x0 = o.dir > 0 ? x - 12 : x + W;
+    art(g, ['.#..#.', '..##..', '.####.', '##ee##', '##ee##', '.####.'], x0, y + W - 12 - bounce, o.dir, { '#': ink, e: k.mid });
+  }
+}
+function tailOf(g, kind, x, y, o, k, tone) {
+  const d = o.dir > 0 ? -1 : 1, bx = o.dir > 0 ? x - P : x + W, cells = [];
+  if (o.moving) { const lift = pose(o.t, 4) ? [0, 0, -1] : [0, 1, 0]; for (let i = 0; i < 3; i++) cells.push([bx + d * i * P, y + P + lift[i] * P]); }
+  else cells.push([bx, y + P], [bx, y + 2 * P]);
+  cells.forEach(([cx, cy], i) => { cellAt(g, cx, cy, kind === 'check' && i % 2 ? (tone ? k[tone] : k.grey(5)) : k.rim); if (kind === 'stripe') rect(g, cx + 2, cy, 2, P, k.mid); });
+}
+function grid(g, rows, x0, y0, dir, ink, grey) {
+  for (let r = 0; r < rows.length; r++) { const row = rows[r].padEnd(7, '.');
+    for (let c = 0; c < 7; c++) { const ch = row[dir < 0 ? 6 - c : c]; if (ch !== '.') rect(g, x0 + c * 2, y0 + r * 2, 2, 2, ch === 'g' ? grey : ink); } }
+}
+const CREWHATS = { helmet: ['###'], lamp: ['.#.', '###'], brim: ['..###..', '#######'], point: ['..#..', '.###.', '#####'], cap: ['###', '###'] };
+
+// A body, dressed. `o` = { outfit, hat, carry, locked, extra }: `locked`
+// names the slots drawn faint (a try-on), `extra` a second aura (the crowd's
+// combined looks only).
+function drawBody(g, b, t, k, o = {}) {
+  const at = b.at(t), x = Math.round(at.x), y = Math.round(at.y), out = o.outfit || {};
+  const look = { dir: at.dir, moving: at.moving, t };
+  const faint = s => { FADE = o.locked && o.locked.includes(s) ? 0.3 : 1; };
+  const hd = HEAD[out.head];
+  b.headH = hd ? headH(hd) : o.hat ? CREWHATS[o.hat].length * P : 0;
+  const auras = [AURA[out.aura], AURA[o.extra]].filter(a => a && a.draw);
+  faint('aura'); for (const a of auras) a.draw(g, b, t, 'back', k);
+  faint('back'); if (out.back && out.back !== 'none') backOf(g, out.back, x, y, look, k);
+  const nk = NECK[out.neck]; faint('neck'); if (nk && nk.tail) tailOf(g, nk.tail, x, y, look, k, nk.tone);
+  FADE = 1;
+  rect(g, x, y, W, W, k.rim); rect(g, x + RIM, y + RIM, W - 2 * RIM, W - 2 * RIM, k.mid);
+  const pat = PATTERN[out.pattern]; faint('pattern');
+  if (pat) for (const [rx, ry, rw, rh, tn] of pat) rect(g, x + RIM + (at.dir < 0 ? 14 - rx - rw : rx), y + RIM + ry, rw, rh, tn === 'g' ? k.grey(5) : k.rim);
+  const on = out.pattern === 'filled' ? k.mid : k.rim, grey = out.pattern === 'filled' ? k.grey(2) : k.grey(5);
+  faint('face'); if (FACE[out.face]) grid(g, FACE[out.face], x + RIM, y + RIM, at.dir, on, grey);
+  faint('neck'); if (nk) grid(g, typeof nk.grid === 'function' ? nk.grid(t) : nk.grid, x + RIM, y + RIM, at.dir, on, nk.tone ? k[nk.tone] : grey);
+  faint('pattern'); if (pat && pat.draw) pat.draw(g, x, y, look, k);
+  faint('head');
+  if (hd && hd.draw) hd.draw(g, x, y, at.dir, k, t, at.moving);
+  else if (hd) headOf(g, hd, x, y, at.dir, hd.tone ? k[hd.tone] : k.rim, k);
+  else if (o.hat) headOf(g, { rows: CREWHATS[o.hat] }, x, y, at.dir, k.rim, k);
+  if (o.carry && !hd) { FADE = 1; rect(g, x + P, y - (o.hat ? CREWHATS[o.hat].length * P : 0) - P - 2, P, P, k.grey(5)); }
+  faint('aura'); for (const a of auras) a.draw(g, b, t, 'front', k);
+  FADE = 1;
+}
+
+// ---------------------------------------------------------------------------
+function walker(a, b, v, ph = 0, rest = 1, y = 0) {
+  return { at(t) {
+    if (!v) return { x: a, y, dir: 1, moving: false };
+    const T = (b - a) / v, C = 2 * T + 2 * rest, u = (((t + ph * C) % C) + C) % C;
+    if (u < T) return { x: a + u * v, y, dir: 1, moving: true };
+    if (u < T + rest) return { x: b, y, dir: 1, moving: false };
+    if (u < 2 * T + rest) return { x: b - (u - T - rest) * v, y, dir: -1, moving: true };
+    return { x: a, y, dir: -1, moving: false };
+  } };
+}
+let motion = 'loop';
+function tileWalker(y) {
+  const loop = walker(22, 40, 8, 0, 2.5, y), walk = walker(22, 40, 8, 0, 0.001, y);
+  return { at(t) { return motion === 'stand' ? { x: 31, y, dir: 1, moving: false } : motion === 'walk' ? walk.at(t) : loop.at(t); } };
+}
+// A body walking in place: the feet going, the body not moving.
+const inPlace = (x, y, on) => ({ at: () => ({ x, y, dir: 1, moving: on() }) });
+
+function canvasOf(w, h, scale) {
+  const c = document.createElement('canvas');
+  c.width = w * scale * DPR; c.height = h * scale * DPR;
+  c.style.width = (w * scale) + 'px';
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.setTransform(scale * DPR, 0, 0, scale * DPR, 0, 0);
+  return { c, g, w, h };
+}
+function fig(parent, cv, caption) {
+  const f = document.createElement('figure'); f.appendChild(cv.c);
+  if (caption) { const fc = document.createElement('figcaption'); fc.innerHTML = caption; f.appendChild(fc); }
+  parent.appendChild(f); return f;
+}
+function groundOf(g, w, h, gy, k, plain) {
+  g.fillStyle = k.ground; g.fillRect(0, 0, w, h);
+  if (!plain) { g.fillStyle = k.faint; for (let y = gy + 4; y < h; y += 6) for (let x = (y * 2) % 12; x < w; x += 12) g.fillRect(x, y, 6, 1); }
+  g.fillStyle = k.line; g.fillRect(0, gy, w, 1);
+}
+let groundDeep = false, paused = false, clock = 0;
+const drawers = [];
+// Only canvases on the glass are drawn: the grids hold about eighty.
+const seen = new WeakMap();
+const io = new IntersectionObserver(es => es.forEach(e => seen.set(e.target, e.isIntersecting)));
+const watch = c => { seen.set(c, true); io.observe(c); return c; };
+// a held snapshot (?t=) draws everything, on or off the glass
+const showing = c => new URLSearchParams(location.search).has('t') || seen.get(c) !== false;
+
+// ---------------------------------------------------------------------------
+// The achievements (src/catalog.js keys; names and notes from locales/en.ftl)
+// and the station rules (src/kit.js).
+const ACH = {
+  muckrain: ['it never rains but it pours', 'stand through a muck rain'],
+  nobodyhired: ['nobody hired', 'clear a whole boulder with nobody on the payroll'],
+  catchall: ['juggler', 'throw a full hand of dust, at its biggest, and catch every grain'],
+  firstbrew: ['hello, potion seller', 'brew a batch at the apothecary'],
+  dizzy: ['shaken baby syndrome', 'shake a worker dizzy'],
+  star: ['conjure a star', 'call a star down from the tower'],
+  wholelot: ['not one of you', 'startle every bird in one lot'],
+  underminute: ['a rock off in under a minute', 'clear a boulder in under a minute'],
+  bird: ['get off my land', 'startle a bird'],
+  alltrades: ['educating the masses', 'stock every station with its hat'],
+  hatoff: ['hats off', 'shake the hat off a worker'],
+  allbuilt: ['building complete', 'you built everything'],
+  drowned: ['the rift has gotten bigger', 'a whole ocean of inter-dimensional storage.'],
+  lifted: ['come here you', 'pick a worker up'],
+  lived1h: ['an hour on one clock', 'keep one body on the payroll for an hour'],
+  firstgrain: ["makin' money", 'throw a pebble into the pit'],
+  freed: ['sqouse freed', 'free your sqouse from the serpent'],
+  tableruin: ['time to get a loan', 'come out 50k down on a single hand at the casino'],
+  shookload: ['turn out your pockets', 'shake a full load out of a worker'],
+  // the aura mock's example locks
+  gotout: ['you saved your sqouse', 'no more rocks, you did it.'],
+  tablebeaten: ["we're so back", 'come out 50k up on a single hand at the casino'],
+  firstspark: ['magic in the air', 'earn your first spark'],
+  serpent0: ['serpent level 2', 'reach serpent level 2'],
+  allstations: ['full party', 'stand a station on every slot in the deep'],
+};
+const RULES = {
+  'hat-rock': { label: 'rock: first helmet bought', hat: 'helmet', station: 'the rock (rockhands)', when: 'the first helmet bought on its kit row (S.breakers >= 1)', line: 'buy the rock its first helmet' },
+  'hat-quarry': { label: 'quarry: first lamp bought', hat: 'lamp', station: 'the quarry (quarriers)', when: 'the first lamp bought (S.blasters >= 1)', line: 'buy the quarry its first lamp' },
+  'hat-farm': { label: 'farm: first sun hat bought', hat: 'sun hat', station: 'the farm (farmhands)', when: 'the first sun hat bought (S.growers >= 1)', line: 'buy the farm its first sun hat' },
+  'hat-tower': { label: 'tower: first wizard hat made', hat: 'point', station: 'the tower (wizards)', when: 'the first wizard hat finished (S.wizardHats >= 1); the same moment as "you\'re a wizard squarey"', line: 'make the tower its first wizard hat' },
+  'hat-shed': { label: 'outhouse open', hat: 'cap', station: 'the outhouse (janitors)', when: 'the outhouse opening (S.outhouseOpen): its hats come with it, nobody buys one', line: 'open the outhouse' },
+};
+// Item -> what opens it. One achievement may open more than one thing.
+const LOCKS = {
+  'aura:flies': 'muckrain', 'aura:stink': 'nobodyhired', 'aura:juggle': 'catchall', 'aura:fizz': 'firstbrew', 'aura:dizzy': 'dizzy',
+  'aura:shoot': 'star', 'aura:flock': 'wholelot', 'aura:speed': 'underminute',
+  'head:bird': 'bird', 'head:mortarboard': 'alltrades', 'head:bowler': 'hatoff', 'head:hard hat': 'allbuilt', 'head:diving bowl': 'drowned',
+  'face:surprised': 'lifted', 'neck:pocket watch': 'lived1h', 'back:moneybag': 'firstgrain', 'back:gold-trim cape': 'freed',
+  'pattern:patches': 'tableruin', 'pattern:pockets': 'shookload',
+  'head:helmet': 'hat-rock', 'head:lamp': 'hat-quarry', 'head:sun hat': 'hat-farm', 'head:point': 'hat-tower', 'head:cap': 'hat-shed',
+  // the aura mock's, with its "home" now the serpent kill
+  'head:gold crown': 'freed', 'aura:halo': 'freed', 'neck:gold scarf': 'freed',
+  'head:crown': 'gotout', 'face:monocle': 'tablebeaten', 'face:shades': 'underminute', 'back:cape': 'star', 'back:balloon': 'wholelot',
+  'aura:orbit': 'firstspark', 'aura:cloud': 'muckrain', 'aura:scales': 'serpent0', 'aura:embers': 'allstations',
+};
+const lockName = id => ACH[id] ? ACH[id][0] : RULES[id].label;
+const lockLine = id => ACH[id] ? `<span class="ph">earn "${ACH[id][0]}"</span>` : `<span class="ph">${RULES[id].line}</span>`;
+const nameOf = (slot, key) => slot === 'aura' ? AURA[key].name : key;
+// The placeholder display name: an item's key, marked when it is new.
+const label = (slot, key) => isNewItem(slot, key) || HEAD[key]?.hat && slot === 'head' ? `<span class="ph">${nameOf(slot, key)}</span>` : nameOf(slot, key);
+const earned = new Set();
+const isLocked = (slot, key) => { const id = LOCKS[slot + ':' + key]; return !!id && !earned.has(id); };
+const lockOf = (slot, key) => LOCKS[slot + ':' + key];
+function lockSvg(c = 'currentColor') {
+  return `<svg class="lk" viewBox="0 0 7 8" aria-hidden="true"><g fill="${c}"><rect x="1" y="0" width="5" height="1"/><rect x="1" y="1" width="1" height="3"/><rect x="5" y="1" width="1" height="3"/><rect x="0" y="3" width="7" height="5"/></g><rect x="3" y="5" width="1" height="2" fill="#fff"/></svg>`;
+}
+
+// ---------------------------------------------------------------------------
+// Part 1: a tile a piece. The bare body at 4x on the chosen ground, at game
+// scale on the yard and in the deep.
+function tile(host, title, sub, forLine, line, outfit, rows) {
+  const card = document.createElement('section'); card.className = 'piece';
+  card.innerHTML = `<h2><span>${title}</span><small>${sub}</small></h2>${forLine}<p class="line">${line}</p>`;
+  const views = document.createElement('div'); views.className = 'views'; card.appendChild(views);
+  const BW = 80, BH = 74, gy = BH - 10;
+  const big = canvasOf(BW, BH, 4), yard = canvasOf(BW, BH, 1), deep = canvasOf(BW, BH, 1);
+  fig(views, big, '4x');
+  const smalls = document.createElement('div'); smalls.style.display = 'flex'; smalls.style.gap = '6px'; views.appendChild(smalls);
+  fig(smalls, yard, 'yard 1x'); fig(smalls, deep, 'deep 1x');
+  const dl = document.createElement('dl'), live = document.createElement('dd');
+  for (const [dt, dd, cls] of rows) dl.insertAdjacentHTML('beforeend', `<dt>${dt}</dt><dd class="${cls || ''}">${dd}</dd>`);
+  dl.insertAdjacentHTML('beforeend', '<dt>measured</dt>'); dl.appendChild(live);
+  card.appendChild(dl); host.appendChild(card);
+  watch(big.c);
+  const body = tileWalker(gy - W);
+  drawers.push(t => {
+    if (!showing(big.c)) return;
+    const kb = palette(groundDeep);
+    groundOf(big.g, BW, BH, gy, kb); RECTS = 0; drawBody(big.g, body, t, kb, { outfit }); live.textContent = `${RECTS} rects this frame`;
+    groundOf(yard.g, BW, BH, gy, palette(false)); drawBody(yard.g, body, t, palette(false), { outfit });
+    groundOf(deep.g, BW, BH, gy, palette(true)); drawBody(deep.g, body, t, palette(true), { outfit });
+  });
+}
+// slot, key, the line, cost, reads, an outfit to show it on
+const NEW = [
+  ['aura', 'flies', 'Three flies loop round the body, darting on their own clocks; each a black unit with two pale wings in two held poses, up and down, swapped every frame so they whirr.', 'up to 3 flies, ~9 rects', ['good', 'yes: the fastest thing in the yard, round one body']],
+  ['aura', 'stink', 'The yuck mark\'s risers, small: three wavy lines of units rise off the top, the wave climbing them, thinning as they go.', '3 risers, ~12 rects', ['good', 'yes: the comic-strip smell, read at once']],
+  ['aura', 'juggle', 'Three balls in a cascade over the head: a high throw one way, a low pass back, on the held frames. One of the three is grey.', '3 balls, 3 rects', ['good', 'yes: arcs over a body are found at once']],
+  ['aura', 'fizz', 'A bubble rises off the top of the head, swells into a ring, and pops into four specks that fly apart and fade.', 'up to 2, ~8 rects', ['warn', 'half: the pop is small; reads better than the plain bubbles']],
+  ['aura', 'dizzy', 'The dizzy mark\'s two stars going round the head at its own speed, made small pluses, behind the head for half the turn.', '2 stars, 10 rects', ['good', 'yes, and already means "shaken" to anyone who has shaken a worker']],
+  ['aura', 'shoot', 'Every few seconds a star streaks down past the head from the upper right, a trail of four fading behind it, then rests.', '1 star + 4, ~9 rects', ['warn', 'when it falls; nothing between']],
+  ['aura', 'flock', 'Two of the sky\'s own birds circle overhead on a flat ring, wingtips swapping V and caret, behind the head for half the turn.', '2 birds, 6 rects', ['warn', 'yes, but next to a real lot it can pass for one of them']],
+  ['aura', 'speed', 'Walking, three dashes trail behind the body, their lengths swapping on the held frames. Standing, nothing.', '3 dashes walking, 0 standing', ['good', 'walking: the plainest "fast"']],
+  ['head', 'bird', 'A small grey bird sits on the head, bobbing with the step; every few seconds it hops up a few units, wings going, and lands again.', '~20 rects', ['good', 'yes: a shape on a head, and a moving one']],
+  ['head', 'mortarboard', 'A flat board over a cap, a tassel off one corner that swings when the body walks.', '~45 rects', ['good', 'yes: the board is wider than any hat']],
+  ['head', 'bowler', 'A round hat that tips itself every few seconds: lifts four units, leans, and settles back.', '~30 rects', ['good', 'yes, when it tips; a plain hat between']],
+  ['head', 'hard hat', 'A dome with a grey ridge and a peak out front, the builders\' hat (the rock\'s helmet is a flat bar; this is not that).', '~30 rects', ['good', 'yes: the peak gives it a front']],
+  ['head', 'diving bowl', 'A grey glass ring round the whole square, a glint on it, and a bubble going up out of the top now and then.', '~60 rects', ['good', 'yes: a ring round a body is nothing else in the yard']],
+  ['face', 'surprised', 'Tall eyes and a round mouth: picked up.', 'in the body', ['warn', 'close up only, as every face']],
+  ['neck', 'pocket watch', 'A chain across the chest to a little watch at the hip whose hand ticks once a second.', 'in the body', ['warn', 'close up only: the chain reads as a dotted line']],
+  ['back', 'moneybag', 'A tied sack on the back with a paper pebble on it, bouncing a unit with the step.', '~30 rects', ['good', 'yes: a lump on the back with ears']],
+  ['back', 'gold-trim cape', 'The cape, its hem and outer edge in gold. The one gold piece in the set, for the serpent kill.', '~5 cells + hem', ['good', 'yes: the only warm pixels on the screen']],
+  ['pattern', 'patches', 'One grey patch with stitched corners and one outlined patch: broke.', 'in the body', ['warn', 'close up; at game scale a busy square']],
+  ['pattern', 'pockets', 'Both pockets turned out, hanging off the sides, swinging with the step.', '4 rects', ['good', 'yes, walking: two flaps off a square']],
+];
+const SLOT_TITLE = { head: 'head', face: 'face', neck: 'neck', back: 'back', pattern: 'pattern', aura: 'aura (the sixth slot)' };
+const hostNew = document.getElementById('slotsNew');
+for (const slot of ['aura', 'head', 'face', 'neck', 'back', 'pattern']) {
+  hostNew.insertAdjacentHTML('beforeend', `<h3>${SLOT_TITLE[slot]}</h3>`);
+  const grid = document.createElement('div'); grid.className = 'pieces'; hostNew.appendChild(grid);
+  for (const [s, key, line, cost, reads] of NEW.filter(n => n[0] === slot)) {
+    const id = lockOf(s, key), gold = (s === 'back' && key === 'gold-trim cape');
+    const outfit = { [s]: key, face: s === 'face' ? key : 'eyes' };
+    tile(grid, `<span class="ph">${nameOf(s, key)}</span>${gold ? '<span class="gold-tag">gold</span>' : ''}`, s,
+      `<p class="for">for <b>${ACH[id][0]}</b> <i>(${ACH[id][1]})</i></p>`, line, outfit, [['cost', cost], ['game scale', reads[1], reads[0]]]);
+  }
+}
+// Part 1b: the station hats.
+const hatsHost = document.getElementById('hats');
+for (const [id, r] of Object.entries(RULES)) {
+  tile(hatsHost, `<span class="ph">${r.hat}</span>`, 'head', `<p class="for">opens with <b>${r.station}</b></p>`,
+    'The crew\'s own sprite, <code>HATS.' + (r.hat === 'sun hat' ? 'brim' : r.hat) + '</code>, on the bare body.', { head: r.hat, face: 'eyes' },
+    [['opens when', r.when], ['lock line', lockLine(id)]]);
+  document.getElementById('hatRules').insertAdjacentHTML('beforeend', `<tr><td>${r.hat}</td><td>${r.station}</td><td>${r.when}</td><td>${lockLine(id)}</td></tr>`);
+}
+
+// The crowd.
+const LOOKS = {
+  'muck: flies and stink': [{ face: 'sleepy', aura: 'flies' }, 'stink'],
+  'juggler and mortarboard': [{ head: 'mortarboard', face: 'smile', aura: 'juggle' }],
+  'bird on the head, flock': [{ head: 'bird', face: 'eyes', aura: 'flock' }],
+  'shaken: bowler, dizzy': [{ head: 'bowler', face: 'surprised', aura: 'dizzy' }],
+  'potion: point, fizz': [{ head: 'point', face: 'eyes', aura: 'fizz' }],
+  'broke: patches, pockets': [{ pattern: 'patches', face: 'sleepy', back: 'moneybag' }],
+  'diver': [{ head: 'diving bowl', face: 'eyes', aura: 'bubbles' }],
+  'freed: gold cape, crown, halo': [{ head: 'gold crown', face: 'smile', back: 'gold-trim cape', aura: 'halo' }],
+  'builder: hard hat, watch': [{ head: 'hard hat', neck: 'pocket watch', face: 'eyes', aura: 'speed' }],
+  'farmhand: sun hat': [{ head: 'sun hat', face: 'eyes', neck: 'scarf' }],
+};
+const crowdPick = { you: 'muck: flies and stink', sq: 'bird on the head, flock' };
+for (const [id, who] of [['lookYou', 'you'], ['lookSq', 'sq']]) {
+  const s = document.getElementById(id);
+  for (const n of Object.keys(LOOKS)) s.insertAdjacentHTML('beforeend', `<option>${n}</option>`);
+  s.value = crowdPick[who]; s.addEventListener('change', () => { crowdPick[who] = s.value; });
+}
+function strip(hostId, deep, scale, w) {
+  const H = 72, gy = H - 8, cv = canvasOf(w, H, scale);
+  document.getElementById(hostId).appendChild(cv.c); watch(cv.c);
+  let r = 7; const rnd = () => (r = (r * 1664525 + 1013904223) >>> 0) / 4294967296;
+  const kits = [null, 'helmet', 'lamp', 'brim', 'point', 'cap'], crew = [];
+  for (let i = 0; i < 10; i++) {
+    const a = 10 + rnd() * (w - 70), span = 40 + rnd() * (w * 0.45);
+    crew.push({ b: walker(a, Math.min(w - 30, a + span), rnd() < 0.2 ? 0 : 10 + rnd() * 12, rnd(), 1, gy - W), hat: kits[Math.floor(rnd() * kits.length)], carry: rnd() < 0.3 });
+  }
+  const you = walker(40, w - 120, 13, 0.1, 1.2, gy - W), sq = walker(90, w - 40, 16, 0.55, 1.2, gy - W);
+  drawers.push(t => {
+    if (!showing(cv.c)) return;
+    const k = palette(deep), [o1, x1] = LOOKS[crowdPick.you], [o2, x2] = LOOKS[crowdPick.sq];
+    groundOf(cv.g, w, H, gy, k);
+    for (const c of crew) drawBody(cv.g, c.b, t, k, { hat: c.hat, carry: c.carry });
+    drawBody(cv.g, you, t, k, { outfit: o1, extra: x1 });
+    drawBody(cv.g, sq, t, k, { outfit: o2, extra: x2 });
+  });
+}
+strip('crowdYard', false, 1, 560); strip('crowdDeep', true, 1, 560); strip('crowdYard2', false, 2, 560);
+
+// ---------------------------------------------------------------------------
+// Part 2: the grid picker. One builder, two layouts (A tabs, B sections), two
+// widths (desk, phone).
+const sheets = [];
+const refreshAll = () => sheets.forEach(s => s.update());
+(() => {
+  const host = document.getElementById('earned');
+  const ids = [...new Set(Object.values(LOCKS))];
+  for (const id of ids) {
+    const l = document.createElement('label');
+    l.innerHTML = `<input type="checkbox" data-id="${id}"> ${lockName(id)}`;
+    l.querySelector('input').addEventListener('change', e => { e.target.checked ? earned.add(id) : earned.delete(id); refreshAll(); });
+    host.appendChild(l);
+  }
+  const all = on => { for (const i of host.querySelectorAll('input')) { i.checked = on; on ? earned.add(i.dataset.id) : earned.delete(i.dataset.id); } refreshAll(); };
+  document.getElementById('earnAll').addEventListener('click', () => all(true));
+  document.getElementById('earnNone').addEventListener('click', () => all(false));
+  // a few earned from the start, so open and locked are both on the page
+  for (const id of ['hat-rock', 'hat-quarry', 'bird', 'muckrain', 'catchall', 'gotout', 'firstgrain']) { earned.add(id); host.querySelector(`[data-id="${id}"]`).checked = true; }
+})();
+
+const DIE = '<svg viewBox="0 0 7 7" aria-hidden="true"><rect x="0.5" y="0.5" width="6" height="6" fill="none" stroke="currentColor"/>' +
+  [[1.5, 1.5], [4.5, 1.5], [3, 3], [1.5, 4.5], [4.5, 4.5]].map(([x, y]) => `<rect x="${x}" y="${y}" width="1" height="1" fill="currentColor"/>`).join('') + '</svg>';
+const ROLES = ['wife', 'ouse', 'husband'];
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const TW = 36, TH = 50, TGY = TH - 5;
+
+function makeSheet(host, layout, size) {
+  const st = {
+    who: 'you', tab: 0,
+    outfit: { you: { head: 'bow', face: 'eyes', neck: 'scarf', back: 'none', pattern: 'plain', aura: 'none' },
+              sqouse: { head: 'helmet', face: 'smile', neck: 'none', back: 'cape', pattern: 'dots', aura: 'flies' } },
+    name: { you: 'pebble', sqouse: 'grit' }, role: { you: 'husband', sqouse: 'wife' }, cur: null, hovered: null,
+  };
+  st.kept = { you: { ...st.outfit.you }, sqouse: { ...st.outfit.sqouse } };
+  const sheet = el('div', `sheet ${layout} ${size}`);
+  const phone = size === 'phone';
+  const nav = e => { e.dataset.nav = '1'; return e; };
+  const btn = (cls, html, fn) => { const b = nav(el('button', cls, html)); b.type = 'button'; b.addEventListener('click', fn); return b; };
+
+  const title = el('div', 't', '<span class="ph">appearance</span><span>x</span>');
+  const who = el('div', 'who');
+  const whoBtns = ['you', 'sqouse'].map(w => btn('tab', `<span class="ph">${w === 'you' ? 'you' : 'your sqouse'}</span>`, () => { st.who = w; update(); }));
+  who.append(...whoBtns);
+  // the close-up
+  const CW = phone ? 52 : 64, CH = 64, cgy = CH - 8, scale = phone ? 2 : 3;
+  const close = canvasOf(CW, CH, scale); watch(close.c);
+  const body = phone ? walker(14, 22, 5, 0, 2.5, cgy - W) : walker(22, 30, 5, 0, 2.5, cgy - W);
+  // name and role
+  const nameIn = nav(el('input')); nameIn.value = st.name.you; nameIn.addEventListener('input', () => { st.name[st.who] = nameIn.value; });
+  const nameRow = el('div', 'frow', '<span class="ph">name</span>');
+  const nameDie = btn('die', DIE, () => { st.name[st.who] = ['pebble', 'grit', 'flint', 'shale', 'cobble'][Math.floor(Math.random() * 5)]; update(); });
+  nameRow.append(nameIn, el('span', '', ''), nameDie);
+  const roleRow = el('div', 'frow role', '<span class="ph">role</span>');
+  const rv = el('span', 'rv');
+  const stepRole = by => { const i = ROLES.indexOf(st.role[st.who]); st.role[st.who] = ROLES[(i + by + 3) % 3]; update(); };
+  roleRow.append(btn('arr', '&lt;', () => stepRole(-1)), rv, btn('arr', '&gt;', () => stepRole(1)), btn('die', DIE, () => { st.role[st.who] = ROLES[Math.floor(Math.random() * 3)]; update(); }));
+  const fields = el('div', 'fields'); fields.append(nameRow, roleRow);
+  const id = el('div', 'id'); id.append(close.c, fields);
+
+  const status = el('div', 'status');
+  const btns = el('div', 'btns');
+  btns.append(btn('btn', '<span class="ph">randomize</span>', () => { SLOTS.forEach(s => roll(s.key)); }),
+              btn('btn', '<span class="ph">clear</span>', () => { for (const s of SLOTS) { const k0 = Object.keys(s.list)[0]; st.outfit[st.who][s.key] = k0; st.kept[st.who][s.key] = k0; } update(); }),
+              btn('btn', '<span class="ph">done</span>', () => { st.outfit[st.who] = { ...st.kept[st.who] }; update(); }));
+  const hint = el('div', 'hint', phone ? 'tap a tile to wear it; a faint one is locked: tap to try it on' :
+    'pad: d-pad nearest that way · A pick · Y roll this slot · LB/RB you / sqouse · ' + (layout === 'A' ? 'LT/RT slot tab' : 'LT/RT section'));
+
+  // the tiles: one per item, rebuilt when the slot (A) changes
+  const tiles = [];
+  function makeTile(slot, key) {
+    const b = btn('tile', '', () => pick(slot.key, key));
+    const cv = canvasOf(TW, TH, 2); watch(cv.c);
+    const name = el('span', '', label(slot.key, key));
+    b.append(cv.c, name);
+    const lk = el('span', '', ''); b.appendChild(lk);
+    b.addEventListener('mouseenter', () => { st.hovered = b; showStatus(); });
+    b.addEventListener('mouseleave', () => { st.hovered = null; showStatus(); });
+    const t = { b, cv, slot: slot.key, key, lk, on: false };
+    t.body = inPlace(9, TGY - W, () => t.on || st.hovered === b || st.cur === b);
+    tiles.push(t);
+    return b;
+  }
+  const tabs = el('div', 'tabs'), tabBtns = [];
+  const slotHead = el('div', 'slothead'), gridA = el('div', 'tiles');
+  const secs = [];
+  function rebuildA() {
+    for (let i = tiles.length - 1; i >= 0; i--) if (tiles[i].b.parentNode === gridA) tiles.splice(i, 1);
+    gridA.innerHTML = '';
+    const s = SLOTS[st.tab];
+    for (const key of Object.keys(s.list)) gridA.appendChild(makeTile(s, key));
+  }
+  if (layout === 'A') {
+    SLOTS.forEach((s, i) => { const b = btn('tab', '', () => { st.tab = i; rebuildA(); update(); }); tabBtns.push(b); tabs.appendChild(b); });
+    slotHead.innerHTML = '<span class="l"></span>';
+    const r = el('span', 'r'); r.append(el('small', ''), btn('die', DIE, () => roll(SLOTS[st.tab].key))); slotHead.appendChild(r);
+    sheet.append(title, who, id, tabs, slotHead, gridA, status, btns, hint);
+    rebuildA();
+  } else {
+    const sections = el('div', 'right');
+    for (const s of SLOTS) {
+      const sec = el('div', 'sec'), h = el('div', 'slothead', '<span class="l"></span>');
+      const r = el('span', 'r'); r.append(el('small', ''), btn('die', DIE, () => roll(s.key))); h.appendChild(r);
+      const g = el('div', 'tiles'); for (const key of Object.keys(s.list)) g.appendChild(makeTile(s, key));
+      sec.append(h, g); sections.appendChild(sec); secs.push({ sec, h, g, s });
+    }
+    if (phone) {
+      const stick = el('div', 'stick'), mini = el('div', 'mini');
+      mini.append(close.c, fields);
+      stick.append(title, who, mini);
+      const foot = el('div', 'foot'); foot.append(status, btns);
+      sheet.append(stick, sections, foot, hint);
+    } else {
+      const cols = el('div', 'cols'), left = el('div', 'left');
+      id.innerHTML = ''; id.append(close.c, fields);
+      left.append(who, id, status, btns);
+      cols.append(left, sections);
+      sheet.append(title, cols, hint);
+    }
+  }
+  host.appendChild(sheet);
+
+  function pick(slot, key) {
+    st.outfit[st.who][slot] = key;
+    if (!isLocked(slot, key)) st.kept[st.who][slot] = key;
+    update();
+  }
+  // None twice as likely as any one item; a locked item is never rolled.
+  function roll(slot) {
+    const keys = Object.keys(SLOTS.find(s => s.key === slot).list), open = keys.slice(1).filter(k => !isLocked(slot, k));
+    const k = Math.random() < 2 / (open.length + 2) || !open.length ? keys[0] : open[Math.floor(Math.random() * open.length)];
+    st.outfit[st.who][slot] = k; st.kept[st.who][slot] = k; update();
+  }
+  function showStatus() {
+    const at = st.hovered || st.cur, t = tiles.find(x => x.b === at), o = st.outfit[st.who];
+    let s = '';
+    if (t) {
+      const id = lockOf(t.slot, t.key);
+      s = `${t.slot}: ${label(t.slot, t.key)}` + (isLocked(t.slot, t.key) ? ` · locked: ${lockLine(id)}` : '');
+    }
+    const tried = SLOTS.filter(x => isLocked(x.key, o[x.key]));
+    if (tried.length) s += (s ? '<br>' : '') + tried.map(x => `trying on ${label(x.key, o[x.key])}: ${lockLine(lockOf(x.key, o[x.key]))}; done keeps ${nameOf(x.key, st.kept[st.who][x.key])}`).join('<br>');
+    status.innerHTML = s || '&nbsp;';
+  }
+  function update() {
+    const o = st.outfit[st.who];
+    whoBtns.forEach((b, i) => b.classList.toggle('on', ['you', 'sqouse'][i] === st.who));
+    nameIn.value = st.name[st.who]; rv.innerHTML = `<span class="ph">${st.role[st.who]}</span>`;
+    const openOf = s => Object.keys(s.list).filter(k => !isLocked(s.key, k)).length, total = s => Object.keys(s.list).length;
+    if (layout === 'A') {
+      tabBtns.forEach((b, i) => { const s = SLOTS[i]; b.classList.toggle('on', i === st.tab); b.innerHTML = `${s.key}${phone ? '' : ` <small>${openOf(s)}/${total(s)}</small>`}`; });
+      const s = SLOTS[st.tab];
+      slotHead.querySelector('.l').innerHTML = `<b>${s.key}</b>: ${label(s.key, o[s.key])}`;
+      slotHead.querySelector('small').textContent = `${openOf(s)} of ${total(s)} open`;
+    } else for (const { h, s } of secs) {
+      h.querySelector('.l').innerHTML = `<b>${s.key}</b>: ${label(s.key, o[s.key])}`;
+      h.querySelector('small').textContent = `${openOf(s)} of ${total(s)} open`;
+    }
+    for (const t of tiles) {
+      t.on = o[t.slot] === t.key;
+      const lk = isLocked(t.slot, t.key);
+      t.b.classList.toggle('on', t.on); t.b.classList.toggle('lock', lk);
+      t.lk.innerHTML = lk ? lockSvg() : '';
+      t.b.title = lk ? `${nameOf(t.slot, t.key)}: ${lockName(lockOf(t.slot, t.key))}` : nameOf(t.slot, t.key);
+    }
+    if (st.cur && !st.cur.isConnected) setCur(null);
+    showStatus();
+  }
+  function setCur(e) {
+    if (st.cur) st.cur.classList.remove('pf');
+    st.cur = e;
+    if (e) { e.classList.add('pf'); e.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+    showStatus();
+  }
+  // The d-pad: of every button whose middle lies that way, the nearest along
+  // the direction, anything overlapping the current one across preferred.
+  function move(dx, dy) {
+    const els = [...sheet.querySelectorAll('[data-nav]')].filter(e => e.offsetParent !== null);
+    if (!st.cur) { setCur(els.find(e => e.classList.contains('tile')) || els[0]); return; }
+    const a = st.cur.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+    let best = null, bs = Infinity;
+    for (const e of els) {
+      if (e === st.cur) continue;
+      const r = e.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const along = dx ? (cx - ax) * dx : (cy - ay) * dy;
+      if (along <= 4) continue;
+      const across = dx ? Math.abs(cy - ay) : Math.abs(cx - ax);
+      const overlap = dx ? (r.bottom > a.top + 2 && r.top < a.bottom - 2) : (r.right > a.left + 2 && r.left < a.right - 2);
+      const s = along + (overlap ? 0 : 1000 + across * 2);
+      if (s < bs) { bs = s; best = e; }
+    }
+    if (best) setCur(best);
+  }
+  const curSlot = () => { const t = tiles.find(x => x.b === st.cur); return t ? t.slot : layout === 'A' ? SLOTS[st.tab].key : null; };
+  function pad(k) {
+    if (k === 'left') move(-1, 0); else if (k === 'right') move(1, 0); else if (k === 'up') move(0, -1); else if (k === 'down') move(0, 1);
+    else if (k === 'A') { if (st.cur) st.cur.tagName === 'INPUT' ? st.cur.focus() : st.cur.click(); }
+    else if (k === 'Y') { const s = curSlot(); if (s) roll(s); }
+    else if (k === 'LB' || k === 'RB') { st.who = st.who === 'you' ? 'sqouse' : 'you'; update(); }
+    else if (k === 'LT' || k === 'RT') {
+      const by = k === 'RT' ? 1 : -1;
+      if (layout === 'A') { st.tab = (st.tab + by + SLOTS.length) % SLOTS.length; rebuildA(); update(); setCur(tiles[0] && tiles[0].b); }
+      else { const i = SLOTS.findIndex(s => s.key === curSlot()), j = Math.max(0, Math.min(SLOTS.length - 1, (i < 0 ? 0 : i + by)));
+        setCur(secs[j].g.firstChild); }
+    }
+  }
+  drawers.push(t => {
+    const o = st.outfit[st.who], k = palette(false);
+    if (showing(close.c)) {
+      groundOf(close.g, CW, CH, cgy, k, true);
+      drawBody(close.g, body, t, k, { outfit: o, locked: SLOTS.map(s => s.key).filter(s => isLocked(s, o[s])) });
+    }
+    for (const x of tiles) {
+      if (!showing(x.cv.c)) continue;
+      const kk = palette(x.on);
+      groundOf(x.cv.g, TW, TH, TGY, kk, true);
+      drawBody(x.cv.g, x.body, t, kk, { outfit: { [x.slot]: x.key, face: x.slot === 'face' ? x.key : 'eyes' } });
+    }
+  });
+  sheet.addEventListener('mouseenter', () => { activeSheet = api; });
+  const api = { pad, update, sheet };
+  sheets.push(api);
+  update();
+  return api;
+}
+function padBar(hostId, s) {
+  const h = document.getElementById(hostId);
+  h.insertAdjacentHTML('beforeend', '<span>pad (pretend):</span>');
+  for (const [k, txt] of [['left', '◀'], ['up', '▲'], ['down', '▼'], ['right', '▶'], ['A', 'A'], ['Y', 'Y'], ['LB', 'LB'], ['RB', 'RB'], ['LT', 'LT'], ['RT', 'RT']]) {
+    const b = el('button', '', txt); b.addEventListener('mousedown', e => e.preventDefault()); b.addEventListener('click', () => s.pad(k)); h.appendChild(b);
+  }
+}
+let activeSheet = null;
+const aDesk = makeSheet(document.getElementById('aDesk'), 'A', 'desk');
+makeSheet(document.getElementById('aPhone'), 'A', 'phone');
+const bDesk = makeSheet(document.getElementById('bDesk'), 'B', 'desk');
+makeSheet(document.getElementById('bPhone'), 'B', 'phone');
+padBar('aDeskPad', aDesk); padBar('bDeskPad', bDesk);
+activeSheet = aDesk;
+// Start the pad's focus on a tile so the look is on the page from the first frame.
+aDesk.pad('down'); aDesk.pad('down'); aDesk.pad('right'); aDesk.pad('right');
+bDesk.pad('down'); bDesk.pad('down');
+window.scrollTo(0, 0);
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT' || !activeSheet) return;
+  const map = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', Enter: 'A', y: 'Y', q: 'LB', e: 'RB', '[': 'LT', ']': 'RT' };
+  if (map[e.key]) { activeSheet.pad(map[e.key]); e.preventDefault(); }
+});
+
+// Today's page, cut down: the five slots and the aura as previous / next rows.
+(() => {
+  const sh = el('div', 'sheet desk today'); sh.style.width = '420px';
+  sh.innerHTML = '<div class="t"><span>appearance (today)</span><span>x</span></div>';
+  const cv = canvasOf(64, 56, 3); sh.appendChild(cv.c); cv.c.style.alignSelf = 'center'; watch(cv.c);
+  const o = { head: 'bow', face: 'eyes', neck: 'scarf', back: 'none', pattern: 'plain', aura: 'none' };
+  for (const s of SLOTS) {
+    const r = el('div', 'row', `<span>${s.key}</span>`), v = el('span', 'v');
+    const keys = Object.keys(s.list);
+    const show = () => { v.innerHTML = label(s.key, o[s.key]) + ` <small style="color:#8a8a8a">${keys.indexOf(o[s.key])}/${keys.length - 1}</small>`; };
+    const step = by => { o[s.key] = keys[(keys.indexOf(o[s.key]) + by + keys.length) % keys.length]; show(); };
+    const pb = el('button', 'arr', '&lt;'), nb = el('button', 'arr', '&gt;'), d = el('button', 'die', DIE);
+    pb.onclick = () => step(-1); nb.onclick = () => step(1); d.onclick = () => { o[s.key] = keys[Math.floor(Math.random() * keys.length)]; show(); };
+    r.append(pb, v, nb, d); r.insertBefore(pb, v); sh.appendChild(r); show();
+  }
+  sh.insertAdjacentHTML('beforeend', '<div class="hint">one item at a time per row; the locks and the new items are in the lists but cannot be seen until stepped to</div>');
+  document.getElementById('today').appendChild(sh);
+  const b = walker(22, 30, 5, 0, 2.5, 48 - W);
+  drawers.push(t => { const k = palette(false); groundOf(cv.g, 64, 56, 48, k, true); drawBody(cv.g, b, t, k, { outfit: o }); });
+})();
+
+// ---------------------------------------------------------------------------
+const themes = ['auto', 'light', 'dark'];
+const q = new URLSearchParams(location.search);
+if (themes.includes(q.get('theme')) && q.get('theme') !== 'auto') document.documentElement.setAttribute('data-theme', q.get('theme'));
+document.getElementById('theme').addEventListener('click', e => {
+  const cur = themes.indexOf(e.target.dataset.v || 'auto'), next = themes[(cur + 1) % 3];
+  e.target.dataset.v = next; e.target.textContent = 'page: ' + next;
+  if (next === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', next);
+});
+document.getElementById('ground').addEventListener('change', e => { groundDeep = e.target.value === 'deep'; });
+document.getElementById('motion').addEventListener('change', e => { motion = e.target.value; });
+document.getElementById('pause').addEventListener('click', e => { paused = !paused; e.target.textContent = paused ? 'play' : 'pause'; });
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches || q.has('t');
+if (q.has('t')) clock = +q.get('t'); else if (still) clock = 1.3;
+if (q.has('deep')) { groundDeep = true; document.getElementById('ground').value = 'deep'; }
+// ?at=<id> scrolls there, for the saved snapshots
+if (q.get('at')) document.getElementById(q.get('at')).scrollIntoView();
+let last = performance.now();
+function frame(now) {
+  if (!paused && !still) clock += Math.min(0.05, (now - last) / 1000);
+  last = now;
+  const t = Math.floor(clock * 12) / 12;
+  for (const d of drawers) d(t);
+  if (!still) requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
