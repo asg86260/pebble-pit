@@ -170,6 +170,8 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+## v0.6.0 — 2026-10-16
+
 **New this release**
 - The controls page is one table grouped by what you do, each action once, with its mouse or keys and its controller button drawn side by side in lined-up columns (src/selftest/settings.js).
 - The pointing hands at the yard portal fade away once you have gone down through it and back up, and the portal stays clickable (test/portal-hand.test.mjs).
