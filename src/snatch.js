@@ -140,6 +140,14 @@ function takeOff(n) {
     w.dig = false;
     w.met = false;
     w.say = null;
+    // Its station's hat stays the station's. Off the crew it is no longer
+    // counted on a head (`worn`), and the beat draws no station hat on the
+    // pair, so it is already back on the stand; left on the body, she would
+    // climb out of the deep on her return to hang it up there (`retask`).
+    w.trained = false;
+    w.kitOf = null;
+    w.wanting = null;
+    w.legs = null;
     for (let i = 0; i < (w.carry || 0); i++)
       spawnChip(w.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, w.load?.[i] || 1);
     w.carry = 0;
