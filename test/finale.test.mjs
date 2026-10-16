@@ -301,3 +301,27 @@ group('an old save with the two of them retired loads with the house and a turn 
     ok(S.retired.x.every((x, i) => x === benchAt()[i]), 'sat on the bench', JSON.stringify(S.retired))
   ];
 });
+
+// The notice for the kill (notices.js, `freed`): the record gets it when the
+// last defense breaks, once, and a save past the finale that never had it is
+// given it on load.
+group('"sqouse freed" is on the record at the kill, once, and a save past it catches up', async () => {
+  yardAtTheEnd();
+  const before = S.won.includes('freed');
+  killed();
+  run(1);
+  const at = S.won.filter(k => k === 'freed').length;
+  until(() => S.beat.sheet === 'freedsheet');
+  window.__skipBeat('sheet');
+  run(2);
+  const once = S.won.filter(k => k === 'freed').length;
+  S.won = S.won.filter(k => k !== 'freed');
+  window.__reload();
+  run(2);
+  return [
+    ok(!before, 'a yard at the last defense has not freed anybody'),
+    ok(at === 1, 'the kill puts it on the record', `${at}`),
+    ok(once === 1, 'and it stays once through the finale', `${once}`),
+    ok(S.won.filter(k => k === 'freed').length === 1, 'a loaded save past the finale gets it', S.won.join(','))
+  ];
+});

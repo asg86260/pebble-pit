@@ -3260,3 +3260,9 @@ shell-carry-yes = carry it on
 
 # the Steam carry-over offer: the button that starts a fresh yard
 shell-carry-no = start fresh
+
+# achievement name: the serpent kill, the one in its belly out (neutral: no name, no role)
+ach-freed-name = sqouse freed
+
+# achievement note: the serpent kill
+ach-freed-note = free your sqouse from the serpent

@@ -7292,5 +7292,19 @@
   "where": "electron/steam.cjs",
   "context": "the Steam carry-over offer: the button that starts a fresh yard",
   "text": "start fresh"
+ },
+ {
+  "id": "ach-freed-name",
+  "group": "The shell",
+  "where": "src/catalog.js",
+  "context": "achievement name: the serpent kill, the one in its belly out (neutral: no name, no role)",
+  "text": "sqouse freed"
+ },
+ {
+  "id": "ach-freed-note",
+  "group": "The shell",
+  "where": "src/catalog.js",
+  "context": "achievement note: the serpent kill",
+  "text": "free your sqouse from the serpent"
  }
 ]
