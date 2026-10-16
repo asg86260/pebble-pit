@@ -19836,7 +19836,9 @@ slot (label, previous, the item, next), a roll for the one being dressed
 only (nothing twice as likely as any one item). Under a thumb each row is
 two lines and every target 44 pixels. A pad moves between its buttons as on
 any page; on a row left and right step the item, LB and RB are her and him,
-Y the roll, B back. It is a row on the settings page, always, and offered
+Y the roll, B back. It is a row on the house's board, always ("the two of
+you", over the yard on the held sheet; the owner moved it off settings,
+2026-10-16), and offered
 once at a new yard (`offerDress`: at boot, and when a slot is opened empty
 or the open one deleted) before the opening walks out, the yard held under
 it, its way off saying done and a skip that puts the defaults back. A save
@@ -19903,19 +19905,22 @@ writes the `-who` one (lang.js, `msgOr`), so German still says "deine frau"
 whatever role was chosen, rather than turning English mid-story.
 
 **The steps.** A new yard holds on the page's four steps: build who you are
-(name, role, the five slots, a die on every row, randomize all), confirm
+(name, role, the five slots, a die on every row, randomize all -- the role
+and the five slots, never the name, which has its own die (the owner,
+2026-10-16) -- and clear, every slot back to none and the pattern to
+plain), confirm
 your square, build your sqouse (the same rows), and the two of you side by
 side; done lets the opening go. Skip on the first step leaves both unnamed
 in today's roles and outfits. The steps are offered once, marked only when
 done or skipped, so a reload in the middle offers them again. The name
 and the role are never locked (the owner, 2026-10-16: "let them update it at
-anytime, it doesnt matter"): the settings page "the two of you" edits them
+anytime, it doesnt matter"): the house board's "the two of you" edits them
 mid-game as at the steps, and the story lines are read when shown, so a
 rename shows on the next card.
 
 **A pad.** The page's buttons as on every page; left and right on the role
 or a slot step it; Y rolls the row the focus is on (the whole square off
-any row); LB and RB the tabs on the settings page; through the steps B is
+any row); LB and RB the tabs on the page off the house; through the steps B is
 the step back and menu the step on, never the sheet's let-go. For the name:
 on the Steam build, Steam's own keyboard behind a button on the name row
 (`desk.askText`, steamworks.js's `showGamepadTextInput`); anywhere else, or

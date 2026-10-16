@@ -56,6 +56,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | roomba          | `roomba`, `tuneroomba` +plus                                                           |
 | house           | `house` +plus, `spellthrift` +star                                                     |
 | door            | `crewlist`                                                                             |
+| sqwife          | `pairpage`                                                                             |
 | hoist frame     | `unlockquarry`                                                                         |
 | furrow + sprout | `unlockfarm`, `farmplot` +plus                                                         |
 | pot             | `unlockapothecary`, `potkeep`, `anotherpot` +plus, `bufflength` +plus|

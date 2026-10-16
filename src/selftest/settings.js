@@ -350,7 +350,6 @@ export const TESTS = [
       ...(document.fullscreenEnabled || document.webkitFullscreenEnabled ? ['fullscreen: off'] : []),
       'sound: on',                            // the mute, which remembers -- see audio.js
       '',                                     // the volume: a slider has no words
-      msg('set-wardrobebtn'),                 // the two of them's picker -- see wardrobepage.js
       'controls',                             // the page of mouse buttons
       'back',
       version(),

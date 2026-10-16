@@ -74,13 +74,19 @@ group('the name die draws off the crew\'s own names, never the other square\'s',
     if (nameOf('you') === nameOf('sqouse')) clash++;
   }
   const outfit = JSON.stringify(outfitOf('you'));
+  setName('you', 'Pim');
   let k = 0;
   rollSquare('you', () => [0.99, 0.5, 0.01, 0.7, 0.3, 0.6, 0.2][k++ % 7]);
+  const kept = nameOf('you');
+  setName('you', '');
+  rollSquare('you', () => 0.5);
+  const unnamed = nameOf('you');
   steps(false);
   return [
     ok(!bad, 'every roll is a crew name that fits', `${bad} of ${n}`),
     ok(!clash, 'and never the one the other square has', `${clash} of ${n}`),
-    ok(JSON.stringify(outfitOf('you')) !== outfit && ROLES.includes(roleOf('you')), 'the whole square rolls its outfit and role too')
+    ok(JSON.stringify(outfitOf('you')) !== outfit && ROLES.includes(roleOf('you')), 'the whole square rolls its outfit and role too'),
+    ok(kept === 'Pim' && unnamed === '', 'but never its name, named or unnamed', `${JSON.stringify(kept)}, ${JSON.stringify(unnamed)}`)
   ];
 });
 

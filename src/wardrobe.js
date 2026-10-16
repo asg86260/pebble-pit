@@ -184,6 +184,10 @@ function rollItem(s, roll) {
 export const rollSlot = (who, slot, roll = Math.random) => wear(who, { [slot]: rollItem(SLOT[slot], roll) });
 // A roll for the one being dressed only, so a good outfit on the other is
 // not lost.
+// Every slot back to its bare item (none, or plain): the page's clear.
+export function bareOutfit(who) {
+  wear(who, Object.fromEntries(SLOTS.map(s => [s.key, bareOf(s.key).key])));
+}
 export function rollOutfit(who, roll = Math.random) {
   const out = {};
   for (const s of SLOTS) out[s.key] = rollItem(s, roll);
@@ -244,10 +248,10 @@ export function rollName(who, roll = Math.random) {
   const from = CREW_NAMES.filter(n => [...n].length <= NAME_MAX && n !== other && n !== now);
   if (from.length) setName(who, from[Math.floor(roll() * from.length) % from.length]);
 }
-// The whole square at random: its name, its role and every slot of what it
-// wears.
+// The whole square at random: its role and every slot of what it wears. Not
+// its name, which is the player's and has its own die (the owner,
+// 2026-10-16).
 export function rollSquare(who, roll = Math.random) {
-  rollName(who, roll);
   rollRole(who, roll);
   rollOutfit(who, roll);
 }

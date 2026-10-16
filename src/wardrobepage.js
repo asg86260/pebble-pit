@@ -6,14 +6,14 @@
 // own scale with a crowd walking it, so a choice is made for being found in
 // the yard and not only for the close-up. Then a row each: the name, the
 // role, and the five slots, each slot and the role with its previous and
-// next, and every row with a die that rolls it alone; and a roll for the
-// whole square.
+// next, and every row with a die that rolls it alone; a roll for the whole
+// square but its name, and a clear that takes every slot back to bare.
 //
 // It is reached two ways. Once at a new yard, before the opening walks out
 // (`offerDress`), as four steps: build who you are, confirm your square,
 // build your sqouse, and a last look at the two of you; done there lets the
-// opening go. And always as a row on the settings page, with a tab for each;
-// the name and the role can be changed there at any time.
+// opening go. And always as a row on the house's board (crewboard.js), with
+// a tab for each; the name and the role can be changed there at any time.
 //
 // Mouse, finger and keyboard type the name into its field. A pad moves
 // between the page's buttons as on every page (padpage.js): left and right
@@ -27,7 +27,7 @@ import { msg, writeInto } from './lang.js';
 import { S } from './state.js';
 import { P, WORKER, WARD_BIG, WARD_BIG_H, WARD_STRIP_H, WARD_CROWD, WARD_CROWD_PACE, NAME_MAX, NAME_GRID_COLS } from './config.js';
 import { SLOTS, WHO, DEFAULTS, itemOf, outfitOf, stepItem, rollSlot, nameOf, setName, stepRole, rollName,
-         rollRole, rollSquare, typedName, storyArgs } from './wardrobe.js';
+         rollRole, rollSquare, bareOutfit, typedName, storyArgs } from './wardrobe.js';
 import { drawDressed, YARD_INKS } from './render/wardrobe.js';
 import { HATS, drawSprite, spriteH, spriteW } from './sprites.js';
 
@@ -210,13 +210,17 @@ function build(el) {
   const roll = button(msg('ward-randomize-all'), 'wardroll');
   roll.id = 'wardroll';
   roll.addEventListener('click', () => { typing = null; rollSquare(who); say(); });
+  // every slot of the square bare, its name and role kept
+  const clear = button(msg('ward-clear'), 'wardclear');
+  clear.id = 'wardclear';
+  clear.addEventListener('click', () => { bareOutfit(who); say(); });
   const next = button(msg('ward-next'), 'wardnext');
   next.id = 'wardnext';
   next.addEventListener('click', () => go(1));
-  foot.append(skip, back, roll, next);
+  foot.append(skip, back, roll, clear, next);
   el.append(stepEl, big, strip, tabs, edit, shown, foot);
   built = { el, stepEl, big, strip, tabs, tab, input, count, askBtn, grid, roleRow, rVal, rPrev, rNext, roleDie,
-            nameDie: nameRow.querySelector('.warddie'), rows, edit, shown, back, skip, roll, next, crowd: crowdOf() };
+            nameDie: nameRow.querySelector('.warddie'), rows, edit, shown, back, skip, roll, clear, next, crowd: crowdOf() };
 }
 
 // The page brought up to the two of them and to the step.
@@ -256,6 +260,7 @@ function say() {
   b.skip.hidden = !at || step > 0;
   b.back.hidden = !at || step === 0;
   b.roll.hidden = kind !== 'build';
+  b.clear.hidden = kind !== 'build';
   b.next.hidden = !at;
   b.next.textContent = at && step === FLOW.length - 1 ? msg('ward-done') : msg('ward-next');
   const backBtn = document.getElementById('wardrobeback');
@@ -325,7 +330,7 @@ function go(by) {
 
 let onClose = null;
 // Done, or skip: the yard has been offered its steps, and the names and roles
-// stay open to change on the settings page.
+// stay open to change from the house's board.
 const close = () => {
   if (step >= 0) S.dressOffered = true;
   step = -1;
@@ -348,6 +353,12 @@ export function showWardrobe(el, { start = false, leave = null } = {}) {
 // Whether the new yard's steps are up, which own the way back and on.
 export const wardrobeOffer = () => step >= 0;
 export const leaveWardrobe = () => close();
+// The house board's row opens the page (crewboard.js), but the sheet is
+// settings.js's to bring up, and settings.js sits behind the board in the
+// import ring: it hands its way in here at load, and the row asks for it.
+let opener = null;
+export function wardrobeOpener(fn) { opener = fn; }
+export function openWardrobe() { opener?.(); }
 
 // --- the pad ----------------------------------------------------------------------
 // Up and down are the page's own moves between its buttons. On the role's

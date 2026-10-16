@@ -21,7 +21,7 @@ import { msg } from './lang.js';
 import { fillLanguages, inForce } from './langpage.js';
 import { feedbackReady } from './feedback.js';
 import { mountFeedback } from './feedbackform.js';
-import { showWardrobe, wardrobeOffer, leaveWardrobe } from './wardrobepage.js';
+import { showWardrobe, leaveWardrobe, wardrobeOpener } from './wardrobepage.js';
 // input.js imports this file; `hold` is a declaration, so it is there to
 // call however the ring is entered.
 import { hold } from './input.js';
@@ -64,7 +64,7 @@ export function showPane(name) {
   slotsBtn.textContent = slotsLabel();
   sayIndexButton(indexBtn);
   if (name === 'record') showRecord(recordEl);
-  // The two of them's picker: from settings, or once at a new yard (`offerDress`).
+  // The two of them's picker: off the house's board, or once at a new yard (`offerDress`).
   if (name === 'wardrobe') showWardrobe(document.getElementById('wardrobe'), { start: dressing, leave: () => hold(false) });
   dressing = false;
   if (name === 'index') showIndex(indexEl);
@@ -98,12 +98,10 @@ langBtn.textContent = msg('set-langbtn', { name: inForce().name });
 fillLanguages(document.getElementById('langlist'), { reload: () => leave(location.href), stay: () => showPane('settings') });
 langBtn.addEventListener('click', () => showPane('language'));
 document.getElementById('langback').addEventListener('click', () => showPane('settings'));
-// The two of them, a page of its own off settings. Its way back is the
-// offer's done when it came up at the start of a yard.
-document.getElementById('wardrobebtn').addEventListener('click', () => showPane('wardrobe'));
-document.getElementById('wardrobeback').addEventListener('click', () => {
-  if (wardrobeOffer()) leaveWardrobe(); else showPane('settings');
-});
+// The two of them, a page of the sheet of its own, brought up over the yard
+// by the house board's row (crewboard.js). Its way back is the yard again.
+wardrobeOpener(() => { hold(true); showPane('wardrobe'); });
+document.getElementById('wardrobeback').addEventListener('click', () => leaveWardrobe());
 let dressing = false;
 // Once, at a new yard: the sheet up on the page's steps (who you are, your
 // square, your sqouse, the two of you) before the opening walks out, the
