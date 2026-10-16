@@ -32,7 +32,8 @@ import { COIN_TONES, SHADES, P, CELL } from '../config.js';
 // docs/mocks/deep-background-2026-10-14.html).
 const SCENES = ['deep-all', 'deep-seven', 'deep-zones', 'deep-rest', 'deep-react-angler', 'meal-reel',
                 'deep-stun', 'party-statuses', 'deep-numbers', 'deep-neardeath-light', 'deep-powerup-motes',
-                'deep-build', 'deep-kill-start', 'deep-freed', 'deep-endless', 'crusher', 'pods', 'finale-gear'];
+                'deep-build', 'deep-kill-start', 'deep-freed', 'deep-endless', 'crusher', 'pods', 'finale-gear',
+                'fang-plate', 'fang-plate-none'];
 const MIN_PX = 12;   // a color counts once it covers this many pixels of the rows read
 
 const xor = h => '#' + (0xffffff ^ parseInt(h.slice(1), 16)).toString(16).padStart(6, '0');

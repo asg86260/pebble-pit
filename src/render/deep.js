@@ -52,6 +52,7 @@ import { unchosen } from '../deep/party.js';
 import { doneAt } from '../works.js';
 import { TYPE } from '../jobs.js';
 import { GREYS, PURPLES, TONE, LIGHT, breathAt } from './deeptones.js';
+import { drawFangPlate } from './fangplate.js';
 
 const isFighter = w => w.type === TYPE.FIGHTER;
 
@@ -176,7 +177,8 @@ const TOP = 'top';
 // the drawing, painted once into an image of its own as a station is and
 // kept by where the crusher stands, so a resize repaints it; then the fire
 // in its door, drawn over that every frame; then the sparks of each scale
-// that has gone in lately (`S.crushes`).
+// that has gone in lately (`S.crushes`); last the plate of the fangs held
+// (render/fangplate.js).
 const FURNACE = CRUSHER_SPRITES.rest;
 // A cell of the frame or the brick with open water over it: the edge the light catches.
 const isBrick = ch => ch === '#' || ch === '+' || ch === '-';
@@ -277,6 +279,7 @@ function drawCrusher() {
   ctx.imageSmoothingEnabled = smooth;
   drawFire(c, t);
   drawSparks(c, t);
+  drawFangPlate(c.x, c.y, t);
   ctx.fillStyle = '#000';
 }
 

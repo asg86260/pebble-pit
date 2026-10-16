@@ -17,6 +17,8 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
 - The constrict's orb's bar over its head is its time: it runs down as the seconds go, a click on the orb knocks a chunk off it in falling chips, the party's blows wear it down too, and at nought the orb lets go (test/orb.test.mjs).
+- The serpent drops no fang once the stations standing and the fangs held or falling would fill all seven slots, at a break as at a kill (test/fangs-seven.test.mjs).
+- The fangs held show on a plate set in the furnace's brick over its door, fang × N, dimmed at none, instead of on the counter card (test/fang-plate.test.mjs).
 - A station with no class yet stands beside a blank flag on a pole, waving slowly, instead of a packed crate (test/props.test.mjs).
 - A station that finishes building fades in as its scaffold fades out, instead of appearing at once (test/props.test.mjs).
 - The constrict's orb holds its fighter halfway between the serpent and the station, in open water clear of the coil, the prop and the floor, instead of carrying it up against the coil, and the serpent swims a little higher to leave it room (test/orb.test.mjs).

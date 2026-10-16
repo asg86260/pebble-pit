@@ -1,0 +1,13 @@
+{
+  "title": "The fang plate on the furnace",
+  "lede": "The fangs held move off the counter card onto a plate in the furnace's brick over its door (option B).",
+  "base": "fb616858",
+  "head": "168f82f2",
+  "items": [
+    { "id": "plate-two", "title": "Two fangs held", "what": "the counter card's fang row goes; the plate over the door reads fang x 2",
+      "shots": [
+        { "scene": "crusher", "setup": "(window.__party({ stations: [{ kind: 'altar', cls: 'brawler', rung: 2 }], fangs: 2 }), window.__fast(1), window.__look(0), new Promise(r => setTimeout(r, 2500)))", "crop": [0, 420, 320, 180], "zoom": 3, "theme": "light", "label": "light page" },
+        { "scene": "crusher", "setup": "(window.__party({ stations: [{ kind: 'altar', cls: 'brawler', rung: 2 }], fangs: 2 }), window.__fast(1), window.__look(0), new Promise(r => setTimeout(r, 2500)))", "crop": [0, 420, 320, 180], "zoom": 3, "theme": "dark", "label": "dark page" }
+      ] }
+  ]
+}

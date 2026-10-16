@@ -334,7 +334,9 @@ export const NUM_FONT = {
   // 1t) and a language's decimal comma
   '-': ['...', '...', '###', '...', '...', '...'],
   't': ['.#..', '###.', '.#..', '.#..', '.#..', '..##'],
-  ',': ['..', '..', '..', '..', '.#', '#.']
+  ',': ['..', '..', '..', '..', '.#', '#.'],
+  // the furnace's plate: fang x N (FANG_PLATE)
+  '×': ['....', '....', '#..#', '.##.', '.##.', '#..#']
 };
 export const NUM_FONT_TIGHT = ',';   // set against the glyph before, no gap; the point has room both sides
 // (docs/mocks/num-decimal-2026-10-15, option B), so 86.1k never reads as 861k
@@ -651,7 +653,21 @@ export const EXPOSED_LIFT_HZ = 1.5;  // how often a lifted scale lifts or settle
 // sinking and carried like a scale: a root three cells across narrowing to
 // its point. '#' white, '+' a grey a step down.
 export const FANG_SPRITE = ['###', '.#+', '.#.'];
-// Its mark on the counter card and the build button is FANG_MARK (config/deepboard.js).
+// Its mark on the build button is FANG_MARK (config/deepboard.js).
+// The fangs held, on a plate set into the furnace's brick over the door (the
+// owner, 2026-10-16, option B of docs/mocks/fang-counter-2026-10-16), in
+// place of the counter card's fang row: the purse for fangs is the furnace
+// they were crushed in. The plate is cut on the cell grid round the words, so
+// its size is read off them at the camera's zoom, never set; the words are
+// screen pixels, as the fight's numbers are, so they read one size however
+// far the deep is pulled in. `pad` screen pixels of black inside the frame
+// round the words; the fang mark `markPx` screen pixels a mark pixel, and
+// `gapPx` between the mark, the ×, and the count. A new count cross-fades
+// over the old in `fadeS`, and the plate's frame catches the light (its own
+// alpha, falling to none) for `glintS` from the fang's landing; the first
+// fang ever fades the whole plate in over `fadeS`. At none held the plate
+// stays and its words go to the mortar's grey.
+export const FANG_PLATE = { padPx: 2, markPx: 1, gapPx: 3, fadeS: 0.5, glintS: 1.2 };
 // The scaffold over a station not yet built: posts SCAFFOLD_OVER cells over
 // the top of the ground it stands round (the flag it will be: a station
 // going up has no class), so it is as tall as what goes up inside it, banded
