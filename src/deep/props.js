@@ -302,10 +302,20 @@ const beatOf = seed => ([...String(seed ?? '')].reduce((h, ch) => (h * 31 + ch.c
 // station `seed`: each column of it lifted by `clothLift` on the frame the
 // clock is on, a frame held `period / length` s, and shaded where it now
 // stands. Nothing for a prop with no cloth.
+// A cloth's pose is one of FLAG_WAVE.length (the lift is a sine of the frame
+// over that many), so each is worked out once and kept: every flag in the
+// deep asks for its own every frame.
+const cloths = new Map();
 export function clothCells(key, lit, t, seed) {
   const { rows, cloth } = PROPS[key], W = FLAG_WAVE;
   if (!cloth) return [];
-  const k = Math.floor((t / W.period + beatOf(seed)) * W.length);
+  const k = ((Math.floor((t / W.period + beatOf(seed)) * W.length) % W.length) + W.length) % W.length;
+  const id = `${key}|${lit ? 1 : 0}|${k}`;
+  let made = cloths.get(id);
+  if (!made) cloths.set(id, made = clothPose(rows, cloth, lit, k));
+  return made;
+}
+function clothPose(rows, cloth, lit, k) {
   const grid = rows.map(row => [...row].map(ch => (cloth.includes(ch) ? '.' : ch)));
   const at = [];
   let hoist = Infinity;

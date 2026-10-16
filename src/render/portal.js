@@ -165,9 +165,15 @@ function drawHole(c, k, { tones, magic, sample, skip, torn, mouth = tones[0] }) 
   const x0 = snap(c.x - out), y0 = snap(c.y - out);
   const cols = Math.ceil((c.x + out - x0) / P) + 1, rows = Math.ceil((c.y + out - y0) / P) + 1;
   hole.begin(cols, rows);
-  for (let j = 0; j < rows; j++) {
+  // Only the cells on the glass: a hole the abyss's depth across is over a
+  // thousand cells, each an angle and a sine, and most of it is often off
+  // the edge of the window. The ones left out are left clear in the image.
+  const sx = Math.abs(S.shakeX) + P * 2, sy = Math.abs(S.shakeY) + P * 2;
+  const i0 = Math.max(0, Math.floor((S.camX - sx - x0) / P)), i1 = Math.min(cols, Math.ceil((S.camX + S.viewW + sx - x0) / P));
+  const j0 = Math.max(0, Math.floor((S.camY - sy - y0) / P)), j1 = Math.min(rows, Math.ceil((S.camY + S.viewH + sy - y0) / P));
+  for (let j = j0; j < j1; j++) {
     const y = y0 + j * P;
-    for (let i = 0; i < cols; i++) {
+    for (let i = i0; i < i1; i++) {
       const x = x0 + i * P;
       if (skip(x, y)) continue;
       const dx = x + P / 2 - c.x, dy = y + P / 2 - c.y, h = seeth(x / P, y / P);

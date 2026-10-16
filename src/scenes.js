@@ -2368,6 +2368,24 @@ export const SCENES = {
                  for (let i = 0; i < 100 && st().rock > 0; i++) window.__fast(0.05);
                  window.__fast(0.35);
                  window.__look(st().rockLeftX - 500); } },
+  // A thirty-hour yard, which is where the frame rate was reported: the
+  // endgame above, every slot in the deep taken with the serpent up, the rock
+  // in the tens of thousands and a crew of a hundred and seventy, the hands
+  // over the endgame's going to whatever the yard shares them out to.
+  // tools/node/late-perf.mjs times it.
+  late: { about: 'the endgame', say: 'a thirty-hour yard: everything bought, seven stations in the deep, 170 crew',
+    run: () => { SCENES.everything.run();
+                 window.__snatch({ played: true });
+                 window.__deepCrew({ spare: 3 });
+                 window.__party({ stations: ['brawler', 'ranger', 'sapper', 'mage', 'hexer', 'monk', 'bard']
+                                  .map(c => cast(c, 2)) });
+                 window.__serpent({ level: 1, stage: 1 });
+                 window.__jump(31621);
+                 S.crew += Math.max(0, 170 - S.crew);
+                 window.__deepCrew({ spare: 0 });   // shares the new hands out
+                 window.__view('yard');
+                 window.__fast(10);
+                 window.__look(st().rockLeftX - 500); } },
 
   // A pad's focus (DESIGN.md, "Controller support"): the corner brackets on
   // a station, on a board's row and on the coil, each reached by presses

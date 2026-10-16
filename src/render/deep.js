@@ -362,8 +362,12 @@ function drawProp(st, t) {
   ctx.drawImage(propImage(p.key, lit), p.x, p.y);
   // the parts that move, over the still image: the hexer's brew over its
   // pot, the Mage's flame (seeded by the slot) and the flag's cloth (by the id)
-  for (const [c, r, ramp, i] of [...brewCells(p.key, lit, t), ...flameCells(p.key, lit, t, st.slot),
-                                 ...clothCells(p.key, lit, t, st.id)]) {
+  drawCells(p, brewCells(p.key, lit, t));
+  drawCells(p, flameCells(p.key, lit, t, st.slot));
+  drawCells(p, clothCells(p.key, lit, t, st.id));
+}
+function drawCells(p, cells) {
+  for (const [c, r, ramp, i] of cells) {
     ctx.fillStyle = toneOf(ramp, i);
     ctx.fillRect(p.x + c * P, p.y + r * P, P, P);
   }

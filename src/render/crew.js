@@ -109,6 +109,12 @@ export function drawHat(x, y, kind = 'helmet', tight = false) {
 // Wider than the body and half its height: at three cells square a carter reads
 // as two workers walking in step.
 const CART_ABREAST = 4;
+// The most of a load drawn: over the head two abreast, or in the cart.
+const HAND_SHOWN = 24, CART_SHOWN = 40;
+// How far from its corner anything drawn with a body can reach: the tallest
+// load drawn, stacked over its head or in the cart beside it, and a cart's
+// width the other way. A body further than this off the glass is not drawn.
+const BODY_REACH = WORKER + CART_W + P * (2 + Math.max(HAND_SHOWN / 2, CART_SHOWN / CART_ABREAST));
 
 function cartBox(x, y, face) {
   const back = face > 0 ? -1 : 1;                       // behind whichever way it is going
@@ -608,6 +614,8 @@ export function drawDeepSight() {
 export function drawWorkers() {
   const t0 = now();
   const was = ctx.globalAlpha;
+  const sx = Math.abs(S.shakeX), sy = Math.abs(S.shakeY);
+  const x0 = S.camX - sx, x1 = S.camX + S.viewW + sx, y0 = S.camY - sy, y1 = S.camY + S.viewH + sy;
   for (const w of S.workers) {
     // Out of sight: in the lab, down the quarry, in the outhouse, or home. The
     // stirrer is NOT hidden: it stirs in plain sight, so `atPot` is not a
@@ -620,6 +628,9 @@ export function drawWorkers() {
     if (ink <= 0) continue;
     ctx.globalAlpha = was * ink;
     if (S.crewSight != null && underSurface(w) == null) ring(w);
+    // Off the glass, by more than anything a body carries or wears reaches:
+    // a big crew is mostly somewhere else along the yard.
+    if (w.x + BODY_REACH < x0 || w.x - BODY_REACH > x1 || w.y + BODY_REACH < y0 || w.y - BODY_REACH > y1) continue;
     const sunk = underSurface(w);
     if (sunk != null) {
       if (w.y >= sunk) continue;
@@ -709,7 +720,7 @@ function drawWorker(w, t0) {
     const abreast = cart ? CART_ABREAST : 2;
     const left = cart ? cart.x : x + (WORKER - P * 2) / 2;
     const top = cart ? cart.y : y;
-    const cap = cart ? 40 : 24;
+    const cap = cart ? CART_SHOWN : HAND_SHOWN;
     for (let i = 0; i < Math.min(w.carry, cap); i++) {
       drawMark(w.load?.[i] || 1,
                left + (i % abreast) * P + P / 2,

@@ -13,7 +13,7 @@ import { noteMet } from './met.js';
 import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
-import { at, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, tickGrid } from './grid.js';
+import { at, addGrain, colOf, surfaceY, topRow, landed, settleSome, resizeGrid, isDust, bottomY, tickGrid } from './grid.js';
 import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, stepShack, quarryShed, farmShed } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine, landRefund } from './pit.js';
@@ -302,6 +302,22 @@ export function step() {
 
 // Everything in the air, one frame further along, and whatever it lands on.
 let dead = new Uint8Array(0);
+// The floor's column tops, read once a frame a column as chips ask: an
+// endgame yard has thousands of grains in the air, and each one walking its
+// column down from the top of the grid every frame was most of this step.
+// Only this step's own landings write the floor while it runs, and each is
+// put into the reading as it lands (`landed`).
+let tops = new Int16Array(0), topsAt = new Uint32Array(0), topsGen = 0;
+function floorTop(c) {
+  if (topsAt[c] !== topsGen) { tops[c] = topRow(floor, c); topsAt[c] = topsGen; }
+  return tops[c];
+}
+function landedOnFloor() {
+  const c = landed.c;
+  if (topsAt[c] === topsGen && landed.r > tops[c]) tops[c] = landed.r;
+}
+// `surfaceY(floor, c)` off the reading.
+const floorSurface = c => bottomY(floor) - (floorTop(c) + 2) * floor.p;
 function stepChips(now) {
   const f = frames();
   // A grain that lands is struck off and the list closed up once at the end:
@@ -309,6 +325,8 @@ function stepChips(now) {
   // an endgame yard has thousands in the air and hundreds landing a frame.
   const chips = S.chips, n = chips.length;
   if (dead.length < n) dead = new Uint8Array(n * 2);
+  if (tops.length !== floor.cols) { tops = new Int16Array(floor.cols); topsAt = new Uint32Array(floor.cols); topsGen = 0; }
+  topsGen++;
   dead.fill(0, 0, n);
   for (let i = n - 1; i >= 0; i--) {
     const ch = chips[i];
@@ -389,7 +407,8 @@ function stepChips(now) {
         // Almost always room in the cut. The one time not is a chip in flight
         // the instant `fillQuarry` puts the ground back under it, and then it
         // comes down as it would on any other ground.
-        if (addGrain(cut, ch.x, null, ch.s) || addGrain(floor, ch.x, blocked, ch.s)) sfx('grain-land', { x: ch.x });
+        if (addGrain(cut, ch.x, null, ch.s)) sfx('grain-land', { x: ch.x });
+        else if (addGrain(floor, ch.x, blocked, ch.s)) { landedOnFloor(); sfx('grain-land', { x: ch.x }); }
         else bankDust(ch.x, ch.s);
         dead[i] = 1;
       }
@@ -413,11 +432,11 @@ function stepChips(now) {
       dead[i] = 1;
       continue;
     }
-    if (ch.vy > 0 && arrived && ch.y >= surfaceY(floor, c)) {
+    if (ch.vy > 0 && arrived && ch.y >= floorSurface(c)) {
       // One rule for everything that lands: as far as the ground is
       // concerned a shard is a grain. The pit says its own sound when the
       // grain goes to it instead.
-      if (addGrain(floor, ch.x, blocked, ch.s)) sfx('grain-land', { x: ch.x });
+      if (addGrain(floor, ch.x, blocked, ch.s)) { landedOnFloor(); sfx('grain-land', { x: ch.x }); }
       else bankDust(ch.x, ch.s);
       dead[i] = 1;
     }

@@ -29,6 +29,14 @@ import { park } from './lifts.js';
 // Everybody who hauls: the haulers, and the forklifts, which are not crew but
 // share the haulers' books (crew/lifts.js).
 const hauling = () => [...S.workers.filter(o => o.type === TYPE.HAUL), ...(S.lifts || [])];
+// The first of them other than `w` with a claim on column `c`, in the same
+// order, walked without making the list: asked of every column a body looks
+// at, and a big crew made the list thousands of times a frame.
+function claimant(w, c) {
+  for (const o of S.workers) if (o.type === TYPE.HAUL && o !== w && o.claim === c) return o;
+  for (const o of S.lifts || []) if (o !== w && o.claim === c) return o;
+  return null;
+}
 
 export function newHauler() {
   // Feet on the ground from the first frame: a body put straight on to
@@ -52,7 +60,11 @@ const lastCol = () => Math.max(0, colOf(floor, pit.x) - 1);
 // Whether anything lies on the ground that nobody has set off for.
 const anyDust = taken => {
   const last = lastCol();
-  for (let c = 0; c <= last; c++) if (!taken.has(c) && at(floor, c, 0)) return true;
+  // The grid's own bottom row read straight, and the cell before the book:
+  // most columns are bare, and a big idle crew asks this of every column
+  // every frame.
+  const row = floor.grid;
+  for (let c = 0; c <= last; c++) if (row[c] && !taken.has(c)) return true;
   return false;
 };
 
@@ -76,19 +88,32 @@ function firstPick(w, taken, zone) {
     if (o === w) continue;
     others.push(o.claim >= 0 ? o.claim : colOf(floor, o.x));
   }
+  // In order, so the nearest of them to a column is a halving search rather
+  // than a walk of the whole crew for every column with something on it.
+  others.sort((a, b) => a - b);
   const side = zone ? sideOf(zone, w.x) : 0;
   let best = -1, bestApart = -1, bestAge = Infinity;
+  const row = floor.grid;                     // the bottom row, read straight (`anyDust`)
   for (let c = 0; c <= last; c++) {
-    if (taken.has(c) || !at(floor, c, 0)) continue;
+    if (!row[c] || taken.has(c)) continue;
     if (side && sideOf(zone, floor.x + c * P) !== side) continue;
-    let apart = Infinity;
-    for (const t of others) apart = Math.min(apart, Math.abs(c - t));
+    const apart = nearestApart(others, c);
     if (apart < bestApart) continue;
     const a = ageAt(floor, c, topGrain(c));
     if (apart === bestApart && a >= bestAge) continue;
     best = c; bestApart = apart; bestAge = a;
   }
   return best;
+}
+
+// How far `c` is from the nearest of `sorted`, Infinity for none.
+function nearestApart(sorted, c) {
+  let lo = 0, hi = sorted.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (sorted[m] < c) lo = m + 1; else hi = m; }
+  let apart = Infinity;
+  if (lo < sorted.length) apart = sorted[lo] - c;
+  if (lo > 0) apart = Math.min(apart, c - sorted[lo - 1]);
+  return apart;
 }
 
 // The column with something in it under a body's feet, the same span `seek`
@@ -138,7 +163,7 @@ function nextNear(w, from, taken, zone) {
   for (let d = 0; d <= reach; d++) {
     for (const c of [from - d, from + d]) {
       if (c < 0 || c > last || !at(floor, c, 0) || keptBy(w, c)) continue;
-      if (taken.has(c) && !hauling().some(o => o.claim === c)) continue;
+      if (taken.has(c) && !claimant(null, c)) continue;
       if (side && sideOf(zone, floor.x + c * P) !== side) continue;
       return c;
     }
@@ -154,7 +179,7 @@ function nextNear(w, from, taken, zone) {
 // reads as hesitating.
 function keptBy(w, c) {
   const x = floor.x + c * P;
-  const o = hauling().find(o => o !== w && o.claim === c);
+  const o = claimant(w, c);
   return !!o && Math.abs(o.x - x) <= Math.abs(w.x - x);
 }
 

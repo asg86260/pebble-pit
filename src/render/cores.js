@@ -392,7 +392,13 @@ export function drawAbyss() {
   // The liquid itself: the field the deep's water is drawn from too
   // (abyssfield.js), from a few cells under the rolling surface down.
   const fieldTop = Math.round(line / P) * P + P * 3;
-  paintAbyssField({ from, to, top: fieldTop, bottom: floorY, line,
+  // Only the rows in view as well, kept on the field's own lattice: the hole
+  // runs a long way under the bottom of the window.
+  const shake = Math.abs(S.shakeY) + P * 2;
+  const viewTop = Math.max(fieldTop, fieldTop + Math.floor((S.camY - shake - fieldTop) / P) * P);
+  const viewBottom = Math.min(floorY, S.camY + S.viewH + shake);
+  if (viewBottom > viewTop)
+    paintAbyssField({ from, to, top: viewTop, bottom: viewBottom, line,
                     tones: ABYSS_TONES, magic: ABYSS_MAGIC_TONES, t });
   if (g) drawGlimpseUnder(g, from, to, fieldTop, line, surf);
 

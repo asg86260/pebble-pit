@@ -103,7 +103,21 @@ const seatsOf = p => {
 
 // Who is at this post, as bodies: the count says who is assigned, and only a
 // body can say whether it has got there.
-const bodiesOf = p => S.workers.filter(w => w.type === TYPE_OF[p.job]);
+// A pass over every post asks this of each several times over, so the pass
+// sorts the crew by type once (`overPosts`) and reads the sort; asked
+// outside a pass, it is a walk of the crew as ever.
+let byType = null;
+const NOBODY = [];
+const bodiesOf = p => byType ? byType.get(TYPE_OF[p.job]) || NOBODY
+                             : S.workers.filter(w => w.type === TYPE_OF[p.job]);
+function overPosts(fn) {
+  byType = new Map();
+  for (const w of S.workers) {
+    const list = byType.get(w.type);
+    if (list) list.push(w); else byType.set(w.type, [w]);
+  }
+  try { return fn(); } finally { byType = null; }
+}
 
 // On its way: a commute whose last leg is the work (crew/commute.js), the
 // hat fetched first included. A hat errand ends on 'back', not 'work': that
@@ -524,8 +538,15 @@ export function rosterButtons(key) {
 // one: `cart(x, y)` a carter with its cart, `lift(x, y)` a forklift, each from
 // the top-left of its box, so the crew's drawing stays in render/crew.js.
 export function drawRoster(ctx, drawBody, drawHat, drawRun, sprites) {
+  overPosts(() => drawRosterPass(ctx, drawBody, drawHat, drawRun, sprites));
+}
+// The roster is cut to the half it stands in (frame.js, `clipToHalf`), so a
+// post in the other half is never seen and is not worked out.
+const inHalf = p => !!p.deep === (S.view === 'deep');
+function drawRosterPass(ctx, drawBody, drawHat, drawRun, sprites) {
   const spare = idle();
   for (const p of posts()) {
+    if (!inHalf(p)) continue;
     const b = boxes(p);
     const n = count(p);
 
@@ -643,8 +664,12 @@ function drawPip(ctx, q) {
 
 // The counts, in screen pixels, after the world has been drawn.
 export function drawRosterCounts(ctx, screenAt) {
+  overPosts(() => drawCountsPass(ctx, screenAt));
+}
+function drawCountsPass(ctx, screenAt) {
   // In the number font, keyed in paper, in the middle of its own slot.
   for (const p of posts()) {
+    if (!inHalf(p)) continue;
     // Drawn over the finished frame: on the light page the deep has been
     // turned over under it, so a deep post's number is written in the
     // paper's white to stand on the black water like the post's own marks,
