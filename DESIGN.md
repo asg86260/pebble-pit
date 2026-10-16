@@ -19799,9 +19799,14 @@ src/migrations/2026-10-16-the-pair.js): him the oldest body of the yard
 in the deep, else the oldest body that is not him. He is let go at the
 snatch (he is in the belly, drawn there as 'him'), she at the finale.
 
-**What they wear.** Five slots, every one led by nothing: head (13), face
-(11), neck (7: the mock's nine less the necklace and the bandana), back (8),
-pattern (9). The items are rows of data in src/wardrobe.js, copied from the
+**What they wear.** Five slots, every one led by nothing: head (11), face
+(11), neck (3, the scarves), back (5), pattern (7). The item review
+(docs/reviews/2026-10-16-wardrobe-items) cut the pigtails and the tiara; the
+bowtie, tie, collar and medal; the small pack and both tails; the grey and
+pale patterns; and renamed the black pattern "filled". A save wearing a cut
+item has that slot bare (SAVE_V 25, src/migrations/2026-10-16-wardrobe-cuts.js,
+and `wholeOutfit` at any load), and the survivor's default bowtie became
+nothing at the neck. The items are rows of data in src/wardrobe.js, copied from the
 mock; render/wardrobe.js draws them in three passes round the body's own
 square (behind it, on its middle, on its head), wherever either of them is
 drawn: the crew, the one lodged under the rock (only the head shows over the
@@ -19825,7 +19830,7 @@ inverted inks, going into the house in the door's purples, sat at the bench
   stacked from the top of the hat, so a bow is not hidden under dust.
 - **A cart is a carter's back**: no back item is drawn on a body hauling one.
 - Things that hang move on the walk (cape, scarf tails) or on their own
-  clock (tails, balloon, flag), held poses, read off where the body is drawn
+  clock (balloon, flag), held poses, read off where the body is drawn
   frame to frame (`motionOf`).
 
 **The picker** (src/wardrobepage.js; the mock's Part 3, titled with the

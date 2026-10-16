@@ -7070,25 +7070,11 @@
   "text": "beret"
  },
  {
-  "id": "ward-tiara",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobe.js",
-  "context": "",
-  "text": "tiara"
- },
- {
   "id": "ward-headband",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
   "text": "headband"
- },
- {
-  "id": "ward-pigtails",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobe.js",
-  "context": "",
-  "text": "pigtails"
  },
  {
   "id": "ward-mohawk",
@@ -7196,34 +7182,6 @@
   "text": "striped scarf"
  },
  {
-  "id": "ward-bowtie",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobe.js",
-  "context": "",
-  "text": "bowtie"
- },
- {
-  "id": "ward-tie",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobe.js",
-  "context": "",
-  "text": "tie"
- },
- {
-  "id": "ward-collar",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobe.js",
-  "context": "",
-  "text": "collar"
- },
- {
-  "id": "ward-medal",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobe.js",
-  "context": "",
-  "text": "medal"
- },
- {
   "id": "ward-cape",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
@@ -7243,27 +7201,6 @@
   "where": "src/wardrobe.js",
   "context": "",
   "text": "backpack"
- },
- {
-  "id": "ward-small-pack",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobe.js",
-  "context": "",
-  "text": "small pack"
- },
- {
-  "id": "ward-cat-tail",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobe.js",
-  "context": "",
-  "text": "cat tail"
- },
- {
-  "id": "ward-bushy-tail",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobe.js",
-  "context": "",
-  "text": "bushy tail"
  },
  {
   "id": "ward-balloon",
@@ -7322,25 +7259,11 @@
   "text": "quarters"
  },
  {
-  "id": "ward-pale",
+  "id": "ward-filled",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobe.js",
   "context": "",
-  "text": "pale"
- },
- {
-  "id": "ward-grey",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobe.js",
-  "context": "",
-  "text": "grey"
- },
- {
-  "id": "ward-black",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobe.js",
-  "context": "",
-  "text": "black"
+  "text": "filled"
  },
  {
   "id": "shell-carry-title",

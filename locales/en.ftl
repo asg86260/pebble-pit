@@ -3216,9 +3216,7 @@ ward-ears = ears
 ward-antenna = antenna
 ward-beanie = beanie
 ward-beret = beret
-ward-tiara = tiara
 ward-headband = headband
-ward-pigtails = pigtails
 ward-mohawk = mohawk
 ward-eyes = eyes
 ward-sleepy = sleepy
@@ -3234,16 +3232,9 @@ ward-blush = blush
 ward-scarf = scarf
 ward-checked-scarf = checked scarf
 ward-striped-scarf = striped scarf
-ward-bowtie = bowtie
-ward-tie = tie
-ward-collar = collar
-ward-medal = medal
 ward-cape = cape
 ward-short-cape = short cape
 ward-backpack = backpack
-ward-small-pack = small pack
-ward-cat-tail = cat tail
-ward-bushy-tail = bushy tail
 ward-balloon = balloon
 ward-flag = flag
 ward-overalls = overalls
@@ -3252,9 +3243,7 @@ ward-tall-stripes = tall stripes
 ward-dots = dots
 ward-diagonal = diagonal
 ward-quarters = quarters
-ward-pale = pale
-ward-grey = grey
-ward-black = black
+ward-filled = filled
 
 ## The shell
 

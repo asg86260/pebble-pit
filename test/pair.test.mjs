@@ -123,7 +123,7 @@ group('what they wear is kept by the save, item by item', async () => {
   restore();
   const back = { sqouse: { ...outfitOf('sqouse') }, you: { ...outfitOf('you') } };
   // An item the game no longer has (the necklace was cut at the vote) comes
-  // back as the slot's default; the rest of the outfit stands.
+  // back as the slot's bare item; the rest of the outfit stands.
   const raw = JSON.parse(localStorage.getItem(KEY));
   raw.outfits.sqouse.neck = 'necklace';
   raw.outfits.you.head = 'no-such-hat';
@@ -136,9 +136,43 @@ group('what they wear is kept by the save, item by item', async () => {
        JSON.stringify(worn)),
     ok(slots.every(k => back.sqouse[k] === worn.sqouse[k] && back.you[k] === worn.you[k]),
        'and a save and a load hand back every slot', JSON.stringify(back)),
-    ok(mended.sqouse.neck === DEFAULTS.sqouse.neck && mended.you.head === DEFAULTS.you.head
+    ok(mended.sqouse.neck === 'none' && mended.you.head === 'none'
        && mended.sqouse.head === worn.sqouse.head && mended.you.back === worn.you.back,
-       'an item no longer in the wardrobe reads as the default, the rest as worn', JSON.stringify(mended))
+       'an item no longer in the wardrobe is taken off, the rest as worn', JSON.stringify(mended))
+  ];
+});
+
+// The item review's cuts (2026-10-16): a save wearing one is bare in that
+// slot, the pattern once called black is the filled one, and no roll of the
+// dice, nor any default, puts a cut item back on.
+const CUT = { head: ['pigtails', 'tiara'], neck: ['bowtie', 'tie', 'collar', 'medal'],
+              back: ['small-pack', 'cat-tail', 'bushy-tail'], pattern: ['grey', 'pale', 'black'] };
+group('a save wearing a cut item has it taken off, and black is filled', async () => {
+  run(1);
+  persist();
+  const raw = JSON.parse(localStorage.getItem(KEY));
+  raw.outfits = {
+    you: { head: 'tiara', face: 'monocle', neck: 'bowtie', back: 'cat-tail', pattern: 'black' },
+    sqouse: { head: 'pigtails', face: 'eyes', neck: 'medal', back: 'flag', pattern: 'pale' },
+  };
+  raw.saveV = 24;
+  const ran = migrate(raw).map(m => m.v);
+  localStorage.setItem(KEY, JSON.stringify(raw));
+  restore();
+  const you = { ...outfitOf('you') }, sq = { ...outfitOf('sqouse') };
+  const listed = SLOTS.flatMap(s => s.items.map(i => `${s.key}:${i.key}`));
+  const rolled = new Set();
+  for (let i = 0; i < 400; i++) { rollOutfit('sqouse'); for (const s of SLOTS) rolled.add(`${s.key}:${outfitOf('sqouse')[s.key]}`); }
+  const cut = Object.entries(CUT).flatMap(([s, ks]) => ks.map(k => `${s}:${k}`));
+  const defaults = Object.values(DEFAULTS).flatMap(o => Object.entries(o).map(([s, k]) => `${s}:${k}`));
+  return [
+    ok(ran.includes(25), 'the migration runs', `${ran}`),
+    ok(you.head === 'none' && you.neck === 'none' && you.back === 'none' && you.pattern === 'filled' && you.face === 'monocle',
+       'each cut slot is bare, the black pattern is filled, the rest as worn', JSON.stringify(you)),
+    ok(sq.head === 'none' && sq.neck === 'none' && sq.pattern === 'plain' && sq.back === 'flag',
+       'on both of them', JSON.stringify(sq)),
+    ok(!cut.some(k => listed.includes(k) || rolled.has(k) || defaults.includes(k)),
+       'no cut item is listed, rolled or worn by default', [...rolled].filter(k => cut.includes(k)).join(' '))
   ];
 });
 

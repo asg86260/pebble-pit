@@ -896,12 +896,13 @@ const deepScenes = {
       if (him) lookDeep(him.x);
     } },
   // The same, in everything the wardrobe draws in its greys, for the deep's
-  // palette check: the checked scarf, the freckles, a grey pattern.
+  // palette check: the checked scarf, the freckles, over a filled pattern (its
+  // greys the pale).
   'pair-deep-greys': { about: 'the deep', say: 'her at the first station in the wardrobe greys, in the deep',
     run: () => {
       deepYard({ stage: 1, wound: 0.33, party: [cast('sword', 2), cast('ranger', 2)] });
       namePair('sqouse', S.workers.find(w => w.uid === S.stations[0].fighter));
-      wear('sqouse', { head: 'crown', face: 'freckles', neck: 'checked-scarf', back: 'cape', pattern: 'grey' });
+      wear('sqouse', { head: 'crown', face: 'freckles', neck: 'checked-scarf', back: 'cape', pattern: 'filled' });
       lookAtStation(0);
     } },
   // Every station the floor holds at once, the camera on the middle of them.

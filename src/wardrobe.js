@@ -42,11 +42,8 @@ export const HEAD = [
   { key: 'antenna', name: 'ward-antenna', rows: ['..#', '.#.', '.#.'], ox: 0 },
   { key: 'beanie', name: 'ward-beanie', rows: ['.#.', '###', '###'] },
   { key: 'beret', name: 'ward-beret', rows: ['..#.', '####'], ox: -1 },
-  { key: 'tiara', name: 'ward-tiara', rows: ['.#.', '#.#'] },
   // a band across the top of the square, and its two ends out the back
   { key: 'headband', name: 'ward-headband', rects: [[0, 4, 18, 2], [-6, 2, 6, 2], [-4, 6, 4, 2]] },
-  // a cell out each side of the top row
-  { key: 'pigtails', name: 'ward-pigtails', rects: [[-6, 2, 6, 6], [18, 2, 6, 6]] },
   { key: 'mohawk', name: 'ward-mohawk', rows: ['#', '#'] },
 ];
 
@@ -69,16 +66,12 @@ export const FACE = [
 
 // Neck: marks on the lower half of the middle, and for the scarves a tail out
 // the back. The necklace and the bandana were cut at the vote ("they look
-// like underwear").
+// like underwear"); the bowtie, tie, collar and medal at the item review.
 export const NECK = [
   { key: 'none', name: 'ward-none' },
   { key: 'scarf', name: 'ward-scarf', grid: ['', '', '', '#######'], tail: 'solid' },
   { key: 'checked-scarf', name: 'ward-checked-scarf', grid: ['', '', '', '#g#g#g#'], tail: 'check' },
   { key: 'striped-scarf', name: 'ward-striped-scarf', grid: ['', '', '', '#.#.#.#'], tail: 'stripe' },
-  { key: 'bowtie', name: 'ward-bowtie', grid: ['', '', '', '', '..#...#', '..#####', '..#...#'] },
-  { key: 'tie', name: 'ward-tie', grid: ['', '', '', '....#..', '...###.', '...###.', '....#..'] },
-  { key: 'collar', name: 'ward-collar', grid: ['', '', '', '###.###', '.#...#.'] },
-  { key: 'medal', name: 'ward-medal', grid: ['', '', '', '..#.#..', '...#...', '..###..', '..###..'] },
 ];
 
 // Back: off the side away from the way the body faces, drawn by key
@@ -88,17 +81,14 @@ export const BACK = [
   { key: 'cape', name: 'ward-cape' },
   { key: 'short-cape', name: 'ward-short-cape' },
   { key: 'backpack', name: 'ward-backpack' },
-  { key: 'small-pack', name: 'ward-small-pack' },
-  { key: 'cat-tail', name: 'ward-cat-tail' },
-  { key: 'bushy-tail', name: 'ward-bushy-tail' },
   { key: 'balloon', name: 'ward-balloon' },
   { key: 'flag', name: 'ward-flag' },
 ];
 
 // Patterns over the white middle, as rects in world pixels off its top-left
-// (the middle is fourteen pixels square on a standing body); `tone` the ink
-// they are drawn in, and `dark` for a fill dark enough that the marks over it
-// are drawn in the paper instead.
+// (the middle is fourteen pixels square on a standing body), in the ink;
+// `dark` for a fill dark enough that the marks over it are drawn in the paper
+// instead.
 const lines = (along) => [2, 6, 10].map(d => (along ? [d, 0, 2, 14] : [0, d, 14, 2]));
 const dots = () => {
   const out = [];
@@ -121,9 +111,7 @@ export const PATTERN = [
   { key: 'dots', name: 'ward-dots', rects: dots() },
   { key: 'diagonal', name: 'ward-diagonal', rects: diagonal() },
   { key: 'quarters', name: 'ward-quarters', rects: [[0, 0, 7, 7], [7, 7, 7, 7]] },
-  { key: 'pale', name: 'ward-pale', rects: [[0, 0, 14, 14]], tone: 'pale' },
-  { key: 'grey', name: 'ward-grey', rects: [[0, 0, 14, 14]], tone: 'grey', dark: true },
-  { key: 'black', name: 'ward-black', rects: [[0, 0, 14, 14]], dark: true },
+  { key: 'filled', name: 'ward-filled', rects: [[0, 0, 14, 14]], dark: true },
 ];
 
 // The slots, in the picker's order, each with its message.
@@ -150,16 +138,18 @@ export const WHO = ['you', 'sqouse'];
 // first frame without the picker ever being opened. Each stays on the body
 // that wore it before the keys were renamed: the top hat the survivor's.
 export const DEFAULTS = {
-  you: { head: 'top-hat', face: 'monocle', neck: 'bowtie', back: 'none', pattern: 'plain' },
+  you: { head: 'top-hat', face: 'monocle', neck: 'none', back: 'none', pattern: 'plain' },
   sqouse: { head: 'bow', face: 'eyes', neck: 'scarf', back: 'none', pattern: 'plain' },
 };
-// An outfit made whole: every slot an item that exists, the default where
-// it does not (an old save, or an item since cut).
+// An outfit made whole: every slot an item that exists. A slot never chosen
+// (a save from before the slot) takes the default; one holding an item since
+// cut takes the slot's bare item, so nobody is dressed in what they did not
+// pick.
 export function wholeOutfit(o, who) {
   const out = {};
   for (const s of SLOTS) {
     const k = o && typeof o[s.key] === 'string' ? o[s.key] : null;
-    out[s.key] = k && itemOf(s.key, k) ? k : DEFAULTS[who][s.key];
+    out[s.key] = k === null ? DEFAULTS[who][s.key] : itemOf(s.key, k) ? k : bareOf(s.key).key;
   }
   return out;
 }

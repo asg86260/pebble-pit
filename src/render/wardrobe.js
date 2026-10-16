@@ -11,7 +11,7 @@
 // marked on its middle, and what sits on its head.
 
 import { P, WORKER, BODY_RIM, GREY, WARD_UNIT, WARD_GRID, WARD_GREY, WARD_PALE, WARD_DEEP_GREY, WARD_DEEP_PALE,
-         WARD_STEP_HZ, WARD_WAG_HZ, WARD_BOB_HZ, WARD_WAVE_HZ, WARD_STILL_S } from '../config.js';
+         WARD_STEP_HZ, WARD_BOB_HZ, WARD_WAVE_HZ, WARD_STILL_S } from '../config.js';
 import { itemOf } from '../wardrobe.js';
 import { GREYS } from './deeptones.js';
 
@@ -56,19 +56,6 @@ const BACKS = {
   backpack(g, x, y, l, k) {
     cell(g, k.bx, y + 2, k.ink); cell(g, k.bx, y + 2 + P, k.ink);
     fill(g, k.bx + 2, y + 2 + P + 2, 2, 2, k.paper);
-  },
-  'small-pack'(g, x, y, l, k) {
-    cell(g, k.bx, y + P, k.ink);
-    fill(g, k.bx + 2, y + P + 2, 2, 2, k.paper);
-  },
-  'cat-tail'(g, x, y, l, k) {
-    const { d, bx } = k, w = pose(l.t, WARD_WAG_HZ);
-    cell(g, bx, y + 2 * P, k.ink); cell(g, bx + d * P, y + P, k.ink);
-    if (w) cell(g, bx + d * P, y, k.ink); else cell(g, bx + d * 2 * P, y, k.ink);
-  },
-  'bushy-tail'(g, x, y, l, k) {
-    const { d, bx } = k, w = pose(l.t, WARD_WAG_HZ);
-    cell(g, bx, y + P, k.ink); cell(g, bx, y + 2 * P, k.ink); cell(g, bx + d * P, y + (w ? 0 : P), k.ink); cell(g, bx + d * P, y + P, k.ink);
   },
   // on a string tied at the back of its head, bobbing
   balloon(g, x, y, l, k) {
@@ -139,8 +126,7 @@ export function dressOn(g, x, y, l, w = WORKER, h = WORKER) {
   g.rect(ix, iy, iw, ih);
   g.clip();
   if (pat && pat.rects) {
-    const tone = pat.tone ? k[pat.tone] : k.ink;
-    for (const [rx, ry, rw, rh] of pat.rects) fill(g, ix + (l.dir < 0 ? iw - rx - rw : rx), iy + ry, rw, rh, tone);
+    for (const [rx, ry, rw, rh] of pat.rects) fill(g, ix + (l.dir < 0 ? iw - rx - rw : rx), iy + ry, rw, rh, k.ink);
   }
   // On a dark fill the marks are drawn in the paper, and the grey in the pale.
   const on = pat && pat.dark ? k.paper : k.ink, grey = pat && pat.dark ? k.pale : k.grey;
