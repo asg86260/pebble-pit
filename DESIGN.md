@@ -19931,7 +19931,7 @@ source language's letters under the name: A types, X takes a letter back.
 of its own, and the end sheet's line is where the names show. Translations
 of the `-who` lines.
 
-## Act 3: heaven (design, not built)
+## Act 3: the afterlife (design, not built)
 
 *The owner's words, 2026-10-15/16, none of them committed: act 1 is a typical
 incremental (the yard), act 2 is lighter fighting in the deep (the serpent,
@@ -19940,31 +19940,50 @@ JRPG strategy. After the reunion, a beat: the house is destroyed, two square
 souls float up, and the next phase is in the clouds. Squares live about
 thirty minutes of work, give birth just before they die, and the child takes
 the name with a lineage tick; in the deep the serpent can kill a fighter and
-the furnace births its successor in the same line. In heaven a crowd of
-every worker and fighter that ever died greets the pair, the dead are
+the furnace births its successor in the same line. In the afterlife a crowd
+of every worker and fighter that ever died greets the pair, the dead are
 rebuilt into a working crew by building something, and nobody dies there.
-The gameplay is undecided.* This section is the spine as told, checked
-against the house rules, then three loops for heaven worked far enough to
-judge, one recommended, and the calls only the owner can make. The look:
-docs/mocks/act3-heaven-2026-10-16 (plain cells, not the game).
+Then, 2026-10-16: "for act 3 lets not say heaven, lets just call it the
+afterlife, and it turns out the afterlife is similar to the real life and
+you have to keep working." The gameplay is undecided.* This section is the
+spine as told, checked against the house rules, then three loops for the
+afterlife judged against that joke, one recommended (a hybrid of two), and
+the calls only the owner can make. The look:
+docs/mocks/act3-afterlife-2026-10-16 (plain cells, not the game; the first
+draft, under the old name, is docs/mocks/act3-heaven-2026-10-16).
 
 ### The bargain
 
-- **What the player gets:** a third place whose crowd is their own history.
-  Every square that worked the yard or fought in the deep is a soul in
-  heaven, by name and by line, so a long act 1 is a big act 3. The two they
-  built at the start (names, roles, outfits, `S.selves`) are the ones who
-  arrive, dressed as chosen.
-- **What the player gives:** the house as an ending. The finale's
-  "afterwards they live there" becomes an interval, and the pair stop being
-  bodies in the yard.
+The joke is the bargain. The pair have worked a yard, dug a hole to the
+bottom of the world, fought a serpent and built a house, and they rise
+expecting rest. The crowd of the dead is waiting for them -- every square
+that ever worked the yard or fought in the deep -- and what the crowd does
+is hand them a pick. Through the cloud below them is a yard: a rock to hit,
+heaps to haul, boards to climb. The afterlife is like real life, and you
+keep working. The player should recognize the place before the pair do, and
+laugh at the recognition; the act earns its keep by what turns out
+*different* once the same grind is under way.
+
+- **What the player gets:** a third place whose crew is their own history.
+  Every square that worked the yard or fought in the deep is there, by name
+  and by line, so a long act 1 is a big act 3. The two they built at the
+  start (names, roles, outfits, `S.selves`) are the ones who arrive, dressed
+  as chosen. And a yard they already know how to play, so act 3 opens at a
+  run rather than on a tutorial -- the familiarity is the gag, and it is
+  also the onboarding.
+- **What the player gives:** the house as an ending, and the promise of
+  rest. The finale's "afterwards they live there" becomes an interval, and
+  the pair stop being bodies in the yard and start again as bodies in
+  another one.
 - **What it must not break:** nothing teleports and nothing pops; no
-  offline accrual and no prestige ("Not doing", above: heaven is a new
-  place, not a reset -- the yard is never wiped and its purse never
-  converted; coins cannot go up, because nothing carries them, so heaven's
-  purse starts at nothing by the no-teleport rule, not by a reset); ladders
-  in bands through `tierRows`; black and white, purple for what magic emits;
-  the P = 6 grid; config owns every number.
+  offline accrual and no prestige ("Not doing", above: the afterlife is a
+  new place, not a reset -- the yard below is never wiped and its purse
+  never converted; coins cannot go up, because nothing carries them, so the
+  afterlife's purse starts at nothing by the no-teleport rule, not by a
+  reset. The joke lands *because* it looks like a restart and is not one:
+  the yard below is still there, still the player's); ladders in bands
+  through `tierRows`; black and white, purple for what magic emits; the
+  P = 6 grid; config owns every number.
 
 ### The spine
 
@@ -20010,47 +20029,80 @@ forty bytes a death, a few thousand deaths in a long game, still well inside
 a gzipped save.) **How the tick reads:** one to four strokes after the name;
 five is the tally's crossed bundle; past that the number in place of the
 strokes (`wick 12`). Names are DOM text (the roster, the hover), so the ticks
-are text there; only heaven's crowd draws them, as two-pixel marks over the
-head, the wardrobe's unit.
+are text there; only the afterlife's crowd draws them, as two-pixel marks
+over the head, the wardrobe's unit. Under the new theme a line is also a
+*work history*: `job` and `gens` say what the line did and for how long,
+which is what the afterlife reads when it puts the dead back to work (the
+loops below).
 
 **3. The beat.** After the finale the house stands and the pair live in it.
 The house is destroyed -- the proposal is a falling rock, the way the game
 began, so act 3 opens on act 1's first picture -- and two souls rise out of
 the wreck dressed as chosen: the outfit goes up with them, drawn in the
 soul's inks. The camera follows them up through the yard's sky (the `skyCam`
-window) and through cloud, and the view is heaven. A beat in `BEATS`, once
-(`beatsDone`), owning the camera as the snatch does; the space bar hurries
-it, never cuts it.
+window) and through cloud, and the view is the afterlife. A beat in `BEATS`,
+once (`beatsDone`), owning the camera as the snatch does; the space bar
+hurries it, never cuts it.
 
-**4. The greeting.** Heaven is already peopled when they arrive: every soul
-that rose in acts 1 and 2 is standing there, in files by line (the oldest
-generation at the back), the deep's dead with their class marks. They hop
-(the finale's held hop, three groups a third of a beat apart) as the pair
-come down onto the cloud. Nobody appears: every one of them was seen to go
-up. A crowd of thousands is drawn as a field -- the near files as bodies,
-the far files thinning into the cloud's own cells -- so a frame costs the
-files in view, not the dead.
+**4. The greeting.** The afterlife is already peopled when they arrive: every
+soul that rose in acts 1 and 2 is standing there, in files by line (the
+oldest generation at the back), the deep's dead with their class marks. They
+hop (the finale's held hop, three groups a third of a beat apart) as the
+pair come down onto the cloud -- and then the front file steps forward and
+one of them holds out a pick, and the camera turns from the crowd to what is
+behind it: a yard. Nobody appears: every one of them was seen to go up, and
+the pick is carried to the pair, not given. A crowd of thousands is drawn as
+a field -- the near files as bodies, the far files thinning into the cloud's
+own cells -- so a frame costs the files in view, not the dead. Whatever is
+said at the greeting is the owner's to write; the joke can be carried with no
+words at all (the pick held out is the line).
 
-**5. Heaven has no deaths.** Nobody ages there. Whether the yard below goes
-on aging, and sending souls up, is the first call below.
+**5. Nobody dies in the afterlife.** Nobody ages there, so nobody is born
+there: the crew never turns over, and a soul put to a job stays at it. That
+is the first thing that works differently up there, and the loops lean on
+it. Whether the yard below goes on aging, and sending souls up, is the
+first call below.
 
 **Save shape.** New on `S`, each in one of state.js's lists: `S.lines`
 (SAVED); `life`, `line` and `gen` on every saved body (the crew's own
-record, SAVED_BY_HAND); heaven's facts under one `S.heaven` (SAVED); and
-`'heaven'` a third value of `S.view`. The souls in flight and the crowd's
-draw are EPHEMERAL: a reload mid-rise lands the soul in the crowd. A save
-from before lifespans gets a migration (save-shape-change): every living
-body founds its own line at generation one and the dead are none -- which is
-why lifespans want to ship well before act 3, so saves have a crowd to
-arrive to.
+record, SAVED_BY_HAND); the afterlife's facts under one `S.after` (SAVED;
+the name is a working one); and `'after'` a third value of `S.view`. The
+souls in flight and the crowd's draw are EPHEMERAL: a reload mid-rise lands
+the soul in the crowd. A save from before lifespans gets a migration
+(save-shape-change): every living body founds its own line at generation one
+and the dead are none -- which is why lifespans want to ship well before act
+3, so saves have a crowd to arrive to.
 
-### Three loops for heaven
+### Three loops for the afterlife
 
 Every loop starts the same way (the greeting) and ends the same way (the
 crowd puts the house up again on the cloud -- the finale's piece-a-trip
-build with heaven's whole crew -- the pair sit on the bench, the sheet). They
-differ in what you click, what you buy and what the crowd is for. Coin and
-station names are working names; the words are the owner's.
+build with the afterlife's whole crew -- the pair sit on the bench, the
+sheet; whether they get to *stay* sat is the last call below). They differ
+in what you click, what you buy and what the crowd is for. Coin and station
+names are working names; the words are the owner's.
+
+The first draft judged the loops on how far each was from act 1. The owner's
+theme turns that test over: the afterlife is *meant* to be like the yard. The
+test now is two-sided -- does it read at once as "the same job again", and
+does it then do enough that is different that it is an act and not a
+re-skin. The twists the theme offers, any loop can draw on:
+
+- **The dead keep their trade.** A line's `job` and `gens` are experience:
+  a carter line forty generations deep starts its afterlife work further up
+  its ladder, or works faster, than a line of one. What a long act 1 earns is
+  skill, not coins (coins still cannot go up).
+- **No breaks, no births, no turnover.** Nobody ages, so nobody is born and
+  nobody stands down; a soul at a job is there for good. The yard's crew
+  costs return as the afterlife's one-way choices: a soul put to a station is
+  spent on it.
+- **The yard's systems mirrored, with a turn.** The rock is a cloud; dust is
+  mist; the sky's smog is below, not above (the yard's weather seen from the
+  top of the cloud); the deep's dark is the afterlife's glare. Each mirror is
+  a candidate, not a promise -- how literal the mirror is is a call below.
+- **The yard below shows through.** Looking down through a thin patch of
+  cloud the player sees their yard still at it. Whether that is a picture or
+  a live view is the first call.
 
 #### A. The cloud is the rock
 
@@ -20067,8 +20119,8 @@ station names are working names; the words are the owner's.
 - **Stations and ladders:** the gatehouse (crew), a loom for mist, the dew
   beds, a light mirror, a builders' yard; each one card of eight rungs in
   `tierRows` bands. The cloud overhead thins as it is mined, and **building
-  heaven out** -- cloud floor laid to the right a tile a trip -- opens the
-  next station, as a barrier opened the next place.
+  the afterlife out** -- cloud floor laid to the right a tile a trip -- opens
+  the next station, as a barrier opened the next place.
 - **The dead's part:** the hire pool; a long line is a deep bench of one job.
 - **Reuse:** rock.js's hit, grid.js in a pale palette, the crew and its
   jobs, stations.js's gates, `tierRows`, home.js's build. New: the place,
@@ -20080,8 +20132,11 @@ station names are working names; the words are the owner's.
   ground.
 - **Cost: L.** A whole place (world.js, render layers, a sand grid in new
   tones) and a full set of stations.
-- **Risk:** act 1 again in white. The owner asked for a different theme;
-  these are the same verbs re-skinned.
+- **Fit to the theme:** the best. It *is* "the same job again": a rock to
+  hit, heaps to haul, a board of stations. The first draft's risk -- "act 1
+  again in white" -- is now the joke. Its weakness moves: on its own the
+  dead are only a hire pool, so after the first laugh nothing in the loop is
+  about who they were, and it is a re-skin with a gag on the front.
 
 #### B. The roll call (souls are the currency)
 
@@ -20091,11 +20146,11 @@ station names are working names; the words are the owner's.
   building them**, a piece a click: act 1's click put to its last use. The
   rebuilt then do the same: builders carry light to an unbuilt soul and set
   its rim a piece a trip (home.js's rule), so waking grows with the woken.
-- **Resources,** in band order: light (made by the woken at heaven's few
-  stations; dust's band), a yard soul (a worker line's; crops'), a deep soul
-  (a fighter line's; ore's), a line's founder (one a line, rare; the spark's
-  band). A rung whose bill names a soul takes it to that station for good,
-  as its keeper.
+- **Resources,** in band order: light (made by the woken at the afterlife's
+  few stations; dust's band), a yard soul (a worker line's; crops'), a deep
+  soul (a fighter line's; ore's), a line's founder (one a line, rare; the
+  spark's band). A rung whose bill names a soul takes it to that station for
+  good, as its keeper.
 - **The crew:** every woken soul works -- light at the lamps, carrying, and
   building the next souls. Production is the population, so it compounds as
   a crew does in act 1.
@@ -20104,8 +20159,8 @@ station names are working names; the words are the owner's.
   each cheaper); the builders' bench; the house's ground. Each one card in
   `tierRows` bands, the last band a founder.
 - **The dead's part:** everything. Lines are what the player buys: a line of
-  twelve carters woken whole makes heaven's hauling twelve strong. Two
-  players' heavens differ because their yards did.
+  twelve carters woken whole makes the afterlife's hauling twelve strong.
+  Two players' afterlives differ because their yards did.
 - **Goal:** the crowd empty -- every soul a body again -- then the house.
   Finite, its length the act-1 history; the founder's bill pulls a whole
   line in, so a crowd of thousands is tens of founders, not thousands of
@@ -20117,8 +20172,12 @@ station names are working names; the words are the owner's.
   goes to ink as you play; the progress bar is the picture.
 - **Cost: M.** One place with few stations; most of the weight is the
   crowd's draw and the rim build.
-- **Risk:** a thin place to look at once the crowd is woken; an old save's
-  lines are one body each.
+- **Fit to the theme:** half. "Waking the dead to put them to work" is the
+  joke told once -- every soul rebuilt is clocked back on -- but the work
+  they then do is lamps and a bench, not a yard, so the *resemblance* the
+  owner asked for is missing: it reads as a new kind of place, which was the
+  old brief, not the new one. Its strength is untouched: it is the only loop
+  where lifespans and lineage are the currency.
 
 #### C. The climb (shelves to a gate)
 
@@ -20127,50 +20186,91 @@ station names are working names; the words are the owner's.
 - **Resources:** light (falling); cloud cut from the shelf you stand on (the
   bargain: you cut your own floor to build the stair up); a barrier's
   stone a shelf.
-- **The crew and the dead:** heaven is a column of cloud shelves. Each holds
-  part of the crowd behind its barrier -- the yard's dead on the first, the
-  deep's on the second -- and opening a shelf brings them on as crew. The
-  crowd arrives in chapters.
+- **The crew and the dead:** the afterlife is a column of cloud shelves.
+  Each holds part of the crowd behind its barrier -- the yard's dead on the
+  first, the deep's on the second -- and opening a shelf brings them on as
+  crew. The crowd arrives in chapters.
 - **Stations and ladders:** a station a shelf (a cutter, a catcher, a stair
   builders' yard), each one card in bands; the stair to the next shelf is
   built a piece a trip and its barrier opens it, as act 1's shields did.
 - **Goal:** the gate at the top; it opens on the house's ground.
 - **Reuse:** barriers as gates, route.js's climbs, home.js's build. New: a
   vertical view (view.js and the camera), shelves as places, falling light.
-- **Reads as:** the axis. The yard is wide, the deep a dark field, heaven
-  tall: thin black shelf edges, pale cloud, the gate a purple outline far
-  up.
+- **Reads as:** the axis. The yard is wide, the deep a dark field, the
+  afterlife tall: thin black shelf edges, pale cloud, the gate a purple
+  outline far up.
 - **Cost: L.** The vertical camera touches every renderer and the pointer,
   and every shelf is a small place.
-- **Risk:** act 1's barrier run turned on its end.
+- **Fit to the theme:** the weakest. A climb to a gate is the paradise story
+  -- the pair are still on their way to rest, and the afterlife is the road
+  there -- which is the opposite of the owner's joke. It can be turned (the
+  gate opens on another yard), but then it is A with a costly camera in
+  front of it.
 
-### Recommendation: B, the roll call
+### Recommendation: A's yard, staffed by B's roll call
 
-It is the only one of the three in which lifespans and lineage *do*
-something. Under A and C they are flavor in acts 1 and 2 and a hire pool or
-a cast in act 3; under B the thirty minutes a square worked is what the
-player has in heaven, so the system proposed for acts 1 and 2 is paid off by
-the act it was proposed for. It reads differently -- a crowd of the dead
-going from grey to ink is a picture neither other act has -- and stays an
-incremental: the woken work, the work wakes more, the curve compounds. It
-reuses the most already built (bodies, crowd ranks, the hop, the build, the
-boards) and costs the least. Its weakness, a place thin to look at, is met
-by the house going up at the end and, if the yard keeps running, by souls
-still rising from below.
+The first draft recommended B. Under the new theme B alone is the wrong
+picture -- the owner wants the afterlife to look like work, and B looks like
+a crowd -- and A alone is the right picture with nothing behind it. The
+hybrid takes the picture from A and the engine from B:
+
+- **The place is A's yard in the clouds.** A cloud to hit, mist falling to a
+  cloud floor, heaps, boards of stations in `tierRows` bands -- read at a
+  glance as the yard again. That is the joke, and it costs no tutorial.
+- **The crew is B's roll call.** There is no hire rung. Every worker is one
+  of the dead, rebuilt a rim piece a click (and, later, a piece a trip by the
+  woken), and a station's crew rung is a bill in souls from the matching
+  line: the loom asks for haulers, the dew beds for farmers, the light mirror
+  for the deep's fighters. Lines are the coin of the crew, as in B.
+- **The dead keep their trade.** A soul works at its line's old job faster
+  (or starts higher up its ladder) by its line's `gens`, so the player's own
+  act 1 is what makes the afterlife's yard run. Put a carter at a carter's
+  job and the yard goes; put it anywhere else and it works like a stranger.
+- **Nobody clocks off.** No ages, no births, no turnover: a soul given to a
+  station is spent there for good, and the crowd at the gate is finite. The
+  roll call's bills are the afterlife's real decisions.
+- **The goal is A's and B's at once:** the cloud mined to nothing, the crowd
+  woken, and the house put up again on the cloud by all of them.
+
+Why: it is the only shape that serves both halves of the owner's line -- "it
+is similar to the real life" (A's yard) and "you have to keep working" (B's
+dead, clocked back on one at a time) -- and it keeps the reason lifespans
+and lineage exist: the thirty minutes a square worked below is what it
+brings to the work above. It costs about what A costs, L; B's rim build and
+crowd field are the M on top, but A already needed a crowd at the gatehouse,
+so the overlap is large. If L is too much, the fallback is B with its few
+stations reshaped as a small mirrored yard (a cloud to hit in place of the
+lamps) -- the joke at M, with less yard to play.
 
 ### The calls for the owner
 
-1. **Does the yard keep running below while you are in heaven, and aging?**
-   Yes: one works across three acts -- a view switch down through the cloud,
-   as the abyss switches to the deep -- and souls keep arriving, which gives
-   B an endless tail. No: heaven is the whole game from the beat on, the
-   crowd is finite and act 3 has an end.
-2. **Do lifespans ship before act 3, on their own, and with the serpent
+1. **Does the yard keep running below while you are in the afterlife, and
+   aging?** Yes: one works across three acts -- a view switch down through
+   the cloud, as the abyss switches to the deep -- and souls keep arriving,
+   which gives the roll call an endless tail and makes "you never stop
+   working" true in both places at once. No: the afterlife is the whole game
+   from the beat on, the crowd is finite and act 3 has an end. The theme
+   leans yes; the cost is two yards' frames at once.
+2. **How literal is the mirror?** Close (the same stations under cloud
+   names, the same boards, the same coins in pale tones -- the joke at its
+   plainest, the least new work) or turned (each system with a twist: mist
+   that rises, a sky whose weather is the yard's smog below, a glare where
+   the deep had dark). A middle is the likely answer, and which systems turn
+   is the owner's pick.
+3. **What do the dead keep?** Their trade as speed or rung (the
+   recommendation), their trade as a requirement (a station takes only its
+   own line), or nothing (a soul is a soul). The first rewards a long act 1
+   without punishing a short one.
+4. **Do lifespans ship before act 3, on their own, and with the serpent
    killing fighters or without?** Before is the recommendation: saves start
-   building lines now, so the crowd is there when heaven is. The kill is a
-   change to the fight's balance and can follow.
-3. **What sets the beat off, and is act 3 held behind a flag until whole?**
+   building lines now, so the crowd is there when the afterlife is. The kill
+   is a change to the fight's balance and can follow.
+5. **What sets the beat off, and is act 3 held behind a flag until whole?**
    The house was "kept for good"; the beat can fire when the player says go
    on (a line on the story card) or on its own after the finale. A flag
-   keeps a half-built heaven out of a release. And are the pair mortal, or
-   exempt as assumed above?
+   keeps a half-built afterlife out of a release. And are the pair mortal,
+   or exempt as assumed above?
+6. **Does the work ever end?** The theme's punchline could go either way:
+   the house is rebuilt on the cloud and the pair finally sit down (rest
+   earned), or they sit down and someone hands them a pick again. The ending
+   is the owner's.

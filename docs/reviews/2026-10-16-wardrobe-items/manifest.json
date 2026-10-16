@@ -1,0 +1,290 @@
+[
+  {
+    "slot": "head",
+    "key": "bow",
+    "name": "bow",
+    "file": "head-bow.png"
+  },
+  {
+    "slot": "head",
+    "key": "top-hat",
+    "name": "top hat",
+    "file": "head-top-hat.png"
+  },
+  {
+    "slot": "head",
+    "key": "crown",
+    "name": "crown",
+    "file": "head-crown.png"
+  },
+  {
+    "slot": "head",
+    "key": "flower",
+    "name": "flower",
+    "file": "head-flower.png"
+  },
+  {
+    "slot": "head",
+    "key": "sprout",
+    "name": "sprout",
+    "file": "head-sprout.png"
+  },
+  {
+    "slot": "head",
+    "key": "ears",
+    "name": "ears",
+    "file": "head-ears.png"
+  },
+  {
+    "slot": "head",
+    "key": "antenna",
+    "name": "antenna",
+    "file": "head-antenna.png"
+  },
+  {
+    "slot": "head",
+    "key": "beanie",
+    "name": "beanie",
+    "file": "head-beanie.png"
+  },
+  {
+    "slot": "head",
+    "key": "beret",
+    "name": "beret",
+    "file": "head-beret.png"
+  },
+  {
+    "slot": "head",
+    "key": "tiara",
+    "name": "tiara",
+    "file": "head-tiara.png"
+  },
+  {
+    "slot": "head",
+    "key": "headband",
+    "name": "headband",
+    "file": "head-headband.png"
+  },
+  {
+    "slot": "head",
+    "key": "pigtails",
+    "name": "pigtails",
+    "file": "head-pigtails.png"
+  },
+  {
+    "slot": "head",
+    "key": "mohawk",
+    "name": "mohawk",
+    "file": "head-mohawk.png"
+  },
+  {
+    "slot": "face",
+    "key": "eyes",
+    "name": "eyes",
+    "file": "face-eyes.png"
+  },
+  {
+    "slot": "face",
+    "key": "sleepy",
+    "name": "sleepy",
+    "file": "face-sleepy.png"
+  },
+  {
+    "slot": "face",
+    "key": "smile",
+    "name": "smile",
+    "file": "face-smile.png"
+  },
+  {
+    "slot": "face",
+    "key": "glasses",
+    "name": "glasses",
+    "file": "face-glasses.png"
+  },
+  {
+    "slot": "face",
+    "key": "round-glasses",
+    "name": "round glasses",
+    "file": "face-round-glasses.png"
+  },
+  {
+    "slot": "face",
+    "key": "shades",
+    "name": "shades",
+    "file": "face-shades.png"
+  },
+  {
+    "slot": "face",
+    "key": "monocle",
+    "name": "monocle",
+    "file": "face-monocle.png"
+  },
+  {
+    "slot": "face",
+    "key": "eyepatch",
+    "name": "eyepatch",
+    "file": "face-eyepatch.png"
+  },
+  {
+    "slot": "face",
+    "key": "mustache",
+    "name": "mustache",
+    "file": "face-mustache.png"
+  },
+  {
+    "slot": "face",
+    "key": "freckles",
+    "name": "freckles",
+    "file": "face-freckles.png"
+  },
+  {
+    "slot": "face",
+    "key": "blush",
+    "name": "blush",
+    "file": "face-blush.png"
+  },
+  {
+    "slot": "neck",
+    "key": "scarf",
+    "name": "scarf",
+    "file": "neck-scarf.png"
+  },
+  {
+    "slot": "neck",
+    "key": "checked-scarf",
+    "name": "checked scarf",
+    "file": "neck-checked-scarf.png"
+  },
+  {
+    "slot": "neck",
+    "key": "striped-scarf",
+    "name": "striped scarf",
+    "file": "neck-striped-scarf.png"
+  },
+  {
+    "slot": "neck",
+    "key": "bowtie",
+    "name": "bowtie",
+    "file": "neck-bowtie.png"
+  },
+  {
+    "slot": "neck",
+    "key": "tie",
+    "name": "tie",
+    "file": "neck-tie.png"
+  },
+  {
+    "slot": "neck",
+    "key": "collar",
+    "name": "collar",
+    "file": "neck-collar.png"
+  },
+  {
+    "slot": "neck",
+    "key": "medal",
+    "name": "medal",
+    "file": "neck-medal.png"
+  },
+  {
+    "slot": "back",
+    "key": "cape",
+    "name": "cape",
+    "file": "back-cape.png"
+  },
+  {
+    "slot": "back",
+    "key": "short-cape",
+    "name": "short cape",
+    "file": "back-short-cape.png"
+  },
+  {
+    "slot": "back",
+    "key": "backpack",
+    "name": "backpack",
+    "file": "back-backpack.png"
+  },
+  {
+    "slot": "back",
+    "key": "small-pack",
+    "name": "small pack",
+    "file": "back-small-pack.png"
+  },
+  {
+    "slot": "back",
+    "key": "cat-tail",
+    "name": "cat tail",
+    "file": "back-cat-tail.png"
+  },
+  {
+    "slot": "back",
+    "key": "bushy-tail",
+    "name": "bushy tail",
+    "file": "back-bushy-tail.png"
+  },
+  {
+    "slot": "back",
+    "key": "balloon",
+    "name": "balloon",
+    "file": "back-balloon.png"
+  },
+  {
+    "slot": "back",
+    "key": "flag",
+    "name": "flag",
+    "file": "back-flag.png"
+  },
+  {
+    "slot": "pattern",
+    "key": "overalls",
+    "name": "overalls",
+    "file": "pattern-overalls.png"
+  },
+  {
+    "slot": "pattern",
+    "key": "stripes",
+    "name": "stripes",
+    "file": "pattern-stripes.png"
+  },
+  {
+    "slot": "pattern",
+    "key": "tall-stripes",
+    "name": "tall stripes",
+    "file": "pattern-tall-stripes.png"
+  },
+  {
+    "slot": "pattern",
+    "key": "dots",
+    "name": "dots",
+    "file": "pattern-dots.png"
+  },
+  {
+    "slot": "pattern",
+    "key": "diagonal",
+    "name": "diagonal",
+    "file": "pattern-diagonal.png"
+  },
+  {
+    "slot": "pattern",
+    "key": "quarters",
+    "name": "quarters",
+    "file": "pattern-quarters.png"
+  },
+  {
+    "slot": "pattern",
+    "key": "pale",
+    "name": "pale",
+    "file": "pattern-pale.png"
+  },
+  {
+    "slot": "pattern",
+    "key": "grey",
+    "name": "grey",
+    "file": "pattern-grey.png"
+  },
+  {
+    "slot": "pattern",
+    "key": "black",
+    "name": "black",
+    "file": "pattern-black.png"
+  }
+]

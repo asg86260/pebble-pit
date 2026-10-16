@@ -231,7 +231,7 @@ function say() {
   if (at) who = at.who;
   const kind = at ? at.kind : 'build';
   const head = document.getElementById('wardhead');
-  if (head) writeInto(head, msg(at ? at.title : 'ward-title'));
+  if (head) writeInto(head, msg(at ? at.title : 'ward-appearance'));
   b.stepEl.hidden = !at;
   if (at) b.stepEl.textContent = msg('ward-step', { n: step + 1, of: FLOW.length });
   b.tabs.hidden = !!at;

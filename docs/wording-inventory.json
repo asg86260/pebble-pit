@@ -6828,8 +6828,15 @@
   "id": "ward-title",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "play.html",
-  "context": "the picker page's heading; at a new yard, the heading of its last step, the two of you side by side; and the house board's row that opens the picker",
+  "context": "at a new yard, the heading of the picker's last step, the two of you side by side",
   "text": "the two of you"
+ },
+ {
+  "id": "ward-appearance",
+  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
+  "where": "src/crewboard.js",
+  "context": "the picker page's heading and the house board's row that opens it",
+  "text": "appearance"
  },
  {
   "id": "ward-you",
@@ -6885,7 +6892,7 @@
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobepage.js",
   "context": "the picker's row label over the role, stepped between the three words",
-  "text": "role"
+  "text": "title"
  },
  {
   "id": "ward-role-word",
