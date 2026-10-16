@@ -1,0 +1,27 @@
+{
+ "base": "fb61685847436d647357c70988cc8c922149dfd3",
+ "head": "168f82f27e756f57e87c1b30d7c391c08813c6a5",
+ "at": "2026-10-16T04:29:56.667Z",
+ "items": {
+  "plate-two": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 2,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   }
+  ]
+ }
+}

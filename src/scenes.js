@@ -1095,7 +1095,9 @@ const deepScenes = {
     run: () => {
       deepYard({ party: [cast('brawler', 8)], fangs: 1 });
       window.__serpent({ stage: 0, wound: Math.max(0, depthAt(0) - 1) });
-      for (let i = 0; i < 60 * 60 && !S.fangsLoose.some(f => f.held); i++) window.__fast(1 / 60);
+      // carried, a few seconds short of the hopper
+      const c = crusherRect(), near = f => f.held && f.x < c.x + c.w + P * 30;
+      for (let i = 0; i < 90 * 60 && !S.fangsLoose.some(near); i++) window.__fast(1 / 60);
       window.__look(deepX0());
     } },
   // Every status the serpent can wear, at once: a Swordsman's Bleeding, a
