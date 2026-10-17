@@ -12,7 +12,7 @@
 
 import { S } from '../state.js';
 import { P, MANSION_GREYS, MANSION_LIT, MANSION_WINDOW, MANSION_WINDOW_EVERY, MANSION_FLOOR_ROWS, MANSION_POLES,
-         MANSION_FLOORS, MANSION_BLOCKS_AT, MANSION_BLOCKS_W, MANSION_TOWER_FLOORS, FINALE_PILE_W, FINALE_GREYS, ACT_ROCK_TONES } from '../config.js';
+         MANSION_FLOORS, MANSION_BLOCKS_AT, MANSION_BLOCK_CELLS, MANSION_BLOCKS_W, MANSION_TOWER_FLOORS, FINALE_PILE_W, FINALE_GREYS, ACT_ROCK_TONES } from '../config.js';
 import { ctx } from './ctx.js';
 import { pieces } from '../home.js';
 import { hash } from './flicker.js';
@@ -72,7 +72,7 @@ export function drawMansion() {
   for (let r = 0; r < wood; r++) for (let i = 0; i < FINALE_PILE_W; i++)
     cell(woodX() - FINALE_PILE_W * P / 2 + i * P, gy - P - r * P, r % 2 ? FINALE_GREYS[4] : FINALE_GREYS[2]);
   if (!mansionStands()) { ctx.fillStyle = '#000'; return; }
-  const blocks = blocksLeft();
+  const blocks = Math.ceil(blocksLeft() / MANSION_BLOCK_CELLS);
   for (let n = 0; n < blocks; n++)
     cell((MANSION_BLOCKS_AT + n % MANSION_BLOCKS_W) * P, gy - P - Math.floor(n / MANSION_BLOCKS_W) * P, ACT_ROCK_TONES[n % ACT_ROCK_TONES.length]);
   // the scaffold, behind the pieces

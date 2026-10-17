@@ -1396,6 +1396,11 @@ import { ruinX, campX, yardFeet, sendPair } from './ghosts.js';
 import { afterFloor as actsAfterFloor } from './after/place.js';
 import { WORKER as ACTS_WORKER, ACT_RIM_PIECES, MANSION_FADE_S } from './config.js';
 import { WALL_BEATS } from './hell/story.js';
+// The go-on card pressed, as its click presses it (render/portals.js,
+// `onGoOn`, then actbeats.js `sayGoOn`), and the house's fall as drawn.
+import { sayGoOn as actsGoOn, fallNow as actsFallNow } from './actbeats.js';
+HANDLES.__goOn = () => actsGoOn();
+HANDLES.__actFall = () => actsFallNow();
 const ACT_POINTS = ['home', 'fallen', 'road', 'act4', 'mansion'];
 const ACT_DONE = {
   home: ['freed', 'finale', 'freedsheet'],

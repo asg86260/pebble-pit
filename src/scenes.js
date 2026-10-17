@@ -2682,8 +2682,48 @@ export const SCENES = {
       const t = window.__afterTrees().find(p => p.stage === 3 && !p.falling);
       for (let k = 0; k < 8; k++) window.__afterClick(t.x, t.y);
       window.__fast(0.5); window.__look(0); window.__holdShot();
+    } },
+
+  // --- the acts' connective tissue (actbeats.js, portals.js, mansion.js) --------
+  // Each off a yard past the snatch with the wizards' portal up and a crew to
+  // borrow, stood at its point of the acts' story (`__actsAt`).
+  'portal-heaven': { about: 'the acts', say: 'heaven\'s tear over the ruin, the cloud stair let down, the rock on the ruin, the ghosts setting off',
+    run: () => { actsYard('act4'); window.__fast(2); pinCamera(0); window.__holdShot(); } },
+  'portal-heaven-up': { about: 'the acts', say: 'heaven\'s portal\'s other end, over the patch of cloud floor the road comes up through',
+    run: () => { actsYard('road'); S.beatsDone.push('haunt'); S.acts.pair.mode = 'ghost'; window.__goPlace('after'); window.__fast(2); window.__holdShot(); } },
+  'portal-hell': { about: 'the acts', say: 'hell\'s white-hot slit in the deep\'s floor, and its hand',
+    run: () => { actsYard('act4'); window.__view('deep'); window.__fast(2); window.__holdShot(); } },
+  'house-fall': { about: 'the acts', say: 'the house\'s fall: the rock out of the sky over the house, the two of them indoors',
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 20 && !window.__goOn(); i++) window.__fast(1 / 60);
+      for (let i = 0; i < 60 * 40 && !(window.__actFall() && window.__actFall().rock >= 0.5); i++) window.__fast(1 / 60);
+      window.__holdShot();
+    } },
+  'mansion': { about: 'the acts', say: 'the mansion going up on the house\'s ground: the scaffold, a floor and a half set, the rock half broken up',
+    run: () => { actsYard('mansion', 34); window.__fast(3); pinCamera(0); window.__holdShot(); } },
+  'mansion-end': { about: 'the acts', say: 'the mansion finished, the two of them in, the freed souls down the stair in their files',
+    run: () => {
+      actsYard('mansion', 999);
+      Object.assign(S.acts.pair, { at: 'door', inside: 1 });
+      S.acts.house = 'mansion';
+      S.acts.mansion.done = true;
+      S.acts.mansion.G = 9;
+      window.__fast(1); pinCamera(0); window.__holdShot();
     } }
 };
+
+// A yard for the acts' scenes: rich, past the snatch with the wizards'
+// portal, a crew with spare hands, stood at `point` (`__actsAt`).
+function actsYard(point, pieces = 0) {
+  window.__reset();
+  window.__actsOn(null);
+  rich();
+  window.__crew(2, 4);
+  window.__snatch({ played: true });
+  window.__actsAt(point, pieces);
+  window.__view('yard');
+}
 
 // Wake the checks' pad and hop it along the stops until it is on `id` (or,
 // for null, wherever it lands in this half).

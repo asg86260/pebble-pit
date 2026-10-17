@@ -21290,6 +21290,66 @@ standing beside it.
 spreadsheet of any loop. **I, the way out:** an escape line for the damned
 -- set aside as act 3's verb a second time and act 1's hauling.
 
+### The portals and the mansion (owner, 2026-10-17 night; built as placeholders)
+
+*The owner, the night of 2026-10-17: "build as much code as you can, use
+placeholders ... there should also be portals to heaven and portals to hell
+... the game ends with the squares getting a massive mansion to live in after
+freeing God."* Built behind `AFTERLIFE_ON` / `HELL_ON` (actbeats.js,
+portals.js, ghosts.js, mansion.js, their drawings in render/portals.js and
+render/mansion.js); every drawing a placeholder before its mock, every line
+a plain label in locales/en.ftl for the owner to rewrite.
+
+- **Two portals, the camera's and never a body's.** Heaven's is a tear in
+  the sky over the house (the portals review's H-A), its other end the patch
+  of cloud floor straight above it; hell's is a white-hot slit in the deep's
+  floor (L-A) straight over hell's road, its other end over the landing. A
+  click (or the pad, or the hand) on either end takes the view through on
+  the same ripple the wizards' portal uses, generalized: the nearer place
+  stands while the farther shows through the ring, painted once on the
+  click and frozen, never a second pass of the layers. Each has the yard
+  portal's pointing hand until the player's own round trip. Heaven's carries
+  nobody back by a press until the road opens (`ghost-road`); hell's waits
+  for the pair to come back as ghosts (`haunt`). The places are stacked, so
+  bodies walk the road, never the portal: the souls rise straight up out of
+  the ruin through the tear onto the cloud; the cloud stair is let down from
+  the tear at `ghost-road`; the act-4 road runs into the drowned pit, down
+  the abyss to the deep's floor, along it and down through the slit. The
+  camera follows a body across by the ripple.
+- **What starts act 3** (call 7, as recommended): a go-on card over the
+  house once the finale's sheet is down. Pressed, the house's fall plays.
+- **Who a beat holds:** every act beat owns the camera only, so the yard,
+  the deep and both acts' places keep running (call 1). The pair are held by
+  the beat's own facts: the house's fall walks them indoors before the rock
+  comes down and keeps them there, and from then on they are `S.acts.pair`.
+- **The beats** are placeholder cutscenes on the cutscene system: the
+  letterbox, a camera glided phase to phase, a plain line in the band. Each
+  fires once from its own trigger (the go-on, A's `strikeDue`/`axeDue`, B's
+  `hellWallDue`/`cageBroken`) or `__actOwe`; a click or the held space bar
+  hurries one, never cuts it. A save read back mid-chain plays on from the
+  camera beat it names, the phases skipping what has landed.
+- **The ghosts** (call 5, as recommended): carry only, the pair walking the
+  road from the ruin to hell's store with a load of the yard's dust and back
+  empty; the yard's boards are shut from the house's fall until the pair
+  come back down as ghosts, open again in act 4.
+- **The mansion, the ending.** A standing job from the start of the cage's
+  barrier, so it goes up through a stretch of act 4 and tops out during the
+  walk home: the yard's own builders (spare hands if it has none), borrowed
+  off their work as the finale borrowed them for the house, a piece a trip.
+  The scaffold goes up a pole a trip off the old house's woodpile; the rock
+  on the ruin is broken up a row a trip onto a blocks pile, the source of
+  every piece after; floor by floor a main block, two wings and two towers;
+  the scaffold carried down last. A set piece fades in; the finished pieces
+  are drawn off one cached sheet repainted only when a piece lands. Lives
+  returned, the pair walk home and in at its door, the freed souls come down
+  the cloud stair into files beside it, and the end sheet stands.
+
+Open, for the owner: every word; the look of the tear, the slit, the
+mansion and the souls (mocks); whether the yard's living crew should gather
+at the mansion too (only the souls and the builders do); what the ghosts'
+carried dust is worth in hell (kept on `S.acts.purse` until act 4's mine
+takes it); boards for the acts' stations on a pointer (not yet wired).
+
 ### Each act's verb, and what it reuses
 
 | | act 1: the yard | act 2: the deep | act 3: the afterlife | act 4: hell |

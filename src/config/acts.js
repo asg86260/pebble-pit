@@ -51,7 +51,7 @@ export const ACT_CAPTION_GREY = GREY[0];     // the words, on the letterbox's bl
 // ACT_ROCK_FROM over the ground, in held steps; the dust; then the two souls
 // out of the wreck and straight up through the tear at ACT_SOUL_PX_S.
 export const ACT_ROCK_FALL_S = 2.2;
-export const ACT_ROCK_FROM = P * 70;
+export const ACT_ROCK_FROM = P * 40;
 export const ACT_ROCK_STEPS = 18;
 export const ACT_ROCK_W = 16;                // cells, wider than the house's walls
 export const ACT_ROCK_H = 11;
@@ -68,7 +68,7 @@ export const ACT_SLIT_TONES = [GREY[0], PURPLE[13], GREY[1]];          // the sl
 // --- the ghosts on the road (call 5: carry, not work) -----------------------
 // After the road opens and the pair come down, they walk a loop: the ruin to
 // the drowned pit, down through the abyss to the deep's floor, along it to
-// hell's slit and down onto hell's floor, on to the barrier and back the
+// hell's slit and down onto the landing, on to hell's store and back the
 // same way, carrying a load of the yard's dust down and nothing up. A load
 // is GHOST_LOAD dust, taken off the purse at the ruin if the purse has it.
 // Called somewhere by a beat (the cage, home) they walk ACT_CALL_K faster.
@@ -110,6 +110,7 @@ export const MANSION_POLES = [11, 20, 28, 37];   // the scaffold's poles, cells 
 export const MANSION_BUILDERS = 6;
 export const MANSION_BLOCKS_AT = 1;
 export const MANSION_BLOCKS_W = 4;
+export const MANSION_BLOCK_CELLS = 4;          // the rock's cells a block on the pile stands for
 export const MANSION_TAKE_S = 0.5;
 export const MANSION_SET_S = 0.7;
 export const MANSION_FADE_S = 0.6;

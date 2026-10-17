@@ -12,6 +12,14 @@ fields, the beat rows and two scenes -- nothing playable (DESIGN.md, the
 section's first paragraph). Blocker for anything past it is unchanged: the
 mocks, then lifespans and lineage.
 
+**Connective tissue built as placeholders** (2026-10-17 night, branch
+`acts-connective`; DESIGN.md, "The portals and the mansion"): the two
+portals, the go-on card, every act beat as a placeholder cutscene from its
+trigger, the ghosts' road, the mansion ending and its sheet. Open: every
+word (plain labels in locales/en.ftl), the mocks of the tear, the slit, the
+souls and the mansion, and boards for the acts' stations on a pointer (A's
+`cardAt`/`afterBoard`, B's `hellBoardAt` exist; no STATIONS rows open them).
+
 **Act 4's loop built on placeholder art** (2026-10-17, branch `hell-loop`;
 DESIGN.md, act 4's first paragraph): mine, smelt, forge, barriers, flares,
 ghosts, four cards. Open on it: the hifi mocks to replace every drawing,
