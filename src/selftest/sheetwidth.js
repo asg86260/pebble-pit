@@ -1,7 +1,8 @@
 // Every page of the held sheet and of the landing page's column, at a desk's
 // width and a phone's: each block on the page -- a row of saves, a list, a
 // button, a table, a form -- is the sheet's whole inner width. The sheet is
-// one width on every page (`--held-w`), so a block that sizes itself to its
+// one width on every page (`--held-w`; the appearance page alone is wider,
+// `--ward-sheet-w`, and is measured against its own), so a block that sizes itself to its
 // own content stands narrower than the buttons under it; the saves' rows,
 // stacked two lines a row, did exactly that.
 //
