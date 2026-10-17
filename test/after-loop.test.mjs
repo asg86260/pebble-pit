@@ -212,3 +212,75 @@ group('a big crowd costs the frame little, and only its files in view are drawn'
     ok(files <= Math.ceil(S.viewW / (P * 4)) + 4 && files <= CROWD_FILES, 'the drawing walks only the files in view', `${files} files`)
   ];
 });
+
+group('a thunderhead hit is a burst', async () => {
+  up();
+  S.after.clouds.push({ id: 998, x: 1500, y: -700, size: 8, max: 8, kind: 'thunder', vx: 0, age: 9, die: null });
+  const f0 = read().faith, hit = clickCloud('thunder');
+  run(10);
+  window.__actsOn(null);
+  return [ok(hit && read().faith - f0 >= 6, 'a thunderhead gives several hits\' faith at once', `${f0} -> ${read().faith}`)];
+});
+
+group('the plate\'s card climbs in bands, and the puff rung pays more a hit', async () => {
+  up();
+  window.__afterGrant({ faith: 400, timber: 40 });
+  const rows = () => Object.fromEntries(window.__afterRows().map(r => [r.key, r]));
+  const bill0 = rows()['after-puff'].bill.map(([c]) => c).join('+');
+  const bought = [0, 1, 2].map(() => window.__buy('after-puff'));
+  const r = rows()['after-puff'];
+  const bill2 = r.bill.map(([c]) => c).join('+');
+  const f0 = read().faith;
+  clickCloud('white');
+  run(10);
+  const gain = read().faith - f0;
+  window.__actsOn(null);
+  return [
+    ok(bought.every(Boolean) && r.rung === 3, 'three rungs bought through the card', `${bought} rung ${r.rung}`),
+    ok(bill0 === 'faith' && bill2 === 'faith+timber', 'the first band is faith, the second faith and timber', `${bill0} then ${bill2}`),
+    ok(gain >= 4, 'a hit pays the rung\'s faith', `${gain}`),
+    ok(!rows()['after-axe'].shown, 'the axe\'s ladder waits for the axe')
+  ];
+});
+
+group('the fence sets the split of every log', async () => {
+  up();
+  members(MEET_MEMBERS + 4); run(1);
+  window.__afterGrant({ faith: 500 });
+  window.__buy('after-door-mill');
+  window.__buy('after-hire-sawyer');
+  const set = window.__afterDial('after-fence', 3);
+  window.__afterGrant({ logs: 5 });
+  const t0 = read().timber, d0 = read().sawdust;
+  runUntil(() => read().logs === 0, 90);
+  window.__actsOn(null);
+  return [
+    ok(set, 'the fence is a dial on the mill\'s card'),
+    ok(read().timber - t0 === 15 && read().sawdust - d0 === 5, 'set fine, a log saws into three timber and one sawdust',
+       `${read().timber - t0} timber, ${read().sawdust - d0} sawdust`)
+  ];
+});
+
+group('the speech is warned, strips the half-won and keeps every member; wardens tear posters', async () => {
+  up();
+  // Every soul half-inked but the front rank, made members.
+  window.__afterCrowd(i => (i < CROWD_FILES ? RIM_PIECES : 4));
+  S.after.speech = { next: S.after.t + 8, f0: 0, held: null };
+  S.after.posters.push({ id: 900, slot: 3, age: 0, torn: null });
+  run(3);
+  const warned = S.after.t >= S.after.speech.next - 6;
+  const before = S.after.rims;
+  run(6);
+  const after = S.after.rims;
+  const file1 = [0, 1, 2, 3].map(r => after[r * CROWD_FILES + 1]).join('');
+  const far = after[5 * CROWD_FILES + 30];
+  const torn = runUntil(() => !S.after.posters.some(p => p.id === 900), 120);
+  window.__actsOn(null);
+  return [
+    ok(warned, 'the speech is warned ahead'),
+    ok(file1 === '8000', 'souls in its sweep lose their open pieces, members keep theirs', file1),
+    ok(+far >= 4, 'souls outside it keep theirs', far),
+    ok(before !== after, 'the field changed'),
+    ok(torn, 'a warden walks to the poster and tears it down')
+  ];
+});
