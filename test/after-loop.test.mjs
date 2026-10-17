@@ -7,7 +7,7 @@
 // travel up (`__goPlace`), since the house's fall is not built.
 import { group, ok, run, runUntil, yard, P } from './helpers.mjs';
 import { CHOP_CLICKS, TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIECES,
-         MEET_MEMBERS, AFTER_GATES } from '../src/config.js';
+         MEET_MEMBERS, AFTER_GATES, ACT_CAPTION_S } from '../src/config.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
 
@@ -62,14 +62,16 @@ group('the hand takes an axe after enough cloud hits, and a chop needs it', asyn
   let hits = 0;
   for (let k = 0; k < CHOP_CLICKS * 3 && read().clicks < CHOP_CLICKS; k++) { if (clickCloud(null)) hits++; run(0.25); }
   const before = read().axe;
-  run(1);
+  // The axe comes with its beat, a held caption (actbeats.js): the clock is
+  // turned until the beat has played, not a guessed second.
+  const told = runUntil(() => S.beatsDone.includes('axe'), 4 * ACT_CAPTION_S);
   const after = read().axe;
   const chop = window.__afterClick(t.x, t.y);
   window.__actsOn(null);
   return [
     ok(!early, 'before the axe, a click on a tree does nothing'),
     ok(read().clicks >= CHOP_CLICKS, `${CHOP_CLICKS} cloud hits counted`, `${read().clicks}`),
-    ok(after && S.beatsDone.includes('axe'), 'the axe beat plays and hands the axe over', `${before} -> ${after}`),
+    ok(told && after, 'the axe beat plays and hands the axe over', `${before} -> ${after}`),
     ok(chop && S.after.plots[0].chops === 1, 'and from then on a click on a grown tree is a chop', `${S.after.plots[0].chops}`)
   ];
 });
@@ -167,7 +169,8 @@ group('the gates open in order and the strike falls due at its share', async () 
   const n = S.after.rims.length;
   window.__afterCrowd((i, v) => (i < Math.floor(n * 0.795) ? RIM_PIECES : i < n * 0.9 ? 6 : v));
   const due = runUntil(() => read().gate >= AFTER_GATES.length, 120);
-  run(1);
+  // The strike is a beat with a held caption: turned until it has played.
+  runUntil(() => S.beatsDone.includes('strike'), 4 * ACT_CAPTION_S);
   window.__actsOn(null);
   return [
     ok(gates[0] === 1 && gates[1] === 2, 'the meeting, then the slowdown', gates.join(' ')),

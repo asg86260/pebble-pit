@@ -17,6 +17,7 @@
 // station for good (rows.js): a keeper, who walks to it and stays.
 
 import { S } from '../state.js';
+import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_JOB_POST, AFTER_CANVASS_S, AFTER_CANVASS_RANKS, AFTER_GATHER_S, AFTER_POLE,
          AFTER_FELL_S, AFTER_GRUB_S, AFTER_PLANT_S, AFTER_PASTE_S, AFTER_PASTE_LOAD, AFTER_PRESS_S,
          AFTER_CHOP_HOLD_S } from '../config.js';
@@ -33,7 +34,7 @@ const floorY = () => afterFloor();
 // Where a job waits for work: its station's door, or for a job of the open
 // cloud, the hall's.
 const postX = w => {
-  const post = w.job === 'keeper' ? w.post : AFTER_JOB_POST[w.job];
+  const post = w.job === AFTER_JOB.KEEP ? w.post : AFTER_JOB_POST[w.job];
   if (post === 'grove') return groveX1() - P * 4;
   return stationDoor(post || 'hall') + (w.id % 3) * P;
 };
@@ -50,7 +51,7 @@ export function hireVolunteer(job, post = null) {
   a.volunteers[job] = (a.volunteers[job] || 0) + 1;
   return true;
 }
-export const volunteerCount = () => (S.after ? S.after.bodies.filter(b => b.job !== 'keeper').length : 0);
+export const volunteerCount = () => (S.after ? S.after.bodies.filter(b => b.job !== AFTER_JOB.KEEP).length : 0);
 export const bodiesOf = job => (S.after ? S.after.bodies.filter(b => b.job === job) : []);
 // The bodies through a station's door now: standing at it, and not off on a
 // trip (a sawyer sweeping, a carrier out in the crowd).
@@ -99,7 +100,7 @@ const JOB_STEP = {
     let i = w.target;
     if (i == null || !a.plots[i] || a.plots[i].stage !== 0) {
       i = a.plots.findIndex((p, k) => p.stage === 0 && p.fall == null
-                          && !a.bodies.some(o => o !== w && o.job === 'planter' && o.target === k));
+                          && !a.bodies.some(o => o !== w && o.job === AFTER_JOB.PLANT && o.target === k));
       w.target = i < 0 ? null : i; w.t = 0;
     }
     if (w.target == null) { idle(w, dt); return; }
@@ -113,7 +114,7 @@ const JOB_STEP = {
     let i = w.target;
     if (i == null || !a.plots[i] || !standing(a.plots[i])) {
       const free = a.plots.map((p, k) => k).filter(k => standing(a.plots[k]));
-      const lone = free.filter(k => !a.bodies.some(o => o !== w && o.job === 'feller' && o.target === k));
+      const lone = free.filter(k => !a.bodies.some(o => o !== w && o.job === AFTER_JOB.FELL && o.target === k));
       const pick = (lone.length ? lone : free);
       i = pick.length ? pick.reduce((b, k) => (Math.abs(plotX(k) - w.x) < Math.abs(plotX(b) - w.x) ? k : b)) : null;
       w.target = i; w.t = 0;
@@ -131,7 +132,7 @@ const JOB_STEP = {
     }
     let i = w.target;
     if (i == null || !a.plots[i] || a.plots[i].logs <= 0) {
-      const claimed = k => a.bodies.filter(o => o !== w && o.job === 'hauler' && o.target === k && !o.load).length;
+      const claimed = k => a.bodies.filter(o => o !== w && o.job === AFTER_JOB.HAUL && o.target === k && !o.load).length;
       i = a.plots.findIndex((p, k) => p.logs > claimed(k));
       w.target = i < 0 ? null : i;
     }
@@ -192,7 +193,7 @@ const JOB_STEP = {
       w.n = Math.min(AFTER_PASTE_LOAD, a.stock.posters);
       a.stock.posters -= w.n; w.load = 'posters'; w.target = null; w.t = 0;
     }
-    const others = a.bodies.filter(o => o !== w && o.job === 'paster' && o.target != null).map(o => o.target);
+    const others = a.bodies.filter(o => o !== w && o.job === AFTER_JOB.PASTE && o.target != null).map(o => o.target);
     if (w.target == null || a.posters.some(p => p.slot === w.target) || others.includes(w.target)) {
       const slot = freeSlot(0, others);
       if (slot == null) { w.target = null; return; }

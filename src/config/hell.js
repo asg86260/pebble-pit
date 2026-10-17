@@ -5,6 +5,7 @@
 // number the spec gives is the spec's; every other is a default chosen to
 // stand the loop up, marked so in its comment, for the tuning pass.
 import { P } from './yard.js';
+import { HELL_JOB as J } from '../jobs.js';
 
 // The switch for the act (DESIGN.md, "Held-back flags"), set by the build:
 // `VITE_HELL=1`, which no build sets yet. Act 4 is reached through act 3's
@@ -125,8 +126,8 @@ export const WATER_ROAD_MAX = 6;           // barrels waiting at the road's foot
 // The muster's members, a job each in order: the n-th to come down takes the
 // n-th job. The wall gang is miners taken off their faces (`S.hell.gang`,
 // from the gang card), at most GANG_MAX. Defaults.
-export const HELL_JOBS = ['miner', 'stoker', 'hauler', 'smith', 'miner', 'hauler', 'miner',
-                          'stoker', 'miner', 'hauler', 'miner', 'miner', 'hauler', 'miner'];
+export const HELL_JOBS = [J.MINE, J.STOKE, J.HAUL, J.SMITH, J.MINE, J.HAUL, J.MINE,
+                          J.STOKE, J.MINE, J.HAUL, J.MINE, J.MINE, J.HAUL, J.MINE];
 export const GANG_MAX = 8;
 export const GHOST_WALK = P * 9;           // px/s along a floor (default)
 export const GHOST_CLIMB = P * 5;          // px/s up or down a ladder (default)

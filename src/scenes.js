@@ -16,7 +16,7 @@
 // The comments over the scenes say why each is set up as it is.
 
 import { S } from './state.js';
-import { JOB, TYPE } from './jobs.js';
+import { JOB, TYPE, AFTER_JOB } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs, ramX } from './rock.js';
 import { buriedAt } from './intro.js';
@@ -467,8 +467,9 @@ function afterChain(slow) {
   window.__fast(0.5);
   const doors = ['mill', 'workshop', ...(slow ? ['papermill', 'press'] : [])];
   for (const d of doors) window.__buy(`after-door-${d}`);
-  const hands = ['feller', 'feller', 'hauler', 'hauler', 'hauler', 'sawyer', 'sawyer', 'joiner', 'carrier', 'carrier',
-                 'planter', 'gatherer', 'canvasser', ...(slow ? ['pulper', 'printer', 'paster', 'paster'] : [])];
+  const A = AFTER_JOB;
+  const hands = [A.FELL, A.FELL, A.HAUL, A.HAUL, A.HAUL, A.SAW, A.SAW, A.JOIN, A.CARRY, A.CARRY,
+                 A.PLANT, A.GATHER, A.CANVASS, ...(slow ? [A.PULP, A.PRINT, A.PASTE, A.PASTE] : [])];
   for (const j of hands) window.__buy(`after-hire-${j}`);
 }
 

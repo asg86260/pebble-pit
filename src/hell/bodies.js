@@ -23,6 +23,7 @@
 // crew.js: the JOBS registry's rows for them wait on the mock.
 
 import { S } from '../state.js';
+import { HELL_JOB } from '../jobs.js';
 import { P, HELL_TIERS, HELL_JOBS, GANG_MAX, GHOST_WALK, GHOST_CLIMB, MUSTER_EVERY_S, GHOST_FADE_S,
          HOPPER_MAX, FURNACE_FUEL_MAX, WALL_RATE } from '../config.js';
 import { chamberFloor, ledgeY, ladderX, faceStand, ventX, furnaceStand, anvilX, storeX, roadX, roadTop,
@@ -114,7 +115,7 @@ function jobsWanted() {
   const h = S.hell, jobs = h.bodies.map((_, k) => HELL_JOBS[k % HELL_JOBS.length]);
   if (workableWall() >= 0) {
     let g = Math.min(h.gang, GANG_MAX);
-    for (let k = jobs.length - 1; k >= 0 && g > 0; k--) if (jobs[k] === 'miner') { jobs[k] = 'gang'; g--; }
+    for (let k = jobs.length - 1; k >= 0 && g > 0; k--) if (jobs[k] === HELL_JOB.MINE) { jobs[k] = HELL_JOB.GANG; g--; }
   }
   return jobs;
 }
@@ -330,11 +331,11 @@ export function stepBodies(c) {
     // hands is ever dropped.
     if (b.job !== jobs[k] && !b.carry) { b.job = jobs[k]; b.task = null; b.t = 0; }
     const job = b.job;
-    if (job === 'miner') doMine(b, dt, h.chamber - (miner++ % (h.chamber + 1)));
-    else if (job === 'gang' && wall >= 0) doGang(b, dt, wall, gang++);
-    else if (job === 'smith') doSmith(b, dt);
-    else if (job === 'hauler' || job === 'stoker' || b.carry) {
-      if (!b.task) b.task = job === 'stoker' ? stokerTask() : haulerTask();
+    if (job === HELL_JOB.MINE) doMine(b, dt, h.chamber - (miner++ % (h.chamber + 1)));
+    else if (job === HELL_JOB.GANG && wall >= 0) doGang(b, dt, wall, gang++);
+    else if (job === HELL_JOB.SMITH) doSmith(b, dt);
+    else if (job === HELL_JOB.HAUL || job === HELL_JOB.STOKE || b.carry) {
+      if (!b.task) b.task = job === HELL_JOB.STOKE ? stokerTask() : haulerTask();
       if (b.task) doFetch(b, dt); else idle(b, dt);
     } else idle(b, dt);
   }

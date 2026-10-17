@@ -20,6 +20,7 @@
 
 import { S } from '../state.js';
 import { msg } from '../lang.js';
+import { AFTER_JOB } from '../jobs.js';
 import { P, TIER_BAND, AFTER_BANDS, AFTER_PER, AFTER_LADDERS, AFTER_LADDER_CARD, AFTER_JOBS, AFTER_JOB_POST,
          AFTER_HIRE_FAITH0, AFTER_HIRE_RATE, AFTER_DOORS, AFTER_FENCE_STEPS, AFTER_CARDS } from '../config.js';
 import { tierRows, named } from '../upgrades/tiers.js';
@@ -47,7 +48,7 @@ function spendCoin(coin, n, card) {
   const a = S.after;
   if (coin === 'faith') a.faith -= n;
   else if (coin === 'ink') a.ink -= n;
-  else if (coin === 'pledge') for (let k = 0; k < n; k++) hireVolunteer('keeper', card);
+  else if (coin === 'pledge') for (let k = 0; k < n; k++) hireVolunteer(AFTER_JOB.KEEP, card);
   else a.stock[coin] -= n;
 }
 

@@ -7,6 +7,7 @@
 // marked so in its comment, for the ladder book and the pace tool to move
 // once the loop is built.
 import { P } from './yard.js';
+import { AFTER_JOB as J } from '../jobs.js';
 
 // The switch for the act (DESIGN.md, "Held-back flags"), set by the build:
 // `VITE_AFTERLIFE=1`, which no build sets yet, so the free itch build, the
@@ -195,14 +196,14 @@ export const AFTER_PULL_S = 2;             // ...or pulling a sign up
 
 // --- the volunteers ---
 export const AFTER_WALK = 42;              // px/s, every body up here
-export const AFTER_JOBS = ['canvasser', 'gatherer', 'planter', 'feller', 'hauler', 'sawyer',
-                           'pulper', 'joiner', 'printer', 'carrier', 'paster'];
+export const AFTER_JOBS = [J.CANVASS, J.GATHER, J.PLANT, J.FELL, J.HAUL, J.SAW,
+                           J.PULP, J.JOIN, J.PRINT, J.CARRY, J.PASTE];
 // Which station a job stands at, and so which station must stand before it
 // is hired; null for a job that works the open cloud.
 export const AFTER_JOB_POST = {
-  canvasser: null, gatherer: 'plate', planter: 'grove', feller: 'grove', hauler: 'grove',
-  sawyer: 'mill', pulper: 'papermill', joiner: 'workshop', printer: 'press',
-  carrier: 'workshop', paster: 'press'
+  [J.CANVASS]: null, [J.GATHER]: 'plate', [J.PLANT]: 'grove', [J.FELL]: 'grove', [J.HAUL]: 'grove',
+  [J.SAW]: 'mill', [J.PULP]: 'papermill', [J.JOIN]: 'workshop', [J.PRINT]: 'press',
+  [J.CARRY]: 'workshop', [J.PASTE]: 'press'
 };
 export const AFTER_HIRE_FAITH0 = 12;       // the first volunteer
 export const AFTER_HIRE_RATE = 1.15;       // each one dearer

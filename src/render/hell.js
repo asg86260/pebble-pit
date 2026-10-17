@@ -16,6 +16,7 @@ import { P, GREY, HELL_TIERS, HELL_W, HELL_H, HELL_FLOOR_CELLS, HELL_FLOOR_TONES
          LADDER_AT, ROAD_AT, FURNACE_FUEL_MAX, FACE_LOOSE_MAX, HOPPER_MAX, TRAY_MAX, TOOL_STROKES, FLARE_WARN_S,
          HEAT_SHIMMER_S, SWING_HOLD_S, GHOST_FADE_S, SPOIL_HEAP_ROW } from '../config.js';
 import { S } from '../state.js';
+import { HELL_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { hellX0, hellX1, hellTop, hellFloor, chamberX0, chamberX1, chamberFloor, ledgeY, ladderX, faceX,
          ventX, furnaceBox, anvilX, storeX, roadX, roadTop, spoilX, barrierBox } from '../hell/place.js';
@@ -212,7 +213,7 @@ export function drawHellForge() {
     ctx.fillRect(ax, fy - 2 * P, P, P);
     ctx.fillRect(ax - P, fy - P, 3 * P, P);
     if (h.forge) {
-      const sm = h.bodies.find(b => b.job === 'smith' && b.swung != null && b.swung < SWING_HOLD_S);
+      const sm = h.bodies.find(b => b.job === HELL_JOB.SMITH && b.swung != null && b.swung < SWING_HOLD_S);
       if (sm) for (let d = 0; d < 3; d++) cell(ax + (d - 1) * P, fy - (4 + d % 2) * P, 0);
       // The work on it, its strokes a pip each up its side.
       const done = h.forge.strokes / TOOL_STROKES;
@@ -289,7 +290,7 @@ function ghost(b) {
   ctx.fillRect(x + 1, y + 1, 2 * P - 2, 2 * P - 2);
   const swinging = b.swung != null && b.swung < SWING_HOLD_S;
   const job = b.job;
-  if (job === 'miner' || job === 'gang' || job === 'smith') {
+  if (job === HELL_JOB.MINE || job === HELL_JOB.GANG || job === HELL_JOB.SMITH) {
     ctx.fillStyle = GREY[3];
     const hx = b.face > 0 ? x + 2 * P : x - P;
     if (swinging) ctx.fillRect(hx, y + P, P, 2);               // struck: the head down, level with the work
