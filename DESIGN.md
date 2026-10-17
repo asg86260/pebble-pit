@@ -21511,7 +21511,7 @@ below wherever they differ; the placeholder code predates them):
   picket mark.
 - **14, members:** **walk out.** A soul that joins leaves God's yard for
   the camp, so God's yard empties as the union wins, and the strike reads
-  off how empty it is. Word of mouth between neighbouring members goes.
+  off how empty it is. Word of mouth between neighboring members goes.
   Members in the camp are not workers: a **worker slot is bought** at a
   station (a post, like housing but not), and a member walks from the camp
   to fill it.
