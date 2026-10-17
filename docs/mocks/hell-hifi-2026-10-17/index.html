@@ -79,7 +79,7 @@
 </head>
 <body class="marks">
 <main>
-  <h1>Act 4: hell, high fidelity (round 2)</h1>
+  <h1>Act 4: hell, high fidelity (round 3)</h1>
   <p>A mock drawn from plain cells at the game's sizes (P = 6, a body 18 with a 2-pixel rim), not the game. Design: DESIGN.md, "Act 4: hell, the mine and the forge (design, not built)". Hell is dark on both pages; the page around it follows the theme. Every frame is at 1x (game scale) or 3x, pixelated.</p>
   <div class="banner"><b>Placeholders.</b> Nothing in a picture has words. Every player-facing word on the board (section 4) is a placeholder, <span class="ph">tinted like this</span>; the toggle below hides the tint, so the sheet can be seen as it would read. Ore, bar, tool and barrier names in captions are working names from DESIGN.md, in <span class="wn">italics</span>.</div>
   <div class="bar" id="theme">
@@ -89,14 +89,16 @@
     <button id="pause">pause</button>
     <label>speed <select id="speed"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="2">2x</option></select></label>
   </div>
-  <p><b>The palette.</b> The deep's ramp, capped at six: black, the deep's ground <code>#26262c</code>, its stone <code>#42424a</code>, lit <code>#6e6e78</code>, pale <code>#b4b4c0</code>, and white. <code>#121216</code> is gone. <b>Rock is texture and made things are shape.</b> Rock holds to two adjacent dark rungs, the deep's ground and stone, with lit flecks only near fires. Everything built (furnace, anvil, tank, trough, tray, stair, walkway, cage) is drawn a band brighter, with a one-cell black gap round its silhouette and a white bottom row where the floor's fire catches it. <b>Heat with no red:</b> light comes from below (the floor's top row is lit, the air just over it is washed, and a body's bottom rim is white); flames are white, their height and tone driven by smooth value noise over time, as <code>render/flicker.js</code> drives the cauldron's fire; glare is crossfaded between rungs by alpha; embers rise and fade out. There is no row-shifting shimmer, only a few faint motes drifting up through empty air. <b>Purple shows in three places only:</b> the road's portal, God's halo, and God's light going into the souls.</p>
-  <p><b>Which ramp hell should use.</b> The scaffold's <code>render/hell.js</code> paints its placeholder floor from the neutral <code>GREY</code> ramp (<code>HELL_FLOOR_TONES</code> in <code>config/hell.js</code>). Proposed: hell draws from the deep's capped ramp through <code>render/deeptones.js</code> (<code>GREYS</code>, and <code>PURPLES</code> for the three magic places), with roles of its own beside <code>DEEP_GREY</code>: ground 4 and stone 6 for rock, lit 8, pale 10, white. The road from the deep then runs into hell as one material, the dark page already gets the deep's handling (<code>landed</code>, with the hollow written raw <code>#000</code>), and hell inherits the six-grey cap and its browser check. This mock draws in those tones as seen.</p>
+  <p><b>The palette.</b> The deep's ramp, capped at six: black, the deep's ground <code>#26262c</code>, its stone <code>#42424a</code>, lit <code>#6e6e78</code>, pale <code>#b4b4c0</code>, and white. <code>#121216</code> is gone. <b>Rock is texture and made things are shape.</b> Rock holds to two adjacent dark rungs, the deep's ground and stone, with lit flecks only near fires. Everything built (furnace, anvil, tank, trough, tray, stair, cage) is drawn a band brighter, with a one-cell black gap round its silhouette and a white bottom row where the floor's fire catches it. <b>Heat with no red:</b> light comes from below (the floor's top row is lit, the air just over it is washed, and a body's bottom rim is white); flames are white, their height and tone driven by smooth value noise over time, as <code>render/flicker.js</code> drives the cauldron's fire; glare is crossfaded between rungs by alpha; embers rise and fade out. There is no row-shifting shimmer, only a few faint motes drifting up through empty air. Nothing structural runs full height in a station tone: the flue is capped three cells over the furnace, like the yard's chimneys, and ladders and the cage's chain are drawn in the rock's own dark. Every ore face is set into the rock by a one-cell black gap, as <code>shape()</code> sets a station, and the motifs sit a rung under the stations, so a face never outshines a furnace. <b>Purple shows in three places only:</b> the road's portal, God's halo, and God's light going into the souls.</p>
+  <p><b>Which ramp hell should use.</b> The scaffold's <code>render/hell.js</code> paints its placeholder floor from the neutral <code>GREY</code> ramp (<code>HELL_FLOOR_TONES</code> in <code>config/hell.js</code>). Proposed: hell draws from the deep's capped ramp through <code>render/deeptones.js</code> (<code>GREYS</code>, and <code>PURPLES</code> for the three magic places), with roles of its own beside <code>DEEP_GREY</code>: ground 4 and stone 6 for rock, lit 8, pale 10, white. The road from the deep then runs into hell as one material, the dark page already gets the deep's handling (<code>landed</code>, with the hollow written raw <code>#000</code>), and hell inherits the six-grey cap and its browser check. This mock draws in those tones as seen. <b>On the dark page</b> every tone goes through <code>ink.js</code>'s mapping: written <code>landed</code>, then turned by the page's map, with the hollow written raw <code>#000</code>. In practice each tone is kept and held between the paper and the ink, so white lands on <code>#e0e0e0</code>. The rock's ground <code>#26262c</code> sits only just above the page's <code>#1f1f1f</code> (about 1.1 to 1), so the rock separates from the page by its stone cells and the floor's lit row, and each picture also gets a frame. Changing the theme reloads the page, as the game reinks by a reload.</p>
 
   <!-- 1 -->
   <section class="card" id="s1">
-    <h2>1. The run of chambers: five camera stops at 1x, and a diagram</h2>
-    <p>Each frame is what the game's camera holds, 70 by 84 cells at 1x: one chamber, with the barrier it is working toward at its right edge. <b>Stop 1, <span class="wn">the landing</span>:</b> the portal in the roof and the muster's ladder, the anvil and smith, the quench tank, a furnace, the <span class="wn">dross</span> face, and the pair at <span class="wn">rubble</span> they cannot yet cut. Through the rubble's gaps the cage room's glow leaks white. <b>Stops 2 to 5:</b> the stair comes in at the upper left from the chamber above, a hauler climbs it with bars for the anvil a step at a time, a miner works the face under it, a furnace with as many white tongues as its heat, and the wall gang taking turns at the barrier from their walkway. <b>Stop 5, <span class="wn">the cage room</span>:</b> God in the cage, hung from the roof, the glow filling the room.</p>
+    <h2>1. The run of chambers: five camera stops at 1x, a phone, and a diagram</h2>
+    <p>Each frame is the game's own view, about 133 by 100 cells (800 by 600 at its zoom; <code>S.viewW = S.W / S.zoom</code> in <code>world.js</code>), at 1x: one chamber, with the barrier it is working toward at its right edge. <b>Stop 1, <span class="wn">the landing</span>:</b> the portal in the roof and the muster's ladder, the anvil and smith, the quench tank, a furnace, the <span class="wn">dross</span> face, and the pair at <span class="wn">rubble</span> they cannot yet cut, its gaps leaking the cage room's glow. <b>Stops 2 to 5:</b> the stair comes in at the upper left, a hauler climbs it with bars for the anvil a step a column, a miner works the face under it, the furnace shows as many white tongues as its heat, a brimstone vent crusts, and at the right the wall gang (option (a), section 2) swings at the barrier while two haulers relay the spoil to the heap. <b>Stop 5, <span class="wn">the cage room</span>:</b> God in the cage on its chain, the glow filling the room.</p>
     <div class="row" id="frames"></div>
+    <h3>On a phone, held upright</h3>
+    <div class="row" id="phone"></div>
     <h3>The run, as a diagram</h3>
     <p>The whole run at 2 pixels a cell, a map rather than a picture: rock, the five hollows stepping down and right, the barriers as pale blocks, the portal, and the cage. The dotted boxes are the five camera stops above, left to right.</p>
     <div class="row"><figure><canvas class="v" id="diagram"></canvas></figure></div>
@@ -125,8 +127,17 @@
     <p>For the top two tools. A ghost brings a bucket down from the deep and pours it in. The smith dips the white-hot <span class="wn">glass-edged pick</span>, steam rises and fades, and the pick comes out dark.</p>
     <div class="row" id="quench"></div>
 
-    <h3>The barriers, each worked by a gang of four in turns</h3>
-    <p>A wall gang of four works in turns from a walkway hung off the roof. The member at the front steps down to the face, swings until a piece comes loose, and carries that piece to the spoil heap along the floor. It drops it there (the heap grows one cell, fading in), climbs the ladder, and walks back along the walkway to the tail of the queue. Meanwhile the next member steps down. Carriers walk only one way on the floor and members only one way on the walkway, so nobody passes anybody. A piece falls as its own cells, lies at the face foot, and is carried overhead as itself. The wall is undercut, two columns at a time from the face, bottom to top. Each barrier reuses its seam's motif cell for cell: <span class="wn">rubble</span> is dross blobs with gaps that show the glow; <span class="wn">the bone wall</span> is cinder's bands as courses of bone, with knuckle cells; <span class="wn">the lava gate</span> is copper's diagonal veins as cracks, with fire showing white through them; once it is breached, fire runs out along the floor's top row and cools by crossfade. <span class="wn">The anchor chains</span> are obsidian facets as links, three strands staggered. <span class="wn">The cage</span> is adamant's lattice as bars, with God behind it. A 4-second hold and a fade end each loop; the fade is the mock repeating, not a game event. A strip of stills at 1x sits under each.</p>
+    <h3>The wall gang: a vote</h3>
+    <p>The spec's one standing decision is the gang's size: "break through early with a big gang and the bars dry up." That only works if the blows a minute grow with the gang, so the gang's shape decides it. Two shapes are shown at the bone wall. Spoil goes to two haulers in both: a relay, one from the face to a set-down spot and one from there to the heap, so neither ever passes the other.</p>
+    <ul>
+      <li><b>(a) Shoulder to shoulder, no walkway.</b> All N members stand at the face, each swinging on its own clock out of step with the others, so blows land N times as often and the wall falls N times as fast. The members overlap the way a crowd at a station does, a few pixels apart. No new building.</li>
+      <li><b>(b) Rotation off a walkway.</b> One member swings at a time. The next comes down a ladder at the walkway's end, waits on its low rung while the last walks out underneath, and steps in. The last walks back along the floor, up a ladder at the walkway's start, and along the deck (seven cells up) to the tail of the queue. Haulers carry spoil at their side, under the deck. The rate is one swinger, less the handover, whatever the gang's size: a bigger gang only rests longer. The walkway is also new infrastructure the spec does not have.</li>
+    </ul>
+    <p><b>Recommended: (a).</b> It is the only one of the two where the gang's size is the decision the spec wants: a gang of 2 against a gang of 4 is half the speed, and every member on the wall is one off a face.</p>
+    <div class="row" id="vote"></div>
+
+    <h3>The barriers, each worked by a gang of four, option (a)</h3>
+    <p>A gang of four swings together at the face, out of step, stepping forward as the face recedes. A piece comes loose every three blows, falls as its own cells, and lies at the face foot. The first hauler lifts it overhead and sets it down at the relay. The second carries it to the heap, where it goes on cell by cell, every cell of it, each fading in, so the heap ends as big as the wall was. The wall is undercut, two columns at a time from the face, bottom to top. Each barrier reuses its seam's motif cell for cell: <span class="wn">rubble</span> is dross blobs with gaps that show the glow; <span class="wn">the bone wall</span> is cinder's bands as courses of bone, with knuckle cells; <span class="wn">the lava gate</span> is copper's diagonal veins as cracks, with fire showing white through them; once it is breached, fire runs out along the floor's top row and cools by crossfade. <span class="wn">The anchor chains</span> are obsidian facets as links, three strands staggered. <span class="wn">The cage</span> is adamant's lattice as bars, with God behind it. A 4-second hold and a fade end each loop; the fade is the mock repeating, not a game event. A strip of stills at 1x sits under each.</p>
     <div id="barriers"></div>
 
     <h3>A new tool arrives, and the pair's own click</h3>
@@ -157,12 +168,21 @@
     <div class="row" id="boards"></div>
   </section>
 
+  <section class="card" id="calls">
+    <h2>Open calls the mock raised</h2>
+    <ul>
+      <li><b>One pick, or one a face?</b> The anvil's recipe consumes the old pick as the new one's core, yet the spec says a new tool is carried to every face. Either there is one pick, moved between faces and the wall gang, or every face and gang member holds one, and the recipe makes one and the rest are copies at some cost.</li>
+      <li><b>Smiths: a ladder, or "a second smith"?</b> The spec's anvil card names "the smith's pace, a second smith, the quench tank's size". The board here makes smiths an eight-rung crew ladder, like every other crew row. Which is it?</li>
+      <li><b>Is a miner's "for good" suspended on the wall?</b> A member put to a face stays there for good, yet the wall gang is made of miners taken off their faces. Do they go back to the same face when the wall falls, and does the face stand idle meanwhile?</li>
+    </ul>
+  </section>
+
   <section class="card" id="s5">
     <h2>What this mock cannot show</h2>
     <ul>
       <li>The game's renderer: the deep's turned palette and the dark page's map, device-pixel snapping, the wardrobe's real outfits. The pair's outfits here are stand-ins.</li>
       <li>The camera moving: the glide between stops, and walking back up the run with the view's arrows. The frames are five held views.</li>
-      <li>Real pathing: walks are scripted on straight lines and the stair. One hauler climbs each stair, and the gang's walkway keeps the gang's lanes apart. The face miner and a carrier can still overlap where the floor is shared (route.js would queue them).</li>
+      <li>Real pathing: walks are scripted on straight lines and the stair. The haulers relay so they never pass each other, but a hauler still walks through the gang's members where the floor is shared, and in option (a) the gang stands overlapped, a few pixels apart (route.js would decide both).</li>
       <li>Numbers: blows, burn, batch and pace are made up for the loops; only <code>TOOL_STROKES</code> = 24 is config's.</li>
       <li>Loop resets: each loop ends in a hold and a fade. In the game a face only deepens and a heap only grows.</li>
       <li>The pile-full mark is drawn with canvas paths, as the game's <code>warning()</code> is, so its edge is antialiased and not on the grid. That is the game's own mark, copied.</li>
@@ -176,10 +196,28 @@
 // core
 // =====================================================================================
 const P = 6, W = 18;
+// The theme is chosen before anything is drawn, and changing it reloads the page,
+// as the game reinks by a reload (ink.js): caves and stills are baked in one palette.
+const THEME = (location.hash.match(/theme=(light|dark)/) || [])[1] || null;
+if (THEME) document.documentElement.dataset.theme = THEME;
+const DARK = THEME ? THEME === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+// ink.js on the dark page: a tone is written `landed`, then the page's map turns it;
+// what is seen is the tone itself, held between the paper and the ink. Black is
+// written raw, as the deep writes its water and holes, so the hollow stays black.
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+function toHsl(hex) { const n = parseInt(hex.slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; if (mx === mn) return [0, 0, l];
+  const d = mx - mn, s2 = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); const h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [h / 6, s2, l]; }
+function fromHsl(h, s2, l) { if (!s2) { const v = Math.round(l * 255); return '#' + [v, v, v].map(x => x.toString(16).padStart(2, '0')).join(''); }
+  const q = l < .5 ? l * (1 + s2) : l + s2 - l * s2, p2 = 2 * l - q, f = t => { if (t < 0) t += 1; if (t > 1) t -= 1; return t < 1 / 6 ? p2 + (q - p2) * 6 * t : t < .5 ? q : t < 2 / 3 ? p2 + (q - p2) * (2 / 3 - t) * 6 : p2; };
+  return '#' + [f(h + 1 / 3), f(h), f(h - 1 / 3)].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join(''); }
+const landed = hex => { const [h, s2, l] = toHsl(hex); return fromHsl(h, s2, Math.min(1, Math.max(0, 1 - (l - LP) / (LI - LP)))); };
+const pageMap = hex => { const [h, s2, l] = toHsl(hex); return fromHsl(h, s2, LP + (LI - LP) * (1 - l)); };
+const seen = hex => (!DARK || hex === '#000000' ? hex : pageMap(landed(hex)));
 // The deep's ramp as seen, capped at six: black, ground, stone, lit, pale, white.
-const K = ['#000000', '#26262c', '#42424a', '#6e6e78', '#b4b4c0', '#ffffff'];
+const K = ['#000000', '#26262c', '#42424a', '#6e6e78', '#b4b4c0', '#ffffff'].map(seen);
 // The deep's purples, for magic only.
-const PU = ['#000000', '#1b112c', '#2d1d47', '#412465', '#5c2ba6', '#9b5de5'];
+const PU = ['#000000', '#1b112c', '#2d1d47', '#412465', '#5c2ba6', '#9b5de5'].map(seen);
 function hh(a, b, c) {
   let n = Math.imul((a | 0) ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul((b | 0) + 0x632be59b, 0xc2b2ae35) ^ Math.imul((c | 0) + 0x27d4eb2f, 0x165667b1);
   n ^= n >>> 15; n = Math.imul(n, 0x2c1b3c6d); n ^= n >>> 12; n = Math.imul(n, 0x297a2d39); n ^= n >>> 15;
@@ -217,13 +255,13 @@ function tone(c, cx, cy, L, a = 1) {
 // =====================================================================================
 function oreCell(o, x, y) {
   switch (o) {
-    case 0: { const n = vn(x / 2.1, y / 2.1, 41); return n > .64 ? 4 : n > .47 ? 3 : 2; }                 // dross: mottled blobs
-    case 1: return mod(y, 3) === 0 ? 4 : mod(y, 3) === 1 ? 2 : 1;                                          // cinder: horizontal bands
-    case 2: return mod(x + y, 5) === 0 ? 4 : 0;                                                            // pitch copper: pale diagonal veins
-    case 3: { const by = Math.floor(y / 4), sx = x + (mod(by, 2) ? 2 : 0), bx = Math.floor(sx / 4);        // obsidian: big dark facets,
-              if (mod(sx, 4) === 0 && mod(y, 4) === 0) return 5;                                            // a white corner cell each
-              return hh(bx, by, 43) > .5 ? 1 : 0; }
-    case 4: { const a = mod(x, 3) === 0, b = mod(y, 3) === 0; return a && b ? 5 : a || b ? 4 : 2; }        // adamant: a lattice
+    case 0: { const n = vn(x / 2.1, y / 2.1, 41); return n > .62 ? 3 : n > .45 ? 2 : 1; }                 // dross: mottled blobs
+    case 1: return mod(y, 3) === 0 ? 3 : 1;                                                                // cinder: horizontal bands
+    case 2: return mod(x + y, 5) === 0 ? 3 : 0;                                                            // pitch copper: pale diagonal veins
+    case 3: { const by = Math.floor(y / 4), sx = x + (mod(by, 2) ? 2 : 0);                                // obsidian: big black facets,
+              const lx = mod(sx, 4), ly = mod(y, 4);                                                        // lit along two edges,
+              return lx === 0 && ly === 0 ? 5 : lx === 0 || ly === 0 ? 3 : 0; }                            // a white corner cell each
+    case 4: { const a = mod(x, 3) === 0, b = mod(y, 3) === 0; return a && b ? 4 : a || b ? 3 : 1; }        // adamant: a lattice
   }
   return 1;
 }
@@ -264,6 +302,8 @@ class Cave {
         continue;
       }
       if (this.ore[i] >= 0) { C(c, x, y, K[oreCell(this.ore[i], x, y)]); this.oreCells.push(i); continue; }
+      let byOre = false; for (let dy = -1; dy <= 1 && !byOre; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < wc && yy < hc && this.ore[this.i(xx, yy)] >= 0) { byOre = true; break; } }
+      if (byOre) { C(c, x, y, K[0]); continue; }                       // the gap that sets a face into the rock
       if (this.isAir(x, y - 1)) { C(c, x, y, K[3]); continue; }      // a floor's top row, lit
       const n = vn(x / 3.3, y / 2.4, this.seed) + hh(x, y, this.seed) * .28;
       C(c, x, y, K[n > .9 ? 2 : 1]);                                  // rock: two adjacent dark rungs
@@ -328,9 +368,9 @@ function oreFx(c, cv, t) {
     const x = i % cv.wc, y = (i / cv.wc) | 0, o = cv.ore[i];
     if (cv.hidden && cv.hidden(x, y)) continue;
     const ti = oreCell(o, x, y);
-    if (o === 2 && ti === 4) { const s = mod(x - y - t / 110, 30); if (s < 4) C(c, x, y, K[5], (1 - Math.abs(s - 2) / 2) * .7); }
+    if (o === 2 && ti === 3) { const s = mod(x - y - t / 110, 30); if (s < 4) C(c, x, y, K[5], (1 - Math.abs(s - 2) / 2) * .7); }
     else if (o === 3 && ti === 5) C(c, x, y, K[3], .5 * vnoise(t / 600 + x * 17.3 + y * 7.1));
-    else if (o === 4 && ti >= 4) { const s = mod(x + y - t / 150, 40); if (s < 4) C(c, x, y, K[5], (1 - Math.abs(s - 2) / 2) * .6); }
+    else if (o === 4 && ti >= 3) { const s = mod(x + y - t / 150, 40); if (s < 4) C(c, x, y, K[5], (1 - Math.abs(s - 2) / 2) * .6); }
   }
 }
 
@@ -364,8 +404,8 @@ const FURN = [
 const TONGUES = [[], [5], [4, 6], [3, 5, 7], [3, 4, 6, 7], [3, 4, 5, 6, 7]];
 // the furnace with its body's top-left at cell (cx, cy): heat N tongues; state cold | lit | stoked | out
 function furnace(c, cx, cy, N, state, t, o = {}) {
-  const flueTop = o.flueTop ?? cy - 2, fr = cy - flueTop;
-  const rows = []; for (let k = 0; k < fr; k++) rows.push('........##.'); rows.push(...FURN);
+  const fr = 3, flueTop = cy - fr;
+  const rows = ['.......####', '........##.', '........##.', ...FURN];
   const hot = state === 'lit' || state === 'stoked';
   shape(c, cx, flueTop, rows, (ch, i, j) => {
     if (j < fr) return 3;                                              // the flue
@@ -399,7 +439,7 @@ function stairFlight(c, x0, y0, n, built = n) {   // treads down and to the righ
   const rows = []; for (let k = 0; k < n + 1; k++) rows.push('.'.repeat(Math.max(0, k - 1)) + (k === 0 ? '#' : k <= built ? '##' : ''));
   shape(c, x0, y0, rows.map(r => r.replace(/\.+$/, '') || '.'), (ch, i, j) => (i === j ? 3 : 2));
 }
-function ladderCells(c, cx, y0, y1) { for (let y = y0; y < y1; y++) { C(c, cx, y, K[3]); C(c, cx + 2, y, K[3]); if (mod(y - y0, 2) === 0) C(c, cx + 1, y, K[3]); } }
+function ladderCells(c, cx, y0, y1) { for (let y = y0; y < y1; y++) { C(c, cx, y, K[2]); C(c, cx + 2, y, K[2]); if (mod(y - y0, 2) === 0) C(c, cx + 1, y, K[2]); } }
 function rope(c, cx, y0, y1) { for (let y = y0; y < y1; y++) C(c, cx, y, K[2]); }
 function portal(c, cx, cy, t, rx = 4, ry = 1.6) {
   for (let y = Math.floor(cy - ry - 1); y <= cy + ry + 1; y++) for (let x = Math.floor(cx - rx - 1); x <= cx + rx + 1; x++) {
@@ -417,12 +457,12 @@ function warning(ctx, x, y, r = WARN_R) {
   ctx.lineTo(x + r, y + r * 0.8);
   ctx.lineTo(x - r, y + r * 0.8);
   ctx.closePath();
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = DARK ? pageMap('#ffffff') : '#fff';
   ctx.fill();
   ctx.lineWidth = Math.max(1, r / 6);
-  ctx.strokeStyle = '#000';
+  ctx.strokeStyle = DARK ? pageMap('#000000') : '#000';
   ctx.stroke();
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = DARK ? pageMap('#000000') : '#000';
   ctx.fillRect(x - r / 8, y - r / 4, r / 4, r * 0.4);
   ctx.fillRect(x - r / 8, y + r * 0.35, r / 4, r / 4);
 }
@@ -565,7 +605,7 @@ function makeBarrier(kind, bw, bh) {
     // three strands of links, each link a 2 by 2 obsidian facet, the middle strand staggered
     for (let s = 0; s < 3; s++) { const off = s === 1 ? 1 : 0;
       for (let y = bh - 1 - off; y >= 0; y--) { const k = Math.floor((bh - 1 - off - y) / 2), ly = (bh - 1 - off - y) % 2;
-        for (let dx = 0; dx < 2; dx++) add(s * 2 + dx, y, ly === 1 && dx === 0 ? 5 : mod(k, 2) ? 0 : 1, 'link', s + ':' + Math.floor(k / 2)); } }
+        for (let dx = 0; dx < 2; dx++) add(s * 2 + dx, y, ly === 1 && dx === 0 ? 5 : ly === 1 || dx === 0 ? 3 : 0, 'link', s + ':' + Math.floor(k / 2)); } }
   } else for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++) {
     const key = Math.floor(x / 2) + ':' + Math.floor((bh - 1 - y) / 3);
     const ti = oreCell(KIND_ORE[kind], x, y);
@@ -594,92 +634,181 @@ function drawBarrier(c, B, ox, oy, gone, t) {
   }
 }
 function drawPiece(c, B, g, px, py, t, a = 1) { for (const cell of g.cells) barrierCell(c, B, cell, Math.round(px + (cell.x - g.x0) * P), Math.round(py + (cell.y - g.y0) * P), t, a); }
-function heapCell(B, k) {   // a heap's k-th cell: its spot in the mound, and a tone off the barrier's motif
-  const rows = [8, 6, 4, 2]; let j = k, r = 0; while (r < rows.length && j >= rows[r]) { j -= rows[r]; r++; }
-  return { dx: -rows[0] + (rows[0] - (rows[r] || 2)) / 2 + j, dy: -1 - r, ti: B.kind === 'chains' ? (k % 3 ? 1 : 5) : clamp(oreCell(KIND_ORE[B.kind], k, r), 1, 5) };
+// The heap is a mound filled bottom row first, each row centered, and it takes a
+// cell for every cell of every delivered piece, so the whole wall's mass lands on it.
+const MOUND = [16, 14, 12, 10, 8, 6, 4, 2];
+function moundAt(k, x1) { let j = k, r = 0; while (r < MOUND.length - 1 && j >= MOUND[r]) { j -= MOUND[r]; r++; } return { x: x1 - MOUND[0] + (MOUND[0] - MOUND[r]) / 2 + j, y: -1 - r }; }
+const solid = g => g.cells.filter(c => c.ti >= 0);
+
+// Two haulers in a relay, so they never pass: A from the face foot to the relay,
+// B from the relay to the heap. Each piece is waited for, lifted, carried, set down.
+function haulerSim(N, avail, footAt, relayPx, heapStand) {
+  const v = 5 * P / 1000, A = [], Bs = [], lift = [], dropA = [], liftB = [], heapAt = [];
+  const ra = relayPx + 6, rb = relayPx - W - 6;
+  const seg = (L, t0, t1, x0, x1, j, mode) => L.push({ t0, t1, x0, x1, j, mode });
+  let t = 0, x = footAt(0);
+  for (let j = 0; j < N; j++) {
+    if (avail[j] > t) { seg(A, t, avail[j], x, x); t = avail[j]; }
+    const f = footAt(t);
+    if (Math.abs(f - x) > .5) { const d = Math.abs(f - x) / v; seg(A, t, t + d, x, f); t += d; x = f; }
+    seg(A, t, t + 250, x, x, j, 'lift'); lift[j] = t; t += 250;
+    const d = Math.abs(ra - x) / v; seg(A, t, t + d, x, ra, j, 'carry'); t += d; x = ra;
+    seg(A, t, t + 250, x, x, j, 'drop'); t += 250; dropA[j] = t;
+  }
+  seg(A, t, 1e12, x, x);
+  t = 0; x = heapStand;
+  for (let j = 0; j < N; j++) {
+    if (Math.abs(rb - x) > .5) { const d = Math.abs(rb - x) / v; seg(Bs, t, t + d, x, rb); t += d; x = rb; }
+    if (dropA[j] > t) { seg(Bs, t, dropA[j], x, x); t = dropA[j]; }
+    seg(Bs, t, t + 250, x, x, j, 'lift'); liftB[j] = t; t += 250;
+    const d = Math.abs(heapStand - x) / v; seg(Bs, t, t + d, x, heapStand, j, 'carry'); t += d; x = heapStand;
+    seg(Bs, t, t + 250, x, x, j, 'drop'); t += 250; heapAt[j] = t;
+  }
+  seg(Bs, t, 1e12, x, x);
+  const at = (L, u) => { for (const s of L) if (u < s.t1) { const k = clamp((u - s.t0) / Math.max(1, s.t1 - s.t0), 0, 1); return { x: lerp(s.x0, s.x1, k), j: s.j, mode: s.mode, k }; } return { x: L[L.length - 1].x1 }; };
+  return { A: u => at(A, u), B: u => at(Bs, u), lift, dropA, liftB, heapAt, done: t };
+}
+// what both options share: the fire behind the gate, God, the wall, the heap, the pieces, the haulers
+function wallScene(c, G, B, knock, H, u, t, carry) {
+  const { bx, floor: fl } = G, N = B.n, by = fl - B.bh;
+  const gone = knock.filter(k => k <= u).length;
+  if (B.kind === 'gate' && gone > 0) {
+    const drainedAt = knock[N - 1] + 1500, fa = u < drainedAt ? 1 : Math.max(0, 1 - (u - drainedAt) / 1500);
+    for (const cell of B.cells) if (B.groups[cell.g].rank < gone) { C(c, bx + cell.x, by + cell.y, K[4], fa); C(c, bx + cell.x, by + cell.y, K[5], fa * (.5 + .5 * vnoise(t / 300 + cell.x * 17.3 + cell.y * 3.3))); }
+    const t0 = knock[0] + 400;
+    for (let k = 0; k < 10; k++) {
+      const x = bx - 1 - k, fl0 = t0 + k * 250; if (u < fl0) continue;
+      const heat = u < drainedAt ? 1 : Math.max(0, 1 - (u - drainedAt - k * 150) / 3500);
+      C(c, x, fl, K[2]); C(c, x, fl, K[4], heat); C(c, x, fl, K[5], heat * (.4 + .6 * vnoise(t / 280 + x * 17.3)));
+    }
+  }
+  if (G.godBehind && !(G.godOut && u > knock[N - 1] + 1500)) god(c, (bx + 1) * P, (by + 2) * P, { lit: .5 + gone / N * .5 });
+  drawBarrier(c, B, bx, by, gone, t);
+  // the heap, a cell at a time, each fading in
+  let cum = 0;
+  B.groups.forEach((g, j) => {
+    const cs = solid(g);
+    if (u >= H.heapAt[j]) cs.forEach((cell, i) => { const m = moundAt(cum + i, G.heapX1 + 1); C(c, m.x, fl + m.y, K[Math.max(1, cell.ti)], clamp((u - H.heapAt[j] - i * 45) / 250, 0, 1)); });
+    cum += cs.length;
+  });
+  // the pieces: fall as their own cells, lie, ride with a hauler, lie at the relay, go onto the heap
+  const ha = H.A(u), hb = H.B(u);
+  cum = 0;
+  B.groups.forEach((g, j) => {
+    const n0 = cum; cum += solid(g).length;
+    const kt = knock[j]; if (u < kt || u >= H.heapAt[j]) return;
+    const ht = g.y1 - g.y0, foot = { x: (bx + g.x0) * P, y: (fl - 1 - ht) * P }, relay = { x: G.relayX * P - 6, y: (fl - 1 - ht) * P };
+    let p, a = 1;
+    if (u < kt + 400) { const k = (u - kt) / 400; p = { x: foot.x, y: lerp((by + g.y0) * P, foot.y, k * k) }; }
+    else if (u < H.lift[j]) p = foot;
+    else if (u < H.lift[j] + 250) { const k = (u - H.lift[j]) / 250, q = carry(ha.x, g); p = { x: lerp(foot.x, q.x, k), y: lerp(foot.y, q.y, k) }; }
+    else if (u < H.dropA[j] - 250) p = carry(ha.x, g);
+    else if (u < H.dropA[j]) { const k = (u - H.dropA[j] + 250) / 250, q = carry(ha.x, g); p = { x: lerp(q.x, relay.x, k), y: lerp(q.y, relay.y, k) }; }
+    else if (u < H.liftB[j]) p = relay;
+    else if (u < H.liftB[j] + 250) { const k = (u - H.liftB[j]) / 250, q = carry(hb.x, g); p = { x: lerp(relay.x, q.x, k), y: lerp(relay.y, q.y, k) }; }
+    else if (u < H.heapAt[j] - 250) p = carry(hb.x, g);
+    else { const k = (u - H.heapAt[j] + 250) / 250, q = carry(hb.x, g), m = moundAt(n0, G.heapX1 + 1); p = { x: lerp(q.x, m.x * P, k), y: lerp(q.y, (fl + m.y) * P, k) }; a = 1 - k; }
+    drawPiece(c, B, g, p.x, p.y, t, a);
+  });
+  const fy = fl * P - W;
+  soul(c, ha.x, fy); soul(c, hb.x, fy);
+  return gone;
+}
+function godWalk(c, G, u, from) { if (u > from) { const k = ease((u - from) / 2500); god(c, (G.bx + 1 - Math.round(k * 4)) * P, (G.floor - 5) * P, { lit: 1 }); } }
+function fadeLoop(c, G, u, period) { const f = u > period - 700 ? (u - period + 700) / 700 : u < 400 ? 1 - u / 400 : 0; R(c, 0, 0, G.wc * P, G.hc * P, K[0], f); }
+
+// Option (a): the gang stands shoulder to shoulder at the face, every member
+// swinging on its own clock, so blows land n times as often; haulers take the spoil.
+const BPP = 3, SWING = 1150;
+function gangA(G) {
+  const { B, bx, floor: fl, n } = G, N = B.n, fy = fl * P - W;
+  const times = [];
+  for (let k = 0; k < n; k++) for (let m = 0; m < Math.ceil(BPP * N / n) + 2; m++) times.push(600 + k * SWING / n + m * SWING + .6 * SWING);
+  times.sort((a, b) => a - b);
+  const knock = B.groups.map((_, j) => times[(j + 1) * BPP - 1]), breakAt = knock[N - 1];
+  const colOf = j => bx + B.groups[Math.min(j, N - 1)].x0;
+  const moves = [{ t: 0, col: colOf(0) }];
+  for (let j = 0; j < N - 1; j++) if (colOf(j + 1) !== colOf(j)) moves.push({ t: knock[j] + 300, col: colOf(j + 1) });
+  const frontX = u => { let i = 0; while (i + 1 < moves.length && moves[i + 1].t <= u) i++; const k = i ? ease((u - moves[i].t) / 700) : 1; return (lerp(moves[Math.max(0, i - 1)].col, moves[i].col, k) - 3) * P; };
+  const footAt = u => frontX(u) - (n - 1) * 5 - W - 6;
+  const H = haulerSim(N, knock.map(k => k + 400), footAt, G.relayX * P, (G.heapX1 + 1) * P);
+  const period = Math.max(H.done, breakAt) + 4000 + 800;
+  const overhead = (hx, g) => ({ x: hx + 3, y: fy - (g.y1 - g.y0 + 1) * P - 2 });
+  function draw(c, t, fixedU) {
+    const u = fixedU ?? mod(t, period);
+    wallScene(c, G, B, knock, H, u, t, overhead);
+    const fx = frontX(u);
+    for (let k = n - 1; k >= 0; k--) {
+      const x = fx - k * 5, on = u >= 600 && u < breakAt + 300, sw = swing(u - 600 - k * SWING / n, SWING, 0);
+      soul(c, x, fy); tool(c, x, fy, on ? sw.pose : 'rest', G.tier);
+      if (on && sw.imp >= 0) { const p = contact(x, fy, false); puff(c, p.x, p.y, sw.imp, KIND_ORE[B.kind], false); }
+    }
+    if (G.godOut) godWalk(c, G, u, breakAt + 1500);
+    if (fixedU == null && G.fade !== false) fadeLoop(c, G, u, period);
+  }
+  return { draw, period, breakAt, done: H.done, rate: n * 60000 / SWING };
 }
 
-// The gang of four, in turns, off a walkway hung from the roof (see section 2's text).
-function gang(G) {
-  const { B, bx, floor, deck, plankX0, plankX1, ladderX, heapX1, tier } = G;
-  const by = floor - B.bh, F = 4000, N = B.n, period = N * F + 4000 + 4000;
-  const yFloor = floor * P - W, yDeck = deck * P - W;
-  const slotX = s => (plankX1 - 3 - s * 4) * P;
-  const faceX = j => (bx + B.groups[Math.min(j, N - 1)].x0 - 3) * P;
-  const knock = j => j * F + 1000 + 1150 + 1150 * .6;
-  const carryT = j => Math.abs(faceX(j) - heapX1 * P) / (5 * P) * 1000;
-  const dropAt = j => j * F + 3500 + carryT(j);
-  const speedPlank = 5 * P / 1000;
+// Option (b): the rotation kept. The member at the face swings alone. The next
+// comes down a ladder at the walkway's end, waits on its low rung while the
+// last walks out under it, and steps in; the last walks back to a ladder at the
+// walkway's start and up to the tail of the queue. The deck is seven cells up,
+// and haulers carry spoil at the side, under it.
+function gangB(G) {
+  const { B, bx, floor: fl } = G, N = B.n, F = 4600, v = 5 * P / 1000;
+  const deck = fl - 7, yFloor = fl * P - W, yDeck = deck * P - W, yHold = (fl - 3) * P - W;
+  const px0 = bx - 16, L1x = px0 * P, L2x = (bx - 3) * P;
+  const faceAt = j => (bx + B.groups[Math.min(j, N - 1)].x0 - 3) * P;
+  const turns = [], knock = [];
+  let blows = 0, piece = 0, j = 0;
+  while (piece < N && j < 400) {
+    const fx = faceAt(piece), walk = Math.abs(fx - L2x) / v, arrive = j * F + 1200 + walk, end = (j + 1) * F;
+    turns.push({ fx, walk, arrive });
+    for (let a = arrive + .6 * SWING; a < end && piece < N; a += SWING) if (++blows % BPP === 0) knock[piece++] = a;
+    j++;
+  }
+  const lastTurn = j - 1, breakAt = knock[N - 1];
+  const slotX = s => L2x - s * 4 * P;
+  const footAt = u => turns[clamp(Math.floor(u / F), 0, lastTurn)].fx - W - 6;
+  const H = haulerSim(N, knock.map(k => k + 400), footAt, G.relayX * P, (G.heapX1 + 1) * P);
+  const period = Math.max(H.done, breakAt) + 4000 + 800;
+  const side = (hx, g) => ({ x: hx + W, y: yFloor + W - (g.y1 - g.y0 + 1) * P });
+  function queued(s, u) {
+    const jc = Math.floor(u / F), moved = jc <= lastTurn + 1 && mod(u, F) < 600 && jc > 0;
+    return { x: lerp(slotX(Math.min(2, s + (moved ? 1 : 0))), slotX(s), moved ? ease(mod(u, F) / 600) : 1), y: yDeck, pose: 'rest' };
+  }
   function member(m, u) {
-    let jcur = Math.min(Math.floor(u / F), N), j = jcur - mod(jcur - m, 4);
-    if (j >= N) j -= 4;
-    const queued = s => {
-      const slide = u < N * F ? ease(mod(u, F) / 600) : 1;
-      const sNow = clamp(s, 0, 3), sPrev = clamp(s + (u < N * F && mod(u, F) < 600 ? 1 : 0), 0, 3);
-      return { x: lerp(slotX(sPrev), slotX(sNow), slide), y: yDeck, pose: 'rest' };
-    };
-    if (j < 0) return queued(m - jcur - 1);
-    const tau = u - j * F;
-    if (tau < 1000) { const k = ease(tau / 1000); return { x: lerp(slotX(0), faceX(j), k), y: lerp(yDeck, yFloor, k) - Math.sin(k * Math.PI) * 6, pose: 'rest' }; }
-    if (tau < 3300) { const sw = swing(tau - 1000, 1150, 0); return { x: faceX(j), y: yFloor, pose: sw.pose, imp: sw.imp, n: sw.n }; }
-    const ct = carryT(j);
-    if (tau < 3500) return { x: faceX(j), y: yFloor, pose: 'rest', lift: (tau - 3300) / 200 };
-    if (tau < 3500 + ct) return { x: lerp(faceX(j), heapX1 * P, (tau - 3500) / ct), y: yFloor, pose: 'rest', carrying: true };
-    const t2 = tau - 3500 - ct;
-    if (t2 < 300) return { x: heapX1 * P, y: yFloor, pose: 'rest', dropping: t2 / 300 };
-    const toLadder = Math.abs(heapX1 - ladderX) / 5 * 1000;
-    if (t2 < 300 + toLadder) return { x: lerp(heapX1 * P, ladderX * P, (t2 - 300) / toLadder), y: yFloor, pose: 'rest' };
-    const t3 = t2 - 300 - toLadder;
-    if (t3 < 700) return { x: ladderX * P, y: lerp(yFloor, yDeck, ease(t3 / 700)), pose: 'rest' };
-    const t4 = t3 - 700, walkX = (plankX0 + 1) * P + t4 * speedPlank;
-    // the tail of the queue: the slot this member waits in for its next turn
-    const ahead = clamp((j + 4) - Math.max(jcur, j + 1) - 1, 0, 3);
-    const q = u >= N * F ? queued(clamp(j + 4 - N, 0, 3)) : queued(ahead);
-    return { x: Math.min(walkX, q.x), y: yDeck, pose: 'rest' };
+    const jc = Math.floor(u / F), jn = jc + mod(m - jc, 4), tau = u - jn * F;
+    if (jn <= lastTurn && tau >= -2600) {
+      if (tau < -1300) return { x: L2x, y: lerp(yDeck, yHold, ease((tau + 2600) / 1300)), pose: 'rest' };
+      if (tau < 800) return { x: L2x, y: yHold, pose: 'rest' };
+      if (tau < 1200) return { x: L2x, y: lerp(yHold, yFloor, ease((tau - 800) / 400)), pose: 'rest' };
+      const T0 = turns[jn];
+      if (tau < 1200 + T0.walk) return { x: lerp(L2x, T0.fx, (tau - 1200) / T0.walk), y: yFloor, pose: 'rest' };
+      const sw = swing(u - T0.arrive, SWING, 0), on = u < breakAt + 300;
+      return { x: T0.fx, y: yFloor, pose: on ? sw.pose : 'rest', imp: on ? sw.imp : -1 };
+    }
+    let jp = jn - 4; const slot = clamp(jn - jc - 1, 0, 2);
+    if (jp > lastTurn) jp = lastTurn - mod(lastTurn - m, 4);   // past the last turn: the last one it had
+    if (jp < 0) return queued(slot, u);
+    const fx = turns[jp].fx, tp = u - (jp + 1) * F, dL = Math.abs(fx - L1x) / v;
+    if (tp < dL) return { x: lerp(fx, L1x, tp / dL), y: yFloor, pose: 'rest' };
+    if (tp < dL + 2200) return { x: L1x, y: lerp(yFloor, yDeck, ease((tp - dL) / 2200)), pose: 'rest' };
+    const q = queued(jn > lastTurn ? clamp(jn - lastTurn - 1, 0, 2) : slot, u);
+    return { x: Math.min(L1x + v * (tp - dL - 2200), q.x), y: yDeck, pose: 'rest' };
   }
   function draw(c, t, fixedU) {
     const u = fixedU ?? mod(t, period);
-    const gone = B.groups.filter((_, j) => knock(j) <= u).length;
-    // ropes and walkway, ladder
-    rope(c, plankX0, G.roof, deck); rope(c, plankX1 - 1, G.roof, deck);
-    shape(c, plankX0, deck, ['#'.repeat(plankX1 - plankX0)], (ch, i) => i % 4 === 0 ? 2 : 3, { white: false });   // hung off the roof: no floor under it to light it white
-    ladderCells(c, ladderX, deck, floor);
-    // behind the gate: the run of fire, through every hole; it runs out along the floor
-    if (B.kind === 'gate' && gone > 0) {
-      const drainedAt = knock(N - 1) + 1500, fa = u < drainedAt ? 1 : Math.max(0, 1 - (u - drainedAt) / 1500);
-      for (const cell of B.cells) if (B.groups[cell.g].rank < gone) { C(c, bx + cell.x, by + cell.y, K[4], fa); C(c, bx + cell.x, by + cell.y, K[5], fa * (.5 + .5 * vnoise(t / 300 + cell.x * 17.3 + cell.y * 3.3))); }
-      const t0 = knock(0) + 400;
-      for (let k = 0; k < 12; k++) {
-        const x = bx - 1 - k, fl = t0 + k * 250; if (u < fl || x <= heapX1 + 1) continue;
-        const heat = u < drainedAt ? 1 : Math.max(0, 1 - (u - drainedAt - k * 150) / 3500);
-        C(c, x, floor, K[2]); C(c, x, floor, K[4], heat); C(c, x, floor, K[5], heat * (.4 + .6 * vnoise(t / 280 + x * 17.3)));
-      }
-    }
-    if (G.godBehind) god(c, (bx + 1) * P, (by + 2) * P, { lit: .5 + gone / N * .5 });
-    drawBarrier(c, B, bx, by, gone, t);
-    // the heap: a cell a delivered piece, fading in
-    for (let j = 0; j < N; j++) { const d = dropAt(j); if (u < d) continue; const hc = heapCell(B, j); C(c, heapX1 + hc.dx, floor + hc.dy, K[hc.ti], Math.min(1, (u - d) / 400)); }
-    // pieces: fall as their own cells, lie at the face foot, ride overhead, go onto the heap
-    const bodies = [0, 1, 2, 3].map(m => member(m, u));
-    B.groups.forEach((g, j) => {
-      const kt = knock(j); if (u < kt || u >= dropAt(j) + 300) return;
-      const m = j % 4, b = bodies[m], restY = (floor - 1 - (g.y1 - g.y0)) * P;
-      const sx = (bx + g.x0) * P, sy = (by + g.y0) * P, tau = u - j * F;
-      if (u < kt + 400) { const k = (u - kt) / 400; drawPiece(c, B, g, sx, lerp(sy, restY, k * k), t); return; }
-      if (tau < 3300) { drawPiece(c, B, g, sx, restY, t); return; }
-      const ht = (g.y1 - g.y0 + 1) * P, over = { x: b.x + 3, y: b.y - ht - 2 };
-      if (b.lift != null) { drawPiece(c, B, g, lerp(sx, over.x, b.lift), lerp(restY, over.y, b.lift), t); return; }
-      if (b.carrying) { drawPiece(c, B, g, over.x, over.y, t); return; }
-      if (b.dropping != null) { const hcl = heapCell(B, j); const tx = (heapX1 + hcl.dx) * P, ty = (floor + hcl.dy) * P; drawPiece(c, B, g, lerp(over.x, tx, b.dropping), lerp(over.y, ty, b.dropping), t, 1 - b.dropping); }
-    });
-    bodies.forEach(b => {
-      soul(c, b.x, b.y); tool(c, b.x, b.y, b.pose, tier);
-      if (b.imp >= 0 && b.imp != null) { const p = contact(b.x, b.y, false); puff(c, p.x, p.y, b.imp, KIND_ORE[B.kind], false); }
-    });
-    if (G.godOut && u > N * F + 1500) { const k = ease((u - N * F - 1500) / 2500); god(c, (bx + 1 - Math.round(k * 4)) * P, (floor - 5) * P, { lit: 1 }); }
-    if (fixedU == null && G.fade !== false) { const f = u > period - 700 ? (u - period + 700) / 700 : u < 400 ? 1 - u / 400 : 0; R(c, 0, 0, G.wc * P, G.hc * P, K[0], f); }
+    // the walkway, its two ladders, and its ropes as dotted links in the rock's own dark
+    for (let y = G.roof; y < deck; y++) if (mod(y, 2) === 0) { C(c, px0, y, K[1]); C(c, bx - 1, y, K[1]); }
+    shape(c, px0, deck, ['#'.repeat(16)], (ch, i) => i % 4 === 0 ? 2 : 3, { white: false });
+    for (const lx of [px0, bx - 3]) for (let y = deck + 1; y < fl; y++) { C(c, lx, y, K[2]); C(c, lx + 2, y, K[2]); if (mod(y, 2) === 0) C(c, lx + 1, y, K[2]); }
+    wallScene(c, G, B, knock, H, u, t, side);
+    [0, 1, 2, 3].forEach(m => { const b = member(m, u); soul(c, b.x, b.y); tool(c, b.x, b.y, b.pose, G.tier);
+      if (b.imp >= 0 && b.imp != null) { const p = contact(b.x, b.y, false); puff(c, p.x, p.y, b.imp, KIND_ORE[B.kind], false); } });
+    if (fixedU == null && G.fade !== false) fadeLoop(c, G, u, period);
   }
-  return { draw, period };
+  return { draw, period, breakAt, done: H.done, rate: 60000 / SWING * (F - 1200) / F };
 }
 
 // =====================================================================================
@@ -710,7 +839,7 @@ function render(all) {
     v.draw(v.b, T, v);
     const sx = v.cam ? v.cam(T) : 0;
     v.ctx.imageSmoothingEnabled = false;
-    v.ctx.drawImage(v.buf, sx, 0, v.vw, v.vh, 0, 0, v.vw * v.z, v.vh * v.z);
+    v.ctx.drawImage(v.buf, sx, v.sy || 0, v.vw, v.vh, 0, 0, v.vw * v.z, v.vh * v.z);
     v.done = true;
   }
 }
@@ -747,61 +876,73 @@ function room(wc, hc, seed, o = {}) {
 // =====================================================================================
 // 1. the five camera stops, 70 by 84 cells at 1x
 // =====================================================================================
-const FW = 70, FH = 84, FFLOOR = 70;
+// The game's view: 800 by 600 at its zoom, about 133 by 100 cells (world.js,
+// S.viewW = S.W / S.zoom). Each stop's world is 133 by 120 cells, so a phone held
+// upright (65 by 120) can look at the same place; the landscape view is its lower 100 rows.
+const FW = 133, FH = 120, FFLOOR = 106, VIEW_TOP = 20;
 const STOP_BARRIER = ['rubble', 'bone', 'gate', 'chains', 'cage'];
+function stopScene(i) {
+  const roof = i === 4 ? 34 : 62 - i * 2, fl = FFLOOR;
+  const kind = STOP_BARRIER[i], bw = kind === 'cage' ? 7 : 6, bh = kind === 'chains' ? 8 : kind === 'cage' ? 10 : 9;
+  const bx = FW - 1 - bw, B = makeBarrier(kind, bw, bh), by = fl - bh;
+  const carve = [[bx, by, FW, fl]];
+  if (i > 0) carve.push([0, fl - 20, 11, fl - 12]);                                      // the passage from the chamber above
+  if (i === 0) carve.push([14, roof - 3, 19, roof]);                                      // the road's shaft
+  const fires = [{ x: 12, y: fl, w: 0, s: .5 + i * .1, r: 4 }, { x: 60, y: fl, w: 1, s: .7 + i * .12, r: 6 }, { x: 76, y: fl, w: 1, s: .6 + i * .12, r: 6 }];
+  const glows = [{ x: FW + 2, y: fl - 5, r: 7, s: .9 }];
+  if (i === 4) glows.push({ x: bx + 3.5, y: by + 5, r: 26, s: .8 });
+  const cv = room(FW, FH, 700 + i, { left: 8, roof, floor: fl, seam: i, seamTop: i ? fl - 11 : fl - 13, carve, fires, glows });
+  cv.hidden = (x, y) => x === 7 && y >= fl - 5;
+  const G = { B, bx, floor: fl, heapX1: bx - 26, relayX: bx - 14, tier: i + 1, n: 4, wc: FW, hc: FH, roof, godBehind: kind === 'cage', fade: false };
+  const gangDraw = i > 0 ? gangA(G) : null;
+  return (c, t) => {
+    c.drawImage(cv.bg, 0, 0);
+    for (let y = fl - 5; y < fl; y++) C(c, 7, y, K[0]);             // the dent the face has been worked into
+    cv.dyn(c, t);
+    const fy = fl * P - W;
+    if (i === 0) {
+      portal(c, 16.5, roof - .2, t);
+      ladderCells(c, 15, roof, fl);
+      { const u = mod(t, 9000) / 9000; soul(c, 15 * P, snap(lerp(roof * P, fy, u), 2), { alpha: Math.min(1, u * 6) * (u > .9 ? (1 - u) / .1 : 1) }); }
+      anvil(c, 26, fl - 4);
+      const sw = swing(t, 900); soul(c, 22 * P, fy); tool(c, 22 * P, fy, sw.pose === 'rest' ? 'low' : sw.pose, 0, false, 'hammer');
+      C(c, 28, fl - 5, K[4]); C(c, 28, fl - 5, K[5], .5 + .5 * vnoise(t / 600)); C(c, 29, fl - 5, K[4]);
+      if (sw.imp >= 0) sparks(c, 29 * P, (fl - 5) * P, sw.imp, sw.n);
+      tank(c, 33, fl - 4, t);
+      furnace(c, 44, fl - 7, 1, 'lit', t);
+      const pw = swing(t, 1400); soul(c, (bx - 4) * P, fy, { look: 'a' }); tool(c, (bx - 4) * P, fy, pw.pose, 0);
+      if (pw.imp >= 0) { const p = contact((bx - 4) * P, fy, false); ringOff(c, p.x, p.y, pw.imp, false); }
+      soul(c, (bx - 10) * P, fy, { look: 'b' });
+      drawBarrier(c, B, bx, by, 0, t);
+    } else {
+      stairFlight(c, 10, fl - 12, 12);
+      furnace(c, 34, fl - 7, i + 1, i === 2 ? 'stoked' : 'lit', t);
+      made(c, 47, fl - 2, TRAY); bar(c, 48 * P, (fl - 4) * P, i - 1);
+      vent(c, 54, fl, t, 30 + i); CRUST.slice(0, 5).forEach(([dx, dy]) => crustCell(c, 54 + dx, fl + dy));
+      if (i === 4) for (let y = roof; y < by; y++) if (mod(y, 2) === 0) C(c, bx + 3, y, K[1]);   // the cage's chain: dotted, the rock's dark
+      gangDraw.draw(c, t);
+      // the hauler climbs the stair with a bar for the anvil, a step a column, and comes back down
+      const h = walker(t, 47 * P, 0, 13000, i * 1300), cc = h.x / P + 1.5;
+      let hy = fy;
+      if (cc < 10) hy = (fl - 12) * P - W;
+      else if (cc < 22) { const k = Math.floor(cc), f = clamp((cc - k - .6) / .4, 0, 1); hy = (fl - 22 + k) * P - W + P * ease(f) - Math.sin(f * Math.PI) * 3; }
+      soul(c, h.x, hy); if (!h.out) bar(c, h.x, hy - 13, i - 1);
+    }
+    const mw = swing(t, 1150, i * 333); soul(c, 8 * P, fy); tool(c, 8 * P, fy, mw.pose, i, true);
+    if (mw.imp >= 0) { const p = contact(8 * P, fy, true); puff(c, p.x, p.y, mw.imp, i, true); }
+  };
+}
 function buildFrames() {
   const host = document.getElementById('frames');
+  const caps = ['<span class="wn">the landing</span>: the pair at the rubble, the glow through its gaps', '<span class="wn">cinder iron</span>: the gang at the bone wall', '<span class="wn">pitch copper</span>: the gang at the lava gate', '<span class="wn">obsidian</span>: the gang at the anchor chains', '<span class="wn">the cage room</span>: the gang at the cage'];
+  const scenes = [];
   for (let i = 0; i < 5; i++) {
-    const roof = i === 4 ? 22 : 40 - i * 2, fl = FFLOOR;
-    const kind = STOP_BARRIER[i], bw = kind === 'cage' ? 7 : 6, bh = kind === 'chains' ? 8 : kind === 'cage' ? 10 : 9;
-    const bx = FW - 1 - bw, B = makeBarrier(kind, bw, bh), by = fl - bh;
-    const carve = [[bx, by, FW, fl]];
-    if (i > 0) carve.push([0, fl - 20, 9, fl - 12]);                                   // the passage from the chamber above
-    if (i === 0) carve.push([12, roof - 3, 17, roof]);                                  // the road's shaft
-    const fires = [{ x: 11, y: fl, w: 0, s: .5 + i * .1, r: 4 }, { x: 33, y: fl, w: 1, s: .7 + i * .12, r: 6 }];
-    const glows = [{ x: FW + 2, y: fl - 5, r: 7, s: .9 }];
-    if (i === 4) glows.push({ x: bx + 3.5, y: by + 5, r: 22, s: .8 });
-    const cv = room(FW, FH, 700 + i, { left: 6, roof, floor: fl, seam: i, seamTop: i ? fl - 11 : fl - 13, carve, fires, glows });
-    const seamDepth = 1; cv.hidden = (x, y) => x === 5 && y >= fl - 5;
-    const G = i > 0 ? gang({ B, bx, floor: fl, deck: fl - 4, plankX0: bx - 17, plankX1: bx - 1, ladderX: bx - 20, heapX1: bx - 21, tier: i + 1, roof, wc: FW, hc: FH, godBehind: kind === 'cage', fade: false }) : null;
-    view(mkCanvas(host, `stop ${i + 1}: ${['<span class="wn">the landing</span>, the pair at the rubble', '<span class="wn">cinder iron</span>, the gang at the bone wall', '<span class="wn">pitch copper</span>, the gang at the lava gate', '<span class="wn">obsidian</span>, the gang at the anchor chains', '<span class="wn">the cage room</span>, the gang at the cage'][i]}`), FW * P, FH * P, 1, (c, t) => {
-      c.drawImage(cv.bg, 0, 0);
-      for (let y = fl - 5; y < fl; y++) C(c, 5, y, K[0]);           // the dent the face has been worked into
-      cv.dyn(c, t);
-      const fy = fl * P - W;
-      if (i === 0) {
-        portal(c, 14.5, roof - .2, t); ladderCells(c, 13, roof, fl);
-        // the muster: a soul down the ladder, fading in under the portal
-        { const u = mod(t, 9000) / 9000; soul(c, 13 * P, snap(lerp(roof * P, fy, u), 2), { alpha: Math.min(1, u * 6) * (u > .9 ? (1 - u) / .1 : 1) }); }
-        anvil(c, 21, fl - 4);
-        const sw = swing(t, 900); soul(c, 17 * P, fy); tool(c, 17 * P, fy, sw.pose === 'rest' ? 'low' : sw.pose, 0, false, 'hammer');
-        C(c, 23, fl - 5, K[4]); C(c, 23, fl - 5, K[5], .5 + .5 * vnoise(t / 600)); C(c, 24, fl - 5, K[4]);
-        if (sw.imp >= 0) sparks(c, 24 * P, (fl - 5) * P, sw.imp, sw.n);
-        tank(c, 27, fl - 4, t);
-        furnace(c, 36, fl - 7, 1, 'lit', t, { flueTop: roof });
-        // the pair at the rubble: a blow rings off
-        const pw = swing(t, 1400); soul(c, (bx - 4) * P - 2, fy, { look: 'a' }); tool(c, (bx - 4) * P - 2, fy, pw.pose, 0);
-        if (pw.imp >= 0) { const p = contact((bx - 4) * P - 2, fy, false); ringOff(c, p.x, p.y, pw.imp, false); }
-        soul(c, (bx - 9) * P, fy, { look: 'b' });
-        drawBarrier(c, B, bx, by, 0, t);
-      } else {
-        stairFlight(c, 8, fl - 12, 12);
-        furnace(c, 21, fl - 7, i + 1, i === 2 ? 'stoked' : 'lit', t, { flueTop: roof });
-        if (i === 4) { for (let y = roof; y < by; y++) C(c, bx + 3, y, K[mod(y, 2) ? 1 : 3]); }
-        G.draw(c, t);
-        // the hauler climbs the stair with a bar for the anvil, a step at a time, and comes back down
-        const h = walker(t, 36 * P, 0, 11000, i * 1300), cc = h.x / P + 1.5;
-        let hy = fy;
-        if (cc < 8) hy = (fl - 12) * P - W;
-        else if (cc < 20) { const k = Math.floor(cc), f = clamp((cc - k - .6) / .4, 0, 1);   // a step a column, with a held hop
-          hy = (fl - 20 + k) * P - W + P * ease(f) - Math.sin(f * Math.PI) * 3; }
-        soul(c, h.x, hy); if (!h.out) bar(c, h.x, hy - 13, i - 1);
-      }
-      // the miner at the face
-      const mw = swing(t, 1150, i * 333); soul(c, 6 * P, fy); tool(c, 6 * P, fy, mw.pose, i, true);
-      if (mw.imp >= 0) { const p = contact(6 * P, fy, true); puff(c, p.x, p.y, mw.imp, i, true); }
-    });
+    const base = stopScene(i), draw = (c, t) => base(c, t + i * 4300);   // each stop at its own point in its loop
+    scenes.push(draw);
+    view(mkCanvas(host, `stop ${i + 1}, landscape 133 by 100 at 1x: ${caps[i]}`), FW * P, FH * P, 1, draw, { vw: FW * P, vh: (FH - VIEW_TOP) * P, sy: VIEW_TOP * P });
   }
+  const ph = document.getElementById('phone');
+  view(mkCanvas(ph, 'stop 2 on a phone held upright, 65 by 120 at 1x: the gang, the heap and the bone wall in view, the stair and the face off to the left'), FW * P, FH * P, 1, scenes[1], { vw: 65 * P, vh: FH * P, cam: () => (FW - 65) * P });
 }
 function buildDiagram() {
   const CH = [{ x0: 4, x1: 52, roof: 12, floor: 34 }, { x0: 58, x1: 90, roof: 24, floor: 44 }, { x0: 96, x1: 128, roof: 34, floor: 54 }, { x0: 134, x1: 166, roof: 44, floor: 64 }, { x0: 172, x1: 206, roof: 40, floor: 76 }];
@@ -964,20 +1105,37 @@ function buildQuench() {
   });
 }
 const BARRIER_NAMES = { rubble: 'rubble', bone: 'the bone wall', gate: 'the lava gate', chains: 'the anchor chains', cage: 'the cage' };
+function barrierRoom(kind, idx, wc, hc, fl, bw, bh, bx) {
+  return room(wc, hc, 400 + idx, { left: 0, roof: 3, floor: fl, carve: [[bx, fl - bh, wc, fl]], glows: [{ x: wc + 2, y: fl - 5, r: 7, s: .9 }].concat(kind === 'cage' ? [{ x: bx + 3.5, y: fl - 5, r: 12, s: .7 }] : []), fires: [{ x: 21, y: fl, w: 0, s: .5 + idx * .1, r: 4 }] });
+}
 function buildBarriers() {
   const host = document.getElementById('barriers');
   STOP_BARRIER.forEach((kind, idx) => {
-    const wc = 36, hc = 22, fl = 18, bw = kind === 'cage' ? 7 : 6, bh = kind === 'chains' ? 8 : kind === 'cage' ? 10 : 9, bx = wc - 1 - bw;
-    const B = makeBarrier(kind, bw, bh), roof = 3;
-    const cv = room(wc, hc, 400 + idx, { left: 0, roof, floor: fl, carve: [[bx, fl - bh, wc, fl]], glows: [{ x: wc + 2, y: fl - 5, r: 7, s: .9 }].concat(kind === 'cage' ? [{ x: bx + 3.5, y: fl - 5, r: 12, s: .7 }] : []), fires: [{ x: 13, y: fl, w: 0, s: .5 + idx * .1, r: 4 }] });
-    const G = gang({ B, bx, floor: fl, deck: fl - 4, plankX0: bx - 16, plankX1: bx - 1, ladderX: bx - 19, heapX1: bx - 20, tier: idx + 1, roof, wc, hc, godBehind: kind === 'cage', godOut: kind === 'cage' });
+    const wc = 46, hc = 20, fl = 17, bw = kind === 'cage' ? 7 : 6, bh = kind === 'chains' ? 8 : kind === 'cage' ? 10 : 9, bx = wc - 1 - bw;
+    const B = makeBarrier(kind, bw, bh), cv = barrierRoom(kind, idx, wc, hc, fl, bw, bh, bx);
+    const G = { B, bx, floor: fl, heapX1: bx - 22, relayX: bx - 14, tier: idx + 1, n: 4, wc, hc, roof: 3, godBehind: kind === 'cage', godOut: kind === 'cage' };
+    const S = gangA(G);
     const row = document.createElement('div'); row.className = 'row'; row.id = 'bar-' + kind; row.style.marginBottom = '6px'; host.appendChild(row);
-    const draw = (c, t, fu) => { c.drawImage(cv.bg, 0, 0); cv.dyn(c, t); G.draw(c, t, fu); };
-    view(mkCanvas(row, `<span class="wn">${BARRIER_NAMES[kind]}</span>, the ${['dross', 'iron', 'copper-iron', 'glass-edged', 'adamant'][idx]} pick (tier ${['I', 'II', 'III', 'IV', 'V'][idx]}), ${B.n} pieces (${(G.period / 1000).toFixed(0)} s)`), wc * P, hc * P, 3, (c, t) => draw(c, t));
+    const draw = (c, t, fu) => { c.drawImage(cv.bg, 0, 0); cv.dyn(c, t); S.draw(c, t, fu); };
+    const cells = B.groups.reduce((s, g) => s + solid(g).length, 0);
+    view(mkCanvas(row, `<span class="wn">${BARRIER_NAMES[kind]}</span>, a gang of 4 with the ${['dross', 'iron', 'copper-iron', 'glass-edged', 'adamant'][idx]} pick (tier ${['I', 'II', 'III', 'IV', 'V'][idx]}): ${B.n} pieces, ${cells} cells, all ${cells} on the heap; through in ${(S.breakAt / 1000).toFixed(1)} s`), wc * P, hc * P, 3, (c, t) => draw(c, t));
     const strip = document.createElement('div'); strip.className = 'row'; strip.style.gap = '4px'; strip.style.marginBottom = '16px'; host.appendChild(strip);
-    const N = B.n, F = 4000;
-    [500, F * 1 + 2900, F * Math.floor(N / 3) + 3600, F * Math.floor(N / 2) + 5000, F * (N - 2) + 3400, N * F + 3000].forEach((u, k) => still(strip, wc * P, hc * P, 1, (c, t) => draw(c, t, u), u, k === 0 ? '1x: intact' : k === 5 ? 'down' : ''));
+    const b = S.breakAt;
+    [600, b * .35, b * .7, b + 400, (b + S.done) / 2, S.done + 1200].forEach((u, k) => still(strip, wc * P, hc * P, 1, (c, t) => draw(c, t, u), u, k === 0 ? '1x: intact' : k === 5 ? 'down, all spoil on the heap' : ''));
   });
+}
+// the vote: (a) against (b), at the bone wall, plus (a) with half the gang to show the rate scale
+function buildVote() {
+  const host = document.getElementById('vote');
+  const kind = 'bone', idx = 1, wc = 46, hc = 20, fl = 17, bw = 6, bh = 9, bx = wc - 1 - bw;
+  const B = makeBarrier(kind, bw, bh), cv = barrierRoom(kind, idx, wc, hc, fl, bw, bh, bx);
+  const base = { B, bx, floor: fl, heapX1: bx - 22, relayX: bx - 14, tier: 2, wc, hc, roof: 3 };
+  const opts = [
+    ['(a) a gang of 4, swinging together; recommended', gangA({ ...base, n: 4 })],
+    ['(a) the same with a gang of 2', gangA({ ...base, n: 2 })],
+    ['(b) a gang of 4 in rotation off a walkway', gangB({ ...base, heapX1: bx - 23, relayX: bx - 17 })],
+  ];
+  opts.forEach(([name, S]) => view(mkCanvas(host, `<b>${name}</b>: about ${Math.round(S.rate)} blows a minute; the bone wall is through in ${(S.breakAt / 1000).toFixed(0)} s`), wc * P, hc * P, 3, (c, t) => { c.drawImage(cv.bg, 0, 0); cv.dyn(c, t); S.draw(c, t); }));
 }
 function buildNewTool() {
   const host = document.getElementById('newtool'), wc = 36, hc = 18, fl = 15, bw = 6, bh = 9, bx = wc - 1 - bw;
@@ -1248,18 +1406,14 @@ function drawMarks() {
 // boot
 // =====================================================================================
 buildFrames(); buildDiagram();
-buildFaces(); buildFurnaces(); buildVent(); buildAnvils(); buildQuench(); buildBarriers(); buildNewTool();
+buildFaces(); buildFurnaces(); buildVent(); buildAnvils(); buildQuench(); buildVote(); buildBarriers(); buildNewTool();
 buildAssets(); buildFlare(); buildFree(); buildAlive(); buildBoard();
 document.getElementById('pause').onclick = e => { paused = !paused; e.target.classList.toggle('on', paused); };
 document.getElementById('marks').onclick = e => { document.body.classList.toggle('marks'); e.target.classList.toggle('on', document.body.classList.contains('marks')); };
 document.getElementById('speed').onchange = e => { speed = +e.target.value; };
-document.querySelectorAll('#theme button').forEach(b => b.onclick = () => {
-  const t = b.dataset.t;
-  if (t === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
-  document.querySelectorAll('#theme button').forEach(x => x.classList.toggle('on', x === b));
-  drawMarks();
-});
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawMarks);
+document.querySelectorAll('#theme button[data-t]').forEach(b => { b.classList.toggle('on', b.dataset.t === (THEME || 'auto'));
+  b.onclick = () => { location.hash = b.dataset.t === 'auto' ? '' : 'theme=' + b.dataset.t; location.reload(); }; });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if (!THEME && e.matches !== DARK) location.reload(); });
 window.__setT = t => { T = t; render(true); };
 render(true);
 requestAnimationFrame(loop);
