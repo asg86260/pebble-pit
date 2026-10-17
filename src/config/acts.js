@@ -14,12 +14,11 @@ import { GREY, PURPLE } from './palette.js';
 // in the sky ACT_HEAVEN_SKY over the house, the cloud stair let down from it
 // to the ruin; its end in the afterlife is the patch of cloud floor straight
 // above, the ring drawn ACT_HEAVEN_HANG over it. Hell's is a white-hot slit
-// in the deep's floor at ACT_HELL_AT of the deep's width (hell lies straight
-// under it); its end in hell ACT_HELL_HANG over hell's floor.
+// in the deep's floor straight over hell's road down (hell/place.js, `roadX`),
+// and the landing; its end in hell ACT_HELL_HANG over the landing's floor.
 export const ACT_PORTAL_R = P * 5;           // a ring's radius
 export const ACT_HEAVEN_SKY = P * 34;
 export const ACT_HEAVEN_HANG = P * 14;
-export const ACT_HELL_AT = 0.2;
 export const ACT_HELL_HANG = P * 14;
 export const ACT_PORTAL_OPEN_S = 2;          // a ring opening, by opacity and size
 export const ACT_PORTAL_SPIN_HZ = 0.6;       // its cells turning, steps a second
@@ -75,7 +74,6 @@ export const ACT_SLIT_TONES = [GREY[0], PURPLE[13], GREY[1]];          // the sl
 // Called somewhere by a beat (the cage, home) they walk ACT_CALL_K faster.
 export const GHOST_PX_S = P * 8;
 export const GHOST_LOAD = 25;
-export const GHOST_HELL_RUN = P * 60;        // how far into hell the loop walks
 export const GHOST_GAP = P * 4;              // between the two of them, one behind
 export const ACT_CALL_K = 3;
 

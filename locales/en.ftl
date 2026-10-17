@@ -3412,3 +3412,140 @@ obj-act-cage = free God
 
 # objective line, placeholder: the walk home
 obj-act-home = go home
+
+## Act 4 (placeholder)
+
+# act 4 (placeholder): hell's boards are working labels for the owner to word; the face card's name, the miners at the seams
+row-hellface = miners
+
+# act 4 (placeholder): the face card's verb, before its hits a second
+row-hellface-does = swing
+
+# act 4 (placeholder): the furnace card's name, every furnace's pace
+row-hellfurnace = furnaces
+
+# act 4 (placeholder): the furnace card's verb, before its share
+row-hellfurnace-does = smelt
+
+# act 4 (placeholder): the anvil card's name, the smith's strokes
+row-hellanvil = smith
+
+# act 4 (placeholder): the anvil card's verb, before its hits a second
+row-hellanvil-does = strike
+
+# act 4 (placeholder): the muster card's name, how many ghosts come down the road
+row-hellmuster = muster
+
+# act 4 (placeholder): the muster card's verb, before the count
+row-hellmuster-does = ghosts
+
+# act 4 (placeholder): the barrier board's row taking one more miner off the faces onto the wall
+row-hellgangup = one more on the wall
+
+# act 4 (placeholder): the barrier board's row sending one of the wall gang back to the faces
+row-hellgangdown = one back to the faces
+
+# act 4 (placeholder): the anvil board's row buying a barrel of black water with sparks
+row-hellwater = black water
+
+# act 4 (placeholder): a seam face's board, its heading
+board-hell-face = the seam
+
+# act 4 (placeholder): a furnace's board, its heading
+board-hell-furnace = the furnace
+
+# act 4 (placeholder): the anvil's board, its heading
+board-hell-anvil = the anvil
+
+# act 4 (placeholder): the road's foot, the muster's board, its heading
+board-hell-muster = the road
+
+# act 4 (placeholder): a barrier's board, its heading
+board-hell-wall = the barrier
+# act 3 (placeholder)
+# Plain working labels for act 3's cards, held behind AFTERLIFE_ON and never
+# shipped: every one is the owner's to reword on the wording board.
+
+# act 3 card row (placeholder): the click's faith a cloud hit
+after-row-puff = puff
+
+# act 3 card row (placeholder): the axe, chops a tree
+after-row-axe = axe
+
+# act 3 card row (placeholder): the grove's growth pace
+after-row-grow = growth
+
+# act 3 card row (placeholder): the saw mill's pace
+after-row-saw = saw
+
+# act 3 card row (placeholder): the workshop's pace, a sign
+after-row-joinery = joinery
+
+# act 3 card row (placeholder): the paper mill's pace, a sheet
+after-row-pulp = pulp
+
+# act 3 card row (placeholder): posters a stack off the press
+after-row-print = print
+
+# act 3 card row (placeholder): ink a storm cloud hit
+after-row-wring = wring
+
+# act 3 card dial (placeholder): the saw mill's fence, timber against sawdust
+after-row-fence = fence
+
+# act 3 hall row (placeholder): hire a canvasser
+after-job-canvasser = canvasser
+
+# act 3 hall row (placeholder): hire a gatherer
+after-job-gatherer = gatherer
+
+# act 3 hall row (placeholder): hire a planter
+after-job-planter = planter
+
+# act 3 hall row (placeholder): hire a feller
+after-job-feller = feller
+
+# act 3 hall row (placeholder): hire a hauler
+after-job-hauler = hauler
+
+# act 3 hall row (placeholder): hire a sawyer
+after-job-sawyer = sawyer
+
+# act 3 hall row (placeholder): hire a pulper
+after-job-pulper = pulper
+
+# act 3 hall row (placeholder): hire a joiner
+after-job-joiner = joiner
+
+# act 3 hall row (placeholder): hire a printer
+after-job-printer = printer
+
+# act 3 hall row (placeholder): hire a carrier
+after-job-carrier = carrier
+
+# act 3 hall row (placeholder): hire a paster
+after-job-paster = paster
+
+# act 3 hall row's wait (placeholder): no member free to hire
+after-wait-member = no member free
+
+# act 3 hall row (placeholder): build the saw mill
+after-door-mill = saw mill
+
+# act 3 hall row (placeholder): build the workshop
+after-door-workshop = workshop
+
+# act 3 hall row (placeholder): build the paper mill
+after-door-papermill = paper mill
+
+# act 3 hall row (placeholder): build the printing press
+after-door-press = press
+
+# act 3 hall heading (placeholder): the volunteers
+after-sect-hands = hands
+
+# act 3 hall heading (placeholder): the stations to build
+after-sect-build = build
+
+# act 3 station card heading (placeholder)
+after-sect-card = upgrades

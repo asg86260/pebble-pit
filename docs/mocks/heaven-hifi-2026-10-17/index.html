@@ -1,0 +1,1196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heaven Hi-Fi Mock</title>
+<style>
+  :root {
+    --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2;
+    --ink: #000000; --paper: #ffffff; --g2: #d6d6d6; --g4: #a4a4a4; --g6: #757575;
+    --face: ui-monospace, "Courier New", monospace;
+  }
+  /* the game's dark page: #e0e0e0 ink on #1f1f1f paper, greys mapped by lightness (src/ink.js) */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36;
+      --ink: #e0e0e0; --paper: #1f1f1f; --g2: #4a4a4a; --g4: #7c7c7c; --g6: #a2a2a2;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36;
+    --ink: #e0e0e0; --paper: #1f1f1f; --g2: #4a4a4a; --g4: #7c7c7c; --g6: #a2a2a2;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--face); }
+  main { max-width: 1400px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 0 0 6px; }
+  h3 { font-size: 13px; margin: 12px 0 4px; }
+  p, li { color: var(--muted); margin: 0 0 8px; max-width: 980px; }
+  b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; align-items: center; }
+  .bar button { font: inherit; background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .bar span { color: var(--muted); font-size: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 16px; }
+  .wide { overflow-x: auto; border: 1px solid var(--line); }
+  .wide canvas { border: 0; }
+  canvas { display: block; image-rendering: pixelated; border: 1px solid var(--line); }
+  .fit canvas { width: 100% !important; height: auto !important; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+  figure { margin: 0; min-width: 0; max-width: 100%; }
+  figure canvas { max-width: 100%; height: auto; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 4px; max-width: 460px; }
+  figcaption b { font-weight: bold; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 14px; }
+  .tiles figure.span2 { grid-column: span 2; }
+  .strip { display: flex; gap: 6px; flex-wrap: wrap; }
+  .strip canvas { width: 180px; height: 180px; }
+  .ph { text-decoration: underline dotted var(--g4); text-underline-offset: 3px; }
+  .phnote { display: inline-block; border: 1px dashed var(--muted); padding: 2px 8px; font-size: 12px; color: var(--muted); }
+
+  /* ---------- the board mock (section 4): the game's sheet and plank tiles, from plain CSS ---------- */
+  .sheetwrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  .purse { background: var(--paper); color: var(--ink); border: 2px solid var(--ink); padding: 8px 10px; font: 13px/1.7 var(--face); min-width: 130px; }
+  .purse div { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+  .purse .k { display: flex; gap: 6px; align-items: center; }
+  .sheet { background: var(--paper); color: var(--ink); border: 2px solid var(--ink); padding: 14px 16px 16px; width: 640px; max-width: 100%; font: 13px/1.4 var(--face); text-transform: uppercase; letter-spacing: .04em; box-shadow: 6px 6px 0 var(--g2); }
+  .sheet .title { font-size: 14px; padding-bottom: 6px; border-bottom: 2px solid var(--ink); margin-bottom: 10px; display: flex; justify-content: space-between; }
+  .sheet .sect { display: inline-block; background: var(--ink); color: var(--paper); padding: 2px 10px; margin: 6px 0 8px; }
+  .plank { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; border-bottom: 5px solid var(--ink); padding-bottom: 6px; margin-bottom: 10px; }
+  .tile { position: relative; padding: 8px 18px 8px 8px; text-align: center; min-height: 128px; display: grid; grid-template-rows: 26px auto auto auto; gap: 5px; justify-items: center; align-items: center;
+          background-image: radial-gradient(var(--g2) 1px, transparent 1px); background-size: 6px 6px; }
+  .tile.dim { color: var(--g4); }
+  .tile .corner { position: absolute; left: 0; top: 0; width: 0; height: 0; border-top: 9px solid var(--ink); border-right: 9px solid transparent; }
+  .tile canvas.glyph { border: 0; width: 24px; height: 24px; }
+  .tile .name { font-size: 12px; }
+  .tile .gain { font-size: 12px; color: var(--g6); text-transform: none; }
+  .tile .prop { position: absolute; right: 18px; top: 4px; font-size: 9px; border: 1px dashed var(--g6); color: var(--g6); padding: 0 3px; text-transform: none; letter-spacing: 0; }
+  .bill { display: inline-flex; flex-wrap: wrap; gap: 4px 8px; border: 1px solid var(--ink); padding: 2px 6px; font-size: 12px; justify-content: center; background: var(--paper); }
+  .bill.short { border-style: dashed; color: var(--g6); }
+  .bill i { display: inline-flex; align-items: center; gap: 3px; font-style: normal; }
+  .ladder { position: absolute; right: 4px; top: 8px; display: flex; flex-direction: column-reverse; gap: 3px; }
+  .pip { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--g4); }
+  .pip.b2 { border-color: var(--g6); } .pip.b3 { border-color: var(--ink); }
+  .pip.b4 { border-radius: 0; border-color: var(--ink); }
+  .pip.b1.on { background: var(--g4); } .pip.b2.on { background: var(--g6); } .pip.b3.on, .pip.b4.on { background: var(--ink); }
+  .pip.gap { margin-top: 3px; }
+  .fence { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+  .fence .cells { display: flex; gap: 2px; }
+  .fence .cells b { display: block; width: 8px; height: 10px; border: 1.5px solid var(--ink); }
+  .fence .cells b.on { background: var(--ink); }
+  .btnrow { margin-top: 8px; display: inline-block; border: 1.5px solid var(--ink); padding: 3px 10px; }
+  table.bands { border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  table.bands td, table.bands th { border: 1px solid var(--line); padding: 3px 8px; text-align: left; color: var(--muted); }
+  table.bands th { color: var(--fg); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Heaven, high fidelity (act 3: the grove and the press)</h1>
+  <p>A <b>mock</b>, drawn from plain shapes in a canvas, <b>not the game</b>: nothing here runs the sim or the game's renderer. It is drawn on the game's own grid (P = 6, a body three cells across with a two-pixel rim; every station, crowd column, sign and trunk placed on a whole cell; no stroke thinner than two pixels) from the game's own ramps (palette.js: the eleven greys and the purple). Game scale is one world pixel to one screen pixel, the way the yard is drawn; the close-ups are the same drawing scaled three times. Design: DESIGN.md, "Acts 3 and 4: the afterlife and hell (design, not built)", the loop "the grove and the press".</p>
+  <p><span class="phnote">Every word a player would read on this page is a placeholder. The owner writes the copy.</span> The canvases carry no words at all; the board in section 4 is all placeholder text, dotted underlined.</p>
+  <p>Round 2 (review round 1 applied): every loop ends where it starts; nothing pops, every fade is continuous; every link of the chain is carried by a body; wardens, souls, members and the pair are told apart by shape, not by four greys; the dark page is the game's (#e0e0e0 on #1f1f1f, mapped by lightness), with clouds drawn as shade so a storm cloud stays darker than a white one on either page.</p>
+  <div class="bar" id="theme">
+    <button data-t="auto" class="on">auto</button><button data-t="light">light</button><button data-t="dark">dark</button>
+    <span>|</span>
+    <button id="pause">pause</button><button id="slow">slow motion</button><button id="replay">replay the axe beat</button>
+  </div>
+
+  <section class="card" id="s1">
+    <h2>1. The establishing view: heaven late in act 3</h2>
+    <p>One wide place, left to right as the design has it. <b>The grove</b>: old growth outside the rope, the planted plots inside it; a feller fells an old tree, two haulers carry its logs to the saw mill's log pile and set them down, a planter grubs the stump and sets a sapling, and the tree grows back (growth sped up so the loop closes). <b>The camp</b>, every link carried by a body: sawdust in sacks from the heap to the paper mill, timber from the mill to the workshop, paper from the paper mill to the press, ink from the well to the workshop and the press. A pledge keeper (a member with an inked middle) stands at the saw mill. The faith plate has a gatherer beating a white cloud; the pointer hits the thunderhead for its burst. <b>The hall</b> takes in a member who was canvassed out of a soul that rose through <b>the thin patch</b>. <b>God's yard</b>: the great cloud shedding mist onto a heap, four ranks of the dead working it, posters on the fence, signs inking rings round them (the askew one inks nothing), word of mouth filling the gaps between members. A carrier plants a sign at the front of the crowd; a warden walks down from the stair, pulls it up and carries it up into the glare. A paster pastes a poster on the cloud pillar; the pillar's warden tears it down. <b>The stair</b>: the tithe line climbs and fades into the glare at the top; new carriers fade in at the foot.</p>
+    <div class="bar" id="estscale"><button data-f="0" class="on">game scale (scroll)</button><button data-f="1">fit width</button></div>
+    <div class="wide" id="estwrap"><canvas data-src="est" data-s="1"></canvas></div>
+    <h3>3x close-ups of the same frame</h3>
+    <div class="row">
+      <figure><canvas data-src="est" data-s="3" data-crop="0,236,234,112"></canvas><figcaption>the grove: old growth, the feller, the planted plots inside the rope</figcaption></figure>
+      <figure><canvas data-src="est" data-s="3" data-crop="324,240,234,108"></canvas><figcaption>the log pile, the saw mill (its blade housing the solid mass), the heap below the brim, the keeper</figcaption></figure>
+      <figure><canvas data-src="est" data-s="3" data-crop="552,240,234,108"></canvas><figcaption>the paper mill (the vat), the workshop (the tool wall); couriers on the floor</figcaption></figure>
+      <figure><canvas data-src="est" data-s="3" data-crop="780,180,240,168"></canvas><figcaption>the press (head and platen), the well under its storm cloud, the thunderhead</figcaption></figure>
+      <figure><canvas data-src="est" data-s="3" data-crop="1020,212,258,220"></canvas><figcaption>the plate and its gatherer, the pair, the hall, the thin patch with the yard below</figcaption></figure>
+      <figure><canvas data-src="est" data-s="3" data-crop="1272,192,252,156"></canvas><figcaption>the pillar's poster and warden, the crowd: souls, members, your lines' ticks, a sign's ring</figcaption></figure>
+      <figure><canvas data-src="est" data-s="3" data-crop="1740,42,276,306"></canvas><figcaption>the stair, the tithe line, the throne in the glare</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="card" id="s2">
+    <h2>2. Each station at 3x, idle and working, with its workers</h2>
+    <p>Stations are high key, built of pale timber with black rims, and each has one solid ink mass so it reads at 1x: the saw mill's blade housing, the workshop's tool wall, the paper mill's vat, the press's head and platen. Every worker is a member. Poses are held, never tweened. Each working panel shows the station's inputs arriving and its outputs leaving, carried by couriers who walk in and out of frame.</p>
+    <h3>The grove</h3>
+    <div class="row">
+      <figure><canvas data-src="grove-idle" data-s="3"></canvas><figcaption><b>idle</b>: old growth outside the rope; inside it the plots: a stump, a sapling, a pole, a grown tree; the feller leaning on the axe</figcaption></figure>
+      <figure><canvas data-src="grove-work" data-s="3"></canvas><figcaption><b>working</b>: five chops (a chip flies off each), the fall in four held frames, the crown drifting off, bucked to logs; haulers walk in and carry them out; a planter walks in, grubs the stump, sets a sapling, and it grows back (sped up) to where the loop began</figcaption></figure>
+    </div>
+    <div class="row">
+      <figure><canvas data-src="axe-beat" data-s="3"></canvas><figcaption><b>the axe beat</b> (plays once; "replay the axe beat" above): a member walks over from the grove with an axe and hands it to the pair</figcaption></figure>
+      <figure><canvas data-src="axe" data-s="3"></canvas><figcaption><b>the hand's axe</b>: after the beat, the player's click on a grown tree is a chop: the pointer where the blow lands, a chip a click</figcaption></figure>
+    </div>
+    <h3>The saw mill</h3>
+    <div class="row">
+      <figure><canvas data-src="saw-idle" data-s="3"></canvas><figcaption><b>idle</b>: blade still under its housing, logs on the pile</figcaption></figure>
+      <figure><canvas data-src="saw-work" data-s="3"></canvas><figcaption><b>working</b>: the sawyer fetches a log from the pile and pushes it through; timber out to the stack, sawdust to the heap. In: a hauler sets a log on the pile. Out: a courier fills a sack at the heap, another takes timber. The keeper stands under the roof</figcaption></figure>
+      <figure><canvas data-src="saw-full" data-s="3"></canvas><figcaption><b>heap at the brim</b> (no paper mill yet): the game's warning mark at pileMarkAt's spot (the stand's center, five cells up), the blade stopped, the sawyer carrying sawdust to the cloud's edge and tipping it off</figcaption></figure>
+    </div>
+    <h3>The workshop, the paper mill, the printing press</h3>
+    <div class="row">
+      <figure><canvas data-src="shop-idle" data-s="3"></canvas><figcaption><b>workshop, idle</b>: the tool wall, timber, ink pot</figcaption></figure>
+      <figure><canvas data-src="shop-work" data-s="3"></canvas><figcaption><b>workshop, working</b>: boards laid, joined, lettered a stroke at a time; a carrier walks in and takes the sign out. In: timber from the left, ink from the right</figcaption></figure>
+      <figure><canvas data-src="paper-idle" data-s="3"></canvas><figcaption><b>paper mill, idle</b>: the vat still, sacks waiting</figcaption></figure>
+      <figure><canvas data-src="paper-work" data-s="3"></canvas><figcaption><b>paper mill, working</b>: the mould dipped and lifted with a sheet, laid on the felts, pressed. In: a sack of sawdust. Out: a courier takes paper off the pile</figcaption></figure>
+      <figure><canvas data-src="press-idle" data-s="3"></canvas><figcaption><b>press, idle</b></figcaption></figure>
+      <figure><canvas data-src="press-work" data-s="3"></canvas><figcaption><b>press, working</b>: the forme inked, the bar pulled (platen down, held), a poster onto the stack, three a round; a paster walks in and takes the stack. In: paper from the left, ink from the right</figcaption></figure>
+    </div>
+    <h3>Ink, faith and the hall</h3>
+    <div class="row">
+      <figure><canvas data-src="well-idle" data-s="3"></canvas><figcaption><b>the well, idle</b>: a storm cloud drifting over</figcaption></figure>
+      <figure><canvas data-src="well-work" data-s="3"></canvas><figcaption><b>the well, working</b>: a storm cloud drifts in and the gatherer wrings it a step smaller a blow until it is gone; drops fall in. Out: a courier fills a pot</figcaption></figure>
+      <figure><canvas data-src="plate-idle" data-s="3"></canvas><figcaption><b>the faith plate, idle</b></figcaption></figure>
+      <figure><canvas data-src="plate-work" data-s="3"></canvas><figcaption><b>the faith plate, working</b>: a gatherer beats a white cloud a puff a swing until it is gone; motes drift down, land with a hop and are counted (they fade into the count)</figcaption></figure>
+      <figure><canvas data-src="hall-idle" data-s="3"></canvas><figcaption><b>the hall, idle</b></figcaption></figure>
+      <figure><canvas data-src="hall-work" data-s="3"></canvas><figcaption><b>the hall, working</b>: a member walks in from God's yard and through the door; later the door opens and a volunteer walks out to a job</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="card" id="s3">
+    <h2>3. The new assets</h2>
+    <p>Every new drawing on its own, at 3x. Animated ones loop, and every loop ends where it began.</p>
+    <div class="tiles" id="assets"></div>
+    <h3>The unmasking, as a strip</h3>
+    <p>The strike has starved the glare. It comes off by opacity, a cell at a time, never a pop, outside in; under it is the same shape drawn the deep's way, inverted, on a dark field on either page. God's own look (a big square with a three-point crown) and Satan's two purple eyes are placeholders for the mock-vote the design calls for.</p>
+    <div class="strip" id="unstrip"></div>
+  </section>
+
+  <section class="card" id="s4">
+    <h2>4. A heaven board: the saw mill's card</h2>
+    <p>The game's sheet and plank tiles, drawn in plain CSS (not the game's builder or stylesheet). One card of rows, every ladder eight rungs in four bands of two, the bill deepening band by band in act 3's order. Pips stand down the right edge, foot first. Support is drawn on the crowd, never counted, so the purse carries no support figure. Rows marked "proposal" are not in the design. <span class="phnote">Every word on the sheet and in the purse is a placeholder.</span></p>
+    <div class="sheetwrap">
+      <div class="purse" id="purse"></div>
+      <div class="sheet" id="sheet"></div>
+    </div>
+    <table class="bands">
+      <tr><th>band</th><th>rungs</th><th>bill</th><th>pip</th></tr>
+      <tr><td>1</td><td>1-2</td><td>faith only</td><td>pale ring</td></tr>
+      <tr><td>2</td><td>3-4</td><td>faith and timber</td><td>grey ring</td></tr>
+      <tr><td>3</td><td>5-6</td><td>faith, timber and paper</td><td>black ring</td></tr>
+      <tr><td>4</td><td>7-8</td><td>timber, paper and a pledge (a member who stays as the station's keeper)</td><td>black square (a body)</td></tr>
+    </table>
+    <p style="margin-top:8px">With no coin colors in heaven (sparks cannot reach the cloud), the pips tell their bands apart by tone and, for the pledge, by shape. That is a choice for the owner: the yard's pips are colored by coin.</p>
+  </section>
+
+  <section class="card" id="cant">
+    <h2>What this mock cannot show</h2>
+    <ul>
+      <li>The game's renderer: device-pixel snapping, the wardrobe's real outfits on the pair (a plain top hat and bow stand in), the LAYERS painting order, the real cursor sprite. The warning mark copies warning()'s shape, not its code path or tooltip.</li>
+      <li>Any numbers, pacing or balance: how many chops a tree takes, how fast ink spreads, how quickly a tree grows back (sped up here only so each loop closes).</li>
+      <li>A crowd of thousands: four ranks of a few dozen souls are drawn; the far files thinning into cloud cells is described, not drawn. Support is a fixed map plus the canvassing and the ring tile, not the sim.</li>
+      <li>The camera and the story beats (the house falling, the arrival, the meeting, the strike's cutscene, Satan's line, the descent); the throne's speech sweep appears only in the askew-sign tile.</li>
+      <li>Stock that changes over a loop: piles, stacks and heaps are held level by couriers taking out what the station puts in, so the loops can close; the real game's piles rise and fall.</li>
+      <li>The real board: the game's tile builder, its subgrid, glyph canvases and hover plate. Section 4's glyphs are first drafts, not on the glyph editor.</li>
+      <li>God's and Satan's looks, the thin patch's purple lip, Satan's eyes, the keeper's inked middle and the pair's own grey are placeholders for later votes.</li>
+      <li>Any word a player would read: none are written; every label is the owner's to write.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+// ============================================================ palette and grid
+const P = 6, B = 18, RIM = 2;
+// palette.js, verbatim: paper to ink, and the one purple
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const PURP = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#8244d8', '#9b5de5', '#b79af2'];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+// The dark page as src/ink.js maps it: lightness turned over into #1f1f1f..#e0e0e0.
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+const grey = v => '#' + Math.round(v).toString(16).padStart(2, '0').repeat(3);
+const MAPPED = GREY.map(c => grey((LP + (LI - LP) * (1 - parseInt(c.slice(1, 3), 16) / 255)) * 255));
+let DARK = false;
+const T = i => (DARK ? MAPPED : GREY)[clamp(Math.round(i), 0, 10)];      // ink and paper, mapped on the dark page
+// Shade: what is light stays light on either page (clouds, crowns, mist), so a
+// storm cloud is darker than a white one on both. Dark: white cloud ~#bdbdbd, storm ~#5f5f5f.
+const SH = i => DARK ? GREY[clamp(Math.round(i) + 2, 0, 9)] : GREY[clamp(Math.round(i), 0, 10)];
+const LIGHT = () => DARK ? '#f2f2f2' : '#ffffff';
+const UNDER = () => DARK ? '#151515' : '#000000';                         // a storm cloud's flat underside
+const PU = () => DARK ? PURP[12] : PURP[10];
+let g = null;
+
+function fr(x, y, w, h, c) { if (c) g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+function alpha(a, fn) { const o = g.globalAlpha; g.globalAlpha = o * clamp(a, 0, 1); fn(); g.globalAlpha = o; }
+function hsh(a, b = 0, c = 0) { let h = (a * 374761393 + b * 668265263 + c * 2246822519) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+const held = (t, hz) => Math.floor(t * hz) / hz;          // poses and pulses only; never alpha
+const fade = a => clamp(a, 0, 1);                           // every fade is continuous
+const tri = p => p < .5 ? p * 2 : 2 - p * 2;
+const lerp = (a, b, k) => a + (b - a) * k;
+const snap2 = v => Math.round(v / 2) * 2;
+const cellAt = v => Math.round(v / P) * P;
+const mod = (a, n) => ((a % n) + n) % n;
+
+// ============================================================ the body
+// The game's square. A rim has two states, piece by piece: ink (won) or the
+// soul's pale grey; depth is carried by the pale tone only. Eight pieces, one a
+// border cell, clockwise from the top-left.
+const RIM_ORDER = [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2], [1, 2], [0, 2], [0, 1]];
+function body(x, y, o = {}) {
+  x = Math.round(x); y = Math.round(y);
+  const inked = o.inked ?? 8, soulT = o.soul ?? 4;
+  fr(x, y, B, B, T(0));
+  RIM_ORDER.forEach(([cx, cy], i) => {
+    const c = i < inked ? T(10) : T(soulT), px = x + cx * P, py = y + cy * P;
+    if (cy === 0) fr(px, py, P, RIM, c);
+    if (cy === 2) fr(px, py + P - RIM, P, RIM, c);
+    if (cx === 0) fr(px, py, RIM, P, c);
+    if (cx === 2) fr(px + P - RIM, py, RIM, P, c);
+  });
+  if (o.core) fr(x + P, y + P, P, P, T(10));                // a pledge keeper: the middle cell inked
+}
+const member = (x, y, extra = {}) => body(x, y, { inked: 8, ...extra });
+const soul = (x, y, extra = {}) => body(x, y, { inked: 0, ...extra });
+function squat(x, y) {   // the square squashed to two rows, feet where they were
+  x = Math.round(x); y = Math.round(y) + P;
+  fr(x, y, B, B - P, T(10)); fr(x + RIM, y + RIM, B - 2 * RIM, B - P - 2 * RIM, T(0));
+}
+function ticks(x, y, n) {   // the lineage tick: one to four strokes, five the crossed bundle
+  if (!n) return;
+  const m = Math.min(n, 4), w = m * 4 - 2, x0 = x + Math.round((B - w) / 2);
+  for (let i = 0; i < m; i++) fr(x0 + i * 4, y - 8, 2, 4, T(6));
+  if (n >= 5) for (let k = 0; k <= w + 2; k += 2) fr(x0 - 2 + k, y - 4 - snap2(k / (w + 2) * 4), 2, 2, T(6));
+}
+// A warden: God's steward, ink-filled with a paper eye-slot, an ink halo ring.
+function warden(x, y, a = 1) {
+  alpha(a, () => {
+    const k = T(10); x = Math.round(x); y = Math.round(y);
+    fr(x, y, B, B, k); fr(x + 4, y + 6, 10, 2, T(0));
+    fr(x + 4, y - 8, 10, 2, k); fr(x + 4, y - 4, 10, 2, k); fr(x + 2, y - 6, 2, 2, k); fr(x + 14, y - 6, 2, 2, k);
+  });
+}
+// The pair: the only squares drawn in their own grey, plus what they wear.
+const PAIR = 7;
+function pairOne(x, y, who) {
+  x = Math.round(x); y = Math.round(y);
+  const c = T(PAIR);
+  fr(x, y, B, B, c); fr(x + RIM, y + RIM, B - 2 * RIM, B - 2 * RIM, T(0));
+  if (who === 'you') { fr(x + 4, y - 12, 10, 10, c); fr(x + 6, y - 10, 6, 4, T(3)); fr(x - 2, y - 2, 22, 2, c); fr(x + 10, y + 8, 6, 4, c); }
+  else { fr(x + 4, y - 6, 4, 6, c); fr(x + 10, y - 6, 4, 6, c); fr(x + 8, y - 4, 2, 2, c); fr(x + 6, y + 8, 2, 2, c); fr(x + 12, y + 8, 2, 2, c); }
+}
+
+// ============================================================ tools held in poses
+function pick(x, y, pose) {
+  const k = T(10), bx = x + B;
+  if (pose === 'up') { fr(bx, y - 14, 2, 16, k); fr(bx - 6, y - 16, 14, 2, k); fr(bx - 6, y - 14, 2, 2, k); fr(bx + 6, y - 14, 2, 2, k); }
+  else if (pose === 'down') { fr(bx, y + 8, 14, 2, k); fr(bx + 12, y + 2, 2, 14, k); fr(bx + 10, y + 2, 2, 2, k); fr(bx + 10, y + 14, 2, 2, k); }
+  else if (pose === 'ground') { fr(x + B + 2, y + B - 2, 14, 2, k); fr(x + B + 14, y + B - 8, 2, 8, k); }
+}
+function axe(x, y, pose, face = 1) {
+  const k = T(10), bx = face > 0 ? x + B : x - 2, f = face;
+  if (pose === 'up') { fr(bx, y - 12, 2, 16, k); fr(f > 0 ? bx + 2 : bx - 4, y - 12, 4, 6, k); }
+  else if (pose === 'back') { for (let i = 0; i < 7; i++) fr(bx - f * i * 2, y + 2 - i * 2, 2, 2, k); fr(bx - f * 14 - (f > 0 ? 4 : 0), y - 14, 6, 4, k); }
+  else if (pose === 'hit') { fr(f > 0 ? bx : bx - 12, y + 6, 14, 2, k); fr(f > 0 ? bx + 12 : bx - 14, y + 2, 4, 8, k); }
+  else if (pose === 'rest') { fr(bx + f * 2, y + 4, 2, 14, k); fr(f > 0 ? bx + 2 : bx - 4, y + 2, 6, 4, k); }
+  else if (pose === 'held') { fr(f > 0 ? bx : bx - 10, y + 8, 12, 2, k); fr(f > 0 ? bx + 10 : bx - 12, y + 4, 4, 6, k); }
+}
+function hammer(x, y, pose) {
+  const k = T(10), bx = x + B;
+  if (pose === 'up') { fr(bx, y - 10, 2, 12, k); fr(bx - 2, y - 14, 6, 4, k); }
+  else { fr(bx, y + 6, 12, 2, k); fr(bx + 10, y + 4, 4, 6, k); }
+}
+function poleUp(x, y, hit) {   // the gatherer's long pole: struck up into the cloud, or drawn back
+  const k = T(10);
+  if (hit) for (let i = 0; i < 14; i++) fr(x + B - 2 + i * 2, y - 2 - i * 4, 2, 4, k);
+  else for (let i = 0; i < 12; i++) fr(x + B - 2 + i * 2, y + 2 - i * 3, 2, 3, k);
+}
+function pointer(x, y, down) {
+  const k = T(10), w = T(0); x = snap2(x); y = snap2(y) + (down ? 2 : 0);
+  const rows = ['k.........', 'kk........', 'kwk.......', 'kwwk......', 'kwwwk.....', 'kwwwwk....', 'kwwwwwk...', 'kwwwkkkk..', 'kwkwk.....', 'kk.kwk....', '....kwk...', '.....k....'];
+  rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== '.') fr(x + i * 2, y + j * 2, 2, 2, ch === 'k' ? k : w); }));
+}
+
+// ============================================================ timber and things (2px strokes throughout)
+function plank(x, y, w, seed = 0) {   // 6 tall: a 2px rim round a 2px grain row
+  fr(x, y, w, 6, T(10));
+  for (let i = 0; i < w - 4; i += P) fr(x + 2 + i, y + 2, Math.min(P, w - 4 - i), 2, T(hsh(i, seed, 3) < .5 ? 1 : 2));
+}
+function post(x, top, h) { fr(x, top, 6, h, T(10)); fr(x + 2, top + 2, 2, h - 2, T(2)); }
+function leanRoof(x, y, w, drop, seed = 0) {
+  const cols = Math.ceil(w / P);
+  for (let c = 0; c < cols; c++) { const yy = y + snap2(c * drop / cols), px = x + c * P; fr(px, yy, P, 8, T(10)); fr(px, yy + 2, P, 4, T(hsh(c, seed, 9) < .5 ? 1 : 2)); }
+}
+function peakRoof(cx, y, half, rows, seed = 0) {
+  for (let r = 0; r < rows; r++) {
+    const hw = cellAt((r + 1) / rows * half), yy = y + r * P;
+    for (let x = cx - hw; x < cx + hw; x += P) fr(x, yy, P, P, T(hsh(x, r, seed) < .5 ? 1 : 2));
+    fr(cx - hw - 2, yy, 2, P, T(10)); fr(cx + hw, yy, 2, P, T(10));
+  }
+  fr(cx - half - 4, y + rows * P - 2, half * 2 + 8, 2, T(10)); fr(cx - 2, y - 2, 4, 2, T(10));
+}
+function log_(x, y) {   // 18 x 8, end face to the right
+  x = Math.round(x); y = Math.round(y);
+  fr(x, y, 18, 8, T(10)); fr(x + 2, y + 2, 10, 4, T(2)); fr(x + 4, y + 2, 2, 2, T(4)); fr(x + 14, y + 2, 2, 4, T(1));
+}
+function logPile(x, gy) { log_(x, gy - 8); log_(x + 18, gy - 8); log_(x + 9, gy - 16); }
+function timber(x, y) { plank(Math.round(x), Math.round(y), 18, 7); }
+function timberStack(x, gy, n) { for (let i = 0; i < n; i++) plank(x + (i % 2) * 2, gy - 6 - i * 4, 18, i); }
+function sheet(x, y) { fr(x, y, 10, 12, T(4)); fr(x + 2, y + 2, 6, 8, T(0)); }
+function paperStack(x, gy, n) { for (let i = 0; i < n; i++) { fr(x, gy - 4 - i * 4, 14, 4, T(4)); fr(x + 2, gy - 4 - i * 4, 10, 2, T(0)); } }
+function drop(x, y, a = 1) { alpha(a, () => { fr(snap2(x), snap2(y), 2, 2, T(10)); fr(snap2(x) - 2, snap2(y) + 2, 6, 4, T(10)); }); }
+function inkPot(x, gy) { fr(x, gy - 8, 8, 8, T(10)); fr(x + 2, gy - 10, 4, 2, T(10)); fr(x + 2, gy - 6, 2, 2, T(3)); }
+// a faith mote: pale, black-rimmed, a round 8 x 8
+function mote(x, y, a = 1) {
+  alpha(a, () => { const k = T(10); x = snap2(x); y = snap2(y);
+    fr(x + 2, y, 4, 2, k); fr(x + 2, y + 6, 4, 2, k); fr(x, y + 2, 2, 4, k); fr(x + 6, y + 2, 2, 4, k); fr(x + 2, y + 2, 4, 4, T(0)); });
+}
+function sack(x, gy) { fr(x, gy - 12, 12, 12, T(10)); fr(x + 2, gy - 10, 8, 8, T(3)); fr(x + 4, gy - 14, 4, 2, T(10)); fr(x + 4, gy - 8, 2, 2, T(4)); }
+function bundle(x, y) { fr(x, y, 12, 8, T(10)); fr(x + 2, y + 2, 8, 4, SH(2)); }   // mist, the tithe's load
+// A sign: a board on a post, lettered in ink. `letters` how many of its five
+// strokes are on; `tilt` a pixel shear, the speech's knock askew.
+function sign(x, gy, o = {}) {
+  x = Math.round(x); gy = Math.round(gy);
+  const postH = o.postH ?? 20, tilt = o.tilt || 0, letters = o.letters ?? 5;
+  alpha(o.a ?? 1, () => {
+    if (postH) fr(x, gy - postH, 4, postH, T(10));
+    const bx = x + 2 - 12, by = gy - postH - 12;
+    const strokes = [[4, 4, 6], [4, 12, 4], [4, 18, 2], [8, 4, 4], [8, 10, 10]];
+    for (let r = 0; r < 14; r += 2) {
+      const off = snap2(tilt * (r - 7) / 6);
+      if (r === 0 || r === 12) { fr(bx + off, by + r, 24, 2, T(10)); continue; }
+      fr(bx + off, by + r, 24, 2, T(0)); fr(bx + off, by + r, 2, 2, T(10)); fr(bx + off + 22, by + r, 2, 2, T(10));
+      strokes.forEach(([sr, sx, sw], i) => { if (i < letters && sr === r) fr(bx + off + sx, by + r, sw, 2, T(10)); });
+    }
+  });
+}
+// A poster: paper pasted up, a black head and two lines. `torn` how much is gone from the bottom.
+function poster(x, y, o = {}) {
+  x = Math.round(x); y = Math.round(y);
+  const torn = o.torn || 0, h = 18, keep = Math.round(h * (1 - torn) / 2) * 2;
+  alpha(o.a ?? 1, () => {
+    for (let r = 0; r < keep; r += 2) {
+      const rag = torn && r >= keep - 2;
+      for (let c = 0; c < 12; c += 2) {
+        if (rag && hsh(c, x, 7) < .5) continue;
+        const edge = r === 0 || r === h - 2 || c === 0 || c === 10;
+        const head = r >= 2 && r <= 4 && c >= 2 && c <= 8;
+        const line = (r === 8 && c >= 2 && c <= 8) || (r === 12 && c >= 2 && c <= 6);
+        fr(x + c, y + r, 2, 2, T(edge || head || line ? 10 : 0));
+      }
+    }
+  });
+}
+function posterStack(x, gy, n) {
+  for (let i = 0; i < n; i++) { fr(x, gy - 4 - i * 4, 14, 4, T(10)); fr(x + 2, gy - 4 - i * 4, 10, 2, T(0)); }
+}
+// the game's warning(): a white-filled, stroked triangle, a bar and a dot (render/pilemarks.js)
+function warning(x, y, r = P * 2.6) {
+  g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r, y + r * .8); g.lineTo(x - r, y + r * .8); g.closePath();
+  g.fillStyle = T(0); g.fill(); g.lineWidth = Math.max(1, r / 6); g.strokeStyle = T(10); g.stroke();
+  g.fillStyle = T(10); g.fillRect(x - r / 8, y - r / 4, r / 4, r * .4); g.fillRect(x - r / 8, y + r * .35, r / 4, r / 4);
+}
+function heap(cx, gy, wCells, hCells, seed, tones = [3, 4, 5], tone = T) {
+  for (let r = 0; r < hCells; r++) {
+    const half = Math.max(1, Math.round((hCells - r) * wCells / (2 * hCells)));
+    for (let c = -half; c < half; c++) { const v = hsh(c, r, seed); fr(cx + c * P, gy - (r + 1) * P, P, P, tone(tones[v < .45 ? 0 : v < .85 ? 1 : 2])); }
+  }
+}
+
+// ============================================================ couriers: every link carried by a body
+// One body's round trip: pick up at `from` (a held crouch), walk to `to`, set
+// down (a held crouch), walk back, then stand at `from` (or off frame) until
+// the next round. `load(x, y)` draws what it carries over its head.
+function courier(t, o) {
+  const v = o.v || 50, d = Math.abs(o.to - o.from), tw = d / v, per = o.per;
+  const p = mod(t + (o.off || 0), per), total = tw * 2 + 1.2;
+  let x, loaded = false, sq = false;
+  if (p < .6) { x = o.from; sq = p > .15 && p < .45; loaded = p > .3; }
+  else if (p < .6 + tw) { x = lerp(o.from, o.to, (p - .6) / tw); loaded = true; }
+  else if (p < 1.2 + tw) { x = o.to; const q = p - .6 - tw; sq = q > .15 && q < .45; loaded = q < .3; }
+  else if (p < total) { x = lerp(o.to, o.from, (p - 1.2 - tw) / tw); }
+  else x = o.from;
+  if (o.empty) {   // walks out empty, back loaded (a pickup at `to`), and sets it down at home
+    loaded = !loaded && p > .6 && p < total;
+    if (p < .6) sq = false;
+    if (p >= total && p < total + .6) { const q = p - total; sq = q > .15 && q < .45; loaded = q < .3; }
+  }
+  x = Math.round(x);
+  if (sq) squat(x, o.gy - B); else member(x, o.gy - B);
+  if (loaded && o.load) o.load(x, o.gy - B + (sq ? P : 0));
+}
+const L_LOG = (x, y) => log_(x, y - 9), L_SACK = (x, y) => sack(x + 3, y - 1), L_TIMBER = (x, y) => timber(x, y - 7);
+const L_PAPER = (x, y) => paperStack(x + 2, y, 3), L_INK = (x, y) => inkPot(x + 5, y), L_POSTERS = (x, y) => posterStack(x + 2, y, 3);
+
+// ============================================================ clouds and the cloud floor
+function cloudHeights(cols, rows, seed) {
+  const hs = [];
+  for (let c = 0; c < cols; c++) {
+    const x = (c + .5) / cols, env = Math.pow(Math.sin(Math.PI * x), .55);
+    hs.push(Math.max(1, Math.round(rows * env * (.55 + .45 * hsh(Math.floor((c + seed) / 3), seed, 1)))));
+  }
+  return hs;
+}
+// A cloud, flat-bottomed like the yard's, drawn as shade. `kind` white, storm
+// (the yard's smog risen: a flat ink underside with drips) or thunder (a lit
+// rim). `puff` 0..1 pushes the edge cells out and fades them.
+function cloud(x, yb, cols, rows, seed, kind = 'white', o = {}) {
+  x = cellAt(x); yb = cellAt(yb);
+  const base = kind === 'white' ? 1 : kind === 'storm' ? 5 : 4;
+  const hs = cloudHeights(cols, rows, seed), puff = o.puff;
+  alpha(o.a ?? 1, () => {
+    for (let c = 0; c < cols; c++) for (let r = 0; r < hs[c]; r++) {
+      const h = hs[c];
+      const edge = r === h - 1 || c === 0 || c === cols - 1 || (hs[c - 1] || 0) <= r || (hs[c + 1] || 0) <= r;
+      let tone = base + (r === 0 ? 2 : r === 1 ? 1 : 0) + (hsh(c, r, seed) < .25 ? 1 : 0) - (r === h - 1 && hsh(c, r + 9, seed) < .5 ? 1 : 0);
+      const cx = x + c * P, cy = yb - (r + 1) * P;
+      let fill = SH(tone);
+      if (kind === 'thunder' && r === h - 1) fill = LIGHT();
+      if (puff != null && puff > 0 && edge) {
+        const k = puff, dx = c < cols / 2 ? -1 : 1, dy = r === h - 1 ? -1 : r === 0 ? 1 : 0, d = snap2(k * P * 1.5);
+        alpha(fade(1 - k * 1.25), () => fr(cx + dx * d, cy + dy * d, P, P, fill));
+        continue;
+      }
+      fr(cx, cy, P, P, fill);
+      if (kind === 'thunder' && r === h - 1) fr(cx, cy + P - 2, P, 2, SH(4));
+      if (kind === 'storm' && r === 0) fr(cx, cy + P - 2, P, 2, UNDER());
+    }
+    if (kind === 'storm') for (let c = 1; c < cols - 1; c++) if (hsh(c, 5, seed) < .3) fr(x + c * P + 2, yb, 2, 4 + 2 * Math.floor(hsh(c, 6, seed) * 2), UNDER());
+  });
+}
+// A cloud that drifts across from x0 to x1 over `per` and is hit at `hits`,
+// a step smaller a hit, its last cells fading at the last. Returns where it is.
+const SIZES = [[9, 4], [7, 3], [5, 2], [3, 1]];
+function cloudLoop(t, o) {
+  const p = mod(t + (o.off || 0), o.per), x = lerp(o.x0, o.x1, p / o.per);
+  let k = 0; for (const h of o.hits) if (p >= h) k++;
+  const lastHit = o.hits[k - 1] ?? -9, puff = p - lastHit < .45 ? (p - lastHit) / .45 : null;
+  const sz = k === 0 ? SIZES[0] : SIZES[Math.min(k, SIZES.length) - 1];
+  const out = { x, cx: x + 27, hit: puff != null ? k : 0, sinceHit: p - lastHit, k };
+  if (k >= SIZES.length + 0 && puff == null) return out;               // gone
+  if (puff != null) {
+    const [c0, r0] = sz, ox = (SIZES[0][0] - c0) / 2 * P;
+    cloud(x + ox, o.y, c0, r0, o.seed, o.kind, { puff });
+    if (k < SIZES.length) { const [c1, r1] = SIZES[k]; cloud(x + (SIZES[0][0] - c1) / 2 * P, o.y, c1, r1, o.seed, o.kind); }
+  } else if (k < SIZES.length) { const [c1, r1] = SIZES[k]; cloud(x + (SIZES[0][0] - c1) / 2 * P, o.y, c1, r1, o.seed, o.kind); }
+  return out;
+}
+function cloudFloor(x0, x1, y0, H, seed = 3, hole = null) {
+  for (let x = Math.floor(x0 / P) * P; x < x1; x += P) {
+    const c = x / P, lump = hsh(Math.floor(c / 2), seed) < .3 ? 1 : 0, inHole = hole && x >= hole[0] && x < hole[1];
+    for (let r = -lump; r * P < H; r++) {
+      if (inHole && r >= 0) continue;
+      const v = hsh(c, r, seed), v2 = hsh(c, r + 50, seed);
+      // the dark page thins the speckle to a few faint cells, so it reads as cloud, not gravel
+      const tone = DARK ? (r <= 0 ? (v < .3 ? 2 : 1) : r === 1 ? (v < .5 ? 1 : 0) : (v2 < .08 ? 1 : 0))
+                        : r <= 0 ? (v < .35 ? 2 : 1) : r === 1 ? (v < .3 ? 2 : v < .7 ? 1 : 0) : (v < .06 ? 2 : v2 < .35 ? 1 : 0);
+      fr(x, y0 + r * P, P, P, T(tone));
+    }
+  }
+}
+function shadow(cx, gy, half) {
+  for (let x = -half; x < half; x += P) { const k = 1 - Math.abs(x) / half; if (k > .1) fr(cellAt(cx + x), gy, P, P, T(k > .5 ? 4 : 3)); }
+}
+function sky(w, h) { fr(0, 0, w, h, T(0)); const n = DARK ? w * h / 9000 : w * h / 4000; for (let i = 0; i < n; i++) fr(snap2(hsh(i, 1, 2) * w), snap2(hsh(i, 3, 4) * h * .7), 2, 2, T(hsh(i, 5) < .5 ? 2 : 3)); }
+
+// ============================================================ trees, placed by the trunk's left edge
+const TREES = [
+  { tc: 0, th: 2, cw: 3, ch: 2 },    // sapling: a stem
+  { tc: 1, th: 4, cw: 5, ch: 4 },    // pole
+  { tc: 2, th: 6, cw: 9, ch: 6 },    // grown
+  { tc: 3, th: 8, cw: 13, ch: 8 },   // old growth
+];
+const trunkW = st => Math.max(2, TREES[st].tc * P);
+function crownCells(cw, ch, seed) {
+  const out = [];
+  for (let r = 0; r < ch; r++) for (let c = 0; c < cw; c++) {
+    const nx = ((c + .5) / cw) * 2 - 1, ny = ((r + .5) / ch) * 2 - 1;
+    if (nx * nx + ny * ny * 1.05 < 1.08 - .4 * hsh(c, r, seed)) out.push([c, r]);
+  }
+  return out;
+}
+// `L` is the trunk's left edge, on a cell. `fall` 0..1 lays it down in four
+// held frames toward the right; `chips` cuts the notch on the feller's side.
+function tree(L, gy, stage, seed, o = {}) {
+  const S = TREES[stage], w = S.tc * P, cx = L + w / 2, fall = o.fall || 0;
+  const f = Math.min(4, Math.floor(fall * 4.999)), ang = f / 4 * Math.PI / 2;
+  const cs = Math.cos(ang), sn = Math.sin(ang), rot = (dx, dy) => [cx + snap2(dx * cs - dy * sn), gy + snap2(dx * sn + dy * cs)];
+  const rotated = f > 0;
+  alpha(o.a ?? 1, () => {
+    if (S.tc === 0) fr(L, gy - S.th * P, 2, S.th * P, T(10));
+    else {
+      const cells = [];
+      for (let r = 0; r < S.th; r++) for (let c = 0; c < S.tc; c++) { const [px, py] = rot(-w / 2 + c * P + P / 2, -(r + 1) * P + P / 2); cells.push([px - P / 2, py - P / 2, r, c]); }
+      const e = rotated ? 2 : 0;
+      for (const [px, py] of cells) fr(px - 2 - e, py - (rotated ? 2 + e : 0), P + 4 + 2 * e, P + (rotated ? 4 + 2 * e : 0), T(10));
+      if (!rotated) fr(L - 2, gy - S.th * P - 2, w + 4, 2, T(10));
+      for (const [px, py, r, c] of cells) fr(px - e, py - e, P + 2 * e, P + 2 * e, T(hsh(r, c, seed) < .5 ? 1 : 2));
+      for (const [px, py, r, c] of cells) if (hsh(r, c, seed + 1) < .35) fr(px + 2, py + 2, 2, 2, T(4));
+      if (o.chips && !rotated) {
+        const d = Math.min(w - 2, snap2(o.chips / 5 * w * .6));
+        fr(L - 2, gy - 2 * P + 2, d + 2, P - 4, T(0)); fr(L + d, gy - 2 * P + 2, 2, P - 4, T(10));
+      }
+    }
+    const cc = crownCells(S.cw, S.ch, seed), top = S.th * P - P, ccx = S.tc === 0 ? L + 1 : cx;
+    for (const [c, r] of cc) {
+      const dx = (c - S.cw / 2) * P + P / 2, dy = -top - (S.ch - r) * P + P / 2;
+      let [px, py] = S.tc === 0 ? [ccx + dx, gy + dy] : rot(dx, dy);
+      let a = 1;
+      if (f >= 1) { const k = (fall * 4 - .8) / 4.2; px += snap2((hsh(c, r, seed) - .2) * 34 * k); py -= snap2(hsh(r, c, seed) * 18 * k); a = fade(1 - k * 1.15 - hsh(c + 3, r, seed) * .3 * k); }
+      const tone = 2 + (r === S.ch - 1 ? 2 : r === S.ch - 2 ? 1 : 0) + (hsh(c, r, seed + 2) < .3 ? 1 : 0) - (r === 0 && hsh(c, r, 9) < .5 ? 1 : 0);
+      if (a > 0) alpha(a, () => fr(px - P / 2, py - P / 2, P, P, SH(tone)));
+    }
+  });
+}
+function stump(L, gy, tc = 3, a = 1) {
+  alpha(a, () => { const w = tc * P; fr(L - 2, gy - P - 2, w + 4, P + 2, T(10)); fr(L, gy - P, w, P, T(2)); fr(L, gy - P, w, 2, T(1)); fr(L + w / 2 - 2, gy - P, 4, 2, T(4)); });
+}
+// The plots: cloud cleared a plot a trip, a rope on pegs round them, so
+// planted trees read apart from the old growth outside.
+function plots(x0, x1, gy) {
+  for (let x = x0; x < x1; x += P) fr(x, gy, P, 4, T(hsh(x, 1) < .5 ? 3 : 4));
+  for (let x = x0; x <= x1; x += 36) fr(x, gy - 10, 2, 10, T(10));
+  for (let x = x0; x < x1; x += 2) fr(x, gy - 8 + (Math.floor((x - x0) / 18) % 2 ? 2 : 0), 2, 2, T(6));
+}
+// A tree's whole round: five chops, the fall, the crown drifting off, bucked
+// to logs; haulers walk in from `haulTo`, take a log each, carry it back and set
+// it down; a planter walks in from `plantFrom`, grubs the stump, sets a
+// sapling, walks back; the tree grows back (sped up) to where the round began.
+function felling(L, gy, t, o = {}) {
+  const stage = o.stage ?? 3, seed = o.seed || 11, S = TREES[stage], w = S.tc * P, v = 50, n = 2, fx = L - 24;
+  const logX = i => L + w + 6 + i * 24, home = i => o.haulTo - i * 24, to = i => logX(i) - 6;
+  const tw = i => Math.abs(home(i) - to(i)) / v, haulStart = 8.4, hStart = i => haulStart + i * .6;
+  const lift = i => hStart(i) + .6 + tw(i) + .3, haulEnd = hStart(n - 1) + 2 * tw(n - 1) + 1.8;
+  const pd = Math.abs(o.plantFrom - (L + w + 6)) / v, plantStart = haulStart + 1.8, arrive = plantStart + .6 + pd, plantEnd = plantStart + 2 * pd + 1.2;
+  const growStart = Math.max(haulEnd, plantEnd) + .2, per = growStart + 4.5, p = mod(t, per);
+  // the bodies that come and go stand at home when they are not on their round
+  const others = () => {
+    for (let i = 0; i < n; i++) { const q = p - hStart(i); if (q < 0 || q > 2 * tw(i) + 1.8) member(home(i), gy - B); else courier(q, { per: 1e9, from: home(i), to: to(i), gy, empty: true, load: L_LOG, v }); }
+    const q = p - plantStart; if (q < 0 || q > plantEnd - plantStart) member(o.plantFrom, gy - B); else courier(q, { per: 1e9, from: o.plantFrom, to: L + w + 6, gy, v });
+  };
+  const chopper = pose => { if (o.hand) pointer(L - 12, gy - 24, pose === 'hit'); else { member(fx, gy - B); axe(fx, gy - B, pose, 1); } };
+  if (p < 5.5) {
+    const sw = (p % 1.1) / 1.1, chips = Math.floor(p / 1.1) + (sw >= .45 ? 1 : 0);
+    tree(L, gy, stage, seed, { chips });
+    chopper(sw < .45 ? 'back' : sw < .7 ? 'hit' : 'up');
+    if (sw >= .45 && sw < .85) { const k = (sw - .45) / .4; alpha(fade(1 - k), () => fr(snap2(L - 4 - k * 14), snap2(gy - 9 - k * 12 + k * k * 16), 2, 2, T(3))); }
+    others(); return;
+  }
+  if (!o.hand) { member(fx, gy - B); axe(fx, gy - B, 'rest', 1); }
+  const grub = clamp((p - arrive) / .6, 0, 1);
+  if (p < growStart) stump(L, gy, S.tc, 1 - grub);
+  if (p < 7.1) tree(L, gy - P, stage, seed, { fall: (p - 5.5) / 1.6 });
+  else for (let i = 0; i < n; i++) if (p < lift(i)) log_(logX(i) - (p < 7.6 ? i * 6 : 0), gy - 8);
+  if (p > arrive + .3 && p < growStart) tree(L, gy, 0, seed + 3, { a: (p - arrive - .3) / .6 });
+  if (p >= growStart) {
+    const k = (p - growStart) / 4.5 * 3, sI = Math.min(2, Math.floor(k)), q = k - sI;
+    tree(L, gy, sI, sI === 0 ? seed + 3 : seed + 3, { a: 1 - fade((q - .5) * 2) });
+    tree(L, gy, sI + 1, sI + 1 === 3 ? seed : seed + 3, { a: fade((q - .3) * 2) });
+  }
+  others();
+}
+// A courier whose clock starts at zero and does not repeat (the felling drives it).
+const _courier = courier;
+courier = function (t, o) { return _courier(t, o); };
+
+// ============================================================ stations, each at (x, gy): its left edge on a cell, and its floor
+function sawMill(x, gy, t, st = {}) {
+  const run = st.working && !st.full;
+  const hc = st.full ? 6 : st.fill ?? 3;
+  heap(x - 12, gy, 8, hc, 21);
+  logPile(x - 60, gy);
+  post(x, gy - 54, 54); post(x + 78, gy - 46, 46);
+  leanRoof(x - 6, gy - 60, 96, 10, 5);
+  // the blade under its housing: the solid ink mass
+  const bc = [x + 48, gy - 24], br = 10, a0 = run ? held(t, 12) * 2.4 : .3;
+  for (let dy = -br - 2; dy <= 0; dy += 2) for (let dx = -br - 2; dx <= br + 2; dx += 2) {
+    const d = Math.hypot(dx + 1, dy + 1);
+    if (d < br - 3) fr(bc[0] + dx, bc[1] + dy, 2, 2, T(d < 3 ? 6 : 3)); else if (d < br) fr(bc[0] + dx, bc[1] + dy, 2, 2, T(10));
+  }
+  for (let i = 0; i < 10; i++) { const a = a0 + i * Math.PI / 5, px = bc[0] + snap2(Math.cos(a) * (br + 2)), py = bc[1] + snap2(Math.sin(a) * (br + 2)); if (py <= bc[1]) fr(px - 1, py - 1, 2, 2, T(10)); }
+  fr(x + 30, gy - 42, 36, 14, T(10)); fr(x + 36, gy - 48, 24, 6, T(10)); fr(x + 34, gy - 40, 4, 2, T(0));
+  plank(x + 12, gy - 24, 66, 2); post(x + 16, gy - 18, 18); post(x + 66, gy - 18, 18);
+  if (st.keeper) member(x + 60, gy - B, { core: true });
+  // the sawyer's round: to the pile for a log, back, through the blade
+  const per = 8, p = mod(t, per), sx0 = x + 6, pile = x - 42;
+  if (run) {
+    const wt = (sx0 - pile) / 50;
+    if (p < wt) { const sx = lerp(sx0, pile, p / wt); member(sx, gy - B); }
+    else if (p < wt + .6) { const q = p - wt; if (q > .15 && q < .45) squat(pile, gy - B); else member(pile, gy - B); if (q > .3) log_(pile, gy - B - 9); }
+    else if (p < 2 * wt + .6) { const sx = lerp(pile, sx0, (p - wt - .6) / wt); member(sx, gy - B); log_(sx, gy - B - 9); }
+    else {
+      const k = clamp((p - 2 * wt - .6) / (per - 2 * wt - 1.4), 0, 1), lx = x + 14 + snap2(k * 30);
+      member(sx0 + snap2(k * 12), gy - B);
+      if (k < 1) log_(lx, gy - 32);
+      if (k > .55) { const q = clamp((k - .55) / .45, 0, 1); timber(x + 56 + snap2(q * 30), gy - 30 + snap2(q * 0)); }
+      if (k > .2 && k < 1) for (let i = 0; i < 6; i++) { const q = mod(t * 1.6 + i / 6, 1); alpha(fade(Math.min(q * 6, (1 - q) * 3)), () => fr(snap2(bc[0] - 6 - q * 44 - i * 2), snap2(gy - 22 + q * 16 - (1 - q) * q * 20), 2, 2, T(4))); }
+    }
+  } else if (st.full) {
+    log_(x + 14, gy - 32);
+    // to the heap, fill a bundle, carry it to the cloud's edge and tip it off
+    const edge = st.edge ?? 12, hx = x - 30, wt = (hx - edge) / 50, q = mod(t, 2 * wt + 1.6);
+    let bx, loaded = false, sq = false;
+    if (q < .8) { bx = hx; sq = q > .2 && q < .6; loaded = q > .4; }
+    else if (q < .8 + wt) { bx = lerp(hx, edge, (q - .8) / wt); loaded = true; }
+    else if (q < 1.6 + wt) { bx = edge; const r = q - .8 - wt; loaded = r < .3; if (r > .3) for (let i = 0; i < 6; i++) { const k = clamp((r - .3 - i * .05) / .5, 0, 1); alpha(fade(1 - k), () => fr(snap2(edge - 4 - i * 2), snap2(gy - B + k * 40 + i * 2), 2, 2, T(4))); } }
+    else bx = lerp(edge, hx, (q - 1.6 - wt) / wt);
+    bx = Math.round(bx);
+    if (sq) squat(bx, gy - B); else member(bx, gy - B);
+    if (loaded) heap(bx + 9, gy - B + (sq ? P : 0), 3, 1, 4, [4, 4, 5]);
+    warning(x + 42, gy - 60 - P * 5);
+  } else { log_(x + 14, gy - 32); member(sx0, gy - B); }
+  timberStack(x + 86, gy, 4);
+}
+
+function workshop(x, gy, t, st = {}) {
+  post(x, gy - 48, 48); post(x + 60, gy - 42, 42);
+  leanRoof(x - 6, gy - 54, 78, 8, 7);
+  // the tool wall: the solid mass, tools cut out of it in paper
+  fr(x + 6, gy - 44, 24, 28, T(10));
+  fr(x + 10, gy - 40, 2, 12, T(0)); fr(x + 8, gy - 40, 6, 2, T(0));            // hammer
+  fr(x + 16, gy - 40, 10, 4, T(0)); fr(x + 16, gy - 36, 2, 6, T(0));          // saw
+  fr(x + 16, gy - 26, 10, 2, T(0)); fr(x + 24, gy - 28, 2, 6, T(0));          // square
+  timberStack(x + 6, gy, 2);
+  plank(x + 30, gy - 18, 30, 4); post(x + 32, gy - 12, 12); post(x + 52, gy - 12, 12);
+  inkPot(x + 50, gy - 18);
+  const per = st.per || 12, ph = mod(t, per), pickT = st.pickT ?? 8.5, jx = x + 24;
+  if (!st.working) { member(jx - 6, gy - B); hammer(jx - 6, gy - B, 'down'); return; }
+  if (ph < 1.5) plank(x + 32, gy - 24, 16, 1);
+  else if (ph < 4.5) sign(x + 40, gy - 18, { postH: 0, letters: 0 });
+  else if (ph < pickT) sign(x + 40, gy - 18, { postH: 0, letters: Math.min(5, Math.floor((ph - 4.5) / .5)) });
+  if (ph < 4.5 && ph > .3) { member(jx - 6, gy - B); hammer(jx - 6, gy - B, (ph % .6) < .32 ? 'up' : 'down'); }
+  else if (ph >= 4.5 && ph < 7) { member(jx - 6, gy - B); fr(jx + 12, gy - 32, 2, 8, T(10)); }
+  else { member(jx - 6, gy - B); hammer(jx - 6, gy - B, 'down'); }
+  if (st.carrier !== false) {   // a carrier walks in, lifts the sign off the bench, walks out
+    const from = st.carrierFrom, to = x + 32, wt = Math.abs(from - to) / 50, a = pickT - wt - .3;
+    const q = ph - a;
+    if (q > 0 && q < 2 * wt + .6) {
+      let cx, has = false, sq = false;
+      if (q < wt) cx = lerp(from, to, q / wt); else if (q < wt + .6) { cx = to; sq = q - wt > .15 && q - wt < .45; has = q - wt > .3; } else { cx = lerp(to, from, (q - wt - .6) / wt); has = true; }
+      cx = Math.round(cx); if (sq) squat(cx, gy - B); else member(cx, gy - B);
+      if (has) sign(cx + 7, gy - B - 2 + (sq ? P : 0), { postH: 12 });
+    }
+  }
+}
+
+function paperMill(x, gy, t, st = {}) {
+  // left to right: sacks of sawdust, the pulper, the vat, the felt press, the paper pile
+  post(x, gy - 54, 54); post(x + 84, gy - 54, 54); fr(x + 6, gy - 52, 78, 2, T(10));
+  for (let i = 0; i < 4; i++) { sheet(x + 12 + i * 18, gy - 50); fr(x + 16 + i * 18, gy - 52, 2, 4, T(10)); }
+  sack(x + 8, gy); sack(x + 8, gy - 12);
+  const vx = x + 42, vw = 24;            // the vat: the solid mass, hoops in paper, pulp on top
+  fr(vx, gy - 18, vw, 18, T(10)); fr(vx + 2, gy - 12, vw - 4, 2, T(0)); fr(vx + 2, gy - 6, vw - 4, 2, T(0));
+  for (let c = 0; c < vw - 4; c += 2) { const v = hsh(c, st.working ? Math.floor(t * 6) : 0, 5); fr(vx + 2 + c, gy - 18, 2, 2, SH(v < .4 ? 2 : v < .8 ? 3 : 4)); }
+  const px = x + 70;                     // the felt press
+  post(px - 2, gy - 36, 36); post(px + 12, gy - 36, 36); fr(px - 2, gy - 38, 20, 4, T(10));
+  const cyc = st.working ? mod(t, 3) / 3 : 0, down = cyc > .7 && cyc < .95, ploy = down ? gy - 16 : gy - 22;
+  fr(px + 6, gy - 34, 2, ploy - (gy - 34), T(10));
+  for (let y = gy - 32; y < ploy - 2; y += 4) fr(px + 4, y, 6, 2, T(10));
+  fr(px + 4, ploy, 6, 4, T(10));
+  for (let i = 0; i < 3; i++) fr(px + 4, gy - 4 - i * 4, 6, 2, T(i % 2 ? 0 : 5));
+  paperStack(x + 92, gy, 3);              // paper ready for the press
+  const mx = x + 22;
+  member(mx, gy - B);
+  if (st.working) {
+    if (cyc < .35) fr(vx + 2, gy - 20, 14, 2, T(10));
+    else if (cyc < .7) { fr(vx - 2, gy - 32, 14, 2, T(10)); fr(vx, gy - 34, 10, 2, T(0)); }
+    else fr(px + 2, gy - 28, 10, 2, T(10));
+  }
+}
+
+function press(x, gy, t, st = {}) {
+  paperStack(x, gy, 3);
+  const fx = x + 18;
+  post(fx, gy - 56, 56); post(fx + 28, gy - 56, 56);
+  // the head and platen: the solid mass
+  fr(fx - 4, gy - 62, 42, 10, T(10));
+  fr(fx - 2, gy - 22, 38, 4, T(10));
+  const per = 16, p = mod(t, per), sub = mod(p, 4) / 4, work = st.working && p < 12;
+  const pulled = work && sub > .3 && sub < .55, platY = pulled ? gy - 36 : gy - 42;
+  fr(fx + 13, gy - 52, 2, platY - (gy - 52), T(10));
+  for (let y = gy - 50; y < platY - 2; y += 4) fr(fx + 10, y, 8, 2, T(10));
+  fr(fx + 4, platY, 26, 8, T(10));
+  if (pulled) for (let i = 0; i < 9; i++) fr(fx + 18 + i * 2, platY - 4 + i, 2, 2, T(10)); else fr(fx + 18, platY - 6, 18, 2, T(10));
+  const bedOut = work && sub > .6 ? snap2((sub - .6) / .4 * 16) : 0;
+  fr(fx + 4 + bedOut, gy - 28, 26, 6, T(10)); fr(fx + 6 + bedOut, gy - 26, 22, 2, T(work ? 7 : 3));
+  const pr = fx + 36;
+  member(pr, gy - B);
+  if (work && sub < .3) { const up = (sub % .15) < .08; fr(pr - 6, gy - 30 - (up ? 4 : 0), 6, 6, T(10)); fr(pr - 4, gy - 24 - (up ? 4 : 0), 2, 6, T(10)); }
+  if (work && sub > .7) poster(pr, gy - B - 20);
+  // the stack: a poster lands at the end of each round, the paster lifts the lot
+  const stackN = !st.working || st.paster === false ? 2 : p < 3.9 ? 0 : p < 7.9 ? 1 : p < 11.9 ? 2 : p < 13.6 ? 3 : 0;
+  posterStack(x + 64, gy, stackN);
+  if (st.working && st.paster !== false) {
+    const from = st.pasterFrom, to = x + 62, wt = Math.abs(from - to) / 50, a = 13.3 - wt, q = p - a;
+    if (q > 0 && q < 2 * wt + .6) {
+      let cx, has = false, sq = false;
+      if (q < wt) cx = lerp(from, to, q / wt); else if (q < wt + .6) { cx = to; sq = q - wt > .15 && q - wt < .45; has = q - wt > .3; } else { cx = lerp(to, from, (q - wt - .6) / wt); has = true; }
+      cx = Math.round(cx); if (sq) squat(cx, gy - B); else member(cx, gy - B);
+      if (has) posterStack(cx + 2, gy - B + (sq ? P : 0), 3);
+    }
+  }
+}
+
+function well(x, gy, t, st = {}) {
+  post(x, gy - 34, 34); post(x + 36, gy - 34, 34); fr(x, gy - 36, 42, 4, T(10));
+  fr(x + 20, gy - 32, 2, 8, T(10)); fr(x + 16, gy - 24, 10, 6, T(10)); fr(x + 18, gy - 22, 6, 2, T(0));
+  for (let r = 0; r < 2; r++) for (let c = 0; c < 7; c++) { const v = hsh(c, r, 41); fr(x + c * P, gy - (r + 1) * P, P, P, T(v < .4 ? 4 : v < .8 ? 5 : 6)); }
+  fr(x, gy - 2 * P, 42, 2, T(10)); fr(x + P, gy - 2 * P - 2, 5 * P, 2, T(10));
+  fr(x + P + 4 + (Math.floor(t * 2) % 5) * 4, gy - 2 * P - 2, 2, 2, T(st.working ? 4 : 3));
+}
+// the gatherer's blows: each hit at the cloud's hit times
+function gatherer(x, gy, c) { member(x, gy - B); poleUp(x, gy - B, c.sinceHit < .3); }
+
+function plate(x, gy, t, lying = 3) {
+  const dx = x, dy = gy - 20;
+  post(x + 14, dy + 4, 16); fr(x + 6, gy - 2, 22, 2, T(10));
+  fr(dx, dy, 34, 2, T(10)); fr(dx + 2, dy + 2, 30, 2, T(10)); fr(dx - 2, dy - 2, 2, 2, T(10)); fr(dx + 34, dy - 2, 2, 2, T(10));
+  for (let i = 0; i < lying; i++) mote(dx + 2 + i * 11, dy - 8);
+}
+// motes off a cloud's hits, drifting to the plate, landing with a hop, fading into the count
+function motesTo(t, c, cloudY, px, py, per, hits, off = 0) {
+  const p = mod(t + off, per);
+  hits.forEach((h, j) => {
+    for (let i = 0; i < 2; i++) {
+      const q = p - h - i * .25; if (q < 0 || q > 2.6) continue;
+      const k = clamp(q / 1.8, 0, 1), x0 = lerp(c.x0, c.x1, h / per) + 22 + i * 10;
+      const mx = lerp(x0, px + 6 + i * 10, k) + Math.sin(k * 7 + i) * 4, my = lerp(cloudY, py - 8, k) - (q > 1.8 && q < 2.1 ? 4 : 0);
+      mote(mx, my, q < .3 ? q / .3 : q > 2.1 ? 1 - (q - 2.1) / .5 : 1);
+    }
+  });
+}
+
+function hall(x, gy, t, st = {}) {
+  const w = 60, wy = gy - 34;
+  fr(x, wy, w, 34, T(10));
+  for (let i = 0; i < w - 4; i += 4) fr(x + 2 + i, wy + 2, Math.min(4, w - 4 - i) - (i % 8 ? 0 : 0), 32, T(hsh(i, 2, 3) < .5 ? 1 : 2));
+  peakRoof(x + w / 2, wy - 24, w / 2 + 6, 4, 13);
+  fr(x + w / 2 - 2, wy - 44, 2, 20, T(10));
+  fr(x + w / 2, wy - 44, 12, 8, T(10)); fr(x + w / 2 + 4, wy - 42, 4, 4, T(0)); if (Math.floor(t * 3) % 2) fr(x + w / 2 + 12, wy - 42, 2, 4, T(10));
+  const dX = x + 22;
+  fr(dX, gy - 24, 16, 24, T(10)); fr(dX + 2, gy - 22, 12, 22, T(st.open ? 10 : 3)); if (!st.open) fr(dX + 10, gy - 12, 2, 2, T(10));
+  fr(x + 42, gy - 28, 16, 22, T(10)); poster(x + 44, gy - 26);
+  fr(x + 4, gy - 28, 14, 2, T(10)); poster(x + 5, gy - 26);
+  return dX - 1;
+}
+// a body passing through a door: drawn inside the doorway, fading as it steps in or out
+function inDoor(dX, gy, a) { alpha(a, () => member(dX, gy - B)); }
+
+// ============================================================ the throne, God, the glare, the stair
+function throne(x, gy) {
+  const k = T(10);
+  fr(x + 6, gy - 70, 30, 52, k); fr(x + 8, gy - 68, 26, 48, T(0)); fr(x + 12, gy - 64, 18, 40, T(1));
+  fr(x + 12, gy - 76, 6, 6, k); fr(x + 24, gy - 76, 6, 6, k); fr(x + 18, gy - 82, 6, 12, k);
+  fr(x, gy - 24, 42, 6, k); fr(x + 2, gy - 22, 38, 2, T(2));
+  fr(x + 2, gy - 18, 4, 18, k); fr(x + 36, gy - 18, 4, 18, k); fr(x, gy - 36, 4, 12, k); fr(x + 38, gy - 36, 4, 12, k);
+}
+function god(x, y, inv = false) {
+  const s = 36, r = 4, a = inv ? '#ffffff' : T(10), b = inv ? '#000000' : LIGHT();
+  fr(x, y, s, s, a); fr(x + r, y + r, s - 2 * r, s - 2 * r, b);
+  fr(x + 6, y - 8, 6, 8, a); fr(x + 15, y - 12, 6, 12, a); fr(x + 24, y - 8, 6, 8, a); fr(x + 6, y - 2, 24, 2, a);
+  if (inv) { fr(x + 10, y + 12, 4, 4, PU()); fr(x + 22, y + 12, 4, 4, PU()); }
+}
+// The glare: a white disc with an ink ring and ink rays, on the sky dimmed to
+// GREY[1] round it, pulsing in held steps. `str` how much the tithe still feeds it.
+function glare(cx, cy, t, R = 30, str = 1) {
+  const pulse = Math.floor(t * 3) % 3;
+  for (let y = -R - 42; y < R + 42; y += P) for (let x = -R - 42; x < R + 42; x += P) {
+    const d = Math.hypot(x + P / 2, y + P / 2); if (d < R + 42 - hsh(x, y, 3) * 12) fr(cellAt(cx) + x, cellAt(cy) + y, P, P, T(1));
+  }
+  for (let i = 0; i < 16; i++) {
+    const a = i * Math.PI / 8, len = (i % 2 ? 10 : 18) + ((pulse + i) % 3) * 4 * str;
+    for (let r = R + 4; r < R + 4 + len; r += 2) fr(snap2(cx + Math.cos(a) * r) - 1, snap2(cy + Math.sin(a) * r) - 1, 2, 2, T(10));
+  }
+  const Rp = R + (pulse === 1 ? 2 : 0);
+  for (let y = -Rp; y <= Rp; y += 2) for (let x = -Rp; x <= Rp; x += 2) {
+    const d = Math.hypot(x, y);
+    if (d < Rp - 2) fr(cx + x, cy + y, 2, 2, LIGHT()); else if (d < Rp) fr(cx + x, cy + y, 2, 2, T(10));
+  }
+}
+function stair(x0, gy0, n, run, rise) {
+  for (let i = 0; i < n; i++) {
+    const sx = x0 + i * run, sy = gy0 - (i + 1) * rise;
+    for (let y = sy; y < gy0; y += P) fr(sx, y, run, P, T(y === sy ? 1 : hsh(sx, y, 9) < .3 ? 2 : 1));
+    fr(sx, sy, run, 2, T(10)); fr(sx, sy, 2, rise, T(10));
+  }
+}
+
+// ============================================================ the thin patch
+// The floor thins and the yard below shows through: the rock's outline, a
+// station's roof, two bodies at work. A purple lip says it is a way between places.
+function thinPatch(x, w, gy, H, t) {
+  fr(x, gy, w, H, T(0));
+  for (let yy = gy; yy < gy + 12; yy += P) for (let xx = x; xx < x + w; xx += P) if (hsh(xx, yy, 71) < (yy === gy ? .5 : .2)) fr(xx, yy, P, P, T(1));
+  const by = gy + H - 8;
+  fr(x, by, w, 2, T(10));
+  const rx = x + 14;            // the rock: an outline
+  for (let i = 0; i < 9; i++) { const hgt = 4 + Math.round(Math.sin((i + .5) / 9 * Math.PI) * 18 / 2) * 2; fr(rx + i * 4, by - hgt, 4, 2, T(10)); }
+  fr(rx - 2, by - 6, 2, 6, T(10)); fr(rx + 36, by - 6, 2, 6, T(10));
+  const sx = x + w - 34;        // a station's roof
+  for (let i = 0; i < 6; i++) fr(sx + i * 2, by - 14 + i * 2 - 0, 2, 2, T(10)), fr(sx + 22 - i * 2, by - 14 + i * 2, 2, 2, T(10));
+  fr(sx + 10, by - 16, 4, 2, T(10)); fr(sx + 2, by - 4, 2, 4, T(10)); fr(sx + 20, by - 4, 2, 4, T(10));
+  for (let i = 0; i < 2; i++) { const bx = x + 4 + snap2(mod(t * 6 + i * 30, w - 12)); fr(bx, by - 6, 6, 6, T(10)); fr(bx + 2, by - 4, 2, 2, T(0)); }
+  for (let xx = x; xx < x + w; xx += 4) fr(xx, gy, 2, 2, hsh(xx, 2, 7) < .5 ? PU() : T(3));
+}
+
+// ============================================================ 1. the establishing view
+const EW = 2016, FY = 342, EH = FY + 90;
+const PATCH = [1176, 1272];
+const SIGNS = [{ x: 1398 }, { x: 1608 }, { x: 1686, askew: true }];
+const CROWD_X0 = 1314, FILES = 19, RANK = 24;
+const heapGap = (x, r) => x > 1494 && x < 1560 && r < 2;
+function crowdMap(extra) {
+  const m = [];
+  for (let r = 0; r < 4; r++) {
+    m.push([]);
+    for (let f = 0; f < FILES; f++) {
+      const x = CROWD_X0 + f * 24 + (r % 2) * 12;
+      let n = 0;
+      for (const s of SIGNS.concat(extra || [])) { if (s.askew) continue; const d = Math.abs(x + 9 - s.x) / 24 + r * .6; if (d < 1.4) n = Math.max(n, 8); else if (d < 3.2) n = Math.max(n, 7 - Math.floor(d * 1.6)); }
+      if (r >= 2) n = Math.max(n, 4);                    // the poster band: half, no more
+      const own = hsh(f, r, 5) < .22; if (own) n = Math.max(n, 2 + Math.floor(hsh(f, 9) * 3));
+      m[r].push({ x, n, own });
+    }
+  }
+  // word of mouth: a soul with members on both sides comes across
+  for (let r = 0; r < 4; r++) for (let f = 1; f < FILES - 1; f++) if (m[r][f - 1].n === 8 && m[r][f + 1].n === 8) m[r][f].n = 8;
+  return m;
+}
+function drawEst(t) {
+  sky(EW, EH);
+  const drift = (sp, off) => mod(t * sp + off, EW + 300) - 150;
+  cloud(drift(6, 200), 70, 12, 4, 3, 'white'); cloud(drift(4, 900), 50, 9, 3, 8, 'white'); cloud(drift(5, 1500), 96, 8, 3, 12, 'white');
+  // the thunderhead hangs over the camp; the pointer hits it for the burst
+  const thx = 840 + snap2(Math.sin(t * .2) * 24);
+  cloud(thx, 132, 20, 8, 23, 'thunder');
+  { const p = mod(t, 10); pointer(thx + 70, 96, p < .15);
+    if (p < 2.5) for (let i = 0; i < 10; i++) { const k = p / 2.5, a = i / 10 * Math.PI * 2; mote(thx + 60 + Math.cos(a) * k * 50, 110 + Math.sin(a) * k * 30 + k * k * 30, fade(1 - k)); } }
+  // the great cloud over God's yard, shedding mist
+  cloud(1386, 150, 44, 12, 5, 'white');
+  // the glare and the throne on its cloud dais
+  const dais = FY - 22 * 6;
+  glare(1968, dais - 66, t);
+  for (let x = 1908; x < EW; x += P) for (let y = dais; y < dais + 18; y += P) fr(x, y, P, P, T(hsh(x, y, 4) < .4 ? 2 : 1));
+  fr(1908, dais, EW - 1908, 2, T(10));
+  throne(1944, dais); god(1947, dais - 52);
+  cloudFloor(0, EW, FY, EH - FY, 3, PATCH);
+  shadow(thx + 60, FY, 84);
+  thinPatch(PATCH[0], PATCH[1] - PATCH[0], FY, EH - FY, t);
+  // the grove: old growth outside the rope, the plots inside it
+  tree(6, FY, 3, 1);
+  plots(150, 330, FY);
+  tree(198, FY, 0, 4); tree(222, FY, 1, 9); tree(258, FY, 2, 7); stump(168, FY, 2); tree(300, FY, 2, 3);
+  felling(78, FY, t, { seed: 14, haulTo: 336, plantFrom: 180 });
+  // the camp
+  sawMill(420, FY, t, { working: true, fill: 3, keeper: true });
+  paperMill(558, FY, t, { working: true });
+  workshop(696, FY, t - .3, { working: true, carrier: false, per: 40, pickT: 40 });
+  press(786, FY, t, { working: true, paster: false });
+  well(900, FY, t, { working: true });
+  { const c = cloudLoop(t, { per: 12, x0: 840, x1: 930, y: 246, seed: 31, kind: 'storm', hits: [3, 5.4, 7.8, 10.2] }); gatherer(948, FY, c);
+    const p = mod(t, 12); for (let i = 0; i < 3; i++) { const q = p - 3 - i * 2.4; if (q > 0 && q < 1.4) { const k = q / 1.4; drop(c.cx, 250 + k * (FY - 262), Math.min(1, q * 4, (1 - k) * 4)); } } }
+  plate(984, FY, t);
+  { const c = cloudLoop(t, { per: 11, x0: 948, x1: 1030, y: 250, seed: 51, kind: 'white', hits: [3, 5, 7, 9] }); gatherer(1026, FY, c);
+    motesTo(t, { x0: 948, x1: 1030 }, 254, 984, FY - 20, 11, [3, 5, 7, 9]); }
+  pairOne(1050, FY - B, 'you'); pairOne(1074, FY - B, 'sqouse');
+  // couriers along the chain
+  courier(t, { per: 14, from: 404, to: 570, gy: FY, load: L_SACK, off: 0 });            // sawdust to the paper mill
+  courier(t, { per: 13, from: 510, to: 702, gy: FY, load: L_TIMBER, off: 5 });          // timber to the workshop
+  courier(t, { per: 12, from: 648, to: 786, gy: FY, load: L_PAPER, off: 2 });           // paper to the press
+  courier(t, { per: 15, from: 906, to: 744, gy: FY, load: L_INK, off: 7 });             // ink to the workshop
+  courier(t, { per: 9, from: 918, to: 822, gy: FY, load: L_INK, off: 1 });              // ink to the press
+  // the hall: a soul rises through the patch, is canvassed to a member, walks to the hall and in
+  const hp = mod(t, 20), canvasX = 1236, doorX = hall(1104, FY, t, { open: hp > 12.6 && hp < 14.8 });
+  { member(1260, FY - B);
+    if (hp < 3) alpha(fade(hp / 2), () => soul(1212 + snap2(hp / 3 * 0), FY + 54 - snap2(hp / 3 * 72), { soul: 3 }));
+    else if (hp < 3.6) soul(lerp(1212, canvasX, (hp - 3) / .6), FY - B, { soul: 3 });
+    else if (hp < 11.2) body(canvasX, FY - B, { inked: Math.min(8, Math.floor((hp - 3.6) / .9)), soul: 3 });
+    else if (hp < 13.6) member(Math.round(lerp(canvasX, doorX, (hp - 11.2) / 2.4)), FY - B);
+    else if (hp < 14.4) inDoor(doorX, FY, 1 - (hp - 13.6) / .8); }
+  // pillars of cloud
+  for (const px of [1284, 1758]) { for (let y = FY - 96; y < FY; y += P) for (let x = px; x < px + 12; x += P) fr(x, y, P, P, SH(hsh(x, y, 2) < .4 ? 3 : 2)); fr(px - 2, FY - 98, 16, 4, T(10)); }
+  // the paster pastes a poster on the pillar; the pillar's warden tears it down
+  { const p = mod(t, 24), wt = (1266 - 860) / 60;
+    const pasted = p > 7.6 + .4 ? 1 : 0, torn = clamp((p - 17) / 2, 0, 1);
+    if (p > wt + .4 && p < 17) poster(1284, FY - 40, { a: fade((p - wt - .4) / .6) });
+    else if (p >= 17 && torn < 1) poster(1284, FY - 40, { torn });
+    for (let i = 0; i < 3; i++) { const k = clamp((p - 17.4 - i * .3) / 1.6, 0, 1); if (k > 0 && k < 1) alpha(fade(1 - k), () => fr(1286 + i * 4, FY - 28 + snap2(k * 26), 2, 6, T(i % 2 ? 4 : 10))); }
+    let x, has = false;
+    if (p < wt) { x = lerp(860, 1266, p / wt); has = true; } else if (p < wt + 1) { x = 1266; has = p < wt + .5; } else if (p < 2 * wt + 1) x = lerp(1266, 860, (p - wt - 1) / wt); else x = 860;
+    member(Math.round(x), FY - B); if (has) posterStack(Math.round(x) + 2, FY - B, 3);
+    warden(1296, FY - B - 0); }
+  // God's yard: the fence behind, papered
+  const fx0 = 1308, fx1 = 1740, fTop = FY - 132;
+  for (let x = fx0; x <= fx1; x += 36) post(x, fTop, 60);
+  fr(fx0, fTop + 6, fx1 - fx0 + 6, 2, T(10)); fr(fx0, fTop + 32, fx1 - fx0 + 6, 2, T(10));
+  for (let x = fx0 + 12; x < fx1; x += 36) poster(x + 2, fTop + 10);
+  // the carrier's sign and the warden who takes it (one 40s round)
+  const cp = mod(t, 40), plantX = 1350, sitting = cp > 11.4 && cp < 21.3;
+  const extra = sitting ? [{ x: plantX + 2 }] : [];
+  const m = crowdMap(extra);
+  for (let r = 3; r >= 0; r--) {
+    for (let f = 0; f < FILES; f++) {
+      const { x, n, own } = m[r][f], y = FY - B - r * RANK;
+      if (heapGap(x, r)) continue;
+      body(x, y, { inked: n, soul: r === 0 ? 4 : r < 3 ? 3 : 2 });
+      if (r === 0 && own) ticks(x, y, 1 + Math.floor(hsh(f, 9) * 7));
+      if (r === 0 && f % 3 === 1 && !heapGap(x - 30, 0) && !heapGap(x + 30, 0)) pick(x, y, (Math.floor(t * 1.4 + f) % 2) ? 'up' : 'down');
+    }
+    if (r === 2) {
+      heap(1530, FY, 10, 5, 8, [1, 2, 3], SH);
+      for (let i = 0; i < 16; i++) { const k = mod(t * .45 + i / 16, 1); alpha(Math.min(1, k * 6, (1 - k) * 6), () => fr(snap2(1480 + (i * 37) % 100), snap2(152 + k * (FY - 186)), 2, 2, SH(i % 3 ? 3 : 4))); }
+      SIGNS.forEach(s => sign(s.x - 2, FY - 6, { postH: 30, tilt: s.askew ? 4 : 0 }));
+    }
+  }
+  if (sitting) sign(plantX, FY, { postH: 16 });
+  { // the carrier: workshop bench to the front of the crowd, plants, walks back
+    const wt = (plantX - 6 - 726) / 60; let x, has = false, sq = false;
+    if (cp < .6) { x = 726; sq = cp > .15 && cp < .45; has = cp > .3; }
+    else if (cp < .6 + wt) { x = lerp(726, plantX - 24, (cp - .6) / wt); has = true; }
+    else if (cp < 1.6 + wt) { x = plantX - 24; const q = cp - .6 - wt; sq = q > .2 && q < .8; has = q < .5; }
+    else if (cp < 1.6 + 2 * wt) x = lerp(plantX - 24, 726, (cp - 1.6 - wt) / wt); else x = 726;
+    x = Math.round(x); if (sq) squat(x, FY - B); else member(x, FY - B); if (has) sign(x + 7, FY - B - 2 + (sq ? P : 0), { postH: 12 });
+  }
+  // the stair: tithe carriers fade in at the foot and into the glare at the top
+  const SX = 1776, N = 22;
+  stair(SX, FY, N, 6, 6);
+  for (let i = 3; i < N; i += 5) { const sx = SX + i * 6, sy = FY - (i + 1) * 6; fr(sx, sy - 24, 2, 24, T(10)); if (i % 10 === 3) poster(sx + 4, sy - 24); }
+  const onStep = (s, a, fn) => { const st = clamp(Math.floor(s), 0, N - 1); fn(SX + st * 6 - 6, FY - (st + 1) * 6 - B, a); };
+  for (let j = 0; j < 5; j++) {
+    const s = mod(t * 2 + j * 5, 25), a = s < 2 ? s / 2 : s > N ? Math.max(0, 1 - (s - N) / 3) : 1;
+    onStep(Math.min(s, N - 1), a, (x, y, a) => alpha(a, () => { soul(x, y); bundle(x + 3, y - 8); }));
+  }
+  { // the warden: down from the stair foot to the planted sign, back, and up into the glare
+    const footX = SX - 24, wt = (footX - plantX) / 60;
+    let a = 1, x = footX, y = FY - B, has = false, up = -1;
+    if (cp < 14) x = footX; else if (cp < 14 + wt) x = lerp(footX, plantX + 6, (cp - 14) / wt);
+    else if (cp < 15 + wt) { x = plantX + 6; has = cp > 14.5 + wt; } else if (cp < 15 + 2 * wt) { x = lerp(plantX + 6, footX, (cp - 15 - wt) / wt); has = true; }
+    else { up = (cp - 15 - 2 * wt) * 2.5; has = true; }
+    if (up >= 0) { const s = up; a = s > N - 1 ? Math.max(0, 1 - (s - (N - 1)) / 3) : 1; onStep(Math.min(s, N - 1), a, (xx, yy, aa) => { warden(xx, yy, aa); sign(xx + 7, yy - 10, { postH: 10, a: aa }); });
+      warden(footX, FY - B, fade((cp - 38.5) / 1.5)); }
+    else { warden(Math.round(x), y); if (has) sign(Math.round(x) + 7, y - 10, { postH: 10 }); }
+  }
+}
+
+// ============================================================ 2. the station panels
+const PANEL_W = 150, PANEL_H = 120, PGY = 102;
+function panelGround(w, h, gy, edge = 0) { sky(w, h); cloudFloor(edge, w, gy, h - gy, 5); if (edge) fr(edge, gy, 2, h - gy, T(4)); }
+
+// ============================================================ 3. the asset tiles
+const ASSETS = [];
+const asset = (name, cap, draw, w = 60, h = 60, opt = {}) => ASSETS.push({ name, cap, draw, w, h, opt });
+const AG = 54;
+asset('trees', 'trees in held stages, placed by the trunk\'s left edge: sapling, pole, grown, old growth; the stump', t => { tree(12, 102, 0, 4); tree(30, 102, 1, 5); tree(60, 102, 2, 6); tree(108, 102, 3, 7); stump(138, 102, 3); }, 162, 108, { wide: true });
+asset('plots', 'a plot inside the rope (planted) against old growth outside it', t => { cloudFloor(0, 150, 102, 6, 2); tree(18, 102, 3, 2); plots(60, 150, 102); tree(78, 102, 1, 5); tree(108, 102, 2, 6); stump(132, 102, 2); }, 150, 108, { wide: true });
+asset('logs', 'logs on the pile, and a log carried', t => { logPile(6, AG); member(36, AG - B); log_(36, AG - B - 9); });
+asset('timber', 'timber, a board and a stack', t => { timber(6, 20); timberStack(30, AG, 6); });
+asset('sawdust', 'sawdust heap at the brim with the game\'s warning mark', t => { heap(30, AG, 8, 4, 21); warning(30, AG - 4 * P - 22); });
+asset('paper', 'paper: a sheet and a stack', t => { sheet(10, 16); paperStack(32, AG, 8); });
+asset('ink', 'ink: a drop falling, the pot', t => { const k = mod(t, 1); drop(18, 8 + k * 34, Math.min(1, k * 5, (1 - k) * 5)); inkPot(36, AG); });
+asset('sign', 'a sign, lettered a stroke at a time', t => { const ph = mod(t, 4); sign(28, AG, { letters: Math.min(5, Math.floor(ph * 2)), a: ph > 3.4 ? 1 - (ph - 3.4) / .6 * 0 : 1 }); });
+asset('askew', 'the speech knocks a sign askew and its ring stops inking; a carrier walks in and straightens it, and the ring inks again until the next speech sweeps the open pieces back', t => {
+  const AG = 78, p = mod(t, 12), straight = p > 3.4 && p < 10.2;
+  const grow = straight ? clamp((p - 3.4) / 6, 0, 1) : p >= 10.2 ? 1 - clamp((p - 10.2) / .6, 0, 1) : 0;
+  for (let r = 1; r >= 0; r--) for (let f = 0; f < 6; f++) { const x = 4 + f * 24 + (r % 2) * 12, d = Math.abs(x + 9 - 76) / 24; body(x, AG - B - r * 24, { inked: 2 + Math.floor(grow * Math.max(0, 4 - d)), soul: r ? 3 : 4 }); }
+  sign(74, AG - 30, { postH: 20, tilt: straight ? 0 : 4 });
+  if (p > 1.4 && p < 5.4) { const q = p - 1.4, x = q < 1.6 ? lerp(160, 92, q / 1.6) : q < 2.4 ? 92 : lerp(92, 160, (q - 2.4) / 1.6); member(Math.round(x), AG - B); }
+  if (p > 9.6 && p < 11) { const k = (p - 9.6) / 1.4, bx = snap2(lerp(160, -12, k)); for (let y = 0; y < AG; y += P) alpha(.75, () => fr(bx, y, 12, P, LIGHT())); fr(bx, 0, 2, AG, T(3)); }
+}, 160, 84, { wide: true });
+asset('poster', 'a poster, pasted (it fades in as the paster presses it up)', t => { const p = mod(t, 4); poster(24, 14, { a: p < 1 ? p : p > 3.4 ? 1 : 1 }); });
+asset('poster-torn', 'a poster torn down: strips fall and fade, then a paster pastes the next', t => { const p = mod(t, 5); if (p < 2.4) poster(24, 10, { torn: clamp(p / 2, 0, 1) }); else if (p > 3.6) poster(24, 10, { a: (p - 3.6) / 1.4 }); for (let i = 0; i < 3; i++) { const k = clamp((p - .3 - i * .3) / 1.6, 0, 1); if (k > 0 && k < 1) alpha(fade(1 - k), () => fr(26 + i * 4, 24 + snap2(k * 22), 2, 6, T(i % 2 ? 4 : 10))); } });
+asset('stack', 'posters, a stack', t => { posterStack(22, AG, 6); });
+asset('mote', 'a faith mote, drifting down, landing with a hop, fading into the count', t => { const k = mod(t, 2.4) / 2; const y = k < .8 ? 4 + k / .8 * 26 : 30 - (k < .9 ? 4 : 0); mote(26 + Math.sin(k * 7) * 6 * (k < .8), y, k < .1 ? k * 10 : k > .95 ? 1 - (k - .95) / .25 : 1); plate(12, AG + 4, t, 0); });
+asset('cloud', 'a white cloud, hit: a step smaller a hit until it is gone; the next drifts in', t => { cloudLoop(t, { per: 8, x0: -50, x1: 60, y: 40, seed: 51, kind: 'white', hits: [2, 3.6, 5.2, 6.4] }); }, 120, 60, { wide: true });
+asset('storm', 'a storm cloud: the yard\'s smog risen, a flat ink underside with drips; hit, it wrings ink', t => { const c = cloudLoop(t, { per: 8, x0: -50, x1: 60, y: 30, seed: 31, kind: 'storm', hits: [2, 3.6, 5.2, 6.4] }); for (let i = 0; i < 3; i++) { const q = c.sinceHit - i * .2; if (c.k && q > 0 && q < 1) drop(c.x + 26 + i * 8, 32 + q * 22, Math.min(1, q * 5, (1 - q) * 4)); } }, 120, 60, { wide: true });
+asset('thunder', 'a thunderhead: lit rim, a wide shadow; the pointer hits it for the burst (the act\'s crit)', t => { const p = mod(t, 4), x = 6 + snap2(Math.sin(t * .4) * 4); cloud(x, 36, 18, 6, 23, 'thunder'); cloudFloor(0, 120, AG, 8, 2); shadow(60, AG, 66); pointer(84, 2, p < .15); if (p < 2.2) for (let i = 0; i < 12; i++) { const k = p / 2.2, a = i / 12 * Math.PI * 2; mote(60 + Math.cos(a) * k * 46, 20 + Math.sin(a) * k * 18 + k * k * 22, fade(1 - k)); } }, 120, 60, { wide: true });
+asset('souls', 'two rim states only: a soul (pale), half-inked by posters, a member (ink); your own line (ticks, starts part-inked); a pledge keeper (inked middle); a warden (ink-filled, eye-slot, halo); the pair (their own grey)', t => { soul(4, AG - B); body(28, AG - B, { inked: 4 }); member(52, AG - B); body(76, AG - B, { inked: 3 }); ticks(76, AG - B, 3); member(100, AG - B, { core: true }); warden(124, AG - B); pairOne(148, AG - B, 'you'); }, 172, 60, { wide: true });
+asset('spread', 'support spreading: a soul going from pale to ink, a rim piece at a time (a member stays a member)', t => { const n = Math.min(8, Math.floor(mod(t, 6) * 2)); body(20, 24, { inked: n }); fr(0, 0, 0, 0); });
+asset('ring', 'a sign\'s ring: the field inks round it, deepest closest, in one ink', t => { const ph = clamp(mod(t, 8) / 6, 0, 1); for (let r = 1; r >= 0; r--) for (let f = 0; f < 5; f++) { const x = 2 + f * 24 + (r % 2) * 12, d = Math.abs(x + 9 - 62) / 24 + r * .6; const n = clamp(Math.floor(ph * 10 - d * 3), 0, 8); body(x, AG - B - r * 24, { inked: n, soul: r ? 3 : 4 }); } sign(60, AG - 4, { postH: 26 }); }, 120, 60, { wide: true });
+asset('warden', 'a warden: ink-filled, a paper eye-slot, an ink halo', t => { warden(20, AG - B); });
+asset('keeper', 'a pledge keeper: a member given to a station for good, its middle inked', t => { member(20, AG - B, { core: true }); post(4, AG - 30, 30); });
+asset('throne', 'the throne', t => { throne(8, 88); }, 60, 92);
+asset('glare', 'the glare: a white disc, an ink ring and rays, the sky dimmed round it, pulsing in held steps', t => { glare(50, 46, t, 26); god(32, 34); }, 100, 96);
+asset('stair', 'the stair: carriers fade in at the foot and into the glare at the top', t => { stair(2, AG, 16, 6, 3); fr(38, AG - 30, 2, 22, T(10)); poster(42, AG - 34); for (let j = 0; j < 2; j++) { const s = mod(t * 2 + j * 9, 18), a = s < 2 ? s / 2 : s > 15 ? Math.max(0, 1 - (s - 15) / 3) : 1, st = Math.min(15, Math.floor(s)); alpha(a, () => { soul(2 + st * 6 - 6, AG - (st + 1) * 3 - B); bundle(2 + st * 6 - 3, AG - (st + 1) * 3 - B - 8); }); } }, 120, 60, { wide: true });
+asset('strike', 'the strike: picks swinging, then every tool down at once, the crowd standing still', t => { const down = mod(t, 6) > 3; for (let f = 0; f < 4; f++) { const x = 4 + f * 28; member(x, AG - B); pick(x, AG - B, down ? 'ground' : (Math.floor(t * 2 + f) % 2 ? 'up' : 'down')); } }, 120, 60, { wide: true });
+asset('road', 'the ghost road, after the unmasking: a stair of cloud lets down from the empty throne a step at a time to the thin patch; the pair walk down it', t => {
+  const c = mod(t, 9), grow = clamp(c / 3.6, 0, 1), down = c > 6.5 ? clamp((c - 8.4) / .6, 0, 1) : 0;
+  for (let x = 0; x < 30; x += P) for (let y = 12; y < 24; y += P) fr(x, y, P, P, T(hsh(x, y) < .5 ? 2 : 1)); fr(0, 12, 30, 2, T(10));
+  thinPatch(102, 48, 84, 24, t);
+  for (let i = 0; i < 12; i++) { const a = clamp(grow * 12 - i, 0, 1) * (1 - down); if (!a) continue; alpha(a, () => { const sx = 30 + i * 6, sy = 12 + (i + 1) * 6; fr(sx, sy, 6, 6, T(1)); fr(sx, sy, 6, 2, T(10)); }); }
+  if (c > 3.8 && c < 8.4) { const s = Math.min(11, Math.floor((c - 3.8) * 3)); pairOne(24 + s * 6, 12 + (s + 1) * 6 - B, 'you'); }
+  else if (c >= 8.4) alpha(1 - down, () => pairOne(108, 84 - B, 'you'));
+}, 150, 108, { wide: true });
+
+// ============================================================ wiring: sources and displays
+const SOURCES = {};
+function source(name, w, h, draw) { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; SOURCES[name] = { w, h, draw, cv }; }
+source('est', EW, EH, drawEst);
+const panel = (name, fn, w = PANEL_W, h = PANEL_H, gy = PGY, edge = 0) => source(name, w, h, t => { panelGround(w, h, gy, edge); fn(t, gy, w); });
+panel('grove-idle', (t, gy) => { tree(36, gy, 3, 7); plots(96, 204, gy); tree(132, gy, 1, 5); tree(156, gy, 2, 6); tree(114, gy, 0, 4); stump(186, gy, 2); member(12, gy - B); axe(12, gy - B, 'rest'); }, 216, 132, 114);
+panel('grove-work', (t, gy, w) => { felling(42, gy, t, { seed: 7, haulTo: w + 24, plantFrom: w + 24 }); plots(150, 216, gy); tree(168, gy, 2, 6); }, 216, 132, 114);
+panel('axe', (t, gy, w) => { felling(66, gy, t, { seed: 3, stage: 2, hand: true, haulTo: w + 24, plantFrom: w + 24 }); pairOne(12, gy - B, 'you'); axe(12, gy - B, 'rest'); });
+source('axe-beat', PANEL_W, PANEL_H, t => {
+  panelGround(PANEL_W, PANEL_H, PGY); const b = Math.max(0, clock - beatAt), gy = PGY, px = 24;
+  pairOne(px, gy - B, 'you'); pairOne(px - 24, gy - B, 'sqouse');
+  const giver = b < 2.4 ? lerp(PANEL_W + 20, px + 30, b / 2.4) : b < 3.6 ? px + 30 : lerp(px + 30, PANEL_W + 20, (b - 3.6) / 2.4);
+  if (b < 6) { member(Math.round(giver), gy - B); if (b < 3) axe(Math.round(giver), gy - B, 'held', -1); }
+  if (b >= 3) axe(px, gy - B, b < 3.6 ? 'held' : 'rest');
+  tree(110, gy, 2, 6);
+});
+panel('saw-idle', (t, gy) => sawMill(66, gy, t, { fill: 2 }));
+panel('saw-work', (t, gy, w) => {
+  sawMill(66, gy, t, { working: true, fill: 3, keeper: true });
+  courier(t, { per: 10, from: -24, to: 12, gy, load: L_LOG, off: 4 });                 // a hauler sets a log on the pile
+  courier(t, { per: 10, from: -24, to: 42, gy, load: L_SACK, empty: true, off: 0 });   // a sack filled at the heap
+  courier(t, { per: 9, from: w + 24, to: 150, gy, load: L_TIMBER, empty: true, off: 3 }); // timber taken off the stack
+}, 180);
+panel('saw-full', (t, gy) => sawMill(66, gy, t, { full: true, edge: 6 }), 180, PANEL_H, PGY, 6);
+panel('shop-idle', (t, gy) => workshop(30, gy, t, {}), 120);
+panel('shop-work', (t, gy, w) => { workshop(30, gy, t, { working: true, carrierFrom: w + 24 });
+  courier(t, { per: 12, from: -24, to: 30, gy, load: L_TIMBER, off: 9 }); courier(t, { per: 12, from: w + 24, to: 84, gy, load: L_INK, off: 3 }); }, 120);
+panel('paper-idle', (t, gy) => paperMill(24, gy, t, {}), 150);
+panel('paper-work', (t, gy, w) => { paperMill(24, gy, t, { working: true });
+  courier(t, { per: 9, from: -24, to: 12, gy, load: L_SACK, off: 1 }); courier(t, { per: 9, from: w + 24, to: 118, gy, load: L_PAPER, empty: true, off: 5 }); }, 150);
+panel('press-idle', (t, gy) => press(18, gy, t, {}), 130);
+panel('press-work', (t, gy, w) => { press(18, gy, t, { working: true, pasterFrom: w + 24 });
+  courier(t, { per: 16, from: -24, to: 0, gy, load: L_PAPER, off: 6 }); courier(t, { per: 16, from: -24, to: 12, gy, load: L_INK, off: 10 }); }, 130);
+panel('well-idle', (t, gy) => { cloud(30 + snap2(Math.sin(t * .3) * 6), gy - 72, 9, 3, 31, 'storm'); well(36, gy, t, {}); member(84, gy - B); }, 130);
+panel('well-work', (t, gy, w) => { const c = cloudLoop(t, { per: 10, x0: -30, x1: 60, y: gy - 72, seed: 31, kind: 'storm', hits: [3, 4.8, 6.6, 8.4] }); well(36, gy, t, { working: true }); gatherer(84, gy, c);
+  for (let i = 0; i < 3; i++) { const q = c.sinceHit - i * .2; if (c.k && q > 0 && q < 1.2) { const k = q / 1.2; drop(c.cx, gy - 70 + k * 56, Math.min(1, q * 5, (1 - k) * 5)); } }
+  courier(t, { per: 10, from: w + 24, to: 60, gy, load: L_INK, empty: true, off: 2 }); }, 130);
+panel('plate-idle', (t, gy) => { cloud(18, gy - 66, 9, 4, 51, 'white'); plate(42, gy, t); }, 120);
+panel('plate-work', (t, gy) => { const c = cloudLoop(t, { per: 10, x0: -30, x1: 60, y: gy - 66, seed: 51, kind: 'white', hits: [3, 4.8, 6.6, 8.4] }); plate(42, gy, t); gatherer(84, gy, c);
+  motesTo(t, { x0: -30, x1: 60 }, gy - 62, 42, gy - 20, 10, [3, 4.8, 6.6, 8.4]); }, 120);
+panel('hall-idle', (t, gy) => hall(42, gy, t, {}), 150);
+panel('hall-work', (t, gy, w) => {
+  const p = mod(t, 10), open = (p > 2.4 && p < 3.6) || (p > 5.6 && p < 7);
+  const dX = hall(42, gy, t, { open });
+  if (p < 2.6) member(Math.round(lerp(w + 24, dX, p / 2.6)), gy - B); else if (p < 3.4) inDoor(dX, gy, 1 - (p - 2.6) / .8);   // in from God's yard, through the door
+  if (p > 5.8 && p < 6.6) inDoor(dX, gy, (p - 5.8) / .8); else if (p >= 6.6) member(Math.round(lerp(dX, -24, (p - 6.6) / 3.2)), gy - B);   // out to a job
+}, 150);
+for (const a of ASSETS) source('a-' + a.name, a.w, a.h, t => { fr(0, 0, a.w, a.h, T(0)); a.draw(t); });
+
+// the unmasking: God's look and Satan's, then the glare comes off a cell at a time
+const UW = 90, UH = 90;
+const godCv = document.createElement('canvas'), satCv = document.createElement('canvas');
+godCv.width = satCv.width = UW; godCv.height = satCv.height = UH;
+function unmask(t, p) {
+  const gg = g;
+  g = godCv.getContext('2d'); fr(0, 0, UW, UH, T(0)); glare(45, 50, t, 26); throne(24, 88); god(27, 40);
+  g = satCv.getContext('2d'); fr(0, 0, UW, UH, '#1a1a1a');
+  for (let y = 0; y < UH; y += P) for (let x = 0; x < UW; x += P) { const d = Math.hypot(x - 42, y - 42); if (d < 46 - hsh(x, y) * 8) fr(x, y, P, P, GREY[hsh(x, y, 2) < .5 ? 9 : 8]); }
+  for (let i = 0; i < 6; i++) fr(snap2(10 + hsh(i, 1) * 70), snap2(10 + hsh(i, 2) * 60), 2, 2, PU());
+  const was = DARK; DARK = true; throne(24, 88); DARK = was; god(27, 40, true);
+  g = gg;
+  g.drawImage(satCv, 0, 0);
+  for (let y = 0; y < UH; y += P) for (let x = 0; x < UW; x += P) {
+    const d = Math.hypot(x + 3 - 45, y + 3 - 44) / 64, at = (1 - d) * .7 + hsh(x, y, 9) * .3;
+    const a = fade(1 - (p - at * .8) / .2);
+    if (a > 0) alpha(a, () => g.drawImage(godCv, x, y, P, P, x, y, P, P));
+  }
+}
+const UFR = [0, .25, .45, .6, .75, 1];
+UFR.forEach((p, i) => source('un-' + i, UW, UH, t => unmask(t, p)));
+source('un-anim', UW, UH, t => { const c = mod(t, 10); unmask(t, c < 2 ? 0 : c < 6 ? (c - 2) / 4 : c < 8 ? 1 : 1 - (c - 8) / 2); });
+
+const host = document.getElementById('assets');
+for (const a of ASSETS) {
+  const f = document.createElement('figure'); if (a.w > 100) f.className = 'span2';
+  f.innerHTML = `<canvas data-src="a-${a.name}" data-s="3"></canvas><figcaption>${a.cap}</figcaption>`;
+  host.appendChild(f);
+}
+const us = document.getElementById('unstrip');
+UFR.forEach((p, i) => { const f = document.createElement('figure'); f.innerHTML = `<canvas data-src="un-${i}" data-s="2"></canvas><figcaption>${i === 0 ? 'God in the glare' : i === UFR.length - 1 ? 'Satan' : Math.round(p * 100) + '%'}</figcaption>`; us.appendChild(f); });
+{ const f = document.createElement('figure'); f.innerHTML = `<canvas data-src="un-anim" data-s="2"></canvas><figcaption><b>animated</b>: the glare fades off, holds, and (for the loop only) fades back</figcaption>`; us.appendChild(f); }
+
+const displays = [...document.querySelectorAll('canvas[data-src]')].map(cv => {
+  const src = SOURCES[cv.dataset.src], s = +(cv.dataset.s || 1);
+  const crop = cv.dataset.crop ? cv.dataset.crop.split(',').map(Number) : [0, 0, src.w, src.h];
+  cv.width = crop[2] * s; cv.height = crop[3] * s;
+  if (!cv.closest('.strip')) cv.style.width = cv.width + 'px';
+  return { cv, src, s, crop, vis: true };
+});
+const io = new IntersectionObserver(es => es.forEach(e => { const d = displays.find(d => d.cv === e.target); if (d) d.vis = e.isIntersecting; }), { rootMargin: '200px' });
+displays.forEach(d => io.observe(d.cv));
+
+let paused = false, speed = 1, clock = 0, last = null, beatAt = 0;
+function frame(ms) {
+  if (last == null) last = ms;
+  if (!paused) clock += (ms - last) / 1000 * speed;
+  last = ms;
+  DARK = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+  const want = new Set(displays.filter(d => d.vis || window.__all).map(d => d.src));
+  for (const s of want) { g = s.cv.getContext('2d'); g.imageSmoothingEnabled = false; g.globalAlpha = 1; s.draw(clock); }
+  for (const d of displays) if (d.vis || window.__all) {
+    const c = d.cv.getContext('2d'); c.imageSmoothingEnabled = false;
+    c.drawImage(d.src.cv, d.crop[0], d.crop[1], d.crop[2], d.crop[3], 0, 0, d.cv.width, d.cv.height);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.__setClock = v => { clock = v; paused = true; };
+window.__beatAt = v => { beatAt = v; };
+
+document.querySelectorAll('#theme button[data-t]').forEach(b => b.onclick = () => {
+  if (b.dataset.t === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = b.dataset.t;
+  document.querySelectorAll('#theme button[data-t]').forEach(x => x.classList.toggle('on', x === b));
+  drawGlyphs();
+});
+document.getElementById('pause').onclick = e => { paused = !paused; e.target.classList.toggle('on', paused); };
+document.getElementById('slow').onclick = e => { speed = speed === 1 ? .25 : 1; e.target.classList.toggle('on', speed !== 1); };
+document.getElementById('replay').onclick = () => { beatAt = clock; };
+document.querySelectorAll('#estscale button').forEach(b => b.onclick = () => {
+  document.getElementById('estwrap').classList.toggle('fit', b.dataset.f === '1');
+  document.querySelectorAll('#estscale button').forEach(x => x.classList.toggle('on', x === b));
+});
+
+// ============================================================ 4. the board (plain CSS, placeholder words)
+const GLYPHS = {
+  faith: ['..kkkk..', '.kwwwwk.', 'kwwggwwk', 'kwggggwk', 'kwggggwk', 'kwwggwwk', '.kwwwwk.', '..kkkk..'],
+  timber: ['........', 'kkkkkkkk', 'kwwgwwwk', 'kkkkkkkk', 'kkkkkkkk', 'kwwwwgwk', 'kkkkkkkk', '........'],
+  paper: ['kkkkkk..', 'kwwwwgk.', 'kwwwwggk', 'kwkkkwwk', 'kwwwwwwk', 'kwkkkkwk', 'kwwwwwwk', 'kkkkkkkk'],
+  pledge: ['kkkkkkkk', 'kkkkkkkk', 'kkwwwwkk', 'kkwkkwkk', 'kkwkkwkk', 'kkwwwwkk', 'kkkkkkkk', 'kkkkkkkk'],
+  ink: ['...kk...', '...kk...', '..kkkk..', '.kkkkkk.', '.kkkkkk.', 'kkkkkkkk', '.kkgkkk.', '..kkkk..'],
+  sawdust: ['........', '...g....', '..ggg...', '.gggkg..', '.gkgggg.', 'ggggkggg', 'gggggggg', '........'],
+  sign: ['kkkkkkkk', 'kwwwwwwk', 'kwkkwkwk', 'kwwwwwwk', 'kkkkkkkk', '...kk...', '...kk...', '...kk...'],
+  poster: ['kkkkkk..', 'kwwwwk..', 'kkkkkk..', 'kwwwwk..', 'kwkkwk..', 'kwwwwk..', 'kkkkkk..', '........'],
+  member: ['kkkkkkkk', 'kkkkkkkk', 'kkwwwwkk', 'kkwwwwkk', 'kkwwwwkk', 'kkwwwwkk', 'kkkkkkkk', 'kkkkkkkk'],
+  saw: ['...kk...', '.kgggk..', 'kggkggk.', 'kgkkkgkk', 'kggkggk.', '.kgggk..', '..kkk...', 'kkkkkkkk'],
+  pace: ['kkkk....', 'k..k....', 'k..kkkkk', 'kkkk...k', '...kkkkk', '...k..k.', '...k..k.', '...kkkk.'],
+  sawyer: ['...kk...', 'kkkkkk..', 'kwwwwk..', 'kwwwwkkk', 'kwwwwk.k', 'kkkkkk..', '........', 'kkkkkkkk'],
+  fence: ['k.k.k.k.', 'kkkkkkkk', 'k.k.k.k.', 'k.k.k.k.', 'kkkkkkkk', 'k.k.k.k.', 'k.k.k.k.', 'k.k.k.k.'],
+  broom: ['...k....', '...k....', '...k....', '...k....', '..kkk...', '.kkkkk..', 'k.k.k.k.', 'k.k.k.k.'],
+  teeth: ['k.k.k.k.', 'kkkkkkkk', 'kgggggkk', 'kggggggk', 'kggggggk', 'kgggggkk', 'kkkkkkkk', '........'],
+};
+function isDark() { return document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches); }
+function drawGlyph(cv, name, unit = 3) {
+  const rows = GLYPHS[name], c = cv.getContext('2d'), d = isDark();
+  cv.width = rows[0].length * unit; cv.height = rows.length * unit; c.clearRect(0, 0, cv.width, cv.height);
+  rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch === '.') return; c.fillStyle = ch === 'k' ? (d ? '#e0e0e0' : '#000') : ch === 'g' ? (d ? MAPPED[4] : GREY[4]) : (d ? '#1f1f1f' : '#fff'); c.fillRect(i * unit, j * unit, unit, unit); }));
+}
+const gl = (n, u = 2) => `<canvas class="g" data-glyph="${n}" data-u="${u}" style="border:0;width:${8 * u}px;height:${8 * u}px;display:inline-block"></canvas>`;
+const ph = s => `<span class="ph">${s}</span>`;
+const pips = (n, bought) => { let h = ''; for (let i = 0; i < 8; i++) { const b = 1 + Math.floor(i / 2); h += `<span class="pip b${b}${i < bought ? ' on' : ''}${i % 2 === 0 && i ? ' gap' : ''}"></span>`; } return `<div class="ladder">${h}</div>`; };
+const bill = (items, short) => `<span class="bill${short ? ' short' : ''}">${items.map(([g_, n]) => `<i>${gl(g_)}${n}</i>`).join('')}</span>`;
+const tile = (o) => `<div class="tile${o.dim ? ' dim' : ''}">${o.corner ? '<span class="corner"></span>' : ''}${o.prop ? '<span class="prop">proposal</span>' : ''}<canvas class="glyph" data-glyph="${o.glyph}" data-u="3"></canvas><div class="name">${ph(o.name)}</div><div class="gain">${o.gain}</div><div>${o.bill}</div>${o.pips != null ? pips(8, o.pips) : ''}</div>`;
+document.getElementById('purse').innerHTML = [
+  ['faith', '1.2k'], ['ink', '340'], ['timber', '860'], ['sawdust', '2.1k'], ['paper', '410'], ['sign', '12'], ['poster', '88'], ['pledge', '3'],
+].map(([k, v]) => `<div><span class="k">${gl(k)}</span><span>${v}</span></div>`).join('');
+document.getElementById('sheet').innerHTML = `
+  <div class="title">${ph('the saw mill')}<span>${gl('saw', 2)}</span></div>
+  <div class="sect">${ph('the mill')}</div>
+  <div class="plank">
+    ${tile({ glyph: 'saw', name: 'saws', gain: '1 &rarr; 2', bill: bill([['faith', 40]]), pips: 1, corner: true })}
+    ${tile({ glyph: 'pace', name: 'saw pace', gain: '+10% &rarr; +20%', bill: bill([['faith', 180], ['timber', 30]]), pips: 3 })}
+    ${tile({ glyph: 'sawyer', name: 'sawyers', gain: '2 &rarr; 3', bill: bill([['faith', 600], ['timber', 120], ['paper', 25]], true), pips: 4, dim: true })}
+    ${tile({ glyph: 'teeth', name: 'blade teeth', gain: '12', bill: `<span class="bill">${ph('finished')}</span>`, pips: 8, prop: true })}
+  </div>
+  <div class="sect">${ph('the cut')}</div>
+  <div class="plank">
+    <div class="tile" style="grid-column: span 2"><canvas class="glyph" data-glyph="fence" data-u="3"></canvas><div class="name">${ph('the fence')}</div>
+      <div class="fence">${ph('fine')} ${gl('timber')}<span class="cells"><b class="on"></b><b class="on"></b><b class="on"></b><b></b><b></b></span>${gl('sawdust')} ${ph('coarse')}</div>
+      <div class="gain">${gl('timber')} 3 : 2 ${gl('sawdust')}</div></div>
+    ${tile({ glyph: 'broom', name: 'sweepers', gain: '0 &rarr; 1', bill: bill([['timber', 900], ['paper', 300], ['pledge', 1]], true), pips: 6, dim: true, prop: true })}
+    ${tile({ glyph: 'sawdust', name: 'heap room', gain: '40 &rarr; 60', bill: bill([['faith', 900], ['timber', 260], ['paper', 60]]), pips: 5 })}
+  </div>
+  <span class="btnrow">${ph('hide finished')}</span>`;
+function drawGlyphs() { document.querySelectorAll('canvas[data-glyph]').forEach(cv => { drawGlyph(cv, cv.dataset.glyph, +cv.dataset.u || 2); cv.style.width = cv.width + 'px'; cv.style.height = cv.height + 'px'; }); }
+drawGlyphs();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawGlyphs);
+</script>
+</body>
+</html>

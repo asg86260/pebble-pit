@@ -21,12 +21,12 @@
 // (`S.portalDown`, `S.portalRound`, `S.portalHand`; view.js) kept per portal.
 
 import { S } from './state.js';
-import { P, ACT_PORTAL_R, ACT_HEAVEN_SKY, ACT_HEAVEN_HANG, ACT_HELL_AT, ACT_HELL_HANG,
-         ACT_PORTAL_OPEN_S, ACT_HAND_FADE_S, FINALE_HOUSE_W, HELL_W, DEEP_W } from './config.js';
+import { P, ACT_PORTAL_R, ACT_HEAVEN_SKY, ACT_HEAVEN_HANG, ACT_HELL_HANG,
+         ACT_PORTAL_OPEN_S, ACT_HAND_FADE_S, FINALE_HOUSE_W } from './config.js';
 import { houseX } from './home.js';
 import { afterX0, afterFloor } from './after/place.js';
-import { hellX0, hellFloor } from './hell/place.js';
-import { deepX0, deepFloor } from './deep/place.js';
+import { roadX, chamberFloor } from './hell/place.js';
+import { deepFloor } from './deep/place.js';
 import { afterlifeOn, hellOn } from './acts.js';
 import { travel, gliding } from './view.js';
 
@@ -48,8 +48,10 @@ export const PORTALS = {
   hell: {
     outer: 'deep', inner: 'hell', on: hellOn,
     end: {
-      deep: () => ({ x: snap(deepX0() + ACT_HELL_AT * DEEP_W), y: snap(deepFloor() - ACT_PORTAL_R - P), r: ACT_PORTAL_R }),
-      hell: () => ({ x: snap(hellX0() + ACT_HELL_AT * HELL_W), y: snap(hellFloor() - ACT_HELL_HANG), r: ACT_PORTAL_R })
+      // The slit straight over hell's road (hell/place.js, `roadX`), so the
+      // road down through it is a straight drop onto the landing.
+      deep: () => ({ x: snap(roadX()), y: snap(deepFloor() - ACT_PORTAL_R - P), r: ACT_PORTAL_R }),
+      hell: () => ({ x: snap(roadX()), y: snap(chamberFloor(0) - ACT_HELL_HANG), r: ACT_PORTAL_R })
     }
   }
 };

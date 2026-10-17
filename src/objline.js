@@ -4,7 +4,7 @@
 // up, so the line never changes under the eye without saying so.
 
 import { S } from './state.js';
-import { objective, questNow } from './objectives.js';
+import { objective, questNow, ACT_STEPS } from './objectives.js';
 import { seatBarrier } from './objbarrier.js';
 import { cornerLeft } from './dodge.js';
 
@@ -17,9 +17,15 @@ const STRIKE_MS = 1000;
 let shown = null, leaving = 0, listed = '';
 let cornerAt = null;
 
+// Up in the afterlife or down in hell the card is about that place: only a
+// step of the acts' own (objectives.js, `ACT_STEPS`), and never the yard's
+// row under it -- nothing on the yard's boards is for sale from up there.
+const inAct = () => S.view === 'after' || S.view === 'hell';
+
 export function seatObjective(t) {
   if (!say) return;
-  const want = objective();
+  const step = objective();
+  const want = inAct() && step && !ACT_STEPS.has(step.key) ? null : step;
   // Faded out while a beat has the yard, the camera or a sheet -- the story
   // is being told -- and back in after, never popped (style.css, `.scened`).
   const scene = !!(S.beat.yard || S.beat.camera || S.beat.sheet);
@@ -59,7 +65,7 @@ export function seatObjective(t) {
   }
   if (!want && !shown) el.hidden = true;
   seatQuest(want);
-  seatBarrier(want && shown && want.key === shown.key ? want : null, t);
+  seatBarrier(want && shown && want.key === shown.key && !inAct() ? want : null, t);
 }
 
 // The card and the squares in the top-right share the top edge, so on a

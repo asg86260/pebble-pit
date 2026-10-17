@@ -453,6 +453,25 @@ const lookAtOrb = () => {
 // reaches the phase named. The shot tool runs a second more after a scene,
 // and the take is shorter than that, so the scene stops at the start of the
 // phase before the one to be seen.
+// Act 3's chain stood up the way the hall sells it (after/rows.js): the
+// afterlife begun by the dev travel, the meeting's members made (the setup a
+// scene is not about), faith and ink granted, the doors and the hands bought
+// row by row; `slow` carries the crowd past the slowdown and buys its branch.
+function afterChain(slow) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  // Half-way, won in blocks of files rather than from the front back, so the
+  // shot shows the ink spreading into the gaps between them.
+  window.__afterCrowd(slow ? (i, v) => ((Math.floor((i % 40) / 5) + Math.floor(i / 160)) % 2 ? 8 : v)
+                           : (i, v) => (i < 40 ? 8 : v));
+  window.__afterGrant({ faith: 9000, ink: 400, timber: slow ? 120 : 0 });
+  window.__fast(0.5);
+  const doors = ['mill', 'workshop', ...(slow ? ['papermill', 'press'] : [])];
+  for (const d of doors) window.__buy(`after-door-${d}`);
+  const hands = ['feller', 'feller', 'hauler', 'hauler', 'hauler', 'sawyer', 'sawyer', 'joiner', 'carrier', 'carrier',
+                 'planter', 'gatherer', 'canvasser', ...(slow ? ['pulper', 'printer', 'paster', 'paster'] : [])];
+  for (const j of hands) window.__buy(`after-hire-${j}`);
+}
+
 const snatchAt = (phase, into = 0, pin = false) => () => {
   rich();
   window.__fullSites();
@@ -2627,7 +2646,43 @@ export const SCENES = {
   'after-empty': { about: 'the acts', say: 'the afterlife, empty: the placeholder cloud floor, nothing built on it',
     run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); } },
   'hell-empty': { about: 'the acts', say: 'hell, empty: the placeholder black hollow and its floor, nothing built in it',
-    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('hell'); window.__fast(1); } }
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('hell'); window.__fast(1); } },
+  // Act 4's loop on its placeholder art (hell/; render/hell.js): the landing
+  // at work, a barrier half down, and the cage room at the end of the run.
+  // The ghosts take twenty seconds to come down the road, so each runs on.
+  'hell-forge': { about: 'the acts', say: 'hell\'s landing at work: miners at the seam, a lit furnace, the smith at the anvil, brimstone off the vent',
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('hell');
+                 window.__hell({ brimstone: 24, bars: { dross: 5 }, ore: { dross: 4 }, rungs: { hellmuster: 4 },
+                                 vents: { 0: { crust: 8 } },
+                                 furnaces: { 0: { fuel: 8, lit: true, warm: 1, hopper: { dross: 6 }, tray: { dross: 2 } } } });
+                 window.__fast(32); } },
+  'hell-wall': { about: 'the acts', say: 'hell\'s rubble half down: the wall gang swinging, spoil falling and carried to the heap',
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('hell');
+                 window.__hell({ tool: 1, gang: 3, blows: { 0: 60 }, rungs: { hellmuster: 5 }, faces: { 0: { tool: 1 } },
+                                 walls: { 0: { tool: 1, loose: 3, heap: 14 } },
+                                 furnaces: { 0: { fuel: 6, lit: true, warm: 1 } } });
+                 window.__fast(32); } },
+  'hell-cage': { about: 'the acts', say: 'hell\'s cage room: the run open behind, the cage half cut, God hanging inside',
+    run: () => { window.__reset(); window.__actsOn(null);
+                 window.__hell({ tool: 5, chamber: 4, gang: 4, blows: { 0: 120, 1: 200, 2: 320, 3: 480, 4: 350 },
+                                 rungs: { hellmuster: 8 }, seams: { 0: 9, 1: 7, 2: 5, 3: 3, 4: 1 },
+                                 walls: { 4: { tool: 5, heap: 20 } } });
+                 window.__goPlace('hell'); window.__fast(80); } },
+  // Act 3's loop on its placeholder drawings (after/; track A): the chain
+  // bought row by row and run, framed on the camp; the crowd half won, framed
+  // on God's yard; the grove with a tree coming down.
+  'after-chain': { about: 'the acts', say: 'the afterlife\'s chain running: logs to the saw mill, timber and sawdust, signs going out',
+    run: () => { afterChain(false); window.__fast(90); window.__look(560); window.__holdShot(); } },
+  'after-crowd': { about: 'the acts', say: 'the afterlife\'s crowd half won: signs and posters out, the rims inking round them',
+    run: () => { afterChain(true); window.__fast(120); window.__look(1300); window.__holdShot(); } },
+  'after-grove': { about: 'the acts', say: 'the afterlife\'s grove: fellers at the old growth, a tree coming down, logs lying',
+    run: () => {
+      afterChain(false); window.__fast(20);
+      window.__afterAxe();
+      const t = window.__afterTrees().find(p => p.stage === 3 && !p.falling);
+      for (let k = 0; k < 8; k++) window.__afterClick(t.x, t.y);
+      window.__fast(0.5); window.__look(0); window.__holdShot();
+    } }
 };
 
 // Wake the checks' pad and hop it along the stops until it is on `id` (or,

@@ -20,11 +20,11 @@
 // they stood, on the leg they were walking.
 
 import { S, pit } from './state.js';
-import { P, WORKER, FINALE_HOUSE_W, AFTER_W, GHOST_PX_S, GHOST_LOAD, GHOST_HELL_RUN, GHOST_GAP } from './config.js';
+import { P, WORKER, FINALE_HOUSE_W, AFTER_W, GHOST_PX_S, GHOST_LOAD, GHOST_GAP, HELL_TIERS } from './config.js';
 import { houseX } from './home.js';
 import { feetOn, ways } from './route.js';
 import { afterX0, afterFloor, afterTop } from './after/place.js';
-import { hellFloor, hellTop } from './hell/place.js';
+import { hellTop, chamberFloor, chamberAtX, chamberFocusX, storeX as hellStoreX } from './hell/place.js';
 import { deepTop, deepFloor } from './deep/place.js';
 import { portalEnd } from './portals.js';
 import * as HELL from './hell/index.js';
@@ -46,12 +46,18 @@ export const campX = () => snap(afterX0() + AFTER_W * 0.25);
 // Into the drowned pit a few cells off its near wall.
 export const pitX = () => snap(pit.x + P * 4);
 export const slitX = () => snap(slit().x - WORKER / 2);
-export const cageX = () => slitX() + GHOST_HELL_RUN;
+// In hell: the landing's store, where a load is handed in, and the cage
+// room, where a beat calls the two of them (hell/place.js).
+export const storeX = () => snap(hellStoreX() - WORKER / 2);
+export const cageX = () => snap(chamberFocusX(HELL_TIERS.length - 1) - WORKER / 2);
+const hellLegX = () => (S.acts && S.acts.pair && S.acts.pair.hold === 'cage' ? cageX() : storeX());
 const tearX = () => snap(tear().x - WORKER / 2);
 export const yardFeet = x => feetOn(ways().yard, x);
 const afterFeet = () => afterFloor() - WORKER;
 const deepFeet = () => deepFloor() - WORKER;
-const hellFeet = () => hellFloor() - WORKER;
+// The floor of the chamber a body is over (each lower than the last), the
+// landing's off the run.
+const hellFeet = x => chamberFloor(Math.max(0, chamberAtX(x))) - WORKER;
 
 // The routes, each a run of legs: `h` along the ground to an x (standing on
 // `y` of where it is), `v` straight up or down to a y, `to` a slant to a
@@ -63,7 +69,7 @@ const ROUTES = {
   // tear over the yard, down the stair, and along to the ruin
   down: [{ h: tearX, y: afterFeet }, { v: () => tear().y - WORKER / 2 }, { to: stairFoot }, { h: ruinX, y: yardFeet }],
   // act 4's carry: the ruin to the cage and back (LOOP_CAGE, LOOP_HOME)
-  loop: [{ h: pitX, y: yardFeet }, { v: deepFeet }, { h: slitX, y: deepFeet }, { v: hellFeet }, { h: cageX, y: hellFeet },
+  loop: [{ h: pitX, y: yardFeet }, { v: deepFeet }, { h: slitX, y: deepFeet }, { v: () => hellFeet(slitX()) }, { h: hellLegX, y: hellFeet },
          { h: slitX, y: hellFeet }, { v: deepFeet }, { h: pitX, y: deepFeet }, { v: () => yardFeet(pitX()) }, { h: ruinX, y: yardFeet }],
   // home at the end: from the ruin to the mansion's door
   door: [{ h: () => mansionDoorX() - WORKER / 2, y: yardFeet }]
@@ -101,9 +107,11 @@ export function pairBodies() {
 }
 
 // --- walking ---------------------------------------------------------------------
-// Set off on a route from where it stands.
+// Set off on a route from where it stands; one already being walked is
+// walked on from the leg it is on (a beat played again after a reload).
 export function sendPair(route, leg = 0) {
   const p = S.acts.pair;
+  if (p.route === route) return;
   p.route = route; p.leg = leg; p.at = null;
 }
 export const pairAt = where => !!(S.acts && S.acts.pair && S.acts.pair.at === where);
@@ -112,9 +120,8 @@ export const pairAt = where => !!(S.acts && S.acts.pair && S.acts.pair.at === wh
 export function stepPair(dist) {
   const p = S.acts && S.acts.pair;
   if (!p || !p.route) return;
-  const legs = ROUTES[p.route];
   for (let n = 0; n < 4 && dist > 0 && p.route; n++) {
-    const L = legs[p.leg];
+    const L = ROUTES[p.route][p.leg];
     if (!L) { p.at = p.route; p.route = null; return; }
     let done = false;
     if (L.h) {
@@ -145,7 +152,11 @@ export function stepPair(dist) {
 function legEnd(p) {
   if (p.route !== 'loop') {
     p.leg++;
-    if (p.leg >= ROUTES[p.route].length) { p.at = p.route; p.route = null; }
+    if (p.leg >= ROUTES[p.route].length) {
+      p.at = p.route; p.route = null;
+      // a walk with another after it (down from the cloud, then the loop)
+      if (p.then) { const next = p.then; p.then = null; sendPair(next); }
+    }
     return;
   }
   if (p.leg === LOOP_CAGE) {

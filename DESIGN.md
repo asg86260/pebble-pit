@@ -20458,6 +20458,38 @@ act 1 (building), act 2 (party combat) and act 4.
 
 #### The loop: the grove and the press (the owner's, 2026-10-17)
 
+**Built (placeholder art), 2026-10-17**, behind `AFTERLIFE_ON`, on the
+scaffold: the owner, asleep, "build as much code as you can, use
+placeholders for assets and stations." Every drawing is flat cells standing
+in for the hifi mocks still to be voted; every number a default in
+config/after.js for the ladder book to move. What runs (src/after/,
+test/after-loop.test.mjs, scenes `after-chain`, `after-crowd`,
+`after-grove`): clouds drifting and puffed by the click, faith motes counted
+on the plate where they land, storm clouds wrung for ink to the well, the
+thunderhead's burst; the axe owed after `CHOP_CLICKS` cloud hits (the `axe`
+beat hands it over) and a chop a click on a grown tree, the fall in held
+frames, the crown fading, the logs lying; the grove's old growth, planters
+replanting stumps for faith, fellers, trees growing in stages; haulers to
+the saw mill, the fence as a dial, the sawdust heap to its brim and its
+pile-full mark and a sawyer's sweep off the edge until the paper mill; the
+workshop's signs carried out and planted, the paper mill, the press's
+posters pasted on the fence; volunteers hired with faith, each a member
+walking out of the crowd to a post, a body that walks; the crowd as data
+(a rim character a soul), only its files in view drawn, signs inking near to
+the full, posters down a file to half, word of mouth, souls rising into the
+back; the speech, warned, stripping the half-won; wardens tearing posters
+and carrying signs up the stair; the gates off the support share and the
+strike owed at `STRIKE_SHARE`; every card one `tierRows` ladder in the act's
+bands, the pledge holding the top band's seat (call 12) and the act's coins
+bought through `buyAfter`, never the yard's purse. The open calls stand as
+the recommendations: storm clouds for ink (11), a click count for the axe
+(15), old growth then replanting (10), the fence a control and the carriers
+choosing where signs go (13), members at their posts (14). Not yet: God,
+the throne and the stair as drawings, God's yard working, the camp built a
+piece a trip by builders (stations fade in when bought), lineage, the
+boards opened on the pointer and the click wired to input.js (Track C), and
+the pledge's keeper anything but standing by the station.
+
 The owner: "clicking clouds to gather faith, you can buy permanent workers
 to spread the word / work with faith. what if there were trees in heaven,
 and we made this act about cutting trees, processing them into signs and
@@ -20962,6 +20994,31 @@ barriers to get closer to the cage room, each taking higher tier tools ...
 it breaks down a wall/blockage then unlocks the new ore tier." Its own
 theme: heat, hardness, and a chain of materials, each one only reachable
 by what was made from the one before.
+
+**Built (placeholder art), 2026-10-17** (the owner: "build as much code as
+you can, use placeholders for assets and stations"), behind `HELL_ON`, on
+the scaffold, reached only by the dev travel until the descent and the
+beats are wired: the run of five chambers laid out in `hell/place.js`
+(stepping down CHAMBER_STEP each, a passage level off each floor out onto
+a ledge and a ladder in the next); the seams as faces that cut back a cell
+every LUMPS_A_CELL lumps, struck by the click (`clickHell`) and by miners;
+brimstone off the vents; a furnace a chamber, heat its depth, smelting only
+while fed and hot and going out when the fuel ends; the anvil's five
+recipes (TOOL_RECIPES; III the alloy, IV and V quenched); the five barriers
+coming down a cell at a time to their tool alone, each piece falling as
+spoil and carried to a heap, the wall gang taken off the miners; the flare,
+warned, crusting the face and the barrier and putting the furnace out,
+never an item; the muster's ghosts walking every item (`hell/bodies.js`,
+saved whole); four `tierRows` cards led by brimstone (faces, furnaces,
+anvil, muster), the gang's size as a choice, and `cageBroken` and
+`hellWallDue` as the story's seams. Placeholders, marked so in the code:
+every drawing (flat cells, `render/hell.js`), every number in
+config/hell.js but the spec's, the words (`# act 4 (placeholder)` in
+en.ftl), black water bought with sparks at the road's foot instead of
+carried from the abyss, rungs had on the press (no builders in hell), the
+stair a ladder (no flights cut), the ghosts this act's own bodies rather
+than JOBS rows, no flux from the yard, no vent caps or shielding. Shots:
+`hell-forge`, `hell-wall`, `hell-cage`; checks: test/hell-loop.test.mjs.
 
 #### The place: a run of chambers down to the cage room
 

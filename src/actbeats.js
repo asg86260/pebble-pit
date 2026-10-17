@@ -41,13 +41,16 @@ import { play, stepShot, release, addScene } from './cutscene.js';
 import { travel, gliding, setView, goDeep, goUp, canGoDown } from './view.js';
 import { beatDone } from './beats.js';
 import { openPortal, freePortal, portalEnd, portalBetween, stepPortals } from './portals.js';
-import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, takeLoad, LOOP_CAGE, ghostPace } from './ghosts.js';
+import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, takeLoad, LOOP_CAGE, ghostPace, tear } from './ghosts.js';
 import { beginMansion, mansionDone, mansionX, MANSION_W, beginGathering, gathered, stepMansion, stepGathering,
          forgetMansionHands } from './mansion.js';
 import { houseX, IN_DONE_S } from './home.js';
 import { afterX1, afterFloor } from './after/place.js';
 import { hellFloor } from './hell/place.js';
 import * as AFTER from './after/index.js';
+import * as FAITH from './after/faith.js';
+import * as STRIKE from './after/strike.js';
+import * as HELLPLACE from './hell/place.js';
 import * as HELL from './hell/index.js';
 import * as BARRIERS from './hell/barriers.js';
 import { AFTER_STORY } from './after/story.js';
@@ -88,6 +91,8 @@ function makePair() {
 function pairForAct4() {
   const p = makePair();
   if (p.mode === 'soul') { p.mode = 'ghost'; p.lift = 1; }
+  // still up in the cloud: down the road first, walking
+  if (p.y < tear().y - WORKER) { if (p.route !== 'down') { sendPair('down'); p.then = 'loop'; } return p; }
   if (!p.route && p.at !== 'cage' && p.at !== 'home') sendPair('loop');
   return p;
 }
@@ -112,16 +117,22 @@ export function sayGoOn() {
 // chain (which plays the chain again from the beat it was in) never starts
 // the chain over.
 const lastWall = HELL_TIERS.length - 1;
+// Hell's walls (Track B, hell/index.js): the first fallen barrier the story
+// has not told (`hellWallDue`, -1 for none) and the cage's fall
+// (`cageBroken`); the scaffold's blows count if the track is not there.
 const down = i => (typeof BARRIERS.barrierDown === 'function' ? BARRIERS.barrierDown(i) : 0);
+const wallDue = i => (typeof HELL.hellWallDue === 'function' ? HELL.hellWallDue() === i : down(i) >= 1);
+const cageDown = () => (typeof HELL.cageBroken === 'function' ? !!HELL.cageBroken() : down(lastWall) >= 1);
 const TRIGGERS = {
   'house-fall': () => !!A() && A().goOn && !!S.retired && A().house === 'standing',
-  'axe': () => beatDone('refuse') && typeof AFTER.axeDue === 'function' && !!AFTER.axeDue(),
-  'strike': () => beatDone('refuse') && !!S.after && S.after.gate >= AFTER_GATES.length && !(A() && A().struck),
+  'axe': () => beatDone('refuse') && typeof FAITH.axeDue === 'function' && !!FAITH.axeDue(),
+  'strike': () => beatDone('refuse') && !(A() && A().struck)
+    && (typeof STRIKE.strikeDue === 'function' ? !!STRIKE.strikeDue() : !!S.after && S.after.gate >= AFTER_GATES.length),
   'haunt': () => beatDone('ghost-road') && !!pair() && pair().mode === 'soul',
   'descend': () => beatDone('haunt') && !!A() && !A().wentDown && !!pair() && pair().route === 'loop' && pair().leg >= 1,
-  'unchain': () => beatDone('descend') && (down(lastWall) >= 1 || (typeof HELL.cageBroken === 'function' && !!HELL.cageBroken()))
+  'unchain': () => beatDone('descend') && cageDown()
 };
-for (let i = 0; i < lastWall; i++) TRIGGERS[`wall-${i + 1}`] = () => beatDone('wall-first') && down(i) >= 1;
+for (let i = 0; i < lastWall; i++) TRIGGERS[`wall-${i + 1}`] = () => beatDone('wall-first') && wallDue(i);
 export const actDue = key => !!(TRIGGERS[key] && TRIGGERS[key]());
 
 // --- the phases' marks ------------------------------------------------------------------
@@ -129,7 +140,9 @@ const houseSpot = () => ({ x: houseX() + FINALE_HOUSE_W * P / 2, y: S.groundY - 
 const throne = () => ({ x: afterX1() - P * 60, y: afterFloor() - WORKER });
 const onPair = () => { const p = pair(); return p ? { x: p.x + WORKER / 2, y: p.y } : houseSpot(); };
 const tearAbove = () => { const e = portalEnd('heaven', 'after'); return { x: e.x, y: afterFloor() - WORKER }; };
-const barrier = () => ({ x: cageX(), y: hellFloor() - WORKER });
+// Hell's chambers, where the camera holds each (hell/place.js).
+const chamber = i => () => ({ x: typeof HELLPLACE.chamberFocusX === 'function' ? HELLPLACE.chamberFocusX(i) : cageX(),
+                                y: hellFloor() - WORKER });
 const mansionMid = () => ({ x: mansionX() + MANSION_W * P / 2, y: S.groundY - WORKER });
 const files = () => ({ x: (MANSION_FILE_AT + MANSION_FILE_W * 2) * P, y: S.groundY - WORKER });
 const storyOf = key => (key in AFTER_STORY ? AFTER_STORY : HELL_STORY);
@@ -181,7 +194,7 @@ const BODIES = {
     { at: onPair, enter: () => { ensureActs().wentDown = true; pairForAct4(); }, until: () => placeAt(pair().y) === 'hell' },
     { at: onPair, s: ACT_CAPTION_S, enter: beginAct4, say: 'act-descend' }
   ],
-  'wall-first': [{ at: barrier, s: ACT_CAPTION_S, say: 'act-wall-first' }],
+  'wall-first': [{ at: chamber(0), s: ACT_CAPTION_S, say: 'act-wall-first' }],
   'unchain': [
     { at: onPair, enter: () => { beginMansion(); const p = pairForAct4(); p.hold = 'cage'; }, until: () => pairAt('cage') },
     { at: onPair, s: ACT_CAPTION_S, say: 'act-unchain' }
@@ -204,7 +217,14 @@ const BODIES = {
     { at: files, enter: beginGathering, until: gathered, say: 'act-mansion', end: () => { A().ended = true; } }
   ]
 };
-for (let i = 0; i < lastWall; i++) BODIES[`wall-${i + 1}`] = [{ at: barrier, s: ACT_CAPTION_S, say: 'act-wall', args: { n: i + 1 } }];
+// A wall down: the story told it (`tellWall`), and the camera glides from the
+// chamber it closed to the one it opened (Track B's ask), the line over that.
+for (let i = 0; i < lastWall; i++) {
+  BODIES[`wall-${i + 1}`] = [
+    { at: chamber(i), s: 1, enter: () => { if (typeof HELL.tellWall === 'function') HELL.tellWall(i); } },
+    { at: chamber(i + 1), s: ACT_CAPTION_S, say: 'act-wall', args: { n: i + 1 } }
+  ];
+}
 export const ACT_BEAT_KEYS = Object.keys(BODIES);
 
 // --- the runner ----------------------------------------------------------------------
@@ -249,7 +269,7 @@ const HOPS = { yard: { after: 'after', deep: 'deep', hell: 'deep' }, after: { ya
                deep: { yard: 'yard', after: 'yard', hell: 'hell' }, hell: { deep: 'deep', yard: 'deep', after: 'deep' } };
 function hop(place) {
   const next = HOPS[S.view] && HOPS[S.view][place];
-  if (!next) { setView(place); return; }
+  if (!next || (next === 'deep' && !canGoDown())) { setView(place); return; }
   const key = portalBetween(S.view, next);
   if (key) { if (!travel(next, key)) setView(next); return; }
   if (S.view === 'yard' && canGoDown()) goDeep();
@@ -264,7 +284,10 @@ function step(key, next, t) {
   const ph = phases[run.i];
   if (ph) {
     const at = ph.at();
-    const place = placeFor(at.y);
+    // A place the camera cannot stand in (the deep before the wizards'
+    // portal, in a yard stood up for a check) is watched from where it is.
+    const want = placeFor(at.y);
+    const place = want === 'deep' && !canGoDown() ? S.view : want;
     if (S.view !== place) {
       if (!gliding()) hop(place);
       run.framed = null;
@@ -282,7 +305,8 @@ function step(key, next, t) {
     const done = ph.until ? ph.until() : run.u >= hold;
     if (!done) return true;
     if (ph.end) ph.end();
-    run.i++; run.u = 0;
+    // the next phase glides the camera from here to what it looks at
+    run.i++; run.u = 0; run.framed = null;
     enterPhase(phases);
     if (run.i < phases.length) return true;
   }
@@ -331,6 +355,10 @@ export function stepActs(c) {
     const k = (p.hold ? ACT_CALL_K : 1) * (run ? run.hurry : 1);
     stepPair(base * k * c.dt / 1000);
   }
+  // The mansion is a standing job from the start of the cage's barrier
+  // (the coordinator's ask, 2026-10-17): the last wall told, the cage the
+  // one left, so it goes up through a real stretch of play.
+  if (hellOn() && !A().mansion && beatDone(`wall-${lastWall}`)) beginMansion();
   if (hellOn()) { stepMansion(c); stepGathering(c); }
 }
 

@@ -5,7 +5,7 @@
 // switches off nothing of either act is reachable and the save is untouched;
 // with them on each place is stepped every frame, on screen or not, the yard
 // runs on under the camera in either, and each act's facts round-trip a save.
-import { group, ok, run, yard } from './helpers.mjs';
+import { group, ok, run, runUntil, yard } from './helpers.mjs';
 import { BEATS } from '../src/beats.js';
 import { AFTER_STORY } from '../src/after/story.js';
 import { HELL_STORY } from '../src/hell/story.js';
@@ -113,18 +113,24 @@ group('each act\'s facts round-trip a save', async () => {
   ];
 });
 
+// The beats are placeholder cutscenes now (actbeats.js), each taking its
+// seconds and its walk; a held skip hurries them, never cuts them.
+const hurryUntil = (fn, limit) => runUntil(() => { if (S.beat.camera) window.__skipBeat('camera'); return fn(); }, limit);
+
 group('an act\'s beats play behind its switch, each once', async () => {
   window.__actsOn(true, false);
+  window.__crew(2, 1);
   window.__actOwe('house-fall');
   window.__actOwe('descend');
-  run(1);
+  hurryUntil(() => actsDone().includes('refuse'), 200);
+  run(2);
   const afterOnly = actsDone();
   window.__actsOn(true);
   window.__actOwe('descend');
-  run(1);
+  hurryUntil(() => actsDone().includes('wall-first'), 400);
   const both = actsDone();
   window.__actOwe('house-fall');
-  run(1);
+  run(3);
   const again = actsDone();
   window.__actsOn(null);
   const keys = BEATS.map(r => r.key);

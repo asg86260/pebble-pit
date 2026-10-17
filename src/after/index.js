@@ -1,7 +1,6 @@
 // Act 3, the afterlife: its frame and its save (DESIGN.md, "Acts 3 and 4:
-// the afterlife and hell (design, not built)", act 3). The scaffold: the act's
-// state, the step the sim calls every frame (game.js, `STEPS`) and the saver;
-// every part it steps is a stub.
+// the afterlife and hell (design, not built)", act 3). The act's state, the
+// step the sim calls every frame (game.js, `STEPS`), the click, and the saver.
 //
 // Everything keeps running (call 1, the owner's, 2026-10-17): the afterlife is
 // stepped every frame whether or not the camera is up there, as the deep is,
@@ -13,22 +12,27 @@
 // else (DESIGN.md, "Rules and consequences to check", the save shape).
 
 import { S } from '../state.js';
-import { AFTER_STOCK } from '../config.js';
+import { AFTER_STOCK, AFTER_FENCE0, AFTER_START_BUILT } from '../config.js';
 import { afterlifeOn } from '../acts.js';
-import { stepFaith } from './faith.js';
-import { stepGrove } from './grove.js';
+import { stepFaith, hitCloud, forgetAir } from './faith.js';
+import { stepGrove, blankPlots } from './grove.js';
 import { stepMill } from './mill.js';
 import { stepPress } from './press.js';
-import { stepUnion } from './union.js';
+import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
+import { stepBodies } from './bodies.js';
+import { secs } from './util.js';
 
-// The act's facts, as the spec's save shape names them, each empty: faith
-// and ink; the chain's stock; each soul's inked rim pieces, a character a
-// soul (union.js); the volunteers by job; the grove's plots and each tree's
-// growth; the signs planted and posters pasted with their wear; the mill's
-// fence (null while call 13 is open); the camp's stations built and their
-// rungs; the gate reached. Souls in flight, loads in hands and the crowd's
-// draw are this session's and live on the modules, never here.
+// The act's facts, as the spec's save shape names them: faith and ink; the
+// chain's stock; each soul's inked rim pieces, a character a soul
+// (union.js); the volunteers by job; the grove's plots and each tree's
+// growth; the signs planted and posters pasted; the mill's fence; the camp's
+// stations built and their rungs; the gate reached. And what the loop added
+// to stand it up (track A): the act's clock (`t`) and its chance (`seed`),
+// the cloud hits and the axe, the clouds and the motes coming down, the
+// volunteers' bodies, the wardens, the throne's speech, when each station
+// went up, and the last id handed out. A puff's cells are this session's and
+// live on faith.js.
 export const blankAfter = () => ({
   faith: 0,
   ink: 0,
@@ -38,16 +42,36 @@ export const blankAfter = () => ({
   plots: [],
   signs: [],
   posters: [],
-  fence: null,
+  fence: AFTER_FENCE0,
   built: [],
   rungs: {},
-  gate: 0
+  gate: 0,
+  t: 0,
+  seed: 1,
+  clicks: 0,
+  axe: false,
+  clouds: [],
+  motes: [],
+  bodies: [],
+  wardens: [],
+  speech: null,
+  builtAt: {},
+  gateAt: null,
+  brimAt: null,
+  ids: 0
 });
 
-// The act begun: its facts stood up empty, once. The house's fall will call
-// this; until it is built only the dev travel does (`__goPlace`).
+// The act begun: its facts stood up, once -- the crowd in its files, the
+// old growth standing in the grove, the plate, the hall and the well on the
+// camp's patch. The house's fall will call this; until it is built only the
+// dev travel does (`__goPlace`).
 export function beginAfter() {
-  if (!S.after) S.after = blankAfter();
+  if (S.after) return S.after;
+  S.after = blankAfter();
+  S.after.seed = (S.tick * 2654435761) | 0 || 1;
+  S.after.plots = blankPlots();
+  S.after.built = [...AFTER_START_BUILT];
+  seedCrowd();
   return S.after;
 }
 
@@ -56,28 +80,44 @@ export function beginAfter() {
 let frames = 0;
 export const afterFrames = () => frames;
 
+// What the session keeps beside the act (the puffs' cells) belongs to
+// one `S.after`: a new game or a read save drops it.
+let seen = null;
+
 // One frame of the afterlife, called every frame with the act on, on screen
 // or not. Its parts in the order the place hands its work along: the sky's
-// clouds and faith, the grove, the mills, the workshop and the press, the
-// crowd, the gates.
+// clouds and faith, the grove, the volunteers at their work, the mills, the
+// workshop and the press, the crowd, the gates.
 export function stepAfter(c) {
   if (!afterlifeOn()) return;
   frames++;
   if (!S.after) return;
+  if (seen !== S.after) { forgetAir(); seen = S.after; }
+  S.after.t += secs(c);
   stepFaith(c);
   stepGrove(c);
+  stepBodies(c);
   stepMill(c);
   stepPress(c);
   stepUnion(c);
   stepStrike(c);
 }
 
+// A click on the place, in world pixels: true if it was the afterlife's (a
+// cloud puffed, or with the axe a tree chopped). Track C's input.js calls
+// it with the camera up here.
+export function clickAfter(wx, wy) {
+  if (!afterlifeOn() || !S.after) return false;
+  return hitCloud(wx, wy);
+}
+
 // The save (persist.js, `SAVERS`): written whole, null before the act
 // begins, and read over a blank so a save from before a field was added
-// comes back with that field empty rather than missing.
+// comes back with that field empty rather than missing. The crowd's rims are
+// brought up to the field first (union.js keeps them as bytes between).
 export const SAVE = {
   fields: ['after'],
-  write(out) { out.after = S.after ? JSON.parse(JSON.stringify(S.after)) : null; },
+  write(out) { if (S.after) syncRims(); out.after = S.after ? JSON.parse(JSON.stringify(S.after)) : null; },
   read(s) {
     const a = s.after;
     S.after = a && typeof a === 'object' ? { ...blankAfter(), ...a, stock: { ...blankAfter().stock, ...(a.stock || {}) } } : null;

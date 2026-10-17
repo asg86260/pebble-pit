@@ -80,6 +80,9 @@ export const STEPS = [
 // before it falls, before the bench offers the place: the goal shows with its
 // bill and a dimmed buy (the owner, 2026-10-10), so the card is never empty
 // between one barrier and the next.
+// The acts' own steps: the ones the card shows in their places (objline.js).
+export const ACT_STEPS = new Set(['goon', 'union', 'road', 'hell', 'cage', 'home']);
+
 export function objective() {
   // the demo's line ends with the net; its last sheet says the rest
   const cut = demoOn() ? PAST_DEMO : [];

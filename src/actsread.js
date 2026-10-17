@@ -1,24 +1,22 @@
 // What the readouts show in the acts' places (render/counter.js): each
-// place's own purse, the yard's coins being below. Each act's track says its
-// own lines when it exports them (`afterCount` in after/index.js, `hellCount`
-// in hell/index.js, each a list of `{ n }` in the order its card reads);
-// until then the scaffold's facts stand in: faith and ink up there,
-// brimstone and the dust carried down in hell. Placeholder marks, every one.
+// place's own purse, the yard's coins being below. Read off each act's own
+// purse (after/rows.js `afterPurse`, hell/coins.js `hellPurse`): faith, then
+// ink once there is any, up there; brimstone, then the bars once there are
+// any, down in hell, and the dust the ghosts have carried down. Placeholder
+// marks on the card, every one, until the coins are drawn.
 
 import { S } from './state.js';
-import * as AFTER from './after/index.js';
-import * as HELL from './hell/index.js';
+import { afterPurse } from './after/rows.js';
+import { hellPurse, HELL_COINS } from './hell/coins.js';
 
 export function actsCount(place) {
   if (place === 'after') {
-    if (typeof AFTER.afterCount === 'function') return AFTER.afterCount();
-    const a = S.after;
-    if (!a) return [{ n: 0 }];
-    return a.ink > 0 ? [{ n: a.faith || 0 }, { n: a.ink }] : [{ n: a.faith || 0 }];
+    const out = [{ n: afterPurse('faith') }];
+    if (afterPurse('ink') > 0) out.push({ n: afterPurse('ink') });
+    return out;
   }
-  if (typeof HELL.hellCount === 'function') return HELL.hellCount();
-  const h = S.hell, carried = (S.acts && S.acts.purse) || 0;
-  const out = [{ n: h ? h.brimstone || 0 : 0 }];
+  const out = HELL_COINS.map(c => ({ n: hellPurse(c) })).filter((l, i) => i === 0 || l.n > 0);
+  const carried = (S.acts && S.acts.purse) || 0;
   if (carried > 0) out.push({ n: carried });
   return out;
 }

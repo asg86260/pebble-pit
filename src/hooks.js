@@ -644,6 +644,8 @@ const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES,
                         ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                         ...APOTHECARY_UPGRADES,
                         ...(deepRows.DEEP_UPGRADES || []),
+                        // Act 4's boards (upgrades/rows-hell.js), shown once hell has begun.
+                        ...HELL_UPGRADES,
                         // On the crew board, not the bench.
                         HOUSE_ROW];
 
@@ -1429,6 +1431,92 @@ HANDLES.__actsAt = (point, pieces = 0) => {
   for (let i = 0; i < Math.min(pieces, all.length); i++) a.mansion.set[i] = -MANSION_FADE_S;
   return a;
 };
+
+// --- act 4: the mine and the forge (hell/; DESIGN.md, "Acts 3 and 4", act 4) ---
+// The setup a check is not about: hell begun and its facts patched -- a count
+// by ore or a chamber's record merged, anything else set. Returns `S.hell`.
+// What a check IS about goes through `__clickHell` and `__buy`.
+import { HELL_UPGRADES } from './upgrades/rows-hell.js';
+import { clickHell, hellWallDue } from './hell/index.js';
+import { flareWarning } from './hell/chambers.js';
+import { faceX as hellFaceX, faceTop as hellFaceTop, barrierBox as hellBarrierBox } from './hell/place.js';
+HANDLES.__hell = (patch = {}) => {
+  if (!hellOn()) return null;
+  const h = beginHell();
+  for (const [k, v] of Object.entries(patch)) {
+    if (Array.isArray(h[k]) && v && typeof v === 'object' && !Array.isArray(v))
+      for (const [i, rec] of Object.entries(v)) {
+        if (!rec || typeof rec !== 'object') { h[k][i] = rec; continue; }
+        const was = h[k][i];
+        for (const [f, fv] of Object.entries(rec))
+          was[f] = fv && typeof fv === 'object' && was[f] && typeof was[f] === 'object' ? { ...was[f], ...fv } : fv;
+      }
+    else if (h[k] && typeof h[k] === 'object' && !Array.isArray(h[k]) && v && typeof v === 'object') Object.assign(h[k], v);
+    else h[k] = v;
+  }
+  S.shopStale = true;
+  return h;
+};
+// A click in hell at a world point, the pointer's way in (input.js calls
+// `clickHell` the same, once it is wired).
+HANDLES.__clickHell = (x, y) => clickHell(x, y);
+// The story's seams, read: the barrier whose fall is owed, and a chamber's
+// flare warning.
+HANDLES.__hellWallDue = () => hellWallDue();
+HANDLES.__hellFlareWarning = i => flareWarning(i);
+// Where to click on face `i` or barrier `i`, in world pixels.
+HANDLES.__hellAt = (what, i) => {
+  if (what === 'face') { const d = S.hell?.seams[i] || 0; return { x: hellFaceX(i, d) + 1, y: hellFaceTop(i) + 2 }; }
+  const b = hellBarrierBox(i);
+  return { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+};
+// --- act 3's loop (after/; track A) ---
+// The click as a player makes it, in world pixels; the act's rows bought
+// through `__buy` as any row is (its coins are the act's, so `__buy` hands an
+// act-3 key to `buyAfter`); and the setup a check is not about: coins
+// granted, the crowd's rims set, where the clouds and trees stand.
+import { clickAfter } from './after/index.js';
+import { afterRow, buyAfter, setAfterDial, AFTER_ROWS, afterBill, afterMaxed, cardAt } from './after/rows.js';
+import { setCrowd, support as afterSupport, union as afterUnion, members as afterMembers, crowdSize } from './after/union.js';
+import { cloudW, cloudH } from './after/faith.js';
+import { plotX, afterFloor } from './after/place.js';
+import { afterGate, strikeDue } from './after/strike.js';
+HANDLES.__afterClick = (x, y) => clickAfter(x, y);
+{
+  const yardBuy = HANDLES.__buy;
+  HANDLES.__buy = key => (afterRow(key) ? buyAfter(key) : yardBuy(key));
+}
+HANDLES.__afterDial = (key, v) => setAfterDial(key, v);
+HANDLES.__afterGrant = (coins = {}) => {
+  const a = S.after;
+  if (!a) return null;
+  for (const [c, n] of Object.entries(coins)) {
+    if (c === 'faith' || c === 'ink') a[c] += n; else a.stock[c] = (a.stock[c] || 0) + n;
+  }
+  return { faith: a.faith, ink: a.ink, ...a.stock };
+};
+// Every soul's rim by `fn(i, v)`, or with a number, that share of the crowd
+// made members from the front back.
+HANDLES.__afterCrowd = fn => {
+  if (!S.after) return null;
+  if (typeof fn === 'number') { const n = Math.floor(crowdSize() * fn); setCrowd((i, v) => (i < n ? 8 : v)); }
+  else setCrowd(fn);
+  return { support: afterSupport(), union: afterUnion(), members: afterMembers(), size: crowdSize() };
+};
+// Where to click: each cloud's middle and kind, each plot's trunk.
+HANDLES.__afterClouds = () => (S.after ? S.after.clouds.filter(c => c.die == null)
+  .map(c => ({ id: c.id, kind: c.kind, size: c.size, x: c.x + cloudW(c) / 2, y: c.y + cloudH(c) / 2 })) : []);
+HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage: p.stage, logs: p.logs, falling: p.fall != null,
+  x: plotX(i) + P / 2, y: afterFloor() - P * 5 })) : []);
+HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, shown: !!S.after && u.show(),
+  bill: afterBill(u), rung: u.rung ? u.rung() : 0, done: afterMaxed(u) }));
+HANDLES.__afterRead = () => (S.after ? { faith: S.after.faith, ink: S.after.ink, ...S.after.stock, gate: S.after.gate,
+  axe: S.after.axe, clicks: S.after.clicks, support: afterSupport(), union: afterUnion(), members: afterMembers(),
+  size: crowdSize(), signs: S.after.signs.length, posters: S.after.posters.length, bodies: S.after.bodies.length,
+  due: afterGate(), strike: strikeDue() } : null);
+HANDLES.__afterCardAt = (x, y) => cardAt(x, y);
+// The axe in hand without the cloud hits that earn it: a scene's setup.
+HANDLES.__afterAxe = () => { if (S.after) S.after.axe = true; return !!S.after?.axe; };
 
 // --- the two of them (wardrobe.js) ---
 // Who they are and what they wear, read for a check: each one's uid, the

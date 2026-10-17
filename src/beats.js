@@ -277,11 +277,15 @@ export const SAVE = {
     // partway through it does not write the yard's beat down, so the beats
     // it had played come off the set and the story starts over from its
     // first.
+    // A chain of camera beats (the acts') is told on from the camera beat the
+    // save names, so the beats before it in that chain stay played.
+    const cam = typeof s.beat?.camera === 'string' ? s.beat.camera : null;
     const done = new Set(S.beatsDone);
     for (const row of BEATS) {
       let end = row;
-      while (end.next) end = BEATS.find(r => r.key === end.next);
-      if (end !== row && !done.has(end.key)) done.delete(row.key);
+      const keys = [row.key];
+      while (end.next) { end = BEATS.find(r => r.key === end.next); keys.push(end.key); }
+      if (end !== row && !done.has(end.key) && !(cam && keys.indexOf(cam) > 0)) done.delete(row.key);
     }
     S.beatsDone = [...done];
     // A scene the last sitting closed the tab on is the running camera beat,
