@@ -55,6 +55,9 @@ export * from './config/roomba.js';
 export * from './config/classes.js';
 export * from './config/glimpse.js';
 export * from './config/riftlife.js';
+// Acts 3 and 4, the scaffold (DESIGN.md, "Acts 3 and 4").
+export * from './config/after.js';
+export * from './config/hell.js';
 
 // --- turning the knobs ------------------------------------------------------
 // One dial, one row, one home.

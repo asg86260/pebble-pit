@@ -28,6 +28,8 @@ import { SAVE as CASINO } from './casino.js';
 import { SAVE as INTRO } from './intro.js';
 import { SAVE as PAIR } from './wardrobe.js';
 import { SAVE as BEATS } from './beats.js';
+import { SAVE as AFTER } from './after/index.js';
+import { SAVE as HELL } from './hell/index.js';
 import { SAVE as ABYSS } from './abyssintro.js';
 import { SAVE as ROCK } from './rock.js';
 import { setPitGrain, SAVE as PIT } from './pit.js';
@@ -498,6 +500,10 @@ export const SAVERS = [
   // The finale after the crew and the beats: a reload mid-finale takes her
   // off the crew read back and marks the kill and the finale played.
   FINALE,
+  // Acts 3 and 4: plain facts of their own, read whole; nothing earlier
+  // reads them and nothing later is placed off them.
+  AFTER,
+  HELL,
   // The cut after `resetCut`, which reads the depth the quarry put back.
   CUT,
   // The opening's pair are stood at the door after everything else is

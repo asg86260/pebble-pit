@@ -62,7 +62,8 @@ const settingsTab = t => {
 export const ABOUT = [
   'the story', 'the rock', 'the crew', 'the bench', 'the cut', 'the plots',
   'the apothecary', 'the kit', 'the house and the sky', 'the tower',
-  'the casino', 'the pit and the rift', 'the shields', 'the endgame', 'the deep'
+  'the casino', 'the pit and the rift', 'the shields', 'the endgame', 'the deep',
+  'the acts'
 ];
 
 const st = () => window.__state();
@@ -2617,7 +2618,16 @@ export const SCENES = {
                  padTo(window.__pad.stops().find(s => s.startsWith('st:') && s !== 'st:crusher' && s !== 'st:pods'));
                  window.__pad.press('up'); } },
 
-  ...deepScenes
+  ...deepScenes,
+
+  // --- the acts (acts.js; DESIGN.md, "Acts 3 and 4") ---------------------------
+  // Each act's place stood up empty: the scaffold's placeholder backdrop, the
+  // act's facts blank, the yard and the deep running on underneath. The
+  // switches handed back to the build, which in a dev build stands both.
+  'after-empty': { about: 'the acts', say: 'the afterlife, empty: the placeholder cloud floor, nothing built on it',
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); } },
+  'hell-empty': { about: 'the acts', say: 'hell, empty: the placeholder black hollow and its floor, nothing built in it',
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('hell'); window.__fast(1); } }
 };
 
 // Wake the checks' pad and hop it along the stops until it is on `id` (or,

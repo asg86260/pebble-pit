@@ -141,6 +141,15 @@ line('serpent', box => {
   button(box, 'full health', () => window.__serpent({ wound: 0 }));
 });
 
+line('acts', box => {
+  // Acts 3 and 4's places, straight there: the only way in until each act's
+  // road is built (acts.js). A dev build stands both acts whatever the
+  // release switches say.
+  button(box, 'afterlife', () => window.__goPlace('after'));
+  button(box, 'hell', () => window.__goPlace('hell'));
+  button(box, 'yard', () => window.__view('yard'));
+});
+
 line('run on', box => {
   for (const s of [1, 5, 30]) button(box, `${s}s`, () => window.__fast(s));
 });

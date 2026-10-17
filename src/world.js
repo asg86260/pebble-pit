@@ -28,6 +28,7 @@ import { DOME_RINGS } from './config.js';
 import { JOB } from './jobs.js';
 import { reducedMotion, coarse } from './prefs.js';
 import { deepX0, deepX1, deepFloor } from './deep/place.js';
+import { actPlace } from './acts.js';
 import { frameHeight } from './cutscene.js';
 
 const canvas = document.getElementById('c');
@@ -738,7 +739,8 @@ function writeScroll() {
   if (!scroller) return;
   // In the deep the scroller spans the deep as well: it is laid out off the
   // pit's lip, not its length, and runs on past the yard's far end.
-  const w = Math.round((S.view === 'deep' ? Math.max(S.worldW, deepX1()) : S.worldW) * S.zoom);
+  const pl = actPlace(S.view);
+  const w = Math.round((S.view === 'deep' ? Math.max(S.worldW, deepX1()) : pl ? Math.max(S.worldW, pl.x1()) : S.worldW) * S.zoom);
   if (w !== spacerW) { spacerW = w; spacer.style.width = `${w}px`; }
   const left = S.camX * S.zoom;
   if (left === wroteLeft) return;
@@ -842,6 +844,16 @@ export function clampCam() {
     writeScroll();
     return;
   }
+  // In an act's place (acts.js) the same, held to that place's width with its
+  // floor on the window's foot, up off it by the place's own margin.
+  const pl = actPlace(S.view);
+  if (pl) {
+    const x0 = pl.x0();
+    S.camX = Math.max(x0, Math.min(S.camX, Math.max(x0, pl.x1() - S.viewW)));
+    S.camY = frameHeight(S.camLockY != null ? S.camLockY : pl.floor() + pl.margin - S.viewH);
+    writeScroll();
+    return;
+  }
   S.camX = Math.max(0, Math.min(S.camX, Math.max(0, S.worldW - S.viewW)));
   // The bottom of the world sits on the bottom of the window, always, except
   // when a scene locks the height: pulled in close, half as much world
@@ -887,6 +899,7 @@ export function stepShake() {
   // Every knock is the yard's, and the deep is under the abyss: looked at
   // from down there it goes on ringing out unfelt, so a view gone back up
   // mid-shake finds the yard still rocking.
-  if (S.view === 'deep') { S.shakeX = 0; S.shakeY = 0; }
+  // The acts' places are further off still.
+  if (S.view !== 'yard') { S.shakeX = 0; S.shakeY = 0; }
 }
 

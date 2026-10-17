@@ -95,7 +95,20 @@
    "stock count",
    "pot labels",
    "serpent bar",
-   "build button"
+   "build button",
+   "after backdrop",
+   "after stair",
+   "after yard",
+   "after grove",
+   "after camp",
+   "after crowd",
+   "after sky",
+   "hell backdrop",
+   "hell chambers",
+   "hell seams",
+   "hell forge",
+   "hell barriers",
+   "hell cage"
   ],
   "src/render/fish.js": [
    "Lantern angler",

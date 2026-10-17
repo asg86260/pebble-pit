@@ -49,6 +49,7 @@ import { sayStore, showPane, pane } from './settings.js';
 import { isTap } from './tap.js';   // one definition of a tap for the whole page
 import { reducedMotion } from './prefs.js';
 import { goDeep, goUp, gliding } from './view.js';
+import { isActView } from './acts.js';
 import { onShaftArrow } from './render/shaftway.js';
 import { onPortal } from './render/portal.js';
 import { clickDeep, onOrb } from './deep/serpent.js';
@@ -183,6 +184,10 @@ canvas.addEventListener('pointerdown', e => {
   // and in the deep a click is the serpent's first, the way one in the yard
   // is the rock's, and only the ordinary handling's if it missed the coil.
   if (gliding()) return;
+  // The acts' places take no click yet: a click up there will be a cloud or a
+  // tree's (after/faith.js), down in hell a seam's (hell/ore.js), and nothing
+  // of the yard's stands in either.
+  if (isActView(S.view)) return;
   if (onShaftArrow(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }
   if (onPortal(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }
   if (S.view === 'deep' && clickDeep(p.x, p.y)) return;

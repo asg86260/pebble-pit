@@ -13,6 +13,13 @@
 //
 // The deep fills the window: water from the top edge to its floor, the
 // roster in the band under that, and no surface or sky over it.
+//
+// Acts 3 and 4 add two places (acts.js, `PLACES`): the afterlife above the
+// yard's sky and hell under the deep's floor, each framed by its own camera
+// the way the deep is, its floor on the foot of the window. The way into
+// each is a road the acts have not built (DESIGN.md, "Back to the surface,
+// dead": a glide down the cloud stair, the deep's floor opening), so for now
+// the only way there is a straight cut for scenes and checks (`goPlace`).
 
 import { S } from './state.js';
 import { CELL, P, VIEW_GLIDE_S, SHAFT_HAND_FADE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM } from './config.js';
@@ -21,6 +28,7 @@ import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor, deepTop }
 import { reducedMotion } from './prefs.js';
 import { dropLift } from './cutscene.js';
 import { smoothstep as ease } from './motion.js';
+import { actPlace, placeOpen, isActView } from './acts.js';
 
 export const inDeep = () => S.view === 'deep';
 // A glide is running: the pointer waits for it.
@@ -61,12 +69,21 @@ export function letGoDeepFrame() {
   held = null; killIn = 0; killY = null; shot = null;
   if (S.view === 'deep' && !gliding()) setZoom(deepZoom());
 }
-const zoomOf = v => (v === 'deep' ? deepZoom() : 1);
+// An act's place (acts.js): the yard's zoom, or less if the window is too
+// short to hold the place from its top to its floor and the floor's margin
+// -- the deep's fit, without the deep's holds, which no act has yet.
+function placeZoom(v) {
+  const pl = actPlace(v);
+  const fit = Math.min(1, S.H / ((pl.h + pl.margin) * CELL / P)) * (CELL / yardCell());
+  const unit = yardCell() * S.dpr;
+  return Math.max(1, Math.floor(unit * fit)) / unit;
+}
+const zoomOf = v => (v === 'deep' ? deepZoom() : isActView(v) ? placeZoom(v) : 1);
 
 // Where each half is looked at from: the floor of the deep on the bottom of
 // the window (world.js, `clampCam`), and in the yard the pit floor there as
 // always. Across, each opens on its own end of the portal.
-const openX = v => (v === 'deep' ? deepPortal().x : portalX());
+const openX = v => (v === 'deep' ? deepPortal().x : isActView(v) ? actPlace(v).open() : portalX());
 function frameOn(v) {
   S.view = v;
   S.camLockY = null;
@@ -91,6 +108,18 @@ export function deepCamera() {
 // The deep's columns the glass spans, in world pixels: the camera's own view
 // while the deep is on screen, else the view it rests at on the way down
 // (the meal's newcomers swim in from just off it, deep/meals.js).
+// An act's camera as numbers, the same way (`deepCamera`): the framing
+// `frameOn(v)` makes, worked out without making it, for whatever draws the
+// place while another place's camera stands (a glide, once one is built).
+export function placeCamera(v) {
+  const pl = actPlace(v);
+  const zoom = yardZoom() * placeZoom(v);
+  const viewW = S.W / zoom, viewH = S.H / zoom;
+  const x0 = pl.x0();
+  const camX = Math.max(x0, Math.min(pl.open() - viewW / 2, Math.max(x0, pl.x1() - viewW)));
+  return { zoom, viewW, viewH, camX, camY: pl.floor() + pl.margin - viewH };
+}
+
 export function deepGlass() {
   if (S.view === 'deep' && !gliding()) return { x0: S.camX, x1: S.camX + S.viewW };
   const c = deepCamera();
@@ -175,7 +204,7 @@ export const canGoDown = () => !!S.portalOpen;
 let yardCam = null;
 const keepYard = () => { yardCam = { x: S.camX, y: S.camY, w: S.viewW, h: S.viewH }; };
 export function skyCam() {
-  if (S.view !== 'deep') return { x: S.camX, y: S.camY, w: S.viewW, h: S.viewH };
+  if (S.view === 'yard') return { x: S.camX, y: S.camY, w: S.viewW, h: S.viewH };
   if (yardCam) return yardCam;
   const z = yardZoom(), w = S.W / z, h = S.H / z;
   return { x: Math.max(0, portalX() - w / 2), y: S.worldH - h, w, h };
@@ -208,13 +237,24 @@ function start(v) {
 export const goDeep = () => start('deep');
 export const goUp = () => start('yard');
 
-// Straight there, for scenes and checks (`__view`).
+// Straight there, for scenes and checks (`__view`). An act's place only with
+// its act on; anything else is the yard.
 export function setView(v) {
   posed = false;
-  if (S.view === 'yard' && v === 'deep' && !gliding()) keepYard();
+  const to = v === 'deep' || (isActView(v) && placeOpen(v)) ? v : 'yard';
+  if (S.view === 'yard' && to !== 'yard' && !gliding()) keepYard();
   S.viewTo = null;
   S.viewFade = 0;
-  frameOn(v === 'deep' ? 'deep' : 'yard');
+  frameOn(to);
+}
+
+// Into an act's place, straight there (the dev panel's buttons, `__goPlace`):
+// the road in is the act's to build. Refused with the act off or a glide
+// under way; the view it ends on, either way.
+export function goPlace(v) {
+  if (!isActView(v) || !placeOpen(v) || gliding()) return S.view;
+  setView(v);
+  return S.view;
 }
 
 
@@ -224,8 +264,18 @@ export function stepView(c) {
   if (shot && !S.shot) shot = null;
   if (gliding()) { glide(c.dt); return; }
   if (S.portalRound && S.portalHand > 0) S.portalHand = Math.max(0, S.portalHand - c.dt / (SHAFT_HAND_FADE_S * 1000));
-  // A save left in the deep from before the portal comes back to the yard.
+  // A save left in the deep from before the portal comes back to the yard,
+  // and one left in an act's place by a build with that act on, read by one
+  // with it off.
   if (S.view === 'deep' && !canGoDown()) { setView('yard'); return; }
+  if (isActView(S.view)) {
+    if (!placeOpen(S.view)) { setView('yard'); return; }
+    // Held every frame, as the deep's is: a resize lets go of it.
+    const z = placeZoom(S.view);
+    if (S.zoom !== z * yardZoom()) setZoom(z);
+    clampCam();
+    return;
+  }
   // Held every frame, since a resize or a scene's zoom lets go of it.
   if (S.view !== 'deep') return;
   if (shot) { frameShot(); return; }

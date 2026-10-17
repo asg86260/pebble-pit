@@ -62,6 +62,8 @@ import { drawLevelUpBack, drawLevelUpFront } from './render/levelup.js';   // tr
 import { drawSinking, drawLifting, drawIntoCrusher } from './render/scales.js';
 import { drawFireworks, drawHungKits, drawFinaleDeep, drawFinaleYard } from './render/finale.js';
 import { drawHome } from './render/home.js';
+import { drawAfterBackdrop, drawAfterStair, drawAfterYard, drawAfterGrove, drawAfterCamp, drawAfterCrowd, drawAfterSky } from './render/after.js';
+import { drawHellBackdrop, drawHellChambers, drawHellSeams, drawHellForge, drawHellBarriers, drawHellCage } from './render/hell.js';
 import { S } from './state.js';
 import { recede, frontLayers } from './cutscene.js';
 import { wash, setPass, backInk, byInk, hudInk, drawLetterbox } from './render/recede.js';
@@ -194,6 +196,23 @@ const LAYERS = [
   { name: 'garage', draw: drawGarage },           // where the forklifts go when there is nothing to fetch
   { name: 'home', draw: drawHome },               // the two of them's house at the left end, and its woodpile (render/home.js)
   { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
+  // Act 3's afterlife (render/after.js), drawn only with the camera up there:
+  // the backdrop, then the place back to front. The order past the backdrop
+  // is a first guess, to be settled with the mocks.
+  { name: 'after backdrop', draw: drawAfterBackdrop },
+  { name: 'after stair', draw: drawAfterStair },
+  { name: 'after yard', draw: drawAfterYard },
+  { name: 'after grove', draw: drawAfterGrove },
+  { name: 'after camp', draw: drawAfterCamp },
+  { name: 'after crowd', draw: drawAfterCrowd },
+  { name: 'after sky', draw: drawAfterSky },
+  // Act 4's hell (render/hell.js), the same: drawn only with the camera down there.
+  { name: 'hell backdrop', draw: drawHellBackdrop },
+  { name: 'hell chambers', draw: drawHellChambers },
+  { name: 'hell seams', draw: drawHellSeams },
+  { name: 'hell forge', draw: drawHellForge },
+  { name: 'hell barriers', draw: drawHellBarriers },
+  { name: 'hell cage', draw: drawHellCage },
   // The deep (render/deep.js), back to front, drawn only while the camera is
   // down there: the roof and the underside of the surface, the water, the
   // floor, the scales lying on it and its stations, then the serpent and
@@ -306,7 +325,7 @@ const LAYERS = [
 
   // A strike's instant, a dark pane over the finished frame. In screen pixels
   // it would be shared with the deep, which is under water and has no sky.
-  { name: 'flash', draw: drawFlash, when: () => S.view !== 'deep' },
+  { name: 'flash', draw: drawFlash, when: () => S.view === 'yard' },
 
   { name: 'press', draw: pressFrame },           // and then the filter, over the finished frame
 ];
@@ -347,10 +366,22 @@ const DEEP = new Set(['deep zones', 'deep water', 'deep fauna', 'deep motes', 'd
 // does, so they are drawn in both halves, each cut to its own (`PINNED`).
 const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'roster', 'says', 'held', 'pointed', 'cursor',
                       'work bars', 'build sites', 'done marks', 'pile marks', 'pad focus']);
+// The acts' places (acts.js), each with only its own layers: none of the
+// yard's or the deep's world is anywhere near them.
+const AFTER = new Set(['after backdrop', 'after stair', 'after yard', 'after grove', 'after camp', 'after crowd', 'after sky']);
+const HELL = new Set(['hell backdrop', 'hell chambers', 'hell seams', 'hell forge', 'hell barriers', 'hell cage']);
+const placeOf = name => (DEEP.has(name) ? 'deep' : AFTER.has(name) ? 'after' : HELL.has(name) ? 'hell' : 'yard');
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
 const shared = (layer, i) => BOTH.has(layer.name) || i > SCREEN_FROM;
-const inHalf = (layer, i, deep) =>
-  shared(layer, i) || (deep ? DEEP.has(layer.name) : !DEEP.has(layer.name));
+const actPlace = place => place === 'after' || place === 'hell';
+// A layer is in a place's picture if it is its own, or shared: in an act's
+// place, only the shared layers pinned to the window or in screen pixels --
+// the marks the yard and the deep share stand over things in those two.
+const inHalf = (layer, i, place) => {
+  if (!shared(layer, i)) return placeOf(layer.name) === place;
+  if (!actPlace(place)) return true;
+  return PINNED.has(layer.name) || i > SCREEN_FROM;
+};
 // Of the shared layers, the ones pinned to the window rather than standing
 // over something in the world: the spaces, the pointer, the counter and the
 // frame's own finish. Every other shared layer is cut at the shaft's middle
@@ -365,21 +396,21 @@ const halfLine = () => (S.worldH + deepTop()) / 2;
 // One half, every layer that belongs to it, with whatever camera is standing.
 // While a scene holds the yard the layers it is about are held back from the
 // first pass and painted after the wash (`recede`), in their own order.
-function drawHalf(deep) {
+function drawHalf(place) {
   const held = recede() > 0;
   const front = held ? frontLayers() : null;
   const later = [];
   for (let i = 0; i < LAYERS.length; i++) {
     const layer = LAYERS[i];
-    if (!inHalf(layer, i, deep)) continue;
+    if (!inHalf(layer, i, place)) continue;
     if (picture && READING.has(layer.name)) continue;
     if (layer.when && !layer.when()) continue;
     if (held && (front.has(layer.name) || MIXED.has(layer.name))) later.push(i);
     if (held && front.has(layer.name)) continue;
     if (held && layer.name === 'recede') {
-      drawLayer(layer, i, deep);
+      drawLayer(layer, i, place);
       setPass('front');
-      for (const j of later) drawLayer(LAYERS[j], j, deep);
+      for (const j of later) drawLayer(LAYERS[j], j, place);
       setPass('back');
       continue;
     }
@@ -387,12 +418,12 @@ function drawHalf(deep) {
               : AFTER_WASH.has(layer.name) ? backInk() : 1;
     if (ink <= 0) continue;
     if (ink < 1) ctx.globalAlpha = ink;
-    drawLayer(layer, i, deep);
+    drawLayer(layer, i, place);
     if (ink < 1) ctx.globalAlpha = 1;
   }
 }
 
-function drawLayer(layer, i, deep) {
+function drawLayer(layer, i, place) {
   // A `dim` layer is the crew's own plane, and the corner's crew switch
   // takes ink out of it, or takes it out of the picture, so the buildings
   // behind a late yard's crowd can be read (prefs.js, `crewView`). Only the
@@ -401,8 +432,10 @@ function drawLayer(layer, i, deep) {
   const view = layer.dim ? crewView() : 'show';
   if (view === 'hide') return;
   const faint = view === 'fade';
-  const cut = shared(layer, i) && !PINNED.has(layer.name);
-  if (cut) clipToHalf(deep, halfLine());
+  // Cut at the shaft's middle in the yard and the deep; an act's place draws
+  // none of the layers the cut is for (`inHalf`).
+  const cut = shared(layer, i) && !PINNED.has(layer.name) && !actPlace(place);
+  if (cut) clipToHalf(place === 'deep', halfLine());
   const was = ctx.globalAlpha;
   if (faint) ctx.globalAlpha = was * CREW_FADE;
   layer.draw();
@@ -417,13 +450,13 @@ function drawLayer(layer, i, deep) {
 // both. With no glide, the ripple is readied while the page is idle -- not on
 // the landing page's picture, which never goes down.
 export function draw() {
-  drawHalf(S.view === 'deep');
+  drawHalf(S.view);
   const rip = ripple();
   if (!rip) { if (!picture) warmRipple(canWarm, drawDeepUnseen); return; }
   if (rip.r <= 0) return;
   // The yard's knock is the yard's (world.js, `stepShake`): the deep through
   // the ripple holds still while the yard around it rocks.
-  asDeep(() => drawThrough(rip, S.dpr, () => drawHalf(true)));
+  asDeep(() => drawThrough(rip, S.dpr, () => drawHalf('deep')));
   drawRipples(rip);
 }
 
