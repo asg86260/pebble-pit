@@ -942,6 +942,19 @@ export const TESTS = [
         page.openWardrobe();
         await paint(3);
         const all = await walk('page', ['you', 'sqouse']);
+        // the appearance sheet is its own, wider and held to a landscape's
+        // height whatever the window (the owner, 2026-10-17); a phone keeps
+        // the width and height every sheet has
+        {
+          const r = sheet.getBoundingClientRect(), fs = parseFloat(win.getComputedStyle(sheet).fontSize);
+          const em = name => parseFloat(win.getComputedStyle(d.documentElement).getPropertyValue(name)) * fs;
+          const desk = w > 560, edges = 2 * 14 + 2;      // the sheet's padding and border
+          checks.push(ok(desk ? Math.abs(r.width - (em('--ward-sheet-w') + 2 * 24 + 2)) <= 2 && r.width > em('--held-w') + 2 * 24 + 2
+                              : r.width <= w,
+                         `${size}: the sheet is the appearance sheet's width (wider than every other page's on a desk)`, `${Math.round(r.width)}px`));
+          checks.push(ok(!desk || r.height <= em('--ward-sheet-h') + edges + 2 || r.height <= h,
+                         `${size}: the sheet is no taller than the appearance sheet's own height`, `${Math.round(r.height)}px of a ${h}px window`));
+        }
         // the slots' names whole, in the longest names: never wider than the
         // button, never taller than the room kept for them
         const slotCut = [...d.querySelectorAll('.wardslot:not(.wardprobe)')].flatMap(b => [...b.querySelectorAll('.wardsk, .wardsw')])

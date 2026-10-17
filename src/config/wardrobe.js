@@ -51,8 +51,8 @@ export const WARD_TILE_W = 36;
 export const WARD_TILE_H = 50;
 export const WARD_TILE_K = 2;
 export const WARD_TILE_FOOT = 5;
-// Tiles to a row of the grid on a desk; a phone fits what it fits (style.css).
-export const WARD_TILE_COLS = 4;
+// Tiles to a row of the grid on a desk (five since the appearance sheet went wider, 2026-10-17); a phone fits what it fits (style.css).
+export const WARD_TILE_COLS = 5;
 // How strong a locked item is drawn on the close-up while it is tried on.
 export const WARD_TRY_ALPHA = 0.35;
 // The fewest rows of tiles the grid gives way to on a short window, before

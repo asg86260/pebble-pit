@@ -80,6 +80,10 @@ html, body {
   --gap-s: 4px; --gap-m: 8px;
   /* The held sheet's width (its content box): every page turns at it. */
   --held-w: 36em;
+  /* The appearance page's sheet only (the owner, 2026-10-17): wider than the
+     rest and held to a landscape's height, the grid scrolling inside it. */
+  --ward-sheet-w: 46em;
+  --ward-sheet-h: 56em;
   /* The page's spacing, written once so a new element inherits it rather than
      guessing its own. Every element pinned to an edge or a corner of the
      glass stands --edge in from it (plus the safe area); things stacked
@@ -1406,6 +1410,15 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    way at all: their least heights are measured too, and past them it is the
    sheet that scrolls, as on every page. */
 .held .wardrobe { min-height: var(--ward-min, auto); }
+/* The sheet that holds the page: wider, and no taller than a landscape's
+   worth, whatever the window (the measured least, `--ward-min`, still wins
+   where the content needs more). A phone keeps the sheet it has. */
+@media (min-width: 561px) {
+  .held:has(> .wardrobe:not([hidden])) {
+    width: var(--ward-sheet-w);
+    max-height: min(var(--ward-sheet-h), calc(100vh - 2 * var(--edge) - 2 * var(--pad-l-y) - 2px));
+  }
+}
 .wardrobe > *, .wardrobe .wardbox > * { flex-shrink: 0; }
 .wardrobe > .wardbox { flex-shrink: 1; min-height: var(--box-min, auto); }
 .wardrobe .wardbox > .wardgrids {
