@@ -3208,17 +3208,14 @@ ward-slot-aura = aura
 # the picker's slot tabs: how many of a slot's items are open to wear, of all of them
 ward-slot-open = { $open }/{ $all }
 
-# the heading over the picker's grid of items, and the line under it for the item under the pointer: $slot the slot, $item its item
+# the heading over the picker's grid of items: $slot the slot, $item its item
 ward-grid-head = { $slot }: { $item }
 
 # beside the heading over the picker's grid: how many of the slot's items are open to wear
 ward-grid-open = { $open } of { $all } open
 
-# a locked item in the picker's grid, on its hover: $item the item, $lock what opens it
+# a locked item in the picker's grid, in the tooltip on its hover and focus: $item the item, $lock what opens it
 ward-locked = { $item }: { $lock }
-
-# under the picker's grid while a locked item is tried on the close-up: $item the item; it is not kept
-ward-trying = trying on { $item }: not kept
 
 # an item on the picker, under its tile in the slot's grid; a plain label
 ward-none = none

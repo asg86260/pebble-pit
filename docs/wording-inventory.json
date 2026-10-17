@@ -7010,7 +7010,7 @@
   "id": "ward-grid-head",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobepage.js",
-  "context": "the heading over the picker's grid of items, and the line under it for the item under the pointer: $slot the slot, $item its item",
+  "context": "the heading over the picker's grid of items: $slot the slot, $item its item",
   "text": "${slot}: ${item}"
  },
  {
@@ -7024,15 +7024,8 @@
   "id": "ward-locked",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobepage.js",
-  "context": "a locked item in the picker's grid, on its hover: $item the item, $lock what opens it",
+  "context": "a locked item in the picker's grid, in the tooltip on its hover and focus: $item the item, $lock what opens it",
   "text": "${item}: ${lock}"
- },
- {
-  "id": "ward-trying",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobepage.js",
-  "context": "under the picker's grid while a locked item is tried on the close-up: $item the item; it is not kept",
-  "text": "trying on ${item}: not kept"
  },
  {
   "id": "ward-none",

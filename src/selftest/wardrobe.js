@@ -14,7 +14,7 @@
 
 import { ok, raf, run, canvas, onScreen, hoverHouse, hoverAway } from './kit.js';
 import { S } from '../state.js';
-import { P, WORKER, NAME_MAX, WARD_AURAS, WARD_AURA_FPS, WARD_GRID_ROWS } from '../config.js';
+import { P, WORKER, NAME_MAX, WARD_AURAS, WARD_AURA_FPS, WARD_GRID_ROWS, TEXT_FLOOR } from '../config.js';
 import { advance } from '../clock.js';
 import { draw } from '../render.js';
 import { darkPage } from '../ink.js';
@@ -301,16 +301,24 @@ export const TESTS = [
       const t = tile('head', 'crown');
       const faint = t.classList.contains('lock') && +getComputedStyle(t.querySelector('canvas')).opacity < 0.5
         && getComputedStyle(t.querySelector('.wardlk')).visibility === 'visible';
-      const told = t.title.includes('crown lock');
+      const told = t.getAttribute('aria-label').includes('crown lock');
+      const tipEl = document.getElementById('tip'), tipSays = () => (tipEl.hidden ? '' : tipEl.textContent);
       const count = slotTab('head').textContent.includes(`${HEAD.length - 1}/${HEAD.length}`);
       t.dispatchEvent(new PointerEvent('pointerenter'));
-      const hover = byId('wardrobe').querySelector('.wardabout').textContent;
+      await frames(1);
+      const hover = tipSays(), tipPx = parseFloat(getComputedStyle(tipEl).fontSize);
       t.dispatchEvent(new PointerEvent('pointerleave'));
+      const hoverGone = tipSays() === '';
+      tile('head', 'ears').dispatchEvent(new PointerEvent('pointerenter'));
+      const openTip = tipSays();
+      tile('head', 'ears').dispatchEvent(new PointerEvent('pointerleave'));
+      t.focus();
+      const focused = tipSays();
+      t.blur();
       const plain = greys();
       t.click();
       await frames(3);
       const kept = outfitOf('you').head === 'none';
-      const trying = byId('wardrobe').querySelector('.wardabout').textContent;
       const faintOn = greys();
       // anything open picked takes it off
       tile('head', 'ears').click();
@@ -333,10 +341,12 @@ export const TESTS = [
       }
       await closePicker();
       return [
-        ok(faint && told && count, 'a locked tile is faint, under a lock, says its lock, and is not counted open', t.title),
-        ok(hover.includes('crown lock') && hover.includes('a check holds it'), 'its lock and note under the grid on hover', hover),
-        ok(kept && trying.includes('crown') && faintOn > plain + 20, 'picked, it is tried on the close-up, faint, and not worn',
-           `${outfitOf('you').head} "${trying}" ${plain} > ${faintOn} greys`),
+        ok(faint && told && count, 'a locked tile is faint, under a lock, says its lock, and is not counted open'),
+        ok(hover.includes('crown lock') && hover.includes('a check holds it') && hoverGone, 'its lock and note in the game\'s tooltip on hover, gone when the pointer leaves', hover),
+        ok(focused === hover && openTip === '', 'the same on the focus, and an open tile has none', `${focused} | ${openTip}`),
+        ok(tipPx >= TEXT_FLOOR, 'the tooltip is at the text floor', `${tipPx}px`),
+        ok(kept && faintOn > plain + 20, 'picked, it is tried on the close-up, faint, and not worn',
+           `${outfitOf('you').head} ${plain} > ${faintOn} greys`),
         ok(off, 'an open tile picked wears it and takes the try-on off'),
         ok(left, 'leaving the page keeps nothing tried'),
         ok(shut, 'a roll never wears a locked item')
@@ -833,6 +843,18 @@ export const TESTS = [
             t.dispatchEvent(new win.Event('pointerleave')); t.dispatchEvent(new win.Event('blur'));
           }
         }
+        // no name is cut: it wraps at spaces, never an ellipsis, never wider than its tile
+        const cut = [];
+        for (const s of SLOTS) {
+          d.getElementById(`ward-${s.key}-tab`).click();
+          await paint(2);
+          for (const n of d.querySelectorAll(`.wardtiles[data-slot="${s.key}"] .wardtn`)) {
+            const cs = win.getComputedStyle(n);
+            if (n.scrollWidth > n.clientWidth || n.scrollHeight > n.clientHeight + 1 || cs.textOverflow === 'ellipsis')
+              cut.push(`${s.key}:${n.textContent} ${n.scrollWidth}>${n.clientWidth}`);
+          }
+        }
+        checks.push(ok(cut.length === 0, `${size}: every tile's name shows whole`, cut.slice(0, 4).join('; ')));
         checks.push(ok(moved.length === 0, `${size}: hovering any tile in any slot moves neither the sheet nor the grid`, moved.slice(0, 3).join('; ')));
         page.leaveWardrobe();
         await paint(2);

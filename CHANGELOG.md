@@ -183,7 +183,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 - The smallest words in the menus -- the appearance page's tabs and tile names, the boards' row names, the controls table, the settings tabs, the title page's foot -- are no longer too small to read, and every grey word in the menus is dark enough to read on the light page and the dark (src/selftest/textaa.js; test/ui-tokens.test.mjs).
 - The appearance page stays one height as you turn its slot tabs, switch between you and your sqouse, or step through a new yard's build steps (src/selftest/wardrobe.js, "one height").
-- The appearance page's tiles are four to a row and their unlock lines wrap at spaces, not mid-word, and the line under the grid keeps one height as you hover, so the page no longer jumps (src/selftest/wardrobe.js).
+- The appearance page's tiles are four to a row, every name and unlock line shows whole and wraps at spaces, and what opens a locked tile comes up in the game's tooltip; the line under the grid is gone, so hovering never moves the page (src/selftest/wardrobe.js).
 - On a gamepad the focus brackets travel from one thing to the next where you can follow them, up to the corner buttons, onto a board's rows and back, while the camera glides to center each one, both eased in and out (test/pad-glide.test.mjs; src/selftest/pad.js, "the marker travels across to the corner").
 - A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).
 

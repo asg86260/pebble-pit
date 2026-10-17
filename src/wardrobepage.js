@@ -31,6 +31,7 @@
 
 import { msg, writeInto, has } from './lang.js';
 import { S } from './state.js';
+import { showTipAt } from './board.js';
 import { WORKER, WARD_BIG, WARD_BIG_W, WARD_BIG_H, WARD_TILE_W, WARD_TILE_H, WARD_TILE_K, WARD_TILE_FOOT, WARD_TILE_COLS,
          WARD_TRY_ALPHA, WARD_GRID_ROWS, NAME_MAX, NAME_GRID_COLS, P } from './config.js';
 import { SLOTS, WHO, DEFAULTS, itemOf, bareOf, outfitOf, rollSlot, nameOf, setName, stepRole, rollName,
@@ -255,7 +256,7 @@ function build(el) {
       b.append(c, span('wardtn', msg(it.name)), u, lk);
       b.addEventListener('click', () => wearTile(s.key, it.key));
       const t = { b, c, lk, u, slot: s.key, key: it.key, aura: {} };
-      const on = () => { hot.add(t); sayAbout(); }, off = () => { hot.delete(t); sayAbout(); };
+      const on = () => { hot.add(t); tipFor(t); }, off = () => { hot.delete(t); if (hot.size) tipFor([...hot].pop()); else showTipAt(null); };
       b.addEventListener('pointerenter', on);
       b.addEventListener('pointerleave', off);
       b.addEventListener('focus', on);
@@ -266,13 +267,8 @@ function build(el) {
     grids.appendChild(g);
     gridOf[s.key] = g;
   }
-  // the line under the grid: the tile under the pointer or the focus, what
-  // opens a locked one, and what is being tried on
-  const about = div('wardabout');
-  about.setAttribute('aria-live', 'polite');
-
   const edit = div('wardedit');
-  edit.append(grid, slots, slotHead, grids, about);
+  edit.append(grid, slots, slotHead, grids);
 
   // the confirm steps: the name, or the role word with none, and the role
   const shown = div('wardshown');
@@ -301,7 +297,7 @@ function build(el) {
   el.append(stepEl, tabs, head, edit, shown, foot);
   el.addEventListener('keydown', keys);
   built = { el, stepEl, big, head, fields, tabs, tab, input, count, askBtn, grid, roleRow, rVal, rPrev, rNext, roleDie,
-            slots, slotTab, slotWorn, slotOpen, slotDie, tiles, gridOf, grids, about,
+            slots, slotTab, slotWorn, slotOpen, slotDie, tiles, gridOf, grids,
             nameDie: nameRow.querySelector('.warddie'), edit, shown, back, skip, roll, clear, next };
   // the page's width sets how many rows each grid is, and the parts round
   // the grid their own heights (a font coming in, the letter grid up), so the
@@ -346,13 +342,21 @@ function rowsTall(g, n) {
   const upTo = i => (i ? feet[i - 1].foot - top : 0);
   return upTo(whole) + (part && feet[whole] ? part * (feet[whole].foot - top - upTo(whole)) : 0);
 }
+// Every tile's name in a slot stands as tall as that slot's longest, measured,
+// so a row is even and no name is cut.
+function reserveNames() {
+  for (const g of Object.values(built.gridOf)) {
+    g.style.removeProperty('--tn-h');
+    px(g, '--tn-h', Math.max(0, ...[...g.querySelectorAll('.wardtn')].map(n => n.getBoundingClientRect().height)));
+  }
+}
 function fitGrid() {
   const b = built;
   if (!b || b.edit.hidden || !shownEl(b.el)) return;
+  reserveNames();
   // the tallest slot's, whichever is shown, so the page is one height
   const gs = Object.values(b.gridOf), tall = Math.max(...gs.map(g => g.scrollHeight));
   if (!tall) return;
-  reserveAbout();
   const least = Math.min(tall, Math.max(...gs.map(g => rowsTall(g, WARD_GRID_ROWS))));
   px(b.grids, '--grids-h', tall);
   px(b.grids, '--grids-min', least);
@@ -422,9 +426,10 @@ function say() {
     t.u.textContent = lock ? lockWords(lock.name) : '';
     t.u.hidden = !lock;
     const nm = itemName(t.slot, t.key);
-    t.b.title = lock ? msg('ward-locked', { item: nm, lock: lockWords(lock.name) }) : nm;
+    t.b.setAttribute('aria-label', lock ? lockTip(t) : nm);
   }
-  sayAbout();
+  const lit = [...hot].pop() || built.tiles.find(t => t.b === document.activeElement);
+  if (lit) tipFor(lit);
 
   if (kind !== 'build') showSquares(kind === 'both' ? WHO : [who]);
 
@@ -442,39 +447,20 @@ function say() {
 
 // The line under the grid: the tile the pointer or the focus is on -- its
 // name, and for a locked one what opens it -- and what is being tried on.
-function fillAbout(box, at, tryItem) {
-  box.textContent = '';
-  if (at) {
-    const lock = lockOf(at.slot, at.key), nm = itemName(at.slot, at.key);
-    box.append(span('wardline', lock ? msg('ward-locked', { item: nm, lock: lockWords(lock.name) })
-                                     : msg('ward-grid-head', { slot: msg(SLOTS.find(s => s.key === at.slot).name), item: nm })));
-    if (lock && lock.note) box.append(span('wardline', lockWords(lock.note)));
-  }
-  if (tryItem) box.append(span('wardline', msg('ward-trying', { item: itemName(tryItem.slot, tryItem.key) })));
+// A locked tile's words, in the game's own tooltip (board.js `showTipAt`),
+// under the tile on a hover and on the focus: what it is and what opens it,
+// and the lock's note. An open tile has none; its name is on its face.
+function lockTip(t) {
+  const lock = lockOf(t.slot, t.key);
+  if (!lock) return '';
+  const head = msg('ward-locked', { item: itemName(t.slot, t.key), lock: lockWords(lock.name) });
+  return lock.note ? `${head}. ${lockWords(lock.note)}` : head;
 }
-function sayAbout() {
-  if (!built) return;
-  const at = [...hot].pop() || built.tiles.find(t => t.b === document.activeElement);
-  fillAbout(built.about, at && at.slot === slot ? at : null, tried);
-}
-// The tallest the info line can stand, measured: every tile's words, with the
-// trying line under them, set in the box at its width. The box keeps that
-// height, so hovering never moves the grid or the sheet.
-let aboutAt = '';
-function reserveAbout() {
-  const b = built, box = b.about, w = box.clientWidth, key = `${w}|${msg('ward-trying', { item: '' })}`;
-  if (!w || key === aboutAt) return;
-  aboutAt = key;
-  const keep = [...box.childNodes];
-  box.style.minHeight = '0';
-  let tall = 0;
-  for (const t of b.tiles) {
-    fillAbout(box, t, { slot: t.slot, key: t.key });
-    tall = Math.max(tall, box.getBoundingClientRect().height);
-  }
-  box.replaceChildren(...keep);
-  box.style.minHeight = '';
-  px(box, '--about-h', tall);
+function tipFor(t) {
+  const words = t.slot === slot ? lockTip(t) : '';
+  if (!words) { showTipAt(null); return; }
+  const r = t.b.getBoundingClientRect();
+  showTipAt(words, r.left + r.width / 2, r.bottom + 4, true);
 }
 
 // Each of `list` as a name over its role word; with no name, the role word
@@ -513,6 +499,7 @@ function turnSlot(to) {
   slot = typeof to === 'number' ? SLOTS[(i + to + SLOTS.length) % SLOTS.length].key : to;
   tried = null;
   hot.clear();
+  showTipAt(null);
   say();
 }
 // The tile worn in the slot shown, for the focus to land on.
