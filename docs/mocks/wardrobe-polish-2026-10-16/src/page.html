@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wardrobe Polish</title>
+<style>
+  :root { color-scheme: light; --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --mark: #6a2fbe; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; } }
+  :root[data-theme="dark"] { --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  body[data-bg="dark"] .item, body[data-bg="dark"] .card.audit-card { background: #2a2a2a; color: #e6e6e6; border-color: #444; }
+  body[data-bg="deep"] .item, body[data-bg="deep"] .card.audit-card { background: #111114; color: #e8e8ea; border-color: #333; }
+  body[data-bg="dark"] .note, body[data-bg="deep"] .note, body[data-bg="dark"] .lab, body[data-bg="deep"] .lab { color: #aaa; }
+  main { max-width: 1320px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 28px 0 4px; }
+  h3 { font-size: 15px; margin: 0 0 2px; }
+  h4 { font-size: 13px; margin: 6px 0 4px; }
+  p { margin: 0 0 10px; color: var(--muted); }
+  .bar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .bar button { font: inherit; padding: 3px 10px; border: 1px solid var(--line); background: var(--card); border-radius: 4px; cursor: pointer; }
+  .bar button.on { border-color: var(--mark); color: var(--mark); font-weight: bold; }
+  .bar .sep { width: 12px; }
+  #clock { color: var(--muted); min-width: 6em; }
+  .item, .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 14px; }
+  .note { font-size: 13px; }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  figure { margin: 0; }
+  figcaption { font-weight: bold; font-size: 12px; margin-bottom: 4px; }
+  .side figcaption { color: var(--mark); }
+  .scales { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 6px; }
+  .lab { display: block; font-size: 11px; color: var(--muted); }
+  canvas { image-rendering: pixelated; display: block; max-width: 100%; height: auto; }
+  canvas.big { width: 100%; max-width: 480px; }
+  .strip { width: 100%; max-width: 1188px; margin-bottom: 6px; }
+  .striplab { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  details summary { cursor: pointer; font-size: 12px; color: var(--mark); margin-top: 6px; }
+  .combgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .combcell { margin-bottom: 8px; }
+  .combcell canvas { margin-top: 3px; }
+  .combcell canvas.big { width: 100%; max-width: 240px; }
+  figure.crowd { margin-top: 10px; }
+  figure.crowd canvas.mag { width: 100%; max-width: 1040px; }
+  .audit { display: flex; flex-direction: column; gap: 10px; }
+  .auditslot { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+  .auditslot h4 { width: 100%; }
+  .acell { border: 1px solid var(--line); border-radius: 4px; padding: 4px; display: flex; flex-direction: column; gap: 2px; align-items: center; }
+  .acell canvas { max-width: none; }
+  .aname { font-size: 11px; }
+  table.rank { border-collapse: collapse; font-size: 12px; width: 100%; }
+  table.rank td, table.rank th { border-top: 1px solid var(--line); padding: 4px 6px; text-align: left; vertical-align: top; }
+  table.rank th { font-size: 11px; color: var(--muted); }
+  .flag { color: #a33; font-weight: bold; }
+  ul { margin: 4px 0 10px; padding-left: 20px; color: var(--muted); }
+  @media (max-width: 760px) { .pair { grid-template-columns: 1fr; } .combgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<main>
+<h1>Wardrobe polish (mock)</h1>
+<p>Every outfit piece checked at game size and the dangling and thin ones given a polished version, for the owner's vote.
+<b>The "today" panels are the game's own drawing code</b> (src/render/wardrobe.js, wardheads.js, wardaura.js, bundled into this page);
+the "polished" panels are a copy of those with only the named changes. Each live panel loops: walk right, stop, stand, walk left, stop, stand,
+a world pixel at a time, with the game's own clocks (the step at 4 a second, the bob at 1.2, walking still counted 0.25 s after the last step).
+"1x desk" is the yard at 1280x800 on a 1x screen, 0.83 device pixels a world pixel; the canvas is shown pixel for pixel. The rock behind the
+right of every panel is there to test a piece against a black mass.</p>
+
+<div class="bar">
+  <b>ground</b>
+  <button data-bg="light">yard (light page)</button><button data-bg="dark">yard (dark page)</button><button data-bg="deep">the deep</button>
+  <span class="sep"></span><b>speed</b>
+  <button data-speed="1">1x</button><button data-speed="0.25">0.25x</button>
+  <button id="pause">pause</button><button id="step">step a pose</button>
+  <span id="clock"></span>
+</div>
+
+<section class="card">
+<h2 style="margin-top:0">What changes everywhere</h2>
+<ul>
+  <li><b>Rigid at 1x.</b> On the desktop a world pixel is 0.83 of a screen pixel, so a two-pixel unit is 1.67: today each mark rounds on its own, and as the
+    body walks the 1 px / 2 px pattern crawls through its face, its stripes, a scarf, a ribbon. Polished: the body's corner is put on a whole screen pixel
+    first and everything on it is drawn from there, so a piece keeps one shape while it walks. One translate in drawBody, no drawing changed.</li>
+  <li><b>Paper keyline.</b> One unit of paper round everything worn outside the square, drawn under the body. Invisible on the bare yard; in front of the rock,
+    a building, another body or the deep's floor it is what keeps a black cape, hat or flag from merging into the mass behind it.</li>
+  <li><b>Follow-through.</b> Every dangle reads the walk as start / walk / stop / rest. Start: one held pose lagging before the walk poses. Stop: three held
+    poses 0.13 s each (catching up, one unit past rest, back) before the rest pose. Still held poses on the game's clock: no tweening, no flash.
+    It needs one more number from <code>motionOf</code>: how long the body has been moving or still.</li>
+</ul>
+</section>
+
+<h2>Audit: ranked</h2>
+<section class="card" id="rank"><p>Most help first. "1x" is the desk at 1280x800 (a unit is 1.67 screen pixels); on a phone a unit is a whole 3 device pixels, so nothing
+crawls there, it is only small (the body is nine CSS pixels tall).</p>
+<table class="rank">
+<tr><th>#</th><th>item</th><th>reads at 1x?</th><th>motion</th></tr>
+<tr><td>1</td><td>scarf, checked, striped, gold scarf (your sqouse starts in one)</td><td>yes; the striped tail falls apart into dashes on the sky and ground (its light stripes are the paper)</td><td>snaps from a nine-unit stream to the hanging tail in one frame, both ways</td></tr>
+<tr><td>2</td><td>cape, short cape, gold cape</td><td>merges with the square's back rim, so the body reads as a wider blob; gone in front of the rock</td><td>snaps from the billow to the hang in one frame</td></tr>
+<tr><td>3</td><td>bow (your sqouse starts in it)</td><td><span class="flag">the bow's loops are a scribble at 1x</span>; the tails are one unit and read as dashes</td><td>tails snap from streaming to hanging</td></tr>
+<tr><td>4</td><td>balloon</td><td>yes; its string is lost against the rock</td><td>jumps three units on the stop and the start</td></tr>
+<tr><td>5</td><td>flag</td><td>yes; the pole vanishes into the rock</td><td>the whole pennant drops in one frame</td></tr>
+<tr><td>6</td><td>headband</td><td><span class="flag">the band reads as a second top rim at 1x</span>; the ends are specks</td><td>its ends never move: a dangle that does not dangle</td></tr>
+<tr><td>7</td><td>mortarboard</td><td>the grey tassel is one unit, faint</td><td>the tassel hangs at the <b>front</b> corner (the code says back) and swings forward with the step: follow-through the wrong way</td></tr>
+<tr><td>8</td><td>every black head item (top hat, crown, beanie, beret, mohawk, bowler, all five station hats...) in front of the rock or a building</td><td>vanishes whole; the square floats bareheaded. The crew's own station hats do the same</td><td>-</td></tr>
+<tr><td>9</td><td>faces and patterns, walking at 1x</td><td>the 1 px / 2 px pattern crawls through the marks as the body walks; <span class="flag">shades and the eyepatch merge into the top rim, the monocle and round glasses read as a scribble at 1x; dots and diagonal read as noise</span></td><td>-</td></tr>
+<tr><td>10</td><td>bird</td><td>yes (grey body, ink eye and beak)</td><td>ignores the start and the stop; a hop can land over a stop</td></tr>
+<tr><td>11</td><td>dust motes, bubbles, falling petals, stink (auras)</td><td>the palest greys: lost among the sky's own motes</td><td>good</td></tr>
+<tr><td>12</td><td>antenna, flower</td><td>yes</td><td>rigid; a nod would sell them (minor)</td></tr>
+<tr><td>13</td><td>backpack, moneybag</td><td>yes; the backpack welds to the back rim</td><td>backpack welded still; moneybag fine (minor)</td></tr>
+<tr><td>14</td><td>serpent comb</td><td>yes in the yard; dim purple on the deep's black at 1x</td><td>still (the owner asks for an idle light: options below)</td></tr>
+<tr><td>-</td><td>fine as they are</td><td colspan="2">top hat, crown, gold crown, ears, beanie, beret, mohawk, helmet, lamp, sun hat, wizard hat, cap, bowler (its tip is good motion), hard hat,
+diving bowl, sprout; the faces eyes, sleepy, smile, mustache, freckles, blush; overalls, stripes, tall stripes, quarters, filled (with the rigid fix);
+orbiting pixel, pebble bits, sparkle, footprints, rain cloud (it already lags on the walk's trail), scale swirl, embers, flies, juggling, potion fizz,
+dizzy stars, shooting star, flock, speed lines, gold halo. Nothing reads worse in the deep than in the yard; the dark page maps cleanly.</td></tr>
+</table>
+<p><b>Cannot be fixed without a redesign (for the owner):</b> the bow's loops at 1x (it needs a chunkier drawing); the headband's band (it would have to sit
+above the head or change weight); the busy faces and the dots and diagonal patterns at 1x (two-pixel marks on an eleven-pixel middle cannot thicken);
+the keyline for station hats on the whole crew is a crew-wide call, not a wardrobe one.</p></section>
+
+<h2>The polished pieces</h2>
+<div id="items"></div>
+
+<h2>Serpent comb: idle light options</h2>
+<div id="comb-slot"></div>
+
+<h2>The crowd</h2>
+<div id="crowd-slot"></div>
+
+<h2>Audit: every item today</h2>
+<section class="card audit-card">
+<p>Every item on a bare square, the game's own draw. Per item: standing on the sky, walking on the sky, standing in front of the rock (all 1x desk,
+magnified x3), walking on a phone (its device pixels, magnified x2), walking at 4x. Switch the ground at the top for the dark page and the deep.</p>
+<div id="audit-slot"></div>
+</section>
+
+<h2>What this mock cannot show</h2>
+<section class="card">
+<ul>
+  <li>The real yard's light, smog, rain and crowd density, the deep's swell and dim, or the picker's close-up: the backdrops here are plain shapes
+    (sky motes, the ground's hatch, a stepped black block for the rock, the deep's floor and a stone block).</li>
+  <li>The dark page and the deep are made here from the light draw the way the game makes them (the lightness map, the turn-over), not by the game itself.</li>
+  <li>The walk is a scripted loop at one speed; the game's ambles are slower, its crouch and hop are not drawn, and a carter's cart (no back item) is not shown.</li>
+  <li>A real phone's screen: the phone panels are its device pixels magnified, not its size in the hand (a body is nine CSS pixels tall there).</li>
+  <li>The keyline here is grown from the drawn pieces on a scratch canvas each frame; in the game it would be the same pass on the two bodies only.</li>
+  <li>The comb options in the yard use a pale purple glow the game does not draw anywhere else yet.</li>
+</ul>
+</section>
+</main>
+<script>/*BUNDLE*/</script>
+</body>
+</html>
