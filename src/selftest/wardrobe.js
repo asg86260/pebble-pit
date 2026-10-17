@@ -2,9 +2,10 @@
 // "Who you are"): what the chosen head item does to a station hat, read off
 // the glass, and the page worked as a player works it -- by the mouse and
 // the keyboard on its buttons and its name field, and by a pad on the page
-// (padpage.js), the d-pad across the grid's tiles and A picking
-// one, the triggers for the slot tabs, the shoulders for you and your
-// sqouse, the letter grid for a name, X a letter back and Y a slot's roll; a
+// (padpage.js), the d-pad between the slots round the close-up, A opening a
+// slot's grid and picking a tile, B back to the slot, the triggers for the
+// slot before and after, the shoulders for you and your sqouse, the letter
+// grid for a name, X a letter back and Y a slot's roll; a
 // locked tile tried on and not kept; the page at a phone's width; a new
 // yard's four steps by both; and the name and the role held on the page off
 // the house's board once those steps are behind a yard.
@@ -25,6 +26,7 @@ import { wearing } from '../kit.js';
 import { TYPE } from '../jobs.js';
 import { offerDress } from '../settings.js';
 import { lockForCheck } from '../wardrobepage.js';
+import { msg } from '../lang.js';
 
 const frames = async n => { for (let i = 0; i < n; i++) await raf(); };
 const byId = id => document.getElementById(id);
@@ -56,12 +58,18 @@ async function closePicker() {
   dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
   await frames(2);
 }
-// The grid's parts: a slot's tab, a tile, the tiles shown, the heading.
-const slotTab = slot => byId(`ward-${slot}-tab`);
+// The page's parts: a slot's button round the close-up, a tile, the tiles
+// shown, what the chosen slot's button says is worn, and the count by the grid.
+const slotBtn = slot => byId(`ward-${slot}-slot`);
 const tile = (slot, key) => byId(`ward-tile-${slot}-${key}`);
 const shownTiles = () => [...document.querySelectorAll('.wardtiles.on .wardtile')];
-const gridHead = () => document.querySelector('.wardslothead .wardworn')?.textContent || '';
+const gridHead = () => document.querySelector('.wardslot.on .wardsw')?.textContent || '';
+const openCount = () => document.querySelector('.wardopen')?.textContent || '';
 const tileOf = el => (el?.classList?.contains('wardtile') ? `${el.dataset.slot}:${el.dataset.item}` : null);
+const slotOf = el => (el?.classList?.contains('wardslot') ? el.dataset.slot : null);
+// The guide lines seen, once their fade is over: the slots whose line stands.
+const seenLines = (d = document) => [...d.querySelectorAll('.wardlead g')]
+  .filter(g => +d.defaultView.getComputedStyle(g).opacity > 0.5).map(g => g.dataset.slot);
 // A key pressed on the focused button, as a keyboard does.
 const key = (k, el = document.activeElement) =>
   el.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
@@ -163,34 +171,60 @@ export const TESTS = [
     ];
   }],
 
-  ['wardrobe: the picker by the mouse: a tile worn, the two tabs, the slot tabs, the slot\'s die, the roll', async () => {
+  ['wardrobe: the picker by the mouse: the slots round the close-up, the guide line, a tile worn, the switch, the slot\'s die, the roll', async () => {
     fresh();
     run(0.5);
     await openPicker();
     const page = byId('wardrobe');
     const shown = up(page);
     byId('wardyou').click();
-    slotTab('head').click();
+    slotBtn('head').click();
     // every head item a tile, the worn one inverted
-    const headFirst = slotTab('head').classList.contains('on') && shownTiles().length === HEAD.length;
+    const headFirst = slotBtn('head').classList.contains('on') && shownTiles().length === HEAD.length;
     const wornOn = tile('head', DEFAULTS.you.head).classList.contains('on');
+    // D2: the six round the close-up, three a side in the order they are
+    // worn down the body, each with what it wears named on it
+    const big = page.querySelector('.wardbig').getBoundingClientRect();
+    const at = k => slotBtn(k).getBoundingClientRect();
+    const side = (ks, left) => ks.every((k, i) => (left ? at(k).right <= big.left : at(k).left >= big.right)
+      && (!i || at(k).top > at(ks[i - 1]).top));
+    const placed = side(['head', 'back', 'aura'], true) && side(['face', 'neck', 'pattern'], false);
+    const named = SLOTS.every(sl => up(slotBtn(sl.key)) && slotBtn(sl.key).querySelector('.wardsw').textContent
+      === msg(sl.items.find(it => it.key === outfitOf('you')[sl.key]).name));
+    // the strip of slot tabs and the heading over the grid are gone; the
+    // grid's tab is the chosen slot's name, inverted as its button is
+    const gone = !page.querySelector('.wardslots, .wardslothead, [role="tablist"]');
+    const tab = page.querySelector('.wardgridtab'), bg = el => getComputedStyle(el).backgroundColor;
+    const asOne = tab.textContent === msg('ward-slot-head') && bg(tab) === bg(slotBtn('head')) && bg(tab) !== bg(slotBtn('face'));
+    // the slot's picture is the real drawing of what it wears
+    await frames(2);
+    const pic = () => slotBtn('head').querySelector('canvas').toDataURL();
+    const hatPic = pic();
     tile('head', 'ears').click();
-    await frames(1);
+    await frames(2);
     const eared = outfitOf('you').head === 'ears', earsOn = tile('head', 'ears').classList.contains('on')
       && !tile('head', DEFAULTS.you.head).classList.contains('on'), said = gridHead();
-    // every slot a tab, its open count on it; a turn shows that slot's tiles alone
+    const drawn = pic() !== hatPic;
+    // the count is beside the grid, and a turn shows that slot's tiles alone
     const openOf = sl => sl.items.filter(it => isOpen(sl.key, it.key)).length;
-    const tabs = SLOTS.every(sl => up(slotTab(sl.key)) && slotTab(sl.key).textContent.includes(`${openOf(sl)}/${sl.items.length}`));
-    slotTab('back').click();
-    await frames(1);
+    const head = SLOTS[0], counted = openCount() === msg('ward-grid-open', { open: openOf(head), all: head.items.length });
+    // only the chosen slot's guide line stands, fading across on a change
+    await frames(20);
+    const lineHead = seenLines().join();
+    slotBtn('back').click();
+    const fades = parseFloat(getComputedStyle(page.querySelector('.wardlead g')).transitionDuration) > 0;
+    await frames(20);
+    const lineBack = seenLines().join();
+    const end = page.querySelector('.wardlead g.on rect').getBoundingClientRect();
+    const onSquare = end.left >= big.left - 1 && end.right <= big.right + 1 && end.top >= big.top - 1 && end.bottom <= big.bottom + 1;
     const backShown = shownTiles().length === SLOTS.find(sl => sl.key === 'back').items.length
-      && shownTiles().every(t => t.dataset.slot === 'back') && slotTab('back').classList.contains('on');
+      && shownTiles().every(t => t.dataset.slot === 'back') && slotBtn('back').classList.contains('on');
     byId('wardsqouse').click();
     const sqOn = byId('wardsqouse').classList.contains('on');
     tile('back', 'flag').click();
     const sqBack = outfitOf('sqouse').back, youBack = outfitOf('you').back;
-    // the slot's die, in the grid's heading: that slot alone
-    slotTab('face').click();
+    // the slot's die, beside the grid: that slot alone
+    slotBtn('face').click();
     const before = { ...outfitOf('sqouse') };
     let faced = false;
     for (let i = 0; i < 12 && !faced; i++) { byId('wardslotdie').click(); faced = outfitOf('sqouse').face !== before.face; }
@@ -211,10 +245,16 @@ export const TESTS = [
     fresh();
     return [
       ok(shown, "the house board's row opens the picker"),
-      ok(headFirst && wornOn, 'the head tab shows a tile an item, the one worn inverted'),
-      ok(eared && earsOn && said.includes('ears'), 'a click on a tile wears it, and the heading says it', `${outfitOf('you').head} "${said}"`),
-      ok(tabs, 'a tab a slot, each with its open count'),
-      ok(backShown, 'a slot tab shows that slot\'s tiles alone'),
+      ok(headFirst && wornOn, 'the head slot shows a tile an item, the one worn inverted'),
+      ok(placed, 'the slots stand round the close-up, head, back and aura down the left, face, neck and pattern down the right'),
+      ok(named, 'each slot names what it wears'),
+      ok(gone && asOne, 'no slot tabs and no heading: the grid\'s tab is the chosen slot, inverted as its button is', `${gone} "${tab.textContent}"`),
+      ok(eared && earsOn && said.includes('ears'), 'a click on a tile wears it, and its slot says it', `${outfitOf('you').head} "${said}"`),
+      ok(drawn, 'the slot\'s picture is drawn again in what it wears'),
+      ok(counted, 'how many are open is said beside the grid', openCount()),
+      ok(lineHead === 'head' && lineBack === 'back' && fades, 'only the chosen slot\'s guide line is seen, and it fades across', `${lineHead} > ${lineBack}`),
+      ok(onSquare, 'and it ends on the close-up', JSON.stringify([end.left, end.top, big.left, big.top])),
+      ok(backShown, 'a slot shows its tiles alone'),
       ok(sqOn && sqBack === 'flag' && youBack === DEFAULTS.you.back, 'the sqouse tab dresses your sqouse, not you',
          `${sqOn} ${sqBack} ${youBack}`),
       ok(faced && others, 'the slot\'s die rolls that slot alone', JSON.stringify(outfitOf('sqouse'))),
@@ -225,14 +265,27 @@ export const TESTS = [
     ];
   }],
 
-  // The keyboard on the grid: the arrows the nearest tile that way, y the
-  // slot's roll, ] and [ the slot tabs.
-  ['wardrobe: the picker by the keyboard: the arrows across the tiles, y, [ and ]', async () => {
+  // The keyboard: the arrows between the slots round the close-up and never
+  // into the grid from beside it; Enter on a slot its grid, the focus on the
+  // tile worn; the arrows the nearest tile that way; Escape the slot again;
+  // y the slot's roll, ] and [ the slots.
+  ['wardrobe: the picker by the keyboard: the arrows between the slots, Enter, the tiles, Escape, y, [ and ]', async () => {
     fresh();
     run(0.5);
     await openPicker();
     byId('wardyou').click();
-    slotTab('head').click();
+    slotBtn('head').focus();
+    key('ArrowRight');
+    const across = slotOf(document.activeElement);
+    key('ArrowDown');
+    const under = slotOf(document.activeElement);
+    key('ArrowDown');
+    key('ArrowDown');
+    const notIn = !tileOf(document.activeElement);
+    // Enter on a focused button is its click, with no pointer's count of clicks
+    slotBtn('head').focus();
+    slotBtn('head').click();
+    const opened = tileOf(document.activeElement) === `head:${outfitOf('you').head}`;
     tile('head', 'none').focus();
     const x0 = tile('head', 'none').getBoundingClientRect();
     key('ArrowRight');
@@ -248,17 +301,26 @@ export const TESTS = [
     for (let i = 0; i < 12 && !rolled; i++) { key('y'); rolled = outfitOf('you').head !== was; }
     const slotOnly = outfitOf('you').face === faceWas;
     key(']');
-    const turned = slotTab('face').classList.contains('on') && !!tileOf(document.activeElement)?.startsWith('face:');
+    const turned = slotBtn('face').classList.contains('on') && !!tileOf(document.activeElement)?.startsWith('face:');
     key('[');
-    const turnedBack = slotTab('head').classList.contains('on');
+    const turnedBack = slotBtn('head').classList.contains('on');
+    key('Escape');
+    const escaped = slotOf(document.activeElement) === 'head' && up(byId('wardrobe'));
+    key(']');
+    const slotTurn = slotOf(document.activeElement) === 'face' && slotBtn('face').classList.contains('on');
     await closePicker();
     await hoverAway();
     fresh();
     return [
+      ok(across === 'face' && under === 'neck', 'the arrows go from slot to slot, the nearest that way', `${across} ${under}`),
+      ok(notIn, 'and never into the grid from beside it', document.activeElement?.id),
+      ok(opened, 'Enter on a slot puts the focus on its worn tile', tileOf(document.activeElement)),
       ok(along, 'right is the next tile along', tileOf(right)),
       ok(below && backUp, 'down is the tile under, and up comes back', `${tileOf(down)}`),
       ok(rolled && slotOnly, 'y rolls the slot the focus is in, and only it'),
-      ok(turned && turnedBack, '] turns to the next slot, the focus on its tiles, and [ back', tileOf(document.activeElement))
+      ok(turned && turnedBack, '] turns to the next slot, the focus on its tiles, and [ back'),
+      ok(escaped, 'Escape in the grid is its slot again, the sheet still up'),
+      ok(slotTurn, '] on a slot is the next slot, the focus on it', document.activeElement?.id)
     ];
   }],
 
@@ -271,20 +333,21 @@ export const TESTS = [
     fresh();
     await openPicker();
     byId('wardyou').click();
-    slotTab('head').click();
+    slotBtn('head').click();
     await frames(1);
     const line = k => tile('head', k)?.querySelector('.wardtu');
     const want = itemLock('head', 'crown'), crown = line('crown'), ears = line('ears'), lamp = line('lamp');
     const all = HEAD.every(it => up(tile('head', it.key)));
     const full = crown && getComputedStyle(crown).opacity === '1' && getComputedStyle(crown.parentElement).opacity === '1';
+    // read while the sheet is up: once let go it is on its way out
+    const crownSays = up(crown) && crown.textContent === want?.name, lampSays = up(lamp) && lamp.textContent === itemLock('head', 'lamp').name;
+    const earsSays = up(ears);
     await closePicker();
     return [
       ok(all, 'every head item is a tile, locked or not'),
-      ok(want && up(crown) && crown.textContent === want.name && full, 'the crown\'s tile says what opens it, at full ink',
-         crown?.textContent),
-      ok(up(lamp) && lamp.textContent === itemLock('head', 'lamp').name, 'a station hat\'s tile names its station\'s first hat',
-         lamp?.textContent),
-      ok(!up(ears), 'an open tile has no such line')
+      ok(want && crownSays && full, 'the crown\'s tile says what opens it, at full ink', crown?.textContent),
+      ok(lampSays, 'a station hat\'s tile names its station\'s first hat', lamp?.textContent),
+      ok(!earsSays, 'an open tile has no such line')
     ];
   }],
   ['wardrobe: a locked tile is tried on, faint, and not kept; a roll never wears one', async () => {
@@ -296,14 +359,14 @@ export const TESTS = [
       await openPicker();
       byId('wardyou').click();
       byId('wardclear').click();
-      slotTab('head').click();
+      slotBtn('head').click();
       await frames(3);
       const t = tile('head', 'crown');
       const faint = t.classList.contains('lock') && +getComputedStyle(t.querySelector('canvas')).opacity < 0.5
         && getComputedStyle(t.querySelector('.wardlk')).visibility === 'visible';
       const told = t.getAttribute('aria-label').includes('crown lock');
       const tipEl = document.getElementById('tip'), tipSays = () => (tipEl.hidden ? '' : tipEl.textContent);
-      const count = slotTab('head').textContent.includes(`${HEAD.length - 1}/${HEAD.length}`);
+      const count = openCount() === msg('ward-grid-open', { open: HEAD.length - 1, all: HEAD.length });
       t.dispatchEvent(new PointerEvent('pointerenter'));
       await frames(1);
       const hover = tipSays(), tipPx = parseFloat(getComputedStyle(tipEl).fontSize);
@@ -359,10 +422,10 @@ export const TESTS = [
   }],
 
   // The page at a phone's width, in a frame of its own (as sheetwidth.js
-  // stands its pages): the slot tabs scroll sideways rather than squeeze,
-  // the tiles reflow to the width, and the sheet itself never scrolls
-  // sideways.
-  ['wardrobe: at a phone\'s width the slot tabs scroll sideways and the tiles reflow', async () => {
+  // stands its pages): the six slots in two rows of three under the
+  // close-up, every name on them whole, only the chosen one's guide line; the
+  // tiles reflow to the width, and the sheet itself never scrolls sideways.
+  ['wardrobe: at a phone\'s width the slots stand in two rows of three under the close-up and the tiles reflow', async () => {
     const f = document.createElement('iframe');
     f.style.cssText = 'position:fixed;left:0;top:0;width:360px;height:740px;border:0;opacity:0;pointer-events:none;z-index:-1';
     document.body.appendChild(f);
@@ -380,15 +443,25 @@ export const TESTS = [
       await paint(3);
       page.openWardrobe();
       await paint(3);
-      const sheet = d.getElementById('held'), strip = d.querySelector('.wardslots');
+      const sheet = d.getElementById('held');
+      d.getElementById('ward-back-slot').click();
+      await paint(20);
+      const big = d.querySelector('.wardbig').getBoundingClientRect(), sh = sheet.getBoundingClientRect();
+      const btns = [...d.querySelectorAll('.wardslot:not(.wardprobe)')], rects = btns.map(b => b.getBoundingClientRect());
+      const rows = [...new Set(rects.map(r => Math.round(r.top)))];
+      const under = rects.every(r => r.top >= big.bottom - 1 && r.left >= sh.left && r.right <= sh.right);
+      const whole = btns.every(b => [...b.querySelectorAll('.wardsk')].every(n => n.scrollWidth <= n.clientWidth + 1));
+      const lines = seenLines(d).join();
       const tiles = [...d.querySelectorAll('.wardtiles.on .wardtile')];
       const tops = [...new Set(tiles.map(t => Math.round(t.getBoundingClientRect().top)))];
       const perRow = tiles.filter(t => Math.round(t.getBoundingClientRect().top) === tops[0]).length;
       const grid = d.querySelector('.wardtiles.on').getBoundingClientRect();
       const inside = tiles.every(t => t.getBoundingClientRect().right <= grid.right + 1);
       return [
-        ok(!!strip && strip.scrollWidth > strip.clientWidth && getComputedStyle(strip).overflowX === 'auto',
-           'the slot tabs run past the page and scroll sideways', strip && `${strip.scrollWidth} in ${strip.clientWidth}`),
+        ok(btns.length === 6 && rows.length === 2 && under, 'the six slots stand in two rows of three under the close-up, inside the sheet',
+           `${btns.length} in ${rows.length} rows`),
+        ok(whole, 'every slot\'s name shows whole'),
+        ok(lines === 'back', 'only the chosen slot\'s guide line is seen', lines),
         ok(tops.length > 1 && perRow >= 3 && inside, 'the tiles reflow into rows inside the page', `${perRow} a row, ${tops.length} rows`),
         ok(sheet.scrollWidth <= sheet.clientWidth + 1, 'the sheet does not scroll sideways', `${sheet.scrollWidth} in ${sheet.clientWidth}`)
       ];
@@ -476,38 +549,67 @@ export const TESTS = [
     ];
   }],
 
-  ['wardrobe: the picker by a pad: the d-pad across the tiles, A picks, LT and RT the slots, LB and RB, Y the slot', async () => {
+  // A pad on D2 of docs/mocks/appearance-hierarchy-2026-10-16: the d-pad
+  // between the slots round the close-up, the nearest that way, and never
+  // into the grid from beside it; A on a slot its grid, the focus on the
+  // tile worn; the d-pad across the tiles and A wearing one; B the slot
+  // again, and B on the slots the sheet's own let-go; LT and RT the slot
+  // before and after from a slot or from a grid; LB and RB; Y the slot.
+  ['wardrobe: the picker by a pad: the d-pad between the slots, A opens a slot\'s grid and wears a tile, B back, LT and RT, LB and RB, Y', async () => {
     fresh();
     run(0.5);
     plugIn();
     // every item open, so a tile the d-pad lands on is one A wears (a locked
     // one is tried on and not kept, its own check above)
     lockForCheck(() => null);
+    const at = () => window.__pad.page();
     try {
       await press('b');                               // wakes the pad
       await openPicker();
       await frames(2);
-      slotTab('head').click();
-      // down the page onto the grid
-      for (let i = 0; i < 16 && !tileOf(window.__pad.page()); i++) await press('down');
-      const onTile = tileOf(window.__pad.page());
-      const r0 = window.__pad.page()?.getBoundingClientRect();
+      // down the page onto the slots, then to the head's
+      for (let i = 0; i < 16 && !slotOf(at()); i++) await press('down');
+      const reached = slotOf(at());
+      for (let i = 0; i < 4 && slotOf(at()) !== 'head'; i++) await press(slotOf(at()) === 'face' ? 'left' : 'up');
+      const onHead = slotOf(at()) === 'head';
       await press('right');
-      const nextTile = window.__pad.page(), r1 = nextTile?.getBoundingClientRect();
-      const along = !!tileOf(nextTile) && tileOf(nextTile) !== onTile && Math.abs(r1.top - r0.top) < 2 && r1.left > r0.left;
+      const across = slotOf(at());
+      await press('down');
+      const under = slotOf(at());
+      await press('down');
+      await press('down');
+      const notIn = !tileOf(at());
+      await press('up');
+      for (let i = 0; i < 4 && slotOf(at()) !== 'neck'; i++) await press('up');
+      // A: the neck's grid, the focus on what is worn there
+      await press('a');
+      const opened = slotBtn('neck').classList.contains('on') && tileOf(at()) === `neck:${outfitOf('you').neck}`;
+      const r0 = at()?.getBoundingClientRect();
+      await press('right');
+      const nextTile = at(), r1 = nextTile?.getBoundingClientRect();
+      const along = !!tileOf(nextTile) && Math.abs(r1.top - r0.top) < 2 && r1.left > r0.left;
       await press('a');
       const [sl, it] = (tileOf(nextTile) || ':').split(':');
       const picked = outfitOf('you')[sl] === it && nextTile.classList.contains('on');
+      await press('b');
+      const backTo = slotOf(at()) === 'neck' && S.paused && up(byId('wardrobe'));
+      // RT on a slot: the next slot, the focus on it
       await press('rt');
-      const rt = slotTab('face').classList.contains('on') && !!tileOf(window.__pad.page())?.startsWith('face:');
+      const rtSlot = slotOf(at()) === 'back' && slotBtn('back').classList.contains('on');
+      // RT in a grid: the next slot's grid, the focus on its worn tile; and round
+      await press('a');
+      await press('rt');
+      const rtGrid = slotBtn('pattern').classList.contains('on') && !!tileOf(at())?.startsWith('pattern:');
+      await press('rt');
+      await press('rt');
+      const wrapped = slotBtn('head').classList.contains('on') && !!tileOf(at())?.startsWith('head:');
       await press('lt');
-      await press('lt');
-      const lt = slotTab('aura').classList.contains('on') && !!tileOf(window.__pad.page())?.startsWith('aura:');
+      const lt = slotBtn('aura').classList.contains('on') && !!tileOf(at())?.startsWith('aura:');
       await press('rt');
       await press('rb');
       const sq = byId('wardsqouse').classList.contains('on');
       await press('right');
-      const sqTile = tileOf(window.__pad.page());
+      const sqTile = tileOf(at());
       await press('a');
       const sqWorn = !!sqTile && outfitOf('sqouse')[sqTile.split(':')[0]] === sqTile.split(':')[1];
       await press('lb');
@@ -516,19 +618,26 @@ export const TESTS = [
       let rolled = false;
       for (let i = 0; i < 12 && !rolled; i++) { await press('y'); rolled = outfitOf('you').head !== heads; }
       const slotOnly = outfitOf('you').face === faces;
-      await press('b');                               // back, to the yard
+      await press('b');                               // the grid's slot
+      const slotAgain = slotOf(at()) === 'head' && S.paused;
+      await press('b');                               // and the sheet let go
       const settings = !S.paused;
       await hoverAway();
       return [
-        ok(!!onTile, 'the d-pad reaches the grid', onTile),
-        ok(along, 'right is the next tile along', `${onTile} > ${tileOf(nextTile)}`),
+        ok(!!reached && onHead, 'the d-pad reaches the slots', `${reached} ${slotOf(at())}`),
+        ok(across === 'face' && under === 'neck', 'the d-pad goes from slot to slot, the nearest that way', `${across} ${under}`),
+        ok(notIn, 'and never into the grid from beside it'),
+        ok(opened, 'A on a slot opens its grid, the focus on the tile worn', tileOf(at())),
+        ok(along, 'right is the next tile along', tileOf(nextTile)),
         ok(picked, 'A wears the tile', tileOf(nextTile)),
-        ok(rt, 'RT turns to the next slot tab, the focus on its tiles', tileOf(window.__pad.page())),
-        ok(lt, 'LT turns back, wrapping'),
+        ok(backTo, 'B in the grid is its slot again, the sheet still up'),
+        ok(rtSlot, 'RT on a slot is the next slot, the focus on it'),
+        ok(rtGrid && wrapped, 'RT in a grid is the next slot\'s grid, the focus on its tiles, round past the last'),
+        ok(lt, 'LT is the slot before'),
         ok(sq && sqWorn, 'RB dresses your sqouse, A wearing the tile on them', `${sq} ${sqTile}`),
         ok(you, 'LB is you again'),
         ok(rolled && slotOnly, 'Y rolls the slot the focus is in, and only it'),
-        ok(settings, 'B goes back to the yard')
+        ok(slotAgain && settings, 'B goes to the slot, and B on the slots back to the yard')
       ];
     } finally {
       lockForCheck(null);
@@ -552,7 +661,7 @@ export const TESTS = [
     const opened = S.paused && up(byId('wardrobe'));
     const settingsGone = !byId('wardrobebtn');
     byId('wardyou').click();
-    slotTab('head').click();
+    slotBtn('head').click();
     tile('head', 'ears').click();
     const eared = outfitOf('you').head === 'ears';
     byId('wardrobeback').click();
@@ -616,7 +725,7 @@ export const TESTS = [
     if (!S.won.includes('muckrain')) S.won.push('muckrain');
     await openPicker();
     byId('wardyou').click();
-    slotTab('aura').click();
+    slotBtn('aura').click();
     const row = up(tile('aura', 'rain-cloud'));
     tile('aura', 'rain-cloud').click();
     const said = gridHead(), worn = outfitOf('you').aura;
@@ -787,11 +896,11 @@ export const TESTS = [
   }],
 
   // One height whatever is shown (the owner, 2026-10-16), as the settings
-  // tabs hold one: every slot tab and both squares on the page, and every
-  // slot tab on a new yard's two build steps, at a desk's size and a
+  // tabs hold one: every slot and both squares on the page, and every
+  // slot on a new yard's two build steps, at a desk's size and a
   // phone's. Read as the sheet's whole content height (scrollHeight), so a
   // phone's sheet that scrolls is held to it too.
-  ['wardrobe: the sheet is one height across every slot tab, both squares and the build steps, desk and phone', async () => {
+  ['wardrobe: the sheet is one height across every slot, both squares and the build steps, desk and phone', async () => {
     const checks = [];
     for (const [size, w, h] of [['desk', 1280, 800], ['short', 1280, 900], ['tall', 1280, 1400], ['phone', 360, 740]]) {
       const f = document.createElement('iframe');
@@ -810,6 +919,10 @@ export const TESTS = [
           return win.eval(`import(${JSON.stringify(at)})`);
         };
         const page = await mod('wardrobepage'), settings = await mod('settings'), state = await mod('state');
+        // your sqouse in the longest names there are, so the two squares'
+        // slots name the shortest and the longest
+        (await mod('wardrobe')).wear('sqouse', { head: 'serpent-comb', face: 'round-glasses', neck: 'gold-scarf',
+                                                 back: 'gold-cape', pattern: 'tall-stripes', aura: 'flock-overhead' });
         const sheet = d.getElementById('held');
         const tall = () => Math.round(sheet.scrollHeight);
         const walk = async (label, whos) => {
@@ -817,7 +930,7 @@ export const TESTS = [
           for (const k of whos) {
             if (k) { d.getElementById(`ward${k}`).click(); await paint(2); }
             for (const s of SLOTS) {
-              d.getElementById(`ward-${s.key}-tab`).click();
+              d.getElementById(`ward-${s.key}-slot`).click();
               await paint(2);
               seen.push([`${label}${k ? ' ' + k : ''} ${s.key}`, tall()]);
             }
@@ -829,12 +942,19 @@ export const TESTS = [
         page.openWardrobe();
         await paint(3);
         const all = await walk('page', ['you', 'sqouse']);
+        // the slots' names whole, in the longest names: never wider than the
+        // button, never taller than the room kept for them
+        const slotCut = [...d.querySelectorAll('.wardslot:not(.wardprobe)')].flatMap(b => [...b.querySelectorAll('.wardsk, .wardsw')])
+          .filter(n => n.getClientRects().length && (n.scrollWidth > n.clientWidth + 1 || n.scrollHeight > n.clientHeight + 1
+            || n.getBoundingClientRect().right > n.closest('.wardslot').getBoundingClientRect().right))
+          .map(n => `${n.textContent} ${n.scrollWidth}>${n.clientWidth}`);
+        checks.push(ok(slotCut.length === 0, `${size}: every slot's name and what it wears show whole`, slotCut.slice(0, 4).join('; ')));
         // every tile hovered and focused in every slot: neither the sheet nor
         // the grid moves for the words under it
         const gridH = () => Math.round(d.querySelector('.wardgrids').getBoundingClientRect().height);
         const moved = [];
         for (const s of SLOTS) {
-          d.getElementById(`ward-${s.key}-tab`).click();
+          d.getElementById(`ward-${s.key}-slot`).click();
           await paint(2);
           const h0 = tall(), g0 = gridH();
           for (const t of d.querySelectorAll(`.wardtile[data-slot="${s.key}"]`)) {
@@ -846,7 +966,7 @@ export const TESTS = [
         // no name is cut: it wraps at spaces, never an ellipsis, never wider than its tile
         const cut = [];
         for (const s of SLOTS) {
-          d.getElementById(`ward-${s.key}-tab`).click();
+          d.getElementById(`ward-${s.key}-slot`).click();
           await paint(2);
           for (const n of d.querySelectorAll(`.wardtiles[data-slot="${s.key}"] .wardtn`)) {
             const cs = win.getComputedStyle(n);
@@ -882,7 +1002,7 @@ export const TESTS = [
   }],
 
   // A short window (the owner, 2026-10-16): only the grid scrolls, inside
-  // itself, so the close-up, the slot tabs and the foot stay on the glass;
+  // itself, so the close-up, its slots and the foot stay on the glass;
   // the grid keeps at least its first WARD_GRID_ROWS rows in sight; and the
   // arrow down walks every row of it, each scrolled into sight, before it
   // leaves the grid. The same on a new yard's first build step. At a
@@ -915,12 +1035,12 @@ async function shortWindow(h) {
       const sheet = d.getElementById('held'), grids = () => d.querySelector('.wardgrids');
       const inWin = el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.top >= 0 && r.bottom <= win.innerHeight + 1; };
       const inGrid = el => { const r = el.getBoundingClientRect(), g = grids().getBoundingClientRect(); return r.top >= g.top - 1 && r.bottom <= g.bottom + 1; };
-      const fixed = () => [d.querySelector('.wardbig'), d.querySelector('.wardslots'), d.getElementById('wardroll')].every(inWin);
+      const fixed = () => [d.querySelector('.wardbig'), d.querySelector('.wardstage'), d.getElementById('wardroll')].every(inWin);
       win.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
       await paint(3);
       page.openWardrobe();
       await paint(3);
-      d.getElementById('ward-head-tab').click();
+      d.getElementById('ward-head-slot').click();
       await paint(3);
       const g = grids(), tiles = [...d.querySelectorAll('.wardtiles.on .wardtile')];
       const rowOf = t => Math.round(t.getBoundingClientRect().top + g.scrollTop);
@@ -957,13 +1077,13 @@ async function shortWindow(h) {
       settings.offerDress(true);
       await paint(3);
       const stepStill = sheet.scrollHeight <= sheet.clientHeight + 1, stepScrolls = grids().scrollHeight > grids().clientHeight + 1;
-      const stepUp = [d.querySelector('.wardbig'), d.querySelector('.wardslots'), d.getElementById('wardnext')].every(inWin);
+      const stepUp = [d.querySelector('.wardbig'), d.querySelector('.wardstage'), d.getElementById('wardnext')].every(inWin);
       page.leaveWardrobe();
       return [
         ok(sheetStill && gridScrolls, 'the sheet stands still and the grid scrolls inside it',
            `sheet ${sheet.scrollHeight} in ${sheet.clientHeight}, grid ${g.scrollHeight} in ${g.clientHeight}`),
         ok(twoSeen, `the grid keeps its first ${WARD_GRID_ROWS} rows in sight`, `${g.clientHeight} for ${Math.round(two)}`),
-        ok(upAtFirst && upAfter, 'the close-up, the slot tabs and the foot stay in the window, before the walk and after'),
+        ok(upAtFirst && upAfter, 'the close-up, its slots and the foot stay in the window, before the walk and after'),
         ok(seen.size === rows.length && !lost.length, 'the arrow down walks every row, each scrolled into sight',
            `${seen.size} of ${rows.length} rows; out of sight: ${lost.join(' ')}`),
         ok(!!leftTo && !leftTo.startsWith('ward-tile-'), 'and only then leaves the grid', leftTo),

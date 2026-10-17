@@ -1284,34 +1284,34 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    either is the sheet's whole width. */
 .held .pair, .col .pair { display: flex; gap: var(--gap-m); align-self: stretch; }
 .held .pair button, .col .pair button { flex: 1; }
-/* The picker (wardrobepage.js; layout A of
-   docs/mocks/wardrobe-expansion-2026-10-16): the you and your sqouse tabs a
-   pair, the one being dressed inverted; the close-up with the name and the
-   role beside it, wrapped under it where the page is too narrow for both
-   (the fields' basis); a tab a slot, scrolling sideways when they do not
-   fit; and the slot's grid, a tile an item, as many to a line as the page
-   holds and the slack shared. The chosen tile is inverted as the boards mark
-   a chosen thing; a locked one faint under its lock; one tried on dashed.
-   Under a thumb every target is the platform's 44 pixels (TOUCH_TARGET). */
+/* The picker (wardrobepage.js; D2 of
+   docs/mocks/appearance-hierarchy-2026-10-16): the you and your sqouse
+   switch a joined pair, each with its square small, the one being dressed
+   inverted; the name and the title; the close-up with its six slots three a
+   side, the chosen slot inverted and its guide line drawn to the square; and
+   under them the chosen slot's grid, headed by the slot's name inverted as
+   its button is, a tile an item, four to a line. The chosen tile is inverted
+   as the boards mark a chosen thing; a locked one faint under its lock; one
+   tried on dashed. Under a thumb every target is the platform's 44 pixels
+   (TOUCH_TARGET). */
 .held .wardrobe { display: flex; flex-direction: column; gap: var(--gap-m); }
 /* the yard-window rule (`canvas`, sticky at the top) undone: in the scrolling
    grid a tile's picture would stick to the grid's top over its own words */
 .wardrobe canvas { display: block; image-rendering: pixelated; position: static; z-index: auto; }
+.held .wardrobe .wardwho { gap: 0; }
+.held .wardrobe .wardwho button { display: flex; align-items: center; justify-content: center; gap: var(--gap-m); padding: 2px 8px; }
+.held .wardrobe .wardwho button + button { border-left: 0; }
 .held .wardrobe .wardtab.on { color: var(--paper); background: var(--ink); }
-.wardrobe .wardid { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: var(--gap-m); }
-.wardrobe .wardid.alone .wardbig { flex: 1 1 100%; min-width: 0; }
-.wardrobe .wardbig { flex: none; }
-.wardrobe .wardfields { flex: 1 1 20em; min-width: 0; display: flex; flex-direction: column; gap: var(--gap-m); }
+.wardrobe .wardfields { display: flex; flex-direction: column; gap: var(--gap-m); }
 .wardrobe .wardrow { display: grid; grid-template-columns: 5em auto 1fr auto auto; align-items: center; gap: var(--gap-m); text-align: left; }
 .held .wardrobe .wardarr { align-self: auto; min-width: 2.6em; padding: 2px 8px; }
 .wardrobe .wardval { text-align: center; }
 /* Who each is (DESIGN.md, "Who you are"): the step counted over the page at
    a new yard; the name row its field (or, for a pad on Steam, the button
    that asks Steam's keyboard), the letters left and its die; the pad's
-   letter grid under the close-up; and the confirm steps' names, each over
-   its role word. */
+   letter grid under it; and the confirm steps' names, each over its role
+   word. */
 .wardrobe .wardstep { color: var(--ink-5); font-size: var(--fs-small); }
-.wardrobe .wardedit { display: flex; flex-direction: column; gap: var(--gap-m); }
 .wardrobe .wardname { grid-template-columns: 5em 1fr auto auto; }
 .held .wardrobe .wardname input {
   box-sizing: border-box; min-width: 0; width: 100%;
@@ -1328,30 +1328,89 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .wardrobe .wardone { display: flex; flex-direction: column; align-items: center; gap: var(--gap-s); min-width: 0; overflow-wrap: anywhere; }
 .wardrobe .wardnm { font-size: var(--fs-word); font-weight: bold; }
 .wardrobe .wardrl { color: var(--ink-4); }
-/* the slot tabs are the settings' strip (.settabs, below), each tab as wide
-   as its word and its count and never squeezed: past the page's width the
-   strip scrolls instead */
-.held .wardrobe .wardslots button { letter-spacing: normal; display: inline-flex; gap: var(--gap-s); justify-content: center; align-items: baseline; }
-.wardrobe .wardn { color: var(--ink-5); }
-.wardrobe .wardslot.on .wardn { color: var(--ink-8); }
-.wardrobe .wardslothead { display: flex; justify-content: space-between; align-items: center; gap: var(--gap-m); border-bottom: 1px solid var(--ink); padding-bottom: var(--gap-s); }
-.wardrobe .wardr { display: inline-flex; align-items: center; gap: var(--gap-m); }
+/* The close-up and its slots: on a desk three a side, top to bottom as they
+   are worn down the body, each a button as narrow as the longest name lets
+   it be (`--slot-min`, measured) and the close-up as large as is left
+   between them, a whole number of pixels a world pixel (`sizeBig`); on a
+   phone the close-up over two rows of three. A worn name stands as tall as
+   the most lines any name takes (`--sw-h`, measured), so every square's
+   page is one height. The guide line is under the buttons and over the
+   close-up, so a line from the lower row on a phone goes behind the row
+   over it. */
+.wardrobe .wardstage {
+  --ward-side: 1;
+  position: relative; display: grid; gap: var(--gap-m); align-items: center;
+  grid-template-columns: minmax(var(--slot-min, 0px), 1fr) auto minmax(var(--slot-min, 0px), 1fr);
+  grid-template-areas: "head sq face" "back sq neck" "aura sq pattern";
+}
+.wardrobe .wardstage > .wardbig { grid-area: sq; justify-self: center; max-width: 100%; }
+.wardrobe .wardstage.alone { grid-template-columns: minmax(0, 1fr); grid-template-areas: "sq"; }
+.wardrobe .wardstage.alone > .wardlead { display: none; }
+.wardrobe .wardslot[data-slot="head"] { grid-area: head; }
+.wardrobe .wardslot[data-slot="face"] { grid-area: face; }
+.wardrobe .wardslot[data-slot="neck"] { grid-area: neck; }
+.wardrobe .wardslot[data-slot="back"] { grid-area: back; }
+.wardrobe .wardslot[data-slot="pattern"] { grid-area: pattern; }
+.wardrobe .wardslot[data-slot="aura"] { grid-area: aura; }
+.held .wardrobe .wardslot {
+  position: relative; z-index: 1; min-width: 0; align-self: stretch;
+  display: grid; grid-template-columns: auto minmax(min-content, 1fr); align-items: center; gap: var(--gap-s);
+  padding: 3px 4px 3px 3px; text-align: left; letter-spacing: normal;
+}
+.held .wardrobe .wardslot.on { color: var(--paper); background: var(--ink); }
+/* a slot's button never turns over under the pointer, its picture being drawn
+   the right way up for it: the edge greys instead, as a tile's does */
+@media (hover: hover) {
+  .held .wardrobe .wardslot:hover:not(.on), .held .wardrobe .wardtab:hover:not(.on) { color: var(--ink); background: var(--paper); border-color: var(--ink-7); }
+  .held .wardrobe .wardslot.on:hover, .held .wardrobe .wardtab.on:hover { color: var(--paper); background: var(--ink); }
+}
+.held .wardrobe .wardslot:focus-visible:not(.on) { border-color: var(--ink-7); }
+.wardrobe .wardst { display: flex; flex-direction: column; min-width: 0; }
+.wardrobe .wardsk { font-weight: bold; text-transform: uppercase; }
+.wardrobe .wardsw { color: var(--ink-4); text-transform: none; min-height: var(--sw-h, 0);
+                    white-space: normal; overflow-wrap: normal; word-break: normal; hyphens: manual; line-height: 1.15; }
+.held .wardrobe .wardslot.on .wardsw { color: var(--paper); }
+.held .wardrobe .wardprobe { position: absolute; left: 0; top: 0; height: 0; min-height: 0; overflow: hidden; visibility: hidden; pointer-events: none; z-index: -1; }
+.wardrobe .wardprobe .wardsw { min-height: 0; }
+.wardrobe .wardlead { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; shape-rendering: crispEdges; }
+.wardrobe .wardlead polyline { stroke: var(--ink); }
+.wardrobe .wardlead rect { fill: var(--ink); }
+/* only the chosen slot's line, fading across as the slot is changed */
+.wardrobe .wardlead g { opacity: 0; transition: opacity .2s linear; }
+.wardrobe .wardlead g.on { opacity: 1; }
+@media (max-width: 560px) {
+  .wardrobe .wardstage {
+    --ward-side: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas: "sq sq sq" "head face neck" "back pattern aura";
+  }
+  .held .wardrobe .wardslot { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; padding: 3px 2px; }
+  .wardrobe .wardst { align-items: center; }
+  .wardrobe .wardsw { display: none; }
+}
+/* The grid's head: the slot's name inverted, sitting on the grid's edge as
+   a folder's tab, so it and the chosen slot read as one; and quiet at the
+   other end, how many of its items are open, and its die. */
+.wardrobe .wardbox { display: flex; flex-direction: column; }
+.wardrobe .wardgridhead { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--gap-m); }
+.wardrobe .wardgridtab { color: var(--paper); background: var(--ink); font-weight: bold; padding: 3px 10px 2px; }
+.wardrobe .wardr { display: inline-flex; align-items: center; gap: var(--gap-m); padding-bottom: var(--gap-s); }
 .wardrobe .wardopen { color: var(--ink-5); font-size: var(--fs-small); white-space: nowrap; }
 /* On a short window the grid alone gives way, scrolling inside itself, so the
-   close-up, the name and the slot tabs over it and the buttons at its foot
+   close-up, the slots and the switch over it and the buttons at its foot
    stay on the glass (the owner, 2026-10-16). The grid's box is the tallest
    slot's height, measured (wardrobepage.js, `fitGrid`), so the page holds one
-   height as the tabs turn; the slots not shown keep their width but no
+   height as the slots turn; the slots not shown keep their width but no
    height, so the scroll runs only as far as the slot shown. It never gives
    way below WARD_GRID_ROWS rows of tiles, and nothing else on the page gives
    way at all: their least heights are measured too, and past them it is the
    sheet that scrolls, as on every page. */
 .held .wardrobe { min-height: var(--ward-min, auto); }
-.wardrobe > *, .wardrobe .wardedit > * { flex-shrink: 0; }
-.wardrobe > .wardedit { flex-shrink: 1; min-height: var(--edit-min, auto); }
-.wardrobe .wardedit > .wardgrids {
+.wardrobe > *, .wardrobe .wardbox > * { flex-shrink: 0; }
+.wardrobe > .wardbox { flex-shrink: 1; min-height: var(--box-min, auto); }
+.wardrobe .wardbox > .wardgrids {
   flex: 0 1 var(--grids-h, auto); min-height: var(--grids-min, auto);
-  display: grid; grid-template-columns: minmax(0, 1fr);
+  display: grid; grid-template-columns: minmax(0, 1fr); border: 2px solid var(--ink); padding: var(--gap-s);
   overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
 }
 .wardrobe .wardtiles { grid-area: 1 / 1; align-self: start; display: grid; grid-template-columns: repeat(var(--tile-cols), minmax(0, 1fr)); gap: var(--gap-s); }
@@ -1371,7 +1430,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    under the name (the owner: show how to unlock), wrapping to two lines and
    no more, so a row of tiles is short enough that two of them stand on a
    laptop's window with the close-up (the whole of it is the tile's title and
-   the line under the grid) */
+   the game's tooltip) */
 .wardrobe .wardtile.lock canvas { opacity: .32; }
 .wardrobe .wardtu { font-size: var(--fs-body); line-height: 1.15; max-width: 100%; padding: 0 2px;
                     white-space: normal; overflow-wrap: normal; word-break: normal; hyphens: none; text-align: center;
@@ -1387,7 +1446,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   .held .wardrobe .wardname input { min-height: 44px; }
   .held .wardrobe .wardarr, .held .wardrobe .warddie { min-width: 44px; min-height: 44px; padding: 0; }
   .wardrobe .warddie svg { width: 18px; height: 18px; }
-  .held .wardrobe .pair button, .held #wardrobeback, .held .wardrobe .wardslots button { min-height: 44px; }
+  .held .wardrobe .pair button, .held #wardrobeback, .held .wardrobe .wardslot { min-height: 44px; }
 }
 /* The paste, for a save coming back in: as wide as the sheet, one hand, and
    no resize handle, because a corner that stretched it would stretch
@@ -2462,17 +2521,16 @@ body.still .fill::before { transition: none; }
    tallest tab's height on every tab and the sheet never re-centers as they
    turn. Short of the window, the controls table or the languages scroll
    inside their tab. A tab's word is never broken: past the strip's width
-   (a phone, a long language) the strip scrolls sideways instead, as the
-   picker's slot tabs do. */
-.settabs, .wardslots { display: flex; flex-shrink: 0; align-self: stretch; border: 1px solid var(--ink); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
-.settabs::-webkit-scrollbar, .wardslots::-webkit-scrollbar { display: none; }
-.held .settabs button, .col .settabs button, .held .wardslots button {
+   (a phone, a long language) the strip scrolls sideways instead. */
+.settabs { display: flex; flex-shrink: 0; align-self: stretch; border: 1px solid var(--ink); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.settabs::-webkit-scrollbar { display: none; }
+.held .settabs button, .col .settabs button {
   flex: 1 0 auto; border: 0; border-left: 1px solid var(--ink);
   padding-left: var(--gap-s); padding-right: var(--gap-s);
   font-size: var(--fs-small); white-space: nowrap; overflow-wrap: normal;
 }
-.held .settabs button:first-child, .col .settabs button:first-child, .held .wardslots button:first-child { border-left: 0; }
-.held .settabs button.on, .col .settabs button.on, .held .wardslots button.on { color: var(--paper); background: var(--ink); }
+.held .settabs button:first-child, .col .settabs button:first-child { border-left: 0; }
+.held .settabs button.on, .col .settabs button.on { color: var(--paper); background: var(--ink); }
 .tabbody { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); align-self: stretch; min-height: 0; }
 .tabpane { grid-area: 1 / 1; display: flex; flex-direction: column; gap: var(--gap-m); min-width: 0; min-height: 0; }
 .tabpane > * { flex-shrink: 0; }

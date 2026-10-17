@@ -1,42 +1,49 @@
 // The two of them's page: who each is and what each wears, a page of the
 // held sheet (DESIGN.md, "What the two of them wear" and "Who you are"; the
 // mocks' votes, docs/mocks/pair-wardrobe-2026-10-16,
-// docs/mocks/who-you-are-2026-10-16, and layout A of
-// docs/mocks/wardrobe-expansion-2026-10-16). At the top a tab each for you
-// and your sqouse; under them the one being chosen close up, its name and
-// its role beside it; then a tab a slot, each with how many of its items
-// are open, and under them every item of that slot at once as a grid of
-// tiles, each tile the bare square wearing that item. The chosen tile is
-// inverted; a locked one is faint, under a lock, and says what opens it.
-// Picking a locked one tries it on the close-up, faint, and is not kept. The
-// slot's die is in the grid's heading; the roll of the whole square but its
-// name, and the clear that takes every slot back to bare, at the foot.
+// docs/mocks/who-you-are-2026-10-16, layout A of
+// docs/mocks/wardrobe-expansion-2026-10-16, and D2 of
+// docs/mocks/appearance-hierarchy-2026-10-16). At the top a switch between
+// you and your sqouse, each with its square small; under it the name and the
+// title; then the one being chosen close up, its six slots round it, three a
+// side in the order they are worn down the body, each a button with the
+// slot's item drawn on it, and the chosen slot's guide line to where it is
+// worn. Under them the chosen slot's every item at once, a grid of tiles
+// headed by the slot's name inverted as its button is, each tile the bare
+// square wearing that item. The chosen tile is inverted; a locked one is
+// faint, under a lock, and says what opens it. Picking a locked one tries it
+// on the close-up, faint, and is not kept. The slot's die is beside the
+// grid's count; the roll of the whole square but its name, and the clear
+// that takes every slot back to bare, at the foot.
 //
 // It is reached two ways. Once at a new yard, before the opening walks out
 // (`offerDress`), as four steps: build who you are, confirm your square,
 // build your sqouse, and a last look at the two of you; done there lets the
 // opening go. And always as a row on the house's board (crewboard.js), with
-// a tab for each; the name and the role can be changed there at any time.
+// the switch for each; the name and the role can be changed there at any time.
 //
 // Mouse, finger and keyboard type the name into its field. A pad moves
 // between the page's buttons as on every page (padpage.js), the nearest that
-// way, so across the tiles as across any row: A picks, Y rolls the slot the
-// focus is in (or the name, or the role, on theirs), left and right on the
-// role's row step it and on the slot tabs turn them, LT and RT turn the slot
-// tabs from anywhere, LB and RB are you and your sqouse. The keyboard the
-// same: the arrows, Enter, y, and [ and ] for the slot tabs. For the name,
-// Steam's own keyboard where the desk has Steam to ask (`desk.askText`), and
-// anywhere else, or when Steam cannot show one, a grid of letters under the
-// name row: A types the key, X takes the last letter back.
+// way, but never into the grid from outside it: A on a slot opens its grid
+// with the focus on the tile worn, A on a tile wears it, B in the grid goes
+// back to its slot's button, and B anywhere else is the sheet's own. Y rolls
+// what the focus is in (a slot or its grid, the name, the role), left and
+// right on the role's row step it, LT and RT are the slot before and after
+// from anywhere, LB and RB are you and your sqouse. The keyboard the same:
+// the arrows, Enter, Escape for B in the grid, y, and [ and ] for the slots.
+// For the name, Steam's own keyboard where the desk has Steam to ask
+// (`desk.askText`), and anywhere else, or when Steam cannot show one, a grid
+// of letters under the name row: A types the key, X takes the last letter back.
 
 import { msg, writeInto, has } from './lang.js';
 import { S } from './state.js';
 import { showTipAt } from './board.js';
-import { WORKER, WARD_BIG, WARD_BIG_W, WARD_BIG_H, WARD_TILE_W, WARD_TILE_H, WARD_TILE_K, WARD_TILE_FOOT, WARD_TILE_COLS,
-         WARD_TRY_ALPHA, WARD_GRID_ROWS, NAME_MAX, NAME_GRID_COLS, P } from './config.js';
+import { P, WORKER, WARD_BIG, WARD_BIG_W, WARD_BIG_H, WARD_TILE_W, WARD_TILE_H, WARD_TILE_K, WARD_TILE_FOOT, WARD_TILE_COLS,
+         WARD_TRY_ALPHA, WARD_GRID_ROWS, WARD_SLOT_W, WARD_SLOT_H, WARD_SLOT_FOOT, WARD_MINI_W, WARD_MINI_H, WARD_MINI_FOOT,
+         WARD_PARTS, WARD_LEAD_W, WARD_LEAD_DOT, NAME_MAX, NAME_GRID_COLS } from './config.js';
 import { SLOTS, WHO, DEFAULTS, itemOf, bareOf, outfitOf, rollSlot, nameOf, setName, stepRole, rollName,
          rollRole, rollSquare, bareOutfit, typedName, storyArgs, wear, itemLock, isOpen } from './wardrobe.js';
-import { drawDressed, YARD_INKS, DEEP_INKS } from './render/wardrobe.js';
+import { drawDressed, headHeight, YARD_INKS, DEEP_INKS } from './render/wardrobe.js';
 import { raw } from './ink.js';
 
 // A new yard's steps: who each is about and what it shows.
@@ -83,16 +90,25 @@ const button = (text, ...cls) => {
 };
 const span = (cls, text = '') => Object.assign(document.createElement('span'), { className: cls, textContent: text });
 const div = (...cls) => { const d = document.createElement('div'); d.classList.add(...cls); return d; };
+const canvasOf = (cls, w, h) => {
+  const c = document.createElement('canvas');
+  if (cls) c.className = cls;
+  c.style.width = `${w}px`;
+  c.style.height = `${h}px`;
+  return c;
+};
 // Small pictures in the button's own ink, on a grid of whole units.
 const SVG = 'http://www.w3.org/2000/svg';
+const svgEl = (name, attrs = {}) => {
+  const e = document.createElementNS(SVG, name);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+};
 function glyph(w, h, rects, cls) {
-  const s = document.createElementNS(SVG, 'svg');
-  s.setAttribute('viewBox', `0 0 ${w} ${h}`);
-  s.setAttribute('aria-hidden', 'true');
+  const s = svgEl('svg', { viewBox: `0 0 ${w} ${h}`, 'aria-hidden': 'true' });
   if (cls) s.setAttribute('class', cls);
   for (const [x, y, rw, rh, fill = true] of rects) {
-    const r = document.createElementNS(SVG, 'rect');
-    for (const [k, v] of Object.entries({ x, y, width: rw, height: rh, fill: fill ? 'currentColor' : 'none' })) r.setAttribute(k, v);
+    const r = svgEl('rect', { x, y, width: rw, height: rh, fill: fill ? 'currentColor' : 'none' });
     if (!fill) r.setAttribute('stroke', 'currentColor');
     s.appendChild(r);
   }
@@ -135,22 +151,20 @@ function build(el) {
   el.textContent = '';
   hot.clear();
   const stepEl = span('wardstep');
+  // you and your sqouse: a segmented pair, each with its square small
   const tabs = div('pair', 'wardwho');
   const tab = {};
   for (const k of WHO) {
-    const b = button(k === 'you' ? msg('ward-you') : msg('ward-sqouse'), 'wardtab');
+    const b = button('', 'wardtab');
     b.id = `ward${k}`;
+    const c = canvasOf('wardmini', WARD_MINI_W, WARD_MINI_H);
+    b.append(c, span('wardwl', k === 'you' ? msg('ward-you') : msg('ward-sqouse')));
     b.addEventListener('click', () => pick(k));
     tabs.appendChild(b);
-    tab[k] = b;
+    tab[k] = { b, c, aura: {} };
   }
 
-  // the close-up, and beside it the name and the role
-  const big = document.createElement('canvas');
-  big.className = 'wardbig';
-  const head = div('wardid');
   const fields = div('wardfields');
-
   // the name: its field, the letters left, its die; and for a pad the
   // button that asks Steam, or the grid
   const nameRow = div('wardrow', 'wardname');
@@ -203,35 +217,68 @@ function build(el) {
   rNext.addEventListener('click', () => { stepRole(who, 1); say(); });
   const roleDie = die(() => rollRole(who));
   roleRow.append(span('wardlabel', msg('ward-role')), rPrev, rVal, rNext, roleDie);
-  fields.append(nameRow, roleRow);
-  head.append(big, fields);
+  fields.append(nameRow, grid, roleRow);
 
-  // a tab a slot, with how many of its items are open
-  const slots = div('wardslots');
-  slots.setAttribute('role', 'tablist');
-  slots.dataset.row = 'slots';
-  const slotTab = {};
+  // the close-up, its six slots round it and the chosen one's guide line
+  const stage = div('wardstage');
+  const big = document.createElement('canvas');
+  big.className = 'wardbig';
+  const lead = svgEl('svg', { class: 'wardlead', 'aria-hidden': 'true' });
+  const leads = {};
+  stage.append(big, lead);
+  const slotBtn = {};
   for (const s of SLOTS) {
     const b = button('', 'wardslot');
-    b.id = `ward-${s.key}-tab`;   // never ending "back": pad.js finds the way back by that
+    b.id = `ward-${s.key}-slot`;   // never ending "back": pad.js finds the way back by that
     b.dataset.slot = s.key;
-    b.setAttribute('role', 'tab');
-    const n = span('wardn');
-    b.append(span('wardsn', msg(s.name)), n);
-    b.addEventListener('click', () => turnSlot(s.key));
-    slots.appendChild(b);
-    slotTab[s.key] = { b, n };
+    b.dataset.row = s.key;
+    const c = canvasOf('wardsg', WARD_SLOT_W, WARD_SLOT_H);
+    const worn = span('wardsw');
+    const words = span('wardst');
+    words.append(span('wardsk', msg(s.name)), worn);
+    b.append(c, words);
+    // a click is the slot chosen; a click from a key or a pad's A (no
+    // pointer, so no count of clicks) is the grid opened too, its worn tile
+    // taking the focus
+    b.addEventListener('click', e => {
+      turnSlot(s.key);
+      if (e.detail === 0) { const t = wornTile(); if (t) nav.focus(t.b); }
+    });
+    stage.appendChild(b);
+    slotBtn[s.key] = { b, c, worn, aura: {} };
+    const g = svgEl('g', { 'data-slot': s.key });
+    const line = svgEl('polyline', { fill: 'none', 'stroke-width': WARD_LEAD_W });
+    const dot = svgEl('rect', { width: WARD_LEAD_DOT, height: WARD_LEAD_DOT });
+    g.append(line, dot);
+    lead.appendChild(g);
+    leads[s.key] = { g, line, dot };
   }
-  // the grid's heading: the slot and what is worn in it, how many are open,
-  // and the slot's die
-  const slotHead = div('wardslothead');
-  const slotWorn = span('wardworn'), slotOpen = span('wardopen');
+  // A slot's button laid out unseen with every item's name in it, for the
+  // narrowest a slot's button can be and the most lines a name takes in one
+  // (`slotLeast`, `slotLines`): neither may be guessed, or a name nobody has written
+  // yet is cut.
+  const probe = button('', 'wardslot', 'wardprobe');
+  probe.inert = true;
+  probe.tabIndex = -1;
+  probe.setAttribute('aria-hidden', 'true');
+  const probeWorn = span('wardsw');
+  const probeWords = span('wardst');
+  probeWords.append(span('wardsk', SLOTS.map(s => msg(s.name)).join(' ')), probeWorn);
+  probe.append(canvasOf('wardsg', WARD_SLOT_W, WARD_SLOT_H), probeWords);
+  stage.appendChild(probe);
+
+  // the grid: its head, the slot's name inverted as the chosen slot's
+  // button is, so the two read as one, and beside it how many are open and
+  // the slot's die; under it every slot's tiles, the one chosen shown
+  const box = div('wardbox');
+  const boxHead = div('wardgridhead');
+  const gridTab = span('wardgridtab');
+  const slotOpen = span('wardopen');
   const slotDie = die(() => rollOpen(slot));
   slotDie.id = 'wardslotdie';
   const right = span('wardr');
   right.append(slotOpen, slotDie);
-  slotHead.append(slotWorn, right);
-  // every slot's tiles, the one shown at a time
+  boxHead.append(gridTab, right);
   const tiles = [];
   const gridOf = {};
   const grids = div('wardgrids');
@@ -241,15 +288,12 @@ function build(el) {
     const g = div('wardtiles');
     g.dataset.slot = s.key;
     g.dataset.row = s.key;
-    g.setAttribute('role', 'tabpanel');
     for (const it of s.items) {
       const b = button('', 'wardtile');
       b.id = `ward-tile-${s.key}-${it.key}`;
       b.dataset.slot = s.key;
       b.dataset.item = it.key;
-      const c = document.createElement('canvas');
-      c.style.width = `${WARD_TILE_W * WARD_TILE_K}px`;
-      c.style.height = `${WARD_TILE_H * WARD_TILE_K}px`;
+      const c = canvasOf('', WARD_TILE_W * WARD_TILE_K, WARD_TILE_H * WARD_TILE_K);
       const lk = glyph(7, 8, LOCK, 'wardlk');
       // under a locked tile's name, what opens it, there without a hover
       const u = span('wardtu', '');
@@ -267,8 +311,7 @@ function build(el) {
     grids.appendChild(g);
     gridOf[s.key] = g;
   }
-  const edit = div('wardedit');
-  edit.append(grid, slots, slotHead, grids);
+  box.append(boxHead, grids);
 
   // the confirm steps: the name, or the role word with none, and the role
   const shown = div('wardshown');
@@ -294,22 +337,23 @@ function build(el) {
   next.id = 'wardnext';
   next.addEventListener('click', () => go(1));
   foot.append(skip, back, roll, clear, next);
-  el.append(stepEl, tabs, head, edit, shown, foot);
+  el.append(stepEl, tabs, fields, stage, box, shown, foot);
   el.addEventListener('keydown', keys);
-  built = { el, stepEl, big, head, fields, tabs, tab, input, count, askBtn, grid, roleRow, rVal, rPrev, rNext, roleDie,
-            slots, slotTab, slotWorn, slotOpen, slotDie, tiles, gridOf, grids,
-            nameDie: nameRow.querySelector('.warddie'), edit, shown, back, skip, roll, clear, next };
-  // the page's width sets how many rows each grid is, and the parts round
-  // the grid their own heights (a font coming in, the letter grid up), so the
-  // heights are measured again as any of them changes; the grid's own box is
-  // left out, being what the measuring sets. On the next frame, not in the
-  // observer's own call: the page it sets resizes what is observed.
+  built = { el, stepEl, big, k: WARD_BIG, fields, tabs, tab, input, count, askBtn, grid, roleRow, rVal, rPrev, rNext, roleDie,
+            stage, lead, leads, slotBtn, probe, probeWorn, box, gridTab, slotOpen, slotDie, tiles, gridOf, grids,
+            nameDie: nameRow.querySelector('.warddie'), shown, back, skip, roll, clear, next };
+  // the page's width sets how big the close-up can be and how many rows each
+  // grid is, and the parts round the grid their own heights (a font coming
+  // in, the letter grid up), so all of it is measured again as any of them
+  // changes; the grid's own box is left out, being what the measuring sets.
+  // On the next frame, not in the observer's own call: the page it sets
+  // resizes what is observed.
   if (typeof ResizeObserver !== 'undefined') {
     let asked = false;
     const ro = new ResizeObserver(() => {
       if (!asked) { asked = true; requestAnimationFrame(() => { asked = false; fitGrid(); }); }
     });
-    for (const part of [el, ...el.children, ...edit.children]) if (part !== edit && part !== grids) ro.observe(part);
+    for (const part of [el, ...el.children, ...box.children]) if (part !== box && part !== grids) ro.observe(part);
   }
 }
 
@@ -322,7 +366,7 @@ const px = (el, name, v) => { const s = `${Math.ceil(v)}px`; if (el.style.getPro
 function stacked(box, swap, h) {
   let sum = 0, n = 0;
   for (const c of box.children) {
-    if (c.hidden || !c.getClientRects().length) continue;
+    if (c.hidden || !c.getClientRects().length || getComputedStyle(c).position === 'absolute') continue;
     sum += c === swap ? h : c.getBoundingClientRect().height;
     n++;
   }
@@ -350,20 +394,111 @@ function reserveNames() {
     px(g, '--tn-h', Math.max(0, ...[...g.querySelectorAll('.wardtn')].map(n => n.getBoundingClientRect().height)));
   }
 }
+// Whether the slots stand three a side of the close-up (a desk) or in two
+// rows under it (a phone): style.css says, by `--ward-side`.
+const sideBySide = () => getComputedStyle(built.stage).getPropertyValue('--ward-side').trim() !== '0';
+// The slots' buttons measured off the unseen one: the narrowest any can be,
+// every item's name in it wrapping at its spaces (its longest word, then);
+// and laid at the width a button has, the most lines any name takes there,
+// which every button's worn name is given, so a square in longer names is
+// no taller and the page stays one height.
+const allNames = () => [...new Set(SLOTS.flatMap(s => s.items.map(it => itemName(s.key, it.key))))];
+function slotLeast() {
+  const b = built;
+  b.probe.style.width = 'min-content';
+  b.probeWorn.textContent = allNames().join(' ');
+  return b.probe.getBoundingClientRect().width;
+}
+// At the width a button is given, `w`: the lines are read there.
+function slotLines(w) {
+  const b = built;
+  b.probe.style.width = `${w}px`;
+  let lines = 0;
+  for (const n of allNames()) { b.probeWorn.textContent = n; lines = Math.max(lines, b.probeWorn.getBoundingClientRect().height); }
+  return lines;
+}
+// The close-up as large as the page lets it be, a whole number of screen
+// pixels a world pixel: beside the slots, what is left between them; over
+// them on a phone, or alone on a confirm step, the most it is ever drawn.
+function sizeBig() {
+  const b = built, alone = b.stage.classList.contains('alone');
+  let k = WARD_BIG, width = `${WARD_BIG_W * WARD_BIG}px`, side = 0;
+  if (alone && step === FLOW.length - 1) width = '100%';
+  else if (!alone && sideBySide()) {
+    const least = slotLeast();
+    px(b.stage, '--slot-min', least);
+    const gap = parseFloat(getComputedStyle(b.stage).columnGap) || 0;
+    const room = b.stage.clientWidth - 2 * gap - 2 * Math.ceil(least);
+    k = Math.max(1, Math.min(WARD_BIG, Math.floor(room / WARD_BIG_W)));
+    width = `${WARD_BIG_W * k}px`;
+    side = (b.stage.clientWidth - 2 * gap - WARD_BIG_W * k) / 2;
+  } else if (!alone) {
+    k = Math.max(1, Math.min(WARD_BIG, Math.floor(b.stage.clientWidth / WARD_BIG_W)));
+    width = `${WARD_BIG_W * k}px`;
+  }
+  b.k = k;
+  if (b.big.style.width !== width) b.big.style.width = width;
+  const h = `${WARD_BIG_H * k}px`;
+  if (b.big.style.height !== h) b.big.style.height = h;
+  if (side) px(b.stage, '--sw-h', slotLines(side));
+}
 function fitGrid() {
   const b = built;
-  if (!b || b.edit.hidden || !shownEl(b.el)) return;
+  if (!b || !shownEl(b.el)) return;
+  sizeBig();
+  lead();
+  if (b.box.hidden) return;
   reserveNames();
   // the tallest slot's, whichever is shown, so the page is one height
   const gs = Object.values(b.gridOf), tall = Math.max(...gs.map(g => g.scrollHeight));
   if (!tall) return;
   const least = Math.min(tall, Math.max(...gs.map(g => rowsTall(g, WARD_GRID_ROWS))));
-  px(b.grids, '--grids-h', tall);
-  px(b.grids, '--grids-min', least);
-  const edit = stacked(b.edit, b.grids, least);
-  px(b.edit, '--edit-min', edit);
-  px(b.el, '--ward-min', stacked(b.el, b.edit, edit));
+  // the grid's own edge counted in, as its box is drawn
+  const edge = b.grids.offsetHeight - b.grids.clientHeight;
+  px(b.grids, '--grids-h', tall + edge);
+  px(b.grids, '--grids-min', least + edge);
+  const box = stacked(b.box, b.grids, least + edge);
+  px(b.box, '--box-min', box);
+  px(b.el, '--ward-min', stacked(b.el, b.box, box));
 }
+
+// The chosen slot's guide line, from its button's edge nearest the close-up
+// to where that slot is worn on the square, across and then up or down so it
+// keeps to the page's square lines. Every slot has its line laid; only the
+// chosen one's is seen, and the others fade out as it fades in (style.css,
+// `.wardlead`).
+function lead() {
+  const b = built;
+  if (b.stage.classList.contains('alone')) return;
+  const St = b.stage.getBoundingClientRect(), Q = b.big.getBoundingClientRect(), k = b.k;
+  if (!Q.width) return;
+  const w = Q.width / k;
+  const x0 = Math.round(w * 0.5 - WORKER / 2), y0 = Math.round(WARD_BIG_H - P) - WORKER;
+  const o = drawnOutfit(who);
+  for (const s of SLOTS) {
+    const l = b.leads[s.key];
+    l.g.classList.toggle('on', s.key === slot);
+    const [wx, wy] = WARD_PARTS[s.key];
+    const lift = s.key === 'head' ? headHeight({ outfit: o }) : 0;
+    const px0 = Math.round(Q.left - St.left + (x0 + wx) * k), py0 = Math.round(Q.top - St.top + (y0 + wy - lift) * k);
+    const B = b.slotBtn[s.key].b.getBoundingClientRect();
+    const L = B.left - St.left, R = B.right - St.left, T = B.top - St.top, D = B.bottom - St.top;
+    const inset = WARD_LEAD_DOT;
+    const clampY = v => Math.round(Math.min(Math.max(v, T + inset), D - inset));
+    const clampX = v => Math.round(Math.min(Math.max(v, L + inset), R - inset));
+    let ax, ay;
+    if (R < px0 - inset) { ax = Math.round(R); ay = clampY(py0); }
+    else if (L > px0 + inset) { ax = Math.round(L); ay = clampY(py0); }
+    else if (D < py0) { ax = clampX(px0); ay = Math.round(D); }
+    else { ax = clampX(px0); ay = Math.round(T); }
+    const mid = Math.abs(ax - px0) > Math.abs(ay - py0) ? `${px0},${ay}` : `${ax},${py0}`;
+    l.line.setAttribute('points', `${ax},${ay} ${mid} ${px0},${py0}`);
+    l.dot.setAttribute('x', px0 - WARD_LEAD_DOT / 2);
+    l.dot.setAttribute('y', py0 - WARD_LEAD_DOT / 2);
+  }
+}
+// What the close-up wears for `k`: its outfit, with a locked item tried on.
+const drawnOutfit = k => (tried && tried.who === k ? { ...outfitOf(k), [tried.slot]: tried.key } : outfitOf(k));
 
 // The page brought up to the two of them and to the step.
 function say() {
@@ -379,13 +514,14 @@ function say() {
   if (at) b.stepEl.textContent = msg('ward-step', { n: step + 1, of: FLOW.length });
   b.tabs.hidden = !!at;
   for (const k of WHO) {
-    b.tab[k].classList.toggle('on', k === who);
-    b.tab[k].setAttribute('aria-pressed', String(k === who));
+    b.tab[k].b.classList.toggle('on', k === who);
+    b.tab[k].b.setAttribute('aria-pressed', String(k === who));
   }
-  b.fields.hidden = kind !== 'build';
-  b.head.classList.toggle('alone', kind !== 'build');
-  b.edit.hidden = kind !== 'build';
-  b.shown.hidden = kind === 'build';
+  const building = kind === 'build';
+  b.fields.hidden = !building;
+  b.stage.classList.toggle('alone', !building);
+  b.box.hidden = !building;
+  b.shown.hidden = building;
 
   const name = nameOf(who);
   if (document.activeElement !== b.input || typedName(b.input.value).trim() !== name) b.input.value = typing ?? name;
@@ -396,21 +532,23 @@ function say() {
   padKeys();
   b.rVal.textContent = roleWord(who);
 
-  // the slot tabs, the grid's heading, and every tile
+  // the slots' buttons, the grid's head, and every tile
   const o = outfitOf(who);
   for (const s of SLOTS) {
     const all = s.items.length, opened = s.items.filter(it => open(s.key, it.key)).length;
-    const t = b.slotTab[s.key], on = s.key === slot;
-    t.n.textContent = msg('ward-slot-open', { open: opened, all });
-    t.b.classList.toggle('on', on);
-    t.b.setAttribute('aria-selected', String(on));
+    const sb = b.slotBtn[s.key], on = s.key === slot, worn = itemName(s.key, o[s.key]);
+    sb.b.hidden = !building;
+    sb.b.classList.toggle('on', on);
+    sb.b.setAttribute('aria-pressed', String(on));
+    sb.b.setAttribute('aria-label', msg('ward-grid-head', { slot: msg(s.name), item: worn }));
+    sb.worn.textContent = worn;
     // every slot's grid stands in one cell, the others unseen but keeping
     // their space (style.css, `.wardgrids`), so the page is the tallest
     // slot's height whichever is shown, as the settings tabs are
     b.gridOf[s.key].classList.toggle('on', on);
     b.gridOf[s.key].inert = !on;
     if (on) {
-      b.slotWorn.textContent = msg('ward-grid-head', { slot: msg(s.name), item: itemName(s.key, o[s.key]) });
+      b.gridTab.textContent = msg(s.name);
       b.slotOpen.textContent = msg('ward-grid-open', { open: opened, all });
     }
   }
@@ -431,13 +569,13 @@ function say() {
   const lit = [...hot].pop() || built.tiles.find(t => t.b === document.activeElement);
   if (lit) tipFor(lit);
 
-  if (kind !== 'build') showSquares(kind === 'both' ? WHO : [who]);
+  if (!building) showSquares(kind === 'both' ? WHO : [who]);
 
   // the way on and back: skip on the first step, back on the rest
   b.skip.hidden = !at || step > 0;
   b.back.hidden = !at || step === 0;
-  b.roll.hidden = kind !== 'build';
-  b.clear.hidden = kind !== 'build';
+  b.roll.hidden = !building;
+  b.clear.hidden = !building;
   b.next.hidden = !at;
   b.next.textContent = at && step === FLOW.length - 1 ? msg('ward-done') : msg('ward-next');
   const backBtn = document.getElementById('wardrobeback');
@@ -445,8 +583,6 @@ function say() {
   fitGrid();
 }
 
-// The line under the grid: the tile the pointer or the focus is on -- its
-// name, and for a locked one what opens it -- and what is being tried on.
 // A locked tile's words, in the game's own tooltip (board.js `showTipAt`),
 // under the tile on a hover and on the focus: what it is and what opens it,
 // and the lock's note. An open tile has none; its name is on its face.
@@ -493,13 +629,17 @@ function keepOpen(k) {
 }
 function rollOpen(s) { tried = null; rollSlot(who, s); keepOpen(who); }
 
-// The slot tabs turned, to a slot by name or a step along them (wrapping).
+// The slot chosen, by name or a step along the slots (wrapping), in the
+// order they are listed: head, face, neck, back, pattern, aura.
 function turnSlot(to) {
   const i = SLOTS.findIndex(s => s.key === slot);
+  const was = slot;
   slot = typeof to === 'number' ? SLOTS[(i + to + SLOTS.length) % SLOTS.length].key : to;
-  tried = null;
-  hot.clear();
-  showTipAt(null);
+  if (slot !== was) {
+    tried = null;
+    hot.clear();
+    showTipAt(null);
+  }
   say();
 }
 // The tile worn in the slot shown, for the focus to land on.
@@ -509,7 +649,7 @@ const wornTile = () => built.tiles.find(t => t.slot === slot && t.on) || built.t
 // can be asked, else the grid; neither without a pad, where the field is
 // typed into.
 function padKeys() {
-  const b = built, pad = !!S.padOn && !b.edit.hidden;
+  const b = built, pad = !!S.padOn && !b.fields.hidden;
   const steam = pad && !!steamAsk() && !gridAsked;
   b.askBtn.hidden = !steam;
   b.input.hidden = steam;
@@ -575,6 +715,9 @@ export function showWardrobe(el, { start = false, leave = null } = {}) {
   tried = null;
   if (start) { who = 'you'; slot = SLOTS[0].key; }
   say();
+  // a pad comes onto the page at the chosen slot; a new yard's steps start
+  // it on the name, at the top, as the page reads
+  if (S.padOn && !start) nav.focus(built.slotBtn[slot].b);
 }
 // Whether the new yard's steps are up, which own the way back and on.
 export const wardrobeOffer = () => step >= 0;
@@ -588,14 +731,17 @@ export function openWardrobe() { opener?.(); }
 
 // --- the pad and the keys ---------------------------------------------------------
 // What the focus is in: the name (its row, or the letter grid), the role's
-// row, the slot tabs, or a slot (a tile of its grid, or the grid's die).
+// row, or a slot (its button, a tile of its grid, or the grid's die).
 function rowAt(el) {
   if (!el?.closest) return null;
   if (el === built.slotDie) return slot;
   return el.closest('[data-row]')?.dataset.row || (el.closest('.wardkeys') ? 'name' : null);
 }
-// Y, or y: the roll of the row the focus is in, the slot shown from
-// anywhere else.
+// Whether the focus is in the chosen slot's grid, or on a slot's button.
+const inBox = el => !!el && built.box.contains(el);
+const onSlot = el => !!el?.classList?.contains('wardslot');
+// Y, or y: the roll of what the focus is in, the slot shown from anywhere
+// else.
 function rollAt(el) {
   typing = null;
   const row = rowAt(el);
@@ -604,6 +750,8 @@ function rollAt(el) {
   else rollOpen(SLOTS.some(s => s.key === row) ? row : slot);
   say();
 }
+const mid = b => { const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, b }; };
+const boxOf = el => { const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; };
 // From a tile, the nearest tile that way in its own grid, the rows a short
 // window has scrolled out of sight counted with the seen ones, and scrolled
 // to: the grid is walked to its last row before a press leaves it (a row out
@@ -611,47 +759,60 @@ function rollAt(el) {
 function gridStep(el, d) {
   const g = built.gridOf[slot];
   if (!el?.classList?.contains('wardtile') || !g.contains(el)) return false;
-  const mid = b => { const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, b }; };
-  const r = el.getBoundingClientRect();
-  const to = nav.toward({ x: r.left, y: r.top, w: r.width, h: r.height }, d, [...g.children].filter(b => b !== el).map(mid));
+  const to = nav.toward(boxOf(el), d, [...g.children].filter(b => b !== el).map(mid));
   if (!to) return false;
   nav.focus(to.b);
   to.b.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   return true;
 }
-// A direction the page answers itself: across or along a grid to its next
-// tile, left and right on the role's row step it, and on the slot tabs turn
-// them. True if it was answered.
-function stepAt(el, d) {
-  if (gridStep(el, d)) return true;
-  if (d !== 'left' && d !== 'right') return false;
-  const by = d === 'right' ? 1 : -1, row = rowAt(el);
-  if (row === 'role') { stepRole(who, by); say(); return true; }
-  if (row === 'slots') { turnSlot(by); nav.focus(built.slotTab[slot].b); return true; }
-  return false;
+// Everything on the sheet a press can stand on but the tiles: the grid is
+// gone into by A on its slot, never walked into from beside it.
+function outside() {
+  const sheet = built.el.closest('#held') || built.el.parentElement || built.el;
+  return [...sheet.querySelectorAll('button, a[href], input[type="range"]')]
+    .filter(b => shownEl(b) && !b.closest('[inert]') && !b.classList.contains('wardtile') && b.getBoundingClientRect().width >= 1);
 }
-// LT and RT, or [ and ]: the next slot tab, the focus on its worn tile.
+// A direction the page answers itself: across or along a grid to its next
+// tile, left and right on the role's row step it, and anywhere else on the
+// sheet the nearest that way of everything but the tiles. True if it was
+// answered (a press with nothing that way is answered by nothing).
+function stepAt(el, d) {
+  if (!el || !built.el.parentElement?.contains(el)) return false;
+  if (gridStep(el, d)) return true;
+  if ((d === 'left' || d === 'right') && rowAt(el) === 'role') { stepRole(who, d === 'right' ? 1 : -1); say(); return true; }
+  // from a slot, the slots first: the six are one control round the
+  // close-up, and a wide key over them stands nearer by the rule than the
+  // slot across the square
+  const from = boxOf(el), all = outside().filter(b => b !== el);
+  const to = (onSlot(el) && nav.toward(from, d, all.filter(onSlot).map(mid))) || nav.toward(from, d, all.map(mid));
+  if (to) nav.focus(to.b);
+  return true;
+}
+// LT and RT, or [ and ]: the slot before or after, the focus kept where it
+// was -- in the grid, on the new grid's worn tile; on a slot, on the new slot.
 function turnFrom(by) {
+  const at = document.activeElement, grid = inBox(at), slotted = onSlot(at);
   turnSlot(by);
-  const t = wornTile();
-  if (t) nav.focus(t.b);
+  if (grid) { const t = wornTile(); if (t) nav.focus(t.b); }
+  else if (slotted) nav.focus(built.slotBtn[slot].b);
+}
+// B, or Escape, in the grid: back to its slot's button.
+function outOfGrid(el) {
+  if (!inBox(el)) return false;
+  nav.focus(built.slotBtn[slot].b);
+  return true;
 }
 
 // The keyboard: the arrows go to the nearest button that way, as the pad's
-// d-pad does, and Enter is the button's own; y rolls, [ and ] turn the slot
-// tabs. Not while the name is being typed into its field.
+// d-pad does, and Enter is the button's own; Escape in the grid is its slot
+// again, y rolls, [ and ] turn the slots. Not while the name is being typed
+// into its field.
 function keys(e) {
-  if (!built || built.edit.hidden || e.target === built.input || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (!built || built.box.hidden || e.target === built.input || e.altKey || e.ctrlKey || e.metaKey) return;
   const dir = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
-  if (dir) {
-    if (!stepAt(e.target, dir)) {
-      const from = e.target.getBoundingClientRect();
-      const list = [...built.el.querySelectorAll('button')].filter(b => b !== e.target && shownEl(b) && !b.closest('[inert]'));
-      const to = nav.toward({ x: from.left, y: from.top, w: from.width, h: from.height }, dir,
-                            list.map(b => { const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, b }; }));
-      to?.b.focus();
-    }
-  } else if (e.key === 'y' || e.key === 'Y') rollAt(e.target);
+  if (dir) stepAt(e.target, dir);
+  else if (e.key === 'Escape') { if (!outOfGrid(e.target)) return; }
+  else if (e.key === 'y' || e.key === 'Y') rollAt(e.target);
   else if (e.key === '[' || e.key === ']') turnFrom(e.key === ']' ? 1 : -1);
   else return;
   e.preventDefault();
@@ -659,10 +820,11 @@ function keys(e) {
 }
 
 // The pad, on top of the page's own moves between its buttons: Y rolls, X
-// takes a letter back while the grid is up, LT and RT turn the slot tabs,
-// LB and RB are the tabs for the two of you. Through the new yard's steps B
-// is the step back and menu the step on, never the sheet's own let-go.
-// Answers the directions it left for the page, and whether it took B.
+// takes a letter back while the grid is up, LT and RT turn the slots, LB and
+// RB are you and your sqouse, B in the grid goes back to its slot. Through
+// the new yard's steps B is otherwise the step back and menu the step on,
+// never the sheet's own let-go. Answers the directions it left for the
+// page, and whether it took B.
 export function wardrobePad(dirs, pressed) {
   if (!built || !shownEl(built.el)) return { dirs, took: false };
   padKeys();
@@ -670,15 +832,16 @@ export function wardrobePad(dirs, pressed) {
     if (pressed('lb')) pick(WHO[0]);
     if (pressed('rb')) pick(WHO[1]);
   }
-  const editing = !built.edit.hidden;
+  const editing = !built.box.hidden;
   if (editing && (pressed('lt') || pressed('rt'))) turnFrom(pressed('rt') ? 1 : -1);
   if (pressed('y') && editing) rollAt(document.activeElement);
   if (pressed('x') && !built.grid.hidden) unType();
   let took = false;
-  if (step >= 0) {
+  if (pressed('b') && editing && outOfGrid(document.activeElement)) took = true;
+  else if (step >= 0) {
     if (pressed('b')) { if (step > 0) go(-1); took = true; }
-    if (pressed('menu')) { go(1); took = true; }
   }
+  if (step >= 0 && pressed('menu')) { go(1); took = true; }
   if (!editing) return { dirs, took };
   return { took, dirs: dirs.filter(d => !stepAt(document.activeElement, d)) };
 }
@@ -706,6 +869,22 @@ function ground(g, w, h, gy, inks) {
   g.fillStyle = inks.ink;
   g.fillRect(0, gy, w, 1);
 }
+// A square standing in a picture of its own, `foot` over its bottom: a tile,
+// a slot's button, the switch's two. The chosen one is turned over, in the
+// deep's inks as the deep is, to stand on its inverted button.
+function paintSquare(c, k, h, foot, outfit, chosen, key, moving, t) {
+  const { g, w, h: hh } = fit(c, k, h * k);
+  const inks = chosen ? DEEP_INKS : YARD_INKS;
+  const gy = hh - foot;
+  ground(g, w, hh, gy, inks);
+  drawDressed(g, Math.round((w - WORKER) / 2), gy - WORKER, { outfit, dir: 1, moving, t, inks, key, seed: 0 });
+  if (chosen) {
+    g.globalCompositeOperation = 'difference';
+    g.fillStyle = raw('#fff');
+    g.fillRect(0, 0, w, hh);
+    g.globalCompositeOperation = 'source-over';
+  }
+}
 // the close-up's two, a key apiece for an aura to remember their walk by,
 // and a third for the faint pass of a try-on
 const CLOSE = [{}, {}];
@@ -729,8 +908,9 @@ const tileOutfit = (s, k) => {
   return o;
 };
 
-// Once a frame while the page is up: the close-up and the shown slot's
-// tiles, walking on the page's own clock (the yard is held under the sheet).
+// Once a frame while the page is up: the close-up, the slots' and the
+// switch's squares, and the shown slot's tiles, walking on the page's own
+// clock (the yard is held under the sheet).
 export function paintWardrobe(t = performance.now()) {
   if (!built || !shownEl(built.el)) return;
   padKeys();                         // a pad seen or put down while the page is up
@@ -739,12 +919,9 @@ export function paintWardrobe(t = performance.now()) {
   if (now !== built.said) say();
   const s = t / 1000;
   const both = step === FLOW.length - 1;
-  const alone = !built.fields.hidden;
   {
-    // beside the fields its own width, which they wrap under where the page
-    // is too narrow for both (style.css); alone, the page's
-    built.big.style.width = alone ? `${WARD_BIG_W * WARD_BIG}px` : '';
-    const { g, w, h } = fit(built.big, WARD_BIG, WARD_BIG_H * WARD_BIG);
+    const k = built.k;
+    const { g, w, h } = fit(built.big, k, WARD_BIG_H * k);
     ground(g, w, h, Math.round(h - P), YARD_INKS);
     const gy = Math.round(h - P);
     // a turn now and then, so the things that hang off the back are seen moving
@@ -773,21 +950,17 @@ export function paintWardrobe(t = performance.now()) {
       }
     });
   }
-  if (built.edit.hidden) return;
+  if (!built.tabs.hidden) {
+    for (const k of WHO) paintSquare(built.tab[k].c, 1, WARD_MINI_H, WARD_MINI_FOOT, outfitOf(k), k === who, built.tab[k].aura, false, s);
+  }
+  if (built.box.hidden) return;
+  const o = outfitOf(who);
+  for (const sl of SLOTS) {
+    const sb = built.slotBtn[sl.key];
+    paintSquare(sb.c, 1, WARD_SLOT_H, WARD_SLOT_FOOT, tileOutfit(sl.key, o[sl.key]), sl.key === slot, sb.aura, false, s);
+  }
   for (const tile of built.tiles) {
     if (tile.slot !== slot) continue;
-    const { g, w, h } = fit(tile.c, WARD_TILE_K, WARD_TILE_H * WARD_TILE_K);
-    // the chosen tile turned over, in the deep's inks as the deep is
-    const inks = tile.on ? DEEP_INKS : YARD_INKS;
-    const gy = h - WARD_TILE_FOOT;
-    ground(g, w, h, gy, inks);
-    drawDressed(g, Math.round((w - WORKER) / 2), gy - WORKER,
-                { outfit: tileOutfit(tile.slot, tile.key), dir: 1, moving: hot.has(tile), t: s, inks, key: tile.aura, seed: 0 });
-    if (tile.on) {
-      g.globalCompositeOperation = 'difference';
-      g.fillStyle = raw('#fff');
-      g.fillRect(0, 0, w, h);
-      g.globalCompositeOperation = 'source-over';
-    }
+    paintSquare(tile.c, WARD_TILE_K, WARD_TILE_H, WARD_TILE_FOOT, tileOutfit(tile.slot, tile.key), tile.on, tile.aura, hot.has(tile), s);
   }
 }

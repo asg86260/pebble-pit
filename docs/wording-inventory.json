@@ -6960,8 +6960,8 @@
  {
   "id": "ward-slot-head",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobe.js",
-  "context": "the picker's slot tabs, a slot a tab",
+  "where": "src/selftest/wardrobe.js",
+  "context": "the picker's slot buttons round the close-up, and the tab over the grid of the chosen one, a slot each",
   "text": "head"
  },
  {
@@ -7000,24 +7000,17 @@
   "text": "aura"
  },
  {
-  "id": "ward-slot-open",
-  "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobepage.js",
-  "context": "the picker's slot tabs: how many of a slot's items are open to wear, of all of them",
-  "text": "${open}/${all}"
- },
- {
   "id": "ward-grid-head",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
   "where": "src/wardrobepage.js",
-  "context": "the heading over the picker's grid of items: $slot the slot, $item its item",
+  "context": "a slot's button round the picker's close-up, as a screen reader names it: $slot the slot, $item what is worn in it",
   "text": "${slot}: ${item}"
  },
  {
   "id": "ward-grid-open",
   "group": "The picker: who the two of them are and what they wear (wardrobepage.js)",
-  "where": "src/wardrobepage.js",
-  "context": "beside the heading over the picker's grid: how many of the slot's items are open to wear",
+  "where": "src/selftest/wardrobe.js",
+  "context": "beside the tab over the picker's grid: how many of the slot's items are open to wear",
   "text": "${open} of ${all} open"
  },
  {

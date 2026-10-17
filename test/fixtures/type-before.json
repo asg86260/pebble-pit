@@ -205,7 +205,7 @@
  },
  {
   "file": "src/style.css",
-  "sel": ".held .wardrobe .wardslots button",
+  "sel": ".held .wardrobe .wardslot",
   "prop": "letter-spacing",
   "value": "normal"
  },
