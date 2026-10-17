@@ -3327,3 +3327,53 @@ ach-freed-name = complete act 2
 
 # achievement note: the serpent kill
 ach-freed-note = finish act 2
+
+## Act 4 (placeholder)
+
+# act 4 (placeholder): hell's boards are working labels for the owner to word; the face card's name, the miners at the seams
+row-hellface = miners
+
+# act 4 (placeholder): the face card's verb, before its hits a second
+row-hellface-does = swing
+
+# act 4 (placeholder): the furnace card's name, every furnace's pace
+row-hellfurnace = furnaces
+
+# act 4 (placeholder): the furnace card's verb, before its share
+row-hellfurnace-does = smelt
+
+# act 4 (placeholder): the anvil card's name, the smith's strokes
+row-hellanvil = smith
+
+# act 4 (placeholder): the anvil card's verb, before its hits a second
+row-hellanvil-does = strike
+
+# act 4 (placeholder): the muster card's name, how many ghosts come down the road
+row-hellmuster = muster
+
+# act 4 (placeholder): the muster card's verb, before the count
+row-hellmuster-does = ghosts
+
+# act 4 (placeholder): the barrier board's row taking one more miner off the faces onto the wall
+row-hellgangup = one more on the wall
+
+# act 4 (placeholder): the barrier board's row sending one of the wall gang back to the faces
+row-hellgangdown = one back to the faces
+
+# act 4 (placeholder): the anvil board's row buying a barrel of black water with sparks
+row-hellwater = black water
+
+# act 4 (placeholder): a seam face's board, its heading
+board-hell-face = the seam
+
+# act 4 (placeholder): a furnace's board, its heading
+board-hell-furnace = the furnace
+
+# act 4 (placeholder): the anvil's board, its heading
+board-hell-anvil = the anvil
+
+# act 4 (placeholder): the road's foot, the muster's board, its heading
+board-hell-muster = the road
+
+# act 4 (placeholder): a barrier's board, its heading
+board-hell-wall = the barrier

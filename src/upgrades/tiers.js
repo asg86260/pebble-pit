@@ -7,20 +7,24 @@
 // written a rung at a time in config/rungs.js.
 
 import { S } from '../state.js';
-import { TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, SCALE_BAND_COINS, SCALE_RUNG_COINS, WORK_BASE, WORK_STEP, rungDust, rungFoot } from '../config.js';
+import { TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, SCALE_BAND_COINS, SCALE_RUNG_COINS, HELL_BAND_COINS, HELL_RUNG_COINS, WORK_BASE, WORK_STEP, rungDust, rungFoot } from '../config.js';
 import { DUST_PER, coinsOpen, coinNeeds } from './price.js';
 import { ahead } from '../works.js';
 
 // The coins each band adds, by the coin a ladder leads with: the yard's
 // ladders lead with dust, the deep's with scales (config/deepboard.js).
-const LEAD_BANDS = { dust: BAND_COINS, scale: SCALE_BAND_COINS };
+// Hell's lead with brimstone (config/hell.js).
+const LEAD_BANDS = { dust: BAND_COINS, scale: SCALE_BAND_COINS, brimstone: HELL_BAND_COINS };
+// The leads whose band coins are written a rung at a time rather than
+// converted: hell's coins have no worth in dust at all.
+const WRITTEN = { scale: SCALE_RUNG_COINS, brimstone: HELL_RUNG_COINS };
 // What a coin is worth in dust, dust itself included, for turning the lead
 // coin's amount into a band coin's.
 const perDust = c => (c === 'dust' ? 1 : DUST_PER[c]);
-// A band coin's amount on rung `lvl`: the deep's are written
-// (SCALE_RUNG_COINS), the yard's are the lead's amount at the coins' rates.
-const bandCoin = (lead, c, amount, lvl) => lead === 'scale'
-  ? Math.max(1, SCALE_RUNG_COINS[c][Math.min(lvl, SCALE_RUNG_COINS[c].length - 1)])
+// A band coin's amount on rung `lvl`: the deep's and hell's are written
+// (WRITTEN), the yard's are the lead's amount at the coins' rates.
+const bandCoin = (lead, c, amount, lvl) => WRITTEN[lead]
+  ? Math.max(1, WRITTEN[lead][c][Math.min(lvl, WRITTEN[lead][c].length - 1)])
   : Math.max(1, Math.round(amount * perDust(lead) / perDust(c)));
 
 // Clamped on read: a save from a longer ladder may hold any level, and it

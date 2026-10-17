@@ -1,16 +1,22 @@
-// The cage room and the way home (DESIGN.md, "Acts 3 and 4", act 4, beats 14
-// to 16, "Freeing God", "Lives returned" and "Home"). A stub of the scaffold:
-// nothing here runs yet.
+// The cage room (DESIGN.md, "Acts 3 and 4", act 4, beats 14 to 16, "Freeing
+// God", "Lives returned" and "Home").
 //
-// What it will own: the fifth chamber, God hanging in the cage cut from the
-// room's own adamant; the cage as the last barrier, worked like the others
-// (call 4 open: worked by the crew, recommended, or a cutscene once the
-// fourth wall falls; and whether Satan watches); owing `unchain` when its last
-// bar falls; then `alive` -- the pair's pale rims filling to black a piece at
-// a time (call 6 open: the pair only, recommended, or every member) -- and
-// `home-again`, the way back up and the house rebuilt on its old ground by
-// the yard's builders (call 8 open: the bench for good, or a pick held out
-// again; and whether there is a tail).
+// The last chamber, God hanging in the cage cut from the room's own adamant.
+// The cage is the last barrier and is worked like the others (barriers.js):
+// the adamant pick, the gang and the click, a cell at a time. Its last cell
+// down is the act's climax, `cageBroken`, for the story to take (the
+// `unchain` beat, Track C's). Still open and not built: whether the cage is
+// the crew's work or a cutscene once the fourth wall falls (call 4), whether
+// Satan watches, the pair's rims filling (call 6) and the way home (call 8).
 
-// One frame of the cage room.
+import { S } from '../state.js';
+import { HELL_TIERS } from '../config.js';
+import { barrierFallen } from './barriers.js';
+
+// The cage's index in the run: the last barrier.
+export const CAGE = HELL_TIERS.length - 1;
+// Whether the cage's last bar is down.
+export const cageBroken = () => !!S.hell && barrierFallen(CAGE);
+
+// One frame of the cage room: nothing of its own yet beyond the barrier.
 export function stepCage(c) {}

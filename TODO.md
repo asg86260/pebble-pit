@@ -12,6 +12,13 @@ fields, the beat rows and two scenes -- nothing playable (DESIGN.md, the
 section's first paragraph). Blocker for anything past it is unchanged: the
 mocks, then lifespans and lineage.
 
+**Act 4's loop built on placeholder art** (2026-10-17, branch `hell-loop`;
+DESIGN.md, act 4's first paragraph): mine, smelt, forge, barriers, flares,
+ghosts, four cards. Open on it: the hifi mocks to replace every drawing,
+the input and beat wiring (`clickHell`, `hellBoardAt`, `hellWallDue`,
+`cageBroken` -- Track C), a tuning pass on config/hell.js, and the
+placeholder sources (black water, builders, the stair, flux).
+
 "Acts 3 and 4: the afterlife and hell (design, not built)" in DESIGN.md,
 reworked for the owner's story (God forces the dead to work forever; the
 pair take God down; God is Satan unmasked; the dead travel back to the

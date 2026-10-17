@@ -7663,5 +7663,117 @@
   "where": "src/catalog.js",
   "context": "achievement note: the serpent kill",
   "text": "finish act 2"
+ },
+ {
+  "id": "row-hellface",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): hell's boards are working labels for the owner to word; the face card's name, the miners at the seams",
+  "text": "miners"
+ },
+ {
+  "id": "row-hellface-does",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): the face card's verb, before its hits a second",
+  "text": "swing"
+ },
+ {
+  "id": "row-hellfurnace",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): the furnace card's name, every furnace's pace",
+  "text": "furnaces"
+ },
+ {
+  "id": "row-hellfurnace-does",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): the furnace card's verb, before its share",
+  "text": "smelt"
+ },
+ {
+  "id": "row-hellanvil",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): the anvil card's name, the smith's strokes",
+  "text": "smith"
+ },
+ {
+  "id": "row-hellanvil-does",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): the anvil card's verb, before its hits a second",
+  "text": "strike"
+ },
+ {
+  "id": "row-hellmuster",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): the muster card's name, how many ghosts come down the road",
+  "text": "muster"
+ },
+ {
+  "id": "row-hellmuster-does",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): the muster card's verb, before the count",
+  "text": "ghosts"
+ },
+ {
+  "id": "row-hellgangup",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): the barrier board's row taking one more miner off the faces onto the wall",
+  "text": "one more on the wall"
+ },
+ {
+  "id": "row-hellgangdown",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): the barrier board's row sending one of the wall gang back to the faces",
+  "text": "one back to the faces"
+ },
+ {
+  "id": "row-hellwater",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): the anvil board's row buying a barrel of black water with sparks",
+  "text": "black water"
+ },
+ {
+  "id": "board-hell-face",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): a seam face's board, its heading",
+  "text": "the seam"
+ },
+ {
+  "id": "board-hell-furnace",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): a furnace's board, its heading",
+  "text": "the furnace"
+ },
+ {
+  "id": "board-hell-anvil",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): the anvil's board, its heading",
+  "text": "the anvil"
+ },
+ {
+  "id": "board-hell-muster",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): the road's foot, the muster's board, its heading",
+  "text": "the road"
+ },
+ {
+  "id": "board-hell-wall",
+  "group": "Act 4 (placeholder)",
+  "where": "src/upgrades/rows-hell.js",
+  "context": "act 4 (placeholder): a barrier's board, its heading",
+  "text": "the barrier"
  }
 ]

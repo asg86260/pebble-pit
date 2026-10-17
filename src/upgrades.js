@@ -20,6 +20,7 @@ import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HO
 
 import { spelled } from './tower.js';
 import { spendScales, refundScales } from './deep/scales.js';
+import { isHellCoin, takeHell } from './hell/coins.js';
 
 import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut,
          ahead, newestWaiting, waitingCount, worksOf } from './works.js';
@@ -174,6 +175,8 @@ export function markSectionsSeen() {
 export function take(money, n, to = null) {
   if (!n) return;
   if (money === 'scale') { spendScales(n, to?.x ?? S.cx, to?.y ?? S.groundY); return; }
+  // Hell's come off its store and its anvil (hell/coins.js).
+  if (isHellCoin(money)) { takeHell(money, n); return; }
   if (money === 'dust') spend(n);
   else if (money === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
   else if (money === 'spore') { S.spores -= n; spendHeld(n, SPORE_CELL); }

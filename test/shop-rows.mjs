@@ -53,6 +53,13 @@ const deep = (S, run) => {
   window.__snatch({ played: true });
   window.__grant({ scales: 5000 });
 };
+// Hell begun, its store stocked: the act's own coins, and the yard's crew so
+// the opening is behind it.
+const hell = (patch = {}) => {
+  crew();
+  window.__goPlace('hell');
+  window.__hell({ brimstone: 500, bars: { dross: 50, cinder: 50, copper: 50, obsidian: 50 }, ...patch });
+};
 export const ROWS = [
   // --- the bench --------------------------------------------------------------
   { key: 'carry', fresh: true, part: 1 },
@@ -168,6 +175,18 @@ export const ROWS = [
   // on its rails, not as rows (deep/rails.js, test/rails.test.mjs), and is
   // bought from the floating button, not a board (deep/buildbutton.js).
   { key: 'pod', part: 1, reach: deep },
+
+  // --- act 4, hell (upgrades/rows-hell.js) -------------------------------------
+  // Off every board until hell has begun; its cards are paid in brimstone
+  // and bars, which the flood does not pour, so `reach` stocks the store.
+  { key: 'hellface', part: 2, purse: true, reach: () => hell() },
+  { key: 'hellfurnace', part: 2, purse: true, reach: () => hell() },
+  { key: 'hellanvil', part: 2, purse: true, reach: () => hell() },
+  { key: 'hellmuster', part: 2, purse: true, reach: () => hell() },
+  { key: 'hellgangup', part: 2, reach: () => hell() },
+  { key: 'hellgangdown', part: 2, reach: () => hell({ gang: 2 }) },
+  // The black water's placeholder row: sparks, once the iron pick is made.
+  { key: 'hellwater', part: 2, reach: () => hell({ tool: 2 }) },
 
   // The casino has no board: its decisions are levers on the building and
   // heaps on the ground (levers.js, stakes.js), checked in casino.test.mjs.
