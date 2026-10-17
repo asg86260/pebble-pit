@@ -19854,21 +19854,35 @@ in rain clouds cost the frame about 0.04 ms.
 
 **The picker** (src/wardrobepage.js; the mock's Part 3, titled with the
 mock's words "the two of you"). A page of the held sheet, at its full width:
-you and your sqouse as two tabs; the one being chosen close up, its name and
-role beside it; a tab a slot, each with how many of its items are open; and
-under them every item of the slot at once, a tile each of the bare square
-wearing it, walking in place under the pointer or the focus (the owner's
-vote, layout A of docs/mocks/wardrobe-expansion-2026-10-16, which replaced
-the row a slot with previous and next, and the crowd strip with it). The
-chosen tile is inverted; a locked one is faint under a lock, says what
-opens it, and picked is tried on the close-up faint and not kept; a roll
-never wears one. The slot's die is in the grid's heading, the roll of the
-whole square and the clear at the foot (nothing twice as likely as any one
-item). Under a thumb every target is 44 pixels, the slot tabs scroll
-sideways and the tiles reflow. A pad moves between its buttons as on any
-page, the nearest that way, so across the tiles; A picks, LT and RT are the
-slot tabs, LB and RB her and him, Y the slot's roll, B back; the keyboard
-the same, [ and ] for the slot tabs.
+you and your sqouse as a joined switch, each with its square small; the name
+and the title; the one being chosen close up, its six slots round it, three
+a side ordered by where they are worn down the body (head, back, aura on the
+left; face, neck, pattern on the right), each a button with the slot's item
+drawn on it, its name, and on a desk the worn item's whole name; only the
+chosen slot draws its guide line to the square, fading across as the slot
+changes (the owner's vote, D2 of docs/mocks/appearance-hierarchy-2026-10-16,
+with the other slots' lines left out; it replaced the strip of slot tabs and
+the heading over the grid, because two strips that looked alike did not say
+which belonged to the square). Under them every item of the chosen slot at
+once, a tile each of the bare square wearing it, walking in place under the
+pointer or the focus, four to a row (layout A of
+docs/mocks/wardrobe-expansion-2026-10-16, which replaced the row a slot with
+previous and next, and the crowd strip with it), headed by the slot's name
+inverted as its button is, so the two read as one. The close-up is as large
+as the room between the slots allows, a whole number of pixels a world pixel
+(two on a laptop's sheet), the slots as narrow as the longest name lets
+them be, both measured. The chosen tile is inverted; a locked one is faint
+under a lock, says what opens it, and picked is tried on the close-up faint
+and not kept; a roll never wears one. The slot's die is beside the grid's
+count, the roll of the whole square and the clear at the foot (nothing
+twice as likely as any one item). On a phone the six stand in two rows of
+three under the close-up, every target 44 pixels, and the tiles reflow. A
+pad moves between the slots as on any page, the nearest that way, but never
+walks into the grid: A on a slot opens its grid on the tile worn, A on a
+tile wears it, B in the grid is the slot again and B on the slots the
+sheet's own; LT and RT the slot before and after from anywhere, LB and RB
+her and him, Y the roll of what the focus is in; the keyboard the same,
+Enter, Escape in the grid, and [ and ] for the slots.
 It is a row on the house's board, always ("the two of
 you", over the yard on the held sheet; the owner moved it off settings,
 2026-10-16), and offered

@@ -3197,7 +3197,7 @@ ward-key-space = space
 # the pad's letter grid under the name: the key that takes the last letter back
 ward-key-del = del
 
-# the picker's slot tabs, a slot a tab
+# the picker's slot buttons round the close-up, and the tab over the grid of the chosen one, a slot each
 ward-slot-head = head
 ward-slot-face = face
 ward-slot-neck = neck
@@ -3205,13 +3205,10 @@ ward-slot-back = back
 ward-slot-pattern = pattern
 ward-slot-aura = aura
 
-# the picker's slot tabs: how many of a slot's items are open to wear, of all of them
-ward-slot-open = { $open }/{ $all }
-
-# the heading over the picker's grid of items: $slot the slot, $item its item
+# a slot's button round the picker's close-up, as a screen reader names it: $slot the slot, $item what is worn in it
 ward-grid-head = { $slot }: { $item }
 
-# beside the heading over the picker's grid: how many of the slot's items are open to wear
+# beside the tab over the picker's grid: how many of the slot's items are open to wear
 ward-grid-open = { $open } of { $all } open
 
 # a locked item in the picker's grid, in the tooltip on its hover and focus: $item the item, $lock what opens it

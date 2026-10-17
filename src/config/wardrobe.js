@@ -54,6 +54,25 @@ export const WARD_TRY_ALPHA = 0.35;
 // next, so a laptop's window (1280x800) holds the close-up still, and the
 // half row says there is more under it.
 export const WARD_GRID_ROWS = 1.5;
+// The slots round the close-up (D2 of docs/mocks/appearance-hierarchy-2026-10-16):
+// each slot's button carries the bare square wearing that slot's item, this
+// many world pixels wide and tall at a screen pixel a world pixel, its feet
+// this far over the picture's bottom.
+export const WARD_SLOT_W = 36;
+export const WARD_SLOT_H = 44;
+export const WARD_SLOT_FOOT = 4;
+// The you and your sqouse switch: each square's whole outfit, as small.
+export const WARD_MINI_W = 30;
+export const WARD_MINI_H = 34;
+export const WARD_MINI_FOOT = 2;
+// Where the chosen slot's guide line ends on the close-up, in world pixels
+// off the body's top-left (its square is WORKER across, facing right, so the
+// face and the neck are on the right and the back on the left). The head's
+// height is over the head item's own top, whatever is worn there.
+export const WARD_PARTS = { head: [9, -2], face: [13, 6], neck: [11, 14], back: [-3, 9], pattern: [6, 10], aura: [9, 21] };
+// The guide line's weight and the square at its end, in screen pixels.
+export const WARD_LEAD_W = 2;
+export const WARD_LEAD_DOT = 6;
 
 // Who the two of them are (DESIGN.md, "Who you are"): the longest name the
 // player may give either square, in characters. The narrow places a name
