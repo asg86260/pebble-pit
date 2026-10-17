@@ -11,7 +11,7 @@
 // marked on its middle, and what sits on its head.
 
 import { P, WORKER, BODY_RIM, GREY, GOLD, WARD_UNIT, WARD_GRID, WARD_GREY, WARD_PALE, WARD_DEEP_GREY, WARD_DEEP_PALE,
-         WARD_STEP_HZ, WARD_BOB_HZ, WARD_WAVE_HZ, WARD_STILL_S, WARD_HEADS } from '../config.js';
+         WARD_STEP_HZ, WARD_BOB_HZ, WARD_STILL_S, WARD_HEADS } from '../config.js';
 import { itemOf } from '../wardrobe.js';
 import { GREYS, seen } from './deeptones.js';
 import { dressAura } from './wardaura.js';
@@ -41,7 +41,7 @@ export function fill(g, x, y, w, h, tone) {
   g.fillRect(x0, y0, x1 - x0, y1 - y0);
 }
 const cell = (g, x, y, tone) => fill(g, x, y, P, P, tone);
-const pose = (t, hz) => Math.floor((t || 0) * hz) % 2;
+const pose = (t, hz, n = 2) => Math.floor((t || 0) * hz) % n;
 const widthOf = rows => Math.max(...rows.map(r => r.length));
 
 // A drawing in WARD_UNIT marks, its characters mapped to tones, its top-left
@@ -56,63 +56,107 @@ export function art(g, rows, x0, y0, dir, tones) {
   });
 }
 
-// The cape's cells, a cell each: hanging when the body stands, two poses
-// streaming out behind as it walks.
-function capeCells(y, l, k) {
-  const { d, bx } = k, p = pose(l.t, WARD_STEP_HZ);
-  return l.moving ? [[bx, y], [bx + d * P, y + P], [bx + d * P * (p ? 2 : 1), y + (p ? P : 2 * P)], [bx, y + P]]
-    : [[bx, y], [bx, y + P], [bx, y + 2 * P]];
+// The back items are drawn in WARD_UNIT marks, as the scarf's tail is (the
+// owner's votes, docs/mocks/wardrobe-back-2026-10-16): a unit at (ux, uy)
+// off the body's top-left facing right, negative ux behind it, mirrored round
+// the body for a body facing left.
+const unit = (g, x, y, l, ux, uy, tone) => fill(g, across(x, l, ux * WARD_UNIT, WARD_UNIT), y + uy * WARD_UNIT, WARD_UNIT, WARD_UNIT, tone);
+// Rows of units, '#' the ink and 'w' the paper, their top-left at (ux, uy).
+function units(g, x, y, l, rows, ux, uy, k) {
+  rows.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch !== '.') unit(g, x, y, l, ux + c, uy + r, ch === 'w' ? k.paper : k.ink);
+  }));
 }
+const BODY_UNITS = WORKER / WARD_UNIT;
+
+// The cape (option B, "billow"): to the knee with a smooth hem, hanging in
+// three columns that step down off the back when the body stands, billowing
+// out behind in three held poses as it walks -- filling, full, falling. Each
+// pose is its columns' tops and lengths in units, the one against the back
+// first; the short cape is the same cut to the waist, its lengths scaled by
+// SHORT_CUT over its first SHORT_COLS columns.
+const CAPE_TOP = [[0, 0, 0, 1, 1, 2, 3], [0, -1, -1, -1, 0, 0, 1], [0, 0, 1, 2, 2, 3, 4]];
+const CAPE_LEN = [[7, 6, 6, 5, 4, 3, 2], [7, 7, 7, 6, 5, 4, 3], [7, 7, 6, 5, 4, 3, 2]];
+const CAPE_HANG = { long: [[0, 7], [1, 7], [3, 7]], short: [[0, 4], [1, 4], [2, 4]] };
+const SHORT_COLS = 5, SHORT_CUT = 4 / 7;
+// The cape's units, [ux, uy], never below the body's foot.
+function capeUnits(l, short) {
+  let cols;
+  if (!l.moving) cols = CAPE_HANG[short ? 'short' : 'long'];
+  else {
+    const p = pose(l.t, WARD_STEP_HZ, CAPE_TOP.length), len = CAPE_LEN[p];
+    cols = CAPE_TOP[p].slice(0, short ? SHORT_COLS : len.length)
+      .map((top, i) => [top, top + (short ? Math.max(1, Math.round(len[i] * SHORT_CUT)) : len[i])]);
+  }
+  const out = [];
+  cols.forEach(([top, bot], i) => { for (let v = top; v < Math.min(bot, BODY_UNITS); v++) out.push([-(i + 1), v]); });
+  return out;
+}
+// A cape's units in the ink; hemmed in gold, every unit with nothing under it
+// and the column farthest out.
+function drawCape(g, x, y, l, k, short, trim) {
+  const set = capeUnits(l, short), has = new Set(set.map(([a, b]) => a + ',' + b));
+  const far = Math.min(...set.map(s => s[0]));
+  for (const [ux, uy] of set) {
+    const hem = trim && (!has.has(ux + ',' + (uy + 1)) || ux === far);
+    unit(g, x, y, l, ux, uy, hem ? k.gold : k.ink);
+  }
+}
+
+// The balloon (option A, "lags behind"): ten by twelve with a paper
+// highlight, its knot the last row, on a stepped string tied over the back
+// of the head. Standing it hangs over the back and bobs; walking it lags
+// back, swinging a unit further back and down on the other step. The knot's
+// spot [ux, uy], a pose each.
+const BALLOON = ['.###.', '#####', '#w###', '#####', '.###.', '..#..'];
+const BALLOON_KNOT = 2;
+const BALLOON_STAND = [[-1, -7], [-1, -8]];
+const BALLOON_WALK = [[-4, -8], [-5, -7]];
+function balloon(g, x, y, l, k) {
+  const [kx, ky] = l.moving ? BALLOON_WALK[pose(l.t, WARD_STEP_HZ)] : BALLOON_STAND[pose(l.t, WARD_BOB_HZ)];
+  // the string, stepped from the tie (0, -1) to just under the knot
+  const ey = ky + 2, n = Math.max(Math.abs(kx), Math.abs(ey));
+  for (let i = 0; i <= n; i++) unit(g, x, y, l, Math.round(kx * i / n), -1 + Math.round(ey * i / n), k.ink);
+  units(g, x, y, l, BALLOON, kx - BALLOON_KNOT, ky - BALLOON.length + 1, k);
+}
+
+// The flag (option B, "pennant"): a pole up the back and a pennant tapering
+// to a point off its top, streaming straight back in a two-pose wave as the
+// body walks, drooping a column at a time with its tip swaying as it stands.
+const PENNANT = [4, 4, 3, 3, 3, 2, 2, 1, 1];
+const PENNANT_WAVE = [[0, 0, 0, 1, 1, 0, 0, -1, -1], [0, 0, 0, 0, 1, 1, 1, 0, 0]];
+const PENNANT_DROOP = [4, 4, 3, 3, 2, 2, 1];
+const POLE_TOP = -11, POLE_FOOT = 6, PENNANT_TOP = -10, DROOP_SAG = 1.5, TIP_FROM = 5;
+function flag(g, x, y, l, k) {
+  for (let v = POLE_TOP; v < POLE_FOOT; v++) unit(g, x, y, l, -1, v, k.ink);
+  const col = (i, top, h) => { for (let r = 0; r < h; r++) unit(g, x, y, l, -2 - i, top + r, k.ink); };
+  if (l.moving) {
+    const wave = PENNANT_WAVE[pose(l.t, WARD_STEP_HZ)], tall = PENNANT[0];
+    PENNANT.forEach((h, i) => col(i, PENNANT_TOP + Math.floor((tall - h) / 2) + wave[i], h));
+  } else {
+    const s = pose(l.t, WARD_BOB_HZ);
+    PENNANT_DROOP.forEach((h, i) => col(i, PENNANT_TOP + Math.round(i * DROOP_SAG) + (i >= TIP_FROM ? s : 0), h));
+  }
+}
+
+// The backpack, in units: a flap line and a buckle in the paper. Still.
+const BACKPACK = ['.##', '###', 'www', '###', '#w#', '###', '###'];
+
 // A sack tied at the neck, a paper pebble on it, bouncing a unit with the step.
 const MONEYBAG = ['.#..#.', '..##..', '.####.', '##ee##', '##ee##', '.####.'];
 // --- behind the body -------------------------------------------------------------
-// Off the side away from the way the body faces: `bx` the column just past
-// its back, `d` a step further back.
+// Off the side away from the way the body faces.
 const BACKS = {
-  cape(g, x, y, l, k) {
-    for (const [cx, cy] of capeCells(y, l, k)) cell(g, cx, cy, k.ink);
-  },
-  // the cape, hemmed in gold: the foot of every cell with nothing under it,
-  // and the outer side of the cell farthest out
-  'gold-cape'(g, x, y, l, k) {
-    const cells = capeCells(y, l, k), U = WARD_UNIT;
-    for (const [cx, cy] of cells) cell(g, cx, cy, k.ink);
-    const has = (cx, cy) => cells.some(([a, b]) => a === cx && b === cy);
-    const far = l.dir > 0 ? Math.min(...cells.map(c => c[0])) : Math.max(...cells.map(c => c[0]));
-    for (const [cx, cy] of cells) {
-      if (!has(cx, cy + P)) fill(g, cx, cy + P - U, P, U, k.gold);
-      if (cx === far) fill(g, l.dir > 0 ? cx : cx + P - U, cy, U, P, k.gold);
-    }
-  },
+  cape: (g, x, y, l, k) => drawCape(g, x, y, l, k, false, false),
+  'short-cape': (g, x, y, l, k) => drawCape(g, x, y, l, k, true, false),
+  'gold-cape': (g, x, y, l, k) => drawCape(g, x, y, l, k, false, true),
   moneybag(g, x, y, l, k) {
     const U = WARD_UNIT, w = MONEYBAG[0].length * U, bounce = l.moving && pose(l.t, WARD_STEP_HZ) ? U : 0;
     art(g, MONEYBAG, l.dir > 0 ? x - w : x + WORKER, y + WORKER - w - bounce, l.dir, { '#': k.ink, e: k.paper });
   },
-  'short-cape'(g, x, y, l, k) {
-    const { d, bx } = k, p = pose(l.t, WARD_STEP_HZ);
-    if (l.moving) { cell(g, bx, y, k.ink); cell(g, bx + d * P, y + (p ? 0 : P), k.ink); }
-    else { cell(g, bx, y, k.ink); cell(g, bx, y + P, k.ink); }
-  },
-  backpack(g, x, y, l, k) {
-    cell(g, k.bx, y + 2, k.ink); cell(g, k.bx, y + 2 + P, k.ink);
-    fill(g, k.bx + 2, y + 2 + P + 2, 2, 2, k.paper);
-  },
-  // on a string tied at the back of its head, bobbing
-  balloon(g, x, y, l, k) {
-    const bob = pose(l.t, WARD_BOB_HZ) ? -2 : 0;
-    const sx = l.dir > 0 ? x + 2 : x + WORKER - 4;
-    fill(g, sx, y - 3 * P + bob, 1, 3 * P - bob, k.ink);
-    const bxl = sx - 5 + k.d * 4, byl = y - 3 * P - 12 + bob;
-    fill(g, bxl + 2, byl, 8, 12, k.ink); fill(g, bxl, byl + 2, 12, 8, k.ink);
-  },
-  // on a pole up the back, waving
-  flag(g, x, y, l, k) {
-    const px = l.dir > 0 ? x : x + WORKER - 2;
-    fill(g, px, y - 4 * P, 2, 4 * P, k.ink);
-    const fx = l.dir > 0 ? px - 2 * P : px + 2, wv = pose(l.t, WARD_WAVE_HZ);
-    fill(g, fx, y - 4 * P, 2 * P, P, k.ink);
-    fill(g, l.dir > 0 ? fx + (wv ? 0 : P) : fx + (wv ? P : 0), y - 3 * P, P, P - 2, k.ink);
-  },
+  backpack: (g, x, y, l, k) => units(g, x, y, l, BACKPACK, -BACKPACK[0].length, 1, k),
+  balloon,
+  flag,
 };
 
 // A mark `rx` world pixels in from the body's left facing right, `w` wide,
@@ -157,11 +201,9 @@ function scarfTail(g, nk, x, y, l, k, h) {
   fill(g, across(x, l, -3 * U, U), floor - U, U, U, scarfTone(kind, n, k, chk));
 }
 
-const sides = (x, l) => ({ d: l.dir > 0 ? -1 : 1, bx: l.dir > 0 ? x - P : x + WORKER });
-
 // `h` the body's height, short of WORKER when it is squashed (the crouch).
 export function dressBehind(g, x, y, l, h = WORKER) {
-  const o = l.outfit, k = { ...l.inks, ...sides(x, l) };
+  const o = l.outfit, k = l.inks;
   // a lamp on the head lights the way ahead, behind everything it wears
   const hd = itemOf('head', o.head);
   lampCone(g, x, y + h - WORKER, l.dir, { on: !!(hd && hd.lamp), key: l.key, t: l.t, deep: l.deep, src: 'head' });

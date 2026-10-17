@@ -1335,15 +1335,25 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .wardrobe .wardslothead { display: flex; justify-content: space-between; align-items: center; gap: var(--gap-m); border-bottom: 1px solid var(--ink); padding-bottom: var(--gap-s); }
 .wardrobe .wardr { display: inline-flex; align-items: center; gap: var(--gap-m); }
 .wardrobe .wardopen { color: var(--ink-5); font-size: var(--fs-small); white-space: nowrap; }
-/* Every slot's grid in one cell, the ones not shown unseen but keeping their
-   space (as .tabpane does): the cell is the tallest slot's, measured by the
-   layout, so the page holds one height as the tabs turn. Past the window it
-   is the sheet that scrolls, as on every page: a grid that scrolled inside
-   itself was squeezed to a part of a row, and the row under it stood further
-   off than the buttons at the foot, so an arrow down left the grid. */
-.wardrobe .wardgrids { display: grid; grid-template-columns: minmax(0, 1fr); }
+/* On a short window the grid alone gives way, scrolling inside itself, so the
+   close-up, the name and the slot tabs over it and the buttons at its foot
+   stay on the glass (the owner, 2026-10-16). The grid's box is the tallest
+   slot's height, measured (wardrobepage.js, `fitGrid`), so the page holds one
+   height as the tabs turn; the slots not shown keep their width but no
+   height, so the scroll runs only as far as the slot shown. It never gives
+   way below WARD_GRID_ROWS rows of tiles, and nothing else on the page gives
+   way at all: their least heights are measured too, and past them it is the
+   sheet that scrolls, as on every page. */
+.held .wardrobe { min-height: var(--ward-min, auto); }
+.wardrobe > *, .wardrobe .wardedit > * { flex-shrink: 0; }
+.wardrobe > .wardedit { flex-shrink: 1; min-height: var(--edit-min, auto); }
+.wardrobe .wardedit > .wardgrids {
+  flex: 0 1 var(--grids-h, auto); min-height: var(--grids-min, auto);
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
+}
 .wardrobe .wardtiles { grid-area: 1 / 1; align-self: start; display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--tile) + 4px), 1fr)); gap: var(--gap-s); }
-.wardrobe .wardtiles:not(.on) { visibility: hidden; }
+.wardrobe .wardtiles:not(.on) { visibility: hidden; height: 0; overflow: hidden; }
 .held .wardrobe .wardtile {
   position: relative; min-width: 0; padding: 0 0 2px; border: 2px solid transparent;
   display: flex; flex-direction: column; align-items: center; gap: 0; letter-spacing: normal;

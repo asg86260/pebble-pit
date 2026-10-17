@@ -602,6 +602,8 @@ export const TESTS = [
     namePair('you', w);
     w.kitOf = null;
     wear('you', { head: 'none' });
+    // the cloud waits on the first muck rain (wardrobe-locks.test.mjs)
+    if (!S.won.includes('muckrain')) S.won.push('muckrain');
     await openPicker();
     byId('wardyou').click();
     slotTab('aura').click();
@@ -781,7 +783,7 @@ export const TESTS = [
   // phone's sheet that scrolls is held to it too.
   ['wardrobe: the sheet is one height across every slot tab, both squares and the build steps, desk and phone', async () => {
     const checks = [];
-    for (const [size, w, h] of [['desk', 1280, 800], ['phone', 360, 740]]) {
+    for (const [size, w, h] of [['desk', 1280, 800], ['short', 1280, 900], ['tall', 1280, 1400], ['phone', 360, 740]]) {
       const f = document.createElement('iframe');
       f.style.cssText = `position:fixed;left:0;top:0;width:${w}px;height:${h}px;border:0;opacity:0;pointer-events:none;z-index:-1`;
       document.body.appendChild(f);
@@ -840,5 +842,77 @@ export const TESTS = [
       } finally { f.remove(); }
     }
     return checks;
+  }],
+
+  // A short window (the owner, 2026-10-16): only the grid scrolls, inside
+  // itself, so the close-up, the slot tabs and the foot stay on the glass;
+  // the grid keeps at least its first two rows in sight; and the arrow down
+  // walks every row of it, each scrolled into sight, before it leaves the
+  // grid. The same on a new yard's first build step.
+  ['wardrobe: on a short window only the grid scrolls, the close-up stays in view, and the arrow down walks every row', async () => {
+    const f = document.createElement('iframe');
+    f.style.cssText = 'position:fixed;left:0;top:0;width:1280px;height:900px;border:0;opacity:0;pointer-events:none;z-index:-1';
+    document.body.appendChild(f);
+    const loaded = new Promise(r => f.addEventListener('load', r, { once: true }));
+    f.src = './play.html?bench';
+    await loaded;
+    try {
+      const win = f.contentWindow, d = f.contentDocument;
+      const paint = async n => { for (let i = 0; i < n; i++) await new Promise(r => win.requestAnimationFrame(r)); };
+      for (let i = 0; i < 400 && !(win.__scene && win.__fast); i++) await paint(1);
+      const mod = name => {
+        const at = win.performance.getEntriesByType('resource').map(e => e.name)
+          .filter(u => new URL(u).pathname === `/src/${name}.js`).pop() || `/src/${name}.js`;
+        return win.eval(`import(${JSON.stringify(at)})`);
+      };
+      const page = await mod('wardrobepage'), settings = await mod('settings'), state = await mod('state');
+      const sheet = d.getElementById('held'), grids = () => d.querySelector('.wardgrids');
+      const inWin = el => { const r = el.getBoundingClientRect(); return r.height > 0 && r.top >= 0 && r.bottom <= win.innerHeight + 1; };
+      const inGrid = el => { const r = el.getBoundingClientRect(), g = grids().getBoundingClientRect(); return r.top >= g.top - 1 && r.bottom <= g.bottom + 1; };
+      const fixed = () => [d.querySelector('.wardbig'), d.querySelector('.wardslots'), d.getElementById('wardroll')].every(inWin);
+      win.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+      await paint(3);
+      page.openWardrobe();
+      await paint(3);
+      d.getElementById('ward-head-tab').click();
+      await paint(3);
+      const g = grids(), tiles = [...d.querySelectorAll('.wardtiles.on .wardtile')];
+      const rowOf = t => Math.round(t.getBoundingClientRect().top + g.scrollTop);
+      const rows = [...new Set(tiles.map(rowOf))];
+      const two = tiles.filter(t => rowOf(t) <= rows[1]).reduce((m, t) => Math.max(m, t.getBoundingClientRect().bottom), 0) - g.getBoundingClientRect().top;
+      const sheetStill = sheet.scrollHeight <= sheet.clientHeight + 1, gridScrolls = g.scrollHeight > g.clientHeight + 1;
+      const twoSeen = g.clientHeight >= two - 1, upAtFirst = fixed();
+      // down from the first tile, a press at a time, until the focus leaves
+      tiles[0].focus();
+      const seen = new Set(), lost = [];
+      for (let i = 0; i < 40; i++) {
+        const at = d.activeElement;
+        if (!at?.classList.contains('wardtile') || !g.contains(at)) break;
+        seen.add(rowOf(at));
+        if (!inGrid(at)) lost.push(at.id);
+        at.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'ArrowDown', code: 'ArrowDown', bubbles: true }));
+        await paint(1);
+      }
+      const leftTo = d.activeElement?.id, upAfter = fixed() && sheet.scrollTop === 0;
+      page.leaveWardrobe();
+      await paint(2);
+      state.S.dressOffered = false;
+      settings.offerDress(true);
+      await paint(3);
+      const stepStill = sheet.scrollHeight <= sheet.clientHeight + 1, stepScrolls = grids().scrollHeight > grids().clientHeight + 1;
+      const stepUp = [d.querySelector('.wardbig'), d.querySelector('.wardslots'), d.getElementById('wardnext')].every(inWin);
+      page.leaveWardrobe();
+      return [
+        ok(sheetStill && gridScrolls, 'the sheet stands still and the grid scrolls inside it',
+           `sheet ${sheet.scrollHeight} in ${sheet.clientHeight}, grid ${g.scrollHeight} in ${g.clientHeight}`),
+        ok(twoSeen, 'the grid keeps its first two rows in sight', `${g.clientHeight} for ${Math.round(two)}`),
+        ok(upAtFirst && upAfter, 'the close-up, the slot tabs and the foot stay in the window, before the walk and after'),
+        ok(seen.size === rows.length && !lost.length, 'the arrow down walks every row, each scrolled into sight',
+           `${seen.size} of ${rows.length} rows; out of sight: ${lost.join(' ')}`),
+        ok(!!leftTo && !leftTo.startsWith('ward-tile-'), 'and only then leaves the grid', leftTo),
+        ok(stepStill && stepScrolls && stepUp, 'a new yard\'s build step the same',
+           `sheet ${sheet.scrollHeight}/${sheet.clientHeight}, grid scrolls ${stepScrolls}, in view ${stepUp}`)
+      ];
+    } finally { f.remove(); }
   }],
 ];

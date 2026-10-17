@@ -32,7 +32,7 @@
 import { msg, writeInto, has } from './lang.js';
 import { S } from './state.js';
 import { WORKER, WARD_BIG, WARD_BIG_W, WARD_BIG_H, WARD_TILE_W, WARD_TILE_H, WARD_TILE_K, WARD_TILE_FOOT,
-         WARD_TRY_ALPHA, NAME_MAX, NAME_GRID_COLS, P } from './config.js';
+         WARD_TRY_ALPHA, WARD_GRID_ROWS, NAME_MAX, NAME_GRID_COLS, P } from './config.js';
 import { SLOTS, WHO, DEFAULTS, itemOf, bareOf, outfitOf, rollSlot, nameOf, setName, stepRole, rollName,
          rollRole, rollSquare, bareOutfit, typedName, storyArgs, wear, itemLock, isOpen } from './wardrobe.js';
 import { drawDressed, YARD_INKS, DEEP_INKS } from './render/wardrobe.js';
@@ -300,8 +300,62 @@ function build(el) {
   el.append(stepEl, tabs, head, edit, shown, foot);
   el.addEventListener('keydown', keys);
   built = { el, stepEl, big, head, fields, tabs, tab, input, count, askBtn, grid, roleRow, rVal, rPrev, rNext, roleDie,
-            slots, slotTab, slotWorn, slotOpen, slotDie, tiles, gridOf, about,
+            slots, slotTab, slotWorn, slotOpen, slotDie, tiles, gridOf, grids, about,
             nameDie: nameRow.querySelector('.warddie'), edit, shown, back, skip, roll, clear, next };
+  // the page's width sets how many rows each grid is, and the parts round
+  // the grid their own heights (a font coming in, the letter grid up), so the
+  // heights are measured again as any of them changes; the grid's own box is
+  // left out, being what the measuring sets. On the next frame, not in the
+  // observer's own call: the page it sets resizes what is observed.
+  if (typeof ResizeObserver !== 'undefined') {
+    let asked = false;
+    const ro = new ResizeObserver(() => {
+      if (!asked) { asked = true; requestAnimationFrame(() => { asked = false; fitGrid(); }); }
+    });
+    for (const part of [el, ...el.children, ...edit.children]) if (part !== edit && part !== grids) ro.observe(part);
+  }
+}
+
+// The heights the grid gives way between on a short window (style.css,
+// `.wardgrids`): its box the tallest slot's grid, never under WARD_GRID_ROWS
+// rows of tiles; and the least the page and the part round the grid can be,
+// everything at its own height but the grid at that floor, so on a window
+// shorter still the sheet scrolls rather than anything being squeezed.
+const px = (el, name, v) => { const s = `${Math.ceil(v)}px`; if (el.style.getPropertyValue(name) !== s) el.style.setProperty(name, s); };
+function stacked(box, swap, h) {
+  let sum = 0, n = 0;
+  for (const c of box.children) {
+    if (c.hidden || !c.getClientRects().length) continue;
+    sum += c === swap ? h : c.getBoundingClientRect().height;
+    n++;
+  }
+  return sum + Math.max(0, n - 1) * (parseFloat(getComputedStyle(box).rowGap) || 0);
+}
+// How tall a grid's first `n` rows of tiles stand (a row with a locked tile's
+// words under it stands taller than one without).
+function rowsTall(g, n) {
+  const top = g.getBoundingClientRect().top, tops = [];
+  let foot = 0;
+  for (const t of g.children) {
+    const r = t.getBoundingClientRect();
+    if (!tops.includes(r.top)) tops.push(r.top);
+    if (tops.length > n) break;
+    foot = Math.max(foot, r.bottom - top);
+  }
+  return foot;
+}
+function fitGrid() {
+  const b = built;
+  if (!b || b.edit.hidden || !shownEl(b.el)) return;
+  // the tallest slot's, whichever is shown, so the page is one height
+  const gs = Object.values(b.gridOf), tall = Math.max(...gs.map(g => g.scrollHeight));
+  if (!tall) return;
+  const least = Math.min(tall, Math.max(...gs.map(g => rowsTall(g, WARD_GRID_ROWS))));
+  px(b.grids, '--grids-h', tall);
+  px(b.grids, '--grids-min', least);
+  const edit = stacked(b.edit, b.grids, least);
+  px(b.edit, '--edit-min', edit);
+  px(b.el, '--ward-min', stacked(b.el, b.edit, edit));
 }
 
 // The page brought up to the two of them and to the step.
@@ -380,6 +434,7 @@ function say() {
   b.next.textContent = at && step === FLOW.length - 1 ? msg('ward-done') : msg('ward-next');
   const backBtn = document.getElementById('wardrobeback');
   if (backBtn) { backBtn.hidden = !!at; backBtn.textContent = msg('set-controlsback'); }
+  fitGrid();
 }
 
 // The line under the grid: the tile the pointer or the focus is on -- its
@@ -538,9 +593,26 @@ function rollAt(el) {
   else rollOpen(SLOTS.some(s => s.key === row) ? row : slot);
   say();
 }
-// A direction the page answers itself: left and right on the role's row
-// step it, and on the slot tabs turn them. True if it was answered.
+// From a tile, the nearest tile that way in its own grid, the rows a short
+// window has scrolled out of sight counted with the seen ones, and scrolled
+// to: the grid is walked to its last row before a press leaves it (a row out
+// of sight under it stands further off than the buttons at the page's foot).
+function gridStep(el, d) {
+  const g = built.gridOf[slot];
+  if (!el?.classList?.contains('wardtile') || !g.contains(el)) return false;
+  const mid = b => { const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, b }; };
+  const r = el.getBoundingClientRect();
+  const to = nav.toward({ x: r.left, y: r.top, w: r.width, h: r.height }, d, [...g.children].filter(b => b !== el).map(mid));
+  if (!to) return false;
+  nav.focus(to.b);
+  to.b.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  return true;
+}
+// A direction the page answers itself: across or along a grid to its next
+// tile, left and right on the role's row step it, and on the slot tabs turn
+// them. True if it was answered.
 function stepAt(el, d) {
+  if (gridStep(el, d)) return true;
   if (d !== 'left' && d !== 'right') return false;
   const by = d === 'right' ? 1 : -1, row = rowAt(el);
   if (row === 'role') { stepRole(who, by); say(); return true; }

@@ -150,7 +150,7 @@ group('what they wear is kept by the save, item by item', async () => {
 group('the aura is a slot: kept by the save, rolled by randomize, taken off by clear', async () => {
   // the ones a fresh yard can wear: the rest wait on what opens them (wardrobe-locks.test.mjs)
   const all = SLOTS.find(s => s.key === 'aura').items.map(i => i.key), auras = all.filter(k => isOpen('aura', k));
-  stepItem('you', 'aura', 7);
+  stepItem('you', 'aura', 6);
   stepItem('sqouse', 'aura', -1);
   const worn = { you: outfitOf('you').aura, sqouse: outfitOf('sqouse').aura };
   persist();
@@ -169,7 +169,7 @@ group('the aura is a slot: kept by the save, rolled by randomize, taken off by c
   localStorage.setItem(KEY, JSON.stringify(raw));
   restore();
   return [
-    ok(worn.you === auras[7] && worn.sqouse === auras[auras.length - 1], 'the row steps the aura', JSON.stringify(worn)),
+    ok(worn.you === auras[6] && worn.sqouse === auras[auras.length - 1], 'the row steps the aura', JSON.stringify(worn)),
     ok(back.you === worn.you && back.sqouse === worn.sqouse, 'a save and a load hand it back', JSON.stringify(back)),
     ok(all.slice(1).every(k => AURA_KEYS.includes(k)) && AURA_KEYS.every(k => all.includes(k)),
        'every aura on the row is one that is drawn', AURA_KEYS.join(' ')),

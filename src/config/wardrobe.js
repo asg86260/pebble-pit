@@ -20,10 +20,9 @@ export const WARD_DEEP_GREY = 8;
 export const WARD_DEEP_PALE = 4;
 
 // How often the moving things change pose, a second: a cape's or a scarf's
-// tail as the body walks, a balloon's bob, a flag's wave.
+// tail or a flag's pennant as the body walks, a balloon's bob or a pennant's sway.
 export const WARD_STEP_HZ = 4;
 export const WARD_BOB_HZ = 1.2;
-export const WARD_WAVE_HZ = 3;
 // How long a body stood still between two steps still counts as walking.
 export const WARD_STILL_S = 0.25;
 
@@ -48,6 +47,9 @@ export const WARD_TILE_K = 2;
 export const WARD_TILE_FOOT = 5;
 // How strong a locked item is drawn on the close-up while it is tried on.
 export const WARD_TRY_ALPHA = 0.35;
+// The fewest rows of tiles the grid gives way to on a short window, before
+// the sheet scrolls instead (style.css, `.wardgrids`).
+export const WARD_GRID_ROWS = 2;
 
 // Who the two of them are (DESIGN.md, "Who you are"): the longest name the
 // player may give either square, in characters. The narrow places a name
