@@ -20963,6 +20963,31 @@ it breaks down a wall/blockage then unlocks the new ore tier." Its own
 theme: heat, hardness, and a chain of materials, each one only reachable
 by what was made from the one before.
 
+**Built (placeholder art), 2026-10-17** (the owner: "build as much code as
+you can, use placeholders for assets and stations"), behind `HELL_ON`, on
+the scaffold, reached only by the dev travel until the descent and the
+beats are wired: the run of five chambers laid out in `hell/place.js`
+(stepping down CHAMBER_STEP each, a passage level off each floor out onto
+a ledge and a ladder in the next); the seams as faces that cut back a cell
+every LUMPS_A_CELL lumps, struck by the click (`clickHell`) and by miners;
+brimstone off the vents; a furnace a chamber, heat its depth, smelting only
+while fed and hot and going out when the fuel ends; the anvil's five
+recipes (TOOL_RECIPES; III the alloy, IV and V quenched); the five barriers
+coming down a cell at a time to their tool alone, each piece falling as
+spoil and carried to a heap, the wall gang taken off the miners; the flare,
+warned, crusting the face and the barrier and putting the furnace out,
+never an item; the muster's ghosts walking every item (`hell/bodies.js`,
+saved whole); four `tierRows` cards led by brimstone (faces, furnaces,
+anvil, muster), the gang's size as a choice, and `cageBroken` and
+`hellWallDue` as the story's seams. Placeholders, marked so in the code:
+every drawing (flat cells, `render/hell.js`), every number in
+config/hell.js but the spec's, the words (`# act 4 (placeholder)` in
+en.ftl), black water bought with sparks at the road's foot instead of
+carried from the abyss, rungs had on the press (no builders in hell), the
+stair a ladder (no flights cut), the ghosts this act's own bodies rather
+than JOBS rows, no flux from the yard, no vent caps or shielding. Shots:
+`hell-forge`, `hell-wall`, `hell-cage`; checks: test/hell-loop.test.mjs.
+
 #### The place: a run of chambers down to the cage room
 
 Hell is a **descending run of chambers** under the deep's floor, each one

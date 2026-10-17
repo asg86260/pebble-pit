@@ -2627,7 +2627,28 @@ export const SCENES = {
   'after-empty': { about: 'the acts', say: 'the afterlife, empty: the placeholder cloud floor, nothing built on it',
     run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); } },
   'hell-empty': { about: 'the acts', say: 'hell, empty: the placeholder black hollow and its floor, nothing built in it',
-    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('hell'); window.__fast(1); } }
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('hell'); window.__fast(1); } },
+  // Act 4's loop on its placeholder art (hell/; render/hell.js): the landing
+  // at work, a barrier half down, and the cage room at the end of the run.
+  // The ghosts take twenty seconds to come down the road, so each runs on.
+  'hell-forge': { about: 'the acts', say: 'hell\'s landing at work: miners at the seam, a lit furnace, the smith at the anvil, brimstone off the vent',
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('hell');
+                 window.__hell({ brimstone: 24, bars: { dross: 5 }, ore: { dross: 4 }, rungs: { hellmuster: 4 },
+                                 vents: { 0: { crust: 8 } },
+                                 furnaces: { 0: { fuel: 8, lit: true, warm: 1, hopper: { dross: 6 }, tray: { dross: 2 } } } });
+                 window.__fast(32); } },
+  'hell-wall': { about: 'the acts', say: 'hell\'s rubble half down: the wall gang swinging, spoil falling and carried to the heap',
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('hell');
+                 window.__hell({ tool: 1, gang: 3, blows: { 0: 60 }, rungs: { hellmuster: 5 }, faces: { 0: { tool: 1 } },
+                                 walls: { 0: { tool: 1, loose: 3, heap: 14 } },
+                                 furnaces: { 0: { fuel: 6, lit: true, warm: 1 } } });
+                 window.__fast(32); } },
+  'hell-cage': { about: 'the acts', say: 'hell\'s cage room: the run open behind, the cage half cut, God hanging inside',
+    run: () => { window.__reset(); window.__actsOn(null);
+                 window.__hell({ tool: 5, chamber: 4, gang: 4, blows: { 0: 120, 1: 200, 2: 320, 3: 480, 4: 350 },
+                                 rungs: { hellmuster: 8 }, seams: { 0: 9, 1: 7, 2: 5, 3: 3, 4: 1 },
+                                 walls: { 4: { tool: 5, heap: 20 } } });
+                 window.__goPlace('hell'); window.__fast(80); } }
 };
 
 // Wake the checks' pad and hop it along the stops until it is on `id` (or,

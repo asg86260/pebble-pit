@@ -184,7 +184,7 @@ export const SMELT_S = 8;
 // Black hollows in grey rock, no red (red is the sparks'). Rungs of the one
 // grey ramp (palette.js, GREY), the cells picking among them by a fixed hash.
 export const HELL_FLOOR_TONES = [8, 9, 8, 7, 9, 8];
-export const HELL_ROCK_TONES = [7, 8, 8, 9, 7, 8, 6];
+export const HELL_ROCK_TONES = [8, 8, 7, 8, 9, 8];
 // Each ore's vein, a grey of its own, light to dark down the run. Defaults.
 export const HELL_ORE_TONES = [4, 5, 3, 1, 0];
 // The barriers' tones, one a row. Defaults.
