@@ -30,7 +30,7 @@ import { TYPE } from '../jobs.js';
 import { shown } from '../tween.js';
 import { poseAt, topOf } from '../motion.js';
 import { writeCount } from './numfont.js';
-import { dressBehind, dressOn, dressHead, dressFlat, headRows, wearsHead, motionOf, YARD_INKS, DEEP_INKS } from './wardrobe.js';
+import { dressBehind, dressOn, dressHead, dressFlat, headRows, wearsHead, motionOf, onDevice, YARD_INKS, DEEP_INKS } from './wardrobe.js';
 import { dressAura } from './wardaura.js';
 import { lampCone } from './lamplight.js';
 import { outfitOf, whoIs, WHO } from '../wardrobe.js';
@@ -61,31 +61,47 @@ export function drawBench() {
 // (render/wardrobe.js), handed in as `look` (`lookFor`). True when what they
 // wear on their head was drawn, which is then worn in place of a station hat.
 export function drawBody(x, y, look = null) {
-  if (look) { dressAura(ctx, x, y, look, 'back'); dressBehind(ctx, x, y, look); }
   // Filled, not see-through: an outlined square on a black rock shows the rock
   // through its middle and reads as a hole in whatever is behind it. The page
   // is white, so a body is white.
-  square(x, y, WORKER, WORKER);
-  if (!look) return false;
-  dressOn(ctx, x, y, look);
-  const head = dressHead(ctx, x, y, look);
-  dressAura(ctx, x, y, look, 'front');
-  ctx.fillStyle = '#000';
-  return head;
+  if (!look) { square(x, y, WORKER, WORKER); return false; }
+  return rigid(x, y, () => {
+    dressAura(ctx, x, y, look, 'back');
+    dressBehind(ctx, x, y, look);
+    square(x, y, WORKER, WORKER);
+    dressOn(ctx, x, y, look);
+    const head = dressHead(ctx, x, y, look);
+    dressAura(ctx, x, y, look, 'front');
+    return head;
+  });
+}
+
+// What a dressed body wears drawn rigid: its corner put on a whole device
+// pixel first, so every mark on it rounds the same way frame to frame. Laid
+// at its own place each mark rounds alone, and as the body walks a world
+// pixel at a time at a zoom that is not whole, its one- and two-pixel marks
+// swap and the pattern crawls.
+function rigid(x, y, draw) {
+  const m = ctx.getTransform ? ctx.getTransform() : null;
+  const dx = m ? onDevice(x, m.a, m.e) - x : 0, dy = m ? onDevice(y, m.d, m.f) - y : 0;
+  if (dx || dy) ctx.translate(dx, dy);
+  try { return draw(); } finally { if (dx || dy) ctx.translate(-dx, -dy); ctx.fillStyle = '#000'; }
 }
 
 // The same square squashed to two rows, its feet on the ground of a body
 // stood at (x, y): the crouch before a hop and the landing after it.
 export function drawSquat(x, y, look = null) {
-  // the aura stays round the body as it stands: a crouch is its feet where they were
-  if (look) { dressAura(ctx, x, y, look, 'back'); dressBehind(ctx, x, y + P, look, WORKER - P); }
-  square(x, y + P, WORKER, WORKER - P);
-  if (!look) return false;
-  dressOn(ctx, x, y + P, look, WORKER, WORKER - P);
-  const head = dressHead(ctx, x, y + P, look);
-  dressAura(ctx, x, y, look, 'front');
-  ctx.fillStyle = '#000';
-  return head;
+  if (!look) { square(x, y + P, WORKER, WORKER - P); return false; }
+  return rigid(x, y, () => {
+    // the aura stays round the body as it stands: a crouch is its feet where they were
+    dressAura(ctx, x, y, look, 'back');
+    dressBehind(ctx, x, y + P, look, WORKER - P);
+    square(x, y + P, WORKER, WORKER - P);
+    dressOn(ctx, x, y + P, look, WORKER, WORKER - P);
+    const head = dressHead(ctx, x, y + P, look);
+    dressAura(ctx, x, y, look, 'front');
+    return head;
+  });
 }
 
 // How one of the two of them is drawn this frame, or null for anybody else
@@ -98,7 +114,7 @@ export function drawSquat(x, y, look = null) {
 export function lookFor(who, key, x, { face = null, deep = false, back = true, aura = true } = {}) {
   if (!who) return null;
   const t = now() / 1000, m = motionOf(key, x, t, face);
-  return { outfit: outfitOf(who), dir: m.dir, moving: m.moving, t, inks: deep ? DEEP_INKS : YARD_INKS, back,
+  return { outfit: outfitOf(who), dir: m.dir, moving: m.moving, since: m.since, t, inks: deep ? DEEP_INKS : YARD_INKS, back,
            deep, aura, key, seed: WHO.indexOf(who) };
 }
 
@@ -110,7 +126,7 @@ export function lookFor(who, key, x, { face = null, deep = false, back = true, a
 function square(x, y, w, h) {
   const m = ctx.getTransform ? ctx.getTransform() : null;
   const k = m ? m.a : 1, e = m ? m.e : 0, f = m ? m.f : 0;
-  const sx = v => (Math.round(v * k + e) - e) / k, sy = v => (Math.round(v * k + f) - f) / k;
+  const sx = v => onDevice(v, k, e), sy = v => onDevice(v, k, f);
   const x0 = sx(x), y0 = sy(y), x1 = sx(x + w), y1 = sy(y + h);
   const rim = Math.max(1, Math.round(BODY_RIM * k)) / k;
   ctx.fillStyle = '#000';

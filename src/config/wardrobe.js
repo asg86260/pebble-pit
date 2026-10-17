@@ -25,6 +25,12 @@ export const WARD_STEP_HZ = 4;
 export const WARD_BOB_HZ = 1.2;
 // How long a body stood still between two steps still counts as walking.
 export const WARD_STILL_S = 0.25;
+// The follow-through (docs/mocks/wardrobe-polish-2026-10-16): what dangles
+// off a body lags one held pose as it sets off, and settles over
+// WARD_SETTLE_POSES held poses as it stops (catching up, one past rest,
+// back), each held this many seconds, before it rests.
+export const WARD_SETTLE_S = 0.13;
+export const WARD_SETTLE_POSES = 3;
 
 // A roll of the dice on the picker: none (or plain) is this many times as
 // likely as any one item, so a roll is not a costume party.
@@ -86,11 +92,11 @@ export const WARD_AURA_TURN = 2.1;
 // behind the body.
 export const WARD_AURAS = {
   // lift off the body, drift and thin away
-  'dust-motes': { n: 4, life: 2.4, seed: 1, spread: 30, sway: 3, top: 2, band: 14, rise: 10, rung: 4, rungs: 3, back: 0.5 },
+  'dust-motes': { n: 4, life: 2.4, seed: 1, spread: 30, sway: 3, top: 2, band: 14, rise: 10, rung: 6, rungs: 3, back: 0.5 },
   // shaken off the sides to the ground: three walking, one standing
   'pebble-bits': { n: 3, life: 0.9, seed: 2, jitter: 3, from: 6, band: 6, fall: 0.6, rung: 7, rungs: 3, in: 0.08 },
   // rings rising off the shoulders, wobbling a unit
-  bubbles: { n: 3, life: 2.2, seed: 3, lag: 0.4, off: 5, jitter: 3, wobble: 9, from: 10, rise: 28, in: 0.15, out: 0.3, rung: 6 },
+  bubbles: { n: 3, life: 2.2, seed: 3, lag: 0.4, off: 5, jitter: 3, wobble: 9, from: 10, rise: 28, in: 0.15, out: 0.3, rung: 8 },
   // one pixel round the middle on a flat ellipse, two fading behind it
   'orbiting-pixel': { speed: 2.6, trail: [1, 0.5, 0.22], gap: 0.3, rx: 15, ry: 4, mid: 8, rung: 10 },
   // a point fades in, holds a plus, fades out, rests
@@ -102,7 +108,7 @@ export const WARD_AURAS = {
                   drops: 3, dropLife: 0.55, seed: 5, dropIn: 2, dropSpan: 12, dropTo: 3, dropLen: 3, out: 0.3, dropRung: 7 },
   // falling from over the head, swaying and turning, a moment on the ground
   'falling-petals': { n: 3, life: 2.8, seed: 6, back: 0.4, from: -5, spread: 28, over: 12, below: 1, sway: 4, swayHz: 7,
-                      turnHz: 4, land: 0.8, in: 0.1, out: 0.15, rung: 5, rungs: 2 },
+                      turnHz: 4, land: 0.8, in: 0.1, out: 0.15, rung: 7, rungs: 2 },
   // four scales round the body, each edge-on a moment on its own clock
   'scale-swirl': { n: 4, speed: 1.8, rx: 14, ry: 3, mid: 7, bobHz: 1.1, bob: 3, every: 0.52, edge: 0.13, size: 4, rung: 7 },
   // the level-up's embers, small: from the feet on a turn, cooling
@@ -114,7 +120,7 @@ export const WARD_AURAS = {
            loop: 6, lift: 2, sink: 3, flapHz: 12, rung: 10, wing: 4 },
   // the yuck mark's risers, small: three wavy lines rising off the top
   stink: { at: [-3, 8, 19], life: 1.9, seed: 11, from: 2, rise: 14, in: 0.2, out: 0.45, units: 4, gap: 3,
-           wave: 1.3, waveHz: 6, travel: 0.9, thin: 0.18, rung: 6 },
+           wave: 1.3, waveHz: 6, travel: 0.9, thin: 0.18, rung: 8 },
   // a cascade over the head: a high throw one way, a low pass back
   'juggling-balls': { n: 3, period: 1.3, size: 4, from: 4, high: 24, low: 5, half: 14, throw: 0.62, rung: 10, odd: 6 },
   // a bubble off the head, swelling to a ring and popping into four specks
@@ -127,7 +133,7 @@ export const WARD_AURAS = {
   // two of the sky's birds circling overhead, wings swapping V and caret
   'flock-overhead': { n: 2, speed: 1.4, step: 0.3, r: 16, ry: 3, over: 14, apart: 4, flapHz: 5, rung: 7 },
   // walking, three dashes behind, their lengths swapping a frame each
-  'speed-lines': { rows: [[4, 8, 12], [9, 12, 6], [14, 6, 10]], gap: 3, hz: 12, ink: 0.8, rung: 6 },
+  'speed-lines': { rows: [[4, 8, 12], [9, 12, 6], [14, 6, 10]], gap: 3, hz: 12, ink: 1, rung: 8 },
   // the gold set's: a ring over the head breathing by opacity, two motes off it
   'gold-halo': { over: 12, rows: ['..#####..', '##.....##', '##.....##', '..#####..'], back: 2, breath: 0.15, breathHz: 1.3,
                  motes: 2, life: 2.2, seed: 8, spread: 12, sway: 2, swayHz: 5, lift: 2, rise: 12 },
@@ -160,7 +166,16 @@ export const WARD_HEADS = {
   // unit along the top from the front and down the back, every other spike
   // a unit taller, `tall` units at the most, shortening to its end; in the
   // crest's own purple, a rung of the abyss's magic ramp (ABYSS_MAGIC_TONES)
-  'serpent-comb': { h: 6, tall: 3, top: 5, down: 2, rung: 9 },
+  // Now and then it gives the serpent's own tell (render/serpent.js,
+  // `combLit`; the owner's vote, option B): every `every` seconds, `seed`
+  // apart for the two of them, it lights head first over `warn`, holds lit
+  // `hold`, then goes dark tail first over `dark`; lit, a spike's tip is the
+  // white and its body flickers between two purples `flickHz` times a
+  // second, held two ticks each, as the crest does. In the yard the lit
+  // tones are rungs of PURPLE, `tip` and `body` (flicker on, off), with a
+  // `glow` rung round the lit tip; in the deep the deep's own top tones.
+  'serpent-comb': { h: 6, tall: 3, top: 5, down: 2, rung: 9,
+                    tell: { every: 5.5, warn: 0.9, hold: 0.35, dark: 0.45, seed: 1.7, flickHz: 12, tip: 12, body: [11, 10], glow: 13 } },
 };
 
 // --- the lamp's light (render/lamplight.js; the owner, 2026-10-16: "lamp
