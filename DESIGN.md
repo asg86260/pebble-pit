@@ -21491,6 +21491,33 @@ day) and **call 4's loop** (act 4 is the mine and the forge). Still open:
 
 Act 3's own calls, raised by the grove and the press (2026-10-17):
 
+**Settled by the owner, 2026-10-18** (these replace the recommendations
+below wherever they differ; the placeholder code predates them):
+
+- **9, faith:** stays the clicked coin all act, as recommended.
+- **10, trees:** replanted. The grove starts at **one plot** (a grown
+  tree in it), and its upgrades are **growth speed, tree size** (more logs
+  a fall) and **plot count**. No ten plots of old growth.
+- **11, ink:** **cut.** Signs are timber alone, posters paper alone; no
+  ink well, no storm clouds for ink, no ink gatherer. (Smog rising from the
+  yard into storm clouds was offered as a way to tie the acts together and
+  set aside for now.)
+- **12, the top band:** **no bands at all in act 3.** Each station sells
+  two or three **short named upgrades**, each one a change you can see (a
+  plot, a second blade, a bigger sign), paid in faith, timber and paper. No
+  pledge, no eight-rung ladders; "a rung for its own sake reads tedious".
+  Act 3 is outside the eight-rungs rule.
+- **13, signs:** carriers choose where signs go (the palest files). No
+  picket mark.
+- **14, members:** **walk out.** A soul that joins leaves God's yard for
+  the camp, so God's yard empties as the union wins, and the strike reads
+  off how empty it is. Word of mouth between neighbouring members goes.
+  Members in the camp are not workers: a **worker slot is bought** at a
+  station (a post, like housing but not), and a member walks from the camp
+  to fill it.
+- **15, the axe:** **bought** -- a row on the plate's card paid in faith,
+  not a click count.
+
 9. **Does faith stay the clicked coin late?** Recommended: yes -- faith
    buys every volunteer (each dearer), every sapling and every ladder's
    first band, so it is always short; gatherers automate the click but the
