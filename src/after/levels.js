@@ -1,25 +1,34 @@
-// What each act-3 ladder is worth now: the afterlife's levels.js. Pure reads
-// of `S.after.rungs` and the written tables (AFTER_LADDERS), so the sim reads
-// a ladder without importing the cards that sell it (rows.js).
+// What act 3's upgrades make of the place now: the afterlife's levels.js. Pure
+// reads of `S.after.ups` (how many times each named upgrade is bought) and the
+// config's two values a row (the foot and what its upgrade buys), so the sim
+// reads an upgrade without importing the cards that sell it (rows.js).
 
 import { S } from '../state.js';
-import { AFTER_LADDERS, LADDER } from '../config.js';
+import { AFTER_UPGRADES, AFTER_PLOTS0, AFTER_SHOUT_REBEL, AFTER_SHOUT_REBEL_UP, TREE_GROW_S, AFTER_GROW_S_UP,
+         AFTER_BLADE_LOGS, AFTER_BENCH_SIGNS, AFTER_VAT_SHEETS, AFTER_STACK, AFTER_STACK_UP,
+         SIGN_REACH, SIGN_REACH_UP, POSTER_REACH, POSTER_REACH_UP } from '../config.js';
 
-export const rungAt = key => Math.max(0, Math.min(LADDER, (S.after && S.after.rungs[key]) || 0));
-export const ladderValue = (key, lvl) => {
-  const v = AFTER_LADDERS[key].value;
-  return v[Math.max(0, Math.min(v.length - 1, lvl))];
-};
-export const valueOf = key => ladderValue(key, rungAt(key));
+export const upCount = key => Math.max(0, Math.min(AFTER_UPGRADES[key].bills.length, (S.after && S.after.ups[key]) || 0));
+export const has = key => upCount(key) > 0;
 
-export const puffFaith = () => valueOf('after-puff');
-export const treeChops = () => valueOf('after-axe');
-export const growS = () => valueOf('after-grow');
-export const sawS = () => valueOf('after-saw');
-export const signS = () => valueOf('after-joinery');
-export const pulpS = () => valueOf('after-pulp');
-export const stackOf = () => valueOf('after-print');
-export const wringInk = () => valueOf('after-wring');
+export const shoutRebel = () => (has('after-shout') ? AFTER_SHOUT_REBEL_UP : AFTER_SHOUT_REBEL);
+export const plotCount = () => AFTER_PLOTS0 + upCount('after-plot');
+export const growS = () => (has('after-grow') ? AFTER_GROW_S_UP : TREE_GROW_S);
+// Each read when the thing is made, never after: a tree planted big, a sign
+// or a poster put up big, so nothing already standing changes size.
+export const bigTrees = () => has('after-tree');
+export const bigSigns = () => has('after-signreach');
+export const bigPosters = () => has('after-posterreach');
+// Woodcutters dig stumps out too, once stump removal is bought.
+export const stumpsOn = () => has('after-stumps');
+export const bladeLogs = () => (has('after-blade') ? AFTER_BLADE_LOGS : 1);
+export const fenceOn = () => has('after-fence');
+export const benchSigns = () => (has('after-bench') ? AFTER_BENCH_SIGNS : 1);
+export const vatSheets = () => (has('after-vat') ? AFTER_VAT_SHEETS : 1);
+export const stackOf = () => (has('after-stack') ? AFTER_STACK_UP : AFTER_STACK);
+export const signReach = big => (big ? SIGN_REACH_UP : SIGN_REACH);
+export const posterReach = big => (big ? POSTER_REACH_UP : POSTER_REACH);
 
-// Whether a station stands (bought, or standing from the start).
-export const built = key => !!S.after && (key === 'grove' ? S.after.gate >= 1 : S.after.built.includes(key));
+// Whether a station stands: bought, or standing from the start. The grove is
+// open from the act's first frame.
+export const built = key => !!S.after && (key === 'grove' || S.after.built.includes(key));

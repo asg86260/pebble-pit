@@ -20,10 +20,10 @@
 // they stood, on the leg they were walking.
 
 import { S, pit } from './state.js';
-import { P, WORKER, FINALE_HOUSE_W, AFTER_W, GHOST_PX_S, GHOST_LOAD, GHOST_GAP, HELL_TIERS } from './config.js';
+import { P, WORKER, FINALE_HOUSE_W, GHOST_PX_S, GHOST_LOAD, GHOST_GAP, HELL_TIERS } from './config.js';
 import { houseX } from './home.js';
 import { feetOn, ways } from './route.js';
-import { afterX0, afterFloor, afterTop } from './after/place.js';
+import { afterFloor, afterTop, stationBox } from './after/place.js';
 import { hellTop, chamberFloor, chamberAtX, chamberFocusX, storeX as hellStoreX } from './hell/place.js';
 import { deepTop, deepFloor } from './deep/place.js';
 import { portalEnd } from './portals.js';
@@ -41,8 +41,10 @@ export const stairFoot = () => {
   const x = snap(houseX() + (FINALE_HOUSE_W + 4) * P);
   return { x, y: yardFeet(x) };
 };
-// The camp's patch on the cloud, a quarter of the way across.
-export const campX = () => snap(afterX0() + AFTER_W * 0.25);
+// The camp's pedestal, the two of them at its foot (after/place.js): its
+// top, and the speech from it, are act 3's placeholder until the climb up
+// is drawn.
+export const campX = () => snap(stationBox('pedestal').x - WORKER - P);
 // Into the drowned pit a few cells off its near wall.
 export const pitX = () => snap(pit.x + P * 4);
 export const slitX = () => snap(slit().x - WORKER / 2);

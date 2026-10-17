@@ -1,45 +1,46 @@
 // The union: the crowd and its support (DESIGN.md, "Acts 3 and 4", act 3,
-// "Faith buys hands", "How support spreads" and "God's pushback (no fight)").
-// Placeholder drawing.
+// "How support spreads" and "God's pushback (no fight)"; call 14, settled
+// 2026-10-18: members walk out). Placeholder drawing.
 //
 // The crowd field: every soul a slot with its rim pieces (RIM_PIECES; eight
 // inked is a member), stepped as data a few times a second (AFTER_SPREAD_HZ),
 // and only the files in view drawn (render/after.js, `crowdSpan`), so a big
 // crowd costs the frame the files on screen (call 1's frame cost). The rims
 // are saved as `S.after.rims`, a character a soul ('0'..'8', and '9' for a
-// slot whose member has walked out to the camp as a volunteer or a pledge);
-// the field works on a byte array mirrored off that string and written back
-// to it whenever it changes.
+// slot whose member has walked out); the field works on a byte array
+// mirrored off that string and written back to it whenever it changes.
 //
-// What inks a rim: a canvasser's word (a piece), a sign planted close (every
-// soul within SIGN_REACH, to the full), a poster on the fence (POSTER_REACH
-// souls down its file, to half: POSTER_CAP), and word of mouth -- a soul
-// gains on a slow clock (WORD_S) as fast as it has members round it, so the
-// spread fills the gaps and compounds. A soul of the player's own lines
-// arrives part-inked (a share, until lineage exists to say whose). Souls
-// keep rising from the running yard into the back of the crowd.
+// What inks a rim: a sign planted close (every soul within its reach, to the
+// full) and a poster on the fence (its reach of souls down its file, to half:
+// POSTER_CAP). Nothing else: the pair's speech and the agitators make rebel
+// and win nobody, and word of mouth is gone. A soul of the player's own
+// lines arrives part-inked (a share, until lineage exists to say whose).
+// Souls keep rising from the running yard into the back of the crowd.
+//
+// A member walks out: the frame its rim closes, its slot is left empty and a
+// body sets off from where it stood to the camp (bodies.js), so God's yard
+// empties as the union wins, and the gates read off how empty it is
+// (`support`, the share walked out).
 //
 // God's pushback: the throne's speech, warned ahead, sweeping a band of files
-// and stripping every half-won soul in it back to pale -- a member is never
-// un-made -- and knocking the signs in it askew; and the wardens, walking
-// rounds, tearing posters down and carrying signs up the stair into the
-// glare. Nobody fights them. Members stay at their posts until the strike
-// (call 14 open: they do, the recommendation).
+// and stripping every half-won soul in it back to pale -- a member is gone
+// from the yard by then and never un-made -- and knocking the signs in it
+// askew; and the wardens, walking rounds, tearing posters down and carrying
+// signs up the stair into the glare. Nobody fights them.
 
 import { S } from '../state.js';
-import { P, RIM_PIECES, POSTER_CAP, SIGN_REACH, POSTER_REACH, WORD_S, CROWD_FILES,
-         AFTER_CROWD, AFTER_FIRST_MEMBERS, AFTER_KIN_SHARE, AFTER_KIN_PIECES, AFTER_RISE_S,
-         AFTER_SPREAD_HZ, AFTER_SIGN_INK_S, AFTER_POSTER_INK_S, AFTER_SPEECH_S, AFTER_SPEECH_WARN_S,
-         AFTER_SPEECH_FILES, AFTER_SPEECH_HOLD_S, AFTER_WARDENS, AFTER_WARDEN_REST_S, AFTER_TEAR_S,
-         AFTER_PULL_S, CROWD_X0, CROWD_PITCH } from '../config.js';
+import { P, RIM_PIECES, POSTER_CAP, CROWD_FILES, AFTER_CROWD, AFTER_FIRST_MEMBERS, AFTER_KIN_SHARE,
+         AFTER_KIN_PIECES, AFTER_RISE_S, AFTER_SPREAD_HZ, AFTER_SIGN_INK_S, AFTER_POSTER_INK_S, AFTER_SPEECH_S,
+         AFTER_SPEECH_WARN_S, AFTER_SPEECH_FILES, AFTER_SPEECH_HOLD_S, AFTER_WARDENS, AFTER_WARDEN_REST_S,
+         AFTER_TEAR_S, AFTER_PULL_S, CROWD_X0, CROWD_PITCH } from '../config.js';
 import { arand, secs, walk, nextId } from './util.js';
+import { signReach, posterReach } from './levels.js';
 import { soulX, soulY, fileOf, rankOf, slotX, afterFloor, throneAt, stairFoot } from './place.js';
 
 const OUT = 9;           // a slot whose member walked out to the camp
 
 // --- the field, mirrored off the save ------------------------------------------------
-const field = { ref: null, str: null, arr: new Uint8Array(0), dirty: false,
-                members: 0, out: 0, inked: 0 };
+const field = { ref: null, str: null, arr: new Uint8Array(0), dirty: false, out: 0 };
 function rebuild() {
   const s = S.after.rims || '';
   const arr = new Uint8Array(s.length);
@@ -53,9 +54,9 @@ export function souls() {
   return field.arr;
 }
 function recount() {
-  let m = 0, o = 0, inked = 0;
-  for (const v of field.arr) { if (v === RIM_PIECES) m++; else if (v === OUT) o++; else inked += v; }
-  field.members = m; field.out = o; field.inked = inked;
+  let o = 0;
+  for (const v of field.arr) if (v === OUT) o++;
+  field.out = o;
 }
 // The string the save carries, brought up to the field.
 export function syncRims() {
@@ -68,11 +69,6 @@ export function syncRims() {
   S.after.rims = s; field.str = s; field.dirty = false;
 }
 const grow = (arr, n) => { const b = new (arr.constructor)(n); b.set(arr.subarray(0, Math.min(arr.length, n))); return b; };
-function setSoul(i, v) {
-  const a = souls();
-  if (a[i] === v) return;
-  a[i] = v; field.dirty = true;
-}
 // A soul added at the back: the crowd's new slot, its rim as it arrives.
 function addSoul(v) {
   souls();
@@ -81,8 +77,23 @@ function addSoul(v) {
   field.arr[n - 1] = v; field.dirty = true;
 }
 
+export const soulPos = i => ({ x: soulX(fileOf(i)) + P / 2, y: soulY(rankOf(i)) + P * 2 });
+
+// Every member still standing in the field walks out: its slot emptied, a
+// body set off from it toward the camp, walking (bodies.js, 'out').
+function walkOuts() {
+  const a = souls(), A = S.after;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== RIM_PIECES) continue;
+    a[i] = OUT; field.dirty = true; field.out++;
+    const at = soulPos(i);
+    A.bodies.push({ id: nextId(), job: null, state: 'out', x: at.x, y: at.y, face: -1, t: 0, load: null, target: null, n: 0 });
+  }
+}
+
 // The crowd stood up at the act's start: AFTER_CROWD souls, a share part-inked
-// (the player's own lines), the first members inked full in the front rank.
+// (the player's own lines), the first members inked full in the front rank
+// (they walk out on the first frame).
 export function seedCrowd() {
   const a = S.after;
   let s = '';
@@ -100,12 +111,13 @@ export function seedCrowd() {
 // --- the reads -----------------------------------------------------------------------
 export const crowdSize = () => (S.after ? souls().length : 0);
 export const crowdRanks = () => Math.ceil(crowdSize() / CROWD_FILES);
-export const members = () => (S.after ? (souls(), field.members) : 0);
-// Support, members and volunteers as a share of the crowd as it stands.
-export const union = () => (S.after ? (souls(), field.members + field.out) : 0);
+// The souls who have walked out of God's yard, and their share of the crowd
+// as it stands: what the gates read.
+export const union = () => (S.after ? (souls(), field.out) : 0);
 export const support = () => { const n = crowdSize(); return n ? union() / n : 0; };
 export const rimOf = i => souls()[i];
-// The ink in the 3 by 3 block round a slot, for picking where a sign goes.
+// The ink in the 3 by 3 block round a slot, for picking where a sign goes: an
+// empty slot counts full.
 export function inkAround(f, r) {
   const a = souls();
   let sum = 0;
@@ -118,42 +130,9 @@ export function inkAround(f, r) {
   return sum;
 }
 
-// --- the hands that ink, and the hands that leave ------------------------------------
-// A canvasser's word to soul `i`: a piece, true if it took.
-export function canvass(i) {
-  const a = souls();
-  if (i < 0 || i >= a.length || a[i] >= RIM_PIECES) return false;
-  setSoul(i, a[i] + 1);
-  if (a[i] === RIM_PIECES) { field.members++; }
-  return true;
-}
-// The soul a canvasser at world x goes to next: the nearest not yet a member
-// in the front `ranks`.
-export function canvassTarget(x, ranks) {
-  const a = souls();
-  let best = -1, bd = Infinity;
-  for (let r = 0; r < ranks; r++) for (let f = 0; f < CROWD_FILES; f++) {
-    const i = r * CROWD_FILES + f;
-    if (i >= a.length || a[i] >= RIM_PIECES) continue;
-    const d = Math.abs(soulX(f) - x) + r * P * 4;
-    if (d < bd) { bd = d; best = i; }
-  }
-  return best;
-}
-// A member walking out of the crowd to the camp (a hire, a pledge): the
-// nearest the front, its slot left standing empty. -1 with no member free.
-export function takeMember() {
-  const a = souls();
-  for (let i = 0; i < a.length; i++) if (a[i] === RIM_PIECES) {
-    setSoul(i, OUT); field.members--; field.out++;
-    return i;
-  }
-  return -1;
-}
-export const soulPos = i => ({ x: soulX(fileOf(i)) + P / 2, y: soulY(rankOf(i)) + P * 2 });
-
 // For a check or a scene: every soul's rim set by `fn(i, v)`, the setup a
-// check is not about (`__afterCrowd`).
+// check is not about (`__afterCrowd`). A rim set full walks out on the next
+// frame like any other; a slot set to 9 is one already gone, with no body.
 export function setCrowd(fn) {
   const a = souls();
   for (let i = 0; i < a.length; i++) a[i] = Math.max(0, Math.min(OUT, fn(i, a[i]) | 0));
@@ -165,51 +144,37 @@ let spreadIn = 0;
 function spread(dt) {
   const a = souls(), n = a.length, F = CROWD_FILES;
   const A = S.after;
-  // Signs: every soul within SIGN_REACH of a sign standing straight, a piece
-  // each AFTER_SIGN_INK_S, to the full.
+  // Signs: every soul within the sign's reach, a piece each AFTER_SIGN_INK_S,
+  // to the full, while it stands straight.
   for (const s of A.signs) {
     if (s.askew || s.pull != null) continue;
     s.acc = (s.acc || 0) + dt;
+    const R = signReach(s.big);
     while (s.acc >= AFTER_SIGN_INK_S) {
       s.acc -= AFTER_SIGN_INK_S;
-      for (let r = Math.max(0, s.r - SIGN_REACH); r <= s.r + SIGN_REACH; r++)
-        for (let f = Math.max(0, s.f - SIGN_REACH); f <= Math.min(F - 1, s.f + SIGN_REACH); f++) {
+      for (let r = Math.max(0, s.r - R); r <= s.r + R; r++)
+        for (let f = Math.max(0, s.f - R); f <= Math.min(F - 1, s.f + R); f++) {
           const i = r * F + f;
           if (i < n && a[i] < RIM_PIECES) { a[i]++; field.dirty = true; }
         }
     }
   }
-  // Posters: POSTER_REACH souls down the file passing the poster's wall, a
+  // Posters: the poster's reach of souls down the file passing its wall, a
   // piece each AFTER_POSTER_INK_S, to half.
   for (const p of A.posters) {
     if (p.torn != null) continue;
     p.acc = (p.acc || 0) + dt;
+    const R = posterReach(p.big);
     while (p.acc >= AFTER_POSTER_INK_S) {
       p.acc -= AFTER_POSTER_INK_S;
       const f = Math.max(0, Math.min(F - 1, Math.floor((slotX(p.slot) - CROWD_X0) / CROWD_PITCH)));
-      for (let k = 0; k < POSTER_REACH; k++) {
+      for (let k = 0; k < R; k++) {
         const i = k * F + f;
         if (i >= n) break;
         if (a[i] < POSTER_CAP) { a[i]++; field.dirty = true; }
       }
     }
   }
-  // Word of mouth: a soul gains as fast as it has members on its sides, a
-  // piece every WORD_S on the average with two of them. A chance a tick, off
-  // the act's own word, rather than a running sum a soul: memoryless, so a
-  // reload loses nobody's progress.
-  for (let i = 0; i < n; i++) {
-    const v = a[i];
-    if (v >= RIM_PIECES) continue;
-    const f = i % F;
-    let m = 0;
-    if (f > 0 && a[i - 1] === RIM_PIECES) m++;
-    if (f < F - 1 && i + 1 < n && a[i + 1] === RIM_PIECES) m++;
-    if (i >= F && a[i - F] === RIM_PIECES) m++;
-    if (i + F < n && a[i + F] === RIM_PIECES) m++;
-    if (m && arand() < m / 2 * dt / WORD_S) { a[i] = v + 1; field.dirty = true; }
-  }
-  recount();
 }
 
 // --- God's pushback --------------------------------------------------------------------
@@ -230,7 +195,6 @@ function stepSpeech() {
       if (i < n && a[i] > 0 && a[i] < RIM_PIECES) { a[i] = 0; field.dirty = true; }
     }
   for (const s of A.signs) if (s.f >= sp.f0 && s.f < sp.f0 + AFTER_SPEECH_FILES) s.askew = true;
-  recount();
   sp.held = A.t;
   sp.next = A.t + speechEvery();
   sp.f0 = Math.floor(arand() * (CROWD_FILES - AFTER_SPEECH_FILES));
@@ -295,13 +259,14 @@ function stepWardens(dt) {
   for (const w of A.wardens) stepWarden(w, dt);
 }
 
-// One frame of the crowd, the speech and the wardens.
+// One frame of the crowd, the members walking out, the speech and the wardens.
 let riseIn = AFTER_RISE_S;
 export function stepUnion(c) {
-  const A = S.after, dt = secs(c);
+  const dt = secs(c);
   souls();
   spreadIn += dt;
   if (spreadIn >= 1 / AFTER_SPREAD_HZ) { spread(spreadIn); spreadIn = 0; }
+  walkOuts();
   riseIn -= dt;
   if (riseIn <= 0) { riseIn = AFTER_RISE_S; addSoul(arand() < AFTER_KIN_SHARE ? 1 : 0); }
   stepSpeech();

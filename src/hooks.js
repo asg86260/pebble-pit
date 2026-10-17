@@ -1475,15 +1475,17 @@ HANDLES.__hellAt = (what, i) => {
   const b = hellBarrierBox(i);
   return { x: b.x + b.w / 2, y: b.y + b.h / 2 };
 };
-// --- act 3's loop (after/; track A) ---
+// --- act 3's loop (after/; track A, reworked 2026-10-18) ---
 // The click as a player makes it, in world pixels; the act's rows bought
 // through `__buy` as any row is (its coins are the act's, so `__buy` hands an
 // act-3 key to `buyAfter`); and the setup a check is not about: coins
-// granted, the crowd's rims set, where the clouds and trees stand.
+// granted, the crowd's rims set, where the pair, the trees and the stumps
+// stand.
 import { clickAfter } from './after/index.js';
 import { afterRow, buyAfter, setAfterDial, AFTER_ROWS, afterBill, afterMaxed, cardAt } from './after/rows.js';
-import { setCrowd, support as afterSupport, union as afterUnion, members as afterMembers, crowdSize } from './after/union.js';
-import { cloudW, cloudH } from './after/faith.js';
+import { setCrowd, support as afterSupport, union as afterUnion, crowdSize } from './after/union.js';
+import { pairBox } from './after/rebel.js';
+import { campCount, walkingOut } from './after/bodies.js';
 import { plotX, afterFloor } from './after/place.js';
 import { afterGate, strikeDue } from './after/strike.js';
 HANDLES.__afterClick = (x, y) => clickAfter(x, y);
@@ -1496,31 +1498,31 @@ HANDLES.__afterGrant = (coins = {}) => {
   const a = S.after;
   if (!a) return null;
   for (const [c, n] of Object.entries(coins)) {
-    if (c === 'faith' || c === 'ink') a[c] += n; else a.stock[c] = (a.stock[c] || 0) + n;
+    if (c === 'rebel') a.rebel += n; else a.stock[c] = (a.stock[c] || 0) + n;
   }
-  return { faith: a.faith, ink: a.ink, ...a.stock };
+  return { rebel: a.rebel, ...a.stock };
 };
 // Every soul's rim by `fn(i, v)`, or with a number, that share of the crowd
-// made members from the front back.
+// made members from the front back (they walk out on the next frame).
 HANDLES.__afterCrowd = fn => {
   if (!S.after) return null;
   if (typeof fn === 'number') { const n = Math.floor(crowdSize() * fn); setCrowd((i, v) => (i < n ? 8 : v)); }
   else setCrowd(fn);
-  return { support: afterSupport(), union: afterUnion(), members: afterMembers(), size: crowdSize() };
+  return { support: afterSupport(), union: afterUnion(), size: crowdSize() };
 };
-// Where to click: each cloud's middle and kind, each plot's trunk.
-HANDLES.__afterClouds = () => (S.after ? S.after.clouds.filter(c => c.die == null)
-  .map(c => ({ id: c.id, kind: c.kind, size: c.size, x: c.x + cloudW(c) / 2, y: c.y + cloudH(c) / 2 })) : []);
+// Where to click: the pair on the pedestal, each plot's trunk and stump.
+HANDLES.__afterPair = () => { const b = pairBox(); return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; };
 HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage: p.stage, logs: p.logs, falling: p.fall != null,
-  x: plotX(i) + P / 2, y: afterFloor() - P * 5 })) : []);
+  stump: p.stump, x: plotX(i) + P / 2, y: afterFloor() - P * 5, sx: plotX(i) + P / 2, sy: afterFloor() - P / 2 })) : []);
 HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, shown: !!S.after && u.show(),
   bill: afterBill(u), rung: u.rung ? u.rung() : 0, done: afterMaxed(u) }));
-HANDLES.__afterRead = () => (S.after ? { faith: S.after.faith, ink: S.after.ink, ...S.after.stock, gate: S.after.gate,
-  axe: S.after.axe, clicks: S.after.clicks, support: afterSupport(), union: afterUnion(), members: afterMembers(),
+HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...S.after.stock, gate: S.after.gate,
+  axe: S.after.axe, support: afterSupport(), union: afterUnion(), camp: campCount(), walking: walkingOut(),
   size: crowdSize(), signs: S.after.signs.length, posters: S.after.posters.length, bodies: S.after.bodies.length,
+  posted: S.after.bodies.filter(b => b.job).length, motes: S.after.motes.length,
   due: afterGate(), strike: strikeDue() } : null);
 HANDLES.__afterCardAt = (x, y) => cardAt(x, y);
-// The axe in hand without the cloud hits that earn it: a scene's setup.
+// The axe in hand without buying it: a scene's setup.
 HANDLES.__afterAxe = () => { if (S.after) S.after.axe = true; return !!S.after?.axe; };
 
 // --- the two of them (wardrobe.js) ---

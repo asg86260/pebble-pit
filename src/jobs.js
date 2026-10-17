@@ -86,23 +86,19 @@ const SAID = Object.freeze({
 export const jobSaid = job => SAID[job] || job || '';
 
 // The acts beyond the yard keep crews of their own, out of reach of everything
-// above: act 3's volunteers (`S.after.bodies`) and hell's ghosts
-// (`S.hell.bodies`). Their words are spelled here all the same, because two of
+// above: act 3's members at their posts (`S.after.bodies`) and hell's ghosts
+// (`S.hell.bodies`). Their words are spelled here all the same, because some of
 // them are the yard's words too, and a bare `'hauler'` cannot say whose it is.
 export const AFTER_JOB = Object.freeze({
-  CANVASS: 'canvasser',
-  GATHER:  TYPE.GATHER,
-  PLANT:   'planter',
-  FELL:    'feller',
+  AGITATE: 'agitator',
+  CUT:     'woodcutter',
   HAUL:    TYPE.HAUL,
   SAW:     'sawyer',
   PULP:    'pulper',
   JOIN:    'joiner',
-  PRINT:   'printer',
   CARRY:   'carrier',
-  PASTE:   'paster',
-  // A pledge: a member given to a station for good, hired by no row of its own.
-  KEEP:    'keeper'
+  PRINT:   'printer',
+  PASTE:   'paster'
 });
 
 export const HELL_JOB = Object.freeze({

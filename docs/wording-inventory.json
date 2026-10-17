@@ -7966,151 +7966,172 @@
   "text": "the barrier"
  },
  {
-  "id": "after-row-puff",
+  "id": "after-coin-rebel",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the click's faith a cloud hit",
-  "text": "puff"
+  "context": "act 3's coin (placeholder): rebel, knocked off the pair's speech",
+  "text": "rebel"
+ },
+ {
+  "id": "after-row-shout",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the pedestal's bigger speech, more rebel a click",
+  "text": "bigger speech"
  },
  {
   "id": "after-row-axe",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the axe, chops a tree",
+  "context": "act 3 card row (placeholder): the axe, bought: a click on a grown tree chops it",
   "text": "axe"
+ },
+ {
+  "id": "after-row-plot",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the grove's plots, a plot cleared a press",
+  "text": "plot"
  },
  {
   "id": "after-row-grow",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the grove's growth pace",
-  "text": "growth"
+  "context": "act 3 card row (placeholder): the grove's faster growth",
+  "text": "faster growth"
  },
  {
-  "id": "after-row-saw",
+  "id": "after-row-tree",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the saw mill's pace",
-  "text": "saw"
+  "context": "act 3 card row (placeholder): the grove's bigger trees, more logs a fall",
+  "text": "bigger trees"
  },
  {
-  "id": "after-row-joinery",
+  "id": "after-row-stumps",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the workshop's pace, a sign",
-  "text": "joinery"
+  "context": "act 3 card row (placeholder): the grove's stump removal: woodcutters dig stumps too",
+  "text": "stump removal"
  },
  {
-  "id": "after-row-pulp",
+  "id": "after-row-blade",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the paper mill's pace, a sheet",
-  "text": "pulp"
- },
- {
-  "id": "after-row-print",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): posters a stack off the press",
-  "text": "print"
- },
- {
-  "id": "after-row-wring",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): ink a storm cloud hit",
-  "text": "wring"
+  "context": "act 3 card row (placeholder): the saw mill's second blade, two logs a cut",
+  "text": "second blade"
  },
  {
   "id": "after-row-fence",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card dial (placeholder): the saw mill's fence, timber against sawdust",
+  "context": "act 3 card row (placeholder): the saw mill's fence, bought",
   "text": "fence"
  },
  {
-  "id": "after-job-canvasser",
+  "id": "after-row-bench",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): hire a canvasser",
-  "text": "canvasser"
+  "context": "act 3 card row (placeholder): the workshop's second bench, two signs at once",
+  "text": "second bench"
  },
  {
-  "id": "after-job-gatherer",
+  "id": "after-row-signreach",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): hire a gatherer",
-  "text": "gatherer"
+  "context": "act 3 card row (placeholder): the workshop's bigger sign, a further reach",
+  "text": "bigger sign"
  },
  {
-  "id": "after-job-planter",
+  "id": "after-row-vat",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): hire a planter",
-  "text": "planter"
+  "context": "act 3 card row (placeholder): the paper mill's second vat, two sheets a pull",
+  "text": "second vat"
  },
  {
-  "id": "after-job-feller",
+  "id": "after-row-stack",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): hire a feller",
-  "text": "feller"
+  "context": "act 3 card row (placeholder): the press's bigger stack, more posters a stack",
+  "text": "bigger stack"
+ },
+ {
+  "id": "after-row-posterreach",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the press's bigger poster, a further reach",
+  "text": "bigger poster"
+ },
+ {
+  "id": "after-row-cut",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card dial (placeholder): the saw mill's fence, timber against sawdust",
+  "text": "cut"
+ },
+ {
+  "id": "after-job-agitator",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): a post for a agitator, held by a member from the camp",
+  "text": "agitator"
+ },
+ {
+  "id": "after-job-woodcutter",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): a post for a woodcutter, held by a member from the camp",
+  "text": "woodcutter"
  },
  {
   "id": "after-job-hauler",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): hire a hauler",
+  "context": "act 3 card row (placeholder): a post for a hauler, held by a member from the camp",
   "text": "hauler"
  },
  {
   "id": "after-job-sawyer",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): hire a sawyer",
+  "context": "act 3 card row (placeholder): a post for a sawyer, held by a member from the camp",
   "text": "sawyer"
  },
  {
   "id": "after-job-pulper",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): hire a pulper",
+  "context": "act 3 card row (placeholder): a post for a pulper, held by a member from the camp",
   "text": "pulper"
  },
  {
   "id": "after-job-joiner",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): hire a joiner",
+  "context": "act 3 card row (placeholder): a post for a joiner, held by a member from the camp",
   "text": "joiner"
- },
- {
-  "id": "after-job-printer",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): hire a printer",
-  "text": "printer"
  },
  {
   "id": "after-job-carrier",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): hire a carrier",
+  "context": "act 3 card row (placeholder): a post for a carrier, held by a member from the camp",
   "text": "carrier"
+ },
+ {
+  "id": "after-job-printer",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): a post for a printer, held by a member from the camp",
+  "text": "printer"
  },
  {
   "id": "after-job-paster",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): hire a paster",
+  "context": "act 3 card row (placeholder): a post for a paster, held by a member from the camp",
   "text": "paster"
- },
- {
-  "id": "after-wait-member",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 hall row's wait (placeholder): no member free to hire",
-  "text": "no member free"
  },
  {
   "id": "after-door-mill",
@@ -8141,11 +8162,11 @@
   "text": "press"
  },
  {
-  "id": "after-sect-hands",
+  "id": "after-sect-posts",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall heading (placeholder): the volunteers",
-  "text": "hands"
+  "context": "act 3 card heading (placeholder): the station's posts",
+  "text": "posts"
  },
  {
   "id": "after-sect-build",

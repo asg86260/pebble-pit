@@ -14,7 +14,7 @@
 import { S } from '../state.js';
 import { AFTER_STOCK, AFTER_FENCE0, AFTER_START_BUILT } from '../config.js';
 import { afterlifeOn } from '../acts.js';
-import { stepFaith, hitCloud, forgetAir } from './faith.js';
+import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
 import { stepMill } from './mill.js';
 import { stepPress } from './press.js';
@@ -23,33 +23,41 @@ import { stepStrike } from './strike.js';
 import { stepBodies } from './bodies.js';
 import { secs } from './util.js';
 
-// The act's facts, as the spec's save shape names them: faith and ink; the
+// The act's facts, as the spec's save shape names them and the owner's
+// settled calls (2026-10-18) reshaped them: rebel, the act's coin; the
 // chain's stock; each soul's inked rim pieces, a character a soul
-// (union.js); the volunteers by job; the grove's plots and each tree's
-// growth; the signs planted and posters pasted; the mill's fence; the camp's
-// stations built and their rungs; the gate reached. And what the loop added
-// to stand it up (track A): the act's clock (`t`) and its chance (`seed`),
-// the cloud hits and the axe, the clouds and the motes coming down, the
-// volunteers' bodies, the wardens, the throne's speech, when each station
-// went up, and the last id handed out. A puff's cells are this session's and
-// live on faith.js.
+// (union.js); the members waiting in the camp (`camp`, a count: each stands
+// on its spot) and the posts bought at each station by job (`posts`); the
+// grove's plots and each tree's growth; the signs planted and posters
+// pasted; the mill's fence; the camp's stations built, and how many times
+// each named upgrade is bought (`ups`); the gate reached. When the last post
+// of each job and each upgrade was bought (`postAt`, `upAt`), so what it puts
+// on screen fades in. And what the loop
+// added to stand it up: the act's clock (`t`) and its chance (`seed`), the
+// axe bought and in hand, the pair's last line (`shout`), the clouds and the
+// motes coming down, the bodies -- members walking out and members at their
+// posts -- the wardens, the throne's speech, when each station went up, and
+// the last id handed out.
 export const blankAfter = () => ({
-  faith: 0,
-  ink: 0,
+  rebel: 0,
   stock: Object.fromEntries(AFTER_STOCK.map(k => [k, 0])),
   rims: '',
-  volunteers: {},
+  camp: 0,
+  posts: {},
+  postAt: {},
   plots: [],
   signs: [],
   posters: [],
   fence: AFTER_FENCE0,
   built: [],
-  rungs: {},
+  ups: {},
+  upAt: {},
   gate: 0,
   t: 0,
   seed: 1,
-  clicks: 0,
+  axeBought: false,
   axe: false,
+  shout: null,
   clouds: [],
   motes: [],
   bodies: [],
@@ -62,9 +70,8 @@ export const blankAfter = () => ({
 });
 
 // The act begun: its facts stood up, once -- the crowd in its files, the
-// old growth standing in the grove, the plate, the hall and the well on the
-// camp's patch. The house's fall will call this; until it is built only the
-// dev travel does (`__goPlace`).
+// grove's one grown tree, the pedestal and the hall on the camp's patch. The
+// house's fall calls this (actbeats.js), and the dev travel (`__goPlace`).
 export function beginAfter() {
   if (S.after) return S.after;
   S.after = blankAfter();
@@ -80,21 +87,16 @@ export function beginAfter() {
 let frames = 0;
 export const afterFrames = () => frames;
 
-// What the session keeps beside the act (the puffs' cells) belongs to
-// one `S.after`: a new game or a read save drops it.
-let seen = null;
-
 // One frame of the afterlife, called every frame with the act on, on screen
-// or not. Its parts in the order the place hands its work along: the sky's
-// clouds and faith, the grove, the volunteers at their work, the mills, the
-// workshop and the press, the crowd, the gates.
+// or not. Its parts in the order the place hands its work along: the sky and
+// the rebel coming down, the grove, the members walking and at their posts,
+// the mills, the workshop and the press, the crowd, the gates.
 export function stepAfter(c) {
   if (!afterlifeOn()) return;
   frames++;
   if (!S.after) return;
-  if (seen !== S.after) { forgetAir(); seen = S.after; }
   S.after.t += secs(c);
-  stepFaith(c);
+  stepRebel(c);
   stepGrove(c);
   stepBodies(c);
   stepMill(c);
@@ -104,11 +106,11 @@ export function stepAfter(c) {
 }
 
 // A click on the place, in world pixels: true if it was the afterlife's (a
-// cloud puffed, or with the axe a tree chopped). Track C's input.js calls
-// it with the camera up here.
+// line of the pair's speech, a tree chopped with the axe, a stump dug at).
+// input.js calls it with the camera up here.
 export function clickAfter(wx, wy) {
   if (!afterlifeOn() || !S.after) return false;
-  return hitCloud(wx, wy);
+  return clickPlace(wx, wy);
 }
 
 // The save (persist.js, `SAVERS`): written whole, null before the act

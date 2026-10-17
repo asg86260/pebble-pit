@@ -3466,68 +3466,77 @@ board-hell-wall = the barrier
 # Plain working labels for act 3's cards, held behind AFTERLIFE_ON and never
 # shipped: every one is the owner's to reword on the wording board.
 
-# act 3 card row (placeholder): the click's faith a cloud hit
-after-row-puff = puff
+# act 3's coin (placeholder): rebel, knocked off the pair's speech
+after-coin-rebel = rebel
 
-# act 3 card row (placeholder): the axe, chops a tree
+# act 3 card row (placeholder): the pedestal's bigger speech, more rebel a click
+after-row-shout = bigger speech
+
+# act 3 card row (placeholder): the axe, bought: a click on a grown tree chops it
 after-row-axe = axe
 
-# act 3 card row (placeholder): the grove's growth pace
-after-row-grow = growth
+# act 3 card row (placeholder): the grove's plots, a plot cleared a press
+after-row-plot = plot
 
-# act 3 card row (placeholder): the saw mill's pace
-after-row-saw = saw
+# act 3 card row (placeholder): the grove's faster growth
+after-row-grow = faster growth
 
-# act 3 card row (placeholder): the workshop's pace, a sign
-after-row-joinery = joinery
+# act 3 card row (placeholder): the grove's bigger trees, more logs a fall
+after-row-tree = bigger trees
 
-# act 3 card row (placeholder): the paper mill's pace, a sheet
-after-row-pulp = pulp
+# act 3 card row (placeholder): the grove's stump removal: woodcutters dig stumps too
+after-row-stumps = stump removal
 
-# act 3 card row (placeholder): posters a stack off the press
-after-row-print = print
+# act 3 card row (placeholder): the saw mill's second blade, two logs a cut
+after-row-blade = second blade
 
-# act 3 card row (placeholder): ink a storm cloud hit
-after-row-wring = wring
-
-# act 3 card dial (placeholder): the saw mill's fence, timber against sawdust
+# act 3 card row (placeholder): the saw mill's fence, bought
 after-row-fence = fence
 
-# act 3 hall row (placeholder): hire a canvasser
-after-job-canvasser = canvasser
+# act 3 card row (placeholder): the workshop's second bench, two signs at once
+after-row-bench = second bench
 
-# act 3 hall row (placeholder): hire a gatherer
-after-job-gatherer = gatherer
+# act 3 card row (placeholder): the workshop's bigger sign, a further reach
+after-row-signreach = bigger sign
 
-# act 3 hall row (placeholder): hire a planter
-after-job-planter = planter
+# act 3 card row (placeholder): the paper mill's second vat, two sheets a pull
+after-row-vat = second vat
 
-# act 3 hall row (placeholder): hire a feller
-after-job-feller = feller
+# act 3 card row (placeholder): the press's bigger stack, more posters a stack
+after-row-stack = bigger stack
 
-# act 3 hall row (placeholder): hire a hauler
+# act 3 card row (placeholder): the press's bigger poster, a further reach
+after-row-posterreach = bigger poster
+
+# act 3 card dial (placeholder): the saw mill's fence, timber against sawdust
+after-row-cut = cut
+
+# act 3 card row (placeholder): a post for a agitator, held by a member from the camp
+after-job-agitator = agitator
+
+# act 3 card row (placeholder): a post for a woodcutter, held by a member from the camp
+after-job-woodcutter = woodcutter
+
+# act 3 card row (placeholder): a post for a hauler, held by a member from the camp
 after-job-hauler = hauler
 
-# act 3 hall row (placeholder): hire a sawyer
+# act 3 card row (placeholder): a post for a sawyer, held by a member from the camp
 after-job-sawyer = sawyer
 
-# act 3 hall row (placeholder): hire a pulper
+# act 3 card row (placeholder): a post for a pulper, held by a member from the camp
 after-job-pulper = pulper
 
-# act 3 hall row (placeholder): hire a joiner
+# act 3 card row (placeholder): a post for a joiner, held by a member from the camp
 after-job-joiner = joiner
 
-# act 3 hall row (placeholder): hire a printer
-after-job-printer = printer
-
-# act 3 hall row (placeholder): hire a carrier
+# act 3 card row (placeholder): a post for a carrier, held by a member from the camp
 after-job-carrier = carrier
 
-# act 3 hall row (placeholder): hire a paster
-after-job-paster = paster
+# act 3 card row (placeholder): a post for a printer, held by a member from the camp
+after-job-printer = printer
 
-# act 3 hall row's wait (placeholder): no member free to hire
-after-wait-member = no member free
+# act 3 card row (placeholder): a post for a paster, held by a member from the camp
+after-job-paster = paster
 
 # act 3 hall row (placeholder): build the saw mill
 after-door-mill = saw mill
@@ -3541,8 +3550,8 @@ after-door-papermill = paper mill
 # act 3 hall row (placeholder): build the printing press
 after-door-press = press
 
-# act 3 hall heading (placeholder): the volunteers
-after-sect-hands = hands
+# act 3 card heading (placeholder): the station's posts
+after-sect-posts = posts
 
 # act 3 hall heading (placeholder): the stations to build
 after-sect-build = build

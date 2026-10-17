@@ -48,7 +48,7 @@ import { houseX, IN_DONE_S } from './home.js';
 import { afterX1, afterFloor } from './after/place.js';
 import { hellFloor } from './hell/place.js';
 import * as AFTER from './after/index.js';
-import * as FAITH from './after/faith.js';
+import * as REBEL from './after/rebel.js';
 import * as STRIKE from './after/strike.js';
 import * as HELLPLACE from './hell/place.js';
 import * as HELL from './hell/index.js';
@@ -126,7 +126,7 @@ const wallDue = i => (typeof HELL.hellWallDue === 'function' ? HELL.hellWallDue(
 const cageDown = () => (typeof HELL.cageBroken === 'function' ? !!HELL.cageBroken() : down(lastWall) >= 1);
 const TRIGGERS = {
   'house-fall': () => !!A() && A().goOn && !!S.retired && A().house === 'standing',
-  'axe': () => beatDone('refuse') && typeof FAITH.axeDue === 'function' && !!FAITH.axeDue(),
+  'axe': () => beatDone('refuse') && typeof REBEL.axeDue === 'function' && !!REBEL.axeDue(),
   'strike': () => beatDone('refuse') && !(A() && A().struck)
     && (typeof STRIKE.strikeDue === 'function' ? !!STRIKE.strikeDue() : !!S.after && S.after.gate >= AFTER_GATES.length),
   'haunt': () => beatDone('ghost-road') && !!pair() && pair().mode === 'soul',

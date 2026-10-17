@@ -9,7 +9,7 @@
 // and `fall` is already the opening's rock coming down (beats.js), so it is
 // `house-fall` here.
 
-import { giveAxe } from './faith.js';
+import { giveAxe } from './rebel.js';
 
 // A beat that does nothing yet: entered, over on its first frame.
 const stub = () => ({ enter() {}, step() { return false; }, skip() {} });
@@ -26,15 +26,16 @@ export const AFTER_STORY = {
   // 3. The meeting: the throne in the glare, a pick sent down the stair.
   'meet-god': stub(),
   // 4. The refusal: the pick set down, the first members inking their rims
-  // and following the pair to the camp's bare patch, a first hit on a cloud.
+  // and following the pair to the camp's bare patch, the pair up on the
+  // pedestal and the first line of their speech.
   'refuse': stub(),
-  // The axe handed over after CHOP_CLICKS cloud hits (call 15 open): owed by
-  // faith.js when the count is reached. The member walking over from the
-  // grove with it is a mock before it is a drawing; until then the beat
-  // hands the axe over on its first frame, so the click chops from then on.
+  // The axe handed over once it is bought on the pedestal's card (call 15,
+  // settled): due while rebel.js's `axeDue` says so. The member walking over
+  // from the grove with it is a mock before it is a drawing; until then the
+  // beat hands the axe over on its first frame, so the click chops from then on.
   'axe': { enter() { giveAxe(); }, step() { return false; }, skip() { giveAxe(); } },
   // 6. The strike: the whole crowd's tools down at once, God's yard still.
-  // Owed by strike.js at STRIKE_SHARE.
+  // Due by strike.js's `strikeDue` at STRIKE_SHARE walked out.
   'strike': stub(),
   // 7. The unmasking: the starved glare fading off cell by cell, Satan under it.
   'unmask': stub(),

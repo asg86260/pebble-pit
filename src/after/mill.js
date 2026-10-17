@@ -6,21 +6,21 @@
 // never by a count). The sawdust heaps beside the mill to its brim -- the
 // pile-full mark -- and, until the paper mill opens at the slowdown, a sawyer
 // has to sweep it off the cloud's edge, a trip that takes the sawyer off the
-// saw. The paper mill pulps sawdust into sheets. And the fence, the act's
-// standing decision (call 13 open: a control on the mill's card, the
-// recommendation, built so): set fine, more timber; coarse, more sawdust.
-// Act 3 never gets tiers: a better saw makes more boards, never a new kind of
-// tree.
+// saw. The paper mill pulps sawdust into sheets, two a pull with its second
+// vat. The mill's second blade saws two logs a cut. And the fence, the act's
+// standing decision, bought on the mill's card and then a dial on it: set
+// fine, more timber; coarse, more sawdust. Until it is bought every log cuts
+// at AFTER_FENCE0.
 
 import { S } from '../state.js';
 import { AFTER_LOG_YIELD, AFTER_FENCE_STEPS, AFTER_FENCE0, AFTER_SAWDUST_BRIM, AFTER_SWEEP_LOAD, AFTER_SWEEP_WAIT_S,
          AFTER_PULP_SAWDUST } from '../config.js';
-import { built } from './levels.js';
+import { built, bladeLogs, fenceOn, vatSheets } from './levels.js';
 
 // The fence's setting: timber of each log's AFTER_LOG_YIELD, the rest sawdust.
-export const fenceSplit = () => (S.after ? (S.after.fence ?? AFTER_FENCE0) : null);
+export const fenceSplit = () => (S.after ? (fenceOn() ? (S.after.fence ?? AFTER_FENCE0) : AFTER_FENCE0) : null);
 export function setFence(v) {
-  if (!S.after || !AFTER_FENCE_STEPS.includes(v)) return false;
+  if (!S.after || !fenceOn() || !AFTER_FENCE_STEPS.includes(v)) return false;
   S.after.fence = v;
   return true;
 }
@@ -29,14 +29,15 @@ export function setFence(v) {
 // the saw stops, and a sawyer sweeps (the pile-full mark, render/after.js).
 export const heapFull = () => !!S.after && !built('papermill') && S.after.stock.sawdust >= AFTER_SAWDUST_BRIM;
 
-// One log through the saw: false with no log on the pile or the heap full.
+// A cut through the saw, a log a blade: false with no log on the pile or the
+// heap full.
 export function sawLog() {
   const st = S.after.stock;
   if (st.logs <= 0 || heapFull()) return false;
-  const timber = fenceSplit();
-  st.logs -= 1;
-  st.timber += timber;
-  st.sawdust += AFTER_LOG_YIELD - timber;
+  const n = Math.min(bladeLogs(), st.logs), timber = fenceSplit();
+  st.logs -= n;
+  st.timber += timber * n;
+  st.sawdust += (AFTER_LOG_YIELD - timber) * n;
   return true;
 }
 
@@ -48,12 +49,13 @@ export function takeSweep() {
   return n;
 }
 
-// One sheet out of the vat: false while the sawdust is short.
+// A pull, a sheet a vat: false while the sawdust is short of one.
 export function pulpSheet() {
   const st = S.after.stock;
-  if (st.sawdust < AFTER_PULP_SAWDUST) return false;
-  st.sawdust -= AFTER_PULP_SAWDUST;
-  st.paper += 1;
+  const n = Math.min(vatSheets(), Math.floor(st.sawdust / AFTER_PULP_SAWDUST));
+  if (n < 1) return false;
+  st.sawdust -= AFTER_PULP_SAWDUST * n;
+  st.paper += n;
   return true;
 }
 
