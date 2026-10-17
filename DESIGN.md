@@ -20008,17 +20008,33 @@ each other." *So act 1 is building (the yard), act 2 is light party combat
 incremental, and God's fall and God's freeing are story climaxes the loop
 reaches, delivered as cutscenes, never as a fight.*
 
+*Then the owner's calls, 2026-10-17.* **Everything keeps running:** the
+yard and the deep keep running, and their crews keep aging, while the pair
+are dead (call 1, settled; what it means is worked through in "Everything
+keeps running", below). **Act 3 is D, the union,** as written: "i kind of
+like the unionization of the afterlife workers and eventually overturning
+god" (call 2, settled; E and F are kept as a short note). **Act 4 is
+mining,** and replaces the expeditions: "start by mining low-tier ores,
+process them into bars and better tools, unlocking more attempts to free
+God from his hell cage" (call 4's loop, settled; the expeditions, the
+bargain and the way out are kept as a short note); and, refining it the
+same day, the tools break down a run of barriers on the way to the cage
+room, each barrier opening the next ore's tier. The design below is
+reworked to those three; the calls still open are at the end.
+
 This section is the story of both acts as beats, the lifespans and lineage
-both acts stand on, act 3's loops (the first drafts' three, judged again
-against a climax and against the no-combat, all-distinct rule, and three new
-ones), act 4's three loops, the way the dead get
-back to the surface, the rules both acts must keep, and the calls only the
-owner can make. Every player-facing word is the owner's: where a beat below
-quotes a line, it is a placeholder marked as one, there only to show the
-beat's shape. The look of the afterlife's place:
+both acts stand on, act 3's loop (the union, chosen, with the first drafts'
+loops and the set-aside ones kept short), what it means that everything
+keeps running, the way the dead get back to the surface, act 4's loop (the
+mine and the forge, chosen), the rules both acts must keep, and the calls
+only the owner can make. Every player-facing word is the owner's: where a
+beat below quotes a line, it is a placeholder marked as one, there only to
+show the beat's shape, and every ore, bar, tool and station name is a
+working name. The look of the afterlife's place:
 docs/mocks/act3-afterlife-2026-10-16 (plain cells, not the game; the first
 draft, under the old name, is docs/mocks/act3-heaven-2026-10-16). There is
-no mock of God, Satan or hell yet; each is a mock-vote before it is code.
+no mock of God, Satan, hell, the forge or the cage yet; each is a mock-vote
+before it is code.
 
 ### The bargain
 
@@ -20033,17 +20049,19 @@ rebellion -- not a war but a walkout. The work is the means: every soul
 the player turns from God's service to the union is a voice gained and a
 tithe God loses, and the end of the act is the whole works putting its
 tools down at once. Then the turn under the
-turn: the god who made them work was the devil, the real one is in chains,
+turn: the god who made them work was the devil, the real one is caged in hell,
 and act 4 is a rescue -- the shape act 1 had (someone under a rock) and act
 2 had (someone in a belly), told a third time at the bottom of everything.
 
 - **What the player gets:** two more places whose crew is their own
   history. Every square that worked the yard or fought in the deep is there,
-  by name and by line, so a long act 1 is a big act 3. The two they built at
+  by name and by line, so a long act 1 is a big act 3, and the union's
+  members are the hands act 4 mines with. The two they built at
   the start (names, roles, outfits) are the ones who arrive, dressed as
   chosen. A place that looks like the yard they know -- the familiarity is the gag
   -- and a loop that is not the yard at all: in act 3 they organize the
-  workers rather than work, in act 4 they mount trips rather than build.
+  workers rather than work, in act 4 they refine -- ore to bar to tool, a
+  tier at a time -- rather than build a works.
   Two villains' worth of story, an unmasking, and an ending that
   gives them their lives and their house back.
 - **What the player gives:** the house as an ending, and the promise of
@@ -20092,7 +20110,7 @@ the owner's to write -- the ones quoted are placeholders.
    promised paradise.") They cannot stop the crowd working by themselves --
    so the act's loop is getting the crowd to stop with them.
 5. **The build-up** (the act's loop, no cutscene of its own; small beats at
-   its gates). Under the recommended loop (the union, below), the pair go
+   its gates). Under the chosen loop (the union, below), the pair go
    soul to soul; each soul woken to the cause has its rim inked and puts
    its tool down, and the line of tithe-carriers up the stair thins. Each of
    the act's three gates -- the first meeting, the slowdown, the strike --
@@ -20111,7 +20129,7 @@ the owner's to write -- the ones quoted are placeholders.
    disguise and the one under it at once (a call below, if the owner meant
    two defeats).
 8. **Satan's line** (`hell-told`). Beaten, Satan tells the pair the truth:
-   the afterlife was his trap, and God is chained in hell. (Placeholder:
+   the afterlife was his trap, and God is caged in hell. (Placeholder:
    "your god is in my basement.") What becomes of Satan after -- he sinks
    through the cloud, gone ahead of them to hell -- is drawn as a body
    going, not a vanishing.
@@ -20124,26 +20142,45 @@ the owner's to write -- the ones quoted are placeholders.
 
 10. **The return, as ghosts** (`haunt`). The pair walk down the stair onto
     their own yard as souls, pale-rimmed, and the yard is still at it --
-    the living crew, the machines, the purse (whether it kept running is a
-    call). The rock that took the house is still lying on its ruin.
+    it never stopped. The crew at work are the grandchildren and
+    great-grandchildren of the crew the pair knew (the ticks over their
+    names say how many generations went by), the machines are turning, the
+    heaps are at the brim. The rock that took the house is still lying on
+    its ruin.
 11. **The first descent** (`descend`). The way to hell is the way they
     already know: the pit, the abyss, the deep -- and through the deep's
     floor. The first trip plays as act 2's first trip down did, then keeps
-    going, and the view is the top of hell. It is too hot to stay: the trip
-    turns back, and the act's loop is the trips (the recommended loop,
-    expeditions, below).
-12. **Hell** (the act's loop, beats at its gates). Trip by trip, deeper.
-    Each chain on God is anchored at a depth, and the trip that first
-    reaches an anchor and carries back what breaks it is that depth's gate.
-13. **Freeing God** (`unchain`). The last trip reaches the bottom with the
-    last thing it needs and the chains are undone, a link at a time -- a
+    going, and the view opens on hell's first chamber: a black hollow lit
+    from below, its walls veined with the softest ore, and across its far
+    side a fall of fused rubble. Through the gaps in the rubble, far down,
+    is a glow -- the cage room, where God is.
+12. **The first attempt** (`wall-first`). The pair go straight to the
+    rubble with what they have -- the yard's pick, carried down -- and
+    swing. The pick rings off and chips. Nothing gives. The camera goes
+    from the rubble to the chamber's wall, where the softest seam shows the
+    same grain as the rubble: the failed attempt is the lesson (the pick
+    can cut that seam; that seam's bars make a tool the rubble yields to).
+    The act's loop is the mine and the forge (below).
+13. **Hell** (the act's loop, beats at its gates). Ore to bars to a better
+    tool; the better tool breaks the barrier at the chamber's far side, and
+    behind it is the next chamber, lower and hotter, with the next ore in
+    its walls and the next barrier across its far side. A barrier comes
+    down over time, worked by the crew with the new tool, a cell at a time;
+    its last piece falling is a beat: the camera moves on into the new
+    chamber, the pair cross, strike the next barrier once, and the tool
+    rings off -- the failure is shown every time, and the camera goes to
+    the seam whose grain matches it. Five barriers -- rubble, a bone wall,
+    a lava gate, the anchor chains and the cage itself -- each the gate to
+    the next tier.
+14. **Freeing God** (`unchain`). The fifth barrier is the cage: the last
+    tool and the crew cut it a bar at a time, it opens, and God stands -- a
     cutscene, not a fight. What God looks like is a mock and the owner's
     call; Satan, if he is there, watches it happen (a call below).
-14. **Lives returned** (`alive`). God gives them their lives back: the
+15. **Lives returned** (`alive`). God gives them their lives back: the
     souls' pale rims fill to black a piece at a time -- the union's rim
     build, run to its end on the two of them -- and they are bodies again.
     (Placeholder: no words; the rims closing are the line.)
-15. **Home** (`home-again`). They go back up the way they came, through the
+16. **Home** (`home-again`). They go back up the way they came, through the
     deep and the abyss, onto the yard, alive; the yard's builders put the
     house up again on its old ground, piece a trip, as the finale did, and
     the pair sit down on the bench by the door. The sheet. What follows --
@@ -20152,7 +20189,7 @@ the owner's to write -- the ones quoted are placeholders.
 The rhyme across the four acts: act 1 rescues your sqouse from under a
 rock (you build); act 2 rescues you from a belly (you fight); act 3 brings
 down the one who set the work (you organize); act 4 rescues the one who can
-set it right (you venture). Four verbs, a rescue at each end, and only one
+set it right (you forge). Four verbs, a rescue at each end, and only one
 act of fighting.
 
 ### Lifespans and lineage (acts 1 and 2, the ground both acts stand on)
@@ -20218,15 +20255,15 @@ there, and both acts lean on it.
 
 ### Act 3: the afterlife
 
-The place is settled whatever the loop: a yard in the clouds -- a great cloud
-shedding mist onto a cloud floor, heaps, a stair up to a throne in the glare
--- worked by the pale crowd of the dead, and the share of what it makes that
-goes up the stair to the throne is the **tithe**. What is open is what the
-*player* does in it. The first drafts answered with three loops in which the
-player ran the place; the owner's two later lines (a climax at the end, and
-"i don't want the main loops for act 3 + 4 to be combat ... i want each act
-to feel distinct") send most of that back. The three are kept below as they
-were written, then judged again, then three loops that answer the new brief.
+The place is settled: a yard in the clouds -- a great cloud shedding mist
+onto a cloud floor, heaps, a stair up to a throne in the glare -- worked by
+the pale crowd of the dead, and the share of what it makes that goes up the
+stair to the throne is the **tithe**. The player does not run that yard;
+the player organizes the crowd out of it. **The loop is D, the union,
+chosen by the owner on 2026-10-17.** The first drafts' three loops (in
+which the player ran the place) are kept below as written and as judged
+against the brief, for the record; E and F, the other two non-combat
+loops, are kept as a short note after D.
 
 #### The first drafts' three loops (kept as written, 2026-10-16)
 
@@ -20379,16 +20416,17 @@ act 1 (building), act 2 (party combat) and act 4.
   climax -- the crowd emptied is a progress bar finishing, not a story --
   and its stations (lamps, a bench) were a small yard again. Its engine
   (the rim build, lines as the coin) is the recommended loop's engine.
-- **C, the climb,** is a journey through places. That verb belongs to act 4
-  (the descent is the climb turned over), so act 3 cannot have it too.
+- **C, the climb,** is a journey through places. That verb would
+  have crowded act 4 (whose run of chambers is a journey down), so act 3
+  cannot have it.
 
-#### Three loops that are not a fight
+#### The chosen loop: D, the union (decided 2026-10-17)
 
-Each is still an incremental at heart -- numbers that grow, automation,
-ladders in `tierRows` bands -- and each reaches God's fall as a cutscene.
-Coin and station names are working names.
+The owner: "i kind of like the unionization of the afterlife workers and
+eventually overturning god." Built as written below; the only addition
+since the owner's pick is what "everything keeps running" does to the
+crowd (the last bullet).
 
-##### D. The union (organize the dead)
 
 - **The picture:** God's yard runs in the middle of the view, worked by the
   pale crowd; a line of tithe-carriers climbs the stair to the throne; the
@@ -20435,8 +20473,8 @@ Coin and station names are working names.
   confrontation is standing still.
 - **Distinct from:** act 1 -- the player never hits, hauls or builds a thing
   that makes stuff; act 2 -- no blow is struck, nobody is specced; act 4 --
-  no journey, one place, and the number that matters is a share of a
-  crowd, not a distance. The picture is the progress: a pale field going to
+  nothing made, one place, and the number that matters is a share of a
+  crowd, not a tier. The picture is the progress: a pale field going to
   ink.
 - **Reuse:** the crew's bodies, the finale's crowd ranks and hop, home.js's
   rim-a-trip build, the motes, `tierRows` and the boards, `BEATS`, the
@@ -20446,44 +20484,36 @@ Coin and station names are working names.
   (A's place, drawn and stepped, but with no player rows).
 - **Cost: M to L.** A's place without A's boards, B's crowd and rim build,
   one camp of four stations.
+- **The crowd keeps growing.** The yard and the deep keep running while
+  the pair are dead, so their crews keep aging and souls keep rising
+  through act 3: each one is seen to come up through the cloud's thin
+  patch and joins the back of the crowd, pale, and goes to work in God's
+  yard. A soul from a line already won walks to the camp on arrival (its
+  line is in the union); any other is one more soul to win. The strike's
+  bar is a share of the crowd as it stands (`STRIKE_SHARE`), so the bar
+  creeps up as souls arrive -- at about a crew's size over `LIFE_S`, one
+  soul every half-minute for a sixty-body yard, small against a crowd of
+  thousands, but a reason the union cannot coast. It is also a gag the
+  owner may want to point at: the player's own yard, running on without
+  them, keeps feeding God.
 
-##### E. The skim (undermine the works)
+#### Considered and set aside: E and F (2026-10-17)
 
-- **The picture:** the player does work God's yard -- A's loop, as the
-  first drafts had it -- and under the cloud floor, out of the throne's
-  sight, is a cellar.
-- **Click and grow:** the yard is played as act 1 (a cloud to hit, heaps,
-  boards); a share of every heap is skimmed through a crack in the floor to
-  the cellar, where it builds the thing that brings the throne down (a
-  saw through the cloud under it; the name is the owner's).
-- **The pressure:** God's eye, a beam that sweeps the yard. A skim it
-  crosses is a skim lost and suspicion up; suspicion slows the skim.
-  Ladders: quieter cracks, lookouts, a cellar that holds more.
-- **The climax:** the cellar's thing is finished; the floor under the
-  throne gives, the throne comes down through the cloud, and the glare
-  comes off in the fall.
-- **Distinct from:** act 2 and act 4, yes; act 1, no -- its top half *is*
-  act 1, and a stealth meter on top of the yard is the only new verb.
-- **Cost: L.** A whole yard of boards plus the cellar and the eye.
+Two other non-combat loops were written beside D and set aside when the
+owner chose it. **E, the skim:** the player works God's yard as act 1 and
+skims a share of every heap through a crack in the floor to a cellar that
+builds the thing that brings the throne down, under a sweeping eye. Set
+aside because its top half *is* act 1, and a stealth meter is its only new
+verb. **F, overtime:** the pair outwork God's quota until the ledger's scale
+cracks and the counterweight in its pan is the mask -- the idle genre told
+straight. Set aside because "work harder" is the yard's verb with bigger
+numbers. Either could still lend a gag (the eye as the throne's speech; the
+quota as the tithe line), never the loop.
 
-##### F. Overtime (outwork the machine)
-
-- **The picture:** God's ledger -- a great scale beside the throne that
-  weighs every soul's work against a quota.
-- **Click and grow:** the pair play along and do it better than anyone: the
-  quota is met, raised, met again, and the numbers climb to absurdity, the
-  incremental's own joke told straight. Automation and multipliers, the
-  idle genre at its purest.
-- **The climax:** the scale cannot hold what is put on it; it cracks, and
-  the counterweight in its pan is the mask.
-- **Distinct from:** act 2 and 4, yes; act 1, barely -- the verb is "work
-  harder", which is the yard's verb with bigger numbers. The cheapest of
-  the three (M) and the one with the least that is new to play.
-
-#### Recommendation for act 3: D, the union
+#### Why D
 
 It is the only one of the six that is unlike all three other acts: act 1
-builds a works, act 2 fights with a party, act 4 ventures in trips, and
+builds a works, act 2 fights with a party, act 4 refines at a forge, and
 act 3 **organizes people** -- the thing that grows is a membership, the
 antagonist is a system rather than a body, and the end is a tipping point
 (a share of the crowd) rather than a health bar. It keeps everything the
@@ -20497,6 +20527,63 @@ on after it. Working forever turns into the means to rebel because the
 work is the throne's food: the tithe is what the disguise lives on, and the
 union is the act of taking the work away.
 
+### Everything keeps running (call 1, settled 2026-10-17)
+
+The yard and the deep never stop. From the house's fall to `home-again`,
+every place runs every frame -- the deep's rule, already true of the yard
+and the deep -- and nobody living is exempt from the lifespan clock except
+the pair, who are dead. What that means, worked through:
+
+- **The yard runs itself.** Its crew keeps every job the boards gave it,
+  the machines keep turning, the heaps fill. Nobody buys anything there in
+  act 3 -- the pair are in the cloud and nothing carries a coin -- so the
+  yard runs at the last rungs the player bought and its piles go to the
+  brim and stop, the pile-full marks up (the yard's own rule for a heap
+  with nowhere to go; no new mechanism). Its pressures keep their clocks:
+  the weather rains, the sky's smog drifts on the filter the player left
+  it with. In act 4 the boards open again (the pair are on the yard, as
+  ghosts) and the yard's purse becomes hell's supply line (below).
+- **The lines grow generations.** Births keep the yard's crew count whole
+  and add a tick to every line on every birth. A long act 3 means the
+  ghosts come down among descendants: the carter the pair hired is a
+  `wick 9` now, and the roster and the hover read the same way they always
+  did -- the name, the ticks. The lines table stays one row a line however
+  long the pair are away (`gens` grows, the table does not), so the save
+  does not grow with time dead.
+- **Souls keep rising.** Into the crowd through act 3 (the union's last
+  bullet, above); after the strike, into a freed afterlife, where they join
+  the crowd at rest. A soul rises only from a walkable body (`pairReady`'s
+  rule), so the yard's births and deaths look the same with the pair away
+  as with the pair there.
+- **The deep keeps fighting.** If the endless serpent is being fought, its
+  living fighters stay at their stations; if the serpent kills a fighter
+  (the lifespans section), the furnace births its successor. The fight
+  draws on the yard's purse as it does today and does not pause for the
+  afterlife.
+- **What the player sees of it.** In act 3, a thin patch in the cloud
+  floor looks down on the yard at work (the first drafts' "the yard below
+  shows through", now a window on a yard that is really running). The
+  souls that come up through it are the same souls the player can watch
+  leave the yard.
+- **Frame cost.** Four places a frame, and the yard and the deep at
+  endgame are already the heaviest frame the game has (PERF.md;
+  `break-perf.mjs` drives it). The rule that pays for it is the deep's: a
+  place off screen steps and does not draw. The afterlife's crowd steps as
+  data -- a soul is a row with its rim pieces, and only the files in view
+  are bodies -- so a crowd of thousands costs a frame its visible files.
+  After the strike the afterlife is at rest and steps nothing but arrivals.
+  Hell's own crew is tens of bodies, not hundreds. So the act-3 frame is
+  today's endgame frame plus the crowd's visible files, and the act-4 frame
+  is today's endgame frame plus hell's tens and the ghosts on the road.
+  The gate is the same as the deep's was: a driven endgame yard with a
+  crowd in view, and one with hell in view, measured quiet against the
+  PERF.md budget before either act lands. If it does not fit, the first
+  lever is stepping the off-screen yard at a coarser tick, not freezing it.
+- **No offline accrual still holds.** Everything keeps running *while the
+  game is open*; closed, nothing runs, and the resume clamp holds. The
+  pair coming down to great-grandchildren is a fact about play time spent
+  in the cloud, never about days away.
+
 ### Back to the surface, dead
 
 The unlock that ends act 3 (beat 9) is a **road**, not a teleport: a stair
@@ -20507,130 +20594,313 @@ carries them") is the rule the road answers: now something can.
 - **The views.** `S.view` gains `'after'` (act 3) and `'hell'` (act 4)
   beside `'yard'` and `'deep'`. The switch from the afterlife to the yard is
   a camera glide down the stair, as the abyss's glide goes down to the deep.
-  The sim does not read the view; every place runs every frame (the deep's
-  rule), so what the player finds below is the yard where it was.
-- **Does the yard resume?** Recommended: it never stopped (call 1). The
-  living crew -- the pair's yard, still turning over by lifespans, the
-  lines growing generations while the pair were dead -- is at work, and
-  the ghosts come down among the great-great-grandchildren of their crew.
-  If the owner calls it frozen instead, it resumes on the frame the road
-  opens, and the crowd that rose while it was frozen is none.
+  The sim does not read the view.
 - **What the dead can do there.** Recommended: *carry, not work*. A ghost
   -- a body with its rim in the pale grey, the soul's look -- walks the
   yard, takes no job on its boards (the living's crew stays the yard's, and
-  lifespans stay a fact about the living) and carries loads along the
-  ghost road: the yard's purse up to the afterlife, and, in act 4, down to
-  hell. So the road makes the economies one, the way the portal made the
-  yard's and the deep's one. The living do not see them -- no living body
-  routes round a ghost, nothing waits on one.
+  lifespans stay a fact about the living) and carries loads along the road
+  down to hell. So the road makes the economies one, the way the portal
+  made the yard's and the deep's one. The living do not see them -- no
+  living body routes round a ghost, nothing waits on one.
+- **Who the ghosts are.** The pair, and the union's members who follow them
+  down. After the strike the union is free and idle; the members who come
+  down the road are act 4's crew (the muster, below), a line at a time.
+  The rest stay in the afterlife at rest.
 - **The way to hell** runs through the yard: the pit, the abyss, the deep,
-  and through the deep's floor. The deep's fighters (if the endless serpent
-  is still being fought) are living and stay at their stations; a ghost
-  passes through the fight without taking part.
+  and through the deep's floor. The deep's fighters are living and stay at
+  their stations; a ghost passes through the fight without taking part.
 
-### Act 4: hell
+### Act 4: hell, the mine and the forge
 
-Hell is the fourth place and the third look, and it must be the fourth
-verb. Act 1 builds, act 2 fights, act 3 organizes; whatever act 4 is, it is
-none of those. Its own theme: heat, depth, and a long way down.
+Hell is the fourth place and the third look, and its loop is the fourth
+verb. Act 1 builds, act 2 fights, act 3 organizes; act 4 **forges** -- it
+refines. The owner's lines are the loop: "start by mining low-tier ores,
+process them into bars and better tools, unlocking more attempts to free
+God from his hell cage," and, refining it the same day, "breaking down
+barriers to get closer to the cage room, each taking higher tier tools ...
+it breaks down a wall/blockage then unlocks the new ore tier." Its own
+theme: heat, hardness, and a chain of materials, each one only reachable
+by what was made from the one before.
 
-#### Three loops for hell
+#### The place: a run of chambers down to the cage room
 
-##### G. Expeditions (the descent, in trips)
+Hell is a **descending run of chambers** under the deep's floor, each one
+lower, further right and hotter than the last, stepping down like the
+pit's own shelves turned to caves. The road from the deep lands in the
+first. Each chamber is a black hollow lit from below, the light coming up
+off its floor's fire as held white shapes (flames are white; red stays the
+sparks'), its walls a cross-section of rock veined with **one ore** -- that
+chamber's tier -- and across its far side stands a **barrier** between it
+and the next. The fifth chamber is **the cage room**: God hangs there in
+the cage, and the cage is the last barrier.
 
-- **The picture:** the yard's pit is the trailhead. Ghosts gather at the
-  house's ruin, go down through the abyss and the deep, and on into hell;
-  the view follows one trip at a time, and a depth gauge down the side of
-  the view is the act's main number.
-- **The trip:** a team of ghosts goes down until the heat turns them. Every
-  ghost carries **cool** (a working name), drawn down by depth; at the
-  bottom of it the trip turns for home and walks back up, scorched pale,
-  and rests before it goes again. Nobody dies -- they are dead -- so a trip
-  never fails, it only turns back short. What a trip brings home is what it
-  found where it turned: ash in the shallows (the dust band), cinders
-  (crops'), brimstone (ore's), a relic near an anchor (the spark's band) --
-  each carried, every grain, back up the road.
-- **What grows:** depth reached, team size, cool, haul a trip. The ladders,
-  each one card in bands: cool (the abyss's black water carried down in
-  flasks -- the deep's own stuff, cooling), the team (how many go), the
-  pace, and **the way** -- a stair down through hell built a flight a trip
-  and kept, so every trip after starts its walk on what the last one built.
-- **Automation:** standing trips that go on their own; waystations built at
-  depth, each a place a trip refills its cool and the next trip starts
-  from; at the top, a lift down the way. The idle shape is send, wait,
-  return, spend, deeper.
-- **The yard feeds it:** ghosts carry the yard's purse down (the road's
-  reason): a waystation or an anchor's bill can ask for ore or sparks from
-  the yard, carried down the whole way by a body, so act 1's machine is act
-  4's supply line.
-- **The gates:** each chain on God is anchored at a depth. The trip that
-  first reaches an anchor sees it (a beat); the anchor's bill -- relics and
-  what was carried down -- is paid there, by bodies, and the chain falls.
-  Four chains, four depths, the shields' and the defenses' four.
-- **The climax:** the last trip reaches the bottom with the last bill in
-  its hands; the last chain is undone a link at a time; God stands (beat
-  13). A cutscene.
-- **Distinct from:** act 1 -- no place is built up, the progress is
-  distance and the rhythm is trips; act 2 -- no blow is struck; act 3 -- not
-  a crowd but a few, and not one place but many, passed through. The risk
-  is a clock (the heat), not an enemy.
-- **Reuse:** route.js's climbs and the cut's ladder for the way down, the
-  deep's swim and its look, home.js's piece-a-trip build for the way and the
-  waystations, the beats, `tierRows`. **New:** hell's place (a column, so
-  the camera follows down; drawn on the deep's rules, a black field lit
-  from below rather than above, flames as held white shapes -- red stays
-  the sparks'), the trip and its cool, the depth gauge, the anchors.
-- **Cost: L.** A place, a trip system, a camera that follows a trip down.
+The camera holds one chamber in view, with the next barrier at its right
+edge; when a barrier comes down the camera moves on, a glide down and to
+the right into the new chamber (the abyss's glide), and the chambers
+behind stay running -- their seams still mined, their furnaces still lit
+-- and a press of the view's arrows walks back up the run. From the first
+chamber the cage room's glow shows far below through the rubble's gaps,
+so the goal is on screen from the first frame of the act.
 
-##### H. The bargain (hell's market)
+#### The chain: five ores, five tools, five barriers
 
-- **The picture:** hell is a bazaar of contracts; the damned trade debts,
-  and God's chains are the biggest debt in hell.
-- **The loop:** buy low, sell high: goods whose prices move with what the
-  market holds; brokers (automation) who trade on their own; ladders on the
-  stalls. Every chain is a contract the pair buy out.
-- **The climax:** the last contract is bought; torn up, the chains with it.
-- **Distinct, but:** it is the most "spreadsheet with a picture on top" of
-  any loop here, which the game's pillar forbids; every trade would have to
-  be a body carrying goods across a stall to stay watchable. **Cost: M.**
+| chamber | ore (working name) | cut by | its bars make | the barrier at its far side | that barrier yields to |
+|---|---|---|---|---|---|
+| 1, the landing | dross | the yard's pick | the dross pick | **rubble** -- a fall of slag fused into a heap | the dross pick |
+| 2 | cinder iron | the dross pick | the iron pick | **the bone wall** -- the damned's bones, mortared course on course | the iron pick |
+| 3 | pitch copper | the iron pick | the copper-iron pick (an alloy) | **the lava gate** -- a cast gate holding back a run of fire | the copper-iron pick |
+| 4 | obsidian glass | the copper-iron pick | the glass-edged pick | **the anchor chains** -- the cage's chains, run across the passage to their anchor | the glass-edged pick |
+| 5, the cage room | adamant (the seam the cage was cut from) | the glass-edged pick | the adamant pick | **the cage** | the adamant pick |
 
-##### I. The way out (an escape line)
+Five tiers, five barriers, the defenses' five; the count is the owner's
+call (four to five was the brief; four would drop the chains). Every row
+is one rule told five times: **a chamber's ore yields to the tool of the
+tier before it; its bars make the tool its barrier yields to; and behind
+the barrier is the next ore.** So tier N's tool breaks barrier N, which
+opens chamber N+1 and ore N+1, which makes tool N+1 -- down to the cage.
 
-- **The picture:** hell holds souls; the pair build a line out -- paths,
-  lifts, queues -- and guide the damned up it.
-- **The loop:** throughput: souls freed a minute; each freed soul joins as
-  a hand; the chains loosen with every soul freed.
-- **The climax:** the last soul out, the chains slack, God walks up the line
-  last.
-- **Distinct, but:** freeing souls is act 3's verb a second time, and a
-  logistics line is act 1's hauling. **Cost: L.**
+- **Mining.** The pair's click is a blow at a seam face: the face is a
+  block of cells in the seam's grain, a blow knocks a lump off, and the lump
+  is an item, counted and carried -- not grains in the sand grid. The tool
+  sets which seams a blow can bite at all (the dross pick rings off cinder
+  iron and chips nothing) and how many blows a lump takes; a tier's own
+  ore comes off its tool slowly and the tier below's comes off fast, so an
+  old seam gets quicker every time a tool is made. The ghost crew mine the
+  same way: a **miner** takes a face and swings on its own clock with the
+  best tool the forge has made (a new tool is carried to every face by a
+  body, and the face's swing changes on the frame it arrives). Each seam is
+  a station, one card: miners at that face and their pace, in `tierRows`
+  bands. A face mined out moves back into the wall a cell at a time, so the
+  seam is a dent that deepens, never a heap that fills.
+- **Smelting.** A **furnace** takes ore and fuel and gives bars. The fuel
+  is hell's own: **brimstone**, which crusts on the floor round the vents
+  and is gathered by anyone, any tool (the lowest coin, the dust band's).
+  Every chamber has a furnace site, and **the deeper the chamber, the
+  hotter its floor**: a furnace built in chamber N runs at heat N and melts
+  any ore of tier N or below, so a new chamber's ore is smelted where it is
+  mined, and the run of chambers is also a run of hotter fires. An ore
+  above a furnace's heat is refused -- it waits in the hopper, with the
+  pile-full mark when the hopper is full. Heat is held by feeding: a
+  furnace burns brimstone by the second while lit, and one that runs out
+  of fuel cools and stops, so the fuel line is a line that has to keep
+  moving. A **stoker** (ghost job) feeds a furnace; a **hauler** carries
+  ore from faces to hoppers and bars up the run to the anvil. The
+  furnace's card: its batch, its burn (brimstone a bar), its stokers, in
+  bands.
+- **The forge.** The **anvil** stands in the landing, where the road
+  arrives and the deep's water and the yard's carries come in, so bars walk
+  up the run to it and tools walk back down; the walk grows with every
+  chamber, and **the stair** -- steps cut between chambers by builders, a
+  flight a trip (home.js's rule) -- is the ladder that shortens it. It
+  turns bars into the next tool: a tier's
+  recipe is a count of its bars plus the tool before it, carried to the
+  anvil -- the old pick is the new one's core, so a tool is upgraded, never
+  bought beside the last. The **smith** (ghost job) works it in held
+  pixel-art strokes, the animation register's held poses and visible
+  sparks (white sparks, not red), and a tool takes a fixed count of strokes
+  (`TOOL_STROKES`). Tier III's pick is an **alloy**: copper bars and iron
+  bars together, the one recipe that asks for two tiers at once, so the
+  low seams are never finished with. The top two tools are **quenched**:
+  their last stroke is a dip in the abyss's black water, carried down from
+  the deep by a ghost (the deep's contribution, and the reason the road
+  runs through it). The anvil's card: the smith's pace, a second smith,
+  the quench tank's size.
+- **The crew: the muster.** Act 4's hands are the union's members, coming
+  down the road. The **muster** -- a card at the foot of the road where it
+  meets hell -- calls them down a line at a time; its rungs are how many
+  come. A member keeps its trade (a carter line hauls faster, a line that
+  mined at the yard's pit mines faster), the union's rule carried on.
+  Nobody ages in hell and nobody is born, so a member put to a face is
+  there for good. A short act 3 gives a small muster, never none: the
+  strangers who joined the union count.
 
-#### Recommendation for act 4: G, expeditions
+#### The barriers: an attempt is work, not a fight
 
-It is the one verb no other act has: **venture**. The progress is distance,
-the risk is a clock, and the shape is the trip -- out, turn, home, spend,
-out deeper -- which reads as a descent the way act 3 reads as a crowd and
-act 2 as a fight. It is the most "hell" of the three (the heat is the
-place's own rule, the way the deep's buoyancy and the afterlife's glare
-are theirs), it gives "travel back to the surface, dead" its job (the yard
-is base camp and supply line), and it ends on the shape act 1 began with:
-someone trapped at the bottom, reached by work. Two cheap twists it can
-borrow from the others without changing its verb: a trip that finds a
-damned soul brings it home as a new ghost (I), and an anchor's bill can be
-haggled (H) -- both owner's calls, neither needed.
+The barriers are the act's climax spread across the act, and the act's
+gates. Nothing fights back; a barrier has no health bar, only a body of
+cells that has to come down.
+
+- **What each one looks like.** Each is drawn in hell's black and white on
+  the P = 6 grid, with per-cell variation, filling the passage at the
+  chamber's far side from floor to roof. **Rubble:** slag lumps in mixed
+  greys, fused, gaps between them that show the glow below. **The bone
+  wall:** courses of pale bone cells laid like brick, mortar dark. **The
+  lava gate:** a cast black gate, riveted, with the fire behind showing
+  white through its seams; when it falls the run behind it drains down a
+  channel into the next chamber's floor and goes dark as it cools, a cell
+  at a time. **The anchor chains:** a curtain of black links strung across
+  the passage from roof to floor, each link a few cells, running on down
+  to the cage. **The cage:** the bars round God, adamant, the room's own
+  ore drawn as a made thing.
+- **An attempt.** A barrier is tried the moment there is a tool to try it
+  with: the barrier's card (one card per barrier, at the chamber's far
+  side) offers to set the crew on it -- the words are the owner's. With
+  the tool it yields to, the crew put on it (a **wall gang**, miners taken
+  off their faces, the gang's size a choice on the card) swing at it with
+  the tool, carried down to them; a barrier is a count of blows
+  (`BARRIER_BLOWS`, a written table, one a barrier) and it comes down
+  **over time and a cell at a time** -- each piece knocked loose falls,
+  lands, and is carried off to the chamber's side by haulers as spoil, so
+  a half-broken wall is a wall with a hole in it, and nothing pops. The
+  pair's click works the wall too, a blow a click. With a lesser tool, every
+  blow rings off and nothing comes loose; the card says what the wall
+  wants by showing its grain beside the seam that matches.
+- **The trade.** Every miner on the wall gang is a miner off a face, so a
+  barrier costs the chain's output while it is worked: break through early
+  with a big gang and the bars dry up; keep the faces running and the wall
+  takes longer. It is the act's one standing decision, and it is the
+  player's, not a timer's.
+- **The fall, and the lesson.** The last piece falling is a beat
+  (`wall-<n>`): the camera moves on into the new chamber, the pair cross
+  the spoil into it, and at its far side they strike the next barrier once
+  with the tool they have; it rings off, and the camera goes to the new
+  chamber's seam, whose grain matches. So "a failed attempt teaches what's
+  needed next" is shown at every barrier, and the player never spends
+  anything to learn it. The first attempt (`wall-first`, beat 12) is that
+  lesson with nothing broken first: the yard's pick on the rubble.
+- **Why attempts are gated, not bought.** "Unlocking more attempts" is the
+  tool tier: a new tool is what makes a barrier yield, and a wall worked
+  with the wrong tool never moves, so there is no grind of retries and no
+  bill that opens a wall. The fifth barrier is the cage; its fall is beat
+  14.
+- **Each barrier is a gate,** the way each shield's answer was in act 1:
+  barrier N's fall opens chamber N+1 -- its seam's card, its furnace site,
+  its far barrier -- so the map opens in the run's order.
+
+#### The pressure: the heat
+
+Hell's own clock is the **flare**: a vent on the floor or a wall breaks out
+on its clock, warned ahead (the serpent's phase warning, held glow
+building), and scorches the faces, furnaces and barrier near it -- the
+deeper the chamber, the oftener. Miners at a scorched face, or a wall
+gang at a scorched barrier, step back until it passes, and the face is
+crusted over with slag that takes blows to clear before ore comes off it
+again; a scorched furnace goes out and must be relit. A setback that costs time and never takes ore,
+bars or tools away -- the act's falling rock. The answers are ladders:
+vent caps (a flare's reach), the furnaces' shielding (no fire lost), and
+the fact that a flare crusts brimstone round the vent it came from, so the
+pressure also pays the fuel line. If the owner wants Satan in hell, the
+flares are his (a call below).
+
+#### What the surface contributes
+
+The yard has been running the whole time the pair were in the cloud, and
+its purse is at the brim (above). The road makes that purse act 4's
+supply line, carried every step by a ghost:
+
+- **The spark band.** Every hell ladder's last band asks for a spark, as
+  every ladder in the game does -- carried down from the yard by a ghost on
+  the road, so act 1's machines feed act 4's top rungs. Never the core.
+- **The quench.** The abyss's black water for the top two tools, carried
+  from the deep.
+- **Flux.** The yard's ore, carried down, is the alloy's flux (tier III's
+  recipe), so the yard's ore stations keep a reason to run.
+- **What it does not send:** brimstone (hell's own), ore of hell's tiers
+  (hell's own walls), crew (the union, not the yard's living).
+
+The carriers are ghosts on the muster's card (a carrier rung), and the walk
+is the whole road, yard to hell -- long, so a carry is a trip and the
+carriers are a standing line, not a click.
+
+#### Ladders in bands
+
+Every card in hell is one ladder of eight rungs in `tierRows` bands, a
+written table in `LADDERS` like every other: brimstone only (the dust
+band's place), then brimstone and low bars (dross, iron: crops'), then
+brimstone, low bars and high bars (copper, glass: ore's), then low bars,
+high bars and a spark carried down (the spark's band). The barriers and
+the chambers behind them are not ladders and carry no bill: they are the
+chain's gates, opened by a tool and by work. The five tools are the
+anvil's recipes, not rungs.
+
+#### How it is distinct from act 1
+
+Act 1 and act 4 both have the player hitting rock, which is exactly why
+the difference has to be spelled out.
+
+- **What the rock is for.** Act 1 has one boulder, cleared, and its dust
+  fills a pit; the progress is a hole emptying and a heap filling. Act 4
+  has many seams of different metals and nothing is filled: the rock is
+  the first step of a chain, and the progress is the chain's tier.
+- **What grows.** Act 1 grows a crew and a works sideways -- more stations
+  doing more of the same, all of them spending the same four coins. Act 4
+  grows *up*: every product is the input of the next step (ore to bar to
+  tool to the next ore), and the tool tier is a hard gate that changes
+  what a click can do at all, not how much. Act 1 never has a material
+  that turns into another.
+- **The click.** In act 1 a click is a grain of dust; in act 4 a click is a
+  blow that bites or does not, depending on the tool in hand. A new tool
+  turns a wall that rang into a wall that gives.
+- **The boulder against the barriers.** Act 1's boulder is the economy's
+  source: every blow on it is income, and the game is clearing it. Act 4's
+  barriers yield nothing -- their pieces are spoil, carried aside -- and
+  they do not move at all until the chain has made the right tool; they
+  are obstacles that measure the chain, not a source that feeds it.
+- **Act 1's barriers against act 4's.** Act 1's barriers are bought: a
+  shield is a row with a bill, paid in coins, and paying it opens the next
+  place. Act 4's barriers have no bill and no row to buy: a barrier yields
+  only to a tool, the tool is the end of the chain, and the wall comes
+  down by bodies working it over time, on screen. Gold cannot open a wall
+  in hell; only a better edge can.
+- **The map.** Act 1 is one rock in one yard, spreading sideways; act 4 is a
+  run of chambers going down, each with its own ore, the camera moving on
+  as each opens, the goal in view at the bottom from the first frame.
+- **The material.** Act 1's dust is grains in the sand grid; act 4's ore and
+  bars are counted lumps in hands, and nothing in hell is sand.
+- **The pressure and the look.** Act 1's rock falls from above on white
+  ground; act 4's heat comes up from below in a black hollow, and the
+  pressure is a fire that crusts a face, not a weight that buries a crew.
+- **The climax.** Act 1 ends when the dome holds; act 4 closes on its goal
+  a wall at a time across the whole act, each fall a beat, the last wall
+  the cage.
+
+From act 2: no blow is struck at anything that fights back. From act 3:
+not a crowd won but a chain climbed, and the number that matters is a
+tier, not a share.
+
+#### Reuse and new
+
+- **Reuse:** the crew's bodies and the `JOBS` registry (miner, stoker,
+  hauler, smith, carrier as new rows in it); stations.js's gates and their
+  `after` column for the chambers' order; `tierRows` and the boards; the
+  pile-full mark on hoppers and the anvil's tray; route.js's climbs and
+  the cut's ladder for the road down and the stair between chambers; the
+  abyss's glide for the camera moving on; the deep's look, inverted again;
+  the serpent's phase warning for the flare; `BEATS` for every wall's fall;
+  home.js's piece-a-trip build for the stair and for the house at the end.
+- **New:** hell's place and its look (a run of chambers lit from below);
+  the seams as faces that deepen; items as counted lumps; furnaces with
+  floor heat and fuel burn; the anvil's recipes and tool tiers; the five
+  barriers, each a body of cells that comes down by blows, and their
+  spoil; the wall gang; the flare; the muster and the carry down the road.
+
+#### Considered and set aside: expeditions, the bargain, the way out
+
+Three loops were written for act 4 before the owner's call. **G,
+expeditions:** trips down through hell against a heat clock, four anchors
+on God's chains at depth -- replaced by the mine, though the heat survives
+as the flare, the descent survives as the run of chambers, and the long
+carry down the road keeps a little of the trip. An earlier draft of the
+mine put the whole act in one hollow with the cage's five rings as its
+locks; the owner's refinement the same day moved the locks out into the
+run as barriers, so the player travels toward the cage instead of
+standing beside it.
+**H, the bargain:** a market of contracts -- set aside as the most
+spreadsheet of any loop. **I, the way out:** an escape line for the damned
+-- set aside as act 3's verb a second time and act 1's hauling.
 
 ### Each act's verb, and what it reuses
 
 | | act 1: the yard | act 2: the deep | act 3: the afterlife | act 4: hell |
 |---|---|---|---|---|
-| verb | build | fight | organize | venture |
-| what grows | a crew, a works | a party | a membership | a reach (depth) |
-| the pressure | the rock falls | the serpent's phases | the throne's speech | the heat |
-| the gates | four shields | five defenses | meeting, slowdown, strike | four anchors |
-| the end | the dome holds (a rescue) | the kill (a fight) | the strike (a cutscene) | the chains fall (a rescue) |
-| new coin | dust, crops, ore, sparks | scales | word, pledges, founders | ash, cinders, brimstone, relics |
-| look | black on white | inverted, lit from above | high key, the glare | dark, lit from below |
-| reused | -- | the yard's purse, `tierRows`, the crew | the crew's bodies, the crowd and hop, home.js's build, motes, beats | route.js's climbs, the deep's swim and look, home.js's build, the yard's purse |
+| verb | build | fight | organize | forge |
+| what grows | a crew, a works | a party | a membership | a chain: ore, bar, tool, a tier at a time |
+| the pressure | the rock falls | the serpent's phases | the throne's speech | the flares |
+| the gates | four shields (bought) | five defenses | meeting, slowdown, strike | five barriers (broken by a tool) |
+| the end | the dome holds (a rescue) | the kill (a fight) | the strike (a cutscene) | the cage, the fifth barrier, opens (a rescue) |
+| new coin | dust, crops, ore, sparks | scales | word, pledges, founders | brimstone, five ores, their bars |
+| look | black on white | inverted, lit from above | high key, the glare | a run of black chambers, lit from below |
+| reused | -- | the yard's purse, `tierRows`, the crew | the crew's bodies, the crowd and hop, home.js's build, motes, beats | the crew and `JOBS`, stations' gates, the deep's look, route.js, the beats, the yard's purse carried down |
 
 ### Rules and consequences to check
 
@@ -20646,21 +20916,31 @@ haggled (H) -- both owner's calls, neither needed.
   `pairReady` rule (walkable, not in a basket or a hand) holds for the
   fall's lift too.
 - **Nothing teleports.** Souls rise and are seen to; members walk out of
-  the work; coins cross only in a ghost's hands; a trip walks every step;
-  the space bar hurries a beat and never cuts it. Every appearance fades by
-  opacity.
+  the work; coins cross only in a ghost's hands; every lump of ore, every
+  bar and every tool is carried by a body from face to furnace to anvil and
+  back down the run; a new tool reaches a face or a wall gang in a body's
+  hands before the swing changes; a barrier comes down a piece at a time
+  and every piece lands and is carried aside; the camera moving on is a
+  glide, and the pair walk into each new chamber; the space bar hurries a
+  beat and never cuts it. Every appearance fades by opacity.
 - **Save shape** (the save-shape-change skill, a migration for each step):
   `S.lines` (SAVED); `life`, `line`, `gen` on every saved body
   (SAVED_BY_HAND); `S.after` -- won rim pieces a line, members, organizers,
   the camp's rungs, the gate reached (SAVED; a working name); `S.hell` --
-  depth reached, the way's flights, waystations, cool and team rungs,
-  anchors paid (SAVED); `S.view` gains `'after'` and `'hell'`; the new beats
-  in `beatsDone`; `S.retired` gains the house's fallen and rebuilt modes.
-  Souls in flight, trips mid-walk and the crowd's draw are EPHEMERAL: a
-  reload mid-rise lands the soul in the crowd, a reload mid-trip lands the
-  trip back at the trailhead with what it carried. A save from before
-  lifespans: every living body founds its own line at generation one and
-  the dead are none.
+  ore and bars held by tier, brimstone, the tool tier made and the tier
+  each face holds, each furnace's fuel and lit state, the seams' depths,
+  the chamber reached, each barrier's blows taken (a barrier's drawn cells
+  derive from that count, so a reload shows the same hole), the wall gang,
+  the stair's flights, the muster's members, the rungs (SAVED); `S.view` gains
+  `'after'` and `'hell'`; the new beats in `beatsDone`; `S.retired` gains
+  the house's fallen and rebuilt modes. Souls in flight, loads in hands
+  and the crowd's draw are EPHEMERAL: a reload mid-rise lands the soul in
+  the crowd, a reload with a lump in a hauler's hands lands the lump where
+  it was going, spoil in flight lands at the chamber's side, and a reload
+  during a wall's fall beat replays the beat from its start (the next
+  chamber opens only when the beat ends). A save from
+  before lifespans: every living body founds its own line at generation
+  one and the dead are none.
 - **Held-back flags,** as `SERPENT_ON` holds the deep: `AFTERLIFE_ON` (act
   3, and the house's fall with it -- a build without it keeps the house
   standing and the pair on the bench for good) and `HELL_ON` (act 4). Two
@@ -20685,36 +20965,46 @@ haggled (H) -- both owner's calls, neither needed.
   throne, the union's coins -- all the owner's. Whether the store page and
   the age questionnaires need to say anything about the theme is a release
   check, not a design one.
-- **Frame cost:** four places stepped every frame. The endgame budget
-  (PERF.md) is the gate: the crowd field draws the files in view, and a
-  place off screen steps without drawing.
+- **Frame cost:** four places stepped every frame, settled by "everything
+  keeps running" (above): a place off screen steps without drawing, the
+  crowd is data past the files in view, hell is tens of bodies. The
+  endgame budget (PERF.md) is the gate, measured with a crowd in view and
+  with hell in view.
 - **The deep and the endless serpent** during acts 3 and 4: living
-  fighters, still at their stations; the fight runs if the yard runs (call
-  1).
+  fighters, still at their stations, still fighting; the yard pays for it
+  as it does today.
 
 ### The calls for the owner
 
-1. **Do the yard and the deep keep running, and aging, while the pair are
-   dead?** Yes (recommended): souls keep rising to join the crowd, the
-   ghosts come down to a living yard, and the yard is act 4's supply line.
-   No: the afterlife and hell are the whole game from the fall, and the
-   yard resumes when the road opens. Yes costs four places a frame.
-2. **Act 3's loop:** D the union (recommended), E the skim, or F overtime.
+Settled 2026-10-17: **call 1** (everything keeps running), **call 2**
+(act 3 is D, the union) and **call 4's loop** (act 4 is the mine and the
+forge). Still open:
+
 3. **One defeat in heaven or two?** The beats say God is defeated, unmasked
    as Satan, and Satan is defeated in heaven. Recommended: one -- the
    strike beats the disguise and the one under it in a single beat. The
    other reading is a second confrontation with Satan unmasked; it would
    still be a cutscene (or a last gate of the union), never a fight.
-4. **Act 4's loop:** G expeditions (recommended), H the bargain, or I the
-   way out; and is Satan at the bottom of hell when God is freed (watching,
-   a last line) or gone for good after heaven?
+4. **Act 4's remaining shape.** Is Satan in hell when God is freed -- the
+   flares his, watching from the cage room as the walls come down, a last
+   line when the cage opens -- or gone for good after heaven (the flares
+   are only hell's)? Recommended: there, and the flares his, so act 4 has a
+   face without a fight. And the run's size: five ores, five tools, five
+   barriers with the cage as the fifth (recommended), or four (no chains);
+   and whether the cage is a barrier the crew works like the others
+   (recommended, so the climax is the loop's own verb) or only a cutscene
+   once the fourth wall falls.
 5. **What can the dead do on the surface?** Carry only (recommended), carry
    and take jobs as ghost hands that never age, or only pass through to the
-   pit.
+   pit. And the yard's boards: closed in act 3 (recommended -- the yard runs
+   on the rungs it had, seen through the cloud) and open again in act 4
+   once the pair are on the yard as ghosts (recommended), or open
+   throughout.
 6. **Who gets their lives back?** The pair only (recommended: the union's
-   dead are freed from the trap but stay dead, the crowd thins into the
-   afterlife's real rest), or every member -- which floods the yard with
-   thousands of bodies and needs its own design.
+   dead -- the muster's miners and smiths among them -- are freed from the
+   trap but stay dead, and go back up to the afterlife's real rest), or
+   every member -- which floods the yard with thousands of bodies and needs
+   its own design.
 7. **How it ships:** act 3 alone behind `AFTERLIFE_ON` with a cliffhanger
    sheet at the ghost road, or acts 3 and 4 together; lifespans first, on
    their own (recommended), with or without the serpent killing fighters;
@@ -20723,12 +21013,19 @@ haggled (H) -- both owner's calls, neither needed.
    its own a while after the finale.
 8. **The ending, and after.** Home: the pair on the bench for good (rest
    earned), or a pick held out again (the joke's last turn). And is there
-   an endless tail, as the endless serpent is act 2's? G has one for free
-   (hell has no floor past the last chain: depth for its own sake, the best
-   depth kept for the record); D has none (the crowd is finite).
+   an endless tail, as the endless serpent is act 2's? D has none (the
+   crowd is finite), and with the expeditions gone the mine has none by
+   itself either. The cheap one if wanted: past the cage room the run goes
+   on down, chamber after chamber with no cage at the end, each barrier a
+   little harder than the last -- the deepest chamber kept for the record.
+   Recommended: no tail; the bench is the end.
 
 Before any of it is code: mock-votes of God and the throne, Satan's
-unmasking, the union's crowd going to ink, and hell's look.
+unmasking, the union's crowd going to ink, hell's run of chambers and its
+seams, the five barriers (rubble, the bone wall, the lava gate, the anchor
+chains, the cage), a wall coming down a piece at a time and the camera
+moving on, the forge (a furnace, the anvil, a tool's strokes, animated),
+and the next barrier ringing the tool off.
 
 ### Size, and the order to build in
 
@@ -20739,10 +21036,13 @@ unmasking, the union's crowd going to ink, and hell's look.
 | act 3: God's yard as a place that runs itself (A's place, no player rows) | M |
 | act 3: the union -- crowd field, rim build, camp stations, the speech, the gates | M to L |
 | act 3: the strike, the unmasking, Satan's line, the ghost road | M |
+| everything keeps running: the off-screen yard and deep, arrivals, the perf gate | S to M |
 | **act 3 whole** | **L** |
-| act 4: ghosts on the surface, the descent through the deep | S to M |
-| act 4: hell's place and look, the trip, cool, the way, waystations | L |
-| act 4: anchors, freeing God, lives returned, the house rebuilt, home | M |
+| act 4: ghosts on the surface, the road down, the muster, the carry | S to M |
+| act 4: hell's run of chambers, the camera moving on, the seams and mining, items as lumps | M to L |
+| act 4: furnaces, floor heat and brimstone, the anvil, tool tiers, the quench, the stair | M to L |
+| act 4: the five barriers, the wall gang, spoil, the fall beats, the flare | M |
+| act 4: freeing God, lives returned, the house rebuilt, home | M |
 | **act 4 whole** | **L** |
 
 Order, when the owner says go:
@@ -20753,16 +21053,21 @@ Order, when the owner says go:
    unmasking), voted.
 3. **Act 3's scaffolding** behind `AFTERLIFE_ON`: `S.view = 'after'`, the
    fall and the rise, the arrival and the meeting -- the act's opening
-   playable end to end with nothing after it.
+   playable end to end with nothing after it -- with the yard and the deep
+   running underneath from the first frame, and the perf gate measured
+   then, not at the end.
 4. **The union**: the crowd field and the rim build, members and word, then
    the camp's stations and ladders, then organizers, then the throne's
-   speech and the gates.
+   speech and the gates, then arrivals from the running yard.
 5. **The climax**: the strike, the unmasking, Satan's line, the ghost road
    -- and, if act 3 ships first, its last sheet.
-6. **The mocks** for act 4 (hell's look, a trip, an anchor), voted.
+6. **The mocks** for act 4 (the run of chambers, the barriers and a wall
+   coming down, the forge), voted.
 7. **Act 4** behind `HELL_ON`: ghosts on the surface and the road, the
-   descent, then the trip and its cool, then the way and waystations, then
-   the anchors.
+   muster, then the landing -- the dross seam, its furnace, the anvil, the
+   rubble and the first attempt -- end to end through the rubble's fall
+   into chamber 2, then chambers 2 to 5 and their barriers, then the
+   flare, then the stair, the carry from the yard and the quench.
 8. **The end**: freeing God, lives returned, the house rebuilt, home, the
    sheet -- then tuning both acts' lengths with the ladder book and a pace
    tool, as the deep's was.
