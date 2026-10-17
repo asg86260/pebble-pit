@@ -842,7 +842,7 @@
   },
   {
    "id": "ach.gotout.name",
-   "text": "you saved your sqouse"
+   "text": "complete act 1"
   },
   {
    "id": "ach.gotout.note",
@@ -2351,7 +2351,7 @@
    "from": "src/catalog.js:23"
   },
   "ach-gotout-name": {
-   "text": "you saved your sqouse",
+   "text": "complete act 1",
    "from": "src/catalog.js:24"
   },
   "ach-gotout-note": {

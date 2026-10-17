@@ -900,7 +900,7 @@ ach-firstrock-name = better keep digging
 ach-firstrock-note = clear the first rock
 
 # achievement name
-ach-gotout-name = you saved your sqouse
+ach-gotout-name = complete act 1
 
 # achievement note
 ach-gotout-note = no more rocks, you did it.
@@ -3323,7 +3323,7 @@ shell-carry-yes = carry it on
 shell-carry-no = start fresh
 
 # achievement name: the serpent kill, the one in its belly out (neutral: no name, no role)
-ach-freed-name = sqouse freed
+ach-freed-name = complete act 2
 
 # achievement note: the serpent kill
-ach-freed-note = free your sqouse from the serpent
+ach-freed-note = finish act 2

@@ -178,6 +178,6 @@ group('nothing else in the language file names a role', async () => {
   const stray = roled.filter(id => !known.has(id));
   return [
     ok(!stray.length, 'every line that names a role follows the choice', stray.join(', ')),
-    ok(msg('ach-gotout-name') === 'you saved your sqouse', 'the achievement is neutral', msg('ach-gotout-name'))
+    ok(msg('ach-gotout-name') === 'complete act 1', 'the achievement is neutral', msg('ach-gotout-name'))
   ];
 });

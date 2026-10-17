@@ -19941,7 +19941,7 @@ cannot select on an empty string and a square called "none" must not read
 as nameless. Each is read when shown (`storyLine`), so a name set on the
 steps reads at once on a card already up. The lines about your sqouse are
 act 1's and the rescue's; obj-free and freed-why name you, the one in the
-belly. The achievement for the rescue is neutral, "you saved your sqouse",
+belly. The achievement for the rescue is neutral, "complete act 1",
 and follows neither the role nor the name: Steam's achievement names are
 written once for every player. play.html's three sheet lines say the
 neutral line in the page's own fallback.
@@ -21299,7 +21299,7 @@ spreadsheet of any loop. **I, the way out:** an escape line for the damned
   still edits names and roles mid-act (never locked); every new story line
   that names them is a `-who` message read when shown. Translations keep
   their older line (`msgOr`).
-- **Achievements:** neutral, as "you saved your sqouse" is -- never the role
+- **Achievements:** neutral, as "complete act 1" is -- never the role
   word or the name, because Steam's names are written once for every
   player. One for each act's end is the obvious pair; the words and the
   Steam display names are the owner's, by hand on the dashboard.

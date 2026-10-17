@@ -305,7 +305,7 @@ group('an old save with the two of them retired loads with the house and a turn 
 // The notice for the kill (notices.js, `freed`): the record gets it when the
 // last defense breaks, once, and a save past the finale that never had it is
 // given it on load.
-group('"sqouse freed" is on the record at the kill, once, and a save past it catches up', async () => {
+group('"complete act 2" is on the record at the kill, once, and a save past it catches up', async () => {
   yardAtTheEnd();
   const before = S.won.includes('freed');
   killed();

@@ -16,7 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
-- An achievement, "sqouse freed", for freeing your sqouse from the serpent; a save already past it has it on load (test/finale.test.mjs).
+- An achievement, "complete act 2", for freeing your sqouse from the serpent; a save already past it has it on load (test/finale.test.mjs).
 - The constrict's orb's bar over its head is its time: it runs down as the seconds go, a click on the orb knocks a chunk off it in falling chips, the party's blows wear it down too, and at nought the orb lets go (test/orb.test.mjs).
 - The serpent drops no fang once the stations standing and the fangs held or falling would fill all seven slots, at a break as at a kill (test/fangs-seven.test.mjs).
 - The fangs held show on a plate set in the furnace's brick over its door, fang × N, dimmed at none, instead of on the counter card (test/fang-plate.test.mjs).
@@ -174,7 +174,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
-- At a new yard you build who you are and then your sqouse -- a name, one of sqwife, sqouse or sqhusband, and what each wears, with a die on every row, a randomize all that leaves the name alone and a clear -- and every story line, card, sheet, the index and the books name the two of you that way; the rescue achievement now says "you saved your sqouse" (test/who-you-are.test.mjs; src/selftest/wardrobe.js).
+- At a new yard you build who you are and then your sqouse -- a name, one of sqwife, sqouse or sqhusband, and what each wears, with a die on every row, a randomize all that leaves the name alone and a clear -- and every story line, card, sheet, the index and the books name the two of you that way; the rescue achievement now says "complete act 1" (test/who-you-are.test.mjs; src/selftest/wardrobe.js).
 - The appearance page is a wider, shorter sheet of its own, the grid five tiles across and scrolling inside it (src/selftest/wardrobe.js).
 - The sqwife and the sqhusband can be dressed -- a hat, a face, something at the neck, something on the back, a pattern, an aura -- on a page of their own, "appearance" on the house's board, offered once at a new yard; what they wear on their heads replaces their station hat, so the two of them can be found in any crowd; the station hats, a gold set, the serpent's comb and a dozen more pieces open with achievements, a station's first hat or the portal, and a lamp lights the way ahead of whoever wears it; capes, scarves, ribbons, flags and the rest lag as they set off and swing past and settle as they stop, what they wear holds its shape as they walk, and the comb now and then lights up as the serpent's crest does (test/pair.test.mjs; test/wardrobe-locks.test.mjs; test/wardrobe-motion.test.mjs; src/selftest/wardrobe.js).
 - The appearance page and a new yard's build steps put the six slots round the close-up, three a side in the order they are worn, each showing what it wears, with a line from the chosen one to where it is worn and that slot's every item in a grid under it; a locked one is tried on faintly and not kept (src/selftest/wardrobe.js).

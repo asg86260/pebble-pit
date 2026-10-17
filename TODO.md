@@ -72,7 +72,7 @@ forge before any build.
 
 "Who you are (built)" in DESIGN.md. The English words were read and approved
 by the owner (2026-10-16). Open:
-- **Steamworks:** ACH_GOTOUT's display name to "you saved your sqouse", by
+- **Steamworks:** ACH_GOTOUT's display name to "complete act 1"; and ACH_FREED to "complete act 2", by
   hand on the dashboard (the game's own notice already says it).
 - **Translations** of the `-who` lines and the role word: deferred by the
   owner ("lets not worry about other languages"). Until a language writes

@@ -1908,7 +1908,7 @@
   "group": "Achievements",
   "where": "src/catalog.js",
   "context": "achievement name",
-  "text": "you saved your sqouse"
+  "text": "complete act 1"
  },
  {
   "id": "ach-gotout-note",
@@ -7655,13 +7655,13 @@
   "group": "The shell",
   "where": "src/catalog.js",
   "context": "achievement name: the serpent kill, the one in its belly out (neutral: no name, no role)",
-  "text": "sqouse freed"
+  "text": "complete act 2"
  },
  {
   "id": "ach-freed-note",
   "group": "The shell",
   "where": "src/catalog.js",
   "context": "achievement note: the serpent kill",
-  "text": "free your sqouse from the serpent"
+  "text": "finish act 2"
  }
 ]

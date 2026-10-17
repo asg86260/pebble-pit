@@ -85,7 +85,7 @@ group('the outhouse opens the cap, and the portal the diving bowl, and neither c
   ];
 });
 
-group('sqouse freed opens the gold set', async () => {
+group('complete act 2 opens the gold set', async () => {
   const gold = [['head', 'gold-crown'], ['neck', 'gold-scarf'], ['back', 'gold-cape'], ['aura', 'gold-halo']];
   const was = gold.some(([s, k]) => isOpen(s, k));
   earn('freed', true);
