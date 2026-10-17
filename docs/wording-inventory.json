@@ -7663,5 +7663,201 @@
   "where": "src/catalog.js",
   "context": "achievement note: the serpent kill",
   "text": "finish act 2"
+ },
+ {
+  "id": "after-row-puff",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the click's faith a cloud hit",
+  "text": "puff"
+ },
+ {
+  "id": "after-row-axe",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the axe, chops a tree",
+  "text": "axe"
+ },
+ {
+  "id": "after-row-grow",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the grove's growth pace",
+  "text": "growth"
+ },
+ {
+  "id": "after-row-saw",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the saw mill's pace",
+  "text": "saw"
+ },
+ {
+  "id": "after-row-joinery",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the workshop's pace, a sign",
+  "text": "joinery"
+ },
+ {
+  "id": "after-row-pulp",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the paper mill's pace, a sheet",
+  "text": "pulp"
+ },
+ {
+  "id": "after-row-print",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): posters a stack off the press",
+  "text": "print"
+ },
+ {
+  "id": "after-row-wring",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): ink a storm cloud hit",
+  "text": "wring"
+ },
+ {
+  "id": "after-row-fence",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 card dial (placeholder): the saw mill's fence, timber against sawdust",
+  "text": "fence"
+ },
+ {
+  "id": "after-job-canvasser",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): hire a canvasser",
+  "text": "canvasser"
+ },
+ {
+  "id": "after-job-gatherer",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): hire a gatherer",
+  "text": "gatherer"
+ },
+ {
+  "id": "after-job-planter",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): hire a planter",
+  "text": "planter"
+ },
+ {
+  "id": "after-job-feller",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): hire a feller",
+  "text": "feller"
+ },
+ {
+  "id": "after-job-hauler",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): hire a hauler",
+  "text": "hauler"
+ },
+ {
+  "id": "after-job-sawyer",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): hire a sawyer",
+  "text": "sawyer"
+ },
+ {
+  "id": "after-job-pulper",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): hire a pulper",
+  "text": "pulper"
+ },
+ {
+  "id": "after-job-joiner",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): hire a joiner",
+  "text": "joiner"
+ },
+ {
+  "id": "after-job-printer",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): hire a printer",
+  "text": "printer"
+ },
+ {
+  "id": "after-job-carrier",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): hire a carrier",
+  "text": "carrier"
+ },
+ {
+  "id": "after-job-paster",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): hire a paster",
+  "text": "paster"
+ },
+ {
+  "id": "after-wait-member",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row's wait (placeholder): no member free to hire",
+  "text": "no member free"
+ },
+ {
+  "id": "after-door-mill",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): build the saw mill",
+  "text": "saw mill"
+ },
+ {
+  "id": "after-door-workshop",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): build the workshop",
+  "text": "workshop"
+ },
+ {
+  "id": "after-door-papermill",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): build the paper mill",
+  "text": "paper mill"
+ },
+ {
+  "id": "after-door-press",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall row (placeholder): build the printing press",
+  "text": "press"
+ },
+ {
+  "id": "after-sect-hands",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall heading (placeholder): the volunteers",
+  "text": "hands"
+ },
+ {
+  "id": "after-sect-build",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 hall heading (placeholder): the stations to build",
+  "text": "build"
+ },
+ {
+  "id": "after-sect-card",
+  "group": "The shell",
+  "where": "src/after/rows.js",
+  "context": "act 3 station card heading (placeholder)",
+  "text": "upgrades"
  }
 ]

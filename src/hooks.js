@@ -1378,6 +1378,52 @@ HANDLES.__actOwe = key => { if (key == null) forgetOwed(); else owe(key); };
 // How many frames each act's place has been stepped this session.
 HANDLES.__actFrames = () => ({ after: afterFrames(), hell: hellFrames() });
 
+// --- act 3's loop (after/; track A) ---
+// The click as a player makes it, in world pixels; the act's rows bought
+// through `__buy` as any row is (its coins are the act's, so `__buy` hands an
+// act-3 key to `buyAfter`); and the setup a check is not about: coins
+// granted, the crowd's rims set, where the clouds and trees stand.
+import { clickAfter } from './after/index.js';
+import { afterRow, buyAfter, setAfterDial, AFTER_ROWS, afterBill, afterMaxed, cardAt } from './after/rows.js';
+import { setCrowd, support as afterSupport, union as afterUnion, members as afterMembers, crowdSize } from './after/union.js';
+import { cloudW, cloudH } from './after/faith.js';
+import { plotX, afterFloor } from './after/place.js';
+import { afterGate, strikeDue } from './after/strike.js';
+HANDLES.__afterClick = (x, y) => clickAfter(x, y);
+{
+  const yardBuy = HANDLES.__buy;
+  HANDLES.__buy = key => (afterRow(key) ? buyAfter(key) : yardBuy(key));
+}
+HANDLES.__afterDial = (key, v) => setAfterDial(key, v);
+HANDLES.__afterGrant = (coins = {}) => {
+  const a = S.after;
+  if (!a) return null;
+  for (const [c, n] of Object.entries(coins)) {
+    if (c === 'faith' || c === 'ink') a[c] += n; else a.stock[c] = (a.stock[c] || 0) + n;
+  }
+  return { faith: a.faith, ink: a.ink, ...a.stock };
+};
+// Every soul's rim by `fn(i, v)`, or with a number, that share of the crowd
+// made members from the front back.
+HANDLES.__afterCrowd = fn => {
+  if (!S.after) return null;
+  if (typeof fn === 'number') { const n = Math.floor(crowdSize() * fn); setCrowd((i, v) => (i < n ? 8 : v)); }
+  else setCrowd(fn);
+  return { support: afterSupport(), union: afterUnion(), members: afterMembers(), size: crowdSize() };
+};
+// Where to click: each cloud's middle and kind, each plot's trunk.
+HANDLES.__afterClouds = () => (S.after ? S.after.clouds.filter(c => c.die == null)
+  .map(c => ({ id: c.id, kind: c.kind, size: c.size, x: c.x + cloudW(c) / 2, y: c.y + cloudH(c) / 2 })) : []);
+HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage: p.stage, logs: p.logs, falling: p.fall != null,
+  x: plotX(i) + P / 2, y: afterFloor() - P * 5 })) : []);
+HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, shown: !!S.after && u.show(),
+  bill: afterBill(u), rung: u.rung ? u.rung() : 0, done: afterMaxed(u) }));
+HANDLES.__afterRead = () => (S.after ? { faith: S.after.faith, ink: S.after.ink, ...S.after.stock, gate: S.after.gate,
+  axe: S.after.axe, clicks: S.after.clicks, support: afterSupport(), union: afterUnion(), members: afterMembers(),
+  size: crowdSize(), signs: S.after.signs.length, posters: S.after.posters.length, bodies: S.after.bodies.length,
+  due: afterGate(), strike: strikeDue() } : null);
+HANDLES.__afterCardAt = (x, y) => cardAt(x, y);
+
 // --- the two of them (wardrobe.js) ---
 // Who they are and what they wear, read for a check: each one's uid, the
 // body's job and place if it is one of the crew, and the outfits. `__dress`
