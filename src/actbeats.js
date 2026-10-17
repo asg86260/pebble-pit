@@ -88,12 +88,13 @@ function makePair() {
 }
 // A pair stood up for a beat owed with no story behind it (a check, a
 // scene): put on the act-4 road at the ruin. A played game never needs it.
-function pairForAct4() {
+function pairForAct4(there = null) {
   const p = makePair();
   if (p.mode === 'soul') { p.mode = 'ghost'; p.lift = 1; }
   // still up in the cloud: down the road first, walking
   if (p.y < tear().y - WORKER) { if (p.route !== 'down') { sendPair('down'); p.then = 'loop'; } return p; }
-  if (!p.route && p.at !== 'cage' && p.at !== 'home') sendPair('loop');
+  // on the loop unless already where the beat wants them
+  if (!p.route && p.at !== there) sendPair('loop');
   return p;
 }
 
@@ -191,29 +192,29 @@ const BODIES = {
     { at: onPair, s: 1.5, end: () => { const p = pair(); p.mode = 'ghost'; freePortal('hell'); sendPair('loop'); takeLoad(p); } }
   ],
   'descend': [
-    { at: onPair, enter: () => { ensureActs().wentDown = true; pairForAct4(); }, until: () => placeAt(pair().y) === 'hell' },
+    { at: onPair, enter: () => { ensureActs().wentDown = true; pairForAct4('none'); }, until: () => placeAt(pair().y) === 'hell' },
     { at: onPair, s: ACT_CAPTION_S, enter: beginAct4, say: 'act-descend' }
   ],
   'wall-first': [{ at: chamber(0), s: ACT_CAPTION_S, say: 'act-wall-first' }],
   'unchain': [
-    { at: onPair, enter: () => { beginMansion(); const p = pairForAct4(); p.hold = 'cage'; }, until: () => pairAt('cage') },
+    { at: onPair, enter: () => { beginMansion(); const p = pairForAct4('cage'); p.hold = 'cage'; }, until: () => pairAt('cage') },
     { at: onPair, s: ACT_CAPTION_S, say: 'act-unchain' }
   ],
   'alive': [{ at: onPair, s: ACT_RIM_PIECES * ACT_RIM_STEP_S + 1, say: 'act-alive',
               step: u => { const p = pair(); p.rims = Math.max(p.rims || 0, Math.min(ACT_RIM_PIECES, Math.floor(u / ACT_RIM_STEP_S))); },
               end: () => { const p = pair(); p.rims = ACT_RIM_PIECES; p.mode = 'alive'; } }],
   'home-again': [
-    { at: onPair, say: 'act-home-again',
+    { at: onPair, say: 'act-home-again', skipIf: () => pairAt('home') || pairAt('door') || A().house === 'mansion',
       enter: () => {
         beginMansion();
-        const p = pairForAct4();
+        const p = pairForAct4(pair() && pair().at === 'cage' ? 'cage' : 'home');
         p.hold = 'home';
         if (p.at === 'cage') { p.route = 'loop'; p.leg = LOOP_CAGE + 1; p.at = null; }
       },
       until: () => pairAt('home') },
     { at: mansionMid, until: mansionDone },
-    { at: onPair, enter: () => { if (!pairAt('door')) sendPair('door'); }, until: () => pairAt('door') },
-    { at: onPair, s: 2, step: u => { pair().inside = Math.min(1, u / 2); }, end: () => { pair().inside = 1; A().house = 'mansion'; } },
+    { at: onPair, enter: () => { if (!pairAt('door')) sendPair('door'); }, until: () => pairAt('door'), skipIf: () => A().house === 'mansion' },
+    { at: onPair, s: 2, skipIf: () => A().house === 'mansion', step: u => { pair().inside = Math.min(1, u / 2); }, end: () => { pair().inside = 1; A().house = 'mansion'; } },
     { at: files, enter: beginGathering, until: gathered, say: 'act-mansion', end: () => { A().ended = true; } }
   ]
 };

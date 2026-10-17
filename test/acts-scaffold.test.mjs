@@ -143,3 +143,25 @@ group('an act\'s beats play behind its switch, each once', async () => {
        'every act beat is a row of the table, and no key is used twice', ACT_KEYS.filter(k => !keys.includes(k)).join(' '))
   ];
 });
+
+group('with the switches off, the connective tissue is out of reach: no go-on, no portal, no mansion', async () => {
+  const { sayGoOn, goOnDue, boardsShut } = await import('../src/actbeats.js');
+  const { portalStands, throughPortal } = await import('../src/portals.js');
+  window.__actsOn(false);
+  window.__crew(2, 1);
+  window.__actsAt('home');
+  run(8);
+  const goOn = { due: goOnDue(), said: sayGoOn(), acts: S.acts };
+  // a save from a build with the acts on, the road open, read by one with them off
+  window.__actsAt('mansion', 3);
+  const T = S.acts.mansion.T;
+  run(2);
+  const portals = { heaven: portalStands('heaven'), hell: portalStands('hell'), went: throughPortal('heaven') || throughPortal('hell') };
+  const ran = S.acts.mansion.T !== T;
+  window.__actsOn(null);
+  return [
+    ok(!goOn.due && !goOn.said && goOn.acts === null, 'no go-on card after the finale, and no act begun', JSON.stringify(goOn)),
+    ok(!portals.heaven && !portals.hell && !portals.went, 'neither portal stands or takes the camera', JSON.stringify(portals)),
+    ok(!ran && !boardsShut(), 'the mansion does not step and the yard\'s boards stay open', `${ran} ${boardsShut()}`)
+  ];
+});
