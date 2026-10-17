@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Appearance Hierarchy</title>
+<style>
+  /* The page around the mocks. */
+  :root { --bg: #ececea; --ink: #1b1b1f; --muted: #55555e; --card: #fff; --line: #d0d0ca; --warn: #8a5a00; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #141417; --ink: #e9e9ee; --muted: #a0a0aa; --card: #1d1d22; --line: #33333b; --warn: #e0b45a; }
+  }
+  :root[data-theme="dark"] { --bg: #141417; --ink: #e9e9ee; --muted: #a0a0aa; --card: #1d1d22; --line: #33333b; --warn: #e0b45a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 ui-monospace, Consolas, "Courier New", monospace; }
+  main { max-width: 1900px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 28px 0 4px; }
+  h3 { font-size: 13px; margin: 14px 0 4px; color: var(--muted); font-weight: normal; text-transform: uppercase; letter-spacing: .08em; }
+  p, li { color: var(--muted); }
+  p { margin: 0 0 8px; max-width: 110ch; }
+  b { color: var(--ink); }
+  .ph { border-bottom: 1px dashed currentColor; }
+  .ph::after { content: '*'; color: var(--warn); }
+  .row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  .shot { margin: 0; }
+  .shot img { display: block; border: 1px solid var(--line); max-width: 100%; height: auto; }
+  .shot figcaption, .frame figcaption { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .padbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+  .padbar button { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--line); padding: 4px 10px; cursor: pointer; }
+  .padsay { font-size: 13px; color: var(--ink); min-width: 32ch; }
+  table { border-collapse: collapse; font-size: 12px; margin-top: 6px; }
+  th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 4px 12px 4px 0; vertical-align: top; }
+  th { color: var(--muted); font-weight: normal; text-transform: uppercase; font-size: 11px; letter-spacing: .06em; }
+  .bad { color: #c0392b; font-weight: bold; }
+  .padlist { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
+
+  /* ---- the sheet, in the game's tokens (src/style.css) ---------------------- */
+  .sheet {
+    --c-paper: #fff; --c-ink: #000; --paper: var(--c-paper); --ink: var(--c-ink);
+    --ink-2: #333; --ink-4: #666; --ink-5: #767676; --ink-7: #a4a4a4; --ink-8: #cfcfcf;
+    --accent: #6a2fbe; --gold: #b8901c;
+    --track: 1;
+    position: relative; background: var(--paper); color: var(--ink);
+    border: 2px solid var(--ink); font: 12px/1.35 ui-monospace, Consolas, "Courier New", monospace;
+    text-transform: uppercase; letter-spacing: calc(.06em * var(--track));
+  }
+  .sheet.dark {
+    --c-paper: #1f1f1f; --c-ink: #e0e0e0;
+    --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #878787; --ink-7: #5f5f5f; --ink-8: #434343;
+    --accent: #9b5de5; --gold: #d9b44a;
+  }
+  .sheet.desk { width: 480px; padding: 16px 24px 16px; }
+  .sheet.phone { width: 360px; padding: 12px 16px 16px; --track: .6; }
+  .sheet .fold { position: absolute; left: -2px; right: -2px; border-top: 2px dashed #c0392b; pointer-events: none; }
+  .sheet .fold span { position: absolute; right: 4px; top: 2px; font-size: 11px; color: #c0392b; background: var(--paper); text-transform: none; letter-spacing: 0; }
+  .sheet button { font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; background: var(--paper); border: 2px solid var(--ink); cursor: pointer; padding: 0; }
+  .s-title { text-align: center; font-size: 17px; letter-spacing: calc(.3em * var(--track)); margin: 2px 0 10px; }
+  .phone .s-title { font-size: 14px; margin-bottom: 8px; }
+
+  /* you / your sqouse: a segmented header, each with the square's mini */
+  .who { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 10px; }
+  .who button { display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; }
+  .who button + button { border-left: 0; }
+  .who button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .who svg { width: 26px; height: 26px; }
+  .phone .who button { height: 36px; }
+
+  .fieldrow { display: grid; grid-template-columns: 56px 1fr 32px; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .fieldrow .in { border: 2px solid var(--ink); height: 28px; display: flex; align-items: center; padding: 0 8px; color: var(--ink-4); text-transform: none; }
+  .fieldrow .step { display: grid; grid-template-columns: 28px 1fr 28px; align-items: center; text-align: center; }
+  .fieldrow .step button { height: 28px; }
+  .die { width: 32px; height: 28px; display: grid; place-items: center; }
+  .die svg { width: 14px; height: 14px; }
+
+  /* the stage: the square and its six slots */
+  .stage { position: relative; display: grid; gap: 6px 8px; margin: 10px 0 12px; align-items: center; }
+  .stage > .sq { grid-area: sq; display: grid; place-items: center; }
+  .stage svg.leaders { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .slot { display: grid; align-items: center; text-align: left; position: relative; z-index: 1; }
+  .slot .g { display: grid; place-items: center; }
+  .slot .k { font-weight: bold; }
+  .slot .w { color: var(--ink-4); text-transform: none; letter-spacing: 0; overflow-wrap: normal; word-break: normal; hyphens: manual; }
+  .slot.on { background: var(--ink); color: var(--paper); }
+  .sheet .slot.on .w { color: var(--ink); }
+  /* desk: a horizontal button, the glyph left, the slot and what it wears right */
+  .desk .slot { grid-template-columns: 40px 1fr; gap: 6px; padding: 4px 6px 4px 4px; width: 148px; min-height: 48px; }
+  .desk .slot .g svg { width: 40px; height: 40px; }
+  /* phone: glyph over the slot's name, no worn name (the grid says it) */
+  .phone .slot { grid-template-rows: 32px auto; justify-items: center; text-align: center; padding: 4px 2px; width: 84px; }
+  .phone .slot .g svg { width: 32px; height: 32px; }
+  .phone .slot .w { display: none; }
+
+  .d1.desk .stage { grid-template-columns: 148px minmax(0, 1fr) 148px; grid-template-areas: ". head ." "back sq face" "pattern sq neck" ". aura ."; }
+  .d1.desk .slot[data-k="head"], .d1.desk .slot[data-k="aura"] { justify-self: center; }
+  .d2.desk .stage { grid-template-columns: 148px minmax(0, 1fr) 148px; grid-template-areas: "head sq face" "back sq neck" "aura sq pattern"; gap: 8px 8px; }
+  .d1.phone .stage { grid-template-columns: 84px 1fr 84px; grid-template-areas: ". head ." "back sq face" "pattern sq neck" ". aura ."; gap: 6px 6px; }
+  .d1.phone .slot[data-k="head"], .d1.phone .slot[data-k="aura"] { justify-self: center; }
+  .d2.phone .stage { grid-template-columns: repeat(3, 1fr); grid-template-areas: "sq sq sq" "head face neck" "back pattern aura"; gap: 8px 8px; }
+  .d2.phone .slot { width: auto; }
+  .slot[data-k="head"] { grid-area: head; } .slot[data-k="face"] { grid-area: face; } .slot[data-k="neck"] { grid-area: neck; }
+  .slot[data-k="back"] { grid-area: back; } .slot[data-k="pattern"] { grid-area: pattern; } .slot[data-k="aura"] { grid-area: aura; }
+
+  /* the grid, boxed, its slot's tab joined to its top like a folder */
+  .gridbox { position: relative; border: 2px solid var(--ink); margin-top: 30px; }
+  .gridtab { position: absolute; left: -2px; top: -24px; height: 24px; display: flex; align-items: center; gap: 8px; padding: 0 10px;
+             background: var(--ink); color: var(--paper); font-weight: bold; }
+  .gridmeta { position: absolute; right: -2px; top: -26px; display: flex; align-items: center; gap: 8px; color: var(--ink-4); }
+  .gridmeta .die { height: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px; overflow-y: auto; scrollbar-width: thin; }
+  .phone .grid { gap: 4px; padding: 4px; scrollbar-width: none; }
+  .sheet .tile { display: grid; grid-template-rows: auto auto; justify-items: center; border: 2px solid transparent; padding: 4px 1px 3px; background: var(--paper); position: relative; }
+  .tile > svg:not(.lk) { width: 64px; height: 64px; }
+  .phone .sheet .tile, .sheet.phone .tile { border: 0; padding: 4px 0 3px; }
+  .sheet.phone .tile .n { padding: 0; }
+  .phone .tile > svg:not(.lk) { width: 56px; height: 56px; }
+  .tile .n { text-align: center; text-transform: none; letter-spacing: 0; color: var(--ink); overflow-wrap: normal; word-break: normal; width: 100%; padding: 0 2px; }
+  .sheet .tile.worn, .sheet .slot.on { --ink: var(--c-paper); --paper: var(--c-ink); background: var(--paper); color: var(--ink); }
+  .sheet .tile.worn .n { color: var(--ink); }
+  .tile.locked .n { color: var(--ink-4); }
+  .tile svg.lk { position: absolute; right: 4px; top: 4px; width: 8px; height: 9px; }
+
+  .info { height: 36px; margin: 8px 0 8px; overflow: hidden; }
+  .info .a { color: var(--ink); }
+  .info .b { color: var(--ink-4); }
+  .foot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .foot button { height: 28px; }
+  .foot button.wide { grid-column: 1 / -1; }
+
+  /* the keyboard's and the pad's focus: the purple brackets, the one accent */
+  .sheet .focus { outline: none; }
+  .sheet .focus::after { content: ''; position: absolute; inset: -6px; pointer-events: none; z-index: 3;
+    --b: var(--accent);
+    background:
+      linear-gradient(var(--b),var(--b)) 0 0/10px 2px no-repeat, linear-gradient(var(--b),var(--b)) 0 0/2px 10px no-repeat,
+      linear-gradient(var(--b),var(--b)) 100% 0/10px 2px no-repeat, linear-gradient(var(--b),var(--b)) 100% 0/2px 10px no-repeat,
+      linear-gradient(var(--b),var(--b)) 0 100%/10px 2px no-repeat, linear-gradient(var(--b),var(--b)) 0 100%/2px 10px no-repeat,
+      linear-gradient(var(--b),var(--b)) 100% 100%/10px 2px no-repeat, linear-gradient(var(--b),var(--b)) 100% 100%/2px 10px no-repeat; }
+  .sheet button.focus, .sheet .tile.focus { position: relative; }
+  .frame { margin: 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Appearance: the slots around the square</h1>
+<p>The owner, 2026-10-16: "another pass on the outfit menu, right now the hierarchy is a bit wonky, hard to read the tabs and what they correspond to" -- and then: <b>"have the slots appear around the square, and clicking the slot opens the options below in the grid."</b> Item names are never cut short.</p>
+<p>This is a <b>mock drawn from plain shapes, not the game</b>. Every frame below is live: click a slot, a tile, or the you / your sqouse switch. The purple brackets are the pad's focus; "play the pad path" walks it. Words marked <span class="ph">like this</span> are new placeholders for the owner; everything else is a message the game already has.</p>
+<h3>What the mock cannot show</h3>
+<ul>
+  <li>The real drawings: the square, hats, backs and auras here are rough stand-ins (the expansion hats, every back and every aura are guesses), and nothing moves -- the auras, capes and balloon are still.</li>
+  <li>The game's font metrics: this page uses the system monospace; the measured name heights below are for this face and should be re-measured in the build.</li>
+  <li>The sheet's own scroll, the held-sheet chrome, the name keyboard (pad letter grid / Steam), and the 4-column branch's exact info-line height (assumed 2 lines, 36px).</li>
+  <li>Touch: the phone frames are drawn at 360 wide; real phone scroll and the one sheet seat are not reproduced.</li>
+</ul>
+
+<h2>Today</h2>
+<p>The page on main (9659d36a), scene <code>wardrobe</code>: two tab strips that look alike, the slot strip not reading as belonging to the square, counts as loud as names, the heading repeating the tab.</p>
+<div class="row">
+  <figure class="shot"><img src="today-desk-light.png" width="640" alt="today, desk, light"><figcaption>desk 1280x800, light</figcaption></figure>
+  <figure class="shot"><img src="today-desk-dark.png" width="640" alt="today, desk, dark"><figcaption>desk 1280x800, dark</figcaption></figure>
+  <figure class="shot"><img src="today-phone-light.png" width="240" alt="today, phone, light"><figcaption>phone 360x740, light</figcaption></figure>
+  <figure class="shot"><img src="today-phone-dark.png" width="240" alt="today, phone, dark"><figcaption>phone 360x740, dark</figcaption></figure>
+</div>
+
+<h2>D1. A cross around the square</h2>
+<p><b>Rationale:</b> each slot sits where it is worn -- head above, aura below, back and pattern on the back side, face and neck on the side the square faces -- with a leader to the body part, so the button <i>is</i> the label; the chosen slot is inverted and its same inverted tab heads the grid below, so the two read as one thing.</p>
+<div class="padbar"><button data-play="d1">play the pad path</button><span class="padsay" id="say-d1">&nbsp;</span></div>
+<div class="row" id="row-d1"></div>
+
+<h2>D2. Three on each side</h2>
+<p><b>Rationale:</b> the same mapping in two columns, ordered top to bottom by height on the body (head, back, aura on the left; face, neck, pattern on the right), so the stage is one button row shorter and the grid gets that height; on a phone the six drop to two rows of three under the square, and only the chosen one draws its leader.</p>
+<div class="padbar"><button data-play="d2">play the pad path</button><span class="padsay" id="say-d2">&nbsp;</span></div>
+<div class="row" id="row-d2"></div>
+
+<h2>Both: what moves where</h2>
+<ul>
+  <li><b>The slot tabs are gone</b>; the six slot buttons around the square are the only slot control. On desk each shows the worn item's drawing on a grey body, the slot name in bold, and the worn item's name under it (full, wrapping). On phone, the drawing and the slot name only; the worn name is in the grid and the info line.</li>
+  <li><b>The heading "head: top hat" is gone</b>. The grid's box carries an inverted tab with the slot name (the same inverting as the chosen button), and on its right, quiet in grey, the count ("9 of 24 open", today's message) and the slot's die.</li>
+  <li><b>Counts</b> leave the slot buttons entirely: one count, beside the grid it counts.</li>
+  <li><b>You / your sqouse</b> becomes the top of the page: a segmented pair with each square's mini portrait, framing everything under it.</li>
+  <li><b>Dice:</b> name's die and title's die stay on their rows; the slot's die moves to the grid's tab row; randomize all stays in the foot.</li>
+  <li><b>Tiles</b> show the name only, full, wrapping at spaces (and at a hyphen); what opens a locked item goes to the info line on hover / focus, as today's "gold crown: sqouse freed".</li>
+  <li><b>Info line</b> fixed at two lines (the 4-column branch's), the foot unchanged: randomize all | clear, back.</li>
+</ul>
+<h3>The pad path (both)</h3>
+<ul class="padlist">
+  <li><b>LB / RB</b>: you / your sqouse, from anywhere (as today).</li>
+  <li><b>D-pad</b> on the slots: the nearest slot that way, spatially, as every page's nearest-that-way does; up from the top row goes to title, then name.</li>
+  <li><b>A</b> on a slot: opens that slot's grid and puts the focus on the worn tile. <b>A</b> on a tile: wears it.</li>
+  <li><b>B</b> in the grid: back to the slot button the grid belongs to. <b>B</b> on the slots: lets go of the sheet (today's B). This is the one change of meaning: B is two steps from a tile instead of one.</li>
+  <li><b>LT / RT</b>: the previous / next slot from anywhere, in the order head, face, neck, back, pattern, aura (as today's slot tabs); in the grid it stays in the grid.</li>
+  <li><b>Y</b>: rolls the slot the focus is in (a slot button or its grid), the name or the title (as today). A <span class="ph">pad hint</span> in the grid's tab row ("B slots") is optional and not drawn.</li>
+</ul>
+
+<h3>Snapshots</h3>
+<p>snapshot-row-d1.png, snapshot-row-d2.png (as opened), snapshot-pad-row-d1.png, snapshot-pad-row-d2.png (mid pad path: neck grid open, focus on a tile), snapshot-names.png, and today-*.png.</p>
+
+<h2>Item names, measured</h2>
+<p>Every item name in every slot laid out at the width it gets, in this page's monospace at 12px, tracking 0, wrapping only at spaces and hyphens. Lines is the most any name needs; the name area is sized to that, so every tile in a row is the same height. A red row would be a name wider than its box.</p>
+<div id="names"></div>
+</main>
+
+<script>
+// ---- the wardrobe, copied from src/wardrobe.js (names from locales/en.ftl) ------
+const HEAD = [
+  ['none', 'none'], ['bow', 'bow', { rects: [[2,-6,4,2],[12,-6,4,2],[2,-4,2,2],[6,-4,6,2],[14,-4,2,2],[2,-2,4,2],[12,-2,4,2]] }],
+  ['top-hat', 'top hat', { rows: ['.###.', '.###.', '#####'] }], ['crown', 'crown', { rows: ['#.#.#', '#####'], lock: 1 }],
+  ['flower', 'flower', { rows: ['.#.', '#.#', '.#.', '.#.'], lock: 1 }], ['sprout', 'sprout', { rows: ['##.##', '..#..'], lock: 1 }],
+  ['ears', 'ears', { rows: ['#.#'] }], ['antenna', 'antenna', { rows: ['..#', '.#.', '.#.'] }],
+  ['beanie', 'beanie', { rows: ['.#.', '###', '###'] }], ['beret', 'beret', { rows: ['..#.', '####'] }],
+  ['headband', 'headband', { rects: [[0,4,18,2],[-6,2,6,2],[-4,6,4,2]] }], ['mohawk', 'mohawk', { rows: ['#', '#'] }],
+  ['helmet', 'helmet', { rows: ['.###.', '#####'], lock: 1 }], ['lamp', 'lamp', { rows: ['..#..', '.###.', '#####'], lock: 1 }],
+  ['sun-hat', 'sun hat', { rows: ['..###..', '#######'], lock: 1 }], ['wizard-hat', 'wizard hat', { rows: ['..#..', '.###.', '#####'], lock: 1 }],
+  ['cap', 'cap', { rows: ['.###.', '######'], lock: 1 }], ['bird', 'bird', { rows: ['..##', '.###', '##..'], lock: 1 }],
+  ['mortarboard', 'mortarboard', { rows: ['#####', '.###.'], lock: 1 }], ['bowler', 'bowler', { rows: ['.###.', '#####'], lock: 1 }],
+  ['hard-hat', 'hard hat', { rows: ['.###.', '#####'], lock: 1 }], ['diving-bowl', 'diving bowl', { rows: ['.###.', '#...#'], lock: 1 }],
+  ['serpent-comb', 'serpent comb', { rows: ['#.#.#', '.###.'], lock: 1 }], ['gold-crown', 'gold crown', { rows: ['#.#.#', '#####'], gold: 1, lock: 1 }],
+];
+const FACE = [
+  ['none', 'none'], ['eyes', 'eyes', { grid: ['', '', '...#.#.'] }], ['sleepy', 'sleepy', { grid: ['', '', '..##.##'] }],
+  ['smile', 'smile', { grid: ['', '', '...#.#.', '', '..#...#', '...###.'] }], ['glasses', 'glasses', { grid: ['', '###.###', '#.###.#', '###.###'] }],
+  ['round-glasses', 'round glasses', { grid: ['', '.#...#.', '#.###.#', '.#...#.'], lock: 1 }], ['shades', 'shades', { grid: ['', '#######', '###.###'] }],
+  ['monocle', 'monocle', { grid: ['', '.....#.', '..#.#.#', '.....#.', '......#', '......#'] }], ['eyepatch', 'eyepatch', { grid: ['', '#####..', '..#.###', '....###'] }],
+  ['mustache', 'mustache', { grid: ['', '', '...#.#.', '..#...#', '..#####'] }], ['freckles', 'freckles', { grid: ['', '', '...#.#.', '...g.g.', '..g.g..'] }],
+  ['blush', 'blush', { grid: ['', '', '...#.#.', '..gg.gg'] }], ['surprised', 'surprised', { grid: ['', '...#.#.', '...#.#.', '', '...###.', '...#.#.', '...###.'], lock: 1 }],
+];
+const NECK = [
+  ['none', 'none'], ['scarf', 'scarf', { grid: ['', '', '', '', '#######', '#######'], tail: 1 }],
+  ['checked-scarf', 'checked scarf', { grid: ['', '', '', '', '#g#g#g#', 'g#g#g#g'], tail: 1 }],
+  ['striped-scarf', 'striped scarf', { grid: ['', '', '', '', '#.#.#.#', '#.#.#.#'], tail: 1 }],
+  ['gold-scarf', 'gold-checked scarf', { grid: ['', '', '', '', '#g#g#g#', 'g#g#g#g'], tail: 1, gold: 1, lock: 1 }],
+];
+const BACK = [
+  ['none', 'none'], ['cape', 'cape', { back: [[-4,2,4,16]] }], ['short-cape', 'short cape', { back: [[-4,2,4,9]] }],
+  ['backpack', 'backpack', { back: [[-6,4,6,10]] }], ['balloon', 'balloon', { back: [[-9,-14,8,9],[-5,-5,1,12]] }],
+  ['flag', 'flag', { back: [[-3,-14,1,30],[-10,-14,7,6]] }], ['moneybag', 'moneybag', { back: [[-7,8,7,9],[-5,6,3,2]], lock: 1 }],
+  ['gold-cape', 'gold-trim cape', { back: [[-4,2,4,16]], gold: 1, lock: 1 }],
+];
+const lines = along => [2, 6, 10].map(d => (along ? [d, 0, 2, 14] : [0, d, 14, 2]));
+const dotsP = () => { const o = []; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) o.push([1 + i * 4 + (j % 2) * 2, 2 + j * 4, 2, 2]); return o; };
+const diag = () => { const o = []; for (let k = -12; k < 14; k += 6) for (let i = 0; i < 7; i++) { const y = i * 2 + k; if (y >= 0 && y < 14) o.push([i * 2, y, 2, 2]); } return o; };
+const PATTERN = [
+  ['plain', 'plain'], ['overalls', 'overalls', { pat: [[0,8,14,6],[2,0,2,8],[10,0,2,8]] }], ['stripes', 'stripes', { pat: lines(false) }],
+  ['tall-stripes', 'tall stripes', { pat: lines(true) }], ['dots', 'dots', { pat: dotsP() }], ['diagonal', 'diagonal', { pat: diag() }],
+  ['quarters', 'quarters', { pat: [[0,0,7,7],[7,7,7,7]] }], ['filled', 'filled', { pat: [[0,0,14,14]] }],
+];
+const AURA = [
+  ['none', 'none'], ['dust-motes', 'dust motes'], ['pebble-bits', 'pebble bits'], ['bubbles', 'bubbles'], ['orbiting-pixel', 'orbiting pixel'],
+  ['sparkle-glints', 'sparkle glints'], ['footprints', 'footprints'], ['rain-cloud', 'rain cloud', { lock: 1 }], ['falling-petals', 'falling petals'],
+  ['scale-swirl', 'scale swirl', { lock: 1 }], ['embers', 'embers'], ['flies', 'flies', { lock: 1 }], ['stink', 'stink lines', { lock: 1 }],
+  ['juggling-balls', 'juggling balls', { lock: 1 }], ['potion-fizz', 'potion fizz', { lock: 1 }], ['dizzy-stars', 'dizzy stars', { lock: 1 }],
+  ['shooting-star', 'shooting star', { lock: 1 }], ['flock-overhead', 'flock overhead', { lock: 1 }], ['speed-lines', 'speed lines', { lock: 1 }],
+  ['gold-halo', 'gold halo', { gold: 1, lock: 1 }],
+];
+const SLOTS = [['head', 'head', HEAD], ['face', 'face', FACE], ['neck', 'neck', NECK], ['back', 'back', BACK], ['pattern', 'pattern', PATTERN], ['aura', 'aura', AURA]]
+  .map(([key, name, items]) => ({ key, name, items: items.map(([k, n, d]) => ({ key: k, name: n, ...(d || {}) })) }));
+const SLOT = Object.fromEntries(SLOTS.map(s => [s.key, s]));
+// A couple of locks opened, so a count reads like a yard's.
+const OPENED = new Set(['crown', 'helmet', 'lamp', 'round-glasses', 'rain-cloud', 'gold-crown', 'gold-scarf', 'moneybag']);
+const locked = it => it.lock && !OPENED.has(it.key);
+const LOCK_SAY = { helmet: ['first helmet at the rock', 'buy the rock its first helmet'], lamp: ['first lamp at the quarry', 'buy the quarry its first lamp'],
+  'sun-hat': ['first sun hat at the farm', 'buy the farm its first sun hat'], 'wizard-hat': ['first wizard hat at the tower', 'make the tower its first wizard hat'],
+  cap: ['the outhouse opens', 'open the outhouse'], 'diving-bowl': ['the portal opens', 'conjure the portal over the abyss'] };
+const lockSay = it => LOCK_SAY[it.key] || ['a notice earned', 'the notice that opens it'];
+
+// ---- the drawing (world px; the body's top-left at 0,0, eighteen square) ------
+const VB = [-11, -17, 40, 40];   // what every square picture shows
+function hatShape(it) {
+  if (it.rects) return it.rects.map(([x, y, w, h]) => [x, y, w, h]);
+  if (!it.rows) return [];
+  const c = 4, cols = it.rows[0].length, x0 = 9 - cols * c / 2, n = it.rows.length, out = [];
+  it.rows.forEach((r, j) => [...r].forEach((ch, i) => { if (ch === '#') out.push([x0 + i * c, -(n - j) * c, c, c]); }));
+  return out;
+}
+function gridShape(grid) {
+  const out = [];
+  grid.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== '.' && ch !== ' ') out.push([2 + i * 2, 2 + j * 2, 2, 2, ch === 'g']); }));
+  return out;
+}
+function auraDots(key) {
+  let h = 0; for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const out = [];
+  for (let i = 0; i < 7; i++) { h = (h * 1103515245 + 12345) >>> 0; const a = (h % 360) / 57.3; const r = 13 + (h >> 9) % 4;
+    out.push([Math.round((9 + Math.cos(a) * r) / 2) * 2, Math.round((8 + Math.sin(a) * r * 0.9) / 2) * 2, 2, 2]); }
+  return out;
+}
+// The square in an outfit. `only` draws that slot's item alone, on a grey body
+// (the slot buttons' glyph); `dim` greys the lot (a locked tile).
+function squareSvg(outfit, { only = null, dim = false } = {}) {
+  const ink = 'var(--ink)', grey = 'var(--ink-7)', paper = 'var(--paper)', gold = 'var(--gold)';
+  const show = k => !only || only === k;
+  const it = k => SLOT[k].items.find(i => i.key === outfit[k]) || SLOT[k].items[0];
+  const tone = (i, base) => (dim ? grey : i.gold ? gold : base);
+  const bodyInk = only || dim ? grey : ink;
+  const R = (x, y, w, h, f) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}"/>`;
+  let s = '';
+  const back = it('back');
+  if (show('back') && back.back) back.back.forEach(([x, y, w, h], n) => { s += R(x, y, w, h, tone(back, ink)); });
+  const aura = it('aura');
+  if (show('aura') && aura.key !== 'none') auraDots(aura.key).forEach(([x, y, w, h]) => { s += R(x, y, w, h, tone(aura, ink)); });
+  s += R(-4, 18, 26, 1, bodyInk);                              // the ground line
+  s += R(0, 0, 18, 18, bodyInk) + R(2, 2, 14, 14, paper);       // the body
+  const pat = it('pattern');
+  if (show('pattern') && pat.pat) pat.pat.forEach(([x, y, w, h]) => { s += R(2 + x, 2 + y, w, h, tone(pat, ink)); });
+  const neck = it('neck');
+  if (show('neck') && neck.grid) {
+    gridShape(neck.grid).forEach(([x, y, w, h, g]) => { s += R(x, y, w, h, g ? (neck.gold ? tone(neck, ink) : grey) : tone(neck, ink)); });
+    if (neck.tail) s += R(-2, 10, 2, 8, tone(neck, ink));
+  }
+  const face = it('face');
+  if (show('face') && face.grid) gridShape(face.grid).forEach(([x, y, w, h, g]) => { s += R(x, y, w, h, g ? grey : tone(face, ink)); });
+  const head = it('head');
+  if (show('head')) hatShape(head).forEach(([x, y, w, h]) => { s += R(x, y, w, h, tone(head, ink)); });
+  // a bare slot's glyph: the part outlined, so the button still says where
+  if (only && SLOT[only].items[0].key === outfit[only]) s += emptyMark(only);
+  return `<svg viewBox="${VB.join(' ')}" shape-rendering="crispEdges" aria-hidden="true">${s}</svg>`;
+}
+function emptyMark(k) {
+  const d = 'var(--ink-4)', R = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${d}"/>`;
+  return { head: R(5, -6, 8, 1) + R(5, -6, 1, 4) + R(12, -6, 1, 4),
+           face: R(9, 6, 2, 2) + R(13, 6, 2, 2),
+           neck: R(4, 11, 10, 1),
+           back: R(-4, 2, 1, 14),
+           pattern: R(5, 5, 1, 1) + R(9, 9, 1, 1) + R(13, 13, 1, 1),
+           aura: R(-6, 4, 2, 2) + R(22, 2, 2, 2) + R(9, -12, 2, 2) }[k] || '';
+}
+// Where each slot is worn, in world px: the leaders end here.
+function partAt(k, outfit) {
+  const head = SLOT.head.items.find(i => i.key === outfit.head);
+  const top = Math.min(0, ...hatShape(head).map(r => r[1]));
+  return { head: [9, top - 1], face: [14, 7], neck: [11, 13], back: [-1, 9], pattern: [6, 10], aura: [9, 21] }[k];
+}
+const DIE = `<svg viewBox="0 0 7 7" shape-rendering="crispEdges"><rect x=".5" y=".5" width="6" height="6" fill="none" stroke="currentColor"/><rect x="2" y="2" width="1" height="1" fill="currentColor"/><rect x="4" y="4" width="1" height="1" fill="currentColor"/><rect x="4" y="2" width="1" height="1" fill="currentColor"/><rect x="2" y="4" width="1" height="1" fill="currentColor"/></svg>`;
+const LOCK = `<svg class="lk" viewBox="0 0 8 9" shape-rendering="crispEdges"><rect x="1" y="4" width="6" height="5" fill="var(--ink-4)"/><rect x="2" y="1" width="1" height="3" fill="var(--ink-4)"/><rect x="5" y="1" width="1" height="3" fill="var(--ink-4)"/><rect x="2" y="0" width="4" height="1" fill="var(--ink-4)"/></svg>`;
+
+// ---- a sheet --------------------------------------------------------------------
+const OUTFITS = () => ({
+  you: { head: 'top-hat', face: 'monocle', neck: 'none', back: 'none', pattern: 'plain', aura: 'none' },
+  sqouse: { head: 'bow', face: 'eyes', neck: 'scarf', back: 'none', pattern: 'plain', aura: 'none' },
+});
+const NAMES = { you: ['sqhusband', 'sqhusband'], sqouse: ['sqwife', 'sqwife'] };
+const sheets = [];
+
+function makeSheet(variant, size, dark) {
+  const st = { variant, size, dark, who: 'you', slot: 'head', outfits: OUTFITS(), hover: null, focus: null };
+  const el = document.createElement('div');
+  el.className = `sheet ${variant} ${size}${dark ? ' dark' : ''}`;
+  st.el = el;
+  sheets.push(st);
+  render(st);
+  return st;
+}
+
+function render(st) {
+  const { el } = st;
+  const o = st.outfits[st.who], slot = SLOT[st.slot];
+  const open = slot.items.filter(i => !locked(i)).length;
+  el.innerHTML = `
+    <div class="s-title">appearance</div>
+    <div class="who">
+      ${['you', 'sqouse'].map(w => `<button data-who="${w}" aria-pressed="${st.who === w}">${squareSvg(st.outfits[w])}<span>${w === 'you' ? 'you' : 'your sqouse'}</span></button>`).join('')}
+    </div>
+    <div class="fieldrow"><span>name</span><span class="in">${NAMES[st.who][0].toUpperCase()}</span><button class="die" data-id="name-die">${DIE}</button></div>
+    <div class="fieldrow"><span>title</span><span class="step"><button data-id="role-prev">&lt;</button><span>${NAMES[st.who][1]}</span><button data-id="role-next">&gt;</button></span><button class="die" data-id="role-die">${DIE}</button></div>
+    <div class="stage">
+      <div class="sq">${squareSvg(o)}</div>
+      ${SLOTS.map(s => {
+        const it = s.items.find(i => i.key === o[s.key]);
+        return `<button class="slot${s.key === st.slot ? ' on' : ''}" data-k="${s.key}" data-id="slot-${s.key}">
+          <span class="g">${squareSvg(o, { only: s.key })}</span>
+          <span class="t"><div class="k">${s.name}</div><div class="w">${it.name}</div></span></button>`;
+      }).join('')}
+      <svg class="leaders"></svg>
+    </div>
+    <div class="gridbox">
+      <div class="gridtab">${slot.name}</div>
+      <div class="gridmeta"><span>${open} of ${slot.items.length} open</span><button class="die" data-id="slot-die">${DIE}</button></div>
+      <div class="grid">
+        ${slot.items.map(it => `<button class="tile${o[st.slot] === it.key ? ' worn' : ''}${locked(it) ? ' locked' : ''}" data-tile="${it.key}" data-id="tile-${it.key}">
+          ${squareSvg({ ...o, [st.slot]: it.key }, { dim: locked(it) })}${locked(it) ? LOCK : ''}<span class="n">${it.name}</span></button>`).join('')}
+      </div>
+    </div>
+    <div class="info">${infoLine(st)}</div>
+    <div class="foot"><button data-id="rand-all">randomize all</button><button data-id="clear">clear</button><button class="wide" data-id="back">back</button></div>
+    <div class="fold" style="top:${st.size === 'desk' ? 784 : 740}px"><span>${st.size === 'desk' ? 'tallest sheet at 1280x800' : 'the phone\'s 740'}</span></div>`;
+  const sq = el.querySelector('.sq svg');
+  sq.style.width = st.size === 'desk' ? '116px' : (st.variant === 'd1' ? '140px' : '150px');
+  sq.style.height = 'auto';
+  sizeNames(st);
+  el.querySelectorAll('[data-who]').forEach(b => b.onclick = () => { st.who = b.dataset.who; render(st); });
+  el.querySelectorAll('.slot').forEach(b => b.onclick = () => { st.slot = b.dataset.k; st.hover = null; render(st); });
+  el.querySelectorAll('.tile').forEach(b => {
+    b.onclick = () => { const it = slot.items.find(i => i.key === b.dataset.tile); if (!locked(it)) { o[st.slot] = it.key; render(st); } };
+    b.onpointerenter = () => { st.hover = b.dataset.tile; el.querySelector('.info').innerHTML = infoLine(st); };
+    b.onpointerleave = () => { st.hover = null; el.querySelector('.info').innerHTML = infoLine(st); };
+  });
+  if (st.focus) el.querySelector(`[data-id="${st.focus}"]`)?.classList.add('focus');
+  requestAnimationFrame(() => leaders(st));
+}
+
+function infoLine(st) {
+  const o = st.outfits[st.who], slot = SLOT[st.slot];
+  const key = st.hover || o[st.slot];
+  const it = slot.items.find(i => i.key === key);
+  if (locked(it)) { const [a, b] = lockSay(it); return `<div class="a">${it.name}: ${a}</div><div class="b">${b}</div>`; }
+  return `<div class="a">${it.name}</div><div class="b">&nbsp;</div>`;
+}
+
+// The grid's rows and the slot buttons' worn names are as tall as the longest
+// name needs, measured, so nothing is cut and the rows line up.
+function sizeNames(st) {
+  const tile = st.el.querySelector('.tile .n');
+  const tw = tile.getBoundingClientRect().width;
+  const tl = maxLines(SLOTS.flatMap(s => s.items.map(i => i.name)), tw);
+  st.el.querySelectorAll('.tile .n').forEach(n => n.style.minHeight = `${tl.lines * tl.lh}px`);
+  const tileH = st.el.querySelector('.tile').getBoundingClientRect().height;
+  const grid = st.el.querySelector('.grid');
+  // desk: the grid takes what the sheet has left under 784; phone: two rows and a peek
+  if (st.size === 'desk') {
+    grid.style.height = '0px';
+    const used = st.el.getBoundingClientRect().height;
+    grid.style.height = `${Math.max(tileH * 1.5, 784 - used)}px`;
+  } else grid.style.height = `${tileH * 2 + 4 * 3 + tileH * 0.35}px`;
+  const w = st.el.querySelector('.slot .w');
+  if (w && getComputedStyle(w).display !== 'none') {
+    const ww = w.getBoundingClientRect().width;
+    const bl = maxLines(SLOTS.flatMap(s => s.items.map(i => i.name)), ww);
+    st.el.querySelectorAll('.slot .w').forEach(n => n.style.minHeight = `${bl.lines * bl.lh}px`);
+  }
+  st.measure = { tile: { w: tw, ...tl } };
+  if (w && getComputedStyle(w).display !== 'none') st.measure.slot = { w: w.getBoundingClientRect().width, ...maxLines(SLOTS.flatMap(s => s.items.map(i => i.name)), w.getBoundingClientRect().width) };
+}
+let probe;
+function maxLines(names, width) {
+  if (!probe) { probe = document.createElement('div'); probe.className = 'sheet'; probe.style.cssText = 'position:absolute;left:-9999px;top:0;border:0;padding:0;';
+    probe.innerHTML = '<span class="n" style="display:block;letter-spacing:0;text-transform:none;overflow-wrap:normal;word-break:normal"></span>'; document.body.appendChild(probe); }
+  const n = probe.firstChild;
+  n.style.width = `${width}px`;
+  let best = { lines: 1, name: '', over: [] }, lh = 0;
+  for (const name of names) {
+    n.textContent = name;
+    lh = parseFloat(getComputedStyle(n).lineHeight) || 16.2;
+    const lines = Math.round(n.getBoundingClientRect().height / lh);
+    if (n.scrollWidth > Math.ceil(width) + 0.5) best.over.push(name);
+    if (lines > best.lines || !best.name) best = { ...best, lines, name };
+  }
+  return { ...best, lh };
+}
+
+// Leaders: from each slot button's nearest edge to the part it dresses. The
+// chosen slot's is solid ink; the rest a grey dash. On the phone's two rows,
+// only the chosen one, or six lines would cross the square.
+function leaders(st) {
+  const stage = st.el.querySelector('.stage'), svg = stage.querySelector('svg.leaders'), sq = stage.querySelector('.sq svg');
+  const S = stage.getBoundingClientRect(), Q = sq.getBoundingClientRect();
+  const sx = Q.width / VB[2], sy = Q.height / VB[3];
+  const o = st.outfits[st.who];
+  let out = '';
+  for (const b of stage.querySelectorAll('.slot')) {
+    const k = b.dataset.k, on = k === st.slot;
+    if (st.variant === 'd2' && st.size === 'phone' && !on) continue;
+    const [wx, wy] = partAt(k, o);
+    const px = Q.left - S.left + (wx - VB[0]) * sx, py = Q.top - S.top + (wy - VB[1]) * sy;
+    const B = b.getBoundingClientRect();
+    const l = B.left - S.left, r = B.right - S.left, t = B.top - S.top, bt = B.bottom - S.top;
+    let ax, ay;
+    if (r < px - 4) { ax = r; ay = Math.min(Math.max(py, t + 8), bt - 8); }
+    else if (l > px + 4) { ax = l; ay = Math.min(Math.max(py, t + 8), bt - 8); }
+    else if (bt < py) { ax = Math.min(Math.max(px, l + 8), r - 8); ay = bt; }
+    else { ax = Math.min(Math.max(px, l + 8), r - 8); ay = t; }
+    // an elbow, so lines stay on the grid: across, then to the point
+    const mid = Math.abs(ax - px) > Math.abs(ay - py) ? `${px},${ay}` : `${ax},${py}`;
+    const c = on ? 'var(--ink)' : 'var(--ink-7)';
+    out += `<polyline points="${ax},${ay} ${mid} ${px},${py}" fill="none" stroke="${c}" stroke-width="2" ${on ? '' : 'stroke-dasharray="2 3"'} shape-rendering="crispEdges"/>`;
+    out += `<rect x="${px - 3}" y="${py - 3}" width="6" height="6" fill="${c}"/>`;
+  }
+  svg.innerHTML = out;
+}
+
+// ---- the pad's walk ---------------------------------------------------------------
+const PATHS = {
+  d1: [
+    ['open', 'the sheet opens: focus on the chosen slot', st => { st.focus = 'slot-head'; }],
+    ['d-pad →', 'nearest that way: face', st => { st.focus = 'slot-face'; }],
+    ['d-pad ↓', 'neck, under it', st => { st.focus = 'slot-neck'; }],
+    ['A', 'opens neck\'s grid, focus on the worn tile', st => { st.slot = 'neck'; st.focus = `tile-${st.outfits[st.who].neck}`; }],
+    ['d-pad →', 'the next tile', st => { st.focus = 'tile-scarf'; }],
+    ['A', 'wears it', st => { st.outfits[st.who].neck = 'scarf'; }],
+    ['B', 'back to the neck slot', st => { st.focus = 'slot-neck'; }],
+    ['d-pad ←', 'across the square: pattern', st => { st.focus = 'slot-pattern'; }],
+    ['RT', 'next slot from anywhere: pattern → aura', st => { st.slot = 'aura'; st.focus = 'slot-aura'; }],
+    ['RB', 'your sqouse', st => { st.who = 'sqouse'; }],
+    ['LB', 'you', st => { st.who = 'you'; }],
+  ],
+  d2: [
+    ['open', 'the sheet opens: focus on the chosen slot', st => { st.focus = 'slot-head'; }],
+    ['d-pad ↓', 'back, under head', st => { st.focus = 'slot-back'; }],
+    ['d-pad →', 'across the square: neck', st => { st.focus = 'slot-neck'; }],
+    ['A', 'opens neck\'s grid, focus on the worn tile', st => { st.slot = 'neck'; st.focus = `tile-${st.outfits[st.who].neck}`; }],
+    ['d-pad →', 'the next tile', st => { st.focus = 'tile-striped-scarf'; }],
+    ['A', 'wears it', st => { st.outfits[st.who].neck = 'striped-scarf'; }],
+    ['B', 'back to the neck slot', st => { st.focus = 'slot-neck'; }],
+    ['d-pad ↓', 'pattern, under neck', st => { st.focus = 'slot-pattern'; }],
+    ['LT', 'previous slot from anywhere: pattern → back', st => { st.slot = 'back'; st.focus = 'slot-back'; }],
+    ['RB', 'your sqouse', st => { st.who = 'sqouse'; }],
+    ['LB', 'you', st => { st.who = 'you'; }],
+  ],
+};
+const timers = {};
+function play(v) {
+  clearInterval(timers[v]);
+  const mine = sheets.filter(s => s.variant === v);
+  mine.forEach(s => { s.outfits = OUTFITS(); s.who = 'you'; s.slot = 'head'; s.focus = null; render(s); });
+  let i = 0;
+  const step = () => {
+    if (i >= PATHS[v].length) { clearInterval(timers[v]); mine.forEach(s => { s.focus = null; render(s); }); document.getElementById(`say-${v}`).textContent = 'done'; return; }
+    const [press, what, fn] = PATHS[v][i++];
+    mine.forEach(s => { fn(s); render(s); });
+    document.getElementById(`say-${v}`).innerHTML = `<b>${press}</b> -- ${what}`;
+  };
+  step();
+  timers[v] = setInterval(step, 1300);
+}
+document.querySelectorAll('[data-play]').forEach(b => b.onclick = () => play(b.dataset.play));
+
+// ---- build -----------------------------------------------------------------------
+for (const v of ['d1', 'd2']) {
+  const row = document.getElementById(`row-${v}`);
+  for (const [size, dark] of [['desk', false], ['desk', true], ['phone', false], ['phone', true]]) {
+    const fig = document.createElement('figure'); fig.className = 'frame';
+    row.appendChild(fig);
+    const st = makeSheet(v, size, dark);
+    fig.appendChild(st.el);
+    const cap = document.createElement('figcaption');
+    cap.textContent = `${v.toUpperCase()} · ${size === 'desk' ? 'desk 1280x800 (the sheet)' : 'phone 360 wide'} · ${dark ? 'dark' : 'light'}`;
+    fig.appendChild(cap);
+    render(st);
+  }
+}
+// A query string can stand a frame's state up for a snapshot.
+const q = new URLSearchParams(location.search);
+if (q.get('focus')) sheets.forEach(s => { s.focus = q.get('focus'); if (q.get('slot')) s.slot = q.get('slot'); render(s); });
+
+// ---- the measured names table ------------------------------------------------------
+function namesTable() {
+  const rows = [];
+  for (const st of sheets.filter(s => !s.dark)) {
+    const m = st.measure;
+    const tr = (what, x) => `<tr><td>${st.variant.toUpperCase()} ${st.size}</td><td>${what}</td><td>${x.w.toFixed(0)}px</td><td>${x.lines}</td><td>${(x.lines * x.lh).toFixed(0)}px</td><td>${x.name}</td><td class="${x.over.length ? 'bad' : ''}">${x.over.length ? x.over.join(', ') : 'none'}</td></tr>`;
+    rows.push(tr('tile name', m.tile));
+    if (m.slot) rows.push(tr('slot button, worn name', m.slot));
+  }
+  document.getElementById('names').innerHTML = `<table><tr><th>frame</th><th>where</th><th>text width</th><th>most lines</th><th>name area</th><th>first name needing that many</th><th>wider than its box</th></tr>${rows.join('')}</table>`;
+}
+namesTable();
+addEventListener('resize', () => sheets.forEach(leaders));
+</script>
+</body>
+</html>
