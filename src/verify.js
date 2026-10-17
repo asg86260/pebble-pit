@@ -44,6 +44,9 @@ import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
 import { deepTop, deepFloor, deepX1, coilLine, coilThick, standOfStation } from './deep/place.js';
 import { yardReads } from './persist.js';
+import { afterlifeOn, hellOn } from './acts.js';
+import { AFTER_STORY } from './after/story.js';
+import { HELL_STORY } from './hell/story.js';
 
 // The jobs the roster is made of, and the count on S that owns each: every
 // body type and its job, read off the one table (jobs.js) rather than kept
@@ -127,6 +130,8 @@ export function resetVerify() {
 
 // The story's table, read for its keys and owners only.
 const BEAT_OWNS = new Map(BEATS.map(r => [r.key, r.owns]));
+// And which act each act beat belongs to (rule 20), off the two story files.
+const ACT_BEATS = { after: new Set(Object.keys(AFTER_STORY)), hell: new Set(Object.keys(HELL_STORY)) };
 
 export function verifyWorld() {
   // --- rule 15: the yard's length only grows (wave-cloud SYNC) ---------------
@@ -176,6 +181,16 @@ export function verifyWorld() {
       fail('a beat is running under the wrong owner', `${key} under ${owner}`);
     if (S.beatsDone.includes(key))
       fail('a beat that has played is running', `${key}`);
+  }
+
+  // --- rule 20: an act stands only with its switch on -------------------------
+  // Acts 3 and 4 are held back (acts.js): with an act's switch off the camera
+  // is never in its place and none of its beats runs.
+  for (const [v, on] of [['after', afterlifeOn()], ['hell', hellOn()]]) {
+    if (on) continue;
+    if (S.view === v) fail('the camera is in an act that is switched off', v);
+    for (const key of Object.values(S.beat))
+      if (key != null && ACT_BEATS[v].has(key)) fail('an act beat runs with its switch off', `${key} (${v})`);
   }
 
   // --- rule 17: the serpent shows itself only on a quiet surface -------------

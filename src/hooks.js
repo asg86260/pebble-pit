@@ -403,6 +403,8 @@ export const newGame = (intro = false, fresh = false) => {
   // A new yard's serpent starts at its first defense: the rule that a stage
   // never goes back is about one yard, not the one before it.
   forgetSerpent();
+  // ...and no act beat owed by the last yard's check (acts.js).
+  forgetOwed();
   if (!intro) skipIntro();
   // A yard the last group left held would stall this one: `fast` does
   // nothing held.
@@ -1352,6 +1354,29 @@ HANDLES.__view = v => { setView(v); return S.view; };
 // The deep held at a zoom step instead of its fit (null lets go), and the
 // step it came out at: the station editor's pull-in on one station.
 HANDLES.__deepZoom = k => { holdDeepZoom(k); return S.zoom; };
+
+// --- acts 3 and 4: the scaffold (acts.js; DESIGN.md, "Acts 3 and 4") ---
+// The acts' switches said for this yard: false plays a released build's yard,
+// true a build with the act on, null hands it back to the build. `hell`
+// defaults to the afterlife's say.
+import { forceActs, owe, forgetOwed, afterlifeOn, hellOn } from './acts.js';
+import { goPlace } from './view.js';
+import { beginAfter, afterFrames } from './after/index.js';
+import { beginHell, hellFrames } from './hell/index.js';
+HANDLES.__actsOn = (after, hell = after) => { forceActs(after, hell); return { after: afterlifeOn(), hell: hellOn() }; };
+// Into an act's place, straight there, the act's facts stood up empty if it
+// has not begun: the dev travel, until each act's road in is built. Refused
+// with the act off; the view it ends on, either way.
+HANDLES.__goPlace = v => {
+  if (v === 'after' && afterlifeOn()) beginAfter();
+  if (v === 'hell' && hellOn()) beginHell();
+  return goPlace(v);
+};
+// An act beat's trigger stood up (acts.js, `owe`), for a check or a scene,
+// until the trigger itself is built; null forgets every one owed.
+HANDLES.__actOwe = key => { if (key == null) forgetOwed(); else owe(key); };
+// How many frames each act's place has been stepped this session.
+HANDLES.__actFrames = () => ({ after: afterFrames(), hell: hellFrames() });
 
 // --- the two of them (wardrobe.js) ---
 // Who they are and what they wear, read for a check: each one's uid, the

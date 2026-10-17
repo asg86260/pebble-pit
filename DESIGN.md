@@ -19980,6 +19980,16 @@ of the `-who` lines.
 
 ## Acts 3 and 4: the afterlife and hell (design, not built)
 
+**Scaffold built, 2026-10-17** (the owner: "can we start building the
+boilerplate for the new acts?"), nothing a player can reach: `AFTERLIFE_ON`
+and `HELL_ON` held back as `SERPENT_ON` holds the deep, the places
+`S.view = 'after'` and `'hell'` with their own extents, cameras and layers
+(a placeholder backdrop each), an empty step for each in `STEPS`, the
+modules below as stubs (src/acts.js, src/after/, src/hell/), `S.after` and
+`S.hell` null until each act begins, the beats as no-op rows behind the
+switches, dev travel only, and the scenes `after-empty` and `hell-empty`.
+None of the calls below is settled by it; each is a seam in the code.
+
 *The owner's words, 2026-10-15/16, none of them committed: act 1 is a typical
 incremental (the yard), act 2 is lighter fighting in the deep (the serpent,
 the party), and act 3 must be themed differently but stay incremental, not

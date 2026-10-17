@@ -34,8 +34,29 @@ import { shieldUp, KINDS } from './shield.js';
 import { setZoom, clampCam } from './world.js';
 import { firstMuckDue, startFirstMuck } from './firstmuck.js';
 import { startFinale, stepFinale, cutFinale, sheetDown, workPaused } from './finale.js';
+import { afterlifeOn, hellOn, owed, paid } from './acts.js';
+import { AFTER_STORY } from './after/story.js';
+import { HELL_STORY, WALL_BEATS } from './hell/story.js';
 
 const OWNERS = ['yard', 'camera', 'sheet'];
+
+// An act's beat (DESIGN.md, "Acts 3 and 4", "The story, beat by beat"): its
+// body is its act's story file, its trigger a key owed (acts.js) until the
+// trigger is built, and only with its act's switch on. A beat `next` follows
+// is never set off by a trigger of its own. Every one owns the camera, not
+// the yard: owning the yard holds the yard's crew still, and everything keeps
+// running (the owner's call 1) -- a beat in the cloud must not stop the yard
+// below. A beat that needs the pair held in the yard (the house's fall) is a
+// question for when it is built.
+const actBeat = (on, story) => (key, next = null, first = true) => ({
+  key, owns: 'camera', next,
+  when: first ? () => on() && owed(key) : () => false,
+  enter: t => { paid(key); story[key].enter(t); },
+  step: t => story[key].step(t),
+  skip: t => story[key].skip(t)
+});
+const after = actBeat(afterlifeOn, AFTER_STORY);
+const hell = actBeat(hellOn, HELL_STORY);
 
 // A shield's answer is a scene on the frame the rock leaves the sky over a
 // finished span of that kind: the timber breaks on the frame the rock reaches
@@ -169,6 +190,30 @@ export const BEATS = [
     enter: () => {},
     step: () => true,
     skip: t => { S.reformAt = t; sheetDown(); } },
+
+  // --- act 3: the afterlife (after/story.js), behind AFTERLIFE_ON ----------
+  // The fall and the opening, played through as one story; the axe on its
+  // own; the strike and what it uncovers, through to the road down.
+  after('house-fall', 'arrive'),
+  after('arrive', 'meet-god', false),
+  after('meet-god', 'refuse', false),
+  after('refuse', null, false),
+  after('axe'),
+  after('strike', 'unmask'),
+  after('unmask', 'hell-told', false),
+  after('hell-told', 'ghost-road', false),
+  after('ghost-road', null, false),
+
+  // --- act 4: hell (hell/story.js), behind HELL_ON ---------------------------
+  // The return as ghosts; the first descent and the first attempt; a fall for
+  // each barrier but the cage; the cage's fall and the way home.
+  hell('haunt'),
+  hell('descend', 'wall-first'),
+  hell('wall-first', null, false),
+  ...WALL_BEATS.map(k => hell(k)),
+  hell('unchain', 'alive'),
+  hell('alive', 'home-again', false),
+  hell('home-again', null, false),
 ];
 
 const ROW = new Map(BEATS.map(r => [r.key, r]));

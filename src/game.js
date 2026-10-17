@@ -37,6 +37,8 @@ import { stepWorks, setGround, setDone, setFoot, setRooms } from './works.js';
 import { roomsAfter } from './house.js';
 import { sampleBooks } from './income.js';
 import { stepAudio, sfx } from './audio.js';
+import { stepAfter } from './after/index.js';
+import { stepHell } from './hell/index.js';
 
 // The ground is laid the moment the order the yard was bought in changes, not
 // the frame after: `__finish` in the checks and a player's click landing a
@@ -271,6 +273,11 @@ export const STEPS = [
   { name: 'serpent',   step: c => stepSerpent(c) },
   { name: 'arms',      step: c => stepArms(c) },
   { name: 'scales',    step: c => stepScales(c) },
+  // Acts 3 and 4, the same rule: every place is stepped every frame, on
+  // screen or not (the owner's call 1, "everything keeps running"), each a
+  // no-op with its act's switch off (after/index.js, hell/index.js).
+  { name: 'afterlife', step: c => stepAfter(c) },
+  { name: 'hell',      step: c => stepHell(c) },
   { name: 'smog',      step: c => stepSmog(ambientMs(c.dt)) },       // and the sky, which is filling up
   { name: 'balloons',  step: c => stepBalloons(c.dt) },              // and the craft crossing it
   { name: 'craftair',  step: c => stepCraftAir(c.dt) },   // and the haze they are drawing in

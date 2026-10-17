@@ -487,7 +487,8 @@ export const S = {
   settleAt: 0,            // the column the pit settler got to last frame
 
   // --- the deep: the serpent's half (docs/wave-serpent.md) ------------------
-  // Which half the player is looking at. The renderer's and the pointer's
+  // Which place the player is looking at: 'yard' or 'deep', and, with acts 3
+  // and 4 on (acts.js), 'after' or 'hell'. The renderer's and the pointer's
   // alone: nothing in the sim branches on it.
   view: 'yard',
   viewFade: 0,            // the glide between the two, 0..1 (view.js)
@@ -531,6 +532,11 @@ export const S = {
   // and the turn they are on.
   finale: null,
   retired: null,
+  // Acts 3 and 4 (DESIGN.md, "Acts 3 and 4"; src/after/, src/hell/): each
+  // act's facts, null until the act begins, then the shape `blankAfter` and
+  // `blankHell` stand up.
+  after: null,
+  hell: null,
   // The constrict's orb (deep/phases.js): the station its fighter is at, the
   // seconds it has left of the `max` it closed with (its time is its health),
   // the seconds blows have cut off it, and when it closed.
@@ -826,6 +832,7 @@ export const SAVED_BY_HAND = [
   'deepBed',              // the scales on the deep's floor, a plot like the pit (deep/scales.js)
   'refundOwed',           // a bill handed back still in the air, by coin, landed on the way in (pit.js)
   'pairIds', 'outfits', 'dressOffered', 'selves', 'wardOpened',   // the two of them, what they are called and what they wear, checked item by item (wardrobe.js)
+  'after', 'hell',        // acts 3 and 4, read over a blank so a field added later comes back empty (after/index.js, hell/index.js)
 ];
 
 // And everything else: this session's own, deliberately thrown away on a
