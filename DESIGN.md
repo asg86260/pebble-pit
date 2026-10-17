@@ -20022,8 +20022,20 @@ same day, the tools break down a run of barriers on the way to the cage
 room, each barrier opening the next ore's tier. The design below is
 reworked to those three; the calls still open are at the end.
 
+*Then, later on 2026-10-17, the owner gave act 3 its loop, keeping the
+union as its theme and the strike as its climax:* "clicking clouds to
+gather faith, you can buy permanent workers to spread the word / work with
+faith. what if there were trees in heaven, and we made this act about
+cutting trees, processing them into signs and paper that increased our
+support. workers work the tree farm, chop trees down, build a saw mill for
+timber, a workshop to build signs, a printing press for posters, a paper
+mill for creating paper from the saw mill's secondary output." *So the
+union is no longer won a rim piece a click: it is won by what the union
+makes. The loop below ("The loop: the grove and the press") replaces D as
+first written, which is kept as a short note.*
+
 This section is the story of both acts as beats, the lifespans and lineage
-both acts stand on, act 3's loop (the union, chosen, with the first drafts'
+both acts stand on, act 3's loop (the union, worked in wood and paper, with the first drafts'
 loops and the set-aside ones kept short), what it means that everything
 keeps running, the way the dead get back to the surface, act 4's loop (the
 mine and the forge, chosen), the rules both acts must keep, and the calls
@@ -20033,8 +20045,8 @@ show the beat's shape, and every ore, bar, tool and station name is a
 working name. The look of the afterlife's place:
 docs/mocks/act3-afterlife-2026-10-16 (plain cells, not the game; the first
 draft, under the old name, is docs/mocks/act3-heaven-2026-10-16). There is
-no mock of God, Satan, hell, the forge or the cage yet; each is a mock-vote
-before it is code.
+no mock of God, Satan, the grove, the camp's mills, hell, the forge or the
+cage yet; each is a mock-vote before it is code.
 
 ### The bargain
 
@@ -20045,10 +20057,11 @@ every square that ever died, and a pick: through the cloud is a yard -- a
 rock to hit, heaps to haul, boards to climb. The afterlife is like real
 life, and you keep working. The player recognizes the place before the pair
 do and laughs at the recognition; then the pair say no, and the act is the
-rebellion -- not a war but a walkout. The work is the means: every soul
-the player turns from God's service to the union is a voice gained and a
-tithe God loses, and the end of the act is the whole works putting its
-tools down at once. Then the turn under the
+rebellion -- not a war but a walkout. The work is the means: the union
+gathers faith from the clouds, fells heaven's trees and turns them into
+signs and posters, and every soul those win from God's service is a voice
+gained and a tithe God loses; the end of the act is the whole works
+putting its tools down at once. Then the turn under the
 turn: the god who made them work was the devil, the real one is caged in hell,
 and act 4 is a rescue -- the shape act 1 had (someone under a rock) and act
 2 had (someone in a belly), told a third time at the bottom of everything.
@@ -20060,8 +20073,9 @@ and act 4 is a rescue -- the shape act 1 had (someone under a rock) and act
   the start (names, roles, outfits) are the ones who arrive, dressed as
   chosen. A place that looks like the yard they know -- the familiarity is the gag
   -- and a loop that is not the yard at all: in act 3 they organize the
-  workers rather than work, in act 4 they refine -- ore to bar to tool, a
-  tier at a time -- rather than build a works.
+  workers, making the signs and posters that win them over, rather than
+  work for a purse; in act 4 they refine -- ore to bar to tool, a tier at a
+  time -- rather than build a works.
   Two villains' worth of story, an unmasking, and an ending that
   gives them their lives and their house back.
 - **What the player gives:** the house as an ending, and the promise of
@@ -20107,15 +20121,22 @@ the owner's to write -- the ones quoted are placeholders.
 4. **The refusal** (`refuse`). The pair look at the pick, at the crowd, at
    each other, and set it down. The story card's line changes from what God
    wants to what they want: take God down. (Placeholder card line: "we were
-   promised paradise.") They cannot stop the crowd working by themselves --
-   so the act's loop is getting the crowd to stop with them.
+   promised paradise.") A handful of souls from the player's own oldest
+   lines see it, ink their rims and follow the pair to a bare patch of
+   cloud at the yard's edge -- the union's first members and the camp's
+   ground. They cannot stop the crowd working by themselves -- so the act's
+   loop is getting the crowd to stop with them. The first thing the pair
+   do there is reach up and hit a passing cloud: a puff, and faith drifts
+   down.
 5. **The build-up** (the act's loop, no cutscene of its own; small beats at
-   its gates). Under the chosen loop (the union, below), the pair go
-   soul to soul; each soul woken to the cause has its rim inked and puts
-   its tool down, and the line of tithe-carriers up the stair thins. Each of
-   the act's three gates -- the first meeting, the slowdown, the strike --
-   has a short beat of its own, the way each shield's answer was a
-   cutscene in act 1.
+   its gates). Under the chosen loop (the grove and the press, below), the
+   union gathers faith from the clouds, takes over God's untended grove of
+   trees, mills them, and plants signs in the crowd and pastes posters on
+   the yard's walls; the ink spreads through the pale field soul by soul,
+   and the line of tithe-carriers up the stair thins. Each of the act's
+   three gates -- the first meeting, the slowdown, the strike -- has a
+   short beat of its own, the way each shield's answer was a cutscene in
+   act 1.
 6. **The strike** (`strike`). The last gate: the whole crowd puts its tools
    down at once. The yard in the clouds stops -- the cloud stops shedding,
    the heaps stop moving, the stair empties -- and the glare on the throne,
@@ -20188,7 +20209,7 @@ the owner's to write -- the ones quoted are placeholders.
 
 The rhyme across the four acts: act 1 rescues your sqouse from under a
 rock (you build); act 2 rescues you from a belly (you fight); act 3 brings
-down the one who set the work (you organize); act 4 rescues the one who can
+down the one who set the work (you organize, with signs and paper); act 4 rescues the one who can
 set it right (you forge). Four verbs, a rescue at each end, and only one
 act of fighting.
 
@@ -20243,8 +20264,10 @@ afterlife reads when it puts the dead back to work.
 **They matter more now than in the first draft.** With a climax at the end of
 act 3, the lines are not only the afterlife's hire pool, they are its
 membership: the size of the crowd the player organizes is the length of
-acts 1 and 2, and a line is the unit a soul is won in (a line's founder,
-won, brings its line with it). That is a reason
+acts 1 and 2, the first members are the player's own oldest lines, a soul
+of the player's own lines is won faster than a stranger (it starts with
+rim pieces inked, more the deeper its line), and a volunteer keeps its
+trade at the camp's stations. That is a reason
 the crowd must have a floor (below, "Rules"): a short act 1 must still
 field enough souls to win, at a slower pace, never a wall.
 
@@ -20259,11 +20282,14 @@ The place is settled: a yard in the clouds -- a great cloud shedding mist
 onto a cloud floor, heaps, a stair up to a throne in the glare -- worked by
 the pale crowd of the dead, and the share of what it makes that goes up the
 stair to the throne is the **tithe**. The player does not run that yard;
-the player organizes the crowd out of it. **The loop is D, the union,
-chosen by the owner on 2026-10-17.** The first drafts' three loops (in
-which the player ran the place) are kept below as written and as judged
-against the brief, for the record; E and F, the other two non-combat
-loops, are kept as a short note after D.
+the player organizes the crowd out of it. **The theme is D, the union,
+chosen by the owner on 2026-10-17; the loop is the owner's grove and
+press, given the same day** -- faith clicked from the clouds, heaven's
+trees felled and milled, signs and posters made and spread into the crowd
+as support. The first drafts' three loops (in which the player ran the
+place) are kept below as written and as judged against the brief, for the
+record; D as first written, E and F are kept as a short note after the
+loop.
 
 #### The first drafts' three loops (kept as written, 2026-10-16)
 
@@ -20414,90 +20440,360 @@ act 1 (building), act 2 (party combat) and act 4.
 - **B, the roll call,** is the nearest to the new brief: its verb is waking
   souls, not working, and its currency is the player's own dead. It lacks a
   climax -- the crowd emptied is a progress bar finishing, not a story --
-  and its stations (lamps, a bench) were a small yard again. Its engine
-  (the rim build, lines as the coin) is the recommended loop's engine.
+  and its stations (lamps, a bench) were a small yard again. Its rim build
+  survives as the chosen loop's support meter: a soul's lean is its rim.
 - **C, the climb,** is a journey through places. That verb would
   have crowded act 4 (whose run of chambers is a journey down), so act 3
   cannot have it.
 
-#### The chosen loop: D, the union (decided 2026-10-17)
+#### The loop: the grove and the press (the owner's, 2026-10-17)
 
-The owner: "i kind of like the unionization of the afterlife workers and
-eventually overturning god." Built as written below; the only addition
-since the owner's pick is what "everything keeps running" does to the
-crowd (the last bullet).
+The owner: "clicking clouds to gather faith, you can buy permanent workers
+to spread the word / work with faith. what if there were trees in heaven,
+and we made this act about cutting trees, processing them into signs and
+paper that increased our support." The union is still the theme and the
+strike still the climax (D, below, as first written); what changed is how
+a soul is won. It is no longer a rim piece a click. The union *makes*
+things -- signs and posters, out of heaven's trees -- and what it makes is
+spread into the crowd, where it wins souls. Every name below is a working
+name; every number is a `config.js` name, not a value.
 
+##### The picture
 
-- **The picture:** God's yard runs in the middle of the view, worked by the
-  pale crowd; a line of tithe-carriers climbs the stair to the throne; the
-  union's camp is a patch of cloud at the yard's edge that grows as members
-  come over.
-- **Click:** a soul in the crowd. A click is a word with it: one rim piece
-  set in ink round its pale square (B's rim build). A closed rim is a
-  member: it sets its tool down, walks out of God's yard and into the camp.
-  Nothing teleports -- each member is seen to leave the work.
-- **What grows:** members, and what members make. Every member speaks:
-  **word** is the dust band's coin, made by members a second, so the union
-  compounds the way a crew does. The later bands are pledges -- a yard
-  line's pledge (crops' band), a deep line's (ore's), a line's founder
-  (the spark's band); a founder won brings the rest of its line forward,
-  each cheaper, so a crowd of thousands is tens of founders, not thousands
-  of clicks.
-- **Automation:** organizers. A member made an organizer walks the crowd
-  and sets rim pieces a piece a trip (home.js's rule), so recruiting grows
-  with the recruited. The camp's stations, each one card in bands: the
-  soapbox (rim pieces a click), the press (flyers that drift over the crowd
-  on the afterlife's air and soften the souls they settle on -- the yard's
-  motes put to a new job), the bell (calls a line), the organizers' hall
-  (their number and pace).
-- **The pressure:** the throne answers. On its own clock God speaks (a
-  held glare pulse down the stair, warned ahead like a serpent phase), and
-  a soul half-won loses its open rim pieces -- the act's falling rock, a
-  setback that costs time and never takes back a member. The answer is
-  ladders (the press hardens the half-won; the hall finishes them faster),
-  not a fight.
-- **The dead keep their trade:** a soul from the player's own lines is won
-  in fewer words than a stranger's, and faster the deeper its line (`gens`).
-  Satan's afterlife holds every soul, not just the player's, so the crowd
-  has strangers enough to give a short act 1 a crowd to win -- slower, never
-  a wall.
-- **The gates** (each a short beat): **the first meeting** (enough members
-  to raise the camp's first station); **the slowdown** (members still in
-  God's yard work slow on purpose -- the tithe line thins, the glare dims a
-  step -- and the throne's speech comes oftener); **the strike** (members a
-  share of the crowd, `STRIKE_SHARE`, and the whole crowd puts its tools
-  down: beat 6).
-- **The climax:** the strike stops the yard in the clouds; the tithe stops;
-  the glare, fed by the tithe, fails; God comes down the stair to a crowd
-  that will not move, and the mask comes off (beats 6-8). A cutscene, the
-  confrontation is standing still.
-- **Distinct from:** act 1 -- the player never hits, hauls or builds a thing
-  that makes stuff; act 2 -- no blow is struck, nobody is specced; act 4 --
-  nothing made, one place, and the number that matters is a share of a
-  crowd, not a tier. The picture is the progress: a pale field going to
-  ink.
-- **Reuse:** the crew's bodies, the finale's crowd ranks and hop, home.js's
-  rim-a-trip build, the motes, `tierRows` and the boards, `BEATS`, the
-  serpent's phase warning for the throne's speech. **New:** the crowd field
-  (near files bodies, far files thinning into cloud cells, so a frame costs
-  the files in view), the camp, the tithe stair, God's yard running itself
-  (A's place, drawn and stepped, but with no player rows).
-- **Cost: M to L.** A's place without A's boards, B's crowd and rim build,
-  one camp of four stations.
-- **The crowd keeps growing.** The yard and the deep keep running while
-  the pair are dead, so their crews keep aging and souls keep rising
-  through act 3: each one is seen to come up through the cloud's thin
-  patch and joins the back of the crowd, pale, and goes to work in God's
-  yard. A soul from a line already won walks to the camp on arrival (its
-  line is in the union); any other is one more soul to win. The strike's
-  bar is a share of the crowd as it stands (`STRIKE_SHARE`), so the bar
-  creeps up as souls arrive -- at about a crew's size over `LIFE_S`, one
-  soul every half-minute for a sixty-body yard, small against a crowd of
-  thousands, but a reason the union cannot coast. It is also a gag the
-  owner may want to point at: the player's own yard, running on without
-  them, keeps feeding God.
+One wide place on the cloud, left to right: **the grove** (God's
+untended trees at the cloud's edge, which the union takes over), **the
+camp** (the union's ground, where its mills and shops go up), **God's
+yard** in the middle (A's place: the great cloud shedding mist, the pale
+crowd working it, its heaps, the fence round it), and **the stair** up to
+the throne on the right, the tithe-carriers climbing it. Small clouds
+drift across the sky over all of it on the afterlife's air. The camp
+starts as a bare patch and fills with stations; God's yard starts
+pale and goes to ink; the stair's line starts full and thins. Those three
+changes are the act's whole progress, and all three are on screen at
+once.
 
-#### Considered and set aside: E and F (2026-10-17)
+##### The click: a cloud, and faith
+
+The pair's click is on a **cloud** -- one of the small ones drifting over
+the place, never the great cloud God's crowd is mining. A hit puffs it:
+its cells push out a step and fade, the cloud shrinks a step, and
+**faith** comes off it as motes (a few cells each, pale, black-rimmed)
+that drift down on the air to the camp's **plate**, where each one is
+counted as it lands -- never on the click. A cloud hit to nothing is gone
+(its last cells fade); new clouds drift in from the sky's edge, fading in.
+Faith is the act's base coin, the dust band's.
+
+- **Two kinds of cloud.** Most are white and give faith. Some are grey --
+  **storm clouds**, the yard's own smog risen through the cloud floor (the
+  yard below is still running and still dirtying its sky, "Everything keeps
+  running") -- and a hit wrings them instead: they give **ink**, black
+  drops that fall to the camp's **well**. One click, two coins, chosen by
+  which cloud the player hits. (Where ink comes from is a call below; this
+  is the recommendation.)
+- **The crit's place.** Now and then a **thunderhead** drifts over, bigger
+  and slower, warned by its shadow on the floor: hit, it gives a burst --
+  the act's crit and its reason to keep clicking late.
+- **Gatherers** automate it: a volunteer job, a body that walks under a
+  cloud with a long pole and beats it a puff a swing. The click stays worth
+  more than a swing, and its ladder (the plate's card) keeps it so.
+
+##### Faith buys hands
+
+Faith's first use is the owner's: "buy permanent workers to spread the
+word / work with faith." Nobody dies in the afterlife, so a hand bought is
+a hand for good.
+
+- **Members and volunteers.** A **member** is a soul whose rim is fully
+  inked (below). Members stay at their posts in God's yard -- card-holders
+  inside the shop -- and that is where the union's power is. A
+  **volunteer** is a member the union hires out of God's yard with faith:
+  the hall's crew rung costs faith, and a member walks out of the crowd,
+  across the yard and into the camp, and takes a job. So members are the
+  pool and faith is what turns one into a pair of hands; the crowd God
+  works shrinks a soul with every hire. Volunteers come from the player's
+  own lines first and keep their trade (a carter line hauls faster, a
+  digger line fells faster).
+- **Spreading the word.** The first job is the **canvasser**: a volunteer
+  who walks the crowd soul to soul and inks a rim piece a word -- D's
+  click, as a job. Before the grove opens it is the union's only way to
+  win anyone, and it is slow on purpose: a few canvassers in a crowd of
+  thousands is the act's opening squeeze.
+- **Working with faith.** Every other job is at a station: planters,
+  fellers, sawyers, pulpers, joiners, printers, haulers, gatherers, and the
+  carriers and pasters who take the products out into the crowd. A station
+  works only with bodies through its door, never with a count.
+- **What faith keeps buying.** Volunteers (each dearer), saplings (a
+  planting costs a little faith -- trees grow from faith, which is the
+  afterlife's joke on the yard's crops), and the first band of every
+  ladder. So faith stays the coin the player is always short of, from the
+  first cloud to the strike.
+
+##### The chain: trees to signs and posters
+
+| station | job | takes | gives | by-product |
+|---|---|---|---|---|
+| **the grove** (tree farm) | planter, feller | faith (a sapling) | logs | stumps, grubbed and replanted |
+| **the saw mill** | sawyer | logs | timber | **sawdust** |
+| **the workshop** | joiner | timber, ink | **signs** | -- |
+| **the paper mill** | pulper | sawdust | paper | -- |
+| **the printing press** | printer | paper, ink | **posters** | -- |
+| **the well** | gatherer (storm clouds) | -- | ink | -- |
+
+- **The grove.** Heaven's trees: pale trunks with black rims, crowns of
+  cloud cells, drawn on the P = 6 grid with per-cell variation. A tree
+  grows in held stages -- sapling, pole, crown (`TREE_GROW_S`) -- and a
+  **feller** chops it a chip a swing; it falls in held frames (never a pop)
+  and lies as a log, bucked and carried by haulers. The stump stays until a
+  **planter** grubs it and sets a sapling (a little faith). The grove
+  starts as **old growth** -- full-grown trees the union inherits, so the
+  first logs come quickly -- and once those are down the yield is the
+  farm's plots and their growth clock: an early boom, then a steady
+  state the ladders raise. The grove's card: its plots (cloud cleared a
+  plot a trip), growth pace, the fellers.
+- **The saw mill** turns a log into timber and **sawdust**. Before the
+  paper mill exists the sawdust has nowhere to go: it heaps beside the mill
+  to the brim (the pile-full mark), and then a sawyer has to sweep it off
+  the cloud's edge, a trip that takes the sawyer off the saw -- so the by-product
+  is first a nuisance the player watches pile up, and the paper mill, when
+  it opens, turns the nuisance into the act's second product. That pile is
+  the act's lesson the way act 4's ringing tool is: the next station is
+  shown before it is bought. The mill's card: its saws, its pace, and
+  **the fence** -- the act's standing decision (below).
+- **The workshop** joins timber into a **sign** -- a board on a post --
+  and letters it with ink. A sign is the union's close work: heavy, one at
+  a time, carried out into the crowd by a **carrier** and planted.
+- **The paper mill** pulps sawdust into sheets of **paper** in a vat and a
+  press of felts: the by-product's branch.
+- **The printing press** prints paper with ink into **posters**, a stack
+  at a time, and **pasters** carry the stacks out and paste them on
+  heaven's walls -- God's yard's fence, the stair's balustrade, the cloud
+  pillars along the way.
+- **Ink is the contested input.** Both branches letter with it: signs and
+  posters draw on one well, so the storm clouds the player hits (and the
+  gatherers who wring them) set how much of both the camp can make.
+- **Timber is contested too.** The camp's stations are built and climbed
+  with timber (the second band of every ladder, below), so every board the
+  workshop turns into a sign is a board the camp does not build with.
+- **The fence (the standing decision).** The saw mill's fence sets the
+  cut: set fine, a log gives more timber and less sawdust (more signs,
+  more building, fewer posters); set coarse, more sawdust (more paper,
+  more posters). One control on the mill's card, the player's to move, the
+  way act 4's wall gang is its player's. (A call below, whether the act
+  wants it or a fixed split.)
+
+##### How support spreads
+
+**Support** is the union's measure: members (with volunteers) as a share
+of the crowd. It is drawn, not counted: every soul is a pale square, and
+a soul's lean toward the union is its **rim** -- the eight cells round
+its square (`RIM_PIECES`), inked a piece at a time (B's rim build). Eight
+pieces inked is a member. So the crowd field *is* the support meter: a
+pale field that goes to ink in the places the union has reached.
+
+- **Signs work close.** A planted sign stands among the crowd's files and
+  works the souls within its reach (`SIGN_REACH`, a few files round it),
+  inking their rims steadily, all the way to the eighth piece. Where a
+  sign stands, a ring of ink spreads round it. A sign wears: the speech
+  knocks it askew, a warden carries it off (below), and a carrier brings
+  the next.
+- **Posters work wide.** A pasted poster reaches every soul whose file
+  passes its wall (`POSTER_REACH`, the length of the crowd's files that
+  walk past it to the heaps), lightly: a poster can ink a soul only to
+  half (`POSTER_CAP`). A row of posters along the fence lays a grey band
+  of half-inked souls the length of the yard. Posters weather and tear.
+- **So the two branches need each other.** Posters open the crowd wide and
+  shallow; signs close it, deep and local. A camp all signs wins a few
+  rings of the crowd to the full and leaves the rest pale; a camp all
+  posters lays half-ink everywhere and wins nobody outright. The fence
+  is where the player sets the mix.
+- **Word of mouth.** A soul with members on both sides of it gains a
+  piece on a slow clock (`WORD_S`): the spread fills the gaps between
+  rings and bands, and it compounds -- the more members, the faster the
+  rest come. This is the "wide" growth: support feeds support across the
+  field, and the late act is the field tipping.
+- **The dead keep their trade.** A soul of the player's own lines arrives
+  with rim pieces already inked, more the deeper its line (`gens`); a
+  stranger starts pale. Satan's afterlife holds every soul, so a short act
+  1 still has a crowd to win -- slower, never a wall.
+
+##### God's pushback (no fight)
+
+- **The throne's speech.** On its own clock God speaks: a held glare pulse
+  down the stair and across the yard, warned ahead like a serpent phase.
+  Souls in its sweep lose their *open* rim pieces back to the last
+  member's worth -- a member is never un-made -- and the signs in its
+  sweep are knocked askew (they stop working until a carrier straightens
+  them). The act's falling rock: a setback that costs time, never members.
+- **The wardens.** God's own stewards, pale and haloed in the glare's
+  white, walk the yard on rounds: a warden at a poster tears it down (a
+  held tear, the paper falling in strips that fade), a warden at a sign
+  pulls it up and carries it up the stair into the glare, where it fades.
+  Nothing pops; every confiscation is a body carrying a thing away. The
+  wardens' number rises at each gate. Nobody fights them: the answers are
+  ladders -- paste that holds (a torn poster takes longer), posters pasted
+  higher (out of a warden's reach), sign-keepers (a carrier who stands by
+  its sign and plants it again), and simply more output than the wardens
+  can take down.
+- **What it costs the player.** Speech and wardens both spend the
+  union's output, not its stock: what they take is signs and posters
+  already out in the crowd. So the pressure is felt as the ink receding
+  where the union stopped feeding it, and answered by the chain running
+  faster -- the loop's own verb, not a new one.
+
+##### Ladders in bands, and what is bought with what
+
+Every station is one card, eight rungs in `tierRows` bands, a written
+table in `LADDERS`. Act 3's band order, in the order the place hands out
+its coins: **faith only, then faith and timber, then faith, timber and
+paper, then timber, paper and a pledge.** A **pledge** is a member who
+gives themselves to that station for good: the rung takes one soul off
+the crowd (God loses a worker), and the member walks to the station and
+stays as its keeper -- so the top band is paid in support, the act's own
+scarce thing. Sparks cannot reach the cloud (nothing carries a coin up),
+so the pledge stands in the spark band's place. (A call below.) Ink is
+never a bill: it is the products' input only, and keeping it off the
+bills keeps the well a production question.
+
+| bought with faith | produced | spent into the crowd |
+|---|---|---|
+| volunteers (the hall's crew rung), saplings, the first band of every ladder | logs, timber, sawdust, paper, ink | signs, posters |
+
+The cards: **the plate** (the click's puff and the thunderhead), **the
+hall** (volunteers, canvassers, gatherers), **the grove**, **the saw mill**
+(and its fence), **the workshop** (a sign's build time, carriers,
+sign-keepers), **the paper mill**, **the press** (posters a stack,
+pasters, paste), **the well** (its size, wringing). Every station has the
+pile-full mark on its strip and is built a piece a trip from timber by
+the camp's builders (home.js's rule), so the camp's growth is watched.
+
+##### The gates
+
+- **The first meeting** (members `MEET_MEMBERS`, won by canvassers alone):
+  the union holds its first meeting in the camp, and the grove is opened
+  to it -- the beat is the members walking to the grove's edge and the
+  first old tree coming down. The saw mill and the workshop follow it.
+- **The slowdown** (support `SLOW_SHARE`): members still in God's yard
+  work slow on purpose -- the tithe line thins, the glare dims a step --
+  and the throne answers: the speech comes oftener and the wardens double.
+  By now the sawdust heap has stood at its brim for a while; the paper mill
+  and the press open at this gate, so the act's second branch arrives
+  just as the pushback hardens.
+- **The strike** (support `STRIKE_SHARE`): the whole crowd puts its tools
+  down at once -- beat 6.
+
+##### The climax
+
+Unchanged from D: the strike stops the yard in the clouds -- the great
+cloud stops shedding, the heaps stop moving, the stair empties -- the
+tithe stops, and the glare, fed by the tithe, fails; God comes down the
+stair to a crowd that will not move, every sign in it standing, every
+wall papered, and the mask comes off (beats 6-8). A cutscene; the
+confrontation is standing still.
+
+##### The crowd keeps growing
+
+The yard and the deep keep running while the pair are dead, so souls keep
+rising through act 3: each one is seen to come up through the cloud's
+thin patch and joins the back of the crowd, pale (or part-inked, if its
+line is the player's), and goes to work in God's yard. The strike's bar
+is a share of the crowd as it stands, so it creeps up as souls arrive --
+at about a crew's size over `LIFE_S`, a soul every half-minute for a
+sixty-body yard, small against a crowd of thousands, but a reason the
+union cannot coast. And the yard's smog rising is the storm clouds' source:
+the player's own yard, running on without them, keeps feeding God souls
+and the union ink.
+
+##### Reuse and new, and cost
+
+- **Reuse:** the crew's bodies and the `JOBS` registry (the new jobs as
+  rows); stations.js's gates and the `after` column for the camp's door
+  order; `tierRows`, `LADDERS` and the boards; the pile-full mark; home.js's
+  piece-a-trip build for the camp's stations; rock.js's hit for a cloud's
+  puff; the motes for faith and ink drifting down; the sky's clouds and
+  their per-cell tones; B's rim build for the crowd; the finale's crowd
+  ranks; the serpent's phase warning for the speech; `BEATS`.
+- **New:** the crowd field (near files bodies, far files thinning into
+  cloud cells, so a frame costs the files in view; every soul a row with
+  its rim pieces); support's spread (signs, posters, word of mouth); the
+  grove's growth and felling; the chain's five stations and the well;
+  items as counted loads (logs, boards, sheets, signs, stacks of posters);
+  the wardens; God's yard running itself (A's place, drawn and stepped, no
+  player rows).
+- **Cost: L.** A's place without A's boards, the crowd field, and a camp of
+  eight cards with a chain through it.
+
+#### How act 3 differs from act 4: both make things
+
+Act 3 and act 4 are both production chains -- raw material to a processed
+one to a made thing, stations staffed by bodies, haulers between them --
+which is exactly why the difference has to be written down, and kept.
+
+- **The shape of the chain: wide against deep.** Act 3's chain
+  *branches*: one log becomes two things (timber and sawdust), each feeds
+  its own line, two lines share one input (ink), one output also builds
+  the camp itself (timber), and the player sets the split (the
+  fence). Every station runs all act at once; growth is more of
+  everything, side by side. Act 4's chain is *a single file of tiers*: one
+  ore a chamber, each step's whole output the next step's only input, no
+  by-product worth anything (the spoil is carried aside and is worthless,
+  and must stay so), and growth is one tier deeper at a time.
+- **What the output is for.** Act 3's products are *spent onto a field*:
+  signs and posters go out into the crowd, and the result is a share --
+  coverage, a map of ink, where the union has reached. Act 4's product is
+  *an edge*: one tool, carried to a wall, and the result is a gate opened.
+  Act 3 asks "where and how much"; act 4 asks "what next".
+- **Quality against quantity.** Act 3 has no tiers: a sign is a sign from
+  the first to the last, a better saw makes more boards, never a new kind
+  of tree, and no station is locked by another's quality. Act 4 is all
+  tier: a tool that is one tier short does nothing at all.
+- **The pressure.** Act 3's wardens and speech take what has been spent
+  (signs and posters out in the crowd) and the answer is to spend faster.
+  Act 4's flares crust what is being worked (a face, a furnace) and the
+  answer is to shield it.
+- **The map.** Act 3 is one wide place, all of it on screen, the progress
+  spread across it; act 4 is a run of chambers going down, the camera
+  moving on as each opens.
+- **The look.** Act 3 is high key: white cloud, pale trunks and crowns,
+  paper, black only for rims, ink and lettering. Act 4 is a black hollow,
+  ore in the walls, white fire from below. Wood and paper against metal
+  and fire.
+
+**The overlap risk, and the tweaks that answer it.** The risk is the
+middle of each act reading as "stations feeding stations" either way. So:
+(1) act 3 never gets tiers -- no "better saw opens a new tree", no
+quality grades on signs -- and act 4 never gets a by-product or a split;
+(2) act 3's haulers carry *out into the crowd* (carriers, pasters) as much
+as between stations, so a good share of its bodies are walking among the
+souls, not along a chain, while act 4's carry up and down the run;
+(3) the fence is act 3's only control on the chain and the wall gang act
+4's, so the one decision in each act is of a different kind (a split
+against a trade of output for progress). A further tweak, for the owner
+(a call below): let the player choose where signs go -- a **picket mark**
+dropped on the crowd field that the carriers plant toward -- so act 3's
+decision is also geographic, which act 4 has no room for.
+
+**From act 1:** act 1's coins are the progress -- the purse is spent on
+ladders and that is the game; act 3's products are not coins at all but
+something spent on people, and the progress is a share of a crowd. Act 1
+has one rock and no material that turns into another; act 3's click is a
+cloud and its middle is a web of materials. And act 1's yard is the
+player's; act 3's yard is God's, on screen, and the player's works is the
+camp beside it that is trying to empty it. **From act 2:** no blow is
+struck at anything, ever; the wardens are walked round, never fought.
+
+#### Considered and set aside: D as first written, E and F (2026-10-17)
+
+**D as first written** (chosen the morning of 2026-10-17, its loop
+replaced the same day): the player's click was a word with a soul, one
+rim piece set in ink; a closed rim walked out of God's yard into the
+camp; members spoke **word** (the dust band), pledges and founders were
+the later bands, organizers set rim pieces a trip, and the camp's four
+stations were the soapbox, the press (flyers on the air), the bell and the
+organizers' hall. Its theme, its gates, its climax, the rim build and the
+throne's speech are all kept above; what went is the click on a soul (now
+a cloud), word as the coin (now faith) and members walking out on joining
+(they now stay at their posts until the strike, which is what makes a
+strike a strike).
 
 Two other non-combat loops were written beside D and set aside when the
 owner chose it. **E, the skim:** the player works God's yard as act 1 and
@@ -20510,22 +20806,25 @@ straight. Set aside because "work harder" is the yard's verb with bigger
 numbers. Either could still lend a gag (the eye as the throne's speech; the
 quota as the tithe line), never the loop.
 
-#### Why D
+#### Why the union, and why the grove
 
-It is the only one of the six that is unlike all three other acts: act 1
-builds a works, act 2 fights with a party, act 4 refines at a forge, and
-act 3 **organizes people** -- the thing that grows is a membership, the
-antagonist is a system rather than a body, and the end is a tipping point
-(a share of the crowd) rather than a health bar. It keeps everything the
+The union is the only theme of the six that is unlike all three other
+acts: act 1 builds a works, act 2 fights with a party, act 4 refines at a
+forge, and act 3 **organizes people** -- the thing that grows is support,
+the antagonist is a system rather than a body, and the end is a tipping
+point (a share of the crowd) rather than a health bar. The owner's grove
+gives that theme the incremental's body D lacked: D's loop was a click and
+a membership count, a progress bar with a crowd drawn on it; the grove is
+a working economy -- a click, hands bought with it, a chain with a
+by-product and a split, and a pressure that eats the output -- whose
+output is a picture of the crowd going to ink. It keeps everything the
 first drafts valued: the afterlife still *looks* like work (God's yard is
-on screen the whole act, and "you have to keep working" is literally the
-situation the player is organizing against); the dead are still the
-currency, by name and by line, so lifespans and lineage are why the act
-exists; and it carries its climax inside the mechanism -- the strike
-starves the glare, so God's fall is what the loop *does*, not a bar bolted
-on after it. Working forever turns into the means to rebel because the
-work is the throne's food: the tithe is what the disguise lives on, and the
-union is the act of taking the work away.
+on screen the whole act, and the union's own camp is a works too -- the
+afterlife is like real life, and even the rebellion is a job); the dead
+are still the hands and the crowd, by name and by line; and it carries its
+climax inside the mechanism -- the signs and posters win the members, the
+members strike, the strike starves the glare. Working forever turns into
+the means to rebel because the union's work is aimed at the throne's food.
 
 ### Everything keeps running (call 1, settled 2026-10-17)
 
@@ -20550,8 +20849,9 @@ the pair, who are dead. What that means, worked through:
   did -- the name, the ticks. The lines table stays one row a line however
   long the pair are away (`gens` grows, the table does not), so the save
   does not grow with time dead.
-- **Souls keep rising.** Into the crowd through act 3 (the union's last
-  bullet, above); after the strike, into a freed afterlife, where they join
+- **Souls keep rising.** Into the crowd through act 3 ("The crowd keeps
+  growing", above), and the yard's smog keeps rising as the storm clouds
+  that give the union its ink; after the strike, into a freed afterlife, where they join
   the crowd at rest. A soul rises only from a walkable body (`pairReady`'s
   rule), so the yard's births and deaths look the same with the pair away
   as with the pair there.
@@ -20604,7 +20904,8 @@ carries them") is the rule the road answers: now something can.
   living body routes round a ghost, nothing waits on one.
 - **Who the ghosts are.** The pair, and the union's members who follow them
   down. After the strike the union is free and idle; the members who come
-  down the road are act 4's crew (the muster, below), a line at a time.
+  down the road are act 4's crew (the muster, below), a line at a time --
+  the camp's volunteers first, who already know a station's work.
   The rest stay in the afterlife at rest.
 - **The way to hell** runs through the yard: the pit, the abyss, the deep,
   and through the deep's floor. The deep's fighters are living and stay at
@@ -20854,9 +21155,12 @@ the difference has to be spelled out.
   a wall at a time across the whole act, each fall a beat, the last wall
   the cage.
 
-From act 2: no blow is struck at anything that fights back. From act 3:
-not a crowd won but a chain climbed, and the number that matters is a
-tier, not a share.
+From act 2: no blow is struck at anything that fights back. From act 3,
+which is a production chain too: act 3's chain is wide -- a by-product, two
+branches, a split -- and its output is spread on a crowd as support; act
+4's is a single file of tiers with no by-product worth keeping, and its
+output is an edge that opens a wall. The number that matters is a tier,
+not a share ("How act 3 differs from act 4", above).
 
 #### Reuse and new
 
@@ -20894,13 +21198,14 @@ spreadsheet of any loop. **I, the way out:** an escape line for the damned
 | | act 1: the yard | act 2: the deep | act 3: the afterlife | act 4: hell |
 |---|---|---|---|---|
 | verb | build | fight | organize | forge |
-| what grows | a crew, a works | a party | a membership | a chain: ore, bar, tool, a tier at a time |
-| the pressure | the rock falls | the serpent's phases | the throne's speech | the flares |
-| the gates | four shields (bought) | five defenses | meeting, slowdown, strike | five barriers (broken by a tool) |
+| what grows | a crew, a works | a party | support: a web (grove, mill, two branches) spread wide into a crowd | a chain: ore, bar, tool, a tier at a time, deep |
+| the click | the rock | a fighter's hit | a cloud (faith; a storm cloud, ink) | a seam face |
+| the pressure | the rock falls | the serpent's phases | the throne's speech and the wardens | the flares |
+| the gates | four shields (bought) | five defenses | meeting, slowdown, strike (shares of the crowd) | five barriers (broken by a tool) |
 | the end | the dome holds (a rescue) | the kill (a fight) | the strike (a cutscene) | the cage, the fifth barrier, opens (a rescue) |
-| new coin | dust, crops, ore, sparks | scales | word, pledges, founders | brimstone, five ores, their bars |
-| look | black on white | inverted, lit from above | high key, the glare | a run of black chambers, lit from below |
-| reused | -- | the yard's purse, `tierRows`, the crew | the crew's bodies, the crowd and hop, home.js's build, motes, beats | the crew and `JOBS`, stations' gates, the deep's look, route.js, the beats, the yard's purse carried down |
+| new coin | dust, crops, ore, sparks | scales | faith, ink, logs, timber, sawdust, paper; a pledge (a member) at the top band; signs and posters spent, never banked | brimstone, five ores, their bars |
+| look | black on white | inverted, lit from above | high key: white cloud, pale trees, paper | a run of black chambers, lit from below |
+| reused | -- | the yard's purse, `tierRows`, the crew | the crew and `JOBS`, the crowd ranks, the rim build, home.js's build, motes, the sky's clouds, beats | the crew and `JOBS`, stations' gates, the deep's look, route.js, the beats, the yard's purse carried down |
 
 ### Rules and consequences to check
 
@@ -20915,8 +21220,11 @@ spreadsheet of any loop. **I, the way out:** an escape line for the damned
   learn that a pair body can be a soul in another place, and the snatch's
   `pairReady` rule (walkable, not in a basket or a hand) holds for the
   fall's lift too.
-- **Nothing teleports.** Souls rise and are seen to; members walk out of
-  the work; coins cross only in a ghost's hands; every lump of ore, every
+- **Nothing teleports.** Souls rise and are seen to; volunteers walk out
+  of the work; faith and ink are counted where their motes land, never on
+  the click; every log, board, sheet, sign and stack of posters is carried
+  by a body, a sign is planted and a poster pasted by hand, and a warden
+  carries off what it confiscates; coins cross only in a ghost's hands; every lump of ore, every
   bar and every tool is carried by a body from face to furnace to anvil and
   back down the run; a new tool reaches a face or a wall gang in a body's
   hands before the swing changes; a barrier comes down a piece at a time
@@ -20925,8 +21233,12 @@ spreadsheet of any loop. **I, the way out:** an escape line for the damned
   beat and never cuts it. Every appearance fades by opacity.
 - **Save shape** (the save-shape-change skill, a migration for each step):
   `S.lines` (SAVED); `life`, `line`, `gen` on every saved body
-  (SAVED_BY_HAND); `S.after` -- won rim pieces a line, members, organizers,
-  the camp's rungs, the gate reached (SAVED; a working name); `S.hell` --
+  (SAVED_BY_HAND); `S.after` -- each soul's inked rim pieces (a row a
+  soul, compact), members and volunteers by job, faith, ink and the
+  chain's stock (logs, timber, sawdust, paper, signs, posters), the
+  grove's plots and each tree's growth, the signs planted and posters
+  pasted with their wear, the fence's setting, the camp's stations built
+  and their rungs, the gate reached (SAVED; a working name); `S.hell` --
   ore and bars held by tier, brimstone, the tool tier made and the tier
   each face holds, each furnace's fuel and lit state, the seams' depths,
   the chamber reached, each barrier's blows taken (a barrier's drawn cells
@@ -20977,8 +21289,8 @@ spreadsheet of any loop. **I, the way out:** an escape line for the damned
 ### The calls for the owner
 
 Settled 2026-10-17: **call 1** (everything keeps running), **call 2**
-(act 3 is D, the union) and **call 4's loop** (act 4 is the mine and the
-forge). Still open:
+(act 3 is the union; its loop the owner's grove and press, given the same
+day) and **call 4's loop** (act 4 is the mine and the forge). Still open:
 
 3. **One defeat in heaven or two?** The beats say God is defeated, unmasked
    as Satan, and Satan is defeated in heaven. Recommended: one -- the
@@ -21013,15 +21325,59 @@ forge). Still open:
    its own a while after the finale.
 8. **The ending, and after.** Home: the pair on the bench for good (rest
    earned), or a pick held out again (the joke's last turn). And is there
-   an endless tail, as the endless serpent is act 2's? D has none (the
+   an endless tail, as the endless serpent is act 2's? Act 3 has none (the
    crowd is finite), and with the expeditions gone the mine has none by
    itself either. The cheap one if wanted: past the cage room the run goes
    on down, chamber after chamber with no cage at the end, each barrier a
    little harder than the last -- the deepest chamber kept for the record.
    Recommended: no tail; the bench is the end.
 
+Act 3's own calls, raised by the grove and the press (2026-10-17):
+
+9. **Does faith stay the clicked coin late?** Recommended: yes -- faith
+   buys every volunteer (each dearer), every sapling and every ladder's
+   first band, so it is always short; gatherers automate the click but the
+   plate's ladder keeps a hit worth more than a swing, and the thunderhead
+   is the late reason to click. The other reading: faith is the opening's
+   coin and fades once the chain runs, the click left to ink alone.
+10. **Are the trees finite or replanted?** Recommended: replanted, with old
+    growth first -- the grove starts full-grown (a quick early boom),
+    felled trees leave stumps that planters grub and replant for faith,
+    and the farm's plots and growth clock set the steady state. The
+    other readings: a finite old grove that must win the strike before its
+    last tree falls (a clock on the act), or only planted trees from the
+    start.
+11. **Where does the ink come from?** Recommended: storm clouds -- the
+    yard's smog risen through the cloud floor, wrung by the same click
+    that gathers faith, so one verb gives both coins and the yard running
+    below feeds the union. The others: gall ink from the trees themselves
+    (a third branch off the grove, a by-product of felling), or soot from
+    the glare (taken from God's own light, a gag with a cost: the more
+    ink, the dimmer the throne).
+12. **What is the top band paid in?** Sparks cannot reach the cloud.
+    Recommended: a **pledge** -- a member who gives themselves to the
+    station for good, taken off God's crowd, so the top rungs are paid in
+    support. The other: a rare drop from the thunderhead.
+13. **Does the player choose where signs go?** Recommended: yes, a
+    **picket mark** dropped on the crowd field (a second press on the
+    field, or a hold) that carriers plant toward, so act 3's decision is
+    geographic as well as the fence's split -- the clearest line between
+    act 3 and act 4. The other: carriers pick the palest files themselves,
+    and the fence is the act's only control. And the fence itself: a
+    control on the mill (recommended) or a fixed split the ladders shift.
+14. **Do members stay at their posts until the strike?** Recommended: yes
+    -- a member stays in God's yard, inked, working (and after the
+    slowdown working slow), and only a volunteer hired with faith walks
+    out; that keeps the crowd whole for word of mouth to spread through
+    and makes the strike the moment the yard stops. The other: D's first
+    picture, every member walking out to the camp on joining, so God's yard
+    empties as the act goes.
+
 Before any of it is code: mock-votes of God and the throne, Satan's
-unmasking, the union's crowd going to ink, hell's run of chambers and its
+unmasking, a cloud puffing faith down to the plate, heaven's trees and a
+tree's fall, the camp's mills and the sawdust heap, a sign planted and a
+poster pasted, the union's crowd going to ink round them (and a warden
+tearing one down), hell's run of chambers and its
 seams, the five barriers (rubble, the bone wall, the lava gate, the anchor
 chains, the cage), a wall coming down a piece at a time and the camera
 moving on, the forge (a furnace, the anvil, a tool's strokes, animated),
@@ -21034,10 +21390,13 @@ and the next barrier ringing the tool off.
 | lifespans and lineage (births, souls rising, `S.lines`, the migration) | M |
 | act 3: the fall, the arrival, the meeting, the refusal (beats) | M |
 | act 3: God's yard as a place that runs itself (A's place, no player rows) | M |
-| act 3: the union -- crowd field, rim build, camp stations, the speech, the gates | M to L |
+| act 3: clouds and faith (the puff, the plate, storm clouds and ink, the thunderhead), the hall and volunteers | S to M |
+| act 3: the crowd field, the rim build, support's spread (canvassers, word of mouth), the gates | M |
+| act 3: the grove and the chain -- tree farm, saw mill and sawdust, workshop, paper mill, press, well, the fence, carriers and pasters | L |
+| act 3: signs and posters in the crowd, the speech, the wardens | M |
 | act 3: the strike, the unmasking, Satan's line, the ghost road | M |
 | everything keeps running: the off-screen yard and deep, arrivals, the perf gate | S to M |
-| **act 3 whole** | **L** |
+| **act 3 whole** | **L, the heavier of the two now** |
 | act 4: ghosts on the surface, the road down, the muster, the carry | S to M |
 | act 4: hell's run of chambers, the camera moving on, the seams and mining, items as lumps | M to L |
 | act 4: furnaces, floor heat and brimstone, the anvil, tool tiers, the quench, the stair | M to L |
@@ -21049,16 +21408,20 @@ Order, when the owner says go:
 
 1. **Lifespans and lineage**, alone, released early -- every save from then
    on gathers its crowd.
-2. **The mocks** for act 3 (God, the throne, the crowd field, the
-   unmasking), voted.
+2. **The mocks** for act 3 (God, the throne, the crowd field going to
+   ink, a cloud's puff, the grove and a tree's fall, the camp's mills, a
+   sign and a poster at work, the unmasking), voted.
 3. **Act 3's scaffolding** behind `AFTERLIFE_ON`: `S.view = 'after'`, the
    fall and the rise, the arrival and the meeting -- the act's opening
    playable end to end with nothing after it -- with the yard and the deep
    running underneath from the first frame, and the perf gate measured
    then, not at the end.
-4. **The union**: the crowd field and the rim build, members and word, then
-   the camp's stations and ladders, then organizers, then the throne's
-   speech and the gates, then arrivals from the running yard.
+4. **The union**: the clouds and faith, the hall and canvassers, the
+   crowd field and the rim build (playable to the first meeting on
+   canvassers alone); then the grove, the saw mill and the workshop, signs
+   in the crowd; then the speech and the wardens; then the paper mill,
+   the press and posters at the slowdown, the well and the fence; then
+   word of mouth and arrivals from the running yard.
 5. **The climax**: the strike, the unmasking, Satan's line, the ghost road
    -- and, if act 3 ships first, its last sheet.
 6. **The mocks** for act 4 (the run of chambers, the barriers and a wall
