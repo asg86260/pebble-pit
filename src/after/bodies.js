@@ -78,7 +78,8 @@ const JOB_STEP = {
     if (w.t >= AFTER_CANVASS_S) { canvass(w.target); w.target = null; }
   },
   gatherer(w, dt) {
-    const alive = clouds().filter(c => c.die == null);
+    // A cloud the pole reaches: low enough over the floor.
+    const alive = clouds().filter(c => c.die == null && floorY() - (c.y + cloudH(c)) <= AFTER_POLE);
     let c = alive.find(q => q.id === w.target);
     if (!c) {
       let bd = Infinity;

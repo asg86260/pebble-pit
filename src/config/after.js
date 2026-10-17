@@ -226,8 +226,8 @@ export const AFTER_PER = { faith: 1, timber: 4, paper: 6 };
 const AFTER_COST = [8, 15, 25, 40, 60, 90, 130, 180];
 export const AFTER_LADDERS = {
   'after-puff':    { value: [1, 2, 3, 4, 6, 8, 11, 15, 20], cost: AFTER_COST },              // faith a hit
-  'after-axe':     { value: [8, 7, 6, 5, 5, 4, 4, 3, 3], cost: AFTER_COST.map(c => c * 2) }, // chops a tree (TREE_CHOPS the foot)
-  'after-grow':    { value: [90, 80, 70, 62, 55, 48, 42, 36, 30], cost: AFTER_COST },        // seconds a growth stage (TREE_GROW_S the foot)
+  'after-axe':     { value: [TREE_CHOPS, 7, 6, 5, 5, 4, 4, 3, 3], cost: AFTER_COST.map(c => c * 2) }, // chops a tree (TREE_CHOPS the foot)
+  'after-grow':    { value: [TREE_GROW_S, 80, 70, 62, 55, 48, 42, 36, 30], cost: AFTER_COST },        // seconds a growth stage (TREE_GROW_S the foot)
   'after-saw':     { value: [4, 3.6, 3.2, 2.8, 2.5, 2.2, 1.9, 1.6, 1.4], cost: AFTER_COST }, // seconds a log
   'after-joinery': { value: [6, 5.4, 4.8, 4.2, 3.7, 3.2, 2.8, 2.4, 2], cost: AFTER_COST },   // seconds a sign
   'after-pulp':    { value: [4, 3.6, 3.2, 2.8, 2.5, 2.2, 1.9, 1.6, 1.4], cost: AFTER_COST }, // seconds a sheet

@@ -18,7 +18,7 @@ import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { warning } from './pilemarks.js';
 import { afterX0, afterX1, afterFloor, plotX, stationBox, soulX, farX, soulY, slotX, crowdX1, stairFoot,
-         throneAt, fileAt } from '../after/place.js';
+         throneAt, fileAt, rankAtY } from '../after/place.js';
 import { CROWD_X0 } from '../config.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, airPuffs, cloudW } from '../after/faith.js';
 import { trees, GROWN, TRUNK_CELLS, CROWN_CELLS } from '../after/grove.js';
@@ -241,7 +241,7 @@ export function drawAfterCamp() {
 // by one. A slot whose member walked out to the camp stands empty.
 const RIM = [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2], [1, 2], [0, 2], [0, 1]];
 const FAR_TONE = [1, 2, 3, 4, 5, 6, 7, 8, 10];
-export const crowdSpan = () => ({ f0: fileAt(S.camX - P * 4), f1: fileAt(S.camX + S.viewW + P * 4) });
+export const crowdSpan = () => ({ f0: fileAt(S.camX - P * 4), f1: fileAt(S.camX + S.viewW + P * 4), r1: rankAtY(S.camY - P * 4) });
 let drawn = 0;
 export const crowdDrawn = () => drawn;
 function drawSoul(f, r, v) {
@@ -266,10 +266,11 @@ export function drawAfterCrowd() {
   const a = A();
   if (!a) return;
   const arr = souls(), n = arr.length;
-  const { f0, f1 } = crowdSpan();
+  const { f0, f1, r1 } = crowdSpan();
   drawn = 0;
-  // Back to front, so a near body stands over the far field behind it.
-  for (let r = Math.ceil(n / CROWD_FILES) - 1; r >= 0; r--) {
+  // Back to front, so a near body stands over the far field behind it; the
+  // ranks above the view's top are left undrawn.
+  for (let r = Math.min(r1, Math.ceil(n / CROWD_FILES) - 1); r >= 0; r--) {
     for (let f = f0; f <= f1; f++) {
       const i = r * CROWD_FILES + f;
       if (i >= n) continue;

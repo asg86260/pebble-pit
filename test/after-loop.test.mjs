@@ -206,10 +206,14 @@ group('a big crowd costs the frame little, and only its files in view are drawn'
   const ms = (performance.now() - t0) / FR;
   const span = crowdSpan();
   const files = span.f1 - span.f0 + 1;
+  // The far field stops at the view's top: the ranks drawn are those whose row
+  // is on screen, however deep the crowd.
+  const ranks = span.r1 + 1;
   window.__actsOn(null);
   return [
     ok(ms < 1, `the afterlife's step with ${n} souls stays under a millisecond a frame`, `${ms.toFixed(3)} ms`),
-    ok(files <= Math.ceil(S.viewW / (P * 4)) + 4 && files <= CROWD_FILES, 'the drawing walks only the files in view', `${files} files`)
+    ok(files <= Math.ceil(S.viewW / (P * 4)) + 4 && files <= CROWD_FILES, 'the drawing walks only the files in view', `${files} files`),
+    ok(ranks < n / CROWD_FILES && ranks * P <= S.viewH, 'and only the ranks in view', `${ranks} of ${n / CROWD_FILES} ranks`)
   ];
 });
 

@@ -63,6 +63,13 @@ export const soulX = f => CROWD_X0 + f * CROWD_PITCH + P;
 export const farX = (f, r) => soulX(f) + (r % 2 ? CROWD_PITCH / 2 : 0);
 export const soulY = r => afterFloor() - P * 2 - (r < CROWD_NEAR ? r * CROWD_ROW
                                                  : CROWD_NEAR * CROWD_ROW + (r - CROWD_NEAR) * CROWD_FAR_ROW);
+// The deepest rank whose row stands at or below world y: the far field is
+// drawn only up to the view's top.
+export const rankAtY = y => {
+  const front = afterFloor() - P * 2, near = CROWD_NEAR * CROWD_ROW;
+  if (front - y < near) return Math.max(0, Math.floor((front - y) / CROWD_ROW));
+  return CROWD_NEAR + Math.floor((front - near - y) / CROWD_FAR_ROW);
+};
 export const crowdX1 = () => CROWD_X0 + CROWD_FILES * CROWD_PITCH;
 // The file under a world x, clamped to the field.
 export const fileAt = x => Math.max(0, Math.min(CROWD_FILES - 1, Math.floor((x - CROWD_X0) / CROWD_PITCH)));
