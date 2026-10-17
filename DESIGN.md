@@ -20496,6 +20496,26 @@ Faith is the act's base coin, the dust band's.
 - **Gatherers** automate it: a volunteer job, a body that walks under a
   cloud with a long pole and beats it a puff a swing. The click stays worth
   more than a swing, and its ladder (the plate's card) keeps it so.
+- **The hand takes an axe** (the owner, 2026-10-17: "allow clicks to cut
+  trees after enough clicks"). The click starts on clouds only. After
+  `CHOP_CLICKS` cloud hits -- a click count, not a purchase, so it comes
+  to every player who plays the opening and costs no faith they are short
+  of -- a short beat (`axe`): a member walks over from the grove and
+  hands the pair an axe. From then on a click on a grown tree is a
+  **chop**: a held swing, a chip knocked out of the trunk where the blow
+  lands, and a tree takes `TREE_CHOPS` of them. On the last it falls in
+  held frames, the crown's cloud cells drifting off and fading -- nothing
+  pops -- and lies as logs for the haulers, the same logs a feller's tree
+  gives. A click on a cloud still gathers faith; the player chooses each
+  click's target. So the hand helps the lumber chain the way act 1's hand
+  helps the rock and act 4's hand mines a seam: it is never the chain's
+  engine (fellers are), but early, before the grove has hands, a player
+  chopping is how the first logs reach the mill. The plate's card carries
+  the axe's ladder beside the puff's (chops a tree, from `TREE_CHOPS`
+  down), in the same bands. Because the axe opens at a click count, it
+  usually lands just before the first meeting opens the grove: the count is
+  set so the hand is ready when the trees are. (Whether a click count or a
+  faith rung is the unlock is call 15.)
 
 ##### Faith buys hands
 
@@ -20723,6 +20743,16 @@ and the union ink.
   eight cards with a chain through it.
 
 #### How act 3 differs from act 4: both make things
+
+**The parallel is intentional** (the owner, 2026-10-17: "i think im cool
+with the act 3 + 4, heaven and hell symmetry but different"). Heaven and
+hell are drawn as a pair on purpose: up there, trees to the mill to signs
+and posters; down there, ore to the forge to tools. Each has a hand that
+works the raw material (an axe on a tree, a pick on a seam), a mill or a
+furnace in the middle, and a made thing carried out to where it does its
+work. The player should feel the rhyme -- the afterlife and hell are two
+works built on one plan, white and black -- and the differences below are
+what keeps the rhyme from being a repeat.
 
 Act 3 and act 4 are both production chains -- raw material to a processed
 one to a made thing, stations staffed by bodies, haulers between them --
@@ -21199,7 +21229,7 @@ spreadsheet of any loop. **I, the way out:** an escape line for the damned
 |---|---|---|---|---|
 | verb | build | fight | organize | forge |
 | what grows | a crew, a works | a party | support: a web (grove, mill, two branches) spread wide into a crowd | a chain: ore, bar, tool, a tier at a time, deep |
-| the click | the rock | a fighter's hit | a cloud (faith; a storm cloud, ink) | a seam face |
+| the click | the rock | a fighter's hit | a cloud (faith; a storm cloud, ink), then a tree (a chop, logs) | a seam face |
 | the pressure | the rock falls | the serpent's phases | the throne's speech and the wardens | the flares |
 | the gates | four shields (bought) | five defenses | meeting, slowdown, strike (shares of the crowd) | five barriers (broken by a tool) |
 | the end | the dome holds (a rescue) | the kill (a fight) | the strike (a cutscene) | the cage, the fifth barrier, opens (a rescue) |
@@ -21372,6 +21402,12 @@ Act 3's own calls, raised by the grove and the press (2026-10-17):
     and makes the strike the moment the yard stops. The other: D's first
     picture, every member walking out to the camp on joining, so God's yard
     empties as the act goes.
+15. **What hands the pair the axe?** Recommended: a click count
+    (`CHOP_CLICKS` cloud hits, then the `axe` beat), so it arrives on its
+    own as the opening is played and is timed to the grove opening. The
+    other: a faith rung on the plate's card, bought like a player buys
+    anything -- clearer as a choice, but it competes with the first
+    volunteers for the faith the opening is short of.
 
 Before any of it is code: mock-votes of God and the throne, Satan's
 unmasking, a cloud puffing faith down to the plate, heaven's trees and a

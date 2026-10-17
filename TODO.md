@@ -4,7 +4,7 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Acts 3 and 4: the afterlife and hell -- LOOPS CHOSEN, TWELVE CALLS OPEN (2026-10-17)
+## Acts 3 and 4: the afterlife and hell -- LOOPS CHOSEN, THIRTEEN CALLS OPEN (2026-10-17)
 
 "Acts 3 and 4: the afterlife and hell (design, not built)" in DESIGN.md,
 reworked for the owner's story (God forces the dead to work forever; the
@@ -21,7 +21,9 @@ not drawing and the crowd stepped as data, gated on PERF.md); **act 3 is
 the union**, and its loop is **the owner's grove and press** (given later
 the same day, replacing D's rim-a-click loop, which is kept as a note with
 E and F): the click is a cloud, which puffs faith down to the camp's
-plate (a grey storm cloud -- the yard's smog risen -- gives ink); faith
+plate (a grey storm cloud -- the yard's smog risen -- gives ink), and
+after `CHOP_CLICKS` cloud hits a member hands the pair an axe and a click
+on a tree is a chop (`TREE_CHOPS` to fell it, logs for the haulers); faith
 buys permanent volunteers (members hired out of God's yard) and saplings;
 the grove (God's untended trees, old growth then replanted) gives logs,
 the saw mill timber plus sawdust (a nuisance heap until the paper mill),
@@ -34,9 +36,12 @@ take down what is spent; the mill's fence (timber against sawdust) is the
 act's standing decision; gates at the first meeting (the grove opens),
 the slowdown (the paper branch opens, wardens double) and the strike;
 bands faith, +timber, +paper, then a pledge (a member) in the spark's
-place. Spelled out how act 3's wide, by-product web spread into a crowd
-differs from act 4's deep, single-file tool tiers, with tweaks against the
-overlap (no tiers in act 3, no by-product in act 4). **act 4 is the mine and the
+place. The heaven/hell parallel (trees to mill to signs; ore to forge to
+tools) is intentional -- the owner: "heaven and hell symmetry but
+different" -- and the differences are spelled out: act 3's wide,
+by-product web spread into a crowd against act 4's deep, single-file tool
+tiers, with tweaks against the overlap (no tiers in act 3, no by-product
+in act 4). **act 4 is the mine and the
 forge**, replacing expeditions -- a descending run of five chambers, each
 with one ore (dross, cinder iron, pitch copper, obsidian glass, adamant;
 working names), smelted with brimstone in furnaces whose heat is their
@@ -52,11 +57,12 @@ one defeat in heaven or two; Satan in hell or gone, five barriers or four,
 the cage worked or a cutscene; what the dead can do on the surface and
 when the yard's boards reopen; who gets their lives back; how it ships
 (lifespans first, what sets off the fall); the ending and a tail. Act 3's
-own (calls 9-14): does faith stay the clicked coin late; trees finite or
+own (calls 9-15): does faith stay the clicked coin late; trees finite or
 replanted; where ink comes from (storm clouds, tree galls, or the glare's
 soot); the top band (a pledge or a thunderhead drop); a picket mark for
 where signs go, and the fence a control or a fixed split; members stay at
-their posts until the strike or walk out on joining. The owner's order:
+their posts until the strike or walk out on joining; the axe unlocked by
+a click count or a faith rung. The owner's order:
 spec only, no code ("lets not build anything for act 3 yet"). Mocks of
 God, the unmasking, a cloud's puff, the grove, the camp's mills, signs and
 posters in the crowd going to ink, hell's chambers, the barriers and the
