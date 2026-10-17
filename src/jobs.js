@@ -99,7 +99,10 @@ export const AFTER_JOB = Object.freeze({
   JOIN:    'joiner',
   CARRY:   'carrier',
   PRINT:   'printer',
-  PASTE:   'paster'
+  PASTE:   'paster',
+  // A member raising a station off the shack, or the pair down off the
+  // pedestal: bought by no post of its own.
+  BUILD:   'builder'
 });
 
 export const HELL_JOB = Object.freeze({

@@ -176,6 +176,13 @@ export const ROWS = [
   // bought from the floating button, not a board (deep/buildbutton.js).
   { key: 'pod', part: 1, reach: deep },
 
+  // --- act 3, the afterlife: no lines here --------------------------------------
+  // Its rows (after/rows.js) are bought with the act's own coins through
+  // `buyAfter` and are not among the yard's rows (`__rows`), so this walk
+  // never meets them; test/after-loop.test.mjs buys them as a player does and
+  // reads the act back from a save. None is a ladder (DESIGN.md, act 3's
+  // call 12).
+
   // --- act 4, hell (upgrades/rows-hell.js) -------------------------------------
   // Off every board until hell has begun; its cards are paid in brimstone
   // and bars, which the flood does not pour, so `reach` stocks the store.

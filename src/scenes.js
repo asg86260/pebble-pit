@@ -468,9 +468,13 @@ function afterChain(slow) {
   for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
   S.after.camp += slow ? 30 : 0;   // the members a patchy field sent out, without their walk
   window.__afterGrant({ rebel: 9000, timber: slow ? 160 : 40, paper: slow ? 40 : 0, logs: 12 });
-  const stations = ['mill', 'chipper', 'workshop', ...(slow ? ['papermill', 'press'] : [])];
-  for (const st of stations) window.__buy(`after-build-${st}`);
-  for (let k = 0; k < 120 && stations.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
+  // In waves, each needing the one before: the saw mill and the chipper,
+  // then what stands on the saw mill, then the press on the paper mill.
+  const waves = [['mill', 'chipper'], ['workshop', ...(slow ? ['papermill'] : [])], slow ? ['press'] : []];
+  for (const wave of waves) {
+    for (const st of wave) window.__buy(`after-build-${st}`);
+    for (let k = 0; k < 120 && wave.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
+  }
   const A = AFTER_JOB;
   const posts = [A.CUT, A.CUT, A.HAUL, A.HAUL, A.HAUL, A.SAW, A.CHIP, A.JOIN, A.CARRY, A.CARRY, A.AGITATE, A.AGITATE,
                  ...(slow ? [A.PULP, A.PRINT, A.PASTE, A.PASTE] : [])];
@@ -2682,15 +2686,25 @@ export const SCENES = {
     run: () => { afterChain(false); window.__fast(90); window.__look(560); window.__holdShot(); } },
   'after-crowd': { about: 'the acts', say: "the afterlife's crowd half walked out: signs and posters out, the rims inking round them",
     run: () => { afterChain(true); window.__fast(120); window.__look(1300); window.__holdShot(); } },
-  'after-grove': { about: 'the acts', say: "the afterlife's grove: woodcutters at the trees, a tree coming down, a stump half dug, logs lying",
+  'after-grove': { about: 'the acts', say: "the afterlife's grove: four plots, a tree coming down, a stump half dug, a sapling, logs lying",
     run: () => {
-      afterChain(false); window.__fast(20);
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      window.__afterGrant({ rebel: 600, timber: 60 });
+      for (let k = 0; k < 3; k++) window.__buy('after-plot');
+      window.__buy('after-tree');
       window.__afterAxe();
-      const t = window.__afterTrees().find(p => p.stage === 3 && !p.falling);
-      if (t) for (let k = 0; k < 8; k++) window.__afterClick(t.x, t.y);
-      const st = window.__afterTrees().find(p => p.stump);
-      if (st) window.__afterClick(st.sx, st.sy);
-      window.__fast(0.5); window.__look(0); window.__holdShot();
+      // The plots stood at their stages, the setup the shot is not about:
+      // a grown tree, a big one, a pole, and a stump with its logs.
+      const plots = S.after.plots;
+      Object.assign(plots[1], { stage: 3, big: true });
+      Object.assign(plots[2], { stage: 2 });
+      Object.assign(plots[3], { stage: 0, stump: true, logs: 3 });
+      window.__fast(3);
+      const t = window.__afterTrees()[0];
+      for (let k = 0; k < 8; k++) window.__afterClick(t.x, t.y);
+      const st = window.__afterTrees()[3];
+      window.__afterClick(st.sx, st.sy);
+      window.__fast(0.4); window.__look(0); window.__holdShot();
     } },
   // The pedestal: the pair mid-line over the rebel pile, motes on their way
   // down, and agitators behind them at their own lines.
@@ -2699,7 +2713,7 @@ export const SCENES = {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       S.after.camp = 3; window.__afterGrant({ rebel: 200 });
       for (let k = 0; k < 3; k++) window.__buy('after-post-agitator');
-      window.__fast(20);
+      window.__fast(45);
       const at = window.__afterPair();
       for (let k = 0; k < 4; k++) { window.__afterClick(at.x, at.y); window.__fast(0.15); }
       window.__look(800); window.__holdShot();

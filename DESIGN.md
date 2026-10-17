@@ -20490,6 +20490,71 @@ piece a trip by builders (stations fade in when bought), lineage, the
 boards opened on the pointer and the click wired to input.js (Track C), and
 the pledge's keeper anything but standing by the station.
 
+**Reworked to the settled calls (2026-10-18)**, on the same placeholder art,
+to the owner's calls under "Act 3's own calls" and the decisions relayed the
+same day; where this and the paragraph above differ, this is what runs.
+
+- **Rebel, off the pedestal.** The coin is **rebel** (a working name; faith
+  is gone). The pair stand on a **pedestal** in the camp facing God's yard;
+  a click on them is a line of a speech -- a held pose, a shout mark -- that
+  knocks rebel off as motes, counted where they land on the pile at its
+  foot. Clouds are scenery: no cloud is clicked, and the plate, gatherers,
+  storm clouds and the thunderhead are cut. The pedestal's card sells a
+  bigger speech, **the axe** (bought, call 15; its `axe` beat plays when the
+  row is bought) and **agitator** posts: a member beside the pedestal giving
+  a slower, smaller line of its own. The speech and agitators make rebel
+  only and win nobody.
+- **Ink is cut** (call 11): signs are timber alone, posters paper alone; no
+  well, no storm clouds, no ink gatherer.
+- **Members walk out** (call 14). A soul whose rim closes leaves its slot
+  and walks to the camp, where it waits on the camp's ground; God's yard
+  empties, and every gate reads off the share walked out (`STRIKE_SHARE`
+  and the rest). Word of mouth and canvassers are gone: only signs and
+  posters ink a soul. Members in the camp are not workers: a **post** is
+  bought on a station's card with rebel (each dearer) and the member at the
+  back of the camp walks to it; nobody waiting, it stands empty.
+- **No bands** (call 12): act 3 is outside the eight-rungs rule. A card is
+  its posts plus two or three named upgrades, each a change on screen, paid
+  in rebel, timber and paper (`AFTER_UPGRADES`). No pledge, no keeper, no
+  `tierRows`. The act's rows are not on the yard's `__rows()`, so the
+  coverage table and the ladders check do not walk them; after-loop.test
+  buys and reloads them instead.
+- **The construction shack** stands from the start and lists every
+  station, priced, locked only behind one it truly needs (the workshop and
+  the paper mill on a sawdust or timber maker, the press on the paper mill).
+  The gates offer nothing. A station bought is raised in `AFTER_BUILD_PIECES`
+  bands, each fading in, by a member from the camp, or by the pair down off
+  the pedestal when the camp is empty (they climb back up after; no line
+  while they are down). The hall is gone with the doors it sold.
+- **Hand work first.** Every station is worked by the click before any
+  post: a click saws a cut, chips a log, pulls a sheet, joins a sign, pulls
+  a stack, all through one door, `workAfter(station, amount)` (after/work.js),
+  which a post's worker calls too, slower, and the gestures being mocked will
+  call later. The grove the same: with the axe a click chops, a stump blocks
+  its plot until dug (a few clicks), digging replants a sapling free;
+  **woodcutter** posts chop but leave stumps until **stump removal** is
+  bought.
+- **The grove** starts at one plot holding a grown tree (call 10); its card
+  clears plots (to `AFTER_PLOT_MAX`), quickens growth, grows bigger trees
+  (more logs a fall, planted big from then on) and buys stump removal.
+- **The fence is cut**: a log saws into a fixed split. The full sawdust heap
+  never stops the saw for good: with no paper mill a click on the heap tips
+  a load through a notch in the cloud floor beside it, and a sawyer tips one
+  once it has stood full a while.
+- **The chipper**, built off the shack beside the saw mill, turns a log into
+  sawdust alone; haulers take each log to whichever of the two standing has
+  the smaller pile. The paper mill's upgrades are a bigger vat and a drying
+  line.
+- **Carriers choose** where a sign goes (the palest files; call 13). The
+  throne's speech and the wardens push back as before. The strike beat
+  reads `strikeDue` and the axe beat `axeDue`; nothing in act 3 calls `owe`.
+
+Open from the rework: the hall's return, if it should have a job; a third
+upgrade for the saw mill (the second blade and a bigger heap stand now);
+the story's pair stand at the pedestal's foot while the placeholder pair
+are drawn on it (the climb up is not drawn); each station's hand gesture
+(being mocked); every number, for the pace tool.
+
 The owner: "clicking clouds to gather faith, you can buy permanent workers
 to spread the word / work with faith. what if there were trees in heaven,
 and we made this act about cutting trees, processing them into signs and

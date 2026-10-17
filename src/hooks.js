@@ -58,7 +58,7 @@ import { forgetWalk } from './deep/fauna.js';
 import { step, settleIntoWorld } from './game.js';
 import { rand, seedRng, seed } from './rng.js';
 import { verifyWorld, resetVerify } from './verify.js';
-import { JOB, TYPE, DEEP_JOBS } from './jobs.js';
+import { JOB, TYPE, DEEP_JOBS, AFTER_JOB } from './jobs.js';
 import { dustUnder, sweep, release } from './hands.js';
 import { setCloudUrl, setCloudFetch } from './cloud.js';
 import { surfaceY, colOf } from './grid.js';
@@ -1524,7 +1524,7 @@ HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, sho
 HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...S.after.stock, gate: S.after.gate,
   axe: S.after.axe, support: afterSupport(), union: afterUnion(), camp: campCount(), walking: walkingOut(),
   size: crowdSize(), signs: S.after.signs.length, posters: S.after.posters.length, bodies: S.after.bodies.length,
-  posted: S.after.bodies.filter(b => b.job && b.job !== 'builder').length, motes: S.after.motes.length,
+  posted: S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD).length, motes: S.after.motes.length,
   built: [...S.after.built], camped: S.after.camp,
   due: afterGate(), strike: strikeDue() } : null);
 HANDLES.__afterCardAt = (x, y) => cardAt(x, y);

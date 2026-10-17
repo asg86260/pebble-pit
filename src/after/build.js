@@ -12,6 +12,7 @@
 // kept after it stands, so its bands finish fading in.
 
 import { S } from '../state.js';
+import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_BUILD_PIECES, AFTER_BUILD_PIECE_S } from '../config.js';
 import { nextId } from './util.js';
 import { built } from './levels.js';
@@ -25,22 +26,22 @@ export function raiseStation(key) {
   return true;
 }
 const sites = () => Object.keys(S.after.raising).filter(k => !built(k));
-export const pairBuilding = () => !!S.after && S.after.bodies.some(b => b.job === 'builder' && b.pair != null);
+export const pairBuilding = () => !!S.after && S.after.bodies.some(b => b.job === AFTER_JOB.BUILD && b.pair != null);
 
 // Every site without a builder gets one: a member off the back of the camp,
 // or, with none waiting and the pair on the pedestal, the pair.
 export function fillBuilders() {
   const a = S.after;
   for (const key of sites()) {
-    if (a.bodies.some(b => b.job === 'builder' && b.site === key && b.state !== 'home')) continue;
+    if (a.bodies.some(b => b.job === AFTER_JOB.BUILD && b.site === key && b.state !== 'home')) continue;
     if (a.camp > 0) {
       a.camp -= 1;
       const at = campSpot(a.camp);
-      a.bodies.push({ id: nextId(), job: 'builder', site: key, pair: null, x: at.x, y: at.y, face: 1, state: 'work', t: 0, load: null, target: null, n: 0 });
+      a.bodies.push({ id: nextId(), job: AFTER_JOB.BUILD, site: key, pair: null, x: at.x, y: at.y, face: 1, state: 'work', t: 0, load: null, target: null, n: 0 });
     } else if (!pairBuilding()) {
       for (const k of [0, 1]) {
         const at = speakerAt(k);     // a speaker's spot is its left edge, a body's x its middle column
-        a.bodies.push({ id: nextId(), job: 'builder', site: key, pair: k, x: at.x + P, y: at.y, face: -1, state: 'work', t: 0, load: null, target: null, n: 0 });
+        a.bodies.push({ id: nextId(), job: AFTER_JOB.BUILD, site: key, pair: k, x: at.x + P, y: at.y, face: -1, state: 'work', t: 0, load: null, target: null, n: 0 });
       }
     }
   }

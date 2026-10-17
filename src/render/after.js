@@ -18,6 +18,7 @@ import { P, GREY, AFTER_FLOOR_CELLS, AFTER_FLOOR_TONES, AFTER_CARDS, AFTER_FALL_
          AFTER_WORK_HOLD_S, AFTER_TIP_HOLD_S, AFTER_SPILL_S,
          CROWD_FILES, CROWD_NEAR, RIM_PIECES, CROWD_X0 } from '../config.js';
 import { S } from '../state.js';
+import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { warning } from './pilemarks.js';
 import { afterX0, afterX1, afterFloor, plotX, stationBox, soulX, farX, soulY, slotX, crowdX1, stairFoot,
@@ -308,7 +309,7 @@ function drawBody(w, rim, fill) {
   else if (w.load === 'posters') { cell(x, y - P, 0); cell(x + P, y - P, 2); cell(x + P * 2, y - P, 0); }
   else if (w.load === 'tip') { cell(x, y - P, 4); cell(x + P, y - P, 4); }
   if (w.swing != null) {
-    if (w.job === 'agitator') shoutMark(x + P, y - P * 3);
+    if (w.job === AFTER_JOB.AGITATE) shoutMark(x + P, y - P * 3);
     else for (let k = 1; k <= 2; k++) cell(x + (w.face > 0 ? 2 + k : -k) * P, y - k * P, 10);
   }
 }

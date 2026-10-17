@@ -88,7 +88,7 @@ export const AFTER_FLOOR_TONES = [1, 1, 2, 1, 2, 3];
 // run; none is the spec's unless its comment says so.
 
 // --- the layout, left to right (place.js reads these) ---
-export const AFTER_GROVE_X0 = P * 4;       // the grove's first plot's left
+export const AFTER_GROVE_X0 = P * 12;      // the grove's first plot's left, clear of the counter in the view's corner
 export const AFTER_PLOTS0 = 1;             // plots the grove starts with, a grown tree in it (call 10, the owner's)
 export const AFTER_PLOT_MAX = 4;           // ...and the most its card clears
 export const AFTER_PLOT_STEP = P * 9;      // across a plot
@@ -96,8 +96,8 @@ export const AFTER_PLOT_STEP = P * 9;      // across a plot
 // walked out of God's yard stand here, a body a spot, until a post wants one.
 // Rows of AFTER_CAMP_COLS, each staggered half a spot, stepping up the screen;
 // past AFTER_CAMP_ROWS the spots start again at the front, a second layer.
-export const AFTER_CAMP_X0 = P * 42;
-export const AFTER_CAMP_COLS = 13;
+export const AFTER_CAMP_X0 = P * 52;
+export const AFTER_CAMP_COLS = 11;
 export const AFTER_CAMP_PITCH = P * 4;     // across a spot
 export const AFTER_CAMP_ROW = P * 2;       // a row's depth up the screen
 export const AFTER_CAMP_ROWS = 40;
