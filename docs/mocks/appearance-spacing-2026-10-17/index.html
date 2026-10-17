@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Appearance Spacing</title>
+<style>
+  :root { --ink: #111; --paper: #fafafa; --mute: #666; --line: #ccc; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ink: #eee; --paper: #161616; --mute: #999; --line: #444; } }
+  :root[data-theme="dark"] { --ink: #eee; --paper: #161616; --mute: #999; --line: #444; }
+  body { margin: 0; padding: 24px 16px 64px; background: var(--paper); color: var(--ink); font: 14px/1.5 ui-monospace, Consolas, monospace; }
+  main { max-width: 1400px; margin: 0 auto; }
+  h1 { font-size: 20px; letter-spacing: .2em; text-transform: uppercase; margin: 0 0 4px; }
+  h2 { font-size: 15px; letter-spacing: .12em; text-transform: uppercase; margin: 40px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  p, li { max-width: 70em; }
+  .note { color: var(--mute); }
+  .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .grid figure { margin: 0; }
+  .grid img { width: 100%; height: auto; display: block; border: 1px solid var(--line); image-rendering: pixelated; }
+  .grid figcaption { font-size: 12px; margin-top: 4px; }
+  .grid figcaption a { color: var(--mute); }
+  @media (max-width: 800px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  table { border-collapse: collapse; font-size: 12px; width: 100%; max-width: 70em; }
+  td, th { border: 1px solid var(--line); padding: 3px 6px; text-align: left; vertical-align: top; }
+  pre { background: color-mix(in srgb, var(--ink) 6%, transparent); padding: 8px 10px; overflow-x: auto; font-size: 12px; }
+  .wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+<h1>Appearance spacing</h1>
+<p class="note">The owner, 2026-10-17: "it just feels a bit messy. spacing is off ... between the sections. i like the individual pieces ... just giving things room to breathe."
+Every shot is the real page (scene <code>wardrobe</code>) with the variant's CSS injected for the shot only; no game CSS has changed.
+Each picture is the sheet cropped at 1:1; the link under it is the whole window.</p>
+
+<h2>What is wrong today</h2>
+<p>Measured off the page (1280x800 and 1920x1080 give the same sheet: 602x702 outer, 552px content). Tokens: <code>--gap-s</code> 4, <code>--gap-m</code> 8, <code>--pad-l</code> 14/24.</p>
+<div class="wrap"><table>
+<tr><th>gap</th><th>px</th><th>from</th></tr>
+<tr><td>sheet padding</td><td>14 top/bottom, 24 sides</td><td><code>--pad-l</code></td></tr>
+<tr><td>heading → switch</td><td>8</td><td><code>.held</code> gap, <code>--gap-m</code></td></tr>
+<tr><td>switch → name row</td><td>8</td><td><code>.wardrobe</code> gap, <code>--gap-m</code></td></tr>
+<tr><td>name row → title row</td><td>8</td><td><code>.wardfields</code> gap, <code>--gap-m</code></td></tr>
+<tr><td>title row → slots/close-up</td><td>8</td><td><code>.wardrobe</code> gap</td></tr>
+<tr><td>slots: row gap / slot → close-up</td><td>8 / 8</td><td><code>.wardstage</code> gap, <code>--gap-m</code></td></tr>
+<tr><td>close-up</td><td>192x180, centered in the 192 left between the slots (0 spare)</td><td>sizeBig</td></tr>
+<tr><td>slots → grid tab</td><td>8</td><td><code>.wardrobe</code> gap</td></tr>
+<tr><td>grid tab → grid box</td><td>0 (the tab sits on the box)</td><td>by design</td></tr>
+<tr><td>grid box padding</td><td>4; tiles inset 4 left, 14 right (scrollbar)</td><td><code>--gap-s</code></td></tr>
+<tr><td>tile gaps</td><td>4 x 4 (tiles 103x146)</td><td><code>--gap-s</code></td></tr>
+<tr><td>grid → randomize/clear</td><td>8</td><td><code>.wardrobe</code> gap</td></tr>
+<tr><td>randomize ↔ clear</td><td>8</td><td><code>.pair</code>, <code>--gap-m</code></td></tr>
+<tr><td>randomize/clear → back</td><td>8</td><td><code>.held</code> gap</td></tr>
+<tr><td>name/title label column</td><td>5em (60) + 8</td><td>hand-set <code>5em</code></td></tr>
+</table></div>
+<ul>
+<li><b>One gap everywhere, so no grouping.</b> Every vertical gap on the page is 8px: between the name and the title row (one thing) and between the title row and the slots (two different things) alike. Nothing says where a section ends, which is what reads as "messy".</li>
+<li><b>The buttons are three sections' worth of 8.</b> Randomize/clear sit 8 under the grid and the back 8 under them; the foot reads as part of the grid.</li>
+<li><b>The name and title rows are on different columns.</b> Name is <code>5em 1fr auto auto</code>, title <code>5em auto 1fr auto auto</code>: the field ends 26px short of the title row's <code>&gt;</code>, the count floats between them.</li>
+<li><b>The grid's gutters are uneven.</b> 4px of padding on the left, 4 + the scrollbar (~10) on the right, so the five tiles sit off-center in the box.</li>
+<li><b>The sheet's edge is thinner top and bottom (14) than at the sides (24)</b>, and the heading has only 8 under it.</li>
+<li><b>Hand-set px</b> inside the pieces (2px 8px on the switch and arrows, 3px 10px 2px on the tab, 3px 4px on slots) are the pieces' own and stay; the section spacing is all tokens, just one token.</li>
+<li><b>The budget:</b> today the grid shows 1.66 rows; its floor is <code>WARD_GRID_ROWS</code> = 1.5, about 24px. Any variant spends that or grows the sheet.</li>
+</ul>
+
+<h2>The variants</h2>
+<ul>
+<li><b>A, consistent rhythm</b>: 12px between every section (heading, switch, name+title, outfit, grid, buttons), 4px inside one; the two rows on one set of columns; the grid's scrollbar room on both sides. Grid 1.58 rows.</li>
+<li><b>B, grouped</b>: four groups (who, outfit, grid, buttons), 4px inside, 17px between with a grey hairline halfway; heading 8 over the switch; A's column and gutter fixes. Grid 1.56 rows.</li>
+<li><b>C, airy</b>: B plus a 20/32px sheet edge and 8px grid padding and tile gaps. <b>Something gives:</b> the sheet's size is its content box, so the padding grows it to 618x714 (from 602x702), which still fits a 1280x800 window (room to 796). Held to 702 instead, the grid would fall under 1.5 rows and the sheet scroll ~12px. Grid 1.54 rows.</li>
+</ul>
+
+<h2>1280x800, light</h2>
+<div class="grid">
+<figure><img src="today-1280x800-light-sheet.png" alt="today"><figcaption>today · <a href="today-1280x800-light.png">window</a></figcaption></figure>
+<figure><img src="a-1280x800-light-sheet.png" alt="A"><figcaption>A rhythm · <a href="a-1280x800-light.png">window</a></figcaption></figure>
+<figure><img src="b-1280x800-light-sheet.png" alt="B"><figcaption>B grouped · <a href="b-1280x800-light.png">window</a></figcaption></figure>
+<figure><img src="c-1280x800-light-sheet.png" alt="C"><figcaption>C airy · <a href="c-1280x800-light.png">window</a></figcaption></figure>
+</div>
+<h2>1280x800, dark</h2>
+<div class="grid">
+<figure><img src="today-1280x800-dark-sheet.png" alt="today"><figcaption>today · <a href="today-1280x800-dark.png">window</a></figcaption></figure>
+<figure><img src="a-1280x800-dark-sheet.png" alt="A"><figcaption>A rhythm · <a href="a-1280x800-dark.png">window</a></figcaption></figure>
+<figure><img src="b-1280x800-dark-sheet.png" alt="B"><figcaption>B grouped · <a href="b-1280x800-dark.png">window</a></figcaption></figure>
+<figure><img src="c-1280x800-dark-sheet.png" alt="C"><figcaption>C airy · <a href="c-1280x800-dark.png">window</a></figcaption></figure>
+</div>
+<h2>1920x1080, light</h2>
+<div class="grid">
+<figure><img src="today-1920x1080-light-sheet.png" alt="today"><figcaption>today · <a href="today-1920x1080-light.png">window</a></figcaption></figure>
+<figure><img src="a-1920x1080-light-sheet.png" alt="A"><figcaption>A rhythm · <a href="a-1920x1080-light.png">window</a></figcaption></figure>
+<figure><img src="b-1920x1080-light-sheet.png" alt="B"><figcaption>B grouped · <a href="b-1920x1080-light.png">window</a></figcaption></figure>
+<figure><img src="c-1920x1080-light-sheet.png" alt="C"><figcaption>C airy · <a href="c-1920x1080-light.png">window</a></figcaption></figure>
+</div>
+<h2>1920x1080, dark</h2>
+<div class="grid">
+<figure><img src="today-1920x1080-dark-sheet.png" alt="today"><figcaption>today · <a href="today-1920x1080-dark.png">window</a></figcaption></figure>
+<figure><img src="a-1920x1080-dark-sheet.png" alt="A"><figcaption>A rhythm · <a href="a-1920x1080-dark.png">window</a></figcaption></figure>
+<figure><img src="b-1920x1080-dark-sheet.png" alt="B"><figcaption>B grouped · <a href="b-1920x1080-dark.png">window</a></figcaption></figure>
+<figure><img src="c-1920x1080-dark-sheet.png" alt="C"><figcaption>C airy · <a href="c-1920x1080-dark.png">window</a></figcaption></figure>
+</div>
+
+<h2>The exact changes (the build is a copy)</h2>
+<p>Each is the whole override file beside this page; built, it goes into <code>src/style.css</code>'s picker block, the token in <code>:root</code> next to <code>--gap-s</code>/<code>--gap-m</code>, and the row columns inside <code>@media (min-width: 561px)</code> so the phone rows keep theirs.</p>
+<p><b>A</b> (<a href="a-rhythm.css">a-rhythm.css</a>): new <code>--gap-l: 12px</code>; ward sheet gap <code>--gap-m</code> → <code>--gap-s</code> with <code>#wardhead</code> padding-bottom <code>calc(--gap-l - --gap-s)</code>; <code>.wardrobe</code> gap → <code>--gap-l</code>; <code>.wardfields</code>, <code>.wardstage</code>, <code>.wardfoot</code> gap → <code>--gap-s</code>; both rows <code>5em 2.6em 1fr 2.6em 2.6em</code> (input 2/4, count 4, die 5); <code>.wardgrids</code> <code>scrollbar-gutter: stable both-edges</code>.</p>
+<p><b>B</b> (<a href="b-grouped.css">b-grouped.css</a>): new <code>--gap-l: 16px</code>, <code>--ward-rule: 1px solid var(--ink-7)</code>; ward sheet gap → <code>--gap-s</code>, <code>#wardhead</code> padding-bottom <code>calc(--gap-m - --gap-s)</code>; <code>.wardrobe</code>, <code>.wardfields</code>, <code>.wardstage</code>, <code>.wardfoot</code> gap → <code>--gap-s</code>; <code>.wardfields</code>/<code>.wardstage</code>/<code>.wardbox</code> padding-bottom <code>calc(--gap-l / 2)</code> + border-bottom <code>--ward-rule</code>; <code>.wardstage</code>/<code>.wardbox</code>/<code>.wardfoot</code> padding-top <code>calc(--gap-l / 2 - --gap-s)</code>; A's rows and gutter. Padding and borders, never margins: <code>fitGrid</code>'s <code>stacked</code> sums boxes and row gaps, and a margin would be missing from <code>--ward-min</code>.</p>
+<p><b>C</b> (<a href="c-airy.css">c-airy.css</a>): B, plus ward sheet padding <code>20px 32px</code> (from <code>--pad-l</code> 14/24), <code>.wardgrids</code> padding <code>--gap-s</code> → <code>--gap-m</code>, <code>.wardtiles</code> gap <code>--gap-s</code> → <code>--gap-m</code>. The ward sheet's <code>max-height</code> calc subtracts <code>--pad-l-y</code>; built, it should subtract the 20px it now has.</p>
+
+<h2>What this cannot show</h2>
+<p class="note">One state: you, the head slot, nobody's long name. A Steam pad's name button (<code>.wardask</code>) would need its own column in A–C's row grid. The phone layout is untouched by all three. The new-yard steps (<code>wardrobe-offer</code>) are not shot.</p>
+<p class="note">Reshoot: <code>GAME=http://localhost:&lt;port&gt;/ node docs/mocks/appearance-spacing-2026-10-17/shoot.mjs</code> (<code>--measure</code> prints the gaps).</p>
+</main>
+</body>
+</html>

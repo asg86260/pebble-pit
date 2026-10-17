@@ -1,0 +1,19 @@
+/* A, consistent rhythm: one step between every section (--gap-l, 12px), one
+   step inside a section (--gap-s, 4px), and every row on the same column
+   lines. Sections: heading | switch | name+title | slots+close-up | grid |
+   buttons. */
+:root { --gap-l: 12px; }
+.held:has(> .wardrobe:not([hidden])) { gap: var(--gap-s); }
+.held #wardhead { padding-bottom: calc(var(--gap-l) - var(--gap-s)); }
+.held .wardrobe { gap: var(--gap-l); }
+.wardrobe .wardfields { gap: var(--gap-s); }
+.wardrobe .wardstage { gap: var(--gap-s); }
+.held .wardrobe .wardfoot { gap: var(--gap-s); }
+/* the name row and the title row on one set of columns: label | < or the
+   field's left | ... | > or the count | die */
+.wardrobe .wardrow, .wardrobe .wardname { grid-template-columns: 5em 2.6em 1fr 2.6em 2.6em; }
+.held .wardrobe .wardname input { grid-column: 2 / 4; }
+.wardrobe .wardname .wardcount { grid-column: 4; }
+.wardrobe .wardname .warddie { grid-column: 5; }
+/* the scrollbar's room kept on both sides, so the tiles sit centered */
+.wardrobe .wardbox > .wardgrids { scrollbar-gutter: stable both-edges; }
