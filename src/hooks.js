@@ -644,6 +644,8 @@ const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES,
                         ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                         ...APOTHECARY_UPGRADES,
                         ...(deepRows.DEEP_UPGRADES || []),
+                        // Act 4's boards (upgrades/rows-hell.js), shown once hell has begun.
+                        ...HELL_UPGRADES,
                         // On the crew board, not the bench.
                         HOUSE_ROW];
 
@@ -1377,6 +1379,45 @@ HANDLES.__goPlace = v => {
 HANDLES.__actOwe = key => { if (key == null) forgetOwed(); else owe(key); };
 // How many frames each act's place has been stepped this session.
 HANDLES.__actFrames = () => ({ after: afterFrames(), hell: hellFrames() });
+
+// --- act 4: the mine and the forge (hell/; DESIGN.md, "Acts 3 and 4", act 4) ---
+// The setup a check is not about: hell begun and its facts patched -- a count
+// by ore or a chamber's record merged, anything else set. Returns `S.hell`.
+// What a check IS about goes through `__clickHell` and `__buy`.
+import { HELL_UPGRADES } from './upgrades/rows-hell.js';
+import { clickHell, hellWallDue } from './hell/index.js';
+import { flareWarning } from './hell/chambers.js';
+import { faceX as hellFaceX, faceTop as hellFaceTop, barrierBox as hellBarrierBox } from './hell/place.js';
+HANDLES.__hell = (patch = {}) => {
+  if (!hellOn()) return null;
+  const h = beginHell();
+  for (const [k, v] of Object.entries(patch)) {
+    if (Array.isArray(h[k]) && v && typeof v === 'object' && !Array.isArray(v))
+      for (const [i, rec] of Object.entries(v)) {
+        if (!rec || typeof rec !== 'object') { h[k][i] = rec; continue; }
+        const was = h[k][i];
+        for (const [f, fv] of Object.entries(rec))
+          was[f] = fv && typeof fv === 'object' && was[f] && typeof was[f] === 'object' ? { ...was[f], ...fv } : fv;
+      }
+    else if (h[k] && typeof h[k] === 'object' && !Array.isArray(h[k]) && v && typeof v === 'object') Object.assign(h[k], v);
+    else h[k] = v;
+  }
+  S.shopStale = true;
+  return h;
+};
+// A click in hell at a world point, the pointer's way in (input.js calls
+// `clickHell` the same, once it is wired).
+HANDLES.__clickHell = (x, y) => clickHell(x, y);
+// The story's seams, read: the barrier whose fall is owed, and a chamber's
+// flare warning.
+HANDLES.__hellWallDue = () => hellWallDue();
+HANDLES.__hellFlareWarning = i => flareWarning(i);
+// Where to click on face `i` or barrier `i`, in world pixels.
+HANDLES.__hellAt = (what, i) => {
+  if (what === 'face') { const d = S.hell?.seams[i] || 0; return { x: hellFaceX(i, d) + 1, y: hellFaceTop(i) + 2 }; }
+  const b = hellBarrierBox(i);
+  return { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+};
 
 // --- the two of them (wardrobe.js) ---
 // Who they are and what they wear, read for a check: each one's uid, the

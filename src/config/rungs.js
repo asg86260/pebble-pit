@@ -21,7 +21,11 @@
 // (test/cut-pockets.test.mjs measures the cut at the top rung), so a higher
 // figure would be a rung that changes nothing.
 
+import { HELL_LADDERS } from './hell.js';
+
 export const LADDERS = {
+  // --- act 4, hell (config/hell.js): its four cards, led by brimstone ---------
+  ...HELL_LADDERS,
   // --- the bench: you --------------------------------------------------------
   carry:        { value: [1, 2, 3, 4, 6, 8, 10, 15, 20], dust: [20, 50, 100, 150, 200, 400, 600, 1000] },       // px you can carry
   speed:        { value: [1, 1.5, 2, 2.5, 3, 4, 6, 8, 12], dust: [100, 150, 200, 300, 400, 600, 800, 1200] },      // hits/s, your swing

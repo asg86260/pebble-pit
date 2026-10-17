@@ -8,6 +8,7 @@
 import { msg, placeOf } from './lang.js';
 import { S } from './state.js';
 import { RUNGS } from './config.js';
+import { isHellCoin, hellPurse } from './hell/coins.js';
 
 // Every currency is a mark, never a word. Adding one is a line here and a line
 // in the stylesheet. Time is a price like the coins and reads the same way.
@@ -59,6 +60,8 @@ export const purse = money =>
   money === 'spark' ? S.sparks :
   // Every scale lying on the deep's floor, counted by the bed that holds them.
   money === 'scale' ? S.scales :
+  // Hell's, off its store and its anvil (hell/coins.js).
+  isHellCoin(money) ? hellPurse(money) :
   S.stored;
 
 // What a unit is *drawn* as, for the units the yard has a coin for. A unit not
