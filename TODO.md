@@ -4,28 +4,39 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Acts 3 and 4: the afterlife and hell -- SPECCED, WAITING ON THE OWNER (2026-10-17)
+## Acts 3 and 4: the afterlife and hell -- LOOPS CHOSEN, SIX CALLS OPEN (2026-10-17)
 
 "Acts 3 and 4: the afterlife and hell (design, not built)" in DESIGN.md,
 reworked for the owner's story (God forces the dead to work forever; the
 pair take God down; God is Satan unmasked; the dead travel back to the
 surface; act 4 frees the real God in hell; lives returned, home) and the
 owner's rule that neither act's loop is combat and each act feels distinct.
-Fifteen beats, cutscene by cutscene; lifespans and lineage as the ground;
-act 3's first-draft loops kept and judged again, three non-combat loops,
-recommended **D, the union** (organize the dead out of God's yard; the
-strike starves the glare and unmasks Satan); the ghost road back to the
-surface (ghosts carry, not work); act 4's three loops, recommended **G,
-expeditions** (trips down through hell against the heat, four anchors on
-God's chains); rules (save shape, `AFTERLIFE_ON` / `HELL_ON`, the house
-falling and rebuilt, the wardrobe, neutral achievements); sizing (each act
-L, lifespans M) and a build order. Blocked on the owner's eight calls: does
-the yard keep running and aging; act 3's loop; one defeat in heaven or two;
-act 4's loop and where Satan ends; what the dead can do on the surface; who
-gets their lives back; how it ships (and lifespans first, and what sets off
-the fall); the ending and an endless tail. The owner's order: spec only, no
-code ("lets not build anything for act 3 yet"). Mocks of God, the
-unmasking, the crowd and hell before any build.
+Sixteen beats, cutscene by cutscene; lifespans and lineage as the ground.
+The owner's calls of 2026-10-17 are in: **everything keeps running** (the
+yard and the deep run and age while the pair are dead -- worked through:
+the yard runs on its last rungs to the brim, lines grow generations so the
+ghosts come down among descendants, souls keep rising into the crowd and
+nudge the strike's bar, four places a frame paid for by off-screen places
+not drawing and the crowd stepped as data, gated on PERF.md); **act 3 is
+D, the union** (E and F kept as a note); **act 4 is the mine and the
+forge**, replacing expeditions -- a descending run of five chambers, each
+with one ore (dross, cinder iron, pitch copper, obsidian glass, adamant;
+working names), smelted with brimstone in furnaces whose heat is their
+chamber's depth, forged at the anvil into five tool tiers; each tier's
+tool breaks the barrier at its chamber's far side (rubble, a bone wall, a
+lava gate, the anchor chains, the cage itself), worked down over time by a
+wall gang, which opens the next chamber and ore; every fall ends with the
+next barrier ringing the tool off, so a failed attempt names the next
+ore; the union's members come down as the crew; the yard sends sparks for
+the last band, ore as flux, the deep's water to quench. Spelled out how it
+differs from act 1's boulder and bought shields. Still open (calls 3-8):
+one defeat in heaven or two; Satan in hell or gone, five barriers or four,
+the cage worked or a cutscene; what the dead can do on the surface and
+when the yard's boards reopen; who gets their lives back; how it ships
+(lifespans first, what sets off the fall); the ending and a tail. The
+owner's order: spec only, no code ("lets not build anything for act 3
+yet"). Mocks of God, the unmasking, the crowd, hell's chambers, the
+barriers and the forge before any build.
 
 ## Who you are: Steam names, translations -- WAITING ON THE OWNER (2026-10-16)
 
