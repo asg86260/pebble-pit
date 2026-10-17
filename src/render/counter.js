@@ -11,6 +11,16 @@ import { shown } from '../tween.js';
 import { safeBottom } from '../world.js';
 import { portalNearEdge } from './portal.js';
 import { drawable, widthOf, writeCount } from './numfont.js';
+import { actsCount } from '../actsread.js';
+
+// An act's coin's mark, a placeholder until each act's coins are drawn: a
+// hollow square in the MARK box (the owner's, with the coins' mocks).
+function drawActMark(g, x, y) {
+  g.fillRect(x + 1, y + 1, MARK - 2, 2);
+  g.fillRect(x + 1, y + MARK - 3, MARK - 2, 2);
+  g.fillRect(x + 1, y + 1, 2, MARK - 2);
+  g.fillRect(x + MARK - 3, y + 1, 2, MARK - 2);
+}
 
 // Drawn in **screen** pixels, so it stays the size it is however far the yard
 // has been scaled down to fit the window.
@@ -59,6 +69,9 @@ export const overCount = (sx, sy) => !!countBox && sx >= countBox.x && sx < coun
 // counts up and a purchase counts down. Gathered before any of it is placed,
 // because how wide the card is decides where it can stand.
 export function countLines() {
+  // In an act's place the card is that place's purse (actsCount): the yard's
+  // coins are below, and nothing carries them up or down but a ghost.
+  if (S.view === 'after' || S.view === 'hell') return actsCount(S.view).map(l => ({ cell: 'act', text: digits(Math.round(l.n)) }));
   const dust = digits(Math.round(shown('dust', S.stored)));
   const lines = [{ cell: null, text: dust }];
   if (S.seenShard) lines.push({ cell: SHARD_CELL, text: digits(Math.round(shown('card:shard', S.shards))) });
@@ -99,7 +112,7 @@ export function drawCount() {
   // In the deep the pit is overhead, not beside the card: the card keeps to
   // the left edge of the glass, and the crusher stands far enough in from the
   // deep's left end to clear it (DEEP_SPOTS in config/deep.js).
-  if (S.view === 'deep') x = EDGE;
+  if (S.view !== 'yard') x = EDGE;
   x = Math.round(x);                // whole pixels, so the marks' cells stay crisp
   // `y` is the bottom row's baseline and the box hangs above it, so the card's
   // own bottom edge is `y + PAD`.
@@ -161,7 +174,8 @@ export function drawCount() {
   if (!key) {
     markKey = '';
     ctx.fillStyle = '#000';
-    drawCoin('dust', x, y - MARK, MARK_PX);
+    if (lines[0].cell === 'act') drawActMark(ctx, x, y - MARK);
+    else drawCoin('dust', x, y - MARK, MARK_PX);
   } else {
     if (markKey !== key) {
       markCan = markCan || document.createElement('canvas');
@@ -178,6 +192,7 @@ export function drawCount() {
       lines.forEach((l, i) => {
         const at = y - (lines.length - 1 - i) * ROW;
         if (!l.cell) drawCoin('dust', x, at - MARK, MARK_PX, g);
+        else if (l.cell === 'act') drawActMark(g, x, at - MARK);
         else if (l.cell === 'scale') drawScale(g, x, at - MARK);
         else drawMark(l.cell, x + MARK / 2, at - MARK / 2, MARK, true, g);
       });

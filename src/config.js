@@ -58,6 +58,8 @@ export * from './config/riftlife.js';
 // Acts 3 and 4, the scaffold (DESIGN.md, "Acts 3 and 4").
 export * from './config/after.js';
 export * from './config/hell.js';
+// Acts 3 and 4's connective tissue: the portals, the beats, the ghosts, the mansion.
+export * from './config/acts.js';
 
 // --- turning the knobs ------------------------------------------------------
 // One dial, one row, one home.

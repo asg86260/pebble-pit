@@ -77,6 +77,7 @@ import { sfx } from '../audio.js';
 import { holdStill, roleOf, meetHim } from '../stage.js';
 import { holdHer } from '../abyssintro.js';
 import { finaleBody } from '../finale.js';
+import { mansionBody } from '../mansion.js';
 
 // The yard is celebrating, and the dance ends at the clock and nowhere else.
 // A fall is never a party: read as a dance by `danceUntil > 0`, a stale
@@ -184,6 +185,10 @@ const STAGES = [
   // house, and the one going to take up her gear.
   // Above the scene's hold, which would stand the crowd still as well.
   w => finaleBody(w),
+
+  // The mansion's (mansion.js): a builder borrowed for the ending's build,
+  // a piece a trip, while the yard runs on around it.
+  w => mansionBody(w),
 
   // Held still while a scene holds the yard (stage.js): the rock's gang and
   // the deep's fighters stop and hold their pose. Above the commute, so a

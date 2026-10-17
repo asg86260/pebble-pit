@@ -7665,6 +7665,195 @@
   "text": "finish act 2"
  },
  {
+  "id": "act-goon",
+  "group": "The shell",
+  "where": "src/render/portals.js",
+  "context": "the card over the house after the finale: pressing it begins act 3 (call 7)",
+  "text": "go on"
+ },
+ {
+  "id": "act-house-fall",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the rock falls on the house",
+  "text": "the house falls"
+ },
+ {
+  "id": "act-arrive",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the souls arrive on the cloud",
+  "text": "the afterlife"
+ },
+ {
+  "id": "act-meet-god",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: God at the throne",
+  "text": "God holds out a pick"
+ },
+ {
+  "id": "act-refuse",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the pair refuse the work",
+  "text": "they set the pick down"
+ },
+ {
+  "id": "act-axe",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the axe handed over",
+  "text": "an axe"
+ },
+ {
+  "id": "act-strike",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the strike",
+  "text": "the strike"
+ },
+ {
+  "id": "act-unmask",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the unmasking",
+  "text": "God is Satan"
+ },
+ {
+  "id": "act-hell-told",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: Satan's line",
+  "text": "God is caged in hell"
+ },
+ {
+  "id": "act-ghost-road",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the cloud stair let down",
+  "text": "the road down opens"
+ },
+ {
+  "id": "act-haunt",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the pair back on the yard as ghosts",
+  "text": "back on the yard, as ghosts"
+ },
+ {
+  "id": "act-descend",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the first descent into hell",
+  "text": "hell"
+ },
+ {
+  "id": "act-wall-first",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the yard's pick rings off the rubble",
+  "text": "the pick rings off"
+ },
+ {
+  "id": "act-wall",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: a barrier down",
+  "text": "barrier ${n} down"
+ },
+ {
+  "id": "act-unchain",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the cage open",
+  "text": "God is free"
+ },
+ {
+  "id": "act-alive",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the pair's lives given back",
+  "text": "their lives back"
+ },
+ {
+  "id": "act-home-again",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the walk home",
+  "text": "home"
+ },
+ {
+  "id": "act-mansion",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "act beat line, placeholder: the freed souls gathering at the mansion",
+  "text": "the mansion"
+ },
+ {
+  "id": "mansion-word",
+  "group": "The shell",
+  "where": "play.html",
+  "context": "the ending's sheet heading, placeholder",
+  "text": "the end"
+ },
+ {
+  "id": "mansion-why",
+  "group": "The shell",
+  "where": "play.html",
+  "context": "the ending's sheet line, placeholder",
+  "text": "a mansion, for the two of you."
+ },
+ {
+  "id": "mansion-keep",
+  "group": "The shell",
+  "where": "play.html",
+  "context": "the ending's sheet dismiss button",
+  "text": "keep playing"
+ },
+ {
+  "id": "obj-act-goon",
+  "group": "The shell",
+  "where": "src/objectives.js",
+  "context": "objective line, placeholder: begin act 3",
+  "text": "say go on"
+ },
+ {
+  "id": "obj-act-union",
+  "group": "The shell",
+  "where": "src/objectives.js",
+  "context": "objective line, placeholder: act 3's loop",
+  "text": "take God down"
+ },
+ {
+  "id": "obj-act-road",
+  "group": "The shell",
+  "where": "src/objectives.js",
+  "context": "objective line, placeholder: the road down",
+  "text": "take the road down"
+ },
+ {
+  "id": "obj-act-hell",
+  "group": "The shell",
+  "where": "src/objectives.js",
+  "context": "objective line, placeholder: into hell",
+  "text": "go down to hell"
+ },
+ {
+  "id": "obj-act-cage",
+  "group": "The shell",
+  "where": "src/objectives.js",
+  "context": "objective line, placeholder: act 4's loop",
+  "text": "free God"
+ },
+ {
+  "id": "obj-act-home",
+  "group": "The shell",
+  "where": "src/objectives.js",
+  "context": "objective line, placeholder: the walk home",
+  "text": "go home"
+ },
+ {
   "id": "row-hellface",
   "group": "Act 4 (placeholder)",
   "where": "src/upgrades/rows-hell.js",

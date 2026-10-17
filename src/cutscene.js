@@ -83,6 +83,12 @@ const SHIELD = {
   }
 };
 const sceneOf = name => SCENES[name] || SHIELD;
+// A scene whose row is kept by the module that plays it (actbeats.js, the
+// acts' beats), registered on first play and read like every other.
+export function addScene(name, row) {
+  SCENES[name] = row;
+  fronts.delete(name);
+}
 
 // What every scene is about: the two of them and the serpent in all its
 // shapes, with what the pointer is holding. A shield's answer and the yard's

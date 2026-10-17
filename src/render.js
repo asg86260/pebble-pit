@@ -8,7 +8,7 @@
 
 import { CREW_FADE, P, MAGIC_TONES, RIPPLE_RINGS, RIPPLE_GAP } from './config.js';
 import { crewView } from './prefs.js';
-import { ctx } from './render/ctx.js';
+import { ctx, canvas, paintOn } from './render/ctx.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
 
@@ -62,6 +62,8 @@ import { drawLevelUpBack, drawLevelUpFront } from './render/levelup.js';   // tr
 import { drawSinking, drawLifting, drawIntoCrusher } from './render/scales.js';
 import { drawFireworks, drawHungKits, drawFinaleDeep, drawFinaleYard } from './render/finale.js';
 import { drawHome } from './render/home.js';
+import { drawActsYard, drawActsDeep, drawActsAfter, drawActsHell, drawActBodies, drawActCaption } from './render/portals.js';
+import { drawMansion } from './render/mansion.js';
 import { drawAfterBackdrop, drawAfterStair, drawAfterYard, drawAfterGrove, drawAfterCamp, drawAfterCrowd, drawAfterSky } from './render/after.js';
 import { drawHellBackdrop, drawHellChambers, drawHellSeams, drawHellForge, drawHellBarriers, drawHellCage } from './render/hell.js';
 import { S } from './state.js';
@@ -195,6 +197,8 @@ const LAYERS = [
   { name: 'kit stands', draw: drawKitStands },   // and the kit put out ready at each of them
   { name: 'garage', draw: drawGarage },           // where the forklifts go when there is nothing to fetch
   { name: 'home', draw: drawHome },               // the two of them's house at the left end, and its woodpile (render/home.js)
+  { name: 'mansion', draw: drawMansion },         // and the mansion raised on its ground at the end (render/mansion.js)
+  { name: 'acts-yard', draw: drawActsYard },      // heaven's tear over the ruin and its cloud stair, the rock on the ruin, the go-on card (render/portals.js)
   { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
   // Act 3's afterlife (render/after.js), drawn only with the camera up there:
   // the backdrop, then the place back to front. The order past the backdrop
@@ -206,6 +210,10 @@ const LAYERS = [
   { name: 'after camp', draw: drawAfterCamp },
   { name: 'after crowd', draw: drawAfterCrowd },
   { name: 'after sky', draw: drawAfterSky },
+  // The acts' connective tissue up there (render/portals.js): heaven's tear in
+  // the cloud floor, and the souls and ghosts walking the road.
+  { name: 'acts-after', draw: drawActsAfter },
+  { name: 'acts-after-bodies', draw: () => drawActBodies('after') },
   // Act 4's hell (render/hell.js), the same: drawn only with the camera down there.
   { name: 'hell backdrop', draw: drawHellBackdrop },
   { name: 'hell chambers', draw: drawHellChambers },
@@ -213,6 +221,8 @@ const LAYERS = [
   { name: 'hell forge', draw: drawHellForge },
   { name: 'hell barriers', draw: drawHellBarriers },
   { name: 'hell cage', draw: drawHellCage },
+  { name: 'acts-hell', draw: drawActsHell },
+  { name: 'acts-hell-bodies', draw: () => drawActBodies('hell') },
   // The deep (render/deep.js), back to front, drawn only while the camera is
   // down there: the roof and the underside of the surface, the water, the
   // floor, the scales lying on it and its stations, then the serpent and
@@ -230,6 +240,7 @@ const LAYERS = [
   { name: 'deep portal', draw: drawDeepPortal }, // the way up, hanging in the water behind it all
   { name: 'focus lines', draw: drawFocusLines },  // the serpent on the brink: rays in the water, behind the floor and all on it
   { name: 'deep floor', draw: drawDeepFloor },
+  { name: 'acts-deep', draw: drawActsDeep },      // hell's white-hot slit in the floor (render/portals.js)
   { name: 'serpent diving', draw: drawSerpentDiving },   // the first break's dive, behind the stations and the bed
   // The scales, then the stations standing in front of them: the bed can
   // heap forty cells deep, and a station buried in its own coin could not
@@ -252,6 +263,7 @@ const LAYERS = [
   { name: 'party', draw: drawFighters },
   { name: 'freed', draw: drawFreed },   // him out of the serpent, walking to her
   { name: 'finale deep', draw: drawFinaleDeep },  // and the two of them after, her gear coming off, the way up
+  { name: 'acts-deep-bodies', draw: () => drawActBodies('deep') },   // the ghosts on the road down
   { name: 'orb', draw: drawOrb },       // the constrict's bolts and orb round a fighter
   { name: 'level-up front', draw: drawLevelUpFront },
   { name: 'shots', draw: drawShots },
@@ -272,6 +284,7 @@ const LAYERS = [
   { name: 'brew steam', draw: drawBrewSteam },   // off the pots, on the crew's plane: in front of the buildings
   { name: 'says', draw: drawSays, dim: 1 },      // and what any of them stood about is saying
   { name: 'finale', draw: drawFinaleYard },      // the two of them, down the yard and at its end for good
+  { name: 'acts-bodies', draw: () => drawActBodies('yard') },   // the souls and ghosts on the road, the mansion's gathering (render/portals.js)
   { name: 'puffs', draw: drawPuffs },            // what the crew are putting up there right now
   { name: 'smog', draw: drawSmog },              // and what it has gathered into up there
   // The serpent's head over the liquid it came out of, and the one it takes
@@ -322,6 +335,7 @@ const LAYERS = [
   // The scene's bands, over everything that is read: they step in over the
   // counter rather than it vanishing under them.
   { name: 'letterbox', draw: drawLetterbox },
+  { name: 'acts-caption', draw: drawActCaption },  // an act beat's placeholder line, in the band (render/portals.js)
 
   // A strike's instant, a dark pane over the finished frame. In screen pixels
   // it would be shared with the deep, which is under water and has no sky.
@@ -360,7 +374,7 @@ export const asPicture = on => { picture = on; };
 // moment (view.js moves it at the black).
 const DEEP = new Set(['deep zones', 'deep water', 'deep fauna', 'deep motes', 'deep portal', 'focus lines', 'deep floor', 'deep stations', 'hung kit', 'finale deep', 'deep bed',
                       'meal gulped', 'meal', 'deep sight', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'charge', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
-                      'fight numbers', 'status posts']);
+                      'fight numbers', 'status posts', 'acts-deep', 'acts-deep-bodies']);
 // The marks of work -- the bar over a work on the go, the tape round it, the
 // tick when it lands -- and the pile-full marks stand wherever their site
 // does, so they are drawn in both halves, each cut to its own (`PINNED`).
@@ -368,8 +382,8 @@ const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'roster
                       'work bars', 'build sites', 'done marks', 'pile marks', 'pad focus']);
 // The acts' places (acts.js), each with only its own layers: none of the
 // yard's or the deep's world is anywhere near them.
-const AFTER = new Set(['after backdrop', 'after stair', 'after yard', 'after grove', 'after camp', 'after crowd', 'after sky']);
-const HELL = new Set(['hell backdrop', 'hell chambers', 'hell seams', 'hell forge', 'hell barriers', 'hell cage']);
+const AFTER = new Set(['after backdrop', 'after stair', 'after yard', 'after grove', 'after camp', 'after crowd', 'after sky', 'acts-after', 'acts-after-bodies']);
+const HELL = new Set(['hell backdrop', 'hell chambers', 'hell seams', 'hell forge', 'hell barriers', 'hell cage', 'acts-hell', 'acts-hell-bodies']);
 const placeOf = name => (DEEP.has(name) ? 'deep' : AFTER.has(name) ? 'after' : HELL.has(name) ? 'hell' : 'yard');
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
 const shared = (layer, i) => BOTH.has(layer.name) || i > SCREEN_FROM;
@@ -449,15 +463,56 @@ function drawLayer(layer, i, place) {
 // camera moves while the other shows through; then the rings themselves over
 // both. With no glide, the ripple is readied while the page is idle -- not on
 // the landing page's picture, which never goes down.
+//
+// The far place is not drawn a frame at a time: it is painted once, on the
+// glide's first frame, with its own camera onto a sheet the window's size,
+// and the ring shows that frozen picture (the owner's portals review,
+// 2026-10-17): one pass of the layers a frame, whichever two places the
+// ripple joins (view.js, `ripple`: the deep or an act's place).
 export function draw() {
   drawHalf(S.view);
   const rip = ripple();
   if (!rip) { if (!picture) warmRipple(canWarm, drawDeepUnseen); return; }
   if (rip.r <= 0) return;
-  // The yard's knock is the yard's (world.js, `stepShake`): the deep through
-  // the ripple holds still while the yard around it rocks.
-  asDeep(() => drawThrough(rip, S.dpr, () => drawHalf('deep')));
+  const far = farPicture(rip);
+  const d = S.dpr;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1;
+  ctx.beginPath();
+  ctx.arc(rip.cx * d, rip.cy * d, rip.r * d, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.drawImage(far, 0, 0);
+  ctx.restore();
   drawRipples(rip);
+}
+
+// The far place's picture for glide `rip.no`, painted once. The yard's knock
+// is the yard's (world.js, `stepShake`): the far place is drawn still.
+let frozen = null;
+function farPicture(rip) {
+  const c = frozen ? frozen.c : document.createElement('canvas');
+  if (frozen && frozen.no === rip.no && c.width === canvas.width && c.height === canvas.height) return c;
+  c.width = canvas.width;
+  c.height = canvas.height;
+  paintOn(c, () => {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.fillStyle = '#000';
+    asPlace(rip.inner, rip.cam, () => drawHalf(rip.inner));
+    ctx.restore();
+  });
+  frozen = { no: rip.no, c };
+  return c;
+}
+
+// A place's camera standing for the length of `fn`, and the one on screen put back.
+function asPlace(place, cam, fn) {
+  const keep = { view: S.view, camX: S.camX, camY: S.camY, zoom: S.zoom, viewW: S.viewW, viewH: S.viewH,
+                 shakeX: S.shakeX, shakeY: S.shakeY };
+  Object.assign(S, cam, { view: place, shakeX: 0, shakeY: 0 });
+  try { fn(); } finally { Object.assign(S, keep); }
 }
 
 // The deep's camera standing for the length of `fn`, and the yard's put back.

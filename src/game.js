@@ -39,6 +39,7 @@ import { sampleBooks } from './income.js';
 import { stepAudio, sfx } from './audio.js';
 import { stepAfter } from './after/index.js';
 import { stepHell } from './hell/index.js';
+import { stepActs } from './actbeats.js';
 
 // The ground is laid the moment the order the yard was bought in changes, not
 // the frame after: `__finish` in the checks and a player's click landing a
@@ -278,6 +279,8 @@ export const STEPS = [
   // no-op with its act's switch off (after/index.js, hell/index.js).
   { name: 'afterlife', step: c => stepAfter(c) },
   { name: 'hell',      step: c => stepHell(c) },
+  // ...and what joins them: the portals, the pair on the road, the mansion (actbeats.js).
+  { name: 'acts',      step: c => stepActs(c) },
   { name: 'smog',      step: c => stepSmog(ambientMs(c.dt)) },       // and the sky, which is filling up
   { name: 'balloons',  step: c => stepBalloons(c.dt) },              // and the craft crossing it
   { name: 'craftair',  step: c => stepCraftAir(c.dt) },   // and the haze they are drawing in

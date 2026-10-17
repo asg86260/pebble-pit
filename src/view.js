@@ -17,9 +17,14 @@
 // Acts 3 and 4 add two places (acts.js, `PLACES`): the afterlife above the
 // yard's sky and hell under the deep's floor, each framed by its own camera
 // the way the deep is, its floor on the foot of the window. The way into
-// each is a road the acts have not built (DESIGN.md, "Back to the surface,
-// dead": a glide down the cloud stair, the deep's floor opening), so for now
-// the only way there is a straight cut for scenes and checks (`goPlace`).
+// each is a portal of the acts' own (portals.js): heaven's between the yard
+// and the afterlife, hell's between the deep and hell. A portal is the
+// camera's way, never a body's: bodies walk the road (the cloud stair, the
+// slit in the deep's floor), and the view follows them by the ripple. Every
+// way between two places is the same ripple: the nearer the yard of the two
+// (`OUTER`) is the one the camera stands in while the farther shows through
+// the ring, opening out of the near end going in and closing onto the far
+// end coming back. `goPlace` is the straight cut for scenes and checks.
 
 import { S } from './state.js';
 import { CELL, P, VIEW_GLIDE_S, SHAFT_HAND_FADE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM } from './config.js';
@@ -29,6 +34,11 @@ import { reducedMotion } from './prefs.js';
 import { dropLift } from './cutscene.js';
 import { smoothstep as ease } from './motion.js';
 import { actPlace, placeOpen, isActView } from './acts.js';
+import { portalEnd } from './portals.js';
+
+// Each farther place and the nearer one it is reached from: the deep and the
+// afterlife off the yard, hell off the deep.
+const OUTER = { deep: 'yard', after: 'yard', hell: 'deep' };
 
 export const inDeep = () => S.view === 'deep';
 // A glide is running: the pointer waits for it.
@@ -84,12 +94,12 @@ const zoomOf = v => (v === 'deep' ? deepZoom() : isActView(v) ? placeZoom(v) : 1
 // the window (world.js, `clampCam`), and in the yard the pit floor there as
 // always. Across, each opens on its own end of the portal.
 const openX = v => (v === 'deep' ? deepPortal().x : isActView(v) ? actPlace(v).open() : portalX());
-function frameOn(v) {
+function frameOn(v, x = openX(v)) {
   S.view = v;
   S.camLockY = null;
   dropLift();
   setZoom(zoomOf(v));
-  S.camX = openX(v) - S.viewW / 2;
+  S.camX = x - S.viewW / 2;
   S.camTo = null;
   clampCam();
 }
@@ -97,11 +107,11 @@ function frameOn(v) {
 // The deep's camera as numbers, for drawing it through the ripple while the
 // yard's camera is the one standing: the framing `frameOn('deep')` makes,
 // worked out without making it.
-export function deepCamera() {
+export function deepCamera(x = openX('deep')) {
   const zoom = yardZoom() * deepZoom();
   const viewW = S.W / zoom, viewH = S.H / zoom;
   const x0 = deepX0();
-  const camX = Math.max(x0, Math.min(openX('deep') - viewW / 2, Math.max(x0, deepX1() - viewW)));
+  const camX = Math.max(x0, Math.min(x - viewW / 2, Math.max(x0, deepX1() - viewW)));
   return { zoom, viewW, viewH, camX, camY: deepFloor() + DEEP_FLOOR_MARGIN - viewH };
 }
 
@@ -111,12 +121,12 @@ export function deepCamera() {
 // An act's camera as numbers, the same way (`deepCamera`): the framing
 // `frameOn(v)` makes, worked out without making it, for whatever draws the
 // place while another place's camera stands (a glide, once one is built).
-export function placeCamera(v) {
+export function placeCamera(v, x = actPlace(v).open()) {
   const pl = actPlace(v);
   const zoom = yardZoom() * placeZoom(v);
   const viewW = S.W / zoom, viewH = S.H / zoom;
   const x0 = pl.x0();
-  const camX = Math.max(x0, Math.min(pl.open() - viewW / 2, Math.max(x0, pl.x1() - viewW)));
+  const camX = Math.max(x0, Math.min(x - viewW / 2, Math.max(x0, pl.x1() - viewW)));
   return { zoom, viewW, viewH, camX, camY: pl.floor() + pl.margin - viewH };
 }
 
@@ -216,26 +226,68 @@ function backToYard() {
   if (yardCam) { S.camX = yardCam.x; clampCam(); }
 }
 
-function start(v) {
-  if (S.view === v || gliding()) return;
-  if (v === 'deep' && !canGoDown()) return;
-  // The hands over the portal have told what they had to once the player has
-  // gone down and come back up by their own click or key (render/shaftway.js).
-  if (v === 'deep') S.portalDown = true; else if (S.portalDown) S.portalRound = true;
+// The glide under way: the farther of its two places (the one drawn through
+// the ring), the portal it goes by (null: the wizards'), and a count of
+// glides, so the picture frozen for one (render.js) is never another's. This
+// session's only: a reload mid-glide lands in the nearer place, where
+// `S.view` already is.
+let through = null, via = null, glides = 0;
+export const glideNo = () => glides;
+// The ring a glide opens out of or closes onto, in `place`: the wizards'
+// portal's ends, or an act portal's (portals.js).
+function ringIn(place, how = via) {
+  if (how) return portalEnd(how, place);
+  return place === 'deep' ? deepPortal() : portalCircle();
+}
+// A place's camera as numbers, framed on `x`: what `frameOn(place, x)` makes.
+const cameraOf = (place, x) => (place === 'deep' ? deepCamera(x) : placeCamera(place, x));
+
+// Through to `v` by the portal `how` (null: the wizards'). Going in, the
+// nearer place is where the camera already is and the farther is drawn in the
+// growing ring; coming back, the nearer is put back first and the farther
+// drawn over it, shrinking onto the ring. False if `v` is not across that
+// portal from here, or a glide is under way.
+function start(v, how = null) {
+  if (S.view === v || gliding()) return false;
+  const inward = OUTER[v] === S.view;
+  const inner = inward ? v : S.view, outer = OUTER[inner];
+  if (!outer || (!inward && v !== outer)) return false;
+  // The wizards' portal joins the yard and the deep alone; an act's its own two.
+  if (!how && inner !== 'deep') return false;
+  if (inner === 'deep' && !canGoDown()) return false;
+  if (isActView(inner) && !placeOpen(inner)) return false;
+  // The hands over the wizards' portal have told what they had to once the
+  // player has gone down and come back up by their own click or key
+  // (render/shaftway.js); an act portal's hands are portals.js's.
+  if (!how) { if (inward) S.portalDown = true; else if (S.portalDown) S.portalRound = true; }
   posed = false;
-  if (reducedMotion()) { if (v === 'deep') { keepYard(); frameOn('deep'); landed = true; } else backToYard(); return; }
-  // The yard is the half standing through the whole ripple: going down it
-  // is where the camera already is, going up it is put back first and the
-  // deep drawn over it, shrinking.
-  if (v === 'deep') keepYard();
-  else backToYard();
+  through = inner; via = how; glides++;
+  const at = place => ringIn(place).x;
+  if (inward && S.view === 'yard') keepYard();
+  if (reducedMotion()) {
+    if (inward) frameOn(inner, at(inner));
+    else if (!how && outer === 'yard') backToYard();
+    else frameOn(outer, at(outer));
+    landed = inward && inner === 'deep';
+    if (how) arrivedVia = { place: v, via: how };
+    return true;
+  }
+  if (!inward) { if (!how && outer === 'yard') backToYard(); else frameOn(outer, at(outer)); }
   S.viewTo = v;
   S.viewFade = 0;
   S.follow = null;
+  return true;
 }
 
-export const goDeep = () => start('deep');
-export const goUp = () => start('yard');
+// The wizards' way, from the yard down and from the deep up, and nowhere else.
+export const goDeep = () => { if (S.view === 'yard') start('deep'); };
+export const goUp = () => { if (S.view === 'deep') start('yard'); };
+// Through an act's portal (portals.js): to `v` by the portal `key`. True if
+// the glide started.
+export const travel = (v, key) => start(v, key);
+// The last arrival by an act portal, read once: the place and the portal.
+let arrivedVia = null;
+export function arrivedThrough() { const was = arrivedVia; arrivedVia = null; return was; }
 
 // Straight there, for scenes and checks (`__view`). An act's place only with
 // its act on; anything else is the yard.
@@ -289,8 +341,10 @@ function glide(dt) {
   if (posed) dt = 0;
   S.viewFade = Math.min(1, S.viewFade + dt / (VIEW_GLIDE_S * 1000));
   if (S.viewFade < 1) return;
-  if (S.viewTo === 'deep') { frameOn('deep'); landed = true; }
-  else yardCam = null;
+  if (!through) through = S.viewTo === 'yard' ? 'deep' : S.viewTo;
+  if (S.viewTo === through) { frameOn(through, ringIn(through).x); landed = through === 'deep'; }
+  else if (S.viewTo === 'yard') yardCam = null;
+  if (via) arrivedVia = { place: S.viewTo, via };
   S.viewTo = null;
   S.viewFade = 0;
 }
@@ -301,14 +355,21 @@ function glide(dt) {
 // the portal as the yard's camera sees it; up it draws back into the deep's
 // end as the deep's camera sees it, so the deep closes onto the circle that
 // was pressed. Null when there is no glide.
+// `inner` is the place shown through the ring and `cam` its camera, framed
+// where the glide lands in it, so the picture in the ring is the one the view
+// arrives on; `no` says which glide it is.
 export function ripple() {
   if (!gliding()) return null;
-  const down = S.viewTo === 'deep';
-  const c = down ? portalCircle() : deepPortal();
-  const cam = down ? { camX: S.camX, camY: S.camY, zoom: S.zoom } : deepCamera();
+  // A glide with no record of its far place (a scene's, or a caller from
+  // before the acts) is the wizards' way, as it always was.
+  if (!through) { through = S.viewTo === 'yard' ? 'deep' : S.viewTo; via = null; }
+  const down = S.viewTo === through;
+  const c = ringIn(down ? OUTER[through] : through);
+  const inner = cameraOf(through, ringIn(through).x);
+  const cam = down ? { camX: S.camX, camY: S.camY, zoom: S.zoom } : inner;
   const cx = (c.x - cam.camX) * cam.zoom, cy = (c.y - cam.camY) * cam.zoom;
   const far = Math.max(...[[0, 0], [S.W, 0], [0, S.H], [S.W, S.H]]
     .map(([x, y]) => Math.hypot(x - cx, y - cy))) + P * 8;
   const e = ease(S.viewFade);
-  return { cx, cy, r: far * (down ? e : 1 - e) };
+  return { cx, cy, r: far * (down ? e : 1 - e), inner: through, cam: inner, no: glides };
 }

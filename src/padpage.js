@@ -21,7 +21,7 @@ import { aim, markAt, bracketCells, haloCells } from './padglide.js';
 
 // The story's sheets, which stand over the held sheet and the yard and are
 // put away only by their own buttons.
-const SHEETS = ['crashed', 'saved', 'demoend', 'teaseend', 'freed'];
+const SHEETS = ['crashed', 'saved', 'demoend', 'teaseend', 'freed', 'mansionend'];
 const byId = id => document.getElementById(id);
 const shown = el => !!el && !el.hidden && typeof el.getClientRects === 'function' && el.getClientRects().length > 0;
 

@@ -45,6 +45,7 @@ import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
 import { SHACK_ROWS } from './upgrades/rows-shack.js';
 import { SHIELD_ROWS } from './upgrades/rows-shields.js';
 import { registerBoard } from './boardrows.js';
+import { boardsShut } from './actbeats.js';
 
 // A ladder sold in more than one row shows one row at a time: a row naming
 // `after` stays off every board until that row's ladder is finished. Wraps
@@ -258,7 +259,10 @@ export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 // whether to put itself away; a press that bought nothing must leave it open,
 // or a sheet shutting on a bill you cannot pay looks like it took the money.
 export function buy(u) {
-  if (u.job || u.dial) return false;   // a job row moves bodies and a dial sets a number
+  if (u.job || u.dial) return false;
+  // The yard's boards are shut while the two of them are dead in the cloud
+  // (act 3, call 5): the yard runs on the rungs it had. Open again in act 4.
+  if (boardsShut()) return false;   // a job row moves bodies and a dial sets a number
   // A signpost costs nothing; pressing it only points somewhere.
   if (u.sign) { if (u.show() && !u.dead?.()) u.buy(); return false; }
   // A row with a payout on it instead of a price is not a purchase: nothing is

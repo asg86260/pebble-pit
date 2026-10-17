@@ -3328,6 +3328,91 @@ ach-freed-name = complete act 2
 # achievement note: the serpent kill
 ach-freed-note = finish act 2
 
+# --- acts 3 and 4: the connective tissue (actbeats.js), placeholders --------
+# Every line below is a plain label standing in for the owner's words, behind
+# AFTERLIFE_ON / HELL_ON (nothing a released build shows).
+
+# the card over the house after the finale: pressing it begins act 3 (call 7)
+act-goon = go on
+
+# act beat line, placeholder: the rock falls on the house
+act-house-fall = the house falls
+
+# act beat line, placeholder: the souls arrive on the cloud
+act-arrive = the afterlife
+
+# act beat line, placeholder: God at the throne
+act-meet-god = God holds out a pick
+
+# act beat line, placeholder: the pair refuse the work
+act-refuse = they set the pick down
+
+# act beat line, placeholder: the axe handed over
+act-axe = an axe
+
+# act beat line, placeholder: the strike
+act-strike = the strike
+
+# act beat line, placeholder: the unmasking
+act-unmask = God is Satan
+
+# act beat line, placeholder: Satan's line
+act-hell-told = God is caged in hell
+
+# act beat line, placeholder: the cloud stair let down
+act-ghost-road = the road down opens
+
+# act beat line, placeholder: the pair back on the yard as ghosts
+act-haunt = back on the yard, as ghosts
+
+# act beat line, placeholder: the first descent into hell
+act-descend = hell
+
+# act beat line, placeholder: the yard's pick rings off the rubble
+act-wall-first = the pick rings off
+
+# act beat line, placeholder: a barrier down
+act-wall = barrier { $n } down
+
+# act beat line, placeholder: the cage open
+act-unchain = God is free
+
+# act beat line, placeholder: the pair's lives given back
+act-alive = their lives back
+
+# act beat line, placeholder: the walk home
+act-home-again = home
+
+# act beat line, placeholder: the freed souls gathering at the mansion
+act-mansion = the mansion
+
+# the ending's sheet heading, placeholder
+mansion-word = the end
+
+# the ending's sheet line, placeholder
+mansion-why = a mansion, for the two of you.
+
+# the ending's sheet dismiss button
+mansion-keep = keep playing
+
+# objective line, placeholder: begin act 3
+obj-act-goon = say go on
+
+# objective line, placeholder: act 3's loop
+obj-act-union = take God down
+
+# objective line, placeholder: the road down
+obj-act-road = take the road down
+
+# objective line, placeholder: into hell
+obj-act-hell = go down to hell
+
+# objective line, placeholder: act 4's loop
+obj-act-cage = free God
+
+# objective line, placeholder: the walk home
+obj-act-home = go home
+
 ## Act 4 (placeholder)
 
 # act 4 (placeholder): hell's boards are working labels for the owner to word; the face card's name, the miners at the seams

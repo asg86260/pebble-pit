@@ -40,6 +40,7 @@ import { hold, stepPan } from './input.js';   // the mouse, the wheel and the ke
 import { offerDress } from './settings.js';   // the held sheet's shelf, and the picker offered at a new yard
 import { paintWardrobe } from './wardrobepage.js';   // the two of them, walking on the picker while it is up
 import { syncEnding } from './ending.js';   // the sheet at the end of the story
+import { syncMansionSheet } from './mansionsheet.js';   // and the acts' end, after the mansion
 import { stepToast } from './toast.js';    // a notice said out loud as it lands
 import { stepSkipHint } from './skiphint.js';   // the hint under a scene, and its bar
 import { stepMessTags } from './messtags.js';   // a card at the top edge while mess is down
@@ -87,6 +88,7 @@ function frame() {
     (S.paused ? fadeIn : fadeOut)(heldSheet);
     (S.paused ? fadeIn : fadeOut)(scrim);
     syncEnding();
+    syncMansionSheet();
     stepPan();                                // the keys and the wheel: a held yard pans too
     stepPad();                                // and a pad, before the step, so a press acts this frame
     const t0 = mark();

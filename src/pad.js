@@ -39,6 +39,7 @@ import { potPick } from './potpick.js';
 import { clickDeep } from './deep/serpent.js';
 import { coilAt, coilThick } from './deep/place.js';
 import { goDeep, goUp, gliding } from './view.js';
+import { throughPortal } from './portals.js';
 import { skippable, holdSkip } from './skip.js';
 import { shutOpts } from './shop.js';
 import { closeWindow } from './modal.js';
@@ -58,7 +59,7 @@ import { scope, focused, dropFocus, keepFocus, move as pageMove, pressA, pressX,
 wardrobeNav({ focus: focusEl, toward: pickToward });
 
 const mid = r => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
-const half = () => (S.view === 'deep' ? 'deep' : 'yard');
+const half = () => S.view;
 const onScreen = r => !!r && r.x + r.w > S.camX && r.x < S.camX + S.viewW && r.y + r.h > S.camY && r.y < S.camY + S.viewH;
 const onGlassX = r => !!r && r.x + r.w > S.camX && r.x < S.camX + S.viewW;
 
@@ -615,6 +616,7 @@ function pressFocus() {
     return;
   }
   if (s.kind === 'way') { if (!gliding()) { if (S.view === 'deep') goUp(); else goDeep(); } return; }
+  if (s.kind === 'actway') { throughPortal(s.key); return; }
   if (s.kind === 'orb') { const c = mid(s.r); clickDeep(c.x, c.y); return; }
   if (s.kind === 'raise') { s.el.click(); return; }
   if (s.kind === 'station') {

@@ -30,6 +30,7 @@ import { SAVE as PAIR } from './wardrobe.js';
 import { SAVE as BEATS } from './beats.js';
 import { SAVE as AFTER } from './after/index.js';
 import { SAVE as HELL } from './hell/index.js';
+import { SAVE as ACTS } from './actbeats.js';
 import { SAVE as ABYSS } from './abyssintro.js';
 import { SAVE as ROCK } from './rock.js';
 import { setPitGrain, SAVE as PIT } from './pit.js';
@@ -504,6 +505,7 @@ export const SAVERS = [
   // reads them and nothing later is placed off them.
   AFTER,
   HELL,
+  ACTS,
   // The cut after `resetCut`, which reads the depth the quarry put back.
   CUT,
   // The opening's pair are stood at the door after everything else is
