@@ -4,7 +4,13 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Acts 3 and 4: the afterlife and hell -- LOOPS CHOSEN, THIRTEEN CALLS OPEN (2026-10-17)
+## Acts 3 and 4: the afterlife and hell -- LOOPS CHOSEN, THIRTEEN CALLS OPEN, SCAFFOLD BUILT (2026-10-17)
+
+**Scaffold built** (2026-10-17, branch `acts-scaffold`): the switches, the
+two places and their cameras, the empty steps, the stub modules, the save
+fields, the beat rows and two scenes -- nothing playable (DESIGN.md, the
+section's first paragraph). Blocker for anything past it is unchanged: the
+mocks, then lifespans and lineage.
 
 "Acts 3 and 4: the afterlife and hell (design, not built)" in DESIGN.md,
 reworked for the owner's story (God forces the dead to work forever; the
