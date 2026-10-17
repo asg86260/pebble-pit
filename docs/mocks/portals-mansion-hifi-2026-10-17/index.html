@@ -7,9 +7,9 @@
 <style>
   :root { --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --warn: #6a2fbe; }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) { --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1d1d22; --line: #2e2e36; --warn: #b38cff; }
+    :root:not([data-theme="light"]) { --bg: #161616; --fg: #e0e0e0; --muted: #9a9a9a; --card: #1f1f1f; --line: #333; --warn: #9b5de5; }
   }
-  :root[data-theme="dark"] { --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1d1d22; --line: #2e2e36; --warn: #b38cff; }
+  :root[data-theme="dark"] { --bg: #161616; --fg: #e0e0e0; --muted: #9a9a9a; --card: #1f1f1f; --line: #333; --warn: #9b5de5; }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
   main { max-width: 1480px; margin: 0 auto; padding: 16px; }
   h1 { font-size: 18px; margin: 0 0 4px; }
@@ -18,6 +18,7 @@
   p, li { color: var(--muted); margin: 0 0 8px; max-width: 980px; }
   b { color: var(--fg); }
   .ph { color: var(--warn); }
+  .rec { color: var(--warn); font-weight: bold; }
   .bar { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; align-items: center; }
   .bar button { font: inherit; background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
   .bar button.on { border-color: var(--fg); font-weight: bold; }
@@ -28,47 +29,54 @@
   figcaption { font-size: 12px; color: var(--muted); margin-top: 4px; max-width: 720px; }
   figcaption.live { color: var(--fg); min-height: 1.5em; }
   .opt { border-left: 3px solid var(--line); padding-left: 12px; margin-top: 14px; }
+  .opt.recd { border-left-color: var(--warn); }
   .scroll { overflow-x: auto; max-width: 100%; }
   .scroll canvas { max-width: none; }
+  #err { color: #c00; white-space: pre-wrap; }
 </style>
 </head>
 <body>
 <main>
+  <div id="err"></div>
   <h1>Portals to heaven and hell, the beats, and the mansion ending</h1>
-  <p>High-fidelity mock, 2026-10-17, for the owner to iterate on. These are plain cells at the game's sizes (P = 6, a body 18 px with a 2 px rim, the pointing hand at its real ten cells), <b>not the game</b>: nothing here runs the game's renderer. Each scene is drawn at game scale, with a 3x crop beside it. The design is DESIGN.md, "Acts 3 and 4: the afterlife and hell (design, not built)". The heaven and hell portals and the mansion are <b>new proposals</b>, not in the spec yet (proposal.md in this folder). <span class="ph">Every player-facing word in these pictures is a placeholder.</span> Red never appears: hell is hot in black and white, and red stays the sparks' color.</p>
+  <p>High-fidelity mock, round 2 (2026-10-17), for the owner to iterate on. These are plain cells at the game's sizes (P = 6, a body 18 px with its 2 px rim, the pointing hand at its real ten cells), <b>not the game</b>: nothing here runs the game's renderer. Each scene is drawn at game scale, with a 3x crop beside it that follows its subject. Everything sits on whole cells; the only things finer than a cell are the body's own 2 px rim and the outfits, drawn at the wardrobe's 2 px unit, as in the game. The design is DESIGN.md, "Acts 3 and 4: the afterlife and hell (design, not built)". The portals and the mansion are <b>new proposals</b> (proposal.md in this folder). <span class="ph">Every player-facing word in these pictures is a placeholder.</span> Red never appears: hell is hot in black and white, and red stays the sparks'.</p>
+  <p><b>The rule the portals keep:</b> a portal is the <b>camera's</b> switch. Clicking it changes the view with the ripple, as the wizards' portal does, and that is the only place the ripple appears. <b>No body ever goes through one.</b> Carriers, ghosts and the freed souls walk the road: down the cloud stair from heaven's tear, along the yard, down the pit and the deep, and down through the slit in the deep's floor. The strips show them walking it.</p>
   <div class="bar" id="theme">
-    <span>page:</span><button data-t="auto" class="on">auto</button><button data-t="light">light</button><button data-t="dark">dark (the game's white on black)</button>
-    <span style="margin-left:12px">mansion in 4c to 4f:</span><span id="mpick"><button data-m="A" class="on">A manor</button><button data-m="B">B hill castle</button><button data-m="C">C long house</button></span>
+    <span>page:</span><button data-t="auto" class="on">auto</button><button data-t="light">light</button><button data-t="dark">dark (the game's page: #e0e0e0 on #1f1f1f)</button>
+  </div>
+  <div class="bar">
+    <span>mansion in 3e and 4c to 4f:</span><span id="mpick"><button data-m="A" class="on">A manor of the rock</button><button data-m="B">B the house, grown</button><button data-m="C">C hall of every line</button></span>
+    <span style="margin-left:12px">the player's builders:</span><span id="bpick"><button data-b="4">4</button><button data-b="8" class="on">8</button><button data-b="16">16</button></span>
   </div>
 
   <!-- ===================================================== 1. HEAVEN -->
   <div class="card" id="s1">
     <h2>1. The portal to heaven</h2>
-    <p>It is the ghost road made into a way (beat 9, <code>ghost-road</code>): once the throne is empty, the afterlife's end opens over the house's ruin, the spot the souls rose from, so the road down lands where the house was. It stays open after act 3, the way between the yard and the union's camp, the way the wizards' portal is the way between the yard and the deep. The deep's portal is a black mouth in black liquid with a veil lip; heaven's is its negative: a <b>white mouth in the white sky</b>, rimmed in cloud, with a dashed ink fringe turning round it so it reads on a white sky. Purple only for what the magic gives off: motes drawn up into the mouth. The pointing hand is the yard portal's hand (purple line, white fill, still 0.6 s then pressed a cell for 0.2 s), and it fades by opacity once the first round trip is made, as <code>S.portalHand</code> does now.</p>
+    <p>The road down from the afterlife (beat 9) is a <b>stair</b>, and the portal is the <b>glide</b> at its top. Once the throne is empty a tear opens over the house's ruin and a stair of cloud lets down from it to the yard floor beside the rock. The ghosts walk the stair; the player's view takes the portal. It stays open after act 3, the way between the yard and the union's camp. It is the wizards' portal's opposite: a <b>white mouth in the white sky</b>, a <b>soft cloud rim</b>, a slow calm fringe turning round it (each cell easing on and off, never blinking), and purple motes drawn up into it. Those four things are heaven's alone; hell never has them. The pointing hand is the yard portal's hand, and it fades by opacity once the first round trip is made, as <code>S.portalHand</code> does now.</p>
 
-    <div class="opt">
-      <h3>H-A. The tear and the stair</h3>
-      <p>A tall lumpy tear in the sky over the ruin, and a stair of cloud from its lower lip down onto the rock lying on the house. The hand stands in the sky to its right, pointing left at it, as the yard portal's hand does. At heaven's end, the stair's top is a hole in the cloud floor with the yard seen far below through it; the hand points down into it. The ripple out of it rings purple, then pale; cloud puffs are thrown off the leading ring.</p>
+    <div class="opt recd">
+      <h3>H-A. The tear and the stair <span class="rec">(recommended)</span></h3>
+      <p>The tear over the ruin; the stair comes down from its lower lip in steps two cells tall with an ink rim under each tread, and lands on the yard floor beside the rock. Union ghosts walk down it, pale, and off along the yard toward the pit. The hand stands in the sky to the tear's right, pointing left at it. At heaven's end the stair goes down through a hole in the cloud floor with the yard seen far below; the hand points down into it.</p>
       <div class="row">
-        <figure><canvas id="hA" data-w="720" data-h="300"></canvas><figcaption>game scale: the yard's left end, the rock on the ruin, the tear and its stair, the crew at work</figcaption></figure>
-        <figure><canvas id="hAz" data-src="hA" data-crop="180,0,170,170"></canvas><figcaption>3x: the lip churning, the fringe turning, motes going up</figcaption></figure>
+        <figure><canvas id="hA" data-w="720" data-h="300"></canvas><figcaption>game scale: the yard's left end, the rock on the ruin, the tear, the stair with ghosts on it, the crew at work</figcaption></figure>
+        <figure><canvas id="hAz" data-src="hA" data-crop="0,0,180,180"></canvas><figcaption>3x: the cloud rim, the calm fringe, motes, the stair's top steps</figcaption></figure>
       </div>
       <div class="row" style="margin-top:10px">
-        <figure><canvas id="hAt" data-w="720" data-h="300"></canvas><figcaption class="live" id="hAt-ph"></figcaption><figcaption>the round trip, twice: yard to heaven and back with the hands, then again with the hands gone (16 s loop)</figcaption></figure>
-        <figure><canvas id="hAe" data-w="480" data-h="300"></canvas><figcaption>heaven's end at rest: the hole in the cloud floor, the yard far below, the hand pointing down</figcaption></figure>
+        <figure><canvas id="hAt" data-w="720" data-h="300"></canvas><figcaption class="live" id="hAt-ph"></figcaption><figcaption>the camera's round trip, twice: with the hands, then with the hands gone (16 s loop). The ghosts keep walking the stair the whole time; nobody rides the ripple.</figcaption></figure>
+        <figure><canvas id="hAe" data-w="480" data-h="300"></canvas><figcaption>heaven's end: the stair going down through the hole in the cloud floor, the hand pointing down</figcaption></figure>
       </div>
     </div>
 
     <div class="opt">
       <h3>H-B. The column of light</h3>
-      <p>A narrow upright lens standing on the ground beside the ruin, with a beam of pale cells going up out of its top into the sky, light rising in it. It stands on the ground like a door, so the souls walk in rather than climb, and the beam is seen from anywhere in the yard. At heaven's end the same lens stands on the cloud floor with the yard's ground seen through it. The hand points left at it at both ends.</p>
+      <p>An upright lens standing on the ground beside the ruin, a beam of pale cells going up out of its top. <b>Two problems, kept here for the vote:</b> it has no road of its own (carriers would still need H-A's stair, so H-B is a camera door only), and a white upright shape with light rising off it <b>reads as a white flame</b>, which is hell's signifier in act 4.</p>
       <div class="row">
         <figure><canvas id="hB" data-w="720" data-h="300"></canvas><figcaption>game scale</figcaption></figure>
-        <figure><canvas id="hBz" data-src="hB" data-crop="200,60,160,230"></canvas><figcaption>3x: the lens and the foot of the beam</figcaption></figure>
+        <figure><canvas id="hBz" data-src="hB" data-crop="0,0,160,230"></canvas><figcaption>3x: the lens and the foot of the beam</figcaption></figure>
       </div>
       <div class="row" style="margin-top:10px">
-        <figure><canvas id="hBt" data-w="720" data-h="300"></canvas><figcaption class="live" id="hBt-ph"></figcaption><figcaption>the round trip, twice (16 s loop)</figcaption></figure>
-        <figure><canvas id="hBe" data-w="480" data-h="300"></canvas><figcaption>heaven's end at rest: the lens on the cloud floor, the yard's ground through it</figcaption></figure>
+        <figure><canvas id="hBt" data-w="720" data-h="300"></canvas><figcaption class="live" id="hBt-ph"></figcaption><figcaption>the camera's round trip, twice (16 s loop)</figcaption></figure>
+        <figure><canvas id="hBe" data-w="480" data-h="300"></canvas><figcaption>heaven's end: the lens on the cloud floor, the yard's ground through it</figcaption></figure>
       </div>
     </div>
   </div>
@@ -76,30 +84,30 @@
   <!-- ===================================================== 2. HELL -->
   <div class="card" id="s2">
     <h2>2. The portal to hell</h2>
-    <p>Opened by Satan going ahead of them (beat 8, <code>hell-told</code>): he sinks through the cloud, and where he lands the way down burns open. Satan is not designed: he is drawn here as a plain placeholder shape, marked. Hot is white: the mouth is white-hot with black veins flowing through it, the lip is rock lit from below, embers go up in held steps and fade by opacity as they rise. A few purple cells on the seam, because Satan's magic tore it. The hand is the same hand, and fades the same way.</p>
+    <p>Burned open by Satan going ahead of them (beat 8): he sinks through, and where he goes down the way burns open. Satan is not designed and is a marked placeholder shape. Hell's look, which heaven never has: hot is white, <b>black veins</b> flow through the mouth, the lip is rock <b>lit from below</b>, <b>embers</b> rise and thin by opacity. A few purple cells on the seam, because Satan's magic tore it. It has no cloud, no stair, no motes and no fringe.</p>
 
-    <div class="opt">
-      <h3>L-A. The deep's floor tears (the spec's way)</h3>
-      <p>Beat 11 says the way to hell is the way they already know: the pit, the abyss, the deep, and through the deep's floor. Satan sinks through the deep's floor and leaves a slit of white heat in it. The deep is drawn in its own turned-over tones (black, grey water); the deep's end of the wizards' portal is drawn small at the top left for scale. The hand hangs above the slit pointing down. At hell's end the slit is a hole in the first chamber's ceiling with the deep's water seen through it; the hand points up. The ripple rings are jagged and step, and throw embers.</p>
+    <div class="opt recd">
+      <h3>L-A. The deep's floor tears <span class="rec">(recommended)</span></h3>
+      <p>The spec's way (beat 11): the pit, the abyss, the deep, and through the deep's floor. A wide slit of white heat in the deep's floor that throws its light up onto the deep above it. The deep is drawn in its own tones, a dark field on both pages, as render/deep.js draws it; the deep's end of the wizards' portal is small at the top left for scale. The hand only appears from the descent beat (beat 11), fading in. Then the carriers walk across the floor and climb down a cut ladder through the slit, out of sight into the heat, and come back up the same way.</p>
       <div class="row">
-        <figure><canvas id="lA" data-w="720" data-h="300"></canvas><figcaption class="live" id="lA-ph"></figcaption><figcaption>game scale: the opening (placeholder Satan sinks, the floor cracks, the slit opens), then at rest (14 s loop)</figcaption></figure>
-        <figure><canvas id="lAz" data-src="lA" data-crop="250,160,220,140"></canvas><figcaption>3x: the slit, the veins, the lit lip, embers</figcaption></figure>
+        <figure><canvas id="lA" data-w="720" data-h="300"></canvas><figcaption class="live" id="lA-ph"></figcaption><figcaption>game scale: the opening, the wait, beat 11's hand, then the carriers walking down through it (16 s loop)</figcaption></figure>
+        <figure><canvas id="lAz" data-src="lA" data-crop="0,0,240,130"></canvas><figcaption>3x: the slit, the veins, the lit lip, the light thrown up, a carrier on the ladder</figcaption></figure>
       </div>
       <div class="row" style="margin-top:10px">
-        <figure><canvas id="lAt" data-w="720" data-h="300"></canvas><figcaption class="live" id="lAt-ph"></figcaption><figcaption>the round trip, twice: the deep to hell's first chamber and back (16 s loop)</figcaption></figure>
-        <figure><canvas id="lAe" data-w="480" data-h="300"></canvas><figcaption>hell's first chamber at rest: lit from below, the soft seam in the wall, the rubble with the cage room's glow through it, the hole in the ceiling</figcaption></figure>
+        <figure><canvas id="lAt" data-w="720" data-h="300"></canvas><figcaption class="live" id="lAt-ph"></figcaption><figcaption>the camera's round trip, twice: the deep to hell's first chamber and back (16 s loop); the carriers keep climbing</figcaption></figure>
+        <figure><canvas id="lAe" data-w="480" data-h="300"></canvas><figcaption>hell's first chamber: lit from below, the soft seam, the rubble with the cage room's glow, the hole in the ceiling with the ladder coming down it</figcaption></figure>
       </div>
     </div>
 
     <div class="opt">
-      <h3>L-B. The crater by the ruin</h3>
-      <p>Satan comes down through the yard's sky and lands beside the rock on the ruin, and burns a crater into the yard's ground: a scorched ring, cracks running off it, a white-hot bowl with heat rings running inward, smoke and embers going up into the white sky (embers in ink here, since white is lost on white). Heaven's way and hell's way then stand side by side on the old house's ground. It is quicker to reach than L-A but skips beat 11's "the way they already know", so it could instead be a shortcut that opens after the first descent: a call for the owner.</p>
+      <h3>L-B. The crater by the ruin <span class="ph">(camera only)</span></h3>
+      <p>Satan comes down through the yard's sky and goes into the ground beside the rock, clipped at the ground line as he sinks, and the ground burns open. <b>Camera only:</b> carriers never use it; they still walk the whole road down through the deep, so the carry's length stands as the spec costs it. The bowl is drawn in hell's own tones, so it stays white-hot on the dark page too.</p>
       <div class="row">
         <figure><canvas id="lB" data-w="720" data-h="330"></canvas><figcaption class="live" id="lB-ph"></figcaption><figcaption>game scale: the landing and the burn, then at rest (14 s loop)</figcaption></figure>
-        <figure><canvas id="lBz" data-src="lB" data-crop="290,170,220,150"></canvas><figcaption>3x: the bowl, the scorch, the cracks</figcaption></figure>
+        <figure><canvas id="lBz" data-src="lB" data-crop="0,0,220,150"></canvas><figcaption>3x: the bowl, the scorch, the cracks</figcaption></figure>
       </div>
       <div class="row" style="margin-top:10px">
-        <figure><canvas id="lBt" data-w="720" data-h="330"></canvas><figcaption class="live" id="lBt-ph"></figcaption><figcaption>the round trip, twice: the yard to hell's first chamber and back (16 s loop)</figcaption></figure>
+        <figure><canvas id="lBt" data-w="720" data-h="330"></canvas><figcaption class="live" id="lBt-ph"></figcaption><figcaption>the camera's round trip, twice (16 s loop)</figcaption></figure>
       </div>
     </div>
   </div>
@@ -107,88 +115,86 @@
   <!-- ===================================================== 3. BEATS -->
   <div class="card" id="s3">
     <h2>3. The key beats</h2>
-    <p>Each a cutscene in <code>BEATS</code>. Bodies move in held steps; the camera glides smoothly; dust, smoke and souls fade by opacity; nothing pops.</p>
+    <p>Each a cutscene in <code>BEATS</code>. Bodies move in held steps; the camera glides smoothly; everything that comes or goes ramps its opacity continuously, cell by cell.</p>
     <h3>a. The house falls (<code>fall</code>)</h3>
-    <p>The pair on the bench by the door, the window lit. A shadow spreads on the ground, the rock comes out of the sky (act 1's first picture again) and lands on the house. Boards fly out and land and stay; dust rolls out and thins away.</p>
-    <div class="row"><figure><canvas id="bFall" data-w="720" data-h="260"></canvas><figcaption class="live" id="bFall-ph"></figcaption><figcaption>8 s loop</figcaption></figure></div>
+    <p>The pair on the bench by the door, the window lit. A shadow eases onto the ground cell by cell from the middle out, the rock comes out of the sky (act 1's first picture again) and lands on the house. Boards fly out and land and stay; dust rolls out and thins away.</p>
+    <div class="row"><figure><canvas id="bFall" data-w="720" data-h="264"></canvas><figcaption class="live" id="bFall-ph"></figcaption><figcaption>8 s loop</figcaption></figure></div>
     <h3>b. The two souls rise (<code>fall</code>, its second half)</h3>
-    <p>Two souls fade in out of the wreck by opacity, dressed as chosen, the outfit in the soul's grey, their rims pale. They lift in held steps; the camera follows them up through the yard's sky and into the cloud.</p>
+    <p>Two souls ease in out of the wreck, dressed as chosen, the outfit in the soul's grey, their rims pale. They lift in held steps; the camera follows them up into the cloud. This is the spec's beat and is before any tear exists; from the tear on, nobody rises or sinks: they walk.</p>
     <div class="row">
       <figure><canvas id="bRise" data-w="720" data-h="300"></canvas><figcaption class="live" id="bRise-ph"></figcaption><figcaption>9 s loop</figcaption></figure>
-      <figure><canvas id="bRisez" data-src="bRise" data-crop="290,140,130,110"></canvas><figcaption>3x: the souls in their outfits, pale rims</figcaption></figure>
+      <figure><canvas id="bRisez" data-src="bRise" data-crop="0,0,130,110"></canvas><figcaption>3x: the souls in their outfits, pale rims</figcaption></figure>
     </div>
     <h3>c. The ghost road back (<code>ghost-road</code>, <code>haunt</code>)</h3>
-    <p>Down the stair from the tear (H-A drawn here), onto the rock on the ruin, and along the yard among the living crew, who are at work and do not look up: black rims, generation ticks over them (three and four strokes: the grandchildren of the crew the pair knew). The pair are pale and a little see-through.</p>
+    <p>Staged on the yard floor: the tear stands over open ground to the right of the ruin, and the stair lands on the floor. The pair walk down it step by step, then along the yard among the living crew, who are at work and do not look up (black rims, generation ticks over them).</p>
     <div class="row"><figure><canvas id="bRoad" data-w="720" data-h="300"></canvas><figcaption class="live" id="bRoad-ph"></figcaption><figcaption>12 s loop</figcaption></figure></div>
     <h3>d. Lives returned (<code>alive</code>)</h3>
-    <p>In the cage room, the cage cut open (two bars on the floor). God is a placeholder: nobody has drawn God. Purple motes run from God to the pair, and each one closes a rim piece: twelve pieces, round the square, grey to black, the union's rim build run to its end. Then they hop. The union souls who mined the way down watch, still pale.</p>
+    <p>In the cage room, the cage cut open. God is a placeholder (nobody has drawn God), its border easing on and off. Purple motes run from God to the pair; each closes a rim piece, the piece fading from the soul's grey to black, and the outfit darkens with them a twelfth at a time. Then they hop. The union souls who mined the way watch, still pale.</p>
     <div class="row">
-      <figure><canvas id="bAlive" data-w="720" data-h="260"></canvas><figcaption class="live" id="bAlive-ph"></figcaption><figcaption>9 s loop</figcaption></figure>
-      <figure><canvas id="bAlivez" data-src="bAlive" data-crop="250,120,140,100"></canvas><figcaption>3x: the rims closing</figcaption></figure>
+      <figure><canvas id="bAlive" data-w="720" data-h="264"></canvas><figcaption class="live" id="bAlive-ph"></figcaption><figcaption>9 s loop</figcaption></figure>
+      <figure><canvas id="bAlivez" data-src="bAlive" data-crop="0,0,140,100"></canvas><figcaption>3x: the rims closing</figcaption></figure>
     </div>
     <h3>e. The walk home (<code>home-again</code>)</h3>
-    <p>Up out of the pit, alive, and the whole length of the yard to its left end, where the builders are raising the mansion (the one picked above) floor by floor. As the pair pass, each of the crew leaves its work and falls in behind in two files, hopping, as the finale did. Fireworks quicken as they near it; it tops out as they reach the gate. The camera follows the pair.</p>
-    <div class="row"><figure><canvas id="bHome" data-w="720" data-h="320"></canvas><figcaption class="live" id="bHome-ph"></figcaption><figcaption>18 s loop, compressed (the real walk is the yard's length at the finale's pace)</figcaption></figure></div>
+    <p>Up out of the pit, alive, and the length of the yard to its left end. The mansion (the one picked above) has been going up as a standing job since the cage fell (4c); the walk shows its last stretch, and it tops out as they reach the gate. The crew fall in behind them as they pass, two files; <b>one</b> volley of fireworks at the gate; then the crew drift back to work, because everything keeps running.</p>
+    <div class="row"><figure><canvas id="bHome" data-w="720" data-h="312"></canvas><figcaption class="live" id="bHome-ph"></figcaption><figcaption>22 s loop, compressed (the real walk is the yard's length at the finale's pace)</figcaption></figure></div>
   </div>
 
   <!-- ===================================================== 4. MANSION -->
   <div class="card" id="s4">
     <h2>4. The mansion ending</h2>
-    <p>After freeing God, the pair do not get the old house back: they get a mansion, much bigger than the house (the house is 18 cells wide and 15 tall; these are 70 to 120 wide and 40 to 60 tall). Built of the same stuff as everything else: stone in pairs of cells, each course a tone off its neighbors, ink edges, windows that light and go dark by opacity as people move about inside, flags in three held poses.</p>
+    <p>After freeing God, the pair get a mansion many times the old house (the house is 18 cells wide and 15 tall). Three distinct silhouettes, each with something of theirs in view at game scale. Stone in pairs of cells, ink edges, windows that light and go dark by opacity.</p>
 
     <div class="opt">
       <h3>4a. Three designs</h3>
-      <p><b>A. The manor on the old ground.</b> Where the house stood, replacing it: a four-floor middle block with a pediment and a round window, two three-floor wings, two six-floor towers with spires and flags, a fence and an iron gate, hedges, topiary, two trees. The rock that killed them is quarried into its stone (the builders break it up; it is the pile).</p>
+      <p><b>A. The manor of the rock.</b> Spiky and symmetrical: two six-floor towers with spires and flags, a four-floor middle block with a pediment and a round window, two wings, a fence and an iron gate, hedges, topiary. <b>Built from the rock that killed them</b>: the rock is its pile, broken up a piece a trip. Theirs: the old bench under the door, six cells wide.</p>
       <div class="row">
-        <figure><canvas id="mA" data-w="720" data-h="380"></canvas><figcaption>A at game scale</figcaption></figure>
-        <figure><canvas id="mAz" data-src="mA" data-crop="250,190,140,190"></canvas><figcaption>3x: the door, the gate, the topiary</figcaption></figure>
+        <figure><canvas id="mA" data-w="720" data-h="384"></canvas><figcaption>A at game scale</figcaption></figure>
+        <figure><canvas id="mAz" data-src="mA" data-crop="0,0,160,130"></canvas><figcaption>3x: the door, the bench, the gate</figcaption></figure>
       </div>
-      <p style="margin-top:10px"><b>B. The castle on the hill.</b> A hill raised at the yard's far left, a keep with battlements on it, a tall spire tower and a short one, a turret; a gatehouse at the hill's foot and a stair winding up to the keep's door. The house's ruin is left where it was, below, with the rock on it and the old bench beside it: a memorial they can see from the windows.</p>
+      <p style="margin-top:10px"><b>B. The house, grown.</b> One huge gable: the old house at three times its size, the same thick posts, the same roof steps, the same chimney smoking, floors of windows in its walls, the old window grown into a bay, and the old door grown into the entrance with a door their size inside it. Its pile is the yard's heaps. Theirs: the whole shape, and the bench by the door.</p>
       <div class="row">
-        <figure class="scroll"><canvas id="mB" data-w="900" data-h="420"></canvas><figcaption>B at game scale</figcaption></figure>
-        <figure><canvas id="mBz" data-src="mB" data-crop="640,290,220,130"></canvas><figcaption>3x: the memorial (the ruin, the rock, the old bench)</figcaption></figure>
+        <figure><canvas id="mB" data-w="720" data-h="420"></canvas><figcaption>B at game scale</figcaption></figure>
+        <figure><canvas id="mBz" data-src="mB" data-crop="0,0,160,130"></canvas><figcaption>3x: the old door grown, the door inside it, the bench</figcaption></figure>
       </div>
-      <p style="margin-top:10px"><b>C. The long house of every line.</b> The yard's house was a room a body; this is a window a line. A long two-floor gallery each side of a three-floor hall with a bell tower, dormers in the roof, one-floor wings at the ends that would grow outward with the number of lines. Over each upper window, that line's ticks. The old bench by the door.</p>
+      <p style="margin-top:10px"><b>C. The hall of every line.</b> A massive block, eight floors, a window for every line the yard has had (twenty a floor), a balustrade and an attic over the middle; and in front of it, as its gatehouse, <b>the old house rebuilt</b> on its old ground, whose door is the way in. Its pile is the yard's heaps.</p>
       <div class="row">
-        <figure class="scroll"><canvas id="mC" data-w="900" data-h="340"></canvas><figcaption>C at game scale</figcaption></figure>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <figure><canvas id="mCz" data-src="mC" data-crop="300,110,180,170"></canvas><figcaption>3x: the hall door, the ticks over the windows</figcaption></figure>
+        <figure><canvas id="mC" data-w="720" data-h="420"></canvas><figcaption>C at game scale</figcaption></figure>
+        <figure><canvas id="mCz" data-src="mC" data-crop="0,0,180,140"></canvas><figcaption>3x: the old house as the gatehouse, its bench, the hall's door behind</figcaption></figure>
       </div>
     </div>
 
     <div class="opt">
       <h3>4b. Where it stands</h3>
-      <p>A and C stand on the house's own ground at the yard's left end (<code>houseX()</code>), where the walk home already ends. B raises the far left into a hill and leaves the ruin standing below it. In every case the yard's work runs on to the right of it, untouched. See the wide shot (4f).</p>
+      <p>All three on the house's own ground at the yard's left end (<code>houseX()</code>), where the walk home already ends. The yard's work runs on to the right of it, untouched. The tear stays open over it, with its stair down to the ground beside it. See the wide shot (4f).</p>
     </div>
 
     <div class="opt">
       <h3>4c. How it is built</h3>
-      <p>The finale's rule, scaled up: the builders carry a piece a trip from the pile (for A, the broken rock), walk it along the ground and up the scaffold, and set it where it goes, standing at it. Bottom course first, right across the whole front, so it goes up floor by floor. The scaffold stood before the walk (put up while the deep half played, as the finale's poles are) and comes down by fading once the last piece is set. Compressed here: sixteen builders, pieces six cells long.</p>
-      <div class="row"><figure><canvas id="mBuild" data-w="720" data-h="380"></canvas><figcaption class="live" id="mBuild-ph"></figcaption><figcaption>22 s loop</figcaption></figure></div>
+      <p>A <b>standing job</b> from the cage's fall (beat 14), watched in the last stretch of the act and topping out during the walk home. The builders are <b>the player's builders</b> (a variable here: 4, 8 or 16 above; the loop gets longer with fewer). They first carry the scaffold in pole by pole; then every piece is carried from the pile (A: the rock; B and C: the yard's heaps), walked along the ground to the nearest pole, climbed up the pole and along the plank, and set where it goes. Bottom course first across the whole front, so it rises floor by floor. At the top-out the poles are carried back out one by one, and the garden goes in.</p>
+      <div class="row"><figure><canvas id="mBuild" data-w="720" data-h="396"></canvas><figcaption class="live" id="mBuild-ph"></figcaption><figcaption>the loop's length is the build's: about 30 s with 8 builders, compressed (pieces are twelve cells)</figcaption></figure></div>
     </div>
 
     <div class="opt">
-      <h3>4d. The arrival</h3>
-      <p>The gate opens in held steps, the pair stand at the door; the crew in two files behind them, generation ticks over their heads; the freed souls (the afterlife's dead, pale) come down and gather on the right and in the sky over it. Fireworks off both sides.</p>
+      <h3>4d. The arrival and the last held shot</h3>
+      <p>Quieter. The gate opens; the freed souls walk down the stair from the still-open tear and stand on the ground (nobody hovers); one volley of fireworks; the crew drift back to work. The pair walk up to the bench under the door and sit, and a window lights. Then the sheet.</p>
       <div class="row">
-        <figure><canvas id="mArrive" data-w="720" data-h="380"></canvas><figcaption>game scale</figcaption></figure>
-        <figure><canvas id="mArrivez" data-src="mArrive" data-crop="250,250,170,130"></canvas><figcaption>3x: the pair at the door</figcaption></figure>
+        <figure><canvas id="mArrive" data-w="720" data-h="384"></canvas><figcaption class="live" id="mArrive-ph"></figcaption><figcaption>24 s loop</figcaption></figure>
+        <figure><canvas id="mArrivez" data-src="mArrive" data-crop="0,0,170,120"></canvas><figcaption>3x: follows the pair</figcaption></figure>
       </div>
     </div>
 
     <div class="opt">
       <h3>4e. The end sheet</h3>
-      <p>The arrival held, the yard under a white veil, and the sheet over it. <span class="ph">Every word on it is a placeholder</span>; what it says is the owner's. Its fields are guesses at what a last sheet could count.</p>
-      <div class="row"><figure><canvas id="mSheet" data-w="720" data-h="380"></canvas><figcaption>game scale</figcaption></figure></div>
+      <p>The last held shot, under a veil, and the sheet over it. <span class="ph">Every word on it is a placeholder</span>; what it says is the owner's.</p>
+      <div class="row"><figure><canvas id="mSheet" data-w="720" data-h="384"></canvas><figcaption>game scale</figcaption></figure></div>
     </div>
 
     <div class="opt">
       <h3>4f. The final scene, one wide shot</h3>
-      <p>The whole yard at game scale: the mansion at the left end with the pair on the bench by its door, freed souls in the garden, the crew at work in the middle, the pit at the right with the wizards' portal in its wall, and heaven's tear still open over the mansion, small, as the way up to the union's camp. Hell's way is in the deep and not seen from here.</p>
-      <div class="scroll"><canvas id="wide" data-w="1440" data-h="400"></canvas></div>
+      <p>The whole game's history in one frame at game scale: the mansion at the left end with the pair on the bench by its door, freed souls standing in the garden, the tear still open over it with its stair down to the ground, the crew at work in the middle, the pit at the right with the wizards' portal in its wall. Hell's way is in the deep and not seen from here.</p>
+      <div class="scroll"><canvas id="wide" data-w="1440" data-h="396"></canvas></div>
       <div class="row" style="margin-top:10px">
-        <figure><canvas id="widez" data-src="wide" data-crop="250,210,180,110"></canvas><figcaption>3x: the bench by the door</figcaption></figure>
+        <figure><canvas id="widez" data-src="wide" data-crop="0,0,200,120"></canvas><figcaption>3x: the bench by the door</figcaption></figure>
       </div>
     </div>
   </div>
@@ -196,46 +202,82 @@
   <div class="card" id="s5">
     <h2>What this mock cannot show</h2>
     <ul>
-      <li>The game's renderer: the abyss field's own tones, the wardrobe's real outfits and the scarf's tail, device-pixel snapping, the real yard's stations and heaps. The stations here are plain boxes and the crew a handful.</li>
-      <li>The real ripple: the game draws the far half on a sheet through a circle (render/ripple.js) with its own ring tones and glide clock; this draws a circle of cells and its own rings.</li>
-      <li>The camera: the game's <code>skyCam</code> window, the far yard, and what the screen shows at a real window size. Each strip is a fixed 720 px frame.</li>
+      <li>The game's renderer: the abyss field's own tones, the wardrobe's real outfits, device-pixel snapping, the real yard's stations and heaps. The stations here are plain boxes and the crew a handful.</li>
+      <li>The real ripple: the game draws the far half on a sheet through a circle (render/ripple.js). <b>Cost:</b> the ripple should snapshot the far place to an offscreen canvas once when the glide starts and draw that through the circle, not redraw the far place every frame as this mock does; and the mansion should be cached on its own canvas and redrawn only when a piece is set, not repainted cell by cell every frame.</li>
+      <li>The dark page here applies the game's lightness map (ink.js) to the mock's own tones, and draws the deep and hell as landed (a dark field on both pages); the game's own abyss tones and its turned ramps are not reproduced.</li>
+      <li><b>Dark-page check:</b> under the game's map the tear's white mouth goes charcoal with a light cloud rim. Where the two are seen together, in the yard, it is still the wizards' portal's opposite, because the yard's end of that portal (the pit's liquid) goes light (see 4f in dark). The deep's own end is drawn landed, so it stays a black mouth, and the tear now looks more like it; drawing the tear landed too would keep its mouth white on both pages. Hell's slit stays white-hot in a dark field, so heaven and hell still read apart.</li>
+      <li>The camera: the game's <code>skyCam</code> window, the far yard, and what the screen shows at a real window size. Each strip is a fixed frame.</li>
       <li>God, Satan, the cage and the union camp: none are designed. God and Satan are plain placeholder shapes.</li>
-      <li>Pace: every strip is compressed. The walk home, the build and the rise run in seconds here; in the game they are the finale's pace.</li>
+      <li>Pace: every strip is compressed. The walk home, the build, the carry and the rise run in seconds here.</li>
+      <li>The carry's real route: the ghosts' walk from the stair's foot along the yard, down the pit and through the deep is only shown in pieces (the stair's foot, the slit's ladder).</li>
       <li>Sound, the space bar's hurry, and a reload mid-beat.</li>
-      <li>How the mansion would grow with the yard (C's wings a line at a time), or what the pair do in it afterwards.</li>
       <li>Words. Every player-facing word is a placeholder.</li>
     </ul>
   </div>
 </main>
 
 <script>
+window.onerror = (m, s, l) => { document.getElementById('err').textContent += `${m} (line ${l})\n`; };
 const P = 6, W = 18, RIM = 2, U = 2;
 const Q = new URLSearchParams(location.search);
 let theme = Q.get('theme') || 'auto';
 const FREEZE = Q.has('t') ? +Q.get('t') : null;
 let mansionPick = Q.get('m') || 'A';
+let BUILDERS = +(Q.get('builders') || 8);
 if (Q.has('only')) document.querySelectorAll('.card').forEach(c => { if (c.id !== Q.get('only')) c.style.display = 'none'; });
 
+// ---------------------------------------------------------------- the palette
+// The game's ramps (src/config/palette.js) and its dark page (view.js, ink.js):
+// a color keeps its hue and saturation and is moved by lightness between
+// #1f1f1f paper and #e0e0e0 ink. The deep and hell are a dark field on both
+// pages (render/deep.js); here that is their tones landed in that span.
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const PURPLE = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739', '#2d1d47', '#371f56', '#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#8244d8', '#9b5de5', '#b79af2'];
+const LIGHT = { paper: GREY[0], ink: GREY[10], g1: GREY[1], g2: GREY[2], g3: GREY[3], g4: GREY[4], mid: GREY[5], soul: GREY[3],
+                d3: GREY[7], d2: GREY[8], d1: GREY[9], purple: PURPLE[10], purpleL: PURPLE[13], purpleD: PURPLE[7] };
+const hexRgb = h => { const n = parseInt(h.slice(1, 7), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+const rgbHex = ([r, g, b]) => '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+function toHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min, s = l > .5 ? d / (2 - max - min) : d / (max + min);
+  const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h / 6, s, l];
+}
+function fromHsl(h, s, l) {
+  if (s === 0) { const v = Math.round(l * 255); return [v, v, v]; }
+  const q = l < .5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+  const f = t => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p; };
+  return [f(h + 1 / 3), f(h), f(h - 1 / 3)].map(v => Math.round(v * 255));
+}
+const LP = hexRgb('#1f1f1f').reduce((a, b) => a + b) / 765, LI = hexRgb('#e0e0e0').reduce((a, b) => a + b) / 765;
+const mapDark = c => { const [h, s, l] = toHsl(...hexRgb(c)); return rgbHex(fromHsl(h, s, LP + (LI - LP) * (1 - l))); };
+const landDark = c => { const [h, s, l] = toHsl(...hexRgb(c)); return rgbHex(fromHsl(h, s, Math.min(LI, Math.max(LP, l)))); };
 const dark = () => theme === 'dark' || (theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-// The game's dark mode is the whole picture white on black, so every tone swaps.
+const PAL = {};
 function pal() {
-  return dark()
-    ? { ink: '#f2f2f2', paper: '#0e0e0e', g1: '#1a1a1a', g2: '#262626', g3: '#3a3a3a', g4: '#555', soul: '#5a5a5a', mid: '#8c8c8c',
-        d3: '#a8a8a8', d2: '#c8c8c8', d1: '#e2e2e2', purple: '#a77bff', purpleL: '#5e3f9e' }
-    : { ink: '#000', paper: '#fff', g1: '#f0f0f0', g2: '#e2e2e2', g3: '#cfcfcf', g4: '#b2b2b2', soul: '#b4b4b4', mid: '#8c8c8c',
-        d3: '#5a5a5a', d2: '#363636', d1: '#1c1c1c', purple: '#6a2fbe', purpleL: '#b394e6' };
+  const key = dark() ? 'dark' : 'light';
+  if (PAL[key]) return PAL[key];
+  if (key === 'light') { const k = { ...LIGHT }; k.deep = k; return (PAL.light = k); }
+  const k = {}, d = {};
+  for (const n in LIGHT) { k[n] = mapDark(LIGHT[n]); d[n] = landDark(LIGHT[n]); }
+  k.deep = d; d.deep = d;
+  return (PAL.dark = k);
 }
 function applyTheme() {
   if (theme === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = theme;
   document.querySelectorAll('#theme button[data-t]').forEach(x => x.classList.toggle('on', x.dataset.t === theme));
 }
 document.querySelectorAll('#theme button[data-t]').forEach(b => b.onclick = () => { theme = b.dataset.t; applyTheme(); });
-document.querySelectorAll('#mpick button').forEach(b => b.onclick = () => {
-  mansionPick = b.dataset.m;
-  document.querySelectorAll('#mpick button').forEach(x => x.classList.toggle('on', x === b));
+const pickBar = (sel, attr, set) => document.querySelectorAll(sel + ' button').forEach(b => b.onclick = () => {
+  set(b.dataset[attr]); document.querySelectorAll(sel + ' button').forEach(x => x.classList.toggle('on', x === b));
 });
+pickBar('#mpick', 'm', v => { mansionPick = v; });
+pickBar('#bpick', 'b', v => { BUILDERS = +v; });
 applyTheme();
 document.querySelectorAll('#mpick button').forEach(x => x.classList.toggle('on', x.dataset.m === mansionPick));
+document.querySelectorAll('#bpick button').forEach(x => x.classList.toggle('on', +x.dataset.b === BUILDERS));
 
 // ---------------------------------------------------------------- helpers
 const hash = (x, y, z = 0) => { let h = (x | 0) * 374761393 + (y | 0) * 668265263 + (z | 0) * 2147483647; h = (h ^ (h >> 13)) * 1274126177; return ((h ^ (h >> 16)) >>> 0) / 4294967296; };
@@ -246,6 +288,8 @@ const ease = v => { v = clamp01(v); return v * v * (3 - 2 * v); };
 const lerp = (a, b, u) => a + (b - a) * u;
 const seg = (t, a, b) => clamp01((t - a) / (b - a));
 function R(g, x, y, w, h, c) { g.fillStyle = c; g.fillRect(x, y, w, h); }
+function C(g, x, y, c, a = 1) { if (a <= 0) return; if (a < 1) g.globalAlpha = a; R(g, x, y, P, P, c); g.globalAlpha = 1; }
+const FOCUS = {};
 const bufs = {};
 function buf(id, w, h) {
   let c = bufs[id];
@@ -257,22 +301,29 @@ function buf(id, w, h) {
 function label(g, k, x, y, s, tone, size = 10) {
   g.font = `${size}px ui-monospace, Menlo, Consolas, monospace`; g.fillStyle = tone || k.mid; g.textBaseline = 'top'; g.fillText(s, x, y);
 }
+// a body's place along a path of points, in whole cells
+function along(pts, u) {
+  const L = [0];
+  for (let i = 1; i < pts.length; i++) L.push(L[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const d = clamp01(u) * L[L.length - 1];
+  let i = 1; while (i < pts.length - 1 && L[i] < d) i++;
+  const f = (d - L[i - 1]) / Math.max(1e-6, L[i] - L[i - 1]);
+  return [snap(lerp(pts[i - 1][0], pts[i][0], f)), snap(lerp(pts[i - 1][1], pts[i][1], f))];
+}
 
 // ---------------------------------------------------------------- the yard
 function sky(g, k, w, h, t, seed = 0) {
   R(g, 0, 0, w, h, k.paper);
-  for (let i = 0; i < 22; i++) {
-    const x = ((hash(i, seed, 1) * w + t * (2 + i % 3) * 2) % w + w) % w, y = hash(i, seed, 2) * h * 0.55;
-    R(g, Math.round(x / 2) * 2, Math.round(y / 2) * 2, 2, 2, k.g2);
+  for (let i = 0; i < 18; i++) {
+    const x = ((hash(i, seed, 1) * w + t * (2 + i % 3) * 2) % w + w) % w, y = hash(i, seed, 2) * h * .5;
+    C(g, snap(x), snap(y), k.g1);
   }
 }
-function ground(g, k, gy, w, h, x0 = 0) {
-  const ox = ((x0 % P) + P) % P;
-  for (let y = gy; y < h; y += P) for (let x = -ox; x < w; x += P) {
-    const v = hash(Math.round((x + x0) / P), y / P, 3), dd = (y - gy) / P;
-    R(g, x, y, P, P, v < .5 - dd * .02 ? k.g2 : v < .82 ? k.g3 : v < .96 ? k.g4 : k.mid);
+function ground(g, k, gy, w, h) {
+  for (let y = gy; y < h; y += P) for (let x = 0; x < w; x += P) {
+    const v = hash(x / P, y / P, 3), top = y === gy;
+    R(g, x, y, P, P, top ? (v < .5 ? k.d3 : k.mid) : v < .5 ? k.g2 : v < .82 ? k.g3 : v < .96 ? k.g4 : k.mid);
   }
-  R(g, 0, gy, w, 2, k.ink);
 }
 function rock(g, k, cx, cy, rc, seed = 0) {
   const n = Math.ceil(rc * 1.25 + 1), X = snap(cx), Y = snap(cy);
@@ -280,54 +331,57 @@ function rock(g, k, cx, cy, rc, seed = 0) {
     const a = Math.atan2(r, c), d = Math.hypot(c, r), e = rc * (1 + .12 * Math.sin(3 * a + 1 + seed) + .07 * Math.sin(5 * a + seed));
     if (d > e) continue;
     const v = hash(c, r, 7 + seed);
-    const tone = d > e - 1 ? k.ink : (c + r < -rc * .4 && v < .6) ? k.g3 : v < .45 ? k.g4 : v < .85 ? k.mid : k.d3;
-    R(g, X + c * P, Y + r * P, P, P, tone);
+    R(g, X + c * P, Y + r * P, P, P, d > e - 1 ? k.ink : (c + r < -rc * .4 && v < .6) ? k.g3 : v < .45 ? k.g4 : v < .85 ? k.mid : k.d3);
   }
 }
-// The finale's house (FINALE_* in config/finale.js): 18 cells, nine wall rows, the roof, chimney, door, window, bench.
-function house(g, k, x, gy, o = {}) {
-  const cell = (c, r, w, h, tone) => R(g, x + c * P, gy + r * P, w * P, h * P, tone);
+// The finale's house (FINALE_* in config/finale.js) as cells: [col, row, role], rows up from the ground.
+const HOUSE = (() => {
+  const out = [];
   for (let r = -9; r <= -1; r++) for (let c = 1; c < 17; c++) {
     if (c === 8) continue;
-    if (c >= 3 && c < 6 && r >= -6 && r < -4) continue;
-    if (c >= 11 && c < 15 && r >= -7) continue;
-    const v = hash(c, r, 11); cell(c, r, 1, 1, (r & 1) ? (v < .7 ? k.g2 : k.g3) : (v < .7 ? k.g3 : k.g4));
+    if (c >= 3 && c < 6 && r >= -6 && r < -4) { out.push([c, r, 'win', 777]); continue; }
+    if (c >= 11 && c < 15 && r >= -7) { out.push([c, r, (c === 11 || c === 14 || r === -7) ? 'edge' : 'door']); continue; }
+    out.push([c, r, 'board']);
   }
-  [0, 17, 8].forEach(c => cell(c, -9, 1, 9, k.ink));
-  cell(0, -10, 18, 1, k.ink);
-  [[-1, 20], [0, 18], [1, 16], [2, 14], [4, 10]].forEach(([cx, w], j) => { for (let i = 0; i < w; i++) cell(cx + i, -11 - j, 1, 1, j === 0 ? k.ink : hash(cx + i, j, 12) < .6 ? k.d3 : k.ink); });
-  cell(13, -18, 2, 3, k.ink);
-  cell(11, -7, 4, 7, k.ink); cell(12, -6, 2, 6, k.mid);
-  cell(3, -6, 3, 2, o.lit ? k.paper : k.ink); R(g, x + 4.5 * P - 1, gy - 6 * P, 2, 2 * P, k.ink);
-  R(g, x + 3 * P, gy - 4 * P, 3 * P, 2, k.ink);
-  cell(16, -2, 4, 1, k.ink); cell(16, -1, 1, 1, k.ink); cell(19, -1, 1, 1, k.ink);
-  if (o.t != null) for (let i = 0; i < 4; i++) {          // chimney smoke, thinning by opacity
-    const ph = (o.t * .3 + i / 4) % 1;
-    g.globalAlpha = 1 - ph;
-    R(g, x + snap(13 * P + ph * 30 + (i % 2) * P), gy + snap(-19 * P - ph * 60), P, P, k.g3);
-  }
-  g.globalAlpha = 1;
+  for (const c of [0, 17, 8]) for (let r = -9; r <= -1; r++) out.push([c, r, 'edge']);
+  for (let c = 0; c < 18; c++) out.push([c, -10, 'edge']);
+  [[-1, 20], [0, 18], [1, 16], [2, 14], [4, 10]].forEach(([x, w], j) => { for (let i = 0; i < w; i++) out.push([x + i, -11 - j, j === 0 ? 'roofEdge' : 'roof']); });
+  for (let r = -18; r < -15; r++) for (const c of [13, 14]) out.push([c, r, 'edge']);
+  return out;
+})();
+function bench(g, k, x, y, w = 4) {          // x, y: top-left of the seat in px
+  R(g, x, y, w * P, P, k.ink); R(g, x, y + P, P, P, k.ink); R(g, x + (w - 1) * P, y + P, P, P, k.ink);
 }
-// The house under the rock: splinters, a slipped piece of roof, the rock on it.
+function house(g, k, x, gy, o = {}) {
+  for (const [c, r, role] of HOUSE) R(g, x + c * P, gy + r * P, P, P, role === 'win' ? (o.lit ? k.paper : k.ink) : cellTone(k, role, c, r));
+  if (o.lit != null && o.lit > 0 && o.lit < 1) { g.globalAlpha = o.lit; R(g, x + 3 * P, gy - 6 * P, 3 * P, 2 * P, k.paper); g.globalAlpha = 1; }
+  bench(g, k, x + 16 * P, gy - 2 * P);
+  if (o.t != null) for (let i = 0; i < 4; i++) {
+    const ph = (o.t * .3 + i / 4) % 1;
+    C(g, x + snap(13 * P + ph * 30 + (i % 2) * P), gy + snap(-19 * P - ph * 60), k.g3, 1 - ph);
+  }
+}
 function ruin(g, k, x, gy, seed = 0) {
   const cell = (c, r, tone) => R(g, x + c * P, gy + r * P, P, P, tone);
   for (const [c0, r0, dc, dr, n] of [[-3, -1, 1, 0, 4], [-2, -2, 1, -1, 3], [18, -1, 1, 0, 5], [19, -3, 1, 1, 3], [21, -1, 1, 0, 2]])
     for (let i = 0; i < n; i++) cell(c0 + i * dc, r0 + i * dr, i % 2 ? k.g4 : k.g3);
   for (let i = 0; i < 5; i++) cell(16 + i, -4 + Math.floor(i / 2), k.ink);
-  cell(-4, -1, k.ink); cell(22, -1, k.ink);
   rock(g, k, x + 9 * P, gy - 8 * P, 10, seed);
 }
-function station(g, k, x, gy, w = 42, h = 36) {
-  R(g, x, gy - h, w, 2, k.ink); R(g, x, gy - h, 2, h, k.ink); R(g, x + w - 2, gy - h, 2, h, k.ink);
-  for (let c = 1; c < w / P - 1; c++) if (hash(c, x, 51) < .5) R(g, x + c * P, gy - P, P, P, k.g3);
+function station(g, k, x, gy, w = 7, h = 6) {   // in cells
+  for (let c = 0; c < w; c++) R(g, x + c * P, gy - h * P, P, P, k.ink);
+  for (let r = 1; r < h; r++) { R(g, x, gy - (h - r) * P, P, P, k.ink); R(g, x + (w - 1) * P, gy - (h - r) * P, P, P, k.ink); }
+  for (let c = 1; c < w - 1; c++) if (hash(c, x, 51) < .5) R(g, x + c * P, gy - P, P, P, k.g3);
 }
 function heap(g, k, x, gy, n = 5) {
   for (let r = 0; r < n; r++) for (let c = r; c < 2 * n - r; c++) R(g, x + c * P, gy - (r + 1) * P, P, P, hash(c, r, x) < .5 ? k.g4 : k.mid);
 }
 
 // ---------------------------------------------------------------- bodies
-// rim then middle; `pieces` of the twelve rim pieces are set in `rim`, the rest in the soul's grey.
+// Rim then middle. `pieces` (0..12, fractional) of the twelve rim pieces are in
+// `rim`; the piece being closed fades from the soul's grey to `rim`.
 function body(g, k, x, y, rim, a = 1, pieces = 12, fill = k.paper, base = k.soul) {
+  if (a <= 0) return;
   g.globalAlpha = a;
   R(g, x, y, W, W, base);
   const segs = [];
@@ -335,43 +389,50 @@ function body(g, k, x, y, rim, a = 1, pieces = 12, fill = k.paper, base = k.soul
   for (let i = 0; i < 3; i++) segs.push([x + W - RIM, y + i * P, RIM, P]);
   for (let i = 2; i >= 0; i--) segs.push([x + i * P, y + W - RIM, P, RIM]);
   for (let i = 2; i >= 0; i--) segs.push([x, y + i * P, RIM, P]);
-  g.fillStyle = rim; segs.forEach((s, i) => { if (i < pieces) g.fillRect(...s); });
+  const full = Math.floor(pieces), frac = pieces - full;
+  g.fillStyle = rim;
+  segs.forEach((s, i) => {
+    if (i < full) g.fillRect(...s);
+    else if (i === full && frac > 0) { g.globalAlpha = a * frac; g.fillRect(...s); g.globalAlpha = a; }
+  });
   R(g, x + RIM, y + RIM, W - 2 * RIM, W - 2 * RIM, fill);
   g.globalAlpha = 1;
 }
-function ticks(g, k, x, y, n, a = 1, tone) {
-  g.globalAlpha = a; g.fillStyle = tone || k.mid;
-  const m = Math.min(n, 4), w = m * 4 - 2, x0 = x + (W - w) / 2;
-  for (let i = 0; i < m; i++) g.fillRect(x0 + i * 4, y - 8, U, 4);
-  if (n >= 5) g.fillRect(x0 - 1, y - 7, w + 2, 2);
-  g.globalAlpha = 1;
+// generation ticks as whole cells over the head, alternating tones so they count
+function ticks(g, k, x, y, n, a = 1) {
+  const m = Math.min(n, 4), x0 = x + Math.round((3 - m) / 2) * P;
+  for (let i = 0; i < m; i++) C(g, x0 + i * P, y - 2 * P, i % 2 ? k.g4 : k.mid, a);
 }
-// The two outfits (the wardrobe's defaults: top hat, monocle, bowtie; bow, eyes, scarf).
+// The two outfits at the wardrobe's 2 px unit (top hat, monocle, bowtie; bow, eyes, scarf).
 const OUT = {
-  you: { head: ['.###.', '.###.', '#####'], face: ['', '.....#.', '..#.#.#', '.....#.', '......#', '......#'], neck: ['', '', '', '', '..#...#', '..#####', '..#...#'] },
+  you: { head: ['.###.', '.###.', '.###.', '#####'], face: ['', '.....#.', '..#.#.#', '.....#.', '......#', '......#'], neck: ['', '', '', '', '..#...#', '..#####', '..#...#'] },
   sqouse: { head: ['##.##', '#####', '##.##'], face: ['', '', '...#.#.'], neck: ['', '', '', '#######'] },
 };
 function dressed(g, k, x, y, who, o = {}) {
   const a = o.a ?? 1, rim = o.rim ?? k.soul, tone = o.tone ?? k.mid, ou = OUT[who];
+  if (a <= 0) return;
   body(g, k, x, y, rim, a, o.pieces ?? 12);
-  g.globalAlpha = a; g.fillStyle = tone;
-  for (const grid of [ou.face, ou.neck]) grid.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') g.fillRect(x + RIM + c * U, y + RIM + r * U, U, U); }));
-  const w = Math.max(...ou.head.map(r => r.length)), hx = x + Math.round((W - w * 3) / 2), top = y - ou.head.length * 3;
-  ou.head.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') g.fillRect(hx + c * 3, top + r * 3, 3, 3); }));
+  const marks = (ink, al) => {
+    g.globalAlpha = al; g.fillStyle = ink;
+    for (const grid of [ou.face, ou.neck]) grid.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') g.fillRect(x + RIM + c * U, y + RIM + r * U, U, U); }));
+    const w = Math.max(...ou.head.map(r => r.length)), hx = x + (W - w * U) / 2, top = y - ou.head.length * U;
+    ou.head.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') g.fillRect(hx + c * U, top + r * U, U, U); }));
+  };
+  marks(tone, a);
+  if (o.inkA) marks(k.ink, a * o.inkA);
   g.globalAlpha = 1;
 }
 function hopY(t, grp) {
   const ph = ((t / .76 + grp / 3) % 1 + 1) % 1;
   return [0, 0, -P, -2 * P, -P, 0][Math.floor(ph * 6)];
 }
-// a hauler going between two spots in held steps, with a load one way
 function hauler(g, k, t, i, xa, xb, gy, o = {}) {
   const ph = ((held(t, 4) / (o.period || 6)) + i * .37) % 1;
   const d = ph < .5 ? ph * 2 : 2 - ph * 2;
   const x = snap(lerp(xa, xb, d));
   body(g, k, x, gy - W, o.rim || k.ink, o.a ?? 1);
   if (o.ticks) ticks(g, k, x, gy - W, o.ticks);
-  if (ph < .5) R(g, x + 6, gy - W - 6, P, 4, k.g4);
+  if (ph < .5) R(g, x + P, gy - W - P, P, P, k.g4);
   return x;
 }
 
@@ -382,7 +443,6 @@ const HANDS = {
   left: ['.....##...', '....#oo#..', '.######o##', '#oooooooo#', '.####oooo#', '...#ooooo#', '....#ooo##', '...#ooo#..', '....#o##..', '.....##...'],
 };
 const STEP = { down: [0, 1], up: [0, -1], left: [-1, 0] };
-// still HAND_STILL_S (0.6), then pressed a cell for HAND_PRESS_S (0.2)
 function hand(g, k, x, y, way, t, a = 1) {
   if (a <= 0) return;
   const k2 = (t % .8) >= .6 ? P : 0, ox = x + STEP[way][0] * k2, oy = y + STEP[way][1] * k2;
@@ -390,43 +450,45 @@ function hand(g, k, x, y, way, t, a = 1) {
   for (const [ch, ink] of [['#', k.purple], ['o', k.paper]]) HANDS[way].forEach((row, r) => [...row].forEach((c, col) => { if (c === ch) R(g, ox + col * P, oy + r * P, P, P, ink); }));
   g.globalAlpha = 1;
 }
-// tips: down [3,9], up [3,0], left [0,3]
 
 // ---------------------------------------------------------------- heaven: the lens, the stair, the beam
-// A lumpy lens of cloud round a white mouth, a dashed ink fringe turning round it.
+// A white mouth, a soft cloud rim, a slow fringe whose every cell eases on and off.
 function lens(g, k, cx, cy, rx, ry, t, inside = null) {
   if (rx < .5 || ry < .5) return;
-  const X = snap(cx), Y = snap(cy), hs = held(t, 4), n = Math.ceil(Math.max(rx, ry) * 1.3 + 2);
+  const X = snap(cx), Y = snap(cy), n = Math.ceil(Math.max(rx, ry) * 1.3 + 2);
   for (let r = -n; r <= n; r++) for (let c = -n; c <= n; c++) {
     const dx = (c + .5) / rx, dy = (r + .5) / ry, d = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
-    const e = 1 + .1 * Math.sin(a * 5 + hs * .9) + .06 * Math.sin(a * 9 - hs * 1.3);
-    const x = X + c * P, y = Y + r * P, turn = (((a / (2 * Math.PI)) + t * .04) % 1 + 1) % 1;
+    const e = 1 + .08 * Math.sin(a * 5 + t * .25) + .05 * Math.sin(a * 9 - t * .35);
+    const x = X + c * P, y = Y + r * P, turn = (((a / (2 * Math.PI)) + t * .02) % 1 + 1) % 1;
     if (d < .7 * e) {
       if (inside) inside(x, y, c, r);
-      else R(g, x, y, P, P, hash(c, r - Math.floor(t * 1.5), 21) < .1 ? k.g1 : k.paper);
+      else R(g, x, y, P, P, hash(c, r - Math.floor(t * 1.5), 21) < .08 ? k.g1 : k.paper);
     } else if (d < e) {
-      const v = hash(c, r, Math.floor(turn * 14)), outer = d > .88 * e;
+      const v = hash(c, r, 22), outer = d > .88 * e;
       R(g, x, y, P, P, outer ? (v < .5 ? k.g3 : k.g4) : (v < .4 ? k.g1 : v < .8 ? k.g2 : k.g3));
     } else if (d < e + 1.15 / Math.min(rx, ry)) {
-      if (Math.floor(turn * 30 + t * 1.2) % 2 === 0) R(g, x, y, P, P, k.ink);
+      C(g, x, y, k.ink, clamp01(.5 + .9 * Math.sin(2 * Math.PI * turn * 12 - t * .5 + hash(c, r, 23) * .8)));
     }
   }
 }
 function motes(g, k, cx, cy, spread, rise, t, n = 10, tone) {
   for (let i = 0; i < n; i++) {
-    const ph = (t * .25 + i * .137) % 1, x = snap(cx + (hash(i, 1, 5) - .5) * spread), y = Math.round((cy + rise * (1 - ph)) / 2) * 2;
-    g.globalAlpha = Math.min(1, ph * 3, (1 - ph) * 3); R(g, x, y, 2, 2, tone || k.purple);
+    const ph = (t * .2 + i * .137) % 1;
+    C(g, snap(cx + (hash(i, 1, 5) - .5) * spread), snap(cy + rise * (1 - ph)), tone || k.purple, Math.min(1, ph * 3, (1 - ph) * 3));
   }
-  g.globalAlpha = 1;
 }
-function stair(g, k, x0, y0, x1, y1, n, a = 1) {
-  g.globalAlpha = a;
+// steps two cells tall: a cloud tread over an ink rim; `dir` 1 goes down to the right, -1 to the left
+function stair(g, k, x0, y0, n, dir = 1, a = 1) {
   for (let i = 0; i < n; i++) {
-    const x = snap(lerp(x0, x1, i / (n - 1))), y = snap(lerp(y0, y1, i / (n - 1)));
-    for (let c = 0; c < 3; c++) R(g, x + c * P, y, P, P, hash(c, i, 61) < .4 ? k.g2 : hash(c, i, 62) < .6 ? k.g3 : k.g4);
-    R(g, x, y + P, 3 * P, 2, k.ink);
+    const x = x0 + dir * i * 2 * P, y = y0 + i * 2 * P;
+    for (let c = 0; c < 3; c++) { C(g, x + c * P, y, hash(c, i, 61) < .5 ? k.g3 : k.g2, a); C(g, x + c * P, y + P, k.ink, a); }
   }
-  g.globalAlpha = 1;
+}
+// where a body stands on each step, then off the foot
+function stairPts(x0, y0, n, dir = 1) {
+  const pts = [];
+  for (let i = 0; i < n; i++) pts.push([x0 + dir * i * 2 * P, y0 + i * 2 * P - W]);
+  return pts;
 }
 function heavenTear(g, k, cx, cy, t, open = 1, inside) {
   lens(g, k, cx, cy, 7 * open, 10 * open, t, inside);
@@ -434,12 +496,10 @@ function heavenTear(g, k, cx, cy, t, open = 1, inside) {
 }
 function heavenColumn(g, k, cx, gy, t, open = 1, inside) {
   const ry = 11 * open, top = gy - ry * 2 * P, X = snap(cx);
-  if (open > 0) for (let y = snap(top) - P; y >= -P; y -= P) for (let c = -2; c <= 1; c++) {
-    const v = hash(c, y / P + Math.floor(t * 3), 71);
-    const edge = c === -2 || c === 1;
-    if (edge ? v < .35 : true) { g.globalAlpha = open; R(g, X + c * P, y, P, P, edge ? k.g3 : v < .5 ? k.g1 : k.g2); }
+  for (let y = snap(top) - P; y >= -P; y -= P) for (let c = -2; c <= 1; c++) {
+    const v = hash(c, y / P + Math.floor(t * 3), 71), edge = c === -2 || c === 1;
+    if (!edge || v < .35) C(g, X + c * P, y, edge ? k.g3 : v < .5 ? k.g1 : k.g2, open);
   }
-  g.globalAlpha = 1;
   lens(g, k, cx, gy - ry * P, 4 * open, ry, t, inside);
   if (open > .5) motes(g, k, cx, -10, 3 * P, top + 10, t, 8);
 }
@@ -450,191 +510,160 @@ function cloudMass(g, k, x0, y0, cols, rows, shape) {
     R(g, x0 + c * P, y0 + r * P, P, P, v < .5 ? k.g1 : v < .85 ? k.g2 : k.g3);
   }
 }
-
-// heaven's end: the cloud floor, heaven's trees, the union at its mill, posters on posts; and the portal's end
-function heavenEnd(g, k, t, w, h, style, px) {
+function heavenEnd(g, k, t, w, h, style, px, hand_a) {
   R(g, 0, 0, w, h, k.paper);
   cloudMass(g, k, 0, 0, Math.ceil(w / P), 7, (c, r) => (Math.sin(c * .31) + Math.sin(c * .11 + 2)) * 1.6 + 3.5 > r);
   const fy = h - 60;
-  // the cloud floor, with a hole for H-A
+  const inHole = (x, y) => { const dx = (x + 3 - px) / (9 * P), dy = (y + 3 - fy - 12) / (4 * P); return dx * dx + dy * dy; };
   for (let y = fy; y < h; y += P) for (let x = 0; x < w; x += P) {
-    if (style === 'A') { const dx = (x + 3 - px) / (9 * P), dy = (y + 3 - fy - 9) / (3 * P); if (dx * dx + dy * dy < 1) continue; }
+    if (style === 'A') { const d = inHole(x, y); if (d < 1) { R(g, x, y, P, P, d > .72 ? k.ink : y > fy + 30 ? k.g3 : k.g1); continue; } }
     const v = hash(x / P, y / P, 82); R(g, x, y, P, P, v < .45 ? k.g1 : v < .82 ? k.g2 : k.g3);
   }
-  if (style === 'A') {
-    // through the hole: the yard far below, its ground a thin band, specks of crew
-    for (let y = fy; y < h; y += P) for (let x = px - 9 * P; x < px + 9 * P; x += P) {
-      const dx = (x + 3 - px) / (9 * P), dy = (y + 3 - fy - 9) / (3 * P), d = dx * dx + dy * dy;
-      if (d >= 1) continue;
-      R(g, snap(x), y, P, P, d > .78 ? k.ink : d > .6 ? k.g4 : (y > fy + 18 ? k.g3 : k.g1));
-    }
-    R(g, px - 36, fy + 18, 72, 2, k.d3);
-    for (let i = 0; i < 3; i++) R(g, snap(px - 18 + i * 14 + held(t, 2) * 2 % 6), fy + 16, 2, 2, k.ink);
-    stair(g, k, px - 54, fy - 6, px - 18, fy + 6, 3);
-  }
-  // heaven's trees: an ink trunk, a crown of cloud-like cells with an ink rim
+  // heaven's trees
   for (const tx of [30, 78, 126]) {
-    R(g, tx, fy - 36, P, 36, k.ink);
-    for (let r = -4; r <= 4; r++) for (let c = -4; c <= 4; c++) {
-      const d = Math.hypot(c, r); if (d > 4.3) continue;
-      R(g, tx + c * P, fy - 48 + r * P, P, P, d > 3.4 ? k.ink : hash(c, r, tx) < .5 ? k.g3 : k.g4);
-    }
+    for (let r = 1; r <= 6; r++) R(g, tx, fy - r * P, P, P, k.ink);
+    for (let r = -4; r <= 4; r++) for (let c = -4; c <= 4; c++) { const d = Math.hypot(c, r); if (d > 4.3) continue; R(g, tx + c * P, fy - 48 + r * P, P, P, d > 3.4 ? k.ink : hash(c, r, tx) < .5 ? k.g3 : k.g4); }
   }
-  // a mill box and the union at work, rims inked
-  station(g, k, w - 120, fy, 54, 42);
+  station(g, k, w - 120, fy, 9, 7);
   for (let i = 0; i < 3; i++) hauler(g, k, t, i, 150, w - 140, fy, { ticks: 1 + i });
-  // posters on posts
-  for (const qx of [190, w - 170]) { R(g, qx, fy - 42, 2, 42, k.ink); R(g, qx - 10, fy - 54, 22, 16, k.paper); R(g, qx - 10, fy - 54, 22, 2, k.ink); R(g, qx - 10, fy - 40, 22, 2, k.ink); R(g, qx - 10, fy - 54, 2, 16, k.ink); R(g, qx + 10, fy - 54, 2, 16, k.ink); R(g, qx - 6, fy - 49, 14, 2, k.mid); R(g, qx - 6, fy - 45, 10, 2, k.mid); }
+  for (const qx of [192, w - 168]) { for (let r = 1; r <= 7; r++) R(g, qx, fy - r * P, P, P, k.ink); for (let c = -1; c <= 1; c++) for (let r = 8; r <= 10; r++) R(g, qx + c * P, fy - r * P, P, P, (c === 0 && r === 9) ? k.mid : k.ink); }
+  if (style === 'A') {
+    // the stair goes down into the hole: its last steps, clipped at the floor, a ghost on it
+    g.save(); g.beginPath(); g.rect(0, 0, w, fy + 4 * P); g.clip();
+    stair(g, k, px - 8 * P, fy - 6 * P, 5, 1);
+    const pts = stairPts(px - 8 * P, fy - 6 * P, 5, 1);
+    const [x, y] = along([[px - 20 * P, fy - W], ...pts], (t * .12) % 1);
+    body(g, k, x, y, k.soul, .9);
+    g.restore();
+    hand(g, k, px - 3 * P, fy - 16 * P, 'down', t, hand_a);
+  }
   return fy;
 }
-// The stair's top, where heaven's end of H-A is: [cx, cy] for the ripple
-const HEAVEN_A_END = (w, h) => [Math.round(w * .5 / P) * P, h - 60 + 9];
-const HEAVEN_B_END = (w, h) => [Math.round(w * .5 / P) * P, h - 60 - 11 * P];
 
 // ---------------------------------------------------------------- hell: the slit, the crater, the chamber
 function hot(k, c, r, d, hs) {
-  const vein = Math.abs(Math.sin(c * 1.1 + r * 2.3 - hs * 2)) < .14;
-  if (vein) return k.ink;
+  if (Math.abs(Math.sin(c * 1.1 + r * 2.3 - hs * 2)) < .14) return k.ink;
   if (d < .35) return k.paper;
   return Math.sin(c * .8 - hs * 3 + r * 1.3) > .2 ? k.paper : k.g2;
 }
 function embers(g, k, cx, cy, spread, rise, t, n, onDark) {
   for (let i = 0; i < n; i++) {
-    const ph = (t * .35 + i * .107) % 1, wob = (Math.floor(held(t, 3) * 3 + i) % 3 - 1) * 2;
-    const x = Math.round((cx + (hash(i, 9, 3) - .5) * spread + wob * (ph > .3 ? 1 : 0)) / 2) * 2, y = Math.round((cy - ph * rise) / 2) * 2;
-    g.globalAlpha = Math.min(1, (1 - ph) * 1.6);
+    const ph = (t * .3 + i * .107) % 1, wob = (Math.floor(held(t, 3) * 3 + i) % 3 - 1) * P;
+    const x = snap(cx + (hash(i, 9, 3) - .5) * spread + (ph > .3 ? wob : 0)), y = snap(cy - ph * rise);
     const tone = onDark ? (ph < .3 ? k.paper : ph < .6 ? k.g3 : k.mid) : (ph < .3 ? k.ink : ph < .6 ? k.d3 : k.mid);
-    R(g, x, y, 2, 2, tone);
+    C(g, x, y, tone, Math.min(1, (1 - ph) * 1.6, ph * 8));
   }
-  g.globalAlpha = 1;
 }
-// a slit of white heat in a floor; lit rock teeth round it, a few purple cells on the seam
+// Every cell of the slit comes in on its own ramp as it opens, never whole.
 function hellSlit(g, k, cx, cy, t, open, o = {}) {
-  const rx = (o.rx || 9) * open, ry = (o.ry || 3.2) * open; if (rx < .5) return;
-  const X = snap(cx), Y = snap(cy), hs = held(t, 6), n = Math.ceil(rx * 1.3 + 2);
+  if (open <= 0) return;
+  const rx = o.rx || 9, ry = o.ry || 3.2, X = snap(cx), Y = snap(cy), hs = held(t, 6), n = Math.ceil(rx * 1.3 + 2);
+  // the light thrown up onto the deep above it
+  if (o.light) for (let r = 1; r <= 14; r++) for (let c = -Math.ceil(rx * 1.1); c <= Math.ceil(rx * 1.1); c++) {
+    const p = .55 * (1 - r / 14) * (1 - Math.abs(c) / (rx * 1.1));
+    if (hash(c, r, 35) < p) C(g, X + c * P, Y - Math.ceil(ry) * P - r * P, r < 5 ? k.g4 : k.d3, open * (.75 + .25 * Math.sin(t * 1.1 + c * .4)));
+  }
   for (let r = -Math.ceil(ry * 1.4 + 2); r <= Math.ceil(ry * 1.4 + 2); r++) for (let c = -n; c <= n; c++) {
     const dx = (c + .5) / rx, dy = (r + .5) / ry, d = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
     const e = 1 + .26 * (hash(Math.round(a * 8), 0, 31) - .5);
-    const x = X + c * P, y = Y + r * P;
-    if (d < .62 * e) R(g, x, y, P, P, hot(k, c, r, d, hs));
-    else if (d < e) {
-      const lit = r < 0 ? false : hash(c, r, 32) < .55;
-      R(g, x, y, P, P, o.onDark ? (lit ? k.g4 : hash(c, r, 33) < .5 ? k.d3 : k.d2) : (lit ? k.mid : k.ink));
-      if (d < .7 * e && hash(c, r, 34) < .18) { g.globalAlpha = .55 + .45 * Math.sin(t * 1.4 + c); R(g, x, y, P, P, k.purple); g.globalAlpha = 1; }
+    if (d >= e) continue;
+    const al = clamp01((open * 1.25 - d / e) * 5), x = X + c * P, y = Y + r * P;
+    if (d < .62 * e) C(g, x, y, hot(k, c, r, d, hs), al);
+    else {
+      const lit = r >= 0 && hash(c, r, 32) < .55;
+      C(g, x, y, o.onDark ? (lit ? k.g4 : hash(c, r, 33) < .5 ? k.d3 : k.d2) : (lit ? k.mid : k.ink), al);
+      if (d < .7 * e && hash(c, r, 34) < .18) C(g, x, y, k.purple, al * (.55 + .45 * Math.sin(t * 1.4 + c)));
     }
   }
   if (open > .4) embers(g, k, cx, cy - ry * P * .5, rx * P * 1.3, 130, t, 16, o.onDark);
 }
 function hellCrater(g, k, cx, gy, t, open) {
-  const rc = 10 * open; if (rc < .5) return;
-  const X = snap(cx), hs = held(t, 6);
-  // scorch on the ground round it
-  for (let r = 0; r <= Math.ceil(rc * 1.1); r++) for (let c = -Math.ceil(rc * 1.6); c <= Math.ceil(rc * 1.6); c++) {
+  if (open <= 0) return;
+  const rc = 10, X = snap(cx), hs = held(t, 6), kd = k.deep;
+  for (let r = 0; r <= 11; r++) for (let c = -16; c <= 16; c++) {
     const d = Math.hypot(c / (rc * 1.55), r / (rc * 1.05));
-    if (d < 1 && hash(c, r, 91) < 1.15 - d) R(g, X + c * P, gy + r * P, P, P, hash(c, r, 92) < .5 ? k.d3 : k.ink);
+    if (d < 1 && hash(c, r, 91) < 1.15 - d) C(g, X + c * P, gy + r * P, hash(c, r, 92) < .5 ? k.d3 : k.ink, clamp01((open * 1.3 - d) * 4));
   }
-  // cracks running off it
   for (let i = 0; i < 6; i++) {
     const a = (i / 6) * Math.PI + .25 + hash(i, 0, 93) * .3, len = Math.round(rc * (1.2 + hash(i, 1, 93)));
-    for (let s = Math.round(rc * .9); s < len + rc * .9; s++) {
+    for (let s = 9; s < len + 9; s++) {
       const c = Math.round(Math.cos(a) * s * 1.2), r = Math.round(Math.sin(a) * s * .8);
-      if (r >= 0) R(g, X + c * P, gy + r * P, P, P, k.ink);
+      if (r >= 0) C(g, X + c * P, gy + r * P, k.ink, clamp01((open * 2.2 - s / (len + 9)) * 3));
     }
   }
-  // the bowl: heat rings running inward, veins, a charred lip
-  for (let r = 0; r <= Math.ceil(rc * .8); r++) for (let c = -Math.ceil(rc); c <= Math.ceil(rc); c++) {
-    const d = Math.hypot((c + .5) / rc, (r + .5) / (rc * .75));
+  for (let r = 0; r <= 8; r++) for (let c = -rc; c <= rc; c++) {
+    const d = Math.hypot((c + .5) / rc, (r + .5) / (rc * .75)), al = clamp01((open * 1.25 - d) * 5);
     const x = X + c * P, y = gy + r * P;
-    if (d < .78) {
-      const ring = Math.floor(d * 7 + t * 2) % 2;
-      const tone = hot(k, c, r, d, hs);
-      R(g, x, y, P, P, tone === k.ink ? k.ink : ring ? k.paper : k.g2);
-    } else if (d < 1) R(g, x, y, P, P, hash(c, r, 94) < .4 ? k.mid : k.ink);
+    if (d < .78) { const ring = Math.floor(d * 7 + t * 2) % 2, tone = hot(kd, c, r, d, hs); C(g, x, y, tone === kd.ink ? kd.ink : ring ? kd.paper : kd.g2, al); }
+    else if (d < 1) C(g, x, y, hash(c, r, 94) < .4 ? k.mid : k.ink, al);
   }
-  // thrown-up dirt on the rim
-  for (let c = -Math.ceil(rc) - 1; c <= Math.ceil(rc) + 1; c++) if (Math.abs(c) >= rc - 1.5 && hash(c, 0, 95) < .7) R(g, X + c * P, gy - P, P, P, hash(c, 1, 95) < .5 ? k.d3 : k.mid);
   if (open > .4) {
-    for (let i = 0; i < 5; i++) {                      // smoke, thinning as it goes
-      const ph = (t * .18 + i / 5) % 1;
-      g.globalAlpha = (1 - ph) * .9;
-      for (let j = 0; j < 3; j++) R(g, snap(X + (hash(i, j, 96) - .5) * rc * P + ph * 24), snap(gy - 12 - ph * 150 - j * P), P, P, j ? k.g3 : k.g4);
-    }
-    g.globalAlpha = 1;
+    for (let i = 0; i < 5; i++) { const ph = (t * .18 + i / 5) % 1; for (let j = 0; j < 3; j++) C(g, snap(X + (hash(i, j, 96) - .5) * rc * P + ph * 24), snap(gy - 12 - ph * 150 - j * P), j ? k.g3 : k.g4, (1 - ph) * .9 * ph * 6 > 1 ? (1 - ph) * .9 : ph * 5); }
     embers(g, k, cx, gy - 4, rc * P * 1.4, 150, t, 16, false);
   }
 }
-// placeholder Satan: a plain tall shape, not a design
-function placeholderFigure(g, k, x, y, a, tone, rim, name) {
-  g.globalAlpha = a;
-  R(g, x, y, 5 * P, 9 * P, rim); R(g, x + 2, y + 2, 5 * P - 4, 9 * P - 4, tone);
-  g.globalAlpha = 1;
+function placeholderFigure(g, k, x, y, tone, rim, name) {
+  R(g, x, y, 5 * P, 9 * P, rim); R(g, x + P, y + P, 3 * P, 7 * P, tone);
   label(g, k, x - 18, y - 14, `[placeholder: ${name}]`, k.mid, 9);
 }
-function deepScene(g, k, t, w, h, o = {}) {
+function deepScene(g, k, t, w, h) {
+  k = k.deep;
   R(g, 0, 0, w, h, k.ink);
-  const fy = o.fy || h - 60, hs = held(t, 2);
+  const fy = h - 60, hs = held(t, 2);
   for (let y = 0; y < fy; y += P) for (let x = 0; x < w; x += P) {
     const v = hash(x / P + Math.floor(hs * 2) * (y / P % 3 === 0 ? 1 : 0), y / P, 101);
     if (v < .07) R(g, x, y, P, P, k.d1); else if (v < .085) R(g, x, y, P, P, k.d2);
   }
-  for (let y = fy; y < h; y += P) for (let x = 0; x < w; x += P) { const v = hash(x / P, y / P, 102); R(g, x, y, P, P, v < .45 ? k.d2 : v < .85 ? k.d3 : k.mid); }
-  R(g, 0, fy, w, 2, k.mid);
-  // the deep's end of the wizards' portal, small, for scale: a black mouth in a grey and purple lip
-  const pcx = 90, pcy = 70;
+  for (let y = fy; y < h; y += P) for (let x = 0; x < w; x += P) { const v = hash(x / P, y / P, 102); R(g, x, y, P, P, y === fy ? k.mid : v < .45 ? k.d2 : v < .85 ? k.d3 : k.mid); }
+  const pcx = 84, pcy = 66;
   for (let r = -6; r <= 6; r++) for (let c = -6; c <= 6; c++) {
     const d = Math.hypot(c + .5, r + .5); if (d > 6) continue;
     const turn = ((Math.atan2(r, c) / (2 * Math.PI) + t * .1) % 1 + 1) % 1;
     R(g, pcx + c * P, pcy + r * P, P, P, d < 4.3 ? k.ink : Math.floor(turn * 12) % 3 === 0 ? k.purple : hash(c, r, 103) < .5 ? k.g4 : k.d3);
   }
-  // the deep's crew, drawn turned over: white rim, black middle
-  for (let i = 0; i < 3; i++) {
-    const x = snap(200 + i * 160 + Math.sin(held(t, 3) + i) * 6), y = snap(fy - 60 - (i % 2) * 40 + (Math.floor(held(t, 2) * 2 + i) % 2) * P);
+  for (let i = 0; i < 2; i++) {
+    const x = snap(540 + i * 90 + Math.sin(held(t, 3) + i) * 6), y = fy - 60 - i * 36 + (Math.floor(held(t, 2) * 2 + i) % 2) * P;
     body(g, k, x, y, k.paper, 1, 12, k.ink, k.paper);
   }
-  for (const sx of [170, 490]) { R(g, sx, fy - 40, 50, 2, k.d3); R(g, sx, fy - 40, 2, 40, k.d3); R(g, sx + 48, fy - 40, 2, 40, k.d3); }
+  station(g, k, 528, fy, 8, 7);
   return fy;
 }
 function hellScene(g, k, t, w, h, o = {}) {
+  k = k.deep;
   R(g, 0, 0, w, h, k.ink);
-  const fy = h - 40, hs = held(t, 3);
-  // lit from below: the dither of lit cells thins with height, flat cells, no gradient
+  const fy = h - 42;
   for (let y = 0; y < fy; y += P) for (let x = 0; x < w; x += P) {
-    const up = (fy - y) / fy, v = hash(x / P, y / P + Math.floor(hs * 3) * (up < .2 ? 1 : 0), 111);
-    if (v < .32 * (1 - up) ** 4) R(g, x, y, P, P, up < .1 ? k.g4 : k.d3);
+    const up = (fy - y) / fy;
+    if (hash(x / P, y / P, 111) < .32 * (1 - up) ** 4) R(g, x, y, P, P, up < .1 ? k.g4 : k.d3);
   }
   for (let y = fy - P; y < h; y += P) for (let x = 0; x < w; x += P) { if (y < fy && hash(x / P, 0, 119) < .6) continue; const v = hash(x / P, y / P, 112); R(g, x, y, P, P, v < .3 ? k.paper : v < .7 ? k.g3 : k.g4); }
-  // walls with the soft seam
   for (let y = 0; y < fy; y += P) for (const side of [0, 1]) {
     const depth = 3 + Math.round(2 * Math.sin(y * .05 + side * 3) + hash(y, side, 113) * 2);
     for (let c = 0; c < depth; c++) {
-      const x = side ? w - (c + 1) * P : c * P;
-      const seam = Math.abs(((y / P) + c * 2) % 11 - 5) < .6 && !side;
+      const x = side ? w - (c + 1) * P : c * P, seam = Math.abs(((y / P) + c * 2) % 11 - 5) < .6 && !side;
       R(g, x, y, P, P, seam ? k.g3 : hash(c, y, 114) < .5 ? k.d2 : k.d3);
     }
   }
-  // the rubble across the far side, the cage room's glow through its gaps
-  if (!o.noRubble) for (let r = 0; r < 14; r++) for (let c = 0; c < 8; c++) {
-    const x = w - 100 + c * P - (r % 3) * 3, y = fy - (r + 1) * P;
-    const gap = hash(c, r, 115) < .14;
-    if (gap) { g.globalAlpha = .6 + .4 * Math.sin(t * 1.5 + c + r); R(g, snap(x), y, P, P, k.paper); g.globalAlpha = 1; }
-    else R(g, snap(x), y, P, P, hash(c, r, 116) < .5 ? k.mid : k.d3);
+  for (let r = 0; r < 14; r++) for (let c = 0; c < 8; c++) {
+    const x = snap(w - 100 + c * P), y = fy - (r + 1) * P;
+    if (hash(c, r, 115) < .14) C(g, x, y, k.paper, .6 + .4 * Math.sin(t * 1.5 + c + r));
+    else R(g, x, y, P, P, hash(c, r, 116) < .5 ? k.mid : k.d3);
   }
-  // the hole in the ceiling: the deep's water through it, a ragged lit lip, embers drawn up into it
-  const hx = o.hx ?? w / 2;
+  const hx = snap(o.hx ?? w / 2);
   for (let r = 0; r < 6; r++) for (let c = -10; c <= 10; c++) {
     const d = Math.hypot((c + .5) / 10, (r + .5) / 5); if (d > 1.1) continue;
-    const x = snap(hx) + c * P, y = r * P;
-    R(g, x, y, P, P, d < .8 ? (hash(c, r + Math.floor(t * 2), 117) < .3 ? k.d2 : k.d1) : (hash(c, r, 118) < .5 ? k.g4 : k.mid));
+    R(g, hx + c * P, r * P, P, P, d < .8 ? (hash(c, r + Math.floor(t * 2), 117) < .3 ? k.d2 : k.d1) : (hash(c, r, 118) < .5 ? k.g4 : k.mid));
   }
-  // a union soul at the seam with a pick: pale
-  body(g, k, 30, fy - W, k.soul, .9); R(g, 50, fy - W - 4, 8, 2, k.g4);
+  // the cut ladder coming down out of the hole, a carrier on it
+  const lx = hx - 5 * P;
+  for (let r = 0; r * P < fy; r++) R(g, lx, r * P, P, P, r % 2 ? k.d3 : k.mid);
+  const ph = (t * .1) % 1, cy = snap(lerp(-W, fy - W, ph < .5 ? ph * 2 : 2 - ph * 2));
+  body(g, k, lx - P, cy, k.soul, .9);
+  body(g, k, 30, fy - W, k.soul, .9); C(g, 54, fy - W - P, k.g4);
   return fy;
 }
-const HELL_END = (w, h) => [Math.round(w / 2 / P) * P, 9];
 
-// ---------------------------------------------------------------- the ripple between two places
-// `A` and `B` are canvases; cells within r of (cx, cy) show B. Rings ride the rim: heaven's
-// purple then pale, puffs thrown off; hell's jagged and stepped, embers thrown off.
+// ---------------------------------------------------------------- the ripple: the camera's switch, never a body's
 function ripple(g, k, A, B, cx, cy, p, style, t) {
   const w = A.width, h = A.height;
   g.drawImage(A, 0, 0);
@@ -642,10 +671,7 @@ function ripple(g, k, A, B, cx, cy, p, style, t) {
   const r = ease(p) * maxR, hs = held(t, 8);
   const rad = a => style === 'hell' ? r * (1 + .07 * Math.sin(a * 7 + hs * 3) + .04 * Math.sin(a * 13 - hs * 5)) : r;
   g.save(); g.beginPath();
-  for (let y = 0; y < h; y += P) for (let x = 0; x < w; x += P) {
-    const dx = x + 3 - cx, dy = y + 3 - cy;
-    if (Math.hypot(dx, dy) < rad(Math.atan2(dy, dx))) g.rect(x, y, P, P);
-  }
+  for (let y = 0; y < h; y += P) for (let x = 0; x < w; x += P) { const dx = x + 3 - cx, dy = y + 3 - cy; if (Math.hypot(dx, dy) < rad(Math.atan2(dy, dx))) g.rect(x, y, P, P); }
   g.clip(); g.drawImage(B, 0, 0); g.restore();
   const tones = style === 'hell' ? [k.ink, k.d3, k.mid, k.g4] : [k.purple, k.purpleL, k.g3, k.g2];
   for (let i = 0; i < 4; i++) {
@@ -659,105 +685,118 @@ function ripple(g, k, A, B, cx, cy, p, style, t) {
       }
     }
   }
-  // things thrown off the leading ring
   for (let j = 0; j < 18; j++) {
     const a = hash(j, 0, 123) * Math.PI * 2, d = r + P * (1 + hash(j, 1, 123) * 4) * (.5 + p);
-    const x = snap(cx + Math.cos(a) * d), y = snap(cy + Math.sin(a) * d);
-    g.globalAlpha = 1 - p;
-    if (style === 'hell') R(g, x, y, 2, 2, k.d3); else R(g, x, y, P, P, k.g2);
+    C(g, snap(cx + Math.cos(a) * d), snap(cy + Math.sin(a) * d), style === 'hell' ? k.d3 : k.g2, 1 - p);
   }
-  g.globalAlpha = 1;
 }
-// The round trip, twice: once with the hands, once after they have faded.
-// [start, end, what] in a 16 s loop
-const TRIP = [[0, 1.5, 'the yard; the hand taps at the portal'], [1.5, 2.8, 'clicked: the ripple out of the portal'], [2.8, 5, 'the far side; its own hand points back'],
-  [5, 6.3, 'clicked: the ripple back'], [6.3, 7.3, 'home again: the round trip made, both hands fade'], [7.3, 9, 'the portal alone is the click now'],
-  [9, 10.3, 'the ripple out, no hands'], [10.3, 12, 'the far side, no hand'], [12, 13.3, 'the ripple back'], [13.3, 16, 'the yard']];
-function tripPhase(T) { return TRIP.find(([a, b]) => T >= a && T < b) || TRIP[0]; }
+const TRIP = [[0, 1.5, 'the view at the near end; the hand taps at the portal'], [1.5, 2.8, 'clicked: the camera ripples through (no body goes)'], [2.8, 5, 'the far end; its own hand points back'],
+  [5, 6.3, 'clicked: the camera ripples back'], [6.3, 7.3, 'the round trip made: both hands fade'], [7.3, 9, 'the portal itself is the click now'],
+  [9, 10.3, 'the camera ripples through, no hands'], [10.3, 12, 'the far end, no hand'], [12, 13.3, 'the camera ripples back'], [13.3, 16, 'the near end']];
 function tripStrip(g, k, t, w, h, id, o) {
-  const T = t % 16, [a, , what] = tripPhase(T);
-  const handA = T < 6.3 ? 1 : T < 7.3 ? 1 - (T - 6.3) : 0;
-  const handB = T < 6.3 ? 1 : 0;
+  const T = t % 16, [, , what] = TRIP.find(([a, b]) => T >= a && T < b) || TRIP[0];
+  const handA = T < 6.3 ? 1 : T < 7.3 ? 1 - (T - 6.3) : 0, handB = T < 6.3 ? 1 : 0;
   const [cA, gA] = buf(id + 'A', w, h), [cB, gB] = buf(id + 'B', w, h);
-  const inRipOut = (T >= 1.5 && T < 2.8) || (T >= 9 && T < 10.3), inRipBack = (T >= 5 && T < 6.3) || (T >= 12 && T < 13.3);
+  const out = (T >= 1.5 && T < 2.8) || (T >= 9 && T < 10.3), back = (T >= 5 && T < 6.3) || (T >= 12 && T < 13.3);
   const atB = (T >= 2.8 && T < 5) || (T >= 10.3 && T < 12);
   const drawA = () => o.near(gA, k, t, w, h, (T < 1.5 || (T >= 6.3 && T < 9) || T >= 13.3) ? handA : 0);
   const drawB = () => o.far(gB, k, t, w, h, atB ? handB : 0);
-  if (inRipOut) { drawA(); drawB(); const p = T >= 9 ? (T - 9) / 1.3 : (T - 1.5) / 1.3; ripple(g, k, cA, cB, o.ca[0], o.ca[1], p, o.style, t); }
-  else if (inRipBack) { drawA(); drawB(); const p = T >= 12 ? (T - 12) / 1.3 : (T - 5) / 1.3; ripple(g, k, cB, cA, o.cb[0], o.cb[1], p, o.style, t); }
+  if (out) { drawA(); drawB(); ripple(g, k, cA, cB, o.ca[0], o.ca[1], T >= 9 ? (T - 9) / 1.3 : (T - 1.5) / 1.3, o.style, t); }
+  else if (back) { drawA(); drawB(); ripple(g, k, cB, cA, o.cb[0], o.cb[1], T >= 12 ? (T - 12) / 1.3 : (T - 5) / 1.3, o.style, t); }
   else if (atB) { drawB(); g.drawImage(cB, 0, 0); }
   else { drawA(); g.drawImage(cA, 0, 0); }
   return `${T.toFixed(1)} s: ${what}`;
 }
 
-// ---------------------------------------------------------------- the yards the portals stand in
-const RUIN_X = 120, GY = 250;
-function yardLeftEnd(g, k, t, w, h, o = {}) {
+// ---------------------------------------------------------------- the places the portals stand in
+const GY = 252, RUIN_X = 48;
+function yardLeftEnd(g, k, t, w, h) {
   sky(g, k, w, h, t);
   ground(g, k, GY, w, h);
-  R(g, 0, 0, P, GY, k.g3);                                     // the yard's left end
+  for (let y = 0; y < GY; y += P) R(g, 0, y, P, P, k.g3);
   ruin(g, k, RUIN_X, GY);
-  station(g, k, 520, GY); heap(g, k, 430, GY, 4);
-  for (let i = 0; i < 4; i++) hauler(g, k, t, i, 490, 620, GY, { ticks: 2 + (i % 3) });
+  station(g, k, 540, GY); heap(g, k, 450, GY, 4);
+  for (let i = 0; i < 4; i++) hauler(g, k, t, i, 492, 630, GY, { ticks: 2 + (i % 3) });
 }
-const TEAR = [RUIN_X + 9 * P + 84, 72];
+const TEAR = [174, 60], STAIR_A = [156, 126, 11];
+// ghosts on the stair: down it, along the floor toward the pit, and back
+function stairGhosts(g, k, t, x0, y0, n, dir, endX, count = 3, period = 14) {
+  const pts = [...stairPts(x0, y0, n, dir), [x0 + dir * (n + 1) * 2 * P, y0 + (n - 1) * 2 * P + 2 * P - W], [endX, y0 + (n - 1) * 2 * P + 2 * P - W]];
+  for (let i = 0; i < count; i++) {
+    const ph = (t / period + i / count) % 1, u = ph < .5 ? ph * 2 : 2 - ph * 2;
+    const [x, y] = along(pts, held(u, 30));
+    body(g, k, x, y, k.soul, .85);
+  }
+}
 function sceneHA(g, k, t, w, h, handA = 1) {
   yardLeftEnd(g, k, t, w, h);
-  stair(g, k, TEAR[0] - 30, TEAR[1] + 10 * P - 6, RUIN_X + 9 * P - 6, GY - 19 * P, 6);
   heavenTear(g, k, TEAR[0], TEAR[1], t, 1);
-  hand(g, k, TEAR[0] + 7 * P + 3 * P, TEAR[1] - 3 * P - P, 'left', t, handA);
+  stair(g, k, ...STAIR_A, 1);
+  stairGhosts(g, k, t, ...STAIR_A, 1, 430);
+  hand(g, k, TEAR[0] + 9 * P, TEAR[1] - 3 * P, 'left', t, handA);
+  FOCUS.hA = [TEAR[0] + 4 * P, TEAR[1] + 12 * P];
 }
-function sceneHAe(g, k, t, w, h, handB = 1) {
-  const fy = heavenEnd(g, k, t, w, h, 'A', HEAVEN_A_END(w, h)[0]);
-  hand(g, k, HEAVEN_A_END(w, h)[0] - 3 * P, fy - 12 * P, 'down', t, handB);
-}
-const COL = [RUIN_X + 26 * P + 12, GY];
+const sceneHAe = (g, k, t, w, h, handB = 1) => heavenEnd(g, k, t, w, h, 'A', snap(w * .5), handB);
+const COL = [318, GY];
 function sceneHB(g, k, t, w, h, handA = 1) {
   yardLeftEnd(g, k, t, w, h);
   heavenColumn(g, k, COL[0], COL[1], t, 1);
-  hand(g, k, COL[0] + 4 * P + 3 * P, GY - 11 * P - 3 * P, 'left', t, handA);
+  hand(g, k, COL[0] + 7 * P, GY - 14 * P, 'left', t, handA);
+  FOCUS.hB = [COL[0], GY - 100];
 }
 function sceneHBe(g, k, t, w, h, handB = 1) {
   const fy = heavenEnd(g, k, t, w, h, 'B', 0);
-  const [cx] = HEAVEN_B_END(w, h);
-  // the lens on the cloud floor with the yard's ground seen through it
-  lens(g, k, cx, fy - 11 * P, 4, 11, t, (x, y, c, r) => R(g, x, y, P, P, r > 6 ? (hash(c, r, 3) < .5 ? k.g3 : k.g2) : r === 6 ? k.ink : k.paper));
-  hand(g, k, cx + 7 * P, fy - 11 * P - 3 * P, 'left', t, handB);
+  const cx = snap(w / 2);
+  lens(g, k, cx, fy - 11 * P, 4, 11, t, (x, y, c, r) => R(g, x, y, P, P, r > 6 ? (hash(c, r, 3) < .5 ? k.g3 : k.g2) : r === 6 ? k.d3 : k.paper));
+  hand(g, k, cx + 7 * P, fy - 14 * P, 'left', t, handB);
 }
-// hell L-A: the deep with the slit in its floor
-const SLIT = [360, 0];
-function deepWithSlit(g, k, t, w, h, open, handA, satan) {
-  const fy = deepScene(g, k, t, w, h);
-  if (satan) satan(fy);
-  hellSlit(g, k, SLIT[0], fy + 2 * P, t, open, { onDark: true, rx: 14, ry: 4.5 });
-  hand(g, k, SLIT[0] - 3 * P, fy - 16 * P, 'down', t, handA);
+// hell L-A: the deep with the slit, the carriers climbing down through it
+const SLIT = [360, 0], SLIT_RX = 20, SLIT_RY = 4.5;
+function deepWithSlit(g, k, t, w, h, open, handA, o = {}) {
+  const fy = deepScene(g, k, t, w, h), kd = k.deep;
+  if (o.before) o.before(fy);
+  hellSlit(g, kd, SLIT[0], fy + 2 * P, t, open, { onDark: true, rx: SLIT_RX, ry: SLIT_RY, light: true });
+  const lx = SLIT[0] - 9 * P;
+  if (open >= 1) for (let r = 0; r < 6; r++) R(g, lx, fy + r * P, P, P, r % 2 ? kd.d3 : kd.mid);
+  if (o.carriers) {
+    // across the floor, down the cut ladder into the heat (clipped there), and back up
+    g.save(); g.beginPath(); g.rect(0, 0, w, fy + 2 * P); g.clip();
+    for (let i = 0; i < 3; i++) {
+      const ph = ((o.carriers + i * 2.6) / 8) % 1;
+      const pts = [[30, fy - W], [lx - P, fy - W], [lx - P, fy + 3 * P]];
+      const u = ph < .5 ? ph * 2 : 2 - ph * 2, [x, y] = along(pts, held(u, 20));
+      body(g, kd, x, y, kd.soul, .9);
+      if (ph < .5) C(g, x + P, y - P, kd.g4, .9);
+      if (i === 0) FOCUS.lA = [lx, fy];
+    }
+    g.restore();
+  }
+  FOCUS.lA = FOCUS.lA || [SLIT[0], fy];
+  hand(g, kd, SLIT[0] - 3 * P, fy - 18 * P, 'down', t, handA);
   return fy;
 }
 function sceneLAe(g, k, t, w, h, handB = 1) {
   hellScene(g, k, t, w, h);
-  const [cx] = HELL_END(w, h);
-  embers(g, k, cx, 70, 60, 50, t, 8, true);
-  hand(g, k, cx - 3 * P, 6 * P, 'up', t, handB);
+  const cx = snap(w / 2);
+  embers(g, k.deep, cx, 70, 60, 50, t, 8, true);
+  hand(g, k.deep, cx + 2 * P, 7 * P, 'up', t, handB);
 }
-// hell L-B: the crater beside the ruin
-const CRATER = [RUIN_X + 9 * P + 200, GY];
+const CRATER = [360, GY];
 function yardWithCrater(g, k, t, w, h, open, handA) {
   yardLeftEnd(g, k, t, w, h);
   hellCrater(g, k, CRATER[0], GY, t, open);
   hand(g, k, CRATER[0] + 12 * P, GY - 12 * P, 'left', t, handA);
+  FOCUS.lB = [CRATER[0], GY];
 }
 
 // ---------------------------------------------------------------- the mansions
-// Each design is a map of cells (col from its left, row up from its base: negative) with a role.
-// Bottom course first gives the build order.
-function Mm() { const m = new Map(); return { m, put: (c, r, role, id = 0) => m.set(c + ',' + r, [c, r, role, id]), get: (c, r) => m.get(c + ',' + r) }; }
+function Mm() { const m = new Map(); return { m, put: (c, r, role, id = 0) => m.set(c + ',' + r, [c, r, role, id]) }; }
 function block(M, c0, w, rows, o = {}) {
   const fh = o.fh || 6, wg = o.wg || 4, wx = o.wx ?? 2, base = o.base || 0;
   for (let r = base - 1; r >= base - rows; r--) for (let c = c0; c < c0 + w; c++) {
-    const f = Math.floor((base - 1 - r) / fh), inF = (base - 1 - r) % fh, lc = c - c0;
-    const edge = lc === 0 || lc === w - 1;
+    const f = Math.floor((base - 1 - r) / fh), inF = (base - 1 - r) % fh, lc = c - c0, edge = lc === 0 || lc === w - 1;
     let role = edge ? 'edge' : inF === fh - 1 ? 'band' : 'stone', id = 0;
-    if (!edge && lc >= wx && lc <= w - 1 - wx && ((lc - wx) % wg) < 2 && inF >= 1 && inF <= 3 && !(o.noWinFloor === f)) { role = 'win'; id = c0 * 1000 + f * 100 + Math.floor((lc - wx) / wg) + (o.idSalt || 0); }
+    if (!edge && lc >= wx && lc <= w - 1 - wx && ((lc - wx) % wg) < 2 && inF >= 1 && inF <= 3) { role = 'win'; id = c0 * 1000 + f * 100 + Math.floor((lc - wx) / wg) + (o.idSalt || 0) * 100000; }
     M.put(c, r, role, id);
   }
 }
@@ -777,9 +816,6 @@ function spire(M, c0, w, base, h, flags) {
   for (let j = 0; j < 4; j++) M.put(pc, base - 1 - h - j, 'edge');
   flags.push([pc, base - h - 4]);
 }
-function battlements(M, c0, w, base) {
-  for (let c = c0; c < c0 + w; c++) { M.put(c, base - 1, 'band'); if ((c - c0) % 4 < 2) { M.put(c, base - 2, 'stone'); M.put(c, base - 3, 'edge'); } }
-}
 function doorway(M, c, w, h, base = 0) {
   for (let r = base - 1; r >= base - h; r--) for (let x = c; x < c + w; x++) {
     const top = r === base - h, side = x === c || x === c + w - 1;
@@ -788,472 +824,488 @@ function doorway(M, c, w, h, base = 0) {
   }
 }
 function roundWin(M, cx, cy, rad) {
-  for (let r = -rad - 1; r <= rad + 1; r++) for (let c = -rad - 1; c <= rad + 1; c++) {
-    const d = Math.hypot(c + .5, r + .5); if (d > rad + .7) continue;
-    M.put(cx + c, cy + r, d > rad - .3 ? 'edge' : 'glass');
-  }
+  for (let r = -rad - 1; r <= rad + 1; r++) for (let c = -rad - 1; c <= rad + 1; c++) { const d = Math.hypot(c + .5, r + .5); if (d <= rad + .7) M.put(cx + c, cy + r, d > rad - .3 ? 'edge' : 'glass'); }
 }
 function chimney(M, c, rTop, h) { for (let r = rTop; r < rTop + h; r++) { M.put(c, r, r === rTop ? 'band' : 'edge'); M.put(c + 1, r, r === rTop ? 'band' : 'roof'); } }
+function benchCells(M, c, w = 6) { for (let i = 0; i < w; i++) M.put(c + i, -2, 'edge'); M.put(c, -1, 'edge'); M.put(c + w - 1, -1, 'edge'); }
 
 const DESIGNS = {};
 function design(name) {
   if (DESIGNS[name]) return DESIGNS[name];
   const M = Mm(), flags = [];
-  let gateC, doorC, doorBase = 0, hill = null;
+  let gateC = null, doorC, benchC, smoke = null, source;
   if (name === 'A') {
     block(M, 0, 6, 36); spire(M, 0, 6, -36, 12, flags);
     block(M, 6, 18, 18, { idSalt: 7 }); pitched(M, 6, 18, -18); chimney(M, 10, -24, 5);
     block(M, 24, 24, 24); pitched(M, 24, 24, -24); roundWin(M, 35, -29, 2);
     block(M, 48, 18, 18, { idSalt: 3 }); pitched(M, 48, 18, -18); chimney(M, 60, -24, 5);
     block(M, 66, 6, 36); spire(M, 66, 6, -36, 12, flags);
-    doorway(M, 33, 6, 9);
-    gateC = 35.5; doorC = 35.5;
+    doorway(M, 33, 6, 9); benchCells(M, 40);
+    gateC = 35.5; doorC = 35.5; benchC = 43; source = 'rock';
   } else if (name === 'B') {
-    hill = c => { const u = (c + 16) / 106; if (u <= 0 || u >= 1) return 0; return Math.round(Math.min(1, Math.sin(u * Math.PI) * 1.5) * 8); };
-    block(M, 8, 10, 42, { base: -8 }); spire(M, 8, 10, -50, 10, flags);
-    block(M, 18, 30, 24, { base: -8 }); battlements(M, 18, 30, -32);
-    block(M, 48, 8, 54, { base: -8, wg: 4, wx: 3 }); spire(M, 48, 8, -62, 14, flags);
-    block(M, 56, 6, 30, { base: -8 }); battlements(M, 56, 6, -38);
-    doorway(M, 30, 6, 9, -8);
-    block(M, -14, 4, 10); battlements(M, -14, 4, -10);
-    block(M, -4, 4, 10); battlements(M, -4, 4, -10);
-    for (let c = -10; c < -4; c++) M.put(c, -9, 'band');
-    gateC = -7; doorC = 33; doorBase = -8;
+    // the house at three times: every cell of it three by three, its walls given floors of windows
+    const S = 3;
+    for (const [c, r, role, id] of HOUSE) {
+      for (let i = 0; i < S; i++) for (let j = 0; j < S; j++) {
+        const C2 = c * S + i;
+        const rr = r * S + j;      // rows: r*3 .. r*3+2, r negative
+        let rl = role;
+        if (role === 'board') {
+          const inF = (-1 - rr) % 6, lc = C2 - 3;
+          rl = (inF >= 1 && inF <= 3 && lc >= 1 && (lc % 4) < 2) ? 'win' : inF === 5 ? 'band' : 'stone';
+          M.put(C2, rr, rl, rl === 'win' ? 50000 + Math.floor((-1 - rr) / 6) * 100 + Math.floor(lc / 4) : 0);
+          continue;
+        }
+        if (role === 'door') { M.put(C2, rr, 'stone'); continue; }
+        M.put(C2, rr, rl, rl === 'win' ? 777 : 0);
+      }
+    }
+    // the old door's frame, grown: an entrance with a door their size inside it, a fanlight over
+    for (let r = -1; r >= -21; r--) for (let c = 36; c <= 41; c++) M.put(c, r, r >= -9 ? (c === 36 || c === 41 || r === -9 || c === 38.5 ? 'edge' : 'door') : (r === -10 || r === -21 ? 'band' : (r <= -12 && r >= -19 && c > 36 && c < 41) ? 'win' : 'stone'), r < -10 ? 60001 : 0);
+    for (let r = -1; r >= -9; r--) M.put(38, r, 'edge');
+    benchCells(M, 46);
+    doorC = 38.5; benchC = 49; smoke = [40, -55]; source = 'heaps';
   } else {
-    block(M, -12, 12, 6, { idSalt: 11 }); pitched(M, -12, 12, -6, 3);
-    block(M, 0, 40, 12, { idSalt: 1 }); pitched(M, 0, 40, -12, 5);
-    block(M, 40, 16, 18); pitched(M, 40, 16, -18);
-    block(M, 45, 6, 12, { base: -18, wg: 4, wx: 2 }); spire(M, 45, 6, -30, 8, flags);
-    block(M, 56, 40, 12, { idSalt: 2 }); pitched(M, 56, 40, -12, 5);
-    block(M, 96, 12, 6, { idSalt: 13 }); pitched(M, 96, 12, -6, 3);
-    for (let c = 4; c < 36; c += 6) { M.put(c, -15, 'win', 9000 + c); M.put(c + 1, -15, 'win', 9000 + c); }
-    for (let c = 60; c < 92; c += 6) { M.put(c, -15, 'win', 9000 + c); M.put(c + 1, -15, 'win', 9000 + c); }
-    doorway(M, 45, 6, 9);
-    gateC = 48; doorC = 48;
+    block(M, 0, 64, 48, { fh: 6, wg: 3, wx: 2 });
+    for (let c = 0; c < 64; c++) { M.put(c, -49, 'band'); M.put(c, -50, c % 2 ? 'stone' : 'edge'); M.put(c, -51, 'band'); }
+    block(M, 22, 20, 6, { base: -51, wg: 3, idSalt: 9 }); pitched(M, 22, 20, -57, 6);
+    doorway(M, 28, 8, 14);
+    // the old house rebuilt in front, centered on the door: the gatehouse
+    const hx = 23;
+    for (const [c, r, role, id] of HOUSE) M.put(hx + c, r, role, role === 'win' ? 778 : id);
+    benchCells(M, hx + 16, 4);
+    doorC = hx + 12.5; benchC = hx + 18; smoke = [hx + 13.5, -19]; source = 'heaps';
   }
   const cells = [...M.m.values()];
   const wins = new Map();
   for (const [c, r, role, id] of cells) if (role === 'win') { const w = wins.get(id) || { c0: c, c1: c, r0: r, r1: r, id }; w.c0 = Math.min(w.c0, c); w.c1 = Math.max(w.c1, c); w.r0 = Math.min(w.r0, r); w.r1 = Math.max(w.r1, r); wins.set(id, w); }
-  // build order: bottom row first, then left to right; pieces of up to six cells in a row
   const sorted = cells.slice().sort((a, b) => b[1] - a[1] || a[0] - b[0]);
   const pieces = [];
   for (const cell of sorted) {
     const last = pieces[pieces.length - 1];
-    if (last && last.r === cell[1] && last.cells.length < 6 && last.c1 === cell[0] - 1) { last.cells.push(cell); last.c1 = cell[0]; }
+    if (last && last.r === cell[1] && last.cells.length < 12 && last.c1 === cell[0] - 1) { last.cells.push(cell); last.c1 = cell[0]; }
     else pieces.push({ r: cell[1], c0: cell[0], c1: cell[0], cells: [cell] });
   }
   const minC = Math.min(...cells.map(c => c[0])), maxC = Math.max(...cells.map(c => c[0]));
-  const top = c => Math.min(...cells.filter(x => x[0] === c).map(x => x[1]), 0);
-  return (DESIGNS[name] = { cells, wins: [...wins.values()], pieces, flags, gateC, doorC, doorBase, hill, minC, maxC, top });
+  const tops = {}; for (const [c, r] of cells) tops[c] = Math.min(tops[c] ?? 0, r);
+  const top = c => tops[c] ?? 0;
+  return (DESIGNS[name] = { name, cells, wins: [...wins.values()], pieces, flags, gateC, doorC, benchC, smoke, source, minC, maxC, top });
 }
 function cellTone(k, role, c, r) {
   switch (role) {
     case 'stone': { const v = hash(Math.floor((c + (r & 1)) / 2), r, 41); return v < .45 ? k.g2 : v < .85 ? k.g3 : k.g4; }
+    case 'board': { const v = hash(c, r, 11); return (r & 1) ? (v < .7 ? k.g2 : k.g3) : (v < .7 ? k.g3 : k.g4); }
     case 'roof': { const v = hash(c, r, 42); return v < .55 ? k.d3 : v < .85 ? k.d2 : k.ink; }
     case 'door': return k.mid;
     case 'glass': return k.paper;
-    case 'win': return k.ink;
     default: return k.ink;
   }
 }
-// `setFn(piece index)` says whether a piece is up; windows light and go dark by opacity
-function drawMansion(g, k, D, ox, gy, t, setFn) {
+// `setFn(i)` says whether piece i is up. In the game this is a cached canvas redrawn on a set.
+function drawMansion(g, k, D, ox, gy, t, setFn, litOverride) {
   const N = D.pieces.length;
   for (let i = 0; i < N; i++) {
     if (setFn && !setFn(i)) continue;
     for (const [c, r, role] of D.pieces[i].cells) R(g, ox + c * P, gy + r * P, P, P, cellTone(k, role, c, r));
   }
-  const allUp = !setFn || setFn(N - 1);
+  const up = !setFn || setFn(N - 1);
   for (const w of D.wins) {
     if (setFn && !D.pieces.some((p, i) => setFn(i) && p.r === w.r0 && p.c0 <= w.c0 && p.c1 >= w.c0)) continue;
-    const l = clamp01((Math.sin(t * .35 + w.id * 1.7) + .2) * 2.5);
-    const x = ox + w.c0 * P, y = gy + w.r0 * P, ww = (w.c1 - w.c0 + 1) * P, hh = (w.r1 - w.r0 + 1) * P;
-    g.globalAlpha = l; R(g, x, y, ww, hh, k.paper); g.globalAlpha = 1;
-    if (ww > P) R(g, x + ww / 2 - 1, y, 2, hh, k.ink);
-    R(g, x - 2, y + hh, ww + 4, 2, k.ink);
+    let l = clamp01((Math.sin(t * .35 + w.id * 1.7) + .2) * 2.5);
+    if (litOverride && litOverride[w.id] != null) l = litOverride[w.id];
+    g.globalAlpha = l; R(g, ox + w.c0 * P, gy + w.r0 * P, (w.c1 - w.c0 + 1) * P, (w.r1 - w.r0 + 1) * P, k.paper); g.globalAlpha = 1;
   }
-  if (allUp) for (const [c, r] of D.flags) {
+  if (up) for (const [c, r] of D.flags) {
     const pose = Math.floor(t * 3) % 3, drop = [[0, 0, 0], [0, 0, 1], [0, 1, 1]][pose];
-    for (let i = 0; i < 3; i++) R(g, ox + (c + 1 + i) * P, gy + (r + drop[i]) * P, P, P, i === 2 && pose === 1 ? k.d3 : k.ink);
+    for (let i = 0; i < 3; i++) R(g, ox + (c + 1 + i) * P, gy + (r + drop[i]) * P, P, P, k.ink);
   }
-}
-// the ground it stands on (the hill for B), the fence and gate, hedges, topiary, trees
-function drawHill(g, k, D, ox, gy) {
-  if (!D.hill) return;
-  for (let c = D.minC - 4; c <= D.maxC + 24; c++) {
-    const hgt = D.hill(c); for (let r = 1; r <= hgt; r++) { const v = hash(c, r, 131); R(g, ox + c * P, gy - r * P, P, P, r === hgt ? k.d3 : v < .5 ? k.g2 : v < .85 ? k.g3 : k.g4); }
-  }
+  if (up && D.smoke) for (let i = 0; i < 4; i++) { const ph = (t * .3 + i / 4) % 1; C(g, ox + snap(D.smoke[0] * P + ph * 30 + (i % 2) * P), gy + snap(D.smoke[1] * P - ph * 60), k.g3, Math.min(1 - ph, ph * 6)); }
 }
 function tree(g, k, x, gy, s = 4) {
-  R(g, x, gy - 7 * P, P, 7 * P, k.ink);
+  for (let r = 1; r <= 7; r++) R(g, x, gy - r * P, P, P, k.ink);
   for (let r = -s - 1; r <= s; r++) for (let c = -s; c <= s; c++) { const d = Math.hypot(c, r * 1.15); if (d > s + .3) continue; R(g, x + c * P, gy - (8 + s) * P + (r + s) * P, P, P, d > s - .7 ? k.ink : hash(c, r, x) < .5 ? k.g4 : k.mid); }
 }
-function hedgeRun(g, k, x0, x1, gy, rows = 2, seed = 0) {
+function hedgeRun(g, k, x0, x1, gy, rows = 2, seed = 0, a = 1) {
   for (let x = x0; x < x1; x += P) for (let r = 1; r <= rows; r++) {
     if (r === rows && (x === x0 || x + P >= x1)) continue;
     const v = hash(x / P, r, 141 + seed);
-    R(g, x, gy - r * P, P, P, v < .08 ? k.paper : v < .5 ? k.g4 : v < .85 ? k.mid : k.d3);
+    C(g, x, gy - r * P, v < .08 ? k.paper : v < .5 ? k.g4 : v < .85 ? k.mid : k.d3, a);
   }
 }
-function topiary(g, k, x, gy) {
-  R(g, x + P, gy - 2 * P, P, 2 * P, k.ink);
-  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) if (!(r !== 1 && c !== 1 && hash(c, r, x) < .5)) R(g, x + c * P, gy - (5 - r) * P, P, P, (r + c) % 3 ? k.mid : k.d3);
+function topiary(g, k, x, gy, a = 1) {
+  C(g, x + P, gy - P, k.ink, a); C(g, x + P, gy - 2 * P, k.ink, a);
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) if (!(r !== 1 && c !== 1 && hash(c, r, x) < .5)) C(g, x + c * P, gy - (5 - r) * P, (r + c) % 3 ? k.mid : k.d3, a);
 }
+// Two leaves of one-cell bars sliding outward a cell at a time behind the pillars.
 function gate(g, k, xc, gy, open, w = 10, tall = 4) {
-  // two leaves of bars, folding to the pillars in held steps as it opens
-  const half = w / 2, shown = Math.round(half * (1 - open));
-  for (const side of [-1, 1]) for (let i = 0; i < half; i++) {
-    const folded = i >= shown;
-    const c = side < 0 ? (folded ? -half + (i - shown) * .25 : -half + i) : (folded ? half - 1 - (i - shown) * .25 : half - 1 - i);
-    const x = Math.round(xc + c * P + P / 2 - 1);
-    R(g, x, gy - tall * P, 2, tall * P, k.ink);
+  const half = w / 2, s = Math.round(half * open), x0 = snap(xc - half * P);
+  for (let i = 0; i < half; i++) {
+    const cl = i - s, cr = half + i + s;
+    R(g, x0 + cl * P, gy - tall * P, P, P, k.ink); R(g, x0 + cr * P, gy - tall * P, P, P, k.ink);
+    if (i % 2 === 0) for (let r = 2; r <= tall; r++) R(g, x0 + cl * P, gy - r * P + P - P, P, P, k.ink);
+    if (i % 2 === 1) for (let r = 2; r <= tall; r++) R(g, x0 + cr * P, gy - r * P, P, P, k.ink);
+    if (i % 2 === 0) R(g, x0 + cl * P, gy - P, P, P, k.ink);
+    if (i % 2 === 1) R(g, x0 + cr * P, gy - P, P, P, k.ink);
   }
-  R(g, snap(xc - half * P), gy - tall * P, Math.round(shown * P), 2, k.ink);
-  R(g, snap(xc + half * P) - Math.round(shown * P), gy - tall * P, Math.round(shown * P), 2, k.ink);
-  for (const side of [-1, 1]) {                      // the pillars
-    const px = snap(xc + side * (half + 1) * P) - (side < 0 ? 0 : P);
-    for (let r = 1; r <= tall + 2; r++) for (let c = 0; c < 2; c++) R(g, px + (side < 0 ? -P : 0) + c * P, gy - r * P, P, P, r === tall + 2 || c === (side < 0 ? 0 : 1) ? k.ink : hash(c, r, px) < .5 ? k.g3 : k.g4);
-  }
+  for (const px of [x0 - 2 * P, x0 + w * P]) for (let r = 1; r <= tall + 2; r++) for (let c = 0; c < 2; c++)
+    R(g, px + c * P, gy - r * P, P, P, r === tall + 2 || c === (px < x0 ? 0 : 1) ? k.ink : hash(c, r, px) < .5 ? k.g3 : k.g4);
 }
-function garden(g, k, D, name, ox, gy, gateOpen, a = 1) {
-  g.globalAlpha = a;
-  if (name === 'A') {
+// The garden goes in by opacity as a whole: drawn on a sheet, put down at `a`.
+function garden(g, k, D, ox, gy, gateOpen, a = 1) {
+  if (a <= 0) return;
+  if (a < 1) { const [c2, g2] = buf('garden', g.canvas.width, g.canvas.height); g2.setTransform(g.getTransform()); g2.clearRect(-9999, -9999, 99999, 99999); gardenAt(g2, k, D, ox, gy, gateOpen, 1); g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = a; g.drawImage(c2, 0, 0); g.restore(); return; }
+  gardenAt(g, k, D, ox, gy, gateOpen, 1);
+}
+function gardenAt(g, k, D, ox, gy, gateOpen, a = 1) {
+  if (D.name === 'A') {
     tree(g, k, ox - 7 * P, gy); tree(g, k, ox + 79 * P, gy, 5);
-    hedgeRun(g, k, ox + 7 * P, ox + 23 * P, gy); hedgeRun(g, k, ox + 49 * P, ox + 65 * P, gy, 2, 1);
-    topiary(g, k, ox + 26 * P, gy); topiary(g, k, ox + 43 * P, gy);
-    for (let c = -10; c <= 82; c += 3) { if (c > 28 && c < 43) continue; R(g, ox + c * P, gy - 3 * P, 2, 3 * P, k.ink); }
-    R(g, ox - 10 * P, gy - 3 * P, 38 * P, 2, k.ink); R(g, ox + 43 * P, gy - 3 * P, 40 * P, 2, k.ink);
+    hedgeRun(g, k, ox + 7 * P, ox + 23 * P, gy, 2, 0, a); hedgeRun(g, k, ox + 49 * P, ox + 65 * P, gy, 2, 1, a);
+    topiary(g, k, ox + 25 * P, gy, a); topiary(g, k, ox + 47 * P, gy, a);
+    for (let c = -10; c <= 82; c += 3) { if (c > 27 && c < 44) continue; for (let r = 1; r <= 3; r++) R(g, ox + c * P, gy - r * P, P, P, k.ink); }
+    for (let c = -10; c <= 82; c++) { if (c > 27 && c < 44) continue; R(g, ox + c * P, gy - 3 * P, P, P, k.ink); }
     gate(g, k, ox + D.gateC * P, gy, gateOpen);
-  } else if (name === 'B') {
-    // the stair winding up the hill to the keep's door
-    for (let i = 0; i < 16; i++) { const c = -8 + Math.round(i * 2.6), r = Math.min(8, Math.floor(i / 2) + 1); R(g, ox + c * P, gy - r * P, 2 * P, P, k.g3); R(g, ox + c * P, gy - r * P, 2 * P, 2, k.ink); }
-    hedgeRun(g, k, ox + 66 * P, ox + 80 * P, gy - 5 * P, 2, 2);
-    tree(g, k, ox + 2 * P, gy - 8 * P, 3);
-    gate(g, k, ox + (D.gateC + .5) * P, gy, gateOpen, 6, 5);
-    // the memorial: the ruin, the rock, the old bench
-    const mx = ox + 96 * P; ruin(g, k, mx, gy);
-    R(g, mx + 24 * P, gy - 2 * P, 4 * P, P, k.ink); R(g, mx + 24 * P, gy - P, P, P, k.ink); R(g, mx + 27 * P, gy - P, P, P, k.ink);
+  } else if (D.name === 'B') {
+    tree(g, k, ox - 8 * P, gy); hedgeRun(g, k, ox + 2 * P, ox + 30 * P, gy, 2, 2, a); hedgeRun(g, k, ox + 58 * P, ox + 70 * P, gy, 2, 3, a);
+    for (let i = 0; i < 6; i++) C(g, ox + (60 + (i % 3) * 2) * P, gy - (1 + Math.floor(i / 3)) * P, i % 2 ? k.g4 : k.mid);   // the woodpile
   } else {
-    hedgeRun(g, k, ox - 12 * P, ox + 42 * P, gy, 2, 3); hedgeRun(g, k, ox + 54 * P, ox + 108 * P, gy, 2, 4);
-    for (const c of [-18, 114]) tree(g, k, ox + c * P, gy);
-    R(g, ox + 52 * P, gy - 2 * P, 4 * P, P, k.ink); R(g, ox + 52 * P, gy - P, P, P, k.ink); R(g, ox + 55 * P, gy - P, P, P, k.ink);
-    // a window a line: that line's ticks over each upper window
-    for (const w of D.wins) if (w.r0 < -7 && w.r0 > -13) { const n = 1 + Math.floor(hash(w.id, 0, 151) * 5), x = ox + w.c0 * P, y = gy + w.r0 * P; for (let i = 0; i < Math.min(4, n); i++) R(g, x + i * 3, y - 6, 2, 4, k.mid); }
+    hedgeRun(g, k, ox - 12 * P, ox + 20 * P, gy, 2, 3, a); hedgeRun(g, k, ox + 46 * P, ox + 76 * P, gy, 2, 4, a);
+    for (const c of [-18, 82]) tree(g, k, ox + c * P, gy, 5);
   }
-  g.globalAlpha = 1;
-}
-// The build: builder i carries pieces i, i+B, ... a trip each; a piece is set at the half-trip.
-function buildState(D, tb, dur, B = 16) {
-  const N = D.pieces.length, trips = Math.ceil(N / B), T = dur / (trips + .5);
-  const setAt = j => Math.floor(j / B) * T + (j % B) * T / B + T / 2;
-  return { N, B, T, setAt, set: j => setAt(j) <= tb };
-}
-function drawBuild(g, k, D, ox, gy, tb, dur, pileX, scaffA = 1) {
-  const st = buildState(D, tb, dur), { N, B, T } = st;
-  // scaffold: thin poles every twelve cells, planks every six rows; fades once the last piece is set
-  if (scaffA > 0) {
-    g.globalAlpha = scaffA;
-    for (let c = D.minC - 1; c <= D.maxC + 1; c += 12) {
-      const tp = Math.min(D.top(c), D.top(Math.min(D.maxC, c + 1))) - 1, base = D.hill ? -D.hill(c) : 0;
-      R(g, ox + c * P, gy + tp * P, 2, (base - tp) * P, k.d3);
-      for (let r = base - 6; r > tp; r -= 6) R(g, ox + c * P, gy + r * P, 12 * P, 2, k.g4);
-    }
-    g.globalAlpha = 1;
-  }
-  drawMansion(g, k, D, ox, gy, tb, st.set);
-  // the pile: what has not yet left it
-  let started = 0;
-  for (let i = 0; i < B; i++) started += Math.max(0, Math.min(Math.ceil((N - i) / B), Math.floor((tb - i * T / B) / T) + 1));
-  const left = Math.max(0, N - started), cells = Math.ceil(49 * left / N);
-  let n = 0;
-  for (let r = 0; n < cells && r < 7; r++) for (let c = r; c < 14 - r && n < cells; c++, n++) R(g, pileX + c * P, gy - (r + 1) * P, P, P, hash(c, r, 161) < .5 ? k.g4 : k.mid);
-  // the builders
-  for (let i = 0; i < B; i++) {
-    const kk = Math.floor((tb - i * T / B) / T), j = kk * B + i;
-    let x, y, carry = false;
-    if (kk < 0) { x = pileX + (i % 8) * P * 2; y = gy - W; }
-    else if (j >= N) { x = pileX + 90 + (i % 8) * 3 * P; y = gy - W + hopY(tb, i % 3); }
-    else {
-      const u = (tb - i * T / B - kk * T) / T, p = D.pieces[j];
-      const tx = ox + ((p.c0 + p.c1) / 2) * P - W / 2, ty = gy + (p.r + 1) * P - W;
-      const fx = pileX + (i % 8) * P, fy = gy - W, s = u < .45 ? u / .45 : u < .55 ? 1 : 1 - (u - .55) / .45;
-      const dx = Math.abs(tx - fx), dy = Math.abs(ty - fy), L = dx + dy, d = s * L;
-      x = d <= dx ? lerp(fx, tx, d / Math.max(1, dx)) : tx; y = d <= dx ? fy : lerp(fy, ty, (d - dx) / Math.max(1, dy));
-      x = snap(Math.floor(held(tb, 8) * 0 + x)); y = snap(y);
-      carry = u < .5;
-    }
-    body(g, k, x, y, k.ink);
-    if (carry) R(g, x - 3, y - P, 4 * P, P, k.g4);
-  }
-  return st;
 }
 
-// ---------------------------------------------------------------- fireworks (the finale's, in ink)
+// ---------------------------------------------------------------- the build: every piece carried
+// Jobs round-robin across the player's builders: first the poles, then the pieces,
+// bottom course first; after the top-out, the poles carried back out.
+const PLANS = {};
+function plan(name, B) {
+  const key = name + B; if (PLANS[key]) return PLANS[key];
+  const D = design(name), T = 1.1;
+  const poles = [];
+  for (let c = D.minC - 1; c <= D.maxC + 1; c += 12) { let tp = 0; for (let cc = c - 6; cc <= c + 6; cc++) tp = Math.min(tp, D.top(cc)); poles.push({ c, top: tp - 1 }); }
+  const jobs = [...poles.map((p, i) => ({ kind: 'pole', i })), ...D.pieces.map((p, i) => ({ kind: 'piece', i }))];
+  jobs.forEach((jb, j) => { jb.b = j % B; jb.t0 = Math.floor(j / B) * T + (j % B) * T / B; jb.set = jb.t0 + T / 2; });
+  const topOut = Math.max(...jobs.map(j => j.set));
+  const un = poles.map((p, i) => ({ kind: 'unpole', i })).reverse();
+  un.forEach((jb, m) => { jb.b = m % B; jb.t0 = topOut + 1 + Math.floor(m / B) * T + (m % B) * T / B; jb.set = jb.t0 + T / 2; });
+  const poleSet = [], poleGone = [], pieceSet = [], pieceTaken = [];
+  jobs.forEach(jb => { if (jb.kind === 'pole') poleSet[jb.i] = jb.set; else { pieceSet[jb.i] = jb.set; pieceTaken[jb.i] = jb.t0; } });
+  un.forEach(jb => { poleGone[jb.i] = jb.set; });
+  const per = [...Array(B)].map(() => []);
+  [...jobs, ...un].forEach(jb => per[jb.b].push(jb));
+  const end = Math.max(...un.map(j => j.t0 + T));
+  return (PLANS[key] = { D, B, T, poles, topOut, end, poleSet, poleGone, pieceSet, pieceTaken, per, N: D.pieces.length });
+}
+function source(g, k, PL, x, gy, tb) {
+  let taken = 0; for (const t0 of PL.pieceTaken) if (t0 <= tb) taken++;
+  const left = 1 - taken / PL.N;
+  if (PL.D.source === 'rock') { if (left > 0) rock(g, k, x + 10 * P, gy - 7 * P, 2 + 8 * Math.sqrt(left)); }
+  else { const n = Math.ceil(7 * Math.sqrt(left)); if (n > 0) { heap(g, k, x, gy, n); heap(g, k, x + 16 * P, gy, Math.max(0, n - 2)); } }
+}
+function drawBuild(g, k, PL, ox, gy, tb, srcX) {
+  const { D, T, poles } = PL;
+  const standing = poles.map((p, i) => PL.poleSet[i] <= tb && tb < PL.poleGone[i]);
+  source(g, k, PL, srcX, gy, tb);
+  drawMansion(g, k, D, ox, gy, tb, i => PL.pieceSet[i] <= tb);
+  poles.forEach((p, i) => {
+    if (!standing[i]) return;
+    const x = ox + p.c * P;
+    for (let r = -1; r >= p.top; r--) R(g, x, gy + r * P, P, P, k.d3);
+    const nx = poles[i + 1]; if (!nx || !standing[i + 1]) return;
+    for (let r = -6; r > Math.max(p.top, nx.top); r -= 6) for (let c = p.c + 1; c < nx.c; c++) R(g, ox + c * P, gy + r * P, P, P, k.g4);
+  });
+  for (let b = 0; b < PL.B; b++) {
+    const jb = PL.per[b].find(j => j.t0 <= tb && tb < j.t0 + T);
+    const home = [srcX + (b % 6) * P, gy - W];
+    let x, y, carry = null;
+    if (!jb) {
+      const last = PL.per[b][PL.per[b].length - 1];
+      if (!last || tb < PL.per[b][0].t0) [x, y] = home;
+      else { const u = clamp01((tb - last.t0 - T) / 4); [x, y] = along([home, [srcX + 120 + b * 3 * P, gy - W]], held(u, 10)); }
+    } else {
+      const u = (tb - jb.t0) / T;
+      let pts;
+      if (jb.kind !== 'piece') { const px = ox + poles[jb.i].c * P - P; pts = [home, [px, gy - W]]; }
+      else {
+        const p = D.pieces[jb.i];
+        let pole = poles[0]; for (const q of poles) if (q.c <= p.c0) pole = q;
+        const px = ox + pole.c * P - P, yRow = gy + (p.r + 1) * P - W;
+        pts = [home, [px, gy - W], [px, yRow], [ox + p.c0 * P, yRow]];
+      }
+      const there = u < .45 ? along(pts, u / .45) : u < .55 ? pts[pts.length - 1] : along([...pts].reverse(), (u - .55) / .45);
+      [x, y] = there;
+      if ((jb.kind === 'unpole' && u >= .5) || (jb.kind !== 'unpole' && u < .5)) carry = jb.kind === 'piece' ? Math.min(4, D.pieces[jb.i].cells.length) : 'pole';
+    }
+    body(g, k, x, y, k.ink);
+    if (carry === 'pole') for (let c = -1; c < 4; c++) R(g, x + c * P, y - P, P, P, k.d3);
+    else if (carry) for (let c = 0; c < carry; c++) R(g, x + (c - 0) * P, y - P, P, P, k.g4);
+  }
+}
+// one cell a spark, one volley
 function firework(g, k, x, y, age) {
-  if (age < 0 || age > 1.6) return;
-  if (age < .5) { R(g, snap(x), snap(y + (1 - age / .5) * 120), 2, 6, k.ink); return; }
-  const u = (age - .5) / 1.1, rad = 4 + u * 40;
-  g.globalAlpha = 1 - u;
-  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; R(g, snap(x + Math.cos(a) * rad), snap(y + Math.sin(a) * rad), P / 2 + 1, P / 2 + 1, i % 3 ? k.ink : k.mid); }
-  g.globalAlpha = 1;
+  if (age < 0 || age > 1.8) return;
+  if (age < .6) { C(g, snap(x), snap(y + (1 - age / .6) * 120), k.ink); return; }
+  const u = (age - .6) / 1.2, rad = 6 + u * 40;
+  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; C(g, snap(x + Math.cos(a) * rad), snap(y + Math.sin(a) * rad), i % 3 ? k.ink : k.mid, 1 - u); }
 }
 
 // ---------------------------------------------------------------- the scenes
-const LIVE = {};
 const SCENES = {
   hA: (g, k, t, w, h) => sceneHA(g, k, t, w, h, 1),
-  hAt: (g, k, t, w, h) => tripStrip(g, k, t, w, h, 'hAt', { near: sceneHA, far: sceneHAe, ca: TEAR, cb: HEAVEN_A_END(w, h), style: 'heaven' }),
+  hAt: (g, k, t, w, h) => tripStrip(g, k, t, w, h, 'hAt', { near: sceneHA, far: sceneHAe, ca: TEAR, cb: [snap(w * .5), h - 48], style: 'heaven' }),
   hAe: (g, k, t, w, h) => sceneHAe(g, k, t, w, h, 1),
   hB: (g, k, t, w, h) => sceneHB(g, k, t, w, h, 1),
-  hBt: (g, k, t, w, h) => tripStrip(g, k, t, w, h, 'hBt', { near: sceneHB, far: sceneHBe, ca: [COL[0], GY - 11 * P], cb: [w / 2, h - 60 - 11 * P], style: 'heaven' }),
+  hBt: (g, k, t, w, h) => tripStrip(g, k, t, w, h, 'hBt', { near: sceneHB, far: sceneHBe, ca: [COL[0], GY - 11 * P], cb: [snap(w / 2), h - 60 - 11 * P], style: 'heaven' }),
   hBe: (g, k, t, w, h) => sceneHBe(g, k, t, w, h, 1),
 
   lA(g, k, t, w, h) {
-    const T = t % 14;
-    const open = ease(seg(T, 3, 5.5));
-    deepWithSlit(g, k, t, w, h, open, T > 6 ? 1 : 0, fy => {
-      if (T < 3) {
-        // the placeholder sinks through the floor, cut off at it: a body going, not a vanishing
-        const y = snap(lerp(fy - 120, fy + 10, seg(T, .3, 2.8)));
-        const [c2, g2] = buf('satanA', w, h); g2.clearRect(0, 0, w, h);
-        placeholderFigure(g2, k, SLIT[0] - 15, y, 1, k.paper, k.purple, 'Satan');
-        g.drawImage(c2, 0, 0, w, fy, 0, 0, w, fy);
+    const T = t % 16, open = ease(seg(T, 3, 5.5));
+    deepWithSlit(g, k, t, w, h, open, seg(T, 9, 10), {
+      carriers: T >= 10 ? (T - 10) : 0,
+      before: fy => {
+        const kd = k.deep;
+        if (T < 3) {
+          // the placeholder sinks through the floor, clipped at it: a body going, not a vanishing
+          const y = snap(lerp(fy - 120, fy + 12, seg(T, .3, 2.8)));
+          g.save(); g.beginPath(); g.rect(0, 0, w, fy); g.clip();
+          placeholderFigure(g, kd, SLIT[0] - 15, y, kd.paper, kd.purple, 'Satan');
+          g.restore();
+        }
+        if (T >= 2.4 && T < 4) for (let i = -10; i <= 10; i++) C(g, SLIT[0] + i * P, fy + (i % 2 ? P : 0), kd.paper, clamp01(seg(T, 2.4, 3.6) * 11 - Math.abs(i)) * (1 - seg(T, 3.6, 4)));
       }
-      if (T >= 2.4 && T < 3.6) { const n = Math.floor(seg(T, 2.4, 3.4) * 9); for (let i = -n; i <= n; i++) R(g, SLIT[0] + i * P, fy + (i % 2) * P, P, P, k.paper); }
     });
-    return T < 3 ? `${T.toFixed(1)} s: placeholder Satan sinks through the deep's floor` : T < 5.5 ? `${T.toFixed(1)} s: the floor cracks and the slit burns open` : `${T.toFixed(1)} s: at rest; the hand points down at it`;
+    return T < 3 ? `${T.toFixed(1)} s: placeholder Satan sinks through the deep's floor (beat 8)` : T < 5.5 ? `${T.toFixed(1)} s: the crack eases open, cell by cell` : T < 9 ? `${T.toFixed(1)} s: open, no hand yet: act 3 is still being played` : T < 10 ? `${T.toFixed(1)} s: beat 11, the first descent: the hand fades in` : `${T.toFixed(1)} s: the carriers walk down through it on the cut ladder`;
   },
-  lAt: (g, k, t, w, h) => tripStrip(g, k, t, w, h, 'lAt', { near: (g2, k2, t2, w2, h2, a) => deepWithSlit(g2, k2, t2, w2, h2, 1, a), far: sceneLAe, ca: [SLIT[0], h - 60 + 5], cb: HELL_END(w, h), style: 'hell' }),
+  lAt: (g, k, t, w, h) => tripStrip(g, k, t, w, h, 'lAt', { near: (g2, k2, t2, w2, h2, a) => deepWithSlit(g2, k2, t2, w2, h2, 1, a, { carriers: t2 }), far: sceneLAe, ca: [SLIT[0], h - 60 + 12], cb: [snap(w / 2), 12], style: 'hell' }),
   lAe: (g, k, t, w, h) => sceneLAe(g, k, t, w, h, 1),
   lB(g, k, t, w, h) {
     const T = t % 14, open = ease(seg(T, 2.6, 5));
-    yardWithCrater(g, k, t, w, h, open, T > 6 ? 1 : 0);
-    if (T < 2.8) {
-      const y = snap(lerp(-60, GY - 54, ease(seg(T, 0, 2.2))));
-      const a = T < 2.2 ? 1 : 1 - seg(T, 2.2, 2.8);
-      const [c2, g2] = buf('satanB', w, h); g2.clearRect(0, 0, w, h);
-      placeholderFigure(g2, k, CRATER[0] - 15, y + (T > 2.2 ? seg(T, 2.2, 2.8) * 54 : 0), a, k.ink, k.purple, 'Satan');
-      g.drawImage(c2, 0, 0, w, GY, 0, 0, w, GY);
+    yardWithCrater(g, k, t, w, h, open, T > 6 ? seg(T, 6, 7) : 0);
+    if (T < 3.4) {
+      const y = snap(T < 2.2 ? lerp(-60, GY - 54, ease(seg(T, 0, 2.2))) : lerp(GY - 54, GY + 6, seg(T, 2.2, 3.4)));
+      g.save(); g.beginPath(); g.rect(0, 0, w, GY); g.clip();
+      placeholderFigure(g, k, CRATER[0] - 15, y, k.ink, k.purple, 'Satan');
+      g.restore();
     }
-    return T < 2.2 ? `${T.toFixed(1)} s: placeholder Satan comes down through the yard's sky` : T < 5 ? `${T.toFixed(1)} s: he goes down into the ground; it burns open` : `${T.toFixed(1)} s: at rest`;
+    return T < 2.2 ? `${T.toFixed(1)} s: placeholder Satan comes down through the yard's sky` : T < 5 ? `${T.toFixed(1)} s: he goes down into the ground, clipped at it; it burns open` : `${T.toFixed(1)} s: at rest; camera only, the carriers never use it`;
   },
-  lBt: (g, k, t, w, h) => tripStrip(g, k, t, w, h, 'lBt', { near: (g2, k2, t2, w2, h2, a) => yardWithCrater(g2, k2, t2, w2, h2, 1, a), far: sceneLAe, ca: [CRATER[0], GY + 12], cb: HELL_END(w, h), style: 'hell' }),
+  lBt: (g, k, t, w, h) => tripStrip(g, k, t, w, h, 'lBt', { near: (g2, k2, t2, w2, h2, a) => yardWithCrater(g2, k2, t2, w2, h2, 1, a), far: sceneLAe, ca: [CRATER[0], GY + 12], cb: [snap(w / 2), 12], style: 'hell' }),
 
   bFall(g, k, t, w, h) {
-    const T = t % 8, gy = h - 40, hx = 270;
+    const T = t % 8, gy = h - 48, hx = 270, land = 3.2, fallU = seg(T, 2, land);
     sky(g, k, w, h, t); ground(g, k, gy, w, h);
-    const land = 3.2, fallU = seg(T, 2, land);
-    // the shadow comes first and widens
-    if (T > 1.4 && T < land + .1) { const n = Math.round(seg(T, 1.4, land) * 11); for (let c = -n; c <= n; c++) if ((c + Math.floor(T * 8)) % 2 === 0) R(g, hx + 9 * P + c * P, gy - 2, P, 2, k.d3); }
+    if (T > 1.4 && T < land + .3) {
+      const s = seg(T, 1.4, land) * 12;
+      for (let c = -11; c <= 11; c++) C(g, hx + 9 * P + c * P, gy, k.ink, clamp01(s - Math.abs(c)) * .6 * (1 - seg(T, land, land + .3)));
+    }
     if (T < land) {
-      house(g, k, hx, gy, { lit: true, t });
-      dressed(g, k, hx + 16 * P, gy - 2 * P - W + 2, 'you', { rim: k.ink, tone: k.ink });
-      dressed(g, k, hx + 19 * P - 2, gy - 2 * P - W + 2, 'sqouse', { rim: k.ink, tone: k.ink });
-      if (T > 2) { const y = lerp(-90, gy - 8 * P, held(fallU * fallU, 14)); rock(g, k, hx + 9 * P, y, 10); }
+      house(g, k, hx, gy, { lit: 1, t });
+      dressed(g, k, hx + 16 * P, gy - 2 * P - W, 'you', { rim: k.ink, tone: k.ink });
+      dressed(g, k, hx + 19 * P, gy - 2 * P - W, 'sqouse', { rim: k.ink, tone: k.ink });
+      if (T > 2) rock(g, k, hx + 9 * P, lerp(-90, gy - 8 * P, held(fallU * fallU, 14)), 10);
     } else {
-      // boards fly out and land and stay
       for (let i = 0; i < 8; i++) {
         const side = i % 2 ? 1 : -1, u = clamp01((T - land) / (.7 + i * .05)), vx = side * (40 + i * 18), vy = -(70 + (i * 23) % 60);
-        const x = hx + 9 * P + side * 50 + vx * u, y = gy - 30 + vy * u + 220 * u * u;
-        const yy = Math.min(gy - P, y);
-        R(g, snap(x), snap(yy), 3 * P, P, i % 3 ? k.g4 : k.ink);
+        const x = hx + 9 * P + side * 50 + vx * u, y = Math.min(gy - P, gy - 30 + vy * u + 220 * u * u);
+        R(g, snap(x), snap(y), 3 * P, P, i % 3 ? k.g4 : k.ink);
       }
       ruin(g, k, hx, gy);
-      for (let i = 0; i < 10; i++) {                // dust, rolling out and thinning away
-        const u = seg(T, land, land + 2.4), side = i % 2 ? 1 : -1;
-        g.globalAlpha = 1 - u;
-        for (let j = 0; j < 3; j++) R(g, snap(hx + 9 * P + side * (40 + u * (60 + i * 12)) + j * P), snap(gy - P - (i % 3) * P - u * 12 - j * 3), P, P, j ? k.g3 : k.g4);
-      }
-      g.globalAlpha = 1;
+      const u = seg(T, land, land + 2.4);
+      for (let i = 0; i < 10; i++) { const side = i % 2 ? 1 : -1; for (let j = 0; j < 3; j++) C(g, snap(hx + 9 * P + side * (40 + u * (60 + i * 12)) + j * P), snap(gy - P - (i % 3) * P - u * 12 - j * 3), j ? k.g3 : k.g4, 1 - u); }
     }
-    return T < 1.4 ? `${T.toFixed(1)} s: the pair on the bench, the window lit` : T < land ? `${T.toFixed(1)} s: the shadow, the rock out of the sky` : `${T.toFixed(1)} s: the house gone under it`;
+    return T < 1.4 ? `${T.toFixed(1)} s: the pair on the bench, the window lit` : T < land ? `${T.toFixed(1)} s: the shadow eases in; the rock out of the sky` : `${T.toFixed(1)} s: the house gone under it`;
   },
   bRise(g, k, t, w, h) {
-    const T = t % 9, WORLD = 760, gyW = WORLD - 40;
-    const rise0 = seg(T, 1.2, 7.8), ySoul = lerp(gyW - 18 * P, 96, held(rise0, 10));
-    const cam = Math.max(0, Math.min(WORLD - h, lerp(gyW - 18 * P, 96, ease(rise0)) - 140));
+    const T = t % 9, WORLD = 762, gyW = 720, y0 = gyW - 18 * P, y1 = 96;
+    const e = ease(seg(T, 1.2, 7.8)), ySoul = snap(lerp(y0, y1, held(e, 14)));
+    const cam = Math.round(Math.max(0, Math.min(WORLD - h, lerp(y0, y1, e) - 150)));
     sky(g, k, w, h, t, 3);
-    g.save(); g.translate(0, -Math.round(cam));
+    g.save(); g.translate(0, -cam);
     cloudMass(g, k, 0, 0, Math.ceil(w / P), 14, (c, r) => (Math.sin(c * .27) + Math.sin(c * .09 + 1)) * 2.4 + 8 > r);
-    for (let y = gyW; y < WORLD; y += P) for (let x = 0; x < w; x += P) { const v = hash(x / P, y / P, 3); R(g, x, y, P, P, v < .5 ? k.g2 : v < .82 ? k.g3 : k.g4); }
-    R(g, 0, gyW, w, 2, k.ink);
+    ground(g, k, gyW, w, WORLD);
     ruin(g, k, 300, gyW);
-    const rise = seg(T, 1.2, 7.8), yBase = gyW - 18 * P;
-    const y = snap(lerp(yBase, 96, held(rise, 10)));
-    const a = held(clamp01((T - .2) / 1), 4);
-    dressed(g, k, 330, y, 'you', { a: a * .9 });
-    dressed(g, k, 366, y - (Math.floor(held(T, 2) * 2) % 2) * P, 'sqouse', { a: a * .9 });
+    const a = clamp01((T - .2) / 1) * .9;
+    dressed(g, k, 330, ySoul, 'you', { a });
+    dressed(g, k, 366, ySoul - (Math.floor(held(T, 2) * 2) % 2) * P, 'sqouse', { a });
     g.restore();
-    return T < 1.2 ? `${T.toFixed(1)} s: two souls fade in out of the wreck` : T < 7.8 ? `${T.toFixed(1)} s: rising, the camera following` : `${T.toFixed(1)} s: into the cloud`;
+    FOCUS.bRise = [357, ySoul - cam + 6];
+    return T < 1.2 ? `${T.toFixed(1)} s: two souls ease in out of the wreck` : T < 7.8 ? `${T.toFixed(1)} s: rising, the camera following` : `${T.toFixed(1)} s: into the cloud`;
   },
   bRoad(g, k, t, w, h) {
-    const T = t % 12, gy = h - 40, rx = 150, rockTop = gy - 18 * P;
+    const T = t % 12, gy = 252;
     sky(g, k, w, h, t, 5); ground(g, k, gy, w, h);
-    ruin(g, k, rx - 9 * P, gy);
-    const tx = rx + 60, ty = 60;
-    const s0 = [tx - 18, ty + 10 * P - 6], s1 = [rx + 4 * P, rockTop - P];
-    stair(g, k, s0[0], s0[1], s1[0], s1[1], 6);
-    heavenTear(g, k, tx, ty, t, .9);
-    station(g, k, 470, gy); station(g, k, 600, gy, 54, 42); heap(g, k, 360, gy, 5);
-    for (let i = 0; i < 5; i++) hauler(g, k, t, i, 430, 640, gy, { ticks: 3 + (i % 2) });
-    // the pair: down the stair, off the rock, along the yard, a step at a time
-    const path = [[s0[0] + 6, s0[1] - W], [s1[0] + 6, s1[1] - W], [rx + 13 * P, gy - W], [520, gy - W]];
-    const u = held(seg(T, .8, 10.5), 6) * 3, i0 = Math.min(2, Math.floor(u)), f = u - i0;
-    const px = snap(lerp(path[i0][0], path[i0 + 1][0], f)), py = snap(lerp(path[i0][1], path[i0 + 1][1], f));
+    ruin(g, k, 24, gy);
+    const tear = [234, 54], st = [216, 120, 11];
+    heavenTear(g, k, ...tear, t, 1);
+    stair(g, k, ...st, 1);
+    station(g, k, 480, gy); station(g, k, 600, gy, 9, 7); heap(g, k, 384, gy, 5);
+    for (let i = 0; i < 5; i++) hauler(g, k, t, i, 444, 650, gy, { ticks: 3 + (i % 2) });
+    const pts = [...stairPts(...st, 1), [st[0] + 24 * P, gy - W], [540, gy - W]];
+    const u = held(seg(T, .8, 10.5), 6);
+    const [px, py] = along(pts, u), [qx, qy] = along(pts, Math.max(0, u - .07));
     dressed(g, k, px, py, 'you', { a: .8 });
-    dressed(g, k, px - 28, py - (i0 === 0 ? -12 : 0) - (Math.floor(held(T, 2) * 2) % 2) * P, 'sqouse', { a: .8 });
-    return u < 1 ? `${T.toFixed(1)} s: down the stair from the tear` : u < 2 ? `${T.toFixed(1)} s: off the rock on the ruin` : `${T.toFixed(1)} s: among the living crew, who do not look up`;
+    dressed(g, k, qx, qy - (u > .5 ? (Math.floor(held(T, 2) * 2) % 2) * P : 0), 'sqouse', { a: .8 });
+    return u < .45 ? `${T.toFixed(1)} s: down the stair from the tear, a step at a time` : `${T.toFixed(1)} s: on the yard floor, among the living crew, who do not look up`;
   },
   bAlive(g, k, t, w, h) {
-    const T = t % 9, fy = h - 40;
+    k = k.deep;
+    const T = t % 9, fy = h - 42;
     R(g, 0, 0, w, h, k.paper);
     for (let y = 0; y < fy; y += P) for (let x = 0; x < w; x += P) { const up = (fy - y) / fy; if (hash(x / P, y / P, 171) < .25 * up * up) R(g, x, y, P, P, k.g1); }
-    for (let y = fy; y < h; y += P) for (let x = 0; x < w; x += P) R(g, x, y, P, P, hash(x / P, y / P, 172) < .5 ? k.g2 : k.g3);
-    R(g, 0, fy, w, 2, k.ink);
+    for (let y = fy; y < h; y += P) for (let x = 0; x < w; x += P) R(g, x, y, P, P, y === fy ? k.ink : hash(x / P, y / P, 172) < .5 ? k.g2 : k.g3);
     for (let y = 0; y < fy; y += P) for (const side of [0, 1]) for (let c = 0; c < 3 + (hash(y, side, 173) * 3 | 0); c++) R(g, side ? w - (c + 1) * P : c * P, y, P, P, hash(c, y, 174) < .5 ? k.ink : k.d3);
-    // the cage, cut open
-    const cx = 470, ctop = fy - 26 * P;
-    R(g, cx - 10 * P, ctop, 20 * P, 2, k.ink); R(g, cx - 10 * P, ctop + 4, 20 * P, 2, k.ink);
-    for (let i = 0; i <= 10; i++) if (i < 4 || i > 6) R(g, cx - 10 * P + i * 2 * P, ctop, 2, fy - ctop, k.ink);
-    R(g, cx - 6 * P, fy - 3, 2 * P * 3, 3, k.ink); R(g, cx - 2 * P, fy - 6, 2 * P * 2, 3, k.ink);
-    // God, a placeholder; purple, because it is magic
-    const gx = cx - 15, gyy = fy - 16 * P;
-    for (let r = -1; r <= 12; r++) for (let c = -1; c <= 5; c++) if ((r === -1 || r === 12 || c === -1 || c === 5) && (r + c + Math.floor(t * 2)) % 2 === 0) R(g, gx + c * P, gyy + r * P, P, P, k.purple);
-    label(g, k, gx - 34, gyy - 22, '[placeholder: God, not designed]', k.mid, 9);
-    // the pair before God, rims closing a piece a mote
-    const n = Math.min(12, Math.floor(seg(T, 1, 6) * 12 + .0001));
-    const yx = 260, sx = 300, by = fy - W;
+    const cx = 468, ctop = fy - 26 * P;
+    for (let c = -10; c <= 10; c++) R(g, cx + c * P, ctop, P, P, k.ink);
+    for (let i = 0; i <= 10; i++) if (i < 4 || i > 6) for (let r = 1; r * P < fy - ctop; r++) R(g, cx - 10 * P + i * 2 * P, ctop + r * P, P, P, k.ink);
+    for (let c = -6; c <= -1; c++) R(g, cx + c * P, fy - P, P, P, k.ink);
+    for (let c = 1; c <= 4; c++) R(g, cx + c * P, fy - P, P, P, k.ink);
+    const gx = cx - 2 * P, gyy = fy - 16 * P;
+    for (let r = -1; r <= 12; r++) for (let c = -1; c <= 5; c++) if (r === -1 || r === 12 || c === -1 || c === 5) C(g, gx + c * P, gyy + r * P, k.purple, .5 + .5 * Math.sin(t * 2 + (r + c) * .7));
+    label(g, k, gx - 60, gyy - 22, '[placeholder: God, not designed]', k.mid, 9);
+    const n = seg(T, 1, 6) * 12, yx = 258, sx = 300, by = fy - W;
     const hopA = T > 6.4 ? hopY(T, 0) : 0, hopB = T > 6.4 ? hopY(T, 1) : 0;
-    const tone = n >= 12 ? k.ink : k.mid;
-    dressed(g, k, yx, by + hopA, 'you', { rim: k.ink, pieces: n, tone });
-    dressed(g, k, sx, by + hopB, 'sqouse', { rim: k.ink, pieces: n, tone });
-    if (n < 12 && T > 1) {
-      const u = (seg(T, 1, 6) * 12) % 1;
-      for (const bx of [yx, sx]) R(g, Math.round(lerp(gx + 12, bx + 8, u) / 2) * 2, Math.round(lerp(gyy + 30, by + 4, u) / 2) * 2, 2, 2, k.purple);
-    }
-    for (let i = 0; i < 4; i++) { body(g, k, 70 + i * 26, by, k.soul, .9); R(g, 70 + i * 26 + 20, by - 4, 8, 2, k.g4); }
-    return T < 1 ? `${T.toFixed(1)} s: the cage open, God stands` : n < 12 ? `${T.toFixed(1)} s: rim piece ${n} of 12, grey to black` : `${T.toFixed(1)} s: alive; they hop`;
+    dressed(g, k, yx, by + hopA, 'you', { rim: k.ink, pieces: n, tone: k.mid, inkA: n / 12 });
+    dressed(g, k, sx, by + hopB, 'sqouse', { rim: k.ink, pieces: n, tone: k.mid, inkA: n / 12 });
+    if (n < 12 && T > 1) { const u = n % 1; for (const bx of [yx, sx]) C(g, snap(lerp(gx + 12, bx + 6, u)), snap(lerp(gyy + 30, by, u)), k.purple); }
+    for (let i = 0; i < 4; i++) { body(g, k, 66 + i * 30, by, k.soul, .9); C(g, 66 + i * 30 + 18, by - P, k.g4); }
+    FOCUS.bAlive = [yx + 30, by + 4];
+    return T < 1 ? `${T.toFixed(1)} s: the cage open, God stands` : n < 12 ? `${T.toFixed(1)} s: rim piece ${Math.floor(n) + 1} of 12 fading grey to black` : `${T.toFixed(1)} s: alive; they hop`;
   },
   bHome(g, k, t, w, h) {
-    const T = t % 18, gy = h - 50, WORLD = 1500, name = mansionPick, D = design(name);
-    const ox = name === 'B' ? 110 : name === 'C' ? 130 : 70;
-    const gateX = ox + D.gateC * P, arrive = 12, start = WORLD - 140;
-    const walk = seg(T, 0, arrive);
-    const pairX = snap(lerp(start, gateX + 8, held(walk, 6)));
+    const T = t % 22, gy = h - 48, WORLD = 1500, D = design(mansionPick), PL = plan(mansionPick, BUILDERS);
+    const ox = 60, gateX = ox + (D.gateC ?? D.doorC) * P, arrive = 12, start = WORLD - 140, srcX = ox + (D.maxC + 6) * P;
+    const walk = seg(T, 0, arrive), pairX = snap(lerp(start, gateX + 2 * P, held(walk, 6)));
     const camX = Math.round(Math.max(0, Math.min(WORLD - w, pairX - w * .45)));
+    const tb = PL.topOut - arrive + T;
     sky(g, k, w, h, t, 7);
     g.save(); g.translate(-camX, 0);
     ground(g, k, gy, WORLD, h);
-    // the pit at the right, the wizards' portal in its wall
-    for (let y = gy; y < h; y += P) for (let x = WORLD - 110; x < WORLD - 10; x += P) R(g, x, y, P, P, y > gy + 14 ? k.ink : k.paper);
+    for (let y = gy; y < h; y += P) for (let x = WORLD - 110; x < WORLD - 10; x += P) R(g, x, y, P, P, y > gy + 12 ? k.ink : k.paper);
     for (let r = -3; r <= 3; r++) for (let c = -3; c <= 3; c++) if (Math.hypot(c, r) < 3.3) R(g, WORLD - 110 + c * P, gy + 24 + r * P, P, P, Math.hypot(c, r) > 2.2 ? k.purple : k.ink);
-    drawHill(g, k, D, ox, gy);
-    drawBuild(g, k, D, ox, gy, T, arrive, ox + (D.maxC + 4) * P, T < arrive ? 1 : 1 - seg(T, arrive, arrive + 2));
-    garden(g, k, D, name, ox, gy, ease(seg(T, arrive, arrive + 1.5)), seg(T, arrive - 2, arrive));
-    // stations and the crew, who fall in behind as the pair pass
-    for (const sx of [760, 980, 1180]) station(g, k, sx, gy);
+    drawBuild(g, k, PL, ox, gy, tb, srcX);
+    garden(g, k, D, ox, gy, ease(seg(T, arrive, arrive + 1.5)), seg(T, arrive - 2.5, arrive - .5));
+    for (const sx of [780, 990, 1190]) station(g, k, sx, gy);
     let joined = 0;
     for (let i = 0; i < 14; i++) {
-      const home = 720 + i * 46;
-      const passT = arrive * clamp01((start - home) / (start - gateX - 8));
+      const home = 720 + i * 48, passT = arrive * clamp01((start - home) / (start - gateX - 12));
       const hx0 = snap(home + Math.sin(held(t, 4) * 2 + i) * 12);
       if (T < passT) { body(g, k, hx0, gy - W, k.ink); ticks(g, k, hx0, gy - W, 2 + i % 3); continue; }
-      const slot = joined++, sx = pairX + 40 + Math.floor(slot / 2) * 26, sy = gy - W - (slot % 2) * P;
-      const u = ease((T - passT) / .8), x = snap(lerp(hx0, sx, u)), y = snap(lerp(gy - W, sy, u)) + (u >= 1 ? hopY(T, slot % 3) : 0);
-      body(g, k, x, y, k.ink, slot % 2 ? .85 : 1); ticks(g, k, x, y, 2 + i % 3);
+      const slot = joined++, sx = (T < arrive ? pairX : gateX) + 7 * P + Math.floor(slot / 2) * 4 * P, sy = gy - W - (slot % 2) * P;
+      const back = seg(T, arrive + 3 + slot * .15, arrive + 8 + slot * .15);
+      const u = ease((T - passT) / .8);
+      let x = snap(lerp(hx0, sx, u)), y = snap(lerp(gy - W, sy, u)) + (u >= 1 && back === 0 ? hopY(T, slot % 3) : 0);
+      if (back > 0) { x = snap(lerp(sx, hx0, held(back, 8))); y = gy - W; }
+      body(g, k, x, y, k.ink, slot % 2 && back === 0 ? .85 : 1); ticks(g, k, x, y, 2 + i % 3);
     }
-    const pxp = T < arrive ? pairX : snap(lerp(gateX + 8, ox + D.doorC * P - 12, ease(seg(T, arrive + 1.5, arrive + 3.5))));
-    const pyy = (name === 'B' && T > arrive + 1.5) ? gy - W - snap(8 * P * ease(seg(T, arrive + 1.5, arrive + 3.5))) : gy - W;
-    dressed(g, k, pxp, pyy, 'you', { rim: k.ink, tone: k.ink });
-    dressed(g, k, pxp + 24, pyy - (Math.floor(held(T, 2) * 2) % 2) * P, 'sqouse', { rim: k.ink, tone: k.ink });
-    // fireworks, quicker as they near it
-    for (let i = 0; i < 26; i++) { const at = arrive * Math.sqrt(i / 26) + .2; firework(g, k, ox + (hash(i, 0, 181) * (D.maxC - D.minC) + D.minC) * P, 50 + hash(i, 1, 181) * 60, T - at); }
+    const doorX = ox + D.doorC * P;
+    const pxp = T < arrive ? pairX : snap(lerp(gateX + 2 * P, doorX - 2 * P, ease(seg(T, arrive + 1.5, arrive + 3.5))));
+    dressed(g, k, pxp, gy - W, 'you', { rim: k.ink, tone: k.ink });
+    dressed(g, k, pxp + 4 * P, gy - W - (Math.floor(held(T, 2) * 2) % 2) * P, 'sqouse', { rim: k.ink, tone: k.ink });
+    for (let i = 0; i < 6; i++) firework(g, k, ox + (D.minC + (i + .5) * (D.maxC - D.minC) / 6) * P, 50 + hash(i, 1, 181) * 50, T - arrive - .3 - (i % 2) * .15);
     g.restore();
-    return T < arrive ? `${T.toFixed(1)} s: walking home; the ${name === 'A' ? 'manor' : name === 'B' ? 'castle' : 'long house'} going up floor by floor` : T < arrive + 1.5 ? `${T.toFixed(1)} s: it tops out; the gate opens` : `${T.toFixed(1)} s: to the door`;
+    return T < arrive ? `${T.toFixed(1)} s: walking home; the builders on its last courses` : T < arrive + 1.5 ? `${T.toFixed(1)} s: it tops out; the gate; one volley` : T < arrive + 4 ? `${T.toFixed(1)} s: to the door; the poles come out` : `${T.toFixed(1)} s: the crew drift back to work`;
   },
 
-  mA: (g, k, t, w, h) => mansionScene(g, k, t, w, h, 'A', 120),
-  mB: (g, k, t, w, h) => mansionScene(g, k, t, w, h, 'B', 100),
-  mC: (g, k, t, w, h) => mansionScene(g, k, t, w, h, 'C', 150),
+  mA: (g, k, t, w, h) => mansionScene(g, k, t, w, h, 'A', 120, 'mA'),
+  mB: (g, k, t, w, h) => mansionScene(g, k, t, w, h, 'B', 150, 'mB'),
+  mC: (g, k, t, w, h) => mansionScene(g, k, t, w, h, 'C', 150, 'mC'),
   mBuild(g, k, t, w, h) {
-    const T = t % 22, name = mansionPick, D = design(name), gy = h - 40;
-    const ox = name === 'B' ? 140 : name === 'C' ? 100 : 80, dur = 17;
+    const D = design(mansionPick), PL = plan(mansionPick, BUILDERS), gy = h - 48;
+    const ox = mansionPick === 'A' ? 60 : 90, srcX = Math.min(w - 132, ox + (D.maxC + 10) * P);
+    const period = PL.end + 5, T = t % period;
     sky(g, k, w, h, t, 9); ground(g, k, gy, w, h);
-    drawHill(g, k, D, ox, gy);
-    const st = drawBuild(g, k, D, ox, gy, T, dur, Math.min(w - 100, ox + (D.maxC + 4) * P), 1 - seg(T, dur, dur + 2));
-    garden(g, k, D, name, ox, gy, 0, seg(T, dur, dur + 2));
-    const up = D.pieces.filter((p, i) => st.set(i));
-    const row = up.length ? up[up.length - 1].r : 0;
-    return T < dur ? `${T.toFixed(1)} s: ${up.length} of ${st.N} pieces set; working on row ${-row}` : `${T.toFixed(1)} s: topped out; the scaffold comes down, the garden goes in`;
+    drawBuild(g, k, PL, ox, gy, T, srcX);
+    garden(g, k, D, ox, gy, 0, seg(T, PL.end, PL.end + 2));
+    let up = 0; for (const s of PL.pieceSet) if (s <= T) up++;
+    const firstPiece = PL.poles.length / PL.B * PL.T;
+    const phase = T < firstPiece ? 'beat 14, the cage falls: the build starts as a standing job; the scaffold carried in pole by pole'
+      : T < PL.topOut * .45 ? 'courses going up while beat 15 plays in hell'
+      : T < PL.topOut * .8 ? 'watched through the last stretch of the act'
+      : T < PL.topOut ? 'the walk home: its last courses'
+      : T < PL.end ? 'topped out: the poles carried back out' : 'the garden goes in';
+    return `${T.toFixed(1)} s of ${period.toFixed(0)}: ${up} of ${PL.N} pieces set by ${PL.B} builders (${D.source === 'rock' ? 'from the rock' : 'from the heaps'}); ${phase}`;
   },
-  mArrive: (g, k, t, w, h) => arrival(g, k, t, w, h),
+  mArrive: (g, k, t, w, h) => arrival(g, k, t % 24, w, h),
   mSheet(g, k, t, w, h) {
-    arrival(g, k, 30, w, h, true);
+    arrival(g, k, 22, w, h, true);
     g.globalAlpha = .62; R(g, 0, 0, w, h, k.paper); g.globalAlpha = 1;
-    const cw = 300, ch = 210, x = (w - cw) / 2, y = 70;
-    R(g, x, y, cw, ch, k.paper); R(g, x, y, cw, 2, k.ink); R(g, x, y + ch - 2, cw, 2, k.ink); R(g, x, y, 2, ch, k.ink); R(g, x + cw - 2, y, 2, ch, k.ink);
+    const cw = 300, ch = 210, x = 210, y = 66;
+    R(g, x, y, cw, ch, k.paper); R(g, x, y, cw, P, k.ink); R(g, x, y + ch - P, cw, P, k.ink); R(g, x, y, P, ch, k.ink); R(g, x + cw - P, y, P, ch, k.ink);
     label(g, k, x + 18, y + 18, '[placeholder: the last sheet\'s title]', k.ink, 12);
     label(g, k, x + 18, y + 44, '[placeholder: one line, the owner\'s]', k.mid, 10);
-    const rows = ['[placeholder: time played]', '[placeholder: lines in the yard]', '[placeholder: souls freed]', '[placeholder: barriers broken]'];
-    rows.forEach((s, i) => { label(g, k, x + 18, y + 74 + i * 18, s, k.mid, 10); R(g, x + cw - 60, y + 78 + i * 18, 40, 2, k.g4); });
-    R(g, x + 18, y + ch - 46, 120, 28, k.ink); label(g, k, x + 26, y + ch - 38, '[placeholder]', k.paper, 10);
-    R(g, x + 150, y + ch - 46, 130, 28, k.g2); label(g, k, x + 158, y + ch - 38, '[placeholder]', k.ink, 10);
+    ['[placeholder: time played]', '[placeholder: lines in the yard]', '[placeholder: souls freed]', '[placeholder: barriers broken]'].forEach((s, i) => { label(g, k, x + 18, y + 72 + i * 18, s, k.mid, 10); });
+    R(g, x + 18, y + ch - 48, 120, 30, k.ink); label(g, k, x + 26, y + ch - 38, '[placeholder]', k.paper, 10);
+    R(g, x + 150, y + ch - 48, 132, 30, k.g2); label(g, k, x + 158, y + ch - 38, '[placeholder]', k.ink, 10);
   },
   wide(g, k, t, w, h) {
-    const gy = h - 90, name = mansionPick, D = design(name), ox = name === 'B' ? 120 : 90;
+    const gy = h - 90, D = design(mansionPick), ox = 90;
     sky(g, k, w, h, t, 11); ground(g, k, gy, w, h);
-    drawHill(g, k, D, ox, gy);
     drawMansion(g, k, D, ox, gy, t);
-    garden(g, k, D, name, ox, gy, 1);
-    // heaven's tear, small, over it: the way up to the union's camp
-    const tearX = ox + (D.maxC + 16) * P;
-    lens(g, k, tearX, 60, 3.5, 5, t); motes(g, k, tearX, 50, 3 * P, 80, t, 5);
-    // the pair on the bench by the door
-    const dx = ox + D.doorC * P, by = gy + D.doorBase * P;
-    R(g, dx + 20, by - 2 * P, 4 * P, P, k.ink); R(g, dx + 20, by - P, P, P, k.ink); R(g, dx + 20 + 3 * P, by - P, P, P, k.ink);
-    dressed(g, k, dx + 18, by - 2 * P - W + 2, 'you', { rim: k.ink, tone: k.ink });
-    dressed(g, k, dx + 40, by - 2 * P - W + 2, 'sqouse', { rim: k.ink, tone: k.ink });
-    // freed souls in the garden
-    for (let i = 0; i < 6; i++) body(g, k, snap(ox + (D.minC + 6 + i * 11) * P + Math.sin(held(t, 2) + i) * 6), gy - W + (D.hill ? -D.hill(D.minC + 6 + i * 11) * P : 0) - (Math.floor(held(t, 2) * 2 + i) % 2) * P, k.soul, .85);
-    // the yard at work
-    const y0 = Math.max(ox + (D.maxC + 36) * P, 860);
-    station(g, k, y0, gy); station(g, k, y0 + 160, gy, 54, 42); heap(g, k, y0 + 70, gy, 5); heap(g, k, y0 + 240, gy, 3);
-    for (let i = 0; i < 6; i++) hauler(g, k, t, i, y0 - 20, y0 + 230, gy, { ticks: 1 + i % 4 });
-    // the pit and the wizards' portal
-    const px = w - 170;
-    for (let y = gy; y < h; y += P) for (let x = px; x < w - 20; x += P) R(g, x, y, P, P, y > gy + 14 ? k.ink : k.paper);
+    garden(g, k, D, ox, gy, 1);
+    // the tear still open, its stair down to the ground beside the mansion
+    const tx = ox + (D.maxC + 14) * P, ty = 54, steps = Math.round((gy - 12 - 120) / 12) + 1;
+    heavenTear(g, k, tx, ty, t, .9);
+    stair(g, k, tx - 3 * P, 120, steps, 1);
+    stairGhosts(g, k, t, tx - 3 * P, 120, steps, 1, tx + 50 * P, 2, 18);
+    const bx = ox + D.benchC * P;
+    dressed(g, k, bx - 2 * P, gy - 2 * P - W + P, 'you', { rim: k.ink, tone: k.ink });
+    dressed(g, k, bx + P, gy - 2 * P - W + P, 'sqouse', { rim: k.ink, tone: k.ink });
+    FOCUS.wide = [bx, gy - 30];
+    for (let i = 0; i < 6; i++) body(g, k, ox + (D.maxC + 3 + i * 4) * P, gy - W, k.soul, .85);
+    const y0 = Math.max(ox + (D.maxC + 64) * P, 900);
+    station(g, k, y0, gy); station(g, k, y0 + 156, gy, 9, 7); heap(g, k, y0 + 66, gy, 5); heap(g, k, y0 + 228, gy, 3);
+    for (let i = 0; i < 6; i++) hauler(g, k, t, i, y0 - 24, y0 + 222, gy, { ticks: 1 + i % 4 });
+    const px = w - 168;
+    for (let y = gy; y < h; y += P) for (let x = px; x < w - 18; x += P) R(g, x, y, P, P, y > gy + 12 ? k.ink : k.paper);
     for (let r = -4; r <= 4; r++) for (let c = -4; c <= 4; c++) { const d = Math.hypot(c, r); if (d < 4.3) R(g, px + c * P, gy + 30 + r * P, P, P, d > 3 ? (hash(c, r, 191) < .6 ? k.purple : k.g4) : k.ink); }
-    for (let i = 0; i < 8; i++) firework(g, k, ox + hash(i, 0, 192) * 500, 40 + hash(i, 1, 192) * 60, (t + i * .7) % 4);
   },
 };
-function mansionScene(g, k, t, w, h, name, ox) {
-  const D = design(name), gy = h - 40;
+function mansionScene(g, k, t, w, h, name, ox, id) {
+  const D = design(name), gy = h - 48;
   sky(g, k, w, h, t, 13); ground(g, k, gy, w, h);
-  drawHill(g, k, D, ox, gy);
   drawMansion(g, k, D, ox, gy, t);
-  garden(g, k, D, name, ox, gy, 0);
-  // the old house beside it, for size
-  if (name !== 'B') { house(g, k, w - 18 * P - 14, gy); label(g, k, w - 18 * P - 14, gy + 8, 'the old house, for size', k.mid, 9); }
+  garden(g, k, D, ox, gy, 0);
+  if (name !== 'C') { house(g, k, w - 18 * P - 12, gy); label(g, k, w - 18 * P - 12, gy + 10, 'the old house, for size', k.mid, 9); }
+  FOCUS[id] = [ox + D.doorC * P + 3 * P, gy - 3 * P];
 }
-function arrival(g, k, t, w, h, still) {
-  const name = mansionPick, D = design(name), gy = h - 40;
-  const ox = name === 'B' ? 60 : name === 'C' ? 30 : 110;
-  sky(g, k, w, h, t, 15); ground(g, k, gy, w, h);
-  drawHill(g, k, D, ox, gy);
-  drawMansion(g, k, D, ox, gy, t);
-  garden(g, k, D, name, ox, gy, still ? 1 : ease(seg(t % 10, 1, 3)));
-  const dx = ox + D.doorC * P, by = gy + D.doorBase * P;
-  dressed(g, k, dx - 22, by - W, 'you', { rim: k.ink, tone: k.ink });
-  dressed(g, k, dx + 4, by - W - (Math.floor(held(t, 2) * 2) % 2) * P, 'sqouse', { rim: k.ink, tone: k.ink });
-  // the crew in two files, ticks over them
-  const fx = Math.min(w - 260, ox + (D.gateC + 6) * P);
-  for (let i = 0; i < 16; i++) { const x = fx + Math.floor(i / 2) * 24, y = gy - W - (i % 2) * P + hopY(t, i % 3); body(g, k, x, y, k.ink, i % 2 ? .85 : 1); ticks(g, k, x, y, 1 + (i * 3) % 5); }
-  // the freed souls, pale, come down and gathered at the right and over it
-  for (let i = 0; i < 14; i++) {
-    const air = i >= 6, x = snap(w - 150 + (i % 6) * 24 + (air ? 8 : 0)), y = air ? snap(60 + (i % 4) * 28 + (Math.floor(held(t, 2) + i) % 2) * P) : gy - W;
-    body(g, k, x, y, k.soul, air ? .7 : .9);
+// The last stretch: the gate, the souls down the stair, one volley, the crew back to work,
+// the pair to the bench, a window.
+function arrival(g, k, T, w, h, still) {
+  const D = design(mansionPick), gy = h - 48, ox = mansionPick === 'A' ? 60 : 90;
+  sky(g, k, w, h, T, 15); ground(g, k, gy, w, h);
+  const doorX = ox + D.doorC * P, bx = ox + D.benchC * P;
+  // the window by the door lights at the end
+  const lit = {}; const near = D.wins.reduce((b, wn) => (!b || Math.abs(wn.c0 - D.doorC) + Math.abs(wn.r0 + 6) < Math.abs(b.c0 - D.doorC) + Math.abs(b.r0 + 6)) ? wn : b, null);
+  for (const wn of D.wins) lit[wn.id] = 0;
+  if (near) lit[near.id] = seg(T, 14, 16);
+  drawMansion(g, k, D, ox, gy, T, null, lit);
+  garden(g, k, D, ox, gy, ease(seg(T, .5, 2.5)));
+  // the tear and its stair at the right; the freed souls walk down and stand
+  const tx = w - 36, ty = 54, steps = Math.round((gy - 12 - 120) / 12) + 1;
+  heavenTear(g, k, tx, ty, T, .9);
+  stair(g, k, tx + 3 * P, 120, steps, -1);
+  const pts = stairPts(tx + 3 * P, 120, steps, -1);
+  for (let i = 0; i < 8; i++) {
+    const spot = [300 + i * 4 * P, gy - W];
+    const u = seg(T, i * .6, i * .6 + 6);
+    const [x, y] = u < 1 ? along([...pts, [pts[pts.length - 1][0] - 2 * P, gy - W], spot], held(u, 24)) : spot;
+    if (u > 0) body(g, k, x, y, k.soul, .85);
   }
-  for (let i = 0; i < 10; i++) firework(g, k, ox + (hash(i, 0, 201) * (D.maxC - D.minC) + D.minC) * P, 40 + hash(i, 1, 201) * 50, ((still ? 2.7 : t) + i * .55) % 5.5);
+  // the crew: two files behind the pair, then back to work
+  const fx = snap(ox + ((D.gateC ?? D.doorC) + 8) * P);
+  for (let i = 0; i < 12; i++) {
+    const sx = fx + Math.floor(i / 2) * 4 * P, back = seg(T, 6 + i * .3, 11 + i * .3);
+    const x = snap(lerp(sx, w + 40 + i * 24, held(back, 10))), y = back > 0 ? gy - W : gy - W - (i % 2) * P + hopY(T, i % 3);
+    body(g, k, x, y, k.ink, i % 2 && back === 0 ? .85 : 1); ticks(g, k, x, y, 1 + (i * 3) % 4);
+  }
+  // the pair: at the gate, to the bench, sat
+  const walk = held(seg(T, 6, 12), 6), sat = T >= 12.5;
+  const ax = snap(lerp(ox + (D.gateC ?? D.doorC) * P - 2 * P, bx - 2 * P, walk));
+  const ay = sat ? gy - 2 * P - W + P : gy - W;
+  dressed(g, k, ax, ay, 'you', { rim: k.ink, tone: k.ink });
+  dressed(g, k, ax + 3 * P, ay - (!sat ? (Math.floor(held(T, 2) * 2) % 2) * P : 0), 'sqouse', { rim: k.ink, tone: k.ink });
+  FOCUS.mArrive = FOCUS.mSheet = [ax + 3 * P, ay];
+  for (let i = 0; i < 6; i++) firework(g, k, ox + (D.minC + (i + .5) * (D.maxC - D.minC) / 6) * P, 40 + hash(i, 1, 201) * 40, T - 3 - (i % 2) * .15);
+  return T < 3 ? `${T.toFixed(1)} s: the gate opens; the souls start down the stair` : T < 5 ? `${T.toFixed(1)} s: one volley` : T < 12 ? `${T.toFixed(1)} s: the crew drift back to work; the pair walk to the bench` : T < 14 ? `${T.toFixed(1)} s: they sit` : T < 16 ? `${T.toFixed(1)} s: a window lights` : `${T.toFixed(1)} s: held; then the sheet`;
 }
 
 // ---------------------------------------------------------------- the loop
@@ -1261,7 +1313,10 @@ const canvases = [...document.querySelectorAll('canvas')];
 const seen = new Set();
 const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => e.isIntersecting ? seen.add(e.target.id) : seen.delete(e.target.id)), { rootMargin: '200px' }) : null;
 canvases.forEach(c => io ? io.observe(c) : seen.add(c.id));
-function wanted(c) { if (c.closest('.card') && c.closest('.card').style.display === 'none') return false; return FREEZE != null || seen.has(c.id) || canvases.some(z => z.dataset.src === c.id && seen.has(z.id)); }
+function wanted(c) {
+  const card = c.closest('.card'); if (card && card.style.display === 'none') return false;
+  return FREEZE != null || seen.has(c.id) || canvases.some(z => z.dataset.src === c.id && seen.has(z.id));
+}
 function frame(ms) {
   const t = FREEZE != null ? FREEZE : ms / 1000, k = pal();
   for (const c of canvases) if (!c.dataset.src && wanted(c)) {
@@ -1274,12 +1329,15 @@ function frame(ms) {
     if (ph && typeof said === 'string') ph.textContent = said;
   }
   for (const c of canvases) if (c.dataset.src && wanted(c)) {
-    const [x, y, w, h] = c.dataset.crop.split(',').map(Number), s = 3;
+    const src = document.getElementById(c.dataset.src);
+    let [x, y, w, h] = c.dataset.crop.split(',').map(Number);
+    const f = FOCUS[c.dataset.src];
+    if (f) { x = Math.round(Math.max(0, Math.min(src.width - w, f[0] - w / 2))); y = Math.round(Math.max(0, Math.min(src.height - h, f[1] - h / 2))); }
+    const s = 3;
     if (c.width !== w * s) { c.width = w * s; c.height = h * s; c.style.width = w * s + 'px'; }
     const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
-    g.drawImage(document.getElementById(c.dataset.src), x, y, w, h, 0, 0, w * s, h * s);
+    g.drawImage(src, x, y, w, h, 0, 0, w * s, h * s);
   }
-  document.body.dataset.drawn = '1';
   if (FREEZE == null) requestAnimationFrame(frame);
 }
 if (FREEZE != null) frame(0); else requestAnimationFrame(frame);
