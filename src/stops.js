@@ -19,6 +19,7 @@ import { arrowBox, arrowShown } from './render/shaftway.js';
 import { portalOpenness } from './render/portal.js';
 import { orbOn, orbMiddle } from './deep/phases.js';
 import { ORB_R } from './config.js';
+import { PORTAL_KEYS, PORTALS, portalEnd, portalFree } from './portals.js';
 
 const mid = r => r.x + r.w / 2;
 
@@ -59,6 +60,15 @@ function every() {
   for (const deep of [false, true]) {
     const r = portalRect(deep);
     if (r) out.push({ id: `way:portal:${deep ? 'deep' : 'yard'}`, kind: 'way', key: 'portal', r, half: deep ? 'deep' : 'yard' });
+  }
+  // The acts' portals, an end in each of their places, once the player may
+  // take them (portals.js): `half` is the place the end stands in.
+  for (const key of PORTAL_KEYS) {
+    if (!portalFree(key)) continue;
+    for (const place of [PORTALS[key].outer, PORTALS[key].inner]) {
+      const e = portalEnd(key, place);
+      out.push({ id: `act:${key}:${place}`, kind: 'actway', key, r: { x: e.x - e.r, y: e.y - e.r, w: e.r * 2, h: e.r * 2 }, half: place });
+    }
   }
   const orb = orbOn(), c = orb && orbMiddle(orb.st);
   if (c) out.push({ id: 'orb', kind: 'orb', key: 'orb', r: { x: c.x - ORB_R * P, y: c.y - ORB_R * P, w: ORB_R * P * 2, h: ORB_R * P * 2 }, half: 'deep' });

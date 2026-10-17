@@ -537,6 +537,9 @@ export const S = {
   // `blankHell` stand up.
   after: null,
   hell: null,
+  // The acts' connective tissue (actbeats.js): the go-on, the house, the
+  // portals, the pair on the road, the mansion; null until the player says go on.
+  acts: null,
   // The constrict's orb (deep/phases.js): the station its fighter is at, the
   // seconds it has left of the `max` it closed with (its time is its health),
   // the seconds blows have cut off it, and when it closed.
@@ -832,6 +835,7 @@ export const SAVED_BY_HAND = [
   'deepBed',              // the scales on the deep's floor, a plot like the pit (deep/scales.js)
   'refundOwed',           // a bill handed back still in the air, by coin, landed on the way in (pit.js)
   'pairIds', 'outfits', 'dressOffered', 'selves', 'wardOpened',   // the two of them, what they are called and what they wear, checked item by item (wardrobe.js)
+  'acts',                 // the acts' portals, the pair on the road and the mansion, read over a blank (actbeats.js)
   'after', 'hell',        // acts 3 and 4, read over a blank so a field added later comes back empty (after/index.js, hell/index.js)
 ];
 

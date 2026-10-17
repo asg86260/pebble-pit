@@ -50,6 +50,11 @@ import { isTap } from './tap.js';   // one definition of a tap for the whole pag
 import { reducedMotion } from './prefs.js';
 import { goDeep, goUp, gliding } from './view.js';
 import { isActView } from './acts.js';
+import { portalAt, handAt, throughPortal } from './portals.js';
+import { sayGoOn } from './actbeats.js';
+import { onGoOn } from './render/portals.js';
+import * as AFTER_PLACE from './after/index.js';
+import * as HELL_PLACE from './hell/index.js';
 import { onShaftArrow } from './render/shaftway.js';
 import { onPortal } from './render/portal.js';
 import { clickDeep, onOrb } from './deep/serpent.js';
@@ -184,10 +189,20 @@ canvas.addEventListener('pointerdown', e => {
   // and in the deep a click is the serpent's first, the way one in the yard
   // is the rock's, and only the ordinary handling's if it missed the coil.
   if (gliding()) return;
-  // The acts' places take no click yet: a click up there will be a cloud or a
-  // tree's (after/faith.js), down in hell a seam's (hell/ore.js), and nothing
-  // of the yard's stands in either.
-  if (isActView(S.view)) return;
+  // The acts' portals, at whichever end is on screen, and their hands: the
+  // camera through by the ripple (portals.js). The go-on card over the house.
+  const way = portalAt(p.x, p.y) || handAt(p.x, p.y);
+  if (way && throughPortal(way)) return;
+  if (onGoOn(p.x, p.y) && sayGoOn()) return;
+  // The acts' places: a click up there is the afterlife's (after/index.js,
+  // `clickAfter`), down in hell hell's (hell/index.js, `clickHell`), each
+  // asked only once its act's track exports it; nothing of the yard's stands
+  // in either.
+  if (isActView(S.view)) {
+    const click = S.view === 'after' ? AFTER_PLACE.clickAfter : HELL_PLACE.clickHell;
+    if (typeof click === 'function') click(p.x, p.y);
+    return;
+  }
   if (onShaftArrow(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }
   if (onPortal(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }
   if (S.view === 'deep' && clickDeep(p.x, p.y)) return;

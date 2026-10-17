@@ -14,6 +14,11 @@ import { beatDone } from './beats.js';
 import { open } from './stations.js';
 import { msg } from './lang.js';
 import { storyLine } from './wardrobe.js';
+import { afterlifeOn, hellOn } from './acts.js';
+
+// Acts 3 and 4 follow the second half: only with the deep on as well.
+const actsOn = () => afterlifeOn() && deepOn();
+const act4On = () => hellOn() && deepOn();
 
 // In the order they come. `done` is the fact that finishes a step, and it
 // must imply every step before it (a fact that can come early, like the pit
@@ -56,6 +61,14 @@ export const STEPS = [
   // every rise (deep/serpent.js).
   { key: 'free', get say() { return storyLine('obj-free-who', 'obj-free', 'you'); }, when: deepOn,
     done: () => beatDone('freed') || !!S.serpentFreed || S.serpentLevel > 1 },
+  // Acts 3 and 4 (actbeats.js), behind their switches: placeholder lines,
+  // each done by the beat or fact that ends it.
+  { key: 'goon', get say() { return beatDone('freedsheet') ? msg('obj-act-goon') : ''; }, when: actsOn, done: () => !!(S.acts && S.acts.goOn) },
+  { key: 'union', say: msg('obj-act-union'), when: actsOn, done: () => beatDone('strike') },
+  { key: 'road', say: msg('obj-act-road'), when: act4On, done: () => beatDone('haunt') },
+  { key: 'hell', say: msg('obj-act-hell'), when: act4On, done: () => beatDone('descend') },
+  { key: 'cage', say: msg('obj-act-cage'), when: act4On, done: () => beatDone('unchain') },
+  { key: 'home', say: msg('obj-act-home'), when: act4On, done: () => !!(S.acts && S.acts.ended) },
 ];
 
 // The step the story is on, or null once it is told: the first step after

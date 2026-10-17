@@ -1378,6 +1378,58 @@ HANDLES.__actOwe = key => { if (key == null) forgetOwed(); else owe(key); };
 // How many frames each act's place has been stepped this session.
 HANDLES.__actFrames = () => ({ after: afterFrames(), hell: hellFrames() });
 
+// --- the acts' connective tissue (actbeats.js, portals.js, ghosts.js, mansion.js) ---
+// A yard stood at a point of the acts' story for the setup a check or a scene
+// is not about: 'home' (the finale had, the two of them at the house),
+// 'fallen' (act 3 begun: the house under the rock, the souls at the camp),
+// 'road' (the strike had, the stair down, hell's slit open), 'act4' (the
+// ghosts on the road, hell begun) and 'mansion' (God freed, the two of them
+// alive at the ruin, the mansion begun with `pieces` of it set). Each takes
+// the ones before it. The acts' facts, as they stand after.
+import { ensureActs, forgetActs } from './actbeats.js';
+import { retiredIn } from './home.js';
+import { openPortal, freePortal } from './portals.js';
+import { beginMansion, mansionPieces } from './mansion.js';
+import { ruinX, campX, yardFeet, sendPair } from './ghosts.js';
+import { afterFloor as actsAfterFloor } from './after/place.js';
+import { WORKER as ACTS_WORKER, ACT_RIM_PIECES, MANSION_FADE_S } from './config.js';
+import { WALL_BEATS } from './hell/story.js';
+const ACT_POINTS = ['home', 'fallen', 'road', 'act4', 'mansion'];
+const ACT_DONE = {
+  home: ['freed', 'finale', 'freedsheet'],
+  fallen: ['house-fall', 'arrive', 'meet-god', 'refuse'],
+  road: ['strike', 'unmask', 'hell-told', 'ghost-road'],
+  act4: ['haunt', 'descend', 'wall-first'],
+  mansion: [...WALL_BEATS, 'unchain', 'alive']
+};
+HANDLES.__actsAt = (point, pieces = 0) => {
+  const upTo = ACT_POINTS.slice(0, ACT_POINTS.indexOf(point) + 1);
+  for (const p of upTo) for (const k of ACT_DONE[p]) if (!S.beatsDone.includes(k)) S.beatsDone.push(k);
+  forgetActs();
+  if (!S.retired) S.retired = retiredIn();
+  if (point === 'home') { S.acts = null; return S.acts; }
+  const a = ensureActs();
+  a.goOn = true; a.house = 'fallen';
+  a.portals.heaven.k = 1;
+  a.pair = { x: campX(), y: actsAfterFloor() - ACTS_WORKER, route: null, leg: 0, hold: null, carry: 0, mode: 'soul', rims: 0, face: 1, lift: 1, inside: 0, at: 'camp' };
+  beginAfter();
+  if (point === 'fallen') return a;
+  a.struck = true; a.road = true;
+  freePortal('heaven'); openPortal('hell'); a.portals.hell.k = 1;
+  if (point === 'road') return a;
+  const x = ruinX();
+  Object.assign(a.pair, { x, y: yardFeet(x), mode: 'ghost', at: null });
+  sendPair('loop');
+  freePortal('hell'); a.wentDown = true;
+  beginHell();
+  if (point === 'act4') return a;
+  Object.assign(a.pair, { mode: 'alive', rims: ACT_RIM_PIECES, route: null, at: 'home', hold: 'home' });
+  beginMansion();
+  const all = mansionPieces();
+  for (let i = 0; i < Math.min(pieces, all.length); i++) a.mansion.set[i] = -MANSION_FADE_S;
+  return a;
+};
+
 // --- the two of them (wardrobe.js) ---
 // Who they are and what they wear, read for a check: each one's uid, the
 // body's job and place if it is one of the crew, and the outfits. `__dress`

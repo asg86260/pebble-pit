@@ -54,6 +54,10 @@ function toneOf(p, X, Y, lit) {
 
 export function drawHome() {
   if (!houseStands()) return;
+  // Gone under the rock once the acts' house falls (actbeats.js): only its
+  // woodpile is left, which the mansion's scaffold is carried off
+  // (render/mansion.js draws what is left of it from then on).
+  if (S.acts && S.acts.house !== 'standing') return;
   const hx = houseX() / P, gy = Math.round(S.groundY / P), px = pileX() / P;
   // the pile, a row for every so many pieces still in it, and the woodpile on it
   const { left, wood } = pileNow();
