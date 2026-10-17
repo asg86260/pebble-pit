@@ -1,0 +1,18 @@
+/* C, airy: B, plus a deeper sheet edge and a roomier grid. */
+:root { --gap-l: 16px; --ward-rule: 1px solid var(--ink-7); }
+.held:has(> .wardrobe:not([hidden])) { gap: var(--gap-s); padding: 20px 32px; }
+.held #wardhead { padding-bottom: calc(var(--gap-m) - var(--gap-s)); }
+.held .wardrobe { gap: var(--gap-s); }
+.wardrobe .wardfields { gap: var(--gap-s); }
+.wardrobe .wardstage { gap: var(--gap-s); }
+.held .wardrobe .wardfoot { gap: var(--gap-s); }
+.wardrobe > .wardfields, .wardrobe > .wardstage, .wardrobe > .wardbox {
+  padding-bottom: calc(var(--gap-l) / 2); border-bottom: var(--ward-rule);
+}
+.wardrobe > .wardstage, .wardrobe > .wardbox, .wardrobe > .wardfoot { padding-top: calc(var(--gap-l) / 2 - var(--gap-s)); }
+.wardrobe .wardrow, .wardrobe .wardname { grid-template-columns: 5em 2.6em 1fr 2.6em 2.6em; }
+.held .wardrobe .wardname input { grid-column: 2 / 4; }
+.wardrobe .wardname .wardcount { grid-column: 4; }
+.wardrobe .wardname .warddie { grid-column: 5; }
+.wardrobe .wardbox > .wardgrids { scrollbar-gutter: stable both-edges; padding: var(--gap-m); }
+.wardrobe .wardtiles { gap: var(--gap-m); }
