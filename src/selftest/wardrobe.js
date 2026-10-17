@@ -14,7 +14,7 @@
 
 import { ok, raf, run, canvas, onScreen, hoverHouse, hoverAway } from './kit.js';
 import { S } from '../state.js';
-import { P, WORKER, NAME_MAX, WARD_AURAS, WARD_AURA_FPS } from '../config.js';
+import { P, WORKER, NAME_MAX, WARD_AURAS, WARD_AURA_FPS, WARD_GRID_ROWS } from '../config.js';
 import { advance } from '../clock.js';
 import { draw } from '../render.js';
 import { darkPage } from '../ink.js';
@@ -846,12 +846,21 @@ export const TESTS = [
 
   // A short window (the owner, 2026-10-16): only the grid scrolls, inside
   // itself, so the close-up, the slot tabs and the foot stay on the glass;
-  // the grid keeps at least its first two rows in sight; and the arrow down
-  // walks every row of it, each scrolled into sight, before it leaves the
-  // grid. The same on a new yard's first build step.
+  // the grid keeps at least its first WARD_GRID_ROWS rows in sight; and the
+  // arrow down walks every row of it, each scrolled into sight, before it
+  // leaves the grid. The same on a new yard's first build step. At a
+  // laptop's window (1280x800, the owner wants the square held there too)
+  // and a little taller.
   ['wardrobe: on a short window only the grid scrolls, the close-up stays in view, and the arrow down walks every row', async () => {
+    const checks = [];
+    for (const h of [800, 900]) checks.push(...(await shortWindow(h)).map(c => ({ ...c, what: `1280x${h}: ${c.what}` })));
+    return checks;
+  }],
+];
+
+async function shortWindow(h) {
     const f = document.createElement('iframe');
-    f.style.cssText = 'position:fixed;left:0;top:0;width:1280px;height:900px;border:0;opacity:0;pointer-events:none;z-index:-1';
+    f.style.cssText = `position:fixed;left:0;top:0;width:1280px;height:${h}px;border:0;opacity:0;pointer-events:none;z-index:-1`;
     document.body.appendChild(f);
     const loaded = new Promise(r => f.addEventListener('load', r, { once: true }));
     f.src = './play.html?bench';
@@ -879,7 +888,11 @@ export const TESTS = [
       const g = grids(), tiles = [...d.querySelectorAll('.wardtiles.on .wardtile')];
       const rowOf = t => Math.round(t.getBoundingClientRect().top + g.scrollTop);
       const rows = [...new Set(tiles.map(rowOf))];
-      const two = tiles.filter(t => rowOf(t) <= rows[1]).reduce((m, t) => Math.max(m, t.getBoundingClientRect().bottom), 0) - g.getBoundingClientRect().top;
+      // how far down the grid its first WARD_GRID_ROWS rows reach, a part of
+      // the next row for a part of a row
+      const footOf = i => tiles.filter(t => rowOf(t) === rows[i]).reduce((m, t) => Math.max(m, t.getBoundingClientRect().bottom), 0) - g.getBoundingClientRect().top;
+      const whole = Math.floor(WARD_GRID_ROWS), part = WARD_GRID_ROWS - whole;
+      const two = footOf(whole - 1) + (part ? part * (footOf(whole) - footOf(whole - 1)) : 0);
       const sheetStill = sheet.scrollHeight <= sheet.clientHeight + 1, gridScrolls = g.scrollHeight > g.clientHeight + 1;
       const twoSeen = g.clientHeight >= two - 1, upAtFirst = fixed();
       // down from the first tile, a press at a time, until the focus leaves
@@ -894,6 +907,13 @@ export const TESTS = [
         await paint(1);
       }
       const leftTo = d.activeElement?.id, upAfter = fixed() && sheet.scrollTop === 0;
+      // scrolled to the foot, every tile's picture stands at its tile's top, over its words
+      g.scrollTop = g.scrollHeight;
+      await paint(1);
+      const strays = tiles.filter(t => {
+        const a = t.getBoundingClientRect(), c = t.querySelector('canvas').getBoundingClientRect();
+        return Math.abs(c.top - a.top - parseFloat(getComputedStyle(t).borderTopWidth)) > 1;
+      }).map(t => t.id);
       page.leaveWardrobe();
       await paint(2);
       state.S.dressOffered = false;
@@ -905,14 +925,14 @@ export const TESTS = [
       return [
         ok(sheetStill && gridScrolls, 'the sheet stands still and the grid scrolls inside it',
            `sheet ${sheet.scrollHeight} in ${sheet.clientHeight}, grid ${g.scrollHeight} in ${g.clientHeight}`),
-        ok(twoSeen, 'the grid keeps its first two rows in sight', `${g.clientHeight} for ${Math.round(two)}`),
+        ok(twoSeen, `the grid keeps its first ${WARD_GRID_ROWS} rows in sight`, `${g.clientHeight} for ${Math.round(two)}`),
         ok(upAtFirst && upAfter, 'the close-up, the slot tabs and the foot stay in the window, before the walk and after'),
         ok(seen.size === rows.length && !lost.length, 'the arrow down walks every row, each scrolled into sight',
            `${seen.size} of ${rows.length} rows; out of sight: ${lost.join(' ')}`),
         ok(!!leftTo && !leftTo.startsWith('ward-tile-'), 'and only then leaves the grid', leftTo),
+        ok(!strays.length, 'a tile\'s picture scrolls with its tile', strays.join(' ')),
         ok(stepStill && stepScrolls && stepUp, 'a new yard\'s build step the same',
            `sheet ${sheet.scrollHeight}/${sheet.clientHeight}, grid scrolls ${stepScrolls}, in view ${stepUp}`)
       ];
     } finally { f.remove(); }
-  }],
-];
+}

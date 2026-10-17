@@ -1294,7 +1294,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    a chosen thing; a locked one faint under its lock; one tried on dashed.
    Under a thumb every target is the platform's 44 pixels (TOUCH_TARGET). */
 .held .wardrobe { display: flex; flex-direction: column; gap: var(--gap-m); }
-.wardrobe canvas { display: block; image-rendering: pixelated; }
+/* the yard-window rule (`canvas`, sticky at the top) undone: in the scrolling
+   grid a tile's picture would stick to the grid's top over its own words */
+.wardrobe canvas { display: block; image-rendering: pixelated; position: static; z-index: auto; }
 .held .wardrobe .wardtab.on { color: var(--paper); background: var(--ink); }
 .wardrobe .wardid { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: var(--gap-m); }
 .wardrobe .wardid.alone .wardbig { flex: 1 1 100%; min-width: 0; }
@@ -1355,7 +1357,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .wardrobe .wardtiles { grid-area: 1 / 1; align-self: start; display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--tile) + 4px), 1fr)); gap: var(--gap-s); }
 .wardrobe .wardtiles:not(.on) { visibility: hidden; height: 0; overflow: hidden; }
 .held .wardrobe .wardtile {
-  position: relative; min-width: 0; padding: 0 0 2px; border: 2px solid transparent;
+  position: relative; min-width: 0; padding: 0; border: 2px solid transparent;
   display: flex; flex-direction: column; align-items: center; gap: 0; letter-spacing: normal;
 }
 .held .wardrobe .wardtile:focus-visible { border-color: var(--ink-7); }
@@ -1364,11 +1366,16 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .held .wardrobe .wardtile.tried { border-style: dashed; border-color: var(--ink); }
 .wardrobe .wardtn { font-size: var(--fs-small); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* a locked tile: the drawing faint, its words at full ink, and what opens it
-   under the name, wrapping rather than cut (the owner: show how to unlock) */
+   under the name (the owner: show how to unlock), wrapping to two lines and
+   no more, so a row of tiles is short enough that two of them stand on a
+   laptop's window with the close-up (the whole of it is the tile's title and
+   the line under the grid) */
 .wardrobe .wardtile.lock canvas { opacity: .32; }
-.wardrobe .wardtu { font-size: var(--fs-body); line-height: 1.2; max-width: 100%; padding: 0 2px;
+.wardrobe .wardtu { font-size: var(--fs-body); line-height: 1.15; max-width: 100%; padding: 0 2px;
                     white-space: normal; overflow-wrap: break-word; hyphens: auto; text-align: center;
-                    text-transform: none; letter-spacing: normal; }
+                    text-transform: none; letter-spacing: normal;
+                    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.wardrobe .wardtu[hidden] { display: none; }
 .wardrobe .wardlk { position: absolute; top: 3px; right: 3px; width: 7px; height: 8px; }
 .wardrobe .wardabout { min-height: 2.6em; display: flex; flex-direction: column; color: var(--ink-4); font-size: var(--fs-small); text-align: left; }
 @media (max-width: 560px), (pointer: coarse) {

@@ -48,8 +48,10 @@ export const WARD_TILE_FOOT = 5;
 // How strong a locked item is drawn on the close-up while it is tried on.
 export const WARD_TRY_ALPHA = 0.35;
 // The fewest rows of tiles the grid gives way to on a short window, before
-// the sheet scrolls instead (style.css, `.wardgrids`).
-export const WARD_GRID_ROWS = 2;
+// the sheet scrolls instead (style.css, `.wardgrids`): a row and half the
+// next, so a laptop's window (1280x800) holds the close-up still, and the
+// half row says there is more under it.
+export const WARD_GRID_ROWS = 1.5;
 
 // Who the two of them are (DESIGN.md, "Who you are"): the longest name the
 // player may give either square, in characters. The narrow places a name

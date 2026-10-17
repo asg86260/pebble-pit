@@ -331,18 +331,19 @@ function stacked(box, swap, h) {
   }
   return sum + Math.max(0, n - 1) * (parseFloat(getComputedStyle(box).rowGap) || 0);
 }
-// How tall a grid's first `n` rows of tiles stand (a row with a locked tile's
-// words under it stands taller than one without).
+// How tall a grid's first `n` rows of tiles stand, a part of a row for a
+// part of `n` (a row with a locked tile's words under it stands taller than
+// one without).
 function rowsTall(g, n) {
-  const top = g.getBoundingClientRect().top, tops = [];
-  let foot = 0;
+  const top = g.getBoundingClientRect().top, feet = [];
   for (const t of g.children) {
-    const r = t.getBoundingClientRect();
-    if (!tops.includes(r.top)) tops.push(r.top);
-    if (tops.length > n) break;
-    foot = Math.max(foot, r.bottom - top);
+    const r = t.getBoundingClientRect(), at = feet.findIndex(f => f.top === r.top);
+    if (at < 0) feet.push({ top: r.top, foot: r.bottom });
+    else feet[at].foot = Math.max(feet[at].foot, r.bottom);
   }
-  return foot;
+  const whole = Math.min(Math.floor(n), feet.length), part = n - Math.floor(n);
+  const upTo = i => (i ? feet[i - 1].foot - top : 0);
+  return upTo(whole) + (part && feet[whole] ? part * (feet[whole].foot - top - upTo(whole)) : 0);
 }
 function fitGrid() {
   const b = built;
