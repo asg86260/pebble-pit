@@ -19964,7 +19964,7 @@ source language's letters under the name: A types, X takes a letter back.
 of its own, and the end sheet's line is where the names show. Translations
 of the `-who` lines.
 
-## Act 3: the afterlife (design, not built)
+## Acts 3 and 4: the afterlife and hell (design, not built)
 
 *The owner's words, 2026-10-15/16, none of them committed: act 1 is a typical
 incremental (the yard), act 2 is lighter fighting in the deep (the serpent,
@@ -19978,54 +19978,177 @@ of every worker and fighter that ever died greets the pair, the dead are
 rebuilt into a working crew by building something, and nobody dies there.
 Then, 2026-10-16: "for act 3 lets not say heaven, lets just call it the
 afterlife, and it turns out the afterlife is similar to the real life and
-you have to keep working." The gameplay is undecided.* This section is the
-spine as told, checked against the house rules, then three loops for the
-afterlife judged against that joke, one recommended (a hybrid of two), and
-the calls only the owner can make. The look:
+you have to keep working." Then, 2026-10-17, the story of acts 3 and 4 and
+a standing order: "lets not build anything for act 3 yet, lets just spec
+it out." In the afterlife the pair meet God, who forces them to work for
+the rest of eternity; they think they should live in paradise and decide to
+take God down. When act 3's loop is done God is defeated and revealed as
+Satan in disguise, trapping souls in the afterlife and working them forever,
+and Satan tells them God is trapped in hell. Once Satan is beaten in
+heaven, the squares can travel back to the surface, still dead. Act 4 goes
+down to hell to free God; freed, God gives them their lives back and they
+go home to the surface.* Later the same day: "i don't want the main loops
+for act 3 + 4 to be combat though. i want each act to feel distinct from
+each other." *So act 1 is building (the yard), act 2 is light party combat
+(the serpent), and acts 3 and 4 are neither: each is its own non-combat
+incremental, and God's fall and God's freeing are story climaxes the loop
+reaches, delivered as cutscenes, never as a fight.*
+
+This section is the story of both acts as beats, the lifespans and lineage
+both acts stand on, act 3's loops (the first drafts' three, judged again
+against a climax and against the no-combat, all-distinct rule, and three new
+ones), act 4's three loops, the way the dead get
+back to the surface, the rules both acts must keep, and the calls only the
+owner can make. Every player-facing word is the owner's: where a beat below
+quotes a line, it is a placeholder marked as one, there only to show the
+beat's shape. The look of the afterlife's place:
 docs/mocks/act3-afterlife-2026-10-16 (plain cells, not the game; the first
-draft, under the old name, is docs/mocks/act3-heaven-2026-10-16).
+draft, under the old name, is docs/mocks/act3-heaven-2026-10-16). There is
+no mock of God, Satan or hell yet; each is a mock-vote before it is code.
 
 ### The bargain
 
-The joke is the bargain. The pair have worked a yard, dug a hole to the
-bottom of the world, fought a serpent and built a house, and they rise
-expecting rest. The crowd of the dead is waiting for them -- every square
-that ever worked the yard or fought in the deep -- and what the crowd does
-is hand them a pick. Through the cloud below them is a yard: a rock to hit,
-heaps to haul, boards to climb. The afterlife is like real life, and you
-keep working. The player should recognize the place before the pair do, and
-laugh at the recognition; the act earns its keep by what turns out
-*different* once the same grind is under way.
+The joke was the bargain, and it now has a turn. The pair have worked a
+yard, dug a hole to the bottom of the world, fought a serpent and built a
+house, and they rise expecting rest. What is waiting is God, a crowd of
+every square that ever died, and a pick: through the cloud is a yard -- a
+rock to hit, heaps to haul, boards to climb. The afterlife is like real
+life, and you keep working. The player recognizes the place before the pair
+do and laughs at the recognition; then the pair say no, and the act is the
+rebellion -- not a war but a walkout. The work is the means: every soul
+the player turns from God's service to the union is a voice gained and a
+tithe God loses, and the end of the act is the whole works putting its
+tools down at once. Then the turn under the
+turn: the god who made them work was the devil, the real one is in chains,
+and act 4 is a rescue -- the shape act 1 had (someone under a rock) and act
+2 had (someone in a belly), told a third time at the bottom of everything.
 
-- **What the player gets:** a third place whose crew is their own history.
-  Every square that worked the yard or fought in the deep is there, by name
-  and by line, so a long act 1 is a big act 3. The two they built at the
-  start (names, roles, outfits, `S.selves`) are the ones who arrive, dressed
-  as chosen. And a yard they already know how to play, so act 3 opens at a
-  run rather than on a tutorial -- the familiarity is the gag, and it is
-  also the onboarding.
+- **What the player gets:** two more places whose crew is their own
+  history. Every square that worked the yard or fought in the deep is there,
+  by name and by line, so a long act 1 is a big act 3. The two they built at
+  the start (names, roles, outfits) are the ones who arrive, dressed as
+  chosen. A place that looks like the yard they know -- the familiarity is the gag
+  -- and a loop that is not the yard at all: in act 3 they organize the
+  workers rather than work, in act 4 they mount trips rather than build.
+  Two villains' worth of story, an unmasking, and an ending that
+  gives them their lives and their house back.
 - **What the player gives:** the house as an ending, and the promise of
-  rest. The finale's "afterwards they live there" becomes an interval, and
-  the pair stop being bodies in the yard and start again as bodies in
-  another one.
+  rest. The finale's "afterwards they live there" becomes an interval; the
+  pair stop being bodies in the yard and start again as bodies somewhere
+  else, twice.
 - **What it must not break:** nothing teleports and nothing pops; no
-  offline accrual and no prestige ("Not doing", above: the afterlife is a
-  new place, not a reset -- the yard below is never wiped and its purse
-  never converted; coins cannot go up, because nothing carries them, so the
-  afterlife's purse starts at nothing by the no-teleport rule, not by a
-  reset. The joke lands *because* it looks like a restart and is not one:
-  the yard below is still there, still the player's); ladders in bands
-  through `tierRows`; black and white, purple for what magic emits; the
-  P = 6 grid; config owns every number.
+  offline accrual and no prestige ("Not doing", above: the afterlife and
+  hell are new places, not resets -- the yard below is never wiped and its
+  purse never converted; coins cannot go up at the start, because nothing
+  carries them, so the afterlife's purse starts at nothing by the
+  no-teleport rule, not by a reset. The joke lands *because* it looks like a
+  restart and is not one: the yard below is still there, still the
+  player's, and act 3's own payoff is a road back to it); ladders in bands
+  through `tierRows`; black and white, purple for what magic emits, red
+  only the sparks'; the P = 6 grid; config owns every number.
 
-### The spine
+### The story, beat by beat
 
-**1. Lifespans (acts 1 and 2).** A body ages only while it works: a second
-on a job (hauling, at a station, mining, building, fighting) is a second of
-`LIFE_S` (about 1800); walking to a break, resting, idling and dancing do
-not count. The clock is the sim's, so with no offline accrual and the clamp
-on a resumed clock nobody ages while the game is closed: a player never
-comes back to a yard of the dead.
+Each beat is a cutscene in `BEATS`, played once (`beatsDone`), owning the
+camera the way the snatch and the finale do; the space bar hurries a beat
+and never cuts it, so nobody teleports. Names are working names. Lines are
+the owner's to write -- the ones quoted are placeholders.
+
+**Act 3**
+
+1. **The house falls** (`fall`). The pair live in the house after the
+   finale. Then a rock comes down on it -- the game's first picture, the
+   rock out of the sky -- and the house is gone under it. Two souls lift out
+   of the wreck dressed as chosen (the outfit goes up with them, drawn in
+   the soul's inks), and the camera follows them up through the yard's sky
+   (the `skyCam` window) and into cloud. What sets it off is a call below.
+2. **The arrival** (`arrive`). The souls come down onto cloud. Every soul
+   that rose in acts 1 and 2 is standing there in files by line, the oldest
+   generation at the back, the deep's dead with their class marks, and
+   behind them a yard in the clouds that the crowd is already working, pale,
+   head down. Nobody appears: every one of them was seen to go up.
+3. **The meeting** (`meet-god`). At the head of the yard, up a stair, is a
+   throne in the glare, and God on it. God sends a pick down the stair in a
+   soul's hands and it is held out to the pair: they work here now, for
+   ever. (Placeholder: "WORK." The pick held out can carry the beat with no
+   words at all.)
+4. **The refusal** (`refuse`). The pair look at the pick, at the crowd, at
+   each other, and set it down. The story card's line changes from what God
+   wants to what they want: take God down. (Placeholder card line: "we were
+   promised paradise.") They cannot stop the crowd working by themselves --
+   so the act's loop is getting the crowd to stop with them.
+5. **The build-up** (the act's loop, no cutscene of its own; small beats at
+   its gates). Under the recommended loop (the union, below), the pair go
+   soul to soul; each soul woken to the cause has its rim inked and puts
+   its tool down, and the line of tithe-carriers up the stair thins. Each of
+   the act's three gates -- the first meeting, the slowdown, the strike --
+   has a short beat of its own, the way each shield's answer was a
+   cutscene in act 1.
+6. **The strike** (`strike`). The last gate: the whole crowd puts its tools
+   down at once. The yard in the clouds stops -- the cloud stops shedding,
+   the heaps stop moving, the stair empties -- and the glare on the throne,
+   which was fed by the tithe, starts to fail. No blow is struck: the
+   confrontation is God coming down the stair to the crowd that will not
+   move, and the crowd not moving. A cutscene, not a fight.
+7. **The unmasking** (`unmask`). Starved, the glare comes off -- a fade by
+   opacity, cell by cell, never a pop -- and under it is the same shape
+   drawn the deep's way, inverted: Satan. This is "God is defeated" and
+   "after you defeat Satan in heaven" in one beat: the strike beats the
+   disguise and the one under it at once (a call below, if the owner meant
+   two defeats).
+8. **Satan's line** (`hell-told`). Beaten, Satan tells the pair the truth:
+   the afterlife was his trap, and God is chained in hell. (Placeholder:
+   "your god is in my basement.") What becomes of Satan after -- he sinks
+   through the cloud, gone ahead of them to hell -- is drawn as a body
+   going, not a vanishing.
+9. **The way down opens** (`ghost-road`). With the throne empty the cloud
+   under it thins, and through it is the yard: the squares can go back to
+   the surface, still dead. A stair of cloud lets down to the yard, landing
+   where the house was. This is the unlock that ends act 3.
+
+**Act 4**
+
+10. **The return, as ghosts** (`haunt`). The pair walk down the stair onto
+    their own yard as souls, pale-rimmed, and the yard is still at it --
+    the living crew, the machines, the purse (whether it kept running is a
+    call). The rock that took the house is still lying on its ruin.
+11. **The first descent** (`descend`). The way to hell is the way they
+    already know: the pit, the abyss, the deep -- and through the deep's
+    floor. The first trip plays as act 2's first trip down did, then keeps
+    going, and the view is the top of hell. It is too hot to stay: the trip
+    turns back, and the act's loop is the trips (the recommended loop,
+    expeditions, below).
+12. **Hell** (the act's loop, beats at its gates). Trip by trip, deeper.
+    Each chain on God is anchored at a depth, and the trip that first
+    reaches an anchor and carries back what breaks it is that depth's gate.
+13. **Freeing God** (`unchain`). The last trip reaches the bottom with the
+    last thing it needs and the chains are undone, a link at a time -- a
+    cutscene, not a fight. What God looks like is a mock and the owner's
+    call; Satan, if he is there, watches it happen (a call below).
+14. **Lives returned** (`alive`). God gives them their lives back: the
+    souls' pale rims fill to black a piece at a time -- the union's rim
+    build, run to its end on the two of them -- and they are bodies again.
+    (Placeholder: no words; the rims closing are the line.)
+15. **Home** (`home-again`). They go back up the way they came, through the
+    deep and the abyss, onto the yard, alive; the yard's builders put the
+    house up again on its old ground, piece a trip, as the finale did, and
+    the pair sit down on the bench by the door. The sheet. What follows --
+    rest, or a pick held out again -- is the last call.
+
+The rhyme across the four acts: act 1 rescues your sqouse from under a
+rock (you build); act 2 rescues you from a belly (you fight); act 3 brings
+down the one who set the work (you organize); act 4 rescues the one who can
+set it right (you venture). Four verbs, a rescue at each end, and only one
+act of fighting.
+
+### Lifespans and lineage (acts 1 and 2, the ground both acts stand on)
+
+**1. Lifespans.** A body ages only while it works: a second on a job
+(hauling, at a station, mining, building, fighting) is a second of `LIFE_S`
+(about 1800); walking to a break, resting, idling and dancing do not count.
+The clock is the sim's, so with no offline accrual and the clamp on a
+resumed clock nobody ages while the game is closed: a player never comes
+back to a yard of the dead.
 
 - **Birth comes first.** At `LIFE_S - BIRTH_LEAD_S` the body finishes what is
   in its hands (a load is set down where it was going, never dropped), stops
@@ -20042,8 +20165,7 @@ comes back to a yard of the dead.
   (`pairReady`): never from a basket, the air, the cut's ladder, a hand or a
   build.
 - **The two of them are exempt.** The pair do not age: they are the story,
-  and their deaths are the beat below (a call, below, if the owner wants
-  them mortal).
+  and their deaths are the house's fall.
 - **Fighters.** The serpent can kill a fighter -- new to act 2, and its own
   design, because it changes the fight's balance. The fighter's soul rises
   through the deep's dark and the surface. The station keeps its rungs and
@@ -20063,81 +20185,67 @@ a gzipped save.) **How the tick reads:** one to four strokes after the name;
 five is the tally's crossed bundle; past that the number in place of the
 strokes (`wick 12`). Names are DOM text (the roster, the hover), so the ticks
 are text there; only the afterlife's crowd draws them, as two-pixel marks
-over the head, the wardrobe's unit. Under the new theme a line is also a
-*work history*: `job` and `gens` say what the line did and for how long,
-which is what the afterlife reads when it puts the dead back to work (the
-loops below).
+over the head, the wardrobe's unit. A line is also a *work history*: `job`
+and `gens` say what the line did and for how long, which is what the
+afterlife reads when it puts the dead back to work.
 
-**3. The beat.** After the finale the house stands and the pair live in it.
-The house is destroyed -- the proposal is a falling rock, the way the game
-began, so act 3 opens on act 1's first picture -- and two souls rise out of
-the wreck dressed as chosen: the outfit goes up with them, drawn in the
-soul's inks. The camera follows them up through the yard's sky (the `skyCam`
-window) and through cloud, and the view is the afterlife. A beat in `BEATS`,
-once (`beatsDone`), owning the camera as the snatch does; the space bar
-hurries it, never cuts it.
+**They matter more now than in the first draft.** With a climax at the end of
+act 3, the lines are not only the afterlife's hire pool, they are its
+membership: the size of the crowd the player organizes is the length of
+acts 1 and 2, and a line is the unit a soul is won in (a line's founder,
+won, brings its line with it). That is a reason
+the crowd must have a floor (below, "Rules"): a short act 1 must still
+field enough souls to win, at a slower pace, never a wall.
 
-**4. The greeting.** The afterlife is already peopled when they arrive: every
-soul that rose in acts 1 and 2 is standing there, in files by line (the
-oldest generation at the back), the deep's dead with their class marks. They
-hop (the finale's held hop, three groups a third of a beat apart) as the
-pair come down onto the cloud -- and then the front file steps forward and
-one of them holds out a pick, and the camera turns from the crowd to what is
-behind it: a yard. Nobody appears: every one of them was seen to go up, and
-the pick is carried to the pair, not given. A crowd of thousands is drawn as
-a field -- the near files as bodies, the far files thinning into the cloud's
-own cells -- so a frame costs the files in view, not the dead. Whatever is
-said at the greeting is the owner's to write; the joke can be carried with no
-words at all (the pick held out is the line).
+**3. Nobody dies in the afterlife or in hell.** Nobody there is alive, so
+nobody ages and nobody is born: the crew never turns over, and a soul put
+to a job stays at it. That is the first thing that works differently up
+there, and both acts lean on it.
 
-**5. Nobody dies in the afterlife.** Nobody ages there, so nobody is born
-there: the crew never turns over, and a soul put to a job stays at it. That
-is the first thing that works differently up there, and the loops lean on
-it. Whether the yard below goes on aging, and sending souls up, is the
-first call below.
+### Act 3: the afterlife
 
-**Save shape.** New on `S`, each in one of state.js's lists: `S.lines`
-(SAVED); `life`, `line` and `gen` on every saved body (the crew's own
-record, SAVED_BY_HAND); the afterlife's facts under one `S.after` (SAVED;
-the name is a working one); and `'after'` a third value of `S.view`. The
-souls in flight and the crowd's draw are EPHEMERAL: a reload mid-rise lands
-the soul in the crowd. A save from before lifespans gets a migration
-(save-shape-change): every living body founds its own line at generation one
-and the dead are none -- which is why lifespans want to ship well before act
-3, so saves have a crowd to arrive to.
+The place is settled whatever the loop: a yard in the clouds -- a great cloud
+shedding mist onto a cloud floor, heaps, a stair up to a throne in the glare
+-- worked by the pale crowd of the dead, and the share of what it makes that
+goes up the stair to the throne is the **tithe**. What is open is what the
+*player* does in it. The first drafts answered with three loops in which the
+player ran the place; the owner's two later lines (a climax at the end, and
+"i don't want the main loops for act 3 + 4 to be combat ... i want each act
+to feel distinct") send most of that back. The three are kept below as they
+were written, then judged again, then three loops that answer the new brief.
 
-### Three loops for the afterlife
+#### The first drafts' three loops (kept as written, 2026-10-16)
+
+*These were written before the owner's 2026-10-17 lines. Where they end on
+the house rebuilt on the cloud, read: that ending is gone (the house is
+rebuilt on the surface at the end of act 4).*
 
 Every loop starts the same way (the greeting) and ends the same way (the
 crowd puts the house up again on the cloud -- the finale's piece-a-trip
 build with the afterlife's whole crew -- the pair sit on the bench, the
-sheet; whether they get to *stay* sat is the last call below). They differ
-in what you click, what you buy and what the crowd is for. Coin and station
-names are working names; the words are the owner's.
+sheet). They differ in what you click, what you buy and what the crowd is
+for. Coin and station names are working names; the words are the owner's.
 
 The first draft judged the loops on how far each was from act 1. The owner's
-theme turns that test over: the afterlife is *meant* to be like the yard. The
-test now is two-sided -- does it read at once as "the same job again", and
-does it then do enough that is different that it is an act and not a
-re-skin. The twists the theme offers, any loop can draw on:
+theme of 2026-10-16 turned that test over: the afterlife was *meant* to be
+like the yard, so the test became two-sided -- does it read at once as "the
+same job again", and does it then do enough that is different that it is an
+act and not a re-skin. The twists the theme offers, any loop can draw on
+(and the new loops below still do):
 
 - **The dead keep their trade.** A line's `job` and `gens` are experience:
   a carter line forty generations deep starts its afterlife work further up
   its ladder, or works faster, than a line of one. What a long act 1 earns is
   skill, not coins (coins still cannot go up).
 - **No breaks, no births, no turnover.** Nobody ages, so nobody is born and
-  nobody stands down; a soul at a job is there for good. The yard's crew
-  costs return as the afterlife's one-way choices: a soul put to a station is
-  spent on it.
+  nobody stands down; a soul at a job is there for good.
 - **The yard's systems mirrored, with a turn.** The rock is a cloud; dust is
   mist; the sky's smog is below, not above (the yard's weather seen from the
-  top of the cloud); the deep's dark is the afterlife's glare. Each mirror is
-  a candidate, not a promise -- how literal the mirror is is a call below.
+  top of the cloud); the deep's dark is the afterlife's glare.
 - **The yard below shows through.** Looking down through a thin patch of
-  cloud the player sees their yard still at it. Whether that is a picture or
-  a live view is the first call.
+  cloud the player sees their yard still at it.
 
-#### A. The cloud is the rock
+##### A. The cloud is the rock
 
 - **Click:** a great cloud overhead, hit like the rock; each blow knocks off
   mist, which falls as grains onto the cloud floor through the sand grid, in
@@ -20171,7 +20279,7 @@ re-skin. The twists the theme offers, any loop can draw on:
   dead are only a hire pool, so after the first laugh nothing in the loop is
   about who they were, and it is a re-skin with a gag on the front.
 
-#### B. The roll call (souls are the currency)
+##### B. The roll call (souls are the currency)
 
 - **Click:** a soul in the crowd. A soul is a body without its rim -- a pale
   square -- and a click sets one rim piece in ink, round the square, until
@@ -20212,7 +20320,7 @@ re-skin. The twists the theme offers, any loop can draw on:
   old brief, not the new one. Its strength is untouched: it is the only loop
   where lifespans and lineage are the currency.
 
-#### C. The climb (shelves to a gate)
+##### C. The climb (shelves to a gate)
 
 - **Click:** light falls in drops from a gate at the top of the view; a
   click on the sky pulls one down early, and the crew catch and carry it.
@@ -20240,70 +20348,407 @@ re-skin. The twists the theme offers, any loop can draw on:
   gate opens on another yard), but then it is A with a costly camera in
   front of it.
 
-### Recommendation: A's yard, staffed by B's roll call
+#### The first drafts, judged again
 
-The first draft recommended B. Under the new theme B alone is the wrong
-picture -- the owner wants the afterlife to look like work, and B looks like
-a crowd -- and A alone is the right picture with nothing behind it. The
-hybrid takes the picture from A and the engine from B:
+The first drafts recommended A's yard staffed by B's roll call. That
+recommendation is withdrawn. The test is now three-sided: the loop must
+reach a climax (God's fall), it must not be a fight, and it must feel unlike
+act 1 (building), act 2 (party combat) and act 4.
 
-- **The place is A's yard in the clouds.** A cloud to hit, mist falling to a
-  cloud floor, heaps, boards of stations in `tierRows` bands -- read at a
-  glance as the yard again. That is the joke, and it costs no tutorial.
-- **The crew is B's roll call.** There is no hire rung. Every worker is one
-  of the dead, rebuilt a rim piece a click (and, later, a piece a trip by the
-  woken), and a station's crew rung is a bill in souls from the matching
-  line: the loom asks for haulers, the dew beds for farmers, the light mirror
-  for the deep's fighters. Lines are the coin of the crew, as in B.
-- **The dead keep their trade.** A soul works at its line's old job faster
-  (or starts higher up its ladder) by its line's `gens`, so the player's own
-  act 1 is what makes the afterlife's yard run. Put a carter at a carter's
-  job and the yard goes; put it anywhere else and it works like a stranger.
-- **Nobody clocks off.** No ages, no births, no turnover: a soul given to a
-  station is spent there for good, and the crowd at the gate is finite. The
-  roll call's bills are the afterlife's real decisions.
-- **The goal is A's and B's at once:** the cloud mined to nothing, the crowd
-  woken, and the house put up again on the cloud by all of them.
+- **A, the cloud is the rock,** is act 1 in white -- which was the joke when
+  the afterlife was the whole point, and is now the thing the owner has
+  ruled out. It survives as the *setting*: God's yard is A, run by the
+  crowd, and the player does not run it. It is what the player is trying
+  to stop.
+- **B, the roll call,** is the nearest to the new brief: its verb is waking
+  souls, not working, and its currency is the player's own dead. It lacks a
+  climax -- the crowd emptied is a progress bar finishing, not a story --
+  and its stations (lamps, a bench) were a small yard again. Its engine
+  (the rim build, lines as the coin) is the recommended loop's engine.
+- **C, the climb,** is a journey through places. That verb belongs to act 4
+  (the descent is the climb turned over), so act 3 cannot have it too.
 
-Why: it is the only shape that serves both halves of the owner's line -- "it
-is similar to the real life" (A's yard) and "you have to keep working" (B's
-dead, clocked back on one at a time) -- and it keeps the reason lifespans
-and lineage exist: the thirty minutes a square worked below is what it
-brings to the work above. It costs about what A costs, L; B's rim build and
-crowd field are the M on top, but A already needed a crowd at the gatehouse,
-so the overlap is large. If L is too much, the fallback is B with its few
-stations reshaped as a small mirrored yard (a cloud to hit in place of the
-lamps) -- the joke at M, with less yard to play.
+#### Three loops that are not a fight
+
+Each is still an incremental at heart -- numbers that grow, automation,
+ladders in `tierRows` bands -- and each reaches God's fall as a cutscene.
+Coin and station names are working names.
+
+##### D. The union (organize the dead)
+
+- **The picture:** God's yard runs in the middle of the view, worked by the
+  pale crowd; a line of tithe-carriers climbs the stair to the throne; the
+  union's camp is a patch of cloud at the yard's edge that grows as members
+  come over.
+- **Click:** a soul in the crowd. A click is a word with it: one rim piece
+  set in ink round its pale square (B's rim build). A closed rim is a
+  member: it sets its tool down, walks out of God's yard and into the camp.
+  Nothing teleports -- each member is seen to leave the work.
+- **What grows:** members, and what members make. Every member speaks:
+  **word** is the dust band's coin, made by members a second, so the union
+  compounds the way a crew does. The later bands are pledges -- a yard
+  line's pledge (crops' band), a deep line's (ore's), a line's founder
+  (the spark's band); a founder won brings the rest of its line forward,
+  each cheaper, so a crowd of thousands is tens of founders, not thousands
+  of clicks.
+- **Automation:** organizers. A member made an organizer walks the crowd
+  and sets rim pieces a piece a trip (home.js's rule), so recruiting grows
+  with the recruited. The camp's stations, each one card in bands: the
+  soapbox (rim pieces a click), the press (flyers that drift over the crowd
+  on the afterlife's air and soften the souls they settle on -- the yard's
+  motes put to a new job), the bell (calls a line), the organizers' hall
+  (their number and pace).
+- **The pressure:** the throne answers. On its own clock God speaks (a
+  held glare pulse down the stair, warned ahead like a serpent phase), and
+  a soul half-won loses its open rim pieces -- the act's falling rock, a
+  setback that costs time and never takes back a member. The answer is
+  ladders (the press hardens the half-won; the hall finishes them faster),
+  not a fight.
+- **The dead keep their trade:** a soul from the player's own lines is won
+  in fewer words than a stranger's, and faster the deeper its line (`gens`).
+  Satan's afterlife holds every soul, not just the player's, so the crowd
+  has strangers enough to give a short act 1 a crowd to win -- slower, never
+  a wall.
+- **The gates** (each a short beat): **the first meeting** (enough members
+  to raise the camp's first station); **the slowdown** (members still in
+  God's yard work slow on purpose -- the tithe line thins, the glare dims a
+  step -- and the throne's speech comes oftener); **the strike** (members a
+  share of the crowd, `STRIKE_SHARE`, and the whole crowd puts its tools
+  down: beat 6).
+- **The climax:** the strike stops the yard in the clouds; the tithe stops;
+  the glare, fed by the tithe, fails; God comes down the stair to a crowd
+  that will not move, and the mask comes off (beats 6-8). A cutscene, the
+  confrontation is standing still.
+- **Distinct from:** act 1 -- the player never hits, hauls or builds a thing
+  that makes stuff; act 2 -- no blow is struck, nobody is specced; act 4 --
+  no journey, one place, and the number that matters is a share of a
+  crowd, not a distance. The picture is the progress: a pale field going to
+  ink.
+- **Reuse:** the crew's bodies, the finale's crowd ranks and hop, home.js's
+  rim-a-trip build, the motes, `tierRows` and the boards, `BEATS`, the
+  serpent's phase warning for the throne's speech. **New:** the crowd field
+  (near files bodies, far files thinning into cloud cells, so a frame costs
+  the files in view), the camp, the tithe stair, God's yard running itself
+  (A's place, drawn and stepped, but with no player rows).
+- **Cost: M to L.** A's place without A's boards, B's crowd and rim build,
+  one camp of four stations.
+
+##### E. The skim (undermine the works)
+
+- **The picture:** the player does work God's yard -- A's loop, as the
+  first drafts had it -- and under the cloud floor, out of the throne's
+  sight, is a cellar.
+- **Click and grow:** the yard is played as act 1 (a cloud to hit, heaps,
+  boards); a share of every heap is skimmed through a crack in the floor to
+  the cellar, where it builds the thing that brings the throne down (a
+  saw through the cloud under it; the name is the owner's).
+- **The pressure:** God's eye, a beam that sweeps the yard. A skim it
+  crosses is a skim lost and suspicion up; suspicion slows the skim.
+  Ladders: quieter cracks, lookouts, a cellar that holds more.
+- **The climax:** the cellar's thing is finished; the floor under the
+  throne gives, the throne comes down through the cloud, and the glare
+  comes off in the fall.
+- **Distinct from:** act 2 and act 4, yes; act 1, no -- its top half *is*
+  act 1, and a stealth meter on top of the yard is the only new verb.
+- **Cost: L.** A whole yard of boards plus the cellar and the eye.
+
+##### F. Overtime (outwork the machine)
+
+- **The picture:** God's ledger -- a great scale beside the throne that
+  weighs every soul's work against a quota.
+- **Click and grow:** the pair play along and do it better than anyone: the
+  quota is met, raised, met again, and the numbers climb to absurdity, the
+  incremental's own joke told straight. Automation and multipliers, the
+  idle genre at its purest.
+- **The climax:** the scale cannot hold what is put on it; it cracks, and
+  the counterweight in its pan is the mask.
+- **Distinct from:** act 2 and 4, yes; act 1, barely -- the verb is "work
+  harder", which is the yard's verb with bigger numbers. The cheapest of
+  the three (M) and the one with the least that is new to play.
+
+#### Recommendation for act 3: D, the union
+
+It is the only one of the six that is unlike all three other acts: act 1
+builds a works, act 2 fights with a party, act 4 ventures in trips, and
+act 3 **organizes people** -- the thing that grows is a membership, the
+antagonist is a system rather than a body, and the end is a tipping point
+(a share of the crowd) rather than a health bar. It keeps everything the
+first drafts valued: the afterlife still *looks* like work (God's yard is
+on screen the whole act, and "you have to keep working" is literally the
+situation the player is organizing against); the dead are still the
+currency, by name and by line, so lifespans and lineage are why the act
+exists; and it carries its climax inside the mechanism -- the strike
+starves the glare, so God's fall is what the loop *does*, not a bar bolted
+on after it. Working forever turns into the means to rebel because the
+work is the throne's food: the tithe is what the disguise lives on, and the
+union is the act of taking the work away.
+
+### Back to the surface, dead
+
+The unlock that ends act 3 (beat 9) is a **road**, not a teleport: a stair
+of cloud from the empty throne down to the yard, landing at the house's
+ruin. The rule that kept coins from going up at act 3's start ("nothing
+carries them") is the rule the road answers: now something can.
+
+- **The views.** `S.view` gains `'after'` (act 3) and `'hell'` (act 4)
+  beside `'yard'` and `'deep'`. The switch from the afterlife to the yard is
+  a camera glide down the stair, as the abyss's glide goes down to the deep.
+  The sim does not read the view; every place runs every frame (the deep's
+  rule), so what the player finds below is the yard where it was.
+- **Does the yard resume?** Recommended: it never stopped (call 1). The
+  living crew -- the pair's yard, still turning over by lifespans, the
+  lines growing generations while the pair were dead -- is at work, and
+  the ghosts come down among the great-great-grandchildren of their crew.
+  If the owner calls it frozen instead, it resumes on the frame the road
+  opens, and the crowd that rose while it was frozen is none.
+- **What the dead can do there.** Recommended: *carry, not work*. A ghost
+  -- a body with its rim in the pale grey, the soul's look -- walks the
+  yard, takes no job on its boards (the living's crew stays the yard's, and
+  lifespans stay a fact about the living) and carries loads along the
+  ghost road: the yard's purse up to the afterlife, and, in act 4, down to
+  hell. So the road makes the economies one, the way the portal made the
+  yard's and the deep's one. The living do not see them -- no living body
+  routes round a ghost, nothing waits on one.
+- **The way to hell** runs through the yard: the pit, the abyss, the deep,
+  and through the deep's floor. The deep's fighters (if the endless serpent
+  is still being fought) are living and stay at their stations; a ghost
+  passes through the fight without taking part.
+
+### Act 4: hell
+
+Hell is the fourth place and the third look, and it must be the fourth
+verb. Act 1 builds, act 2 fights, act 3 organizes; whatever act 4 is, it is
+none of those. Its own theme: heat, depth, and a long way down.
+
+#### Three loops for hell
+
+##### G. Expeditions (the descent, in trips)
+
+- **The picture:** the yard's pit is the trailhead. Ghosts gather at the
+  house's ruin, go down through the abyss and the deep, and on into hell;
+  the view follows one trip at a time, and a depth gauge down the side of
+  the view is the act's main number.
+- **The trip:** a team of ghosts goes down until the heat turns them. Every
+  ghost carries **cool** (a working name), drawn down by depth; at the
+  bottom of it the trip turns for home and walks back up, scorched pale,
+  and rests before it goes again. Nobody dies -- they are dead -- so a trip
+  never fails, it only turns back short. What a trip brings home is what it
+  found where it turned: ash in the shallows (the dust band), cinders
+  (crops'), brimstone (ore's), a relic near an anchor (the spark's band) --
+  each carried, every grain, back up the road.
+- **What grows:** depth reached, team size, cool, haul a trip. The ladders,
+  each one card in bands: cool (the abyss's black water carried down in
+  flasks -- the deep's own stuff, cooling), the team (how many go), the
+  pace, and **the way** -- a stair down through hell built a flight a trip
+  and kept, so every trip after starts its walk on what the last one built.
+- **Automation:** standing trips that go on their own; waystations built at
+  depth, each a place a trip refills its cool and the next trip starts
+  from; at the top, a lift down the way. The idle shape is send, wait,
+  return, spend, deeper.
+- **The yard feeds it:** ghosts carry the yard's purse down (the road's
+  reason): a waystation or an anchor's bill can ask for ore or sparks from
+  the yard, carried down the whole way by a body, so act 1's machine is act
+  4's supply line.
+- **The gates:** each chain on God is anchored at a depth. The trip that
+  first reaches an anchor sees it (a beat); the anchor's bill -- relics and
+  what was carried down -- is paid there, by bodies, and the chain falls.
+  Four chains, four depths, the shields' and the defenses' four.
+- **The climax:** the last trip reaches the bottom with the last bill in
+  its hands; the last chain is undone a link at a time; God stands (beat
+  13). A cutscene.
+- **Distinct from:** act 1 -- no place is built up, the progress is
+  distance and the rhythm is trips; act 2 -- no blow is struck; act 3 -- not
+  a crowd but a few, and not one place but many, passed through. The risk
+  is a clock (the heat), not an enemy.
+- **Reuse:** route.js's climbs and the cut's ladder for the way down, the
+  deep's swim and its look, home.js's piece-a-trip build for the way and the
+  waystations, the beats, `tierRows`. **New:** hell's place (a column, so
+  the camera follows down; drawn on the deep's rules, a black field lit
+  from below rather than above, flames as held white shapes -- red stays
+  the sparks'), the trip and its cool, the depth gauge, the anchors.
+- **Cost: L.** A place, a trip system, a camera that follows a trip down.
+
+##### H. The bargain (hell's market)
+
+- **The picture:** hell is a bazaar of contracts; the damned trade debts,
+  and God's chains are the biggest debt in hell.
+- **The loop:** buy low, sell high: goods whose prices move with what the
+  market holds; brokers (automation) who trade on their own; ladders on the
+  stalls. Every chain is a contract the pair buy out.
+- **The climax:** the last contract is bought; torn up, the chains with it.
+- **Distinct, but:** it is the most "spreadsheet with a picture on top" of
+  any loop here, which the game's pillar forbids; every trade would have to
+  be a body carrying goods across a stall to stay watchable. **Cost: M.**
+
+##### I. The way out (an escape line)
+
+- **The picture:** hell holds souls; the pair build a line out -- paths,
+  lifts, queues -- and guide the damned up it.
+- **The loop:** throughput: souls freed a minute; each freed soul joins as
+  a hand; the chains loosen with every soul freed.
+- **The climax:** the last soul out, the chains slack, God walks up the line
+  last.
+- **Distinct, but:** freeing souls is act 3's verb a second time, and a
+  logistics line is act 1's hauling. **Cost: L.**
+
+#### Recommendation for act 4: G, expeditions
+
+It is the one verb no other act has: **venture**. The progress is distance,
+the risk is a clock, and the shape is the trip -- out, turn, home, spend,
+out deeper -- which reads as a descent the way act 3 reads as a crowd and
+act 2 as a fight. It is the most "hell" of the three (the heat is the
+place's own rule, the way the deep's buoyancy and the afterlife's glare
+are theirs), it gives "travel back to the surface, dead" its job (the yard
+is base camp and supply line), and it ends on the shape act 1 began with:
+someone trapped at the bottom, reached by work. Two cheap twists it can
+borrow from the others without changing its verb: a trip that finds a
+damned soul brings it home as a new ghost (I), and an anchor's bill can be
+haggled (H) -- both owner's calls, neither needed.
+
+### Each act's verb, and what it reuses
+
+| | act 1: the yard | act 2: the deep | act 3: the afterlife | act 4: hell |
+|---|---|---|---|---|
+| verb | build | fight | organize | venture |
+| what grows | a crew, a works | a party | a membership | a reach (depth) |
+| the pressure | the rock falls | the serpent's phases | the throne's speech | the heat |
+| the gates | four shields | five defenses | meeting, slowdown, strike | four anchors |
+| the end | the dome holds (a rescue) | the kill (a fight) | the strike (a cutscene) | the chains fall (a rescue) |
+| new coin | dust, crops, ore, sparks | scales | word, pledges, founders | ash, cinders, brimstone, relics |
+| look | black on white | inverted, lit from above | high key, the glare | dark, lit from below |
+| reused | -- | the yard's purse, `tierRows`, the crew | the crew's bodies, the crowd and hop, home.js's build, motes, beats | route.js's climbs, the deep's swim and look, home.js's build, the yard's purse |
+
+### Rules and consequences to check
+
+- **Lifespans and lineage** are the floor both acts stand on, and they
+  matter more than in the first draft: act 3's membership is the player's
+  own dead, so they should ship well before act 3, alone, so saves gather
+  lines. The crowd has strangers enough that a short history still wins.
+  The serpent killing fighters is a separate balance change and can follow.
+- **The pair.** Exempt from aging; they die only at the house's fall. From
+  the fall to `alive` they are souls (bodies with pale rims) in the
+  afterlife, on the road, or in hell; `keepPair` and the stand-down rules
+  learn that a pair body can be a soul in another place, and the snatch's
+  `pairReady` rule (walkable, not in a basket or a hand) holds for the
+  fall's lift too.
+- **Nothing teleports.** Souls rise and are seen to; members walk out of
+  the work; coins cross only in a ghost's hands; a trip walks every step;
+  the space bar hurries a beat and never cuts it. Every appearance fades by
+  opacity.
+- **Save shape** (the save-shape-change skill, a migration for each step):
+  `S.lines` (SAVED); `life`, `line`, `gen` on every saved body
+  (SAVED_BY_HAND); `S.after` -- won rim pieces a line, members, organizers,
+  the camp's rungs, the gate reached (SAVED; a working name); `S.hell` --
+  depth reached, the way's flights, waystations, cool and team rungs,
+  anchors paid (SAVED); `S.view` gains `'after'` and `'hell'`; the new beats
+  in `beatsDone`; `S.retired` gains the house's fallen and rebuilt modes.
+  Souls in flight, trips mid-walk and the crowd's draw are EPHEMERAL: a
+  reload mid-rise lands the soul in the crowd, a reload mid-trip lands the
+  trip back at the trailhead with what it carried. A save from before
+  lifespans: every living body founds its own line at generation one and
+  the dead are none.
+- **Held-back flags,** as `SERPENT_ON` holds the deep: `AFTERLIFE_ON` (act
+  3, and the house's fall with it -- a build without it keeps the house
+  standing and the pair on the bench for good) and `HELL_ON` (act 4). Two
+  switches beside `serpentOn` and `deepOn` in the builds table: the free
+  itch build and the Steam demo never; the paid builds when the owner
+  releases each. If act 3 ships before act 4, the ghost road opens on a
+  last sheet the way the free build's teaser does (`teaseend`).
+- **The house:** destroyed at `fall` (the rock lies on the ruin through act
+  4, the woodpile beside it), rebuilt at `home-again` by the yard's
+  builders, the finale's piece-a-trip build on its old ground. The
+  afterwards turns (sat, a heart, a stroll) resume.
+- **The wardrobe and who you are** carry through: the souls rise dressed,
+  the outfit drawn in the soul's inks; the house board's "the two of you"
+  still edits names and roles mid-act (never locked); every new story line
+  that names them is a `-who` message read when shown. Translations keep
+  their older line (`msgOr`).
+- **Achievements:** neutral, as "you saved your sqouse" is -- never the role
+  word or the name, because Steam's names are written once for every
+  player. One for each act's end is the obvious pair; the words and the
+  Steam display names are the owner's, by hand on the dashboard.
+- **Every word in `locales/en.ftl`** through `msg()`; God, Satan, the
+  throne, the union's coins -- all the owner's. Whether the store page and
+  the age questionnaires need to say anything about the theme is a release
+  check, not a design one.
+- **Frame cost:** four places stepped every frame. The endgame budget
+  (PERF.md) is the gate: the crowd field draws the files in view, and a
+  place off screen steps without drawing.
+- **The deep and the endless serpent** during acts 3 and 4: living
+  fighters, still at their stations; the fight runs if the yard runs (call
+  1).
 
 ### The calls for the owner
 
-1. **Does the yard keep running below while you are in the afterlife, and
-   aging?** Yes: one works across three acts -- a view switch down through
-   the cloud, as the abyss switches to the deep -- and souls keep arriving,
-   which gives the roll call an endless tail and makes "you never stop
-   working" true in both places at once. No: the afterlife is the whole game
-   from the beat on, the crowd is finite and act 3 has an end. The theme
-   leans yes; the cost is two yards' frames at once.
-2. **How literal is the mirror?** Close (the same stations under cloud
-   names, the same boards, the same coins in pale tones -- the joke at its
-   plainest, the least new work) or turned (each system with a twist: mist
-   that rises, a sky whose weather is the yard's smog below, a glare where
-   the deep had dark). A middle is the likely answer, and which systems turn
-   is the owner's pick.
-3. **What do the dead keep?** Their trade as speed or rung (the
-   recommendation), their trade as a requirement (a station takes only its
-   own line), or nothing (a soul is a soul). The first rewards a long act 1
-   without punishing a short one.
-4. **Do lifespans ship before act 3, on their own, and with the serpent
-   killing fighters or without?** Before is the recommendation: saves start
-   building lines now, so the crowd is there when the afterlife is. The kill
-   is a change to the fight's balance and can follow.
-5. **What sets the beat off, and is act 3 held behind a flag until whole?**
-   The house was "kept for good"; the beat can fire when the player says go
-   on (a line on the story card) or on its own after the finale. A flag
-   keeps a half-built afterlife out of a release. And are the pair mortal,
-   or exempt as assumed above?
-6. **Does the work ever end?** The theme's punchline could go either way:
-   the house is rebuilt on the cloud and the pair finally sit down (rest
-   earned), or they sit down and someone hands them a pick again. The ending
-   is the owner's.
+1. **Do the yard and the deep keep running, and aging, while the pair are
+   dead?** Yes (recommended): souls keep rising to join the crowd, the
+   ghosts come down to a living yard, and the yard is act 4's supply line.
+   No: the afterlife and hell are the whole game from the fall, and the
+   yard resumes when the road opens. Yes costs four places a frame.
+2. **Act 3's loop:** D the union (recommended), E the skim, or F overtime.
+3. **One defeat in heaven or two?** The beats say God is defeated, unmasked
+   as Satan, and Satan is defeated in heaven. Recommended: one -- the
+   strike beats the disguise and the one under it in a single beat. The
+   other reading is a second confrontation with Satan unmasked; it would
+   still be a cutscene (or a last gate of the union), never a fight.
+4. **Act 4's loop:** G expeditions (recommended), H the bargain, or I the
+   way out; and is Satan at the bottom of hell when God is freed (watching,
+   a last line) or gone for good after heaven?
+5. **What can the dead do on the surface?** Carry only (recommended), carry
+   and take jobs as ghost hands that never age, or only pass through to the
+   pit.
+6. **Who gets their lives back?** The pair only (recommended: the union's
+   dead are freed from the trap but stay dead, the crowd thins into the
+   afterlife's real rest), or every member -- which floods the yard with
+   thousands of bodies and needs its own design.
+7. **How it ships:** act 3 alone behind `AFTERLIFE_ON` with a cliffhanger
+   sheet at the ghost road, or acts 3 and 4 together; lifespans first, on
+   their own (recommended), with or without the serpent killing fighters;
+   and what sets off the house's fall -- the player saying go on (a line on
+   the story card, recommended, so nobody loses the bench by accident) or on
+   its own a while after the finale.
+8. **The ending, and after.** Home: the pair on the bench for good (rest
+   earned), or a pick held out again (the joke's last turn). And is there
+   an endless tail, as the endless serpent is act 2's? G has one for free
+   (hell has no floor past the last chain: depth for its own sake, the best
+   depth kept for the record); D has none (the crowd is finite).
+
+Before any of it is code: mock-votes of God and the throne, Satan's
+unmasking, the union's crowd going to ink, and hell's look.
+
+### Size, and the order to build in
+
+| piece | size |
+|---|---|
+| lifespans and lineage (births, souls rising, `S.lines`, the migration) | M |
+| act 3: the fall, the arrival, the meeting, the refusal (beats) | M |
+| act 3: God's yard as a place that runs itself (A's place, no player rows) | M |
+| act 3: the union -- crowd field, rim build, camp stations, the speech, the gates | M to L |
+| act 3: the strike, the unmasking, Satan's line, the ghost road | M |
+| **act 3 whole** | **L** |
+| act 4: ghosts on the surface, the descent through the deep | S to M |
+| act 4: hell's place and look, the trip, cool, the way, waystations | L |
+| act 4: anchors, freeing God, lives returned, the house rebuilt, home | M |
+| **act 4 whole** | **L** |
+
+Order, when the owner says go:
+
+1. **Lifespans and lineage**, alone, released early -- every save from then
+   on gathers its crowd.
+2. **The mocks** for act 3 (God, the throne, the crowd field, the
+   unmasking), voted.
+3. **Act 3's scaffolding** behind `AFTERLIFE_ON`: `S.view = 'after'`, the
+   fall and the rise, the arrival and the meeting -- the act's opening
+   playable end to end with nothing after it.
+4. **The union**: the crowd field and the rim build, members and word, then
+   the camp's stations and ladders, then organizers, then the throne's
+   speech and the gates.
+5. **The climax**: the strike, the unmasking, Satan's line, the ghost road
+   -- and, if act 3 ships first, its last sheet.
+6. **The mocks** for act 4 (hell's look, a trip, an anchor), voted.
+7. **Act 4** behind `HELL_ON`: ghosts on the surface and the road, the
+   descent, then the trip and its cool, then the way and waystations, then
+   the anchors.
+8. **The end**: freeing God, lives returned, the house rebuilt, home, the
+   sheet -- then tuning both acts' lengths with the ladder book and a pace
+   tool, as the deep's was.

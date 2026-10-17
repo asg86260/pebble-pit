@@ -4,18 +4,28 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Act 3: the afterlife -- DESIGNED, WAITING ON THE OWNER (2026-10-16)
+## Acts 3 and 4: the afterlife and hell -- SPECCED, WAITING ON THE OWNER (2026-10-17)
 
-"Act 3: the afterlife (design, not built)" in DESIGN.md, revised for the
-owner's theme (the afterlife is like real life and you keep working): the
-spine (lifespans, lineage, the house's beat, the greeting with a pick held
-out), three loops judged against that joke, and a hybrid recommended -- A's
-yard in the clouds, staffed by B's roll call of the dead, who keep their
-trade. Look: docs/mocks/act3-afterlife-2026-10-16. Blocked on the owner's
-pick of loop and six calls: does the yard keep running below; how literal
-the mirror is; what the dead keep; do lifespans ship first (and the
-serpent's kill with them); what sets the beat off, behind a flag or not, and
-are the pair mortal; does the work ever end. No code until then.
+"Acts 3 and 4: the afterlife and hell (design, not built)" in DESIGN.md,
+reworked for the owner's story (God forces the dead to work forever; the
+pair take God down; God is Satan unmasked; the dead travel back to the
+surface; act 4 frees the real God in hell; lives returned, home) and the
+owner's rule that neither act's loop is combat and each act feels distinct.
+Fifteen beats, cutscene by cutscene; lifespans and lineage as the ground;
+act 3's first-draft loops kept and judged again, three non-combat loops,
+recommended **D, the union** (organize the dead out of God's yard; the
+strike starves the glare and unmasks Satan); the ghost road back to the
+surface (ghosts carry, not work); act 4's three loops, recommended **G,
+expeditions** (trips down through hell against the heat, four anchors on
+God's chains); rules (save shape, `AFTERLIFE_ON` / `HELL_ON`, the house
+falling and rebuilt, the wardrobe, neutral achievements); sizing (each act
+L, lifespans M) and a build order. Blocked on the owner's eight calls: does
+the yard keep running and aging; act 3's loop; one defeat in heaven or two;
+act 4's loop and where Satan ends; what the dead can do on the surface; who
+gets their lives back; how it ships (and lifespans first, and what sets off
+the fall); the ending and an endless tail. The owner's order: spec only, no
+code ("lets not build anything for act 3 yet"). Mocks of God, the
+unmasking, the crowd and hell before any build.
 
 ## Who you are: Steam names, translations -- WAITING ON THE OWNER (2026-10-16)
 
