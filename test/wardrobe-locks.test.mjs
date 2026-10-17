@@ -17,7 +17,7 @@ group('a fresh yard: the starting outfits and the plain items are open, the rest
   const lk = itemLock('face', 'round-glasses'), hat = itemLock('head', 'helmet'), bowl = itemLock('head', 'diving-bowl');
   return [
     ok(isOpen('head', 'top-hat') && isOpen('face', 'monocle') && isOpen('head', 'bow'), 'what they start in is open, the top hat with it'),
-    ok(isOpen('head', 'ears') && isOpen('aura', 'rain-cloud') && itemLock('head', 'ears') === null, 'an item with no rule is open'),
+    ok(isOpen('head', 'ears') && isOpen('aura', 'dust-motes') && itemLock('head', 'ears') === null, 'an item with no rule is open'),
     ok(lk && lk.kind === 'ach' && lk.id === 'firstspark' && lk.name === 'magic in the air' && lk.note,
        'round glasses wait on "magic in the air"', JSON.stringify(lk)),
     ok(hat && hat.kind === 'hat' && hat.id === JOB.ROCK && hat.name && hat.note, 'the helmet waits on the rock\'s first helmet',
@@ -25,7 +25,7 @@ group('a fresh yard: the starting outfits and the plain items are open, the rest
     ok(bowl && bowl.kind === 'fact' && bowl.id === 'portal' && bowl.name && bowl.note, 'the diving bowl waits on the portal',
        JSON.stringify(bowl)),
     ok(['head:serpent-comb', 'head:crown', 'head:flower', 'head:sprout', 'head:gold-crown', 'neck:gold-scarf', 'back:gold-cape', 'aura:gold-halo',
-        'aura:flies', 'head:bird', 'face:surprised', 'back:moneybag'].every(k => locked().includes(k)),
+        'aura:flies', 'aura:rain-cloud', 'aura:scale-swirl', 'head:bird', 'face:surprised', 'back:moneybag'].every(k => locked().includes(k)),
        'the earned items are locked', locked().join(' '))
   ];
 });
@@ -107,6 +107,30 @@ group('the serpent comb opens at the serpent\'s level 25, not before', async () 
     ok(!at24 && lk && lk.kind === 'ach' && lk.id === 'serpent3' && lk.name, 'locked at level 24, waiting on the notice for 25',
        JSON.stringify(lk)),
     ok(S.won.includes('serpent3') && isOpen('head', 'serpent-comb'), 'open at 25', S.won.join(' '))
+  ];
+});
+
+// The muck rain is the game's own, counted on the tally the notice reads.
+group('the first muck rain opens the rain cloud with the flies', async () => {
+  const was = isOpen('aura', 'rain-cloud'), lk = itemLock('aura', 'rain-cloud');
+  S.tally.muckRains = 1;
+  run(1);
+  return [
+    ok(!was && lk && lk.kind === 'ach' && lk.id === 'muckrain' && lk.name, 'locked, waiting on the muck rain', JSON.stringify(lk)),
+    ok(S.won.includes('muckrain') && isOpen('aura', 'rain-cloud') && isOpen('aura', 'flies'), 'both open after', S.won.join(' '))
+  ];
+});
+
+group('the scale swirl opens at the serpent\'s level 2, not before', async () => {
+  S.serpentBest = 1;
+  run(1);
+  const at1 = isOpen('aura', 'scale-swirl'), lk = itemLock('aura', 'scale-swirl');
+  S.serpentBest = 2;
+  run(1);
+  return [
+    ok(!at1 && lk && lk.kind === 'ach' && lk.id === 'serpent0' && lk.name, 'locked at level 1, waiting on the notice for 2',
+       JSON.stringify(lk)),
+    ok(S.won.includes('serpent0') && isOpen('aura', 'scale-swirl'), 'open at 2', S.won.join(' '))
   ];
 });
 

@@ -170,9 +170,10 @@ export const AURA = [
   { key: 'orbiting-pixel', name: 'ward-orbiting-pixel' },
   { key: 'sparkle-glints', name: 'ward-sparkle-glints' },
   { key: 'footprints', name: 'ward-footprints' },
-  { key: 'rain-cloud', name: 'ward-rain-cloud' },
+  { key: 'rain-cloud', name: 'ward-rain-cloud', lock: { ach: 'muckrain' } },
   { key: 'falling-petals', name: 'ward-falling-petals' },
-  { key: 'scale-swirl', name: 'ward-scale-swirl' },
+  // the serpent's scales, for its ladder's first rung (level 2)
+  { key: 'scale-swirl', name: 'ward-scale-swirl', lock: { ach: 'serpent0' } },
   { key: 'embers', name: 'ward-embers' },
   { key: 'flies', name: 'ward-flies', lock: { ach: 'muckrain' } },
   { key: 'stink', name: 'ward-stink', lock: { ach: 'nobodyhired' } },
