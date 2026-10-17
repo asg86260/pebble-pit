@@ -17,7 +17,7 @@ import { P, GREY, AFTER_FLOOR_CELLS, AFTER_FLOOR_TONES, AFTER_CARDS, AFTER_FALL_
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { warning } from './pilemarks.js';
-import { afterX0, afterX1, afterFloor, plotX, stationBox, soulX, soulY, slotX, crowdX1, stairFoot,
+import { afterX0, afterX1, afterFloor, plotX, stationBox, soulX, farX, soulY, slotX, crowdX1, stairFoot,
          throneAt, fileAt } from '../after/place.js';
 import { CROWD_X0 } from '../config.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, airPuffs, cloudW } from '../after/faith.js';
@@ -277,7 +277,7 @@ export function drawAfterCrowd() {
       if (v > RIM_PIECES) continue;
       drawn++;
       if (r < CROWD_NEAR) drawSoul(f, r, v);
-      else cell(soulX(f), soulY(r), FAR_TONE[v]);
+      else cell(farX(f, r), soulY(r), FAR_TONE[v]);
     }
   }
   // The signs planted: a post and a board, the board knocked a cell over when askew.

@@ -58,6 +58,9 @@ export const soulAt = (f, r) => r * CROWD_FILES + f;
 // A soul's square, its middle cell's left and top: files across God's yard,
 // near ranks a body deep up the screen, far ranks a cell each behind them.
 export const soulX = f => CROWD_X0 + f * CROWD_PITCH + P;
+// A far rank is staggered half a file every other row, so the far field reads
+// as a crowd thinning back rather than as columns.
+export const farX = (f, r) => soulX(f) + (r % 2 ? CROWD_PITCH / 2 : 0);
 export const soulY = r => afterFloor() - P * 2 - (r < CROWD_NEAR ? r * CROWD_ROW
                                                  : CROWD_NEAR * CROWD_ROW + (r - CROWD_NEAR) * CROWD_FAR_ROW);
 export const crowdX1 = () => CROWD_X0 + CROWD_FILES * CROWD_PITCH;

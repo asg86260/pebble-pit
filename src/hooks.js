@@ -1423,6 +1423,8 @@ HANDLES.__afterRead = () => (S.after ? { faith: S.after.faith, ink: S.after.ink,
   size: crowdSize(), signs: S.after.signs.length, posters: S.after.posters.length, bodies: S.after.bodies.length,
   due: afterGate(), strike: strikeDue() } : null);
 HANDLES.__afterCardAt = (x, y) => cardAt(x, y);
+// The axe in hand without the cloud hits that earn it: a scene's setup.
+HANDLES.__afterAxe = () => { if (S.after) S.after.axe = true; return !!S.after?.axe; };
 
 // --- the two of them (wardrobe.js) ---
 // Who they are and what they wear, read for a check: each one's uid, the
