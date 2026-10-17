@@ -31,7 +31,7 @@
 
 import { msg, writeInto, has } from './lang.js';
 import { S } from './state.js';
-import { WORKER, WARD_BIG, WARD_BIG_W, WARD_BIG_H, WARD_TILE_W, WARD_TILE_H, WARD_TILE_K, WARD_TILE_FOOT,
+import { WORKER, WARD_BIG, WARD_BIG_W, WARD_BIG_H, WARD_TILE_W, WARD_TILE_H, WARD_TILE_K, WARD_TILE_FOOT, WARD_TILE_COLS,
          WARD_TRY_ALPHA, WARD_GRID_ROWS, NAME_MAX, NAME_GRID_COLS, P } from './config.js';
 import { SLOTS, WHO, DEFAULTS, itemOf, bareOf, outfitOf, rollSlot, nameOf, setName, stepRole, rollName,
          rollRole, rollSquare, bareOutfit, typedName, storyArgs, wear, itemLock, isOpen } from './wardrobe.js';
@@ -234,6 +234,7 @@ function build(el) {
   const tiles = [];
   const gridOf = {};
   const grids = div('wardgrids');
+  grids.style.setProperty('--tile-cols', WARD_TILE_COLS);
   grids.style.setProperty('--tile', `${WARD_TILE_W * WARD_TILE_K}px`);
   for (const s of SLOTS) {
     const g = div('wardtiles');
@@ -351,6 +352,7 @@ function fitGrid() {
   // the tallest slot's, whichever is shown, so the page is one height
   const gs = Object.values(b.gridOf), tall = Math.max(...gs.map(g => g.scrollHeight));
   if (!tall) return;
+  reserveAbout();
   const least = Math.min(tall, Math.max(...gs.map(g => rowsTall(g, WARD_GRID_ROWS))));
   px(b.grids, '--grids-h', tall);
   px(b.grids, '--grids-min', least);
@@ -440,18 +442,39 @@ function say() {
 
 // The line under the grid: the tile the pointer or the focus is on -- its
 // name, and for a locked one what opens it -- and what is being tried on.
-function sayAbout() {
-  if (!built) return;
-  const box = built.about;
+function fillAbout(box, at, tryItem) {
   box.textContent = '';
-  const at = [...hot].pop() || built.tiles.find(t => t.b === document.activeElement);
-  if (at && at.slot === slot) {
+  if (at) {
     const lock = lockOf(at.slot, at.key), nm = itemName(at.slot, at.key);
     box.append(span('wardline', lock ? msg('ward-locked', { item: nm, lock: lockWords(lock.name) })
                                      : msg('ward-grid-head', { slot: msg(SLOTS.find(s => s.key === at.slot).name), item: nm })));
     if (lock && lock.note) box.append(span('wardline', lockWords(lock.note)));
   }
-  if (tried) box.append(span('wardline', msg('ward-trying', { item: itemName(tried.slot, tried.key) })));
+  if (tryItem) box.append(span('wardline', msg('ward-trying', { item: itemName(tryItem.slot, tryItem.key) })));
+}
+function sayAbout() {
+  if (!built) return;
+  const at = [...hot].pop() || built.tiles.find(t => t.b === document.activeElement);
+  fillAbout(built.about, at && at.slot === slot ? at : null, tried);
+}
+// The tallest the info line can stand, measured: every tile's words, with the
+// trying line under them, set in the box at its width. The box keeps that
+// height, so hovering never moves the grid or the sheet.
+let aboutAt = '';
+function reserveAbout() {
+  const b = built, box = b.about, w = box.clientWidth, key = `${w}|${msg('ward-trying', { item: '' })}`;
+  if (!w || key === aboutAt) return;
+  aboutAt = key;
+  const keep = [...box.childNodes];
+  box.style.minHeight = '0';
+  let tall = 0;
+  for (const t of b.tiles) {
+    fillAbout(box, t, { slot: t.slot, key: t.key });
+    tall = Math.max(tall, box.getBoundingClientRect().height);
+  }
+  box.replaceChildren(...keep);
+  box.style.minHeight = '';
+  px(box, '--about-h', tall);
 }
 
 // Each of `list` as a name over its role word; with no name, the role word

@@ -1354,7 +1354,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   display: grid; grid-template-columns: minmax(0, 1fr);
   overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
 }
-.wardrobe .wardtiles { grid-area: 1 / 1; align-self: start; display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--tile) + 4px), 1fr)); gap: var(--gap-s); }
+.wardrobe .wardtiles { grid-area: 1 / 1; align-self: start; display: grid; grid-template-columns: repeat(var(--tile-cols), minmax(0, 1fr)); gap: var(--gap-s); }
+@media (max-width: 560px) { .wardrobe .wardtiles { grid-template-columns: repeat(auto-fill, minmax(calc(var(--tile) + 4px), 1fr)); } }
 .wardrobe .wardtiles:not(.on) { visibility: hidden; height: 0; overflow: hidden; }
 .held .wardrobe .wardtile {
   position: relative; min-width: 0; padding: 0; border: 2px solid transparent;
@@ -1364,7 +1365,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 @media (hover: hover) { .held .wardrobe .wardtile:hover { border-color: var(--ink-7); } }
 .held .wardrobe .wardtile.on { color: var(--paper); background: var(--ink); border-color: var(--ink); }
 .held .wardrobe .wardtile.tried { border-style: dashed; border-color: var(--ink); }
-.wardrobe .wardtn { font-size: var(--fs-small); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wardrobe .wardtn { font-size: var(--fs-small); hyphens: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* a locked tile: the drawing faint, its words at full ink, and what opens it
    under the name (the owner: show how to unlock), wrapping to two lines and
    no more, so a row of tiles is short enough that two of them stand on a
@@ -1372,12 +1373,12 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    the line under the grid) */
 .wardrobe .wardtile.lock canvas { opacity: .32; }
 .wardrobe .wardtu { font-size: var(--fs-body); line-height: 1.15; max-width: 100%; padding: 0 2px;
-                    white-space: normal; overflow-wrap: break-word; hyphens: auto; text-align: center;
+                    white-space: normal; overflow-wrap: normal; word-break: normal; hyphens: none; text-align: center;
                     text-transform: none; letter-spacing: normal;
                     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .wardrobe .wardtu[hidden] { display: none; }
 .wardrobe .wardlk { position: absolute; top: 3px; right: 3px; width: 7px; height: 8px; }
-.wardrobe .wardabout { min-height: 2.6em; display: flex; flex-direction: column; color: var(--ink-4); font-size: var(--fs-small); text-align: left; }
+.wardrobe .wardabout { min-height: var(--about-h, 2.6em); display: flex; flex-direction: column; color: var(--ink-4); font-size: var(--fs-small); text-align: left; }
 @media (max-width: 560px), (pointer: coarse) {
   .wardrobe .wardrow { grid-template-columns: 44px 1fr 44px 44px; row-gap: 2px; }
   .wardrobe .wardlabel { grid-column: 1 / 5; font-size: var(--fs-small); }

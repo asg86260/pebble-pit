@@ -819,6 +819,21 @@ export const TESTS = [
         page.openWardrobe();
         await paint(3);
         const all = await walk('page', ['you', 'sqouse']);
+        // every tile hovered and focused in every slot: neither the sheet nor
+        // the grid moves for the words under it
+        const gridH = () => Math.round(d.querySelector('.wardgrids').getBoundingClientRect().height);
+        const moved = [];
+        for (const s of SLOTS) {
+          d.getElementById(`ward-${s.key}-tab`).click();
+          await paint(2);
+          const h0 = tall(), g0 = gridH();
+          for (const t of d.querySelectorAll(`.wardtile[data-slot="${s.key}"]`)) {
+            t.dispatchEvent(new win.Event('pointerenter')); t.dispatchEvent(new win.Event('focus'));
+            if (tall() !== h0 || gridH() !== g0) moved.push(`${s.key}:${t.dataset.item} ${h0}>${tall()} ${g0}>${gridH()}`);
+            t.dispatchEvent(new win.Event('pointerleave')); t.dispatchEvent(new win.Event('blur'));
+          }
+        }
+        checks.push(ok(moved.length === 0, `${size}: hovering any tile in any slot moves neither the sheet nor the grid`, moved.slice(0, 3).join('; ')));
         page.leaveWardrobe();
         await paint(2);
         state.S.dressOffered = false;
