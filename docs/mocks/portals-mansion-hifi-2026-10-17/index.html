@@ -48,12 +48,17 @@
     <span>mansion in 3e and 4c to 4f:</span><span id="mpick"><button data-m="A" class="on">A manor of the rock</button><button data-m="B">B the house, grown</button><button data-m="C">C hall of every line</button></span>
     <span style="margin-left:12px">the player's builders:</span><span id="bpick"><button data-b="4">4</button><button data-b="8" class="on">8</button><button data-b="16">16</button></span>
   </div>
+  <div class="bar">
+    <span>lines the yard has had (C's floors, 20 a floor):</span><span id="lpick"><button data-l="60">60</button><button data-l="120">120</button><button data-l="160" class="on">160</button></span>
+    <span style="margin-left:12px">the cage barrier's stretch (assumed):</span><span id="spick"><button data-s="4">4 min</button><button data-s="12" class="on">12 min</button><button data-s="30">30 min</button></span>
+  </div>
 
   <!-- ===================================================== 1. HEAVEN -->
   <div class="card" id="s1">
     <h2>1. The portal to heaven</h2>
-    <p>The road down from the afterlife (beat 9) is a <b>stair</b>, and the portal is the <b>glide</b> at its top. Once the throne is empty a tear opens over the house's ruin and a stair of cloud lets down from it to the yard floor beside the rock. The ghosts walk the stair; the player's view takes the portal. It stays open after act 3, the way between the yard and the union's camp. It is the wizards' portal's opposite: a <b>white mouth in the white sky</b>, a <b>soft cloud rim</b>, a slow calm fringe turning round it (each cell easing on and off, never blinking), and purple motes drawn up into it. Those four things are heaven's alone; hell never has them. The pointing hand is the yard portal's hand, and it fades by opacity once the first round trip is made, as <code>S.portalHand</code> does now.</p>
+    <p>The road down from the afterlife (beat 9) is a <b>stair</b>, and the portal is the <b>glide</b> at its top. Once the throne is empty a tear opens over the house's ruin and a stair of cloud lets down from it to the yard floor beside the rock. The ghosts walk the stair; the player's view takes the portal. It stays open after act 3, the way between the yard and the union's camp. It is the wizards' portal's opposite: a <b>white mouth in the white sky</b>, a <b>soft cloud rim</b>, a slow calm fringe turning round it (each cell easing on and off, never blinking), and purple motes drawn up into it. Those four things are heaven's alone; hell never has them. The mouth is a light source: on the dark page it is drawn landed, as hell's heat is, so it stays light on both pages (before and after just below). The pointing hand is the yard portal's hand, and it fades by opacity once the first round trip is made, as <code>S.portalHand</code> does now.</p>
 
+    <div class="row"><figure><canvas id="heavenDark" data-w="360" data-h="174"></canvas><figcaption>the tear on the dark page: before, mapped like the yard, its mouth reads as soot; after, landed as a light source</figcaption></figure></div>
     <div class="opt recd">
       <h3>H-A. The tear and the stair <span class="rec">(recommended)</span></h3>
       <p>The tear over the ruin; the stair comes down from its lower lip in steps two cells tall with an ink rim under each tread, and lands on the yard floor beside the rock. Union ghosts walk down it, pale, and off along the yard toward the pit. The hand stands in the sky to the tear's right, pointing left at it. At heaven's end the stair goes down through a hole in the cloud floor with the yard seen far below; the hand points down into it.</p>
@@ -88,7 +93,7 @@
 
     <div class="opt recd">
       <h3>L-A. The deep's floor tears <span class="rec">(recommended)</span></h3>
-      <p>The spec's way (beat 11): the pit, the abyss, the deep, and through the deep's floor. A wide slit of white heat in the deep's floor that throws its light up onto the deep above it. The deep is drawn in its own tones, a dark field on both pages, as render/deep.js draws it; the deep's end of the wizards' portal is small at the top left for scale. The hand only appears from the descent beat (beat 11), fading in. Then the carriers walk across the floor and climb down a cut ladder through the slit, out of sight into the heat, and come back up the same way.</p>
+      <p>The spec's way (beat 11): the pit, the abyss, the deep, and through the deep's floor. Satan's route there (beat 8): he sinks through the cloud floor, falls through the yard's sky into the drowned pit, sinks down through the abyss and the deep's water, a body the camera can follow the whole way, and burns through the deep's floor where he lands. A wide slit of white heat in the deep's floor that throws its light up onto the deep above it. The deep is drawn in its own tones, a dark field on both pages, as render/deep.js draws it; the deep's end of the wizards' portal is small at the top left for scale. The hand only appears from the descent beat (beat 11), fading in. Then the carriers walk across the floor and climb down a cut ladder through the slit, out of sight into the heat, and come back up the same way.</p>
       <div class="row">
         <figure><canvas id="lA" data-w="720" data-h="300"></canvas><figcaption class="live" id="lA-ph"></figcaption><figcaption>game scale: the opening, the wait, beat 11's hand, then the carriers walking down through it (16 s loop)</figcaption></figure>
         <figure><canvas id="lAz" data-src="lA" data-crop="0,0,240,130"></canvas><figcaption>3x: the slit, the veins, the lit lip, the light thrown up, a carrier on the ladder</figcaption></figure>
@@ -135,8 +140,8 @@
       <figure><canvas id="bAlivez" data-src="bAlive" data-crop="0,0,140,100"></canvas><figcaption>3x: the rims closing</figcaption></figure>
     </div>
     <h3>e. The walk home (<code>home-again</code>)</h3>
-    <p>Up out of the pit, alive, and the length of the yard to its left end. The mansion (the one picked above) has been going up as a standing job since the cage fell (4c); the walk shows its last stretch, and it tops out as they reach the gate. The crew fall in behind them as they pass, two files; <b>one</b> volley of fireworks at the gate; then the crew drift back to work, because everything keeps running.</p>
-    <div class="row"><figure><canvas id="bHome" data-w="720" data-h="312"></canvas><figcaption class="live" id="bHome-ph"></figcaption><figcaption>22 s loop, compressed (the real walk is the yard's length at the finale's pace)</figcaption></figure></div>
+    <p>Up out of the pit, alive, and the length of the yard to its left end. The mansion (the one picked above) has been going up as a standing job since the cage barrier's stretch began (4c); the walk shows its last courses, and it tops out as they reach the gate, or, if the real sum runs over, while they stand at the gate and watch. The crew fall in behind them as they pass, two files; <b>one</b> volley of fireworks at the gate; then the crew drift back to work, because everything keeps running.</p>
+    <div class="row"><figure><canvas id="bHome" data-w="720" data-h="480"></canvas><figcaption class="live" id="bHome-ph"></figcaption><figcaption class="live" id="sum-home"></figcaption><figcaption>24 s loop, compressed (the real walk is the yard's length at the finale's pace); set the stretch to 4 min to see them wait at the gate</figcaption></figure></div>
   </div>
 
   <!-- ===================================================== 4. MANSION -->
@@ -146,19 +151,19 @@
 
     <div class="opt">
       <h3>4a. Three designs</h3>
-      <p><b>A. The manor of the rock.</b> Spiky and symmetrical: two six-floor towers with spires and flags, a four-floor middle block with a pediment and a round window, two wings, a fence and an iron gate, hedges, topiary. <b>Built from the rock that killed them</b>: the rock is its pile, broken up a piece a trip. Theirs: the old bench under the door, six cells wide.</p>
+      <p><b>A. The manor of the rock.</b> Spiky and symmetrical: two six-floor towers with spires and flags, a four-floor middle block with a pediment and a round window, two wings, a fence and an iron gate, hedges, topiary. <b>Built from the rock that killed them</b>: the rock is its pile, broken up a piece a trip; the door's lintel is carved from it and what is left of it, a few cells, stays in the garden. Theirs: the lintel, the chunk, and the old bench under the door with its back, eight cells wide.</p>
       <div class="row">
         <figure><canvas id="mA" data-w="720" data-h="384"></canvas><figcaption>A at game scale</figcaption></figure>
         <figure><canvas id="mAz" data-src="mA" data-crop="0,0,160,130"></canvas><figcaption>3x: the door, the bench, the gate</figcaption></figure>
       </div>
-      <p style="margin-top:10px"><b>B. The house, grown.</b> One huge gable: the old house at three times its size, the same thick posts, the same roof steps, the same chimney smoking, floors of windows in its walls, the old window grown into a bay, and the old door grown into the entrance with a door their size inside it. Its pile is the yard's heaps. Theirs: the whole shape, and the bench by the door.</p>
+      <p style="margin-top:10px"><b>B. The house, grown.</b> One huge gable: the old house at three times its size, the same thick posts, the same roof steps, the same chimney smoking, floors of windows in its walls, the old window grown into a bay, and the old door grown into the entrance with a door their size inside it. Its pile is the rock, like every design. Theirs: the whole shape, the bench by the door, the rock's chunk in the garden.</p>
       <div class="row">
         <figure><canvas id="mB" data-w="720" data-h="420"></canvas><figcaption>B at game scale</figcaption></figure>
         <figure><canvas id="mBz" data-src="mB" data-crop="0,0,160,130"></canvas><figcaption>3x: the old door grown, the door inside it, the bench</figcaption></figure>
       </div>
-      <p style="margin-top:10px"><b>C. The hall of every line.</b> A massive block, eight floors, a window for every line the yard has had (twenty a floor), a balustrade and an attic over the middle; and in front of it, as its gatehouse, <b>the old house rebuilt</b> on its old ground, whose door is the way in. Its pile is the yard's heaps.</p>
+      <p style="margin-top:10px"><b>C. The hall of every line.</b> A massive block with a window for every line the yard has had: twenty a floor, so its floors are the lines over twenty and it grows with the yard (the lines control above; 160 lines is eight floors). A balustrade and an attic over the middle; and in front of it, as its gatehouse, <b>the old house rebuilt</b> on its old ground, whose door is the way in (the game's old door is four cells wide, so a body stands in its left three). Its pile is the rock.</p>
       <div class="row">
-        <figure><canvas id="mC" data-w="720" data-h="420"></canvas><figcaption>C at game scale</figcaption></figure>
+        <figure><canvas id="mC" data-w="720" data-h="480"></canvas><figcaption>C at game scale</figcaption></figure>
         <figure><canvas id="mCz" data-src="mC" data-crop="0,0,180,140"></canvas><figcaption>3x: the old house as the gatehouse, its bench, the hall's door behind</figcaption></figure>
       </div>
     </div>
@@ -170,15 +175,15 @@
 
     <div class="opt">
       <h3>4c. How it is built</h3>
-      <p>A <b>standing job</b> from the cage's fall (beat 14), watched in the last stretch of the act and topping out during the walk home. The builders are <b>the player's builders</b> (a variable here: 4, 8 or 16 above; the loop gets longer with fewer). They first carry the scaffold in pole by pole; then every piece is carried from the pile (A: the rock; B and C: the yard's heaps), walked along the ground to the nearest pole, climbed up the pole and along the plank, and set where it goes. Bottom course first across the whole front, so it rises floor by floor. At the top-out the poles are carried back out one by one, and the garden goes in.</p>
-      <div class="row"><figure><canvas id="mBuild" data-w="720" data-h="396"></canvas><figcaption class="live" id="mBuild-ph"></figcaption><figcaption>the loop's length is the build's: about 30 s with 8 builders, compressed (pieces are twelve cells)</figcaption></figure></div>
+      <p>A <b>standing job</b> from the start of the cage barrier's stretch, so it runs through real play: when the anchor chains fall (<code>wall-4</code>), a word comes up the road from the cage (a purple mote along the ground to the yard's builders and a placeholder card over them: the on-screen cause), and the builders start. Beat 14 (the cage falls) and beat 15 are cutscenes inside the stretch; the build runs on through them and tops out on the walk home. The builders are <b>the player's builders</b> (4, 8 or 16 above). The pile is the rock that killed them, for every design. The scaffold goes up a level at a time: each pole's six-row section carried up and set, each plank bay carried and laid, each fading in as it is set. Then every piece is carried from the rock, walked to the nearest pole, climbed, walked along the plank and set, fading in over 0.3 s. Bottom course first, so it rises floor by floor. At the top-out the scaffold comes back down the same way, a section and a bay a trip, each fading out as it is lifted, and the garden goes in. <b>The real sum</b> is printed under the strip with its assumptions (a body's walk, the stop to set, the stretch's length); if it runs over the stretch, the pair stand at the gate and watch the last of it top out (3e).</p>
+      <div class="row"><figure><canvas id="mBuild" data-w="720" data-h="480"></canvas><figcaption class="live" id="mBuild-ph"></figcaption><figcaption class="live" id="sum-build"></figcaption><figcaption>the loop is compressed (pieces are twelve cells, a carry 1.1 s); its length follows the builders</figcaption></figure></div>
     </div>
 
     <div class="opt">
       <h3>4d. The arrival and the last held shot</h3>
       <p>Quieter. The gate opens; the freed souls walk down the stair from the still-open tear and stand on the ground (nobody hovers); one volley of fireworks; the crew drift back to work. The pair walk up to the bench under the door and sit, and a window lights. Then the sheet.</p>
       <div class="row">
-        <figure><canvas id="mArrive" data-w="720" data-h="384"></canvas><figcaption class="live" id="mArrive-ph"></figcaption><figcaption>24 s loop</figcaption></figure>
+        <figure><canvas id="mArrive" data-w="720" data-h="480"></canvas><figcaption class="live" id="mArrive-ph"></figcaption><figcaption>24 s loop</figcaption></figure>
         <figure><canvas id="mArrivez" data-src="mArrive" data-crop="0,0,170,120"></canvas><figcaption>3x: follows the pair</figcaption></figure>
       </div>
     </div>
@@ -186,13 +191,13 @@
     <div class="opt">
       <h3>4e. The end sheet</h3>
       <p>The last held shot, under a veil, and the sheet over it. <span class="ph">Every word on it is a placeholder</span>; what it says is the owner's.</p>
-      <div class="row"><figure><canvas id="mSheet" data-w="720" data-h="384"></canvas><figcaption>game scale</figcaption></figure></div>
+      <div class="row"><figure><canvas id="mSheet" data-w="720" data-h="480"></canvas><figcaption>game scale</figcaption></figure></div>
     </div>
 
     <div class="opt">
       <h3>4f. The final scene, one wide shot</h3>
-      <p>The whole game's history in one frame at game scale: the mansion at the left end with the pair on the bench by its door, freed souls standing in the garden, the tear still open over it with its stair down to the ground, the crew at work in the middle, the pit at the right with the wizards' portal in its wall. Hell's way is in the deep and not seen from here.</p>
-      <div class="scroll"><canvas id="wide" data-w="1440" data-h="396"></canvas></div>
+      <p>The whole game's history in one frame at game scale: the mansion at the left end with the pair on the bench by its door, the rock's last chunk in the garden, freed souls standing in the garden, the tear still open over it with its stair down to the ground, the crew at work in the middle, the pit at the right with the wizards' portal in its wall. Hell's way is in the deep and not seen from here.</p>
+      <div class="scroll"><canvas id="wide" data-w="1440" data-h="480"></canvas></div>
       <div class="row" style="margin-top:10px">
         <figure><canvas id="widez" data-src="wide" data-crop="0,0,200,120"></canvas><figcaption>3x: the bench by the door</figcaption></figure>
       </div>
@@ -205,9 +210,10 @@
       <li>The game's renderer: the abyss field's own tones, the wardrobe's real outfits, device-pixel snapping, the real yard's stations and heaps. The stations here are plain boxes and the crew a handful.</li>
       <li>The real ripple: the game draws the far half on a sheet through a circle (render/ripple.js). <b>Cost:</b> the ripple should snapshot the far place to an offscreen canvas once when the glide starts and draw that through the circle, not redraw the far place every frame as this mock does; and the mansion should be cached on its own canvas and redrawn only when a piece is set, not repainted cell by cell every frame.</li>
       <li>The dark page here applies the game's lightness map (ink.js) to the mock's own tones, and draws the deep and hell as landed (a dark field on both pages); the game's own abyss tones and its turned ramps are not reproduced.</li>
-      <li><b>Dark-page check:</b> under the game's map the tear's white mouth goes charcoal with a light cloud rim. Where the two are seen together, in the yard, it is still the wizards' portal's opposite, because the yard's end of that portal (the pit's liquid) goes light (see 4f in dark). The deep's own end is drawn landed, so it stays a black mouth, and the tear now looks more like it; drawing the tear landed too would keep its mouth white on both pages. Hell's slit stays white-hot in a dark field, so heaven and hell still read apart.</li>
+      <li><b>Dark-page check:</b> the tear's mouth is drawn landed, a light source, so it stays light on both pages (the before and after in section 1); in the yard it is still the wizards' portal's opposite, and against the deep's end (a black mouth, landed) it now reads apart. Hell's slit is also white-hot on a dark field; the two keep apart by their own marks: cloud rim, stair, motes and calm fringe against the under-lit lip, veins and embers.</li>
       <li>The camera: the game's <code>skyCam</code> window, the far yard, and what the screen shows at a real window size. Each strip is a fixed frame.</li>
       <li>God, Satan, the cage and the union camp: none are designed. God and Satan are plain placeholder shapes.</li>
+      <li>The real sum's inputs are assumptions marked on the page: a body's walk (20 cells/s), a second to set a piece, pieces of twelve cells, and the cage barrier's stretch, which the spec has no number for yet (<code>BARRIER_BLOWS</code> is unwritten).</li>
       <li>Pace: every strip is compressed. The walk home, the build, the carry and the rise run in seconds here.</li>
       <li>The carry's real route: the ghosts' walk from the stair's foot along the yard, down the pit and through the deep is only shown in pieces (the stair's foot, the slit's ladder).</li>
       <li>Sound, the space bar's hurry, and a reload mid-beat.</li>
@@ -224,6 +230,8 @@ let theme = Q.get('theme') || 'auto';
 const FREEZE = Q.has('t') ? +Q.get('t') : null;
 let mansionPick = Q.get('m') || 'A';
 let BUILDERS = +(Q.get('builders') || 8);
+let LINES = +(Q.get('lines') || 160);
+let STRETCH_MIN = +(Q.get('stretch') || 12);
 if (Q.has('only')) document.querySelectorAll('.card').forEach(c => { if (c.id !== Q.get('only')) c.style.display = 'none'; });
 
 // ---------------------------------------------------------------- the palette
@@ -256,8 +264,8 @@ const mapDark = c => { const [h, s, l] = toHsl(...hexRgb(c)); return rgbHex(from
 const landDark = c => { const [h, s, l] = toHsl(...hexRgb(c)); return rgbHex(fromHsl(h, s, Math.min(LI, Math.max(LP, l)))); };
 const dark = () => theme === 'dark' || (theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
 const PAL = {};
-function pal() {
-  const key = dark() ? 'dark' : 'light';
+const pal = () => makePal(dark() ? 'dark' : 'light');
+function makePal(key) {
   if (PAL[key]) return PAL[key];
   if (key === 'light') { const k = { ...LIGHT }; k.deep = k; return (PAL.light = k); }
   const k = {}, d = {};
@@ -275,9 +283,13 @@ const pickBar = (sel, attr, set) => document.querySelectorAll(sel + ' button').f
 });
 pickBar('#mpick', 'm', v => { mansionPick = v; });
 pickBar('#bpick', 'b', v => { BUILDERS = +v; });
+pickBar('#lpick', 'l', v => { LINES = +v; });
+pickBar('#spick', 's', v => { STRETCH_MIN = +v; });
 applyTheme();
 document.querySelectorAll('#mpick button').forEach(x => x.classList.toggle('on', x.dataset.m === mansionPick));
 document.querySelectorAll('#bpick button').forEach(x => x.classList.toggle('on', +x.dataset.b === BUILDERS));
+document.querySelectorAll('#lpick button').forEach(x => x.classList.toggle('on', +x.dataset.l === LINES));
+document.querySelectorAll('#spick button').forEach(x => x.classList.toggle('on', +x.dataset.s === STRETCH_MIN));
 
 // ---------------------------------------------------------------- helpers
 const hash = (x, y, z = 0) => { let h = (x | 0) * 374761393 + (y | 0) * 668265263 + (z | 0) * 2147483647; h = (h ^ (h >> 13)) * 1274126177; return ((h ^ (h >> 16)) >>> 0) / 4294967296; };
@@ -453,7 +465,8 @@ function hand(g, k, x, y, way, t, a = 1) {
 
 // ---------------------------------------------------------------- heaven: the lens, the stair, the beam
 // A white mouth, a soft cloud rim, a slow fringe whose every cell eases on and off.
-function lens(g, k, cx, cy, rx, ry, t, inside = null) {
+// The mouth is a light source: drawn in `km`, landed tones by default, so it stays light on the dark page as hell's heat does.
+function lens(g, k, cx, cy, rx, ry, t, inside = null, km = k.deep) {
   if (rx < .5 || ry < .5) return;
   const X = snap(cx), Y = snap(cy), n = Math.ceil(Math.max(rx, ry) * 1.3 + 2);
   for (let r = -n; r <= n; r++) for (let c = -n; c <= n; c++) {
@@ -462,7 +475,7 @@ function lens(g, k, cx, cy, rx, ry, t, inside = null) {
     const x = X + c * P, y = Y + r * P, turn = (((a / (2 * Math.PI)) + t * .02) % 1 + 1) % 1;
     if (d < .7 * e) {
       if (inside) inside(x, y, c, r);
-      else R(g, x, y, P, P, hash(c, r - Math.floor(t * 1.5), 21) < .08 ? k.g1 : k.paper);
+      else { R(g, x, y, P, P, km.paper); C(g, x, y, km.g1, clamp01(Math.sin(t * .6 + hash(c, r, 21) * 6.28) * 2.5 - 1.5)); }
     } else if (d < e) {
       const v = hash(c, r, 22), outer = d > .88 * e;
       R(g, x, y, P, P, outer ? (v < .5 ? k.g3 : k.g4) : (v < .4 ? k.g1 : v < .8 ? k.g2 : k.g3));
@@ -497,8 +510,10 @@ function heavenTear(g, k, cx, cy, t, open = 1, inside) {
 function heavenColumn(g, k, cx, gy, t, open = 1, inside) {
   const ry = 11 * open, top = gy - ry * 2 * P, X = snap(cx);
   for (let y = snap(top) - P; y >= -P; y -= P) for (let c = -2; c <= 1; c++) {
-    const v = hash(c, y / P + Math.floor(t * 3), 71), edge = c === -2 || c === 1;
-    if (!edge || v < .35) C(g, X + c * P, y, edge ? k.g3 : v < .5 ? k.g1 : k.g2, open);
+    const v = hash(c, y / P, 71), edge = c === -2 || c === 1, kk = k.deep;
+    const wave = clamp01(.5 + .8 * Math.sin(t * 1.5 + y * .12 + v * 6.28));
+    if (edge) C(g, X + c * P, y, k.g3, open * wave * .8);
+    else { C(g, X + c * P, y, kk.g1, open); C(g, X + c * P, y, kk.g2, open * wave); }
   }
   lens(g, k, cx, gy - ry * P, 4 * open, ry, t, inside);
   if (open > .5) motes(g, k, cx, -10, 3 * P, top + 10, t, 8);
@@ -594,7 +609,7 @@ function hellCrater(g, k, cx, gy, t, open) {
   for (let r = 0; r <= 8; r++) for (let c = -rc; c <= rc; c++) {
     const d = Math.hypot((c + .5) / rc, (r + .5) / (rc * .75)), al = clamp01((open * 1.25 - d) * 5);
     const x = X + c * P, y = gy + r * P;
-    if (d < .78) { const ring = Math.floor(d * 7 + t * 2) % 2, tone = hot(kd, c, r, d, hs); C(g, x, y, tone === kd.ink ? kd.ink : ring ? kd.paper : kd.g2, al); }
+    if (d < .78) { const tone = hot(kd, c, r, d, hs); if (tone === kd.ink) C(g, x, y, kd.ink, al); else { C(g, x, y, kd.g2, al); C(g, x, y, kd.paper, al * clamp01(.5 + .7 * Math.sin(d * 7 * Math.PI + t * 4))); } }
     else if (d < 1) C(g, x, y, hash(c, r, 94) < .4 ? k.mid : k.ink, al);
   }
   if (open > .4) {
@@ -611,15 +626,16 @@ function deepScene(g, k, t, w, h) {
   R(g, 0, 0, w, h, k.ink);
   const fy = h - 60, hs = held(t, 2);
   for (let y = 0; y < fy; y += P) for (let x = 0; x < w; x += P) {
-    const v = hash(x / P + Math.floor(hs * 2) * (y / P % 3 === 0 ? 1 : 0), y / P, 101);
-    if (v < .07) R(g, x, y, P, P, k.d1); else if (v < .085) R(g, x, y, P, P, k.d2);
+    const v = hash(x / P, y / P, 101);
+    if (v < .1) C(g, x, y, v < .02 ? k.d2 : k.d1, clamp01(Math.sin(t * .5 + v * 63) * 2 - .3));
   }
   for (let y = fy; y < h; y += P) for (let x = 0; x < w; x += P) { const v = hash(x / P, y / P, 102); R(g, x, y, P, P, y === fy ? k.mid : v < .45 ? k.d2 : v < .85 ? k.d3 : k.mid); }
   const pcx = 84, pcy = 66;
   for (let r = -6; r <= 6; r++) for (let c = -6; c <= 6; c++) {
     const d = Math.hypot(c + .5, r + .5); if (d > 6) continue;
     const turn = ((Math.atan2(r, c) / (2 * Math.PI) + t * .1) % 1 + 1) % 1;
-    R(g, pcx + c * P, pcy + r * P, P, P, d < 4.3 ? k.ink : Math.floor(turn * 12) % 3 === 0 ? k.purple : hash(c, r, 103) < .5 ? k.g4 : k.d3);
+    R(g, pcx + c * P, pcy + r * P, P, P, d < 4.3 ? k.ink : hash(c, r, 103) < .5 ? k.g4 : k.d3);
+    if (d >= 4.3) C(g, pcx + c * P, pcy + r * P, k.purple, clamp01(Math.sin(2 * Math.PI * turn * 4) * 2 - .6));
   }
   for (let i = 0; i < 2; i++) {
     const x = snap(540 + i * 90 + Math.sin(held(t, 3) + i) * 6), y = fy - 60 - i * 36 + (Math.floor(held(t, 2) * 2 + i) % 2) * P;
@@ -652,7 +668,8 @@ function hellScene(g, k, t, w, h, o = {}) {
   const hx = snap(o.hx ?? w / 2);
   for (let r = 0; r < 6; r++) for (let c = -10; c <= 10; c++) {
     const d = Math.hypot((c + .5) / 10, (r + .5) / 5); if (d > 1.1) continue;
-    R(g, hx + c * P, r * P, P, P, d < .8 ? (hash(c, r + Math.floor(t * 2), 117) < .3 ? k.d2 : k.d1) : (hash(c, r, 118) < .5 ? k.g4 : k.mid));
+    if (d < .8) { R(g, hx + c * P, r * P, P, P, k.d1); C(g, hx + c * P, r * P, k.d2, clamp01(Math.sin(t * .8 + hash(c, r, 117) * 6.28) * 2 - 1)); }
+    else R(g, hx + c * P, r * P, P, P, hash(c, r, 118) < .5 ? k.g4 : k.mid);
   }
   // the cut ladder coming down out of the hole, a carrier on it
   const lx = hx - 5 * P;
@@ -827,54 +844,70 @@ function roundWin(M, cx, cy, rad) {
   for (let r = -rad - 1; r <= rad + 1; r++) for (let c = -rad - 1; c <= rad + 1; c++) { const d = Math.hypot(c + .5, r + .5); if (d <= rad + .7) M.put(cx + c, cy + r, d > rad - .3 ? 'edge' : 'glass'); }
 }
 function chimney(M, c, rTop, h) { for (let r = rTop; r < rTop + h; r++) { M.put(c, r, r === rTop ? 'band' : 'edge'); M.put(c + 1, r, r === rTop ? 'band' : 'roof'); } }
-function benchCells(M, c, w = 6) { for (let i = 0; i < w; i++) M.put(c + i, -2, 'edge'); M.put(c, -1, 'edge'); M.put(c + w - 1, -1, 'edge'); }
+// a bench with a back, big enough to read at game scale: seat row -2, back row -4
+function benchCells(M, c, w = 8, back = true) {
+  for (let i = 0; i < w; i++) { M.put(c + i, -2, 'edge'); if (back) M.put(c + i, -4, 'edge'); }
+  M.put(c, -1, 'edge'); M.put(c + w - 1, -1, 'edge');
+  if (back) { M.put(c, -3, 'edge'); M.put(c + w - 1, -3, 'edge'); }
+}
 
+// Every column a whole column: `doorCol` is the middle column of an odd-wide
+// doorway, where a three-cell body stands centered; `gate0` the gate's left
+// column; `bench0` the seat's left column.
 const DESIGNS = {};
 function design(name) {
-  if (DESIGNS[name]) return DESIGNS[name];
+  const key = name === 'C' ? 'C' + LINES : name;
+  if (DESIGNS[key]) return DESIGNS[key];
   const M = Mm(), flags = [];
-  let gateC = null, doorC, benchC, smoke = null, source;
+  let gate0 = null, doorCol, bench0, smoke = null;
   if (name === 'A') {
     block(M, 0, 6, 36); spire(M, 0, 6, -36, 12, flags);
     block(M, 6, 18, 18, { idSalt: 7 }); pitched(M, 6, 18, -18); chimney(M, 10, -24, 5);
     block(M, 24, 24, 24); pitched(M, 24, 24, -24); roundWin(M, 35, -29, 2);
     block(M, 48, 18, 18, { idSalt: 3 }); pitched(M, 48, 18, -18); chimney(M, 60, -24, 5);
     block(M, 66, 6, 36); spire(M, 66, 6, -36, 12, flags);
-    doorway(M, 33, 6, 9); benchCells(M, 40);
-    gateC = 35.5; doorC = 35.5; benchC = 43; source = 'rock';
+    doorway(M, 33, 7, 9);
+    // the lintel over the door carved from the rock that killed them
+    for (let c = 32; c <= 40; c++) M.put(c, -10, 'lintel');
+    benchCells(M, 41, 8);
+    gate0 = 31; doorCol = 36; bench0 = 41;
   } else if (name === 'B') {
     // the house at three times: every cell of it three by three, its walls given floors of windows
     const S = 3;
-    for (const [c, r, role, id] of HOUSE) {
+    for (const [c, r, role] of HOUSE) {
       for (let i = 0; i < S; i++) for (let j = 0; j < S; j++) {
-        const C2 = c * S + i;
-        const rr = r * S + j;      // rows: r*3 .. r*3+2, r negative
-        let rl = role;
+        const C2 = c * S + i, rr = r * S + j;
         if (role === 'board') {
           const inF = (-1 - rr) % 6, lc = C2 - 3;
-          rl = (inF >= 1 && inF <= 3 && lc >= 1 && (lc % 4) < 2) ? 'win' : inF === 5 ? 'band' : 'stone';
+          const rl = (inF >= 1 && inF <= 3 && lc >= 1 && (lc % 4) < 2) ? 'win' : inF === 5 ? 'band' : 'stone';
           M.put(C2, rr, rl, rl === 'win' ? 50000 + Math.floor((-1 - rr) / 6) * 100 + Math.floor(lc / 4) : 0);
           continue;
         }
         if (role === 'door') { M.put(C2, rr, 'stone'); continue; }
-        M.put(C2, rr, rl, rl === 'win' ? 777 : 0);
+        M.put(C2, rr, role, role === 'win' ? 777 : 0);
       }
     }
-    // the old door's frame, grown: an entrance with a door their size inside it, a fanlight over
-    for (let r = -1; r >= -21; r--) for (let c = 36; c <= 41; c++) M.put(c, r, r >= -9 ? (c === 36 || c === 41 || r === -9 || c === 38.5 ? 'edge' : 'door') : (r === -10 || r === -21 ? 'band' : (r <= -12 && r >= -19 && c > 36 && c < 41) ? 'win' : 'stone'), r < -10 ? 60001 : 0);
-    for (let r = -1; r >= -9; r--) M.put(38, r, 'edge');
-    benchCells(M, 46);
-    doorC = 38.5; benchC = 49; smoke = [40, -55]; source = 'heaps';
+    // the old door's frame, grown: an entrance seven wide, a door their size inside it, a fanlight over
+    for (let r = -1; r >= -21; r--) for (let c = 35; c <= 41; c++) {
+      const role = r >= -9 ? (c === 35 || c === 41 || r === -9 || c === 38 ? 'edge' : 'door')
+        : (r === -10 || r === -21 ? 'band' : (r <= -12 && r >= -19 && c > 35 && c < 41) ? 'win' : 'stone');
+      M.put(c, r, role, role === 'win' ? 60001 : 0);
+    }
+    benchCells(M, 45, 8);
+    doorCol = 38; bench0 = 45; smoke = [40, -55];
   } else {
-    block(M, 0, 64, 48, { fh: 6, wg: 3, wx: 2 });
-    for (let c = 0; c < 64; c++) { M.put(c, -49, 'band'); M.put(c, -50, c % 2 ? 'stone' : 'edge'); M.put(c, -51, 'band'); }
-    block(M, 22, 20, 6, { base: -51, wg: 3, idSalt: 9 }); pitched(M, 22, 20, -57, 6);
-    doorway(M, 28, 8, 14);
-    // the old house rebuilt in front, centered on the door: the gatehouse
-    const hx = 23;
+    // a window for every line: twenty a floor, so the floors are the lines over twenty
+    const floors = Math.max(2, Math.ceil(LINES / 20)), rows = floors * 6;
+    block(M, 0, 64, rows, { fh: 6, wg: 3, wx: 2 });
+    for (let c = 0; c < 64; c++) { M.put(c, -rows - 1, 'band'); M.put(c, -rows - 2, c % 2 ? 'stone' : 'edge'); M.put(c, -rows - 3, 'band'); }
+    block(M, 22, 20, 6, { base: -rows - 3, wg: 3, idSalt: 9 }); pitched(M, 22, 20, -rows - 9, 6);
+    doorway(M, 31, 9, 14);
+    // the old house rebuilt in front, its door on the hall's: the gatehouse. The old door is
+    // the game's four cells (FINALE_DOOR_W), so a body stands in its left three.
+    const hx = 24;
     for (const [c, r, role, id] of HOUSE) M.put(hx + c, r, role, role === 'win' ? 778 : id);
-    benchCells(M, hx + 16, 4);
-    doorC = hx + 12.5; benchC = hx + 18; smoke = [hx + 13.5, -19]; source = 'heaps';
+    benchCells(M, hx + 16, 6);
+    doorCol = hx + 12; bench0 = hx + 16; smoke = [hx + 13, -19];
   }
   const cells = [...M.m.values()];
   const wins = new Map();
@@ -889,31 +922,39 @@ function design(name) {
   const minC = Math.min(...cells.map(c => c[0])), maxC = Math.max(...cells.map(c => c[0]));
   const tops = {}; for (const [c, r] of cells) tops[c] = Math.min(tops[c] ?? 0, r);
   const top = c => tops[c] ?? 0;
-  return (DESIGNS[name] = { name, cells, wins: [...wins.values()], pieces, flags, gateC, doorC, benchC, smoke, source, minC, maxC, top });
+  return (DESIGNS[key] = { name, key, cells, wins: [...wins.values()], pieces, flags, gate0, doorCol, bench0, smoke, minC, maxC, top });
 }
+// where a three-cell body stands centered on a column, in px from the design's left
+const colX = (ox, col) => ox + (col - 1) * P;
 function cellTone(k, role, c, r) {
   switch (role) {
     case 'stone': { const v = hash(Math.floor((c + (r & 1)) / 2), r, 41); return v < .45 ? k.g2 : v < .85 ? k.g3 : k.g4; }
     case 'board': { const v = hash(c, r, 11); return (r & 1) ? (v < .7 ? k.g2 : k.g3) : (v < .7 ? k.g3 : k.g4); }
     case 'roof': { const v = hash(c, r, 42); return v < .55 ? k.d3 : v < .85 ? k.d2 : k.ink; }
+    case 'lintel': { const v = hash(c, r, 7); return v < .45 ? k.g4 : v < .85 ? k.mid : k.d3; }
     case 'door': return k.mid;
     case 'glass': return k.paper;
     default: return k.ink;
   }
 }
-// `setFn(i)` says whether piece i is up. In the game this is a cached canvas redrawn on a set.
-function drawMansion(g, k, D, ox, gy, t, setFn, litOverride) {
+// `alphaFn(i)` is piece i's opacity: each fades in over FADE_S from its set.
+// In the game this is a cached canvas redrawn when a piece is set.
+const FADE_S = .3;
+function drawMansion(g, k, D, ox, gy, t, alphaFn, litOverride) {
   const N = D.pieces.length;
   for (let i = 0; i < N; i++) {
-    if (setFn && !setFn(i)) continue;
-    for (const [c, r, role] of D.pieces[i].cells) R(g, ox + c * P, gy + r * P, P, P, cellTone(k, role, c, r));
+    const a = alphaFn ? alphaFn(i) : 1;
+    if (a <= 0) continue;
+    for (const [c, r, role] of D.pieces[i].cells) C(g, ox + c * P, gy + r * P, cellTone(k, role, c, r), a);
   }
-  const up = !setFn || setFn(N - 1);
+  const up = !alphaFn || alphaFn(N - 1) >= 1;
   for (const w of D.wins) {
-    if (setFn && !D.pieces.some((p, i) => setFn(i) && p.r === w.r0 && p.c0 <= w.c0 && p.c1 >= w.c0)) continue;
+    let wa = 1;
+    if (alphaFn) { const i = D.pieces.findIndex(p => p.r === w.r0 && p.c0 <= w.c0 && p.c1 >= w.c0); wa = i < 0 ? 0 : alphaFn(i); }
+    if (wa <= 0) continue;
     let l = clamp01((Math.sin(t * .35 + w.id * 1.7) + .2) * 2.5);
     if (litOverride && litOverride[w.id] != null) l = litOverride[w.id];
-    g.globalAlpha = l; R(g, ox + w.c0 * P, gy + w.r0 * P, (w.c1 - w.c0 + 1) * P, (w.r1 - w.r0 + 1) * P, k.paper); g.globalAlpha = 1;
+    g.globalAlpha = l * wa; R(g, ox + w.c0 * P, gy + w.r0 * P, (w.c1 - w.c0 + 1) * P, (w.r1 - w.r0 + 1) * P, k.paper); g.globalAlpha = 1;
   }
   if (up) for (const [c, r] of D.flags) {
     const pose = Math.floor(t * 3) % 3, drop = [[0, 0, 0], [0, 0, 1], [0, 1, 1]][pose];
@@ -936,16 +977,14 @@ function topiary(g, k, x, gy, a = 1) {
   C(g, x + P, gy - P, k.ink, a); C(g, x + P, gy - 2 * P, k.ink, a);
   for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) if (!(r !== 1 && c !== 1 && hash(c, r, x) < .5)) C(g, x + c * P, gy - (5 - r) * P, (r + c) % 3 ? k.mid : k.d3, a);
 }
-// Two leaves of one-cell bars sliding outward a cell at a time behind the pillars.
-function gate(g, k, xc, gy, open, w = 10, tall = 4) {
-  const half = w / 2, s = Math.round(half * open), x0 = snap(xc - half * P);
+// Two leaves of one-cell bars sliding outward a cell at a time behind the pillars; x0 its left column's px.
+function gate(g, k, x0, gy, open, w = 10, tall = 4) {
+  const half = w / 2, s = Math.round(half * open);
   for (let i = 0; i < half; i++) {
     const cl = i - s, cr = half + i + s;
     R(g, x0 + cl * P, gy - tall * P, P, P, k.ink); R(g, x0 + cr * P, gy - tall * P, P, P, k.ink);
-    if (i % 2 === 0) for (let r = 2; r <= tall; r++) R(g, x0 + cl * P, gy - r * P + P - P, P, P, k.ink);
-    if (i % 2 === 1) for (let r = 2; r <= tall; r++) R(g, x0 + cr * P, gy - r * P, P, P, k.ink);
-    if (i % 2 === 0) R(g, x0 + cl * P, gy - P, P, P, k.ink);
-    if (i % 2 === 1) R(g, x0 + cr * P, gy - P, P, P, k.ink);
+    if (i % 2 === 0) for (let r = 1; r < tall; r++) R(g, x0 + cl * P, gy - r * P, P, P, k.ink);
+    if (i % 2 === 1) for (let r = 1; r < tall; r++) R(g, x0 + cr * P, gy - r * P, P, P, k.ink);
   }
   for (const px of [x0 - 2 * P, x0 + w * P]) for (let r = 1; r <= tall + 2; r++) for (let c = 0; c < 2; c++)
     R(g, px + c * P, gy - r * P, P, P, r === tall + 2 || c === (px < x0 ? 0 : 1) ? k.ink : hash(c, r, px) < .5 ? k.g3 : k.g4);
@@ -953,66 +992,91 @@ function gate(g, k, xc, gy, open, w = 10, tall = 4) {
 // The garden goes in by opacity as a whole: drawn on a sheet, put down at `a`.
 function garden(g, k, D, ox, gy, gateOpen, a = 1) {
   if (a <= 0) return;
-  if (a < 1) { const [c2, g2] = buf('garden', g.canvas.width, g.canvas.height); g2.setTransform(g.getTransform()); g2.clearRect(-9999, -9999, 99999, 99999); gardenAt(g2, k, D, ox, gy, gateOpen, 1); g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = a; g.drawImage(c2, 0, 0); g.restore(); return; }
-  gardenAt(g, k, D, ox, gy, gateOpen, 1);
+  if (a < 1) { const [c2, g2] = buf('garden', g.canvas.width, g.canvas.height); g2.setTransform(g.getTransform()); g2.clearRect(-9999, -9999, 99999, 99999); gardenAt(g2, k, D, ox, gy, gateOpen); g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = a; g.drawImage(c2, 0, 0); g.restore(); return; }
+  gardenAt(g, k, D, ox, gy, gateOpen);
 }
-function gardenAt(g, k, D, ox, gy, gateOpen, a = 1) {
+function gardenAt(g, k, D, ox, gy, gateOpen) {
   if (D.name === 'A') {
     tree(g, k, ox - 7 * P, gy); tree(g, k, ox + 79 * P, gy, 5);
-    hedgeRun(g, k, ox + 7 * P, ox + 23 * P, gy, 2, 0, a); hedgeRun(g, k, ox + 49 * P, ox + 65 * P, gy, 2, 1, a);
-    topiary(g, k, ox + 25 * P, gy, a); topiary(g, k, ox + 47 * P, gy, a);
-    for (let c = -10; c <= 82; c += 3) { if (c > 27 && c < 44) continue; for (let r = 1; r <= 3; r++) R(g, ox + c * P, gy - r * P, P, P, k.ink); }
-    for (let c = -10; c <= 82; c++) { if (c > 27 && c < 44) continue; R(g, ox + c * P, gy - 3 * P, P, P, k.ink); }
-    gate(g, k, ox + D.gateC * P, gy, gateOpen);
+    hedgeRun(g, k, ox + 7 * P, ox + 23 * P, gy, 2, 0); hedgeRun(g, k, ox + 51 * P, ox + 65 * P, gy, 2, 1);
+    topiary(g, k, ox + 25 * P, gy);
+    for (let c = -10; c <= 82; c += 3) { if (c > 28 && c < 43) continue; for (let r = 1; r <= 3; r++) R(g, ox + c * P, gy - r * P, P, P, k.ink); }
+    for (let c = -10; c <= 82; c++) { if (c > 28 && c < 43) continue; R(g, ox + c * P, gy - 3 * P, P, P, k.ink); }
+    gate(g, k, ox + D.gate0 * P, gy, gateOpen);
   } else if (D.name === 'B') {
-    tree(g, k, ox - 8 * P, gy); hedgeRun(g, k, ox + 2 * P, ox + 30 * P, gy, 2, 2, a); hedgeRun(g, k, ox + 58 * P, ox + 70 * P, gy, 2, 3, a);
-    for (let i = 0; i < 6; i++) C(g, ox + (60 + (i % 3) * 2) * P, gy - (1 + Math.floor(i / 3)) * P, i % 2 ? k.g4 : k.mid);   // the woodpile
+    tree(g, k, ox - 8 * P, gy); hedgeRun(g, k, ox + 2 * P, ox + 30 * P, gy, 2, 2);
   } else {
-    hedgeRun(g, k, ox - 12 * P, ox + 20 * P, gy, 2, 3, a); hedgeRun(g, k, ox + 46 * P, ox + 76 * P, gy, 2, 4, a);
+    hedgeRun(g, k, ox - 12 * P, ox + 20 * P, gy, 2, 3); hedgeRun(g, k, ox + 46 * P, ox + 76 * P, gy, 2, 4);
     for (const c of [-18, 82]) tree(g, k, ox + c * P, gy, 5);
   }
 }
 
 // ---------------------------------------------------------------- the build: every piece carried
-// Jobs round-robin across the player's builders: first the poles, then the pieces,
-// bottom course first; after the top-out, the poles carried back out.
+// Jobs round-robin across the player's builders. First the scaffold, a level at a
+// time: each pole's six-row section carried up and set, then each plank bay laid.
+// Then the pieces, bottom course first. After the top-out, the scaffold carried
+// back out in the reverse order. Everything set fades in over FADE_S; everything
+// lifted fades out over it as the builder takes it.
 const PLANS = {};
+// The real sum's assumptions, marked in the mock: a body's walk and the stop to set.
+const REAL_WALK_PX_S = P * 20, REAL_SET_S = 1;
 function plan(name, B) {
-  const key = name + B; if (PLANS[key]) return PLANS[key];
-  const D = design(name), T = 1.1;
+  const D = design(name), key = D.key + B; if (PLANS[key]) return PLANS[key];
+  const T = 1.1;
   const poles = [];
   for (let c = D.minC - 1; c <= D.maxC + 1; c += 12) { let tp = 0; for (let cc = c - 6; cc <= c + 6; cc++) tp = Math.min(tp, D.top(cc)); poles.push({ c, top: tp - 1 }); }
-  const jobs = [...poles.map((p, i) => ({ kind: 'pole', i })), ...D.pieces.map((p, i) => ({ kind: 'piece', i }))];
+  const scaff = [], lowest = Math.min(...poles.map(p => p.top));
+  for (let L = 0; -(L * 6 + 1) >= lowest; L++) {
+    poles.forEach((p, i) => { if (-(L * 6 + 1) >= p.top) scaff.push({ kind: 'sec', i, L }); });
+    poles.forEach((p, i) => { const q = poles[i + 1], r = -(L + 1) * 6; if (q && r > p.top && r > q.top) scaff.push({ kind: 'bay', i, L }); });
+  }
+  const jobs = [...scaff, ...D.pieces.map((p, i) => ({ kind: 'piece', i }))];
   jobs.forEach((jb, j) => { jb.b = j % B; jb.t0 = Math.floor(j / B) * T + (j % B) * T / B; jb.set = jb.t0 + T / 2; });
   const topOut = Math.max(...jobs.map(j => j.set));
-  const un = poles.map((p, i) => ({ kind: 'unpole', i })).reverse();
+  const un = scaff.slice().reverse().map(j => ({ ...j, kind: 'un' + j.kind }));
   un.forEach((jb, m) => { jb.b = m % B; jb.t0 = topOut + 1 + Math.floor(m / B) * T + (m % B) * T / B; jb.set = jb.t0 + T / 2; });
-  const poleSet = [], poleGone = [], pieceSet = [], pieceTaken = [];
-  jobs.forEach(jb => { if (jb.kind === 'pole') poleSet[jb.i] = jb.set; else { pieceSet[jb.i] = jb.set; pieceTaken[jb.i] = jb.t0; } });
-  un.forEach(jb => { poleGone[jb.i] = jb.set; });
+  const set = {}, gone = {}, pieceSet = [], pieceTaken = [];
+  jobs.forEach(jb => { if (jb.kind === 'piece') { pieceSet[jb.i] = jb.set; pieceTaken[jb.i] = jb.t0; } else set[jb.kind + jb.i + ',' + jb.L] = jb.set; });
+  un.forEach(jb => { gone[jb.kind.slice(2) + jb.i + ',' + jb.L] = jb.set; });
   const per = [...Array(B)].map(() => []);
   [...jobs, ...un].forEach(jb => per[jb.b].push(jb));
   const end = Math.max(...un.map(j => j.t0 + T));
-  return (PLANS[key] = { D, B, T, poles, topOut, end, poleSet, poleGone, pieceSet, pieceTaken, per, N: D.pieces.length });
+  const PL = { D, B, T, poles, scaff, topOut, end, set, gone, pieceSet, pieceTaken, per, N: D.pieces.length, jobs: jobs.length + un.length };
+  // the honest sum: every job's own round trip at a body's walk, over the builders
+  let work = 0;
+  for (const jb of [...jobs, ...un]) { const pts = jobPath(PL, jb, 0, 0, 0); let L = 0; for (let i = 1; i < pts.length; i++) L += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]); work += 2 * L / REAL_WALK_PX_S + REAL_SET_S; }
+  PL.realS = work / B;
+  return (PLANS[key] = PL);
 }
+// a job's path from the pile (at srcX) out to where it is set, body top-left
+function jobPath(PL, jb, ox, gy, srcX, b = 0) {
+  const { D, poles } = PL, home = [srcX + (b % 6) * P, gy - W], kind = jb.kind.replace(/^un/, '');
+  if (kind === 'sec') { const px = ox + poles[jb.i].c * P - P; return [home, [px, gy - W], [px, gy - jb.L * 6 * P - W]]; }
+  if (kind === 'bay') { const p = poles[jb.i], q = poles[jb.i + 1], y = gy - (jb.L + 1) * 6 * P - W, px = ox + p.c * P - P; return [home, [px, gy - W], [px, y], [ox + snap((p.c + q.c) / 2 * P) - P, y]]; }
+  const p = D.pieces[jb.i];
+  let pole = poles[0]; for (const q of poles) if (q.c <= p.c0) pole = q;
+  const px = ox + pole.c * P - P, yRow = gy + (p.r + 1) * P - W;
+  return [home, [px, gy - W], [px, yRow], [ox + p.c0 * P, yRow]];
+}
+// The rock that killed them is every design's pile. What is left of it, a few cells, stays in the garden.
 function source(g, k, PL, x, gy, tb) {
   let taken = 0; for (const t0 of PL.pieceTaken) if (t0 <= tb) taken++;
   const left = 1 - taken / PL.N;
-  if (PL.D.source === 'rock') { if (left > 0) rock(g, k, x + 10 * P, gy - 7 * P, 2 + 8 * Math.sqrt(left)); }
-  else { const n = Math.ceil(7 * Math.sqrt(left)); if (n > 0) { heap(g, k, x, gy, n); heap(g, k, x + 16 * P, gy, Math.max(0, n - 2)); } }
+  rock(g, k, x + 10 * P, gy - 2 * P - Math.round(5 * Math.sqrt(left)) * P, 3 + 7 * Math.sqrt(left));
 }
+const fadeIn = (tb, t0) => clamp01((tb - t0) / FADE_S);
 function drawBuild(g, k, PL, ox, gy, tb, srcX) {
   const { D, T, poles } = PL;
-  const standing = poles.map((p, i) => PL.poleSet[i] <= tb && tb < PL.poleGone[i]);
   source(g, k, PL, srcX, gy, tb);
-  drawMansion(g, k, D, ox, gy, tb, i => PL.pieceSet[i] <= tb);
-  poles.forEach((p, i) => {
-    if (!standing[i]) return;
-    const x = ox + p.c * P;
-    for (let r = -1; r >= p.top; r--) R(g, x, gy + r * P, P, P, k.d3);
-    const nx = poles[i + 1]; if (!nx || !standing[i + 1]) return;
-    for (let r = -6; r > Math.max(p.top, nx.top); r -= 6) for (let c = p.c + 1; c < nx.c; c++) R(g, ox + c * P, gy + r * P, P, P, k.g4);
-  });
+  drawMansion(g, k, D, ox, gy, tb, i => fadeIn(tb, PL.pieceSet[i]));
+  // the scaffold, section by section and bay by bay, each faded in as set and out as lifted
+  const sa = (kind, i, L) => { const key = kind + i + ',' + L, s = PL.set[key]; if (s == null) return 0; return fadeIn(tb, s) * (1 - fadeIn(tb, PL.gone[key] ?? Infinity)); };
+  for (const jb of PL.scaff) {
+    const a = sa(jb.kind, jb.i, jb.L); if (a <= 0) continue;
+    const p = poles[jb.i];
+    if (jb.kind === 'sec') { const x = ox + p.c * P; for (let r = -(jb.L * 6 + 1); r >= Math.max(-(jb.L + 1) * 6, p.top); r--) C(g, x, gy + r * P, k.d3, a); }
+    else { const q = poles[jb.i + 1], r = -(jb.L + 1) * 6; for (let c = p.c + 1; c < q.c; c++) C(g, ox + c * P, gy + r * P, k.g4, a); }
+  }
   for (let b = 0; b < PL.B; b++) {
     const jb = PL.per[b].find(j => j.t0 <= tb && tb < j.t0 + T);
     const home = [srcX + (b % 6) * P, gy - W];
@@ -1022,22 +1086,15 @@ function drawBuild(g, k, PL, ox, gy, tb, srcX) {
       if (!last || tb < PL.per[b][0].t0) [x, y] = home;
       else { const u = clamp01((tb - last.t0 - T) / 4); [x, y] = along([home, [srcX + 120 + b * 3 * P, gy - W]], held(u, 10)); }
     } else {
-      const u = (tb - jb.t0) / T;
-      let pts;
-      if (jb.kind !== 'piece') { const px = ox + poles[jb.i].c * P - P; pts = [home, [px, gy - W]]; }
-      else {
-        const p = D.pieces[jb.i];
-        let pole = poles[0]; for (const q of poles) if (q.c <= p.c0) pole = q;
-        const px = ox + pole.c * P - P, yRow = gy + (p.r + 1) * P - W;
-        pts = [home, [px, gy - W], [px, yRow], [ox + p.c0 * P, yRow]];
-      }
-      const there = u < .45 ? along(pts, u / .45) : u < .55 ? pts[pts.length - 1] : along([...pts].reverse(), (u - .55) / .45);
-      [x, y] = there;
-      if ((jb.kind === 'unpole' && u >= .5) || (jb.kind !== 'unpole' && u < .5)) carry = jb.kind === 'piece' ? Math.min(4, D.pieces[jb.i].cells.length) : 'pole';
+      const u = (tb - jb.t0) / T, pts = jobPath(PL, jb, ox, gy, srcX, b);
+      [x, y] = u < .45 ? along(pts, u / .45) : u < .55 ? pts[pts.length - 1] : along([...pts].reverse(), (u - .55) / .45);
+      const out = !jb.kind.startsWith('un');
+      if ((out && u < .5) || (!out && u >= .5)) carry = jb.kind === 'piece' ? Math.min(4, D.pieces[jb.i].cells.length) : jb.kind.endsWith('sec') ? 'sec' : poles[jb.i + 1].c - poles[jb.i].c - 1;
     }
     body(g, k, x, y, k.ink);
-    if (carry === 'pole') for (let c = -1; c < 4; c++) R(g, x + c * P, y - P, P, P, k.d3);
-    else if (carry) for (let c = 0; c < carry; c++) R(g, x + (c - 0) * P, y - P, P, P, k.g4);
+    if (carry === 'sec') for (let c = -1; c < 5; c++) R(g, x + c * P, y - P, P, P, k.d3);        // a six-cell section, carried flat
+    else if (carry && jb && jb.kind.endsWith('bay')) { const n = carry, x0 = x - Math.floor((n - 3) / 2) * P; for (let c = 0; c < n; c++) R(g, x0 + c * P, y - P, P, P, k.g4); }   // a whole plank, its bay's length
+    else if (carry) for (let c = 0; c < carry; c++) R(g, x + c * P, y - P, P, P, k.g4);
   }
 }
 // one cell a spark, one volley
@@ -1171,38 +1228,43 @@ const SCENES = {
     return T < 1 ? `${T.toFixed(1)} s: the cage open, God stands` : n < 12 ? `${T.toFixed(1)} s: rim piece ${Math.floor(n) + 1} of 12 fading grey to black` : `${T.toFixed(1)} s: alive; they hop`;
   },
   bHome(g, k, t, w, h) {
-    const T = t % 22, gy = h - 48, WORLD = 1500, D = design(mansionPick), PL = plan(mansionPick, BUILDERS);
-    const ox = 60, gateX = ox + (D.gateC ?? D.doorC) * P, arrive = 12, start = WORLD - 140, srcX = ox + (D.maxC + 6) * P;
+    const T = t % 24, gy = h - 48, WORLD = 1500, D = design(mansionPick), PL = plan(mansionPick, BUILDERS);
+    const over = PL.realS / 60 > STRETCH_MIN, wait = over ? 3 : 0;
+    const ox = 60, gateCol = D.gate0 != null ? D.gate0 + 5 : D.doorCol, gateX = colX(ox, gateCol), arrive = 12, open = arrive + wait;
+    const start = WORLD - 140, srcX = ox + (D.maxC + 6) * P;
     const walk = seg(T, 0, arrive), pairX = snap(lerp(start, gateX + 2 * P, held(walk, 6)));
     const camX = Math.round(Math.max(0, Math.min(WORLD - w, pairX - w * .45)));
-    const tb = PL.topOut - arrive + T;
+    const tb = PL.topOut - open + T;
     sky(g, k, w, h, t, 7);
     g.save(); g.translate(-camX, 0);
     ground(g, k, gy, WORLD, h);
-    for (let y = gy; y < h; y += P) for (let x = WORLD - 110; x < WORLD - 10; x += P) R(g, x, y, P, P, y > gy + 12 ? k.ink : k.paper);
-    for (let r = -3; r <= 3; r++) for (let c = -3; c <= 3; c++) if (Math.hypot(c, r) < 3.3) R(g, WORLD - 110 + c * P, gy + 24 + r * P, P, P, Math.hypot(c, r) > 2.2 ? k.purple : k.ink);
+    for (let y = gy; y < h; y += P) for (let x = WORLD - 108; x < WORLD - 12; x += P) R(g, x, y, P, P, y > gy + 12 ? k.ink : k.paper);
+    for (let r = -3; r <= 3; r++) for (let c = -3; c <= 3; c++) if (Math.hypot(c, r) < 3.3) R(g, WORLD - 108 + c * P, gy + 24 + r * P, P, P, Math.hypot(c, r) > 2.2 ? k.purple : k.ink);
     drawBuild(g, k, PL, ox, gy, tb, srcX);
-    garden(g, k, D, ox, gy, ease(seg(T, arrive, arrive + 1.5)), seg(T, arrive - 2.5, arrive - .5));
-    for (const sx of [780, 990, 1190]) station(g, k, sx, gy);
+    garden(g, k, D, ox, gy, ease(seg(T, open, open + 1.5)), seg(T, open - 2.5, open - .5));
+    for (const sx of [780, 990, 1188]) station(g, k, sx, gy);
     let joined = 0;
     for (let i = 0; i < 14; i++) {
       const home = 720 + i * 48, passT = arrive * clamp01((start - home) / (start - gateX - 12));
       const hx0 = snap(home + Math.sin(held(t, 4) * 2 + i) * 12);
       if (T < passT) { body(g, k, hx0, gy - W, k.ink); ticks(g, k, hx0, gy - W, 2 + i % 3); continue; }
       const slot = joined++, sx = (T < arrive ? pairX : gateX) + 7 * P + Math.floor(slot / 2) * 4 * P, sy = gy - W - (slot % 2) * P;
-      const back = seg(T, arrive + 3 + slot * .15, arrive + 8 + slot * .15);
+      const back = seg(T, open + 3 + slot * .15, open + 8 + slot * .15);
       const u = ease((T - passT) / .8);
       let x = snap(lerp(hx0, sx, u)), y = snap(lerp(gy - W, sy, u)) + (u >= 1 && back === 0 ? hopY(T, slot % 3) : 0);
       if (back > 0) { x = snap(lerp(sx, hx0, held(back, 8))); y = gy - W; }
       body(g, k, x, y, k.ink, slot % 2 && back === 0 ? .85 : 1); ticks(g, k, x, y, 2 + i % 3);
     }
-    const doorX = ox + D.doorC * P;
-    const pxp = T < arrive ? pairX : snap(lerp(gateX + 2 * P, doorX - 2 * P, ease(seg(T, arrive + 1.5, arrive + 3.5))));
+    const doorX = colX(ox, D.doorCol);
+    const pxp = T < open ? pairX : snap(lerp(gateX + 2 * P, doorX, ease(seg(T, open + 1.5, open + 3.5))));
     dressed(g, k, pxp, gy - W, 'you', { rim: k.ink, tone: k.ink });
-    dressed(g, k, pxp + 4 * P, gy - W - (Math.floor(held(T, 2) * 2) % 2) * P, 'sqouse', { rim: k.ink, tone: k.ink });
-    for (let i = 0; i < 6; i++) firework(g, k, ox + (D.minC + (i + .5) * (D.maxC - D.minC) / 6) * P, 50 + hash(i, 1, 181) * 50, T - arrive - .3 - (i % 2) * .15);
+    dressed(g, k, pxp + 4 * P, gy - W - (T < arrive ? (Math.floor(held(T, 2) * 2) % 2) * P : 0), 'sqouse', { rim: k.ink, tone: k.ink });
+    for (let i = 0; i < 6; i++) firework(g, k, ox + (D.minC + (i + .5) * (D.maxC - D.minC) / 6) * P, 50 + hash(i, 1, 181) * 50, T - open - .3 - (i % 2) * .15);
     g.restore();
-    return T < arrive ? `${T.toFixed(1)} s: walking home; the builders on its last courses` : T < arrive + 1.5 ? `${T.toFixed(1)} s: it tops out; the gate; one volley` : T < arrive + 4 ? `${T.toFixed(1)} s: to the door; the poles come out` : `${T.toFixed(1)} s: the crew drift back to work`;
+    sumTo('sum-home', PL);
+    return T < arrive ? `${T.toFixed(1)} s: walking home; the builders on its last courses`
+      : T < open ? `${T.toFixed(1)} s: the sum runs over: they stand at the gate and watch the last of it top out`
+      : T < open + 1.5 ? `${T.toFixed(1)} s: it tops out; the gate; one volley` : T < open + 4 ? `${T.toFixed(1)} s: to the door; the scaffold comes out` : `${T.toFixed(1)} s: the crew drift back to work`;
   },
 
   mA: (g, k, t, w, h) => mansionScene(g, k, t, w, h, 'A', 120, 'mA'),
@@ -1211,18 +1273,34 @@ const SCENES = {
   mBuild(g, k, t, w, h) {
     const D = design(mansionPick), PL = plan(mansionPick, BUILDERS), gy = h - 48;
     const ox = mansionPick === 'A' ? 60 : 90, srcX = Math.min(w - 132, ox + (D.maxC + 10) * P);
-    const period = PL.end + 5, T = t % period;
+    const CAUSE = 3, period = CAUSE + PL.end + 5, T = t % period, tb = T - CAUSE;
     sky(g, k, w, h, t, 9); ground(g, k, gy, w, h);
-    drawBuild(g, k, PL, ox, gy, T, srcX);
-    garden(g, k, D, ox, gy, 0, seg(T, PL.end, PL.end + 2));
-    let up = 0; for (const s of PL.pieceSet) if (s <= T) up++;
-    const firstPiece = PL.poles.length / PL.B * PL.T;
-    const phase = T < firstPiece ? 'beat 14, the cage falls: the build starts as a standing job; the scaffold carried in pole by pole'
-      : T < PL.topOut * .45 ? 'courses going up while beat 15 plays in hell'
-      : T < PL.topOut * .8 ? 'watched through the last stretch of the act'
-      : T < PL.topOut ? 'the walk home: its last courses'
-      : T < PL.end ? 'topped out: the poles carried back out' : 'the garden goes in';
-    return `${T.toFixed(1)} s of ${period.toFixed(0)}: ${up} of ${PL.N} pieces set by ${PL.B} builders (${D.source === 'rock' ? 'from the rock' : 'from the heaps'}); ${phase}`;
+    drawBuild(g, k, PL, ox, gy, tb, srcX);
+    garden(g, k, D, ox, gy, 0, seg(tb, PL.end, PL.end + 2));
+    if (T < CAUSE + 1) {
+      // the cause on screen: the anchor chains fall in hell and a word comes up the road from the cage,
+      // a purple mote along the ground from the pit's side to the builders, and a card over them
+      const u = seg(T, 0, 1.6), mx = snap(lerp(w, srcX + 2 * P, u));
+      C(g, mx, gy - 3 * P, k.purple, 1 - seg(T, 1.6, 2));
+      const ca = seg(T, 1.4, 1.8) * (1 - seg(T, CAUSE, CAUSE + 1));
+      if (ca > 0) {
+        g.globalAlpha = ca;
+        const bx = srcX - 30, by = gy - 15 * P;
+        R(g, bx, by, 216, 30, k.paper); for (const [x, y, ww, hh] of [[bx, by, 216, P], [bx, by + 24, 216, P], [bx, by, P, 30], [bx + 210, by, P, 30]]) R(g, x, y, ww, hh, k.purple);
+        label(g, k, bx + 12, by + 9, '[placeholder card: a word from below]', k.ink, 9);
+        g.globalAlpha = 1;
+      }
+    }
+    let up = 0; for (const s of PL.pieceSet) if (s <= tb) up++;
+    const scaffEnd = Math.ceil(PL.scaff.length / PL.B) * PL.T;
+    const phase = T < CAUSE ? 'wall-4, the anchor chains fall: the cage barrier\'s stretch begins, and a word comes up from the cage'
+      : tb < scaffEnd ? 'the scaffold carried up, section by section, bay by bay'
+      : tb < PL.topOut * .8 ? 'the cage barrier worked in hell; the mansion rising floor by floor here'
+      : tb < PL.topOut * .93 ? 'beats 14 and 15 (the cage falls, lives returned): cutscenes, the build runs on'
+      : tb < PL.topOut ? 'the walk home: its last courses'
+      : tb < PL.end ? 'topped out: the scaffold carried back out' : 'the garden goes in';
+    sumTo('sum-build', PL);
+    return `${T.toFixed(1)} s of ${period.toFixed(0)}: ${up} of ${PL.N} pieces set by ${PL.B} builders, from the rock; ${phase}`;
   },
   mArrive: (g, k, t, w, h) => arrival(g, k, t % 24, w, h),
   mSheet(g, k, t, w, h) {
@@ -1241,45 +1319,67 @@ const SCENES = {
     sky(g, k, w, h, t, 11); ground(g, k, gy, w, h);
     drawMansion(g, k, D, ox, gy, t);
     garden(g, k, D, ox, gy, 1);
-    // the tear still open, its stair down to the ground beside the mansion
-    const tx = ox + (D.maxC + 14) * P, ty = 54, steps = Math.round((gy - 12 - 120) / 12) + 1;
+    rockChunk(g, k, D, ox, gy);
+    const tx = ox + (D.maxC + 20) * P, ty = 54, steps = Math.round((gy - 12 - 120) / 12) + 1;
     heavenTear(g, k, tx, ty, t, .9);
     stair(g, k, tx - 3 * P, 120, steps, 1);
     stairGhosts(g, k, t, tx - 3 * P, 120, steps, 1, tx + 50 * P, 2, 18);
-    const bx = ox + D.benchC * P;
-    dressed(g, k, bx - 2 * P, gy - 2 * P - W + P, 'you', { rim: k.ink, tone: k.ink });
-    dressed(g, k, bx + P, gy - 2 * P - W + P, 'sqouse', { rim: k.ink, tone: k.ink });
-    FOCUS.wide = [bx, gy - 30];
+    sitPair(g, k, D, ox, gy);
+    FOCUS.wide = [ox + (D.bench0 + 4) * P, gy - 4 * P];
     for (let i = 0; i < 6; i++) body(g, k, ox + (D.maxC + 3 + i * 4) * P, gy - W, k.soul, .85);
-    const y0 = Math.max(ox + (D.maxC + 64) * P, 900);
+    const y0 = Math.max(ox + (D.maxC + 70) * P, 900);
     station(g, k, y0, gy); station(g, k, y0 + 156, gy, 9, 7); heap(g, k, y0 + 66, gy, 5); heap(g, k, y0 + 228, gy, 3);
     for (let i = 0; i < 6; i++) hauler(g, k, t, i, y0 - 24, y0 + 222, gy, { ticks: 1 + i % 4 });
     const px = w - 168;
     for (let y = gy; y < h; y += P) for (let x = px; x < w - 18; x += P) R(g, x, y, P, P, y > gy + 12 ? k.ink : k.paper);
     for (let r = -4; r <= 4; r++) for (let c = -4; c <= 4; c++) { const d = Math.hypot(c, r); if (d < 4.3) R(g, px + c * P, gy + 30 + r * P, P, P, d > 3 ? (hash(c, r, 191) < .6 ? k.purple : k.g4) : k.ink); }
   },
+  heavenDark(g, k, t, w, h) {
+    // the tear on the dark page, before (mapped like the yard) and after (landed, a light source)
+    const kd = makePal('dark');
+    R(g, 0, 0, w, h, kd.paper);
+    lens(g, kd, w * .25, h / 2 + 12, 7, 10, t, null, kd);
+    lens(g, kd, w * .75, h / 2 + 12, 7, 10, t, null, kd.deep);
+    label(g, kd, 12, 8, 'before: mapped (reads as soot)', kd.mid, 9);
+    label(g, kd, w / 2 + 12, 8, 'after: landed (stays light)', kd.mid, 9);
+  },
 };
+// The leftover of the rock that killed them, kept in the garden beside the mansion.
+function rockChunk(g, k, D, ox, gy) { rock(g, k, ox + (D.maxC + 12) * P, gy - 2 * P, 3); }
+// the pair sat on the bench under the door
+function sitPair(g, k, D, ox, gy) {
+  dressed(g, k, ox + (D.bench0 + 1) * P, gy - 2 * P - W, 'you', { rim: k.ink, tone: k.ink });
+  dressed(g, k, ox + (D.bench0 + 4) * P, gy - 2 * P - W, 'sqouse', { rim: k.ink, tone: k.ink });
+}
+// The honest sum, printed beside the strip: every job's own round trip at a body's walk,
+// over the player's builders, against the cage barrier's stretch.
+function sumTo(id, PL) {
+  const el = document.getElementById(id); if (!el) return;
+  const m = PL.realS / 60, over = m > STRETCH_MIN;
+  el.textContent = `the real sum: ${PL.jobs} carries (${PL.N} pieces + the scaffold up and down), each its own round trip at ${REAL_WALK_PX_S / P} cells/s plus ${REAL_SET_S} s to set, over ${PL.B} builders = ${m.toFixed(1)} min, against the cage barrier's stretch of ${STRETCH_MIN} min (assumed): ` +
+    (over ? `runs over by ${(m - STRETCH_MIN).toFixed(1)} min, so the pair stand at the gate and watch it top out` : `fits, with ${(STRETCH_MIN - m).toFixed(1)} min to spare`);
+}
 function mansionScene(g, k, t, w, h, name, ox, id) {
   const D = design(name), gy = h - 48;
   sky(g, k, w, h, t, 13); ground(g, k, gy, w, h);
   drawMansion(g, k, D, ox, gy, t);
   garden(g, k, D, ox, gy, 0);
-  if (name !== 'C') { house(g, k, w - 18 * P - 12, gy); label(g, k, w - 18 * P - 12, gy + 10, 'the old house, for size', k.mid, 9); }
-  FOCUS[id] = [ox + D.doorC * P + 3 * P, gy - 3 * P];
+  rockChunk(g, k, D, ox, gy);
+  if (name === 'B') { house(g, k, w - 18 * P - 12, gy); label(g, k, w - 18 * P - 12, gy + 10, 'the old house, for size', k.mid, 9); }
+  FOCUS[id] = [colX(ox, D.doorCol) + 4 * P, gy - 4 * P];
 }
 // The last stretch: the gate, the souls down the stair, one volley, the crew back to work,
 // the pair to the bench, a window.
 function arrival(g, k, T, w, h, still) {
   const D = design(mansionPick), gy = h - 48, ox = mansionPick === 'A' ? 60 : 90;
   sky(g, k, w, h, T, 15); ground(g, k, gy, w, h);
-  const doorX = ox + D.doorC * P, bx = ox + D.benchC * P;
-  // the window by the door lights at the end
-  const lit = {}; const near = D.wins.reduce((b, wn) => (!b || Math.abs(wn.c0 - D.doorC) + Math.abs(wn.r0 + 6) < Math.abs(b.c0 - D.doorC) + Math.abs(b.r0 + 6)) ? wn : b, null);
+  const gateCol = D.gate0 != null ? D.gate0 + 5 : D.doorCol;
+  const lit = {}; const near = D.wins.reduce((b, wn) => (!b || Math.abs(wn.c0 - D.doorCol) + Math.abs(wn.r0 + 6) < Math.abs(b.c0 - D.doorCol) + Math.abs(b.r0 + 6)) ? wn : b, null);
   for (const wn of D.wins) lit[wn.id] = 0;
   if (near) lit[near.id] = seg(T, 14, 16);
   drawMansion(g, k, D, ox, gy, T, null, lit);
   garden(g, k, D, ox, gy, ease(seg(T, .5, 2.5)));
-  // the tear and its stair at the right; the freed souls walk down and stand
+  rockChunk(g, k, D, ox, gy);
   const tx = w - 36, ty = 54, steps = Math.round((gy - 12 - 120) / 12) + 1;
   heavenTear(g, k, tx, ty, T, .9);
   stair(g, k, tx + 3 * P, 120, steps, -1);
@@ -1290,8 +1390,7 @@ function arrival(g, k, T, w, h, still) {
     const [x, y] = u < 1 ? along([...pts, [pts[pts.length - 1][0] - 2 * P, gy - W], spot], held(u, 24)) : spot;
     if (u > 0) body(g, k, x, y, k.soul, .85);
   }
-  // the crew: two files behind the pair, then back to work
-  const fx = snap(ox + ((D.gateC ?? D.doorC) + 8) * P);
+  const fx = colX(ox, gateCol) + 8 * P;
   for (let i = 0; i < 12; i++) {
     const sx = fx + Math.floor(i / 2) * 4 * P, back = seg(T, 6 + i * .3, 11 + i * .3);
     const x = snap(lerp(sx, w + 40 + i * 24, held(back, 10))), y = back > 0 ? gy - W : gy - W - (i % 2) * P + hopY(T, i % 3);
@@ -1299,11 +1398,13 @@ function arrival(g, k, T, w, h, still) {
   }
   // the pair: at the gate, to the bench, sat
   const walk = held(seg(T, 6, 12), 6), sat = T >= 12.5;
-  const ax = snap(lerp(ox + (D.gateC ?? D.doorC) * P - 2 * P, bx - 2 * P, walk));
-  const ay = sat ? gy - 2 * P - W + P : gy - W;
-  dressed(g, k, ax, ay, 'you', { rim: k.ink, tone: k.ink });
-  dressed(g, k, ax + 3 * P, ay - (!sat ? (Math.floor(held(T, 2) * 2) % 2) * P : 0), 'sqouse', { rim: k.ink, tone: k.ink });
-  FOCUS.mArrive = FOCUS.mSheet = [ax + 3 * P, ay];
+  if (sat) sitPair(g, k, D, ox, gy);
+  else {
+    const ax = snap(lerp(colX(ox, gateCol), ox + (D.bench0 + 1) * P, walk));
+    dressed(g, k, ax, gy - W, 'you', { rim: k.ink, tone: k.ink });
+    dressed(g, k, ax + 3 * P, gy - W - (Math.floor(held(T, 2) * 2) % 2) * P, 'sqouse', { rim: k.ink, tone: k.ink });
+  }
+  FOCUS.mArrive = FOCUS.mSheet = [ox + (D.bench0 + 4) * P, gy - 4 * P];
   for (let i = 0; i < 6; i++) firework(g, k, ox + (D.minC + (i + .5) * (D.maxC - D.minC) / 6) * P, 40 + hash(i, 1, 201) * 40, T - 3 - (i % 2) * .15);
   return T < 3 ? `${T.toFixed(1)} s: the gate opens; the souls start down the stair` : T < 5 ? `${T.toFixed(1)} s: one volley` : T < 12 ? `${T.toFixed(1)} s: the crew drift back to work; the pair walk to the bench` : T < 14 ? `${T.toFixed(1)} s: they sit` : T < 16 ? `${T.toFixed(1)} s: a window lights` : `${T.toFixed(1)} s: held; then the sheet`;
 }
