@@ -9,7 +9,8 @@
 import { group, ok, run, runUntil, yard, P } from './helpers.mjs';
 import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
          ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_SHOUT_REBEL, AFTER_SHOUT_REBEL_UP, AFTER_PLOTS0, AFTER_PLOT_MAX,
-         AFTER_UPGRADES, AFTER_CARDS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL } from '../src/config.js';
+         AFTER_UPGRADES, AFTER_CARDS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL,
+         AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_SAW_S, AFTER_TIP_LOAD, AFTER_CHIP_SAWDUST } from '../src/config.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
 
@@ -205,47 +206,161 @@ group('a soul whose rim closes walks out of God\'s yard to the camp', async () =
   ];
 });
 
-// The chain, bought row by row: the doors and the posts, from a camp of
-// members. Shared by the chain, the support and the reload groups.
+// Stations bought on the shack, each in turn, and the clock turned until it
+// stands (one may need the one before).
+function raise(...keys) {
+  return keys.every(k => window.__buy(`after-build-${k}`) && runUntil(() => read().built.includes(k), 180));
+}
+
+group('a station bought on the shack is raised a piece at a time by a member from the camp', async () => {
+  up();
+  settle();
+  window.__afterGrant({ rebel: 200 });
+  const shown = window.__afterRows().filter(r => r.card === 'shack' && r.shown).map(r => r.key);
+  const locked = window.__buy('after-build-workshop');
+  const camp0 = read().camp;
+  const bought = window.__buy('after-build-mill');
+  run(0.1);
+  const builder = S.after.bodies.find(b => b.job === 'builder');
+  const pieces = [];
+  runUntil(() => { const r = S.after.raising.mill; if (r && pieces.at(-1) !== r.n) pieces.push(r.n); return read().built.includes('mill'); }, 120);
+  const n = S.after.raising.mill.at.length;
+  run(30);
+  const back = read().camp;
+  window.__actsOn(null);
+  return [
+    ok(['mill', 'chipper', 'workshop', 'papermill', 'press'].every(k => shown.includes(`after-build-${k}`)),
+       'every station is on the shack\'s board from the start', shown.join(' ')),
+    ok(!locked, 'one that needs another first cannot be bought before it'),
+    ok(bought && builder && builder.pair == null && read().camp <= camp0, 'bought, a member leaves the camp to build it'),
+    ok(pieces.join(' ') === '0 1 2 3 4' && n === AFTER_BUILD_PIECES, 'it goes up a piece at a time, standing only with the last', pieces.join(' ')),
+    ok(back === camp0, 'and the builder walks back to the camp after', `${camp0} -> ${back}`)
+  ];
+});
+
+group('with nobody in the camp the pair step down and build, and climb back up', async () => {
+  up();
+  settle();
+  S.after.camp = 0;
+  window.__afterGrant({ rebel: 200 });
+  window.__buy('after-build-chipper');
+  run(0.1);
+  const pair = S.after.bodies.filter(b => b.job === 'builder' && b.pair != null).length;
+  const quiet = !line();
+  const stood = runUntil(() => read().built.includes('chipper'), 120);
+  const home = runUntil(() => !S.after.bodies.some(b => b.job === 'builder'), 60);
+  window.__actsOn(null);
+  return [
+    ok(pair === 2, 'the two of them come down off the pedestal', `${pair}`),
+    ok(quiet, 'and while they are down a click on the pedestal gives no line'),
+    ok(stood && home, 'the station stands and they climb back up')
+  ];
+});
+
+group('a station is worked by the click before any member, and a post works it slower', async () => {
+  up();
+  window.__afterGrant({ rebel: 500, logs: 20 });
+  raise('mill');
+  const at = window.__afterAt('mill');
+  const t0 = read().timber;
+  for (let k = 0; k < 5; k++) window.__afterClick(at.x, at.y);
+  const byHand = read().timber - t0;
+  settle();
+  window.__buy('after-post-sawyer');
+  runUntil(() => S.after.bodies.some(b => b.at === 'mill'), 60);
+  const l0 = read().logs;
+  run(12);
+  const byPost = l0 - read().logs;
+  window.__actsOn(null);
+  return [
+    ok(byHand === 5 * AFTER_LOG_TIMBER, 'five clicks on the saw mill, five cuts', `${byHand} timber`),
+    ok(byPost >= 1 && byPost <= Math.ceil(12 / AFTER_SAW_S), 'a sawyer at its post cuts on its own clock, slower than a hand', `${byPost} cuts in 12 s`)
+  ];
+});
+
+group('with no paper mill the heap stops the saw, and a click on it tips a load through the notch', async () => {
+  up();
+  window.__afterGrant({ rebel: 2000, logs: 4, timber: 40 });
+  raise('mill');
+  window.__afterGrant({ sawdust: AFTER_SAWDUST_BRIM });
+  const at = window.__afterAt('mill'), heap = window.__afterAt('heap');
+  const stopped = !window.__afterClick(at.x, at.y) || read().logs === 4;
+  const d0 = read().sawdust;
+  const tipped = window.__afterClick(heap.x, heap.y);
+  const d1 = read().sawdust;
+  const sawn = window.__afterClick(at.x, at.y) && read().logs === 3;
+  // With a paper mill the heap has somewhere better to go.
+  raise('papermill');
+  const kept = !window.__afterClick(heap.x, heap.y);
+  window.__actsOn(null);
+  return [
+    ok(stopped, 'the heap at its brim stops the saw'),
+    ok(tipped && d0 - d1 === AFTER_TIP_LOAD, 'a click on the heap tips a load off it', `${d0} -> ${d1}`),
+    ok(sawn, 'and the saw runs again'),
+    ok(kept, 'once the paper mill stands, the heap is not tipped')
+  ];
+});
+
+group('the chipper turns logs into sawdust alone, and haulers feed the smaller pile', async () => {
+  up();
+  window.__afterGrant({ rebel: 2000, chiplogs: 2 });
+  raise('chipper');
+  const at = window.__afterAt('chipper');
+  const t0 = read().timber, d0 = read().sawdust;
+  window.__afterClick(at.x, at.y);
+  const chipped = read().sawdust - d0 === AFTER_CHIP_SAWDUST && read().timber === t0;
+  raise('mill');
+  window.__afterGrant({ logs: 3 });
+  S.after.plots[0].logs = 4;                 // logs lying in the grove, as a felled tree leaves them
+  settle();
+  window.__buy('after-post-hauler');
+  const fed = runUntil(() => read().chiplogs > 1, 240);
+  window.__actsOn(null);
+  return [
+    ok(chipped, 'a click on the chipper turns a log into sawdust, no timber', `${read().sawdust - d0} sawdust`),
+    ok(fed && read().logs === 3, 'a hauler takes the grove\'s logs to the chipper, the smaller pile', `${read().logs} ${read().chiplogs}`)
+  ];
+});
+
+// The chain, bought row by row: the stations raised off the shack, then the
+// posts, from a camp of members. Shared by the chain, the support and the
+// reload groups.
 function buildChain() {
   up();
   members(24);
   // Logs at the saw already, as felled old growth would leave them: the grove
   // has its own checks above.
   window.__afterGrant({ rebel: 5000, timber: 60, logs: 16 });
-  const bought = [];
-  for (const k of ['after-door-mill', 'after-door-workshop', 'after-plot', 'after-plot', 'after-stumps']) bought.push([k, window.__buy(k)]);
+  const bought = [['raised', raise('mill', 'workshop')]];
+  for (const k of ['after-plot', 'after-plot', 'after-stumps']) bought.push([k, window.__buy(k)]);
   for (const job of ['woodcutter', 'woodcutter', 'hauler', 'hauler', 'hauler', 'sawyer', 'sawyer', 'joiner', 'carrier', 'carrier'])
     bought.push([job, window.__buy(`after-post-${job}`)]);
   return bought;
 }
 
-group('the chain makes timber and sawdust, then signs, and the heap brims until the paper mill', async () => {
+group('the chain makes timber and sawdust, then signs, and a sawyer tips the full heap until the paper mill', async () => {
   const bought = buildChain();
-  let brim = false, swept = false;
+  let brim = false, tipped = false;
   for (let k = 0; k < 960; k++) {
     run(0.25);
     if (S.after.stock.sawdust >= AFTER_SAWDUST_BRIM) brim = true;
-    if (S.after.bodies.some(b => b.load === 'sawdust')) swept = true;
+    if (S.after.bodies.some(b => b.load === 'tip')) tipped = true;
   }
   const mid = read();
-  // The slowdown, and its branch.
-  window.__afterCrowd(0.45);
+  // The second branch, raised off the shack.
   window.__afterGrant({ timber: 100, rebel: 2000 });
-  run(1);
-  const gate2 = read().gate;
   S.after.camp += 6;                         // hands for the branch: the walk out is checked above
-  const b2 = ['after-door-papermill', 'after-door-press', 'after-post-pulper', 'after-post-printer', 'after-post-paster']
-    .map(k => [k, window.__buy(k)]);
+  const raised = raise('papermill', 'press');
+  const b2 = ['after-post-pulper', 'after-post-printer', 'after-post-paster'].map(k => [k, window.__buy(k)]);
   run(150);
   const end = read();
   window.__actsOn(null);
   return [
-    ok(bought.every(([, b]) => b), 'the doors and the posts are bought through their rows', JSON.stringify(bought.filter(([, b]) => !b))),
+    ok(bought.every(([, b]) => b), 'the stations and the posts are bought through their rows', JSON.stringify(bought.filter(([, b]) => !b))),
     ok(mid.timber > 0 || mid.signs > 0 || S.after.signs.length > 0, 'logs reach the mill and are sawn into timber', JSON.stringify(mid)),
-    ok(brim && swept, 'the sawdust heaps to its brim and a sawyer sweeps it off the edge', `brim ${brim} swept ${swept}`),
+    ok(brim && tipped, 'the sawdust heaps to its brim and a sawyer tips a load through the notch', `brim ${brim} tipped ${tipped}`),
     ok(S.after.signs.length > 0, 'the workshop makes signs and a carrier plants them in the crowd', `${S.after.signs.length}`),
-    ok(gate2 === 2 && b2.every(([, b]) => b), 'the slowdown offers the paper mill and the press', `${gate2} ${JSON.stringify(b2)}`),
+    ok(raised && b2.every(([, b]) => b), 'the paper mill and the press are raised and posted', JSON.stringify(b2)),
     ok(end.paper > 0 || end.posters > 0 || S.after.posters.length > 0, 'the paper mill pulps sawdust into paper', JSON.stringify(end)),
     ok(S.after.posters.length > 0, 'the press prints posters and a paster pastes them on the fence', `${S.after.posters.length}`)
   ];
@@ -324,16 +439,13 @@ group('a big crowd costs the frame little, and only its files in view are drawn'
   ];
 });
 
-group('the mill\'s second blade saws two logs a cut, and its fence is bought, then a dial', async () => {
+group('the mill\'s second blade saws two logs a cut, at the fixed split', async () => {
   up();
   members(2);
   window.__afterGrant({ rebel: 2000, timber: 60 });
-  window.__buy('after-door-mill');
+  raise('mill');
   window.__buy('after-post-sawyer');
-  const early = window.__afterDial('after-cut', 3);
-  const fence = window.__buy('after-fence');
   const blade = window.__buy('after-blade');
-  const set = window.__afterDial('after-cut', 3);
   window.__afterGrant({ logs: 6 });
   const t0 = read().timber, d0 = read().sawdust;
   runUntil(() => S.after.bodies.some(b => b.at === 'mill'), 90);
@@ -342,10 +454,9 @@ group('the mill\'s second blade saws two logs a cut, and its fence is bought, th
   runUntil(() => { const l = read().logs; if (l !== last) { cuts.push(last - l); last = l; } return l === 0; }, 90);
   window.__actsOn(null);
   return [
-    ok(!early && fence && set, 'the fence is bought on the mill\'s card, and only then is its cut a dial'),
     ok(blade && cuts.every(c => c === 2), 'with the second blade every cut takes two logs', cuts.join(' ')),
-    ok(read().timber - t0 === 18 && read().sawdust - d0 === 6, 'set fine, a log saws into three timber and one sawdust',
-       `${read().timber - t0} timber, ${read().sawdust - d0} sawdust`)
+    ok(read().timber - t0 === 6 * AFTER_LOG_TIMBER && read().sawdust - d0 === 6 * AFTER_LOG_SAWDUST,
+       'a log saws into the fixed timber and sawdust', `${read().timber - t0} timber, ${read().sawdust - d0} sawdust`)
   ];
 });
 
@@ -376,7 +487,7 @@ group('every act-3 card sells two or three named upgrades, none of them a ladder
   up();
   const rows = window.__afterRows();
   const ups = Object.entries(AFTER_UPGRADES);
-  const perCard = AFTER_CARDS.filter(c => c !== 'hall')
+  const perCard = AFTER_CARDS.filter(c => c !== 'shack')
     .map(c => [c, ups.filter(([, u]) => u.card === c).length]);
   const long = ups.filter(([k, u]) => u.bills.length > (k === 'after-plot' ? AFTER_PLOT_MAX - AFTER_PLOTS0 : 1)).map(([k]) => k);
   const coins = new Set(ups.flatMap(([, u]) => u.bills.flat().map(([c]) => c)));

@@ -21,14 +21,16 @@
 import { S } from '../state.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S, AFTER_PASTE_S,
-         AFTER_PASTE_LOAD, AFTER_PRESS_S, AFTER_SAW_S, AFTER_SIGN_S, AFTER_PULP_S, AFTER_CHOP_HOLD_S } from '../config.js';
+         AFTER_PASTE_LOAD, AFTER_PRESS_S, AFTER_SAW_S, AFTER_CHIP_S, AFTER_SIGN_S, AFTER_PULP_S, AFTER_CHOP_HOLD_S } from '../config.js';
 import { secs, walk, nextId } from './util.js';
 import { built, stumpsOn } from './levels.js';
-import { afterFloor, stationDoor, plotX, edgeX, soulX, soulY, slotX, groveX1, campSpot, agitatorX } from './place.js';
+import { afterFloor, stationDoor, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, agitatorX, speakerAt } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, takeLog } from './grove.js';
-import { sweepDue, sawLog, takeSweep, pulpSheet } from './mill.js';
-import { joinSign, printStack, signSpot, plantSign, freeSlot, pastePoster } from './press.js';
+import { sweepDue, tipSawdust } from './mill.js';
+import { signSpot, plantSign, freeSlot, pastePoster } from './press.js';
+import { workAfter } from './work.js';
+import { fillBuilders, layPiece, pieceS } from './build.js';
 
 const floorY = () => afterFloor();
 // Where a member waits for work at its post: its station's door, or the
@@ -68,15 +70,25 @@ function fillPosts() {
 }
 
 // --- each job's frame ------------------------------------------------------------------
-// A station's worker: at its door, the work done on its clock by the body
-// standing there. `make` returns false while the station's input is short,
-// and the clock holds full until it is not.
-function stationWork(w, key, period, make, dt) {
+// A station's worker: at its door, a unit of the station's work (work.js)
+// done on its clock by the body standing there, slower than the hand. The
+// clock holds full while the station's input is short.
+function stationWork(w, key, period, dt) {
   if (!built(key)) { w.at = null; idle(w, dt); return; }
   if (!walk(w, stationDoor(key) + (w.id % 3) * P, floorY(), dt)) { w.at = null; return; }
   w.at = key;
   w.t = Math.min(period, w.t + dt);
-  if (w.t >= period && make()) w.t = 0;
+  if (w.t >= period && workAfter(key, 1)) w.t = 0;
+}
+// Where a hauler takes a log: whichever of the saw mill and the chipper,
+// among those standing, has the smaller pile; the mill on a tie. Null with
+// neither standing.
+const PILE = { mill: 'logs', chipper: 'chiplogs' };
+function logTo() {
+  const st = S.after.stock;
+  const up = Object.keys(PILE).filter(k => built(k));
+  if (!up.length) return null;
+  return up.reduce((b, k) => (st[PILE[k]] < st[PILE[b]] ? k : b));
 }
 // The plot of `test` nearest `w`, one no other woodcutter has claimed first
 // if there is one.
@@ -117,9 +129,14 @@ const JOB_STEP = {
   hauler(w, dt) {
     const a = S.after;
     if (w.load === 'log') {
-      if (walk(w, stationDoor('mill') - P * 2, floorY(), dt)) { a.stock.logs += 1; w.load = null; w.target = null; }
+      // Chosen as it sets off with the log, and kept: a pile that drops
+      // behind on the way does not turn it round.
+      if (!w.to || !built(w.to)) w.to = logTo();
+      if (!w.to) { idle(w, dt); return; }
+      if (walk(w, stationDoor(w.to) - P * 2, floorY(), dt)) { a.stock[PILE[w.to]] += 1; w.load = null; w.target = null; w.to = null; }
       return;
     }
+    if (!logTo()) { idle(w, dt); return; }
     let i = w.target;
     if (i == null || !a.plots[i] || a.plots[i].logs <= 0) {
       const claimed = k => a.bodies.filter(o => o !== w && o.job === AFTER_JOB.HAUL && o.target === k && !o.load).length;
@@ -128,23 +145,41 @@ const JOB_STEP = {
     }
     if (w.target == null) { idle(w, dt); return; }
     if (!walk(w, plotX(w.target) + P, floorY(), dt)) return;
-    if (takeLog(w.target)) w.load = 'log';
+    if (takeLog(w.target)) { w.load = 'log'; w.to = logTo(); }
     w.target = null;
   },
   sawyer(w, dt) {
-    // Off the saw while the heap is at its brim: a load swept off the cloud's
-    // edge, and back.
-    if (w.load === 'sawdust') {
+    // Off the saw while the heap has stood at its brim: to the notch beside
+    // it, a load tipped through, and back.
+    if (w.load === 'tip') {
       w.at = null;
-      if (walk(w, edgeX(), floorY(), dt)) { w.load = null; w.n = 0; }
+      if (walk(w, notchX(), floorY(), dt)) { tipSawdust(); w.load = null; }
       return;
     }
-    if (built('mill') && sweepDue() && w.at === 'mill') { w.n = takeSweep(); w.load = 'sawdust'; w.at = null; return; }
-    stationWork(w, 'mill', AFTER_SAW_S, sawLog, dt);
+    if (built('mill') && sweepDue() && w.at === 'mill' && !S.after.bodies.some(o => o.load === 'tip')) { w.load = 'tip'; w.at = null; return; }
+    stationWork(w, 'mill', AFTER_SAW_S, dt);
   },
-  pulper(w, dt) { stationWork(w, 'papermill', AFTER_PULP_S, pulpSheet, dt); },
-  joiner(w, dt) { stationWork(w, 'workshop', AFTER_SIGN_S, joinSign, dt); },
-  printer(w, dt) { stationWork(w, 'press', AFTER_PRESS_S, printStack, dt); },
+  feeder(w, dt) { stationWork(w, 'chipper', AFTER_CHIP_S, dt); },
+  pulper(w, dt) { stationWork(w, 'papermill', AFTER_PULP_S, dt); },
+  joiner(w, dt) { stationWork(w, 'workshop', AFTER_SIGN_S, dt); },
+  printer(w, dt) { stationWork(w, 'press', AFTER_PRESS_S, dt); },
+  builder(w, dt) {
+    // At the site's door a piece a stretch; the station up, home: a member
+    // back to the camp (walking out again, counted on arrival), the pair back
+    // up onto the pedestal.
+    if (w.state === 'home') {
+      const at = speakerAt(w.pair);
+      if (walk(w, at.x + P, at.y, dt)) w.state = 'gone';
+      return;
+    }
+    if (built(w.site)) {
+      if (w.pair != null) { w.state = 'home'; return; }
+      w.job = null; w.state = 'out'; w.site = null; return;
+    }
+    if (!walk(w, stationDoor(w.site) + (w.pair ? P * 4 : 0), floorY(), dt)) return;
+    w.t += dt;
+    if (w.t >= pieceS()) { w.t = 0; w.swing = S.after.t; if (w.pair !== 1) layPiece(w.site); }
+  },
   carrier(w, dt) {
     const a = S.after;
     if (!built('workshop')) { idle(w, dt); return; }
@@ -216,9 +251,8 @@ export function stepBodies(c) {
     }
     (JOB_STEP[w.job] || idle)(w, dt);
   }
-  if (arrived) {
-    a.bodies = a.bodies.filter(w => w.state !== 'camp');
-    a.camp += arrived;
-  }
+  if (arrived) a.camp += arrived;
+  if (arrived || a.bodies.some(w => w.state === 'gone')) a.bodies = a.bodies.filter(w => w.state !== 'camp' && w.state !== 'gone');
+  fillBuilders();
   fillPosts();
 }

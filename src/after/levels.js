@@ -5,7 +5,8 @@
 
 import { S } from '../state.js';
 import { AFTER_UPGRADES, AFTER_PLOTS0, AFTER_SHOUT_REBEL, AFTER_SHOUT_REBEL_UP, TREE_GROW_S, AFTER_GROW_S_UP,
-         AFTER_BLADE_LOGS, AFTER_BENCH_SIGNS, AFTER_VAT_SHEETS, AFTER_STACK, AFTER_STACK_UP,
+         AFTER_BLADE_LOGS, AFTER_BENCH_SIGNS, AFTER_VAT_SHEETS, AFTER_DRY_SHEETS, AFTER_STACK, AFTER_STACK_UP,
+         AFTER_SAWDUST_BRIM, AFTER_SAWDUST_BRIM_UP, AFTER_CHIP_LOGS, AFTER_CHIP_SAWDUST, AFTER_CHIP_SAWDUST_UP,
          SIGN_REACH, SIGN_REACH_UP, POSTER_REACH, POSTER_REACH_UP } from '../config.js';
 
 export const upCount = key => Math.max(0, Math.min(AFTER_UPGRADES[key].bills.length, (S.after && S.after.ups[key]) || 0));
@@ -22,13 +23,17 @@ export const bigPosters = () => has('after-posterreach');
 // Woodcutters dig stumps out too, once stump removal is bought.
 export const stumpsOn = () => has('after-stumps');
 export const bladeLogs = () => (has('after-blade') ? AFTER_BLADE_LOGS : 1);
-export const fenceOn = () => has('after-fence');
+export const heapBrim = () => (has('after-heap') ? AFTER_SAWDUST_BRIM_UP : AFTER_SAWDUST_BRIM);
+export const chipLogs = () => (has('after-drum') ? AFTER_CHIP_LOGS : 1);
+export const chipSawdust = () => (has('after-spout') ? AFTER_CHIP_SAWDUST_UP : AFTER_CHIP_SAWDUST);
 export const benchSigns = () => (has('after-bench') ? AFTER_BENCH_SIGNS : 1);
-export const vatSheets = () => (has('after-vat') ? AFTER_VAT_SHEETS : 1);
+export const vatSheets = () => (has('after-vat') ? AFTER_VAT_SHEETS : 1) * (has('after-dry') ? AFTER_DRY_SHEETS : 1);
 export const stackOf = () => (has('after-stack') ? AFTER_STACK_UP : AFTER_STACK);
 export const signReach = big => (big ? SIGN_REACH_UP : SIGN_REACH);
 export const posterReach = big => (big ? POSTER_REACH_UP : POSTER_REACH);
 
-// Whether a station stands: bought, or standing from the start. The grove is
-// open from the act's first frame.
+// Whether a station stands: raised to its last piece, or standing from the
+// start. The grove is open from the act's first frame.
 export const built = key => !!S.after && (key === 'grove' || S.after.built.includes(key));
+// Whether it is bought and going up a piece at a time.
+export const raising = key => !!S.after && !!S.after.raising[key] && !built(key);

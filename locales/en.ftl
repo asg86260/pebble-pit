@@ -3490,8 +3490,8 @@ after-row-stumps = stump removal
 # act 3 card row (placeholder): the saw mill's second blade, two logs a cut
 after-row-blade = second blade
 
-# act 3 card row (placeholder): the saw mill's fence, bought
-after-row-fence = fence
+# act 3 card row (placeholder): the saw mill's bigger sawdust heap
+after-row-heap = bigger heap
 
 # act 3 card row (placeholder): the workshop's second bench, two signs at once
 after-row-bench = second bench
@@ -3499,17 +3499,23 @@ after-row-bench = second bench
 # act 3 card row (placeholder): the workshop's bigger sign, a further reach
 after-row-signreach = bigger sign
 
-# act 3 card row (placeholder): the paper mill's second vat, two sheets a pull
-after-row-vat = second vat
+# act 3 card row (placeholder): the paper mill's bigger vat, more paper a batch
+after-row-vat = bigger vat
+
+# act 3 card row (placeholder): the paper mill's drying line, a second sheet at once
+after-row-dry = drying line
+
+# act 3 card row (placeholder): the chipper's second drum, two logs a feed
+after-row-drum = second drum
+
+# act 3 card row (placeholder): the chipper's wider spout, more sawdust a log
+after-row-spout = wider spout
 
 # act 3 card row (placeholder): the press's bigger stack, more posters a stack
 after-row-stack = bigger stack
 
 # act 3 card row (placeholder): the press's bigger poster, a further reach
 after-row-posterreach = bigger poster
-
-# act 3 card dial (placeholder): the saw mill's fence, timber against sawdust
-after-row-cut = cut
 
 # act 3 card row (placeholder): a post for a agitator, held by a member from the camp
 after-job-agitator = agitator
@@ -3522,6 +3528,9 @@ after-job-hauler = hauler
 
 # act 3 card row (placeholder): a post for a sawyer, held by a member from the camp
 after-job-sawyer = sawyer
+
+# act 3 card row (placeholder): a post for a feeder at the chipper, held by a member from the camp
+after-job-feeder = feeder
 
 # act 3 card row (placeholder): a post for a pulper, held by a member from the camp
 after-job-pulper = pulper
@@ -3538,22 +3547,34 @@ after-job-printer = printer
 # act 3 card row (placeholder): a post for a paster, held by a member from the camp
 after-job-paster = paster
 
-# act 3 hall row (placeholder): build the saw mill
-after-door-mill = saw mill
+# act 3 shack row (placeholder): build the saw mill
+after-build-mill = saw mill
 
-# act 3 hall row (placeholder): build the workshop
-after-door-workshop = workshop
+# act 3 shack row (placeholder): build the chipper
+after-build-chipper = chipper
 
-# act 3 hall row (placeholder): build the paper mill
-after-door-papermill = paper mill
+# act 3 shack row (placeholder): build the workshop
+after-build-workshop = workshop
 
-# act 3 hall row (placeholder): build the printing press
-after-door-press = press
+# act 3 shack row (placeholder): build the paper mill
+after-build-papermill = paper mill
+
+# act 3 shack row (placeholder): build the press
+after-build-press = press
+
+# act 3 shack row's wait (placeholder): the saw mill must stand first
+after-wait-mill = needs the saw mill
+
+# act 3 shack row's wait (placeholder): the saw mill or the chipper must stand first
+after-wait-sawdust = needs the saw mill or the chipper
+
+# act 3 shack row's wait (placeholder): the paper mill must stand first
+after-wait-papermill = needs the paper mill
 
 # act 3 card heading (placeholder): the station's posts
 after-sect-posts = posts
 
-# act 3 hall heading (placeholder): the stations to build
+# act 3 shack heading (placeholder): the stations to build
 after-sect-build = build
 
 # act 3 station card heading (placeholder)

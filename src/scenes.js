@@ -456,7 +456,8 @@ const lookAtOrb = () => {
 // Act 3's chain stood up the way the cards sell it (after/rows.js): the
 // afterlife begun by the dev travel, a block of the crowd made members (the
 // setup a scene is not about) and run on until they have walked out to the
-// camp, rebel and timber granted, the doors and the posts bought row by row;
+// camp, rebel and timber granted, the stations bought on the shack and run on
+// until they stand, then the posts and the upgrades bought row by row;
 // `slow` carries the crowd past the slowdown and buys its branch.
 function afterChain(slow) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
@@ -466,15 +467,15 @@ function afterChain(slow) {
                            : (i, v) => (i < 40 ? 8 : v));
   for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
   S.after.camp += slow ? 30 : 0;   // the members a patchy field sent out, without their walk
-  window.__afterGrant({ rebel: 9000, timber: slow ? 160 : 40, paper: slow ? 40 : 0 });
-  window.__fast(0.5);
-  const doors = ['mill', 'workshop', ...(slow ? ['papermill', 'press'] : [])];
-  for (const d of doors) window.__buy(`after-door-${d}`);
+  window.__afterGrant({ rebel: 9000, timber: slow ? 160 : 40, paper: slow ? 40 : 0, logs: 12 });
+  const stations = ['mill', 'chipper', 'workshop', ...(slow ? ['papermill', 'press'] : [])];
+  for (const st of stations) window.__buy(`after-build-${st}`);
+  for (let k = 0; k < 120 && stations.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
   const A = AFTER_JOB;
-  const posts = [A.CUT, A.CUT, A.HAUL, A.HAUL, A.HAUL, A.SAW, A.SAW, A.JOIN, A.CARRY, A.CARRY, A.AGITATE, A.AGITATE,
+  const posts = [A.CUT, A.CUT, A.HAUL, A.HAUL, A.HAUL, A.SAW, A.CHIP, A.JOIN, A.CARRY, A.CARRY, A.AGITATE, A.AGITATE,
                  ...(slow ? [A.PULP, A.PRINT, A.PASTE, A.PASTE] : [])];
   for (const j of posts) window.__buy(`after-post-${j}`);
-  for (const u of ['after-plot', 'after-plot', 'after-stumps', 'after-blade', 'after-fence', 'after-bench',
+  for (const u of ['after-plot', 'after-plot', 'after-stumps', 'after-blade', 'after-bench',
                    ...(slow ? ['after-vat', 'after-stack'] : [])]) window.__buy(u);
 }
 
@@ -2677,11 +2678,11 @@ export const SCENES = {
   // Act 3's loop on its placeholder drawings (after/; track A): the chain
   // bought row by row and run, framed on the camp; the crowd half won, framed
   // on God's yard; the grove with a tree coming down.
-  'after-chain': { about: 'the acts', say: 'the afterlife's chain running: logs to the saw mill, timber and sawdust, signs going out',
+  'after-chain': { about: 'the acts', say: "the afterlife's chain running: logs to the saw mill and the chipper, timber and sawdust, signs going out",
     run: () => { afterChain(false); window.__fast(90); window.__look(560); window.__holdShot(); } },
-  'after-crowd': { about: 'the acts', say: 'the afterlife's crowd half walked out: signs and posters out, the rims inking round them',
+  'after-crowd': { about: 'the acts', say: "the afterlife's crowd half walked out: signs and posters out, the rims inking round them",
     run: () => { afterChain(true); window.__fast(120); window.__look(1300); window.__holdShot(); } },
-  'after-grove': { about: 'the acts', say: 'the afterlife's grove: woodcutters at the trees, a tree coming down, a stump half dug, logs lying',
+  'after-grove': { about: 'the acts', say: "the afterlife's grove: woodcutters at the trees, a tree coming down, a stump half dug, logs lying",
     run: () => {
       afterChain(false); window.__fast(20);
       window.__afterAxe();
@@ -2705,14 +2706,14 @@ export const SCENES = {
     } },
   // The camp: a block of the crowd walking out across God's yard to the
   // camp's ground, the first already standing on their spots, empty posts.
-  'after-camp': { about: 'the acts', say: 'members walking out of God's yard to the camp, the first on their spots, posts waiting',
+  'after-camp': { about: 'the acts', say: "members walking out of God's yard to the camp, the first on their spots, two builders raising the saw mill and the chipper",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       window.__afterCrowd((i, v) => (i < 80 ? 8 : v));
       window.__afterGrant({ rebel: 400 });
-      window.__buy('after-door-mill');
-      for (let k = 0; k < 4; k++) window.__buy('after-post-sawyer');
-      window.__fast(30); window.__look(300); window.__holdShot();
+      window.__buy('after-build-mill');
+      window.__buy('after-build-chipper');
+      window.__fast(14); window.__look(300); window.__holdShot();
     } },
 
   // --- the acts' connective tissue (actbeats.js, portals.js, mansion.js) --------

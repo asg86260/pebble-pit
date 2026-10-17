@@ -64,14 +64,15 @@ export const STRIKE_SHARE = 0.8;           // default
 export const AFTER_GATES = ['meeting', 'slowdown', 'strike'];
 
 // --- the camp's cards and the chain ----------------------------------------------
-// The seven cards: the pedestal (the speech, the axe, the agitators), the
-// hall (the stations' doors), the grove, the saw mill, the workshop, the
-// paper mill and the press. Keys, not words: every name a player reads is
-// the owner's, in locales/en.ftl.
-export const AFTER_CARDS = ['pedestal', 'hall', 'grove', 'mill', 'workshop', 'papermill', 'press'];
+// The eight cards: the pedestal (the speech, the axe, the agitators), the
+// construction shack (every station that can be built), the grove, the saw
+// mill, the chipper, the workshop, the paper mill and the press. Keys, not words: every
+// name a player reads is the owner's, in locales/en.ftl.
+export const AFTER_CARDS = ['pedestal', 'shack', 'grove', 'mill', 'chipper', 'workshop', 'papermill', 'press'];
 // What the chain holds, made and spent (S.after.stock). Signs and posters are
-// spent into the crowd, never a bill.
-export const AFTER_STOCK = ['logs', 'timber', 'sawdust', 'paper', 'signs', 'posters'];
+// spent into the crowd, never a bill. The logs are two piles, the saw mill's
+// (`logs`) and the chipper's (`chiplogs`), each where its haulers drop them.
+export const AFTER_STOCK = ['logs', 'chiplogs', 'timber', 'sawdust', 'paper', 'signs', 'posters'];
 
 // --- the placeholder backdrop ----------------------------------------------------
 // High key: white cloud and pale floor, black only for rims (DESIGN.md, "The
@@ -95,28 +96,35 @@ export const AFTER_PLOT_STEP = P * 9;      // across a plot
 // walked out of God's yard stand here, a body a spot, until a post wants one.
 // Rows of AFTER_CAMP_COLS, each staggered half a spot, stepping up the screen;
 // past AFTER_CAMP_ROWS the spots start again at the front, a second layer.
-export const AFTER_CAMP_X0 = P * 46;
-export const AFTER_CAMP_COLS = 15;
+export const AFTER_CAMP_X0 = P * 42;
+export const AFTER_CAMP_COLS = 13;
 export const AFTER_CAMP_PITCH = P * 4;     // across a spot
 export const AFTER_CAMP_ROW = P * 2;       // a row's depth up the screen
 export const AFTER_CAMP_ROWS = 40;
 // The camp's stations, left to right, each its left edge in cells off the
-// place's left and its width in cells: the mill nearest the grove, the
+// place's left and its width in cells: the mill nearest the grove and the
+// chipper beside it, the sawdust heap between them (both tip onto it), the
 // pedestal nearest God's yard, facing it.
 export const AFTER_STATIONS = {
   mill:      { at: 110, w: 12 },
-  papermill: { at: 133, w: 11 },
-  workshop:  { at: 148, w: 11 },
-  press:     { at: 163, w: 11 },
-  hall:      { at: 180, w: 12 },
+  chipper:   { at: 131, w: 9 },
+  papermill: { at: 146, w: 11 },
+  workshop:  { at: 160, w: 11 },
+  press:     { at: 174, w: 11 },
+  shack:     { at: 189, w: 10 },
   pedestal:  { at: 216, w: 8 }
 };
 // The pedestal is a plinth, not a house: this many cells high.
 export const AFTER_PEDESTAL_H = 4;
 // The stations standing from the act's first frame: the pedestal the pair
-// speak from and the hall that sells the doors.
-export const AFTER_START_BUILT = ['pedestal', 'hall'];
-export const AFTER_BUILD_FADE_S = 2;       // a station bought, a plot cleared or a post put up fades in over this
+// speak from and the construction shack that sells every other.
+export const AFTER_START_BUILT = ['pedestal', 'shack'];
+export const AFTER_BUILD_FADE_S = 2;       // a piece of a station, a plot cleared or a post put up fades in over this
+// A station bought on the shack is raised a piece at a time, a band of its
+// box from the floor up, by a builder at its door: a member from the camp,
+// or the pair down off the pedestal when nobody is waiting there.
+export const AFTER_BUILD_PIECES = 4;
+export const AFTER_BUILD_PIECE_S = 3;      // a builder's piece
 // The crowd field: files across God's yard, the near ranks drawn as bodies
 // (a soul and its eight rim cells, three cells square) and the far ranks a
 // cell a soul, thinning back up the screen.
@@ -188,20 +196,38 @@ export const AFTER_DIG_CLICKS = 3;
 export const AFTER_DIG_S = 4;              // a woodcutter digging a stump out
 
 // --- the mills, the workshop, the press ---
-export const AFTER_LOG_YIELD = 4;          // what a log saws into, timber and sawdust together
+// Every station is worked by the click first (the owner, 2026-10-18): a
+// click on the mill saws a cut, on the paper mill pulls a sheet, on the
+// workshop joins a sign, on the press pulls a stack; its mark held a moment.
+// A post bought on its card then works it on the worker's clock, slower.
+export const AFTER_WORK_HOLD_S = 0.3;
+export const AFTER_LOG_TIMBER = 2;         // what a log saws into: timber (the fence is cut, a fixed split)
+export const AFTER_LOG_SAWDUST = 2;        // ...and sawdust
 export const AFTER_BLADE_LOGS = 2;         // logs a cut takes with the mill's second blade
-export const AFTER_FENCE_STEPS = [1, 2, 3];// the fence's settings: timber of the yield, coarse to fine
-export const AFTER_FENCE0 = 2;             // the cut before the fence is bought, and where its dial starts
-export const AFTER_SAWDUST_BRIM = 24;      // the heap's brim before the paper mill opens
-export const AFTER_SWEEP_LOAD = 8;         // sawdust a sweep carries off the cloud's edge
-export const AFTER_SWEEP_WAIT_S = 8;       // the heap stands at its brim, its mark up, this long before a sawyer sweeps
+export const AFTER_SAWDUST_BRIM = 24;      // the heap's brim while there is no paper mill
+export const AFTER_SAWDUST_BRIM_UP = 48;   // ...with the mill's bigger heap
+// The saw never stops for good: with no paper mill a click on the heap tips
+// a load through the cloud's edge beside it (a notch in the floor), the heap
+// held tipped a moment and the grains falling and fading; and a sawyer tips
+// a load there too once the heap has stood at its brim a while.
+export const AFTER_TIP_LOAD = 8;           // sawdust a tip takes, by the click or a sawyer
+export const AFTER_TIP_HOLD_S = 0.4;       // the heap held tipped
+export const AFTER_SPILL_S = 1.2;          // the grains falling through the notch and fading
+export const AFTER_NOTCH_AT = 7;           // the notch, cells right of the mill's box
+export const AFTER_SWEEP_WAIT_S = 8;       // the heap stands at its brim, its mark up, this long before a sawyer tips
 export const AFTER_SAW_S = 4;              // a sawyer's cut
 export const AFTER_SIGN_TIMBER = 2;        // timber a sign: signs are timber alone (call 11)
 export const AFTER_SIGN_S = 6;             // a joiner's sign
 export const AFTER_BENCH_SIGNS = 2;        // signs a joining with the workshop's second bench
+// The chipper: logs into sawdust only, no timber.
+export const AFTER_CHIP_SAWDUST = 4;       // sawdust a log
+export const AFTER_CHIP_SAWDUST_UP = 6;    // ...with the chipper's wider spout
+export const AFTER_CHIP_LOGS = 2;          // logs a feed takes with the chipper's second drum
+export const AFTER_CHIP_S = 4;             // a feeder's feed
 export const AFTER_PULP_SAWDUST = 2;       // sawdust a sheet of paper
 export const AFTER_PULP_S = 4;             // a pulper's pull
-export const AFTER_VAT_SHEETS = 2;         // sheets a pull with the paper mill's second vat
+export const AFTER_VAT_SHEETS = 2;         // sheets a pull with the paper mill's bigger vat
+export const AFTER_DRY_SHEETS = 2;         // ...and again with its drying line, a second sheet at once
 export const AFTER_POSTER_PAPER = 1;       // paper a stack: posters are paper alone (call 11)
 export const AFTER_STACK = 2;              // posters a stack
 export const AFTER_STACK_UP = 4;           // ...with the press's bigger stack
@@ -233,11 +259,11 @@ export const AFTER_PULL_S = 2;             // ...or pulling a sign up
 // a station with rebel, each dearer than the last, and a member walks from
 // the camp to hold it. A post with nobody waiting in the camp stands empty.
 export const AFTER_WALK = 42;              // px/s, every body up here
-export const AFTER_JOBS = [J.AGITATE, J.CUT, J.HAUL, J.SAW, J.PULP, J.JOIN, J.CARRY, J.PRINT, J.PASTE];
+export const AFTER_JOBS = [J.AGITATE, J.CUT, J.HAUL, J.SAW, J.CHIP, J.PULP, J.JOIN, J.CARRY, J.PRINT, J.PASTE];
 // The station each job's post is bought at, so which card sells it and which
 // station must stand before it is offered.
 export const AFTER_JOB_POST = {
-  [J.AGITATE]: 'pedestal', [J.CUT]: 'grove', [J.HAUL]: 'grove', [J.SAW]: 'mill',
+  [J.AGITATE]: 'pedestal', [J.CUT]: 'grove', [J.HAUL]: 'grove', [J.SAW]: 'mill', [J.CHIP]: 'chipper',
   [J.PULP]: 'papermill', [J.JOIN]: 'workshop', [J.CARRY]: 'workshop',
   [J.PRINT]: 'press', [J.PASTE]: 'press'
 };
@@ -245,21 +271,24 @@ export const AFTER_POST_REBEL0 = 12;       // the first post
 export const AFTER_POST_RATE = 1.15;       // each one dearer, every station's counted together
 
 // --- the cards ---
-// What a station's door costs, and the gate that offers it (how many of
-// AFTER_GATES are reached). The grove stands open from the start, and the
-// saw mill and the workshop are offered from it: signs are the first way a
-// soul is won. The paper mill and the press come with the slowdown.
-export const AFTER_DOORS = {
-  mill:      { gate: 0, bill: [['rebel', 40]] },
-  workshop:  { gate: 0, bill: [['rebel', 60]] },
-  papermill: { gate: 2, bill: [['rebel', 200], ['timber', 30]] },
-  press:     { gate: 2, bill: [['rebel', 250], ['timber', 40]] }
+// Every station the shack can build, all of them on its board and priced
+// from the start (the owner, 2026-10-18: the gates offer nothing), each
+// locked only behind a station it truly needs first: timber comes off the
+// saw mill, sawdust off the saw mill or the chipper, and posters are printed
+// on paper. `needs` is the stations any one of which must stand first.
+export const AFTER_BUILDS = {
+  mill:      { needs: [],                   bill: [['rebel', 40]] },
+  chipper:   { needs: [],                   bill: [['rebel', 50]] },
+  workshop:  { needs: ['mill'],             bill: [['rebel', 60]] },
+  papermill: { needs: ['mill', 'chipper'],  bill: [['rebel', 200], ['timber', 30]] },
+  press:     { needs: ['papermill'],        bill: [['rebel', 250], ['timber', 40]] }
 };
 // Every station's upgrades: no bands, no ladders (call 12, settled -- act 3 is
 // outside the eight-rungs rule): two or three short named upgrades a card,
 // each a change on screen, paid in rebel, timber and paper. Each row is its
 // card and its bills, one bill a time it can be bought -- once for all but
-// the grove's plots, a plot a bill. The posts are sold beside them (rows.js).
+// the grove's plots, a plot a bill. The posts are sold beside them (rows.js);
+// the stations themselves on the shack (AFTER_BUILDS).
 export const AFTER_UPGRADES = {
   'after-shout':       { card: 'pedestal',  bills: [[['rebel', 30]]] },                                  // a bigger speech
   'after-axe':         { card: 'pedestal',  bills: [[['rebel', 50]]] },                                  // the axe (call 15)
@@ -269,10 +298,13 @@ export const AFTER_UPGRADES = {
   'after-tree':        { card: 'grove',     bills: [[['rebel', 120], ['timber', 30]]] },                 // bigger trees
   'after-stumps':      { card: 'grove',     bills: [[['rebel', 100], ['timber', 20]]] },                 // stump removal: woodcutters dig stumps too
   'after-blade':       { card: 'mill',      bills: [[['rebel', 80], ['timber', 20]]] },                  // a second blade
-  'after-fence':       { card: 'mill',      bills: [[['rebel', 60], ['timber', 10]]] },                  // the fence, and its dial
+  'after-heap':        { card: 'mill',      bills: [[['rebel', 60], ['timber', 10]]] },                  // a bigger heap
   'after-bench':       { card: 'workshop',  bills: [[['rebel', 120], ['timber', 40]]] },                 // a second bench
   'after-signreach':   { card: 'workshop',  bills: [[['rebel', 200], ['timber', 40], ['paper', 10]]] },  // a bigger sign
-  'after-vat':         { card: 'papermill', bills: [[['rebel', 150], ['timber', 30]]] },                 // a second vat
+  'after-drum':        { card: 'chipper',   bills: [[['rebel', 70], ['timber', 15]]] },                  // a second drum
+  'after-spout':       { card: 'chipper',   bills: [[['rebel', 90], ['timber', 20]]] },                  // a wider spout: more sawdust a log
+  'after-vat':         { card: 'papermill', bills: [[['rebel', 150], ['timber', 30]]] },                 // a bigger vat
+  'after-dry':         { card: 'papermill', bills: [[['rebel', 180], ['timber', 30], ['paper', 10]]] },  // a drying line
   'after-stack':       { card: 'press',     bills: [[['rebel', 200], ['timber', 30], ['paper', 20]]] },  // a bigger stack
   'after-posterreach': { card: 'press',     bills: [[['rebel', 300], ['timber', 40], ['paper', 30]]] }   // a bigger poster, reaching further
 };

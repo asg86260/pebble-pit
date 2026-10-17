@@ -9,7 +9,7 @@
 // body walks to the spot the picture shows.
 
 import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_OPEN_AT,
-         AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PEDESTAL_H,
+         AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PEDESTAL_H, AFTER_NOTCH_AT,
          AFTER_CAMP_X0, AFTER_CAMP_COLS, AFTER_CAMP_PITCH, AFTER_CAMP_ROW, AFTER_CAMP_ROWS,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
@@ -49,8 +49,10 @@ export const stationBox = key => {
 // Where a body stands to work a station: its door, a cell in from the left.
 export const stationDoor = key => { const b = stationBox(key); return b ? b.x + P * 2 : 0; };
 export const stationMid = key => { const b = stationBox(key); return b ? b.x + b.w / 2 : 0; };
-// The cloud's edge a sweeping sawyer tips sawdust off: the place's left.
-export const edgeX = () => afterX0() + P;
+// The sawdust heap, between the saw mill and the chipper, and the notch in
+// the cloud floor beside it where a load is tipped through.
+export const heapX = () => { const b = stationBox('mill'); return b.x + b.w + P; };
+export const notchX = () => { const b = stationBox('mill'); return b.x + b.w + AFTER_NOTCH_AT * P; };
 // Where the pair stand to speak: the pedestal's top, their feet on it, a body
 // apart about its middle.
 export const speakerAt = k => { const b = stationBox('pedestal'); return { x: snap(b.x + b.w / 2) + (k ? P : -P * 4), y: b.y }; };

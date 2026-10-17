@@ -12,11 +12,11 @@
 // else (DESIGN.md, "Rules and consequences to check", the save shape).
 
 import { S } from '../state.js';
-import { AFTER_STOCK, AFTER_FENCE0, AFTER_START_BUILT } from '../config.js';
+import { AFTER_STOCK, AFTER_START_BUILT } from '../config.js';
 import { afterlifeOn } from '../acts.js';
 import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
-import { stepMill } from './mill.js';
+import { stepMill, forgetSpills } from './mill.js';
 import { stepPress } from './press.js';
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
@@ -29,15 +29,16 @@ import { secs } from './util.js';
 // (union.js); the members waiting in the camp (`camp`, a count: each stands
 // on its spot) and the posts bought at each station by job (`posts`); the
 // grove's plots and each tree's growth; the signs planted and posters
-// pasted; the mill's fence; the camp's stations built, and how many times
-// each named upgrade is bought (`ups`); the gate reached. When the last post
-// of each job and each upgrade was bought (`postAt`, `upAt`), so what it puts
-// on screen fades in. And what the loop
+// pasted; the camp's stations built and those going up a piece at a time
+// (`raising`), and how many times each named upgrade is bought (`ups`); the
+// gate reached. When the last post of each job and each upgrade was bought
+// (`postAt`, `upAt`), so what it puts on screen fades in. And what the loop
 // added to stand it up: the act's clock (`t`) and its chance (`seed`), the
-// axe bought and in hand, the pair's last line (`shout`), the clouds and the
-// motes coming down, the bodies -- members walking out and members at their
-// posts -- the wardens, the throne's speech, when each station went up, and
-// the last id handed out.
+// axe bought and in hand, the pair's last line (`shout`), the heap last
+// tipped and each station last worked by hand (`tipAt`, `workAt`), the
+// clouds and the motes coming down, the bodies -- members walking out, at
+// their posts and building -- the wardens, the throne's speech, and the last
+// id handed out.
 export const blankAfter = () => ({
   rebel: 0,
   stock: Object.fromEntries(AFTER_STOCK.map(k => [k, 0])),
@@ -48,8 +49,8 @@ export const blankAfter = () => ({
   plots: [],
   signs: [],
   posters: [],
-  fence: AFTER_FENCE0,
   built: [],
+  raising: {},
   ups: {},
   upAt: {},
   gate: 0,
@@ -58,19 +59,21 @@ export const blankAfter = () => ({
   axeBought: false,
   axe: false,
   shout: null,
+  tipAt: null,
+  workAt: {},
   clouds: [],
   motes: [],
   bodies: [],
   wardens: [],
   speech: null,
-  builtAt: {},
   gateAt: null,
   brimAt: null,
   ids: 0
 });
 
 // The act begun: its facts stood up, once -- the crowd in its files, the
-// grove's one grown tree, the pedestal and the hall on the camp's patch. The
+// grove's one grown tree, the pedestal and the construction shack on the
+// camp's patch. The
 // house's fall calls this (actbeats.js), and the dev travel (`__goPlace`).
 export function beginAfter() {
   if (S.after) return S.after;
@@ -87,6 +90,10 @@ export function beginAfter() {
 let frames = 0;
 export const afterFrames = () => frames;
 
+// What the session keeps beside the act (a tip's falling grains) belongs to
+// one `S.after`: a new game or a read save drops it.
+let seen = null;
+
 // One frame of the afterlife, called every frame with the act on, on screen
 // or not. Its parts in the order the place hands its work along: the sky and
 // the rebel coming down, the grove, the members walking and at their posts,
@@ -95,6 +102,7 @@ export function stepAfter(c) {
   if (!afterlifeOn()) return;
   frames++;
   if (!S.after) return;
+  if (seen !== S.after) { forgetSpills(); seen = S.after; }
   S.after.t += secs(c);
   stepRebel(c);
   stepGrove(c);

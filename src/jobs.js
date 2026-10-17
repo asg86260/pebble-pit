@@ -94,6 +94,7 @@ export const AFTER_JOB = Object.freeze({
   CUT:     'woodcutter',
   HAUL:    TYPE.HAUL,
   SAW:     'sawyer',
+  CHIP:    'feeder',
   PULP:    'pulper',
   JOIN:    'joiner',
   CARRY:   'carrier',

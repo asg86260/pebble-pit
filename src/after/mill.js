@@ -1,55 +1,51 @@
-// The saw mill and the paper mill (DESIGN.md, "Acts 3 and 4", act 3, "The
-// chain: trees to signs and posters"). Placeholder drawing.
+// The saw mill, the chipper and the paper mill (DESIGN.md, "Acts 3 and 4",
+// act 3, "The chain: trees to signs and posters"; the owner's calls of
+// 2026-10-18). Placeholder drawing.
 //
-// A log sawn into timber and sawdust, by a sawyer through the mill's door
-// (crew.js here, `bodies.js`: the work is done by the body standing there,
-// never by a count). The sawdust heaps beside the mill to its brim -- the
-// pile-full mark -- and, until the paper mill opens at the slowdown, a sawyer
-// has to sweep it off the cloud's edge, a trip that takes the sawyer off the
-// saw. The paper mill pulps sawdust into sheets, two a pull with its second
-// vat. The mill's second blade saws two logs a cut. And the fence, the act's
-// standing decision, bought on the mill's card and then a dial on it: set
-// fine, more timber; coarse, more sawdust. Until it is bought every log cuts
-// at AFTER_FENCE0.
+// A cut through the saw turns a log into a fixed split of timber and sawdust
+// (the fence is cut), a log a blade; the chipper turns a log into sawdust
+// alone. Both tip their sawdust onto the one heap between them. With no
+// paper mill the heap stands at a brim -- the pile-full mark -- and the saw
+// and the chipper stop until it is tipped: a click on the heap tips a load
+// through the notch in the cloud floor beside it, and a sawyer tips one there
+// too once the heap has stood full a while, so the saw never stops for good.
+// The paper mill pulps sawdust into sheets. Each is worked by the click first
+// and then by a member at a post (work.js, bodies.js): the work itself is
+// here, the same whoever does it.
 
 import { S } from '../state.js';
-import { AFTER_LOG_YIELD, AFTER_FENCE_STEPS, AFTER_FENCE0, AFTER_SAWDUST_BRIM, AFTER_SWEEP_LOAD, AFTER_SWEEP_WAIT_S,
-         AFTER_PULP_SAWDUST } from '../config.js';
-import { built, bladeLogs, fenceOn, vatSheets } from './levels.js';
+import { AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_TIP_LOAD, AFTER_SWEEP_WAIT_S, AFTER_PULP_SAWDUST,
+         AFTER_SPILL_S } from '../config.js';
+import { built, bladeLogs, vatSheets, heapBrim, chipLogs, chipSawdust } from './levels.js';
+import { secs } from './util.js';
 
-// The fence's setting: timber of each log's AFTER_LOG_YIELD, the rest sawdust.
-export const fenceSplit = () => (S.after ? (fenceOn() ? (S.after.fence ?? AFTER_FENCE0) : AFTER_FENCE0) : null);
-export function setFence(v) {
-  if (!S.after || !fenceOn() || !AFTER_FENCE_STEPS.includes(v)) return false;
-  S.after.fence = v;
-  return true;
-}
+// The heap is at its brim while nothing takes sawdust away: the saw and the
+// chipper stop (the pile-full mark, render/after.js).
+export const heapFull = () => !!S.after && !built('papermill') && S.after.stock.sawdust >= heapBrim();
 
-// The heap beside the mill is at its brim while nothing takes sawdust away:
-// the saw stops, and a sawyer sweeps (the pile-full mark, render/after.js).
-export const heapFull = () => !!S.after && !built('papermill') && S.after.stock.sawdust >= AFTER_SAWDUST_BRIM;
-
-// A cut through the saw, a log a blade: false with no log on the pile or the
+// A cut through the saw, a log a blade: false with no log on its pile or the
 // heap full.
 export function sawLog() {
   const st = S.after.stock;
   if (st.logs <= 0 || heapFull()) return false;
-  const n = Math.min(bladeLogs(), st.logs), timber = fenceSplit();
+  const n = Math.min(bladeLogs(), st.logs);
   st.logs -= n;
-  st.timber += timber * n;
-  st.sawdust += (AFTER_LOG_YIELD - timber) * n;
+  st.timber += AFTER_LOG_TIMBER * n;
+  st.sawdust += AFTER_LOG_SAWDUST * n;
   return true;
 }
 
-// A sweep's load off the heap, carried to the cloud's edge: what was taken.
-export function takeSweep() {
+// A feed through the chipper, a log a drum: all of it sawdust.
+export function chipLog() {
   const st = S.after.stock;
-  const n = Math.min(AFTER_SWEEP_LOAD, st.sawdust);
-  st.sawdust -= n;
-  return n;
+  if (st.chiplogs <= 0 || heapFull()) return false;
+  const n = Math.min(chipLogs(), st.chiplogs);
+  st.chiplogs -= n;
+  st.sawdust += chipSawdust() * n;
+  return true;
 }
 
-// A pull, a sheet a vat: false while the sawdust is short of one.
+// A pull at the paper mill: false while the sawdust is short of a sheet.
 export function pulpSheet() {
   const st = S.after.stock;
   const n = Math.min(vatSheets(), Math.floor(st.sawdust / AFTER_PULP_SAWDUST));
@@ -59,14 +55,32 @@ export function pulpSheet() {
   return true;
 }
 
-// A sweep is due once the heap has stood at its brim AFTER_SWEEP_WAIT_S, so
-// the stopped saw and its mark are seen before a sawyer walks off with it.
+// --- tipping the heap ------------------------------------------------------------------
+// The grains of a tip falling through the notch and fading, and when the heap
+// was last held tipped: this session's drawing only, a load already gone.
+const spills = [];
+export const airSpills = () => spills;
+export const forgetSpills = () => { spills.length = 0; };
+// A load off the heap through the notch: what was taken. While there is a
+// paper mill the heap has somewhere better to go, and is never tipped.
+export function tipSawdust() {
+  const a = S.after, st = a.stock;
+  if (built('papermill') || st.sawdust <= 0) return 0;
+  const n = Math.min(AFTER_TIP_LOAD, st.sawdust);
+  st.sawdust -= n;
+  a.tipAt = a.t;
+  spills.push({ n, age: 0 });
+  return n;
+}
+
+// A sawyer tips once the heap has stood at its brim AFTER_SWEEP_WAIT_S, so the
+// stopped saw and its mark are seen first.
 export const sweepDue = () => heapFull() && S.after.brimAt != null && S.after.t - S.after.brimAt >= AFTER_SWEEP_WAIT_S;
 
-// One frame of the mills: only the heap's clock. Every sheet and board is a
-// body's work at its door (bodies.js).
+// One frame of the mills: the heap's clock and the falling grains.
 export function stepMill(c) {
-  const a = S.after;
+  const a = S.after, dt = secs(c);
   if (!heapFull()) a.brimAt = null;
   else if (a.brimAt == null) a.brimAt = a.t;
+  for (let i = spills.length - 1; i >= 0; i--) if ((spills[i].age += dt) > AFTER_SPILL_S) spills.splice(i, 1);
 }

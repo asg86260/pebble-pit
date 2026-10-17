@@ -8022,11 +8022,11 @@
   "text": "second blade"
  },
  {
-  "id": "after-row-fence",
+  "id": "after-row-heap",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the saw mill's fence, bought",
-  "text": "fence"
+  "context": "act 3 card row (placeholder): the saw mill's bigger sawdust heap",
+  "text": "bigger heap"
  },
  {
   "id": "after-row-bench",
@@ -8046,8 +8046,29 @@
   "id": "after-row-vat",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the paper mill's second vat, two sheets a pull",
-  "text": "second vat"
+  "context": "act 3 card row (placeholder): the paper mill's bigger vat, more paper a batch",
+  "text": "bigger vat"
+ },
+ {
+  "id": "after-row-dry",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the paper mill's drying line, a second sheet at once",
+  "text": "drying line"
+ },
+ {
+  "id": "after-row-drum",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the chipper's second drum, two logs a feed",
+  "text": "second drum"
+ },
+ {
+  "id": "after-row-spout",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the chipper's wider spout, more sawdust a log",
+  "text": "wider spout"
  },
  {
   "id": "after-row-stack",
@@ -8062,13 +8083,6 @@
   "where": "src/after/rows.js",
   "context": "act 3 card row (placeholder): the press's bigger poster, a further reach",
   "text": "bigger poster"
- },
- {
-  "id": "after-row-cut",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card dial (placeholder): the saw mill's fence, timber against sawdust",
-  "text": "cut"
  },
  {
   "id": "after-job-agitator",
@@ -8097,6 +8111,13 @@
   "where": "src/after/rows.js",
   "context": "act 3 card row (placeholder): a post for a sawyer, held by a member from the camp",
   "text": "sawyer"
+ },
+ {
+  "id": "after-job-feeder",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): a post for a feeder at the chipper, held by a member from the camp",
+  "text": "feeder"
  },
  {
   "id": "after-job-pulper",
@@ -8134,32 +8155,60 @@
   "text": "paster"
  },
  {
-  "id": "after-door-mill",
+  "id": "after-build-mill",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): build the saw mill",
+  "context": "act 3 shack row (placeholder): build the saw mill",
   "text": "saw mill"
  },
  {
-  "id": "after-door-workshop",
+  "id": "after-build-chipper",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): build the workshop",
+  "context": "act 3 shack row (placeholder): build the chipper",
+  "text": "chipper"
+ },
+ {
+  "id": "after-build-workshop",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 shack row (placeholder): build the workshop",
   "text": "workshop"
  },
  {
-  "id": "after-door-papermill",
+  "id": "after-build-papermill",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): build the paper mill",
+  "context": "act 3 shack row (placeholder): build the paper mill",
   "text": "paper mill"
  },
  {
-  "id": "after-door-press",
+  "id": "after-build-press",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall row (placeholder): build the printing press",
+  "context": "act 3 shack row (placeholder): build the press",
   "text": "press"
+ },
+ {
+  "id": "after-wait-mill",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 shack row's wait (placeholder): the saw mill must stand first",
+  "text": "needs the saw mill"
+ },
+ {
+  "id": "after-wait-sawdust",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 shack row's wait (placeholder): the saw mill or the chipper must stand first",
+  "text": "needs the saw mill or the chipper"
+ },
+ {
+  "id": "after-wait-papermill",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 shack row's wait (placeholder): the paper mill must stand first",
+  "text": "needs the paper mill"
  },
  {
   "id": "after-sect-posts",
@@ -8172,7 +8221,7 @@
   "id": "after-sect-build",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 hall heading (placeholder): the stations to build",
+  "context": "act 3 shack heading (placeholder): the stations to build",
   "text": "build"
  },
  {

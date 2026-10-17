@@ -14,17 +14,19 @@
 
 import { P, GREY, AFTER_FLOOR_CELLS, AFTER_FLOOR_TONES, AFTER_CARDS, AFTER_FALL_FRAMES, AFTER_FALL_S,
          AFTER_CROWN_FADE_S, AFTER_BUILD_FADE_S, AFTER_POSTER_FADE_S, AFTER_SPEECH_FILES, AFTER_SPEECH_WARN_S,
-         AFTER_SAWDUST_BRIM, AFTER_SHOUT_HOLD_S, AFTER_POST_STEP, AFTER_JOBS, AFTER_JOB_POST, AFTER_DIG_CLICKS,
+         AFTER_SHOUT_HOLD_S, AFTER_POST_STEP, AFTER_JOBS, AFTER_JOB_POST, AFTER_DIG_CLICKS, AFTER_BUILD_PIECES,
+         AFTER_WORK_HOLD_S, AFTER_TIP_HOLD_S, AFTER_SPILL_S,
          CROWD_FILES, CROWD_NEAR, RIM_PIECES, CROWD_X0 } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { warning } from './pilemarks.js';
 import { afterX0, afterX1, afterFloor, plotX, stationBox, soulX, farX, soulY, slotX, crowdX1, stairFoot,
-         throneAt, fileAt, rankAtY, campSpot, speakerAt, pileX } from '../after/place.js';
+         throneAt, fileAt, rankAtY, campSpot, speakerAt, pileX, heapX, notchX } from '../after/place.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel.js';
 import { trees, GROWN, trunkCells, crownCells } from '../after/grove.js';
-import { built, has } from '../after/levels.js';
-import { heapFull } from '../after/mill.js';
+import { built, has, heapBrim } from '../after/levels.js';
+import { heapFull, airSpills } from '../after/mill.js';
+import { pairBuilding } from '../after/build.js';
 import { postsOf, bodiesOf } from '../after/bodies.js';
 import { souls, speechWarned, speechHeld } from '../after/union.js';
 
@@ -185,19 +187,24 @@ export function drawAfterGrove() {
 }
 
 // --- the camp --------------------------------------------------------------------------------
-// A station: a box of hashed pale cells in a black frame, a black door, fading
-// in when it goes up; its heaps beside it; its posts a row of stakes along
-// its roof, black while a member holds one or is walking to it, hollow while
-// it waits. A station not yet built is a ring of grey cells on the floor
-// where it will stand.
+// A station: a box of hashed pale cells in a black frame, a black door, and
+// its glyph; raised a piece at a time once bought, a band of the box from the
+// floor up, each fading in as it lands; its heaps beside it; its posts a row
+// of stakes along its roof (the pedestal's along its face), black while a
+// member holds one or is walking to it, hollow while it waits. A station not
+// bought is a ring of grey cells on the floor where it will stand. Worked by
+// hand, its glyph is held a cell down a moment.
 const MARKS = {   // a placeholder glyph a station, cells off its middle: no words on the canvas
-  mill: [[-1, 0], [1, 0], [0, -1], [0, 1]], papermill: [[-1, -1], [0, -1], [1, -1], [-1, 1], [0, 1], [1, 1]],
+  mill: [[-1, 0], [1, 0], [0, -1], [0, 1]], chipper: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]],
+  papermill: [[-1, -1], [0, -1], [1, -1], [-1, 1], [0, 1], [1, 1]],
   workshop: [[0, -1], [0, 0], [0, 1], [-1, -1], [1, -1]], press: [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]],
-  hall: [[-1, 1], [0, 0], [1, 1], [0, -1]]
+  shack: [[-1, 1], [0, 0], [1, 1], [0, 1]]
 };
 // What an upgrade adds to a station's face: a second glyph beside the first
-// (the second blade, bench and vat), and the fence a rail along the mill's foot.
-const SECOND = { mill: 'after-blade', workshop: 'after-bench', papermill: 'after-vat' };
+// (the second blade, drum, bench and vat), and a rail along its foot (the
+// paper mill's drying line, the chipper's spout).
+const SECOND = { mill: 'after-blade', chipper: 'after-drum', workshop: 'after-bench', papermill: 'after-vat' };
+const RAIL = { papermill: 'after-dry', chipper: 'after-spout' };
 function drawPosts(key, b) {
   const jobs = AFTER_JOBS.filter(j => AFTER_JOB_POST[j] === key);
   let k = 0;
@@ -205,7 +212,7 @@ function drawPosts(key, b) {
     const held = bodiesOf(job).length;
     const posts = postsOf(job);
     for (let n = 0; n < posts; n++, k++) {
-      const x = b.x + P + k * AFTER_POST_STEP, y = b.y - P * 2;
+      const x = b.x + P + k * AFTER_POST_STEP, y = key === 'pedestal' ? b.y + P : b.y - P * 2;
       ctx.globalAlpha = n === posts - 1 ? fadeIn(A().postAt[job]) : 1;
       cell(x, y, n < held ? 10 : 3);
       cell(x, y + P, n < held ? 10 : 4);
@@ -213,34 +220,50 @@ function drawPosts(key, b) {
     ctx.globalAlpha = 1;
   }
 }
+// The station's box from row `y0` down to `y1`, with its door.
+function stationRows(key, b, y0, y1) {
+  const floor = afterFloor();
+  ctx.fillStyle = '#000';
+  ctx.fillRect(b.x, y0, b.w, y1 - y0);
+  for (let y = Math.max(y0, b.y + P); y < y1; y += P) for (let x = b.x + P; x < b.x + b.w - P; x += P)
+    cell(x, y, toneAt(x / P, y / P, [0, 1, 1, 2]));
+  if (key === 'pedestal' || y1 <= floor - P * 3) return;
+  const top = Math.max(y0, floor - P * 3);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(b.x + P * 2, top, P * 2, y1 - top);
+}
 function drawStation(key) {
   const b = stationBox(key);
   if (!inView(b.x - P * 12, b.w + P * 24)) return;
-  const floor = afterFloor();
-  if (!built(key)) {
+  const a = A(), floor = afterFloor(), r = a.raising[key];
+  if (!built(key) && !r) {
     for (let x = b.x; x < b.x + b.w; x += P * 2) cell(x, floor - P, 3);
     return;
   }
-  ctx.globalAlpha = fadeIn(A().builtAt[key]);
-  ctx.fillStyle = '#000';
-  ctx.fillRect(b.x, b.y, b.w, b.h);
-  for (let y = b.y + P; y < b.y + b.h; y += P) for (let x = b.x + P; x < b.x + b.w - P; x += P)
-    cell(x, y, toneAt(x / P, y / P, [0, 1, 1, 2]));
-  if (key !== 'pedestal') {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(b.x + P * 2, floor - P * 3, P * 2, P * 3);
-    const mx = snap(b.x + b.w / 2), my = snap(b.y + b.h / 2) - P;
-    for (const [dx, dy] of MARKS[key]) cell(mx + dx * P, my + dy * P, 10);
+  if (r) {
+    // A band a piece, the floor up, each fading in from when it landed.
+    const rows = b.h / P;
+    for (let k = 0; k < r.n; k++) {
+      const top = Math.round(rows * (k + 1) / AFTER_BUILD_PIECES), bot = Math.round(rows * k / AFTER_BUILD_PIECES);
+      ctx.globalAlpha = fadeIn(r.at[k]);
+      stationRows(key, b, floor - top * P, floor - bot * P);
+    }
+    ctx.globalAlpha = 1;
+    if (!built(key)) return;
+  } else stationRows(key, b, b.y, floor);
+  const settled = r ? fadeIn(r.at[r.at.length - 1]) : 1;
+  const mx = snap(b.x + b.w / 2), my = snap(b.y + b.h / 2) - P;
+  const held = a.workAt[key] != null && a.t - a.workAt[key] < AFTER_WORK_HOLD_S ? P : 0;
+  if (MARKS[key]) {
+    ctx.globalAlpha = settled;
+    for (const [dx, dy] of MARKS[key]) cell(mx + dx * P, my + dy * P + held, 10);
   }
-  ctx.globalAlpha = 1;
-  const upAt = A().upAt;
   if (SECOND[key] && has(SECOND[key])) {
-    const mx = snap(b.x + b.w / 2), my = snap(b.y + b.h / 2) - P;
-    ctx.globalAlpha = fadeIn(upAt[SECOND[key]]);
-    for (const [dx, dy] of MARKS[key]) cell(mx + (dx + 3) * P, my + dy * P, 10);
+    ctx.globalAlpha = Math.min(settled, fadeIn(a.upAt[SECOND[key]]));
+    for (const [dx, dy] of MARKS[key]) cell(mx + (dx + 3) * P, my + dy * P + held, 10);
   }
-  if (key === 'mill' && has('after-fence')) {
-    ctx.globalAlpha = fadeIn(upAt['after-fence']);
+  if (RAIL[key] && has(RAIL[key])) {
+    ctx.globalAlpha = Math.min(settled, fadeIn(a.upAt[RAIL[key]]));
     for (let x = b.x + P * 5; x < b.x + b.w - P; x += P) cell(x, floor - P, 8);
   }
   ctx.globalAlpha = 1;
@@ -250,6 +273,27 @@ function drawStation(key) {
 function heap(x, n, cap, tone) {
   const floor = afterFloor();
   for (let k = 0; k < n; k++) cell(x + Math.floor(k / cap) * P, floor - P * (1 + (k % cap)), tone(k));
+}
+// The sawdust heap between the mill and the chipper, a column of eight at
+// most, its top held tipped toward the notch a moment after a tip; the notch,
+// a gap in the cloud floor's top rows; a tip's grains falling into it and
+// fading.
+function drawSawdust(a) {
+  const floor = afterFloor(), x0 = heapX(), nx = notchX();
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 2; c++) cell(nx + c * P, floor + r * P, r ? 1 : 0);
+  const n = Math.min(heapBrim(), Math.round(a.stock.sawdust));
+  const tipped = a.tipAt != null && a.t - a.tipAt < AFTER_TIP_HOLD_S;
+  for (let k = 0; k < n; k++) {
+    const col = Math.floor(k / 8), row = k % 8;
+    cell(x0 + (col + (tipped && row >= 4 ? 1 : 0)) * P, floor - P * (1 + row), k % 3 ? 4 : 5);
+  }
+  for (const sp of airSpills()) {
+    const k = sp.age / AFTER_SPILL_S;
+    ctx.globalAlpha = Math.max(0, 1 - k);
+    for (let g = 0; g < Math.min(6, sp.n); g++) cell(nx + (g % 2) * P, snap(floor - P * 2 + k * P * 5 + g * P), g % 2 ? 4 : 5);
+    ctx.globalAlpha = 1;
+  }
+  if (heapFull()) warning(x0 + P * 2, floor - P * 11);
 }
 // A body: a square of `rim` with a pale middle at its feet (x, y), a load
 // carried overhead, an arm out held on the blow, and a shout mark over it
@@ -262,7 +306,7 @@ function drawBody(w, rim, fill) {
   if (w.load === 'log') for (let c = -1; c <= 3; c++) cell(x + c * P, y - P, c === 1 ? 2 : 8);
   else if (w.load === 'sign') { cell(x + P, y - P, 10); for (let c = 0; c < 3; c++) cell(x + c * P, y - P * 2, 1); }
   else if (w.load === 'posters') { cell(x, y - P, 0); cell(x + P, y - P, 2); cell(x + P * 2, y - P, 0); }
-  else if (w.load === 'sawdust') { cell(x, y - P, 4); cell(x + P, y - P, 4); }
+  else if (w.load === 'tip') { cell(x, y - P, 4); cell(x + P, y - P, 4); }
   if (w.swing != null) {
     if (w.job === 'agitator') shoutMark(x + P, y - P * 3);
     else for (let k = 1; k <= 2; k++) cell(x + (w.face > 0 ? 2 + k : -k) * P, y - k * P, 10);
@@ -271,11 +315,11 @@ function drawBody(w, rim, fill) {
 // The shout mark: a bar and a dot, cells over a speaker's head.
 function shoutMark(x, y) { cell(x, y - P * 2, 10); cell(x, y - P, 10); cell(x, y + P, 10); }
 // The pair on the pedestal, as placeholders, while the story's pair are not
-// up here to stand at its foot: arms up and the mark over them held a moment
-// after a line.
+// up here to stand at its foot and they are not down building: arms up and
+// the mark over them held a moment after a line.
 function drawSpeakers() {
   const a = A(), pair = S.acts && S.acts.pair;
-  if (pair && pair.y < 0) return;
+  if ((pair && pair.y < 0) || pairBuilding()) return;
   const loud = a.shout != null && a.t - a.shout < AFTER_SHOUT_HOLD_S;
   for (let k = 0; k < 2; k++) {
     const at = speakerAt(k);
@@ -290,16 +334,17 @@ export function drawAfterCamp() {
   if (!a) return;
   for (const key of AFTER_CARDS) if (key !== 'grove') drawStation(key);
   const st = a.stock;
-  const mill = stationBox('mill'), pm = stationBox('papermill'), ws = stationBox('workshop'), pr = stationBox('press');
-  // The logs waiting at the saw, the timber stacked after it, the sawdust heap
-  // to its brim (the pile-full mark over it while it stands full).
+  const mill = stationBox('mill'), ch = stationBox('chipper'), pm = stationBox('papermill'), ws = stationBox('workshop'),
+        pr = stationBox('press');
+  // The logs waiting at the saw and the chipper, the timber stacked behind
+  // the saw's logs, the sawdust heap between them.
   heap(mill.x - P * 7, Math.min(st.logs, 24), 4, k => (k % 2 ? 8 : 6));
-  heap(mill.x + mill.w + P, Math.min(AFTER_SAWDUST_BRIM, Math.round(st.sawdust)), 6, k => (k % 3 ? 4 : 5));
-  heap(mill.x + mill.w + P * 6, Math.min(Math.floor(st.timber), 18), 6, () => 3);
-  if (heapFull()) warning(mill.x + mill.w + P * 3, afterFloor() - P * 10);
-  if (built('papermill')) heap(pm.x + pm.w + P, Math.min(st.paper, 18), 6, () => 0);
+  heap(mill.x - P * 11, Math.min(Math.floor(st.timber), 18), 6, () => 3);
+  if (built('chipper')) heap(ch.x + ch.w + P, Math.min(st.chiplogs, 12), 4, k => (k % 2 ? 8 : 6));
+  drawSawdust(a);
+  if (built('papermill')) heap(pm.x + pm.w + P, Math.min(st.paper, 12), 6, () => 0);
   if (built('workshop')) heap(ws.x + ws.w, Math.min(st.signs, 6), 1, () => 10);
-  if (built('press')) heap(pr.x + pr.w, Math.min(st.posters, 18), 6, () => 1);
+  if (built('press')) heap(pr.x + pr.w, Math.min(st.posters, 12), 6, () => 1);
   // The rebel pile at the pedestal's foot, a cell a power of ten.
   const rows = Math.ceil(Math.log10(1 + a.rebel) * 2);
   heap(pileX(), rows, 6, k => (k % 2 ? 2 : 3));

@@ -1482,18 +1482,17 @@ HANDLES.__hellAt = (what, i) => {
 // granted, the crowd's rims set, where the pair, the trees and the stumps
 // stand.
 import { clickAfter } from './after/index.js';
-import { afterRow, buyAfter, setAfterDial, AFTER_ROWS, afterBill, afterMaxed, cardAt } from './after/rows.js';
+import { afterRow, buyAfter, AFTER_ROWS, afterBill, afterMaxed, cardAt } from './after/rows.js';
 import { setCrowd, support as afterSupport, union as afterUnion, crowdSize } from './after/union.js';
 import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut } from './after/bodies.js';
-import { plotX, afterFloor } from './after/place.js';
+import { plotX, afterFloor, stationBox, heapX } from './after/place.js';
 import { afterGate, strikeDue } from './after/strike.js';
 HANDLES.__afterClick = (x, y) => clickAfter(x, y);
 {
   const yardBuy = HANDLES.__buy;
   HANDLES.__buy = key => (afterRow(key) ? buyAfter(key) : yardBuy(key));
 }
-HANDLES.__afterDial = (key, v) => setAfterDial(key, v);
 HANDLES.__afterGrant = (coins = {}) => {
   const a = S.after;
   if (!a) return null;
@@ -1510,8 +1509,14 @@ HANDLES.__afterCrowd = fn => {
   else setCrowd(fn);
   return { support: afterSupport(), union: afterUnion(), size: crowdSize() };
 };
-// Where to click: the pair on the pedestal, each plot's trunk and stump.
+// Where to click: the pair on the pedestal, the sawdust heap, a station's
+// worked box (below its roof's strip), each plot's trunk and stump.
 HANDLES.__afterPair = () => { const b = pairBox(); return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; };
+HANDLES.__afterAt = what => {
+  if (what === 'heap') return { x: heapX() + P, y: afterFloor() - P };
+  const b = stationBox(what);
+  return b ? { x: b.x + b.w / 2, y: b.y + b.h - P } : null;
+};
 HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage: p.stage, logs: p.logs, falling: p.fall != null,
   stump: p.stump, x: plotX(i) + P / 2, y: afterFloor() - P * 5, sx: plotX(i) + P / 2, sy: afterFloor() - P / 2 })) : []);
 HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, shown: !!S.after && u.show(),
@@ -1519,7 +1524,8 @@ HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, sho
 HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...S.after.stock, gate: S.after.gate,
   axe: S.after.axe, support: afterSupport(), union: afterUnion(), camp: campCount(), walking: walkingOut(),
   size: crowdSize(), signs: S.after.signs.length, posters: S.after.posters.length, bodies: S.after.bodies.length,
-  posted: S.after.bodies.filter(b => b.job).length, motes: S.after.motes.length,
+  posted: S.after.bodies.filter(b => b.job && b.job !== 'builder').length, motes: S.after.motes.length,
+  built: [...S.after.built], camped: S.after.camp,
   due: afterGate(), strike: strikeDue() } : null);
 HANDLES.__afterCardAt = (x, y) => cardAt(x, y);
 // The axe in hand without buying it: a scene's setup.

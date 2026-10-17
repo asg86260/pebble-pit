@@ -4,9 +4,9 @@
 // The three gates in AFTER_GATES, each reached once and kept, every one read
 // off how empty God's yard is (call 14, settled 2026-10-18: members walk
 // out): the first meeting at MEET_MEMBERS souls walked out to the camp, the
-// slowdown at SLOW_SHARE of the crowd walked out (the paper mill and the
-// press are offered, the throne's speech comes twice as often and the wardens
-// double), the strike at STRIKE_SHARE. The strike is a cutscene, never a
+// slowdown at SLOW_SHARE of the crowd walked out (the throne's speech comes
+// twice as often and the wardens double), the strike at STRIKE_SHARE. No gate
+// offers a station: the shack has them all from the start. The strike is a cutscene, never a
 // fight (call 3 open: one defeat, the recommendation). `S.after.gate` is how
 // many are reached, so `AFTER_GATES[gate - 1]` is the last.
 //
