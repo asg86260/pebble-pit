@@ -58,7 +58,7 @@ export const BUILD_GHOST_INK = GREY[3];
 // And it drifts while it waits and while it goes up, the shop tile's drift
 // (SHELF_FLOAT_MS) at the yard's scale: this many cells either way at the
 // most, two waves summed an axis, free of the lattice.
-export const BUILD_DRIFT = 1;
+export const BUILD_DRIFT = 0.5;
 // The carried motes' turn round the pointer is written a frame at sixty: on
 // the clock it is this many of those a second, whatever the screen draws.
 export const MOTE_SPIN_FPS = 60;
