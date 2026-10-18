@@ -21726,6 +21726,12 @@ without a change). Option C of the vote:
 - **The selected lane opens under itself**: a piano roll (draw, select,
   drag, length, velocity) for a synth track, a step grid (kick, snare, hat,
   sixteen steps a bar) for the drum track.
+- **Styled "Studio"** (the second vote, https://claude.ai/artifact/DNbdRZkUiCWHQqsP7CcC5M,
+  option A): dark panels, Inter at 14px with JetBrains Mono for numbers,
+  each track its own color carried onto its clips and notes, amber for
+  what is playing, note names on every key of the piano roll. The bench is
+  the one page that leaves the game's black and white, because it is a
+  tool, not the yard; the fonts load from Google Fonts in a dev page only.
 - **Launching is Ableton's**: a clip or a whole scene is launched now and
   starts on the next bar line; a queued slot throbs by opacity (fade,
   never blink) until it starts.
@@ -21774,32 +21780,37 @@ mido is already installed, and nothing new goes into `package.json`.
 
 `audio.js` stays the only file that has heard of an AudioContext and gains
 a music half: it loads the place's loops after the first gesture, and
-changes scene on the bar line with a crossfade (fade, never pop). The
-choice of scene is a decision on the game's clock with no context, like
-the strikes', so the node tier can assert it. The ducking reads the strike
+changes place on the bar line with a crossfade (fade, never pop). Which
+loop plays is a decision on the game's clock with no context, like the
+strikes', read off the place the camera is in, so the node tier can
+assert it. The ducking reads the strike
 decisions already counted there. Mute silences it with everything else.
 
 ### What it costs and what it must not break
 
 - **Size**: an OGG loop is roughly 1 MB a minute at the quality a bed
-  needs; four places of three or four scenes of 30 to 60 s is a few MB on
-  every build, the desk's included.
+  needs; four places, one loop of 30 to 60 s each, is a few MB on every
+  build, the desk's included.
 - **Every word a player reads** goes through `msg()`: the only player-facing
-  words here are on the settings sheet (a music level, if the call below
-  gives it one). The bench is dev-only and reads no locale.
+  words here are the music slider's label on the settings sheet. The bench is dev-only and reads no locale.
 - **No new field on S** for the score: the scene playing is derived from
   the place and its state, never saved, so a reload cannot desync it.
 - **Checks**: `test/music.test.mjs` in the node tier (a song file reads,
-  the bar-line launch lands on the bar, the scene choice follows the place,
+  the bar-line launch lands on the bar, the loop follows the place,
   the duck follows the strikes); the bench's pointer work in the browser
   tier only if the piano roll grows logic worth guarding.
 
-### Open calls
+### The calls, settled (the owner, 2026-10-17)
 
-1. **What changes the scene in the game.** Proposed: one song a place
-   (yard, the deep, the afterlife, hell), its scenes driven by what that
-   place is doing (the yard: calm, rain, a storm front, the rift torn).
-2. **The music level.** Its own slider on the settings sheet (one new
-   message), or the one volume slider for everything.
-3. **Surge live, one track at a time.** Good enough, or worth Surge's
-   channel split for two live tracks at once.
+1. **What changes the music: the place only.** One loop a place (the yard,
+   the deep, the afterlife, hell), and nothing else moves it: no weather,
+   no rift, no story beat. A song's scenes are for composing; the song file
+   names the one scene that is the place's loop (`"game": "<scene>"`), and
+   only that scene ships. Walking from one place to another crossfades the
+   two loops on the bar line.
+2. **The music level: its own slider** on the settings sheet beside the
+   volume, one new message in `locales/en.ftl`, kept in `prefs.js` beside
+   `volume` (a preference, not a state.js field, so it survives a reset
+   and does not travel with a save). Mute silences both.
+3. **Surge live: the selected track only.** One Surge XT standalone window;
+   the other lanes stay on the preview synth.
