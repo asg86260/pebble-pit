@@ -1,0 +1,416 @@
+{
+ "name": "ambient-dust",
+ "tempo": 64,
+ "key": {
+  "root": "A",
+  "mode": "minor"
+ },
+ "game": "main",
+ "scenes": [
+  "main"
+ ],
+ "chords": {
+  "main": [
+   1,
+   6,
+   3,
+   7,
+   1,
+   6,
+   4,
+   5
+  ]
+ },
+ "tracks": [
+  {
+   "id": "pad",
+   "name": "Pad",
+   "kind": "synth",
+   "patch": "Pads/MKS-70 Warm Pad",
+   "color": "#22a06b",
+   "level": 0.5,
+   "pan": 0,
+   "clips": {
+    "main": {
+     "bars": 8,
+     "notes": [
+      [
+       0,
+       57,
+       16,
+       72
+      ],
+      [
+       0,
+       60,
+       16,
+       68
+      ],
+      [
+       0,
+       64,
+       16,
+       68
+      ],
+      [
+       16,
+       53,
+       16,
+       72
+      ],
+      [
+       16,
+       57,
+       16,
+       68
+      ],
+      [
+       16,
+       60,
+       16,
+       68
+      ],
+      [
+       32,
+       60,
+       16,
+       72
+      ],
+      [
+       32,
+       64,
+       16,
+       68
+      ],
+      [
+       32,
+       67,
+       16,
+       68
+      ],
+      [
+       48,
+       55,
+       16,
+       72
+      ],
+      [
+       48,
+       59,
+       16,
+       68
+      ],
+      [
+       48,
+       62,
+       16,
+       68
+      ],
+      [
+       64,
+       57,
+       16,
+       72
+      ],
+      [
+       64,
+       60,
+       16,
+       68
+      ],
+      [
+       64,
+       64,
+       16,
+       68
+      ],
+      [
+       80,
+       53,
+       16,
+       72
+      ],
+      [
+       80,
+       57,
+       16,
+       68
+      ],
+      [
+       80,
+       60,
+       16,
+       68
+      ],
+      [
+       96,
+       62,
+       16,
+       72
+      ],
+      [
+       96,
+       65,
+       16,
+       68
+      ],
+      [
+       96,
+       69,
+       16,
+       68
+      ],
+      [
+       112,
+       52,
+       16,
+       72
+      ],
+      [
+       112,
+       55,
+       16,
+       68
+      ],
+      [
+       112,
+       59,
+       16,
+       68
+      ]
+     ]
+    }
+   },
+   "follow": {
+    "pattern": "pad-held"
+   },
+   "preview": {
+    "wave": "triangle",
+    "cutoff": 1400,
+    "q": 1,
+    "attack": 0.8,
+    "decay": 1,
+    "sustain": 0.8,
+    "release": 1.5
+   },
+   "fx": [
+    {
+     "type": "chorus",
+     "on": true,
+     "params": {
+      "rate": 0.4,
+      "depth": 0.5,
+      "mix": 0.5
+     }
+    },
+    {
+     "type": "autofilter",
+     "on": true,
+     "params": {
+      "rate": 0.15,
+      "depth": 0.5,
+      "center": 1500
+     }
+    },
+    {
+     "type": "reverb",
+     "on": true,
+     "params": {
+      "size": 0.85,
+      "damp": 0.4,
+      "mix": 0.45
+     }
+    },
+    {
+     "type": "vinyl",
+     "on": true,
+     "params": {
+      "crackle": 0.1,
+      "hiss": 0.15,
+      "wear": 0.4
+     }
+    }
+   ]
+  },
+  {
+   "id": "sub",
+   "name": "Sub",
+   "kind": "synth",
+   "patch": "Basses/Sub 2",
+   "color": "#3b82f6",
+   "level": 0.35,
+   "pan": 0,
+   "clips": {
+    "main": {
+     "bars": 8,
+     "notes": [
+      [
+       0,
+       33,
+       16,
+       96
+      ],
+      [
+       16,
+       41,
+       16,
+       96
+      ],
+      [
+       32,
+       36,
+       16,
+       96
+      ],
+      [
+       48,
+       43,
+       16,
+       96
+      ],
+      [
+       64,
+       33,
+       16,
+       96
+      ],
+      [
+       80,
+       41,
+       16,
+       96
+      ],
+      [
+       96,
+       38,
+       16,
+       96
+      ],
+      [
+       112,
+       40,
+       16,
+       96
+      ]
+     ]
+    }
+   },
+   "follow": {
+    "pattern": "bass-held"
+   },
+   "preview": {
+    "wave": "sine",
+    "cutoff": 500,
+    "q": 1,
+    "attack": 0.5,
+    "decay": 1,
+    "sustain": 0.9,
+    "release": 1.5
+   },
+   "fx": [
+    {
+     "type": "filter",
+     "on": true,
+     "params": {
+      "type": "lowpass",
+      "cutoff": 400,
+      "reso": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "bells",
+   "name": "Bells",
+   "kind": "synth",
+   "patch": "Plucks/Magic Music Box",
+   "color": "#d946a8",
+   "level": 0.22,
+   "pan": 0.2,
+   "clips": {
+    "main": {
+     "bars": 8,
+     "notes": [
+      [
+       4,
+       76,
+       4,
+       70
+      ],
+      [
+       30,
+       72,
+       4,
+       60
+      ],
+      [
+       52,
+       74,
+       4,
+       66
+      ],
+      [
+       84,
+       69,
+       4,
+       58
+      ],
+      [
+       110,
+       71,
+       4,
+       62
+      ]
+     ]
+    }
+   },
+   "preview": {
+    "wave": "triangle",
+    "cutoff": 3000,
+    "q": 1,
+    "attack": 0.005,
+    "decay": 0.4,
+    "sustain": 0.1,
+    "release": 1
+   },
+   "fx": [
+    {
+     "type": "filter",
+     "on": true,
+     "params": {
+      "type": "lowpass",
+      "cutoff": 3500,
+      "reso": 0
+     }
+    },
+    {
+     "type": "delay",
+     "on": true,
+     "params": {
+      "time": 0.75,
+      "feedback": 0.6,
+      "mix": 0.4
+     }
+    },
+    {
+     "type": "filter",
+     "on": true,
+     "params": {
+      "type": "lowpass",
+      "cutoff": 3500,
+      "reso": 0.1
+     }
+    },
+    {
+     "type": "reverb",
+     "on": true,
+     "params": {
+      "size": 0.75,
+      "damp": 0.5,
+      "mix": 0.35
+     }
+    }
+   ]
+  }
+ ]
+}
