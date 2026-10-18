@@ -66,15 +66,18 @@ export const TESTS = [
       still({ zoom: 5, zoomShow: 4.5, gliding: true }),                // a glide may move the zoom
       still({ camX: 5000, zoom: 5, zoomShow: 4.5, gliding: true }),    // and the camera
       still({ camX: 5000, frame: { x: 0, y: 0, w: 100, h: 100 } }),    // box outside, zoom back
-      still({ camX: 5000, hush: 0.5 }),                                // band short under a beat
+      still({ camX: 5000, hush: 0.5 }),                                // a band dipping mid-shot
+      still({ camX: 5000 }),
     ]);
+    const ramp = runChecks([still({ hush: 0.3 }), still(), still(), still({ hush: 0.4 })]);
     return [
       ok(f[1].length === 0, 'a still frame is clean'),
       ok(f[2].includes('zoom'), 'a zoom step while not gliding is red'),
       ok(!f[3].includes('zoom'), 'a zoom change in a glide is not'),
       ok(!f[4].includes('pan'), 'a pan in a glide is not'),
       ok(f[5].includes('box'), 'a box outside the window is red'),
-      ok(f[6].includes('band') && DT === 0.1, 'a hush under 1 while a beat holds is red'),
+      ok(f[6].includes('band') && DT === 0.1, 'a band dipping while the shot holds is red'),
+      ok(!ramp[0].includes('band') && !ramp[3].includes('band'), 'the bands easing in and out at the ends are not'),
     ];
   }],
 ];

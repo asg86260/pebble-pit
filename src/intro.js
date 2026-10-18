@@ -25,7 +25,7 @@ import { now, frames } from './clock.js';
 import { makeBoulder, dropZone, boulderAlive } from './rock.js';
 import { spawnChip, spawnSpoil, aim } from './dust.js';
 import { shadeNear } from './grid.js';
-import { walkY, setZoom, clampCam, lookAt, openingCamX, yardCell } from './world.js';
+import { walkY, setZoom, setZoomNow, clampCam, lookAt, openingCamX, yardCell } from './world.js';
 
 // The close-up the opening starts on, as a share of the yard's own zoom: held at
 // the same size on the glass on a phone, whose yard is drawn smaller.
@@ -102,7 +102,7 @@ export function startIntro() {
   for (const b of S.pair) b.y = walkY(b.x + WORKER / 2);
   // and the view is on the door before the first frame, so the walk out is
   // watched from the house rather than glided to from wherever the seat was
-  setZoom(introZoom());
+  setZoomNow(introZoom());
   S.camX = door + WORKER / 2 - S.viewW / 2;
   S.camTo = null;
   clampCam();       // and written through to the page's scroller, or the next frame reads the old seat back
