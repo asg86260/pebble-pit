@@ -18,6 +18,9 @@ import { msg } from './lang.js';
 function apply() {
   document.documentElement.classList.toggle('readable', readable());
   dispatchEvent(new Event('resize'));
+  // the resize has laid the words out in the new face, so it is asked for and
+  // `ready` waits on it rather than answering at once
+  void document.body.offsetWidth;
   document.fonts?.ready.then(() => dispatchEvent(new Event('resize')));
 }
 
@@ -31,5 +34,5 @@ export function mountReadable(el) {
     sayReadable(el);
   });
   // a page opened with it on: the face may land after the boot's measures
-  if (readable()) document.fonts?.ready.then(() => dispatchEvent(new Event('resize')));
+  if (readable()) { void document.body.offsetWidth; document.fonts?.ready.then(() => dispatchEvent(new Event('resize'))); }
 }

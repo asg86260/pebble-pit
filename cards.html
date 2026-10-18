@@ -121,6 +121,9 @@ mountRows(page2.querySelector('.rows'), queued);
 
 // Each board's slot fitted to its words, as the game's board does when it
 // opens (board.js, `pinWidth`), once the face is in.
+// A layout first: until the words are laid out the face is not asked for, and
+// `ready` answers at once, before it lands.
+void document.body.offsetWidth;
 document.fonts.ready.then(() => { for (const r of document.querySelectorAll('.rows.shelves')) fitSlot(r); });
 
 </script>

@@ -10,7 +10,22 @@ import { SHELF_SLOT } from './config.js';
 // What on a tile cannot fold, and how many shares of a wider tile each one
 // gets: a name and a gain take the whole of it, a strip half its share of
 // the halves standing (they split the tile, flex 1 1 0).
-const PARTS = '.what, .gain, .strip > i';
+export const UNFOLDING = '.what, .gain, .strip > i';
+
+// How far `el`'s words run past its content box, in fractional pixels.
+// Not scrollWidth against clientWidth: both are rounded to whole pixels, and
+// a strip half 72.5 wide holding words 73.45 wide reads as 73 and 73, fits,
+// and shows its ellipsis.
+export function overOf(el) {
+  const view = el.ownerDocument.defaultView;
+  const cs = view.getComputedStyle(el);
+  const box = el.getBoundingClientRect().width
+    - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+    - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth);
+  const words = el.ownerDocument.createRange();
+  words.selectNodeContents(el);
+  return words.getBoundingClientRect().width - box;
+}
 
 // Written onto `host` (the sheet in the game, so its width rule reads it too;
 // the rows on the card bench), and returned. Cleared first, so the measure is
@@ -22,11 +37,11 @@ export function fitSlot(shelf, host = shelf) {
   for (const tile of shelf.querySelectorAll(':scope > .tile')) {
     // A tile two slots wide grows by two slots' worth for every one.
     const span = +(/span (\d+)/.exec(getComputedStyle(tile).gridColumnStart)?.[1] || 1);
-    for (const el of tile.querySelectorAll(PARTS)) {
+    for (const el of tile.querySelectorAll(UNFOLDING)) {
       if (!el.getClientRects().length) continue;            // hidden: nothing to fit
       const shares = el.matches('.strip > i')
         ? [...el.parentElement.children].filter(h => h.getClientRects().length).length : 1;
-      over = Math.max(over, (el.scrollWidth - el.clientWidth) * shares / span);
+      over = Math.max(over, overOf(el) * shares / span);
     }
   }
   const slot = SHELF_SLOT + Math.ceil(over);
