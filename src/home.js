@@ -127,7 +127,10 @@ export function takeBuilders(f) {
   f.house = { n: gang.length, delivered: 0, next: 0, from: null, D: 0, step: 0, set: [], gone: [], wood: 0, done: false };
 }
 const homeX = b => pileX() + FINALE_PILE_HOMES[b % FINALE_PILE_HOMES.length] * P;
-const cheerX = b => pileX() - (b + 1) * WORKER;
+// The cheer stands in a line off the pile's far side, closed up where the
+// yard's left edge leaves less room than a body each.
+const cheerGap = () => Math.min(WORKER, Math.floor(pileX() / FINALE_BUILDERS / P) * P);
+const cheerX = b => pileX() - (b + 1) * cheerGap();
 
 // The plan, made as the pair come out of the pit: trips a step apart from
 // FINALE_BUILD_FROM_S, each its own length, the last done FINALE_BUILD_SPARE_S

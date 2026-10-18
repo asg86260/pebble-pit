@@ -42,7 +42,7 @@ export const FINALE_OUT_STEPS = 6;
 export const FINALE_WALK_PX_S = P * 30;
 export const FINALE_WALK_MAX_S = 30;
 export const FINALE_LEAD = 0.38;          // where the pair stand in the window, a share of it from the left
-export const FINALE_END_CELLS = 40;       // where they stop: the door, cells off the yard's left edge
+export const FINALE_END_CELLS = 31;       // where they stop: the door, cells off the yard's left edge, the bench clear of the casino
 export const FINALE_PAIR_GAP = P;         // between the two of them, hand in hand
 
 // --- the crowd --------------------------------------------------------------------
