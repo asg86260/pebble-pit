@@ -21867,3 +21867,51 @@ drawn on top is optional, and the roll makes a wrong note impossible.
   pattern fills its bars and an edit stops a follow), and the strip and the
   switches on the bench. The song file grows `chords` and `follow`; older
   songs read without them.
+
+### A track's effects chain (design, not built)
+
+*Asked for 2026-10-17: effects you stack on a track, Ableton's way. The
+owner chose a chain of effect boxes over a few fixed knobs, and the vote
+(https://claude.ai/artifact/SrCtXCW4gRHVNf6WpBZmai) put it **in a row under
+the clip**, option A.*
+
+- **Where it is.** The open clip's editor gets two tabs, **notes** and
+  **effects**. Effects is a row of boxes in the order the sound goes through
+  them, left to right, with an add box at the end that opens the list. A box
+  has a light (click to switch it off and hear without it), a ✕, and its
+  knobs: drag a knob up or down to turn it, double-click to put it back.
+  Drag a box by its title to move it in the chain. Drum tracks get the same
+  tab. The lane says how many effects a track has.
+- **The ten effects**, each with three knobs at most, every range and
+  default a row of `MUSIC_FX` in `config/music.js`:
+  **Filter** (type, cutoff, resonance), **EQ** (low, mid, high),
+  **Drive** (amount, tone, mix), **Bitcrush** (bits, mix),
+  **Chorus** (rate, depth, mix), **Phaser** (rate, depth, mix),
+  **Delay** (time in beats, feedback, mix), **Reverb** (size, damping, mix),
+  **Compressor** (threshold, ratio, release), and **Duck** (amount,
+  release: the pump under the kick, read from the drum track's kicks).
+- **The song file.** `track.fx` is the chain, a list of
+  `{ type, on, params }`; a track without it is dry.
+- **Two sounds for one chain.** The render runs each box through its
+  pedalboard namesake (LadderFilter, the shelf and peak filters,
+  Distortion, Bitcrush, Chorus, Phaser, a tempo-synced Delay, Reverb,
+  Compressor, the sidechain duck the mix already has). The preview builds
+  the nearest Web Audio nodes (biquads, a wave shaper, a modulated delay,
+  an all-pass chain, a feedback delay, a convolver over a made-up hall, the
+  dynamics compressor, a gain dipped on every kick). The two will not match
+  exactly -- the render is the sound -- but every knob moves both the same
+  way.
+- **The fixed per-track effects in the mix go.** `mix.py` stops choosing
+  effects by track id (the bass's drive, the pad's chorus, the lead's
+  delay, the shared hall, the bass and pad duck). The yard song gets those
+  as written chains, so it renders as close to before as the new boxes
+  allow. The master's glue and limiter stay: they are the mix's, not a
+  track's.
+- **Cheap to change.** Effects are applied at the mix, after the stems, so a
+  knob turned after a render costs the mix's few seconds and none of
+  Surge's minute: the stems stay cached.
+- **New songs** start with a chain on each following part: Duck on the
+  bass, Chorus and Reverb on the pad, Delay and Reverb on the arpeggio.
+- **Checks.** `test/music.test.mjs`: every `MUSIC_FX` type has a preview
+  builder and a case in `mix.py`; validate names an unknown effect or a
+  knob out of its range; the yard's chains read clean.
