@@ -12,6 +12,7 @@
   "src/verify.js",
   "src/migrations/",
   "src/config/sound.js",
+  "src/config/music.js",
   "src/music/"
  ],
  "strings": {
