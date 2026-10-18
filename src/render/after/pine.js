@@ -10,23 +10,15 @@
 
 import { P, AFTER_FALL_S, AFTER_FALL_POSES, AFTER_CROWN_FADE_S, AFTER_BUILD_FADE_S, AFTER_DIG_CLICKS,
          TREE_CHOPS, AFTER_ART_WORK_S, AFTER_PILE_FADE_S } from '../../config.js';
-import { plotX, afterFloor } from '../../after/place.js';
-import { trees, GROWN } from '../../after/grove.js';
+import { plotX, afterFloor, pineOf, inPine, PINE_GROWN, STUMP } from '../../after/place.js';
+import { trees } from '../../after/grove.js';
 import { frame, K, W, SOIL, toneOf, now, inView, pileState, clamp01 } from './kit.js';
 import { logPile } from './piles.js';
 import { gestureView, stumpWobble } from '../../after/gestures.js';
 
-// A stage: its trunk [width, height] and its tiers { v0, h, s }: a tier's foot
-// v0 cells over the top of the trunk, h rows tall, its top row 2s+1 wide. The
-// big pine (the grove's bigger trees) is the grown one with a tier more under it.
-const PINE = {
-  1: { trunk: [1, 1], tiers: [{ v0: 0, h: 3, s: 0 }] },
-  2: { trunk: [1, 1], tiers: [{ v0: 0, h: 4, s: 1 }, { v0: 4, h: 3, s: 0 }] },
-  3: { trunk: [3, 2], tiers: [{ v0: 0, h: 6, s: 2 }, { v0: 6, h: 5, s: 1 }, { v0: 11, h: 4, s: 0 }] },
-  big: { trunk: [3, 3], tiers: [{ v0: 0, h: 7, s: 3 }, { v0: 7, h: 6, s: 2 }, { v0: 13, h: 5, s: 1 }, { v0: 18, h: 4, s: 0 }] }
-};
-const stageOf = (stage, big) => (stage === GROWN && big ? PINE.big : PINE[stage]);
-const inPine = (tiers, u, v) => tiers.some(({ v0, h, s }) => v >= v0 && v < v0 + h && Math.abs(u) <= (v0 + h - v) - 0.5 + s + 1e-6);
+// The pine's shape is place.js's (`PINE`), where the hand reads it too.
+const stageOf = pineOf;
+const GROWN = PINE_GROWN;
 
 // The tiers' cells, turned about the top of the trunk by th (0 upright, PI/2
 // lying to the right), the pivot raised by `lift`: worked out once a pose.
@@ -59,8 +51,9 @@ function pine(d, stage, a = 1) {
 // pixel either way `dx` as its roots give.
 function stump(d, a, dug, up = 0, dx = 0) {
   d.fade(a, () => {
-    d.px(-P + dx, -2 * P - up, 3 * P, 2 * P, K); d.px(-P + 2 + dx, -2 * P + 2 - up, 3 * P - 4, 2, 3);
-    if (up) d.px(-P + 2 + dx, -up, 3 * P - 4, up, 5);          // the roots, pulled up out of the ground
+    const [x0, w, h] = STUMP.map(v => v * P);
+    d.px(x0 + dx, -h - up, w, h, K); d.px(x0 + 2 + dx, -h + 2 - up, w - 4, 2, 3);
+    if (up) d.px(x0 + 2 + dx, -up, w - 4, up, 5);          // the roots, pulled up out of the ground
     // a root given takes a cell off its top
     for (let k = 0; k < Math.min(dug, AFTER_DIG_CLICKS); k++) d.px((-1 + k) * P + dx, -2 * P - up, P, P, W);
   });

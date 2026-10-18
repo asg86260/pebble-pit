@@ -20,7 +20,7 @@ const TURN = Math.PI / 16;                                 // a held step of a t
 const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
 import { P, GESTURE_WHEEL_LOG, GESTURE_FEED_LOG } from '../../config.js';
-import { K, W, PULP, DUST, hash, clamp01 } from './kit.js';
+import { K, W, PULP, DUST, hash, clamp01, silhouette } from './kit.js';
 
 const cyc = (t, T) => { const u = Math.max(0, t), k = Math.floor(u / T); return { ph: u / T - k, since: u - k * T }; };
 const FADE = 0.4;
@@ -252,6 +252,12 @@ function shack(d) {
 }
 
 export const DRAW = { mill, chipper, papermill, workshop, press, shack };
+
+// Each station's paper backing (kit.js, `silhouette`), read off its idle
+// drawing once: the moving parts swing inside it, and what they carry is
+// solid ink of its own.
+const BACKS = {};
+export const backOf = key => BACKS[key] || (BACKS[key] = silhouette(d => DRAW[key](d, false, 0, null)));
 
 // Where the worker at a working station stands and how, in its frame's
 // cells: its left column and top row, a lean in px, and whether it squats.

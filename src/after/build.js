@@ -16,7 +16,7 @@ import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_BUILD_PIECES, AFTER_BUILD_PIECE_S } from '../config.js';
 import { nextId } from './util.js';
 import { built } from './levels.js';
-import { campSpot, speakerAt } from './place.js';
+import { campSpot, speakerAt, stationDoor } from './place.js';
 
 // A station bought on the shack: its site started.
 export function raiseStation(key) {
@@ -28,7 +28,7 @@ export function raiseStation(key) {
 const sites = () => Object.keys(S.after.raising).filter(k => !built(k));
 export const pairBuilding = () => !!S.after && S.after.bodies.some(b => b.job === AFTER_JOB.BUILD && b.pair != null);
 
-// Every site without a builder gets one: a member off the back of the camp,
+// Every site without a builder gets one: a member out of the camp,
 // or, with none waiting and the pair on the pedestal, the pair.
 export function fillBuilders() {
   const a = S.after;
@@ -36,8 +36,8 @@ export function fillBuilders() {
     if (a.bodies.some(b => b.job === AFTER_JOB.BUILD && b.site === key && b.state !== 'home')) continue;
     if (a.camp > 0) {
       a.camp -= 1;
-      const at = campSpot(a.camp);
-      a.bodies.push({ id: nextId(), job: AFTER_JOB.BUILD, site: key, pair: null, x: at.x, y: at.y, face: 1, state: 'work', t: 0, load: null, target: null, n: 0 });
+      const at = campSpot(stationDoor(key));   // out of our crowd's front nearest the site
+      a.bodies.push({ id: nextId(), job: AFTER_JOB.BUILD, site: key, pair: null, x: at.x, y: at.y, face: 1, state: 'work', t: 0, load: null, target: null, n: 0, born: a.t });
     } else if (!pairBuilding()) {
       for (const k of [0, 1]) {
         const at = speakerAt(k);     // a speaker's spot is its left edge, a body's x its middle column

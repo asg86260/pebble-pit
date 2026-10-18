@@ -20507,12 +20507,16 @@ same day; where this and the paragraph above differ, this is what runs.
 - **Ink is cut** (call 11): signs are timber alone, posters paper alone; no
   well, no storm clouds, no ink gatherer.
 - **Members walk out** (call 14). A soul whose rim closes leaves its slot
-  and walks to the camp, where it waits on the camp's ground; God's yard
+  and walks to the camp, into the front of our crowd behind the stations,
+  where it waits; God's yard
   empties, and every gate reads off the share walked out (`STRIKE_SHARE`
   and the rest). Word of mouth and canvassers are gone: only signs and
   posters ink a soul. Members in the camp are not workers: a **post** is
-  bought on a station's card with rebel (each dearer) and the member at the
-  back of the camp walks to it; nobody waiting, it stands empty.
+  bought on a station's card with rebel (each dearer) and a member steps out
+  of our crowd's front where it is nearest the post (polish, 2026-10-18: the
+  old waiting ground by the shack was a 30-40 s walk from the grove; our
+  crowd spans the camp, so no post is more than a few seconds off). Nobody
+  waiting, it stands empty.
 - **No bands** (call 12): act 3 is outside the eight-rungs rule. A card is
   its posts plus two or three named upgrades, each a change on screen, paid
   in rebel, timber and paper (`AFTER_UPGRADES`). No pledge, no keeper, no

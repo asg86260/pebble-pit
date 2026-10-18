@@ -14,24 +14,25 @@
 
 import { P, GREY, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
-         AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS } from '../config.js';
+         AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
+         NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
 import { S } from '../state.js';
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
-import { writeCount } from './numfont.js';
+import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { overCrowd, stationBox, stationX0, campSpot, heapMid, notchX, fileAt, rankAtY, floorAt, afterFloor, ART } from '../after/place.js';
+import { overCrowd, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, floorAt, afterFloor, ART } from '../after/place.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel.js';
 import { built, heapBrim } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
-import { postsOf, bodiesOf, atStation } from '../after/bodies.js';
+import { postsOf, bodiesOf, atStation, bodyInk } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
-import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, hash } from './after/kit.js';
+import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, hash, backing } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { drawGrove } from './after/pine.js';
-import { DRAW, workerPose, GLYPHS } from './after/stations.js';
+import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
 import { heap, heapCells, logPile, plankPile, sheetPile, signPile } from './after/piles.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
 
@@ -134,7 +135,9 @@ function drawStation(key) {
   if (!inView(b.x - P * 16, b.w + P * 32)) return;
   const a = A(), r = a.raising[key];
   if (!built(key) && !r) { ghostBox(b); return; }
-  const draw = key === 'pedestal' ? drawPillar : (d, work, t) => DRAW[key](d, work, t, hands[key]);
+  // Each drawn on its paper backing, so the camp's crowd behind it does not
+  // show through its open parts; the pillar is paper through already.
+  const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { backing(d, backOf(key)); DRAW[key](d, work, t, hands[key]); };
   if (!built(key)) {
     // Raised a band a piece, the floor up, each fading in from when it landed.
     ghostBox(b);
@@ -144,7 +147,6 @@ function drawStation(key) {
       ctx.save();
       ctx.beginPath(); ctx.rect(b.x - P * 4, afterFloor() - top * P, b.w + P * 8, (top - bot) * P); ctx.clip();
       ctx.globalAlpha = fadeIn(r.at[k]);
-      ctx.fillStyle = GREY[0]; ctx.fillRect(b.x, afterFloor() - top * P, b.w, (top - bot) * P);
       draw(d, false, 0);
       ctx.restore();
     }
@@ -209,11 +211,7 @@ export function drawAfterCamp() {
   drawRebelPile();
   drawPair();
   drawBubbles();
-  // The members waiting on the camp's ground, each on its spot, back rows first.
-  for (let k = a.camp - 1; k >= 0; k--) {
-    const at = campSpot(k);
-    if (inView(at.x - P * 2, P * 4)) body(at.x, at.y + floorAt(at.x) - afterFloor());
-  }
+  // The members waiting are our crowd behind the camp (render/aftercrowd.js).
 }
 
 // --- the members ---------------------------------------------------------------------
@@ -250,16 +248,27 @@ export function drawAfterMembers() {
   const a = A();
   if (!a) return;
   // Those over God's crowd are drawn through its rows (render/aftercrowd.js).
-  for (const w of a.bodies) if (!overCrowd(w.x) && inView(w.x - P * 4, P * 8)) drawMember(w);
+  // Each faded as it steps out of our crowd or walks back into it.
+  for (const w of a.bodies) {
+    if (overCrowd(w.x) || !inView(w.x - P * 4, P * 8)) continue;
+    ctx.globalAlpha = bodyInk(w);
+    drawMember(w);
+    ctx.globalAlpha = 1;
+  }
 }
 
 // --- the counts ----------------------------------------------------------------------
-// Each pile's count, in screen pixels after the world, where the piles put it.
+// Each pile's count, in screen pixels after the world, where the piles put
+// it, on a plate of paper its own size, so the camp's crowd behind it does
+// not crowd its digits.
 export function drawAfterCounts() {
   if (S.view !== 'after' || !A()) return;
   for (const c of pendingCounts()) {
-    const at = screenAt(c.x, c.y);
-    writeCount(ctx, String(c.n), at.x, at.y);
+    const at = screenAt(c.x, c.y), str = String(c.n);
+    const w = widthOf(drawable(str), NUM_FONT_PX), h = GH * NUM_FONT_PX, pad = AFTER_COUNT_PAD;
+    ctx.fillStyle = GREY[0];
+    ctx.fillRect(Math.round(at.x - w / 2) - pad, Math.round(at.y - h / 2) - pad, w + pad * 2, h + pad * 2);
+    writeCount(ctx, str, at.x, at.y);
   }
   clearCounts();
 }

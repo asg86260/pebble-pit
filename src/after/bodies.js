@@ -3,10 +3,10 @@
 // 2026-10-18). Placeholder drawing.
 //
 // A soul whose rim closes leaves its slot and walks to the camp (union.js
-// sets it off, 'out'), where it stands on the camp's ground, a body a spot.
-// Members in the camp are not workers: a post is bought at a station (rows.js,
-// `S.after.posts`), and the member at the back of the camp walks from its
-// spot to hold it. A post with nobody waiting stands empty until somebody
+// sets it off, 'out'), into the front of our crowd behind the camp, and
+// fades into it. Members in the camp are not workers: a post is bought at a
+// station (rows.js, `S.after.posts`), and a member steps out of our crowd's
+// front where it is nearest the post, fading in, to hold it. A post with nobody waiting stands empty until somebody
 // walks in. Every station works only with a body through its door, never a
 // count: the sawyer at the mill saws the log, the joiner at the workshop
 // makes the sign, and a carrier walks it out into the crowd.
@@ -15,16 +15,17 @@
 // here and none of the yard's stations or routes apply, so the act keeps its
 // own list, `S.after.bodies`, saved whole, so a reload stands every body back
 // where it was (test/after-loop.test.mjs). A member who has reached the camp
-// is only counted (`S.after.camp`) and drawn on its spot, so a crowd that has
-// walked out by the thousand costs the frame nothing while it waits.
+// is only counted (`S.after.camp`) and stands in our crowd, so a crowd that
+// has walked out by the thousand costs the frame nothing while it waits.
 
 import { S } from '../state.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S, AFTER_PASTE_S,
-         AFTER_PASTE_LOAD, AFTER_PRESS_S, AFTER_SAW_S, AFTER_CHIP_S, AFTER_SIGN_S, AFTER_PULP_S, AFTER_CHOP_HOLD_S } from '../config.js';
+         AFTER_PASTE_LOAD, AFTER_PRESS_S, AFTER_SAW_S, AFTER_CHIP_S, AFTER_SIGN_S, AFTER_PULP_S, AFTER_CHOP_HOLD_S,
+         AFTER_JOIN_FADE_S } from '../config.js';
 import { secs, walk, nextId } from './util.js';
 import { built, stumpsOn } from './levels.js';
-import { afterFloor, stationDoor, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, agitatorX, speakerAt } from './place.js';
+import { afterFloor, stationDoor, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, agitatorX, speakerAt, overCrowd, crowdEdge } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, takeLog } from './grove.js';
 import { sweepDue, tipSawdust } from './mill.js';
@@ -33,6 +34,27 @@ import { workAfter } from './work.js';
 import { fillBuilders, layPiece, pieceS } from './build.js';
 
 const floorY = () => afterFloor();
+// A walk that keeps to the floor: the rows of God's crowd stand up the
+// screen, so a body goes up into them only over the crowd, and anything off
+// the floor elsewhere (the pedestal's top) is climbed straight up to and
+// down from. Off the floor where it should not be, it comes down first.
+// True once there.
+function go(w, tx, ty, dt) {
+  const fl = floorY(), onFloor = Math.abs(w.y - fl) < 0.5, toFloor = Math.abs(ty - fl) < 0.5;
+  if (onFloor && toFloor) return walk(w, tx, ty, dt);
+  if (overCrowd(w.x) && overCrowd(tx)) return walk(w, tx, ty, dt);
+  if (!onFloor) {
+    // In the crowd's rows bound out of them, or up on the pedestal bound
+    // elsewhere: straight down to the floor.
+    if (Math.abs(w.x - tx) < 0.5) return walk(w, tx, ty, dt);
+    walk(w, w.x, fl, dt);
+    return false;
+  }
+  // On the floor, bound up: along it to the crowd's edge or to under the spot.
+  const ex = overCrowd(tx) ? crowdEdge(w.x) : tx;
+  if (Math.abs(w.x - ex) >= 0.5) { walk(w, ex, fl, dt); return false; }
+  return walk(w, tx, ty, dt);
+}
 // Where a member waits for work at its post: its station's door, or the
 // grove's edge.
 const postX = w => {
@@ -40,7 +62,7 @@ const postX = w => {
   if (post === 'grove') return groveX1() - P * 4;
   return stationDoor(post) + (w.id % 3) * P;
 };
-const idle = (w, dt) => walk(w, postX(w), floorY(), dt);
+const idle = (w, dt) => go(w, postX(w), floorY(), dt);
 
 // --- the posts ---------------------------------------------------------------------------
 export const postsOf = job => (S.after ? S.after.posts[job] || 0 : 0);
@@ -55,19 +77,29 @@ export const atStation = key => (S.after ? S.after.bodies.filter(b => b.at === k
 // A post bought at its station: one more of `job` wanted.
 export const addPost = job => { const p = S.after.posts; p[job] = (p[job] || 0) + 1; S.after.postAt[job] = S.after.t; };
 
-// Every post without a member walking to it or at it takes the member at the
-// back of the camp, who sets off from its spot. None waiting, it stays empty.
+// Where a post of `job` first sends its member: the agitators' row behind
+// the pedestal, or the post's station door or grove edge.
+const postFor = (job, k) => (job === AFTER_JOB.AGITATE ? agitatorX(k) : postX({ job, id: 0 }));
+// Every post without a member walking to it or at it takes a member from the
+// camp, who steps out of our crowd's front nearest the post, fading in.
+// None waiting, it stays empty.
 function fillPosts() {
   const a = S.after;
   for (const job of AFTER_JOBS) {
     let want = postsOf(job) - bodiesOf(job).length;
     while (want-- > 0 && a.camp > 0) {
       a.camp -= 1;
-      const at = campSpot(a.camp);
-      a.bodies.push({ id: nextId(), job, x: at.x, y: at.y, face: 1, state: 'work', t: 0, load: null, target: null, n: 0 });
+      const at = campSpot(postFor(job, bodiesOf(job).length));
+      a.bodies.push({ id: nextId(), job, x: at.x, y: at.y, face: 1, state: 'work', t: 0, load: null, target: null, n: 0, born: a.t });
     }
   }
 }
+// A body's ink: fading in as it steps out of our crowd, out as it walks into it.
+export const bodyInk = w => {
+  const t = S.after ? S.after.t : 0;
+  if (w.state === 'join') return Math.max(0, 1 - (t - w.joined) / AFTER_JOIN_FADE_S);
+  return w.born == null ? 1 : Math.min(1, Math.max(0, (t - w.born) / AFTER_JOIN_FADE_S));
+};
 
 // --- each job's frame ------------------------------------------------------------------
 // A station's worker: at its door, a unit of the station's work (work.js)
@@ -75,7 +107,7 @@ function fillPosts() {
 // clock holds full while the station's input is short.
 function stationWork(w, key, period, dt) {
   if (!built(key)) { w.at = null; idle(w, dt); return; }
-  if (!walk(w, stationDoor(key) + (w.id % 3) * P, floorY(), dt)) { w.at = null; return; }
+  if (!go(w, stationDoor(key) + (w.id % 3) * P, floorY(), dt)) { w.at = null; return; }
   w.at = key;
   w.t = Math.min(period, w.t + dt);
   if (w.t >= period && workAfter(key, 1)) w.t = 0;
@@ -105,7 +137,7 @@ const JOB_STEP = {
     // A spot behind the pedestal by its place among the agitators, a line on
     // its own clock: rebel, and nobody won.
     const k = bodiesOf(AFTER_JOB.AGITATE).indexOf(w);
-    if (!walk(w, agitatorX(k), floorY(), dt)) return;
+    if (!go(w, agitatorX(k), floorY(), dt)) return;
     w.face = 1;
     w.t += dt;
     if (w.t >= AFTER_AGITATE_S) { agitate(w); w.t = 0; w.swing = S.after.t; }
@@ -121,7 +153,7 @@ const JOB_STEP = {
       w.target = i; w.dig = dig; w.t = 0;
     }
     if (w.target == null) { idle(w, dt); return; }
-    if (!walk(w, plotX(w.target) + P * 3, floorY(), dt)) return;
+    if (!go(w, plotX(w.target) + P * 3, floorY(), dt)) return;
     w.t += dt;
     if (w.dig) { if (w.t >= AFTER_DIG_S) { digStump(w.target); w.target = null; w.t = 0; w.swing = a.t; } }
     else if (w.t >= AFTER_FELL_S) { chopTree(w.target); w.t = 0; w.swing = a.t; }
@@ -133,7 +165,9 @@ const JOB_STEP = {
       // behind on the way does not turn it round.
       if (!w.to || !built(w.to)) w.to = logTo();
       if (!w.to) { idle(w, dt); return; }
-      if (walk(w, stationDoor(w.to) - P * 2, floorY(), dt)) { a.stock[PILE[w.to]] += 1; w.load = null; w.target = null; w.to = null; }
+      // Put down on the station's log pile, which the turned chipper lays on
+      // the side away from its jaw.
+      if (go(w, pileMid(w.to, PILE[w.to]), floorY(), dt)) { a.stock[PILE[w.to]] += 1; w.load = null; w.target = null; w.to = null; }
       return;
     }
     if (!logTo()) { idle(w, dt); return; }
@@ -144,7 +178,7 @@ const JOB_STEP = {
       w.target = i < 0 ? null : i;
     }
     if (w.target == null) { idle(w, dt); return; }
-    if (!walk(w, plotX(w.target) + P, floorY(), dt)) return;
+    if (!go(w, plotX(w.target) + P, floorY(), dt)) return;
     if (takeLog(w.target)) { w.load = 'log'; w.to = logTo(); }
     w.target = null;
   },
@@ -153,7 +187,7 @@ const JOB_STEP = {
     // it, a load tipped through, and back.
     if (w.load === 'tip') {
       w.at = null;
-      if (walk(w, notchX(), floorY(), dt)) { tipSawdust(); w.load = null; }
+      if (go(w, notchX(), floorY(), dt)) { tipSawdust(); w.load = null; }
       return;
     }
     if (built('mill') && sweepDue() && w.at === 'mill' && !S.after.bodies.some(o => o.load === 'tip')) { w.load = 'tip'; w.at = null; return; }
@@ -169,14 +203,14 @@ const JOB_STEP = {
     // up onto the pedestal.
     if (w.state === 'home') {
       const at = speakerAt(w.pair);
-      if (walk(w, at.x + P, at.y, dt)) w.state = 'gone';
+      if (go(w, at.x + P, at.y, dt)) w.state = 'gone';
       return;
     }
     if (built(w.site)) {
       if (w.pair != null) { w.state = 'home'; return; }
       w.job = null; w.state = 'out'; w.site = null; return;
     }
-    if (!walk(w, stationDoor(w.site) + (w.pair ? P * 4 : 0), floorY(), dt)) return;
+    if (!go(w, stationDoor(w.site) + (w.pair ? P * 4 : 0), floorY(), dt)) return;
     w.t += dt;
     if (w.t >= pieceS()) { w.t = 0; w.swing = S.after.t; if (w.pair !== 1) layPiece(w.site); }
   },
@@ -191,20 +225,20 @@ const JOB_STEP = {
     if (typeof w.target === 'string') {
       const s = a.signs.find(q => `s${q.id}` === w.target && q.askew && q.pull == null);
       if (!s) { w.target = null; w.t = 0; return; }
-      if (!walk(w, soulX(s.f) + P / 2, soulY(s.r) + P * 2, dt)) return;
+      if (!go(w, soulX(s.f) + P / 2, soulY(s.r) + P * 2, dt)) return;
       w.t += dt;
       if (w.t >= AFTER_PLANT_S) { s.askew = false; w.target = null; w.t = 0; }
       return;
     }
     if (!w.load) {
-      if (!walk(w, stationDoor('workshop') + P * 4, floorY(), dt)) return;
+      if (!go(w, stationDoor('workshop') + P * 4, floorY(), dt)) return;
       if (a.stock.signs <= 0) return;
       const spot = signSpot();
       if (!spot) return;
       a.stock.signs -= 1; w.load = 'sign'; w.target = spot; w.t = 0;
     }
     const s = w.target;
-    if (!walk(w, soulX(s.f) + P / 2, soulY(s.r) + P * 2, dt)) return;
+    if (!go(w, soulX(s.f) + P / 2, soulY(s.r) + P * 2, dt)) return;
     w.t += dt;
     if (w.t >= AFTER_PLANT_S) { plantSign(s.f, s.r); w.load = null; w.target = null; w.t = 0; }
   },
@@ -213,7 +247,7 @@ const JOB_STEP = {
     if (!built('press')) { idle(w, dt); return; }
     if (!w.n) {
       w.load = null;
-      if (!walk(w, stationDoor('press') + P * 4, floorY(), dt)) return;
+      if (!go(w, stationDoor('press') + P * 4, floorY(), dt)) return;
       if (a.stock.posters <= 0 || freeSlot() == null) return;
       w.n = Math.min(AFTER_PASTE_LOAD, a.stock.posters);
       a.stock.posters -= w.n; w.load = 'posters'; w.target = null; w.t = 0;
@@ -224,7 +258,7 @@ const JOB_STEP = {
       if (slot == null) { w.target = null; return; }
       w.target = slot;
     }
-    if (!walk(w, slotX(w.target), floorY(), dt)) return;
+    if (!go(w, slotX(w.target), floorY(), dt)) return;
     w.t += dt;
     if (w.t >= AFTER_PASTE_S) {
       pastePoster(w.target); w.n -= 1; w.target = null; w.t = 0;
@@ -233,26 +267,27 @@ const JOB_STEP = {
   }
 };
 
-// One frame of every member up here: those walking out to the camp, each to
-// the spot behind the last one waiting, and counted in the camp once they
-// stand on it; the posts filled from the camp; and every post's job.
+// One frame of every member up here: those walking out to the camp, into
+// our crowd's front, counted in the camp as
+// they reach it and fading into the crowd; the posts filled from the camp;
+// and every post's job.
 export function stepBodies(c) {
   const a = S.after, dt = secs(c);
-  // A walker is counted only from the front of the queue, so the one counted
-  // is always the one standing on the camp's next spot.
-  let k = 0, arrived = 0, front = true;
+  let arrived = 0;
   for (const w of a.bodies) {
     if (w.swing != null && a.t - w.swing > AFTER_CHOP_HOLD_S) w.swing = null;
+    if (w.state === 'join') { if (bodyInk(w) <= 0) w.state = 'gone'; continue; }
     if (w.state === 'out') {
-      const at = campSpot(a.camp + k++);
-      const there = walk(w, at.x, at.y, dt);
-      if (there && front) { w.state = 'camp'; arrived++; } else front = false;
+      // Into our crowd's front where it is nearest: its end, for one coming
+      // from God's yard; where it stands, for a builder done.
+      const at = campSpot(w.x);
+      if (go(w, at.x, at.y, dt)) { w.state = 'join'; w.joined = a.t; arrived++; }
       continue;
     }
     (JOB_STEP[w.job] || idle)(w, dt);
   }
   if (arrived) a.camp += arrived;
-  if (arrived || a.bodies.some(w => w.state === 'gone')) a.bodies = a.bodies.filter(w => w.state !== 'camp' && w.state !== 'gone');
+  if (a.bodies.some(w => w.state === 'gone')) a.bodies = a.bodies.filter(w => w.state !== 'gone');
   fillBuilders();
   fillPosts();
 }

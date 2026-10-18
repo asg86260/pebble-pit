@@ -90,15 +90,14 @@ export const AFTER_GROVE_X0 = P * 12;      // the grove's first plot's left, cle
 export const AFTER_PLOTS0 = 1;             // plots the grove starts with, a grown tree in it (call 10, the owner's)
 export const AFTER_PLOT_MAX = 4;           // ...and the most its card clears
 export const AFTER_PLOT_STEP = P * 16;     // across a plot: a grown pine's foot is fifteen cells
-// The camp's ground, between the grove and the stations: the members who have
-// walked out of God's yard stand here, a body a spot, until a post wants one.
-// Rows of AFTER_CAMP_COLS, each staggered half a spot, stepping up the screen;
-// past AFTER_CAMP_ROWS the spots start again at the front, a second layer.
-export const AFTER_CAMP_X0 = P * 284;      // between the shack and the pedestal (layout A)
-export const AFTER_CAMP_COLS = 11;
-export const AFTER_CAMP_PITCH = P * 4;     // across a spot
-export const AFTER_CAMP_ROW = P * 2;       // a row's depth up the screen
-export const AFTER_CAMP_ROWS = 40;
+// The members waiting are our crowd behind the camp (render/aftercrowd.js,
+// OURS_X0 to the pedestal): a member walking out of God's yard walks into its
+// front at the end nearest God's yard, and one going to a post steps out of
+// its front at the point nearest the post (after/place.js, `campSpot`), each
+// fading over this as it goes into the crowd or comes out of it.
+export const AFTER_JOIN_FADE_S = 0.5;
+// A pile's count stands on a plate of paper this many screen px proud of its digits.
+export const AFTER_COUNT_PAD = 2;
 // The camp's stations, left to right (layout A, docs/mocks/act3-place-2026-10-18):
 // each the left edge of its ground in cells off the place's left, its piles
 // and its drawing laid off that (after/place.js, `ART`). The mill nearest the
@@ -174,13 +173,8 @@ export const AFTER_AGITATE_S = 4;
 export const AFTER_AGITATE_REBEL = 1;
 
 // --- the grove ---
-// A tree's trunk and crown, in cells, by stage: none, sapling, pole, crown;
-// and a grown tree's, planted after the grove's "bigger trees", which falls
-// into more logs.
-export const AFTER_TRUNK_CELLS = [0, 2, 6, 10];
-export const AFTER_CROWN_CELLS = [0, 1, 2, 4];
-export const AFTER_BIG_TRUNK = 14;
-export const AFTER_BIG_CROWN = 5;
+// A tree's logs, and a big one's (planted after the grove's "bigger trees");
+// its shape is the drawing's (after/place.js, `PINE`).
 export const AFTER_LOGS_A_TREE = 3;
 export const AFTER_LOGS_BIG_TREE = 5;
 export const AFTER_GROW_S_UP = 45;         // seconds a growth stage with the grove's "faster growth"
