@@ -16,7 +16,7 @@ const { own } = await browser({ port });
 const tab = await openTab(port, PAGE, { ready: '!!window.__mock' });
 const ev = async e => { const r = await tab.send('Runtime.evaluate', { expression: e, returnByValue: true, awaitPromise: true }); if (r.result?.exceptionDetails) throw new Error(JSON.stringify(r.result.exceptionDetails).slice(0, 600)); return r.result?.result?.value; };
 const wait = ms => new Promise(r => setTimeout(r, ms));
-await tab.send('Emulation.setDeviceMetricsOverride', { width: 1260, height: 3400, deviceScaleFactor: 1, mobile: false });
+await tab.send('Emulation.setDeviceMetricsOverride', { width: 1260, height: 6000, deviceScaleFactor: 1, mobile: false });
 
 const mouse = (type, p, buttons = 0) => tab.send('Input.dispatchMouseEvent', { type, x: p.x, y: p.y, button: 'left', buttons, clickCount: 1 });
 async function view() { await wait(30); }   // the viewport holds the whole page: no scrolling, so a point is a point

@@ -35,8 +35,6 @@
 <main>
 <h1>Act 3: working the <span class="ph">chipper</span> by hand, in the world</h1>
 <p>A <b>playable mock</b> drawn from plain cells on the game's grid (P = 6, the game's eleven greys, a body the yard's 18 px square with a 2 px rim), <b>not the game</b>. The station is take B, the jaws, as built in <code>src/render/after/stations.js</code> (<code>chipper</code>), drawn facing right, at zoom 1 (a cell is 6 px, a body 3 cells). Each take is drawn twice: the 3x view to play on, and the 1x picture beside it, which plays too. Mouse and touch both work.</p>
-<p><b>The feeder.</b> Tick <span class="ph">post a feeder</span> and a body walks in from the left. It loads at the pile, carries the log on its head, places it in the jaws and works the control. Halfway through each log it lets go for a second, which shows the jaws stopping and starting again. It works the jaws at the same steady speed as the hand, but the walking, the pauses and the rest make it about 9 s a log against about 6 s for a player. While it is posted, the hand cannot use the station.</p>
-<p><b>Two steps.</b> 1: grab a log off the pile and drop it in the jaws (a drop anywhere else slides it back to the pile). 2: hold the control; the jaws bite at a steady speed until the log is gone, stop when you let go, and go on when you hold again. One log at a time. A carrier walks logs onto the pile from the left edge, so nothing appears from nowhere.</p>
 <p><b>Every word on this page is a placeholder</b> (marked <span class="ph">like this</span>). The canvases draw no words.</p>
 <div class="bar">
   <button data-theme="light" class="on">light</button><button data-theme="dark">dark</button>
@@ -45,20 +43,42 @@
 </div>
 <p style="font-size:12px">Dark is ink #e0e0e0 on paper #1f1f1f, each grey mapped by its lightness, not inverted.</p>
 
-<div id="takes"></div>
-
-<p class="recline" id="pick"><b>Pick:</b> <span class="ph">(b) the lever</span>. Its pressed pose is the biggest change of the three (a plumb rod laid level, its knob moving five cells), so nobody wonders whether it is down. It is the press's bar again, a rod pulled down at the body's hand, which ties the chipper into the camp's family. The worker reads at a glance: a body with a lever laid by it. (a) is the clearest thing to press with a mouse but the plainest to look at, and its pressed state is a 3 px drop. (c) is the best worker (the body stands on it, and steps off to rest) and the worst for the hand: a pedal is a foot's control, thin at 1x, and nobody clicks a floor.</p>
-
+<section class="take rec" id="chosen-sec">
+<h2><span class="ph">the chosen control</span>: <span class="ph">the arm</span></h2>
+<p><b>The vote.</b> The owner kept the log dragging and picked the lever, worked like a slot machine's arm: click the knob, drag it down and hold it there.</p>
+<p><b>The arm.</b> A long arm with a ball knob, on a pivot box at the jaws' foot. It moves in three held poses, never at an odd angle: plumb (let go), 45 degrees, and level (pulled). The knob is a solid ball with a glint. The box is solid ink with a white ring round its pin, so it does not read as a body.</p>
+<p><b>Using it.</b> 1: drag a log off the pile into the jaws, exactly as before. 2: click the knob and drag it <b>down</b> (straight down or down along its arc; only the drop counts). A partial pull shows the arm at 45 degrees and does nothing. At the bottom, holding, the jaws bite at a steady speed, about 0.7 s a bite and six bites a log. Let go and the arm springs back up a pose at a time; the jaws finish the bite they are in, lift open and stop, mid-log. Pull and hold again to go on.</p>
+<p><b>The cut.</b> Each bite, the top jaw comes down until its tooth tips (white-edged, so they show against the wood) land on the log. A white kerf opens across the log at the block's mouth, that cell breaks into grey crumbs while the tooth over it goes on down through it, and as the jaw lifts the log is pushed in a cell. The chips come out of the chute a moment later. The log shortens only on the bite that cut it.</p>
+<p><b>The readout</b> is on the machine now: a gauge on the face of the back block, filling a row from the bottom with each bite and fading away when the log is done.</p>
+<p><b>The feeder.</b> Tick <span class="ph">post a feeder</span>. It loads at the pile, carries the log on its head, places it in the jaws, then hops up, grabs the knob and rides the arm down with its weight, a pose at a time, and stays there holding it while the jaws bite. Halfway through each log it lets go to rest for a second (the arm springs up and the jaws stop), then hops up and pulls again.</p>
+<p><b>Cues.</b> The ghost hand first shows <span class="ph">drag a log here</span> (pile to jaws, dotted); once a log is in, it shows <span class="ph">pull down and hold</span>: it takes the knob, a faint ghost arm steps down to level, and three dots light while it holds. Each fades for good after three goes.</p>
+<div id="chosen"></div>
 <h2>What the mock cannot show</h2>
 <ul>
   <li>The camp around it: no crowd, no other stations, no camera. The station has the page to itself.</li>
   <li>The card, the sound and the coin the sawdust becomes. The heap only grows; nobody carries it off.</li>
   <li>The game's frame timing. Here time is the browser's own clock.</li>
+  <li>A body with arms. The yard's bodies are squares, so the feeder "holds" the knob by overlapping it; the ride down is the hop and the weight.</li>
 </ul>
+<h2>Self-critique on the arm, round 1 (on the first build)</h2>
+<ol id="critA1"></ol>
+<h2>Self-critique on the arm, round 2 (after the fixes)</h2>
+<ol id="critA2"></ol>
+</section>
 
-<h2>Self-critique, round 1 (on the first build)</h2>
+<section class="take" style="margin-top:34px">
+<h2>The last round: three takes on the control</h2>
+<p><b>The feeder.</b> Tick <span class="ph">post a feeder</span> and a body walks in from the left. It loads at the pile, carries the log on its head, places it in the jaws and works the control. Halfway through each log it lets go for a second, which shows the jaws stopping and starting again. It works the jaws at the same steady speed as the hand, but the walking, the pauses and the rest make it about 9 s a log against about 6 s for a player. While it is posted, the hand cannot use the station.</p>
+<p><b>Two steps.</b> 1: grab a log off the pile and drop it in the jaws (a drop anywhere else slides it back to the pile). 2: hold the control; the jaws bite at a steady speed until the log is gone, stop when you let go, and go on when you hold again. One log at a time. A carrier walks logs onto the pile from the left edge, so nothing appears from nowhere.</p>
+<p style="font-size:12px">The pile moved a cell left this round (to make room for the arm's level pose); these takes are otherwise as voted on.</p>
+</section>
+<div id="takes"></div>
+
+<p class="recline" id="pick"><b>The last round's pick:</b> <span class="ph">(b) the lever</span>, voted through as the arm above.</p>
+
+<h2>Last round's self-critique, round 1</h2>
 <ol id="crit1"></ol>
-<h2>Self-critique, round 2 (after the fixes)</h2>
+<h2>Last round's self-critique, round 2</h2>
 <ol id="crit2"></ol>
 </main>
 
@@ -110,6 +130,17 @@ const TUNE = {
   CUE_FADE_S: 0.9,
   HOLD_USE_S: 0.6,      // a hold this long while biting counts as a go
   BAR_FADE_S: 0.35,
+  // the arm
+  ARM_BITE: [0, 1, 2, 4, 4, 4, 2, 1],  // the top jaw's drop through one bite; at 4 its tooth tips are on the wood
+  ARM_KERF: 3,          // the step the kerf opens at; the next two show the crumbs
+  ARM_CUT: 6,           // the step the cell is gone and the log is pushed in a cell
+  ARM_CHIPS: 4,         // chips out of the chute for each cell cut
+  PULL_MID: 0.3,        // the knob dragged this far down (of its whole drop) shows the 45 degree pose...
+  PULL_BOTTOM: 0.85,    // ...and this far, the bottom
+  SPRING_S: 0.06,       // a pose of the arm springing back up
+  RIDE_S: 0.14,         // a pose of the feeder riding the arm down
+  CROUCH_S: 0.14,       // the feeder's crouch before the hop...
+  AIR_S: 0.1,           // ...and its held frame in the air
 };
 const BITE_S = TUNE.CHIP_S / TUNE.LOG_LEN, BITE_STEP = BITE_S / TUNE.BITE.length;
 
@@ -117,23 +148,32 @@ const BITE_S = TUNE.CHIP_S / TUNE.LOG_LEN, BITE_STEP = BITE_S / TUNE.BITE.length
 // The yard strip: cells (x, y), x across from the left, y up from the floor
 // (row -1 the bottom row, standing on it). 50 cells by 28, floor at row 26.
 const COLS = 50, ROWS = 28, G = 26, WPX = COLS * P, HPX = ROWS * P;
-const PILE_X = 4, LOAD = 11;            // the pile's left column; where a body stands to load
+const PILE_X = 2, LOAD = 11;            // the pile's left column; where a body stands to load
 const SLOT = { x: 26, y: -4 };           // the log's cell in the jaws
 const ZONE = { x0: 20, x1: 33, y0: -13, y1: 1 };   // a drop counts anywhere in here
 const SPOTS = {                           // the feeder's place and press columns, a take's
   a: { place: 13, press: 13 },
   b: { place: 12, press: 12 },
   c: { place: 12, press: 15 },
+  arm: { place: 12, press: 10, hop: 15 },
 };
-const POSES = { a: 2, b: 3, c: 2 };
+const POSES = { a: 2, b: 3, c: 2, arm: 2 };
+// The arm: a pivot box at the jaws' foot, the pivot at the box's middle cell,
+// the knob's center cell in each held pose (plumb, 45 degrees, level), six
+// cells out every way.
+const ARM = { pivot: { x: 19, y: -3 }, knob: [{ x: 19, y: -9 }, { x: 15, y: -7 }, { x: 13, y: -3 }] };
+const knobPx = pose => ({ x: (ARM.knob[pose].x + 0.5) * P, y: (ARM.knob[pose].y + 0.5) * P });
+const ARM_DROP = knobPx(2).y - knobPx(0).y;     // the knob's whole fall, px
+const ARM_STEP = BITE_S / TUNE.ARM_BITE.length;
 // The control's hit box in cells, generous: a whole body's width round the part.
 const HIT = {
   a: { x0: 14, x1: 21, y0: -7, y1: 0 },
   b: { x0: 13, x1: 23, y0: -12, y1: 0 },
   c: { x0: 13, x1: 21, y0: -5, y1: 1 },
+  arm: { x0: 16, x1: 22, y0: -12, y1: -6 },   // round the knob, plumb; armHit adds the knob where it is now
 };
 // Where the "hold here" hand presses, a take's, in px.
-const PRESS_AT = { a: { x: 18.5 * P, y: -4 * P }, b: { x: 20.5 * P, y: -10 * P }, c: { x: 16 * P, y: -2 * P } };
+const PRESS_AT = { a: { x: 18.5 * P, y: -4 * P }, b: { x: 20.5 * P, y: -10 * P }, c: { x: 16 * P, y: -2 * P }, arm: knobPx(0) };
 const pileSlot = i => ({ x: (PILE_X + (i % 2)) * P, y: (-2 - 2 * i) * P });
 const slotPx = { x: SLOT.x * P, y: SLOT.y * P };
 const LOGW = TUNE.LOG_LEN * P, LOGH = 2 * P;
@@ -166,7 +206,9 @@ function makeTake(key) {
     feeder: { on: false, x: -5, carry: false, lift: 1, from: null, wait: 0, walk: 0, rested: false, restT: 0, lean: 0 },
     carrier: { x: -5, state: 'off', walk: 0, wait: 0, next: 0 },
     hover: null, ptr: null, done: 0,
+    armDrag: false, armTarget: 0, armDy: 0, fPull: null, bitePh: 0, chipQ: 0,
   };
+  st.feeder.ride = false; st.feeder.hop = 0;
   for (let i = 0; i < st.heap; i++) st.heapBorn[i] = -1e9;
   return st;
 }
@@ -175,8 +217,10 @@ function makeTake(key) {
 function update(st, dt) {
   st.t += dt;
   carrierStep(st, dt);
-  feederStep(st, dt);
+  if (st.key === 'arm') feederStepArm(st, dt); else feederStep(st, dt);
   const ready = !!st.log && st.log.settled && st.log.prog < 1;
+  if (st.key === 'arm') armStep(st, dt, ready);
+  else {
   st.held = st.pHeld || st.fHeld;
   // the control's pose, a step at a time toward pressed or released
   st.poseAcc += dt;
@@ -202,6 +246,7 @@ function update(st, dt) {
     st.dropAcc += dt;
     while (st.dropAcc >= BITE_STEP) { st.dropAcc -= BITE_STEP; if (st.drop > 0) st.drop--; }
   } // else: stopped mid-log, the jaw holds where it was
+  }
   if (st.log) st.barK = Math.floor(st.log.prog * TUNE.LOG_LEN + 1e-6);
   // chips: fall a cell a tick, land on the heap
   st.chips = st.chips.filter(c => {
@@ -221,7 +266,7 @@ function update(st, dt) {
   // the cues
   const c = st.cue, f = st.feeder;
   const showDrag = !f.on && !st.drag && !st.log && c.drop < TUNE.CUE_USES && st.pile > 0;
-  const showHold = !f.on && !st.pHeld && !!st.log && st.log.settled && c.hold < TUNE.CUE_USES;
+  const showHold = !f.on && !st.pHeld && !st.armDrag && st.pose === 0 && !!st.log && st.log.settled && c.hold < TUNE.CUE_USES;
   const rate = n => dt / (n >= TUNE.CUE_USES ? TUNE.CUE_FADE_S : 0.3);
   const wasDrag = c.aDrag, wasHold = c.aHold;
   c.aDrag = clamp01(c.aDrag + (showDrag ? 1 : -1) * rate(c.drop));
@@ -233,6 +278,101 @@ function heapTop(st, x) {
   for (let i = 0; i < st.heap; i++) if (HEAP_ORDER[i].x === x) top = Math.min(top, HEAP_ORDER[i].y);
   return top;
 }
+// ---- the arm ---------------------------------------------------------------
+// The arm's pose follows the hand (or the feeder's weight) down a pose at a
+// time and springs back up a pose at a time; the jaws bite only while it is
+// held at the bottom. A bite once started is finished, so a release never
+// leaves the top jaw hanging half down, and the log is cut only by the bite.
+function armStep(st, dt, ready) {
+  const want = st.fPull != null ? st.fPull : st.armDrag ? st.armTarget : 0;
+  if (st.pose === want) st.poseAcc = 0;
+  else {
+    const stepS = want < st.pose ? TUNE.SPRING_S : st.fPull != null ? TUNE.RIDE_S : TUNE.POSE_S;
+    st.poseAcc += dt;
+    while (st.poseAcc >= stepS && st.pose !== want) { st.poseAcc -= stepS; st.pose += Math.sign(want - st.pose); }
+  }
+  st.pHeld = st.armDrag && st.armTarget === 2 && st.pose === 2;
+  st.held = st.pHeld || st.fHeld;
+  const running = st.held && ready && st.pose === 2;
+  st.running = running;
+  if (running) st.holdRun += dt;
+  if (running || st.bitePh > 0) {
+    const was = Math.floor(st.bitePh / ARM_STEP);
+    st.bitePh += dt;
+    if (st.bitePh >= BITE_S) st.bitePh = running ? st.bitePh - BITE_S : 0;
+    const now = Math.floor(st.bitePh / ARM_STEP);
+    if (st.bitePh > 0 && was < TUNE.ARM_CUT && now >= TUNE.ARM_CUT && st.log && st.log.settled) {
+      st.log.cuts++; st.log.prog = st.log.cuts / TUNE.LOG_LEN; st.chipQ += TUNE.ARM_CHIPS;
+      if (st.log.cuts >= TUNE.LOG_LEN) {
+        st.log = null; st.done++; st.barK = TUNE.LOG_LEN;
+        if (st.pHeld) { st.cue.hold++; st.holdRun = -1e9; }
+      }
+    }
+  }
+  st.biteIdx = st.bitePh > 0 ? Math.floor(st.bitePh / ARM_STEP) : -1;
+  st.drop = st.biteIdx >= 0 ? TUNE.ARM_BITE[st.biteIdx] : 0;
+  // the chips the bites have cut leave the chute one at a time, the two columns in turn
+  st.chipAcc += dt;
+  while (st.chipAcc >= TUNE.CHIP_EVERY) {
+    st.chipAcc -= TUNE.CHIP_EVERY;
+    if (st.chipQ > 0) { st.chipQ--; st.chips.push({ x: 40 + (st.chipN++ % 2), t0: st.t, tone: DUST[st.chipN % DUST.length] }); }
+  }
+}
+
+// The arm's feeder: loads, places the log, then hops up to the plumb knob and
+// rides the arm down with its weight. It lets go only at the bottom, where it
+// stands on the floor again: halfway through a log to rest, and when the log is gone.
+function feederStepArm(st, dt) {
+  const f = st.feeder, sp = SPOTS.arm;
+  f.lift = Math.min(1, f.lift + dt / TUNE.LIFT_S);
+  st.fHeld = false;
+  if (f.ride) {
+    if (st.pose === 2) {
+      const letGo = !f.on || !st.log || (st.log.prog >= TUNE.FEED_REST_AT && !f.rested);
+      if (letGo) { f.ride = false; st.fPull = null; f.x = ARM.knob[2].x - 3; f.restT = 0; f.wait = 0; return; }
+      if (st.log.settled) st.fHeld = true;
+    }
+    return;
+  }
+  if (f.hop > 0) {
+    f.hop += dt;
+    if (f.hop >= TUNE.CROUCH_S + TUNE.AIR_S) { f.hop = 0; f.ride = true; st.fPull = 2; }
+    return;
+  }
+  const walk = tgt => {
+    if (f.x === tgt) return true;
+    f.walk += dt; if (f.walk >= TUNE.STEP_S) { f.walk = 0; f.x += Math.sign(tgt - f.x); }
+    f.wait = 0; return false;
+  };
+  if (!f.on) {
+    if (f.x === -5 && !f.carry) return;
+    if (f.carry) { if (walk(LOAD)) { f.carry = false; flyToPile(st, headPx(f), TUNE.LIFT_S, 0.4, false); } return; }
+    walk(-5); return;
+  }
+  if (st.log) {
+    if (st.log.prog >= TUNE.FEED_REST_AT && !f.rested) {
+      if (!walk(sp.press)) return;
+      f.restT += dt; if (f.restT >= TUNE.FEED_REST_S) f.rested = true;
+      return;
+    }
+    if (!st.log.settled || !walk(sp.hop)) return;
+    f.wait += dt;
+    if (f.wait > TUNE.FEED_WAIT_S * 0.6 && st.pose === 0) f.hop = 1e-6;
+    return;
+  }
+  if (f.carry) {
+    if (!walk(sp.place)) return;
+    f.wait += dt;
+    if (f.wait > TUNE.FEED_WAIT_S && f.lift >= 1) { f.carry = false; f.rested = false; f.restT = 0; flyToJaws(st, headPx(f), TUNE.PLACE_S, 1.5 * P); }
+    return;
+  }
+  if (!walk(LOAD)) return;
+  f.wait += dt;
+  if (f.wait > TUNE.FEED_WAIT_S && st.pile > 0 && !st.drag) {
+    st.pile--; f.carry = true; f.lift = 0; f.from = pileSlot(st.pile); f.wait = 0;
+  }
+}
+
 const headPx = b => ({ x: b.x * P + 9 - LOGW / 2, y: -3 * P - LOGH - 1 + (b.sink || 0) });
 
 // The carrier: walks a log in from the left edge whenever the pile is short.
@@ -243,7 +383,7 @@ function carrierStep(st, dt) {
     return;
   }
   const walk = tgt => { if (c.x === tgt) return true; c.walk += dt; if (c.walk >= TUNE.STEP_S) { c.walk = 0; c.x += Math.sign(tgt - c.x); } return false; };
-  if (c.state === 'in' && walk(0)) { c.wait += dt; if (c.wait > 0.25) { c.wait = 0; c.state = 'drop'; flyToPile(st, headPx(c), TUNE.LIFT_S, 0.6, true); } }
+  if (c.state === 'in' && walk(-1)) { c.wait += dt; if (c.wait > 0.25) { c.wait = 0; c.state = 'drop'; flyToPile(st, headPx(c), TUNE.LIFT_S, 0.6, true); } }
   else if (c.state === 'drop') c.state = 'out';
   else if (c.state === 'out' && walk(-5)) { c.state = 'off'; c.next = st.t + 0.4; }
 }
@@ -254,7 +394,7 @@ function flyToPile(st, from, dur, arc, counted) {
   st.fly.push(f);
 }
 function flyToJaws(st, from, dur, arc) {
-  st.log = { prog: 0, settled: false };
+  st.log = { prog: 0, settled: false, cuts: 0 };
   st.jawT = 0;
   st.fly.push({ from, to: () => slotPx, t0: st.t, dur, ease: easeSettle, arc, done: () => { if (st.log) st.log.settled = true; } });
 }
@@ -319,7 +459,60 @@ function drawLog(d, x, y, len = TUNE.LOG_LEN) {
 }
 function drawBody(d, x, y, dx = 0) { d.px(x + dx, y, 18, 18, K); d.px(x + dx + 2, y + 2, 14, 14, W); }
 
+// A tooth, a stepped spike a cell wide and a cell tall, pointing down (dir 1)
+// or up (-1) from the cell row `row`. `halo` rims it in paper, so where it
+// sinks into the wood the wood shows round it.
+function drawTooth(d, x, row, dir, halo) {
+  const steps = [[0, 6], [1, 4], [2, 2]];
+  const y0 = row * P, yOf = i => dir > 0 ? y0 + i * 2 : y0 + P - (i + 1) * 2;
+  if (halo) steps.forEach(([o, w], i) => d.px(x * P + o - 2, yOf(i) - (dir > 0 ? 0 : 2), w + 4, 4, W));
+  steps.forEach(([o, w], i) => d.px(x * P + o, yOf(i), w, 2, K));
+}
+// The arm's take paints the log over the jaws' plates and its teeth over the
+// log, so a bite reads as teeth sunk in wood rather than one black mass; the
+// log is drawn only as long as what is left of it, ending at the block.
+function drawChipperArm(d, st) {
+  const jy = -13 + st.drop, idx = st.biteIdx;
+  d.r(32, -15, 6, 15, K);                                       // the back block
+  d.px(33 * P + 2, -6 * P, 4 * P - 4, 2, W); d.px(33 * P + 2, -4 * P, 4 * P - 4, 2, W);
+  // the gauge on the block's face: a row of ink from the bottom for each bite
+  if (st.bar > 0) d.fade(st.bar, () => {
+    d.px(33 * P, -15 * P + 2, 4 * P, 7 * P - 2, W);
+    for (let i = 0; i < TUNE.LOG_LEN; i++) d.px(34 * P + 1, (-9 - i) * P + 1, 2 * P - 2, P - 2, i < st.barK ? K : 2);
+  });
+  d.r(22, -1, 10, 1, K);                                        // the bottom jaw
+  d.r(23, jy, 9, 4, K); d.r(22, jy - 1, 1, 3, K);               // the top jaw and its lip
+  d.px(24 * P, (jy + 1) * P + 2, 6 * P, 2, W);                  // its band
+  d.px(32 * P - 2, (jy + 2) * P - 2, 4, 4, W);                  // the hinge pin
+  if (st.log && st.log.settled) {
+    const k = st.log.cuts;
+    drawLog(d, slotPx.x + k * P, slotPx.y, TUNE.LOG_LEN - k);
+    d.px(32 * P, slotPx.y - 2, 2, LOGH + 4, K);                 // the log's paper edge stops at the block
+    // the bite: the kerf opens at the block's mouth, then the cell there breaks up
+    if (idx >= TUNE.ARM_KERF && idx < TUNE.ARM_CUT) {
+      d.px(31 * P - 2, slotPx.y, 2, LOGH, W);
+      if (idx > TUNE.ARM_KERF) {
+        d.px(31 * P, slotPx.y, P, LOGH, W);
+        for (let j = 0; j < 6; j++) for (let i = 0; i < 3; i++) {
+          const h = hash(i * 7 + j * 13 + k * 31 + idx);
+          if (h > 0.3) d.px(31 * P + i * 2, slotPx.y + j * 2, 2, 2, h > 0.75 ? K : h > 0.5 ? 7 : 5);
+        }
+      }
+    }
+  }
+  for (let i = 0; i < 5; i++) drawTooth(d, 22 + i * 2, -2, -1, true);
+  for (let i = 0; i < 5; i++) drawTooth(d, 23 + i * 2, jy + 4, 1, true);
+  // the tooth at the block's mouth goes on down through the cell it is breaking
+  if (st.log && st.log.settled && idx > TUNE.ARM_KERF && idx < TUNE.ARM_CUT) {
+    d.px(31 * P - 2, (jy + 4) * P, P + 4, P, W); d.r(31, jy + 4, 1, 1, K);
+    drawTooth(d, 31, jy + 5, 1, true);
+  }
+  d.px(32 * P, -6 * P, 2, 5 * P, K);                            // the teeth's paper rims stop at the block
+  d.r(35, -18, 2, 3, K); d.r(35, -19, 7, 2, K); d.r(40, -17, 2, 2, K); d.r(39, -15, 4, 1, K);   // the chute
+}
+
 function drawChipper(d, st) {
+  if (st.key === 'arm') return drawChipperArm(d, st);
   const jy = -13 + st.drop;
   // the log in the jaws, walked into the block a cell a bite (the block hides what it has swallowed)
   if (st.log && st.log.settled) {
@@ -338,7 +531,30 @@ function drawChipper(d, st) {
 }
 
 // The three controls. `p` is the pose, 0 released .. POSES[key] pressed.
+// The arm in pose p: the rod, the ball knob, then the pivot box over the rod's root.
+function drawArm(d, p, box = true) {
+  const pv = ARM.pivot, k = ARM.knob[p];
+  if (p === 0) d.r(pv.x, k.y + 1, 1, pv.y - k.y, K);
+  else if (p === 2) d.r(k.x + 1, pv.y, pv.x - k.x, 1, K);
+  else {                                                       // 45 degrees: a band 8 px across, each pixel row painted once, so a faded arm stays one flat tone
+    const x0 = (pv.x + 0.5) * P, y0 = (pv.y + 0.5) * P, y1 = (k.y + 0.5) * P;
+    for (let y = y1; y < y0; y++) d.px(x0 - (y0 - y) - 4, y, 8, 1, K);
+  }
+  // the ball: a 3 cell square with its corners cut back to paper, and a glint
+  const x = (k.x - 1) * P, y = (k.y - 1) * P;
+  d.px(x, y, 3 * P, 3 * P, K);
+  const corners = [[0, 0], [3 * P - 3, 0], [0, 3 * P - 3], [3 * P - 3, 3 * P - 3]].filter((c, i) => !(p === 1 && i === 3));   // not where the slanted rod joins
+  for (const [cx, cy] of corners) d.px(x + cx, y + cy, 3, 3, W);
+  d.px(x + 4, y + 4, 4, 2, W); d.px(x + 4, y + 6, 2, 2, W);
+  if (!box) return;
+  d.r(pv.x - 2, -1, 5, 1, K);                                   // the foot
+  d.r(pv.x - 1, pv.y - 1, 3, 3, K);                             // the pivot box, solid
+  d.px(pv.x * P - 2, pv.y * P - 2, P + 4, P + 4, W);            // a white ring round the pin
+  d.px(pv.x * P, pv.y * P, P, P, K);
+}
+
 function drawControl(d, key, p) {
+  if (key === 'arm') return drawArm(d, p);
   if (key === 'a') {
     // (a) a round push-button on a stub at the jaws' foot: a dome in a collar
     d.r(17, -1, 3, 1, K);                                       // a foot,
@@ -415,7 +631,24 @@ function drawCues(d, st) {
     d.fade(a * 0.45, () => drawLog(d, hx - 15, hy - 4));
     d.fade(a * 0.8, () => drawHand(d, hx, hy + 2));
   }
-  if (c.aHold > 0) {
+  if (c.aHold > 0 && st.key === 'arm') {
+    // pull down and hold: the hand takes the knob, a ghost arm steps down to
+    // level with it, and three dots light while it holds there
+    const ph = ((st.t - c.t0) % T) / T;
+    const a = (ph < 0.12 ? ph / 0.12 : ph > 0.85 ? 1 - (ph - 0.85) / 0.15 : 1) * c.aHold;
+    const pose = ph < 0.25 ? 0 : ph < 0.35 ? 1 : 2, at = knobPx(pose);
+    if (pose > 0) d.fade(a * 0.4, () => drawArm(d, pose, false));
+    d.fade(a * 0.55, () => {                 // the way down, dotted along the knob's arc
+      for (let i = 1; i < 10; i++) {
+        const v = (i / 10) * Math.PI / 2, pv = ARM.pivot, R = 6 * P;
+        d.px(Math.round((pv.x + 0.5) * P - Math.sin(v) * R) - 1, Math.round((pv.y + 0.5) * P - Math.cos(v) * R) - 1, 2, 2, 5);
+      }
+    });
+    d.fade(a * 0.8, () => drawHand(d, at.x, at.y - 1));
+    const dot = knobPx(2);
+    // the dots only once the hand is down there, over it
+    if (pose === 2) d.fade(a, () => { for (let i = 0; i < 3; i++) { const lit = ph > 0.45 + i * 0.12 && ph < 0.85; d.px(Math.round(dot.x - 8 + i * 6), Math.round(dot.y - 4 * P), 4, 4, lit ? K : 3); } });
+  } else if (c.aHold > 0) {
     const ph = ((st.t - c.t0) % T) / T, at = PRESS_AT[st.key];
     const a = (ph < 0.12 ? ph / 0.12 : ph > 0.85 ? 1 - (ph - 0.85) / 0.15 : 1) * c.aHold;
     const down = ph > 0.2 && ph < 0.85 ? 3 : 0;
@@ -428,7 +661,7 @@ function drawCues(d, st) {
 // The readout over the station: a log glyph and the yard's bar, a paper box
 // with an ink rule, ink a cell a bite.
 function drawBar(d, st) {
-  if (st.bar <= 0) return;
+  if (st.bar <= 0 || st.key === 'arm') return;     // the arm's take carries its gauge on the block
   d.fade(st.bar, () => {
     const bx = 28, by = -23, n = TUNE.LOG_LEN;
     // the glyph: a log end-on, a ring cut white
@@ -462,7 +695,14 @@ function render(st, g) {
   const c = st.carrier;
   if (c.state !== 'off') { drawBody(d, c.x * P, -3 * P); if (c.state === 'in') { const h = headPx(c); drawLog(d, h.x, h.y); } }
   const f = st.feeder;
-  if (f.on || f.x > -5) {
+  if (st.key === 'arm' && (f.ride || f.hop > 0)) {
+    // riding the arm: the body hangs off the knob, overlapping its near side,
+    // and comes down with it; the crouch and the held frame in the air before
+    const k = ARM.knob[st.pose];
+    if (f.ride) drawBody(d, (k.x - 3) * P, k.y * P);
+    else if (f.hop < TUNE.CROUCH_S) { const x = SPOTS.arm.hop * P; d.px(x, -14, 18, 14, K); d.px(x + 2, -12, 14, 10, W); }
+    else drawBody(d, (SPOTS.arm.hop + 1) * P, -6 * P);
+  } else if (f.on || f.x > -5) {
     const onPedal = st.key === 'c' && f.x === SPOTS.c.press && st.pose === POSES.c;
     const sink = onPedal ? 4 : 0;
     const lean = st.fHeld && st.key !== 'c' ? 3 : 0;
@@ -488,22 +728,25 @@ const TAKES = [
   { key: 'a', name: 'push-button', say: 'A round push-button on a stub at the jaws\' foot, at the body\'s hand: a dome in a collar. Held, the dome sinks flush and the collar\'s lip goes grey. The feeder leans on it.' },
   { key: 'b', name: 'lever', say: 'A lever on a pivot at the jaws\' foot: plumb with a knob on top when let go, laid level toward the body when held down, through two slanted steps. The feeder stands by it and holds the knob down.' },
   { key: 'c', name: 'treadle', say: 'A treadle on the floor in front of the jaws: a plate hinged on a post, its free end raised on a spring. Held, it lies flat. The feeder stands on it to run the jaws and steps off to rest.' },
+  // last in the list so the earlier takes keep their numbers; drawn at the top of the page
+  { key: 'arm', name: 'the arm', say: 'Drag a log into the jaws, then take the knob, pull it down and hold it.' },
 ];
 const takes = [];
 const host = document.getElementById('takes');
 TAKES.forEach((T, i) => {
   const st = makeTake(T.key);
   const sec = document.createElement('section');
-  sec.className = 'take' + (T.key === 'b' ? ' rec' : ''); sec.id = 'take-' + T.key;
-  sec.innerHTML = `<h2>(${T.key}) <span class="ph">${T.name}</span>${T.key === 'b' ? ' <span class="ph">(pick)</span>' : ''}</h2>
-    <p>${T.say}</p>
+  const arm = T.key === 'arm';
+  sec.className = arm ? '' : 'take'; sec.id = 'take-' + T.key;
+  sec.innerHTML = `${arm ? '' : `<h2>(${T.key}) <span class="ph">${T.name}</span>${T.key === 'b' ? ' <span class="ph">(picked last round)</span>' : ''}</h2>`}
+    <p><span class="ph">${T.say}</span></p>
     <div class="views">
       <figure><canvas class="three" width="${WPX * 3}" height="${HPX * 3}"></canvas><figcaption>3x</figcaption></figure>
       <figure><canvas class="one" width="${WPX}" height="${HPX}"></canvas><figcaption>1x, the game's size</figcaption></figure>
     </div>
     <div class="bar"><label><input type="checkbox" class="feeder"> <span class="ph">post a feeder</span></label>
-      <button class="cues">bring the cues back</button><button class="reset">reset</button></div>`;
-  host.appendChild(sec);
+      <button class="cues"><span class="ph">bring the cues back</span></button><button class="reset"><span class="ph">reset</span></button></div>`;
+  (arm ? document.getElementById('chosen') : host).appendChild(sec);
   const off = document.createElement('canvas'); off.width = WPX; off.height = HPX;
   const T3 = sec.querySelector('canvas.three'), T1 = sec.querySelector('canvas.one');
   const take = { st, sec, off, g: off.getContext('2d'), T3, T1, g3: T3.getContext('2d'), g1: T1.getContext('2d') };
@@ -520,16 +763,24 @@ function toPx(cv, e) {
 }
 const inCells = (p, h) => p.x >= h.x0 * P && p.x < (h.x1 + 1) * P && p.y >= h.y0 * P && p.y < (h.y1 + 1) * P;
 const pileBox = { x0: PILE_X - 1, x1: PILE_X + TUNE.LOG_LEN + 1, y0: -2 * TUNE.PILE_MAX - 1, y1: 0 };
+// The arm is in reach at its knob, wherever the knob is now, and round the plumb knob.
+const armHit = (st, p) => {
+  const k = ARM.knob[st.pose];
+  return inCells(p, HIT.arm) || inCells(p, { x0: k.x - 2, x1: k.x + 2, y0: k.y - 2, y1: k.y + 2 });
+};
 function release(st) {
   if (st.pHeld && st.holdRun >= TUNE.HOLD_USE_S) st.cue.hold++;
-  st.pHeld = false;
+  st.pHeld = false; st.armDrag = false;
   if (st.drag) { const dr = st.drag; st.drag = null; flyToPile(st, { x: dr.x, y: dr.y }, TUNE.RETURN_S, 0, false); }
 }
 function wirePointer(take, cv) {
   cv.addEventListener('pointerdown', e => {
     const st = take.st, p = toPx(cv, e);
     if (st.feeder.on || st.ptr != null) return;
-    if (inCells(p, HIT[st.key])) { st.pHeld = true; st.holdRun = 0; }
+    if (st.key === 'arm' && armHit(st, p)) {
+      // the drag is measured from where the knob is, so a grab low on the ball pulls the same
+      st.armDrag = true; st.armTarget = st.pose; st.armDy = knobPx(st.pose).y - p.y; st.holdRun = 0;
+    } else if (st.key !== 'arm' && inCells(p, HIT[st.key])) { st.pHeld = true; st.holdRun = 0; }
     else if (st.pile > 0 && inCells(p, pileBox)) {
       const s = pileSlot(st.pile - 1); st.pile--;
       st.drag = { x: s.x, y: s.y, ox: p.x - s.x, oy: p.y - s.y, over: false };
@@ -543,8 +794,14 @@ function wirePointer(take, cv) {
       const cx = st.drag.x + LOGW / 2, cy = st.drag.y + LOGH / 2;
       st.drag.over = !st.log && (inCells(p, ZONE) || inCells({ x: cx, y: cy }, ZONE));
     }
-    if (st.ptr == null) cv.style.cursor = st.feeder.on ? 'default' : inCells(p, HIT[st.key]) ? 'pointer' : (st.pile > 0 && inCells(p, pileBox)) ? 'grab' : 'default';
-    else if (st.drag) cv.style.cursor = 'grabbing';
+    if (st.armDrag && e.pointerId === st.ptr) {
+      // only the drop counts: straight down or down along the arc pull the same
+      const u = (p.y + st.armDy - knobPx(0).y) / ARM_DROP;
+      st.armTarget = u >= TUNE.PULL_BOTTOM ? 2 : u >= TUNE.PULL_MID ? 1 : 0;
+    }
+    const onCtl = st.key === 'arm' ? armHit(st, p) : inCells(p, HIT[st.key]);
+    if (st.ptr == null) cv.style.cursor = st.feeder.on ? 'default' : onCtl ? (st.key === 'arm' ? 'grab' : 'pointer') : (st.pile > 0 && inCells(p, pileBox)) ? 'grab' : 'default';
+    else if (st.drag || st.armDrag) cv.style.cursor = 'grabbing';
   });
   const up = e => {
     const st = take.st;
@@ -555,7 +812,7 @@ function wirePointer(take, cv) {
       if (dr.over && !st.log) { st.cue.drop++; flyToJaws(st, { x: dr.x, y: dr.y }, TUNE.SETTLE_S, 0); }
       else flyToPile(st, { x: dr.x, y: dr.y }, TUNE.RETURN_S, 0, false);
     }
-    if (st.pHeld) release(st);
+    if (st.pHeld || st.armDrag) release(st);
   };
   cv.addEventListener('pointerup', up);
   cv.addEventListener('pointercancel', up);
@@ -615,6 +872,28 @@ const CRIT2 = [
  "Still weak, not fixed: (b)'s lever stands plumb with its knob one cell short of the top jaw. At 1x the knob and the jaw nearly join. A shorter rod would keep them apart, but then the held knob comes to rest inside the feeder.",
  "Still weak, not fixed: the ghost hand is 12 px across at 1x, smaller than a body. It reads at 3x; at 1x the dotted path does most of the work."
 ];
+const CRIT_A1 = [
+ "The bite was one black mass. The top jaw came down five cells, so its plate sat on the log and its teeth filled the log's top row; jaw, teeth, log and bottom teeth read as one bar with a white zigzag through it, and the log could not be found. Fixed: the log is painted over the jaw's plate, the teeth over the log, every tooth has a paper rim, and the deepest drop is four cells, so the tooth tips land on the wood and the log stays a log.",
+ "With the tips only touching, nothing cut. Fixed: the bite now has three held frames at the bottom. First a white kerf opens across the log at the block's mouth, then that cell breaks into grey crumbs while the tooth over it goes on down through it, then the jaw lifts and the log is pushed in a cell. The log shortens on that frame and no other, and the gauge fills on the same frame.",
+ "The log's paper edge and the teeth's rims cut 2 px white notches into the block's left edge, a hairline down the machine. Fixed: the log is drawn only as long as what is left of it, and both rims are inked back at the block.",
+ "The faint ghost arm in the 'pull down and hold' cue was drawn as overlapping squares, so its transparency stacked into a dark streak: a gradient, which the house style forbids. Fixed: the slanted rod is a band with each pixel row painted once, so a faded arm is one flat tone.",
+ "At 45 degrees, one of the ball's paper corners cut a white notch where the rod joins it, so the knob looked snapped off. Fixed: that corner is left on.",
+ "The feeder holding the arm at the bottom stood touching the log pile and read as a fifth log end. Fixed: the pile moved a cell left (for the earlier takes too), and the carrier now drops logs reaching in from the edge.",
+ "The hold cue faded back in while the arm was still springing up, so a ghost hand hovered over empty air beside a slanted arm. Fixed: it waits until the arm is plumb again."
+];
+const CRIT_A2 = [
+ "The hold cue's three dots hung by themselves, off the arc, for the whole cue. Fixed: they show only once the hand is down at the bottom, over it.",
+ "Still weak, not fixed: a release finishes the bite it is in, and that bite cuts. So letting go can hand you up to one free bite (0.7 s) of work. The other choice, the jaw lifting back without cutting, is a bite thrown away, which reads as the machine being fussy. Easy to flip.",
+ "Still weak, not fixed: the body has no arms, so it 'holds' the knob by overlapping its near third. At the bottom the knob shows as a two-cell stub beside a body. It reads as holding at 3x; at 1x it is a body with something next to it.",
+ "Still weak, not fixed: the feeder's ride is three held poses, four cells apart, with the body moving with the knob. That is in the house style (held poses), but the hop up (crouch, a frame in the air, the grab) jumps three cells a frame and is the busiest motion in the yard.",
+ "Still weak, not fixed: the ball knob is 3 cells across, the same size as a body. Its cut corners and glint keep it from reading as one, but at 1x, with the feeder overlapping it, the two can merge.",
+ "Still weak, not fixed: a partial pull holds the arm at 45 degrees and nothing else happens. That is the rule, but nothing shows how far there is still to go. The ghost arm in the cue is the only thing that shows the bottom is the target.",
+ "Still weak, not fixed: the feeder's log still flies in an arc from its head into the jaws, and now passes in front of the plumb arm's rod on the way.",
+ "Still weak, not fixed: the gauge sits high on the back block, six rows above the jaws. It is clearly the chipper's, but the eye is on the jaws and the arm, two stations of attention apart.",
+ "Still weak, not fixed: at 1x the pulled arm is a level rod at floor height, and a closed jaw is a dense block. The plumb arm is the strongest shape the station has, and pulling it removes it."
+];
+CRIT_A1.forEach(s => { const li = document.createElement('li'); li.textContent = s; document.getElementById('critA1').appendChild(li); });
+CRIT_A2.forEach(s => { const li = document.createElement('li'); li.textContent = s; document.getElementById('critA2').appendChild(li); });
 CRIT1.forEach(s => { const li = document.createElement('li'); li.textContent = s; document.getElementById('crit1').appendChild(li); });
 CRIT2.forEach(s => { const li = document.createElement('li'); li.textContent = s; document.getElementById('crit2').appendChild(li); });
 
@@ -624,7 +903,9 @@ window.__mock = {
   pause: b => { PAUSED = b; },
   advance: dt => { advance(dt); draw(); },
   feeder: (i, on) => { const t = takes[i]; t.sec.querySelector('.feeder').checked = on; t.st.feeder.on = on; },
-  state: i => { const s = takes[i].st; return { pile: s.pile, log: s.log, held: s.held, running: s.running, pose: s.pose, drag: !!s.drag, drop: s.drop, cue: s.cue, done: s.done, heap: s.heap, fx: s.feeder.x }; },
+  state: i => { const s = takes[i].st; return { pile: s.pile, log: s.log, held: s.held, running: s.running, pose: s.pose, drag: !!s.drag, drop: s.drop, cue: s.cue, done: s.done, heap: s.heap, fx: s.feeder.x, armDrag: s.armDrag, target: s.armTarget, bite: s.biteIdx, ride: s.feeder.ride, hop: s.feeder.hop, fHeld: s.fHeld }; },
+  knob: i => knobPx(takes[i].st.pose),
+  ARM: 3,
   // a point in a take's strip (px, y up from the floor), in the viewport, on the 3x canvas
   at: (i, x, y, one = false) => { const cv = one ? takes[i].T1 : takes[i].T3, b = cv.getBoundingClientRect(); return { x: b.left + x * b.width / WPX, y: b.top + (y + G * P) * b.height / HPX }; },
   pileTop: i => { const s = pileSlot(takes[i].st.pile - 1); return { x: s.x + 18, y: s.y + 6 }; },
