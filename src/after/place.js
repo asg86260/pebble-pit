@@ -10,7 +10,7 @@
 // read by the sim and the drawing alike, so a body walks to the spot the
 // picture shows.
 
-import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN,
+import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PEDESTAL_H, AFTER_NOTCH_AT, AFTER_HEAP_R,
          OURS_X0,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
@@ -197,19 +197,11 @@ export const floorAt = x => {
 };
 
 // --- the pine, as drawn ------------------------------------------------------------
-// A stage of the grove's pine (render/after/pine.js draws it, after/grove.js
-// clicks it): its trunk [width, height] in cells, and its tiers { v0, h, s }:
-// a tier's foot v0 cells over the top of the trunk, h rows tall, its top row
-// 2s+1 wide. The big pine (the grove's bigger trees) is the grown one with a
-// tier more under it. Kept here, with where things stand, so the drawing and
-// the hand read the one shape.
+// The grove's pine (config's AFTER_PINE), read here by the drawing
+// (render/after/pine.js) and the hand (after/grove.js) alike, so both see the
+// one shape.
 export const PINE_GROWN = 3;
-export const PINE = {
-  1: { trunk: [1, 1], tiers: [{ v0: 0, h: 3, s: 0 }] },
-  2: { trunk: [1, 1], tiers: [{ v0: 0, h: 4, s: 1 }, { v0: 4, h: 3, s: 0 }] },
-  3: { trunk: [3, 2], tiers: [{ v0: 0, h: 6, s: 2 }, { v0: 6, h: 5, s: 1 }, { v0: 11, h: 4, s: 0 }] },
-  big: { trunk: [3, 3], tiers: [{ v0: 0, h: 7, s: 3 }, { v0: 7, h: 6, s: 2 }, { v0: 13, h: 5, s: 1 }, { v0: 18, h: 4, s: 0 }] }
-};
+export const PINE = AFTER_PINE;
 export const pineOf = (stage, big) => (stage === PINE_GROWN && big ? PINE.big : PINE[stage]);
 // Whether (u, v) lies in the tiers: u across from the trunk's middle, v up
 // from the top of the trunk, both in cells.
