@@ -6,12 +6,12 @@
 // (`__afterCrowd`), the setup these checks are not about; a slot set to 9 is
 // a member already gone, with no walk.
 import { group, ok, run, yard } from './helpers.mjs';
-import { CROWD_FILES, CROWD_PITCH, CROWD_X0, CROWD_NEAR_RATE, STRIKE_SHARE, AFTER_FLOOR_MARGIN } from '../src/config.js';
+import { CROWD_FILES, CROWD_PITCH, CROWD_X0, CROWD_NEAR_RATE, STRIKE_SHARE, AFTER_FLOOR_MARGIN, GOD_FAR } from '../src/config.js';
 import { afterFloor } from '../src/after/place.js';
 import { stepAfter } from '../src/after/index.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawAfterCrowd, drawCampCrowd, crowdDrawn, glareAlpha, oursMass, arrived } from '../src/render/aftercrowd.js';
-import { afterEnd } from '../src/view.js';
+import { afterEnd, godScaleAt } from '../src/view.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -93,6 +93,20 @@ group('the view zooms toward the throne, and the camp end stays at the place\'s 
     ok(endTop < restTop - 1, 'and the view lifts toward the top of the throne', `${endTop.toFixed(0)} over ${restTop.toFixed(0)}`),
     ok(held, 'it holds where it is'),
     ok(back === camp, 'and lets go coming back', `${back}`)
+  ];
+});
+
+// God far off from the camp: small on the horizon there, growing as the
+// view pans, whole at the throne end where the dive meets him face to face.
+group('God is small and far from the camp, and grows to his full size at the throne end', async () => {
+  up();
+  const at = x => { lookAt(x); return godScaleAt(S.camX + S.viewW / 2); };
+  const camp = at(CROWD_X0 - 200), front = at(CROWD_X0), mid = at(CROWD_X0 + (afterEnd() - CROWD_X0) * 0.5), end = at(afterEnd());
+  window.__actsOn(null);
+  return [
+    ok(camp === GOD_FAR && front === GOD_FAR, 'from the camp and the crowd\'s front, his far size', `${camp} / ${front}`),
+    ok(mid > camp && mid < end, 'growing across the pan', `${camp} -> ${mid.toFixed(3)} -> ${end}`),
+    ok(end === 1, 'whole at the throne end', `${end}`)
   ];
 });
 

@@ -125,7 +125,7 @@ const DEFS = {
     down(g, h) {
       if (!BUBBLES.pop(h.b)) return 'tap';
       const n = h.b.big ? GESTURE_BUBBLE_CRIT : 1;
-      if (workAfter('pedestal', n, true)) {
+      if (workAfter('pedestal', n, true, { x: h.b.x + h.b.w / 2, y: h.b.y + h.b.h / 2 })) {
         used(g);
         if (h.b.big) crit(g, h.b.x + h.b.w / 2, h.b.y + h.b.h / 2, n);
       }

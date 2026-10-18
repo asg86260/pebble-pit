@@ -28,7 +28,7 @@
 
 import { S } from './state.js';
 import { CELL, P, VIEW_GLIDE_S, SHAFT_HAND_FADE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM,
-         CROWD_X0, AFTER_ZOOM_MAX, AFTER_FOCUS_UP, AFTER_FOCUS_AT } from './config.js';
+         CROWD_X0, AFTER_ZOOM_MAX, AFTER_FOCUS_UP, AFTER_FOCUS_AT, GOD_HORIZON_UP, GOD_FAR } from './config.js';
 import { clampCam, setZoom, yardCell } from './world.js';
 import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor, deepTop } from './deep/place.js';
 import { reducedMotion } from './prefs.js';
@@ -111,6 +111,10 @@ export function afterPan(cx) {
 // How far into the dive, 0..1: the cube of an ease, slow through the crowd.
 export const afterDive = cx => ease(afterPan(cx)) ** 3;
 export const afterZoomAt = cx => 1 + (AFTER_ZOOM_MAX - 1) * afterDive(cx);
+// God's size where the window's middle stands, 1 at the throne end: small
+// on the horizon from the camp and the crowd's front, growing into view
+// across the pan, so he reads as far off until the camera has walked to him.
+export const godScaleAt = cx => GOD_FAR + (1 - GOD_FAR) * ease(afterPan(cx));
 // The zoom as `setZoom` keeps it, whole device pixels a cell, worked out
 // without setting it (for `placeCamera`).
 function snapped(k) {
@@ -119,10 +123,11 @@ function snapped(k) {
 }
 // The window's top: the floor on the window's foot at rest, lifted as the
 // dive goes in until the throne's top stands AFTER_FOCUS_AT down the window.
-function afterTopAt(e, viewH) {
+function afterTopAt(e, viewH, cx) {
   const pl = actPlace('after');
   const rest = pl.floor() + pl.margin - viewH;
-  const lift = Math.min(rest, pl.floor() - AFTER_FOCUS_UP - AFTER_FOCUS_AT * viewH);
+  const up = GOD_HORIZON_UP + (AFTER_FOCUS_UP - GOD_HORIZON_UP) * godScaleAt(cx);
+  const lift = Math.min(rest, pl.floor() - up - AFTER_FOCUS_AT * viewH);
   return rest + (lift - rest) * e;
 }
 // The afterlife framed off its window's middle, held there. The lift is
@@ -134,7 +139,7 @@ function frameAfter() {
   const k = placeZoom('after') * (1 + (AFTER_ZOOM_MAX - 1) * e);
   if (Math.abs(S.zoom - snapped(k)) > 1e-9) setZoom(k);
   S.camX = cx - S.viewW / 2;
-  if (e > 0) { S.camLockY = afterTopAt(e, S.viewH); lifted = true; }
+  if (e > 0) { S.camLockY = afterTopAt(e, S.viewH, cx); lifted = true; }
   else if (lifted) { S.camLockY = null; lifted = false; }
   clampCam();
 }
@@ -180,7 +185,7 @@ export function placeCamera(v, x = actPlace(v).open()) {
   const viewW = S.W / zoom, viewH = S.H / zoom;
   const x0 = pl.x0();
   const camX = Math.max(x0, Math.min(cx - viewW / 2, Math.max(x0, pl.x1() - viewW)));
-  return { zoom, viewW, viewH, camX, camY: e > 0 ? afterTopAt(e, viewH) : pl.floor() + pl.margin - viewH };
+  return { zoom, viewW, viewH, camX, camY: e > 0 ? afterTopAt(e, viewH, cx) : pl.floor() + pl.margin - viewH };
 }
 
 export function deepGlass() {

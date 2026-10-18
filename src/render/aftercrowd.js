@@ -37,16 +37,16 @@ import { S } from '../state.js';
 import { P, GREY, CROWD_FILES, CROWD_PITCH, CROWD_X0, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW, RIM_PIECES,
          STRIKE_SHARE, CROWD_FRONT_BODY, CROWD_NEAR_SIZES, CROWD_NEAR_RANKS, CROWD_NEAR_RATE, CROWD_NEAR_LIFT,
          CROWD_RIM, CROWD_RIM_FROM, CROWD_PIECES_FROM, CROWD_NEAR_TONES, CROWD_FRONT_TONES, CROWD_INK_FADE,
-         CROWD_STEP_UP, CROWD_BANDS, CROWD_MASS_ALT, CROWD_MASS_HEADS, CROWD_MASS_TAPER, CROWD_MASS_STEP_S,
-         CROWD_MASS_READ_S, CROWD_INK_LOCAL, CROWD_INK_WON, CROWD_CLUMP, CROWD_CLUMP_K, CROWD_CLUMP_R, OURS_X0, OURS_INK, OURS_FAR_INK,
-         GOD_RATE, GOD_HORIZON_UP, GOD_THRONE, GOD_SEAT, GOD_FACE, GOD_CROWN, GOD_HAZE_TONE, GOD_GLARE,
+         CROWD_STEP_UP, CROWD_BANDS, CROWD_MASS_ALT, CROWD_MASS_ALT_GRAIN, CROWD_MASS_HEADS, CROWD_MASS_TAPER, CROWD_MASS_STEP_S,
+         CROWD_MASS_READ_S, CROWD_INK_LOCAL, CROWD_INK_WON, CROWD_CLUMP, CROWD_CLUMP_K, CROWD_CLUMP_R, CROWD_CLUMP_TALL, CROWD_CLUMP_LEAST, OURS_X0, OURS_INK,
+         GOD_RATE, GOD_FAR, GOD_FAR_ALPHA, GOD_HORIZON_UP, GOD_THRONE, GOD_SEAT, GOD_FACE, GOD_CROWN, GOD_HAZE_TONE, GOD_GLARE,
          GOD_LEDGES, GOD_FLIGHTS, GOD_TITHE_PATH, GOD_CARRIERS, GOD_CARRIER_LAP_S } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { afterFloor, stationBox, slotX, overCrowd } from '../after/place.js';
 import { souls, support, union, OUT_RIM } from '../after/union.js';
 import { walkingOut } from '../after/bodies.js';
-import { afterEnd, afterPan } from '../view.js';
+import { afterEnd, afterPan, godScaleAt } from '../view.js';
 import { smoothstep } from '../motion.js';
 
 const F = CROWD_FILES;
@@ -99,6 +99,9 @@ const ROWS = (() => {
 const VIS = [{ row: 0, off: 0 }];
 CROWD_NEAR_RANKS.forEach((n, k) => { for (let j = 0; j < n; j++) VIS.push({ row: k + 1, off: j * CROWD_PITCH / 2 }); });
 export const NEAR = VIS.length;
+// Every band's foot, px off the floor: the top of the back near row, so the
+// bands stand on the rows and no soul is drawn over a band.
+const BAND_FOOT = (() => { const r = ROWS[ROWS.length - 1]; return r.foot + r.s; })();
 // A visual depth's layout, any depth: rate, size, foot (px up off the
 // floor) and offset across, eased between ranks so a soul stepping forward
 // or a body walking through the rows moves smoothly. Past the near rows, the
@@ -114,11 +117,11 @@ function layout(d, bandL) {
   const m = (d - (NEAR - 1)) / Math.max(1, bandL);
   if (m <= 1) {
     const bd = CROWD_BANDS[0];
-    return { rate: lerp(last.rate, bd.rate, m), s: lerp(last.s, bd.cell, m), foot: lerp(last.foot, bd.up + bd.rows * bd.cell * 0.5, m), off: 0 };
+    return { rate: lerp(last.rate, bd.rate, m), s: lerp(last.s, bd.cell, m), foot: lerp(last.foot, BAND_FOOT + bd.rows * bd.cell * 0.5, m), off: 0 };
   }
   const b = Math.min(CROWD_BANDS.length - 1, Math.floor(m - 1)), bd = CROWD_BANDS[b];
   const u = clamp(m - 1 - b, 0, 1);
-  return { rate: bd.rate, s: bd.cell, foot: bd.up + bd.rows * bd.cell * u, off: 0 };
+  return { rate: bd.rate, s: bd.cell, foot: BAND_FOOT + bd.rows * bd.cell * u, off: 0 };
 }
 // A soul's file middle at the front row's scale.
 const fileMid = f => CROWD_X0 + f * CROWD_PITCH + CROWD_FRONT_BODY / 2;
@@ -281,14 +284,43 @@ function body(w, rim, fill) {
 
 // --- the bands, as bitmaps ------------------------------------------------------------------
 // A band's picture: its columns of cells, each column's depth its share of
-// the band still standing, a head over most in runs, a few cells a step off
-// its grey (never on the top), and ink in clumps where a slow noise falls
-// under the column's share won. Taken on a canvas of its own at the
-// frame's device scale, one rect a column and one a cell off its grey.
+// the band still standing, a head over most in runs, soft patches of cells
+// a step off its grey (never on the top), and ink in clumps where a slow
+// noise falls under the column's share won. Taken on a canvas of its own at
+// the frame's device scale.
 function canvas(w, h) {
   const c = document.createElement('canvas');
   c.width = Math.max(1, w); c.height = Math.max(1, h);
   return c;
+}
+// Keep a marked cell only where it is part of a whole 2 by 2 block of marks:
+// no single cell, no one-cell spur or line, ever (`at(j, r)` the mark).
+function opened(cols, rows, at) {
+  const out = new Uint8Array(cols * rows);
+  for (let j = 0; j + 1 < cols; j++) for (let r = 0; r + 1 < rows; r++) {
+    if (at(j, r) && at(j + 1, r) && at(j, r + 1) && at(j + 1, r + 1))
+      out[r * cols + j] = out[r * cols + j + 1] = out[(r + 1) * cols + j] = out[(r + 1) * cols + j + 1] = 1;
+  }
+  return out;
+}
+// Clear every patch of marks smaller than `least` cells, in place: what is
+// left of a clump a column's top cut short is a fleck, not a blob.
+function noFlecks(marks, cols, rows, least) {
+  const seen = new Uint8Array(marks.length), stack = [], patch = [];
+  for (let k0 = 0; k0 < marks.length; k0++) {
+    if (!marks[k0] || seen[k0]) continue;
+    stack.push(k0); seen[k0] = 1; patch.length = 0;
+    while (stack.length) {
+      const k = stack.pop(), j = k % cols, r = (k - j) / cols;
+      patch.push(k);
+      for (const [dj, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const jj = j + dj, rr = r + dr, kk = rr * cols + jj;
+        if (jj >= 0 && jj < cols && rr >= 0 && rr < rows && marks[kk] && !seen[kk]) { seen[kk] = 1; stack.push(kk); }
+      }
+    }
+    if (patch.length < least) for (const k of patch) marks[k] = 0;
+  }
+  return marks;
 }
 function paintBand(bd, seed, cols, column, drift) {
   const cw = Math.ceil(cols * bd.cell * K), chRows = bd.rows + 2, ch = Math.ceil(chRows * bd.cell * K);
@@ -296,19 +328,24 @@ function paintBand(bd, seed, cols, column, drift) {
   if (!g) return c;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.imageSmoothingEnabled = false;
-  const cell = (j, r, w, h, tone) => {
+  const cell = (j, r, h, tone) => {
     g.fillStyle = GREY[tone];
     const x0 = Math.round(j * bd.cell * K), y0 = Math.round((chRows - r - h) * bd.cell * K);
-    g.fillRect(x0, y0, Math.round((j + w) * bd.cell * K) - x0, Math.round((chRows - r) * bd.cell * K) - y0);
+    g.fillRect(x0, y0, Math.round((j + 1) * bd.cell * K) - x0, Math.round((chRows - r) * bd.cell * K) - y0);
   };
+  const cs = Array.from({ length: cols }, (_, j) => column(j));
+  const tops = cs.map(q => (q.h > 0 ? q.h + (q.head ? 1 : 0) : 0));
+  const inside = j => j >= 0 && j < cols;
+  const share = j => (inside(j) ? cs[j].ink : 0), height = j => (inside(j) ? cs[j].h : 0);
+  const ink = noFlecks(opened(cols, chRows, (j, r) => r < tops[j] && inClump(j + drift, r, share, height, drift, seed, clumpFloor(bd), bd.rows)), cols, chRows, CROWD_CLUMP_LEAST);
+  const [ga, gb] = CROWD_MASS_ALT_GRAIN;
+  const alt = opened(cols, chRows, (j, r) => r < cs[j].h - 1 && vnoise(j * ga, r * gb, seed + 7) > CROWD_MASS_ALT);
   for (let j = 0; j < cols; j++) {
-    const { h, head, ink } = column(j);
-    if (h <= 0) continue;
-    const top = h + (head ? 1 : 0);
-    cell(j, 0, 1, top, bd.tone);
-    for (let r = 0; r < top; r++) {
-      if (inClump(j + drift, r, ink, seed)) cell(j, r, 1, 1, 10);
-      else if (r < h - 1 && hsh(j, r, seed) < CROWD_MASS_ALT) cell(j, r, 1, 1, bd.alt);
+    if (tops[j] <= 0) continue;
+    cell(j, 0, tops[j], bd.tone);
+    for (let r = 0; r < tops[j]; r++) {
+      const k = r * cols + j;
+      if (ink[k] || alt[k]) cell(j, r, 1, ink[k] ? 10 : bd.alt);
     }
   }
   return c;
@@ -317,15 +354,29 @@ function paintBand(bd, seed, cols, column, drift) {
 // grid (CROWD_CLUMP), each square holding a clump or not by the share won
 // there, a clump a soft oval of a few cells off the square's middle with a
 // lumpy edge. Whole clumps, few or many, never a scatter of single cells.
-function inClump(x, r, share, seed) {
-  if (share <= 0) return false;
+// Whether a clump stands is asked once, at its middle (`share(col)` and
+// `top(col)` the band's there, `drift` the clumps' slow walk across), so a
+// clump is all there or not at all: placed whole inside the band's depth,
+// never cut flat by its foot, and never on a column too short to hold it
+// (the band's sloping ends).
+// The row a band's clumps stand clear of: the top of the band in front of
+// it, so a clump is never half hidden behind the nearer band.
+const clumpFloor = bd => {
+  const b = CROWD_BANDS.indexOf(bd), front = CROWD_BANDS[b - 1];
+  return front ? Math.ceil((front.rows + 1) * front.cell / bd.cell) : 0;
+};
+function inClump(x, r, share, top, drift, seed, lo, hi) {
   const [gw, gh] = CROWD_CLUMP, cx = Math.floor(x / gw), cy = Math.floor(r / gh);
-  const density = Math.min(1, share * CROWD_CLUMP_K);
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
     const qx = cx + dx, qy = cy + dy;
-    if (hsh(qx, qy, seed + 11) >= density) continue;
-    const mx = (qx + 0.2 + 0.6 * hsh(qx, qy, seed + 12)) * gw, my = (qy + 0.2 + 0.6 * hsh(qx, qy, seed + 13)) * gh;
-    const rx = CROWD_CLUMP_R[0] + (CROWD_CLUMP_R[1] - CROWD_CLUMP_R[0]) * hsh(qx, qy, seed + 14), ry = rx * 0.6;
+    const r0 = CROWD_CLUMP_R[0] + (CROWD_CLUMP_R[1] - CROWD_CLUMP_R[0]) * hsh(qx, qy, seed + 14);
+    const ry = Math.min(r0 * CROWD_CLUMP_TALL, (hi - lo) / 2), rx = ry / CROWD_CLUMP_TALL;
+    if (ry < CROWD_CLUMP_R[0] * CROWD_CLUMP_TALL) continue;
+    const mx = (qx + 0.2 + 0.6 * hsh(qx, qy, seed + 12)) * gw;
+    const my = hi - lo > 2 * ry ? clamp((qy + 0.2 + 0.6 * hsh(qx, qy, seed + 13)) * gh, lo + ry, hi - ry) : (lo + hi) / 2;
+    const col = Math.floor(mx - drift), w = Math.ceil(rx);
+    if (hsh(qx, qy, seed + 11) >= Math.min(1, share(col) * CROWD_CLUMP_K)) continue;
+    if (my + ry > Math.min(top(col - w), top(col), top(col + w))) continue;
     const ex = (x + 0.5 - mx) / rx, ey = (r + 0.5 - my) / ry;
     if (ex * ex + ey * ey < 0.75 + 0.35 * vnoise(x * 0.5, r * 0.5, seed + 15)) return true;
   }
@@ -348,7 +399,7 @@ function drawBandCache(cache, cols, column, x, rate, phase) {
     cache.A = cache.B; cache.B = take(i + 1); cache.step = i;
   }
   const w = cache.A.width / K, h = cache.A.height / K;
-  const x0 = onPx(at(x, rate)), y0 = onPx(afterFloor() - bd.up - (bd.rows + 2) * bd.cell);
+  const x0 = onPx(at(x, rate)), y0 = onPx(afterFloor() - BAND_FOOT - (bd.rows + 2) * bd.cell);
   if (x0 > S.camX + S.viewW || x0 + w < S.camX) return;
   let pic = cache.A;
   if (f > 0.002) {
@@ -368,10 +419,12 @@ function drawBandCache(cache, cols, column, x, rate, phase) {
   }
   ctx.drawImage(pic, x0, y0, w, h);
 }
-// The band's slow rise and fall, and its ends sloping down.
-const undulate = (j, cols, seed) => {
-  const end = Math.min(j, cols - 1 - j);
-  return Math.round(2 * vnoise(j * 0.13, 0, seed) - 1) - (end < CROWD_MASS_TAPER ? (CROWD_MASS_TAPER - end) * 0.6 : 0);
+// A column's height in cells off its share of the band: the band's slow rise
+// and fall, and its ends eased down to its foot, a shoulder rather than a
+// stair, so the bands' ends at their three rates read as one slope.
+const bandH = (rows, fill, j, cols, seed) => {
+  const end = Math.min(j, cols - 1 - j), ease = smoothstep(clamp((end + 0.5) / CROWD_MASS_TAPER, 0, 1));
+  return Math.max(0, Math.round((rows * fill + 2 * vnoise(j * 0.13, 0, seed) - 1) * ease));
 };
 const hasHead = (j, seed) => vnoise(j * 0.45, 3, seed) < CROWD_MASS_HEADS;
 
@@ -396,7 +449,7 @@ function godColumn(b) {
     const ff = clamp((j + 0.5) / cols * F - 0.5, 0, F - 1), f0 = Math.floor(ff), f1 = Math.min(F - 1, f0 + 1), u = ff - f0;
     const fill = clamp(lerp(files[f0].fill, files[f1].fill, u), 0, 1);
     const inked = lerp(files[f0].ink, files[f1].ink, u);
-    const h = fill > 0.02 ? Math.max(0, Math.round(bd.rows * fill + undulate(j, cols, 31 + b))) : 0;
+    const h = fill > 0.02 ? bandH(bd.rows, fill, j, cols, 31 + b) : 0;
     return { h, head: h > 0 && hasHead(j, 31 + b), ink: CROWD_INK_LOCAL * inked + CROWD_INK_WON * won };
   };
 }
@@ -488,15 +541,22 @@ function billow(cols, seed) {
   }
   return el;
 }
-function sprite(box, paint) {
-  const c = canvas(Math.ceil(box.w * K), Math.ceil(box.h * K)), g = c.getContext('2d');
+// A sprite painted in God's own px about (0, floor 0), drawn at `s` of its
+// size about the horizon (God far off is God smaller on the horizon). Every
+// rect keeps a device pixel at least, so a far stroke thins and never drops
+// out. Its box, scaled, rides on the canvas for `blit`.
+const sx = (x, s) => x * s, sy = (y, s) => -GOD_HORIZON_UP + (y + GOD_HORIZON_UP) * s;
+function sprite(box, paint, s = 1) {
+  const sb = { x: sx(box.x, s), y: sy(box.y, s), w: box.w * s, h: box.h * s };
+  const c = canvas(Math.ceil(sb.w * K) + 1, Math.ceil(sb.h * K) + 1), g = c.getContext('2d');
+  c.box = sb;
   if (!g) return c;
   g.setTransform(1, 0, 0, 1, 0, 0);
   const r = (x, y, w, h, tone) => {
     g.fillStyle = GREY[tone];
-    const x0 = Math.round((x - box.x) * K), y0 = Math.round((y - box.y) * K);
-    const ww = Math.round((x + w - box.x) * K) - x0, hh = Math.round((y + h - box.y) * K) - y0;
-    if (ww > 0 && hh > 0) g.fillRect(x0, y0, ww, hh);
+    const x0 = Math.round((sx(x, s) - sb.x) * K), y0 = Math.round((sy(y, s) - sb.y) * K);
+    const ww = Math.max(1, Math.round((sx(x + w, s) - sb.x) * K) - x0), hh = Math.max(1, Math.round((sy(y + h, s) - sb.y) * K) - y0);
+    if (w > 0 && h > 0) g.fillRect(x0, y0, ww, hh);
   };
   paint(r);
   return c;
@@ -533,8 +593,8 @@ function throne(r, tone, fill) {
   for (let k = 0; k < GOD_CROWN.prongs; k++) r(-bw / 2 + 4 + k * gap, -GOD_CROWN.up, pw, ph, tone);
   r(-bw / 2, -GOD_CROWN.up + ph - 2, bw, bh, tone);
 }
-function takeGod() {
-  god.K = K;
+function takeGod(s) {
+  god.K = K; god.s = s;
   const reach = GOD_GLARE.r1[1] + 4;
   const glareBox = { x: -reach, y: -GOD_GLARE.up - reach, w: reach * 2, h: reach * 2 };
   god.glare = sprite(glareBox, r => {
@@ -543,12 +603,12 @@ function takeGod() {
       for (let d = GOD_GLARE.r0; d < r1; d += 2)
         r(Math.round(Math.cos(an) * d) - 1, Math.round(-GOD_GLARE.up + Math.sin(an) * d) - 1, 2, 2, GOD_GLARE.tone);
     }
-  });
+  }, s);
   god.glareBox = glareBox;
   const tw = Math.max(GOD_SEAT.w, GOD_THRONE.w) + 4;
   const tbox = { x: -tw / 2, y: -GOD_THRONE.top - 2, w: tw, h: GOD_THRONE.top - GOD_SEAT.up + GOD_SEAT.h * 3 };
-  god.haze = sprite(tbox, r => throne(r, GOD_HAZE_TONE, true));
-  god.ink = sprite(tbox, r => throne(r, 10, false));
+  god.haze = sprite(tbox, r => throne(r, GOD_HAZE_TONE, true), s);
+  god.ink = sprite(tbox, r => throne(r, 10, false), s);
   god.box = tbox;
   const xs = [...GOD_LEDGES.flatMap(l => [l[0], l[1]]), ...GOD_FLIGHTS.flatMap(l => [l[0], l[2]])];
   const sbox = { x: Math.min(...xs) - P, y: -Math.max(...GOD_LEDGES.map(l => l[2])) - P * 2, w: Math.max(...xs) - Math.min(...xs) + P * 2,
@@ -569,28 +629,38 @@ function takeGod() {
         r(dx > 0 ? x : x + dx + Math.abs(dx), y, 2, dy + 2, 3);
       }
     }
-  });
+  }, s);
   god.sceneryBox = sbox;
   // The far horizon: a billow line a tile long, laid end to end across the window.
   const tile = P * 40;
   god.horizonBox = { x: 0, y: -GOD_HORIZON_UP - P * 2, w: tile, h: P * 3 };
   god.horizon = sprite(god.horizonBox, r => edge(r, billow(tile / P, 41), 0, -GOD_HORIZON_UP, 2, null, 0));
 }
-const blit = (pic, box, x, y) => ctx.drawImage(pic, onPx(x + box.x), onPx(y + box.y), pic.width / K, pic.height / K);
+const blit = (pic, box, x, y) => { const b = pic.box || box; ctx.drawImage(pic, onPx(x + b.x), onPx(y + b.y), pic.width / K, pic.height / K); };
+// God's size this frame (view.js, `godScaleAt`), held to a device pixel of
+// the throne's height so the sprites are taken again only when he has grown
+// by one; and how strongly he shows, fainter the further off.
+const godSize = () => {
+  const s = godScaleAt(CX), unit = GOD_THRONE.top * K;
+  return Math.max(1 / unit, Math.round(s * unit) / unit);
+};
 function drawGod() {
-  if (god.K !== K) takeGod();
+  const s = godSize();
+  if (god.K !== K || god.s !== s) takeGod(s);
   const floor = afterFloor(), G = at(afterEnd(), GOD_RATE), t = now();
+  const far = clamp((s - GOD_FAR) / (1 - GOD_FAR), 0, 1), show = lerp(GOD_FAR_ALPHA, 1, far);
   // The horizon, its tiles at God's rate.
   const tile = god.horizonBox.w, x0 = at(0, GOD_RATE);
   const first = Math.floor((S.camX - x0) / tile);
   for (let k = first; x0 + k * tile < S.camX + S.viewW; k++) blit(god.horizon, god.horizonBox, x0 + k * tile, floor);
   const was = ctx.globalAlpha;
+  ctx.globalAlpha = was * show;
   const glare = glareAlpha() * (0.55 + 0.45 * (0.5 + 0.5 * Math.sin(t * GOD_GLARE.pulse)));
-  if (glare > 0) { ctx.globalAlpha = was * glare; blit(god.glare, god.glareBox, G, floor); ctx.globalAlpha = was; }
+  if (glare > 0) { ctx.globalAlpha = was * show * glare; blit(god.glare, god.glareBox, G, floor); ctx.globalAlpha = was * show; }
   blit(god.scenery, god.sceneryBox, G, floor);
   blit(god.haze, god.box, G, floor);
   const near = smoothstep(afterPan(CX)) ** 1.5;
-  if (near > 0) { ctx.globalAlpha = was * near; blit(god.ink, god.box, G, floor); ctx.globalAlpha = was; }
+  if (near > 0) { ctx.globalAlpha = was * show * near; blit(god.ink, god.box, G, floor); ctx.globalAlpha = was * show; }
   // The tithe carriers on the switchback, tiny, fading in at its foot and
   // out into the glare at the seat.
   const pts = GOD_TITHE_PATH, lens = pts.slice(1).map((q, i) => Math.hypot(q[0] - pts[i][0], q[1] - pts[i][1]));
@@ -599,9 +669,11 @@ function drawGod() {
     const q = (((t / GOD_CARRIER_LAP_S + k / GOD_CARRIERS) % 1) + 1) % 1;
     let d = q * tot, i = 0;
     while (i < lens.length - 1 && d > lens[i]) d -= lens[i++];
-    const u = d / lens[i], x = Math.round(G + lerp(pts[i][0], pts[i + 1][0], u)) - 3, y = Math.round(floor - lerp(pts[i][1], pts[i + 1][1], u)) - 6;
-    ctx.globalAlpha = was * Math.min(1, q * 20, (1 - q) * 12);
-    rect(x, y, 6, 6, 5); rect(x + 2, y + 2, 2, 2, 0); rect(x + 1, y - 2, 4, 2, 4);
+    const u = d / lens[i], px = G + sx(lerp(pts[i][0], pts[i + 1][0], u), s), py = floor + sy(-lerp(pts[i][1], pts[i + 1][1], u), s);
+    const c = Math.max(1 / K, s);
+    ctx.globalAlpha = was * show * Math.min(1, q * 20, (1 - q) * 12);
+    const x = onPx(px - 3 * c), y = onPx(py - 6 * c);
+    rect(x, y, 6 * c, 6 * c, 5); rect(x + 2 * c, y + 2 * c, 2 * c, 2 * c, 0); rect(x + c, y - 2 * c, 4 * c, 2 * c, 4);
   }
   ctx.globalAlpha = was;
 }
@@ -650,7 +722,7 @@ function ourColumn(b, mass) {
     const q = (cols - 1 - j) / cols;
     const edgeK = u >= 1 ? 1 : clamp((reach - q) / 0.12, 0, 1);
     const fill = depth * smoothstep(edgeK) * (u > 0 ? 1 : 0);
-    const h = fill > 0.02 ? Math.max(0, Math.round(bd.rows * fill + undulate(j, cols, 51 + b))) : 0;
+    const h = fill > 0.02 ? bandH(bd.rows, fill, j, cols, 51 + b) : 0;
     return { h, head: h > 0 && hasHead(j, 51 + b), ink: OURS_INK };
   };
 }
@@ -676,7 +748,7 @@ export function drawCampCrowd(c) {
     const L = layout(v, 1), s = Math.round(L.s);
     const x = onPx(at(OURS_X0 + f * CROWD_PITCH + CROWD_FRONT_BODY / 2 + L.off, L.rate) - s / 2);
     if (x + s < S.camX || x > S.camX + S.viewW) continue;
-    const ink = RIM_PIECES * lerp(1, OURS_FAR_INK, (v - 1) / (NEAR - 2));
+    const ink = RIM_PIECES * lerp(1, OURS_INK, (v - 1) / (NEAR - 2));
     soul(x, onPx(floor - L.foot - s), s, ink, paleTone(s, k), k === whole ? part : 1);
     count++;
   }

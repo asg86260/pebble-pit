@@ -193,6 +193,30 @@ group('the pedestal: a popped bubble is a line of the speech, and the big one pa
   ];
 }, NO_RELOAD);
 
+// The rebel a popped bubble knocks loose starts at the bubble, not at the
+// pair's heads, and is counted only when it lands on the pile.
+group('the pedestal: a popped bubble\'s rebel starts at the bubble and is counted where it lands', async () => {
+  up();
+  const pair = partsOf('pedestal').box, b = { x: pair.x + P * 20, y: pair.y - P * 24, w: P * 7, h: P * 4, big: false };
+  let air = [b];
+  useBubbles({ list: () => air, pop: x => { const had = air.includes(x); air = air.filter(y => y !== x); return had; } });
+  const r0 = read().rebel, m0 = S.after.motes.length, at = mid(b);
+  gestureDown(at.x, at.y);
+  gestureUp();
+  const motes = S.after.motes.slice(m0).map(m => ({ x: m.x, y: m.y, v: m.v }));
+  const fromBubble = motes.length > 0 && motes.every(m => Math.abs(m.x - at.x) <= b.w && Math.abs(m.y - at.y) <= P);
+  const carried = motes.reduce((s, m) => s + m.v, 0), early = read().rebel - r0;
+  run(10);
+  useBubbles(null);
+  const paid = read().rebel - r0;
+  window.__actsOn(null);
+  return [
+    ok(fromBubble, 'every mote starts at the bubble', JSON.stringify({ at, motes })),
+    ok(early === 0 && carried === AFTER_SHOUT_REBEL, 'carrying the line, and nothing counted on the pop', `${carried} carried, ${early} counted`),
+    ok(paid === AFTER_SHOUT_REBEL, 'counted once they land on the pile', `${paid}`)
+  ];
+}, NO_RELOAD);
+
 group('a stump: held up it gives a root at a time; yanked as it wobbles it comes out in one pull', async () => {
   const stump = () => { up(); Object.assign(S.after.plots[0], { stage: 0, stump: true, dug: 0 }); return partsOf('stump', 0).at; };
   // Held high and kept there: a root a strain.

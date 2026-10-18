@@ -15,16 +15,18 @@ import { shout } from './rebel.js';
 const WORK = { mill: sawLog, chipper: chipLog, papermill: pulpSheet, workshop: joinSign, press: printStack };
 export const WORKED = Object.keys(WORK);
 // The pedestal is worked by the hand alone (a bubble popped, gestures.js), a
-// line of the pair's speech a unit: not a station a click on its box works,
-// so it is not in WORKED.
-const HAND = { ...WORK, pedestal: () => { shout(); return true; } };
+// line of the pair's speech a unit, its rebel let go from the bubble: not a
+// station a click on its box works, so it is not in WORKED.
+const HAND = { ...WORK, pedestal: at => { shout(at); return true; } };
 
 // `amount` units of work at station `key`, by whoever: how many took. The
-// hand's (`hand`) marks the station held a moment (render/after.js).
-export function workAfter(key, amount = 1, hand = false) {
+// hand's (`hand`) marks the station held a moment (render/after.js); `at` is
+// the world point the work came out of, where it has one (a popped bubble's
+// middle).
+export function workAfter(key, amount = 1, hand = false, at = null) {
   if (!S.after || !HAND[key] || !built(key)) return 0;
   let done = 0;
-  for (let k = 0; k < amount && HAND[key](); k++) done++;
+  for (let k = 0; k < amount && HAND[key](at); k++) done++;
   if (hand && done) S.after.workAt[key] = S.after.t;
   return done;
 }

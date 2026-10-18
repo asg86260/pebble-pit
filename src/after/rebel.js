@@ -64,14 +64,15 @@ function spawnCloud(a) {
 // The motes coming down: { x, y, v, up, age } -- knocked up `up` px first,
 // then falling to the pile.
 export const airMotes = () => (S.after ? S.after.motes : []);
-// `v` rebel shed off a head at (x, y), shared across at most AFTER_MOTES_A_HIT.
-function shed(x, y, v) {
+// `v` rebel shed at (x, y), shared across at most AFTER_MOTES_A_HIT: knocked
+// up off a head first, or (`rise` false) let go where they are.
+function shed(x, y, v, rise = true) {
   const n = Math.max(1, Math.min(AFTER_MOTES_A_HIT, v));
   let left = v;
   for (let k = 0; k < n; k++) {
     const each = k === n - 1 ? left : Math.floor(v / n);
     left -= each;
-    S.after.motes.push({ x: x + (k - (n - 1) / 2) * P, y, v: each, up: AFTER_MOTE_RISE + k * P, age: 0 });
+    S.after.motes.push({ x: x + (k - (n - 1) / 2) * P, y, v: each, up: rise ? AFTER_MOTE_RISE + k * P : 0, age: 0 });
   }
 }
 
@@ -83,11 +84,14 @@ export function pairBox() {
 }
 const inBox = (x, y, b) => x >= b.x && x < b.x + b.w && y >= b.y && y <= b.y + b.h;
 // A line of the pair's speech: the pose and the mark (`S.after.shout`), the
-// rebel shed off both heads.
-export function shout() {
+// rebel shed off both heads -- or, for a line popped out of a speech bubble,
+// out of the bubble where it burst (`from`, a world point), drifting down to
+// the pile from there.
+export function shout(from = null) {
   const a = S.after, at = speakerAt(0);
   a.shout = a.t;
-  shed(at.x + P * 3, at.y - WORKER, shoutRebel());
+  if (from) shed(from.x, from.y, shoutRebel(), false);
+  else shed(at.x + P * 3, at.y - WORKER, shoutRebel());
 }
 // An agitator's line, off its own head: rebel only.
 export const agitate = w => { shed(w.x, w.y - WORKER, AFTER_AGITATE_REBEL); };

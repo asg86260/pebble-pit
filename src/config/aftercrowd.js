@@ -27,16 +27,21 @@ export const CROWD_STEP_UP = 1.5;
 
 // --- the mass ------------------------------------------------------------------------
 // Three flat bands behind the near rows, nearest first: parallax rate, cell
-// px, rows of cells at full depth, how far up off the floor the band's foot
-// stands, its grey and the step-off grey a few of its cells take.
+// px, rows of cells at full depth, its grey and the step-off grey a patch of
+// its cells take. Every band's foot is the top of the near rows (worked out
+// in render/aftercrowd.js), so a band's end slopes down to the rows rather
+// than floating over paper, and no near soul is drawn over a band.
 export const CROWD_BANDS = [
-  { rate: 0.55, cell: 4, rows: 8, up: 96, tone: 3, alt: 2 },
-  { rate: 0.42, cell: 3, rows: 12, up: 112, tone: 2, alt: 1 },
-  { rate: 0.3, cell: 2, rows: 18, up: 128, tone: 1, alt: 0 },
+  { rate: 0.55, cell: 4, rows: 7, tone: 3, alt: 2 },
+  { rate: 0.42, cell: 3, rows: 16, tone: 2, alt: 1 },
+  { rate: 0.3, cell: 2, rows: 36, tone: 1, alt: 0 },
 ];
-export const CROWD_MASS_ALT = 0.05;      // share of a band's cells a step paler than its grey (the mock's sixth, both ways, was too busy)
+// The step-off grey in soft patches where a slow noise runs over this, never
+// a single cell (the mock's sixth of single cells, both ways, read as speckle).
+export const CROWD_MASS_ALT = 0.78;
+export const CROWD_MASS_ALT_GRAIN = [0.3, 0.45];   // the patches' noise, a cell across and down
 export const CROWD_MASS_HEADS = 0.55;    // share of columns with a head over the band's top, in runs
-export const CROWD_MASS_TAPER = 8;       // columns at each end of a band that slope down
+export const CROWD_MASS_TAPER = 14;      // columns at each end of a band that ease down to its foot
 export const CROWD_MASS_STEP_S = 4;      // a band's picture taken again this often, crossfaded over the same
 export const CROWD_MASS_READ_S = 0.5;    // the crowd's counts read again at most this often
 // Ink clumps: a band's cell is inked where a slow noise falls under the
@@ -44,17 +49,21 @@ export const CROWD_MASS_READ_S = 0.5;    // the crowd's counts read again at mos
 // share of the whole crowd walked out.
 export const CROWD_INK_LOCAL = 0.6;
 export const CROWD_INK_WON = 0.7;
-export const CROWD_CLUMP = [10, 6];      // the clumps' coarse grid, cells across and down: a clump a square at most
+export const CROWD_CLUMP = [10, 7];      // the clumps' coarse grid, cells across and down: a clump a square at most
 export const CROWD_CLUMP_K = 2.5;        // a square's chance of a clump, a share won
-export const CROWD_CLUMP_R = [1.6, 3.4]; // a clump's half-width, cells, smallest and largest
+export const CROWD_CLUMP_R = [2, 3.2];   // a clump's half-width, cells, smallest and largest
+export const CROWD_CLUMP_TALL = 0.8;     // a clump's height, a share of its width
+export const CROWD_CLUMP_LEAST = 10;     // cells: any ink smaller is a fleck and is not drawn
 
 // --- our crowd -------------------------------------------------------------------------
 // The members who have walked out, behind the camp, from the grove's edge to
 // the pedestal: the same rows and bands, filling front to back from the end
 // nearest God's yard. The mass is full when the strike's share has arrived.
 export const OURS_X0 = P * 14;
-export const OURS_INK = 0.15;            // our mass's ink clumps: every one of ours is a member
-export const OURS_FAR_INK = 0.5;         // ...and our back near row's ink, a share of the front's, so ours is palest furthest too
+// Our mass's ink clumps (every one of ours is a member), and our back near
+// row's ink, a share of the front's: ours is palest furthest and meets our
+// mass in its own grey.
+export const OURS_INK = 0.15;
 
 // --- God -------------------------------------------------------------------------------
 // Far off on the horizon, on the slowest layer, still taller than the crowd.
@@ -62,6 +71,11 @@ export const OURS_FAR_INK = 0.5;         // ...and our back near row's ink, a sh
 // the cloud floor, world px.
 export const GOD_RATE = 0.2;
 export const GOD_HORIZON_UP = 150;
+// From the camp and the crowd's front God stands this much of his size on
+// the horizon, and shows this strongly; both grow to whole across the pan
+// (view.js, `godScaleAt`), so he looms only once the camera has walked to him.
+export const GOD_FAR = 0.45;
+export const GOD_FAR_ALPHA = 0.6;
 export const GOD_THRONE = { w: 120, top: 450, h: 172 };         // the throne's back
 export const GOD_SEAT = { w: 148, up: 284, h: 14 };
 export const GOD_FACE = { w: 96, up: 384, eye: 10, eyeAt: [-26, 16], eyeUp: 352 };
