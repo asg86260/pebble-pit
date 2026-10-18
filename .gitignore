@@ -23,3 +23,7 @@ src/fonts/
 # the feedback worker's local secrets and wrangler's local state (feedback/README.md)
 .dev.vars
 .wrangler/
+
+# the music render: stem cache and the rendered loops (not committed yet)
+tools/music/.cache/
+public/music/
