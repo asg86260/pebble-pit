@@ -767,6 +767,8 @@ const deepScenes = {
     run: stageScene(3, 0.27, [cast('mage', 4), cast('monk', 4)]) },
   'deep-meal': { about: 'the deep', say: 'the window a moment short of a meal: the comb about to light for the nearest creature',
     run: mealScene(null) },
+  'comb-timer': { about: 'the deep', say: 'halfway through the window: the comb, the meal\'s timer, half lit from the head',
+    run: () => { mealScene(null)(); S.mealT = (windowS() - MEAL_LEAD_S + MEAL_WARN_S) / 2 - 1; } },
   'meal-bolts': { about: 'the deep', say: 'the meal bolts off the lit comb, the orb closed round the nearest creature',
     run: mealScene(() => MEAL_WARN_S + 0.3) },
   'meal-reel': { about: 'the deep', say: 'the meal orb hauled in on its bolts, halfway to the jaws',

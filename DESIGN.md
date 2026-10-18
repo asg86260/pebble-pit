@@ -17218,8 +17218,14 @@ warning they can read, not a swimmer to watch for.
   and the siphonophore (a colony 26 cells long) fit no orb and are never taken
   (`MEAL_SKIP`); the roster puts no kind in two slots, so one of the three
   always can be.
+- **The comb is the timer** (the owner's A, 2026-10-18,
+  docs/mocks/serpent-comb-timer-2026-10-18.html): it fills head first on
+  `S.mealT` over the whole window, a spike at a time in its lit look, so the
+  player reads how near the meal is off the serpent itself; the stun and Held
+  stop it with the window, and its last spike lights as the warning ends and
+  the bolts leave (`combCharge`).
 - **The beats** (`deep/meals.js`, `beatOf`): the orb mechanic's warning (the
-  comb lit head first), `ORB_BOLT_S` of bolts while the orb closes over
+  comb's last stretch lit), `ORB_BOLT_S` of bolts while the orb closes over
   `ORB_CLOSE_S`, the haul (`MEAL_REEL`: a second and one more every forty
   cells, held between 1.6 and 4.5, eased), `MEAL_GULP_S` into the jaws,
   `MEAL_SWALLOW_S` down the body, and the heal at the belly; then the aura.
