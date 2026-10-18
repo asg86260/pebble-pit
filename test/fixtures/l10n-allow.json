@@ -11,7 +11,8 @@
   "src/report.js",
   "src/verify.js",
   "src/migrations/",
-  "src/config/sound.js"
+  "src/config/sound.js",
+  "src/music/"
  ],
  "strings": {
   "src/cloudsheet.js": [

@@ -30,6 +30,24 @@ export const MUSIC_ROLL_ROWS = 48;
 export const MUSIC_SCHED_TICK_MS = 25;
 export const MUSIC_SCHED_AHEAD_S = 0.12;
 export const MUSIC_PREVIEW_MASTER = 0.5;
+// The master's compressor, so a stack of tracks does not clip the preview.
+export const MUSIC_PREVIEW_COMP = { threshold: -10, ratio: 4 };
+// A synth track's voice when its `preview` leaves a field out: seconds for
+// the envelope, hertz for the cutoff, cents for the two oscillators' spread.
+export const MUSIC_PREVIEW_VOICE = { wave: 'sawtooth', cutoff: 1800, q: 1, attack: 0.01, decay: 0.2, sustain: 0.6, release: 0.2, detune: 0 };
+// The loudest a single preview note gets, at velocity 127.
+export const MUSIC_PREVIEW_PEAK = 0.35;
+// The filter opens to this many times its cutoff at the note's start.
+export const MUSIC_PREVIEW_SWEEP = 2;
+// The preview's drums, by GM pitch: a sine sweep for the kick, filtered noise
+// for the rest (hertz, seconds, level at velocity 127).
+export const MUSIC_PREVIEW_DRUMS = {
+  kick: { from: 150, to: 45, sweep: 0.12, len: 0.35, level: 0.9 },
+  snare: { freq: 1800, q: 0.8, len: 0.18, level: 0.6, tone: 190, toneLen: 0.1, toneLevel: 0.4 },
+  clap: { freq: 1200, q: 1.5, len: 0.09, level: 0.5, gaps: [0, 0.012, 0.024] },
+  hat: { freq: 8000, len: 0.05, level: 0.3 },
+  openHat: { freq: 7000, len: 0.35, level: 0.25 },
+};
 
 // Surge live: the MIDI channel the selected track plays on (0-based).
 export const MUSIC_LIVE_CHANNEL = 0;
