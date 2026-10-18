@@ -984,6 +984,15 @@
    },
    "fx": [
     {
+     "type": "filter",
+     "on": true,
+     "params": {
+      "type": "highpass",
+      "cutoff": 250,
+      "reso": 0
+     }
+    },
+    {
      "type": "delay",
      "on": true,
      "params": {

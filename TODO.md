@@ -11,8 +11,10 @@ preview, Surge live, the render and chords first are on main. Open: the
 in-game playback (one loop a place, its own slider), blocked on the owner
 having a song they like. loopMIDI must be installed by hand for the live
 switch. Nobody has listened to the preview patterns or the render's mix.
-Designed, awaiting the go-ahead: **a track's effects chain** (the section's
-last part; the owner chose a row of boxes under the clip).
+The effects chain is built; open on it: pedalboard's Limiter seems to raise
+the mix to 0 dBFS whatever its threshold (the render's report, 2026-10-17),
+so the master limits about 3 dB harder than it needs to -- a by-ear call on
+`MASTER_GAIN_DB` in tools/music/mix.py.
 
 ## Acts 3 and 4: the afterlife and hell -- LOOPS CHOSEN, THIRTEEN CALLS OPEN, SCAFFOLD BUILT (2026-10-17)
 

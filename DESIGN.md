@@ -21868,7 +21868,15 @@ drawn on top is optional, and the roll makes a wrong note impossible.
   switches on the bench. The song file grows `chords` and `follow`; older
   songs read without them.
 
-### A track's effects chain (design, not built)
+### A track's effects chain (built 2026-10-17)
+
+*Built as designed: `src/music/fx.js` (the chain as data), `fxnodes.js` (the
+preview's stand-ins), the effects tab on `music.html`, and the chains in
+`tools/music/mix.py` through `plan.mjs`. What the render could not keep from
+the old fixed mix: the lead's echoes are a plain feedback delay rather than
+the old ping-pong, and each track has its own reverb rather than one shared,
+filtered hall. The yard's chains add the old high-pass on the lead; the old
+pad low-pass and bass high-pass are left for the owner's ear.*
 
 *Asked for 2026-10-17: effects you stack on a track, Ableton's way. The
 owner chose a chain of effect boxes over a few fixed knobs, and the vote
