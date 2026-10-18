@@ -183,6 +183,17 @@ swap all four tokens. The light page is unchanged. The float shadow is
 light page's steps from the other end, with -4 and -5 lifted to AA, and the
 accent is PURPLE's lightest rung, which keeps 3:1 on graphite.
 
+**The player's choice** (the owner, 2026-10-18). The settings' switch
+steps through three looks: **light**, **dim** and **dark** (`theme` in
+prefs.js, the words `set-dark-off`, `set-dark-dim`, `set-dark-on`). Dim is
+the first dark page, kept whole: one turned map between charcoal and light
+gray everywhere (`DEEP_PAPER`, `DEEP_INK`), the tags reading as that map,
+and `html.dark.dim` in the stylesheet putting back its tokens, its fills in
+the light gray. Dark is the graphite page above. The system's dark asks for
+dark. A store from before, which said `dark: true`, opens dark too. Every
+page's head reads the same three before the first paint, and `?dim` and
+`?dark` in the address force one for a shot.
+
 **What it costs.** Black on graphite has a quarter of the range black on
 white has, so anything faint (a try-on in the appearance sheet, a heap's
 outer rings) is fainter. Scene shots after `mansion` in one `look.mjs` run

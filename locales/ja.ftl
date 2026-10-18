@@ -395,6 +395,9 @@ set-touch-off = タッチ：オフ
 set-dark-on = ダーク：オン
 
 # settings dark switch
+set-dark-dim = ダーク：ディム
+
+# settings dark switch
 set-dark-off = ダーク：オフ
 
 # settings sound switch

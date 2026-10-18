@@ -4,8 +4,11 @@
 // white *are*.
 //
 // On the light page the paper is white and the ink black, and the map is the
-// identity, so it is not installed at all. The dark page has three maps, and
-// render.js says which one a layer is drawn in (`inkMode`):
+// identity, so it is not installed at all. The dim page (prefs.js, `theme`)
+// is the first dark page, kept as the player's choice: one map, light gray
+// on charcoal turned by lightness, everywhere, and the tags below are that
+// map too. The dark page has three maps, and render.js says which one a
+// layer is drawn in (`inkMode`):
 //
 // - 'yard', the default: white goes to the graphite paper and black stays
 //   black, a gray landing on the same step between them, so a heap's deepest
@@ -35,12 +38,13 @@
 // the palette cannot be changed under it.
 
 import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, DEEP_PAPER, DEEP_INK } from './config.js';
-import { dark } from './prefs.js';
+import { theme } from './prefs.js';
 
-const on = dark();
+const look = theme();
+const on = look !== 'light', dim = look === 'dim';
 export const darkPage = on;
-export const paper = on ? DARK_PAPER : LIGHT_PAPER;
-export const ink = on ? DARK_INK : LIGHT_INK;
+export const paper = dim ? DEEP_PAPER : on ? DARK_PAPER : LIGHT_PAPER;
+export const ink = dim ? DEEP_INK : on ? DARK_INK : LIGHT_INK;
 
 // A color that must reach the canvas as written: for a `difference` fill,
 // where the mapped ink would be the wrong answer (buildsites.js, drawGrit).
@@ -77,10 +81,11 @@ function fromHsl(h, s, l) {
 }
 
 // The ends of each map: where white lands and where black lands.
-const ENDS = {
+const DEEP_ENDS = [lightOf(DEEP_PAPER), lightOf(DEEP_INK)];
+const ENDS = dim ? { yard: DEEP_ENDS, line: DEEP_ENDS, deep: DEEP_ENDS } : {
   yard: [lightOf(DARK_PAPER), 0],
   line: [lightOf(DARK_PAPER), lightOf(DARK_INK)],
-  deep: [lightOf(DEEP_PAPER), lightOf(DEEP_INK)],
+  deep: DEEP_ENDS,
 };
 // How far a color has to be from gray for the yard to keep it as written:
 // the spread of its channels, faded in between the two so no hue jumps.
@@ -91,13 +96,13 @@ let mode = 'yard';
 export function inkMode(m) { if (m) mode = m; return mode; }
 // Whether black is being drawn light: the turned maps, where a `darken`
 // becomes a `lighten` and the deep skips its negative.
-export const turnedOver = () => on && mode !== 'yard';
+export const turnedOver = () => on && (dim || mode !== 'yard');
 
 function mapRgb(r, g, b, m) {
   const [h, s, l] = toHsl(r, g, b);
   const [lw, lb] = ENDS[m];
   const to = lb + (lw - lb) * l;
-  if (m !== 'yard') return fromHsl(h, s, to);
+  if (m !== 'yard' || dim) return fromHsl(h, s, to);
   const chroma = (Math.max(r, g, b) - Math.min(r, g, b)) / 255;
   const k = Math.min(1, Math.max(0, (chroma - DULL) / (KEPT - DULL)));
   return fromHsl(h, s, to + (l - to) * k);
@@ -126,7 +131,7 @@ export function seen(c) {
   if (!on) return c;
   const [h, s, l] = toHsl(...hex(c));
   const [lw, lb] = ENDS[mode];
-  const lo = Math.min(lw, lb), hi = mode === 'yard' ? lightOf(DARK_INK) : Math.max(lw, lb);
+  const lo = Math.min(lw, lb), hi = mode === 'yard' && !dim ? lightOf(DARK_INK) : Math.max(lw, lb);
   return raw(toHex(fromHsl(h, s, lo + (hi - lo) * l)));
 }
 
@@ -134,6 +139,7 @@ export function seen(c) {
 // ink, so a lit window on the dark page is still lit.
 export function light(c) {
   if (!on) return c;
+  if (dim) return raw(inkOf(c));
   const [h, s, l] = toHsl(...hex(c));
   return raw(toHex(fromHsl(h, s, l * lightOf(DARK_INK))));
 }
@@ -177,7 +183,8 @@ export function inkOf(c, m = mode) {
 // as on the light page, the fill is white.
 const sum = (p, i) => { const [a, b, c] = hex(p), [d, e, f] = hex(i);
   return raw('#' + [a + d, b + e, c + f].map(v => Math.min(255, v).toString(16).padStart(2, '0')).join('')); };
-const XOR = { yard: raw('#ffffff'), line: sum(DARK_PAPER, DARK_INK), deep: sum(DEEP_PAPER, DEEP_INK) };
+const XOR = dim ? { yard: sum(DEEP_PAPER, DEEP_INK), line: sum(DEEP_PAPER, DEEP_INK), deep: sum(DEEP_PAPER, DEEP_INK) }
+  : { yard: raw('#ffffff'), line: sum(DARK_PAPER, DARK_INK), deep: sum(DEEP_PAPER, DEEP_INK) };
 export const xorInk = () => (on ? XOR[mode] : raw('#ffffff'));
 
 // The setters, on the prototype, so every context is covered. Only on the

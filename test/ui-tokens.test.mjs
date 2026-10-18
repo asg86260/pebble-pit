@@ -9,14 +9,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { COIN, COIN_DARK, PURPLE, GREY } from '../src/config/palette.js';
-import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, FLOAT_SHADOW_ALPHA } from '../src/config/view.js';
+import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, DEEP_PAPER, DEEP_INK, FLOAT_SHADOW_ALPHA } from '../src/config/view.js';
 import { PAD_ACCENT } from '../src/config/pad.js';
 import { TEXT_FLOOR, TEXT_AA } from '../src/config/view.js';
 
 const css = readFileSync('src/style.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 const block = sel => css.match(new RegExp(`(?:^|\\n)${sel}\\s*\\{([^}]*)\\}`))?.[1] || '';
 const token = (body, name) => body.match(new RegExp(`--${name}\\s*:\\s*([^;]+);`))?.[1].trim().toLowerCase();
-const light = block(':root'), dark = block('html\\.dark');
+const light = block(':root'), dark = block('html\\.dark'), dim = block('html\\.dark\\.dim');
 
 test('the light page draws the palette\'s coins, accent, ends and shadow', () => {
   assert.equal(token(light, 'coin-ore'), COIN.ore);
@@ -37,11 +37,18 @@ test('the dark page draws the palette\'s dark coins, a rung of the purple, and t
   assert.equal(token(dark, 'c-ink'), DARK_INK);
 });
 
+test('the dim page draws the first dark page\'s ends, its fills in the light gray', () => {
+  assert.equal(token(dim, 'c-paper'), DEEP_PAPER);
+  assert.equal(token(dim, 'c-ink'), DEEP_INK);
+  assert.equal(token(dim, 'c-fill'), DEEP_INK);
+  assert.equal(token(dim, 'c-on-fill'), DEEP_PAPER);
+});
+
 test('no coin or purple is written outside the tokens', () => {
   const lit = [...Object.values(COIN), ...Object.values(COIN_DARK), ...PURPLE.slice(1)].map(c => c.toLowerCase());
   for (const f of ['src/style.css', 'src/shelf.css', 'src/title.css']) {
     const text = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').toLowerCase()
-      .replace(/(?:^|\n)(:root|html\.dark)\s*\{[^}]*\}/g, '');
+      .replace(/(?:^|\n)(:root|html\.dark(?:\.dim)?)\s*\{[^}]*\}/g, '');
     const found = lit.filter(c => text.includes(c));
     assert.deepEqual(found, [], `${f} writes a palette color outside :root`);
   }
@@ -68,7 +75,7 @@ test('no size on the type scale is under the floor', () => {
 });
 
 test('every gray words are set in is AA on its own paper, light and dark', () => {
-  for (const [page, body] of [['light', light], ['dark', dark]]) {
+  for (const [page, body] of [['light', light], ['dark', dark], ['dim', dim]]) {
     for (const n of ['ink-2', 'ink-4', 'ink-5']) {
       const r = ratio(token(body, n), token(body, 'c-paper'));
       assert.ok(r >= TEXT_AA, `${page} --${n} is ${r.toFixed(2)}:1 on its paper`);

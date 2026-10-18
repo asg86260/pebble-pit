@@ -483,6 +483,9 @@ set-touch-off = touch: off
 # settings dark switch
 set-dark-on = dark: on
 
+# settings dark switch: the first dark page, light gray on charcoal
+set-dark-dim = dark: dim
+
 # settings dark switch
 set-dark-off = dark: off
 

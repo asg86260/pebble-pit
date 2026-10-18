@@ -19,8 +19,9 @@ export const SHADES = GREY.slice(GREY_DUST_FROM, GREY_DUST_FROM + 6);
 // stays black"): a graphite paper light enough for pure black to sit on it,
 // and a light ink for words and lines. ink.js sends white to the paper and
 // keeps black black, and the stylesheet's variables carry the same four
-// (style.css, `:root`). The deep keeps the old dark page, light gray on
-// charcoal turned by lightness: it was drawn for that and reads right in it.
+// (style.css, `:root`). The first dark page, light gray on charcoal turned by
+// lightness, is the dim page now (prefs.js, `theme`), and the deep draws in
+// it on the dark page too: it was drawn for that and reads right in it.
 export const LIGHT_PAPER = '#ffffff', LIGHT_INK = '#000000';
 export const DARK_PAPER = '#3a3a3a', DARK_INK = '#ececec';
 export const DEEP_PAPER = '#1f1f1f', DEEP_INK = '#e0e0e0';

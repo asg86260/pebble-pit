@@ -195,10 +195,15 @@ export const SURFACES = [
       ids: ['set-touch-off', ...ids('ctl-')] },
   ] },
   // The dark switch reloads the page, so its "on" is a page of its own.
-  { name: 'held-dark', before: `try { localStorage.setItem('boulder-clicker/prefs', JSON.stringify({ dark: true })); } catch {}`, steps: [
+  { name: 'held-dark', before: `try { localStorage.setItem('boulder-clicker/prefs', JSON.stringify({ theme: 'dark' })); } catch {}`, steps: [
     { file: 'sheet-settings-dark', clip: '#held',
       setup: `${YARD} ${HOLD} ${PANE('settings')}`,
       ids: ['set-dark-on'] },
+  ] },
+  { name: 'held-dim', before: `try { localStorage.setItem('boulder-clicker/prefs', JSON.stringify({ theme: 'dim' })); } catch {}`, steps: [
+    { file: 'sheet-settings-dim', clip: '#held',
+      setup: `${YARD} ${HOLD} ${PANE('settings')}`,
+      ids: ['set-dark-dim'] },
   ] },
   // --- the saves page, on the held sheet ------------------------------------------
   { name: 'saves', steps: [
@@ -355,7 +360,7 @@ export const SURFACES = [
     { file: 'title-settings', clip: '.col',
       setup: `document.getElementById('settingsbtn').click(); await W.frames(3);`,
       ids: ['title-settings-word', 'set-tab-graphics', 'set-tab-audio', 'set-tab-controls', 'set-tab-language', 'set-motion-full', 'set-dark-off', 'title-settingsback'],
-      re: { 'set-motion-full': 'motion: (full|less)', 'set-dark-off': 'dark: (on|off)' },
+      re: { 'set-motion-full': 'motion: (full|less)', 'set-dark-off': 'dark: (on|dim|off)' },
       noteAll: 'one state of the switch shown; the held sheet shots show both states of each' },
     { file: 'title-settings-audio', clip: '.col',
       setup: `document.querySelector('.settabs button[data-tab="audio"]').click(); await W.frames(3);`,

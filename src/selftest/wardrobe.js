@@ -18,10 +18,11 @@ import { S } from '../state.js';
 import { P, WORKER, NAME_MAX, WARD_AURAS, WARD_AURA_FPS, WARD_GRID_ROWS, TEXT_FLOOR } from '../config.js';
 import { advance } from '../clock.js';
 import { draw } from '../render.js';
-import { paper, ink } from '../ink.js';
+import { paper, ink, inkOf } from '../ink.js';
 
-const lumOf = h => [1, 3, 5].reduce((s, k) => s + parseInt(h.slice(k, k + 2), 16), 0) / 3;
-const PAPER_LUM = lumOf(paper);
+const lumOf = h => { if (h.length === 4) h = '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+  return [1, 3, 5].reduce((s, k) => s + parseInt(h.slice(k, k + 2), 16), 0) / 3; };
+const PAPER_LUM = lumOf(paper), INK_LUM = lumOf(inkOf('#000', 'yard'));
 // The lightnesses a picture is drawn in when it is not faint: black, white,
 // and the page's own paper and ink.
 const ENDS = [0, 255, PAPER_LUM, lumOf(ink)];
@@ -50,8 +51,9 @@ function inkAt(wx, wy) {
   if (y % 2) y++;
   const d = canvas().getContext('2d').getImageData(Math.round(sx * k), y, 1, 1).data;
   const lum = (d[0] + d[1] + d[2]) / 3;
-  // ink is black on both pages (ink.js): darker than halfway to the paper
-  return lum < PAPER_LUM / 2;
+  // ink as the yard draws it (ink.js): black on the light and dark pages,
+  // the light gray on the dim one -- nearer that than the paper
+  return Math.abs(lum - INK_LUM) < Math.abs(lum - PAPER_LUM);
 }
 
 // The held sheet up on the picker as a player brings it: the pointer to the
