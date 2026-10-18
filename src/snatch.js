@@ -30,15 +30,16 @@ import { P, WORKER, COMMUTE_PACE, INTRO_BEAT,
          SNATCH_RISE, SNATCH_EDGE, SNATCH_WALK_MAX_S, SNATCH_LOOK_MS, SNATCH_HEAVE_MS,
          SNATCH_RISE_MS, SNATCH_RISE_STEPS, SNATCH_TAKE_MS, SNATCH_SINK_MS, SNATCH_SINK_STEPS,
          SNATCH_ALONE_MS, SNATCH_LEAP_MS, SNATCH_LEAP_STEPS, SNATCH_LEAP_H, SNATCH_STILL_MS,
-         SNATCH_HURRY, SNATCH_PORTAL_MS, SNATCH_HEAD_H, SNATCH_HINGE, COIL_SEGS, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_GLIDE_S, KILL_MEET_GAP, KILL_HOP_S, KILL_IN_S, KILL_OUT_S,
+         SNATCH_HURRY, SNATCH_PORTAL_MS, SNATCH_HEAD_H, SNATCH_HINGE, COIL_SEGS, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_MEET_GAP, KILL_HOP_S, KILL_IN_S, KILL_OUT_S, KILL_ZOOM,
          DEEP_SURFACE, SERPENT_ON, STAGE_WAIT_S } from './config.js';
 import { S } from './state.js';
 import { frames } from './clock.js';
 import { mouthX, bellyAt, deepTop, deepFloor, deepX0, deepX1, coilLine, standOfStation } from './deep/place.js';
-import { killFrame } from './view.js';
+import { shoot } from './cutscene.js';
+import { union } from './shot.js';
 import { now } from './clock.js';
 import { abyssLine } from './pit.js';
-import { walkY, lookAt } from './world.js';
+import { walkY } from './world.js';
 import { spawnChip, bell } from './dust.js';
 import { rebalance, JOBS } from './staffing.js';
 import { syncWorkers, retask, FACTORY, newRecord, unbook } from './crew.js';
@@ -181,7 +182,6 @@ export function startSnatch(t) {
   const surface = abyssLine();
   S.snatch = { phase: after ? 'close' : 'walk', at: t, headY: surface, carried: after, hurry: 1,
                him: null, stood: null, portal: after ? 1 : 0 };
-  lookAt(mouthX() + WORKER / 2);
 }
 
 // The space bar. Nothing is cut to its end -- a body at the edge one frame
@@ -355,9 +355,8 @@ export const heldBodies = () =>
 // then he is out on the floor where the belly was and walks to her, they
 // cheer, and the finale has them (finale.js). The beat's clock is saved, so
 // a reload picks it up where it was. A skip plays it out at once.
-const ease = k => 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3);
 const outAt = () => KILL.last + KILL.limp + KILL.apart;
-export function startFreed(t) { if (S.freedAt == null) S.freedAt = t; glide = null; }
+export function startFreed(t) { if (S.freedAt == null) S.freedAt = t; }
 // Where he stops: beside her, out in the water past her station's ground on
 // his side (she comes out to its edge, stage.js `meetHim`), so the two of
 // them meet where they can be seen. With no station standing, beside the
@@ -392,30 +391,9 @@ export function meetAt() {
   const dir = Math.sign(S.freedTo - S.freedFrom) || 1;
   return { x: S.freedTo + dir * (WORKER + KILL_MEET_GAP), y: deepFloor() - WORKER };
 }
-// The frame's glide: from where it was when the move began to where it is
-// going, on an ease over KILL_GLIDE_S, and then on it exactly. Not a share of
-// the gap a frame, which is a chase that is still sliding when the thing
-// happens. In the kill's own seconds; a reload takes the move again.
-let glide = null;
-const easeInOut = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-function glideTo(move, a, x) {
-  if (!glide || glide.move !== move) glide = { move, at: a, from: S.camX + S.viewW / 2 };
-  const k = easeInOut(Math.max(0, Math.min(1, (a - glide.at) / KILL_GLIDE_S)));
-  return glide.from + (x - glide.from) * k;
-}
-// Where the frame looks while they meet: on the two of them, from his way
-// out to the cheer -- the middle of his walk when the whole of it fits the
-// frame, so he walks in to her across a held shot, else on him.
-function lookAtMeet(t) {
-  const him = freedBody(t), m = meetAt();
-  if (!m) return (him ? him.x : S.freedTo) + WORKER / 2;
-  if (Math.abs(m.x - S.freedFrom) + WORKER * 4 <= S.viewW) return (S.freedFrom + m.x) / 2 + WORKER / 2;
-  return ((him ? him.x : S.freedTo) + m.x) / 2 + WORKER / 2;
-}
 // Where the frame looks while he is down: on the belly as he goes limp; then
 // after the coming apart as it runs in from the tail, until it reaches the
 // belly and lets him go.
-const lookAtKill = (t, a) => killPoint(t, a).x;
 function killPoint(t, a) {
   const belly = bellyAt(t);
   const apart = (a - KILL.last - KILL.limp) / KILL.apart;
@@ -423,10 +401,29 @@ function killPoint(t, a) {
   const front = coilLine((1 - apart) * (COIL_SEGS - 1), t);
   return front.x > belly.x ? front : belly;
 }
+// The kill's frames, as the shot's requests (shot.js, `stepAim`): the last
+// blow at the deep's own size, then pulled in on him as the serpent goes
+// limp and comes apart, kept with as the coming apart runs in. The pull is
+// KILL_ZOOM closer than the deep's fit, and the finale after keeps it.
+function killShot(t, a) {
+  const close = a >= KILL.last;
+  return { key: close ? 'kill' : 'blow', frame: union(killSubject(t)), move: 'follow',
+           zoom: close ? 1 + KILL_ZOOM : 1, s: close ? KILL_IN_S : 0 };
+}
+// ...then over to the two of them: his whole walk to her held in one frame
+// when it fits, so he walks in across a still shot, else kept with him. With
+// nobody to hand over, the pull lets go at the end (`out`).
+function meetShot(t, out) {
+  const him = freedBody(t), m = meetAt();
+  const whole = m && Math.abs(m.x - S.freedFrom) + WORKER * 4 <= S.viewW;
+  const at = whole ? [{ x: S.freedFrom, y: m.y }, m] : [him, m].filter(Boolean);
+  const frame = union(at.map(o => ({ x: o.x, y: o.y, w: WORKER, h: WORKER })));
+  return out ? { key: 'out', frame, move: 'glide', zoom: 1, s: KILL_OUT_S }
+             : { key: 'meet', frame, move: whole ? 'glide' : 'follow', zoom: 1 + KILL_ZOOM };
+}
 export function stepFreed(t) {
   const a = (t - S.freedAt) / 1000;
-  const zin = ease((a - KILL.last) / KILL_IN_S);
-  if (a < outAt()) { killFrame(zin, glideTo('kill', a, lookAtKill(t, a))); return true; }
+  if (a < outAt()) { shoot(t, killShot(t, a)); return true; }
   if (S.freedFrom == null) { S.freedFrom = bellyAt(t).x - WORKER / 2; S.freedTo = herX(S.freedFrom); }
   // The frame goes over to the two of them and holds; and then the finale
   // has them (finale.js): he is not one of the crew, and nor, once her gear
@@ -434,7 +431,7 @@ export function stepFreed(t) {
   // and the frame lets go.
   const end = outAt() + walkS() + KILL_CHEER_S;
   const going = !S.retired;
-  killFrame(zin * (going ? 1 : 1 - ease((a - end) / KILL_OUT_S)), glideTo('meet', a, lookAtMeet(t)));
+  shoot(t, meetShot(t, !going && a >= end));
   if (a < end + (going ? 0 : KILL_OUT_S)) return true;
   if (going) handOver(S.freedTo, deepFloor() - WORKER);
   S.freedFrom = S.freedTo = null;

@@ -30,7 +30,7 @@ import { reducedMotion, coarse } from './prefs.js';
 import { deepX1 } from './deep/place.js';
 import { actPlace } from './acts.js';
 import { frameHeight } from './cutscene.js';
-import { clampX, clampY, restY, bandWorld, easeInOut } from './shot.js';
+import { clampX, clampY, restY, bandWorld, easeInOut, zoomHeld } from './shot.js';
 
 const canvas = document.getElementById('c');
 
@@ -823,6 +823,7 @@ const zoomUnit = () => yardCell() * S.dpr;      // device pixels a cell takes at
 // `k` (a share of the yard's own zoom) as the zoom on the glass, snapped to
 // whole device pixels a cell the way every target is.
 const asZoom = k => (yardCell() / P) * Math.max(1, Math.round(zoomUnit() * k)) / zoomUnit();
+export const zoomOn = asZoom;
 function showZoom(z) {
   const unit = zoomUnit(), base = yardCell() / P;
   S.zoomShow = z;
@@ -839,7 +840,11 @@ export const zoomGliding = () => !!zoomGlide;
 // The same target again changes nothing; a new one while a glide runs takes
 // that glide over from where it stands, on its own clock, so a target asked
 // for a frame at a time is followed smoothly. Under reduced motion it cuts.
+// While a cutscene's move holds the zoom (shot.js, `zoomHeld`) the zoom is
+// the shot's and this is refused: a place re-taking its own every frame
+// would otherwise pull a held frame back out.
 export function setZoom(k) {
+  if (zoomHeld()) return;
   const to = asZoom(k);
   if (Math.abs(to - zoomTarget()) < 1e-9) return;
   if (reducedMotion() || !(S.zoomShow > 0)) { setZoomNow(k); return; }

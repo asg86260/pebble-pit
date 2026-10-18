@@ -10,10 +10,11 @@
 //
 // The five rules, and where each is kept:
 //   1. the bands are up for the whole hold: cutscene.js, `stepHush`;
-//   2. no zoom step in a held frame: the shot never sets the zoom, and
-//      between places it changes under the ripple (view.js, `frameOn`);
-//   3. one move: a glide is one ease in and out, in x and y together, over a
-//      time read off the distance -- `stepAim` below;
+//   2. no zoom step in a held frame: the zoom moves only as a scene's own
+//      deliberate move, glided with the pan (`zoom` on a request, below),
+//      and between places it changes under the ripple (view.js, `frameOn`);
+//   3. one move: a glide is one ease in and out, in x and y and the zoom
+//      together, over a time read off the distance -- `stepAim` below;
 //   4. the box is fitted between the bands and the frame held inside the
 //      place's limits, never under its floor or over its sky -- `fitBox`
 //      and `PLACE_LIMITS`, which world.js `clampCam` reads too;
@@ -27,6 +28,8 @@ import { deepX0, deepX1, deepFloor, deepTop } from './deep/place.js';
 import { actPlace } from './acts.js';
 import { frameMs } from './clock.js';
 import { reducedMotion } from './prefs.js';
+import { setZoomFree, zoomOn } from './world.js';
+import { restZoom } from './view.js';
 
 // The one easing every move in a cutscene rides: slow off the mark, slow onto
 // the end, quickest halfway.
@@ -75,30 +78,45 @@ export function clampY(y, h = S.viewH, band = 0, place = S.view) {
 // or the floor on the foot of the window.
 export const restY = () => (S.camLockY != null ? S.camLockY : limitsOf().foot() - S.viewH);
 
-// The window that frames `box` in the place on screen: its middle across on
-// the box's middle; up and down, the least move off the resting height that
-// puts the box between the bands at full, CUT_FRAME_MARGIN clear of both (a
-// box taller than that is centered between them); then held to the place.
-export function fitBox(box) {
-  const band = bandWorld(), m = CUT_FRAME_MARGIN, rest = restY();
-  const top = rest + band, bottom = rest + S.viewH - band;
+// The window that frames `box` in the place on screen, at the zoom on the
+// glass `z`: its middle across on the box's middle; up and down, the least
+// move off the resting height that puts the box between the bands at full,
+// CUT_FRAME_MARGIN clear of both (a box taller than that, or one the scene
+// asks to have in the `middle`, is centered between them); then held to the
+// place. Worked out at the zoom the move ends on, so a pull in or out lands
+// on its own frame.
+export function fitBox(box, z = S.zoomShow || S.zoom || 1, middle = false) {
+  const viewW = S.W / z, viewH = S.H / z;
+  const band = bandCells() * CELL / z, m = CUT_FRAME_MARGIN;
+  const rest = S.camLockY != null ? S.camLockY : limitsOf().foot() - viewH;
+  const top = rest + band, bottom = rest + viewH - band;
   let dy = 0;
-  if (box.h + m * 2 > bottom - top) dy = box.y + box.h / 2 - (top + bottom) / 2;
+  if (middle || box.h + m * 2 > bottom - top) dy = box.y + box.h / 2 - (top + bottom) / 2;
   else if (box.y - m < top) dy = box.y - m - top;
   else if (box.y + box.h + m > bottom) dy = box.y + box.h + m - bottom;
-  return { x: clampX(box.x + box.w / 2 - S.viewW / 2), y: clampY(rest + dy, S.viewH, band) };
+  return { x: clampX(box.x + box.w / 2 - viewW / 2, viewW), y: clampY(rest + dy, viewH, band), w: viewW, h: viewH };
+}
+
+// The one box around every box of `at`: a scene that is about several things
+// at once is about all of them. Null for none.
+export function union(at) {
+  if (!at || !at.length) return null;
+  const x = Math.min(...at.map(r => r.x)), y = Math.min(...at.map(r => r.y));
+  return { x, y, w: Math.max(...at.map(r => r.x + r.w)) - x, h: Math.max(...at.map(r => r.y + r.h)) - y };
 }
 
 // --- the move ---------------------------------------------------------------------
 // The aim under way: when its glide began and how long it takes, where the
-// window's middle set off from, and for a follow the spring's own middle and
-// speed. Ephemeral: a reload takes the shot again from its scene.
+// window's middle set off from and how wide it was, the zoom it ends on (null:
+// the scene leaves the zoom alone), and for a follow the spring's own middle
+// and speed. Ephemeral: a reload takes the shot again from its scene.
 let aim = null;
 let lastBox = null;
 
 // A new move from wherever the camera stands now: the scene's first frame, or
-// a box that has changed hands (a beat's next phase).
-export function newAim() { aim = { at: null }; }
+// a box that has changed hands (a beat's next phase). `key` names the move,
+// so a scene asking every frame starts a new one only when it changes.
+export function newAim(key) { aim = { at: null, key }; }
 export function dropAim() { aim = null; lastBox = null; }
 export const aiming = () => !!aim;
 // The glide done: the frame has arrived on the box.
@@ -106,31 +124,56 @@ export const aimArrived = () => !!aim && !!aim.done;
 // What the shot holds the window on, for the readout (`__shot`).
 export const aimBox = () => lastBox;
 export const aimGliding = () => !!aim && !aim.done;
+// The zoom is the shot's while its move carries one: nothing else may glide
+// it (world.js, `setZoom`), so a place that re-takes its own zoom every frame
+// (the deep's) does not pull it back out from under a held frame.
+export const zoomHeld = () => !!aim && aim.zTo != null;
 
 // One frame of the shot on `box`: the window's top-left it asks for this
 // frame, which the caller writes through `clampCam`. Not a chase: a share of
 // the gap a frame is quick at the start and still sliding when the thing it
 // went to see happens. Under reduced motion the frame is taken at once.
-export function stepAim(t, box, move = 'glide') {
-  if (!aim) newAim();
+//
+// `how` is the rest of the scene's request: `zoom`, a zoom to move to as a
+// share of the place's own, glided on the same curve and the same clock as
+// the pan; `middle`, the box centered between the bands rather than let in
+// by the least move; `s`, the fewest seconds the move may take, for a scene
+// whose story wants a slower pull than the distance does; and `key`, which
+// starts a new move when it changes.
+export function stepAim(t, box, move = 'glide', how = {}) {
+  if (!aim || (how.key !== undefined && aim.key !== how.key)) newAim(how.key);
   lastBox = box;
-  const want = fitBox(box);
-  const to = { x: want.x + S.viewW / 2, y: want.y + S.viewH / 2 };
   if (aim.at == null) {
     aim.at = t;
-    aim.from = { x: S.camX + S.viewW / 2, y: S.camY + S.viewH / 2 };
+    aim.from = { x: S.camX + S.viewW / 2, y: S.camY + S.viewH / 2, w: S.viewW };
+    aim.zFrom = S.zoomShow || S.zoom || 1;
+    aim.zTo = how.zoom != null ? zoomOn(restZoom() * how.zoom) : null;
+    aim.middle = !!how.middle;
+    const end = fitBox(box, aim.zTo ?? aim.zFrom, aim.middle);
     // Its top speed, halfway along an ease in and out, is twice the average,
     // held under CUT_PAN_PX_S so a long way reads as a pan and not a whip --
-    // within reason (CUT_PAN_MAX_S).
-    const d = Math.hypot(to.x - aim.from.x, to.y - aim.from.y);
-    aim.ms = 1000 * Math.max(CUT_SETTLE_S, Math.min(CUT_PAN_MAX_S, 2 * d / CUT_PAN_PX_S));
+    // within reason (CUT_PAN_MAX_S). A zoom is a pan of the window's
+    // corners, so the way is the farthest any corner goes.
+    const dx = end.x + end.w / 2 - aim.from.x, dy = end.y + end.h / 2 - aim.from.y;
+    const dw = (end.w - aim.from.w) / 2, dh = dw * S.H / S.W;
+    const d = Math.hypot(Math.abs(dx) + Math.abs(dw), Math.abs(dy) + Math.abs(dh));
+    aim.ms = 1000 * Math.max(CUT_SETTLE_S, how.s || 0, Math.min(CUT_PAN_MAX_S, 2 * d / CUT_PAN_PX_S));
     aim.done = false;
     aim.pos = null;
   }
   const k = reducedMotion() ? 1 : Math.min(1, (t - aim.at) / aim.ms);
+  const e = easeInOut(k);
+  // The zoom first, so the window is its size for this frame: the window's
+  // width is what moves evenly, so its corners ride the same curve as its
+  // middle.
+  if (aim.zTo != null) {
+    const z = k >= 1 ? aim.zTo : 1 / (1 / aim.zFrom + (1 / aim.zTo - 1 / aim.zFrom) * e);
+    if (Math.abs(z - S.zoomShow) > 1e-9) setZoomFree(z);
+  }
+  const want = fitBox(box, aim.zTo ?? S.zoomShow, aim.middle);
+  const to = { x: want.x + want.w / 2, y: want.y + want.h / 2 };
   let at;
   if (k < 1) {
-    const e = easeInOut(k);
     at = { x: aim.from.x + (to.x - aim.from.x) * e, y: aim.from.y + (to.y - aim.from.y) * e };
   } else if (move === 'follow' && !reducedMotion()) {
     at = spring(to);

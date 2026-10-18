@@ -20,9 +20,6 @@ export const CUT_SHIELD_MAX_S = 30;  // and never longer than this, whatever the
 // Letting go. The seat stays on the event, and the yard comes back around it
 // over this stretch.
 export const CUT_OUT_S = 1.5;
-// The first trip down follows her charge at this share of the way a frame
-// (abyssintro.js).
-export const CUT_GLIDE = 0.12;
 
 // Every scene ends early under a held space bar (src/skip.js). Held, not
 // pressed: a tap is the accident of a hand resting on the keyboard. Measured

@@ -16,7 +16,9 @@
 // camera; this file is the scene -- `play` takes the shot, `stepShot` walks it a
 // frame on what the scene is about, `release` lets go -- and the two cues the
 // rows watch. The camera itself is shot.js's: a scene names a box and the
-// shot frames it, the same way for every scene.
+// shot frames it, the same way for every scene. A yard beat with no camera
+// of its own (the opening, the kill, the finale) asks the same shot for its
+// frame every frame it holds the yard (`shoot`).
 //
 // Letting go is a stretch, not a frame, and it does not go home: the seat
 // stays on the event and the yard comes back around it over CUT_OUT_S.
@@ -30,7 +32,7 @@ import { muckSpot, muckOver, muckSubject } from './firstmuck.js';
 import { mouthX } from './deep/place.js';
 import { S, rift, pit } from './state.js';
 import { clampCam, lockScroller } from './world.js';
-import { arrived, holdDeepShot, gliding } from './view.js';
+import { arrived, gliding } from './view.js';
 import { abyssLine } from './pit.js';
 import { shieldTopY } from './shield.js';
 import { introSubject } from './intro.js';
@@ -41,8 +43,7 @@ import { reducedMotion } from './prefs.js';
 import { beatRunning, skipBeat } from './beats.js';
 import { now, frameMs, setStill } from './clock.js';
 import { keepCast, dropCast } from './stage.js';
-import { outCubic as ease } from './motion.js';
-import { easeInOut, bandWorld, restY, newAim, dropAim, stepAim, aiming, aimArrived } from './shot.js';
+import { easeInOut, bandWorld, restY, newAim, dropAim, stepAim, aiming, aimArrived, aimBox } from './shot.js';
 export { bandCells } from './shot.js';
 
 // How long a scene may run, where it looks, and what it is about. `spot`
@@ -57,8 +58,8 @@ export { bandCells } from './shot.js';
 //
 // What each is framed on is its subject (`subjects` below), which the shot
 // glides to and holds (shot.js); `move` says when the subject walks and the
-// shot is to keep with it instead. No scene zooms: held at the place's own
-// size, the camera's one move is the glide (the owner's C).
+// shot is to keep with it instead. A scene that `asks` names its frame itself,
+// every frame, with its own zoom (`stepShot`'s request).
 const SCENES = {
   tear:  { s: CUT_TEAR_S, arrived: true, spot: () => rift.x + rift.w / 2, front: ['rift', 'pit', 'pit outline', 'abyss'] },
   drown: { s: CUT_DROWN_S, arrived: true, spot: () => pit.x + Math.min(700, pit.w) / 2, front: ['abyss', 'pit', 'pit outline', 'rift'] },
@@ -69,10 +70,10 @@ const SCENES = {
   // over once the patch is clear and faded (firstmuck.js).
   firstmuck: { s: CUT_MUCK_MAX_S, spot: muckSpot, tail: CUT_MUCK_TAIL_S,
                over: () => muckOver(), front: ['muck'], move: () => 'follow' },
-  // The first trip down (abyssintro.js): in the deep, so its framing is the
-  // deep's (`stepDeepShot`), and a click there is a blow, so only the held
-  // space bar skips it.
-  abyss: { s: ABYSS_MAX_S, deep: true, holdOnly: true },
+  // The first trip down (abyssintro.js): its frames are its own phases'
+  // requests, and a click in the deep is a blow, so only the held space bar
+  // skips it.
+  abyss: { s: ABYSS_MAX_S, asks: true, holdOnly: true },
 };
 // A shield's answer has no length of its own, so the scene ends on the fact
 // (the shield gone, or a held rock set down) plus a tail to see the wreck fly.
@@ -152,9 +153,8 @@ export function awaitingShot(keys) {
 export function play(name) {
   const sc = sceneOf(name);
   S.shot = { name, at: 0, s: sc.s };
-  // The deep's scenes frame themselves (`stepDeepShot`); every other is a
-  // move of the shot's from wherever the camera stands now.
-  if (!sc.deep) newAim();
+  // A move of the shot's from wherever the camera stands now.
+  newAim();
   // The scroller is shut for the run: a fling in flight would fight the seat.
   lockScroller(true);
 }
@@ -162,10 +162,14 @@ export function play(name) {
 // game or a read save took away (`S.shot` gone) is let go of here.
 function shotHolds() {
   if (!aiming()) return false;
-  if (S.shot && !S.shot.out) return true;
+  if ((S.shot && !S.shot.out) || shotNow || shotLive) return true;
   dropAim();
   return false;
 }
+// A yard beat's frame, asked this frame (`shoot`), and asked last frame: the
+// shot is the beat's for as long as it goes on asking. Read once a frame by
+// `stepHush`, which lets an aim nobody asked for go.
+let shotNow = false, shotLive = false;
 
 // A scene on its way out has let go as far as the player is concerned: the
 // click that would have skipped it lands in the yard instead.
@@ -179,8 +183,9 @@ export function skipCutscene() {
 }
 
 // One frame of the camera's beat: true while it still has the camera, the
-// way out included.
-export function stepShot(t) {
+// way out included. A scene that `asks` hands its frame in as `req`, the
+// request `shoot` takes.
+export function stepShot(t, req = null) {
   // A scene the last sitting closed the tab on: the cues never fire for it,
   // so the save says which was owed (`S.beat.camera`) and it plays once over
   // the event as it now stands.
@@ -218,17 +223,30 @@ export function stepShot(t) {
   }
   // What the scene is about, framed by the shot: glided to and held, or kept
   // with as it moves. A scene with nothing to name holds where it stands.
-  const box = sceneBox(sc);
-  if (box) aimAt(t, box, sc.move ? sc.move() : 'glide');
+  const box = req ? req.frame : sceneBox(sc);
+  if (box) aimAt(t, box, req ? req.move : sc.move ? sc.move() : 'glide', req || {});
   if (aimArrived() && !c.settled) { c.settled = true; c.settledAt = t; }
   return true;
+}
+
+// A yard beat's frame for this one frame, as a camera scene's: `frame` the
+// box in the world, `move` 'glide' or 'follow', and the rest of shot.js's
+// request (`zoom`, `middle`, `s`, `key`). Asked every frame the beat wants
+// the camera; once it stops asking the shot lets go and the bands' lift goes
+// back with them. A camera scene, or the ripple, has the window over it.
+export function shoot(t, req) {
+  if ((S.shot && !S.shot.out) || gliding() || !req || !req.frame) return;
+  shotNow = true;
+  S.follow = null;
+  S.camTo = null;
+  aimAt(t, req.frame, req.move, req);
 }
 
 // The shot's window for this frame, written: across as the left edge, up and
 // down as the lift off the place's resting height, which is how the bands'
 // framing hands the height back when the scene lets go.
-function aimAt(t, box, move) {
-  const at = stepAim(t, box, move);
+function aimAt(t, box, move = 'glide', how = {}) {
+  const at = stepAim(t, box, move, how);
   S.camX = at.x;
   want = lift = at.y - restY();
   clampCam();
@@ -241,7 +259,10 @@ function sceneBox(sc) {
 }
 // ...for the readout (`__shot`): the frame of the scene that has the camera,
 // null with none, or on its way out.
-export const shotFrame = () => (S.shot && !S.shot.out ? sceneBox(sceneOf(S.shot.name)) : null);
+export const shotFrame = () => {
+  if (S.shot && !S.shot.out) return sceneOf(S.shot.name).asks ? aimBox() : sceneBox(sceneOf(S.shot.name));
+  return (shotNow || shotLive) && aiming() ? aimBox() : null;
+};
 
 // --- held still, letterboxed --------------------------------------------------
 // While a scene holds the yard the background settles and stands still: the
@@ -276,6 +297,8 @@ export function stepHush(t) {
   if (on) keepCast();
   else if (S.hush <= 0) dropCast();
   setStill(easeInOut(S.hush));
+  shotLive = shotNow;
+  shotNow = false;
   stepLift(step);
 }
 // How far the yard has receded, eased, for the drawing.
@@ -400,41 +423,9 @@ export function liftArrived() {
   return Math.abs(lift - (box ? need(S.camY - lift, box) : want) * S.hush) < 0.5;
 }
 
-// One frame of a scene in the deep: `want` is where its own beat looks this
-// frame, `{ k, x, y }` -- pulled in by `k` over the deep's fit, its middle on
-// (x, y) in the world -- and this holds the deep's camera on it
-// (`holdDeepShot`). The yard's framing above does not reach the deep: its
-// ground line is the yard's and its zoom goes back to the yard's, and the deep
-// takes back its own every frame (view.js, `stepView`). Letting go is the same
-// stretch as the yard's, and no more going home: the pull eases back to the
-// deep's fit and the height to its floor over CUT_OUT_S, on the last thing
-// looked at. True while it still has the camera.
-export function stepDeepShot(t, want) {
-  if (!S.shot) play(S.beat.camera);
-  const c = S.shot;
-  if (!c.at) c.at = t;
-  if (!c.out && t - c.at >= c.s * 1000) release();
-  S.follow = null;
-  S.camTo = null;
-  if (!c.out && want) c.last = want;
-  if (c.out) c.outAt ??= t;
-  const out = !c.out ? 0
-            : reducedMotion() ? 1
-            : ease(Math.min(1, (t - c.outAt) / (CUT_OUT_S * 1000)));
-  const f = c.last;
-  if (out < 1 && f) {
-    holdDeepShot({ k: f.k + (1 - f.k) * out, x: f.x, y: f.y, w: 1 - out });
-    return true;
-  }
-  holdDeepShot(null);
-  S.shot = null;
-  return false;
-}
-
-// A deep scene whose deep has gone from under it (the way up taken while it
-// played): the camera is the yard's again at once, nothing held.
-export function dropDeepShot() {
-  holdDeepShot(null);
+// A scene whose place has gone from under it (the first trip down's deep,
+// the way up taken while it played): nothing is held any more, at once.
+export function dropShot() {
   S.shot = null;
   dropAim();
   lockScroller(false);
