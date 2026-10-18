@@ -38,6 +38,8 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
+import { afterEnd } from './view.js';
+import { CROWD_X0, CROWD_FILES } from './config.js';
 import { pref, setPref } from './prefs.js';
 import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
@@ -481,6 +483,27 @@ function afterChain(slow) {
   for (const j of posts) window.__buy(`after-post-${j}`);
   for (const u of ['after-plot', 'after-plot', 'after-stumps', 'after-blade', 'after-bench',
                    ...(slow ? ['after-vat', 'after-stack'] : [])]) window.__buy(u);
+}
+
+// Act 3's crowds and God at a point of the pan (track C, render/aftercrowd.js):
+// a crowd of 24,000 with patches walked out and a few rims inking, three
+// signs in the near rows, and the camera's middle `pan` of the way from the
+// pedestal to the throne end (null: on the pedestal, both crowds in frame).
+function afterMass(pan) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  const n = 24000, F = CROWD_FILES;
+  const rims = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const f = i % F, r = Math.floor(i / F), h = ((f * 7919 + r * 104729) % 997) / 997;
+    const patch = (Math.floor(f / 6) + Math.floor(r / 40)) % 3 === 0 && h < 0.55;
+    rims[i] = patch ? '9' : h < 0.12 ? String(1 + Math.floor(h * 40) % 5) : '0';
+  }
+  S.after.rims = rims.join('');
+  for (const [f, r] of [[8, 1], [27, 3], [16, 0]]) S.after.signs.push({ id: 90000 + f, f, r, askew: false, pull: null, big: false });
+  window.__fast(2);
+  const ped = CROWD_X0 - P * 20;
+  const cx = pan == null ? ped : CROWD_X0 + (afterEnd() - CROWD_X0) * pan;
+  window.__look(cx - S.viewW / 2); window.__fast(1); window.__holdShot();
 }
 
 const snatchAt = (phase, into = 0, pin = false) => () => {
@@ -2760,6 +2783,15 @@ export const SCENES = {
       window.__buy('after-build-chipper');
       window.__fast(14); window.__look(300); window.__holdShot();
     } },
+
+  // Act 3's crowds, God and the camera's zoom (track C): the camp end with
+  // both crowds in frame, the middle of God's crowd, and the dive's end.
+  'after-crowd-mass': { about: 'the acts', say: "the afterlife's two crowds: ours behind the camp, God's near rows and mass, God far off on the horizon",
+    run: () => afterMass(null) },
+  'after-crowd-mass-mid': { about: 'the acts', say: "God's crowd from its middle: the near rows shrinking into the mass, the zoom just starting",
+    run: () => afterMass(0.5) },
+  'after-crowd-mass-throne': { about: 'the acts', say: 'the pan at its end: the dive on the top of the throne, God hazed no longer',
+    run: () => afterMass(1) },
 
   // --- the acts' connective tissue (actbeats.js, portals.js, mansion.js) --------
   // Each off a yard past the snatch with the wizards' portal up and a crew to
