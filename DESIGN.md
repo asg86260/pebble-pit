@@ -21578,6 +21578,14 @@ day) and **call 4's loop** (act 4 is the mine and the forge). Still open:
 
 Act 3's own calls, raised by the grove and the press (2026-10-17):
 
+**The yard pays too (owner, 2026-10-18).** Act 3's buildings and upgrades
+also cost the yard's four coins (dust, crops, ore, sparks), in the order the yard
+hands them out: early bills rebel and dust, then crops, then ore, the top ones
+a spark, with timber and paper on the bigger ones. The yard keeps running while
+the pair are dead, so a well-kept yard funds the union. Nothing teleports: a
+bought bill's yard coins rise out of the yard through the thin patch as motes
+and fly to the station, the yard's counter dropping as they leave.
+
 **Settled by the owner, 2026-10-18** (these replace the recommendations
 below wherever they differ; the placeholder code predates them):
 
