@@ -17,6 +17,7 @@ import { AFTERLIFE_ON, HELL_ON } from './config.js';
 import { demoOn } from './demo.js';
 import { AFTER_PLACE } from './after/place.js';
 import { HELL_PLACE } from './hell/place.js';
+import { S } from './state.js';
 
 // --- whether -----------------------------------------------------------------
 // A released build plays an act only with its switch set (config/after.js,
@@ -35,7 +36,15 @@ export function forceActs(after, hell = after) { forcedAfter = after; forcedHell
 // The two places, as the camera reads them (view.js, world.js `clampCam`):
 // each one's left and right, its top and floor, where across it opens and
 // how far its floor stands up off the window's foot. Keyed by `S.view`.
-export const PLACES = { after: AFTER_PLACE, hell: HELL_PLACE };
+// The afterlife's floor stands as far up off the window's foot as the yard's
+// ground does (the pit's depth under it), so crossing over keeps the line a
+// body stands on where the eye left it, and the cloud fills under it as the
+// pit did.
+const AFTER_AT_YARD = {
+  ...AFTER_PLACE,
+  get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; }
+};
+export const PLACES = { after: AFTER_AT_YARD, hell: HELL_PLACE };
 export const actPlace = v => PLACES[v] || null;
 // Whether a place's act is on: a view into one whose act is off is sent back
 // to the yard (view.js, `stepView`).

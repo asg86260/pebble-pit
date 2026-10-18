@@ -15,7 +15,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          OURS_X0,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
-         AFTER_SKY_LO, AFTER_SKY_HI, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG } from '../config.js';
+         AFTER_SKY_LO, AFTER_SKY_HI, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST } from '../config.js';
 
 import { S } from '../state.js';
 
@@ -154,9 +154,12 @@ export const skyHi = () => afterFloor() - AFTER_SKY_HI;
 // --- the cloud floor's billow (floor A) -----------------------------------------------
 // A cell column's height over the floor line, in cells: puffs a few cells
 // wide, one or two cells high, their edges a step lower than their middles,
-// butting so the valleys are where their low edges meet; pressed flat under
-// the grove, every station's ground, the crowd and the stair, so everything
-// built stands on the line the sim stands it on. Worked out once: the layout
+// butting so the valleys are where their low edges meet. Pressed flat only
+// where something built stands on the line -- a station's drawing, its piles
+// and its door, the heap and the notch, a tree's foot, the pillar's pile,
+// the stair -- so it stands where the sim stands it. Everywhere else
+// billows, God's crowd's front row on the puffs too (render/aftercrowd.js),
+// and a body walks up and over them (`floorAt`). Worked out once: the layout
 // does not move.
 const hsh = (a, b = 0, c = 0) => {
   let h = (a * 374761393 + b * 668265263 + c * 2246822519) | 0;
@@ -173,12 +176,31 @@ export function billow(cols, seed, maxK = 2, big = AFTER_BILLOW_BIG) {
   }
   return el;
 }
-// The flats, in cells off the place's left: [from, to).
+// God's crowd's columns, [from, to) in cells: where its lip is drawn.
+export const crowdLip = () => [Math.round((CROWD_X0 - CROWD_PITCH - afterX0()) / P), Math.round((CROWD_X0 + (CROWD_FILES + 1) * CROWD_PITCH - afterX0()) / P)];
+// The flats, in cells off the place's left: [from, to), each a cell wider
+// either side than what stands on it, so a puff never butts a wall.
 export function floorFlats() {
   const c = x => Math.round((x - afterX0()) / P);
-  const out = [[c(AFTER_GROVE_X0) - 2, c(groveX1())]];
-  for (const key of Object.keys(AFTER_STATIONS)) out.push([AFTER_STATIONS[key].at - 1, AFTER_STATIONS[key].at + ART[key].ground + 1]);
-  out.push([c(CROWD_X0) - 5, c(crowdX1()) + 4], [c(stairFoot()) - 2, c(afterX1())]);
+  const span = (x, w) => [c(x) - 1, c(x) + w + 1];
+  const out = [];
+  // A tree's foot, from the stump it leaves to the end of the logs cut off
+  // it (render/after/pine.js lays them two cells off the trunk).
+  for (let i = 0; i < AFTER_PLOT_MAX; i++) out.push(span(plotX(i) + STUMP[0] * P, GROVE_LOGS_AT - STUMP[0] + PILE_W));
+  for (const key of Object.keys(AFTER_STATIONS)) {
+    const b = stationBox(key);
+    out.push(span(b.x, b.w / P));
+    for (const what of Object.keys(ART[key].pile)) out.push(span(pileAt(key, what), PILE_W));
+    out.push(span(stationDoor(key) - P, 3));
+  }
+  out.push(span(heapX(), AFTER_HEAP_R * 2 + 1), span(notchX(), 2));
+  // The rebel pile at the pillar's foot.
+  out.push(span(pileX(), 8));
+  // Where a body steps from the floor into God's crowd's rows (`overCrowd`),
+  // drawn there by the crowd standing on the flat line behind its lip.
+  const [l0, l1] = crowdLip();
+  out.push([l0 - 2, l0 + 2], [l1 - 2, l1 + 2]);
+  out.push([c(stairFoot()) - 2, c(afterX1())]);
   return out;
 }
 let profile = null;
@@ -187,6 +209,15 @@ export function floorProfile() {
   const cols = Math.ceil(AFTER_W / P);
   profile = billow(cols, AFTER_BILLOW_SEED);
   for (const [a, b] of floorFlats()) for (let j = Math.max(0, a); j < Math.min(cols, b); j++) profile[j] = 0;
+  // A gap between two flats too narrow for a puff would stand a lone post
+  // of cloud: pressed flat too.
+  for (let j = 0; j < cols;) {
+    if (!profile[j]) { j++; continue; }
+    let k = j;
+    while (k < cols && profile[k]) k++;
+    if (k - j < AFTER_PUFF_LEAST) profile.fill(0, j, k);
+    j = k;
+  }
   return profile;
 }
 // The floor's top under a body standing with its middle at world x: the
@@ -225,6 +256,8 @@ export function pineRows(stage, big) {
 }
 // The stump, [left, width, height] in cells off its plot's trunk column.
 export const STUMP = [-1, 3, 2];
+// Where a plot's logs lie, in cells off its trunk column (render/after/pine.js).
+export const GROVE_LOGS_AT = 2;
 
 // --- each station's moving part, for the hand ----------------------------------------
 // What the hand's motion at each station aims at (after/gestures.js,

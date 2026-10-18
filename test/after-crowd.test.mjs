@@ -6,12 +6,13 @@
 // (`__afterCrowd`), the setup these checks are not about; a slot set to 9 is
 // a member already gone, with no walk.
 import { group, ok, run, yard } from './helpers.mjs';
-import { CROWD_FILES, CROWD_PITCH, CROWD_X0, CROWD_NEAR_RATE, STRIKE_SHARE, AFTER_FLOOR_MARGIN, GOD_FAR } from '../src/config.js';
+import { CROWD_FILES, CROWD_PITCH, CROWD_X0, CROWD_NEAR_RATE, STRIKE_SHARE, GOD_FAR } from '../src/config.js';
 import { afterFloor } from '../src/after/place.js';
 import { stepAfter } from '../src/after/index.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawAfterCrowd, drawCampCrowd, crowdDrawn, glareAlpha, oursMass, arrived } from '../src/render/aftercrowd.js';
 import { afterEnd, godScaleAt } from '../src/view.js';
+import { actPlace } from '../src/acts.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -79,7 +80,7 @@ group('the view zooms toward the throne, and the camp end stays at the place\'s 
   lookAt(CROWD_X0 + (afterEnd() - CROWD_X0) * 0.5);
   const mid = S.zoom;
   lookAt(afterEnd());
-  const end = S.zoom, endTop = S.camY, restTop = afterFloor() + AFTER_FLOOR_MARGIN - S.viewH;
+  const end = S.zoom, endTop = S.camY, restTop = afterFloor() + actPlace('after').margin - S.viewH;
   const cx = S.camX + S.viewW / 2;
   // Held there frame after frame: the middle is the one fact the zoom reads.
   run(1);
@@ -94,6 +95,26 @@ group('the view zooms toward the throne, and the camp end stays at the place\'s 
     ok(held, 'it holds where it is'),
     ok(back === camp, 'and lets go coming back', `${back}`)
   ];
+});
+
+// The camp end framed as the yard is at the same window: a body the size it
+// was in the yard, its floor as far up off the window's foot as the yard's
+// ground, at a tall window and a short one alike.
+group("at the camp end, act 3 is framed at the yard's zoom and the yard's floor height", async () => {
+  const out = [];
+  for (const [w, h] of [[2000, 967], [800, 600], [800, 400]]) {
+    S.W = w; S.H = h;
+    window.__actsOn(true);
+    window.__view('yard'); run(1 / 30);
+    const yz = S.zoom, yFoot = (S.worldH - S.groundY) * S.zoom;
+    up();
+    lookAt(CROWD_X0 - 200);
+    const az = S.zoom, aFoot = (S.camY + S.viewH - afterFloor()) * S.zoom;
+    window.__actsOn(null);
+    out.push(ok(Math.abs(az - yz) < 1e-9, `at ${w}x${h} the camp's zoom is the yard's`, `${yz.toFixed(3)} / ${az.toFixed(3)}`),
+             ok(Math.abs(aFoot - yFoot) <= 1, `at ${w}x${h} its floor stands where the yard's ground does`, `${yFoot.toFixed(0)} / ${aFoot.toFixed(0)} px up`));
+  }
+  return out;
 });
 
 // God far off from the camp: small on the horizon there, growing as the

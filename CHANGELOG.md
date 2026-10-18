@@ -192,6 +192,9 @@ this section; the release that switches it on moves these under Unreleased.
 - The arrow on the corner button that takes you down to the deep and back up is light on the dark theme instead of black (src/selftest/deep.js).
 - A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).
 - The apothecary's brew notes and who-first heading are dark enough to read in both themes (src/selftest/contrast.js).
+- Act 3 is drawn at the yard's own size on any window, its cloud floor standing where the yard's ground does instead of crammed along the foot (test/after-crowd.test.mjs).
+- Act 3's cloud floor billows in puffs everywhere but under the stations, the trees' feet and the stair, and God's crowd stands in them (test/after-floor.test.mjs).
+- The pair, standing as souls by the cloud pillar through act 3, are as easy to see on the dark theme as on the light one (the `after-pair` scene).
 
 ## v0.6.0 — 2026-10-16
 

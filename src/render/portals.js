@@ -28,8 +28,9 @@ import { portalOpenK, portalEnd, handShown, handAlpha, handBox, PORTALS } from '
 import { pairBodies, placeAt, tear, stairFoot } from '../ghosts.js';
 import { goOnDue, goOnAlpha, fallNow, actCaption } from '../actbeats.js';
 import { rockRowsLeft, soulAt, mansionHeld } from '../mansion.js';
-import { afterFloor } from '../after/place.js';
+import { afterFloor, floorAt } from '../after/place.js';
 import { deepFloor } from '../deep/place.js';
+import { darkPage, turned } from '../ink.js';
 
 const snap = v => Math.round(v / P) * P;
 const cellAt = (x, y, tone) => { if (!tone) return; ctx.fillStyle = tone; ctx.fillRect(x, y, P, P); };
@@ -241,22 +242,31 @@ export function drawActsHell() {
 // A soul: the body's square with its rim's eight cells in the pale grey,
 // those inked in black (lives coming back a piece at a time), what it wears
 // drawn in the same pale inks.
-const SOUL_INKS = { ink: ACT_SOUL_RIM, paper: ACT_SOUL_PAPER, grey: GREY[2], pale: GREY[1] };
+// On the dark page the pale greys are drawn at the light page's own
+// lightness (`turned`), so a soul is a pale thing on either page: mapped as
+// the page maps every grey they land a quarter of the way off the dark paper
+// and the pair, stood on it all through act 3, all but vanish. The middle
+// stays paper and an inked piece ink, as a body's are in the yard.
+const seen = c => (darkPage ? turned(c) : c);
+const SOUL_RIM = seen(ACT_SOUL_RIM);
+const SOUL_INKS = { ink: SOUL_RIM, paper: ACT_SOUL_PAPER, grey: seen(GREY[2]), pale: seen(GREY[1]) };
 const RIM = [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2], [1, 2], [0, 2], [0, 1]];
 function drawSoul(x, y, inked, look) {
   if (look) dressBehind(ctx, x, y, look);
-  RIM.forEach(([c, r], i) => cellAt(x + c * P, y + r * P, i < inked ? '#000' : ACT_SOUL_RIM));
+  RIM.forEach(([c, r], i) => cellAt(x + c * P, y + r * P, i < inked ? '#000' : SOUL_RIM));
   cellAt(x + P, y + P, ACT_SOUL_PAPER);
   if (look) { dressOn(ctx, x, y, look); dressHead(ctx, x, y, look); }
 }
 
+const onCloud = b => (Math.abs(b.y + WORKER - afterFloor()) < 1 ? floorAt(b.x + WORKER / 2) - afterFloor() : 0);
 export function drawActBodies(place) {
   const pair = pairBodies(), p = S.acts && S.acts.pair;
   if (pair && p) {
     const k = Math.min(p.lift ?? 1, 1 - (p.inside || 0));
     pair.forEach((b, i) => {
       if (placeAt(b.y) !== place) return;
-      const x = Math.round(b.x), y = Math.round(b.y);
+      // Up there, a body standing on the cloud floor stands on its puffs.
+      const x = Math.round(b.x), y = Math.round(b.y) + (place === 'after' ? onCloud(b) : 0);
       const look = lookFor(WHO[i], {}, b.x, { face: p.face || null, deep: place === 'deep' });
       faded(k, () => {
         if (p.mode === 'alive') drawBody(x, y, look);
