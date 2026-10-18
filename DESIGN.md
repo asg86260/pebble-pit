@@ -101,6 +101,97 @@ the fix is a window color read from the store, and it is not done.
 For a shot, `play.html?dark` opens the dark page whatever the store says
 (`GAME=http://localhost:<port>/play.html?dark node tools/look.mjs rock`).
 
+## Dark mode: black stays black (design, not built)
+
+The owner, 2026-10-18: the dark page should be "less inversion and more
+designed around dark UI elements". The page above is the light page with
+its lightness turned over, and a survey of 45 scenes and the card bench
+found seventeen places where that makes no sense (the vote page,
+https://claude.ai/artifact/WofQtTXBrUwNDxHDD8neDo, has a light/dark crop of
+each). They fall into two kinds. **Fills turn into glare:** the objective
+banner, the build-the-bench arrow, the boards' section chips and thick
+rules, the selected tab, the selected row and the appearance sheet's
+chosen tile all turn from black cards into the brightest slabs on the
+screen. The cutscene's skip tag becomes a pale chip with pale words on it.
+The float shadow becomes a light halo. **Meaning turns over in the yard:**
+the rock goes from a black mass to a pale blob whose deepest part is its
+brightest. The pit becomes a light slab and the void orb a pale egg. A
+house's lit windows go dark while the portal's glow becomes a hole. The
+pair's black hair and hats turn white, and hell's black strips turn light.
+The first of these, the cutscene's bands, was fixed by hand (`raw` in
+`render/recede.js`, 2026-10-18). The rest is one cause: lightness alone
+cannot tell a surface from a hole, a shadow or a light.
+
+Of three directions mocked (surface tiers; black stays black; line art on
+night) the owner chose **black stays black**. It is the one closest to the
+art as drawn. The dark page changes the paper and nothing else, so a sprite
+mostly needs no second thought.
+
+**The bargain.** The paper goes from charcoal to a graphite light enough
+for pure black to sit on it (`DARK_PAPER` about `#3a3a3a`, a first guess;
+the mock's value). Black stays `#000` everywhere: every fill, every hole,
+every hat, every shadow. Only two things are lifted off the old map. Words
+and lines on the paper take a light ink (`DARK_INK`, `#ececec` in the mock),
+because black lettering on graphite is under 2:1. And the things that shine
+(a lit window, the portal, a fire, a spark) stay light, because on this
+page they are the lights. Nothing else moves.
+
+**The canvas.** `ink.js` keeps its one job and its place on the
+prototype's setters, but the map gets new ends and two tags:
+
+- The default map sends white to the paper and keeps black black, with a
+  gray landing on the same step between them. A depth ring of `#444` lands
+  near black, so a heap's deepest part stays its darkest. Most of the
+  roughly 250 black and 80 white literals in `src/render` need no edit.
+- `light(c)` passes a color as written, lifted to the light ink if it is
+  white. It is for things that shine. It works like `raw` and is written at
+  the call: windows, the portal's glow, fires, the abyss's motes, lightning.
+- `line(c)` sends black to the light ink. It is for lettering and UI drawn
+  on the canvas (the counter, `numfont`, `crisptext`, the canvas signs) and
+  for the few strokes that sit on bare paper and must be seen (the ground
+  line).
+- The painter's shade table and `landed`/`turned` are recomputed from the
+  new ends. The deep is drawn dark on both pages already; its tones lighter
+  than the new paper can no longer be reached by the map, so they take
+  `light`. A deeppalette selftest exists to say where.
+
+Both new tags are the identity on the light page, as `raw` is.
+
+**The boards (CSS).** `--paper` is the graphite and `--ink` the light ink
+for words, borders and rules. A new token, `--fill`, is `#000` on both
+pages. The 44 rules that paint a background in `var(--ink)` (chips,
+banners, the arrow, selected tabs and rows) and the five boxes that ink
+themselves the other way round (`--paper: var(--c-ink)`) take `--fill` and
+keep the light ink for their words. Their black-on-white look on the light
+page is unchanged. The float shadow (`--float-shadow`, `FLOAT_SHADOW` on
+the canvas) is drawn in `--fill` at a stronger alpha on the dark page, so
+it stays a shadow. Scrims are rgba black already and stay so. The `--ink-N`
+grays are recomputed between the graphite and the light ink and are held to
+`TEXT_AA` by `selftest/textaa.js` as now.
+
+**Calls still open (the owner's):**
+
+1. *Things painted white as the paper inside a sprite.* The crew's bodies,
+   the boards drawn on the canvas, a cloud's top. On the light page these
+   are paper, so under the map they go graphite: a worker becomes a black
+   outline around a graphite body. The mock drew them lit instead. Hollow
+   is the consistent reading and costs nothing. Lit is a `light` call on
+   every sprite that has one.
+2. *Clouds.* Under the map a light-gray cloud lands a step darker than the
+   graphite sky, so it reads as a storm at night. The mock drew them a step
+   lighter. Lighter is a tag on the sky's palette (`SMOG_TINTS` and the
+   cloud tones), not a change to the map.
+
+**What it must not break.** The light page is the identity, as now, and no
+light-page pixel changes. The palette is fixed at boot and the switch is
+still a reload. `xorInk` is recomputed for the site grit. Coins keep their
+hues: a colored mark still takes the lightness of a gray of its weight, and
+the coin tokens' dark values are chosen again against the graphite.
+
+**How it is checked.** A shot of each of the seventeen survey scenes on
+`?dark`, side by side with the light page. No test can see a color.
+`textaa.js` and `test/ui-tokens.test.mjs` keep the tokens honest.
+
 ## The opening
 
 The game used to start with a rock already sitting on the ground and a cursor to hit it with.
