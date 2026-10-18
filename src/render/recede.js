@@ -15,7 +15,7 @@ import { CELL, CUT_BAND_RULE_PX, CUT_BAND_RULE_TONE, CUT_RECEDE_INK, ABYSS_TONES
 import { S } from '../state.js';
 import { recede, bandCells } from '../cutscene.js';
 import { roleOf } from '../stage.js';
-import { darkPage, turned } from '../ink.js';
+import { darkPage, turned, raw } from '../ink.js';
 import { canvas, ctx } from './ctx.js';
 
 // Which half of the picture is being painted: the receding yard ('back') or
@@ -74,13 +74,15 @@ export { bandCells };
 // the hush rather than sliding, flat black over the finished picture. In the
 // deep that black is the water's own, so a rule of the deep's light tone
 // stands on each band's inner edge; drawn after the deep's negative, its tone
-// is written as seen (render/fightnums.js).
+// is written as seen (render/fightnums.js). The bands are a cinema's, not the
+// page's ink: black on the dark page too, past the palette's map.
 const seen = c => darkPage ? turned(c) : c;
+const BAND_BLACK = raw('#000');
 export function drawLetterbox() {
   const n = Math.round(S.hush * bandCells());
   if (n <= 0) return;
   const h = n * CELL;
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = BAND_BLACK;
   ctx.fillRect(0, 0, S.W, h);
   ctx.fillRect(0, S.H - h, S.W, h);
   if (S.view !== 'deep') return;

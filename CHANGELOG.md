@@ -192,6 +192,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The arrow on the corner button that takes you down to the deep and back up is light on the dark theme instead of black (src/selftest/deep.js).
 - A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).
 - The apothecary's brew notes and who-first heading are dark enough to read in both themes (src/selftest/contrast.js).
+- A cutscene's widescreen bands stay black in dark mode instead of turning light grey, and a beat's line on them stays light (`GAME=…/play.html?dark node tools/look.mjs leaving`).
 
 ## v0.6.0 — 2026-10-16
 
