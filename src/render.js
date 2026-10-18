@@ -66,6 +66,7 @@ import { drawActsYard, drawActsDeep, drawActsAfter, drawActsHell, drawActBodies,
 import { drawMansion } from './render/mansion.js';
 import { drawAfterBackdrop, drawAfterGrove, drawAfterCamp, drawAfterMembers, drawAfterSky, drawAfterCounts } from './render/after.js';
 import { drawAfterCrowd, drawCampCrowd } from './render/aftercrowd.js';
+import { drawAfterCues } from './render/aftercues.js';
 import { drawHellBackdrop, drawHellChambers, drawHellSeams, drawHellForge, drawHellBarriers, drawHellCage } from './render/hell.js';
 import { S } from './state.js';
 import { recede, frontLayers } from './cutscene.js';
@@ -213,6 +214,7 @@ const LAYERS = [
   { name: 'after camp', draw: drawAfterCamp },
   { name: 'after crowd', draw: drawAfterCrowd },
   { name: 'after members', draw: drawAfterMembers },
+  { name: 'after cues', draw: drawAfterCues },     // the hand work's ghost hands, gauges and crit marks (render/aftercues.js)
   // The acts' connective tissue up there (render/portals.js): heaven's tear in
   // the cloud floor, and the souls and ghosts walking the road.
   { name: 'acts-after', draw: drawActsAfter },
@@ -386,7 +388,7 @@ const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'roster
                       'work bars', 'build sites', 'done marks', 'pile marks', 'pad focus']);
 // The acts' places (acts.js), each with only its own layers: none of the
 // yard's or the deep's world is anywhere near them.
-const AFTER = new Set(['after backdrop', 'after sky', 'after camp crowd', 'after grove', 'after camp', 'after crowd', 'after members', 'acts-after', 'acts-after-bodies']);
+const AFTER = new Set(['after backdrop', 'after sky', 'after camp crowd', 'after grove', 'after camp', 'after crowd', 'after members', 'after cues', 'acts-after', 'acts-after-bodies']);
 const HELL = new Set(['hell backdrop', 'hell chambers', 'hell seams', 'hell forge', 'hell barriers', 'hell cage', 'acts-hell', 'acts-hell-bodies']);
 const placeOf = name => (DEEP.has(name) ? 'deep' : AFTER.has(name) ? 'after' : HELL.has(name) ? 'hell' : 'yard');
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');

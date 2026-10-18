@@ -1488,6 +1488,7 @@ import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut } from './after/bodies.js';
 import { plotX, afterFloor, stationBox, heapX } from './after/place.js';
 import { afterGate, strikeDue } from './after/strike.js';
+import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, stumpWobble } from './after/gestures.js';
 HANDLES.__afterClick = (x, y) => clickAfter(x, y);
 {
   const yardBuy = HANDLES.__buy;
@@ -1530,6 +1531,13 @@ HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...S.after.stock,
 HANDLES.__afterCardAt = (x, y) => cardAt(x, y);
 // The axe in hand without buying it: a scene's setup.
 HANDLES.__afterAxe = () => { if (S.after) S.after.axe = true; return !!S.after?.axe; };
+// The hand's motions up there (after/gestures.js), made as input.js makes
+// them: 'down', 'move' and 'up' at a world point; where a station's parts
+// stand; each station's record; the stump's wobble.
+HANDLES.__gesture = (what, x, y) => (what === 'down' ? gestureDown(x, y) : what === 'move' ? gestureMove(x, y) : gestureUp(x, y));
+HANDLES.__gestureParts = (key, i = 0) => gestureParts(key, i);
+HANDLES.__gestureView = () => gestureView();
+HANDLES.__stumpWobble = () => stumpWobble();
 
 // --- the two of them (wardrobe.js) ---
 // Who they are and what they wear, read for a check: each one's uid, the

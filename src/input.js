@@ -54,6 +54,7 @@ import { portalAt, handAt, throughPortal } from './portals.js';
 import { sayGoOn } from './actbeats.js';
 import { onGoOn } from './render/portals.js';
 import * as AFTER_PLACE from './after/index.js';
+import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder } from './after/gestures.js';
 import * as HELL_PLACE from './hell/index.js';
 import { onShaftArrow } from './render/shaftway.js';
 import { onPortal } from './render/portal.js';
@@ -199,6 +200,13 @@ canvas.addEventListener('pointerdown', e => {
   // asked only once its act's track exports it; nothing of the yard's stands
   // in either.
   if (isActView(S.view)) {
+    // Up there a station is worked by its own motion (after/gestures.js): a
+    // press it takes is held until the release, wherever that is. Anything
+    // else is the place's click.
+    if (S.view === 'after' && gestureDown(p.x, p.y)) {
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+      return;
+    }
     const click = S.view === 'after' ? AFTER_PLACE.clickAfter : HELL_PLACE.clickHell;
     if (typeof click === 'function') click(p.x, p.y);
     return;
@@ -274,6 +282,8 @@ canvas.addEventListener('pointermove', e => {
   }
   // the arm in hand follows the pointer, and nothing else reads the drag
   if (S.holding) { const p = pos(e); S.mouse = p; dragArm(p.x, p.y); return; }
+  // and so does a station up there under the hand's motion
+  if (gestureHeld()) { const p = pos(e); S.mouse = p; gestureMove(p.x, p.y); return; }
 
   // The air is stirred on the glass, where a mote lives: dragging the view
   // slides the pointer across the world without moving it across the window,
@@ -337,8 +347,9 @@ export function endDrag(e) {
     S.crewSight = null;
     if (S.mouse) setCursor(S.mouse.x, S.mouse.y);
   }
-  // the arm let go, wherever the pointer has got to
+  // the arm let go, wherever the pointer has got to, and any station's motion
   releaseArm();
+  if (gestureHeld()) { const p = pos(e); gestureUp(p.x, p.y); }
   const up = lifted();
   if (up) { drop(up); return; }
   const held = down.get(e.pointerId);
@@ -379,6 +390,7 @@ addEventListener('blur', () => {
   wheelPan = null;
   S.mining = false;
   releaseArm();
+  gestureUp();
   if (S.dragging) { S.dragging = false; release(S.mouse.x, S.mouse.y); }
 });
 
@@ -716,11 +728,13 @@ addEventListener('touchstart', e => {
     // ...and a finger on the casino's arm, or on its sign while it is a
     // button: a hold on the arm must never scroll the page
     if (dustUnder(p.x, p.y, fingerReach()) || leverUnder(p.x, p.y) || signUnder(p.x, p.y)) { claim(e); return; }
+    // ...and on a station up there worked by its motion: a drag on it is the motion
+    if (S.view === 'after' && gestureUnder(p.x, p.y)) { claim(e); return; }
   }
 }, { passive: false });
 addEventListener('touchmove', e => {
   if (e.target !== canvas) return;
-  if (S.dragging || S.holding) e.preventDefault();
+  if (S.dragging || S.holding || gestureHeld()) e.preventDefault();
 }, { passive: false });
 const unclaim = e => {
   if (!claimed || e.touches.length) return;

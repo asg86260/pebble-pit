@@ -20,6 +20,7 @@ import { portalOpenness } from './render/portal.js';
 import { orbOn, orbMiddle } from './deep/phases.js';
 import { ORB_R } from './config.js';
 import { PORTAL_KEYS, PORTALS, portalEnd, portalFree } from './portals.js';
+import { gestureStops } from './after/gestures.js';
 
 const mid = r => r.x + r.w / 2;
 
@@ -70,6 +71,9 @@ function every() {
       out.push({ id: `act:${key}:${place}`, kind: 'actway', key, r: { x: e.x - e.r, y: e.y - e.r, w: e.r * 2, h: e.r * 2 }, half: place });
     }
   }
+  // Act 3's stations, each worked by its own motion (after/gestures.js): A
+  // and the stick work the one under the focus.
+  for (const g of gestureStops()) out.push({ id: `ag:${g.key}`, kind: 'gesture', key: g.key, r: g.r, half: 'after' });
   const orb = orbOn(), c = orb && orbMiddle(orb.st);
   if (c) out.push({ id: 'orb', kind: 'orb', key: 'orb', r: { x: c.x - ORB_R * P, y: c.y - ORB_R * P, w: ORB_R * P * 2, h: ORB_R * P * 2 }, half: 'deep' });
   return out;
