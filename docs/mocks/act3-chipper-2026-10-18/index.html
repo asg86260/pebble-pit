@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Act 3 Chipper Hand</title>
+<style>
+  :root { --bg: #ffffff; --fg: #000000; --muted: #5f5f5f; --line: #d6d6d6; --ph: #8a8a8a; }
+  :root[data-theme="dark"] { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #a4a4a4; --line: #464646; --ph: #8a8a8a; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1240px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  h2 { font-size: 15px; margin: 0 0 6px; }
+  p, li { color: var(--muted); margin: 0 0 8px; max-width: 120ch; }
+  b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; align-items: center; }
+  button { font: inherit; background: var(--bg); color: var(--fg); border: 2px solid var(--line); padding: 3px 10px; cursor: pointer; }
+  button.on { border-color: var(--fg); font-weight: bold; }
+  label { color: var(--muted); font-size: 13px; }
+  section.take { border-top: 2px solid var(--fg); margin-top: 22px; padding-top: 10px; }
+  section.take.rec { border-top-width: 4px; }
+  .views { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+  .views figure { margin: 0; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border: 1px solid var(--line); touch-action: none; max-width: 100%; }
+  canvas.three { width: 900px; }
+  .ph { border-bottom: 1px dotted var(--ph); }
+  .ph::after { content: "ph"; font-size: 9px; vertical-align: super; color: var(--ph); margin-left: 1px; }
+  .recline { margin-top: 14px; padding: 6px 10px; border-left: 4px solid var(--fg); }
+  ol, ul { padding-left: 22px; }
+  @media (max-width: 700px) { main { padding: 16px; } canvas.three { width: 100%; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Act 3: working the <span class="ph">chipper</span> by hand, in the world</h1>
+<p>A <b>playable mock</b> drawn from plain cells on the game's grid (P = 6, the game's eleven greys, a body the yard's 18 px square with a 2 px rim), <b>not the game</b>. The station is take B, the jaws, as built in <code>src/render/after/stations.js</code> (<code>chipper</code>), drawn facing right, at zoom 1 (a cell is 6 px, a body 3 cells). Each take is drawn twice: the 3x view to play on, and the 1x picture beside it, which plays too. Mouse and touch both work.</p>
+<p><b>The feeder.</b> Tick <span class="ph">post a feeder</span> and a body walks in from the left. It loads at the pile, carries the log on its head, places it in the jaws and works the control. Halfway through each log it lets go for a second, which shows the jaws stopping and starting again. It works the jaws at the same steady speed as the hand, but the walking, the pauses and the rest make it about 9 s a log against about 6 s for a player. While it is posted, the hand cannot use the station.</p>
+<p><b>Two steps.</b> 1: grab a log off the pile and drop it in the jaws (a drop anywhere else slides it back to the pile). 2: hold the control; the jaws bite at a steady speed until the log is gone, stop when you let go, and go on when you hold again. One log at a time. A carrier walks logs onto the pile from the left edge, so nothing appears from nowhere.</p>
+<p><b>Every word on this page is a placeholder</b> (marked <span class="ph">like this</span>). The canvases draw no words.</p>
+<div class="bar">
+  <button data-theme="light" class="on">light</button><button data-theme="dark">dark</button>
+  <button id="pause">pause</button>
+  <button id="resetall">reset all</button>
+</div>
+<p style="font-size:12px">Dark is ink #e0e0e0 on paper #1f1f1f, each grey mapped by its lightness, not inverted.</p>
+
+<div id="takes"></div>
+
+<p class="recline" id="pick"><b>Pick:</b> <span class="ph">(b) the lever</span>. Its pressed pose is the biggest change of the three (a plumb rod laid level, its knob moving five cells), so nobody wonders whether it is down. It is the press's bar again, a rod pulled down at the body's hand, which ties the chipper into the camp's family. The worker reads at a glance: a body with a lever laid by it. (a) is the clearest thing to press with a mouse but the plainest to look at, and its pressed state is a 3 px drop. (c) is the best worker (the body stands on it, and steps off to rest) and the worst for the hand: a pedal is a foot's control, thin at 1x, and nobody clicks a floor.</p>
+
+<h2>What the mock cannot show</h2>
+<ul>
+  <li>The camp around it: no crowd, no other stations, no camera. The station has the page to itself.</li>
+  <li>The card, the sound and the coin the sawdust becomes. The heap only grows; nobody carries it off.</li>
+  <li>The game's frame timing. Here time is the browser's own clock.</li>
+</ul>
+
+<h2>Self-critique, round 1 (on the first build)</h2>
+<ol id="crit1"></ol>
+<h2>Self-critique, round 2 (after the fixes)</h2>
+<ol id="crit2"></ol>
+</main>
+
+<script>
+// ---------------------------------------------------------------------------
+// Grid, greys and the dark map, as the stations mock has them.
+const P = 6;
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a',
+              '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const K = 10, W = 0;
+const DUST = [3, 4, 5, 4, 6];
+let DARK = false, PAUSED = false;
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+function hex(tone) {
+  const c = GREY[tone];
+  if (!DARK) return c;
+  const v = parseInt(c.slice(1, 3), 16) / 255;
+  const n = Math.round((LP + (LI - LP) * (1 - v)) * 255).toString(16).padStart(2, '0');
+  return '#' + n + n + n;
+}
+const hash = n => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const lerp = (a, b, u) => a + (b - a) * u;
+const toneOf = (pal, x, y, s = 0) => pal[Math.floor(hash(x * 13.1 + y * 7.7 + s) * pal.length)];
+const easeInOut = u => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+// A settle: eases in and overshoots a little, then comes to rest.
+const easeSettle = u => { const c1 = 1.3, c3 = c1 + 1; return 1 + c3 * Math.pow(u - 1, 3) + c1 * Math.pow(u - 1, 2); };
+
+// ---------------------------------------------------------------------------
+// The knobs. Every number the mock runs on.
+const TUNE = {
+  CHIP_S: 4.2,          // seconds of holding to chip one log
+  LOG_LEN: 6,           // a log's length in cells; one cell swallowed a bite
+  BITE: [0, 1, 2, 4, 4, 2],  // the top jaw's drop in cells through one bite, held steps
+  POSE_S: 0.04,         // a step of the control's pose
+  SETTLE_S: 0.3,        // a dropped log settling into the jaws
+  RETURN_S: 0.5,        // a missed drop sliding back to the pile
+  PLACE_S: 0.6,         // the feeder's log, head to jaws
+  LIFT_S: 0.3,          // a log, pile to head or head to pile
+  CHIP_DT: 0.1,         // a chip falls a cell this often
+  CHIP_EVERY: 0.2,      // one leaves the chute this often, the two columns in turn
+  GRAINS: 3,            // chips to a cell of heap
+  PILE_MAX: 4,
+  STEP_S: 0.2,          // a body's step, a cell
+  FEED_WAIT_S: 0.45,    // the feeder's pause before each act
+  FEED_REST_AT: 0.5,    // the feeder lets go half way through a log...
+  FEED_REST_S: 1.0,     // ...for this long
+  CUE_USES: 3,          // a cue fades for good after this many goes
+  CUE_FADE_S: 0.9,
+  HOLD_USE_S: 0.6,      // a hold this long while biting counts as a go
+  BAR_FADE_S: 0.35,
+};
+const BITE_S = TUNE.CHIP_S / TUNE.LOG_LEN, BITE_STEP = BITE_S / TUNE.BITE.length;
+
+// ---------------------------------------------------------------------------
+// The yard strip: cells (x, y), x across from the left, y up from the floor
+// (row -1 the bottom row, standing on it). 50 cells by 28, floor at row 26.
+const COLS = 50, ROWS = 28, G = 26, WPX = COLS * P, HPX = ROWS * P;
+const PILE_X = 4, LOAD = 11;            // the pile's left column; where a body stands to load
+const SLOT = { x: 26, y: -4 };           // the log's cell in the jaws
+const ZONE = { x0: 20, x1: 33, y0: -13, y1: 1 };   // a drop counts anywhere in here
+const SPOTS = {                           // the feeder's place and press columns, a take's
+  a: { place: 13, press: 13 },
+  b: { place: 12, press: 12 },
+  c: { place: 12, press: 15 },
+};
+const POSES = { a: 2, b: 3, c: 2 };
+// The control's hit box in cells, generous: a whole body's width round the part.
+const HIT = {
+  a: { x0: 14, x1: 21, y0: -7, y1: 0 },
+  b: { x0: 13, x1: 23, y0: -12, y1: 0 },
+  c: { x0: 13, x1: 21, y0: -5, y1: 1 },
+};
+// Where the "hold here" hand presses, a take's, in px.
+const PRESS_AT = { a: { x: 18.5 * P, y: -4 * P }, b: { x: 20.5 * P, y: -10 * P }, c: { x: 16 * P, y: -2 * P } };
+const pileSlot = i => ({ x: (PILE_X + (i % 2)) * P, y: (-2 - 2 * i) * P });
+const slotPx = { x: SLOT.x * P, y: SLOT.y * P };
+const LOGW = TUNE.LOG_LEN * P, LOGH = 2 * P;
+
+// The heap's cells in the order they fill: from the floor up, out from the
+// middle under the chute, so it grows into a mound.
+const HEAP_ORDER = (() => {
+  const c = [];
+  for (let x = 38; x <= 49; x++) for (let y = -1; y >= -9; y--) {
+    const s = (-y - 1) + Math.abs(x + 0.5 - 40.5) * 0.62 + hash(x * 3 + y) * 0.3;
+    c.push({ x, y, s, tone: toneOf(DUST, x, y, 4) });
+  }
+  return c.sort((a, b) => a.s - b.s).slice(0, 56);
+})();
+
+// ---------------------------------------------------------------------------
+// One take: its own yard, its two canvases, its pointer.
+function makeTake(key) {
+  const st = {
+    key, t: 0, pile: TUNE.PILE_MAX, incoming: 0,
+    drag: null,                 // { x, y, ox, oy, px, py } the carried log's top-left px
+    fly: [],                    // logs on their way somewhere
+    log: null,                  // { prog, settled } the log in the jaws
+    pHeld: false, fHeld: false, held: false, holdRun: 0,
+    pose: 0, poseAcc: 0,
+    jawT: 0, drop: 0, dropAcc: 0,
+    chips: [], chipAcc: 0, chipN: 0, heap: 14, grains: 0, heapBorn: [],
+    bar: 0, barK: 0,
+    cue: { drop: 0, hold: 0, aDrag: 1, aHold: 0, t0: 0 },
+    feeder: { on: false, x: -5, carry: false, lift: 1, from: null, wait: 0, walk: 0, rested: false, restT: 0, lean: 0 },
+    carrier: { x: -5, state: 'off', walk: 0, wait: 0, next: 0 },
+    hover: null, ptr: null, done: 0,
+  };
+  for (let i = 0; i < st.heap; i++) st.heapBorn[i] = -1e9;
+  return st;
+}
+
+// ---- the sim ---------------------------------------------------------------
+function update(st, dt) {
+  st.t += dt;
+  carrierStep(st, dt);
+  feederStep(st, dt);
+  const ready = !!st.log && st.log.settled && st.log.prog < 1;
+  st.held = st.pHeld || st.fHeld;
+  // the control's pose, a step at a time toward pressed or released
+  st.poseAcc += dt;
+  while (st.poseAcc >= TUNE.POSE_S) {
+    st.poseAcc -= TUNE.POSE_S;
+    const want = st.held ? POSES[st.key] : 0;
+    if (st.pose !== want) st.pose += Math.sign(want - st.pose);
+  }
+  const running = st.held && ready && st.pose === POSES[st.key];
+  st.running = running;
+  if (running) {
+    st.jawT += dt; st.holdRun += dt;
+    st.log.prog = Math.min(1, st.log.prog + dt / TUNE.CHIP_S);
+    st.drop = TUNE.BITE[Math.floor(st.jawT / BITE_STEP) % TUNE.BITE.length];
+    st.chipAcc += dt;
+    while (st.chipAcc >= TUNE.CHIP_EVERY) { st.chipAcc -= TUNE.CHIP_EVERY; st.chips.push({ x: 40 + (st.chipN++ % 2), t0: st.t, tone: DUST[st.chipN % DUST.length] }); }
+    if (st.log.prog >= 1) {             // swallowed: the jaws open, the log is gone
+      st.log = null; st.done++; st.barK = TUNE.LOG_LEN;
+      if (st.pHeld) { st.cue.hold++; st.holdRun = -1e9; }
+    }
+  } else if (!st.log || !st.log.settled) {
+    // nothing to bite: the jaw lifts back open a step at a time
+    st.dropAcc += dt;
+    while (st.dropAcc >= BITE_STEP) { st.dropAcc -= BITE_STEP; if (st.drop > 0) st.drop--; }
+  } // else: stopped mid-log, the jaw holds where it was
+  if (st.log) st.barK = Math.floor(st.log.prog * TUNE.LOG_LEN + 1e-6);
+  // chips: fall a cell a tick, land on the heap
+  st.chips = st.chips.filter(c => {
+    const y = -14 + Math.floor((st.t - c.t0) / TUNE.CHIP_DT);
+    if (y + 2 >= heapTop(st, c.x)) {
+      st.grains++;
+      if (st.grains % TUNE.GRAINS === 0 && st.heap < HEAP_ORDER.length) { st.heapBorn[st.heap] = st.t; st.heap++; }
+      return false;
+    }
+    return true;
+  });
+  // logs in the air
+  st.fly = st.fly.filter(f => { if (st.t - f.t0 >= f.dur) { f.done(); return false; } return true; });
+  // the bar over the station
+  const barOn = !!st.log;
+  st.bar = clamp01(st.bar + (barOn ? 1 : -1) * dt / TUNE.BAR_FADE_S);
+  // the cues
+  const c = st.cue, f = st.feeder;
+  const showDrag = !f.on && !st.drag && !st.log && c.drop < TUNE.CUE_USES && st.pile > 0;
+  const showHold = !f.on && !st.pHeld && !!st.log && st.log.settled && c.hold < TUNE.CUE_USES;
+  const rate = n => dt / (n >= TUNE.CUE_USES ? TUNE.CUE_FADE_S : 0.3);
+  const wasDrag = c.aDrag, wasHold = c.aHold;
+  c.aDrag = clamp01(c.aDrag + (showDrag ? 1 : -1) * rate(c.drop));
+  c.aHold = clamp01(c.aHold + (showHold ? 1 : -1) * rate(c.hold));
+  if ((wasDrag === 0 && c.aDrag > 0) || (wasHold === 0 && c.aHold > 0)) c.t0 = st.t;
+}
+function heapTop(st, x) {
+  let top = 0;
+  for (let i = 0; i < st.heap; i++) if (HEAP_ORDER[i].x === x) top = Math.min(top, HEAP_ORDER[i].y);
+  return top;
+}
+const headPx = b => ({ x: b.x * P + 9 - LOGW / 2, y: -3 * P - LOGH - 1 + (b.sink || 0) });
+
+// The carrier: walks a log in from the left edge whenever the pile is short.
+function carrierStep(st, dt) {
+  const c = st.carrier;
+  if (c.state === 'off') {
+    if (st.pile + st.incoming + (st.drag ? 1 : 0) < TUNE.PILE_MAX && st.t >= c.next) { c.state = 'in'; c.x = -5; st.incoming++; }
+    return;
+  }
+  const walk = tgt => { if (c.x === tgt) return true; c.walk += dt; if (c.walk >= TUNE.STEP_S) { c.walk = 0; c.x += Math.sign(tgt - c.x); } return false; };
+  if (c.state === 'in' && walk(0)) { c.wait += dt; if (c.wait > 0.25) { c.wait = 0; c.state = 'drop'; flyToPile(st, headPx(c), TUNE.LIFT_S, 0.6, true); } }
+  else if (c.state === 'drop') c.state = 'out';
+  else if (c.state === 'out' && walk(-5)) { c.state = 'off'; c.next = st.t + 0.4; }
+}
+// A log on its way to the top of the pile (wherever the top is when it lands).
+function flyToPile(st, from, dur, arc, counted) {
+  if (!counted) st.incoming++;
+  const f = { from, to: () => pileSlot(st.pile), t0: st.t, dur, ease: easeInOut, arc, done: () => { st.pile++; st.incoming--; } };
+  st.fly.push(f);
+}
+function flyToJaws(st, from, dur, arc) {
+  st.log = { prog: 0, settled: false };
+  st.jawT = 0;
+  st.fly.push({ from, to: () => slotPx, t0: st.t, dur, ease: easeSettle, arc, done: () => { if (st.log) st.log.settled = true; } });
+}
+
+// The feeder: loads at the pile, places the log, works the control, rests once a log.
+function feederStep(st, dt) {
+  const f = st.feeder, sp = SPOTS[st.key];
+  f.lift = Math.min(1, f.lift + dt / TUNE.LIFT_S);
+  const walk = tgt => {
+    if (f.x === tgt) return true;
+    f.walk += dt; if (f.walk >= TUNE.STEP_S) { f.walk = 0; f.x += Math.sign(tgt - f.x); }
+    f.wait = 0; return false;
+  };
+  f.fHeldWas = st.fHeld; st.fHeld = false;
+  if (!f.on) {
+    if (f.x === -5 && !f.carry) return;
+    if (f.carry) { if (walk(LOAD)) { f.carry = false; flyToPile(st, headPx(f), TUNE.LIFT_S, 0.4, false); } return; }
+    walk(-5); return;
+  }
+  const inJaws = !!st.log;
+  if (inJaws) {
+    const resting = st.log.prog >= TUNE.FEED_REST_AT && !f.rested;
+    const tgt = resting ? sp.place : sp.press;
+    if (!walk(tgt)) return;
+    f.wait += dt;
+    if (resting) { f.restT += dt; if (f.restT >= TUNE.FEED_REST_S) f.rested = true; return; }
+    if (st.log.settled && f.wait > TUNE.FEED_WAIT_S * 0.6) st.fHeld = true;
+    return;
+  }
+  if (f.carry) {
+    if (!walk(sp.place)) return;
+    f.wait += dt;
+    if (f.wait > TUNE.FEED_WAIT_S && f.lift >= 1) { f.carry = false; f.rested = false; f.restT = 0; flyToJaws(st, headPx(f), TUNE.PLACE_S, 2.5 * P); }
+    return;
+  }
+  if (!walk(LOAD)) return;
+  f.wait += dt;
+  if (f.wait > TUNE.FEED_WAIT_S && st.pile > 0 && !st.drag) {
+    st.pile--; f.carry = true; f.lift = 0; f.from = pileSlot(st.pile); f.wait = 0;
+  }
+}
+
+// ---- drawing ---------------------------------------------------------------
+function painter(g) {
+  const px = (x, y, w, h, tone) => { g.fillStyle = hex(tone); g.fillRect(Math.round(x), Math.round(G * P + y), Math.round(w), Math.round(h)); };
+  const r = (x, y, w, h, tone = K) => px(x * P, y * P, w * P, h * P, tone);
+  const fade = (a, fn) => { const was = g.globalAlpha; g.globalAlpha = was * clamp01(a); fn(); g.globalAlpha = was; };
+  // a line `w` px thick between two px points
+  const line = (x0, y0, x1, y1, w, tone) => {
+    const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0));
+    for (let i = 0; i <= n; i++) { const u = n ? i / n : 0; px(Math.round(lerp(x0, x1, u) - w / 2), Math.round(lerp(y0, y1, u) - w / 2), w, w, tone); }
+  };
+  return { px, r, fade, line };
+}
+
+// A log, side on, top-left in px: ink, its end grain cut grey.
+function drawLog(d, x, y, len = TUNE.LOG_LEN) {
+  x = Math.round(x); y = Math.round(y);
+  d.px(x - 2, y - 2, len * P + 4, Math.min(LOGH + 4, -(y - 2)), W);   // a paper edge, so a log reads on ink; never under the floor line
+  d.px(x, y, len * P, LOGH, K);
+  d.px(x + 2, y + 2, P - 2, LOGH - 4, 3);
+}
+function drawBody(d, x, y, dx = 0) { d.px(x + dx, y, 18, 18, K); d.px(x + dx + 2, y + 2, 14, 14, W); }
+
+function drawChipper(d, st) {
+  const jy = -13 + st.drop;
+  // the log in the jaws, walked into the block a cell a bite (the block hides what it has swallowed)
+  if (st.log && st.log.settled) {
+    const k = Math.floor(st.log.prog * TUNE.LOG_LEN + 1e-6);
+    drawLog(d, slotPx.x + k * P, slotPx.y);
+  }
+  d.r(32, -15, 6, 15, K);                                       // the back block
+  d.px(33 * P + 2, -6 * P, 4 * P - 4, 2, W); d.px(33 * P + 2, -4 * P, 4 * P - 4, 2, W);
+  d.r(22, -1, 10, 1, K);                                        // the bottom jaw
+  for (let i = 0; i < 5; i++) d.r(22 + i * 2, -2, 1, 1, K);     // its teeth
+  d.r(23, jy, 9, 4, K); d.r(22, jy - 1, 1, 3, K);               // the top jaw and its lip
+  d.px(24 * P, (jy + 1) * P + 2, 6 * P, 2, W);                  // its band
+  for (let i = 0; i < 5; i++) d.r(23 + i * 2, jy + 4, 1, 1, K);
+  d.px(32 * P - 2, (jy + 2) * P - 2, 4, 4, W);                  // the hinge pin
+  d.r(35, -18, 2, 3, K); d.r(35, -19, 7, 2, K); d.r(40, -17, 2, 2, K); d.r(39, -15, 4, 1, K);   // the chute
+}
+
+// The three controls. `p` is the pose, 0 released .. POSES[key] pressed.
+function drawControl(d, key, p) {
+  if (key === 'a') {
+    // (a) a round push-button on a stub at the jaws' foot: a dome in a collar
+    d.r(17, -1, 3, 1, K);                                       // a foot,
+    d.r(16, -2, 5, 1, K);                                       // the collar over it: a pedestal, not a box
+    const h = 2 * P - p * 3, top = -2 * P - h;                  // the dome sinks into the collar
+    if (h > 0) {
+      d.px(17 * P, top, 3 * P, h, K);
+      d.px(17 * P, top, 2, 2, W); d.px(20 * P - 2, top, 2, 2, W);   // rounded corners
+      if (p === 0) d.px(17 * P + 4, top + 3, 4, 2, W);          // the glint, only up
+    }
+    if (p === POSES.a) d.px(16 * P, -2 * P, 5 * P, 2, 5);       // pressed: the collar's lip goes grey, the dome flush
+  } else if (key === 'b') {
+    // (b) a lever on a pivot: plumb when let go, laid level toward the body when held
+    d.r(18, -1, 4, 1, K); d.r(20, -3, 1, 2, K);                 // a foot and a post
+    const cx = 20.5 * P, cy = -3.5 * P;                         // the pivot's center
+    if (p === 0) { d.r(20, -8, 1, 5, K); d.r(19, -10, 3, 2, K); d.px(19 * P + 3, -10 * P + 3, 4, 2, W); }
+    else if (p === POSES.b) { d.r(17, -4, 4, 1, K); d.r(15, -5, 2, 3, K); }
+    else {
+      const a = -Math.PI / 2 - p * (Math.PI / 2) / POSES.b, L = 5 * P;
+      const tx = cx + Math.cos(a) * L, ty = cy + Math.sin(a) * L;
+      d.line(cx, cy, tx, ty, P, K);
+      d.px(Math.round(tx / P - 1) * P, Math.round(ty / P - 1) * P, 2 * P, 2 * P, K);
+    }
+    d.r(20, -4, 1, 1, K); d.px(20 * P + 2, -4 * P + 2, 2, 2, W);  // the boss and its pin
+  } else {
+    // (c) a treadle: a plate hinged at the right on a post, raised on a spring, flat when stood on
+    d.r(19, -2, 1, 2, K); d.px(19 * P + 2, -2 * P + 2, 2, 2, W);
+    if (p === POSES.c) { d.px(13 * P, -4, 6 * P, 4, K); d.px(14 * P, -3, 4 * P, 2, W); }
+    else {
+      const lift = p === 0 ? 2 * P : P;
+      d.line(13 * P + 2, -lift - 2, 19 * P - 2, -P - 2, 4, K);
+      // the spring under the raised end, a zigzag a pixel at a time
+      for (let y = -lift + 2, i = 0; y < 0; y += 2, i++) d.px(14 * P + (i % 2 ? 3 : 0), y, 3, 2, 6);
+    }
+  }
+}
+
+// The ghost hand: a white glove rimmed in ink, fingertip at (hx, hy) px.
+const HAND = [
+  '....##......',
+  '...#oo#.....',
+  '...#oo#.....',
+  '...#oo###...',
+  '...#oooo###.',
+  '.###ooooooo#',
+  '#oo#ooooooo#',
+  '#oooooooooo#',
+  '.#ooooooooo#',
+  '..#ooooooo#.',
+  '...#######..',
+];
+function drawHand(d, hx, hy) {
+  const x0 = Math.round(hx - 4.5), y0 = Math.round(hy);
+  HAND.forEach((row, j) => [...row].forEach((ch, i) => {
+    if (ch !== '.') d.px(x0 + i - 1, y0 + j - 1, 3, 3, W);
+  }));
+  HAND.forEach((row, j) => [...row].forEach((ch, i) => {
+    if (ch === '#') d.px(x0 + i, y0 + j, 1, 1, K); else if (ch === 'o') d.px(x0 + i, y0 + j, 1, 1, W);
+  }));
+}
+
+function drawCues(d, st) {
+  const c = st.cue, T = 2.4;
+  if (c.aDrag > 0 && st.pile > 0) {
+    const ph = ((st.t - c.t0) % T) / T;
+    const s = pileSlot(st.pile - 1), from = { x: s.x + 15, y: s.y + 4 }, to = { x: slotPx.x + 15, y: slotPx.y + 4 };
+    const a = (ph < 0.12 ? ph / 0.12 : ph > 0.8 ? 1 - (ph - 0.8) / 0.2 : 1) * c.aDrag;
+    const u = easeInOut(clamp01((ph - 0.15) / 0.45));
+    const arc = -4 * 3 * P * u * (1 - u);
+    const hx = lerp(from.x, to.x, u), hy = lerp(from.y, to.y, u) + arc;
+    d.fade(0.55 * c.aDrag, () => {          // the way, dotted
+      for (let i = 1; i < 12; i++) { const v = i / 12, ay = -4 * 3 * P * v * (1 - v); d.px(Math.round(lerp(from.x, to.x, v)), Math.round(lerp(from.y, to.y, v) + ay), 2, 2, 5); }
+    });
+    d.fade(a * 0.45, () => drawLog(d, hx - 15, hy - 4));
+    d.fade(a * 0.8, () => drawHand(d, hx, hy + 2));
+  }
+  if (c.aHold > 0) {
+    const ph = ((st.t - c.t0) % T) / T, at = PRESS_AT[st.key];
+    const a = (ph < 0.12 ? ph / 0.12 : ph > 0.85 ? 1 - (ph - 0.85) / 0.15 : 1) * c.aHold;
+    const down = ph > 0.2 && ph < 0.85 ? 3 : 0;
+    d.fade(a * 0.8, () => drawHand(d, at.x, at.y + down - 1));
+    // three dots over the hand, lit one by one while it keeps holding: keep holding
+    d.fade(a, () => { for (let i = 0; i < 3; i++) { const lit = ph > 0.3 + i * 0.17 && ph < 0.85; d.px(Math.round(at.x - 8 + i * 6), Math.round(at.y - 7), 4, 4, lit ? K : 3); } });
+  }
+}
+
+// The readout over the station: a log glyph and the yard's bar, a paper box
+// with an ink rule, ink a cell a bite.
+function drawBar(d, st) {
+  if (st.bar <= 0) return;
+  d.fade(st.bar, () => {
+    const bx = 28, by = -23, n = TUNE.LOG_LEN;
+    // the glyph: a log end-on, a ring cut white
+    d.px(25 * P, by * P, 2 * P, 2 * P, K); d.px(25 * P + 3, by * P + 3, 2 * P - 6, 2 * P - 6, W); d.px(25 * P + 5, by * P + 5, 2, 2, K);
+    d.px(bx * P - P, by * P, (n + 2) * P, 2 * P, W);
+    d.px(bx * P - P, by * P, (n + 2) * P, 2, K); d.px(bx * P - P, (by + 2) * P - 2, (n + 2) * P, 2, K);
+    d.px(bx * P - P, by * P, 2, 2 * P, K); d.px((bx + n + 1) * P - 2, by * P, 2, 2 * P, K);
+    for (let i = 0; i < n; i++) d.px((bx + i) * P, by * P + 3, P - 1, 2 * P - 6, i < st.barK ? K : 2);
+  });
+}
+
+function render(st, g) {
+  const d = painter(g);
+  g.fillStyle = hex(W); g.fillRect(0, 0, WPX, HPX);
+  d.px(0, 0, WPX, 2, K);                                         // the floor line
+  for (let x = 0; x < COLS; x++) if (hash(x * 5.3) > 0.55) d.px(x * P + Math.floor(hash(x) * 4), 4, 2, 2, toneOf(DUST, x, 0));   // ground dust
+  // the log pile
+  for (let i = 0; i < st.pile; i++) { const s = pileSlot(i); drawLog(d, s.x, s.y); }
+  // the heap and the falling chips
+  for (let i = 0; i < st.heap; i++) { const h = HEAP_ORDER[i]; d.fade(clamp01((st.t - st.heapBorn[i]) / 0.3), () => d.r(h.x, h.y, 1, 1, h.tone)); }
+  for (const c of st.chips) { const y = -14 + Math.floor((st.t - c.t0) / TUNE.CHIP_DT); d.r(c.x, y, 1, 2, c.tone); }
+  // the slot, dotted, while a log is carried
+  if (st.drag && !st.log) {
+    const over = st.drag.over, tone = over ? K : 5;
+    for (let x = 0; x < LOGW + 4; x += 4) { d.px(slotPx.x - 2 + x, slotPx.y - 2, 2, 2, tone); d.px(slotPx.x - 2 + x, slotPx.y + LOGH, 2, 2, tone); }
+    for (let y = 0; y < LOGH + 4; y += 4) { d.px(slotPx.x - 2, slotPx.y - 2 + y, 2, 2, tone); d.px(slotPx.x + LOGW, slotPx.y - 2 + y, 2, 2, tone); }
+  }
+  drawChipper(d, st);
+  drawControl(d, st.key, st.pose);
+  // bodies: the carrier and the feeder
+  const c = st.carrier;
+  if (c.state !== 'off') { drawBody(d, c.x * P, -3 * P); if (c.state === 'in') { const h = headPx(c); drawLog(d, h.x, h.y); } }
+  const f = st.feeder;
+  if (f.on || f.x > -5) {
+    const onPedal = st.key === 'c' && f.x === SPOTS.c.press && st.pose === POSES.c;
+    const sink = onPedal ? 4 : 0;
+    const lean = st.fHeld && st.key !== 'c' ? 3 : 0;
+    const onRaised = st.key === 'c' && f.x === SPOTS.c.press && !onPedal;   // stepping onto the raised plate
+    drawBody(d, f.x * P, -3 * P - sink - (onRaised ? P : 0), lean);
+    if (f.carry) {
+      const h = headPx(f), u = easeInOut(f.lift), from = f.from || h;
+      drawLog(d, lerp(from.x, h.x, u), lerp(from.y, h.y, u) - 2 * P * 4 * u * (1 - u) * 0.5);
+    }
+  }
+  // logs in the air
+  for (const fl of st.fly) {
+    const u = clamp01((st.t - fl.t0) / fl.dur), to = fl.to(), e = fl.ease(u);
+    drawLog(d, lerp(fl.from.x, to.x, e), lerp(fl.from.y, to.y, e) - (fl.arc || 0) * 4 * u * (1 - u));
+  }
+  drawBar(d, st);
+  drawCues(d, st);
+  if (st.drag) drawLog(d, st.drag.x, st.drag.y);                 // the carried log, at the hand
+}
+
+// ---- the page --------------------------------------------------------------
+const TAKES = [
+  { key: 'a', name: 'push-button', say: 'A round push-button on a stub at the jaws\' foot, at the body\'s hand: a dome in a collar. Held, the dome sinks flush and the collar\'s lip goes grey. The feeder leans on it.' },
+  { key: 'b', name: 'lever', say: 'A lever on a pivot at the jaws\' foot: plumb with a knob on top when let go, laid level toward the body when held down, through two slanted steps. The feeder stands by it and holds the knob down.' },
+  { key: 'c', name: 'treadle', say: 'A treadle on the floor in front of the jaws: a plate hinged on a post, its free end raised on a spring. Held, it lies flat. The feeder stands on it to run the jaws and steps off to rest.' },
+];
+const takes = [];
+const host = document.getElementById('takes');
+TAKES.forEach((T, i) => {
+  const st = makeTake(T.key);
+  const sec = document.createElement('section');
+  sec.className = 'take' + (T.key === 'b' ? ' rec' : ''); sec.id = 'take-' + T.key;
+  sec.innerHTML = `<h2>(${T.key}) <span class="ph">${T.name}</span>${T.key === 'b' ? ' <span class="ph">(pick)</span>' : ''}</h2>
+    <p>${T.say}</p>
+    <div class="views">
+      <figure><canvas class="three" width="${WPX * 3}" height="${HPX * 3}"></canvas><figcaption>3x</figcaption></figure>
+      <figure><canvas class="one" width="${WPX}" height="${HPX}"></canvas><figcaption>1x, the game's size</figcaption></figure>
+    </div>
+    <div class="bar"><label><input type="checkbox" class="feeder"> <span class="ph">post a feeder</span></label>
+      <button class="cues">bring the cues back</button><button class="reset">reset</button></div>`;
+  host.appendChild(sec);
+  const off = document.createElement('canvas'); off.width = WPX; off.height = HPX;
+  const T3 = sec.querySelector('canvas.three'), T1 = sec.querySelector('canvas.one');
+  const take = { st, sec, off, g: off.getContext('2d'), T3, T1, g3: T3.getContext('2d'), g1: T1.getContext('2d') };
+  takes.push(take);
+  sec.querySelector('.feeder').addEventListener('change', e => { take.st.feeder.on = e.target.checked; if (take.st.feeder.on) release(take.st); });
+  sec.querySelector('.cues').addEventListener('click', () => { take.st.cue.drop = 0; take.st.cue.hold = 0; });
+  sec.querySelector('.reset').addEventListener('click', () => { take.st = makeTake(T.key); sec.querySelector('.feeder').checked = false; });
+  for (const cv of [T3, T1]) wirePointer(take, cv);
+});
+
+function toPx(cv, e) {
+  const b = cv.getBoundingClientRect();
+  return { x: (e.clientX - b.left) * WPX / b.width, y: (e.clientY - b.top) * HPX / b.height - G * P };
+}
+const inCells = (p, h) => p.x >= h.x0 * P && p.x < (h.x1 + 1) * P && p.y >= h.y0 * P && p.y < (h.y1 + 1) * P;
+const pileBox = { x0: PILE_X - 1, x1: PILE_X + TUNE.LOG_LEN + 1, y0: -2 * TUNE.PILE_MAX - 1, y1: 0 };
+function release(st) {
+  if (st.pHeld && st.holdRun >= TUNE.HOLD_USE_S) st.cue.hold++;
+  st.pHeld = false;
+  if (st.drag) { const dr = st.drag; st.drag = null; flyToPile(st, { x: dr.x, y: dr.y }, TUNE.RETURN_S, 0, false); }
+}
+function wirePointer(take, cv) {
+  cv.addEventListener('pointerdown', e => {
+    const st = take.st, p = toPx(cv, e);
+    if (st.feeder.on || st.ptr != null) return;
+    if (inCells(p, HIT[st.key])) { st.pHeld = true; st.holdRun = 0; }
+    else if (st.pile > 0 && inCells(p, pileBox)) {
+      const s = pileSlot(st.pile - 1); st.pile--;
+      st.drag = { x: s.x, y: s.y, ox: p.x - s.x, oy: p.y - s.y, over: false };
+    } else return;
+    st.ptr = e.pointerId; cv.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  cv.addEventListener('pointermove', e => {
+    const st = take.st, p = toPx(cv, e);
+    if (st.drag && e.pointerId === st.ptr) {
+      st.drag.x = p.x - st.drag.ox; st.drag.y = p.y - st.drag.oy;
+      const cx = st.drag.x + LOGW / 2, cy = st.drag.y + LOGH / 2;
+      st.drag.over = !st.log && (inCells(p, ZONE) || inCells({ x: cx, y: cy }, ZONE));
+    }
+    if (st.ptr == null) cv.style.cursor = st.feeder.on ? 'default' : inCells(p, HIT[st.key]) ? 'pointer' : (st.pile > 0 && inCells(p, pileBox)) ? 'grab' : 'default';
+    else if (st.drag) cv.style.cursor = 'grabbing';
+  });
+  const up = e => {
+    const st = take.st;
+    if (e.pointerId !== st.ptr) return;
+    st.ptr = null;
+    if (st.drag) {
+      const dr = st.drag; st.drag = null;
+      if (dr.over && !st.log) { st.cue.drop++; flyToJaws(st, { x: dr.x, y: dr.y }, TUNE.SETTLE_S, 0); }
+      else flyToPile(st, { x: dr.x, y: dr.y }, TUNE.RETURN_S, 0, false);
+    }
+    if (st.pHeld) release(st);
+  };
+  cv.addEventListener('pointerup', up);
+  cv.addEventListener('pointercancel', up);
+}
+
+function draw() {
+  for (const t of takes) {
+    render(t.st, t.g);
+    t.g3.imageSmoothingEnabled = false; t.g1.imageSmoothingEnabled = false;
+    t.g3.drawImage(t.off, 0, 0, WPX * 3, HPX * 3);
+    t.g1.drawImage(t.off, 0, 0);
+  }
+}
+function advance(dt) {
+  const n = Math.max(1, Math.ceil(dt / (1 / 60)));
+  for (let i = 0; i < n; i++) for (const t of takes) update(t.st, dt / n);
+}
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!PAUSED) advance(dt);
+  draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+function setTheme(th) {
+  DARK = th === 'dark';
+  document.documentElement.dataset.theme = th;
+  document.querySelectorAll('[data-theme]').forEach(b => b.tagName === 'BUTTON' && b.classList.toggle('on', b.dataset.theme === th));
+  draw();
+}
+document.querySelectorAll('button[data-theme]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.theme)));
+document.getElementById('pause').addEventListener('click', e => { PAUSED = !PAUSED; e.target.classList.toggle('on', PAUSED); });
+document.getElementById('resetall').addEventListener('click', () => takes.forEach(t => { t.st = makeTake(t.st.key); t.sec.querySelector('.feeder').checked = false; }));
+if (new URLSearchParams(location.search).get('theme') === 'dark') setTheme('dark');
+
+// ---- the critique ----------------------------------------------------------
+const CRIT1 = [
+ "The first stands for (a) and (b) were a 3 by 3 block of ink with a white band: the size and shape of a worker. At 1x the chipper seemed to have a second body glued to its jaw. Fixed: each stand is a foot and a collar or post, a pedestal, never a square.",
+ "The chips poured as one solid grey column, so the chute looked like a pipe, not something pouring. Fixed: a chip leaves every 0.2 s, the two columns taking turns, so they fall as separate dashes the way the built station draws them.",
+ "A log merged into whatever ink it touched: the pile was one black block, the log in the jaws melted into the teeth and the block, and a carried log disappeared over the stand. Fixed: every log has a 2 px paper edge, cutting white out of black.",
+ "The ghost hand's ink rim met the ink jaws and the glove vanished, which is exactly where the hold cue sits. Fixed: a paper edge round the glove.",
+ "The carrier topped the pile up while a log was in the hand, so a missed drop slid back onto a full pile and made five. Fixed: a log in the hand still counts as on the pile.",
+ "The lever's held knob stopped a cell short of the feeder, which made the body look as if it was holding the air. Fixed: the feeder stands a cell nearer, its rim touching the knob."
+];
+const CRIT2 = [
+ "The paper edge on the bottom log cut a gap in the floor line under the pile: a hairline, the thing the grid exists to prevent. Fixed: a log's paper edge stops at the floor.",
+ "The push-button stood above a body's head (dome at rows 6 to 7), so the feeder leaned on a post under a button it could not reach. Fixed: the button is lowered to the body's hand, and moved a cell off the jaw so its collar no longer joins the teeth into one bar.",
+ "The carrier's log hung over the pile while it waited to drop it, so the pile read as five logs. Fixed: the pile moved a cell right. Still a little overlap at the drop, which is the log arriving.",
+ "Still weak, not fixed: (a)'s pressed state is a 3 px drop and a grey lip. It is visible at 3x, easy to miss at 1x while the eye is on the jaws.",
+ "Still weak, not fixed: (c) is a thin plate on the floor. Its hit box is a whole body tall, but nothing about a pedal says 'press me with a hand'. It is a foot's control.",
+ "Still weak, not fixed: the readout sits 4 rows above the chute with nothing tying it to the station. With several stations close together in the camp it could read as belonging to the neighbour.",
+ "Still weak, not fixed: the log goes into the block one whole cell each time the jaw opens, so the bite and the shortening are tied only by timing. The teeth never visibly cut the wood. Chips falling from the bite itself would tie them together, but the chute is where the built station pours them.",
+ "Still weak, not fixed: let go in the middle of a bite and the top jaw stays half down. That reads as stopped, but it could read as stuck. Lifting it open on release would read as idle instead, at the cost of a pose that changes when you let go.",
+ "Still weak, not fixed: the feeder's log travels seven cells in an arc from its head into the jaws, because the stand and the lip are in the way. It is a visible move, not a pop, but it is a toss rather than a body walking the log in.",
+ "Still weak, not fixed: (b)'s lever stands plumb with its knob one cell short of the top jaw. At 1x the knob and the jaw nearly join. A shorter rod would keep them apart, but then the held knob comes to rest inside the feeder.",
+ "Still weak, not fixed: the ghost hand is 12 px across at 1x, smaller than a body. It reads at 3x; at 1x the dotted path does most of the work."
+];
+CRIT1.forEach(s => { const li = document.createElement('li'); li.textContent = s; document.getElementById('crit1').appendChild(li); });
+CRIT2.forEach(s => { const li = document.createElement('li'); li.textContent = s; document.getElementById('crit2').appendChild(li); });
+
+// ---- for the check ---------------------------------------------------------
+window.__mock = {
+  theme: setTheme,
+  pause: b => { PAUSED = b; },
+  advance: dt => { advance(dt); draw(); },
+  feeder: (i, on) => { const t = takes[i]; t.sec.querySelector('.feeder').checked = on; t.st.feeder.on = on; },
+  state: i => { const s = takes[i].st; return { pile: s.pile, log: s.log, held: s.held, running: s.running, pose: s.pose, drag: !!s.drag, drop: s.drop, cue: s.cue, done: s.done, heap: s.heap, fx: s.feeder.x }; },
+  // a point in a take's strip (px, y up from the floor), in the viewport, on the 3x canvas
+  at: (i, x, y, one = false) => { const cv = one ? takes[i].T1 : takes[i].T3, b = cv.getBoundingClientRect(); return { x: b.left + x * b.width / WPX, y: b.top + (y + G * P) * b.height / HPX }; },
+  pileTop: i => { const s = pileSlot(takes[i].st.pile - 1); return { x: s.x + 18, y: s.y + 6 }; },
+  slot: () => ({ x: slotPx.x + 18, y: slotPx.y + 6 }),
+  press: i => PRESS_AT[takes[i].st.key],
+  takes,
+};
+</script>
+</body>
+</html>
