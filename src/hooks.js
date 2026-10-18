@@ -1573,3 +1573,26 @@ HANDLES.__pairAt = () => Object.fromEntries(['sqouse', 'you'].map((k, i) => {
   const o = pairBody(k) || (S.finale && S.finale.pair[i]) || (k === 'you' && freedBody()) || null;
   return [k, o ? { x: (o.x - S.camX) * S.zoom, y: (o.y - S.camY) * S.zoom, s: WORKER * S.zoom } : null];
 }));
+
+// --- wave shot, track A ---
+// The camera as the shot holds it (shot.js), for the cutscene bench and the
+// checks: the place, both zooms, the window, the frame it is on (null with
+// no scene), the bands' depth in world pixels at the zoom on the glass, the
+// hush, the beat and its phase, and whether anything is moving the camera on
+// purpose -- the shot's glide, the ripple, a zoom glide.
+import { shotFrame as shotFrameNow } from './cutscene.js';
+import { aimGliding as shotAimGliding, bandWorld as shotBandWorld } from './shot.js';
+import { actPhase as shotActPhase } from './actbeats.js';
+import { gliding as shotViewGliding } from './view.js';
+import { zoomGliding as shotZoomGliding } from './world.js';
+HANDLES.__shot = () => {
+  const f = shotFrameNow();
+  return {
+    place: S.view, zoom: S.zoom, zoomShow: S.zoomShow, camX: S.camX, camY: S.camY, viewW: S.viewW, viewH: S.viewH,
+    frame: f ? { x: f.x, y: f.y, w: f.w, h: f.h } : null,
+    bands: shotBandWorld(), hush: S.hush,
+    beat: S.beat.camera || S.beat.yard || null,
+    phase: shotActPhase() ?? S.finale?.phase ?? S.abyss?.phase ?? S.snatch?.phase ?? null,
+    gliding: shotAimGliding() || shotViewGliding() || shotZoomGliding()
+  };
+};

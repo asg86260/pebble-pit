@@ -834,6 +834,7 @@ function showZoom(z) {
 // the target, over ZOOM_GLIDE_S on the yard's clock. Never saved.
 let zoomGlide = null;
 export const zoomTarget = () => (zoomGlide ? zoomGlide.to : S.zoomShow);
+export const zoomGliding = () => !!zoomGlide;
 // A new zoom: a target the glass eases to, about the middle of the window.
 // The same target again changes nothing; a new one while a glide runs takes
 // that glide over from where it stands, on its own clock, so a target asked

@@ -239,6 +239,9 @@ function sceneBox(sc) {
   if (sc.frame) return sc.frame();
   return subject();
 }
+// ...for the readout (`__shot`): the frame of the scene that has the camera,
+// null with none, or on its way out.
+export const shotFrame = () => (S.shot && !S.shot.out ? sceneBox(sceneOf(S.shot.name)) : null);
 
 // --- held still, letterboxed --------------------------------------------------
 // While a scene holds the yard the background settles and stands still: the

@@ -224,7 +224,7 @@ function blankByHand() {
 // store said about this page, and the housekeeping the loop itself keeps.
 // A reload does none of this because a reload starts from a page with nothing
 // on it; only a reset has a running yard to put down.
-const PAGES = new Set(['W', 'H', 'zoom', 'dpr', 'viewW', 'viewH', 'worldW', 'worldH',
+const PAGES = new Set(['W', 'H', 'zoom', 'zoomShow', 'dpr', 'viewW', 'viewH', 'worldW', 'worldH',
                        'cx', 'cy', 'groundY', 'camY', 'camTo', 'camWas', 'camLockY', 'follow',
                        'mouse', 'unsaved', 'yielded', 'broken', 'fellBack', 'newerSave',
                        'staged', 'build', 'tick', 'lastFrame', 'shopStale', 'fatal',

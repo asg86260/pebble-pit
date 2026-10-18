@@ -283,6 +283,8 @@ let run = null;
 let box = null, moving = 'glide';
 let caption = null;
 export const actCaption = () => caption;
+// The beat playing and its phase, for the readout (`__shot`): null with none.
+export const actPhase = () => (run && !run.out ? run.i : null);
 const registered = new Set();
 function scene(key) {
   if (registered.has(key)) return;
@@ -338,13 +340,13 @@ function step(key, next, t) {
     // portal, in a yard stood up for a check) is watched from where it is.
     const want = fr.place;
     const place = want === 'deep' && !canGoDown() ? S.view : want;
+    box = fr; moving = ph.move || 'glide';
     if (S.view !== place) {
       if (!gliding()) hop(place, fr.x + fr.w / 2);
       run.framed = null;
       return true;
     }
     if (gliding()) return true;
-    box = fr; moving = ph.move || 'glide';
     if (run.framed !== place) { scene(key); play(key); run.framed = place; }
     stepShot(t);
     const dt = frameMs() / 1000 * run.hurry;
