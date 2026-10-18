@@ -22254,6 +22254,18 @@ the first trip down move onto the shot one at a time after act 3, each
 losing its own easing and clamp. Each move is a change to that cutscene's
 frames, checked on the bench, not a redesign of the cutscene.
 
+*Built 2026-10-18 (wave-shot-2): the four ask the shot for a frame every
+frame (`shoot` in cutscene.js for the yard's beats; the first trip down
+through its camera scene). A request may also carry `zoom` (a share of the
+place's own), which the shot glides with the pan on the one curve and the
+one clock, the window's corners counted as the distance; `middle`, for a
+place with no floor line to rest the box on (the deep's close-ups); and `s`,
+the fewest seconds a move takes, so the opening's pull-out keeps its beat's
+length. A follow is aimed ahead by its own trailing time, so a steady walk is
+ridden on its middle, and one already in the window is kept with rather than
+glided to. The kill holds on him while the serpent comes apart: the coming
+apart runs the coil faster than a pan.*
+
 ### The bench
 
 `cutscenes.html`, beside `scenes.html`: the game in a frame, staged from boot

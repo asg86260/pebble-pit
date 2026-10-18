@@ -10,8 +10,8 @@ DESIGN.md, "One camera for every cutscene, and a bench to watch them on".
 The shot (src/shot.js), smooth zoom (mock C) and cutscenes.html are built,
 and the act 3 intro is moved onto the shot. Open: the rise into heaven holds
 a near-empty cloud floor for about 20 s while the pair come up the road
-unseen (call 3, a mock-and-vote); the finale, snatch, opening and first trip
-down still have their own cameras.
+unseen (call 3, a mock-and-vote). The finale, the kill, the opening and the
+first trip down ask the shot for their frames too (wave-shot-2, 2026-10-18).
 
 ## The yard's sound set, by lanes -- BUILT, NOT LISTENED TO IN THE GAME (2026-10-18)
 
