@@ -174,7 +174,8 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
-- A "readable text" switch on the settings' graphics tab sets the game's words in IBM Plex Mono, a size up, without the wide spacing, and tooltips and board notes in their own case (src/selftest/settings.js).
+- The game's words are set in Courier Prime, a Courier drawn for reading, bundled so every machine sees the same face (test/l10n-type.test.mjs).
+- A "readable text" switch on the settings' graphics tab sets the game's words in DM Mono, a size up, without the wide spacing, and tooltips and board notes in their own case (src/selftest/settings.js).
 - At a new yard you build who you are and then your sqouse -- a name, one of sqwife, sqouse or sqhusband, and what each wears, with a die on every row, a randomize all that leaves the name alone and a clear -- and every story line, card, sheet, the index and the books name the two of you that way; the rescue achievement now says "complete act 1" (test/who-you-are.test.mjs; src/selftest/wardrobe.js).
 - The appearance page is a wider, shorter sheet of its own, the grid five tiles across and scrolling inside it (src/selftest/wardrobe.js).
 - The sqwife and the sqhusband can be dressed -- a hat, a face, something at the neck, something on the back, a pattern, an aura -- on a page of their own, "appearance" on the house's board, offered once at a new yard; what they wear on their heads replaces their station hat, so the two of them can be found in any crowd; the station hats, a gold set, the serpent's comb and a dozen more pieces open with achievements, a station's first hat or the portal, and a lamp lights the way ahead of whoever wears it; capes, scarves, ribbons, flags and the rest lag as they set off and swing past and settle as they stop, what they wear holds its shape as they walk, and the comb now and then lights up as the serpent's crest does (test/pair.test.mjs; test/wardrobe-locks.test.mjs; test/wardrobe-motion.test.mjs; src/selftest/wardrobe.js).
@@ -183,11 +184,14 @@ this section; the release that switches it on moves these under Unreleased.
 - On a short window, down to a laptop's 1280x800, only the appearance page's grid scrolls, so the close-up, its slots and the buttons stay in view, and the arrows walk every row of the grid before leaving it (src/selftest/wardrobe.js, "short window").
 - Settings, on the pause sheet and the title page, is one page in four tabs -- graphics, audio, controls and language -- with the controls table and the languages right under their tabs, LB and RB to turn them on a pad, and the title page's volume slider drawn like the pause sheet's (src/selftest/settings.js, "four tabs"; src/selftest/language.js).
 
+- A card's long name, its gain and its cancel / another strip are no longer cut short at the card's edge; the board widens to fit them (src/selftest/boardwords.js).
 - The smallest words in the menus -- the appearance page's tabs and tile names, the boards' row names, the controls table, the settings tabs, the title page's foot -- are no longer too small to read, and every grey word in the menus is dark enough to read on the light page and the dark (src/selftest/textaa.js; test/ui-tokens.test.mjs).
 - The appearance page stays one height as you change slots, switch between you and your sqouse, or step through a new yard's build steps (src/selftest/wardrobe.js, "one height").
 - The appearance page's tiles are four to a row, every name and unlock line shows whole and wraps at spaces, and what opens a locked tile comes up in the game's tooltip; the line under the grid is gone, so hovering never moves the page (src/selftest/wardrobe.js).
 - On a gamepad the focus brackets travel from one thing to the next where you can follow them, up to the corner buttons, onto a board's rows and back, while the camera glides to center each one, both eased in and out (test/pad-glide.test.mjs; src/selftest/pad.js, "the marker travels across to the corner").
+- The arrow on the corner button that takes you down to the deep and back up is light on the dark theme instead of black (src/selftest/deep.js).
 - A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).
+- The apothecary's brew notes and who-first heading are dark enough to read in both themes (src/selftest/contrast.js).
 
 ## v0.6.0 — 2026-10-16
 

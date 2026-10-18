@@ -7,14 +7,16 @@
 <!-- The boards are shelves in the game (main.js loads this beside style.css), so
      a tile here wears the same rules as one on a board. -->
 <link rel="stylesheet" href="/src/shelf.css">
-<!-- Dark mode as play.html takes it (`?dark`, the saved choice, the system),
-     so a card's dark look can be read on the bench. -->
+<!-- Dark mode and readable text as play.html takes them (`?dark`,
+     `?readable`, the saved choice, the system), so a card's dark look and its
+     fit in the readable face can be read on the bench. -->
 <script>
 try {
   var d = /[?&]dark\b/.test(location.search) || null;
   if (d == null) { var p = JSON.parse(localStorage.getItem('boulder-clicker/prefs')); d = p && p.dark; }
   if (d == null) d = matchMedia('(prefers-color-scheme: dark)').matches;
   if (d) document.documentElement.classList.add('dark');
+  if (/[?&]readable\b/.test(location.search) || (p && p.readable)) document.documentElement.classList.add('readable');
 } catch (e) {}
 </script>
 <style>
@@ -49,7 +51,12 @@ try {
 <div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><canvas id="c"></canvas><div id="casino"></div><div id="casinoshop"></div><div id="crewlistrows"></div><div id="modal"></div><div id="modalwash"></div><div id="modaltitle"></div><div id="modalclose"></div><div id="modalbooks"></div><div id="modalcrew"></div><div id="bookincome"></div><div id="booksky"></div><div id="bookcrew"></div><div id="booktally"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="filter"></div><div id="filtershop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div><div id="handle"><span class="name"></span></div></div>
 <div id="out"></div>
 <script type="module">
+import '@fontsource/courier-prime/400.css';   // the house face
+import '@fontsource/courier-prime/700.css';
+import '@fontsource/dm-mono/400.css';
+import '@fontsource/dm-mono/500.css';
 import { mountRows } from './src/shop.js';
+import { fitSlot } from './src/slotfit.js';
 import { S } from './src/state.js';
 import { LADDER, TIER_BAND, TIER_RUNGS, TIER_OWN } from './src/config.js';
 Object.assign(S, { stored: 9000, shards: 60, spores: 5000, sparks: 0, scales: 400, pinned: 'critchance' });
@@ -113,6 +120,13 @@ const page2 = document.createElement('div'); page2.className = 'page';
 page2.innerHTML = '<div class="title">queued again</div><div class="rows"></div>';
 out.prepend(page2);
 mountRows(page2.querySelector('.rows'), queued);
+
+// Each board's slot fitted to its words, as the game's board does when it
+// opens (board.js, `pinWidth`), once the face is in.
+// A layout first: until the words are laid out the face is not asked for, and
+// `ready` answers at once, before it lands.
+void document.body.offsetWidth;
+document.fonts.ready.then(() => { for (const r of document.querySelectorAll('.rows.shelves')) fitSlot(r); });
 
 </script>
 </body>

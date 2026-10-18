@@ -88,12 +88,13 @@ export const LANG = pickLanguage({
 const active = LANG === SOURCE ? english : bundleOf(LANG, await source(LANG));
 
 // The face the canvas writes in (DESIGN.md, "Localization phase two", section
-// 3): the house mono, with the language's cut face after it for Chinese,
+// 3): the house mono (Courier Prime, bundled; Courier New for what it does not
+// draw), with the language's cut face after it for Chinese,
 // Japanese and Korean, the stack style.css's `:lang` blocks write. The canvas
 // does not see `:lang`, so every `ctx.font` is `${px}px ${FACE}`.
 const ROW = LANGUAGES.find(r => r.code === LANG);
 const FAMILY = faceFamily(ROW);
-export const FACE = FAMILY ? `ui-monospace, "Courier New", "${FAMILY}", monospace` : 'ui-monospace, "Courier New", monospace';
+export const FACE = FAMILY ? `"Courier Prime", "Courier New", "${FAMILY}", monospace` : '"Courier Prime", "Courier New", monospace';
 
 // A cut face is fetched before any module runs, so nothing measures a line
 // with the fallback and keeps the wrong width (ribbon.js sizes its cloth

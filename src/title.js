@@ -18,8 +18,10 @@ import { fillLanguages, inForce } from './langpage.js';
 import { focusFirstRow, mountTabs, turnTab } from './settingstabs.js';
 import { feedbackReady } from './feedback.js';
 import { mountFeedback } from './feedbackform.js';
-import '@fontsource/ibm-plex-mono/400.css';   // the readable-text face (readable.js)
-import '@fontsource/ibm-plex-mono/700.css';
+import '@fontsource/courier-prime/400.css';   // the house face
+import '@fontsource/courier-prime/700.css';
+import '@fontsource/dm-mono/400.css';   // the readable-text face (readable.js)
+import '@fontsource/dm-mono/500.css';
 import './focusmark.js';   // the keyboard's focus, drawn as the pad's brackets
 
 const col = document.querySelector('.col');

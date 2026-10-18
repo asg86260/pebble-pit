@@ -1,5 +1,5 @@
 // Readable text (the settings' graphics tab, on the game and the landing
-// page): the page's words in IBM Plex Mono a size up, with the tracking and
+// page): the page's words in DM Mono a size up, with the tracking and
 // the capitals taken off running sentences (style.css, `:root.readable`).
 // The yard's own canvas lettering is a picture and is left as it is. The head
 // of each page sets the class before the first paint, from the store
@@ -18,6 +18,9 @@ import { msg } from './lang.js';
 function apply() {
   document.documentElement.classList.toggle('readable', readable());
   dispatchEvent(new Event('resize'));
+  // the resize has laid the words out in the new face, so it is asked for and
+  // `ready` waits on it rather than answering at once
+  void document.body.offsetWidth;
   document.fonts?.ready.then(() => dispatchEvent(new Event('resize')));
 }
 
@@ -31,5 +34,5 @@ export function mountReadable(el) {
     sayReadable(el);
   });
   // a page opened with it on: the face may land after the boot's measures
-  if (readable()) document.fonts?.ready.then(() => dispatchEvent(new Event('resize')));
+  if (readable()) { void document.body.offsetWidth; document.fonts?.ready.then(() => dispatchEvent(new Event('resize'))); }
 }

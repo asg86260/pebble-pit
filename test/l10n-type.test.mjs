@@ -51,7 +51,7 @@ function english(value) {
 
 test('the root sets the knobs to the house type', () => {
   assert.equal(knob('track'), '1');
-  assert.equal(knob('face'), 'ui-monospace, "Courier New", monospace');
+  assert.equal(knob('face'), '"Courier Prime", "Courier New", monospace');
 });
 
 test('every tracked rule and every face reads as it did in English', () => {

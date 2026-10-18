@@ -110,7 +110,7 @@ html, body {
      the tracking every rule that spaces words multiplies its own em by. One
      variable a language instead of seventy overrides; the pips and the codes
      are pictures and keep their plain numbers. */
-  --face: ui-monospace, "Courier New", monospace;
+  --face: "Courier Prime", "Courier New", monospace;
   --track: 1;
   /* the case of running sentences (a tooltip, a board's note): capitals in
      the house type, as written under readable text */
@@ -124,9 +124,9 @@ html, body {
    and what stands in for the capitals, is the owner's vote on a mock: until
    then --track is inherited as it is for every language, so a phone's
    tightening (below) reaches these too. */
-:lang(zh) { --face: ui-monospace, "Courier New", "Pit SC", monospace; /* TODO(mock vote): the CJK tracking */ }
-:lang(ja) { --face: ui-monospace, "Courier New", "Pit JP", monospace; /* TODO(mock vote) */ }
-:lang(ko) { --face: ui-monospace, "Courier New", "Pit KR", monospace; /* TODO(mock vote) */ }
+:lang(zh) { --face: "Courier Prime", "Courier New", "Pit SC", monospace; /* TODO(mock vote): the CJK tracking */ }
+:lang(ja) { --face: "Courier Prime", "Courier New", "Pit JP", monospace; /* TODO(mock vote) */ }
+:lang(ko) { --face: "Courier Prime", "Courier New", "Pit KR", monospace; /* TODO(mock vote) */ }
 /* An ideograph fills its em where a mono capital stands about two thirds of
    it, so a CJK name among Latin ones -- the language list, the landing
    page's foot -- is set at the capitals' height rather than the em's. In a
@@ -142,19 +142,19 @@ html, body {
    glass is narrower. */
 @media (max-width: 560px) { :root { --track: .6; } }
 /* Readable text (the settings' switch, readable.js; the owner's vote,
-   2026-10-18): IBM Plex Mono, so the words keep the typewriter's even
-   columns, a size up, no tracking, and running sentences in their own case.
+   2026-10-18, on a second mock): DM Mono, so the words keep the
+   typewriter's even columns, a size up, no tracking, and running sentences in their own case.
    Labels and headings keep their capitals. Written after the phone's line
    and one class stronger than it, so the tracking stays off on a phone. */
 :root.readable {
-  --face: "IBM Plex Mono", ui-monospace, monospace;
+  --face: "DM Mono", ui-monospace, monospace;
   --track: 0;
   --prose-case: none;
   --fs-small: 13px; --fs-body: 14px; --fs-note: 14px; --fs-name: 15px; --fs-word: 18px;
 }
-:root.readable:lang(zh) { --face: "IBM Plex Mono", "Pit SC", monospace; }
-:root.readable:lang(ja) { --face: "IBM Plex Mono", "Pit JP", monospace; }
-:root.readable:lang(ko) { --face: "IBM Plex Mono", "Pit KR", monospace; }
+:root.readable:lang(zh) { --face: "DM Mono", "Pit SC", monospace; }
+:root.readable:lang(ja) { --face: "DM Mono", "Pit JP", monospace; }
+:root.readable:lang(ko) { --face: "DM Mono", "Pit KR", monospace; }
 html.dark {
   --c-paper: #1f1f1f; --c-ink: #e0e0e0;
   --paper: var(--c-paper); --ink: var(--c-ink);
@@ -283,10 +283,14 @@ canvas {
 #crewfade[data-view="fade"] .body { opacity: var(--crew-fade, 0.4); }
 /* The way through the surface (corner.js): the chevron the shaft's arrow is
    drawn with (render/shaftway.js), five cells by three at three screen
-   pixels a cell, point down in the yard and turned over in the deep. */
+   pixels a cell, point down in the yard and turned over in the deep. The
+   shape is a mask over the ink, so it turns with the page in dark mode. */
 #way .chevron {
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 3' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h5v1h-5zM1 1h3v1h-3zM2 2h1v1h-1z'/%3E%3C/svg%3E");
   display: block; width: 15px; height: 9px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 3' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h5v1h-5zM1 1h3v1h-3zM2 2h1v1h-1z'/%3E%3C/svg%3E") no-repeat center / 15px 9px;
+  background: var(--ink);
+  -webkit-mask: var(--chevron) no-repeat center / 15px 9px;
+  mask: var(--chevron) no-repeat center / 15px 9px;
 }
 #way[data-way="up"] .chevron { transform: rotate(180deg); }
 #crewfade[data-view="hide"] .body { height: 2px; margin-top: 16px; border: 0; background: var(--ink); }
@@ -983,16 +987,19 @@ body.still #scroller { scroll-behavior: auto; }
 }
 .optspop[data-potpick] .opt .bill span + span { margin-left: 8px; }
 /* What the brew does, under what it is called: the boards' own note register,
-   so a second line reads as a footnote rather than as a second row. */
+   so a second line reads as a footnote rather than as a second row. Faint by
+   its tone, not by opacity: half the ink is under AA's 4.5:1 on either
+   paper, and --ink-5 and --ink-8 are the faint tones that hold it (on the
+   paper and on an inverted row). */
 .optspop[data-potpick] .opt .note {
-  opacity: .5;
+  color: var(--ink-5);
   font-size: var(--fs-small);
   line-height: var(--lh-text);
   margin-top: .1em;
 }
-.optspop[data-potpick] .opt.on .note { opacity: .6; }
+.optspop[data-potpick] .opt.on .note { color: var(--ink-8); }
 @media (hover: hover) {
-  .optspop[data-potpick] .opt:hover .note { opacity: .6; }
+  .optspop[data-potpick] .opt:hover .note { color: var(--ink-8); }
 }
 .optspop[data-potpick] .opt .note:empty { display: none; }
 /* Who the pot's doses go to first, under the brews: a heading in the note
@@ -1004,7 +1011,7 @@ body.still #scroller { scroll-behavior: auto; }
   padding: 6px var(--pad-m-x) 2px;
   border-top: 1px solid var(--ink);
   margin-top: 4px;
-  opacity: .5;
+  color: var(--ink-5);
   font-size: var(--fs-small);
 }
 .optspop[data-potpick] .for {
@@ -1020,9 +1027,11 @@ body.still #scroller { scroll-behavior: auto; }
   align-items: baseline;
 }
 .optspop[data-potpick] .for .who { flex: 1 1 auto; }
-.optspop[data-potpick] .for .count { flex: 0 0 auto; padding-left: 18px; opacity: .6; }
+.optspop[data-potpick] .for .count { flex: 0 0 auto; padding-left: 18px; color: var(--ink-5); }
+.optspop[data-potpick] .for.on .count { color: var(--ink-8); }
 @media (hover: hover) {
   .optspop[data-potpick] .for:hover { color: var(--paper); background: var(--ink); }
+  .optspop[data-potpick] .for:hover .count { color: var(--ink-8); }
 }
 /* The one trade a brew is for, when there is only one: a line, not a choice. */
 .optspop[data-potpick] .for.only { cursor: default; }

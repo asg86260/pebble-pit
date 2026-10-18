@@ -83,10 +83,9 @@ export default defineConfig(({ command, mode }) => {
       // The music render's stem cache is written to by the hundred megabytes.
       watch: { ignored: ['**/release/**', under('.claude'), under('shots'), under('tools/music/.cache')] },
       // A worktree has no node_modules of its own and reads the checkout's,
-      // outside the folder the server will hand files from: the readable
-      // face's font files (readable.js) came back 403 there and the page set
-      // its words in the fallback.
-      fs: { allow: [searchForWorkspaceRoot(process.cwd()), dirname(createRequire(import.meta.url).resolve('@fontsource/ibm-plex-mono/package.json'))] }
+      // outside the folder the server will hand files from: the faces' font
+      // files came back 403 there and the page set its words in the fallback.
+      fs: { allow: [searchForWorkspaceRoot(process.cwd()), dirname(dirname(createRequire(import.meta.url).resolve('@fontsource/dm-mono/package.json')))] }
     },
     preview: {
       host: true,

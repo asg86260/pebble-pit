@@ -928,15 +928,15 @@ export const TESTS = [
       await document.fonts.ready;
       await raf();
       const on = { cls: document.documentElement.classList.contains('readable'), face: face(), said: btn.textContent,
-                   kept: pref('readable'), loaded: document.fonts.check('14px "IBM Plex Mono"') };
+                   kept: pref('readable'), loaded: document.fonts.check('14px "DM Mono"') };
       btn.click();
       await raf();
       const off = { cls: document.documentElement.classList.contains('readable'), face: face(), said: btn.textContent };
       return [
-        ok(on.cls && on.kept && /IBM Plex Mono/.test(on.face) && on.said === msg('set-readable-on'),
+        ok(on.cls && on.kept && /DM Mono/.test(on.face) && on.said === msg('set-readable-on'),
            'pressed, the page is in the readable face and the switch says so', JSON.stringify(on)),
         ok(on.loaded, 'and the face itself arrived', JSON.stringify(on)),
-        ok(!off.cls && !/IBM Plex Mono/.test(off.face) && off.said === msg('set-readable-off'),
+        ok(!off.cls && !/DM Mono/.test(off.face) && off.said === msg('set-readable-off'),
            'pressed again, the house type is back', JSON.stringify(off)),
       ];
     } finally {

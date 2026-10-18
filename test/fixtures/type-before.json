@@ -3,7 +3,7 @@
   "file": "src/style.css",
   "sel": "html, body",
   "prop": "font",
-  "value": "var(--fs-body)/var(--lh-text) ui-monospace, \"Courier New\", monospace"
+  "value": "var(--fs-body)/var(--lh-text) \"Courier Prime\", \"Courier New\", monospace"
  },
  {
   "file": "src/style.css",
@@ -177,7 +177,7 @@
   "file": "src/style.css",
   "sel": ".controls .key",
   "prop": "font",
-  "value": "bold var(--fs-body) ui-monospace, \"Courier New\", monospace"
+  "value": "bold var(--fs-body) \"Courier Prime\", \"Courier New\", monospace"
  },
  {
   "file": "src/style.css",
@@ -201,7 +201,7 @@
   "file": "src/style.css",
   "sel": ".held .wardrobe .wardname input",
   "prop": "font-family",
-  "value": "ui-monospace, \"Courier New\", monospace"
+  "value": "\"Courier Prime\", \"Courier New\", monospace"
  },
  {
   "file": "src/style.css",
@@ -333,7 +333,7 @@
   "file": "src/style.css",
   "sel": "#dev",
   "prop": "font",
-  "value": "11px ui-monospace, \"Courier New\", monospace"
+  "value": "11px \"Courier Prime\", \"Courier New\", monospace"
  },
  {
   "file": "src/style.css",
@@ -471,7 +471,7 @@
   "file": "src/style.css",
   "sel": ".g",
   "prop": "font",
-  "value": "bold .78em ui-monospace, \"Courier New\", monospace"
+  "value": "bold .78em \"Courier Prime\", \"Courier New\", monospace"
  },
  {
   "file": "src/style.css",
@@ -483,7 +483,7 @@
   "file": "src/style.css",
   "sel": ".langs button",
   "prop": "font-family",
-  "value": "ui-monospace, \"Courier New\", monospace"
+  "value": "\"Courier Prime\", \"Courier New\", monospace"
  },
  {
   "file": "src/shelf.css",
@@ -651,7 +651,7 @@
   "file": "src/title.css",
   "sel": ".foot .langfoot",
   "prop": "font-family",
-  "value": "ui-monospace, \"Courier New\", monospace"
+  "value": "\"Courier Prime\", \"Courier New\", monospace"
  },
  {
   "file": "src/title.css",

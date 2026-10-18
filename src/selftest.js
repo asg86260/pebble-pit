@@ -15,6 +15,7 @@ import { newRun, settle, sleep, cost } from './selftest/kit.js';
 import { TESTS as opening } from './selftest/opening.js';
 import { TESTS as boards } from './selftest/boards.js';
 import { TESTS as boardwords } from './selftest/boardwords.js';
+import { TESTS as contrast } from './selftest/contrast.js';
 import { TESTS as wind } from './selftest/wind.js';
 import { TESTS as crew } from './selftest/crew.js';
 import { TESTS as stations } from './selftest/stations.js';
@@ -50,6 +51,7 @@ const TESTS = [
   ...opening,
   ...boards,
   ...boardwords,
+  ...contrast,
   ...wind,
   ...crew,
   ...stations,

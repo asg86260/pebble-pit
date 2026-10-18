@@ -20,15 +20,35 @@ A short, finite, cozy incremental. No prestige, no ascension, no reset loop. One
    rather than a milestone the UI announced in advance. Later unlocks can be visible rows in
    the shop; this one should not be.
 
+## The house face and contrast (built 2026-10-18)
+
+The house face is Courier Prime, bundled, where it was the system's mono
+(Courier New on Windows, SF Mono on a Mac): the owner picked it off shots of
+the two side by side, as the same Courier shapes drawn for reading, and a
+bundled face is the same face on every machine. Courier New stands behind it
+for what it does not draw (Cyrillic), and the canvas writes in it too
+(lang.js, `FACE`).
+
+Every word on a page or a board meets WCAG AA contrast, in both themes, and
+a browser check says so of every page scene and every board
+(src/selftest/contrast.js, axe-core's rule). Faint text is faint by its
+tone, never by opacity: `--ink-5` on the paper and `--ink-8` on an inverted
+row are the faint tones that hold 4.5:1; half the ink does not. The yard's
+canvas lettering is a picture and is outside the check.
+
 ## Readable text (built 2026-10-18)
 
 The game has more words in it than it did -- names, slots, notes, a locked
 tile's way open -- and the house type (a system mono at 12px, much of it in
 capitals with wide tracking) is a look before it is a reading face. A switch
 on the settings' graphics tab trades the look for reading, and leaves the
-look as the default. The owner voted on a mock of four faces: IBM Plex Mono
-won over Atkinson Hyperlegible and the system sans because it keeps the
-typewriter's even columns, so the boards and sheets still read as this game.
+look as the default. A first mock of four faces chose a mono over Atkinson
+Hyperlegible and the system sans, because a mono keeps the typewriter's even
+columns and the boards and sheets still read as this game; a second mock of
+six chose DM Mono, the softest and most modern of the monos, over IBM Plex
+Mono, JetBrains Mono, Courier Prime and two serifs. DM Mono is drawn for
+Latin only and stops at a medium weight: Cyrillic falls back to the system
+mono a letter at a time, and bold is the medium.
 
 It is the type's knobs turned, not a second stylesheet: `--face`, the size
 scale, `--track` to nothing, and `--prose-case` (the capitals on running

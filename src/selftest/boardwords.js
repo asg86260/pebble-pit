@@ -13,6 +13,7 @@
 import { sleep, ok } from './kit.js';
 import { LANGS } from '../lang.js';
 import { BOARDS } from '../stations.js';
+import { UNFOLDING, overOf } from '../slotfit.js';
 
 // The yards to read, and the boards in each: every board at its fullest, then
 // the strips -- a row queued again on the bench and the house, the bench's
@@ -145,6 +146,51 @@ export const TESTS = [
         checks.push(ok(said === lang && uniq.length === 0,
                        `${lang}: no words on a board meet, and none leaves its card`,
                        said !== lang ? `the frame read ${said}` : uniq.slice(0, 6).join('; ') + (uniq.length > 6 ? ` (+${uniq.length - 6})` : '')));
+      } finally { f.remove(); }
+    }
+    return checks;
+  }],
+
+  // A tile's words that cannot fold -- a name's longest word, a gain glued to
+  // its unit, the strip's two halves -- are never cut at the tile's edge: the
+  // board's slot is as wide as they need (slotfit.js). The check above reads
+  // ink inside its clip, so a word cut short passes it; this one asks each
+  // box whether its words are wider than it, to the fraction of a pixel, in the house type and in the
+  // readable face a size up, on every board at its fullest and on the strips
+  // a row bought three times puts up.
+  ['no word on a tile is cut at its edge, in the house type and readable text', async () => {
+    const checks = [];
+    for (const [mode, q] of [['house type', ''], ['readable text', '&readable']]) {
+      const f = document.createElement('iframe');
+      f.src = `./play.html?bench&lang=en${q}`;
+      f.style.cssText = 'position:fixed;left:0;top:0;width:800px;height:600px;border:0;opacity:0;pointer-events:none;z-index:-1';
+      document.body.appendChild(f);
+      try {
+        const t0 = performance.now();
+        const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast); };
+        while (!booted() && performance.now() - t0 < 20000) await sleep(50);
+        const w = f.contentWindow;
+        if (!booted()) { checks.push(ok(false, `${mode}: the game boots in a frame`)); continue; }
+        await w.document.fonts.ready;
+        const face = w.getComputedStyle(w.document.body).fontFamily;
+        const step = () => new Promise(r => { w.__fast(1 / 60); w.requestAnimationFrame(() => r()); });
+        const cut = [];
+        for (const [scene, boards] of SCENES) {
+          w.__scene(scene);
+          w.__fast(1);
+          for (const b of boards) {
+            try { w.__board(b); } catch { continue; }
+            for (let i = 0; i < 4; i++) await step();
+            for (const el of w.document.querySelectorAll('.rows.shelves .tile :is(' + UNFOLDING + ')'))
+              if (el.offsetParent !== null && overOf(el) > 0.01)
+                cut.push(`${scene}/${b} "${el.textContent.trim()}" over by ${overOf(el).toFixed(2)}px`);
+          }
+          w.__board(null);
+        }
+        const uniq = [...new Set(cut)];
+        checks.push(ok(uniq.length === 0 && /DM Mono/.test(face) === !!q,
+                       `${mode}: no word on a tile is cut at its edge`,
+                       `${face}; ` + uniq.slice(0, 6).join('; ') + (uniq.length > 6 ? ` (+${uniq.length - 6})` : '')));
       } finally { f.remove(); }
     }
     return checks;

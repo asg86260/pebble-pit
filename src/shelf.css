@@ -173,8 +173,9 @@
   min-width: 0;
   max-width: 100%;
   /* A name wider than the slot folds at a space; the plank's rows take the
-     line (see `.tile`). A word wider than the slot on its own -- none is --
-     would still be clipped, not broken. */
+     line (see `.tile`). A word wider than the slot on its own widens the
+     board's slot instead (slotfit.js); the clip is only the edge that measure
+     reads. */
   white-space: normal;
   overflow: hidden;
   font-style: normal;
