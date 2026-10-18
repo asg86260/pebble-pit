@@ -41,10 +41,10 @@ export const inAfter = (x, y) => y >= afterTop() && y <= afterFloor() && x >= af
 // about its own ground (`flip`), facing the saw mill across the heap they
 // both feed.
 export const ART = {
-  mill:      { box: [9, 26, 18], door: 7, pile: { logs: 0, timber: 35 }, ground: 54 },
-  chipper:   { box: [3, 21, 18], door: 26, pile: { chiplogs: 0 }, ground: 36, flip: 36 },
-  papermill: { box: [7, 22, 14], door: 10, pile: { paper: 31 }, ground: 36 },
-  workshop:  { box: [7, 19, 16], door: 19, pile: { signs: 28 }, ground: 37 },
+  mill:      { box: [7, 29, 18], door: 7, pile: { logs: 0, timber: 37 }, ground: 54 },
+  chipper:   { box: [3, 21, 19], door: 28, pile: { chiplogs: 0 }, ground: 36, flip: 36 },
+  papermill: { box: [5, 24, 18], door: 7, pile: { paper: 31 }, ground: 36 },
+  workshop:  { box: [5, 21, 21], door: 21, pile: { signs: 28 }, ground: 37 },
   press:     { box: [9, 20, 19], door: 27, pile: { posters: 33 }, ground: 38 },
   shack:     { box: [0, 14, 14], door: 7, pile: {}, ground: 14 },
   pedestal:  { box: [1, 10, AFTER_PEDESTAL_H], door: 6, pile: {}, ground: 16 }
@@ -269,10 +269,10 @@ export function stationParts(key, i = 0) {
   if (!b) return null;
   const worked = { x: b.x, y: b.y + P * TOP_STRIP, w: b.w, h: b.h - P * TOP_STRIP };
   const x0 = stationX0(key);
-  if (key === 'mill') return { box: worked, wheel: { ...at(x0, 25, -9), r: 8 * P }, knob: 8.8 * P, bench: box(x0, 9, -5, 7, 5) };
-  if (key === 'chipper') return { box: worked, mouth: box(x0, 15, -12, 7, 10), drum: box(x0, 9, -7, 6, 7), spout: box(x0, 3, -11, 4, 1) };
-  if (key === 'papermill') return { box: worked, vat: { ...at(x0, 20, -6), rx: 5 * P, ry: 2.5 * P }, pivot: at(x0, 13.6, -10.3) };
-  if (key === 'workshop') return { box: worked, sign: box(x0, 10, -5, 6, 3), hand: at(x0, 18, -4) };
+  if (key === 'mill') return { box: worked, wheel: { ...at(x0, 15, -8), r: 6 * P }, knob: 6.8 * P, frame: box(x0, 21, -18, 15, 18) };
+  if (key === 'chipper') return { box: worked, mouth: box(x0, 14, -14, 10, 14), jaw: box(x0, 14, -14, 10, 5), block: box(x0, 8, -15, 6, 15), chute: box(x0, 3, -19, 8, 5) };
+  if (key === 'papermill') return { box: worked, vat: { ...at(x0, 19, -4.5), rx: 6 * P, ry: 2.5 * P }, line: box(x0, 9, -18, 20, 1), step: box(x0, 5, -9, 4, 9) };
+  if (key === 'workshop') return { box: worked, sign: box(x0, 11, -8, 6, 4), hammer: box(x0, 15, -15, 6, 6), hand: at(x0, 20, -9) };
   if (key === 'press') return { box: worked, bar: { ...at(x0, 14, -11), len: 12 * P }, knob: box(x0, 24, -6, 2, 2), platen: box(x0, 12, -8, 9, 2) };
   return { box: worked };
 }
