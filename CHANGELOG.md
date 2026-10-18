@@ -185,6 +185,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The back items are drawn finer: the capes billow out behind on the walk, the balloon lags behind on a stepped string, the flag is a pennant streaming back, and the backpack has a flap and a buckle.
 - On a short window, down to a laptop's 1280x800, only the appearance page's grid scrolls, so the close-up, its slots and the buttons stay in view, and the arrows walk every row of the grid before leaving it (src/selftest/wardrobe.js, "short window").
 - Settings, on the pause sheet and the title page, is one page in four tabs -- graphics, audio, controls and language -- with the controls table and the languages right under their tabs, LB and RB to turn them on a pad, and the title page's volume slider drawn like the pause sheet's (src/selftest/settings.js, "four tabs"; src/selftest/language.js).
+- Every zoom glides instead of stepping, the picture scaled sharp on the way, and the pointer stays on what it points at through it (test/zoom-glide.test.mjs).
 
 - A card's long name, its gain and its cancel / another strip are no longer cut short at the card's edge; the board widens to fit them (src/selftest/boardwords.js).
 - The smallest words in the menus -- the appearance page's tabs and tile names, the boards' row names, the controls table, the settings tabs, the title page's foot -- are no longer too small to read, and every grey word in the menus is dark enough to read on the light page and the dark (src/selftest/textaa.js; test/ui-tokens.test.mjs).
@@ -195,6 +196,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).
 - The apothecary's brew notes and who-first heading are dark enough to read in both themes (src/selftest/contrast.js).
 - A cutscene's widescreen bands stay black in dark mode instead of turning light grey, and a beat's line on them stays light (`GAME=…/play.html?dark node tools/look.mjs leaving`).
+- The act 3 intro keeps its widescreen bands and its zoom through the tear, and lands in the afterlife on the cloud floor where the two of them come up instead of in the empty sky under it, climbing (test/shot.test.mjs).
 
 ## v0.6.0 — 2026-10-16
 

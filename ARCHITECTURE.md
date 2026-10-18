@@ -23,7 +23,8 @@ field or two on `S` and a constant or two in `config.js`.
 | `state.js` | every mutable fact, plus the two sand grids and every site's rect — and `SAVED` / `SAVED_BY_HAND` / `EPHEMERAL`, which say what a reload keeps | yes — no logic |
 | `grid.js` | the falling-sand rules, and nothing that knows what sand is *for* | yes |
 | `painter.js` | drawing a sand grid through a scratch canvas | yes |
-| `world.js` | where the sites stand; which ground is spoken for | changes coordinates for everyone |
+| `world.js` | where the sites stand; which ground is spoken for; the camera's clamp, the two zooms (`setZoom` glides the zoom on the glass, `setZoomNow` cuts) and the one screen/world conversion (`toWorld`, `toScreen`) | changes coordinates for everyone |
+| `shot.js` | the one camera while a cutscene holds (DESIGN.md, "One camera for every cutscene"): a scene names a box and the shot fits it between the bands, glides to it on the one ease (`easeInOut`) or follows it on a spring, inside each place's limits (`PLACE_LIMITS`, which `clampCam` reads too); `__shot()` reads it out | yes |
 | `rock.js` | making a rock, standing it, hitting it, what comes off | yes |
 | `quarry.js` | the open cut, and the crew working its floor | yes |
 | `farm.js` | the plots, and farmhands tending them | yes |

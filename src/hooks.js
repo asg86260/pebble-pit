@@ -1584,7 +1584,7 @@ import { shotFrame as shotFrameNow } from './cutscene.js';
 import { aimGliding as shotAimGliding, bandWorld as shotBandWorld } from './shot.js';
 import { actPhase as shotActPhase } from './actbeats.js';
 import { gliding as shotViewGliding } from './view.js';
-import { zoomGliding as shotZoomGliding } from './world.js';
+import { zoomGliding as shotZoomGliding, setZoom as shotSetZoom, setZoomNow as shotSetZoomNow } from './world.js';
 HANDLES.__shot = () => {
   const f = shotFrameNow();
   return {
@@ -1596,3 +1596,6 @@ HANDLES.__shot = () => {
     gliding: shotAimGliding() || shotViewGliding() || shotZoomGliding()
   };
 };
+// A zoom asked for by hand, a share of the yard's own: glided, or cut with
+// `now`. For looking at the glide's picture; nothing in the game calls it.
+HANDLES.__zoom = (k, now = false) => { (now ? shotSetZoomNow : shotSetZoom)(k); return S.zoomShow; };
