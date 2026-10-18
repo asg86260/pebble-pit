@@ -38,6 +38,8 @@ import { signReach, posterReach } from './levels.js';
 import { soulX, soulY, fileOf, rankOf, slotX, afterFloor, throneAt, stairFoot } from './place.js';
 
 const OUT = 9;           // a slot whose member walked out to the camp
+// The empty slot's value, read by the drawing (render/aftercrowd.js).
+export const OUT_RIM = OUT;
 
 // --- the field, mirrored off the save ------------------------------------------------
 const field = { ref: null, str: null, arr: new Uint8Array(0), dirty: false, out: 0 };
