@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Act 3 Saw Mill</title>
+<!--
+  Act 3's saw mill, the frame saw, redrawn three ways at the yard's scale (a
+  cell six screen px at zoom 1, a body three cells, 18 px). The owner: the
+  frame saw overall is good; the frame and the saw need work, and a blade that
+  is not the full height is wonky. Every take keeps the flywheel on its post,
+  the rod and the press-style frame; each runs the blade the frame's full
+  height, guided, with the approved handsaw's teeth (docs/mocks/act3-saw-2026-10-18,
+  saw 3). Drawn by this page from plain cells, not by render/after/stations.js.
+  Every word is a placeholder.
+-->
+<style>
+  :root { --bg: #ffffff; --fg: #000000; --muted: #5f5f5f; --line: #d6d6d6; --soft: #efefef; --warn: #757575; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a; }
+  }
+  :root[data-theme="dark"] { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a; }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--fg); }
+  body { margin: 0; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1240px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  h3 { font-size: 14px; margin: 10px 0 4px; }
+  p { margin: 0 0 8px; color: var(--muted); max-width: 110ch; }
+  ul, ol { margin: 4px 0 8px; padding-left: 18px; color: var(--muted); }
+  main b { color: var(--fg); }
+  .ph { border-bottom: 1px dashed currentColor; }
+  .ph::after { content: '*'; color: var(--warn); }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
+  .bar button { font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .rec { border-left: 3px solid var(--fg); padding: 4px 10px; background: var(--soft); color: var(--fg); }
+  section { border-top: 1px solid var(--line); padding: 14px 0; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  .row { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+  figure { margin: 0; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 4px; max-width: 560px; }
+  .take { border: 1px solid var(--line); border-radius: 4px; padding: 10px; margin: 0 0 12px; }
+  .take.picked { border: 2px solid var(--fg); }
+  .take h3 { margin-top: 0; }
+  .scrollx { overflow-x: auto; max-width: 100%; }
+  .rounds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .rounds > div { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; font-size: 12px; }
+  .rounds h3 { margin: 0 0 4px; font-size: 13px; }
+  .rounds ol { padding-left: 16px; margin: 0; }
+  @media (max-width: 760px) { .rounds { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1><span class="ph">the saw mill, the frame saw, three ways</span></h1>
+  <p><span class="ph">The owner: the frame saw overall is good; the frame and the saw need work, and a blade short of the frame's height is wonky. Each take below keeps the flywheel on its post, the rod and a press-style frame, and runs the blade the frame's full height, top beam to bottom, guided in it. The teeth are the approved handsaw's (saw 3): a three-deep sawtooth, the face on the slant, the back square, hooked down so it cuts on the down stroke. Drawn at the yard's scale: a cell six px at one times, a body three cells. The body holds the wheel's knob; the wheel is fourteen cells across. A small crank by the hub drives the rod, so a turn of the wheel is one stroke of the blade, three cells.</span></p>
+  <p class="rec"><b><span class="ph">pick, pending the owner's vote:</span></b> <span class="ph" id="pick-line"></span></p>
+  <div class="bar">
+    <button data-theme-btn="light"><span class="ph">light</span></button>
+    <button data-theme-btn="dark"><span class="ph">dark</span></button>
+    <button id="pause"><span class="ph">pause</span></button>
+    <button id="mid"><span class="ph">hold mid-stroke</span></button>
+  </div>
+
+  <section id="sec-all">
+    <h2><span class="ph">all three at one times</span></h2>
+    <div class="scrollx"><div class="row" id="all"></div></div>
+  </section>
+
+  <section id="sec-family">
+    <h2><span class="ph">the pick beside the press, one times</span></h2>
+    <p><span class="ph">The press as built (render/after/stations.js, redrawn here with the same numbers), then the pick, on one floor.</span></p>
+    <div class="scrollx"><figure id="family"><canvas></canvas></figure></div>
+  </section>
+
+  <section id="sec-takes">
+    <h2><span class="ph">each take: one times, and three times for the detail</span></h2>
+    <div id="takes"></div>
+  </section>
+
+  <section id="sec-rounds">
+    <h2><span class="ph">two rounds of harsh critique</span></h2>
+    <div class="rounds">
+      <div><h3><span class="ph">round 1</span></h3><ol id="round1"></ol></div>
+      <div><h3><span class="ph">round 2</span></h3><ol id="round2"></ol></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="ph">what this page cannot show</span></h2>
+    <ul>
+      <li><span class="ph">The real renderer: cells drawn by this page, not render/after/stations.js. The camp's crowd, cloud floor and posts behind the station are left out; the floor is a plain rule.</span></li>
+      <li><span class="ph">The hand's reach: the body is three cells and the knob sweeps fourteen, so the arm here is a stretched two-px line from the body to the knob. The game's real pose for a body on a wheel is not drawn.</span></li>
+      <li><span class="ph">The gesture: the wheel here turns on the clock; the player's grab, spin and coast (after/gestures.js) are not wired.</span></li>
+      <li><span class="ph">The view from above: the blade cuts along the log, so a true side view would show it face on and the cut would not show. The planks past the blade, split by a white seam, are the drawing's way of saying "cut", as built.</span></li>
+      <li><span class="ph">The piles' counts and fades, and the log pile on the feed side: two fixed piles stand for timber and sawdust.</span></li>
+    </ul>
+  </section>
+</main>
+<script>
+'use strict';
+// ---------------------------------------------------------------------------
+// The ramp, the grid, the clock
+// ---------------------------------------------------------------------------
+const P = 6;
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+// Dark is the light ramp mapped by lightness onto #e0e0e0 on #1f1f1f, never inverted.
+const DARKG = GREY.map(h => { const v = parseInt(h.slice(1, 3), 16) / 255; const c = Math.round(0x1f + (0xe0 - 0x1f) * (1 - v)).toString(16).padStart(2, '0'); return '#' + c + c + c; });
+const K = 10, W = 0, DUST = [3, 4, 5, 4, 6], BARK = [4, 5, 4, 6], WOOD = [2, 3, 2, 3];
+let PAL = GREY, T = 0, PAUSED = false, HELD = false;
+const hash = n => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+const toneOf = (pal, x, y, seed = 0) => pal[Math.floor(hash(x * 13.1 + y * 7.7 + seed) * pal.length)];
+const isDark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+
+// A drawer over a canvas at `s` times, its origin at cell (ox, 0) off the
+// window's left and the floor line; the same calls as kit.js's frame.
+function drawer(g, s, X0, Y0) {
+  const d = {
+    px(x, y, w, h, tone) { g.fillStyle = PAL[tone]; g.fillRect(Math.round((X0 + x) * s), Math.round((Y0 + y) * s), Math.round(w * s), Math.round(h * s)); },
+    r(x, y, w, h, tone = K) { d.px(x * P, y * P, w * P, h * P, tone); },
+    c(x, y, tone = K) { d.r(x, y, 1, 1, tone); },
+    line(x0, y0, x1, y1, w = 2, tone = K, centered = true) {
+      const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * P), o = centered ? w / 2 : 0;
+      for (let i = 0; i <= n; i++) { const f = n ? i / n : 0; d.px(Math.round((x0 + (x1 - x0) * f) * P - o), Math.round((y0 + (y1 - y0) * f) * P - o), w, w, tone); }
+    },
+    // White cut out of a mass, 2 px in from its edge.
+    cut(x, y, w, h, tone = W) { d.px(x * P + 2, y * P + 2, w * P - 4, h * P - 4, tone); },
+    body(x, y, dx = 0) { d.px(x * P + dx, y * P, 18, 18, K); d.px(x * P + dx + 2, y * P + 2, 14, 14, W); },
+    fade(a, fn) { const was = g.globalAlpha; g.globalAlpha = was * Math.max(0, Math.min(1, a)); fn(); g.globalAlpha = was; }
+  };
+  return d;
+}
+
+// ---------------------------------------------------------------------------
+// The parts every take shares
+// ---------------------------------------------------------------------------
+// The flywheel: fourteen cells across, its rim two cells thick, four spokes,
+// a hub, and a knob on a stub outside the rim for the hand. A crank by the
+// hub, CRANK cells off, carries the rod, so the blade's stroke is two cranks.
+const WHEEL = { cx: 9, cy: -9, r: 6 }, CRANK = 1.5, KNOB = WHEEL.r + 2;
+const TURN = Math.PI / 8;                       // a held step of the wheel
+function wheel(d, a) {
+  const { cx, cy, r } = WHEEL;
+  d.px(cx * P - 3, cy * P, 6, -cy * P, K); d.r(cx - 3, -1, 6, 1, K);     // its post and foot
+  for (let y = Math.floor(cy - r - 2); y <= cy + r + 2; y++) for (let x = Math.floor(cx - r - 2); x <= cx + r + 2; x++) {
+    const dd = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+    if (dd > r - 1 && dd <= r + 1) d.c(x, y, K);
+  }
+  for (let k = 0; k < 4; k++) { const b = a + Math.PI / 4 + k * Math.PI / 2; d.line(cx, cy, cx + Math.cos(b) * (r - 0.5), cy + Math.sin(b) * (r - 0.5), 5); }
+  d.r(cx - 1.5, cy - 1.5, 3, 3, K);
+  // the knob's stub off the rim, then the knob, cut white so the fist reads round it
+  const kx = cx + Math.cos(a) * KNOB, ky = cy + Math.sin(a) * KNOB;
+  d.line(cx + Math.cos(a) * (r + 0.5), cy + Math.sin(a) * (r + 0.5), kx, ky, 4);
+  return { kx, ky, pin: { x: cx + Math.cos(a) * CRANK, y: cy + Math.sin(a) * CRANK } };
+}
+// The crank on the hub: a white pin cut in the hub, where the rod takes hold.
+function crankPin(d, pin) { d.px(Math.round(pin.x * P) - 3, Math.round(pin.y * P) - 3, 6, 6, K); d.px(Math.round(pin.x * P) - 1, Math.round(pin.y * P) - 1, 2, 2, W); }
+// The stroke in whole cells, 0 at the top, 3 at the bottom, off the crank.
+const strokeOf = a => Math.round(1.5 + 1.5 * Math.sin(a));
+
+// The body at the wheel, its arm a two-px line to its fist round the knob.
+const BODY = { x: -3, y: -3 };
+function hand(d, k) {
+  d.body(BODY.x, BODY.y);
+  const fx = Math.round(k.kx * P) - 7, fy = Math.round(k.ky * P) - 7;
+  d.line(BODY.x + 3, BODY.y + 1, k.kx, k.ky, 2);
+  d.px(fx, fy, 14, 14, K); d.px(fx + 2, fy + 2, 10, 10, W); d.px(fx + 5, fy + 5, 4, 4, K);   // the fist round the knob
+}
+
+// The blade, plumb: a spine of ink on the right, a grey plate a cell,
+// and the handsaw's teeth (saw 3's rip: 0,1,2,3 cells, hooked down) facing
+// the log on the left. `x` is the plate's left column, rows y0..y1, and the
+// teeth ride with the stroke `o` so they move with the blade.
+const RIP = [0, 1, 2, 3];
+function blade(d, x, y0, y1, o) {
+  for (let y = y0; y <= y1; y++) {
+    const k = RIP[(((y - o) % 4) + 4) % 4];
+    d.c(x, y, 2); d.c(x + 1, y, K);
+    if (k) d.r(x - k, y, k, 1, K);
+  }
+}
+// A rod: three px of ink in a two-px paper rim, so it reads in front of the
+// wheel's spokes rather than as one more of them.
+function rod(d, x0, y0, x1, y1) { d.line(x0, y0, x1, y1, 7, W); d.line(x0, y0, x1, y1, 3); }
+// A block of ink with a white pin cut through its middle: a buckle, a crosshead.
+function pinned(d, x, y, w, h) { d.r(x, y, w, h, K); d.px((x + w / 2) * P - 2, (y + h / 2) * P - 2, 4, 4, W); }
+// The log: three cells deep, grey bark in an ink rim (the log pile's tones),
+// its grain cut white in dashes that differ cell to cell, coming in from the
+// left a cell a step, in front of the frame. Where the teeth stand in it the
+// kerf is open paper, so the teeth read against it; past the blade it is two
+// planks, pale in an ink rim. `bx` is the blade's plate column; the teeth
+// take the three cells left of it.
+const LOG_LEN = 14, LOG_X0 = 17;                // the tail starts in the gap past the wheel
+function log(d, x, y, bx) {
+  for (let i = 0; i < LOG_LEN; i++) {
+    const c = x + i;
+    if (c >= bx - 3 && c < bx + 2) { if (c < bx) d.r(c, y, 1, 3, W); continue; }
+    if (c < bx) {
+      d.r(c, y, 1, 3, K); d.px(c * P, y * P + 2, P, 3 * P - 4, toneOf(BARK, c - x, 1));
+      const h = hash(c - x + 0.5), row = h < 0.5 ? 6 : 10;
+      d.px(c * P + (h < 0.25 || h > 0.75 ? 0 : 2), y * P + row, h < 0.25 || h > 0.75 ? P : P - 2, 2, W);   // the grain
+    } else {
+      d.px(c * P, y * P, P, 8, K); d.px(c * P, y * P + 2, P, 4, toneOf(WOOD, c - x, 3));
+      d.px(c * P, y * P + 10, P, 8, K); d.px(c * P, y * P + 12, P, 4, toneOf(WOOD, c - x, 4));
+    }
+  }
+}
+// The log's place on its cycle: its tail from the near post's outside to past
+// the blade, a cell a step, fading on and off.
+const LOG_T = 6.4, FADE = 0.4;
+function logAt(t, bx, x0) {
+  const u = Math.max(0, t), k = Math.floor(u / LOG_T), ph = u / LOG_T - k, since = u - k * LOG_T;
+  const steps = bx + 2 - x0, i = Math.min(steps, Math.floor(ph * (steps + 2)));
+  const a = since < FADE ? since / FADE : ph > 0.92 ? 1 - (ph - 0.92) / 0.08 : 1;
+  return { x: x0 + i, a };
+}
+// Sawdust out of the bottom of the cut, a cell a step down, on the clock.
+function dust(d, x, y0, y1, t, on) {
+  if (!on) return;
+  for (let j = 0; j < 3; j++) { const y = y0 + ((Math.floor(t / 0.1) + j * 2) % (y1 - y0 + 1)); d.c(x + (j % 2 ? -1 : 0), y, DUST[(j + Math.floor(t / 0.1)) % DUST.length]); }
+}
+// The piles beside it: timber, planks six cells long; and a sawdust heap.
+function planks(d, x, n) {
+  for (let i = 0; i < n; i++) { const y = -1 - i, dx = i % 2 ? 0.5 : 0; d.px((x + dx) * P, y * P, 6 * P, P, K); d.px((x + dx) * P + 2, y * P + 2, 6 * P - 4, P - 4, 3); }
+}
+function heap(d, cx, R) {
+  for (let j = 0; j <= R; j++) for (let dx = -R + j; dx <= R - j; dx++) d.c(cx + dx, -1 - j, toneOf(DUST, cx + dx, j));
+}
+
+// ---------------------------------------------------------------------------
+// The three takes. Each draws its frame, the log, the blade and the rod at
+// wheel angle `a`, the stroke `o` (0..3 cells down) and the log's place.
+// ---------------------------------------------------------------------------
+const TAKES = [
+  {
+    id: 1, name: 'the sash',
+    say: 'A sash: two rails ride up and down post to post, their ends in white guides cut down the middle of three-cell posts, and the blade is strained between them, rail to rail. The log rides two ledges. The rod comes nearly level off the crank to the foot rail\'s end in the near post.',
+    span: [-6, 52],
+    draw(d, a, o, t, work) {
+      const L = 21, R = 36, head = -23, sill = -3, bx = 29;
+      const top = head + 3 + o, foot = -8 + o;
+      // the wheel and the rod first: the rod goes behind the near post to the
+      // foot rail's end, which shows in the guide
+      const k = wheel(d, a);
+      rod(d, k.pin.x, k.pin.y, L + 1.5, foot + 0.5);
+      // the fixed frame: three-cell posts, each with a slot down its middle
+      // column where the rails' ends ride; a two-cell head; a sill on feet
+      d.r(L, head, 3, sill - head, K); d.r(R, head, 3, sill - head, K);
+      d.r(L - 1, head, R - L + 5, 2, K);
+      d.r(L - 1, sill, R - L + 5, 2, K); d.r(L - 1, -1, 4, 1, K); d.r(R, -1, 4, 1, K);
+      for (const px of [L + 1, R + 1]) { d.r(px, head + 3, 1, 4, W); d.r(px, -8, 1, 4, W); }   // the guides
+      // the rails, post to post, their ends in the guides, moving by o
+      d.r(L + 1, top, R - L + 1, 1, K); d.r(L + 1, foot, R - L + 1, 1, K);
+      // the log on its two ledges, in front of the frame
+      const ly = -14;
+      d.r(L + 3, ly + 3, bx - 4 - L - 3, 1, K); d.r(bx + 3, ly + 3, R - bx - 3, 1, K);
+      const lg = logAt(t, bx, LOG_X0);
+      if (work) d.fade(lg.a, () => log(d, lg.x, ly, bx));
+      blade(d, bx, top + 1, foot - 1, o);
+      dust(d, bx - 2, ly + 4, foot - 1, t, work);
+      crankPin(d, k.pin);
+      hand(d, k);
+      planks(d, 43, 5); heap(d, 53, 3);
+    }
+  },
+  {
+    id: 2, name: 'through the beams',
+    say: 'The blade is longer than the frame\'s opening and its ends ride inside a three-cell head and a four-cell bed, so it fills the frame top to bottom at every point of its stroke. Its crosshead rides over the head; the rod slants up to it off the crank, as built.',
+    span: [-6, 52],
+    draw(d, a, o, t, work) {
+      const L = 22, R = 37, head = -21, bed = -6, bx = 30;
+      const k = wheel(d, a);
+      rod(d, k.pin.x, k.pin.y, bx - 2.5, head - 4 + o);                   // up to the crosshead
+      d.r(L, head, 2, bed - head, K); d.r(R, head, 2, bed - head, K);
+      d.r(L - 1, head, R - L + 4, 3, K);                                  // the head, three deep
+      d.r(L - 1, bed, R - L + 4, 4, K);                                   // the bed, four deep, on legs
+      d.r(L, -2, 2, 2, K); d.r(R, -2, 2, 2, K); d.r(L - 1, -1, 3, 1, K); d.r(R, -1, 3, 1, K);
+      const ly = bed - 3, lg = logAt(t, bx, LOG_X0);
+      if (work) d.fade(lg.a, () => log(d, lg.x, ly, bx));
+      // the blade is longer than the opening: its ends are always inside the
+      // beams, so it fills the frame head to bed at every point of the stroke
+      blade(d, bx, head + 3, bed - 1, o);
+      d.r(bx, head - 3 + o, 2, 3 - o, K);                                 // its strap up out of the head
+      pinned(d, bx - 3, head - 5 + o, 6, 2);                              // the crosshead over the head
+      crankPin(d, k.pin);
+      hand(d, k);
+      planks(d, 43, 5); heap(d, 53, 3);
+    }
+  },
+  {
+    id: 3, name: 'the strained frame',
+    say: 'The press\'s own parts: the blade strained between a buckle under the bed and a screw through the head, the screw\'s threads cut white as on the press. The frame stands on its posts with the bed raised; the rod comes off the crank under the bed to the buckle, so it drives from below like a mill\'s pitman.',
+    span: [-6, 52],
+    draw(d, a, o, t, work) {
+      const L = 22, R = 37, head = -20, bed = -9, bx = 30, foot = -6 + o;
+      const k = wheel(d, a);
+      rod(d, k.pin.x, k.pin.y, bx - 2.5, foot + 2);                       // behind the near post to the buckle
+      d.r(L, head, 2, -1 - head, K); d.r(R, head, 2, -1 - head, K);       // posts to the floor
+      d.r(L - 1, -1, 3, 1, K); d.r(R, -1, 3, 1, K);
+      d.r(L - 1, head, R - L + 4, 2, K);                                  // the head
+      const sx = bx - 1;                                       // the screw centered on the blade's back
+      // the strain screw from the blade's top up through the head, its
+      // threads cut white as on the press, its nut riding over the head
+      const bTop = head + 2 + o, sTop = head - 4 + o;
+      d.r(sx, sTop, 3, bTop - sTop, K);
+      for (let j = 1; j < bTop - sTop - 1; j += 1.5) { const y0 = (sTop + j) * P; for (let i = 2; i < 3 * P - 2; i++) d.px(sx * P + i, Math.round(y0 - i / 3), 1, 2, W); }
+      d.r(sx - 1, sTop - 1, 5, 1, K);
+      d.px(sx * P - 2, head * P + 2, 2, 2 * P - 4, W); d.px((sx + 3) * P, head * P + 2, 2, 2 * P - 4, W);   // keyed where it passes the head
+      d.r(L - 1, bed, R - L + 4, 2, K);                                   // the bed, raised
+      const ly = bed - 3, lg = logAt(t, bx, LOG_X0);
+      if (work) d.fade(lg.a, () => log(d, lg.x, ly, bx));
+      blade(d, bx, bTop, bed - 1, o);
+      d.r(bx, bed + 2, 2, foot - bed - 1, K);                             // its strap down out of the bed
+      pinned(d, bx - 3, foot + 1, 6, 2);                                  // the buckle under the bed
+      dust(d, bx - 2, bed + 2, -1, t, work);
+      crankPin(d, k.pin);
+      hand(d, k);
+      planks(d, 43, 5); heap(d, 53, 3);
+    }
+  }
+];
+
+// --- the press, as built (render/after/stations.js, the same numbers) -------------
+const PR = { postL: 10, postR: 22, headY: -14, scX: 15, scW: 3, plX: 12, plW: 9, sheetY: -4, bodyX: 26 };
+const PR_SEQ = [0, 0, 1, 2, 2, 2, 1, 0], PRESS_T = 2.8;
+function press(d, work, t) {
+  const u = Math.max(0, t), ph = u / PRESS_T - Math.floor(u / PRESS_T);
+  const drop = work ? PR_SEQ[Math.floor(ph * 8)] : 0;
+  d.r(PR.postL, -3, PR.postR - PR.postL + 1, 2, K);
+  d.r(PR.plX, PR.sheetY, PR.plW, 1, K); d.px(PR.plX * P + 2, PR.sheetY * P + 2, PR.plW * P - 4, P - 4, W);
+  const plY = -8 + drop, scTop = plY - 10;
+  d.r(PR.scX, scTop, PR.scW, 10, K);
+  for (let j = 1; j < 9; j += 1.5) { const y0 = (scTop + j) * P; for (let i = 2; i < PR.scW * P - 2; i++) d.px(PR.scX * P + i, Math.round(y0 - i / 3), 1, 2, W); }
+  d.r(PR.scX - 1, scTop - 1, PR.scW + 2, 1, K);
+  d.r(PR.postL, PR.headY, 1, -3 - PR.headY, K); d.r(PR.postR, PR.headY, 1, -3 - PR.headY, K);
+  d.r(PR.postL - 1, -1, 2, 1, K); d.r(PR.postR, -1, 2, 1, K);
+  d.r(PR.postL - 1, PR.headY, PR.postR - PR.postL + 3, 2, K);
+  d.r(PR.plX, plY, PR.plW, 2, K);
+  const barY = plY - 3, bx0 = PR.scX - 1, bx1 = PR.bodyX;
+  d.px(PR.postR * P - 2, barY * P - 2, P + 4, P + 4, W);
+  d.r(bx0, barY, bx1 - bx0, 1, K);
+  const knobY = drop === 2 ? -4 : -5;
+  d.line(bx1 - 1.25, barY + 1, bx1 - 1.25, knobY, 3, K, false);
+  d.r(bx1 - 2, knobY, 2, 2, K);
+  d.r(PR.bodyX, -1, 3, 1, K);
+  const sq = drop === 2;
+  d.px(PR.bodyX * P, -4 * P + (sq ? P : 0), 18, sq ? 12 : 18, K); d.px(PR.bodyX * P + 2, -4 * P + 2 + (sq ? P : 0), 14, (sq ? 12 : 18) - 4, W);
+}
+
+// ---------------------------------------------------------------------------
+// The page
+// ---------------------------------------------------------------------------
+const ROWS = 30, FLOOR = 28;                    // rows in a view; the floor line's row from the top
+const state = { a: 0, t: 0, work: true };
+function paintTake(cv, take, s, win) {
+  const cols = win[1] - win[0], cell = P * s, Wd = cols * cell, H = (win[3] - win[2]) * cell;
+  if (cv.width !== Wd || cv.height !== H) { cv.width = Wd; cv.height = H; }
+  const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.fillStyle = PAL[0]; g.fillRect(0, 0, Wd, H);
+  const d = drawer(g, s, -win[0] * P, -win[2] * P);
+  take.draw(d, state.a, strokeOf(state.a), state.t, state.work);
+  g.fillStyle = PAL[K]; g.fillRect(0, -win[2] * P * s, Wd, 2 * s);  // the floor
+}
+function paintFamily(cv) {
+  const s = 1, pressCols = 32, cols = pressCols + 63, H = ROWS * P;
+  if (cv.width !== cols * P) { cv.width = cols * P; cv.height = H; }
+  const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.fillStyle = PAL[0]; g.fillRect(0, 0, cols * P, H);
+  press(drawer(g, s, 0, FLOOR * P), state.work, state.t);
+  const take = TAKES.find(x => x.id === PICK);
+  take.draw(drawer(g, s, (pressCols + 6) * P, FLOOR * P), state.a, strokeOf(state.a), state.t, state.work);
+  g.fillStyle = PAL[K]; g.fillRect(0, FLOOR * P, cols * P, 2);
+}
+const ONE = [-6, 57, -FLOOR, ROWS - FLOOR];
+const THREE = [-6, 57, -28, 1];
+const PICK = 2;
+const views = [];
+function build() {
+  const all = document.getElementById('all');
+  TAKES.forEach(take => {
+    const fig = document.createElement('figure'); fig.id = 'one-' + take.id;
+    fig.innerHTML = `<canvas></canvas><figcaption>${take.id} · <span class="ph">${take.name}</span>${take.id === PICK ? ' <span class="ph">(pick)</span>' : ''}</figcaption>`;
+    all.appendChild(fig);
+    views.push({ take, s: 1, win: ONE, cv: fig.querySelector('canvas') });
+  });
+  const host = document.getElementById('takes');
+  TAKES.forEach(take => {
+    const box = document.createElement('div'); box.className = 'take' + (take.id === PICK ? ' picked' : ''); box.id = 'take-' + take.id;
+    box.innerHTML = `<h3>${take.id} · <span class="ph">${take.name}</span>${take.id === PICK ? ' <span class="ph">(pick)</span>' : ''}</h3>
+      <p><span class="ph">${take.say}</span></p>
+      <div class="row">
+        <figure><canvas class="one"></canvas><figcaption><span class="ph">one times, zoom one</span></figcaption></figure>
+        <div class="scrollx"><figure><canvas class="three"></canvas><figcaption><span class="ph">three times</span></figcaption></figure></div>
+      </div>`;
+    host.appendChild(box);
+    views.push({ take, s: 1, win: ONE, cv: box.querySelector('canvas.one') });
+    views.push({ take, s: 3, win: THREE, cv: box.querySelector('canvas.three') });
+  });
+}
+const familyCv = () => document.querySelector('#family canvas');
+const paint = () => { for (const v of views) paintTake(v.cv, v.take, v.s, v.win); paintFamily(familyCv()); };
+// The wheel turns a held step every tenth of a second: a turn, a stroke, in 1.6 s.
+function advance(dt) { T += dt; if (!HELD) { state.t = T; state.a = Math.floor(T / 0.1) * TURN; } paint(); }
+let last = null;
+function frame(ts) { if (!PAUSED) advance(last == null ? 1 / 60 : Math.min(0.05, (ts - last) / 1000)); last = ts; requestAnimationFrame(frame); }
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  PAL = t === 'dark' ? DARKG : GREY;
+  document.querySelectorAll('[data-theme-btn]').forEach(b => b.classList.toggle('on', b.dataset.themeBtn === t));
+  paint();
+}
+// Held mid-stroke: the knob level on the far side, the blade halfway down,
+// the log half through.
+function mid(on = true) { HELD = on; if (on) { state.a = Math.PI; state.t = LOG_T * 0.25; } paint(); }
+
+// The critique, as it was done: each round is what the shot before it got
+// wrong and what changed.
+const ROUND1 = [
+  'The log could not be seen at all: the kerf was cleared four cells wide and the uncut log was all inside it. The kerf is now only the teeth\'s three cells, the bark runs up to them, and the teeth stand in open paper inside the log.',
+  'When the log was drawn black like the press\'s parts it merged into the black posts and bed. It is grey bark in an ink rim now (the log pile\'s tones), with its grain cut white, so it reads against the frame; the planks past the blade are pale.',
+  'The log was so short that by mid-stroke it was nearly all behind the blade. It is fourteen cells, its tail starts in the gap past the wheel, and every frame is moved two cells right to make that gap.',
+  'Take 2\'s and 3\'s blades went through white slots in the beams, and the slots split the head and the bed into two blocks: the closed shape was gone. The beams are whole now; the blade\'s ends ride inside them unseen, and only a strap and the crosshead (or the buckle) show beyond.',
+  'Take 1\'s sash had stiles a half-cell wide in two-px white grooves: hairlines. Its posts are three cells with a one-cell guide down the middle where the rails\' ends ride, and the stiles are gone.',
+  'The buckle and crosshead were cut white all through, a white box in a thin outline. They are solid ink with one white pin, like the press\'s parts.',
+  'The rod over the wheel read as a fifth spoke. It has a two-px paper rim now, so it reads in front of the spokes, and it passes behind the near post instead of cutting a white hole in it.',
+  'The blade plate was two cells; with three-cell teeth it ate six cells of a nine-cell log. The plate is one cell.'
+];
+const ROUND2 = [
+  'Take 3\'s buckle sank into the floor at the bottom of the stroke. The stroke is a cell higher, so the buckle stands on the floor at its lowest.',
+  'Take 3 stood ten cells taller than the press beside it. Its head is two rows lower; it is still the tallest, because the screw rides over it.',
+  'The crosshead of take 2 sat on the top edge of the view at the top of the stroke. The view is two rows taller.',
+  'The body stood two cells off the wheel, so even with the knob on its side the arm was a long hairline. It stands at the wheel now.',
+  'Take 3\'s dust stopped in the air under the bed. It falls to the floor.',
+  'The pick moved from take 3 to take 2. Beside the press, take 3\'s screw makes the saw mill read as a second press; take 2 is the built layout with the faults fixed, the strongest closed box at one times, and the only take where nothing busy sits under the log.'
+];
+const PICK_LINE = 'take 2, through the beams: the built frame saw with the blade filling the frame head to bed at every point of the stroke, its ends riding inside whole beams, so the box stays closed like the press. Second: take 3, the strained frame, which matches the press best but reads as a second press. Weakest: take 1, the sash, whose rails, ledges and guides read as shelves at one times.';
+build();
+document.getElementById('pick-line').textContent = PICK_LINE;
+for (const [id, list] of [['round1', ROUND1], ['round2', ROUND2]]) document.getElementById(id).innerHTML = list.map(s => `<li><span class="ph">${s}</span></li>`).join('');
+setTheme(isDark() ? 'dark' : 'light');
+document.querySelectorAll('[data-theme-btn]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.themeBtn)));
+document.getElementById('pause').addEventListener('click', () => { PAUSED = !PAUSED; });
+document.getElementById('mid').addEventListener('click', () => mid(!HELD));
+requestAnimationFrame(frame);
+window.__mock = { theme: setTheme, pause: p => { PAUSED = p; }, advance, mid, paint };
+</script>
+</body>
+</html>
