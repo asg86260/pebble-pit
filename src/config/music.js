@@ -113,52 +113,125 @@ export const MUSIC_PATTERNS = {
 
 // A track's effects chain (DESIGN.md, "A track's effects chain"). Each
 // effect has up to three knobs; a knob is a range with a default (`log` turns
-// it on a curve, for hertz and times), or a short list of `choices`. The
+// it on a curve, for hertz and times), or a short list of `choices`; `about`
+// is the sentence the bench shows for an effect or a knob. The
 // preview (preview.js) and the render (tools/music/mix.py) read the same
 // table, so a knob means the same thing to both.
-const MIX = { label: 'mix', min: 0, max: 1, def: 0.4 };
+const MIX = { label: 'mix', min: 0, max: 1, def: 0.4, about: 'How much of the effect you hear against the untouched sound.' };
+const RATE = (def, about) => ({ label: 'rate', min: 0.05, max: 5, def, unit: 'Hz', log: true, about });
+// Rates in beats keep a pulse on the beat at any tempo: a cycle of one beat,
+// two beats, and so on.
+const BEATS = (def, about) => ({ label: 'rate', choices: [0.25, 0.5, 1, 2, 4], names: ['1/16', '1/8', '1/4', '1/2', '1 bar'], def, about });
 export const MUSIC_FX = {
-  filter: { label: 'Filter', params: {
-    type: { label: 'type', choices: ['lowpass', 'highpass', 'bandpass'], def: 'lowpass' },
-    cutoff: { label: 'cutoff', min: 40, max: 16000, def: 1200, unit: 'Hz', log: true },
-    reso: { label: 'reso', min: 0, max: 1, def: 0.2 } } },
-  eq: { label: 'EQ', params: {
-    low: { label: 'low', min: -12, max: 12, def: 0, unit: 'dB' },
-    mid: { label: 'mid', min: -12, max: 12, def: 0, unit: 'dB' },
-    high: { label: 'high', min: -12, max: 12, def: 0, unit: 'dB' } } },
-  drive: { label: 'Drive', params: {
-    amount: { label: 'amount', min: 0, max: 36, def: 8, unit: 'dB' },
-    tone: { label: 'tone', min: 1000, max: 16000, def: 6000, unit: 'Hz', log: true },
+  filter: { label: 'Filter', group: 'tone', about: 'Cuts the top or the bottom off. A lowpass makes things dark and far away.', params: {
+    type: { label: 'type', choices: ['lowpass', 'highpass', 'bandpass'], def: 'lowpass', about: 'Lowpass keeps the lows, highpass the highs, bandpass a narrow middle.' },
+    cutoff: { label: 'cutoff', min: 40, max: 16000, def: 1200, unit: 'Hz', log: true, about: 'Where the cut starts. Lower is darker for a lowpass.' },
+    reso: { label: 'reso', min: 0, max: 1, def: 0.2, about: 'A ringing bump right at the cutoff. Higher sounds more synthy.' } } },
+  eq: { label: 'EQ', group: 'tone', about: 'Turns the lows, the mids and the highs up or down.', params: {
+    low: { label: 'low', min: -12, max: 12, def: 0, unit: 'dB', about: 'The bass end, below about 200 Hz.' },
+    mid: { label: 'mid', min: -12, max: 12, def: 0, unit: 'dB', about: 'The middle, around 1 kHz: the body of most sounds.' },
+    high: { label: 'high', min: -12, max: 12, def: 0, unit: 'dB', about: 'The top end, above about 5 kHz: air and sizzle.' } } },
+  autofilter: { label: 'Auto-filter', group: 'tone', about: 'A filter that opens and shuts by itself: a slow breathing sweep.', params: {
+    rate: RATE(0.25, 'How fast it sweeps. Slow sounds like breathing.'),
+    depth: { label: 'depth', min: 0, max: 1, def: 0.6, about: 'How far it sweeps either side of the center.' },
+    center: { label: 'center', min: 150, max: 8000, def: 1200, unit: 'Hz', log: true, about: 'The middle of the sweep. Lower stays darker.' } } },
+  drive: { label: 'Drive', group: 'crunch', about: 'Pushes the sound until it gets fuzzy and warm.', params: {
+    amount: { label: 'amount', min: 0, max: 36, def: 8, unit: 'dB', about: 'How hard it is pushed. A little is warm, a lot is fuzz.' },
+    tone: { label: 'tone', min: 1000, max: 16000, def: 6000, unit: 'Hz', log: true, about: 'Takes the fizz off the top. Lower is darker and more muffled.' },
     mix: { ...MIX, def: 0.7 } } },
-  bitcrush: { label: 'Bitcrush', params: {
-    bits: { label: 'bits', min: 2, max: 16, def: 8, step: 1 },
+  bitcrush: { label: 'Bitcrush', group: 'crunch', about: 'Fewer bits: hard digital grit, like an old console.', params: {
+    bits: { label: 'bits', min: 2, max: 16, def: 8, step: 1, about: 'Fewer bits is rougher. 16 is clean, 4 is very crushed.' },
     mix: { ...MIX, def: 0.5 } } },
-  chorus: { label: 'Chorus', params: {
-    rate: { label: 'rate', min: 0.05, max: 5, def: 0.7, unit: 'Hz', log: true },
-    depth: { label: 'depth', min: 0, max: 1, def: 0.35 },
+  downsample: { label: 'Downsample', group: 'crunch', about: 'A lower sample rate: a softer, grainier crunch.', params: {
+    rate: { label: 'rate', min: 1000, max: 44100, def: 11025, unit: 'Hz', log: true, about: 'Lower is grainier and more metallic. 44100 is clean.' },
+    mix: { ...MIX, def: 1 } } },
+  chorus: { label: 'Chorus', group: 'movement', about: 'Doubles the sound slightly out of tune: wide and shimmery.', params: {
+    rate: RATE(0.7, 'How fast the doubled copy drifts.'),
+    depth: { label: 'depth', min: 0, max: 1, def: 0.35, about: 'How far out of tune the copy drifts.' },
     mix: { ...MIX, def: 0.45 } } },
-  phaser: { label: 'Phaser', params: {
-    rate: { label: 'rate', min: 0.05, max: 5, def: 0.5, unit: 'Hz', log: true },
-    depth: { label: 'depth', min: 0, max: 1, def: 0.5 },
+  phaser: { label: 'Phaser', group: 'movement', about: 'A swirling, sweeping whoosh.', params: {
+    rate: RATE(0.5, 'How fast it swirls.'),
+    depth: { label: 'depth', min: 0, max: 1, def: 0.5, about: 'How wide the swirl sweeps.' },
     mix: { ...MIX, def: 0.5 } } },
-  // The delay's time is in beats, so it stays on the beat at any tempo.
-  delay: { label: 'Delay', params: {
-    time: { label: 'time', choices: [0.25, 0.5, 0.75, 1, 1.5, 2], names: ['1/16', '1/8', '3/16', '1/4', '3/8', '1/2'], def: 0.75 },
-    feedback: { label: 'feedback', min: 0, max: 0.9, def: 0.35 },
+  flanger: { label: 'Flanger', group: 'movement', about: 'A jet-plane sweep, stronger than chorus.', params: {
+    rate: RATE(0.3, 'How fast the jet sweeps by.'),
+    depth: { label: 'depth', min: 0, max: 1, def: 0.6, about: 'How far it sweeps.' },
+    feedback: { label: 'feedback', min: 0, max: 0.95, def: 0.6, about: 'Higher rings and whistles more.' } } },
+  wobble: { label: 'Wobble', group: 'movement', about: 'Wow and flutter: the pitch drifts like a worn tape.', params: {
+    wow: { label: 'wow', min: 0.1, max: 3, def: 0.6, unit: 'Hz', log: true, about: 'The slow drift: how fast the tape sags and recovers.' },
+    depth: { label: 'depth', min: 0, max: 1, def: 0.4, about: 'How far out of tune it drifts. A little goes a long way.' },
+    flutter: { label: 'flutter', min: 0, max: 1, def: 0.2, about: 'A fast, fine shake on top, like a cheap player.' } } },
+  tremolo: { label: 'Tremolo', group: 'movement', about: 'The volume pulses up and down, in time with the beat.', params: {
+    rate: BEATS(0.5, 'One pulse every this much of the beat.'),
+    depth: { label: 'depth', min: 0, max: 1, def: 0.5, about: 'How far the volume dips on each pulse.' },
+    shape: { label: 'shape', choices: ['sine', 'square'], def: 'sine', about: 'Sine is a smooth swell, square a hard chop.' } } },
+  autopan: { label: 'Auto-pan', group: 'movement', about: 'Moves the sound from left to right and back, in time.', params: {
+    rate: BEATS(2, 'One trip left and right every this much of the beat.'),
+    depth: { label: 'depth', min: 0, max: 1, def: 0.7, about: 'How far it travels to each side.' } } },
+  delay: { label: 'Delay', group: 'space', about: 'Echoes, in time with the beat.', params: {
+    time: { label: 'time', choices: [0.25, 0.5, 0.75, 1, 1.5, 2], names: ['1/16', '1/8', '3/16', '1/4', '3/8', '1/2'], def: 0.75,
+      about: 'The gap between echoes, as a slice of the beat. 3/16 is the classic bouncy one.' },
+    feedback: { label: 'feedback', min: 0, max: 0.9, def: 0.35, about: 'How many echoes: higher keeps them going longer.' },
     mix: { ...MIX, def: 0.3 } } },
-  reverb: { label: 'Reverb', params: {
-    size: { label: 'size', min: 0, max: 1, def: 0.55 },
-    damp: { label: 'damping', min: 0, max: 1, def: 0.5 },
+  reverb: { label: 'Reverb', group: 'space', about: 'A room around the sound, from a small close one to a huge hall.', params: {
+    size: { label: 'size', min: 0, max: 1, def: 0.55, about: 'How big the room is: a closet at 0, a cathedral at 1.' },
+    damp: { label: 'damping', min: 0, max: 1, def: 0.5, about: 'Soft walls: higher makes the tail darker.' },
     mix: { ...MIX, def: 0.25 } } },
-  comp: { label: 'Compressor', params: {
-    threshold: { label: 'threshold', min: -40, max: 0, def: -18, unit: 'dB' },
-    ratio: { label: 'ratio', min: 1, max: 20, def: 3, log: true },
-    release: { label: 'release', min: 10, max: 1000, def: 150, unit: 'ms', log: true } } },
+  width: { label: 'Width', group: 'space', about: 'Spreads the sound wide across the speakers, or narrows it to the middle.', params: {
+    amount: { label: 'amount', min: 0, max: 2, def: 1.5, about: '0 is mono in the middle, 1 leaves it as it is, 2 is extra wide.' } } },
+  vinyl: { label: 'Vinyl', group: 'texture', about: 'Adds crackle and hiss under the track.', params: {
+    crackle: { label: 'crackle', min: 0, max: 1, def: 0.4, about: 'Pops and clicks, like dust on a record.' },
+    hiss: { label: 'hiss', min: 0, max: 1, def: 0.3, about: 'A soft bed of noise underneath.' },
+    wear: { label: 'wear', min: 0, max: 1, def: 0.3, about: 'An old, worn record: takes off the top end.' } } },
+  pitch: { label: 'Pitch shift', group: 'texture', about: 'Blends in a copy an octave up or down: a sparkle, or a sub.', params: {
+    interval: { label: 'interval', choices: [-12, -7, -5, 5, 7, 12], names: ['-oct', '-5th', '-4th', '+4th', '+5th', '+oct'], def: 12,
+      about: 'How far the copy is moved. An octave up sparkles, an octave down adds weight.' },
+    mix: { ...MIX, def: 0.3 } } },
+  comp: { label: 'Compressor', group: 'dynamics', about: 'Evens out the loud and the quiet, so it sits steady.', params: {
+    threshold: { label: 'threshold', min: -40, max: 0, def: -18, unit: 'dB', about: 'How loud before it steps in. Lower squashes more.' },
+    ratio: { label: 'ratio', min: 1, max: 20, def: 3, log: true, about: 'How hard it squashes. 2 is gentle, 10 is a wall.' },
+    release: { label: 'release', min: 10, max: 1000, def: 150, unit: 'ms', log: true, about: 'How quickly it lets go after a loud bit.' } } },
   // The pump under the kick: dips the track on every kick of the song's drums.
-  duck: { label: 'Duck', params: {
-    amount: { label: 'amount', min: 0, max: 24, def: 6, unit: 'dB' },
-    release: { label: 'release', min: 0.03, max: 0.6, def: 0.15, unit: 's', log: true } } },
+  duck: { label: 'Duck', group: 'dynamics', about: 'Dips the track on every kick: the pumping sound.', params: {
+    amount: { label: 'amount', min: 0, max: 24, def: 6, unit: 'dB', about: 'How far it dips on each kick.' },
+    release: { label: 'release', min: 0.03, max: 0.6, def: 0.15, unit: 's', log: true, about: 'How quickly it swells back after each kick.' } } },
 };
+// The panel's groups, in the order it lists them.
+export const MUSIC_FX_GROUPS = [
+  ['tone', 'Tone'], ['crunch', 'Crunch'], ['movement', 'Movement'], ['space', 'Space'], ['texture', 'Texture'], ['dynamics', 'Dynamics'],
+];
+// Starting points: a whole chain to drop on a track and then tweak.
+export const MUSIC_FX_PRESETS = [
+  { name: 'Muffled crunch', about: 'Dark, crushed and far away, like your test song.', chain: [
+    ['bitcrush', { bits: 4, mix: 0.8 }], ['drive', { amount: 9, tone: 1800, mix: 0.4 }], ['filter', { type: 'lowpass', cutoff: 2200, reso: 0.1 }]] },
+  { name: 'Lo-fi tape', about: 'A worn cassette: a slight warble, soft grain, a little hiss.', chain: [
+    ['wobble', { wow: 0.5, depth: 0.3, flutter: 0.2 }], ['downsample', { rate: 16000, mix: 1 }],
+    ['filter', { type: 'lowpass', cutoff: 4000, reso: 0.1 }], ['vinyl', { crackle: 0.25, hiss: 0.2, wear: 0.3 }]] },
+  { name: 'Dreamy pad', about: 'Wide and slowly breathing, for chords that hang in the air.', chain: [
+    ['chorus', { rate: 0.4, depth: 0.5, mix: 0.5 }], ['autofilter', { rate: 0.15, depth: 0.5, center: 1500 }],
+    ['reverb', { size: 0.85, damp: 0.4, mix: 0.45 }]] },
+  { name: 'Underwater', about: 'Muffled and wobbly, like hearing it through water.', chain: [
+    ['filter', { type: 'lowpass', cutoff: 600, reso: 0.35 }], ['wobble', { wow: 0.4, depth: 0.5, flutter: 0 }],
+    ['chorus', { rate: 0.3, depth: 0.6, mix: 0.5 }], ['reverb', { size: 0.7, damp: 0.7, mix: 0.4 }]] },
+  { name: 'Old radio', about: 'Thin and crackly, from a speaker in another room.', chain: [
+    ['filter', { type: 'bandpass', cutoff: 1500, reso: 0.3 }], ['drive', { amount: 12, tone: 4000, mix: 0.6 }],
+    ['downsample', { rate: 8000, mix: 1 }], ['vinyl', { crackle: 0.5, hiss: 0.35, wear: 0.5 }]] },
+  { name: 'Space echo', about: 'Echoes that trail away into the distance.', chain: [
+    ['delay', { time: 0.75, feedback: 0.6, mix: 0.4 }], ['filter', { type: 'lowpass', cutoff: 3500, reso: 0.1 }],
+    ['reverb', { size: 0.75, damp: 0.5, mix: 0.35 }]] },
+  { name: 'Warm bass', about: 'Round and full, and it breathes with the kick.', chain: [
+    ['drive', { amount: 6, tone: 3000, mix: 0.6 }], ['filter', { type: 'lowpass', cutoff: 700, reso: 0.15 }],
+    ['comp', { threshold: -20, ratio: 4, release: 120 }], ['duck', { amount: 6, release: 0.15 }]] },
+  { name: 'Chip crunch', about: 'Old console grit, kept in the middle.', chain: [
+    ['bitcrush', { bits: 6, mix: 1 }], ['downsample', { rate: 11025, mix: 1 }], ['width', { amount: 0.3 }]] },
+  { name: 'Swirl keys', about: 'Electric-piano wobble, gently pulsing.', chain: [
+    ['phaser', { rate: 0.3, depth: 0.6, mix: 0.5 }], ['tremolo', { rate: 0.5, depth: 0.35, shape: 'sine' }],
+    ['reverb', { size: 0.5, damp: 0.5, mix: 0.3 }]] },
+  { name: 'Wide shimmer', about: 'A sparkly octave above, spread wide.', chain: [
+    ['pitch', { interval: 12, mix: 0.25 }], ['chorus', { rate: 0.5, depth: 0.4, mix: 0.4 }],
+    ['width', { amount: 1.8 }], ['reverb', { size: 0.8, damp: 0.4, mix: 0.4 }]] },
+];
+
 // A new song's following parts start with these chains.
 export const MUSIC_START_FX = {
   bass: [{ type: 'duck', params: { amount: 5 } }],
