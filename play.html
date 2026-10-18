@@ -23,6 +23,7 @@ try {
   if (d == null) { var p = JSON.parse(localStorage.getItem('boulder-clicker/prefs')); d = p && p.dark; }
   if (d == null) d = matchMedia('(prefers-color-scheme: dark)').matches;
   if (d) document.documentElement.classList.add('dark');
+  if (/[?&]readable\b/.test(location.search) || (p && p.readable)) document.documentElement.classList.add('readable');
 } catch (e) {}
 </script>
 </head>
@@ -233,6 +234,8 @@ try {
       <button id="motion" type="button" data-pane="settings" hidden data-l10n-id="set-motion-full">motion: full</button>
       <!-- white on black (prefs.js, dark): follows the system until pressed -->
       <button id="dark" type="button" data-pane="settings" hidden data-l10n-id="set-dark-off">dark: off</button>
+      <!-- the page's words in the readable face (readable.js) -->
+      <button id="readable" type="button" data-pane="settings" hidden data-l10n-id="set-readable-off">readable text: off</button>
       <!-- the whole screen, where the platform will give it (fullscreen.js);
            where it will not -- an iphone -- the line under says what does -->
       <button id="fullscreenrow" type="button" data-pane="settings" hidden data-l10n-id="set-fullscreen-off">fullscreen: off</button>

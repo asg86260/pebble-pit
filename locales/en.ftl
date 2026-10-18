@@ -486,6 +486,12 @@ set-dark-on = dark: on
 # settings dark switch
 set-dark-off = dark: off
 
+# settings readable-text switch: the page's words in a plainer face, a size up
+set-readable-on = readable text: on
+
+# settings readable-text switch
+set-readable-off = readable text: off
+
 # settings sound switch
 set-sound-off = sound: off
 

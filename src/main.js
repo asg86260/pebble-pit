@@ -3,6 +3,9 @@
 
 import './style.css';
 import './shelf.css';   // the boards are shelves (DESIGN.md, "The shelf"); the card rules stay for the crew list
+// the readable-text face (readable.js): fetched only when a page sets words in it
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/700.css';
 
 // First, so that a throw anywhere below has something listening for it.
 import { fatal } from './crash.js';

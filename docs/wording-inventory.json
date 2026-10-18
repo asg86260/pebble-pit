@@ -1029,6 +1029,20 @@
   "text": "dark: off"
  },
  {
+  "id": "set-readable-on",
+  "group": "Settings",
+  "where": "src/readable.js",
+  "context": "settings readable-text switch: the page's words in a plainer face, a size up",
+  "text": "readable text: on"
+ },
+ {
+  "id": "set-readable-off",
+  "group": "Settings",
+  "where": "index.html",
+  "context": "settings readable-text switch",
+  "text": "readable text: off"
+ },
+ {
   "id": "set-sound-off",
   "group": "Settings",
   "where": "src/settings.js",

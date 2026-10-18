@@ -5,7 +5,7 @@
 
 import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
          boulderWorld, onScreen, point } from './kit.js';
-import { pref, setPref, reducedMotion, coarse, dark } from '../prefs.js';
+import { pref, setPref, reducedMotion, coarse, dark, readable } from '../prefs.js';
 import { setSlot, storeSettled, clear, slotRaw, writeSlot } from '../save.js';
 import { S } from '../state.js';
 import { version } from '../version.js';
@@ -88,6 +88,7 @@ function tabRows(root) {
 // has no touch or fullscreen row).
 function wantRows(tab, landing) {
   if (tab === 'graphics') return ['motion: ' + (reducedMotion() ? 'less' : 'full'), 'dark: ' + (dark() ? 'on' : 'off'),
+    'readable text: ' + (readable() ? 'on' : 'off'),
     ...(landing ? [] : [fullscreenAble() ? 'fullscreen: off' : msg('set-fullscreen-note')])];
   if (tab === 'audio') return ['sound: ' + (pref('muted') ? 'off' : 'on'), 'slider volume'];
   if (tab === 'controls') return [...(landing ? [] : ['touch: ' + (coarse() ? 'on' : 'off')]), 'the controls table'];
@@ -910,5 +911,38 @@ export const TESTS = [
       ok(kept, 'the save comes back with the notice on it', `${loaded}; ${S.won.join(',')}`),
       ok(!back, 'and says nothing about it', JSON.stringify(back)),
     ];
+  }],
+
+  // Readable text (readable.js), pressed on the graphics tab: the page turns
+  // to the face in place and the face arrives, and pressed again it turns back.
+  ['readable text turns the page to its face and back', async () => {
+    newRun();
+    await settle();
+    await press();
+    document.getElementById('settingsbtn').click();
+    document.querySelector('#held .settabs button[data-tab="graphics"]').click();
+    const btn = document.getElementById('readable');
+    const face = () => getComputedStyle(document.body).fontFamily;
+    try {
+      btn.click();
+      await document.fonts.ready;
+      await raf();
+      const on = { cls: document.documentElement.classList.contains('readable'), face: face(), said: btn.textContent,
+                   kept: pref('readable'), loaded: document.fonts.check('14px "IBM Plex Mono"') };
+      btn.click();
+      await raf();
+      const off = { cls: document.documentElement.classList.contains('readable'), face: face(), said: btn.textContent };
+      return [
+        ok(on.cls && on.kept && /IBM Plex Mono/.test(on.face) && on.said === msg('set-readable-on'),
+           'pressed, the page is in the readable face and the switch says so', JSON.stringify(on)),
+        ok(on.loaded, 'and the face itself arrived', JSON.stringify(on)),
+        ok(!off.cls && !/IBM Plex Mono/.test(off.face) && off.said === msg('set-readable-off'),
+           'pressed again, the house type is back', JSON.stringify(off)),
+      ];
+    } finally {
+      setPref('readable', false);
+      document.documentElement.classList.remove('readable');
+      resume();
+    }
   }],
 ];

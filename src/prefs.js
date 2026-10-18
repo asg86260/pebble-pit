@@ -11,6 +11,7 @@ const DEFAULTS = {
   volume: 1,         // the slider: a share of SND_MASTER, 0..1, so 1 is "quiet"
   touch: null,       // null = follow the pointer; true = a thumb; false = a mouse
   dark: null,        // null = follow the system; true = white on black; false = black on white
+  readable: false,   // the page's words in the readable face (readable.js)
   crew: 'show',      // the crew drawn 'show', 'fade' or 'hide', so a crowded yard can still be read
   language: null,    // null = follow Steam, the system or the browser; else a file in locales/ (lang.js); read at boot
   feedbackDraft: '', // the feedback form's words, kept until they are sent (feedback.js); never the save
@@ -86,4 +87,12 @@ export function dark() {
   if (typeof location !== 'undefined' && /[?&]dark\b/.test(location.search)) return true;
   if (prefs.dark != null) return prefs.dark;
   return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+// Whether the page's words are set in the readable face (readable.js): `?readable`
+// in the address for a shot, else the sheet's switch. The head of each page
+// asks the store the same, before the first paint (play.html, index.html).
+export function readable() {
+  if (typeof location !== 'undefined' && /[?&]readable\b/.test(location.search)) return true;
+  return !!prefs.readable;
 }

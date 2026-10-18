@@ -20,6 +20,24 @@ A short, finite, cozy incremental. No prestige, no ascension, no reset loop. One
    rather than a milestone the UI announced in advance. Later unlocks can be visible rows in
    the shop; this one should not be.
 
+## Readable text (built 2026-10-18)
+
+The game has more words in it than it did -- names, slots, notes, a locked
+tile's way open -- and the house type (a system mono at 12px, much of it in
+capitals with wide tracking) is a look before it is a reading face. A switch
+on the settings' graphics tab trades the look for reading, and leaves the
+look as the default. The owner voted on a mock of four faces: IBM Plex Mono
+won over Atkinson Hyperlegible and the system sans because it keeps the
+typewriter's even columns, so the boards and sheets still read as this game.
+
+It is the type's knobs turned, not a second stylesheet: `--face`, the size
+scale, `--track` to nothing, and `--prose-case` (the capitals on running
+sentences -- the tooltip, a board's note) to none. Labels and headings keep
+their capitals. The yard's own canvas lettering is a picture and is left
+alone. The class is set in each page's head before the first paint, and the
+switch turns it in place, asking for a resize so every measured width is
+measured again in the new face.
+
 ## Dark mode (built 2026-09-16)
 
 A dark page for a dark room: not the light page turned over but a page of

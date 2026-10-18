@@ -18,6 +18,7 @@ import { showCloud, CLOUD_LOOK_MS } from './cloudsheet.js';
 import { cloudReady, cloudStatus } from './cloud.js';
 import { cloudNoticeDue } from './notices.js';
 import { msg } from './lang.js';
+import { mountReadable, sayReadable } from './readable.js';
 import { fillLanguages } from './langpage.js';
 import { focusFirstRow, mountTabs } from './settingstabs.js';
 import { feedbackReady } from './feedback.js';
@@ -178,6 +179,10 @@ darkEl.addEventListener('click', () => {
   leave(location.href);
 });
 
+// The readable-text switch turns the page in place (readable.js).
+const readableEl = document.getElementById('readable');
+mountReadable(readableEl);
+
 // In the Electron shell the save goes out and comes in through native
 // dialogs; the clipboard and the paste box are the web page's way.
 // `window.desk` is reached here and in save.js and nowhere else in src/.
@@ -281,6 +286,7 @@ if (typeof MutationObserver !== 'undefined') new MutationObserver(() => {
   sayMotion();
   sayTouch();
   sayDark();
+  sayReadable(readableEl);
   paste.hidden = true;
   box.value = '';
   said.textContent = '';
