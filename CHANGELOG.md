@@ -176,6 +176,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The yard has a sound for each kind of work, each in its own register so a busy yard stays clear: footsteps, picks, hammers, shovels, carts tipping, the belt, grains landing, bodies thrown, stations landing, birds, the casino's win and loss, and the dome and the rift; the busiest are heard only where you are looking (test/sound-lanes.test.mjs).
 - The dark switch steps light, dim and dark: dim is the old dark page, and dark is a new one drawn for the dark -- a graphite paper where black stays black (the rock, the pit, hats, banners, chips and selected rows), words and lines in a light ink, lit windows and the portal still lit, and the deep as it was (test/settings.test.mjs; test/ui-tokens.test.mjs; src/selftest/textaa.js).
 - The game's words are set in Courier Prime, a Courier drawn for reading, bundled so every machine sees the same face (test/l10n-type.test.mjs).
 - A "readable text" switch on the settings' graphics tab sets the game's words in DM Mono, a size up, without the wide spacing, and tooltips and board notes in their own case (src/selftest/settings.js).

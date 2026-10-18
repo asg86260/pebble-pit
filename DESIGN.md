@@ -22296,7 +22296,18 @@ run, and the bench is where a cutscene is written from now on.
 3. **The rise into heaven** gets a mock-and-vote of its own once the shot
    exists. Its shape is the act 3 intro's question, not the shot's.
 
-## The yard's sound set, by lanes (design, not built)
+## The yard's sound set, by lanes (built 2026-10-18)
+
+*Built: 40 recorded takes and 3 Surge renders in `public/sfx/` (416 KB, with
+`SOURCES.md`), samples beside recipes in `audio.js`, rows marked `onScreen`
+and `perS`, and six new moments wired (`build-blow`, `pick-swing`,
+`shovel-scrape`, `cart-tip`, `place-land`, `body-land`). Two amendments from
+building it: the camera's gate judges each event where it happened, before
+it can join a fold window (a window's place is the average of all it holds,
+and a yard's worth of steps averages to its middle); and the audition is a
+tool, `tools/node/sound-audition.mjs`, which mixes exactly what the decision
+half lets through (`onStrike` in audio.js) from a view held on the crew. On
+the endgame save it measured -24.9 LUFS against today's -23.0.*
 
 *Asked for 2026-10-18: the owner heard nineteen first-wave drafts (all
 variations of the existing recipes) and named two problems: they sound like

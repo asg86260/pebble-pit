@@ -61,6 +61,10 @@ export const SND_RELEASE_TAILS = 6;
 // The sample rate every strike is rendered at, whatever the context runs at.
 // The bench renders at this rate, so what was heard there is what ships.
 export const SND_RATE = 44100;
+// Where the recorded takes live, beside the page (public/sfx/), and how far
+// past the view's edge an on-screen-only row is still heard, in world pixels.
+export const SND_SAMPLE_DIR = 'sfx/';
+export const SND_ONSCREEN_PAD = 40;
 
 // --- the recipes, and which event plays which ----------------------------------
 // A recipe, rendered sample by sample. The fields:
@@ -152,7 +156,13 @@ export const RECIPES = {
                     click: 0, clickMs: 0.5, clickHz: 2700,
                     noise: 0.43, noiseHz: 1040, noiseSlide: 3.35, noiseQ: 2.6, noiseMs: 138,
                     sub: 1, subHz: 28, subDrop: 1, subMs: 28,
-                    bits: 6, hold: 1, cut: 600, drive: 0.5, gain: 0.71, vary: 1 }
+                    bits: 6, hold: 1, cut: 600, drive: 0.5, gain: 0.71, vary: 1 },
+  // The first wave's recipes (2026-10-18): the lane of fine grit and the
+  // lane of landings, drawn from the recipes above.
+  'grain patter': { wave: 'sine', hz: 900, slide: 1.3, slideMs: 1, decay: 10, level: 0.2, duty: 0.05, click: 0, clickMs: 0.5, clickHz: 500, noise: 0.6, noiseHz: 2200, noiseSlide: 1, noiseQ: 2, noiseMs: 3, sub: 0, subHz: 28, subDrop: 1, subMs: 10, bits: 16, hold: 1, cut: 3000, drive: 0.5, gain: 0.25, vary: 1 },
+  'roomba draw': { wave: 'sine', hz: 300, slide: 2, slideMs: 150, decay: 10, level: 0.05, duty: 0.05, click: 0, clickMs: 0.5, clickHz: 500, noise: 1, noiseHz: 1800, noiseSlide: 0.3, noiseQ: 1, noiseMs: 60, sub: 0, subHz: 28, subDrop: 1, subMs: 10, bits: 16, hold: 1, cut: 3500, drive: 1, gain: 0.4, vary: 1, noiseHold: 60 },
+  'works settle': { wave: 'sine', hz: 32, slide: 0.25, slideMs: 1, decay: 10, level: 1, duty: 0.05, click: 0.7, clickMs: 0.5, clickHz: 8000, noise: 0.8, noiseHz: 120, noiseSlide: 0.25, noiseQ: 0.3, noiseMs: 25, sub: 0.6, subHz: 50, subDrop: 2.4, subMs: 60, bits: 16, hold: 1, cut: 1300, drive: 2.6, gain: 0.35, vary: 1 },
+  'station settle': { wave: 'sine', hz: 32, slide: 0.25, slideMs: 1, decay: 10, level: 1, duty: 0.05, click: 0.7, clickMs: 0.5, clickHz: 8000, noise: 0.8, noiseHz: 90, noiseSlide: 0.25, noiseQ: 0.3, noiseMs: 18, sub: 0.6, subHz: 52, subDrop: 2.4, subMs: 55, bits: 16, hold: 1, cut: 1300, drive: 2.6, gain: 0.32, vary: 1 }
 };
 
 // Every event in the yard that can make a sound, and what it plays. The key is
@@ -169,19 +179,19 @@ export const SOUNDS = {
   'rock-crit':    { label: 'you crit the rock',                         cls: 'hand',  recipe: 'stone 2' },
   'rock-swing':   { label: "a body's or the ram's swing at the rock",   cls: 'fold',  recipe: 'worker mine' },
   'crew-crit':    { label: "a body's crit swing at the rock",           cls: 'fold',  recipe: 'worker crit' },
-  'bird-startle': { label: 'you knock a bird off its line',             cls: 'hand',  recipe: null },
-  'rock-through': { label: 'the last sheet of a rock cell gives way',   cls: 'fold',  recipe: null },
+  'bird-startle': { label: 'you knock a bird off its line', cls: 'hand', recipe: { sample: ['bird-startle-1.ogg', 'bird-startle-2.ogg', 'bird-startle-3.ogg'], seconds: 0.35, gain: 1, vary: 0.6 } },
+  'rock-through': { label: 'the last sheet of a rock cell gives way', cls: 'fold', recipe: { sample: ['rock-through-1.ogg', 'rock-through-2.ogg', 'rock-through-3.ogg'], seconds: 0.4, gain: 1, vary: 0.6 } },
   'boulder-land': { label: 'the boulder lands',                         cls: 'punct', recipe: 'boulder-land' },
   'arch-catch':   { label: 'the boulder lands on the arch',             cls: 'punct', recipe: 'arch-catch' },
-  'footstep':     { label: "a body's footstep",                         cls: 'fold',  recipe: null },
+  'footstep': { label: "a body's footstep", cls: 'fold', recipe: { sample: ['footstep-1.ogg', 'footstep-2.ogg', 'footstep-3.ogg', 'footstep-4.ogg'], seconds: 0.25, gain: 1, vary: 0.8 }, onScreen: true, perS: 4 },
   // The machines strike as the workers do, and as quietly: a machine is a
   // body's work done faster, not a louder body.
   'machine-beat': { label: 'a beat of the ram or the tiller',           cls: 'fold',  recipe: 'worker mine' },
   'drill-beat':   { label: 'a beat of the drill',                       cls: 'fold',  recipe: 'worker mine' },
-  'roomba-suck':  { label: 'a roomba takes in a patch of mess',         cls: 'fold',  recipe: null },
-  'belt-load':    { label: 'the scoop sets a chunk on the belt',        cls: 'fold',  recipe: null },
-  'belt-catch':   { label: 'a thrown chunk lands on the belt',          cls: 'fold',  recipe: null },
-  'grain-land':   { label: 'a grain comes to rest on the ground',       cls: 'fold',  recipe: null },
+  'roomba-suck': { label: 'a roomba takes in a patch of mess', cls: 'fold', recipe: 'roomba draw', onScreen: true },
+  'belt-load': { label: 'the scoop sets a chunk on the belt', cls: 'fold', recipe: { sample: ['belt-load-1.ogg', 'belt-load-2.ogg', 'belt-load-3.ogg'], seconds: 0.25, gain: 1, vary: 0.6 }, onScreen: true },
+  'belt-catch': { label: 'a thrown chunk lands on the belt', cls: 'fold', recipe: { sample: ['belt-catch-1.ogg', 'belt-catch-2.ogg', 'belt-catch-3.ogg', 'belt-catch-4.ogg'], seconds: 0.15, gain: 1, vary: 0.8 }, onScreen: true, perS: 6 },
+  'grain-land': { label: 'a grain comes to rest on the ground', cls: 'fold', recipe: 'grain patter', onScreen: true, perS: 6 },
   'pit-land':     { label: 'a grain goes into the pit, pile or rift',   cls: 'each',  recipe: 'dust-gain' },
   'meteor-call':  { label: 'the sky is summoned',                       cls: 'punct', recipe: 'sun summon' },
   'bolt-throw':   { label: 'a wizard throws a bolt at the star',        cls: 'fold',  recipe: 'bolt throw' },
@@ -196,11 +206,23 @@ export const SOUNDS = {
   'bin-thud':     { label: 'a grain lands in a bin',                    cls: 'each',  recipe: 'dust-gain' },
   'edge-hit':     { label: 'a grain lands in a x39 bin',                cls: 'punct', recipe: 'stone 2' },
   'hopper-land':  { label: 'a grain of the stake lands in the hopper',  cls: 'each',  recipe: 'dust-gain' },
-  'jackpot':      { label: 'the hand pays more than it took',           cls: 'punct', recipe: null },
-  'dud':          { label: 'the hand pays less than it took',           cls: 'hand',  recipe: null },
-  'work-land':    { label: 'a building comes down on its ground',       cls: 'punct', recipe: null },
-  'rift-tear':    { label: 'the pit floor tears',                       cls: 'punct', recipe: null },
-  'rift-open':    { label: 'the pit floor gives way',                   cls: 'punct', recipe: null }
+  'jackpot': { label: 'the hand pays more than it took', cls: 'punct', recipe: { sample: ['jackpot-1.ogg', 'jackpot-2.ogg'], seconds: 0.796, gain: 1, vary: 0.3 } },
+  'dud': { label: 'the hand pays less than it took', cls: 'hand', recipe: { sample: ['dud-1.ogg', 'dud-2.ogg', 'dud-3.ogg'], seconds: 0.261, gain: 1, vary: 0.6 } },
+  'work-land': { label: 'a building comes down on its ground', cls: 'punct', recipe: 'works settle' },
+  'rift-tear':    { label: 'the pit floor tears',                       cls: 'punct', recipe: { sample: ['rift-tear-1.ogg'], seconds: 2.57, gain: 1, vary: 0.2 } },
+  'rift-open':    { label: 'the pit floor gives way',                   cls: 'punct', recipe: { sample: ['rift-open-1.ogg'], seconds: 2.9, gain: 1, vary: 0.2 } },
+  // The first wave (2026-10-18), each on its own lane (DESIGN.md, "The
+  // yard's sound set, by lanes").
+  'build-blow':    { label: "a builder's hammer lands",                 cls: 'fold',  recipe: { sample: ['build-blow-1.ogg', 'build-blow-2.ogg', 'build-blow-3.ogg', 'build-blow-4.ogg'], seconds: 0.35, gain: 1, vary: 0.6 } },
+  'pick-swing':    { label: "a quarrier's pick strikes the cut",        cls: 'fold',  recipe: { sample: ['pick-swing-1.ogg', 'pick-swing-2.ogg', 'pick-swing-3.ogg', 'pick-swing-4.ogg'], seconds: 0.3, gain: 1, vary: 0.6 } },
+  'shovel-scrape': { label: 'a shoveller scrapes muck',                 cls: 'fold',  recipe: { sample: ['shovel-scrape-1.ogg', 'shovel-scrape-2.ogg', 'shovel-scrape-3.ogg', 'shovel-scrape-4.ogg'], seconds: 0.35, gain: 1, vary: 0.6 }, onScreen: true },
+  'cart-tip':      { label: 'a load tipped onto the belt or the pile',  cls: 'fold',  recipe: { sample: ['cart-tip-1.ogg', 'cart-tip-2.ogg', 'cart-tip-3.ogg'], seconds: 0.7, gain: 1, vary: 0.6 } },
+  'place-land':    { label: 'a station finishes rising and lands',      cls: 'punct', recipe: 'station settle' },
+  'body-land':     { label: 'a body you threw hits the ground',         cls: 'punct', recipe: { sample: ['body-land-1.ogg', 'body-land-2.ogg', 'body-land-3.ogg'], seconds: 0.4, gain: 1, vary: 0.6 } },
+  // The sky's and the rift's are rendered from Surge XT patches (Pads/Yeti
+  // Funeral, Percussion/Kick 909ish slowed, Plucks/Diamonds) through the
+  // effects, not recorded: magic is the one lane nothing in a yard makes.
+  'dome-burst':    { label: 'the dome bursts the boulder into grains',  cls: 'punct', recipe: { sample: ['dome-burst-1.ogg'], seconds: 1.5, gain: 1, vary: 0.2 } }
 };
 
 // `hard` in [0, 1] can move the body and the grit down and dull the grit --
