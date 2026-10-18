@@ -187,6 +187,9 @@ this section; the release that switches it on moves these under Unreleased.
 - The appearance page's tiles are four to a row, every name and unlock line shows whole and wraps at spaces, and what opens a locked tile comes up in the game's tooltip; the line under the grid is gone, so hovering never moves the page (src/selftest/wardrobe.js).
 - On a gamepad the focus brackets travel from one thing to the next where you can follow them, up to the corner buttons, onto a board's rows and back, while the camera glides to center each one, both eased in and out (test/pad-glide.test.mjs; src/selftest/pad.js, "the marker travels across to the corner").
 - A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).
+- In the afterlife a click on a pine or a stump lands exactly where it is drawn (test/after-grove-hits.test.mjs).
+- In the afterlife haulers put the chipper's logs down on its log pile, not at its jaw (test/after-loop.test.mjs).
+- In the afterlife a member bought into a post comes out of the crowd behind the camp near it, a few seconds' walk instead of half a minute (test/after-loop.test.mjs).
 
 ## v0.6.0 — 2026-10-16
 

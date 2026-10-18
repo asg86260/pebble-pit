@@ -26,12 +26,16 @@ export const toneOf = (pal, x, y, seed = 0) => pal[Math.floor(hash(x * 13.1 + y 
 export const now = () => (S.after ? S.after.t : 0);
 export const inView = (x, w) => x + w >= S.camX && x <= S.camX + S.viewW;
 
-export function frame(ox, oy, flip = 0) {
+// With `sink`, the frame paints nothing and hands every rect, in its own
+// unturned px, to sink(x, y, w, h) instead: how a drawing's silhouette is
+// read off the drawing itself (`silhouette`).
+export function frame(ox, oy, flip = 0, sink = null) {
   const X = (x, w) => (flip ? ox + flip * P - x - w : ox + x);
   const d = {
     ox, oy,
     // local px: a rect, whole pixels
     px(x, y, w, h, tone) {
+      if (sink) { sink(x, y, w, h); return; }
       ctx.fillStyle = GREY[tone];
       ctx.fillRect(Math.round(X(x, w)), Math.round(oy + y), Math.round(w), Math.round(h));
     },
@@ -51,7 +55,7 @@ export function frame(ox, oy, flip = 0) {
         d.px(Math.round((x0 + (x1 - x0) * f) * P - o), Math.round((y0 + (y1 - y0) * f) * P - o), w, w, tone);
       }
     },
-    fade(a, fn) { const was = ctx.globalAlpha; ctx.globalAlpha = was * clamp01(a); fn(); ctx.globalAlpha = was; },
+    fade(a, fn) { if (sink) { fn(); return; } const was = ctx.globalAlpha; ctx.globalAlpha = was * clamp01(a); fn(); ctx.globalAlpha = was; },
     // a body: the mocks' 18 px square, a black rim 2 px round a white middle;
     // squat, two rows high with its feet where they were
     body(x, y, dxpx = 0, dypx = 0, squat = false) {
@@ -62,6 +66,29 @@ export function frame(ox, oy, flip = 0) {
   };
   return d;
 }
+
+// --- backings ------------------------------------------------------------------------
+// A drawing's paper silhouette: every cell it inks, each row filled from its
+// first inked cell to its last, so what stands behind it (the camp's own
+// crowd) is masked through its open parts -- inside a wheel, under a roof,
+// in a jaw -- the way a solid thing would hide it. Read off the drawing by
+// running it through a sinking frame, `draw(d)`, so a station redrawn is a
+// backing redrawn and none is cut by hand. Rows as [row, from, to] in the
+// frame's cells, from and to inclusive.
+export function silhouette(draw) {
+  const rows = new Map();
+  const d = frame(0, 0, 0, (x, y, w, h) => {
+    if (w <= 0 || h <= 0) return;
+    for (let r = Math.floor(y / P); r < Math.ceil((y + h) / P); r++) {
+      const a = Math.floor(x / P), b = Math.ceil((x + w) / P) - 1, s = rows.get(r);
+      rows.set(r, s ? [Math.min(s[0], a), Math.max(s[1], b)] : [a, b]);
+    }
+  });
+  draw(d);
+  return [...rows].map(([r, [a, b]]) => [r, a, b]);
+}
+// The silhouette laid in paper on a frame (turned with it).
+export const backing = (d, rows) => { for (const [r, a, b] of rows) d.r(a, r, b - a + 1, 1, W); };
 
 // --- piles ---------------------------------------------------------------------------
 // What each pile showed last, and since when: a thing coming on or going off

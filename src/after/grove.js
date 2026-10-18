@@ -21,15 +21,12 @@
 
 import { S } from '../state.js';
 import { P, TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_LOGS_BIG_TREE, AFTER_FALL_S, AFTER_CROWN_FADE_S, AFTER_DIG_CLICKS,
-         AFTER_PLOTS0, AFTER_TRUNK_CELLS, AFTER_CROWN_CELLS, AFTER_BIG_TRUNK, AFTER_BIG_CROWN } from '../config.js';
+         AFTER_PLOTS0 } from '../config.js';
 import { secs } from './util.js';
 import { growS, bigTrees } from './levels.js';
-import { plotX, afterFloor } from './place.js';
+import { PINE_GROWN, stationParts } from './place.js';
 
-export const GROWN = 3;
-// A tree's trunk and crown, in cells, by stage and size.
-export const trunkCells = (stage, big) => (big && stage === GROWN ? AFTER_BIG_TRUNK : AFTER_TRUNK_CELLS[stage]);
-export const crownCells = (stage, big) => (big && stage === GROWN ? AFTER_BIG_CROWN : AFTER_CROWN_CELLS[stage]);
+export const GROWN = PINE_GROWN;
 
 const plot = (stage, at = null, big = false) => ({ stage, grow: 0, chops: 0, chip: null, fall: null, fell: null, logs: 0,
                                                   stump: false, dug: 0, big, at });
@@ -43,28 +40,26 @@ export const standing = p => p.stage === GROWN && p.fall == null;
 // A stump left standing, blocking its plot.
 export const stumped = p => p.stump && p.fall == null;
 
-// The plot of a grown tree under a world point: its trunk and crown's box.
+// The plot of a grown tree under a world point: on the pine as drawn, a
+// row of its cells at a time (place.js, `stationParts('tree', i).rows`).
 export function treeAt(x, y) {
   const plots = S.after ? S.after.plots : [];
-  const floor = afterFloor();
   for (let i = 0; i < plots.length; i++) {
-    const p = plots[i];
-    if (!standing(p)) continue;
-    const cx = plotX(i), cr = crownCells(GROWN, p.big), r = cr + 1;
-    const top = floor - (trunkCells(GROWN, p.big) + cr * 2) * P;
-    if (x >= cx - r * P && x < cx + (r + 1) * P && y >= top && y <= floor) return i;
+    if (!standing(plots[i])) continue;
+    const { foot, rows } = stationParts('tree', i);
+    const col = Math.floor((x - foot.x) / P), row = Math.floor((y - foot.y) / P);
+    if (rows.some(([r, a, b]) => r === row && col >= a && col <= b)) return i;
   }
   return null;
 }
-// The plot of a stump under a world point: a few cells round it, so a click
-// near the ground finds it.
+// The plot of a stump under a world point: on the block as drawn, its foot
+// on the floor line taken in.
 export function stumpAt(x, y) {
   const plots = S.after ? S.after.plots : [];
-  const floor = afterFloor();
   for (let i = 0; i < plots.length; i++) {
     if (!stumped(plots[i])) continue;
-    const cx = plotX(i);
-    if (x >= cx - P * 2 && x < cx + P * 3 && y >= floor - P * 4 && y <= floor) return i;
+    const s = stationParts('stump', i).stump;
+    if (x >= s.x && x < s.x + s.w && y >= s.y && y <= s.y + s.h) return i;
   }
   return null;
 }

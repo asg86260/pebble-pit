@@ -13,6 +13,7 @@ import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIE
          AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_SAW_S, AFTER_TIP_LOAD, AFTER_CHIP_SAWDUST } from '../src/config.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
+import { pileAt, stationBox, plotX } from '../src/after/place.js';
 
 const S = yard.S;
 const read = () => window.__afterRead();
@@ -97,6 +98,28 @@ group('an agitator post is filled from the camp and makes rebel, and wins nobody
     ok(made < 30 / 0.25 * AFTER_SHOUT_REBEL, 'less than a click\'s worth', `${made}`),
     ok(inked() === ink0, 'and nobody in the crowd is inked by it', `${ink0} -> ${inked()}`),
     ok(empty && filled, 'a post with nobody in the camp stands empty until a member walks in to it', `${empty} ${filled}`)
+  ];
+});
+
+group('a member bought into a post steps out of our crowd near it: the grove and the pedestal both a short walk', async () => {
+  up();
+  settle();
+  S.after.speech = { next: 1e9, f0: 0, held: null };
+  window.__afterGrant({ rebel: 2000, timber: 200 });
+  // Seconds from the post bought until its member stands where the post
+  // first sends it: a woodcutter at its tree, an agitator behind the pedestal.
+  const trip = (job, there) => {
+    if (!window.__buy(`after-post-${job}`)) return Infinity;
+    let s = 0;
+    while (s < 60) { run(1); s++; const w = S.after.bodies.find(b => b.job === job); if (w && there(w)) return s; }
+    return Infinity;
+  };
+  const cut = trip('woodcutter', w => Math.abs(w.x - (plotX(0) + P * 3)) < 1);
+  const agit = trip('agitator', w => w.t > 0);
+  window.__actsOn(null);
+  return [
+    ok(cut <= 12, 'a woodcutter is at its tree within twelve seconds', `${cut} s`),
+    ok(agit <= 12, 'an agitator is at its spot within twelve seconds', `${agit} s`)
   ];
 });
 
