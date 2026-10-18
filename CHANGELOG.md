@@ -200,7 +200,6 @@ this section; the release that switches it on moves these under Unreleased.
 ## v0.6.0 — 2026-10-16
 
 **New this release**
-- The dark switch steps light, dim and dark: dim is the old dark page, and dark is a new one drawn for the dark -- a graphite paper where black stays black (the rock, the pit, hats, banners, chips and selected rows), words and lines in a light ink, lit windows and the portal still lit, and the deep as it was (test/settings.test.mjs; test/ui-tokens.test.mjs; src/selftest/textaa.js).
 - The controls page is one table grouped by what you do, each action once, with its mouse or keys and its controller button drawn side by side in lined-up columns (src/selftest/settings.js).
 - The pointing hands at the yard portal fade away once you have gone down through it and back up, and the portal stays clickable (test/portal-hand.test.mjs).
 - The drawn yard speaks one visual language: one grey and one purple ramp, a plus for the spark everywhere, pixel numbers on every count, no shaking, and everything on the cell grid.
@@ -341,7 +340,6 @@ this section; the release that switches it on moves these under Unreleased.
 ## v0.5.0 — 2026-09-28
 
 **New this release**
-- The dark switch steps light, dim and dark: dim is the old dark page, and dark is a new one drawn for the dark -- a graphite paper where black stays black (the rock, the pit, hats, banners, chips and selected rows), words and lines in a light ink, lit windows and the portal still lit, and the deep as it was (test/settings.test.mjs; test/ui-tokens.test.mjs; src/selftest/textaa.js).
 - The cloud's buttons and what they answer sit in their own titled cloud saves box, and its stop button says stop cloud saves (src/selftest/cloud.js).
 - On a phone the corner's gear is a pause button, and it opens the paused menu rather than the settings (src/selftest/touch.js).
 - Raindrops kick up a little crown where they land (`node tools/look.mjs rain`).
@@ -365,7 +363,6 @@ this section; the release that switches it on moves these under Unreleased.
 ## v0.4.0 — 2026-09-23
 
 **New this release**
-- The dark switch steps light, dim and dark: dim is the old dark page, and dark is a new one drawn for the dark -- a graphite paper where black stays black (the rock, the pit, hats, banners, chips and selected rows), words and lines in a light ink, lit windows and the portal still lit, and the deep as it was (test/settings.test.mjs; test/ui-tokens.test.mjs; src/selftest/textaa.js).
 - Weather: rain comes on its own clock and carries down a share of the smoke as acid; a storm washes the sky clean (test/weather.test.mjs, test/wave6-sky.test.mjs).
 - The sky is three sheets of cumulus that fill with smoke and brown as the yard dirties; rain falls from them in three sheets of its own (test/sky-air.test.mjs, test/sky-rain.test.mjs).
 - A working machine smokes off its stack, and hand work fouls the air a little (test/machines.test.mjs, test/sky-air.test.mjs).
@@ -447,7 +444,6 @@ this section; the release that switches it on moves these under Unreleased.
 ## v0.2.5 — 2026-09-17
 
 **New this release**
-- The dark switch steps light, dim and dark: dim is the old dark page, and dark is a new one drawn for the dark -- a graphite paper where black stays black (the rock, the pit, hats, banners, chips and selected rows), words and lines in a light ink, lit windows and the portal still lit, and the deep as it was (test/settings.test.mjs; test/ui-tokens.test.mjs; src/selftest/textaa.js).
 - The clouds are proper puffy cumulus now, one connected mass each with a scalloped top, and they say what the sky is doing: brown when the yard has dirtied them (heavy at worst, never black) and a cool heavy grey when rain is on the way (src/scenes.js `sky2`, `cloudswell`).
 - A tile being built draws its unbuilt part as an outline, the same outline it wears everywhere else, not a dotted ghost.
 - A hauler scoops quicker with every rung of its pace ladder, all the way up, so an upgraded hauler is faster at the heap as well as on the walk (test/ladders.test.mjs).
@@ -539,7 +535,6 @@ this section; the release that switches it on moves these under Unreleased.
 ## v0.2.3 — 2026-09-15
 
 **New this release**
-- The dark switch steps light, dim and dark: dim is the old dark page, and dark is a new one drawn for the dark -- a graphite paper where black stays black (the rock, the pit, hats, banners, chips and selected rows), words and lines in a light ink, lit windows and the portal still lit, and the deep as it was (test/settings.test.mjs; test/ui-tokens.test.mjs; src/selftest/textaa.js).
 - The clouds are proper puffy cumulus now, one connected mass each with a scalloped top, and they say what the sky is doing: brown when the yard has dirtied them (heavy at worst, never black) and a cool heavy grey when rain is on the way (src/scenes.js `sky2`, `cloudswell`).
 
 - The haulers spread themselves over the whole yard: each sets off for the resource farthest from where the others are headed, wherever on the ground it lies -- out past the tower included -- fills its hands with whatever is nearest, and comes home taking what it walks over (test/hauler-spread.test.mjs, test/far-ground.test.mjs, test/jobs.test.mjs).
@@ -554,7 +549,6 @@ this section; the release that switches it on moves these under Unreleased.
 ## v0.2.2 — 2026-09-15
 
 **New this release**
-- The dark switch steps light, dim and dark: dim is the old dark page, and dark is a new one drawn for the dark -- a graphite paper where black stays black (the rock, the pit, hats, banners, chips and selected rows), words and lines in a light ink, lit windows and the portal still lit, and the deep as it was (test/settings.test.mjs; test/ui-tokens.test.mjs; src/selftest/textaa.js).
 - The clouds are proper puffy cumulus now, one connected mass each with a scalloped top, and they say what the sky is doing: brown when the yard has dirtied them (heavy at worst, never black) and a cool heavy grey when rain is on the way (src/scenes.js `sky2`, `cloudswell`).
 
 - The apothecary brews three things, one a coin: the hearty stew (crop) is speed, the strong brew (ore) is strength, the bracing tonic (sparks) is crit -- and every trade reads it its own way: a hauler walks faster and carries more, a wizard casts sooner and hits harder, a digger swings sooner and bites deeper. The speed brew and the mana brew are folded in, rungs and stock kept (test/three-brews.test.mjs).
@@ -608,7 +602,6 @@ this section; the release that switches it on moves these under Unreleased.
 ## v0.2.1 — 2026-09-15
 
 **New this release**
-- The dark switch steps light, dim and dark: dim is the old dark page, and dark is a new one drawn for the dark -- a graphite paper where black stays black (the rock, the pit, hats, banners, chips and selected rows), words and lines in a light ink, lit windows and the portal still lit, and the deep as it was (test/settings.test.mjs; test/ui-tokens.test.mjs; src/selftest/textaa.js).
 - The clouds are proper puffy cumulus now, one connected mass each with a scalloped top, and they say what the sky is doing: brown when the yard has dirtied them (heavy at worst, never black) and a cool heavy grey when rain is on the way (src/scenes.js `sky2`, `cloudswell`).
 
 - Every board is shelves: a section is a plank, an upgrade is a thing standing on it with its name, its gain and one price tag under it. The description is the hover tip.
@@ -620,7 +613,6 @@ this section; the release that switches it on moves these under Unreleased.
 ## v0.2.0 — 2026-09-15
 
 **New this release**
-- The dark switch steps light, dim and dark: dim is the old dark page, and dark is a new one drawn for the dark -- a graphite paper where black stays black (the rock, the pit, hats, banners, chips and selected rows), words and lines in a light ink, lit windows and the portal still lit, and the deep as it was (test/settings.test.mjs; test/ui-tokens.test.mjs; src/selftest/textaa.js).
 - The clouds are proper puffy cumulus now, one connected mass each with a scalloped top, and they say what the sky is doing: brown when the yard has dirtied them (heavy at worst, never black) and a cool heavy grey when rain is on the way (src/scenes.js `sky2`, `cloudswell`).
 
 - Every ladder is eight rungs, two a coin: dust, then crops, then ore, then a spark -- one card, the last band red.
