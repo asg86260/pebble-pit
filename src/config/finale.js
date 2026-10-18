@@ -42,7 +42,7 @@ export const FINALE_OUT_STEPS = 6;
 export const FINALE_WALK_PX_S = P * 30;
 export const FINALE_WALK_MAX_S = 30;
 export const FINALE_LEAD = 0.38;          // where the pair stand in the window, a share of it from the left
-export const FINALE_END_CELLS = 27;       // where they stop: the door, cells off the yard's left edge, the bench clear of the casino
+export const FINALE_END_CELLS = 40;       // where they stop: the door, cells off the yard's left edge
 export const FINALE_PAIR_GAP = P;         // between the two of them, hand in hand
 
 // --- the crowd --------------------------------------------------------------------
@@ -107,6 +107,10 @@ export const FINALE_ROOF = [[-1, 20], [0, 18], [1, 16], [2, 14], [4, 10]];   // 
 export const FINALE_CHIMNEY = [13, -18, 2, 3];
 export const FINALE_BENCH = 16;           // its left end, cells from the house's left wall
 export const FINALE_BENCH_W = 4;
+// Bare ground between the home's buildings (this house, act 3's mansion)
+// and the first of the yard's sites, which the yard keeps for them (`HOME_GROUND`
+// in config/sites.js).
+export const FINALE_HOME_GAP = 12;
 // The scaffold: two poles and a plank across them at FINALE_PLANK_ROW, the
 // builders' way up to everything set over FINALE_REACH_ROW.
 export const FINALE_POLES = [-2, 19];
