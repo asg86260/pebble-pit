@@ -23,11 +23,11 @@ const LIFT = 30;
 let list = [], made = 0, clock = 0, nextId = 1;
 export const forgetBubbles = () => { list = []; made = 0; clock = 0; };
 
-// Whether the pair are up there to speak: not the story's pair standing at the
-// pillar's foot, and not down building.
+// Whether the pair are up there to speak: not the story's pair anywhere but
+// on the pillar's top (at its foot, or climbing), and not down building.
 export const pairSpeaking = () => {
   const pair = S.acts && S.acts.pair;
-  return !!S.after && !(pair && pair.y < 0) && !pairBuilding();
+  return !!S.after && !(pair && pair.y < 0 && pair.at !== 'pedestal') && !pairBuilding();
 };
 
 // One more off speaker `k`'s head, now.

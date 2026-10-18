@@ -23,7 +23,7 @@ import { S, pit } from './state.js';
 import { P, WORKER, FINALE_HOUSE_W, GHOST_PX_S, GHOST_LOAD, GHOST_GAP, HELL_TIERS } from './config.js';
 import { houseX } from './home.js';
 import { feetOn, ways } from './route.js';
-import { afterFloor, afterTop, stationBox } from './after/place.js';
+import { afterFloor, afterTop, stationBox, stationX0, speakerAt } from './after/place.js';
 import { hellTop, chamberFloor, chamberAtX, chamberFocusX, storeX as hellStoreX } from './hell/place.js';
 import { deepTop, deepFloor } from './deep/place.js';
 import { portalEnd } from './portals.js';
@@ -41,10 +41,15 @@ export const stairFoot = () => {
   const x = snap(houseX() + (FINALE_HOUSE_W + 4) * P);
   return { x, y: yardFeet(x) };
 };
-// The camp's pedestal, the two of them at its foot (after/place.js): its
-// top, and the speech from it, are act 3's placeholder until the climb up
-// is drawn.
+// The camp's pedestal, the two of them at its foot (after/place.js).
 export const campX = () => snap(stationBox('pedestal').x - WORKER - P);
+// Up onto it: the pillar's left face (a body standing flush against it), the
+// feet on its top, and the front speaker's spot (place.js, `speakerAt`), the
+// other a step behind. Once there the pedestal's own drawing is them
+// (render/after/pedestal.js), the road's faded off over it (`pair.top`).
+const pillarFootX = () => snap(stationX0('pedestal') + P - WORKER);
+const pillarFeet = () => speakerAt(0).y - WORKER;
+const speakerX = () => speakerAt(1).x;
 // Into the drowned pit a few cells off its near wall.
 export const pitX = () => snap(pit.x + P * 4);
 export const slitX = () => snap(slit().x - WORKER / 2);
@@ -67,6 +72,9 @@ const hellFeet = x => chamberFloor(Math.max(0, chamberAtX(x))) - WORKER;
 const ROUTES = {
   rise: [{ v: afterFeet }],
   camp: [{ h: campX, y: afterFeet }],
+  // up the pillar's face onto its top, and back down
+  pedestal: [{ h: pillarFootX, y: afterFeet }, { v: pillarFeet }, { h: speakerX, y: pillarFeet }],
+  off: [{ h: pillarFootX, y: pillarFeet }, { v: afterFeet }],
   // to the tear's patch in the cloud, down through it and the sky to the
   // tear over the yard, down the stair, and along to the ruin
   down: [{ h: tearX, y: afterFeet }, { v: () => tear().y - WORKER / 2 }, { to: stairFoot }, { h: ruinX, y: yardFeet }],
