@@ -140,7 +140,6 @@ const CUES = {
 function gaugeAt(r) {
   const half = GESTURE_GAUGE_CELLS * P / 2;
   if (r.key === 'tree') { const i = r.i != null ? r.i : trees().findIndex(standing); if (i < 0) return null; const b = partsOf('tree', i).box; return { x: snap(b.x + b.w / 2 - half), y: b.y - P * 2 }; }
-  if (r.key === 'stump') { if (r.i == null) return null; const a = partsOf('stump', r.i).at; return { x: snap(a.x - half), y: a.y - P * (GESTURE_GAUGE_RISE + 3) }; }
   const b = partsOf(r.key).box;
   return { x: snap(b.x + b.w / 2 - half), y: b.y - P * (GESTURE_GAUGE_RISE + 2) };
 }

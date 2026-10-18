@@ -213,8 +213,8 @@ const DEFS = {
         g.strain += dt;
         if (g.strain >= GESTURE_STRAIN_S) { g.strain = 0; if (digStump(g.i, true)) used(g); }
       } else g.strain = 0;
-    },
-    speed: g => g.lift / GESTURE_STUMP_MAX
+    }
+    // No gauge: the stump is not a speed but a moment (its wobble, drawn).
   },
   mill: {
     init: () => ({ ang: 0, w: 0, grab: false, pa: 0, acc: 0, prog: 0 }),
