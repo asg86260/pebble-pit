@@ -1,0 +1,46 @@
+OK   A mill (mouse): slow made 0.26 gauge 0.25; fast made 0.93 gauge 0.90
+OK   A papermill (mouse): slow made 0.24 gauge 0.28; fast made 0.81 gauge 0.85
+OK   A press (mouse): slow made 2.00 gauge 0.20; fast made 6.00 gauge 0.51
+OK   A chipper (mouse): slow made 0.20 gauge 0.25; fast made 0.98 gauge 1.00
+OK   A workshop (mouse): slow made 0.75 gauge 0.29; fast made 2.38 gauge 0.86
+OK   A tree (mouse): slow made 0.50 gauge 0.44; fast made 2.00 gauge 0.90
+OK   A heap (mouse): slow made 3.00 gauge 0.30; fast made 6.00 gauge 0.53
+OK   B mill (touch): slow made 0.26 gauge 0.25; fast made 0.93 gauge 0.90
+OK   B papermill (touch): slow made 0.24 gauge 0.28; fast made 0.81 gauge 0.85
+OK   B press (touch): slow made 2.00 gauge 0.20; fast made 6.00 gauge 0.50
+OK   B chipper (touch): slow made 0.20 gauge 0.25; fast made 0.98 gauge 1.00
+OK   B workshop (touch): slow made 0.75 gauge 0.27; fast made 2.38 gauge 0.83
+OK   B tree (touch): slow made 0.50 gauge 0.44; fast made 2.00 gauge 0.91
+OK   B heap (touch): slow made 3.00 gauge 0.30; fast made 6.00 gauge 0.47
+OK   C mill (mouse): slow made 0.26 gauge 0.25; fast made 0.93 gauge 0.90
+OK   C papermill (mouse): slow made 0.24 gauge 0.28; fast made 0.81 gauge 0.85
+OK   C press (mouse): slow made 2.00 gauge 0.20; fast made 6.00 gauge 0.51
+OK   C chipper (mouse): slow made 0.20 gauge 0.25; fast made 0.98 gauge 1.00
+OK   C workshop (mouse): slow made 0.75 gauge 0.29; fast made 2.38 gauge 0.86
+OK   C tree (mouse): slow made 0.50 gauge 0.44; fast made 2.00 gauge 0.90
+OK   C heap (mouse): slow made 3.00 gauge 0.30; fast made 6.00 gauge 0.53
+OK   stump (b): unpulled for five seconds, it stays put (lift 0)
+OK   stump (b): held up, out in 3 roots with no crit (marks 0)
+OK   stump (a): unpulled for five seconds, it stays put (lift 0)
+OK   stump (a): held past the line, a root snaps (dug 1)
+OK   stump (a): yanked in the give, out at once with the crit's mark (marks 1, dug 3)
+OK   upgrades tab: the card eased from 168x96 to 294x353, shelves posts, upgrades
+shot saw-takes-light.png
+shot dir-A-sheet-light.png
+shot dir-B-sheet-light.png
+shot dir-C-sheet-light.png
+shot dir-A-crit-light.png
+shot dir-A-upgrades-light.png
+shot stump-shovel-light.png
+shot now-vs-A-light.png
+shot coin-marks-light.png
+shot saw-takes-dark.png
+shot dir-A-sheet-dark.png
+shot dir-B-sheet-dark.png
+shot dir-C-sheet-dark.png
+shot dir-A-crit-dark.png
+shot dir-A-upgrades-dark.png
+shot stump-shovel-dark.png
+shot now-vs-A-dark.png
+shot coin-marks-dark.png
+no page errors
