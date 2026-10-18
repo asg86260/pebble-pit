@@ -1,0 +1,1463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Act 3 Hand Plaques</title>
+<!--
+  Act 3's hand work, lifted off the station: the one part the player moves
+  drawn big on a plaque floating over the station, the station below keeping
+  its size and moving in step. The camp is drawn at the game's camp scale (a
+  world px two-thirds of a screen px, a cell four), its stations ported from
+  src/render/after/stations.js into this page, and every motion's rule is the
+  gestures mock's (docs/mocks/act3-gestures-2026-10-18), with the press's bar
+  as the built one (src/config/gestures.js). Nothing here is read from src/:
+  the page stands alone. Every word is a placeholder.
+-->
+<style>
+  :root {
+    --bg: #ffffff; --fg: #000000; --muted: #5f5f5f; --line: #d6d6d6; --soft: #efefef; --warn: #757575;
+  }
+  /* The dark page is the light one mapped by lightness onto #e0e0e0 on
+     #1f1f1f (src/ink.js), never inverted. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a; }
+  }
+  :root[data-theme="dark"] { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a; }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--fg); }
+  body { margin: 0; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1000px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  p { margin: 0 0 8px; color: var(--muted); }
+  ul { margin: 4px 0 0; padding-left: 18px; color: var(--muted); }
+  b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
+  button { font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  button.on { border-color: var(--fg); font-weight: bold; }
+  label { color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+  input[type=range] { width: 260px; max-width: 60vw; accent-color: var(--fg); }
+  /* a placeholder word: dashed under, a star after */
+  .ph { border-bottom: 1px dashed currentColor; }
+  .ph::after { content: '*'; color: var(--warn); }
+  .k { color: var(--muted); }
+  .rec { border-left: 3px solid var(--fg); padding: 4px 10px; background: var(--soft); color: var(--fg); }
+  canvas.stage { display: block; touch-action: none; user-select: none; -webkit-user-select: none; border: 1px solid var(--line); max-width: 100%; height: auto; }
+  .shot { display: inline-block; max-width: 100%; }
+  .modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 6px 0 12px; }
+  .modes > div { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; font-size: 13px; }
+  .modes > div.on { border-color: var(--fg); }
+  .modes h3 { font-size: 13px; margin: 0 0 4px; }
+  .modes p { margin: 0 0 4px; font-size: 12px; }
+  @media (max-width: 760px) { .modes { grid-template-columns: 1fr; } }
+  table { border-collapse: collapse; font-size: 12px; margin: 8px 0 16px; width: 100%; }
+  td, th { text-align: left; padding: 2px 8px 2px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: normal; }
+  td.n { text-align: right; width: 4em; }
+  .phone { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; margin-top: 8px; }
+  .phone .glass { width: 404px; max-width: 100%; border: 7px solid var(--fg); border-radius: 22px; padding: 0; overflow: hidden; background: var(--bg); }
+  .phone .glass canvas { border: 0; }
+  .phone .glass .cap { font-size: 11px; color: var(--muted); padding: 4px 10px 6px; }
+  .phone .side { flex: 1 1 280px; min-width: 0; }
+  section { border-top: 1px solid var(--line); padding: 14px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Act 3 hand plaques <span class="k">(mock)</span></h1>
+  <p>The camp at its real scale (a world pixel two-thirds of a screen pixel). Working a station by hand happens on a
+     <b>plaque</b> floating over it: a paper card with an ink rule, the one part you move drawn big on it, the speed gauge
+     and the ghost hand on it too. The station below keeps its size and moves with you. The pedestal's bubbles stay
+     where they are, in the sky. Everything is live with a mouse or a finger. Drawn from plain cells by this page, not by
+     the game. <b>Every word on it is a placeholder</b> (<span class="ph">marked like this</span>; on the canvas, a star after the word).</p>
+  <p class="rec"><b>Recommendation, pending the owner's vote:</b> <span class="ph">(b), click to open. It is the only one of the three that works
+     the same with a mouse, a finger and a pad, it never changes under you while you work, and the camera stays yours.</span></p>
+
+  <div class="bar">
+    <span class="k">how it shows</span>
+    <button data-mode="a">(a) <span class="ph">hover</span></button>
+    <button data-mode="b">(b) <span class="ph">click to open</span></button>
+    <button data-mode="c">(c) <span class="ph">nearest the middle</span></button>
+    <span class="k" style="margin-left:12px">page</span>
+    <button data-theme-set="light">light</button>
+    <button data-theme-set="dark">dark</button>
+  </div>
+  <div class="bar">
+    <label><span class="ph">pan the camp</span> <input type="range" id="pan" min="0" max="1000" value="0"></label>
+    <button id="reset-all"><span class="ph">show every hand again</span></button>
+    <label><input type="checkbox" id="two"> <span class="ph">two at once: the paper mill's and the workshop's (how plaques make room)</span></label>
+  </div>
+  <div class="modes" id="modes">
+    <div data-m="a"><h3>(a) <span class="ph">hover</span></h3>
+      <p><b>shows</b> <span class="ph">fades in while the pointer is over a station; stays while the pointer is on the plaque or working it; fades out a third of a second after it leaves both</span></p>
+      <p><b>pad</b> <span class="ph">a pad has no pointer: the shoulder buttons step a focus along the camp and the focus counts as the hover, so on a pad this is (b)</span></p>
+      <p><b>phone</b> <span class="ph">a phone has no hover: a tap opens it, and from there it is (b)</span></p></div>
+    <div data-m="b"><h3>(b) <span class="ph">click to open</span></h3>
+      <p><b>shows</b> <span class="ph">a click on a station opens its plaque; it stays until a click on the sky or floor, or on another station, which swaps them (one fades out as the other fades in)</span></p>
+      <p><b>pad</b> <span class="ph">LB / RB step the open plaque along the camp with the camera following; A opens, B closes; the sticks work the part</span></p>
+      <p><b>phone</b> <span class="ph">a tap opens it; a tap on the sky or floor closes it; a swipe on the floor pans and the plaque rides along with its station, kept on the glass, and closes once the station is off it</span></p></div>
+    <div data-m="c"><h3>(c) <span class="ph">nearest the middle</span></h3>
+      <p><b>shows</b> <span class="ph">always one plaque, the station nearest the middle of the screen; pan and it hands over to the next; a click on a station slides it to the middle</span></p>
+      <p><b>pad</b> <span class="ph">the left stick pans, the right stick works the part: nothing to open or close, the most natural on a pad</span></p>
+      <p><b>phone</b> <span class="ph">a swipe pans; at 390 px two or three stations share the glass, so the plaque changes hands every swipe or so; a tap on a station slides it to the middle</span></p></div>
+  </div>
+
+  <div class="shot" id="desk-shot"><canvas class="stage" id="desk"></canvas></div>
+  <table id="read"><thead><tr><th><span class="ph">station</span></th><th class="n"><span class="ph">made</span></th><th class="n"><span class="ph">speed</span></th><th><span class="ph">last</span></th></tr></thead><tbody></tbody></table>
+
+  <section>
+    <h2><span class="ph">on a phone, 390 px wide</span></h2>
+    <div class="phone">
+      <div class="glass" id="phone-shot">
+        <canvas class="stage" id="phone"></canvas>
+        <div class="cap" id="phone-cap"></div>
+      </div>
+      <div class="side">
+        <p><span class="ph">The same camp at the same scale: about ninety-seven cells of it on the glass, two or three stations. A swipe on the floor or the sky pans; the plaque is the same size as on the desk, so it is about half the glass wide, and it is kept on the glass at both edges with its tail still pointing at its station.</span></p>
+        <p><span class="ph">This frame takes touch the way a phone does: no hover. In (a) a tap opens the plaque, as in (b).</span></p>
+        <label><span class="ph">pan the phone</span> <input type="range" id="pan-phone" min="0" max="1000" value="0"></label>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="ph">how two plaques keep apart</span></h2>
+    <ul>
+      <li><span class="ph">A plaque stands above the tallest thing under it, so it only ever covers sky: never a station, never a neighbor's part, never the pedestal's bubbles' way up (the pedestal is far down the camp).</span></li>
+      <li><span class="ph">It is wider than a station's spacing (the paper mill's middle and the workshop's are thirty cells, 118 px, apart; a plaque is 180), so it overhangs its neighbors' sky. Only one is open at a time in (b), so that is all it does.</span></li>
+      <li><span class="ph">While one hands over to another (b swapping, a, or c), the two are on the glass together for a quarter of a second: the leaving one slides aside by the overlap as it fades, the arriving one takes its place over its station. Tick "two at once" to hold both and see the room they make: each moves half the overlap and keeps its tail on its station.</span></li>
+      <li><span class="ph">The plaque's part is the only thing that takes a press on it: a press on the plaque's paper away from the part does nothing, so a slip never closes it or works a neighbor.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>What the mock cannot show</h2>
+    <ul>
+      <li>The real renderer: these are the built stations' cells ported into this page, not after.js, its layers, its crowd or its members walking in.</li>
+      <li>The real camera: the scale is fixed at two-thirds here, with no zoom toward God and no lift.</li>
+      <li>The boards: the camp's cards (the shack's, the stations') are not drawn, so how a plaque sits beside an open board is not shown.</li>
+      <li>Gamepad feel: the pad lines are text only. Nothing here reads a pad.</li>
+      <li>A real phone: the frame is a 390 px canvas on this page. Thumb reach, the browser's own swipe-back, and a finger hiding the part are not shown.</li>
+      <li>Pacing: every speed and payout is the gestures mock's guess, and nothing is spent or carried.</li>
+      <li>Sound.</li>
+    </ul>
+  </section>
+</main>
+<script>
+'use strict';
+// ---------------------------------------------------------------------------
+// Grid, ramp, scale
+// ---------------------------------------------------------------------------
+const P = 6;                     // a cell, in world px; and a plaque's cell, in screen px
+const SC = 2 / 3;                // the camp's scale: screen px a world px (a cell is four)
+const CELL = P * SC;
+const VIEW_H = 300, FLOOR_Y = 262;   // the stage's height and its floor line, screen px
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a',
+              '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const DARK = GREY.map(h => {
+  const v = parseInt(h.slice(1, 3), 16) / 255;
+  const c = Math.round(0xe0 + (0x1f - 0xe0) * v).toString(16).padStart(2, '0');
+  return '#' + c + c + c;
+});
+const K = 10, W = 0;
+const FLOOR_TONES = [1, 1, 2, 1, 2, 3];
+const DUST = [3, 4, 5, 4, 6], PULP = [3, 3, 4];
+let PAL = GREY, T = 0;
+
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const clamp01 = v => clamp(v, 0, 1);
+const fadeIn = (t0, d = 0.3) => (t0 == null ? 1 : clamp01((T - t0) / d));
+const fadeOut = (t0, d = 0.4) => 1 - clamp01((T - t0) / d);
+const hash2 = (c, r) => ((((c * 73856093) ^ (r * 19349663)) >>> 0) % 9973);
+const toneAt = (c, r, list) => list[hash2(c, r) % list.length];
+const hash = n => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+const wrap = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
+const ease = a => 1 - (1 - a) * (1 - a);
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+// --- plaque cells: the gestures mock's helpers, a cell P screen px -------------
+function C(g, c, r, t) { g.fillStyle = PAL[t]; g.fillRect(Math.round(c) * P, Math.round(r) * P, P, P); }
+function fill(g, c0, r0, c1, r1, t) { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) C(g, c, r, t); }
+function box(g, c0, r0, c1, r1, tones = [0, 1, 1, 2]) {
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++)
+    C(g, c, r, r === r0 || r === r1 || c === c0 || c === c1 ? 10 : toneAt(c, r, tones));
+}
+function line(c0, r0, c1, r1) {
+  c0 = Math.round(c0); r0 = Math.round(r0); c1 = Math.round(c1); r1 = Math.round(r1);
+  const out = [], dc = Math.abs(c1 - c0), dr = -Math.abs(r1 - r0), sc = c0 < c1 ? 1 : -1, sr = r0 < r1 ? 1 : -1;
+  let e = dc + dr;
+  for (;;) { out.push([c0, r0]); if (c0 === c1 && r0 === r1) break; const e2 = 2 * e; if (e2 >= dr) { e += dr; c0 += sc; } if (e2 <= dc) { e += dc; r0 += sr; } }
+  return out;
+}
+function withAlpha(g, a, fn) { const o = g.globalAlpha; g.globalAlpha = o * clamp01(a); fn(); g.globalAlpha = o; }
+function stackAdd(arr, cap) { if (arr.length < cap) arr.push(T); else { arr.shift(); arr.push(T); } }
+
+// The cue layer: the ghost hand and its path at their own pixel, two a side.
+const D = 2;
+const dotAt = (g, c, r, tone) => { g.fillStyle = PAL[tone]; g.fillRect(Math.round(c) * P + 2, Math.round(r) * P + 2, D, D); };
+function dots(g, pts, tone = 5, every = 1) { pts.forEach(([c, r], i) => { if (i % every === 0) dotAt(g, c, r, tone); }); }
+function chevron(g, c, r, dc, dr, tone = 5) {
+  dotAt(g, c, r, tone);
+  const pc = -dr, pr = dc;
+  for (let s = 1; s <= 2; s++) { dotAt(g, c - dc * s + pc * s, r - dr * s + pr * s, tone); dotAt(g, c - dc * s - pc * s, r - dr * s - pr * s, tone); }
+}
+function ringPts(cx, cy, rx, ry, n) { const out = []; for (let k = 0; k < n; k++) { const a = k / n * 2 * Math.PI; out.push([Math.round(cx + Math.cos(a) * rx), Math.round(cy + Math.sin(a) * ry)]); } return out; }
+const HAND = {
+  point: { at: [3.5, 0], m: ['...##.....', '..#oo#....', '..#oo#....', '..#oo#....', '..#oo####.', '.##oooooo#',
+                             '#o#oooooo#', '#oooooooo#', '.#ooooooo#', '..#oooooo#', '...######.'] },
+  grab:  { at: [5, 3.5], m: ['.##.##.##.', '#oo#oo#oo#', '#oooooooo#', '#oooooooo#', '#oooooooo#', '.#ooooooo#', '..#######.'] }
+};
+function hand(g, c, r, pose = 'point') {
+  const h = HAND[pose], m = h.m;
+  const px = (Math.round(c) + 0.5) * P, py = Math.round(r) * P + (pose === 'grab' ? P / 2 : 0);
+  const x0 = Math.round((px - h.at[0] * D) / D) * D, y0 = Math.round((py - h.at[1] * D) / D) * D;
+  for (let j = 0; j < m.length; j++) for (let i = 0; i < m[j].length; i++) {
+    const ch = m[j][i]; if (ch === '.') continue;
+    g.fillStyle = PAL[ch === '#' ? 8 : 1]; g.fillRect(x0 + i * D, y0 + j * D, D, D);
+  }
+}
+const FONT = {
+  '0': ['###', '#.#', '#.#', '#.#', '###'], '1': ['.#.', '##.', '.#.', '.#.', '###'], '2': ['###', '..#', '###', '#..', '###'],
+  '3': ['###', '..#', '.##', '..#', '###'], '4': ['#.#', '#.#', '###', '..#', '..#'], '5': ['###', '#..', '###', '..#', '###'],
+  '6': ['###', '#..', '###', '#.#', '###'], '7': ['###', '..#', '..#', '..#', '..#'], '8': ['###', '#.#', '###', '#.#', '###'],
+  '9': ['###', '#.#', '###', '..#', '###'], 'x': ['...', '#.#', '.#.', '#.#', '...'], '+': ['...', '.#.', '###', '.#.', '...']
+};
+function text(g, x, y, s, tone = 10) {
+  const w = (s.length * 4 - 1) * D;
+  g.fillStyle = PAL[0]; g.fillRect(x - 2, y - 2, w + 4, 5 * D + 4);
+  g.fillStyle = PAL[tone];
+  [...s].forEach((ch, k) => { const f = FONT[ch]; if (!f) return; for (let j = 0; j < 5; j++) for (let i = 0; i < 3; i++) if (f[j][i] === '#') g.fillRect(x + (k * 4 + i) * D, y + j * D, D, D); });
+}
+function star(g, x, y, tone = 10) {
+  g.fillStyle = PAL[tone];
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+    const n = dx && dy ? 4 : 6;
+    for (let k = 0; k < n; k++) { const d = 8 + k * 2, f = dx && dy ? 0.75 : 1; g.fillRect(Math.round((x + dx * d * f) / D) * D - 1, Math.round((y + dy * d * f) / D) * D - 1, D, D); }
+  }
+}
+// The speed gauge: fills left to right with how fast you go, darker as it fills.
+function speedGauge(g, s, c0 = 1, c1 = 24, r = 14) {
+  const n = c1 - c0 + 1, k = Math.round(clamp01(s.gv || 0) * n);
+  for (let i = 0; i < n; i++) C(g, c0 + i, r, i < k ? 4 + Math.round(i / (n - 1) * 6) : 2);
+  C(g, c1 + 1, r - 1, 10); C(g, c1 + 1, r, 10); C(g, c1 + 1, r + 1, 10);
+}
+// A dial standing up: 0 at the bottom row, max at the top, the band darker
+// and faded in while its window is open, the needle a cell beside it.
+function vgauge(g, c, r0, r1, v, vmax, lo, hi, bandA = 1) {
+  const n = r1 - r0 + 1;
+  for (let k = 0; k < n; k++) {
+    const x = (k + 0.5) / n * vmax, r = r1 - k;
+    C(g, c, r, 2);
+    if (x >= lo && x <= hi) withAlpha(g, bandA, () => C(g, c, r, 6));
+  }
+  const nk = clamp(Math.floor(v / vmax * n), 0, n - 1);
+  C(g, c - 1, r1 - nk, 10); C(g, c, r1 - nk, 10);
+  const a = r1 - Math.round(lo / vmax * n) + 1; C(g, c + 1, a, 10);
+}
+
+// ---------------------------------------------------------------------------
+// The plaque's controls: one a station, the gestures mock's rules on a
+// plaque of 28 by 16 cells (the gauge on row 14, the part above it)
+// ---------------------------------------------------------------------------
+const PC = 28, PR = 16;          // a plaque's inner grid
+const PIN = { w: PC * P, h: PR * P };
+const CUE_AFTER = 3, CUE_FADE_S = 0.8;
+const MARK_HOLD_S = 0.55, MARK_FADE_S = 0.45, STAR_HOLD_S = 0.3;
+function earn(s, words, crit) { s.last = { words, crit }; s.total++; if (crit) s.crits++; s.cueN++; s.dirty = true; }
+function mark(s, c, r, str) { s.marks.push({ c: Math.round(c), r: Math.round(r), str, at: T }); }
+function smear(s, cells, life = 0.3) { s.smears.push({ cells, at: T, life }); }
+function drawOverlays(g, s) {
+  for (const sm of s.smears) {
+    const age = T - sm.at;
+    withAlpha(g, age < 0.08 ? 1 : 1 - (age - 0.08) / (sm.life - 0.08), () => sm.cells.forEach(([c, r, t]) => C(g, c, r, t ?? 4)));
+  }
+  for (const m of s.marks) {
+    const age = T - m.at;
+    withAlpha(g, age < STAR_HOLD_S ? 1 : 1 - (age - STAR_HOLD_S) / 0.3, () => star(g, (m.c + 0.5) * P, (m.r + 0.5) * P));
+    withAlpha(g, age < MARK_HOLD_S ? 1 : 1 - (age - MARK_HOLD_S) / MARK_FADE_S, () => text(g, Math.min((m.c + 3) * P, PIN.w - (m.str.length * 4 - 1) * D - 3), Math.max(3, (m.r - 4) * P), m.str));
+  }
+}
+
+const SAW = { amp: 5 * P, vmax: 220, need: 10 };
+const STUMP = { max: 7 * P, strain: 4 * P, yank: 5 * P, gain: 3 * P, roots: [[5, 12], [8, 12], [11, 12], [14, 12], [17, 12]] };
+const MILL = { cx: 9, cy: 6, R: 5.5, max: 2.0, logLen: 12, feed: 1.6 };
+const CHIP = { bx: 7, by: 6, br: 5, need: 20, slow: 2, fast: 8, ramp: 1.5 };
+const VAT = { cx: 14, cy: 7, rx: 11, ry: 4.5, max: 1.2, turns: 6 };
+const NAILS = [6, 10, 14, 18], SIGN_NEED = 8, SWING_S = 0.12, TAPS_MAX = 7;
+const BAR = { pc: 3, pr: 2, L: 19, a0: -0.05, a1: 0.5, drag: 8 * P, rate: 5, back: 2.2, print: 0.97, reset: 0.15 };
+const HEAP = { edge: 23, toss: 80, max: 300, most: 3, cap: 5, per: 4, floor: 12 };
+const MOUND = (() => { const out = []; [[1, 8], [2, 7], [3, 6], [4, 5], [4, 5]].forEach(([a, b], j) => { for (let c = a; c <= b; c++) out.push([c, 11 - j]); }); return out; })();
+
+const CTLS = {
+  // --- the tree: the two-person saw ---------------------------------------------
+  tree: {
+    name: 'tree', motion: 'drag the saw handle back and forth',
+    init() { Object.assign(this, { s: 0, target: 0, grab: false, gx: 0, s0: 0, units: 0, from: 0, strokeT: 0, first: null, fall: null, regrow: -9, v: 0, dust: [] }); },
+    speed01() { return this.v / SAW.vmax; },
+    update(dt) {
+      if (this.fall == null) {
+        const prev = this.s;
+        this.s += clamp((this.target - this.s) * Math.min(1, dt * 25), -SAW.vmax * dt, SAW.vmax * dt);
+        this.v += (Math.abs(this.s - prev) / dt - this.v) * Math.min(1, dt * 8);
+        const end = this.s <= -0.8 * SAW.amp ? -1 : this.s >= 0.8 * SAW.amp ? 1 : 0;
+        if (end && end !== this.from) { if (this.from) this.stroke(end); this.from = end; this.strokeT = T; }
+      } else {
+        this.v *= Math.exp(-6 * dt);
+        if (T - this.fall > 3.6) { this.fall = null; this.units = 0; this.from = 0; this.first = null; this.regrow = T; }
+      }
+      for (const d of this.dust) { d.vy += 200 * dt; d.y += d.vy * dt; d.x += d.vx * dt; }
+      this.dust = this.dust.filter(d => d.y < 13 * P);
+    },
+    stroke(end) {
+      const secs = T - this.strokeT;
+      if (this.first == null) this.first = this.strokeT;
+      this.units += 1;
+      for (let k = 0; k < (secs < 0.45 ? 4 : 2); k++) this.dust.push({ x: (12 + (k % 2) * 6) * P, y: 8 * P, vx: (k % 2 ? 1 : -1) * (10 + this.rnd() * 25), vy: -20 - this.rnd() * 30, t: k % 2 ? 4 : 5 });
+      if (secs < 0.5) {
+        const a = Math.round(6 + -end * SAW.amp * 0.8 / P), b = Math.round(6 + this.s / P), cells = [];
+        for (let c = Math.min(a, b); c <= Math.max(a, b); c++) { cells.push([c, 5, 3]); cells.push([c, 9, 3]); }
+        smear(this, cells, 0.3);
+      }
+      let words = `+1 cut (a stroke in ${secs.toFixed(2)} s)`;
+      if (this.units >= SAW.need) { this.fall = T; this.grab = false; words += `: felled in ${(T - this.first).toFixed(1)} s`; }
+      earn(this, words, false);
+    },
+    down(p) { if (this.fall != null) return false; this.grab = true; this.gx = p.x; this.s0 = this.target; return true; },
+    move(p) { if (this.grab) this.target = clamp(this.s0 + (p.x - this.gx), -SAW.amp, SAW.amp); },
+    up() { this.grab = false; },
+    draw(g) {
+      const kerf = Math.floor(this.units / SAW.need * 5);
+      const a = this.fall != null ? fadeOut(this.fall + 0.15, 0.5) : fadeIn(this.regrow, 0.6);
+      // the trunk in section, the kerf opened from your side
+      withAlpha(g, a, () => { for (let r = 0; r <= 12; r++) for (let c = 12; c <= 16; c++) {
+        if (r === 7 && c - 12 < kerf) continue;
+        C(g, c, r, c === 12 || c === 16 ? 10 : toneAt(c, r, [1, 2, 3]));
+      } });
+      if (this.fall != null) withAlpha(g, fadeIn(this.fall + 0.2, 0.3) * fadeOut(this.fall + 3, 0.5), () => { for (let c = 8; c <= 21; c++) if ((c - 8) % 5 !== 4) { C(g, c, 11, 10); C(g, c, 12, toneAt(c, 12, [2, 3])); } });
+      const off = Math.round(this.s / P), standingT = this.fall == null;
+      const hidden = c => standingT && c >= 12 + kerf && c <= 16;
+      for (let c = 8 + off; c <= 20 + off; c++) {
+        if (!hidden(c)) C(g, c, 7, 8);
+        if ((c - off) % 2 === 0 && !(standingT && c >= 12 && c <= 16)) C(g, c, 8, 8);
+      }
+      fill(g, 6 + off, 5, 7 + off, 9, 10); C(g, 6 + off, 6, 1); C(g, 6 + off, 8, 1);   // your handle: the grip
+      fill(g, 21 + off, 6, 21 + off, 8, 6);                                            // the partner's, grey
+      for (let k = 0; k < SAW.need; k++) C(g, 3 + k * 2, 0, k < this.units ? 10 : 2);
+      for (const d of this.dust) C(g, Math.round(d.x / P), Math.round(d.y / P), d.t);
+      speedGauge(g, this);
+    },
+    cue(g) {
+      const pts = []; for (let c = 2; c <= 11; c++) pts.push([c, 3]);
+      dots(g, pts, 5); chevron(g, 1, 3, -1, 0); chevron(g, 12, 3, 1, 0);
+      hand(g, Math.round(6 + SAW.amp * Math.sin(2 * Math.PI * T / 0.9) / P), 7, 'grab');
+    }
+  },
+
+  // --- the stump: a grip dragged up, the yank crit --------------------------------
+  stump: {
+    name: 'stump', motion: 'drag the grip up; pull again as it wobbles and it comes out at once',
+    crit: true,
+    init() { this.fresh(); this.wob = -9; this.next = 1.4; },
+    fresh() { Object.assign(this, { lift: 0, target: 0, grab: false, y0: 0, roots: [1, 1, 1, 1, 1], strain: 0, out: null, crit: false, at: T, winLift: 0 }); },
+    intact() { return this.roots.filter(Boolean).length; },
+    wobbling() { return T - this.wob < 0.27; },
+    windowOpen() { return T - this.wob < 0.62; },
+    update(dt) {
+      if (this.out == null) {
+        if (this.grab) this.lift += (this.target - this.lift) * Math.min(1, dt * 20);
+        else this.lift = Math.max(0, this.lift - 80 * dt);
+        if (T >= this.next) { this.wob = T; this.winLift = this.lift; this.next = T + 1.6 + this.rnd() * 1.2; }
+        if (this.grab && this.windowOpen() && this.lift >= STUMP.yank && this.lift - this.winLift >= STUMP.gain) {
+          const n = this.intact();
+          this.roots = this.roots.map(() => 0); this.pullOut(true);
+          mark(this, 11, 6, 'x' + n);
+          earn(this, `out in one pull: ${n} roots at once`, true);
+        } else if (this.grab && this.lift >= STUMP.strain) {
+          this.strain += dt;
+          if (this.strain >= 0.7) {
+            this.strain = 0;
+            const i = this.roots.findIndex(Boolean); this.roots[i] = 0;
+            smear(this, [[STUMP.roots[i][0], 11, 5], [STUMP.roots[i][0] + 1, 12, 5]], 0.3);
+            const left = this.intact();
+            if (!left) this.pullOut(false);
+            earn(this, left ? `+1 root (${left} left)` : '+1 root: the stump is out', false);
+          }
+        } else this.strain = 0;
+      } else if (T - this.out > 3.2) this.fresh();
+    },
+    pullOut(crit) { this.out = T; this.crit = crit; this.grab = false; },
+    speed01: null,
+    down(p) { if (this.out != null) return false; this.grab = true; this.y0 = p.y + this.lift; return true; },
+    move(p) { if (this.grab) this.target = clamp(this.y0 - p.y, 0, STUMP.max); },
+    up() { this.grab = false; },
+    draw(g) {
+      // the floor, the roots in it
+      for (let r = 10; r <= 12; r++) for (let c = 1; c <= 20; c++) C(g, c, r, toneAt(c, r, FLOOR_TONES));
+      let up = Math.round(this.lift / P), give = Math.round(this.lift / P * 0.45), dx = 0, a = 1, side = 0;
+      if (this.wobbling() && this.out == null) dx = [-1, 1, -1][Math.floor((T - this.wob) / 0.09)] || 0;
+      if (this.out != null) {
+        const age = T - this.out, hold = this.crit ? 0.45 : 0.2;
+        give = Math.min(6, give + 1 + Math.floor(age / 0.08));
+        if (age > 0.24 + hold) side = Math.min(8, Math.floor((age - 0.24 - hold) / 0.06));
+        a = fadeOut(this.out + 0.24 + hold + 0.3, 0.4);
+      }
+      if (this.out != null) withAlpha(g, fadeIn(this.out + 1.0, 0.5) * fadeOut(this.out + 2.8, 0.4), () => {
+        C(g, 11, 9, 8); C(g, 11, 8, 8); C(g, 10, 7, 3); C(g, 11, 7, 2); C(g, 12, 7, 3); C(g, 11, 6, 3);
+      });
+      withAlpha(g, a * fadeIn(this.at, 0.5), () => {
+        const c0 = 9 + dx + side, top = 8 - give;
+        STUMP.roots.forEach(([ac, ar], i) => {
+          const oc = 9 + i + dx + side, or = top + 2;
+          if (this.roots[i] && this.out == null) line(oc, or, ac, ar).forEach(([c, r]) => C(g, c, r, 8));
+          else if (this.out == null) line(oc, 11, ac, ar).slice(1).forEach(([c, r]) => C(g, c, r, 5));
+        });
+        box(g, c0, top, c0 + 4, top + 1, [2, 3, 2]); C(g, c0 + 2, top, 2);
+        if (this.wobbling() && this.out == null) { C(g, c0 - 2, top + 1, 6); C(g, c0 + 6, top + 1, 6); }
+        // the rope up to the grip, and the grip: a bar across, two cells deep
+        if (this.out == null) {
+          const gr = Math.max(0, top - 2 - (up - give));
+          for (let r = gr + 2; r < top; r++) C(g, c0 + 2, r, 8);
+          fill(g, c0 - 1, gr, c0 + 5, gr + 1, 10); C(g, c0 + 2, gr, 1);
+        }
+      });
+      const wa = this.out != null ? 0 : this.windowOpen() ? fadeIn(this.wob, 0.06) : fadeOut(this.wob + 0.62, 0.15);
+      vgauge(g, 24, 1, 12, this.out == null ? this.lift : 0, STUMP.max, STUMP.yank, STUMP.max, wa);
+      for (let k = 0; k < 5; k++) C(g, 2 + k * 2, 14, this.roots[k] && this.out == null ? 8 : 2);
+    },
+    cue(g) {
+      const ph = (T % 1.4) / 1.4, up = Math.round(Math.min(1, ph * 1.6) * 4);
+      const pts = []; for (let r = 8; r >= 2; r--) pts.push([18, r]);
+      dots(g, pts, 5); chevron(g, 18, 1, 0, -1);
+      hand(g, 11, 6 - up, 'grab');
+    }
+  },
+
+  // --- the saw mill: the flywheel -------------------------------------------------
+  mill: {
+    name: 'saw mill', motion: 'grab the flywheel and spin it',
+    init() { Object.assign(this, { ang: 0, w: 0, grab: false, pa: 0, acc: 0, fed: 0, planksOfLog: 0, spin: 0, logAt: -9, logStart: null }); },
+    rev() { return Math.abs(this.w) / (2 * Math.PI); },
+    speed01() { return this.rev() / MILL.max; },
+    update(dt) {
+      if (this.grab) { this.w += (this.acc / dt - this.w) * Math.min(1, dt * 8); this.acc = 0; }
+      else { this.w *= Math.exp(-0.5 * dt); this.ang += this.w * dt; }
+      this.spin += this.w * dt * 2;
+      const r = Math.min(this.rev(), MILL.max);
+      if (r > 0.1 && T - this.logAt > 0.4) {
+        if (this.logStart == null) this.logStart = T;
+        this.fed += MILL.feed * r * dt;
+        if (this.fed >= 3 * this.planksOfLog + 3) {
+          this.planksOfLog++;
+          let words = `+1 timber at ${Math.round(r / MILL.max * 100)}% speed`;
+          if (this.fed >= MILL.logLen) { words += `: log done in ${(T - this.logStart).toFixed(1)} s`; this.fed = 0; this.planksOfLog = 0; this.logAt = T; this.logStart = null; }
+          earn(this, words, false);
+        }
+      }
+    },
+    down(p) {
+      const dx = p.x / P - MILL.cx - 0.5, dy = p.y / P - MILL.cy - 0.5;
+      if (Math.hypot(dx, dy) > MILL.R + 2.5) return false;
+      this.grab = true; this.pa = Math.atan2(dy, dx); return true;
+    },
+    move(p) {
+      if (!this.grab) return;
+      const na = Math.atan2(p.y / P - MILL.cy - 0.5, p.x / P - MILL.cx - 0.5), d = wrap(na - this.pa);
+      this.ang += d; this.acc += d; this.pa = na;
+    },
+    up() { this.grab = false; },
+    draw(g) {
+      const { cx, cy, R } = MILL, step = 2 * Math.PI / 16, aq = Math.round(this.ang / step) * step;
+      for (let r = cy - R - 1; r <= cy + R + 1; r++) for (let c = cx - R - 1; c <= cx + R + 1; c++) {
+        const d = Math.hypot(c - cx, r - cy); if (d >= R - 0.6 && d <= R + 0.45) C(g, c, r, 10);
+      }
+      const spokes = (a, t) => { for (let k = 0; k < 4; k++) { const s = a + k * Math.PI / 2; for (let d = 1; d < R; d++) C(g, cx + Math.round(Math.cos(s) * d), cy + Math.round(Math.sin(s) * d), t); } };
+      const rv = this.rev();
+      if (rv > 0.5) spokes(aq - step * Math.sign(this.w), 3);
+      if (rv > 0.9) spokes(aq - 2 * step * Math.sign(this.w), 2);
+      spokes(aq, 8);
+      C(g, cx, cy, 10);
+      // the knob you take hold of, a cell proud of the rim
+      const kc = cx + Math.round(Math.cos(aq) * (R + 0.6)), kr = cy + Math.round(Math.sin(aq) * (R + 0.6));
+      C(g, kc, kr, 6);
+      // the frame saw it drives, small: the blade riding with the knob, the
+      // log through it split into two planks past it, and the log's planks
+      const drop = Math.round(1 + Math.sin(aq));
+      fill(g, 17, 0, 26, 0, 10); C(g, 17, 1, 10); C(g, 26, 1, 10);
+      for (let r = 1; r <= 8; r++) { C(g, 17, r, 10); C(g, 26, r, 10); }
+      withAlpha(g, fadeIn(this.logAt, 0.4), () => {
+        const head = Math.round(18 + this.fed / MILL.logLen * 9 + 3);
+        for (let c = Math.max(18, head - 7); c <= Math.min(25, head); c++) {
+          if (c < 22) { C(g, c, 5, 8); C(g, c, 6, c % 3 ? 2 : 6); } else { C(g, c, 5, 8); C(g, c, 6, 3); }
+        }
+      });
+      for (let r = 1 + drop; r <= 4 + drop; r++) C(g, 21, r, 10);
+      fill(g, 19, drop, 23, drop, 10);
+      fill(g, 17, 8, 26, 8, 10);
+      for (let k = 0; k < 4; k++) fill(g, 18 + k * 2, 10, 19 + k * 2, 11, k < this.planksOfLog ? 10 : 2);
+      speedGauge(g, this);
+    },
+    cue(g) {
+      dots(g, ringPts(MILL.cx, MILL.cy, 7.5, 7.5, 20), 5, 1); chevron(g, MILL.cx, MILL.cy + 8, -1, 0);
+      const a = T * 2 * Math.PI * 1.2;
+      hand(g, MILL.cx + Math.round(Math.cos(a) * MILL.R), MILL.cy + Math.round(Math.sin(a) * MILL.R), 'grab');
+    }
+  },
+
+  // --- the sawdust heap: a load flung to the edge ----------------------------------
+  heap: {
+    name: 'sawdust heap', motion: 'drag a load to the edge; fling it and more goes',
+    init() { Object.assign(this, { loads: 3, fillT: 0, chunk: null, grab: false, v: 0, pts: [], cells: [] }); this.cells = MOUND.slice(0, this.loads * HEAP.per).map(() => -9); },
+    speed() {
+      const a = this.pts[0], b = this.pts[this.pts.length - 1];
+      if (!a || b.t - a.t < 1e-3 || T - b.t > 0.1) return 0;
+      return (b.x - a.x) / (b.t - a.t);
+    },
+    speed01() { return Math.max(0, this.v) / HEAP.max; },
+    loadsAt(v) { return clamp(1 + Math.floor((v - HEAP.toss) / ((HEAP.max - HEAP.toss) / HEAP.most)), 1, HEAP.most); },
+    update(dt) {
+      this.fillT += dt;
+      if (this.fillT > 2 && this.loads < HEAP.cap) { this.fillT = 0; this.loads++; for (let k = 0; k < HEAP.per; k++) this.cells.push(T + k * 0.1); }
+      if (this.loads >= HEAP.cap) this.fillT = 0;
+      this.v = this.grab ? this.speed() : this.v * Math.exp(-3 * dt);
+      const ch = this.chunk;
+      if (!ch) return;
+      const lo = (HEAP.floor - 2) * P;
+      if (ch.mode === 'held') { ch.x += (ch.tx - ch.x) * Math.min(1, dt * 18); ch.y += (ch.ty - ch.y) * Math.min(1, dt * 18); }
+      else if (ch.mode === 'fling') {
+        ch.vy += 400 * dt; ch.x += ch.vx * dt; ch.y = Math.min(ch.y + ch.vy * dt, lo);
+        ch.path.push([Math.round(ch.x / P), Math.round(ch.y / P)]);
+        if (ch.x >= HEAP.edge * P) {
+          Object.assign(ch, { mode: 'fall', at: T });
+          smear(this, ch.path.slice(-10).map(([c, r]) => [c, r + 1, 3]), 0.4);
+          earn(this, `+${ch.n} load${ch.n > 1 ? 's' : ''} tipped: flung at ${Math.round(ch.speed / HEAP.max * 100)}% speed`, false);
+        }
+      } else if (ch.mode === 'fall') {
+        ch.vy = Math.max(ch.vy, 0) + 300 * dt; ch.y += ch.vy * dt; ch.x += 20 * dt;
+        if (T - ch.at > 0.9) this.chunk = null;
+      } else if (ch.mode === 'back') {
+        ch.x -= 72 * dt;
+        if (ch.x <= 5 * P) { this.chunk = null; this.loads++; for (let k = 0; k < HEAP.per; k++) this.cells.push(T); }
+      }
+    },
+    down(p) {
+      const c = p.x / P, r = p.y / P;
+      if (this.chunk || this.loads < 1 || c < 0 || c > 11 || r < 3 || r > 13) return false;
+      this.loads--; this.cells.length = this.loads * HEAP.per;
+      this.grab = true; this.pts = [{ t: T, x: p.x }];
+      const lo = (HEAP.floor - 2) * P;
+      this.chunk = { mode: 'held', x: p.x, y: Math.min(p.y, lo), tx: p.x, ty: Math.min(p.y, lo), n: 1, path: [], x0: p.x };
+      return true;
+    },
+    move(p) {
+      if (!this.grab || !this.chunk) return;
+      this.pts.push({ t: T, x: p.x }); while (this.pts.length > 2 && T - this.pts[0].t > 0.1) this.pts.shift();
+      this.chunk.tx = p.x; this.chunk.ty = Math.min(p.y, (HEAP.floor - 2) * P);
+    },
+    up() {
+      if (!this.grab) return;
+      this.grab = false;
+      const ch = this.chunk, v = this.speed();
+      if (!ch) return;
+      if (v >= HEAP.toss) {
+        const n = this.loadsAt(v), extra = Math.min(n - 1, this.loads);
+        this.loads -= extra; this.cells.length = this.loads * HEAP.per;
+        Object.assign(ch, { mode: 'fling', n: 1 + extra, speed: v, vx: Math.max(v, HEAP.toss * 1.5) * 0.9, vy: -90, path: [] });
+      } else if (ch.x >= HEAP.edge * P) {
+        Object.assign(ch, { mode: 'fall', at: T, vy: 0 });
+        earn(this, '+1 load tipped: carried to the edge', false);
+      } else ch.mode = 'back';
+    },
+    draw(g) {
+      for (let c = 0; c < HEAP.edge; c++) C(g, c, HEAP.floor, toneAt(c, HEAP.floor, FLOOR_TONES));
+      for (let r = 2; r <= 11; r += 2) C(g, HEAP.edge, r, 5);      // the edge, dashed
+      C(g, HEAP.edge, HEAP.floor, 3);
+      fill(g, 3, 0, 5, 0, 10);                                       // the chute
+      if (this.loads < HEAP.cap) for (let k = 0; k < 3; k++) C(g, 4, 1 + Math.floor((T * 12 + k * 3) % 6), 4);
+      this.cells.forEach((at, k) => { if (MOUND[k]) withAlpha(g, fadeIn(at, 0.3), () => C(g, MOUND[k][0], MOUND[k][1], toneAt(k, 3, [4, 5, 4]))); });
+      const ch = this.chunk;
+      if (ch) {
+        const c = Math.round(ch.x / P), r = Math.round(ch.y / P);
+        withAlpha(g, ch.mode === 'fall' ? fadeOut(ch.at, 0.8) : 1, () => {
+          const w = 2 + ch.n, h = 1 + ch.n;
+          for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) C(g, c - 1 + i, r - j + 1, toneAt(i, j, [4, 5]));
+        });
+      }
+      speedGauge(g, this);
+    },
+    cue(g) {
+      const pts = []; for (let c = 8; c <= HEAP.edge - 1; c++) pts.push([c, 5]);
+      dots(g, pts, 5); chevron(g, HEAP.edge - 1, 5, 1, 0);
+      const ph = (T % 1.8) / 1.8, k = Math.min(1, ph / 0.6), c = 5 + Math.round(k * k * 17);
+      hand(g, c, 8, 'grab');
+    }
+  },
+
+  // --- the chipper: a feed button, held -------------------------------------------
+  chipper: {
+    name: 'chipper', motion: 'press and hold the feed; held longer, it feeds faster',
+    init() { Object.assign(this, { prog: 0, hold: false, held: 0, done: null, at: -9, start: null, chips: [], emit: 0 }); },
+    feed() { return this.hold ? CHIP.slow + (CHIP.fast - CHIP.slow) * Math.min(1, this.held / CHIP.ramp) : 0; },
+    speed01() { return this.feed() / CHIP.fast; },
+    update(dt) {
+      if (this.done == null && this.hold) {
+        this.held += dt;
+        if (this.start == null) this.start = T;
+        this.prog += this.feed() * dt;
+        if (this.prog > 6) { this.emit += dt * 7 * this.feed() / CHIP.slow; while (this.emit > 1) { this.emit--; this.chips.push({ x: 25.5 * P, y: 2 * P, vx: 6 + this.rnd() * 10, vy: -10 - this.rnd() * 20, t: this.rnd() < 0.5 ? 4 : 5 }); } }
+        if (this.prog >= CHIP.need) { this.prog = CHIP.need; this.done = T; this.hold = false; earn(this, `+1 sawdust: log in ${(T - this.start).toFixed(1)} s`, false); }
+      }
+      if (this.done != null && T - this.done > 0.9) { this.prog = 0; this.done = null; this.start = null; this.at = T; }
+      for (const ch of this.chips) { ch.vy += 160 * dt; ch.x += ch.vx * dt; ch.y += ch.vy * dt; }
+      this.chips = this.chips.filter(c => c.y < 12 * P && c.x < PIN.w);
+    },
+    down(p) {
+      if (Math.hypot(p.x / P - CHIP.bx - 0.5, p.y / P - CHIP.by - 0.5) > CHIP.br + 2) return false;
+      if (this.done == null) { this.hold = true; this.held = 0; }
+      return true;
+    },
+    up() { this.hold = false; this.held = 0; },
+    draw(g) {
+      const { bx, by, br } = CHIP, sink = this.hold ? 1 : 0;
+      // the button: an ink rim standing a cell proud, its face pressed in while held
+      for (let r = by - br - 1; r <= by + br + 2; r++) for (let c = bx - br - 1; c <= bx + br + 1; c++) {
+        const d0 = Math.hypot(c - bx, r - by - 1), d1 = Math.hypot(c - bx, r - by - sink);
+        if (d1 <= br - 0.6) C(g, c, r, this.hold ? 6 : 1);
+        else if (d1 <= br + 0.45) C(g, c, r, 10);
+        else if (!sink && d0 <= br + 0.45 && r > by) C(g, c, r, 10);
+      }
+      // a log on its face, pointing in
+      for (let c = bx - 2; c <= bx + 1; c++) { C(g, c, by + sink - 1, 10); C(g, c, by + sink, this.hold ? 4 : 3); }
+      C(g, bx + 2, by + sink - 2, 10); C(g, bx + 3, by + sink - 1, 10); C(g, bx + 3, by + sink, 10); C(g, bx + 2, by + sink + 1, 10);
+      // the hold filling round it
+      const k = this.hold ? Math.min(1, this.held / CHIP.ramp) : 0;
+      dots(g, ringPts(bx, by, br + 2, br + 2, 24).slice(0, Math.ceil(k * 24)), 8, 1);
+      // the table, the log on it going into the jaws
+      fill(g, 14, 10, 21, 10, 10);
+      box(g, 22, 3, 26, 11, [1, 2]); fill(g, 22, 7, 22, 9, 0);
+      const jaw = this.hold ? (Math.floor(T * 10) % 2) : 0;
+      fill(g, 23, 6 + jaw, 25, 6 + jaw, 10);
+      fill(g, 24, 1, 26, 2, 10);
+      withAlpha(g, this.done != null ? fadeOut(this.done, 0.3) : fadeIn(this.at, 0.4), () => {
+        const head = Math.round(15 + this.prog / CHIP.need * 13), tail = head - 5;
+        for (let c = Math.max(14, tail); c <= Math.min(head, 21); c++) { C(g, c, 8, 8); C(g, c, 9, c === tail ? 6 : 2); }
+        if (this.feed() > 5) for (let c = tail - 3; c < tail; c++) if (c >= 14) C(g, c, 8 + (c % 2), 3);
+      });
+      for (const ch of this.chips) C(g, Math.round(ch.x / P), Math.round(ch.y / P), ch.t);
+      speedGauge(g, this);
+    },
+    cue(g) {
+      const ph = T % 2.4, pressing = ph < 1.8;
+      hand(g, CHIP.bx, CHIP.by + (pressing ? 1 : -1), 'point');
+      dots(g, ringPts(CHIP.bx, CHIP.by, CHIP.br + 2, CHIP.br + 2, 24).slice(0, pressing ? Math.ceil(ph / 1.5 * 24) : 0), 5, 1);
+    }
+  },
+
+  // --- the paper mill: the vat stirred --------------------------------------------
+  papermill: {
+    name: 'paper mill', motion: 'stir the vat round in circles',
+    init() { Object.assign(this, { a: 0, w: 0, grab: false, pa: 0, acc: 0, prog: 0, start: null, pull: null }); },
+    rev() { return Math.abs(this.w) / (2 * Math.PI); },
+    speed01() { return this.rev() / VAT.max; },
+    update(dt) {
+      if (this.grab) { this.w += (this.acc / dt - this.w) * Math.min(1, dt * 6); this.acc = 0; }
+      else { this.w *= Math.exp(-2 * dt); this.a += this.w * dt; }
+      if (this.pull != null) { if (T - this.pull > 1.1) { this.pull = null; this.prog = 0; } return; }
+      if (!this.grab) return;
+      if (this.start == null && this.rev() > 0.1) this.start = T;
+      this.prog += Math.min(this.rev(), VAT.max) * dt;
+      if (this.prog >= VAT.turns) {
+        this.pull = T; this.prog = VAT.turns;
+        earn(this, `+1 sheet: batch in ${(T - this.start).toFixed(1)} s`, false);
+        this.start = null;
+      }
+    },
+    angleAt(p) { return Math.atan2((p.y / P - VAT.cy - 0.5) / VAT.ry, (p.x / P - VAT.cx - 0.5) / VAT.rx); },
+    down(p) { if (p.y / P > 13) return false; this.grab = true; this.pa = this.angleAt(p); return true; },
+    move(p) { if (!this.grab) return; const na = this.angleAt(p), d = wrap(na - this.pa); this.a += d; this.acc += d; this.pa = na; },
+    up() { this.grab = false; },
+    draw(g) {
+      const { cx, cy, rx, ry } = VAT, step = 2 * Math.PI / 16, aq = Math.round(this.a / step) * step;
+      for (let r = cy; r <= 12; r++) for (let c = cx - rx; c <= cx + rx; c++)
+        C(g, c, r, c === cx - rx || c === cx + rx || r === 12 ? 10 : toneAt(c, r, [2, 3, 2]));
+      for (let r = cy - ry; r <= cy + ry; r++) for (let c = cx - rx; c <= cx + rx; c++) {
+        const d = ((c - cx) / rx) ** 2 + ((r - cy) / ry) ** 2;
+        if (d <= 0.72) C(g, c, r, toneAt(c, r, [1, 2, 1]));
+        else if (d <= 1.2) C(g, c, r, 10);
+      }
+      const trail = Math.round(2 + clamp01(this.rev() / VAT.max) * 5);
+      for (let k = 1; k <= trail; k++) {
+        const s = aq - Math.sign(this.w || 1) * k * 0.35;
+        if (this.rev() > 0.1) C(g, cx + Math.round(Math.cos(s) * (rx - 4)), cy + Math.round(Math.sin(s) * (ry - 1.5)), k < 3 ? 5 : 4);
+      }
+      const pc = cx + Math.round(Math.cos(aq) * (rx - 4)), pr = cy + Math.round(Math.sin(aq) * (ry - 1.5));
+      if (this.pull == null) {
+        // the paddle, two cells thick, set off the pulp and the rim by a
+        // cell of paper either side so it reads wherever it is round the vat
+        const top = Math.max(0, pr - 5);
+        for (let r = top; r <= pr + 1; r++) { C(g, pc - 1, r, 0); C(g, pc + 2, r, 0); }
+        fill(g, pc - 2, top - 1, pc + 3, top - 1, 0);
+        for (let r = top; r <= pr; r++) { C(g, pc, r, 10); C(g, pc + 1, r, 8); }
+        fill(g, pc - 1, top, pc + 2, top, 10);
+        fill(g, pc, pr + 1, pc + 1, pr + 1, 10);
+      } else {
+        const age = T - this.pull, up = Math.min(4, Math.floor(age / 0.08) * 2);
+        withAlpha(g, age < 0.75 ? 1 : fadeOut(this.pull + 0.75, 0.3), () => {
+          const top = Math.round(cy - 1 - up);
+          for (let r = top; r < top + 3; r++) for (let c = cx - 4; c <= cx + 4; c++)
+            C(g, c, r, r === top || r === top + 2 || c === cx - 4 || c === cx + 4 ? 10 : 0);
+        });
+      }
+      for (let k = 0; k < VAT.turns; k++) { C(g, 2 + k * 2, 13, 2); withAlpha(g, clamp01(this.prog - k), () => C(g, 2 + k * 2, 13, 10)); }
+      speedGauge(g, this);
+    },
+    cue(g) {
+      dots(g, ringPts(VAT.cx, VAT.cy, VAT.rx + 1, VAT.ry + 2, 24), 5, 1);
+      chevron(g, VAT.cx, VAT.cy + VAT.ry + 2, -1, 0);
+      const a = T * 2 * Math.PI;
+      hand(g, VAT.cx + Math.round(Math.cos(a) * (VAT.rx - 4)), Math.max(1, VAT.cy + Math.round(Math.sin(a) * (VAT.ry - 1.5)) - 4), 'grab');
+    }
+  },
+
+  // --- the workshop: a hammer pad, tapped ----------------------------------------
+  workshop: {
+    name: 'workshop', motion: 'tap the pad to swing the hammer; tap faster to build faster',
+    init() { Object.assign(this, { units: 0, strike: -9, done: null, at: -9, start: null, taps: [], lastNail: 0, signs: 0 }); },
+    nail() { return Math.min(NAILS.length - 1, Math.floor(this.units / 2)); },
+    speed01() { return this.taps.filter(t => T - t < 1).length / TAPS_MAX; },
+    update() {
+      this.taps = this.taps.filter(t => T - t < 1);
+      if (this.done != null && T - this.done > 0.8) { this.done = null; this.units = 0; this.start = null; this.at = T; }
+    },
+    down(p) {
+      if (p.y / P > 13) return false;
+      if (this.done != null || T - this.strike < SWING_S) return true;
+      if (this.start == null) this.start = T;
+      const n = this.nail();
+      this.units = Math.min(SIGN_NEED, this.units + 1);
+      this.strike = T; this.lastNail = n; this.taps.push(T);
+      const hx = NAILS[n], quick = this.taps.length >= 4;
+      smear(this, [[hx + 1, 3, quick ? 4 : 3], [hx + 2, 4, quick ? 4 : 3], [hx + 2, 5, 3]], 0.2);
+      let words = '+1 blow';
+      if (this.units >= SIGN_NEED) { this.done = T + 0.3; this.signs++; words += `: sign done in ${(T - this.start).toFixed(1)} s`; }
+      earn(this, words, false);
+      return true;
+    },
+    draw(g) {
+      // the pad: a dashed rule round the whole place you tap
+      for (let c = 1; c <= 22; c += 2) { dotAt(g, c, 0, 4); dotAt(g, c, 12, 4); }
+      for (let r = 2; r <= 10; r += 2) { dotAt(g, 0, r, 4); dotAt(g, 23, r, 4); }
+      fill(g, 2, 12, 21, 12, 10);
+      const a = this.done != null ? fadeOut(this.done, 0.4) : fadeIn(this.at, 0.4);
+      withAlpha(g, a, () => {
+        box(g, 3, 9, 21, 11, [0, 1]);
+        NAILS.forEach((c, i) => {
+          const driven = clamp(this.units - i * 2, 0, 2), top = 7 + driven;
+          for (let r = top; r <= 8; r++) C(g, c, r, r === top ? 10 : 7);
+          if (driven === 2) C(g, c, 9, 9);
+        });
+      });
+      for (let k = 0; k < Math.min(4, this.signs); k++) fill(g, 24, 12 - k, 27, 12 - k, k % 2 ? 2 : 3);
+      const down = T - this.strike < SWING_S;
+      const n = down ? this.lastNail : this.nail(), hx = NAILS[n];
+      if (down) {
+        const top = 7 + clamp(this.units - n * 2, 0, 2) - 2;
+        fill(g, hx - 1, top, hx + 1, top + 1, 10);
+        for (let c = hx + 2; c <= hx + 6; c++) C(g, c, top, 6);
+      } else {
+        fill(g, hx - 1, 2, hx + 1, 3, 10);
+        line(hx + 2, 3, hx + 5, 0).forEach(([c, r]) => C(g, c, r, 6));
+      }
+      speedGauge(g, this);
+    },
+    cue(g) {
+      const on = (T % 0.25) < 0.1, hx = NAILS[this.nail()];
+      if (on) hand(g, hx + 4, 5, 'point'); else hand(g, hx + 4, 3, 'point');
+    }
+  },
+
+  // --- the press: the bar, dragged down ----------------------------------------------
+  press: {
+    name: 'press', motion: 'drag the bar down to the stop; a quicker pull prints sooner',
+    init() { Object.assign(this, { k: 0, want: 0, grab: false, printed: false, from: null, w: 0, y0: 0, k0: 0, outs: [], posters: 0, prev: [] }); },
+    th(k = this.k) { return BAR.a0 + (BAR.a1 - BAR.a0) * k; },
+    handle(k = this.k) { const th = this.th(k); return { c: BAR.pc + Math.cos(th) * BAR.L, r: BAR.pr + Math.sin(th) * BAR.L }; },
+    speed01() { return this.w / BAR.rate; },
+    update(dt) {
+      this.prev.unshift(this.k); this.prev.length = Math.min(this.prev.length, 4);
+      const before = this.k;
+      if (this.grab) this.k += clamp(this.want - this.k, -BAR.rate * dt, BAR.rate * dt);
+      else this.k = Math.max(0, this.k - BAR.back * dt);
+      this.w += (Math.max(0, this.k - before) / dt - this.w) * Math.min(1, dt * 8);
+      if (this.k < BAR.reset) { this.printed = false; this.from = null; }
+      else if (this.from == null) this.from = T;
+      if (this.k >= BAR.print && !this.printed) {
+        this.printed = true; this.outs.push({ at: T }); this.posters++;
+        const secs = T - (this.from ?? T);
+        earn(this, `+1 poster (a pull in ${secs.toFixed(2)} s)`, false);
+      }
+      this.outs = this.outs.filter(o => T - o.at < 1);
+    },
+    down(p) { if (p.x / P < 6) return false; this.grab = true; this.y0 = p.y; this.k0 = this.k; this.want = this.k; return true; },
+    move(p) { if (this.grab) this.want = clamp(this.k0 + (p.y - this.y0) / BAR.drag, 0, 1); },
+    up() { this.grab = false; },
+    draw(g) {
+      // the post the bar turns on, the stop under the handle's end
+      for (let r = BAR.pr; r <= 12; r++) C(g, BAR.pc, r, 10);
+      fill(g, BAR.pc - 1, 12, BAR.pc + 1, 12, 10);
+      const e = this.handle(1);
+      fill(g, Math.round(e.c) - 1, Math.round(e.r) + 2, Math.round(e.c) + 2, Math.round(e.r) + 2, 10);
+      for (let r = Math.round(e.r) + 3; r <= 12; r++) C(g, Math.round(e.c), r, 10);
+      // the bar's smear when it is moving fast, then the bar and its handle
+      const fast = this.prev.length > 2 && Math.abs(this.prev[0] - this.prev[2]) > 0.06;
+      if (fast) { const h2 = this.handle(this.prev[2]); line(BAR.pc, BAR.pr, h2.c, h2.r).forEach(([c, r]) => C(g, c, r, 3)); }
+      const h = this.handle();
+      line(BAR.pc, BAR.pr, h.c, h.r).forEach(([c, r]) => C(g, c, r, 10));
+      fill(g, Math.round(h.c) - 1, Math.round(h.r), Math.round(h.c) + 1, Math.round(h.r) + 1, 10);
+      C(g, Math.round(h.c), Math.round(h.r), 1);
+      C(g, BAR.pc, BAR.pr, 6);
+      // posters out, stacked at the post's foot
+      for (let k = 0; k < Math.min(5, this.posters); k++) fill(g, 6, 12 - k, 10, 12 - k, k % 2 ? 1 : 0), C(g, 6, 12 - k, 10), C(g, 10, 12 - k, 10);
+      speedGauge(g, this);
+    },
+    cue(g) {
+      const pts = []; for (let k = 0; k <= 1.001; k += 0.1) { const th = this.th(k); pts.push([Math.round(BAR.pc + Math.cos(th) * (BAR.L + 2)), Math.round(BAR.pr + Math.sin(th) * (BAR.L + 2))]); }
+      dots(g, pts, 5, 1);
+      const end = pts[pts.length - 1]; chevron(g, end[0], end[1] + 1, 0, 1);
+      const ph = (T % 1.3) / 1.3, k = ph < 0.25 ? ph / 0.25 : ph < 0.45 ? 1 : 1 - (ph - 0.45) / 0.55;
+      const h = this.handle(k);
+      hand(g, h.c, h.r, 'grab');
+    }
+  }
+};
+const CTL_KEYS = Object.keys(CTLS);
+
+// ---------------------------------------------------------------------------
+// The camp: the built stations' cells (src/render/after/stations.js), drawn
+// at the camp's scale off a frame laid on each station's ground
+// ---------------------------------------------------------------------------
+// Where each thing stands, in world cells off the place's left (src/config/
+// after.js, AFTER_STATIONS off the grove's end at 96; ART in after/place.js).
+const GROVE_END = 96;
+const AT = { mill: GROVE_END + 12, chipper: GROVE_END + 57, papermill: GROVE_END + 89, workshop: GROVE_END + 120,
+             press: GROVE_END + 150, shack: GROVE_END + 191, pedestal: GROVE_END + 254 };
+const PLOT = i => 12 + i * 21 + 11;                // a plot's trunk column
+const HEAP_MID = AT.mill + 47, NOTCH = HEAP_MID + 5;
+const WORLD_CELLS = AT.pedestal + 40;
+// What a press on the camp takes hold of: each station's box [left, right]
+// in cells and its height off the floor, and the plaque it opens.
+const SITES = [
+  { key: 'tree', x0: PLOT(0) - 9, x1: PLOT(0) + 10, h: 25, part: PLOT(0) + 0.5 },
+  { key: 'stump', x0: PLOT(1) - 3, x1: PLOT(1) + 4, h: 6, top: 3, part: PLOT(1) + 0.5 },
+  { key: 'mill', x0: AT.mill + 7, x1: AT.mill + 36, h: 18, part: AT.mill + 15 },
+  { key: 'heap', x0: HEAP_MID - 5, x1: HEAP_MID + 3, h: 7, top: 5, part: HEAP_MID + 0.5 },
+  { key: 'chipper', x0: AT.chipper + 5, x1: AT.chipper + 30, h: 19, part: AT.chipper + 36 - 17 },
+  { key: 'papermill', x0: AT.papermill + 5, x1: AT.papermill + 29, h: 18, part: AT.papermill + 19 },
+  { key: 'workshop', x0: AT.workshop + 5, x1: AT.workshop + 26, h: 21, part: AT.workshop + 15.5 },
+  { key: 'press', x0: AT.press + 9, x1: AT.press + 30, h: 19, part: AT.press + 25 }
+];
+// Each plaque stands over the part it moves (the wheel, the vat, the bar),
+// not the station's middle, so its tail points at what moves with it.
+const SITE = Object.fromEntries(SITES.map(s => [s.key, s]));
+const siteMid = s => (s.x0 + s.x1) / 2;
+
+// A frame laid on a station's ground: (x, y) in cells, x across, y up off
+// the floor (row -1 stands on it), turned about `flip` cells when given.
+function frame(g, st, ox, flip = 0) {
+  const X = (x, w) => (flip ? ox * P + flip * P - x - w : ox * P + x);
+  const sx = v => Math.round(v * SC - st.cam), sy = v => Math.round(FLOOR_Y + v * SC);
+  const d = {
+    px(x, y, w, h, tone) {
+      const x0 = X(x, w), a = sx(x0), b = sx(x0 + w), c = sy(Math.min(y, y + h)), e = sy(Math.max(y, y + h));
+      if (b < -4 || a > st.W + 4) return;
+      g.fillStyle = PAL[tone]; g.fillRect(a, c, Math.max(1, b - a), Math.max(1, e - c));
+    },
+    r(x, y, w, h, tone = K) { d.px(x * P, y * P, w * P, h * P, tone); },
+    c(x, y, tone = K) { d.r(x, y, 1, 1, tone); },
+    line(x0, y0, x1, y1, w = 2, tone = K, centered = true) {
+      const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * P / 2), o = centered ? w / 2 : 0;
+      for (let i = 0; i <= n; i++) { const f = n ? i / n : 0; d.px(Math.round((x0 + (x1 - x0) * f) * P - o), Math.round((y0 + (y1 - y0) * f) * P - o), w, w, tone); }
+    },
+    fade(a, fn) { const was = g.globalAlpha; g.globalAlpha = was * clamp01(a); fn(); g.globalAlpha = was; },
+    body(x, y, dx = 0, dy = 0) { const bx = x * P + dx, by = y * P + dy; d.px(bx, by, 18, 18, K); d.px(bx + 2, by + 2, 14, 14, W); }
+  };
+  return d;
+}
+const cyc = (t, Tp) => { const u = Math.max(0, t), k = Math.floor(u / Tp); return { ph: u / Tp - k, since: u - k * Tp }; };
+const FADE = 0.4, TURN = Math.PI / 16;
+const cut = (d, x, y, w, h, tone = W) => d.px(x * P + 2, y * P + 2, w * P - 4, h * P - 4, tone);
+
+// --- the saw mill (ported) ---
+const WHEEL = { cx: 15, cy: -8, r: 5 };
+function hugeWheel(d, { cx, cy, r }, a) {
+  for (let y = Math.floor(cy - r - 2); y <= cy + r + 2; y++) for (let x = Math.floor(cx - r - 2); x <= cx + r + 2; x++) {
+    const dd = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+    if (dd > r - 1 && dd <= r + 1) d.c(x, y, K);
+  }
+  for (let k = 0; k < 4; k++) { const b = a + k * Math.PI / 2; d.line(cx, cy, cx + Math.cos(b) * (r - 0.5), cy + Math.sin(b) * (r - 0.5), 5); }
+  d.r(cx - 1.5, cy - 1.5, 3, 3, K);
+  const kx = cx + Math.cos(a) * (r + 1.8), ky = cy + Math.sin(a) * (r + 1.8);
+  d.r(Math.round(kx - 1), Math.round(ky - 1), 2, 2, K);
+}
+function feedLog(d, y, x0, x1, cutX, at, since) {
+  const steps = x1 - x0, k = Math.min(steps, Math.floor(at * (steps + 2))), x = x0 + k;
+  d.fade(clamp01(since / FADE), () => {
+    for (let i = 0; i < 5; i++) {
+      const cx = x + i;
+      if (cx < cutX) d.r(cx, y, 1, 2, K);
+      else { d.r(cx, y, 1, 0.83, K); d.r(cx, y + 1.17, 1, 0.83, K); }
+    }
+    if (x + 4 < cutX) d.px((x + 4) * P + 2, y * P + 2, P - 4, 2 * P - 4, 3);
+  });
+}
+function drawMill(d, h) {
+  const a = Math.round(h.ang / TURN) * TURN;
+  const kx = WHEEL.cx + Math.cos(a) * (WHEEL.r + 1.8), ky = WHEEL.cy + Math.sin(a) * (WHEEL.r + 1.8);
+  const drop = Math.round(1.5 + 1.5 * Math.sin(a)), bot = -7 + drop, chY = bot - 6;
+  d.px(WHEEL.cx * P - 3, WHEEL.cy * P, 6, -WHEEL.cy * P, K); d.r(WHEEL.cx - 3, -1, 6, 1, K);
+  hugeWheel(d, WHEEL, a);
+  d.line(kx, ky, 24.5, chY + 0.5, 3);
+  d.r(21, -3, 15, 2, K);
+  d.r(23, -16, 1, 13, K); d.r(33, -16, 1, 13, K);
+  d.r(22, -1, 2, 1, K); d.r(33, -1, 2, 1, K);
+  d.r(22, -18, 13, 2, K);
+  feedLog(d, -5, 22, 31, 28, h.fed / MILL.logLen * 0.9, T - h.logAt);
+  d.r(24, chY, 9, 1, K);
+  d.r(27, chY + 1, 2, bot - chY, K);
+  for (let y = chY + 2; y <= bot; y++) { d.px(27 * P, y * P, 3, 2, W); d.px(27 * P, y * P + 3, 1, 2, W); }
+  for (let k = 0; k < Math.min(6, h.total); k++) d.r(37 + (k % 2) * 3, -1 - Math.floor(k / 2), 3, 1, k % 2 ? 3 : K);   // the timber pile
+  d.body(6, -3);
+}
+// --- the chipper (ported, turned to face the mill) ---
+const SWALLOW = 0.62, LOG_X0 = 9, LOG_X1 = 15, MOUTH = 17, JAW = [0, 0, 0, 0, 1, 2, 4, 4, 2, 4, 4, 1], CHEW = 4;
+function chFeed(ph) {
+  const steps = LOG_X1 - LOG_X0, k = Math.min(steps, Math.floor(ph / SWALLOW * (steps + 1)));
+  if (ph >= SWALLOW) return { lx: null, bx: LOG_X0 - 3 + steps, lean: 0 };
+  return { lx: LOG_X0 + k, bx: LOG_X0 - 3 + k, lean: k === steps ? 2 : 0 };
+}
+function drawChipper(d, h) {
+  const ph = h.prog / CHIP.need * SWALLOW, f = chFeed(ph);
+  const jawStep = h.hold ? CHEW + Math.floor(T / (2.4 / JAW.length)) % (JAW.length - CHEW) : 0;
+  if (f.lx != null && h.done == null) d.fade(clamp01((T - h.at) / FADE), () => {
+    const w = Math.max(0, Math.min(5, MOUTH - f.lx + 2));
+    d.r(f.lx, -4, w, 2, K); d.px(f.lx * P + 2, -4 * P + 2, P - 2, 2 * P - 4, 3);
+  });
+  const jy = -13 + JAW[jawStep];
+  d.r(22, -15, 6, 15, K);
+  d.px(23 * P + 2, -6 * P, 4 * P - 4, 2, W); d.px(23 * P + 2, -4 * P, 4 * P - 4, 2, W);
+  d.r(12, -1, 10, 1, K);
+  for (let i = 0; i < 5; i++) d.r(12 + i * 2, -2, 1, 1, K);
+  d.r(13, jy, 9, 4, K); d.r(12, jy - 1, 1, 3, K);
+  d.px(14 * P, (jy + 1) * P + 2, 6 * P, 2, W);
+  for (let i = 0; i < 5; i++) d.r(13 + i * 2, jy + 4, 1, 1, K);
+  d.px(22 * P - 2, (jy + 2) * P - 2, 4, 4, W);
+  d.r(25, -18, 2, 3, K); d.r(25, -19, 7, 2, K); d.r(30, -17, 2, 2, K); d.r(29, -15, 4, 1, K);
+  d.body(h.hold || h.prog > 0 ? f.bx : LOG_X0 - 3, -3, f.lean);
+  if (!h.hold || h.prog < 6) return;
+  const step = Math.floor(T * 10) % 12;
+  for (let j = 0; j < 8; j++) { const y = -14 + step - j * 2; if (y < -14 || y > -3) continue; d.r(30 + (j % 2), y, 1, 2, DUST[j % DUST.length]); }
+}
+// --- the paper mill (ported) ---
+const PADDLE_MID = 18, PADDLE_REACH = 3;
+function drawPapermill(d, h) {
+  const x = Math.round(PADDLE_MID - PADDLE_REACH * Math.cos(h.a)), dir = Math.sin(h.a) >= 0 ? 1 : -1;
+  d.r(10, -10, 4, 1, K); d.r(24, -10, 4, 1, K);
+  d.r(11, -9, 2, 8, K); d.r(25, -9, 2, 8, K);
+  d.r(12, -2, 14, 1, K);
+  d.r(11, -1, 3, 1, K); d.r(24, -1, 3, 1, K);
+  for (let j = 0; j < 5; j++) for (let i = 0; i < 12; i++) d.c(13 + i, -7 + j, PULP[Math.floor(hash((13 + i) * 5.1 + j * 9.3) * PULP.length)]);
+  if (Math.abs(h.w) > 0.3) {
+    const c = dir > 0 ? x + 2 : x - 3, tr = dir > 0 ? x - 3 : x + 2;
+    if (c >= 13 && c + 2 <= 25) d.r(c, -8, 2, 1, PULP[0]);
+    if (tr >= 13 && tr + 2 <= 25) d.r(tr, -7, 2, 1, W);
+  }
+  d.r(10, -17, 1, 7, K); d.r(27, -17, 1, 7, K);
+  d.r(9, -18, 20, 1, K);
+  const sheets = Math.min(3, h.total);
+  [12, 17, 22].forEach((sx, k) => d.fade(k < sheets ? 1 : 0.25, () => {
+    d.r(sx, -16, 4, 3, K); cut(d, sx, -16, 4, 3); d.px(sx * P + 2, -14 * P - 2, 4 * P - 4, 2, 2);
+    d.px(sx * P + 3, -17 * P, 3, P + 2, K); d.px((sx + 4) * P - 6, -17 * P, 3, P + 2, K);
+  }));
+  if (h.pull != null) d.fade(fadeOut(h.pull + 0.75, 0.3), () => { d.r(14, -11 - Math.min(2, Math.floor((T - h.pull) / 0.1)), 9, 1, K); });
+  d.r(5, -9, 4, 9, K);
+  for (let y = -8; y < 0; y += 2) d.px(5 * P + 3, y * P + 1, 4 * P - 6, 2, W);
+  d.px(9 * P, -12 * P + 1, (x - 9) * P + 3, 4, K);
+  d.px(x * P, -12 * P + 1, 4, 7 * P, K);
+  d.r(x - 0.5, -5, 2, 3, K);
+  d.body(6, -12, Math.abs(h.w) > 0.3 ? [0, 2, 3, 2][Math.floor(((h.a % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) / (Math.PI / 2))] : 0);
+}
+// --- the workshop (ported) ---
+const WS_STEP = 0.16, STAND_X = 20;
+function signBlank(d, x0, y0 = -8) { d.r(x0, y0, 6, 4, K); cut(d, x0, y0, 6, 4); d.px(x0 * P + 6, y0 * P + 7, 22, 3, K); d.px(x0 * P + 6, y0 * P + 13, 14, 3, K); }
+function drawWorkshop(d, h) {
+  const since = T - h.strike;
+  const pose = since < WS_STEP ? 'swing' : since < WS_STEP * 5 ? 'strike' : 'rest';
+  d.r(5, -18, 21, 1, K);
+  d.r(7, -19, 17, 1, K); d.r(10, -20, 11, 1, K); d.r(13, -21, 5, 1, K);
+  d.px(11 * P + 2, -20 * P + 2, 9 * P - 4, P + 4, W);
+  d.px(12 * P + 2, -20 * P + 5, 7 * P - 4, 2, K);
+  d.r(6, -17, 19, 17, K); d.r(8, -16, 15, 16, W);
+  d.r(9, -4, 11, 2, K); d.r(10, -2, 2, 2, K); d.r(17, -2, 2, 2, K);
+  signBlank(d, 11);
+  d.r(STAND_X, -6, 3, 6, K);
+  for (const y of [-5, -3, -1]) d.px(STAND_X * P + 3, y * P + 1, 3 * P - 6, 2, W);
+  const p = pose === 'rest' ? 'strike' : pose;
+  if (p === 'swing') { d.r(18, -15, 3, 2, 2); d.r(15, -14, 3, 3, 4); d.px(17 * P, -10 * P + 1, 3 * P, 4, 4); }
+  else { d.r(15, -11, 2, 3, K); d.px(17 * P, -10 * P + 1, 3 * P + 2, 4, K); }
+  if (pose === 'strike') d.fade(1 - (since - WS_STEP) / (4 * WS_STEP), () => { d.px(14 * P - 3, -9 * P + 2, 5, 2, K); d.px(14 * P - 2, -11 * P + 2, 2, 5, K); });
+  d.body(STAND_X, -9);
+}
+// --- the press (ported) ---
+const PRS = { postL: 10, postR: 22, headY: -14, scX: 15, scW: 3, plX: 12, plW: 9, sheetY: -4, bodyX: 26 };
+function drawPress(d, h) {
+  const drop = Math.round(h.k * 2);
+  d.r(PRS.postL, -3, PRS.postR - PRS.postL + 1, 2, K);
+  d.r(PRS.plX, PRS.sheetY, PRS.plW, 1, K); d.px(PRS.plX * P + 2, PRS.sheetY * P + 2, PRS.plW * P - 4, P - 4, W);
+  const plY = -8 + drop, scTop = plY - 10;
+  d.r(PRS.scX, scTop, PRS.scW, 10, K);
+  for (let j = 1; j < 9; j += 1.5) { const y0 = (scTop + j) * P; for (let i = 2; i < PRS.scW * P - 2; i += 2) d.px(PRS.scX * P + i, Math.round(y0 - i / 3), 2, 2, W); }
+  d.r(PRS.scX - 1, scTop - 1, PRS.scW + 2, 1, K);
+  d.r(PRS.postL, PRS.headY, 1, -3 - PRS.headY, K); d.r(PRS.postR, PRS.headY, 1, -3 - PRS.headY, K);
+  d.r(PRS.postL - 1, -1, 2, 1, K); d.r(PRS.postR, -1, 2, 1, K);
+  d.r(PRS.postL - 1, PRS.headY, PRS.postR - PRS.postL + 3, 2, K);
+  d.r(PRS.plX, plY, PRS.plW, 2, K);
+  const barY = plY - 3, bx0 = PRS.scX - 1, bx1 = PRS.bodyX;
+  d.px(PRS.postR * P - 2, barY * P - 2, P + 4, P + 4, W);
+  d.r(bx0, barY, bx1 - bx0, 1, K);
+  const knobY = drop === 2 ? -4 : -5;
+  d.line(bx1 - 1.25, barY + 1, bx1 - 1.25, knobY, 3, K, false);
+  d.r(bx1 - 2, knobY, 2, 2, K);
+  d.r(PRS.bodyX, -1, 3, 1, K);
+  for (let k = 0; k < Math.min(5, h.posters); k++) d.r(32, -1 - k, 5, 1, k % 2 ? 3 : K);
+  d.body(PRS.bodyX, -4, 0, drop === 2 ? 4 : 0);
+}
+// --- the shack (ported) ---
+const SHACK = ['##############', ' ############ ', ' ###......### ', ' #..........# ', ' #..........# ', ' ##........## ',
+  ' #####..##### ', ' #####..##### ', ' #####..##### ', ' ############ ', ' ####....#### ', ' ####....#### ', ' ####....#### ', ' ####....#### '];
+function drawShack(d) { SHACK.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') d.c(i, j - SHACK.length, K); else if (ch === '.') d.c(i, j - SHACK.length, W); })); }
+// --- the grove ---
+const PINE = { 1: { trunk: [1, 1], tiers: [{ v0: 0, h: 3, s: 0 }] },
+               big: { trunk: [3, 3], tiers: [{ v0: 0, h: 7, s: 3 }, { v0: 7, h: 6, s: 2 }, { v0: 13, h: 5, s: 1 }, { v0: 18, h: 4, s: 0 }] } };
+function pine(d, stage, a = 1, cutKerf = 0) {
+  d.fade(a, () => {
+    const [w, h] = stage.trunk;
+    d.r(-(w - 1) / 2, -h, w, h, K);
+    for (const t of stage.tiers) for (let k = 0; k < t.h; k++) { const hw = t.s + (t.h - 1 - k); d.r(-hw, -h - t.v0 - 1 - k, 2 * hw + 1, 1, K); }
+    if (cutKerf) d.px(-1 * P, -2 * P + 2, cutKerf * P, 2, W);
+  });
+}
+function drawTree(d, h) {
+  const kerf = Math.floor(h.units / SAW.need * 3);
+  const a = h.fall != null ? fadeOut(h.fall + 0.15, 0.5) : fadeIn(h.regrow, 0.6);
+  pine(d, PINE.big, a, kerf);
+  if (h.fall != null) d.fade(fadeIn(h.fall + 0.2, 0.3) * fadeOut(h.fall + 3, 0.5), () => { for (let k = 0; k < 3; k++) d.r(3 + k * 5, -2, 4, 2, K); });
+  if (h.fall == null) {
+    const off = Math.round(h.s / SAW.amp * 2);
+    d.px((-7 + off) * P, -2 * P - 1, 14 * P, 3, 8);
+    d.r(-8 + off, -3, 1, 2, K); d.r(7 + off, -3, 1, 2, 6);
+    d.body(-11 + off, -3); d.body(8 + off, -3);
+  } else { d.body(-11, -3); d.body(8, -3); }
+}
+function drawStump(d, h) {
+  const out = h.out != null, up = out ? Math.min(4, 1 + Math.floor((T - h.out) / 0.08)) : Math.round(h.lift / STUMP.max * 2);
+  const dx = h.wobbling() && !out ? [-2, 2, -2][Math.floor((T - h.wob) / 0.09)] || 0 : 0;
+  const side = out ? Math.max(0, Math.floor((T - h.out - 0.5) / 0.06)) : 0;
+  d.fade(out ? fadeOut(h.out + 0.7, 0.4) : fadeIn(h.at, 0.5), () => {
+    STUMP.roots.forEach((_, i) => { if (h.roots[i] && !out) d.line(-1.5 + i * 0.75 + dx / P + 0.5, -up, -3 + i * 1.6, 1.2, 2, 8); });
+    d.px(-1 * P + dx + side * P, -2 * P - up * P, 3 * P, 2 * P, K); d.px(-1 * P + 2 + dx + side * P, -2 * P + 2 - up * P, 3 * P - 4, 2, 3);
+    if (h.grab && !out) d.line(0.5, -2 - up, 0.5, -2 - up - 2, 2, 6);
+  });
+  if (out) d.fade(fadeIn(h.out + 1.0, 0.5) * fadeOut(h.out + 2.8, 0.4), () => pine(d, PINE[1]));
+  d.body(-6, -3);
+}
+function drawHeap(g, st, h) {
+  const d = frame(g, st, HEAP_MID);
+  const hgt = Math.min(4, Math.ceil(h.loads * 4 / HEAP.cap));
+  for (let k = 0; k < hgt; k++) { const hw = hgt - k; for (let x = -hw; x <= hw; x++) d.c(x, -1 - k, DUST[Math.floor(hash(x * 3.1 + k * 7.7) * DUST.length)]); }
+  const ch = h.chunk;
+  if (!ch) return;
+  const f = clamp01((ch.x - ch.x0) / (HEAP.edge * P - ch.x0)), n = ch.n || 1;
+  let x = f * (NOTCH - HEAP_MID), y = -hgt - 1 - Math.sin(Math.PI * f) * 3, a = 1;
+  if (ch.mode === 'fall') { x = NOTCH - HEAP_MID; y = -1 + (T - ch.at) * 12; a = fadeOut(ch.at, 0.8); }
+  d.fade(a, () => d.r(Math.round(x) - 1, Math.round(y) - n + 1, n + 1, n, 4));
+}
+function drawPedestal(g, st) {
+  const d = frame(g, st, AT.pedestal);
+  d.r(1, -4, 10, 4, K); d.r(2, -3, 8, 2, 2);
+  const p = st.ped, cheer = T - p.cheer < 0.45;
+  [2, 7].forEach((x, k) => { d.body(x, -7); if (T - p.talk[k] < 0.3) d.px(x * P + 6, -7 * P + 6, 6, 6, 6); if (cheer) { d.r(x - 1, -9, 1, 2, K); d.r(x + 3, -9, 1, 2, K); } });
+  p.pile.forEach((at, k) => d.fade(fadeIn(at, 0.25), () => d.c(13 + Math.floor(k / 4), -1 - (k % 4), k % 2 ? 2 : 3)));
+}
+
+// --- the pedestal's bubbles: in the sky over it, worked where they are -----------
+function pedState() { return { bubbles: [], motes: [], pile: [], pops: [], next: 0.3, n: 0, cheer: -9, talk: [-9, -9], total: 0, crits: 0, last: null, marks: [], dirty: true }; }
+function pedUpdate(st, dt) {
+  const p = st.ped;
+  if (T >= p.next) {
+    const k = p.n % 2, big = p.n % 5 === 3, w = big ? 10 : 7, h = big ? 6 : 4;
+    const cx = (AT.pedestal + (k ? 8.5 : 3.5)) * P;
+    p.bubbles.push({ x: cx - w * P / 2, y: (-9 - h) * P, w, h, big, v: big ? 48 : 21, vx: (st.rnd() - 0.5) * 6, at: T, k, seed: st.rnd() * 6 });
+    p.talk[k] = T; p.n++; p.next = T + 1.5;
+  }
+  for (const b of p.bubbles) { b.y -= b.v * dt; b.x += b.vx * dt; }
+  p.bubbles = p.bubbles.filter(b => (FLOOR_Y + (b.y + b.h * P) * SC) > -10);
+  for (const m of p.motes) { if (T < m.at) continue; m.vy += 330 * dt; m.x += m.vx * dt; m.y += m.vy * dt; if (m.y >= -P && m.vy > 0) { m.done = true; stackAdd(p.pile, 16); } }
+  p.motes = p.motes.filter(m => !m.done);
+  p.pops = p.pops.filter(q => T - q.at < 0.7);
+  p.marks = p.marks.filter(m => T - m.at < MARK_HOLD_S + MARK_FADE_S);
+}
+function pedHit(st, sx, sy) {
+  const p = st.ped, wx = (sx + st.cam) / SC, wy = (sy - FLOOR_Y) / SC, s = P * 1.5;
+  for (let i = p.bubbles.length - 1; i >= 0; i--) {
+    const b = p.bubbles[i];
+    if (wx < b.x - s || wx > b.x + b.w * P + s || wy < b.y - s || wy > b.y + b.h * P + s) continue;
+    p.bubbles.splice(i, 1);
+    p.pops.push({ x: b.x, y: b.y, w: b.w, h: b.h, big: b.big, at: T });
+    const n = b.big ? 15 : 3, cx = b.x + b.w * P / 2, cy = b.y + b.h * P / 2;
+    for (let k = 0; k < n; k++) { const tx = (AT.pedestal + 13 + st.rnd() * 3) * P, vy = -40 - st.rnd() * 40, t = (-vy + Math.sqrt(vy * vy + 2 * 330 * (-P - cy))) / 330; p.motes.push({ x: cx, y: cy, vy, vx: (tx - cx) / t, at: T + k * 0.03 }); }
+    p.total++; if (b.big) { p.crits++; p.cheer = T; p.marks.push({ x: cx, y: cy, str: 'x5', at: T }); }
+    p.last = { words: b.big ? '+15 rebel (x5)' : '+3 rebel', crit: b.big }; p.dirty = true;
+    return true;
+  }
+  return false;
+}
+function pedDraw(g, st) {
+  const p = st.ped, sx = v => Math.round(v * SC - st.cam), sy = v => Math.round(FLOOR_Y + v * SC), c4 = Math.round(CELL);
+  const cellAt = (wx, wy, t) => { g.fillStyle = PAL[t]; g.fillRect(sx(wx), sy(wy), c4, c4); };
+  for (const b of p.bubbles) {
+    const sway = Math.sin((T - b.at) * 1.6 + b.seed), ox = sway > 0.6 ? P : sway < -0.6 ? -P : 0;
+    const x0 = Math.round((b.x + ox) / P) * P, y0 = Math.round(b.y / P) * P;
+    withAlpha(g, fadeIn(b.at, 0.25), () => {
+      if (b.big) { for (const [c, r] of ringPts(b.w / 2 - 0.5, b.h / 2 - 0.5, b.w / 2 + 2, b.h / 2 + 2, 22)) { g.fillStyle = PAL[4]; g.fillRect(sx(x0 + c * P) + 1, sy(y0 + r * P) + 1, 2, 2); } text(g, sx(x0 + (b.w + 2) * P), sy(y0 - P) - 4, 'x5', 5); }
+      for (let r = 0; r < b.h; r++) for (let c = 0; c < b.w; c++) {
+        const corner = (r === 0 || r === b.h - 1) && (c === 0 || c === b.w - 1); if (corner) continue;
+        const rim = r === 0 || r === b.h - 1 || c === 0 || c === b.w - 1;
+        const inner = b.big && !rim && (r === 1 || r === b.h - 2 || c === 1 || c === b.w - 2);
+        cellAt(x0 + c * P, y0 + r * P, rim ? 10 : inner ? 6 : 0);
+      }
+      for (let r = b.big ? 2 : 1, j = 0; r <= b.h - (b.big ? 3 : 2); r++, j++) { const len = 2 + (hash2(j, Math.round(b.seed * 10)) % (b.w - (b.big ? 5 : 3))); for (let c = 0; c < len; c++) cellAt(x0 + ((b.big ? 2 : 1) + c) * P, y0 + r * P, 5); }
+      const tail = b.k ? 1 : b.w - 2;
+      cellAt(x0 + tail * P, y0 + b.h * P, 10); cellAt(x0 + (tail + (b.k ? -1 : 1)) * P, y0 + (b.h + 1) * P, 10);
+    });
+  }
+  for (const q of p.pops) {
+    const age = T - q.at, step = q.big ? 0.12 : 0.07, s = age < step ? 1 : age < step * 2 ? 2 : 3;
+    withAlpha(g, age < step * 2 ? 1 : fadeOut(q.at + step * 2, 0.25), () => {
+      const cx = q.w / 2 - 0.5, cy = q.h / 2 - 0.5;
+      for (let r = 0; r < q.h; r++) for (let c = 0; c < q.w; c++) {
+        const rim = r === 0 || r === q.h - 1 || c === 0 || c === q.w - 1; if (!rim || (c + r) % 2) continue;
+        cellAt(q.x + (c + Math.sign(Math.round(c - cx)) * s) * P, q.y + (r + Math.sign(Math.round(r - cy)) * s) * P, q.big ? 10 : 8);
+      }
+    });
+  }
+  for (const m of p.motes) { if (T < m.at) continue; const x = sx(Math.round(m.x / P) * P), y = sy(Math.round(m.y / P) * P); g.fillStyle = PAL[10]; g.fillRect(x, y, c4, c4); g.fillStyle = PAL[1]; g.fillRect(x + 1, y + 1, c4 - 2, c4 - 2); }
+  for (const m of p.marks) {
+    const age = T - m.at, x = sx(m.x), y = sy(m.y);
+    withAlpha(g, age < STAR_HOLD_S ? 1 : 1 - (age - STAR_HOLD_S) / 0.3, () => star(g, x, y));
+    withAlpha(g, age < MARK_HOLD_S ? 1 : 1 - (age - MARK_HOLD_S) / MARK_FADE_S, () => text(g, x + 14, y - 22, m.str));
+  }
+}
+
+function drawCamp(g, st) {
+  // the cloud floor, a tone a cell, the notch open past the heap
+  const c0 = Math.floor(st.cam / CELL), c1 = Math.ceil((st.cam + st.W) / CELL);
+  for (let c = c0; c <= c1; c++) for (let r = 0; r * CELL + FLOOR_Y < VIEW_H; r++) {
+    if (c >= NOTCH && c <= NOTCH + 1) continue;
+    g.fillStyle = PAL[toneAt(c, r, FLOOR_TONES)]; g.fillRect(Math.round(c * CELL - st.cam), FLOOR_Y + r * CELL, CELL, CELL);
+  }
+  const ct = st.ctl;
+  const td = frame(g, st, PLOT(0)); drawTree(td, ct.tree);
+  drawStump(frame(g, st, PLOT(1)), ct.stump);
+  pine(frame(g, st, PLOT(2)), PINE[1]);
+  drawMill(frame(g, st, AT.mill), ct.mill);
+  drawHeap(g, st, ct.heap);
+  drawChipper(frame(g, st, AT.chipper, 36), ct.chipper);
+  drawPapermill(frame(g, st, AT.papermill), ct.papermill);
+  drawWorkshop(frame(g, st, AT.workshop), ct.workshop);
+  drawPress(frame(g, st, AT.press), ct.press);
+  drawShack(frame(g, st, AT.shack));
+  drawPedestal(g, st);
+  pedDraw(g, st);
+}
+
+// ---------------------------------------------------------------------------
+// The plaque: a paper card with an ink rule, the part on it, over its station
+// ---------------------------------------------------------------------------
+const PAD = 6, HEAD = 22;
+const PW = PIN.w + PAD * 2, PH = PIN.h + HEAD + PAD;
+const TAIL = 6, GAP = 12, SHADOW = 4, ROOM = 8;
+const FADE_IN_S = 0.18, FADE_OUT_S = 0.25, SLIDE = 10;
+const siteScreen = (st, s) => ({ x: s.part * CELL - st.cam, mid: siteMid(s) * CELL - st.cam, top: FLOOR_Y - s.h * CELL, x0: s.x0 * CELL - st.cam, x1: (s.x1 + 1) * CELL - st.cam });
+// Where a plaque wants to stand: over its station's middle, its tail's tip
+// GAP over the station's top, kept on the glass.
+function idealAt(st, key) {
+  const s = siteScreen(st, SITE[key]);
+  return { x: clamp(s.x - PW / 2, 6, st.W - PW - 6), y: Math.max(6, s.top - GAP - TAIL - PH), sx: s.x, top: s.top };
+}
+// Two on the glass at once never overlap: the arriving one (or, held
+// together, both) make room by the overlap, the leaving one sliding aside.
+function layout(st) {
+  const vis = CTL_KEYS.filter(k => st.pl[k].a > 0.001 || st.pl[k].want);
+  const L = vis.map(k => ({ k, ...idealAt(st, k), want: st.pl[k].want }));
+  L.sort((a, b) => a.sx - b.sx);
+  for (let i = 0; i + 1 < L.length; i++) {
+    const a = L[i], b = L[i + 1], over = a.x + PW + ROOM - b.x;
+    if (over <= 0) continue;
+    if (a.want && b.want) { a.x -= over / 2; b.x += over / 2; }
+    else if (a.want) b.x += over; else a.x -= over;
+    if (a.x < 6) { b.x += 6 - a.x; a.x = 6; }
+    if (b.x > st.W - PW - 6) { a.x -= b.x - (st.W - PW - 6); b.x = st.W - PW - 6; }
+    if (!a.want && a.x < 6 - PW / 2) a.x = 6 - PW / 2;
+  }
+  return L;
+}
+const plaqueCanvas = document.createElement('canvas');
+function drawPlaque(g, st, L, dpr) {
+  const pl = st.pl[L.k], ctl = st.ctl[L.k], a = pl.a;
+  if (a <= 0.001) return;
+  if (pl.x == null) { pl.x = L.x + st.cam; pl.y = L.y; }
+  const x = Math.round(pl.x - st.cam), y = Math.round(pl.y + (1 - ease(a)) * SLIDE);
+  pl.rect = { x, y, w: PW, h: PH, ix: x + PAD, iy: y + HEAD };
+  // drawn whole on its own canvas, then laid down at the plaque's ink, so a
+  // fading card fades as one sheet and its shadow never shows through it
+  const cw = PW + SHADOW, chh = PH + SHADOW + TAIL + 2;
+  plaqueCanvas.width = cw * dpr; plaqueCanvas.height = chh * dpr;
+  const q = plaqueCanvas.getContext('2d');
+  q.setTransform(dpr, 0, 0, dpr, 0, 0); q.imageSmoothingEnabled = false;
+  q.globalAlpha = 0.2; q.fillStyle = PAL[10]; q.fillRect(SHADOW, SHADOW, PW, PH); q.globalAlpha = 1;
+  q.fillStyle = PAL[0]; q.fillRect(0, 0, PW, PH);
+  q.fillStyle = PAL[10]; q.fillRect(0, 0, PW, 2); q.fillRect(0, PH - 2, PW, 2); q.fillRect(0, 0, 2, PH); q.fillRect(PW - 2, 0, 2, PH);
+  // the tail, pointing down at its station's middle
+  const tx = Math.round(clamp(L.sx - x, 14, PW - 14));
+  for (let i = 0; i < TAIL; i++) { q.fillStyle = PAL[10]; q.fillRect(tx - (TAIL - i), PH - 2 + i, 2 * (TAIL - i), 1); if (i < TAIL - 2) { q.fillStyle = PAL[0]; q.fillRect(tx - (TAIL - i) + 2, PH - 2 + i, 2 * (TAIL - i) - 4, 1); } }
+  // its name, as a board's title: capitals, a rule under
+  q.font = '11px ui-monospace, Menlo, Consolas, monospace'; q.fillStyle = PAL[10]; q.textBaseline = 'alphabetic';
+  try { q.letterSpacing = '1px'; } catch (_) {}
+  q.fillText(ctl.name.toUpperCase() + '*', PAD + 2, 15);
+  q.fillRect(PAD, 18, PW - PAD * 2, 2);
+  q.save(); q.translate(PAD, HEAD); q.beginPath(); q.rect(0, 0, PIN.w, PIN.h); q.clip();
+  ctl.draw(q); drawOverlays(q, ctl);
+  if (ctl.cueA > 0.01) { q.globalAlpha = ctl.cueA * 0.6; ctl.cue(q); q.globalAlpha = 1; }
+  q.restore();
+  g.save(); g.globalAlpha = a; g.imageSmoothingEnabled = false;
+  g.drawImage(plaqueCanvas, x, y, cw, chh);
+  // the leader: a dotted line down from the tail to its station's top
+  g.fillStyle = PAL[5];
+  for (let yy = y + PH + TAIL + 2; yy < L.top - 3; yy += 4) g.fillRect(Math.round(L.sx) - 1, yy, 2, 2);
+  g.restore();
+}
+
+// ---------------------------------------------------------------------------
+// A stage: a camp, a camera, a mode, a pointer
+// ---------------------------------------------------------------------------
+let MODE = 'b', TWO = false;
+const stages = [];
+function makeStage(id, w, touchOnly, cam) {
+  const cv = document.getElementById(id);
+  const st = { id, cv, W: w, touchOnly, t: 0, cam, camT: null, ctl: {}, pl: {}, open: null, act: null, hover: null, hoverAt: -9, overPlaque: false, rnd: rng(id.length * 31), ped: pedState(), sel: null };
+  CTL_KEYS.forEach((k, i) => {
+    const c = Object.assign({}, CTLS[k], { key: k, cueN: 0, cueA: 1, total: 0, crits: 0, last: null, marks: [], smears: [], gv: 0, dirty: true });
+    c.rnd = rng(i * 977 + 13 + id.length); T = 0; c.init();
+    st.ctl[k] = c; st.pl[k] = { a: 0, x: null, y: null, want: false, rect: null };
+  });
+  stages.push(st);
+  wire(st);
+  return st;
+}
+const maxCam = st => WORLD_CELLS * CELL - st.W;
+function setCam(st, v) { st.cam = clamp(v, 0, maxCam(st)); syncSlider(st); }
+function local(st, e) { const r = st.cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * st.W / r.width, y: (e.clientY - r.top) * VIEW_H / r.height }; }
+function siteAt(st, x, y) {
+  for (const s of SITES) {
+    const sc = siteScreen(st, s), top = FLOOR_Y - (s.top || s.h) * CELL - 8;
+    if (x >= sc.x0 - 2 && x <= sc.x1 + 2 && y >= Math.min(top, sc.top - 4) && y <= FLOOR_Y + 8) return s.key;
+  }
+  return null;
+}
+const inRect = (p, r) => !!r && p.x >= r.x && p.x < r.x + r.w && p.y >= r.y && p.y < r.y + r.h + TAIL;
+function shownKey(st) { return CTL_KEYS.find(k => st.pl[k].want && st.pl[k].a > 0.5) || null; }
+// The middle station, for (c): nearest the glass's middle, handed over only
+// when another is nearer by a few cells so it never flickers between two.
+function middleKey(st) {
+  const mid = (st.cam + st.W / 2) / CELL;
+  let best = null, bd = 1e9;
+  for (const s of SITES) { const d = Math.abs(siteMid(s) - mid); if (d < bd) { bd = d; best = s.key; } }
+  if (bd * CELL > st.W / 2) return null;
+  if (st.sel && st.sel !== best) { const cur = Math.abs(siteMid(SITE[st.sel]) - mid); if (cur - bd < 6 && cur * CELL < st.W / 2) return st.sel; }
+  return best;
+}
+function hoverMode(st, e) { return MODE === 'a' && !st.touchOnly && e.pointerType !== 'touch'; }
+function wire(st) {
+  const cv = st.cv;
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault(); if (st.act) return; T = st.t;
+    const p = local(st, e);
+    try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+    const k = shownKey(st), pl = k && st.pl[k];
+    if (k && inRect(p, pl.rect)) {
+      const ctl = st.ctl[k], lp = { x: p.x - pl.rect.ix, y: p.y - pl.rect.iy };
+      const took = lp.y >= 0 && ctl.down(lp);
+      st.act = { id: e.pointerId, kind: took ? 'ctl' : 'paper', key: k };
+      return;
+    }
+    if (pedHit(st, p.x, p.y)) { st.act = { id: e.pointerId, kind: 'tap' }; return; }
+    const site = siteAt(st, p.x, p.y);
+    st.act = { id: e.pointerId, kind: 'pan', x0: p.x, cam0: st.cam, moved: false, site };
+  });
+  cv.addEventListener('pointermove', e => {
+    T = st.t;
+    const p = local(st, e);
+    st.ptrAt = p;
+    if (st.act && st.act.id === e.pointerId) {
+      const a = st.act;
+      if (a.kind === 'ctl') { const r = st.pl[a.key].rect; st.ctl[a.key].move && st.ctl[a.key].move({ x: p.x - r.ix, y: p.y - r.iy }); }
+      else if (a.kind === 'pan') { if (Math.abs(p.x - a.x0) > 6) a.moved = true; if (a.moved) { st.camT = null; setCam(st, a.cam0 - (p.x - a.x0)); } }
+      return;
+    }
+    if (hoverMode(st, e)) hoverAt(st, p);
+  });
+  const end = e => {
+    if (!st.act || st.act.id !== e.pointerId) return;
+    T = st.t;
+    const a = st.act, p = local(st, e); st.act = null;
+    if (a.kind === 'ctl') { const r = st.pl[a.key].rect; st.ctl[a.key].up && st.ctl[a.key].up({ x: p.x - r.ix, y: p.y - r.iy }); if (hoverMode(st, e)) hoverAt(st, p); return; }
+    if (a.kind !== 'pan' || a.moved) return;
+    // a tap: on a station opens it (b, and a and c by touch), or slides it to
+    // the middle (c); on the sky or floor closes what is open
+    if (MODE === 'c') { if (a.site) { st.camT = clamp(siteMid(SITE[a.site]) * CELL - st.W / 2, 0, maxCam(st)); } return; }
+    if (MODE === 'b' || !hoverMode(st, e)) st.open = a.site || null;
+    else if (a.site) { st.hover = a.site; st.hoverAt = st.t; }
+  };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+  cv.addEventListener('pointerleave', e => { if (hoverMode(st, e) && !st.act) { st.overPlaque = false; st.hoverAt = st.t; st.hoverOff = true; } });
+}
+function hoverAt(st, p) {
+  const k = shownKey(st);
+  st.overPlaque = !!(k && inRect(p, st.pl[k].rect));
+  const site = st.overPlaque ? null : siteAt(st, p.x, p.y);
+  if (site) { st.hover = site; st.hoverAt = st.t; st.hoverOff = false; }
+  else if (!st.overPlaque && !st.hoverOff) { st.hoverOff = true; st.hoverAt = st.t; }
+}
+const HOVER_GRACE_S = 0.33;
+function wantKey(st) {
+  if (st.act && st.act.kind === 'ctl') return st.act.key;
+  if (MODE === 'b' || (MODE === 'a' && st.touchOnly)) {
+    if (st.open && st.touchOnly) { const s = siteScreen(st, SITE[st.open]); if (s.x1 < 0 || s.x0 > st.W) st.open = null; }
+    return st.open;
+  }
+  if (MODE === 'a') {
+    if (st.overPlaque) return st.hover;
+    if (st.hoverOff && st.t - st.hoverAt > HOVER_GRACE_S) return null;
+    return st.hover;
+  }
+  return middleKey(st);
+}
+function stepStage(st, dt) {
+  st.t += dt; T = st.t;
+  if (st.camT != null) { const d = st.camT - st.cam; setCam(st, st.cam + d * Math.min(1, dt * 7)); if (Math.abs(d) < 0.5) { setCam(st, st.camT); st.camT = null; } }
+  const want = wantKey(st);
+  st.sel = want;
+  const two = TWO && st.id === 'desk';
+  for (const k of CTL_KEYS) {
+    const pl = st.pl[k], on = k === want || (two && (k === 'papermill' || k === 'workshop'));
+    pl.want = on;
+    pl.a = clamp01(pl.a + (on ? dt / FADE_IN_S : -dt / FADE_OUT_S));
+    if (pl.a <= 0) { pl.x = null; pl.rect = null; }
+    const c = st.ctl[k];
+    c.update(dt);
+    if (c.speed01) c.gv = (c.gv || 0) + (clamp01(c.speed01()) - (c.gv || 0)) * Math.min(1, dt * 6);
+    c.cueA += clamp((c.cueN < CUE_AFTER ? 1 : 0) - c.cueA, -dt / CUE_FADE_S, dt / CUE_FADE_S);
+    c.marks = c.marks.filter(m => T - m.at < MARK_HOLD_S + MARK_FADE_S);
+    c.smears = c.smears.filter(m => T - m.at < m.life);
+  }
+  pedUpdate(st, dt);
+  // the plaques ease to where they stand: a card that has to make room
+  // slides there, never jumps
+  // (in the camp's own px, so a pan carries a card with its station)
+  for (const L of layout(st)) { const pl = st.pl[L.k], tx = L.x + st.cam; if (pl.x == null) { pl.x = tx; pl.y = L.y; } else { const f = Math.min(1, dt * 14); pl.x += (tx - pl.x) * f; pl.y += (L.y - pl.y) * f; } }
+}
+function renderStage(st) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  if (st.cv.width !== st.W * dpr) { st.cv.width = st.W * dpr; st.cv.height = VIEW_H * dpr; st.cv.style.width = st.W + 'px'; }
+  const g = st.cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false; g.globalAlpha = 1;
+  T = st.t;
+  g.fillStyle = PAL[0]; g.fillRect(0, 0, st.W, VIEW_H);
+  drawCamp(g, st);
+  if (MODE === 'c') { g.fillStyle = PAL[4]; for (let y = 4; y < FLOOR_Y; y += 6) g.fillRect(Math.round(st.W / 2) - 1, y, 2, 2); }
+  const L = layout(st).sort((a, b) => (a.want ? 1 : 0) - (b.want ? 1 : 0));
+  for (const l of L) drawPlaque(g, st, l, dpr);
+  // the mode, in the corner
+  g.font = '11px ui-monospace, Menlo, Consolas, monospace'; g.fillStyle = PAL[6];
+  const label = { a: '(a) hover*', b: '(b) click to open*', c: '(c) nearest the middle*' }[MODE] + (st.touchOnly && MODE === 'a' ? '  no hover on a phone: a tap opens it*' : '');
+  g.fillText(label, 8, VIEW_H - 8);
+}
+
+// ---------------------------------------------------------------------------
+// The page
+// ---------------------------------------------------------------------------
+const root = document.documentElement;
+const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+const desk = makeStage('desk', 960, false, 70 * CELL);
+const phone = makeStage('phone', 390, true, clamp(siteMid(SITE.papermill) * CELL - 195, 0, 1e9));
+const sliders = { desk: document.getElementById('pan'), phone: document.getElementById('pan-phone') };
+function syncSlider(st) { const s = sliders[st.id]; if (s) s.value = Math.round(st.cam / maxCam(st) * 1000); }
+for (const st of stages) { syncSlider(st); sliders[st.id].addEventListener('input', () => { st.camT = null; st.cam = sliders[st.id].value / 1000 * maxCam(st); }); }
+const modeBtns = document.querySelectorAll('[data-mode]');
+function setMode(m) {
+  MODE = m;
+  modeBtns.forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+  document.querySelectorAll('#modes > div').forEach(d => d.classList.toggle('on', d.dataset.m === m));
+  for (const st of stages) { st.open = null; st.hover = null; st.hoverOff = true; st.hoverAt = -9; }
+  document.getElementById('phone-cap').innerHTML = { a: '<span class="ph">(a) on a phone: there is no hover, so a tap opens it, as in (b)</span>', b: '<span class="ph">(b) on a phone: tap a station to open, tap the sky to close, swipe to pan</span>', c: '<span class="ph">(c) on a phone: swipe to pan; the middle station\'s plaque is always up</span>' }[m];
+}
+modeBtns.forEach(b => b.onclick = () => setMode(b.dataset.mode));
+setMode('b');
+document.getElementById('two').onchange = e => { TWO = e.target.checked; };
+document.getElementById('reset-all').onclick = () => stages.forEach(st => CTL_KEYS.forEach(k => { st.ctl[k].cueN = 0; }));
+const themeBtns = document.querySelectorAll('[data-theme-set]');
+const showTheme = () => themeBtns.forEach(b => b.classList.toggle('on', b.dataset.themeSet === (isDark() ? 'dark' : 'light')));
+themeBtns.forEach(b => b.onclick = () => { root.dataset.theme = b.dataset.themeSet; showTheme(); });
+showTheme();
+
+// the readout: the desk's stations, what each made and how fast it is going
+const tbody = document.querySelector('#read tbody'), rows = {};
+for (const k of [...CTL_KEYS, 'pedestal']) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><span class="ph">${k === 'pedestal' ? 'pedestal (bubbles, in the sky)' : CTLS[k].name}</span></td><td class="n tot">0</td><td class="n spd"></td><td class="last ph">nothing yet</td>`;
+  tbody.appendChild(tr); rows[k] = tr;
+}
+function readout() {
+  for (const k of [...CTL_KEYS, 'pedestal']) {
+    const c = k === 'pedestal' ? desk.ped : desk.ctl[k], tr = rows[k];
+    if (c.dirty) { c.dirty = false; tr.querySelector('.tot').textContent = c.total + (c.crits ? ` (${c.crits} crit)` : ''); tr.querySelector('.last').textContent = c.last ? c.last.words + (c.last.crit ? '  (crit)' : '') : 'nothing yet'; }
+    if (k !== 'pedestal' && c.speed01) { const pct = Math.round(clamp01(c.gv || 0) * 100) + '%'; if (tr.dataset.p !== pct) { tr.dataset.p = pct; tr.querySelector('.spd').textContent = pct; } }
+  }
+}
+function drawAll() { PAL = isDark() ? DARK : GREY; for (const st of stages) renderStage(st); readout(); }
+let manual = false, then = performance.now();
+function frameLoop(now) {
+  const dt = Math.min(0.05, (now - then) / 1000); then = now;
+  if (!manual) for (const st of stages) stepStage(st, dt);
+  drawAll();
+  requestAnimationFrame(frameLoop);
+}
+requestAnimationFrame(frameLoop);
+// For the checks: the stages, a clock turned by hand, and where things are on the page.
+window.__mock = {
+  stages: { desk, phone },
+  manual(on) { manual = on; },
+  advance(sec, only) { const n = Math.max(1, Math.round(sec * 60)); for (let i = 0; i < n; i++) for (const st of stages) if (!only || st.id === only) stepStage(st, 1 / 60); drawAll(); },
+  mode: setMode,
+  two(on) { TWO = on; document.getElementById('two').checked = on; },
+  theme(t) { root.dataset.theme = t; showTheme(); drawAll(); },
+  pan(id, cells) { const st = this.stages[id]; st.camT = null; setCam(st, cells * CELL - st.W / 2); drawAll(); },
+  // client px of a point in a stage's own px
+  client(id, x, y) { const st = this.stages[id], r = st.cv.getBoundingClientRect(); return { x: r.left + x * r.width / st.W, y: r.top + y * r.height / VIEW_H }; },
+  site(id, key) { const st = this.stages[id], s = siteScreen(st, SITE[key]), h = SITE[key].top || Math.min(SITE[key].h, 8); return this.client(id, s.x, FLOOR_Y - h * CELL / 2); },
+  plaque(id, key) { const r = this.stages[id].pl[key].rect; return r && { ...this.client(id, r.ix, r.iy), s: this.stages[id].cv.getBoundingClientRect().width / this.stages[id].W }; },
+  shown(id) { const st = this.stages[id]; return CTL_KEYS.filter(k => st.pl[k].a > 0.5); }
+};
+</script>
+</body>
+</html>

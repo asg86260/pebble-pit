@@ -1,0 +1,62 @@
+{
+ "mode a": [
+  "OK: hover in mill, on the plaque mill, just off mill, after the grace []"
+ ],
+ "mode b": [
+  "OK: click opens mill, a click on the paper mill swaps to papermill (mid-swap apart: true), a click on the floor leaves []"
+ ],
+ "mode c": [
+  "OK: middle mill, after a 280 px drag papermill, after a click on the press press"
+ ],
+ "two at once": [
+  "OK: paper mill's plaque at 359, workshop's at 547: 8 px apart"
+ ],
+ "mill": [
+  "0.5 against 1.9 turns a second, 6 s each: slow made 1, gauge 0.25; fast made 5, gauge 0.95",
+  "OK: faster made more in the same time and filled the gauge further",
+  "last: +1 timber at 95% speed"
+ ],
+ "papermill": [
+  "0.4 against 1.2 turns a second, 10 s each: slow made 0, gauge 0.44; fast made 1, gauge 0.99",
+  "OK: faster made more in the same time and filled the gauge further",
+  "last: +1 sheet: batch in 5.5 s"
+ ],
+ "tree": [
+  "strokes of 1.0 s against 0.3 s, 4 s each: slow made 3, gauge 0.37; fast made 10, gauge 0.87",
+  "OK: faster made more in the same time and filled the gauge further",
+  "last: +1 cut (a stroke in 0.30 s): felled in 3.0 s"
+ ],
+ "chipper": [
+  "short presses against one long hold, 8 s each: slow made 0, gauge 0.34; fast made 1, gauge 1",
+  "OK: faster made more in the same time and filled the gauge further",
+  "last: +1 sawdust: log in 3.0 s"
+ ],
+ "workshop": [
+  "2 against 7 taps a second, 4 s each: slow made 8, gauge 0.29; fast made 16, gauge 0.91",
+  "OK: faster made more in the same time and filled the gauge further",
+  "last: +1 blow: sign done in 1.0 s"
+ ],
+ "press": [
+  "slow pull \"+1 poster (a pull in 0.65 s)\", gauge 0.24; quick pull \"+1 poster (a pull in 0.17 s)\", gauge 0.28",
+  "OK: a quicker pull printed sooner and filled the gauge further"
+ ],
+ "heap": [
+  "carried slowly past the edge: 1 (gauge 0.2); flung at 180 px/s: 2 (gauge 0.54); at 360 px/s: 3 (gauge 0.61)",
+  "OK: a faster fling tipped more"
+ ],
+ "stump": [
+  "OK: a root by holding, then the yank crit: [1,2]"
+ ],
+ "pedestal": [
+  "OK: bubbles popped where they float, one a 5x crit: [1,2]"
+ ],
+ "phone": [
+  "OK: a touch tap on the paper mill opened its plaque",
+  "OK: stirring by touch made a sheet (gauge 0.99)",
+  "OK: the plaque is on the glass: 113..293 of 390",
+  "OK: after a 300 px swipe the paper mill's plaque closed"
+ ],
+ "logs": [
+  "no exceptions"
+ ]
+}
