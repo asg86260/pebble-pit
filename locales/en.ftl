@@ -3475,6 +3475,12 @@ board-hell-wall = the barrier
 # act 3's coin (placeholder): rebel, knocked off the pair's speech
 after-coin-rebel = rebel
 
+# act 3's stock on a card's bill (placeholder): timber off the saw mill
+after-coin-timber = timber
+
+# act 3's stock on a card's bill (placeholder): paper off the paper mill
+after-coin-paper = paper
+
 # act 3 card row (placeholder): the pedestal's bigger speech, more rebel a click
 after-row-shout = bigger speech
 

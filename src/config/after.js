@@ -287,43 +287,83 @@ export const AFTER_POST_REBEL0 = 12;       // the first post
 export const AFTER_POST_RATE = 1.15;       // each one dearer, every station's counted together
 
 // --- the cards ---
+// Every bill up here takes the yard's coins too (DESIGN.md, "The yard pays
+// too", the owner, 2026-10-18): the yard keeps running while the pair are
+// dead, so a well-kept yard funds the union. They are added in the order the
+// yard hands them out -- the cheapest and earliest bills rebel and dust, then
+// crops (`spore`), then ore (`shard`), the top upgrades a spark -- with
+// timber and paper on the bigger ones as before. Every amount is a default,
+// sized against a late yard's ladders (config/rungs.js: a top rung there is
+// 7,500 to 25,000 dust; a machine's rung 360 to 1,000 sparks), so the first
+// stations are a few minutes of a late yard's dust and the top upgrades a
+// long stretch of its finds. The yard's coins keep the yard's own names, so
+// a card draws them with the yard's marks (words.js `MARK`).
+//
 // Every station the shack can build, all of them on its board and priced
 // from the start (the owner, 2026-10-18: the gates offer nothing), each
 // locked only behind a station it truly needs first: timber comes off the
 // saw mill, sawdust off the saw mill or the chipper, and posters are printed
 // on paper. `needs` is the stations any one of which must stand first.
 export const AFTER_BUILDS = {
-  mill:      { needs: [],                   bill: [['rebel', 40]] },
-  chipper:   { needs: [],                   bill: [['rebel', 50]] },
-  workshop:  { needs: ['mill'],             bill: [['rebel', 60]] },
-  papermill: { needs: ['mill', 'chipper'],  bill: [['rebel', 200], ['timber', 30]] },
-  press:     { needs: ['papermill'],        bill: [['rebel', 250], ['timber', 40]] }
+  mill:      { needs: [],                   bill: [['rebel', 40], ['dust', 500]] },
+  chipper:   { needs: [],                   bill: [['rebel', 50], ['dust', 600]] },
+  workshop:  { needs: ['mill'],             bill: [['rebel', 60], ['dust', 1000], ['spore', 150]] },
+  papermill: { needs: ['mill', 'chipper'],  bill: [['rebel', 200], ['timber', 30], ['dust', 2500], ['spore', 400], ['shard', 120]] },
+  press:     { needs: ['papermill'],        bill: [['rebel', 250], ['timber', 40], ['dust', 4000], ['spore', 600], ['shard', 200]] }
 };
 // Every station's upgrades: no bands, no ladders (call 12, settled -- act 3 is
 // outside the eight-rungs rule): two or three short named upgrades a card,
-// each a change on screen, paid in rebel, timber and paper. Each row is its
-// card and its bills, one bill a time it can be bought -- once for all but
-// the grove's plots, a plot a bill. The posts are sold beside them (rows.js);
-// the stations themselves on the shack (AFTER_BUILDS).
+// each a change on screen, paid in rebel, timber and paper and the yard's
+// coins. Each row is its card and its bills, one bill a time it can be
+// bought -- once for all but the grove's plots, a plot a bill. The posts are
+// sold beside them (rows.js); the stations themselves on the shack
+// (AFTER_BUILDS).
 export const AFTER_UPGRADES = {
-  'after-shout':       { card: 'pedestal',  bills: [[['rebel', 30]]] },                                  // a bigger speech
-  'after-axe':         { card: 'pedestal',  bills: [[['rebel', 50]]] },                                  // the axe (call 15)
-  'after-plot':        { card: 'grove',     bills: [[['rebel', 40]], [['rebel', 80], ['timber', 10]],
-                                                    [['rebel', 160], ['timber', 30]]] },                 // a plot cleared, AFTER_PLOT_MAX in all
-  'after-grow':        { card: 'grove',     bills: [[['rebel', 60], ['timber', 10]]] },                  // faster growth
-  'after-tree':        { card: 'grove',     bills: [[['rebel', 120], ['timber', 30]]] },                 // bigger trees
-  'after-stumps':      { card: 'grove',     bills: [[['rebel', 100], ['timber', 20]]] },                 // stump removal: woodcutters dig stumps too
-  'after-blade':       { card: 'mill',      bills: [[['rebel', 80], ['timber', 20]]] },                  // a second blade
-  'after-heap':        { card: 'mill',      bills: [[['rebel', 60], ['timber', 10]]] },                  // a bigger heap
-  'after-bench':       { card: 'workshop',  bills: [[['rebel', 120], ['timber', 40]]] },                 // a second bench
-  'after-signreach':   { card: 'workshop',  bills: [[['rebel', 200], ['timber', 40], ['paper', 10]]] },  // a bigger sign
-  'after-drum':        { card: 'chipper',   bills: [[['rebel', 70], ['timber', 15]]] },                  // a second drum
-  'after-spout':       { card: 'chipper',   bills: [[['rebel', 90], ['timber', 20]]] },                  // a wider spout: more sawdust a log
-  'after-vat':         { card: 'papermill', bills: [[['rebel', 150], ['timber', 30]]] },                 // a bigger vat
-  'after-dry':         { card: 'papermill', bills: [[['rebel', 180], ['timber', 30], ['paper', 10]]] },  // a drying line
-  'after-stack':       { card: 'press',     bills: [[['rebel', 200], ['timber', 30], ['paper', 20]]] },  // a bigger stack
-  'after-posterreach': { card: 'press',     bills: [[['rebel', 300], ['timber', 40], ['paper', 30]]] }   // a bigger poster, reaching further
+  'after-shout':       { card: 'pedestal',  bills: [[['rebel', 30], ['dust', 200]]] },                   // a bigger speech
+  'after-axe':         { card: 'pedestal',  bills: [[['rebel', 50], ['dust', 300]]] },                   // the axe (call 15)
+  'after-plot':        { card: 'grove',     bills: [[['rebel', 40], ['dust', 400]],
+                                                    [['rebel', 80], ['timber', 10], ['dust', 1000], ['spore', 150]],
+                                                    [['rebel', 160], ['timber', 30], ['dust', 2500], ['spore', 400], ['shard', 120]]] },   // a plot cleared, AFTER_PLOT_MAX in all
+  'after-grow':        { card: 'grove',     bills: [[['rebel', 60], ['timber', 10], ['dust', 1000], ['spore', 200]]] },                  // faster growth
+  'after-tree':        { card: 'grove',     bills: [[['rebel', 120], ['timber', 30], ['dust', 5000], ['spore', 800], ['shard', 300], ['spark', 50]]] },  // bigger trees
+  'after-stumps':      { card: 'grove',     bills: [[['rebel', 100], ['timber', 20], ['dust', 1500], ['spore', 300]]] },                 // stump removal: woodcutters dig stumps too
+  'after-blade':       { card: 'mill',      bills: [[['rebel', 80], ['timber', 20], ['dust', 1200], ['spore', 250]]] },                  // a second blade
+  'after-heap':        { card: 'mill',      bills: [[['rebel', 60], ['timber', 10], ['dust', 800]]] },                                   // a bigger heap
+  'after-bench':       { card: 'workshop',  bills: [[['rebel', 120], ['timber', 40], ['dust', 2500], ['spore', 400], ['shard', 150]]] },  // a second bench
+  'after-signreach':   { card: 'workshop',  bills: [[['rebel', 200], ['timber', 40], ['paper', 10], ['dust', 6000], ['spore', 1000], ['shard', 400], ['spark', 60]]] },  // a bigger sign
+  'after-drum':        { card: 'chipper',   bills: [[['rebel', 70], ['timber', 15], ['dust', 1000], ['spore', 200]]] },                  // a second drum
+  'after-spout':       { card: 'chipper',   bills: [[['rebel', 90], ['timber', 20], ['dust', 1500], ['spore', 300]]] },                  // a wider spout: more sawdust a log
+  'after-vat':         { card: 'papermill', bills: [[['rebel', 150], ['timber', 30], ['dust', 3000], ['spore', 500], ['shard', 200]]] },  // a bigger vat
+  'after-dry':         { card: 'papermill', bills: [[['rebel', 180], ['timber', 30], ['paper', 10], ['dust', 6000], ['spore', 1000], ['shard', 400], ['spark', 60]]] },  // a drying line
+  'after-stack':       { card: 'press',     bills: [[['rebel', 200], ['timber', 30], ['paper', 20], ['dust', 4000], ['spore', 600], ['shard', 250]]] },  // a bigger stack
+  'after-posterreach': { card: 'press',     bills: [[['rebel', 300], ['timber', 40], ['paper', 30], ['dust', 10000], ['spore', 1500], ['shard', 600], ['spark', 100]]] }   // a bigger poster, reaching further
 };
+// What a post costs the yard, by how many posts stand already (every
+// station's counted together, as the rebel is): the cheapest bills up here,
+// so dust alone; the last entry for every post past the table.
+export const AFTER_POST_DUST = [100, 150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1500];
+// The yard's coins a bill can name, in the order the yard hands them out
+// (shop.js `COIN_ORDER`), and the order a card writes a bill in: the act's
+// coins first.
+export const AFTER_YARD_COINS = ['dust', 'spore', 'shard', 'spark'];
+export const AFTER_TAG_ORDER = ['rebel', 'timber', 'paper', ...AFTER_YARD_COINS];
+
+// --- the yard's coins coming up --------------------------------------------------
+// Nothing teleports: a bill's yard coins are lifted off the yard's pile the
+// way a yard purchase lifts them (upgrades.js `take`) and fly up to the thin
+// patch in the cloud floor; out of it they come as motes in the yard's own
+// tones and arc to the station bought (render/aftercoins.js). Defaults.
+export const AFTER_PATCH_AT = GROVE_END + 228;   // the thin patch, cells off the place's left: open floor between the shack and the pedestal
+export const AFTER_COIN_MOTES = 8;         // motes a coin of a bill at most
+export const AFTER_COIN_UNDER_S = 1.4;     // the yard's grains on their way up to the patch, before the first mote comes out of it
+export const AFTER_COIN_STAGGER_S = 0.08;  // between one mote coming out of the patch and the next
+export const AFTER_COIN_UP = P * 4;        // how far a mote rises out of the patch before it turns for the station
+export const AFTER_COIN_RISE_S = 0.6;      // ...over this
+export const AFTER_COIN_FLY_S = 2.4;       // the arc from there to the station
+export const AFTER_COIN_LIFE_S = AFTER_COIN_RISE_S + AFTER_COIN_FLY_S;   // out of the patch to landed
+export const AFTER_COIN_LIFT = P * 10;     // how high the arc stands over its straight line
+export const AFTER_COIN_FADE_S = 0.4;      // a mote fades in coming out of the cloud, and out on landing, over this
+export const AFTER_COIN_SPREAD = 4;        // cells either side of the patch's middle a mote comes out at
 
 // --- act 3's place and station art (track A, 2026-10-18) -------------------------
 // The mocks the owner voted (docs/mocks/act3-place-2026-10-18,

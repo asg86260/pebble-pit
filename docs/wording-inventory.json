@@ -7987,6 +7987,20 @@
   "text": "rebel"
  },
  {
+  "id": "after-coin-timber",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3's stock on a card's bill (placeholder): timber off the saw mill",
+  "text": "timber"
+ },
+ {
+  "id": "after-coin-paper",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3's stock on a card's bill (placeholder): paper off the paper mill",
+  "text": "paper"
+ },
+ {
   "id": "after-row-shout",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",

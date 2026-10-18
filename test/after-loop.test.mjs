@@ -9,7 +9,7 @@
 import { group, ok, run, runUntil, yard, P } from './helpers.mjs';
 import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
          ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_SHOUT_REBEL, AFTER_SHOUT_REBEL_UP, AFTER_PLOTS0, AFTER_PLOT_MAX,
-         AFTER_UPGRADES, AFTER_CARDS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL,
+         AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL,
          AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_SAW_S, AFTER_TIP_LOAD, AFTER_CHIP_SAWDUST } from '../src/config.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
@@ -19,10 +19,15 @@ const S = yard.S;
 const read = () => window.__afterRead();
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 
+// Act 3's bills take the yard's coins too (DESIGN.md, "The yard pays too"):
+// the yard given enough of each for every path bought below, which is setup
+// no check here is about (test/after-yard-coins.test.mjs is).
+const YARD_PURSE = { dust: 40000, spores: 5000, shards: 2000, sparks: 400 };
 const up = () => {
   window.__actsOn(true);
   window.__goPlace('after');
   for (const k of OPENING) if (!S.beatsDone.includes(k)) S.beatsDone.push(k);
+  window.__grant(YARD_PURSE);
   run(1);
 };
 const tree = i => window.__afterTrees()[i];
@@ -518,7 +523,7 @@ group('every act-3 card sells two or three named upgrades, none of them a ladder
   return [
     ok(perCard.every(([c, n]) => n >= 1 && n <= 4), 'a card\'s upgrades are few', JSON.stringify(perCard)),
     ok(long.length === 0, 'each is bought once, but for the grove\'s plots', long.join(', ')),
-    ok([...coins].every(c => ['rebel', 'timber', 'paper'].includes(c)), 'paid in rebel, timber and paper', [...coins].join(' ')),
+    ok([...coins].every(c => ['rebel', 'timber', 'paper', ...AFTER_YARD_COINS].includes(c)), 'paid in rebel, timber and paper and the yard\'s coins', [...coins].join(' ')),
     ok(rows.every(r => !r.bill.some(([c]) => c === 'pledge' || c === 'faith' || c === 'ink')), 'no pledge, no faith, no ink on any bill')
   ];
 });

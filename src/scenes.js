@@ -40,7 +40,7 @@ import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { stationX0, soulX } from './after/place.js';
 import { afterEnd } from './view.js';
-import { CROWD_X0, CROWD_FILES } from './config.js';
+import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S } from './config.js';
 import { pref, setPref } from './prefs.js';
 import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
@@ -462,6 +462,9 @@ const lookAtOrb = () => {
 // camp, rebel and timber granted, the stations bought on the shack and run on
 // until they stand, then the posts and the upgrades bought row by row;
 // `slow` carries the crowd past the slowdown and buys its branch.
+// Act 3's bills take the yard's coins too (DESIGN.md, "The yard pays too"): the
+// yard given enough of each for every row a scene buys, the setup no shot is about.
+const yardPurse = () => window.__grant({ dust: 40000, spores: 5000, shards: 2000, sparks: 400 });
 function afterChain(slow) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
   // Won in blocks of files rather than from the front back, so the shot
@@ -470,7 +473,7 @@ function afterChain(slow) {
                            : (i, v) => (i < 40 ? 8 : v));
   for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
   S.after.camp += slow ? 30 : 0;   // the members a patchy field sent out, without their walk
-  window.__afterGrant({ rebel: 9000, timber: slow ? 160 : 40, paper: slow ? 40 : 0, logs: 12 });
+  window.__afterGrant({ rebel: 9000, timber: slow ? 160 : 40, paper: slow ? 40 : 0, logs: 12 }); yardPurse();
   // In waves, each needing the one before: the saw mill and the chipper,
   // then what stands on the saw mill, then the press on the paper mill.
   const waves = [['mill', 'chipper'], ['workshop', ...(slow ? ['papermill'] : [])], slow ? ['press'] : []];
@@ -2713,7 +2716,7 @@ export const SCENES = {
   'after-grove': { about: 'the acts', say: "the afterlife's grove: four plots, a tree coming down, a stump half dug, a sapling, logs lying",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-      window.__afterGrant({ rebel: 600, timber: 60 });
+      window.__afterGrant({ rebel: 600, timber: 60 }); yardPurse();
       for (let k = 0; k < 3; k++) window.__buy('after-plot');
       window.__buy('after-tree');
       window.__afterAxe();
@@ -2766,7 +2769,7 @@ export const SCENES = {
   'after-pedestal': { about: 'the acts', say: 'the pair on the pedestal mid-speech, rebel falling to the pile, agitators behind them',
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-      S.after.camp = 3; window.__afterGrant({ rebel: 200 });
+      S.after.camp = 3; window.__afterGrant({ rebel: 200 }); yardPurse();
       for (let k = 0; k < 3; k++) window.__buy('after-post-agitator');
       window.__fast(45);
       const at = window.__afterPair();
@@ -2779,7 +2782,7 @@ export const SCENES = {
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       window.__afterCrowd((i, v) => (i < 80 ? 8 : v));
-      window.__afterGrant({ rebel: 400 });
+      window.__afterGrant({ rebel: 400 }); yardPurse();
       window.__buy('after-build-mill');
       window.__buy('after-build-chipper');
       window.__fast(14); window.__look(stationX0('mill') - P * 4); window.__holdShot();
@@ -2799,10 +2802,22 @@ export const SCENES = {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       window.__afterCrowd((i, v) => (i < 12 ? 8 : v));
       for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
-      window.__afterGrant({ rebel: 400 });
+      window.__afterGrant({ rebel: 400 }); yardPurse();
       window.__buy('after-build-mill');
       for (let k = 0; k < 80 && !(S.after.raising.mill && S.after.raising.mill.n >= 2); k++) window.__fast(0.5);
       window.__look(stationX0('shack') - S.viewW / 2); window.__holdShot();
+    } },
+  // The yard paying (DESIGN.md, "The yard pays too"): the bigger speech bought
+  // on the pedestal's card, its dust come up out of the thin patch as motes and
+  // arcing over to the pedestal.
+  'after-coins': { about: 'the acts', say: "the yard's coins up through the thin patch in the cloud floor, arcing to the station bought",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      window.__afterGrant({ rebel: 400 }); yardPurse();
+      window.__buy('after-shout');
+      window.__buy('after-axe');
+      window.__fast(AFTER_COIN_UNDER_S + 0.5);
+      window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot();
     } },
 
   // Act 3's crowds, God and the camera's zoom (track C): the camp end with
