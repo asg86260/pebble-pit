@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paper Mill Cycle</title>
+<style>
+  :root { --bg: #ffffff; --fg: #000000; --muted: #5f5f5f; --line: #d6d6d6; --ph: #8a8a8a; }
+  :root[data-theme="dark"] { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #a4a4a4; --line: #464646; --ph: #8a8a8a; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1480px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  h2 { font-size: 15px; margin: 22px 0 6px; border-top: 2px solid var(--fg); padding-top: 10px; }
+  p, li { color: var(--muted); margin: 0 0 8px; max-width: 120ch; }
+  b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; align-items: center; }
+  .bar button { font: inherit; background: var(--bg); color: var(--fg); border: 2px solid var(--line); padding: 3px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .bar label { color: var(--muted); font-size: 13px; display: inline-flex; gap: 4px; align-items: center; }
+  canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border: 1px solid var(--line); }
+  #big { touch-action: none; cursor: grab; }
+  .wide { overflow-x: auto; max-width: 100%; }
+  figure { margin: 0; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .play { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  #ro { font-size: 12px; color: var(--muted); white-space: pre; min-width: 300px; }
+  .ph { border-bottom: 1px dotted var(--ph); }
+  .ph::after { content: "ph"; font-size: 9px; vertical-align: super; color: var(--ph); margin-left: 1px; }
+  ol, ul { padding-left: 22px; }
+  .crit li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<main>
+<h1><span class="ph">The paper mill</span>: the vat and line, making paper you can watch</h1>
+<p>A playable mock drawn from plain cells on the game's grid (P = 6, the game's eleven greys, a body the game's 18-pixel square with a 2-pixel rim), <b>not the game</b>. It is take A, <span class="ph">vat and line</span>, from <code>src/render/after/stations.js</code> with the same vat, step, paddle and line, grown a mould, a pulley cord, a longer line, a stack and a peel. The big picture is the 1x drawing scaled three times; the 1x row further down is the same yard at the game's zoom.</p>
+<p><b>Every word on this page is a placeholder</b> (marked <span class="ph">like this</span>, and the whole page is): station, job, tool and upgrade names are working names. The canvases draw no words, only the stack's count. The owner writes the player's words.</p>
+<p><b>Stir:</b> press on the vat in the big picture and drag round in circles (mouse or a finger). Faster circles fill the batch faster, up to a cap. When a batch is full the <span class="ph">pulper</span> hauls the mould out on its cord and pegs the sheet; the <span class="ph">loft hand</span> takes dry sheets off the far end with the peel.</p>
+<div class="bar">
+  <button data-theme="light" class="on">light</button><button data-theme="dark">dark</button>
+  <button id="pause">pause</button>
+  <button id="speed">speed x1</button>
+  <label><input type="checkbox" id="worker"> <span class="ph">pulper</span> stirs on their own</label>
+  <label><input type="checkbox" id="vat2"> <span class="ph">bigger vat</span>: a two-sheet mould</label>
+  <label><input type="checkbox" id="line2"> <span class="ph">drying line</span>: the line twice as long</label>
+  <button id="reset">reset</button>
+</div>
+<div class="play">
+  <div class="wide"><figure><canvas id="big"></canvas><figcaption>3x, playable: stir on the vat</figcaption></figure></div>
+  <div id="ro"></div>
+</div>
+
+<h2>At 1x, beside a yard station</h2>
+<p>The same running yard at the game's zoom, on its paper backing over the camp's crowd, beside a hand copy of the <span class="ph">quarry</span>'s tower (copied by eye from a shot, not drawn by the game's code).</p>
+<div class="wide"><figure><canvas id="row"></canvas><figcaption>1x, live</figcaption></figure></div>
+
+<h2>The drying fade, held, 3x</h2>
+<p>Five sheets stopped at 0, 25, 50, 75 and 100 per cent dry, then a wet sheet's lean and a dry sheet's lean to either side (the difference on the line is how often each leans, not how far). On the line the fade is continuous (each sheet's two tones are blended by how dry it is, never stepped); here it is stopped so the tones can be compared.</p>
+<div class="wide"><figure><canvas id="stages"></canvas><figcaption>3x: wet .. dry; then a wet sheet's lean, and a dry sheet's lean to either side</figcaption></figure></div>
+
+<h2>What each step looks like</h2>
+<ol>
+  <li><b>Stir.</b> The paddle is plumb and steps a whole cell at a time across the vat, following the hand's circle; a crest of pulp stands ahead of it and a trough opens behind. The batch filling shows in the pulp: thin pale grey after a sheet is pulled, thickening cell by cell (each cell fades on its own) to a darker mottled grey when the batch is full. The <span class="ph">pulper</span> on the step leans with the paddle.</li>
+  <li><b>The mould lifts out.</b> A cord runs from the <span class="ph">pulper</span>'s hand up the left post, along the line, and down to a hook over the vat; the mould hangs on it under the pulp. With the batch full the <span class="ph">pulper</span> leans back and hauls, hand over hand (the body rocks two pixels a step), and the mould rises a cell a step out of the pulp: two black side bars, a top and bottom rail, and the wet sheet in it in the darkest sheet grey. Drops fall from its bottom rail back into the vat and vanish at the surface.</li>
+  <li><b>Pegged, still wet.</b> At the line two pegs fade in at the sheet's top corners; the mould sinks back behind the sheet, empty, into the pulp. The new sheet hangs dark grey, its bottom row a step darker where the water pools, and drips fall under it into the vat.</li>
+  <li><b>It dries.</b> Over sixteen seconds the sheet fades from that grey to paper: the body first, the pooled bottom row last. Drips thin out as it dries and stop. In dark mode the same fade runs from mid grey to the paper tone #1f1f1f inside an ink outline.</li>
+  <li><b>It sways.</b> A gust runs down the line on a held clock (a pose every 0.3 s), so the sheets lean in a ripple from the vat end outward. A lean is the sheet's bottom row kicked a whole cell to one side, the rim following it. A wet sheet is heavy: it kicks only at a gust's peak, so it mostly hangs plumb. A dry sheet kicks at most gusts and swings through to the other side.</li>
+  <li><b>Off the line, onto the stack.</b> When the far end's sheet is dry, the <span class="ph">loft hand</span> raises the <span class="ph">peel</span> (a plumb pole with a level head) a cell a step until the head is under the sheet; the pegs fade off; the sheet rides the head down to the stack and fades out as the new top sheet fades in and the count ticks. As soon as the far end is free the line slides one slot along, a cell a step, so the slot over the vat is open before the next batch is full. If the far end is still wet the line cannot slide, and a full batch waits in the vat with the <span class="ph">pulper</span>'s hands on the cord.</li>
+  <li><b>Double output.</b> The <span class="ph">bigger vat</span> lifts a two-sheet mould: one haul, two sheets, two slides. On the short line that outruns the drying (the far end is still wet when the next pair needs room, so batches wait); the <span class="ph">drying line</span> doubles the line and the stack walks out with it, so every sheet gets the same sixteen seconds and the pair keeps up with the fastest hand.</li>
+</ol>
+<p><b>Measured</b> (sheets a minute on the stack over four minutes, through the page's own step; a held hand at a fixed speed; "waiting" is the share of time a full batch sat in the vat because the line had no room):</p>
+<table style="font-size:12px;border-collapse:collapse" id="tput">
+<tr><th style="text-align:left;padding:2px 10px 2px 0"></th><th style="padding:2px 10px">pulper alone</th><th style="padding:2px 10px">hand, 0.6 turns/s</th><th style="padding:2px 10px">hand, 1.2 turns/s (the cap)</th></tr>
+<tr><td>one mould, short line</td><td>5.3</td><td>5.3</td><td>11</td></tr>
+<tr><td>two-sheet mould, short line</td><td>10</td><td>10.8</td><td>11, waiting 43%</td></tr>
+<tr><td>one mould, long line</td><td>4.3</td><td>4.3</td><td>10.3</td></tr>
+<tr><td>two-sheet mould, long line</td><td>9.5</td><td>10.3</td><td>21.8</td></tr>
+</table>
+<p style="font-size:12px">The long line's numbers are a little lower where it is not needed only because it takes longer to fill at the start of the four minutes. The two-sheet mould on the short line gains nothing at the hand's cap: that is the line saying it is the limit.</p>
+
+<h2>Harsh critique, round 1 (and what was changed)</h2>
+<ol class="crit" id="crit1"><li><b>The cord read as a second post.</b> A two-pixel line beside the left post, ending in nothing at the top. <i>Changed:</i> a pulley block (two cells, a white eye) on the post's top, so the cord visibly runs over something.</li>
+<li><b>The count sat on the vat's wall.</b> It was drawn left of the stack and landed on the right wall in the 1x row. <i>Changed:</i> it sits over the stack, above the peel's head.</li>
+<li><b>The resting peel was a table.</b> A level head held at four cells over the stack read as a shelf with the count hung under it. <i>Changed:</i> at rest the peel's head lies on the stack, and it lands there with each sheet.</li>
+<li><b>The handle went through the rising mould.</b> When the hand kept stirring while the <span class="ph">pulper</span> hauled, the level handle still ran to the <span class="ph">pulper</span>'s hand across the mould: one body doing two jobs. <i>Changed:</i> while the <span class="ph">pulper</span> hauls, the hand holds the paddle by a short crossbar; the handle only reaches the body when the body is at the paddle.</li>
+<li><b>Two-row leans read as torn sheets.</b> A dry sheet with its middle and bottom rows both kicked a cell was a stair with a notch, at 3x and at 1x. <i>Changed:</i> a lean is the bottom row only; dry sheets lean at most gusts and to both sides, wet ones only at a gust's peak. "More freely" is now how often, not how far.</li>
+<li><b>The doubled output did not double.</b> Measured, the two-sheet mould on the long line made 15.8 sheets a minute at the hand's cap, not 24: the loft hand and the line's two slides were run one after the other while the full batch waited. <i>Changed:</i> the line slides as soon as the far end is free (while the batch is still filling), and every step of the haul and the peel was quickened; now 21.8.</li></ol>
+<h2>Harsh critique, round 2 (and what was changed)</h2>
+<ol class="crit" id="crit2"><li><b>Dark mode reads backwards to the eye.</b> Mapped by lightness, the wet sheet is a light grey and a dry one goes to the paper tone, #1f1f1f, so in dark the sheets <i>darken</i> as they dry, which is how wet cloth looks, not dry. The progression reads, and the pooled bottom row and the drips say which end is wet, but it is the first thing to vote on. <i>Not changed:</i> the mapping is the owner's rule; breaking it for one station is a call for the owner.</li>
+<li><b>A full batch waiting showed nothing.</b> The hand could circle a full vat with no sign of why nothing happened. <i>Changed:</i> while a batch waits on the line the <span class="ph">pulper</span> stands leaning back with hands on the cord. Still weak at 1x (a two-pixel lean); the honest cue is the wet sheet at the far end.</li>
+<li><b>The long line is mostly air.</b> At 1x the doubled station is 60 cells, its right half an empty frame on a white backing, and it dwarfs the yard tower beside it. The game's paper mill has 36 cells of ground. <i>Not changed:</i> this is the price of the long line; the alternative (two lines stacked) does not work mechanically, see the open questions.</li>
+<li><b>The <span class="ph">pulper</span> alone shows only two sheets on the line.</b> At eight seconds a batch and sixteen to dry, two wet sheets hang at a time and dry sheets wait at the far end; the full four-stage gradient only shows at a fast hand. <i>Not changed:</i> it is the honest count. A longer drying time would show more stages, but then the short line stalls the fastest hand.</li>
+<li><b>The empty twin mould sinking looks like a lid on the vat.</b> For the half second its rails cross the pulp surface it is a flat box over the vat. <i>Not changed:</i> it passes in a few frames; a thinner rail would break the cell-thick rule.</li>
+<li><b>The stack is still the game's ruled stack.</b> At 3x it reads as a slatted crate rather than paper. <i>Not changed:</i> it is <code>sheetPile</code> as built, kept so the camp's piles agree; flagged in case the owner wants paper to read as paper here.</li></ol>
+
+<h2>What the mock cannot show</h2>
+<ul>
+  <li>The real camp: the cloud floor, the posts along each station's top, the build in bands, the glyph stack over a working station, the pile-full mark, and whether a 40-cell (or, with the long line, 60-cell) station fits the camp's spacing. The game's <code>ART</code> box for the paper mill is 36 cells of ground.</li>
+  <li>Where the pulp comes from. Chips arrive from the <span class="ph">chipper</span> by carrier in the game; here the vat never runs dry.</li>
+  <li>Who carries paper on to the <span class="ph">press</span>: carriers taking sheets off the stack are not drawn.</li>
+  <li>The hand with no <span class="ph">pulper</span> posted. Here a body always stands on the step and does the haul; who lifts the mould when only the player is stirring is an open question (below).</li>
+  <li>The game's gesture numbers are copied (six turns a batch, 1.2 turns a second at most, the ease and coast), but the hand's box and the vat ellipse are this page's, not <code>after/place.js</code>'s.</li>
+</ul>
+
+<h2>Open questions for the owner</h2>
+<ul>
+  <li>The <span class="ph">loft hand</span> is a second body at the station. It could instead be the <span class="ph">pulper</span> climbing down between batches (slower, one job), or a carrier from the <span class="ph">workshop</span>'s pool. Which?</li>
+  <li>With the hand stirring and nobody posted, should the mould lift by itself (the hand's batch), or wait for a body?</li>
+  <li>The doubled line makes the station 60 cells wide. The other way to double it, two lines one above the other, was tried and drops out: the peel cannot reach the upper line's end through the lower line, and the second mould would have to rise through the lower line's sheets.</li>
+</ul>
+</main>
+
+<script>
+// ---------------------------------------------------------------------------
+// Grid, greys, dark map. Tones are rungs of GREY (0 paper .. 10 ink), as in kit.js.
+const P = 6;
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a',
+              '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const K = 10, W = 0;
+let DARK = false, PAUSED = false, SPEED = 1;
+const Q = new URLSearchParams(location.search);
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+function hex(tone) {
+  const c = GREY[tone];
+  if (!DARK) return c;
+  const v = parseInt(c.slice(1, 3), 16) / 255;
+  const n = Math.round((LP + (LI - LP) * (1 - v)) * 255).toString(16).padStart(2, '0');
+  return '#' + n + n + n;
+}
+// Two tones blended by f, as one flat grey (a sheet's drying, a pulp cell thickening).
+function mix(a, b, f) {
+  const x = parseInt(hex(a).slice(1, 3), 16), y = parseInt(hex(b).slice(1, 3), 16);
+  const n = Math.round(x + (y - x) * clamp01(f)).toString(16).padStart(2, '0');
+  return '#' + n + n + n;
+}
+const hash = n => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const FADE = 0.4;
+
+// The frame (kit.js): cells (x, y), x across from the station's left, y up from
+// the floor (row -1 the bottom row). A tone is a GREY rung or a ready color.
+function frame(g, ox, oy, sink = null) {
+  const d = {
+    g, ox, oy,
+    px(x, y, w, h, tone) {
+      if (sink) { sink(x, y, w, h); return; }
+      g.fillStyle = typeof tone === 'string' ? tone : hex(tone);
+      g.fillRect(Math.round(ox + x), Math.round(oy + y), Math.round(w), Math.round(h));
+    },
+    r(x, y, w, h, tone = K) { d.px(x * P, y * P, w * P, h * P, tone); },
+    c(x, y, tone = K) { d.r(x, y, 1, 1, tone); },
+    spr(rows, x, y) { rows.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') d.c(x + i, y + j, K); else if (ch === 'o') d.c(x + i, y + j, W); })); },
+    fade(a, fn) { if (sink) { fn(); return; } const was = g.globalAlpha; g.globalAlpha = was * clamp01(a); fn(); g.globalAlpha = was; },
+    clipAbove(yCell, fn) { if (sink) { fn(); return; } g.save(); g.beginPath(); g.rect(-1e4, -1e4, 2e4, oy + yCell * P + 1e4); g.clip(); fn(); g.restore(); },
+    body(x, y, dxpx = 0) { const bx = x * P + dxpx, by = y * P; d.px(bx, by, 18, 18, K); d.px(bx + 2, by + 2, 14, 14, W); },
+    world: (x, y) => ({ x: ox + x * P, y: oy + y * P })
+  };
+  return d;
+}
+function silhouette(draw) {
+  const rows = new Map();
+  draw(frame(null, 0, 0, (x, y, w, h) => {
+    if (w <= 0 || h <= 0) return;
+    for (let r = Math.floor(y / P); r < Math.ceil((y + h) / P); r++) {
+      const a = Math.floor(x / P), b = Math.ceil((x + w) / P) - 1, s = rows.get(r);
+      rows.set(r, s ? [Math.min(s[0], a), Math.max(s[1], b)] : [a, b]);
+    }
+  }));
+  return [...rows].map(([r, [a, b]]) => [r, a, b]);
+}
+
+// The yard's count font with its paper key, 2 px a font pixel, in world px.
+const NUM = {
+  '0': ['.##.', '#..#', '#..#', '#..#', '#..#', '.##.'], '1': ['.#..', '##..', '.#..', '.#..', '.#..', '###.'],
+  '2': ['.##.', '#..#', '..#.', '.#..', '#...', '####'], '3': ['###.', '...#', '.##.', '...#', '...#', '###.'],
+  '4': ['#..#', '#..#', '####', '...#', '...#', '...#'], '5': ['####', '#...', '###.', '...#', '...#', '###.'],
+  '6': ['.##.', '#...', '###.', '#..#', '#..#', '.##.'], '7': ['####', '...#', '..#.', '.#..', '.#..', '.#..'],
+  '8': ['.##.', '#..#', '.##.', '#..#', '#..#', '.##.'], '9': ['.##.', '#..#', '#..#', '.###', '...#', '.##.']
+};
+function count(d, n, cx, cy) {
+  const at = d.world(cx, cy), g = d.g, s = String(Math.round(n)), px = 2;
+  const left = Math.round(at.x - (s.length * 5 - 1) * px / 2), top = Math.round(at.y - 6);
+  const ink = new Set(), key = new Set();
+  [...s].forEach((ch, i) => NUM[ch].forEach((row, r) => [...row].forEach((v, c) => { if (v === '#') ink.add((i * 5 + c) + ',' + r); })));
+  for (const k of ink) { const [x, y] = k.split(',').map(Number); for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) { const kk = (x + dx) + ',' + (y + dy); if (!ink.has(kk)) key.add(kk); } }
+  g.fillStyle = hex(W); for (const k of key) { const [x, y] = k.split(',').map(Number); g.fillRect(left + x * px, top + y * px, px, px); }
+  g.fillStyle = hex(K); for (const k of ink) { const [x, y] = k.split(',').map(Number); g.fillRect(left + x * px, top + y * px, px, px); }
+}
+
+// ---------------------------------------------------------------------------
+// The numbers. The stir's are the game's (config/gestures.js); the rest are this mock's.
+const STIR_TURNS = 6, STIR_MAX_REV = 1.2, STIR_EASE = 6, STIR_COAST = 2;
+const WORKER_REV = 0.75;            // the pulper's own stir: a batch in 8 s, the fastest hand's in 5
+const DRY_S = 16;                   // a sheet's time on the line from grey to paper
+const WET = 6, WET_POOL = 7;        // the wet sheet's grey and its pooled bottom row
+const PADDLE_X = [15, 18, 21, 18], PADDLE_MID = 18, PADDLE_REACH = 3, VAT = { x: 19, y: -5, rx: 6, ry: 2.5 };
+const LINE_Y = -18, SHEET_TOP = -16, MOULD_REST = -6, SURFACE = -7, LIFT_N = MOULD_REST - SHEET_TOP;
+const SLOT0 = 14, SLOT_W = 5, PEEL_UNDER = (SHEET_TOP + 3) * P;   // the peel's head, in px: under the sheet
+const T = { slide: 0.1, lift: 0.09, hang: 0.35, peg: 0.25, lower: 0.05, peelUp: 0.06, unpeg: 0.25, peelDown: 0.06, land: 0.3, sway: 0.3 };
+const CFG = { moulds: 1, slots: 4, worker: false };
+function geo() {
+  const LAST = SLOT0 + SLOT_W * (CFG.slots - 1);
+  return { LAST, stackX: LAST, peelX: LAST + 4, loftX: LAST + 5, postR: LAST + 9, lineX1: LAST + 10 };
+}
+const dryOf = s => clamp01((S.t - s.born) / DRY_S);
+const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+
+let S;
+function reset() {
+  S = { t: 0, prog: 0, stall: false,
+        hand: { ang: -Math.PI / 2, w: 0, grab: false, pa: 0, acc: 0 }, wAng: 0,
+        pul: { st: 'stir', k: 0, tm: 0 }, sheets: [],
+        loft: { st: 'rest', y: -5, tm: 0, carry: null, target: null },
+        pile: { n: 0, prev: 0, since: 9 }, drops: [], batches: 0, stallT: 0 };
+}
+reset();
+
+// ---------------------------------------------------------------------------
+// The hand: the game's stir, an angle round the vat's ellipse; its speed fills
+// the batch while it is held, up to the cap.
+const handTurning = () => S.hand.grab || Math.abs(S.hand.w) > 0.3;
+const handRev = () => Math.abs(S.hand.w) / (2 * Math.PI);
+function vatAngle(x, y) { return Math.atan2((y - VAT.y) / VAT.ry, (x - VAT.x) / VAT.rx); }
+function handDown(x, y) { S.hand.grab = true; S.hand.pa = vatAngle(x, y); }
+function handMove(x, y) { if (!S.hand.grab) return; const na = vatAngle(x, y), d = wrap(na - S.hand.pa); S.hand.ang += d; S.hand.acc += d; S.hand.pa = na; }
+function handUp() { S.hand.grab = false; }
+
+function spawnDrop(xpx, ypx) { S.drops.push({ x: xpx, y: ypx, vy: 0, landed: -1 }); }
+function landY(xpx, G) {
+  const c = Math.floor(xpx / P);
+  if (c >= 13 && c <= 24) return SURFACE * P;
+  if ((c >= 10 && c <= 12) || (c >= 25 && c <= 27)) return -10 * P;
+  if (c >= G.stackX && c < G.stackX + 4) return pileTop();
+  return 0;
+}
+const pileTop = () => -2 - Math.min(S.pile.n, 6) * 3;
+// The peel at rest lies with its head on the stack.
+const peelRest = () => pileTop() - 3;
+
+function step(dt) {
+  const G = geo(), h = S.hand, p = S.pul, L = S.loft;
+  S.t += dt;
+  // the hand's paddle
+  if (h.grab) { h.w += (h.acc / dt - h.w) * Math.min(1, dt * STIR_EASE); h.acc = 0; S.prog = Math.min(STIR_TURNS, S.prog + Math.min(handRev(), STIR_MAX_REV) * dt); }
+  else { h.w *= Math.exp(-STIR_COAST * dt); h.ang += h.w * dt; }
+  // the pulper's own stir, when the hand is off and nothing else is on
+  if (CFG.worker && p.st === 'stir' && !handTurning() && S.prog < STIR_TURNS) { S.wAng += WORKER_REV * 2 * Math.PI * dt; S.prog = Math.min(STIR_TURNS, S.prog + WORKER_REV * dt); }
+
+  // the pulper: hang a full batch, sliding the line along first if the hanging slots are taken
+  p.tm += dt;
+  const hangEnd = SLOT0 + SLOT_W * CFG.moulds;
+  if (p.st === 'stir') {
+    S.stall = false;
+    // The line is slid along as soon as there is room at the far end, while
+    // the batch is still filling, so a full batch is not kept waiting on it.
+    const taken = S.sheets.some(s => s.x < hangEnd), endFree = !S.sheets.some(s => s.x >= G.LAST);
+    if (taken && endFree) { p.st = 'slide'; p.k = 0; p.tm = 0; }
+    else if (S.prog >= STIR_TURNS) {
+      if (!taken) { p.st = 'lift'; p.k = 0; p.tm = 0; S.prog = 0; }
+      else { S.stall = true; S.stallT += dt; }
+    }
+  } else if (p.st === 'slide') {
+    while (p.tm >= T.slide && p.st === 'slide') { p.tm -= T.slide; for (const s of S.sheets) s.x++; if (++p.k === SLOT_W) { p.st = 'stir'; p.tm = 0; } }
+  } else if (p.st === 'lift') {
+    while (p.tm >= T.lift && p.st === 'lift') {
+      p.tm -= T.lift;
+      if (++p.k === LIFT_N) {
+        p.st = 'hang'; p.tm = 0; S.batches++;
+        for (let i = 0; i < CFG.moulds; i++) S.sheets.push({ x: SLOT0 + SLOT_W * i, born: S.t, peg: 0, fresh: true });
+      }
+    }
+  } else if (p.st === 'hang') {
+    for (const s of S.sheets) if (s.fresh) s.peg = clamp01(p.tm / T.peg);
+    if (p.tm >= T.hang) { p.st = 'lower'; p.k = LIFT_N; p.tm = 0; for (const s of S.sheets) { s.fresh = false; s.peg = 1; } }
+  } else if (p.st === 'lower') {
+    while (p.tm >= T.lower && p.st === 'lower') { p.tm -= T.lower; if (--p.k === 0) { p.st = 'stir'; p.tm = 0; } }
+  }
+
+  // drips: from the mould out of the pulp, and from every wet sheet
+  if (p.st === 'lift' || p.st === 'hang') {
+    const top = MOULD_REST - p.k;
+    if (top + 3 <= SURFACE) for (let i = 0; i < CFG.moulds; i++) if (Math.random() < 9 * dt) spawnDrop((SLOT0 + SLOT_W * i) * P + 3 + Math.floor(Math.random() * 9) * 2, (top + 3) * P + 2);
+  }
+  for (const s of S.sheets) {
+    const w = 1 - dryOf(s);
+    if (Math.random() < 3 * w * w * dt) { const ln = leanOf(s); spawnDrop((s.x + ln.bot) * P + 3 + Math.floor(Math.random() * 9) * 2, (SHEET_TOP + 3) * P); }
+  }
+  for (const dr of S.drops) {
+    if (dr.landed >= 0) { dr.landed += dt; continue; }
+    dr.vy += 420 * dt; dr.y += dr.vy * dt;
+    const ly = landY(dr.x, G); if (dr.y + 3 >= ly) { dr.y = ly - 2; dr.landed = 0; }
+  }
+  S.drops = S.drops.filter(dr => dr.landed < 0.3);
+
+  // the loft hand: the far end's sheet, once dry, off on the peel and down onto the stack
+  L.tm += dt; S.pile.since += dt;
+  if (L.st === 'rest') {
+    const s = S.sheets.find(s => s.x === G.LAST && !s.fresh && dryOf(s) >= 1);
+    if (s && p.st !== 'slide') { L.st = 'up'; L.tm = 0; L.target = s; }
+  } else if (L.st === 'up') {
+    while (L.tm >= T.peelUp && L.st === 'up') { L.tm -= T.peelUp; L.y = Math.max(PEEL_UNDER, L.y - P); if (L.y === PEEL_UNDER) { L.st = 'unpeg'; L.tm = 0; } }
+  } else if (L.st === 'unpeg') {
+    L.target.peg = 1 - clamp01(L.tm / T.unpeg);
+    if (L.tm >= T.unpeg) { S.sheets = S.sheets.filter(s => s !== L.target); L.target = null; L.carry = { a: 1 }; L.st = 'down'; L.tm = 0; }
+  } else if (L.st === 'down') {
+    while (L.tm >= T.peelDown && L.st === 'down') {
+      L.tm -= T.peelDown;
+      L.y = Math.min(peelRest(), L.y + P);
+      if (L.y === peelRest()) { L.st = 'land'; L.tm = 0; S.pile.prev = S.pile.n; S.pile.n++; S.pile.since = 0; }
+    }
+  } else if (L.st === 'land') {
+    L.carry.a = 1 - clamp01(L.tm / T.land);
+    if (L.tm >= T.land) { L.carry = null; L.st = 'rest'; L.tm = 0; }
+  }
+  if (L.st === 'rest' || L.st === 'land') L.y = peelRest();
+}
+
+// A gust down the line on a held clock. A lean is the bottom row kicked a
+// whole cell: a wet sheet kicks only at a gust's peak, a dry one at most
+// gusts and to either side. (Two rows leaning read as a torn sheet.)
+function leanOf(s) {
+  if (s.fresh || s.peg < 1) return { mid: 0, bot: 0 };
+  const tq = Math.floor(S.t / T.sway) * T.sway;
+  const gst = Math.sin(tq * 1.1 - s.x * 0.09) + 0.55 * Math.sin(tq * 2.7 + 1.3 - s.x * 0.05);
+  const v = gst * (0.35 + 0.65 * dryOf(s));
+  return { bot: Math.abs(v) > 0.45 ? Math.sign(v) : 0, mid: 0 };
+}
+
+// ---------------------------------------------------------------------------
+// Drawing.
+// A sheet four cells by three, an ink rim round a fill that fades from the wet
+// grey to paper by `dry`; its bottom row pools a step darker and dries last.
+// A lean shifts whole rows a cell, the rim following each row.
+function drawSheet(d, x, top, dry, ln = { mid: 0, bot: 0 }) {
+  const off = [0, ln.mid, ln.bot], w = 4 * P;
+  const fill = mix(WET, W, dry), pool = mix(WET_POOL, W, clamp01((dry - 0.25) / 0.75));
+  for (let r = 0; r < 3; r++) d.px((x + off[r]) * P, (top + r) * P, w, P, K);
+  for (let r = 0; r < 3; r++) {
+    const X = (x + off[r]) * P, Y = (top + r) * P;
+    d.px(X + 2, Y + (r === 0 ? 2 : 0), w - 4, P - (r === 0 ? 2 : 0) - (r === 2 ? 2 : 0), r === 2 ? pool : fill);
+  }
+  // where two rows are shifted apart, the rim closes across the step
+  for (let r = 1; r < 3; r++) if (off[r] !== off[r - 1]) {
+    const a0 = (x + off[r - 1]) * P + 2, a1 = a0 + w - 4, b0 = (x + off[r]) * P + 2, b1 = b0 + w - 4, Y = (top + r) * P;
+    const lo = Math.max(a0, b0), hi = Math.min(a1, b1);
+    if (b0 < lo) d.px(b0, Y, lo - b0, 2, K); if (b1 > hi) d.px(hi, Y, b1 - hi, 2, K);
+    if (a0 < lo) d.px(a0, Y - 2, lo - a0, 2, K); if (a1 > hi) d.px(hi, Y - 2, a1 - hi, 2, K);
+  }
+}
+function pegs(d, x, top, a) { d.fade(a, () => { d.px(x * P + 3, (top - 1) * P, 3, P + 2, K); d.px((x + 4) * P - 6, (top - 1) * P, 3, P + 2, K); }); }
+
+// The mould: side bars a cell wide, a rail top and bottom, the cord from the
+// line's hook to the middle of its top rail.
+function mould(d, top, full) {
+  const m = CFG.moulds, x0 = SLOT0 - 1, x1 = SLOT0 + SLOT_W * m - 1, cx = (x0 + x1 + 1) / 2;
+  d.px(cx * P - 1, (LINE_Y + 1) * P, 2, (top - 1 - LINE_Y - 1) * P, K);
+  if (full) for (let i = 0; i < m; i++) drawSheet(d, SLOT0 + SLOT_W * i, top, 0);
+  for (let i = 0; i <= m; i++) d.px((x0 + SLOT_W * i) * P, (top - 1) * P, P, 4 * P + 2, K);
+  d.px(x0 * P, (top - 1) * P, (x1 - x0 + 1) * P, 3, K);
+  d.px(x0 * P, (top + 3) * P, (x1 - x0 + 1) * P, 2, K);
+}
+
+function vat(d) {
+  d.r(10, -10, 4, 1, K); d.r(24, -10, 4, 1, K);             // the rim's lips
+  d.r(11, -9, 2, 8, K); d.r(25, -9, 2, 8, K);               // walls
+  d.r(12, -2, 14, 1, K);                                    // floor
+  d.r(11, -1, 3, 1, K); d.r(24, -1, 3, 1, K);               // feet
+  // the pulp: thin and pale after a sheet is pulled, each cell thickening on its own as the batch fills
+  const fill = S.prog / STIR_TURNS;
+  for (let j = 0; j < 5; j++) for (let i = 0; i < 12; i++) {
+    const hh = hash((13 + i) * 5.1 + j * 9.3), hh2 = hash((13 + i) * 2.7 + j * 4.1);
+    const thin = hh < 0.6 ? 2 : 3, thick = hh2 < 0.45 ? 3 : hh2 < 0.85 ? 4 : 5;
+    d.c(13 + i, SURFACE + j, mix(thin, thick, clamp01((fill - hh * 0.6) / 0.4)));
+  }
+}
+function crest(d, x, dir) {
+  const c = dir > 0 ? x + 2 : x - 3, tr = dir > 0 ? x - 3 : x + 2;
+  if (c >= 13 && c + 2 <= 25) d.r(c, SURFACE - 1, 2, 1, 3);
+  if (tr >= 13 && tr + 2 <= 25) d.r(tr, SURFACE, 2, 1, W);
+}
+// Where the paddle is: on the hand's circle, the pulper's four poses, or stood by.
+function paddle() {
+  const h = S.hand;
+  if (handTurning()) {
+    const x = Math.max(15, Math.min(21, Math.round(PADDLE_MID + PADDLE_REACH * Math.cos(h.ang))));
+    return { x, dir: -Math.sin(h.ang) * h.w >= 0 ? 1 : -1, held: true };
+  }
+  if (CFG.worker && S.pul.st === 'stir' && S.prog < STIR_TURNS) { const k = Math.floor(S.wAng / (Math.PI / 2)) % 4; return { x: PADDLE_X[k], dir: k < 2 ? 1 : -1, held: true }; }
+  return { x: 21, dir: 0, held: false };
+}
+function pulperPose(pd) {
+  const p = S.pul;
+  if (p.st === 'lift') return p.k % 2 ? -2 : -4;           // hauling hand over hand, leaning back
+  if (p.st === 'hang') return -3;
+  if (S.stall) return -2;                                  // a full batch waiting on the line: hands on the cord
+  if (p.st === 'lower') return -1;
+  return pd.held ? Math.round((pd.x - 15) / 2) : 0;
+}
+
+// The paper stack (piles.js `sheetPile`): a sheet three pixels, ruled in grey.
+function pileAlpha(i, st) { const f = clamp01(st.since / FADE); if (i < Math.min(st.n, st.prev)) return 1; return st.n > st.prev ? f : 1 - f; }
+function sheetPile(d, x, st, cap = 6) {
+  const shown = Math.min(st.n, cap), m = Math.min(Math.max(st.n, st.prev), cap), w = 4 * P;
+  for (let i = 0; i < m; i++) d.fade(st.n > cap && i === cap - 1 ? 1 : pileAlpha(i, st), () => {
+    const y = -2 - (i + 1) * 3; d.px(x * P, y, w, 3, K); d.px(x * P + 2, y, w - 4, 2, i === m - 1 ? W : 1);
+  });
+  if (st.n > cap && st.since < FADE) d.fade(clamp01(st.since / FADE), () => { const y = -2 - cap * 3; d.px(x * P, y, w, 3, K); d.px(x * P + 2, y, w - 4, 2, W); });
+  return -2 - shown * 3;
+}
+
+// The whole station at (ox, floor oy).
+function staticFrame(d, G) {
+  d.r(5, -9, 4, 9, K);                                      // the step
+  for (let y = -8; y < 0; y += 2) d.px(5 * P + 3, y * P + 1, 4 * P - 6, 2, W);
+  vatShell(d);
+  d.r(10, LINE_Y + 1, 1, -10 - LINE_Y - 1, K);              // the left post, off the vat's lip
+  d.r(G.postR, LINE_Y + 1, 1, -LINE_Y - 2, K); d.r(G.postR - 1, -1, 3, 1, K);   // the far post and its foot
+  d.r(9, LINE_Y, G.lineX1 - 9, 1, K);                       // the line
+}
+function vatShell(d) { d.r(10, -10, 4, 1, K); d.r(24, -10, 4, 1, K); d.r(11, -9, 2, 8, K); d.r(25, -9, 2, 8, K); d.r(12, -2, 14, 1, K); d.r(11, -1, 3, 1, K); d.r(24, -1, 3, 1, K); }
+function drawStation(g, ox, oy) {
+  const d = frame(g, ox, oy), G = geo(), p = S.pul, L = S.loft;
+  d.r(5, -9, 4, 9, K);
+  for (let y = -8; y < 0; y += 2) d.px(5 * P + 3, y * P + 1, 4 * P - 6, 2, W);
+  vat(d);
+  d.r(10, LINE_Y + 1, 1, -10 - LINE_Y - 1, K);
+  d.r(G.postR, LINE_Y + 1, 1, -LINE_Y - 2, K); d.r(G.postR - 1, -1, 3, 1, K);
+  d.r(9, LINE_Y, G.lineX1 - 9, 1, K);
+  // a pulley on the left post's top, and the cord from it down to the pulper's hand
+  d.r(9, LINE_Y - 1, 2, 2, K); d.px(9 * P + 5, (LINE_Y - 1) * P + 5, 2, 2, W);
+  d.px(9 * P + 1, (LINE_Y + 1) * P, 2, (-11 - LINE_Y - 1) * P, K);
+
+  const pd = paddle();
+  if (pd.held) {
+    crest(d, pd.x, pd.dir);
+    if (p.st === 'stir') d.px(9 * P, -12 * P + 1, (pd.x - 9) * P + 3, 4, K);   // the handle, level from the pulper's hand
+    else d.px((pd.x - 1) * P + 2, -12 * P + 1, 2 * P, 4, K);                  // the pulper is hauling: the hand has it by a crossbar
+    d.px(pd.x * P, -12 * P + 1, 4, 7 * P, K);                // the paddle, plumb
+    d.r(pd.x - 0.5, -5, 2, 3, K);
+  } else {
+    d.px(22 * P, -12 * P + 1, 4, 7 * P, K); d.r(21.5, -5, 2, 3, K);
+    d.px(21 * P + 2, -12 * P + 1, 2 * P - 4 + 4, 4, K);     // stood by: a short crossbar, nobody at it
+  }
+  const mt = MOULD_REST - p.k, front = p.st === 'lift' || p.st === 'hang';
+  if (!front) d.clipAbove(SURFACE, () => mould(d, mt, false));
+  for (const s of S.sheets) {
+    if (s === L.target && L.st === 'unpeg') { drawSheet(d, s.x, SHEET_TOP, 1); pegs(d, s.x, SHEET_TOP, s.peg); continue; }
+    drawSheet(d, s.x, SHEET_TOP, dryOf(s), leanOf(s)); pegs(d, s.x, SHEET_TOP, s.peg);
+  }
+  if (front) d.clipAbove(SURFACE, () => mould(d, mt, p.st === 'lift'));
+  for (const dr of S.drops) d.fade(dr.landed < 0 ? 1 : 1 - dr.landed / 0.3, () => d.px(dr.x, dr.y, 2, dr.landed < 0 ? 3 : 2, 5));
+
+  sheetPile(d, G.stackX, S.pile);
+  if (S.pile.n > 0) count(d, S.pile.n, G.stackX + 2, (peelRest() - 3) / P - 1.2);
+  d.px(G.stackX * P, L.y, 5 * P, 3, K);                      // the peel's head
+  d.px(G.peelX * P + 1, L.y, 4, -2 * P - L.y, K);            // its pole, plumb, to the hand
+  if (L.carry) d.fade(L.carry.a, () => drawSheet(d, G.stackX, (L.y - 3 * P) / P, 1));
+  d.body(6, -12, pulperPose(pd));
+  d.body(G.loftX, -3, L.st === 'up' || L.st === 'down' ? -1 : 0);
+}
+
+// The camp's crowd, a stand-in by eye (the r2 mock's).
+function crowd(g, x0, x1, oy) {
+  const rows = [[-15, 1, 1.5, 0], [-13.5, 1, 1.3, 0.4], [-11.5, 2, 3, 0.2], [-7, 2, 4, 1.1]];
+  for (const [ry, s, st, o] of rows) for (let x = x0 + o * P; x < x1 - s * P; x += st * P) {
+    const px = Math.round(x), py = Math.round(oy + ry * P), w = s * P;
+    g.fillStyle = hex(7); g.fillRect(px, py, w, w);
+    g.fillStyle = hex(W); g.fillRect(px + (s > 1 ? 2 : 1), py + (s > 1 ? 2 : 1), w - (s > 1 ? 4 : 2), w - (s > 1 ? 4 : 2));
+  }
+}
+const YARD = ['   ###    ', '   ##     ', '  ##o##   ', '  #oo###  ', '  ##o####o', '  ######  ', '##########', ' ##    ## ', ' ##    ## ', ' ##    ## ', '##########', ' ##    ## ', ' ##    ## ', ' ##    ## ', ' ##    ## ', ' ##    ## '];
+
+// ---------------------------------------------------------------------------
+// The canvases.
+const big = document.getElementById('big'), row = document.getElementById('row'), stages = document.getElementById('stages');
+const off = document.createElement('canvas');
+const BIG = { ox: 0, oy: 22 * P, scale: 3 };
+function sizeAll() {
+  const G = geo();
+  off.width = (G.lineX1 + 2) * P; off.height = 24 * P;
+  big.width = off.width * BIG.scale; big.height = off.height * BIG.scale;
+  row.width = (2 + 12 + 4 + G.lineX1 + 3) * P; row.height = 28 * P;
+}
+sizeAll();
+const paper = (g, w, h) => { g.fillStyle = hex(W); g.fillRect(0, 0, w, h); };
+const ground = (g, x0, x1, oy) => { g.fillStyle = hex(K); g.fillRect(x0, oy, x1 - x0, 2); };
+function drawBig() {
+  const g = off.getContext('2d');
+  paper(g, off.width, off.height); ground(g, 0, off.width, BIG.oy);
+  drawStation(g, BIG.ox, BIG.oy);
+  const gb = big.getContext('2d'); gb.imageSmoothingEnabled = false;
+  gb.drawImage(off, 0, 0, big.width, big.height);
+}
+let backRows = null, backKey = '';
+function drawRow() {
+  const g = row.getContext('2d'), oy = 26 * P, G = geo();
+  paper(g, row.width, row.height); crowd(g, 0, row.width, oy); ground(g, 0, row.width, oy);
+  const dt = frame(g, 2 * P, oy); dt.spr(YARD, 0, -YARD.length);
+  const sx = 18 * P, key = CFG.slots + ':' + CFG.moulds;
+  if (backKey !== key) { backRows = silhouette(d => staticFrame(d, G)); backKey = key; }
+  const d = frame(g, sx, oy); for (const [r, a, b] of backRows) d.r(a, r, b - a + 1, 1, W);
+  drawStation(g, sx, oy);
+}
+function drawStages() {
+  const o = document.createElement('canvas'); o.width = 47 * P; o.height = 10 * P;
+  const g = o.getContext('2d'), d = frame(g, 0, 8 * P);
+  paper(g, o.width, o.height);
+  d.r(0, -7, 47, 1, K);
+  const at = [0, 0.25, 0.5, 0.75, 1];
+  at.forEach((v, i) => { drawSheet(d, 1 + 5 * i, -5, v); pegs(d, 1 + 5 * i, -5, 1); });
+  d.r(26, -8, 1, 8, K);
+  drawSheet(d, 29, -5, 0, { mid: 0, bot: 1 }); pegs(d, 29, -5, 1);
+  drawSheet(d, 35, -5, 1, { mid: 0, bot: -1 }); pegs(d, 35, -5, 1);
+  drawSheet(d, 40, -5, 1, { mid: 0, bot: 1 }); pegs(d, 40, -5, 1);
+  d.px(29 * P + 9, -1 * P, 2, 3, 5); d.px(30 * P + 7, 0 * P - 3, 2, 3, 5); d.px(1 * P + 11, -1 * P, 2, 3, 5); d.px(2 * P + 9, 0 - 4, 2, 3, 5);
+  stages.width = o.width * 3; stages.height = o.height * 3;
+  const gs = stages.getContext('2d'); gs.imageSmoothingEnabled = false; gs.drawImage(o, 0, 0, stages.width, stages.height);
+}
+
+function readout() {
+  const p = S.pul, L = S.loft;
+  const lines = [
+    `stir      ${handRev().toFixed(2)} turns/s${S.hand.grab ? ' (held)' : ''}`,
+    `batch     ${Math.round(S.prog / STIR_TURNS * 100)}%${S.stall ? '  waiting: the far end is still wet' : ''}`,
+    `pulper    ${p.st}${p.st === 'lift' || p.st === 'lower' ? ' ' + p.k + '/' + LIFT_N : ''}`,
+    `loft hand ${L.st}`,
+    `on line   ${S.sheets.map(s => Math.round(dryOf(s) * 100) + '%').join(' ') || '-'}`,
+    `stack     ${S.pile.n}   batches ${S.batches}`,
+    `t         ${S.t.toFixed(1)} s`
+  ];
+  document.getElementById('ro').textContent = lines.join('\n') + '\n\n(every label here is a placeholder)';
+}
+function drawAll() { drawBig(); drawRow(); readout(); }
+
+// The hand on the big picture or the 1x one, in the station's cells.
+function cellAt(cv, e) {
+  const r = cv.getBoundingClientRect(), sx = cv.width / r.width, k = cv === big ? BIG.scale : 1;
+  const ox = cv === big ? BIG.ox : 18 * P, oy = cv === big ? BIG.oy : 26 * P;
+  return { x: (((e.clientX - r.left) * sx) / k - ox) / P, y: (((e.clientY - r.top) * sx) / k - oy) / P };
+}
+for (const cv of [big, row]) {
+  cv.style.touchAction = 'none';
+  cv.addEventListener('pointerdown', e => {
+    const c = cellAt(cv, e);
+    if (c.x < 8 || c.x > 30 || c.y < -14 || c.y > 1) return;
+    cv.setPointerCapture(e.pointerId); handDown(c.x, c.y); e.preventDefault();
+  });
+  cv.addEventListener('pointermove', e => { if (S.hand.grab) { const c = cellAt(cv, e); handMove(c.x, c.y); } });
+  for (const t of ['pointerup', 'pointercancel']) cv.addEventListener(t, () => handUp());
+}
+
+// Time.
+let lastT = performance.now();
+function loop(now) {
+  const real = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+  if (!PAUSED) { const n = Math.max(1, Math.round(real * SPEED * 120)), dt = real * SPEED / n; for (let i = 0; i < n; i++) step(dt); }
+  drawAll();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function setTheme(th) {
+  DARK = th === 'dark';
+  document.documentElement.dataset.theme = th;
+  document.querySelectorAll('button[data-theme]').forEach(b => b.classList.toggle('on', b.dataset.theme === th));
+  drawStages(); drawAll();
+}
+document.querySelectorAll('button[data-theme]').forEach(b => b.onclick = () => setTheme(b.dataset.theme));
+document.getElementById('pause').onclick = e => { PAUSED = !PAUSED; e.target.textContent = PAUSED ? 'play' : 'pause'; };
+document.getElementById('speed').onclick = e => { SPEED = SPEED === 1 ? 4 : 1; e.target.textContent = 'speed x' + SPEED; };
+document.getElementById('worker').onchange = e => { CFG.worker = e.target.checked; };
+document.getElementById('vat2').onchange = e => { CFG.moulds = e.target.checked ? 2 : 1; };
+document.getElementById('line2').onchange = e => { CFG.slots = e.target.checked ? 8 : 4; if (!e.target.checked) reset(); sizeAll(); drawAll(); };   // shortened, the yard starts again rather than drop sheets
+document.getElementById('reset').onclick = () => { reset(); };
+if (Q.get('theme') === 'dark') setTheme('dark'); else drawStages();
+
+// Handles for the headless check.
+window.__mock = {
+  state: () => ({ t: S.t, prog: S.prog, stall: S.stall, rev: handRev(), pul: { ...S.pul }, loft: { st: S.loft.st, y: S.loft.y }, sheets: S.sheets.map(s => ({ x: s.x, dry: +dryOf(s).toFixed(2) })), pile: S.pile.n, batches: S.batches, drops: S.drops.length }),
+  pause: b => { PAUSED = b; },
+  theme: setTheme,
+  set: o => { if ('worker' in o) document.getElementById('worker').checked = CFG.worker = o.worker;
+              if ('moulds' in o) { CFG.moulds = o.moulds; document.getElementById('vat2').checked = o.moulds === 2; }
+              if ('slots' in o) { CFG.slots = o.slots; document.getElementById('line2').checked = o.slots === 8; sizeAll(); }
+              drawAll(); },
+  reset: () => { reset(); drawAll(); },
+  warp: s => { const n = Math.round(s * 120); for (let i = 0; i < n; i++) step(1 / 120); drawAll(); },
+  // a cell of the station, in client px on the big picture
+  client: (x, y) => { const r = big.getBoundingClientRect(), k = r.width / big.width * BIG.scale; return { x: r.left + (BIG.ox + x * P) * k, y: r.top + (BIG.oy + y * P) * k }; },
+  rect: sel => { const r = document.querySelector(sel).getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; },
+  vat: VAT,
+  // Sheets stacked a minute by a hand held at `rev` turns a second, on a fresh
+  // yard through the same step() -- the throughput table, not a drive.
+  measure: (moulds, slots, rev, secs = 120) => {
+    const keep = S, kc = { ...CFG }; CFG.moulds = moulds; CFG.slots = slots; CFG.worker = rev === 'worker'; reset();
+    const w = rev === 'worker' ? 0 : rev * 2 * Math.PI, dt = 1 / 120;
+    for (let i = 0; i < secs * 120; i++) { if (w) { S.hand.grab = true; S.hand.acc = w * dt; } step(dt); }
+    const out = { perMin: +(S.pile.n * 60 / secs).toFixed(1), stalledPct: Math.round(S.stallT / secs * 100) };
+    S = keep; Object.assign(CFG, kc); return out;
+  }
+};
+</script>
+</body>
+</html>
