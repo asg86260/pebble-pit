@@ -110,7 +110,7 @@ html, body {
      the tracking every rule that spaces words multiplies its own em by. One
      variable a language instead of seventy overrides; the pips and the codes
      are pictures and keep their plain numbers. */
-  --face: ui-monospace, "Courier New", monospace;
+  --face: "Courier Prime", "Courier New", monospace;
   --track: 1;
   /* the case of running sentences (a tooltip, a board's note): capitals in
      the house type, as written under readable text */
@@ -124,9 +124,9 @@ html, body {
    and what stands in for the capitals, is the owner's vote on a mock: until
    then --track is inherited as it is for every language, so a phone's
    tightening (below) reaches these too. */
-:lang(zh) { --face: ui-monospace, "Courier New", "Pit SC", monospace; /* TODO(mock vote): the CJK tracking */ }
-:lang(ja) { --face: ui-monospace, "Courier New", "Pit JP", monospace; /* TODO(mock vote) */ }
-:lang(ko) { --face: ui-monospace, "Courier New", "Pit KR", monospace; /* TODO(mock vote) */ }
+:lang(zh) { --face: "Courier Prime", "Courier New", "Pit SC", monospace; /* TODO(mock vote): the CJK tracking */ }
+:lang(ja) { --face: "Courier Prime", "Courier New", "Pit JP", monospace; /* TODO(mock vote) */ }
+:lang(ko) { --face: "Courier Prime", "Courier New", "Pit KR", monospace; /* TODO(mock vote) */ }
 /* An ideograph fills its em where a mono capital stands about two thirds of
    it, so a CJK name among Latin ones -- the language list, the landing
    page's foot -- is set at the capitals' height rather than the em's. In a
@@ -987,16 +987,19 @@ body.still #scroller { scroll-behavior: auto; }
 }
 .optspop[data-potpick] .opt .bill span + span { margin-left: 8px; }
 /* What the brew does, under what it is called: the boards' own note register,
-   so a second line reads as a footnote rather than as a second row. */
+   so a second line reads as a footnote rather than as a second row. Faint by
+   its tone, not by opacity: half the ink is under AA's 4.5:1 on either
+   paper, and --ink-5 and --ink-8 are the faint tones that hold it (on the
+   paper and on an inverted row). */
 .optspop[data-potpick] .opt .note {
-  opacity: .5;
+  color: var(--ink-5);
   font-size: var(--fs-small);
   line-height: var(--lh-text);
   margin-top: .1em;
 }
-.optspop[data-potpick] .opt.on .note { opacity: .6; }
+.optspop[data-potpick] .opt.on .note { color: var(--ink-8); }
 @media (hover: hover) {
-  .optspop[data-potpick] .opt:hover .note { opacity: .6; }
+  .optspop[data-potpick] .opt:hover .note { color: var(--ink-8); }
 }
 .optspop[data-potpick] .opt .note:empty { display: none; }
 /* Who the pot's doses go to first, under the brews: a heading in the note
@@ -1008,7 +1011,7 @@ body.still #scroller { scroll-behavior: auto; }
   padding: 6px var(--pad-m-x) 2px;
   border-top: 1px solid var(--ink);
   margin-top: 4px;
-  opacity: .5;
+  color: var(--ink-5);
   font-size: var(--fs-small);
 }
 .optspop[data-potpick] .for {
@@ -1024,9 +1027,11 @@ body.still #scroller { scroll-behavior: auto; }
   align-items: baseline;
 }
 .optspop[data-potpick] .for .who { flex: 1 1 auto; }
-.optspop[data-potpick] .for .count { flex: 0 0 auto; padding-left: 18px; opacity: .6; }
+.optspop[data-potpick] .for .count { flex: 0 0 auto; padding-left: 18px; color: var(--ink-5); }
+.optspop[data-potpick] .for.on .count { color: var(--ink-8); }
 @media (hover: hover) {
   .optspop[data-potpick] .for:hover { color: var(--paper); background: var(--ink); }
+  .optspop[data-potpick] .for:hover .count { color: var(--ink-8); }
 }
 /* The one trade a brew is for, when there is only one: a line, not a choice. */
 .optspop[data-potpick] .for.only { cursor: default; }

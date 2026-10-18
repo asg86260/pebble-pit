@@ -174,6 +174,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The game's words are set in Courier Prime, a Courier drawn for reading, bundled so every machine sees the same face (test/l10n-type.test.mjs).
 - A "readable text" switch on the settings' graphics tab sets the game's words in DM Mono, a size up, without the wide spacing, and tooltips and board notes in their own case (src/selftest/settings.js).
 - At a new yard you build who you are and then your sqouse -- a name, one of sqwife, sqouse or sqhusband, and what each wears, with a die on every row, a randomize all that leaves the name alone and a clear -- and every story line, card, sheet, the index and the books name the two of you that way; the rescue achievement now says "complete act 1" (test/who-you-are.test.mjs; src/selftest/wardrobe.js).
 - The appearance page is a wider, shorter sheet of its own, the grid five tiles across and scrolling inside it (src/selftest/wardrobe.js).
@@ -190,6 +191,7 @@ this section; the release that switches it on moves these under Unreleased.
 - On a gamepad the focus brackets travel from one thing to the next where you can follow them, up to the corner buttons, onto a board's rows and back, while the camera glides to center each one, both eased in and out (test/pad-glide.test.mjs; src/selftest/pad.js, "the marker travels across to the corner").
 - The arrow on the corner button that takes you down to the deep and back up is light on the dark theme instead of black (src/selftest/deep.js).
 - A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).
+- The apothecary's brew notes and who-first heading are dark enough to read in both themes (src/selftest/contrast.js).
 
 ## v0.6.0 — 2026-10-16
 

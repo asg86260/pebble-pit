@@ -137,6 +137,9 @@
    "sect goal",
    "job tile"
   ],
+  "src/slotfit.js": [
+   ".what, .gain, .strip > i"
+  ],
   "src/slots.js": [
    "item lone"
   ],
@@ -150,9 +153,9 @@
   ]
  },
  "why": {
+  "src/cloudsheet.js": "class names",
   "src/config/music.js": "the music bench's drum row names, read only on the dev-only music.html",
   "src/config/sound.js": "the sound bench mapping: each event's label and recipe names are for the bench and the dev panel",
-  "src/cloudsheet.js": "class names",
   "src/cutscene.js": "layer names (render.js LAYERS) a scene keeps or hides",
   "src/deep/rails.js": "markup: class and data attributes; a selector",
   "src/objbarrier.js": "a class name",
@@ -161,6 +164,7 @@
   "src/render/fish.js": "the creatures' names, written beside their drawings and shown nowhere; the error a miscount throws",
   "src/route.js": "the ways' names and the route report, read by the checks",
   "src/shop.js": "class names",
+  "src/slotfit.js": "a CSS selector list (the words on a tile that cannot fold), not words",
   "src/slots.js": "class names",
   "src/tower.js": "a time helper nothing calls",
   "src/upgrades.js": "the bench sections' keys: S.seenSects keeps them, so they stay as the saves have them"
