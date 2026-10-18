@@ -5,9 +5,11 @@
 // per scene at most, and a clip is a loop of whole bars with its notes as
 // `[step, pitch, length, velocity]` on a sixteenth grid. `game` names the one
 // scene that is the place's loop in the game (DESIGN.md, the settled calls).
+// `chords[scene]` is a scale degree a bar, and a track with `follow` has its
+// clips written from those chords (theory.js); both are optional.
 
-import { MUSIC_STEPS_PER_BAR, MUSIC_BEATS_PER_BAR, MUSIC_CLIP_BARS,
-         MUSIC_TEMPO_MIN, MUSIC_TEMPO_MAX } from '../config/music.js';
+import { MUSIC_STEPS_PER_BAR, MUSIC_BEATS_PER_BAR, MUSIC_CLIP_BARS, MUSIC_CHORD_BARS,
+         MUSIC_TEMPO_MIN, MUSIC_TEMPO_MAX, MUSIC_PATTERNS, MUSIC_ROOTS, MUSIC_MODES } from '../config/music.js';
 
 export const beatSeconds = song => 60 / song.tempo;
 export const stepSeconds = song => beatSeconds(song) * MUSIC_BEATS_PER_BAR / MUSIC_STEPS_PER_BAR;
@@ -60,11 +62,19 @@ export function validate(song) {
   if (!(song.tempo >= MUSIC_TEMPO_MIN && song.tempo <= MUSIC_TEMPO_MAX)) bad.push(`tempo ${song.tempo}`);
   if (!Array.isArray(song.scenes) || !song.scenes.length) bad.push('no scenes');
   if (song.game && !song.scenes?.includes(song.game)) bad.push(`game scene ${song.game} is not a scene`);
+  if (song.key && typeof song.key === 'object' && !(MUSIC_ROOTS.includes(song.key.root) && MUSIC_MODES[song.key.mode]))
+    bad.push(`key ${JSON.stringify(song.key)}`);
+  for (const [scene, chords] of Object.entries(song.chords || {})) {
+    if (!song.scenes?.includes(scene)) bad.push(`chords in unknown scene ${scene}`);
+    if (!MUSIC_CHORD_BARS.includes(chords.length)) bad.push(`chords/${scene}: ${chords.length} bars`);
+    if (!chords.every(d => Number.isInteger(d) && d >= 1 && d <= 7)) bad.push(`chords/${scene}: a degree is not 1 to 7`);
+  }
   const ids = new Set();
   for (const t of song.tracks || []) {
     if (ids.has(t.id)) bad.push(`track id ${t.id} twice`);
     ids.add(t.id);
     if (t.kind !== 'synth' && t.kind !== 'drums') bad.push(`${t.id}: kind ${t.kind}`);
+    if (t.follow && !MUSIC_PATTERNS[t.follow.pattern]) bad.push(`${t.id}: follows unknown pattern ${t.follow.pattern}`);
     for (const [scene, clip] of Object.entries(t.clips || {})) {
       if (!song.scenes?.includes(scene)) bad.push(`${t.id}: clip in unknown scene ${scene}`);
       if (!MUSIC_CLIP_BARS.includes(clip.bars)) bad.push(`${t.id}/${scene}: ${clip.bars} bars`);

@@ -9,8 +9,11 @@
 // elements -- and only the playhead and the clip progress move per frame.
 
 import { MUSIC_STEPS_PER_BAR, MUSIC_CLIP_BARS, MUSIC_DRUM_ROWS, MUSIC_ROLL_LOW, MUSIC_ROLL_ROWS,
-         MUSIC_VEL_DEFAULT, MUSIC_TEMPO_MIN, MUSIC_TEMPO_MAX } from '../config/music.js';
-import { clipOf, clipSteps, validate } from './song.js';
+         MUSIC_VEL_DEFAULT, MUSIC_TEMPO_MIN, MUSIC_TEMPO_MAX, MUSIC_ROOTS, MUSIC_MODES, MUSIC_PATTERNS,
+         MUSIC_CHORD_BARS } from '../config/music.js';
+import { clipOf, clipSteps, validate, barSeconds } from './song.js';
+import { keyOf, keyName, inKey, chordPcs, chordName, chordFeel, goodNext, startChords, refollow,
+         transposeNote, carryChords } from './theory.js';
 import { makePreview } from './preview.js';
 import { makeTransport } from './transport.js';
 import { makeLive, openMidi } from './live.js';
@@ -28,6 +31,8 @@ const MUTED = new URLSearchParams(location.search).has('muted');
 const app = {
   name: null, song: null, songs: [], patches: [],
   sel: { track: null, scene: null }, focus: null, lastLen: 2,
+  // the chord strip's open bar, and the roll showing all twelve notes
+  openBar: null, allNotes: false,
   undo: [], redo: [], dirty: false,
   source: 'preview', midi: { outputs: [], error: null }, render: null,
 };
@@ -91,7 +96,7 @@ async function loadSong(name) {
   } catch {}
   if (transport?.running) transport.stop();
   app.name = name; app.song = song; app.undo = []; app.redo = []; app.dirty = restored;
-  app.focus = null;
+  app.focus = null; app.openBar = null;
   const first = song.tracks.find(t => clipOf(t, song.game)) || song.tracks[0];
   app.sel = { track: first?.id || null, scene: first && clipOf(first, song.game) ? song.game : null };
   history.replaceState(null, '', '#' + name);
@@ -121,14 +126,29 @@ async function newSong() {
   const name = prompt('song name (lowercase, a place: yard, deep, after, hell)');
   if (!name) return;
   if (!/^[a-z0-9][a-z0-9-]{0,40}$/.test(name)) { note('a song name is lowercase letters, digits and dashes', true); return; }
+  // A new song is a whole loop before anybody touches it: four chords, and a
+  // bass, a pad and an arpeggio all following them over a steady beat.
+  const key = { root: 'A', mode: 'minor' };
+  const groove = [];
+  for (let st = 0; st < MUSIC_STEPS_PER_BAR; st += 2) groove.push([st, 42, 1, st % 4 ? 60 : 80]);
+  groove.push([0, 36, 1, 110], [8, 36, 1, 100], [4, 38, 1, 100], [12, 38, 1, 100]);
   const song = {
-    name, tempo: 96, key: 'A minor', game: 'main', scenes: ['main'],
+    name, tempo: 96, key, game: 'main', scenes: ['main'], chords: { main: startChords(key) },
     tracks: [
-      { id: 'drums', name: 'Drums', kind: 'drums', color: COLORS[0], level: 0.8, pan: 0, clips: {} },
+      { id: 'drums', name: 'Drums', kind: 'drums', color: COLORS[0], level: 0.8, pan: 0,
+        clips: { main: { bars: 1, notes: groove.sort((a, b) => a[0] - b[0] || a[1] - b[1]) } } },
       { id: 'bass', name: 'Bass', kind: 'synth', patch: 'Basses/Lord Sawtooth', color: COLORS[1], level: 0.7, pan: 0,
+        follow: { pattern: 'bass-fifth' },
         preview: { wave: 'sawtooth', cutoff: 900, q: 4, attack: 0.005, decay: 0.2, sustain: 0.6, release: 0.12 }, clips: {} },
+      { id: 'pad', name: 'Pad', kind: 'synth', patch: 'Pads/MKS-70 Warm Pad', color: COLORS[2], level: 0.45, pan: 0,
+        follow: { pattern: 'pad-held' },
+        preview: { wave: 'sawtooth', cutoff: 1400, q: 1, attack: 0.4, decay: 0.5, sustain: 0.8, release: 0.8, detune: 8 }, clips: {} },
+      { id: 'arp', name: 'Arp', kind: 'synth', patch: 'Plucks/Mr. Sparkle', color: COLORS[5], level: 0.4, pan: 0.15,
+        follow: { pattern: 'arp-up' },
+        preview: { wave: 'triangle', cutoff: 3000, q: 1, attack: 0.005, decay: 0.15, sustain: 0.3, release: 0.15 }, clips: {} },
     ],
   };
+  refollow(song);
   await api('song/' + name, { method: 'PUT', body: JSON.stringify(song) });
   app.songs = await api('songs');
   await loadSong(name);
@@ -225,7 +245,12 @@ function drawTransport() {
   const s = app.song;
   const tempo = h('input', { type: 'number', min: MUSIC_TEMPO_MIN, max: MUSIC_TEMPO_MAX, value: s.tempo,
     onchange: e => { const v = Math.round(+e.target.value); if (v >= MUSIC_TEMPO_MIN && v <= MUSIC_TEMPO_MAX) edit(() => { s.tempo = v; }); } });
-  const key = h('input', { class: 'key', value: s.key || '', onchange: e => edit(() => { s.key = e.target.value; }) });
+  const k = keyOf(s);
+  const key = h('span', { style: 'display:flex;gap:4px' },
+    h('select', { onchange: e => changeKey({ ...k, root: e.target.value }) },
+      MUSIC_ROOTS.map(r => h('option', { value: r, selected: r === k.root }, r))),
+    h('select', { onchange: e => changeKey({ ...k, mode: e.target.value }) },
+      Object.keys(MUSIC_MODES).map(m => h('option', { value: m, selected: m === k.mode }, m))));
   const songSel = h('select', { onchange: e => loadSong(e.target.value) },
     app.songs.map(n => h('option', { value: n, selected: n === app.name }, n)));
   const gameSel = h('select', { onchange: e => edit(() => { s.game = e.target.value; }) },
@@ -300,7 +325,7 @@ function drawLanes() {
       ondblclick: () => renameScene(sc),
     }, h('span', { class: 'tri' }, '▶'), sc, sc === s.game ? h('span', { class: 'game', title: 'the loop the game plays' }, 'game') : null)),
     h('div', { class: 'stopcell' }, h('button', { title: 'add a scene', onclick: addScene }, '+')));
-  const kids = [heads];
+  const kids = [drawStrip(), heads];
   s.tracks.forEach((t, i) => {
     kids.push(drawLane(t, ns));
     if (t.id === app.sel.track && selClip()) kids.push(t.kind === 'drums' ? drawSteps(t) : drawRoll(t));
@@ -343,11 +368,16 @@ function drawLane(t, ns) {
   const s = app.song, sel = t.id === app.sel.track;
   const p = transport?.playing.get(t.id), q = transport?.queued.get(t.id);
   const isLive = app.source === 'live' && sel;
-  const lane = h('div', { class: 'lane' + (sel ? ' sel' : ''), style: `--scenes:${ns};--tc:${t.color}` },
+  const lane = h('div', { class: 'lane' + (sel ? ' sel' : ''), 'data-track': t.id, style: `--scenes:${ns};--tc:${t.color}` },
     h('div', { class: 'tname', onclick: () => { app.sel.track = t.id; draw(); }, ondblclick: () => renameTrack(t) },
       h('span', { class: 'chip' }),
       h('div', { class: 'who' }, h('b', {}, t.name),
-        h('small', { class: isLive ? 'live' : '' }, isLive ? 'live · ' + (t.patch || 'Surge') : t.kind === 'drums' ? 'drums' : (t.patch || 'no patch'))),
+        h('small', { class: isLive ? 'live' : t.follow ? 'follows' : '' }, isLive ? 'live · ' + (t.patch || 'Surge')
+          : t.kind === 'drums' ? 'drums'
+          : t.follow ? 'follows chords · ' + MUSIC_PATTERNS[t.follow.pattern].label
+          : t.unfollowed ? 'your notes now' : (t.patch || 'no patch'))),
+      t.unfollowed && !t.follow ? h('button', { class: 'btn small', title: 'rewrite this part from the chords again',
+        onclick: e => { e.stopPropagation(); setFollow(t, t.unfollowed); } }, 'follow again') : null,
       h('div', { class: 'ms' },
         h('button', { class: 'm' + (t.mute ? ' on' : ''), title: 'mute', onclick: e => { e.stopPropagation(); edit(() => { t.mute = !t.mute || undefined; }); } }, 'M'),
         h('button', { class: 's' + (t.solo ? ' on' : ''), title: 'solo', onclick: e => { e.stopPropagation(); edit(() => { t.solo = !t.solo || undefined; }); } }, 'S'))));
@@ -391,6 +421,11 @@ function editorBar(t, clip, extra) {
       MUSIC_CLIP_BARS.map(b => h('option', { value: b, selected: b === clip.bars }, b + (b > 1 ? ' bars' : ' bar'))))),
     h('button', { class: 'btn small', title: 'double the clip and copy its notes into the new half', onclick: () => duplicate(clip),
       disabled: clip.bars * 2 > Math.max(...MUSIC_CLIP_BARS) }, '×2'),
+    t.kind === 'synth' ? h('label', {}, 'plays', h('select', { onchange: e => setFollow(t, e.target.value || null) },
+      h('option', { value: '', selected: !t.follow }, 'my own notes'),
+      ['bass', 'pad', 'arp'].map(role => h('optgroup', { label: 'follow the chords: ' + role },
+        Object.entries(MUSIC_PATTERNS).filter(([, pt]) => pt.role === role)
+          .map(([id, pt]) => h('option', { value: id, selected: t.follow?.pattern === id }, pt.label)))))) : null,
     extra,
     h('span', { class: 'grow' }),
     t.kind === 'synth' ? h('label', {}, 'Surge patch',
@@ -412,14 +447,35 @@ function editorBar(t, clip, extra) {
 
 let roll = null;   // the open roll's elements, for the per-frame playhead
 
+// The roll's rows, top to bottom: the key's notes only, unless "all notes"
+// is on; a note already drawn off the key keeps its row so it never vanishes.
+function rollRows(clip) {
+  const key = keyOf(app.song), used = new Set(clip.notes.map(n => n[1])), rows = [];
+  for (let p = MUSIC_ROLL_LOW + MUSIC_ROLL_ROWS - 1; p >= MUSIC_ROLL_LOW; p--)
+    if (app.allNotes || inKey(key, p) || used.has(p)) rows.push(p);
+  return rows;
+}
+
 function drawRoll(t) {
-  const clip = selClip(), steps = clipSteps(clip);
+  const clip = selClip(), steps = clipSteps(clip), key = keyOf(app.song);
+  const rows = rollRows(clip), rp = rowPx(), tonic = MUSIC_ROOTS.indexOf(key.root);
   const keys = h('div', { class: 'keys' }), notes = h('div', { class: 'notes' });
-  for (let r = MUSIC_ROLL_ROWS - 1; r >= 0; r--) {
-    const p = MUSIC_ROLL_LOW + r;
-    keys.append(h('div', { class: (isBlack(p) ? 'black ' : '') + (p % 12 === 0 ? 'c' : ''),
+  for (const p of rows) {
+    const off = !inKey(key, p);
+    keys.append(h('div', { class: (isBlack(p) && app.allNotes ? 'black ' : '') + (p % 12 === tonic ? 'c' : '') + (off ? ' off' : ''),
       onpointerdown: () => audition(t, p) }, noteName(p)));
-    notes.append(h('div', { class: 'rowbg' + (isBlack(p) ? ' black' : '') }));
+    notes.append(h('div', { class: 'rowbg' + (off ? ' off' : '') }));
+  }
+  // Under each bar, the rows in that bar's chord are lit: a note there fits.
+  const chords = app.song.chords?.[app.sel.scene];
+  if (chords?.length) {
+    for (let b = 0; b < clip.bars; b++) {
+      const pcs = chordPcs(key, chords[b % chords.length]);
+      rows.forEach((p, i) => {
+        if (pcs.includes(p % 12)) notes.append(h('div', { class: 'tone',
+          style: `left:${b / clip.bars * 100}%;width:${100 / clip.bars}%;top:${i * rp}px;height:${rp}px` }));
+      });
+    }
   }
   for (let st = 0; st <= steps; st++) {
     const cls = st % MUSIC_STEPS_PER_BAR === 0 ? ' bar' : st % 4 === 0 ? ' beat' : '';
@@ -430,10 +486,12 @@ function drawRoll(t) {
   notes.append(layer, ph);
   const velbars = h('div', { class: 'velbars' });
   const box = h('div', { class: 'editor', style: `--tc:${t.color}` },
-    editorBar(t, clip, h('span', { class: 'hint' }, 'click to draw · drag to move · drag the end to stretch · right-click to delete · alt-drag to copy')),
+    editorBar(t, clip, h('label', { title: 'show the notes outside the key too' },
+      h('input', { type: 'checkbox', checked: app.allNotes, onchange: e => { app.allNotes = e.target.checked; drawLanes(); } }), 'all notes')),
+    h('div', { class: 'hint rollhint' }, 'only the notes of ' + keyName(key) + " are shown; the lit rows are in that bar's chord, so a note there always fits · click to draw · drag to move · drag the end to stretch · right-click to delete · alt-drag to copy"),
     h('div', { class: 'roll' }, keys, notes),
     h('div', { class: 'vel' }, h('span', {}, 'velocity'), velbars));
-  roll = { t, clip, notes, layer, ph, velbars, steps };
+  roll = { t, clip, notes, layer, ph, velbars, steps, rows };
   drawNotes();
   rollPointer(notes, t, clip, steps);
   velPointer(velbars, clip, steps);
@@ -442,8 +500,8 @@ function drawRoll(t) {
     const scroller = box.querySelector('.roll');
     const ps = clip.notes.map(n => n[1]);
     const top = ps.length ? Math.max(...ps) + 4 : 72;
-    const row = MUSIC_ROLL_ROWS - 1 - (Math.min(top, MUSIC_ROLL_LOW + MUSIC_ROLL_ROWS - 1) - MUSIC_ROLL_LOW);
-    scroller.scrollTop = row * rowPx();
+    const row = rows.findIndex(p => p <= top);
+    scroller.scrollTop = Math.max(0, row) * rowPx();
   });
   return box;
 }
@@ -452,11 +510,11 @@ const rowPx = () => parseFloat(getComputedStyle(document.documentElement).getPro
 
 function drawNotes() {
   if (!roll) return;
-  const { clip, layer, velbars, steps } = roll, rp = rowPx();
+  const { clip, layer, velbars, steps, rows } = roll, rp = rowPx();
   layer.replaceChildren(...clip.notes.map((n, i) => {
     const [st, p, len] = n;
     const e = h('div', { class: 'n' + (app.focus === n ? ' focus' : ''), 'data-i': i,
-      style: `left:calc(${st / steps * 100}% + 1px);width:calc(${len / steps * 100}% - 2px);top:${(MUSIC_ROLL_LOW + MUSIC_ROLL_ROWS - 1 - p) * rp + 1}px` },
+      style: `left:calc(${st / steps * 100}% + 1px);width:calc(${len / steps * 100}% - 2px);top:${rowIndex(rows, p) * rp + 1}px` },
       len >= 2 ? noteName(p) : '');
     e._n = n;
     return e;
@@ -465,36 +523,45 @@ function drawNotes() {
     style: `left:calc(${(n[0] + 0.5) / steps * 100}% - 2px);height:${n[3] / 127 * 100}%` })));
 }
 
+// A pitch's row, or the row nearest a pitch that has none.
+function rowIndex(rows, p) {
+  let best = 0;
+  rows.forEach((q, i) => { if (Math.abs(q - p) < Math.abs(rows[best] - p)) best = i; });
+  return best;
+}
+
 function rollPointer(el, t, clip, steps) {
   let drag = null;
+  // The pointer snaps to a row, and every row is a note in the key.
   const at = e => {
-    const r = el.getBoundingClientRect();
+    const r = el.getBoundingClientRect(), rows = roll.rows;
     const step = (e.clientX - r.left) / r.width * steps;
-    const pitch = MUSIC_ROLL_LOW + MUSIC_ROLL_ROWS - 1 - Math.floor((e.clientY - r.top) / rowPx());
-    return { step, pitch };
+    const row = clamp(Math.floor((e.clientY - r.top) / rowPx()), 0, rows.length - 1);
+    return { step, row, pitch: rows[row] };
   };
   el.addEventListener('contextmenu', e => e.preventDefault());
   el.addEventListener('pointerdown', e => {
     const hit = e.target.closest('.n')?._n;
     const { step, pitch } = at(e);
     if (e.button === 2) {
-      if (hit) edit(() => { clip.notes.splice(clip.notes.indexOf(hit), 1); if (app.focus === hit) app.focus = null; }, { redraw: false });
+      if (hit) edit(() => { clip.notes.splice(clip.notes.indexOf(hit), 1); if (app.focus === hit) app.focus = null; unfollow(t); }, { redraw: false });
       drawNotes();
       return;
     }
     if (e.button !== 0) return;
     el.setPointerCapture(e.pointerId);
     app.undo.push(JSON.stringify(app.song)); app.redo.length = 0;
+    unfollow(t);
     if (hit) {
       const r = e.target.getBoundingClientRect();
       let n = hit;
       if (e.altKey) { n = [...hit]; clip.notes.push(n); }
       const stretch = e.clientX > r.right - 6;
-      drag = { n, mode: stretch ? 'len' : 'move', from: { step, pitch }, orig: [...n] };
+      drag = { n, mode: stretch ? 'len' : 'move', from: { step }, orig: [...n] };
     } else {
       const n = [Math.floor(step), pitch, Math.min(app.lastLen, steps - Math.floor(step)), MUSIC_VEL_DEFAULT];
       clip.notes.push(n);
-      drag = { n, mode: 'len', from: { step: Math.floor(step), pitch }, orig: [...n], fresh: true };
+      drag = { n, mode: 'len', from: { step: Math.floor(step) }, orig: [...n], fresh: true };
       audition(t, pitch);
     }
     app.focus = drag.n;
@@ -502,11 +569,10 @@ function rollPointer(el, t, clip, steps) {
   });
   el.addEventListener('pointermove', e => {
     if (!drag) return;
-    const { step, pitch } = at(e), n = drag.n, o = drag.orig;
+    const { step, pitch: np } = at(e), n = drag.n, o = drag.orig;
     if (drag.mode === 'move') {
-      const ds = Math.round(step - drag.from.step), dp = pitch - drag.from.pitch;
+      const ds = Math.round(step - drag.from.step);
       n[0] = clamp(o[0] + ds, 0, steps - n[2]);
-      const np = clamp(o[1] + dp, MUSIC_ROLL_LOW, MUSIC_ROLL_LOW + MUSIC_ROLL_ROWS - 1);
       if (np !== n[1]) { n[1] = np; audition(t, np, n[3]); }
     } else {
       n[2] = clamp(Math.ceil(step) - n[0], 1, steps - n[0]);
@@ -536,7 +602,7 @@ function velPointer(el, clip, steps) {
     for (const n of clip.notes) { const dd = Math.abs(n[0] + 0.5 - step); if (dd < d) { d = dd; best = n; } }
     if (best && d < 1) { best[3] = vel; app.focus = best; drawNotes(); }
   };
-  el.addEventListener('pointerdown', e => { on = true; el.setPointerCapture(e.pointerId); app.undo.push(JSON.stringify(app.song)); app.redo.length = 0; set(e); });
+  el.addEventListener('pointerdown', e => { on = true; el.setPointerCapture(e.pointerId); app.undo.push(JSON.stringify(app.song)); app.redo.length = 0; unfollow(roll.t); set(e); });
   el.addEventListener('pointermove', e => { if (on) set(e); });
   el.addEventListener('pointerup', () => { if (on) { on = false; touched(false); } });
 }
@@ -578,6 +644,118 @@ function toggleStep(t, clip, st, pitch, shift) {
   if (!n || shift) audition(t, pitch, (n || clip.notes.find(m => m[0] === st && m[1] === pitch))[3]);
 }
 
+// --- the chord strip ------------------------------------------------------------
+
+// The strip shows the chords of the scene being edited, or the game loop's.
+const stripScene = () => app.sel.scene || app.song.game;
+let strip = null;  // the bar blocks, for the per-frame "playing now" mark
+
+function drawStrip() {
+  const s = app.song, scene = stripScene(), key = keyOf(s), chords = s.chords?.[scene];
+  const box = h('div', { class: 'strip' });
+  if (!chords?.length) {
+    strip = null;
+    box.append(h('div', { class: 'striphead' }, h('b', {}, 'Chords · ' + scene),
+      h('button', { class: 'btn small', onclick: () => setChords(scene, startChords(key)) }, 'add chords')),
+      h('div', { class: 'hint' }, 'pick four chords and the bass, pad and arpeggio play them for you'));
+    return box;
+  }
+  const bars = h('div', { class: 'stripbars', style: `--bars:${chords.length}` });
+  const blocks = chords.map((deg, i) => h('button', {
+    class: 'chordbar' + (app.openBar === i ? ' open' : ''),
+    onclick: () => { app.openBar = app.openBar === i ? null : i; drawLanes(); },
+  }, h('b', {}, chordName(key, deg)), h('small', {}, chordFeel(key, deg)), h('i', { class: 'prog' })));
+  bars.append(...blocks);
+  strip = { scene, blocks };
+  box.append(h('div', { class: 'striphead' },
+    h('b', {}, 'Chords · ' + scene), h('span', { class: 'hint' }, 'one a bar'),
+    h('label', {}, 'bars', h('select', { onchange: e => setChordBars(scene, +e.target.value) },
+      MUSIC_CHORD_BARS.map(n => h('option', { value: n, selected: n === chords.length }, n)))),
+    h('button', { class: 'btn small', title: 'hear the chords on their own', onclick: () => playChords(chords) }, 'hear them')), bars);
+  if (app.openBar != null && app.openBar < chords.length) {
+    const i = app.openBar, before = chords[(i + chords.length - 1) % chords.length];
+    const stars = goodNext(key, before);
+    box.append(h('div', { class: 'chordmenu' },
+      h('span', { class: 'hint' }, `bar ${i + 1}: after ${chordName(key, before)}, the starred ones usually sound right`),
+      h('div', { class: 'chordpicks' }, [1, 2, 3, 4, 5, 6, 7].map(d => h('button', {
+        class: 'chordpick' + (d === chords[i] ? ' cur' : '') + (stars.includes(d) ? ' good' : ''),
+        onmouseenter: () => playChord(d),
+        onclick: () => { setChord(scene, i, d); },
+      }, h('b', {}, chordName(key, d)), h('small', {}, chordFeel(key, d)))))));
+  }
+  return box;
+}
+
+// A chord as a quick sine-ish strum, for choosing by ear.
+const CHORD_VOICE = { id: '__chord', kind: 'synth', level: 0.5, pan: 0,
+  preview: { wave: 'triangle', cutoff: 2400, q: 1, attack: 0.01, decay: 0.3, sustain: 0.5, release: 0.4 } };
+function playChord(deg, at = 0, dur = 0.6) {
+  ensureAudio();
+  const key = keyOf(app.song), t0 = ctx.currentTime + 0.02 + at;
+  const [r, t3, f] = chordPcs(key, deg), root = 48 + ((r - 48) % 12 + 12) % 12;
+  for (const p of [root, root + ((t3 - r + 12) % 12), root + ((f - r + 12) % 12), root + 12])
+    app.sink.note(CHORD_VOICE, p, t0, dur, 80);
+}
+function playChords(chords) {
+  const bar = barSeconds(app.song) / 2;
+  chords.forEach((d, i) => playChord(d, i * bar, bar * 0.95));
+}
+
+function setChords(scene, chords) {
+  edit(() => { app.song.chords = { ...(app.song.chords || {}), [scene]: chords }; refollow(app.song); });
+}
+function setChord(scene, i, deg) {
+  edit(() => { app.song.chords[scene][i] = deg; app.openBar = null; refollow(app.song); });
+}
+// A longer strip repeats the chords it has; a shorter one keeps the first.
+function setChordBars(scene, n) {
+  const old = app.song.chords[scene];
+  setChords(scene, Array.from({ length: n }, (_, i) => old[i % old.length]));
+}
+
+// A new key carries the song: drawn notes move by scale degree, and the
+// following parts are written again from the same chords in the new key.
+function changeKey(to) {
+  const s = app.song, from = keyOf(s);
+  edit(() => {
+    for (const t of s.tracks) {
+      if (t.kind === 'drums' || t.follow) continue;
+      for (const clip of Object.values(t.clips || {}))
+        clip.notes = clip.notes.map(([st, p, len, vel]) => [st, clamp(transposeNote(from, to, p), 0, 127), len, vel]);
+    }
+    for (const [scene, chords] of Object.entries(s.chords || {})) s.chords[scene] = carryChords(from, to, chords);
+    s.key = to;
+    refollow(s);
+  });
+}
+
+// Follow the chords with a pattern, or stop following (null keeps the notes).
+function setFollow(t, pattern) {
+  const s = app.song;
+  edit(() => {
+    if (!pattern) { delete t.follow; return; }
+    t.follow = { pattern };
+    delete t.unfollowed;
+    // Following needs chords: a scene being edited without any gets a start.
+    const scene = app.sel.track === t.id && app.sel.scene ? app.sel.scene : s.game;
+    if (!s.chords?.[scene]?.length) s.chords = { ...(s.chords || {}), [scene]: startChords(keyOf(s)) };
+    refollow(s);
+    if (app.sel.track === t.id && !app.sel.scene) app.sel.scene = scene;
+  });
+}
+
+// Your edit wins: drawing on a following part makes it yours, and the lane
+// offers "follow again" rather than ever writing over what you drew.
+function unfollow(t) {
+  if (!t?.follow) return false;
+  t.unfollowed = t.follow.pattern;
+  delete t.follow;
+  note(`${t.name} plays your notes now; "follow again" on its lane writes it from the chords again`);
+  // The lane shows it once the hand lets go: redrawing mid-drag would drop it.
+  addEventListener('pointerup', () => requestAnimationFrame(drawLanes), { once: true });
+  return true;
+}
+
 // --- edits ----------------------------------------------------------------------
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -586,12 +764,19 @@ function newClip(t, scene) {
   edit(() => {
     t.clips = t.clips || {};
     t.clips[scene] = { bars: t.kind === 'drums' ? 1 : 2, notes: [] };
+    // A following part in a scene with no chords starts the scene's chords.
+    if (t.follow) {
+      const s = app.song;
+      if (!s.chords?.[scene]?.length) s.chords = { ...(s.chords || {}), [scene]: startChords(keyOf(s)) };
+      refollow(s);
+    }
     app.sel = { track: t.id, scene };
     app.focus = null;
   });
 }
 function setBars(clip, bars) {
   edit(() => {
+    unfollow(selTrack());
     clip.bars = bars;
     const steps = clipSteps(clip);
     clip.notes = clip.notes.filter(n => n[0] < steps).map(n => [n[0], n[1], Math.min(n[2], steps - n[0]), n[3]]);
@@ -599,6 +784,7 @@ function setBars(clip, bars) {
 }
 function duplicate(clip) {
   edit(() => {
+    unfollow(selTrack());
     const steps = clipSteps(clip);
     clip.notes = [...clip.notes, ...clip.notes.map(n => [n[0] + steps, n[1], n[2], n[3]])];
     clip.bars *= 2;
@@ -694,8 +880,9 @@ addEventListener('keydown', e => {
   }[e.key];
   if (!move) return;
   e.preventDefault();
-  edit(move, { redraw: false });
-  drawNotes();
+  let lost = false;
+  edit(() => { lost = unfollow(selTrack()); move(); }, { redraw: false });
+  if (lost) drawLanes(); else drawNotes();
   if (app.focus && e.key.startsWith('Arrow')) audition(selTrack(), n[1], n[3]);
 });
 
@@ -722,6 +909,16 @@ function frame() {
       const n = e._n;
       e.classList.toggle('lit', selStep >= n[0] && selStep < n[0] + n[2]);
     }
+  }
+  // The chord strip marks the bar playing now in its scene.
+  if (strip && strip.blocks[0]?.isConnected) {
+    const p = [...transport.playing.values()].find(q => q.scene === strip.scene);
+    const bar = barSeconds(app.song), t = p && transport.running ? ctx.currentTime - p.at : -1;
+    const n = strip.blocks.length, i = t < 0 ? -1 : Math.floor(t / bar) % n;
+    strip.blocks.forEach((b, k) => {
+      b.classList.toggle('now', k === i);
+      b.querySelector('.prog').style.width = k === i ? ((t % bar) / bar * 100) + '%' : '0';
+    });
   }
   if (grid && grid.cells[0]?.cell.isConnected) {
     const cur = Math.floor(selStep);

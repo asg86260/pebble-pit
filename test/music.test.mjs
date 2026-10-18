@@ -71,3 +71,79 @@ test('validate names what the render would choke on', () => {
   assert.match(bad, /3 bars/);
   assert.match(bad, /game scene z/);
 });
+
+// --- chords first (DESIGN.md, "Chords first, no wrong notes") ---------------
+
+import { keyOf, inKey, chordName, chordPcs, followNotes, refollow, transposeNote, startChords, carryChords } from '../src/music/theory.js';
+import { MUSIC_PATTERNS } from '../src/config/music.js';
+
+const aMinor = { root: 'A', mode: 'minor' }, cMajor = { root: 'C', mode: 'major' };
+
+test('an old song key string reads as a root and a mode', () => {
+  assert.deepEqual(keyOf({ key: 'A minor' }), aMinor);
+  assert.deepEqual(keyOf({ key: 'f# MAJOR' }), { root: 'F#', mode: 'major' });
+  assert.deepEqual(keyOf({ key: 'nonsense' }), cMajor);
+  assert.deepEqual(keyOf({ key: aMinor }), aMinor);
+});
+
+test('the seven chords of a key are named as a musician would', () => {
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(d => chordName(aMinor, d)), ['Am', 'Bdim', 'C', 'Dm', 'Em', 'F', 'G']);
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(d => chordName(cMajor, d)), ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim']);
+});
+
+test('every pattern over every chord stays in the key and fills its bars', () => {
+  for (const key of [aMinor, cMajor, { root: 'F#', mode: 'minor' }]) {
+    const chords = [1, 2, 3, 4, 5, 6, 7, 1];
+    for (const name of Object.keys(MUSIC_PATTERNS)) {
+      const notes = followNotes(key, chords, name);
+      assert.ok(notes.every(n => inKey(key, n[1])), `${name} in ${key.root} ${key.mode}`);
+      assert.ok(notes.every(n => n[0] + n[2] <= chords.length * MUSIC_STEPS_PER_BAR), name);
+      for (let bar = 0; bar < chords.length; bar++)
+        assert.ok(notes.some(n => Math.floor(n[0] / MUSIC_STEPS_PER_BAR) === bar), `${name} plays in bar ${bar + 1}`);
+    }
+  }
+});
+
+test('a held chord plays the triad of its bar', () => {
+  const notes = followNotes(aMinor, [1, 6], 'pad-held');
+  const pcs = bar => notes.filter(n => n[0] === bar * 16).map(n => n[1] % 12).sort((a, b) => a - b);
+  assert.deepEqual(pcs(0), [...chordPcs(aMinor, 1)].sort((a, b) => a - b));
+  assert.deepEqual(pcs(1), [...chordPcs(aMinor, 6)].sort((a, b) => a - b));
+});
+
+test('refollow writes following clips the length of the strip and leaves the rest', () => {
+  const s = { tempo: 100, key: aMinor, scenes: ['a', 'b'], chords: { a: startChords(aMinor) },
+    tracks: [{ id: 'bass', kind: 'synth', follow: { pattern: 'bass-pulse' }, clips: {} },
+             { id: 'lead', kind: 'synth', clips: { a: { bars: 1, notes: [[0, 69, 1, 90]] } } }] };
+  refollow(s);
+  assert.equal(s.tracks[0].clips.a.bars, 4);
+  assert.equal(s.tracks[0].clips.b, undefined);
+  assert.deepEqual(s.tracks[1].clips.a.notes, [[0, 69, 1, 90]]);
+  assert.deepEqual(validate(s), []);
+});
+
+test('a melody moved to a new key keeps its degrees and its register', () => {
+  const tune = [69, 71, 72, 74, 76];            // A B C D E in A minor
+  assert.deepEqual(tune.map(p => transposeNote(aMinor, cMajor, p)), [72, 74, 76, 77, 79]);
+  assert.deepEqual(tune.map(p => transposeNote(aMinor, { root: 'E', mode: 'minor' }, p)), [64, 66, 67, 69, 71]);
+});
+
+test('validate names a bad chord strip and an unknown pattern', () => {
+  const s = tiny();
+  s.chords = { a: [1, 9, 3], z: [1] };
+  s.tracks[1].follow = { pattern: 'kazoo' };
+  const bad = validate(s).join('\n');
+  assert.match(bad, /chords\/a: 3 bars/);
+  assert.match(bad, /not 1 to 7/);
+  assert.match(bad, /unknown scene z/);
+  assert.match(bad, /unknown pattern kazoo/);
+});
+
+test('a change of mode never turns a plain chord diminished', () => {
+  const aMajor = { root: 'A', mode: 'major' };
+  const carried = carryChords(aMinor, aMajor, [1, 6, 3, 7]);
+  assert.ok(carried.every(d => !chordName(aMajor, d).endsWith('dim')), carried.join());
+  const back = carryChords(aMajor, aMinor, [1, 2, 4, 5, 6]);
+  assert.ok(back.every(d => !chordName(aMinor, d).endsWith('dim')), back.join());
+  assert.deepEqual(carryChords(aMinor, { root: 'E', mode: 'minor' }, [1, 6, 3, 7]), [1, 6, 3, 7]);
+});

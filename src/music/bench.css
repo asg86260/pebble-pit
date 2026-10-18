@@ -148,3 +148,40 @@ button, input, select { font: inherit; color: inherit; }
 
 .help { color: var(--sub); font-size: 12.5px; padding: 0 14px 30px; max-width: 110ch; }
 .help kbd { font-family: var(--mono); background: var(--raise); border: 1px solid var(--rule); border-radius: 3px; padding: 0 4px; }
+
+/* the chord strip (DESIGN.md, "Chords first, no wrong notes"): one block a
+   bar, the key's seven chords dropping down under the open one */
+:root { --chord: #8b5cf6; }
+.strip { margin: 12px 14px 4px; padding: 10px 12px 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); }
+.striphead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 8px; }
+.striphead label { display: inline-flex; gap: 6px; align-items: center; color: var(--sub); font-size: 13px; }
+.striphead select { background: var(--raise); border: 1px solid var(--rule); border-radius: 5px; padding: 2px 6px; }
+.strip .hint { color: var(--sub); font-size: 12.5px; }
+.stripbars { display: grid; grid-template-columns: repeat(var(--bars), minmax(0, 1fr)); gap: 8px; }
+.chordbar { position: relative; overflow: hidden; height: 54px; border-radius: 6px; background: var(--raise); border: 1px solid var(--rule);
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 0 12px; cursor: pointer; text-align: left; }
+.chordbar:hover { border-color: var(--sub); }
+.chordbar b { font-size: 18px; font-weight: 700; }
+.chordbar small { color: var(--sub); font-size: 12px; }
+.chordbar .prog { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--chord); }
+.chordbar.now { border-color: var(--chord); box-shadow: inset 0 0 0 1px var(--chord); }
+.chordbar.open { outline: 2px solid var(--ink); outline-offset: 2px; }
+.chordmenu { margin-top: 10px; padding: 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--bg); }
+.chordpicks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.chordpick { padding: 7px 12px; border-radius: 6px; background: var(--raise); border: 1px solid var(--rule); min-width: 84px; text-align: left; cursor: pointer; }
+.chordpick b { display: block; font-size: 15px; }
+.chordpick small { color: var(--sub); font-size: 11.5px; }
+.chordpick.good { border-color: var(--accent); }
+.chordpick.good small::before { content: "★ "; color: var(--accent); }
+.chordpick.cur { background: var(--chord); border-color: var(--chord); }
+.chordpick.cur small { color: #eee; }
+.chordpick:hover { border-color: var(--ink); }
+.tname small.follows { color: var(--chord); }
+.tname .btn.small { padding: 2px 7px; font-size: 12px; }
+
+/* the roll in the key: the lit rows are the bar's chord, a row off the key
+   is only there because a note already sits on it */
+.notes .tone { position: absolute; background: rgba(139, 92, 246, .16); pointer-events: none; }
+.notes .rowbg.off, .keys div.off { background: rgba(239, 83, 80, .1); }
+.keys div.c::before { content: "●"; color: var(--chord); font-size: 7px; margin-right: 5px; }
+.rollhint { padding: 6px 12px; border-bottom: 1px solid var(--rule); color: var(--sub); font-size: 12px; }

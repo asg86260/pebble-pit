@@ -21815,7 +21815,14 @@ decisions already counted there. Mute silences it with everything else.
 3. **Surge live: the selected track only.** One Surge XT standalone window;
    the other lanes stay on the preview synth.
 
-### Chords first, no wrong notes (design, not built)
+### Chords first, no wrong notes (built 2026-10-17)
+
+*Built as designed: `src/music/theory.js`, the strip and the follow controls
+on `music.html`, checks in `test/music.test.mjs`. One amendment: a change of
+**mode** keeps each degree except where it would land on the diminished
+chord (into major the seventh becomes the fifth, into minor the second
+becomes the fourth, `MUSIC_MODE_SWAP`), because carrying G in A minor to
+G#dim in A major is never what anybody meant.*
 
 *Asked for 2026-10-17: the owner does not compose, so the bench has to make
 a song out of choices rather than notes. The vote

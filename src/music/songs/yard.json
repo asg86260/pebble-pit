@@ -1,7 +1,10 @@
 {
  "name": "yard",
  "tempo": 92,
- "key": "A minor",
+ "key": {
+  "root": "A",
+  "mode": "minor"
+ },
  "game": "yard",
  "scenes": [
   "intro",
@@ -924,5 +927,25 @@
     }
    }
   }
- ]
+ ],
+ "chords": {
+  "intro": [
+   1,
+   6,
+   3,
+   7
+  ],
+  "yard": [
+   1,
+   6,
+   3,
+   7
+  ],
+  "storm": [
+   1,
+   6,
+   3,
+   7
+  ]
+ }
 }
