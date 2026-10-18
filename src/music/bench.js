@@ -10,7 +10,7 @@
 
 import { MUSIC_STEPS_PER_BAR, MUSIC_CLIP_BARS, MUSIC_DRUM_ROWS, MUSIC_ROLL_LOW, MUSIC_ROLL_ROWS,
          MUSIC_VEL_DEFAULT, MUSIC_TEMPO_MIN, MUSIC_TEMPO_MAX, MUSIC_ROOTS, MUSIC_MODES, MUSIC_PATTERNS,
-         MUSIC_CHORD_BARS, MUSIC_FX, MUSIC_START_FX } from '../config/music.js';
+         MUSIC_CHORD_BARS, MUSIC_FX, MUSIC_START_FX, MUSIC_FX_GROUPS, MUSIC_FX_PRESETS } from '../config/music.js';
 import { clipOf, clipSteps, validate, barSeconds } from './song.js';
 import { keyOf, keyName, inKey, chordPcs, chordName, chordFeel, goodNext, startChords, refollow,
          transposeNote, carryChords } from './theory.js';
@@ -355,6 +355,7 @@ function sceneEveryonePlays() {
 // A launch or a bar line changes only which clips light, so it restyles the
 // slots in place: rebuilding the lanes would drop a drag in the open roll.
 function refreshClips() {
+  preview?.running(!!transport?.running);
   if (!lanesEl) return;
   const playBtn = document.getElementById('play');
   if (playBtn) { playBtn.textContent = transport?.running ? '■' : '▶'; playBtn.classList.toggle('on', !!transport?.running); }
@@ -476,15 +477,36 @@ function drawFx(t) {
       : 'no effects yet: the track plays dry'),
     h('span', { class: 'grow' }),
     t.fx.length ? h('button', { class: 'btn small danger', onclick: () => edit(() => { t.fx = []; }) }, 'clear all') : null), row];
-  if (app.fxMenu) parts.push(h('div', { class: 'fxmenu' }, h('span', { class: 'hint' }, 'add'),
-    FX_TYPES.map(type => h('button', { class: 'btn small', onclick: () => { app.fxMenu = false; edit(() => { t.fx.push(newFx(type)); preview?.refresh(t); }); } },
-      MUSIC_FX[type].label))));
+  if (app.fxMenu) parts.push(fxLibrary(t));
   return h('div', { class: 'editor', style: `--tc:${t.color}` }, ...parts);
+}
+
+// The add panel (DESIGN.md, "The effects library"): starting points across
+// the top, a whole chain each, then every effect in its group with its
+// sentence. Picking one closes the panel; undo takes it back.
+function fxLibrary(t) {
+  const add = boxes => { app.fxMenu = false; edit(() => { t.fx.push(...boxes); preview?.refresh(t); }); };
+  const chainOf = pre => pre.chain.map(([type, params]) => newFx(type, params));
+  const presets = h('div', { class: 'fxpresets' }, MUSIC_FX_PRESETS.map(pre => h('div', { class: 'fxpreset' },
+    h('b', {}, pre.name), h('small', {}, pre.about),
+    h('div', { class: 'fxchips' }, pre.chain.map(([type]) => h('span', {}, MUSIC_FX[type].label))),
+    h('div', { class: 'fxpresetgo' },
+      h('button', { class: 'btn small', title: "replace this track's effects with this chain (undo brings them back)",
+        onclick: () => { app.fxMenu = false; edit(() => { t.fx = chainOf(pre); preview?.refresh(t); }); } }, 'use'),
+      t.fx.length ? h('button', { class: 'btn small', title: 'put this chain after the effects already here',
+        onclick: () => add(chainOf(pre)) }, 'add to the end') : null))));
+  const groups = h('div', { class: 'fxgroups' }, MUSIC_FX_GROUPS.map(([key, label]) => h('div', { class: 'fxgroup' },
+    h('div', { class: 'fxhead' }, label),
+    FX_TYPES.filter(type => MUSIC_FX[type].group === key).map(type => h('button', { class: 'fxrow', onclick: () => add([newFx(type)]) },
+      h('b', {}, MUSIC_FX[type].label), h('small', {}, MUSIC_FX[type].about))))));
+  return h('div', { class: 'fxlib' },
+    h('div', { class: 'fxhead' }, 'Starting points · a whole chain to start from'), presets,
+    h('div', { class: 'fxhead' }, 'Effects · one at a time'), groups);
 }
 
 function fxBox(t, box, i) {
   const spec = MUSIC_FX[box.type], params = fxParams(box);
-  const el = h('div', { class: 'fxbox' + (box.on === false ? ' off' : ''), 'data-i': i });
+  const el = h('div', { class: 'fxbox' + (box.on === false ? ' off' : ''), 'data-i': i, title: spec.about });
   const top = h('div', { class: 'fxtop', draggable: 'true', title: 'drag to move it in the chain' },
     h('button', { class: 'power', title: box.on === false ? 'switch on' : 'switch off (hear the track without it)',
       onclick: () => edit(() => { box.on = box.on === false; preview?.refresh(t); }) }),
@@ -525,7 +547,7 @@ function knob(t, box, k, p, value) {
     val.textContent = knobText(p, v);
   };
   const set = v => { box.params = { ...(box.params || {}), [k]: v }; show(v); preview?.refresh(t); touched(false); };
-  const el = h('div', { class: 'knob', title: p.label }, svg, h('small', {}, p.label), val);
+  const el = h('div', { class: 'knob', title: `${p.label}: ${p.about}` }, svg, h('small', {}, p.label), val);
   let drag = null;
   svg.addEventListener('pointerdown', e => {
     svg.setPointerCapture(e.pointerId);

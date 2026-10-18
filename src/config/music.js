@@ -254,6 +254,13 @@ export const MUSIC_PREVIEW_FX = {
   reverbDamp: [1500, 14000],        // the hall's lowpass at damping 1 and at 0
   compAttack: 0.01,
   duckAttack: 0.004, duckHold: 0.02,
+  autoQ: 2, autoSwing: 0.85,        // the auto-filter's sweep: a share of its center at depth 1
+  flangeBase: 0.002, flangeSwing: 0.0018,
+  wobbleBase: 0.006, wowSwing: 0.003, flutterHz: 7, flutterSwing: 0.0004,
+  tremSmooth: 60,                   // hertz: the square tremolo's edges, softened
+  vinylLoop: 4.3, hissLevel: 0.03, crackleOdds: 0.0004, crackleLevel: 0.5,
+  wearHz: [16000, 3000],            // the record's top end at wear 0 and at wear 1
+  pitchWindow: 0.06,
 };
 
 // the render
