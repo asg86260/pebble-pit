@@ -22179,6 +22179,37 @@ and the fact that ends it.
 A cutscene in `scenes.js` is a still. A cutscene on the bench is the whole
 run, and the bench is where a cutscene is written from now on.
 
+### Zooming is smooth (the owner's pick, 2026-10-18: mock C)
+
+Today the zoom steps through whole cell sizes, because drawing each cell at
+an in-between size opened hairline cracks between cells and made sprites
+jiggle (the vote's option B). The pick is **one picture, scaled
+sharp**: while a zoom is moving, the world is drawn at the whole cell size at
+or below where the zoom is, into one offscreen picture, and that picture is
+scaled to the screen in one nearest-neighbor `drawImage`. Nothing is drawn at
+a fractional size, so no cracks; pixels come out a little uneven while it
+moves, and the moment the zoom lands on a whole size the picture is skipped
+and the frame is drawn as it is today, pin sharp.
+
+- **Two zooms.** `S.zoom` stays the *drawn* zoom, always a whole cell size,
+  so the hundred readers that place things in world pixels are unchanged.
+  `S.zoomShow` (EPHEMERAL) is the zoom on screen, any value. `S.viewW` and
+  `S.viewH` are measured off `S.zoomShow`: they are what the window shows.
+  `S.zoom = snapDown(S.zoomShow)`, so the picture is only ever scaled up.
+- **Every zoom change glides.** `setZoom(k)` becomes a target; the shown zoom
+  eases to it on the shot's one curve over `ZOOM_GLIDE_S`, about the point
+  the camera is framing. `setZoomNow(k)` keeps the old cut for a resize, a
+  boot and a scene setup.
+- **Screen and world meet in one place.** Every screen-to-world conversion
+  (the pointer, the touch, the hover) and every overlay drawn in screen
+  space over the world goes through `toWorld` / `toScreen` in world.js,
+  which read `S.zoomShow`. One reading `S.zoom` for that is the bug the
+  checks look for.
+- **Within a cutscene** the owner's call 1 stands: the zoom does not move in
+  a held frame, so between two places it still changes under the ripple. It
+  glides only when the player has the camera, or as a cutscene's own
+  deliberate `zoom` move.
+
 ### The owner's calls (2026-10-18)
 
 1. **The zoom across places changes under the ripple.** Each place keeps its
