@@ -306,7 +306,7 @@ export function stepPart(t) {
 
 export function letGo() {
   S.camLockY = null;
-  setZoom(1);
+  setZoomNow(1);
   S.danceUntil = 0;
 }
 
@@ -522,7 +522,7 @@ export function begin(t) {
   }
 
   S.camLockY = null;                           // the yard has its view back
-  setZoom(1);
+  setZoomNow(1);
 }
 
 // It knocks a couple of cells off and throws one into the hole. Thrown, not
@@ -587,7 +587,7 @@ function finish() {
   rebalance();
   syncWorkers();
   S.camLockY = null;               // the yard has its own view back
-  setZoom(1);
+  setZoomNow(1);
   // Back to the opening seat: the show walked the view out to the hole, and
   // the call to build the bench, the first thing the player is asked to
   // press, was being pressed with the bench out of shot.

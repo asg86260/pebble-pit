@@ -31,7 +31,7 @@ import { cameraCues, play, stepShot, release, stepDeepShot, dropDeepShot, stepHu
 import { abyssDue, startAbyss, stepAbyss, cutAbyss, endAbyss } from './abyssintro.js';
 import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, cutFreed, serpentOn, deepOn } from './snatch.js';
 import { shieldUp, KINDS } from './shield.js';
-import { setZoom, clampCam } from './world.js';
+import { setZoom, setZoomNow, clampCam } from './world.js';
 import { firstMuckDue, startFirstMuck } from './firstmuck.js';
 import { startFinale, stepFinale, cutFinale, sheetDown, workPaused } from './finale.js';
 import { afterlifeOn, hellOn, owed, paid } from './acts.js';
@@ -304,7 +304,7 @@ export const SAVE = {
     if (S.shot && S.shot.name !== S.beat.camera) {
       const center = S.camX + S.viewW / 2;
       S.shot = null;
-      setZoom(1);
+      setZoomNow(1);
       S.camX = center - S.viewW / 2;
       clampCam();
     }
