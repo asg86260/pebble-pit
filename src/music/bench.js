@@ -10,11 +10,12 @@
 
 import { MUSIC_STEPS_PER_BAR, MUSIC_CLIP_BARS, MUSIC_DRUM_ROWS, MUSIC_ROLL_LOW, MUSIC_ROLL_ROWS,
          MUSIC_VEL_DEFAULT, MUSIC_TEMPO_MIN, MUSIC_TEMPO_MAX, MUSIC_ROOTS, MUSIC_MODES, MUSIC_PATTERNS,
-         MUSIC_CHORD_BARS } from '../config/music.js';
+         MUSIC_CHORD_BARS, MUSIC_FX, MUSIC_START_FX } from '../config/music.js';
 import { clipOf, clipSteps, validate, barSeconds } from './song.js';
 import { keyOf, keyName, inKey, chordPcs, chordName, chordFeel, goodNext, startChords, refollow,
          transposeNote, carryChords } from './theory.js';
 import { makePreview } from './preview.js';
+import { newFx, fxParams, knobPos, knobValue, FX_TYPES } from './fx.js';
 import { makeTransport } from './transport.js';
 import { makeLive, openMidi } from './live.js';
 
@@ -33,6 +34,8 @@ const app = {
   sel: { track: null, scene: null }, focus: null, lastLen: 2,
   // the chord strip's open bar, and the roll showing all twelve notes
   openBar: null, allNotes: false,
+  // the open editor's tab (notes or effects), and whether the add list is open
+  edTab: 'notes', fxMenu: false,
   undo: [], redo: [], dirty: false,
   source: 'preview', midi: { outputs: [], error: null }, render: null,
 };
@@ -148,6 +151,10 @@ async function newSong() {
         preview: { wave: 'triangle', cutoff: 3000, q: 1, attack: 0.005, decay: 0.15, sustain: 0.3, release: 0.15 }, clips: {} },
     ],
   };
+  for (const t of song.tracks) {
+    const role = MUSIC_PATTERNS[t.follow?.pattern]?.role;
+    if (MUSIC_START_FX[role]) t.fx = MUSIC_START_FX[role].map(b => newFx(b.type, b.params));
+  }
   refollow(song);
   await api('song/' + name, { method: 'PUT', body: JSON.stringify(song) });
   app.songs = await api('songs');
@@ -159,7 +166,7 @@ async function newSong() {
 function ensureAudio() {
   if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
   ctx = new AudioContext();
-  preview = makePreview(ctx, { muted: MUTED });
+  preview = makePreview(ctx, { muted: MUTED, beat: () => 60 / app.song.tempo });
   live = makeLive(ctx);
   const sink = {
     // Live is the selected track only; everything else stays on the preview.
@@ -328,7 +335,8 @@ function drawLanes() {
   const kids = [drawStrip(), heads];
   s.tracks.forEach((t, i) => {
     kids.push(drawLane(t, ns));
-    if (t.id === app.sel.track && selClip()) kids.push(t.kind === 'drums' ? drawSteps(t) : drawRoll(t));
+    if (t.id === app.sel.track && app.edTab === 'effects') kids.push(drawFx(t));
+    else if (t.id === app.sel.track && selClip()) kids.push(t.kind === 'drums' ? drawSteps(t) : drawRoll(t));
   });
   kids.push(h('div', { class: 'adds' },
     h('button', { class: 'btn', onclick: () => addTrack('synth') }, '+ synth track'),
@@ -371,7 +379,8 @@ function drawLane(t, ns) {
   const lane = h('div', { class: 'lane' + (sel ? ' sel' : ''), 'data-track': t.id, style: `--scenes:${ns};--tc:${t.color}` },
     h('div', { class: 'tname', onclick: () => { app.sel.track = t.id; draw(); }, ondblclick: () => renameTrack(t) },
       h('span', { class: 'chip' }),
-      h('div', { class: 'who' }, h('b', {}, t.name),
+      h('div', { class: 'who' }, h('b', {}, t.name, t.fx?.length ? h('span', { class: 'fxcount', title: t.fx.map(b => MUSIC_FX[b.type]?.label).join(' → ') },
+        t.fx.length + (t.fx.length > 1 ? ' effects' : ' effect')) : null),
         h('small', { class: isLive ? 'live' : t.follow ? 'follows' : '' }, isLive ? 'live · ' + (t.patch || 'Surge')
           : t.kind === 'drums' ? 'drums'
           : t.follow ? 'follows chords · ' + MUSIC_PATTERNS[t.follow.pattern].label
@@ -391,7 +400,7 @@ function drawLane(t, ns) {
     lane.append(h('div', {
       class: 'clip full' + (playing ? ' playing' : '') + (queued && transport.running ? ' queued' : '') + (sel && app.sel.scene === sc ? ' sel' : ''),
       'data-track': t.id, 'data-scene': sc,
-      onclick: () => { app.sel = { track: t.id, scene: sc }; app.focus = null; draw(); },
+      onclick: () => { app.sel = { track: t.id, scene: sc }; app.focus = null; app.edTab = 'notes'; draw(); },
     },
       h('span', { class: 'q' }),
       h('span', { class: 'go', title: playing ? 'stop' : 'launch',
@@ -416,6 +425,7 @@ function editorBar(t, clip, extra) {
       oninput: e => set(+e.target.value) }));
   const range = (label, k, min, max, step, fallback) => slider(label, v[k] ?? fallback, min, max, step, x => setV(k, x));
   return h('div', { class: 'edbar' },
+    edTabs(),
     h('b', {}, `${t.name} · ${app.sel.scene}`),
     h('label', {}, 'length', h('select', { onchange: e => setBars(clip, +e.target.value) },
       MUSIC_CLIP_BARS.map(b => h('option', { value: b, selected: b === clip.bars }, b + (b > 1 ? ' bars' : ' bar'))))),
@@ -441,6 +451,99 @@ function editorBar(t, clip, extra) {
     h('button', { class: 'btn small danger', onclick: () => deleteClip(t) }, 'delete clip'),
     h('button', { class: 'btn small danger', onclick: () => deleteTrack(t) }, 'delete track'),
   );
+}
+
+// --- the effects chain ----------------------------------------------------------
+
+function edTabs() {
+  const tab = name => h('button', { class: app.edTab === name ? 'on' : '', onclick: () => { app.edTab = name; app.fxMenu = false; drawLanes(); } }, name);
+  return h('div', { class: 'edtabs' }, tab('notes'), tab('effects'));
+}
+
+// The chain under the selected track: one box an effect, in the order the
+// sound goes through them, left to right, and an add box at the end.
+function drawFx(t) {
+  t.fx = t.fx || [];
+  const row = h('div', { class: 'chain' });
+  t.fx.forEach((box, i) => {
+    if (i) row.append(h('span', { class: 'arrow' }, '→'));
+    row.append(fxBox(t, box, i));
+  });
+  if (t.fx.length) row.append(h('span', { class: 'arrow' }, '→'));
+  row.append(h('button', { class: 'addfx' + (app.fxMenu ? ' open' : ''), onclick: () => { app.fxMenu = !app.fxMenu; drawLanes(); } }, '+ add'));
+  const parts = [h('div', { class: 'edbar' }, edTabs(), h('b', {}, t.name + ' · effects'),
+    h('span', { class: 'hint' }, t.fx.length ? 'the sound goes left to right · drag a box by its name to move it · drag a knob up or down, double-click to reset'
+      : 'no effects yet: the track plays dry'),
+    h('span', { class: 'grow' }),
+    t.fx.length ? h('button', { class: 'btn small danger', onclick: () => edit(() => { t.fx = []; }) }, 'clear all') : null), row];
+  if (app.fxMenu) parts.push(h('div', { class: 'fxmenu' }, h('span', { class: 'hint' }, 'add'),
+    FX_TYPES.map(type => h('button', { class: 'btn small', onclick: () => { app.fxMenu = false; edit(() => { t.fx.push(newFx(type)); preview?.refresh(t); }); } },
+      MUSIC_FX[type].label))));
+  return h('div', { class: 'editor', style: `--tc:${t.color}` }, ...parts);
+}
+
+function fxBox(t, box, i) {
+  const spec = MUSIC_FX[box.type], params = fxParams(box);
+  const el = h('div', { class: 'fxbox' + (box.on === false ? ' off' : ''), 'data-i': i });
+  const top = h('div', { class: 'fxtop', draggable: 'true', title: 'drag to move it in the chain' },
+    h('button', { class: 'power', title: box.on === false ? 'switch on' : 'switch off (hear the track without it)',
+      onclick: () => edit(() => { box.on = box.on === false; preview?.refresh(t); }) }),
+    h('b', {}, spec.label),
+    h('button', { class: 'x', title: 'remove', onclick: () => edit(() => { t.fx.splice(i, 1); preview?.refresh(t); }) }, '✕'));
+  // Moving a box: drop it on another and it takes that one's place.
+  top.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', String(i)); el.classList.add('dragging'); });
+  top.addEventListener('dragend', () => el.classList.remove('dragging'));
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('over'));
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    const from = +e.dataTransfer.getData('text/plain');
+    if (Number.isNaN(from) || from === i) return;
+    edit(() => { const [moved] = t.fx.splice(from, 1); t.fx.splice(i, 0, moved); preview?.refresh(t); });
+  });
+  el.append(top, h('div', { class: 'knobs' },
+    Object.entries(spec.params).map(([k, p]) => knob(t, box, k, p, params[k]))));
+  return el;
+}
+
+const knobText = (p, v) => p.names ? p.names[p.choices.indexOf(v)] : p.choices ? v
+  : (Math.abs(v) >= 100 ? Math.round(v) : Math.round(v * 100) / 100) + (p.unit ? ' ' + p.unit : '');
+
+// A knob: drag up to turn it up, double-click for its default; a knob of
+// choices steps through them as it turns.
+function knob(t, box, k, p, value) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 36 36');
+  svg.innerHTML = '<circle cx="18" cy="18" r="14" class="ring"/><path class="arc"/><line x1="18" y1="18" x2="18" y2="6" class="tick"/>';
+  const val = h('span', { class: 'num' });
+  const show = v => {
+    const x = knobPos(p, v), a0 = -135, a = a0 + 270 * x, rad = d => (d - 90) * Math.PI / 180;
+    const pt = d => [18 + 14 * Math.cos(rad(d)), 18 + 14 * Math.sin(rad(d))];
+    const [x0, y0] = pt(a0), [x1, y1] = pt(a);
+    svg.querySelector('.arc').setAttribute('d', x > 0.001 ? `M${x0} ${y0} A14 14 0 ${a - a0 > 180 ? 1 : 0} 1 ${x1} ${y1}` : '');
+    svg.querySelector('.tick').setAttribute('transform', `rotate(${a} 18 18)`);
+    val.textContent = knobText(p, v);
+  };
+  const set = v => { box.params = { ...(box.params || {}), [k]: v }; show(v); preview?.refresh(t); touched(false); };
+  const el = h('div', { class: 'knob', title: p.label }, svg, h('small', {}, p.label), val);
+  let drag = null;
+  svg.addEventListener('pointerdown', e => {
+    svg.setPointerCapture(e.pointerId);
+    app.undo.push(JSON.stringify(app.song)); app.redo.length = 0;
+    drag = { y: e.clientY, x: knobPos(p, fxParams(box)[k]) };
+  });
+  svg.addEventListener('pointermove', e => {
+    if (!drag) return;
+    // A full turn is about two hundred pixels; shift turns it finely.
+    const span = e.shiftKey ? 800 : 200;
+    set(knobValue(p, drag.x + (drag.y - e.clientY) / span));
+  });
+  const end = () => { drag = null; };
+  svg.addEventListener('pointerup', end);
+  svg.addEventListener('pointercancel', end);
+  svg.addEventListener('dblclick', () => { app.undo.push(JSON.stringify(app.song)); set(p.def); });
+  show(value);
+  return el;
 }
 
 // --- the piano roll -----------------------------------------------------------

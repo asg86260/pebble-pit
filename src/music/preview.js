@@ -8,12 +8,15 @@
 
 import { MUSIC_PREVIEW_MASTER, MUSIC_PREVIEW_COMP, MUSIC_PREVIEW_VOICE, MUSIC_PREVIEW_PEAK,
          MUSIC_PREVIEW_SWEEP, MUSIC_PREVIEW_DRUMS as D } from '../config/music.js';
+import { makeChain } from './fxnodes.js';
+import { fxParams } from './fx.js';
 
 const midiHz = p => 440 * Math.pow(2, (p - 69) / 12);
 
 // `muted` keeps every note scheduled and the playhead running with nothing
 // reaching the speakers: an agent checking the bench must never be heard.
-export function makePreview(ctx, { muted = false } = {}) {
+// `beat` is the song's beat in seconds, read when a delay is set.
+export function makePreview(ctx, { muted = false, beat = () => 0.5 } = {}) {
   const master = ctx.createGain();
   master.gain.value = muted ? 0 : MUSIC_PREVIEW_MASTER;
   const comp = ctx.createDynamicsCompressor();
@@ -25,18 +28,21 @@ export function makePreview(ctx, { muted = false } = {}) {
   const nd = noise.getChannelData(0);
   for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
 
+  // A track's bus: its effects chain, then its level and pan. Every note of
+  // the track goes in at the chain's head.
   const buses = new Map();
   function bus(track) {
     let b = buses.get(track.id);
     if (!b) {
-      const gain = ctx.createGain(), pan = ctx.createStereoPanner();
-      gain.connect(pan).connect(master);
-      b = { gain, pan };
+      const chain = makeChain(ctx, beat), gain = ctx.createGain(), pan = ctx.createStereoPanner();
+      chain.output.connect(gain).connect(pan).connect(master);
+      b = { chain, gain, pan };
       buses.set(track.id, b);
     }
+    b.chain.update(track.fx, fxParams);
     b.gain.gain.value = track.level ?? 0.7;
     b.pan.pan.value = track.pan ?? 0;
-    return b.gain;
+    return b.chain.input;
   }
 
   function synthNote(track, pitch, t, dur, vel) {
@@ -76,6 +82,8 @@ export function makePreview(ctx, { muted = false } = {}) {
   function drumNote(track, pitch, t, vel) {
     const out = bus(track), k = vel / 127;
     if (pitch === 36) {
+      // Every Duck in the song dips on this kick.
+      for (const other of buses.values()) other.chain.kick(t);
       const o = ctx.createOscillator(), g = ctx.createGain();
       o.frequency.setValueAtTime(D.kick.from, t);
       o.frequency.exponentialRampToValueAtTime(D.kick.to, t + D.kick.sweep);

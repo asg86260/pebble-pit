@@ -184,3 +184,8 @@ test('validate names an unknown effect, an unknown knob and a knob out of range'
   assert.match(bad, /delay has no knob wobble/);
   assert.match(bad, /reverb mix 2 is out of range/);
 });
+
+test('the preview has a stand-in for every effect in the table', async () => {
+  const { PREVIEW_FX_TYPES } = await import('../src/music/fxnodes.js');
+  assert.deepEqual([...PREVIEW_FX_TYPES].sort(), [...FX_TYPES].sort());
+});

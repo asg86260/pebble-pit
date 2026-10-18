@@ -185,3 +185,32 @@ button, input, select { font: inherit; color: inherit; }
 .notes .rowbg.off, .keys div.off { background: rgba(239, 83, 80, .1); }
 .keys div.c::before { content: "●"; color: var(--chord); font-size: 7px; margin-right: 5px; }
 .rollhint { padding: 6px 12px; border-bottom: 1px solid var(--rule); color: var(--sub); font-size: 12px; }
+
+/* a track's effects chain (DESIGN.md, "A track's effects chain"): boxes in a
+   row under the lane, the sound going left to right */
+.edtabs { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.edtabs button { padding: 4px 12px; background: none; border: 0; color: var(--sub); cursor: pointer; font-weight: 500; }
+.edtabs button.on { background: var(--ink); color: var(--bg); }
+.fxcount { margin-left: 8px; font-size: 11px; font-weight: 500; color: var(--sub); border: 1px solid var(--rule); border-radius: 4px; padding: 0 5px; }
+.chain { display: flex; gap: 8px; align-items: stretch; overflow-x: auto; padding: 12px; }
+.chain .arrow { align-self: center; color: var(--sub); }
+.addfx { flex: none; width: 100px; border: 1px dashed var(--rule); border-radius: 7px; background: none; color: var(--sub); font-weight: 500; cursor: pointer; }
+.addfx:hover, .addfx.open { border-color: var(--ink); color: var(--ink); }
+.fxmenu { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 0 12px 12px; }
+.fxbox { flex: none; min-width: 160px; border: 1px solid var(--rule); border-radius: 7px; background: var(--raise); overflow: hidden; }
+.fxbox.off { opacity: .45; }
+.fxbox.over { border-color: var(--accent); }
+.fxbox.dragging { opacity: .4; }
+.fxtop { display: flex; align-items: center; gap: 7px; padding: 5px 8px; background: var(--panel); border-bottom: 1px solid var(--rule); cursor: grab; font-size: 13px; }
+.fxtop .power { width: 12px; height: 12px; border-radius: 50%; border: 0; padding: 0; background: var(--accent); cursor: pointer; flex: none; }
+.fxbox.off .power { background: var(--rule); }
+.fxtop .x { margin-left: auto; background: none; border: 0; color: var(--sub); cursor: pointer; padding: 0 2px; }
+.fxtop .x:hover { color: var(--bad); }
+.fxbox .knobs { display: flex; gap: 6px; justify-content: space-around; padding: 8px 8px 6px; }
+.knob { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 52px; user-select: none; }
+.knob svg { width: 36px; height: 36px; cursor: ns-resize; touch-action: none; }
+.knob .ring { fill: var(--bg); stroke: var(--rule); stroke-width: 2; }
+.knob .arc { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+.knob .tick { stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
+.knob small { font-size: 11px; color: var(--sub); }
+.knob .num { font-size: 10.5px; white-space: nowrap; }

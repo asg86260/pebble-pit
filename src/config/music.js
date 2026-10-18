@@ -166,6 +166,23 @@ export const MUSIC_START_FX = {
   arp: [{ type: 'delay' }, { type: 'reverb', params: { mix: 0.2 } }],
 };
 
+// The preview's stand-ins for the effects (fxnodes.js): corner frequencies
+// in hertz, times in seconds. The render keeps its own in tools/music/mix.py.
+export const MUSIC_PREVIEW_FX = {
+  shaperSize: 1024,
+  filterQ: [0.7, 14],               // Q at reso 0, and what reso 1 adds
+  eqLow: 200, eqMid: 1000, eqMidQ: 0.9, eqHigh: 5000,
+  driveMakeup: 0.25,                // how much of the drive's gain is taken back after
+  chorusBase: 0.012, chorusSwing: 0.006,
+  phaserFreqs: [400, 800, 1600, 3200], phaserSwing: 600,
+  delayTone: 5000,
+  reverbSeconds: [0.6, 3.4],        // a hall's length at size 0, and what size 1 adds
+  reverbCurve: 3, reverbStep: 0.05,
+  reverbDamp: [1500, 14000],        // the hall's lowpass at damping 1 and at 0
+  compAttack: 0.01,
+  duckAttack: 0.004, duckHold: 0.02,
+};
+
 // the render
 // tools/music/render.mjs: one sample rate for every stem so a cached stem
 // mixes with a fresh one. The loop kept is the second pass, [L, 2L), which
