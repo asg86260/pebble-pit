@@ -1599,3 +1599,13 @@ HANDLES.__shot = () => {
 // A zoom asked for by hand, a share of the yard's own: glided, or cut with
 // `now`. For looking at the glide's picture; nothing in the game calls it.
 HANDLES.__zoom = (k, now = false) => { (now ? shotSetZoomNow : shotSetZoom)(k); return S.zoomShow; };
+// wave shot, track B
+// The cutscene bench's reading of the camera (cutscenes.html), for a frame
+// that has no `__shot` yet: the exact fields, not the rounded ones the
+// snapshot keeps, plus the facts a row's `done` asks (`beatsDone`).
+HANDLES.__cutRead = () => ({
+  place: S.view, zoom: S.zoom, zoomShow: S.zoomShow ?? S.zoom,
+  camX: S.camX, camY: S.camY, viewW: S.viewW, viewH: S.viewH, hush: S.hush,
+  beat: S.beat.camera || S.beat.yard || S.beat.sheet || (S.shot && S.shot.name) || null,
+  done: [...S.beatsDone],
+});
