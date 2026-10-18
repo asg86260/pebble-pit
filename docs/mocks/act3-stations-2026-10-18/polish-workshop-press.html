@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workshop and Press Polish</title>
+<style>
+  :root { --bg: #ffffff; --fg: #000000; --muted: #5f5f5f; --line: #d6d6d6; --card: #ffffff; --ph: #8a8a8a; }
+  :root[data-theme="dark"] { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #a4a4a4; --line: #464646; --card: #1f1f1f; --ph: #8a8a8a; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1320px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  h2 { font-size: 15px; margin: 0 0 6px; }
+  h3 { font-size: 13px; margin: 0 0 4px; }
+  p, li { color: var(--muted); margin: 0 0 8px; max-width: 110ch; }
+  b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; align-items: center; }
+  .bar button { font: inherit; background: var(--card); color: var(--fg); border: 2px solid var(--line); padding: 3px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .bar label { color: var(--muted); font-size: 13px; }
+  section.st { border-top: 2px solid var(--fg); margin-top: 26px; padding-top: 10px; }
+  .opt { border: 1px solid var(--line); padding: 10px; margin-top: 10px; }
+  .opt.after { border: 2px solid var(--fg); }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+  canvas, img.shot { display: block; image-rendering: pixelated; border: 1px solid var(--line); max-width: 100%; }
+  figure { margin: 0; min-width: 0; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .ph { border-bottom: 1px dotted var(--ph); }
+  .ph::after { content: "ph"; font-size: 9px; vertical-align: super; color: var(--ph); margin-left: 1px; }
+  ul { padding-left: 20px; }
+  .wide { overflow-x: auto; }
+  .pair { display: flex; gap: 0; flex-wrap: wrap; }
+  .pair figure { padding: 10px; }
+  .pair .lt { background: #ffffff; }
+  .pair .dk { background: #1f1f1f; }
+  .pair .lt figcaption { color: #5f5f5f; }
+  .pair .dk figcaption { color: #a4a4a4; }
+  .pair canvas { border: 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Act 3 polish: the <span class="ph">workshop</span> and the <span class="ph">press</span></h1>
+<p>A mock drawn from plain cells on the game's grid (P = 6, the game's greys, a body an 18-pixel square with a 2-pixel rim), <b>not the game</b>. It follows the picks: workshop A (<span class="ph">lean-to</span>) and press A (<span class="ph">screw press</span>), and the owner's notes: <i>they don't read well at our low cell size; exaggerate each station and focus on the thing it does.</i></p>
+<p>The rule used on both: <b>the part that does the work is drawn far past life size and everything else is cut to what holds it up.</b> The <span class="ph">workshop</span> is now a hammer with a roof over it; the <span class="ph">press</span> is now a screw and a platen with a frame round them. One bold black outline each, no single loose cells, one white cut-out (the sign's face, the sheet), grey only where the motion smears.</p>
+<p><b>Every word on this page is a placeholder</b> (marked <span class="ph">like this</span>). Motion is held poses: the hammer held up, one smeared swing frame, held on the strike; the bar and platen in three held steps. Anything arriving or leaving (a sign, a sheet, the strike's lines) fades by opacity. Nothing pops.</p>
+<div class="bar">
+  <button data-theme="light" class="on">light</button><button data-theme="dark">dark</button>
+  <label><input type="checkbox" id="hands" checked> show where the player's hand goes (dotted)</label>
+  <button id="pause">pause</button>
+</div>
+<p style="font-size:12px">Dark is ink #e0e0e0 on paper #1f1f1f, each grey mapped by its lightness (black to the ink, white to the paper, a grey to the same step between). It is not an inversion.</p>
+
+<div id="stations"></div>
+
+<section class="st" id="beside">
+  <h2>Beside the yard, at 1x</h2>
+  <p>Left: a real shot of the yard (the shack and the bench, taken from the game with <code>look.mjs apothecary</code>), scaled from the game's 5 screen pixels a cell to this page's 6, nearest-neighbour. Then the two polished stations, working, piles left off. The question is whether they sit in the same family: solid black masses, one white cut-out, a body the same size.</p>
+  <div class="wide"><figure><canvas id="rowB"></canvas><figcaption>1x, working: the yard's shack and bench, the <span class="ph">workshop</span>, the <span class="ph">press</span></figcaption></figure></div>
+  <div class="wide" style="margin-top:8px"><figure><canvas id="rowBz"></canvas><figcaption>2x of the same row</figcaption></figure></div>
+</section>
+
+<section class="st" id="sil">
+  <h2>Silhouette only</h2>
+  <p>Every inked or grey pixel turned to ink. Before on the top line, after below, each in its held working poses. The thing each station does should still be the shape you see.</p>
+  <div class="wide"><figure><canvas id="silB"></canvas><figcaption>before: the old picks, held poses (workshop up, strike; press up, pressed)</figcaption></figure></div>
+  <div class="wide" style="margin-top:8px"><figure><canvas id="silA"></canvas><figcaption>after: the same held poses</figcaption></figure></div>
+</section>
+
+<section class="st" id="ld">
+  <h2>Light and dark</h2>
+  <p>The two polished stations working, side by side in both themes regardless of the toggle above.</p>
+  <div class="pair">
+    <figure class="lt"><canvas id="ldL"></canvas><figcaption>light, 2x</figcaption></figure>
+    <figure class="dk"><canvas id="ldD"></canvas><figcaption>dark, 2x</figcaption></figure>
+  </div>
+</section>
+
+<section class="st" id="calls">
+  <h2>Calls made here</h2>
+  <ul>
+    <li><b>The hammer's head is a 5 by 3 block (30 by 18 pixels; the old head was 18 by 6), wider than the body.</b> At 1x it is the first black mass you see.</li>
+    <li><b>Every hammer pose is drawn by hand in whole cells, not rotated.</b> A 5 by 3 head turned to 45 degrees was tried first and came apart into a ragged blob at this size. Three poses: up (straight up, the head a T over the body, held), a smear frame (the head only grey, faint where it was and darker half way down), and the strike (the head stood on its face on the sign, the handle a clean 4-pixel line back to the hand, held, two short strokes off the face fading over the hold). Idle, the hammer lies on the sign where the last blow left it.</li>
+    <li><b>The body stands on a low step at the bench.</b> A blow comes down, so the hand has to be above what it hits; a body is three cells tall, so the bench is low and the body is raised one cell. The sign stands on the bench as a white board, the station's one white cut-out. No lettering on it: lettering at this size is grit.</li>
+    <li><b>The lean-to is cut to thin lines</b> (a 3-pixel roof and two 3-pixel posts), high over the raised hammer so the head never touches it. This is the one place the page leaves the yard's solid masses: a solid roof was the heaviest black on the station and the first thing read, which is what the owner asked to fix. Say if the roof should be solid again.</li>
+    <li><b>The press's screw is three cells wide (18 pixels; the old one was 6) with white threads</b> cut across it as clean 2-pixel slants, and it stands up out of the head under a cap. Pulled, the screw, the bar and the platen drop two cells together (12 pixels; the old platen moved 3), so the screw visibly sinks into the head: the cause and the effect are one motion.</li>
+    <li><b>The bar is straight and rides the screw</b> between the head and the platen, out past the right post (keyed in white where it crosses, so post and bar stay two shapes), then down a rod to a knob at the body's hand. A bar slanting down to the hand was tried first; its stair ran into the platen. Pulled, the body crouches on its step with the knob: the player's drag down is the knob's drop.</li>
+    <li><b>The glyph stack is left off</b> both before and after here, so only the stations' own reads are compared. The old press's squeeze lines are gone too: the drop says it.</li>
+  </ul>
+</section>
+
+<section class="st" id="cannot">
+  <h2>What the mock cannot show</h2>
+  <ul>
+    <li>The real camp (the cloud floor, the crowd, God's yard, the pedestal). Each station stands alone on a plain ground line.</li>
+    <li>The game's own scale. The game draws a cell at 5 screen pixels at its usual zoom; this page's 1x is 6, so it is 1.2 times the game. The yard shot is scaled up to match, nearest-neighbour, which leaves the odd doubled pixel in its 2-pixel rims.</li>
+    <li>The player's motions themselves (the hammer tapped on the beat, the bar dragged down). The dotted shapes only show the room each look leaves for them.</li>
+    <li>Carriers walking timber, signs, paper and posters between stations. Inputs fade off their piles and outputs fade onto theirs; in the game a body carries every one.</li>
+    <li>The build in bands, posts, the roster, the boards, the glyph stack, and a station with more than one worker.</li>
+    <li>The real pile capacities and rates.</li>
+  </ul>
+</section>
+</main>
+
+<script>
+// ---------------------------------------------------------------------------
+// The grid and the inks (copied from index.html). Every fill goes through
+// tone(), the identity on the light page and the game's lightness map on the
+// dark one.
+const P = 6;
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a',
+              '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const K = '#000000', W = '#ffffff';
+let DARK = false, HANDS = true, PAUSED = false, FROZEN = null, NO_PILES = false;
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+function toneV(v) { return Math.round((LP + (LI - LP) * (1 - v)) * 255); }
+function tone(c) {
+  if (!DARK) return c;
+  const n = toneV(parseInt(c.slice(1, 3), 16) / 255).toString(16).padStart(2, '0');
+  return '#' + n + n + n;
+}
+const clamp01 = v => Math.max(0, Math.min(1, v));
+
+// The scene: SW by SH cells, the ground line under row G-1.
+const SW = 50, SH = 40, G = 30;
+
+function drawer(g) {
+  const d = {
+    g,
+    px(x, y, w, h, c) { g.fillStyle = tone(c); g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); },
+    r(x, y, w, h, c) { d.px(x * P, y * P, w * P, h * P, c); },
+    c(x, y, c) { d.r(x, y, 1, 1, c); },
+    fade(a, fn) { const o = g.globalAlpha; g.globalAlpha = o * clamp01(a); fn(); g.globalAlpha = o; },
+    body(x, y, dxpx = 0, dypx = 0) {
+      const X = Math.round(x * P + dxpx), Y = Math.round(y * P + dypx);
+      d.px(X, Y, 18, 18, K); d.px(X + 2, Y + 2, 14, 14, W);
+    },
+    squat(x, y, dxpx = 0) {
+      const X = Math.round(x * P + dxpx), Y = Math.round((y + 1) * P);
+      d.px(X, Y, 18, 12, K); d.px(X + 2, Y + 2, 14, 8, W);
+    },
+    dots(x, y, w, h) {
+      if (!HANDS) return;
+      const X = x * P, Y = y * P, Wd = w * P, H = h * P;
+      for (let i = 0; i <= Wd; i += 4) { d.px(X + i, Y, 2, 1, GREY[5]); d.px(X + i, Y + H, 2, 1, GREY[5]); }
+      for (let j = 0; j <= H; j += 4) { d.px(X, Y + j, 1, 2, GREY[5]); d.px(X + Wd, Y + j, 1, 2, GREY[5]); }
+    }
+  };
+  return d;
+}
+
+// The count font (NUM_FONT) with its paper key, 2 px a font pixel.
+const NUM = {
+  '0': ['.##.', '#..#', '#..#', '#..#', '#..#', '.##.'], '1': ['.#..', '##..', '.#..', '.#..', '.#..', '###.'],
+  '2': ['.##.', '#..#', '..#.', '.#..', '#...', '####'], '3': ['###.', '...#', '.##.', '...#', '...#', '###.'],
+  '4': ['#..#', '#..#', '####', '...#', '...#', '...#'], '5': ['####', '#...', '###.', '...#', '...#', '###.'],
+  '6': ['.##.', '#...', '###.', '#..#', '#..#', '.##.'], '7': ['####', '...#', '..#.', '.#..', '.#..', '.#..'],
+  '8': ['.##.', '#..#', '.##.', '#..#', '#..#', '.##.'], '9': ['.##.', '#..#', '#..#', '.###', '...#', '.##.']
+};
+function count(d, n, cxpx, cypx, px = 2) {
+  const s = String(n);
+  const wFont = s.length * 4 + (s.length - 1);
+  const left = Math.round(cxpx - wFont * px / 2), top = Math.round(cypx - 6 * px / 2);
+  const ink = new Set();
+  [...s].forEach((ch, i) => NUM[ch].forEach((row, r) => [...row].forEach((v, c) => { if (v === '#') ink.add((i * 5 + c) + ',' + r); })));
+  const key = new Set();
+  for (const k of ink) { const [x, y] = k.split(',').map(Number); for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) { const kk = (x + dx) + ',' + (y + dy); if (!ink.has(kk)) key.add(kk); } }
+  for (const k of key) { const [x, y] = k.split(',').map(Number); d.px(left + x * px, top + y * px, px, px, W); }
+  for (const k of ink) { const [x, y] = k.split(',').map(Number); d.px(left + x * px, top + y * px, px, px, K); }
+}
+
+// Time: a cycle of T seconds, the step it is on, how long since it began.
+function cyc(t, T, L, off = 0) {
+  const u = Math.max(0, t - off), k = Math.floor(u / T);
+  return { i: k % L, ph: u / T - k, since: u - k * T, k };
+}
+const FADE = 0.4;
+function pileAlpha(idx, n, prev, since) {
+  const f = clamp01(since / FADE);
+  if (idx < Math.min(n, prev)) return 1;
+  return n > prev ? f : 1 - f;
+}
+function drain(t, T, L, off = 0) { const c = cyc(t, T, L, off); const n = L - c.i, prev = c.i === 0 ? (c.k === 0 ? L : 1) : n + 1; return { n, prev, since: c.since }; }
+function fill(t, T, L, off = 0) { const c = cyc(t, T, L, off); const n = c.i, prev = c.i === 0 ? (c.k === 0 ? 0 : L - 1) : n - 1; return { n, prev, since: c.since }; }
+
+// ---------------------------------------------------------------------------
+// Piles, yard style (copied from index.html): the things themselves, counted.
+function plankPile(d, x, st, cap = 6) {
+  if (NO_PILES) return;
+  const m = Math.max(st.n, st.prev);
+  for (let i = 0; i < Math.min(m, cap); i++) d.fade(pileAlpha(i, st.n, st.prev, st.since), () => {
+    const y = G - 1 - i, dx = i % 2 ? 0.5 : 0;
+    d.px((x + dx) * P, y * P, 6 * P, P, K); d.px((x + dx) * P + 2, y * P + 2, 6 * P - 4, P - 4, GREY[4]);
+  });
+  count(d, st.n, (x + 3.25) * P, (G - Math.max(1, Math.min(st.n, cap)) - 2.5) * P);
+}
+function sheetPile(d, x, st, cap = 6, print = false) {
+  if (NO_PILES) return;
+  const m = Math.min(Math.max(st.n, st.prev), cap);
+  const w = 4 * P;
+  for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st.n, st.prev, st.since), () => {
+    const y = G * P - 2 - (i + 1) * 3;
+    d.px(x * P, y, w, 3, K); d.px(x * P + 2, y, w - 4, 2, i === m - 1 ? W : GREY[1]);
+  });
+  const topY = G * P - 2 - Math.min(st.n, cap) * 3;
+  if (print && Math.min(st.n, cap) > 0) {
+    d.fade(pileAlpha(Math.min(st.n, cap) - 1, st.n, st.prev, st.since), () => {
+      d.px(x * P, topY - 4 * P + 3, w, 4 * P, K); d.px(x * P + 2, topY - 4 * P + 5, w - 4, 4 * P - 4, W);
+      d.px(x * P + 5, topY - 4 * P + 8, w - 10, 7, K);
+      d.px(x * P + 5, topY - 4 * P + 18, w - 10, 2, K); d.px(x * P + 5, topY - 4 * P + 22, w - 14, 2, K);
+    });
+  }
+  const top = print && st.n > 0 ? topY - 4 * P : topY;
+  count(d, st.n, x * P + w / 2, top - 2.5 * P);
+}
+function sign(d, x, y) {
+  d.r(x, y, 4, 3, K); d.px(x * P + 2, y * P + 2, 4 * P - 4, 3 * P - 4, W);
+  d.px(x * P + 6, y * P + 7, 12, 2, K); d.px(x * P + 6, y * P + 11, 8, 2, K);
+  d.r(x + 1.5, y + 3, 1, 3, K);
+}
+function signPile(d, x, st, cap = 3) {
+  if (NO_PILES) return;
+  const m = Math.min(Math.max(st.n, st.prev), cap);
+  for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st.n, st.prev, st.since), () => sign(d, x + i * 2, G - 6 - (i % 2)));
+  count(d, st.n, (x + 2 + (Math.max(1, Math.min(st.n, cap)) - 1)) * P, (G - 9.5) * P);
+}
+function shopPiles(d, st, t, plankX, signX) {
+  if (st === 'idle') { plankPile(d, plankX, { n: 4, prev: 4, since: 9 }); signPile(d, signX, { n: 1, prev: 1, since: 9 }); return; }
+  plankPile(d, plankX, drain(t, 3.2, 4));
+  signPile(d, signX, fill(t, 3.2, 4, 2.9));
+}
+function pressPiles(d, st, t, sheetX, posterX) {
+  if (st === 'idle') { sheetPile(d, sheetX, { n: 4, prev: 4, since: 9 }); sheetPile(d, posterX, { n: 2, prev: 2, since: 9 }, 6, true); return; }
+  sheetPile(d, sheetX, drain(t, 2.8, 5));
+  sheetPile(d, posterX, fill(t, 2.8, 5, 2.2), 6, true);
+}
+
+// ---------------------------------------------------------------------------
+// BEFORE: the two picks exactly as index.html drew them (glyph stack left off).
+function oldHammer(d, bx, by, pose) {
+  if (pose === 0) { d.r(bx - 1, by - 3, 1, 2, K); d.r(bx - 2, by - 4, 3, 1, K); }
+  else if (pose === 1) {
+    d.c(bx - 1, by - 2, K); d.c(bx - 2, by - 3, K); d.r(bx - 3, by - 4, 1, 2, K);
+    d.c(bx - 2, by - 5, GREY[3]); d.c(bx - 1, by - 5, GREY[2]); d.c(bx - 3, by - 5, GREY[3]);
+  } else {
+    d.r(bx - 3, by - 2, 3, 1, K); d.r(bx - 4, by - 3, 1, 2, K);
+    d.px((bx - 5.6) * P, (by - 2) * P, 3, 3, K); d.px((bx - 5.3) * P, (by - 3.4) * P, 3, 3, K);
+    d.px((bx - 2.4) * P, (by - 1.6) * P, 3, 3, K); d.px((bx - 4.2) * P, (by - 3.9) * P, 3, 3, K);
+  }
+}
+const OLD_HAMMER_SEQ = [0, 0, 0, 1, 2, 2, 2, 0];
+function oldShop(d, st, t) {
+  const work = st !== 'idle';
+  for (let i = 0; i < 13; i++) d.r(10 + i, G - 8 - Math.floor(i / 3), 1, 1, K);
+  d.r(10, G - 8, 1, 8, K); d.r(22, G - 12, 1, 12, K);
+  d.r(11, G - 3, 7, 1, K); d.r(12, G - 2, 1, 2, K); d.r(16, G - 2, 1, 2, K);
+  d.r(12, G - 4, 5, 1, K); d.px(12 * P + 2, (G - 4) * P + 2, 5 * P - 4, P - 4, GREY[4]);
+  const pose = typeof st === 'number' ? st : work ? OLD_HAMMER_SEQ[Math.floor(t / 0.16) % OLD_HAMMER_SEQ.length] : 0;
+  d.body(18, G - 3);
+  if (work) oldHammer(d, 18, G - 3, pose);
+  d.dots(13, G - 7, 6, 3);
+  shopPiles(d, typeof st === 'number' ? 'work' : st, t, 1, 27);
+}
+function oldPress(d, st, t) {
+  const work = st !== 'idle';
+  d.r(12, G - 11, 11, 2, K);
+  d.r(13, G - 9, 1, 9, K); d.r(21, G - 9, 1, 9, K);
+  d.r(12, G - 4, 11, 1, K); d.r(13, G - 3, 9, 1, K);
+  const c = cyc(t, 2.8, 1e9);
+  const pose = typeof st === 'number' ? st : work ? [0, 0, 1, 2, 2, 2, 1, 0][Math.floor(c.ph * 8)] : 0;
+  const down = pose === 2 ? 1 : 0;
+  for (let j = 0; j < 4; j++) { d.r(17, G - 9 + j, 1, 1, K); if (j % 2 === 0) d.px(17 * P + 2, (G - 9 + j) * P + 2, P - 4, P - 4, W); }
+  d.r(17, G - 5, 1, down * 0.5, K); d.r(15, G - 5 + down * 0.5, 5, 1, K);
+  d.px(15 * P, (G - 4) * P - 2, 5 * P, 2, K);
+  d.px(15 * P + 2, (G - 4) * P - 2, 5 * P - 4, 1, W);
+  const reach = [5, 3.5, 2][pose];
+  d.r(17.5 - reach, G - 7, reach * 2, 1, K);
+  d.r(23, G - 2, 3, 2, K);
+  d.body(23, G - 5, pose === 0 ? 0 : 2);
+  d.dots(11.5, G - 8, 15, 3);
+  pressPiles(d, typeof st === 'number' ? 'work' : st, t, 3, 32);
+}
+
+// ---------------------------------------------------------------------------
+// A thin line w px thick between two points in cells, laid in whole pixels:
+// the frame's weight, so the black masses that do the work stand out of it.
+function line(d, x0, y0, x1, y1, w = 3, col = K) {
+  const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * P);
+  for (let i = 0; i <= n; i++) { const f = i / n; d.px(Math.round((x0 + (x1 - x0) * f) * P), Math.round((y0 + (y1 - y0) * f) * P), w, w, col); }
+}
+function block(d, x, y, w, h, col = K) { d.r(x, y, w, h, col); }
+
+// ---------------------------------------------------------------------------
+// AFTER: THE WORKSHOP. A hammer with a roof over it.
+// Every pose is drawn by hand in whole cells, not rotated: a head turned to an
+// odd angle comes apart into a ragged blob at this size. The hand is the body's
+// top-left cell (HX, HY); the bench and the sign sit to its left.
+const WS = { bx: 18, by: G - 4 };
+const HX = WS.bx, HY = WS.by;
+const WS_SEQ = ['up', 'up', 'up', 'swing', 'strike', 'strike', 'strike', 'strike'];   // 0.16 s a step, the beat on the strike
+const WS_STEP = 0.16;
+// the sign on the bench: its board, the one white cut-out
+const SIGN = { x: 10, y: G - 5, w: 6, h: 3 };
+function hammerPose(d, pose) {
+  if (pose === 'up') {
+    // straight up over the body: a 4-cell handle, a 5 by 3 head across its top
+    block(d, HX, HY - 4, 1, 4);
+    block(d, HX - 2, HY - 7, 5, 3);
+  } else if (pose === 'swing') {
+    // the smear frame: the head is only grey, a faint copy where it was and a
+    // darker one half way down, the handle between
+    block(d, HX - 2, HY - 7, 5, 3, GREY[2]);
+    block(d, HX - 5, HY - 6, 4, 4, GREY[4]);
+    line(d, HX + 0.5, HY + 0.5, HX - 1.5, HY - 2.5, 4);
+  } else {
+    // the strike: the head stood on its face on the sign, the handle a clean
+    // line back to the hand
+    line(d, HX + 0.5, HY + 0.5, SIGN.x + 4, SIGN.y - 2.5, 4);
+    block(d, SIGN.x + 1, SIGN.y - 5, 3, 5);
+  }
+}
+function wsPose(st, t) {
+  if (st === 'idle') return { pose: 'rest', since: 9 };
+  if (typeof st === 'string' && st.startsWith('pose:')) return { pose: st.slice(5), since: 0.05 };
+  const k = Math.floor(t / WS_STEP), i = k % WS_SEQ.length;
+  let j = i; while (j > 0 && WS_SEQ[j - 1] === WS_SEQ[i]) j--;
+  return { pose: WS_SEQ[i], since: t - (k - (i - j)) * WS_STEP };
+}
+function newShop(d, st, t) {
+  const { pose, since } = wsPose(st, t);
+  // the lean-to: a roof line high over the raised hammer and two posts, thin,
+  // so it holds the picture up without being the picture
+  const x0 = 7, x1 = 25;
+  line(d, x0, G - 12, x1 + 0.5, G - 15.5);
+  line(d, x0, G - 12, x0, G - 0.4); line(d, x1, G - 15.5, x1, G - 0.4);
+  // the bench, low: a slab and two legs
+  block(d, 8, G - 2, 9, 1); block(d, 9, G - 1, 1, 1); block(d, 15, G - 1, 1, 1);
+  // the sign on it, a white board with a black rim
+  block(d, SIGN.x, SIGN.y, SIGN.w, SIGN.h); d.px(SIGN.x * P + 2, SIGN.y * P + 2, SIGN.w * P - 4, SIGN.h * P - 4, W);
+  // the step the body stands on, so the blow comes down onto the sign
+  block(d, WS.bx - 1, G - 1, 5, 1);
+  // at rest the hammer lies where the last blow left it
+  hammerPose(d, pose === 'rest' ? 'strike' : pose);
+  d.body(WS.bx, WS.by);
+  // the strike's lines: two short strokes off the face, faded over the hold
+  if (pose === 'strike') d.fade(1 - since / (4 * WS_STEP), () => {
+    line(d, SIGN.x - 0.6, SIGN.y - 0.6, SIGN.x - 2, SIGN.y - 0.6, 3);
+    line(d, SIGN.x - 0.2, SIGN.y - 1.6, SIGN.x - 1.8, SIGN.y - 3.2, 3);
+  });
+  d.dots(SIGN.x, SIGN.y - 6, 5, 6);
+  shopPiles(d, st === 'idle' ? 'idle' : 'work', t, 0, 28);
+}
+
+// ---------------------------------------------------------------------------
+// AFTER: THE PRESS. A screw and a platen with a frame round them.
+// The platen, the screw, the bar and its handle all ride one number, `drop`,
+// in whole cells: the bar comes down and the platen comes down with it.
+const PR = { postL: 10, postR: 22, headY: G - 14, scX: 15, scW: 3, plX: 12, plW: 9, sheetY: G - 4, bodyX: 26 };
+const PR_SEQ = [0, 0, 1, 2, 2, 2, 1, 0];
+function prPose(st, t) {
+  if (st === 'idle') return { k: 0, since: 9 };
+  if (typeof st === 'string' && st.startsWith('pose:')) return { k: +st.slice(5), since: 0.05 };
+  const c = cyc(t, 2.8, 1e9), i = Math.floor(c.ph * 8);
+  let j = i; while (j > 0 && PR_SEQ[j - 1] === PR_SEQ[i]) j--;
+  return { k: PR_SEQ[i], since: (c.ph * 8 - j) * 2.8 / 8 };
+}
+function screw(d, x, top, len) {
+  block(d, x, top, PR.scW, len);
+  // threads: a clean white slant across it every cell and a half, 2 px
+  for (let j = 1; j < len - 1; j += 1.5) {
+    const y0 = (top + j) * P;
+    for (let i = 2; i < PR.scW * P - 2; i++) d.px(x * P + i, Math.round(y0 - i / 3), 1, 2, W);
+  }
+}
+function newPress(d, st, t) {
+  const { k, since } = prPose(st, t), drop = k;
+  // the bed, and the sheet on it
+  block(d, PR.postL, G - 3, PR.postR - PR.postL + 1, 2);
+  block(d, PR.plX, PR.sheetY, PR.plW, 1); d.px(PR.plX * P + 2, PR.sheetY * P + 2, PR.plW * P - 4, P - 4, W);
+  // the screw, from the platen up through the head and out over it, capped
+  const plY = G - 8 + drop;                         // the platen's top row
+  const scTop = plY - 10;
+  screw(d, PR.scX, scTop, 10);
+  block(d, PR.scX - 1, scTop - 1, PR.scW + 2, 1);
+  // the frame: two posts and a heavy head over the screw where it passes
+  block(d, PR.postL, PR.headY, 1, G - 3 - PR.headY); block(d, PR.postR, PR.headY, 1, G - 3 - PR.headY);
+  block(d, PR.postL - 1, G - 1, 2, 1); block(d, PR.postR, G - 1, 2, 1);
+  block(d, PR.postL - 1, PR.headY, PR.postR - PR.postL + 3, 2);
+  // the platen: wide and two deep
+  block(d, PR.plX, plY, PR.plW, 2);
+  // the bar: straight through the screw a cell over the platen, out past the
+  // post, with a white key where it crosses the post so the two stay apart
+  const barY = plY - 3, bx0 = PR.scX - 1, bx1 = PR.bodyX;
+  d.px((PR.postR - 0) * P - 2, barY * P - 2, P + 4, P + 4, W);
+  block(d, bx0, barY, bx1 - bx0, 1);
+  // the handle: a rod down from the bar's end to a knob at the body's hand
+  const crouch = k === 2;
+  const knobY = crouch ? G - 4 : G - 5;
+  line(d, bx1 - 1.25, barY + 1, bx1 - 1.25, knobY, 3);
+  block(d, bx1 - 2, knobY, 2, 2);
+  // the step and the body, crouched on the press
+  block(d, PR.bodyX, G - 1, 3, 1);
+  if (crouch) d.squat(PR.bodyX, G - 4); else d.body(PR.bodyX, G - 4);
+  d.dots(PR.bodyX - 2, barY - 1, 3, 7);
+  pressPiles(d, st === 'idle' ? 'idle' : 'work', t, 2, 33);
+}
+
+// ---------------------------------------------------------------------------
+// Building the page.
+const STATIONS = [
+  { key: 'shop', name: 'workshop', io: 'timber in; signs out; the player taps the hammer on the beat.',
+    before: { name: 'A, lean-to (the pick)', draw: oldShop, poses: [[0, 'up'], [1, 'swing'], [2, 'strike']] },
+    after: { name: 'A, lean-to, polished', draw: newShop, poses: [['pose:up', 'up, held'], ['pose:swing', 'swing (smear)'], ['pose:strike', 'strike, held']] },
+    says: 'The hammer is now the station: a 5 by 3 head on a 4-cell handle, wider than the body, in hand-drawn held poses: up, a grey smear, the strike with its face on the sign. The roof is one thin line and two thin posts, high enough that the raised head never touches it. The sign stands on a low bench as a white board, and the body stands on a step so the blow comes down onto it.',
+    crop: [4, 11, 24, 20] },
+  { key: 'press', name: 'press', io: 'paper in; posters out; the player drags the bar down.',
+    before: { name: 'A, screw press (the pick)', draw: oldPress, poses: [[0, 'up'], [1, 'half'], [2, 'pressed']] },
+    after: { name: 'A, screw press, polished', draw: newPress, poses: [['pose:0', 'up, held'], ['pose:1', 'half'], ['pose:2', 'pressed, held']] },
+    says: 'The screw is three cells wide with white threads and stands up out of the head; the platen is nine wide and two deep. The bar rides the screw, straight out past the post and down a rod to a knob at the body\'s hand. Pulled, the bar, the screw and the platen drop two cells together and the body crouches, so one drag reads as one squeeze.',
+    crop: [7, 11, 24, 20] }
+];
+
+const host = document.getElementById('stations');
+const live = [];
+function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function fig(canvas, cap) { const f = document.createElement('figure'); f.appendChild(canvas); const fc = document.createElement('figcaption'); fc.textContent = cap; f.appendChild(fc); return f; }
+const off = mkCanvas(SW * P, SH * P);
+function renderScene(draw, state, t) {
+  const g = off.getContext('2d');
+  g.globalAlpha = 1; g.fillStyle = tone(W); g.fillRect(0, 0, off.width, off.height);
+  g.fillStyle = tone(K); g.fillRect(0, G * P, off.width, 2);
+  draw(drawer(g), state, t);
+  return off;
+}
+for (const s of STATIONS) {
+  const sec = document.createElement('section'); sec.className = 'st'; sec.id = 'st-' + s.key;
+  sec.innerHTML = `<h2><span class="ph">${s.name}</span></h2><p>${s.io}</p><p><b>What changed.</b> ${s.says}</p>`;
+  for (const which of ['before', 'after']) {
+    const o = s[which];
+    const box = document.createElement('div'); box.className = 'opt ' + which; box.id = `${s.key}-${which}`;
+    box.innerHTML = `<h3>${which}: <span class="ph">${o.name}</span></h3>`;
+    const row = document.createElement('div'); row.className = 'row';
+    for (const st of ['idle', 'work']) {
+      const c = mkCanvas(SW * P, SH * P); row.appendChild(fig(c, `1x, ${st === 'work' ? 'working' : 'idle'}`));
+      live.push({ canvas: c, crop: null, draw: o.draw, state: st });
+    }
+    const [, , cw, ch] = s.crop;
+    for (const st of ['idle', 'work']) {
+      const c = mkCanvas(cw * P * 2, ch * P * 2); row.appendChild(fig(c, `2x, ${st === 'work' ? 'working' : 'idle'}`));
+      live.push({ canvas: c, crop: s.crop, draw: o.draw, state: st });
+    }
+    box.appendChild(row);
+    // the held poses, one at a time, at 1x and 2x
+    const prow = document.createElement('div'); prow.className = 'row'; prow.style.marginTop = '8px';
+    for (const [st, cap] of o.poses) {
+      const c = mkCanvas(cw * P, ch * P); prow.appendChild(fig(c, `1x, ${cap}`));
+      live.push({ canvas: c, crop: s.crop, scale: 1, draw: o.draw, state: st, still: true });
+    }
+    for (const [st, cap] of o.poses) {
+      const c = mkCanvas(cw * P * 2, ch * P * 2); prow.appendChild(fig(c, `2x, ${cap}`));
+      live.push({ canvas: c, crop: s.crop, draw: o.draw, state: st, still: true });
+    }
+    box.appendChild(prow);
+    sec.appendChild(box);
+  }
+  host.appendChild(sec);
+}
+
+// The real yard: a crop of the game's shot (shack, bench, a body), 5 px a cell.
+const YARD = new Image();
+YARD.src = 'data:image/png;base64,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';
+const YARD_GROUND = 56;          // the crop's ground line, its top row
+const YARD_SCALE = 6 / 5;
+// the yard crop mapped to the dark theme by lightness, made once
+let yardDark = null;
+function yardCanvas() {
+  if (!YARD.complete || !YARD.naturalWidth) return null;
+  const w = Math.round(YARD.naturalWidth * YARD_SCALE), h = Math.round(YARD.naturalHeight * YARD_SCALE);
+  const c = mkCanvas(w, h), g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.drawImage(YARD, 0, 0, w, h);
+  if (!DARK) return c;
+  if (yardDark) return yardDark;
+  const img = g.getImageData(0, 0, w, h), px = img.data;
+  for (let i = 0; i < px.length; i += 4) { const v = (px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114) / 255; px[i] = px[i + 1] = px[i + 2] = toneV(v); }
+  g.putImageData(img, 0, 0);
+  return (yardDark = c);
+}
+
+// A row: slots cut from each station's scene, standing on one ground line.
+const ROWH = 21, ROW_TOP = G - 18;
+function rowInto(canvas, items, t, withYard) {
+  const g = canvas.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.fillStyle = tone(W); g.fillRect(0, 0, canvas.width, canvas.height);
+  let x = 0;
+  if (withYard) {
+    const y = yardCanvas();
+    if (y) { g.drawImage(y, 0, (G - ROW_TOP) * P - Math.round(YARD_GROUND * YARD_SCALE)); }
+    x = 280;
+  }
+  NO_PILES = true; const hw = HANDS; HANDS = false;
+  for (const it of items) {
+    const c = renderScene(it.draw, it.state, t);
+    g.drawImage(c, it.from * P, ROW_TOP * P, it.w * P, ROWH * P, x, 0, it.w * P, ROWH * P);
+    x += it.w * P;
+  }
+  NO_PILES = false; HANDS = hw;
+  if (withYard) { g.fillStyle = tone(K); g.fillRect(0, (G - ROW_TOP) * P, canvas.width, 2); }
+}
+function silhouette(canvas) {
+  const g = canvas.getContext('2d');
+  const img = g.getImageData(0, 0, canvas.width, canvas.height), px = img.data;
+  const paper = DARK ? 0x1f : 0xff, ink = DARK ? 0xe0 : 0x00;
+  for (let i = 0; i < px.length; i += 4) { const on = Math.abs(px[i] - paper) > 6; px[i] = px[i + 1] = px[i + 2] = on ? ink : paper; }
+  g.putImageData(img, 0, 0);
+}
+function zoomInto(dst, src, k) {
+  const g = dst.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.drawImage(src, 0, 0, src.width, src.height, 0, 0, src.width * k, src.height * k);
+}
+const rowB = document.getElementById('rowB'), rowBz = document.getElementById('rowBz');
+const AFTER_ROW = [{ draw: newShop, state: 'work', from: 4, w: 24 }, { draw: newPress, state: 'work', from: 7, w: 24 }];
+rowB.width = 280 + 48 * P; rowB.height = ROWH * P;
+rowBz.width = rowB.width * 2; rowBz.height = rowB.height * 2;
+const silB = document.getElementById('silB'), silA = document.getElementById('silA');
+const SIL_BEFORE = [{ draw: oldShop, state: 0, from: 4, w: 24 }, { draw: oldShop, state: 2, from: 4, w: 24 }, { draw: oldPress, state: 0, from: 7, w: 24 }, { draw: oldPress, state: 2, from: 7, w: 24 }];
+const SIL_AFTER = [{ draw: newShop, state: 'pose:up', from: 4, w: 24 }, { draw: newShop, state: 'pose:strike', from: 4, w: 24 }, { draw: newPress, state: 'pose:0', from: 7, w: 24 }, { draw: newPress, state: 'pose:2', from: 7, w: 24 }];
+silB.width = silA.width = 96 * P; silB.height = silA.height = ROWH * P;
+const ldL = document.getElementById('ldL'), ldD = document.getElementById('ldD');
+const ldTmp = mkCanvas(48 * P, ROWH * P);
+ldL.width = ldD.width = ldTmp.width * 2; ldL.height = ldD.height = ldTmp.height * 2;
+
+function frame(now) {
+  const t = FROZEN != null ? FROZEN : (PAUSED ? (frame.held ?? 0) : now / 1000);
+  frame.held = t;
+  for (const v of live) {
+    const c = renderScene(v.draw, v.state, t);
+    const g = v.canvas.getContext('2d'); g.imageSmoothingEnabled = false;
+    if (!v.crop) g.drawImage(c, 0, 0, v.canvas.width, v.canvas.height, 0, 0, v.canvas.width, v.canvas.height);
+    else { const [x, y, w, h] = v.crop; g.drawImage(c, x * P, y * P, w * P, h * P, 0, 0, v.canvas.width, v.canvas.height); }
+  }
+  rowInto(rowB, AFTER_ROW, t, true); zoomInto(rowBz, rowB, 2);
+  rowInto(silB, SIL_BEFORE, t, false); silhouette(silB);
+  rowInto(silA, SIL_AFTER, t, false); silhouette(silA);
+  const was = DARK;
+  for (const [dst, dark] of [[ldL, false], [ldD, true]]) { DARK = dark; rowInto(ldTmp, AFTER_ROW, t, false); zoomInto(dst, ldTmp, 2); }
+  DARK = was;
+  if (FROZEN == null) requestAnimationFrame(frame);
+}
+YARD.onload = () => { if (FROZEN != null) frame(0); };
+requestAnimationFrame(frame);
+
+function setDark(on) {
+  DARK = on; document.documentElement.dataset.theme = on ? 'dark' : 'light';
+  document.querySelectorAll('button[data-theme]').forEach(b => b.classList.toggle('on', (b.dataset.theme === 'dark') === on));
+  if (FROZEN != null) frame(0);
+}
+document.querySelectorAll('button[data-theme]').forEach(b => b.onclick = () => setDark(b.dataset.theme === 'dark'));
+document.getElementById('hands').onchange = e => { HANDS = e.target.checked; if (FROZEN != null) frame(0); };
+document.getElementById('pause').onclick = e => { PAUSED = !PAUSED; e.target.textContent = PAUSED ? 'play' : 'pause'; };
+window.__freeze = t => { FROZEN = t; frame(0); return true; };
+window.__dark = on => { setDark(on); return true; };
+window.__ready = true;
+</script>
+</body>
+</html>
