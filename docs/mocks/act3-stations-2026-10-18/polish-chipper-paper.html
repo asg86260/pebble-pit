@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chipper and Paper Mill</title>
+<style>
+  :root { --bg: #ffffff; --fg: #000000; --muted: #5f5f5f; --line: #d6d6d6; --card: #ffffff; --ph: #8a8a8a; }
+  :root[data-theme="dark"] { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #a4a4a4; --line: #464646; --card: #1f1f1f; --ph: #8a8a8a; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1320px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  h2 { font-size: 15px; margin: 0 0 6px; }
+  h3 { font-size: 13px; margin: 0 0 4px; }
+  p, li { color: var(--muted); margin: 0 0 8px; max-width: 110ch; }
+  b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; align-items: center; }
+  .bar button { font: inherit; background: var(--card); color: var(--fg); border: 2px solid var(--line); padding: 3px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .bar label { color: var(--muted); font-size: 13px; }
+  section.st { border-top: 2px solid var(--fg); margin-top: 26px; padding-top: 10px; }
+  .opt { border: 1px solid var(--line); padding: 10px; margin-top: 10px; }
+  .opt.after { border: 2px solid var(--fg); }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+  canvas { display: block; image-rendering: pixelated; border: 1px solid var(--line); max-width: 100%; }
+  figure { margin: 0; min-width: 0; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .ph { border-bottom: 1px dotted var(--ph); }
+  .ph::after { content: "ph"; font-size: 9px; vertical-align: super; color: var(--ph); margin-left: 1px; }
+  ul { padding-left: 20px; }
+  .wide { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+<h1>Act 3 stations, polished: <span class="ph">chipper</span> and <span class="ph">paper mill</span></h1>
+<p>A mock, drawn from plain cells on the game's grid (P = 6, the game's greys, a body an 18-pixel square with a 2-pixel rim), <b>not the game</b>. It polishes the two picks from the act 3 stations mock (<code>index.html</code>): chipper B, the gooseneck drum, and paper mill B, the vat and chimney. The owner's notes were that they did not read well at low resolution, and to exaggerate each station and keep only the thing it does.</p>
+<p>What changed: the signature part is drawn well past realistic and everything else is cut back to what holds it up. Each station is one bold black mass with one white cut-out, and grey only for material (chips, pulp, a log's end). No single loose cells; every detail is at least two cells or a clean line. Each shows <b>before</b> (the old pick, unchanged) and <b>after</b>, at 1x and a 2x crop, idle and working, plus the working poses side by side.</p>
+<p><b>Every word on this page is a placeholder</b> (marked <span class="ph">like this</span>). The canvases draw no words, only numbers. Motion is held poses only; anything arriving or leaving fades.</p>
+<div class="bar">
+  <button data-theme="light" class="on">light</button><button data-theme="dark">dark</button>
+  <label><input type="checkbox" id="hands" checked> show where the player's hand goes (dotted)</label>
+  <button id="pause">pause</button>
+</div>
+<p style="font-size:12px">Dark is ink #e0e0e0 on paper #1f1f1f, each grey mapped by its lightness (black to the ink, white to the paper, a grey to the same step between). It is not an inversion. The yard station in the comparison row is mapped the same way.</p>
+
+<div id="stations"></div>
+
+<section class="st" id="cmp">
+  <h2>Beside a real yard station, at 1x</h2>
+  <p>The two polished stations working, piles and glyphs left off, next to the yard's <span class="ph">filter house</span> cut from a real game shot (the <code>filtering</code> scene, captured at the scale where a body is 18 pixels, so all three are the same size). Below it the same row with every inked or grey pixel turned to ink: the silhouette alone should still say what each one does.</p>
+  <div class="wide"><figure><canvas id="rowc"></canvas><figcaption>1x, working: chipper, paper mill, the yard's filter house</figcaption></figure></div>
+  <div class="wide" style="margin-top:8px"><figure><canvas id="rows"></canvas><figcaption>1x, silhouette only</figcaption></figure></div>
+  <div class="wide" style="margin-top:8px"><figure><canvas id="rowb"></canvas><figcaption>1x, before, for the same comparison: the old picks beside the same yard station</figcaption></figure></div>
+  <div class="wide" style="margin-top:8px"><figure><canvas id="rowbs"></canvas><figcaption>1x, before, silhouette only</figcaption></figure></div>
+</section>
+
+<section class="st" id="calls">
+  <h2>Calls made</h2>
+  <ul>
+    <li><b>The chipper's mouth is an open jaw, not a funnel.</b> Drawn side on, a funnel is a closed black triangle and its opening cannot be seen; an open wedge (a top jaw sloping down to the drum, the bottom jaw flat on the ground) is white inside and open to the left, so the log is seen going into it. The lip stands over four bodies high. No teeth, so it does not turn into a face (the reason jaws, option C, lost).</li>
+    <li><b>The chipper loses its wheels.</b> The drum sits on the ground as one block; the wheels were two loose cells at 1x. The pipe is two cells thick, rises well over the drum and hooks round in a half circle, and the chips pour out of its spout as a dashed grey line straight onto the heap, so cause and effect are one picture.</li>
+    <li><b>The paper mill drops its chimney.</b> The long paddle now gives the station its tall line, and the chimney was a second thing to read. A frame with the chimney kept is shown under the after row, so it can be voted back in.</li>
+    <li><b>The vat is a cutaway.</b> Thick black walls and floor, rounded at the bottom, the pulp seen through as grey, with one white band of air under the rim: the one white cut-out. The body stands on a black post level with the rim, so the post and the vat are one mass, and the paddle rests on the rim's corner like an oar on a gunwale.</li>
+    <li><b>The stir is a loop in four held poses.</b> The blade goes in at the near side, along under the surface, out at the far side and back deep: an ellipse seen side on. The pulp moves with it: a grey crest stands up into the air ahead of the blade and a white trough opens behind it. The dotted ellipse is the room for the player's circular stir.</li>
+    <li><b>The feed is a push in held steps.</b> The body walks the log into the jaw a cell at a time, leans on the last step, the log fades into the throat, and the body walks back a cell at a time. Nothing jumps. The dotted box is the room for the player's hold.</li>
+  </ul>
+</section>
+
+<section class="st" id="cannot">
+  <h2>What the mock cannot show</h2>
+  <ul>
+    <li>The real camp: the cloud floor, the crowd, the other act 3 stations. Each station stands alone on a plain ground line.</li>
+    <li>The player's motions themselves (holding to feed, stirring in circles). The dotted shapes only show the room each drawing leaves for them.</li>
+    <li>Haulers. Logs fade onto the body's hands at the pile and sheets fade onto the stack; in the game a body carries every one.</li>
+    <li>The real glyphs over the stations (placeholders, nobody has drawn them), the build in bands, posts and the roster.</li>
+    <li>The count font in screen pixels: the 2x crops blow the 1x picture up, so their numbers are twice too big.</li>
+    <li>The real pile capacities and rates.</li>
+  </ul>
+</section>
+</main>
+
+<script>
+// ---------------------------------------------------------------------------
+// The grid and the inks, copied from index.html. Every fill goes through
+// tone(), the identity on the light page and the lightness map on the dark one.
+const P = 6;
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a',
+              '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const K = '#000000', W = '#ffffff';
+const GHOST = GREY[3];
+const DUST = [GREY[3], GREY[4], GREY[5], GREY[4], GREY[6]];
+const PULP = [GREY[2], GREY[3], GREY[3], GREY[4]];
+// the polished pulp: two close tones, so the vat reads as one material and
+// not as grit at 1x
+const PULP2 = [GREY[3], GREY[3], GREY[4]];
+let DARK = false, HANDS = true, PAUSED = false, FROZEN = null;
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+const darkOf = v => Math.round((LP + (LI - LP) * (1 - v)) * 255);
+function tone(c) {
+  if (!DARK) return c;
+  const n = darkOf(parseInt(c.slice(1, 3), 16) / 255).toString(16).padStart(2, '0');
+  return '#' + n + n + n;
+}
+const hash = n => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+const clamp01 = v => Math.max(0, Math.min(1, v));
+
+// The scene: SW by SH cells, the ground line under row G-1. Taller than
+// index.html's (G 36, not 30) so the glyph stack over the chipper's pipe fits.
+const SW = 50, SH = 44, G = 36;
+
+function drawer(g) {
+  const d = {
+    g,
+    px(x, y, w, h, c) { g.fillStyle = tone(c); g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); },
+    r(x, y, w, h, c) { d.px(x * P, y * P, w * P, h * P, c); },
+    c(x, y, c) { d.r(x, y, 1, 1, c); },
+    spr(rows, x, y) {
+      rows.forEach((row, j) => { for (let i = 0; i < row.length; i++) { const col = LEG[row[i]]; if (col) d.c(x + i, y + j, col); } });
+    },
+    fade(a, fn) { const o = g.globalAlpha; g.globalAlpha = o * clamp01(a); fn(); g.globalAlpha = o; },
+    body(x, y, dxpx = 0, dypx = 0) {
+      const X = Math.round(x * P + dxpx), Y = Math.round(y * P + dypx);
+      d.px(X, Y, 18, 18, K); d.px(X + 2, Y + 2, 14, 14, W);
+    },
+    dots(x, y, w, h) {
+      if (!HANDS) return;
+      const X = x * P, Y = y * P, Wd = w * P, H = h * P;
+      for (let i = 0; i <= Wd; i += 4) { d.px(X + i, Y, 2, 1, GREY[5]); d.px(X + i, Y + H, 2, 1, GREY[5]); }
+      for (let j = 0; j <= H; j += 4) { d.px(X, Y + j, 1, 2, GREY[5]); d.px(X + Wd, Y + j, 1, 2, GREY[5]); }
+    },
+    dotEllipse(cx, cy, rx, ry) {
+      if (!HANDS) return;
+      const n = Math.round((rx + ry) * P * Math.PI / 4);
+      for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; d.px(cx * P + Math.cos(a) * rx * P - 1, cy * P + Math.sin(a) * ry * P - 1, 2, 2, GREY[5]); }
+    }
+  };
+  return d;
+}
+const LEG = { '#': K, 'o': W };
+
+// The count font with its paper key, 2 px a font pixel (index.html).
+const NUM = {
+  '0': ['.##.', '#..#', '#..#', '#..#', '#..#', '.##.'], '1': ['.#..', '##..', '.#..', '.#..', '.#..', '###.'],
+  '2': ['.##.', '#..#', '..#.', '.#..', '#...', '####'], '3': ['###.', '...#', '.##.', '...#', '...#', '###.'],
+  '4': ['#..#', '#..#', '####', '...#', '...#', '...#'], '5': ['####', '#...', '###.', '...#', '...#', '###.'],
+  '6': ['.##.', '#...', '###.', '#..#', '#..#', '.##.'], '7': ['####', '...#', '..#.', '.#..', '.#..', '.#..'],
+  '8': ['.##.', '#..#', '.##.', '#..#', '#..#', '.##.'], '9': ['.##.', '#..#', '#..#', '.###', '...#', '.##.']
+};
+function count(d, n, cxpx, cypx, px = 2) {
+  const s = String(n), wFont = s.length * 4 + (s.length - 1);
+  const left = Math.round(cxpx - wFont * px / 2), top = Math.round(cypx - 6 * px / 2);
+  const ink = new Set();
+  [...s].forEach((ch, i) => NUM[ch].forEach((row, r) => [...row].forEach((v, c) => { if (v === '#') ink.add((i * 5 + c) + ',' + r); })));
+  const key = new Set();
+  for (const k of ink) { const [x, y] = k.split(',').map(Number); for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) { const kk = (x + dx) + ',' + (y + dy); if (!ink.has(kk)) key.add(kk); } }
+  for (const k of key) { const [x, y] = k.split(',').map(Number); d.px(left + x * px, top + y * px, px, px, W); }
+  for (const k of ink) { const [x, y] = k.split(',').map(Number); d.px(left + x * px, top + y * px, px, px, K); }
+}
+
+// The glyph stack: one glyph over a station, half built (index.html).
+function glyph(d, rows, cxCell, topCell, at) {
+  const laid = [], shape = new Set();
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') { laid.push([x, y]); shape.add(x + ',' + y); } }));
+  laid.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+  const up = Math.floor(at * laid.length);
+  let lo = 99, hi = -1; laid.forEach(([x]) => { lo = Math.min(lo, x); hi = Math.max(hi, x + 1); });
+  const x0 = Math.round(cxCell - (lo + hi) / 2) * P;
+  const barY = (topCell - 7) * P, cy = barY - (8 / 2 - 1.5) * P, y0 = cy - 4 * P;
+  const E = 2;
+  laid.forEach(([x, y], k) => {
+    const px = x0 + x * P, py = y0 + y * P;
+    if (k < up) { d.px(px, py, P, P, K); return; }
+    if (!shape.has(x + ',' + (y - 1))) d.px(px, py, P, E, GHOST);
+    if (!shape.has(x + ',' + (y + 1))) d.px(px, py + P - E, P, E, GHOST);
+    if (!shape.has((x - 1) + ',' + y)) d.px(px, py, E, P, GHOST);
+    if (!shape.has((x + 1) + ',' + y)) d.px(px + P - E, py, E, P, GHOST);
+  });
+}
+const GLYPHS = {
+  chip:  ['########', '#......#', '.#....#.', '..#..#..', '..####..', '..####..', '..#..#..', '..#..#..'],
+  paper: ['........', '#......#', '#......#', '#.####.#', '########', '########', '.######.', '.#....#.']
+};
+
+// Time and counted piles (index.html).
+function cyc(t, T, L, off = 0) {
+  const u = Math.max(0, t - off), k = Math.floor(u / T);
+  return { i: k % L, ph: u / T - k, since: u - k * T, k };
+}
+const FADE = 0.4;
+function pileAlpha(idx, n, prev, since) {
+  const f = clamp01(since / FADE);
+  if (idx < Math.min(n, prev)) return 1;
+  return n > prev ? f : 1 - f;
+}
+function drain(t, T, L, off = 0) { const c = cyc(t, T, L, off); const n = L - c.i, prev = c.i === 0 ? (c.k === 0 ? L : 1) : n + 1; return { n, prev, since: c.since }; }
+function fill(t, T, L, off = 0) { const c = cyc(t, T, L, off); const n = c.i, prev = c.i === 0 ? (c.k === 0 ? 0 : L - 1) : n - 1; return { n, prev, since: c.since }; }
+
+function logEnd(d, x, y) { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, GREY[3]); d.px(x * P + 5, y * P + 5, 2, 2, GREY[6]); }
+function logPile(d, x, st, cap = 6) {
+  const spots = [[0, 0], [2, 0], [4, 0], [1, 1], [3, 1], [2, 2]];
+  const m = Math.max(st.n, st.prev);
+  for (let i = 0; i < Math.min(m, cap); i++) d.fade(pileAlpha(i, st.n, st.prev, st.since), () => logEnd(d, x + spots[i][0], G - 2 - spots[i][1] * 2));
+  const top = Math.min(st.n, cap) <= 3 ? 1 : Math.min(st.n, cap) <= 5 ? 2 : 3;
+  count(d, st.n, (x + 3) * P, (G - top * 2 - 2.5) * P);
+}
+function heapCells(R) {
+  const cells = [];
+  for (let j = 0; j <= R; j++) for (let dx = -R; dx <= R; dx++) if (Math.abs(dx) + j <= R) cells.push([dx, j]);
+  cells.sort((a, b) => (Math.abs(a[0]) + a[1]) - (Math.abs(b[0]) + b[1]) || a[1] - b[1] || a[0] - b[0]);
+  return cells;
+}
+const HEAPS = {};
+function heap(d, cx, R, st, cap, pal = DUST, showCount = true) {
+  const cells = HEAPS[R] || (HEAPS[R] = heapCells(R));
+  const per1 = cells.length / cap;
+  const full = Math.round(Math.min(st.n, st.prev) * per1), to = Math.round(Math.max(st.n, st.prev) * per1);
+  const f = clamp01(st.since / FADE), a = st.n > st.prev ? f : 1 - f;
+  let topRow = 0;
+  for (let i = 0; i < to; i++) {
+    const [dx, j] = cells[i];
+    const col = pal[Math.floor(hash((cx + dx) * 3.3 + j * 17.9) * pal.length)];
+    if (i < full) { d.c(cx + dx, G - 1 - j, col); topRow = Math.max(topRow, j); }
+    else d.fade(a, () => d.c(cx + dx, G - 1 - j, col));
+  }
+  if (showCount) count(d, st.n, (cx + 0.5) * P, (G - 1 - topRow - 3) * P);
+}
+function sheetPile(d, x, st, cap = 6) {
+  const m = Math.min(Math.max(st.n, st.prev), cap), w = 4 * P;
+  for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st.n, st.prev, st.since), () => {
+    const y = G * P - 2 - (i + 1) * 3;
+    d.px(x * P, y, w, 3, K); d.px(x * P + 2, y, w - 4, 2, i === m - 1 ? W : GREY[1]);
+  });
+  count(d, st.n, x * P + w / 2, G * P - 2 - Math.min(st.n, cap) * 3 - 2.5 * P);
+}
+
+// Moving parts used by the old picks (index.html).
+function line(d, x0, y0, x1, y1, w = 2, col = K) {
+  const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * P);
+  for (let i = 0; i <= n; i++) { const f = i / n; d.px(Math.round((x0 + (x1 - x0) * f) * P - w / 2), Math.round((y0 + (y1 - y0) * f) * P - w / 2), w, w, col); }
+}
+function motes(d, t, x, y, vx, vy, n, life, seed, pal = DUST, size = 2, grav = 30) {
+  for (let i = 0; i < n; i++) {
+    const t0 = (t + i * life / n) % life, f = Math.floor(t0 * 10) / 10;
+    const r1 = hash(seed + i * 3.1 + Math.floor((t + i * life / n) / life) * 7.3), r2 = hash(seed + i * 5.7);
+    const px = x + (vx * (0.6 + r1 * 0.8)) * f, py = y + (vy * (0.6 + r2 * 0.8)) * f + grav * f * f;
+    d.fade(1 - t0 / life, () => d.px(Math.round(px / 2) * 2, Math.round(py / 2) * 2, size, size, pal[i % pal.length]));
+  }
+}
+function smoke(d, t, cx, topY, seed) {
+  for (let i = 0; i < 4; i++) {
+    const life = 3, t0 = (t + i * life / 4) % life, k = t0 / life;
+    const cells = Math.max(1, Math.round(3 * (1 - k)) + 1);
+    const ph = Math.floor(hash(seed + i + Math.floor((t + i * life / 4) / life)) * 97);
+    const y = topY - 2 - Math.floor(k * 9);
+    d.fade(1 - k * k, () => { for (let c = 0; c < cells; c++) d.c(cx - 1 + (ph + c * 7) % 3, y + (ph + c * 5) % 3 - 2, K); });
+  }
+}
+function oldPaddle(d, x0, y0, a, len) {
+  const ex = x0 + Math.cos(a) * len, ey = y0 + Math.sin(a) * len;
+  line(d, x0, y0, ex, ey, 3);
+  d.px(Math.round(ex * P) - 4, Math.round(ey * P) - 2, 8, 8, K);
+}
+const STIR = [0.42, 0.52, 0.62, 0.52];
+function pulp(d, x0, w, y, rows, t, work) {
+  for (let j = 0; j < rows; j++) for (let i = 0; i < w; i++) {
+    let c = PULP[Math.floor(hash((x0 + i) * 5.1 + j * 9.3) * PULP.length)];
+    if (work && j === 0 && (i + Math.floor(t / 0.25)) % 4 === 0) c = W;
+    d.c(x0 + i, y + j, c);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// BEFORE: the old picks, as drawn in index.html (chipper B, paper mill B).
+function chipPilesOld(d, st, t, logX, heapX) {
+  if (st === 'idle') { logPile(d, logX, { n: 4, prev: 4, since: 9 }); heap(d, heapX, 4, { n: 3, prev: 3, since: 9 }, 8); return; }
+  logPile(d, logX, drain(t, 2.0, 5));
+  const h = fill(t, 2.0, 5, 1.3); heap(d, heapX, 4, { n: h.n + 2, prev: h.prev + 2, since: h.since }, 8);
+}
+function chipBefore(d, st, t) {
+  const work = st === 'work';
+  d.g.save(); d.g.translate(7 * P, 0);
+  d.r(13, G - 5, 8, 4, K); d.r(14, G - 1, 1, 1, K); d.r(19, G - 1, 1, 1, K);
+  d.r(10, G - 6, 3, 6, K); d.r(10.33, G - 5.33, 3, 4.66, W); d.r(13, G - 5, 0.34, 4, K);
+  d.r(18, G - 12, 1.5, 7, K); d.r(18, G - 12, 6, 1.5, K); d.r(22.5, G - 12, 1.5, 3, K);
+  const c = cyc(t, 2.0, 1e9);
+  if (work) {
+    const k = Math.min(4, Math.floor(c.ph * 6));
+    d.fade(c.ph > 0.8 ? 1 - (c.ph - 0.8) / 0.2 : clamp01(c.since / FADE), () => d.r(6 + k, G - 3, 4, 2, K));
+    d.body(3 + k, G - 3, 0);
+    motes(d, t, 23 * P, (G - 9) * P, 6, 10, 6, 0.9, 9, DUST, 2, 90);
+  } else d.body(4, G - 3);
+  d.dots(9.5, G - 6.5, 4, 7);
+  if (work) glyph(d, GLYPHS.chip, 17, G - 12, 0.5);
+  d.g.restore();
+  chipPilesOld(d, st, t, 1, 35);
+  return { top: G - 12 };
+}
+function paperPilesOld(d, st, t, heapX, sheetX) {
+  if (st === 'idle') { heap(d, heapX, 3, { n: 4, prev: 4, since: 9 }, 6); sheetPile(d, sheetX, { n: 3, prev: 3, since: 9 }); return; }
+  const h = drain(t, 2.6, 5); heap(d, heapX, 3, { n: h.n + 1, prev: h.prev + 1, since: h.since }, 6);
+  sheetPile(d, sheetX, fill(t, 2.6, 6, 1.8));
+}
+function paperBefore(d, st, t) {
+  const work = st === 'work';
+  d.r(22, G - 15, 2, 15, K); d.r(21.5, G - 15, 3, 1, K);
+  d.spr(['#..........#', '#..........#', '#..........#', '#..........#', '############', '.#........#.'], 11, G - 6);
+  pulp(d, 12, 10, G - 5, 3, t, work);
+  d.r(7, G - 3, 3, 3, K);
+  const p = work ? STIR[Math.floor(t / 0.28) % 4] : 0.52;
+  d.body(7, G - 6, work && Math.floor(t / 0.28) % 4 === 2 ? 2 : 0);
+  oldPaddle(d, 10, G - 5.5, p, 6.5);
+  if (work) smoke(d, t, 23, G - 15, 3);
+  d.dots(11, G - 8, 11, 4);
+  paperPilesOld(d, st, t, 2, 30);
+  if (work) glyph(d, GLYPHS.paper, 17, G - 15, 0.5);
+  return { top: G - 15 };
+}
+
+// ---------------------------------------------------------------------------
+// AFTER: THE CHIPPER. An open jaw over four bodies high, a block of a drum, and a
+// two-cell pipe that hooks over and pours the chips straight onto the heap.
+// OX is the jaw's lip; everything is laid off it in whole cells.
+const OX = 14;
+const CHIP_T = 2.4;                 // one log, start to finish
+// The feed, as held poses through one cycle: [from phase, log x, body x,
+// body lean px]. The body walks the log in a cell at a time, leans on the
+// last, and walks back a cell at a time, so it is never anywhere it did not walk.
+const FEED = [
+  [0.00, 10, 7, 0], [0.10, 11, 8, 0], [0.20, 12, 9, 0], [0.30, 13, 10, 0],
+  [0.40, 14, 11, 0], [0.50, 15, 11, 2], [0.62, 16, 11, 2],
+  [0.80, null, 10, 0], [0.87, null, 9, 0], [0.94, null, 8, 0]
+];
+const SWALLOW = 0.62, POUR_FOR = 1.1;      // the log goes in at this phase; chips pour this many seconds
+function chipFrame(d) {
+  // the drum: a block, its top right corner taken off so it reads as a drum
+  // and not a crate
+  d.r(OX + 7, G - 7, 5, 7, K); d.r(OX + 12, G - 6, 1, 6, K);
+  // the top jaw: a band three cells thick, a cell down for every cell in (an
+  // even stair reads as a line, an uneven one as rubble), from four bodies
+  // high at the lip to the throat at the drum's face, where it thickens
+  for (let i = 0; i < 7; i++) {
+    const top = Math.min(G - 8, G - 12 + i), bot = Math.min(G - 4, G - 10 + i);
+    d.r(OX + i, top, 1, bot - top + 1, K);
+  }
+  d.r(OX - 1, G - 13, 1, 2, K);                    // the lip, flared up
+  // the bottom jaw: flat on the ground, turned up at the lip
+  d.r(OX - 1, G - 1, 8, 1, K); d.r(OX - 1, G - 2, 1, 1, K);
+  // the pipe: up from the drum, round in a half circle two cells thick, and
+  // down to a spout over the heap
+  d.r(OX + 10, G - 14, 2, 7, K);
+  const cx = OX + 14, cy = G - 14;
+  for (let y = cy - 4; y < cy; y++) for (let x = cx - 4; x < cx + 4; x++) {
+    const r = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+    if (r >= 1.9 && r <= 4.1) d.c(x, y, K);
+  }
+  d.r(OX + 16, G - 14, 2, 3, K);
+  d.r(OX + 15, G - 11, 4, 1, K);                   // the spout's lip
+}
+function chipLog(d, x, a = 1) {
+  // a log side on: five cells, two high, its cut end grey
+  d.fade(a, () => { d.r(x, G - 3, 5, 2, K); d.px(x * P + 2, (G - 3) * P + 2, P - 2, 2 * P - 4, GREY[3]); });
+}
+function chipPose(ph) { let p = FEED[0]; for (const f of FEED) if (ph >= f[0]) p = f; return p; }
+function chipAfter(d, st, t) {
+  const work = st === 'work';
+  chipFrame(d);
+  const c = cyc(t, CHIP_T, 1e9), ph = work ? c.ph : 0;
+  if (work) {
+    const [, lx, bx, lean] = chipPose(ph);
+    if (lx != null) {
+      // fades onto the hands at the pile, fades into the throat at the end
+      const a = ph < 0.1 ? clamp01(c.since / FADE) : 1;
+      if (ph >= SWALLOW) chipLog(d, lx, 1 - clamp01((ph - SWALLOW) * CHIP_T / 0.35));
+      else chipLog(d, lx, a);
+    }
+    d.body(bx, G - 3, lean);
+    // the chips: dashes a cell wide and two long, falling a cell every tenth
+    // of a second from the spout, for as long as the log is being chewed
+    const s = ((ph - SWALLOW + 1) % 1) * CHIP_T;
+    const step = Math.floor(s * 10);
+    for (let j = 0; j < 12; j++) {
+      const born = step - j * 3;
+      if (born < 0 || j * 0.3 > POUR_FOR) continue;
+      const y = G - 10 + born;
+      if (y > G - 3) continue;
+      d.r(OX + 16 + (j % 2), y, 1, 2, DUST[j % DUST.length]);
+    }
+  } else d.body(8, G - 3);
+  d.dots(OX - 1.5, G - 12, 8.5, 12);
+  // piles: logs on the left by the feeder, the chips' heap under the spout
+  if (st === 'idle') { logPile(d, 0, { n: 4, prev: 4, since: 9 }); heap(d, OX + 17, 4, { n: 3, prev: 3, since: 9 }, 8); }
+  else {
+    logPile(d, 0, drain(t, CHIP_T, 5));
+    const h = fill(t, CHIP_T, 5, CHIP_T * 0.78); heap(d, OX + 17, 4, { n: h.n + 2, prev: h.prev + 2, since: h.since }, 8);
+  }
+  if (work) glyph(d, GLYPHS.chip, OX + 9, G - 18, 0.5);
+  return { top: G - 18 };
+}
+
+// AFTER: THE PAPER MILL. A big cutaway vat of pulp, the body on a post level
+// with the rim, and a long paddle resting on the rim's corner, stirred in a
+// loop of four held poses.
+const RIM = G - 10;                 // the rim's row: the vat is ten cells deep
+const PIVOT = [13.6, RIM - 0.3];    // where the paddle rests on the rim
+// the blade's held places, cells: in near, along under the surface, out far,
+// back deep -- an ellipse seen side on
+const LOOP = [[17, G - 4.5], [20, G - 7], [23, G - 5], [20, G - 3.5]];
+const LEAN = [0, 2, 2, 0];
+const STIR_T = 0.3;                 // seconds a pose is held
+function vat(d) {
+  // the post the body stands on, hard up against the wall: post and vat are
+  // one mass with one white cut-out, the air under the rim
+  d.r(9, RIM, 3, G - RIM, K);
+  d.r(26, RIM, 3, 1, K);                            // the far rim, overhanging
+  d.r(12, RIM, 2, G - RIM - 2, K); d.r(26, RIM + 1, 2, G - RIM - 3, K);  // the walls
+  // the floor, rounded off at the far corner only (the near one is the post)
+  d.r(12, G - 2, 16, 1, K); d.r(12, G - 1, 15, 1, K);
+}
+function pulp2(d, pose, work) {
+  // six rows of pulp under one row of air
+  for (let j = 0; j < 6; j++) for (let i = 0; i < 12; i++)
+    d.c(14 + i, G - 8 + j, PULP2[Math.floor(hash((14 + i) * 5.1 + j * 9.3) * PULP2.length)]);
+  if (!work) return;
+  // the stir moves the pulp: a crest two cells long stands up into the air
+  // ahead of the blade, and a trough two cells long opens behind it
+  const ex = Math.round(LOOP[pose][0]), right = pose === 0 || pose === 1;
+  const crest = right ? ex + 2 : ex - 4, trough = right ? ex - 4 : ex + 2;
+  if (crest >= 14 && crest + 2 <= 26) d.r(crest, G - 9, 2, 1, PULP2[0]);
+  if (trough >= 14 && trough + 2 <= 26) d.r(trough, G - 8, 2, 1, W);
+}
+function paddle(d, pose, dxpx = 0) {
+  const [ex, ey] = LOOP[pose], [px, py] = PIVOT;
+  const L = Math.hypot(ex - px, ey - py), ux = (ex - px) / L, uy = (ey - py) / L;
+  const tx = px - ux * 7 + dxpx / P, ty = py - uy * 7;
+  line(d, tx, ty, ex, ey, P);
+  d.r(Math.round(ex - 1), Math.round(ey - 1.5), 2, 3, K);   // the blade, in the pulp
+}
+function paperAfter(d, st, t, chimney = false) {
+  const work = st === 'work';
+  const pose = work ? Math.floor(t / STIR_T) % 4 : 3;
+  vat(d);
+  pulp2(d, pose, work);
+  if (chimney) { d.r(29, G - 16, 2, 16, K); d.r(28, G - 16, 4, 1, K); if (work) smoke(d, t, 30, G - 16, 3); }
+  d.body(9, RIM - 3, work ? LEAN[pose] : 0);
+  paddle(d, pose, work ? LEAN[pose] : 0);
+  d.dotEllipse(20, G - 6, 5, 2.5);
+  const sx = chimney ? 33 : 31;
+  if (st === 'idle') { heap(d, 3, 3, { n: 4, prev: 4, since: 9 }, 6); sheetPile(d, sx, { n: 3, prev: 3, since: 9 }); }
+  else {
+    const h = drain(t, 2.4, 5); heap(d, 3, 3, { n: h.n + 1, prev: h.prev + 1, since: h.since }, 6);
+    sheetPile(d, sx, fill(t, 2.4, 6, 1.2));
+  }
+  if (work) glyph(d, GLYPHS.paper, 19, G - 16, 0.5);
+  return { top: G - 16 };
+}
+
+// ---------------------------------------------------------------------------
+// The page.
+const STATIONS = [
+  { key: 'chip', name: 'chipper', io: 'logs in; chips (sawdust) out; the player holds to feed.',
+    changed: 'The mouth is now an open jaw: its lip stands over four bodies high and it opens more than two bodies wide (it was one and a half), white inside and open toward the feeder; the drum is a plain block with no wheels; the pipe is two cells thick and hooks round in a half circle to a spout right over the heap, and the chips pour out of it as a dashed grey line. The body walks the log into the jaw a cell at a time.',
+    before: chipBefore, after: chipAfter, crop: [0, G - 20, 40, 21],
+    poses: [0.05, 0.25, 0.45, 0.55, 0.7, 0.9], poseT: CHIP_T, poseCrop: [5, G - 20, 32, 21] },
+  { key: 'paper', name: 'paper mill', io: 'sawdust in; paper out; the player stirs the vat in circles.',
+    changed: 'The vat is twice as deep (six rows of pulp, it was three) and a cutaway: thick black walls and a rounded floor, the pulp seen through in grey, a white band of air under the rim. The paddle is more than twice as long, a cell thick, and rests on the rim\'s corner; the body stands on a post level with the rim. The chimney is gone (kept in one frame below, to vote back in). The stir is a loop in four held poses; a crest of pulp stands up ahead of the blade and a trough opens behind it.',
+    before: paperBefore, after: paperAfter, crop: [0, G - 18, 37, 19],
+    poses: [0.05, 0.35, 0.65, 0.95], poseT: 1.2, poseCrop: [5, G - 18, 25, 19],
+    extra: { cap: '1x, after, working, with the chimney kept', draw: (d, st, t) => paperAfter(d, st, t, true) } }
+];
+const host = document.getElementById('stations');
+const live = [];
+function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function fig(canvas, cap) { const f = document.createElement('figure'); f.appendChild(canvas); const fc = document.createElement('figcaption'); fc.textContent = cap; f.appendChild(fc); return f; }
+const off = mkCanvas(SW * P, SH * P);
+function renderScene(draw, state, t) {
+  const g = off.getContext('2d');
+  g.globalAlpha = 1; g.fillStyle = tone(W); g.fillRect(0, 0, off.width, off.height);
+  g.fillStyle = tone(K); g.fillRect(0, G * P, off.width, 2);
+  draw(drawer(g), state, t);
+  return off;
+}
+for (const s of STATIONS) {
+  const sec = document.createElement('section'); sec.className = 'st'; sec.id = 'st-' + s.key;
+  sec.innerHTML = `<h2><span class="ph">${s.name}</span></h2><p>${s.io}</p><p><b>What changed.</b> ${s.changed}</p>`;
+  for (const which of ['before', 'after']) {
+    const box = document.createElement('div'); box.className = 'opt ' + which;
+    box.innerHTML = `<h3>${which === 'before' ? 'Before: B, as voted' : 'After: polished'}</h3>`;
+    const row = document.createElement('div'); row.className = 'row';
+    const draw = s[which];
+    for (const st of ['idle', 'work']) {
+      const c = mkCanvas(SW * P, SH * P); row.appendChild(fig(c, `1x, ${which}, ${st === 'work' ? 'working' : 'idle'}`));
+      live.push({ canvas: c, crop: null, draw, state: st });
+    }
+    const [, , cw, ch] = s.crop;
+    for (const st of ['idle', 'work']) {
+      const c = mkCanvas(cw * P * 2, ch * P * 2); row.appendChild(fig(c, `2x crop, ${which}, ${st === 'work' ? 'working' : 'idle'}`));
+      live.push({ canvas: c, crop: s.crop, draw, state: st });
+    }
+    box.appendChild(row);
+    if (which === 'after') {
+      // the working cycle's held poses, frozen side by side at 1x
+      const pr = document.createElement('div'); pr.className = 'row'; pr.style.marginTop = '8px';
+      const [, , pw, phh] = s.poseCrop;
+      s.poses.forEach((f, i) => {
+        const c = mkCanvas(pw * P, phh * P); pr.appendChild(fig(c, `1x, pose ${i + 1}`));
+        live.push({ canvas: c, crop: s.poseCrop, draw, state: 'work', at: f * s.poseT + 40 * s.poseT, noPiles: true });
+      });
+      box.appendChild(pr);
+      if (s.extra) {
+        const c = mkCanvas(SW * P, SH * P); const f = fig(c, s.extra.cap); f.style.marginTop = '8px';
+        box.appendChild(f); live.push({ canvas: c, crop: null, draw: s.extra.draw, state: 'work' });
+      }
+    }
+    sec.appendChild(box);
+  }
+  host.appendChild(sec);
+}
+
+// The comparison rows: the stations without piles, glyphs or hands, cut from
+// their scenes, and the yard's filter house from a real shot.
+let NO_PILES = false;
+for (const name of ['logPile', 'heap', 'sheetPile', 'glyph']) {
+  const f = window[name];
+  window[name] = function (...a) { if (NO_PILES) return; return f.apply(this, a); };
+}
+const ROW_H = 24, ROW_G = 22;      // the row's height and its ground line, cells
+const SLOTS = {
+  after: [{ draw: chipAfter, from: 6, w: 28 }, { draw: paperAfter, from: 7, w: 24 }],
+  before: [{ draw: chipBefore, from: 9, w: 28 }, { draw: paperBefore, from: 5, w: 24 }]
+};
+const YARD_W = 20;
+const rowc = document.getElementById('rowc'), rows = document.getElementById('rows');
+const rowb = document.getElementById('rowb'), rowbs = document.getElementById('rowbs');
+for (const c of [rowc, rows, rowb, rowbs]) { c.width = (28 + 24 + YARD_W) * P; c.height = ROW_H * P; }
+// The yard crop, cleaned once: its paper texture and the colored ring's edge
+// to plain paper, every other pixel to its grey, so it maps to dark like the rest.
+const yardImg = new Image();
+let yardGrey = null;   // Uint8 lightness per pixel, 255 paper
+yardImg.onload = () => {
+  const c = mkCanvas(yardImg.width, yardImg.height), g = c.getContext('2d');
+  g.drawImage(yardImg, 0, 0);
+  const px = g.getImageData(0, 0, c.width, c.height).data;
+  yardGrey = { w: c.width, h: c.height, v: new Uint8Array(c.width * c.height) };
+  for (let i = 0; i < yardGrey.v.length; i++) {
+    const r = px[i * 4], gg = px[i * 4 + 1], b = px[i * 4 + 2];
+    const colored = Math.max(r, gg, b) - Math.min(r, gg, b) > 30;
+    const l = (r + gg + b) / 3;
+    yardGrey.v[i] = colored || l > 200 ? 255 : l < 60 ? 0 : Math.round(l);
+  }
+  // the sky's motes and the floor's texture are not the station: any piece
+  // of ink smaller than a cell is let go
+  const { w: yw, h: yh, v: yv } = yardGrey, seen = new Uint8Array(yw * yh);
+  for (let i = 0; i < yv.length; i++) if (yv[i] < 255 && !seen[i]) {
+    const piece = [i], st = [i]; seen[i] = 1;
+    while (st.length) { const k = st.pop(), x = k % yw, y = (k / yw) | 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= yw || yy >= yh) continue; const kk = yy * yw + xx; if (yv[kk] < 255 && !seen[kk]) { seen[kk] = 1; st.push(kk); piece.push(kk); } } }
+    if (piece.length < P * P) for (const k of piece) yv[k] = 255;
+  }
+  // where its ground line sits, measured: the lowest row that is mostly ink
+  for (let y = yardGrey.h - 1; y >= 0; y--) {
+    let n = 0; for (let x = 0; x < yardGrey.w; x++) if (yardGrey.v[y * yardGrey.w + x] < 60) n++;
+    if (n > yardGrey.w * 0.8) { yardGrey.ground = y; break; }
+  }
+  if (FROZEN != null) frame(0);
+};
+yardImg.src = 'data:image/png;base64,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';
+function drawYard(g, x0) {
+  if (!yardGrey) return;
+  const img = g.getImageData(x0, 0, yardGrey.w, ROW_H * P), out = img.data;
+  const top = ROW_G * P - (yardGrey.ground ?? yardGrey.h - 2);
+  for (let y = 0; y < ROW_H * P; y++) for (let x = 0; x < Math.min(yardGrey.w, YARD_W * P); x++) {
+    const sy = y - top; if (sy < 0 || sy >= yardGrey.h) continue;
+    const v = yardGrey.v[sy * yardGrey.w + x]; if (v === 255) continue;
+    const o = (y * yardGrey.w + x) * 4, n = DARK ? darkOf(v / 255) : v;
+    out[o] = out[o + 1] = out[o + 2] = n;
+  }
+  g.putImageData(img, x0, 0);
+}
+function drawRow(canvas, sil, slots, t) {
+  const g = canvas.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.globalAlpha = 1; g.fillStyle = tone(W); g.fillRect(0, 0, canvas.width, canvas.height);
+  NO_PILES = true; const handsWas = HANDS; HANDS = false;
+  let x = 0;
+  for (const s of slots) {
+    const c = renderScene(s.draw, 'work', t);
+    g.drawImage(c, s.from * P, (G - ROW_G) * P, s.w * P, ROW_H * P, x * P, 0, s.w * P, ROW_H * P);
+    x += s.w;
+  }
+  NO_PILES = false; HANDS = handsWas;
+  g.fillStyle = tone(K); g.fillRect(x * P, ROW_G * P, YARD_W * P, 2);
+  drawYard(g, x * P + 1 * P);
+  const gs = sil.getContext('2d');
+  gs.drawImage(canvas, 0, 0);
+  const img = gs.getImageData(0, 0, sil.width, sil.height), px = img.data;
+  const paper = DARK ? 0x1f : 0xff, ink = DARK ? 0xe0 : 0x00;
+  for (let i = 0; i < px.length; i += 4) { const on = Math.abs(px[i] - paper) > 6; px[i] = px[i + 1] = px[i + 2] = on ? ink : paper; }
+  gs.putImageData(img, 0, 0);
+}
+
+function frame(now) {
+  const t = FROZEN != null ? FROZEN : (PAUSED ? (frame.held ?? 0) : now / 1000);
+  frame.held = t;
+  for (const v of live) {
+    if (v.noPiles) NO_PILES = true;
+    const c = renderScene(v.draw, v.state, v.at != null ? v.at : t);
+    NO_PILES = false;
+    const g = v.canvas.getContext('2d'); g.imageSmoothingEnabled = false;
+    if (!v.crop) g.drawImage(c, 0, 0, v.canvas.width, v.canvas.height, 0, 0, v.canvas.width, v.canvas.height);
+    else { const [x, y, w, h] = v.crop; g.drawImage(c, x * P, y * P, w * P, h * P, 0, 0, v.canvas.width, v.canvas.height); }
+  }
+  drawRow(rowc, rows, SLOTS.after, t);
+  drawRow(rowb, rowbs, SLOTS.before, t);
+  if (FROZEN == null) requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// Controls, and handles for the snapshot script.
+function setDark(on) {
+  DARK = on; document.documentElement.dataset.theme = on ? 'dark' : 'light';
+  document.querySelectorAll('button[data-theme]').forEach(b => b.classList.toggle('on', (b.dataset.theme === 'dark') === on));
+  if (FROZEN != null) frame(0);
+}
+document.querySelectorAll('button[data-theme]').forEach(b => b.onclick = () => setDark(b.dataset.theme === 'dark'));
+document.getElementById('hands').onchange = e => { HANDS = e.target.checked; if (FROZEN != null) frame(0); };
+document.getElementById('pause').onclick = e => { PAUSED = !PAUSED; e.target.textContent = PAUSED ? 'play' : 'pause'; };
+window.__freeze = t => { FROZEN = t; frame(0); return true; };
+window.__dark = on => { setDark(on); return true; };
+
+// Measuring by pixels: a station drawn alone (no piles, glyph or hands) at
+// time t, and what its ink is -- its extent, its connected pieces, and any
+// piece smaller than a cell (a loose speck the eye reads as grit).
+window.__measure = (key, which, state, t) => {
+  const s = STATIONS.find(x => x.key === key);
+  NO_PILES = true; const hw = HANDS; HANDS = false;
+  const c = renderScene(s[which], state, t);
+  NO_PILES = false; HANDS = hw;
+  const Wd = c.width, H = G * P;           // above the ground line only
+  const px = c.getContext('2d').getImageData(0, 0, Wd, H).data;
+  const paper = DARK ? 0x1f : 0xff;
+  const on = new Uint8Array(Wd * H);
+  let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, ink = 0, grey = 0, white = 0;
+  for (let i = 0; i < Wd * H; i++) {
+    const v = px[i * 4]; if (Math.abs(v - paper) > 6) { on[i] = 1; const x = i % Wd, y = (i / Wd) | 0; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); if (v === (DARK ? 0xe0 : 0)) ink++; else grey++; }
+  }
+  const seen = new Uint8Array(Wd * H), pieces = [];
+  for (let i = 0; i < Wd * H; i++) if (on[i] && !seen[i]) {
+    let n = 0; const st = [i]; seen[i] = 1;
+    while (st.length) { const k = st.pop(); n++; const x = k % Wd, y = (k / Wd) | 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= Wd || yy >= H) continue; const kk = yy * Wd + xx; if (on[kk] && !seen[kk]) { seen[kk] = 1; st.push(kk); } } }
+    pieces.push(n);
+  }
+  pieces.sort((a, b) => b - a);
+  return { bbox: [x0, y0, x1 + 1, y1 + 1], wCells: (x1 + 1 - x0) / P, hCells: (y1 + 1 - y0) / P, ink, grey, pieces: pieces.length, biggest: pieces[0], specks: pieces.filter(n => n < P * P).length };
+};
+window.__ready = true;
+</script>
+</body>
+</html>
