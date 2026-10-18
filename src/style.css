@@ -1303,6 +1303,10 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    grid a tile's picture would stick to the grid's top over its own words */
 .wardrobe canvas { display: block; image-rendering: pixelated; position: static; z-index: auto; }
 .held .wardrobe .wardwho { gap: 0; }
+/* the switch, the name and title, the close-up and the grid each stand a
+   step further apart than the rows inside them, so the page reads as four
+   parts (the owner, 2026-10-18) */
+.wardrobe > .wardfields, .wardrobe > .wardstage, .wardrobe > .wardbox { margin-top: var(--gap-m); }
 .held .wardrobe .wardwho button { display: flex; align-items: center; justify-content: center; gap: var(--gap-m); padding: 2px 8px; }
 .held .wardrobe .wardwho button + button { border-left: 0; }
 .held .wardrobe .wardtab.on { color: var(--paper); background: var(--ink); }
