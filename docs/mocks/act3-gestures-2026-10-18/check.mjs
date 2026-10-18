@@ -1,7 +1,11 @@
 // Drives every panel of the act 3 gestures mock with real mouse/touch input
-// over CDP, on the page's hand-turned clocks, and asserts each motion earns
-// and each crit can trigger. Then shoots overview + pairs, light and dark.
-// node docs/mocks/act3-gestures-2026-10-18/check.mjs <out dir> [all|drive|shots|idle]
+// over CDP, on the page's hand-turned clocks (each station its own), and
+// asserts what the page claims: at the seven speed stations the same motion
+// done faster gets the work done sooner (and fills the gauge further); at the
+// pedestal and the stump the crit can be triggered. Then shoots the overview
+// and the stations in pairs, light and dark, each frozen mid-motion.
+//
+//   node docs/mocks/act3-gestures-2026-10-18/check.mjs <out dir> [all|drive|shots]
 import { browser, openTab } from '../../../tools/cdp.mjs';
 import { mkdirSync } from 'node:fs';
 
@@ -25,189 +29,183 @@ const mouse = (type, lx, ly) => tab.send('Input.dispatchMouseEvent', { type, x: 
 const down = (x, y) => mouse('mousePressed', x, y), move = (x, y) => mouse('mouseMoved', x, y), up = (x, y) => mouse('mouseReleased', x, y);
 const adv = (s, key) => ev(`__mock.advance(${s}, '${key}')`);
 const st = (key, expr) => ev(`(() => { const s = __mock.st['${key}']; return ${expr}; })()`);
-const P = 6;
+const P = 6, F = 1 / 60;
 const results = {};
 const note = (k, m) => { (results[k] ||= []).push(m); };
+const ok = (k, cond, what) => note(k, (cond ? 'OK: ' : 'FAIL: ') + what);
+const made = k => st(k, 's.total');
+const gauge = k => st(k, '+(s.gv || 0).toFixed(2)');
 
-// ---- each station's motions --------------------------------------------------
+// ---- the motions, each a function of how fast it is done -------------------
+const motion = {
+  // back and forth, a full stroke every `per` seconds
+  async chop(per, secs, k = 'chop') {
+    const base = 7 * P - P + 3; let t = 0;
+    await down(base, 16 * P);
+    let g = 0;
+    for (; t < secs; t += F) { await move(base + 30 * Math.sin(2 * Math.PI * t / (2 * per)), 16 * P); await adv(F, k); if (t > secs / 2) g = Math.max(g, await gauge(k)); }
+    return { g, end: async () => up(base, 16 * P) };
+  },
+  async mill(rps, secs, k = 'mill') {
+    const c = { x: 10 * P, y: 13 * P }, R = 5 * P; let a = 0, g = 0;
+    await down(c.x + R, c.y);
+    for (let i = 0; i < secs * 60; i++) { a += rps * 2 * Math.PI / 60; await move(c.x + Math.cos(a) * R, c.y + Math.sin(a) * R); await adv(F, k); if (i > secs * 30) g = Math.max(g, await gauge(k)); }
+    return { g, end: async () => up(c.x + Math.cos(a) * R, c.y + Math.sin(a) * R) };
+  },
+  // presses of `hold` seconds with `gap` between
+  async chipper(hold, gap, secs, k = 'chipper') {
+    let t = 0, g = 0;
+    while (t < secs) {
+      await down(60, 80);
+      for (let h = 0; h < hold && t < secs; h += F, t += F) { await adv(F, k); g = Math.max(g, await gauge(k)); }
+      if (t >= secs) return { g, end: async () => up(60, 80) };
+      await up(60, 80); await adv(gap, k); t += gap;
+    }
+    return { g, end: async () => {} };
+  },
+  async paper(rps, secs, k = 'paper') {
+    let a = 0, g = 0; const cx0 = 20 * P, cy0 = 13 * P, rx = 9 * P, ry = 3 * P;
+    await down(cx0 + rx, cy0);
+    for (let i = 0; i < secs * 60; i++) { a += rps * 2 * Math.PI / 60; await move(cx0 + Math.cos(a) * rx, cy0 + Math.sin(a) * ry); await adv(F, k); if (i > 60) g = Math.max(g, await gauge(k)); }
+    return { g, end: async () => up(cx0 + Math.cos(a) * rx, cy0 + Math.sin(a) * ry) };
+  },
+  async workshop(rate, secs, k = 'workshop') {
+    let g = 0;
+    for (let t = 0; t < secs; t += 1 / rate) { await down(120, 60); await up(120, 60); await adv(1 / rate, k); g = Math.max(g, await gauge(k)); }
+    return { g, end: async () => {} };
+  },
+  // one pull to the stop, `step` radians of drag a frame; returns the pull time read off the readout
+  async press(step, k = 'press') {
+    const at = th => ({ x: (27 + Math.cos(th) * 10) * P, y: (8 + Math.sin(th) * 10) * P });
+    let th = -0.45, p = at(th), g = 0; await down(p.x, p.y);
+    for (; th <= 0.85; th += step) { p = at(th); await move(p.x, p.y); await adv(F, k); g = Math.max(g, await gauge(k)); }
+    await adv(0.2, k);
+    return { g, end: async () => { await up(p.x, p.y); await adv(1, k); } };
+  },
+  // a drag from the heap toward the edge at `pxPerFrame`, let go at `x1`
+  async heap(pxPerFrame, x1, k = 'heap') {
+    await down(7 * P, 17 * P); let g = 0;
+    for (let x = 7 * P; x <= x1; x += pxPerFrame) { await move(x, 16 * P); await adv(F, k); g = Math.max(g, await gauge(k)); }
+    return { g, end: async () => up(x1, 16 * P) };
+  }
+};
+const freshen = k => ev(`(() => { const s = __mock.st['${k}']; s.init(); s.gv = 0; return 1; })()`);
+
+async function compare(k, slowRun, fastRun, label) {
+  await focus(k);
+  await freshen(k); const s0 = await made(k); const a = await slowRun(); await a.end(); const slow = (await made(k)) - s0;
+  await freshen(k); const f0 = await made(k); const b = await fastRun(); await b.end(); const fast = (await made(k)) - f0;
+  note(k, `${label}: slow made ${slow}, gauge ${a.g}; fast made ${fast}, gauge ${b.g}`);
+  ok(k, fast > slow && b.g > a.g, 'faster made more in the same time, and filled the gauge further');
+  note(k, 'last: ' + await st(k, `s.el.querySelector('.last').textContent`));
+}
+
 const drive = {
-  async pedestal({ critOnly } = {}) {
+  async pedestal() {
     const k = 'pedestal'; await focus(k);
     for (let i = 0; i < 400; i++) {
       await adv(0.05, k);
       const bs = await st(k, `s.bubbles.map(b => ({...s.box(b), w:b.w, h:b.h, big:b.big}))`);
-      const big = bs.find(b => b.big && b.r > 1);
-      const norm = bs.find(b => !b.big && b.r > 1);
       const crits = await st(k, 's.crits'), tot = await st(k, 's.total');
-      const target = big || (!critOnly && tot - crits < 2 ? norm : null);
-      if (target) { const x = (target.c + target.w / 2) * P, y = (target.r + target.h / 2) * P; await down(x, y); await up(x, y); if (target.big) return; }
+      const target = bs.find(b => b.big && b.r > 1) || (tot - crits < 2 ? bs.find(b => !b.big && b.r > 1) : null);
+      if (target) { const x = (target.c + target.w / 2) * P, y = (target.r + target.h / 2) * P; await down(x, y); await up(x, y); if (target.big) break; }
     }
+    const r = await st(k, '[s.crits, s.total]');
+    ok(k, r[0] > 0 && r[1] > r[0], `normal pops and a 5× crit: ${JSON.stringify(r)}`);
   },
-  async chop({ critOnly } = {}) {
-    const k = 'chop'; await focus(k);
-    const base = 7 * P - P + 3; // left handle
-    await down(base, 16 * P);
-    // in rhythm: follow the partner
-    for (let i = 0; i < (critOnly ? 260 : 150); i++) {
-      const tgt = await st(k, 's.partner(s.t)');
-      await move(base + tgt, 16 * P);
-      await adv(1 / 60, k);
-      if (critOnly && await st(k, 's.crits') > 0) { await adv(0.1, k); await up(base, 16 * P); return; }
-    }
-    if (!critOnly) {
-      // against it: the saw should bind
-      for (let i = 0; i < 200; i++) { const tgt = await st(k, 's.partner(s.t)'); await move(base - tgt, 16 * P); await adv(1 / 60, k); }
-    }
-    await up(base, 16 * P);
-  },
-  async stump({ critOnly } = {}) {
+  async stump() {
     const k = 'stump'; await focus(k);
-    if (!critOnly) {
-      // the slow way: hold it up until a root snaps
-      await down(120, 108); await move(120, 108 - 40); await adv(1.0, k); await up(120, 68); await adv(1.5, k);
-    }
-    // the crit: hold at a small lift, wait for the wobble, then yank
+    await down(120, 108); await move(120, 68); await adv(1.0, k); await up(120, 68); await adv(1.5, k);
     await down(120, 108); await move(120, 100);
-    for (let i = 0; i < 400; i++) {
-      await adv(1 / 60, k);
-      const w = await st(k, 's.t - s.wob < 0.06 && s.out == null');
-      if (w) { await move(120, 108 - 50); await adv(0.1, k); break; }
-    }
+    for (let i = 0; i < 400; i++) { await adv(F, k); if (await st(k, 's.t - s.wob < 0.06 && s.out == null')) { await move(120, 58); await adv(0.1, k); break; } }
     await up(120, 50);
+    const r = await st(k, '[s.crits, s.total]');
+    ok(k, r[0] > 0 && r[1] > r[0], `a root by holding, then the yank crit: ${JSON.stringify(r)}`);
   },
-  async mill({ critOnly } = {}) {
-    const k = 'mill'; await focus(k);
-    const spin = async (rps, secs) => {
-      const c = { x: 10 * P, y: 13 * P }, R = 5 * P;
-      let a = 0; await down(c.x + R, c.y);
-      for (let i = 0; i < secs * 60; i++) {
-        a += rps * 2 * Math.PI / 60; await move(c.x + Math.cos(a) * R, c.y + Math.sin(a) * R); await adv(1 / 60, k);
-        if (critOnly && await st(k, 's.crits') > 0) break;
-      }
-      await up(c.x + Math.cos(a) * R, c.y + Math.sin(a) * R);
-    };
-    if (!critOnly) { await spin(0.5, 5); note(k, 'slow spin: ' + JSON.stringify(await st(k, '[s.crits, s.total]'))); }
-    await spin(1.2, 6);
-  },
-  async chipper({ critOnly } = {}) {
-    const k = 'chipper'; await focus(k);
-    if (!critOnly) { await down(60, 80); await adv(5.6, k); await up(60, 80); await adv(1.2, k); }
-    await down(60, 80);
-    for (let i = 0; i < 400; i++) { await adv(1 / 60, k); const t = await st(k, 's.tail()'); if (t >= 21.0) break; }
-    await up(60, 80); await adv(0.1, k);
-  },
-  async paper({ critOnly } = {}) {
-    const k = 'paper'; await focus(k);
-    const stir = async (rps, secs) => {
-      let a = 0; const cx0 = 20 * P, cy0 = 13 * P, rx = 9 * P, ry = 3 * P;
-      await down(cx0 + rx, cy0);
-      for (let i = 0; i < secs * 60; i++) {
-        a += rps * 2 * Math.PI / 60; await move(cx0 + Math.cos(a) * rx, cy0 + Math.sin(a) * ry); await adv(1 / 60, k);
-        if (await st(k, 's.pull != null')) break;
-      }
-      await up(cx0, cy0); await adv(0.2, k);
-    };
-    if (!critOnly) { await stir(1.2, 9); await adv(1.2, k); }
-    await stir(0.65, 14);
-  },
-  async workshop({ critOnly } = {}) {
-    const k = 'workshop'; await focus(k);
-    // off the beat, by touch
-    if (!critOnly) {
-      for (let n = 0; n < 2; n++) {
-        const T = await st(k, 's.t'); const off = (Math.floor(T / 0.6) + 1) * 0.6 + 0.3 - T; await adv(off, k);
-        const tp = [{ x: cx(120), y: cy(60) }];
-        await tab.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: tp });
-        await tab.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-        await adv(0.05, k);
-      }
-      note(k, 'touch taps: ' + JSON.stringify(await st(k, '[s.crits, s.total]')));
-    }
-    for (let n = 0; n < 4; n++) {
-      const T = await st(k, 's.t'); const to = (Math.floor(T / 0.6) + 1) * 0.6 - T; await adv(to, k);
-      await down(120, 60); await up(120, 60);
-      if (critOnly) { await adv(0.08, k); return; }
-    }
-  },
-  async press({ critOnly } = {}) {
+  chop: () => compare('chop', () => motion.chop(1.0, 4), () => motion.chop(0.3, 4), 'strokes of 1.0 s against 0.3 s, 4 s each'),
+  mill: () => compare('mill', () => motion.mill(0.5, 6), () => motion.mill(1.9, 6), '0.5 against 1.9 turns a second, 6 s each'),
+  chipper: () => compare('chipper', () => motion.chipper(0.35, 0.2, 8), () => motion.chipper(9, 0, 8), 'short presses against one long hold, 8 s each'),
+  paper: () => compare('paper', () => motion.paper(0.4, 10), () => motion.paper(1.2, 10), '0.4 against 1.2 turns a second, 10 s each'),
+  workshop: () => compare('workshop', () => motion.workshop(2, 4), () => motion.workshop(7, 4), '2 against 7 taps a second, 4 s each'),
+  async press() {
     const k = 'press'; await focus(k);
-    const at = th => ({ x: (27 + Math.cos(th) * 10) * P, y: (8 + Math.sin(th) * 10) * P });
-    const stroke = async (to, brk) => {
-      let th = -0.45; let p = at(th); await down(p.x, p.y);
-      for (; th <= to; th += 0.05) {
-        p = at(th); await move(p.x, p.y); await adv(1 / 60, k);
-        if (brk && th > 0.2 && th < 0.26) { const q = at(th - 0.3); await move(q.x, q.y); await adv(1 / 60, k); }
-      }
-      if (critOnly) { await adv(0.12, k); await up(p.x, p.y); return; }
-      await up(p.x, p.y); await adv(1, k);
-    };
-    if (!critOnly) { await stroke(0.5, false); await stroke(0.8, true); }
-    await stroke(0.8, false);
+    await freshen(k); const a = await motion.press(0.012); const slow = await st(k, `s.el.querySelector('.last').textContent`); await a.end();
+    await freshen(k); const b = await motion.press(0.1); const fast = await st(k, `s.el.querySelector('.last').textContent`); await b.end();
+    const secs = t => +(/in ([\d.]+) s/.exec(t) || [0, 99])[1];
+    note(k, `slow pull: "${slow}", gauge ${a.g}; quick pull: "${fast}", gauge ${b.g}`);
+    ok(k, secs(fast) < secs(slow) && b.g > a.g, 'a quicker pull printed sooner and filled the gauge further');
   },
-  async heap({ critOnly } = {}) {
+  async heap() {
     const k = 'heap'; await focus(k);
-    if (!critOnly) {
-      // slow drag past the edge
-      await down(7 * P, 17 * P);
-      for (let x = 7 * P; x <= 33 * P; x += 2) { await move(x, 16 * P); await adv(1 / 60, k); }
-      await adv(0.3, k); await up(33 * P, 16 * P); await adv(1.2, k);
-      // slow drag short of the edge: comes back
-      await down(7 * P, 17 * P);
-      for (let x = 7 * P; x <= 20 * P; x += 2) { await move(x, 16 * P); await adv(1 / 60, k); }
-      await adv(0.3, k); await up(20 * P, 16 * P); await adv(2, k);
-    }
-    await adv(1, k);
-    await down(7 * P, 17 * P);
-    for (let x = 7 * P; x <= 20 * P; x += 5) { await move(x, 16 * P); await adv(1 / 60, k); }
-    await up(20 * P, 16 * P);
-    for (let i = 0; i < 120; i++) { await adv(1 / 60, k); if (await st(k, 's.crits') > 0) { await adv(0.08, k); break; } }
+    const tipped = async () => +(/\+(\d) load/.exec(await st(k, `s.el.querySelector('.last').textContent`)) || [0, 0])[1];
+    const one = async (px, x1) => { await freshen(k); await ev(`(() => { const s = __mock.st.heap; s.loads = 5; s.cells = s.cells.concat(Array(8).fill(-9)); return 1; })()`); const r = await motion.heap(px, x1); await r.end(); await adv(1.5, k); return [await tipped(), r.g]; };
+    const slow = await one(1, 33 * P), mid = await one(3, 20 * P), fast = await one(6, 20 * P);
+    note(k, `carried slowly past the edge: ${slow[0]} (gauge ${slow[1]}); flung at 180 px/s: ${mid[0]} (gauge ${mid[1]}); at 360 px/s: ${fast[0]} (gauge ${fast[1]})`);
+    ok(k, slow[0] === 1 && mid[0] >= slow[0] && fast[0] > mid[0], 'a faster fling tipped more');
   }
 };
-
-const KEYS = Object.keys(drive);
-const readout = k => st(k, `({crits: s.crits, total: s.total, last: s.el.querySelector('.last').textContent, cueA: +s.cueA.toFixed(2)})`);
+const KEYS = ['pedestal', 'chop', 'stump', 'mill', 'chipper', 'paper', 'workshop', 'press', 'heap'];
 
 if (MODE === 'all' || MODE === 'drive') {
-  for (const k of KEYS) {
-    await drive[k]();
-    await adv(1.2, k);
-    const r = await readout(k);
-    note(k, JSON.stringify(r));
-    note(k, r.crits > 0 && r.total > r.crits ? 'OK: normal and crit both earned' : 'FAIL');
-  }
-  // the hand fades after three motions; the reset brings it back
-  const fades = await ev(`Object.values(__mock.st).map(s => s.key + ':' + s.cueA.toFixed(2)).join(' ')`);
-  note('cues', 'after the run: ' + fades);
+  for (const k of KEYS) await drive[k]();
+  // a touch tap reaches a panel too
+  await focus('workshop'); await freshen('workshop');
+  const before = await made('workshop');
+  const tp = [{ x: cx(120), y: cy(60) }];
+  await tab.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: tp });
+  await tab.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  ok('touch', await made('workshop') === before + 1, 'a touch tap on the workshop struck one blow');
+  note('cues', 'after the run: ' + await ev(`Object.values(__mock.st).map(s => s.key + ':' + s.cueA.toFixed(2)).join(' ')`));
   await ev(`document.getElementById('reset-all').click(); __mock.advance(1)`);
   note('cues', 'after reset + 1s: ' + await ev(`Object.values(__mock.st).map(s => s.key + ':' + s.cueA.toFixed(2)).join(' ')`));
   note('logs', tab.logs.filter(l => /EXCEPTION|error/i.test(l)).join(' | ') || 'no exceptions');
 }
 
 if (MODE === 'all' || MODE === 'shots') {
+  // each panel frozen in the middle of its motion done fast (the two crit
+  // stations on their crit), the hand put back on
+  const freeze = {
+    async pedestal() {
+      const k = 'pedestal'; await focus(k);
+      for (let i = 0; i < 400; i++) {
+        await adv(0.05, k);
+        const big = (await st(k, `s.bubbles.map(b => ({...s.box(b), w:b.w, h:b.h, big:b.big}))`)).find(b => b.big && b.r > 1);
+        if (big) { const x = (big.c + big.w / 2) * P, y = (big.r + big.h / 2) * P; await down(x, y); await up(x, y); await adv(0.08, k); return; }
+      }
+    },
+    async stump() {
+      const k = 'stump'; await focus(k);
+      await down(120, 108); await move(120, 100);
+      for (let i = 0; i < 400; i++) { await adv(F, k); if (await st(k, 's.t - s.wob < 0.06 && s.out == null')) { await move(120, 58); await adv(0.12, k); break; } }
+      await up(120, 50);
+    },
+    async chop() { await focus('chop'); const r = await motion.chop(0.3, 2.6); await r.end(); },
+    async mill() { await focus('mill'); const r = await motion.mill(1.9, 3); await r.end(); },
+    async chipper() { await focus('chipper'); const r = await motion.chipper(9, 0, 2.4); await r.end(); },
+    async paper() { await focus('paper'); const r = await motion.paper(1.1, 3); await r.end(); },
+    async workshop() { await focus('workshop'); const r = await motion.workshop(7, 0.8); await r.end(); await down(120, 60); await up(120, 60); await adv(0.03, 'workshop'); },
+    async press() {
+      await focus('press'); const k = 'press';
+      const at = th => ({ x: (27 + Math.cos(th) * 10) * P, y: (8 + Math.sin(th) * 10) * P });
+      let th = -0.45, p = at(th); await down(p.x, p.y);
+      for (; th <= 0.3; th += 0.1) { p = at(th); await move(p.x, p.y); await adv(F, k); }
+      await up(p.x, p.y);
+    },
+    async heap() { await focus('heap'); await adv(4, 'heap'); const r = await motion.heap(6, 20 * P); await r.end(); await adv(0.18, 'heap'); }
+  };
   for (const theme of ['light', 'dark']) {
     await ev(`location.reload()`);
     await new Promise(r => setTimeout(r, 800));
     await ev('__mock.manual(true)');
     await ev(`__mock.theme('${theme}')`);
-    // each station: the crit, frozen at its held pose, the hand put back
-    for (const k of KEYS) { await drive[k]({ critOnly: true }); }
+    for (const k of KEYS) await freeze[k]();
     await ev(`Object.values(__mock.st).forEach(s => { s.cueN = 0; s.cueA = 1; }); __mock.advance(0, 'none')`);
     await ev(`window.scrollTo(0,0)`);
-    await tab.send('Emulation.setDeviceMetricsOverride', { width: 1120, height: 1180, deviceScaleFactor: 1, mobile: false });
-    await tab.shot(`${OUT}/overview-${theme}.png`);
-    for (let i = 0; i < KEYS.length; i += 2) {
-      const ks = KEYS.slice(i, i + 2);
+    await tab.shot(`${OUT}/snapshot-overview-${theme}.png`);
+    for (const ks of [['pedestal', 'chop'], ['stump', 'mill'], ['chipper', 'paper'], ['workshop', 'press'], ['heap']]) {
       const box = await ev(`(() => { const a = __mock.st['${ks[0]}'].el, b = __mock.st['${ks[ks.length - 1]}'].el; a.scrollIntoView({block:'start'}); const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(); return {x: 0, y: ra.top + scrollY, w: innerWidth, h: rb.bottom - ra.top}; })()`);
-      await tab.shot(`${OUT}/${ks.join('-')}-${theme}.png`, { clip: { x: box.x, y: box.y, width: box.w, height: box.h, scale: 1 } });
+      await tab.shot(`${OUT}/snapshot-${ks.join('-')}-${theme}.png`, { clip: { x: box.x, y: box.y, width: box.w, height: box.h, scale: 1 } });
     }
-  }
-}
-if (MODE === 'idle') {
-  await ev('__mock.advance(2.3)');
-  for (let i = 0; i < KEYS.length; i += 2) {
-    const ks = KEYS.slice(i, i + 2);
-    const box = await ev(`(() => { const a = __mock.st['${ks[0]}'].el, b = __mock.st['${ks[ks.length - 1]}'].el; a.scrollIntoView({block:'start'}); const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(); return {x: 0, y: ra.top + scrollY, w: 760, h: rb.bottom - ra.top}; })()`);
-    await tab.shot(`${OUT}/idle-${ks.join('-')}.png`, { clip: { x: box.x, y: box.y, width: box.w, height: box.h, scale: 0.7 } });
   }
 }
 console.log(JSON.stringify(results, null, 1));
