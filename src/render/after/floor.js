@@ -6,12 +6,11 @@
 // layered cloud. They are lines, not speckle. Each convex corner of a puff is
 // cut by one 2 px step, so it reads round when near and soft when far.
 
-import { P, AFTER_W, AFTER_DRIFT_ROWS, AFTER_DRIFT_RATE, AFTER_BILLOW_SEED } from '../../config.js';
+import { P, GREY, AFTER_W, AFTER_DRIFT_ROWS, AFTER_DRIFT_RATE, AFTER_BILLOW_SEED } from '../../config.js';
 import { S } from '../../state.js';
 import { afterX0, afterFloor, floorProfile, floorFlats, billow, notchX } from '../../after/place.js';
 import { ctx } from '../ctx.js';
 import { K, W, now } from './kit.js';
-import { GREY } from '../../config.js';
 
 const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(x, y, w, h); };
 

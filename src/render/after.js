@@ -22,7 +22,7 @@ import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount } from './numfont.js';
 import { screenAt } from './frame.js';
-import { overCrowd, stationBox, stationX0, campSpot, heapMid, notchX, pileAt, fileAt, rankAtY, floorAt, afterFloor, ART } from '../after/place.js';
+import { overCrowd, stationBox, stationX0, campSpot, heapMid, notchX, fileAt, rankAtY, floorAt, afterFloor, ART } from '../after/place.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel.js';
 import { built, heapBrim } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
@@ -185,7 +185,7 @@ function drawSawdust() {
     for (let g = 0; g < Math.min(6, sp.n); g++) cell(nx + (g % 2) * P, snap(fl - P * 2 + k * P * 5 + g * P), g % 2 ? 4 : 5);
     ctx.globalAlpha = 1;
   }
-  if (heapFull()) warning(heapMid() + P / 2, fl + P * 7);
+  if (heapFull()) warning(heapMid() + P / 2, fl + P * 5);   // under the heap, clear of the window's foot
 }
 // Each station's counted pile, on its own ground.
 function drawPiles() {

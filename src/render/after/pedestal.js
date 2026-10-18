@@ -5,13 +5,12 @@
 // their speech bubbles rising off them and fading (after/bubbles.js). The
 // rebel pile at its foot, a small grey heap a power of ten.
 
-import { P, AFTER_PEDESTAL_H, AFTER_SHOUT_HOLD_S } from '../../config.js';
+import { P, GREY, AFTER_PEDESTAL_H, AFTER_SHOUT_HOLD_S } from '../../config.js';
 import { S } from '../../state.js';
 import { afterFloor, speakerAt, stationX0, pileX } from '../../after/place.js';
 import { bubbles, pairSpeaking } from '../../after/bubbles.js';
 import { ctx } from '../ctx.js';
-import { frame, K, W, now } from './kit.js';
-import { GREY } from '../../config.js';
+import { frame, K, W } from './kit.js';
 
 const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
 
@@ -76,4 +75,3 @@ export function drawRebelPile() {
     for (let r = 0; r < hh; r++) d.c(j, -1 - r, 3 + ((j + r) % 3 === 0 ? 1 : 0) - (r === hh - 1 ? 1 : 0));
   }
 }
-export const pedestalNow = now;

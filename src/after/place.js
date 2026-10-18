@@ -32,16 +32,17 @@ export const inAfter = (x, y) => y >= afterTop() && y <= afterFloor() && x >= af
 
 // --- the stations' drawings, as ground ------------------------------------------------
 // Each station's drawing (render/after/stations.js) laid off the left edge of
-// its ground (AFTER_STATIONS), in cells: `box` the drawing itself as [left,
+// its ground (AFTER_STATIONS), in cells: `box` the drawing itself, as it stands (turned), as [left,
 // width, height up off the floor] (what a click works and a card opens on);
 // `door` the column a worker's middle stands on (where the mock draws its
-// body); `pile` where each counted pile lies; `ground` how far its ground
+// body), in the world's cells; `pile` where each counted pile lies, in the
+// drawing's own (turned with it); `ground` how far its ground
 // runs, piles and all, pressed flat under it. The chipper is drawn turned
 // about its own ground (`flip`), facing the saw mill across the heap they
 // both feed.
 export const ART = {
   mill:      { box: [9, 26, 18], door: 7, pile: { logs: 0, timber: 35 }, ground: 54 },
-  chipper:   { box: [3, 21, 18], door: 26, pile: { chiplogs: 30 }, ground: 36, flip: 36 },
+  chipper:   { box: [3, 21, 18], door: 26, pile: { chiplogs: 0 }, ground: 36, flip: 36 },
   papermill: { box: [7, 22, 14], door: 10, pile: { paper: 31 }, ground: 36 },
   workshop:  { box: [7, 19, 16], door: 19, pile: { signs: 28 }, ground: 37 },
   press:     { box: [9, 20, 19], door: 27, pile: { posters: 33 }, ground: 38 },
@@ -69,8 +70,14 @@ export const stationBox = key => {
 // mock draws there.
 export const stationDoor = key => (ART[key] ? stationX0(key) + ART[key].door * P : 0);
 export const stationMid = key => { const b = stationBox(key); return b ? b.x + b.w / 2 : 0; };
-// A station's pile of `what`, its left edge.
-export const pileAt = (key, what) => stationX0(key) + ART[key].pile[what] * P;
+// A station's pile of `what`, its left edge in the world. A pile's place in
+// ART is in the drawing's own cells, so a turned drawing turns its piles too
+// (a pile is six cells across).
+const PILE_W = 6;
+export const pileAt = (key, what) => {
+  const art = ART[key], x = art.pile[what];
+  return stationX0(key) + (art.flip ? art.flip - x - PILE_W : x) * P;
+};
 // The sawdust heap at the saw mill's right, where the chipper pours onto it
 // too, `heapMid` its middle column; the notch in the cloud floor just past
 // its foot, where a load is tipped through.
