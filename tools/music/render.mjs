@@ -146,7 +146,7 @@ async function renderScene(song, scene, opts) {
   const name = `${song.name}-${scene}`;
   const wav = join(CACHE, `${name}.wav`), plan = join(CACHE, `${name}.plan.json`);
   writeFileSync(plan, JSON.stringify({
-    sr: MUSIC_RENDER_SR, total: win.total, start: win.start, frames: win.frames, beat: beatSeconds(song), out: wav, kicks,
+    sr: MUSIC_RENDER_SR, total: win.total, start: win.start, end: win.end, frames: win.frames, fade: win.fade, beat: beatSeconds(song), out: wav, kicks,
     tracks: tracks.map((t, i) => ({ id: t.id, kind: t.kind, level: t.level ?? 1, pan: t.pan ?? 0, stem: stems[i] })),
   }));
   await run(PYTHON, [join(HERE, 'mix.py'), plan]);

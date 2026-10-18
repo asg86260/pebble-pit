@@ -2,9 +2,9 @@
 
 The plan (written by render.mjs) names each stem, its level and pan, the
 kick hits, the sample rate and the window [start, start + frames) of the
-two-pass render that becomes the loop. Every effect runs over the whole
-render, so the window starts with the first pass's delay, reverb and
-compressor already in flight and the loop wraps onto itself.
+three-pass render that becomes the loop (tools/music/plan.mjs, loopWindow).
+Every effect runs over the whole render, so the window starts with the
+first pass's delay, reverb and compressor already in flight.
 
 The chain follows the music-render skill's step 4: a kick-driven sidechain
 on the bass and the pad, chorus on the pad, a dotted-eighth delay on the
@@ -99,12 +99,24 @@ for t in plan['tracks']:
 mix = dry
 if send.any():
     mix = mix + fx(pb.HighpassFilter(HALL_HP), pb.Reverb(**HALL))(send) * HALL_LEVEL
-master = fx(pb.HighpassFilter(MASTER_HP), pb.Compressor(**GLUE),
-            pb.HighShelfFilter(MASTER_SHELF_HZ, MASTER_SHELF_DB), pb.LowpassFilter(MASTER_LP),
-            pb.Gain(MASTER_GAIN_DB), pb.Limiter(threshold_db=LIMIT_DB, release_ms=LIMIT_RELEASE_MS))
-y = master(mix)
 a, n = plan['start'], plan['frames']
-loop = y[:, a:a + n].astype(np.float32)
+glued = fx(pb.HighpassFilter(MASTER_HP), pb.Compressor(**GLUE),
+           pb.HighShelfFilter(MASTER_SHELF_HZ, MASTER_SHELF_DB), pb.LowpassFilter(MASTER_LP),
+           pb.Gain(MASTER_GAIN_DB))(mix)
+y = fx(pb.Limiter(threshold_db=LIMIT_DB, release_ms=LIMIT_RELEASE_MS))(glued)
+# How hard the limiter works: a few dB catches peaks, much more flattens the mix.
+pre = 20 * np.log10(max(1e-9, float(np.abs(glued[:, a:a + n]).max())))
+print(f"mix: into the limiter at {pre:+.1f} dBFS against a {LIMIT_DB} dB threshold", file=sys.stderr)
+loop = y[:, a:a + n].copy()
+# The head fades from the third pass's opening, the samples that really follow
+# the loop's last one, into the second pass's own; the passes carry the same
+# notes at the same offsets and differ only in oscillator phase, so a short
+# linear fade between two nearly equal signals is all the seam needs.
+k = plan['fade']
+if k:
+    w = np.linspace(0, 1, k, endpoint=False)
+    loop[:, :k] = y[:, plan['end']:plan['end'] + k] * (1 - w) + loop[:, :k] * w
+loop = loop.astype(np.float32)
 with AudioFile(plan['out'], 'w', SR, 2) as f:
     f.write(loop)
 print(f"mix: {n} frames, peak {float(np.abs(loop).max()):.3f}", file=sys.stderr)

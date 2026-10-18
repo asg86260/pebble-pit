@@ -1,23 +1,28 @@
 // The render's arithmetic, kept pure so the node tier can check it without
-// Surge or Python: how long a scene's loop is, which samples of the two-pass
-// render become the OGG, each track's notes over both passes, its MIDI file
+// Surge or Python: how long a scene's loop is, which samples of the three-pass
+// render become the OGG, each track's notes over every pass, its MIDI file
 // and the key its cached stem is filed under.
 
 import { createHash } from 'node:crypto';
 import { sceneEvents, sceneBars, stepSeconds, barSeconds } from '../../src/music/song.js';
 import { MUSIC_STEPS_PER_BAR, MUSIC_RENDER_PASSES, MUSIC_RENDER_TAIL_S,
-         MUSIC_RENDER_PPQ } from '../../src/config/music.js';
+         MUSIC_RENDER_PPQ, MUSIC_RENDER_SEAM_S } from '../../src/config/music.js';
 import { smf, noteEvents } from './smf.mjs';
 
-// The loop is rendered twice and the second pass is kept: [L, 2L) already
-// carries the first pass's releases, delay and reverb, so the sample after
-// the last one is the first one and the wrap is silent. Rounding the start
-// and the length separately would let the window drift a sample from the
-// bar line, so the end is rounded too and the length is their difference.
-export function loopWindow(seconds, sr, passes = MUSIC_RENDER_PASSES, tail = MUSIC_RENDER_TAIL_S) {
-  const start = Math.round((passes - 1) * seconds * sr);
-  const end = Math.round(passes * seconds * sr);
-  return { start, end, frames: end - start, total: Math.round((passes * seconds + tail) * sr) };
+// The second pass is kept: [L, 2L) already carries the first pass's
+// releases, delay and reverb. Its head is crossfaded from [2L, 2L + fade),
+// the third pass's opening, which is what truly follows the loop's last
+// sample; so the wrap from the end to the head is continuous even though
+// Surge's free-running oscillators never repeat a pass sample for sample.
+// Rounding the start and the length separately would let the window drift a
+// sample from the bar line, so the end is rounded too and the length is
+// their difference.
+export function loopWindow(seconds, sr, passes = MUSIC_RENDER_PASSES, tail = MUSIC_RENDER_TAIL_S,
+                           seam = MUSIC_RENDER_SEAM_S) {
+  if (passes < 3) throw new Error('the seam needs a third pass to crossfade from');
+  const start = Math.round(seconds * sr), end = Math.round(2 * seconds * sr);
+  const fade = Math.min(Math.round(seam * sr), end - start);
+  return { start, end, frames: end - start, fade, total: Math.round((passes * seconds + tail) * sr) };
 }
 
 export const sceneSeconds = (song, scene) => sceneBars(song, scene) * barSeconds(song);

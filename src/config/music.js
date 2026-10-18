@@ -40,12 +40,17 @@ export const MUSIC_TRUE_PEAK = -1;
 
 // the render
 // tools/music/render.mjs: one sample rate for every stem so a cached stem
-// mixes with a fresh one; two passes of the loop plus a tail long enough for
-// the longest release and the delay to die, so the window [L, 2L) already
-// holds the first pass's tail and wraps without a seam.
+// mixes with a fresh one. The loop kept is the second pass, [L, 2L), which
+// already holds the first pass's releases, delay and reverb. Surge's
+// oscillators and LFOs run free, so the second pass never ends on the sample
+// its own head began from; a third pass is rendered so the samples after 2L
+// are the true continuation of the loop's end, and the head is crossfaded
+// from that continuation into the second pass over MUSIC_RENDER_SEAM_S. The
+// tail lets the third pass's releases finish inside the render.
 export const MUSIC_RENDER_SR = 44100;
-export const MUSIC_RENDER_PASSES = 2;
+export const MUSIC_RENDER_PASSES = 3;
 export const MUSIC_RENDER_TAIL_S = 3;
+export const MUSIC_RENDER_SEAM_S = 0.01;
 // Surge XT's first process() after a state change is silent, so it is primed.
 export const MUSIC_RENDER_PRIME_S = 0.5;
 // Each Surge takes 30 to 55 s and a core to load; other agents share the machine.

@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { smf, noteEvents, vlq } from '../tools/music/smf.mjs';
 import { loopWindow, sceneSeconds, passEvents, midiFile, stemKey } from '../tools/music/plan.mjs';
-import { MUSIC_RENDER_PPQ, MUSIC_RENDER_SR, MUSIC_RENDER_TAIL_S } from '../src/config/music.js';
+import { MUSIC_RENDER_PPQ, MUSIC_RENDER_SR, MUSIC_RENDER_TAIL_S, MUSIC_RENDER_PASSES,
+         MUSIC_RENDER_SEAM_S } from '../src/config/music.js';
 
 const song = JSON.parse(readFileSync(new URL('../src/music/songs/yard.json', import.meta.url), 'utf8'));
 
@@ -39,7 +40,7 @@ test('delta times are variable-length quantities', () => {
   assert.deepEqual(vlq(0x3FFF), [0xFF, 0x7F]);
 });
 
-test('the yard loop is four bars at 92 bpm and its window is the second pass', () => {
+test('the yard loop is four bars at 92 bpm and its window is the second of three passes', () => {
   const L = sceneSeconds(song, 'yard');
   assert.ok(Math.abs(L - 4 * 4 * 60 / 92) < 1e-9);
   const w = loopWindow(L, MUSIC_RENDER_SR);
@@ -47,21 +48,24 @@ test('the yard loop is four bars at 92 bpm and its window is the second pass', (
   assert.equal(w.end, Math.round(2 * L * MUSIC_RENDER_SR));
   assert.equal(w.frames, w.end - w.start);
   assert.ok(Math.abs(w.frames / MUSIC_RENDER_SR - L) < 1 / MUSIC_RENDER_SR);
-  assert.equal(w.total, Math.round((2 * L + MUSIC_RENDER_TAIL_S) * MUSIC_RENDER_SR));
-  assert.ok(w.total > w.end, 'the render runs past the window, so the window is never cut short');
+  assert.equal(w.total, Math.round((MUSIC_RENDER_PASSES * L + MUSIC_RENDER_TAIL_S) * MUSIC_RENDER_SR));
+  assert.equal(w.fade, Math.round(MUSIC_RENDER_SEAM_S * MUSIC_RENDER_SR));
+  // The head's crossfade reads [end, end + fade), the third pass's opening.
+  assert.ok(w.total >= w.end + L * MUSIC_RENDER_SR, 'a whole pass follows the window, so the seam reads real samples');
+  assert.throws(() => loopWindow(L, MUSIC_RENDER_SR, 2), /third pass/);
 });
 
-test('both passes carry every note, the second a loop later', () => {
-  const evs = passEvents(song, 'yard', 'lead'), half = evs.length / 2;
-  assert.equal(evs.length, 32);
-  for (let i = 0; i < half; i++) assert.equal(evs[i + half].step - evs[i].step, 64);
-  // The drums' two-bar clip repeats to fill the four-bar loop, twice over.
-  assert.equal(passEvents(song, 'yard', 'drums').filter(e => e.pitch === 36).length, 6 * 2 * 2);
+test('every pass carries every note, each a loop after the last', () => {
+  const evs = passEvents(song, 'yard', 'lead'), one = 16;
+  assert.equal(evs.length, one * MUSIC_RENDER_PASSES);
+  for (let i = one; i < evs.length; i++) assert.equal(evs[i].step - evs[i - one].step, 64);
+  // The drums' two-bar clip repeats to fill the four-bar loop, on every pass.
+  assert.equal(passEvents(song, 'yard', 'drums').filter(e => e.pitch === 36).length, 6 * 2 * MUSIC_RENDER_PASSES);
 });
 
 test('the MIDI file of a stem ends at the render length', () => {
   const evs = passEvents(song, 'yard', 'bass'), L = sceneSeconds(song, 'yard');
-  const b = midiFile(song, evs, 2 * L + MUSIC_RENDER_TAIL_S);
+  const b = midiFile(song, evs, MUSIC_RENDER_PASSES * L + MUSIC_RENDER_TAIL_S);
   assert.equal(b.subarray(0, 4).toString('latin1'), 'MThd');
   assert.equal(b.readUInt16BE(12), MUSIC_RENDER_PPQ);
 });
