@@ -83,7 +83,11 @@ export function letGoDeepFrame() {
 // An act's place (acts.js): the yard's zoom, or less if the window is too
 // short to hold the place from its top to its floor and the floor's margin
 // -- the deep's fit, without the deep's holds, which no act has yet.
+// The afterlife is the exception: it is drawn at the yard's own zoom, so a
+// body is the size it was in the yard, and nothing above its floor strip
+// needs fitting at rest -- the dive lifts the frame to the throne itself.
 function placeZoom(v) {
+  if (v === 'after') return 1;
   const pl = actPlace(v);
   const fit = Math.min(1, S.H / ((pl.h + pl.margin) * CELL / P)) * (CELL / yardCell());
   const unit = yardCell() * S.dpr;

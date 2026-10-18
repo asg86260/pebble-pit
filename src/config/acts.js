@@ -124,3 +124,8 @@ export const MANSION_SOUL_EVERY_S = 0.4;
 export const MANSION_FILE_W = 8;             // souls a file
 export const MANSION_FILE_AT = 54;           // the files' left end, cells off the yard's left edge
 export const MANSION_SHEET_AFTER_S = 4;
+
+// --- act 3 flow (the playthrough track, 2026-10-18) ---
+// The pair up on the pedestal after the refusal: the road's drawing of them
+// fades off over the pedestal's own (and back on before they climb down).
+export const ACT_PEDESTAL_FADE_S = 0.6;

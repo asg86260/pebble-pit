@@ -1,8 +1,8 @@
 // The serpent's meals (DESIGN.md, "The serpent eats to heal"): when a
 // phase's window is nearly up, it takes the nearest creature swimming the
 // deep with its constrict (the owner's B, "drag",
-// docs/mocks/serpent-constrict-meal-2026-10-15.html) -- the comb lights head
-// first, bolts leave its tips, an orb closes round the creature, the orb is
+// docs/mocks/serpent-constrict-meal-2026-10-15.html) -- the comb, filling
+// head first over the window, lights its last spike, bolts leave its tips, an orb closes round the creature, the orb is
 // hauled to the mouth shrinking as it nears, the jaws take it and the swallow
 // runs to the belly, where the heal lands (`deep/serpent.js`).
 //
@@ -93,11 +93,20 @@ export function orbOf(ms, g = S.mealGo) {
   }
   return { x, y, r, alpha, squash: r / ORB_R };
 }
+// The comb is the meal's timer (the owner's A, docs/mocks/serpent-comb-timer-2026-10-18.html):
+// it fills head first on the window's clock, so the stun and Held stop it as
+// they stop the window, and its last spike lights as the warning ends and the
+// bolts leave. Dark outside the fight and through a recoil, whose clock stands.
+export function combCharge() {
+  if (!S.snatched || S.recoilT != null) return 0;
+  const full = Math.max(MEAL_WARN_S, windowS() - MEAL_LEAD_S + MEAL_WARN_S);
+  return Math.max(0, Math.min(1, S.mealT / full));
+}
 // How much of the comb is lit, head first, 0..1.
 export function mealComb(g = S.mealGo) {
   const b = beatOf(g);
-  if (!b) return 0;
-  if (b.name === 'warn') return b.k;
+  if (!b) return combCharge();
+  if (b.name === 'warn') return Math.max(b.k, combCharge());
   if (b.name === 'bolts') return 1;
   if (b.name === 'reel') return Math.max(MEAL_COMB_LEFT, 1 - ease(b.k));
   if (b.name === 'gulp') return b.k < MEAL_GULP_BOLTS ? MEAL_COMB_LEFT : 0;

@@ -584,7 +584,7 @@ function drawVeil(t, pts) {
 // How much of the comb is lit, head first, 0..1: through the orb's warning,
 // and held while the bolts fly.
 let crestTips = [];
-// The meal's constrict lights it the same way (deep/meals.js, `mealComb`).
+// The meal's timer fills it the same way over the whole window (deep/meals.js, `mealComb`).
 function combLit(t) {
   const meal = S.view === 'deep' && bellyWhole() ? mealComb() : 0;
   const p = part();

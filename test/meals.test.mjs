@@ -8,7 +8,7 @@
 
 import { group, ok, yard, run } from './helpers.mjs';
 import { SERPENT_WOUND, SERPENT_WINDOW, MEAL_WARN_S, ORB_BOLT_S, ORB_R, MEAL_REEL, MEAL_SKIP, MEAL_BACK_S, P } from '../src/config.js';
-import { beatOf, orbOf, mouthAt, mealJaw, landAt } from '../src/deep/meals.js';
+import { beatOf, orbOf, mouthAt, mealJaw, mealComb, landAt } from '../src/deep/meals.js';
 import { strike } from '../src/deep/serpent.js';
 import { lay } from '../src/deep/statuses.js';
 import { bellyAt, coilAt } from '../src/deep/place.js';
@@ -42,6 +42,36 @@ group('a meal lands as the window runs out: each phase its own, shorter as the f
   return [
     ok(bad.length === 0, 'every meal lands within a couple of seconds of its window', bad.join('; ')),
     ok(SERPENT_WINDOW.every((w, i) => i === 0 || w < SERPENT_WINDOW[i - 1]), 'and each window is shorter than the last', SERPENT_WINDOW.join(' '))
+  ];
+});
+
+// The comb is the meal's timer (the owner's A,
+// docs/mocks/serpent-comb-timer-2026-10-18.html): it fills over the whole
+// window, never back, held by a stun, and is full as the bolts leave.
+group('the comb fills over the window and is full as the bolts leave', async () => {
+  deepYard(0, 0);
+  const W = SERPENT_WINDOW[0], at = [];
+  let back = 0, last = 0, stunHeld = null;
+  while (!S.mealGo || beatOf().name === 'warn') {
+    frame();
+    const c = mealComb();
+    if (c < last - 1e-9) back++;
+    last = c;
+    if (!stunHeld && S.mealT >= W / 2) {
+      stunNow();
+      const was = mealComb(); for (let i = 0; i < 30; i++) frame();
+      stunHeld = { was, now: mealComb() };
+      for (let i = 0; i < 6 * 60 && S.serpentStun > 0; i++) frame();
+    }
+    if (at.length < 3 && S.mealT >= W * (at.length + 1) / 4) at.push(mealComb());
+    if (S.mealT > W + 10) break;
+  }
+  const bolts = beatOf()?.name;
+  return [
+    ok(at.length === 3 && at[0] > 0.15 && at[0] < 0.4 && at[2] > 0.6 && at[2] < 0.95, 'a quarter, half and three quarters into the window it is partly lit, and more each time', at.map(k => k.toFixed(2)).join(' ')),
+    ok(back === 0, 'it never goes back while it fills', `${back} frames went back`),
+    ok(stunHeld && stunHeld.now === stunHeld.was, 'a stun holds it where it is', JSON.stringify(stunHeld)),
+    ok(bolts === 'bolts' && mealComb() === 1 && last > 0.99, 'and it is full as the bolts leave', `${bolts}, ${last}`)
   ];
 });
 

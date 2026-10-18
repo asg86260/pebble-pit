@@ -1,0 +1,1468 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Act 3 Hand Cards</title>
+<!--
+  Act 3's hand-work cards, redrawn: the two-person saw (three takes), the
+  card system (three directions, each with the work and upgrades tabs of the
+  voted card-tabs option A), the stump (no wobble; a shovel over it when it
+  can be dug; two crit options), and the built cards now beside the pick.
+  Every motion's rule is the built one (src/config/gestures.js, copied in);
+  the cards are drawn by this page from plain cells, not by the game. Nothing
+  here is read from src/: the page stands alone but for the "now" crops,
+  which are inlined. Every word is a placeholder.
+-->
+<style>
+  :root {
+    --bg: #ffffff; --fg: #000000; --muted: #5f5f5f; --line: #d6d6d6; --soft: #efefef; --warn: #757575;
+    --paper: #fff; --ink: #000; --ink-4: #666; --ink-7: #a4a4a4; --ink-off: #767676;
+    --coin-crop: #2e9e4b; --coin-ore: #2f5fd0; --coin-spark: #d93a25;
+    --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
+    --card-shadow: 4px 4px 0 rgba(0, 0, 0, .2);
+    --face: "Courier Prime", "Courier New", monospace;
+    --now-filter: none;
+  }
+  /* The dark page is the light one mapped by lightness onto #e0e0e0 on
+     #1f1f1f (src/ink.js), never inverted. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a;
+      --paper: #1f1f1f; --ink: #e0e0e0; --ink-4: #939393; --ink-7: #5f5f5f; --ink-off: #878787;
+      --coin-crop: #6fd08a; --coin-ore: #7d9cf0; --coin-spark: #f06a55;
+      --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
+      --card-shadow: 4px 4px 0 rgba(224, 224, 224, .2);
+      --now-filter: invert(1) contrast(.757);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a;
+    --paper: #1f1f1f; --ink: #e0e0e0; --ink-4: #939393; --ink-7: #5f5f5f; --ink-off: #878787;
+    --coin-crop: #6fd08a; --coin-ore: #7d9cf0; --coin-spark: #f06a55;
+    --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
+    --card-shadow: 4px 4px 0 rgba(224, 224, 224, .2);
+    --now-filter: invert(1) contrast(.757);
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--fg); }
+  body { margin: 0; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  h3 { font-size: 14px; margin: 10px 0 4px; }
+  p { margin: 0 0 8px; color: var(--muted); }
+  ul, ol { margin: 4px 0 8px; padding-left: 18px; color: var(--muted); }
+  main b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
+  .bar button { font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .bar label { color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+  .ph { border-bottom: 1px dashed currentColor; }
+  .ph::after { content: '*'; color: var(--warn); }
+  .w::after { content: '*'; }
+  .k { color: var(--muted); }
+  .rec { border-left: 3px solid var(--fg); padding: 4px 10px; background: var(--soft); color: var(--fg); }
+  section { border-top: 1px solid var(--line); padding: 14px 0; }
+  .beat { font-size: 12px; color: var(--muted); min-height: 1.5em; }
+  .passes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .passes > div { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; font-size: 12px; }
+  .passes h3 { margin: 0 0 4px; font-size: 13px; }
+  .passes ol { padding-left: 16px; margin: 0; }
+  @media (max-width: 760px) { .passes { grid-template-columns: 1fr; } }
+
+  /* --- strips of shots: frames at real size ------------------------------- */
+  .strip { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+  .strip figure { margin: 0; }
+  .strip figcaption { font-size: 12px; color: var(--muted); margin-top: 2px; max-width: 200px; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+  canvas.part { display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .take { border: 1px solid var(--line); border-radius: 4px; padding: 10px; margin: 0 0 10px; }
+  .take.picked { border-color: var(--fg); border-width: 2px; }
+  .take h3 { margin-top: 0; }
+
+  /* --- the stage a card stands in: its station on the camp under it ------ */
+  .sheet { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: flex-end; }
+  .stagebox { position: relative; padding-bottom: 0; min-width: 0; max-width: 100%; }
+  .stagebox .scrollx { overflow-x: auto; overflow-y: hidden; padding: 2px 0 0; }
+  .stagebox canvas.camp { display: block; }
+  .zoomwrap { transform-origin: 0 0; }
+
+  /* --- the card: the card-tabs mock's option A (the card grows on upgrades) --- */
+  .card { position: relative; display: inline-block; font-family: var(--face); font-size: 12px; line-height: 1; color: var(--ink); vertical-align: bottom; }
+  .card .tabs { display: flex; gap: 4px; padding-left: 6px; height: 19px; align-items: flex-end; }
+  .card .tab { font: inherit; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; line-height: 1;
+               padding: 3px 8px 3px; margin-bottom: -2px; cursor: pointer;
+               color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-bottom: 0;
+               transition: background-color .16s linear, color .16s linear; }
+  .card .tab.on { color: var(--paper); background: var(--ink); }
+  .card .paper { position: relative; background: var(--paper); border: 2px solid var(--ink); box-shadow: var(--card-shadow); padding: 0 4px 4px; }
+  .card .head { position: relative; height: 20px; padding: 6px 2px 0; font-size: 11px; letter-spacing: .09em; text-transform: uppercase; border-bottom: 2px solid var(--ink); white-space: nowrap; }
+  .card .body { position: relative; overflow: hidden; margin-top: 2px; transition: width .28s cubic-bezier(.22, .61, .36, 1), height .28s cubic-bezier(.22, .61, .36, 1); }
+  .card .face { position: absolute; left: 0; top: 0; width: max-content; opacity: 0; pointer-events: none; transition: opacity .18s linear; }
+  .card .face.on { opacity: 1; pointer-events: auto; transition: opacity .18s linear .06s; }
+  .card .face.scroll-x { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--ink) var(--paper); }
+  .card .workface { display: flex; gap: 10px; align-items: flex-start; }
+  .card .tail { position: absolute; bottom: -8px; width: 0; height: 0; margin-left: -7px;
+                border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid var(--ink); }
+  .card .tail::after { content: ''; position: absolute; left: -4px; top: -9px; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--paper); }
+
+  /* (B) the head as the yard's black sign: the name in paper on ink, the steps
+     to the next thing made as pips at its right end */
+  .dirB .card .head { background: var(--ink); color: var(--paper); margin: 0 -4px; padding: 6px 6px 0; border-bottom: 0; height: 20px; }
+  .dirB .card .head .pips { position: absolute; right: 6px; top: 6px; display: flex; gap: 2px; }
+  .dirB .card .head .pips i { display: block; width: 6px; height: 8px; border: 1px solid var(--paper); }
+  .dirB .card .head .pips i.on { background: var(--paper); }
+  .dirB .card .head .crit { position: absolute; right: 6px; top: 5px; font-size: 11px; letter-spacing: .06em; text-transform: none; }
+  /* (C) the head quiet: the name in grey, no rule, the progress bar after it */
+  .dirC .card .head { color: var(--ink-4); border-bottom: 0; display: flex; gap: 8px; align-items: flex-start; }
+  .dirC .card .head .prog { flex: 1; height: 10px; margin-top: -1px; border: 2px solid var(--ink); position: relative; max-width: 96px; margin-left: auto; }
+  .dirC .card .head .prog b { position: absolute; left: 2px; top: 2px; bottom: 2px; background: var(--ink); }
+
+  /* --- the rows: the yard board's tiles (copied from the card-tabs mock) -- */
+  .rows { position: relative; display: grid; grid-template-columns: repeat(var(--cols, 3), 147px); justify-content: start; align-items: stretch;
+          padding: 4px 0 0; font-size: 12px; line-height: 1; color: var(--ink); letter-spacing: 0; text-transform: none; white-space: normal; }
+  .rows::after { content: ''; grid-column: 1 / -1; border-top: 5px solid var(--ink); }
+  .rows .sect { position: relative; grid-column: 1 / -1; justify-self: start; margin: 4px 0 6px; padding: 3px 10px 4px; background: var(--ink); color: var(--paper);
+                font-weight: bold; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; }
+  .rows + .rows { margin-top: 8px; }
+  .card .face.scroll-y { overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: var(--ink) var(--paper); }
+  .tile { position: relative; display: grid; grid-template-columns: 107px; grid-template-rows: 24px auto auto auto; row-gap: 5px; justify-items: center; align-content: start;
+          width: 141px; min-height: 125px; margin: 0 0 6px; padding: 8px 16px; border: 1px solid transparent;
+          font: inherit; color: var(--ink); text-align: center; cursor: pointer;
+          background-color: var(--paper); background-image: var(--dots); background-position: -3px -4px;
+          transition: transform .12s ease-out, border-color .12s linear; scroll-snap-align: start; }
+  .tile::before { content: ''; position: absolute; top: 2px; left: 4px; width: 0; height: 0; border-top: 10px solid var(--ink); border-right: 10px solid transparent; }
+  @media (hover: hover) { .tile:not(.off):not(.done):hover { border-color: var(--ink); transform: translateY(-2px); } }
+  .tile .pic { display: block; height: 24px; }
+  .tile .pic canvas { display: block; width: 28px; height: 28px; margin-top: -2px; }
+  .tile .name { display: block; }
+  .tile .what { display: block; font-style: normal; letter-spacing: .08em; line-height: 13px; text-transform: uppercase; }
+  .tile.off .what, .tile.done .what { color: var(--ink-off); }
+  .tile .gain { display: block; width: 123px; margin-left: -8px; color: var(--ink-4); line-height: 13px; font-style: normal; }
+  .tile .tag { display: block; max-width: 131px; border: 1px solid var(--ink); background: var(--paper); padding: 0 0 1px; letter-spacing: .08em; line-height: 16px; text-transform: uppercase; }
+  .tile.short .tag, .tile.off .tag { border-style: dashed; color: var(--ink-off); }
+  .tile.done .tag { border-color: transparent; color: var(--ink-off); }
+  .tile .cost { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 6px; padding: 1px 6px 0; }
+  .tile .cost > span { display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+  .tile .cost .have { color: var(--ink); }
+  .tile .cost .short { color: var(--ink-off); }
+  .tile .cost .say { font-size: 11px; }
+  /* the yard's coin marks (style.css) */
+  i.dust { display: inline-block; width: 7px; height: 7px; background: currentColor; }
+  .have i.dust, .purse i.dust { background: var(--ink); }
+  i.shard { display: inline-block; width: 0; height: 0; border-left: 4.5px solid transparent; border-right: 4.5px solid transparent; border-bottom: 8px solid var(--coin-ore); }
+  i.spore { display: inline-block; width: 9px; height: 9px; background: var(--coin-crop); clip-path: polygon(0% 50%, 25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%); }
+  i.spark { display: inline-block; width: 11px; height: 11px;
+            background: linear-gradient(var(--coin-spark), var(--coin-spark)) center/3px 11px no-repeat, linear-gradient(var(--coin-spark), var(--coin-spark)) center/11px 3px no-repeat; }
+  /* the act's three coins, proposed: ink marks the yard's size */
+  svg.act { display: inline-block; width: 9px; height: 9px; fill: currentColor; shape-rendering: crispEdges; vertical-align: -1px; }
+  .marks { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font-family: var(--face); font-size: 12px; color: var(--ink); background: var(--paper); border: 2px solid var(--ink); padding: 8px 10px; box-shadow: var(--card-shadow); width: max-content; max-width: 100%; }
+  .marks > span { display: inline-flex; gap: 6px; align-items: center; letter-spacing: .08em; }
+  .marks .big svg.act { width: 27px; height: 27px; }
+  .purse { display: flex; flex-wrap: wrap; gap: 4px 12px; font-family: var(--face); font-size: 12px; color: var(--ink); background: var(--paper); border: 2px solid var(--ink); padding: 4px 8px; width: max-content; max-width: 100%; box-shadow: var(--card-shadow); }
+  .purse > span { display: inline-flex; gap: 5px; align-items: center; }
+
+  /* --- now vs the pick ---------------------------------------------------- */
+  .vs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 470px), 1fr)); gap: 14px; }
+  .vs > div { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; border-top: 1px dashed var(--line); padding-top: 8px; }
+  .vs img { display: block; image-rendering: pixelated; filter: var(--now-filter); }
+  .vs .lbl { font-size: 12px; color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { .card .body, .card .face, .tile { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Act 3 hand-work cards <span class="k">(mock)</span></h1>
+  <p>The hand-work cards redrawn, at their real size (a card cell is six screen pixels) over the camp at its real scale
+     (a camp cell is four). The motions and their speeds are the built ones, unchanged; what changes is how each card looks.
+     Every card on this page is live: work it with a mouse or a finger. Each card has the voted card-tabs layout (option A:
+     a <b>work</b> tab that is the hand-work face, and an <b>upgrades</b> tab the card eases taller and wider for, shelving a
+     POSTS plank and an UPGRADES plank as the yard board does, three tiles a plank at most, two on a phone, scrolling past the
+     sky's room; LT / RT switch tabs on a pad). The shack keeps its one BUILD tab and the pedestal its upgrades only, both as
+     the card-tabs mock drew them and not redrawn here. Drawn by this
+     page from plain cells, not by the game. <b>Every word on it is a placeholder</b> (<span class="ph">marked like this</span>;
+     on the cards themselves, a star after the word).</p>
+  <p class="rec"><b>Recommendations, pending the owner's vote:</b> <span class="ph" id="rec-line">saw take 1, direction A, stump option (a)</span>.
+     <span class="ph">The whole card as page elements (tabs, head, shelves of the yard's real tiles), with the work face (part, gauge, progress, hand, crit) one canvas inside it: the tiles then come from the board's own builder and stylesheet, the text is the page's crisp type, the shelves scroll natively on a phone, and only the part, which needs the pixel grid, is drawn.</span></p>
+  <div class="bar">
+    <span class="k">page</span>
+    <button data-theme-set="light">light</button>
+    <button data-theme-set="dark">dark</button>
+    <span class="k" style="margin-left:12px">zoom</span>
+    <button data-zoom="1" class="on">1x</button>
+    <button data-zoom="2">2x</button>
+    <button data-zoom="3">3x</button>
+    <button id="hands-again" style="margin-left:12px"><span class="ph">show every hand again</span></button>
+    <button id="crit-all"><span class="ph">preview a crit on every card</span></button>
+    <button id="refill"><span class="ph">refill the purse</span></button>
+  </div>
+
+  <section id="sec-saw">
+    <h2>1 · <span class="ph">the two-person saw: three takes</span></h2>
+    <p><span class="ph">A long saw across the trunk: blade, teeth, a handle at each end, your partner on the far one. Every take is level and plumb; the falling tree turns only in held steps of 45 degrees, so no line is ever at an odd angle. The first card of each take is live (drag the near handle back and forth: a stroke end to end is a chop, eight fell it); the other three are its idle, mid-stroke and falling frames.</span></p>
+    <div id="saw-takes"></div>
+  </section>
+
+  <section id="sec-dirs">
+    <h2>2 · <span class="ph">the card system: three directions</span></h2>
+    <p><span class="ph">The same eight cards in each direction: the flywheel, the vat, the press bar, the feed button, the hammer pad, the saw, the stump grip, the sawdust load. The speed gauge only ever fills with speed (faster is more, no band to aim for); progress counts toward the next thing made; the ghost hand fades out after three goes; the crit is a held pose, no flash, no shake.</span></p>
+    <div class="bar">
+      <span class="k">direction</span>
+      <button data-dir="A" class="on">A · <span class="ph">foot rail</span></button>
+      <button data-dir="B">B · <span class="ph">black sign</span></button>
+      <button data-dir="C">C · <span class="ph">quiet head</span></button>
+      <span class="k" style="margin-left:12px">tab</span>
+      <button data-alltab="work" class="on"><span class="ph">all on work</span></button>
+      <button data-alltab="upgrades"><span class="ph">all on upgrades</span></button>
+    </div>
+    <div id="dir-say"></div>
+    <div id="purse-a" class="purse" style="margin: 8px 0 12px"></div>
+    <div id="dir-sheet" class="sheet"></div>
+    <h3><span class="ph">the passes, and what each changed</span></h3>
+    <div class="passes" id="passes"></div>
+    <p class="rec"><span class="ph">Recommend A. It is the yard's own vocabulary end to end: the board's title and rule, the yard's progress bar exactly (a paper box, an ink rule, ink a cell at a time), the "faster" chevrons from the shelf's badges, and the built crit's figure in a ruled patch. Everything a player reads sits in one rail under the part, so the part above is never crowded. B's black sign is strong but fights the black tabs right above it, and its pips cannot show a smooth pull like the press's. C's stamp is the clearest crit of the three and could be borrowed into A; its heavy tones muddy the vat and the plank.</span></p>
+  </section>
+
+  <section id="sec-stump">
+    <h2>3 · <span class="ph">the stump</span></h2>
+    <p><span class="ph">The stump never moves by itself: it moves only while you pull its grip up, and settles back when you let go. When a stump can be dug, a shovel fades in over it in the camp, drawn as the yard's glyphs and pile marks are. Its crit, with no wobble to time it to, is one of two:</span></p>
+    <div class="bar">
+      <span class="k">crit</span>
+      <button data-crit="a" class="on">(a) <span class="ph">the roots give under your pull</span></button>
+      <button data-crit="b">(b) <span class="ph">no stump crit</span></button>
+    </div>
+    <ul>
+      <li><b>(a)</b> <span class="ph">Hold the grip up past the line and the stump strains up a cell, then another, then a root snaps: the broken root is held open for six tenths of a second, and a yank (a quick pull higher) in that moment tears the rest out at once. Every moment is one you made; nothing comes on its own clock.</span></li>
+      <li><b>(b)</b> <span class="ph">Hold the grip up and a root snaps every seven tenths of a second, three and it is out. The pedestal's big bubble is the only crit left in the act.</span></li>
+    </ul>
+    <p class="rec"><span class="ph">Recommend (a): it keeps the second crit the owner voted for, and it is caused by your own pull, so it teaches itself. (b) is the fallback if (a) reads as fiddly on a phone.</span></p>
+    <div class="stagebox dirA" id="stump-stage"></div>
+    <div class="beat" id="stump-beat"></div>
+    <h3><span class="ph">in the camp, at its scale</span></h3>
+    <div class="strip" id="stump-world"></div>
+  </section>
+
+  <section id="sec-vs">
+    <h2>4 · <span class="ph">now, and the recommended direction</span></h2>
+    <p><span class="ph">Left, the built card as the game draws it today (a crop off the game's own canvas); right, the same card in the recommended direction, live.</span></p>
+    <div class="vs" id="vs"></div>
+  </section>
+
+  <section id="sec-coins">
+    <h2>5 · <span class="ph">marks for the act's coins</span></h2>
+    <p><span class="ph">The act's coins are written as words in a bill today, which makes the tags wide. Proposed: three ink marks at the yard's coin size, beside the yard's own. Ink only, since red stays the machines'. They are on every tile above.</span></p>
+    <div class="marks" id="marks"></div>
+  </section>
+
+  <section>
+    <h2>What the mock cannot show</h2>
+    <ul>
+      <li>The real renderer: these are cells drawn by this page, not render/aftercard.js; the camp is a strip of stand-in stations at the camp's scale, not after.js's place, its crowd or its members walking.</li>
+      <li>The card on the glass: here each card stands in its own box; in the game it hangs over its station, eases aside for a neighbor and rises in as it opens. The hand-control mock showed that, and it is unchanged.</li>
+      <li>The house face: Courier New stands in for Courier Prime, so the head and tiles are a few pixels off.</li>
+      <li>Real numbers: the speeds, caps and counts are the built defaults copied in; the purse, the posts and the bills are a made-up mid-act yard, and buying only changes numbers (in the game, coins fly up and a member walks to the post).</li>
+      <li>The grove: the tree and the stump come back here on their own after a few seconds so the card can be worked again; in the game the tree falls into the grove's own cycle.</li>
+      <li>Gamepad feel: none of this reads a pad. The pad lines are the card-tabs mock's (LT / RT switch tabs).</li>
+      <li>A real phone: the page narrows and the cards' planks scroll sideways, but thumb reach is not shown.</li>
+      <li>The "now" crops are light-page captures, mapped by lightness for the dark page; the game's own dark canvas may differ by a step.</li>
+      <li>Sound.</li>
+    </ul>
+  </section>
+</main>
+<script>
+'use strict';
+// ---------------------------------------------------------------------------
+// The ramp, the grid, the clock
+// ---------------------------------------------------------------------------
+const P = 6, D = 2, CAMP = 4;                       // a card cell, the cue's dot, a camp cell (screen px)
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const DARKG = GREY.map(h => { const v = parseInt(h.slice(1, 3), 16) / 255; const c = Math.round(0x1f + (0xe0 - 0x1f) * (1 - v)).toString(16).padStart(2, '0'); return '#' + c + c + c; });
+let PAL = GREY, T = 0, MANUAL = false, ZOOM = 1;
+const isDark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const clamp01 = v => clamp(v, 0, 1);
+const wrap = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
+const toneAt = (c, r, list) => list[((((c * 73856093) ^ (r * 19349663)) >>> 0) % 9973) % list.length];
+const words = s => s.split(' ').map(w => `<span class="w">${w}</span>`).join(' ');
+const PH = s => s.split(' ').map(w => w + '*').join(' ');     // a placeholder on the canvas: a star after each word
+
+// --- the built rules (src/config/gestures.js and config/after.js, copied) ---
+const G = {
+  CUE_USES: 3, CUE_FADE_S: 0.8, CUE_ALPHA: 0.6, CUE_LOOP_S: 1.4, CUE_TAP_S: 0.4,
+  GAUGE_EASE: 6, STAR_HOLD_S: 0.3, STAR_FADE_S: 0.3, MARK_HOLD_S: 0.55, MARK_FADE_S: 0.45,
+  SAW_AMP: 30, SAW_VMAX: 220, SAW_FOLLOW: 25, SAW_END: 0.8, SAW_EASE: 8, TREE_CHOPS: 8,
+  STUMP_DRAG: 0.5, STUMP_MAX: 21, STUMP_FOLLOW: 20, STUMP_SINK: 40, STRAIN_LIFT: 12, STRAIN_S: 0.7,
+  WINDOW_S: 0.62, YANK_LIFT: 15, YANK_GAIN: 9, DIG: 3,
+  WHEEL_MAX_REV: 2, WHEEL_FEED: 1.6, WHEEL_LOG: 12, WHEEL_EASE: 8, WHEEL_COAST: 0.5, WHEEL_MIN_REV: 0.1,
+  FEED_SLOW: 2, FEED_FAST: 8, FEED_RAMP_S: 1.5, FEED_LOG: 20,
+  STIR_MAX_REV: 1.2, STIR_TURNS: 6, STIR_EASE: 6, STIR_COAST: 2,
+  SWING_S: 0.12, SIGN_BLOWS: 8, TAPS_MAX: 7,
+  BAR_DRAG: 48, BAR_RATE: 5, BAR_RETURN: 2.2, BAR_PRINT: 0.97, BAR_RESET: 0.15, BAR_EASE: 8,
+  FLING_MIN: 80, FLING_MAX: 300, FLING_LOADS: 3, FLING_WINDOW_S: 0.1, FLING_GRAV: 400, FLING_LIFT: 90, LOAD_FADE_S: 0.4
+};
+const FACE_W = 168, PART_ROWS = 12;
+
+// ---------------------------------------------------------------------------
+// Drawing on a card's face: cells on the six-pixel grid
+// ---------------------------------------------------------------------------
+let g = null, ST = null;                            // the face being drawn, and its direction's tones
+const C = (c, r, t) => { g.fillStyle = PAL[t]; g.fillRect(Math.round(c) * P, Math.round(r) * P, P, P); };
+const fill = (c0, r0, c1, r1, t) => { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) C(c, r, t); };
+const outline = (c0, r0, c1, r1, t = 10) => { for (let c = c0; c <= c1; c++) { C(c, r0, t); C(c, r1, t); } for (let r = r0; r <= r1; r++) { C(c0, r, t); C(c1, r, t); } };
+const box = (c0, r0, c1, r1, tones) => { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) C(c, r, r === r0 || r === r1 || c === c0 || c === c1 ? 10 : toneAt(c, r, tones)); };
+function line(c0, r0, c1, r1) {
+  c0 = Math.round(c0); r0 = Math.round(r0); c1 = Math.round(c1); r1 = Math.round(r1);
+  const out = [], dc = Math.abs(c1 - c0), dr = -Math.abs(r1 - r0), sc = c0 < c1 ? 1 : -1, sr = r0 < r1 ? 1 : -1;
+  let e = dc + dr;
+  for (;;) { out.push([c0, r0]); if (c0 === c1 && r0 === r1) break; const e2 = 2 * e; if (e2 >= dr) { e += dr; c0 += sc; } if (e2 <= dc) { e += dc; r0 += sr; } }
+  return out;
+}
+function fade(a, fn) { const was = g.globalAlpha; g.globalAlpha = was * clamp01(a); fn(); g.globalAlpha = was; }
+const dot = (c, r, t = 5) => { g.fillStyle = PAL[t]; g.fillRect(Math.round(c) * P + 2, Math.round(r) * P + 2, D, D); };
+const dots = (pts, t = 5) => { for (const [c, r] of pts) dot(c, r, t); };
+const ring = (cx, cy, rx, ry, n) => Array.from({ length: n }, (_, k) => [Math.round(cx + Math.cos(k / n * 2 * Math.PI) * rx), Math.round(cy + Math.sin(k / n * 2 * Math.PI) * ry)]);
+function chevron(c, r, dc, dr, t = 5) {
+  dot(c, r, t);
+  const pc = -dr, pr = dc;
+  for (let s = 1; s <= 2; s++) { dot(c - dc * s + pc * s, r - dr * s + pr * s, t); dot(c - dc * s - pc * s, r - dr * s - pr * s, t); }
+}
+// A line of the cue's own dots, every other dot, between two cell points.
+function hairline(c0, r0, c1, r1, t) {
+  const x0 = c0 * P + 3, y0 = r0 * P + 3, x1 = c1 * P + 3, y1 = r1 * P + 3, n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / (D * 2)));
+  g.fillStyle = PAL[t];
+  for (let i = 0; i <= n; i++) g.fillRect(Math.round((x0 + (x1 - x0) * i / n) / D) * D - 1, Math.round((y0 + (y1 - y0) * i / n) / D) * D - 1, D, D);
+}
+
+// The ghost hand (render/aftercues.js): a pointing mitten and a fist.
+const HAND = {
+  point: { at: [3.5, 0], m: ['...##.....', '..#oo#....', '..#oo#....', '..#oo#....', '..#oo####.', '.##oooooo#',
+                             '#o#oooooo#', '#oooooooo#', '.#ooooooo#', '..#oooooo#', '...######.'] },
+  grab:  { at: [5, 3.5], m: ['.##.##.##.', '#oo#oo#oo#', '#oooooooo#', '#oooooooo#', '#oooooooo#', '.#ooooooo#', '..#######.'] }
+};
+function handOn(x, y, pose, edge = 8, body = 0) {
+  const h = HAND[pose], x0 = Math.round((x - h.at[0] * D) / D) * D, y0 = Math.round((y - h.at[1] * D) / D) * D;
+  for (let j = 0; j < h.m.length; j++) for (let i = 0; i < h.m[j].length; i++) {
+    const ch = h.m[j][i];
+    if (ch === '.') continue;
+    g.fillStyle = PAL[ch === '#' ? edge : body];
+    g.fillRect(x0 + i * D, y0 + j * D, D, D);
+  }
+}
+const hand = (c, r, pose) => handOn((Math.round(c) + 0.5) * P, Math.round(r) * P + (pose === 'grab' ? P / 2 : 0), pose);
+const loopAt = (s = G.CUE_LOOP_S) => (T % s) / s;
+
+// A crit's figure, 3 by 5 dots: 'x' and the count (render/aftercues.js).
+const FIG = {
+  x: ['...', '#.#', '.#.', '#.#', '...'], 0: ['###', '#.#', '#.#', '#.#', '###'], 1: ['.#.', '##.', '.#.', '.#.', '###'],
+  2: ['###', '..#', '###', '#..', '###'], 3: ['###', '..#', '.##', '..#', '###'], 4: ['#.#', '#.#', '###', '..#', '..#'],
+  5: ['###', '#..', '###', '..#', '###'], 6: ['###', '#..', '###', '#.#', '###'], 7: ['###', '..#', '..#', '..#', '..#'],
+  8: ['###', '#.#', '###', '#.#', '###'], 9: ['###', '#.#', '###', '..#', '###']
+};
+function figure(x, y, n, ink = 10) {
+  const chars = ['x', ...String(n)];
+  g.fillStyle = PAL[ink];
+  chars.forEach((ch, k) => { const f = FIG[ch]; for (let j = 0; j < 5; j++) for (let i = 0; i < 3; i++) if (f[j][i] === '#') g.fillRect(x + (k * 4 + i) * D, y + j * D, D, D); });
+  return (chars.length * 4 - 1) * D;
+}
+function star(x, y) {
+  g.fillStyle = PAL[10];
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+    const n = dx && dy ? 3 : 4;
+    for (let s = 0; s < n; s++) { const d = (4 + s) * D; g.fillRect(Math.round((x + dx * d) / D) * D - 1, Math.round((y + dy * d) / D) * D - 1, D, D); }
+  }
+}
+const heldInk = (age, hold, fade) => (age < hold ? 1 : Math.max(0, 1 - (age - hold) / fade));
+
+// An item's glyph, 8 by 8 at the dot: what the progress counts toward.
+const ITEM = {
+  log:    ['..####..', '.#....#.', '#..##..#', '#.#..#.#', '#.#..#.#', '#..##..#', '.#....#.', '..####..'],
+  batch:  ['.######.', '.#....#.', '.######.', '.#....#.', '.######.', '.#....#.', '.######.', '........'],
+  chips:  ['........', '.##..#..', '.##.##..', '.....##.', '.#......', '.##..##.', '..#..##.', '........'],
+  sign:   ['########', '#......#', '#.####.#', '#......#', '########', '...##...', '...##...', '...##...'],
+  poster: ['.######.', '.#....#.', '.#.##.#.', '.#.##.#.', '.#....#.', '.#.##.#.', '.#....#.', '.######.'],
+  tree:   ['...##...', '..####..', '.######.', '..####..', '.######.', '########', '...##...', '...##...'],
+  stump:  ['........', '........', '.######.', '#......#', '########', '.#....#.', '.#....#.', '#.#..#.#'],
+  load:   ['........', '........', '...##...', '..####..', '.######.', '########', '........', '........']
+};
+function itemGlyph(name, x, y, t = 10, s = D) { g.fillStyle = PAL[t]; ITEM[name].forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') g.fillRect(x + i * s, y + j * s, s, s); })); }
+
+// ---------------------------------------------------------------------------
+// The motions: the built rules a station, on a card's own px (its face's top-left)
+// ---------------------------------------------------------------------------
+const CX = c => (c + 0.5) * P;
+const WHEEL = { c: 13, r: 5, R: 4 }, VAT = { c: 13, r: 4, rx: 10, ry: 2.5 }, BUTTON = { c: 13, r: 5, R: 4 };
+const NAILS = [7, 11, 16, 20], PRESS = { c: 3, r: 1, L: 19, a1: 0.5 }, EDGE = 23;
+const SIM = {
+  mill: {
+    title: 'saw mill', item: 'log', steps: 6, posts: ['sawyer'],
+    init: () => ({ ang: 0, w: 0, grab: false, pa: 0, acc: 0, prog: 0 }),
+    hit: (x, y) => Math.hypot(x - CX(WHEEL.c), y - CX(WHEEL.r)) <= 7 * P,
+    down(s, x, y) { s.grab = true; s.pa = Math.atan2(y - CX(WHEEL.r), x - CX(WHEEL.c)); return true; },
+    move(s, x, y) { const na = Math.atan2(y - CX(WHEEL.r), x - CX(WHEEL.c)), d = wrap(na - s.pa); s.ang += d; s.acc += d; s.pa = na; },
+    up(s) { s.grab = false; },
+    step(s, dt, k) {
+      if (s.grab) { s.w += (s.acc / dt - s.w) * Math.min(1, dt * G.WHEEL_EASE); s.acc = 0; }
+      else { s.w *= Math.exp(-G.WHEEL_COAST * dt); s.ang += s.w * dt; }
+      const r = Math.min(Math.abs(s.w) / (2 * Math.PI), G.WHEEL_MAX_REV);
+      if (r <= G.WHEEL_MIN_REV) return;
+      s.prog = Math.min(G.WHEEL_LOG, s.prog + G.WHEEL_FEED * r * dt);
+      if (s.prog >= G.WHEEL_LOG) { s.prog = 0; k.made++; k.used(); }
+    },
+    speed: s => Math.abs(s.w) / (2 * Math.PI) / G.WHEEL_MAX_REV,
+    prog: s => s.prog / G.WHEEL_LOG
+  },
+  papermill: {
+    title: 'paper mill', item: 'batch', steps: 6, posts: ['pulper'],
+    init: () => ({ ang: -Math.PI / 2, w: 0, grab: false, pa: 0, acc: 0, prog: 0 }),
+    angle: (x, y) => Math.atan2((y - CX(VAT.r)) / (VAT.ry * P), (x - CX(VAT.c)) / (VAT.rx * P)),
+    hit: (x, y) => x >= P && x < 26 * P && y < 12 * P,
+    down(s, x, y) { s.grab = true; s.pa = this.angle(x, y); return true; },
+    move(s, x, y) { const na = this.angle(x, y), d = wrap(na - s.pa); s.ang += d; s.acc += d; s.pa = na; },
+    up(s) { s.grab = false; },
+    step(s, dt, k) {
+      if (s.grab) { s.w += (s.acc / dt - s.w) * Math.min(1, dt * G.STIR_EASE); s.acc = 0; }
+      else { s.w *= Math.exp(-G.STIR_COAST * dt); s.ang += s.w * dt; return; }
+      s.prog = Math.min(G.STIR_TURNS, s.prog + Math.min(Math.abs(s.w) / (2 * Math.PI), G.STIR_MAX_REV) * dt);
+      if (s.prog >= G.STIR_TURNS) { s.prog = 0; k.made++; k.used(); }
+    },
+    speed: s => Math.abs(s.w) / (2 * Math.PI) / G.STIR_MAX_REV,
+    prog: s => s.prog / G.STIR_TURNS
+  },
+  press: {
+    title: 'press', item: 'poster', steps: 4, posts: ['printer', 'paster'],
+    init: () => ({ k: 0, want: 0, grab: false, gy: 0, k0: 0, printed: false, w: 0 }),
+    hit: (x, y) => x >= 2 * P && y < 12 * P,
+    down(s, x, y) { s.grab = true; s.gy = y; s.k0 = s.k; s.want = s.k; return true; },
+    move(s, x, y) { s.want = clamp(s.k0 + (y - s.gy) / G.BAR_DRAG, 0, 1); },
+    up(s) { s.grab = false; },
+    step(s, dt, k) {
+      const before = s.k;
+      if (s.grab) s.k += clamp(s.want - s.k, -G.BAR_RATE * dt, G.BAR_RATE * dt);
+      else s.k = Math.max(0, s.k - G.BAR_RETURN * dt);
+      s.w += (Math.max(0, s.k - before) / dt - s.w) * Math.min(1, dt * G.BAR_EASE);
+      if (s.k < G.BAR_RESET) s.printed = false;
+      if (s.k >= G.BAR_PRINT && !s.printed) { s.printed = true; k.made++; k.used(); k.printedAt = T; }
+    },
+    speed: s => s.w / G.BAR_RATE,
+    prog: s => (s.printed ? 1 : s.k / G.BAR_PRINT)
+  },
+  chipper: {
+    title: 'chipper', item: 'chips', steps: 5, posts: ['feeder'],
+    init: () => ({ hold: false, held: 0, prog: 0 }),
+    hit: (x, y) => Math.hypot(x - CX(BUTTON.c), y - CX(BUTTON.r)) <= 6 * P,
+    feed: s => G.FEED_SLOW + (G.FEED_FAST - G.FEED_SLOW) * Math.min(1, s.held / G.FEED_RAMP_S),
+    down(s) { s.hold = true; s.held = 0; return true; },
+    up(s) { s.hold = false; s.held = 0; },
+    step(s, dt, k) {
+      if (!s.hold) return;
+      s.held += dt;
+      s.prog = Math.min(G.FEED_LOG, s.prog + this.feed(s) * dt);
+      if (s.prog >= G.FEED_LOG) { s.prog = 0; k.made++; k.used(); }
+    },
+    speed(s) { return s.hold ? this.feed(s) / G.FEED_FAST : 0; },
+    prog: s => s.prog / G.FEED_LOG
+  },
+  workshop: {
+    title: 'workshop', item: 'sign', steps: 8, posts: ['joiner', 'carrier'],
+    init: () => ({ strike: -1e9, blows: 0, taps: [] }),
+    hit: (x, y) => y < 12 * P,
+    down(s, x, y, k) {
+      if (T - s.strike < G.SWING_S) return 'tap';
+      s.strike = T; s.taps.push(T); s.blows = Math.min(G.SIGN_BLOWS, s.blows + 1); k.used();
+      if (s.blows >= G.SIGN_BLOWS) { s.blows = 0; k.made++; k.signAt = T; }
+      return 'tap';
+    },
+    step(s) { s.taps = s.taps.filter(t => T - t < 1); },
+    speed: s => s.taps.length / G.TAPS_MAX,
+    prog: s => s.blows / G.SIGN_BLOWS
+  },
+  tree: {
+    title: 'tree', item: 'tree', steps: 8, posts: ['woodcutter', 'hauler'], tabsOf: 'grove',
+    init: () => ({ s: 0, target: 0, s0: 0, gx: 0, from: 0, v: 0, grab: false, chops: 0, fell: null, motes: [], nextMote: 0 }),
+    hit: (x, y) => y >= 2 * P && y < 11 * P,
+    down(s, x) { if (s.fell != null) return false; s.grab = true; s.gx = x; s.s0 = s.target; return true; },
+    move(s, x) { s.target = clamp(s.s0 + (x - s.gx), -G.SAW_AMP, G.SAW_AMP); },
+    up(s) { s.grab = false; },
+    step(s, dt, k) {
+      if (s.fell != null) {
+        s.v *= Math.exp(-6 * dt); s.grab = false;
+        if (T - s.fell > 4.2) Object.assign(s, SIM.tree.init(), { back: T });
+        return;
+      }
+      const prev = s.s;
+      s.s += clamp((s.target - s.s) * Math.min(1, dt * G.SAW_FOLLOW), -G.SAW_VMAX * dt, G.SAW_VMAX * dt);
+      s.v += (Math.abs(s.s - prev) / dt - s.v) * Math.min(1, dt * G.SAW_EASE);
+      const end = s.s <= -G.SAW_END * G.SAW_AMP ? -1 : s.s >= G.SAW_END * G.SAW_AMP ? 1 : 0;
+      if (end && end !== s.from) { if (s.from) { s.chops++; k.used(); if (s.chops >= G.TREE_CHOPS) { s.fell = T; k.made++; } } s.from = end; }
+      // the sawdust out of the kerf while the saw runs
+      if (s.v > 40 && T >= s.nextMote && s.chops > 0) { s.motes.push({ at: T, c: 11 + Math.floor(Math.random() * Math.max(1, Math.round(s.chops / 2))) }); s.nextMote = T + 0.18; }
+      s.motes = s.motes.filter(m => T - m.at < 1.2);
+    },
+    speed: s => s.v / G.SAW_VMAX,
+    prog: s => (s.fell != null ? 1 : s.chops / G.TREE_CHOPS)
+  },
+  stump: {
+    title: 'stump', item: 'stump', steps: 3, posts: ['woodcutter', 'hauler'], tabsOf: 'grove',
+    init: () => ({ lift: 0, target: 0, y0: 0, grab: false, strain: 0, dug: 0, out: null, snap: -1e9, winLift: 0, broke: [] }),
+    hit: (x, y) => x >= 6 * P && x < 21 * P && y < 12 * P,
+    down(s, x, y) { if (s.out != null) return false; s.grab = true; s.y0 = y + s.lift / G.STUMP_DRAG; return true; },
+    move(s, x, y) { s.target = clamp((s.y0 - y) * G.STUMP_DRAG, 0, G.STUMP_MAX); },
+    up(s) { s.grab = false; },
+    step(s, dt, k) {
+      if (s.out != null) { s.lift = Math.max(0, s.lift - G.STUMP_SINK * dt); if (T - s.out > 3) Object.assign(s, SIM.stump.init(), { back: T }); return; }
+      if (s.grab) s.lift += (s.target - s.lift) * Math.min(1, dt * G.STUMP_FOLLOW);
+      else s.lift = Math.max(0, s.lift - G.STUMP_SINK * dt);
+      const dig = () => { s.broke.push(s.dug); s.dug++; k.used(); if (s.dug >= G.DIG) { s.out = T; k.made++; } };
+      if (k.opt.crit === 'a' && s.grab && T - s.snap < G.WINDOW_S && s.lift >= G.YANK_LIFT && s.lift - s.winLift >= G.YANK_GAIN / 2) {
+        // the yank in the root's give: every root left at once. Half the built
+        // gain, since the pull is already at the strain line when a root goes
+        // and the full gain would ask for more than the grip's whole travel.
+        const n = G.DIG - s.dug;
+        while (s.out == null) dig();
+        k.mark(CX(13), 5 * P, n); s.grab = false; s.snap = -1e9;
+      } else if (s.grab && s.lift >= G.STRAIN_LIFT) {
+        s.strain += dt;
+        if (s.strain >= G.STRAIN_S) { s.strain = 0; dig(); s.snap = T; s.winLift = s.lift; }
+      } else s.strain = 0;
+    },
+    speed: () => 0,
+    prog: s => (s.out != null ? 1 : s.dug / G.DIG)
+  },
+  heap: {
+    title: 'sawdust heap', item: 'load', steps: 4, posts: [],
+    init: () => ({ grab: false, pts: [], v: 0, load: null, loads: 5, refill: 0 }),
+    hit: (x, y) => x < 12 * P && y >= 3 * P && y < 12 * P,
+    floorY: () => 9 * P,
+    fling(s) {
+      const a = s.pts[0], b = s.pts[s.pts.length - 1];
+      if (!a || b.t - a.t < 1e-3 || T - b.t > G.FLING_WINDOW_S) return 0;
+      return (b.x - a.x) / (b.t - a.t);
+    },
+    down(s, x, y) {
+      if ((s.load && s.load.mode !== 'gone' && s.load.mode !== 'back') || s.loads < 1) return 'tap';
+      s.grab = true; s.pts = [{ t: T, x }];
+      s.load = { mode: 'held', x, x0: x, y: Math.min(y, this.floorY()), n: 1, at: T };
+      return true;
+    },
+    move(s, x, y) {
+      s.pts.push({ t: T, x });
+      while (s.pts.length > 2 && T - s.pts[0].t > G.FLING_WINDOW_S) s.pts.shift();
+      if (s.load && s.load.mode === 'held') { s.load.x = x; s.load.y = Math.min(y, this.floorY()); }
+    },
+    up(s, x, y, k) {
+      s.grab = false;
+      const ld = s.load; if (!ld || ld.mode !== 'held') return;
+      const v = this.fling(s);
+      if (v >= G.FLING_MIN) {
+        const n = Math.min(s.loads, 1 + Math.floor(clamp01((v - G.FLING_MIN) / (G.FLING_MAX - G.FLING_MIN)) * (G.FLING_LOADS - 1) + 0.5));
+        Object.assign(ld, { mode: 'fling', n, vx: Math.max(v, G.FLING_MIN * 1.5), vy: -G.FLING_LIFT, at: T });
+      } else if (ld.x >= EDGE * P) { this.tip(s, k, 1); Object.assign(ld, { mode: 'gone', at: T }); }
+      else Object.assign(ld, { mode: 'back', at: T });
+    },
+    tip(s, k, n) { const m = Math.min(n, s.loads); s.loads -= m; k.made += m; k.used(); },
+    step(s, dt, k) {
+      s.refill += dt; if (s.refill > 3) { s.refill = 0; s.loads = Math.min(5, s.loads + 1); }
+      const ld = s.load;
+      if (ld && ld.mode === 'fling') {
+        ld.vy += G.FLING_GRAV * dt; ld.x += ld.vx * dt; ld.y = Math.min(this.floorY(), ld.y + ld.vy * dt);
+        if (ld.x >= EDGE * P) { this.tip(s, k, ld.n); Object.assign(ld, { mode: 'gone', at: T }); }
+        else if (ld.y >= this.floorY() && ld.vy > 0) Object.assign(ld, { mode: 'back', at: T });
+      }
+      if (ld && (ld.mode === 'gone' || ld.mode === 'back') && T - ld.at > G.LOAD_FADE_S) s.load = null;
+      s.v = s.grab ? Math.max(0, this.fling(s)) : 0;
+    },
+    speed: s => s.v / G.FLING_MAX,
+    prog: s => (s.load && s.load.mode === 'held' ? clamp01((s.load.x - s.load.x0) / Math.max(1, EDGE * P - s.load.x0)) : s.load && s.load.mode === 'gone' ? 1 : 0)
+  }
+};
+const KEYS = ['mill', 'papermill', 'press', 'chipper', 'workshop', 'tree', 'stump', 'heap'];
+
+// ---------------------------------------------------------------------------
+// The parts: one drawing a station, toned by its direction (ST)
+// ---------------------------------------------------------------------------
+// ST: ink the outline, fill a body's face, mat a material's tones, trail a
+// smear, floor the ground's tones, wood a handle's.
+const SAW_TAKES = [
+  { id: 1, name: 'peg handles', say: 'A crosscut blade, its spine ink and its teeth a row of points under it; a plumb peg handle at each end; your partner\'s fist on the far peg, the arm level off the card.', cut: 7 },
+  { id: 2, name: 'frame saw', say: 'A bow frame: two plumb uprights, a level rail over the trunk, the blade across the foot with its teeth down; the uprights are the handles.', cut: 9 },
+  { id: 3, name: 'big crosscut, partner standing', say: 'A deep blade with tall teeth, a level loop handle at each end, and the partner drawn whole at the far end, pulling.', cut: 7 }
+];
+let SAW_PICK = 1;
+const PARTS = {
+  mill: {
+    draw(s, k) {
+      const { c: cx, r: cy, R } = WHEEL, step = 2 * Math.PI / 16, aq = Math.round(s.ang / step) * step, rev = Math.abs(s.w) / (2 * Math.PI);
+      // the stand: a level axle on two plumb legs, feet on the floor
+      fill(6, cy, 20, cy, ST.wood);
+      for (let r = cy; r <= 11; r++) { C(6, r, 10); C(20, r, 10); }
+      fill(5, 11, 7, 11, 10); fill(19, 11, 21, 11, 10);
+      for (let r = cy - R - 1; r <= cy + R + 1; r++) for (let c = cx - R - 1; c <= cx + R + 1; c++) {
+        const d = Math.hypot(c - cx, r - cy);
+        if (d < R - 0.5) C(c, r, ST.fill); else if (d <= R + 0.45) C(c, r, 10);
+      }
+      const spokes = (a, t) => { for (let q = 0; q < 4; q++) { const sa = a + q * Math.PI / 2; for (let d = 1; d < R; d++) C(cx + Math.round(Math.cos(sa) * d), cy + Math.round(Math.sin(sa) * d), t); } };
+      if (rev > G.WHEEL_MAX_REV / 4) spokes(aq - step * Math.sign(s.w), ST.trail);
+      if (rev > G.WHEEL_MAX_REV / 2) spokes(aq - 2 * step * Math.sign(s.w), ST.trail2);
+      spokes(aq, ST.move);
+      C(cx, cy, 10);
+      // the knob the hand turns it by, standing proud of the rim
+      const kc = cx + Math.round(Math.cos(aq) * (R + 1)), kr = cy + Math.round(Math.sin(aq) * (R + 1));
+      C(kc, kr, 10);
+    },
+    cue(k, dir) {
+      const { c: cx, r: cy, R } = WHEEL, a = loopAt() * 2 * Math.PI;
+      if (dir.cue === 'dots') { dots(ring(cx, cy, R + 2, R + 2, 20)); chevron(cx, cy + R + 2, -1, 0); }
+      else if (dir.cue === 'line') { const pts = ring(cx, cy, R + 2, R + 2, 40); dots(pts, 3); chevron(cx, cy + R + 2, -1, 0, 6); }
+      hand(cx + Math.round(Math.cos(a) * (R + 1)), cy + Math.round(Math.sin(a) * (R + 1)), 'grab');
+    },
+    crit: () => [CX(WHEEL.c), CX(WHEEL.r)]
+  },
+  papermill: {
+    draw(s) {
+      const { c: cx, r: cy, rx, ry } = VAT, step = 2 * Math.PI / 16, aq = Math.round(s.ang / step) * step, rev = Math.abs(s.w) / (2 * Math.PI);
+      // the tub: plumb walls, a level foot and a level rim, the pulp seen over
+      // the near lip; its corners cut a cell, so no line is at an odd angle
+      for (let r = cy + 2; r <= 11; r++) for (let c = cx - rx; c <= cx + rx; c++)
+        C(c, r, c === cx - rx || c === cx + rx || r === 11 || r === cy + 2 ? 10 : ST.fill);
+      fill(cx - rx + 1, cy - 2, cx + rx - 1, cy - 2, 10);
+      for (let r = cy - 1; r <= cy + 1; r++) { C(cx - rx, r, 10); C(cx + rx, r, 10); for (let c = cx - rx + 1; c <= cx + rx - 1; c++) C(c, r, toneAt(c, r, ST.mat)); }
+      for (let c = cx - rx + 3; c <= cx + rx - 3; c += 4) C(c, 7, 10);       // the hoops' rivets
+      if (rev > 0.1) {
+        const trail = Math.round(2 + clamp01(rev / G.STIR_MAX_REV) * 6);
+        for (let q = 1; q <= trail; q++) {
+          const a = aq - Math.sign(s.w || 1) * q * 0.32;
+          C(cx + Math.round(Math.cos(a) * (rx - 3)), cy + Math.round(Math.sin(a) * 1), q < 3 ? ST.trail2 : ST.trail);
+        }
+      }
+      // the paddle: plumb, two cells, a grip across its top, set off by paper
+      const pc = cx + Math.round(Math.cos(aq) * (rx - 3)), pr = cy + Math.round(Math.sin(aq) * 1);
+      for (let r = 1; r <= pr; r++) { C(pc - 1, r, 0); C(pc + 2, r, 0); }
+      for (let r = 1; r <= pr; r++) { C(pc, r, 10); C(pc + 1, r, ST.wood); }
+      fill(pc - 1, 0, pc + 2, 0, 10);
+    },
+    cue(k, dir) {
+      const { c: cx, r: cy, rx, ry } = VAT, a = -Math.PI / 2 + loopAt() * 2 * Math.PI;
+      if (dir.cue === 'dots') { dots(ring(cx, cy, rx - 3, 1.5, 22)); chevron(cx, cy + 2, -1, 0); }
+      else if (dir.cue === 'line') { dots(ring(cx, cy, rx - 3, 1.5, 44), 4); chevron(cx, cy + 2, -1, 0, 6); }
+      hand(cx + Math.round(Math.cos(a) * (rx - 3)) + 0.5, 0, 'grab');
+    },
+    crit: () => [CX(VAT.c), CX(VAT.r)]
+  },
+  press: {
+    end(k, L = PRESS.L) { const th = PRESS.a1 * k; return { c: PRESS.c + Math.cos(th) * L, r: PRESS.r + Math.sin(th) * L }; },
+    draw(s, k) {
+      const { c: pc, r: pr } = PRESS;
+      // the post, the bed with a sheet on it, the stop under the handle's end
+      for (let r = pr; r <= 11; r++) C(pc, r, 10);
+      fill(pc - 1, 11, pc + 1, 11, 10);
+      fill(6, 10, 16, 10, 10); fill(7, 11, 7, 11, 10); fill(15, 11, 15, 11, 10);
+      const printed = k.printedAt != null && T - k.printedAt < 0.6;
+      fill(8, 9, 14, 9, printed ? ST.ink2 : ST.fill2);
+      if (printed) for (let c = 9; c <= 13; c += 2) C(c, 9, 10);
+      const e1 = this.end(1);
+      fill(Math.round(e1.c) - 1, 11, Math.round(e1.c) + 1, 11, 10);
+      // the platen, hung plumb from the bar
+      const m = this.end(s.k, 8), mc = Math.round(m.c), mr = Math.round(m.r), plat = mr + 3;
+      for (let r = mr + 1; r < plat; r++) C(mc, r, ST.wood);
+      fill(mc - 3, plat, mc + 3, plat, 10);
+      if (s.w > 1) { const h2 = this.end(Math.max(0, s.k - 0.12)); line(pc, pr, h2.c, h2.r).forEach(([c, r]) => C(c, r, ST.trail)); }
+      const e = this.end(s.k);
+      line(pc, pr, e.c, e.r).forEach(([c, r]) => C(c, r, 10));
+      fill(Math.round(e.c) - 1, Math.round(e.r), Math.round(e.c) + 1, Math.round(e.r) + 1, 10);
+      C(Math.round(e.c), Math.round(e.r), ST.grip);
+      C(pc, pr, ST.grip);
+    },
+    cue(k, dir) {
+      const at = (q, out) => { const e = this.end(q, PRESS.L + out); return [Math.round(e.c), Math.round(e.r)]; };
+      const pts = []; for (let q = 0; q <= 1.001; q += dir.cue === 'line' ? 0.05 : 0.1) pts.push(at(q, 2));
+      if (dir.cue !== 'none') { dots(pts, dir.cue === 'line' ? 4 : 5); const last = pts[pts.length - 1]; chevron(last[0], last[1] + 1, 0, 1, dir.cue === 'line' ? 6 : 5); }
+      const ph = loopAt(G.CUE_LOOP_S * 0.93), q = ph < 0.25 ? ph / 0.25 : ph < 0.45 ? 1 : 1 - (ph - 0.45) / 0.55;
+      const [c, r] = at(q, 0); hand(c, r, 'grab');
+    },
+    crit() { const e = this.end(1); return [e.c * P, e.r * P - 18]; }
+  },
+  chipper: {
+    draw(s) {
+      const { c: bx, r: by, R } = BUTTON, sink = s.hold ? 1 : 0;
+      // the housing it stands in
+      box(7, 8, 19, 11, ST.mat2);
+      for (let r = by - R - 1; r <= by + R + 2; r++) for (let c = bx - R - 1; c <= bx + R + 1; c++) {
+        const d0 = Math.hypot(c - bx, r - by - 1), d1 = Math.hypot(c - bx, r - by - sink);
+        if (d1 <= R - 0.6) C(c, r, s.hold ? ST.press : ST.grip);
+        else if (d1 <= R + 0.45) C(c, r, 10);
+        else if (!sink && d0 <= R + 0.45 && r > by) C(c, r, 10);
+      }
+      // one arrow on its face, the way the log goes in: a level shaft, a plumb head
+      fill(bx - 2, by + sink, bx + 1, by + sink, 10);
+      C(bx + 1, by - 1 + sink, 10); C(bx + 1, by + 1 + sink, 10); C(bx + 2, by + sink, 10);
+    },
+    cue(k, dir) {
+      const { c: bx, r: by, R } = BUTTON, ph = loopAt(G.CUE_LOOP_S * 1.7), pressing = ph < 0.75;
+      if (dir.cue !== 'none') dots(ring(bx, by, R + 2, R + 2, 24).slice(0, pressing ? Math.ceil(ph / 0.65 * 24) : 0), dir.cue === 'line' ? 4 : 5);
+      hand(bx, by + (pressing ? 1 : -1), 'point');
+    },
+    crit: () => [CX(BUTTON.c), CX(BUTTON.r)]
+  },
+  workshop: {
+    draw(s, k) {
+      box(3, 7, 24, 9, ST.mat);
+      for (let r = 10; r <= 11; r++) { C(5, r, 10); C(22, r, 10); }
+      const per = G.SIGN_BLOWS / NAILS.length, done = k.signAt != null && T - k.signAt < 0.5;
+      NAILS.forEach((c, i) => {
+        const driven = done ? 2 : Math.round(clamp(s.blows - i * per, 0, per) / per * 2), head = 4 + driven;
+        C(c, head, 10); for (let r = head + 1; r <= 6; r++) C(c, r, ST.trail2);
+      });
+      const down = T - s.strike < G.SWING_S;
+      const n = Math.min(NAILS.length - 1, Math.floor(Math.max(0, s.blows - (down ? 1 : 0)) / per)), hx = NAILS[n];
+      // the hammer, level in both poses: raised, and held on the nail
+      if (down) {
+        const head = 4 + Math.round(clamp(s.blows - n * per, 0, per) / per * 2);
+        fill(hx - 1, head - 2, hx + 1, head - 1, 10); fill(hx + 2, head - 1, hx + 6, head - 1, ST.wood);
+      } else { fill(hx - 1, 0, hx + 1, 1, 10); fill(hx + 2, 1, hx + 6, 1, ST.wood); }
+    },
+    cue(k, dir) {
+      const per = G.SIGN_BLOWS / NAILS.length, hx = NAILS[Math.min(NAILS.length - 1, Math.floor(k.st.blows / per))];
+      hand(hx + 4, (T % G.CUE_TAP_S) < G.CUE_TAP_S * 0.4 ? 4 : 2, 'point');
+    },
+    crit: k => [CX(NAILS[0]) + 40, 3 * P]
+  },
+  tree: {
+    draw(s, k) { drawSaw(SAW_PICK, s, k); },
+    cue(k, dir) { sawCue(SAW_PICK, k, dir); },
+    crit: () => [CX(12), 4 * P]
+  },
+  stump: {
+    draw(s, k) {
+      const out = s.out != null, crit = k.opt.crit;
+      const up = out ? 4 : Math.round(s.lift / P);
+      let give;
+      if (out) give = Math.min(5, 1 + Math.floor((T - s.out) * 12));
+      else if (crit === 'a') {
+        const win = T - s.snap < G.WINDOW_S;
+        give = s.lift < G.STRAIN_LIFT ? (s.lift > 3 ? 0 : 0) : win ? 1 : 1 + Math.min(1, Math.floor(s.strain / (G.STRAIN_S / 2)));
+      } else give = s.lift < G.STRAIN_LIFT ? 0 : 1;
+      for (let r = 10; r <= 11; r++) for (let c = 1; c <= 26; c++) C(c, r, toneAt(c, r, ST.floor));
+      // the hole it leaves, once out
+      if (out) fill(10, 10, 16, 10, ST.ink2);
+      const top = 6 - give, c0 = 10;
+      const anchors = [[5, 11], [13, 11], [21, 11]], roots = [[10, 9], [13, 9], [16, 9]];
+      fade(out ? 1 - clamp01((T - s.out - 1.2) / 0.8) : 1, () => {
+        for (let i = 0; i < G.DIG; i++) {
+          if (s.broke.includes(i)) {
+            // a snapped root: the stub on the stump, a gap, the stub in the ground
+            const [ac, ar] = anchors[i], held = crit === 'a' && i === s.dug - 1 && T - s.snap < G.WINDOW_S;
+            if (!out) { C(roots[i][0], top + 4, 10); if (held) { C(ac, ar - 1, 10); C(roots[i][0] + (ac < 13 ? -1 : ac > 13 ? 1 : 0), top + 5, 10); } }
+            continue;
+          }
+          const taut = s.lift >= G.STRAIN_LIFT;
+          line(roots[i][0], top + 3, anchors[i][0], anchors[i][1]).forEach(([c, r]) => { if (r > top + 3) C(c, r, taut ? 10 : ST.trail2); });
+        }
+        // the stump: its cut top ringed, bark down plumb sides, the foot flared over the roots
+        fill(c0 + 1, top - 1, c0 + 5, top - 1, 10);
+        for (let c = c0 + 1; c <= c0 + 5; c++) C(c, top, c === c0 + 3 ? ST.ink2 : ST.fill2);
+        C(c0, top, 10); C(c0 + 6, top, 10);
+        for (let r = top + 1; r <= top + 2; r++) for (let c = c0; c <= c0 + 6; c++) C(c, r, c === c0 || c === c0 + 6 ? 10 : toneAt(c, r, ST.mat));
+        fill(c0 - 1, top + 3, c0 + 7, top + 3, 10);
+      });
+      // the rope up to the grip, and the grip: a level bar with plumb ends
+      if (!out || T - s.out < 1.2) {
+        const gr = Math.max(0, 3 - (up - give));
+        for (let r = gr + 1; r < top - 1; r++) C(c0 + 3, r, ST.wood);
+        fill(c0, gr, c0 + 6, gr, 10); C(c0, gr + 1, 10); C(c0 + 6, gr + 1, 10);
+      }
+      // the line a pull must reach to strain the roots
+      if (!out) { dot(18, 3 - Math.round(G.STRAIN_LIFT / P), 4); dot(19, 3 - Math.round(G.STRAIN_LIFT / P), 4); }
+    },
+    cue(k, dir) {
+      const max = Math.round(G.STUMP_MAX / P), up = Math.round(Math.min(1, loopAt() * 1.6) * max);
+      if (dir.cue !== 'none') { const pts = []; for (let r = 5; r >= 0; r--) pts.push([21, r]); dots(pts, dir.cue === 'line' ? 4 : 5); chevron(21, 0, 0, -1, dir.cue === 'line' ? 6 : 5); }
+      hand(13, 3 - up, 'grab');
+    },
+    crit: () => [CX(13), 5 * P]
+  },
+  heap: {
+    draw(s, k) {
+      for (let c = 0; c < EDGE; c++) C(c, 11, toneAt(c, 11, ST.floor));
+      fill(EDGE + 2, 11, 27, 11, toneAt(1, 1, ST.floor));
+      for (let r = 3; r <= 10; r += 2) C(EDGE, r, ST.trail);
+      fill(2, 0, 6, 0, 10); C(3, 1, 10); C(5, 1, 10); C(4, 2, 10);              // the chute, a hopper
+      const rows = [[1, 9], [2, 8], [3, 7], [4, 6], [5, 5]];
+      for (let j = 0; j < Math.min(5, s.loads); j++) for (let c = rows[j][0]; c <= rows[j][1]; c++) C(c, 10 - j, toneAt(c, j, ST.heap));
+      const ld = s.load;
+      if (ld) {
+        const a = ld.mode === 'held' || ld.mode === 'fling' ? 1 : clamp01(1 - (T - ld.at) / G.LOAD_FADE_S);
+        const fall = ld.mode === 'gone' ? (T - ld.at) * 60 : 0;
+        const c = Math.round(ld.x / P), r = Math.round((ld.y + fall) / P), w = 1 + ld.n, h = ld.n;
+        fade(a, () => { for (let j = 0; j < h + 1; j++) for (let i = 0; i < w; i++) C(c - 1 + i, r - j + 1, toneAt(i, j, ST.heap)); });
+      }
+    },
+    cue(k, dir) {
+      if (dir.cue !== 'none') { const pts = []; for (let c = 8; c <= EDGE - 1; c++) pts.push([c, 5]); dots(dir.cue === 'line' ? pts : pts.filter((_, i) => i % 2 === 0), dir.cue === 'line' ? 4 : 5); chevron(EDGE - 1, 5, 1, 0, dir.cue === 'line' ? 6 : 5); }
+      const q = Math.min(1, loopAt(G.CUE_LOOP_S * 1.3) / 0.6);
+      hand(5 + Math.round(q * q * (EDGE - 6)), 8, 'grab');
+    },
+    crit: () => [CX(16), 4 * P]
+  }
+};
+
+// --- the saw, three takes --------------------------------------------------------
+// The trunk stands in columns 11 to 14; the saw's offset is its handle's travel
+// in whole cells; the cut is the row the blade runs in. The kerf opens from
+// your side a chop at a time; the trunk is drawn over the blade except where
+// it is cut. Felled, the top turns in held steps: a cell's creak, 45 degrees,
+// flat on the floor.
+const TRUNK = [11, 14];
+function trunkFall(s, cut) {
+  const age = s.fell == null ? -1 : T - s.fell;
+  return age < 0 ? 'up' : age < 0.25 ? 'creak' : age < 0.55 ? 'lean' : age < 3.4 ? 'down' : 'gone';
+}
+function drawTrunk(s, cut, kerf) {
+  const [a, b] = TRUNK, pose = trunkFall(s, cut);
+  // the stump below the cut, always
+  for (let r = cut + 1; r <= 10; r++) for (let c = a; c <= b; c++) C(c, r, c === a || c === b ? 10 : toneAt(c, r, ST.mat));
+  if (pose === 'up' || pose === 'creak') {
+    const dx = pose === 'creak' ? 1 : 0;
+    for (let r = 0; r <= cut; r++) for (let c = a; c <= b; c++) {
+      if (r === cut && c - a < kerf) continue;
+      if (r === cut && pose === 'creak') { C(c, r, 10); continue; }
+      C(c + (r < cut ? dx : 0), r, c === a || c === b ? 10 : toneAt(c, r, ST.mat));
+    }
+  } else if (pose === 'lean') {
+    const L = cut + 2;
+    for (let u = 0; u < L; u++) for (let j = 0; j < 4; j++) C(a + j + u, cut - 1 - u, j === 0 || j === 3 ? 10 : toneAt(j, u, ST.mat));
+    fill(a, cut, b, cut, 10);
+  } else if (pose === 'down') {
+    // lying level on the floor, past the stump; the puff of dust held, then fading
+    for (let c = b + 1; c <= 27; c++) for (let r = 7; r <= 10; r++) C(c, r, r === 7 || r === 10 ? 10 : toneAt(c, r, ST.mat));
+    fill(a, cut, b, cut, 10);
+    const age = T - s.fell - 0.55;
+    fade(1 - clamp01((age - 0.4) / 0.4), () => { for (const [c, r] of [[16, 6], [19, 5], [23, 6], [26, 5], [17, 4], [25, 4]]) C(c, r, ST.trail); });
+  } else fill(a, cut, b, cut, 10);
+  fill(0, 11, 27, 11, 10);
+  for (let c = 0; c <= 27; c++) if (c < a - 1 || c > b + 1) C(c, 11, toneAt(c, 11, ST.floor));
+}
+function drawSaw(take, s, k) {
+  const tk = SAW_TAKES[take - 1], cut = tk.cut, off = Math.round(s.s / P), kerf = Math.round(s.chops / G.TREE_CHOPS * 4);
+  const felled = s.fell != null, sawA = felled ? 1 - clamp01((T - s.fell - 0.6) / 0.5) : (s.back != null ? clamp01((T - s.back) / 0.5) : 1);
+  const [a, b] = TRUNK;
+  const hidden = c => !felled && c >= a + kerf && c <= b;     // behind the uncut trunk
+  // the trunk first where the blade passes behind it
+  const pose = trunkFall(s, cut);
+  fade(s.back != null && T - s.back < 0.5 ? clamp01((T - s.back) / 0.5) : 1, () => drawTrunk(s, cut, kerf));
+  fade(sawA, () => {
+    if (take === 1) {
+      // blade: spine, plate, a row of points under it; the pegs plumb
+      for (let c = 6 + off; c <= 19 + off; c++) {
+        const behind = hidden(c);
+        if (!behind || c < a) { C(c, cut - 1, 10); C(c, cut, ST.fill2); if ((c - off) % 2 === 0) C(c, cut + 1, 10); }
+        else if (c - a < kerf) { C(c, cut, ST.fill2); }
+      }
+      for (const pc of [5 + off, 20 + off]) { C(pc, cut - 3, 10); for (let r = cut - 2; r <= cut + 2; r++) C(pc, r, ST.wood); C(pc, cut + 3, 10); }
+      // the partner: a fist on the far peg, the arm level off the card
+      const pc = 20 + off;
+      for (let c = pc + 4; c <= 27; c++) C(c, cut, ST.partner);
+      handOn((pc + 1) * P + 4, cut * P + 3, 'grab', 10, ST.partner);
+    } else if (take === 2) {
+      // the bow frame: two plumb uprights, a level rail, the blade at the foot
+      const L = 5 + off, R = 20 + off;
+      for (let c = L; c <= R; c++) C(c, 3, ST.wood);
+      for (let r = 3; r <= cut + 1; r++) { C(L, r, 10); C(R, r, 10); }
+      C(L, 2, 10); C(R, 2, 10);
+      for (let c = L + 1; c <= R - 1; c++) {
+        if (!hidden(c)) { C(c, cut, ST.fill2); if ((c - off) % 2 === 0) C(c, cut + 1, 10); }
+        else if (c - a < kerf) C(c, cut, ST.fill2);
+      }
+      // the twist of cord that keeps it taut, plumb in the middle
+      for (let r = 4; r <= 6; r++) C(Math.round((L + R) / 2), r, ST.trail2);
+      // the partner: a fist on the far upright, arm level
+      for (let c = R + 4; c <= 27; c++) C(c, 6, ST.partner);
+      handOn((R + 1) * P + 4, 6 * P + 3, 'grab', 10, ST.partner);
+    } else {
+      // a deep blade: an ink spine, the plate, teeth two cells tall
+      for (let c = 6 + off; c <= 19 + off; c++) {
+        const behind = hidden(c);
+        if (!behind) { C(c, cut - 1, 10); C(c, cut, ST.fill2); if ((c - off) % 3 !== 2) C(c, cut + 1, 10); if ((c - off) % 3 === 0) C(c, cut + 2, 10); }
+        else if (c - a < kerf) C(c, cut, ST.fill2);
+      }
+      // level loop handles
+      for (const [h0, h1] of [[3 + off, 5 + off], [20 + off, 22 + off]]) { outline(h0, cut - 1, h1, cut + 1, 10); C(h0 + 1, cut, 0); }
+      // the partner, whole, standing fixed: head, body, the arm level to the loop
+      const bx = 25;
+      fill(bx, 1, bx + 1, 2, ST.partner); C(bx, 3, 0); C(bx + 1, 3, 0); fill(bx - 1, 4, bx + 2, 4, ST.partner); fill(bx, 5, bx + 1, 7, ST.partner); C(bx, 8, ST.partner); C(bx + 1, 8, ST.partner);
+      for (let r = 9; r <= 10; r++) { C(bx - (r === 10 ? 1 : 0), r, ST.partner); C(bx + 1 + (r === 10 ? 1 : 0), r, ST.partner); }
+      for (let c = 23 + off; c < bx; c++) C(c, cut, ST.partner);
+    }
+  });
+  // the sawdust out of the kerf, a cell a step to the floor
+  for (const m of s.motes) { const r = cut + 1 + Math.floor((T - m.at) / 0.09); if (r <= 10) C(m.c, r, ST.trail); }
+}
+function sawCue(take, k, dir) {
+  const tk = SAW_TAKES[take - 1], hc = take === 3 ? 4 : 5, row = take === 2 ? 1 : tk.cut - 4, amp = Math.round(G.SAW_AMP / P);
+  if (dir.cue !== 'none') {
+    const pts = []; for (let c = hc - amp; c <= hc + amp; c++) pts.push([c, row]);
+    dots(dir.cue === 'line' ? pts : pts.filter((_, i) => i % 2 === 0), dir.cue === 'line' ? 4 : 5);
+    chevron(hc - amp - 1, row, -1, 0, dir.cue === 'line' ? 6 : 5); chevron(hc + amp + 1, row, 1, 0, dir.cue === 'line' ? 6 : 5);
+  }
+  hand(hc + Math.round(amp * Math.sin(2 * Math.PI * loopAt())), take === 2 ? 8 : tk.cut - 0.5, 'grab');
+}
+
+// ---------------------------------------------------------------------------
+// The directions: the frame, the tones, the readouts, the cue, the crit
+// ---------------------------------------------------------------------------
+const DIRS = {
+  A: {
+    name: 'foot rail', cue: 'dots',
+    say: 'The card as the yard\'s board draws a row: the name in capitals over a rule. Under the part, one rail: the glyph of what is being made, the yard\'s own progress bar (a paper box, an ink rule, ink filling a cell at a time), and the speed as chevrons, the yard\'s "faster" badge, lighting one by one. The ghost hand rides a dotted way with an arrowhead. The crit is a star held on the part and a tag, x and the count, in a ruled patch.',
+    tones: { ink: 10, ink2: 8, fill: 1, fill2: 2, mat: [2, 3, 2], mat2: [1, 2], trail: 3, trail2: 6, floor: [1, 2, 1, 3], wood: 6, grip: 1, press: 3, move: 10, partner: 6, heap: [4, 5, 4, 6] }
+  },
+  B: {
+    name: 'black sign', cue: 'line',
+    say: 'The head is the yard\'s black sign, the name in paper on ink, with a pip a step to the next thing made at its right end. Under the part, the speed as a stepped wedge that climbs as it fills: more is taller. The ghost hand rides a fine solid way. The crit is the part held inside four corner brackets, the count on the sign where the pips were.',
+    tones: { ink: 10, ink2: 8, fill: 0, fill2: 1, mat: [1, 2, 1], mat2: [0, 1], trail: 2, trail2: 5, floor: [1, 1, 2], wood: 5, grip: 0, press: 2, move: 10, partner: 5, heap: [3, 4, 3] }
+  },
+  C: {
+    name: 'quiet head', cue: 'none',
+    say: 'The head is quiet: the name in grey, no rule, the progress bar beside it. The part is drawn heavier, its material dark, so it is the loudest thing on the card. The speed is a ramp along the foot, thin at the slow end, thick at the fast. The ghost hand is the hand alone, no way drawn. The crit is a stamp: an ink block with x and the count in paper, held in the corner.',
+    tones: { ink: 10, ink2: 9, fill: 3, fill2: 4, mat: [5, 6, 5, 7], mat2: [3, 4], trail: 4, trail2: 7, floor: [3, 4, 3, 5], wood: 7, grip: 0, press: 5, move: 10, partner: 7, heap: [6, 7, 6, 8] }
+  }
+};
+let DIR = 'A';
+const REC_DIR = 'A';
+
+// The readouts in the face's foot (rows 12 to 15), the crit, each direction's.
+function readouts(k, dir) {
+  const sim = SIM[k.key], pr = clamp01(sim.prog(k.st)), gv = k.gv, hasGauge = k.key !== 'stump';
+  if (dir === 'A') {
+    itemGlyph(sim.item, 0, 13 * P + 1, 10);
+    // the yard's bar: a paper box, an ink rule, ink a cell at a time, a cell in
+    const c0 = 3, c1 = hasGauge ? 14 : 27, x0 = c0 * P, w = (c1 - c0 + 1) * P;
+    g.fillStyle = PAL[0]; g.fillRect(x0, 13 * P, w, 3 * P);
+    g.fillStyle = PAL[10]; g.fillRect(x0, 13 * P, w, 2); g.fillRect(x0, 16 * P - 2, w, 2); g.fillRect(x0, 13 * P, 2, 3 * P); g.fillRect(x0 + w - 2, 13 * P, 2, 3 * P);
+    const room = c1 - c0 - 1, n = Math.round(room * pr);
+    for (let i = 0; i < n; i++) C(c0 + 1 + i, 14, 10);
+    if (hasGauge) {
+      // chevrons, the "faster" badge, lit one by one
+      const N = 4, lit = gv * N;
+      for (let i = 0; i < N; i++) {
+        const c = 16 + i * 3, t = lit >= i + 1 ? 10 : lit >= i + 0.5 ? 6 : 2;
+        C(c, 13, t); C(c + 1, 14, t); C(c, 15, t);
+      }
+    }
+  } else if (dir === 'B') {
+    if (hasGauge) {
+      const N = 12, lit = Math.round(gv * N);
+      for (let i = 0; i < N; i++) { const h = 1 + Math.floor(i / 4); for (let j = 0; j < h; j++) C(i * 2, 15 - j, i < lit ? 10 : 2); }
+    }
+    itemGlyph(sim.item, 25 * P - 2, 13 * P + 1, 10);
+  } else {
+    if (hasGauge) {
+      // the ramp: thin at the slow end, thick at the fast, filling from the left
+      const N = 28, lit = Math.round(gv * N);
+      for (let i = 0; i < N; i++) { const h = 1 + Math.floor(i * 3 / N); for (let j = 0; j < h; j++) C(i, 15 - j, i < lit ? 10 : 1); }
+    }
+  }
+}
+function drawCrit(k, dir, m) {
+  const age = T - m.at, a1 = heldInk(age, G.STAR_HOLD_S, G.STAR_FADE_S), a2 = heldInk(age, G.MARK_HOLD_S, G.MARK_FADE_S);
+  if (dir === 'A') {
+    fade(a1, () => star(m.x, m.y));
+    fade(a2, () => {
+      const w = (String(m.n).length + 1) * 4 * D - D, x = clamp(Math.round((m.x + 18) / D) * D, 6, FACE_W - w - 6), y = clamp(Math.round((m.y - 26) / D) * D, 6, 72 - 18);
+      g.fillStyle = PAL[10]; g.fillRect(x - 6, y - 6, w + 12, 22);
+      g.fillStyle = PAL[0]; g.fillRect(x - 4, y - 4, w + 8, 18);
+      figure(x, y, m.n);
+    });
+  } else if (dir === 'B') {
+    fade(a2, () => {
+      const b = { x0: 1, y0: 0, x1: 26, y1: 11 };
+      for (const [c, r, dc, dr] of [[b.x0, b.y0, 1, 1], [b.x1, b.y0, -1, 1], [b.x0, b.y1, 1, -1], [b.x1, b.y1, -1, -1]]) { C(c, r, 10); C(c + dc, r, 10); C(c, r + dr, 10); }
+    });
+  } else {
+    fade(a2, () => {
+      const w = (String(m.n).length + 1) * 4 * D - D, x = FACE_W - w - 12, y = 2;
+      g.fillStyle = PAL[10]; g.fillRect(x - 6, y, w + 12, 22);
+      figure(x, y + 6, m.n, 0);
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The yard model: a purse, the posts, the named upgrades (config/after.js)
+// ---------------------------------------------------------------------------
+const POST_REBEL0 = 12, POST_RATE = 1.15, POST_DUST = [100, 150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1500];
+const UPS = {
+  mill: [['second blade', 'blade', [['rebel', 80], ['timber', 20], ['dust', 1200], ['spore', 250]]], ['bigger heap', 'heap', [['rebel', 60], ['timber', 10], ['dust', 800]]]],
+  chipper: [['second drum', 'drum', [['rebel', 70], ['timber', 15], ['dust', 1000], ['spore', 200]]], ['wider spout', 'spout', [['rebel', 90], ['timber', 20], ['dust', 1500], ['spore', 300]]]],
+  papermill: [['bigger vat', 'vat', [['rebel', 150], ['timber', 30], ['dust', 3000], ['spore', 500], ['shard', 200]]], ['drying line', 'dry', [['rebel', 180], ['timber', 30], ['paper', 10], ['dust', 6000], ['spore', 1000], ['shard', 400], ['spark', 60]]]],
+  workshop: [['second bench', 'bench', [['rebel', 120], ['timber', 40], ['dust', 2500], ['spore', 400], ['shard', 150]]], ['bigger sign', 'signup', [['rebel', 200], ['timber', 40], ['paper', 10], ['dust', 6000], ['spore', 1000], ['shard', 400], ['spark', 60]]]],
+  press: [['bigger stack', 'stack', [['rebel', 200], ['timber', 30], ['paper', 20], ['dust', 4000], ['spore', 600], ['shard', 250]]], ['bigger poster', 'posterup', [['rebel', 300], ['timber', 40], ['paper', 30], ['dust', 10000], ['spore', 1500], ['shard', 600], ['spark', 100]]]],
+  grove: [['clear a plot', 'plot', [['rebel', 40], ['dust', 400]]], ['faster growth', 'grow', [['rebel', 60], ['timber', 10], ['dust', 1000], ['spore', 200]]], ['stump removal', 'stumps', [['rebel', 100], ['timber', 20], ['dust', 1500], ['spore', 300]]]],
+  heap: []
+};
+const PURSE0 = { rebel: 140, timber: 25, paper: 12, dust: 3000, spore: 400, shard: 150, spark: 0 };
+const ORDER = ['rebel', 'timber', 'paper', 'dust', 'spore', 'shard', 'spark'];
+// The act's coins, proposed marks: a flag (the union), two planks (timber), a sheet with its corner turned (paper).
+const ACT_MARK = {
+  rebel:  '<svg class="act" viewBox="0 0 9 9"><rect x="1" y="0" width="1" height="9"/><rect x="2" y="0" width="6" height="5"/></svg>',
+  timber: '<svg class="act" viewBox="0 0 9 9"><rect x="0" y="1" width="9" height="3"/><rect x="0" y="5" width="9" height="3"/></svg>',
+  paper:  '<svg class="act" viewBox="0 0 9 9"><path d="M1 0h5v1h-5z M1 0h1v9h-1z M1 8h7v1h-7z M7 3h1v6h-1z M5 0h1v3h-1z M5 2h3v1h-3z M6 1h1v1h-1z"/></svg>'
+};
+const MARK = { dust: '<i class="dust"></i>', spore: '<i class="spore"></i>', shard: '<i class="shard"></i>', spark: '<i class="spark"></i>', ...ACT_MARK };
+let M;
+function resetModel() { M = { purse: { ...PURSE0 }, posts: { sawyer: 1, pulper: 0, printer: 1, paster: 0, feeder: 0, joiner: 1, carrier: 0, woodcutter: 1, hauler: 0 }, ups: {} }; }
+resetModel();
+const postTotal = () => Object.values(M.posts).reduce((a, b) => a + b, 0);
+const fmt = n => n < 1000 ? String(n) : (n < 10000 ? (Math.round(n / 100) / 10) : Math.round(n / 1000)) + 'k';
+const groupOf = key => SIM[key].tabsOf || key;
+function rowsOf(key) {
+  const out = [];
+  for (const job of SIM[key].posts) out.push({ id: 'post-' + job, kind: 'post', name: job, glyph: 'body',
+    bill: () => [['rebel', Math.round(POST_REBEL0 * Math.pow(POST_RATE, postTotal()))], ['dust', POST_DUST[Math.min(postTotal(), POST_DUST.length - 1)]]],
+    gain: () => `${M.posts[job]}&nbsp;→&nbsp;${M.posts[job] + 1}`, done: () => false, buy: () => { M.posts[job]++; } });
+  for (const [name, glyph, bill] of UPS[groupOf(key)] || []) out.push({ id: 'up-' + glyph, kind: 'up', name, glyph,
+    bill: () => bill, gain: () => (M.ups[glyph] ? words('bought') : ''), done: () => !!M.ups[glyph], buy: () => { M.ups[glyph] = true; } });
+  return out;
+}
+const canPay = u => u.bill().every(([c, n]) => M.purse[c] >= n);
+const TILE_GLYPH = {
+  body:  ['.#####.', '.#...#.', '.#...#.', '.#...#.', '.#####.', '.#...#.', '.#...#.'],
+  blade: ['..###..', '.#...#.', '#..#..#', '#.###.#', '#..#..#', '.#...#.', '..###..'],
+  heap:  ['.......', '.......', '...#...', '..###..', '.#####.', '#######', '#######'],
+  drum:  ['.#####.', '#.....#', '#.#.#.#', '#.....#', '#.#.#.#', '#.....#', '.#####.'],
+  spout: ['#.....#', '##...##', '.#...#.', '.##.##.', '..#.#..', '..#.#..', '..#.#..'],
+  vat:   ['.......', '#######', '#.....#', '#.....#', '#.....#', '.#...#.', '.#####.'],
+  dry:   ['#######', '.#.#.#.', '.#.#.#.', '.......', '.......', '.......', '.......'],
+  bench: ['.......', '.......', '#######', '#######', '.#...#.', '.#...#.', '.#...#.'],
+  signup:['#######', '#.....#', '#.###.#', '#######', '...#...', '...#...', '...#...'],
+  stack: ['.#####.', '.#####.', '.......', '.#####.', '.#####.', '.......', '.#####.'],
+  posterup: ['#######', '#.....#', '#.###.#', '#.....#', '#.###.#', '#.....#', '#######'],
+  plot:  ['.......', '...#...', '..###..', '...#...', '.......', '#######', '#.#.#.#'],
+  grow:  ['...#...', '..###..', '.#.#.#.', '...#...', '...#...', '..###..', '#######'],
+  stumps:['..###..', '...#...', '...#...', '.#####.', '.#####.', '.#####.', '..###..']
+};
+function glyphCanvas(name, off) {
+  const cv = document.createElement('canvas'), s = 4, dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
+  cv.width = 28 * dpr; cv.height = 28 * dpr;
+  const q = cv.getContext('2d'); q.scale(dpr, dpr);
+  q.fillStyle = off ? getComputedStyle(document.documentElement).getPropertyValue('--ink-off') : PAL[10];
+  (TILE_GLYPH[name] || TILE_GLYPH.body).forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') q.fillRect(c * s, r * s, s, s); }));
+  return cv;
+}
+function tileHtml(u) {
+  const short = !u.done() && !canPay(u), done = u.done();
+  const bill = u.bill().slice().sort((a, b) => ORDER.indexOf(a[0]) - ORDER.indexOf(b[0]));
+  const cost = bill.map(([c, n]) => `<span class="${M.purse[c] >= n ? 'have' : 'short'}">${MARK[c]} ${fmt(n)}</span>`).join('');
+  return `<button type="button" class="tile${short ? ' short' : ''}${done ? ' done' : ''}" data-id="${u.id}" data-glyph="${u.glyph}">`
+    + `<span class="pic"></span><span class="name"><i class="what">${words(u.name)}</i></span>`
+    + `<span class="gain">${u.gain() || '&nbsp;'}</span>`
+    + `<span class="tag">${done ? `<span class="cost"><span>${words('bought')}</span></span>` : `<span class="cost">${cost}</span>`}</span></button>`;
+}
+function renderPurse() {
+  document.getElementById('purse-a').innerHTML = ORDER.map(c => `<span>${MARK[c]} ${fmt(M.purse[c])}</span>`).join('');
+}
+
+// ---------------------------------------------------------------------------
+// A card: the voted tabs, the work face (one canvas), the upgrades plank
+// ---------------------------------------------------------------------------
+const CARDS = [];
+const FACE_H_PART = 96, MEMBERS_H = 40;
+const ROOM_UP = 360;      // the sky over a station, less the card's head and tail: the most a face stands before it scrolls
+class Card {
+  constructor(key, dir, opt = {}) {
+    this.key = key; this.dir = dir; this.opt = { crit: 'a', tabs: true, members: false, ...opt };
+    this.st = SIM[key].init(); this.gv = 0; this.marks = []; this.made = 0; this.uses = 0; this.cueA = 1; this.tab = 'work';
+    this.used = () => { this.uses++; };
+    this.mark = (x, y, n) => { this.marks.push({ x, y, n, at: T }); };
+    CARDS.push(this);
+  }
+  get faceH() { return FACE_H_PART + (this.opt.members && SIM[this.key].posts.length ? MEMBERS_H : 0); }
+  // The whole card, as page elements round its face's canvas.
+  build(host) {
+    const sim = SIM[this.key], rows = rowsOf(this.key), posts = rows.filter(r => r.kind === 'post'), named = rows.filter(r => r.kind === 'up');
+    const tabs = this.opt.tabs ? (rows.length ? ['work', 'upgrades'] : ['work']) : [];
+    // option A: the upgrades tab shelves the rows as the yard's board does, a sign a section, up to three tiles a plank
+    const cols = n => Math.max(1, Math.min(n, matchMedia('(max-width: 560px)').matches ? 2 : 3));
+    const shelves = [['posts', posts], ['upgrades', named]].filter(s => s[1].length)
+      .map(([t, rs], i) => `<div class="rows" style="--cols:${cols(Math.max(posts.length, named.length))}"><div class="sect">${words(t)}</div>${rs.map(tileHtml).join('')}</div>`).join('');
+    const el = document.createElement('div'); el.className = 'card';
+    el.innerHTML = (tabs.length ? `<div class="tabs">${tabs.map(t => `<button type="button" class="tab${t === 'work' ? ' on' : ''}" data-tab="${t}">${words(t)}</button>`).join('')}</div>` : '')
+      + `<div class="paper"><div class="head">${words(sim.title)}${this.dir === 'B' ? '<span class="pips"></span><span class="crit"></span>' : ''}${this.dir === 'C' ? '<span class="prog"><b></b></span>' : ''}</div>`
+      + `<div class="body"><div class="face on" data-face="work"><div class="workface"><canvas class="part"></canvas></div></div>`
+      + (tabs.includes('upgrades') ? `<div class="face" data-face="upgrades">${shelves}</div>` : '')
+      + `</div><div class="tail"></div></div>`;
+    host.appendChild(el);
+    this.el = el; this.cv = el.querySelector('canvas.part');
+    this.dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
+    this.cv.width = FACE_W * this.dpr; this.cv.height = this.faceH * this.dpr;
+    this.cv.style.width = FACE_W + 'px'; this.cv.style.height = this.faceH + 'px';
+    this.fillGlyphs();
+    el.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => this.setTab(b.dataset.tab)));
+    el.addEventListener('click', e => { const t = e.target.closest('.tile'); if (t) this.buy(t.dataset.id); });
+    this.wire();
+    requestAnimationFrame(() => this.layout(true));
+    return el;
+  }
+  fillGlyphs() { this.el.querySelectorAll('.tile').forEach(t => { const p = t.querySelector('.pic'); p.innerHTML = ''; p.appendChild(glyphCanvas(t.dataset.glyph, t.classList.contains('done'))); }); }
+  buy(id) {
+    const u = rowsOf(this.key).find(r => r.id === id);
+    if (!u || u.done() || !canPay(u)) return;
+    for (const [c, n] of u.bill()) M.purse[c] -= n;
+    u.buy(); refreshTiles();
+  }
+  refreshTiles() {
+    const rows = rowsOf(this.key);
+    this.el.querySelectorAll('.tile').forEach(t => { const u = rows.find(r => r.id === t.dataset.id); if (u) { const d = document.createElement('div'); d.innerHTML = tileHtml(u); t.replaceWith(d.firstChild); } });
+    this.fillGlyphs();
+  }
+  setTab(tab) { this.tab = tab; this.layout(false); }
+  // Option A (the owner's vote): the card eases to the shown face's size, taller
+  // and wider on upgrades; past the sky's room (ROOM_UP) the shelves scroll.
+  layout(fresh) {
+    const body = this.el.querySelector('.body'), faces = [...body.querySelectorAll('.face')];
+    let w = 0, h = 0;
+    this.el.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === this.tab));
+    const maxW = Math.max(200, Math.min(document.querySelector("main").clientWidth - 48, 3 * 147 + 4));
+    for (const f of faces) {
+      const on = f.dataset.face === this.tab; f.classList.toggle('on', on);
+      if (!on) continue;
+      f.classList.remove('scroll-x', 'scroll-y'); f.style.maxWidth = ''; f.style.maxHeight = '';
+      let fw = f.offsetWidth, fh = f.offsetHeight;
+      if (fw > maxW) { f.classList.add('scroll-x'); f.style.maxWidth = maxW + 'px'; fw = maxW; fh = f.offsetHeight; }
+      if (fh > ROOM_UP) { f.classList.add('scroll-y'); f.style.maxHeight = ROOM_UP + 'px'; fh = ROOM_UP; fw = f.offsetWidth; }
+      w = fw; h = fh;
+    }
+    if (fresh) body.style.transition = 'none';
+    body.style.width = w + 'px'; body.style.height = h + 'px';
+    if (fresh) { void body.offsetWidth; body.style.transition = ''; }
+    const tail = this.el.querySelector('.tail'); tail.style.left = (this.tailX ?? 90) + 'px';
+  }
+  // Pointer on the face, mouse or finger, held to the part a press took.
+  wire() {
+    const cv = this.cv, sim = SIM[this.key];
+    const at = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * FACE_W / r.width, (e.clientY - r.top) * this.faceH / r.height]; };
+    cv.addEventListener('pointerdown', e => {
+      const [x, y] = at(e);
+      if (!sim.hit(x, y)) return;
+      const got = sim.down(this.st, x, y, this);
+      if (got === true) { this.held = true; cv.setPointerCapture(e.pointerId); }
+      e.preventDefault();
+    });
+    cv.addEventListener('pointermove', e => { if (!this.held) return; const [x, y] = at(e); sim.move && sim.move(this.st, x, y, this); });
+    const up = e => { if (!this.held) return; this.held = false; const [x, y] = at(e); sim.up && sim.up(this.st, x, y, this); };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  }
+  step(dt) {
+    const sim = SIM[this.key];
+    if (!this.frozen) sim.step(this.st, dt, this);
+    this.gv += (clamp01(sim.speed(this.st)) - this.gv) * Math.min(1, dt * G.GAUGE_EASE);
+    const want = this.uses < G.CUE_USES ? 1 : 0;
+    this.cueA = clamp(this.cueA + clamp(want - this.cueA, -dt / G.CUE_FADE_S, dt / G.CUE_FADE_S), 0, 1);
+    this.marks = this.marks.filter(m => T - m.at < G.MARK_HOLD_S + G.MARK_FADE_S);
+  }
+  draw() {
+    g = this.cv.getContext('2d'); g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0); g.imageSmoothingEnabled = false;
+    const dir = this.dir, D0 = DIRS[dir]; ST = D0.tones;
+    g.fillStyle = PAL[0]; g.fillRect(0, 0, FACE_W, this.faceH);
+    g.save(); g.beginPath(); g.rect(0, 0, FACE_W, FACE_H_PART); g.clip();
+    PARTS[this.key].draw(this.st, this);
+    readouts(this, dir);
+    for (const m of this.marks) drawCrit(this, dir, m);
+    if (this.cueA > 0.01 && !this.noCue) { g.globalAlpha = this.cueA * G.CUE_ALPHA; PARTS[this.key].cue(this, D0); g.globalAlpha = 1; }
+    g.restore();
+    if (this.faceH > FACE_H_PART) this.drawMembers();
+    this.headReadouts();
+  }
+  // The station's members, a slot a post: filled while someone holds it.
+  drawMembers() {
+    const jobs = SIM[this.key].posts, y0 = FACE_H_PART + 4;
+    g.fillStyle = PAL[2]; g.fillRect(0, FACE_H_PART + 1, FACE_W, 2);
+    g.font = '11px "Courier Prime", "Courier New", monospace'; g.textBaseline = 'alphabetic';
+    jobs.forEach((job, j) => {
+      const y = y0 + 4 + j * 18, have = M.posts[job] || 0;
+      for (let i = 0; i < 4; i++) {
+        const x = i * 16;
+        if (i < have) { g.fillStyle = PAL[10]; g.fillRect(x, y, 12, 12); g.fillStyle = PAL[0]; g.fillRect(x + 2, y + 2, 8, 8); }
+        else { g.fillStyle = PAL[4]; for (let q = 0; q < 12; q += 3) { g.fillRect(x + q, y, 2, 1); g.fillRect(x + q, y + 11, 2, 1); g.fillRect(x, y + q, 1, 2); g.fillRect(x + 11, y + q, 1, 2); } }
+      }
+      g.fillStyle = PAL[6]; g.fillText(PH(job + 's').toUpperCase(), 70, y + 10);
+    });
+  }
+  headReadouts() {
+    const sim = SIM[this.key], pr = clamp01(sim.prog(this.st));
+    if (this.dir === 'B') {
+      const pips = this.el.querySelector('.pips'), crit = this.el.querySelector('.crit');
+      const m = this.marks.find(m => T - m.at < G.MARK_HOLD_S);
+      if (pips) {
+        const n = Math.round(pr * sim.steps), want = sim.steps;
+        if (pips.children.length !== want) pips.innerHTML = '<i></i>'.repeat(want);
+        [...pips.children].forEach((p, i) => p.classList.toggle('on', i < n));
+        pips.style.visibility = m ? 'hidden' : 'visible';
+      }
+      if (crit) crit.textContent = m ? 'x' + m.n : '';
+    } else if (this.dir === 'C') {
+      const b = this.el.querySelector('.prog b'), box = this.el.querySelector('.prog');
+      if (b && box) { const room = box.clientWidth - 4, cell = 6, n = Math.floor(room / cell); b.style.width = Math.round(n * pr) * cell + 'px'; }
+    }
+  }
+}
+function refreshTiles() { for (const k of CARDS) if (k.el) k.refreshTiles(); renderPurse(); }
+
+// ---------------------------------------------------------------------------
+// The camp under a card: its station, a stand-in at the camp's scale
+// ---------------------------------------------------------------------------
+const STATION = {
+  mill:      ['..........', '..####....', '.#....#.##', '#..##..###', '#.####.#.#', '#..##..#.#', '.#....#..#', '..####...#', '..#..#####', '.##..##..#'],
+  papermill: ['..........', '..........', '.########.', '#........#', '##########', '#.#.#.#.##', '#........#', '#........#', '#........#', '##########'],
+  press:     ['....##....', '#########.', '#...##..#.', '#...##..#.', '#...##..#.', '#..####.#.', '#.......#.', '#.######..', '#.#....#..', '###....##.'],
+  chipper:   ['.....####.', '......##..', '.#########', '.#.......#', '.#.##....#', '.#.##....#', '.#.......#', '.#########', '.#.....#..', '###...###.'],
+  workshop:  ['....##....', '...####...', '..######..', '.########.', '##########', '.#......#.', '.#.###..#.', '.#.#.#..#.', '.#.#.#..#.', '.########.'],
+  tree:      ['....##....', '...####...', '..######..', '...####...', '.########.', '..######..', '##########', '....##....', '....##....', '...####...'],
+  stump:     ['..........', '..........', '..........', '..........', '..........', '..........', '...####...', '..######..', '..#.##.#..', '.##....##.'],
+  heap:      ['..........', '..........', '..........', '..........', '..........', '....#.....', '...###....', '..#####...', '.#######..', '#########.']
+};
+function drawCamp(cv, key, w, opts = {}) {
+  const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1)), h = 60;
+  if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + 'px'; cv.style.height = h + 'px'; }
+  const q = cv.getContext('2d'); q.setTransform(dpr, 0, 0, dpr, 0, 0); q.imageSmoothingEnabled = false;
+  q.fillStyle = PAL[0]; q.fillRect(0, 0, w, h);
+  // the cloud floor, a camp cell a step, per-cell tones
+  for (let c = 0; c < w / CAMP; c++) for (let r = 0; r < 3; r++) { q.fillStyle = PAL[toneAt(c, r, [1, 2, 1, 3])]; q.fillRect(c * CAMP, h - (3 - r) * CAMP, CAMP, CAMP); }
+  const sx = opts.sx ?? 90, art = STATION[key], top = h - 3 * CAMP - art.length * CAMP, x0 = Math.round(sx / CAMP - art[0].length / 2) * CAMP;
+  art.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') { q.fillStyle = PAL[key === 'tree' && j < 7 ? 8 : 10]; q.fillRect(x0 + i * CAMP, top + j * CAMP, CAMP, CAMP); } }));
+  // the leader: a dot every four px from the card's tail down to the station's top
+  q.fillStyle = PAL[5];
+  const artTop = top + art.findIndex(r => r.includes('#')) * CAMP;
+  for (let y = 2; y < artTop - 3; y += 4) q.fillRect(Math.round(sx) - 1, y, 2, 2);
+  return { top: artTop, x0 };
+}
+
+// ---------------------------------------------------------------------------
+// The page's pieces
+// ---------------------------------------------------------------------------
+// A card in its stage: the card, its tail on the station, the camp under it.
+function stage(host, key, dir, opt = {}) {
+  const box = document.createElement('div'); box.className = 'stagebox dir' + dir;
+  box.innerHTML = '<div class="scrollx"></div><canvas class="camp"></canvas>';
+  host.appendChild(box);
+  const k = new Card(key, dir, opt);
+  k.build(box.querySelector('.scrollx'));
+  k.tailX = 96; k.camp = box.querySelector('canvas.camp'); k.box = box;
+  return k;
+}
+
+// 1 · the saw takes: a live card, then its three frames
+const SAW_FRAMES = [
+  ['idle', 'idle: the saw at rest across the trunk, the hand showing the stroke', s => { Object.assign(s, { s: 0, chops: 0 }); }],
+  ['mid', 'mid-stroke: the saw drawn toward you, the kerf half through, sawdust falling', s => { Object.assign(s, { s: -24, chops: 4, v: 160, motes: [{ at: T - 0.1, c: 11 }, { at: T - 0.35, c: 12 }] }); }],
+  ['fall', 'falling: the top held at 45 degrees on its way down', s => { Object.assign(s, { s: 6, chops: 8, fell: T - 0.4 }); }]
+];
+const sawCards = [];
+function buildSaw() {
+  const host = document.getElementById('saw-takes'); host.innerHTML = '';
+  for (const tk of SAW_TAKES) {
+    const d = document.createElement('div'); d.className = 'take' + (tk.id === SAW_PICK_REC ? ' picked' : '');
+    d.innerHTML = `<h3>${tk.id} · <span class="ph">${tk.name}</span>${tk.id === SAW_PICK_REC ? ' <span class="k">(<span class="ph">recommended</span>)</span>' : ''}</h3><p><span class="ph">${tk.say}</span></p><div class="strip"></div>`;
+    host.appendChild(d);
+    const strip = d.querySelector('.strip');
+    const live = document.createElement('figure'); strip.appendChild(live);
+    const k = new Card('tree', REC_DIR, { tabs: false, members: false }); k.take = tk.id; k.build(live);
+    live.insertAdjacentHTML('beforeend', `<figcaption><span class="ph">live: drag the near handle</span></figcaption>`);
+    sawCards.push(k);
+    for (const [id, cap, set] of SAW_FRAMES) {
+      const f = document.createElement('figure'); f.dataset.frame = `${tk.id}-${id}`; strip.appendChild(f);
+      const q = new Card('tree', REC_DIR, { tabs: false, members: false }); q.take = tk.id; q.frozen = true; q.frame = set; q.noCue = id !== 'idle'; q.build(f);
+      if (id !== 'idle') q.uses = 9, q.cueA = 0;
+      f.insertAdjacentHTML('beforeend', `<figcaption><span class="ph">${cap}</span></figcaption>`);
+      sawCards.push(q);
+    }
+  }
+}
+const SAW_PICK_REC = 1;
+
+// 2 · the directions' sheets
+let dirCards = [];
+function buildDirs() {
+  for (const k of dirCards) CARDS.splice(CARDS.indexOf(k), 1);
+  const host = document.getElementById('dir-sheet'); host.innerHTML = '';
+  host.className = 'sheet dir' + DIR;
+  dirCards = KEYS.map(key => stage(host, key, DIR, { crit: STUMP_CRIT }));
+  document.getElementById('dir-say').innerHTML = `<p><b>${DIR} · <span class="ph">${DIRS[DIR].name}</span></b>${DIR === REC_DIR ? ' <span class="k">(<span class="ph">recommended</span>)</span>' : ''} <span class="ph">${DIRS[DIR].say}</span></p>`;
+  document.querySelectorAll('[data-dir]').forEach(b => b.classList.toggle('on', b.dataset.dir === DIR));
+}
+
+// 3 · the stump: its live card over it, and the camp's stumps with the shovel
+let STUMP_CRIT = 'a', stumpCard = null;
+function buildStump() {
+  if (stumpCard) CARDS.splice(CARDS.indexOf(stumpCard), 1);
+  const host = document.getElementById('stump-stage'); host.innerHTML = '';
+  host.className = 'stagebox dir' + REC_DIR;
+  stumpCard = stage(host, 'stump', REC_DIR, { crit: STUMP_CRIT });
+  stumpCard.uses = 0;
+  document.querySelectorAll('[data-crit]').forEach(b => b.classList.toggle('on', b.dataset.crit === STUMP_CRIT));
+}
+// The camp's grove: a standing tree, a stump that can be dug (the shovel
+// fading in), one with its card open (no shovel: the card is the cue), and
+// one dug out. Drawn at the camp's scale, then once at three times.
+const SHOVEL = ['..####..', '...##...', '...##...', '...##...', '.######.', '.######.', '..####..', '...##...'];
+const SHOVEL_IN_S = 0.5, SHOVEL_LOOP_S = 3;
+function drawShovel(q, cx, y, a, s = 1) {
+  // a paper plate with an ink rule, the glyph inside at two px a dot, a short tail down
+  const gl = 2 * s, w = 8 * gl + 6 * s, h = 8 * gl + 6 * s, x = Math.round(cx - w / 2);
+  q.globalAlpha = a;
+  q.fillStyle = PAL[10]; q.fillRect(x, y, w, h);
+  q.fillStyle = PAL[0]; q.fillRect(x + 2 * s, y + 2 * s, w - 4 * s, h - 4 * s);
+  q.fillStyle = PAL[10];
+  SHOVEL.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') q.fillRect(x + 3 * s + i * gl, y + 3 * s + j * gl, gl, gl); }));
+  for (let i = 0; i < 3; i++) { q.fillRect(Math.round(cx) - (3 - i) * s, y + h + i * s, 2 * (3 - i) * s, s); }
+  q.globalAlpha = 1;
+}
+const worldCanvases = [];
+function buildWorld() {
+  const host = document.getElementById('stump-world'); host.innerHTML = '';
+  const add = (w, h, cap, fn) => { const f = document.createElement('figure'); const cv = document.createElement('canvas'); f.appendChild(cv); f.insertAdjacentHTML('beforeend', `<figcaption><span class="ph">${cap}</span></figcaption>`); host.appendChild(f); worldCanvases.push({ cv, w, h, fn }); };
+  add(400, 110, 'the grove at the camp\'s scale: a tree, a stump ready (the shovel fades in), a stump with its card open (no shovel), a hole', drawGrove);
+  add(120, 110, 'the shovel at three times', (q, w, h) => { q.fillStyle = PAL[0]; q.fillRect(0, 0, w, h); drawShovel(q, w / 2, 14, 1, 3); });
+}
+function drawGrove(q, w, h) {
+  q.fillStyle = PAL[0]; q.fillRect(0, 0, w, h);
+  for (let c = 0; c < w / CAMP; c++) for (let r = 0; r < 3; r++) { q.fillStyle = PAL[toneAt(c, r, [1, 2, 1, 3])]; q.fillRect(c * CAMP, h - (3 - r) * CAMP, CAMP, CAMP); }
+  const put = (key, cx) => { const art = STATION[key], top = h - 3 * CAMP - art.length * CAMP, x0 = Math.round(cx / CAMP - 5) * CAMP; art.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') { q.fillStyle = PAL[key === 'tree' && j < 7 ? 8 : 10]; q.fillRect(x0 + i * CAMP, top + j * CAMP, CAMP, CAMP); } })); return top; };
+  put('tree', 50);
+  const t2 = put('stump', 150); const a = clamp01((T % SHOVEL_LOOP_S) / SHOVEL_IN_S); drawShovel(q, 150, t2 + 6 * CAMP - 40, a);
+  put('stump', 250);
+  // the open card's leader in its place, the card itself off this strip
+  q.fillStyle = PAL[5]; for (let y = 2; y < h - 3 * CAMP - 4 * CAMP - 3; y += 4) q.fillRect(249, y, 2, 2);
+  q.fillStyle = PAL[10]; for (let c = 0; c < 6; c++) q.fillRect(Math.round(350 / CAMP - 3 + c) * CAMP, h - 3 * CAMP, CAMP, CAMP);
+  q.fillStyle = PAL[0]; for (let c = 1; c < 5; c++) q.fillRect(Math.round(350 / CAMP - 3 + c) * CAMP, h - 3 * CAMP, CAMP, CAMP / 2);
+}
+
+// 4 · now beside the pick
+const NOW = {/*NOW*/
+  mill: 'data:image/png;base64,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',
+  papermill: 'data:image/png;base64,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',
+  press: 'data:image/png;base64,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',
+  chipper: 'data:image/png;base64,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',
+  workshop: 'data:image/png;base64,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',
+  tree: 'data:image/png;base64,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',
+  stump: 'data:image/png;base64,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',
+  heap: 'data:image/png;base64,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'
+};
+let vsCards = [];
+function buildVs() {
+  for (const k of vsCards) CARDS.splice(CARDS.indexOf(k), 1);
+  const host = document.getElementById('vs'); host.innerHTML = '';
+  vsCards = KEYS.map(key => {
+    const d = document.createElement('div'); host.appendChild(d);
+    d.innerHTML = `<figure style="margin:0"><img alt="" src="${NOW[key] || ''}"><figcaption class="lbl"><span class="ph">now</span></figcaption></figure><figure style="margin:0" class="dir${REC_DIR}"></figure>`;
+    const f = d.querySelectorAll('figure')[1];
+    const k = new Card(key, REC_DIR, { tabs: false, members: false, crit: STUMP_CRIT });
+    k.build(f); f.insertAdjacentHTML('beforeend', `<figcaption class="lbl"><span class="ph">${REC_DIR} · ${DIRS[REC_DIR].name}, live</span></figcaption>`);
+    return k;
+  });
+}
+
+// 5 · the coins
+function buildMarks() {
+  const yard = [['dust', 'dust'], ['spore', 'crops'], ['shard', 'ore'], ['spark', 'spark']], act = [['rebel', 'rebel'], ['timber', 'timber'], ['paper', 'paper']];
+  document.getElementById('marks').innerHTML =
+    `<span class="k" style="font-family:inherit">${words('yard')}</span>` + yard.map(([c, n]) => `<span>${MARK[c]} ${words(n)}</span>`).join('')
+    + `<span class="k" style="font-family:inherit;margin-left:12px">${words('act 3')}</span>` + act.map(([c, n]) => `<span>${MARK[c]} ${words(n)}</span>`).join('')
+    + `<span class="big" style="margin-left:12px">${act.map(([c]) => MARK[c]).join(' ')}</span>`;
+}
+
+// --- the passes: what each round of critique changed ---------------------------
+const PASSES = {
+  A: ['draft: the name over a rule; a rail under the part of glyph, the yard\'s bar and five chevrons; a dotted way for the hand; a star and a tag for the crit.',
+      'pass 1 (shared with B and C): the vat redrawn level and plumb (a straight rim and lip with the corners cut a cell, in place of a jagged ellipse); one arrow on the feed button in place of a double chevron that read as noise; the hammer pad\'s corner dots dropped (stray specks at 1x); the stump given a cut top, bark sides and a flared foot (it read as a crate); the sawdust mound darker and the chute a hopper (it was a black blob); the ghost hand filled with paper so it shows on a light part; the log glyph redrawn as an end with rings (it read as an eye) and the stump glyph with roots (it read as a bug); the saw partner a grey fist with a level arm (it read as a plug).',
+      'pass 1 (A): the five chevrons packed edge to edge read as a checkerboard at 1x; now four, a cell apart, and the bar shortened to make room.',
+      'pass 2 (A): the crit\'s tag ran off the top of the face on the tree, workshop and heap; it is now kept inside the face. The empty chevrons a step darker, so the four slots read before anything fills them. The vat\'s body plain, so the pulp is the one textured thing in it.'],
+  B: ['draft: the black sign with pips; a stepped wedge; a fine solid way for the hand; brackets and the count on the sign for the crit.',
+      'pass 1: the shared redraws (see A).',
+      'pass 2: the corner brackets shortened to two cells (at three they crowded the press\'s post and the vat\'s walls); the count on the sign in lower case like the figure ("x3", not "X3"); the hand\'s way a step darker (at the lightest grey it vanished at 1x).'],
+  C: ['draft: a grey name with the bar beside it; the part in heavy tones; a ramp along the foot drawn in two-pixel steps; the hand with no way; an ink stamp for the crit.',
+      'pass 1: the shared redraws (see A); the ramp put back on the cell grid (the two-pixel steps were off the grid and read as a smooth slider).',
+      'pass 2: the ramp\'s empty part lighter, so the filled part reads against it. Kept: the heavy tones make the vat and the plank muddy at 1x, which is the case against this direction.']
+};
+function renderPasses() {
+  document.getElementById('passes').innerHTML = Object.entries(PASSES).map(([d, list]) =>
+    `<div><h3>${d} · <span class="ph">${DIRS[d].name}</span></h3><ol>${list.map(s => `<li><span class="ph">${s}</span></li>`).join('')}</ol></div>`).join('');
+}
+
+// ---------------------------------------------------------------------------
+// The loop
+// ---------------------------------------------------------------------------
+function applyTheme() { PAL = isDark() ? DARKG : GREY; }
+function frame(dt) {
+  T += dt;
+  for (const k of CARDS) {
+    if (k.frame) { k.st = SIM[k.key].init(); k.frame(k.st); }
+    if (k.take) SAW_PICK = k.take;
+    k.step(dt);
+    if (k.frame) { k.st = SIM[k.key].init(); k.frame(k.st); }
+    k.draw();
+    if (k.take) SAW_PICK = SAW_PICK_REC;
+    if (k.camp) drawCamp(k.camp, k.key, Math.max(200, k.el.offsetWidth + 8), { sx: k.tailX + 6 });
+  }
+  for (const w of worldCanvases) {
+    const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
+    if (w.cv.width !== w.w * dpr) { w.cv.width = w.w * dpr; w.cv.height = w.h * dpr; w.cv.style.width = w.w + 'px'; w.cv.style.height = w.h + 'px'; }
+    const q = w.cv.getContext('2d'); q.setTransform(dpr, 0, 0, dpr, 0, 0); q.imageSmoothingEnabled = false; w.fn(q, w.w, w.h);
+  }
+  const sb = document.getElementById('stump-beat');
+  if (sb && stumpCard) {
+    const s = stumpCard.st;
+    sb.textContent = s.out != null ? 'out*' : T - s.snap < G.WINDOW_S && STUMP_CRIT === 'a' ? 'a root has snapped: yank now*' : s.lift >= G.STRAIN_LIFT ? 'straining*' : s.grab ? 'pulling: up to the line*' : 'still: it moves only when you pull*';
+  }
+}
+let last = null;
+function tick(now) {
+  if (last == null) last = now;
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!MANUAL) frame(dt);
+  requestAnimationFrame(tick);
+}
+
+// --- controls ---
+document.querySelectorAll('[data-theme-set]').forEach(b => b.addEventListener('click', () => { document.documentElement.dataset.theme = b.dataset.themeSet; applyTheme(); refreshTiles(); }));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+document.querySelectorAll('[data-zoom]').forEach(b => b.addEventListener('click', () => {
+  ZOOM = +b.dataset.zoom; document.querySelectorAll('[data-zoom]').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.card, canvas.camp, #stump-world canvas, .vs img').forEach(el => { el.style.zoom = ZOOM; });
+}));
+document.querySelectorAll('[data-dir]').forEach(b => b.addEventListener('click', () => { DIR = b.dataset.dir; buildDirs(); }));
+document.querySelectorAll('[data-alltab]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-alltab]').forEach(x => x.classList.toggle('on', x === b));
+  for (const k of dirCards) if (k.el.querySelector(`[data-tab="${b.dataset.alltab}"]`)) k.setTab(b.dataset.alltab);
+}));
+document.querySelectorAll('[data-crit]').forEach(b => b.addEventListener('click', () => { STUMP_CRIT = b.dataset.crit; buildStump(); for (const k of CARDS) if (k.key === 'stump') k.opt.crit = STUMP_CRIT; }));
+document.getElementById('hands-again').addEventListener('click', () => { for (const k of CARDS) if (!k.frozen) k.uses = 0; });
+document.getElementById('crit-all').addEventListener('click', () => { for (const k of CARDS) if (!k.frozen) { const [x, y] = PARTS[k.key].crit(k); k.mark(x, y, 3); } });
+document.getElementById('refill').addEventListener('click', () => { resetModel(); refreshTiles(); });
+
+applyTheme();
+buildSaw(); buildDirs(); buildStump(); buildWorld(); buildVs(); buildMarks(); renderPurse(); renderPasses();
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) { MANUAL = true; frame(0.5); }
+requestAnimationFrame(tick);
+
+// --- for the check: a hand-turned clock, and where things are ---------------------
+window.__mock = {
+  manual(on) { MANUAL = on; },
+  advance(s, step = 1 / 60) { for (let t = 0; t < s - 1e-9; t += step) frame(step); },
+  dir(d) { DIR = d; buildDirs(); },
+  crit(c) { document.querySelector(`[data-crit="${c}"]`).click(); },
+  theme(t) { document.documentElement.dataset.theme = t; applyTheme(); refreshTiles(); frame(0); },
+  // the face of card `i` of a group: its client rect and card px scale
+  face(group, i) {
+    const list = group === 'dir' ? dirCards : group === 'vs' ? vsCards : group === 'stump' ? [stumpCard] : sawCards;
+    const k = list[i], r = k.cv.getBoundingClientRect();
+    return { x: r.left, y: r.top, s: r.width / FACE_W, key: k.key };
+  },
+  card(group, i) { const list = group === 'dir' ? dirCards : group === 'vs' ? vsCards : group === 'stump' ? [stumpCard] : sawCards; return list[i]; },
+  read(group, i) { const k = this.card(group, i); return { made: k.made, gv: +k.gv.toFixed(3), uses: k.uses, prog: +clamp01(SIM[k.key].prog(k.st)).toFixed(3), marks: k.marks.length, st: JSON.parse(JSON.stringify(k.st, (key, v) => (key === 'motes' || key === 'pts' || key === 'taps' ? undefined : v))) }; },
+  fresh(group, i) { const k = this.card(group, i); k.st = SIM[k.key].init(); k.gv = 0; k.made = 0; k.marks = []; return 1; },
+  rect(sel) { const r = document.querySelector(sel).getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height }; }
+};
+</script>
+</body>
+</html>

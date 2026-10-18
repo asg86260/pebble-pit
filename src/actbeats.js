@@ -34,7 +34,8 @@
 import { S } from './state.js';
 import { P, WORKER, FINALE_HOUSE_W, AFTER_GATES, HELL_TIERS, ACT_HURRY, ACT_CAPTION_S, ACT_CAPTION_FADE_S,
          ACT_ROCK_FALL_S, ACT_ROCK_DUST_S, ACT_SOUL_LIFT_S, ACT_SOUL_PX_S, ACT_RIM_PIECES, ACT_RIM_STEP_S,
-         ACT_CALL_K, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, MANSION_FILE_AT, MANSION_FILE_W } from './config.js';
+         ACT_CALL_K, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, MANSION_FILE_AT, MANSION_FILE_W,
+         ACT_PEDESTAL_FADE_S } from './config.js';
 import { frameMs } from './clock.js';
 import { afterlifeOn, hellOn, owed } from './acts.js';
 import { play, stepShot, release, addScene } from './cutscene.js';
@@ -165,6 +166,15 @@ const fallen = () => !!A() && A().house !== 'standing';
 const beginAct3 = () => { if (typeof AFTER.beginAfter === 'function') AFTER.beginAfter(); };
 const beginAct4 = () => { if (typeof HELL.beginHell === 'function') HELL.beginHell(); };
 
+// The pair up on the pedestal, and on their way down off it to the road.
+const onPedestal = () => pairAt('pedestal');
+function leavePedestal() {
+  const p = makePair();
+  if (pairAt('down') || p.route === 'down' || (p.route === 'off' && p.then === 'down')) return;
+  if (pairAt('pedestal') || p.route === 'pedestal') { sendPair('off'); p.then = 'down'; }
+  else sendPair('down');
+}
+
 // The phases of each beat. `at` is what the camera looks at (and so the place
 // it stands in); `s` a hold in seconds, or `until` a fact; `say` the band's
 // line; `enter`, `step` and `end` what it does on the way.
@@ -178,8 +188,12 @@ const BODIES = {
   ],
   'arrive': [{ at: onPair, s: ACT_CAPTION_S, enter: beginAct3, say: 'act-arrive' }],
   'meet-god': [{ at: throne, s: ACT_CAPTION_S + 1, say: 'act-meet-god' }],
+  // To the camp, then up onto the pedestal, where the speech is theirs from
+  // then on (after/bubbles.js reads `at === 'pedestal'`).
   'refuse': [
-    { at: onPair, enter: () => sendPair('camp'), until: () => pairAt('camp'), say: 'act-refuse' },
+    { at: onPair, enter: () => sendPair('camp'), until: () => pairAt('camp'), say: 'act-refuse',
+      skipIf: () => onPedestal() || (!!pair() && pair().route === 'pedestal') },
+    { at: onPair, enter: () => { if (!onPedestal()) sendPair('pedestal'); }, until: () => onPedestal() && pair().top >= 1 },
     { at: onPair, s: 1.5 }
   ],
   'axe': [{ at: onPair, s: ACT_CAPTION_S, say: 'act-axe' }],
@@ -188,7 +202,10 @@ const BODIES = {
   'hell-told': [{ at: throne, s: ACT_CAPTION_S + 1, say: 'act-hell-told' }],
   'ghost-road': [{ at: tearAbove, s: ACT_CAPTION_S, enter: () => { ensureActs().road = true; freePortal('heaven'); }, say: 'act-ghost-road' }],
   'haunt': [
-    { at: onPair, enter: () => { makePair(); if (!pairAt('down')) sendPair('down'); }, until: () => pairAt('down'), say: 'act-haunt' },
+    // Off the pedestal first: the road's drawing faded back on over the
+    // pedestal's, then down its face and away to the tear.
+    { at: onPair, enter: () => { pair().off = true; }, until: () => !(pair().top > 0), skipIf: () => !onPedestal() },
+    { at: onPair, enter: leavePedestal, until: () => pairAt('down'), say: 'act-haunt' },
     { at: onPair, s: 1.5, end: () => { const p = pair(); p.mode = 'ghost'; freePortal('hell'); sendPair('loop'); takeLoad(p); } }
   ],
   'descend': [
@@ -234,14 +251,17 @@ export const ACT_BEAT_KEYS = Object.keys(BODIES);
 // session's: a reload plays the beat again from its first phase, and the
 // phases skip what has landed.
 let run = null;
-let spot = 0;
+let spot = 0, spotY = 0;
 let caption = null;
 export const actCaption = () => caption;
 const registered = new Set();
 function scene(key) {
   if (registered.has(key)) return;
   registered.add(key);
-  addScene(key, { s: 1e9, spot: () => spot,
+  // The box put between the letterbox's bands: a body's height over what
+  // the phase looks at, and the ground under it, so the floor a beat plays
+  // on is never under the foot band.
+  addScene(key, { s: 1e9, spot: () => spot, box: () => ({ x: spot - WORKER * 2, y: spotY - WORKER, w: WORKER * 4, h: WORKER * 2 + P }),
                   front: ['acts-yard', 'acts-bodies', 'acts-after', 'acts-after-bodies', 'acts-hell', 'acts-hell-bodies',
                           'acts-deep', 'acts-deep-bodies', 'mansion', 'home', 'workers'] });
 }
@@ -295,7 +315,7 @@ function step(key, next, t) {
       return true;
     }
     if (gliding()) return true;
-    spot = at.x;
+    spot = at.x; spotY = at.y;
     if (run.framed !== place) { scene(key); play(key); run.framed = place; }
     stepShot(t);
     const dt = frameMs() / 1000 * run.hurry;
@@ -351,6 +371,13 @@ export function stepActs(c) {
   if (!S.acts || !afterlifeOn()) return;
   stepPortals(c);
   const p = pair();
+  // The road's drawing of the two of them over the pedestal's: faded off
+  // once they stand on it, back on when they are to climb down.
+  if (p) {
+    const want = p.at === 'pedestal' && !p.off ? 1 : 0, was = p.top || 0;
+    if (was !== want) p.top = want > was ? Math.min(1, was + c.dt / 1000 / ACT_PEDESTAL_FADE_S) : Math.max(0, was - c.dt / 1000 / ACT_PEDESTAL_FADE_S);
+    if (p.off && p.at !== 'pedestal' && p.route !== 'pedestal') p.off = false;
+  }
   if (p && p.route) {
     const base = p.route === 'rise' ? ACT_SOUL_PX_S : ghostPace();
     const k = (p.hold ? ACT_CALL_K : 1) * (run ? run.hurry : 1);

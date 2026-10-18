@@ -40,11 +40,13 @@ import { P, GREY, CROWD_FILES, CROWD_PITCH, CROWD_X0, CROWD_NEAR, CROWD_ROW, CRO
          CROWD_STEP_UP, CROWD_BANDS, CROWD_MASS_ALT, CROWD_MASS_ALT_GRAIN, CROWD_MASS_HEADS, CROWD_MASS_TAPER, CROWD_MASS_STEP_S,
          CROWD_MASS_READ_S, CROWD_INK_LOCAL, CROWD_INK_WON, CROWD_CLUMP, CROWD_CLUMP_K, CROWD_CLUMP_R, CROWD_CLUMP_TALL, CROWD_CLUMP_LEAST, OURS_X0, OURS_INK,
          GOD_RATE, GOD_FAR, GOD_FAR_ALPHA, GOD_HORIZON_UP, GOD_THRONE, GOD_SEAT, GOD_FACE, GOD_CROWN, GOD_HAZE_TONE, GOD_GLARE,
-         GOD_LEDGES, GOD_FLIGHTS, GOD_TITHE_PATH, GOD_CARRIERS, GOD_CARRIER_LAP_S } from '../config.js';
+         GOD_LEDGES, GOD_FLIGHTS, GOD_TITHE_PATH, GOD_CARRIERS, GOD_CARRIER_LAP_S,
+         AFTER_SPEECH_WARN_S, AFTER_SPEECH_FILES, AFTER_SPEECH_HOLD_S, AFTER_POSTER_FADE_S } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { afterFloor, stationBox, slotX, overCrowd } from '../after/place.js';
-import { souls, support, union, OUT_RIM } from '../after/union.js';
+import { drawFloorLip } from './after/floor.js';
+import { souls, support, union, OUT_RIM, speechWarned, speechHeld } from '../after/union.js';
 import { walkingOut } from '../after/bodies.js';
 import { afterEnd, afterPan, godScaleAt } from '../view.js';
 import { smoothstep } from '../motion.js';
@@ -505,6 +507,8 @@ function nearSouls(a, dt) {
     bodiesTo(v);
   }
   bodiesTo(-1);
+  // The cloud's puffs in front of the front row: its feet stand in them.
+  drawFloorLip();
   read.primed = true;
   drawnNow.files = files; drawnNow.souls = count;
 }
@@ -698,6 +702,41 @@ export function drawAfterCrowd(c) {
   }
   nearSouls(a, dt);
   signs();
+  pushback();
+}
+
+// God's pushback over the front (the placeholder's, kept through the crowd's
+// redraw): the posters on the fence, a torn one's every other strip gone and
+// the rest fading; and the throne's speech, its band of files framed in grey
+// cells fading in over its warning, then washed white while it is held,
+// the wash fading off.
+function pushback() {
+  const A = S.after, floor = afterFloor(), t = now(), was = ctx.globalAlpha;
+  for (const p of A.posters) {
+    const x = slotX(p.slot);
+    if (x + P * 2 < S.camX || x - P > S.camX + S.viewW) continue;
+    ctx.globalAlpha = was * (p.torn != null ? clamp(1 - (t - p.torn) / AFTER_POSTER_FADE_S, 0, 1) : 1);
+    const rows = p.big ? 5 : 3, top = floor - P * (3 + rows);
+    rect(x - P, top, P * 3, P * (rows + 1), 10);
+    for (let r = 0; r < rows; r++) {
+      if (p.torn != null && r % 2) continue;
+      rect(x - P + 1, top + 1 + r * P, P * 3 - 2, P - (r === rows - 1 ? 2 : 0), r % 2 ? 2 : 0);
+    }
+  }
+  const sp = A.speech;
+  if (sp) {
+    const held = speechHeld(), f0 = held ? sp.swept ?? sp.f0 : sp.f0;
+    const x0 = fileMid(f0) - CROWD_PITCH / 2, w = AFTER_SPEECH_FILES * CROWD_PITCH, top = floor - BAND_FOOT - P * 4;
+    const k = held ? clamp(1 - (t - sp.held) / AFTER_SPEECH_HOLD_S, 0, 1)
+      : speechWarned() ? clamp(1 - (sp.next - t) / AFTER_SPEECH_WARN_S, 0, 1) : 0;
+    if (k > 0) {
+      if (held) { ctx.globalAlpha = was * 0.75 * k; rect(x0, top, w, floor - top, 0); }
+      ctx.globalAlpha = was * k;
+      for (let x = x0; x < x0 + w; x += P * 2) { rect(x, top, P, P, 5); rect(x, floor - P, P, P, 5); }
+      for (let y = top; y < floor; y += P * 2) { rect(x0, y, P, P, 5); rect(x0 + w - P, y, P, P, 5); }
+    }
+  }
+  ctx.globalAlpha = was;
 }
 
 // --- our crowd ---------------------------------------------------------------------------------

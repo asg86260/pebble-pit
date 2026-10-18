@@ -16308,8 +16308,14 @@ warning they can read, not a swimmer to watch for.
   and the siphonophore (a colony 26 cells long) fit no orb and are never taken
   (`MEAL_SKIP`); the roster puts no kind in two slots, so one of the three
   always can be.
+- **The comb is the timer** (the owner's A, 2026-10-18,
+  docs/mocks/serpent-comb-timer-2026-10-18.html): it fills head first on
+  `S.mealT` over the whole window, a spike at a time in its lit look, so the
+  player reads how near the meal is off the serpent itself; the stun and Held
+  stop it with the window, and its last spike lights as the warning ends and
+  the bolts leave (`combCharge`).
 - **The beats** (`deep/meals.js`, `beatOf`): the orb mechanic's warning (the
-  comb lit head first), `ORB_BOLT_S` of bolts while the orb closes over
+  comb's last stretch lit), `ORB_BOLT_S` of bolts while the orb closes over
   `ORB_CLOSE_S`, the haul (`MEAL_REEL`: a second and one more every forty
   cells, held between 1.6 and 4.5, eased), `MEAL_GULP_S` into the jaws,
   `MEAL_SWALLOW_S` down the body, and the heal at the belly; then the aura.
@@ -19683,8 +19689,7 @@ same day; where this and the paragraph above differ, this is what runs.
 
 Open from the rework: the hall's return, if it should have a job; a third
 upgrade for the saw mill (the second blade and a bigger heap stand now);
-the story's pair stand at the pedestal's foot while the placeholder pair
-are drawn on it (the climb up is not drawn); each station's hand gesture
+each station's hand gesture
 (being mocked); every number, for the pace tool.
 
 The owner: "clicking clouds to gather faith, you can buy permanent workers
@@ -19887,7 +19892,11 @@ pale field that goes to ink in the places the union has reached.
   white, walk the yard on rounds: a warden at a poster tears it down (a
   held tear, the paper falling in strips that fade), a warden at a sign
   pulls it up and carries it up the stair into the glare, where it fades.
-  Nothing pops; every confiscation is a body carrying a thing away. The
+  Nothing pops; every confiscation is a body carrying a thing away. A
+  warden goes only after a thing that has stood a rest's length
+  (`AFTER_WARDEN_REST_S`): one rested and waiting would be on every new
+  sign the moment it was planted, and the opening's lone signs would be
+  pulled before they closed a rim (built 2026-10-18). The
   wardens' number rises at each gate. Nobody fights them: the answers are
   ladders -- paste that holds (a torn poster takes longer), posters pasted
   higher (out of a warden's reach), sign-keepers (a carrier who stands by
@@ -21161,3 +21170,116 @@ learn the parts from the sentence on each one.
   an `about`, every effect is in one group, every starting point names only
   effects and knobs that exist and reads clean through `validate`, and the
   preview and `mix.py` each handle every type.
+
+## One camera for every cutscene, and a bench to watch them on (design, not built)
+
+The act 3 intro is the case that made this necessary: the house falls, the
+souls rise to heaven's tear, and the shot falls apart. Taken frame by frame
+(the owner's report, 2026-10-18, "janky, doesn't follow the letterboxing,
+the zooming is wonky"):
+
+- **The zoom pops.** Through the tear the view lands in the afterlife at that
+  place's own zoom (`placeZoom('after')`, 4/5 of a cell where the yard is
+  5/6), so the window goes from 960 to 1200 world pixels wide in one frame,
+  in the middle of a held shot.
+- **The camera lands in empty sky and climbs for ten seconds.** It follows
+  the pair, and the pair are still far below heaven's cloud floor when the
+  ripple lands. The afterlife's branch of `clampCam` has no vertical limit,
+  so the frame drops into the blank gap under the floor and then lifts with
+  them at their rising pace: roughly ten seconds of a white window with a
+  purple ring in it.
+- **The top band is lost around the portal opening.** The band code draws
+  both bands from one number, so this one is not explained by reading; the
+  bench below is how it gets caught.
+
+None of these is an act 3 bug as such. They come from there being **six
+cameras**: cutscene.js's, the finale's, the snatch's, the opening's, the first
+trip down's and the act beats' runner, which stitches cutscene.js to view.js's
+place glides. Each has its own easing (three copies of one quadratic, two
+cosines, two smoothsteps, an outCubic), its own chase-a-share-a-frame (0.12,
+0.06), its own clamp, and three of them set the zoom. A cutscene that crosses
+from one camera's ground into another's, as act 3's does, gets the seams.
+
+### The shot
+
+One module, `shot.js`, grown out of cutscene.js's framing, is the only thing
+that moves the camera while a cutscene holds. A cutscene does not move the
+camera. It says, each frame or each phase, **what must be seen**:
+
+- `frame`: a box in world pixels (the house and the rock over it; the pair
+  and the tear above them). It is a box, not a point, so the shot can fit it
+  between the bands and refuse a frame that cuts it.
+- `place`: which of the yard, the deep, the afterlife or hell it is in. It is
+  read off the box unless the cutscene says otherwise.
+- `move`: either `glide` (go there and hold, the default) or `follow` (keep
+  a moving box in frame).
+
+From that the shot does everything else, the same way for every cutscene:
+
+1. **The letterbox, always.** Bands are up for as long as the shot holds,
+   from its first frame to its last, in every place. Nothing a cutscene says
+   can lower them.
+2. **One zoom a place.** The zoom never steps in a held frame; between two
+   places it changes under the ripple that joins them (the owner's call 1,
+   below).
+3. **One move.** A glide is one ease-in-out curve over a time from the
+   distance (`CUT_PAN_PX_S`, floored at `CUT_SETTLE_S`, capped at
+   `CUT_PAN_MAX_S`, as today), in x and y together. There is no
+   share-a-frame chase anywhere. `follow` holds the frame still while the box
+   tracks it smoothly (the owner's call 2, below).
+4. **The box is always in frame.** The frame is fitted between the bands
+   with `CUT_FRAME_MARGIN`, and clamped to each place's own limits: never
+   below its floor, never above the top of its sky. Each place states its
+   limits once, in one table, instead of a branch in `clampCam` and another
+   in view.js.
+5. **A place change frames the far side first.** When the box crosses into
+   another place, the shot works out the frame the subject will have over
+   there and ripples straight to it. Nothing drops or climbs after landing.
+
+The act beats keep their phase lists. Each phase's `at` point becomes a
+`frame` box, plus an optional `move`. The finale, the snatch, the opening and
+the first trip down move onto the shot one at a time after act 3, each
+losing its own easing and clamp. Each move is a change to that cutscene's
+frames, checked on the bench, not a redesign of the cutscene.
+
+### The bench
+
+`cutscenes.html`, beside `scenes.html`: the game in a frame, staged from boot
+so it never touches the save, with every cutscene down the side. A cutscene
+there is a row: its name, the setup that stands the yard up just before it,
+and the fact that ends it.
+
+- **Record once, scrub freely.** Choosing a cutscene plays it with the clock
+  held still, a frame every tenth of a second of game time, and keeps the
+  frames. A timeline under the picture scrubs them, with the phase names
+  marked along it. Arrow keys step a frame, space plays, and `r` records it
+  again after an edit.
+- **Play from a phase.** Clicking a phase mark stands the cutscene up again
+  and runs it to that phase, so the end of a forty-second cutscene is a
+  click away.
+- **An overlay**, toggled: the `frame` box, the safe area, the bands' edges,
+  the camera's path as a line, and a readout of place, zoom, camera x and y
+  and the phase.
+- **Checks along the timeline.** A red tick on every frame where the zoom
+  changed, where the camera moved more than a glide allows, where the box is
+  outside the frame, or where a band is missing. The act 3 intro today would
+  be red at the ripple and white-on-white for the climb, and those ticks are
+  the definition of done for its rebuild.
+
+A cutscene in `scenes.js` is a still. A cutscene on the bench is the whole
+run, and the bench is where a cutscene is written from now on.
+
+### The owner's calls (2026-10-18)
+
+1. **The zoom across places changes under the ripple.** Each place keeps its
+   own zoom, but the change happens only while the portal ripple covers the
+   screen, never in a held frame. So rule 2 above reads: one zoom *per place*,
+   and the step between two places is hidden by the ripple that joins them.
+2. **A moving subject is tracked smoothly.** `follow` rides with the box,
+   centered on it, at the box's own pace, not with a still frame and a safe
+   area. The tracking is a critically damped spring on the frame's center
+   (one stiffness, `CUT_FOLLOW_K`, in config), so a start or a stop eases
+   instead of jerking, and it is the only tracking code there is. On the
+   bench, the safe area is drawn as the box's margin instead.
+3. **The rise into heaven** gets a mock-and-vote of its own once the shot
+   exists. Its shape is the act 3 intro's question, not the shot's.

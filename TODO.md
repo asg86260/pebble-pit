@@ -4,6 +4,13 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## One camera for every cutscene, and a cutscene bench -- APPROVED, BUILDING (2026-10-18)
+
+DESIGN.md, "One camera for every cutscene, and a bench to watch them on".
+The act 3 intro's zoom pop, the empty-sky climb and the lost top band come
+from six cameras with their own easing, clamps and zooms. The owner chose
+per-place zoom changed under the ripple, and smooth tracking. The rise into heaven is a mock-and-vote after the shot is built.
+
 ## The score and the music bench -- BENCH BUILT, GAME PLAYBACK DESIGNED, AWAITING THE OWNER'S EAR (2026-10-17)
 
 Next: "The score in the game, and the menu filter" (DESIGN.md). Blocked on

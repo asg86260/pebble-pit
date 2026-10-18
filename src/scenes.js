@@ -38,9 +38,12 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, stationBox, soulX } from './after/place.js';
+import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor } from './after/place.js';
 import { afterEnd } from './view.js';
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S } from './config.js';
+import { FINALE_HOUSE_W } from './config.js';
+import { houseX } from './home.js';
+import { goOnAlpha } from './actbeats.js';
 import { pref, setPref } from './prefs.js';
 import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
@@ -764,6 +767,8 @@ const deepScenes = {
     run: stageScene(3, 0.27, [cast('mage', 4), cast('monk', 4)]) },
   'deep-meal': { about: 'the deep', say: 'the window a moment short of a meal: the comb about to light for the nearest creature',
     run: mealScene(null) },
+  'comb-timer': { about: 'the deep', say: 'halfway through the window: the comb, the meal\'s timer, half lit from the head',
+    run: () => { mealScene(null)(); S.mealT = (windowS() - MEAL_LEAD_S + MEAL_WARN_S) / 2 - 1; } },
   'meal-bolts': { about: 'the deep', say: 'the meal bolts off the lit comb, the orb closed round the nearest creature',
     run: mealScene(() => MEAL_WARN_S + 0.3) },
   'meal-reel': { about: 'the deep', say: 'the meal orb hauled in on its bolts, halfway to the jaws',
@@ -1150,6 +1155,8 @@ const deepScenes = {
   'finale-light': { about: 'the deep', say: 'the finale: the door shut, the window lit, the heart over the house', run: finaleAt('light', 0.6) },
   'finale-after': { about: 'the deep', say: 'after the finale: the two of them come out of the house to the bench', run: finaleAt('after', 1.2) },
   'finale-after-bench': { about: 'the deep', say: 'after the finale: the two of them sat on the bench by the door, for good', run: finaleAt('after', 6) },
+  'finale-after-casino': { about: 'the deep', say: "after the finale: the house and its bench at the yard's left end, clear of the open casino",
+    run: () => { finaleAt('after', 6)(); window.__casino(true); S.still = true; S.camX = 0; clampCam(); } },
   // The fourth break: the belly open and him coming out of it.
   'deep-freed': { about: 'the deep', say: 'the fourth break: the belly open and him swimming out',
     run: () => {
@@ -2857,6 +2864,8 @@ export const SCENES = {
     run: () => { actsYard('act4'); window.__fast(2); pinCamera(0); window.__holdShot(); } },
   'portal-heaven-up': { about: 'the acts', say: 'heaven\'s portal\'s other end, over the patch of cloud floor the road comes up through',
     run: () => { actsYard('road'); S.beatsDone.push('haunt'); S.acts.pair.mode = 'ghost'; window.__goPlace('after'); window.__fast(2); window.__holdShot(); } },
+  'after-pair': { about: 'the acts', say: 'act 3 as it stands after the refusal: the pair as souls at the foot of the cloud pillar',
+    run: () => { actsYard('fallen'); window.__goPlace('after'); window.__fast(2); window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot(); } },
   'portal-hell': { about: 'the acts', say: 'hell\'s white-hot slit in the deep\'s floor, and its hand',
     run: () => { actsYard('act4'); window.__view('deep'); window.__fast(2); window.__holdShot(); } },
   'house-fall': { about: 'the acts', say: 'the house\'s fall: the rock out of the sky over the house, the two of them indoors',
@@ -2866,6 +2875,36 @@ export const SCENES = {
       for (let i = 0; i < 60 * 40 && !(window.__actFall() && window.__actFall().rock >= 0.5); i++) window.__fast(1 / 60);
       window.__holdShot();
     } },
+  // Ways into act 3 for a playtest, from the dev panel's scenes tab: the
+  // start just past act 2's finale, and the middle of the camp's build.
+  'act3-start': { about: 'the acts', say: 'act 3 start: just past act 2\'s finale, the two of them home, the go-on card up over the house -- press it to begin act 3',
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
+      pinCamera(houseX() + FINALE_HOUSE_W * P / 2 - S.viewW / 2);
+    } },
+  // The opening played from the go-on card's press to the refusal's last
+  // phase: the two of them up the pillar's face onto the pedestal, the
+  // road's drawing of them fading off over the pedestal's own.
+  'act3-pedestal': { about: 'the acts', say: 'the refusal\'s end: the two of them climbing up onto the pedestal, where the speech is theirs from then on',
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
+      for (let i = 0; i < 60 * 400 && !(S.acts?.pair?.route === 'pedestal' && S.acts.pair.leg >= 2); i++) window.__fast(1 / 60);
+      window.__fast(0.6);
+      window.__holdShot();
+    } },
+  'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp half built (saw mill, chipper, workshop, posts filled), a fifth of God\'s yard walked out, the axe in hand',
+    run: act3Mid },
+  // God's pushback over the crowd as drawn (render/aftercrowd.js): the
+  // throne's speech warned over its band of files, then held across them,
+  // stripping the half-won; and the wardens at a poster and a sign.
+  'act3-speech-warned': { about: 'the acts', say: 'the throne\'s speech warned: its band of files framed over half-won souls, a sign and posters standing',
+    run: () => pushback('warned') },
+  'act3-speech-held': { about: 'the acts', say: 'the throne\'s speech held across its band: the half-won souls in it stripped pale, the sign in it knocked askew',
+    run: () => pushback('held') },
+  'act3-wardens': { about: 'the acts', say: 'the wardens on their rounds: one tearing a poster off the fence, one carrying a sign up toward the throne',
+    run: () => pushback('wardens') },
   'mansion': { about: 'the acts', say: 'the mansion going up on the house\'s ground: the scaffold, a floor and a half set, the rock half broken up',
     run: () => { actsYard('mansion', 34); window.__fast(3); pinCamera(0); window.__holdShot(); } },
   'mansion-end': { about: 'the acts', say: 'the mansion finished, the two of them in, the freed souls down the stair in their files',
@@ -2889,6 +2928,65 @@ function actsYard(point, pieces = 0) {
   window.__snatch({ played: true });
   window.__actsAt(point, pieces);
   window.__view('yard');
+}
+
+// Act 3 half way: the opening played (`__actsAt('fallen')`, the two of them
+// up on the pedestal), the axe in hand and its beat had, the saw mill, the
+// chipper and the workshop raised off the shack, posts bought and filled, a
+// fifth of the crowd made members and walked out to the camp (the setup the
+// scene is not about), the yard rich for the bills still to come. The paper
+// mill and the press are left to buy.
+function act3Mid() {
+  actsYard('fallen');
+  if (!S.beatsDone.includes('axe')) S.beatsDone.push('axe');
+  S.after.axeBought = true; window.__afterAxe();
+  window.__afterCrowd((i, v) => (i % CROWD_FILES < 8 && i < CROWD_FILES * 30 ? 8 : v));
+  for (let k = 0; k < 120 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  window.__afterGrant({ rebel: 600, timber: 20, logs: 6 });
+  for (const wave of [['mill', 'chipper'], ['workshop']]) {
+    for (const st of wave) window.__buy(`after-build-${st}`);
+    for (let k = 0; k < 120 && wave.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
+  }
+  const A = AFTER_JOB;
+  for (const j of [A.CUT, A.CUT, A.HAUL, A.HAUL, A.SAW, A.CHIP, A.JOIN, A.CARRY, A.CARRY, A.AGITATE]) window.__buy(`after-post-${j}`);
+  for (const u of ['after-plot', 'after-plot']) window.__buy(u);
+  window.__goPlace('after');
+  window.__fast(20);
+  // between the workshop and the pedestal, the camp's middle
+  pinCamera((stationX0('workshop') + stationX0('pedestal')) / 2 - S.viewW / 2);
+}
+
+// God's pushback at a moment (`what`: 'warned', 'held', 'wardens'): the
+// opening played, the crowd half won in its front files, posters along the
+// fence and a sign among the files, the camera on the crowd's front.
+function pushback(what) {
+  actsYard('fallen');
+  window.__goPlace('after');
+  const A = S.after;
+  window.__afterCrowd((i, v) => (i % CROWD_FILES < 24 ? 3 + (i * 7) % 4 : v));
+  for (let s = 0; s < 12; s += 2) A.posters.push({ id: 91000 + s, slot: s, age: 0, torn: null, big: false });
+  A.signs.push({ id: 92000, f: 6, r: 1, askew: false, pull: null, big: false, age: 0 });
+  A.speech = { next: A.t + 1e6, f0: 2, held: null };
+  window.__fast(0.5);
+  if (what === 'warned') A.speech.next = A.t + 3.5;
+  if (what === 'held') { A.speech.next = A.t + 0.05; window.__fast(0.05); }
+  if (what === 'wardens') {
+    const fl = A.posters[2], y = afterFloor();
+    A.posters[1].torn = A.t - 0.5;
+    A.wardens.length = 0;
+    A.wardens.push({ id: 93000, x: wallSlotX(fl.slot), y, state: 'tear', t: 0, goal: 'poster', target: fl.id, load: null, dropped: null, face: -1 },
+                   { id: 93001, x: soulX(30), y, state: 'carry', t: 0, goal: 'sign', target: null, load: 'sign', dropped: null, face: 1 });
+  }
+  window.__fast(0.1);
+  window.__holdShot();
+  pinCamera(CROWD_X0 - P * 10);
+  // The wash fades off in a second and a half, quicker than a shot is taken:
+  // held on the page's frames for a few seconds.
+  if (what === 'held' && typeof window.__scene === 'function') {
+    const sp = A.speech, until = performance.now() + 4000;
+    const hold = () => { if (S.after !== A || performance.now() > until) return; sp.held = A.t - 0.2; window.__look(CROWD_X0 - P * 10); requestAnimationFrame(hold); };
+    requestAnimationFrame(hold);
+  }
 }
 
 // Wake the checks' pad and hop it along the stops until it is on `id` (or,

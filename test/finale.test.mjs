@@ -11,10 +11,11 @@
 // party, the crew.
 import { group, ok, run, runUntil } from './helpers.mjs';
 import { S } from '../src/state.js';
-import { P, WORKER, SERPENT_PHASES, SERPENT_WOUND, FINALE_END_CELLS } from '../src/config.js';
+import { P, WORKER, SERPENT_PHASES, SERPENT_WOUND, FINALE_END_CELLS, FINALE_BENCH_W, APOTH_POTS_MAX } from '../src/config.js';
 import { TYPE, isDeepType } from '../src/jobs.js';
 import { belowYard, wayAt, inWorking } from '../src/route.js';
-import { pieces, pieceUp, houseDone, houseStands, spotOf, benchAt } from '../src/home.js';
+import { pieces, pieceUp, houseDone, houseStands, spotOf, benchAt, benchX } from '../src/home.js';
+import { placeSites } from '../src/world.js';
 import { migrate } from '../src/migrations/index.js';
 import finale from '../src/migrations/2026-10-12-finale.js';
 
@@ -324,4 +325,15 @@ group('"complete act 2" is on the record at the kill, once, and a save past it c
     ok(once === 1, 'and it stays once through the finale', `${once}`),
     ok(S.won.filter(k => k === 'freed').length === 1, 'a loaded save past the finale gets it', S.won.join(','))
   ];
+});
+
+// With every pot bought, the apothecary at its widest and the sites left of
+// it stepped as far left as they go.
+group('the house and its bench stand clear of the casino', async () => {
+  window.__fullSites();
+  window.__casino(true);
+  S.apothPots = APOTH_POTS_MAX;
+  const { at } = placeSites();
+  const end = benchX() + FINALE_BENCH_W * P;
+  return [ok(end <= at.casino.x - 2 * P, 'the bench ends short of the casino\'s wall', `${end} vs ${at.casino.x}`)];
 });

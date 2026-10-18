@@ -1392,8 +1392,8 @@ import { ensureActs, forgetActs } from './actbeats.js';
 import { retiredIn } from './home.js';
 import { openPortal, freePortal } from './portals.js';
 import { beginMansion, mansionPieces } from './mansion.js';
-import { ruinX, campX, yardFeet, sendPair } from './ghosts.js';
-import { afterFloor as actsAfterFloor } from './after/place.js';
+import { ruinX, yardFeet, sendPair } from './ghosts.js';
+import { speakerAt as actsSpeakerAt } from './after/place.js';
 import { WORKER as ACTS_WORKER, ACT_RIM_PIECES, MANSION_FADE_S } from './config.js';
 import { WALL_BEATS } from './hell/story.js';
 // The go-on card pressed, as its click presses it (render/portals.js,
@@ -1418,14 +1418,15 @@ HANDLES.__actsAt = (point, pieces = 0) => {
   const a = ensureActs();
   a.goOn = true; a.house = 'fallen';
   a.portals.heaven.k = 1;
-  a.pair = { x: campX(), y: actsAfterFloor() - ACTS_WORKER, route: null, leg: 0, hold: null, carry: 0, mode: 'soul', rims: 0, face: 1, lift: 1, inside: 0, at: 'camp' };
+  // up on the pedestal, as the refusal leaves them (actbeats.js)
+  a.pair = { x: actsSpeakerAt(1).x, y: actsSpeakerAt(0).y - ACTS_WORKER, route: null, leg: 0, hold: null, carry: 0, mode: 'soul', rims: 0, face: 1, lift: 1, inside: 0, at: 'pedestal', top: 1 };
   beginAfter();
   if (point === 'fallen') return a;
   a.struck = true; a.road = true;
   freePortal('heaven'); openPortal('hell'); a.portals.hell.k = 1;
   if (point === 'road') return a;
   const x = ruinX();
-  Object.assign(a.pair, { x, y: yardFeet(x), mode: 'ghost', at: null });
+  Object.assign(a.pair, { x, y: yardFeet(x), mode: 'ghost', at: null, top: 0 });
   sendPair('loop');
   freePortal('hell'); a.wentDown = true;
   beginHell();

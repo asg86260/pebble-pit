@@ -32,6 +32,7 @@ export const AFTER_BILLOW_SEED = 3;        // which run of puffs (the mock's lay
 export const AFTER_BILLOW_BIG = 0.55;      // the share of puffs two cells high, the rest one
 export const AFTER_DRIFT_ROWS = [4, 9];    // the two contours, cells under the line
 export const AFTER_DRIFT_RATE = [0.25, -0.15];  // ...and how fast each slides, cells a second
+export const AFTER_PUFF_LEAST = 4;        // cells: a run of billow narrower than this between two flats is pressed flat too
 
 // --- the click: the pair's speech, and rebel ------------------------------------
 // The act's coin is rebel (the owner, 2026-10-18; a working name, the label

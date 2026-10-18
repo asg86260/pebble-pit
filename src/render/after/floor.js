@@ -8,7 +8,7 @@
 
 import { P, GREY, AFTER_W, AFTER_DRIFT_ROWS, AFTER_DRIFT_RATE, AFTER_BILLOW_SEED } from '../../config.js';
 import { S } from '../../state.js';
-import { afterX0, afterFloor, floorProfile, floorFlats, billow, notchX } from '../../after/place.js';
+import { afterX0, afterFloor, floorProfile, floorFlats, billow, notchX, crowdLip } from '../../after/place.js';
 import { ctx } from '../ctx.js';
 import { K, W, now } from './kit.js';
 
@@ -71,4 +71,15 @@ export function drawFloor() {
   const nx = notchX();
   fr(nx - 2, top, 2, P + 2, K); fr(nx + 2 * P, top, 2, P + 2, K);
   for (let r = 1; r < 4; r++) { fr(nx - 2, top + r * P, 2, P, 3); fr(nx + 2 * P, top + r * P, 2, P, 3); }
+}
+
+// The puffs again over God's crowd, drawn after its front row (render/
+// aftercrowd.js): the crowd stands on the one floor, shoulder to shoulder,
+// and a puff rising in front of a file hides its feet, so the crowd reads as
+// standing in the cloud without its rows climbing into each other.
+export function drawFloorLip() {
+  const el = floorProfile(), top = afterFloor(), [a, b] = crowdLip();
+  const j0 = Math.max(a, Math.floor((S.camX - afterX0()) / P) - 1);
+  const j1 = Math.min(b, Math.ceil((S.camX + S.viewW - afterX0()) / P) + 2);
+  if (j1 > j0) edge(el, j0, j1, afterX0(), top, K, true, top);
 }
