@@ -9,11 +9,14 @@
 // Every beat is a placeholder cutscene on the cutscene system's own terms --
 // the letterbox, the camera glided to what it is about, a line in the band
 // that is a plain label until the owner writes it -- built as phases: each
-// looks at something (a spot, or the pair as they walk), holds for a few
-// seconds or until a fact lands, and may start something on the way in.
-// What a phase looks at decides the place the camera is in: when the pair
-// walk out of one place into the next, the camera follows by the ripple
-// through the portal between (view.js, `travel`), never a cut. The pair
+// names a frame (a box in the world: a spot, or the pair as they walk, a
+// body's height round it at least), holds for a few seconds or until a fact
+// lands, and may start something on the way in. The shot frames the box
+// (shot.js): glided to and held, or followed as it moves. What the frame is
+// on decides the place the camera is in: when the pair walk out of one place
+// into the next, the camera follows by the ripple through the portal between
+// (view.js, `travel`), landed on the frame they will have over there, never
+// a cut. The pair
 // themselves only ever walk (ghosts.js). A click or the held space bar
 // hurries a beat ACT_HURRY times; nothing in it is cut.
 //
@@ -42,7 +45,7 @@ import { play, stepShot, release, addScene } from './cutscene.js';
 import { travel, gliding, setView, goDeep, goUp, canGoDown } from './view.js';
 import { beatDone } from './beats.js';
 import { openPortal, freePortal, portalEnd, portalBetween, stepPortals } from './portals.js';
-import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, takeLoad, LOOP_CAGE, ghostPace, tear } from './ghosts.js';
+import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, takeLoad, LOOP_CAGE, ghostPace, tear, seenAt } from './ghosts.js';
 import { beginMansion, mansionDone, mansionX, MANSION_W, beginGathering, gathered, stepMansion, stepGathering,
          forgetMansionHands } from './mansion.js';
 import { houseX, IN_DONE_S } from './home.js';
@@ -137,16 +140,41 @@ const TRIGGERS = {
 for (let i = 0; i < lastWall; i++) TRIGGERS[`wall-${i + 1}`] = () => beatDone('wall-first') && wallDue(i);
 export const actDue = key => !!(TRIGGERS[key] && TRIGGERS[key]());
 
-// --- the phases' marks ------------------------------------------------------------------
+// --- the phases' frames ------------------------------------------------------------------
+// Each mark is a spot -- across, the middle of what is watched; down, the top
+// of a body standing there -- and the frame round it is a body's height over
+// it and the ground under it, so the floor a beat plays on is never under the
+// foot band. The place a frame is in is read off its spot (ghosts.js,
+// `placeFor`).
+const around = s => ({ x: s.x - WORKER * 2, y: s.y - WORKER, w: WORKER * 4, h: WORKER * 2 + P, place: placeFor(s.y) });
+const spotted = spot => () => around(spot());
+const union = (a, b) => {
+  const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
+  return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y, place: a.place };
+};
 const houseSpot = () => ({ x: houseX() + FINALE_HOUSE_W * P / 2, y: S.groundY - WORKER });
 const throne = () => ({ x: afterX1() - P * 60, y: afterFloor() - WORKER });
-const onPair = () => { const p = pair(); return p ? { x: p.x + WORKER / 2, y: p.y } : houseSpot(); };
+// The pair where they are seen: where they walk, or, crossing between two
+// places, where they come out (ghosts.js, `seenAt`).
+const pairSpot = () => { const s = seenAt(); return s ? { x: s.x + WORKER / 2, y: s.y } : houseSpot(); };
+const onPair = spotted(pairSpot);
 const tearAbove = () => { const e = portalEnd('heaven', 'after'); return { x: e.x, y: afterFloor() - WORKER }; };
+// The rise: the pair and heaven's tear above them -- the yard's end while
+// they rise to it, the cloud floor's end over the patch they come up through
+// once they are past it, so the frame over there is the one they arrive in.
+const ringBox = e => ({ x: e.x - e.r, y: e.y - e.r, w: e.r * 2, h: e.r * 2 });
+const riseFrame = () => {
+  const box = onPair();
+  const e = portalEnd('heaven', box.place === 'after' ? 'after' : 'yard');
+  return e ? union(box, ringBox(e)) : box;
+};
 // Hell's chambers, where the camera holds each (hell/place.js).
-const chamber = i => () => ({ x: typeof HELLPLACE.chamberFocusX === 'function' ? HELLPLACE.chamberFocusX(i) : cageX(),
-                                y: hellFloor() - WORKER });
+const chamber = i => spotted(() => ({ x: typeof HELLPLACE.chamberFocusX === 'function' ? HELLPLACE.chamberFocusX(i) : cageX(),
+                                       y: hellFloor() - WORKER }));
 const mansionMid = () => ({ x: mansionX() + MANSION_W * P / 2, y: S.groundY - WORKER });
 const files = () => ({ x: (MANSION_FILE_AT + MANSION_FILE_W * 2) * P, y: S.groundY - WORKER });
+const atHouse = spotted(houseSpot), atThrone = spotted(throne), atTear = spotted(tearAbove),
+      atMansion = spotted(mansionMid), atFiles = spotted(files);
 const storyOf = key => (key in AFTER_STORY ? AFTER_STORY : HELL_STORY);
 
 // The house's fall: the two of them walked indoors first (nothing teleports),
@@ -175,53 +203,54 @@ function leavePedestal() {
   else sendPair('down');
 }
 
-// The phases of each beat. `at` is what the camera looks at (and so the place
-// it stands in); `s` a hold in seconds, or `until` a fact; `say` the band's
-// line; `enter`, `step` and `end` what it does on the way.
+// The phases of each beat. `frame` is what the camera frames (and so the
+// place it stands in), and `move` 'follow' for a frame that walks; `s` a hold
+// in seconds, or `until` a fact; `say` the band's line; `enter`, `step` and
+// `end` what it does on the way.
 const BODIES = {
   'house-fall': [
-    { at: houseSpot, enter: walkThemIn, until: indoors, skipIf: fallen },
-    { at: houseSpot, s: ACT_ROCK_FALL_S, skipIf: fallen, end: houseFalls },
-    { at: houseSpot, s: ACT_ROCK_DUST_S, enter: () => openPortal('heaven'), say: 'act-house-fall', skipIf: () => !!pair() },
-    { at: onPair, s: ACT_SOUL_LIFT_S, enter: makePair, step: u => { pair().lift = Math.min(1, u / ACT_SOUL_LIFT_S); }, skipIf: () => !!pair() && pair().lift >= 1 },
-    { at: onPair, enter: () => { makePair().lift = 1; if (!pairAt('rise')) sendPair('rise'); }, until: () => pairAt('rise') }
+    { frame: atHouse, enter: walkThemIn, until: indoors, skipIf: fallen },
+    { frame: atHouse, s: ACT_ROCK_FALL_S, skipIf: fallen, end: houseFalls },
+    { frame: atHouse, s: ACT_ROCK_DUST_S, enter: () => openPortal('heaven'), say: 'act-house-fall', skipIf: () => !!pair() },
+    { frame: onPair, s: ACT_SOUL_LIFT_S, enter: makePair, step: u => { pair().lift = Math.min(1, u / ACT_SOUL_LIFT_S); }, skipIf: () => !!pair() && pair().lift >= 1 },
+    { frame: riseFrame, move: 'follow', enter: () => { makePair().lift = 1; if (!pairAt('rise')) sendPair('rise'); }, until: () => pairAt('rise') }
   ],
-  'arrive': [{ at: onPair, s: ACT_CAPTION_S, enter: beginAct3, say: 'act-arrive' }],
-  'meet-god': [{ at: throne, s: ACT_CAPTION_S + 1, say: 'act-meet-god' }],
+  'arrive': [{ frame: onPair, s: ACT_CAPTION_S, enter: beginAct3, say: 'act-arrive' }],
+  'meet-god': [{ frame: atThrone, s: ACT_CAPTION_S + 1, say: 'act-meet-god' }],
   // To the camp, then up onto the pedestal, where the speech is theirs from
   // then on (after/bubbles.js reads `at === 'pedestal'`).
   'refuse': [
-    { at: onPair, enter: () => sendPair('camp'), until: () => pairAt('camp'), say: 'act-refuse',
+    { frame: onPair, move: 'follow', enter: () => sendPair('camp'), until: () => pairAt('camp'), say: 'act-refuse',
       skipIf: () => onPedestal() || (!!pair() && pair().route === 'pedestal') },
-    { at: onPair, enter: () => { if (!onPedestal()) sendPair('pedestal'); }, until: () => onPedestal() && pair().top >= 1 },
-    { at: onPair, s: 1.5 }
+    { frame: onPair, move: 'follow', enter: () => { if (!onPedestal()) sendPair('pedestal'); }, until: () => onPedestal() && pair().top >= 1 },
+    { frame: onPair, s: 1.5 }
   ],
-  'axe': [{ at: onPair, s: ACT_CAPTION_S, say: 'act-axe' }],
-  'strike': [{ at: throne, s: ACT_CAPTION_S + 1, enter: () => { ensureActs().struck = true; }, say: 'act-strike' }],
-  'unmask': [{ at: throne, s: ACT_CAPTION_S + 1, enter: () => openPortal('hell'), say: 'act-unmask' }],
-  'hell-told': [{ at: throne, s: ACT_CAPTION_S + 1, say: 'act-hell-told' }],
-  'ghost-road': [{ at: tearAbove, s: ACT_CAPTION_S, enter: () => { ensureActs().road = true; freePortal('heaven'); }, say: 'act-ghost-road' }],
+  'axe': [{ frame: onPair, s: ACT_CAPTION_S, say: 'act-axe' }],
+  'strike': [{ frame: atThrone, s: ACT_CAPTION_S + 1, enter: () => { ensureActs().struck = true; }, say: 'act-strike' }],
+  'unmask': [{ frame: atThrone, s: ACT_CAPTION_S + 1, enter: () => openPortal('hell'), say: 'act-unmask' }],
+  'hell-told': [{ frame: atThrone, s: ACT_CAPTION_S + 1, say: 'act-hell-told' }],
+  'ghost-road': [{ frame: atTear, s: ACT_CAPTION_S, enter: () => { ensureActs().road = true; freePortal('heaven'); }, say: 'act-ghost-road' }],
   'haunt': [
     // Off the pedestal first: the road's drawing faded back on over the
     // pedestal's, then down its face and away to the tear.
-    { at: onPair, enter: () => { pair().off = true; }, until: () => !(pair().top > 0), skipIf: () => !onPedestal() },
-    { at: onPair, enter: leavePedestal, until: () => pairAt('down'), say: 'act-haunt' },
-    { at: onPair, s: 1.5, end: () => { const p = pair(); p.mode = 'ghost'; freePortal('hell'); sendPair('loop'); takeLoad(p); } }
+    { frame: onPair, move: 'follow', enter: () => { pair().off = true; }, until: () => !(pair().top > 0), skipIf: () => !onPedestal() },
+    { frame: onPair, move: 'follow', enter: leavePedestal, until: () => pairAt('down'), say: 'act-haunt' },
+    { frame: onPair, s: 1.5, end: () => { const p = pair(); p.mode = 'ghost'; freePortal('hell'); sendPair('loop'); takeLoad(p); } }
   ],
   'descend': [
-    { at: onPair, enter: () => { ensureActs().wentDown = true; pairForAct4('none'); }, until: () => placeAt(pair().y) === 'hell' },
-    { at: onPair, s: ACT_CAPTION_S, enter: beginAct4, say: 'act-descend' }
+    { frame: onPair, move: 'follow', enter: () => { ensureActs().wentDown = true; pairForAct4('none'); }, until: () => placeAt(pair().y) === 'hell' },
+    { frame: onPair, s: ACT_CAPTION_S, enter: beginAct4, say: 'act-descend' }
   ],
-  'wall-first': [{ at: chamber(0), s: ACT_CAPTION_S, say: 'act-wall-first' }],
+  'wall-first': [{ frame: chamber(0), s: ACT_CAPTION_S, say: 'act-wall-first' }],
   'unchain': [
-    { at: onPair, enter: () => { beginMansion(); const p = pairForAct4('cage'); p.hold = 'cage'; }, until: () => pairAt('cage') },
-    { at: onPair, s: ACT_CAPTION_S, say: 'act-unchain' }
+    { frame: onPair, move: 'follow', enter: () => { beginMansion(); const p = pairForAct4('cage'); p.hold = 'cage'; }, until: () => pairAt('cage') },
+    { frame: onPair, s: ACT_CAPTION_S, say: 'act-unchain' }
   ],
-  'alive': [{ at: onPair, s: ACT_RIM_PIECES * ACT_RIM_STEP_S + 1, say: 'act-alive',
+  'alive': [{ frame: onPair, s: ACT_RIM_PIECES * ACT_RIM_STEP_S + 1, say: 'act-alive',
               step: u => { const p = pair(); p.rims = Math.max(p.rims || 0, Math.min(ACT_RIM_PIECES, Math.floor(u / ACT_RIM_STEP_S))); },
               end: () => { const p = pair(); p.rims = ACT_RIM_PIECES; p.mode = 'alive'; } }],
   'home-again': [
-    { at: onPair, say: 'act-home-again', skipIf: () => pairAt('home') || pairAt('door') || A().house === 'mansion',
+    { frame: onPair, move: 'follow', say: 'act-home-again', skipIf: () => pairAt('home') || pairAt('door') || A().house === 'mansion',
       enter: () => {
         beginMansion();
         const p = pairForAct4(pair() && pair().at === 'cage' ? 'cage' : 'home');
@@ -229,18 +258,18 @@ const BODIES = {
         if (p.at === 'cage') { p.route = 'loop'; p.leg = LOOP_CAGE + 1; p.at = null; }
       },
       until: () => pairAt('home') },
-    { at: mansionMid, until: mansionDone },
-    { at: onPair, enter: () => { if (!pairAt('door')) sendPair('door'); }, until: () => pairAt('door'), skipIf: () => A().house === 'mansion' },
-    { at: onPair, s: 2, skipIf: () => A().house === 'mansion', step: u => { pair().inside = Math.min(1, u / 2); }, end: () => { pair().inside = 1; A().house = 'mansion'; } },
-    { at: files, enter: beginGathering, until: gathered, say: 'act-mansion', end: () => { A().ended = true; } }
+    { frame: atMansion, until: mansionDone },
+    { frame: onPair, move: 'follow', enter: () => { if (!pairAt('door')) sendPair('door'); }, until: () => pairAt('door'), skipIf: () => A().house === 'mansion' },
+    { frame: onPair, s: 2, skipIf: () => A().house === 'mansion', step: u => { pair().inside = Math.min(1, u / 2); }, end: () => { pair().inside = 1; A().house = 'mansion'; } },
+    { frame: atFiles, enter: beginGathering, until: gathered, say: 'act-mansion', end: () => { A().ended = true; } }
   ]
 };
 // A wall down: the story told it (`tellWall`), and the camera glides from the
 // chamber it closed to the one it opened (Track B's ask), the line over that.
 for (let i = 0; i < lastWall; i++) {
   BODIES[`wall-${i + 1}`] = [
-    { at: chamber(i), s: 1, enter: () => { if (typeof HELL.tellWall === 'function') HELL.tellWall(i); } },
-    { at: chamber(i + 1), s: ACT_CAPTION_S, say: 'act-wall', args: { n: i + 1 } }
+    { frame: chamber(i), s: 1, enter: () => { if (typeof HELL.tellWall === 'function') HELL.tellWall(i); } },
+    { frame: chamber(i + 1), s: ACT_CAPTION_S, say: 'act-wall', args: { n: i + 1 } }
   ];
 }
 export const ACT_BEAT_KEYS = Object.keys(BODIES);
@@ -251,17 +280,15 @@ export const ACT_BEAT_KEYS = Object.keys(BODIES);
 // session's: a reload plays the beat again from its first phase, and the
 // phases skip what has landed.
 let run = null;
-let spot = 0, spotY = 0;
+let box = null, moving = 'glide';
 let caption = null;
 export const actCaption = () => caption;
 const registered = new Set();
 function scene(key) {
   if (registered.has(key)) return;
   registered.add(key);
-  // The box put between the letterbox's bands: a body's height over what
-  // the phase looks at, and the ground under it, so the floor a beat plays
-  // on is never under the foot band.
-  addScene(key, { s: 1e9, spot: () => spot, box: () => ({ x: spot - WORKER * 2, y: spotY - WORKER, w: WORKER * 4, h: WORKER * 2 + P }),
+  // The phase's frame, as the runner last read it, and how it moves.
+  addScene(key, { s: 1e9, frame: () => box, move: () => moving,
                   front: ['acts-yard', 'acts-bodies', 'acts-after', 'acts-after-bodies', 'acts-hell', 'acts-hell-bodies',
                           'acts-deep', 'acts-deep-bodies', 'mansion', 'home', 'workers'] });
 }
@@ -288,11 +315,13 @@ function enterPhase(phases) {
 // portal in a yard stood up for a check) is a straight cut.
 const HOPS = { yard: { after: 'after', deep: 'deep', hell: 'deep' }, after: { yard: 'yard', deep: 'yard', hell: 'yard' },
                deep: { yard: 'yard', after: 'yard', hell: 'hell' }, hell: { deep: 'deep', yard: 'deep', after: 'deep' } };
-function hop(place) {
+// The last hop lands on `x`, the frame's own middle over there (shot.js,
+// rule 5), so the shot has nothing to move once the ripple has landed.
+function hop(place, x = null) {
   const next = HOPS[S.view] && HOPS[S.view][place];
   if (!next || (next === 'deep' && !canGoDown())) { setView(place); return; }
   const key = portalBetween(S.view, next);
-  if (key) { if (!travel(next, key)) setView(next); return; }
+  if (key) { if (!travel(next, key, next === place ? x : null)) setView(next); return; }
   if (S.view === 'yard' && canGoDown()) goDeep();
   else if (S.view === 'deep') goUp();
   if (!gliding()) setView(next);
@@ -304,18 +333,18 @@ function step(key, next, t) {
   const phases = BODIES[key];
   const ph = phases[run.i];
   if (ph) {
-    const at = ph.at();
+    const fr = ph.frame();
     // A place the camera cannot stand in (the deep before the wizards'
     // portal, in a yard stood up for a check) is watched from where it is.
-    const want = placeFor(at.y);
+    const want = fr.place;
     const place = want === 'deep' && !canGoDown() ? S.view : want;
     if (S.view !== place) {
-      if (!gliding()) hop(place);
+      if (!gliding()) hop(place, fr.x + fr.w / 2);
       run.framed = null;
       return true;
     }
     if (gliding()) return true;
-    spot = at.x; spotY = at.y;
+    box = fr; moving = ph.move || 'glide';
     if (run.framed !== place) { scene(key); play(key); run.framed = place; }
     stepShot(t);
     const dt = frameMs() / 1000 * run.hurry;

@@ -420,12 +420,15 @@ const halfLine = () => (S.worldH + deepTop()) / 2;
 // One half, every layer that belongs to it, with whatever camera is standing.
 // While a scene holds the yard the layers it is about are held back from the
 // first pass and painted after the wash (`recede`), in their own order.
-function drawHalf(place) {
+// `from` and `to` take a stretch of the list (the world, or the glass), and
+// `skip` names layers left for later.
+function drawHalf(place, from = 0, to = LAYERS.length, skip = null) {
   const held = recede() > 0;
   const front = held ? frontLayers() : null;
   const later = [];
-  for (let i = 0; i < LAYERS.length; i++) {
+  for (let i = from; i < to; i++) {
     const layer = LAYERS[i];
+    if (skip && skip.has(layer.name)) continue;
     if (!inHalf(layer, i, place)) continue;
     if (picture && READING.has(layer.name)) continue;
     if (layer.when && !layer.when()) continue;
@@ -479,22 +482,75 @@ function drawLayer(layer, i, place) {
 // and the ring shows that frozen picture (the owner's portals review,
 // 2026-10-17): one pass of the layers a frame, whichever two places the
 // ripple joins (view.js, `ripple`: the deep or an act's place).
+//
+// The frame is drawn in two stretches of the list. The world, at the drawn
+// zoom (`S.zoom`, always a whole cell): straight onto the glass when that is
+// the zoom on the glass, else onto one sheet scaled up sharp onto the glass
+// (`scaledWorld`). Then the glass -- the counts, the counter, the bands --
+// in screen pixels at the zoom on the glass, so whatever stands over a thing
+// in the world stands over it as shown. The bands and the beat's line go on
+// last of all, over the ripple too: a scene's letterbox is up for the whole
+// hold, the way through a portal included. The flash and the press stay over
+// the bands, as they were.
+const GLASS = new Set(['letterbox', 'acts-caption', 'flash', 'press']);
 export function draw() {
-  drawHalf(S.view);
+  if (Math.abs(S.zoomShow - S.zoom) > 1e-9) scaledWorld(() => drawHalf(S.view, 0, SCREEN_FROM));
+  else drawHalf(S.view, 0, SCREEN_FROM);
+  onGlass(() => drawHalf(S.view, SCREEN_FROM, LAYERS.length, GLASS));
   const rip = ripple();
-  if (!rip) { if (!picture) warmRipple(canWarm, drawDeepUnseen); return; }
-  if (rip.r <= 0) return;
-  const far = farPicture(rip);
-  const d = S.dpr;
+  if (!rip) { if (!picture) warmRipple(canWarm, drawDeepUnseen); }
+  else if (rip.r > 0) {
+    const far = farPicture(rip);
+    const d = S.dpr;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.arc(rip.cx * d, rip.cy * d, rip.r * d, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(far, 0, 0);
+    ctx.restore();
+    drawRipples(rip);
+  }
+  onGlass(() => {
+    for (let i = SCREEN_FROM; i < LAYERS.length; i++) {
+      const layer = LAYERS[i];
+      if (GLASS.has(layer.name) && (!layer.when || layer.when())) drawLayer(layer, i, S.view);
+    }
+  });
+}
+
+// The glass's layers read `S.zoom` to stand a thing over the world: for their
+// length it is the zoom on the glass.
+function onGlass(fn) {
+  const drawn = S.zoom;
+  S.zoom = S.zoomShow;
+  try { fn(); } finally { S.zoom = drawn; }
+}
+
+// A zoom on its way between two whole sizes (DESIGN.md, "Zooming is
+// smooth"): the world drawn at the whole size at or under it onto one sheet
+// the glass's size, and the corner of it the window shows scaled up onto the
+// glass in one nearest-neighbor blit. Nothing is drawn at a fractional size,
+// so no seam opens between two cells; the moment the zoom lands this is
+// skipped and the frame is drawn straight, pin sharp.
+let sheet = null;
+function scaledWorld(fn) {
+  if (!sheet) sheet = document.createElement('canvas');
+  if (sheet.width !== canvas.width || sheet.height !== canvas.height) {
+    sheet.width = canvas.width;
+    sheet.height = canvas.height;
+  }
+  // Pinned off on every use: a resized sheet's context has it back on, and a
+  // pattern laid at a scale is filtered into a grey fringe.
+  sheet.getContext('2d').imageSmoothingEnabled = false;
+  paintOn(sheet, fn);
+  const k = S.zoomShow / S.zoom;
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.globalAlpha = 1;
-  ctx.beginPath();
-  ctx.arc(rip.cx * d, rip.cy * d, rip.r * d, 0, Math.PI * 2);
-  ctx.clip();
-  ctx.drawImage(far, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(sheet, 0, 0, sheet.width / k, sheet.height / k, 0, 0, canvas.width, canvas.height);
   ctx.restore();
-  drawRipples(rip);
 }
 
 // The far place's picture for glide `rip.no`, painted once. The yard's knock
@@ -510,7 +566,7 @@ function farPicture(rip) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, c.width, c.height);
     ctx.fillStyle = '#000';
-    asPlace(rip.inner, rip.cam, () => drawHalf(rip.inner));
+    asPlace(rip.inner, rip.cam, () => drawHalf(rip.inner, 0, LAYERS.length, GLASS));
     ctx.restore();
   });
   frozen = { no: rip.no, c };
@@ -519,17 +575,18 @@ function farPicture(rip) {
 
 // A place's camera standing for the length of `fn`, and the one on screen put back.
 function asPlace(place, cam, fn) {
-  const keep = { view: S.view, camX: S.camX, camY: S.camY, zoom: S.zoom, viewW: S.viewW, viewH: S.viewH,
+  const keep = { view: S.view, camX: S.camX, camY: S.camY, zoom: S.zoom, zoomShow: S.zoomShow, viewW: S.viewW, viewH: S.viewH,
                  shakeX: S.shakeX, shakeY: S.shakeY };
-  Object.assign(S, cam, { view: place, shakeX: 0, shakeY: 0 });
+  Object.assign(S, cam, { zoomShow: cam.zoom, view: place, shakeX: 0, shakeY: 0 });
   try { fn(); } finally { Object.assign(S, keep); }
 }
 
 // The deep's camera standing for the length of `fn`, and the yard's put back.
 function asDeep(fn) {
-  const keep = { view: S.view, camX: S.camX, camY: S.camY, zoom: S.zoom, viewW: S.viewW, viewH: S.viewH,
+  const keep = { view: S.view, camX: S.camX, camY: S.camY, zoom: S.zoom, zoomShow: S.zoomShow, viewW: S.viewW, viewH: S.viewH,
                  shakeX: S.shakeX, shakeY: S.shakeY };
-  Object.assign(S, deepCamera(), { view: 'deep', shakeX: 0, shakeY: 0 });
+  const cam = deepCamera();
+  Object.assign(S, cam, { zoomShow: cam.zoom, view: 'deep', shakeX: 0, shakeY: 0 });
   try { fn(); } finally { Object.assign(S, keep); }
 }
 

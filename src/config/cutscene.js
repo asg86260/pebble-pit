@@ -104,3 +104,20 @@ export const CUT_SETTLE_S = 1.6;
 // CUT_PAN_MAX_S, past which the whole length of the yard is not worth waiting on
 export const CUT_PAN_PX_S = 1300;
 export const CUT_PAN_MAX_S = 3;
+
+// --- the shot (wave shot, track A) ---------------------------------------------
+// One camera for every cutscene (shot.js). A moving subject is tracked by a
+// critically damped spring on the frame's middle, this stiff (per second
+// squared): a start or a stop eases instead of jerking, and the camera rides
+// a steady walk about 2 / sqrt(CUT_FOLLOW_K) seconds of the walk behind it.
+export let CUT_FOLLOW_K = 6;
+// Every zoom change glides (world.js, `setZoom`): the zoom on the glass eases
+// to its target over this many seconds, the picture scaled sharp on the way.
+export let ZOOM_GLIDE_S = 0.6;
+
+export const CUT_KNOBS = [
+  { key: 'CUT_FOLLOW_K', label: 'shot follow stiffness', min: 1, max: 30, step: 0.5,
+    get: () => CUT_FOLLOW_K, set: v => { CUT_FOLLOW_K = v; } },
+  { key: 'ZOOM_GLIDE_S', label: 'zoom glide, s', min: 0.1, max: 3, step: 0.05,
+    get: () => ZOOM_GLIDE_S, set: v => { ZOOM_GLIDE_S = v; } }
+];

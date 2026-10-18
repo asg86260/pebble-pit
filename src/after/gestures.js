@@ -38,6 +38,7 @@
 // clock with `run` and reads a fact about the game, not about the machine.
 
 import { S } from '../state.js';
+import { toScreen, toWorld } from '../world.js';
 import { GESTURE_CUE_USES, GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_GAUGE_EASE, GESTURE_GAUGE_FADE_S,
          GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S, GESTURE_BUBBLE_CRIT, GESTURE_BUBBLE_SLACK,
          GESTURE_SAW_AMP, GESTURE_SAW_VMAX, GESTURE_SAW_FOLLOW, GESTURE_SAW_END, GESTURE_SAW_EASE,
@@ -376,11 +377,11 @@ const live = () => afterlifeOn() && !!S.after;
 // One is open at a time; a swap fades one out as the other comes in, and the
 // two make room for each other while both are up.
 export const CARD_FULL_W = CARD_W + CARD_PAD * 2, CARD_FULL_H = CARD_H + CARD_HEAD + CARD_PAD;
-const glassW = () => S.viewW * S.zoom;
-const toSx = wx => (wx - S.camX) * S.zoom;
-const toSy = wy => (wy - S.camY) * S.zoom;
-const toWx = sx => sx / S.zoom + S.camX;
-const toWy = sy => sy / S.zoom + S.camY;
+const glassW = () => S.viewW * S.zoomShow;
+const toSx = wx => toScreen(wx, 0).x;
+const toSy = wy => toScreen(0, wy).y;
+const toWx = sx => toWorld(sx, 0).x;
+const toWy = sy => toWorld(0, sy).y;
 
 // A station's box in the world, and the point on it the card's tail is
 // aimed at: the part that moves with the hand.

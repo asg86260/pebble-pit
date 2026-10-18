@@ -6,6 +6,7 @@ import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_REFUND, SHELF_SL
 import { fmt } from './words.js';
 import { fitSlot } from './slotfit.js';
 import { S, bench } from './state.js';
+import { toScreen } from './world.js';
 import { seatObjective } from './objline.js';
 import { STATIONS as ROWS, station, open, standRect, nearStation } from './stations.js';
 import { crewRows } from './crewboard.js';
@@ -223,17 +224,17 @@ function place(el, at) {
   // Centered over the station: the farm is a row as wide as its furrows, and a
   // board pinned to its left edge read as belonging to whatever was next along.
   const mid = at.x + (at.w || 0) / 2;
-  const want = (mid - S.camX) * S.zoom - w / 2;
+  const want = toScreen(mid, 0).x - w / 2;
   const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
 
-  const stands = S.H - (at.y - S.camY) * S.zoom + P * 3;
+  const stands = S.H - toScreen(0, at.y).y + P * 3;
 
   // Clear of the rosters, which stand in their own strip under the ground line:
   // a board taller than the room above its station is pushed down by the
   // window clamp, and the counters are the worst thing it could land on. A
   // station in the deep has the deep's floor for its ground.
   const floorY = inDeep(mid, at.y) ? deepFloor() : S.groundY;
-  const strip = (floorY + P * 11 - S.camY) * S.zoom;         // where the counters begin
+  const strip = toScreen(0, floorY + P * 11).y;         // where the counters begin
   const lowest = Math.max(GAP, S.H - strip);
   // and under the notice card while one is up at the top of the glass, or a
   // tall board's title bar is under the card -- when the whole board fits
@@ -332,7 +333,7 @@ export function seatCall() {
     raiseEl.hidden = false;
     callSize = { w: raiseEl.offsetWidth, h: raiseEl.offsetHeight };
   }
-  const left = (bench.x - S.camX) * S.zoom, right = (bench.x + bench.w - S.camX) * S.zoom;
+  const left = toScreen(bench.x, 0).x, right = toScreen(bench.x + bench.w, 0).x;
   const side = right <= GAP ? '◀ ' : left >= S.W - GAP ? '' : null;
   const say = side === null ? CALL_TEXT : side === '' ? `${CALL_TEXT} ▶` : `${side}${CALL_TEXT}`;
   if (raiseEl.textContent !== say) {
@@ -342,10 +343,10 @@ export function seatCall() {
   // Centered on the bench and kept inside the window: the opening seat stands
   // the bench nearer the edge than half this is wide.
   const mid = bench.x + bench.w / 2;
-  const want = (mid - S.camX) * S.zoom - callSize.w / 2;
+  const want = toScreen(mid, 0).x - callSize.w / 2;
   const x = Math.round(Math.max(GAP, Math.min(want, S.W - callSize.w - GAP)));
   // Its foot a couple of cells clear of the bench's top.
-  const stands = S.H - (bench.y - S.camY) * S.zoom + P * 2;
+  const stands = S.H - toScreen(0, bench.y).y + P * 2;
   const bottom = Math.round(Math.max(GAP, Math.min(stands, S.H - callSize.h - GAP)));
   if (x === callAt.x && bottom === callAt.y) return;
   callAt = { x, y: bottom };
@@ -378,7 +379,7 @@ export const openBoardRect = () => (panelEl.hidden ? null : panelRect());
 function apexAt(which) {
   const r = anchor(which);
   if (!r) return null;
-  return { x: (r.x + r.w / 2 - S.camX) * S.zoom, y: (r.y + r.h - S.camY) * S.zoom };
+  return toScreen(r.x + r.w / 2, r.y + r.h);
 }
 
 const side = (a, b, px, py) => (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
@@ -470,12 +471,13 @@ let tipFor = null;
 let tipCam = null;
 export function tipFollowsView() {
   if (tipFor === null || !tipCam) return;
-  if (tipCam[0] !== S.camX || tipCam[1] !== S.camY || tipCam[2] !== S.zoom) showTipAt(null);
+  if (tipCam[0] !== S.camX || tipCam[1] !== S.camY || tipCam[2] !== S.zoomShow) showTipAt(null);
 }
 
 export function showTip(text, at, lead = null) {
   if (!text) return showTipAt(null);
-  showTipAt(text, (at.x - S.camX) * S.zoom, (at.y - S.camY) * S.zoom + P * 4, true, false, lead);
+  const sp = toScreen(at.x, at.y);
+  showTipAt(text, sp.x, sp.y + P * 4, true, false, lead);
 }
 
 // The same tip, seated in screen space for things on the page. `over` lets the
@@ -495,7 +497,7 @@ export function showTipAt(text, sx, sy, centred, over = false, lead = null) {
     tipEl.hidden = false;
     tipFor = said;
   }
-  tipCam = [S.camX, S.camY, S.zoom];
+  tipCam = [S.camX, S.camY, S.zoomShow];
   const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
   let x = centred ? sx - w / 2 : sx;
 
