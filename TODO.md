@@ -4,14 +4,14 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## The score and the music bench -- DESIGNED, CALLS SETTLED, NOT BUILT (2026-10-17)
+## The score and the music bench -- BENCH BUILT, CHORDS DESIGNED, GAME PLAYBACK NOT BUILT (2026-10-17)
 
-DESIGN.md, "The score, and the bench it is written on": one music loop a
-place, composed on `music.html` (track lanes, styled "Studio"), previewed in
-the page or the selected track live through Surge XT over loopMIDI, rendered
-through the `music-render` pipeline to OGG. Every call is settled (place
-only, its own slider, one live track). Blocker: the owner's go-ahead to
-build; loopMIDI must be installed by hand for the live switch.
+DESIGN.md, "The score, and the bench it is written on": `music.html`, the
+preview, Surge live and the render are on main. Open: **chords first, no
+wrong notes** (the section's last part; the owner chose the chord strip),
+awaiting the go-ahead to build; then the in-game playback (one loop a
+place, its own slider), after the owner has a song. loopMIDI must be
+installed by hand for the live switch.
 
 ## Acts 3 and 4: the afterlife and hell -- LOOPS CHOSEN, THIRTEEN CALLS OPEN, SCAFFOLD BUILT (2026-10-17)
 

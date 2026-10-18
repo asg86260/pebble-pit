@@ -21814,3 +21814,49 @@ decisions already counted there. Mute silences it with everything else.
    and does not travel with a save). Mute silences both.
 3. **Surge live: the selected track only.** One Surge XT standalone window;
    the other lanes stay on the preview synth.
+
+### Chords first, no wrong notes (design, not built)
+
+*Asked for 2026-10-17: the owner does not compose, so the bench has to make
+a song out of choices rather than notes. The vote
+(https://claude.ai/artifact/RXaC6y2UX2sUwfy7MnAJqb) chose option A, **the
+chord strip**, together with the no-wrong-notes roll.*
+
+The bargain: you pick chords and patterns, and the bench writes the notes.
+A song that is only chords and patterns already sounds finished; a melody
+drawn on top is optional, and the roll makes a wrong note impossible.
+
+- **The key is a choice, not a word.** `song.key` becomes a root and a mode
+  (`{ root: "A", mode: "minor" }`), picked from a menu of the 24; the old
+  string reads as that on load. Every chord and every in-key row comes from
+  it.
+- **A chord strip a scene.** `song.chords[scene]` is a list of scale degrees,
+  one a bar (`[1, 6, 3, 7]` is Am F C G in A minor), as long as the scene's
+  longest clip, or four bars on a new scene. It sits above the lanes. Click a
+  bar and the key's seven chords drop down, each with its name and a plain
+  feel word; a star marks the ones that usually come next after the bar
+  before it, read from a small fixed table of common moves (`MUSIC_NEXT` in
+  `config/music.js`). Degrees, not names, so a change of key moves the whole
+  song with it.
+- **Parts that follow.** A synth track can **follow the chords** with a
+  pattern: bass (root pulse, root and fifth, walking, held), pad (held
+  chord, swell, stabs) or arpeggio (up, up and down, broken). Following
+  writes the clip's notes from the chords and the pattern, and writes them
+  again whenever either changes, so the render and the game read ordinary
+  notes and nothing downstream changes. `track.follow = { pattern }` says
+  which. A new song starts with drums, a bass, a pad and an arpeggio all
+  following, so the first sound is a whole loop.
+- **Your edit wins.** Drawing on a following clip stops it following (the
+  lane says so, with a "follow again" button that rewrites it). Nothing you
+  drew is ever overwritten without that press.
+- **No wrong notes.** The piano roll shows the seven notes of the key and
+  nothing else; a pointer anywhere snaps to the nearest one. Under each bar,
+  the rows that are in that bar's chord are lit, so a note drawn on a lit row
+  always fits. An "all notes" switch shows the twelve rows for anyone who
+  wants them, and changing the key moves drawn notes by scale degree.
+- **What it costs**: one pattern table and one next-chord table in
+  `config/music.js`, the generator as plain functions beside `song.js` (so
+  `test/music.test.mjs` checks a progression's notes are in the key, a
+  pattern fills its bars and an edit stops a follow), and the strip and the
+  switches on the bench. The song file grows `chords` and `follow`; older
+  songs read without them.
