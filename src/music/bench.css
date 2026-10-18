@@ -214,3 +214,21 @@ button, input, select { font: inherit; color: inherit; }
 .knob .tick { stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
 .knob small { font-size: 11px; color: var(--sub); }
 .knob .num { font-size: 10.5px; white-space: nowrap; }
+
+/* the effects library: starting points as cards, then the effects in groups */
+.fxlib { margin: 0 12px 12px; padding: 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); }
+.fxhead { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--sub); font-weight: 600; margin: 2px 0 8px; }
+.fxpresets { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-bottom: 16px; }
+.fxpreset { border: 1px solid var(--rule); border-radius: 7px; background: var(--raise); padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; }
+.fxpreset:hover { border-color: var(--accent); }
+.fxpreset small { color: var(--sub); font-size: 12.5px; }
+.fxchips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
+.fxchips span { font-size: 11px; padding: 0 5px; border-radius: 4px; background: var(--empty); color: var(--sub); border: 1px solid var(--rule); }
+.fxpresetgo { display: flex; gap: 6px; margin-top: 5px; }
+.fxgroups { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px 18px; }
+.fxgroup { margin-bottom: 10px; }
+.fxrow { display: grid; grid-template-columns: max-content 1fr; gap: 10px; width: 100%; text-align: left; padding: 5px 6px;
+  border: 0; border-radius: 5px; background: none; cursor: pointer; }
+.fxrow:hover { background: var(--raise); }
+.fxrow b { font-weight: 600; white-space: nowrap; min-width: 92px; }
+.fxrow small { color: var(--sub); font-size: 12.5px; }

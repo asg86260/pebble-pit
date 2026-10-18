@@ -1,0 +1,379 @@
+{
+ "name": "ambient-under",
+ "tempo": 58,
+ "key": {
+  "root": "D",
+  "mode": "minor"
+ },
+ "game": "main",
+ "scenes": [
+  "main"
+ ],
+ "chords": {
+  "main": [
+   1,
+   1,
+   6,
+   6,
+   4,
+   4,
+   5,
+   5
+  ]
+ },
+ "tracks": [
+  {
+   "id": "beat",
+   "name": "Heartbeat",
+   "kind": "drums",
+   "color": "#e8743b",
+   "level": 0.35,
+   "pan": 0,
+   "fx": [
+    {
+     "type": "filter",
+     "on": true,
+     "params": {
+      "type": "lowpass",
+      "cutoff": 300,
+      "reso": 0.1
+     }
+    },
+    {
+     "type": "reverb",
+     "on": true,
+     "params": {
+      "size": 0.6,
+      "damp": 0.7,
+      "mix": 0.3
+     }
+    }
+   ],
+   "clips": {
+    "main": {
+     "bars": 2,
+     "notes": [
+      [
+       0,
+       36,
+       1,
+       70
+      ],
+      [
+       3,
+       36,
+       1,
+       45
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "id": "pad",
+   "name": "Pad",
+   "kind": "synth",
+   "patch": "Pads/Distant",
+   "color": "#22a06b",
+   "level": 0.5,
+   "pan": 0,
+   "clips": {
+    "main": {
+     "bars": 8,
+     "notes": [
+      [
+       0,
+       62,
+       16,
+       72
+      ],
+      [
+       0,
+       65,
+       16,
+       68
+      ],
+      [
+       0,
+       69,
+       16,
+       68
+      ],
+      [
+       16,
+       62,
+       16,
+       72
+      ],
+      [
+       16,
+       65,
+       16,
+       68
+      ],
+      [
+       16,
+       69,
+       16,
+       68
+      ],
+      [
+       32,
+       58,
+       16,
+       72
+      ],
+      [
+       32,
+       62,
+       16,
+       68
+      ],
+      [
+       32,
+       65,
+       16,
+       68
+      ],
+      [
+       48,
+       58,
+       16,
+       72
+      ],
+      [
+       48,
+       62,
+       16,
+       68
+      ],
+      [
+       48,
+       65,
+       16,
+       68
+      ],
+      [
+       64,
+       55,
+       16,
+       72
+      ],
+      [
+       64,
+       58,
+       16,
+       68
+      ],
+      [
+       64,
+       62,
+       16,
+       68
+      ],
+      [
+       80,
+       55,
+       16,
+       72
+      ],
+      [
+       80,
+       58,
+       16,
+       68
+      ],
+      [
+       80,
+       62,
+       16,
+       68
+      ],
+      [
+       96,
+       57,
+       16,
+       72
+      ],
+      [
+       96,
+       60,
+       16,
+       68
+      ],
+      [
+       96,
+       64,
+       16,
+       68
+      ],
+      [
+       112,
+       57,
+       16,
+       72
+      ],
+      [
+       112,
+       60,
+       16,
+       68
+      ],
+      [
+       112,
+       64,
+       16,
+       68
+      ]
+     ]
+    }
+   },
+   "follow": {
+    "pattern": "pad-held"
+   },
+   "preview": {
+    "wave": "triangle",
+    "cutoff": 1400,
+    "q": 1,
+    "attack": 0.8,
+    "decay": 1,
+    "sustain": 0.8,
+    "release": 1.5
+   },
+   "fx": [
+    {
+     "type": "filter",
+     "on": true,
+     "params": {
+      "type": "lowpass",
+      "cutoff": 600,
+      "reso": 0.35
+     }
+    },
+    {
+     "type": "wobble",
+     "on": true,
+     "params": {
+      "wow": 0.4,
+      "depth": 0.5,
+      "flutter": 0
+     }
+    },
+    {
+     "type": "chorus",
+     "on": true,
+     "params": {
+      "rate": 0.3,
+      "depth": 0.6,
+      "mix": 0.5
+     }
+    },
+    {
+     "type": "reverb",
+     "on": true,
+     "params": {
+      "size": 0.7,
+      "damp": 0.7,
+      "mix": 0.4
+     }
+    }
+   ]
+  },
+  {
+   "id": "drone",
+   "name": "Drone",
+   "kind": "synth",
+   "patch": "Basses/Sub 2",
+   "color": "#3b82f6",
+   "level": 0.32,
+   "pan": 0,
+   "clips": {
+    "main": {
+     "bars": 8,
+     "notes": [
+      [
+       0,
+       38,
+       16,
+       96
+      ],
+      [
+       16,
+       38,
+       16,
+       96
+      ],
+      [
+       32,
+       34,
+       16,
+       96
+      ],
+      [
+       48,
+       34,
+       16,
+       96
+      ],
+      [
+       64,
+       43,
+       16,
+       96
+      ],
+      [
+       80,
+       43,
+       16,
+       96
+      ],
+      [
+       96,
+       33,
+       16,
+       96
+      ],
+      [
+       112,
+       33,
+       16,
+       96
+      ]
+     ]
+    }
+   },
+   "follow": {
+    "pattern": "bass-held"
+   },
+   "preview": {
+    "wave": "sine",
+    "cutoff": 500,
+    "q": 1,
+    "attack": 0.5,
+    "decay": 1,
+    "sustain": 0.9,
+    "release": 1.5
+   },
+   "fx": [
+    {
+     "type": "filter",
+     "on": true,
+     "params": {
+      "type": "lowpass",
+      "cutoff": 350,
+      "reso": 0
+     }
+    },
+    {
+     "type": "wobble",
+     "on": true,
+     "params": {
+      "wow": 0.3,
+      "depth": 0.2,
+      "flutter": 0
+     }
+    }
+   ]
+  }
+ ]
+}

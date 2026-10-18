@@ -176,10 +176,10 @@ test('a knob turned to the ends lands on its range, and back to where it was', (
 
 test('validate names an unknown effect, an unknown knob and a knob out of range', () => {
   const s = tiny();
-  s.tracks[1].fx = [newFx('reverb'), { type: 'flanger' }, { type: 'delay', params: { time: 0.3, wobble: 1 } },
+  s.tracks[1].fx = [newFx('reverb'), { type: 'kazoo' }, { type: 'delay', params: { time: 0.3, wobble: 1 } },
                     { type: 'reverb', params: { mix: 2 } }];
   const bad = validate(s).join('\n');
-  assert.match(bad, /effect 2 is flanger/);
+  assert.match(bad, /effect 2 is kazoo/);
   assert.match(bad, /delay time 0.3 is out of range/);
   assert.match(bad, /delay has no knob wobble/);
   assert.match(bad, /reverb mix 2 is out of range/);
@@ -188,4 +188,29 @@ test('validate names an unknown effect, an unknown knob and a knob out of range'
 test('the preview has a stand-in for every effect in the table', async () => {
   const { PREVIEW_FX_TYPES } = await import('../src/music/fxnodes.js');
   assert.deepEqual([...PREVIEW_FX_TYPES].sort(), [...FX_TYPES].sort());
+});
+
+// --- the effects library (DESIGN.md, "The effects library") -----------------
+
+import { MUSIC_FX_GROUPS, MUSIC_FX_PRESETS } from '../src/config/music.js';
+
+test('every effect and every knob says what it does, and every effect is in a group', () => {
+  const groups = new Set(MUSIC_FX_GROUPS.map(g => g[0]));
+  for (const [type, fx] of Object.entries(MUSIC_FX)) {
+    assert.ok(fx.about?.length > 10, type);
+    assert.ok(groups.has(fx.group), `${type} is in group ${fx.group}`);
+    for (const [k, p] of Object.entries(fx.params)) assert.ok(p.about?.length > 5, `${type}.${k}`);
+  }
+});
+
+test('every starting point is a chain that reads clean', () => {
+  assert.equal(MUSIC_FX_PRESETS.length, 10);
+  for (const pre of MUSIC_FX_PRESETS) {
+    assert.ok(pre.about?.length > 10, pre.name);
+    const s = tiny();
+    s.tracks[1].fx = pre.chain.map(([type, params]) => newFx(type, params));
+    assert.deepEqual(validate(s), [], pre.name);
+    for (const [type, params] of pre.chain) for (const k of Object.keys(params))
+      assert.ok(MUSIC_FX[type].params[k], `${pre.name}: ${type}.${k}`);
+  }
 });

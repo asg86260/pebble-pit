@@ -9,6 +9,7 @@ import { MUSIC_STEPS_PER_BAR, MUSIC_RENDER_PASSES, MUSIC_RENDER_TAIL_S,
          MUSIC_RENDER_PPQ, MUSIC_RENDER_SEAM_S } from '../../src/config/music.js';
 import { smf, noteEvents } from './smf.mjs';
 import { fxParams } from '../../src/music/fx.js';
+import { MUSIC_FX } from '../../src/config/music.js';
 
 // The second pass is kept: [L, 2L) already carries the first pass's
 // releases, delay and reverb. Its head is crossfaded from [2L, 2L + fade),
@@ -72,5 +73,14 @@ export function stemKey(track, song, scene, sr, script) {
 // written out, and a switched-off box left out rather than sent and skipped,
 // so mix.py never needs a default of its own. None of this is in stemKey:
 // effects run at the mix, so a turned knob keeps every cached stem.
-export const mixChain = track => (track.fx || []).filter(b => b.on !== false)
-  .map(b => ({ type: b.type, params: fxParams(b) }));
+// A track's chain as the mix plays it: the boxes that are on, every knob
+// filled, and every sweep's rate rounded to a whole number of cycles over
+// the loop (`loop` seconds), so a slow auto-filter or a tape's wow lands
+// back where it started at the seam instead of jumping there.
+export const mixChain = (track, loop = 0) => (track.fx || []).filter(b => b.on !== false)
+  .map(b => {
+    const params = fxParams(b), spec = MUSIC_FX[b.type].params;
+    if (loop > 0) for (const [k, v] of Object.entries(params))
+      if (spec[k]?.lfo) params[k] = Math.max(1, Math.round(v * loop)) / loop;
+    return { type: b.type, params };
+  });

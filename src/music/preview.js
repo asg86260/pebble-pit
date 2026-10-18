@@ -8,7 +8,7 @@
 
 import { MUSIC_PREVIEW_MASTER, MUSIC_PREVIEW_COMP, MUSIC_PREVIEW_VOICE, MUSIC_PREVIEW_PEAK,
          MUSIC_PREVIEW_SWEEP, MUSIC_PREVIEW_DRUMS as D } from '../config/music.js';
-import { makeChain } from './fxnodes.js';
+import { makeChain, loadWorklets } from './fxnodes.js';
 import { fxParams } from './fx.js';
 
 const midiHz = p => 440 * Math.pow(2, (p - 69) / 12);
@@ -19,6 +19,7 @@ const midiHz = p => 440 * Math.pow(2, (p - 69) / 12);
 export function makePreview(ctx, { muted = false, beat = () => 0.5 } = {}) {
   const master = ctx.createGain();
   master.gain.value = muted ? 0 : MUSIC_PREVIEW_MASTER;
+  loadWorklets(ctx);
   const comp = ctx.createDynamicsCompressor();
   comp.threshold.value = MUSIC_PREVIEW_COMP.threshold; comp.ratio.value = MUSIC_PREVIEW_COMP.ratio;
   master.connect(comp).connect(ctx.destination);
@@ -114,5 +115,7 @@ export function makePreview(ctx, { muted = false, beat = () => 0.5 } = {}) {
       else synthNote(track, pitch, t, dur, vel);
     },
     refresh(track) { bus(track); },
+    // The transport started or stopped: the vinyl's crackle follows it.
+    running(on) { for (const b of buses.values()) b.chain.running(on); },
   };
 }
