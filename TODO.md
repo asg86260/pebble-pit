@@ -4,6 +4,16 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## The score and the music bench -- DESIGNED, THREE CALLS OPEN (2026-10-17)
+
+DESIGN.md, "The score, and the bench it is written on": in-game music, one
+song a place, composed on `music.html` (track lanes, the vote's option C),
+previewed in the page or live through Surge XT over loopMIDI, rendered
+through the `music-render` pipeline to one seamless OGG loop a scene.
+Blocker: the three open calls at the end of the section (what changes the
+scene, the music level, one live track or two), then the owner's approval
+of the design. Nothing built.
+
 ## Acts 3 and 4: the afterlife and hell -- LOOPS CHOSEN, THIRTEEN CALLS OPEN, SCAFFOLD BUILT (2026-10-17)
 
 **Scaffold built** (2026-10-17, branch `acts-scaffold`): the switches, the

@@ -21689,3 +21689,117 @@ Order, when the owner says go:
 8. **The end**: freeing God, lives returned, the house rebuilt, home, the
    sheet -- then tuning both acts' lengths with the ladder book and a pace
    tool, as the deep's was.
+
+## The score, and the bench it is written on (design, not built)
+
+*Asked for 2026-10-17: music for the game, composed by the owner on a bench
+shaped like Ableton's, with the synths already on this machine (Surge XT,
+FluidSynth) as the sound. The owner's calls of the same day: **in-game
+music** (this reverses "The sound of the yard", decision (1), "the sky is
+the only score"); **both** sound sources, a quick preview and Surge XT
+live; the **track-lanes** layout from the vote
+(https://claude.ai/artifact/GGYNodtekPkq9kgDinpRAN, option C).*
+
+### The amendment to the law
+
+"Everything is struck, and nothing is played" stays the law for the yard's
+own sounds, which still come only from a body moving material. The score
+is the one exception, and it is written as one, as the rift's two sines
+were: **one song a place, under the yard, never over it.** It is a loop
+per scene of that song, on the music bus, ducked under strikes (about 4 dB,
+the `music-render` default) so a pick meeting stone is never lost under a
+pad. It never answers the spreadsheet: no sting on a purchase, no jingle on
+a rung, no swell on a number. What moves it is the place you are looking
+at and what that place is doing, the same facts the beds already listen to.
+
+### The bench: `music.html`
+
+A dev page beside `glyphs.html` and `ladders.html`, never in the build
+(`rollupOptions.input` names only `index` and `play`, so it stays out
+without a change). Option C of the vote:
+
+- **A transport row**: play/stop, tempo, key, the bar counter, the sound
+  source (preview / Surge live) and **render**.
+- **One lane per track**: name, its Surge patch, and its clips in a row,
+  one slot per scene; the scene names head the columns. A clip is two,
+  four or eight bars and loops.
+- **The selected lane opens under itself**: a piano roll (draw, select,
+  drag, length, velocity) for a synth track, a step grid (kick, snare, hat,
+  sixteen steps a bar) for the drum track.
+- **Launching is Ableton's**: a clip or a whole scene is launched now and
+  starts on the next bar line; a queued slot throbs by opacity (fade,
+  never blink) until it starts.
+
+### The song is a file
+
+A song is plain data, `src/music/songs/<place>.json`: tempo, key, tracks
+(`kind` synth or drums, the Surge patch, a preview voice, level, pan),
+scenes by name, and clips as `[step, pitch, length, velocity]` on a
+sixteenth grid. DOM-free, so the node tier reads it and the game's player
+reads the same file the bench wrote. The bench saves it to disk through a
+dev-server endpoint (a vite plugin, `serve` only), so a song is a diff in
+git like any other change, not a blob in the browser. Unsaved edits are
+held in localStorage as a convenience, as the glyph editor's are.
+
+### Two sound sources
+
+- **Preview** is a small Web Audio synth in the page: one voice recipe per
+  track (oscillator, filter, envelope) and numpy-style synthesized drums.
+  Instant, every track at once, and only an approximation of the patch.
+- **Surge live** sends Web MIDI to the Surge XT standalone through a
+  virtual cable (loopMIDI, the one install this needs; the bench says so
+  when it finds no port). A standalone Surge is one patch (two scenes at
+  most), so live is **the selected track** through Surge while the other
+  lanes stay on preview: you hear the real patch on the part you are
+  writing, against an approximate band.
+
+### Render is the real sound
+
+**Render** posts the song to the same dev-server endpoint, which runs the
+`music-render` pipeline already proven on this machine: each track to
+MIDI (the SMF writer from Sunday Vacuum's `tools/music/smf.ts`), each
+synth stem through Surge XT under pedalboard in its own subprocess (one
+Surge per process, 30 to 55 s to load, so stems render in parallel and
+cache as `.npy` against a hash of the clip and patch), drums synthesized,
+the production chain (sidechain, delay, chorus, glue, limiter), then
+ffmpeg two-pass `loudnorm` to -18 LUFS, -1 dBTP. The output is **one
+seamless OGG loop per scene**, `public/music/<place>-<scene>.ogg`, the
+reverb tail wrapped onto the loop's head so the seam is silent. The bench
+shows render progress per stem and plays the result back in place of the
+preview, with the measured length, LUFS and true peak beside it. The
+scripts live in `tools/music/`; Python 3.14 with pedalboard, numpy and
+mido is already installed, and nothing new goes into `package.json`.
+
+### In the game
+
+`audio.js` stays the only file that has heard of an AudioContext and gains
+a music half: it loads the place's loops after the first gesture, and
+changes scene on the bar line with a crossfade (fade, never pop). The
+choice of scene is a decision on the game's clock with no context, like
+the strikes', so the node tier can assert it. The ducking reads the strike
+decisions already counted there. Mute silences it with everything else.
+
+### What it costs and what it must not break
+
+- **Size**: an OGG loop is roughly 1 MB a minute at the quality a bed
+  needs; four places of three or four scenes of 30 to 60 s is a few MB on
+  every build, the desk's included.
+- **Every word a player reads** goes through `msg()`: the only player-facing
+  words here are on the settings sheet (a music level, if the call below
+  gives it one). The bench is dev-only and reads no locale.
+- **No new field on S** for the score: the scene playing is derived from
+  the place and its state, never saved, so a reload cannot desync it.
+- **Checks**: `test/music.test.mjs` in the node tier (a song file reads,
+  the bar-line launch lands on the bar, the scene choice follows the place,
+  the duck follows the strikes); the bench's pointer work in the browser
+  tier only if the piano roll grows logic worth guarding.
+
+### Open calls
+
+1. **What changes the scene in the game.** Proposed: one song a place
+   (yard, the deep, the afterlife, hell), its scenes driven by what that
+   place is doing (the yard: calm, rain, a storm front, the rift torn).
+2. **The music level.** Its own slider on the settings sheet (one new
+   message), or the one volume slider for everything.
+3. **Surge live, one track at a time.** Good enough, or worth Surge's
+   channel split for two live tracks at once.
