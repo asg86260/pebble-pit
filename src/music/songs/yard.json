@@ -629,7 +629,26 @@
       ]
      ]
     }
-   }
+   },
+   "fx": [
+    {
+     "type": "duck",
+     "on": true,
+     "params": {
+      "amount": 5,
+      "release": 0.15
+     }
+    },
+    {
+     "type": "drive",
+     "on": true,
+     "params": {
+      "amount": 5,
+      "tone": 5000,
+      "mix": 1
+     }
+    }
+   ]
   },
   {
    "id": "pad",
@@ -804,7 +823,44 @@
       ]
      ]
     }
-   }
+   },
+   "fx": [
+    {
+     "type": "filter",
+     "on": true,
+     "params": {
+      "type": "highpass",
+      "cutoff": 160,
+      "reso": 0
+     }
+    },
+    {
+     "type": "duck",
+     "on": true,
+     "params": {
+      "amount": 6,
+      "release": 0.15
+     }
+    },
+    {
+     "type": "chorus",
+     "on": true,
+     "params": {
+      "rate": 0.7,
+      "depth": 0.35,
+      "mix": 0.45
+     }
+    },
+    {
+     "type": "reverb",
+     "on": true,
+     "params": {
+      "size": 0.55,
+      "damp": 0.5,
+      "mix": 0.2
+     }
+    }
+   ]
   },
   {
    "id": "lead",
@@ -925,7 +981,27 @@
       ]
      ]
     }
-   }
+   },
+   "fx": [
+    {
+     "type": "delay",
+     "on": true,
+     "params": {
+      "time": 0.75,
+      "feedback": 0.35,
+      "mix": 0.3
+     }
+    },
+    {
+     "type": "reverb",
+     "on": true,
+     "params": {
+      "size": 0.55,
+      "damp": 0.5,
+      "mix": 0.25
+     }
+    }
+   ]
   }
  ],
  "chords": {

@@ -6,10 +6,12 @@
 // `[step, pitch, length, velocity]` on a sixteenth grid. `game` names the one
 // scene that is the place's loop in the game (DESIGN.md, the settled calls).
 // `chords[scene]` is a scale degree a bar, and a track with `follow` has its
-// clips written from those chords (theory.js); both are optional.
+// clips written from those chords (theory.js); both are optional. `fx` is a
+// track's effects chain (fx.js); a track without one is dry.
 
 import { MUSIC_STEPS_PER_BAR, MUSIC_BEATS_PER_BAR, MUSIC_CLIP_BARS, MUSIC_CHORD_BARS,
          MUSIC_TEMPO_MIN, MUSIC_TEMPO_MAX, MUSIC_PATTERNS, MUSIC_ROOTS, MUSIC_MODES } from '../config/music.js';
+import { fxProblems } from './fx.js';
 
 export const beatSeconds = song => 60 / song.tempo;
 export const stepSeconds = song => beatSeconds(song) * MUSIC_BEATS_PER_BAR / MUSIC_STEPS_PER_BAR;
@@ -75,6 +77,7 @@ export function validate(song) {
     ids.add(t.id);
     if (t.kind !== 'synth' && t.kind !== 'drums') bad.push(`${t.id}: kind ${t.kind}`);
     if (t.follow && !MUSIC_PATTERNS[t.follow.pattern]) bad.push(`${t.id}: follows unknown pattern ${t.follow.pattern}`);
+    bad.push(...fxProblems(t));
     for (const [scene, clip] of Object.entries(t.clips || {})) {
       if (!song.scenes?.includes(scene)) bad.push(`${t.id}: clip in unknown scene ${scene}`);
       if (!MUSIC_CLIP_BARS.includes(clip.bars)) bad.push(`${t.id}/${scene}: ${clip.bars} bars`);

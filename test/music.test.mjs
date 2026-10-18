@@ -147,3 +147,40 @@ test('a change of mode never turns a plain chord diminished', () => {
   assert.ok(back.every(d => !chordName(aMinor, d).endsWith('dim')), back.join());
   assert.deepEqual(carryChords(aMinor, { root: 'E', mode: 'minor' }, [1, 6, 3, 7]), [1, 6, 3, 7]);
 });
+
+// --- a track's effects chain (DESIGN.md, "A track's effects chain") ---------
+
+import { newFx, fxParams, knobPos, knobValue, FX_TYPES } from '../src/music/fx.js';
+import { MUSIC_FX } from '../src/config/music.js';
+
+test('every knob of every effect has a default inside its own range', () => {
+  for (const type of FX_TYPES) {
+    const params = Object.entries(MUSIC_FX[type].params);
+    assert.ok(params.length >= 1 && params.length <= 3, type);
+    for (const [k, p] of params) {
+      if (p.choices) assert.ok(p.choices.includes(p.def), `${type}.${k}`);
+      else assert.ok(p.def >= p.min && p.def <= p.max, `${type}.${k}`);
+    }
+    assert.deepEqual(fxParams({ type }), Object.fromEntries(params.map(([k, p]) => [k, p.def])));
+  }
+});
+
+test('a knob turned to the ends lands on its range, and back to where it was', () => {
+  for (const type of FX_TYPES) for (const [k, p] of Object.entries(MUSIC_FX[type].params)) {
+    if (p.choices) { assert.equal(knobValue(p, 0), p.choices[0]); assert.equal(knobValue(p, 1), p.choices.at(-1)); continue; }
+    assert.equal(knobValue(p, 0), p.min, `${type}.${k}`);
+    assert.equal(knobValue(p, 1), p.max, `${type}.${k}`);
+    assert.ok(Math.abs(knobValue(p, knobPos(p, p.def)) - p.def) <= Math.max(0.01, p.def * 0.01), `${type}.${k}`);
+  }
+});
+
+test('validate names an unknown effect, an unknown knob and a knob out of range', () => {
+  const s = tiny();
+  s.tracks[1].fx = [newFx('reverb'), { type: 'flanger' }, { type: 'delay', params: { time: 0.3, wobble: 1 } },
+                    { type: 'reverb', params: { mix: 2 } }];
+  const bad = validate(s).join('\n');
+  assert.match(bad, /effect 2 is flanger/);
+  assert.match(bad, /delay time 0.3 is out of range/);
+  assert.match(bad, /delay has no knob wobble/);
+  assert.match(bad, /reverb mix 2 is out of range/);
+});

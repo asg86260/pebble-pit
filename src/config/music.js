@@ -111,6 +111,61 @@ export const MUSIC_PATTERNS = {
     hits: ['r', '5', '3', '5', '8', '5', '3', '5', 'r', '5', '3', '5', '8', '5', '3', '5'].map((t, i) => [i, t, 1, i % 4 ? 70 : 92]) },
 };
 
+// A track's effects chain (DESIGN.md, "A track's effects chain"). Each
+// effect has up to three knobs; a knob is a range with a default (`log` turns
+// it on a curve, for hertz and times), or a short list of `choices`. The
+// preview (preview.js) and the render (tools/music/mix.py) read the same
+// table, so a knob means the same thing to both.
+const MIX = { label: 'mix', min: 0, max: 1, def: 0.4 };
+export const MUSIC_FX = {
+  filter: { label: 'Filter', params: {
+    type: { label: 'type', choices: ['lowpass', 'highpass', 'bandpass'], def: 'lowpass' },
+    cutoff: { label: 'cutoff', min: 40, max: 16000, def: 1200, unit: 'Hz', log: true },
+    reso: { label: 'reso', min: 0, max: 1, def: 0.2 } } },
+  eq: { label: 'EQ', params: {
+    low: { label: 'low', min: -12, max: 12, def: 0, unit: 'dB' },
+    mid: { label: 'mid', min: -12, max: 12, def: 0, unit: 'dB' },
+    high: { label: 'high', min: -12, max: 12, def: 0, unit: 'dB' } } },
+  drive: { label: 'Drive', params: {
+    amount: { label: 'amount', min: 0, max: 36, def: 8, unit: 'dB' },
+    tone: { label: 'tone', min: 1000, max: 16000, def: 6000, unit: 'Hz', log: true },
+    mix: { ...MIX, def: 0.7 } } },
+  bitcrush: { label: 'Bitcrush', params: {
+    bits: { label: 'bits', min: 2, max: 16, def: 8, step: 1 },
+    mix: { ...MIX, def: 0.5 } } },
+  chorus: { label: 'Chorus', params: {
+    rate: { label: 'rate', min: 0.05, max: 5, def: 0.7, unit: 'Hz', log: true },
+    depth: { label: 'depth', min: 0, max: 1, def: 0.35 },
+    mix: { ...MIX, def: 0.45 } } },
+  phaser: { label: 'Phaser', params: {
+    rate: { label: 'rate', min: 0.05, max: 5, def: 0.5, unit: 'Hz', log: true },
+    depth: { label: 'depth', min: 0, max: 1, def: 0.5 },
+    mix: { ...MIX, def: 0.5 } } },
+  // The delay's time is in beats, so it stays on the beat at any tempo.
+  delay: { label: 'Delay', params: {
+    time: { label: 'time', choices: [0.25, 0.5, 0.75, 1, 1.5, 2], names: ['1/16', '1/8', '3/16', '1/4', '3/8', '1/2'], def: 0.75 },
+    feedback: { label: 'feedback', min: 0, max: 0.9, def: 0.35 },
+    mix: { ...MIX, def: 0.3 } } },
+  reverb: { label: 'Reverb', params: {
+    size: { label: 'size', min: 0, max: 1, def: 0.55 },
+    damp: { label: 'damping', min: 0, max: 1, def: 0.5 },
+    mix: { ...MIX, def: 0.25 } } },
+  comp: { label: 'Compressor', params: {
+    threshold: { label: 'threshold', min: -40, max: 0, def: -18, unit: 'dB' },
+    ratio: { label: 'ratio', min: 1, max: 20, def: 3, log: true },
+    release: { label: 'release', min: 10, max: 1000, def: 150, unit: 'ms', log: true } } },
+  // The pump under the kick: dips the track on every kick of the song's drums.
+  duck: { label: 'Duck', params: {
+    amount: { label: 'amount', min: 0, max: 24, def: 6, unit: 'dB' },
+    release: { label: 'release', min: 0.03, max: 0.6, def: 0.15, unit: 's', log: true } } },
+};
+// A new song's following parts start with these chains.
+export const MUSIC_START_FX = {
+  bass: [{ type: 'duck', params: { amount: 5 } }],
+  pad: [{ type: 'chorus' }, { type: 'reverb', params: { mix: 0.3 } }],
+  arp: [{ type: 'delay' }, { type: 'reverb', params: { mix: 0.2 } }],
+};
+
 // the render
 // tools/music/render.mjs: one sample rate for every stem so a cached stem
 // mixes with a fresh one. The loop kept is the second pass, [L, 2L), which
