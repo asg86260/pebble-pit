@@ -138,6 +138,24 @@ export const TESTS = [
       ok(up === 'yard', 'and back up', up)
     ];
   }],
+  // The chevron is painted in the page's ink, so it turns with the theme
+  // like the corner's other squares rather than staying black on dark paper.
+  ['deep: the corner square\'s chevron takes the ink on either theme', async () => {
+    deepYard();
+    run(0.1);
+    const root = document.documentElement, was = root.classList.contains('dark');
+    const read = on => {
+      root.classList.toggle('dark', on);
+      const b = way(), c = b.querySelector('.chevron');
+      return { chevron: getComputedStyle(c).backgroundColor, ink: getComputedStyle(b).color };
+    };
+    const light = read(false), dark = read(true);
+    root.classList.toggle('dark', was);
+    return [
+      ok(light.chevron === light.ink, 'light: the chevron is the ink', JSON.stringify(light)),
+      ok(dark.chevron === dark.ink, 'dark: the chevron is the ink', JSON.stringify(dark))
+    ];
+  }],
   // A window taller than the deep lets its camera look up past the ceiling
   // into the yard's lowest rows, and whatever a shared layer draws over a
   // yard body -- a shout, a squat, a roster badge -- hung there over the
