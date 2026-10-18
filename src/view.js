@@ -29,7 +29,7 @@
 import { S } from './state.js';
 import { CELL, P, VIEW_GLIDE_S, SHAFT_HAND_FADE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM,
          CROWD_X0, AFTER_ZOOM_MAX, AFTER_FOCUS_UP, AFTER_FOCUS_AT, GOD_HORIZON_UP, GOD_FAR } from './config.js';
-import { clampCam, setZoom, setZoomNow, yardCell } from './world.js';
+import { clampCam, setZoom, setZoomNow, setZoomFree, yardCell } from './world.js';
 import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor, deepTop } from './deep/place.js';
 import { reducedMotion } from './prefs.js';
 import { dropLift } from './cutscene.js';
@@ -141,9 +141,10 @@ function frameAfter() {
   const cx = Math.min(S.camX + S.viewW / 2, afterEnd());
   const e = afterDive(cx);
   const k = placeZoom('after') * (1 + (AFTER_ZOOM_MAX - 1) * e);
-  // A target, which the glass glides to as the pan walks the dive in:
-  // `setZoom` takes a target it already has as nothing.
-  setZoom(k);
+  // The dive follows the pan exactly, at any value; at the camp end, where
+  // there is no dive, the place's own whole zoom.
+  if (e > 0) setZoomFree(k);
+  else if (S.zoomShow !== S.zoom) setZoomNow(placeZoom('after'));
   S.camX = cx - S.viewW / 2;
   if (e > 0) { S.camLockY = afterTopAt(e, S.viewH, cx); lifted = true; }
   else if (lifted) { S.camLockY = null; lifted = false; }

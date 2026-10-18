@@ -855,6 +855,15 @@ export function setZoomNow(k) {
   showZoom(asZoom(k));
   clampCam();
 }
+// A zoom that is a function of where the camera is (the afterlife's dive
+// toward the throne): set straight onto the glass at any value, unsnapped,
+// because the scroll that drives it is already smooth. Parked between two
+// whole sizes, the frame stays on the scaled sheet.
+export function setZoomFree(z) {
+  zoomGlide = null;
+  showZoom(z);
+  clampCam();
+}
 // One frame of the glide, about the window's middle: the point the camera is
 // framing stays where it is on the glass while the zoom moves round it
 // (`clampCam` still holds the floor where a place keeps it).
