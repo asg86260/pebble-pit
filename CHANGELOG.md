@@ -52,6 +52,7 @@ this section; the release that switches it on moves these under Unreleased.
 - After the serpent dies she hangs her gear on her station for one of the deep's crew to take up, and the two of them go home through the portal and down the whole yard with everyone falling in behind, to a house the builders put up during the walk, where they live for good (test/finale.test.mjs).
 - The finale's crowd hops in held poses without flickering on and off, the quarry and the hill come and join it, and no firework opens as a hollow box (test/finale.test.mjs).
 - Refreshing the page during the finale brings its closing sheet up at once instead of a moment later (test/finale.test.mjs).
+- The house the two of them live in after the serpent stands at the yard's left end with its bench clear of the casino, instead of in the middle of it (test/finale.test.mjs).
 - The first trip down into the deep plays a short scene: the camera finds him calling from the serpent's belly, then her under the portal, and she charges down and lands her first blow; her station stands, free, from the snatch (test/abyss-intro.test.mjs).
 - During the snatch the rest of the crew fade out of the shot, the portal waits until they are gone, and no rock comes down until it is over (test/ending-stage.test.mjs).
 - A station bought with a fang asks the yard's dust for its first rungs, so a new fighter climbs over minutes instead of all at once.
@@ -192,6 +193,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The arrow on the corner button that takes you down to the deep and back up is light on the dark theme instead of black (src/selftest/deep.js).
 - A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).
 - The apothecary's brew notes and who-first heading are dark enough to read in both themes (src/selftest/contrast.js).
+- A cutscene's widescreen bands stay black in dark mode instead of turning light grey, and a beat's line on them stays light (`GAME=…/play.html?dark node tools/look.mjs leaving`).
 
 ## v0.6.0 — 2026-10-16
 

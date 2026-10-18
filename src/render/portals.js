@@ -17,6 +17,7 @@ import { now } from '../clock.js';
 import { ctx } from './ctx.js';
 import { hash } from './flicker.js';
 import { msg, FACE } from '../lang.js';
+import { raw } from '../ink.js';
 import { bandCells } from '../cutscene.js';
 import { CELL } from '../config.js';
 import { drawBody, lookFor } from './crew.js';
@@ -298,7 +299,7 @@ export function drawActCaption() {
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   ctx.globalAlpha = c.a;
   ctx.font = `${ACT_CAPTION_FONT_PX}px ${FACE}`;
-  ctx.fillStyle = ACT_CAPTION_GREY;
+  ctx.fillStyle = raw(ACT_CAPTION_GREY);   // on the band's own black, past the page's map
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText?.(c.args ? msg(c.id, c.args) : msg(c.id), S.W / 2, S.H - band / 2);

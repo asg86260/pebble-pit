@@ -1153,6 +1153,8 @@ const deepScenes = {
   'finale-light': { about: 'the deep', say: 'the finale: the door shut, the window lit, the heart over the house', run: finaleAt('light', 0.6) },
   'finale-after': { about: 'the deep', say: 'after the finale: the two of them come out of the house to the bench', run: finaleAt('after', 1.2) },
   'finale-after-bench': { about: 'the deep', say: 'after the finale: the two of them sat on the bench by the door, for good', run: finaleAt('after', 6) },
+  'finale-after-casino': { about: 'the deep', say: "after the finale: the house and its bench at the yard's left end, clear of the open casino",
+    run: () => { finaleAt('after', 6)(); window.__casino(true); S.still = true; S.camX = 0; clampCam(); } },
   // The fourth break: the belly open and him coming out of it.
   'deep-freed': { about: 'the deep', say: 'the fourth break: the belly open and him swimming out',
     run: () => {
