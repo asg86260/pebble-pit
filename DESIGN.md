@@ -22129,14 +22129,14 @@ From that the shot does everything else, the same way for every cutscene:
 1. **The letterbox, always.** Bands are up for as long as the shot holds,
    from its first frame to its last, in every place. Nothing a cutscene says
    can lower them.
-2. **One zoom.** The shot takes the zoom the cutscene starts in and keeps it
-   to the end, in every place it visits (call 1 below). The zoom never steps
-   in a held frame.
+2. **One zoom a place.** The zoom never steps in a held frame; between two
+   places it changes under the ripple that joins them (the owner's call 1,
+   below).
 3. **One move.** A glide is one ease-in-out curve over a time from the
    distance (`CUT_PAN_PX_S`, floored at `CUT_SETTLE_S`, capped at
    `CUT_PAN_MAX_S`, as today), in x and y together. There is no
    share-a-frame chase anywhere. `follow` holds the frame still while the box
-   stays inside a central safe area, and glides again when it leaves (call 2).
+   tracks it smoothly (the owner's call 2, below).
 4. **The box is always in frame.** The frame is fitted between the bands
    with `CUT_FRAME_MARGIN`, and clamped to each place's own limits: never
    below its floor, never above the top of its sky. Each place states its
@@ -22179,15 +22179,17 @@ and the fact that ends it.
 A cutscene in `scenes.js` is a still. A cutscene on the bench is the whole
 run, and the bench is where a cutscene is written from now on.
 
-### Calls for the owner
+### The owner's calls (2026-10-18)
 
-1. **The zoom across places.** (a) One zoom for the whole cutscene: heaven is
-   framed at the yard's size and the change of scale waits until the player
-   has the camera back. (b) Each place keeps its own zoom, and the change
-   happens only under the portal ripple, never in a held frame. (a) is
-   steadier; (b) shows more of heaven on arrival.
-2. **Following a moving subject.** (a) A still frame with a safe area: it
-   only glides when the subject is about to leave it. (b) Smooth tracking:
-   the camera rides with the subject at its pace.
+1. **The zoom across places changes under the ripple.** Each place keeps its
+   own zoom, but the change happens only while the portal ripple covers the
+   screen, never in a held frame. So rule 2 above reads: one zoom *per place*,
+   and the step between two places is hidden by the ripple that joins them.
+2. **A moving subject is tracked smoothly.** `follow` rides with the box,
+   centered on it, at the box's own pace, not with a still frame and a safe
+   area. The tracking is a critically damped spring on the frame's center
+   (one stiffness, `CUT_FOLLOW_K`, in config), so a start or a stop eases
+   instead of jerking, and it is the only tracking code there is. On the
+   bench, the safe area is drawn as the box's margin instead.
 3. **The rise into heaven** gets a mock-and-vote of its own once the shot
    exists. Its shape is the act 3 intro's question, not the shot's.
