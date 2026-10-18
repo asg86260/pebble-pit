@@ -146,6 +146,29 @@ group('our crowd grows with the share walked out', async () => {
   ];
 });
 
+// A member bought into a post steps out of our crowd to hold it: our crowd
+// draws one soul fewer once it has, eased out rather than dropped.
+group('a post bought takes a soul out of our crowd', async () => {
+  up();
+  window.__afterCrowd((i, v) => (i < 12 ? 8 : v));
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) run(1);
+  lookAt(CROWD_X0 - 300);
+  const settle = () => { for (let k = 0; k < 40; k++) { run(0.25); draw(); } return { want: arrived(), souls: crowdDrawn().ours }; };
+  const was = settle(), camp0 = S.after.camp;
+  window.__afterGrant({ rebel: 400 });
+  window.__buy('after-post-agitator');
+  run(1 / 30); draw();
+  const mid = crowdDrawn().ours;
+  const now = settle();
+  window.__actsOn(null);
+  return [
+    ok(camp0 > 0, 'members waiting in the camp', `${camp0}`),
+    ok(now.want === was.want - 1, 'one member fewer standing in our crowd', `${was.want} -> ${now.want}`),
+    ok(now.souls === was.souls - 1, 'and our crowd draws one soul fewer', `${was.souls} -> ${now.souls}`),
+    ok(mid === was.souls, 'its soul fading out, not dropped on the frame', `${was.souls} -> ${mid} -> ${now.souls}`)
+  ];
+});
+
 group('God\'s glare dims as support rises, gone at the strike\'s share', async () => {
   up();
   const n = 4000;

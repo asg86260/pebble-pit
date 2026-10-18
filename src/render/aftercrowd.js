@@ -186,8 +186,11 @@ function readCrowd() {
   if (read.bandStr !== A.rims && now() - read.t >= CROWD_MASS_READ_S) { readBands(a); read.t = now(); }
   return a;
 }
-// The members who have walked out and reached the camp.
-export const arrived = () => (S.after ? Math.max(0, union() - walkingOut()) : 0);
+// The members standing in our crowd: walked out and reached the camp, less
+// those stepped out of it again to hold a post or raise a station (the
+// pair building are not members, and a builder walking home is walking out).
+const steppedOut = () => S.after.bodies.filter(w => w.pair == null && w.state !== 'out' && w.state !== 'join').length;
+export const arrived = () => (S.after ? Math.max(0, union() - walkingOut() - steppedOut()) : 0);
 // God's glare: full at the start, dimming as support rises, gone at the
 // strike's share.
 export const glareAlpha = () => clamp(1 - support() / STRIKE_SHARE, 0, 1);
@@ -732,8 +735,10 @@ export function drawCampCrowd(c) {
   souls();
   if (ours.after !== S.after) { ours.after = S.after; ours.shown = arrived(); }
   const want = arrived();
-  // A soul a beat at least, faster when far behind; never eased down.
-  ours.shown = want < ours.shown ? want : Math.min(want, ours.shown + Math.max(2, want - ours.shown) * (oursDt()));
+  // A soul a beat at least, faster when far behind, either way: a member
+  // stepping out to a post fades out of our crowd as it fades in at its spot.
+  const gap = want - ours.shown, step = Math.max(2, Math.abs(gap)) * oursDt();
+  ours.shown = gap >= 0 ? Math.min(want, ours.shown + step) : Math.max(want, ours.shown - step);
   const mass = oursMass();
   drawnNow.oursMass = mass;
   for (let b = CROWD_BANDS.length - 1; b >= 0; b--) {
@@ -747,7 +752,7 @@ export function drawCampCrowd(c) {
     const v = 1 + Math.floor(k / files), f = files - 1 - (k % files);
     const L = layout(v, 1), s = Math.round(L.s);
     const x = onPx(at(OURS_X0 + f * CROWD_PITCH + CROWD_FRONT_BODY / 2 + L.off, L.rate) - s / 2);
-    if (x + s < S.camX || x > S.camX + S.viewW) continue;
+    if (x + s < S.camX || x > S.camX + S.viewW || (k === whole && part <= 0)) continue;
     const ink = RIM_PIECES * lerp(1, OURS_INK, (v - 1) / (NEAR - 2));
     soul(x, onPx(floor - L.foot - s), s, ink, paleTone(s, k), k === whole ? part : 1);
     count++;
