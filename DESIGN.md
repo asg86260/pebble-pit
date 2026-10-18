@@ -22081,7 +22081,7 @@ learn the parts from the sentence on each one.
   effects and knobs that exist and reads clean through `validate`, and the
   preview and `mix.py` each handle every type.
 
-## One camera for every cutscene, and a bench to watch them on (design, not built)
+## One camera for every cutscene, and a bench to watch them on (built 2026-10-18; the rise open)
 
 The act 3 intro is the case that made this necessary: the house falls, the
 souls rise to heaven's tear, and the shot falls apart. Taken frame by frame

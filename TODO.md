@@ -4,12 +4,14 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## One camera for every cutscene, and a cutscene bench -- APPROVED, BUILDING (2026-10-18)
+## One camera for every cutscene, and a cutscene bench -- BUILT, THE RISE OPEN (2026-10-18)
 
 DESIGN.md, "One camera for every cutscene, and a bench to watch them on".
-The act 3 intro's zoom pop, the empty-sky climb and the lost top band come
-from six cameras with their own easing, clamps and zooms. The owner chose
-per-place zoom changed under the ripple, and smooth tracking. The rise into heaven is a mock-and-vote after the shot is built.
+The shot (src/shot.js), smooth zoom (mock C) and cutscenes.html are built,
+and the act 3 intro is moved onto the shot. Open: the rise into heaven holds
+a near-empty cloud floor for about 20 s while the pair come up the road
+unseen (call 3, a mock-and-vote); the finale, snatch, opening and first trip
+down still have their own cameras.
 
 ## The score and the music bench -- BENCH BUILT, GAME PLAYBACK DESIGNED, AWAITING THE OWNER'S EAR (2026-10-17)
 
