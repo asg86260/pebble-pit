@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Act 3 Place Mock</title>
+<style>
+  :root {
+    --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --rec: #1b1b1f;
+    --ink: #000000; --paper: #ffffff;
+    --face: ui-monospace, "Courier New", monospace;
+  }
+  /* the game's dark page: #e0e0e0 ink on #1f1f1f paper, greys mapped by lightness (src/ink.js) */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36; --rec: #e9e9ee;
+      --ink: #e0e0e0; --paper: #1f1f1f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36; --rec: #e9e9ee;
+    --ink: #e0e0e0; --paper: #1f1f1f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--face); }
+  main { max-width: 1440px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 0 0 6px; }
+  p, li { color: var(--muted); margin: 0 0 8px; max-width: 1000px; }
+  b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; align-items: center; }
+  .bar button { font: inherit; background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 16px; }
+  .opts { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+  .opt { border: 1px solid var(--line); border-radius: 6px; padding: 8px; max-width: 100%; }
+  .opt.rec { border: 2px solid var(--rec); }
+  .opt h3 { font-size: 13px; margin: 0 0 6px; }
+  .opt h3 .tag { font-size: 11px; font-weight: normal; border: 1px solid var(--fg); border-radius: 4px; padding: 0 5px; margin-left: 6px; }
+  .opt p { font-size: 12px; max-width: 460px; margin: 6px 0 0; }
+  canvas { display: block; image-rendering: pixelated; max-width: 100%; }
+  .pair { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+  figure { margin: 0; }
+  figcaption { font-size: 11px; color: var(--muted); }
+  .wide { overflow-x: auto; border: 1px solid var(--line); max-width: 100%; }
+  .wide canvas { max-width: none; }
+  .fit .wide canvas { width: 100% !important; height: auto !important; image-rendering: auto; }
+  .ph { border-bottom: 1px dotted var(--muted); }
+  .board { width: 250px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); font: 12px/1.4 var(--face); }
+  .board .t { background: var(--ink); color: var(--paper); padding: 2px 6px; }
+  .board .r { display: grid; grid-template-columns: 1fr max-content; gap: 8px; padding: 3px 6px; border-top: 1px solid var(--ink); }
+  .board .r.lock { opacity: .45; }
+  .why { font-size: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Act 3: the place, at the yard's scale</h1>
+  <p>A <b>mock</b>, drawn from plain shapes in a canvas. It is <b>not the game</b>: nothing here runs the sim or the game's renderer. It is drawn on the game's grid, P = 6. A body is 18 px square with a 2 px rim, and every stroke is 2 px. The colors are the game's eleven greys from palette.js. Every 1x canvas is one world pixel to one screen pixel, the way the yard draws. The 3x figures are crops of the same drawing scaled three times.</p>
+  <p>The rules held to: stations the size of the yard's (36 to 72 px), flat black outlines, grey only for material (heaps, loads, motes, mist), the yard's UI (the floating glyph, the counter, the pile-full mark, a board), and <b>one heaven cue: the cloud floor</b>. Nothing else glows, sparkles or wears a halo. The throne's glare belongs to God, not to the place.</p>
+  <p><b>Every word is a placeholder.</b> Station names, captions on the canvas, board rows and prices are working names. Words with a <span class="ph">dotted underline</span> are placeholders, and the canvases carry no lettering of their own beyond the layout's labels, which are placeholders too.</p>
+  <div class="bar" id="theme">
+    <button data-t="auto" class="on">auto</button><button data-t="light">light</button><button data-t="dark">dark</button>
+    <button id="pause">pause</button><button id="slow">quarter speed</button>
+  </div>
+
+  <!-- ===================================================== 1 -->
+  <section class="card" id="s1">
+    <h2>1. The cloud floor</h2>
+    <p>The owner: "the floor doesnt need to be flat, it should read like its in the clouds somehow". Each option shows a body walking and a <span class="ph">saw mill</span> with its sawdust heap (the grey is material), so you can check that feet land on something. The yard's own floor is a flat 2 px line over a 5 % hatch.</p>
+    <div class="opts">
+      <div class="opt rec"><h3>A. Billow edge <span class="tag">recommended</span></h3>
+        <div class="pair"><figure><canvas data-src="f1"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="f1" data-s="3" data-crop="110,52,130,64"></canvas><figcaption>3x: feet on a hummock, the station pressed flat</figcaption></figure></div>
+        <p>The ground line itself goes lumpy: puffs one or two cells high, stepped on the grid, and pressed flat under every station. A body steps up and down a cell in held poses as it crosses them. Under the line, two fainter puff contours drift slowly, so the floor reads as layered cloud. They are lines, not speckle.</p></div>
+      <div class="opt"><h3>B. Flat walk, billows behind</h3>
+        <div class="pair"><figure><canvas data-src="f2"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="f2" data-s="3" data-crop="110,52,130,64"></canvas><figcaption>3x</figcaption></figure></div>
+        <p>The walking line stays the yard's flat line. Pale puffs rise a cell or two behind it and drift. Wisps drift through the slab, and its underside is scalloped, so you can see it floats. Feet read exactly as they do in the yard.</p></div>
+      <div class="opt"><h3>C. Thin patches</h3>
+        <div class="pair"><figure><canvas data-src="f3"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="f3" data-s="3" data-crop="190,52,100,110"></canvas><figcaption>3x: the yard far below</figcaption></figure></div>
+        <p>A gentle billow edge with gaps in it. Through a gap the yard shows far below in pale grey: its ground line, the rock and tiny bodies. The gap breathes open and shut by fade. Bodies keep to the solid cloud.</p></div>
+    </div>
+    <p class="why"><b>Why A:</b> it is the only option where the floor's own line, the thing every body stands on, says "cloud". B keeps the yard's line and puts the cloud behind it, so it reads as a yard in front of a cloud. C is the most charming, but a gap is a hole a body must route round. A single thin patch from C could sit inside A as a set piece, where souls rise.</p>
+  </section>
+
+  <!-- ===================================================== 2 -->
+  <section class="card" id="s2">
+    <h2>2. The camp layout</h2>
+    <p>One whole strip, 2400 px wide, which is about the yard's width. It is drawn on floor A. The dashed frame is roughly what the camera shows at once, with the counter in its corner. Stations are placeholder boxes at their real sizes. Members walk out of God's yard to the camp's waiting ground, and the tithe line climbs the stair into the glare.</p>
+    <div class="bar" id="fitbar"><button data-f="0" class="on">game scale (scroll)</button><button data-f="1">fit width</button></div>
+    <div id="fitwrap">
+      <div class="opt rec" style="max-width:100%"><h3>A. Camp left, crowd right <span class="tag">recommended</span></h3>
+        <div class="wide"><canvas data-src="L1"></canvas></div>
+        <p style="max-width:1000px">Left to right: <span class="ph">grove</span>, <span class="ph">saw mill</span>, <span class="ph">chipper</span>, <span class="ph">paper mill</span>, <span class="ph">workshop</span>, <span class="ph">press</span>, <span class="ph">construction shack</span>, <span class="ph">pedestal</span> (the pair face right), then God's yard and the crowd, then the stair and the throne. The chain runs one way, from tree to sign, and ends at the pedestal, which faces the crowd. Members walk left out of the crowd to the waiting ground by the shack. The camera opens on the pedestal and the front of the crowd.</p></div>
+      <div class="opt" style="max-width:100%; margin-top:12px"><h3>B. Crowd in the middle</h3>
+        <div class="wide"><canvas data-src="L2"></canvas></div>
+        <p style="max-width:1000px">The <span class="ph">grove</span> and the wood end of the chain (<span class="ph">saw mill</span>, <span class="ph">chipper</span>, <span class="ph">paper mill</span>) stand left. The crowd is in the middle. The <span class="ph">pedestal</span> (the pair face left), the <span class="ph">shack</span>, the <span class="ph">workshop</span> and the <span class="ph">press</span> stand right, between the crowd and the stair, so the tithe line walks through the union's camp to reach the stair. A good picture. But timber and paper have to cross the crowd to the workshop and press, and the camp is cut in two.</p></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 3 -->
+  <section class="card" id="s3">
+    <h2>3. The pedestal and the pair</h2>
+    <p>Each look is drawn twice: <b>left idle, right mid-speech</b>. A line of the speech is a held pose: a crouch, then up a cell with the shout mark. A bubble rises and fades. Rebel knocks off as grey motes onto the pile at the pedestal's foot, and each mote fades as it lands.</p>
+    <div class="opts">
+      <div class="opt"><h3>A. Plinth</h3>
+        <div class="pair"><figure><canvas data-src="p1"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="p1" data-s="3" data-crop="136,0,104,140"></canvas><figcaption>3x, speaking</figcaption></figure></div>
+        <p>A stepped stone block, two courses. Civic, and read at once as "a place to speak from". Nothing about it says union.</p></div>
+      <div class="opt rec"><h3>B. Soapbox <span class="tag">recommended</span></h3>
+        <div class="pair"><figure><canvas data-src="p2"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="p2" data-s="3" data-crop="136,0,104,140"></canvas><figcaption>3x, speaking</figcaption></figure></div>
+        <p>A crate, its planks in grey (material). It is the agitator's own furniture: the pair stand on a box at the crowd's edge. It is low and plain, the yard's size, and the bodies on it are the thing you see.</p></div>
+      <div class="opt"><h3>C. Cloud pillar</h3>
+        <div class="pair"><figure><canvas data-src="p3"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="p3" data-s="3" data-crop="136,0,104,140"></canvas><figcaption>3x, speaking</figcaption></figure></div>
+        <p>A lump of the floor pushed up, billow-topped like floor A. Most "heaven", but it spends the heaven cue on furniture and reads as part of the ground rather than as something the union put there.</p></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 4 -->
+  <section class="card" id="s4">
+    <h2>4. The construction shack</h2>
+    <p>Where you order buildings. Each look stands at its door with a member. Over it floats the glyph of the order in hand, filling a cell at a time, the way the yard's stack does. To the right, the ordered station rises in bands, each band fading in, while a member carries timber (grey) to it. The board beside the options is the yard's sheet, in plain CSS.</p>
+    <div class="opts">
+      <div class="opt rec"><h3>A. Hut with a plan board <span class="tag">recommended</span></h3>
+        <div class="pair"><figure><canvas data-src="k1"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="k1" data-s="3" data-crop="0,30,130,160"></canvas><figcaption>3x</figcaption></figure></div>
+        <p>A small hut with a board on two posts beside it, three little station outlines pinned to the board. "Plans on a board" reads as "pick one".</p></div>
+      <div class="opt"><h3>B. Scaffold and hoist</h3>
+        <div class="pair"><figure><canvas data-src="k2"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="k2" data-s="3" data-crop="0,30,130,160"></canvas><figcaption>3x</figcaption></figure></div>
+        <p>An open frame of poles with a jib and a block on a rope that swings in held steps, with a timber stack at its foot. It reads as "building" more than "ordering", and looks like a site still going up.</p></div>
+      <div class="opt"><h3>C. Foreman's tent</h3>
+        <div class="pair"><figure><canvas data-src="k3"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="k3" data-s="3" data-crop="0,30,130,160"></canvas><figcaption>3x</figcaption></figure></div>
+        <p>A peaked tent with a trestle and a rolled plan. Fits a camp that is still a camp, but at 1x the tent and the trestle read as one triangle.</p></div>
+      <div class="opt"><h3>The shack's board <span class="tag">plain CSS</span></h3>
+        <div class="board">
+          <div class="t"><span class="ph">construction shack</span></div>
+          <div class="r"><span class="ph">saw mill</span><span class="ph">20 rebel</span></div>
+          <div class="r"><span class="ph">chipper</span><span class="ph">30 rebel</span></div>
+          <div class="r lock"><span class="ph">paper mill</span><span class="ph">needs sawdust</span></div>
+          <div class="r lock"><span class="ph">workshop</span><span class="ph">needs timber</span></div>
+          <div class="r lock"><span class="ph">press</span><span class="ph">needs paper mill</span></div>
+        </div>
+        <p>Every station is listed and priced, and locked only behind one it truly needs (DESIGN.md, the rework).</p></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 5 -->
+  <section class="card" id="s5">
+    <h2>5. The crowd and God's yard</h2>
+    <p>The crowd at yard scale. Pale souls have grey rims and members have ink rims; a soul's rim darkens to ink as it is won, and then it walks out toward the camp (left). Shown in each look: a sign planted among the crowd, posters on a standing board, and a <b>warden</b>, a taller body with a solid cap, told apart by shape, not by tone. A new pale soul fades in at the back to keep the loop closed. There is no speckled field anywhere.</p>
+    <div class="opts">
+      <div class="opt"><h3>A. Terraces</h3>
+        <div class="pair"><figure><canvas data-src="c1"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="c1" data-s="3" data-crop="50,20,210,96"></canvas><figcaption>3x</figcaption></figure></div>
+        <p>Three ranks, each on its own billow terrace, the back ranks higher. It reads most like a crowd. But it is three floors, the yard has one, and bodies on the back terraces stand where nothing else in the game stands.</p></div>
+      <div class="opt rec"><h3>B. One file, a bank behind <span class="tag">recommended</span></h3>
+        <div class="pair"><figure><canvas data-src="c2"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="c2" data-s="3" data-crop="50,20,210,96"></canvas><figcaption>3x</figcaption></figure></div>
+        <p>The yard's rule: everyone on the one floor, shoulder to shoulder. Behind them, a cloud bank holds one faint row of rims in the lightest grey, only to say "more of them". God's yard empties from the front as members walk out. Quietest at 1x.</p></div>
+      <div class="opt"><h3>C. Work gangs</h3>
+        <div class="pair"><figure><canvas data-src="c3"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="c3" data-s="3" data-crop="50,20,210,96"></canvas><figcaption>3x</figcaption></figure></div>
+        <p>The crowd at work: souls hauling mist from God's heap to the tithe pile, in loose gangs. It is the liveliest look and the most like the yard, but a crowd that walks about is hard to count, and the empty share is harder to see.</p></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 6 -->
+  <section class="card" id="s6">
+    <h2>6. The throne and the stair</h2>
+    <p>God is a placeholder: a big square with a crown. The glare is God's, so it is the one light thing in the act, and it pulses slowly by fade. The tithe line climbs the stair a step at a time, in held poses, each carrier with a grey bundle. At the top each one walks into the glare and fades out, and a new one fades in at the stair's foot.</p>
+    <div class="opts">
+      <div class="opt rec"><h3>A. Straight stair, ray glare <span class="tag">recommended</span></h3>
+        <div class="pair"><figure><canvas data-src="t1"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="t1" data-s="3" data-crop="250,0,130,130"></canvas><figcaption>3x</figcaption></figure></div>
+        <p>A plain flight of cell steps, two cells to a step, outlined in ink like a yard ramp, rising to a platform. The glare is twelve short rays round the throne in pale grey, long and short in turn. Simple, and it reads at a glance as "up there".</p></div>
+      <div class="opt"><h3>B. Cloud switchback, band glare</h3>
+        <div class="pair"><figure><canvas data-src="t2"></canvas><figcaption>1x</figcaption></figure>
+        <figure><canvas data-src="t2" data-s="3" data-crop="170,20,170,120"></canvas><figcaption>3x</figcaption></figure></div>
+        <p>The stair is three billow ledges in a zigzag, and the glare is horizontal bands behind the throne, like a sunrise. Softer and more heavenly, but it spends the cloud cue twice, and the carriers' path is harder to follow.</p></div>
+    </div>
+  </section>
+
+  <section class="card" id="s7">
+    <h2>What the mock cannot show</h2>
+    <ul>
+      <li>The game's renderer. These are plain shapes on a canvas, drawn on its grid and in its greys. The game's sprites, its ink map and its frame-rate behavior are not here.</li>
+      <li>The camera. The layout is a still strip with a frame on it. How the view pans, opens and follows is not drawn.</li>
+      <li>A crowd of thousands. A few dozen souls are drawn. The fact that only the files in view would be drawn is described, not shown.</li>
+      <li>The sim. Nobody here decides anything: walks, wins and the tithe line are loops on a clock, sped up so they close.</li>
+      <li>The boards' real builder and stylesheet. The one board is plain CSS.</li>
+      <li>Sound, the pointer, and the click on the pair (the speech here plays on a timer).</li>
+      <li>The yard's own scene beside it. The floor and stations are matched by eye to shots of <code>crew</code>, <code>after-camp</code> and <code>after-chain</code>, not measured against a running build.</li>
+      <li>God, the throne, the stations' real faces, the speech's words: all placeholders, each waiting on its own mock-vote.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+// ============================================================ palette and grid
+const P = 6, B = 18, RIM = 2;
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+// The dark page as src/ink.js maps it: lightness turned over into #1f1f1f..#e0e0e0.
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+const grey = v => '#' + Math.round(v).toString(16).padStart(2, '0').repeat(3);
+const MAPPED = GREY.map(c => grey((LP + (LI - LP) * (1 - parseInt(c.slice(1, 3), 16) / 255)) * 255));
+let DARK = false;
+const T = i => (DARK ? MAPPED : GREY)[clamp(Math.round(i), 0, 10)];
+const INK = () => T(10), PAPER = () => T(0);
+let g = null;
+
+function fr(x, y, w, h, c) { if (c) g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+function alpha(a, fn) { const o = g.globalAlpha; g.globalAlpha = o * clamp(a, 0, 1); fn(); g.globalAlpha = o; }
+function hsh(a, b = 0, c = 0) { let h = (a * 374761393 + b * 668265263 + c * 2246822519) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+const mod = (a, n) => ((a % n) + n) % n;
+const lerp = (a, b, k) => a + (b - a) * k;
+const smooth = k => { k = clamp(k, 0, 1); return k * k * (3 - 2 * k); };
+const tri = p => p < .5 ? p * 2 : 2 - p * 2;
+const cell = v => Math.round(v / P) * P;
+
+// an outlined rectangle, 2 px ink, paper inside (or `fill`)
+function box(x, y, w, h, fill = PAPER()) { fr(x, y, w, h, INK()); if (fill) fr(x + 2, y + 2, w - 4, h - 4, fill); }
+function line(x, y, w, h, c = INK()) { fr(x, y, w, h, c); }
+function label(x, y, s, c = T(6)) { g.fillStyle = c; g.font = '10px ui-monospace, monospace'; g.textBaseline = 'top'; g.fillText(s, Math.round(x), Math.round(y)); }
+
+// ============================================================ the body
+// The game's square: an 18 px body, a 2 px rim. A soul's rim is pale grey, a
+// member's ink; `won` crossfades one into the other. A warden is a cell
+// taller with a solid cap, so it is told by shape.
+function body(x, y, o = {}) {
+  x = Math.round(x); y = Math.round(y);
+  const a = o.a ?? 1, h = o.warden ? B + P : (o.h ?? B);
+  if (o.ghost) {   // a soul at the back, half behind the bank: a pale rim, nothing else
+    alpha(a, () => { fr(x, y, B, h, T(2)); fr(x + RIM, y + RIM, B - 2 * RIM, h - 2 * RIM, PAPER()); });
+    return;
+  }
+  alpha(a, () => {
+    const won = o.soul ? (o.won ?? 0) : 1;
+    fr(x, y, B, h, PAPER());
+    if (won < 1) rim(x, y, B, h, T(3));
+    if (won > 0) alpha(won, () => rim(x, y, B, h, INK()));
+    if (o.warden) fr(x, y, B, 6, INK());
+    if (o.load) { fr(x + 2, y - 10, 14, 10, INK()); fr(x + 4, y - 8, 10, 6, T(o.loadT ?? 4)); }
+    if (o.plank) { fr(x - 6, y - 6, 30, 6, INK()); fr(x - 4, y - 4, 26, 2, T(4)); }
+  });
+}
+// a rim as four bars, so a crossfade over it never greys the middle
+function rim(x, y, w, h, c) { fr(x, y, w, RIM, c); fr(x, y + h - RIM, w, RIM, c); fr(x, y + RIM, RIM, h - 2 * RIM, c); fr(x + w - RIM, y + RIM, RIM, h - 2 * RIM, c); }
+// a body walking: feet on `surf(x)`, x on whole pixels
+function walker(x, surf, o = {}) { body(x, surf(x) - (o.warden ? B + P : B), o); }
+
+// ============================================================ the cloud floors
+// A billow profile: per cell column, how many cells the floor's top stands
+// above its base line. Puffs are a few cells wide, their edges a step lower
+// than their middles, with flats (station footprints) pressed to zero.
+function billow(cols, seed, flats = [], x0 = 0, maxK = 2, rare = .55) {
+  const el = new Array(cols).fill(0);
+  let c = 0, i = 0;
+  // A puff's shape is a flattened sine, rounded to cells: 1,1,2,2,2,2,1,1 for
+  // a big one, 0,1,1,1,1,0 for a small one. Puffs butt against each other, so
+  // the valleys are where their low edges meet, never a square notch.
+  while (c < cols) {
+    const big = hsh(seed, i, 2) < rare && maxK > 1, k = big ? 2 : 1;
+    const n = big ? 8 + Math.floor(hsh(seed, i, 1) * 5) : 5 + Math.floor(hsh(seed, i, 1) * 4);
+    for (let j = 0; j < n && c + j < cols; j++) el[c + j] = Math.max(el[c + j], Math.round(k * Math.pow(Math.sin(Math.PI * (j + .5) / n), .6)));
+    c += n - 1; i++;                                  // the next puff overlaps this one's last cell
+  }
+  for (const [a, b] of flats) for (let j = Math.floor((a - x0) / P); j < Math.ceil((b - x0) / P); j++) if (j >= 0 && j < cols) el[j] = 0;
+  return el;
+}
+// the feet line over a profile: the highest cell under a body's width
+function surfOf(el, x0, yTop) {
+  return x => { let m = 0; const a = Math.floor((x - x0) / P), b = Math.floor((x + B - 1 - x0) / P);
+    for (let j = a; j <= b; j++) m = Math.max(m, el[j] ?? 0); return yTop - m * P; };
+}
+// a stepped top edge along a profile, `c` its color, `fill` under it
+function edge(el, x0, yTop, c, fill, yBot, a = 1, skip = null) {
+  alpha(a, () => {
+    for (let j = 0; j < el.length; j++) {
+      if (skip && skip(j)) continue;
+      const x = x0 + j * P, y = yTop - el[j] * P;
+      // Each convex corner is cut by one 2 px step, the cells touching only at
+      // their corners, so a puff reads round at 3x and soft at 1x.
+      const cutL = j > 0 && el[j - 1] < el[j], cutR = j < el.length - 1 && el[j + 1] < el[j];
+      if (fill) fr(x, y + (cutL || cutR ? 2 : 0), P, yBot - y, fill);
+      fr(x + (cutL ? 2 : 0), y, P - (cutL ? 2 : 0) - (cutR ? 2 : 0), 2, c);
+      if (j > 0 && el[j] !== el[j - 1] && !(skip && skip(j - 1))) {
+        const hi = yTop - Math.max(el[j], el[j - 1]) * P, lo = yTop - Math.min(el[j], el[j - 1]) * P;
+        fr(el[j] > el[j - 1] ? x : x - 2, hi + 2, 2, lo - hi, c);
+      }
+    }
+  });
+}
+// A contour that drifts: a billow drawn in `c`, sliding a cell at a time and
+// crossfaded between the two cells it is between, so it never jumps.
+function drifting(seed, cols, x0, y, c, t, rate, clip) {
+  const s = t * rate, i = Math.floor(s), f = s - i;
+  for (const [k, a] of [[i, 1 - f], [i + 1, f]]) {
+    const el = billow(cols + 40, seed).slice(mod(k, 40), mod(k, 40) + cols);
+    alpha(a, () => edge(el, x0, y, c, null, 0, 1, clip));
+  }
+}
+
+// Floor A: the line itself billows; layered contours drift beneath it.
+function floorA(x0, x1, yTop, yBot, t, flats, seed = 7) {
+  const cols = Math.ceil((x1 - x0) / P);
+  const el = billow(cols, seed, flats, x0);
+  edge(el, x0, yTop, INK(), PAPER(), yBot);
+  // shade where two puffs meet: one pale cell under a valley's line
+  for (let j = 1; j < cols - 1; j++) if (el[j] === 0 && (el[j - 1] > 0 || el[j + 1] > 0) && !flats.some(([a, b]) => x0 + j * P >= a - P && x0 + j * P < b + P)) fr(x0 + j * P, yTop + 2, P, P - 2, T(1));
+  if (yBot - yTop > P * 4) drifting(seed + 11, cols, x0, yTop + P * 4, T(2), t, .25);
+  if (yBot - yTop > P * 9) drifting(seed + 23, cols, x0, yTop + P * 9, T(1), t, -.15);
+  return surfOf(el, x0, yTop);
+}
+// Floor B: the walk line flat; pale puffs behind it; wisps; a scalloped underside.
+function floorB(x0, x1, yTop, yBot, t, seed = 5) {
+  const cols = Math.ceil((x1 - x0) / P);
+  drifting(seed, cols, x0, yTop, T(3), t, .3);           // the billows behind, rising off the line
+  fr(x0, yTop, x1 - x0, yBot - yTop, PAPER());
+  // wisps: short runs of a pale tone, each sliding a cell at a time with a crossfade
+  for (let w = 0; w < 7; w++) {
+    const len = 3 + Math.floor(hsh(seed, w, 4) * 5), row = 2 + Math.floor(hsh(seed, w, 5) * 4);
+    const rate = (hsh(seed, w, 6) < .5 ? -1 : 1) * (.3 + hsh(seed, w, 7) * .4);
+    const s = t * rate + hsh(seed, w, 8) * cols, i = Math.floor(s), f = s - i;
+    for (const [k, a] of [[i, 1 - f], [i + 1, f]]) alpha(a, () => {
+      for (let q = 0; q < len; q++) { const c = mod(k + q, cols); fr(x0 + c * P, yTop + row * P, P, P, T(1)); }
+    });
+  }
+  // the underside: an upside-down billow in pale grey, sky below it
+  const under = billow(cols, seed + 3, [], 0, 1).map(v => -v);
+  edge(under, x0, yBot - P * 3, T(3), null, 0);
+  fr(x0, yTop, x1 - x0, 2, INK());
+  return () => yTop;
+}
+// Floor C: a gentle billow broken by thin patches with the yard far below.
+function floorC(x0, x1, yTop, yBot, t, gaps, flats = [], seed = 9) {
+  const cols = Math.ceil((x1 - x0) / P);
+  const el = billow(cols, seed, flats, x0, 1);
+  const inGap = j => gaps.some(([a, b]) => x0 + j * P >= a && x0 + j * P < b);
+  edge(el, x0, yTop, INK(), PAPER(), yBot, 1, inGap);
+  for (const [a, b] of gaps) {
+    const open = .5 + .5 * Math.cos(t * .4 - 2.4);             // breathes shut and open, by fade
+    // the yard far below, in pale greys: its line, the rock, three tiny walkers
+    const gy = yBot - P * 2;
+    alpha(.25 + .75 * open, () => {
+      fr(a + 6, gy, b - a - 12, 2, T(4));
+      fr(a + 18, gy - 10, 14, 10, T(4)); fr(a + 20, gy - 12, 10, 2, T(4));
+      for (let k = 0; k < 3; k++) { const wx = a + 36 + mod(t * (3 + k * 2) + k * 7, b - a - 46); fr(Math.round(wx), gy - 4, 4, 4, T(6)); }
+    });
+    // the gap's walls: the floor's ink turned down a cell, then pale stepped sides
+    // the gap's walls: the floor's ink turned down a cell, then the cloud's
+    // thickness in pale steps, bellying in and out again, one line each side
+    fr(a - 2, yTop, 2, P + 2, INK()); fr(b, yTop, 2, P + 2, INK());
+    const ins = [0, 1, 1, 0], rows = 4;
+    for (let r = 1; r < rows; r++) {
+      const i0 = ins[Math.min(r, 7)] * P, i1 = ins[Math.min(r - 1, 7)] * P, y = yTop + r * P;
+      fr(a + i0 - 2, y, 2, P, T(3)); fr(b - i0, y, 2, P, T(3));
+      if (i0 !== i1) { fr(a + Math.min(i0, i1) - 2, y, Math.abs(i0 - i1) + 2, 2, T(3)); fr(b - Math.max(i0, i1), y, Math.abs(i0 - i1) + 2, 2, T(3)); }
+    }
+    // the cloud filling back across it, faded in as the patch shuts
+    alpha((1 - open) * .85, () => { fr(a, yTop + P, b - a, yBot - yTop - P * 2, PAPER()); edge(new Array(Math.round((b - a) / P)).fill(0), a, yTop + P, T(2), null, 0); });
+  }
+  return surfOf(el, x0, yTop);
+}
+
+// ============================================================ stations (placeholder, yard size)
+function heap(x, yFloor, w, hC, tone = 4) {
+  // a material heap: stepped grey cells, darker at the core
+  const cols = Math.round(w / P);
+  for (let j = 0; j < cols; j++) {
+    const hh = Math.max(1, Math.round(hC * Math.sin(Math.PI * (j + .5) / cols)));
+    for (let r = 0; r < hh; r++) fr(x + j * P, yFloor - (r + 1) * P, P, P, T(tone + ((j + r) % 3 === 0 ? 1 : 0) - (r === hh - 1 ? 1 : 0)));
+  }
+}
+function station(x, yFloor, wC, hC, glyph = 'saw') {
+  const w = wC * P, h = hC * P, y = yFloor - h;
+  box(x, y, w, h);
+  fr(x + P, y + h - P * 3, P * 2, P * 3, INK()); fr(x + P + 2, y + h - P * 3 + 2, P * 2 - 4, P * 3 - 2, PAPER());   // door
+  const gx = x + w - P * 4, gy = y + P;
+  if (glyph === 'saw') { fr(gx, gy + P, P * 3, 2, INK()); for (let k = 0; k < 3; k++) fr(gx + k * P + 2, gy + P + 2, 2, 2, INK()); }
+  else if (glyph === 'chip') { fr(gx + P, gy, P, P * 2, INK()); fr(gx, gy + P * 2, P * 3, 2, INK()); }
+  else if (glyph === 'vat') { box(gx, gy, P * 3, P * 2); fr(gx + 4, gy + 4, P * 3 - 8, 4, T(4)); }
+  else if (glyph === 'sign') { box(gx, gy, P * 3, P * 2); fr(gx + P + 2, gy + P * 2, 2, P, INK()); }
+  else if (glyph === 'press') { fr(gx, gy, P * 3, 2, INK()); fr(gx + P + 2, gy, 2, P * 2, INK()); fr(gx, gy + P * 2, P * 3, 2, INK()); }
+  else if (glyph === 'hammer') { fr(gx, gy, P * 3, P, INK()); fr(gx + P + 2, gy + P, 2, P * 2, INK()); }
+  fr(x + w - P * 2, y - P, 2, P, INK());   // a stack, the yard's little chimney
+}
+function tree(x, yFloor, stage = 3) {
+  const th = [0, P * 2, P * 4, P * 6][stage];
+  box(x, yFloor - th, P * 2, th);
+  if (stage >= 2) {
+    const cw = stage === 3 ? 7 : 5, ch = stage === 3 ? 4 : 3, cx = x + P - cw * P / 2, cy = yFloor - th - ch * P + P;
+    const el = Array.from({ length: cw }, (_, j) => (j === 0 || j === cw - 1) ? ch - 1 : ch);
+    edge(el, cx, cy + ch * P - P, INK(), PAPER(), cy + ch * P + 2);
+    fr(cx, cy + ch * P, cw * P, 2, INK());
+    fr(cx - 2, cy + P, 2, ch * P - P + 2, INK()); fr(cx + cw * P, cy + P, 2, ch * P - P + 2, INK());
+  } else if (stage === 1) fr(x - 4, yFloor - th - 4, P * 2 + 8, 4, INK());
+}
+function stump(x, yFloor) { box(x, yFloor - P, P * 2, P); }
+function sign(x, yFloor, tilt = 0) {
+  fr(x + P + 2, yFloor - P * 4, 2, P * 4, INK());
+  box(x, yFloor - P * 6 + tilt, P * 4, P * 3);
+  fr(x + 4, yFloor - P * 6 + tilt + 6, P * 4 - 8, 2, INK());
+  fr(x + 4, yFloor - P * 6 + tilt + 10, P * 2, 2, INK());
+}
+// a standing board with posters pasted on it
+function posterBoard(x, yFloor, n = 2) {
+  const w = n * P * 3 + P;
+  fr(x, yFloor - P * 6, 2, P * 6, INK()); fr(x + w - 2, yFloor - P * 6, 2, P * 6, INK());
+  fr(x, yFloor - P * 6, w, 2, INK()); fr(x, yFloor - P * 2, w, 2, INK());
+  for (let k = 0; k < n; k++) { const px = x + P + k * P * 3; box(px, yFloor - P * 5 - 2, P * 2, P * 3); fr(px + 4, yFloor - P * 5 + 4, P * 2 - 8, 2, INK()); }
+}
+// the pile-full mark: hollow triangle, bar and dot (pilemarks.js, WARN_R = 2.6 cells)
+function warning(x, y) {
+  const r = P * 2.6;
+  g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r, y + r * .8); g.lineTo(x - r, y + r * .8); g.closePath();
+  g.fillStyle = PAPER(); g.fill(); g.lineWidth = Math.max(1, r / 6); g.strokeStyle = INK(); g.stroke();
+  fr(x - 1, y - r * .35, 2, r * .6, INK()); fr(x - 1, y + r * .4, 2, 2, INK());
+}
+// the counter: the yard's purse box, one coin
+function counter(x, y, n) {
+  const w = 66, h = 20;
+  fr(x + 4, y + 4, w, h, T(3)); box(x, y, w, h);
+  fr(x + 6, y + 7, 6, 6, INK()); fr(x + 8, y + 9, 2, 2, PAPER());
+  label(x + 18, y + 5, String(n), INK());
+}
+// a floating glyph (bars.js, `buildingGlyph`): a cell of drawing a world cell,
+// the built cells in ink from the bottom up (each fading in), the rest a pale outline
+const HAMMER = ['.#####..', '#######.', '.#####..', '...##...', '...##...', '...##...', '...##...', '...##...'];
+function floatGlyph(cx, cy, rows, at) {
+  const laid = [], shape = new Set();
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') { laid.push([x, y]); shape.add(x + ',' + y); } }));
+  laid.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+  const x0 = Math.round(cx - 4 * P), y0 = Math.round(cy - 4 * P), up = at * laid.length;
+  laid.forEach(([x, y], k) => {
+    const px = x0 + x * P, py = y0 + y * P;
+    const e = 1.6;
+    const ghost = T(3);
+    if (!shape.has(x + ',' + (y - 1))) fr(px, py, P, e, ghost);
+    if (!shape.has(x + ',' + (y + 1))) fr(px, py + P - e, P, e, ghost);
+    if (!shape.has((x - 1) + ',' + y)) fr(px, py, e, P, ghost);
+    if (!shape.has((x + 1) + ',' + y)) fr(px + P - e, py, e, P, ghost);
+    const a = clamp(up - k, 0, 1);
+    if (a > 0) alpha(a, () => fr(px, py, P, P, INK()));
+  });
+}
+// a speech bubble, rising and fading; its two lines stand in for words
+function bubble(x, y, a) {
+  alpha(a, () => {
+    fr(x + 2, y, 32, 20, INK()); fr(x, y + 2, 36, 16, INK());
+    fr(x + 2, y + 2, 32, 16, PAPER());
+    fr(x + 6, y + 6, 22, 2, INK()); fr(x + 6, y + 11, 14, 2, INK());
+    fr(x + 6, y + 18, 6, 4, INK()); fr(x + 8, y + 18, 2, 2, PAPER());
+  });
+}
+// the shout mark: three short rays over a head, held
+function shout(x, y) { fr(x + 8, y - 12, 2, 6, INK()); fr(x + 1, y - 9, 2, 2, INK()); fr(x + 3, y - 7, 2, 2, INK()); fr(x + 15, y - 9, 2, 2, INK()); fr(x + 13, y - 7, 2, 2, INK()); }
+
+// ============================================================ sources
+const SOURCES = {};
+function src(name, w, h, draw) { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; SOURCES[name] = { cv, w, h, draw }; }
+const sky = (w, h) => fr(0, 0, w, h, PAPER());
+
+// ---- 1. floors
+const FW = 300, FH = 170, FY = 100;
+function floorScene(kind) {
+  return t => {
+    sky(FW, FH);
+    const stX = 162, stW = 10;
+    const flats = [[stX - P, stX + stW * P + P * 6]];
+    let surf;
+    if (kind === 'A') surf = floorA(0, FW, FY, FH, t, flats);
+    else if (kind === 'B') surf = floorB(0, FW, FY, FH, t);
+    else surf = floorC(0, FW, FY, FH, t, [[210, 270]], flats);
+    station(stX, FY, stW, 6, 'saw');
+    heap(stX + stW * P + 2, FY, 30, 3);
+    // a body walking back and forth on the solid floor, left of the station
+    const span = kind === 'C' ? [6, 140] : [6, 140];
+    const p = tri(mod(t / 9, 1)), x = Math.round(lerp(span[0], span[1], p));
+    walker(x, surf);
+  };
+}
+src('f1', FW, FH, floorScene('A'));
+src('f2', FW, FH, floorScene('B'));
+src('f3', FW, FH, floorScene('C'));
+
+// a cloud: a billowed top over a flat underside, outlined in `c`
+function cloudShape(x, yBot, wC, hC, c, seed) {
+  const el = billow(wC, seed).map(v => v + hC - 2);
+  el[0] = el[wC - 1] = 1;
+  edge(el, x, yBot - P, c, PAPER(), yBot);
+  fr(x, yBot, wC * P, 2, c);
+  fr(x - 2, yBot - P * 2, 2, P * 2 + 2, c); fr(x + wC * P, yBot - P * 2, 2, P * 2 + 2, c);
+}
+
+// ---- 2. the layout strip
+const LW = 2400, LH = 350, LY = 300;
+function layout(order) {
+  // positions, in px from the left
+  const A = order === 'A';
+  const S = A ? {
+    grove: 24, mill: 330, chipper: 438, paper: 516, workshop: 608, press: 700, shack: 800, pedestal: 900,
+    wait: [858, 896], crowd: [1060, 1880], heaps: 1900, fence: 1010, stair: 1990, view: 780, face: 1,
+  } : {
+    grove: 24, mill: 330, chipper: 438, paper: 516, crowd: [700, 1520], fence: 650, heaps: 1530, pedestal: 1600, shack: 1690,
+    workshop: 1780, press: 1872, wait: [1640, 1680], stair: 1990, view: 1150, face: -1,
+  };
+  const boxes = [['mill', 12, 8, 'saw', 'saw mill'], ['chipper', 9, 6, 'chip', 'chipper'], ['paper', 11, 8, 'vat', 'paper mill'],
+                 ['workshop', 11, 7, 'sign', 'workshop'], ['press', 11, 8, 'press', 'press'], ['shack', 10, 7, 'hammer', 'shack']];
+  return t => {
+    sky(LW, LH);
+    const flats = boxes.map(([k, w]) => [S[k] - P, S[k] + w * P + P]).concat([[S.pedestal - P, S.pedestal + 60]], [[S.stair - P * 2, LW]], [[S.crowd[0] - 30, S.crowd[1] + 24]]);
+    const surf = floorA(0, LW, LY, LH, t, flats, 3);
+    // the grove: four plots
+    [3, 3, 2, 0].forEach((st, i) => { const x = S.grove + 30 + i * 60; if (st) tree(x, LY, st); else stump(x, LY); });
+    label(S.grove + 30, LY + 8, 'grove');
+    for (const [k, w, h, gl, name] of boxes) { station(S[k], LY, w, h, gl); label(S[k], LY + 8, name); }
+    heap(S.mill + 12 * P + 2, LY, 24, 3);
+    // the pedestal (a soapbox) and the pair, facing God's yard
+    const pb = S.pedestal; box(pb, LY - P * 3, P * 8, P * 3); fr(pb + 4, LY - P * 2 + 2, P * 8 - 8, 2, T(4));
+    body(pb + 3, LY - P * 3 - B); body(pb + 27, LY - P * 3 - B);
+    label(pb, LY + 8, 'pedestal');
+    heap(pb + (S.face > 0 ? 54 : -30), LY, 24, 2, 3);
+    // waiting members on the camp's ground
+    for (let k = 0; k < 2; k++) body(S.wait[0] + k * 22 - (A ? 56 : -150), surf(S.wait[0] + k * 22 - (A ? 56 : -150)) - B);
+    // God's yard: the great cloud shedding mist onto heaps; the crowd in one file
+    const [c0, c1] = S.crowd, cm = (c0 + c1) / 2;
+    cloudShape(cm - 210, 150, 70, 4, T(4), 41);
+    for (let k = 0; k < 18; k++) { const mx = cm - 200 + hsh(k, 2) * 400, ph = mod(t * .12 + hsh(k, 3), 1); alpha(1 - ph, () => fr(cell(mx), 156 + ph * 120, 4, 4, T(4))); }
+    heap(S.heaps - (A ? 0 : 0), LY, 54, 4);
+    label(c0, LY + 8, "God's yard / the crowd");
+    posterBoard(S.fence, LY, 2);
+    // the crowd: a faint bank behind, one file in front
+    for (let x = c0; x < c1; x += 24) body(x + 12, LY - 42, { ghost: true });
+    const bank = billow(Math.round((c1 - c0) / P) + 8, 77, [], 0, 1).map(v => v + 1);
+    edge(bank, c0 - 24, LY - 26, T(3), PAPER(), LY - 2);
+    const files = Math.floor((c1 - c0) / 24);
+    const won = new Set([3, 7, 8, 15, 22, 23, 24]);
+    const emptied = A ? [0, 1, 2] : [files - 1, files - 2, files - 3];
+    for (let i = 0; i < files; i++) {
+      if (emptied.includes(i)) continue;
+      const x = c0 + i * 24; body(x, surf(x) - B, { soul: !won.has(i), won: won.has(i) ? 1 : 0 });
+    }
+    sign(c0 + 10 * 24 + 18, LY - 2); sign(c0 + 25 * 24 + 18, LY - 2);
+    // members walking out toward the camp, faded in at the crowd and out at the camp
+    for (let k = 0; k < 3; k++) {
+      const ph = mod(t / 14 + k / 3, 1);
+      const from = A ? c0 - 4 : c1, to = A ? S.wait[0] - 40 : S.wait[0] - 150 + 50;
+      const x = lerp(from, to, ph);
+      body(x, surf(x) - B, { a: Math.min(1, ph * 8, (1 - ph) * 8) });
+    }
+    // a warden on its round along the front
+    { const wx = lerp(c0 + 120, c1 - 160, tri(mod(t / 30, 1))); walker(wx, surf, { warden: true }); }
+    // the stair and the throne
+    const sx = S.stair, steps = 18;
+    const { top, tx } = stair(sx, LY, steps, LW);
+    glare(tx + 90, top - 30, t, 1, top);
+    throne(tx + 72, top);
+    label(sx, LY + 8, 'stair'); label(tx + 40, top + 10, 'throne');
+    // the tithe line: carriers from the heap to the stair's foot, up, into the glare
+    for (let k = 0; k < 6; k++) {
+      const ph = mod(t / 24 + k / 6, 1);
+      const walkEnd = .45, start = A ? S.heaps + 20 : S.heaps + 20;
+      let x, y, a = 1;
+      if (ph < walkEnd) { x = lerp(start, sx - B, ph / walkEnd); y = surf(x) - B; a = Math.min(1, ph * 20); }
+      else { const q = (ph - walkEnd) / (1 - walkEnd), st = Math.min(steps, Math.floor(q * (steps + 3))); x = sx + st * P * 2 - 4; y = LY - st * P * 2 - B; if (st >= steps) { x = tx + (q * (steps + 3) - steps) * 20; a = 1 - (q * (steps + 3) - steps) / 3; } }
+      body(x, y, { load: true, a });
+    }
+    // the camera's frame and the counter in its corner
+    g.setLineDash([6, 6]); g.strokeStyle = T(5); g.lineWidth = 2; g.strokeRect(S.view, 4, 800, LH - 8); g.setLineDash([]);
+    counter(S.view + 8, LH - 26, 310);
+  };
+}
+src('L1', LW, LH, layout('A'));
+src('L2', LW, LH, layout('B'));
+
+// ---- the stair, the glare and the throne (shared with section 6)
+// A flight of two-cell steps from `sx` up to a platform running to `x1`: the
+// mass filled first, then the treads and risers, so no fill cuts a line.
+function stair(sx, floorY, steps, x1) {
+  const top = floorY - steps * P * 2, tx = sx + steps * P * 2;
+  for (let s = 0; s < steps; s++) { const x = sx + s * P * 2, y = floorY - (s + 1) * P * 2; fr(x, y, P * 2, floorY - y, PAPER()); }
+  fr(tx, top, x1 - tx, floorY - top, PAPER());
+  for (let s = 0; s < steps; s++) { const x = sx + s * P * 2, y = floorY - (s + 1) * P * 2; fr(x, y, P * 2 + 2, 2, INK()); fr(x, y, 2, P * 2 + 2, INK()); }
+  fr(tx, top, x1 - tx, 2, INK());
+  return { top, tx };
+}
+function glare(cx, cy, t, style, yMax = 1e9) {
+  const pulse = .55 + .45 * (.5 + .5 * Math.sin(t * 1.1));      // a slow swell, by fade
+  if (style === 1) {
+    // twelve short rays, solid 2 px runs on whole pixels, long and short in turn
+    alpha(pulse, () => {
+      for (let k = 0; k < 12; k++) {
+        const an = k / 12 * Math.PI * 2, r0 = 50, r1 = k % 2 ? 62 : 76;
+        for (let r = r0; r < r1; r++) { const py = Math.round(cy + Math.sin(an) * r) - 1; if (py < yMax - 2) fr(Math.round(cx + Math.cos(an) * r) - 1, py, 2, 2, T(3)); }
+      }
+    });
+  } else {
+    alpha(pulse, () => { for (let k = 0; k < 6; k++) fr(cx - 90 + k * 6, cy - 30 + k * 12, 180 - k * 12, 2, T(3)); });
+  }
+}
+function throne(x, top) {
+  // the chair: a tall back, a seat, two legs
+  box(x, top - P * 13, P * 8, P * 9);
+  fr(x - P, top - P * 5, P * 10, 2, INK());
+  box(x - P, top - P * 5, P * 10, P * 2);
+  fr(x, top - P * 3, 2, P * 3, INK()); fr(x + P * 8 - 2, top - P * 3, 2, P * 3, INK());
+  // God, a placeholder: a big square with a crown
+  const gx = x + P, gy = top - P * 11;
+  box(gx, gy, P * 6, P * 6);
+  fr(gx + 8, gy + 12, 4, 4, INK()); fr(gx + 24, gy + 12, 4, 4, INK());
+  for (let k = 0; k < 3; k++) fr(gx + 4 + k * 12, gy - P - 2, 4, P, INK());
+  fr(gx + 2, gy - 4, P * 6 - 4, 4, INK());
+}
+
+// ---- 3. pedestals
+const PW = 260, PH = 150, PY = 130;
+function pedestalScene(look) {
+  return t => {
+    sky(PW, PH);
+    const surf = floorA(0, PW, PY, PH, t, [[10, 110], [130, 230]], 13);
+    for (const [i, bx] of [[0, 22], [1, 146]]) {
+      let top;
+      if (look === 1) { box(bx, PY - P * 2, P * 12, P * 2); box(bx + P * 2, PY - P * 5, P * 8, P * 3 + 2); top = PY - P * 5; }
+      else if (look === 2) {
+        box(bx + P, PY - P * 4, P * 10, P * 4);
+        fr(bx + P + 2, PY - P * 2, P * 10 - 4, 2, T(4)); fr(bx + P * 4, PY - P * 4 + 2, 2, P * 4 - 4, T(4)); fr(bx + P * 8, PY - P * 4 + 2, 2, P * 4 - 4, T(4));
+        top = PY - P * 4;
+      } else {
+        const el = [3, 4, 4, 4, 4, 4, 4, 4, 4, 3];
+        edge(el, bx + P, PY, INK(), PAPER(), PY);
+        fr(bx + P - 2, PY - P * 3, 2, P * 3, INK()); fr(bx + P * 11, PY - P * 3, 2, P * 3, INK());
+        fr(bx + P * 3, PY - P * 2, P * 3, 2, T(2)); fr(bx + P * 7, PY - P, P * 2, 2, T(2));
+        top = PY - P * 4;
+      }
+      // the rebel pile at the foot, God's-yard side
+      heap(bx + P * 12 + 4, PY, 24, 2, 3);
+      const lx = bx + P * 2, rx = bx + P * 6 + 4;
+      if (i === 0) { body(lx, top - B); body(rx, top - B); continue; }
+      // a speech, on a 5 s loop: crouch, up a cell with the shout, a bubble rising, motes
+      const ph = mod(t, 5);
+      let dy = 0, h = B;
+      if (ph < .4) { h = B - 4; dy = 4; }
+      else if (ph < 1.3) { dy = -P; }
+      body(lx, top - B + dy, { h });
+      if (ph >= .4 && ph < 1.3) shout(lx, top - B + dy);
+      body(rx, top - B);
+      if (ph > .7) { const q = (ph - .7) / 4.3; bubble(lx + 6, top - B - 30 - q * 54, q < .55 ? 1 : 1 - (q - .55) / .45); }
+      // three motes off the speech, an arc down to the pile, each fading as it lands
+      for (let m = 0; m < 3; m++) {
+        const q = (ph - .9 - m * .15) / 1.4;
+        if (q < 0 || q > 1.25) continue;
+        const qq = Math.min(q, 1);
+        const mx = lerp(lx + 10, bx + P * 13 + m * 6, qq), my = top - B - 10 - Math.sin(qq * Math.PI) * 26 + qq * (PY - top + B);
+        alpha(q > 1 ? 1 - (q - 1) / .25 : 1, () => { fr(cell(mx), cell(my), P, P, INK()); fr(cell(mx) + 2, cell(my) + 2, 2, 2, T(4)); });
+      }
+    }
+  };
+}
+src('p1', PW, PH, pedestalScene(1));
+src('p2', PW, PH, pedestalScene(2));
+src('p3', PW, PH, pedestalScene(3));
+
+// ---- 4. shacks
+const KW = 320, KH = 200, KY = 180;
+function shackScene(look) {
+  return t => {
+    sky(KW, KH);
+    const surf = floorA(0, KW, KY, KH, t, [[0, 140], [196, 280]], 19);
+    let top;
+    g.save(); if (look !== 2) g.translate(18, 0);
+    if (look === 1) {
+      box(12, KY - P * 6, P * 9, P * 6);
+      fr(6, KY - P * 7, P * 11, 2, INK()); fr(6, KY - P * 7, 2, P, INK()); fr(6 + P * 11 - 2, KY - P * 7, 2, P, INK()); // the roof's eave
+      fr(18, KY - P * 3, P * 2, P * 3, INK()); fr(20, KY - P * 3 + 2, P * 2 - 4, P * 3 - 2, PAPER());
+      // the plan board on two posts, three little station outlines pinned on it
+      fr(72, KY - P * 7, 2, P * 7, INK()); fr(108, KY - P * 7, 2, P * 7, INK());
+      box(66, KY - P * 9, P * 8, P * 5);
+      box(70, KY - P * 8, 10, 8); box(84, KY - P * 8 - 2, 12, 10); box(100, KY - P * 8, 8, 8);
+      fr(72, KY - P * 5 - 4, 30, 2, T(4));
+      top = KY - P * 9;
+    } else if (look === 2) {
+      for (const x of [18, 48, 78]) fr(x, KY - P * 9, 2, P * 9, INK());
+      fr(18, KY - P * 5, 62, 2, INK()); fr(18, KY - P * 9, 62, 2, INK());
+      fr(48, KY - P * 12, 2, P * 3, INK()); fr(30, KY - P * 12, 70, 2, INK());   // the jib
+      const sw = Math.round(Math.sin(Math.floor(t * 1.5) / 1.5) * 2);           // the block swings in held steps
+      fr(94 + sw, KY - P * 12, 2, P * 4, T(5)); box(88 + sw, KY - P * 8, P * 2 + 2, P * 2);
+      for (let r = 0; r < 3; r++) { fr(24, KY - (r + 1) * 4, 36, 4, INK()); fr(26, KY - (r + 1) * 4 + 1, 32, 2, T(4)); }
+      top = KY - P * 12;
+    } else {
+      // a peaked tent, stepped on the grid, a trestle and a rolled plan
+      for (let r = 0; r < 7; r++) {
+        const hw = (r + 1) * P, y = KY - P * 7 + r * P;
+        fr(54 - hw + 2, y, hw * 2 - 4, P, PAPER());
+        fr(54 - hw, y, 2, P, INK()); fr(54 + hw - 2, y, 2, P, INK());              // the stepped sides
+        fr(54 - hw, y, P + 2, 2, INK()); fr(54 + hw - P - 2, y, P + 2, 2, INK());   // and their treads
+      }
+      fr(54 - 1, KY - P * 8, 2, P, INK()); fr(54, KY - P * 9, 8, 4, INK());
+      fr(48, KY - P * 3, P * 2, P * 3, INK());
+      fr(84, KY - P * 3, P * 5, 2, INK()); fr(86, KY - P * 3, 2, P * 3, INK()); fr(112, KY - P * 3, 2, P * 3, INK());
+      box(90, KY - P * 4, P * 3, P);
+      top = KY - P * 9;
+    }
+    g.restore();
+    // the member at the door, and the glyph of the order in hand, filling
+    body([0, 4, 96, 2][look], KY - B);
+    const cyc = mod(t / 10, 1);
+    floatGlyph(60 + (look === 2 ? 0 : 18), top - P * 7, HAMMER, smooth(cyc / .8) * (cyc < .9 ? 1 : 1 - (cyc - .9) / .1));
+    // the ordered station rising in bands to the right, each band fading in
+    const sx = 202, sw = 12, sh = 8, bands = 4, done = (cyc * (bands + 1));
+    g.setLineDash([4, 4]); g.strokeStyle = T(3); g.lineWidth = 2; g.strokeRect(sx + 1, KY - sh * P + 1, sw * P - 2, sh * P - 2); g.setLineDash([]);
+    for (let b = 0; b < bands; b++) {
+      const a = clamp(done - b, 0, 1) * (cyc < .9 ? 1 : 1 - (cyc - .9) / .1);
+      if (a <= 0) continue;
+      const bh = sh * P / bands, by = KY - (b + 1) * bh;
+      alpha(a, () => { fr(sx, by, 2, bh, INK()); fr(sx + sw * P - 2, by, 2, bh, INK()); fr(sx + 2, by, sw * P - 4, bh, PAPER()); fr(sx, by, sw * P, 2, INK()); if (b === 0) fr(sx, KY - 2, sw * P, 2, INK()); });
+    }
+    // a member carrying timber from the shack to the site and back
+    const w = tri(mod(t / 8, 1)), wx = lerp(130, sx - B - 2, w), going = mod(t / 8, 1) < .5;
+    walker(wx, surf, { plank: going });
+  };
+}
+src('k1', KW, KH, shackScene(1));
+src('k2', KW, KH, shackScene(2));
+src('k3', KW, KH, shackScene(3));
+
+// ---- 5. crowds
+const CW = 420, CH = 124, CY = 104;
+function crowdScene(look) {
+  return t => {
+    sky(CW, CH);
+    const surf = floorA(0, CW, CY, CH, t, [[0, CW]], 29);
+    posterBoard(8, CY, 2);
+    const cyc = mod(t / 12, 1);                 // one soul won and walked out, then a new one fades in
+    const winK = smooth(cyc / .3), walkQ = clamp((cyc - .3) / .45, 0, 1), refill = clamp((cyc - .8) / .2, 0, 1);
+    const won = new Set([2, 5, 6, 11]);
+    const front = (i, x, y, special) => {
+      if (special) {
+        if (cyc < .3) body(x, y, { soul: true, won: winK });
+        else if (cyc < .75) { const wx = lerp(x, -24, walkQ); body(wx, surf(Math.max(0, wx)) - B, { a: Math.min(1, (1 - walkQ) * 6) }); }
+        if (cyc > .8) body(x, y, { soul: true, won: 0, a: refill });
+        return;
+      }
+      body(x, y, { soul: !won.has(i), won: won.has(i) ? 1 : 0 });
+    };
+    if (look === 1) {
+      // three terraces, back first
+      for (let r = 2; r >= 0; r--) {
+        const ty = CY - r * 26, x0 = 120 + r * 12;
+        let ts = null;
+        if (r > 0) { const el = billow(Math.round((CW - x0) / P) + 1, 50 + r, [], 0, 1); edge(el, x0 - 6, ty, INK(), PAPER(), ty + 6); fr(x0 - 6, ty + 6, el.length * P, 2, T(3)); ts = surfOf(el, x0 - 6, ty); }
+        for (let i = 0; i < 12 - r; i++) {
+          const x = x0 + i * 24;
+          if (r === 0) front(i, x, CY - B, i === 3);
+          else body(x, ts(x) - B, { soul: !won.has(i + r * 3), won: won.has(i + r * 3) ? 1 : 0 });
+        }
+      }
+      sign(120 + 8 * 24 + 18, CY - 2);
+    } else if (look === 2) {
+      for (let i = 0; i < 12; i++) body(120 + i * 24 + 12, CY - 42, { ghost: true });
+      const bank = billow(60, 61, [], 0, 1).map(v => v + 1);
+      edge(bank, 106, CY - 26, T(3), PAPER(), CY - 2);
+      for (let i = 0; i < 12; i++) { if (i === 0 || i === 1) continue; front(i, 120 + i * 24, CY - B, i === 4); }
+      sign(120 + 8 * 24 + 18, CY - 2);
+    } else {
+      // gangs: a mist heap, souls hauling from it to the tithe pile
+      heap(300, CY, 60, 4, 4); heap(110, CY, 36, 2, 3);
+      for (let k = 0; k < 6; k++) {
+        const ph = mod(t / 10 + k / 6, 1), going = ph < .5, q = tri(ph);
+        const x = lerp(150, 280, q);
+        body(x, surf(x) - B, { soul: k !== 2, won: k === 2 ? 1 : 0, load: !going });
+      }
+      for (let i = 0; i < 2; i++) body(366 + i * 24, CY - B, { soul: true });
+      front(0, 200, CY - B, true);
+      sign(240, CY - 2);
+    }
+    // the warden on its round
+    const wx = lerp(56, look === 2 ? 140 : 98, tri(mod(t / 26, 1)));
+    walker(wx, surf, { warden: true });
+  };
+}
+src('c1', CW, CH, crowdScene(1));
+src('c2', CW, CH, crowdScene(2));
+src('c3', CW, CH, crowdScene(3));
+
+// ---- 6. the throne and the stair
+const TW = 380, TH = 290, TY = 270;
+function throneScene(look) {
+  return t => {
+    sky(TW, TH);
+    const surf = floorA(0, TW, TY, TH, t, [[0, TW]], 31);
+    let path;
+    if (look === 1) {
+      const sx = 40, steps = 15;
+      const { top, tx } = stair(sx, TY, steps, TW);
+      glare(tx + 88, top - 46, t, 1, top);
+      throne(tx + 64, top);
+      path = q => { const st = Math.min(steps, Math.floor(q * (steps + 4))); if (st < steps) return { x: sx + st * P * 2 - 4, y: TY - st * P * 2 - B, a: 1 };
+        const over = (q * (steps + 4) - steps) / 4; return { x: tx + over * 44, y: top - B, a: 1 - over }; };
+    } else {
+      // three cloud ledges in a zigzag, short flights between them, the throne on the top one
+      const ledges = [[150, 300, TY - 60], [40, 240, TY - 120], [160, 360, TY - 180]];
+      for (const [a, b, y] of ledges) { const el = billow(Math.round((b - a) / P), a, [], 0, 1); el[0] = 0; el[el.length - 1] = 0; edge(el, a, y, INK(), PAPER(), y + 24); const un = billow(Math.round((b - a) / P), a + 5, [], 0, 1).map(v => -v); edge(un, a, y + 18, T(3), null, 0); }
+      // a flight of five two-cell steps from (x, y) rising toward `dir`
+      const flight = (x, y, dir) => { for (let s = 0; s < 5; s++) { const sx = dir > 0 ? x + s * P * 2 : x - (s + 1) * P * 2, sy = y - (s + 1) * P * 2; fr(sx, sy, P * 2, P * 2, PAPER()); fr(sx, sy, P * 2 + 2, 2, INK()); fr(dir > 0 ? sx : sx + P * 2, sy, 2, P * 2 + 2, INK()); } };
+      flight(90, TY, 1); flight(260, TY - 60, -1); flight(100, TY - 120, 1);
+      glare(262, TY - 226, t, 2);
+      throne(240, TY - 180);
+      path = q => {
+        // walks and flights, a flight climbed in held hops a step at a time
+        const pts = [[10, TY, 0], [90, TY, 0], [150, TY - 60, 1], [242, TY - 60, 0], [182, TY - 120, 1], [100, TY - 120, 0], [160, TY - 180, 1], [214, TY - 180, 0]];
+        const segs = pts.length - 1, f = q * segs, i = Math.min(segs - 1, Math.floor(f)), k = f - i;
+        const [x0, y0] = pts[i], [x1, y1, climb] = pts[i + 1];
+        const kk = climb ? Math.floor(k * 5 + .5) / 5 : k;
+        const dirX = x1 > x0 ? -4 : -14;
+        return { x: lerp(x0, x1, kk) + (climb ? dirX + 4 : 0), y: lerp(y0, y1, kk) - B, a: q > .92 ? 1 - (q - .92) / .08 : 1 };
+      };
+    }
+    for (let k = 0; k < 5; k++) {
+      const q = mod(t / 30 + k / 5, 1); const p = path(q);
+      body(p.x, p.y, { load: true, a: Math.min(p.a, q * 30) });
+    }
+  };
+}
+src('t1', TW, TH, throneScene(1));
+src('t2', TW, TH, throneScene(2));
+
+// ============================================================ the loop
+const displays = [...document.querySelectorAll('canvas[data-src]')].map(cv => {
+  const s = SOURCES[cv.dataset.src], k = +(cv.dataset.s || 1);
+  const crop = cv.dataset.crop ? cv.dataset.crop.split(',').map(Number) : [0, 0, s.w, s.h];
+  cv.width = crop[2] * k; cv.height = crop[3] * k; cv.style.width = cv.width + 'px';
+  return { cv, s, k, crop, vis: true };
+});
+const io = new IntersectionObserver(es => es.forEach(e => { const d = displays.find(d => d.cv === e.target); if (d) d.vis = e.isIntersecting; }), { rootMargin: '300px' });
+displays.forEach(d => io.observe(d.cv));
+let paused = false, speed = 1, clock = 0, last = null;
+const isDark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+function frame(ms) {
+  if (last == null) last = ms;
+  if (!paused) clock += (ms - last) / 1000 * speed;
+  last = ms;
+  DARK = isDark();
+  const want = new Set(displays.filter(d => d.vis || window.__all).map(d => d.s));
+  for (const s of want) { g = s.cv.getContext('2d'); g.imageSmoothingEnabled = false; g.globalAlpha = 1; s.draw(clock); }
+  for (const d of displays) if (d.vis || window.__all) {
+    const c = d.cv.getContext('2d'); c.imageSmoothingEnabled = false;
+    c.drawImage(d.s.cv, d.crop[0], d.crop[1], d.crop[2], d.crop[3], 0, 0, d.cv.width, d.cv.height);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.__setClock = v => { clock = v; paused = true; };
+document.querySelectorAll('#theme button[data-t]').forEach(b => b.onclick = () => {
+  if (b.dataset.t === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = b.dataset.t;
+  document.querySelectorAll('#theme button[data-t]').forEach(x => x.classList.toggle('on', x === b));
+});
+document.getElementById('pause').onclick = e => { paused = !paused; e.target.classList.toggle('on', paused); };
+document.getElementById('slow').onclick = e => { speed = speed === 1 ? .25 : 1; e.target.classList.toggle('on', speed !== 1); };
+document.querySelectorAll('#fitbar button').forEach(b => b.onclick = () => {
+  document.getElementById('fitwrap').classList.toggle('fit', b.dataset.f === '1');
+  document.querySelectorAll('#fitbar button').forEach(x => x.classList.toggle('on', x === b));
+});
+</script>
+</body>
+</html>
