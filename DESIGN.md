@@ -21923,3 +21923,49 @@ the clip**, option A.*
 - **Checks.** `test/music.test.mjs`: every `MUSIC_FX` type has a preview
   builder and a case in `mix.py`; validate names an unknown effect or a
   knob out of its range; the yard's chains read clean.
+
+### The score in the game, and the menu filter (design, not built)
+
+*Asked for 2026-10-17: the owner wants "a bit crushy style beat, simple, no
+melody or a simple one at that", and the music to sink under a filter when
+the settings sheet or a shop board opens, "to give it depth". This amends
+the settled call "the place only": the place still picks the loop, and a
+menu now shapes how it sounds, never which loop it is.*
+
+- **The loop.** One crushed beat for the yard, chosen by ear from three
+  sketches on the bench (`src/music/songs/sketch-dusty`, `-crunch`,
+  `-lofi`), renamed `yard.json` once picked; its `game` scene renders to
+  `public/music/yard-main.ogg`, which ships. The deep, the afterlife and
+  hell play nothing until they have songs of their own.
+- **Playback lives in `audio.js`**, still the only file in the game that
+  names an AudioContext: a music bus beside the yard's strikes,
+  `buffer → menu lowpass → music gain → master`. It loads the place's loop
+  after the first gesture and loops it sample-exact (an AudioBufferSource
+  with `loop`, since the render made the seam). Changing place crossfades
+  the two loops (fade, never pop). The strikes duck the music by
+  `MUSIC_DUCK_DB` while they fold, read off the decisions already counted.
+- **The menu filter.** While the settings sheet is open (`S.paused`) or any
+  shop board is open (`openBoard()`, or `S.stationBoardOpen` in the deep),
+  the music's lowpass glides down to that menu's depth, and back up when
+  it closes, over `MUSIC_MENU_GLIDE_S`. The glide is a log-scale ramp on
+  the filter's frequency, so it sounds even and never clicks. The settings
+  sheet sits deeper than a board (it pauses the yard; a board does not).
+  The strikes keep their own filter: only the music sinks.
+- **Which menu is open is a decision on the game's clock**, like the
+  strikes', so the node tier asserts it without a context: a function
+  `musicTarget()` returns the place's loop and the cutoff it should be
+  heading to, and `test/music-game.test.mjs` opens the sheet and a board
+  the player's way (the `i` key, a station click) and reads the cutoff go
+  down and come back.
+- **The level.** Its own slider on the settings sheet beside the volume,
+  `prefs.js`'s `music` (a preference, not a state.js field), one new
+  message in `locales/en.ftl`; mute silences both.
+- **Size and the build.** The yard's loop is about 150 KB of OGG; it goes
+  in `public/music/`, which stops being ignored for the shipped loops only.
+- **Numbers** (`config/sound.js`, beside the strikes'): `MUSIC_LEVEL`,
+  `MUSIC_DUCK_DB`, `MUSIC_FADE_S`, `MUSIC_MENU_GLIDE_S`,
+  `MUSIC_MENU_HZ = { board, sheet }`, first guesses from the demo
+  (`shots/music/menu-filter-demo.ogg`: 1400 Hz, 700 Hz, 380 Hz).
+
+**Open, for the owner's ear:** which sketch is the yard, and how deep each
+menu sinks it (the demo's three depths).

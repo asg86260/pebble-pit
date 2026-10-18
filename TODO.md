@@ -4,7 +4,12 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## The score and the music bench -- BENCH AND CHORDS BUILT, GAME PLAYBACK NOT BUILT (2026-10-17)
+## The score and the music bench -- BENCH BUILT, GAME PLAYBACK DESIGNED, AWAITING THE OWNER'S EAR (2026-10-17)
+
+Next: "The score in the game, and the menu filter" (DESIGN.md). Blocked on
+two by-ear picks: which of the three crushed sketches is the yard, and how
+deep the menus sink it (shots/music/menu-filter-demo.ogg); then the go-ahead.
+
 
 DESIGN.md, "The score, and the bench it is written on": `music.html`, the
 preview, Surge live, the render and chords first are on main. Open: the
