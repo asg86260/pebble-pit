@@ -13,10 +13,13 @@ import { copyOut } from './copyout.js';
 import { showCloud, showFoot, showConflicts } from './cloudsheet.js';
 import { VEIL_MS, PICTURE_WAIT_MS, PICTURE_UP, LIGHT_PAPER, DARK_PAPER } from './config.js';
 import { msg } from './lang.js';
+import { mountReadable, sayReadable } from './readable.js';
 import { fillLanguages, inForce } from './langpage.js';
 import { focusFirstRow, mountTabs, turnTab } from './settingstabs.js';
 import { feedbackReady } from './feedback.js';
 import { mountFeedback } from './feedbackform.js';
+import '@fontsource/ibm-plex-mono/400.css';   // the readable-text face (readable.js)
+import '@fontsource/ibm-plex-mono/700.css';
 import './focusmark.js';   // the keyboard's focus, drawn as the pad's brackets
 
 const col = document.querySelector('.col');
@@ -51,7 +54,7 @@ function showPane(name) {
   }
   if (name === 'record') { const s = opened(); showRecord(document.getElementById('record'), recordListOf(s?.won, s?.wonAt), NONE_TITLE); }
   if (name === 'settings') {
-    sayMotion(); sayDark(); saySound(); volumeEl.value = pref('volume');
+    sayMotion(); sayDark(); sayReadable(readableEl); saySound(); volumeEl.value = pref('volume');
   }
   // A new form each time: the tick off, the words the draft, and the save the
   // open slot's blob, the one play would open.
@@ -152,6 +155,8 @@ darkEl.addEventListener('click', async () => {
   requestAnimationFrame(() => veil.classList.remove('up'));
 });
 soundEl.addEventListener('click', () => { setPref('muted', !pref('muted')); saySound(); });
+const readableEl = document.getElementById('readable');
+mountReadable(readableEl);
 volumeEl.addEventListener('input', () => setPref('volume', +volumeEl.value));
 
 // The save out and in, on the open slot's blob. In goes through the same door

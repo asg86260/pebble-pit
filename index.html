@@ -21,6 +21,7 @@ try {
   if (d == null) { var p = JSON.parse(localStorage.getItem('boulder-clicker/prefs')); d = p && p.dark; }
   if (d == null) d = matchMedia('(prefers-color-scheme: dark)').matches;
   if (d) document.documentElement.classList.add('dark');
+  if (/[?&]readable\b/.test(location.search) || (p && p.readable)) document.documentElement.classList.add('readable');
 } catch (e) {}
 </script>
 </head>
@@ -83,6 +84,7 @@ try {
     <div class="tabpane" role="tabpanel" data-tab="graphics">
       <button id="motion" type="button" data-pane="settings" hidden data-l10n-id="set-motion-full">motion: full</button>
       <button id="dark" type="button" data-pane="settings" hidden data-l10n-id="set-dark-off">dark: off</button>
+      <button id="readable" type="button" data-pane="settings" hidden data-l10n-id="set-readable-off">readable text: off</button>
     </div>
     <div class="tabpane" role="tabpanel" data-tab="audio">
       <button id="sound" type="button" data-pane="settings" hidden data-l10n-id="set-sound-on">sound: on</button>

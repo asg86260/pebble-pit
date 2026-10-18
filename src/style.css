@@ -112,6 +112,9 @@ html, body {
      are pictures and keep their plain numbers. */
   --face: ui-monospace, "Courier New", monospace;
   --track: 1;
+  /* the case of running sentences (a tooltip, a board's note): capitals in
+     the house type, as written under readable text */
+  --prose-case: uppercase;
 }
 /* Chinese, Japanese and Korean: the house mono stays first, so the Latin
    letters and figures in a line keep their look, and the language's own face
@@ -138,6 +141,20 @@ html, body {
 /* A phone tightens every tracking at once: the words are the same, the
    glass is narrower. */
 @media (max-width: 560px) { :root { --track: .6; } }
+/* Readable text (the settings' switch, readable.js; the owner's vote,
+   2026-10-18): IBM Plex Mono, so the words keep the typewriter's even
+   columns, a size up, no tracking, and running sentences in their own case.
+   Labels and headings keep their capitals. Written after the phone's line
+   and one class stronger than it, so the tracking stays off on a phone. */
+:root.readable {
+  --face: "IBM Plex Mono", ui-monospace, monospace;
+  --track: 0;
+  --prose-case: none;
+  --fs-small: 13px; --fs-body: 14px; --fs-note: 14px; --fs-name: 15px; --fs-word: 18px;
+}
+:root.readable:lang(zh) { --face: "IBM Plex Mono", "Pit SC", monospace; }
+:root.readable:lang(ja) { --face: "IBM Plex Mono", "Pit JP", monospace; }
+:root.readable:lang(ko) { --face: "IBM Plex Mono", "Pit KR", monospace; }
 html.dark {
   --c-paper: #1f1f1f; --c-ink: #e0e0e0;
   --paper: var(--c-paper); --ink: var(--c-ink);
@@ -428,7 +445,7 @@ body.still #scroller { scroll-behavior: auto; }
 .page .note {
   margin: -4px 0 7px;
   letter-spacing: calc(var(--track-s) * var(--track));
-  text-transform: uppercase;
+  text-transform: var(--prose-case);
   font-size: var(--fs-small);
   color: var(--ink);
 }
@@ -440,7 +457,7 @@ body.still #scroller { scroll-behavior: auto; }
   padding: 2px 0;
   color: var(--ink-5);
   letter-spacing: calc(var(--track-s) * var(--track));
-  text-transform: uppercase;
+  text-transform: var(--prose-case);
 }
 
 /* The headcount: the words' ink as a block and the numeral in paper, so a
@@ -1708,7 +1725,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   border: 1px solid var(--ink);
   font: inherit;
   letter-spacing: calc(var(--track-s) * var(--track));
-  text-transform: uppercase;
+  text-transform: var(--prose-case);
   color: var(--ink);
   pointer-events: none;
   white-space: pre;
