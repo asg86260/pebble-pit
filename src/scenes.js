@@ -2862,6 +2862,8 @@ export const SCENES = {
     run: () => { actsYard('act4'); window.__fast(2); pinCamera(0); window.__holdShot(); } },
   'portal-heaven-up': { about: 'the acts', say: 'heaven\'s portal\'s other end, over the patch of cloud floor the road comes up through',
     run: () => { actsYard('road'); S.beatsDone.push('haunt'); S.acts.pair.mode = 'ghost'; window.__goPlace('after'); window.__fast(2); window.__holdShot(); } },
+  'after-pair': { about: 'the acts', say: 'act 3 as it stands after the refusal: the pair as souls at the foot of the cloud pillar',
+    run: () => { actsYard('fallen'); window.__goPlace('after'); window.__fast(2); window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot(); } },
   'portal-hell': { about: 'the acts', say: 'hell\'s white-hot slit in the deep\'s floor, and its hand',
     run: () => { actsYard('act4'); window.__view('deep'); window.__fast(2); window.__holdShot(); } },
   'house-fall': { about: 'the acts', say: 'the house\'s fall: the rock out of the sky over the house, the two of them indoors',

@@ -45,6 +45,7 @@ import { P, GREY, CROWD_FILES, CROWD_PITCH, CROWD_X0, CROWD_NEAR, CROWD_ROW, CRO
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { afterFloor, stationBox, slotX, overCrowd } from '../after/place.js';
+import { drawFloorLip } from './after/floor.js';
 import { souls, support, union, OUT_RIM, speechWarned, speechHeld } from '../after/union.js';
 import { walkingOut } from '../after/bodies.js';
 import { afterEnd, afterPan, godScaleAt } from '../view.js';
@@ -506,6 +507,8 @@ function nearSouls(a, dt) {
     bodiesTo(v);
   }
   bodiesTo(-1);
+  // The cloud's puffs in front of the front row: its feet stand in them.
+  drawFloorLip();
   read.primed = true;
   drawnNow.files = files; drawnNow.souls = count;
 }

@@ -11,7 +11,8 @@ import { AFTER_STORY } from '../src/after/story.js';
 import { HELL_STORY } from '../src/hell/story.js';
 import { afterFloor, afterX0, afterX1 } from '../src/after/place.js';
 import { hellFloor, hellX0, hellX1 } from '../src/hell/place.js';
-import { AFTER_FLOOR_MARGIN, HELL_FLOOR_MARGIN } from '../src/config.js';
+import { HELL_FLOOR_MARGIN } from '../src/config.js';
+import { actPlace } from '../src/acts.js';
 
 const S = yard.S;
 const KEY = 'boulder-clicker/v4';
@@ -72,7 +73,7 @@ group('with the switches on, each place steps every frame, on screen or not', as
     ok(f1.after - f0.after === dt && f1.hell - f0.hell === dt, 'from the yard, both places step once a frame',
        `${dt} frames, ${f1.after - f0.after} afterlife, ${f1.hell - f0.hell} hell`),
     ok(view === 'after' && stillAfter === 'after', 'the dev travel takes the camera up, and it stays', `${view} ${stillAfter}`),
-    ok(Math.abs(camAfter.foot - (afterFloor() + AFTER_FLOOR_MARGIN)) <= 1 && camAfter.x0 >= afterX0() - 1 && camAfter.x1 <= afterX1() + 1,
+    ok(Math.abs(camAfter.foot - (afterFloor() + actPlace('after').margin)) <= 1 && camAfter.x0 >= afterX0() - 1 && camAfter.x1 <= afterX1() + 1,
        'framed on its own camera, its floor on the window\'s foot', JSON.stringify(camAfter)),
     ok(f2.after - f1.after >= dt2 && f2.hell - f1.hell >= dt2, 'up there, hell still steps every frame',
        `${dt2} frames, ${f2.after - f1.after} afterlife, ${f2.hell - f1.hell} hell`),
