@@ -97,6 +97,9 @@ export function fitBox(box, z = S.zoomShow || S.zoom || 1, middle = false) {
   return { x: clampX(box.x + box.w / 2 - viewW / 2, viewW), y: clampY(rest + dy, viewH, band), w: viewW, h: viewH };
 }
 
+// Whether `box` is inside the window as it stands.
+const inWindow = b => b.x >= S.camX && b.y >= S.camY && b.x + b.w <= S.camX + S.viewW && b.y + b.h <= S.camY + S.viewH;
+
 // The one box around every box of `at`: a scene that is about several things
 // at once is about all of them. Null for none.
 export function union(at) {
@@ -160,10 +163,15 @@ export function stepAim(t, box, move = 'glide', how = {}) {
     const dw = (end.w - aim.from.w) / 2, dh = dw * S.H / S.W;
     const d = Math.hypot(Math.abs(dx) + Math.abs(dw), Math.abs(dy) + Math.abs(dh));
     aim.ms = 1000 * Math.max(CUT_SETTLE_S, how.s || 0, Math.min(CUT_PAN_MAX_S, 2 * d / CUT_PAN_PX_S));
+    // A moving box already in the window, at the zoom it is to be kept at,
+    // is not gone to but kept with from here: a glide's ease out of rest
+    // would let a walker it was already on walk off the edge of it.
+    const zoomed = aim.zTo != null && Math.abs(aim.zTo - aim.zFrom) > 1e-9;
+    if (move === 'follow' && !zoomed && inWindow(box)) aim.ms = 0;
     aim.done = false;
     aim.pos = null;
   }
-  const k = reducedMotion() ? 1 : Math.min(1, (t - aim.at) / aim.ms);
+  const k = reducedMotion() || !aim.ms ? 1 : Math.min(1, (t - aim.at) / aim.ms);
   const e = easeInOut(k);
   // The zoom first, so the window is its size for this frame: the window's
   // width is what moves evenly, so its corners ride the same curve as its

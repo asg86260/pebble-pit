@@ -80,3 +80,28 @@ group('the act 3 intro holds its bands, its zoom and its frame from the fall to 
     ok(landedAt != null && climb < 1, 'nothing drops or climbs once the ripple has landed in the afterlife', `${climb.toFixed(1)} px at ${climbAt}`)
   ];
 });
+
+// A cutscene's own zoom (shot.js, `zoom` on a request), on the kill: the last
+// blow struck the way the scene strikes it, then the frames turned until he
+// is out and has met her. The zoom moves only while the shot says it is
+// moving, it pulls in, and wherever it rests it rests on a whole cell.
+group("a cutscene's own zoom glides with its pan, and rests on a whole cell", async () => {
+  window.__board = () => {};
+  SCENES['finale-kill'].run();
+  const from = S.zoomShow;
+  let most = from, unglided = null, fractional = null, wasZoom = S.zoomShow;
+  for (let f = 0; f < 60 * 60 && !beatDone('freed'); f++) {
+    window.__fast(1 / 60);
+    const sh = window.__shot();
+    if (Math.abs(sh.zoomShow - wasZoom) > 1e-9 && !sh.gliding && !unglided) unglided = `frame ${f}: ${wasZoom} to ${sh.zoomShow}`;
+    if (!sh.gliding && Math.abs(S.zoom - S.zoomShow) > 1e-9 && !fractional) fractional = `frame ${f}: drawn ${S.zoom}, shown ${S.zoomShow}`;
+    wasZoom = sh.zoomShow;
+    most = Math.max(most, S.zoomShow);
+  }
+  return [
+    ok(beatDone('freed'), 'the kill plays through to their meeting'),
+    ok(most > from * 1.3, 'it pulls in on him', `${from} to ${most}`),
+    ok(!unglided, 'the zoom moves only while the shot is gliding', unglided || ''),
+    ok(!fractional, 'and rests on a whole cell', fractional || ''),
+  ];
+});
