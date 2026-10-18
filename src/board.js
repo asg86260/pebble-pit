@@ -4,6 +4,7 @@
 import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_REFUND, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_GAP, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS,
          SHEET_MS, SCALE_MARK } from './config.js';
 import { fmt } from './words.js';
+import { fitSlot } from './slotfit.js';
 import { S, bench } from './state.js';
 import { seatObjective } from './objline.js';
 import { STATIONS as ROWS, station, open, standRect, nearStation } from './stations.js';
@@ -155,7 +156,11 @@ function pinWidth() {
   // against. Signs are measured as a range, not as the box, since a sign's box
   // carries its plank, drawn the whole shelf wide.
   const shelf = sheet.querySelector(':scope > .page:not([hidden]) .rows.shelves');
+  if (!shelf) sheet.style.removeProperty('--shelf-slot');
   if (shelf) {
+    // The slot first: as wide as the open board's widest unbreakable words
+    // (slotfit.js), so the sign's count below is in slots of that width.
+    const slot = fitSlot(shelf, sheet);
     let most = 0, run = 0;
     for (const el of shelf.children) {
       if (el.classList.contains('sect')) run = 0;
@@ -169,7 +174,7 @@ function pinWidth() {
     const range = document.createRange();
     for (const el of shelf.querySelectorAll(':scope > .sect, :scope > .empty')) {
       range.selectNodeContents(el);
-      most = Math.max(most, Math.ceil(range.getBoundingClientRect().width / SHELF_SLOT));
+      most = Math.max(most, Math.ceil(range.getBoundingClientRect().width / slot));
     }
     sheet.style.setProperty('--shelf-slots', String(Math.max(SHELF_SLOTS_MIN, Math.min(SHELF_SLOTS, most))));
   }
