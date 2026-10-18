@@ -22,7 +22,7 @@ import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount } from './numfont.js';
 import { screenAt } from './frame.js';
-import { stationBox, stationX0, campSpot, heapMid, notchX, pileAt, fileAt, rankAtY, floorAt, afterFloor, ART } from '../after/place.js';
+import { overCrowd, stationBox, stationX0, campSpot, heapMid, notchX, pileAt, fileAt, rankAtY, floorAt, afterFloor, ART } from '../after/place.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel.js';
 import { built, heapBrim } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
@@ -249,7 +249,8 @@ function drawMember(w) {
 export function drawAfterMembers() {
   const a = A();
   if (!a) return;
-  for (const w of a.bodies) if (inView(w.x - P * 4, P * 8)) drawMember(w);
+  // Those over God's crowd are drawn through its rows (render/aftercrowd.js).
+  for (const w of a.bodies) if (!overCrowd(w.x) && inView(w.x - P * 4, P * 8)) drawMember(w);
 }
 
 // --- the counts ----------------------------------------------------------------------

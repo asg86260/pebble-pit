@@ -121,6 +121,10 @@ export const rankAtY = y => {
   return CROWD_NEAR + Math.floor((front - near - y) / CROWD_FAR_ROW);
 };
 export const crowdX1 = () => CROWD_X0 + CROWD_FILES * CROWD_PITCH;
+// Whether a body at world x stands over God's crowd, a file's slack either
+// end: drawn there through the crowd's rows (render/aftercrowd.js), and
+// everywhere else on the camp's floor (render/after.js).
+export const overCrowd = x => x >= CROWD_X0 - CROWD_PITCH && x <= CROWD_X0 + (CROWD_FILES + 1) * CROWD_PITCH;
 // The file under a world x, clamped to the field.
 export const fileAt = x => Math.max(0, Math.min(CROWD_FILES - 1, Math.floor((x - CROWD_X0) / CROWD_PITCH)));
 // The fence at the crowd's front: a poster's slot a step along it.
