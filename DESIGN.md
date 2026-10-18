@@ -60,6 +60,9 @@ measured again in the new face.
 
 ## Dark mode (built 2026-09-16)
 
+The map below is the one the deep still draws in; the yard and the boards
+were redesigned on 2026-10-18 (the next section).
+
 A dark page for a dark room: not the light page turned over but a page of
 its own, light gray on charcoal (`DARK_INK` `#e0e0e0` on `DARK_PAPER`
 `#1f1f1f`, `config/view.js`), so it reads as paper and not as a negative.
@@ -100,6 +103,105 @@ the fix is a window color read from the store, and it is not done.
 
 For a shot, `play.html?dark` opens the dark page whatever the store says
 (`GAME=http://localhost:<port>/play.html?dark node tools/look.mjs rock`).
+
+## Dark mode: black stays black (built 2026-10-18)
+
+The owner, 2026-10-18: the dark page should be "less inversion and more
+designed around dark UI elements". The page above is the light page with
+its lightness turned over, and a survey of 45 scenes and the card bench
+found seventeen places where that makes no sense (the vote page,
+https://claude.ai/artifact/WofQtTXBrUwNDxHDD8neDo, has a light/dark crop of
+each). They fall into two kinds. **Fills turn into glare:** the objective
+banner, the build-the-bench arrow, the boards' section chips and thick
+rules, the selected tab, the selected row and the appearance sheet's
+chosen tile all turn from black cards into the brightest slabs on the
+screen. The cutscene's skip tag becomes a pale chip with pale words on it.
+The float shadow becomes a light halo. **Meaning turns over in the yard:**
+the rock goes from a black mass to a pale blob whose deepest part is its
+brightest. The pit becomes a light slab and the void orb a pale egg. A
+house's lit windows go dark while the portal's glow becomes a hole. The
+pair's black hair and hats turn white, and hell's black strips turn light.
+The first of these, the cutscene's bands, was fixed by hand (`raw` in
+`render/recede.js`, 2026-10-18). The rest is one cause: lightness alone
+cannot tell a surface from a hole, a shadow or a light.
+
+Of three directions mocked (surface tiers; black stays black; line art on
+night) the owner chose **black stays black**. It is the one closest to the
+art as drawn. The dark page changes the paper and nothing else, so a sprite
+mostly needs no second thought.
+
+**The bargain.** The paper goes from charcoal to a graphite light enough
+for pure black to sit on it (`DARK_PAPER`, `#3a3a3a`). Black stays `#000`:
+every fill, every hole, every hat, every shadow. Two things are lifted off
+it. Words and lines take a light ink (`DARK_INK`, `#ececec`), because black
+lettering on graphite is under 2:1. And the things that shine stay light,
+because on this page they are the lights. Things painted white as the paper
+inside a sprite (a worker's body) go graphite with the paper: the crew are
+hollow, as on the light page (the owner's call). A light-gray cloud lands a
+step darker than the sky, a storm at night (the owner's call). Nothing else
+moves.
+
+**The canvas.** `ink.js` keeps its one job and its place on the
+prototype's setters, but it has three maps now, and `render.js` says which
+one each layer is drawn in (`inkMode`, set in `drawLayer`):
+
+- **yard**, for the world: white goes to the paper and black stays black,
+  a gray landing on the same step between them, so a heap's deepest part is
+  still its darkest. A colored mark keeps its color as written (the coins,
+  the purple); a dull one (smog's tan) is mapped as a gray is, faded
+  between the two by how far its channels spread, so dirt does not glow.
+- **line**, for the layers that are read (`READING`: the counter, the
+  rosters and their counts, the pile marks, the work bars): the old turn,
+  black to the light ink, white to the paper. A UI drawn on the canvas comes
+  out as the boards do. Its shadow is `raw` black.
+- **deep**, for the deep's whole half: the old dark page, charcoal and
+  light gray turned by lightness (`DEEP_PAPER`, `DEEP_INK`). The deep was
+  drawn as a dark field on either page and is left exactly as it was, with
+  `landed`, `turned` and its negative skipped as before (`turnedOver()`).
+
+Two tags decide a color at the call, past the map, as `raw` does, and are
+the identity on the light page. `light(c)` keeps a color as written with
+white lifted only to the light ink: a house's lit windows, the tear's mouth.
+`line(c)` sends black to the light ink: the bolt and its embers. `seen(c)`
+is the old per-module `darkPage ? turned(c) : c`, in one place: a color as
+written, squeezed into what the map in force shows, for the number font,
+the status posts, the serpent's bar and the pad's mark. Everything that
+keeps colors it has already mapped (the painter's tables, the abyss field's
+packed ramps, `cellimage`, `crisptext`, the counter's mark strip) keeps one
+set a map, so a grid painted in the deep and one in the yard do not share.
+The mode goes back to the yard's after every layer, so a sheet's picture
+drawn between frames (the appearance sheet) is in the yard's.
+
+**The boards (CSS).** `--paper` is the graphite and `--ink` the light ink
+for words, borders and rules. Two new tokens, `--fill` (`#000` on both
+pages) and `--on-fill` (white, or the light ink): every rule that painted a
+background in the ink with its words in the paper -- 37 of them, chips,
+banners, the arrow, the skip tag, selected tabs and rows, hovers -- takes
+them instead, and the four boxes that ink themselves the other way round
+swap all four tokens. The light page is unchanged. The float shadow is
+`--shadow-c` (black) at 45% on the dark page. The `--ink-N` grays are the
+light page's steps from the other end, with -4 and -5 lifted to AA, and the
+accent is PURPLE's lightest rung, which keeps 3:1 on graphite.
+
+**The player's choice** (the owner, 2026-10-18). The settings' switch
+steps through three looks: **light**, **dim** and **dark** (`theme` in
+prefs.js, the words `set-dark-off`, `set-dark-dim`, `set-dark-on`). Dim is
+the first dark page, kept whole: one turned map between charcoal and light
+gray everywhere (`DEEP_PAPER`, `DEEP_INK`), the tags reading as that map,
+and `html.dark.dim` in the stylesheet putting back its tokens, its fills in
+the light gray. Dark is the graphite page above. The system's dark asks for
+dark. A store from before, which said `dark: true`, opens dark too. Every
+page's head reads the same three before the first paint, and `?dim` and
+`?dark` in the address force one for a shot.
+
+**What it costs.** Black on graphite has a quarter of the range black on
+white has, so anything faint (a try-on in the appearance sheet, a heap's
+outer rings) is fainter. Scene shots after `mansion` in one `look.mjs` run
+come out with the camera off the yard on either page; shoot those singly.
+
+**How it is checked.** A shot of each of the seventeen survey scenes on
+`?dark`, side by side with the light page. No test can see a color.
+`textaa.js` and `test/ui-tokens.test.mjs` keep the tokens honest.
 
 ## The opening
 
@@ -22224,3 +22326,71 @@ and the frame is drawn as it is today, pin sharp.
    bench, the safe area is drawn as the box's margin instead.
 3. **The rise into heaven** gets a mock-and-vote of its own once the shot
    exists. Its shape is the act 3 intro's question, not the shot's.
+
+## The yard's sound set, by lanes (built 2026-10-18)
+
+*Built: 40 recorded takes and 3 Surge renders in `public/sfx/` (416 KB, with
+`SOURCES.md`), samples beside recipes in `audio.js`, rows marked `onScreen`
+and `perS`, and six new moments wired (`build-blow`, `pick-swing`,
+`shovel-scrape`, `cart-tip`, `place-land`, `body-land`). Two amendments from
+building it: the camera's gate judges each event where it happened, before
+it can join a fold window (a window's place is the average of all it holds,
+and a yard's worth of steps averages to its middle); and the audition is a
+tool, `tools/node/sound-audition.mjs`, which mixes exactly what the decision
+half lets through (`onStrike` in audio.js) from a view held on the crew. On
+the endgame save it measured -24.9 LUFS against today's -23.0.*
+
+*Asked for 2026-10-18: the owner heard nineteen first-wave drafts (all
+variations of the existing recipes) and named two problems: they sound like
+"plain sound functions", and they are so alike that an endgame yard would
+smash them together. Both were measured: the frequent drafts all centered
+between 300 and 600 Hz, and twenty seconds of the endgame save
+`test/fixtures/crew-grows-on-load.json` asked for 60,961 footsteps, 14,090
+belt catches, 12,250 grains into the pit and 4,013 grains landing; mixed the
+way audio.js decides it, the drafts took that yard from -23 LUFS to -15.5
+(`shots/sound/endgame-today.ogg`, `endgame-drafts.ogg`).*
+
+### Lanes, not sounds
+
+The set is designed as a whole, each family given a lane of its own so they
+stay apart when they overlap: pitch, length and texture all differ.
+
+| family | lane | source |
+|---|---|---|
+| footsteps | the lowest and quietest: a soft dull tap, on screen only | recorded (RPG Audio's footsteps), heavily thinned |
+| belt, grains landing, grains into the pit | a fine high patter, never a thud | recorded sand and gravel, or the existing `dust-gain` lifted an octave |
+| picks, rock cells breaking | a sharp bright crack | recorded stone impacts (Impact Sounds) |
+| hammers at a build | a metallic ring, mid-high | recorded metal impacts |
+| shovels, roombas | a noisy scrape that sweeps | recorded |
+| carts tipped, loads | a rattle of many small stones | recorded |
+| landings (stations, buildings, bodies, boulders) | the deep thump, rare | the existing recipes (`boulder-land`, `arch-catch`) |
+| magic and the sky (meteor, rift, dome, portals) | long, wide, tonal | Surge XT one-shots through the effects chain, rendered to files |
+| the rock under your own hand, the casino's pegs | as tuned | the existing live recipes, untouched |
+
+### Samples beside recipes
+
+`audio.js` stays the only file that names an AudioContext and gains one
+thing: a SOUNDS entry may name a **sample** (a short OGG in `public/sfx/`,
+two to four takes of each) as well as a recipe. A sample strike picks a take,
+then takes the same scatter a recipe does (a little pitch through the
+playback rate, a little level, a little timing), and goes through the same
+fold, ceilings, voice cap, pan and master. "Everything is struck, nothing is
+played" still holds: a sample is a strike recorded instead of computed.
+Samples load after the first gesture, a few hundred kilobytes in all.
+
+### Density
+
+- **On screen only, for the frequent families.** Footsteps, the belt and the
+  grains sound only for what the camera can see; off screen they are still
+  decided and counted, never rendered.
+- **A loudness budget**: the endgame audition (the save above, twenty
+  seconds) must not come out louder than today's -23 LUFS by more than a
+  few LU, and each lane must still be picked out by ear. That audition is
+  the check for every round of the set, alongside the strip of single hits.
+
+### Sources
+
+Kenney's **Impact Sounds** and **RPG Audio** (both CC0: free for any use,
+no credit needed), downloaded once into a scratch folder, the takes chosen
+cut and loudness-matched by script, and only the chosen OGGs committed under
+`public/sfx/` with a `public/sfx/SOURCES.md` naming where each came from.

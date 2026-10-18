@@ -18,6 +18,7 @@ import { across, stand } from './body.js';
 import { unbook } from './hole.js';
 import { roombasOf } from './roomba.js';
 import { posing, standOff } from '../firstmuck.js';
+import { sfx } from '../audio.js';
 
 // Nobody shovels inside anybody, but only when two are genuinely standing in
 // each other: the claims already keep them four columns apart, and a wider
@@ -203,6 +204,7 @@ export function takeMess(w, c) {
   if (now >= (w.sweepAt || 0)) {
     sweepMuckAt(off ? patch : w.x + WORKER / 2, 1, w);
     w.lunge = 1;
+    sfx('shovel-scrape', { x: w.x + WORKER / 2 });
     w.sweepAt = now + swingFor(w) * (0.85 + rand() * 0.3);
   }
   // and not shoulder to shoulder with the next one, or a gang that arrived

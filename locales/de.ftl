@@ -402,6 +402,9 @@ set-touch-off = touch: aus
 set-dark-on = dunkel: an
 
 # settings dark switch
+set-dark-dim = dunkel: gedimmt
+
+# settings dark switch
 set-dark-off = dunkel: aus
 
 # settings sound switch

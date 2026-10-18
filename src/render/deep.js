@@ -40,7 +40,7 @@ import { CRUSHER_SPRITES } from '../deep/sprites.js';
 import { PROPS, propCells, brewCells, flameCells, clothCells } from '../deep/props.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
-import { raw, darkPage } from '../ink.js';
+import { raw, turnedOver } from '../ink.js';
 import { ctx } from './ctx.js';
 import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
@@ -585,7 +585,7 @@ export function drawSwimmers() {
 // everywhere else a `difference` fill: raw white, so the dark page's map
 // does not turn the white it needs into its own paper.
 export function drawDeepInvert() {
-  if (darkPage) return;
+  if (turnedOver()) return;
   const { x0, y0, x1, y1 } = deepWindow();
   ctx.save();
   if (invertByFilter(ctx)) {

@@ -17,7 +17,7 @@ import { now } from '../clock.js';
 import { ctx } from './ctx.js';
 import { hash } from './flicker.js';
 import { msg, FACE } from '../lang.js';
-import { raw } from '../ink.js';
+import { raw, light } from '../ink.js';
 import { bandCells } from '../cutscene.js';
 import { CELL } from '../config.js';
 import { drawBody, lookFor } from './crew.js';
@@ -31,7 +31,6 @@ import { goOnDue, goOnAlpha, fallNow, actCaption } from '../actbeats.js';
 import { rockRowsLeft, soulAt, mansionHeld } from '../mansion.js';
 import { afterFloor, floorAt } from '../after/place.js';
 import { deepFloor } from '../deep/place.js';
-import { darkPage, turned } from '../ink.js';
 
 const snap = v => Math.round(v / P) * P;
 const cellAt = (x, y, tone) => { if (!tone) return; ctx.fillStyle = tone; ctx.fillRect(x, y, P, P); };
@@ -90,7 +89,7 @@ function drawTear() {
         const d = Math.hypot(dx / rx, dy / Math.max(P, ry));
         const jag = hash((e.x + dx) * 0.37 + (e.y + dy) * 0.11) * 0.35;
         const x = snap(e.x + dx), y = snap(e.y + dy);
-        if (d < 0.55) cellAt(x, y, GREY[0]);
+        if (d < 0.55) cellAt(x, y, light(GREY[0]));   // the afterlife's white shines on either page
         else if (d < 0.8) cellAt(x, y, ACT_PORTAL_TONES[0]);
         else if (d < 1 + jag) cellAt(x, y, d < 0.95 ? ACT_PORTAL_TONES[2] : GREY[8]);
       }
@@ -244,11 +243,11 @@ export function drawActsHell() {
 // those inked in black (lives coming back a piece at a time), what it wears
 // drawn in the same pale inks.
 // On the dark page the pale greys are drawn at the light page's own
-// lightness (`turned`), so a soul is a pale thing on either page: mapped as
-// the page maps every grey they land a quarter of the way off the dark paper
-// and the pair, stood on it all through act 3, all but vanish. The middle
-// stays paper and an inked piece ink, as a body's are in the yard.
-const seen = c => (darkPage ? turned(c) : c);
+// lightness (`light`, past the map), so a soul is a pale thing on either
+// page: mapped as the yard maps every grey they would land beside the black
+// and read as ink. The middle stays paper and an inked piece ink, as a
+// body's are in the yard.
+const seen = light;
 const SOUL_RIM = seen(ACT_SOUL_RIM);
 const SOUL_INKS = { ink: SOUL_RIM, paper: ACT_SOUL_PAPER, grey: seen(GREY[2]), pale: seen(GREY[1]) };
 const RIM = [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2], [1, 2], [0, 2], [0, 1]];

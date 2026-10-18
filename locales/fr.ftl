@@ -402,6 +402,9 @@ set-touch-off = tactile : non
 set-dark-on = sombre : oui
 
 # settings dark switch
+set-dark-dim = sombre : tamisé
+
+# settings dark switch
 set-dark-off = sombre : non
 
 # settings sound switch

@@ -1022,6 +1022,13 @@
   "text": "dark: on"
  },
  {
+  "id": "set-dark-dim",
+  "group": "Settings",
+  "where": "src/settings.js",
+  "context": "settings dark switch: the first dark page, light gray on charcoal",
+  "text": "dark: dim"
+ },
+ {
   "id": "set-dark-off",
   "group": "Settings",
   "where": "index.html",

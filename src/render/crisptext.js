@@ -13,13 +13,13 @@
 // inks and at what scale.
 
 import { CRISP_TEXT_KEEP } from '../config.js';
-import { inkOf } from '../ink.js';
+import { inkOf, inkMode } from '../ink.js';
 
 const rgbOf = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
 
 const made = new Map();
 function scrapOf(text, font, ink, ground, steps, k) {
-  const id = `${k}|${font}|${ink}|${ground}|${steps.join()}|${text}`;
+  const id = `${inkMode()}|${k}|${font}|${ink}|${ground}|${steps.join()}|${text}`;
   let s = made.get(id);
   if (s) return s;
   const c = document.createElement('canvas'), g = c.getContext('2d');

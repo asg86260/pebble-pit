@@ -13,6 +13,14 @@ a near-empty cloud floor for about 20 s while the pair come up the road
 unseen (call 3, a mock-and-vote); the finale, snatch, opening and first trip
 down still have their own cameras.
 
+## The yard's sound set, by lanes -- BUILT, NOT LISTENED TO IN THE GAME (2026-10-18)
+
+DESIGN.md, "The yard's sound set, by lanes". Open: the owner's ear on every
+lane (the review page and `shots/sound/endgame-lanes.ogg`), the levels of the
+takes against the tuned recipes, and the rest of the beats list (farm, stir,
+weather, the deep, the story, acts 3-4). `node tools/node/sound-audition.mjs`
+is the check for every round.
+
 ## The score and the music bench -- BENCH BUILT, GAME PLAYBACK DESIGNED, AWAITING THE OWNER'S EAR (2026-10-17)
 
 Next: "The score in the game, and the menu filter" (DESIGN.md). Blocked on
