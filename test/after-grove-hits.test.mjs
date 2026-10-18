@@ -4,13 +4,13 @@
 // cell it is told to fill, and every cell round the pine and the stump is
 // asked of the hit tests: inked, it is the plot's; paper, it is nobody's.
 // A press through the hand's own call (`gestureDown`) on the crown's tip
-// takes hold of the saw. The plots' shapes are the setup these checks are
+// opens that tree's hand-work card. The plots' shapes are the setup these checks are
 // not about, set on the act's state.
 import { group, ok, run, yard, P } from './helpers.mjs';
 import { GREY, AFTER_PLOT_GAP } from '../src/config.js';
 import { afterFloor, plotX } from '../src/after/place.js';
 import { treeAt, stumpAt } from '../src/after/grove.js';
-import { gestureDown, gestureUp, gestureView } from '../src/after/gestures.js';
+import { gestureDown, gestureUp, cardOpen } from '../src/after/gestures.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawAfterGrove } from '../src/render/after.js';
 
@@ -64,13 +64,13 @@ group('a press lands on a pine and a stump exactly where they are drawn', async 
   window.__afterAxe();
   const tip = [...ink].map(k => k.split(',').map(Number)).filter(([cx]) => cx === plotX(0) / P).reduce((a, b) => (b[1] < a[1] ? b : a));
   gestureDown(tip[0] * P + P / 2, tip[1] * P + P / 2);
-  const held = (gestureView() || []).find(r => r.key === 'tree');
+  const held = cardOpen();
   gestureUp();
   window.__actsOn(null);
   return [
     ok(ink.size > 100, 'the grove drew its pines and its stump', `${ink.size} cells`),
     ok(gap >= AFTER_PLOT_GAP, 'two big pines stand clear of each other', `${gap} clear columns between them, ${AFTER_PLOT_GAP} at least`),
     ok(!wrong.length, 'every inked cell is its plot\'s, and every paper cell round it nobody\'s', wrong.slice(0, 6).join('; ')),
-    ok(held && held.i === 0 && held.grab, 'a press on the crown\'s tip takes hold of that tree\'s saw', JSON.stringify(held && { i: held.i, grab: held.grab }))
+    ok(held && held.key === 'tree' && held.i === 0, 'a press on the crown\'s tip opens that tree\'s card', JSON.stringify(held))
   ];
 }, { reload: false });
