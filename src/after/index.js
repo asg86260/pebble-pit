@@ -21,6 +21,7 @@ import { stepPress } from './press.js';
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
 import { stepBodies } from './bodies.js';
+import { stepBubbles, forgetBubbles } from './bubbles.js';
 import { secs } from './util.js';
 
 // The act's facts, as the spec's save shape names them and the owner's
@@ -102,7 +103,7 @@ export function stepAfter(c) {
   if (!afterlifeOn()) return;
   frames++;
   if (!S.after) return;
-  if (seen !== S.after) { forgetSpills(); seen = S.after; }
+  if (seen !== S.after) { forgetSpills(); forgetBubbles(); seen = S.after; }
   S.after.t += secs(c);
   stepRebel(c);
   stepGrove(c);
@@ -111,6 +112,7 @@ export function stepAfter(c) {
   stepPress(c);
   stepUnion(c);
   stepStrike(c);
+  stepBubbles(c);
 }
 
 // A click on the place, in world pixels: true if it was the afterlife's (a

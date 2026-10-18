@@ -64,7 +64,8 @@ import { drawFireworks, drawHungKits, drawFinaleDeep, drawFinaleYard } from './r
 import { drawHome } from './render/home.js';
 import { drawActsYard, drawActsDeep, drawActsAfter, drawActsHell, drawActBodies, drawActCaption } from './render/portals.js';
 import { drawMansion } from './render/mansion.js';
-import { drawAfterBackdrop, drawAfterStair, drawAfterYard, drawAfterGrove, drawAfterCamp, drawAfterCrowd, drawAfterSky } from './render/after.js';
+import { drawAfterBackdrop, drawAfterGrove, drawAfterCamp, drawAfterMembers, drawAfterSky, drawAfterCounts } from './render/after.js';
+import { drawAfterCrowd, drawCampCrowd } from './render/aftercrowd.js';
 import { drawHellBackdrop, drawHellChambers, drawHellSeams, drawHellForge, drawHellBarriers, drawHellCage } from './render/hell.js';
 import { S } from './state.js';
 import { recede, frontLayers } from './cutscene.js';
@@ -200,16 +201,18 @@ const LAYERS = [
   { name: 'mansion', draw: drawMansion },         // and the mansion raised on its ground at the end (render/mansion.js)
   { name: 'acts-yard', draw: drawActsYard },      // heaven's tear over the ruin and its cloud stair, the rock on the ruin, the go-on card (render/portals.js)
   { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
-  // Act 3's afterlife (render/after.js), drawn only with the camera up there:
-  // the backdrop, then the place back to front. The order past the backdrop
-  // is a first guess, to be settled with the mocks.
+  // Act 3's afterlife (render/after.js), drawn only with the camera up there,
+  // back to front: the page and the cloud floor, the sky's clouds, the
+  // camp's own crowd behind the stations (render/aftercrowd.js), the grove
+  // and the camp in front of it, God's crowd and the throne, and the members
+  // walking and working over all of it.
   { name: 'after backdrop', draw: drawAfterBackdrop },
-  { name: 'after stair', draw: drawAfterStair },
-  { name: 'after yard', draw: drawAfterYard },
+  { name: 'after sky', draw: drawAfterSky },
+  { name: 'after camp crowd', draw: drawCampCrowd },
   { name: 'after grove', draw: drawAfterGrove },
   { name: 'after camp', draw: drawAfterCamp },
   { name: 'after crowd', draw: drawAfterCrowd },
-  { name: 'after sky', draw: drawAfterSky },
+  { name: 'after members', draw: drawAfterMembers },
   // The acts' connective tissue up there (render/portals.js): heaven's tear in
   // the cloud floor, and the souls and ghosts walking the road.
   { name: 'acts-after', draw: drawActsAfter },
@@ -328,6 +331,7 @@ const LAYERS = [
   { name: 'roster counts', draw: drawRosterBadgeCounts },
   { name: 'kit counts', draw: drawKitStandCounts },   // and how many are waiting on each stand
   { name: 'stock count', draw: drawStockCounts },     // and how many doses stand ready on the apothecary table
+  { name: 'after counts', draw: drawAfterCounts },    // and how much lies on each of the afterlife's piles
   { name: 'pot labels', draw: drawPotLabels },        // the brew each pot is set to, as a color block under it
 
   { name: 'counter', draw: drawCount },          // last, and in screen pixels: it is read, not looked at
@@ -354,7 +358,7 @@ const FISH = new Set(['deep fauna', 'meal gulped', 'meal']);
 const AFTER_WASH = new Set(['fight numbers', 'status posts', 'air near', 'pot labels']);
 // The yard's reading, which is in no scene: faded right out while one holds,
 // on the recede's own number (render/recede.js, `hudInk`).
-const HUD = new Set(['pile marks', 'roster', 'roster counts', 'kit counts', 'stock count', 'counter']);
+const HUD = new Set(['pile marks', 'roster', 'roster counts', 'kit counts', 'stock count', 'after counts', 'counter']);
 // Bodies of either kind in one layer: drawn behind the wash and again over
 // it, each body sorted by `bodyInk`.
 const MIXED = new Set(['workers', 'says', 'swimmers', 'party']);
@@ -363,7 +367,7 @@ const MIXED = new Set(['workers', 'says', 'swimmers', 'party']);
 // and not read: the layers a player reads off the picture are left out of it.
 const READING = new Set(['pad focus', 'offer flags', 'paid', 'pile marks', 'auras', 'work bars', 'done marks',
                          'casino mark', 'roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
-                         'stock count', 'pot labels', 'counter', 'fight numbers', 'status posts', 'serpent bar']);
+                         'stock count', 'after counts', 'pot labels', 'counter', 'fight numbers', 'status posts', 'serpent bar']);
 let picture = false;
 export const asPicture = on => { picture = on; };
 
@@ -382,7 +386,7 @@ const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'roster
                       'work bars', 'build sites', 'done marks', 'pile marks', 'pad focus']);
 // The acts' places (acts.js), each with only its own layers: none of the
 // yard's or the deep's world is anywhere near them.
-const AFTER = new Set(['after backdrop', 'after stair', 'after yard', 'after grove', 'after camp', 'after crowd', 'after sky', 'acts-after', 'acts-after-bodies']);
+const AFTER = new Set(['after backdrop', 'after sky', 'after camp crowd', 'after grove', 'after camp', 'after crowd', 'after members', 'acts-after', 'acts-after-bodies']);
 const HELL = new Set(['hell backdrop', 'hell chambers', 'hell seams', 'hell forge', 'hell barriers', 'hell cage', 'acts-hell', 'acts-hell-bodies']);
 const placeOf = name => (DEEP.has(name) ? 'deep' : AFTER.has(name) ? 'after' : HELL.has(name) ? 'hell' : 'yard');
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');

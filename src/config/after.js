@@ -23,12 +23,16 @@ export const AFTERLIFE_ON = env.VITE_AFTERLIFE === '1';
 // has no drawing yet to size them against.
 export const AFTER_GAP = P * 40;           // world px of sky between the yard's top and the cloud floor's underside (default)
 export const AFTER_H = P * 120;            // the place's top to its cloud floor (default)
-export const AFTER_W = P * 440;            // across: grove, camp, God's yard, the stair (default; sized to the placeholder layout below)
+export const AFTER_W = P * 572;            // across: grove, camp, God's yard, the stair (sized to the layout below, the mock's layout A)
 export const AFTER_FLOOR_MARGIN = P * 9;   // the cloud floor stands this far up off the window's foot (default; the deep's)
-export const AFTER_OPEN_AT = 0.5;          // where across it the camera opens, a share of its width (default)
-// The cloud floor's own depth, for the placeholder backdrop (render/after.js):
-// a band of pale cells the place stands on. Default.
-export const AFTER_FLOOR_CELLS = 6;
+// The cloud floor (render/after/floor.js; docs/mocks/act3-place-2026-10-18,
+// floor A, the billow edge): the walking line itself billows in puffs of
+// one or two cells, pressed flat under every station, and two fainter puff
+// contours drift under it, the nearer this far down and the further that.
+export const AFTER_BILLOW_SEED = 3;        // which run of puffs (the mock's layout strip)
+export const AFTER_BILLOW_BIG = 0.55;      // the share of puffs two cells high, the rest one
+export const AFTER_DRIFT_ROWS = [4, 9];    // the two contours, cells under the line
+export const AFTER_DRIFT_RATE = [0.25, -0.15];  // ...and how fast each slides, cells a second
 
 // --- the click: the pair's speech, and rebel ------------------------------------
 // The act's coin is rebel (the owner, 2026-10-18; a working name, the label
@@ -74,12 +78,6 @@ export const AFTER_CARDS = ['pedestal', 'shack', 'grove', 'mill', 'chipper', 'wo
 // (`logs`) and the chipper's (`chiplogs`), each where its haulers drop them.
 export const AFTER_STOCK = ['logs', 'chiplogs', 'timber', 'sawdust', 'paper', 'signs', 'posters'];
 
-// --- the placeholder backdrop ----------------------------------------------------
-// High key: white cloud and pale floor, black only for rims (DESIGN.md, "The
-// look"). Rungs of the one grey ramp (palette.js, GREY), lightest first; the
-// floor's cells pick among them so it is never one flat tone.
-export const AFTER_FLOOR_TONES = [1, 1, 2, 1, 2, 3];
-
 // --- act 3's loop, placeholder (track A, 2026-10-17; reworked 2026-10-18) ----------
 // The grove and the press on the scaffold, every drawing a placeholder of
 // flat cells, reworked to the owner's settled calls (DESIGN.md, "Act 3's own
@@ -91,30 +89,32 @@ export const AFTER_FLOOR_TONES = [1, 1, 2, 1, 2, 3];
 export const AFTER_GROVE_X0 = P * 12;      // the grove's first plot's left, clear of the counter in the view's corner
 export const AFTER_PLOTS0 = 1;             // plots the grove starts with, a grown tree in it (call 10, the owner's)
 export const AFTER_PLOT_MAX = 4;           // ...and the most its card clears
-export const AFTER_PLOT_STEP = P * 9;      // across a plot
+export const AFTER_PLOT_STEP = P * 16;     // across a plot: a grown pine's foot is fifteen cells
 // The camp's ground, between the grove and the stations: the members who have
 // walked out of God's yard stand here, a body a spot, until a post wants one.
 // Rows of AFTER_CAMP_COLS, each staggered half a spot, stepping up the screen;
 // past AFTER_CAMP_ROWS the spots start again at the front, a second layer.
-export const AFTER_CAMP_X0 = P * 52;
+export const AFTER_CAMP_X0 = P * 284;      // between the shack and the pedestal (layout A)
 export const AFTER_CAMP_COLS = 11;
 export const AFTER_CAMP_PITCH = P * 4;     // across a spot
 export const AFTER_CAMP_ROW = P * 2;       // a row's depth up the screen
 export const AFTER_CAMP_ROWS = 40;
-// The camp's stations, left to right, each its left edge in cells off the
-// place's left and its width in cells: the mill nearest the grove and the
-// chipper beside it, the sawdust heap between them (both tip onto it), the
-// pedestal nearest God's yard, facing it.
+// The camp's stations, left to right (layout A, docs/mocks/act3-place-2026-10-18):
+// each the left edge of its ground in cells off the place's left, its piles
+// and its drawing laid off that (after/place.js, `ART`). The mill nearest the
+// grove and the chipper turned to face it, the sawdust heap between them
+// (both tip onto it), the shack, the camp's waiting ground, and the pedestal
+// nearest God's yard, facing it, with open floor past it for the walk across.
 export const AFTER_STATIONS = {
-  mill:      { at: 110, w: 12 },
-  chipper:   { at: 131, w: 9 },
-  papermill: { at: 146, w: 11 },
-  workshop:  { at: 160, w: 11 },
-  press:     { at: 174, w: 11 },
-  shack:     { at: 189, w: 10 },
-  pedestal:  { at: 216, w: 8 }
+  mill:      { at: 88 },
+  chipper:   { at: 133 },
+  papermill: { at: 165 },
+  workshop:  { at: 196 },
+  press:     { at: 226 },
+  shack:     { at: 267 },
+  pedestal:  { at: 330 }
 };
-// The pedestal is a plinth, not a house: this many cells high.
+// The pedestal is a lump of the cloud floor pushed up, this many cells high.
 export const AFTER_PEDESTAL_H = 4;
 // The stations standing from the act's first frame: the pedestal the pair
 // speak from and the construction shack that sells every other.
@@ -128,7 +128,7 @@ export const AFTER_BUILD_PIECE_S = 3;      // a builder's piece
 // The crowd field: files across God's yard, the near ranks drawn as bodies
 // (a soul and its eight rim cells, three cells square) and the far ranks a
 // cell a soul, thinning back up the screen.
-export const CROWD_X0 = P * 236;           // the first file's left
+export const CROWD_X0 = P * 368;           // the first file's left, past the walk across from the pedestal
 export const CROWD_FILES = 40;
 export const CROWD_PITCH = P * 4;          // across a file
 export const CROWD_NEAR = 5;               // ranks drawn as bodies
@@ -143,7 +143,7 @@ export const AFTER_KIN_SHARE = 0.15;       // souls of the player's own lines, a
 export const AFTER_KIN_PIECES = 3;         // ...up to this many pieces
 export const AFTER_RISE_S = 30;            // a soul rising into the back of the crowd (the spec's "a soul every half-minute")
 export const AFTER_WALL_STEP = P * 4;      // a poster's slot along the fence at the crowd's front
-export const AFTER_STAIR_X = P * 436;      // the stair's head, the throne's ground
+export const AFTER_STAIR_X = P * 568;      // the stair's head, the throne's ground
 export const AFTER_STAIR_W = P * 36;       // the stair's run, foot to head
 export const AFTER_STAIR_RISE = P * 50;    // how high the throne stands off the floor
 // A station's posts: a stake each along its roof, filled black while a member
@@ -213,7 +213,8 @@ export const AFTER_SAWDUST_BRIM_UP = 48;   // ...with the mill's bigger heap
 export const AFTER_TIP_LOAD = 8;           // sawdust a tip takes, by the click or a sawyer
 export const AFTER_TIP_HOLD_S = 0.4;       // the heap held tipped
 export const AFTER_SPILL_S = 1.2;          // the grains falling through the notch and fading
-export const AFTER_NOTCH_AT = 7;           // the notch, cells right of the mill's box
+export const AFTER_NOTCH_AT = 5;           // the notch, cells right of the heap's middle: just past its foot
+export const AFTER_HEAP_R = 4;             // the sawdust heap at its brim, a triangle this many cells high
 export const AFTER_SWEEP_WAIT_S = 8;       // the heap stands at its brim, its mark up, this long before a sawyer tips
 export const AFTER_SAW_S = 4;              // a sawyer's cut
 export const AFTER_SIGN_TIMBER = 2;        // timber a sign: signs are timber alone (call 11)
@@ -308,3 +309,23 @@ export const AFTER_UPGRADES = {
   'after-stack':       { card: 'press',     bills: [[['rebel', 200], ['timber', 30], ['paper', 20]]] },  // a bigger stack
   'after-posterreach': { card: 'press',     bills: [[['rebel', 300], ['timber', 40], ['paper', 30]]] }   // a bigger poster, reaching further
 };
+
+// --- act 3's place and station art (track A, 2026-10-18) -------------------------
+// The mocks the owner voted (docs/mocks/act3-place-2026-10-18,
+// docs/mocks/act3-stations-2026-10-18): the stations' working poses and the
+// pair's bubbles.
+// A station shows its working pose this long after a unit of hand work: the
+// mocks' cycle, so one click plays one turn of the moving part.
+export const AFTER_ART_WORK_S = 2.4;
+export const AFTER_PILE_FADE_S = 0.4;      // a thing coming onto or off a pile fades over this
+export const AFTER_FALL_POSES = [0.08, 0.3, 0.7, 1.15];   // a falling pine's held angles, radians, over AFTER_FALL_S
+// The pair's speech bubbles (after/bubbles.js): one sent up off a speaker's
+// head this often while they stand on the pedestal, rising and fading; every
+// AFTER_BUBBLE_BIG_EVERY-th one twice the size and quicker.
+export const AFTER_BUBBLE_EVERY_S = 2.5;
+export const AFTER_BUBBLE_LIFE_S = 4.3;
+export const AFTER_BUBBLE_RISE = 12.5;      // px/s
+export const AFTER_BUBBLE_HOLD = 0.55;      // the share of its life a bubble holds full ink before it fades
+export const AFTER_BUBBLE_BIG_EVERY = 5;
+export const AFTER_BUBBLE_BIG_RISE = 2.5;   // ...a big one's rise, times a small one's
+export const AFTER_BUBBLE_POP_S = 0.3;      // a bubble taken fades out over this

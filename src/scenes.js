@@ -38,6 +38,7 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
+import { stationX0, soulX } from './after/place.js';
 import { pref, setPref } from './prefs.js';
 import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
@@ -2683,9 +2684,9 @@ export const SCENES = {
   // bought row by row and run, framed on the camp; the crowd half won, framed
   // on God's yard; the grove with a tree coming down.
   'after-chain': { about: 'the acts', say: "the afterlife's chain running: logs to the saw mill and the chipper, timber and sawdust, signs going out",
-    run: () => { afterChain(false); window.__fast(90); window.__look(560); window.__holdShot(); } },
+    run: () => { afterChain(false); window.__fast(90); window.__look(stationX0('mill') - P * 4); window.__holdShot(); } },
   'after-crowd': { about: 'the acts', say: "the afterlife's crowd half walked out: signs and posters out, the rims inking round them",
-    run: () => { afterChain(true); window.__fast(120); window.__look(1300); window.__holdShot(); } },
+    run: () => { afterChain(true); window.__fast(120); window.__look(soulX(0) - P * 20); window.__holdShot(); } },
   'after-grove': { about: 'the acts', say: "the afterlife's grove: four plots, a tree coming down, a stump half dug, a sapling, logs lying",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
@@ -2716,7 +2717,7 @@ export const SCENES = {
       window.__fast(45);
       const at = window.__afterPair();
       for (let k = 0; k < 4; k++) { window.__afterClick(at.x, at.y); window.__fast(0.15); }
-      window.__look(800); window.__holdShot();
+      window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot();
     } },
   // The camp: a block of the crowd walking out across God's yard to the
   // camp's ground, the first already standing on their spots, empty posts.
@@ -2727,7 +2728,27 @@ export const SCENES = {
       window.__afterGrant({ rebel: 400 });
       window.__buy('after-build-mill');
       window.__buy('after-build-chipper');
-      window.__fast(14); window.__look(300); window.__holdShot();
+      window.__fast(14); window.__look(stationX0('mill') - P * 4); window.__holdShot();
+    } },
+  // Act 3's place and station art (track A, 2026-10-18; the mocks in
+  // docs/mocks/act3-place-2026-10-18 and act3-stations-2026-10-18): every
+  // station standing and worked at its post, its piles counted, framed on
+  // the left of the camp and then on the right.
+  'after-camp-art': { about: 'the acts', say: "the camp's stations polished and working: the grove's pines, the saw mill's wheel, the chipper's jaw, the paper mill's vat, piles counted",
+    run: () => { afterChain(true); window.__afterGrant({ logs: 4, timber: 6 }); window.__fast(60); window.__look(stationX0('mill') - P * 30); window.__holdShot(); } },
+  'after-camp-art-2': { about: 'the acts', say: "the camp's right half: the workshop's hammer, the press's screw, the shack, the cloud pillar and the pair's bubbles",
+    run: () => { afterChain(true); window.__afterGrant({ timber: 12 }); window.__fast(60); window.__look(stationX0('workshop') - P * 4); window.__holdShot(); } },
+  // The shack ordering: the saw mill bought, its glyph filling over the shack
+  // as the builders raise it a piece at a time.
+  'after-shack': { about: 'the acts', say: 'the construction shack ordering the saw mill: its glyph filling over the shack a piece at a time',
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      window.__afterCrowd((i, v) => (i < 12 ? 8 : v));
+      for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+      window.__afterGrant({ rebel: 400 });
+      window.__buy('after-build-mill');
+      for (let k = 0; k < 80 && !(S.after.raising.mill && S.after.raising.mill.n >= 2); k++) window.__fast(0.5);
+      window.__look(stationX0('shack') - S.viewW / 2); window.__holdShot();
     } },
 
   // --- the acts' connective tissue (actbeats.js, portals.js, mansion.js) --------
