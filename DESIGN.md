@@ -22295,3 +22295,60 @@ run, and the bench is where a cutscene is written from now on.
    bench, the safe area is drawn as the box's margin instead.
 3. **The rise into heaven** gets a mock-and-vote of its own once the shot
    exists. Its shape is the act 3 intro's question, not the shot's.
+
+## The yard's sound set, by lanes (design, not built)
+
+*Asked for 2026-10-18: the owner heard nineteen first-wave drafts (all
+variations of the existing recipes) and named two problems: they sound like
+"plain sound functions", and they are so alike that an endgame yard would
+smash them together. Both were measured: the frequent drafts all centered
+between 300 and 600 Hz, and twenty seconds of the endgame save
+`test/fixtures/crew-grows-on-load.json` asked for 60,961 footsteps, 14,090
+belt catches, 12,250 grains into the pit and 4,013 grains landing; mixed the
+way audio.js decides it, the drafts took that yard from -23 LUFS to -15.5
+(`shots/sound/endgame-today.ogg`, `endgame-drafts.ogg`).*
+
+### Lanes, not sounds
+
+The set is designed as a whole, each family given a lane of its own so they
+stay apart when they overlap: pitch, length and texture all differ.
+
+| family | lane | source |
+|---|---|---|
+| footsteps | the lowest and quietest: a soft dull tap, on screen only | recorded (RPG Audio's footsteps), heavily thinned |
+| belt, grains landing, grains into the pit | a fine high patter, never a thud | recorded sand and gravel, or the existing `dust-gain` lifted an octave |
+| picks, rock cells breaking | a sharp bright crack | recorded stone impacts (Impact Sounds) |
+| hammers at a build | a metallic ring, mid-high | recorded metal impacts |
+| shovels, roombas | a noisy scrape that sweeps | recorded |
+| carts tipped, loads | a rattle of many small stones | recorded |
+| landings (stations, buildings, bodies, boulders) | the deep thump, rare | the existing recipes (`boulder-land`, `arch-catch`) |
+| magic and the sky (meteor, rift, dome, portals) | long, wide, tonal | Surge XT one-shots through the effects chain, rendered to files |
+| the rock under your own hand, the casino's pegs | as tuned | the existing live recipes, untouched |
+
+### Samples beside recipes
+
+`audio.js` stays the only file that names an AudioContext and gains one
+thing: a SOUNDS entry may name a **sample** (a short OGG in `public/sfx/`,
+two to four takes of each) as well as a recipe. A sample strike picks a take,
+then takes the same scatter a recipe does (a little pitch through the
+playback rate, a little level, a little timing), and goes through the same
+fold, ceilings, voice cap, pan and master. "Everything is struck, nothing is
+played" still holds: a sample is a strike recorded instead of computed.
+Samples load after the first gesture, a few hundred kilobytes in all.
+
+### Density
+
+- **On screen only, for the frequent families.** Footsteps, the belt and the
+  grains sound only for what the camera can see; off screen they are still
+  decided and counted, never rendered.
+- **A loudness budget**: the endgame audition (the save above, twenty
+  seconds) must not come out louder than today's -23 LUFS by more than a
+  few LU, and each lane must still be picked out by ear. That audition is
+  the check for every round of the set, alongside the strip of single hits.
+
+### Sources
+
+Kenney's **Impact Sounds** and **RPG Audio** (both CC0: free for any use,
+no credit needed), downloaded once into a scratch folder, the takes chosen
+cut and loudness-matched by script, and only the chosen OGGs committed under
+`public/sfx/` with a `public/sfx/SOURCES.md` naming where each came from.

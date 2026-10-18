@@ -11,6 +11,15 @@ The act 3 intro's zoom pop, the empty-sky climb and the lost top band come
 from six cameras with their own easing, clamps and zooms. The owner chose
 per-place zoom changed under the ripple, and smooth tracking. The rise into heaven is a mock-and-vote after the shot is built.
 
+## The yard's sound set, by lanes -- DESIGNED, AWAITING THE GO-AHEAD (2026-10-18)
+
+DESIGN.md, "The yard's sound set, by lanes": recorded samples for the
+physical work, Surge one-shots for the magic, the live recipes kept for the
+hand and the pegs; frequent families on screen only; the endgame audition
+(`shots/sound/endgame-*.ogg`, made by `shots/sound/endgame-mix.mjs`) as the
+check. Blocker: the owner's go-ahead, which includes downloading two CC0
+packs (Kenney Impact Sounds, 0.8 MB; RPG Audio, 0.96 MB).
+
 ## The score and the music bench -- BENCH BUILT, GAME PLAYBACK DESIGNED, AWAITING THE OWNER'S EAR (2026-10-17)
 
 Next: "The score in the game, and the menu filter" (DESIGN.md). Blocked on
