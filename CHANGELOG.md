@@ -16,6 +16,7 @@ src/config/deep.js) until it is tuned. `npm run release` and the notes skip
 this section; the release that switches it on moves these under Unreleased.
 
 **New when it is on**
+- The serpent's comb is its feeding timer: it lights spike by spike from the head over the whole window, and when the last spike lights the beam leaves for its meal (test/meal.test.mjs).
 - An achievement, "complete act 2", for freeing your sqouse from the serpent; a save already past it has it on load (test/finale.test.mjs).
 - The constrict's orb's bar over its head is its time: it runs down as the seconds go, a click on the orb knocks a chunk off it in falling chips, the party's blows wear it down too, and at nought the orb lets go (test/orb.test.mjs).
 - The serpent drops no fang once the stations standing and the fangs held or falling would fill all seven slots, at a break as at a kill (test/fangs-seven.test.mjs).

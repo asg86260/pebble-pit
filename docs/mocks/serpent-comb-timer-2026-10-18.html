@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comb Feeding Timer</title>
+<style>
+  :root { color-scheme: dark; --bg: #000; --ink: #b4b4c0; --dim: #6e6e78; --rule: #26262c; }
+  body { background: var(--bg); color: var(--ink); font: 14px/1.45 ui-monospace, Menlo, Consolas, monospace; margin: 0; padding: 16px; }
+  h1 { font-size: 16px; margin: 0 0 4px; color: #fff; }
+  p.lede { margin: 0 0 16px; color: var(--dim); max-width: 760px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 16px; }
+  .opt { border: 1px solid var(--rule); padding: 10px; }
+  .opt h2 { font-size: 14px; margin: 0 0 4px; color: #fff; }
+  .opt .cap { margin: 0 0 8px; color: var(--dim); min-height: 3em; }
+  canvas { width: 100%; image-rendering: pixelated; display: block; background: #000; }
+  .beat { margin-top: 6px; color: #9b5de5; }
+  .bar { height: 4px; background: var(--rule); margin-top: 4px; }
+  .bar i { display: block; height: 100%; background: var(--dim); width: 0; }
+  .note { margin-top: 16px; color: var(--dim); max-width: 760px; }
+</style>
+</head>
+<body>
+<h1>The comb as the feeding timer</h1>
+<p class="lede">The comb fills head first over the whole window; when the last spike lights, the bolts leave it and the meal runs as now. The window is squeezed to eight seconds here (the game's are 18 to 40).</p>
+<div class="grid" id="grid"></div>
+<p class="note">What the mock cannot show: the real coil's bends and the head's shape, the real window lengths (a spike every one to three seconds in the game), the stun and Held pausing the fill, the haul and the gulp after the beam, and the orb phase, whose own attack lights the comb too.</p>
+<script>
+const P = 4, W = 140, H = 56;
+const DIM = ['#371f56', '#412465'], MID = '#5c2ba6', LIT = ['#8244d8', '#9b5de5'], WHITE = '#ffffff';
+const RAMP = ['#412465', '#4e2090', '#5c2ba6', '#6a2fbe', '#8244d8', '#9b5de5'];
+const HIDE = ['#8b8b96', '#b4b4c0'], EDGE = '#55555e';
+const CHARGE = 8, BOLTS = 1.5, AFTER = 2.5, LOOP = CHARGE + BOLTS + AFTER;
+const OPTS = [
+  ['A', 'Spike by spike', "Each spike lights in turn in the comb's full lit look (flicker, white tip); the last one lit fires the beam.", 'steps'],
+  ['B', 'Charge, then flare', 'Filling spikes light a steady mid purple, no flicker, no tips; full, the whole comb flares to the lit look and the beam leaves.', 'flare'],
+  ['C', 'Quickening', "Like B, but the lit part pulses, slow at first and quicker as it nears full, so a glance tells how close the meal is.", 'quick'],
+  ['D', 'Creeping glow', 'The leading spike brightens through the purple ramp before the next starts, so the fill moves smoothly instead of in steps; full is the lit look.', 'creep'],
+];
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const grid = document.getElementById('grid'), panels = [];
+for (const [l, name, cap, kind] of OPTS) {
+  const d = document.createElement('div'); d.className = 'opt';
+  d.innerHTML = `<h2>${l} · ${name}</h2><p class="cap">${cap}</p><canvas width="${W * P}" height="${H * P}"></canvas><div class="beat"></div><div class="bar"><i></i></div>`;
+  grid.appendChild(d);
+  panels.push({ kind, g: d.querySelector('canvas').getContext('2d'), beat: d.querySelector('.beat'), bar: d.querySelector('.bar i') });
+}
+const cell = (g, x, y, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, P, P); };
+// the neck: a gentle wave, head at the left
+const spineY = x => 30 + Math.round(Math.sin(x / 14) * 3);
+const R = 4, X0 = 14, X1 = 132, CREST0 = 18, NSPIKE = 17;
+const ORB = { x: 104, y: 48 };
+function drawBody(g) {
+  for (let x = X0; x <= X1; x++) {
+    const y = spineY(x), r = x < X0 + 6 ? R - 1 : x > X1 - 20 ? Math.max(1, Math.round(R * (X1 - x) / 20)) : R;
+    for (let dy = -r; dy <= r; dy++) cell(g, x, y + dy, Math.abs(dy) === r ? EDGE : HIDE[(x + dy) & 1 ? 0 : 1]);
+  }
+  cell(g, X0 + 3, spineY(X0 + 3) - 1, '#000');   // the eye
+}
+// the spikes: [x, base y, height]
+function spikes() {
+  const s = [];
+  for (let i = 0; i < NSPIKE; i++) {
+    const x = CREST0 + i * 2, left = 1 - i / NSPIKE;
+    s.push([x, spineY(x) - R - 1, Math.max(1, Math.round((i % 2 === 0 ? 3 : 2) * Math.min(1, left * 1.6)))]);
+  }
+  return s;
+}
+function draw(p, t) {
+  const g = p.g; g.fillStyle = '#000'; g.fillRect(0, 0, W * P, H * P);
+  const c = t % LOOP, ht = Math.floor(t * 12) / 12;
+  const charging = c < CHARGE, firing = c >= CHARGE && c < CHARGE + BOLTS;
+  const fill = charging ? c / CHARGE : firing ? 1 : 0;
+  drawBody(g);
+  const S = spikes(), tips = [];
+  S.forEach(([x, y, h], i) => {
+    const at = fill * NSPIKE - i;            // >= 1 fully lit, 0..1 the one filling
+    const on = at >= 1 || firing;
+    const flick = Math.floor(ht * 12 + i) % 4 < 2;
+    for (let m = 0; m < h; m++) {
+      const top = m === h - 1;
+      let col = DIM[i & 1];
+      if (p.kind === 'steps') {
+        if (on) col = top ? WHITE : flick ? LIT[1] : LIT[0];
+      } else if (p.kind === 'flare') {
+        if (firing) col = top ? WHITE : flick ? LIT[1] : LIT[0];
+        else if (on) col = MID;
+      } else if (p.kind === 'quick') {
+        if (firing) col = top ? WHITE : flick ? LIT[1] : LIT[0];
+        else if (on) {
+          const hz = 0.6 + 3.4 * fill * fill, pulse = Math.floor(ht * hz * 2) % 2;
+          col = pulse ? LIT[0] : MID;
+        }
+      } else if (p.kind === 'creep') {
+        if (firing) col = top ? WHITE : flick ? LIT[1] : LIT[0];
+        else if (at >= 1) col = RAMP[RAMP.length - 1];
+        else if (at > 0) col = RAMP[Math.min(RAMP.length - 1, Math.floor(Math.floor(at * 6) / 6 * RAMP.length))];
+      }
+      cell(g, x, y - m, col);
+    }
+    if (on) tips.push([x, y - h]);
+  });
+  // the creature, and the beam and orb while firing
+  const fx = ORB.x, fy = ORB.y;
+  for (let dx = -3; dx <= 3; dx++) for (let dy = -1; dy <= 1; dy++) if (Math.abs(dx) + Math.abs(dy) * 2 < 4) cell(g, fx + dx, fy + dy, '#6e6e78');
+  if (firing) {
+    const k = (c - CHARGE) / BOLTS, from = tips[Math.floor(tips.length / 2)];
+    const dx = fx - from[0], dy = fy - from[1], len = Math.hypot(dx, dy), steps = Math.ceil(len * 2);
+    const nx = -dy / len, ny = dx / len;
+    for (let q = 0; q <= steps; q++) {
+      const u = q / steps;
+      if (u < 0.6) cell(g, from[0] + dx * u + nx, from[1] + dy * u + ny, '#5c2ba6');
+      if (u < 0.3) cell(g, from[0] + dx * u - nx, from[1] + dy * u - ny, '#5c2ba6');
+      cell(g, from[0] + dx * u, from[1] + dy * u, '#b4b4c0');
+    }
+    const r = 1 + 4 * Math.min(1, k * 2), dots = 20, turn = Math.floor(ht * 8) / 8 * 0.6;
+    for (let n = 0; n < dots; n++) {
+      const th = n / dots * Math.PI * 2 + turn;
+      cell(g, fx + Math.cos(th) * r, fy + Math.sin(th) * r * 0.9, n % 4 === 0 ? '#9b5de5' : '#5c2ba6');
+    }
+  }
+  p.beat.textContent = charging ? `window ${(c).toFixed(1)}s of ${CHARGE}s, comb ${Math.floor(fill * 100)}% lit`
+    : firing ? 'full: the bolts leave the comb, the orb closes' : 'the meal: haul, gulp, swallow (not drawn); the window starts again';
+  p.bar.style.width = `${Math.round(fill * 100)}%`;
+}
+function frame(ms) { for (const p of panels) draw(p, ms / 1000); if (!reduced) requestAnimationFrame(frame); }
+if (reduced) frame(CHARGE * 0.6 * 1000); else requestAnimationFrame(frame);
+</script>
+</body>
+</html>
