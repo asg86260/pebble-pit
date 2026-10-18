@@ -29,8 +29,12 @@ export function runChecks(frames) {
   return frames.map((s, i) => {
     const out = [];
     const p = i > 0 ? frames[i - 1] : null;
-    if (p && !s.gliding && Math.abs((s.zoomShow ?? s.zoom) - (p.zoomShow ?? p.zoom)) > 1e-6) out.push('zoom');
-    if (p && !s.gliding) {
+    // A frame is a tenth of a second of several steps: a glide that was under
+    // way at the last frame and landed somewhere in this one moved on purpose
+    // all the way, so either end gliding covers the move between them.
+    const moving = s.gliding || (p && p.gliding);
+    if (p && !moving && Math.abs((s.zoomShow ?? s.zoom) - (p.zoomShow ?? p.zoom)) > 1e-6) out.push('zoom');
+    if (p && !moving) {
       const a = mid(p), b = mid(s);
       if (Math.hypot(b.x - a.x, b.y - a.y) > CUT_PAN_PX_S * DT) out.push('pan');
     }

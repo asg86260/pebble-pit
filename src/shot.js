@@ -123,7 +123,9 @@ export const aiming = () => !!aim;
 export const aimArrived = () => !!aim && !!aim.done;
 // What the shot holds the window on, for the readout (`__shot`).
 export const aimBox = () => lastBox;
-export const aimGliding = () => !!aim && !aim.done;
+// Moving on purpose: under way, or landing this very frame (the last step of
+// the glide is still a step of it).
+export const aimGliding = () => !!aim && (!aim.done || !!aim.landing);
 // The zoom is the shot's while its move carries one: nothing else may glide
 // it (world.js, `setZoom`), so a place that re-takes its own zoom every frame
 // (the deep's) does not pull it back out from under a held frame.
@@ -180,7 +182,8 @@ export function stepAim(t, box, move = 'glide', how = {}) {
   } else {
     at = to;
   }
-  if (k >= 1 && !aim.done) aim.done = true;
+  aim.landing = k >= 1 && !aim.done;
+  if (k >= 1) aim.done = true;
   aim.last = to;
   return { x: at.x - S.viewW / 2, y: at.y - S.viewH / 2 };
 }
@@ -191,15 +194,22 @@ export function stepAim(t, box, move = 'glide', how = {}) {
 // jerked after.
 function spring(to) {
   const dt = Math.max(1e-3, frameMs() / 1000);
+  // From where the glide left the window, at rest, as the ease leaves it: a
+  // box that jumped on the frame the glide landed is gone to by the spring,
+  // never cut to.
   if (!aim.pos) {
-    const was = aim.last || to;
-    aim.pos = { ...to };
-    aim.vel = { x: (to.x - was.x) / dt, y: (to.y - was.y) / dt };
-    return aim.pos;
+    aim.pos = { x: S.camX + S.viewW / 2, y: S.camY + S.viewH / 2 };
+    aim.vel = { x: 0, y: 0 };
   }
-  const k = CUT_FOLLOW_K, c = 2 * Math.sqrt(k);
+  // Aimed ahead of the box by its own speed times the time a spring this
+  // stiff trails a steady pace (2 / sqrt(k)): a box walking steadily is
+  // ridden on its middle, not a second behind it, and only its starts and
+  // stops are eased. A box faster than a pan is led no further than a pan
+  // goes, so a jump is a step the spring takes at its own pace, not a whip.
+  const k = CUT_FOLLOW_K, c = 2 * Math.sqrt(k), was = aim.last || to;
   for (const a of ['x', 'y']) {
-    aim.vel[a] += (k * (to[a] - aim.pos[a]) - c * aim.vel[a]) * dt;
+    const v = Math.max(-CUT_PAN_PX_S, Math.min(CUT_PAN_PX_S, (to[a] - was[a]) / dt));
+    aim.vel[a] += (k * (to[a] + v * c / k - aim.pos[a]) - c * aim.vel[a]) * dt;
     aim.pos[a] += aim.vel[a] * dt;
   }
   return aim.pos;

@@ -30,11 +30,11 @@ import { P, WORKER, COMMUTE_PACE, INTRO_BEAT,
          SNATCH_RISE, SNATCH_EDGE, SNATCH_WALK_MAX_S, SNATCH_LOOK_MS, SNATCH_HEAVE_MS,
          SNATCH_RISE_MS, SNATCH_RISE_STEPS, SNATCH_TAKE_MS, SNATCH_SINK_MS, SNATCH_SINK_STEPS,
          SNATCH_ALONE_MS, SNATCH_LEAP_MS, SNATCH_LEAP_STEPS, SNATCH_LEAP_H, SNATCH_STILL_MS,
-         SNATCH_HURRY, SNATCH_PORTAL_MS, SNATCH_HEAD_H, SNATCH_HINGE, COIL_SEGS, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_MEET_GAP, KILL_HOP_S, KILL_IN_S, KILL_OUT_S, KILL_ZOOM,
+         SNATCH_HURRY, SNATCH_PORTAL_MS, SNATCH_HEAD_H, SNATCH_HINGE, KILL, KILL_WALK_PX_S, KILL_WALK_MAX_S, KILL_CHEER_S, KILL_MEET_GAP, KILL_HOP_S, KILL_IN_S, KILL_OUT_S, KILL_ZOOM,
          DEEP_SURFACE, SERPENT_ON, STAGE_WAIT_S } from './config.js';
 import { S } from './state.js';
 import { frames } from './clock.js';
-import { mouthX, bellyAt, deepTop, deepFloor, deepX0, deepX1, coilLine, standOfStation } from './deep/place.js';
+import { mouthX, bellyAt, deepTop, deepFloor, deepX0, deepX1, standOfStation } from './deep/place.js';
 import { shoot } from './cutscene.js';
 import { union } from './shot.js';
 import { now } from './clock.js';
@@ -391,20 +391,12 @@ export function meetAt() {
   const dir = Math.sign(S.freedTo - S.freedFrom) || 1;
   return { x: S.freedTo + dir * (WORKER + KILL_MEET_GAP), y: deepFloor() - WORKER };
 }
-// Where the frame looks while he is down: on the belly as he goes limp; then
-// after the coming apart as it runs in from the tail, until it reaches the
-// belly and lets him go.
-function killPoint(t, a) {
-  const belly = bellyAt(t);
-  const apart = (a - KILL.last - KILL.limp) / KILL.apart;
-  if (apart <= 0 || apart >= 1) return belly;
-  const front = coilLine((1 - apart) * (COIL_SEGS - 1), t);
-  return front.x > belly.x ? front : belly;
-}
 // The kill's frames, as the shot's requests (shot.js, `stepAim`): the last
 // blow at the deep's own size, then pulled in on him as the serpent goes
-// limp and comes apart, kept with as the coming apart runs in. The pull is
-// KILL_ZOOM closer than the deep's fit, and the finale after keeps it.
+// limp, and held on him while the coming apart runs in to him from the tail:
+// it runs the length of the coil quicker than any pan, so it is let into the
+// frame rather than chased. The pull is KILL_ZOOM closer than the deep's fit,
+// and the finale after keeps it.
 function killShot(t, a) {
   const close = a >= KILL.last;
   return { key: close ? 'kill' : 'blow', frame: union(killSubject(t)), move: 'follow',
@@ -451,13 +443,12 @@ export function snatchSubject() {
   if (s.headY < surface) at.push({ x: mouthX() - WORKER, y: s.headY, w: WORKER * 2, h: surface - s.headY });
   return at;
 }
-// And the kill's: the belly he is in while the serpent goes down, the
-// coming apart running in to it, then him out on the floor and her come out
-// to meet him.
+// And the kill's: the belly he is in while the serpent goes down and comes
+// apart, then him out on the floor and her come out to meet him.
 export function killSubject(t = now()) {
   const him = freedBody(t), m = meetAt();
   if (!him) {
-    const b = killPoint(t, (t - S.freedAt) / 1000);
+    const b = bellyAt(t);
     return [{ x: b.x - WORKER / 2, y: b.y - WORKER / 2, w: WORKER, h: WORKER }];
   }
   return [him, m].filter(Boolean).map(o => ({ x: o.x, y: o.y, w: WORKER, h: WORKER }));

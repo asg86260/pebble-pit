@@ -28,6 +28,12 @@ export const ROWS = [
   { key: 'snatch', name: 'snatch', scene: 'snatch-portal',
     about: 'from the whirlpool opening in the abyss\'s surface to the sqwife\'s leap',
     start: none, done: over('snatch') },
+  // The kill, which snatch.js plays: stood from the finale's own scene (the
+  // last blow just landed), which needs no pin, and over once he is out and
+  // has met her, where the finale takes over.
+  { key: 'snatch-kill', name: 'snatch: the kill', scene: 'finale-kill',
+    about: 'the last blow, the pull in on him in the belly, the coming apart, him out and meeting her',
+    start: none, done: over('freed') },
   { key: 'opening', name: 'opening', scene: 'opening',
     about: 'the intro from the top: the pair out of the house, the first rock',
     start: none, done: over('show') },

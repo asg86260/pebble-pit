@@ -106,7 +106,8 @@ export const CUT_PAN_MAX_S = 3;
 // One camera for every cutscene (shot.js). A moving subject is tracked by a
 // critically damped spring on the frame's middle, this stiff (per second
 // squared): a start or a stop eases instead of jerking, and the camera rides
-// a steady walk about 2 / sqrt(CUT_FOLLOW_K) seconds of the walk behind it.
+// a steady walk on its middle, aimed ahead by the 2 / sqrt(CUT_FOLLOW_K)
+// seconds of the walk a spring this stiff would trail it by.
 export let CUT_FOLLOW_K = 6;
 // Every zoom change glides (world.js, `setZoom`): the zoom on the glass eases
 // to its target over this many seconds, the picture scaled sharp on the way.

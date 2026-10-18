@@ -602,10 +602,14 @@ export function resize(after) {
   // A small window does not shrink the yard, it shows less of it. About
   // 830px of height shows the sky, the ground and the whole depth of the
   // pit; anything shorter loses sky off the top.
+  // A cutscene's move holding the zoom (shot.js, `zoomHeld`) keeps it: the
+  // window changing size under a held frame is not a zoom step.
+  const kept = zoomHeld() ? S.zoomShow : null;
   S.zoom = S.zoomShow = cell / P;
   S.viewW = S.W / S.zoom;
   S.viewH = S.H / S.zoom;
   zoomGlide = null;
+  if (kept) showZoom(kept);
 
   // fixed places, laid out once and never moved
   S.groundY = SKY;
