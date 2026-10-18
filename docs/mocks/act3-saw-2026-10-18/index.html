@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Act 3 Saw</title>
+<!--
+  Act 3's two-person saw, drawn on the tree itself in the camp at the yard's
+  scale (a cell six screen px at zoom 1, a body three cells, 18 px): four
+  saws across the grown pine's trunk, your handle at the near end and your
+  partner, a body, at the far end. Each at one times (the main view) and at
+  three times for the detail. The motion is the built one (GESTURE_SAW_AMP,
+  five cells either way); only the drawing is new. Drawn by this page from
+  plain cells, not by render/after/pine.js. Every word is a placeholder.
+-->
+<style>
+  :root { --bg: #ffffff; --fg: #000000; --muted: #5f5f5f; --line: #d6d6d6; --soft: #efefef; --warn: #757575; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a; }
+  }
+  :root[data-theme="dark"] { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a; }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--fg); }
+  body { margin: 0; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  h3 { font-size: 14px; margin: 10px 0 4px; }
+  p { margin: 0 0 8px; color: var(--muted); }
+  ul, ol { margin: 4px 0 8px; padding-left: 18px; color: var(--muted); }
+  main b { color: var(--fg); }
+  .ph { border-bottom: 1px dashed currentColor; }
+  .ph::after { content: '*'; color: var(--warn); }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
+  .bar button { font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .rec { border-left: 3px solid var(--fg); padding: 4px 10px; background: var(--soft); color: var(--fg); }
+  section { border-top: 1px solid var(--line); padding: 14px 0; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; touch-action: none; cursor: ew-resize; }
+  .row { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+  figure { margin: 0; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 4px; max-width: 560px; }
+  .saw { border: 1px solid var(--line); border-radius: 4px; padding: 10px; margin: 0 0 12px; }
+  .saw.picked { border: 2px solid var(--fg); }
+  .saw h3 { margin-top: 0; }
+  .scrollx { overflow-x: auto; max-width: 100%; }
+  .rounds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .rounds > div { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; font-size: 12px; }
+  .rounds h3 { margin: 0 0 4px; font-size: 13px; }
+  .rounds ol { padding-left: 16px; margin: 0; }
+  @media (max-width: 760px) { .rounds { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1><span class="ph">the two-person saw, on the tree</span></h1>
+  <p><span class="ph">The owner: it does not look like a saw. And the hand work is back in the world, no card: the saw is drawn across the grown pine's trunk in the camp, at the yard's scale (a cell six px at zoom one, a body three cells). Your handle is the near end, on the left; your partner, a body, stands at the far end. The motion is the built one: the blade slides five cells either way along its length, through the trunk. The kerf opens from your side a chop a stroke, sawdust falls out of the cut, and the teeth are the read.</span></p>
+  <p class="rec"><b><span class="ph">pick, pending the owner's vote:</span></b> <span class="ph" id="pick-line">saw 3, the handsaw</span></p>
+  <div class="bar">
+    <button data-theme-btn="light"><span class="ph">light</span></button>
+    <button data-theme-btn="dark"><span class="ph">dark</span></button>
+    <button id="pause"><span class="ph">pause</span></button>
+    <button id="mid"><span class="ph">hold mid-stroke</span></button>
+    <button data-trunk="raised"><span class="ph">trunk raised to seven</span></button>
+    <button data-trunk="built"><span class="ph">trunk as built, two</span></button>
+  </div>
+  <p><span class="ph">One change to the pine is proposed with the saw: its trunk raised from two rows to seven. On the built trunk the black skirt comes down to two cells off the floor, and a blade with teeth needs five; the saw then has to cross the tree in front of the branches and stops biting into anything. The toggle shows the built trunk with the same saws.</span></p>
+
+  <section id="sec-all">
+    <h2><span class="ph">all four, in the camp at one times</span></h2>
+    <div class="row" id="all"></div>
+  </section>
+
+  <section id="sec-saws">
+    <h2><span class="ph">each saw: one times, and three times for the detail</span></h2>
+    <p><span class="ph">Drag either view side to side to saw it by hand; let go and it saws itself. The dotted box at three times is the near handle's grab area.</span></p>
+    <div id="saws"></div>
+  </section>
+
+  <section id="sec-rounds">
+    <h2><span class="ph">two rounds of "would a stranger call this a saw?"</span></h2>
+    <div class="rounds">
+      <div><h3><span class="ph">round 1</span></h3><ol id="round1"></ol></div>
+      <div><h3><span class="ph">round 2</span></h3><ol id="round2"></ol></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="ph">what this page cannot show</span></h2>
+    <ul>
+      <li><span class="ph">The real renderer: cells drawn by this page, not render/after/pine.js. The pine is AFTER_PINE's grown tree, the body the yard's square; the camp around them is left out.</span></li>
+      <li><span class="ph">The partner's walk: here the body rocks two cells with the stroke and its arm takes the rest; the crew's real poses and wardrobe are not drawn.</span></li>
+      <li><span class="ph">The fall: the cut runs to the far side and resets; the tree's fall is the built one and does not change.</span></li>
+      <li><span class="ph">The ghost hand that shows the stroke is left out, so the handles can be judged bare.</span></li>
+      <li><span class="ph">Other zooms: one times is zoom one; the camp's reframe may land on another zoom.</span></li>
+    </ul>
+  </section>
+</main>
+<script>
+'use strict';
+// ---------------------------------------------------------------------------
+// The ramp, the grid, the clock
+// ---------------------------------------------------------------------------
+const P = 6;                                        // a world cell at zoom 1, screen px
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+// Dark is the light ramp mapped by lightness onto #e0e0e0 on #1f1f1f, never inverted.
+const DARKG = GREY.map(h => { const v = parseInt(h.slice(1, 3), 16) / 255; const c = Math.round(0x1f + (0xe0 - 0x1f) * (1 - v)).toString(16).padStart(2, '0'); return '#' + c + c + c; });
+let PAL = GREY, T = 0, PAUSED = false, HELD = false;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const toneAt = (c, r, list) => list[((((c * 73856093) ^ (r * 19349663)) >>> 0) % 9973) % list.length];
+const isDark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+
+// The built motion (src/config/gestures.js): five cells either side, a
+// stroke end to end a chop, eight chops through.
+const AMP = 5, STROKE_S = 0.7, CHOPS = 8, HOLD_S = 1.2;
+// The world: column 0 the trunk's middle, row -1 the last row above the floor.
+// The grown pine (config's AFTER_PINE[3]): a trunk three wide, two tall, and
+// three stair-sided tiers over it.
+const PINE = { trunk: [3, 2], tiers: [{ v0: 0, h: 6, s: 2 }, { v0: 6, h: 5, s: 1 }, { v0: 11, h: 4, s: 0 }] };
+const inPine = (u, v) => PINE.tiers.some(({ v0, h, s }) => v >= v0 && v < v0 + h && Math.abs(u) <= (v0 + h - v) - 0.5 + s + 1e-6);
+// The trunk's height is the one thing this page changes about the pine: the
+// built two rows leave no room under the skirt for a blade and its teeth, so
+// the saw is drawn on a trunk RAISED to seven, and the built one is a toggle.
+const TRUNK = [-1, 1], TRUNK_BUILT = PINE.trunk[1], TRUNK_RAISED = 10;
+let TH = TRUNK_RAISED;
+const isTrunk = (c, r) => c >= TRUNK[0] && c <= TRUNK[1] && r >= -TH && r <= -1;
+const isLeaf = (c, r) => r <= -TH - 1 && inPine(c, -r - TH - 1 + 0.5);
+const BODY = 3;                                     // a body, cells a side
+
+// ---------------------------------------------------------------------------
+// The saws: each a list of cells off the blade's offset `o`. `blade` cells
+// hide inside the uncut trunk and show in the kerf; `front` cells (handles,
+// frame) never hide. `grip` is the near handle's grab box, `far` the cell the
+// partner's hand closes on.
+// ---------------------------------------------------------------------------
+const PLATE = 2;                // the blade's plate: a tone off the paper, so it has body at one times
+const TOOTH = {
+  big: [0, 1, 2, 3, 2, 1],      // symmetric: five wide, three deep, a gullet between
+  tri: [0, 1, 2, 1],            // symmetric: three wide, two deep
+  rip: [0, 1, 2, 3],            // sawtooth three deep: the face on the slant, the back plumb
+  fang: [0, 1, 2, 3, 4]         // sawtooth four deep
+};
+const toothAt = (shape, ph) => shape[((ph % shape.length) + shape.length) % shape.length];
+function teeth(add, c, e, shape, ph) { for (let k = 1; k <= toothAt(shape, ph); k++) add(c, e + k, 10, 'blade'); }
+// A plumb wooden handle two cells wide: an ink cap and foot, the wood between.
+function peg(add, c, r0, r1) {
+  for (let r = r0; r <= r1; r++) { const end = r === r0 || r === r1; add(c, r, end ? 10 : 7, 'front'); add(c + 1, r, end ? 10 : 5, 'front'); }
+}
+
+// Rows off the raised trunk (seven, so the skirt starts at -8): the blade's
+// spine at -7, its teeth down to -2, the floor's last row -1 left for the
+// sawdust. `band` is the blade's rows, the slot the kerf opens in the trunk.
+const SAWS = [
+  {
+    id: 1, name: 'crosscut, the misery whip',
+    say: 'A long pale blade, its spine level, its belly a cell deeper through the middle and shallow at both ends, five big triangular teeth along the belly, a plumb wooden handle at each end.',
+    band: [-7, -2], grip: [-12, -8, 2, 6], far: [10, -3],
+    draw(add, o) {
+      for (let u = -9; u <= 9; u++) {
+        const c = u + o, e = Math.abs(u) <= 5 ? -5 : -6;
+        add(c, -7, 10, 'blade');
+        for (let r = -6; r <= e; r++) add(c, r, PLATE, 'blade');
+        teeth(add, c, e, TOOTH.big, u + 9);
+      }
+      for (let r = -7; r <= -6; r++) { add(-9 + o, r, 10, 'blade'); add(9 + o, r, 10, 'blade'); }
+      peg(add, -12 + o, -8, -3); add(-10 + o, -7, 10, 'front'); add(-10 + o, -6, 10, 'front');
+      peg(add, 10 + o, -8, -3); add(9 + o, -7, 10, 'front');
+    }
+  },
+  {
+    id: 2, name: 'bucksaw, the H-frame',
+    say: 'A wooden H: two plumb uprights standing past the blade as handles, a level stretcher across the middle, a twisted cord and its toggle over it, the blade stretched across the foot with big sawtooth teeth.',
+    band: [-5, -2], grip: [-12, -9, 2, 8], far: [10, -3],
+    draw(add, o) {
+      const L = -12 + o, R = 10 + o;
+      for (let r = -10; r <= -2; r++) for (const c of [L, R]) { const end = r === -10 || r === -2; add(c, r, end ? 10 : 7, 'front'); add(c + 1, r, end ? 10 : 5, 'front'); }
+      // the stretcher, the cord and the toggle pass behind the trunk, as the frame goes round it
+      for (let c = L + 2; c <= R - 1; c++) { add(c, -7, 10, 'blade'); add(c, -6, 5, 'blade'); }   // the stretcher
+      for (let c = L + 2; c <= R - 1; c++) add(c, -9, (c - o) % 2 ? 8 : 4, 'blade');              // the cord, twisted
+      for (let r = -10; r <= -8; r++) add(4 + o, r, 10, 'blade');                                 // the toggle, off the trunk
+      for (let c = L + 2; c <= R - 1; c++) { add(c, -5, 10, 'blade'); teeth(add, c, -5, TOOTH.rip, c - o); }
+    }
+  },
+  {
+    id: 3, name: 'handsaw, enlarged',
+    say: 'The handsaw everyone draws: a wide blade narrowing to its tip in two level steps, the grip with a hole through it at your end, a peg through the tip for your partner, teeth along the foot.',
+    band: [-8, -2], grip: [-15, -8, 4, 7], far: [10, -3],
+    draw(add, o) {
+      // the grip: an ink-ruled block of wood with a hole
+      for (let r = -8; r <= -2; r++) for (let u = -15; u <= -11; u++) {
+        const edge = r === -8 || r === -2 || u === -15 || u === -11, hole = r >= -6 && r <= -4 && u >= -14 && u <= -13;
+        if (u === -15 && (r === -8 || r === -2)) continue;
+        add(u + o, r, hole ? 0 : edge ? 10 : 6, 'front');
+      }
+      for (let r = -7; r <= -3; r++) add(-14 + o, r, 10, 'front');
+      for (let u = -14; u <= -12; u++) { add(u + o, -7, 10, 'front'); add(u + o, -3, 10, 'front'); }
+      // the blade: the spine stepping down toward the tip, the foot level
+      for (let u = -10; u <= 9; u++) {
+        const c = u + o, top = u <= -4 ? -8 : u <= 3 ? -7 : -6;
+        add(c, top, 10, 'blade');
+        for (let r = top + 1; r <= -5; r++) add(c, r, PLATE, 'blade');
+        teeth(add, c, -5, TOOTH.rip, u + 10);
+      }
+      for (let r = -6; r <= -5; r++) add(9 + o, r, 10, 'blade');
+      peg(add, 10 + o, -7, -2);
+    }
+  },
+  {
+    id: 4, name: 'the fang saw',
+    say: 'The zigzag is the saw: an ink spine two cells deep and under it tall sawtooth fangs, four deep, nothing else; a plumb handle each end.',
+    band: [-7, -2], grip: [-12, -8, 2, 6], far: [10, -3],
+    draw(add, o) {
+      for (let u = -9; u <= 9; u++) {
+        const c = u + o;
+        add(c, -7, 10, 'blade'); add(c, -6, PLATE, 'blade');
+        teeth(add, c, -6, TOOTH.fang, u + 9);
+      }
+      peg(add, -12 + o, -8, -3); add(-10 + o, -7, 10, 'front');
+      peg(add, 10 + o, -8, -3);
+    }
+  }
+];
+
+
+// ---------------------------------------------------------------------------
+// The world, drawn at `s` times over a window of cells.
+// ---------------------------------------------------------------------------
+function drawWorld(cv, saw, st, s, win) {
+  const cell = P * s, W = win.cols * cell, H = win.rows * cell;
+  if (cv.width !== W) { cv.width = W; cv.height = H; }
+  const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.fillStyle = PAL[0]; g.fillRect(0, 0, W, H);
+  const X = c => (c - win.c0) * cell, Y = r => (r - win.r0) * cell;
+  const C = (c, r, t) => { g.fillStyle = PAL[t]; g.fillRect(X(c), Y(r), cell, cell); };
+  const o = st.o, kerf = Math.round(st.chops / CHOPS * 3);
+  const cut = (c, r) => isTrunk(c, r) && c < TRUNK[0] + kerf && r >= saw.band[0] && r <= saw.band[1];
+  const hidden = (c, r) => isTrunk(c, r) && !cut(c, r);
+  const c1 = win.c0 + win.cols, r1 = win.r0 + win.rows;
+  // the floor, three rows of soil in its greys
+  for (let r = 0; r < r1; r++) for (let c = win.c0; c < c1; c++) C(c, r, toneAt(c, r, [1, 2, 1, 3]));
+  // the pine
+  for (let r = win.r0; r < 0; r++) for (let c = win.c0; c < c1; c++) if (isLeaf(c, r) || (isTrunk(c, r) && !cut(c, r))) C(c, r, 10);
+  // the sawdust heap at the trunk's foot, a cell a pair of chops, either side
+  const heap = Math.min(4, Math.floor(st.chops / 2));
+  for (let i = 0; i < heap; i++) { C(-2 - (i >> 1), -1, toneAt(i, 1, [3, 4])); C(2 + (i >> 1), -1, toneAt(i, 2, [4, 3])); }
+  // sawdust out of the cut, off both faces, a cell a step down to the heap
+  // (under the blade, so it never reads as another tooth)
+  for (const m of st.motes) { const r = saw.band[1] + Math.floor((T - m.at) / 0.08); if (r <= -1) C(m.c, r, m.t); }
+  // the saw: worked out, then a cell of paper round what shows, so it stands off the black tree
+  const cells = new Map();
+  saw.draw((c, r, t, layer) => cells.set(c + ',' + r, { c, r, t, layer }), o);
+  const shows = [...cells.values()].filter(x => !(x.layer === 'blade' && hidden(x.c, x.r)));
+  for (const x of shows) for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const c = x.c + dc, r = x.r + dr;
+    if (cells.has(c + ',' + r) || r >= 0 || isTrunk(c, r)) continue;
+    if (isLeaf(c, r)) C(c, r, 0);
+  }
+  for (const layer of ['blade', 'front']) for (const x of shows) if (x.layer === layer) C(x.c, x.r, x.t);
+  // the partner: a body (the yard's square) past the far handle, rocking with
+  // the stroke, its arm the body's own two-px rim out to the handle, and its
+  // hand an ink cuff round the handle's two columns
+  const [fc, fr] = saw.far, hx = fc + o, bx = 14 + Math.round(o * 0.8);
+  const rim = Math.max(1, Math.round(2 * s));
+  g.fillStyle = PAL[10]; g.fillRect(X(bx), Y(-BODY), BODY * cell, BODY * cell);
+  g.fillStyle = PAL[0]; g.fillRect(X(bx) + rim, Y(-BODY) + rim, BODY * cell - 2 * rim, BODY * cell - 2 * rim);
+  g.fillStyle = PAL[10];
+  const ay = Y(fr) + Math.round(cell / 2 - rim / 2), ax0 = X(hx + 2), ax1 = X(bx);
+  if (ax1 > ax0) g.fillRect(ax0, ay, ax1 - ax0, rim);
+  // the fist: paper in an ink rim, wrapped round both columns of the handle
+  g.fillRect(X(hx) - rim, Y(fr) - rim, 2 * cell + 2 * rim, cell + 2 * rim);
+  g.fillStyle = PAL[0]; g.fillRect(X(hx), Y(fr), 2 * cell, cell);
+  g.fillStyle = PAL[10]; g.fillRect(X(hx + 1) - Math.round(rim / 2), Y(fr), rim, Math.round(cell / 2));   // a knuckle's crease
+  // at three times, the near handle's grab box, dotted
+  if (win.grab) {
+    const [c, r, w, h] = [saw.grip[0] + o - 1, saw.grip[1] - 1, saw.grip[2] + 2, saw.grip[3] + 2];
+    g.fillStyle = PAL[5];
+    for (let x = X(c); x < X(c + w); x += 6) { g.fillRect(x, Y(r), 2, 2); g.fillRect(x, Y(r + h) - 2, 2, 2); }
+    for (let y = Y(r); y < Y(r + h); y += 6) { g.fillRect(X(c), y, 2, 2); g.fillRect(X(c + w) - 2, y, 2, 2); }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The stroke: the built motion on the clock, or a hand dragging a view.
+// ---------------------------------------------------------------------------
+const states = SAWS.map(() => ({ s: 0, o: 0, v: 0, chops: 0, side: 0, motes: [], hold: -1, drag: null }));
+function step(st, dt) {
+  if (st.hold >= 0) { st.v = 0; if (T - st.hold > HOLD_S) { st.chops = 0; st.hold = -1; st.motes = []; } return; }
+  const was = st.s;
+  if (st.drag != null) st.s += (st.drag - st.s) * Math.min(1, dt * 25);
+  else st.s = AMP * Math.sin(2 * Math.PI * T / (STROKE_S * 2));
+  st.s = clamp(st.s, -AMP, AMP);
+  st.v = dt > 0 ? (st.s - was) / dt / AMP : 0;
+  st.o = Math.round(st.s);
+  const side = st.s > AMP * 0.8 ? 1 : st.s < -AMP * 0.8 ? -1 : 0;
+  if (side && side !== st.side) { if (st.side) st.chops++; st.side = side; if (st.chops >= CHOPS) st.hold = T; }
+  if (st.chops > 0 && Math.abs(st.v) > 0.6 && Math.random() < dt * 12) st.motes.push({ at: T, c: Math.random() < 0.5 ? -2 : 2, t: Math.random() < 0.5 ? 4 : 5 });
+  st.motes = st.motes.filter(m => T - m.at < 0.3);
+}
+
+// ---------------------------------------------------------------------------
+// The page's pieces
+// ---------------------------------------------------------------------------
+const ONE = { c0: -21, r0: -25, cols: 42, rows: 28 };          // the pine whole, the partner, a margin
+const THREE = { c0: -21, r0: -13, cols: 41, rows: 15, grab: true };   // the saw's band
+const PICK = 3;
+const views = [];
+function grabbable(cv, i, cellPx) {
+  let x0 = null, s0 = 0;
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); x0 = e.clientX; s0 = states[i].s; states[i].drag = s0; });
+  cv.addEventListener('pointermove', e => { if (x0 != null) states[i].drag = clamp(s0 + (e.clientX - x0) / cellPx, -AMP, AMP); });
+  const up = () => { x0 = null; states[i].drag = null; };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+}
+function build() {
+  const all = document.getElementById('all');
+  SAWS.forEach((saw, i) => {
+    const fig = document.createElement('figure');
+    fig.innerHTML = `<canvas></canvas><figcaption>${saw.id} · <span class="ph">${saw.name}</span></figcaption>`;
+    all.appendChild(fig);
+    const cv = fig.querySelector('canvas'); views.push({ i, s: 1, win: ONE, cv }); grabbable(cv, i, P);
+  });
+  const host = document.getElementById('saws');
+  SAWS.forEach((saw, i) => {
+    const box = document.createElement('div'); box.className = 'saw' + (saw.id === PICK ? ' picked' : ''); box.id = 'saw-' + saw.id;
+    box.innerHTML = `<h3>${saw.id} · <span class="ph">${saw.name}</span>${saw.id === PICK ? ' <span class="ph">(pick)</span>' : ''}</h3>
+      <p><span class="ph">${saw.say}</span></p>
+      <div class="row">
+        <figure><canvas class="one"></canvas><figcaption><span class="ph">one times, zoom one</span></figcaption></figure>
+        <div class="scrollx"><figure class="three"><canvas class="three"></canvas><figcaption><span class="ph">three times</span></figcaption></figure></div>
+      </div>`;
+    host.appendChild(box);
+    const one = box.querySelector('canvas.one'), three = box.querySelector('canvas.three');
+    views.push({ i, s: 1, win: ONE, cv: one }); grabbable(one, i, P);
+    views.push({ i, s: 3, win: THREE, cv: three }); grabbable(three, i, P * 3);
+  });
+}
+const paint = () => { for (const v of views) drawWorld(v.cv, SAWS[v.i], states[v.i], v.s, v.win); };
+function advance(dt) { T += dt; if (!HELD) states.forEach(st => step(st, dt)); paint(); }
+let last = null;
+function frame(ts) {
+  if (!PAUSED) advance(last == null ? 1 / 60 : Math.min(0.05, (ts - last) / 1000));
+  last = ts; requestAnimationFrame(frame);
+}
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  PAL = t === 'dark' ? DARKG : GREY;
+  document.querySelectorAll('[data-theme-btn]').forEach(b => b.classList.toggle('on', b.dataset.themeBtn === t));
+  paint();
+}
+// A held mid-stroke: drawn toward you, the kerf a third through, dust falling.
+function mid(on = true) {
+  HELD = on;
+  if (on) states.forEach(st => {
+    Object.assign(st, { s: -2.6, o: -3, v: -1.4, chops: 4, hold: -1, drag: null });
+    st.motes = [{ at: T - 0.02, c: -2, t: 4 }, { at: T - 0.1, c: 2, t: 5 }];
+  });
+  paint();
+}
+
+/// The critique, as it was done: each round is what the shot before it got
+// wrong and what changed.
+const ROUND1 = [
+  'The blade sat on the built two-row trunk under the black skirt, so spine and teeth fused into the tree and nothing read as a saw. The trunk is raised to ten rows here (a proposal, see the toggle), so the saw works in open air under the skirt with wood above and below the cut.',
+  'The teeth were three wide and two deep and read as a comb of T-shaped stubs. The crosscut now has five-wide, three-deep triangles; the bucksaw and the handsaw have a three-deep sawtooth; the fang saw has a four-deep one.',
+  'The kerf opened the trunk\'s whole height and the tree looked snapped. The slot is now only the blade\'s rows, opening a column at a time from your side, with wood standing above and below it.',
+  'The ghost hand sat on the near handle and turned it into a grey blob. It is left out of these views; the handle\'s grab area (two cells by six, plus a cell round it) is dotted at three times instead.',
+  'The fang saw\'s solid black spine merged with the tree. Its lower spine row is pale now, so only the fangs are solid ink.',
+  'The bucksaw\'s frame topped out in the skirt. It is a row lower.'
+];
+const ROUND2 = [
+  'The partner\'s hand was two ink ticks on the handle and read as a black lump. It is now a paper fist in an ink rim, wrapped round both columns of the handle, with a knuckle crease; the arm is the body\'s own two-px rim.',
+  'The bucksaw\'s stretcher crossed in front of the trunk while its blade went behind it, so it read as a gate standing in front of the tree. The stretcher, cord and toggle now pass behind the trunk. It is still the weakest at one times.',
+  'The palest plate disappeared on the paper at one times, leaving only an outline. The plate is now one tone darker on every saw.',
+  'The pick changed from the crosscut to the handsaw: at one times the grip with its hole and the stepped blade are the shape a stranger names first. The crosscut comes second.'
+];
+
+const PICK_LINE = 'saw 3, the handsaw enlarged: at one times its grip with the hole is the saw everybody draws, the sawtooth reads, and the grip is the natural thing for your hand to take. Second: saw 1, the crosscut. Weakest: saw 2, the bucksaw, whose frame reads as a gate.';
+build();
+document.getElementById('pick-line').textContent = PICK_LINE;
+for (const [id, list] of [['round1', ROUND1], ['round2', ROUND2]]) document.getElementById(id).innerHTML = list.map(s => `<li><span class="ph">${s}</span></li>`).join('');
+setTheme(isDark() ? 'dark' : 'light');
+document.querySelectorAll('[data-theme-btn]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.themeBtn)));
+document.getElementById('pause').addEventListener('click', () => { PAUSED = !PAUSED; });
+document.getElementById('mid').addEventListener('click', () => mid(!HELD));
+function trunk(raised) {
+  TH = raised ? TRUNK_RAISED : TRUNK_BUILT;
+  document.querySelectorAll('[data-trunk]').forEach(b => b.classList.toggle('on', (b.dataset.trunk === 'raised') === raised));
+  paint();
+}
+document.querySelectorAll('[data-trunk]').forEach(b => b.addEventListener('click', () => trunk(b.dataset.trunk === 'raised')));
+trunk(true);
+requestAnimationFrame(frame);
+window.__mock = { theme: setTheme, pause: p => { PAUSED = p; }, advance, mid, paint, states, trunk };
+</script>
+</body>
+</html>
