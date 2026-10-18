@@ -1,0 +1,52 @@
+OK   light a: a click on the saw mill opens its card on work ({"open":"mill","tab":"work","cardOn":true,"face":"work","faceOpacity":1,"body":96,"panel":false})
+OK   light a: a click on the upgrades tab switches to it (face opacity 1; mid-fade it read 0.222478)
+OK   a: a click on "bigger heap" spends rebel 60, timber 10, dust 800 ({"rebel":90,"timber":15,"paper":0,"dust":1500,"spore":120,"shard":40,"spark":0} -> {"rebel":30,"timber":5,"paper":0,"dust":700,"spore":120,"shard":40,"spark":0})
+OK   a: the row reads bought (tile done)
+OK   a: a click on "second blade", short of timber and crops, spends nothing
+OK   a: a click on the sawyer post (on upgrades) spends rebel 18, dust 250
+OK   light a: a click on the shack opens its one tab, build
+OK   a: the press row is locked with its reason (tile short off | needs the paper mill)
+OK   light a: the pedestal's card opens on upgrades, no work tab
+OK   light a: on the phone, taps open the saw mill and switch to upgrades
+OK   light a: on the phone, a tap on the shack opens build
+OK   light b: a click on the saw mill opens its card on work ({"open":"mill","tab":"work","cardOn":true,"face":"work","faceOpacity":1,"body":96,"panel":false})
+OK   light b: a click on the upgrades tab switches to it (the sheet stands; mid-fade it read sheet)
+OK   b: a click on "bigger heap" spends rebel 60, timber 10, dust 800 ({"rebel":90,"timber":15,"paper":0,"dust":1500,"spore":120,"shard":40,"spark":0} -> {"rebel":30,"timber":5,"paper":0,"dust":700,"spore":120,"shard":40,"spark":0})
+OK   b: the row reads bought (tile done)
+OK   b: a click on "second blade", short of timber and crops, spends nothing
+OK   b: a click on the sawyer post (on upgrades) spends rebel 18, dust 250
+OK   light b: a click on the shack opens its one tab, build
+OK   b: the press row is locked with its reason (tile short off | needs the paper mill)
+OK   light b: the pedestal's card opens on upgrades, no work tab
+OK   light b: on the phone, taps open the saw mill and switch to upgrades
+OK   light b: on the phone, a tap on the shack opens build
+OK   light c: a click on the saw mill opens its card on work ({"open":"mill","tab":"work","cardOn":true,"face":"work","faceOpacity":1,"body":163,"panel":false})
+OK   light c: a click on the upgrades tab switches to it (face opacity 1; mid-fade it read 0.2219)
+OK   c: a click on "bigger heap" spends rebel 60, timber 10, dust 800 ({"rebel":90,"timber":15,"paper":0,"dust":1500,"spore":120,"shard":40,"spark":0} -> {"rebel":30,"timber":5,"paper":0,"dust":700,"spore":120,"shard":40,"spark":0})
+OK   c: the row reads bought (tile done)
+OK   c: a click on "second blade", short of timber and crops, spends nothing
+OK   c: a click on the sawyer post (on work) spends rebel 18, dust 250
+OK   light c: a click on the shack opens its one tab, build
+OK   c: the press row is locked with its reason (tile short off | needs the paper mill)
+OK   light c: the pedestal's card opens on upgrades, no work tab
+OK   light c: on the phone, taps open the saw mill and switch to upgrades
+OK   light c: on the phone, a tap on the shack opens build
+OK   dark a: a click on the saw mill opens its card on work ({"open":"mill","tab":"work","cardOn":true,"face":"work","faceOpacity":1,"body":96,"panel":false})
+OK   dark a: a click on the upgrades tab switches to it (face opacity 1; mid-fade it read 0.315)
+OK   dark a: a click on the shack opens its one tab, build
+OK   dark a: the pedestal's card opens on upgrades, no work tab
+OK   dark a: on the phone, taps open the saw mill and switch to upgrades
+OK   dark a: on the phone, a tap on the shack opens build
+OK   dark b: a click on the saw mill opens its card on work ({"open":"mill","tab":"work","cardOn":true,"face":"work","faceOpacity":1,"body":96,"panel":false})
+OK   dark b: a click on the upgrades tab switches to it (the sheet stands; mid-fade it read sheet)
+OK   dark b: a click on the shack opens its one tab, build
+OK   dark b: the pedestal's card opens on upgrades, no work tab
+OK   dark b: on the phone, taps open the saw mill and switch to upgrades
+OK   dark b: on the phone, a tap on the shack opens build
+OK   dark c: a click on the saw mill opens its card on work ({"open":"mill","tab":"work","cardOn":true,"face":"work","faceOpacity":1,"body":163,"panel":false})
+OK   dark c: a click on the upgrades tab switches to it (face opacity 1; mid-fade it read 0.3152)
+OK   dark c: a click on the shack opens its one tab, build
+OK   dark c: the pedestal's card opens on upgrades, no work tab
+OK   dark c: on the phone, taps open the saw mill and switch to upgrades
+OK   dark c: on the phone, a tap on the shack opens build
+page errors: none

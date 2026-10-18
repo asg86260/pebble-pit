@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Act 3 Card Tabs</title>
+<!--
+  Act 3's station card with tabs: "work" (the hand-work face, as built in
+  src/render/aftercard.js) and "upgrades" (the station's posts and named
+  upgrades), and the construction shack's card with one tab, "build". Three
+  options for where the rows go. The camp is drawn at the camp's scale (a
+  world px two-thirds of a screen px, a cell four), its stations ported from
+  docs/mocks/act3-handcontrol-2026-10-18. The rows are the yard board's tiles,
+  their stylesheet copied from what src/style.css and src/shelf.css compute
+  on cards.html (the card bench). Bills are config/after.js's. Nothing here is
+  read from src/: the page stands alone. Every word is a placeholder.
+-->
+<style>
+  :root {
+    --bg: #ffffff; --fg: #000000; --muted: #5f5f5f; --line: #d6d6d6; --soft: #efefef; --warn: #757575;
+    /* the yard board's own tokens (style.css, as cards.html computes them) */
+    --paper: #fff; --ink: #000; --ink-4: #666; --ink-7: #a4a4a4; --ink-off: #767676;
+    --coin-crop: #2e9e4b; --coin-ore: #2f5fd0; --coin-spark: #d93a25;
+    --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
+    --float-shadow: 6px 6px 0 rgba(0, 0, 0, .2);
+    --card-shadow: 4px 4px 0 rgba(0, 0, 0, .2);
+    --face: "Courier Prime", "Courier New", monospace;
+  }
+  /* The dark page is the light one mapped by lightness onto #e0e0e0 on
+     #1f1f1f (src/ink.js), never inverted. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a;
+      --paper: #1f1f1f; --ink: #e0e0e0; --ink-4: #939393; --ink-7: #5f5f5f; --ink-off: #878787;
+      --coin-crop: #6fd08a; --coin-ore: #7d9cf0; --coin-spark: #f06a55;
+      --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
+      --float-shadow: 6px 6px 0 rgba(224, 224, 224, .2); --card-shadow: 4px 4px 0 rgba(224, 224, 224, .2);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a;
+    --paper: #1f1f1f; --ink: #e0e0e0; --ink-4: #939393; --ink-7: #5f5f5f; --ink-off: #878787;
+    --coin-crop: #6fd08a; --coin-ore: #7d9cf0; --coin-spark: #f06a55;
+    --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
+    --float-shadow: 6px 6px 0 rgba(224, 224, 224, .2); --card-shadow: 4px 4px 0 rgba(224, 224, 224, .2);
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--fg); }
+  body { margin: 0; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1000px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  p { margin: 0 0 8px; color: var(--muted); }
+  ul { margin: 4px 0 0; padding-left: 18px; color: var(--muted); }
+  main b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
+  .bar button { font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  /* a placeholder word: dashed under, a star after */
+  .ph { border-bottom: 1px dashed currentColor; }
+  .ph::after { content: '*'; color: var(--warn); }
+  /* on the game's own surfaces a placeholder is the star alone */
+  .w::after { content: '*'; }
+  .k { color: var(--muted); }
+  .rec { border-left: 3px solid var(--fg); padding: 4px 10px; background: var(--soft); color: var(--fg); }
+  .opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 6px 0 12px; }
+  .opts > div { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; font-size: 13px; }
+  .opts > div.on { border-color: var(--fg); }
+  .opts h3 { font-size: 13px; margin: 0 0 4px; }
+  .opts p { margin: 0 0 4px; font-size: 12px; }
+  @media (max-width: 760px) { .opts { grid-template-columns: 1fr; } }
+  section { border-top: 1px solid var(--line); padding: 14px 0; }
+  table { border-collapse: collapse; font-size: 12px; margin: 8px 0 4px; width: 100%; }
+  td, th { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--muted); }
+  th { font-weight: normal; }
+  td:first-child { color: var(--fg); white-space: nowrap; }
+
+  /* --- the stage: a canvas camp with the card and the sheet laid over it ---- */
+  .scroller { max-width: 100%; overflow-x: auto; }
+  .stage { position: relative; overflow: hidden; border: 1px solid var(--line); background: var(--paper); touch-action: none; user-select: none; -webkit-user-select: none; }
+  .stage canvas.camp { position: absolute; left: 0; top: 0; display: block; }
+  .stage .layer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; pointer-events: none; }
+  .phone { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; margin-top: 8px; }
+  .phone .glass { border: 7px solid var(--fg); border-radius: 22px; overflow: hidden; background: var(--paper); flex: 0 0 auto; }
+  .phone .glass .stage { border: 0; }
+  .phone .side { flex: 1 1 280px; min-width: 0; }
+
+  /* the board's face: the house hand, its tracking, its capitals */
+  .stage { font-family: var(--face); font-size: 12px; line-height: 1; color: var(--ink); }
+
+  /* --- the card ----------------------------------------------------------- */
+  .card { position: absolute; z-index: 3; opacity: 0; transform: translateY(10px); pointer-events: none;
+          transition: opacity .18s linear, transform .18s cubic-bezier(.22, .61, .36, 1), left .28s cubic-bezier(.22, .61, .36, 1); }
+  .card.on { opacity: 1; transform: none; pointer-events: auto; }
+  .card.leaving { transition: opacity .25s linear, transform .25s linear, left .28s cubic-bezier(.22, .61, .36, 1); }
+  .card .tabs { display: flex; gap: 4px; padding-left: 6px; height: 19px; align-items: flex-end; }
+  .card .tab { font: inherit; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; line-height: 1;
+               padding: 3px 8px 3px; margin-bottom: -2px; cursor: pointer;
+               color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-bottom: 0;
+               transition: background-color .16s linear, color .16s linear; }
+  .card .tab.on { color: var(--paper); background: var(--ink); }
+  .card .paper { position: relative; background: var(--paper); border: 2px solid var(--ink); box-shadow: var(--card-shadow); padding: 0 4px 4px; }
+  .card .head { height: 20px; padding: 6px 2px 0; font-size: 11px; letter-spacing: .09em; text-transform: uppercase; border-bottom: 2px solid var(--ink); white-space: nowrap; }
+  .card .body { position: relative; overflow: hidden; margin-top: 2px;
+                transition: width .28s cubic-bezier(.22, .61, .36, 1), height .28s cubic-bezier(.22, .61, .36, 1); }
+  .card .face { position: absolute; left: 0; top: 0; width: max-content; opacity: 0; pointer-events: none; transition: opacity .18s linear; }
+  .card .face.on { opacity: 1; pointer-events: auto; transition: opacity .18s linear .06s; }
+  .card .face.scroll-x { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--ink) var(--paper); }
+  .card .face.scroll-y { overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: var(--ink) var(--paper); }
+  .card .face.scroll-x .tile { scroll-snap-align: start; }
+  .card .workface { display: flex; gap: 10px; align-items: flex-start; }
+  .card .workface canvas { display: block; }
+  .card .tail { position: absolute; bottom: -8px; width: 0; height: 0; margin-left: -7px;
+                border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 8px solid var(--ink);
+                transition: left .28s cubic-bezier(.22, .61, .36, 1); }
+  .card .tail::after { content: ''; position: absolute; left: -4px; top: -9px; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--paper); }
+
+  /* --- the yard's board sheet and its purse (B) ------------------------------ */
+  .panel { position: absolute; z-index: 4; display: flex; gap: 8px; align-items: flex-end; opacity: 0; transform: translateY(3px) scale(.985); transform-origin: 0 100%; pointer-events: none;
+           transition: opacity .16s linear, transform .2s cubic-bezier(.22, .61, .36, 1); }
+  .panel.on { opacity: 1; transform: none; pointer-events: auto; }
+  .panel .sheet { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--paper); border: 2px solid var(--ink); box-shadow: var(--float-shadow);
+                  letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ink) var(--paper); background-image: var(--dots); }
+  .panel .sheet .title { padding: 0 0 4px; border-bottom: 2px solid var(--ink); letter-spacing: .14em; line-height: 16.8px; }
+  .panel.bottom { left: 0 !important; right: 0; bottom: 0 !important; top: auto !important; flex-direction: column; align-items: stretch; gap: 0; transform: translateY(16px); transform-origin: 50% 100%;
+                  background: var(--paper); border-top: 2px solid var(--ink); }
+  .panel.bottom.on { transform: none; }
+  .panel.bottom .grip { position: relative; padding: 14px 12px 6px; letter-spacing: .08em; text-transform: uppercase; }
+  .panel.bottom .grip::before { content: ''; position: absolute; top: 4px; left: 50%; width: 36px; height: 4px; margin-left: -18px; background: var(--ink); }
+  .panel.bottom .sheet { border: 0; box-shadow: none; padding: 4px 9px 10px; }
+  .panel.bottom .sheet .title { display: none; }
+
+  /* --- the purse, the yard's box, in the stage's corner ------------------------ */
+  .purse { position: absolute; z-index: 2; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; background: var(--paper); border: 2px solid var(--ink); box-shadow: var(--float-shadow); letter-spacing: .08em; white-space: nowrap; font-size: 12px; }
+  .purse .coin { display: flex; align-items: center; gap: 6px; }
+  .purse .coin b { font-weight: normal; min-width: 5ch; text-align: right; font-variant-numeric: tabular-nums; }
+  .purse .coin .say { text-transform: uppercase; font-size: 11px; color: var(--ink-4); min-width: 7ch; }
+  .purse.row { flex-direction: row; flex-wrap: wrap; gap: 4px 10px; padding: 4px 8px; left: 8px; right: 8px; max-width: none; }
+  .purse.row .coin .say { min-width: 0; }
+  .purse.row .coin b { min-width: 0; }
+
+  /* --- the rows: the yard board's tiles (style.css + shelf.css, as computed) --- */
+  .rows { position: relative; display: grid; grid-template-columns: repeat(var(--cols, 3), 147px); justify-content: start; align-items: stretch;
+          padding: 4px 0 0; font-size: 12px; line-height: 1; color: var(--ink); letter-spacing: 0; text-transform: none; white-space: normal; }
+  .rows::after { content: ''; grid-column: 1 / -1; border-top: 5px solid var(--ink); }
+  .rows .sect { position: relative; grid-column: 1 / -1; justify-self: start; margin: 4px 0 6px; padding: 3px 10px 4px; background: var(--ink); color: var(--paper);
+                font-weight: bold; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; }
+  .rows + .rows { margin-top: 8px; }
+  .tile { position: relative; display: grid; grid-template-columns: 107px; grid-template-rows: 24px auto auto auto; row-gap: 5px; justify-items: center; align-content: start;
+          width: 141px; min-height: 125px; margin: 0 0 6px; padding: 8px 16px; border: 1px solid transparent;
+          font: inherit; color: var(--ink); text-align: center; cursor: pointer;
+          background-color: var(--paper); background-image: var(--dots); background-position: -3px -4px;
+          transition: transform .12s ease-out, border-color .12s linear; }
+  .tile::before { content: ''; position: absolute; top: 2px; left: 4px; width: 0; height: 0; border-top: 10px solid var(--ink); border-right: 10px solid transparent; }
+  @media (hover: hover) { .tile:not(.off):not(.done):hover { border-color: var(--ink); transform: translateY(-2px); } }
+  .tile.focus { border-color: var(--ink); outline: 2px dotted var(--ink); outline-offset: 1px; }
+  .tile .pic { display: block; height: 24px; }
+  .tile .pic canvas { display: block; width: 28px; height: 28px; margin-top: -2px; }
+  .tile .name { display: block; }
+  .tile .what { display: block; font-style: normal; letter-spacing: .08em; line-height: 13px; text-transform: uppercase; }
+  .tile.off .what, .tile.done .what { color: var(--ink-off); }
+  .tile .ladder { position: absolute; top: 12px; right: 4px; display: flex; flex-direction: column; gap: 4px; opacity: .78; }
+  .tile .ladder b { display: flex; flex-direction: column; gap: 2px; font-weight: normal; }
+  .tile .ladder i { display: block; width: 6px; height: 6px; border: 1px solid currentColor; border-radius: 50%; transition: background-color .2s linear; }
+  .tile .ladder i.on { background: currentColor; }
+  .tile .gain { display: block; width: 123px; margin-left: -8px; color: var(--ink-4); line-height: 13px; font-style: normal; }
+  .tile .gain.why { color: var(--ink-off); font-size: 11px; line-height: 12px; }
+  .tile .tag { display: block; max-width: 131px; border: 1px solid var(--ink); background: var(--paper); padding: 0 0 1px; letter-spacing: .08em; line-height: 16px; text-transform: uppercase; }
+  .tile.short .tag, .tile.off .tag { border-style: dashed; color: var(--ink-off); }
+  .tile.done .tag { border-color: transparent; color: var(--ink-off); }
+  .tile .cost { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 6px; padding: 1px 6px 0; }
+  .tile .cost > span { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .tile .cost .have { color: var(--ink); }
+  .tile .cost .short { color: var(--ink-off); }
+  .tile .cost .say { font-size: 11px; }
+  /* the yard's coin marks (style.css) */
+  i.dust { display: inline-block; width: 7px; height: 7px; background: currentColor; }
+  .tile .cost .have i.dust, .purse i.dust { background: var(--ink); }
+  i.shard { display: inline-block; width: 0; height: 0; border-left: 4.5px solid transparent; border-right: 4.5px solid transparent; border-bottom: 8px solid var(--coin-ore); }
+  i.spore { display: inline-block; width: 9px; height: 9px; background: var(--coin-crop); clip-path: polygon(0% 50%, 25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%); }
+  i.spark { display: inline-block; width: 11px; height: 11px;
+            background: linear-gradient(var(--coin-spark), var(--coin-spark)) center/3px 11px no-repeat, linear-gradient(var(--coin-spark), var(--coin-spark)) center/11px 3px no-repeat; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Act 3 card tabs <span class="k">(mock)</span></h1>
+  <p>The card a click opens over an act 3 station gets tabs: <b>work</b> (the hand-work face, as built) and <b>upgrades</b>
+     (the station's posts and named upgrades). The construction shack's card has one tab, <b>build</b>; the pedestal's has
+     one, <b>upgrades</b>, because its work is popping bubbles in the sky. The camp is at its real scale. The rows are the yard
+     board's tiles, styled from what the game's stylesheet computes on the card bench. Bills are config/after.js's. Click a
+     station to open its card, a tab to switch, a tile to buy from the fake purse. Drawn by this page, not by the game.
+     <b>Every word on it is a placeholder</b> (<span class="ph">marked like this</span>; on the game's own surfaces, a star after the word).</p>
+  <p class="rec"><b>Recommendation, pending the owner's vote:</b> <span class="ph">(C), the card keeps its height. The card never
+     grows up into the sky, so its tail and leader stay put and the station under it stays in view. The posts sit on the work
+     tab, beside the part those members work. Upgrades is always one plank, two or three tiles, and it scrolls sideways on a
+     phone. The tiles are the yard's own.</span></p>
+
+  <div class="bar">
+    <span class="k">option</span>
+    <button data-opt="a">(A) <span class="ph">card grows</span></button>
+    <button data-opt="b">(B) <span class="ph">the yard's sheet</span></button>
+    <button data-opt="c">(C) <span class="ph">one height, posts on work</span></button>
+    <span class="k" style="margin-left:12px">page</span>
+    <button data-theme-set="light">light</button>
+    <button data-theme-set="dark">dark</button>
+  </div>
+  <div class="bar">
+    <span class="k">open</span>
+    <button data-open="mill"><span class="ph">saw mill</span></button>
+    <button data-open="shack"><span class="ph">shack</span></button>
+    <button data-open="pedestal"><span class="ph">pedestal</span></button>
+    <button data-open=""><span class="ph">close</span></button>
+    <button id="refill" style="margin-left:12px"><span class="ph">refill the purse</span></button>
+  </div>
+  <div class="opts" id="opts">
+    <div data-o="a"><h3>(A) <span class="ph">card grows</span></h3>
+      <p><span class="ph">Two tabs on the card's top edge. On upgrades the card eases taller (and wider, up to three slots) and lists the station's rows as the yard's board does: a POSTS shelf, then an UPGRADES shelf. Past the sky's room it scrolls.</span></p>
+      <p><b>pad</b> <span class="ph">LT / RT switch tabs (LB / RB already step the card along the camp). On upgrades the d-pad moves between tiles; up from the top shelf lands on the tabs. A buys the tile in focus; B goes back to work, then closes.</span></p></div>
+    <div data-o="b"><h3>(B) <span class="ph">the yard's sheet</span></h3>
+      <p><span class="ph">The same tabs. Upgrades shrinks the card to its tab handle, and the yard's own board sheet stands beside it, with its shelves and signs. On a phone it is the yard's bottom sheet with its grip. Work closes the sheet and the card eases back.</span></p>
+      <p><b>pad</b> <span class="ph">LT / RT switch tabs. With the sheet up the pad is the board's, as in the yard: the d-pad moves between tiles, A buys, B closes the sheet and leaves the handle on work.</span></p></div>
+    <div data-o="c"><h3>(C) <span class="ph">one height, posts on work</span></h3>
+      <p><span class="ph">The same tabs, but the card has one height on every tab: only its width eases. The work tab carries the posts (one post tile beside the part, with the members drawn as filled or empty slots under it). Upgrades is the named upgrades on one plank, and it scrolls sideways on a phone.</span></p>
+      <p><b>pad</b> <span class="ph">LT / RT switch tabs. On work the sticks work the part and A on the post tile buys a post. On upgrades left and right step along the plank, the plank scrolling with the focus, and A buys.</span></p></div>
+  </div>
+
+  <div class="scroller"><div class="stage" id="desk"><canvas class="camp"></canvas></div></div>
+
+  <section>
+    <h2><span class="ph">on a phone, 390 px wide</span></h2>
+    <div class="phone">
+      <div class="glass"><div class="stage" id="phone"><canvas class="camp"></canvas></div></div>
+      <div class="side">
+        <p><span class="ph">The same camp at the same scale. The card keeps to the glass with its tail still on its station. A tap opens it, a tap on a tab switches, a tap on a tile buys, and a tap on the sky closes it.</span></p>
+        <p><span class="ph">(A) at two slots wide. (B) is the yard's bottom sheet, which covers the floor and the station under it. (C) keeps the card one height, and its plank scrolls under the thumb.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="ph">gamepad</span></h2>
+    <table>
+      <tr><th></th><th><span class="ph">switch tabs</span></th><th><span class="ph">reach a row</span></th><th><span class="ph">buy</span></th><th><span class="ph">back out</span></th></tr>
+      <tr><td>(A)</td><td><span class="ph">LT / RT, or up from the top shelf onto the tab strip then left / right</span></td><td><span class="ph">d-pad, nearest that way (padpage.js)</span></td><td><span class="ph">A</span></td><td><span class="ph">B: to work, then closed</span></td></tr>
+      <tr><td>(B)</td><td><span class="ph">LT / RT on the handle</span></td><td><span class="ph">the sheet's own pad, as in the yard</span></td><td><span class="ph">A</span></td><td><span class="ph">B: the sheet closes, the handle goes back to work</span></td></tr>
+      <tr><td>(C)</td><td><span class="ph">LT / RT</span></td><td><span class="ph">work: the post tile is the one focus; upgrades: left / right along the plank</span></td><td><span class="ph">A</span></td><td><span class="ph">B: to work, then closed</span></td></tr>
+    </table>
+    <p><span class="ph">Why not LB / RB: the voted hand card already uses LB / RB to step the open card along the camp, and the held sheet's settings tabs use them too, so the triggers are the free pair. A one-tab card (the shack, the pedestal) ignores LT / RT.</span></p>
+  </section>
+
+  <section>
+    <h2>What the mock cannot show</h2>
+    <ul>
+      <li>The real board builder: these tiles are hand-built HTML with the game's computed styles copied in, not <code>mountRows</code>. The glyphs are placeholder drawings (act 3's rows have none yet).</li>
+      <li>The house face: Courier New stands in for Courier Prime, so widths are a few pixels off.</li>
+      <li>The real renderer and camera: the stations are ported cells, the scale is fixed, and the built card is drawn on the canvas, not in the page as it is here.</li>
+      <li>Nothing teleports in the game: there, a bill's yard coins fly up through the cloud floor to the station, a member walks from the camp to a new post, and a bought station is raised a piece at a time. Here a buy just changes the numbers, and a station fades in.</li>
+      <li>Gamepad feel: the pad table is text only. Nothing here reads a pad.</li>
+      <li>A real phone: the frame is a 390 px box on this page. Thumb reach and the browser's own gestures are not shown.</li>
+      <li>Wording: the act's coins are said as words in a tag (rebel, timber, paper), which makes tags wider than the yard's. A mark for them is the owner's call.</li>
+      <li>Sound.</li>
+    </ul>
+  </section>
+</main>
+<script>
+'use strict';
+// ---------------------------------------------------------------------------
+// The camp: grid, ramp, scale (the hand-control mock's)
+// ---------------------------------------------------------------------------
+const P = 6, SC = 2 / 3, CELL = P * SC;
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const DARK = GREY.map(h => { const v = parseInt(h.slice(1, 3), 16) / 255; const c = Math.round(0xe0 + (0x1f - 0xe0) * v).toString(16).padStart(2, '0'); return '#' + c + c + c; });
+const K = 10, W = 0, FLOOR_TONES = [1, 1, 2, 1, 2, 3], PULP = [3, 3, 4];
+let PAL = GREY, T = 0;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const clamp01 = v => clamp(v, 0, 1);
+const hash2 = (c, r) => ((((c * 73856093) ^ (r * 19349663)) >>> 0) % 9973);
+const toneAt = (c, r, list) => list[hash2(c, r) % list.length];
+const hash = n => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+const isDark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+
+const GROVE_END = 96;
+const AT = { mill: GROVE_END + 12, chipper: GROVE_END + 57, papermill: GROVE_END + 89, workshop: GROVE_END + 120,
+             press: GROVE_END + 150, shack: GROVE_END + 191, pedestal: GROVE_END + 254 };
+const PLOT = i => 12 + i * 21 + 11;
+const WORLD_CELLS = AT.pedestal + 40;
+// Each station's box in cells, its height off the floor, and the column its
+// card's tail points at (the part it moves, or its middle).
+const SITE = {
+  mill:      { x0: AT.mill + 5, x1: AT.mill + 36, h: 18, part: AT.mill + 15 },
+  chipper:   { x0: AT.chipper + 5, x1: AT.chipper + 30, h: 19, part: AT.chipper + 19 },
+  papermill: { x0: AT.papermill + 5, x1: AT.papermill + 29, h: 18, part: AT.papermill + 19 },
+  workshop:  { x0: AT.workshop + 5, x1: AT.workshop + 26, h: 21, part: AT.workshop + 15.5 },
+  press:     { x0: AT.press + 9, x1: AT.press + 30, h: 19, part: AT.press + 20 },
+  shack:     { x0: AT.shack, x1: AT.shack + 13, h: 14, part: AT.shack + 7 },
+  // The pedestal's card stands aside, left of the bubbles' way up, so it
+  // never covers the work it has none of.
+  pedestal:  { x0: AT.pedestal + 1, x1: AT.pedestal + 12, h: 10, part: AT.pedestal + 2, aside: true }
+};
+
+function frame(g, st, ox, flip = 0) {
+  const X = (x, w) => (flip ? ox * P + flip * P - x - w : ox * P + x);
+  const sx = v => Math.round(v * SC - st.cam), sy = v => Math.round(st.floor + v * SC);
+  const d = {
+    px(x, y, w, h, tone) {
+      const x0 = X(x, w), a = sx(x0), b = sx(x0 + w), c = sy(Math.min(y, y + h)), e = sy(Math.max(y, y + h));
+      if (b < -4 || a > st.W + 4) return;
+      g.fillStyle = PAL[tone]; g.fillRect(a, c, Math.max(1, b - a), Math.max(1, e - c));
+    },
+    r(x, y, w, h, tone = K) { d.px(x * P, y * P, w * P, h * P, tone); },
+    c(x, y, tone = K) { d.r(x, y, 1, 1, tone); },
+    line(x0, y0, x1, y1, w = 2, tone = K) {
+      const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * P / 2), o = w / 2;
+      for (let i = 0; i <= n; i++) { const f = n ? i / n : 0; d.px(Math.round((x0 + (x1 - x0) * f) * P - o), Math.round((y0 + (y1 - y0) * f) * P - o), w, w, tone); }
+    },
+    fade(a, fn) { const was = g.globalAlpha; g.globalAlpha = was * clamp01(a); fn(); g.globalAlpha = was; },
+    body(x, y, dx = 0, dy = 0) { const bx = x * P + dx, by = y * P + dy; d.px(bx, by, 18, 18, K); d.px(bx + 2, by + 2, 14, 14, W); }
+  };
+  return d;
+}
+const cut = (d, x, y, w, h, tone = W) => d.px(x * P + 2, y * P + 2, w * P - 4, h * P - 4, tone);
+const TURN = Math.PI / 16;
+
+// --- the stations (ported from the hand-control mock, standing still but the mill's wheel) ---
+const WHEEL = { cx: 15, cy: -8, r: 5 };
+function drawMill(d) {
+  const a = Math.round((T * 1.4) / TURN) * TURN;
+  const kx = WHEEL.cx + Math.cos(a) * (WHEEL.r + 1.8), ky = WHEEL.cy + Math.sin(a) * (WHEEL.r + 1.8);
+  const drop = Math.round(1.5 + 1.5 * Math.sin(a)), bot = -7 + drop, chY = bot - 6;
+  d.px(WHEEL.cx * P - 3, WHEEL.cy * P, 6, -WHEEL.cy * P, K); d.r(WHEEL.cx - 3, -1, 6, 1, K);
+  for (let y = Math.floor(WHEEL.cy - WHEEL.r - 2); y <= WHEEL.cy + WHEEL.r + 2; y++) for (let x = Math.floor(WHEEL.cx - WHEEL.r - 2); x <= WHEEL.cx + WHEEL.r + 2; x++) {
+    const dd = Math.hypot(x + 0.5 - WHEEL.cx, y + 0.5 - WHEEL.cy); if (dd > WHEEL.r - 1 && dd <= WHEEL.r + 1) d.c(x, y, K);
+  }
+  for (let k = 0; k < 4; k++) { const b = a + k * Math.PI / 2; d.line(WHEEL.cx, WHEEL.cy, WHEEL.cx + Math.cos(b) * (WHEEL.r - 0.5), WHEEL.cy + Math.sin(b) * (WHEEL.r - 0.5), 5); }
+  d.r(WHEEL.cx - 1.5, WHEEL.cy - 1.5, 3, 3, K);
+  d.r(Math.round(kx - 1), Math.round(ky - 1), 2, 2, K);
+  d.line(kx, ky, 24.5, chY + 0.5, 3);
+  d.r(21, -3, 15, 2, K); d.r(23, -16, 1, 13, K); d.r(33, -16, 1, 13, K);
+  d.r(22, -1, 2, 1, K); d.r(33, -1, 2, 1, K); d.r(22, -18, 13, 2, K);
+  for (let i = 0; i < 5; i++) d.r(25 + i, -5, 1, 2, K);
+  d.r(24, chY, 9, 1, K); d.r(27, chY + 1, 2, bot - chY, K);
+  for (let k = 0; k < 4; k++) d.r(37 + (k % 2) * 3, -1 - Math.floor(k / 2), 3, 1, k % 2 ? 3 : K);
+  d.body(6, -3);
+}
+function drawChipper(d) {
+  d.r(22, -15, 6, 15, K);
+  d.px(23 * P + 2, -6 * P, 4 * P - 4, 2, W); d.px(23 * P + 2, -4 * P, 4 * P - 4, 2, W);
+  d.r(12, -1, 10, 1, K);
+  for (let i = 0; i < 5; i++) d.r(12 + i * 2, -2, 1, 1, K);
+  d.r(13, -13, 9, 4, K); d.r(12, -14, 1, 3, K); d.px(14 * P, -12 * P + 2, 6 * P, 2, W);
+  for (let i = 0; i < 5; i++) d.r(13 + i * 2, -9, 1, 1, K);
+  d.r(25, -18, 2, 3, K); d.r(25, -19, 7, 2, K); d.r(30, -17, 2, 2, K); d.r(29, -15, 4, 1, K);
+  d.body(6, -3);
+}
+function drawPapermill(d) {
+  const x = PADDLE_X;
+  d.r(10, -10, 4, 1, K); d.r(24, -10, 4, 1, K); d.r(11, -9, 2, 8, K); d.r(25, -9, 2, 8, K);
+  d.r(12, -2, 14, 1, K); d.r(11, -1, 3, 1, K); d.r(24, -1, 3, 1, K);
+  for (let j = 0; j < 5; j++) for (let i = 0; i < 12; i++) d.c(13 + i, -7 + j, PULP[Math.floor(hash((13 + i) * 5.1 + j * 9.3) * PULP.length)]);
+  d.r(10, -17, 1, 7, K); d.r(27, -17, 1, 7, K); d.r(9, -18, 20, 1, K);
+  [12, 17, 22].forEach(sx => { d.r(sx, -16, 4, 3, K); cut(d, sx, -16, 4, 3); });
+  d.r(5, -9, 4, 9, K); for (let y = -8; y < 0; y += 2) d.px(5 * P + 3, y * P + 1, 4 * P - 6, 2, W);
+  d.px(9 * P, -12 * P + 1, (x - 9) * P + 3, 4, K); d.px(x * P, -12 * P + 1, 4, 7 * P, K); d.r(x - 0.5, -5, 2, 3, K);
+  d.body(6, -12);
+}
+const PADDLE_X = 16;
+function drawWorkshop(d) {
+  d.r(5, -18, 21, 1, K); d.r(7, -19, 17, 1, K); d.r(10, -20, 11, 1, K); d.r(13, -21, 5, 1, K);
+  d.r(6, -17, 19, 17, K); d.r(8, -16, 15, 16, W);
+  d.r(9, -4, 11, 2, K); d.r(10, -2, 2, 2, K); d.r(17, -2, 2, 2, K);
+  d.r(11, -8, 6, 4, K); cut(d, 11, -8, 6, 4);
+  d.r(20, -6, 3, 6, K); d.body(20, -9);
+}
+function drawPress(d) {
+  d.r(10, -3, 13, 2, K); d.r(12, -4, 9, 1, K);
+  d.r(15, -18, 3, 10, K); d.r(14, -19, 5, 1, K);
+  d.r(10, -14, 1, 11, K); d.r(22, -14, 1, 11, K); d.r(9, -14, 15, 2, K); d.r(12, -8, 9, 2, K);
+  d.r(14, -11, 12, 1, K); d.r(25, -11, 1, 6, K);
+  for (let k = 0; k < 3; k++) d.r(32, -1 - k, 5, 1, k % 2 ? 3 : K);
+  d.body(26, -4);
+}
+const SHACK = ['##############', ' ############ ', ' ###......### ', ' #..........# ', ' #..........# ', ' ##........## ',
+  ' #####..##### ', ' #####..##### ', ' #####..##### ', ' ############ ', ' ####....#### ', ' ####....#### ', ' ####....#### ', ' ####....#### '];
+function drawShack(d) { SHACK.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') d.c(i, j - SHACK.length, K); else if (ch === '.') d.c(i, j - SHACK.length, W); })); }
+const PINE = { 1: { trunk: [1, 1], tiers: [{ v0: 0, h: 3, s: 0 }] },
+               big: { trunk: [3, 3], tiers: [{ v0: 0, h: 7, s: 3 }, { v0: 7, h: 6, s: 2 }, { v0: 13, h: 5, s: 1 }, { v0: 18, h: 4, s: 0 }] } };
+function pine(d, stage) {
+  const [w, h] = stage.trunk;
+  d.r(-(w - 1) / 2, -h, w, h, K);
+  for (const t of stage.tiers) for (let k = 0; k < t.h; k++) { const hw = t.s + (t.h - 1 - k); d.r(-hw, -h - t.v0 - 1 - k, 2 * hw + 1, 1, K); }
+}
+function drawPedestal(d) {
+  d.r(1, -4, 10, 4, K); d.r(2, -3, 8, 2, 2);
+  [2, 7].forEach(x => d.body(x, -7));
+}
+// Its bubbles, rising in the sky over it on a loop: the pedestal's work, where it is.
+function drawBubbles(g, st) {
+  const sx = v => Math.round(v * SC - st.cam), sy = v => Math.round(st.floor + v * SC), c4 = Math.round(CELL);
+  for (let k = 0; k < 3; k++) {
+    const age = (T + k * 1.6) % 4.8, big = k === 1, w = big ? 10 : 7, h = big ? 6 : 4;
+    const x0 = (AT.pedestal + (k % 2 ? 8.5 : 3.5)) * P - w * P / 2, y0 = Math.round(((-10 - h) * P - age * 24) / P) * P;
+    if (sy(y0) < 0) continue;
+    g.save(); g.globalAlpha = clamp01(age / 0.3) * clamp01((4.8 - age) / 0.4);
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+      if ((r === 0 || r === h - 1) && (c === 0 || c === w - 1)) continue;
+      const rim = r === 0 || r === h - 1 || c === 0 || c === w - 1;
+      g.fillStyle = PAL[rim ? 10 : (r > 0 && r < h - 1 && c > 0 && c < 2 + (hash2(r, k) % (w - 3))) ? 5 : 0];
+      g.fillRect(sx(x0 + c * P), sy(y0 + r * P), c4, c4);
+    }
+    g.restore();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The model: one camp, one purse, shared by both stages
+// ---------------------------------------------------------------------------
+// config/after.js, as it stands (AFTER_BUILDS, AFTER_UPGRADES, posts).
+const POST_REBEL0 = 12, POST_RATE = 1.15;
+const POST_DUST = [100, 150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1500];
+const BUILDS = {
+  mill:      { needs: [],                  bill: [['rebel', 40], ['dust', 500]] },
+  chipper:   { needs: [],                  bill: [['rebel', 50], ['dust', 600]] },
+  workshop:  { needs: ['mill'],            bill: [['rebel', 60], ['dust', 1000], ['spore', 150]] },
+  papermill: { needs: ['mill', 'chipper'], bill: [['rebel', 200], ['timber', 30], ['dust', 2500], ['spore', 400], ['shard', 120]] },
+  press:     { needs: ['papermill'],       bill: [['rebel', 250], ['timber', 40], ['dust', 4000], ['spore', 600], ['shard', 200]] }
+};
+const UPS = {
+  shout:  { card: 'pedestal', name: 'bigger speech', bill: [['rebel', 30], ['dust', 200]] },
+  axe:    { card: 'pedestal', name: 'axe', bill: [['rebel', 50], ['dust', 300]] },
+  blade:  { card: 'mill', name: 'second blade', bill: [['rebel', 80], ['timber', 20], ['dust', 1200], ['spore', 250]] },
+  heap:   { card: 'mill', name: 'bigger heap', bill: [['rebel', 60], ['timber', 10], ['dust', 800]] },
+  drum:   { card: 'chipper', name: 'second drum', bill: [['rebel', 70], ['timber', 15], ['dust', 1000], ['spore', 200]] },
+  spout:  { card: 'chipper', name: 'wider spout', bill: [['rebel', 90], ['timber', 20], ['dust', 1500], ['spore', 300]] }
+};
+const JOBS = { agitator: 'pedestal', sawyer: 'mill', feeder: 'chipper' };
+const CARD_NAME = { mill: 'saw mill', chipper: 'chipper', shack: 'shack', pedestal: 'pedestal', workshop: 'workshop', papermill: 'paper mill', press: 'press' };
+const BUILD_NAME = { mill: 'saw mill', chipper: 'chipper', workshop: 'workshop', papermill: 'paper mill', press: 'press' };
+const WAITS = { workshop: 'needs the saw mill', papermill: 'needs the saw mill or the chipper', press: 'needs the paper mill' };
+// The purse a mid act 3 yard might hold: enough for the mill's bigger heap,
+// short of its second blade (timber and crops), short of the workshop's crops.
+const PURSE0 = { rebel: 90, timber: 15, paper: 0, dust: 1500, spore: 120, shard: 40, spark: 0 };
+const ORDER = ['rebel', 'timber', 'paper', 'dust', 'spore', 'shard', 'spark'];
+const ACT = { rebel: 'rebel', timber: 'timber', paper: 'paper' };
+const MARK = { dust: '<i class="dust"></i>', spore: '<i class="spore"></i>', shard: '<i class="shard"></i>', spark: '<i class="spark"></i>' };
+let M;
+function resetModel() {
+  M = { purse: { ...PURSE0 }, posts: { agitator: 1, sawyer: 1, feeder: 0, woodcutter: 1 }, ups: {},
+        built: { mill: true, chipper: false, workshop: false, papermill: false, press: false, shack: true, pedestal: true },
+        raisedAt: {}, bought: [] };
+}
+resetModel();
+const postTotal = () => Object.values(M.posts).reduce((a, b) => a + b, 0);
+const fmt = n => n < 1000 ? String(n) : (n < 10000 ? (Math.round(n / 100) / 10) : Math.round(n / 1000)) + 'k';
+const words = s => s.split(' ').map(w => `<span class="w">${w}</span>`).join(' ');
+
+// A card's rows: the yard's row shape, cut down (rows.js).
+function rowsOf(card) {
+  const out = [];
+  for (const [job, at] of Object.entries(JOBS)) if (at === card) out.push({
+    key: 'post-' + job, kind: 'post', name: job, glyph: 'body',
+    bill: () => [['rebel', Math.round(POST_REBEL0 * Math.pow(POST_RATE, postTotal()))], ['dust', POST_DUST[Math.min(postTotal(), POST_DUST.length - 1)]]],
+    gain: () => `${M.posts[job]}&nbsp;→&nbsp;${M.posts[job] + 1} ${words(job + 's')}`,
+    done: () => false, dead: () => false, buy: () => { M.posts[job]++; }
+  });
+  for (const [k, u] of Object.entries(UPS)) if (u.card === card) out.push({
+    key: 'up-' + k, kind: 'up', name: u.name, glyph: k, rungs: 1, rung: () => (M.ups[k] ? 1 : 0),
+    bill: () => u.bill, gain: () => (M.ups[k] ? words('bought') : ''),
+    done: () => !!M.ups[k], dead: () => false, buy: () => { M.ups[k] = true; }
+  });
+  if (card === 'shack') for (const [st, b] of Object.entries(BUILDS)) out.push({
+    key: 'build-' + st, kind: 'build', name: BUILD_NAME[st], glyph: 'house', rungs: 1, rung: () => (M.built[st] ? 1 : 0),
+    bill: () => b.bill,
+    gain: () => (M.built[st] ? words(T - (M.raisedAt[st] ?? -99) < 3 ? 'raising' : 'standing') : !needsMet(st) ? words(WAITS[st]) : ''),
+    done: () => !!M.built[st], dead: () => !needsMet(st), buy: () => { M.built[st] = true; M.raisedAt[st] = T; }
+  });
+  return out;
+}
+const needsMet = st => { const n = BUILDS[st].needs; return !n.length || n.some(k => M.built[k]); };
+const canPay = u => u.bill().every(([c, n]) => M.purse[c] >= n);
+function buy(key, card) {
+  const u = rowsOf(card).find(r => r.key === key);
+  if (!u || u.done() || u.dead() || !canPay(u)) return false;
+  for (const [c, n] of u.bill()) M.purse[c] -= n;
+  u.buy(); M.bought.push(key);
+  renderAll();
+  return true;
+}
+
+// --- a glyph, a placeholder drawing a row (act 3's rows have none yet) -----------
+const GLYPHS = {
+  body:  ['.#####.', '.#...#.', '.#...#.', '.#...#.', '.#####.', '.#...#.', '.#...#.'],
+  blade: ['..###..', '.#...#.', '#..#..#', '#.###.#', '#..#..#', '.#...#.', '..###..'],
+  heap:  ['.......', '.......', '...#...', '..###..', '.#####.', '#######', '#######'],
+  shout: ['#####..', '#...#..', '#...#..', '#####..', '.#.....', '#......', '.......'],
+  axe:   ['..##...', '.###...', '..##...', '...#...', '...#...', '...#...', '...#...'],
+  drum:  ['.#####.', '#.....#', '#.#.#.#', '#.....#', '#.#.#.#', '#.....#', '.#####.'],
+  spout: ['#.....#', '##...##', '.#...#.', '.##.##.', '..#.#..', '..#.#..', '..#.#..'],
+  house: ['...#...', '..###..', '.#####.', '#######', '.#...#.', '.#.#.#.', '.#.#.#.']
+};
+function glyphCanvas(name, off) {
+  const cv = document.createElement('canvas'), s = 4, dpr = window.devicePixelRatio || 1;
+  cv.width = 28 * dpr; cv.height = 28 * dpr;
+  const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  g.fillStyle = off ? getComputedStyle(document.documentElement).getPropertyValue('--ink-off') : PAL[10];
+  (GLYPHS[name] || GLYPHS.body).forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') g.fillRect(c * s, r * s, s, s); }));
+  return cv;
+}
+
+// --- a tile, as the yard's builder writes one (shop.js / shelf.css) ----------------
+function tileHtml(u) {
+  const short = !u.done() && !canPay(u), off = u.dead(), done = u.done();
+  const bill = u.bill().slice().sort((a, b) => ORDER.indexOf(a[0]) - ORDER.indexOf(b[0]));
+  const cost = bill.map(([c, n]) => `<span class="${M.purse[c] >= n ? 'have' : 'short'}">${MARK[c] || `<span class="say">${words(ACT[c])}</span>`} ${fmt(n)}</span>`).join('');
+  const ladder = u.rungs ? `<i class="ladder"><b>${Array.from({ length: u.rungs }, (_, i) => `<i class="${i < u.rung() ? 'on' : ''}"></i>`).join('')}</b></i>` : '';
+  const g = u.gain();
+  return `<button type="button" class="tile${short ? ' short' : ''}${off ? ' off' : ''}${done ? ' done' : ''}" data-key="${u.key}" data-glyph="${u.glyph}">`
+    + `<span class="pic"></span><span class="name"><i class="what">${words(u.name)}</i>${ladder}</span>`
+    + `<span class="gain${off ? ' why' : ''}">${g || '&nbsp;'}</span>`
+    + `<span class="tag">${done ? `<span class="cost"><span>${words(u.kind === 'build' ? 'built' : 'bought')}</span></span>` : `<span class="cost">${cost}</span>`}</span></button>`;
+}
+function fillGlyphs(root) { root.querySelectorAll('.tile').forEach(t => { const p = t.querySelector('.pic'); p.innerHTML = ''; p.appendChild(glyphCanvas(t.dataset.glyph, t.classList.contains('off') || t.classList.contains('done'))); }); }
+// The rows as the yard's board shelves them: a sign a section, a plank under each.
+function shelvesHtml(card, cols) {
+  const rows = rowsOf(card);
+  const sects = card === 'shack' ? [['build', rows]]
+    : [['posts', rows.filter(r => r.kind === 'post')], ['upgrades', rows.filter(r => r.kind === 'up')]].filter(s => s[1].length);
+  return sects.map(([title, rs], i) => `<div class="rows" style="--cols:${cols}">`
+    + `<div class="sect${i ? ' more' : ''}">${words(title)}</div>${rs.map(tileHtml).join('')}</div>`).join('');
+}
+const stripHtml = rs => `<div class="rows strip" style="--cols:${rs.length}">${rs.map(tileHtml).join('')}</div>`;
+
+// --- the work face: the built card's part (aftercard.js), small ------------------
+function drawWorkFace(cv, card, members) {
+  const dpr = window.devicePixelRatio || 1, w = 168, h = members ? 140 : 96;
+  if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + 'px'; cv.style.height = h + 'px'; }
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false;
+  g.fillStyle = PAL[0]; g.fillRect(0, 0, w, h);
+  const C = (c, r, t) => { g.fillStyle = PAL[t]; g.fillRect(Math.round(c) * 6, Math.round(r) * 6, 6, 6); };
+  if (card === 'mill') {
+    const cx = 8, cy = 6, R = 5, step = 2 * Math.PI / 16, aq = Math.round((T * 2) / step) * step;
+    for (let r = cy - R - 1; r <= cy + R + 1; r++) for (let c = cx - R - 1; c <= cx + R + 1; c++) { const d = Math.hypot(c - cx, r - cy); if (d >= R - 0.6 && d <= R + 0.45) C(c, r, 10); }
+    for (let k = 0; k < 4; k++) { const s = aq + k * Math.PI / 2; for (let d = 1; d < R; d++) C(cx + Math.round(Math.cos(s) * d), cy + Math.round(Math.sin(s) * d), 8); }
+    C(cx, cy, 10); C(cx + Math.round(Math.cos(aq) * (R + 0.6)), cy + Math.round(Math.sin(aq) * (R + 0.6)), 6);
+    const drop = Math.round(1 + Math.sin(aq)), fed = (T * 0.15) % 1;
+    for (let c = 17; c <= 26; c++) C(c, 0, 10);
+    for (let r = 1; r <= 8; r++) { C(17, r, 10); C(26, r, 10); }
+    const head = Math.round(18 + fed * 9 + 3);
+    for (let c = Math.max(18, head - 7); c <= Math.min(25, head); c++) { C(c, 5, 8); C(c, 6, c < 22 ? (c % 3 ? 2 : 6) : 3); }
+    for (let r = 1 + drop; r <= 4 + drop; r++) C(21, r, 10);
+    for (let c = 19; c <= 23; c++) C(c, drop, 10);
+    for (let c = 17; c <= 26; c++) C(c, 8, 10);
+    for (let k = 0; k < 4; k++) for (let c = 18 + k * 2; c <= 19 + k * 2; c++) { C(c, 10, k < Math.floor(fed * 4) ? 10 : 2); C(c, 11, k < Math.floor(fed * 4) ? 10 : 2); }
+    // the ghost hand's way round, dotted, and its grab
+    const a = (T % 2.4) / 2.4 * 2 * Math.PI;
+    for (let k = 0; k < 20; k++) { const b = k / 20 * 2 * Math.PI; g.fillStyle = PAL[5]; g.fillRect(Math.round(cx + Math.cos(b) * (R + 2)) * 6 + 2, Math.round(cy + Math.sin(b) * (R + 2)) * 6 + 2, 2, 2); }
+    g.globalAlpha = 0.6; g.fillStyle = PAL[10];
+    const hx = Math.round(cx + Math.cos(a) * R) * 6, hy = Math.round(cy + Math.sin(a) * R) * 6;
+    g.fillRect(hx, hy, 8, 8); g.fillStyle = PAL[0]; g.fillRect(hx + 2, hy + 2, 4, 4); g.globalAlpha = 1;
+  } else {
+    // the chipper's button, small
+    const bx = 7, by = 6, br = 4;
+    for (let r = by - br - 1; r <= by + br + 2; r++) for (let c = bx - br - 1; c <= bx + br + 1; c++) { const d = Math.hypot(c - bx, r - by); if (d <= br - 0.6) C(c, r, 1); else if (d <= br + 0.45) C(c, r, 10); }
+    for (let c = 14; c <= 21; c++) C(c, 10, 10);
+    for (let r = 3; r <= 11; r++) for (let c = 22; c <= 26; c++) C(c, r, r === 3 || r === 11 || c === 22 || c === 26 ? 10 : 1);
+  }
+  // the speed gauge along the foot (CARD_GAUGE_ROW 14, 24 cells)
+  const v = 0.35 + 0.25 * Math.sin(T * 1.3), n = 24, kk = Math.round(clamp01(v) * n);
+  for (let i = 0; i < n; i++) C(1 + i, 14, i < kk ? 4 + Math.round(i / (n - 1) * 6) : 2);
+  for (let j = -1; j <= 1; j++) C(n + 1, 14 + j, 10);
+  if (!members) return;
+  // C: the station's members, a slot a post -- filled while someone holds it
+  const job = Object.keys(JOBS).find(j => JOBS[j] === card), have = M.posts[job] || 0;
+  g.fillStyle = PAL[2]; g.fillRect(0, 99, w, 2);
+  g.font = '11px "Courier Prime", "Courier New", monospace'; g.fillStyle = PAL[6]; g.textBaseline = 'alphabetic';
+  try { g.letterSpacing = '1px'; } catch (_) {}
+  g.fillText((job + 's*').toUpperCase(), 6, 118);
+  for (let i = 0; i < Math.max(4, have + 1); i++) {
+    const x = 6 + i * 24, y = 124;
+    if (i < have) { g.fillStyle = PAL[10]; g.fillRect(x, y, 12, 12); g.fillStyle = PAL[0]; g.fillRect(x + 2, y + 2, 8, 8); }
+    else { g.fillStyle = PAL[4]; for (let k = 0; k < 12; k += 3) { g.fillRect(x + k, y, 2, 1); g.fillRect(x + k, y + 11, 2, 1); g.fillRect(x, y + k, 1, 2); g.fillRect(x + 11, y + k, 1, 2); } }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// A stage: a camp, a camera, a card, a sheet
+// ---------------------------------------------------------------------------
+let OPT = 'c';
+const stages = {};
+function makeStage(id, w, h, phone) {
+  const el = document.getElementById(id), cv = el.querySelector('canvas');
+  el.style.width = w + 'px'; el.style.height = h + 'px';
+  const st = { id, el, cv, W: w, H: h, floor: h - 40, phone, cam: 0, camT: 0, open: null, tab: null };
+  // the world layer: slid by the camera each frame, so the card rides with its station
+  st.layer = document.createElement('div'); st.layer.className = 'layer'; el.appendChild(st.layer);
+  st.card = document.createElement('div'); st.card.className = 'card';
+  st.card.innerHTML = '<div class="tabs"></div><div class="paper"><div class="head"></div><div class="body"></div><div class="tail"></div></div>';
+  st.layer.appendChild(st.card);
+  st.panel = document.createElement('div'); st.panel.className = 'panel';
+  el.appendChild(st.panel);
+  st.purse = document.createElement('div'); st.purse.className = 'purse' + (phone ? ' row' : '');
+  el.appendChild(st.purse);
+  stages[id] = st;
+  wire(st);
+  return st;
+}
+const tabsOf = key => key === 'shack' ? ['build'] : key === 'pedestal' ? ['upgrades'] : ['work', 'upgrades'];
+const site = (st, key, cam = st.cam) => { const s = SITE[key]; return { x: s.part * CELL - cam, top: st.floor - s.h * CELL, x0: s.x0 * CELL - cam, x1: (s.x1 + 1) * CELL - cam }; };
+const maxCam = st => WORLD_CELLS * CELL - st.W;
+// Where the camera wants to be with this card open: the station in the
+// middle, or, while (B)'s sheet stands at the left, to the right of it.
+function camFor(st, key) {
+  const s = SITE[key], mid = s.part * CELL;
+  let frac = 0.5;
+  if (OPT === 'b' && !st.phone && st.tab !== 'work') frac = 0.72;
+  if (key === 'pedestal') frac = st.phone ? 0.78 : 0.7;
+  return clamp(mid - st.W * frac, 0, maxCam(st));
+}
+function openCard(st, key) {
+  if (key && !M.built[key]) key = null;
+  if (key === st.open) return;
+  const was = st.open;
+  st.open = key; st.tab = key ? tabsOf(key)[0] : null;
+  if (key) st.camT = camFor(st, key);
+  if (was && key) {
+    // a swap: the card fades and is built again where it is wanted
+    st.card.classList.add('leaving'); st.card.classList.remove('on');
+    setTimeout(() => { st.card.classList.remove('leaving'); build(st, true); requestAnimationFrame(() => st.card.classList.add('on')); }, 160);
+    hidePanel(st);
+  } else if (key) { build(st, true); requestAnimationFrame(() => requestAnimationFrame(() => st.card.classList.add('on'))); }
+  else { st.card.classList.add('leaving'); st.card.classList.remove('on'); hidePanel(st); setTimeout(() => st.card.classList.remove('leaving'), 260); }
+}
+function setTab(st, tab) {
+  if (!st.open || st.tab === tab || !tabsOf(st.open).includes(tab)) return;
+  st.tab = tab;
+  st.camT = camFor(st, st.open);
+  layoutCard(st, false);
+}
+// Builds the card's faces for its station and option; `layoutCard` then sizes it.
+function build(st, fresh) {
+  const key = st.open; if (!key) return;
+  const card = st.card, tabs = tabsOf(key);
+  card.querySelector('.tabs').innerHTML = tabs.map(t => `<button type="button" class="tab" data-tab="${t}">${words(t)}</button>`).join('');
+  card.querySelector('.head').innerHTML = words(CARD_NAME[key]);
+  const body = card.querySelector('.body');
+  const keepScroll = [...body.querySelectorAll('.face')].map(f => [f.dataset.face, f.scrollLeft, f.scrollTop]);
+  const rows = rowsOf(key), posts = rows.filter(r => r.kind === 'post'), named = rows.filter(r => r.kind !== 'post');
+  const cols = n => Math.max(1, Math.min(n, st.phone ? 2 : 3));
+  let html = '';
+  for (const t of tabs) {
+    let inner = '';
+    if (t === 'work') {
+      if (OPT === 'c') inner = `<div class="workface"><canvas class="part"></canvas>${posts.length ? stripHtml(posts) : ''}</div>`;
+      else inner = `<div class="workface"><canvas class="part"></canvas></div>`;
+    } else if (OPT === 'a') inner = shelvesHtml(key, cols(Math.max(...(key === 'shack' ? [rows.length] : [posts.length, named.length]))));
+    else if (OPT === 'b') inner = '';
+    else inner = stripHtml(tabs.includes('work') ? named : rows);
+    html += `<div class="face" data-face="${t}">${inner}</div>`;
+  }
+  body.innerHTML = html;
+  fillGlyphs(body);
+  body.querySelectorAll('canvas.part').forEach(cv => drawWorkFace(cv, key, OPT === 'c'));
+  for (const [f, l, tp] of keepScroll) { const el = body.querySelector(`.face[data-face="${f}"]`); if (el) { el.scrollLeft = l; el.scrollTop = tp; } }
+  if (OPT === 'b') buildPanel(st);
+  layoutCard(st, fresh);
+}
+// Sizes and seats the card: the body eases to the shown face's size, the
+// card to its spot over the station, the tail to the station's part.
+function layoutCard(st, fresh) {
+  const key = st.open; if (!key) return;
+  const card = st.card, body = card.querySelector('.body'), s = site(st, key, st.camT);
+  const roomUp = s.top - 12 - 8 - 19 - 2 * 2 - 4 - 22 - 6 - (st.phone && OPT !== 'b' ? 38 : 0);
+  const maxW = st.W - 12 - 12;
+  const sheetMode = OPT === 'b' && st.tab !== 'work';
+  card.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === st.tab));
+  let w = 0, h = 0;
+  body.querySelectorAll('.face').forEach(f => {
+    const on = f.dataset.face === st.tab;
+    f.classList.toggle('on', on && !sheetMode);
+    if (!on) return;
+    f.classList.remove('scroll-x', 'scroll-y'); f.style.maxWidth = ''; f.style.maxHeight = '';
+    let fw = f.offsetWidth, fh = f.offsetHeight;
+    if (fw > maxW) { f.classList.add('scroll-x'); f.style.maxWidth = maxW + 'px'; fw = maxW; fh = f.offsetHeight; }
+    if (fh > roomUp) { f.classList.add('scroll-y'); f.style.maxHeight = roomUp + 'px'; fh = roomUp; fw = f.offsetWidth; }
+    w = fw; h = fh;
+  });
+  if (OPT === 'c') body.querySelectorAll('.face').forEach(f => { if (f.dataset.face !== st.tab) h = Math.max(h, Math.min(roomUp, f.offsetHeight)); });
+  if (sheetMode) { const work = body.querySelector('.face[data-face="work"]'); w = work ? work.offsetWidth : 168; h = 0; }
+  if (!w) w = 168;
+  const cw = w + 4 * 2 + 2 * 2;
+  if (fresh) { body.style.transition = 'none'; card.style.transition = 'none'; }
+  body.style.width = w + 'px'; body.style.height = h + 'px';
+  let left;
+  if (SITE[key].aside) left = clamp(s.x0 - 18 - cw, 6, st.W - cw - 6);
+  else left = clamp(s.x - cw / 2, 6, st.W - cw - 6);
+  card.style.left = Math.round(left + st.camT) + 'px';   // in world px: the layer under it carries the camera
+  card.dataset.wx = Math.round(left + st.camT);
+  card.style.bottom = Math.round(st.H - (s.top - 12 - 8)) + 'px';
+  const tail = card.querySelector('.tail');
+  tail.style.left = Math.round(SITE[key].aside ? cw - 16 : clamp(s.x - left, 16, cw - 16)) + 'px';
+  if (fresh) { void card.offsetWidth; body.style.transition = ''; card.style.transition = ''; }
+  if (OPT === 'b') { if (sheetMode) showPanel(st); else hidePanel(st); }
+}
+
+// --- (B): the yard's board sheet, beside the handle ---------------------------------
+function buildPanel(st) {
+  const key = st.open, rows = rowsOf(key);
+  const nPosts = rows.filter(r => r.kind === 'post').length, nNamed = rows.length - nPosts;
+  const cols = st.phone ? 2 : Math.min(3, key === 'shack' ? rows.length : Math.max(nPosts, nNamed));
+  const keep = st.panel.querySelector('.sheet')?.scrollTop || 0;
+  st.panel.innerHTML = (st.phone ? `<div class="grip">${words(CARD_NAME[key])}</div>` : '')
+    + `<div class="sheet"><div class="title">${words(CARD_NAME[key])}</div>${shelvesHtml(key, cols)}</div>`;
+  st.panel.classList.toggle('bottom', st.phone);
+  fillGlyphs(st.panel);
+  const sheet = st.panel.querySelector('.sheet');
+  sheet.style.maxHeight = (st.phone ? Math.round(st.H * 0.55) : st.H - 24) + 'px';
+  sheet.scrollTop = keep;
+}
+function showPanel(st) {
+  if (st.phone) { st.panel.classList.add('on'); return; }
+  // stood beside the handle, its foot level with the handle's, on the side with room
+  const s = site(st, st.open), pw = st.panel.offsetWidth || 480;
+  const cardLeft = (+st.card.dataset.wx) - st.cam;
+  let left = cardLeft - 14 - pw;
+  if (left < 8) left = Math.min(st.W - pw - 8, cardLeft + st.card.offsetWidth + 14);
+  st.panel.style.left = Math.round(Math.max(8, left)) + 'px';
+  st.panel.style.top = '12px';
+  st.panel.classList.add('on');
+}
+function hidePanel(st) { st.panel.classList.remove('on'); }
+
+function renderPurse(st) {
+  st.purse.innerHTML = ORDER.map(c => `<span class="coin">${MARK[c] || `<span class="say">${words(ACT[c])}</span>`}<b>${fmt(M.purse[c])}</b></span>`).join('');
+}
+function renderAll() {
+  for (const st of Object.values(stages)) { renderPurse(st); if (st.open) build(st, false); }
+}
+
+// --- input: a click on a station opens its card, on the sky closes it ---------------
+function siteAt(st, x, y) {
+  for (const [k, s] of Object.entries(SITE)) {
+    if (!M.built[k]) continue;
+    const x0 = s.x0 * CELL - st.cam, x1 = (s.x1 + 1) * CELL - st.cam, top = st.floor - (s.h + 3) * CELL;
+    if (x >= x0 && x < x1 && y >= top && y <= st.floor + 4) return k;
+  }
+  return null;
+}
+function wire(st) {
+  let drag = null;
+  st.el.addEventListener('pointerdown', e => {
+    const t = e.target;
+    if (t.closest('.card, .panel, .purse')) return;
+    const r = st.el.getBoundingClientRect();
+    drag = { x: e.clientX, cam: st.cam, moved: false, px: e.clientX - r.left, py: e.clientY - r.top };
+  });
+  st.el.addEventListener('pointermove', e => {
+    if (!drag) return;
+    if (Math.abs(e.clientX - drag.x) > 6) drag.moved = true;
+    if (drag.moved) { st.cam = st.camT = clamp(drag.cam - (e.clientX - drag.x), 0, maxCam(st)); }
+  });
+  st.el.addEventListener('pointerup', () => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (d.moved) return;
+    openCard(st, siteAt(st, d.px, d.py));
+  });
+  st.el.addEventListener('click', e => {
+    const tab = e.target.closest('.tab');
+    if (tab) { setTab(st, tab.dataset.tab); return; }
+    const tile = e.target.closest('.tile');
+    if (tile && st.open) buy(tile.dataset.key, st.open);
+  });
+}
+
+// --- the frame -----------------------------------------------------------------
+function drawStage(st) {
+  const dpr = window.devicePixelRatio || 1, cv = st.cv;
+  if (cv.width !== st.W * dpr) { cv.width = st.W * dpr; cv.height = st.H * dpr; cv.style.width = st.W + 'px'; cv.style.height = st.H + 'px'; }
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false;
+  g.fillStyle = PAL[0]; g.fillRect(0, 0, st.W, st.H);
+  const c0 = Math.floor(st.cam / CELL), c1 = Math.ceil((st.cam + st.W) / CELL);
+  for (let c = c0; c <= c1; c++) for (let r = 0; r * CELL + st.floor < st.H; r++) { g.fillStyle = PAL[toneAt(c, r, FLOOR_TONES)]; g.fillRect(Math.round(c * CELL - st.cam), st.floor + r * CELL, CELL, CELL); }
+  pine(frame(g, st, PLOT(0)), PINE.big); pine(frame(g, st, PLOT(1)), PINE.big); pine(frame(g, st, PLOT(2)), PINE[1]);
+  const raise = k => clamp01((T - (M.raisedAt[k] ?? -99)) / 3);
+  const drawIf = (k, fn) => { if (!M.built[k]) return; const a = raise(k); g.save(); g.globalAlpha = 0.15 + 0.85 * a; fn(); g.restore(); };
+  drawIf('mill', () => drawMill(frame(g, st, AT.mill)));
+  drawIf('chipper', () => drawChipper(frame(g, st, AT.chipper, 36)));
+  drawIf('papermill', () => drawPapermill(frame(g, st, AT.papermill)));
+  drawIf('workshop', () => drawWorkshop(frame(g, st, AT.workshop)));
+  drawIf('press', () => drawPress(frame(g, st, AT.press)));
+  drawShack(frame(g, st, AT.shack));
+  drawPedestal(frame(g, st, AT.pedestal));
+  drawBubbles(g, st);
+  // the leader: dotted, from the card's tail to its station's top
+  if (st.open && st.card.classList.contains('on')) {
+    const er = st.el.getBoundingClientRect(), tr = st.card.querySelector('.tail').getBoundingClientRect(), s = site(st, st.open);
+    const x0 = tr.left + tr.width / 2 - er.left, y0 = tr.bottom - er.top + 2, x1 = SITE[st.open].aside ? s.x0 + 6 : s.x, y1 = s.top - 3;
+    const n = Math.max(1, Math.floor(Math.hypot(x1 - x0, y1 - y0) / 4));
+    g.fillStyle = PAL[5];
+    for (let i = 0; i < n; i++) g.fillRect(Math.round(x0 + (x1 - x0) * i / n) - 1, Math.round(y0 + (y1 - y0) * i / n), 2, 2);
+  }
+}
+let last = performance.now();
+function frameLoop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
+  PAL = isDark() ? DARK : GREY;
+  for (const st of Object.values(stages)) {
+    st.cam += (st.camT - st.cam) * (1 - Math.exp(-dt * 9));
+    if (Math.abs(st.camT - st.cam) < 0.3) st.cam = st.camT;
+    st.layer.style.transform = `translateX(${-Math.round(st.cam)}px)`;
+    if (st.open) {
+      st.card.querySelectorAll('canvas.part').forEach(cv => drawWorkFace(cv, st.open, OPT === 'c'));
+      if (OPT === 'b' && st.panel.classList.contains('on') && !st.phone) showPanel(st);
+    }
+    drawStage(st);
+  }
+  requestAnimationFrame(frameLoop);
+}
+
+// --- the page's buttons ---------------------------------------------------------
+function setOpt(o) {
+  OPT = o;
+  document.querySelectorAll('[data-opt]').forEach(b => b.classList.toggle('on', b.dataset.opt === o));
+  document.querySelectorAll('#opts > div').forEach(d => d.classList.toggle('on', d.dataset.o === o));
+  for (const st of Object.values(stages)) { hidePanel(st); if (st.open) { st.tab = tabsOf(st.open)[0]; build(st, true); st.camT = camFor(st, st.open); } }
+}
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  document.querySelectorAll('[data-theme-set]').forEach(b => b.classList.toggle('on', b.dataset.themeSet === t));
+  PAL = isDark() ? DARK : GREY;
+  renderAll();
+}
+document.querySelectorAll('[data-opt]').forEach(b => b.addEventListener('click', () => setOpt(b.dataset.opt)));
+document.querySelectorAll('[data-theme-set]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.themeSet)));
+document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => { for (const st of Object.values(stages)) openCard(st, b.dataset.open || null); }));
+document.getElementById('refill').addEventListener('click', () => { M.purse = { ...PURSE0 }; renderAll(); });
+
+const desk = makeStage('desk', 966, 560, false);
+const phone = makeStage('phone', 390, 640, true);
+desk.cam = desk.camT = clamp(SITE.mill.part * CELL - desk.W * 0.5, 0, maxCam(desk));
+phone.cam = phone.camT = clamp(SITE.mill.part * CELL - phone.W * 0.5, 0, maxCam(phone));
+setOpt('c');
+setTheme(isDark() ? 'dark' : 'light');
+requestAnimationFrame(frameLoop);
+
+// --- handles for the check (check.mjs drives the page with real input) ------------
+const rel = (el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height, top: r.top, left: r.left }; };
+window.__mock = {
+  option: setOpt, theme: setTheme,
+  reset() { resetModel(); for (const st of Object.values(stages)) { st.open = null; st.card.classList.remove('on'); hidePanel(st); } renderAll(); },
+  // a client point on a station, after panning to it
+  site(id, key) { const st = stages[id]; st.cam = st.camT = camFor(st, key); const s = site(st, key), r = st.el.getBoundingClientRect();
+    return { x: r.left + (s.x0 + s.x1) / 2, y: r.top + s.top + (st.floor - s.top) / 2 }; },
+  tab(id, t) { const b = stages[id].card.querySelector(`.tab[data-tab="${t}"]`); return b && rel(b); },
+  tile(id, key) { const st = stages[id], b = (st.panel.classList.contains('on') ? st.panel : st.card).querySelector(`.tile[data-key="${key}"]`); return b && rel(b); },
+  state(id) { const st = stages[id]; const f = st.card.querySelector('.face.on');
+    return { open: st.open, tab: st.tab, cardOn: st.card.classList.contains('on'), face: f && f.dataset.face, faceOpacity: f && +getComputedStyle(f).opacity,
+             body: st.card.querySelector('.body').getBoundingClientRect().height, panel: st.panel.classList.contains('on') }; },
+  purse: () => ({ ...M.purse }), bought: () => M.bought.slice(),
+  rect(id) { return rel(stages[id].el); }
+};
+</script>
+</body>
+</html>
