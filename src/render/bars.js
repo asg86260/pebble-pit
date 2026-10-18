@@ -268,10 +268,11 @@ export function drawWorkBars() {
   }
 }
 
-// The shop tile's drift (shelf.css, `shelf-sway-*`), in whole cells held
-// between steps: each axis two sines summed, one on the glyph's own clock and
-// one at an incommensurate multiple of it, so the path never repeats, and
-// rounded to cells so the stack stays on the lattice. The rate, the
+// The shop tile's drift (shelf.css, `shelf-sway-*`): each axis two sines
+// summed, one on the glyph's own clock and one at an incommensurate multiple
+// of it, so the path never repeats. Free of the lattice, as the tile's is --
+// a glyph that steps a cell at a time reads as ticking, not floating; the
+// painter still lays it on whole device pixels (`onPixel`). The rate, the
 // direction and the phase are hashed off the site and the row, so a stack
 // never breathes in unison.
 export function drift(name) {
@@ -280,6 +281,6 @@ export function drift(name) {
   const dir = (h >> 10) & 1 ? -1 : 1;
   const p = dir * now() / (SHELF_FLOAT_MS * rate) + ((h >> 11) % 1000) / 1000;
   const wave = k => Math.sin(Math.PI * 2 * p * k);
-  return [Math.round(BUILD_DRIFT * (wave(1) - wave(1 / 1.618)) / 2) * P,
-          Math.round(BUILD_DRIFT * (-wave(1) - wave(1 / 0.73)) / 2) * P];
+  return [BUILD_DRIFT * (wave(1) - wave(1 / 1.618)) / 2 * P,
+          BUILD_DRIFT * (-wave(1) - wave(1 / 0.73)) / 2 * P];
 }

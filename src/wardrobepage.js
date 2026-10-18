@@ -367,7 +367,8 @@ function stacked(box, swap, h) {
   let sum = 0, n = 0;
   for (const c of box.children) {
     if (c.hidden || !c.getClientRects().length || getComputedStyle(c).position === 'absolute') continue;
-    sum += c === swap ? h : c.getBoundingClientRect().height;
+    const cs = getComputedStyle(c);
+    sum += (c === swap ? h : c.getBoundingClientRect().height) + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
     n++;
   }
   return sum + Math.max(0, n - 1) * (parseFloat(getComputedStyle(box).rowGap) || 0);
