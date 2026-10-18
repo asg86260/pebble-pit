@@ -23,7 +23,6 @@ export const AFTERLIFE_ON = env.VITE_AFTERLIFE === '1';
 // has no drawing yet to size them against.
 export const AFTER_GAP = P * 40;           // world px of sky between the yard's top and the cloud floor's underside (default)
 export const AFTER_H = P * 120;            // the place's top to its cloud floor (default)
-export const AFTER_W = P * 572;            // across: grove, camp, God's yard, the stair (sized to the layout below, the mock's layout A)
 export const AFTER_FLOOR_MARGIN = P * 9;   // the cloud floor stands this far up off the window's foot (default; the deep's)
 // The cloud floor (render/after/floor.js; docs/mocks/act3-place-2026-10-18,
 // floor A, the billow edge): the walking line itself billows in puffs of
@@ -89,7 +88,26 @@ export const AFTER_STOCK = ['logs', 'chiplogs', 'timber', 'sawdust', 'paper', 's
 export const AFTER_GROVE_X0 = P * 12;      // the grove's first plot's left, clear of the counter in the view's corner
 export const AFTER_PLOTS0 = 1;             // plots the grove starts with, a grown tree in it (call 10, the owner's)
 export const AFTER_PLOT_MAX = 4;           // ...and the most its card clears
-export const AFTER_PLOT_STEP = P * 16;     // across a plot: a grown pine's foot is fifteen cells
+// The grove's pine, a stage a row (render/after/pine.js draws it, after/grove.js
+// clicks it, after/place.js lays it out): its trunk [width, height] in cells,
+// and its tiers { v0, h, s }: a tier's foot v0 cells over the top of the
+// trunk, h rows tall, its top row 2s+1 wide. The big pine (the grove's bigger
+// trees) is the grown one with a tier more under it.
+export const AFTER_PINE = {
+  1: { trunk: [1, 1], tiers: [{ v0: 0, h: 3, s: 0 }] },
+  2: { trunk: [1, 1], tiers: [{ v0: 0, h: 4, s: 1 }, { v0: 4, h: 3, s: 0 }] },
+  3: { trunk: [3, 2], tiers: [{ v0: 0, h: 6, s: 2 }, { v0: 6, h: 5, s: 1 }, { v0: 11, h: 4, s: 0 }] },
+  big: { trunk: [3, 3], tiers: [{ v0: 0, h: 7, s: 3 }, { v0: 7, h: 6, s: 2 }, { v0: 13, h: 5, s: 1 }, { v0: 18, h: 4, s: 0 }] }
+};
+// A plot is as wide as the big pine's foot, its widest row (the bottom
+// tier's bottom row, h - 1 + s cells either side of the trunk), and a gap,
+// so the biggest trees stand clear of each other.
+const BIG_FOOT = (t => 2 * (t.h - 1 + t.s) + 1)(AFTER_PINE.big.tiers[0]);
+export const AFTER_PLOT_GAP = 2;           // cells of floor between two big pines' feet
+export const AFTER_PLOT_STEP = P * (BIG_FOOT + AFTER_PLOT_GAP);
+// The grove's end, in cells: everything right of it is laid off it, so a
+// wider grove moves the camp, God's yard and the stair along with it.
+const GROVE_END = AFTER_GROVE_X0 / P + AFTER_PLOT_MAX * AFTER_PLOT_STEP / P;
 // The members waiting are our crowd behind the camp (render/aftercrowd.js,
 // OURS_X0 to the pedestal): a member walking out of God's yard walks into its
 // front at the end nearest God's yard, and one going to a post steps out of
@@ -99,19 +117,20 @@ export const AFTER_JOIN_FADE_S = 0.5;
 // A pile's count stands on a plate of paper this many screen px proud of its digits.
 export const AFTER_COUNT_PAD = 2;
 // The camp's stations, left to right (layout A, docs/mocks/act3-place-2026-10-18):
-// each the left edge of its ground in cells off the place's left, its piles
+// each the left edge of its ground in cells off the place's left (laid off
+// the grove's end), its piles
 // and its drawing laid off that (after/place.js, `ART`). The mill nearest the
 // grove and the chipper turned to face it, the sawdust heap between them
-// (both tip onto it), the shack, the camp's waiting ground, and the pedestal
+// (both tip onto it), the shack, and the pedestal
 // nearest God's yard, facing it, with open floor past it for the walk across.
 export const AFTER_STATIONS = {
-  mill:      { at: 88 },
-  chipper:   { at: 133 },
-  papermill: { at: 165 },
-  workshop:  { at: 196 },
-  press:     { at: 226 },
-  shack:     { at: 267 },
-  pedestal:  { at: 330 }
+  mill:      { at: GROVE_END + 12 },
+  chipper:   { at: GROVE_END + 57 },
+  papermill: { at: GROVE_END + 89 },
+  workshop:  { at: GROVE_END + 120 },
+  press:     { at: GROVE_END + 150 },
+  shack:     { at: GROVE_END + 191 },
+  pedestal:  { at: GROVE_END + 254 }
 };
 // The pedestal is a lump of the cloud floor pushed up, this many cells high.
 export const AFTER_PEDESTAL_H = 4;
@@ -127,7 +146,7 @@ export const AFTER_BUILD_PIECE_S = 3;      // a builder's piece
 // The crowd field: files across God's yard, the near ranks drawn as bodies
 // (a soul and its eight rim cells, three cells square) and the far ranks a
 // cell a soul, thinning back up the screen.
-export const CROWD_X0 = P * 368;           // the first file's left, past the walk across from the pedestal
+export const CROWD_X0 = P * (GROVE_END + 292);   // the first file's left, past the walk across from the pedestal
 export const CROWD_FILES = 40;
 export const CROWD_PITCH = P * 4;          // across a file
 export const CROWD_NEAR = 5;               // ranks drawn as bodies
@@ -142,7 +161,9 @@ export const AFTER_KIN_SHARE = 0.15;       // souls of the player's own lines, a
 export const AFTER_KIN_PIECES = 3;         // ...up to this many pieces
 export const AFTER_RISE_S = 30;            // a soul rising into the back of the crowd (the spec's "a soul every half-minute")
 export const AFTER_WALL_STEP = P * 4;      // a poster's slot along the fence at the crowd's front
-export const AFTER_STAIR_X = P * 568;      // the stair's head, the throne's ground
+export const AFTER_STAIR_X = P * (GROVE_END + 492);   // the stair's head, the throne's ground
+// Across the whole place: grove, camp, God's yard, the stair (the mock's layout A).
+export const AFTER_W = AFTER_STAIR_X + P * 4;
 export const AFTER_STAIR_W = P * 36;       // the stair's run, foot to head
 export const AFTER_STAIR_RISE = P * 50;    // how high the throne stands off the floor
 // A station's posts: a stake each along its roof, filled black while a member
@@ -174,7 +195,7 @@ export const AFTER_AGITATE_REBEL = 1;
 
 // --- the grove ---
 // A tree's logs, and a big one's (planted after the grove's "bigger trees");
-// its shape is the drawing's (after/place.js, `PINE`).
+// its shape is AFTER_PINE, above.
 export const AFTER_LOGS_A_TREE = 3;
 export const AFTER_LOGS_BIG_TREE = 5;
 export const AFTER_GROW_S_UP = 45;         // seconds a growth stage with the grove's "faster growth"

@@ -7,7 +7,7 @@
 // takes hold of the saw. The plots' shapes are the setup these checks are
 // not about, set on the act's state.
 import { group, ok, run, yard, P } from './helpers.mjs';
-import { GREY } from '../src/config.js';
+import { GREY, AFTER_PLOT_GAP } from '../src/config.js';
 import { afterFloor, plotX } from '../src/after/place.js';
 import { treeAt, stumpAt } from '../src/after/grove.js';
 import { gestureDown, gestureUp, gestureView } from '../src/after/gestures.js';
@@ -43,18 +43,23 @@ function inked() {
 
 group('a press lands on a pine and a stump exactly where they are drawn', async () => {
   up();
-  S.after.plots = [plot(), plot({ big: true }), plot({ stage: 0, stump: true })];
+  // Two big pines side by side, the widest a plot holds, then a grown one and a stump.
+  S.after.plots = [plot({ big: true }), plot({ big: true }), plot(), plot({ stage: 0, stump: true })];
   window.__look(plotX(1) - S.viewW / 2);
   run(3);   // past every fade, so each is drawn whole
   const ink = inked(), fl = afterFloor() / P;
   const wrong = [];
-  // A big pine's foot reaches over its neighbors' ground, so a cell is asked
-  // only whether it is somebody's.
-  for (let cx = plotX(0) / P - 12; cx <= plotX(2) / P + 12; cx++) for (let cy = fl - 28; cy < fl; cy++) {
-    const x = cx * P + P / 2, y = cy * P + P / 2, drawn = ink.has(`${cx},${cy}`);
+  // Each cell is its nearest trunk's plot: no pine reaches onto another's ground.
+  const owner = cx => [0, 1, 2, 3].reduce((a, b) => (Math.abs(cx - plotX(b) / P) < Math.abs(cx - plotX(a) / P) ? b : a));
+  for (let cx = plotX(0) / P - 12; cx <= plotX(3) / P + 12; cx++) for (let cy = fl - 28; cy < fl; cy++) {
+    const x = cx * P + P / 2, y = cy * P + P / 2, drawn = ink.has(`${cx},${cy}`), i = owner(cx);
     const hit = treeAt(x, y) ?? stumpAt(x, y);
-    if (drawn !== (hit != null)) wrong.push(`cell ${cx},${cy - fl}: ${drawn ? 'inked, missed' : `paper, got plot ${hit}`}`);
+    if (drawn !== (hit === i)) wrong.push(`plot ${i} cell ${cx - plotX(i) / P},${cy - fl}: ${drawn ? `inked, got ${hit}` : `paper, got ${hit}`}`);
   }
+  // The floor between the two big pines' feet: columns with no ink at all.
+  const cols = new Set([...ink].map(k => +k.split(',')[0]));
+  let gap = 0;
+  for (let cx = plotX(0) / P; cx < plotX(1) / P; cx++) if (!cols.has(cx)) gap++;
   // The crown's tip, the tree's highest inked cell, pressed by the hand.
   window.__afterAxe();
   const tip = [...ink].map(k => k.split(',').map(Number)).filter(([cx]) => cx === plotX(0) / P).reduce((a, b) => (b[1] < a[1] ? b : a));
@@ -64,6 +69,7 @@ group('a press lands on a pine and a stump exactly where they are drawn', async 
   window.__actsOn(null);
   return [
     ok(ink.size > 100, 'the grove drew its pines and its stump', `${ink.size} cells`),
+    ok(gap >= AFTER_PLOT_GAP, 'two big pines stand clear of each other', `${gap} clear columns between them, ${AFTER_PLOT_GAP} at least`),
     ok(!wrong.length, 'every inked cell is its plot\'s, and every paper cell round it nobody\'s', wrong.slice(0, 6).join('; ')),
     ok(held && held.i === 0 && held.grab, 'a press on the crown\'s tip takes hold of that tree\'s saw', JSON.stringify(held && { i: held.i, grab: held.grab }))
   ];
