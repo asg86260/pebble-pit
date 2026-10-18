@@ -156,6 +156,7 @@ group('a post bought takes a soul out of our crowd', async () => {
   const settle = () => { for (let k = 0; k < 40; k++) { run(0.25); draw(); } return { want: arrived(), souls: crowdDrawn().ours }; };
   const was = settle(), camp0 = S.after.camp;
   window.__afterGrant({ rebel: 400 });
+  window.__grant({ dust: 1000 });   // a post's bill takes the yard's dust too (DESIGN.md, "The yard pays too")
   window.__buy('after-post-agitator');
   run(1 / 30); draw();
   const mid = crowdDrawn().ours;
