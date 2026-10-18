@@ -21969,3 +21969,46 @@ menu now shapes how it sounds, never which loop it is.*
 
 **Open, for the owner's ear:** which sketch is the yard, and how deep each
 menu sinks it (the demo's three depths).
+
+### The effects library: nineteen effects and ten starting points (design, not built)
+
+*Asked for 2026-10-17: "more synth type chains... the more the better, with
+a description of each", from an owner who says they do not know what they
+are doing. The vote (https://claude.ai/artifact/PxoznzrigiNtaMP3xvWJ7x)
+chose **one long panel** under + add, option A.*
+
+The bargain: a person who has never touched an effect can still get a
+sound by starting from a named chain that says what it sounds like, and
+learn the parts from the sentence on each one.
+
+- **The panel.** Starting points across the top as cards (name, one
+  sentence, the chain as chips; **use** replaces the track's chain, undo
+  brings it back, **add** puts it at the end), then every effect in its
+  group, a name and a sentence a row. Hovering a box in the chain shows its
+  sentence; hovering a knob says what that knob does. Every sentence is a
+  field of `MUSIC_FX` (`about` on the effect and on each knob) and the
+  groups and starting points are `MUSIC_FX_GROUPS` and `MUSIC_FX_PRESETS`,
+  all in `config/music.js`. Dev-bench words, not player copy.
+- **The nine new effects**, three knobs at most, each with its render and
+  its preview stand-in:
+
+  | effect | knobs | render | preview |
+  |---|---|---|---|
+  | Auto-filter | rate, depth, center | LadderFilter swept in blocks | biquad with an LFO on its frequency |
+  | Downsample | rate (Hz), mix | Resample, zero-order hold | an AudioWorklet sample-and-hold |
+  | Flanger | rate, depth, feedback | Chorus at a 2 ms center | a short delay, LFO and feedback |
+  | Wobble | wow, depth, flutter | a fractionally read delay line under a slow sine and a faster drift | a delay under two LFOs |
+  | Tremolo | rate (beats), depth, shape | a gain curve | a gain under a sine or square LFO |
+  | Auto-pan | rate (beats), depth | a pan curve | a stereo panner under an LFO |
+  | Width | amount (0 mono, 1 as is, 2 wide) | mid/side gains | a mid/side matrix |
+  | Vinyl | crackle, hiss, wear | seeded noise and clicks added, wear a lowpass | a looped noise and crackle buffer, silent while stopped |
+  | Pitch shift | interval, mix | PitchShift | two crossfaded delay lines under a sawtooth |
+
+- **The ten starting points**: Muffled crunch (the owner's test song's
+  chain: Bitcrush, Drive, Filter), Lo-fi tape, Dreamy pad, Underwater, Old
+  radio, Space echo, Warm bass, Chip crunch, Swirl keys, Wide shimmer, with
+  the sentences and chains of the mock.
+- **Checks** grow with the table: every effect has an `about`, every knob
+  an `about`, every effect is in one group, every starting point names only
+  effects and knobs that exist and reads clean through `validate`, and the
+  preview and `mix.py` each handle every type.
