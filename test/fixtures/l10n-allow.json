@@ -11,7 +11,9 @@
   "src/report.js",
   "src/verify.js",
   "src/migrations/",
-  "src/config/sound.js"
+  "src/config/sound.js",
+  "src/config/music.js",
+  "src/music/"
  ],
  "strings": {
   "src/cloudsheet.js": [
@@ -146,6 +148,7 @@
   ]
  },
  "why": {
+  "src/config/music.js": "the music bench's drum row names, read only on the dev-only music.html",
   "src/config/sound.js": "the sound bench mapping: each event's label and recipe names are for the bench and the dev panel",
   "src/cloudsheet.js": "class names",
   "src/cutscene.js": "layer names (render.js LAYERS) a scene keeps or hides",

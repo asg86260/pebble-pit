@@ -1,0 +1,216 @@
+/* The music bench, styled "Studio" (DESIGN.md, the second vote): dark panels,
+   Inter for words and JetBrains Mono for numbers, each track's color on its
+   clips and notes, amber for what is playing. The one page that leaves the
+   game's black and white, because it is a tool and not the yard. */
+
+:root {
+  --bg: #1d1e21; --panel: #26282c; --raise: #2c2f34; --ink: #ececec; --sub: #9aa0a8;
+  --rule: #3a3d43; --grid: #2f3237; --gridbeat: #383b41; --gridbar: #5a5e66;
+  --accent: #f5a524; --onaccent: #111; --empty: #24262a; --emptybeat: #30333a;
+  --blackkey: #16171a; --onblack: #8a9099; --blackrow: #232529; --sel: #23252a;
+  --bad: #ef5350; --good: #4caf7a;
+  --font: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --row: 44px; --keyw: 56px; --rollrow: 18px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.3 var(--font); }
+button, input, select { font: inherit; color: inherit; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* transport */
+.transport { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center;
+  gap: 10px 16px; padding: 10px 14px; background: var(--panel); border-bottom: 1px solid var(--rule); }
+.play { width: 36px; height: 36px; border-radius: 6px; border: 0; background: var(--accent); color: var(--onaccent);
+  display: grid; place-items: center; font-size: 14px; cursor: pointer; }
+.play.on { background: var(--ink); }
+.field { display: flex; flex-direction: column; gap: 2px; line-height: 1.15; }
+.field > small { font-size: 11px; color: var(--sub); text-transform: uppercase; letter-spacing: .06em; }
+.field input, .field select { background: var(--raise); border: 1px solid var(--rule); border-radius: 5px; padding: 3px 6px; }
+.field input[type=number] { width: 64px; font-family: var(--mono); }
+.field input.key { width: 90px; }
+.field b { font-weight: 600; font-size: 15px; }
+.spacer { flex: 1; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.seg button { padding: 7px 12px; font-weight: 500; background: none; border: 0; cursor: pointer; color: var(--sub); }
+.seg button.on { background: var(--ink); color: var(--bg); }
+.btn { padding: 7px 14px; border-radius: 6px; border: 1px solid var(--rule); background: var(--raise);
+  font-weight: 500; cursor: pointer; }
+.btn:hover { border-color: var(--sub); }
+.btn.primary { border-color: var(--accent); color: var(--accent); background: transparent; font-weight: 600; }
+.btn.small { padding: 3px 9px; font-size: 13px; }
+.btn.danger:hover { border-color: var(--bad); color: var(--bad); }
+.btn:disabled { opacity: .45; cursor: default; }
+.dirty::after { content: " •"; color: var(--accent); }
+
+/* the status strip under the transport: live port, render progress, errors */
+.status { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; padding: 6px 14px; min-height: 30px;
+  border-bottom: 1px solid var(--rule); color: var(--sub); font-size: 13px; }
+.status:empty { display: none; }
+.status .bad { color: var(--bad); }
+.status .good { color: var(--good); }
+.stem { display: inline-flex; gap: 5px; align-items: center; }
+.stem i { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); }
+.stem.rendering i { background: var(--accent); animation: throb 1s ease-in-out infinite; }
+.stem.done i, .stem.cached i { background: var(--good); }
+@keyframes throb { 50% { opacity: .3; } }
+.status audio { height: 30px; }
+
+/* the lanes */
+.heads, .lane { display: grid; grid-template-columns: 230px repeat(var(--scenes), minmax(110px, 1fr)) 64px; gap: 8px;
+  padding: 0 14px; align-items: center; }
+.heads { padding-top: 12px; padding-bottom: 4px; }
+.scenehead { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--sub); font-size: 13px;
+  background: none; border: 0; padding: 4px 2px; cursor: pointer; text-align: left; min-width: 0; }
+.scenehead .tri { font-size: 9px; }
+.scenehead.live { color: var(--ink); }
+.scenehead.live .tri { color: var(--accent); }
+.scenehead .game { font-size: 10px; color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 0 4px; }
+.lane { min-height: var(--row); padding-top: 4px; padding-bottom: 4px; }
+.lane.sel { background: var(--sel); }
+.tname { display: flex; align-items: center; gap: 10px; min-width: 0; cursor: pointer; }
+.chip { width: 10px; align-self: stretch; border-radius: 3px; background: var(--tc); flex: none; }
+.tname .who { min-width: 0; flex: 1; }
+.tname b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tname small { display: block; color: var(--sub); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tname .live { color: var(--accent); }
+.ms { display: flex; gap: 4px; }
+.ms button { width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--rule); background: var(--raise);
+  font-size: 11px; font-weight: 600; cursor: pointer; color: var(--sub); padding: 0; }
+.ms button.on.m { background: var(--sub); color: var(--bg); }
+.ms button.on.s { background: var(--accent); color: var(--onaccent); border-color: var(--accent); }
+.clip { position: relative; height: calc(var(--row) - 8px); border-radius: 5px; display: flex; align-items: center;
+  overflow: hidden; white-space: nowrap; cursor: pointer; border: 1px solid transparent; }
+.clip.empty { background: var(--empty); }
+.clip.empty:hover { border-color: var(--rule); }
+.clip.empty:hover::after { content: "+"; margin: auto; color: var(--sub); }
+.clip.full { background: var(--raise); border-color: var(--rule); }
+.clip .go { flex: none; width: 26px; height: 100%; display: grid; place-items: center; font-size: 9px; opacity: .75; }
+.clip .go:hover { opacity: 1; }
+.clip .lbl { font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.clip .bars { margin-left: auto; padding-right: 8px; font-size: 11px; opacity: .6; font-family: var(--mono); }
+.clip.playing { background: var(--tc); color: #fff; border-color: transparent; }
+.clip .prog { position: absolute; left: 0; bottom: 0; height: 3px; background: currentColor; opacity: .55; width: 0; }
+.clip .q { position: absolute; inset: 0; background: var(--tc); opacity: 0; pointer-events: none; }
+.clip.queued .q { animation: queue .5s ease-in-out infinite alternate; }
+@keyframes queue { from { opacity: .08; } to { opacity: .4; } }
+.clip.sel { outline: 2px solid var(--ink); outline-offset: 2px; }
+.stopcell { display: flex; justify-content: center; }
+.stopcell button { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--rule); background: var(--raise);
+  cursor: pointer; color: var(--sub); font-size: 10px; }
+.adds { display: flex; gap: 8px; padding: 12px 14px 40px; }
+
+/* the editor under the selected lane */
+.editor { margin: 6px 14px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--raise); overflow: hidden; }
+.edbar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 8px 12px;
+  border-bottom: 1px solid var(--rule); background: var(--panel); }
+.edbar b { font-weight: 600; }
+.edbar label { display: inline-flex; align-items: center; gap: 6px; color: var(--sub); font-size: 13px; }
+.edbar input, .edbar select { background: var(--raise); border: 1px solid var(--rule); border-radius: 5px; padding: 3px 6px; color: var(--ink); }
+.edbar input[type=range] { width: 90px; padding: 0; accent-color: var(--accent); }
+.edbar input.patch { width: 230px; }
+.edbar .grow { flex: 1; }
+.edbar .hint { color: var(--sub); font-size: 12px; }
+
+.roll { display: grid; grid-template-columns: var(--keyw) 1fr; max-height: 420px; overflow-y: auto; overflow-x: hidden; position: relative; }
+.keys div { height: var(--rollrow); font-size: 11px; display: flex; align-items: center; justify-content: flex-end;
+  padding-right: 8px; border-bottom: 1px solid var(--grid); color: var(--sub); cursor: pointer; user-select: none; }
+.keys div.black { background: var(--blackkey); color: var(--onblack); }
+.keys div.c { color: var(--ink); font-weight: 600; }
+.keys div:active { background: var(--accent); color: var(--onaccent); }
+.notes { position: relative; cursor: crosshair; touch-action: none; user-select: none; }
+.notes .rowbg { height: var(--rollrow); border-bottom: 1px solid var(--grid); pointer-events: none; }
+.notes .rowbg.black { background: var(--blackrow); }
+.vline { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--grid); pointer-events: none; }
+.vline.beat { background: var(--gridbeat); }
+.vline.bar { background: var(--gridbar); }
+.n { position: absolute; height: calc(var(--rollrow) - 2px); border-radius: 3px; background: var(--tc);
+  border: 1px solid rgba(0,0,0,.35); font-size: 10px; color: #fff; padding-left: 3px; line-height: calc(var(--rollrow) - 4px);
+  white-space: nowrap; overflow: hidden; cursor: grab; }
+.n::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 6px; cursor: ew-resize; }
+.n.focus { box-shadow: 0 0 0 2px var(--ink); }
+.n.lit { filter: brightness(1.3); }
+.ph { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent); pointer-events: none; display: none; }
+.vel { display: grid; grid-template-columns: var(--keyw) 1fr; height: 64px; border-top: 1px solid var(--rule); }
+.vel > span { font-size: 11px; color: var(--sub); display: flex; align-items: flex-end; justify-content: flex-end; padding: 0 8px 4px 0; }
+.velbars { position: relative; cursor: ns-resize; touch-action: none; }
+.velbars i { position: absolute; bottom: 0; width: 4px; background: var(--tc); border-radius: 2px 2px 0 0; }
+.velbars i.focus { background: var(--ink); }
+
+.steps { padding: 6px 0; }
+.steprow { display: grid; grid-template-columns: 90px repeat(var(--steps), minmax(0, 1fr)); gap: 3px; padding: 3px 10px; align-items: center; }
+.steprow > span { font-weight: 500; cursor: pointer; user-select: none; }
+.steprow i { height: 26px; border-radius: 4px; background: var(--empty); cursor: pointer; }
+.steprow i.down { background: var(--emptybeat); }
+.steprow i.on { background: var(--tc); }
+.steprow i.cur { box-shadow: 0 0 0 2px var(--accent); }
+.steprow i.barline { margin-left: 4px; }
+
+.help { color: var(--sub); font-size: 12.5px; padding: 0 14px 30px; max-width: 110ch; }
+.help kbd { font-family: var(--mono); background: var(--raise); border: 1px solid var(--rule); border-radius: 3px; padding: 0 4px; }
+
+/* the chord strip (DESIGN.md, "Chords first, no wrong notes"): one block a
+   bar, the key's seven chords dropping down under the open one */
+:root { --chord: #8b5cf6; }
+.strip { margin: 12px 14px 4px; padding: 10px 12px 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); }
+.striphead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 8px; }
+.striphead label { display: inline-flex; gap: 6px; align-items: center; color: var(--sub); font-size: 13px; }
+.striphead select { background: var(--raise); border: 1px solid var(--rule); border-radius: 5px; padding: 2px 6px; }
+.strip .hint { color: var(--sub); font-size: 12.5px; }
+.stripbars { display: grid; grid-template-columns: repeat(var(--bars), minmax(0, 1fr)); gap: 8px; }
+.chordbar { position: relative; overflow: hidden; height: 54px; border-radius: 6px; background: var(--raise); border: 1px solid var(--rule);
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: 0 12px; cursor: pointer; text-align: left; }
+.chordbar:hover { border-color: var(--sub); }
+.chordbar b { font-size: 18px; font-weight: 700; }
+.chordbar small { color: var(--sub); font-size: 12px; }
+.chordbar .prog { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--chord); }
+.chordbar.now { border-color: var(--chord); box-shadow: inset 0 0 0 1px var(--chord); }
+.chordbar.open { outline: 2px solid var(--ink); outline-offset: 2px; }
+.chordmenu { margin-top: 10px; padding: 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--bg); }
+.chordpicks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.chordpick { padding: 7px 12px; border-radius: 6px; background: var(--raise); border: 1px solid var(--rule); min-width: 84px; text-align: left; cursor: pointer; }
+.chordpick b { display: block; font-size: 15px; }
+.chordpick small { color: var(--sub); font-size: 11.5px; }
+.chordpick.good { border-color: var(--accent); }
+.chordpick.good small::before { content: "★ "; color: var(--accent); }
+.chordpick.cur { background: var(--chord); border-color: var(--chord); }
+.chordpick.cur small { color: #eee; }
+.chordpick:hover { border-color: var(--ink); }
+.tname small.follows { color: var(--chord); }
+.tname .btn.small { padding: 2px 7px; font-size: 12px; }
+
+/* the roll in the key: the lit rows are the bar's chord, a row off the key
+   is only there because a note already sits on it */
+.notes .tone { position: absolute; background: rgba(139, 92, 246, .16); pointer-events: none; }
+.notes .rowbg.off, .keys div.off { background: rgba(239, 83, 80, .1); }
+.keys div.c::before { content: "●"; color: var(--chord); font-size: 7px; margin-right: 5px; }
+.rollhint { padding: 6px 12px; border-bottom: 1px solid var(--rule); color: var(--sub); font-size: 12px; }
+
+/* a track's effects chain (DESIGN.md, "A track's effects chain"): boxes in a
+   row under the lane, the sound going left to right */
+.edtabs { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.edtabs button { padding: 4px 12px; background: none; border: 0; color: var(--sub); cursor: pointer; font-weight: 500; }
+.edtabs button.on { background: var(--ink); color: var(--bg); }
+.fxcount { margin-left: 8px; font-size: 11px; font-weight: 500; color: var(--sub); border: 1px solid var(--rule); border-radius: 4px; padding: 0 5px; }
+.chain { display: flex; gap: 8px; align-items: stretch; overflow-x: auto; padding: 12px; }
+.chain .arrow { align-self: center; color: var(--sub); }
+.addfx { flex: none; width: 100px; border: 1px dashed var(--rule); border-radius: 7px; background: none; color: var(--sub); font-weight: 500; cursor: pointer; }
+.addfx:hover, .addfx.open { border-color: var(--ink); color: var(--ink); }
+.fxmenu { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 0 12px 12px; }
+.fxbox { flex: none; min-width: 160px; border: 1px solid var(--rule); border-radius: 7px; background: var(--raise); overflow: hidden; }
+.fxbox.off { opacity: .45; }
+.fxbox.over { border-color: var(--accent); }
+.fxbox.dragging { opacity: .4; }
+.fxtop { display: flex; align-items: center; gap: 7px; padding: 5px 8px; background: var(--panel); border-bottom: 1px solid var(--rule); cursor: grab; font-size: 13px; }
+.fxtop .power { width: 12px; height: 12px; border-radius: 50%; border: 0; padding: 0; background: var(--accent); cursor: pointer; flex: none; }
+.fxbox.off .power { background: var(--rule); }
+.fxtop .x { margin-left: auto; background: none; border: 0; color: var(--sub); cursor: pointer; padding: 0 2px; }
+.fxtop .x:hover { color: var(--bad); }
+.fxbox .knobs { display: flex; gap: 6px; justify-content: space-around; padding: 8px 8px 6px; }
+.knob { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 52px; user-select: none; }
+.knob svg { width: 36px; height: 36px; cursor: ns-resize; touch-action: none; }
+.knob .ring { fill: var(--bg); stroke: var(--rule); stroke-width: 2; }
+.knob .arc { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+.knob .tick { stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
+.knob small { font-size: 11px; color: var(--sub); }
+.knob .num { font-size: 10.5px; white-space: nowrap; }

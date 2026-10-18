@@ -21689,3 +21689,237 @@ Order, when the owner says go:
 8. **The end**: freeing God, lives returned, the house rebuilt, home, the
    sheet -- then tuning both acts' lengths with the ladder book and a pace
    tool, as the deep's was.
+
+## The score, and the bench it is written on (design, not built)
+
+*Asked for 2026-10-17: music for the game, composed by the owner on a bench
+shaped like Ableton's, with the synths already on this machine (Surge XT,
+FluidSynth) as the sound. The owner's calls of the same day: **in-game
+music** (this reverses "The sound of the yard", decision (1), "the sky is
+the only score"); **both** sound sources, a quick preview and Surge XT
+live; the **track-lanes** layout from the vote
+(https://claude.ai/artifact/GGYNodtekPkq9kgDinpRAN, option C).*
+
+### The amendment to the law
+
+"Everything is struck, and nothing is played" stays the law for the yard's
+own sounds, which still come only from a body moving material. The score
+is the one exception, and it is written as one, as the rift's two sines
+were: **one song a place, under the yard, never over it.** It is a loop
+per scene of that song, on the music bus, ducked under strikes (about 4 dB,
+the `music-render` default) so a pick meeting stone is never lost under a
+pad. It never answers the spreadsheet: no sting on a purchase, no jingle on
+a rung, no swell on a number. What moves it is the place you are looking
+at and what that place is doing, the same facts the beds already listen to.
+
+### The bench: `music.html`
+
+A dev page beside `glyphs.html` and `ladders.html`, never in the build
+(`rollupOptions.input` names only `index` and `play`, so it stays out
+without a change). Option C of the vote:
+
+- **A transport row**: play/stop, tempo, key, the bar counter, the sound
+  source (preview / Surge live) and **render**.
+- **One lane per track**: name, its Surge patch, and its clips in a row,
+  one slot per scene; the scene names head the columns. A clip is two,
+  four or eight bars and loops.
+- **The selected lane opens under itself**: a piano roll (draw, select,
+  drag, length, velocity) for a synth track, a step grid (kick, snare, hat,
+  sixteen steps a bar) for the drum track.
+- **Styled "Studio"** (the second vote, https://claude.ai/artifact/DNbdRZkUiCWHQqsP7CcC5M,
+  option A): dark panels, Inter at 14px with JetBrains Mono for numbers,
+  each track its own color carried onto its clips and notes, amber for
+  what is playing, note names on every key of the piano roll. The bench is
+  the one page that leaves the game's black and white, because it is a
+  tool, not the yard; the fonts load from Google Fonts in a dev page only.
+- **Launching is Ableton's**: a clip or a whole scene is launched now and
+  starts on the next bar line; a queued slot throbs by opacity (fade,
+  never blink) until it starts.
+
+### The song is a file
+
+A song is plain data, `src/music/songs/<place>.json`: tempo, key, tracks
+(`kind` synth or drums, the Surge patch, a preview voice, level, pan),
+scenes by name, and clips as `[step, pitch, length, velocity]` on a
+sixteenth grid. DOM-free, so the node tier reads it and the game's player
+reads the same file the bench wrote. The bench saves it to disk through a
+dev-server endpoint (a vite plugin, `serve` only), so a song is a diff in
+git like any other change, not a blob in the browser. Unsaved edits are
+held in localStorage as a convenience, as the glyph editor's are.
+
+### Two sound sources
+
+- **Preview** is a small Web Audio synth in the page: one voice recipe per
+  track (oscillator, filter, envelope) and numpy-style synthesized drums.
+  Instant, every track at once, and only an approximation of the patch.
+- **Surge live** sends Web MIDI to the Surge XT standalone through a
+  virtual cable (loopMIDI, the one install this needs; the bench says so
+  when it finds no port). A standalone Surge is one patch (two scenes at
+  most), so live is **the selected track** through Surge while the other
+  lanes stay on preview: you hear the real patch on the part you are
+  writing, against an approximate band.
+
+### Render is the real sound
+
+**Render** posts the song to the same dev-server endpoint, which runs the
+`music-render` pipeline already proven on this machine: each track to
+MIDI (the SMF writer from Sunday Vacuum's `tools/music/smf.ts`), each
+synth stem through Surge XT under pedalboard in its own subprocess (one
+Surge per process, 30 to 55 s to load, so stems render in parallel and
+cache as `.npy` against a hash of the clip and patch), drums synthesized,
+the production chain (sidechain, delay, chorus, glue, limiter), then
+ffmpeg two-pass `loudnorm` to -18 LUFS, -1 dBTP. The output is **one
+seamless OGG loop per scene**, `public/music/<place>-<scene>.ogg`, the
+reverb tail wrapped onto the loop's head so the seam is silent. The bench
+shows render progress per stem and plays the result back in place of the
+preview, with the measured length, LUFS and true peak beside it. The
+scripts live in `tools/music/`; Python 3.14 with pedalboard, numpy and
+mido is already installed, and nothing new goes into `package.json`.
+
+### In the game
+
+`audio.js` stays the only file that has heard of an AudioContext and gains
+a music half: it loads the place's loops after the first gesture, and
+changes place on the bar line with a crossfade (fade, never pop). Which
+loop plays is a decision on the game's clock with no context, like the
+strikes', read off the place the camera is in, so the node tier can
+assert it. The ducking reads the strike
+decisions already counted there. Mute silences it with everything else.
+
+### What it costs and what it must not break
+
+- **Size**: an OGG loop is roughly 1 MB a minute at the quality a bed
+  needs; four places, one loop of 30 to 60 s each, is a few MB on every
+  build, the desk's included.
+- **Every word a player reads** goes through `msg()`: the only player-facing
+  words here are the music slider's label on the settings sheet. The bench is dev-only and reads no locale.
+- **No new field on S** for the score: the scene playing is derived from
+  the place and its state, never saved, so a reload cannot desync it.
+- **Checks**: `test/music.test.mjs` in the node tier (a song file reads,
+  the bar-line launch lands on the bar, the loop follows the place,
+  the duck follows the strikes); the bench's pointer work in the browser
+  tier only if the piano roll grows logic worth guarding.
+
+### The calls, settled (the owner, 2026-10-17)
+
+1. **What changes the music: the place only.** One loop a place (the yard,
+   the deep, the afterlife, hell), and nothing else moves it: no weather,
+   no rift, no story beat. A song's scenes are for composing; the song file
+   names the one scene that is the place's loop (`"game": "<scene>"`), and
+   only that scene ships. Walking from one place to another crossfades the
+   two loops on the bar line.
+2. **The music level: its own slider** on the settings sheet beside the
+   volume, one new message in `locales/en.ftl`, kept in `prefs.js` beside
+   `volume` (a preference, not a state.js field, so it survives a reset
+   and does not travel with a save). Mute silences both.
+3. **Surge live: the selected track only.** One Surge XT standalone window;
+   the other lanes stay on the preview synth.
+
+### Chords first, no wrong notes (built 2026-10-17)
+
+*Built as designed: `src/music/theory.js`, the strip and the follow controls
+on `music.html`, checks in `test/music.test.mjs`. One amendment: a change of
+**mode** keeps each degree except where it would land on the diminished
+chord (into major the seventh becomes the fifth, into minor the second
+becomes the fourth, `MUSIC_MODE_SWAP`), because carrying G in A minor to
+G#dim in A major is never what anybody meant.*
+
+*Asked for 2026-10-17: the owner does not compose, so the bench has to make
+a song out of choices rather than notes. The vote
+(https://claude.ai/artifact/RXaC6y2UX2sUwfy7MnAJqb) chose option A, **the
+chord strip**, together with the no-wrong-notes roll.*
+
+The bargain: you pick chords and patterns, and the bench writes the notes.
+A song that is only chords and patterns already sounds finished; a melody
+drawn on top is optional, and the roll makes a wrong note impossible.
+
+- **The key is a choice, not a word.** `song.key` becomes a root and a mode
+  (`{ root: "A", mode: "minor" }`), picked from a menu of the 24; the old
+  string reads as that on load. Every chord and every in-key row comes from
+  it.
+- **A chord strip a scene.** `song.chords[scene]` is a list of scale degrees,
+  one a bar (`[1, 6, 3, 7]` is Am F C G in A minor), as long as the scene's
+  longest clip, or four bars on a new scene. It sits above the lanes. Click a
+  bar and the key's seven chords drop down, each with its name and a plain
+  feel word; a star marks the ones that usually come next after the bar
+  before it, read from a small fixed table of common moves (`MUSIC_NEXT` in
+  `config/music.js`). Degrees, not names, so a change of key moves the whole
+  song with it.
+- **Parts that follow.** A synth track can **follow the chords** with a
+  pattern: bass (root pulse, root and fifth, walking, held), pad (held
+  chord, swell, stabs) or arpeggio (up, up and down, broken). Following
+  writes the clip's notes from the chords and the pattern, and writes them
+  again whenever either changes, so the render and the game read ordinary
+  notes and nothing downstream changes. `track.follow = { pattern }` says
+  which. A new song starts with drums, a bass, a pad and an arpeggio all
+  following, so the first sound is a whole loop.
+- **Your edit wins.** Drawing on a following clip stops it following (the
+  lane says so, with a "follow again" button that rewrites it). Nothing you
+  drew is ever overwritten without that press.
+- **No wrong notes.** The piano roll shows the seven notes of the key and
+  nothing else; a pointer anywhere snaps to the nearest one. Under each bar,
+  the rows that are in that bar's chord are lit, so a note drawn on a lit row
+  always fits. An "all notes" switch shows the twelve rows for anyone who
+  wants them, and changing the key moves drawn notes by scale degree.
+- **What it costs**: one pattern table and one next-chord table in
+  `config/music.js`, the generator as plain functions beside `song.js` (so
+  `test/music.test.mjs` checks a progression's notes are in the key, a
+  pattern fills its bars and an edit stops a follow), and the strip and the
+  switches on the bench. The song file grows `chords` and `follow`; older
+  songs read without them.
+
+### A track's effects chain (built 2026-10-17)
+
+*Built as designed: `src/music/fx.js` (the chain as data), `fxnodes.js` (the
+preview's stand-ins), the effects tab on `music.html`, and the chains in
+`tools/music/mix.py` through `plan.mjs`. What the render could not keep from
+the old fixed mix: the lead's echoes are a plain feedback delay rather than
+the old ping-pong, and each track has its own reverb rather than one shared,
+filtered hall. The yard's chains add the old high-pass on the lead; the old
+pad low-pass and bass high-pass are left for the owner's ear.*
+
+*Asked for 2026-10-17: effects you stack on a track, Ableton's way. The
+owner chose a chain of effect boxes over a few fixed knobs, and the vote
+(https://claude.ai/artifact/SrCtXCW4gRHVNf6WpBZmai) put it **in a row under
+the clip**, option A.*
+
+- **Where it is.** The open clip's editor gets two tabs, **notes** and
+  **effects**. Effects is a row of boxes in the order the sound goes through
+  them, left to right, with an add box at the end that opens the list. A box
+  has a light (click to switch it off and hear without it), a ✕, and its
+  knobs: drag a knob up or down to turn it, double-click to put it back.
+  Drag a box by its title to move it in the chain. Drum tracks get the same
+  tab. The lane says how many effects a track has.
+- **The ten effects**, each with three knobs at most, every range and
+  default a row of `MUSIC_FX` in `config/music.js`:
+  **Filter** (type, cutoff, resonance), **EQ** (low, mid, high),
+  **Drive** (amount, tone, mix), **Bitcrush** (bits, mix),
+  **Chorus** (rate, depth, mix), **Phaser** (rate, depth, mix),
+  **Delay** (time in beats, feedback, mix), **Reverb** (size, damping, mix),
+  **Compressor** (threshold, ratio, release), and **Duck** (amount,
+  release: the pump under the kick, read from the drum track's kicks).
+- **The song file.** `track.fx` is the chain, a list of
+  `{ type, on, params }`; a track without it is dry.
+- **Two sounds for one chain.** The render runs each box through its
+  pedalboard namesake (LadderFilter, the shelf and peak filters,
+  Distortion, Bitcrush, Chorus, Phaser, a tempo-synced Delay, Reverb,
+  Compressor, the sidechain duck the mix already has). The preview builds
+  the nearest Web Audio nodes (biquads, a wave shaper, a modulated delay,
+  an all-pass chain, a feedback delay, a convolver over a made-up hall, the
+  dynamics compressor, a gain dipped on every kick). The two will not match
+  exactly -- the render is the sound -- but every knob moves both the same
+  way.
+- **The fixed per-track effects in the mix go.** `mix.py` stops choosing
+  effects by track id (the bass's drive, the pad's chorus, the lead's
+  delay, the shared hall, the bass and pad duck). The yard song gets those
+  as written chains, so it renders as close to before as the new boxes
+  allow. The master's glue and limiter stay: they are the mix's, not a
+  track's.
+- **Cheap to change.** Effects are applied at the mix, after the stems, so a
+  knob turned after a render costs the mix's few seconds and none of
+  Surge's minute: the stems stay cached.
+- **New songs** start with a chain on each following part: Duck on the
+  bass, Chorus and Reverb on the pad, Delay and Reverb on the arpeggio.
+- **Checks.** `test/music.test.mjs`: every `MUSIC_FX` type has a preview
+  builder and a case in `mix.py`; validate names an unknown effect or a
+  knob out of its range; the yard's chains read clean.

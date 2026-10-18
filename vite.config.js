@@ -4,6 +4,7 @@ import { writeFileSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fontsPlugin } from './tools/fonts.mjs';
+import { musicPlugin } from './tools/music-server.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // a glob for everything under a folder of this checkout; forward slashes,
@@ -52,7 +53,7 @@ export default defineConfig(({ command, mode }) => {
     build: { rollupOptions: { input: { index: 'index.html', play: 'play.html' } } },
     // The CJK faces, cut from each language's file (tools/fonts.mjs): before
     // the first module is read, so lang.js's glob finds them, in dev and build.
-    plugins: [fontsPlugin(), ...(command === 'build' ? [stampFile(stamp, cut)] : [])],
+    plugins: [fontsPlugin(), musicPlugin(__dirname), ...(command === 'build' ? [stampFile(stamp, cut)] : [])],
     define: {
       // Off the dev server the page says "dev": a stamp that changed on every
       // save would be a stamp nobody could compare against anything.
@@ -78,7 +79,8 @@ export default defineConfig(({ command, mode }) => {
       // Spelled as paths under *this* root rather than as `**/.claude/**`,
       // so a worktree's own server, which is itself under `.claude/`, keeps
       // watching its own tree.
-      watch: { ignored: ['**/release/**', under('.claude'), under('shots')] }
+      // The music render's stem cache is written to by the hundred megabytes.
+      watch: { ignored: ['**/release/**', under('.claude'), under('shots'), under('tools/music/.cache')] }
     },
     preview: {
       host: true,
