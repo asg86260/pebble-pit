@@ -29,20 +29,22 @@
   .bar input[type=range] { width: 220px; max-width: 50vw; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 16px; }
   .card.rec { border: 2px solid var(--rec); }
+  .card.alt { border: 2px dashed var(--muted); }
   canvas { display: block; image-rendering: pixelated; max-width: 100%; height: auto; }
   .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
   figure { margin: 0; max-width: 100%; }
   figcaption { font-size: 11px; color: var(--muted); }
   .stats { font-size: 12px; color: var(--muted); margin-top: 4px; min-height: 3em; }
   .ph { border-bottom: 1px dotted var(--muted); }
+  .note { border-left: 3px solid var(--muted); padding-left: 10px; }
 </style>
 </head>
 <body>
 <main>
-  <h1>Act 3: God's yard as a huge crowd</h1>
-  <p>A <b>mock</b>, drawn from plain shapes in a canvas. It is <b>not the game</b>: no sim, no game renderer. It uses the game's grid (P = 6), its eleven greys and the dark page's lightness map. Each 1x canvas is <b>133 by 100 cells (798 by 600 px)</b>, about what the yard's camera shows, with one world pixel to one screen pixel. The 3x figures are crops of the same frame. The floor is <b>floor A</b> (the billow edge), the layout is <b>layout A</b> (camp left, crowd, then throne) and the pedestal is <b>C</b> (the cloud pillar), as chosen.</p>
-  <p>Every option tells the same story. A <span class="ph">sign</span> and a <span class="ph">poster</span> stand in the front of the crowd and ink the souls round them. A soul whose rim closes becomes a member (an ink rim) and walks out left to the camp, leaving a hole. A pale soul fades in to refill each hole. A <span class="ph">warden</span> (taller, solid cap) paces the front, and the <span class="ph">tithe</span> line climbs to the throne at the far right. <b>Only the front row is real bodies.</b> Everything behind it is a texture drawn from counts: each soul is a rank, and the share slider sets the counts. Signs and posters raise the share near themselves and speed up the turnover there, so the ink gathers round them.</p>
-  <p><b>Every word is a placeholder</b>, including the slider's name and every caption. The throne is a placeholder too.</p>
+  <h1>Act 3: God's yard as a huge crowd, smaller and smaller</h1>
+  <p>A <b>mock</b>, drawn from plain shapes in a canvas. It is <b>not the game</b>: no sim, no game renderer. It uses the game's grid (P = 6), its eleven greys and the dark page's lightness map. Each 1x canvas is <b>133 by 100 cells (798 by 600 px)</b>, about the yard camera's width, one world pixel to one screen pixel. The 3x figures are crops of the same frame. It is drawn on floor A, layout A and pedestal C, as chosen.</p>
+  <p class="note">The owner on the first round: "crowd still needs work. i think the crowd should get smaller and smaller." Options (a) to (c) read that as <b>shrinking into the distance</b>: row after row, each a little smaller than the one before it and a little closer to it, from the 18 px front row down to single dots at a horizon. Option (d) is an <b>alternate reading</b>: the crowd itself gets smaller as the union wins. The first round's parallax and background-crowd options are dropped from this page; they are still in git history (commit 05e03d30).</p>
+  <p>All four tell the same story. A <span class="ph">sign</span> and a <span class="ph">poster</span> in the front row ink the souls round them. A soul whose rim closes becomes a member (an ink rim) and walks out left to the camp, leaving a hole. A pale soul fades in to refill the hole. A <span class="ph">warden</span> (taller, with a solid cap) paces the front, and the <span class="ph">tithe</span> line climbs to the placeholder throne on the right. <b>Only the front row is real bodies</b>; the rows behind it are a texture drawn from counts. <b>Every word is a placeholder.</b></p>
   <div class="bar" id="bar">
     <button data-t="auto" class="on">auto</button><button data-t="light">light</button><button data-t="dark">dark</button>
     <button id="pause">pause</button><button id="slow">quarter speed</button>
@@ -50,66 +52,71 @@
     <button data-w="0">0%</button><button data-w="20">20%</button><button data-w="70">70%</button><button data-w="100">100%</button>
   </div>
 
-  <section class="card rec" id="o1">
-    <h2>1. Rows receding <span class="tag">recommended</span></h2>
-    <div class="row">
-      <figure><canvas data-src="1"></canvas><figcaption>1x, the camera's width</figcaption></figure>
-    </div>
+  <section class="card" id="va">
+    <h2>(a) Linear shrink</h2>
+    <figure><canvas data-src="a"></canvas><figcaption>1x, the camera's width</figcaption></figure>
     <div class="row" style="margin-top:8px">
-      <figure><canvas data-src="1" data-s="3" data-crop="236,380,260,104"></canvas><figcaption>3x: the sign, the poster and the near rows</figcaption></figure>
-      <figure><canvas data-src="1" data-s="3" data-crop="470,316,180,170"></canvas><figcaption>3x: the far rows down to 2 px dots, and a small sign in row two</figcaption></figure>
+      <figure><canvas data-src="a" data-s="3" data-crop="236,372,260,110"></canvas><figcaption>3x: the sign, the poster and the near rows</figcaption></figure>
+      <figure><canvas data-src="a" data-s="3" data-crop="470,250,180,160"></canvas><figcaption>3x: the far rows into the horizon</figcaption></figure>
     </div>
-    <div class="stats" data-stats="1"></div>
-    <p>The front row is full size: 18 px bodies. Each row behind sits a little higher, smaller and paler: 12, 9 and 6 px bodies with 2 px rims, then solid dots of 4 px and of 2 px, twenty rows up to a horizon contour. A member is ink at every depth, so the spread of support reads at a glance, and a soul who walks out leaves a hole in the far rows too (it fades out, as nothing can be seen walking there).</p>
+    <div class="stats" data-stats="a"></div>
+    <p>Each row is one pixel smaller than the row in front: 17, 16, 15 and so on down to 1 px, then three more rows of single dots. The gap between rows shrinks with the size. It is even and orderly, a slope rather than a distance: the crowd reads as a bank tilted away from you more than as a plain going far off.</p>
   </section>
 
-  <section class="card" id="o2">
-    <h2>2. Parallax</h2>
-    <div class="row">
-      <figure><canvas data-src="2"></canvas><figcaption>1x, the camera panning back and forth on its own</figcaption></figure>
-    </div>
+  <section class="card rec" id="vb">
+    <h2>(b) Perspective shrink <span class="tag">recommended</span></h2>
+    <figure><canvas data-src="b"></canvas><figcaption>1x, the camera's width</figcaption></figure>
     <div class="row" style="margin-top:8px">
-      <figure><canvas data-src="2" data-s="3" data-crop="236,380,260,104"></canvas><figcaption>3x: the near rows (they move under a fixed crop)</figcaption></figure>
-      <figure><canvas data-src="2" data-s="3" data-crop="470,316,180,170"></canvas><figcaption>3x: the far rows</figcaption></figure>
+      <figure><canvas data-src="b" data-s="3" data-crop="236,372,260,110"></canvas><figcaption>3x: the sign, the poster and the near rows</figcaption></figure>
+      <figure><canvas data-src="b" data-s="3" data-crop="470,250,180,160"></canvas><figcaption>3x: the far rows into the horizon</figcaption></figure>
     </div>
-    <div class="stats" data-stats="2"></div>
-    <p>The same rows as option 1. Each scrolls at its own rate as the camera pans: the front row, the camp and the throne at the world's rate, the far rows slower, down to a twenty-fifth at the horizon. The pan is automatic here, 60 px each way over 16 seconds, so it shows. Each row moves in whole pixels, so the far rows move in steps.</p>
+    <div class="stats" data-stats="b"></div>
+    <p>Size falls off as one over distance: 18, 14, 11, 9, 8, 7, 6, 6, 5 near the front, then long runs of 4, 3 and 2 px rows, then single dots. The near rows step down fast and the far ones crowd together, so the eye reads depth: a few rows of people, then a field of them, then a horizon. Members are ink at every depth.</p>
   </section>
 
-  <section class="card" id="o3">
-    <h2>3. Background crowd</h2>
-    <div class="row">
-      <figure><canvas data-src="3"></canvas><figcaption>1x, the camera's width</figcaption></figure>
-    </div>
+  <section class="card" id="vc">
+    <h2>(c) Perspective shrink, far rows into the cloud</h2>
+    <figure><canvas data-src="c"></canvas><figcaption>1x, the camera's width</figcaption></figure>
     <div class="row" style="margin-top:8px">
-      <figure><canvas data-src="3" data-s="3" data-crop="236,380,260,104"></canvas><figcaption>3x: the sign, the poster and the bottom tiers</figcaption></figure>
-      <figure><canvas data-src="3" data-s="3" data-crop="470,120,240,150"></canvas><figcaption>3x: the top tiers and the throne on top</figcaption></figure>
+      <figure><canvas data-src="c" data-s="3" data-crop="236,372,260,110"></canvas><figcaption>3x: the sign, the poster and the near rows</figcaption></figure>
+      <figure><canvas data-src="c" data-s="3" data-crop="470,250,180,160"></canvas><figcaption>3x: the far rows into the horizon</figcaption></figure>
     </div>
-    <div class="stats" data-stats="3"></div>
-    <p>No floor horizon. The crowd rises behind everything, tier on tier up into the sky, like stadium seating seen from the pitch, smaller toward the top and widening as it climbs. The throne sits on a plinth on top of it, and the tithe line climbs a steep stair up its right side.</p>
+    <div class="stats" data-stats="c"></div>
+    <p>The rows of (b), and past the first quarter of the depth each row's greys step toward the cloud floor's own pale grey. Members fade from ink to light grey and pale souls to the faintest grey, so the crowd dissolves into the cloud instead of ending at a line. It is the most distant-looking, but far members are no longer ink, so the share won is harder to read in the back half.</p>
+  </section>
+
+  <section class="card alt" id="vd">
+    <h2>(d) Alternate reading: the crowd shrinks as the union wins</h2>
+    <figure><canvas data-src="d"></canvas><figcaption>1x, the camera's width</figcaption></figure>
+    <div class="row" style="margin-top:8px">
+      <figure><canvas data-src="d" data-s="3" data-crop="236,372,260,110"></canvas><figcaption>3x: the sign, the poster and the near rows</figcaption></figure>
+      <figure><canvas data-src="d" data-s="3" data-crop="470,250,180,160"></canvas><figcaption>3x: where the far rows were</figcaption></figure>
+    </div>
+    <div class="stats" data-stats="d"></div>
+    <p><b>A different reading of the owner's words</b>: "smaller and smaller" as the act goes on, not into the distance. The rows of (b), but the crowd's depth is the share still in God's yard. As members walk out, the back row fades away, then the next, so the crowd draws in toward the front. Past 70 % the front row thins too, until God's yard is a handful of souls round the sign and the poster. A hole refills sooner here, because the crowd closes up rather than going gappy. Drag the slider to see it.</p>
   </section>
 
   <section class="card" id="calls">
     <h2>Calls made in the mock</h2>
     <ul>
-      <li><b>The far dots are 2 px at the smallest</b>, not whole cells. The rows go 18, 12, 9, 6 px (each with a 2 px rim), then solid 4 px dots, then solid 2 px dots. Whole-cell dots would stop at 6 px, which is the 6 px row already, and the crowd would end about four rows sooner. Nothing is drawn 1 px wide; the page checks this on its own canvases (see the numbers under each option).</li>
-      <li><b>The back rows' baselines are on whole pixels, not on the 6 px grid.</b> A 9 px or a 4 px body cannot sit on the grid. The front row, the floor, the camp, the stair and the throne are all on the grid.</li>
-      <li><b>The share is split 70 / 30.</b> At a share won of s, about 0.7 s of the crowd's places are holes (walked out) and 0.3 s are members still in the crowd (inked, waiting their turn to leave). So 100 % reads as mostly empty with ink in what is left, and 0 % is all pale. A sign or a poster adds up to 35 points of share near itself and makes its neighbors turn over up to eight times as fast.</li>
-      <li>A walker fades out as it reaches the camp, where two members already stand. In the game it would join the waiting ground.</li>
-      <li>Pale souls vary between two or three greys within a row (the per-cell rule), and the default grey gets lighter row by row. Members are always full ink.</li>
-      <li>One warden is drawn in the front row (pacing) and one small warden stands in the 9 px row, to show a warden can be read at depth by its cap.</li>
+      <li><b>The last rows are single pixels.</b> The brief named them, so they are drawn, 1 px each on a 3 px pitch, as the last four rows only. Everything larger is 2 px or more: bodies of 6 px and over are hollow with a 2 px rim, and bodies of 5 px and under are solid squares, so no shape has a 1 px stroke or a 1 px hole. The page counts 1 px runs on each frame, outside the single-dot rows and inside them, under each option.</li>
+      <li><b>Rows do not overlap.</b> The gap between rows is a quarter of the row's size (at least 1 px), and the gap within a row a third (at least 2 px for the solid ones). Each shape stays clean at 1x. Overlapping rows, heads peeking over heads, would pack more in but turn the far rows to grit.</li>
+      <li><b>Bodies below 18 px are off the 6 px grid</b> (allowed by the brief), all on whole pixels. The front row, the floor, the camp, the stair and the throne are on the grid.</li>
+      <li><b>Depth is measured as distance, not as row count</b> (18 ÷ size − 1), so a sign's reach is the same in every option: about two rows of 9 px behind it. The second sign stands in the 11 px row, and a small capped warden in the 9 px row.</li>
+      <li><b>The share is split 70 / 30</b> in (a) to (c): at a share won of s, about 0.7 s of the places are holes and 0.3 s are members still waiting in the crowd. In (d) the split is 15 / 30, because there the share mostly shows as missing rows.</li>
+      <li>In (c) the greys step by whole palette steps, row by row: no alpha and no gradient. Members keep full ink for the first quarter of the depth.</li>
+      <li>A walker fades out as it reaches the camp, where two members already wait.</li>
     </ul>
   </section>
 
   <section class="card" id="cannot">
     <h2>What the mock cannot show</h2>
     <ul>
-      <li><b>The frame cost in the real renderer.</b> The number under each option is this page's own canvas time for that frame, on this machine, in a browser with nothing else running. The game draws its world through its own layers, ink map and camera. A crowd of a few thousand souls drawn as rects every frame could cost real milliseconds there. It probably wants each back row cached as a bitmap and redrawn only when a soul changes state. Nobody has measured that. For scale: in a headless browser here, this page drew one option's frame in about 1 to 4 ms, option 3 the dearest. That is a canvas with nothing else on it, not the game.</li>
-      <li><b>Thousands.</b> Options 1 and 2 draw about 2,000 places and option 3 about 2,500. A crowd of ten thousand would need either a smaller dot than 2 px (which breaks the hairline rule) or rows off camera. How the act's counts map onto drawn places is not decided.</li>
-      <li>The sim. Wins, walk-outs and refills are a loop on a clock, driven by a rank for each place, sped up so they close. Nobody chooses anything. Moving the slider down can make a walker vanish partway, because the loop is a clock and not a log.</li>
-      <li>The camera. Option 2 pans on its own. How the real camera opens, pans and follows is not drawn, and the other two options do not pan at all.</li>
-      <li>The rest of the place. The grove, the mills and most of the camp are off the left edge. Only the pedestal and the waiting ground show.</li>
-      <li>The game's sprites, its smog and weather, sound, and the pointer. The speech on the pedestal plays on a timer.</li>
+      <li><b>The frame cost in the real renderer.</b> The number under each option is this page's own canvas time for that frame, in a browser with nothing else on the page. The game draws through its own layers, ink map and camera. A few thousand rects every frame could cost real milliseconds there, and it probably wants each back row cached as a bitmap and redrawn only when a place changes state. Nobody has measured that.</li>
+      <li><b>Thousands.</b> These draw about 1,400 places in (a) and 3,800 in (b) and (c). A bigger crowd than that needs more single-dot rows or rows off camera. How the act's counts map onto drawn places is not decided.</li>
+      <li>The sim. Wins, walk-outs and refills are a loop on a clock, a sliding rank for each place, sped up so they close. Nobody chooses anything. Dragging the slider down can make a walker vanish partway.</li>
+      <li>The camera, and what is off the left edge: the grove, the mills and most of the camp.</li>
+      <li>The game's sprites, smog, weather and sound, and the pointer. The speech on the pedestal plays on a timer.</li>
       <li>The throne, God, the sign and the poster are placeholders, each waiting on its own mock and vote.</li>
     </ul>
   </section>
@@ -134,7 +141,7 @@ function hsh(a, b = 0, c = 0) { let h = (a * 374761393 + b * 668265263 + c * 224
 const mod = (a, n) => ((a % n) + n) % n;
 const lerp = (a, b, k) => a + (b - a) * k;
 const tri = p => p < .5 ? p * 2 : 2 - p * 2;
-const cell = v => Math.round(v / P) * P;
+const smooth = k => { k = clamp(k, 0, 1); return k * k * (3 - 2 * k); };
 function box(x, y, w, h, fill = PAPER()) { fr(x, y, w, h, INK()); if (fill) fr(x + 2, y + 2, w - 4, h - 4, fill); }
 function rim(x, y, w, h, c, r = RIM) { fr(x, y, w, r, c); fr(x, y + h - r, w, r, c); fr(x, y + r, r, h - 2 * r, c); fr(x + w - r, y + r, r, h - 2 * r, c); }
 
@@ -221,7 +228,7 @@ function posterBoard(x, yFloor) {
 }
 // a sign small enough for a back row: board and pole in 2 px strokes
 function miniSign(x, base, s) {
-  const bw = s + 4, bh = s >= 12 ? 10 : 8;
+  const bw = s + 4, bh = 8;
   fr(x + (bw >> 1) - 1, base - s + 2, 2, s - 2, INK());
   box(x, base - s - bh + 4, bw, bh);
 }
@@ -232,12 +239,6 @@ function stairRight(sx, floorY, steps, x1) {
   for (let s = 0; s < steps; s++) { const x = sx + s * P * 2, y = floorY - (s + 1) * P * 2; fr(x, y, P * 2 + 2, 2, INK()); fr(x, y, 2, P * 2 + 2, INK()); }
   fr(tx, top, x1 - tx, 2, INK());
   return { top, tx };
-}
-// a steep flight climbing leftward, a cell across and two up a step
-function stairLeft(x1, floorY, steps) {
-  for (let s = 0; s < steps; s++) { const x = x1 - (s + 1) * P, y = floorY - (s + 1) * P * 2; fr(x, y, P, floorY - y, PAPER()); }
-  for (let s = 0; s < steps; s++) { const x = x1 - (s + 1) * P, y = floorY - (s + 1) * P * 2; fr(x, y, P, 2, INK()); fr(x + P - 2, y, 2, P * 2 + 2, INK()); }
-  return { top: floorY - steps * P * 2, tx: x1 - steps * P };
 }
 function glare(cx, cy, t, yMax = 1e9) {
   const pulse = .55 + .45 * (.5 + .5 * Math.sin(t * 1.1));
@@ -288,13 +289,14 @@ function pedestal(bx, t) {
 // Every place in the crowd has a rank in [0, 1). The rank slides down on a
 // clock, so each place goes pale -> inking -> member -> leaving -> hole ->
 // (a pale soul fading in) -> pale, and the share of time it spends in each is
-// the share of places in that state. `wl` is the local share won.
+// the share of places in that state. `wl` is the local share won; `split`
+// is [holes, holes + members] as shares of it.
 const ρ0 = 1 / 70;
-function soulState(r, rate, wl, t) {
+function soulState(r, rate, wl, t, split) {
   const o = { pale: 0, ink: 0, p: 1, e: 1e9, leaving: 0 };
   if (wl < .004) { o.pale = 1; return o; }
   wl = Math.min(wl, .96);
-  const hE = wl * .7, mE = wl;
+  const hE = wl * split[0], mE = wl * split[1];
   const ib = Math.max(0, Math.min(.06, wl * .3, 1 - mE - .02));
   const ob = Math.min(.03, hE * .4);
   const fb = Math.max(.005, Math.min(.03, (1 - mE - ib) * .5));
@@ -312,151 +314,139 @@ function rimPieces(x, y, s, p) {
   bars.forEach((b, k) => alpha(clamp(p * 4 - k, 0, 1), () => fr(b[0], b[1], b[2], b[3], INK())));
 }
 
-// The rows behind the front one. `d` is depth in rows, `f` the parallax rate.
-function rowsFor(opt) {
-  const rows = [];
-  if (opt !== 3) {
-    const spec = [[12, 16, 460, [3, 3, 2]], [9, 12, 444, [3, 2]], [6, 8, 430, [2, 2, 3]], [4, 6, 419, [2, 2, 3]], [4, 6, 412, [2, 2, 1]], [4, 6, 405, [2, 2, 1]]];
-    for (let b = 398; b >= 330; b -= 5) spec.push([2, 4, b, [2, 1]]);
-    spec.forEach(([s, pitch, base, tones], i) => {
-      const d = i + 1;
-      rows.push({ s, pitch, base, tones, d, f: opt === 2 ? Math.max(.04, .7 * Math.pow(.8, i)) : 1,
-        x0: 180 + Math.floor(hsh(d, 1) * 10), x1: 650 - Math.floor(hsh(d, 2) * 14) });
-    });
-  } else {
-    let base = 460, d = 0;
-    for (const [s, n, v, tones] of [[12, 3, 14, [3, 3, 2]], [9, 4, 11, [3, 2]], [6, 6, 8, [2, 2, 3]], [4, 8, 6, [2, 2, 3]], [2, 12, 4, [2, 1]]]) {
-      for (let k = 0; k < n; k++) {
-        d++;
-        // the bank widens as it climbs, an amphitheater seen from the pitch
-        const spread = Math.round((460 - base) * .35);
-        rows.push({ s, pitch: s + 4 - (s <= 4 ? 2 : 0), base, tones, d, f: 1, x0: 176 - spread + Math.floor(hsh(d, 1) * 6), x1: 586 });
-        base -= v;
-      }
-    }
+// The rows behind the front one, near to far. A row's size is its distance:
+// z = 18 / s - 1, so a 9 px row is one front-row depth behind, a 6 px row two.
+function sizesFor(v) {
+  const out = [];
+  if (v === 'a') { for (let s = 17; s >= 1; s--) out.push(s); for (let k = 0; k < 3; k++) out.push(1); }
+  else {
+    let ones = 0;
+    for (let k = 1; ones < 4; k++) { const s = Math.max(1, Math.round(18 / (1 + .3 * k))); out.push(s); if (s === 1) ones++; }
   }
+  return out;
+}
+function rowsFor(v) {
+  const rows = [];
+  let base = FLOOR - B - 2;                    // the first row stands just over the front row's heads
+  sizesFor(v).forEach((s, i) => {
+    const d = i + 1, gapY = Math.max(1, Math.round(s * .25)), gapX = s <= 5 ? Math.max(2, Math.round(s * .35)) : Math.round(s * .35);
+    const tones = s >= 8 ? [3, 3, 2] : s >= 4 ? [2, 2, 3] : [2, 2, 1];
+    rows.push({ s, d, z: 18 / s - 1, base, pitch: s + gapX, tones, x0: 180 + Math.floor(hsh(d, 1) * 10), x1: 650 - Math.floor(hsh(d, 2) * 14) });
+    base -= s + gapY;
+  });
+  const zMax = rows[rows.length - 1].z;
+  for (const R of rows) R.u = R.z / zMax;     // 0 at the front, 1 at the horizon
   return rows;
 }
-const ROWS = { 1: rowsFor(1), 2: rowsFor(2), 3: rowsFor(3) };
+const VARS = ['a', 'b', 'c', 'd'];
+const ROWS = Object.fromEntries(VARS.map(v => [v, rowsFor(v)]));
+const HORIZON = Object.fromEntries(VARS.map(v => { const r = ROWS[v][ROWS[v].length - 1]; return [v, r.base - r.s - 6]; }));
+const SPLIT = { a: [.7, 1], b: [.7, 1], c: [.7, 1], d: [.15, .45] };
+// the 1 px rows: their band, so the pixel check can count them apart
+const DOTBAND = Object.fromEntries(VARS.map(v => { const d = ROWS[v].filter(r => r.s === 1); return [v, [d[d.length - 1].base - 1, d[0].base]]; }));
 
-// the front row's places, the sign's and the poster's among them
-function frontFor(opt) {
-  const n = opt === 3 ? 16 : 18, xs = [];
-  for (let i = 0; i < n; i++) xs.push(186 + i * 24);
-  return { xs, sign: 4, poster: 11 };
-}
-// signs and posters: world x, depth in rows, how hard they push
-function sourcesFor(opt) {
-  const f = frontFor(opt);
-  const s = [{ x: f.xs[f.sign] + 12, d: 0 }, { x: f.xs[f.poster] + 12, d: 0 }];
-  s.push(opt === 3 ? { x: 470, d: 5, mini: 5 } : { x: 546, d: 1, mini: 1 });
-  return s;
-}
-const SRC = { 1: sourcesFor(1), 2: sourcesFor(2), 3: sourcesFor(3) };
-function influence(opt, x, d) {
+const FRONT = (() => { const xs = []; for (let i = 0; i < 18; i++) xs.push(186 + i * 24); return { xs, sign: 4, poster: 11 }; })();
+// (d)'s order of leaving the front row: nearest the sign and the poster go last
+const FRONT_ORDER = (() => {
+  const idx = FRONT.xs.map((_, i) => i).filter(i => i !== FRONT.sign && i !== FRONT.poster);
+  idx.sort((a, b) => (Math.min(Math.abs(a - FRONT.sign), Math.abs(a - FRONT.poster)) + hsh(a, 9) * .5) - (Math.min(Math.abs(b - FRONT.sign), Math.abs(b - FRONT.poster)) + hsh(b, 9) * .5));
+  const o = {}; idx.forEach((i, r) => o[i] = r); return o;
+})();
+// signs and posters, by world x and distance z; the second sign stands in the row nearest 11 px
+const SRC = Object.fromEntries(VARS.map(v => {
+  const mini = ROWS[v].reduce((a, r) => Math.abs(r.s - 11) < Math.abs(a.s - 11) ? r : a);
+  return [v, [{ x: FRONT.xs[FRONT.sign] + 12, z: 0 }, { x: FRONT.xs[FRONT.poster] + 12, z: 0 }, { x: 546, z: mini.z, mini: mini.d }]];
+}));
+const WARDEN_ROW = Object.fromEntries(VARS.map(v => [v, ROWS[v].reduce((a, r) => Math.abs(r.s - 9) < Math.abs(a.s - 9) ? r : a).d]));
+function influence(v, x, z) {
   let m = 0;
-  for (const s of SRC[opt]) m = Math.max(m, Math.exp(-(((x - s.x) / 64) ** 2) - ((d - s.d) / 2.2) ** 2));
+  for (const s of SRC[v]) m = Math.max(m, Math.exp(-(((x - s.x) / 64) ** 2) - ((z - s.z) / .9) ** 2));
   return m;
 }
 const localShare = (w, inf) => clamp(w + .35 * inf * (1 - w), 0, 1);
 const localRate = inf => ρ0 * (.2 + 1.4 * inf);
 
-// ============================================================ one frame of an option
-const stats = { 1: {}, 2: {}, 3: {} };
-function drawOpt(opt, t, w) {
+// ============================================================ one frame of a variant
+const stats = Object.fromEntries(VARS.map(v => [v, {}]));
+function drawVar(v, t, w) {
   const st = { souls: 0, ink: 0, hole: 0 };
-  const count = o => { st.souls++; if (o.ink >= .5) st.ink++; else if (o.pale < .5) st.hole++; };
+  const count = (o, a = 1) => { if (a < .5) return; st.souls++; if (o.ink >= .5) st.ink++; else if (o.pale < .5) st.hole++; };
   fr(0, 0, W, H, PAPER());
-  // the camera's pan: option 2 only, back and forth, whole pixels per layer
-  const pan = opt === 2 ? 60 * Math.sin(t * Math.PI * 2 / 16) : 0;
-  const px = f => Math.round(pan * f);
+  drifting(41, Math.ceil(W / P) + 2, -P, HORIZON[v], T(2), t, .08);
 
-  // the horizon: a pale contour, drifting, far off (not in option 3)
-  if (opt !== 3) drifting(41, Math.ceil(W / P) + 2, -P - px(.04), 322, T(2), t, .08);
+  // (d): the crowd's depth is the share still in God's yard; the back rows fade away first
+  const rows = ROWS[v];
+  const keep = v === 'd' ? rows.length * clamp(1 - w, 0, 1) ** 1.3 : 1e9;
 
-  // the rows behind, far to near
-  const rows = ROWS[opt];
   for (let ri = rows.length - 1; ri >= 0; ri--) {
     const R = rows[ri], off = Math.floor(hsh(R.d, 3) * R.pitch), y = R.base - R.s;
-    const mini = SRC[opt].find(s => s.mini === R.d);
+    const rowA = clamp(keep - ri, 0, 1);
+    if (rowA <= 0) continue;
+    // (c): past a quarter of the depth, the greys step toward the cloud floor's tone
+    const fade = v === 'c' ? smooth((R.u - .25) / .75) : 0;
+    const inkC = T(Math.round(lerp(10, 2, fade)));
+    const mini = SRC[v].find(s => s.mini === R.d);
+    g.globalAlpha = rowA;
     for (let i = 0, x = R.x0 + off; x + R.s <= R.x1; i++, x += R.pitch) {
-      const sx = x - px(R.f);
-      if (mini && Math.abs(x + R.pitch / 2 - mini.x) < R.pitch * 1.5) { if (Math.abs(x - mini.x) < R.pitch / 2) miniSign(sx, R.base, R.s); continue; }
-      // a warden in the 9 px row of option 1 and 2: told by its cap
-      if (opt !== 3 && R.s === 9 && i === 30) { fr(sx, y - 3, 9, 12, PAPER()); rim(sx, y - 3, 9, 12, INK()); fr(sx, y - 3, 9, 4, INK()); continue; }
-      const inf = influence(opt, x, R.d);
-      const o = soulState(hsh(R.d, i, 77), localRate(inf), localShare(w, inf), t);
-      count(o);
-      const tone = T(R.tones[Math.floor(hsh(R.d, i, 5) * R.tones.length)]);
+      if (mini && Math.abs(x + R.pitch / 2 - mini.x) < R.pitch * 1.5) { if (Math.abs(x - mini.x) < R.pitch / 2) miniSign(x, R.base, R.s); continue; }
+      if (R.d === WARDEN_ROW[v] && i === Math.floor(300 / R.pitch)) { fr(x, y - 3, R.s, R.s + 3, PAPER()); rim(x, y - 3, R.s, R.s + 3, INK()); fr(x, y - 3, R.s, 4, INK()); continue; }
+      const inf = influence(v, x, R.z);
+      const o = soulState(hsh(R.d, i, 77), localRate(inf), localShare(w, inf), t, SPLIT[v]);
+      count(o, rowA);
+      const pt = R.tones[Math.floor(hsh(R.d, i, 5) * R.tones.length)];
+      const tone = T(Math.round(lerp(pt, 1, fade)));
       if (R.s >= 6) {
-        alpha(o.pale, () => rim(sx, y, R.s, R.s, tone));
-        if (R.s >= 12 && o.p < 1 && !o.leaving) rimPieces(sx, y, R.s, o.p);
-        else alpha(o.ink * (o.leaving ? 1 : o.p), () => rim(sx, y, R.s, R.s, INK()));
+        alpha(o.pale, () => rim(x, y, R.s, R.s, tone));
+        if (R.s >= 12 && o.p < 1 && !o.leaving && fade === 0) rimPieces(x, y, R.s, o.p);
+        else alpha(o.ink * (o.leaving ? 1 : o.p), () => rim(x, y, R.s, R.s, inkC));
       } else {
-        alpha(o.pale, () => fr(sx, y, R.s, R.s, tone));
-        alpha(o.ink * o.p, () => fr(sx, y, R.s, R.s, INK()));
+        alpha(o.pale, () => fr(x, y, R.s, R.s, tone));
+        alpha(o.ink * o.p, () => fr(x, y, R.s, R.s, inkC));
       }
     }
-  }
-  if (opt === 3) {
-    // the bank's top: a pale billow over the highest tier
-    const top = rows[rows.length - 1], tx0 = cell(top.x0 - 6);
-    edge(billow(Math.ceil((586 - tx0) / P), 53), tx0, top.base - top.s - 6, T(2), null, 0);
+    g.globalAlpha = 1;
   }
 
   // the stair, the glare and the throne
-  const F = px(1);
-  let carrierPath;
-  if (opt !== 3) {
-    const sx = 654 - F, steps = 8;
-    const { top, tx } = stairRight(sx, FLOOR, steps, W + 20);
-    glare(tx + 22, top - 46, t, top);
-    throne(tx - 4, top);
-    carrierPath = q => { const st = Math.min(steps, Math.floor(q * (steps + 4))); if (st < steps) return { x: sx + st * P * 2 - 4, y: FLOOR - st * P * 2 - B, a: 1 };
-      const over = (q * (steps + 4) - steps) / 4; return { x: tx + over * 30, y: top - B, a: 1 - over }; };
-  } else {
-    const steps = 21, x1 = 798 - F;
-    const { top, tx } = stairLeft(x1, FLOOR, steps);
-    box(590 - F, top, tx - 590 + F + 2, FLOOR - top);           // the plinth the throne stands on
-    for (let y = top + P * 2; y < FLOOR - P; y += P * 3) fr(596 - F + (y % 12), y, P * 2, 2, T(2));
-    glare(630 - F, top - 46, t, top);
-    throne(606 - F, top);
-    carrierPath = q => { const st = Math.min(steps, Math.floor(q * (steps + 5))); if (st < steps) return { x: x1 - (st + 1) * P - 8, y: FLOOR - st * P * 2 - B, a: 1 };
-      const over = (q * (steps + 5) - steps) / 5; return { x: tx - 18 - over * 10, y: top - B, a: 1 - over }; };
-  }
+  const sx = 654, steps = 8;
+  const { top, tx } = stairRight(sx, FLOOR, steps, W + 20);
+  glare(tx + 22, top - 46, t, top);
+  throne(tx - 4, top);
+  const carrierPath = q => { const s = Math.min(steps, Math.floor(q * (steps + 4))); if (s < steps) return { x: sx + s * P * 2 - 4, y: FLOOR - s * P * 2 - B, a: 1 };
+    const over = (q * (steps + 4) - steps) / 4; return { x: tx + over * 30, y: top - B, a: 1 - over }; };
 
   // floor A at the front, pressed flat under the camp, the crowd and the stair
-  const flats = opt !== 3 ? [[0, 110], [180, 2000]] : [[0, 110], [180, 2000]];
-  const surf = floorA(-F - 72, W + 72, FLOOR, H, t, flats.map(([a, b]) => [a - F, b - F]), 7);
+  const surf = floorA(-72, W + 72, FLOOR, H, t, [[0, 110], [180, 2000]], 7);
 
   // the camp's edge: the pedestal and the members waiting
-  pedestal(6 - F, t);
-  for (const mx of [118, 142]) body(mx - F, surf(mx - F) - B);
+  pedestal(6, t);
+  for (const mx of [118, 142]) body(mx, surf(mx) - B);
+  heap(618, FLOOR, 30, 3);
 
-  // God's heap at the crowd's right end, where the tithe sets off
-  heap((opt === 3 ? 566 : 618) - F, FLOOR, 30, 3);
-
-  // the front row: real bodies
-  const fr0 = frontFor(opt), walkers = [];
-  fr0.xs.forEach((x, i) => {
-    const sx = x - F;
-    if (i === fr0.sign) { sign(sx, FLOOR); return; }
-    if (i === fr0.poster) { posterBoard(sx, FLOOR); return; }
-    const inf = influence(opt, x + 9, 0);
-    const o = soulState(hsh(0, i, 77), localRate(inf), localShare(w, inf), t);
-    count(o);
+  // the front row: real bodies; in (d), past 70 % it thins to a handful
+  const walkers = [];
+  const frontKeep = v === 'd' ? 3 + 13 * clamp((1 - w) / .3, 0, 1) : 99;
+  FRONT.xs.forEach((x, i) => {
+    if (i === FRONT.sign) { sign(x, FLOOR); return; }
+    if (i === FRONT.poster) { posterBoard(x, FLOOR); return; }
+    // the places nearest the sign and the poster are the last to go
+    const fa = clamp(frontKeep - FRONT_ORDER[i], 0, 1);
+    const inf = influence(v, x + 9, 0);
+    const o = soulState(hsh(0, i, 77), localRate(inf), localShare(w, inf), t, SPLIT[v]);
+    count(o, fa);
+    if (fa <= 0) return;
     const y = FLOOR - B;
     if (o.leaving) o.ink = 0;                             // the member has set off; the walker is drawn below
-    const any = Math.max(o.pale, o.ink);
-    alpha(any, () => fr(sx, y, B, B, PAPER()));
-    alpha(o.pale, () => rim(sx, y, B, B, T([3, 3, 4][Math.floor(hsh(0, i, 5) * 3)])));
-    if (o.p < 1) rimPieces(sx, y, B, o.p); else alpha(o.ink, () => rim(sx, y, B, B, INK()));
+    alpha(fa, () => {
+      alpha(Math.max(o.pale, o.ink), () => fr(x, y, B, B, PAPER()));
+      alpha(o.pale, () => rim(x, y, B, B, T([3, 3, 4][Math.floor(hsh(0, i, 5) * 3)])));
+      if (o.p < 1) rimPieces(x, y, B, o.p); else alpha(o.ink, () => rim(x, y, B, B, INK()));
+    });
     // a member walking out to the camp, 30 px a second, fading as it joins
     const camp = 166, wx = x - o.e * 30;
-    if (wx > camp - 30 && o.e < 40) walkers.push({ x: Math.round(wx) - F, a: clamp((wx - (camp - 30)) / 30, 0, 1) });
+    if (wx > camp - 30 && o.e < 40) walkers.push({ x: Math.round(wx), a: fa * clamp((wx - (camp - 30)) / 30, 0, 1) });
   });
-  // the warden paces the front
-  const wdx = Math.round(lerp(196, 580, tri(mod(t / 60, 1)))) - F;
+  const wdx = Math.round(lerp(196, 580, tri(mod(t / 60, 1))));
   body(wdx, FLOOR - B - P, { warden: true });
   for (const k of walkers) body(k.x, surf(k.x) - B, { a: k.a });
 
@@ -465,12 +455,12 @@ function drawOpt(opt, t, w) {
     const q = mod(t / 26 + k / 4, 1), p = carrierPath(q);
     body(p.x, p.y, { load: true, a: Math.min(p.a, q * 25) });
   }
-  stats[opt] = st;
+  stats[v] = st;
 }
 
 // ============================================================ sources, displays and the loop
 const SOURCES = {};
-for (const opt of [1, 2, 3]) { const cv = document.createElement('canvas'); cv.width = W; cv.height = H; SOURCES[opt] = { cv, opt, ms: 0 }; }
+for (const v of VARS) { const cv = document.createElement('canvas'); cv.width = W; cv.height = H; SOURCES[v] = { cv, v, ms: 0 }; }
 const displays = [...document.querySelectorAll('canvas[data-src]')].map(cv => {
   const s = SOURCES[cv.dataset.src], k = +(cv.dataset.s || 1);
   const crop = cv.dataset.crop ? cv.dataset.crop.split(',').map(Number) : [0, 0, W, H];
@@ -492,7 +482,7 @@ function paint() {
   for (const s of Object.values(SOURCES)) {
     if (!displays.some(d => d.s === s && (d.vis || window.__all))) continue;
     g = s.cv.getContext('2d'); g.imageSmoothingEnabled = false; g.globalAlpha = 1;
-    const t0 = performance.now(); drawOpt(s.opt, clock, wShown); s.ms = s.ms * .9 + (performance.now() - t0) * .1;
+    const t0 = performance.now(); drawVar(s.v, clock, wShown); s.ms = s.ms * .9 + (performance.now() - t0) * .1;
   }
   for (const d of displays) if (d.vis || window.__all) {
     const c = d.cv.getContext('2d'); c.imageSmoothingEnabled = false;
@@ -507,9 +497,9 @@ function frame(ms) {
   wShown += (wTarget - wShown) * Math.min(1, dt * 1.5);   // the share eases, so nothing jumps
   paint();
   if (++statTick % 15 === 0) for (const el of document.querySelectorAll('[data-stats]')) {
-    const s = stats[el.dataset.stats], src = SOURCES[el.dataset.stats];
+    const v = el.dataset.stats, s = stats[v], src = SOURCES[v];
     if (!s.souls) continue;
-    el.textContent = `drawn: ${s.souls} places (front row ${frontFor(+el.dataset.stats).xs.length - 2} bodies) · members in the crowd ${Math.round(100 * s.ink / s.souls)}% · holes ${Math.round(100 * s.hole / s.souls)}% · this page's draw ${src.ms.toFixed(2)} ms a frame`;
+    el.textContent = `${ROWS[v].length + 1} rows (${ROWS[v].map(r => r.s).join(', ')} px behind the 18 px front) · drawn now: ${s.souls} places · members in the crowd ${Math.round(100 * s.ink / s.souls)}% · holes ${Math.round(100 * s.hole / s.souls)}% · this page's draw ${src.ms.toFixed(2)} ms a frame`;
   }
   requestAnimationFrame(frame);
 }
@@ -535,20 +525,22 @@ window.__set = ({ w, t, theme }) => {
   if (theme) document.documentElement.dataset.theme = theme;
   window.__all = true; paint();
 };
-// Pixel checks on the 1x frames: any ink 1 px wide (a run with background
-// on both sides, across or down) is a hairline.
+// Pixel checks on the 1x frames: any drawn pixel with background on both
+// sides, across or down, is 1 px thin. Those inside the single-dot rows are
+// counted apart: they are the dots themselves.
 window.__measure = () => Object.fromEntries(Object.values(SOURCES).map(s => {
   const c = s.cv.getContext('2d'), d = c.getImageData(0, 0, W, H).data;
-  const bg = parseInt(PAPER().slice(1, 3), 16);
+  const bg = parseInt(PAPER().slice(1, 3), 16), [b0, b1] = DOTBAND[s.v];
   // past the frame's edge counts as drawn: a shape cut by the edge is not a hairline
   const isBg = (x, y) => x >= 0 && y >= 0 && x < W && y < H && Math.abs(d[(y * W + x) * 4] - bg) < 3;
-  let thinX = 0, thinY = 0; const at = [];
+  let thin = 0, dots = 0; const at = [];
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     if (isBg(x, y)) continue;
-    if (isBg(x - 1, y) && isBg(x + 1, y)) { thinX++; if (at.length < 6) at.push([x, y]); }
-    if (isBg(x, y - 1) && isBg(x, y + 1)) thinY++;
+    if ((isBg(x - 1, y) && isBg(x + 1, y)) || (isBg(x, y - 1) && isBg(x, y + 1))) {
+      if (y >= b0 && y < b1 && x >= 170 && x < 660) dots++; else { thin++; if (at.length < 6) at.push([x, y]); }
+    }
   }
-  return [s.opt, { thinX, thinY, at, ms: +s.ms.toFixed(2), ...stats[s.opt] }];
+  return [s.v, { thin, at, dots, ms: +s.ms.toFixed(2), ...stats[s.v] }];
 }));
 window.__ready = true;
 </script>
