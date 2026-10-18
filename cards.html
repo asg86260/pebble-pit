@@ -7,14 +7,16 @@
 <!-- The boards are shelves in the game (main.js loads this beside style.css), so
      a tile here wears the same rules as one on a board. -->
 <link rel="stylesheet" href="/src/shelf.css">
-<!-- Dark mode as play.html takes it (`?dark`, the saved choice, the system),
-     so a card's dark look can be read on the bench. -->
+<!-- Dark mode and readable text as play.html takes them (`?dark`,
+     `?readable`, the saved choice, the system), so a card's dark look and its
+     fit in the readable face can be read on the bench. -->
 <script>
 try {
   var d = /[?&]dark\b/.test(location.search) || null;
   if (d == null) { var p = JSON.parse(localStorage.getItem('boulder-clicker/prefs')); d = p && p.dark; }
   if (d == null) d = matchMedia('(prefers-color-scheme: dark)').matches;
   if (d) document.documentElement.classList.add('dark');
+  if (/[?&]readable\b/.test(location.search) || (p && p.readable)) document.documentElement.classList.add('readable');
 } catch (e) {}
 </script>
 <style>
@@ -49,6 +51,8 @@ try {
 <div hidden><div id="apothboard"></div><div id="apothshop"></div><div id="board"></div><canvas id="c"></canvas><div id="casino"></div><div id="casinoshop"></div><div id="crewlistrows"></div><div id="modal"></div><div id="modalwash"></div><div id="modaltitle"></div><div id="modalclose"></div><div id="modalbooks"></div><div id="modalcrew"></div><div id="bookincome"></div><div id="booksky"></div><div id="bookcrew"></div><div id="booktally"></div><div id="crewshop"></div><div id="farmboard"></div><div id="farmshop"></div><div id="hidedone"></div><div id="house"></div><div id="looboard"></div><div id="looshop"></div><div id="panel"></div><div id="purse"></div><div id="quarryboard"></div><div id="quarryshop"></div><div id="raise"></div><div id="school"></div><div id="schoolshop"></div><div id="filter"></div><div id="filtershop"></div><div id="shackboard"></div><div id="shackshop"></div><div id="shop"></div><div id="statsboard"></div><div id="statsshop"></div><div id="tip"></div><div id="towerboard"></div><div id="towershop"></div><div id="handle"><span class="name"></span></div></div>
 <div id="out"></div>
 <script type="module">
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/700.css';
 import { mountRows } from './src/shop.js';
 import { S } from './src/state.js';
 import { LADDER, TIER_BAND, TIER_RUNGS, TIER_OWN } from './src/config.js';
