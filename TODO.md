@@ -4,15 +4,6 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Dark mode, black stays black -- VOTED, DESIGN AWAITING APPROVAL (2026-10-18)
-
-DESIGN.md, "Dark mode: black stays black". The owner picked B on the vote
-page (https://claude.ai/artifact/WofQtTXBrUwNDxHDD8neDo, survey of seventeen
-broken spots plus three directions). Blocked on approval of the design and
-its two open calls: crew bodies hollow or lit, and clouds darker or lighter
-than the sky. Nothing built. The cutscene bands' fix (`raw`, recede.js) is
-already on main and becomes the new map's default.
-
 ## The score and the music bench -- BENCH BUILT, GAME PLAYBACK DESIGNED, AWAITING THE OWNER'S EAR (2026-10-17)
 
 Next: "The score in the game, and the menu filter" (DESIGN.md). Blocked on

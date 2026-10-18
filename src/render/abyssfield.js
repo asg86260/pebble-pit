@@ -27,7 +27,7 @@ import { P, ABYSS_STAR_EVERY, ABYSS_STAR_MS, ABYSS_STAR_FLOOR, ABYSS_STAR_VARY, 
          ABYSS_VEIL_AT, ABYSS_VEIL_EVERY, ABYSS_VEIL_JITTER, ABYSS_VEIL_LIT, ABYSS_VEIL_DEEP,
          ABYSS_FLOW_LIFT } from '../config.js';
 import { ctx } from './ctx.js';
-import { inkOf } from '../ink.js';
+import { inkOf, inkMode } from '../ink.js';
 
 const HASH_C = 73856093, HASH_R = 19349663;
 const seeth = (c, r) => Math.abs((c * HASH_C) ^ (r * HASH_R)) % 997;
@@ -43,8 +43,10 @@ const seeth = (c, r) => Math.abs((c * HASH_C) ^ (r * HASH_R)) % 997;
 // and every machine a browser runs on is little-endian, so the word's low
 // byte is red.
 let img = null, octx = null, buf = null, words = null;
-const packs = new WeakMap();
+const packsIn = new Map();   // a WeakMap of ramps for each map (ink.js)
 function packed(ramp) {
+  let packs = packsIn.get(inkMode());
+  if (!packs) packsIn.set(inkMode(), packs = new WeakMap());
   let v = packs.get(ramp);
   if (v) return v;
   v = new Uint32Array(ramp.length);

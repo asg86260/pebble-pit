@@ -40,20 +40,28 @@ html, body {
    grays the boards use as steps between them, numbered by how far from the
    ink they stand, in tenths. No rule below names a color; it names one of
    these. The dark page's ink and paper are the ones config/view.js gives the
-   canvas (DARK_PAPER, DARK_INK), and its grays are the light page's put
-   through ink.js's map -- the same step, from the other end:
-   paper + (ink - paper) * (1 - v / 255). Scrims (rgba black) are shade, not
-   ink, and stay dark on both pages. A gray that words are set in (-2, -4,
+   canvas (DARK_PAPER, DARK_INK): a graphite light enough for black to sit
+   on, and a light ink for words and lines. Its grays are the light page's
+   steps taken from the other end, paper + (ink - paper) * (1 - v / 255),
+   with -4 and -5 lifted to AA, which the formula misses on graphite.
+   Scrims (rgba black) are shade, not ink, and stay dark on both pages. A gray that words are set in (-2, -4,
    -5) is at least WCAG AA's 4.5:1 on its own paper, light and dark: -5 is
    the lightest step that is (TEXT_AA in config/view.js; checked on every
    page by src/selftest/textaa.js). -7 and -8 are for edges and fills, never
    words on the paper. */
 :root {
   /* The two ends, named apart from what they are used as, so a box can ink
-     itself the other way round (`--paper: var(--c-ink)`) without a cycle:
+     itself the other way round (`--paper: var(--c-fill)`) without a cycle:
      the deep's story card and every section sign are that. */
   --c-paper: #fff; --c-ink: #000;
   --paper: var(--c-paper); --ink: var(--c-ink);
+  /* A fill (DESIGN.md, "Dark mode: black stays black"): a chip, a banner, a
+     selected row -- black on both pages, with its words in --on-fill. On the
+     light page that is the ink and the paper; on the dark page the paper
+     changes and the black does not. A box that inks itself the other way
+     round swaps all four. */
+  --c-fill: #000; --c-on-fill: #fff;
+  --fill: var(--c-fill); --on-fill: var(--c-on-fill);
   --ink-2: #333; --ink-4: #666; --ink-5: #767676; --ink-7: #a4a4a4; --ink-8: #cfcfcf;
   /* The one accent: purple, for anything outside the black and white -- the
      keyboard's focus, the deep's capstones and asks. A rung of PURPLE in
@@ -104,7 +112,7 @@ html, body {
   /* Every card that floats over the yard casts the same hard one-cell shadow,
      down and right, in the ink at a fifth, so the yard shows through it (the
      counter on the canvas draws the same one: FLOAT_SHADOW in config/view.js). */
-  --shadow-off: 6px; --shadow-ink: 20%;
+  --shadow-off: 6px; --shadow-ink: 20%; --shadow-c: #000;
   /* The type, as two knobs a language can turn (DESIGN.md, "Localization
      phase two", section 3): the face every rule writes as var(--face), and
      the tracking every rule that spaces words multiplies its own em by. One
@@ -137,7 +145,7 @@ html, body {
 /* Declared again wherever --ink-7 is: a custom property resolves its var()s
    where it is declared, so one inherited from the root would keep the root's
    gray on a card that inks itself the other way. */
-:root { --float-shadow: var(--shadow-off) var(--shadow-off) 0 color-mix(in srgb, var(--ink) var(--shadow-ink), transparent); }
+:root { --float-shadow: var(--shadow-off) var(--shadow-off) 0 color-mix(in srgb, var(--shadow-c) var(--shadow-ink), transparent); }
 /* A phone tightens every tracking at once: the words are the same, the
    glass is narrower. */
 @media (max-width: 560px) { :root { --track: .6; } }
@@ -156,12 +164,13 @@ html, body {
 :root.readable:lang(ja) { --face: "DM Mono", "Pit JP", monospace; }
 :root.readable:lang(ko) { --face: "DM Mono", "Pit KR", monospace; }
 html.dark {
-  --c-paper: #1f1f1f; --c-ink: #e0e0e0;
+  --c-paper: #3a3a3a; --c-ink: #ececec; --c-on-fill: #ececec;
   --paper: var(--c-paper); --ink: var(--c-ink);
-  --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #878787; --ink-7: #5f5f5f; --ink-8: #434343;
-  --accent: #9b5de5;
+  --ink-2: #c8c8c8; --ink-4: #b1b1b1; --ink-5: #a5a5a5; --ink-7: #7a7a7a; --ink-8: #5c5c5c;
+  --accent: #b79af2;
   --coin-ore: #7d9cf0; --coin-crop: #6fd08a; --coin-spark: #f06a55;
-  --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
+  --shadow-ink: 45%;
+  --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23ececec' fill-opacity='.14'/%3E%3C/svg%3E");
 }
 body :not(canvas):not(#scroller):not(#spacer):not(.handle) { touch-action: manipulation; }
 /* The scroller: the window, scrolled sideways by the platform (DESIGN.md,
@@ -393,7 +402,7 @@ body.still #scroller { scroll-behavior: auto; }
    so whatever sits on it (the headcount's badge) inverts against it by the
    same rules it follows on the page. */
 .rows .sect {
-  --paper: var(--c-ink); --ink: var(--c-paper);
+  --paper: var(--c-fill); --ink: var(--c-on-fill); --fill: var(--c-on-fill); --on-fill: var(--c-fill);
   justify-self: start;
   margin-top: var(--gap-m);
   padding: 3px 10px 4px;
@@ -472,8 +481,8 @@ body.still #scroller { scroll-behavior: auto; }
   display: inline-block;
   margin-left: .5em;
   padding: 0 .33em;
-  color: var(--paper);
-  background: var(--ink);
+  color: var(--on-fill);
+  background: var(--fill);
   font: inherit;
   letter-spacing: 0;
 }
@@ -516,13 +525,13 @@ body.still #scroller { scroll-behavior: auto; }
   cursor: pointer;
 }
 @media (hover: hover) {
-  .rows button:hover:not(:disabled) { color: var(--paper); background: var(--ink); }
+  .rows button:hover:not(:disabled) { color: var(--on-fill); background: var(--fill); }
 }
 /* The tonic the pot is set to, marked on the menu: it reads inverted, the way a
    chosen thing does, so a glance at the board says what is on the boil. The word
    "brewing" sits where a price would, filled in by the board. */
-.rows button.pick.on { color: var(--paper); background: var(--ink); }
-.rows button.pick.on .gain { color: var(--paper); }
+.rows button.pick.on { color: var(--on-fill); background: var(--fill); }
+.rows button.pick.on .gain { color: var(--on-fill); }
 /* A row you cannot press yet is dimmed by *colour* rather than by opacity, so
    that something inside it can still be darker than it is. Opacity on the row
    multiplies everything under it and there is no way back up from it -- which
@@ -789,9 +798,9 @@ body.still #scroller { scroll-behavior: auto; }
    on the black rather than turning to ink on ink. A reading (`.stat`) is never
    inverted, so its note keeps its ink: white on the page was a note that went
    away under the cursor. */
-.rows button.pick.on .note { color: var(--paper); opacity: .9; }
+.rows button.pick.on .note { color: var(--on-fill); opacity: .9; }
 @media (hover: hover) {
-  .rows button:hover:not(:disabled):not(.stat) .note { color: var(--paper); opacity: .9; }
+  .rows button:hover:not(:disabled):not(.stat) .note { color: var(--on-fill); opacity: .9; }
 }
 
 /* The count and its two buttons, held in the one cell that a price would fill,
@@ -959,7 +968,7 @@ body.still #scroller { scroll-behavior: auto; }
   cursor: pointer;
 }
 @media (hover: hover) {
-  .optspop .opt:hover { color: var(--paper); background: var(--ink); }
+  .optspop .opt:hover { color: var(--on-fill); background: var(--fill); }
 }
 /* The picker at the pot lays its rows out like a board row rather than like a
    plain option: the name on the left, what a batch of it costs on the right, and
@@ -1030,7 +1039,7 @@ body.still #scroller { scroll-behavior: auto; }
 .optspop[data-potpick] .for .count { flex: 0 0 auto; padding-left: 18px; color: var(--ink-5); }
 .optspop[data-potpick] .for.on .count { color: var(--ink-8); }
 @media (hover: hover) {
-  .optspop[data-potpick] .for:hover { color: var(--paper); background: var(--ink); }
+  .optspop[data-potpick] .for:hover { color: var(--on-fill); background: var(--fill); }
   .optspop[data-potpick] .for:hover .count { color: var(--ink-8); }
 }
 /* The one trade a brew is for, when there is only one: a line, not a choice. */
@@ -1053,9 +1062,9 @@ body.still #scroller { scroll-behavior: auto; }
 /* On a row that has a second line under it, the block belongs beside the NAME
    rather than halfway down the whole row. */
 .optspop[data-potpick] .opt .swatch { margin-top: 3px; }
-.optspop .opt.on .swatch { border-color: var(--paper); }
+.optspop .opt.on .swatch { border-color: var(--on-fill); }
 @media (hover: hover) {
-  .optspop .opt:hover .swatch { border-color: var(--paper); }
+  .optspop .opt:hover .swatch { border-color: var(--on-fill); }
 }
 .rows .job button {
   display: block;
@@ -1177,12 +1186,12 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   gap: 4px;
   padding: var(--pad-m);
   max-width: 80vw;
-  background: var(--ink);
+  background: var(--fill);
   box-shadow: var(--float-shadow);
-  border: 1px solid var(--paper);
-  outline: 1px solid var(--ink);
+  border: 1px solid var(--on-fill);
+  outline: 1px solid var(--fill);
   font: inherit;
-  color: var(--paper);
+  color: var(--on-fill);
   text-align: center;
   cursor: pointer;
   /* going: a slow fade, so it lingers rather than blinks off */
@@ -1335,7 +1344,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .wardrobe > .wardfields, .wardrobe > .wardstage, .wardrobe > .wardbox { margin-top: var(--gap-m); }
 .held .wardrobe .wardwho button { display: flex; align-items: center; justify-content: center; gap: var(--gap-m); padding: 2px 8px; }
 .held .wardrobe .wardwho button + button { border-left: 0; }
-.held .wardrobe .wardtab.on { color: var(--paper); background: var(--ink); }
+.held .wardrobe .wardtab.on { color: var(--on-fill); background: var(--fill); }
 .wardrobe .wardfields { display: flex; flex-direction: column; gap: var(--gap-m); }
 .wardrobe .wardrow { display: grid; grid-template-columns: 5em auto 1fr auto auto; align-items: center; gap: var(--gap-m); text-align: left; }
 .held .wardrobe .wardarr { align-self: auto; min-width: 2.6em; padding: 2px 8px; }
@@ -1391,19 +1400,19 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   display: grid; grid-template-columns: auto minmax(min-content, 1fr); align-items: center; gap: var(--gap-s);
   padding: 3px 4px 3px 3px; text-align: left; letter-spacing: normal;
 }
-.held .wardrobe .wardslot.on { color: var(--paper); background: var(--ink); }
+.held .wardrobe .wardslot.on { color: var(--on-fill); background: var(--fill); }
 /* a slot's button never turns over under the pointer, its picture being drawn
    the right way up for it: the edge greys instead, as a tile's does */
 @media (hover: hover) {
   .held .wardrobe .wardslot:hover:not(.on), .held .wardrobe .wardtab:hover:not(.on) { color: var(--ink); background: var(--paper); border-color: var(--ink-7); }
-  .held .wardrobe .wardslot.on:hover, .held .wardrobe .wardtab.on:hover { color: var(--paper); background: var(--ink); }
+  .held .wardrobe .wardslot.on:hover, .held .wardrobe .wardtab.on:hover { color: var(--on-fill); background: var(--fill); }
 }
 .held .wardrobe .wardslot:focus-visible:not(.on) { border-color: var(--ink-7); }
 .wardrobe .wardst { display: flex; flex-direction: column; min-width: 0; }
 .wardrobe .wardsk { font-weight: bold; text-transform: uppercase; }
 .wardrobe .wardsw { color: var(--ink-4); text-transform: none; min-height: var(--sw-h, 0);
                     white-space: normal; overflow-wrap: normal; word-break: normal; hyphens: manual; line-height: 1.15; }
-.held .wardrobe .wardslot.on .wardsw { color: var(--paper); }
+.held .wardrobe .wardslot.on .wardsw { color: var(--on-fill); }
 .held .wardrobe .wardprobe { position: absolute; left: 0; top: 0; height: 0; min-height: 0; overflow: hidden; visibility: hidden; pointer-events: none; z-index: -1; }
 .wardrobe .wardprobe .wardsw { min-height: 0; }
 .wardrobe .wardlead { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; shape-rendering: crispEdges; }
@@ -1427,7 +1436,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    other end, how many of its items are open, and its die. */
 .wardrobe .wardbox { display: flex; flex-direction: column; }
 .wardrobe .wardgridhead { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--gap-m); }
-.wardrobe .wardgridtab { color: var(--paper); background: var(--ink); font-weight: bold; padding: 3px 10px 2px; }
+.wardrobe .wardgridtab { color: var(--on-fill); background: var(--fill); font-weight: bold; padding: 3px 10px 2px; }
 .wardrobe .wardr { display: inline-flex; align-items: center; gap: var(--gap-m); padding-bottom: var(--gap-s); }
 .wardrobe .wardopen { color: var(--ink-5); font-size: var(--fs-small); white-space: nowrap; }
 /* On a short window the grid alone gives way, scrolling inside itself, so the
@@ -1465,7 +1474,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 }
 .held .wardrobe .wardtile:focus-visible { border-color: var(--ink-7); }
 @media (hover: hover) { .held .wardrobe .wardtile:hover { border-color: var(--ink-7); } }
-.held .wardrobe .wardtile.on { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+.held .wardrobe .wardtile.on { color: var(--on-fill); background: var(--fill); border-color: var(--fill); }
 .held .wardrobe .wardtile.tried { border-style: dashed; border-color: var(--ink); }
 .wardrobe .wardtn { font-size: var(--fs-small); hyphens: none; max-width: 100%; white-space: normal; overflow-wrap: normal; word-break: normal;
                     text-align: center; line-height: 1.15; min-height: var(--tn-h, 0); }
@@ -1549,9 +1558,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 }
 /* The one that opens the game stands inverted on the landing page's front:
    the one thing the page is for. */
-.col button.play { color: var(--paper); background: var(--ink); }
+.col button.play { color: var(--on-fill); background: var(--fill); }
 @media (hover: hover) {
-  .held button:hover:not(:disabled), .held a.store:hover, .col button:hover:not(:disabled) { color: var(--paper); background: var(--ink); }
+  .held button:hover:not(:disabled), .held a.store:hover, .col button:hover:not(:disabled) { color: var(--on-fill); background: var(--fill); }
   .col button.play:hover { color: var(--ink); background: var(--paper); }
 }
 /* One disabled look for every menu control: the disabled grey and a dashed
@@ -1720,7 +1729,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 }
 .queue button .pips { letter-spacing: .22em; opacity: var(--pip-tone, .78); flex: none; }
 @media (hover: hover) {
-  .queue button.wait:hover { color: var(--paper); background: var(--ink); }
+  .queue button.wait:hover { color: var(--on-fill); background: var(--fill); }
 }
 
 #tip {
@@ -1756,7 +1765,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   cursor: pointer;
 }
 @media (hover: hover) {
-  #hidedone:hover { color: var(--paper); background: var(--ink); }
+  #hidedone:hover { color: var(--on-fill); background: var(--fill); }
 }
 /* The saves page (slots.js), on the held sheet and the landing page alike: a
    line a yard -- the row's button carrying its words and its playtime, a
@@ -1773,7 +1782,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; column-gap: 6px;
   border: 1px solid var(--ink); align-items: stretch;
 }
-.saves .saverow.open { color: var(--paper); background: var(--ink); }
+.saves .saverow.open { color: var(--on-fill); background: var(--fill); }
 .saves .slot {
   grid-column: 1 / 6; display: grid; grid-template-columns: subgrid; column-gap: 3ch;
   align-items: baseline; text-align: left; white-space: nowrap; border: 0;
@@ -1781,7 +1790,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .saves .slot .what { display: contents; }
 .saves .slot .item.lone { grid-column: 2 / -1; }
 .saves .slot .played { text-align: right; font-variant-numeric: tabular-nums; }
-.saves .slot.armed { color: var(--paper); background: var(--ink); }
+.saves .slot.armed { color: var(--on-fill); background: var(--fill); }
 /* At least 36px across and the card's height. A row with nothing to delete
    keeps its place unseen, so the card is as wide as the others. */
 .saves .del {
@@ -1791,7 +1800,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .saves .del .x { width: 15px; height: 15px; display: block; shape-rendering: crispEdges; }
 .saves .del .x rect { fill: currentColor; }
 @media (hover: hover) {
-  .saves .del:hover { color: var(--paper); background: var(--ink); }
+  .saves .del:hover { color: var(--on-fill); background: var(--fill); }
   .saves .saverow.open .del:hover { color: var(--ink); background: var(--paper); }
 }
 .saves .saverow.open .del { border-left-color: var(--paper); }
@@ -1804,7 +1813,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .saves .confirm .fold { min-height: 0; overflow: hidden; }
 .saves .confirm .pair { display: flex; gap: var(--gap-m); }
 .saves .confirm .pair button { flex: 1; text-align: center; }
-.saves .confirm .yes { color: var(--paper); background: var(--ink); }
+.saves .confirm .yes { color: var(--on-fill); background: var(--fill); }
 body.still .saves .confirm { transition: none; }
 /* Too wide for the window across (slots.js, `fit`), a row's words take two
    lines -- number, rock, crew, then when and playtime -- and the ✕ stays in the
@@ -1821,7 +1830,7 @@ body.still .saves .confirm { transition: none; }
 .saves.stacked .del { grid-column: 2; }
 /* The slot you are in is drawn inverted, not faded: inert, but plainly the
    page's subject. The disabled color is set too, or the browser greys it. */
-.saves .slot.open, .saves .slot.open:disabled { color: var(--paper); background: var(--ink); opacity: 1; }
+.saves .slot.open, .saves .slot.open:disabled { color: var(--on-fill); background: var(--fill); opacity: 1; }
 /* The veil: white over the whole page as it boots, and taken away once the
    yard is drawn (main.js). The landing page goes to the same white on play,
    so the two documents meet in it. Under motion: less it is taken away at
@@ -1877,7 +1886,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   background: var(--paper);
   border-bottom: 1px solid var(--ink);
 }
-#dev .devtabs button.on { color: var(--paper); background: var(--ink); }
+#dev .devtabs button.on { color: var(--on-fill); background: var(--fill); }
 #dev .devrow {
   display: grid;
   grid-template-columns: 8em 1fr;
@@ -1904,7 +1913,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   cursor: pointer;
 }
 @media (hover: hover) {
-  #dev button:hover { color: var(--paper); background: var(--ink); }
+  #dev button:hover { color: var(--on-fill); background: var(--fill); }
 }
 #dev b { min-width: 3.4em; font-weight: normal; }
 #dev input[type=range] { width: 8em; accent-color: var(--ink); }
@@ -2039,9 +2048,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   left: 0; top: auto; bottom: 0;
   z-index: 11;
   padding: var(--pad-m);
-  background: var(--ink);
-  color: var(--paper);
-  border: 2px solid var(--ink);
+  background: var(--fill);
+  color: var(--on-fill);
+  border: 2px solid var(--fill);
   box-shadow: var(--float-shadow);
   font: inherit;
   letter-spacing: calc(var(--track-m) * var(--track));
@@ -2073,7 +2082,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   text-transform: uppercase;
 }
 .langs button.on, .held .index .it.on, .optspop .opt.on, .optspop[data-potpick] .for.on {
-  color: var(--paper); background: var(--ink);
+  color: var(--on-fill); background: var(--fill);
 }
 
 /* A tick box, in the type's own size so it rides the text beside it: a
@@ -2105,7 +2114,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 .rows button:not(.tile):active:not(:disabled):not(.stat), .optspop .opt:active, .optspop .for:active:not(.only),
 .queue button.wait:active, #hidedone:active, #modalclose:active, #objective .barrier button:active:not(:disabled),
 #corner > button:active, #hop button:active, #buildbtn:active, .saves .del:active {
-  color: var(--paper); background: var(--ink);
+  color: var(--on-fill); background: var(--fill);
 }
 .col button.play:active, #raise:active, .toast:active { color: var(--ink); background: var(--paper); }
 
@@ -2275,13 +2284,13 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   transform: translateX(-50%);
   padding: var(--pad-m);
   box-shadow: var(--float-shadow);
-  background: var(--ink);
-  border: 1px solid var(--paper);
-  outline: 1px solid var(--ink);
+  background: var(--fill);
+  border: 1px solid var(--on-fill);
+  outline: 1px solid var(--fill);
   font: inherit;
   letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
-  color: var(--paper);
+  color: var(--on-fill);
   /* A button, since a phone has no space bar: held, it is the key held. */
   cursor: pointer;
   touch-action: manipulation;
@@ -2289,7 +2298,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   transition: opacity .18s linear;   /* SHEET_FADE_MS in config/view.js */
 }
 .skip.on { opacity: 1; }
-.skip .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--paper); }
+.skip .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--on-fill); }
 .skip .say { position: relative; mix-blend-mode: difference; }
 
 /* The mess tags (messtags.js): the skip hint's black card at the top edge, a
@@ -2310,13 +2319,13 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   padding: calc(var(--pad-m-y) - 2px) var(--pad-m-x);
   white-space: nowrap;
   box-shadow: var(--float-shadow);
-  background: var(--ink);
-  border: 1px solid var(--paper);
-  outline: 1px solid var(--ink);
+  background: var(--fill);
+  border: 1px solid var(--on-fill);
+  outline: 1px solid var(--fill);
   font: inherit;
   letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
-  color: var(--paper);
+  color: var(--on-fill);
   opacity: 0;
   /* the skip hint's fade (SHEET_FADE_MS in config/view.js), and the toast's
      ease for the glide */
@@ -2360,7 +2369,7 @@ body.still .messtag { transition: none; }
 .modalhead .title { letter-spacing: calc(var(--track-m) * var(--track)); text-transform: uppercase; }
 #modalclose { padding: 0 var(--pad-s-x); border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font: inherit; line-height: var(--lh-text); cursor: pointer; }
 @media (hover: hover) {
-  #modalclose:hover { background: var(--ink); color: var(--paper); }
+  #modalclose:hover { background: var(--fill); color: var(--on-fill); }
 }
 .modalbody { overflow-y: auto; overscroll-behavior: contain; min-height: 0;
              scrollbar-width: thin; scrollbar-color: var(--ink) transparent; }   /* inked: no grey in the picture */
@@ -2408,13 +2417,13 @@ body.still .messtag { transition: none; }
 }
 #objective .next { position: absolute; top: calc(-1 * var(--tab-h)); left: -2px; padding: 0 8px; line-height: var(--tab-h);
                    font-size: var(--fs-small); letter-spacing: calc(var(--track-s) * var(--track)); text-transform: uppercase;
-                   background: var(--ink); color: var(--paper); }
+                   background: var(--fill); color: var(--on-fill); }
 #objective .say { transition: opacity .35s ease; }
 #objective .say.done { text-decoration: line-through; text-decoration-thickness: 2px; }
 #objective .say.in { opacity: 0; }
 /* the step done: the strike stands a beat, then the card goes */
 #objective.going { opacity: 0; translate: 0 -8px; transition: opacity .35s ease .55s, translate .35s ease .55s; }
-#objective.deep { --paper: var(--c-ink); --ink: var(--c-paper); }
+#objective.deep { --paper: var(--c-fill); --ink: var(--c-on-fill); --fill: var(--c-on-fill); --on-fill: var(--c-fill); }
 /* A scene holding the yard: the card fades out where it stands and back in
    after (objline.js), as the letterbox steps in and out. */
 #objective.scened { opacity: 0; transition: opacity .6s ease; }
@@ -2489,7 +2498,7 @@ body.still .fill::before { transition: none; }
 #objective .barrier .cancel { flex: none; padding: var(--pad-s); border: 1px solid var(--ink); white-space: nowrap; }
 #objective .barrier .cancel:not(.on) { opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s .35s; }
 @media (hover: hover) {
-  #objective .barrier button:hover:not(:disabled) { color: var(--paper); background: var(--ink); }
+  #objective .barrier button:hover:not(:disabled) { color: var(--on-fill); background: var(--fill); }
   #objective .barrier button:hover:not(:disabled) .short { color: var(--ink-8); }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -2505,7 +2514,7 @@ body.still .fill::before { transition: none; }
 .g { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
      min-width: 1.6em; height: 1.6em; padding: 0 .3em; vertical-align: middle;
      font: bold .78em var(--face); letter-spacing: 0; text-transform: none;
-     color: var(--paper); background: var(--ink); border: 1px solid var(--ink); }
+     color: var(--on-fill); background: var(--fill); border: 1px solid var(--fill); }
 .g.face { border-radius: 50%; padding: 0; width: 1.6em; }
 .g.bump { border-radius: .35em; }
 .g.trig { border-radius: .35em .35em .15em .15em; height: 1.9em; }
@@ -2513,7 +2522,7 @@ body.still .fill::before { transition: none; }
 .g.stick { color: var(--ink); background: var(--paper); border-radius: 50%; padding: 0; width: 1.6em; border-width: 2px; }
 /* The skip hint's words are drawn by difference over its own fill, so its
    glyph is drawn the other way round to come out ink on paper there too. */
-.skip .g { color: var(--ink); background: var(--paper); border-color: var(--paper); }
+.skip .g { color: var(--fill); background: var(--on-fill); border-color: var(--on-fill); }
 /* The marker over a page's rows: a sheet over everything, painted by
    padpage.js, that no press ever lands on. */
 #padmark, #focusmark { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 22; pointer-events: none;
@@ -2573,7 +2582,7 @@ body.still .fill::before { transition: none; }
   font-size: var(--fs-small); white-space: nowrap; overflow-wrap: normal;
 }
 .held .settabs button:first-child, .col .settabs button:first-child { border-left: 0; }
-.held .settabs button.on, .col .settabs button.on { color: var(--paper); background: var(--ink); }
+.held .settabs button.on, .col .settabs button.on { color: var(--on-fill); background: var(--fill); }
 .tabbody { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); align-self: stretch; min-height: 0; }
 .tabpane { grid-area: 1 / 1; display: flex; flex-direction: column; gap: var(--gap-m); min-width: 0; min-height: 0; }
 .tabpane > * { flex-shrink: 0; }

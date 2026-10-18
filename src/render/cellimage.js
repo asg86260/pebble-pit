@@ -6,16 +6,17 @@
 // comes out the color it would have been drawn.
 
 import { P } from '../config.js';
-import { inkOf } from '../ink.js';
+import { inkOf, inkMode } from '../ink.js';
 
 const rgbOf = new Map();
 function rgba(c) {
-  let v = rgbOf.get(c);
+  const key = inkMode() + c;
+  let v = rgbOf.get(key);
   if (v) return v;
   const h = inkOf(c).replace('#', '');
   const n = parseInt(h.length === 3 ? h.split('').map(d => d + d).join('') : h, 16);
   v = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-  rgbOf.set(c, v);
+  rgbOf.set(key, v);
   return v;
 }
 

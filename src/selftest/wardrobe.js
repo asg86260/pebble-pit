@@ -18,7 +18,16 @@ import { S } from '../state.js';
 import { P, WORKER, NAME_MAX, WARD_AURAS, WARD_AURA_FPS, WARD_GRID_ROWS, TEXT_FLOOR } from '../config.js';
 import { advance } from '../clock.js';
 import { draw } from '../render.js';
-import { darkPage } from '../ink.js';
+import { paper, ink } from '../ink.js';
+
+const lumOf = h => [1, 3, 5].reduce((s, k) => s + parseInt(h.slice(k, k + 2), 16), 0) / 3;
+const PAPER_LUM = lumOf(paper);
+// The lightnesses a picture is drawn in when it is not faint: black, white,
+// and the page's own paper and ink.
+const ENDS = [0, 255, PAPER_LUM, lumOf(ink)];
+// How close counts as one of them: a fifth of the way from the paper to
+// black, which on the dark page's graphite is a short way.
+const NEAR = Math.min(40, PAPER_LUM / 5);
 import { namePair, outfitOf, wear, DEFAULTS, HEAD, SLOTS, bareOf, nameOf, roleOf, setName, pairBody, ROLE_START, isOpen, itemLock } from '../wardrobe.js';
 import { CREW_NAMES } from '../crew/names.js';
 import { objective } from '../objectives.js';
@@ -41,7 +50,8 @@ function inkAt(wx, wy) {
   if (y % 2) y++;
   const d = canvas().getContext('2d').getImageData(Math.round(sx * k), y, 1, 1).data;
   const lum = (d[0] + d[1] + d[2]) / 3;
-  return darkPage ? lum > 128 : lum < 128;
+  // ink is black on both pages (ink.js): darker than halfway to the paper
+  return lum < PAPER_LUM / 2;
 }
 
 // The held sheet up on the picker as a player brings it: the pointer to the
@@ -79,7 +89,7 @@ function greys() {
   const c = byId('wardrobe').querySelector('.wardbig');
   const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
   let n = 0;
-  for (let i = 0; i < d.length; i += 4) { const l = (d[i] + d[i + 1] + d[i + 2]) / 3; if (l > 40 && l < 215) n++; }
+  for (let i = 0; i < d.length; i += 4) { const l = (d[i] + d[i + 1] + d[i + 2]) / 3; if (ENDS.every(e => Math.abs(l - e) >= NEAR)) n++; }
   return n;
 }
 // The name typed into its field as a keyboard does: the value, and the
@@ -749,7 +759,7 @@ export const TESTS = [
         const [sx, sy] = onScreen(x + dx, y + dy), k = S.dpr;
         const d = canvas().getContext('2d').getImageData(Math.round(sx * k), Math.round(sy * k) & ~1, 1, 1).data;
         const lum = (d[0] + d[1] + d[2]) / 3;
-        if (darkPage ? lum > 60 : lum < 235) n++;
+        if (Math.abs(lum - PAPER_LUM) > 20) n++;
       }
       return n;
     };

@@ -17,7 +17,7 @@ import { now } from '../clock.js';
 import { ctx } from './ctx.js';
 import { hash } from './flicker.js';
 import { msg, FACE } from '../lang.js';
-import { raw } from '../ink.js';
+import { raw, light } from '../ink.js';
 import { bandCells } from '../cutscene.js';
 import { CELL } from '../config.js';
 import { drawBody, lookFor } from './crew.js';
@@ -89,7 +89,7 @@ function drawTear() {
         const d = Math.hypot(dx / rx, dy / Math.max(P, ry));
         const jag = hash((e.x + dx) * 0.37 + (e.y + dy) * 0.11) * 0.35;
         const x = snap(e.x + dx), y = snap(e.y + dy);
-        if (d < 0.55) cellAt(x, y, GREY[0]);
+        if (d < 0.55) cellAt(x, y, light(GREY[0]));   // the afterlife's white shines on either page
         else if (d < 0.8) cellAt(x, y, ACT_PORTAL_TONES[0]);
         else if (d < 1 + jag) cellAt(x, y, d < 0.95 ? ACT_PORTAL_TONES[2] : GREY[8]);
       }

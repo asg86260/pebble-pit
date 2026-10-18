@@ -5,7 +5,7 @@
 
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
-import { darkPage, turned } from '../ink.js';
+import { seen } from '../ink.js';
 import { NUM_FONT, NUM_FONT_TIGHT, NUM_FONT_PX } from '../config.js';
 import { fmt } from '../words.js';
 
@@ -28,9 +28,8 @@ export const sayNum = n => fmt(n);
 // What of `str` the font can draw: anything it has no glyph for is left out.
 export const drawable = str => [...String(str)].filter(ch => ch in NUM_FONT).join('');
 
-// On the dark page every color is mapped by its lightness (ink.js), and the
-// deep there is drawn turned so the map brings it back: the numbers too.
-const seen = c => darkPage ? turned(c) : c;
+// Written as seen (ink.js, `seen`): a number reads the same way round in
+// whichever map it is drawn.
 
 // A small sheet of every glyph in one face on its drop line, at `px` device
 // pixels a font pixel: a number is a drawImage a glyph. One sheet a size and

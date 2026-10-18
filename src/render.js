@@ -9,6 +9,7 @@
 import { CREW_FADE, P, MAGIC_TONES, RIPPLE_RINGS, RIPPLE_GAP } from './config.js';
 import { crewView } from './prefs.js';
 import { ctx, canvas, paintOn } from './render/ctx.js';
+import { inkMode } from './ink.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
 
@@ -447,6 +448,12 @@ function drawHalf(place) {
   }
 }
 
+// The dark page's map a layer is drawn in (ink.js): the deep's whole half in
+// the deep's own, the layers that are read in the turned one so black words
+// come out light, and the rest in the yard's, where black stays black. On
+// the light page every map is the identity.
+const mapOf = (name, place) => place === 'deep' ? 'deep' : READING.has(name) ? 'line' : 'yard';
+
 function drawLayer(layer, i, place) {
   // A `dim` layer is the crew's own plane, and the corner's crew switch
   // takes ink out of it, or takes it out of the picture, so the buildings
@@ -455,6 +462,7 @@ function drawLayer(layer, i, place) {
   // The alpha is put back the same frame: nothing else is ever drawn faint.
   const view = layer.dim ? crewView() : 'show';
   if (view === 'hide') return;
+  inkMode(mapOf(layer.name, place));
   const faint = view === 'fade';
   // Cut at the shaft's middle in the yard and the deep; an act's place draws
   // none of the layers the cut is for (`inHalf`).
@@ -463,6 +471,7 @@ function drawLayer(layer, i, place) {
   const was = ctx.globalAlpha;
   if (faint) ctx.globalAlpha = was * CREW_FADE;
   layer.draw();
+  inkMode('yard');   // and back, so whatever draws between frames (a sheet's pictures) is in the yard's
   if (cut) ctx.restore();
   if (faint) ctx.globalAlpha = was;
 }

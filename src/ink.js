@@ -1,14 +1,30 @@
-// The palette (DESIGN.md, "Dark mode"). The renderers write black and white
-// by name in some three hundred places, and the boards' stylesheet in as
-// many; this is the one place that decides what black and white *are*.
+// The palette (DESIGN.md, "Dark mode: black stays black"). The renderers
+// write black and white by name in some three hundred places, and the boards'
+// stylesheet in as many; this is the one place that decides what black and
+// white *are*.
 //
-// A color is mapped by its lightness alone: black to the ink, white to the
-// paper, a gray to the same step between them, and a colored mark keeps its
-// hue and its saturation and takes the lightness a gray of its weight would
-// -- so the quarry's blue is still blue on the dark page, and the sparks are
-// still red, where an inversion turned them salmon. On the light page the
-// paper is white and the ink black, and the map is the identity, so it is
-// not installed at all.
+// On the light page the paper is white and the ink black, and the map is the
+// identity, so it is not installed at all. The dark page has three maps, and
+// render.js says which one a layer is drawn in (`inkMode`):
+//
+// - 'yard', the default: white goes to the graphite paper and black stays
+//   black, a gray landing on the same step between them, so a heap's deepest
+//   part is still its darkest, a hole is still a hole and a black hat is
+//   still black. A colored mark keeps its color as written: the coins were
+//   chosen against white and read on graphite. A dull one (smog's tan, a
+//   cloud's gray-brown) is mapped as a gray is, so dirt does not glow.
+// - 'line', for the layers that are read rather than looked at (render.js,
+//   READING): black goes to the light ink and white to the paper, the old
+//   dark page's turn, since black words on graphite are under 2:1.
+// - 'deep', for the deep's whole half: the same turn between the old dark
+//   page's charcoal and light gray. The deep was drawn for that, as a dark
+//   field on either page, and it is left as it was.
+//
+// Two tags decide a color at the call, past the map, as `raw` does:
+// `light(c)` for a thing that shines (a lit window, the portal, a fire),
+// which keeps its color with white lifted only to the light ink; and
+// `line(c)`, a word or a stroke on bare paper in a layer that is not one of
+// the reading ones. Both are the identity on the light page.
 //
 // It is installed on the canvas context's prototype rather than threaded
 // through every draw: every context on the page -- the yard's, the painters'
@@ -18,7 +34,7 @@
 // cached on a scratch canvas was drawn in the palette of the moment, and
 // the palette cannot be changed under it.
 
-import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK } from './config.js';
+import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, DEEP_PAPER, DEEP_INK } from './config.js';
 import { dark } from './prefs.js';
 
 const on = dark();
@@ -35,10 +51,10 @@ const hex = h => {
   const n = parseInt(h.slice(1, 7), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 };
-const [pr, pg, pb] = hex(paper), [ir, ig, ib] = hex(ink);
-const lp = (pr + pg + pb) / 765, li = (ir + ig + ib) / 765;
+const lightOf = h => { const [r, g, b] = hex(h); return (r + g + b) / 765; };
+const toHex = ([r, g, b]) => '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
 
-// HSL both ways, as the map keeps hue and saturation and moves lightness.
+// HSL both ways, as every map keeps hue and saturation and moves lightness.
 function toHsl(r, g, b) {
   r /= 255; g /= 255; b /= 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
@@ -60,44 +76,84 @@ function fromHsl(h, s, l) {
   return [f(h + 1 / 3), f(h), f(h - 1 / 3)].map(v => Math.round(v * 255));
 }
 
-// A color with its lightness turned over and its hue kept. Written on the
-// dark page, the map turns the lightness back, so it is seen as the light
-// page would show it turned over: the deep is drawn this way there
-// (render/deep.js), a dark field on either page with its purples still purple.
+// The ends of each map: where white lands and where black lands.
+const ENDS = {
+  yard: [lightOf(DARK_PAPER), 0],
+  line: [lightOf(DARK_PAPER), lightOf(DARK_INK)],
+  deep: [lightOf(DEEP_PAPER), lightOf(DEEP_INK)],
+};
+// How far a color has to be from gray for the yard to keep it as written:
+// the spread of its channels, faded in between the two so no hue jumps.
+const DULL = 0.22, KEPT = 0.42;
+
+let mode = 'yard';
+// Which map the next fills go through (render.js, a layer at a time).
+export function inkMode(m) { if (m) mode = m; return mode; }
+// Whether black is being drawn light: the turned maps, where a `darken`
+// becomes a `lighten` and the deep skips its negative.
+export const turnedOver = () => on && mode !== 'yard';
+
+function mapRgb(r, g, b, m) {
+  const [h, s, l] = toHsl(r, g, b);
+  const [lw, lb] = ENDS[m];
+  const to = lb + (lw - lb) * l;
+  if (m !== 'yard') return fromHsl(h, s, to);
+  const chroma = (Math.max(r, g, b) - Math.min(r, g, b)) / 255;
+  const k = Math.min(1, Math.max(0, (chroma - DULL) / (KEPT - DULL)));
+  return fromHsl(h, s, to + (l - to) * k);
+}
+
+// A color with its lightness turned over and its hue kept. Drawn in the
+// deep's map, which turns the lightness back, it is seen as the light page
+// would show it turned over (render/deep.js).
 export function turned(c) {
   const [h, s, l] = toHsl(...hex(c));
-  const [r, g, b] = fromHsl(h, s, 1 - l);
-  return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+  return toHex(fromHsl(h, s, 1 - l));
 }
 
-// A color written so the page's map lands it on `c` itself: the lightness is
-// chosen to be the one whose map is `c`'s own, so the deep's tones come out on
-// the dark page as they do on the light one, steps and all. `turned` leaves
-// them squeezed into the paper-to-ink span and lifted off black, which folds
-// a brick's mortar, a fire and the floor together. A tone darker than the
-// paper cannot be reached by the map and lands on the paper.
+// A color written so the deep's map lands it on `c` itself, steps and all. A
+// tone darker than the deep's paper cannot be reached and lands on the paper.
 export function landed(c) {
   const [h, s, l] = toHsl(...hex(c));
-  const [r, g, b] = fromHsl(h, s, Math.min(1, Math.max(0, 1 - (l - lp) / (li - lp))));
-  return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+  const [lp, li] = ENDS.deep;
+  return toHex(fromHsl(h, s, Math.min(1, Math.max(0, 1 - (l - lp) / (li - lp)))));
 }
 
-// A gray keeps its step: pure black lands on the ink, pure white on the
-// paper, and the rest in between in the same order.
-const mapRgb = (r, g, b) => {
-  const [h, s, l] = toHsl(r, g, b);
-  return fromHsl(h, s, lp + (li - lp) * (1 - l));
-};
+// A color as written, squeezed into what the map in force can show: white to
+// its lightest, black to its darkest. What the deep's marks and the number
+// font want, a count reading the same way round on either page.
+export function seen(c) {
+  if (!on) return c;
+  const [h, s, l] = toHsl(...hex(c));
+  const [lw, lb] = ENDS[mode];
+  const lo = Math.min(lw, lb), hi = mode === 'yard' ? lightOf(DARK_INK) : Math.max(lw, lb);
+  return raw(toHex(fromHsl(h, s, lo + (hi - lo) * l)));
+}
+
+// A thing that shines: its color as written, white lifted only to the light
+// ink, so a lit window on the dark page is still lit.
+export function light(c) {
+  if (!on) return c;
+  const [h, s, l] = toHsl(...hex(c));
+  return raw(toHex(fromHsl(h, s, l * lightOf(DARK_INK))));
+}
+
+// A word or a stroke on bare paper: black to the light ink.
+export function line(c) {
+  if (!on) return c;
+  return raw(toHex(mapRgb(...hex(c), 'line')));
+}
 
 const NAMED = { black: [0, 0, 0], white: [255, 255, 255] };
 const RGB = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/;
-const cache = new Map();
+const caches = { yard: new Map(), line: new Map(), deep: new Map() };
 
-// The color the page draws for a color the code wrote. Anything it cannot
-// read -- a gradient, a pattern, a name it does not know -- goes through as
-// it is.
-export function inkOf(c) {
+// The color the page draws for a color the code wrote, in the map in force.
+// Anything it cannot read -- a gradient, a pattern, a name it does not know --
+// goes through as it is.
+export function inkOf(c, m = mode) {
   if (!on || typeof c !== 'string') return c;
+  const cache = caches[m];
   let out = cache.get(c);
   if (out !== undefined) return out;
   out = c;
@@ -105,20 +161,24 @@ export function inkOf(c) {
   if (c[0] === '#' && (c.length === 4 || c.length === 7)) rgb = hex(c);
   else if (NAMED[c]) rgb = NAMED[c];
   else {
-    const m = RGB.exec(c);
-    if (m) { rgb = [+m[1], +m[2], +m[3]]; a = m[4]; }
+    const m2 = RGB.exec(c);
+    if (m2) { rgb = [+m2[1], +m2[2], +m2[3]]; a = m2[4]; }
   }
   if (rgb) {
-    const [r, g, b] = mapRgb(...rgb);
-    out = a != null ? `rgba(${r},${g},${b},${a})` : '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+    const [r, g, b] = mapRgb(...rgb, m);
+    out = a != null ? `rgba(${r},${g},${b},${a})` : toHex([r, g, b]);
   }
   cache.set(c, out);
   return out;
 }
 
-// The color a `difference` fill wants, to come out as the ink over the paper
-// and as the paper over the ink: their sum, which on the light page is white.
-export const xorInk = raw('#' + [pr + ir, pg + ig, pb + ib].map(v => Math.min(255, v).toString(16).padStart(2, '0')).join(''));
+// The color a `difference` fill wants in a turned map, to come out as the ink
+// over the paper and as the paper over the ink: their sum. In the yard's map,
+// as on the light page, the fill is white.
+const sum = (p, i) => { const [a, b, c] = hex(p), [d, e, f] = hex(i);
+  return raw('#' + [a + d, b + e, c + f].map(v => Math.min(255, v).toString(16).padStart(2, '0')).join('')); };
+const XOR = { yard: raw('#ffffff'), line: sum(DARK_PAPER, DARK_INK), deep: sum(DEEP_PAPER, DEEP_INK) };
+export const xorInk = () => (on ? XOR[mode] : raw('#ffffff'));
 
 // The setters, on the prototype, so every context is covered. Only on the
 // dark page: on the light one the map is the identity and costs a lookup a

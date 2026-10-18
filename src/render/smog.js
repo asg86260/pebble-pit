@@ -10,6 +10,7 @@ import { CLOUD_LAYERS } from '../config.js';
 import { paled, towardPage } from '../weather.js';
 import { S, floor } from '../state.js';
 import { ctx } from './ctx.js';
+import { light, line } from '../ink.js';
 import { screenAt } from './frame.js';
 
 // What the rain left, drawn where it landed, one column at a time, stacked on
@@ -358,10 +359,13 @@ function drawSplashes() {
 // The bolt: black, full for the first half of its life and fading through the
 // second. Black even through the flash; the flash is what turns it white
 // (`drawFlash`).
+// The bolt and its embers are the ink's on the light page and a light on the
+// dark one, where a black strike would be lost in the storm's own dark.
+const BOLT_INK = line('#000');
 export function drawBolt() {
   const b = S.bolt;
   if (b) {
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = BOLT_INK;
     ctx.globalAlpha = Math.min(1, b.left / (BOLT_LIFE_S / 2));
     ctx.beginPath();
     for (const [x, y] of b.cells) ctx.rect(x, y, P, P);
@@ -381,7 +385,7 @@ export function drawBolt() {
     if (!run) runs.set(a, run = []);
     run.push(Math.round(e.x / P) * P, Math.round(e.y / P) * P);
   }
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = BOLT_INK;
   for (const [a, at] of runs) {
     ctx.globalAlpha = a;
     ctx.beginPath();
@@ -403,7 +407,7 @@ export function drawFlash() {
   ctx.globalAlpha = BOLT_FLASH_INK * Math.min(1, b.flash / BOLT_FLASH_S);
   ctx.fillRect(0, 0, S.W, S.H);
   ctx.globalAlpha = 1;
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = light('#fff');   // the bolt shines on either page
   ctx.beginPath();
   const k = P * S.zoom;
   for (const [x, y] of b.cells) { const p = screenAt(x, y); ctx.rect(p.x, p.y, k, k); }
