@@ -188,7 +188,7 @@ export const TESTS = [
           w.__board(null);
         }
         const uniq = [...new Set(cut)];
-        checks.push(ok(uniq.length === 0 && /IBM Plex Mono/.test(face) === !!q,
+        checks.push(ok(uniq.length === 0 && /DM Mono/.test(face) === !!q,
                        `${mode}: no word on a tile is cut at its edge`,
                        `${face}; ` + uniq.slice(0, 6).join('; ') + (uniq.length > 6 ? ` (+${uniq.length - 6})` : '')));
       } finally { f.remove(); }

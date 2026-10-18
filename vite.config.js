@@ -86,7 +86,7 @@ export default defineConfig(({ command, mode }) => {
       // outside the folder the server will hand files from: the readable
       // face's font files (readable.js) came back 403 there and the page set
       // its words in the fallback.
-      fs: { allow: [searchForWorkspaceRoot(process.cwd()), dirname(createRequire(import.meta.url).resolve('@fontsource/ibm-plex-mono/package.json'))] }
+      fs: { allow: [searchForWorkspaceRoot(process.cwd()), dirname(createRequire(import.meta.url).resolve('@fontsource/dm-mono/package.json'))] }
     },
     preview: {
       host: true,

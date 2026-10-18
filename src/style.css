@@ -142,19 +142,19 @@ html, body {
    glass is narrower. */
 @media (max-width: 560px) { :root { --track: .6; } }
 /* Readable text (the settings' switch, readable.js; the owner's vote,
-   2026-10-18): IBM Plex Mono, so the words keep the typewriter's even
-   columns, a size up, no tracking, and running sentences in their own case.
+   2026-10-18, on a second mock): DM Mono, so the words keep the
+   typewriter's even columns, a size up, no tracking, and running sentences in their own case.
    Labels and headings keep their capitals. Written after the phone's line
    and one class stronger than it, so the tracking stays off on a phone. */
 :root.readable {
-  --face: "IBM Plex Mono", ui-monospace, monospace;
+  --face: "DM Mono", ui-monospace, monospace;
   --track: 0;
   --prose-case: none;
   --fs-small: 13px; --fs-body: 14px; --fs-note: 14px; --fs-name: 15px; --fs-word: 18px;
 }
-:root.readable:lang(zh) { --face: "IBM Plex Mono", "Pit SC", monospace; }
-:root.readable:lang(ja) { --face: "IBM Plex Mono", "Pit JP", monospace; }
-:root.readable:lang(ko) { --face: "IBM Plex Mono", "Pit KR", monospace; }
+:root.readable:lang(zh) { --face: "DM Mono", "Pit SC", monospace; }
+:root.readable:lang(ja) { --face: "DM Mono", "Pit JP", monospace; }
+:root.readable:lang(ko) { --face: "DM Mono", "Pit KR", monospace; }
 html.dark {
   --c-paper: #1f1f1f; --c-ink: #e0e0e0;
   --paper: var(--c-paper); --ink: var(--c-ink);

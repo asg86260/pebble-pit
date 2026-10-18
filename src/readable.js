@@ -1,5 +1,5 @@
 // Readable text (the settings' graphics tab, on the game and the landing
-// page): the page's words in IBM Plex Mono a size up, with the tracking and
+// page): the page's words in DM Mono a size up, with the tracking and
 // the capitals taken off running sentences (style.css, `:root.readable`).
 // The yard's own canvas lettering is a picture and is left as it is. The head
 // of each page sets the class before the first paint, from the store

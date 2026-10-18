@@ -26,9 +26,13 @@ The game has more words in it than it did -- names, slots, notes, a locked
 tile's way open -- and the house type (a system mono at 12px, much of it in
 capitals with wide tracking) is a look before it is a reading face. A switch
 on the settings' graphics tab trades the look for reading, and leaves the
-look as the default. The owner voted on a mock of four faces: IBM Plex Mono
-won over Atkinson Hyperlegible and the system sans because it keeps the
-typewriter's even columns, so the boards and sheets still read as this game.
+look as the default. A first mock of four faces chose a mono over Atkinson
+Hyperlegible and the system sans, because a mono keeps the typewriter's even
+columns and the boards and sheets still read as this game; a second mock of
+six chose DM Mono, the softest and most modern of the monos, over IBM Plex
+Mono, JetBrains Mono, Courier Prime and two serifs. DM Mono is drawn for
+Latin only and stops at a medium weight: Cyrillic falls back to the system
+mono a letter at a time, and bold is the medium.
 
 It is the type's knobs turned, not a second stylesheet: `--face`, the size
 scale, `--track` to nothing, and `--prose-case` (the capitals on running
