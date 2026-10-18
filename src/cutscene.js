@@ -299,6 +299,10 @@ function subjects() {
     return [{ x: S.shield.x, y, w: S.shield.w, h: S.groundY - y }];
   }
   if (S.beat.yard) return introSubject();
+  // A scene kept by the module that plays it may name its own box (the acts'
+  // beats, actbeats.js): what it looks at put between the bands.
+  const row = S.shot && SCENES[S.shot.name];
+  if (row && row.box) return [row.box()];
   return [];
 }
 // A scene whose subject has gone from under it -- a shield broken, the

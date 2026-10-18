@@ -149,6 +149,7 @@ function spread(dt) {
   // Signs: every soul within the sign's reach, a piece each AFTER_SIGN_INK_S,
   // to the full, while it stands straight.
   for (const s of A.signs) {
+    s.age = (s.age || 0) + dt;
     if (s.askew || s.pull != null) continue;
     s.acc = (s.acc || 0) + dt;
     const R = signReach(s.big);
@@ -197,7 +198,7 @@ function stepSpeech() {
       if (i < n && a[i] > 0 && a[i] < RIM_PIECES) { a[i] = 0; field.dirty = true; }
     }
   for (const s of A.signs) if (s.f >= sp.f0 && s.f < sp.f0 + AFTER_SPEECH_FILES) s.askew = true;
-  sp.held = A.t;
+  sp.held = A.t; sp.swept = sp.f0;          // the band it swept, for the drawing while it is held
   sp.next = A.t + speechEvery();
   sp.f0 = Math.floor(arand() * (CROWD_FILES - AFTER_SPEECH_FILES));
 }
@@ -205,12 +206,16 @@ function stepSpeech() {
 // The wardens on rounds: their number by the gate reached, each walking down
 // from the throne, to a poster (torn down where it hangs) or a sign (pulled up
 // and carried up the stair into the glare, where it fades), and resting at
-// the stair's foot between rounds.
+// the stair's foot between rounds. A round goes only after a thing that has
+// stood a rest's length: a warden rested and waiting would otherwise be on
+// every new sign the moment it was planted, and a lone sign, the opening's
+// only kind, would be pulled before it had closed a single rim.
 export const wardensDue = () => AFTER_WARDENS[Math.min(AFTER_WARDENS.length - 1, S.after.gate)];
+const noticed = thing => (thing.age ?? Infinity) >= AFTER_WARDEN_REST_S;
 function pickRound(w) {
   const A = S.after;
-  const posters = A.posters.filter(p => p.torn == null && !A.wardens.some(o => o !== w && o.goal === 'poster' && o.target === p.id));
-  const signs = A.signs.filter(s => s.pull == null && !A.wardens.some(o => o !== w && o.goal === 'sign' && o.target === s.id));
+  const posters = A.posters.filter(p => p.torn == null && noticed(p) && !A.wardens.some(o => o !== w && o.goal === 'poster' && o.target === p.id));
+  const signs = A.signs.filter(s => s.pull == null && noticed(s) && !A.wardens.some(o => o !== w && o.goal === 'sign' && o.target === s.id));
   if (!posters.length && !signs.length) return false;
   const takeSign = signs.length && (!posters.length || arand() < 0.5);
   if (takeSign) { const s = signs[Math.floor(arand() * signs.length)]; w.goal = 'sign'; w.target = s.id; }

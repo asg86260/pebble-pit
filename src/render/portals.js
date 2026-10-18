@@ -253,7 +253,9 @@ function drawSoul(x, y, inked, look) {
 export function drawActBodies(place) {
   const pair = pairBodies(), p = S.acts && S.acts.pair;
   if (pair && p) {
-    const k = Math.min(p.lift ?? 1, 1 - (p.inside || 0));
+    // Faded off over the pedestal's own drawing of them while they stand on
+    // it (actbeats.js, `top`).
+    const k = Math.min(p.lift ?? 1, 1 - (p.inside || 0), 1 - (p.top || 0));
     pair.forEach((b, i) => {
       if (placeAt(b.y) !== place) return;
       const x = Math.round(b.x), y = Math.round(b.y);

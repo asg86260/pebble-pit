@@ -20593,8 +20593,7 @@ same day; where this and the paragraph above differ, this is what runs.
 
 Open from the rework: the hall's return, if it should have a job; a third
 upgrade for the saw mill (the second blade and a bigger heap stand now);
-the story's pair stand at the pedestal's foot while the placeholder pair
-are drawn on it (the climb up is not drawn); each station's hand gesture
+each station's hand gesture
 (being mocked); every number, for the pace tool.
 
 The owner: "clicking clouds to gather faith, you can buy permanent workers
@@ -20797,7 +20796,11 @@ pale field that goes to ink in the places the union has reached.
   white, walk the yard on rounds: a warden at a poster tears it down (a
   held tear, the paper falling in strips that fade), a warden at a sign
   pulls it up and carries it up the stair into the glare, where it fades.
-  Nothing pops; every confiscation is a body carrying a thing away. The
+  Nothing pops; every confiscation is a body carrying a thing away. A
+  warden goes only after a thing that has stood a rest's length
+  (`AFTER_WARDEN_REST_S`): one rested and waiting would be on every new
+  sign the moment it was planted, and the opening's lone signs would be
+  pulled before they closed a rim (built 2026-10-18). The
   wardens' number rises at each gate. Nobody fights them: the answers are
   ladders -- paste that holds (a torn poster takes longer), posters pasted
   higher (out of a warden's reach), sign-keepers (a carrier who stands by

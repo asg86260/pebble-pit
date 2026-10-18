@@ -45,8 +45,8 @@ group('act 3: go on, the house falls, the souls rise into the afterlife, and the
   return [
     ok(!early && due && said, 'the go-on card answers once it has faded in, and only then', `${early} ${due} ${said}`),
     ok(opened && inOrder(story.slice(0, 4)), 'the fall plays through the opening, in order', S.beatsDone.join(' ')),
-    ok(act3.house === 'fallen' && act3.view === 'after' && act3.pair.place === 'after' && act3.pair.at === 'camp' && act3.after,
-       'the house is under the rock, the souls stand at the camp in the cloud, and the camera is with them', JSON.stringify(act3)),
+    ok(act3.house === 'fallen' && act3.view === 'after' && act3.pair.place === 'after' && act3.pair.at === 'pedestal' && act3.after,
+       'the house is under the rock, the souls stand up on the pedestal in the camp, and the camera is with them', JSON.stringify(act3)),
     ok(act3.shut, 'and the yard\'s boards are shut while they are up there'),
     ok(walked && inOrder(story) && once(story), 'the strike plays through to the road, and the pair come down it, each beat once', S.beatsDone.join(' ')),
     ok(act4.view === 'yard' && act4.mode === 'ghost' && act4.place === 'yard' && act4.hell && act4.heaven && !act4.shut,
