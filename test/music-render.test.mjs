@@ -5,9 +5,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { smf, noteEvents, vlq } from '../tools/music/smf.mjs';
-import { loopWindow, sceneSeconds, passEvents, midiFile, stemKey } from '../tools/music/plan.mjs';
+import { loopWindow, sceneSeconds, passEvents, midiFile, stemKey, mixChain } from '../tools/music/plan.mjs';
 import { MUSIC_RENDER_PPQ, MUSIC_RENDER_SR, MUSIC_RENDER_TAIL_S, MUSIC_RENDER_PASSES,
-         MUSIC_RENDER_SEAM_S } from '../src/config/music.js';
+         MUSIC_RENDER_SEAM_S, MUSIC_FX } from '../src/config/music.js';
+import { fxParams } from '../src/music/fx.js';
 
 const song = JSON.parse(readFileSync(new URL('../src/music/songs/yard.json', import.meta.url), 'utf8'));
 
@@ -80,4 +81,38 @@ test('a stem key moves with its notes and nothing else', () => {
   other.tracks.find(t => t.id === 'bass').clips.yard.notes[0][3] -= 1;
   assert.notEqual(stemKey(other.tracks.find(t => t.id === 'bass'), other, 'yard', MUSIC_RENDER_SR, 'x'), a);
   assert.notEqual(stemKey(bass, song, 'yard', MUSIC_RENDER_SR, 'y'), a);
+});
+
+// mix.py's FX table is the render's half of MUSIC_FX: a type missing there
+// is a box the bench offers and the render cannot play.
+test('every MUSIC_FX type has a handler in the mix', () => {
+  const py = readFileSync(new URL('../tools/music/mix.py', import.meta.url), 'utf8');
+  const table = /^FX = \{([\s\S]*?)^\}/m.exec(py)?.[1];
+  assert.ok(table, 'mix.py has an FX table');
+  const handled = [...table.matchAll(/'(\w+)':\s*(\w+)/g)];
+  assert.deepEqual(handled.map(m => m[1]).sort(), Object.keys(MUSIC_FX).sort());
+  for (const [, type, fn] of handled) assert.match(py, new RegExp(`^def ${fn}\\(x, p\\):`, 'm'), `${type} names a function`);
+});
+
+test('the plan carries each track its chain, knobs filled, switched-off boxes left out', () => {
+  for (const t of song.tracks) {
+    const on = (t.fx || []).filter(b => b.on !== false);
+    assert.deepEqual(mixChain(t), on.map(b => ({ type: b.type, params: fxParams(b) })), t.id);
+  }
+  assert.ok(song.tracks.some(t => mixChain(t).length), 'the yard has chains');
+  const t = { id: 'x', fx: [{ type: 'reverb', on: false }, { type: 'delay', on: true, params: { feedback: 0.5 } }, { type: 'duck' }] };
+  assert.deepEqual(mixChain(t), [
+    { type: 'delay', params: { ...fxParams({ type: 'delay' }), feedback: 0.5 } },
+    { type: 'duck', params: fxParams({ type: 'duck' }) },
+  ]);
+  assert.deepEqual(mixChain({ id: 'dry' }), []);
+});
+
+test('a turned knob keeps every stem cached', () => {
+  const other = structuredClone(song);
+  other.tracks.find(t => t.id === 'pad').fx.find(b => b.type === 'reverb').params.mix = 0.6;
+  other.tracks.find(t => t.id === 'lead').fx[0].on = false;
+  for (const t of song.tracks)
+    assert.equal(stemKey(other.tracks.find(o => o.id === t.id), other, 'yard', MUSIC_RENDER_SR, 'x'),
+                 stemKey(t, song, 'yard', MUSIC_RENDER_SR, 'x'), t.id);
 });

@@ -1,38 +1,32 @@
 """Mix a scene's stems into one loop: python mix.py <plan.json>
 
-The plan (written by render.mjs) names each stem, its level and pan, the
-kick hits, the sample rate and the window [start, start + frames) of the
-three-pass render that becomes the loop (tools/music/plan.mjs, loopWindow).
-Every effect runs over the whole render, so the window starts with the
-first pass's delay, reverb and compressor already in flight.
+The plan (written by render.mjs) names each stem, its level, pan and effects
+chain, the kick hits, the beat length, the sample rate and the window
+[start, start + frames) of the three-pass render that becomes the loop
+(tools/music/plan.mjs, loopWindow). Every effect runs over the whole render,
+so the window starts with the first pass's delay, reverb and compressor
+already in flight.
 
-The chain follows the music-render skill's step 4: a kick-driven sidechain
-on the bass and the pad, chorus on the pad, a dotted-eighth delay on the
-lead, glue compression and a limiter on the master. Parts are found by
-track id, the names the bench gives them.
+Each track's chain is its own (DESIGN.md, "A track's effects chain"): the
+boxes run in the song file's order, every knob filled by plan.mjs, before the
+track's level and pan; FX maps each MUSIC_FX type to the function that plays
+it. The master's glue compression and limiter are the mix's, not a track's.
+Effects run here rather than in the stems, so a turned knob costs a mix and
+never a Surge render.
 """
 import json, sys
 import numpy as np
 import pedalboard as pb
 from pedalboard.io import AudioFile
 
-# The sidechain: a fast duck on each kick that breathes back out.
-DUCK_ATTACK_S, DUCK_RELEASE_TAU, DUCK_SHAPE_S = .003, .15, .8
-DUCK_DB = {'bass': 5, 'pad': 6}
-# The bass: a little drive for weight on small speakers, its fizz trimmed.
-BASS_DRIVE_DB, BASS_LP, BASS_HP = 5, 5000, 35
-# The pad: a slow chorus to widen it, kept out of the bass and the hats.
-PAD_CHORUS = dict(rate_hz=.7, depth=.35, centre_delay_ms=9, feedback=.1, mix=.45)
-PAD_HP, PAD_LP = 160, 9000
-# The lead: its taps alternate sides a dotted eighth apart, band-limited so
-# the echoes sit behind the line rather than on it.
-LEAD_HP, LEAD_SHELF_HZ, LEAD_SHELF_DB = 250, 7000, -3
-DELAY_BEATS, DELAY_TAPS, DELAY_HP, DELAY_LP, DELAY_LEVEL = .75, (.5, .34, .23, .15), 300, 5000, .6
-# One shared hall, sent lightly from the pad and the lead.
-SEND = {'pad': .5, 'lead': .8}
-DELAY_SEND = .5
-HALL = dict(room_size=.55, damping=.6, wet_level=1, dry_level=0, width=1)
-HALL_HP, HALL_LEVEL = 350, .32
+# The filter box: the ladder's gentler 12 dB slope for each of its three types.
+FILTER_MODES = {'lowpass': pb.LadderFilter.Mode.LPF12, 'highpass': pb.LadderFilter.Mode.HPF12,
+                'bandpass': pb.LadderFilter.Mode.BPF12}
+# The EQ box's three corners: a low shelf, a bell and a high shelf.
+EQ_LOW_HZ, EQ_MID_HZ, EQ_HIGH_HZ, EQ_MID_Q = 200, 1000, 5000, .7
+# The sidechain: a fast duck on each kick that breathes back out, its shape
+# long enough for the slowest release to come all the way back.
+DUCK_ATTACK_S, DUCK_TAIL_TAUS = .003, 6
 # The master: glue, then a ceiling under the loudness pass's true-peak target.
 MASTER_HP = 30
 GLUE = dict(threshold_db=-16, ratio=2, attack_ms=25, release_ms=140)
@@ -41,7 +35,7 @@ MASTER_GAIN_DB, LIMIT_DB, LIMIT_RELEASE_MS = 3, -1.5, 80
 
 plan = json.load(open(sys.argv[1]))
 SR, N = plan['sr'], plan['total']
-fx = lambda *p: (lambda x: pb.Pedalboard(list(p))(x.astype(np.float32), SR))
+fx = lambda *p: (lambda x: pb.Pedalboard(list(p))(x.astype(np.float32), SR).astype(np.float64))
 
 
 def fit(x):
@@ -49,9 +43,13 @@ def fit(x):
     return np.pad(x, ((0, 0), (0, N - x.shape[1]))) if x.shape[1] < N else x
 
 
-def duck_curve(db):
+def blend(x, wet, mix):
+    return x * (1 - mix) + wet * mix
+
+
+def duck_curve(db, tau):
     g, depth, a = np.ones(N), 1 - 10 ** (-db / 20), int(DUCK_ATTACK_S * SR)
-    shape = np.concatenate([np.linspace(0, 1, a), np.exp(-np.arange(int(DUCK_SHAPE_S * SR) - a) / (DUCK_RELEASE_TAU * SR))])
+    shape = np.concatenate([np.linspace(0, 1, a), np.exp(-np.arange(int(DUCK_TAIL_TAUS * tau * SR)) / (tau * SR))])
     for t in plan['kicks']:
         i = int(round(t * SR))
         if i >= N:
@@ -61,13 +59,62 @@ def duck_curve(db):
     return g
 
 
-def pingpong(x):
-    m = fx(pb.HighpassFilter(DELAY_HP), pb.LowpassFilter(DELAY_LP))(x.mean(0, keepdims=True))[0]
-    y, step = np.zeros_like(x), DELAY_BEATS * plan['beat']
-    for k, g in enumerate(DELAY_TAPS):
-        d = int(round((k + 1) * step * SR))
-        y[k % 2, d:] += m[:N - d] * g
-    return y
+# One function a MUSIC_FX type, each taking the stem and the box's knobs.
+def filter_(x, p):
+    return fx(pb.LadderFilter(mode=FILTER_MODES[p['type']], cutoff_hz=p['cutoff'], resonance=p['reso']))(x)
+
+
+def eq(x, p):
+    return fx(pb.LowShelfFilter(EQ_LOW_HZ, p['low']), pb.PeakFilter(EQ_MID_HZ, p['mid'], EQ_MID_Q),
+              pb.HighShelfFilter(EQ_HIGH_HZ, p['high']))(x)
+
+
+def drive(x, p):
+    return blend(x, fx(pb.Distortion(drive_db=p['amount']), pb.LowpassFilter(p['tone']))(x), p['mix'])
+
+
+def bitcrush(x, p):
+    return blend(x, fx(pb.Bitcrush(bit_depth=p['bits']))(x), p['mix'])
+
+
+def chorus(x, p):
+    return fx(pb.Chorus(rate_hz=p['rate'], depth=p['depth'], mix=p['mix']))(x)
+
+
+def phaser(x, p):
+    return fx(pb.Phaser(rate_hz=p['rate'], depth=p['depth'], mix=p['mix']))(x)
+
+
+# The time knob is in beats, so the echoes land on the song's grid.
+def delay(x, p):
+    return fx(pb.Delay(delay_seconds=p['time'] * plan['beat'], feedback=p['feedback'], mix=p['mix']))(x)
+
+
+def reverb(x, p):
+    return fx(pb.Reverb(room_size=p['size'], damping=p['damp'], wet_level=p['mix'], dry_level=1 - p['mix']))(x)
+
+
+def comp(x, p):
+    return fx(pb.Compressor(threshold_db=p['threshold'], ratio=p['ratio'], release_ms=p['release']))(x)
+
+
+# With no kicks in the scene there is nothing to duck under.
+def duck(x, p):
+    return x * duck_curve(p['amount'], p['release']) if plan['kicks'] else x
+
+
+FX = {
+    'filter': filter_,
+    'eq': eq,
+    'drive': drive,
+    'bitcrush': bitcrush,
+    'chorus': chorus,
+    'phaser': phaser,
+    'delay': delay,
+    'reverb': reverb,
+    'comp': comp,
+    'duck': duck,
+}
 
 
 # Constant power, scaled so a centered track keeps its level.
@@ -76,29 +123,13 @@ def pan_gains(p):
     return np.array([np.cos(a), np.sin(a)])[:, None] * np.sqrt(2)
 
 
-dry, send = np.zeros((2, N)), np.zeros((2, N))
+mix = np.zeros((2, N))
 for t in plan['tracks']:
-    x, tid = fit(np.load(t['stem']).astype(np.float64)), t['id']
-    echo = None
-    if tid == 'bass':
-        x = fx(pb.Distortion(BASS_DRIVE_DB), pb.LowpassFilter(BASS_LP), pb.HighpassFilter(BASS_HP))(x)
-    elif tid == 'pad':
-        x = fx(pb.Chorus(**PAD_CHORUS), pb.HighpassFilter(PAD_HP), pb.LowpassFilter(PAD_LP))(x)
-    elif tid == 'lead':
-        x = fx(pb.HighpassFilter(LEAD_HP), pb.HighShelfFilter(LEAD_SHELF_HZ, LEAD_SHELF_DB))(x)
-        echo = pingpong(x)
-    if tid in DUCK_DB and plan['kicks']:
-        x = x * duck_curve(DUCK_DB[tid])
-    g = t['level'] * pan_gains(t.get('pan', 0))
-    dry += x * g
-    send += x * g * SEND.get(tid, 0)
-    if echo is not None:
-        dry += echo * g * DELAY_LEVEL
-        send += echo * g * DELAY_SEND
+    x = fit(np.load(t['stem']).astype(np.float64))
+    for box in t.get('fx', []):
+        x = FX[box['type']](x, box['params'])
+    mix += x * t['level'] * pan_gains(t.get('pan', 0))
 
-mix = dry
-if send.any():
-    mix = mix + fx(pb.HighpassFilter(HALL_HP), pb.Reverb(**HALL))(send) * HALL_LEVEL
 a, n = plan['start'], plan['frames']
 glued = fx(pb.HighpassFilter(MASTER_HP), pb.Compressor(**GLUE),
            pb.HighShelfFilter(MASTER_SHELF_HZ, MASTER_SHELF_DB), pb.LowpassFilter(MASTER_LP),
