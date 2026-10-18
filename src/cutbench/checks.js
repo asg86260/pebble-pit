@@ -16,7 +16,10 @@ const mid = s => ({ x: s.camX + s.viewW / 2, y: s.camY + s.viewH / 2 });
 
 // -> one array of check names per frame.
 export function runChecks(frames) {
-  const full = Math.max(0, ...frames.filter(s => s.beat).map(s => s.bands || 0));
+  // Band height is compared on the glass: in world pixels it changes with the
+  // zoom, which a place change is allowed to do under the ripple.
+  const glass = s => (s.bands || 0) * (s.zoomShow ?? s.zoom ?? 1);
+  const full = Math.max(0, ...frames.filter(s => s.beat).map(glass));
   return frames.map((s, i) => {
     const out = [];
     const p = i > 0 ? frames[i - 1] : null;
@@ -28,7 +31,7 @@ export function runChecks(frames) {
     const f = s.frame;
     if (f && (f.x < s.camX - 1 || f.y < s.camY - 1
         || f.x + f.w > s.camX + s.viewW + 1 || f.y + f.h > s.camY + s.viewH + 1)) out.push('box');
-    if (s.beat && (s.hush < 0.999 || (s.bands || 0) < full - 0.5)) out.push('band');
+    if (s.beat && (s.hush < 0.999 || glass(s) < full - 0.5)) out.push('band');
     return out;
   });
 }
