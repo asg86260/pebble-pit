@@ -8258,5 +8258,26 @@
   "where": "src/after/rows.js",
   "context": "act 3 station card heading (placeholder)",
   "text": "upgrades"
+ },
+ {
+  "id": "after-hand-tree",
+  "group": "Act 4 (placeholder)",
+  "where": "src/render/aftercard.js",
+  "context": "act 3 hand-work card's title (placeholder): a grown tree, sawn",
+  "text": "tree"
+ },
+ {
+  "id": "after-hand-stump",
+  "group": "Act 4 (placeholder)",
+  "where": "src/render/aftercard.js",
+  "context": "act 3 hand-work card's title (placeholder): a stump, pulled",
+  "text": "stump"
+ },
+ {
+  "id": "after-hand-heap",
+  "group": "Act 4 (placeholder)",
+  "where": "src/render/aftercard.js",
+  "context": "act 3 hand-work card's title (placeholder): the sawdust heap, tipped",
+  "text": "sawdust heap"
  }
 ]

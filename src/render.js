@@ -68,6 +68,7 @@ import { drawAfterBackdrop, drawAfterGrove, drawAfterCamp, drawAfterMembers, dra
 import { drawAfterCrowd, drawCampCrowd } from './render/aftercrowd.js';
 import { drawAfterCues } from './render/aftercues.js';
 import { drawAfterCoins } from './render/aftercoins.js';
+import { drawAfterCard } from './render/aftercard.js';
 import { drawHellBackdrop, drawHellChambers, drawHellSeams, drawHellForge, drawHellBarriers, drawHellCage } from './render/hell.js';
 import { S } from './state.js';
 import { recede, frontLayers } from './cutscene.js';
@@ -336,6 +337,7 @@ const LAYERS = [
   { name: 'kit counts', draw: drawKitStandCounts },   // and how many are waiting on each stand
   { name: 'stock count', draw: drawStockCounts },     // and how many doses stand ready on the apothecary table
   { name: 'after counts', draw: drawAfterCounts },    // and how much lies on each of the afterlife's piles
+  { name: 'after card', draw: drawAfterCard },        // and the hand-work card open over a station, on the glass (render/aftercard.js)
   { name: 'pot labels', draw: drawPotLabels },        // the brew each pot is set to, as a color block under it
 
   { name: 'counter', draw: drawCount },          // last, and in screen pixels: it is read, not looked at
@@ -362,7 +364,7 @@ const FISH = new Set(['deep fauna', 'meal gulped', 'meal']);
 const AFTER_WASH = new Set(['fight numbers', 'status posts', 'air near', 'pot labels']);
 // The yard's reading, which is in no scene: faded right out while one holds,
 // on the recede's own number (render/recede.js, `hudInk`).
-const HUD = new Set(['pile marks', 'roster', 'roster counts', 'kit counts', 'stock count', 'after counts', 'counter']);
+const HUD = new Set(['pile marks', 'roster', 'roster counts', 'kit counts', 'stock count', 'after counts', 'after card', 'counter']);
 // Bodies of either kind in one layer: drawn behind the wash and again over
 // it, each body sorted by `bodyInk`.
 const MIXED = new Set(['workers', 'says', 'swimmers', 'party']);

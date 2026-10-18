@@ -38,7 +38,7 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, soulX } from './after/place.js';
+import { stationX0, stationBox, soulX } from './after/place.js';
 import { afterEnd } from './view.js';
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S } from './config.js';
 import { pref, setPref } from './prefs.js';
@@ -465,6 +465,18 @@ const lookAtOrb = () => {
 // Act 3's bills take the yard's coins too (DESIGN.md, "The yard pays too"): the
 // yard given enough of each for every row a scene buys, the setup no shot is about.
 const yardPurse = () => window.__grant({ dust: 40000, spores: 5000, shards: 2000, sparks: 400 });
+// Station `key`'s hand-work card opened by a click on the station, then its
+// round part (`ring`, the card's wheel or vat) turned on the card at `rev`
+// turns a second for `frames` frames, the press held (after/gestures.js).
+function handCard(key, ring, rev, frames) {
+  const b = stationBox(key);
+  window.__gesture('down', b.x + b.w / 2, b.y + b.h / 2); window.__gesture('up');
+  window.__fast(0.3);
+  const w = window.__gestureParts(key)[ring], rx = w.r || w.rx, ry = w.r || w.ry;
+  const at = a => { const p = window.__card.at(w.x + Math.cos(a) * rx, w.y + Math.sin(a) * ry); return [p.x, p.y]; };
+  window.__gesture('down', ...at(0));
+  for (let f = 1; f <= frames; f++) { window.__gesture('move', ...at(f / 60 * rev * 2 * Math.PI)); window.__fast(1 / 60); }
+}
 function afterChain(slow) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
   // Won in blocks of files rather than from the front back, so the shot
@@ -2733,36 +2745,45 @@ export const SCENES = {
       window.__afterClick(st.sx, st.sy);
       window.__fast(0.4); window.__look(0); window.__holdShot();
     } },
-  // Act 3's hand work cued (after/gestures.js, render/aftercues.js): the
-  // stations of the chain standing, nobody at a post, each with its ghost
-  // hand acting its motion out, and the saw mill's flywheel being spun, its
-  // speed gauge filling.
-  'after-hands': { about: 'the acts', say: "the afterlife's hand work: a ghost hand at each station, the flywheel spun and its gauge filling",
+  // Act 3's hand work on its card (after/gestures.js, render/aftercard.js):
+  // the stations of the chain standing, nobody at a post, the saw mill's card
+  // open and its flywheel being spun on it, the speed gauge filling and the
+  // station's own wheel turning in step under it.
+  'after-hands': { about: 'the acts', say: "the afterlife's hand work: the saw mill's card open, its flywheel spun on it and the gauge filling",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       for (const k of ['mill', 'chipper', 'workshop', 'papermill', 'press']) if (!S.after.built.includes(k)) S.after.built.push(k);
       window.__afterGrant({ logs: 6, timber: 8, sawdust: 6, paper: 4 });
       window.__afterAxe();
+      window.__look(stationX0('mill') - P * 20);
       window.__fast(0.5);
-      const w = window.__gestureParts('mill').wheel;
-      const at = a => [w.x + Math.cos(a) * w.r, w.y + Math.sin(a) * w.r];
-      window.__gesture('down', ...at(0));
-      for (let f = 1; f <= 90; f++) { window.__gesture('move', ...at(f / 60 * 1.6 * 2 * Math.PI)); window.__fast(1 / 60); }
-      window.__look(w.x - 300); window.__holdShot();
+      handCard('mill', 'wheel', 1.6, 90);
+      window.__holdShot();
     } },
-  // The stump's crit: held low, yanked the frame it wobbles, out in one pull
-  // with the star and its figure held over it.
-  'after-yank': { about: 'the acts', say: "the afterlife's stump yanked as it wobbles: out in one pull, the crit's star and figure",
+  // A card open on each of the two round motions, the camp drawn as the art
+  // scene draws it (`after-camp-art`): the saw mill's flywheel and the paper
+  // mill's vat, each mid-turn on its card over its station.
+  'after-card-mill': { about: 'the acts', say: "the camp's stations working, the saw mill's hand-work card open over it, its flywheel spun on the card",
+    run: () => { afterChain(true); window.__afterGrant({ logs: 4, timber: 6 }); window.__fast(60); window.__look(stationX0('mill') - P * 30);
+                 window.__fast(0.2); handCard('mill', 'wheel', 1.6, 90); window.__holdShot(); } },
+  'after-card-papermill': { about: 'the acts', say: "the camp's stations working, the paper mill's hand-work card open over it, its vat stirred on the card",
+    run: () => { afterChain(true); window.__afterGrant({ timber: 12, sawdust: 12 }); window.__fast(60); window.__look(stationX0('papermill') - P * 40);
+                 window.__fast(0.2); handCard('papermill', 'vat', 1, 90); window.__holdShot(); } },
+  // The stump's crit: its card open, held low, yanked the frame it wobbles,
+  // out in one pull with the star and its figure held on the card.
+  'after-yank': { about: 'the acts', say: "the afterlife's stump yanked on its card as it wobbles: out in one pull, the crit's star and figure",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       Object.assign(S.after.plots[0], { stage: 0, stump: true, dug: 0 });
-      const a = window.__gestureParts('stump', 0).at;
-      window.__gesture('down', a.x, a.y); window.__gesture('move', a.x, a.y - 12);
+      window.__look(0);
+      window.__card.open('stump', 0); window.__fast(0.3);
+      const a = window.__gestureParts('stump').at, at = (x, y) => { const p = window.__card.at(x, y); return [p.x, p.y]; };
+      window.__gesture('down', ...at(a.x, a.y)); window.__gesture('move', ...at(a.x, a.y - 12));
       for (let k = 0; k < 600 && !(window.__stumpWobble() && window.__stumpWobble().wobbling); k++) window.__fast(1 / 60);
-      window.__gesture('move', a.x, a.y - 48);
+      window.__gesture('move', ...at(a.x, a.y - 48));
       for (let k = 0; k < 6; k++) window.__fast(1 / 60);
       window.__gesture('up');
-      window.__look(0); window.__holdShot();
+      window.__holdShot();
     } },
   // The pedestal: the pair mid-line over the rebel pile, motes on their way
   // down, and agitators behind them at their own lines.

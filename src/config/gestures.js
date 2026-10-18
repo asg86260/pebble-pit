@@ -14,9 +14,9 @@ export const GESTURE_CUE_USES = 3;
 export const GESTURE_CUE_FADE_S = 0.8;
 export const GESTURE_CUE_ALPHA = 0.6;
 export const GESTURE_CUE_IDLE_S = 120;
-// The speed gauge: a strip of cells over the station that fills with how fast
-// the motion goes, eased at this rate a second, fading out once it is still.
-export const GESTURE_GAUGE_CELLS = 12;
+// The speed gauge: a strip of cells along the card's foot that fills with how
+// fast the motion goes, eased at this rate a second, fading out once it is still.
+export const GESTURE_GAUGE_CELLS = 24;
 export const GESTURE_GAUGE_EASE = 6;
 export const GESTURE_GAUGE_FADE_S = 0.6;
 // A crit's mark: the star held, then faded; the figure held longer.
@@ -117,11 +117,43 @@ export const GESTURE_LOAD_FADE_S = 0.4;
 export const GESTURE_PAD_PULL = P * 2;
 export const GESTURE_PAD_TURN = 0.5;
 
-// The cue's own drawing (render/aftercues.js): its pixel, finer than a cell,
-// as the hand is a pointer over the place and not a thing in it; one motion
-// of the ghost hand, and one tap of it; the gauge this many cells over a
-// station's roof.
+// The cue's own drawing (render/aftercard.js, render/aftercues.js): its
+// pixel, finer than a cell, as the hand is a pointer over the part and not a
+// thing in it; one motion of the ghost hand, and one tap of it.
 export const GESTURE_CUE_DOT = 2;
 export const GESTURE_CUE_LOOP_S = 1.4;
 export const GESTURE_CUE_TAP_S = 0.4;
-export const GESTURE_GAUGE_RISE = 5;
+
+// --- act 3: the hand-work card (the owner's vote, mode (b), click to open,
+// docs/mocks/act3-handcontrol-2026-10-18) ------------------------------------------
+// A click on a station opens a paper card over it, and the motion is made on
+// the card's big part. All of it in screen pixels, since the card is read at
+// one size whatever the camp's zoom: its part on a grid of CARD_COLS by
+// CARD_ROWS cells of CARD_CELL px, a margin round it and a title band over
+// it; the tail and its gap over the tallest thing under the card; the shadow's
+// offset and ink; the room two cards on the glass at once keep between them,
+// and the least margin a card keeps to the glass's edge.
+export const CARD_CELL = 6;
+export const CARD_COLS = 28;
+export const CARD_ROWS = 16;
+export const CARD_PAD = 6;
+export const CARD_HEAD = 22;
+export const CARD_RULE = 2;
+export const CARD_TAIL = 6;
+export const CARD_GAP = 12;
+export const CARD_SHADOW = 4;
+export const CARD_SHADOW_INK = 0.2;
+export const CARD_ROOM = 8;
+export const CARD_EDGE = 6;
+// It fades in over CARD_IN_S rising CARD_RISE px, and out over CARD_OUT_S; a
+// card that has to make room eases there at CARD_EASE a second.
+export const CARD_IN_S = 0.18;
+export const CARD_OUT_S = 0.25;
+export const CARD_RISE = 10;
+export const CARD_EASE = 14;
+// The title: its type's size, its baseline and its rule's row off the top.
+export const CARD_TITLE_PX = 11;
+export const CARD_TITLE_Y = 15;
+export const CARD_TITLE_RULE_Y = 18;
+// The leader from the tail to the station: a dot every CARD_LEADER_STEP px.
+export const CARD_LEADER_STEP = 4;

@@ -1488,7 +1488,8 @@ import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut } from './after/bodies.js';
 import { plotX, afterFloor, stationBox, heapX } from './after/place.js';
 import { afterGate, strikeDue } from './after/strike.js';
-import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, stumpWobble } from './after/gestures.js';
+import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, stumpWobble, openCard, closeCard, cardOpen,
+         cardToWorld, cardsView } from './after/gestures.js';
 HANDLES.__afterClick = (x, y) => clickAfter(x, y);
 {
   const yardBuy = HANDLES.__buy;
@@ -1538,6 +1539,11 @@ HANDLES.__gesture = (what, x, y) => (what === 'down' ? gestureDown(x, y) : what 
 HANDLES.__gestureParts = (key, i = 0) => gestureParts(key, i);
 HANDLES.__gestureView = () => gestureView();
 HANDLES.__stumpWobble = () => stumpWobble();
+// The hand-work card: open one on a station (plot `i` for the grove's), shut
+// it, the one open, a point on its grid (card px) as the world point the
+// pointer would give, and every card on the glass with its rectangle.
+HANDLES.__card = { open: (key, i) => openCard(key, i), close: () => closeCard(), now: () => cardOpen(),
+                   at: (x, y) => cardToWorld(x, y), list: () => cardsView() };
 
 // --- the two of them (wardrobe.js) ---
 // Who they are and what they wear, read for a check: each one's uid, the

@@ -54,7 +54,7 @@ import { portalAt, handAt, throughPortal } from './portals.js';
 import { sayGoOn } from './actbeats.js';
 import { onGoOn } from './render/portals.js';
 import * as AFTER_PLACE from './after/index.js';
-import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder } from './after/gestures.js';
+import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, gestureTap } from './after/gestures.js';
 import * as HELL_PLACE from './hell/index.js';
 import { onShaftArrow } from './render/shaftway.js';
 import { onPortal } from './render/portal.js';
@@ -200,11 +200,14 @@ canvas.addEventListener('pointerdown', e => {
   // asked only once its act's track exports it; nothing of the yard's stands
   // in either.
   if (isActView(S.view)) {
-    // Up there a station is worked by its own motion (after/gestures.js): a
-    // press it takes is held until the release, wherever that is. Anything
-    // else is the place's click.
-    if (S.view === 'after' && gestureDown(p.x, p.y)) {
-      try { canvas.setPointerCapture(e.pointerId); } catch {}
+    // Up there a click on a station opens its hand-work card, and the
+    // station is worked by its own motion on the card's part
+    // (after/gestures.js): a press it takes is held until the release,
+    // wherever that is. A finger opens and shuts a card at its tap's release
+    // (`endDrag`), since a press may be the start of a swipe. Anything else
+    // is the place's click.
+    if (S.view === 'after' && gestureDown(p.x, p.y, e.pointerType === 'touch')) {
+      if (gestureHeld()) try { canvas.setPointerCapture(e.pointerId); } catch {}
       return;
     }
     const click = S.view === 'after' ? AFTER_PLACE.clickAfter : HELL_PLACE.clickHell;
@@ -364,6 +367,8 @@ export function endDrag(e) {
       isTap(held.x0, held.y0, e.clientX, e.clientY, now() - held.at)) {
     const p = pos(e);
     if (tapAt(p.x, p.y)) { S.mining = false; return; }
+    // Up there a tap on a station opens its card; anywhere else it shuts it.
+    if (S.view === 'after' && gestureTap(p.x, p.y, true)) { S.mining = false; return; }
     const which = boardAt(p.x, p.y);
     // A second tap on the station whose board is up puts it away.
     showPanel(which && !S[station(which).board] ? which : null, true);

@@ -48,7 +48,7 @@ import { crewView } from './prefs.js';
 import { hear } from './audio.js';
 import { hold, pan, viewTaken, whatIsAt } from './input.js';
 import { aim, markAt, glideMs } from './padglide.js';
-import { padGesture } from './after/gestures.js';
+import { padGesture, cardOpen, openCard, closeCard, stepCard, CARD_KEYS } from './after/gestures.js';
 import { fillControls } from './controls.js';
 import { wardrobePad, wardrobeHolds, wardrobeNav } from './wardrobepage.js';
 import { padTabs } from './settingstabs.js';
@@ -578,10 +578,33 @@ function yardPresses(p, dirs, pressed, released, lx, ly, dt) {
 
   for (const d of dirs) hop(d);
 
-  // An act-3 station under the focus is worked by A and the stick, the
-  // station's own motion (after/gestures.js); the d-pad still hops off it.
+  // An act-3 card open while the d-pad hops: it steps with the focus to the
+  // station hopped to, and shuts once the focus leaves the hand work.
+  if (dirs.length && cardOpen()) {
+    const f = S.padFocus || '', key = f.startsWith('ag:') ? f.slice(3) : null;
+    if (!key || !CARD_KEYS.includes(key)) closeCard();
+    else if (cardOpen().key !== key) openCard(key);
+  }
+
+  // An act-3 station under the focus: A opens its card, then A and the
+  // stick work the station's own motion on it (after/gestures.js), LB and RB
+  // step the open card to the neighboring station with the camera following,
+  // B shuts it; the d-pad still hops off it. The pedestal has no card: A
+  // pops its bubbles where they rise.
   if ((S.padFocus || '').startsWith('ag:')) {
-    padGesture(S.padFocus.slice(3), { a: !!p.down.a, pressed: pressed('a'), released: released('a'), lx, ly });
+    const key = S.padFocus.slice(3), card = cardOpen();
+    if (CARD_KEYS.includes(key) && !(card && card.key === key)) {
+      if (pressed('a')) openCard(key);
+      else if ((pressed('lb') || pressed('rb')) && !carried) turnBoard(pressed('rb') ? 1 : -1);
+      return;
+    }
+    if (CARD_KEYS.includes(key) && pressed('b')) { closeCard(); return; }
+    if (CARD_KEYS.includes(key) && (pressed('lb') || pressed('rb'))) {
+      const id = stepCard(pressed('rb') ? 1 : -1);
+      if (id) setFocus(id, true);
+      return;
+    }
+    padGesture(key, { a: !!p.down.a, pressed: pressed('a'), released: released('a'), lx, ly });
     if ((pressed('lb') || pressed('rb')) && !carried) turnBoard(pressed('rb') ? 1 : -1);
     return;
   }
