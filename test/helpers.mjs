@@ -96,6 +96,12 @@ export const run = seconds => {
   }
   return Math.round(seconds * 60);
 };
+// A group that runs the same yard twice and compares the two (cutscene-hold's
+// played and skipped scene) starts each run's reload clock at its own first
+// frame, so both reload on the same frames: a reload may stand a body back
+// anywhere within a cell, and twins reloaded at different moments drift apart
+// by a few grains for that alone.
+export const restartReloadClock = () => { sinceReload = 0; };
 export const runUntil = (done, limit = 60) => {
   for (let i = 0; i < limit; i++) { run(1); if (done()) return true; }
   return false;
