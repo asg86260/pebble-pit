@@ -45,7 +45,7 @@ const ofAct = v => ({
 });
 export const PLACE_LIMITS = {
   yard: { x0: () => 0, x1: () => S.worldW, foot: () => S.worldH, top: () => 0 },
-  deep: { x0: deepX0, x1: deepX1, foot: () => deepFloor() + DEEP_FLOOR_MARGIN, top: deepTop },
+  deep: { x0: () => deepX0(), x1: () => deepX1(), foot: () => deepFloor() + DEEP_FLOOR_MARGIN, top: () => deepTop() },
   after: ofAct('after'),
   hell: ofAct('hell')
 };
