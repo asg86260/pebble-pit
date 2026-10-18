@@ -8,6 +8,7 @@ import { sceneEvents, sceneBars, stepSeconds, barSeconds } from '../../src/music
 import { MUSIC_STEPS_PER_BAR, MUSIC_RENDER_PASSES, MUSIC_RENDER_TAIL_S,
          MUSIC_RENDER_PPQ, MUSIC_RENDER_SEAM_S } from '../../src/config/music.js';
 import { smf, noteEvents } from './smf.mjs';
+import { fxParams } from '../../src/music/fx.js';
 
 // The second pass is kept: [L, 2L) already carries the first pass's
 // releases, delay and reverb. Its head is crossfaded from [2L, 2L + fade),
@@ -66,3 +67,10 @@ export function stemKey(track, song, scene, sr, script) {
     bars: sceneBars(song, scene), sr, passes: MUSIC_RENDER_PASSES, tail: MUSIC_RENDER_TAIL_S, script,
   })).digest('hex').slice(0, 16);
 }
+
+// A track's chain as the mix reads it: the boxes in order, every knob
+// written out, and a switched-off box left out rather than sent and skipped,
+// so mix.py never needs a default of its own. None of this is in stemKey:
+// effects run at the mix, so a turned knob keeps every cached stem.
+export const mixChain = track => (track.fx || []).filter(b => b.on !== false)
+  .map(b => ({ type: b.type, params: fxParams(b) }));
