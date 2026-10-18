@@ -22080,3 +22080,114 @@ learn the parts from the sentence on each one.
   an `about`, every effect is in one group, every starting point names only
   effects and knobs that exist and reads clean through `validate`, and the
   preview and `mix.py` each handle every type.
+
+## One camera for every cutscene, and a bench to watch them on (design, not built)
+
+The act 3 intro is the case that made this necessary: the house falls, the
+souls rise to heaven's tear, and the shot falls apart. Taken frame by frame
+(the owner's report, 2026-10-18, "janky, doesn't follow the letterboxing,
+the zooming is wonky"):
+
+- **The zoom pops.** Through the tear the view lands in the afterlife at that
+  place's own zoom (`placeZoom('after')`, 4/5 of a cell where the yard is
+  5/6), so the window goes from 960 to 1200 world pixels wide in one frame,
+  in the middle of a held shot.
+- **The camera lands in empty sky and climbs for ten seconds.** It follows
+  the pair, and the pair are still far below heaven's cloud floor when the
+  ripple lands. The afterlife's branch of `clampCam` has no vertical limit,
+  so the frame drops into the blank gap under the floor and then lifts with
+  them at their rising pace: roughly ten seconds of a white window with a
+  purple ring in it.
+- **The top band is lost around the portal opening.** The band code draws
+  both bands from one number, so this one is not explained by reading; the
+  bench below is how it gets caught.
+
+None of these is an act 3 bug as such. They come from there being **six
+cameras**: cutscene.js's, the finale's, the snatch's, the opening's, the first
+trip down's and the act beats' runner, which stitches cutscene.js to view.js's
+place glides. Each has its own easing (three copies of one quadratic, two
+cosines, two smoothsteps, an outCubic), its own chase-a-share-a-frame (0.12,
+0.06), its own clamp, and three of them set the zoom. A cutscene that crosses
+from one camera's ground into another's, as act 3's does, gets the seams.
+
+### The shot
+
+One module, `shot.js`, grown out of cutscene.js's framing, is the only thing
+that moves the camera while a cutscene holds. A cutscene does not move the
+camera. It says, each frame or each phase, **what must be seen**:
+
+- `frame`: a box in world pixels (the house and the rock over it; the pair
+  and the tear above them). It is a box, not a point, so the shot can fit it
+  between the bands and refuse a frame that cuts it.
+- `place`: which of the yard, the deep, the afterlife or hell it is in. It is
+  read off the box unless the cutscene says otherwise.
+- `move`: either `glide` (go there and hold, the default) or `follow` (keep
+  a moving box in frame).
+
+From that the shot does everything else, the same way for every cutscene:
+
+1. **The letterbox, always.** Bands are up for as long as the shot holds,
+   from its first frame to its last, in every place. Nothing a cutscene says
+   can lower them.
+2. **One zoom.** The shot takes the zoom the cutscene starts in and keeps it
+   to the end, in every place it visits (call 1 below). The zoom never steps
+   in a held frame.
+3. **One move.** A glide is one ease-in-out curve over a time from the
+   distance (`CUT_PAN_PX_S`, floored at `CUT_SETTLE_S`, capped at
+   `CUT_PAN_MAX_S`, as today), in x and y together. There is no
+   share-a-frame chase anywhere. `follow` holds the frame still while the box
+   stays inside a central safe area, and glides again when it leaves (call 2).
+4. **The box is always in frame.** The frame is fitted between the bands
+   with `CUT_FRAME_MARGIN`, and clamped to each place's own limits: never
+   below its floor, never above the top of its sky. Each place states its
+   limits once, in one table, instead of a branch in `clampCam` and another
+   in view.js.
+5. **A place change frames the far side first.** When the box crosses into
+   another place, the shot works out the frame the subject will have over
+   there and ripples straight to it. Nothing drops or climbs after landing.
+
+The act beats keep their phase lists. Each phase's `at` point becomes a
+`frame` box, plus an optional `move`. The finale, the snatch, the opening and
+the first trip down move onto the shot one at a time after act 3, each
+losing its own easing and clamp. Each move is a change to that cutscene's
+frames, checked on the bench, not a redesign of the cutscene.
+
+### The bench
+
+`cutscenes.html`, beside `scenes.html`: the game in a frame, staged from boot
+so it never touches the save, with every cutscene down the side. A cutscene
+there is a row: its name, the setup that stands the yard up just before it,
+and the fact that ends it.
+
+- **Record once, scrub freely.** Choosing a cutscene plays it with the clock
+  held still, a frame every tenth of a second of game time, and keeps the
+  frames. A timeline under the picture scrubs them, with the phase names
+  marked along it. Arrow keys step a frame, space plays, and `r` records it
+  again after an edit.
+- **Play from a phase.** Clicking a phase mark stands the cutscene up again
+  and runs it to that phase, so the end of a forty-second cutscene is a
+  click away.
+- **An overlay**, toggled: the `frame` box, the safe area, the bands' edges,
+  the camera's path as a line, and a readout of place, zoom, camera x and y
+  and the phase.
+- **Checks along the timeline.** A red tick on every frame where the zoom
+  changed, where the camera moved more than a glide allows, where the box is
+  outside the frame, or where a band is missing. The act 3 intro today would
+  be red at the ripple and white-on-white for the climb, and those ticks are
+  the definition of done for its rebuild.
+
+A cutscene in `scenes.js` is a still. A cutscene on the bench is the whole
+run, and the bench is where a cutscene is written from now on.
+
+### Calls for the owner
+
+1. **The zoom across places.** (a) One zoom for the whole cutscene: heaven is
+   framed at the yard's size and the change of scale waits until the player
+   has the camera back. (b) Each place keeps its own zoom, and the change
+   happens only under the portal ripple, never in a held frame. (a) is
+   steadier; (b) shows more of heaven on arrival.
+2. **Following a moving subject.** (a) A still frame with a safe area: it
+   only glides when the subject is about to leave it. (b) Smooth tracking:
+   the camera rides with the subject at its pace.
+3. **The rise into heaven** gets a mock-and-vote of its own once the shot
+   exists. Its shape is the act 3 intro's question, not the shot's.
