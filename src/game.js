@@ -38,6 +38,7 @@ import { roomsAfter } from './house.js';
 import { sampleBooks } from './income.js';
 import { stepAudio, sfx } from './audio.js';
 import { stepAfter } from './after/index.js';
+import { stepGestures } from './after/gestures.js';
 import { stepHell } from './hell/index.js';
 import { stepActs } from './actbeats.js';
 
@@ -278,6 +279,8 @@ export const STEPS = [
   // screen or not (the owner's call 1, "everything keeps running"), each a
   // no-op with its act's switch off (after/index.js, hell/index.js).
   { name: 'afterlife', step: c => stepAfter(c) },
+  // ...and the hand working its stations up there, a frame of each motion (after/gestures.js).
+  { name: 'gestures',  step: c => stepGestures(c) },
   { name: 'hell',      step: c => stepHell(c) },
   // ...and what joins them: the portals, the pair on the road, the mansion (actbeats.js).
   { name: 'acts',      step: c => stepActs(c) },

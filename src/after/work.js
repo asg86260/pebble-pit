@@ -9,17 +9,22 @@ import { S } from '../state.js';
 import { built } from './levels.js';
 import { sawLog, chipLog, pulpSheet } from './mill.js';
 import { joinSign, printStack } from './press.js';
+import { shout } from './rebel.js';
 
 // Each station's one unit of work: true if it made something.
 const WORK = { mill: sawLog, chipper: chipLog, papermill: pulpSheet, workshop: joinSign, press: printStack };
 export const WORKED = Object.keys(WORK);
+// The pedestal is worked by the hand alone (a bubble popped, gestures.js), a
+// line of the pair's speech a unit: not a station a click on its box works,
+// so it is not in WORKED.
+const HAND = { ...WORK, pedestal: () => { shout(); return true; } };
 
 // `amount` units of work at station `key`, by whoever: how many took. The
 // hand's (`hand`) marks the station held a moment (render/after.js).
 export function workAfter(key, amount = 1, hand = false) {
-  if (!S.after || !WORK[key] || !built(key)) return 0;
+  if (!S.after || !HAND[key] || !built(key)) return 0;
   let done = 0;
-  for (let k = 0; k < amount && WORK[key](); k++) done++;
+  for (let k = 0; k < amount && HAND[key](); k++) done++;
   if (hand && done) S.after.workAt[key] = S.after.t;
   return done;
 }

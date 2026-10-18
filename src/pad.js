@@ -48,6 +48,7 @@ import { crewView } from './prefs.js';
 import { hear } from './audio.js';
 import { hold, pan, viewTaken, whatIsAt } from './input.js';
 import { aim, markAt, glideMs } from './padglide.js';
+import { padGesture } from './after/gestures.js';
 import { fillControls } from './controls.js';
 import { wardrobePad, wardrobeHolds, wardrobeNav } from './wardrobepage.js';
 import { padTabs } from './settingstabs.js';
@@ -407,7 +408,8 @@ export function stepPad(t = performance.now()) {
     if (pressed(d)) { dirs.push(d); repeatAt[d] = t + PAD_REPEAT_WAIT_MS; }
     else if (p.down[d] && t >= repeatAt[d]) { dirs.push(d); repeatAt[d] = t + PAD_REPEAT_MS; }
   }
-  const stickBusy = !!S.padHand || !!carried || (held && held.arm) || (S.padFocus || '').startsWith('coil|');
+  const stickBusy = !!S.padHand || !!carried || (held && held.arm) || (S.padFocus || '').startsWith('coil|') ||
+                    (S.padFocus || '').startsWith('ag:');
   if (!stickBusy) {
     const m = Math.max(Math.abs(lx), Math.abs(ly));
     if (m >= PAD_FLICK && flickArmed) {
@@ -575,6 +577,14 @@ function yardPresses(p, dirs, pressed, released, lx, ly, dt) {
   }
 
   for (const d of dirs) hop(d);
+
+  // An act-3 station under the focus is worked by A and the stick, the
+  // station's own motion (after/gestures.js); the d-pad still hops off it.
+  if ((S.padFocus || '').startsWith('ag:')) {
+    padGesture(S.padFocus.slice(3), { a: !!p.down.a, pressed: pressed('a'), released: released('a'), lx, ly });
+    if ((pressed('lb') || pressed('rb')) && !carried) turnBoard(pressed('rb') ? 1 : -1);
+    return;
+  }
 
   // The coil under the stick: the focus slides along it as it moves.
   if ((S.padFocus || '').startsWith('coil|') && lx) seg = Math.max(0, Math.min(COIL_SEGS - 1, seg + lx * PAD_COIL_RATE * dt));
