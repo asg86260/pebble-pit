@@ -14,9 +14,10 @@ it. The master's glue compression and limiter are the mix's, not a track's.
 Effects run here rather than in the stems, so a turned knob costs a mix and
 never a Surge render.
 """
-import json, sys
+import json, sys, zlib
 import numpy as np
 import pedalboard as pb
+from scipy.ndimage import uniform_filter1d
 from pedalboard.io import AudioFile
 
 # The filter box: the ladder's gentler 12 dB slope for each of its three types.
@@ -32,6 +33,21 @@ MASTER_HP = 30
 GLUE = dict(threshold_db=-16, ratio=2, attack_ms=25, release_ms=140)
 MASTER_SHELF_HZ, MASTER_SHELF_DB, MASTER_LP = 8000, -2.5, 14000
 MASTER_GAIN_DB, LIMIT_DB, LIMIT_RELEASE_MS = 3, -1.5, 80
+# The auto-filter: a ladder lowpass retuned every block, its sweep three
+# octaves either side of the center at full depth, kept under Nyquist.
+AUTOFILTER_BLOCK, AUTOFILTER_OCTAVES, AUTOFILTER_FLOOR_HZ, AUTOFILTER_TOP = 256, 3, 20, .45
+# The flanger: a chorus pulled down to a comb's short center delay.
+FLANGER_CENTER_MS, FLANGER_MIX = 2, .5
+# Wobble: the wow's swing at depth 1, the flutter's at flutter 1, and how
+# often the flutter's random drift picks a new heading.
+WOBBLE_WOW_MS, WOBBLE_FLUTTER_MS, WOBBLE_FLUTTER_HZ = 3, .15, 8
+# The square tremolo's edges, softened so the chop never clicks.
+TREMOLO_EDGE_S = .002
+# Vinyl: the hiss's level at hiss 1, the crackle's pops a second and their
+# loudest peak at crackle 1, each pop's ring, and the wear's lowpass from
+# a new record (wear 0) to a worn one (wear 1).
+VINYL_HISS_RMS, VINYL_POPS_PER_S, VINYL_POP_PEAK, VINYL_POP_S = .02, 25, .2, .0004
+VINYL_NEW_HZ, VINYL_WORN_HZ = 16000, 3000
 
 plan = json.load(open(sys.argv[1]))
 SR, N = plan['sr'], plan['total']
@@ -103,6 +119,93 @@ def duck(x, p):
     return x * duck_curve(p['amount'], p['release']) if plan['kicks'] else x
 
 
+def autofilter(x, p):
+    # The ladder smooths its own cutoff between blocks, so the steps never click.
+    lpf = pb.LadderFilter(mode=pb.LadderFilter.Mode.LPF12, cutoff_hz=p['center'], resonance=0)
+    x32, out = x.astype(np.float32), np.empty_like(x)
+    for i in range(0, N, AUTOFILTER_BLOCK):
+        t = (i + AUTOFILTER_BLOCK / 2) / SR
+        hz = p['center'] * 2 ** (p['depth'] * AUTOFILTER_OCTAVES * np.sin(2 * np.pi * p['rate'] * t))
+        lpf.cutoff_hz = float(np.clip(hz, AUTOFILTER_FLOOR_HZ, AUTOFILTER_TOP * SR))
+        out[:, i:i + AUTOFILTER_BLOCK] = lpf.process(x32[:, i:i + AUTOFILTER_BLOCK], SR, reset=False)
+    return out
+
+
+def downsample(x, p):
+    return blend(x, fx(pb.Resample(target_sample_rate=p['rate'], quality=pb.Resample.Quality.ZeroOrderHold))(x), p['mix'])
+
+
+def flanger(x, p):
+    return fx(pb.Chorus(rate_hz=p['rate'], depth=p['depth'], centre_delay_ms=FLANGER_CENTER_MS,
+                        feedback=p['feedback'], mix=FLANGER_MIX))(x)
+
+
+# The read point swings either side of now rather than behind a base delay:
+# offline the line can read ahead, so the track wobbles without leaving the
+# grid by the base's few milliseconds.
+def wobble(x, p):
+    n = np.arange(N)
+    hop = int(SR / WOBBLE_FLUTTER_HZ)
+    heads = rng().uniform(-1, 1, N // hop + 2)
+    drift = uniform_filter1d(np.interp(n, np.arange(len(heads)) * hop, heads), hop)
+    swing = (p['depth'] * WOBBLE_WOW_MS * np.sin(2 * np.pi * p['wow'] * n / SR)
+             + p['flutter'] * WOBBLE_FLUTTER_MS * drift) * SR / 1000
+    pos = np.clip(n - swing, 0, N - 1)
+    i = np.minimum(pos.astype(int), N - 2)
+    f = pos - i
+    return x[:, i] * (1 - f) + x[:, i + 1] * f
+
+
+# A cycle in beats, timed from the render's start: the window starts on a bar
+# line, so the loop holds whole cycles and the pulse wraps with it.
+def beat_phase(p):
+    return 2 * np.pi * np.arange(N) / SR / (p['rate'] * plan['beat'])
+
+
+def tremolo(x, p):
+    lfo = np.cos(beat_phase(p))
+    if p['shape'] == 'square':
+        k = np.hanning(int(TREMOLO_EDGE_S * SR) + 2)[1:-1]
+        lfo = np.convolve(np.sign(lfo), k / k.sum(), mode='same')
+    return x * (1 - p['depth'] * (1 - lfo) / 2)
+
+
+def autopan(x, p):
+    a = (p['depth'] * np.sin(beat_phase(p)) + 1) * np.pi / 4
+    return x * np.array([np.cos(a), np.sin(a)]) * np.sqrt(2)
+
+
+# The level is measured back, so narrowing or widening never jumps the
+# track's loudness: only the balance of middle and sides moves.
+def width(x, p):
+    mid, side = (x[0] + x[1]) / 2, (x[0] - x[1]) / 2 * p['amount']
+    y = np.array([mid + side, mid - side])
+    e = float((y ** 2).sum())
+    return y * np.sqrt(float((x ** 2).sum()) / e) if e > 0 else y
+
+
+# The noise is one loop's worth, tiled so the window holds it exactly once
+# and the samples after the window's end are its head again: the seam's
+# crossfade then blends the same noise into itself. Pops wrap around the
+# loop's end rather than being cut by it.
+def vinyl(x, p):
+    r, F, a = rng(), plan['frames'], plan['start']
+    noise = r.standard_normal((2, F)) * VINYL_HISS_RMS * p['hiss']
+    count = r.poisson(p['crackle'] * VINYL_POPS_PER_S * F / SR)
+    ring = np.exp(-np.arange(int(VINYL_POP_S * SR * 4)) / (VINYL_POP_S * SR))
+    at, peak = r.integers(0, F, count), p['crackle'] * VINYL_POP_PEAK * r.uniform(.1, 1, count)
+    sign, side = r.choice([-1, 1], count), r.uniform(.6, 1, (2, count))
+    for c in range(2):
+        np.add.at(noise[c], (at[:, None] + np.arange(len(ring))) % F, (sign * peak * side[c])[:, None] * ring)
+    y = x + noise[:, (np.arange(N) - a) % F]
+    hz = VINYL_NEW_HZ * (VINYL_WORN_HZ / VINYL_NEW_HZ) ** p['wear']
+    return fx(pb.LadderFilter(mode=pb.LadderFilter.Mode.LPF12, cutoff_hz=hz, resonance=0))(y)
+
+
+def pitch(x, p):
+    return blend(x, fx(pb.PitchShift(semitones=p['interval']))(x), p['mix'])
+
+
 FX = {
     'filter': filter_,
     'eq': eq,
@@ -114,6 +217,15 @@ FX = {
     'reverb': reverb,
     'comp': comp,
     'duck': duck,
+    'autofilter': autofilter,
+    'downsample': downsample,
+    'flanger': flanger,
+    'wobble': wobble,
+    'tremolo': tremolo,
+    'autopan': autopan,
+    'width': width,
+    'vinyl': vinyl,
+    'pitch': pitch,
 }
 
 
@@ -123,10 +235,16 @@ def pan_gains(p):
     return np.array([np.cos(a), np.sin(a)])[:, None] * np.sqrt(2)
 
 
+# A box's noise is seeded by its track and its place in the chain, so a render
+# repeats sample for sample and two tracks' vinyl never hiss in unison.
+seed = 0
+rng = lambda: np.random.default_rng(seed)
+
 mix = np.zeros((2, N))
 for t in plan['tracks']:
     x = fit(np.load(t['stem']).astype(np.float64))
-    for box in t.get('fx', []):
+    for i, box in enumerate(t.get('fx', [])):
+        seed = zlib.crc32(f"{t['id']}/{i}".encode())
         x = FX[box['type']](x, box['params'])
     mix += x * t['level'] * pan_gains(t.get('pan', 0))
 

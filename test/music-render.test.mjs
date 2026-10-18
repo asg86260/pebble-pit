@@ -91,6 +91,9 @@ test('every MUSIC_FX type has a handler in the mix', () => {
   assert.ok(table, 'mix.py has an FX table');
   const handled = [...table.matchAll(/'(\w+)':\s*(\w+)/g)];
   assert.deepEqual(handled.map(m => m[1]).sort(), Object.keys(MUSIC_FX).sort());
+  // The library's nine (DESIGN.md, "The effects library") beside the first ten.
+  for (const type of ['autofilter', 'downsample', 'flanger', 'wobble', 'tremolo', 'autopan', 'width', 'vinyl', 'pitch'])
+    assert.ok(handled.some(m => m[1] === type), `${type} is played by the mix`);
   for (const [, type, fn] of handled) assert.match(py, new RegExp(`^def ${fn}\\(x, p\\):`, 'm'), `${type} names a function`);
 });
 
