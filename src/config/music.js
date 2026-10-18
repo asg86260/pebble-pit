@@ -37,3 +37,19 @@ export const MUSIC_LIVE_CHANNEL = 0;
 // The render's loudness: a bed sits at -18 LUFS with the peaks under -1 dBTP.
 export const MUSIC_LUFS = -18;
 export const MUSIC_TRUE_PEAK = -1;
+
+// the render
+// tools/music/render.mjs: one sample rate for every stem so a cached stem
+// mixes with a fresh one; two passes of the loop plus a tail long enough for
+// the longest release and the delay to die, so the window [L, 2L) already
+// holds the first pass's tail and wraps without a seam.
+export const MUSIC_RENDER_SR = 44100;
+export const MUSIC_RENDER_PASSES = 2;
+export const MUSIC_RENDER_TAIL_S = 3;
+// Surge XT's first process() after a state change is silent, so it is primed.
+export const MUSIC_RENDER_PRIME_S = 0.5;
+// Each Surge takes 30 to 55 s and a core to load; other agents share the machine.
+export const MUSIC_RENDER_JOBS = 3;
+export const MUSIC_RENDER_OGG_Q = 5;
+// The MIDI file's resolution: a sixteenth is a quarter of a beat.
+export const MUSIC_RENDER_PPQ = 480;
