@@ -1,0 +1,1181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Act 3 Gestures</title>
+<!--
+  Act 3's hand work, mocked: one live panel a station, each worked by its own
+  motion with a crit, a ghosted hand acting the motion out until it has been
+  done a few times. Drawn from plain cells on the P = 6 grid in the game's
+  grey ramp (src/config/palette.js), at three times the yard's scale, with a
+  one-times thumbnail beside. Not the game: nothing here is read from src/.
+  Every word is a placeholder.
+-->
+<style>
+  :root {
+    --bg: #ffffff; --fg: #000000; --muted: #5f5f5f; --line: #d6d6d6; --soft: #efefef; --warn: #757575;
+  }
+  /* The dark page is the light one mapped by lightness onto #e0e0e0 on
+     #1f1f1f (src/ink.js), never inverted: each token below is its light
+     twin's grey taken to the same step between the dark page's two inks. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a; }
+  }
+  :root[data-theme="dark"] { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a; }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--fg); }
+  body { margin: 0; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1080px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  p { margin: 0 0 8px; color: var(--muted); }
+  ul { margin: 4px 0 0; padding-left: 18px; color: var(--muted); }
+  b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 10px 0 14px; }
+  button { font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  button.on { border-color: var(--fg); font-weight: bold; }
+  /* a placeholder word: dashed under, a star after */
+  .ph { border-bottom: 1px dashed currentColor; }
+  .ph::after { content: '*'; color: var(--warn); }
+  canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .over { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin: 8px 0 20px; }
+  .over a { color: inherit; text-decoration: none; font-size: 12px; }
+  .over canvas { width: 240px; max-width: 100%; height: auto; border: 1px solid var(--line); }
+  .card { display: flex; gap: 18px; flex-wrap: wrap; border-top: 1px solid var(--line); padding: 18px 0; }
+  .card .big { width: 720px; max-width: 100%; height: auto; border: 1px solid var(--line); touch-action: none; cursor: pointer; user-select: none; -webkit-user-select: none; }
+  .side { flex: 1 1 260px; min-width: 0; }
+  .side .thumb { width: 240px; max-width: 100%; height: auto; border: 1px solid var(--line); margin-top: 10px; }
+  .read { background: var(--soft); border-radius: 4px; padding: 6px 8px; margin: 8px 0; font-size: 13px; }
+  .read .crit { font-weight: bold; }
+  .k { color: var(--muted); }
+  figcaption { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Act 3 hand work <span class="k">(mock)</span></h1>
+  <p>Every station is worked by its own motion and has a crit. A grey ghost hand shows the motion until you have done it
+     three times, then fades out. Every panel is live: mouse or touch. This page is drawn from plain cells on the 6-pixel grid,
+     not by the game. <b>Every word on it is a placeholder</b> (<span class="ph">marked like this</span>).</p>
+  <div class="bar">
+    <span class="k">page</span>
+    <button data-theme-set="light">light</button>
+    <button data-theme-set="dark">dark</button>
+    <span class="k" style="margin-left:12px">hands</span>
+    <button id="reset-all">show every hand again</button>
+  </div>
+  <div class="over" id="over"></div>
+  <div id="cards"></div>
+  <section class="card" style="display:block">
+    <h2>What the mock cannot show</h2>
+    <ul>
+      <li>The real renderer: these are flat cells drawn by this page, not after.js, its layers or its camera.</li>
+      <li>The real camera scale: the panels are three times the yard and the thumbnails one time, as close as a page can get.</li>
+      <li>Gamepad feel: the pad lines are text only. Nothing here reads a pad.</li>
+      <li>Pacing and numbers: every speed, band, window and payout is a guess for the pace tool to move.</li>
+      <li>The stations in the camp: each panel stands alone, with no hauling, no posts and no members walking in.</li>
+      <li>Sound.</li>
+    </ul>
+  </section>
+</main>
+<script>
+'use strict';
+// ---------------------------------------------------------------------------
+// The grid and the ramp
+// ---------------------------------------------------------------------------
+const P = 6, COLS = 40, ROWS = 26, W = COLS * P, H = ROWS * P, FLOOR = 20, BIG = 3;
+// GREY from src/config/palette.js, paper to ink.
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a',
+              '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+// The dark page: each rung taken to the same step between ink #e0e0e0 and
+// paper #1f1f1f (src/ink.js maps by lightness).
+const DARK = GREY.map(h => {
+  const v = parseInt(h.slice(1, 3), 16) / 255;
+  const c = Math.round(0xe0 + (0x1f - 0xe0) * v).toString(16).padStart(2, '0');
+  return '#' + c + c + c;
+});
+const FLOOR_TONES = [1, 1, 2, 1, 2, 3];   // AFTER_FLOOR_TONES
+let PAL = GREY, T = 0;
+
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fadeIn = (t0, d = 0.3) => (t0 == null ? 1 : clamp((T - t0) / d, 0, 1));
+const fadeOut = (t0, d = 0.4) => 1 - clamp((T - t0) / d, 0, 1);
+const hash = (c, r) => ((((c * 73856093) ^ (r * 19349663)) >>> 0) % 9973);
+const toneAt = (c, r, list) => list[hash(c, r) % list.length];
+const wrap = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function C(g, c, r, t) { g.fillStyle = PAL[t]; g.fillRect(Math.round(c) * P, Math.round(r) * P, P, P); }
+function fill(g, c0, r0, c1, r1, t) { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) C(g, c, r, t); }
+function box(g, c0, r0, c1, r1, tones = [0, 1, 1, 2]) {
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++)
+    C(g, c, r, r === r0 || r === r1 || c === c0 || c === c1 ? 10 : toneAt(c, r, tones));
+}
+function ground(g, c0 = 0, c1 = COLS - 1) { for (let r = FLOOR; r < ROWS; r++) for (let c = c0; c <= c1; c++) C(g, c, r, toneAt(c, r, FLOOR_TONES)); }
+// A body as the camp draws one: a three-cell square, its middle pale.
+function body(g, c, rb, rim = 10, mid = 1) { fill(g, c - 1, rb - 2, c + 1, rb, rim); C(g, c, rb - 1, mid); }
+function line(c0, r0, c1, r1) {
+  c0 = Math.round(c0); r0 = Math.round(r0); c1 = Math.round(c1); r1 = Math.round(r1);
+  const out = [], dc = Math.abs(c1 - c0), dr = -Math.abs(r1 - r0), sc = c0 < c1 ? 1 : -1, sr = r0 < r1 ? 1 : -1;
+  let e = dc + dr;
+  for (;;) { out.push([c0, r0]); if (c0 === c1 && r0 === r1) break; const e2 = 2 * e; if (e2 >= dr) { e += dr; c0 += sc; } if (e2 <= dc) { e += dc; r0 += sr; } }
+  return out;
+}
+function withAlpha(g, a, fn) { const o = g.globalAlpha; g.globalAlpha = o * clamp(a, 0, 1); fn(); g.globalAlpha = o; }
+// A stack that fades each piece in as it lands: `at` is when each landed.
+function stackAdd(arr, cap) { if (arr.length < cap) arr.push(T); }
+
+// The cue layer is drawn at its own pixel, two to a side, over the cells:
+// the ghost hand and its path are a pointer over the yard, not a thing in
+// it, and drawn in whole cells they read as more of the yard's material.
+const D = 2;
+const dotAt = (g, c, r, tone) => { g.fillStyle = PAL[tone]; g.fillRect(Math.round(c) * P + 2, Math.round(r) * P + 2, D, D); };
+// The motion's path: a dot a cell (or every other), and a chevron for its way.
+function dots(g, pts, tone = 5, every = 1) { pts.forEach(([c, r], i) => { if (i % every === 0) dotAt(g, c, r, tone); }); }
+function chevron(g, c, r, dc, dr, tone = 5) {
+  dotAt(g, c, r, tone);
+  const pc = -dr, pr = dc;
+  for (let s = 1; s <= 2; s++) { dotAt(g, c - dc * s + pc * s, r - dr * s + pr * s, tone); dotAt(g, c - dc * s - pc * s, r - dr * s - pr * s, tone); }
+}
+function ringPts(cx, cy, rx, ry, n) { const out = []; for (let k = 0; k < n; k++) { const a = k / n * 2 * Math.PI; out.push([Math.round(cx + Math.cos(a) * rx), Math.round(cy + Math.sin(a) * ry)]); } return out; }
+// A dial: a strip of cells for 0..max, the crit band darker, the band's ends
+// ticked under the strip and the needle a column over it. `bandA` fades the
+// band in and out where the window opens and shuts (the stump's).
+function gauge(g, c0, c1, r, v, vmax, lo, hi, bandA = 1) {
+  const n = c1 - c0 + 1;
+  for (let k = 0; k < n; k++) {
+    const x = (k + 0.5) / n * vmax, inBand = x >= lo && x <= hi;
+    C(g, c0 + k, r, 2);
+    if (inBand) withAlpha(g, bandA, () => C(g, c0 + k, r, 6));
+  }
+  const a = c0 + Math.round(lo / vmax * n), b = c0 + Math.round(hi / vmax * n) - 1;
+  C(g, a, r + 1, 10); C(g, b, r + 1, 10);
+  const nc = c0 + clamp(Math.floor(v / vmax * n), 0, n - 1);
+  C(g, nc, r - 1, 10); C(g, nc, r, 10);
+}
+
+// The ghost hand, at the cue's pixel: a pointing mitten (its point the
+// fingertip, at the top of the named cell) and a fist (its point the middle
+// of the grip, at the named cell's middle). '#' its outline, 'o' its fill.
+const HAND = {
+  point: { at: [3.5, 0], m: ['...##.....', '..#oo#....', '..#oo#....', '..#oo#....', '..#oo####.', '.##oooooo#',
+                             '#o#oooooo#', '#oooooooo#', '.#ooooooo#', '..#oooooo#', '...######.'] },
+  grab:  { at: [5, 3.5], m: ['.##.##.##.', '#oo#oo#oo#', '#oooooooo#', '#oooooooo#', '#oooooooo#', '.#ooooooo#', '..#######.'] }
+};
+function hand(g, c, r, pose = 'point') {
+  const h = HAND[pose], m = h.m;
+  const px = (Math.round(c) + 0.5) * P, py = Math.round(r) * P + (pose === 'grab' ? P / 2 : 0);
+  const x0 = Math.round((px - h.at[0] * D) / D) * D, y0 = Math.round((py - h.at[1] * D) / D) * D;
+  for (let j = 0; j < m.length; j++) for (let i = 0; i < m[j].length; i++) {
+    const ch = m[j][i]; if (ch === '.') continue;
+    g.fillStyle = PAL[ch === '#' ? 8 : 1]; g.fillRect(x0 + i * D, y0 + j * D, D, D);
+  }
+}
+
+// The mark's figures, 3 by 5, drawn at 2 pixels a dot on a paper patch: a
+// mark is a number over the picture, as the game's fight numbers are drawn at
+// their own pixel rather than the cell's.
+const FONT = {
+  '0': ['###', '#.#', '#.#', '#.#', '###'], '1': ['.#.', '##.', '.#.', '.#.', '###'], '2': ['###', '..#', '###', '#..', '###'],
+  '3': ['###', '..#', '.##', '..#', '###'], '4': ['#.#', '#.#', '###', '..#', '..#'], '5': ['###', '#..', '###', '..#', '###'],
+  '6': ['###', '#..', '###', '#.#', '###'], '7': ['###', '..#', '..#', '..#', '..#'], '8': ['###', '#.#', '###', '#.#', '###'],
+  '9': ['###', '#.#', '###', '..#', '###'], 'x': ['...', '#.#', '.#.', '#.#', '...'], '+': ['...', '.#.', '###', '.#.', '...']
+};
+function text(g, x, y, s, tone = 10) {
+  const w = (s.length * 4 - 1) * D;
+  g.fillStyle = PAL[0]; g.fillRect(x - 2, y - 2, w + 4, 5 * D + 4);
+  g.fillStyle = PAL[tone];
+  [...s].forEach((ch, k) => { const f = FONT[ch]; if (!f) return; for (let j = 0; j < 5; j++) for (let i = 0; i < 3; i++) if (f[j][i] === '#') g.fillRect(x + (k * 4 + i) * D, y + j * D, D, D); });
+}
+// The impact star: eight thin rays round the struck cell, at the mark's
+// pixel, so it marks the blow without burying the thing struck.
+function star(g, c, r, tone = 10) {
+  const x = (c + 0.5) * P, y = (r + 0.5) * P;
+  g.fillStyle = PAL[tone];
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+    const n = dx && dy ? 4 : 6;
+    for (let k = 0; k < n; k++) { const d = 8 + k * 2; g.fillRect(Math.round((x + dx * d * (dx && dy ? 0.75 : 1)) / D) * D - 1, Math.round((y + dy * d * (dx && dy ? 0.75 : 1)) / D) * D - 1, D, D); }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Stations
+// ---------------------------------------------------------------------------
+const CUE_AFTER = 3;           // motions done before the hand fades
+const CUE_FADE_S = 0.8;
+const MARK_HOLD_S = 0.55, MARK_FADE_S = 0.45, STAR_HOLD_S = 0.3;
+const stations = [];
+function station(def) {
+  const s = Object.assign({ cueN: 0, cueA: 1, crits: 0, total: 0, last: null, marks: [], smears: [], ptr: null, dirty: true }, def);
+  s.rnd = rng(stations.length * 977 + 13);
+  s.t = 0; T = 0;
+  s.init();
+  stations.push(s);
+  return s;
+}
+function earn(s, words, crit) { s.last = { words, crit }; s.total++; if (crit) s.crits++; s.cueN++; s.dirty = true; }
+function mark(s, c, r, str) { s.marks.push({ c: Math.round(c), r: Math.round(r), str, at: T }); }
+// A smear: cells shown for a held frame at full, then faded off.
+function smear(s, cells, life = 0.3) { s.smears.push({ cells, at: T, life }); }
+function drawOverlays(g, s) {
+  for (const sm of s.smears) {
+    const age = T - sm.at;
+    withAlpha(g, age < 0.08 ? 1 : 1 - (age - 0.08) / (sm.life - 0.08), () => sm.cells.forEach(([c, r, t]) => C(g, c, r, t ?? 4)));
+  }
+  for (const m of s.marks) {
+    const age = T - m.at;
+    withAlpha(g, age < STAR_HOLD_S ? 1 : 1 - (age - STAR_HOLD_S) / 0.3, () => star(g, m.c, m.r));
+    withAlpha(g, age < MARK_HOLD_S ? 1 : 1 - (age - MARK_HOLD_S) / MARK_FADE_S, () => text(g, Math.min((m.c + 3) * P, W - (m.str.length * 4 - 1) * D - 3), Math.max(3, (m.r - 4) * P), m.str));
+  }
+}
+
+// --- the pedestal -----------------------------------------------------------
+// The pair speak; their lines rise as bubbles; a click on one pops it, its
+// rim broken outward a cell a held frame, and the rebel motes fall to the pile
+// at the pedestal's foot. Every fifth bubble or so is big, double-rimmed and
+// fast, and pays five times.
+station({
+  key: 'pedestal', name: 'pedestal',
+  motion: 'click a speech bubble as it rises; it pops into rebel motes',
+  critLine: 'the odd big bubble rises faster; popping it pays 5×',
+  pad: 'A pops the lowest bubble',
+  window: 'the big bubble: double rim, dotted halo, its ×5 written by it',
+  init() { Object.assign(this, { bubbles: [], motes: [], pile: [], pops: [], next: 0.3, n: 0, cheer: -9, talk: [-9, -9], hx: 20, hy: 13, landed: 0 }); },
+  spawn() {
+    const k = this.n % 2, big = this.n % 5 === 3;
+    const w = big ? 10 : 7, h = big ? 6 : 4;
+    this.bubbles.push({ x: (k ? 26 : 12) * P, y: (10 - h) * P, w, h, big, v: big ? 32 : 14, vx: (this.rnd() - 0.5) * 5, at: T, seed: this.rnd() * 6, k });
+    this.talk[k] = T; this.n++;
+  },
+  box(b) { return { c: Math.round(b.x / P - b.w / 2), r: Math.round(b.y / P) }; },
+  update(dt) {
+    if (T >= this.next) { this.spawn(); this.next = T + 1.5; }
+    for (const b of this.bubbles) { b.y -= b.v * dt; b.x = clamp(b.x + b.vx * dt, (b.w / 2 + 1) * P, (COLS - b.w / 2 - 1) * P); }
+    this.bubbles = this.bubbles.filter(b => b.y + b.h * P > -P);
+    for (const m of this.motes) {
+      if (T < m.at) continue;
+      m.vy += 220 * dt; m.x += m.vx * dt; m.y += m.vy * dt;
+      if (m.y >= (FLOOR - 1) * P && m.vy > 0) { m.done = true; if (++this.landed % 2 === 0) stackAdd(this.pile, 42); }
+    }
+    this.motes = this.motes.filter(m => !m.done);
+    this.pops = this.pops.filter(p => T - p.at < 0.7);
+    // The hand drifts to the lowest bubble a cell at a time.
+    const tgt = this.bubbles.reduce((a, b) => (!a || b.y > a.y ? b : a), null);
+    if (tgt) {
+      const bx = this.box(tgt), tc = bx.c + Math.floor(tgt.w / 2), tr = bx.r + tgt.h - 1;
+      this.hx += clamp(tc - this.hx, -12 * dt, 12 * dt); this.hy += clamp(tr - this.hy, -12 * dt, 12 * dt);
+      this.ring = { c: bx.c + tgt.w / 2 - 0.5, r: bx.r + tgt.h / 2 - 0.5, rx: tgt.w / 2 + 1.5, ry: tgt.h / 2 + 1.5 };
+    }
+  },
+  down(p) {
+    const pc = p.x / P, pr = p.y / P;
+    for (let i = this.bubbles.length - 1; i >= 0; i--) {
+      const b = this.bubbles[i], bx = this.box(b);
+      if (pc < bx.c - 1 || pc > bx.c + b.w + 1 || pr < bx.r - 1 || pr > bx.r + b.h + 1) continue;
+      this.bubbles.splice(i, 1);
+      this.pops.push({ c: bx.c, r: bx.r, w: b.w, h: b.h, big: b.big, at: T });
+      const n = b.big ? 15 : 3, cx = (bx.c + b.w / 2) * P, cy = (bx.r + b.h / 2) * P;
+      for (let k = 0; k < n; k++) {
+        const x = cx + (this.rnd() - 0.5) * b.w * P * 0.6, vy = -30 - this.rnd() * 40, land = (FLOOR - 1) * P;
+        const t = (-vy + Math.sqrt(vy * vy + 2 * 220 * (land - cy))) / 220, tx = (29 + this.rnd() * 6) * P;
+        this.motes.push({ x, y: cy, vy, vx: (tx - x) / t, at: T + k * 0.03 });
+      }
+      if (b.big) { this.cheer = T; mark(this, bx.c + b.w / 2, bx.r + b.h / 2, 'x5'); }
+      earn(this, b.big ? '+15 rebel (×5)' : '+3 rebel', b.big);
+      return;
+    }
+  },
+  draw(g) {
+    ground(g);
+    box(g, 13, 15, 26, 19);
+    const cheer = T - this.cheer < 0.45;
+    [16, 23].forEach((c, k) => {
+      body(g, c, 14, 10, T - this.talk[k] < 0.3 ? 6 : 1);
+      if (cheer) { C(g, c - 2, 11, 10); C(g, c - 2, 12, 10); C(g, c + 2, 11, 10); C(g, c + 2, 12, 10); }
+    });
+    this.pile.forEach((at, k) => withAlpha(g, fadeIn(at, 0.25), () => C(g, 28 + Math.floor(k / 6), 19 - (k % 6), k % 2 ? 2 : 3)));
+    for (const b of this.bubbles) {
+      const bx = this.box(b), sway = Math.sin((T - b.at) * 1.6 + b.seed);
+      const c0 = bx.c + (sway > 0.6 ? 1 : sway < -0.6 ? -1 : 0), r0 = bx.r, c1 = c0 + b.w - 1, r1 = r0 + b.h - 1;
+      const a = Math.min(fadeIn(b.at, 0.25), clamp((b.y + b.h * P) / (3 * P), 0, 1));
+      withAlpha(g, a, () => {
+        if (b.big) {   // the crit window: a dotted halo and the ×5 beside it
+          dots(g, ringPts(c0 + b.w / 2 - 0.5, r0 + b.h / 2 - 0.5, b.w / 2 + 2, b.h / 2 + 2, 22), 4, 1);
+          text(g, (c1 + 2) * P, (r0 - 1) * P, 'x5', 5);
+        }
+        for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+          const corner = (r === r0 || r === r1) && (c === c0 || c === c1);
+          if (corner) continue;
+          const rim = r === r0 || r === r1 || c === c0 || c === c1;
+          const inner = b.big && !rim && (r === r0 + 1 || r === r1 - 1 || c === c0 + 1 || c === c1 - 1);
+          C(g, c, r, rim ? 10 : inner ? 6 : 0);
+        }
+        // words: bars of grey in the bubble
+        for (let r = r0 + (b.big ? 2 : 1), j = 0; r <= r1 - (b.big ? 2 : 1); r++, j++) {
+          const len = 2 + (hash(j, Math.round(b.seed * 10)) % (b.w - (b.big ? 5 : 3)));
+          for (let c = 0; c < len; c++) C(g, c0 + (b.big ? 2 : 1) + c, r, 5);
+        }
+        const tail = b.k ? c0 + 1 : c1 - 1;
+        C(g, tail, r1 + 1, 10); C(g, tail + (b.k ? -1 : 1), r1 + 2, 10);
+      });
+    }
+    for (const p of this.pops) {
+      const age = T - p.at, step = p.big ? 0.12 : 0.07;
+      const st = age < step ? 1 : age < step * 2 ? 2 : 3;
+      withAlpha(g, age < step * 2 ? 1 : fadeOut(p.at + step * 2, 0.25), () => {
+        const cx = p.c + p.w / 2 - 0.5, cy = p.r + p.h / 2 - 0.5;
+        for (let r = p.r; r < p.r + p.h; r++) for (let c = p.c; c < p.c + p.w; c++) {
+          const rim = r === p.r || r === p.r + p.h - 1 || c === p.c || c === p.c + p.w - 1;
+          if (!rim || (c + r) % 2) continue;
+          C(g, c + Math.sign(Math.round(c - cx)) * st, r + Math.sign(Math.round(r - cy)) * st, p.big ? 10 : 8);
+        }
+      });
+    }
+    for (const m of this.motes) {
+      if (T < m.at) continue;
+      const x = Math.round(m.x / P) * P, y = Math.round(m.y / P) * P;
+      g.fillStyle = PAL[10]; g.fillRect(x, y, P, P);
+      g.fillStyle = PAL[1]; g.fillRect(x + 1, y + 1, P - 2, P - 2);
+    }
+  },
+  cue(g) {
+    if (this.ring) dots(g, ringPts(this.ring.c, this.ring.r, this.ring.rx, this.ring.ry, 18), 5, 1);
+    const press = (T % 1) < 0.18 ? 1 : 0;
+    hand(g, this.hx, this.hy + 1 + press, 'point');
+  }
+});
+
+// --- chop a tree --------------------------------------------------------------
+// A two-man saw across the trunk; the pair's member holds the left handle
+// (yours), a partner the right. The partner pulls on its own rhythm, and the
+// ghost handle at your end shows where it wants yours. A stroke end to end
+// with the partner's pull cuts double; against it, the saw binds.
+const SAW_AMP = 5 * P, SAW_PERIOD = 1.6, SAW_ROW = 16, KERF_NEED = 10;
+station({
+  key: 'chop', name: 'chop a tree',
+  motion: 'drag the saw back and forth across the trunk; a partner holds the far end',
+  critLine: 'match the partner\'s rhythm (fight it and the saw binds); each stroke in rhythm cuts double',
+  pad: 'stick L-R saws',
+  window: 'the ghost handle at your end: where the partner wants yours',
+  init() { Object.assign(this, { s: 0, target: 0, grab: false, gx: 0, s0: 0, units: 0, bind: -9, hold: -9, from: 0, match: 0, sum: 0, fall: null, regrow: null, pc: 35, pstep: 0, dust: [] }); },
+  partner(t = T) { return SAW_AMP * Math.sin(2 * Math.PI * t / SAW_PERIOD); },
+  partnerV(t = T) { return Math.cos(2 * Math.PI * t / SAW_PERIOD); },
+  standing() { return this.fall == null; },
+  update(dt) {
+    const free = T >= this.bind && T >= this.hold && this.standing();
+    if (free) {
+      const prev = this.s;
+      this.s += (this.target - this.s) * Math.min(1, dt * 25);
+      const ds = this.s - prev;
+      if (Math.abs(ds) > 0.01) { this.sum += Math.abs(ds); if (Math.sign(ds) === Math.sign(this.partnerV())) this.match += Math.abs(ds); }
+      const end = this.s <= -0.8 * SAW_AMP ? -1 : this.s >= 0.8 * SAW_AMP ? 1 : 0;
+      if (end && end !== this.from) { if (this.from) this.stroke(end); this.from = end; this.match = 0; this.sum = 0; this.strokeAt = this.s; }
+    }
+    // The fall, the lying trunk and the regrow; the partner steps clear.
+    if (this.fall != null && this.regrow == null && T - this.fall > 3.2) this.regrow = T;
+    if (this.regrow != null && T - this.regrow > 0.6) { this.fall = null; this.regrow = null; this.units = 0; this.from = 0; }
+    const want = this.fall != null && this.regrow == null ? 38 : Math.round(33 + this.s / P) + 2;
+    this.pstep += dt;
+    if (this.pstep > 0.1) { this.pstep = 0; this.pc += Math.sign(want - this.pc); }
+    for (const d of this.dust) { d.vy += 200 * dt; d.y += d.vy * dt; d.x += d.vx * dt; }
+    this.dust = this.dust.filter(d => d.y < FLOOR * P);
+  },
+  stroke(end) {
+    const r = this.match / Math.max(1e-6, this.sum);
+    const handleAt = s => Math.round(7 + s / P) - 1;
+    if (r >= 0.7) {
+      this.units += 2; this.hold = T + 0.25;
+      const a = handleAt(-end * SAW_AMP * 0.8), b = handleAt(this.s), cells = [];
+      for (let c = Math.min(a, b); c <= Math.max(a, b); c++) { cells.push([c, 14, 3]); cells.push([c, 18, 3]); }
+      smear(this, cells, 0.35);
+      mark(this, 20, 13, 'x2');
+      this.spray(6);
+      earn(this, '+2 cut, in rhythm (×2)', true);
+    } else if (r < 0.4) {
+      this.bind = T + 0.6;
+      earn(this, 'bound: the saw stuck, no cut', false);
+    } else {
+      this.units += 1; this.spray(2);
+      earn(this, '+1 cut', false);
+    }
+    if (this.units >= KERF_NEED && this.fall == null) this.fall = T;
+  },
+  spray(n) { for (let k = 0; k < n; k++) this.dust.push({ x: (17 + (k % 2) * 7) * P, y: (SAW_ROW + 1) * P, vx: (k % 2 ? 1 : -1) * (10 + this.rnd() * 25), vy: -20 - this.rnd() * 30, t: k % 2 ? 4 : 5 }); },
+  down(p) { this.grab = true; this.gx = p.x; this.s0 = this.target; },
+  move(p) { if (this.grab) this.target = clamp(this.s0 + (p.x - this.gx), -SAW_AMP, SAW_AMP); },
+  up() { this.grab = false; },
+  treeCells() {
+    const out = [];
+    for (let r = 8; r <= 19; r++) for (let c = 18; c <= 22; c++) out.push([c, r, c === 18 || c === 22 ? 10 : toneAt(c, r, [1, 2])]);
+    for (let r = 1; r <= 10; r++) for (let c = 13; c <= 27; c++) {
+      const d = ((c - 20) / 5.6) ** 2 + ((r - 5.5) / 4.6) ** 2;
+      if (d > 1 || (r >= 8 && c >= 18 && c <= 22)) continue;
+      out.push([c, r, d > 0.72 ? 4 : toneAt(c, r, [1, 2, 3, 2])]);
+    }
+    return out;
+  },
+  draw(g) {
+    ground(g);
+    const kerfCut = Math.floor(this.units / KERF_NEED * 5);
+    const cells = this.treeCells();
+    // Standing, falling or lying: the part above the kerf turns about the
+    // kerf's right end a held frame at a time and drops to the floor.
+    let ang = 0, drop = 0, crownA = 1;
+    if (this.fall != null) {
+      const k = Math.min(4, Math.floor((T - this.fall) / 0.16));
+      ang = Math.PI / 2 * k / 4; drop = Math.round(3 * k / 4);
+      crownA = fadeOut(this.fall + 1.2, 0.6);
+    }
+    const regrowA = this.regrow != null ? fadeIn(this.regrow, 0.6) : 0;
+    for (const [c, r, t] of cells) {
+      const above = r < SAW_ROW;
+      if (!above || this.fall == null) {
+        if (r === SAW_ROW && c - 18 < kerfCut && this.fall == null) continue;   // the kerf, opened from your side
+        if (r === SAW_ROW && this.fall != null) continue;
+        C(g, c, r, t); continue;
+      }
+      const isCrown = !(c >= 18 && c <= 22);
+      const dx = c - 22, dy = r - SAW_ROW, cos = Math.cos(ang), sin = Math.sin(ang);
+      const nc = 22 + Math.round(dx * cos - dy * sin), nr = SAW_ROW + Math.round(dx * sin + dy * cos) + drop;
+      if (nr >= FLOOR) continue;
+      let a = isCrown ? crownA : 1;
+      if (this.regrow != null) a *= 1 - regrowA;
+      // lying, the trunk is three logs: a gap of paper every fourth cell
+      if (!isCrown && ang > 1.5 && T - this.fall > 1.0 && (nc - 23) % 3 === 2) continue;
+      withAlpha(g, a, () => C(g, nc, nr, t));
+    }
+    if (this.regrow != null) withAlpha(g, regrowA, () => cells.forEach(([c, r, t]) => { if (r < 17) C(g, c, r, t); }));
+    // The saw: blade, teeth and handles, behind the uncut trunk.
+    const off = Math.round(this.s / P), bind = T < this.bind;
+    const hidden = c => this.fall == null && c >= 18 + kerfCut && c <= 22;
+    for (let c = 7 + off; c <= 33 + off; c++) {
+      let r = SAW_ROW;
+      if (bind && ((c > 9 + off && c < 16) || (c > 24 && c < 31 + off))) r -= 1;   // bowed: it binds
+      if (!hidden(c) || r !== SAW_ROW) C(g, c, r, 8);
+      if ((c - off) % 2 === 0 && !(c >= 18 && c <= 22 && this.fall == null)) C(g, c, SAW_ROW + 1, 8);
+    }
+    const lh = 6 + off, rh = 34 + off;
+    for (let r = 15; r <= 17; r++) { C(g, lh, r, 10); C(g, rh, r, 10); }
+    if (bind) { C(g, 17, 13, 10); C(g, 16, 14, 10); C(g, 24, 13, 10); C(g, 23, 14, 10); }
+    // You: the pair's member at the left handle; the partner at the right,
+    // leaning the way it pulls.
+    body(g, lh - 2, 19);
+    const lean = this.partnerV() > 0.35 ? 1 : this.partnerV() < -0.35 ? -1 : 0;
+    body(g, this.pc, 19, 10, 2);
+    if (this.fall == null) {
+      withAlpha(g, Math.abs(this.partnerV()), () => chevron(g, this.pc + lean * 2, 13, lean || 1, 0, 6));
+      // the crit window: the ghost handle, where the partner wants yours
+      const gc = Math.round(7 + this.partner() / P) - 1;
+      for (let r = 14; r <= 18; r++) if (r !== 16) C(g, gc, r, (r % 2) ? 5 : 4);
+    }
+    for (const d of this.dust) C(g, Math.round(d.x / P), Math.round(d.y / P), d.t);
+  },
+  cue(g) {
+    const pts = []; for (let c = 0; c <= 12; c++) pts.push([c, 12]);
+    dots(g, pts, 5); chevron(g, 0, 12, -1, 0); chevron(g, 12, 12, 1, 0);
+    hand(g, Math.round(7 + this.partner() / P) - 1, 15, 'grab');
+  }
+});
+
+// --- dig a stump ------------------------------------------------------------
+// Grab the stump and drag it up; it gives a little, the roots stretch, and
+// held up a while a root snaps. Now and then the roots give and the stump
+// wobbles, three held frames; a pull right then has it out in one go.
+const STUMP_MAX = 3.5 * P, ROOTS = [[14, 24], [16, 25], [20, 25], [24, 25], [26, 24]];
+station({
+  key: 'stump', name: 'dig a stump',
+  motion: 'grab the stump and drag it up out of the ground',
+  critLine: 'the stump wobbles when the roots give; pull right then and it comes out in one go',
+  pad: 'mash A pulls',
+  window: 'the lift dial\'s top, darkened while the stump wobbles',
+  init() { this.fresh(); this.wob = -9; this.next = 1.4; },
+  fresh() { Object.assign(this, { lift: 0, target: 0, grab: false, y0: 0, roots: [1, 1, 1, 1, 1], strain: 0, out: null, crit: false, at: T, winLift: 0 }); },
+  intact() { return this.roots.filter(Boolean).length; },
+  wobbling() { return T - this.wob < 0.27; },
+  windowOpen() { return T - this.wob < 0.62; },
+  update(dt) {
+    if (this.out == null) {
+      if (this.grab) this.lift += (this.target - this.lift) * Math.min(1, dt * 20);
+      else this.lift = Math.max(0, this.lift - 40 * dt);
+      if (T >= this.next) { this.wob = T; this.winLift = this.lift; this.next = T + 1.6 + this.rnd() * 1.2; }
+      if (this.grab && this.windowOpen() && this.lift >= 2.5 * P && this.lift - this.winLift >= 1.5 * P) {
+        const n = this.intact();
+        this.roots = this.roots.map(() => 0); this.pullOut(true);
+        mark(this, 20, 7, 'x' + n);
+        earn(this, `out in one pull: ${n} roots at once`, true);
+      } else if (this.grab && this.lift >= 2 * P) {
+        this.strain += dt;
+        if (this.strain >= 0.7) {
+          this.strain = 0;
+          const i = this.roots.findIndex(Boolean); this.roots[i] = 0;
+          smear(this, [[ROOTS[i][0], 21, 5], [ROOTS[i][0] + 1, 22, 5]], 0.3);
+          const left = this.intact();
+          if (!left) this.pullOut(false);
+          earn(this, left ? `+1 root (${left} left)` : '+1 root: the stump is out', false);
+        }
+      } else this.strain = 0;
+    } else if (T - this.out > 3.2) this.fresh();
+  },
+  pullOut(crit) {
+    this.out = T; this.crit = crit; this.grab = false;
+    if (crit) { const cells = []; for (const c of [18, 20, 22]) for (let r = 18; r <= 19; r++) cells.push([c, r, 3]); smear(this, cells, 0.4); }
+  },
+  down(p) { if (this.out == null) { this.grab = true; this.y0 = p.y + this.lift * 2; } },
+  move(p) { if (this.grab) this.target = clamp((this.y0 - p.y) * 0.5, 0, STUMP_MAX); },
+  up() { this.grab = false; },
+  draw(g) {
+    ground(g);
+    let lift = Math.round(this.lift / P), dx = 0, a = 1, side = 0;
+    if (this.wobbling() && this.out == null) dx = [-1, 1, -1][Math.floor((T - this.wob) / 0.09)] || 0;
+    if (this.out != null) {
+      const age = T - this.out, hold = this.crit ? 0.45 : 0.2;
+      lift = Math.min(6, Math.round(this.lift / P) + 1 + Math.floor(age / 0.08));
+      if (age > 0.24 + hold) { side = Math.min(10, Math.floor((age - 0.24 - hold) / 0.06)); lift = Math.max(0, lift - side); }
+      a = fadeOut(this.out + 0.24 + hold + 0.3, 0.4);
+    }
+    // the plot: a sapling, planted free, once the stump is gone
+    if (this.out != null) withAlpha(g, fadeIn(this.out + 1.0, 0.5) * fadeOut(this.out + 2.8, 0.4), () => {
+      C(g, 20, 19, 8); C(g, 20, 18, 8); C(g, 19, 17, 3); C(g, 20, 17, 2); C(g, 21, 17, 3); C(g, 20, 16, 3);
+    });
+    withAlpha(g, a * fadeIn(this.at, 0.5), () => {
+      const c0 = 18 + dx + side, top = 17 - lift;
+      ROOTS.forEach(([ac, ar], i) => {
+        const oc = 18 + i + dx + side, or = 20 - lift;
+        if (this.roots[i] && this.out == null) line(oc, or, ac, ar).forEach(([c, r]) => C(g, c, r, 8));
+        else { C(g, oc, or, 8); C(g, oc + (i < 2 ? -1 : i > 2 ? 1 : 0), or + 1, 8);
+          if (this.out == null) line(oc, 22, ac, ar).slice(1).forEach(([c, r]) => C(g, c, r, 5)); }
+      });
+      box(g, c0, top, c0 + 4, top + 2, [2, 3, 2]);
+      C(g, c0 + 2, top, 2); C(g, c0 + 1, top + 1, 6); C(g, c0 + 3, top + 1, 6);   // the rings on its face
+      if (this.wobbling() && this.out == null) { C(g, c0 - 2, top + 1, 6); C(g, c0 + 6, top + 1, 6); }
+    });
+    // the lift dial: the pull zone darkens while the window is open
+    const wa = this.out != null ? 0 : this.windowOpen() ? fadeIn(this.wob, 0.06) : fadeOut(this.wob + 0.62, 0.15);
+    gauge(g, 2, 13, 3, this.out == null ? this.lift : 0, STUMP_MAX, 2.5 * P, STUMP_MAX, wa);
+  },
+  cue(g) {
+    const ph = (T % 1.4) / 1.4, up = Math.round(Math.min(1, ph * 1.6) * 3);
+    const pts = []; for (let r = 16; r >= 10; r--) pts.push([25, r]);
+    dots(g, pts, 5); chevron(g, 25, 9, 0, -1);
+    hand(g, 20, 16 - up, 'grab');
+  }
+});
+
+// --- the saw mill -------------------------------------------------------------
+// A big flywheel, turned by hand, drives the saw by a belt. Kept inside the
+// band on its dial, the log goes through twice as fast. A plank cut in the
+// band is held at the blade a moment, its teeth smeared round.
+const MILL = { cx: 10, cy: 13, R: 6, lo: 0.9, hi: 1.5, max: 2.2, logLen: 12 };
+station({
+  key: 'mill', name: 'saw mill',
+  motion: 'grab the flywheel and turn it round; it drives the saw',
+  critLine: 'keep the wheel inside the marked band and the saw cuts twice as fast',
+  pad: 'stick rotation turns the wheel',
+  window: 'the band on the dial above the wheel',
+  init() { Object.assign(this, { ang: 0, w: 0, grab: false, pa: 0, acc: 0, fed: 0, planks: [], spin: 0, logAt: 0, cuts: [] }); },
+  rev() { return Math.abs(this.w) / (2 * Math.PI); },
+  inBand() { const r = this.rev(); return r >= MILL.lo && r <= MILL.hi; },
+  update(dt) {
+    if (this.grab) { this.w += (this.acc / dt - this.w) * Math.min(1, dt * 8); this.acc = 0; }
+    else { this.w *= Math.exp(-0.5 * dt); this.ang += this.w * dt; }
+    this.spin += this.w * dt * 2;
+    const r = this.rev();
+    if (r > 0.15 && T - this.logAt > 0.4) {
+      this.fed += (this.inBand() ? 2 : 1) * 1.6 * dt;
+      if (this.fed >= 3 * (this.planksOfLog || 0) + 3) {
+        this.planksOfLog = (this.planksOfLog || 0) + 1;
+        const crit = this.inBand();
+        this.cuts.push({ at: T, crit });
+        stackAdd(this.planks, 12);
+        if (crit) {
+          mark(this, 27, 12, 'x2');
+          smear(this, ringPts(28, 14, 4, 4, 16).filter((_, i) => i % 2 === 0).map(([c, r]) => [c, r, 3]), 0.35);
+        }
+        earn(this, crit ? '+1 timber, cut at double speed' : '+1 timber', crit);
+        if (this.fed >= MILL.logLen) { this.fed = 0; this.planksOfLog = 0; this.logAt = T; }
+      }
+    }
+    this.cuts = this.cuts.filter(c => T - c.at < 1);
+  },
+  down(p) {
+    const dx = p.x / P - MILL.cx, dy = p.y / P - MILL.cy;
+    if (Math.hypot(dx, dy) > 9) return;
+    this.grab = true; this.pa = Math.atan2(dy, dx);
+  },
+  move(p) {
+    if (!this.grab) return;
+    const na = Math.atan2(p.y / P - MILL.cy, p.x / P - MILL.cx), d = wrap(na - this.pa);
+    this.ang += d; this.acc += d; this.pa = na;
+  },
+  up() { this.grab = false; },
+  draw(g) {
+    ground(g);
+    const { cx, cy, R } = MILL, step = 2 * Math.PI / 16;
+    const aq = Math.round(this.ang / step) * step;
+    // the belt, running
+    const ph = Math.floor(this.spin * 2) & 1;
+    line(cx, cy - R, 28, 11).forEach(([c, r], i) => C(g, c, r, (i + ph) % 2 ? 5 : 7));
+    line(cx, cy + R, 28, 17).forEach(([c, r], i) => C(g, c, r, (i + ph) % 2 ? 5 : 7));
+    // the wheel's stand
+    for (let r = cy + 1; r <= 19; r++) C(g, cx, r, 8);
+    fill(g, cx - 3, 19, cx + 3, 19, 8);
+    // the wheel: smeared spokes behind the spokes when it is going
+    const spokes = (a, t) => { for (let k = 0; k < 4; k++) { const s = a + k * Math.PI / 2; for (let d = 1; d < R; d++) C(g, cx + Math.round(Math.cos(s) * d), cy + Math.round(Math.sin(s) * d), t); } };
+    for (let r = cy - R - 1; r <= cy + R + 1; r++) for (let c = cx - R - 1; c <= cx + R + 1; c++) {
+      const d = Math.hypot(c - cx, r - cy); if (d >= R - 0.6 && d <= R + 0.45) C(g, c, r, 10);
+    }
+    const rv = this.rev();
+    if (rv > 0.5) spokes(aq - step * Math.sign(this.w), 3);
+    if (rv > 0.9) spokes(aq - 2 * step * Math.sign(this.w), 2);
+    spokes(aq, 8);
+    C(g, cx, cy, 10);
+    // the crank knob on the rim, where you take hold
+    C(g, cx + Math.round(Math.cos(aq) * R), cy + Math.round(Math.sin(aq) * R), 6);
+    // the bench, the log through the blade, the planks
+    fill(g, 22, 17, 39, 17, 10); for (let r = 18; r <= 19; r++) { C(g, 23, r, 10); C(g, 38, r, 10); }
+    const la = fadeIn(this.logAt, 0.4);
+    const f = this.fed, inProg = f % 3;
+    withAlpha(g, la, () => {
+      for (let c = Math.round(28 - inProg); c <= Math.round(39 - f); c++) for (let r = 15; r <= 16; r++)
+        C(g, c, r, c < 28 ? 3 : r === 15 ? 8 : (c % 3 ? 2 : 6));
+    });
+    this.planks.forEach((at, k) => withAlpha(g, fadeIn(at, 0.3), () => { const r = 19 - Math.floor(k / 2), c = 14 + (k % 2) * 4; for (let i = 0; i < 3; i++) C(g, c + i, r, i === 1 ? 2 : 3); }));
+    // the blade, its teeth turning; held still a moment on a crit cut
+    const held = this.cuts.some(c => c.crit && T - c.at < 0.25);
+    const sp = held ? 0 : Math.floor(this.spin * 3);
+    for (let r = 10; r <= 18; r++) for (let c = 24; c <= 32; c++) {
+      const d = Math.hypot(c - 28, r - 14);
+      if (d <= 2.3) C(g, c, r, d < 0.5 ? 10 : 3);
+      else if (d <= 3.3) { const sec = Math.floor(((Math.atan2(r - 14, c - 28) + Math.PI) / (2 * Math.PI)) * 12 + sp); C(g, c, r, sec % 2 === 0 ? 10 : 4); }
+    }
+    // the dial: the crit band
+    gauge(g, 3, 18, 2, rv, MILL.max, MILL.lo, MILL.hi);
+  },
+  cue(g) {
+    const pts = ringPts(MILL.cx, MILL.cy, 8, 8, 20);
+    dots(g, pts, 5, 1); chevron(g, MILL.cx, MILL.cy + 8, -1, 0);
+    const a = T * 2 * Math.PI * 0.6;
+    hand(g, MILL.cx + Math.round(Math.cos(a) * MILL.R), MILL.cy + Math.round(Math.sin(a) * MILL.R), 'grab');
+  }
+});
+
+// --- the chipper --------------------------------------------------------------
+// Press and hold to push the log along the table into the chipper's mouth;
+// let go when its tail reaches the mark and the chipper bites the rest in at
+// once for twice the sawdust. Let go elsewhere and the log stops.
+const CHIP = { len: 8, start: 12, mouth: 25, mark: 21, lo: 20.5, hi: 22.0, speed: 4 };
+station({
+  key: 'chipper', name: 'chipper',
+  motion: 'press and hold to feed the log in',
+  critLine: 'let go as the log\'s tail reaches the mark for bonus sawdust',
+  pad: 'hold A feeds; let go at the mark',
+  window: 'the mark on the table, and its bracket',
+  init() { Object.assign(this, { head: CHIP.start, hold: false, done: null, crit: false, at: 0, chips: [], heap: [], emit: 0, bite: -9 }); },
+  tail() { return this.head - CHIP.len + 1; },
+  update(dt) {
+    if (this.done == null && this.hold) {
+      this.head += CHIP.speed * dt;
+      if (this.head >= CHIP.mouth) this.emitChips(dt, 1);
+      if (this.tail() >= CHIP.mouth) { this.finish(false); earn(this, '+1 sawdust', false); }
+    }
+    if (this.done != null && T - this.done > 0.9) { this.head = CHIP.start; this.done = null; this.at = T; }
+    for (const ch of this.chips) { ch.vy += 160 * dt; ch.x += ch.vx * dt; ch.y += ch.vy * dt; }
+    for (const ch of this.chips) if (ch.y > (FLOOR - 1) * P) { ch.gone = true; if (this.rnd() < 0.5) stackAdd(this.heap, 30); }
+    this.chips = this.chips.filter(c => !c.gone);
+  },
+  emitChips(dt, k) {
+    this.emit += dt * 14 * k;
+    while (this.emit > 1) { this.emit--; this.chips.push({ x: 35 * P, y: 7 * P, vx: 15 + this.rnd() * 25, vy: -30 - this.rnd() * 30, t: this.rnd() < 0.5 ? 4 : 5 }); }
+  },
+  finish(crit) { this.done = T; this.crit = crit; this.hold = false; },
+  down() { if (this.done == null) this.hold = true; },
+  up() {
+    if (!this.hold) return;
+    this.hold = false;
+    const t = this.tail();
+    if (this.done == null && t >= CHIP.lo && t <= CHIP.hi) {
+      this.bite = T; this.finish(true);
+      for (let k = 0; k < 14; k++) this.chips.push({ x: 35 * P, y: 7 * P, vx: 20 + this.rnd() * 40, vy: -40 - this.rnd() * 40, t: k % 2 ? 4 : 5 });
+      smear(this, [[36, 6, 4], [37, 5, 4], [38, 5, 3], [36, 7, 4], [37, 7, 3], [39, 6, 3]], 0.35);
+      mark(this, 25, 12, 'x2');
+      earn(this, '+2 sawdust, let go on the mark (×2)', true);
+    }
+  },
+  draw(g) {
+    ground(g);
+    // the chipper: box, mouth, spout; the mouth's lips shut on a bite
+    box(g, 25, 9, 33, 19);
+    const bite = T - this.bite < 0.35;
+    if (bite) { fill(g, 25, 14, 26, 14, 10); C(g, 24, 13, 10); C(g, 24, 15, 10); }
+    else { fill(g, 25, 13, 26, 15, 10); C(g, 24, 12, 10); C(g, 24, 16, 10); }
+    fill(g, 33, 7, 35, 8, 10); C(g, 34, 9, 10);
+    this.heap.forEach((at, k) => withAlpha(g, fadeIn(at, 0.25), () => C(g, 35 + (k % 5), 19 - Math.floor(k / 5), k % 3 ? 4 : 5)));
+    // the table and its mark
+    fill(g, 1, 16, 24, 16, 10); for (let r = 17; r <= 19; r++) { C(g, 3, r, 10); C(g, 23, r, 10); }
+    C(g, CHIP.mark, 16, 0); C(g, CHIP.mark, 17, 10); fill(g, CHIP.mark - 1, 18, CHIP.mark + 1, 18, 10);
+    C(g, CHIP.mark - 1, 12, 5); C(g, CHIP.mark + 1, 12, 5); C(g, CHIP.mark, 12, 10);
+    // the log, hidden past the mouth
+    const a = this.done != null ? (this.crit ? 0 : 1) : fadeIn(this.at, 0.4);
+    withAlpha(g, a, () => {
+      const t = Math.round(this.tail()), h = Math.round(this.head);
+      for (let c = t; c <= Math.min(h, CHIP.mouth - 1); c++) for (let r = 14; r <= 15; r++) C(g, c, r, r === 14 ? 8 : (c === t ? 6 : 2));
+    });
+    if (this.hold) { C(g, Math.round(this.tail()) - 1, 13, 6); }
+    for (const ch of this.chips) C(g, Math.round(ch.x / P), Math.round(ch.y / P), ch.t);
+  },
+  cue(g) {
+    const ph = (T % 3.2);
+    const pressing = ph < 2.2, tc = pressing ? 5 + Math.min(16, Math.round(ph / 2.2 * 16)) : 21;
+    hand(g, tc - 1, (pressing ? 14 : 11) + 0, 'point');
+    // the hold: a ring filling round the fingertip while pressed
+    const ring = ringPts(tc - 1, 13, 2, 2, 10).slice(0, pressing ? Math.ceil(ph / 2.2 * 10) : 10);
+    dots(g, ring, pressing ? 5 : 4, 1);
+    if (!pressing) chevron(g, tc + 2, 9, 0, -1);
+    const pts = []; for (let c = 5; c <= 19; c++) pts.push([c, 11]);
+    dots(g, pts, 4); chevron(g, 20, 11, 1, 0, 4);
+  }
+});
+
+// --- the paper mill -----------------------------------------------------------
+// The vat, seen from above and in front; a paddle stirred round in circles.
+// Each full turn is scored against the band; a batch of six turns with five
+// in the band pulls two sheets instead of one.
+const VAT = { cx: 20, cy: 13, rx: 9, ry: 3, lo: 0.45, hi: 0.85, max: 1.4, turns: 6, good: 5 };
+station({
+  key: 'paper', name: 'paper mill',
+  motion: 'stir the vat round in circles',
+  critLine: 'stir steadily, inside the band, for an extra sheet in the batch',
+  pad: 'stick rotation stirs',
+  window: 'the band on the dial, and a pip a turn: dark in the band, grey out of it',
+  init() { Object.assign(this, { a: 0, w: 0, grab: false, pa: 0, acc: 0, turn: 0, rmin: 9, rmax: 0, turns: [], pull: null, two: false, sheets: [] }); },
+  rev() { return Math.abs(this.w) / (2 * Math.PI); },
+  update(dt) {
+    if (this.grab) { this.w += (this.acc / dt - this.w) * Math.min(1, dt * 6); this.acc = 0; }
+    else { this.w *= Math.exp(-2 * dt); this.a += this.w * dt; }
+    if (this.pull != null) { if (T - this.pull > 1.1) { this.pull = null; this.turns = []; } return; }
+    if (!this.grab) return;
+    const r = this.rev();
+    this.turn += Math.abs(this.w) * dt;
+    if (this.turn > 0.6) { this.rmin = Math.min(this.rmin, r); this.rmax = Math.max(this.rmax, r); }
+    if (this.turn >= 2 * Math.PI) {
+      this.turn -= 2 * Math.PI;
+      this.turns.push(this.rmin >= VAT.lo && this.rmax <= VAT.hi);
+      this.rmin = 9; this.rmax = 0;
+      if (this.turns.length >= VAT.turns) {
+        const good = this.turns.filter(Boolean).length >= VAT.good;
+        this.pull = T; this.two = good;
+        stackAdd(this.sheets, 10); if (good) stackAdd(this.sheets, 10);
+        if (good) mark(this, 20, 6, 'x2');
+        earn(this, good ? '+2 sheets: stirred steady (+1)' : '+1 sheet', good);
+      }
+    }
+  },
+  angleAt(p) { return Math.atan2((p.y / P - VAT.cy) / VAT.ry, (p.x / P - VAT.cx) / VAT.rx); },
+  down(p) { this.grab = true; this.pa = this.angleAt(p); this.turn = 0; this.rmin = 9; this.rmax = 0; },
+  move(p) { if (!this.grab) return; const na = this.angleAt(p), d = wrap(na - this.pa); this.a += d; this.acc += d; this.pa = na; },
+  up() { this.grab = false; },
+  draw(g) {
+    ground(g);
+    const { cx, cy, rx, ry } = VAT, step = 2 * Math.PI / 16, aq = Math.round(this.a / step) * step;
+    // the vat's body, then the pulp, then its rim
+    for (let r = cy; r <= 19; r++) for (let c = cx - rx; c <= cx + rx; c++)
+      C(g, c, r, c === cx - rx || c === cx + rx || r === 19 ? 10 : toneAt(c, r, [2, 3, 2]));
+    for (let r = cy - ry; r <= cy + ry; r++) for (let c = cx - rx; c <= cx + rx; c++) {
+      const d = ((c - cx) / rx) ** 2 + ((r - cy) / ry) ** 2;
+      if (d <= 0.75) C(g, c, r, toneAt(c, r, [1, 2, 1]));
+      else if (d <= 1.25) C(g, c, r, 10);
+    }
+    // the swirl, trailing the paddle round
+    for (let k = 1; k <= 5; k++) {
+      const s = aq - Math.sign(this.w || 1) * k * 0.4;
+      if (this.rev() > 0.1) C(g, cx + Math.round(Math.cos(s) * (rx - 3)), cy + Math.round(Math.sin(s) * (ry - 1)), k < 3 ? 5 : 4);
+    }
+    // the paddle, behind the front rim when it is at the back
+    const pc = cx + Math.round(Math.cos(aq) * (rx - 3)), pr = cy + Math.round(Math.sin(aq) * (ry - 1));
+    if (this.pull == null) {
+      for (let r = pr - 6; r <= pr; r++) C(g, pc, r, 10);
+      C(g, pc - 1, pr - 6, 10); C(g, pc + 1, pr - 6, 10);
+    }
+    // the sheet pulled: the mould up out of the vat in held frames
+    if (this.pull != null) {
+      const age = T - this.pull, up = Math.min(5, Math.floor(age / 0.08) * 2);
+      withAlpha(g, age < 0.75 ? 1 : fadeOut(this.pull + 0.75, 0.3), () => {
+        const top = Math.round(cy - 1 - up);
+        // the mould: a black frame, the sheet in it; two sheets lie in it on a crit
+        const rows = this.two ? 4 : 3;
+        for (let r = top; r < top + rows; r++) for (let c = cx - 4; c <= cx + 4; c++)
+          C(g, c, r, r === top || r === top + rows - 1 || c === cx - 4 || c === cx + 4 ? 10 : this.two && r === top + 1 ? 5 : 0);
+      });
+    }
+    // the drying line
+    fill(g, 31, 7, 39, 7, 8);
+    this.sheets.forEach((at, k) => withAlpha(g, fadeIn(at, 0.35), () => { const c = 31 + (k % 4) * 2, r = 8 + Math.floor(k / 4) * 4; fill(g, c, r, c, r + 2, k % 2 ? 0 : 1); C(g, c, r, 10); }));
+    // the dial and the pips
+    gauge(g, 2, 15, 2, this.rev(), VAT.max, VAT.lo, VAT.hi);
+    for (let k = 0; k < VAT.turns; k++) C(g, 3 + k * 2, 5, k < this.turns.length ? (this.turns[k] ? 10 : 5) : 2);
+  },
+  cue(g) {
+    dots(g, ringPts(VAT.cx, VAT.cy, VAT.rx + 2, VAT.ry + 2, 22), 5, 1);
+    chevron(g, VAT.cx, VAT.cy + VAT.ry + 2, -1, 0);
+    const a = T * 2 * Math.PI * 0.62;
+    hand(g, VAT.cx + Math.round(Math.cos(a) * (VAT.rx - 3)), VAT.cy + Math.round(Math.sin(a) * (VAT.ry - 1)) - 6, 'grab');
+  }
+});
+
+// --- the workshop -------------------------------------------------------------
+// Tap to swing the hammer at the next nail; the beat's ticks run down the
+// lane to the gate. A blow on the beat drives a nail all the way, so a sign
+// takes four blows on the beat and eight off it.
+const BEAT = 0.6, BEAT_WIN = 0.09, NAILS = [12, 17, 22, 26], SIGN_NEED = 8;
+station({
+  key: 'workshop', name: 'workshop',
+  motion: 'tap to swing the hammer, in rhythm',
+  critLine: 'blows on the beat drive twice as far, so the sign takes fewer blows',
+  pad: 'A on the beat',
+  window: 'the ticks running down the lane to the gate',
+  init() { Object.assign(this, { units: 0, blows: 0, strike: -9, crit: false, done: null, at: 0, signs: [] }); },
+  nail() { return Math.min(NAILS.length - 1, Math.floor(this.units / 2)); },
+  update() { if (this.done != null && T - this.done > 0.8) { this.done = null; this.units = 0; this.blows = 0; this.at = T; } },
+  down() {
+    if (this.done != null) return;
+    const k = Math.round(T / BEAT), on = Math.abs(T - k * BEAT) <= BEAT_WIN;
+    const n = this.nail(), prev = this.units;
+    this.units = Math.min(SIGN_NEED, this.units + (on ? 2 : 1)); this.blows++;
+    this.strike = T; this.crit = on; this.lastNail = n;
+    const hx = NAILS[n];
+    smear(this, [[hx + 1, 9, 4], [hx + 2, 10, on ? 4 : 3], [hx + 2, 11, on ? 4 : 3], on ? [hx + 3, 9, 3] : [hx, 9, 3]], on ? 0.3 : 0.2);
+    if (on) mark(this, hx, 12, 'x2');
+    let words = on ? '+2 on the beat (×2)' : '+1 off the beat';
+    if (this.units >= SIGN_NEED) { this.done = T + 0.3; stackAdd(this.signs, 6); words += `: sign done in ${this.blows} blows`; }
+    earn(this, words, on);
+  },
+  draw(g) {
+    ground(g);
+    // the bench
+    fill(g, 6, 17, 31, 17, 10); for (let r = 18; r <= 19; r++) { C(g, 8, r, 10); C(g, 29, r, 10); }
+    // the sign lying on it, nails standing proud until driven
+    const a = this.done != null ? fadeOut(this.done, 0.4) : fadeIn(this.at, 0.4);
+    withAlpha(g, a, () => {
+      box(g, 9, 14, 28, 16, [0, 1]);
+      NAILS.forEach((c, i) => {
+        const driven = clamp(this.units - i * 2, 0, 2);
+        const top = 12 + driven;
+        for (let r = top; r <= 13; r++) C(g, c, r, r === top ? 10 : 7);
+        if (driven === 2) C(g, c, 14, 9);
+      });
+    });
+    this.signs.forEach((at, k) => withAlpha(g, fadeIn(at, 0.4), () => fill(g, 33, 19 - k, 38, 19 - k, k % 2 ? 2 : 3)));
+    // the hammer: raised, or down on the nail (held longer on the beat)
+    const n = T - this.strike < (this.crit ? 0.25 : 0.1) ? this.lastNail : this.nail();
+    const hx = NAILS[n], down = T - this.strike < (this.crit ? 0.25 : 0.1);
+    if (down) {
+      const top = 12 + clamp(this.units - n * 2, 0, 2) - 2;
+      fill(g, hx - 1, top, hx + 1, top + 1, 10);
+      for (let c = hx + 2; c <= hx + 6; c++) C(g, c, top, 6);
+    } else {
+      fill(g, hx - 1, 7, hx + 1, 8, 10);
+      line(hx + 2, 8, hx + 5, 4).forEach(([c, r]) => C(g, c, r, 6));
+    }
+    // the lane: ticks running down to the gate on each beat
+    C(g, 19, 0, 8); C(g, 21, 0, 8); C(g, 19, 2, 8); C(g, 21, 2, 8); C(g, 20, 2, 10);
+    const k0 = Math.floor((T - 0.4) / BEAT);
+    for (let k = k0; k < k0 + 6; k++) {
+      const tk = k * BEAT, c = Math.round(20 + (tk - T) * 8);
+      if (c < 2 || c > 37) continue;
+      const a2 = tk < T ? fadeOut(tk, 0.3) : clamp((37 - c) / 4, 0, 1);
+      withAlpha(g, a2, () => C(g, c, 1, 10));
+    }
+  },
+  cue(g) {
+    const ph = T % BEAT, on = ph < 0.12;
+    const hx = NAILS[this.nail()];
+    dots(g, line(hx + 7, 3, hx + 8, 9), 5, 1);
+    chevron(g, hx + 8, 10, 0, 1);
+    const head = 12 + clamp(this.units - this.nail() * 2, 0, 2);
+    if (on) hand(g, hx + 6, head - 2, 'grab'); else hand(g, hx + 5, 4, 'grab');
+  }
+});
+
+// --- the press ----------------------------------------------------------------
+// Drag the bar down: the platen comes down on the sheet with it. One stroke
+// down to the stop, unbroken, prints two posters; a broken stroke to the stop,
+// or a let-go past half, prints one.
+const PRESS = { pc: 27, pr: 8, L: 10, a0: -0.45, a1: 0.75 };
+station({
+  key: 'press', name: 'press',
+  motion: 'drag the bar down',
+  critLine: 'one full stroke down to the stop prints two posters',
+  pad: 'stick down pulls the bar',
+  window: 'the stop, with its bracket',
+  init() { Object.assign(this, { th: PRESS.a0, grab: false, max: 0, broken: false, printed: false, hold: -9, posters: [], outs: [], prev: [] }); },
+  k() { return (this.th - PRESS.a0) / (PRESS.a1 - PRESS.a0); },
+  handle(th = this.th) { return { c: PRESS.pc + Math.cos(th) * PRESS.L, r: PRESS.pr + Math.sin(th) * PRESS.L }; },
+  update(dt) {
+    this.prev.unshift(this.th); this.prev.length = Math.min(this.prev.length, 4);
+    if (!this.grab && T >= this.hold) this.th = Math.max(PRESS.a0, this.th - 2.6 * dt);
+    if (this.k() < 0.15 && !this.grab) { this.max = 0; this.broken = false; this.printed = false; }
+    this.outs = this.outs.filter(o => T - o.at < 1);
+  },
+  print(n) {
+    this.printed = true;
+    this.outs.push({ at: T, n });
+    for (let i = 0; i < n; i++) stackAdd(this.posters, 12);
+    if (n === 2) {
+      this.hold = T + 0.3;
+      const cells = []; [0.25, 0.5].forEach(d => line(PRESS.pc, PRESS.pr, ...Object.values(this.handle(PRESS.a1 - d))).forEach(([c, r]) => cells.push([c, r, 4])));
+      smear(this, cells, 0.3);
+      mark(this, 34, 16, 'x2');
+      earn(this, '+2 posters: one full stroke (×2)', true);
+    } else earn(this, this.broken ? '+1 poster: the stroke broke' : '+1 poster: stopped short', false);
+  },
+  down(p) {
+    const h = this.handle();
+    if (Math.hypot(p.x / P - h.c, p.y / P - h.r) > 5 && p.x / P < 26) return;
+    if (this.k() < 0.15) { this.max = 0; this.broken = false; this.printed = false; }
+    this.grab = true;
+  },
+  move(p) {
+    if (!this.grab || T < this.hold) return;
+    this.th = clamp(Math.atan2(p.y / P - PRESS.pr, p.x / P - PRESS.pc), PRESS.a0, PRESS.a1);
+    const k = this.k();
+    if (k > this.max) this.max = k; else if (this.max - k > 0.12) this.broken = true;
+    if (k >= 0.97 && !this.printed) this.print(this.broken ? 1 : 2);
+  },
+  up() { if (this.grab && !this.printed && this.max >= 0.6) this.print(1); this.grab = false; },
+  draw(g) {
+    ground(g);
+    // the frame
+    for (let r = 4; r <= 19; r++) { C(g, 11, r, 10); C(g, 25, r, 10); }
+    fill(g, 11, 4, 25, 4, 10);
+    // the bed and the sheet on it
+    box(g, 12, 16, 24, 17, [2, 3]); for (let r = 18; r <= 19; r++) { C(g, 13, r, 10); C(g, 23, r, 10); }
+    const pressed = this.outs.length && T - this.outs[this.outs.length - 1].at < 0.5;
+    fill(g, 13, 15, 23, 15, pressed ? 6 : 0);
+    // the platen with the bar
+    const k = this.k(), top = Math.round(8 + 5 * k);
+    for (let r = 5; r < top; r++) C(g, 18, r, 8);
+    box(g, 14, top, 22, top + 1, [6]);
+    // the stop: a block on a post, bracketed
+    fill(g, 34, 16, 35, 16, 10); for (let r = 17; r <= 19; r++) C(g, 35, r, 10);
+    C(g, 33, 15, 5); C(g, 36, 15, 5); C(g, 33, 17, 5); C(g, 36, 17, 5);
+    // the bar's smear when it is moving fast, then the bar
+    const fast = this.prev.length > 2 && Math.abs(this.prev[0] - this.prev[2]) > 0.08;
+    if (fast) withAlpha(g, 0.7, () => line(PRESS.pc, PRESS.pr, ...Object.values(this.handle(this.prev[2]))).forEach(([c, r]) => C(g, c, r, 3)));
+    fill(g, 25, 7, 27, 9, 10);
+    const h = this.handle();
+    line(PRESS.pc, PRESS.pr, h.c, h.r).forEach(([c, r]) => C(g, c, r, 10));
+    fill(g, Math.round(h.c), Math.round(h.r), Math.round(h.c) + 1, Math.round(h.r) + 1, 10);
+    // posters out to the stack on the left
+    for (const o of this.outs) withAlpha(g, fadeOut(o.at + 0.4, 0.4), () => { const c = 13 - Math.min(6, Math.floor((T - o.at) / 0.07)); fill(g, c, 14, c + 4, 14, 1); });
+    this.posters.forEach((at, i) => withAlpha(g, fadeIn(at, 0.35), () => { fill(g, 2, 19 - i, 7, 19 - i, i % 2 ? 1 : 0); C(g, 2, 19 - i, 10); C(g, 7, 19 - i, 10); }));
+  },
+  cue(g) {
+    const pts = []; for (let a = PRESS.a0; a <= PRESS.a1; a += 0.09) pts.push([Math.round(PRESS.pc + Math.cos(a) * (PRESS.L + 2)), Math.round(PRESS.pr + Math.sin(a) * (PRESS.L + 2))]);
+    dots(g, pts, 5, 1);
+    const end = pts[pts.length - 1]; chevron(g, end[0] - 1, end[1] + 1, -1, 1);
+    const ph = (T % 1.6) / 1.6, k = ph < 0.6 ? ph / 0.6 : ph < 0.8 ? 1 : 1 - (ph - 0.8) / 0.8;
+    const h = this.handle(PRESS.a0 + (PRESS.a1 - PRESS.a0) * k);
+    hand(g, h.c, h.r, 'grab');
+  }
+});
+
+// --- the sawdust heap -----------------------------------------------------------
+// The heap fills from the chute. Grab a load and drag it to the cloud's edge
+// to tip it off; fling it there fast and it takes a second load with it.
+const HEAP = { edge: 30, fling: 160, max: 300, cap: 5, per: 4 };
+const MOUND = (() => { const out = []; [[3, 10], [4, 9], [5, 8], [6, 7], [6, 7]].forEach(([a, b], j) => { for (let c = a; c <= b; c++) out.push([c, 19 - j]); }); return out; })();
+station({
+  key: 'heap', name: 'sawdust heap',
+  motion: 'drag a load off the heap to the cloud\'s edge',
+  critLine: 'fling it fast and it tips double',
+  pad: 'stick toward the edge flings',
+  window: 'the edge, dotted, and the fling band on the dial',
+  init() { Object.assign(this, { loads: 3, fillT: 0, chunk: null, grab: false, v: 0, pts: [], cells: [], grains: [] }); this.cells = MOUND.slice(0, this.loads * HEAP.per).map(() => -9); },
+  speed() {
+    const a = this.pts[0], b = this.pts[this.pts.length - 1];
+    if (!a || b.t - a.t < 1e-3 || T - b.t > 0.1) return 0;
+    return (b.x - a.x) / (b.t - a.t);
+  },
+  update(dt) {
+    this.fillT += dt;
+    if (this.fillT > 2 && this.loads < HEAP.cap) { this.fillT = 0; this.loads++; for (let k = 0; k < HEAP.per; k++) this.cells.push(T + k * 0.1); }
+    if (this.loads >= HEAP.cap) this.fillT = 0;
+    this.v = this.grab ? this.speed() : this.v * Math.exp(-4 * dt);
+    const ch = this.chunk;
+    if (!ch) return;
+    if (ch.mode === 'held') { ch.x += (ch.tx - ch.x) * Math.min(1, dt * 18); ch.y += (ch.ty - ch.y) * Math.min(1, dt * 18); }
+    else if (ch.mode === 'fling') {
+      if (T < ch.hold) return;
+      ch.vy += 400 * dt; ch.x += ch.vx * dt; ch.y = Math.min(ch.y + ch.vy * dt, (FLOOR - 2) * P);
+      ch.path.push([Math.round(ch.x / P), Math.round(ch.y / P)]);
+      if (ch.x >= HEAP.edge * P && !ch.tipped) {
+        ch.tipped = true; ch.hold = T + 0.22; ch.mode = 'fall'; ch.at = T + 0.22;
+        smear(this, ch.path.slice(-10).map(([c, r]) => [c, r + 1, 4]), 0.45);
+        mark(this, HEAP.edge, Math.round(ch.y / P), 'x2');
+        earn(this, '+2 loads tipped: flung (×2)', true);
+      }
+    } else if (ch.mode === 'fall') {
+      if (T < ch.at) return;
+      ch.vy = Math.max(ch.vy, 0) + 300 * dt; ch.y += ch.vy * dt; ch.x += 20 * dt;
+      if (T - ch.at > 0.9) this.chunk = null;
+    } else if (ch.mode === 'back') {
+      ch.x -= 72 * dt;
+      if (ch.x <= 7 * P) { this.chunk = null; this.loads++; for (let k = 0; k < HEAP.per; k++) this.cells.push(T); }
+    }
+    for (const gr of this.grains) gr.y += 40 * dt;
+  },
+  down(p) {
+    const c = p.x / P, r = p.y / P;
+    if (this.chunk || this.loads < 1 || c < 1 || c > 12 || r < 11 || r > 21) return;
+    this.loads--; this.cells.length = this.loads * HEAP.per;
+    this.grab = true; this.pts = [{ t: T, x: p.x }];
+    this.chunk = { mode: 'held', x: p.x, y: Math.min(p.y, (FLOOR - 2) * P), tx: p.x, ty: Math.min(p.y, (FLOOR - 2) * P), n: 1, path: [] };
+  },
+  move(p) {
+    if (!this.grab || !this.chunk) return;
+    this.pts.push({ t: T, x: p.x }); while (this.pts.length > 2 && T - this.pts[0].t > 0.1) this.pts.shift();
+    this.chunk.tx = p.x; this.chunk.ty = Math.min(p.y, (FLOOR - 2) * P);
+  },
+  up() {
+    if (!this.grab) return;
+    this.grab = false;
+    const ch = this.chunk, v = this.speed();
+    if (!ch) return;
+    if (v >= HEAP.fling) {
+      if (this.loads > 0) { this.loads--; this.cells.length = this.loads * HEAP.per; }
+      Object.assign(ch, { mode: 'fling', n: 2, vx: Math.max(v, HEAP.fling) * 0.9, vy: -90, hold: 0, path: [] });
+    } else if (ch.x >= HEAP.edge * P) {
+      Object.assign(ch, { mode: 'fall', at: T, vy: 0 });
+      earn(this, '+1 load tipped', false);
+    } else ch.mode = 'back';
+  },
+  draw(g) {
+    ground(g, 0, HEAP.edge - 1);
+    // the ragged edge, and the open air past it
+    C(g, HEAP.edge, FLOOR, 3); C(g, HEAP.edge, FLOOR + 1, 2); C(g, HEAP.edge - 1, ROWS - 1, 0);
+    for (const [c, r] of [[34, 24], [37, 23], [32, 25], [38, 25]]) C(g, c, r, 2);
+    for (let r = 10; r <= 19; r += 2) C(g, HEAP.edge, r, 5);
+    // the chute and the heap under it
+    fill(g, 5, 0, 7, 1, 10);
+    if (this.loads < HEAP.cap) for (let k = 0; k < 6; k++) C(g, 6, 2 + Math.floor((T * 12 + k * 3) % 17), 4);
+    this.cells.forEach((at, k) => { if (MOUND[k]) withAlpha(g, fadeIn(at, 0.3), () => C(g, MOUND[k][0], MOUND[k][1], toneAt(k, 3, [4, 5, 4]))); });
+    // the load in hand or in the air
+    const ch = this.chunk;
+    if (ch) {
+      const c = Math.round(ch.x / P), r = Math.round(ch.y / P);
+      const a = ch.mode === 'fall' ? fadeOut(ch.at, 0.8) : 1;
+      withAlpha(g, a, () => {
+        const w = ch.n === 2 ? 4 : 3, h = ch.n === 2 ? 3 : 2;
+        for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) C(g, c - 1 + i, r - j + 1, toneAt(i, j, [4, 5]));
+      });
+    }
+    // the dial: the fling band
+    gauge(g, 20, 35, 2, clamp(this.v, 0, HEAP.max), HEAP.max, HEAP.fling, HEAP.max);
+  },
+  cue(g) {
+    const pts = []; for (let c = 9; c <= HEAP.edge - 1; c++) pts.push([c, 13]);
+    dots(g, pts, 5); chevron(g, HEAP.edge - 1, 13, 1, 0);
+    const ph = (T % 1.8) / 1.8, k = Math.min(1, ph / 0.6), c = 7 + Math.round(k * k * 23);
+    if (k > 0.6 && k < 1) for (const r of [15, 17]) { C(g, c - 4, r, 4); C(g, c - 6, r, 3); }
+    hand(g, c, 16, 'grab');
+  }
+});
+
+// ---------------------------------------------------------------------------
+// The page
+// ---------------------------------------------------------------------------
+const root = document.documentElement;
+const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+const over = document.getElementById('over'), cards = document.getElementById('cards');
+for (const s of stations) {
+  const a = document.createElement('a');
+  a.href = '#st-' + s.key;
+  a.innerHTML = `<canvas width="${W}" height="${H}"></canvas><span class="ph">${s.name}</span>`;
+  over.appendChild(a);
+  const sec = document.createElement('section');
+  sec.className = 'card'; sec.id = 'st-' + s.key;
+  sec.innerHTML = `<canvas class="big" width="${W * BIG}" height="${H * BIG}"></canvas>
+    <div class="side">
+      <h2><span class="ph">${s.name}</span></h2>
+      <p><b>motion</b> <span class="ph">${s.motion}</span></p>
+      <p><b>crit</b> <span class="ph">${s.critLine}</span></p>
+      <p><b>its window</b> <span class="ph">${s.window}</span></p>
+      <p><b>gamepad</b> <span class="ph">${s.pad}</span> <span class="k">(text only)</span></p>
+      <div class="read"><div>last: <span class="last">nothing yet</span></div><div>crits: <b class="crits">0</b> of <b class="tot">0</b></div></div>
+      <button class="reset">show the hand again</button>
+      <figure style="margin:0"><canvas class="thumb" width="${W}" height="${H}"></canvas><figcaption>1× (the yard's scale)</figcaption></figure>
+    </div>`;
+  cards.appendChild(sec);
+  s.el = sec;
+  s.views = [[sec.querySelector('.big'), BIG], [sec.querySelector('.thumb'), 1], [a.querySelector('canvas'), 1]];
+  sec.querySelector('.reset').onclick = () => { s.cueN = 0; };
+  const cv = sec.querySelector('.big');
+  const at = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; };
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); if (s.ptr != null) return; T = s.t; try { cv.setPointerCapture(e.pointerId); } catch (_) {} s.ptr = e.pointerId; s.down && s.down(at(e)); });
+  cv.addEventListener('pointermove', e => { if (s.ptr === e.pointerId && s.move) { T = s.t; s.move(at(e)); } });
+  const end = e => { if (s.ptr !== e.pointerId) return; s.ptr = null; T = s.t; s.up && s.up(at(e)); };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+}
+document.getElementById('reset-all').onclick = () => stations.forEach(s => { s.cueN = 0; });
+const themeBtns = document.querySelectorAll('[data-theme-set]');
+const showTheme = () => themeBtns.forEach(b => b.classList.toggle('on', b.dataset.themeSet === (isDark() ? 'dark' : 'light')));
+themeBtns.forEach(b => b.onclick = () => { root.dataset.theme = b.dataset.themeSet; showTheme(); });
+showTheme();
+
+// Each station keeps its own clock, so the checks can turn one alone and
+// leave the rest standing; T is set to it around everything it does.
+function step(dt, only) {
+  for (const s of stations) {
+    if (only && s.key !== only) continue;
+    s.t += dt; T = s.t;
+    s.update(dt);
+    const want = s.cueN < CUE_AFTER ? 1 : 0;
+    s.cueA += clamp(want - s.cueA, -dt / CUE_FADE_S, dt / CUE_FADE_S);
+    s.marks = s.marks.filter(m => T - m.at < MARK_HOLD_S + MARK_FADE_S);
+    s.smears = s.smears.filter(m => T - m.at < m.life);
+  }
+}
+function render(s, cv, scale) {
+  const g = cv.getContext('2d');
+  T = s.t;
+  g.setTransform(scale, 0, 0, scale, 0, 0);
+  g.imageSmoothingEnabled = false;
+  g.globalAlpha = 1;
+  g.fillStyle = PAL[0]; g.fillRect(0, 0, W, H);
+  s.draw(g);
+  drawOverlays(g, s);
+  if (s.cueA > 0.01) { g.globalAlpha = s.cueA * 0.6; s.cue(g); g.globalAlpha = 1; }
+}
+function drawAll() {
+  PAL = isDark() ? DARK : GREY;
+  for (const s of stations) {
+    for (const [cv, sc] of s.views) render(s, cv, sc);
+    if (s.dirty) {
+      s.dirty = false;
+      const l = s.el.querySelector('.last');
+      l.textContent = s.last ? s.last.words + (s.last.crit ? '  (crit)' : '') : 'nothing yet';
+      l.className = 'last ph' + (s.last && s.last.crit ? ' crit' : '');
+      s.el.querySelector('.crits').textContent = s.crits;
+      s.el.querySelector('.tot').textContent = s.total;
+    }
+  }
+}
+let manual = false, then = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - then) / 1000); then = now;
+  if (!manual) step(dt);
+  drawAll();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+// For the checks: the stations, and a clock to turn by hand.
+window.__mock = {
+  st: Object.fromEntries(stations.map(s => [s.key, s])),
+  manual(on) { manual = on; },
+  advance(sec, only) { const n = Math.max(1, Math.round(sec * 60)); for (let i = 0; i < n; i++) step(1 / 60, only); drawAll(); },
+  theme(t) { root.dataset.theme = t; showTheme(); drawAll(); }
+};
+</script>
+</body>
+</html>
