@@ -17,6 +17,8 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
          AFTER_SKY_LO, AFTER_SKY_HI, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG } from '../config.js';
 
+import { S } from '../state.js';
+
 const snap = v => Math.round(v / P) * P;
 
 // The cloud floor's top: the yard's top is world y 0, so the afterlife's floor
@@ -177,32 +179,51 @@ export const floorAt = x => {
 };
 
 // --- each station's moving part, for the hand ----------------------------------------
-// What the hand's motion at each station aims at, in world px, read off the
-// numbers the drawing uses (render/after/stations.js): the wheel to spin, the
-// saw's handle line, the stump to dig, the chipper's mouth, the vat to stir,
-// the sign the hammer strikes, the press's bar, the heap to tip. `i` is the
-// plot, for the grove.
+// What the hand's motion at each station aims at (after/gestures.js,
+// `partsOf`), in world px, read off the numbers the drawing uses
+// (render/after/stations.js, pine.js, pedestal.js). Every key has `box`, the
+// area a press works (below a station's top strip, where its card opens);
+// besides it: the mill's `wheel` {x, y, r}, the paper mill's `vat` {x, y, rx,
+// ry}, the press's `bar` {x, y, len} (its pivot at the screw, level when
+// idle, pulled down), the heap's `edge` (the notch's x), a tree's `saw` {x, y}
+// (the middle of its cut) and a stump's `at` {x, y} (its foot) for plot `i`;
+// and the rest of each moving part for the cues to point at.
+const TOP_STRIP = 2;   // cells along a station's top that open its card (after/rows.js, `cardAt`)
 export function stationParts(key, i = 0) {
   const fl = afterFloor();
   const at = (x0, x, y) => ({ x: x0 + x * P, y: fl + y * P });
   const box = (x0, x, y, w, h) => ({ x: x0 + x * P, y: fl + y * P, w: w * P, h: h * P });
-  if (key === 'grove') {
-    const bx = plotX(i);
-    return { trunk: box(bx, -1, -3, 3, 3), stump: box(bx, -1, -2, 3, 2), tree: box(bx, -7, -18, 15, 18),
-             saw: { x0: bx - 2 * P, y0: fl - P * 2 + 2, x1: bx + 3 * P, y1: fl - P * 2 + 2 } };
+  if (key === 'tree') {
+    // A grown pine: fifteen cells across its foot, its trunk and three tiers
+    // seventeen tall; a big one twenty-one across and twenty-five tall.
+    const bx = plotX(i), big = !!(i >= 0 && treeBig(i));
+    const half = big ? 10 : 7, h = big ? 25 : 17;
+    return { box: box(bx, -half, -h, half * 2 + 1, h), saw: { x: bx + P / 2, y: fl - P * 2 + 3 },
+             cut: { x0: bx - 2 * P, x1: bx + 3 * P, y: fl - P * 2 + 2 } };
   }
-  if (key === 'heap') return { heap: { x: heapX(), y: fl - (AFTER_HEAP_R + 1) * P, w: (AFTER_HEAP_R * 2 + 1) * P, h: (AFTER_HEAP_R + 1) * P },
-                               notch: { x: notchX(), y: fl, w: P * 2, h: P * 3 } };
-  if (!AFTER_STATIONS[key]) return null;
+  if (key === 'stump') {
+    const bx = plotX(i);
+    return { box: box(bx, -2, -4, 5, 4), at: { x: bx + P / 2, y: fl }, stump: box(bx, -1, -2, 3, 2) };
+  }
+  if (key === 'heap') {
+    const x0 = heapX(), edge = notchX();
+    return { box: { x: x0, y: fl - P * (AFTER_HEAP_R + 4), w: edge + P * 2 - x0, h: P * (AFTER_HEAP_R + 5) }, edge,
+             heap: { x: x0, y: fl - (AFTER_HEAP_R + 1) * P, w: (AFTER_HEAP_R * 2 + 1) * P, h: (AFTER_HEAP_R + 1) * P },
+             notch: { x: edge, y: fl, w: P * 2, h: P * 3 } };
+  }
+  if (key === 'pedestal') {
+    const a = speakerAt(0), b = speakerAt(1);
+    return { box: { x: a.x, y: a.y - P * 3, w: b.x + P * 3 - a.x, h: P * 3 }, top: box(stationX0(key), 1, -AFTER_PEDESTAL_H, 10, AFTER_PEDESTAL_H) };
+  }
+  const b = stationBox(key);
+  if (!b) return null;
+  const worked = { x: b.x, y: b.y + P * TOP_STRIP, w: b.w, h: b.h - P * TOP_STRIP };
   const x0 = stationX0(key);
-  if (key === 'mill') return { wheel: { ...at(x0, 25, -9), r: 7 * P, rim: 8 * P, knob: 8.8 * P }, bench: box(x0, 9, -5, 7, 5) };
-  if (key === 'chipper') return { mouth: box(x0, 15, -12, 7, 10), drum: box(x0, 9, -7, 6, 7), spout: box(x0, 3, -11, 4, 1) };
-  if (key === 'papermill') return { vat: { ...at(x0, 20, -6), rx: 5 * P, ry: 2.5 * P }, pivot: at(x0, 13.6, -10.3),
-                                    tub: box(x0, 12, -10, 16, 10) };
-  if (key === 'workshop') return { sign: box(x0, 10, -5, 6, 3), hand: at(x0, 18, -4), strike: box(x0, 10, -11, 5, 6) };
-  if (key === 'press') return { bar: { x0: x0 + 14 * P, x1: x0 + 26 * P, y: fl - 5 * P }, knob: box(x0, 24, -6, 2, 2),
-                                platen: box(x0, 12, -8, 9, 2), screw: box(x0, 15, -18, 3, 10) };
-  if (key === 'shack') return { door: box(x0, 5, -4, 4, 4), mallet: box(x0, 2, -12, 10, 4) };
-  if (key === 'pedestal') return { top: box(x0, 1, -AFTER_PEDESTAL_H, 10, AFTER_PEDESTAL_H) };
-  return null;
-}
+  if (key === 'mill') return { box: worked, wheel: { ...at(x0, 25, -9), r: 8 * P }, knob: 8.8 * P, bench: box(x0, 9, -5, 7, 5) };
+  if (key === 'chipper') return { box: worked, mouth: box(x0, 15, -12, 7, 10), drum: box(x0, 9, -7, 6, 7), spout: box(x0, 3, -11, 4, 1) };
+  if (key === 'papermill') return { box: worked, vat: { ...at(x0, 20, -6), rx: 5 * P, ry: 2.5 * P }, pivot: at(x0, 13.6, -10.3) };
+  if (key === 'workshop') return { box: worked, sign: box(x0, 10, -5, 6, 3), hand: at(x0, 18, -4) };
+  if (key === 'press') return { box: worked, bar: { ...at(x0, 14, -11), len: 12 * P }, knob: box(x0, 24, -6, 2, 2), platen: box(x0, 12, -8, 9, 2) };
+  return { box: worked };
+}// Whether plot i's tree was planted big (the grove's bigger trees).
+const treeBig = i => !!(S.after && S.after.plots[i] && S.after.plots[i].big);

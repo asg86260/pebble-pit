@@ -44,23 +44,21 @@ import { P, GESTURE_CUE_USES, GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_GA
 import { afterlifeOn } from '../acts.js';
 import { secs } from './util.js';
 import { built } from './levels.js';
-import { stationBox, afterFloor, plotX, heapX, notchX } from './place.js';
-import { treeAt, stumpAt, standing, stumped, chopTree, digStump, trees, GROWN, trunkCells, crownCells } from './grove.js';
+import { afterFloor, heapX, notchX, stationParts } from './place.js';
+import { treeAt, stumpAt, standing, stumped, chopTree, digStump, trees } from './grove.js';
 import { tipSawdust } from './mill.js';
-import { pairBox } from './rebel.js';
 import { pairBuilding } from './build.js';
 import { workAfter } from './work.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const snap = v => Math.round(v / P) * P;
 const wrap = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
 const inBox = (x, y, b) => !!b && x >= b.x && x < b.x + b.w && y >= b.y && y <= b.y + b.h;
 const T = () => S.after.t;
 
 // --- where each station's parts stand: the one adapter ---------------------------
-// Every hit and every cue reads a station's parts here and nowhere else, so
-// when place.js exports `stationParts(key)` (Track A's drawings) this is the
-// one function to point at it. Each answer, in world pixels:
+// Every hit and every cue reads a station's parts here and nowhere else, off
+// the drawings themselves (place.js, `stationParts`). Each answer, in world
+// pixels:
 //   box    the worked box (every key)
 //   wheel  { x, y, r }       the saw mill's flywheel
 //   vat    { x, y, rx, ry }  the paper mill's vat
@@ -68,33 +66,7 @@ const T = () => S.after.t;
 //   edge   x                 the heap's tipping edge (the notch)
 //   saw    { x, y }          a tree's saw: the middle of its cut (with `i`)
 //   at     { x, y }          a stump's foot (with `i`)
-// Until then they are read off the placeholder boxes: a station's box below
-// the strip along its roof that a board opens on (rebel.js, `workAt`).
-export function partsOf(key, i = 0) {
-  const floor = afterFloor();
-  if (key === 'pedestal') return { box: pairBox() };
-  if (key === 'heap') {
-    const x0 = heapX(), edge = notchX();
-    return { box: { x: x0, y: floor - P * 9, w: edge + P * 2 - x0, h: P * 10 }, edge };
-  }
-  if (key === 'tree') {
-    const cx = plotX(i), p = trees()[i], big = !!(p && p.big);
-    const cr = crownCells(GROWN, big), top = floor - (trunkCells(GROWN, big) + cr * 2) * P;
-    return { box: { x: cx - (cr + 1) * P, y: top, w: (cr * 2 + 3) * P, h: floor - top }, saw: { x: cx + P / 2, y: floor - P * 3 } };
-  }
-  if (key === 'stump') {
-    const cx = plotX(i);
-    return { box: { x: cx - P * 2, y: floor - P * 4, w: P * 5, h: P * 4 }, at: { x: cx + P / 2, y: floor - P } };
-  }
-  const b = stationBox(key);
-  if (!b) return null;
-  const box = { x: b.x, y: b.y + P * 2, w: b.w, h: b.h - P * 2 };
-  const mx = snap(b.x + b.w / 2), my = snap(box.y + box.h / 2);
-  if (key === 'mill') return { box, wheel: { x: mx, y: my, r: snap(Math.min(box.w, box.h) * 0.4) } };
-  if (key === 'papermill') return { box, vat: { x: mx, y: my, rx: snap(box.w * 0.35), ry: snap(box.h * 0.3) } };
-  if (key === 'press') return { box, bar: { x: b.x + P * 2, y: box.y + P, len: b.w - P * 4 } };
-  return { box };
-}
+export const partsOf = (key, i = 0) => stationParts(key, i);
 
 // The pedestal's bubbles are the pair's speech rising (Track A, bubbles.js):
 // `list()` the bubbles in the air, each { x, y, w, h, big } a world box, and

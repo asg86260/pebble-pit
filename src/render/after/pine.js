@@ -14,6 +14,7 @@ import { plotX, afterFloor } from '../../after/place.js';
 import { trees, GROWN } from '../../after/grove.js';
 import { frame, K, W, SOIL, toneOf, now, inView, pileState, clamp01 } from './kit.js';
 import { logPile } from './piles.js';
+import { gestureView, stumpWobble } from '../../after/gestures.js';
 
 // A stage: its trunk [width, height] and its tiers { v0, h, s }: a tier's foot
 // v0 cells over the top of the trunk, h rows tall, its top row 2s+1 wide. The
@@ -54,11 +55,14 @@ function pine(d, stage, a = 1) {
   if (!stage || a <= 0) return;
   d.fade(a, () => { const [w, h] = stage.trunk; d.r(-(w - 1) / 2, -h, w, h, K); tiers(d, stage); });
 }
-function stump(d, a, dug) {
+// The stump, lifted `up` px out of the ground by the hand and knocked a
+// pixel either way `dx` as its roots give.
+function stump(d, a, dug, up = 0, dx = 0) {
   d.fade(a, () => {
-    d.r(-1, -2, 3, 2, K); d.px(-P + 2, -2 * P + 2, 3 * P - 4, 2, 3);
-    // a swing of the spade takes a cell off its top
-    for (let k = 0; k < Math.min(dug, AFTER_DIG_CLICKS); k++) d.c(-1 + k, -2, W);
+    d.px(-P + dx, -2 * P - up, 3 * P, 2 * P, K); d.px(-P + 2 + dx, -2 * P + 2 - up, 3 * P - 4, 2, 3);
+    if (up) d.px(-P + 2 + dx, -up, 3 * P - 4, up, 5);          // the roots, pulled up out of the ground
+    // a root given takes a cell off its top
+    for (let k = 0; k < Math.min(dug, AFTER_DIG_CLICKS); k++) d.px((-1 + k) * P + dx, -2 * P - up, P, P, W);
   });
 }
 
@@ -77,6 +81,7 @@ function plotSeen(i, p) {
 
 export function drawGrove() {
   const t = now(), fl = afterFloor();
+  const saw = (gestureView() || []).find(r => r.key === 'tree'), wob = stumpWobble();
   trees().forEach((p, i) => {
     const bx = plotX(i);
     if (!inView(bx - P * 10, P * 30)) return;
@@ -92,7 +97,10 @@ export function drawGrove() {
     }
     // Down on its tiers, lying, fading as the logs come off it.
     if (p.fell != null) d.fade(Math.max(0, 1 - (t - p.fell) / AFTER_CROWN_FADE_S), () => tiers(d, stageOf(GROWN, big), Math.PI / 2, 4.5, 1));
-    if (p.stump && p.fall == null) stump(d, 1, p.dug || 0);
+    if (p.stump && p.fall == null) {
+      const mine = wob && wob.i === i, up = mine ? Math.round(wob.lift) : 0;
+      stump(d, 1, p.dug || 0, up, mine && wob.wobbling ? (Math.floor(t / 0.08) % 2 ? 2 : -2) : 0);
+    }
     else if (!p.stump && t - s.gone < AFTER_BUILD_FADE_S) stump(d, 1 - (t - s.gone) / AFTER_BUILD_FADE_S, AFTER_DIG_CLICKS);
     if (p.fall == null && p.stage) {
       // A stage coming in, faded over the one it grew from.
@@ -101,10 +109,14 @@ export function drawGrove() {
       pine(d, stageOf(p.stage, big), a);
       // The saw: its kerf eaten into the trunk a chop at a time, and the
       // blade pushed and pulled in held steps while the chops come.
-      if (p.stage === GROWN && p.chops > 0) {
+      if (p.stage === GROWN) {
         const kerf = Math.round(Math.min(1, p.chops / TREE_CHOPS) * 3 * P);
-        d.px(2 * P - kerf, -2 * P + 2, kerf, 2, W);
-        if (p.chip != null && t - p.chip < AFTER_ART_WORK_S) {
+        if (kerf) d.px(2 * P - kerf, -2 * P + 2, kerf, 2, W);
+        // The hand's saw where the hand has it, on whole pixels; else
+        // pushed and pulled in held steps while the chops come.
+        const held = saw && saw.i === i && (saw.grab || saw.v > 1);
+        if (held) d.px(-2 * P + Math.round(saw.s), -2 * P + 2, 5 * P, 2, K);
+        else if (p.chip != null && t - p.chip < AFTER_ART_WORK_S) {
           const sh = Math.floor(t / 0.25) % 2 ? 4 : -4;
           d.px(-2 * P + sh, -2 * P + 2, 5 * P, 2, K);
         }

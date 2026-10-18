@@ -27,6 +27,7 @@ import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel
 import { built, heapBrim } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
 import { postsOf, bodiesOf, atStation } from '../after/bodies.js';
+import { gestureView } from '../after/gestures.js';
 import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, hash } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { drawGrove } from './after/pine.js';
@@ -94,6 +95,9 @@ function working(key) {
   return { work: false, at: 0, ink: 0 };
 }
 const frameOf = key => frame(stationX0(key), afterFloor(), ART[key].flip || 0);
+// The hand's motion at each station this frame (after/gestures.js), by key.
+let hands = {};
+const readHands = () => { hands = {}; for (const r of gestureView() || []) hands[r.key] = r; };
 
 // A station's posts: a stake each along its top, black while a member holds
 // one or is walking to it, hollow grey while it waits; the newest fades in.
@@ -130,7 +134,7 @@ function drawStation(key) {
   if (!inView(b.x - P * 16, b.w + P * 32)) return;
   const a = A(), r = a.raising[key];
   if (!built(key) && !r) { ghostBox(b); return; }
-  const draw = key === 'pedestal' ? drawPillar : (d, work, t) => DRAW[key](d, work, t);
+  const draw = key === 'pedestal' ? drawPillar : (d, work, t) => DRAW[key](d, work, t, hands[key]);
   if (!built(key)) {
     // Raised a band a piece, the floor up, each fading in from when it landed.
     ghostBox(b);
@@ -197,6 +201,7 @@ function drawPiles() {
 export function drawAfterCamp() {
   const a = A();
   if (!a) return;
+  readHands();
   for (const key of AFTER_CARDS) if (key !== 'grove') drawStation(key);
   drawShackOrder();
   if (built('mill') || built('chipper')) drawSawdust();

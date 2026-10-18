@@ -11,9 +11,15 @@
 // A station draws its idle pose, or with `work` its working pose at time
 // `t`; the worker's body is not drawn here but by the members' layer at the
 // pose `workerPose` gives, so the one body standing at the door is the one
-// doing the work. Every pose is held: a part moves a whole step at a time.
+// doing the work. With the hand on it (`h`, the station's record in
+// after/gestures.js, `gestureView`) the moving part goes where the hand put
+// it instead: the wheel at the angle it was spun to, the paddle round the
+// vat, the bar as far down as it is pulled. Every pose is held: a part moves
+// a whole step at a time.
+const TURN = Math.PI / 16;                                 // a held step of a turning part
+const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
-import { P } from '../../config.js';
+import { P, GESTURE_WHEEL_LOG, GESTURE_FEED_LOG } from '../../config.js';
 import { K, W, PULP, DUST, hash, clamp01 } from './kit.js';
 
 const cyc = (t, T) => { const u = Math.max(0, t), k = Math.floor(u / T); return { ph: u / T - k, since: u - k * T }; };
@@ -24,8 +30,7 @@ const FADE = 0.4;
 // lines, a solid hub and a knob for the hand, turning in held eighths of a
 // quarter. The bench and its solid half blade are small beside it.
 const WHEEL = { cx: 25, cy: -9, r: 7 };
-function hugeWheel(d, { cx, cy, r }, step) {
-  const a = step * Math.PI / 8;
+function hugeWheel(d, { cx, cy, r }, a) {
   for (let y = Math.floor(cy - r - 2); y <= cy + r + 2; y++) for (let x = Math.floor(cx - r - 2); x <= cx + r + 2; x++) {
     const dd = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
     if (dd > r - 1 && dd <= r + 1) d.c(x, y, K);
@@ -37,8 +42,8 @@ function hugeWheel(d, { cx, cy, r }, step) {
 }
 // The log on its way through the blade: a cell a step over the cycle, cut
 // into two planks with a seam past the blade, faded on and off.
-function feedLog(d, t, T, y, x0, x1, cutX) {
-  const c = cyc(t, T), steps = x1 - x0, k = Math.min(steps, Math.floor(c.ph * (steps + 2)));
+function feedLog(d, t, T, y, x0, x1, cutX, at = null) {
+  const c = at == null ? cyc(t, T) : { ph: at, since: 1 }, steps = x1 - x0, k = Math.min(steps, Math.floor(c.ph * (steps + 2)));
   const x = x0 + k, a = c.since < FADE ? c.since / FADE : (c.ph > 0.9 ? 1 - (c.ph - 0.9) / 0.1 : 1);
   d.fade(a, () => {
     for (let i = 0; i < 5; i++) {
@@ -50,12 +55,14 @@ function feedLog(d, t, T, y, x0, x1, cutX) {
   });
 }
 const SAW_T = 2.4;
-function mill(d, work, t) {
-  hugeWheel(d, WHEEL, work ? Math.floor(t / 0.1) : 0);
+function mill(d, work, t, h) {
+  const hand = turning(h);
+  hugeWheel(d, WHEEL, hand ? Math.round(h.ang / TURN) * TURN : work ? Math.floor(t / 0.1) * Math.PI / 8 : 0);
   d.r(22, -1, 6, 1, K);                                   // the foot it turns on
   d.spr(['.##.', '####'], 12, -5);                         // the blade's top half, over the bench
   d.r(9, -3, 7, 1, K); d.r(10, -2, 1, 2, K); d.r(14, -2, 1, 2, K);
-  if (work) feedLog(d, t, SAW_T, -5, 7, 12, 13);
+  if (hand) feedLog(d, t, SAW_T, -5, 7, 12, 13, (h.prog || 0) / GESTURE_WHEEL_LOG * 0.9);
+  else if (work) feedLog(d, t, SAW_T, -5, 7, 12, 13);
 }
 
 // --- the chipper: an open jaw, a drum, a hooked pipe ----------------------------
@@ -72,7 +79,7 @@ const FEED = [
   [0.80, null, 10, 0], [0.87, null, 9, 0], [0.94, null, 8, 0]
 ];
 const feedPose = ph => { let p = FEED[0]; for (const f of FEED) if (ph >= f[0]) p = f; return p; };
-function chipper(d, work, t) {
+function chipper(d, work, t, h) {
   d.r(OX + 7, -7, 5, 7, K); d.r(OX + 12, -6, 1, 6, K);             // the drum, its corner taken off
   for (let i = 0; i < 7; i++) {                                     // the top jaw, a cell down a cell in
     const top = Math.min(-8, -12 + i), bot = Math.min(-4, -10 + i);
@@ -88,15 +95,17 @@ function chipper(d, work, t) {
   }
   d.r(OX + 16, -14, 2, 3, K);                                       // and down
   d.r(OX + 15, -11, 4, 1, K);                                       // the spout's lip
-  if (!work) return;
-  const c = cyc(t, CHIP_T), [, lx] = feedPose(c.ph);
+  // Held by the hand, the log goes in as far as the feed has taken it.
+  const hand = !!h && h.hold;
+  if (!work && !hand) return;
+  const c = hand ? { ph: (h.prog || 0) / GESTURE_FEED_LOG * SWALLOW, since: 1 } : cyc(t, CHIP_T), [, lx] = feedPose(c.ph);
   if (lx != null) {
     const a = c.ph >= SWALLOW ? 1 - clamp01((c.ph - SWALLOW) * CHIP_T / 0.35) : c.ph < 0.1 ? clamp01(c.since / FADE) : 1;
     d.fade(a, () => { d.r(lx, -3, 5, 2, K); d.px(lx * P + 2, -3 * P + 2, P - 2, 2 * P - 4, 3); });
   }
   // The chips: dashes a cell wide and two long, falling a cell every tenth
   // of a second from the spout while the log is chewed.
-  const step = Math.floor(((c.ph - SWALLOW + 1) % 1) * CHIP_T * 10);
+  const step = hand ? Math.floor(t * 10) % 10 : Math.floor(((c.ph - SWALLOW + 1) % 1) * CHIP_T * 10);
   for (let j = 0; j < 12; j++) {
     const born = step - j * 3;
     if (born < 0 || j * 0.3 > POUR_FOR) continue;
@@ -115,8 +124,11 @@ const RIM = -10, PIVOT = [13.6, RIM - 0.3];
 const LOOP = [[17, -4.5], [20, -7], [23, -5], [20, -3.5]];   // the blade's held places: an ellipse side on
 const LEAN = [0, 2, 2, 0], STIR_T = 0.3;
 const stirPose = (work, t) => (work ? Math.floor(t / STIR_T) % 4 : 3);
-function papermill(d, work, t) {
-  const pose = stirPose(work, t);
+const LOOP_TURN = 2 * Math.PI;
+function papermill(d, work, t, h) {
+  const hand = turning(h);
+  const pose = hand ? Math.floor((((h.ang % LOOP_TURN) + LOOP_TURN) % LOOP_TURN) / LOOP_TURN * LOOP.length) % LOOP.length : stirPose(work, t);
+  work = work || hand;
   d.r(9, RIM, 3, -RIM, K);                                          // the post, hard up against the wall
   d.r(26, RIM, 3, 1, K);                                            // the far rim, overhanging
   d.r(12, RIM, 2, -RIM - 2, K); d.r(26, RIM + 1, 2, -RIM - 3, K);   // the walls
@@ -159,8 +171,15 @@ function hammer(d, pose) {
     d.r(SIGN.x + 1, SIGN.y - 5, 3, 5, K);
   }
 }
-function workshop(d, work, t) {
-  const { pose, since } = wsPose(work, t);
+// A tap is a blow: the swing for a step, then held on the strike.
+function tapPose(h, t) {
+  const since = t - h.strike;
+  if (since < WS_STEP) return { pose: 'swing', since };
+  if (since < WS_STEP * 5) return { pose: 'strike', since: since - WS_STEP };
+  return null;
+}
+function workshop(d, work, t, h) {
+  const { pose, since } = (h && tapPose(h, t)) || wsPose(work, t);
   d.line(7, -12, 25.5, -15.5, 3, K, false);
   d.line(7, -12, 7, -0.4, 3, K, false); d.line(25, -15.5, 25, -0.4, 3, K, false);
   d.r(8, -2, 9, 1, K); d.r(9, -1, 1, 1, K); d.r(15, -1, 1, 1, K);    // the bench, low
@@ -179,8 +198,8 @@ function workshop(d, work, t) {
 const PR = { postL: 10, postR: 22, headY: -14, scX: 15, scW: 3, plX: 12, plW: 9, sheetY: -4, bodyX: 26 };
 const PR_SEQ = [0, 0, 1, 2, 2, 2, 1, 0], PRESS_T = 2.8;
 const prDrop = (work, t) => (work ? PR_SEQ[Math.floor(cyc(t, PRESS_T).ph * 8)] : 0);
-function press(d, work, t) {
-  const drop = prDrop(work, t);
+function press(d, work, t, h) {
+  const drop = h && h.k > 0.01 ? Math.round(h.k * 2) : prDrop(work, t);
   d.r(PR.postL, -3, PR.postR - PR.postL + 1, 2, K);                 // the bed,
   d.r(PR.plX, PR.sheetY, PR.plW, 1, K); d.px(PR.plX * P + 2, PR.sheetY * P + 2, PR.plW * P - 4, P - 4, W);   // the sheet on it
   const plY = -8 + drop, scTop = plY - 10;

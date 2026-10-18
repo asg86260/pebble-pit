@@ -13,6 +13,7 @@ import { S } from '../state.js';
 import { speakerAt } from './place.js';
 import { pairBuilding } from './build.js';
 import { secs } from './util.js';
+import { useBubbles } from './gestures.js';
 
 // A bubble's size, small and big, in px: the mock's 36 by 20 box and its tail.
 const W = 36, H = 20, BIG = 2;
@@ -71,9 +72,15 @@ export function takeBubble(id) {
   return look(b, S.after.t);
 }
 
+// The hand pops them (gestures.js): the bubbles still up to be taken, and a
+// pop that takes one -- what it pays is the gesture's to say. Handed over on
+// the first frame rather than at load, since gestures.js reaches this file
+// back round the act's imports.
+let handed = false;
 // One frame: a bubble sent on the clock while the pair can speak, and the
 // faded ones let go.
 export function stepBubbles(c) {
+  if (!handed) { useBubbles({ list: () => bubbles().filter(b => b.open), pop: b => !!(b && takeBubble(b.id)) }); handed = true; }
   if (!S.after) return;
   const t = S.after.t;
   if (pairSpeaking()) {
