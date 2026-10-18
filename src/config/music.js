@@ -118,7 +118,9 @@ export const MUSIC_PATTERNS = {
 // preview (preview.js) and the render (tools/music/mix.py) read the same
 // table, so a knob means the same thing to both.
 const MIX = { label: 'mix', min: 0, max: 1, def: 0.4, about: 'How much of the effect you hear against the untouched sound.' };
-const RATE = (def, about) => ({ label: 'rate', min: 0.05, max: 5, def, unit: 'Hz', log: true, about });
+// `lfo` marks a sweep's speed in hertz: the render rounds it to a whole
+// number of cycles a loop, so the sweep never restarts at the seam.
+const RATE = (def, about) => ({ label: 'rate', min: 0.05, max: 5, def, unit: 'Hz', log: true, lfo: true, about });
 // Rates in beats keep a pulse on the beat at any tempo: a cycle of one beat,
 // two beats, and so on.
 const BEATS = (def, about) => ({ label: 'rate', choices: [0.25, 0.5, 1, 2, 4], names: ['1/16', '1/8', '1/4', '1/2', '1 bar'], def, about });
@@ -158,7 +160,7 @@ export const MUSIC_FX = {
     depth: { label: 'depth', min: 0, max: 1, def: 0.6, about: 'How far it sweeps.' },
     feedback: { label: 'feedback', min: 0, max: 0.95, def: 0.6, about: 'Higher rings and whistles more.' } } },
   wobble: { label: 'Wobble', group: 'movement', about: 'Wow and flutter: the pitch drifts like a worn tape.', params: {
-    wow: { label: 'wow', min: 0.1, max: 3, def: 0.6, unit: 'Hz', log: true, about: 'The slow drift: how fast the tape sags and recovers.' },
+    wow: { label: 'wow', min: 0.1, max: 3, def: 0.6, unit: 'Hz', log: true, lfo: true, about: 'The slow drift: how fast the tape sags and recovers.' },
     depth: { label: 'depth', min: 0, max: 1, def: 0.4, about: 'How far out of tune it drifts. A little goes a long way.' },
     flutter: { label: 'flutter', min: 0, max: 1, def: 0.2, about: 'A fast, fine shake on top, like a cheap player.' } } },
   tremolo: { label: 'Tremolo', group: 'movement', about: 'The volume pulses up and down, in time with the beat.', params: {

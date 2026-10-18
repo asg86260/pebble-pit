@@ -8,7 +8,7 @@ import { smf, noteEvents, vlq } from '../tools/music/smf.mjs';
 import { loopWindow, sceneSeconds, passEvents, midiFile, stemKey, mixChain } from '../tools/music/plan.mjs';
 import { MUSIC_RENDER_PPQ, MUSIC_RENDER_SR, MUSIC_RENDER_TAIL_S, MUSIC_RENDER_PASSES,
          MUSIC_RENDER_SEAM_S, MUSIC_FX } from '../src/config/music.js';
-import { fxParams } from '../src/music/fx.js';
+import { fxParams, newFx } from '../src/music/fx.js';
 
 const song = JSON.parse(readFileSync(new URL('../src/music/songs/yard.json', import.meta.url), 'utf8'));
 
@@ -118,4 +118,18 @@ test('a turned knob keeps every stem cached', () => {
   for (const t of song.tracks)
     assert.equal(stemKey(other.tracks.find(o => o.id === t.id), other, 'yard', MUSIC_RENDER_SR, 'x'),
                  stemKey(t, song, 'yard', MUSIC_RENDER_SR, 'x'), t.id);
+});
+
+test('every sweep is rounded to whole cycles a loop, and nothing else moves', () => {
+  const t = { id: 'x', fx: [newFx('autofilter', { rate: 0.25, center: 900 }), newFx('wobble', { wow: 0.6 }),
+                         newFx('chorus', { rate: 0.03 + 0.05 }), newFx('downsample', { rate: 11025 })] };
+  const loop = 10.434785;
+  const [auto, wob, cho, down] = mixChain(t, loop);
+  for (const [v, name] of [[auto.params.rate, 'autofilter'], [wob.params.wow, 'wobble'], [cho.params.rate, 'chorus']]) {
+    const cycles = v * loop;
+    assert.ok(Math.abs(cycles - Math.round(cycles)) < 1e-9 && cycles >= 1, `${name}: ${cycles} cycles`);
+  }
+  assert.equal(auto.params.center, 900);
+  assert.equal(down.params.rate, 11025, 'a sample rate is not a sweep');
+  assert.deepEqual(mixChain(t).map(b => b.params), t.fx.map(b => fxParams(b)), 'with no loop, nothing is rounded');
 });

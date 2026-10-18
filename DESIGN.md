@@ -21970,7 +21970,16 @@ menu now shapes how it sounds, never which loop it is.*
 **Open, for the owner's ear:** which sketch is the yard, and how deep each
 menu sinks it (the demo's three depths).
 
-### The effects library: nineteen effects and ten starting points (design, not built)
+### The effects library: nineteen effects and ten starting points (built 2026-10-17)
+
+*Built as designed. One amendment, from the render's report: a sweep's
+speed in hertz (Chorus, Phaser, Flanger and Auto-filter's rate, Wobble's
+wow) is rounded by the render to a whole number of cycles a loop (`lfo` on
+the knob, `mixChain` in tools/music/plan.mjs), and Wobble's flutter is drawn
+for one loop and tiled, so no sweep restarts at the seam; the preview's
+sweeps run free, since its loop is the clip's. Open: PitchShift moves its
+onset with the interval (about 18 ms early at +12), which may smear a
+blended attack.*
 
 *Asked for 2026-10-17: "more synth type chains... the more the better, with
 a description of each", from an owner who says they do not know what they

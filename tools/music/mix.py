@@ -145,9 +145,12 @@ def flanger(x, p):
 # grid by the base's few milliseconds.
 def wobble(x, p):
     n = np.arange(N)
-    hop = int(SR / WOBBLE_FLUTTER_HZ)
-    heads = rng().uniform(-1, 1, N // hop + 2)
-    drift = uniform_filter1d(np.interp(n, np.arange(len(heads)) * hop, heads), hop)
+    # The flutter's drift is drawn for one loop and tiled, smoothed round the
+    # wrap, so it is the same drift at the seam both times it is heard.
+    L, hop = plan['frames'], int(SR / WOBBLE_FLUTTER_HZ)
+    heads = rng().uniform(-1, 1, L // hop + 1)
+    one = uniform_filter1d(np.interp(np.arange(L), np.arange(len(heads)) * hop, heads, period=L), hop, mode='wrap')
+    drift = one[(n - plan['start']) % L]
     swing = (p['depth'] * WOBBLE_WOW_MS * np.sin(2 * np.pi * p['wow'] * n / SR)
              + p['flutter'] * WOBBLE_FLUTTER_MS * drift) * SR / 1000
     pos = np.clip(n - swing, 0, N - 1)
