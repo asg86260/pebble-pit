@@ -3023,8 +3023,10 @@ export const SCENES = {
     run: () => heavenAt(0.1, 1) },
   'heaven-rally': { about: 'the acts', say: 'a rally off a sign: its ring climbing through every band, the near souls with their arms up',
     run: () => heavenAt(0.1, 0, 'rally') },
-  'heaven-roar': { about: 'the acts', say: "God's roar: his bubble and teeth, the ring ducking the crowd as it passes",
+  'heaven-roar': { about: 'the acts', say: "God's roar, a proclamation: his mouth open round, a hand raised in blessing, the ring ducking the crowd",
     run: () => heavenAt(0.1, 0, 'roar') },
+  'heaven-unmasked': { about: 'the acts', say: 'God unmasked, once the unmask beat has played: the horns, the lids lifted into slits, the smile gone',
+    run: () => { heavenAt(0.1, 1, 'roar'); if (!S.beatsDone.includes('unmask')) S.beatsDone.push('unmask'); window.__fast(1 / 30); } },
 
   // --- the acts' connective tissue (actbeats.js, portals.js, mansion.js) --------
   // Each off a yard past the snatch with the wizards' portal up and a crew to

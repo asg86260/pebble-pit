@@ -1,6 +1,6 @@
 // Act 3's sky, drawn: God's crowd filling it, God on his tower throne, the
 // sermon and the tithe line (docs/mocks/act3-skycrowd-2026-10-18, round 2,
-// the owner's vote, with horns and a harder scowl added after it;
+// the owner's vote; God's face docs/mocks/act3-god-2026-10-19, face (c);
 // docs/wave-act3-build.md, track B). Every place is after/sky.js's.
 //
 // The crowd is seven parallax bands from the window's top down to a cloud
@@ -464,39 +464,57 @@ function stone() {
   });
   return cache.stone;
 }
-// God himself, lit from within: a white square edged in ink, horns, slit
-// eyes under heavy brows in a hard scowl, a white pinpoint each, teeth when
-// he roars; the robe, the crown in an ink outline, the hands.
-function godSprite(pose, gaze, roaring) {
-  const key = `${pose.breath}${pose.finger}${pose.tilt}${pose.hand}|${gaze.look}${gaze.squint ? 1 : 0}|${roaring ? 1 : 0}`;
+// God's face (docs/mocks/act3-god-2026-10-19, face (c), the owner's pick):
+// on the surface a calm, benevolent square -- level lids over visible
+// pupils, a quiet smile -- and a roar is a proclamation: the lids stay, the
+// mouth opens round, the right hand rises open in blessing. Unmasked, once
+// the unmask beat has played, he is Satan: the horns come in, the lids lift
+// into slits under heavy brows, the smile drops, the roar bares teeth.
+export const godFace = () => (S.beatsDone.includes('unmask') ? 'unmasked' : 'serene');
+// God himself, lit from within: a white square edged in ink, his face, the
+// robe, the crown in an ink outline, the hands.
+function godSprite(pose, gaze, roaring, face = godFace()) {
+  const key = `${face}|${pose.breath}${pose.finger}${pose.tilt}${pose.hand}|${gaze.look}${gaze.squint ? 1 : 0}|${roaring ? 1 : 0}`;
   let pic = cache.poses.get(key);
   if (pic) return pic;
-  const c = GC();
+  const c = GC(), mask = face === 'unmasked';
   pic = sprite(34 * c, 47 * c, (r, L) => {
     const Fd = (x, y, w, h, tone) => L((x - STONE_X) * c, (y - STONE_Y) * c, w * c, h * c, tone);
     const top = -pose.breath;
-    // the horns, out of the square's top corners and up past the crown
-    const horn = [[-1, 3], [-1, 2], [-2, 2], [-2, 1], [-3, 1], [-3, 0], [-4, 0], [-4, -1], [-4, -2], [-4, -3], [-4, -4], [-3, -5], [-3, -6], [-2, -7]];
-    for (const side of [0, 1]) {
-      const cells = horn.map(([x, y]) => [side ? 17 - x : x, y + top]);
-      cells.forEach(([x, y]) => Fd(x - 1, y - 1, 3, 3, 10));
-      cells.forEach(([x, y]) => Fd(x, y, 1, 1, 0));
+    if (mask) {
+      // the horns, out of the square's top corners and up past the crown
+      const horn = [[-1, 3], [-1, 2], [-2, 2], [-2, 1], [-3, 1], [-3, 0], [-4, 0], [-4, -1], [-4, -2], [-4, -3], [-4, -4], [-3, -5], [-3, -6], [-2, -7]];
+      for (const side of [0, 1]) {
+        const cells = horn.map(([x, y]) => [side ? 17 - x : x, y + top]);
+        cells.forEach(([x, y]) => Fd(x - 1, y - 1, 3, 3, 10));
+        cells.forEach(([x, y]) => Fd(x, y, 1, 1, 0));
+      }
     }
     Fd(0, top, 18, 18 - top, 10);
     Fd(1, top + 1, 16, 16 - top, 0);
     for (let y = top + 1; y < 17; y++) for (let x = 1; x < 17; x++) if (hsh(x, y, 72) < 0.14) Fd(x, y, 1, 1, 1);
-    const ey = 6 + top;
-    [[3, 1], [10, -1]].forEach(([ex, side]) => {
-      const outer = side > 0 ? ex : ex + 2, inner = side > 0 ? ex + 1 : ex;
-      // the brow: two heavy ink bars stepping down hard to the nose
-      if (!gaze.squint) { Fd(side > 0 ? ex - 1 : ex + 3, ey - 1, 2, 1, 10); Fd(outer, ey, 3, 1, 10); }
-      Fd(inner, ey + 1, 4, 1, 10);
-      Fd(ex + 2 + gaze.look, ey + 1, 1, 1, 0);
-    });
-    // the furrow between the brows
-    Fd(8, ey - 1, 1, 2, 10); Fd(9, ey - 1, 1, 2, 10);
-    if (roaring) { Fd(5, 11 + top, 8, 3, 10); for (const x of [6, 8, 10, 12]) Fd(x, 11 + top, 1, 1, 0); }
-    else { Fd(6, 12 + top, 6, 1, 10); Fd(5, 13 + top, 1, 1, 10); Fd(12, 13 + top, 1, 1, 10); }
+    if (mask) {
+      const ey = 6 + top;
+      [[3, 1], [10, -1]].forEach(([ex, side]) => {
+        const outer = side > 0 ? ex : ex + 2, inner = side > 0 ? ex + 1 : ex;
+        // the brow: two heavy ink bars stepping down hard to the nose
+        if (!gaze.squint) { Fd(side > 0 ? ex - 1 : ex + 3, ey - 1, 2, 1, 10); Fd(outer, ey, 3, 1, 10); }
+        Fd(inner, ey + 1, 4, 1, 10);
+        Fd(ex + 2 + gaze.look, ey + 1, 1, 1, 0);
+      });
+      Fd(8, ey - 1, 1, 2, 10); Fd(9, ey - 1, 1, 2, 10);       // the furrow between the brows
+      if (roaring) { Fd(5, 11 + top, 8, 3, 10); for (const x of [6, 8, 10, 12]) Fd(x, 11 + top, 1, 1, 0); }
+      else { Fd(6, 12 + top, 6, 1, 10); Fd(5, 13 + top, 1, 1, 10); Fd(12, 13 + top, 1, 1, 10); }
+    } else {
+      // level lids, the pupils under them following the gaze
+      const ey = 7 + top;
+      for (const ox of [3, 11]) { Fd(ox, ey, 4, 1, 10); Fd(ox + 1 + gaze.look, ey + 1, 2, 1, 10); }
+      if (roaring) {
+        // the mouth open round, no teeth
+        Fd(7, 11 + top, 4, 1, 10); Fd(6, 12 + top, 1, 2, 10); Fd(11, 12 + top, 1, 2, 10); Fd(7, 14 + top, 4, 1, 10);
+        Fd(7, 12 + top, 4, 2, 4);
+      } else { Fd(6, 12 + top, 1, 1, 10); Fd(7, 13 + top, 4, 1, 10); Fd(11, 12 + top, 1, 1, 10); }
+    }
     // the robe, widening down over the seat
     for (let y = 15; y < 30; y++) {
       const half = 9 + Math.floor((y - 15) / 3);
@@ -514,11 +532,19 @@ function godSprite(pose, gaze, roaring) {
     crown.forEach(([x, y]) => Fd(x - 1, y - 1, 3, 3, 10));
     crown.forEach(([x, y]) => Fd(x, y, 1, 1, 0));
     Fd(8, cy, 2, 1, 10);
-    // hands: the left on its arm or up at the crown; the right drumming
+    // hands: the left on its arm or up at the crown; the right drumming, or
+    // raised open in blessing while he proclaims
     const hl = [[-6, 15], [-5, 6], [-2, cy - 1]][pose.hand];
     Fd(hl[0], hl[1], 4, 3, 10); Fd(hl[0] + 1, hl[1] + 1, 2, 1, 0);
-    Fd(20, 15, 4, 3, 10); Fd(21, 16, 2, 1, 0);
-    for (let f = 0; f < 3; f++) Fd(20 + f, 18 - (pose.finger === f ? 1 : 0), 1, 1, 10);
+    if (roaring && !mask) {
+      Fd(20, 9, 4, 6, 10); Fd(21, 10, 2, 5, 2);                 // the sleeve
+      Fd(19, 4, 6, 5, 10); Fd(20, 5, 4, 3, 0);                  // the open palm
+      for (const [fx, fy] of [[19, 2], [21, 1], [22, 1], [24, 2]]) Fd(fx, fy, 1, 3, 10);
+      Fd(18, 6, 1, 2, 10);                                      // the thumb
+    } else {
+      Fd(20, 15, 4, 3, 10); Fd(21, 16, 2, 1, 0);
+      for (let f = 0; f < 3; f++) Fd(20 + f, 18 - (pose.finger === f ? 1 : 0), 1, 1, 10);
+    }
   });
   if (cache.poses.size > 64) cache.poses.clear();
   cache.poses.set(key, pic);
