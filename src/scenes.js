@@ -540,6 +540,26 @@ function handChip(phase) {
   window.__holdShot();
 }
 
+// Track A: the paper mill standing with sawdust in its heap, stirred by
+// hand through batch after batch, the line filling as they come; `up` buys
+// the bigger vat and the drying line first. Framed on the station.
+function handPaper(up) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  for (const k of ['mill', 'chipper', 'papermill']) if (!S.after.built.includes(k)) S.after.built.push(k);
+  window.__afterGrant({ sawdust: 200, rebel: 5000, timber: 200, paper: 50 }); yardPurse();
+  if (up) { window.__buy('after-vat'); window.__buy('after-dry'); }
+  const b = stationBox('papermill');
+  window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(2);
+  const v = window.__gestureParts('papermill').vat, at = a => [v.x + Math.cos(a) * v.rx, v.y + Math.sin(a) * v.ry];
+  for (let n = 0; n < (up ? 5 : 4); n++) {
+    window.__gesture('down', ...at(0));
+    for (let f = 1; f <= 300; f++) { window.__gesture('move', ...at(f / 60 * 1.2 * 2 * Math.PI)); window.__fast(1 / 60); }
+    window.__gesture('up');
+    window.__fast(1.5);
+  }
+  window.__holdShot();
+}
+
 // Track A: the workshop ordered with the saw mill and the press standing
 // either side of its spot, four members in the camp to carry it, run on
 // until `until(site)` holds (null: never ordered), framed on the spot.
@@ -2921,6 +2941,15 @@ export const SCENES = {
     run: () => handChip('held') },
   'after-chip-spring': { about: 'the acts', say: "the chipper's arm let go, springing back up a pose at a time, the jaws stopped",
     run: () => handChip('spring') },
+
+  // The paper mill (docs/mocks/act3-papermill-2026-10-18): batches stirred by
+  // hand and pegged on the line, drying grey to white, the loft hand peeling
+  // the dry ones to the stack; and the same with the bigger vat and the
+  // drying line bought.
+  'after-paper': { about: 'the acts', say: "the paper mill's vat stirred by hand, wet sheets on the line drying grey to white, the loft hand at the stack",
+    run: () => handPaper(false) },
+  'after-paper-line': { about: 'the acts', say: "the paper mill with its bigger vat and drying line: two sheets a pull on a line eight sheets long",
+    run: () => handPaper(true) },
 
   // Act 3's crowds, God and the camera's zoom (track C): the camp end with
   // both crowds in frame, the middle of God's crowd, and the dive's end.

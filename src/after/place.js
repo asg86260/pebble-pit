@@ -36,6 +36,10 @@ export const inAfter = (x, y) => y >= afterTop() && y <= afterFloor() && x >= af
 // where the config lays the camp out off them; the pedestal stands as high
 // as the config says.
 export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal, box: [1, 10, AFTER_PEDESTAL_H] } };
+// The paper mill's stack stands at its line's far end, which its drying
+// line carries four sheets further along (render/after/stations.js).
+const longLine = () => !!S.after && (S.after.ups['after-dry'] || 0) > 0;
+ART.papermill = { ...BASE_ART.papermill, pile: { get paper() { return longLine() ? 49 : 29; } } };
 export const stationX0 = key => afterX0() + AFTER_STATIONS[key].at * P;
 
 // --- the grove ---------------------------------------------------------------------
@@ -212,7 +216,7 @@ export function floorFlats() {
 export const sited = key => (S.after ? S.after.built.includes(key) || !!S.after.raising[key] : AFTER_START_BUILT.includes(key));
 // Which grounds are taken, as a key: the profile is worked out again only
 // when that changes.
-export const sitesKey = () => Object.keys(AFTER_STATIONS).filter(sited).join(',');
+export const sitesKey = () => Object.keys(AFTER_STATIONS).filter(sited).join(',') + (longLine() ? '|line' : '');
 let profile = null, profileKey = null;
 export function floorProfile() {
   const key = sitesKey();
@@ -339,7 +343,7 @@ export function stationParts(key, i = 0) {
     return { box: worked, mouth: tb(16, -13, 14, 14), jaw: tb(18, -14, 10, 5), block: tb(28, -15, 6, 15), chute: tb(31, -19, 7, 5),
              arm: tb(7, -11, 11, 11), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - P * 6, w: PILE_W * P, h: P * 6 } };
   }
-  if (key === 'papermill') return { box: worked, vat: { ...at(x0, 19, -4.5), rx: 6 * P, ry: 2.5 * P }, line: box(x0, 9, -18, 20, 1), step: box(x0, 5, -9, 4, 9) };
+  if (key === 'papermill') return { box: worked, vat: { ...at(x0, 19, -4.5), rx: 6 * P, ry: 2.5 * P }, line: box(x0, 9, -18, 30, 1), step: box(x0, 5, -9, 4, 9) };
   if (key === 'workshop') return { box: worked, sign: box(x0, 11, -8, 6, 4), hammer: box(x0, 15, -15, 6, 6), hand: at(x0, 20, -9),
                                     nails: [[11, -8], [16, -8], [11, -5], [16, -5]].map(([c, r]) => box(x0, c, r, 1, 1)) };
   if (key === 'press') return { box: worked, bar: { ...at(x0, 14, -11), len: 12 * P }, knob: box(x0, 24, -6, 2, 2), platen: box(x0, 12, -8, 9, 2),

@@ -20,3 +20,8 @@ export const AFTER_BUILD_HOLD_S = 1;       // the pile stands complete this long
 // A plain click this many cells up off the floor over God's crowd opens its
 // status board (track C's 'crowd'): its near rows and the mass behind them.
 export const CROWD_CLICK_ROWS = 40;
+
+// The paper mill's line (docs/mocks/act3-papermill-2026-10-18): sheets it
+// holds drying, and with its drying line (a second batch at once).
+export const AFTER_LINE_SHORT = 4;
+export const AFTER_LINE_LONG = 8;

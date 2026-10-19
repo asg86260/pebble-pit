@@ -54,8 +54,14 @@ export function pulpSheet() {
   if (n < 1) return false;
   st.sawdust -= AFTER_PULP_SAWDUST * n;
   st.paper += n;
+  pulls.push(S.after.t);
+  if (pulls.length > PULLS_KEPT) pulls.shift();
   return true;
 }
+// When each of the last pulls was made: this session's, for the line the
+// drawing plays them out on (render/after/stations.js), a pull at a time.
+const PULLS_KEPT = 16, pulls = [];
+export const paperPulls = () => pulls;
 // The batches stirring at once, a pulper to each: one, or two with the
 // drying line taking a batch off to dry (`vats`). The pulpers take the vats
 // in the order they came to their posts, so which one stirs never flickers;
@@ -70,7 +76,7 @@ export function vatOf(w) {
 // was last held tipped: this session's drawing only, a load already gone.
 const spills = [];
 export const airSpills = () => spills;
-export const forgetSpills = () => { spills.length = 0; };
+export const forgetSpills = () => { spills.length = 0; pulls.length = 0; };
 // A load off the heap through the notch: what was taken. While there is a
 // paper mill the heap has somewhere better to go, and is never tipped.
 export function tipSawdust() {

@@ -12,7 +12,7 @@
 // off a fixed hash of where the cell stands (no flat fills, no random draw,
 // so it holds still frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_BUILD_DROP_S, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
+import { P, GREY, AFTER_BUILD_DROP_S, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
@@ -25,7 +25,7 @@ import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
 import { buildPileAt, overCrowd, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, floorAt, afterFloor, ART } from '../after/place.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel.js';
-import { built, heapBrim } from '../after/levels.js';
+import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
 import { postsOf, bodiesOf, atStation, bodyInk } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
@@ -101,6 +101,15 @@ const frameOf = key => frame(stationX0(key), afterFloor(), ART[key].flip || 0);
 let hands = {};
 const readHands = () => { hands = {}; for (const r of gestureView() || []) hands[r.key] = r; };
 
+// What a station's drawing reads besides its pose: the paper mill's vat as
+// full as the batch is stirred (by the hand, or the pulper's clock), its
+// count, and how many sheets the mould lifts and the line holds.
+function extras(key) {
+  if (key !== 'papermill') return {};
+  const h = hands.papermill, w = atStation('papermill')[0];
+  const fill = h && h.prog ? h.prog / GESTURE_STIR_TURNS : w ? w.t / AFTER_PULP_S : 0;
+  return { paper: A().stock.paper, moulds: vatSheets(), slots: vats() > 1 ? AFTER_LINE_LONG : AFTER_LINE_SHORT, fill };
+}
 // A station's posts: a stake each along its top, black while a member holds
 // one or is walking to it, hollow grey while it waits; the newest fades in.
 function drawPosts(key, b) {
@@ -142,7 +151,7 @@ function drawStation(key) {
   if (!built(key) && !r) return;
   // Each drawn on its paper backing, so the camp's crowd behind it does not
   // show through its open parts; the pillar is paper through already.
-  const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { backing(d, backOf(key)); DRAW[key](d, work, t, hands[key], atStation(key).length > 0); };
+  const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { backing(d, backOf(key)); DRAW[key](d, work, t, hands[key], atStation(key).length > 0, extras(key)); };
   if (!built(key)) {
     // Raised a band a piece, the floor up, each fading in from when it landed.
     drawSite(key);

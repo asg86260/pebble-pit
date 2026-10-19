@@ -32,7 +32,7 @@ export const inView = (x, w) => x + w >= S.camX && x <= S.camX + S.viewW;
 export function frame(ox, oy, flip = 0, sink = null) {
   const X = (x, w) => (flip ? ox + flip * P - x - w : ox + x);
   const d = {
-    ox, oy,
+    ox, oy, sinking: !!sink,
     // local px: a rect, whole pixels
     px(x, y, w, h, tone) {
       if (sink) { sink(x, y, w, h); return; }
