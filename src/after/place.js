@@ -344,8 +344,8 @@ export function stationParts(key, i = 0) {
              arm: tb(7, -11, 11, 11), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - P * 6, w: PILE_W * P, h: P * 6 } };
   }
   if (key === 'papermill') return { box: worked, vat: { ...at(x0, 19, -4.5), rx: 6 * P, ry: 2.5 * P }, line: box(x0, 9, -18, 30, 1), step: box(x0, 5, -9, 4, 9) };
-  if (key === 'workshop') return { box: worked, sign: box(x0, 11, -8, 6, 4), hammer: box(x0, 15, -15, 6, 6), hand: at(x0, 20, -9),
-                                    nails: [[11, -8], [16, -8], [11, -5], [16, -5]].map(([c, r]) => box(x0, c, r, 1, 1)) };
+  if (key === 'workshop') return { box: worked, sign: box(x0, 8, -6, 12, 2), hammer: box(x0, 8, -14, 14, 6), hand: at(x0, 13, -9),
+                                    nails: [9, 12, 15, 18].map(c => box(x0, c - 0.5, -8.5, 2, 3)) };   // a nail's head and a half cell round it: the gaps between are misses
   if (key === 'press') return { box: worked, bar: { ...at(x0, 14, -11), len: 12 * P }, knob: box(x0, 24, -6, 2, 2), platen: box(x0, 12, -8, 9, 2),
                                 handle: box(x0, 23, -12, 4, 8) };
   return { box: worked };

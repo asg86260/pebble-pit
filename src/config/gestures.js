@@ -82,12 +82,11 @@ export const GESTURE_STIR_COAST = 2;
 // The workshop (docs/mocks/act3-workshop-2026-10-18): four nails a sign, two
 // taps each (half, then flush), a tap no closer than the swing; a tap off a
 // nail does nothing. Once the hand has stopped this long, the joiner at the
-// bench taps the rest on its own, a tap every GESTURE_JOINER_TAP_S.
+// bench taps on its own, at a sign every AFTER_SIGN_S.
 export const GESTURE_NAILS = 4;
 export const GESTURE_NAIL_TAPS = 2;
 export const GESTURE_SWING_S = 0.12;
 export const GESTURE_JOINER_WAIT_S = 1.5;
-export const GESTURE_JOINER_TAP_S = 0.5;
 
 // The press: the bar pulled down by a drag this long, its pull a share a
 // second at most, sprung back up at this rate let go; it prints past the

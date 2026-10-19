@@ -12,7 +12,7 @@
 // off a fixed hash of where the cell stands (no flat fills, no random draw,
 // so it holds still frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_BUILD_DROP_S, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
+import { P, GREY, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
@@ -32,7 +32,7 @@ import { gestureView } from '../after/gestures.js';
 import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, hash, backing } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { drawGrove } from './after/pine.js';
-import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
+import { DRAW, workerPose, GLYPHS, backOf, boardPile } from './after/stations.js';
 import { heap, heapCells, logPile, plankPile, sheetPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
 import { siteOf } from '../after/build.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
@@ -105,6 +105,7 @@ const readHands = () => { hands = {}; for (const r of gestureView() || []) hands
 // full as the batch is stirred (by the hand, or the pulper's clock), its
 // count, and how many sheets the mould lifts and the line holds.
 function extras(key) {
+  if (key === 'workshop') return { blanks: Math.floor(A().stock.timber / AFTER_SIGN_TIMBER) };
   if (key !== 'papermill') return {};
   const h = hands.papermill, w = atStation('papermill')[0];
   const fill = h && h.prog ? h.prog / GESTURE_STIR_TURNS : w ? w.t / AFTER_PULP_S : 0;
@@ -211,7 +212,7 @@ function drawPiles() {
   pile('mill', 'timber', plankPile, Math.floor(st.timber));
   pile('chipper', 'chiplogs', logPile, st.chiplogs);
   pile('papermill', 'paper', sheetPile, Math.floor(st.paper));
-  pile('workshop', 'signs', signPile, Math.floor(st.signs));
+  pile('workshop', 'signs', boardPile, Math.floor(st.signs));
   pile('press', 'posters', (d, x, s) => sheetPile(d, x, s, 6, true), Math.floor(st.posters));
 }
 export function drawAfterCamp() {

@@ -18,7 +18,7 @@ export const ART = {
   mill:      { box: [11, 39, 26], door: 8, pile: { logs: 0, timber: 53 }, ground: 72 },
   chipper:   { box: [2, 30, 19], door: 30, pile: { chiplogs: 0 }, ground: 40, flip: 40 },
   papermill: { box: [5, 54, 19], door: 7, pile: { paper: 29 }, ground: 62 },
-  workshop:  { box: [5, 21, 21], door: 21, pile: { signs: 28 }, ground: 37 },
+  workshop:  { box: [5, 21, 22], door: 13, pile: { signs: 27 }, ground: 53 },
   press:     { box: [9, 20, 19], door: 27, pile: { posters: 33 }, ground: 38 },
   shack:     { box: [0, 14, 14], door: 7, pile: {}, ground: 14 },
   pedestal:  { box: [1, 10, 4], door: 6, pile: {}, ground: 16 }

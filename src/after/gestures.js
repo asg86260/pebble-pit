@@ -35,14 +35,14 @@
 // clock with `run` and reads a fact about the game, not about the machine.
 
 import { S } from '../state.js';
-import { P, AFTER_SIGN_TIMBER, GESTURE_CUE_USES, GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S,
+import { P, AFTER_SIGN_TIMBER, AFTER_SIGN_S, GESTURE_CUE_USES, GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S,
          GESTURE_BUBBLE_CRIT, GESTURE_BUBBLE_SLACK, GESTURE_GRAB_SLACK,
          GESTURE_SAW_AMP, GESTURE_SAW_VMAX, GESTURE_SAW_FOLLOW, GESTURE_SAW_END, GESTURE_SAW_EASE,
          GESTURE_STUMP_DRAG, GESTURE_STUMP_MAX, GESTURE_STUMP_FOLLOW, GESTURE_STUMP_SINK, GESTURE_STRAIN_LIFT, GESTURE_STRAIN_S,
          GESTURE_WHEEL_MAX_REV, GESTURE_WHEEL_FEED, GESTURE_WHEEL_LOG, GESTURE_WHEEL_EASE, GESTURE_WHEEL_COAST, GESTURE_WHEEL_MIN_REV,
          GESTURE_ARM_FEED, GESTURE_ARM_LOG, GESTURE_ARM_PULL, GESTURE_ARM_HOLD, GESTURE_ARM_POSES, GESTURE_ARM_SPRING_S,
          GESTURE_STIR_MAX_REV, GESTURE_STIR_TURNS, GESTURE_STIR_EASE, GESTURE_STIR_COAST,
-         GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S, GESTURE_JOINER_TAP_S, GESTURE_JOINER_WAIT_S,
+         GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S, GESTURE_JOINER_WAIT_S,
          GESTURE_BAR_DRAG, GESTURE_BAR_RATE, GESTURE_BAR_RETURN, GESTURE_BAR_PRINT, GESTURE_BAR_RESET, GESTURE_BAR_EASE,
          GESTURE_FLING_MIN, GESTURE_FLING_MAX, GESTURE_FLING_LOADS, GESTURE_FLING_WINDOW_S, GESTURE_FLING_GRAV,
          GESTURE_FLING_LIFT, GESTURE_LOAD_FADE_S, GESTURE_PAD_PULL, GESTURE_PAD_TURN, CROWD_CLICK_ROWS } from '../config.js';
@@ -268,7 +268,7 @@ const DEFS = {
     open: () => built('workshop'),
     grab(g, x, y) {
       const p = stationParts('workshop');
-      for (let k = 0; k < p.nails.length; k++) if (inBox(x, y, p.nails[k], G_S) && g.nails[k] < GESTURE_NAIL_TAPS) return k;
+      for (let k = 0; k < p.nails.length; k++) if (inBox(x, y, p.nails[k]) && g.nails[k] < GESTURE_NAIL_TAPS) return k;
       return inBox(x, y, p.sign, G_S) ? -1 : null;
     },
     down(g, k) {
@@ -283,12 +283,13 @@ const DEFS = {
       return 'tap';
     },
     step(g) {
-      // Once the hand stops, the joiner at the bench taps the rest on its own.
+      // The joiner at the bench taps on its own once the hand has stopped, a
+      // blow every AFTER_SIGN_S shared over a sign's taps; a fresh blank
+      // only with the timber for it.
       const t = T(), joiner = S.after.bodies.some(b => b.at === 'workshop');
-      if (!joiner || t - g.last < GESTURE_JOINER_WAIT_S || t - g.auto < GESTURE_JOINER_TAP_S) return;
-      // Only a sign the hand has started: an untouched blank is left for the
-      // joiner's own clock (bodies.js).
-      if (!g.nails.some(n => n > 0)) return;
+      const every = AFTER_SIGN_S / (GESTURE_NAILS * GESTURE_NAIL_TAPS);
+      if (!joiner || t - g.last < GESTURE_JOINER_WAIT_S || t - g.auto < every) return;
+      if (g.nails.every(n => n === 0) && S.after.stock.timber < AFTER_SIGN_TIMBER) return;
       const k = g.nails.findIndex(n => n < GESTURE_NAIL_TAPS);
       g.auto = t; g.strike = t; g.hit = k; g.nails[k] += 1;
       settleSign(g);

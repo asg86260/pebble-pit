@@ -560,6 +560,20 @@ function handPaper(up) {
   window.__holdShot();
 }
 
+// Track A: the workshop standing with timber for its blanks, `taps` nails
+// tapped by hand in order, then `after` seconds more; framed on the shed.
+function handNails(taps, after) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  for (const k of ['mill', 'workshop']) if (!S.after.built.includes(k)) S.after.built.push(k);
+  window.__afterGrant({ timber: 30, signs: 2 });
+  const b = stationBox('workshop');
+  window.__look(b.x + b.w / 2 + P * 10 - S.viewW / 2); window.__fast(0.5);
+  const nails = window.__gestureParts('workshop').nails;
+  for (let k = 0; k < taps; k++) { const n = nails[Math.floor(k / 2)]; window.__gesture('down', n.x + n.w / 2, n.y + n.h / 2); window.__gesture('up'); window.__fast(0.25); }
+  window.__fast(after);
+  window.__holdShot();
+}
+
 // Track A: the workshop ordered with the saw mill and the press standing
 // either side of its spot, four members in the camp to carry it, run on
 // until `until(site)` holds (null: never ordered), framed on the spot.
@@ -2950,6 +2964,14 @@ export const SCENES = {
     run: () => handPaper(false) },
   'after-paper-line': { about: 'the acts', say: "the paper mill with its bigger vat and drying line: two sheets a pull on a line eight sheets long",
     run: () => handPaper(true) },
+
+  // The workshop (docs/mocks/act3-workshop-2026-10-18, roof A): nails tapped
+  // by hand, two driven flush, one half in; and a sign just done, the
+  // carrier walking it out to the pile.
+  'after-nails': { about: 'the acts', say: "the workshop's sign blank on the bench, two nails tapped flush and one half in, the pips over the door to match",
+    run: () => handNails(5, 0.2) },
+  'after-sign-carry': { about: 'the acts', say: "a sign just nailed, the workshop's carrier walking it out to the pile of signs",
+    run: () => handNails(8, 0.9) },
 
   // Act 3's crowds, God and the camera's zoom (track C): the camp end with
   // both crowds in frame, the middle of God's crowd, and the dive's end.

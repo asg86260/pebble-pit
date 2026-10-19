@@ -87,9 +87,9 @@ group('the workshop: four nails a sign, two taps each; a miss does nothing; the 
   up(['mill', 'workshop'], { timber: 10, rebel: 500 });
   window.__grant({ dust: 40000, spores: 5000, shards: 2000, scales: 3000, sparks: 400 });
   const s0 = S.after.stock.signs;
-  // Off the nails, on the blank: nothing.
-  const sign = partsOf('workshop').sign;
-  click({ x: sign.x + sign.w / 2, y: sign.y + sign.h / 2 }); run(0.3);
+  // Off the nails, on the blank between two of them: nothing.
+  const n0 = partsOf('workshop').nails[0];
+  click({ x: n0.x + n0.w + P / 2, y: n0.y + n0.h / 2 }); run(0.3);
   const missed = rec('workshop').nails.every(n => n === 0);
   // One tap drives a nail half in, the second flush.
   click(mid(partsOf('workshop').nails[0])); run(0.3);

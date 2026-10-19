@@ -17,7 +17,7 @@ import { afterlifeOn } from '../acts.js';
 import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
 import { stepMill, forgetSpills } from './mill.js';
-import { stepPress } from './press.js';
+import { stepPress, forgetSigns } from './press.js';
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
 import { stepBodies } from './bodies.js';
@@ -106,7 +106,7 @@ export function stepAfter(c) {
   if (!afterlifeOn()) return;
   frames++;
   if (!S.after) return;
-  if (seen !== S.after) { forgetSpills(); forgetBubbles(); seen = S.after; }
+  if (seen !== S.after) { forgetSpills(); forgetBubbles(); forgetSigns(); seen = S.after; }
   S.after.t += secs(c);
   stepRebel(c);
   stepGrove(c);

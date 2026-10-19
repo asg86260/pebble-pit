@@ -23,7 +23,8 @@ const TURN = Math.PI / 16;                                 // a held step of a t
 const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
 import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT } from '../../config.js';
-import { K, W, PULP, DUST, hash, clamp01, silhouette } from './kit.js';
+import { K, W, PULP, DUST, hash, clamp01, silhouette, pileAlpha, countAt } from './kit.js';
+import { signsJoined } from '../../after/press.js';
 import { paperPulls } from '../../after/mill.js';
 
 const cyc = (t, T) => { const u = Math.max(0, t), k = Math.floor(u / T); return { ph: u / T - k, since: u - k * T }; };
@@ -356,61 +357,103 @@ function papermill(d, work, t, h, body = false, at = {}) {
   pulperLean = pu.st === 'lift' ? (pu.k % 2 ? -2 : -4) : pu.st === 'hang' ? -3 : pu.st === 'lower' ? -1 : held ? Math.round((px - 15) / 2) : 0;
 }
 
-// --- the workshop: the shed -------------------------------------------------------
-// A solid gabled mass with its whole front open, like the shack's cut-out, a
-// sign cut white over the door. Inside, a two-deep bench with the sign blank
-// stood in it and the body on a slatted stand at the blank's top edge; the
-// hammer in two held poses a whole quarter turn apart (up: handle plumb,
-// head level; strike: handle level, head plumb), a grey smear between,
-// never drawn at a slant.
-const WS_SEQ = ['up', 'up', 'up', 'swing', 'strike', 'strike', 'strike', 'strike'], WS_STEP = 0.16;
-const STAND_X = 20;
-function wsPose(work, t) {
-  if (!work) return { pose: 'rest', since: 9 };
-  const k = Math.floor(t / WS_STEP), i = k % WS_SEQ.length;
-  let j = i; while (j > 0 && WS_SEQ[j - 1] === WS_SEQ[i]) j--;
-  return { pose: WS_SEQ[i], since: t - (k - (i - j)) * WS_STEP };
+// --- the workshop: the shed, roof A ------------------------------------------------
+// docs/mocks/act3-workshop-2026-10-18, roof A, the clean gable: one even
+// stair to a five-cell ridge, the eaves a cell past each wall with a white
+// trim under them, and a sign over the door holding four pips, one a nail
+// (a ring raised, half filled half in, solid flush). Inside, the joiner on a
+// pale stand behind the bench, the blank edge-on with its four nails, and
+// the hammer in held poses: up, a smear for the swing, and plumb on the nail
+// struck. A finished sign is slid onto the carrier's head and walked out to
+// the pile of signs, and a blank fetched back from the blanks.
+const NAILS = [9, 12, 15, 18], BOARD = { x: 8, w: 12, row: -6, h: 2 }, JY = -11, REST_X = 12, SHANK = [9, 4, 0];
+const SIGNS_X = 27, BLANKS_X = 40, PILE_CAP = 4, CAR = { wait: 25, at: 20 };
+const SW_T = 0.06, ST_T = 0.14;
+const nailHeadY = (ypx, n) => ypx - SHANK[n] - 3;
+function roofA(d) {
+  d.r(5, -18, 21, 1, K);
+  d.px(5 * P, -17 * P - 2, 21 * P, 2, W);                     // the trim under the eaves
+  d.r(7, -19, 17, 1, K); d.r(9, -20, 13, 1, K); d.r(11, -21, 9, 1, K); d.r(13, -22, 5, 1, K);
+  d.r(6, -17, 19, 17, K); d.r(8, -16, 15, 16, W);             // walls and the open front
+  cut(d, 10, -20, 11, 2);                                     // the sign over the door
 }
-// A tap is a blow: the swing for a step, then held on the strike.
-function tapPose(h, t) {
-  const since = t - h.strike;
-  if (since < WS_STEP) return { pose: 'swing', since };
-  if (since < WS_STEP * 5) return { pose: 'strike', since: since - WS_STEP };
-  return null;
-}
-// The sign blank stood in the bench, x0..x0+5, rows y0..y0+3.
-function signBlank(d, x0, y0 = -8) {
-  d.r(x0, y0, 6, 4, K); cut(d, x0, y0, 6, 4);
-  d.px(x0 * P + 6, y0 * P + 7, 22, 3, K); d.px(x0 * P + 6, y0 * P + 13, 14, 3, K);
-}
-function benchKit(d, pose, since) {
-  d.r(9, -4, 11, 2, K);                                     // the bench top, two deep
-  d.r(10, -2, 2, 2, K); d.r(17, -2, 2, 2, K);               // its legs
-  signBlank(d, 11);
-  d.r(STAND_X, -6, 3, 6, K);                                // the stand the body works from
-  for (const y of [-5, -3, -1]) d.px(STAND_X * P + 3, y * P + 1, 3 * P - 6, 2, W);
-  const p = pose === 'rest' ? 'strike' : pose;              // at rest it lies where the last blow left it
-  if (p === 'up') { d.px(19 * P + 2, -13 * P, 4, 4 * P, K); d.r(18, -15, 3, 2, K); }
-  else if (p === 'swing') {
-    d.r(18, -15, 3, 2, 2);                                  // where it was, faint
-    d.r(15, -14, 3, 3, 4);                                  // half way, darker
-    d.px(17 * P, -10 * P + 1, 3 * P, 4, 4);
-  } else {
-    d.r(15, -11, 2, 3, K);                                  // the head stood on the blank's edge
-    d.px(17 * P, -10 * P + 1, 3 * P + 2, 4, K);             // the handle, level, back to the hand
-  }
-  if (pose === 'strike') d.fade(1 - since / (4 * WS_STEP), () => {
-    d.px(14 * P - 3, -9 * P + 2, 5, 2, K); d.px(14 * P - 2, -11 * P + 2, 2, 5, K);
+function pips(d, nails) {
+  const cw = 11 * P, gap = 8, pw = 6, x0 = 10 * P + Math.round((cw - (4 * pw + 3 * gap)) / 2), y0 = -20 * P + Math.round((2 * P - pw) / 2);
+  nails.forEach((n, i) => {
+    const x = x0 + i * (pw + gap);
+    d.px(x, y0, pw, pw, K);
+    if (n === 0) d.px(x + 1, y0 + 1, pw - 2, pw - 2, W); else if (n === 1) d.px(x + 1, y0 + 1, pw - 2, 2, W);
   });
 }
-function workshop(d, work, t, h) {
-  const { pose, since } = (h && tapPose(h, t)) || wsPose(work, t);
-  d.r(5, -18, 21, 1, K);                                    // eaves
-  d.r(7, -19, 17, 1, K); d.r(10, -20, 11, 1, K); d.r(13, -21, 5, 1, K);   // the gable, stepped
-  d.px(11 * P + 2, -20 * P + 2, 9 * P - 4, P + 4, W);       // a sign over the door, cut white
-  d.px(12 * P + 2, -20 * P + 5, 7 * P - 4, 2, K);
-  d.r(6, -17, 19, 17, K); d.r(8, -16, 15, 16, W);           // walls and the open front
-  benchKit(d, pose, since);
+// A board edge-on: two cells deep, its rim and grey grain.
+function wsBoard(d, x, ypx, w = BOARD.w) {
+  d.px(x * P, ypx, w * P, BOARD.h * P, K); d.px(x * P + 2, ypx + 2, w * P - 4, BOARD.h * P - 4, 3);
+  d.px(x * P + 2, ypx + 5, w * P - 4, 2, 5);
+}
+function wsNail(d, col, ypx, n) { const sh = SHANK[n]; if (sh) d.px(col * P + 2, ypx - sh, 2, sh, K); d.px(col * P - 1, ypx - sh - 3, P + 2, 3, K); }
+const nailed = (d, x, ypx, nails) => { wsBoard(d, x, ypx); NAILS.forEach((c, i) => wsNail(d, x - BOARD.x + c, ypx, nails[i])); };
+function wsHammer(d, pose, bx, hy, by = JY * P) {
+  const hand = bx * P;
+  if (pose === 'up') { d.px(hand - 4, by, 4, 12, K); d.px(hand - 7, by - 6, 10, 6, K); }
+  else if (pose === 'swing') { d.px(hand - 7, by - 6, 10, 6, 2); d.px(hand - 12, by + 2, 8, 8, 4); d.px(hand - 6, by + 8, 6, 4, 4); }
+  else { const top = hy - 10; d.px(hand - 2 * P, top, P, 10, K); d.px(hand - P, top + 3, P, 4, K); }
+}
+// The carrier's walk with a sign, by seconds since it was joined: in from
+// its spot to the bench, the board slid onto its head, out to the signs and
+// laid on, on to the blanks and one lifted, back, slid onto the bench, home.
+// Keyframes [t, carrier x, board x, board row, where the board is].
+const CARRY = (() => {
+  const k = [], step = 0.06; let t = 0.35, x = CAR.wait;
+  const walk = (to, board) => { while (x !== to) { x += Math.sign(to - x); t += step; k.push([t, x, board === 'head' ? x - 4 : null, -5, board]); } };
+  k.push([0, x, BOARD.x, BOARD.row, 'bench'], [t, x, BOARD.x, BOARD.row, 'bench']);
+  walk(CAR.at, 'bench');
+  for (let bx = BOARD.x; bx < x - 4; bx++) { t += step; k.push([t, x, bx + 1, BOARD.row, 'bench']); }
+  t += step; k.push([t, x, x - 4, -5, 'head']);
+  walk(SIGNS_X + 4, 'head');
+  t += step * 3; k.push([t, x, null, null, 'laid']);
+  walk(BLANKS_X + 4, null);
+  t += step * 3; k.push([t, x, x - 4, -5, 'head']);
+  walk(CAR.at, 'head');
+  for (let bx = x - 4; bx > BOARD.x; bx--) { t += step; k.push([t, x, bx - 1, BOARD.row, 'bench']); }
+  walk(CAR.wait, null);
+  return k;
+})();
+const carryAt = since => CARRY.reduce((a, f) => (f[0] <= since ? f : a), CARRY[0]);
+const CARRY_S = CARRY[CARRY.length - 1][0];
+function workshop(d, work, t, h, body = false, at = {}) {
+  const nails = h ? h.nails : [0, 0, 0, 0];
+  roofA(d);
+  pips(d, nails);
+  d.r(9, -8, 14, 8, 1);                                       // the stand, pale and edgeless
+  for (const y of [-7, -5, -3]) d.px(9 * P + 2, y * P + 2, 14 * P - 4, 2, 2);
+  d.r(8, -4, 13, 2, K); d.r(9, -2, 2, 2, K); d.r(17, -2, 2, 2, K);   // the bench
+  // The carrier, while it walks a sign out: the board where it has it.
+  const joined = signsJoined(), last = joined.length ? joined[joined.length - 1] : -1e9, since = t - last;
+  const f = since >= 0 && since < CARRY_S ? carryAt(since) : null;
+  if (!f || f[4] === 'bench' && f[2] === BOARD.x) nailed(d, BOARD.x, BOARD.row * P, f && since > 0.35 && f[0] < CARRY_S / 2 ? [2, 2, 2, 2] : nails);
+  else if (f[4] === 'bench') nailed(d, f[2], BOARD.row * P, f[0] < CARRY_S / 2 ? [2, 2, 2, 2] : [0, 0, 0, 0]);
+  // The hammer, on the nail last struck.
+  const k = h && h.hit != null ? h.hit : null, s2 = h ? t - h.strike : 9;
+  const jx = k != null && s2 < 2 ? NAILS[k] + 2 : REST_X;
+  const pose = k != null && s2 < SW_T ? 'swing' : k != null && s2 < SW_T + ST_T ? 'strike' : 'up';
+  wsHammer(d, pose, jx + 1, pose === 'strike' ? nailHeadY(BOARD.row * P, nails[k] || 2) : 0);
+  if (pose === 'strike') d.fade(1 - (s2 - SW_T) / ST_T, () => { const c = NAILS[k], hy = nailHeadY(BOARD.row * P, nails[k] || 2); d.px(c * P - 5, hy - 4, 3, 2, K); d.px(c * P - 4, hy - 9, 2, 3, K); d.px(c * P + P + 2, hy - 4, 3, 2, K); });
+  wsLastJx = jx;
+  // The carrier and what it carries, over the walls once it is outside.
+  const cx = f ? f[1] : CAR.wait;
+  d.body(cx, -3);
+  if (f && f[4] === 'head') nailed(d, f[2], f[3] * P, f[0] < CARRY_S / 2 ? [2, 2, 2, 2] : [0, 0, 0, 0]);
+  // The blanks, as many as there is timber for, edge-on.
+  const blanks = Math.min(PILE_CAP, at.blanks || 0);
+  for (let i = 0; i < blanks; i++) wsBoard(d, BLANKS_X, (-2 - 2 * i) * P);
+}
+let wsLastJx = REST_X;
+// Signs at the pile: boards edge-on with their nails flush (piles.js's fade).
+export function boardPile(d, x, st) {
+  const m = Math.min(Math.max(st.n, st.prev), PILE_CAP);
+  for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => nailed(d, x, (-2 - 2 * i) * P, [2, 2, 2, 2]));
+  const at = d.world(x + BOARD.w / 2, -2 * Math.max(1, Math.min(st.n, PILE_CAP)) - 2.4);
+  countAt(at.x, at.y, st.n);
 }
 
 // --- the press: a screw and a platen in a frame -----------------------------------
@@ -487,7 +530,7 @@ export function workerPose(key, work, t) {
   if (key === 'mill') return { x: MILL.body, y: -3, dx: 0 };
   if (key === 'chipper') return { x: CH.body - 1, y: -3, dx: 0 };
   if (key === 'papermill') return { x: 6, y: -12, dx: pulperLean * 2 };
-  if (key === 'workshop') return { x: STAND_X, y: -9, dx: 0 };
+  if (key === 'workshop') return { x: wsLastJx - 1, y: JY, dx: 0 };
   if (key === 'press') return { x: PR.bodyX, y: -4, dx: 0, squat: prDrop(work, t) === 2 };
   return null;
 }

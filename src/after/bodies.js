@@ -199,7 +199,13 @@ const JOB_STEP = {
     if (vatOf(w) == null && built('papermill')) { if (go(w, stationDoor('papermill') + (w.id % 3) * P, floorY(), dt)) w.at = null; return; }
     stationWork(w, 'papermill', AFTER_PULP_S, dt);
   },
-  joiner(w, dt) { stationWork(w, 'workshop', AFTER_SIGN_S, dt); },
+  // The joiner stands at its bench; its blows are the nails' (gestures.js,
+  // the workshop's own taps once the hand stops), so a sign is the four
+  // nails it drives, at the hand's pace or its own.
+  joiner(w, dt) {
+    if (!built('workshop')) { w.at = null; idle(w, dt); return; }
+    w.at = go(w, stationDoor('workshop'), floorY(), dt) ? 'workshop' : null;
+  },
   printer(w, dt) { stationWork(w, 'press', AFTER_PRESS_S, dt); },
   builder(w, dt) {
     // Carrying the station's loads in and raising it off them (build.js).
