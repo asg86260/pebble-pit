@@ -461,9 +461,10 @@ function drawHalf(place, from = 0, to = LAYERS.length, skip = null) {
 
 // The dark page's map a layer is drawn in (ink.js): the deep's whole half in
 // the deep's own, the layers that are read in the turned one so black words
-// come out light, and the rest in the yard's, where black stays black. On
-// the light page every map is the identity.
-const mapOf = (name, place) => place === 'deep' ? 'deep' : READING.has(name) ? 'line' : 'yard';
+// come out light, act 3's own layers in its own spread, and the rest in the
+// yard's, where black stays black. On the light page every map is the
+// identity.
+const mapOf = (name, place) => place === 'deep' ? 'deep' : READING.has(name) ? 'line' : AFTER.has(name) ? 'after' : 'yard';
 
 function drawLayer(layer, i, place) {
   // A `dim` layer is the crew's own plane, and the corner's crew switch

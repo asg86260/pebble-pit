@@ -142,7 +142,7 @@ step darker than the sky, a storm at night (the owner's call). Nothing else
 moves.
 
 **The canvas.** `ink.js` keeps its one job and its place on the
-prototype's setters, but it has three maps now, and `render.js` says which
+prototype's setters, but it has four maps now, and `render.js` says which
 one each layer is drawn in (`inkMode`, set in `drawLayer`):
 
 - **yard**, for the world: white goes to the paper and black stays black,
@@ -158,6 +158,15 @@ one each layer is drawn in (`inkMode`, set in `drawLayer`):
   light gray turned by lightness (`DEEP_PAPER`, `DEEP_INK`). The deep was
   drawn as a dark field on either page and is left exactly as it was, with
   `landed`, `turned` and its negative skipped as before (`turnedOver()`).
+- **after**, for act 3's layers (render.js, `AFTER`; the owner, 2026-10-19,
+  option 1): still black stays black, but its own spread. The act is drawn
+  in four tones only, and the yard's map put all four inside the paper's
+  quarter of the range (#3a3a3a, #2b2b2b, #1b1b1b, #000), a murk at 1x.
+  Here they sit an equal lightness step apart, the step the paper already
+  stands over black: ink #000, paper #3a3a3a, pale #747474, mid #aeaeae.
+  The greys climb above the paper, mid the higher, so the far crowd's pale
+  is still the tone nearest the paper; God's raw white stays the lightest
+  thing in the act (`afterSpread` in ink.js).
 
 Two tags decide a color at the call, past the map, as `raw` does, and are
 the identity on the light page. `light(c)` keeps a color as written with

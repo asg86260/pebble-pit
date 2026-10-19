@@ -8,7 +8,9 @@
 // and image-data pixel, on a sheet that keeps them, across the act's scenes,
 // sprites and band canvases included.
 import { group, ok, run, yard } from './helpers.mjs';
-import { GREY, AFTER_TONES } from '../src/config.js';
+import { GREY, AFTER_TONES, DARK_PAPER } from '../src/config.js';
+import { setPref } from '../src/prefs.js';
+import { inkOf } from '../src/ink.js';
 import { SCENES } from '../src/scenes.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawAfterBackdrop, drawAfterSky, drawAfterGrove, drawAfterCamp, drawAfterMembers, drawAfterCounts } from '../src/render/after.js';
@@ -97,5 +99,33 @@ group("act 3's layers paint only its four tones, God's raw light aside", async (
   return [
     ok(stood.length === SCENE_NAMES.length, 'every act-3 scene stood the act up', SCENE_NAMES.filter(n => !stood.includes(n)).join(', ')),
     ok(off.length === 0, 'no tone outside paper, pale, mid and ink', off.join('; ')),
+  ];
+});
+
+// On the dark page the act has its own spread (ink.js, 'after'): black stays
+// black and white the graphite paper, and the two greys stand up off the
+// paper a clear step each, where the yard's map squeezed all four into the
+// paper's quarter of the range. What is checked is the map itself, read off
+// a copy of ink.js loaded on the dark page, since the yard here is the light
+// one -- on which the map must stay the identity.
+const AFTER_STEP_MIN = 0.2;   // of the lightness range, between any two of the four
+const lightness = c => { const [r, g, b] = hex6(c).slice(1).match(/../g).map(h => parseInt(h, 16)); return (Math.max(r, g, b) + Math.min(r, g, b)) / 510; };
+
+group("act 3's four tones sit apart on the dark page, and the light page is as written", async () => {
+  setPref('theme', 'dark');
+  let dark;
+  try { dark = await import('../src/ink.js?after-dark'); } finally { setPref('theme', null); }
+  const to = Object.fromEntries(Object.entries(AFTER_TONES).map(([k, i]) => [k, dark.inkOf(GREY[i], 'after')]));
+  const ls = Object.values(to).map(lightness).sort((a, b) => a - b);
+  const gaps = ls.slice(1).map((l, i) => l - ls[i]);
+  const said = Object.entries(to).map(([k, c]) => `${k} ${c}`).join(', ');
+  return [
+    ok(dark.darkPage, 'the copy is on the dark page'),
+    ok(hex6(to.ink) === '#000000', 'the ink stays black', said),
+    ok(hex6(to.paper) === hex6(DARK_PAPER), "the paper is the dark page's graphite", said),
+    ok(lightness(to.pale) > lightness(to.paper) && lightness(to.mid) > lightness(to.pale), 'pale and mid stand above the paper, mid the higher', said),
+    ok(Math.min(...gaps) >= AFTER_STEP_MIN, `every two of the four at least ${AFTER_STEP_MIN} apart`, `${said}; gaps ${gaps.map(g => g.toFixed(3)).join(', ')}`),
+    ok(lightness(to.mid) < 1, "God's raw white is still the lightest thing in the act", said),
+    ok(Object.values(AFTER_TONES).every(i => inkOf(GREY[i], 'after') === GREY[i]), 'the light page draws the four as written'),
   ];
 });

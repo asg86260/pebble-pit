@@ -7,7 +7,7 @@
 // identity, so it is not installed at all. The dim page (prefs.js, `theme`)
 // is the first dark page, kept as the player's choice: one map, light gray
 // on charcoal turned by lightness, everywhere, and the tags below are that
-// map too. The dark page has three maps, and render.js says which one a
+// map too. The dark page has four maps, and render.js says which one a
 // layer is drawn in (`inkMode`):
 //
 // - 'yard', the default: white goes to the graphite paper and black stays
@@ -22,6 +22,13 @@
 // - 'deep', for the deep's whole half: the same turn between the old dark
 //   page's charcoal and light gray. The deep was drawn for that, as a dark
 //   field on either page, and it is left as it was.
+// - 'after', for act 3's layers (render.js, AFTER): black still black and
+//   white still the paper, but the act's two greys stood up off the paper
+//   rather than squeezed between it and the ink. The act is drawn in four
+//   tones and no others (config, AFTER_TONES), and the yard's map puts all
+//   four inside the paper's quarter of the range, a murk at 1x. Here they
+//   sit an equal lightness step apart, the step the paper already is above
+//   the ink: ink, paper, pale, mid, at 0, 1, 2 and 3 steps (`afterSpread`).
 //
 // Two tags decide a color at the call, past the map, as `raw` does:
 // `light(c)` for a thing that shines (a lit window, the portal, a fire),
@@ -37,7 +44,7 @@
 // cached on a scratch canvas was drawn in the palette of the moment, and
 // the palette cannot be changed under it.
 
-import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, DEEP_PAPER, DEEP_INK } from './config.js';
+import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, DEEP_PAPER, DEEP_INK, GREY, AFTER_TONES } from './config.js';
 import { theme } from './prefs.js';
 
 const look = theme();
@@ -82,8 +89,9 @@ function fromHsl(h, s, l) {
 
 // The ends of each map: where white lands and where black lands.
 const DEEP_ENDS = [lightOf(DEEP_PAPER), lightOf(DEEP_INK)];
-const ENDS = dim ? { yard: DEEP_ENDS, line: DEEP_ENDS, deep: DEEP_ENDS } : {
+const ENDS = dim ? { yard: DEEP_ENDS, line: DEEP_ENDS, deep: DEEP_ENDS, after: DEEP_ENDS } : {
   yard: [lightOf(DARK_PAPER), 0],
+  after: [lightOf(DARK_PAPER), 0],
   line: [lightOf(DARK_PAPER), lightOf(DARK_INK)],
   deep: DEEP_ENDS,
 };
@@ -91,18 +99,43 @@ const ENDS = dim ? { yard: DEEP_ENDS, line: DEEP_ENDS, deep: DEEP_ENDS } : {
 // the spread of its channels, faded in between the two so no hue jumps.
 const DULL = 0.22, KEPT = 0.42;
 
+// Act 3's dark spread: where each of its four tones lands, as lightness, for
+// a paper of lightness `p`. One step is the paper's own height over the ink,
+// and pale and mid climb on past the paper by that step each, so every pair
+// of neighbors is the same distance apart and the lightest, mid, is three
+// times the paper -- under the light ink and God's raw white, which stays the
+// brightest thing in the act. A paper too light for three steps
+// would have them shared out between it and white instead.
+export function afterSpread(p) {
+  const step = Math.min(p, (1 - p) / 3);
+  return { ink: 0, paper: p, pale: p + step, mid: p + 2 * step };
+}
+// The map as knots, written lightness to drawn lightness, from the darkest:
+// a tone between two of the four lands between theirs.
+const AFTER_KNOTS = (() => {
+  const to = afterSpread(lightOf(DARK_PAPER));
+  return Object.entries(AFTER_TONES).map(([k, i]) => [lightOf(GREY[i]), to[k]]).sort((a, b) => a[0] - b[0]);
+})();
+function afterLight(l) {
+  for (let i = 1; i < AFTER_KNOTS.length; i++) {
+    const [l0, t0] = AFTER_KNOTS[i - 1], [l1, t1] = AFTER_KNOTS[i];
+    if (l <= l1) return t0 + (t1 - t0) * (l - l0) / (l1 - l0);
+  }
+  return AFTER_KNOTS[AFTER_KNOTS.length - 1][1];
+}
+
 let mode = 'yard';
 // Which map the next fills go through (render.js, a layer at a time).
 export function inkMode(m) { if (m) mode = m; return mode; }
 // Whether black is being drawn light: the turned maps, where a `darken`
 // becomes a `lighten` and the deep skips its negative.
-export const turnedOver = () => on && (dim || mode !== 'yard');
+export const turnedOver = () => on && (dim || (mode !== 'yard' && mode !== 'after'));
 
 function mapRgb(r, g, b, m) {
   const [h, s, l] = toHsl(r, g, b);
   const [lw, lb] = ENDS[m];
-  const to = lb + (lw - lb) * l;
-  if (m !== 'yard' || dim) return fromHsl(h, s, to);
+  const to = m === 'after' && !dim ? afterLight(l) : lb + (lw - lb) * l;
+  if ((m !== 'yard' && m !== 'after') || dim) return fromHsl(h, s, to);
   const chroma = (Math.max(r, g, b) - Math.min(r, g, b)) / 255;
   const k = Math.min(1, Math.max(0, (chroma - DULL) / (KEPT - DULL)));
   return fromHsl(h, s, to + (l - to) * k);
@@ -131,7 +164,7 @@ export function seen(c) {
   if (!on) return c;
   const [h, s, l] = toHsl(...hex(c));
   const [lw, lb] = ENDS[mode];
-  const lo = Math.min(lw, lb), hi = mode === 'yard' && !dim ? lightOf(DARK_INK) : Math.max(lw, lb);
+  const lo = Math.min(lw, lb), hi = (mode === 'yard' || mode === 'after') && !dim ? lightOf(DARK_INK) : Math.max(lw, lb);
   return raw(toHex(fromHsl(h, s, lo + (hi - lo) * l)));
 }
 
@@ -152,7 +185,7 @@ export function line(c) {
 
 const NAMED = { black: [0, 0, 0], white: [255, 255, 255] };
 const RGB = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/;
-const caches = { yard: new Map(), line: new Map(), deep: new Map() };
+const caches = { yard: new Map(), line: new Map(), deep: new Map(), after: new Map() };
 
 // The color the page draws for a color the code wrote, in the map in force.
 // Anything it cannot read -- a gradient, a pattern, a name it does not know --
@@ -183,8 +216,8 @@ export function inkOf(c, m = mode) {
 // as on the light page, the fill is white.
 const sum = (p, i) => { const [a, b, c] = hex(p), [d, e, f] = hex(i);
   return raw('#' + [a + d, b + e, c + f].map(v => Math.min(255, v).toString(16).padStart(2, '0')).join('')); };
-const XOR = dim ? { yard: sum(DEEP_PAPER, DEEP_INK), line: sum(DEEP_PAPER, DEEP_INK), deep: sum(DEEP_PAPER, DEEP_INK) }
-  : { yard: raw('#ffffff'), line: sum(DARK_PAPER, DARK_INK), deep: sum(DEEP_PAPER, DEEP_INK) };
+const XOR = dim ? { yard: sum(DEEP_PAPER, DEEP_INK), line: sum(DEEP_PAPER, DEEP_INK), deep: sum(DEEP_PAPER, DEEP_INK), after: sum(DEEP_PAPER, DEEP_INK) }
+  : { yard: raw('#ffffff'), line: sum(DARK_PAPER, DARK_INK), deep: sum(DEEP_PAPER, DEEP_INK), after: raw('#ffffff') };
 export const xorInk = () => (on ? XOR[mode] : raw('#ffffff'));
 
 // The setters, on the prototype, so every context is covered. Only on the
