@@ -39,8 +39,8 @@ import { secs } from './util.js';
 // axe bought and in hand, the pair's last line (`shout`), the heap last
 // tipped and each station last worked by hand (`tipAt`, `workAt`), the
 // clouds and the motes coming down, the bodies -- members walking out, at
-// their posts and building -- the wardens, the throne's speech, and the last
-// id handed out.
+// their posts and building -- the throne's speech, and the last id handed
+// out.
 export const blankAfter = () => ({
   rebel: 0,
   stock: Object.fromEntries(AFTER_STOCK.map(k => [k, 0])),
@@ -67,7 +67,6 @@ export const blankAfter = () => ({
   clouds: [],
   motes: [],
   bodies: [],
-  wardens: [],
   speech: null,
   gateAt: null,
   brimAt: null,
@@ -135,7 +134,9 @@ export const SAVE = {
   write(out) { if (S.after) syncRims(); out.after = S.after ? JSON.parse(JSON.stringify(S.after)) : null; },
   read(s) {
     const a = s.after;
-    S.after = a && typeof a === 'object' ? { ...blankAfter(), ...a, stock: { ...blankAfter().stock, ...(a.stock || {}) } } : null;
+    // An older save's wardens, which nothing reads, are left out.
+    const { wardens, ...kept } = a && typeof a === 'object' ? a : {};
+    S.after = a && typeof a === 'object' ? { ...blankAfter(), ...kept, stock: { ...blankAfter().stock, ...(a.stock || {}) } } : null;
   },
   blank() { S.after = null; }
 };

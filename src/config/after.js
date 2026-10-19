@@ -265,12 +265,6 @@ export const AFTER_POSTER_FADE_S = 2;      // a torn poster's strips fading
 // --- God's pushback ---
 export const AFTER_SPEECH_S = 100;         // between the throne's speeches; halved past the slowdown
 export const AFTER_SPEECH_WARN_S = 6;      // warned this long ahead
-export const AFTER_SPEECH_FILES = 16;      // files its sweep crosses
-export const AFTER_SPEECH_HOLD_S = 1.5;    // the glare held across them
-export const AFTER_WARDENS = [0, 2, 4, 4]; // wardens on rounds, by gate reached: none until the first meeting, and the slowdown doubles them
-export const AFTER_WARDEN_REST_S = 60;     // a warden's rest between rounds
-export const AFTER_TEAR_S = 3;             // a warden tearing a poster down
-export const AFTER_PULL_S = 2;             // ...or pulling a sign up
 
 // --- the members and their posts ---
 // Members in the camp are not workers (call 14, settled): a post is bought at

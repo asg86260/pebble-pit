@@ -11,8 +11,9 @@ import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIE
          ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_SHOUT_REBEL, AFTER_SHOUT_REBEL_UP, AFTER_PLOTS0, AFTER_PLOT_MAX,
          AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL,
          AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_SAW_S, AFTER_TIP_LOAD, AFTER_CHIP_SAWDUST,
-         AFTER_BUILDS, AFTER_POST_DUST, AFTER_PULP_S, AFTER_VAT_SHEETS, AFTER_DRY_VATS, AFTER_PULP_SAWDUST, AFTER_SIGN_INK_S,
+         AFTER_BUILDS, AFTER_POST_DUST, AFTER_PULP_S, AFTER_VAT_SHEETS, AFTER_DRY_VATS, AFTER_PULP_SAWDUST, AFTER_SIGN_INK_S, AFTER_BURN_S,
          GESTURE_STRAIN_S } from '../src/config.js';
+import { speechTarget } from '../src/after/union.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
 import { pileAt, stationBox, plotX } from '../src/after/place.js';
@@ -42,7 +43,9 @@ const up = () => {
 };
 const tree = i => window.__afterTrees()[i];
 const rims = () => S.after.rims;
-const inked = () => rims().split('').reduce((n, c) => n + (c === '9' ? 0 : +c), 0);
+// The ink on the first `n` souls: a soul rising into the back of the crowd
+// since may arrive part-inked, which no station did.
+const inked = (n = Infinity) => rims().slice(0, n).split('').reduce((t, c) => t + (c === '9' ? 0 : +c), 0);
 // The first members, or any set walking, turned on until they stand in the camp.
 const settle = () => runUntil(() => read().walking === 0, 120);
 const line = () => { const at = window.__afterPair(); return window.__afterClick(at.x, at.y); };
@@ -92,7 +95,7 @@ group('an agitator post is filled from the camp and makes rebel, and wins nobody
   const posts = [0, 1].map(() => window.__buy('after-post-agitator'));
   run(0.1);
   const camp1 = read().camp;
-  const ink0 = inked(), r0 = read().rebel;
+  const n0 = rims().length, ink0 = inked(n0), r0 = read().rebel;
   run(30);
   const agitators = S.after.bodies.filter(b => b.job === 'agitator');
   const made = read().rebel - r0;
@@ -111,7 +114,7 @@ group('an agitator post is filled from the camp and makes rebel, and wins nobody
     ok(posts.every(Boolean) && camp1 === camp0 - 2, 'two posts bought, two members leave the camp for them', `${camp0} -> ${camp1}`),
     ok(agitators.length === 2 && made > 0, 'the agitators stand by the pedestal and their lines make rebel', `${agitators.length}, +${made}`),
     ok(made < 30 / 0.25 * AFTER_SHOUT_REBEL, 'less than a click\'s worth', `${made}`),
-    ok(inked() === ink0, 'and nobody in the crowd is inked by it', `${ink0} -> ${inked()}`),
+    ok(inked(n0) === ink0, 'and nobody in the crowd is inked by it', `${ink0} -> ${inked(n0)}`),
     ok(empty && filled, 'a post with nobody in the camp stands empty until a member walks in to it', `${empty} ${filled}`)
   ];
 });
@@ -555,24 +558,32 @@ group('the bigger vat makes more paper a batch; the drying line stirs a second b
   ];
 });
 
-group('the throne\'s speech strips the half-won and the wardens tear posters', async () => {
+// The throne's speech (docs/wave-act3-build.md, track B): warned first by God's
+// gaze settling on one sign or poster, then that one burnt away. Souls are
+// never knocked back, and nobody walks rounds.
+group('a speech burns a sign after its warning, and knocks no soul back', async () => {
   up();
   window.__afterCrowd(i => (i < CROWD_FILES ? 9 : 4));
-  S.after.speech = { next: S.after.t + 8, f0: 0, held: null };
-  S.after.posters.push({ id: 900, slot: 3, age: 0, torn: null, big: false });
-  run(3);
-  const warned = S.after.t >= S.after.speech.next - 6;
-  run(6);
-  const after = S.after.rims;
-  const file1 = [1, 2, 3].map(r => after[r * CROWD_FILES + 1]).join('');
-  const far = after[5 * CROWD_FILES + 30];
-  const torn = runUntil(() => !S.after.posters.some(p => p.id === 900), 120);
+  S.after.signs.push({ id: 901, f: 6, r: 1, askew: false, pull: null, big: false, age: 0 });
+  S.after.speech = { next: S.after.t + 8, target: null, burnt: null };
+  const before = rims();
+  run(1);
+  const early = speechTarget();
+  run(2);
+  const aimed = speechTarget(), standing = S.after.signs.some(q => q.id === 901 && q.burnt == null);
+  runUntil(() => S.after.signs.some(q => q.id === 901 && q.burnt != null), 10);
+  const burnt = S.after.speech.burnt;
+  const after = rims();
+  const back = [...after].filter((c, i) => c !== '9' && +c < +before[i]).length;
+  const gone = runUntil(() => !S.after.signs.some(q => q.id === 901), AFTER_BURN_S + 1);
   window.__actsOn(null);
   return [
-    ok(warned, 'the speech is warned ahead'),
-    ok(file1 === '000', 'souls in its sweep lose their open pieces', file1),
-    ok(+far >= 4, 'souls outside it keep theirs', far),
-    ok(torn, 'a warden walks to the poster and tears it down')
+    ok(early === null, 'no mark before the warning'),
+    ok(aimed && aimed.id === 901 && standing, 'warned: the gaze settles on the sign, still standing', JSON.stringify(S.after.speech)),
+    ok(burnt && burnt.kind === 'sign' && burnt.id === 901, 'then the speech burns that sign', JSON.stringify(burnt)),
+    ok(back === 0, 'and not one soul is knocked back', `${back}`),
+    ok(gone, 'the sign chars away and is gone'),
+    ok(!('wardens' in S.after), 'no wardens walk the crowd')
   ];
 });
 

@@ -38,9 +38,9 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1 } from './after/place.js';
+import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX } from './after/place.js';
 import { afterEnd } from './view.js';
-import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S } from './config.js';
+import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE } from './config.js';
 import { FINALE_HOUSE_W } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
@@ -610,6 +610,25 @@ function afterMass(pan) {
   const ped = CROWD_X0 - P * 20;
   const cx = pan == null ? ped : CROWD_X0 + (afterEnd() - CROWD_X0) * pan;
   window.__look(cx - S.viewW / 2); window.__fast(1); window.__holdShot();
+}
+
+// Track B: the sky at `share` of the way to the strike (a crowd of 4,000,
+// that many walked out with no walk), signs and posters standing along God's
+// yard, the camera `pan` of the way along the dive. `what` stands a rally or
+// a roar going on: the clock turned to the moment one is out across the sky.
+function heavenAt(share, pan = 0, what = null) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  const n = 4000, gone = Math.round(n * share * STRIKE_SHARE);
+  S.after.rims = Array.from({ length: n }, (_, i) => (i < gone ? '9' : '0')).join('');
+  S.after.speech = { next: S.after.t + 1e6, target: null, burnt: null };
+  for (const [f, r] of [[4, 1], [14, 3], [24, 0], [34, 2]]) S.after.signs.push({ id: 94000 + f, f, r, askew: false, pull: null, big: false, age: 0 });
+  for (const slot of [8, 22, 36]) S.after.posters.push({ id: 95000 + slot, slot, age: 0, torn: null, big: false });
+  const t = S.after.t;
+  // A rally falls every 7.5 s or so, a roar every 6.5 (render/aftercrowd.js).
+  const wait = what === 'rally' ? 7.5 - (t % 7.5) + 1.2 : what === 'roar' ? 6.5 - ((t - 2.5) % 6.5) + 0.8 : 2;
+  window.__fast(wait);
+  const a = afterOpenX(), cx = a + (afterEnd() - a) * pan;
+  window.__look(cx - S.viewW / 2); window.__fast(1 / 30); window.__holdShot();
 }
 
 const snatchAt = (phase, into = 0, pin = false) => () => {
@@ -2987,6 +3006,26 @@ export const SCENES = {
   'after-crowd-mass-throne': { about: 'the acts', say: 'the pan at its end: the dive on the top of the throne, God hazed no longer',
     run: () => afterMass(1) },
 
+  // --- track B: the sky (render/aftercrowd.js, docs/mocks/act3-skycrowd-2026-10-18) ---
+  // God's crowd filling the sky at a share of the way to the strike, the
+  // camera where the act opens or `pan` of the way on to the end of the dive.
+  'heaven-10': { about: 'the acts', say: "God's crowd filling the sky, a tenth of the way to the strike: every band full, God over them",
+    run: () => heavenAt(0.1) },
+  'heaven-50': { about: 'the acts', say: "God's crowd half way to the strike: the far bands speckled and sunk",
+    run: () => heavenAt(0.5) },
+  'heaven-90': { about: 'the acts', say: "God's crowd nine tenths of the way to the strike: a low scatter of the near band, the rays nearly gone",
+    run: () => heavenAt(0.9) },
+  'heaven-100': { about: 'the acts', say: "the strike's share won: a thin low scatter left, no rays, the tithe line standing still",
+    run: () => heavenAt(1) },
+  'heaven-pan': { about: 'the acts', say: 'the camera half way along the dive toward God',
+    run: () => heavenAt(0.1, 0.5) },
+  'heaven-zoom': { about: 'the acts', say: "the dive's end: God's face pulled to the window's middle, zoomed in",
+    run: () => heavenAt(0.1, 1) },
+  'heaven-rally': { about: 'the acts', say: 'a rally off a sign: its ring climbing through every band, the near souls with their arms up',
+    run: () => heavenAt(0.1, 0, 'rally') },
+  'heaven-roar': { about: 'the acts', say: "God's roar: his bubble and teeth, the ring ducking the crowd as it passes",
+    run: () => heavenAt(0.1, 0, 'roar') },
+
   // --- the acts' connective tissue (actbeats.js, portals.js, mansion.js) --------
   // Each off a yard past the snatch with the wizards' portal up and a crew to
   // borrow, stood at its point of the acts' story (`__actsAt`).
@@ -3043,15 +3082,13 @@ export const SCENES = {
   ...Object.fromEntries(['shack', 'grove', 'pedestal', 'mill', 'chipper', 'papermill', 'workshop', 'press', 'crowd'].map(key =>
     [`act3-board-${key}`, { about: 'the acts', say: `act 3's ${key} board open in the yard's sheet, its shelves, bills in the act's marks`,
       run: () => act3Board(key) }])),
-  // God's pushback over the crowd as drawn (render/aftercrowd.js): the
-  // throne's speech warned over its band of files, then held across them,
-  // stripping the half-won; and the wardens at a poster and a sign.
-  'act3-speech-warned': { about: 'the acts', say: 'the throne\'s speech warned: its band of files framed over half-won souls, a sign and posters standing',
+  // God's pushback as drawn (render/aftercrowd.js): the throne's speech
+  // warned, his gaze settled on a sign with the corner marks closing in; then
+  // the sign burning away.
+  'act3-speech-warned': { about: 'the acts', say: "the throne's speech warned: God's gaze settled on a sign, the corner marks closing in on it",
     run: () => pushback('warned') },
-  'act3-speech-held': { about: 'the acts', say: 'the throne\'s speech held across its band: the half-won souls in it stripped pale, the sign in it knocked askew',
-    run: () => pushback('held') },
-  'act3-wardens': { about: 'the acts', say: 'the wardens on their rounds: one tearing a poster off the fence, one carrying a sign up toward the throne',
-    run: () => pushback('wardens') },
+  'act3-speech-burn': { about: 'the acts', say: "the throne's speech fallen: the sign it was aimed at charring and burning away, embers rising",
+    run: () => pushback('burn') },
   'mansion': { about: 'the acts', say: 'the mansion going up on the house\'s ground: the scaffold, a floor and a half set, the rock half broken up',
     run: () => { actsYard('mansion', 34); window.__fast(3); pinCamera(0); window.__holdShot(); } },
   'mansion-end': { about: 'the acts', say: 'the mansion finished, the two of them in, the freed souls down the stair in their files',
@@ -3121,37 +3158,23 @@ function act3Board(key) {
   window.__holdShot();
 }
 
-// God's pushback at a moment (`what`: 'warned', 'held', 'wardens'): the
-// opening played, the crowd half won in its front files, posters along the
-// fence and a sign among the files, the camera on the crowd's front.
+// God's pushback at a moment (`what`: 'warned', 'burn'): the opening
+// played, the crowd half won in its front files, posters along the fence and
+// a sign among the files, the speech aimed at the sign, the camera where
+// the act opens.
 function pushback(what) {
   actsYard('fallen');
   window.__goPlace('after');
   const A = S.after;
   window.__afterCrowd((i, v) => (i % CROWD_FILES < 24 ? 3 + (i * 7) % 4 : v));
-  for (let s = 0; s < 12; s += 2) A.posters.push({ id: 91000 + s, slot: s, age: 0, torn: null, big: false });
-  A.signs.push({ id: 92000, f: 6, r: 1, askew: false, pull: null, big: false, age: 0 });
-  A.speech = { next: A.t + 1e6, f0: 2, held: null };
+  for (const s of [1, 8]) A.posters.push({ id: 91000 + s, slot: s, age: 0, torn: null, big: false });
+  A.signs.push({ id: 92000, f: 4, r: 1, askew: false, pull: null, big: false, age: 0 });
+  A.speech = { next: A.t + 1e6, target: null, burnt: null };
   window.__fast(0.5);
-  if (what === 'warned') A.speech.next = A.t + 3.5;
-  if (what === 'held') { A.speech.next = A.t + 0.05; window.__fast(0.05); }
-  if (what === 'wardens') {
-    const fl = A.posters[2], y = afterFloor();
-    A.posters[1].torn = A.t - 0.5;
-    A.wardens.length = 0;
-    A.wardens.push({ id: 93000, x: wallSlotX(fl.slot), y, state: 'tear', t: 0, goal: 'poster', target: fl.id, load: null, dropped: null, face: -1 },
-                   { id: 93001, x: soulX(30), y, state: 'carry', t: 0, goal: 'sign', target: null, load: 'sign', dropped: null, face: 1 });
-  }
-  window.__fast(0.1);
+  A.speech = { next: A.t + (what === 'warned' ? 3 : 0.6), target: { kind: 'sign', id: 92000 }, burnt: null };
+  window.__fast(what === 'warned' ? 0.1 : 1.6);
   window.__holdShot();
-  pinCamera(CROWD_X0 - P * 10);
-  // The wash fades off in a second and a half, quicker than a shot is taken:
-  // held on the page's frames for a few seconds.
-  if (what === 'held' && typeof window.__scene === 'function') {
-    const sp = A.speech, until = performance.now() + 4000;
-    const hold = () => { if (S.after !== A || performance.now() > until) return; sp.held = A.t - 0.2; window.__look(CROWD_X0 - P * 10); requestAnimationFrame(hold); };
-    requestAnimationFrame(hold);
-  }
+  pinCamera(afterOpenX() - S.viewW / 2);
 }
 
 // Wake the checks' pad and hop it along the stops until it is on `id` (or,
