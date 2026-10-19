@@ -114,18 +114,29 @@ export const MANSION_GREYS = [GREY[10], GREY[8], GREY[6], GREY[4], GREY[2]];
 export const MANSION_LIT = PURPLE[12];
 // --- heaven's gates (docs/mocks/act3-gates-2026-10-19, take A; the owner,
 // 2026-10-19) ------------------------------------------------------------------
-// Tall pearly gates in a long cloud bank ACT_GATES_SKY over the ground, a
-// cloud stair up to them from beside the ruin in two flights turning on a
-// landing: the first ACT_STAIR_UP steps away from the ruin, the second back,
-// so its top comes out over its foot. A step is ACT_STAIR_TREAD cells along
-// and ACT_STAIR_RISE up. The gates' middle stands ACT_GATES_CLEAR cells past
+// Tall pearly gates in a long cloud bank high over the ground, a cloud stair
+// up to them from beside the ruin in switchback flights of ACT_STAIR_FLIGHTS
+// steps each, turning on a landing ACT_STAIR_LANDING cells long: the first
+// away from the ruin, the next back, and so on, an even count so its top
+// comes out over its foot. A step is ACT_STAIR_TREAD cells along and
+// ACT_STAIR_RISE up, so the bank stands ACT_GATES_SKY, every step's rise, over
+// the ground (the owner, 2026-10-19: higher, the climb longer). The gates
+// are the portal and nothing stands over them: going through the open gates
+// is the trip (the ripple plays as the camera goes through), a body fading
+// into the gateway at one end and out of it at the other over
+// ACT_GATES_PASS cells of walk. The gates' middle stands ACT_GATES_CLEAR cells past
 // the farther of the ruin's right end and the mansion's, so neither the stair
 // nor the gates nor the bank stands on the mansion's ground or in its tower.
 // Two leaves, each ACT_GATES_LEAF[0] cells wide and ACT_GATES_H tall, swing
 // open in held steps a cell narrower each (ACT_GATES_LEAF), a step every
 // ACT_GATES_STEP_S, and stand open ACT_GATES_HOLD_S after the camera has come
 // through before they close the same way.
-export const ACT_GATES_SKY = P * 30;
+export const ACT_STAIR_TREAD = 3;
+export const ACT_STAIR_RISE = 2;
+export const ACT_STAIR_FLIGHTS = [5, 5, 5, 5];
+export const ACT_STAIR_LANDING = 6;           // so each flight starts clear of the last one's top
+export const ACT_GATES_SKY = P * ACT_STAIR_RISE * ACT_STAIR_FLIGHTS.reduce((a, n) => a + n, 0);
+export const ACT_GATES_PASS = 6;
 export const ACT_GATES_CLEAR = 4;
 export const ACT_GATES_CELL = Math.max(FINALE_END_CELLS - FINALE_DOOR_CELL + FINALE_HOUSE_W + 3,
                                        MANSION_AT + MANSION_WING_W * 2 + MANSION_MAIN_W) + ACT_GATES_CLEAR;
@@ -135,15 +146,11 @@ export const ACT_GATES_REACH = P * 8;        // the middle to a post's outside
 export const ACT_GATES_STEP_S = 0.3;
 export const ACT_GATES_HOLD_S = 1.5;
 export const ACT_GATES_NEAR = P * 6;         // a body this near the gateway has them open
-export const ACT_STAIR_TREAD = 3;
-export const ACT_STAIR_RISE = 2;
-export const ACT_STAIR_UP = 8;
-export const ACT_STAIR_LANDING = 6;           // so the second flight starts clear of the first's top
-// The stair's far end, cells off the yard's left edge: the landing's.
-export const ACT_STAIR_END = ACT_GATES_CELL + ACT_STAIR_UP * ACT_STAIR_TREAD + ACT_STAIR_LANDING + 2;
-// The light over the open gates, cells up from their crest, that the freed
-// souls come down out of.
-export const ACT_GATES_LIGHT = 24;
+// The stair's far end, cells off the yard's left edge: the farthest landing's.
+export const ACT_STAIR_END = ACT_GATES_CELL + ACT_STAIR_TREAD + 2 + ACT_STAIR_FLIGHTS.reduce(([x, far], n, i) => {
+  const d = i % 2 ? -1 : 1, to = x + d * (n * ACT_STAIR_TREAD + (i < ACT_STAIR_FLIGHTS.length - 1 ? ACT_STAIR_LANDING : 0));
+  return [to, Math.max(far, to)];
+}, [0, 0])[1];
 
 // The gathering: the freed souls coming down heaven's cloud stair and
 // standing in files beside the mansion, MANSION_SOULS of them, a soul every
@@ -159,17 +166,14 @@ export const MANSION_SHEET_AFTER_S = 4;
 // fades off over the pedestal's own (and back on before they climb down).
 export const ACT_PEDESTAL_FADE_S = 0.6;
 
-// --- the rise, ridden (the owner's pick B, 2026-10-18) -----------------------
-// One shot from the ruin to heaven's floor: the camera rides up the road with
-// the two of them (DESIGN.md, "The rise rides up with them"). The road from
-// the tear to the cloud floor takes ACT_RIDE_S whatever its length, so their
-// pace on it is that length over this. ACT_ROAD_CLOUDS clouds are spread up
+// --- the road up (the owner's pick B, 2026-10-18; the rise no longer rides it
+// since heaven's gates became the portal, 2026-10-19) -------------------------
+// The sky between the yard and the cloud floor (render/road.js). ACT_ROAD_CLOUDS clouds are spread up
 // the road above the yard's own window, ACT_ROAD_CLOUD_W cells wide at the
 // least and the most, ACT_ROAD_CLOUD_H rows high at most; the cloud floor's
 // underside is ACT_ROAD_UNDER under the deepest the afterlife's own window
 // shows of it, and billows down ACT_ROAD_BILLOW rows more (seeded by
 // ACT_ROAD_SEED, as the floor's top is).
-export let ACT_RIDE_S = 8;
 export let ACT_ROAD_CLOUDS = 14;
 export const ACT_ROAD_CLOUD_W = [10, 24];
 export const ACT_ROAD_CLOUD_H = 4;
@@ -191,8 +195,6 @@ export const ACT_ROAD_ROUND = 2.4;
 export const ACT_ROAD_SPECKLE = 0.25;
 
 export const ACT_KNOBS = [
-  { key: 'ACT_RIDE_S', label: 'the rise, ridden, s', min: 2, max: 30, step: 0.5,
-    get: () => ACT_RIDE_S, set: v => { ACT_RIDE_S = v; } },
   { key: 'ACT_ROAD_CLOUDS', label: 'clouds up the road', min: 0, max: 40, step: 1,
     get: () => ACT_ROAD_CLOUDS, set: v => { ACT_ROAD_CLOUDS = v; } }
 ];

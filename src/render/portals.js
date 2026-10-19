@@ -25,7 +25,7 @@ import { drawHand } from './hand.js';
 import { GREYS, PURPLES } from './deeptones.js';
 import { houseX } from '../home.js';
 import { portalOpenK, portalEnd, handShown, handAlpha, handBox, PORTALS } from '../portals.js';
-import { pairBodies, placeAt, onRoad } from '../ghosts.js';
+import { pairBodies, placeAt, onRoad, passAlpha } from '../ghosts.js';
 import { drawGatesBehind, drawGatesFront, drawGatesAfter } from './gates.js';
 import { goOnDue, goOnAlpha, fallNow, actCaption } from '../actbeats.js';
 import { rockRowsLeft, soulAt, mansionHeld } from '../mansion.js';
@@ -230,8 +230,9 @@ export function drawActBodies(place) {
   const pair = pairBodies(), p = S.acts && S.acts.pair;
   if (pair && p) {
     // Faded off over the pedestal's own drawing of them while they stand on
-    // it (actbeats.js, `top`).
-    const k = Math.min(p.lift ?? 1, 1 - (p.inside || 0), 1 - (p.top || 0));
+    // it (actbeats.js, `top`), and into and out of heaven's gateway going
+    // through (ghosts.js, `passAlpha`).
+    const k = Math.min(p.lift ?? 1, 1 - (p.inside || 0), 1 - (p.top || 0), passAlpha(p));
     pair.forEach((b, i) => {
       // on the road up between the yard and the cloud floor, the road's own
       // layer draws them (render/road.js)

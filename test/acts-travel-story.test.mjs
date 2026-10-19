@@ -80,9 +80,12 @@ group('the walls and the cage play from hell\'s barriers, each once and in order
 // Heaven's road is walked (the owner's take A, 2026-10-19): the two of them
 // go up the cloud stair to the gates and through them, and come back down
 // the same way, every frame a step from the last, the second on the walk
-// behind the first, and the gates standing open as they go through.
-const { pairBodies, threshold, stairFoot, campX } = await import('../src/ghosts.js');
-const { gatesStep, GATES_OPEN } = await import('../src/portals.js');
+// behind the first, and the gates standing open as they go through. The gates
+// are the portal (the owner, later that day): going through, a body fades
+// into the gateway at one end and out of it at the other, and that is the one
+// move a frame may make past a step, and only while it cannot be seen.
+const { pairBodies, threshold, stairFoot, campX, passAlpha } = await import('../src/ghosts.js');
+const { gatesStep, GATES_OPEN, portalEnd } = await import('../src/portals.js');
 const { afterFloor } = await import('../src/after/place.js');
 const { P, WORKER, GHOST_GAP } = await import('../src/config.js');
 // What a walk did, frame by frame: the most either body moved in one, the
@@ -91,27 +94,33 @@ const { P, WORKER, GHOST_GAP } = await import('../src/config.js');
 // The pair is read afresh each frame: the harness's reloads put a new one in
 // its place.
 function walkWatch() {
-  const w = { jump: 0, apart: 0, top: [false, false], foot: [false, false], open: false };
-  let was = null;
+  const w = { jump: 0, apart: 0, top: [false, false], foot: [false, false], open: false, through: 0 };
+  let was = null, wasSeen = 1;
   return {
     w,
     see() {
       const b = pairBodies();
       if (!b) return;
-      const t = threshold(), f = stairFoot();
+      const t = threshold(), f = stairFoot(), seen = passAlpha();
+      // the hop between the two gateways, unseen at both ends of it
+      const ends = [portalEnd('heaven', 'yard'), portalEnd('heaven', 'after')];
+      const atGate = q => ends.some(e => Math.abs(q.x + WORKER / 2 - e.x) < GHOST_GAP + P && Math.abs(q.y + WORKER - e.feet) < P);
+      const hop = was && seen < 0.2 && wasSeen < 0.2 && b.every(atGate) && was.every(atGate);
+      if (hop && b.some((q, i) => Math.hypot(q.x - was[i].x, q.y - was[i].y) > MOST)) w.through++;
       b.forEach((q, i) => {
         if (Math.hypot(q.x - t.x, q.y - t.y) < 1) w.top[i] = true;
         if (Math.hypot(q.x - f.x, q.y - f.y) < 1) w.foot[i] = true;
-        if (was) w.jump = Math.max(w.jump, Math.hypot(q.x - was[i].x, q.y - was[i].y));
+        if (was && !hop) w.jump = Math.max(w.jump, Math.hypot(q.x - was[i].x, q.y - was[i].y));
       });
+      wasSeen = seen;
       w.apart = Math.max(w.apart, Math.hypot(b[0].x - b[1].x, b[0].y - b[1].y));
       if (Math.abs(b[0].x - t.x) < P * 4 && Math.abs(b[0].y - t.y) < P * 4 && gatesStep() === GATES_OPEN) w.open = true;
       was = b;
     }
   };
 }
-// A frame's walk is at most the rise's pace, hurried: a jump past that is a teleport.
-const MOST = P * 40;
+// A frame's walk is at most the pace, called and hurried: a jump past that is a teleport.
+const MOST = P * 4;
 group('heaven\'s road up: the souls up the cloud stair at the fall and through the gates, walked', async () => {
   window.__actsOn(true);
   window.__crew(2, 2);
@@ -119,15 +128,16 @@ group('heaven\'s road up: the souls up the cloud stair at the fall and through t
   runUntil(() => goOnAlpha() >= 1, 4 * (ACT_GOON_WAIT_S + ACT_GOON_FADE_S));
   sayGoOn();
   const up = walkWatch();
-  for (let i = 0; i < 60 * 120 && !(S.acts?.pair?.route === 'rise' && placeAt(S.acts.pair.y) !== 'yard'); i++) { run(1 / 60); up.see(); }
-  const rising = { route: S.acts.pair.route, ...up.w };
+  for (let i = 0; i < 60 * 120 && !(S.acts?.pair?.at === 'rise' && S.view === 'after'); i++) { run(1 / 60); up.see(); }
+  const rising = { at: S.acts.pair.at, place: placeAt(S.acts.pair.y), view: S.view, ...up.w };
   runUntil(() => beatDone('house-fall'), 60);
   window.__actsOn(null);
   return [
-    // the second stops a step short on the bank and rises beside the first
-    ok(rising.route === 'rise' && rising.foot.every(Boolean) && rising.top[0],
-       'at the fall both souls walk onto the stair at its foot, and up it to the gates before the rise', JSON.stringify(rising)),
-    ok(rising.open, 'the gates stand open as they go through', JSON.stringify(rising)),
+    // the second stops a step short on the bank and follows the first in
+    ok(rising.foot.every(Boolean) && rising.top[0],
+       'at the fall both souls walk onto the stair at its foot, and up it to the gates', JSON.stringify(rising)),
+    ok(rising.open && rising.through === 1 && rising.at === 'rise' && rising.place === 'after' && rising.view === 'after',
+       'and through the open gates, once and unseen between, onto the cloud floor, the camera with them', JSON.stringify(rising)),
     ok(rising.jump < MOST && rising.apart <= GHOST_GAP + 1, 'every frame a step from the last, the second a step behind', JSON.stringify(rising))
   ];
 });
@@ -137,7 +147,7 @@ group('heaven\'s road down: the ghosts down through the gates and the cloud stai
   // from the camp along the cloud floor to the gates, as the haunt sends them
   window.__actsAt('road');
   S.beatsDone.push('haunt');
-  Object.assign(S.acts.pair, { x: campX(), y: afterFloor() - WORKER, mode: 'ghost', at: null, top: 0, route: null, then: null });
+  Object.assign(S.acts.pair, { x: campX(), y: afterFloor() - WORKER, mode: 'ghost', at: null, top: 0, route: null, then: null, face: Math.sign(threshold().x - campX()) || 1 });
   window.__sendPair('down');
   const down = walkWatch();
   for (let i = 0; i < 60 * 150 && S.acts.pair.at !== 'down'; i++) { run(1 / 60); down.see(); }
@@ -145,7 +155,7 @@ group('heaven\'s road down: the ghosts down through the gates and the cloud stai
   const came = { at: p.at, place: placeAt(p.y), ...down.w };
   window.__actsOn(null);
   return [
-    ok(came.at === 'down' && came.place === 'yard' && came.top[0] && came.foot.every(Boolean) && came.open,
+    ok(came.at === 'down' && came.place === 'yard' && came.top[0] && came.foot.every(Boolean) && came.open && came.through === 1,
        'the ghosts come down through the open gates and the whole stair to the ruin', JSON.stringify(came)),
     ok(came.jump < MOST && came.apart <= GHOST_GAP + 1, 'walked, every frame, the second a step behind', JSON.stringify(came))
   ];

@@ -1,12 +1,12 @@
 // The two of them as souls and ghosts, and the road they walk (DESIGN.md,
 // "Acts 3 and 4", "Back to the surface, dead", and "The portals and the
-// mansion"). A portal is the camera's way between two places; a body never
-// goes through one. The road is real ground, every step of it an ordinary
-// world position: out of the fallen house, up heaven's cloud stair to its
-// gates, and through them straight up the light to the cloud floor above
-// (the places are stacked, so the souls rise into the afterlife rather than
-// appear there); back down the same way, down the light and the stair to the
-// ruin; and for act 4, into
+// mansion"). Hell's portal is the camera's way between two places, never a
+// body's; heaven's gates are both (the owner, 2026-10-19): a body walks into
+// the open gates at one end, fading into the gateway, and out of them at the
+// other (`through`), and the camera goes with it by the ripple. Every other
+// step of the road is an ordinary world position: out of the fallen house, up
+// heaven's cloud stair to its gates and through them onto the cloud floor;
+// back down the same way to the ruin; and for act 4, into
 // the drowned pit, down through the abyss to the deep's floor, along it to
 // hell's white-hot slit and down through that onto hell's floor. A carry on
 // the road is a trip that takes its time (call 5: the dead carry, they do not
@@ -21,8 +21,8 @@
 // they stood, on the leg they were walking.
 
 import { S, pit } from './state.js';
-import { P, WORKER, FINALE_HOUSE_W, GHOST_PX_S, GHOST_LOAD, GHOST_GAP, HELL_TIERS, ACT_RIDE_S, ACT_GATES_SKY, ACT_GATES_REACH,
-         ACT_GATES_NEAR, ACT_GATES_LIGHT, ACT_STAIR_TREAD, ACT_STAIR_RISE, ACT_STAIR_UP, ACT_STAIR_LANDING, MANSION_SOULS } from './config.js';
+import { P, WORKER, FINALE_HOUSE_W, GHOST_PX_S, GHOST_LOAD, GHOST_GAP, HELL_TIERS, ACT_GATES_REACH, ACT_GATES_PASS,
+         ACT_GATES_NEAR, ACT_STAIR_TREAD, ACT_STAIR_RISE, ACT_STAIR_FLIGHTS, ACT_STAIR_LANDING, MANSION_SOULS } from './config.js';
 import { houseX } from './home.js';
 import { feetOn, ways } from './route.js';
 import { afterFloor, afterTop, stationBox, stationX0, speakerAt } from './after/place.js';
@@ -44,12 +44,11 @@ export const ruinX = () => snap(houseX() + FINALE_HOUSE_W * P / 2 - WORKER / 2);
 
 // --- heaven's stair --------------------------------------------------------------
 // The walk up it, as a body's top-left at every corner: from its foot on the
-// ground straight under the gates, a flight of ACT_STAIR_UP steps away from the
-// ruin -- a cell to the riser, up it, and on along the tread -- across the
-// landing, a flight back the rest of the way up to the bank, and along the
+// ground straight under the gates, a flight away from the ruin -- a step is a
+// cell to the riser, up it, and on along the tread -- across a landing, a
+// flight back, and so on up ACT_STAIR_FLIGHTS to the bank, then along the
 // bank into the gateway, the threshold. The drawing's treads are the cells
-// under it (render/portals.js, `stairTreads`), so a body walks on cloud.
-const STAIR_BACK = ACT_GATES_SKY / P / ACT_STAIR_RISE - ACT_STAIR_UP;
+// under it (render/gates.js, `stairTreads`), so a body walks on cloud.
 let walkMemo = null, walkFor = null;
 export function stairWalk() {
   const x0 = tearX(), g = snap(S.groundY);
@@ -63,14 +62,16 @@ export function stairWalk() {
       x += d * (ACT_STAIR_TREAD - 1) * P; pts.push({ x, y });
     }
   };
-  flight(1, ACT_STAIR_UP);
-  x += ACT_STAIR_LANDING * P; pts.push({ x, y });
-  flight(-1, STAIR_BACK);
+  ACT_STAIR_FLIGHTS.forEach((n, i) => {
+    const d = i % 2 ? -1 : 1;
+    flight(d, n);
+    if (i < ACT_STAIR_FLIGHTS.length - 1) { x += d * ACT_STAIR_LANDING * P; pts.push({ x, y }); }
+  });
   pts.push({ x: x0, y });
   walkFor = `${x0},${g}`; walkMemo = pts;
   return pts;
 }
-export const STAIR_POINTS = 2 + 3 * ACT_STAIR_UP + 1 + 3 * STAIR_BACK;
+export const STAIR_POINTS = 2 + ACT_STAIR_FLIGHTS.reduce((a, n) => a + 3 * n, 0) + ACT_STAIR_FLIGHTS.length - 1;
 // The stair's foot, and the threshold at its top.
 export const stairFoot = () => stairWalk()[0];
 export const threshold = () => stairWalk()[STAIR_POINTS - 1];
@@ -85,27 +86,23 @@ export function alongWalk(pts, d) {
   return { x: z.x, y: z.y, done: true };
 }
 export const walkLength = pts => pts.reduce((n, b, i) => (i ? n + Math.hypot(b.x - pts[i - 1].x, b.y - pts[i - 1].y) : 0), 0);
-// The freed souls' way down (mansion.js): out of the light over the open
-// gates, down through them and the stair to its foot.
-export const lightDown = () => {
-  const t = threshold();
-  return [{ x: t.x, y: t.y - ACT_GATES_LIGHT * P }, ...stairWalk().slice().reverse()];
-};
+// The freed souls' way down (mansion.js): out of the open gates and down the
+// stair to its foot.
+export const stairDown = () => stairWalk().slice().reverse();
 const UP_LEGS = Array.from({ length: STAIR_POINTS - 1 }, (_, i) => ({ to: () => stairWalk()[i + 1] }));
 const DOWN_LEGS = Array.from({ length: STAIR_POINTS - 1 }, (_, i) => ({ to: () => stairWalk()[STAIR_POINTS - 2 - i] }));
 
-// Whether a body stands at heaven's gates, at either end or on the light
-// between, so they stand open for it (portals.js, `stepGates`): the pair, or
-// a freed soul on its way down.
+// Whether a body stands at heaven's gates, at either end, so they stand open
+// for it (portals.js, `stepGates`): the pair, or a freed soul on its way down.
 export function atGates() {
   const e = tear(), up = portalEnd('heaven', 'after');
   if (!e || !up) return false;
   const reach = ACT_GATES_REACH + ACT_GATES_NEAR;
-  const near = b => {
-    if (Math.abs(b.x + WORKER / 2 - e.x) > reach) return false;
+  const at = (g, b) => {
     const foot = b.y + WORKER;
-    return (foot >= e.top && foot <= e.feet + P) || (foot > up.feet - P && foot < e.top);
+    return Math.abs(b.x + WORKER / 2 - g.x) <= reach && foot >= g.top && foot <= g.feet + P;
   };
+  const near = b => at(e, b) || at(up, b);
   const pair = pairBodies();
   if (pair && pair.some(near)) return true;
   for (let i = 0; i < MANSION_SOULS; i++) { const s = soulAt(i); if (s && s.stair && near(s)) return true; }
@@ -138,18 +135,18 @@ const hellFeet = x => chamberFloor(Math.max(0, chamberAtX(x))) - WORKER;
 
 // The routes, each a run of legs: `h` along the ground to an x (standing on
 // `y` of where it is), `v` straight up or down to a y, `to` a slant to a
-// point (the stair).
+// point (the stair), `through` heaven's gates into the place named.
 const ROUTES = {
-  // out of the ruin, up the stair to the gates; then through them, up the light
+  // out of the ruin, up the stair to the gates; then through them
   climb: [{ h: () => stairFoot().x, y: yardFeet }, ...UP_LEGS],
-  rise: [{ v: afterFeet }],
+  rise: [{ through: 'after' }],
   camp: [{ h: campX, y: afterFeet }],
   // up the pillar's face onto its top, and back down
   pedestal: [{ h: pillarFootX, y: afterFeet }, { v: pillarFeet }, { h: speakerX, y: pillarFeet }],
   off: [{ h: pillarFootX, y: pillarFeet }, { v: afterFeet }],
-  // to the gates on the cloud floor, down through them and the light to the
-  // gates over the yard, down the stair, and along to the ruin
-  down: [{ h: tearX, y: afterFeet }, { v: () => threshold().y }, ...DOWN_LEGS, { h: ruinX, y: yardFeet }],
+  // to the gates on the cloud floor, through them to the gates over the
+  // yard, down the stair, and along to the ruin
+  down: [{ h: tearX, y: afterFeet }, { through: 'yard' }, ...DOWN_LEGS, { h: ruinX, y: yardFeet }],
   // act 4's carry: the ruin to the cage and back (LOOP_CAGE, LOOP_HOME)
   loop: [{ h: pitX, y: yardFeet }, { v: deepFeet }, { h: slitX, y: deepFeet }, { v: () => hellFeet(slitX()) }, { h: hellLegX, y: hellFeet },
          { h: slitX, y: hellFeet }, { v: deepFeet }, { h: pitX, y: deepFeet }, { v: () => yardFeet(pitX()) }, { h: ruinX, y: yardFeet }],
@@ -184,15 +181,14 @@ export function placeFor(y) {
 // the road's own layer draws a body (render/road.js).
 export const onRoad = y => !placeAt(y) && y < tear().y && y > afterTop();
 
-// Where the pair are next seen: where they stand, while that is in a place;
-// on the way up from the ruin, where they are, since the rise is ridden up
-// the road in one shot (actbeats.js); crossing between two places any other
-// way (down the sky from the cloud floor to the tear, the rock from the
-// deep's floor to hell), where the leg they are on comes out -- the camera
-// goes there by the ripple and they walk into it (shot.js, rule 5).
+// Where the pair are next seen: where they stand, while that is in a place
+// (through heaven's gates they are in one place or the other, never between);
+// crossing between two places any other way (the rock from the deep's floor
+// to hell), where the leg they are on comes out -- the camera goes there by
+// the ripple and they walk into it (shot.js, rule 5).
 export function seenAt(p = S.acts && S.acts.pair) {
   if (!p) return null;
-  if (placeAt(p.y) || (p.route === 'rise' && onRoad(p.y))) return { x: p.x, y: p.y };
+  if (placeAt(p.y)) return { x: p.x, y: p.y };
   const L = p.route && ROUTES[p.route][p.leg];
   if (L && L.v) return { x: p.x, y: L.v() };
   if (L && L.to) return L.to();
@@ -203,17 +199,26 @@ export function seenAt(p = S.acts && S.acts.pair) {
 // the first is facing. Null with no pair.
 // On the stair the second walks GHOST_GAP behind along the walk itself, so
 // it stands on a tread rather than beside one in the air (`trail`).
+// Going through the gates it closes up into the gateway behind the first and
+// steps out of it behind them at the far end.
 export function pairBodies() {
   const p = S.acts && S.acts.pair;
   if (!p) return null;
   const poly = trail(p), d = poly ? along(poly, p) : null;
-  const second = d != null ? alongWalk(poly, Math.max(0, d - GHOST_GAP)) : { x: p.x - (p.face || 1) * GHOST_GAP, y: p.y };
+  // (coming out over the yard it steps out on the gates' near side, where
+  // the walk down the stair has it next, `trail`)
+  const k = p.pass > 0 ? Math.abs(1 - p.pass) : 1, out = p.pass > 1 && p.route === 'down';
+  const second = d != null ? alongWalk(poly, Math.max(0, d - GHOST_GAP)) : { x: p.x - (out ? 1 : p.face || 1) * GHOST_GAP * k, y: p.y };
   return [{ x: p.x, y: p.y }, { x: second.x, y: second.y }];
 }
+// How much of them is seen, going through the gates: faded out into the
+// gateway at the near end, in out of it at the far one (`through`).
+export const passAlpha = (p = S.acts && S.acts.pair) => (p && p.pass > 0 ? Math.abs(1 - p.pass) : 1);
 // The walk the first is on while it is on the stair: up it from the ground
-// short of its foot to the threshold, or down it from the bank on the side
-// the light was come down on (the camp's) to the ground past its foot. Far
-// out along the ground or the bank either is the plain offset behind.
+// short of its foot to the threshold, or down it from the bank on the gates'
+// near side, off the walk along it (the second steps out of the gateway
+// there), to the ground past its foot. Far out along the ground or the bank
+// either is the plain offset behind.
 const FAR = P * 1e4;
 function trail(p) {
   if (p.route === 'climb' || p.at === 'climb') {
@@ -221,8 +226,8 @@ function trail(p) {
     return [{ x: w[0].x - FAR, y: w[0].y }, ...w];
   }
   if ((p.route === 'down' && p.leg >= 2) || p.at === 'down') {
-    const w = stairWalk(), t = threshold(), side = Math.sign(campX() - tearX()) || -1;
-    return [{ x: t.x + side * FAR, y: t.y }, ...w.slice().reverse(), { x: w[0].x - FAR, y: w[0].y }];
+    const w = stairWalk(), t = threshold();
+    return [{ x: t.x - FAR, y: t.y }, ...w.slice().reverse(), { x: w[0].x - FAR, y: w[0].y }];
   }
   return null;
 }
@@ -266,6 +271,18 @@ export function stepPair(dist) {
       const d = L.v() - p.y, m = Math.min(Math.abs(d), dist);
       p.y += Math.sign(d) * m; dist -= m;
       done = Math.abs(L.v() - p.y) < 0.01;
+    } else if (L.through) {
+      // `pass` 0..2 over twice ACT_GATES_PASS cells of walk: into the gateway
+      // here, then out of it there, at the far end's threshold from 1 on
+      const span = ACT_GATES_PASS * P, was = p.pass || 0;
+      const m = Math.min(dist, (2 - was) * span);
+      p.pass = was + m / span; dist -= m;
+      if (was < 1 && p.pass >= 1) {
+        const at = L.through === 'after' ? { x: tearX(), y: afterFeet() } : threshold();
+        p.x = at.x; p.y = at.y;
+      }
+      done = p.pass >= 2 - 1e-9;
+      if (done) p.pass = 0;
     } else {
       const to = L.to(), dx = to.x - p.x, dy = to.y - p.y, len = Math.hypot(dx, dy);
       if (len < 0.01) done = true;
@@ -320,8 +337,3 @@ export function takeLoad(p) {
 
 // The pace the road is walked at.
 export const ghostPace = () => GHOST_PX_S;
-// The rise's: the road from the gates to the cloud floor in ACT_RIDE_S,
-// however far apart the two stand.
-export const ridePace = () => Math.max(P, threshold().y - afterFeet()) / ACT_RIDE_S;
-// The seconds of the rise still to go from height y.
-export const rideLeft = (y = S.acts && S.acts.pair ? S.acts.pair.y : afterFeet()) => Math.max(0, y - afterFeet()) / ridePace();

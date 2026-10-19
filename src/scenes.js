@@ -3050,12 +3050,12 @@ export const SCENES = {
   // borrow, stood at its point of the acts' story (`__actsAt`).
   'portal-heaven': { about: 'the acts', say: 'heaven\'s gates on their cloud bank up the stair from beside the ruin, shut, the hand beside them, the rock on the ruin',
     run: () => { actsYard('act4'); window.__fast(2); pinCamera(0); window.__holdShot(); } },
-  'portal-heaven-up': { about: 'the acts', say: 'heaven\'s gates from behind, standing on the cloud floor, the light coming up through it between them',
+  'portal-heaven-up': { about: 'the acts', say: 'heaven\'s gates from behind, standing on the cloud floor',
     run: () => { actsYard('road'); S.beatsDone.push('haunt'); S.acts.pair.mode = 'ghost'; window.__goPlace('after'); window.__fast(2); window.__holdShot(); } },
   // Heaven's gates at work (portals.js, render/gates.js): pressed and half
   // open, a held step before the ripple; the two of them walking up the
   // stair as souls at the house's fall; the two coming down it as ghosts.
-  'gates-opening': { about: 'the acts', say: 'heaven\'s gates pressed: the leaves two held steps open, the light going up, the ripple still to come',
+  'gates-opening': { about: 'the acts', say: 'heaven\'s gates pressed: the leaves two held steps open, the ripple still to come',
     run: () => { actsYard('act4'); window.__fast(2); pinCamera(0); window.__pressPortal('heaven'); window.__fast(0.65); window.__still(true); window.__holdShot(); } },
   'gates-climb': { about: 'the acts', say: 'the house\'s fall: the two of them as souls walking up the cloud stair to the gates, the gates opening as they come',
     run: () => {
@@ -3064,7 +3064,7 @@ export const SCENES = {
       for (let i = 0; i < 60 * 90 && !(S.acts?.pair?.route === 'climb' && S.acts.pair.leg >= 18); i++) window.__fast(1 / 60);
       window.__holdShot();
     } },
-  'gates-road': { about: 'the acts', say: 'the ghost road: the two of them coming down out of the light through the gates and down the cloud stair',
+  'gates-road': { about: 'the acts', say: 'the ghost road: the two of them out of the gates and walking down the cloud stair',
     run: () => {
       actsYard('road');
       S.beatsDone.push('haunt');
