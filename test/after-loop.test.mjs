@@ -135,18 +135,19 @@ group('a member bought into a post steps out of our crowd near it: the grove and
   ];
 });
 
-group('the axe is bought on the pedestal\'s card, its beat hands it over, and a click chops', async () => {
+group('the axe is bought on the grove\'s card, its beat hands it over, and a click chops', async () => {
   up();
   const t = tree(0);
   const early = window.__afterClick(t.x, t.y);
   window.__afterGrant({ rebel: 50 });
+  const card = window.__afterRows().find(r => r.key === 'after-axe').card;
   const bought = window.__buy('after-axe');
   const told = runUntil(() => S.beatsDone.includes('axe'), 4 * ACT_CAPTION_S);
   const chop = window.__afterClick(t.x, t.y);
   window.__actsOn(null);
   return [
     ok(!early && S.after.plots[0].chops <= 1, 'before the axe, a click on a tree chops nothing'),
-    ok(bought, 'the axe is a row on the pedestal\'s card, paid in rebel'),
+    ok(bought && card === 'grove', 'the axe is a row on the grove\'s card, paid in rebel', card),
     ok(told && read().axe, 'its beat plays and hands the axe over'),
     ok(chop && S.after.plots[0].chops === 1, 'and from then on a click on a grown tree is a chop', `${S.after.plots[0].chops}`)
   ];
@@ -568,7 +569,7 @@ group('every act-3 card sells two or three named upgrades, none of them a ladder
   const coins = new Set(ups.flatMap(([, u]) => u.bills.flat().map(([c]) => c)));
   window.__actsOn(null);
   return [
-    ok(perCard.every(([c, n]) => n >= 1 && n <= 4), 'a card\'s upgrades are few', JSON.stringify(perCard)),
+    ok(perCard.every(([c, n]) => n >= 1 && n <= 5), 'a card\'s upgrades are few (the grove\'s five, the axe among them)', JSON.stringify(perCard)),
     ok(long.length === 0, 'each is bought once, but for the grove\'s plots', long.join(', ')),
     ok([...coins].every(c => ['rebel', 'timber', 'paper', ...AFTER_YARD_COINS].includes(c)), 'paid in rebel, timber and paper and the yard\'s coins', [...coins].join(' ')),
     ok(rows.every(r => !r.bill.some(([c]) => c === 'pledge' || c === 'faith' || c === 'ink')), 'no pledge, no faith, no ink on any bill')

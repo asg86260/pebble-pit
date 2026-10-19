@@ -12,7 +12,7 @@
 // A click on a station works it by hand (work.js), and on the sawdust heap
 // tips a load (mill.js).
 //
-// With the axe -- bought on the pedestal's card (call 15, settled), which
+// With the axe -- bought on the grove's card (call 15, settled), which
 // owes the `axe` beat that hands it over -- a click on a grown tree is a chop;
 // a click on a stump is a swing digging it out (grove.js), axe or no axe.
 //
@@ -128,7 +128,7 @@ export function clickPlace(x, y) {
   return false;
 }
 
-// The axe: bought on the pedestal's card, owed until the beat hands it over
+// The axe: bought on the grove's card, owed until the beat hands it over
 // (story.js). Track C's actbeats.js reads `axeDue`.
 export const axeDue = () => !!S.after && !!S.after.axeBought && !S.after.axe;
 export const giveAxe = () => { if (S.after) S.after.axe = true; };

@@ -68,9 +68,9 @@ export const STRIKE_SHARE = 0.8;           // default
 export const AFTER_GATES = ['meeting', 'slowdown', 'strike'];
 
 // --- the camp's cards and the chain ----------------------------------------------
-// The eight cards: the pedestal (the speech, the axe, the agitators), the
-// construction shack (every station that can be built), the grove, the saw
-// mill, the chipper, the workshop, the paper mill and the press. Keys, not words: every
+// The eight cards: the pedestal (the speech and the agitators), the
+// construction shack (every station that can be built), the grove (the axe
+// and the trees), the saw mill, the chipper, the workshop, the paper mill and the press. Keys, not words: every
 // name a player reads is the owner's, in locales/en.ftl.
 export const AFTER_CARDS = ['pedestal', 'shack', 'grove', 'mill', 'chipper', 'workshop', 'papermill', 'press'];
 // What the chain holds, made and spent (S.after.stock). Signs and posters are
@@ -322,11 +322,12 @@ export const AFTER_POST_RATE = 1.08;       // each one dearer, every station's c
 // locked only behind a station it truly needs first: timber comes off the
 // saw mill, sawdust off the saw mill or the chipper, and posters are printed
 // on paper. `needs` is the stations any one of which must stand first.
+// Listed in camp order, the order the shack's board lists them.
 export const AFTER_BUILDS = {
   mill:      { needs: [],                   bill: [['rebel', 40], ['dust', 15000]] },
   chipper:   { needs: [],                   bill: [['rebel', 60], ['dust', 20000]] },
-  workshop:  { needs: ['mill'],             bill: [['rebel', 60], ['dust', 25000], ['spore', 3500]] },
   papermill: { needs: ['mill', 'chipper'],  bill: [['rebel', 250], ['timber', 40], ['dust', 60000], ['spore', 15000], ['shard', 15000], ['scale', 800]] },
+  workshop:  { needs: ['mill'],             bill: [['rebel', 60], ['dust', 25000], ['spore', 3500]] },
   press:     { needs: ['papermill'],        bill: [['rebel', 300], ['timber', 60], ['dust', 90000], ['spore', 20000], ['shard', 25000], ['scale', 1200]] }
 };
 // Every station's upgrades: no bands, no ladders (call 12, settled -- act 3 is
@@ -338,7 +339,7 @@ export const AFTER_BUILDS = {
 // (AFTER_BUILDS).
 export const AFTER_UPGRADES = {
   'after-shout':       { card: 'pedestal',  bills: [[['rebel', 30], ['dust', 5000]]] },                  // a bigger speech
-  'after-axe':         { card: 'pedestal',  bills: [[['rebel', 50], ['dust', 8000]]] },                  // the axe (call 15)
+  'after-axe':         { card: 'grove',     bills: [[['rebel', 50], ['dust', 8000]]] },                  // the axe (call 15)
   'after-plot':        { card: 'grove',     bills: [[['rebel', 60], ['dust', 15000]],
                                                     [['rebel', 200], ['timber', 10], ['dust', 40000], ['spore', 10000]],
                                                     [['rebel', 400], ['timber', 60], ['dust', 80000], ['spore', 20000], ['shard', 20000], ['scale', 800]]] },   // a plot cleared, AFTER_PLOT_MAX in all
@@ -406,3 +407,48 @@ export const AFTER_BUBBLE_HOLD = 0.55;      // the share of its life a bubble ho
 export const AFTER_BUBBLE_BIG_EVERY = 5;
 export const AFTER_BUBBLE_BIG_RISE = 2.5;   // ...a big one's rise, times a small one's
 export const AFTER_BUBBLE_POP_S = 0.3;      // a bubble taken fades out over this
+
+// --- the act's coin marks (track C, 2026-10-18) -----------------------------------
+// Rebel, timber and paper as marks at the yard's coin size, beside the yard's
+// own on every bill and in the purse (docs/mocks/act3-handwork-ui-2026-10-18,
+// "marks for the act's coins"): a flag for the union, two planks, a sheet
+// with its corner turned. Ink only, since red stays the machines'. Drawn the
+// scale's way (SCALE_MARK): ink `#`, paper `.`, handed to the stylesheet as a
+// mask by board.js.
+export const AFTER_COIN_MARKS = {
+  rebel: [
+    '.#######.',
+    '.#######.',
+    '.#######.',
+    '.#######.',
+    '.#######.',
+    '.#.......',
+    '.#.......',
+    '.#.......',
+    '.#.......'
+  ],
+  timber: [
+    '.........',
+    '#########',
+    '#########',
+    '#########',
+    '.........',
+    '#########',
+    '#########',
+    '#########',
+    '.........'
+  ],
+  paper: [
+    '.#####...',
+    '.#...##..',
+    '.#...###.',
+    '.#.....#.',
+    '.#.....#.',
+    '.#.....#.',
+    '.#.....#.',
+    '.#.....#.',
+    '.#######.'
+  ]
+};
+// The act's coins, in the order the purse lists them ahead of the yard's.
+export const AFTER_ACT_COINS = ['rebel', 'timber', 'paper'];

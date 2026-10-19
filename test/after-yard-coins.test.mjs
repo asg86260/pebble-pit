@@ -49,7 +49,7 @@ group('short of a yard coin, the buy refuses and takes nothing', async () => {
   return [
     ok(!bought, 'a dust short, the saw mill is not bought'),
     ok(S.stored === dust0 && S.after.rebel === rebel0, 'and neither purse moved', `${dust0} -> ${S.stored}, ${rebel0} -> ${S.after.rebel}`),
-    ok(/class="short"><i class="dust">/.test(tag) && /class="have">rebel/.test(tag),
+    ok(/class="short"><i class="dust">/.test(tag) && /class="have"><i class="rebel">/.test(tag),
       'the card says which coin is short, the dust in the yard\'s mark', tag)
   ];
 });
