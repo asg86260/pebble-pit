@@ -19,6 +19,8 @@
 //   name      () => its title
 //   stand     () => the world rectangle it stands over, as a station's `stand`
 //   empty     () => what it says with nothing on it
+// and any board may say
+//   slots     the most tiles a plank holds before they wrap (SHELF_SLOTS else)
 
 const BOARD = {};
 export const registerBoard = (key, board) => { BOARD[key] = board; };

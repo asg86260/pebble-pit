@@ -32,7 +32,7 @@ import { msg } from '../lang.js';
 import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_POST_REBEL0, AFTER_POST_RATE, AFTER_BUILDS,
          AFTER_CARDS, AFTER_POST_DUST, AFTER_YARD_COINS, AFTER_TAG_ORDER, AFTER_PATCH_AT,
          AFTER_COIN_MOTES, AFTER_COIN_UNDER_S, AFTER_COIN_STAGGER_S, AFTER_COIN_SPREAD, AFTER_COIN_LIFE_S,
-         MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, CROWD_X0, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
+         MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, CROWD_X0, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
 import { registerBoard, openBoardByKey } from '../boardrows.js';
 import { purse, MARK, priceText, leftText } from '../words.js';
 import { take } from '../upgrades.js';
@@ -241,7 +241,7 @@ const standOf = card => () => {
 };
 for (const card of AFTER_CARDS)
   registerBoard(`after-${card}`, { rows: () => afterBoard(card).rows, sections: () => afterBoard(card).sections,
-                                   offTable: true, name: BOARD_NAMES[card], stand: standOf(card) });
+                                   offTable: true, name: BOARD_NAMES[card], stand: standOf(card), slots: AFTER_BOARD_SLOTS });
 
 // --- the crowd's board -----------------------------------------------------------------------
 // God's crowd sells nothing: its board is readings (a ledger, as the yard's

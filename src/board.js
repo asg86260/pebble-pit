@@ -190,7 +190,10 @@ function pinWidth() {
       range.selectNodeContents(el);
       most = Math.max(most, Math.ceil(range.getBoundingClientRect().width / slot));
     }
-    sheet.style.setProperty('--shelf-slots', String(Math.max(SHELF_SLOTS_MIN, Math.min(SHELF_SLOTS, most))));
+    // A board may hold its planks narrower than the yard's (`slots`, boardrows.js):
+    // its tiles wrap onto more rows by the same auto-fill.
+    const cap = boardOf(at)?.slots || SHELF_SLOTS;
+    sheet.style.setProperty('--shelf-slots', String(Math.max(SHELF_SLOTS_MIN, Math.min(cap, most))));
   }
   sheet.style.width = '';
   // A bottom sheet is as wide as the glass and the stylesheet says so; the
