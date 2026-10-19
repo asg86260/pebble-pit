@@ -1,0 +1,277 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rolling cloud floor</title>
+<style>
+:root{--bg:#f4f4f4;--fg:#111;--line:#ccc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1b;--fg:#eee;--line:#444}}
+:root[data-theme="dark"]{--bg:#1b1b1b;--fg:#eee;--line:#444}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 ui-monospace,Menlo,Consolas,monospace}
+header{padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;border-bottom:1px solid var(--line)}
+.tag{background:var(--fg);color:var(--bg);padding:1px 6px}
+label{display:inline-flex;gap:6px;align-items:center}
+button{font:inherit;padding:3px 10px;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer}
+button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.wrap{padding:12px 16px}
+canvas{width:100%;height:auto;image-rendering:pixelated;display:block}
+p{margin:8px 0;max-width:1000px}
+</style></head><body>
+<header><span class="tag">MOCK</span><b>Rolling cloud floor</b>
+<span>page <button data-k="theme" data-v="light">light</button><button data-k="theme" data-v="dark">dark</button></span>
+<span>floor <button data-k="take" data-v="a">A. billow rows</button><button data-k="take" data-v="b">B. cumulus heaps</button><button data-k="take" data-v="c">C. rolling swells</button></span>
+<span>support <button data-k="auto" data-v="on">plays</button><button data-k="auto" data-v="off">held</button></span>
+<label><input id="sup" type="range" min="0" max="1" step="0.01" value="0.2"></label>
+</header>
+<div class="wrap">
+<canvas id="c" width="2004" height="967"></canvas>
+<p>Drawn from plain shapes at your window size on the game's 6 px grid. It is not the game: God's camp from the last mock, the crowd unchanged, the floor replaced. Each take is a whole floor in perspective, from the horizon behind the throne's foot to the bottom of the window, and each moves slowly in held cell steps; anything arriving at the horizon fades in. The crowd is the last mock's, except that a soul is now either there or gone for a given support, fading out over about a second as it leaves, so the floor never shows through a soul. What it cannot show: how the floor sits under the game's real crowd, camera and other layers, or its frame cost.</p>
+<p id="what"></p>
+</div>
+<script>
+const P = 6, cv = document.getElementById('c'), g = cv.getContext('2d');
+const st = { theme: 'light', take: 'a', auto: 'on', s: 0.2 };
+const TONES = {
+  light: { paper: '#fff', pale: '#d6d6d6', pale2: '#bdbdbd', mid: '#757575', ink: '#000' },
+  dark: { paper: '#121212', pale: '#262626', pale2: '#3a3a3a', mid: '#5a5a5a', ink: '#9a9a9a' } };
+const WHAT = {
+  a: 'A. Billow rows: the billow edge you picked, made into the whole floor. Row behind row of puffs, each row one lumpy ink line over white cloud with its shaded flank under it, small and grey at the horizon, big and black at your feet. The rows roll slowly toward you.',
+  b: 'B. Cumulus heaps: heaps of round lobes standing out of a grey valley, white on top with a thin shaded rim and a shaded crescent and flat belly underneath, no ink. The heaps drift slowly sideways, the near ones faster than the far ones.',
+  c: 'C. Curling billows: the rows of A with a soft grey rim instead of ink, and in every near puff a curl, the heavenly cloud of old paintings, turning over in held steps while the rows roll toward you.' };
+let T, tick = 0;
+const cell = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, Math.round(w) * P, Math.round(h) * P); };
+const hsh = (a, b = 0, c = 0) => { let h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, k) => a + (b - a) * k;
+const W = 334, H = 161, GX = 167, HOR = 92;
+const GOD = '#ffffff', FEAT = '#000000';
+const sup = () => st.auto === 'on' ? 0.5 + 0.45 * Math.sin(tick * 0.02) : st.s;
+const alpha = (a, f) => { const w = g.globalAlpha; g.globalAlpha = w * a; f(); g.globalAlpha = w; };
+
+// ---------------------------------------------------------------- depth
+// A place in depth is p: 0 at the horizon, 1 just past the bottom of the
+// window. Rows bunch toward the horizon (y goes as p^1.6), and a row's heads
+// are sized from the gap to the next row, so near and far each overlap the
+// row behind by the same share and nothing breaks into speckle. Far heads
+// are wide and flat, near ones rounder: the floor is seen from above.
+const DEEP = H + 26 - HOR;
+const yOf = p => HOR + 1 + DEEP * Math.pow(p, 1.6);
+const gapOf = (p, n) => Math.max(1.5, DEEP * 1.6 * Math.pow(Math.max(p, 0.02), 0.6) / n);
+const spread = p => lerp(0.45, 1, p);              // how far x opens out from the vanishing line
+const band = p => p < 0.3 ? 2 : p < 0.55 ? 1 : 0;  // 2 far, 1 middle, 0 near: aerial depth in flat steps
+
+// A dome: a half ellipse standing on `base`, rx cells either side, ry tall,
+// one column of cells per x, with `foot` cells more under it. Its lit cap is
+// a smaller dome set back toward the light (up and left), so a crescent of
+// shade is left on the right and along the bottom. Flat fills, two tones.
+const colH = (dx, rx, ry) => Math.abs(dx) > rx ? -1 : Math.round(ry * Math.sqrt(Math.max(0, 1 - (dx / (rx + 0.5)) ** 2)));
+function dome(cx, base, rx, ry, shade, lit, o = {}, top = null) {
+  cx = Math.round(cx); rx = Math.max(1, Math.round(rx)); ry = Math.max(1, Math.round(ry));
+  // the cap: a whole ellipse set up and to the left of the dome's middle
+  const capX = cx - rx * (o.capShift ?? 0.2), crx = rx * (o.cap ?? 0.85), cry = ry * (o.capY ?? 0.65), cyc = base - ry * (o.capUp ?? 0.6), foot = o.foot ?? 0;
+  for (let dx = -rx; dx <= rx; dx++) {
+    const x = cx + dx; if (x < 0 || x >= W) continue;
+    const h = colH(dx, rx, ry); if (h < 0) continue;
+    cell(x, base - h, 1, h + foot, shade);
+    if (o.thin) {
+      // a thin rim of shade: the lit part is the dome moved a cell left and up
+      const t = o.thin, lh = colH(dx + t, rx - t, ry);
+      if (lh > 0) { const a = Math.max(base - h, base - t - lh), b = base - t; if (b > a) cell(x, a, 1, b - a, lit); }
+      if (top && base - h < top[x]) top[x] = base - h;
+      continue;
+    }
+    const u = (x - capX) / crx;
+    if (Math.abs(u) < 1) {
+      const half = cry * Math.sqrt(1 - u * u), a = Math.max(base - h, Math.round(cyc - half)), b = Math.min(base + foot, Math.round(cyc + half));
+      if (b > a) cell(x, a, 1, b - a, lit);
+    }
+    if (top && base - h < top[x]) top[x] = base - h;
+  }
+}
+// The outline over a row's union of heads: a cell of `c` on top of every
+// column, and the steps between columns joined, so it is one lumpy line.
+function rim(top, c) {
+  for (let x = 0; x < W; x++) {
+    if (top[x] >= 1e8) continue;
+    const l = x > 0 ? top[x - 1] : top[x], r = x < W - 1 ? top[x + 1] : top[x];
+    const lo = Math.max(top[x] - 1, Math.min(Math.max(l, r), 1e7) - 2);
+    cell(x, top[x] - 1, 1, lo - top[x] + 2, c);
+  }
+}
+// The heads of one row, stable per row id m: world x on a jittered pitch,
+// a size each, a lift each.
+function headsOf(m, p, n, pitch, o = {}) {
+  const gp = gapOf(p, n), ry0 = gp * (o.tall ?? 1.3), rx0 = ry0 * lerp(o.flatFar ?? 3.4, o.flatNear ?? 1.7, p);
+  const sp = spread(p), half = (GX + 60) / sp, out = [], drift = o.drift ?? 0;
+  for (let k = Math.floor((-half - drift) / pitch) - 1; k <= Math.ceil((half - drift) / pitch) + 1; k++) {
+    if (o.skip && hsh(k, m, 7) < o.skip) continue;
+    const s = hsh(k, m, 2) < 0.18 ? lerp(1.3, 1.55, hsh(k, m, 5)) : lerp(0.75, 1.1, hsh(k, m, 2));
+    out.push({ k, x: GX + (k * pitch + (hsh(k, m, 1) - 0.5) * pitch * 0.5 + drift) * sp, rx: rx0 * s, ry: ry0 * s * lerp(0.85, 1.1, hsh(k, m, 3)), u: hsh(k, m, 4) });
+  }
+  return out.sort((a, b) => a.ry - b.ry);         // small first, so the big ones stand in front
+}
+const fresh = () => new Array(W).fill(1e9);
+
+// A. Billow rows. The owner's billow edge was the line every body stood on,
+// gone lumpy: puffs stepped on the grid, an ink line over white cloud. Here
+// every row of the floor is such an edge, seen from above: one ink line over
+// each row's puffs, the puffs white with a shaded crescent, the row's flank
+// shaded under them. The rows roll toward you, one row's place every minute
+// or so, the far ones in grey ink.
+function floorA() {
+  const n = 13, s = tick * 0.008, f = s - Math.floor(s);
+  cell(0, HOR, W, H - HOR, T.pale);
+  for (let j = 0; j < n; j++) {
+    const p = (j + f) / n, m = j - Math.floor(s), base = Math.round(yOf(p)), bz = band(p);
+    if (base > H + 30) continue;
+    const top = fresh();
+    alpha(clamp((j + f) / 1.5, 0, 1), () => {
+      cell(0, base, W, H - base, T.pale);
+      for (const h of headsOf(m, p, n, 25, { tall: 1.25, flatFar: 1.4, flatNear: 0.95 })) { const up = Math.round(h.ry * 0.5 * h.u); dome(h.x, base - up, h.rx, h.ry, T.pale, T.paper, { foot: 2 + up }, top); }
+      rim(top, [T.ink, T.mid, T.pale2][bz]);
+    });
+  }
+}
+
+// B. Cumulus heaps: heaps of round lobes standing out of a valley that is
+// darker toward you, white tops and shaded bellies, no outline: the
+// silhouette is the step from white to the valley's grey. Nine layers drift
+// sideways, the near ones faster, so the field slides past in parallax.
+// A ball: a whole disk in `shade`, and in `lit` the part of it a smaller
+// disk set up and to the left still covers -- a crescent of shade under it.
+function ball(cx, cy, r, shade, lit) {
+  cx = Math.round(cx); cy = Math.round(cy); r = Math.max(1, Math.round(r));
+  const ox = -Math.max(1, Math.round(0.1 * r)), oy = -Math.max(1, Math.round(0.14 * r)), r2 = r + 0.4;
+  for (let dy = -r; dy <= r; dy++) {
+    const hw = Math.round(Math.sqrt(Math.max(0, (r + 0.4) ** 2 - dy * dy))); if (hw <= 0) continue;
+    cell(cx - hw, cy + dy, 2 * hw, 1, shade);
+    const d2 = dy - oy; if (Math.abs(d2) > r2) continue;
+    const hw2 = Math.sqrt(r2 * r2 - d2 * d2), a = Math.max(cx - hw, Math.round(cx + ox - hw2)), b = Math.min(cx + hw, Math.round(cx + ox + hw2));
+    if (b > a) cell(a, cy + dy, b - a, 1, lit);
+  }
+}
+// A heap as a whole: the union of its lobes in shade, and lit wherever the
+// heap still covers the point a step down and to the right -- and a cell in from
+// its upper left edge, so the shade is a thin rim over the top and one crescent along the heap's lower right edge that follows every lobe,
+// and the belly under `belly` is shade. Drawn as runs along each cell row.
+function heap(balls, belly, d, shade, lit, foot) {
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (const [x, y, r] of balls) { x0 = Math.min(x0, x - r - 1); x1 = Math.max(x1, x + r + 1); y0 = Math.min(y0, y - r - 1); y1 = Math.max(y1, y + r + 1); }
+  y1 = Math.min(y1, foot);
+  const inside = (x, y) => { if (y > foot) return false; for (const [bx, by, r] of balls) { const dx = x - bx, dy = y - by; if (dx * dx + dy * dy <= (r + 0.4) * (r + 0.4)) return true; } return false; };
+  x0 = Math.max(Math.floor(x0), -1); x1 = Math.min(Math.ceil(x1), W + 1);
+  for (let y = Math.floor(y0); y <= y1; y++) {
+    let run = null, rx = 0;
+    const flush = (x) => { if (run) cell(rx, y, x - rx, 1, run); };
+    for (let x = x0; x <= x1 + 1; x++) {
+      const c = x > x1 || !inside(x, y) ? null : (y < belly && inside(x + d[0], y + d[1]) && inside(x - 1, y - 1) ? lit : shade);
+      if (c !== run) { flush(x); run = c; rx = x; }
+    }
+  }
+}
+function floorB() {
+  const n = 9;
+  cell(0, HOR, W, H - HOR, T.pale);
+  cell(0, Math.round(yOf(0.2)), W, H, T.pale2);
+  for (let j = 0; j < n; j++) {
+    const p = (j + 0.7) / n, base = Math.round(yOf(p)), m = 40 + j;
+    const drift = tick * 0.12 * (j + 1) / n / spread(p);
+    for (const h of headsOf(m, p, n, 52, { skip: 0.2, tall: 1.0, flatFar: 1.2, flatNear: 1.0, drift })) {
+      const R = Math.max(2, h.ry), x = Math.round(h.x), q = v => Math.round(v);
+      const balls = [[q(x - 0.95 * R), q(base - 0.45 * R), q(0.62 * R)], [q(x + 1.0 * R), q(base - 0.4 * R), q(0.58 * R)], [x, q(base - 0.75 * R), q(R)]];
+      if (R > 3) balls.push([q(x + (h.u - 0.6) * 0.8 * R), q(base - 1.55 * R), q(0.55 * R)]);
+      const d = [Math.max(1, q(0.14 * R)), Math.max(1, q(0.2 * R))];
+      heap(balls, base - Math.max(1, q(R * 0.2)), d, T.pale, T.paper, base);
+    }
+  }
+}
+
+// C. Curling billows: the rows of A without the outline, rolling toward
+// you more slowly, and in every head a curl -- the heavenly cloud of old
+// paintings -- turning over in held steps, so each billow visibly rolls.
+function curl(cx, cy, rx, ry, ph, c) {
+  const seen = new Set();
+  for (let t = 0; t < 1.7 * Math.PI; t += 0.6 / Math.max(rx, 4)) {
+    const k = 0.12 + 0.88 * t / (1.7 * Math.PI), a = ph - t;
+    const x = Math.round(cx + Math.cos(a) * rx * k), y = Math.round(cy + Math.sin(a) * ry * k), key = x * 1000 + y;
+    if (seen.has(key)) continue; seen.add(key); cell(x, y, 1, 1, c);
+  }
+}
+function floorC() {
+  const n = 12, s = tick * 0.005, f = s - Math.floor(s);
+  cell(0, HOR, W, H - HOR, T.pale);
+  for (let j = 0; j < n; j++) {
+    const p = (j + f) / n, m = j - Math.floor(s), base = Math.round(yOf(p)), bz = band(p);
+    if (base > H + 40) continue;
+    const top = fresh();
+    alpha(clamp((j + f) / 1.5, 0, 1), () => {
+      cell(0, base, W, H - base, T.pale);
+      const hs = headsOf(m, p, n, 30, { tall: 1.35, flatFar: 1.3, flatNear: 1.0 });
+      for (const h of hs) { const up = Math.round(h.ry * 0.4 * h.u); dome(h.x, base - up, h.rx, h.ry, T.pale, T.paper, { foot: 2 + up, thin: h.rx > 8 ? 2 : 1 }, top); }
+      rim(top, [T.pale2, T.pale2, T.pale][bz]);
+      for (const h of hs) {
+        if (h.rx < 7) continue;
+        const up = Math.round(h.ry * 0.4 * h.u);
+        curl(h.x - h.rx * 0.12, base - up - h.ry * 0.5, h.rx * 0.55, h.ry * 0.42, Math.floor(tick / 4) * 0.12 + h.u * 6, h.rx >= 11 ? T.pale2 : T.pale);
+      }
+    });
+  }
+}
+
+// ---------------------------------------------------------------- God's camp, as in the last mock
+function throne() {
+  const ink = st.theme === 'dark' ? '#4a4a4a' : FEAT, N2 = 40, x0 = GX - N2 / 2, y0 = 10, seat = y0 + N2;
+  cell(GX - 30, y0 + 14, 60, seat - y0 - 14, ink);
+  cell(GX - 36, seat, 72, 8, ink);
+  for (let k = 0, y = seat + 8; y < HOR + 4; k++, y += 4) cell(GX - 40 - 4 * k, y, 80 + 8 * k, 4, ink);
+  cell(x0 - 2, y0 - 2, N2 + 4, N2 + 2, FEAT); cell(x0, y0, N2, N2, GOD);
+  for (const ox of [6, 24]) { cell(x0 + ox, y0 + 14, 10, 2, FEAT); cell(x0 + ox + 3, y0 + 16, 4, 2, FEAT); }
+  cell(x0 + 12, y0 + 26, 2, 2, FEAT); cell(x0 + 14, y0 + 28, 12, 2, FEAT); cell(x0 + 26, y0 + 26, 2, 2, FEAT);
+  const cr = st.theme === 'dark' ? GOD : FEAT;
+  cell(x0 - 1, y0 - 6, N2 + 2, 2, cr); for (const px of [2, 10, 19, 28, 36]) cell(x0 + px, y0 - 10, 2, 4, cr);
+  for (let i = 0; i < 6; i++) { const y = HOR + 4 - ((tick * 0.5 + i * 8) % 40); cell(GX - 2, y, 4, 4, st.theme === 'dark' ? '#9a9a9a' : '#bdbdbd'); }
+}
+const ROWS = 16;
+const rowY = r => { const k = r / (ROWS - 1); return Math.round(lerp(HOR + 2, H - 6, k * k * 0.6 + k * 0.4)); };
+const rowOf = r => { const k = r / (ROWS - 1), y = rowY(r), next = r < ROWS - 1 ? rowY(r + 1) : H; return { k, y, n: Math.max(2, Math.round(lerp(2, 9, k)), next - y + 1) }; };
+const baseHalf = y => y < HOR + 4 ? 40 + 4 * Math.max(0, Math.floor((y - 58) / 4)) + 3 : 0;
+const FADE = new Map(); let lastTick = null, stepping = false;
+function crowd() {
+  stepping = lastTick != null && Math.abs(tick - lastTick) <= 2; lastTick = tick;
+  for (let r = 0; r < ROWS; r++) {
+    const R = rowOf(r), pitch = R.n;
+    let i = 0;
+    for (let x = ((r % 2) * pitch >> 1) - pitch - ((r * 3) % pitch); x < W; x += pitch, i++) {
+      const cx = x + R.n / 2;
+      if (Math.abs(cx - GX) > lerp(66, 150, R.k) + (hsh(r, 4) * 8)) continue;
+      if (Math.abs(cx - GX) < baseHalf(R.y) + 2) continue;
+      if (Math.abs(cx - GX) < 6 + R.n) continue;
+      // A soul is there or gone by the support; leaving, it fades over a
+      // second of held steps, so a held support never shows a soul half there
+      // and the floor never shows through one.
+      const want = ((1 - sup()) * 1.9 - (r / ROWS) * 0.8 - hsh(i, r + 9) * 0.6 + 0.35) > 0 ? 1 : 0, key = r * 1000 + i;
+      const was = FADE.get(key), a = was == null || !stepping ? want : was + clamp(want - was, -0.25, 0.25);
+      FADE.set(key, a); if (a <= 0.01) continue;
+      const c = st.theme === 'dark' ? ((i + r) % 2 ? '#4a4a4a' : '#5f5f5f') : ((i + r) % 2 ? T.mid : '#8a8a8a');
+      g.globalAlpha = Math.min(1, a); cell(x, R.y, R.n, R.n, c); g.globalAlpha = 1;
+    }
+  }
+}
+function draw() {
+  T = TONES[st.theme];
+  cell(0, 0, W, H, T.paper);
+  ({ a: floorA, b: floorB, c: floorC })[st.take]();
+  throne(); crowd();
+}
+function sync() {
+  for (const b of document.querySelectorAll('button[data-k]')) b.setAttribute('aria-pressed', String(st[b.dataset.k] === b.dataset.v));
+  document.documentElement.dataset.theme = st.theme; document.getElementById('what').textContent = WHAT[st.take]; draw();
+}
+document.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => { st[b.dataset.k] = b.dataset.v; sync(); });
+document.getElementById('sup').oninput = e => { st.s = +e.target.value; st.auto = 'off'; sync(); };
+window.setTick = t => { tick = t; draw(); };
+const q = new URLSearchParams(location.hash.slice(1));
+for (const k of ['theme', 'take', 'auto']) if (q.get(k)) st[k] = q.get(k);
+if (q.get('s')) { st.s = +q.get('s'); document.getElementById('sup').value = st.s; }
+if (q.get('t')) tick = +q.get('t');
+setInterval(() => { if (!q.get('still')) { tick++; draw(); } }, 250);
+sync();
+</script>
+</body></html>

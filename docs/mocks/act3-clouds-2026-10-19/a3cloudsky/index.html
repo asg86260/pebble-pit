@@ -1,0 +1,404 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cloud sky</title>
+<style>
+:root{--bg:#f4f4f4;--fg:#111;--line:#ccc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1b;--fg:#eee;--line:#444}}
+:root[data-theme="dark"]{--bg:#1b1b1b;--fg:#eee;--line:#444}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 ui-monospace,Menlo,Consolas,monospace}
+header{padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;border-bottom:1px solid var(--line)}
+.tag{background:var(--fg);color:var(--bg);padding:1px 6px}
+label{display:inline-flex;gap:6px;align-items:center}
+button{font:inherit;padding:3px 10px;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer}
+button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.wrap{padding:12px 16px}
+canvas{width:100%;height:auto;image-rendering:pixelated;display:block}
+p{margin:8px 0;max-width:1000px}
+</style></head><body>
+<header><span class="tag">MOCK</span><b>The sky over the cloud floor</b>
+<span>page <button data-k="theme" data-v="light">light</button><button data-k="theme" data-v="dark">dark</button></span>
+<span>sky <button data-k="take" data-v="s1">S1. towering banks</button><button data-k="take" data-v="s2">S2. cloud ceiling</button><button data-k="take" data-v="s3">S3. cloud ranges</button></span>
+<span>support <button data-k="auto" data-v="on">plays</button><button data-k="auto" data-v="off">held</button></span>
+<label><input id="sup" type="range" min="0" max="1" step="0.01" value="0.2"></label>
+</header>
+<div class="wrap">
+<canvas id="c" width="2004" height="967"></canvas>
+<p>MOCK, drawn from plain shapes at your window size on the game's 6 px grid. It is not the game. The floor, the crowd and the throne are the last round's G1, unchanged; only the sky above the horizon is new. Every take builds its sky from the floor's billow: white tops, a shaded underside and a line along the top, kept a step quieter than the floor (no ink by day) so the floor stays in front and the horizon reads. By night the clouds are not the day's inverted: they are dim masses whose tops catch the light and whose undersides sink into the dark.</p>
+<p>What it cannot show: the game's real crowd, camera and other layers, or what tracing the floor every frame would cost there.</p>
+<p id="what"></p>
+</div>
+<script>
+const P = 6, cv = document.getElementById('c'), g = cv.getContext('2d');
+const st = { theme: 'light', take: 's1', auto: 'on', s: 0.2 };
+const TONES = {
+  light: { paper: '#fff', pale: '#d6d6d6', mid: '#757575', ink: '#000' },
+  dark: { paper: '#121212', pale: '#262626', mid: '#3a3a3a', ink: '#666666' } };
+const WHAT = {
+  s1: 'S1. Towering banks: cumulus heaped up either side of the throne, highest at the edges and lower toward him, so he sits in a valley of cloud with clear sky round his crown; a low far bank drifts along the horizon behind. The heads boil slowly in place.',
+  s2: 'S2. Cloud ceiling: the floor turned over -- the same billows hung from a plane above you, big overhead and thinning toward the horizon, their bellies in shade and their far rims white, rolling toward you with the floor.',
+  s3: 'S3. Cloud ranges: three ranges of billow one behind another like mountain ranges, the farthest tallest and quietest, each nearer one lower with bigger heads, sliding past each other slowly.' };
+// how each take grounds a body: how far down into the billow under it the
+// foot goes (1 = on top, 0 = at the bottom of the billows), whether nearer
+// cloud covers it, and whether it casts a shade
+const GROUND = { g1: { lift: 0, sink: 0, shade: 0, fluff: 1 }, g2: { lift: 1, sink: 0, shade: 1 }, g3: { lift: 0, sink: 1, shade: 0 } };
+let T, tick = 0;
+const cell = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, Math.round(w) * P, Math.round(h) * P); };
+const hsh = (a, b = 0, c = 0) => { let h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, k) => a + (b - a) * k;
+const sstep = (a, b, v) => { const k = clamp((v - a) / (b - a), 0, 1); return k * k * (3 - 2 * k); };
+const W = 334, H = 161, GX = 167, HOR = 92;
+const GOD = '#ffffff', FEAT = '#000000';
+const sup = () => st.auto === 'on' ? 0.5 + 0.45 * Math.sin(tick * 0.02) : st.s;
+
+// ---------------------------------------------------------------- the camera
+// A camera F cells from the screen, CAM units above the plane: a point of
+// height h at depth z lands HOR + F*(CAM - h)/z cells down, and anything W
+// wide there is W*F/z cells wide. The floor, the souls and the throne all go
+// through this one camera.
+const F = 130, CAM = 0.86;
+const yAt = (z, h = 0) => HOR + F * (CAM - h) / z, xAt = (X, z) => GX + X * F / z, zAt = y => F * CAM / Math.max(0.5, y - HOR);
+
+// ---------------------------------------------------------------- the floor (round 2, A2)
+const K = { cap: [0.1, 0.17, 0.95], vary: 0.15, ez: 1.35, lx: 0.36, lz: 0.45, jit: 0.3, r: [0.48, 0.62], amp: [0.21, 0.3], puff: 0.4, row: 0.5, roll: 0.006 };
+// near your feet the billows are pressed low, so the ground reads as walkable
+const ampAt = z => lerp(0.3, 1, sstep(2.5, 9, z));
+// Past the depth where a row of billows would be thinner than ROWMIN cells,
+// the rows stop thinning and only narrow: the far floor is laid out on a
+// depth scale that slows (u), so the billows shrink into the horizon in thin
+// rows a cell and a half deep instead of melting below a cell.
+const ROWMIN = 1.6, WC = F * CAM * K.lz / ROWMIN, Z1 = Math.sqrt(WC);
+const uOf = z => z <= Z1 ? z : 2 * Z1 - WC / z;
+const xsOf = z => z <= Z1 ? 1 : Math.sqrt(Z1 / z);
+const psOf = y => { const z = zAt(y); return z <= Z1 ? F * CAM * K.lz / (z * z) : ROWMIN; };
+function domeAt(i, j) {
+  const off = K.row * (j & 1), v = hsh(i, j, 6), sz = v < K.vary ? lerp(1.2, 1.4, hsh(i, j, 8)) : lerp(0.75, 1.05, hsh(i, j, 8));
+  const r = lerp(K.r[0], K.r[1], hsh(i, j, 3)) * K.lx * sz;
+  return { id: i * 7919 + j * 104729, cx: (i + 0.5 + off + (hsh(i, j, 1) - 0.5) * 2 * K.jit) * K.lx, cz: (j + 0.5 + (hsh(i, j, 2) - 0.5) * 2 * K.jit) * K.lz,
+    rx: r, rz: r * K.ez, a: lerp(K.amp[0], K.amp[1], hsh(i, j, 4)) * sz, q: hsh(i, j, 5) };
+}
+const cache = new Map();
+function dome(i, j) { const key = i * 100003 + j; let d = cache.get(key); if (!d) { d = domeAt(i, j); cache.set(key, d); } return d; }
+function sample(X, U) {
+  const j0 = Math.floor(U / K.lz);
+  let best = 0, own = null, bx = 0, bz = 0;
+  for (let j = j0 - 2; j <= j0 + 2; j++) {
+    const i0 = Math.floor(X / K.lx - K.row * (j & 1));
+    for (let i = i0 - 2; i <= i0 + 2; i++) {
+      const d = dome(i, j), dx = (X - d.cx) / d.rx, dz = (U - d.cz) / d.rz, m = dx * dx + dz * dz;
+      if (m >= 1) continue;
+      const h = d.a * Math.pow(1 - m, K.puff);
+      if (h > best) { best = h; own = d; bx = dx; bz = dz; }
+    }
+  }
+  return { h: best, own, dx: bx, dz: bz };
+}
+// the floor's height at plane point (X, z), in the camera's units
+const ground = (X, z) => sample(X * xsOf(z), uOf(z) + tick * K.roll).h * ampAt(z);
+const lit = s => { if (!s.own) return false; const [cx, cz, cr] = K.cap, u = (s.dx + cx) / cr, v = (s.dz - cz) / cr; return u * u + v * v < 1; };
+const ZB = new Float32Array(W * H), CZ = new Float32Array(W * H), OW = new Int32Array(W * H), TN = new Uint8Array(W * H), RA = new Float32Array(W * H), COL = new Array(W * H);
+function floor() {
+  const roll = tick * K.roll;
+  cache.clear(); ZB.fill(0); OW.fill(-2); TN.fill(0);
+  const z0 = zAt(H + 4) * 0.55, zF = 400;
+  for (let x = 0; x < W; x++) {
+    const sx = (x + 0.5 - GX) / F;
+    let top = H;
+    for (let z = z0; z < zF && top > HOR; z += Math.max(0.006, z * 0.005)) {
+      const s = sample(sx * z * xsOf(z), uOf(z) + roll), h = s.h * ampAt(z);
+      const y0 = Math.max(HOR + 1, Math.ceil(yAt(z, h) - 0.5));
+      if (y0 >= top) continue;
+      const t = lit(s) ? 1 : 2, id = s.own ? s.own.id : -1, cz = s.own ? s.own.cz : uOf(z) + roll + 9;
+      for (let y = y0; y < top; y++) { if (y >= H) continue; const c = y * W + x; ZB[c] = z; CZ[c] = cz; OW[c] = id; TN[c] = t; RA[c] = s.own ? s.own.q : 0.5; }
+      top = y0;
+    }
+    for (let y = HOR + 1; y < top; y++) { const c = y * W + x; ZB[c] = 1e9; CZ[c] = 1e9; OW[c] = -3; TN[c] = 1; }
+  }
+  // white tops, shaded fronts, and the line where a nearer billow stands in
+  // front of a farther one, grey with distance by how far apart the rows are
+  for (let y = HOR + 1; y < H; y++) {
+    const ps = psOf(y);
+    for (let x = 0; x < W; x++) {
+      const c = y * W + x, o = OW[c], me = CZ[c], gap = 0.25 * K.lz;
+      let col = TN[c] === 2 && ps > 0.35 ? T.pale : T.paper;
+      const edge = (y > HOR + 1 && OW[c - W] !== o && CZ[c - W] > me + gap) || (x > 0 && OW[c - 1] !== o && CZ[c - 1] > me + gap && ZB[c - 1] > ZB[c] * 1.3) || (x < W - 1 && OW[c + 1] !== o && CZ[c + 1] > me + gap && ZB[c + 1] > ZB[c] * 1.3);
+      if (edge) { const pz = ps * lerp(0.8, 1.25, RA[c]); col = pz > 6 ? T.ink : pz > 3 ? T.mid : pz > 0.5 ? T.pale : col; }
+      COL[c] = col; cell(x, y, 1, 1, col);
+    }
+  }
+}
+// paint the floor back over whatever is drawn in a rect, wherever the floor
+// there is nearer than depth z: cloud in front of a body covers it
+function lap(x0, y0, x1, y1, z) {
+  for (let y = Math.max(HOR + 1, y0); y < Math.min(H, y1); y++) for (let x = Math.max(0, x0); x < Math.min(W, x1); x++) {
+    const c = y * W + x; if (ZB[c] < z) cell(x, y, 1, 1, COL[c]);
+  }
+}
+
+// A lip of billow standing on row `base` from x0 to x1, h cells tall: a few
+// round tops side by side, white, with `line` along the top -- the floor's
+// own drawing, put in front of a body's feet.
+function lip(x0, x1, base, h, line, seed, rw) {
+  const rb = rw || Math.max(2, h * 1.7), n = Math.max(1, Math.round((x1 - x0) / (1.5 * rb))), step = (x1 - x0) / n, tops = new Array(x1 - x0 + 3).fill(0);
+  for (let b = 0; b <= n; b++) {
+    const c = x0 + b * step + (hsh(seed, b) - 0.5) * step * 0.4, hb = h * lerp(0.75, 1.1, hsh(seed, b, 3));
+    for (let x = x0 - 1; x <= x1 + 1; x++) { const u = (x + 0.5 - c) / rb; if (Math.abs(u) < 1) tops[x - x0 + 1] = Math.max(tops[x - x0 + 1], hb * Math.sqrt(1 - u * u)); }
+  }
+  for (let x = x0 - 1; x <= x1 + 1; x++) {
+    const t = Math.round(tops[x - x0 + 1]); if (t < 1 || x < 0 || x >= W) continue;
+    const l = Math.round(tops[x - x0] || 0), r = Math.round(tops[x - x0 + 2] || 0);
+    cell(x, base - t, 1, t, T.paper);
+    // the line over the top, joined down the steps between columns
+    // (not down the outer ends: the lip melts into the floor at its sides)
+    const lo = l < 1 || r < 1 ? 1 : Math.max(1, Math.min(t, t - Math.min(l, r) + 1));
+    if (line) cell(x, base - t - 1, 1, Math.min(lo, t), line);
+  }
+}
+
+// ---------------------------------------------------------------- God's camp
+// The throne's foot stands at depth ZT, the depth of the ground under its
+// bottom step; sunk takes set it a little further back so the billows in
+// front lap over the step.
+const FOOT = HOR + 6;                             // the row under the bottom step
+function throne() {
+  const ink = st.theme === 'dark' ? '#4a4a4a' : FEAT, N2 = 40, x0 = GX - N2 / 2, y0 = 10, seat = y0 + N2;
+  cell(GX - 30, y0 + 14, 60, seat - y0 - 14, ink);
+  cell(GX - 36, seat, 72, 8, ink);
+  let half = 0;
+  for (let k = 0, y = seat + 8; y < FOOT; k++, y += 4) { const h = Math.min(4, FOOT - y); cell(GX - 40 - 4 * k, y, 80 + 8 * k, h, ink); half = 40 + 4 * k; }
+  cell(x0 - 2, y0 - 2, N2 + 4, N2 + 2, FEAT); cell(x0, y0, N2, N2, GOD);
+  for (const ox of [6, 24]) { cell(x0 + ox, y0 + 14, 10, 2, FEAT); cell(x0 + ox + 3, y0 + 16, 4, 2, FEAT); }
+  cell(x0 + 12, y0 + 26, 2, 2, FEAT); cell(x0 + 14, y0 + 28, 12, 2, FEAT); cell(x0 + 26, y0 + 26, 2, 2, FEAT);
+  const cr = st.theme === 'dark' ? GOD : FEAT;
+  cell(x0 - 1, y0 - 6, N2 + 2, 2, cr); for (const px of [2, 10, 19, 28, 36]) cell(x0 + px, y0 - 10, 2, 4, cr);
+  const G = GROUND.g1;
+  if (G.sink) lap(GX - half - 1, FOOT - 6, GX + half + 1, FOOT, zAt(FOOT - 0.5) * 1.35);
+  if (G.shade) shade(GX - half + 2, FOOT, 2 * half, 2, G.sink ? zAt(FOOT) : 0);
+  if (G.fluff) lip(GX - half - 3, GX + half + 3, FOOT + 1, 2.4, T.mid, 77);
+  for (let i = 0; i < 6; i++) { const y = HOR + 4 - ((tick * 0.5 + i * 8) % 40); cell(GX - 2, y, 4, 4, st.theme === 'dark' ? '#9a9a9a' : '#bdbdbd'); }
+  return half;
+}
+// a body's shade on the cloud: mid on the lit tops, where pale would not
+// show, and left alone on cloud nearer than the body
+function shade(x0, y0, w, h, z) {
+  for (let y = y0; y < Math.min(H, y0 + h); y++) for (let x = Math.max(0, x0); x < Math.min(W, x0 + w); x++) {
+    const c = y * W + x; if (z && ZB[c] < z * 0.85) continue; cell(x, y, 1, 1, T.mid);
+  }
+}
+
+// ---------------------------------------------------------------- the crowd, in the floor's camera
+// Rows from your feet back to the throne, each row's souls SOUL wide on the
+// plane and so SOUL*F/z cells on screen; the next row back stands where the
+// one in front of it covers its feet, so the full crowd hides the floor.
+const SOUL = 0.22;
+const ROWS = (() => {
+  const out = []; let yf = H + 3;
+  while (yf > HOR + 2) {
+    // never under two cells: the far billows stop shrinking at about that
+    // size too (ROWMIN), so a soul by the throne still matches its cloud
+    const z = zAt(yf), n = Math.max(2, SOUL * F / z);
+    out.push({ z, yf, n });
+    yf -= Math.max(1, n * 0.7);
+  }
+  return out.reverse();                         // back to front, the painting order
+})();
+const FADE = new Map(); let lastTick = null, stepping = false;
+function crowd(half) {
+  stepping = lastTick != null && Math.abs(tick - lastTick) <= 2; lastTick = tick;
+  const G = GROUND.g1, souls = [];
+  ROWS.forEach((R, r) => {
+    const kf = (R.yf - HOR) / (H - HOR), pitch = SOUL * 0.94;
+    for (let i = -400; i <= 400; i++) {
+      const X = (i + (r & 1) * 0.5) * pitch, cx = xAt(X, R.z);
+      if (cx < -20 || cx > W + 20) continue;
+      const n = Math.max(1, Math.round(R.n));
+      // gathered round the throne: wider toward you, either side of its
+      // base, and an aisle up the middle for the line
+      if (Math.abs(cx - GX) > lerp(66, 150, kf) + hsh(r, 4) * 8) continue;
+      if (R.yf - n < FOOT && Math.abs(cx - GX) < half + 2 + n / 2) continue;
+      if (Math.abs(cx - GX) < 5 + n) continue;
+      // there or gone by the support, the front first; leaving, it fades
+      const want = ((1 - sup()) * 1.9 - kf * 0.8 - hsh(i, r + 9) * 0.6 + 0.35) > 0 ? 1 : 0, key = r * 1000 + i;
+      const was = FADE.get(key), a = was == null || !stepping ? want : was + clamp(want - was, -0.25, 0.25);
+      FADE.set(key, a); if (a <= 0.01) continue;
+      // the foot: on the billow under the soul, or part way down into it
+      const hg = n >= 4 ? ground(X, R.z) * G.lift : 0, yf = Math.round(yAt(R.z, hg)), x0 = Math.round(cx - n / 2);
+      souls.push({ r, i, x0, yf, y0: Math.round(yAt(R.z)), n, z: R.z, a: Math.min(1, a), c: st.theme === 'dark' ? ((i + r) & 1 ? '#4a4a4a' : '#5f5f5f') : ((i + r) & 1 ? T.mid : '#8a8a8a') });
+    }
+  });
+  // Only a soul with nobody standing just in front of it shows the cloud
+  // lapping its feet; inside the crowd the next row covers them, so the
+  // full crowd still hides the floor.
+  window.__souls = souls.length;
+  const here = new Set(souls.filter(s => s.a > 0.5).map(s => s.r * 1000 + s.i));
+  for (const s of souls) {
+    const j = s.r & 1 ? s.i + 1 : s.i - 1;
+    s.open = !(here.has((s.r + 1) * 1000 + s.i) && here.has((s.r + 1) * 1000 + j)) || s.r === ROWS.length - 1;
+  }
+  for (const s of souls) {
+    // inside the crowd a soul reaches down to its row's line, so no cloud
+    // shows between rows; the open ones stand where their billow puts them
+    const top = s.yf - s.n, bot = s.open ? s.yf : Math.max(s.yf, s.y0);
+    g.globalAlpha = s.a;
+    // its shade, on the cloud just behind and to the right of its feet
+    if (G.shade && s.open && s.n >= 4) shade(s.x0 + 1, s.yf - Math.max(1, Math.round(s.n * 0.2)), s.n + Math.max(1, Math.round(s.n * 0.25)), Math.max(1, Math.round(s.n * 0.2)), G.sink ? s.z : 0);
+    for (let y = top; y < bot; y++) {
+      if (y <= HOR || y >= H) continue;
+      for (let x = s.x0; x < s.x0 + s.n; x++) {
+        if (x < 0 || x >= W) continue;
+        // nearer cloud covers the soul's feet
+        // -- only its lower half, so every soul still shows
+        if (G.sink && s.open && s.n >= 4 && y >= s.yf - Math.ceil(s.n / 2) && ZB[y * W + x] < s.z * 0.97) continue;
+        cell(x, y, 1, 1, s.c);
+      }
+    }
+    // the lip of cloud in front of an open soul's feet, in the line tone
+    // the floor uses at that size
+    if (G.fluff && s.open && s.n >= 4) lip(s.x0 - 1, s.x0 + s.n + 1, s.yf + Math.max(1, Math.round(s.n * 0.15)), Math.max(1.6, s.n * 0.4), s.n >= 6 ? T.ink : T.mid, s.r * 1000 + s.i, Math.max(1.6, (s.n + 2) / 3.2));
+  }
+  g.globalAlpha = 1;
+}
+// ---------------------------------------------------------------- the sky
+// Tone roles for cloud in the sky. By day a cloud is white with a pale
+// underside and a line along its top, quieter than the floor's (no ink). By
+// night a cloud is a dim mass on the dark, its top catching the light and
+// its underside sinking into the night sky itself.
+const SKYT = {
+  light: { lit: '#fff', shade: '#d6d6d6', rim: ['#757575', '#d6d6d6'] },
+  dark: { lit: '#262626', shade: '#121212', rim: ['#666666', '#3a3a3a'], cap: '#3a3a3a' } };
+// A cloud mass: lobes [x, y, r] in cells, cut flat at `belly`. Lit where the
+// point a little down and right is still inside (so a crescent of shade
+// follows every lobe's lower right), shaded in a band over the belly, and a
+// line along every edge that faces up. `far` picks the quieter rim.
+function mass(lobes, belly, far, capD) {
+  const S = SKYT[st.theme];
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9;
+  for (const [x, y, r] of lobes) { x0 = Math.min(x0, x - r); x1 = Math.max(x1, x + r); y0 = Math.min(y0, y - r); }
+  x0 = Math.max(0, Math.floor(x0)); x1 = Math.min(W - 1, Math.ceil(x1)); y0 = Math.max(0, Math.floor(y0)); const y1 = Math.min(HOR, Math.ceil(belly));
+  const inside = (px, py) => { if (py > belly) return false; for (const [x, y, r] of lobes) { const dx = px - x, dy = py - y; if (dx * dx + dy * dy <= r * r) return true; } return false; };
+  for (let x = x0; x <= x1; x++) {
+    let top = null;
+    for (let y = y0; y <= y1; y++) {
+      const px = x + 0.5, py = y + 0.5; if (!inside(px, py)) continue;
+      if (top === null) top = y;
+      // white over the top of the mass to a depth of capD, scalloped by a
+      // crescent of shade under each head; the body below in shade
+      const d = far ? 1 : 2, lit = y - top < capD && inside(px + d, py + d);
+      let c = lit ? S.lit : S.shade;
+      if (S.cap && lit && y - top < 2) c = S.cap;          // night: the very top catches the light
+      if (!inside(px, py - 1) || (lit && (!inside(px - 1, py) || !inside(px + 1, py)))) c = S.rim[far ? 1 : 0];
+      cell(x, y, 1, 1, c);
+    }
+  }
+}
+// lobes heaped into a cumulus: a broad foot and smaller heads stacked on it,
+// each head breathing slowly so the cloud boils without moving off its spot
+function heap(cx, base, w, h, seed, t) {
+  const out = [], levels = Math.max(2, Math.round(h / (w * 0.22)));
+  for (let k = 0; k < levels; k++) {
+    const f = k / Math.max(1, levels - 1), rowW = w * (1 - 0.65 * f), r = w * lerp(0.2, 0.12, f), n = Math.max(1, Math.round(rowW / (r * 0.85)));
+    for (let i = 0; i < n; i++) {
+      const s = seed * 97 + k * 13 + i, u = n === 1 ? 0 : i / (n - 1) - 0.5;
+      const rr = r * lerp(0.8, 1.25, hsh(s, 1)) * (1 + 0.07 * Math.sin(t * lerp(0.008, 0.016, hsh(s, 2)) + hsh(s, 3) * 6.28));
+      out.push([cx + u * rowW + (hsh(s, 4) - 0.5) * r * 0.8, base - r * 0.6 - f * h + (hsh(s, 5) - 0.5) * r * 0.5, rr]);
+    }
+  }
+  return out;
+}
+// S1: towering banks rising either side of the throne and a lower far bank
+// across the horizon behind him; his crown has clear sky round it
+function skyS1() {
+  const t = tick, drift = t * 0.02;
+  for (let i = -1; i < 9; i++) {
+    const x = ((i * 46 + drift) % 460 + 460) % 460 - 60;
+    mass(heap(x, HOR + 2, 52, 16 + 8 * hsh(i, 21), 300 + i, t), HOR + 2, true, 4);
+  }
+  // the towers: two a side, the inner one lower, so God sits in a valley
+  const T2 = [[38, 120, 70, 1], [104, 70, 40, 2], [296, 120, 74, 3], [232, 74, 42, 4]];
+  for (const [x, w, h, s] of [...T2].sort((a, b) => b[2] - a[2])) mass(heap(x + Math.sin(t * 0.004 + s) * 1.5, HOR + 4, w, h, s, t), HOR + 4, false, 9);
+}
+// S3: ranges of billow like mountain ranges of cloud: the farthest tallest
+// and quietest, each nearer range lower, bigger in the lobe and drifting
+// faster, so they slide past one another
+function skyS3() {
+  const t = tick;
+  const R = [{ base: HOR + 2, top: 62, r: 6, far: true, sp: 0.01, sb: 4 }, { base: HOR + 2, top: 40, r: 9, far: true, sp: 0.02, sb: 6 },
+    { base: HOR + 2, top: 22, r: 13, far: false, sp: 0.035, sb: 8 }];
+  R.forEach((g, k) => {
+    const lobes = [], step = g.r * 1.1, off = t * g.sp;
+    for (let i = Math.floor(-off / step) - 2; i * step + off < W + 2 * g.r; i++) {
+      const x = i * step + off;
+      const hgt = g.top * (0.45 + 0.35 * Math.sin(i * 0.37 + k * 2) + 0.2 * Math.sin(i * 0.11 + k)) * lerp(0.85, 1.15, hsh(i, k));
+      const rr = g.r * lerp(0.85, 1.2, hsh(i, k, 2)) * (1 + 0.06 * Math.sin(t * 0.012 + hsh(i, k, 3) * 6.28));
+      for (let y = g.base; y > g.base - hgt; y -= g.r * 1.2) lobes.push([x + (hsh(i, k, Math.round(y)) - 0.5) * g.r * 0.6, y - rr * 0.3, rr]);
+    }
+    mass(lobes, g.base, g.far, g.sb);
+  });
+}
+// S2: a ceiling of billow overhead, the floor turned upside down: billows
+// hung from a plane CEIL above the eye, big over your head and thinning
+// toward the horizon, rolling toward you with the floor
+const CEIL = 1.3, CLX = 0.5, CLZ = 0.6;
+// the ceiling's own slowing of depth, as the floor's: rows stop thinning at
+// ROWMIN cells and only narrow toward the horizon
+const WC2 = F * CEIL * CLZ / ROWMIN, Z2 = Math.sqrt(WC2), u2Of = z => z <= Z2 ? z : 2 * Z2 - WC2 / z, xs2Of = z => z <= Z2 ? 1 : Math.sqrt(Z2 / z);
+function skyS2() {
+  const S = SKYT[st.theme], roll = tick * K.roll, N = W * (HOR + 1), BUF = new Float32Array(N), OWN = new Int32Array(N), SH = new Uint8Array(N);
+  const cache2 = new Map();
+  const dome2 = (i, j) => {
+    const key = i * 100003 + j; let d = cache2.get(key);
+    if (!d) { const b = domeAt(i + 5000, j + 5000); d = { ...b, cx: (b.cx - 5000 * K.lx) * CLX / K.lx, cz: (b.cz - 5000 * K.lz) * CLZ / K.lz, rx: b.rx * 1.4, rz: b.rz * 1.4, a: b.a * 1.4 }; cache2.set(key, d); }
+    return d;
+  };
+  const samp = (X, U) => {
+    const j0 = Math.floor(U / CLZ); let best = 0, own = null, bx = 0, bz = 0;
+    for (let j = j0 - 2; j <= j0 + 2; j++) { const i0 = Math.floor(X / CLX - K.row * (j & 1)); for (let i = i0 - 2; i <= i0 + 2; i++) {
+      const d = dome2(i, j), dx = (X - d.cx) / d.rx, dz = (U - d.cz) / d.rz, m = dx * dx + dz * dz; if (m >= 1) continue;
+      const h = d.a * Math.pow(1 - m, K.puff); if (h > best) { best = h; own = d; bx = dx; bz = dz; } } }
+    return { h: best, own, dx: bx, dz: bz };
+  };
+  const zT = F * CEIL / (HOR + 4) * 0.6;
+  for (let x = 0; x < W; x++) {
+    const sx = (x + 0.5 - GX) / F; let bot = 0;
+    for (let z = zT; z < 400 && bot < HOR; z += Math.max(0.006, z * 0.005)) {
+      const s = samp(sx * z * xs2Of(z), u2Of(z) + roll), sy = HOR - F * (CEIL - s.h) / z, y1 = Math.min(HOR, Math.floor(sy + 0.5));
+      if (y1 <= bot) continue;
+      // from below, a billow's belly is in shade; its far rim, where the
+      // light comes over it, is white
+      const lit = s.own && (s.dz > 0.35 || s.dx * s.dx + s.dz * s.dz > 0.8);
+      for (let y = bot; y < y1; y++) { const c = y * W + x; BUF[c] = s.own ? s.own.cz : 1e9; OWN[c] = s.own ? s.own.id : -1; SH[c] = lit ? 1 : 2; }
+      bot = y1;
+    }
+    for (let y = bot; y <= HOR; y++) { const c = y * W + x; BUF[c] = 1e9; OWN[c] = -3; SH[c] = 0; }
+  }
+  for (let y = 0; y <= HOR; y++) {
+    const z = F * CEIL / Math.max(0.5, HOR - y), ps = z <= Z2 ? F * CEIL * CLZ / (z * z) : ROWMIN;
+    for (let x = 0; x < W; x++) {
+      const c = y * W + x; if (SH[c] === 0) continue;
+      let col = SH[c] === 1 ? S.lit : S.shade;
+      // the line: where the cell below belongs to a billow further off
+      if (ps > 1.2 && y < HOR && OWN[c + W] !== OWN[c] && BUF[c + W] > BUF[c] + 0.15) col = S.rim[ps > 10 ? 0 : 1];
+      cell(x, y, 1, 1, col);
+    }
+  }
+}
+function sky() { cell(0, 0, W, HOR + 1, T.paper); ({ s1: skyS1, s2: skyS2, s3: skyS3 })[st.take](); }
+function draw() {
+  T = TONES[st.theme];
+  cell(0, 0, W, H, T.paper);
+  sky(); floor(); const half = throne(); crowd(half);
+}
+function sync() {
+  for (const b of document.querySelectorAll('button[data-k]')) b.setAttribute('aria-pressed', String(st[b.dataset.k] === b.dataset.v));
+  document.documentElement.dataset.theme = st.theme; document.getElementById('what').textContent = WHAT[st.take]; draw();
+}
+document.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => { st[b.dataset.k] = b.dataset.v; sync(); });
+document.getElementById('sup').oninput = e => { st.s = +e.target.value; st.auto = 'off'; sync(); };
+window.setTick = t => { tick = t; draw(); };
+const q = new URLSearchParams(location.hash.slice(1));
+for (const k of ['theme', 'take', 'auto']) if (q.get(k)) st[k] = q.get(k);
+if (q.get('s')) { st.s = +q.get('s'); document.getElementById('sup').value = st.s; }
+if (q.get('t')) tick = +q.get('t');
+setInterval(() => { if (!q.get('still')) { tick++; draw(); } }, 250);
+sync();
+</script>
+</body></html>

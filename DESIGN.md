@@ -20841,8 +20841,51 @@ act3-union2, act3-level and act3-flaglogo cards; `docs/mocks/act3-level-2026-10-
   then drifts across to the union's camp and joins its front. Rising and
   fading upward is God's language (the blessing); going sideways to the
   camp is the union's.
+- **God's crowd stands all round the throne**, either side of his stepped
+  base and out in front, with an aisle up the middle for the line, packed
+  row behind row so no floor shows through it until it thins.
 - Gaps still open: how far apart the zones sit (the walk between them),
   and the workshops' own drawings (the camp card).
+
+**God's camp stands in the clouds (design, not built; the owner,
+2026-10-19).** Voted a mock at a time (the board's act3-cloudfloor,
+act3-cloudfloor2/3 and act3-cloudsky/2 cards). The crowd once floated on
+nothing; haze, flat bands, strata, ledges and loose puffs all read as cheap.
+What reads as ground is a floor *made of* cloud, seen in perspective:
+
+- **The floor is a cloud sea on a ground plane** (take A2). Billows are
+  placed on the plane and seen through one camera, so they are big and few
+  at the viewer's feet and shrink and crowd toward the horizon by the
+  perspective itself, never by a tuned row list; near the feet they are
+  pressed low, mounds you could walk on, rising to full height toward the
+  throne. Each billow is a white top, a shaded front, and a line where a
+  nearer billow stands over a farther one, ink near and paling with
+  distance. Rows too thin to draw near the horizon stop thinning and only
+  narrow, so the billows run right to it. It rolls slowly toward the
+  viewer, each row at its own depth's speed.
+- **The crowd stands in that floor** (take G1). A soul's foot is its spot
+  on the floor through the same camera, and its size scales with the same
+  depth, so souls match the billows round them. A soul with nobody in front
+  of it gets a lip of billow over its feet, in the floor's own line tone; the
+  throne's bottom step sits in the cloud with the same lip.
+- **The sky is ranges of cloud, drawn by math** (take S3, taller). Three
+  ranges, far to near, each a skyline of layered value noise over position
+  and time, cut at a floor so a range dips out in places and the three
+  overlap irregularly rather than stacking in bands. Billow heads sit on
+  the ridge and swell, shrink to nothing and come back on their own clock;
+  the shading (white tops toward the light, a crescent under each head,
+  the body in shade, a line no darker than mid by day) is derived from the
+  shape each moment, so it stays right as the shape changes. A seed fixes
+  the sky and time evolves it: peaks rise, sink, merge and split over
+  minutes, and a slow weather term swings it calm to towering. The owner
+  asked for the ranges **taller** than the mock's default, which filled
+  only the bottom third. The sky is recomputed every couple of seconds into
+  a cached image and each frame blends the two nearest, so a changing cell
+  fades across rather than flipping.
+- **Dark mode is redrawn, not swapped**: cloud tops catch a grey light,
+  undersides sink into the night, and God glows against it.
+- God stays the brightest, most solid thing on screen; the sky's lines
+  are quieter than the floor's near ones so the horizon reads.
 
 ##### The click: a cloud, and faith
 
