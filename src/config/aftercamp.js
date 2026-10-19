@@ -25,3 +25,13 @@ export const CROWD_CLICK_ROWS = 40;
 // holds drying, and with its drying line (a second batch at once).
 export const AFTER_LINE_SHORT = 4;
 export const AFTER_LINE_LONG = 8;
+
+// The pair's speech bubbles (after/bubbles.js; the owner, 2026-10-18): sent
+// up at uneven intervals, between these shares of AFTER_BUBBLE_EVERY_S, and
+// in mixed sizes -- this share of them half as big again as a small one, and
+// the big ones (twice the size, the crit) as often as AFTER_BUBBLE_BIG_EVERY
+// says on the average. Inside each a symbol, never a word: a shout, a
+// question shouted, a raised fist.
+export const AFTER_BUBBLE_GAP = [0.45, 1.6];
+export const AFTER_BUBBLE_MID_SHARE = 0.35;
+export const AFTER_BUBBLE_MID = 1.5;

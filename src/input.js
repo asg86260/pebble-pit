@@ -197,12 +197,11 @@ canvas.addEventListener('pointerdown', e => {
   // asked only once its act's track exports it; nothing of the yard's stands
   // in either.
   if (isActView(S.view)) {
-    // Up there a click on a station opens its hand-work card, and the
-    // station is worked by its own motion on the card's part
-    // (after/gestures.js): a press it takes is held until the release,
-    // wherever that is. A finger opens and shuts a card at its tap's release
-    // (`endDrag`), since a press may be the start of a swipe. Anything else
-    // is the place's click.
+    // Up there a press on a station's moving part works it where it stands
+    // (after/gestures.js) and is held until the release, wherever that is;
+    // a plain click on a station opens its board. A finger opens a board at
+    // its tap's release (`endDrag`), since a press may be the start of a
+    // swipe. Anything else is the place's click.
     if (S.view === 'after' && gestureDown(p.x, p.y, e.pointerType === 'touch')) {
       if (gestureHeld()) try { canvas.setPointerCapture(e.pointerId); } catch {}
       return;

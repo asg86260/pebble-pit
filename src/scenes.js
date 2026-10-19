@@ -2973,6 +2973,11 @@ export const SCENES = {
   'after-sign-carry': { about: 'the acts', say: "a sign just nailed, the workshop's carrier walking it out to the pile of signs",
     run: () => handNails(8, 0.9) },
 
+  // The pair's bubbles: sent up at uneven gaps in mixed sizes, a symbol in each.
+  'after-bubbles': { about: 'the acts', say: "the pair's speech bubbles rising off the pillar at uneven gaps, small, middling and big, a symbol in each",
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(14);
+                 window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot(); } },
+
   // Act 3's crowds, God and the camera's zoom (track C): the camp end with
   // both crowds in frame, the middle of God's crowd, and the dive's end.
   'after-crowd-mass': { about: 'the acts', say: "the afterlife's two crowds: ours behind the camp, God's near rows and mass, God far off on the horizon",

@@ -49,8 +49,15 @@ export function drawPair() {
   }
 }
 
-// A speech bubble: a box with its corners cut, two lines standing in for
-// words, a tail, all scaled for a big one; risen and faded as bubbles.js says.
+// A speech bubble: a box with its corners cut and a tail, all scaled for a
+// bigger one, a symbol in it and never a word (the owner, 2026-10-18): a
+// shout, a question shouted, a raised fist; risen and faded as bubbles.js
+// says. The symbols are cells of the bubble's own 2 px, laid in its middle.
+const SYM = {
+  shout: ['##', '##', '##', '##', '..', '##'],
+  ask:   ['####.##', '...#.##', '.###.##', '.#...##', '.......', '.#...##'],
+  fist:  ['.#.#.#.', '#######', '#######', '#######', '.#####.', '..###..', '..###..']
+};
 export function drawBubbles() {
   for (const b of bubbles()) {
     if (b.alpha <= 0) continue;
@@ -58,8 +65,10 @@ export function drawBubbles() {
     ctx.globalAlpha = was * b.alpha;
     fr(x + 2 * s, y, 32 * s, 20 * s, K); fr(x, y + 2 * s, 36 * s, 16 * s, K);
     fr(x + 2 * s, y + 2 * s, 32 * s, 16 * s, W);
-    fr(x + 6 * s, y + 6 * s, 22 * s, 2 * s, K); fr(x + 6 * s, y + 11 * s, 14 * s, 2 * s, K);
     fr(x + 6 * s, y + 18 * s, 6 * s, 4 * s, K); fr(x + 8 * s, y + 18 * s, 2 * s, 2 * s, W);
+    const rows = SYM[b.sym] || SYM.shout, d = Math.max(2, Math.round(2 * s)), w = rows[0].length * d, h = rows.length * d;
+    const sx = Math.round(x + (36 * s - w) / 2), sy = Math.round(y + (20 * s - h) / 2);
+    rows.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') fr(sx + i * d, sy + j * d, d, d, K); }));
     ctx.globalAlpha = was;
   }
 }
