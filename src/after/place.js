@@ -331,7 +331,7 @@ export function stationParts(key, i = 0) {
   if (!b) return null;
   const worked = { x: b.x, y: b.y + P * TOP_STRIP, w: b.w, h: b.h - P * TOP_STRIP };
   const x0 = stationX0(key);
-  if (key === 'mill') return { box: worked, wheel: { ...at(x0, 15, -8), r: 6 * P }, knob: 6.8 * P, frame: box(x0, 21, -18, 15, 18) };
+  if (key === 'mill') return { box: worked, wheel: { ...at(x0, 19, -9), r: 6 * P }, knob: 8 * P, frame: box(x0, 31, -26, 19, 26) };
   if (key === 'chipper') return { box: worked, mouth: box(x0, 14, -14, 10, 14), jaw: box(x0, 14, -14, 10, 5), block: box(x0, 8, -15, 6, 15), chute: box(x0, 3, -19, 8, 5),
                                    arm: box(x0, 0, -16, 3, 8), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - P * 6, w: PILE_W * P, h: P * 6 } };
   if (key === 'papermill') return { box: worked, vat: { ...at(x0, 19, -4.5), rx: 6 * P, ry: 2.5 * P }, line: box(x0, 9, -18, 20, 1), step: box(x0, 5, -9, 4, 9) };

@@ -16,7 +16,7 @@ import { AFTER_SHOUT_REBEL, AFTER_TIP_LOAD, AFTER_DIG_CLICKS, TREE_CHOPS, GESTUR
          GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_STRAIN_S, GESTURE_ARM_POSES, GESTURE_ARM_SPRING_S,
          GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS, AFTER_CHIP_SAWDUST } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, gestureView, partsOf, useBubbles, boardAsked, groveIcons } from '../src/after/gestures.js';
-import { stationBox } from '../src/after/place.js';
+import { stationBox, soulX, afterFloor } from '../src/after/place.js';
 import { FRAME, frame, click, timeTo, sawOn, saw, lift, spin, feedLog, pullArm, nailSign, pullBar } from './after-hands.mjs';
 
 const S = yard.S;
@@ -250,12 +250,15 @@ group('a plain click on a station asks for its board; a click on open floor asks
     const a = boardAsked();
     asked.push(a && a.key);
   }
+  click({ x: soulX(5), y: afterFloor() - P * 4 });
+  const crowd = boardAsked();
   const before = boardAsked(), b = stationBox('workshop');
   const floorTook = click({ x: b.x + b.w + P * 8, y: b.y + b.h - P });
   const after = boardAsked();
   window.__actsOn(null);
   return [
     ok(asked.join() === 'papermill,workshop,press,shack,pedestal', 'each station\'s board, by a click on its drawing', asked.join()),
+    ok(crowd && crowd.key === 'crowd', 'a click on the crowd of God asks for its status board', JSON.stringify(crowd)),
     ok(!floorTook && after === before, 'the open floor asks for none, and the click is still the place\'s', `${floorTook}`)
   ];
 }, NO_RELOAD);

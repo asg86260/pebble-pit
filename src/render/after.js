@@ -142,7 +142,7 @@ function drawStation(key) {
   if (!built(key) && !r) return;
   // Each drawn on its paper backing, so the camp's crowd behind it does not
   // show through its open parts; the pillar is paper through already.
-  const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { backing(d, backOf(key)); DRAW[key](d, work, t, hands[key]); };
+  const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { backing(d, backOf(key)); DRAW[key](d, work, t, hands[key], atStation(key).length > 0); };
   if (!built(key)) {
     // Raised a band a piece, the floor up, each fading in from when it landed.
     drawSite(key);

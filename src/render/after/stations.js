@@ -30,57 +30,86 @@ const FADE = 0.4;
 // White cut out of a mass a cell or more, 2 px in from its edge.
 const cut = (d, x, y, w, h, tone = W) => d.px(x * P + 2, y * P + 2, w * P - 4, h * P - 4, tone);
 
-// --- the saw mill: the frame saw ------------------------------------------------
-// The press's frame with a plumb blade in it, its teeth cut white, going up
-// and down through the log; a rod from the flywheel's knob to the blade's
-// crosshead, so each turn of the wheel is a stroke of the blade. The wheel
-// stands on a post beside the frame, at the body's hand.
-const WHEEL = { cx: 15, cy: -8, r: 5 };
-function hugeWheel(d, { cx, cy, r }, a) {
+// --- the saw mill: through the beams ----------------------------------------------
+// Take 2 of docs/mocks/act3-sawmill-2026-10-18: a closed frame like the
+// press's, its blade longer than the opening so its ends ride inside a
+// three-cell head and a four-cell bed and it fills the frame at every point
+// of its stroke; its crosshead rides over the head, and a rod slants up to it
+// off a crank by the flywheel's hub, so each turn of the fourteen-cell wheel
+// is a stroke. The log comes in from the wheel's side through the teeth and
+// leaves as two planks. The body at the wheel turns it by a knob on a stub
+// off the rim. Numbers are the mock's, laid ten cells in so the log pile
+// stands at the ground's foot.
+const MW = { cx: 19, cy: -9, r: 6 }, CRANK = 1.5, KNOB = MW.r + 2, MILL_TURN = Math.PI / 8;
+const MILL = { L: 32, R: 47, head: -21, bed: -6, bx: 40, logX0: 27, logLen: 14, body: 7 };
+const BARK = [4, 5, 4, 6], WOOD = [2, 3, 2, 3], RIP = [0, 1, 2, 3];
+function flywheel(d, a) {
+  const { cx, cy, r } = MW;
+  d.px(cx * P - 3, cy * P, 6, -cy * P, K); d.r(cx - 3, -1, 6, 1, K);       // its post and foot
   for (let y = Math.floor(cy - r - 2); y <= cy + r + 2; y++) for (let x = Math.floor(cx - r - 2); x <= cx + r + 2; x++) {
     const dd = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
     if (dd > r - 1 && dd <= r + 1) d.c(x, y, K);
   }
-  for (let k = 0; k < 4; k++) { const b = a + k * Math.PI / 2; d.line(cx, cy, cx + Math.cos(b) * (r - 0.5), cy + Math.sin(b) * (r - 0.5), 5); }
+  for (let k = 0; k < 4; k++) { const q = a + Math.PI / 4 + k * Math.PI / 2; d.line(cx, cy, cx + Math.cos(q) * (r - 0.5), cy + Math.sin(q) * (r - 0.5), 5); }
   d.r(cx - 1.5, cy - 1.5, 3, 3, K);
-  const kx = cx + Math.cos(a) * (r + 1.8), ky = cy + Math.sin(a) * (r + 1.8);
-  d.r(Math.round(kx - 1), Math.round(ky - 1), 2, 2, K);
+  const kx = cx + Math.cos(a) * KNOB, ky = cy + Math.sin(a) * KNOB;
+  d.line(cx + Math.cos(a) * (r + 0.5), cy + Math.sin(a) * (r + 0.5), kx, ky, 4);   // the knob's stub
+  return { kx, ky, pin: { x: cx + Math.cos(a) * CRANK, y: cy + Math.sin(a) * CRANK } };
 }
-// The wheel's post, a cell thick down its middle, and its foot.
-function wheelStand(d, { cx, cy }) { d.px(cx * P - 3, cy * P, 6, -cy * P, K); d.r(cx - 3, -1, 6, 1, K); }
-// The log on its way through the blade: a cell a step over the cycle, cut
-// into two planks with a seam past the blade, faded on and off.
-function feedLog(d, t, T, y, x0, x1, cutX, at = null) {
-  const c = at == null ? cyc(t, T) : { ph: at, since: 1 }, steps = x1 - x0, k = Math.min(steps, Math.floor(c.ph * (steps + 2)));
-  const x = x0 + k, a = c.since < FADE ? c.since / FADE : (c.ph > 0.9 ? 1 - (c.ph - 0.9) / 0.1 : 1);
-  d.fade(a, () => {
-    for (let i = 0; i < 5; i++) {
-      const cx = x + i;
-      if (cx < cutX) d.r(cx, y, 1, 2, K);
-      else { d.r(cx, y, 1, 0.83, K); d.r(cx, y + 1.17, 1, 0.83, K); }
+// The blade, plumb: its spine of ink, a grey plate, the rip teeth facing the
+// log, riding the stroke so they move with it.
+function millBlade(d, x, y0, y1, o) {
+  for (let y = y0; y <= y1; y++) {
+    const k = RIP[(((y - o) % 4) + 4) % 4];
+    d.c(x, y, 2); d.c(x + 1, y, K);
+    if (k) d.r(x - k, y, k, 1, K);
+  }
+}
+// The log: grey bark in an ink rim, its grain cut white; open kerf where the
+// teeth stand in it, and two pale planks past the blade.
+function millLog(d, x, y, bx) {
+  for (let i = 0; i < MILL.logLen; i++) {
+    const c = x + i;
+    if (c >= bx - 3 && c < bx + 2) { if (c < bx) d.r(c, y, 1, 3, W); continue; }
+    if (c < bx) {
+      d.r(c, y, 1, 3, K); d.px(c * P, y * P + 2, P, 3 * P - 4, BARK[Math.floor(hash(c - x + 1.3) * BARK.length)]);
+      const h = hash(c - x + 0.5), row = h < 0.5 ? 6 : 10;
+      d.px(c * P + (h < 0.25 || h > 0.75 ? 0 : 2), y * P + row, h < 0.25 || h > 0.75 ? P : P - 2, 2, W);
+    } else {
+      d.px(c * P, y * P, P, 8, K); d.px(c * P, y * P + 2, P, 4, WOOD[Math.floor(hash(c - x + 3.1) * WOOD.length)]);
+      d.px(c * P, y * P + 10, P, 8, K); d.px(c * P, y * P + 12, P, 4, WOOD[Math.floor(hash(c - x + 4.7) * WOOD.length)]);
     }
-    if (x + 4 < cutX) d.px((x + 4) * P + 2, y * P + 2, P - 4, 2 * P - 4, 3);
-  });
+  }
 }
-const SAW_T = 2.4;
-const SPIN = (work, t) => (work ? Math.floor(t / 0.1) * Math.PI / 8 : 0);
-function mill(d, work, t, h) {
-  const hand = turning(h), a = hand ? Math.round(h.ang / TURN) * TURN : SPIN(work, t);
-  const kx = WHEEL.cx + Math.cos(a) * (WHEEL.r + 1.8), ky = WHEEL.cy + Math.sin(a) * (WHEEL.r + 1.8);
-  // The blade's stroke, in whole cells, off the wheel's angle: down as the knob goes down.
-  const drop = Math.round(1.5 + 1.5 * Math.sin(a)), bot = -7 + drop, chY = bot - 6;
-  wheelStand(d, WHEEL);
-  hugeWheel(d, WHEEL, a);
-  d.line(kx, ky, 24.5, chY + 0.5, 3);                       // the rod, knob to crosshead
-  d.r(21, -3, 15, 2, K);                                    // the bed
-  d.r(23, -16, 1, 13, K); d.r(33, -16, 1, 13, K);           // posts
-  d.r(22, -1, 2, 1, K); d.r(33, -1, 2, 1, K);
-  d.r(22, -18, 13, 2, K);                                   // the head
-  if (hand) feedLog(d, t, SAW_T, -5, 22, 31, 28, (h.prog || 0) / GESTURE_WHEEL_LOG * 0.9);
-  else if (work) feedLog(d, t, SAW_T, -5, 22, 31, 28);
-  d.r(24, chY, 9, 1, K);                                    // the crosshead, riding between the posts
-  d.r(27, chY + 1, 2, bot - chY, K);                        // the blade
-  for (let y = chY + 2; y <= bot; y++) { d.px(27 * P, y * P, 3, 2, W); d.px(27 * P, y * P + 3, 1, 2, W); }   // its teeth, cut white
+const SAW_T = 6.4;
+// The log's tail along its way at phase ph, a cell a step, and its ink.
+function millLogAt(ph, since) {
+  const steps = MILL.bx + 2 - MILL.logX0, i = Math.min(steps, Math.floor(ph * (steps + 2)));
+  return { x: MILL.logX0 + i, a: since < FADE ? since / FADE : ph > 0.92 ? 1 - (ph - 0.92) / 0.08 : 1 };
+}
+function mill(d, work, t, h, body = false) {
+  const hand = turning(h);
+  const a = hand ? Math.round(h.ang / MILL_TURN) * MILL_TURN : work ? Math.floor(t / 0.1) * MILL_TURN : 0;
+  const o = Math.round(1.5 + 1.5 * Math.sin(a)), { L, R, head, bed, bx } = MILL;
+  const k = flywheel(d, a);
+  d.line(k.pin.x, k.pin.y, bx - 2.5, head - 4 + o, 7, W); d.line(k.pin.x, k.pin.y, bx - 2.5, head - 4 + o, 3);   // the rod, in a paper rim
+  d.r(L, head, 2, bed - head, K); d.r(R, head, 2, bed - head, K);         // posts
+  d.r(L - 1, head, R - L + 4, 3, K);                                      // the head
+  d.r(L - 1, bed, R - L + 4, 4, K);                                       // the bed, on legs
+  d.r(L, -2, 2, 2, K); d.r(R, -2, 2, 2, K); d.r(L - 1, -1, 3, 1, K); d.r(R, -1, 3, 1, K);
+  const ly = bed - 3;
+  if (hand && (h.prog || 0) > 0) { const lg = millLogAt((h.prog || 0) / GESTURE_WHEEL_LOG * 0.92, 1); millLog(d, lg.x, ly, bx); }
+  else if (work) { const c = cyc(t, SAW_T), lg = millLogAt(c.ph, c.since); d.fade(lg.a, () => millLog(d, lg.x, ly, bx)); }
+  millBlade(d, bx, head + 3, bed - 1, o);
+  d.r(bx, head - 3 + o, 2, 3 - o, K);                                     // its strap up out of the head
+  d.r(bx - 3, head - 5 + o, 6, 2, K); d.px((bx) * P - 2, (head - 4 + o) * P - 2, 4, 4, W);   // the crosshead
+  d.px(Math.round(k.pin.x * P) - 3, Math.round(k.pin.y * P) - 3, 6, 6, K); d.px(Math.round(k.pin.x * P) - 1, Math.round(k.pin.y * P) - 1, 2, 2, W);
+  // A body at the wheel: its arm to its fist round the knob.
+  if (body) {
+    const fx = Math.round(k.kx * P) - 7, fy = Math.round(k.ky * P) - 7;
+    d.line(MILL.body + 3, -2, k.kx, k.ky, 2);
+    d.px(fx, fy, 14, 14, K); d.px(fx + 2, fy + 2, 10, 10, W); d.px(fx + 5, fy + 5, 4, 4, K);
+  }
 }
 
 // --- the chipper: the jaws ------------------------------------------------------
@@ -309,7 +338,7 @@ export const backOf = key => BACKS[key] || (BACKS[key] = silhouette(d => DRAW[ke
 // cells: its left column and top row, a lean in px, and whether it squats.
 // Idle, it stands at the same spot unleaning.
 export function workerPose(key, work, t) {
-  if (key === 'mill') return { x: 6, y: -3, dx: work && Math.floor(cyc(t, SAW_T).ph * 9) % 2 ? 3 : 0 };
+  if (key === 'mill') return { x: MILL.body, y: -3, dx: 0 };
   if (key === 'chipper') {
     if (!work) return { x: LOG_X0 - 3, y: -3, dx: 0 };
     const f = chFeed(cyc(t, CHIP_T).ph);
