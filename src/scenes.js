@@ -517,6 +517,29 @@ function afterChain(slow) {
                    ...(slow ? ['after-vat', 'after-stack'] : [])]) window.__buy(u);
 }
 
+// Track A: the chipper standing with logs on its pile, worked by hand to
+// `phase`: 'carry' a log half way to the jaws; 'held' laid in and the arm
+// held down a second and a half; 'spring' the arm just let go. Framed on it.
+function handChip(phase) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  for (const k of ['mill', 'chipper']) if (!S.after.built.includes(k)) S.after.built.push(k);
+  window.__afterGrant({ chiplogs: 4 });
+  const b = stationBox('chipper');
+  window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(0.5);
+  const p = window.__gestureParts('chipper'), mid = q => [q.x + q.w / 2, q.y + q.h / 2];
+  const [ax, ay] = mid(p.pile), [bx, by] = mid(p.mouth);
+  window.__gesture('down', ax, ay);
+  const steps = phase === 'carry' ? 6 : 12;
+  for (let k = 1; k <= steps; k++) { window.__gesture('move', ax + (bx - ax) * k / 12, ay + (by - ay) * k / 12); window.__fast(1 / 60); }
+  if (phase === 'carry') { window.__holdShot(); return; }
+  window.__gesture('up', bx, by);
+  const [kx, ky] = mid(p.arm);
+  window.__gesture('down', kx, ky - P * 3); window.__gesture('move', kx, ky + P * 6);
+  window.__fast(1.5);
+  if (phase === 'spring') { window.__gesture('up', kx, ky + P * 6); window.__fast(0.07); }
+  window.__holdShot();
+}
+
 // Track A: the workshop ordered with the saw mill and the press standing
 // either side of its spot, four members in the camp to carry it, run on
 // until `until(site)` holds (null: never ordered), framed on the spot.
@@ -2888,6 +2911,16 @@ export const SCENES = {
     run: () => afterSite(r => r.whole != null) },
   'after-site-band': { about: 'the acts', say: 'the workshop going up a band at a time, the pile shrinking',
     run: () => afterSite(r => r.n >= 2) },
+
+  // The chipper's hand work (docs/mocks/act3-chipper-2026-10-18, the arm): a
+  // log carried off the pile toward the jaws; the arm pulled down and held,
+  // the jaws biting; and the arm let go, springing back up.
+  'after-chip-carry': { about: 'the acts', say: "a log dragged off the chipper's pile toward its jaws",
+    run: () => handChip('carry') },
+  'after-chip-held': { about: 'the acts', say: "the chipper's arm pulled down and held, the jaws biting through the log",
+    run: () => handChip('held') },
+  'after-chip-spring': { about: 'the acts', say: "the chipper's arm let go, springing back up a pose at a time, the jaws stopped",
+    run: () => handChip('spring') },
 
   // Act 3's crowds, God and the camera's zoom (track C): the camp end with
   // both crowds in frame, the middle of God's crowd, and the dive's end.

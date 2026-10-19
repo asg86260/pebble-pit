@@ -66,11 +66,11 @@ export const GESTURE_WHEEL_MIN_REV = 0.1;
 // back up a held pose at a time, a pose every GESTURE_ARM_SPRING_S, and the
 // jaws stop.
 export const GESTURE_ARM_PULL = P * 6;
-export const GESTURE_ARM_HOLD = 0.9;
-export const GESTURE_ARM_FEED = 6;
-export const GESTURE_ARM_LOG = 12;
-export const GESTURE_ARM_POSES = 4;
-export const GESTURE_ARM_SPRING_S = 0.08;
+export const GESTURE_ARM_HOLD = 0.85;
+export const GESTURE_ARM_FEED = 1.4;
+export const GESTURE_ARM_LOG = 6;
+export const GESTURE_ARM_POSES = 3;
+export const GESTURE_ARM_SPRING_S = 0.06;
 
 // The paper mill's vat, stirred: turns a second it counts to at most, turns
 // a batch, how fast its speed follows the hand, how fast it stops let go.

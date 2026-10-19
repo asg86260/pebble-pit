@@ -60,7 +60,7 @@ group('the chipper: a log dragged into the jaws, then the arm pulled down and he
   up(['chipper'], { chiplogs: 3 });
   const d0 = read().sawdust;
   // The arm pulled with nothing in the jaws chips nothing.
-  pullArm(4);
+  pullArm(6);
   const empty = read().sawdust === d0;
   const laid = feedLog() && rec('chipper').log === 'in';
   // Pulled, then let go at once: the arm comes back up in held steps and the jaws stop.
@@ -71,7 +71,7 @@ group('the chipper: a log dragged into the jaws, then the arm pulled down and he
   const sprang = rec('chipper').k === 0 && poses.size >= GESTURE_ARM_POSES - 1;
   const stopped = read().sawdust === d0;
   // Held down: a steady feed, and the log goes through.
-  pullArm(4);
+  pullArm(6);
   const chipped = read().sawdust - d0;
   window.__actsOn(null);
   return [

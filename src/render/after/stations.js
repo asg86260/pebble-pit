@@ -22,7 +22,7 @@
 const TURN = Math.PI / 16;                                 // a held step of a turning part
 const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
-import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG } from '../../config.js';
+import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD } from '../../config.js';
 import { K, W, PULP, DUST, hash, clamp01, silhouette } from './kit.js';
 
 const cyc = (t, T) => { const u = Math.max(0, t), k = Math.floor(u / T); return { ph: u / T - k, since: u - k * T }; };
@@ -112,60 +112,87 @@ function mill(d, work, t, h, body = false) {
   }
 }
 
-// --- the chipper: the jaws ------------------------------------------------------
-// A tall back block and a toothed top jaw that comes down on the log a whole
-// cell at a time, like the platen, and opens again; white teeth on both
-// jaws, a chute off the block's top pouring the chips straight down. Drawn
-// facing right; its frame turns it to face the saw mill.
-const CHIP_T = 2.4, SWALLOW = 0.62, LOG_X0 = 9, LOG_X1 = 15, MOUTH = 17;
-// The top jaw's drop in cells through a cycle, twelve held steps: open while
-// the log goes in, then bites.
-const JAW = [0, 0, 0, 0, 1, 2, 4, 4, 2, 4, 4, 1];
-const CHEW = 4;                                            // the first step of JAW that bites
-const POUR = 0.45;                                         // the phase the chips start falling
-// The feed at phase `ph`: the log walked into the mouth a cell at a time with
-// the body behind it, a lean on the last; then the body walks back.
-function chFeed(ph) {
-  const steps = LOG_X1 - LOG_X0, k = Math.min(steps, Math.floor(ph / SWALLOW * (steps + 1)));
-  if (ph >= SWALLOW) {
-    const back = Math.floor((ph - SWALLOW) / (1 - SWALLOW) * 4);
-    return { lx: null, bx: LOG_X0 - 3 + steps - Math.min(steps, back * Math.ceil(steps / 3)), lean: 0 };
-  }
-  return { lx: LOG_X0 + k, bx: LOG_X0 - 3 + k, lean: k === steps ? 2 : 0 };
+// --- the chipper: the jaws and the arm ---------------------------------------------
+// docs/mocks/act3-chipper-2026-10-18, the chosen control: the jaws on a tall
+// back block with a chute off its top, and a slot-machine arm on a pivot box
+// at the jaws' foot. A log is dragged off the pile into the jaws; the arm is
+// pulled down and held, and the top jaw bites at a steady pace, a cell of
+// log a bite, its teeth sinking into the wood; let go, the arm springs back
+// up a held pose at a time (plumb, half way, level) and the jaws stop. Drawn
+// facing right, in the mock's cells laid four to the left; its frame turns
+// it to face the saw mill.
+const CH = { slot: 22, slotY: -4, log: 6, block: 28, pivot: { x: 15, y: -3 },
+             knob: [{ x: 15, y: -9 }, { x: 11, y: -7 }, { x: 9, y: -3 }], body: 10 };
+const ARM_BITE = [0, 1, 2, 4, 4, 4, 2, 1], BITE_S = 0.7, ARM_KERF = 3, ARM_CUT = 6;
+// The arm's held pose off how far it is pulled.
+const armPose = k => (k >= GESTURE_ARM_HOLD ? 2 : k >= 0.3 ? 1 : 0);
+function chTooth(d, x, row, dir) {
+  const steps = [[0, 6], [1, 4], [2, 2]], y0 = row * P, yOf = i => (dir > 0 ? y0 + i * 2 : y0 + P - (i + 1) * 2);
+  steps.forEach(([o, w], i) => d.px(x * P + o - 2, yOf(i) - (dir > 0 ? 0 : 2), w + 4, 4, W));
+  steps.forEach(([o, w], i) => d.px(x * P + o, yOf(i), w, 2, K));
+}
+function chLog(d, x, len) {
+  const y = CH.slotY * P;
+  d.px(x * P - 2, y - 2, len * P + 4, 2 * P + 4, W);
+  d.px(x * P, y, len * P, 2 * P, K); d.px(x * P + 2, y + 2, P - 2, 2 * P - 4, 3);
+}
+function chArm(d, p) {
+  const pv = CH.pivot, k = CH.knob[p];
+  if (p === 0) d.r(pv.x, k.y + 1, 1, pv.y - k.y, K);
+  else if (p === 2) d.r(k.x + 1, pv.y, pv.x - k.x, 1, K);
+  else { const x0 = (pv.x + 0.5) * P, y0 = (pv.y + 0.5) * P, y1 = (k.y + 0.5) * P; for (let y = y1; y < y0; y++) d.px(x0 - (y0 - y) - 4, y, 8, 1, K); }
+  const x = (k.x - 1) * P, y = (k.y - 1) * P;                 // the ball, its corners cut, a glint
+  d.px(x, y, 3 * P, 3 * P, K);
+  [[0, 0], [3 * P - 3, 0], [0, 3 * P - 3], [3 * P - 3, 3 * P - 3]].filter((c, i) => !(p === 1 && i === 3)).forEach(([cx, cy]) => d.px(x + cx, y + cy, 3, 3, W));
+  d.px(x + 4, y + 4, 4, 2, W); d.px(x + 4, y + 6, 2, 2, W);
+  d.r(pv.x - 2, -1, 5, 1, K);                                 // the foot
+  d.r(pv.x - 1, pv.y - 1, 3, 3, K);                           // the pivot box, a white ring round its pin
+  d.px(pv.x * P - 2, pv.y * P - 2, P + 4, P + 4, W); d.px(pv.x * P, pv.y * P, P, P, K);
 }
 function chipper(d, work, t, h) {
-  // Held by the hand, the log goes in as far as the feed has taken it and
-  // the jaw chews for as long as it is held.
-  const hand = !!h && h.hold, c = hand ? { ph: (h.prog || 0) / GESTURE_ARM_LOG * SWALLOW, since: 1 } : cyc(t, CHIP_T);
-  const jawStep = hand ? CHEW + Math.floor(t / (CHIP_T / JAW.length)) % (JAW.length - CHEW) : Math.min(JAW.length - 1, Math.floor(c.ph * JAW.length));
-  const chewing = hand || (work && c.ph >= POUR);
-  if (work || hand) {
-    const f = chFeed(c.ph);
-    if (f.lx != null) d.fade(c.ph < 0.1 ? clamp01(c.since / FADE) : 1, () => {
-      const w = Math.max(0, Math.min(5, MOUTH - f.lx + 2));
-      d.r(f.lx, -4, w, 2, K); d.px(f.lx * P + 2, -4 * P + 2, P - 2, 2 * P - 4, 3);
-    });
+  // By hand: the arm where it is pulled, the log in the jaws as far as it
+  // is fed, the jaws biting while it is held down. At a post: the arm held
+  // level and the jaws biting through the log on the feeder's clock.
+  const hand = !!h && (h.log === 'in' || h.arm || h.k > 0);
+  const pose = hand ? armPose(h.k) : work ? 2 : 0;
+  const biting = hand ? h.hold && h.log === 'in' : work;
+  const logIn = hand ? h.log === 'in' : work;
+  const fed = hand ? (h.prog || 0) / GESTURE_ARM_LOG : work ? cyc(t, CHIP_T).ph : 0;
+  const cuts = Math.min(CH.log - 1, Math.floor(fed * CH.log));
+  const idx = biting ? Math.floor((t % BITE_S) / BITE_S * ARM_BITE.length) : -1, jy = -13 + (idx >= 0 ? ARM_BITE[idx] : 0);
+  d.r(CH.block, -15, 6, 15, K);                               // the back block
+  d.px((CH.block + 1) * P + 2, -6 * P, 4 * P - 4, 2, W); d.px((CH.block + 1) * P + 2, -4 * P, 4 * P - 4, 2, W);
+  d.r(18, -1, 10, 1, K);                                      // the bottom jaw
+  d.r(19, jy, 9, 4, K); d.r(18, jy - 1, 1, 3, K);             // the top jaw and its lip
+  d.px(20 * P, (jy + 1) * P + 2, 6 * P, 2, W);                // its band, cut white
+  d.px(CH.block * P - 2, (jy + 2) * P - 2, 4, 4, W);          // the hinge pin
+  if (logIn) {
+    chLog(d, CH.slot + cuts, CH.log - cuts);
+    d.px(CH.block * P, CH.slotY * P - 2, 2, 2 * P + 4, K);
+    if (idx > ARM_KERF && idx < ARM_CUT) {                    // the cell at the mouth breaking up
+      d.px((CH.block - 1) * P, CH.slotY * P, P, 2 * P, W);
+      for (let j = 0; j < 6; j++) for (let i = 0; i < 3; i++) {
+        const q = hash(i * 7 + j * 13 + cuts * 31 + idx);
+        if (q > 0.3) d.px((CH.block - 1) * P + i * 2, CH.slotY * P + j * 2, 2, 2, q > 0.75 ? K : q > 0.5 ? 7 : 5);
+      }
+    }
   }
-  const jy = -13 + (work || hand ? JAW[jawStep] : 0);
-  d.r(22, -15, 6, 15, K);                                   // the back block
-  d.px(23 * P + 2, -6 * P, 4 * P - 4, 2, W); d.px(23 * P + 2, -4 * P, 4 * P - 4, 2, W);
-  d.r(12, -1, 10, 1, K);                                    // the bottom jaw
-  for (let i = 0; i < 5; i++) d.r(12 + i * 2, -2, 1, 1, K); // its teeth
-  d.r(13, jy, 9, 4, K); d.r(12, jy - 1, 1, 3, K);           // the top jaw and its lip
-  d.px(14 * P, (jy + 1) * P + 2, 6 * P, 2, W);              // its band, cut white
-  for (let i = 0; i < 5; i++) d.r(13 + i * 2, jy + 4, 1, 1, K);
-  d.px(22 * P - 2, (jy + 2) * P - 2, 4, 4, W);              // the hinge pin
-  d.r(25, -18, 2, 3, K); d.r(25, -19, 7, 2, K); d.r(30, -17, 2, 2, K); d.r(29, -15, 4, 1, K);   // the chute
-  // The chips: dashes a cell wide and two long, falling a cell every tenth
-  // of a second from the chute while the log is chewed.
-  if (!chewing) return;
-  const step = hand ? Math.floor(t * 10) % 12 : Math.floor((c.ph - POUR) * CHIP_T * 10);
+  for (let i = 0; i < 5; i++) chTooth(d, 18 + i * 2, -2, -1);
+  for (let i = 0; i < 5; i++) chTooth(d, 19 + i * 2, jy + 4, 1);
+  d.px(CH.block * P, -6 * P, 2, 5 * P, K);
+  d.r(31, -18, 2, 3, K); d.r(31, -19, 7, 2, K); d.r(36, -17, 2, 2, K); d.r(35, -15, 4, 1, K);   // the chute
+  chArm(d, pose);
+  // The chips: dashes falling a cell every tenth of a second from the chute
+  // while the jaws bite.
+  if (!biting) return;
+  const step = Math.floor(t * 10) % 12;
   for (let j = 0; j < 8; j++) {
     const y = -14 + step - j * 2;
     if (y < -14 || y > -3) continue;
-    d.r(30 + (j % 2), y, 1, 2, DUST[j % DUST.length]);
+    d.r(36 + (j % 2), y, 1, 2, DUST[j % DUST.length]);
   }
 }
+const CHIP_T = 4.2;
 
 // --- the paper mill: the vat and the drying line ---------------------------------
 // A mirrored vat with lips, posts up off the lips to a line hung with three
@@ -339,11 +366,7 @@ export const backOf = key => BACKS[key] || (BACKS[key] = silhouette(d => DRAW[ke
 // Idle, it stands at the same spot unleaning.
 export function workerPose(key, work, t) {
   if (key === 'mill') return { x: MILL.body, y: -3, dx: 0 };
-  if (key === 'chipper') {
-    if (!work) return { x: LOG_X0 - 3, y: -3, dx: 0 };
-    const f = chFeed(cyc(t, CHIP_T).ph);
-    return { x: f.bx, y: -3, dx: f.lean };
-  }
+  if (key === 'chipper') return { x: CH.body - 1, y: -3, dx: 0 };
   if (key === 'papermill') return { x: 6, y: -12, dx: work ? LEAN[stirPose(work, t)] : 0 };
   if (key === 'workshop') return { x: STAND_X, y: -9, dx: 0 };
   if (key === 'press') return { x: PR.bodyX, y: -4, dx: 0, squat: prDrop(work, t) === 2 };

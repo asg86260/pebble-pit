@@ -361,7 +361,7 @@ group('the chipper turns logs into sawdust alone, and haulers feed the smaller p
   window.__afterGrant({ rebel: 2000, chiplogs: 2 });
   raise('chipper');
   const t0 = read().timber, d0 = read().sawdust;
-  feedLog(); pullArm(4);
+  feedLog(); pullArm(6);
   const chipped = read().sawdust - d0 === AFTER_CHIP_SAWDUST && read().timber === t0;
   raise('mill');
   window.__afterGrant({ logs: 3 });

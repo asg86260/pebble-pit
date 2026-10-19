@@ -89,6 +89,16 @@ function drawLoad(ld, t) {
   for (let k = 0; k < Math.min(4, ld.n * 2); k++) cell(x + (k % 2) * P, y - Math.floor(k / 2) * P, k % 3 ? 4 : 5);
 }
 
+// A log off the chipper's pile in the hand, on its way to the jaws: six
+// cells side on, its end grain grey, in a paper rim so it reads over ink.
+function heldLog(x, y) {
+  const x0 = snap(x - P * 3), y0 = snap(y - P);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = GREY[0]; ctx.fillRect(x0 - 2, y0 - 2, P * 6 + 4, P * 2 + 4);
+  ctx.fillStyle = GREY[10]; ctx.fillRect(x0, y0, P * 6, P * 2);
+  ctx.fillStyle = GREY[3]; ctx.fillRect(x0 + 2, y0 + 2, P - 2, P * 2 - 4);
+}
+
 // Where each station's ghost hand is now and how it is held, acting its
 // motion out on the part; null where there is nothing to show it on.
 function cueAt(key, r) {
@@ -141,6 +151,7 @@ export function drawAfterCues() {
     }
     for (const m of r.marks) markOn(ctx, m, t, P);
     if (r.key === 'heap' && r.load) drawLoad(r.load, t);
+    if (r.key === 'chipper' && r.log === 'held') heldLog(r.lx, r.ly);
   }
   ctx.globalAlpha = 1;
 }

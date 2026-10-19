@@ -332,8 +332,13 @@ export function stationParts(key, i = 0) {
   const worked = { x: b.x, y: b.y + P * TOP_STRIP, w: b.w, h: b.h - P * TOP_STRIP };
   const x0 = stationX0(key);
   if (key === 'mill') return { box: worked, wheel: { ...at(x0, 19, -9), r: 6 * P }, knob: 8 * P, frame: box(x0, 31, -26, 19, 26) };
-  if (key === 'chipper') return { box: worked, mouth: box(x0, 14, -14, 10, 14), jaw: box(x0, 14, -14, 10, 5), block: box(x0, 8, -15, 6, 15), chute: box(x0, 3, -19, 8, 5),
-                                   arm: box(x0, 0, -16, 3, 8), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - P * 6, w: PILE_W * P, h: P * 6 } };
+  // The chipper is drawn turned (ART.chipper.flip): its parts, laid off
+  // the drawing's own cells, turned the same way.
+  if (key === 'chipper') {
+    const f = ART.chipper.flip, tb = (c, y, w, h) => box(x0, f - c - w, y, w, h);
+    return { box: worked, mouth: tb(16, -13, 14, 14), jaw: tb(18, -14, 10, 5), block: tb(28, -15, 6, 15), chute: tb(31, -19, 7, 5),
+             arm: tb(7, -11, 11, 11), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - P * 6, w: PILE_W * P, h: P * 6 } };
+  }
   if (key === 'papermill') return { box: worked, vat: { ...at(x0, 19, -4.5), rx: 6 * P, ry: 2.5 * P }, line: box(x0, 9, -18, 20, 1), step: box(x0, 5, -9, 4, 9) };
   if (key === 'workshop') return { box: worked, sign: box(x0, 11, -8, 6, 4), hammer: box(x0, 15, -15, 6, 6), hand: at(x0, 20, -9),
                                     nails: [[11, -8], [16, -8], [11, -5], [16, -5]].map(([c, r]) => box(x0, c, r, 1, 1)) };
