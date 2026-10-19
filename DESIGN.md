@@ -20820,8 +20820,17 @@ act3-union2, act3-level and act3-flaglogo cards; `docs/mocks/act3-level-2026-10-
   camera lower, bigger and wider, backs to us, facing him, in his greys; as
   support rises it empties from the front, receding toward the throne.
 - **The pair's podium is low and in the first plane**, near the camera, in
-  front of their crowd, the pair big on it, a cell of paper round them so
-  they stand off the crowd's ink. Its look is on the board (act3-podium).
+  front of their crowd, the pair on it, a cell of paper round them so they
+  stand off the crowd's ink. **It is a ladder of five** (the board's
+  act3-podium2): a soapbox crate; crates stacked two high with a plank; a
+  plank stage with the fist banner on its front; a cloud plinth of squared
+  blocks with steps; the Greek cloud column, a fluted shaft on a cloud base
+  with a capital. Each rung is a row on the pedestal's board, paid in rebel
+  and timber, that opens when support reaches its mark (about 10, 25, 45 and
+  70 per cent of the strike's share), and makes the pair's speech carry
+  further -- more rebel a bubble. It replaces the "bigger speech" row. A new
+  rung is built where the old stood: the old fades, the new stands up a
+  course at a time, and the pair step up onto it.
 - **Signs are flags**: the union's ink, the **raised fist** in paper on
   it, rippling in held steps, planted among God's rows, each scaled to
   its row and behind the rows nearer the camera.

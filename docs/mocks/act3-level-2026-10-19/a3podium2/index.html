@@ -1,0 +1,116 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The podium ladder</title>
+<style>
+:root{--bg:#f4f4f4;--fg:#111;--line:#ccc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1b;--fg:#eee;--line:#444}}
+:root[data-theme="dark"]{--bg:#1b1b1b;--fg:#eee;--line:#444}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 ui-monospace,Menlo,Consolas,monospace}
+header{padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;border-bottom:1px solid var(--line)}
+.tag{background:var(--fg);color:var(--bg);padding:1px 6px}
+button{font:inherit;padding:3px 10px;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer}
+button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.wrap{padding:12px 16px}
+canvas{width:100%;height:auto;image-rendering:pixelated;display:block}
+p{margin:8px 0;max-width:1000px}
+</style></head><body>
+<header><span class="tag">MOCK</span><b>The podium ladder</b>
+<span>page <button data-k="theme" data-v="light">light</button><button data-k="theme" data-v="dark">dark</button></span>
+<span>view <button data-k="view" data-v="row">all five</button><button data-k="view" data-v="climb">one, climbing</button></span>
+</header>
+<div class="wrap">
+<canvas id="c" width="2004" height="600"></canvas>
+<p>Drawn from plain shapes on the game's 6 px grid, at the size the podium stands near the camera. It is not the game. The pair's podium as a ladder of five, each a rung unlocked by the union's support: 1 a soapbox crate; 2 crates stacked, two high, with a plank to stand on; 3 a plank stage with the fist banner on its front; 4 a cloud plinth, squared blocks with steps; 5 the Greek cloud column -- a fluted shaft on a cloud base with a capital under the pair. 'One, climbing' runs a single podium up the ladder, each new one built where the old stood: the old fades, the new one stands up a course at a time (nothing pops).</p>
+</div>
+<script>
+const P = 6, cv = document.getElementById('c'), g = cv.getContext('2d');
+const st = { theme: 'light', view: 'row' };
+let tick = 0;
+const cell = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, w * P, h * P); };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, k) => a + (b - a) * k;
+const GOD = '#ffffff', FEAT = '#000000';
+const FIST = ['.X.X.X.', 'XXXXXXX', 'XXXXXX.', '.XXXX..', '..XXX..'];
+let ink, pap, pale, mid;
+// Each podium drawn about its middle x with its foot at y; returns its top.
+// `k` (0..1) is how much of it stands, bottom course first, for the build.
+const PODS = [
+  function soapbox(x, y, k) {
+    const w = 22, h = 10, t = y - h;
+    rise(x - w / 2, t, w, h, k, () => { cell(x - w / 2, t, w, h, ink); cell(x - w / 2 + 2, t + 2, w - 4, h - 4, pap);
+      for (let yy = t + 4; yy < y - 2; yy += 3) cell(x - w / 2 + 2, yy, w - 4, 1, ink);
+      for (let i = 0; i < w - 4; i += 2) cell(x - w / 2 + 2 + i, t + 2 + Math.round(i * (h - 4) / (w - 4)), 2, 1, ink); });
+    return t;
+  },
+  function crates(x, y, k) {
+    const w = 20, h = 9, t = y - 2 * h - 2;
+    rise(x - 22, t, 44, y - t, k, () => {
+      for (const [cx, cy] of [[x - 21, y - h], [x + 1, y - h], [x - 10, y - 2 * h]]) { cell(cx, cy, w, h, ink); cell(cx + 2, cy + 2, w - 4, h - 4, pap); cell(cx + 2, cy + 4, w - 4, 1, ink); }
+      cell(x - 16, t, 32, 2, ink); });
+    return t;
+  },
+  function stage(x, y, k) {
+    const w = 48, h = 12, t = y - h;
+    rise(x - w / 2, t, w, h, k, () => { cell(x - w / 2, t, w, 2, ink); cell(x - w / 2 + 2, t + 2, 2, h - 2, ink); cell(x + w / 2 - 4, t + 2, 2, h - 2, ink);
+      cell(x - 12, t + 2, 24, h - 2, ink); FIST.forEach((r, j) => [...r].forEach((ch, i) => { if (ch === 'X') cell(x - 3 + i, t + 4 + j, 1, 1, pap); })); });
+    return t;
+  },
+  function plinth(x, y, k) {
+    const t = y - 18;
+    rise(x - 24, t, 48, 18, k, () => {
+      cell(x - 24, y - 6, 48, 6, pale); cell(x - 18, y - 12, 36, 6, pale); cell(x - 12, y - 18, 24, 6, pale);
+      for (const [yy, hw] of [[y - 6, 24], [y - 12, 18], [y - 18, 12]]) cell(x - hw, yy, 2 * hw, 1, mid);   // each course's top edge
+      for (let i = 0; i < 3; i++) cell(x + 24 - 4 - i * 2, y - 2 - i * 2, 4, 1, mid); });
+    return t;
+  },
+  function column(x, y, k) {
+    const t = y - 34;
+    rise(x - 22, t, 44, 34, k, () => {
+      // the cloud base: a heap of round puffs in two courses
+      for (const [dx, r] of [[-14, 6], [-4, 7], [7, 6], [16, 5]]) for (let dy = -r; dy <= 0; dy++) { const hw = Math.round(Math.sqrt(r * r - dy * dy)); cell(x + dx - hw, y - 2 + dy, 2 * hw, 1, pale); }
+      // the fluted shaft
+      cell(x - 9, t + 6, 18, y - 8 - t - 6, pale);
+      for (let i = -7; i <= 7; i += 3) cell(x + i, t + 7, 1, y - 9 - t - 7, mid);
+      // the capital: scrolls either side and an abacus slab
+      cell(x - 13, t + 3, 26, 3, pale); cell(x - 13, t + 3, 26, 1, mid);
+      for (const sx of [-14, 11]) { cell(x + sx, t + 3, 3, 3, mid); cell(x + sx + 1, t + 4, 1, 1, pale); }
+      cell(x - 15, t, 30, 3, pale); cell(x - 15, t + 2, 30, 1, mid); });
+    return t;
+  }
+];
+// Stand a shape up a course at a time, bottom first, by clipping it.
+function rise(x, t, w, h, k, paint) {
+  if (k >= 1) { paint(); return; }
+  if (k <= 0) return;
+  g.save(); const show = Math.ceil(h * k); g.beginPath(); g.rect(x * P - P, (t + h - show) * P, (w + 2) * P, show * P + P); g.clip(); paint(); g.restore();
+}
+function pair(x, top) {
+  cell(x - 10, top - 10, 20, 10, pap);
+  for (const dx of [-9, 1]) { cell(x + dx, top - 9, 8, 9, FEAT); cell(x + dx + 1, top - 8, 6, 7, GOD); }
+}
+function draw() {
+  const dark = st.theme === 'dark';
+  ink = dark ? '#9a9a9a' : FEAT; pap = dark ? '#121212' : '#fff'; pale = dark ? '#3a3a3a' : '#d6d6d6'; mid = dark ? '#5a5a5a' : '#757575';
+  if (dark) { pale = '#3a3a3a'; }
+  cell(0, 0, 334, 100, pap);
+  cell(0, 90, 334, 1, mid);
+  if (st.view === 'row') {
+    PODS.forEach((f, i) => { const x = 34 + i * 66; const top = f(x, 90, 1); pair(x, top); });
+  } else {
+    // one podium climbing: 40 ticks a rung -- the old fades, the new rises
+    const T = 40, n = Math.floor(tick / T) % PODS.length, u = (tick % T) / T;
+    const prev = (n + PODS.length - 1) % PODS.length, x = 167;
+    const prevTop = PODS[prev](x, 90, 0);              // its top, drawn or not
+    if (u < 0.4) { g.globalAlpha = 1 - u / 0.4; PODS[prev](x, 90, 1); g.globalAlpha = 1; }
+    const top = PODS[n](x, 90, clamp((u - 0.2) / 0.6, 0, 1));
+    pair(x, u < 0.8 ? prevTop : top);                    // the pair step up once it stands
+  }
+}
+function sync() { for (const b of document.querySelectorAll('button[data-k]')) b.setAttribute('aria-pressed', String(st[b.dataset.k] === b.dataset.v)); document.documentElement.dataset.theme = st.theme; draw(); }
+document.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => { st[b.dataset.k] = b.dataset.v; sync(); });
+window.setTick = t => { tick = t; draw(); };
+const q = new URLSearchParams(location.hash.slice(1));
+for (const k of ['theme', 'view']) if (q.get(k)) st[k] = q.get(k);
+setInterval(() => { if (!q.get('still')) { tick++; draw(); } }, 250);
+sync();
+</script>
+</body></html>
