@@ -169,12 +169,12 @@ export const GOD_FAR = 1.3;
 // feet they are pressed to `low` of their height, rising to whole between
 // depths `rise`; past a row `rowmin` cells deep the rows stop thinning and
 // only narrow. It rolls `roll` units toward the viewer a second, traced a
-// tick at a time (SKY_TICK_S), held between, and slid row by row with the
-// camera between traces; a pan of more than `margin` of the window since
-// the last trace traces it again.
+// tick at a time (SKY_TICK_S), `slice` of its columns a frame, held
+// between, and slid row by row with the camera between traces; a pan of more
+// than `margin` of the window since the last trace traces it again at once.
 export const CLOUD_FLOOR = { f: 130, cam: 0.86, cap: [0.1, 0.17, 0.95], vary: 0.15, ez: 1.35, lx: 0.36, lz: 0.45,
                              jit: 0.3, r: [0.48, 0.62], amp: [0.21, 0.3], puff: 0.4, row: 0.5, roll: 0.024,
-                             low: 0.3, rise: [2.5, 9], rowmin: 1.6, far: 400, margin: 0.25 };
+                             low: 0.3, rise: [2.5, 9], rowmin: 1.6, far: 400, margin: 0.25, slice: 0.1 };
 // A lip of billow over a body's feet: as high as `h` of its size, round
 // tops `w` of it across, its line ink from `ink` cells of body up, mid below.
 export const CLOUD_LIP = { h: 0.4, w: 0.31, sink: 0.15, ink: 6, least: 4 };
@@ -190,10 +190,11 @@ export const CLOUD_LIP_THRONE = 2.4;
 // its drift in cells a second, whether its line is the far tone, and its
 // lit cap's depth. `seed` fixes the sky; `weather` leans it calm (0) to
 // towering (1), swinging `swing` either way over `period` seconds. It is
-// worked out every `step` seconds and each frame shows the step behind
-// blended into the step ahead.
+// worked out every `step` seconds, a slice a frame over the first `slice` of
+// the step before, and each frame shows the step behind blended into the
+// step ahead.
 export const CLOUD_SKY = {
-  seed: 7, weather: 0.5, swing: 0.3, period: 1800, step: 2,
+  seed: 7, weather: 0.5, swing: 0.3, period: 1800, step: 2, slice: 0.5,
   ranges: [
     { A: 1.0, R: 9, S: 10, drift: 0.04, far: 1, cap: 5 },
     { A: 0.72, R: 12, S: 13, drift: 0.08, far: 1, cap: 7 },

@@ -38,7 +38,10 @@ export function drawFloor() {
   // puffs are filled only down to the line.
   const el = floorProfile(), top = afterFloor(), bot = top + 2;
   const j0 = Math.max(0, Math.floor((S.camX - afterX0()) / P) - 1);
-  const j1 = Math.ceil((S.camX + S.viewW - afterX0()) / P) + 2;
+  // Past the place's end (the camera reaches on to God's camp) the line runs
+  // on flat, one fill.
+  const jEnd = Math.ceil((S.camX + S.viewW - afterX0()) / P) + 2, j1 = Math.min(el.length, jEnd);
+  if (jEnd > el.length) { const a = Math.max(j0, el.length); fr(afterX0() + a * P, top, (jEnd - a) * P, 2, K); }
   const key = sitesKey();
   if (key !== wasKey) { if (wasKey != null) { changedAt = now(); } else was = el.slice(); wasKey = key; }
   const f = clamp01((now() - changedAt) / AFTER_BUILD_FADE_S);

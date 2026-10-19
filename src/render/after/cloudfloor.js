@@ -14,10 +14,11 @@
 // mock's) a depth d is z = d * ZN.
 //
 // The frame's cost: the floor is traced a cell at a time only once a tick
-// (the roll held between, as every pose up here is), onto a sheet a pixel a
-// cell, a little wider than the window; between traces each row is drawn off
-// the sheet slid by its own depth's share of the camera's move since. A pan
-// further than the sheet's margin traces it again.
+// (the roll held between, as every pose up here is), a slice of the trace a
+// frame, onto a sheet a pixel a cell, a little wider than the window;
+// between traces each row is drawn off the sheet slid by its own depth's
+// share of the camera's move since. A pan further than the sheet's margin
+// traces it again at once.
 
 import { P, GREY, CLOUD_FLOOR as C, CLOUD_LIP, AFTER_HORIZON, SKY_TICK_S } from '../../config.js';
 import { S } from '../../state.js';
@@ -69,13 +70,15 @@ function dome(i, j) {
   return d;
 }
 // The tallest billow over plane point (X, U), and where in it the point is.
+// A billow is never wider than its lattice cell less its jitter, so only the
+// three spots either way of the point's own can reach it.
 const hit = { h: 0, own: null, dx: 0, dz: 0 };
 function sample(X, U) {
   const j0 = Math.floor(U / C.lz);
   let best = 0, own = null, bx = 0, bz = 0;
-  for (let j = j0 - 2; j <= j0 + 2; j++) {
+  for (let j = j0 - 1; j <= j0 + 1; j++) {
     const i0 = Math.floor(X / C.lx - C.row * (j & 1));
-    for (let i = i0 - 2; i <= i0 + 2; i++) {
+    for (let i = i0 - 1; i <= i0 + 1; i++) {
       const d = dome(i, j), dx = (X - d.cx) / d.rx, dz = (U - d.cz) / d.rz, m = dx * dx + dz * dz;
       if (m >= 1) continue;
       const h = d.a * Math.pow(1 - m, C.puff);
@@ -92,20 +95,33 @@ const lit = s => {
 };
 
 // --- the trace -------------------------------------------------------------------------------
-// One trace of the floor: a sheet a pixel a cell, its columns from world x
-// `x0`, its rows from the one under the horizon down, with the camera's
-// middle at `cx` and the roll at `roll`.
-const T = { key: '', sheet: null, g: null, x0: 0, cols: 0, rows: 0, cx: 0, y0: 0 };
+// A trace of the floor is a job: a sheet a pixel a cell, its columns from
+// world x `x0`, its rows from the one under the horizon down, with the
+// camera's middle at `cx` and the roll at `roll`. Its columns are marched a
+// share a frame (C.slice), so a new tick's floor is worked out over the
+// frames of the tick before it shows, and the frame never pays for a whole
+// trace -- unless there is nothing to show yet, or the camera has slid past
+// what the shown sheet covers.
 const TONE = [W, PALE, MID, K];
-function trace(x0, cols, rows, cx, roll) {
+// A trace's buffers, kept for the next: a trace a tick would otherwise be a
+// megabyte of garbage a quarter second.
+const bufs = [];
+function job(x0, cols, rows, cx, roll, y0, key, sheet) {
   const n = cols * rows;
-  const ZB = new Float32Array(n), CZ = new Float32Array(n), OW = new Int32Array(n), TN = new Uint8Array(n), RA = new Float32Array(n);
-  OW.fill(-2);
+  let b = bufs.pop();
+  if (!b || b.ZB.length < n) b = { ZB: new Float32Array(n), CZ: new Float32Array(n), OW: new Int32Array(n), TN: new Uint8Array(n), RA: new Float32Array(n) };
+  const j = { x0, cols, rows, cx, roll, y0, key, x: 0, sheet, ...b, bufs: b };
+  j.OW.fill(-2, 0, n); j.TN.fill(0, 0, n);
   if (domes.size > 60000) domes.clear();
-  const yMax = rows + 1, zMin = F * CAM / yMax * 0.55;
-  for (let x = 0; x < cols; x++) {
+  return j;
+}
+// March columns of the job, at most `n` of them.
+function march(j, n) {
+  const { cols, rows, ZB, CZ, OW, TN, RA, roll } = j, zMin = F * CAM / (rows + 1) * 0.55, c = j.cx / UNIT;
+  for (const end = Math.min(cols, j.x + n); j.x < end; j.x++) {
+    const x = j.x;
     // The column's middle as a floor x at the near layer, off the camera.
-    const sx = (x0 + (x + 0.5) * P - cx) / UNIT, c = cx / UNIT;
+    const sx = (j.x0 + (x + 0.5) * P - j.cx) / UNIT;
     let top = rows;
     for (let z = zMin; z < C.far && top > 0;) {
       const s = sample((sx * z / ZN + c) * xsOf(z), uOf(z) + roll), h = s.h * ampAt(z);
@@ -121,10 +137,14 @@ function trace(x0, cols, rows, cx, roll) {
     }
     for (let y = 0; y < top; y++) { const k = y * cols + x; ZB[k] = 1e9; CZ[k] = 1e9; OW[k] = -3; TN[k] = 1; }
   }
-  // White tops, shaded fronts, and the line where a nearer billow stands in
-  // front of a farther one, its tone by how thick the rows are there.
-  const g = T.g, gap = 0.25 * C.lz;
-  g.clearRect(0, 0, T.sheet.width, T.sheet.height);
+  return j.x >= cols;
+}
+// Paint a marched job onto its sheet: white tops, shaded fronts, and the line
+// where a nearer billow stands in front of a farther one, its tone by how
+// thick the rows are there.
+function paint(j) {
+  const { cols, rows, ZB, CZ, OW, TN, RA } = j, g = j.sheet.g, gap = 0.25 * C.lz;
+  g.clearRect(0, 0, j.sheet.c.width, j.sheet.c.height);
   for (let y = 0; y < rows; y++) {
     const ps = psOf(F * CAM / (y + 1.5));
     let run = -1, at = 0;
@@ -140,39 +160,70 @@ function trace(x0, cols, rows, cx, roll) {
     }
     flush(cols);
   }
+  bufs.push(j.bufs);
 }
-
-function sheet(cols, rows) {
-  if (!T.sheet || T.sheet.width < cols || T.sheet.height < rows) {
-    T.sheet = document.createElement('canvas');
-    T.sheet.width = Math.max(cols, T.sheet?.width || 0); T.sheet.height = Math.max(rows, T.sheet?.height || 0);
-    T.g = T.sheet.getContext('2d');
+// Two sheets, the one shown and the one being worked out.
+function sheetFor(cols, rows, not) {
+  let sh = sheets.find(q => q !== not);
+  if (!sh || sh.c.width < cols || sh.c.height < rows) {
+    const c = document.createElement('canvas');
+    c.width = Math.max(cols, sh?.c.width || 0); c.height = Math.max(rows, sh?.c.height || 0);
+    const i = sh ? sheets.indexOf(sh) : sheets.length;
+    sh = { c, g: c.getContext('2d') };
+    sheets[i] = sh;
   }
+  return sh;
 }
+const sheets = [];
+let shown = null, next = null;
 export const floorTraces = { n: 0 };
-// The floor in view: traced afresh on a new tick, a pan past the margin or a
-// new window, else slid row by row off the last trace.
+// The floor in view: worked out afresh a tick at a time (a slice of it a
+// frame), at once for a new window or a pan past the shown sheet's margin,
+// and drawn row by row off the shown sheet, each row slid by its depth's
+// share of the camera's move since that sheet was traced.
 export function drawCloudFloor() {
   const cx = S.camX + S.viewW / 2, hy = horizonY(), y0 = hy + P;
   const rows = Math.ceil((S.camY + S.viewH - y0) / P) + 1;
   if (rows <= 0 || !ctx) return;
   const m = Math.ceil(S.viewW * C.margin / P) * P;
-  const tick = Math.floor(now() / SKY_TICK_S);
-  const key = `${tick}|${rows}|${S.viewW}|${y0}`;
-  if (key !== T.key || Math.abs(cx - T.cx) > m * 0.8) {
+  const tick = Math.floor(now() / SKY_TICK_S), shape = `${rows}|${S.viewW}|${y0}`, key = `${tick}|${shape}`;
+  const start = () => {
     const x0 = Math.floor((S.camX - m) / P) * P, cols = Math.ceil((S.viewW + 2 * m) / P) + 1;
-    sheet(cols, rows);
-    trace(x0, cols, rows, cx, tick * SKY_TICK_S * C.roll);
-    T.key = key; T.x0 = x0; T.cols = cols; T.rows = rows; T.cx = cx; T.y0 = y0;
-    floorTraces.n++;
+    return job(x0, cols, rows, cx, tick * SKY_TICK_S * C.roll, y0, key, sheetFor(cols, rows, shown?.sheet));
+  };
+  if (!shown || !shown.key.endsWith(shape) || Math.abs(cx - shown.cx) > m * 0.8) {
+    // Nothing fit to show: the whole trace now.
+    const j = start();
+    march(j, j.cols); paint(j);
+    shown = j; next = null; floorTraces.n++;
+  } else if (shown.key !== key) {
+    if (!next || next.key !== key) next = start();
+    if (march(next, Math.ceil(next.cols * C.slice))) { paint(next); shown = next; next = null; floorTraces.n++; }
   }
-  const smooth = ctx.imageSmoothingEnabled;
+  // The sheet blown up to the window's pixels once a trace, so a frame is a
+  // copy: one, with the camera where it was traced, or a row at a time slid.
+  const T = shown, k = (S.zoomShow || S.zoom) * S.dpr, big = bigOf(T, k), smooth = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
-  for (let y = 0; y < T.rows; y++) {
-    const wy = T.y0 + y * P, d = depthAtY(wy + P / 2), shift = (cx - T.cx) * (1 - 1 / d);
-    ctx.drawImage(T.sheet, 0, y, T.cols, 1, T.x0 + shift, wy, T.cols * P, P);
+  if (Math.abs(cx - T.cx) < 0.5) ctx.drawImage(big.c, T.x0, T.y0, big.c.width / k, big.c.height / k);
+  else for (let y = 0; y < T.rows; y++) {
+    const wy = T.y0 + y * P, d = depthAtY(wy + P / 2), shift = Math.round((cx - T.cx) * (1 - 1 / d));
+    const sy = Math.round(y * P * k), sh = Math.round((y + 1) * P * k) - sy;
+    ctx.drawImage(big.c, 0, sy, big.c.width, sh, T.x0 + shift, wy, big.c.width / k, sh / k);
   }
   ctx.imageSmoothingEnabled = smooth;
+}
+// The shown sheet at the window's scale, made once a trace.
+const blown = { of: null, k: 0, c: null };
+function bigOf(T, k) {
+  if (blown.of === T && blown.k === k) return blown;
+  const w = Math.max(1, Math.round(T.cols * P * k)), h = Math.max(1, Math.round(T.rows * P * k));
+  if (!blown.c || blown.c.width !== w || blown.c.height !== h) { blown.c = document.createElement('canvas'); blown.c.width = w; blown.c.height = h; }
+  const g = blown.c.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.clearRect(0, 0, w, h);
+  g.drawImage(T.sheet.c, 0, 0, T.cols, T.rows, 0, 0, w, h);
+  blown.of = T; blown.k = k;
+  return blown;
 }
 
 // --- a lip of billow -----------------------------------------------------------------------

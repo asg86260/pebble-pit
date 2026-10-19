@@ -40,7 +40,7 @@
 
 import { S } from '../state.js';
 import { P, GREY, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AFTER_SPEECH_WARN_S,
-         SKY_BOB, SKY_TICK_S, GOD_CROWD, CLOUD_LIP_THRONE,
+         SKY_BOB, SKY_TICK_S, GOD_CROWD, CLOUD_LIP, CLOUD_LIP_THRONE,
          SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
          GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, TITHE, GAZE,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_POSTER, SKY_DRIFT,
@@ -51,7 +51,7 @@ import { raw, darkPage } from '../ink.js';
 import { afterX0, slotX, stationBox, unionJoinAt, afterFloor } from '../after/place.js';
 import { support, union, souls, OUT_RIM, speechTarget } from '../after/union.js';
 import { signReach } from '../after/levels.js';
-import { skyFrame, godMid, godU, campX, pointX, pointU, footY, crowdHalf, crowdPoint, walkPoint, deepAt } from '../after/sky.js';
+import { skyFrame, godMid, pointX, pointU, footY, crowdHalf, crowdPoint, walkPoint, deepAt } from '../after/sky.js';
 import { bodyLip, lip } from './after/cloudfloor.js';
 import { K as INK, W, PALE, MID } from './after/kit.js';
 
@@ -261,11 +261,12 @@ export const crowdDrawn = () => ({ ...drawn, won: shown.won.length });
 const pitch = () => GOD_CROWD.soul * P * GOD_CROWD.pitch;
 // The souls of row r in view, each { r, i, x, y, n, a, d }: x its left, y its foot.
 function rowSouls(r, R, out) {
-  const G = GOD_CROWD, hw = crowdHalf(R.d) * R.d, pp = pitch(), n = R.n, w = n * P;
+  const G = GOD_CROWD, hw = crowdHalf(R.d) * R.d, pp = pitch(), n = R.n, w = n * P, mid = gx();
   for (let i = Math.floor(-hw / pp) - 1; i <= Math.ceil(hw / pp) + 1; i++) {
     const xl = (i + (r & 1) * 0.5) * pp;
     if (Math.abs(xl) > hw + hsh(r, 1) * 0.5 * pp) continue;
-    const x = campX(godU() + xl, R.d, CX), x0 = snap(x - w / 2, P);
+    // God's camp slides as one (after/sky.js, `campX`): off his middle.
+    const x = mid + xl / R.d, x0 = snap(x - w / 2, P);
     if (x0 + w < S.camX - P || x0 > S.camX + S.viewW + P) continue;
     // The aisle up the middle kept clear for the line.
     if (Math.abs(xl) / R.d < (G.aisle + n) * P) continue;
@@ -297,10 +298,11 @@ function drawGodsCrowd(rows, between) {
       // lifted by a rally or a bob, a soul still reaches its foot.
       const w = s.n * P, short = r === 0 && hsh(s.i, s.r, 77) < GOD_CROWD.short ? P : 0;
       const lift = ringsAt(s.x + w / 2, s.y, 1 / s.d, w) || (bob(s.i + r * 7) ? -P : 0);
-      alpha(s.a, () => {
-        rect(s.x, s.y - w + short + lift, w, w - short - lift, CROWD_TONE);
-        if (open) { drawn.open++; bodyLip(Math.round(s.x / P), s.n, Math.round(s.y / P), s.r * 1000 + s.i); }
-      });
+      const was = ctx.globalAlpha;
+      if (s.a < 1) ctx.globalAlpha = was * s.a;
+      rect(s.x, s.y - w + short + lift, w, w - short - lift, CROWD_TONE);
+      if (open && s.n >= CLOUD_LIP.least) { drawn.open++; bodyLip(Math.round(s.x / P), s.n, Math.round(s.y / P), s.r * 1000 + s.i); }
+      ctx.globalAlpha = was;
     }
   });
   between(0);
