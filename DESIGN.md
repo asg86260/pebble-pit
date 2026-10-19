@@ -20860,7 +20860,7 @@ act3-union2, act3-level and act3-flaglogo cards; `docs/mocks/act3-level-2026-10-
   a grey body under an ink cap) so God stays the eye's anchor.
 - Gaps still open: the workshops' own drawings (the camp card).
 
-**God's camp stands in the clouds (design, not built; the owner,
+**God's camp stands in the clouds (built; the owner,
 2026-10-19).** Voted a mock at a time (the board's act3-cloudfloor,
 act3-cloudfloor2/3 and act3-cloudsky/2 cards). The crowd once floated on
 nothing; haze, flat bands, strata, ledges and loose puffs all read as cheap.
