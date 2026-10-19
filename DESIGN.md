@@ -20744,7 +20744,7 @@ and bubbles. Depth in the crowd is which of the four a band takes, never a
 fifth grey. God's light -- he, his glare, halo, rays and gaze -- is the one
 thing outside them. `test/after-palette.test.mjs` goes red on a fifth tone.
 
-**The sky, redrawn flat (design, not built; the owner, 2026-10-19).** The
+**The sky, redrawn flat (built and approved; the owner, 2026-10-19).** The
 first build of the sky read as noise: flecks of a second tone in every
 fill, a dithered crowd, faces on every soul, ink outlines round the crown
 and throne. The owner voted it down to this, a mock at a time
