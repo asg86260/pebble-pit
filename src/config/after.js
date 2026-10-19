@@ -6,6 +6,7 @@
 // to stand the act up, marked so in its comment, for the pace tool to move.
 import { P } from './yard.js';
 import { AFTER_JOB as J } from '../jobs.js';
+import { campLayout } from '../after/art.js';
 
 // The switch for the act (DESIGN.md, "Held-back flags"), set by the build:
 // `VITE_AFTERLIFE=1`, which no build sets yet, so the free itch build, the
@@ -117,22 +118,16 @@ const GROVE_END = AFTER_GROVE_X0 / P + AFTER_PLOT_MAX * AFTER_PLOT_STEP / P;
 export const AFTER_JOIN_FADE_S = 0.5;
 // A pile's count stands on a plate of paper this many screen px proud of its digits.
 export const AFTER_COUNT_PAD = 2;
-// The camp's stations, left to right (layout A, docs/mocks/act3-place-2026-10-18):
-// each the left edge of its ground in cells off the place's left (laid off
-// the grove's end), its piles
-// and its drawing laid off that (after/place.js, `ART`). The mill nearest the
-// grove and the chipper turned to face it, the sawdust heap between them
-// (both tip onto it), the shack, and the pedestal
-// nearest God's yard, facing it, with open floor past it for the walk across.
-export const AFTER_STATIONS = {
-  mill:      { at: GROVE_END + 12 },
-  chipper:   { at: GROVE_END + 57 },
-  papermill: { at: GROVE_END + 89 },
-  workshop:  { at: GROVE_END + 120 },
-  press:     { at: GROVE_END + 150 },
-  shack:     { at: GROVE_END + 191 },
-  pedestal:  { at: GROVE_END + 254 }
-};
+// The camp's stations, left to right (layout A, docs/mocks/act3-place-2026-10-18),
+// laid off the grove's end by after/art.js (track A, 2026-10-18): about one
+// station's width of open floor between neighbors (the owner), never under
+// AFTER_CAMP_GAP cells. Each is the left edge of its ground in cells off the
+// place's left (`at`); its piles and its drawing are laid off that.
+export const AFTER_CAMP_GAP = 12;
+const CAMP = campLayout(GROVE_END + 12, AFTER_CAMP_GAP);
+export const AFTER_STATIONS = CAMP.stations;
+// The walk across, in cells, from the pedestal's ground to God's crowd's first file.
+const WALK_ACROSS = 22;
 // The pedestal is a lump of the cloud floor pushed up, this many cells high.
 export const AFTER_PEDESTAL_H = 4;
 // The stations standing from the act's first frame: the pedestal the pair
@@ -147,7 +142,7 @@ export const AFTER_BUILD_PIECE_S = 3;      // a builder's piece
 // The crowd field: files across God's yard, the near ranks drawn as bodies
 // (a soul and its eight rim cells, three cells square) and the far ranks a
 // cell a soul, thinning back up the screen.
-export const CROWD_X0 = P * (GROVE_END + 292);   // the first file's left, past the walk across from the pedestal
+export const CROWD_X0 = P * (CAMP.end + WALK_ACROSS);   // the first file's left, past the walk across from the pedestal
 export const CROWD_FILES = 40;
 export const CROWD_PITCH = P * 4;          // across a file
 export const CROWD_NEAR = 5;               // ranks drawn as bodies
@@ -162,7 +157,7 @@ export const AFTER_KIN_SHARE = 0.15;       // souls of the player's own lines, a
 export const AFTER_KIN_PIECES = 3;         // ...up to this many pieces
 export const AFTER_RISE_S = 30;            // a soul rising into the back of the crowd (the spec's "a soul every half-minute")
 export const AFTER_WALL_STEP = P * 4;      // a poster's slot along the fence at the crowd's front
-export const AFTER_STAIR_X = P * (GROVE_END + 492);   // the stair's head, the throne's ground
+export const AFTER_STAIR_X = CROWD_X0 + P * 200;   // the stair's head, the throne's ground
 // Across the whole place: grove, camp, God's yard, the stair (the mock's layout A).
 export const AFTER_W = AFTER_STAIR_X + P * 4;
 export const AFTER_STAIR_W = P * 36;       // the stair's run, foot to head
@@ -354,7 +349,7 @@ export const AFTER_TAG_ORDER = ['rebel', 'timber', 'paper', ...AFTER_YARD_COINS]
 // way a yard purchase lifts them (upgrades.js `take`) and fly up to the thin
 // patch in the cloud floor; out of it they come as motes in the yard's own
 // tones and arc to the station bought (render/aftercoins.js). Defaults.
-export const AFTER_PATCH_AT = GROVE_END + 228;   // the thin patch, cells off the place's left: open floor between the shack and the pedestal
+export const AFTER_PATCH_AT = CAMP.patch;   // the thin patch, cells off the place's left: open floor between the shack and the pedestal
 export const AFTER_COIN_MOTES = 8;         // motes a coin of a bill at most
 export const AFTER_COIN_UNDER_S = 1.4;     // the yard's grains on their way up to the patch, before the first mote comes out of it
 export const AFTER_COIN_STAGGER_S = 0.08;  // between one mote coming out of the patch and the next

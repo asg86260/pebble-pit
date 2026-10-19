@@ -31,7 +31,7 @@ import { standing, stumped, chopTree, digStump, takeLog } from './grove.js';
 import { sweepDue, tipSawdust } from './mill.js';
 import { signSpot, plantSign, freeSlot, pastePoster } from './press.js';
 import { workAfter } from './work.js';
-import { fillBuilders, layPiece, pieceS } from './build.js';
+import { fillBuilders, stepBuilder } from './build.js';
 
 const floorY = () => afterFloor();
 // A walk that keeps to the floor: the rows of God's crowd stand up the
@@ -198,21 +198,8 @@ const JOB_STEP = {
   joiner(w, dt) { stationWork(w, 'workshop', AFTER_SIGN_S, dt); },
   printer(w, dt) { stationWork(w, 'press', AFTER_PRESS_S, dt); },
   builder(w, dt) {
-    // At the site's door a piece a stretch; the station up, home: a member
-    // back to the camp (walking out again, counted on arrival), the pair back
-    // up onto the pedestal.
-    if (w.state === 'home') {
-      const at = speakerAt(w.pair);
-      if (go(w, at.x + P, at.y, dt)) w.state = 'gone';
-      return;
-    }
-    if (built(w.site)) {
-      if (w.pair != null) { w.state = 'home'; return; }
-      w.job = null; w.state = 'out'; w.site = null; return;
-    }
-    if (!go(w, stationDoor(w.site) + (w.pair ? P * 4 : 0), floorY(), dt)) return;
-    w.t += dt;
-    if (w.t >= pieceS()) { w.t = 0; w.swing = S.after.t; if (w.pair !== 1) layPiece(w.site); }
+    // Carrying the station's loads in and raising it off them (build.js).
+    stepBuilder(w, dt, go);
   },
   carrier(w, dt) {
     const a = S.after;

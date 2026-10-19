@@ -166,3 +166,7 @@ export * from './config/feedback.js';
 
 // the two of them's wardrobe: its marks, its greys and its picker
 export * from './config/wardrobe.js';
+
+// Track A of the act-3 build: the camp -- hand work in the world, the empty
+// sites and the carry that raises a station
+export * from './config/aftercamp.js';

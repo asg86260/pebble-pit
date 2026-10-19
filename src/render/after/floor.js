@@ -6,11 +6,11 @@
 // layered cloud. They are lines, not speckle. Each convex corner of a puff is
 // cut by one 2 px step, so it reads round when near and soft when far.
 
-import { P, GREY, AFTER_W, AFTER_DRIFT_ROWS, AFTER_DRIFT_RATE, AFTER_BILLOW_SEED } from '../../config.js';
+import { P, GREY, AFTER_W, AFTER_DRIFT_ROWS, AFTER_DRIFT_RATE, AFTER_BILLOW_SEED, AFTER_BUILD_FADE_S } from '../../config.js';
 import { S } from '../../state.js';
-import { afterX0, afterFloor, floorProfile, floorFlats, billow, notchX, crowdLip } from '../../after/place.js';
+import { afterX0, afterFloor, floorProfile, floorFlats, billow, notchX, crowdLip, sitesKey, sited } from '../../after/place.js';
 import { ctx } from '../ctx.js';
-import { K, W, now } from './kit.js';
+import { K, W, now, clamp01 } from './kit.js';
 
 const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(x, y, w, h); };
 
@@ -53,13 +53,29 @@ function drifting(k, j0, j1, y, tone) {
   }
 }
 
+// The profile as it stood before a station was ordered, and since when: the
+// puffs under a newly taken ground fade out as its flat line fades in, never
+// popped. Drawing state only.
+let was = null, wasKey = null, changedAt = -1e9;
 export function drawFloor() {
   const el = floorProfile(), top = afterFloor(), bot = S.camY + S.viewH + P;
   const j0 = Math.max(0, Math.floor((S.camX - afterX0()) / P) - 1);
   const j1 = Math.min(el.length, Math.ceil((S.camX + S.viewW - afterX0()) / P) + 2);
-  // The notch beside the sawdust heap: a gap in the line two cells wide.
-  const n0 = Math.round((notchX() - afterX0()) / P), inNotch = j => j >= n0 && j < n0 + 2;
-  edge(el, j0, j1, afterX0(), top, K, true, bot, inNotch);
+  const key = sitesKey();
+  if (key !== wasKey) { if (wasKey != null) { changedAt = now(); } else was = el.slice(); wasKey = key; }
+  const f = clamp01((now() - changedAt) / AFTER_BUILD_FADE_S);
+  if (f >= 1 || now() < changedAt) was = el.slice();
+  const moving = j => f < 1 && (was[j] || 0) !== (el[j] || 0);
+  // The notch beside the sawdust heap: a gap in the line two cells wide,
+  // there once the saw mill's ground is taken.
+  const n0 = sited('mill') ? Math.round((notchX() - afterX0()) / P) : -9, inNotch = j => j >= n0 && j < n0 + 2;
+  edge(el, j0, j1, afterX0(), top, K, true, bot, j => inNotch(j) || moving(j) || moving(j - 1));
+  if (f < 1) {
+    const g = ctx.globalAlpha, near = j => !(moving(j) || moving(j - 1)) || inNotch(j);
+    ctx.globalAlpha = g * f; edge(el, j0, j1, afterX0(), top, K, false, bot, near);
+    ctx.globalAlpha = g * (1 - f); edge(was, j0, j1, afterX0(), top, K, false, bot, near);
+    ctx.globalAlpha = g;
+  }
   // One pale cell under a valley's line, where two puffs meet.
   const flats = floorFlats();
   for (let j = Math.max(1, j0); j < Math.min(j1, el.length - 1); j++) {
@@ -68,6 +84,7 @@ export function drawFloor() {
   AFTER_DRIFT_ROWS.forEach((rows, k) => { if (bot - top > P * (rows + 1)) drifting(k, j0, j1, top + rows * P, k ? 1 : 2); });
   // The notch's walls: the line turned down a cell, then the cloud's depth in
   // pale steps either side, the gap left white.
+  if (!sited('mill')) return;
   const nx = notchX();
   fr(nx - 2, top, 2, P + 2, K); fr(nx + 2 * P, top, 2, P + 2, K);
   for (let r = 1; r < 4; r++) { fr(nx - 2, top + r * P, 2, P, 3); fr(nx + 2 * P, top + r * P, 2, P, 3); }
