@@ -65,7 +65,7 @@ import { drawHome } from './render/home.js';
 import { drawActsYard, drawActsDeep, drawActsAfter, drawActsHell, drawActBodies, drawActCaption } from './render/portals.js';
 import { drawMansion } from './render/mansion.js';
 import { drawAfterBackdrop, drawAfterGrove, drawAfterCamp, drawAfterMembers, drawAfterSky, drawAfterCounts } from './render/after.js';
-import { drawAfterCrowd, drawCampCrowd } from './render/aftercrowd.js';
+import { drawAfterCrowd } from './render/aftercrowd.js';
 import { drawAfterCues } from './render/aftercues.js';
 import { drawAfterCoins } from './render/aftercoins.js';
 import { drawAfterCard } from './render/aftercard.js';
@@ -205,13 +205,11 @@ const LAYERS = [
   { name: 'acts-yard', draw: drawActsYard },      // heaven's tear over the ruin and its cloud stair, the rock on the ruin, the go-on card (render/portals.js)
   { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
   // Act 3's afterlife (render/after.js), drawn only with the camera up there,
-  // back to front: the page and the cloud floor, the sky's clouds, the
-  // camp's own crowd behind the stations (render/aftercrowd.js), the grove
-  // and the camp in front of it, God's crowd and the throne, and the members
-  // walking and working over all of it.
+  // back to front: the page and the cloud floor, the sky's clouds, the grove
+  // and the camp, God's crowd and the throne (render/aftercrowd.js), and the
+  // members walking and working over all of it.
   { name: 'after backdrop', draw: drawAfterBackdrop },
   { name: 'after sky', draw: drawAfterSky },
-  { name: 'after camp crowd', draw: drawCampCrowd },
   { name: 'after grove', draw: drawAfterGrove },
   { name: 'after camp', draw: drawAfterCamp },
   { name: 'after crowd', draw: drawAfterCrowd },

@@ -38,7 +38,7 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor } from './after/place.js';
+import { stationX0, stationBox, soulX } from './after/place.js';
 import { afterEnd } from './view.js';
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S } from './config.js';
 import { FINALE_HOUSE_W } from './config.js';
@@ -2896,15 +2896,13 @@ export const SCENES = {
     } },
   'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp half built (saw mill, chipper, workshop, posts filled), a fifth of God\'s yard walked out, the axe in hand',
     run: act3Mid },
-  // God's pushback over the crowd as drawn (render/aftercrowd.js): the
-  // throne's speech warned over its band of files, then held across them,
-  // stripping the half-won; and the wardens at a poster and a sign.
-  'act3-speech-warned': { about: 'the acts', say: 'the throne\'s speech warned: its band of files framed over half-won souls, a sign and posters standing',
+  // God's pushback as drawn (render/aftercrowd.js): the throne's speech
+  // warned, his gaze settled on a sign with the corner marks closing in; then
+  // the sign burning away.
+  'act3-speech-warned': { about: 'the acts', say: 'the throne's speech warned: God's gaze settled on a sign, the corner marks closing in on it',
     run: () => pushback('warned') },
-  'act3-speech-held': { about: 'the acts', say: 'the throne\'s speech held across its band: the half-won souls in it stripped pale, the sign in it knocked askew',
-    run: () => pushback('held') },
-  'act3-wardens': { about: 'the acts', say: 'the wardens on their rounds: one tearing a poster off the fence, one carrying a sign up toward the throne',
-    run: () => pushback('wardens') },
+  'act3-speech-burn': { about: 'the acts', say: 'the throne's speech fallen: the sign it was aimed at charring and burning away, embers rising',
+    run: () => pushback('burn') },
   'mansion': { about: 'the acts', say: 'the mansion going up on the house\'s ground: the scaffold, a floor and a half set, the rock half broken up',
     run: () => { actsYard('mansion', 34); window.__fast(3); pinCamera(0); window.__holdShot(); } },
   'mansion-end': { about: 'the acts', say: 'the mansion finished, the two of them in, the freed souls down the stair in their files',
@@ -2956,37 +2954,23 @@ function act3Mid() {
   pinCamera((stationX0('workshop') + stationX0('pedestal')) / 2 - S.viewW / 2);
 }
 
-// God's pushback at a moment (`what`: 'warned', 'held', 'wardens'): the
-// opening played, the crowd half won in its front files, posters along the
-// fence and a sign among the files, the camera on the crowd's front.
+// God's pushback at a moment (`what`: 'warned', 'burn'): the opening
+// played, the crowd half won in its front files, posters along the fence and
+// a sign among the files, the speech aimed at the sign, the camera on the
+// crowd's front.
 function pushback(what) {
   actsYard('fallen');
   window.__goPlace('after');
   const A = S.after;
   window.__afterCrowd((i, v) => (i % CROWD_FILES < 24 ? 3 + (i * 7) % 4 : v));
-  for (let s = 0; s < 12; s += 2) A.posters.push({ id: 91000 + s, slot: s, age: 0, torn: null, big: false });
-  A.signs.push({ id: 92000, f: 6, r: 1, askew: false, pull: null, big: false, age: 0 });
-  A.speech = { next: A.t + 1e6, f0: 2, held: null };
+  for (let s = 0; s < 12; s += 4) A.posters.push({ id: 91000 + s, slot: s, age: 0, torn: null, big: false });
+  A.signs.push({ id: 92000, f: 14, r: 1, askew: false, pull: null, big: false, age: 0 });
+  A.speech = { next: A.t + 1e6, target: null, burnt: null };
   window.__fast(0.5);
-  if (what === 'warned') A.speech.next = A.t + 3.5;
-  if (what === 'held') { A.speech.next = A.t + 0.05; window.__fast(0.05); }
-  if (what === 'wardens') {
-    const fl = A.posters[2], y = afterFloor();
-    A.posters[1].torn = A.t - 0.5;
-    A.wardens.length = 0;
-    A.wardens.push({ id: 93000, x: wallSlotX(fl.slot), y, state: 'tear', t: 0, goal: 'poster', target: fl.id, load: null, dropped: null, face: -1 },
-                   { id: 93001, x: soulX(30), y, state: 'carry', t: 0, goal: 'sign', target: null, load: 'sign', dropped: null, face: 1 });
-  }
-  window.__fast(0.1);
+  A.speech = { next: A.t + (what === 'warned' ? 3 : 0.6), target: { kind: 'sign', id: 92000 }, burnt: null };
+  window.__fast(what === 'warned' ? 0.1 : 1.6);
   window.__holdShot();
   pinCamera(CROWD_X0 - P * 10);
-  // The wash fades off in a second and a half, quicker than a shot is taken:
-  // held on the page's frames for a few seconds.
-  if (what === 'held' && typeof window.__scene === 'function') {
-    const sp = A.speech, until = performance.now() + 4000;
-    const hold = () => { if (S.after !== A || performance.now() > until) return; sp.held = A.t - 0.2; window.__look(CROWD_X0 - P * 10); requestAnimationFrame(hold); };
-    requestAnimationFrame(hold);
-  }
 }
 
 // Wake the checks' pad and hop it along the stops until it is on `id` (or,

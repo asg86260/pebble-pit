@@ -10,7 +10,7 @@ import { CROWD_FILES, CROWD_PITCH, CROWD_X0, CROWD_NEAR_RATE, STRIKE_SHARE, GOD_
 import { afterFloor } from '../src/after/place.js';
 import { stepAfter } from '../src/after/index.js';
 import { paintOn } from '../src/render/ctx.js';
-import { drawAfterCrowd, drawCampCrowd, crowdDrawn, glareAlpha, oursMass, arrived } from '../src/render/aftercrowd.js';
+import { drawAfterCrowd, crowdDrawn, glareAlpha } from '../src/render/aftercrowd.js';
 import { afterEnd, godScaleAt } from '../src/view.js';
 import { actPlace } from '../src/acts.js';
 
@@ -35,7 +35,7 @@ function draw() {
     get: (o, k) => (k === 'fillRect' || k === 'drawImage' ? () => { fills++; } : k in o ? o[k] : () => ({})),
     set: (o, k, v) => { o[k] = v; return true; },
   });
-  paintOn({ getContext: () => g, width: S.W, height: S.H }, () => { drawCampCrowd(); drawAfterCrowd(); });
+  paintOn({ getContext: () => g, width: S.W, height: S.H }, () => { drawAfterCrowd(); });
   return fills;
 }
 // The window's middle put on `x`, and the frame it is framed on.
@@ -146,48 +146,6 @@ group('a reload stands the crowd back as it was, and draws it the same', async (
   return [
     ok(S.after.rims.length === rims.length && S.after.rims.slice(0, 4000) === rims.slice(0, 4000), 'every soul\'s rim comes back from the save', `${S.after.rims.length} souls`),
     ok(Math.abs(now.souls - was.souls) <= 2, 'and the near rows draw the same souls', `${was.souls} -> ${now.souls}`)
-  ];
-});
-
-group('our crowd grows with the share walked out', async () => {
-  up();
-  const n = 24000;
-  const at = share => {
-    crowd(n, i => (i < n * share ? 9 : 0));
-    lookAt(CROWD_X0 - 300);
-    for (let k = 0; k < 40; k++) { run(0.25); draw(); }
-    return { arrived: arrived(), souls: crowdDrawn().ours, mass: oursMass() };
-  };
-  const a = at(0.001), b = at(0.2), c = at(STRIKE_SHARE);
-  window.__actsOn(null);
-  return [
-    ok(a.arrived < b.arrived && b.arrived < c.arrived, 'the members arrived rise with the share', `${a.arrived} ${b.arrived} ${c.arrived}`),
-    ok(a.souls > 0 && a.souls < b.souls && a.mass === 0, 'a handful at the start, its near rows only', `${a.souls} souls, mass ${a.mass}`),
-    ok(b.mass > 0 && b.mass < c.mass && c.mass >= 0.99, 'then its mass, full at the strike', `${b.mass.toFixed(2)} -> ${c.mass.toFixed(2)}`)
-  ];
-});
-
-// A member bought into a post steps out of our crowd to hold it: our crowd
-// draws one soul fewer once it has, eased out rather than dropped.
-group('a post bought takes a soul out of our crowd', async () => {
-  up();
-  window.__afterCrowd((i, v) => (i < 12 ? 8 : v));
-  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) run(1);
-  lookAt(CROWD_X0 - 300);
-  const settle = () => { for (let k = 0; k < 40; k++) { run(0.25); draw(); } return { want: arrived(), souls: crowdDrawn().ours }; };
-  const was = settle(), camp0 = S.after.camp;
-  window.__afterGrant({ rebel: 400 });
-  window.__grant({ dust: 1000 });   // a post's bill takes the yard's dust too (DESIGN.md, "The yard pays too")
-  window.__buy('after-post-agitator');
-  run(1 / 30); draw();
-  const mid = crowdDrawn().ours;
-  const now = settle();
-  window.__actsOn(null);
-  return [
-    ok(camp0 > 0, 'members waiting in the camp', `${camp0}`),
-    ok(now.want === was.want - 1, 'one member fewer standing in our crowd', `${was.want} -> ${now.want}`),
-    ok(now.souls === was.souls - 1, 'and our crowd draws one soul fewer', `${was.souls} -> ${now.souls}`),
-    ok(mid === was.souls, 'its soul fading out, not dropped on the frame', `${was.souls} -> ${mid} -> ${now.souls}`)
   ];
 });
 

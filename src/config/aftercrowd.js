@@ -98,3 +98,8 @@ export const GOD_CARRIER_LAP_S = 40;
 export const AFTER_ZOOM_MAX = 2.4;
 export const AFTER_FOCUS_UP = 420;
 export const AFTER_FOCUS_AT = 0.38;
+
+// --- the burning speech (track B) ------------------------------------------------
+// The gaze settles on the sign or poster it will burn for the warning
+// (AFTER_SPEECH_WARN_S); it chars and burns away over this.
+export const AFTER_BURN_S = 4;

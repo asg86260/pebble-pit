@@ -38,16 +38,15 @@ import { P, GREY, CROWD_FILES, CROWD_PITCH, CROWD_X0, CROWD_NEAR, CROWD_ROW, CRO
          STRIKE_SHARE, CROWD_FRONT_BODY, CROWD_NEAR_SIZES, CROWD_NEAR_RANKS, CROWD_NEAR_RATE, CROWD_NEAR_LIFT,
          CROWD_RIM, CROWD_RIM_FROM, CROWD_PIECES_FROM, CROWD_NEAR_TONES, CROWD_FRONT_TONES, CROWD_INK_FADE,
          CROWD_STEP_UP, CROWD_BANDS, CROWD_MASS_ALT, CROWD_MASS_ALT_GRAIN, CROWD_MASS_HEADS, CROWD_MASS_TAPER, CROWD_MASS_STEP_S,
-         CROWD_MASS_READ_S, CROWD_INK_LOCAL, CROWD_INK_WON, CROWD_CLUMP, CROWD_CLUMP_K, CROWD_CLUMP_R, CROWD_CLUMP_TALL, CROWD_CLUMP_LEAST, OURS_X0, OURS_INK,
+         CROWD_MASS_READ_S, CROWD_INK_LOCAL, CROWD_INK_WON, CROWD_CLUMP, CROWD_CLUMP_K, CROWD_CLUMP_R, CROWD_CLUMP_TALL, CROWD_CLUMP_LEAST,
          GOD_RATE, GOD_FAR, GOD_FAR_ALPHA, GOD_HORIZON_UP, GOD_THRONE, GOD_SEAT, GOD_FACE, GOD_CROWN, GOD_HAZE_TONE, GOD_GLARE,
          GOD_LEDGES, GOD_FLIGHTS, GOD_TITHE_PATH, GOD_CARRIERS, GOD_CARRIER_LAP_S,
-         AFTER_SPEECH_WARN_S, AFTER_SPEECH_FILES, AFTER_SPEECH_HOLD_S, AFTER_POSTER_FADE_S } from '../config.js';
+         AFTER_BURN_S, AFTER_POSTER_FADE_S } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
-import { afterFloor, stationBox, slotX, overCrowd } from '../after/place.js';
+import { afterFloor, slotX, overCrowd } from '../after/place.js';
 import { drawFloorLip } from './after/floor.js';
-import { souls, support, union, OUT_RIM, speechWarned, speechHeld } from '../after/union.js';
-import { walkingOut } from '../after/bodies.js';
+import { souls, support, OUT_RIM } from '../after/union.js';
 import { afterEnd, afterPan, godScaleAt } from '../view.js';
 import { smoothstep } from '../motion.js';
 
@@ -188,11 +187,6 @@ function readCrowd() {
   if (read.bandStr !== A.rims && now() - read.t >= CROWD_MASS_READ_S) { readBands(a); read.t = now(); }
   return a;
 }
-// The members standing in our crowd: walked out and reached the camp, less
-// those stepped out of it again to hold a post or raise a station (the
-// pair building are not members, and a builder walking home is walking out).
-const steppedOut = () => S.after.bodies.filter(w => w.pair == null && w.state !== 'out' && w.state !== 'join').length;
-export const arrived = () => (S.after ? Math.max(0, union() - walkingOut() - steppedOut()) : 0);
 // God's glare: full at the start, dimming as support rises, gone at the
 // strike's share.
 export const glareAlpha = () => clamp(1 - support() / STRIKE_SHARE, 0, 1);
@@ -464,17 +458,17 @@ function godColumn(b) {
 // the near rows steps out of the mass. Then the signs among them, and the
 // bodies, each after the rank it stands in.
 const drawnNow = { files: 0, souls: 0, bandBuilds: 0, ours: 0, oursMass: 0 };
-export const crowdDrawn = () => ({ ...drawnNow, bandBuilds: [...godBands, ...ourBands].reduce((n, c) => n + c.builds, 0) });
+export const crowdDrawn = () => ({ ...drawnNow, bandBuilds: godBands.reduce((n, c) => n + c.builds, 0) });
 function nearSouls(a, dt) {
   const floor = afterFloor(), pad = CROWD_FRONT_BODY + CROWD_PITCH;
   const posters = S.after.posters.filter(p => p.torn == null).map(p => slotX(p.slot));
-  const bodies = [...S.after.bodies.filter(w => overCrowd(w.x)).map(w => ({ w, rim: 10, fill: 1 })), ...S.after.wardens.map(w => ({ w, rim: 4, fill: 0, warden: true }))]
+  const bodies = S.after.bodies.filter(w => overCrowd(w.x)).map(w => ({ w, rim: 10, fill: 1 }))
     .map(o => ({ ...o, d: depthAt(o.w.x, o.w.y) })).sort((p, q) => q.d - p.d);
   let next = 0;
   const bodiesTo = d => {
     for (; next < bodies.length && bodies[next].d >= d; next++) {
-      const o = bodies[next], v = body(o.w, o.rim, o.fill);
-      if (o.warden) { const u = P * v.k; for (let c = -1; c <= 1; c++) rect(onPx(v.x) + (c - 0.5) * u, v.y - u * 5, u, u, 3); }
+      const o = bodies[next];
+      body(o.w, o.rim, o.fill);
     }
   };
   bodiesTo(NEAR);
@@ -523,7 +517,7 @@ function signs() {
     const u = P * v.k, x = onPx(v.x - u / 2), y = v.y;
     if (x + u * 3 < S.camX || x - u * 3 > S.camX + S.viewW) continue;
     const was = ctx.globalAlpha;
-    if (s.pull != null) ctx.globalAlpha = was * 0.6;
+    if (s.burnt != null) ctx.globalAlpha = was * clamp(1 - (now() - s.burnt) / AFTER_BURN_S, 0, 1);
     rect(x, y - u * 3, u, u * 3, 10);
     const off = s.askew ? u : 0, half = s.big ? 2 : 1;
     rect(x - u * half + off, y - u * 5, u * (half * 2 + 1), u * 2, 10);
@@ -715,7 +709,7 @@ function pushback() {
   for (const p of A.posters) {
     const x = slotX(p.slot);
     if (x + P * 2 < S.camX || x - P > S.camX + S.viewW) continue;
-    ctx.globalAlpha = was * (p.torn != null ? clamp(1 - (t - p.torn) / AFTER_POSTER_FADE_S, 0, 1) : 1);
+    ctx.globalAlpha = was * (p.burnt != null ? clamp(1 - (t - p.burnt) / AFTER_BURN_S, 0, 1) : p.torn != null ? clamp(1 - (t - p.torn) / AFTER_POSTER_FADE_S, 0, 1) : 1);
     const rows = p.big ? 5 : 3, top = floor - P * (3 + rows);
     rect(x - P, top, P * 3, P * (rows + 1), 10);
     for (let r = 0; r < rows; r++) {
@@ -723,80 +717,6 @@ function pushback() {
       rect(x - P + 1, top + 1 + r * P, P * 3 - 2, P - (r === rows - 1 ? 2 : 0), r % 2 ? 2 : 0);
     }
   }
-  const sp = A.speech;
-  if (sp) {
-    const held = speechHeld(), f0 = held ? sp.swept ?? sp.f0 : sp.f0;
-    const x0 = fileMid(f0) - CROWD_PITCH / 2, w = AFTER_SPEECH_FILES * CROWD_PITCH, top = floor - BAND_FOOT - P * 4;
-    const k = held ? clamp(1 - (t - sp.held) / AFTER_SPEECH_HOLD_S, 0, 1)
-      : speechWarned() ? clamp(1 - (sp.next - t) / AFTER_SPEECH_WARN_S, 0, 1) : 0;
-    if (k > 0) {
-      if (held) { ctx.globalAlpha = was * 0.75 * k; rect(x0, top, w, floor - top, 0); }
-      ctx.globalAlpha = was * k;
-      for (let x = x0; x < x0 + w; x += P * 2) { rect(x, top, P, P, 5); rect(x, floor - P, P, P, 5); }
-      for (let y = top; y < floor; y += P * 2) { rect(x0, y, P, P, 5); rect(x0 + w - P, y, P, P, 5); }
-    }
-  }
   ctx.globalAlpha = was;
 }
 
-// --- our crowd ---------------------------------------------------------------------------------
-// The members arrived, eased in a soul at a time, so a member reaching the
-// camp fades into our crowd's front. Our near rows hold the files across
-// from the grove's edge to the pedestal, rank by rank from the end nearest
-// God's yard; past them our mass fills band by band, near first, each
-// spreading out from that end and rising as it fills, full when the strike's
-// share of the crowd has arrived.
-const ourBands = CROWD_BANDS.map((_, b) => makeCache(b, 51 + b));
-const ours = { shown: 0, after: null };
-const oursX1 = () => stationBox('pedestal').x;
-const ourFiles = () => Math.max(1, Math.floor((oursX1() - OURS_X0) / CROWD_PITCH));
-const ourCols = b => Math.floor((oursX1() - OURS_X0) * CROWD_BANDS[b].rate / CROWD_BANDS[b].cell);
-// How full our mass is, 0..1, off the members past the near rows.
-export function oursMass(n = ours.shown) {
-  const cap = ourFiles() * (NEAR - 1);
-  const full = STRIKE_SHARE * Math.max(1, souls().length) - cap;
-  return n <= cap ? 0 : full <= 0 ? 1 : clamp((n - cap) / full, 0, 1);
-}
-function ourColumn(b, mass) {
-  const bd = CROWD_BANDS[b], cols = ourCols(b), u = clamp(mass * CROWD_BANDS.length - b, 0, 1);
-  const reach = Math.sqrt(u), depth = 0.45 + 0.55 * u;
-  return j => {
-    const q = (cols - 1 - j) / cols;
-    const edgeK = u >= 1 ? 1 : clamp((reach - q) / 0.12, 0, 1);
-    const fill = depth * smoothstep(edgeK) * (u > 0 ? 1 : 0);
-    const h = fill > 0.02 ? bandH(bd.rows, fill, j, cols, 51 + b) : 0;
-    return { h, head: h > 0 && hasHead(j, 51 + b), ink: OURS_INK };
-  };
-}
-export function drawCampCrowd(c) {
-  if (!S.after) return;
-  camFrame();
-  souls();
-  if (ours.after !== S.after) { ours.after = S.after; ours.shown = arrived(); }
-  const want = arrived();
-  // A soul a beat at least, faster when far behind, either way: a member
-  // stepping out to a post fades out of our crowd as it fades in at its spot.
-  const gap = want - ours.shown, step = Math.max(2, Math.abs(gap)) * oursDt();
-  ours.shown = gap >= 0 ? Math.min(want, ours.shown + step) : Math.max(want, ours.shown - step);
-  const mass = oursMass();
-  drawnNow.oursMass = mass;
-  for (let b = CROWD_BANDS.length - 1; b >= 0; b--) {
-    if (mass * CROWD_BANDS.length - b <= 0) continue;
-    drawBandCache(ourBands[b], ourCols(b), ourColumn(b, mass), OURS_X0, CROWD_BANDS[b].rate, b * 1.7 + 0.6);
-  }
-  const files = ourFiles(), floor = afterFloor(), whole = Math.floor(ours.shown), part = ours.shown - whole;
-  const nearCap = files * (NEAR - 1);
-  let count = 0;
-  for (let k = Math.min(whole, nearCap - 1); k >= 0; k--) {
-    const v = 1 + Math.floor(k / files), f = files - 1 - (k % files);
-    const L = layout(v, 1), s = Math.round(L.s);
-    const x = onPx(at(OURS_X0 + f * CROWD_PITCH + CROWD_FRONT_BODY / 2 + L.off, L.rate) - s / 2);
-    if (x + s < S.camX || x > S.camX + S.viewW || (k === whole && part <= 0)) continue;
-    const ink = RIM_PIECES * lerp(1, OURS_INK, (v - 1) / (NEAR - 2));
-    soul(x, onPx(floor - L.foot - s), s, ink, paleTone(s, k), k === whole ? part : 1);
-    count++;
-  }
-  drawnNow.ours = count;
-}
-let oursLast = null;
-function oursDt() { const t = now(), d = oursLast == null ? 0 : clamp(t - oursLast, 0, 0.25); oursLast = t; return d; }
