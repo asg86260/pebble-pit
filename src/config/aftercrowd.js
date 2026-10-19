@@ -1,7 +1,9 @@
 // --- act 3: the sky, God and the camera (track B) ---------------------------------
-// God's crowd filling the sky (docs/mocks/act3-skycrowd-2026-10-18, round 2,
-// the owner's vote; horns and a harder scowl added after it), built to
-// docs/wave-act3-build.md, track B. Every number the mock gives is the mock's.
+// The sky redrawn flat (DESIGN.md, "The sky, redrawn flat"; the owner's votes,
+// docs/mocks/act3-sky-flat-2026-10-19, a3gaze the cumulative one). Every
+// number the mock gives is the mock's: lengths in sky cells (render/
+// aftercrowd.js, `h`: half a God-cell, or less where the sky is too short to
+// hold the mock's layout), times in the mock's ticks of a quarter second.
 import { P } from './yard.js';
 
 // The members waiting stand in the camp from here to the pedestal
@@ -9,111 +11,106 @@ import { P } from './yard.js';
 export const OURS_X0 = P * 14;
 
 // --- the sky's frame ----------------------------------------------------------------
-// The crowd stands from the window's top to a cloud bank this far up off the
-// floor, worked out off the window the place has at rest (after/sky.js), so
-// the dive magnifies the sky rather than laying it out again.
+// The crowd stands from its bands' tops down to a cloud bank this far up off
+// the floor, worked out off the window the place has at rest (after/sky.js),
+// so the dive magnifies the sky rather than laying it out again.
 export const SKY_BANK = P * 17;
-// Each band's top, a share of the sky from the window's top to the bank,
-// furthest first; the last is the near band of souls.
-export const SKY_TOPS = [0.07, 0.20, 0.33, 0.45, 0.57, 0.69, 0.81];
-// The six far bands, furthest first: px a texel (`q`) and a row (`p`), a
-// cell `cp` texels apart and `hs` across, every other row staggered `st`;
-// its tone, one of act 3's four (AFTER_TONES) by name, and the share of its
-// cells that stand (`fill`), so the far bands are the pale one thinly and
-// the nearer ones the mid grey more densely -- depth by which tone and how
-// dense, never a grey between; the tone of its top two rows of heads
-// (`edge`), standing whole, so each band's top reads as a line against the
-// one behind; and its parallax rate.
+// The sky cells from God's square's top down to the bank in the mock, so a
+// sky too short for half a God-cell a cell is laid out at a cell that fits.
+export const SKY_FIT = 87;
+// The bands of the mass, furthest first, as many as are listed; the last is
+// the near band, whose souls a member walks out of. Each: its top, a share
+// of the sky from the window's top to the bank (the mock's 84 and 97 of
+// 109); a soul a flat square `n` cells across, packed with no gaps, its
+// column's top up to `up` cells over the band's own; its tone, one of act
+// 3's four by name; its parallax rate; and how it sinks as support rises --
+// from `from` of the way to the strike over `span` more, its top down to
+// `to` cells over the bank, fading out over the last `fade` of it, stopping
+// `cap` of the way (the near band's low strip at the strike).
 export const SKY_BANDS = [
-  { p: 2, q: 2, cp: 1, hs: 1, st: 0, tone: 'pale', fill: 0.45, edge: 'pale', rate: 0.24 },
-  { p: 2, q: 2, cp: 1, hs: 1, st: 0, tone: 'pale', fill: 0.7, edge: 'mid', rate: 0.31 },
-  { p: 3, q: 3, cp: 1, hs: 1, st: 0, tone: 'pale', fill: 0.95, edge: 'mid', rate: 0.39 },
-  { p: 4, q: 1, cp: 4, hs: 3, st: 2, tone: 'mid', fill: 0.5, edge: 'mid', rate: 0.47 },
-  { p: 5, q: 1, cp: 5, hs: 4, st: 2, tone: 'mid', fill: 0.75, edge: 'mid', rate: 0.55 },
-  { p: 8, q: 2, cp: 4, hs: 3, st: 2, tone: 'mid', fill: 0.95, edge: 'mid', rate: 0.70 }
+  { top: 0.77, n: 3, up: 2, tone: 'pale', rate: 0.7, seed: 11, from: 0, span: 0.75, to: 2, fade: 0.15, cap: 1 },
+  { top: 0.89, n: 5, up: 2, tone: 'mid', rate: 0.8, seed: 23, from: 0.25, span: 0.75, to: 4, fade: 0, cap: 0.9 }
 ];
-// The near band: souls a body's two thirds square, this far apart across and
-// down, an ink rim and two eyes on God.
-export const SKY_NEAR = { soul: 12, pitch: 16, rowp: 15, rate: 0.8 };
+// The bands' tops, read by the sky's frame (after/sky.js).
+export const SKY_TOPS = SKY_BANDS.map(b => b.top);
+// A column bobs a cell for a tick, column i on the ticks where
+// (i * mul + tick) % every is 0 (the mock's band).
+export const SKY_BOB = { every: 13, mul: 5 };
 export const SKY_BANK_RATE = 0.9;          // the cloud bank's own parallax
 export const SKY_SIGN_RATE = 0.85;         // the signs and posters, standing in the near band
-export const SKY_CLOUDS_AFTER = [1, 3, 4]; // a thin cloud strip between band k and the next
-export const SKY_CLOUD_DRIFT = 3;          // px/s the furthest strip drifts, a px/s more each nearer
 // The layers' pan reaches this far past the window either side, so a band
 // is never seen to end.
 export const SKY_EDGE = P * 34;
+export const SKY_TICK_S = 0.25;            // the mock's tick: every pose in the sky held this long
 
-// --- thinning as support rises ----------------------------------------------------------
-// The share of support toward the strike (1 at STRIKE_SHARE) band k starts
-// to go at, and how much more it takes to empty it; the near band keeps a
-// scatter. Every soul and far cell has its own threshold, three parts chance
-// to one part row, so the back rows go first and a band empties by scattered
-// souls; past it a soul fades out over SKY_KEEP_SOFT of support. A band's top
-// sinks by SKY_SINK of its height as it empties.
-export const SKY_THIN = { from: 0.12, step: 0.11, span: 0.30, nearCap: 0.9 };
-export const SKY_KEEP_SOFT = 0.06;
-export const SKY_SINK = 0.5;
 export const SKY_SUPPORT_EASE = 0.8;       // support's share a second the drawing eases toward the sim's
-export const SKY_REDRAW_STEP = 0.004;      // a band's cells are written again when its share moves this much
-// A member walking out: a near soul in view inks its rim, holds, and fades.
+// A member walking out: a near soul at the band's top inks, holds, then
+// rises a cell a tick and fades; at most this many a frame.
 export const SKY_JOIN = { hold: 0.5, fade: 1.2, most: 3 };
 
-// --- the crowd's life: the sea and the rings ------------------------------------------------
-// A, the sea: one long wave through every band, heads up and down a step at a time.
-export const SKY_SEA = { len: 230, hz: 0.85, amp: 1.2, lag: 0.35, swayLen: 240, swayHz: 0.7 };
-// C, a rally: a sign or poster lifts a cell and a ring runs out from it
-// through every band; the throne's roar and grumble send rings of their own.
-// Each ring's width and jump in a band scale by the band's parallax rate.
+// --- the crowd's life: the rings ----------------------------------------------------------
+// A rally: a sign or poster lifts a cell and a ring runs out from it through
+// both bands, lifting the squares it passes; the throne's roar ducks them and
+// a grumble lifts them a cell. Each ring's width and jump in a band scale by
+// the band's parallax rate.
 export const SKY_RALLY = { every: [6, 9], speed: 320, life: 8, lift: 1.2 };
 export const SKY_ROAR = { every: 6.5, speed: 380, life: 6, mouth: 1.6, bubble: 1.9 };
 export const SKY_GRUMBLE = { every: [2.3, 3.3], speed: 220, reach: 420, bubble: 1.2 };
 export const SKY_RING_W = [16, 70];        // a ring's half-width, px, plus this times the band's rate
 export const SKY_RING_LIFT = [3, 12];      // its jump, px, plus this times the band's rate
-export const SKY_RING_STEP = 12;           // screen px a slice of a band moved by a ring
 
 // --- God -----------------------------------------------------------------------------------
-// High in the sky's middle on a block-seat throne atop a tower, in front of
-// the near band (docs/mocks/act3-crown-2026-10-19, 3C, the owner's pick). A God-cell is the largest of GOD_CELLS px that fits
-// GOD_FIT cells -- spikes to tower foot -- in the sky; God is 18 cells
-// square. He is a light source on either page (raw tones, src/ink.js).
+// Behind the whole crowd, high in the sky's middle (after/sky.js lays him
+// out). A God-cell is the largest of GOD_CELLS px that fits GOD_FIT cells in
+// the sky; a sky cell is half of one. He is a light source on either page
+// (raw tones, src/ink.js).
 export const GOD_CELLS = [9, 6, 4, 3];
 export const GOD_FIT = 52;
 export const GOD_RATE = 0.62;              // his parallax walking toward the camp
 export const GOD_OPEN_AT = 0.62;           // where across the window he stands when the act opens
 export const GOD_UP = 0.03;                // his crown's spikes this share of the sky down off the window's top, and 19 cells
-export const GOD_GLARE_R = 19;             // the glare's disc, God-cells
-export const GOD_HALO_R = 21;              // the halo's ring, God-cells
-export const GOD_SPOKES = { n: 12, r: 23, long: 5, short: 3, turn_s: 50 };
-// His idle, in held poses: a breath, three fingers drumming twice then a
-// rest, the crown slipping and set straight with the left hand.
-export const GOD_IDLE = { breath_s: 4.6, drum_s: 3.2, crown_s: 11 };
-// The gaze: a pale wedge from his eyes sweeping the sky and the camp, holding
-// on the camp a while.
-export const GOD_GAZE_HOLD_S = 2.6;
+// His square, its outline, the crown's ring over it and its points (x off
+// the square's left, height), the eyes' lids, the mouth and the hands, in
+// sky cells off the square's top left: the mock's.
+export const GOD_N = 40;
+export const GOD_EDGE = 2;
+export const GOD_CROWN = { up: 8, rx: 1, ry: 3, points: [[2, 4], [10, 6], [18, 8], [20, 8], [28, 6], [36, 4]] };
+export const GOD_EYES = { x: [6, 24], y: 14, w: 10 };
+export const GOD_HAND = { w: 6, rest: -6 };   // a hand's square, and its rest on the seat this far over it
+// The block throne: a back up to his cheeks, a broad seat under him, and a
+// stepped base under the seat, a soul's width out a step down into the crowd.
+export const GOD_THRONE = { backTop: 14, backHalf: 30, seatHalf: 36, seatH: 8, baseHalf: 40, step: 4 };
+// His rays: runs of square cells from his middle, every other one short,
+// turning a step a tick, shortening as support rises; fainter on the dark page.
+export const GOD_RAYS = { n: 16, r: 36, long: 40, short: 24, cell: 2, turn: 0.05, dark: 0.6 };
+// His breath (a cell up and down), and the pupils looking round, in ticks.
+export const GOD_IDLE = { breath: 8, look: 6 };
 
-// --- the burning speech ------------------------------------------------------------------
-// The gaze swings onto the sign or poster it will burn over this, then four
-// corner marks close in on it in held steps for the rest of the warning
-// (AFTER_SPEECH_WARN_S); it chars and burns away over AFTER_BURN_S, embers
-// rising.
+// --- the line and the blessing ------------------------------------------------------------
+// He takes turns: PHASE ticks blessing the line, then PHASE glaring round the
+// crowd while the line waits on its steps. A soul starts up out of the
+// crowd every GAP ticks, a step every `climb` ticks; on the top step it is
+// blessed for BLESS ticks (the hands in over the first `in` of it, the light
+// from `light` to `out`, the hands back by the end), then walks off a cell a
+// tick along the seat and down the base's side. Its load fades in his hands.
+export const TITHE = { phase: 64, gap: 16, climb: 8, bless: 12, soul: 4, offset: 10,
+                       in: 0.25, light: 0.25, out: 0.75, back: 0.7, slow: 0.6 };
+
+// --- the gaze and the burning speech ----------------------------------------------------------
+// A cone of his light from his eyes to a round spot on the crowd, each edge
+// GAZE edge grey. Glaring, it sweeps the crowd: a point every `hold` ticks,
+// getting there over `move` of them, at these shares of the window either
+// side of him. Its spot is `w` cells across the half (a flattened disc,
+// `flat` as tall); warned, it moves onto the mark over AFTER_GAZE_SETTLE_S
+// and narrows on it in three steps (`narrow`) over the rest of the warning;
+// the speech chars the board to ink in held steps over AFTER_BURN_S, and it
+// fades.
+export const GAZE = { sweep: [-0.5, -0.26, 0.28, -0.02, -0.17, 0.4, 0.12, -0.38], hold: 8, move: 5,
+                      w: 16, narrow: [12, 9, 6], flat: 0.6, w0: 8, body: 0.7, bodyDark: 0.35, spot: 0.8, spotDark: 0.5 };
 export const AFTER_GAZE_SETTLE_S = 0.9;
 export const AFTER_BURN_S = 4;
 export const SKY_SIGN = { w: 60, h: 36, cell: 3 };
 export const SKY_POSTER = { w: 42, h: 60, cell: 3 };
-
-// --- the tithe line ---------------------------------------------------------------------------
-// Bowed carriers with planks and sheets from the camp across the cloud floor
-// and up the stair under God (docs/mocks/act3-throne-2026-10-19, take 1, the
-// owner's pick) to the glare at his left hand; thinning and slowing as
-// support rises, standing still at the strike. The stair is a cloud cliff
-// banked against the tower, God-cells off his square's top left: its foot
-// `foot` of the way from the bank down to the floor, its open side at
-// `left`, its flights turning at `right`, the line ending at `end` under his
-// left hand; a ledge for every `rise` cells of height, `ledges` at most.
-export const TITHE_STAIR = { foot: 0.3, left: -20, right: 3, end: -9, rise: 6.5, ledges: 3 };
-export const TITHE_GAP = 5;                // God-cells between carriers
-export const TITHE_PACE = 0.9;             // God-cells a carrier walks a second at the start
-export const TITHE_GLARE_R = 4;            // the glare that takes the loads, God-cells
 
 // --- souls drifting up from the camp ---------------------------------------------------------
 export const SKY_DRIFT = { every: [2.5, 4.5], life: 14, rise: 22 };
