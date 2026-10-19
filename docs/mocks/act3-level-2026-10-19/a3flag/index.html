@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Union flag logos</title>
+<style>
+:root{--bg:#f4f4f4;--fg:#111;--line:#ccc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1b;--fg:#eee;--line:#444}}
+:root[data-theme="dark"]{--bg:#1b1b1b;--fg:#eee;--line:#444}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 ui-monospace,Menlo,Consolas,monospace}
+header{padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;border-bottom:1px solid var(--line)}
+.tag{background:var(--fg);color:var(--bg);padding:1px 6px}
+button{font:inherit;padding:3px 10px;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer}
+button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.wrap{padding:12px 16px}
+canvas{width:100%;height:auto;image-rendering:pixelated;display:block}
+p{margin:8px 0;max-width:900px}
+</style></head><body>
+<header><span class="tag">MOCK</span><b>Union flag logos</b>
+<span>page <button data-v="light">light</button><button data-v="dark">dark</button></span></header>
+<div class="wrap">
+<canvas id="c" width="1800" height="600"></canvas>
+<p>Drawn from plain shapes on the game's 6 px grid, at a near plane's size and at a far plane's size (the small row). It is not the game. Six emblems for the union's flag, each in paper on the union's ink, the flag rippling in held steps: 1 the raised fist, redrawn; 2 the pair -- the two squares side by side, the union's own founders; 3 the crown, toppled upside down; 4 a broken chain; 5 the crowd -- nine squares in a block; 6 two squares joined, hand in hand.</p>
+</div>
+<script>
+const P = 6, cv = document.getElementById('c'), g = cv.getContext('2d');
+let theme = 'light', tick = 0;
+const cell = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x * P, y * P, w * P, h * P); };
+const L = {
+  fist:   ['..X.X.X..', '.XXXXXXX.', 'XXXXXXXXX', 'XXXXXXXXX', 'XXXXXXXX.', '.XXXXXX..', '..XXXX...', '..XXXX...', '..XXXX...'],
+  pair:   ['.........', 'XXXX.XXXX', 'X..X.X..X', 'X..X.X..X', 'XXXX.XXXX', '.........', '.........', '.........', '.........'],
+  crown:  ['.........', '.........', 'XXXXXXXXX', 'XXXXXXXXX', 'XX.XXX.XX', 'X...X...X', '.........', '.........', '.........'],   // the crown, toppled
+  chain:  ['.........', 'XXX...XXX', 'X.X...X.X', 'X.XX.XX.X', 'X.X...X.X', 'XXX...XXX', '.........', '.........', '.........'],
+  crowd:  ['.........', 'XX.XX.XX.', 'XX.XX.XX.', '.........', 'XX.XX.XX.', 'XX.XX.XX.', '.........', 'XX.XX.XX.', 'XX.XX.XX.'],
+  hands:  ['.........', 'XXX...XXX', 'XXX...XXX', 'XXXXXXXXX', 'XXX...XXX', 'XXX...XXX', '.........', '.........', '.........']
+};
+const NAMES = ['fist', 'pair', 'crown', 'chain', 'crowd', 'hands'];
+function flag(x, y, u, logo) {
+  const ink = theme === 'dark' ? '#9a9a9a' : '#000', pap = theme === 'dark' ? '#121212' : '#fff';
+  const fw = 13 * u, fh = 11 * u, pw = Math.max(1, Math.round(u));
+  cell(x, y, pw, 90 - y + 8, ink);                                    // the pole
+  const rows = L[logo];
+  for (let i = 0; i < fw; i++) {
+    const d = Math.round(Math.sin(i / Math.max(2, fw / 3) - tick * 0.5) * Math.max(1, u * 0.6));
+    cell(x + pw + i, y + d, 1, fh, ink);
+    // the emblem, column by column, riding the same ripple
+    const gi = Math.floor((i - 2 * u) / u);
+    if (gi >= 0 && gi < 9) rows.forEach((r, j) => { if (r[gi] === 'X') cell(x + pw + i, y + d + u + j * u, 1, u, pap); });
+  }
+}
+function draw() {
+  const paper = theme === 'dark' ? '#121212' : '#fff';
+  cell(0, 0, 300, 100, paper);
+  cell(0, 90, 300, 1, theme === 'dark' ? '#3a3a3a' : '#bdbdbd');
+  NAMES.forEach((n, k) => { flag(8 + k * 49, 14, 3, n); flag(22 + k * 49, 66, 1, n); });
+}
+document.querySelectorAll('button[data-v]').forEach(b => b.onclick = () => { theme = b.dataset.v; sync(); });
+function sync() { document.querySelectorAll('button[data-v]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === theme))); document.documentElement.dataset.theme = theme; draw(); }
+window.setTick = t => { tick = t; draw(); };
+const q = new URLSearchParams(location.hash.slice(1));
+if (q.get('theme')) theme = q.get('theme');
+let play = !q.get('still');
+setInterval(() => { if (play) { tick++; draw(); } }, 250);
+sync();
+</script>
+</body></html>

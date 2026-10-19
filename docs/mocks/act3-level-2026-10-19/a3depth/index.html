@@ -1,0 +1,392 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Act 3 crowd depth</title>
+<style>
+:root{--bg:#f4f4f4;--fg:#111;--line:#ccc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1b;--fg:#eee;--line:#444}}
+:root[data-theme="dark"]{--bg:#1b1b1b;--fg:#eee;--line:#444}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 ui-monospace,Menlo,Consolas,monospace}
+header{padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;border-bottom:1px solid var(--line)}
+header b{font-size:15px}
+.tag{background:var(--fg);color:var(--bg);padding:1px 6px}
+label{display:inline-flex;gap:6px;align-items:center}
+button{font:inherit;padding:3px 10px;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer}
+button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.wrap{padding:12px 16px}
+canvas{width:100%;height:auto;image-rendering:pixelated;display:block}
+p{margin:8px 0;max-width:900px}
+</style></head><body>
+<header>
+  <span class="tag">MOCK</span><b>Act 3 crowd depth</b>
+  <span>page <button data-k="theme" data-v="light">light</button><button data-k="theme" data-v="dark">dark</button></span>
+  <span>converts <button data-k="out" data-v="rise">A rise and fade</button><button data-k="out" data-v="camp">B drift off to the camp</button></span>
+  <label>camera <input id="pan" type="range" min="-40" max="40" step="1" value="0"></label>
+  <label>support <input id="sup" type="range" min="0" max="1" step="0.01" value="0.1"></label>
+  <button id="play" aria-pressed="true">moving</button>
+</header>
+<div class="wrap">
+  <canvas id="c" width="2000" height="967"></canvas>
+  <p>Drawn from plain shapes at your window size (2000x967), on the game's 6 px grid. It is not the game. It leaves out the camp, the bubbles, the gaze and the burning.</p>
+  <p>Your idea, drawn: the crowd in five planes, far to near, each a packed mass of squares a size up and a tone down from the one behind (pale, pale, mid, mid, ink), each sliding at its own rate as the camera pans (it drifts on its own; the camera slider holds it). Signs stand in every plane at that plane's scale, behind the nearer planes. Each sign has an aura, the union's ink as a faint breathing disc and rim. Souls lift out of the crowd beside it, darkening as they rise, orbit the sign a turn and a half, then go: A rise and fade, as you described; B drift off toward the camp and fade, so being won over reads as joining the union rather than ascending -- rising is God's language (the blessing). The gaze is left out of this mock to keep it on the crowd.</p>
+</div>
+<script>
+const P = 6, cv = document.getElementById('c'), g = cv.getContext('2d');
+const st = { theme: 'light', throne: 'block', line: 'file', dais: 'ink', end: 'bless', glow: 'litrays', gaze: 'on', gz: 'lit', out: 'rise', pan: null, s: 0.1, play: true };
+const TONES = {
+  light: { paper: '#ffffff', pale: '#bdbdbd', mid: '#757575', ink: '#000000', soul: '#000000', seat: '#000000' },
+  dark:  { paper: '#121212', pale: '#262626', mid: '#3a3a3a', ink: '#666666', soul: '#9a9a9a', seat: '#4a4a4a' }
+};
+const GOD = '#ffffff', FEAT = '#000000';
+// The gaze's edge: one grey on either page, a step off both the white and the dark.
+const EDGE = '#8a8a8a';
+let T;
+const cell = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x * P, y * P, w * P, h * P); };
+const hsh = (a, b = 0) => { let h = (a * 374761393 + b * 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const ss = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+const lerp = (a, b, k) => a + (b - a) * k;
+const W = 334, BANK = 109, GROUND = 121, GX = 207;
+const N = 40, GY = 22, SEAT = GY + N;           // God's square, and the seat's top under it
+let tick = 0;
+// He takes turns: PHASE ticks blessing the line, then PHASE ticks glaring
+// round the crowd while the line waits on its steps. The line's clock runs
+// only while he blesses, offset so a switch falls between two blessings.
+const PHASE = 64;
+const glaring = () => tick % (2 * PHASE) >= PHASE;
+const lineT = () => { const c = Math.floor(tick / (2 * PHASE)), r = tick % (2 * PHASE); return c * PHASE + Math.min(r, PHASE) + 10; };
+const gazeT = () => tick % (2 * PHASE) - PHASE;
+
+// The crowd: every soul a flat square, packed with no gaps, so a band is
+// solid and only its top edge steps square by square.
+function band(top, tone, n, seed) {
+  cell(0, top + n, W, BANK - top - n + 1, tone);
+  for (let i = 0, x = -(seed % n); x < W; i++, x += n) {
+    const up = Math.floor(hsh(i, seed) * 3), bob = ((i * 5 + tick) % 13 === 0) ? 1 : 0;
+    cell(x, top - up - bob, n, n + up + bob, tone);
+  }
+}
+
+function rays(s) {
+  const left = 1 - s; if (left < 0.02) return;
+  const cx = GX, cy = GY + N / 2, n = 16, th = tick * 0.05;
+  g.globalAlpha = (st.theme === 'dark' ? 0.6 : 1) * left;
+  for (let i = 0; i < n; i++) {
+    const a = th + i / n * Math.PI * 2, len = (i % 2 ? 24 : 40) * left;
+    for (let d = 36; d < 36 + len; d += 2) cell(Math.round((cx + Math.cos(a) * d) / 2) * 2, Math.round((cy + Math.sin(a) * d) / 2) * 2, 2, 2, st.theme === 'dark' ? GOD : T.pale);
+  }
+  g.globalAlpha = 1;
+}
+
+// The throne, in the seat tone, its foot down in the crowd.
+function throne() {
+  const c = T.seat;
+  if (st.throne === 'block') {
+    cell(GX - 30, GY + 14, 60, SEAT - GY - 14, c);        // the back, up to his cheeks
+    cell(GX - 36, SEAT, 72, st.dais === 'face' ? BANK - SEAT : 8, c);   // the seat; a block down into the crowd when there's no dais
+  } else if (st.throne === 'tiers') {
+    cell(GX - 16, GY - 12, 32, 12, c);                     // stepped back, rising over him
+    cell(GX - 26, GY, 52, 14, c);
+    cell(GX - 34, GY + 14, 68, SEAT - GY - 14, c);
+    cell(GX - 42, SEAT, 84, BANK - SEAT, c);
+  } else {
+    cell(GX - 26, GY - 16, 52, SEAT - GY + 16, c);         // a tall back past his crown
+    cell(GX - 40, SEAT - 14, 14, 14, c); cell(GX + 26, SEAT - 14, 14, 14, c);   // the arms
+    cell(GX - 40, SEAT, 80, BANK - SEAT, c);
+  }
+}
+
+function god() {
+  const ARR = blessing(), E = 2, x0 = GX - N / 2, br = (tick % 8 < 4) ? 0 : 1, y0 = GY - br;
+  cell(x0 - E, y0 - E, N + 2 * E, SEAT - y0 + E, FEAT); cell(x0, y0, N, SEAT - y0, GOD);
+  const look = glaring() ? clamp(Math.round((gazeAt().x - GX) / 40), -2, 2) : [0, 2, 0, -2][Math.floor(tick / 6) % 4];
+  for (const ox of [6, 24]) {
+    cell(x0 + ox, y0 + 14, 10, 2, FEAT);
+    if (st.gz === 'lit' && glaring()) { cell(x0 + ox + 2 + look, y0 + 16, 6, 4, FEAT); cell(x0 + ox + 3 + look, y0 + 17, 4, 2, GOD); }   // the eyes lit from inside
+    else cell(x0 + ox + 3 + look, y0 + 16, 4, 2, FEAT);
+  }
+  cell(x0 + 12, y0 + 26, 2, 2, FEAT); cell(x0 + 14, y0 + 28, 12, 2, FEAT); cell(x0 + 26, y0 + 26, 2, 2, FEAT);
+  // the hands, on the seat either side of him
+  const [lx, ly] = ARR.left || [x0 - 10, SEAT - 6], [rx, ry] = ARR.right || [x0 + N + 4, SEAT - 6];
+  for (const [hx, hy] of [[lx, ly], [rx, ry]]) { cell(hx - 2, hy - 2, 10, 10, FEAT); cell(hx, hy, 6, 6, GOD); }
+  const cy = y0 - 8, cells = new Set();
+  for (let i = 0; i < 160; i++) { const a = i / 160 * 2 * Math.PI; cells.add(2 * Math.floor((N / 2 + Math.cos(a) * (N / 2 + 1)) / 2) + ',' + 2 * Math.round((cy + Math.sin(a) * 3) / 2)); }
+  for (const [x, h] of [[2, 4], [10, 6], [18, 8], [20, 8], [28, 6], [36, 4]]) for (let k = 2; k <= h; k += 2) cells.add(x + ',' + (2 * Math.round(cy / 2) - 2 - k));
+  // ink against the sky; white where a tall back stands behind it
+  const crown = st.theme === 'dark' || st.throne !== 'block' ? GOD : FEAT;
+  for (const c of cells) { const [x, y] = c.split(',').map(Number); cell(x0 + x, y, 2, 2, crown); }
+}
+
+// The dais: a stepped pyramid up the throne's front to his feet, standing
+// behind the crowd, so only its upper steps show over their heads. The
+// souls come up out of the crowd onto it.
+const STEP = 4;
+function dais() {
+  if (st.dais === 'face') return;
+  const c = st.dais === 'pale' ? T.pale : T.seat;
+  // under the seat, black steps stepping out a soul's width each, down into the crowd
+  for (let k = 0, y = SEAT + 8; y < BANK; k++, y += STEP) {
+    cell(GX - 40 - 4 * k, y, 80 + 8 * k, STEP, c);
+    if (st.dais === 'treads') cell(GX - 40 - 4 * k, y, 4, 1, T.pale), cell(GX + 36 + 4 * k, y, 4, 1, T.pale);
+  }
+}
+const soulTone = () => st.theme === 'dark' ? T.soul : (st.dais === 'pale' ? T.soul : T.pale);
+// The line: a soul starts at the crowd every GAP ticks and climbs a step at
+// a time. On the top step he blesses it: both hands come in either side of
+// it, a little light plays round its square, the hands go back, and it
+// walks off along the seat and down the dais's side, back behind the crowd.
+// Every soul is a fact of the clock, so the line runs forever.
+const GAP = 16, CLIMB = (BANK - SEAT) * 2, BLESS = 12;
+const eio = u => u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u);
+const TOP = [GX - 2, SEAT + 4];
+const WALK = (() => {
+  const p = [];
+  for (let x = TOP[0]; x < GX + 40; x++) p.push([x, TOP[1]]);
+  p.push([GX + 40, SEAT + 4]);
+  for (let k = 0, x = GX + 40, y = SEAT + 4; y < BANK; k++) {
+    for (let j = 0; j < 4; j++) p.push([x + j, y]);
+    x += 4; y += 4;
+  }
+  return p;
+})();
+function blessing() {
+  const L = lineT(), n = Math.floor((L - CLIMB) / GAP), b = L - CLIMB - n * GAP;
+  if (n < 0 || b >= BLESS) return {};
+  const u = b / BLESS, [x, y] = TOP;
+  const rest = { l: [GX - N / 2 - 10, SEAT - 6], r: [GX + N / 2 + 4, SEAT - 6] };
+  const at = { l: [x - 9, y - 1], r: [x + 7, y - 1] };
+  const k = u < 0.25 ? eio(u / 0.25) : u < 0.7 ? 1 : 1 - eio(clamp((u - 0.7) / 0.25, 0, 1));
+  const mix = (a, c) => [Math.round(lerp(a[0], c[0], k)), Math.round(lerp(a[1], c[1], k))];
+  return { left: mix(rest.l, at.l), right: mix(rest.r, at.r), light: u >= 0.25 && u < 0.75 ? (u - 0.25) / 0.5 : null, soul: [x, y] };
+}
+// The little light round the blessed soul's square, in held steps.
+function glow(L, x, y) {
+  const st4 = Math.floor(L * 4), a = 1 - st4 / 4;
+  g.globalAlpha = a;
+  const c = GOD, cx = x + 2, cy = y + 2;
+  if (st.glow === 'litrays') {
+    g.globalAlpha = 1;
+    cell(x - 1, y - 1, 6, 6, c);                       // its square edged in his light
+    g.globalAlpha = a;
+    const len = 2 + st4;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1], [0, 1], [1, -1], [-1, -1]]) for (let d = 5; d < 5 + len; d++) cell(cx + dx * d - 1, cy + dy * d - 1, 1, 1, c);
+  } else if (st.glow === 'ring') {
+    const r = 6 + 2 * st4;
+    for (let i = 0; i < 8; i++) { const t = i / 8 * Math.PI * 2 + st4 * 0.2; cell(Math.round(cx + Math.cos(t) * r) - 1, Math.round(cy + Math.sin(t) * r) - 1, 2, 2, c); }
+  } else if (st.glow === 'rays') {
+    const r0 = 4, len = 2 + st4;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1], [0, 1], [1, -1], [-1, -1]]) for (let d = r0; d < r0 + len; d++) cell(cx + dx * d - 1, cy + dy * d - 1, 1, 1, c);
+  } else {
+    g.globalAlpha = 1;
+    cell(x - 1, y - 1, 6, 6, c);                       // its square edged in his light
+    g.globalAlpha = a;
+    for (const [dx, dy] of [[-3, -3], [5, -3], [-3, 5], [5, 5]]) cell(x + dx - st4, y + dy - st4 * (dy < 0 ? 1 : -1) * 0, 2, 2, c);
+  }
+  g.globalAlpha = 1;
+}
+function line() {
+  const L = lineT();
+  for (let n = Math.floor(L / GAP); n >= 0; n--) {
+    const age = L - n * GAP;
+    if (age < CLIMB - 4) { const y = BANK - Math.floor(age / 2); cell(GX - 2, Math.ceil(y / STEP) * STEP - 4, 4, 4, soulTone()); continue; }
+    const b = age - CLIMB;
+    if (b < 0) continue;
+    if (b < BLESS) {
+      const B = blessing();
+      if (B.light != null) glow(B.light, ...TOP);
+      cell(TOP[0], TOP[1], 4, 4, soulTone());
+      continue;
+    }
+    const w = b - BLESS;
+    if (w >= WALK.length) break;
+    const [x, y] = WALK[w];
+    cell(x, y, 4, 4, soulTone());
+  }
+}
+
+const SIGNS = [60, 96, 270, 292, 304, 318];
+// The gaze, on a 64-tick cycle: it sweeps the crowd in held steps, settles
+// on a sign and narrows on it in three held steps (the warning), and the
+// speech burns the sign: the board chars to ink and fades out. (The mock
+// stands the sign back up next cycle; the game would not.)
+const SWEEP = [40, 120, 300, 200, 150], T0 = 64, MARK = 3;
+function gazeAt() {
+  const t = gazeT(), sx = SIGNS[MARK] + 5, sy = 92;
+  if (t < 0) return null;
+  if (t >= 40) { const k = Math.min(2, Math.floor((t - 40) / 4)); return { x: sx, y: sy, w: [12, 9, 6][k], hold: true, burn: t >= 52 ? (t - 52) / 12 : null }; }
+  const i = Math.floor(t / 8), k = (t % 8) / 8;
+  return { x: Math.round(lerp(SWEEP[i], SWEEP[(i + 1) % SWEEP.length], eio(Math.min(1, k * 1.6)))), y: 96, w: 16, hold: false };
+}
+function gaze() {
+  if (!glaring()) return;
+  const G = gazeAt(), dark = st.theme === 'dark', eyeY = GY + 16;
+  const beam = (ax, w0, w1, a) => {
+    g.globalAlpha = a;
+    for (let y = SEAT; y <= G.y + 4; y++) {
+      const k = (y - eyeY) / (G.y + 4 - eyeY), cx = Math.round(lerp(ax, G.x, k)), hw = Math.max(1, Math.round(lerp(w0, w1, k)));
+      cell(cx - hw, y, 2 * hw, 1, GOD);
+    }
+  };
+  if (st.gz === 'cone') beam(GX, 2, G.w, dark ? 0.3 : 0.55);
+  if (st.gz === 'edged' || st.gz === 'lit') {
+    // from his eyes, over his face: a body of his light, each edge a cell of ink
+    const y0 = eyeY + 2, y1 = G.y + 4;
+    const e = EDGE;
+    let pl = null, pr = null;
+    for (let y = y0; y <= y1; y++) {
+      const k = (y - y0) / (y1 - y0), cx = Math.round(lerp(GX, G.x, k)), hw = Math.max(2, Math.round(lerp(8, G.w, k)));
+      const l = cx - hw - 1, r = cx + hw;
+      g.globalAlpha = dark ? 0.35 : 0.7; cell(l + 1, y, r - l - 1, 1, GOD);
+      g.globalAlpha = 1;
+      // each edge a joined line two cells thick: a run across to where the row above left off
+      const run = (x, px) => { const a = px == null ? x : Math.min(x, px), b = px == null ? x : Math.max(x, px); cell(a, y, b - a + 2, 1, e); };
+      run(l - 1, pl); run(r, pr);
+      pl = l - 1; pr = r;
+    }
+  }
+  if (st.gz === 'pale') {
+    g.globalAlpha = 0.75;
+    for (let y = SEAT; y <= G.y + 4; y++) {
+      const k = (y - eyeY) / (G.y + 4 - eyeY), cx = Math.round(lerp(GX, G.x, k)), hw = Math.max(1, Math.round(lerp(2, G.w, k)));
+      cell(cx - hw, y, 2 * hw, 1, dark ? '#9a9a9a' : T.mid);
+    }
+  }
+  if (st.gz === 'twin') { beam(GX - 9, 1, 2, dark ? 0.6 : 0.85); beam(GX + 9, 1, 2, dark ? 0.6 : 0.85); }
+  // the spot: a square of his light on the crowd
+  g.globalAlpha = dark ? 0.5 : 0.8;
+  const hw = G.w;
+  // a round spot of his light, a stepped disc flattened to lie on the crowd, its rim the gaze's grey
+  const ry = Math.max(2, Math.round(hw * 0.6)), rows = [];
+  for (let dy = -ry; dy <= ry; dy++) rows.push([dy, Math.round(hw * Math.sqrt(1 - (dy / (ry + 0.5)) ** 2))]);
+  g.globalAlpha = dark ? 0.5 : 0.8;
+  for (const [dy, w] of rows) cell(G.x - w, G.y + dy, 2 * w, 1, GOD);
+  g.globalAlpha = 1;
+  if (st.gz === 'edged' || st.gz === 'lit') rows.forEach(([dy, w], i) => {
+    const pw = i ? rows[i - 1][1] : 0, nw = i < rows.length - 1 ? rows[i + 1][1] : 0, out = Math.max(pw, nw);
+    if (dy === -ry || dy === ry) { cell(G.x - w - 1, G.y + dy, 2 * w + 2, 1, EDGE); return; }
+    cell(G.x - w - 1, G.y + dy, Math.max(1, w - out + 1), 1, EDGE); cell(G.x + Math.min(w, out), G.y + dy, Math.max(1, w - out + 1), 1, EDGE);
+  });
+}
+function signs() {
+  const G = gazeAt() || {};
+  for (const [i, x] of SIGNS.entries()) {
+    const y = 90 + (i % 2) * 2;
+    if (i === MARK && G.burn != null) {
+      // charring: the board goes to ink in held steps, then fades out
+      const k = Math.floor(G.burn * 4);
+      g.globalAlpha = k < 2 ? 1 : 1 - (k - 1) / 3;
+      cell(x + 5, y + 7, 1, BANK - y - 6, T.ink);
+      cell(x, y, 11, 7, k === 0 ? T.pale : T.ink);
+      g.globalAlpha = 1;
+      continue;
+    }
+    cell(x + 5, y + 7, 1, BANK - y - 6, T.ink);
+    cell(x, y, 11, 7, T.paper);
+    cell(x + 2, y + 2, 7, 1, T.ink); cell(x + 2, y + 4, 5, 1, T.ink);
+  }
+}
+
+function bank() {
+  cell(0, BANK + 1, W, GROUND - BANK, T.paper);
+  for (let i = 0; i < W; i++) if (Math.sin(i / 5) + hsh(i, 7) * 0.6 > 0.5) cell(i, BANK, 1, 1, T.paper);
+  cell(0, GROUND, W, 1, T.mid);
+  cell(0, GROUND + 1, W, 40, T.paper);
+}
+
+// The crowd in five planes, far to near: each a packed mass of squares a
+// size up and a tone down from the one behind, sliding at its own rate as
+// the camera pans. Signs stand in every plane at that plane's scale, behind
+// the planes in front of it.
+const PL = [
+  { n: 2, top: 66, tone: 'pale', rate: 0.25, signs: [70, 300] },
+  { n: 3, top: 75, tone: 'pale', rate: 0.4, signs: [140] },
+  { n: 4, top: 84, tone: 'mid', rate: 0.55, signs: [40, 290] },
+  { n: 5, top: 92, tone: 'mid', rate: 0.75, signs: [110] },
+  { n: 7, top: 100, tone: 'ink', rate: 1, signs: [30, 300] }
+];
+const DARKT = { pale: '#262626', mid: '#3a3a3a', ink: '#666666' };
+const tone = k => st.theme === 'dark' ? DARKT[PL[k].tone] : T[PL[k].tone];
+const CONV = () => st.theme === 'dark' ? '#9a9a9a' : FEAT;          // a soul won over: the union's ink
+const panNow = () => st.pan != null ? st.pan : Math.round(30 * Math.sin(tick * 0.03));
+function plane(k) {
+  const p = PL[k], n = p.n, c = tone(k);
+  cell(-80, p.top + n, W + 160, BANK - p.top - n + 1, c);
+  for (let i = 0, x = -80 - ((k * 7) % n); x < W + 80; i++, x += n) {
+    const up = Math.floor(hsh(i, k + 30) * 3) * Math.max(1, Math.round(n / 3)), bob = ((i * 5 + tick) % 13 === 0) ? 1 : 0;
+    cell(x, p.top - up - bob, n, n + up + bob, c);
+  }
+}
+const boardOf = (k, sx) => { const p = PL[k], sc = p.n / 5, w = Math.max(4, Math.round(11 * sc)), h = Math.max(3, Math.round(7 * sc));
+  return { x: sx - Math.floor(w / 2), y: p.top - h - Math.round(4 * sc), w, h, sc, cx: sx, cy: p.top - Math.round(h / 2) - Math.round(4 * sc) }; };
+// The aura: the union's ink round a sign, a stepped disc and its rim, breathing a cell.
+function aura(k, b) {
+  const R = Math.round(10 * b.sc) + 2 + ((Math.floor(tick / 4) + k) % 2), c = CONV();
+  const rows = [];
+  for (let dy = -R; dy <= R; dy++) rows.push([dy, Math.round(Math.sqrt(R * R - dy * dy))]);
+  g.globalAlpha = st.theme === 'dark' ? 0.2 : 0.14;
+  for (const [dy, w] of rows) cell(b.cx - w, b.cy + dy, 2 * w, 1, c);
+  g.globalAlpha = 0;
+  rows.forEach(([dy, w], i) => { const o = Math.max(i ? rows[i - 1][1] : 0, i < rows.length - 1 ? rows[i + 1][1] : 0);
+    if (Math.abs(dy) === R) cell(b.cx - w, b.cy + dy, 2 * w, 1, c); else { cell(b.cx - w, b.cy + dy, Math.max(1, w - o), 1, c); cell(b.cx + Math.max(o, w - 1), b.cy + dy, Math.max(1, w - o), 1, c); } });
+  g.globalAlpha = 1;
+  return R;
+}
+function board(k, b) {
+  cell(b.cx, b.y + b.h, Math.max(1, Math.round(b.sc)), BANK - b.y - b.h, T.ink === '#000000' || st.theme !== 'dark' ? FEAT : T.ink);
+  cell(b.x, b.y, b.w, b.h, T.paper);
+  const lw = Math.max(1, Math.round(b.sc));
+  cell(b.x + lw, b.y + lw, b.w - 2 * lw, lw, FEAT); if (b.h >= 5) cell(b.x + lw, b.y + 3 * lw, Math.round((b.w - 2 * lw) * 0.7), lw, FEAT);
+}
+// The won-over souls: one lifts out of the plane's top beside the sign,
+// darkening as it rises to the aura's rim, orbits the sign a turn and a half
+// in held steps, then rises and fades (A) or drifts off to the camp and fades (B).
+function converts(k, j, b, R) {
+  const p = PL[k], n = Math.max(2, p.n - 1), C = 52;
+  for (const off of [0, 26]) {
+    const t = (tick + off + j * 11 + k * 7) % C;
+    let x, y, a = 1, dk;
+    if (t < 6) { const u = t / 6; x = b.cx + R * 0.7; y = lerp(p.top, b.cy + R * 0.7, u); dk = u * 0.3; }
+    else if (t < 30) { const st8 = Math.floor((t - 6) / 2), ang = Math.PI / 4 + st8 * Math.PI / 4; x = b.cx + Math.cos(ang) * R; y = b.cy + Math.sin(ang) * R; dk = 0.3 + 0.7 * (t - 6) / 24; }
+    else { const u = (t - 30) / 22; const ang = Math.PI / 4 + 12 * Math.PI / 4; const x0 = b.cx + Math.cos(ang) * R, y0 = b.cy + Math.sin(ang) * R;
+      if (st.out === 'rise') { x = x0; y = y0 - u * 30; } else { x = x0 - u * 60; y = y0 + Math.sin(u * Math.PI) * -6; }
+      a = 1 - u; dk = 1; }
+    x = Math.round(x - n / 2); y = Math.round(y - n / 2);
+    g.globalAlpha = a; cell(x, y, n, n, tone(k)); g.globalAlpha = a * dk; cell(x, y, n, n, CONV()); g.globalAlpha = 1;
+  }
+}
+function draw() {
+  T = TONES[st.theme];
+  cell(0, 0, W, 162, T.paper);
+  const pan = panNow();
+  g.save(); g.translate(-pan * 0.1 * P, 0);
+  rays(0.1); throne(); god(); dais(); line();
+  g.restore();
+  for (let k = 0; k < PL.length; k++) {
+    g.save(); g.translate(-pan * PL[k].rate * P, 0);
+    plane(k);
+    PL[k].signs.forEach((sx, j) => { const b = boardOf(k, sx); const R = aura(k, b); board(k, b); converts(k, j, b, R); });
+    g.restore();
+  }
+  bank();
+}
+
+function sync() {
+  for (const b of document.querySelectorAll('button[data-k]')) b.setAttribute('aria-pressed', String(st[b.dataset.k] === b.dataset.v));
+  document.documentElement.dataset.theme = st.theme;
+  draw();
+}
+document.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => { st[b.dataset.k] = b.dataset.v; sync(); });
+document.getElementById('pan').oninput = e => { st.pan = +e.target.value; draw(); };
+document.getElementById('sup').oninput = e => { st.s = +e.target.value; draw(); };
+const pl = document.getElementById('play');
+pl.onclick = () => { st.play = !st.play; pl.setAttribute('aria-pressed', String(st.play)); };
+setInterval(() => { if (st.play) { tick++; draw(); } }, 250);
+window.setTick = t => { tick = t; draw(); };
+const q = new URLSearchParams(location.hash.slice(1));
+for (const k of ['theme', 'throne', 'line', 'dais', 'end', 'glow', 'gaze', 'gz', 'out']) if (q.get(k)) st[k] = q.get(k);
+if (q.get('s')) st.s = +q.get('s');
+if (q.get('t')) tick = +q.get('t');
+if (q.get('still')) { st.play = false; pl.setAttribute('aria-pressed', 'false'); }
+document.getElementById('sup').value = st.s;
+sync();
+</script>
+</body></html>

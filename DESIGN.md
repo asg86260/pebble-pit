@@ -20799,6 +20799,40 @@ act3-seat, act3-dais, act3-arrive, act3-bless, act3-gaze cards):
 The tithe load each soul carries up fades in his hands at the blessing
 (the owner, 2026-10-19).
 
+**The level, the two crowds and the flags (design, not built; the owner,
+2026-10-19).** Voted a mock at a time (the board's act3-depth, act3-union,
+act3-union2, act3-level and act3-flaglogo cards; `docs/mocks/act3-level-2026-10-19/`):
+
+- **Three zones, left to right, far apart.** The **workshops** at the far
+  left -- the grove and the stations on the floor, open sky behind them,
+  no crowd of any kind, so it stays clean. Right of them, the **union's
+  camp**: the pair on their pedestal gathering their crowd. All the way
+  right, **God's camp**: his crowd, the throne, the line and the gaze. The
+  camera pans the whole run; no crowd plane may show over the workshops
+  (a band's extent ends short of them, whatever its parallax).
+- **The pedestal moves to the union's camp, near the front.** The pair on
+  top, their symbol bubbles drifting out toward God's side.
+- **The union has its own crowd again**, in groups round and behind the
+  pair, several depths deep, each at its own parallax. In front every soul
+  is its own square, a cell or two apart (ink); each depth back the squares
+  are smaller, closer and a tone lighter, until the back groups are a pale
+  packed mass. Groups stand up a depth at a time as support rises, so the
+  crowd grows away from the pair toward the back.
+- **God's crowd stands in planes** (one tone each, a big step in square
+  size between them), giving up ground and sinking as support rises.
+- **Signs are flags**: the union's ink, the **raised fist** in paper on
+  it, rippling in held steps, planted in every plane of God's crowd at
+  that plane's scale and behind the nearer planes.
+- **Each sign has an aura**: a faint breathing disc of the union's ink and
+  a slow ring of ink squares turning round it.
+- **A won-over soul** lifts out of its plane beside the sign, darkening
+  toward ink as it rises, orbits the sign a turn and a half in held steps,
+  then drifts across to the union's camp and joins its front. Rising and
+  fading upward is God's language (the blessing); going sideways to the
+  camp is the union's.
+- Gaps still open: how far apart the zones sit (the walk between them),
+  and the workshops' own drawings (the camp card).
+
 ##### The click: a cloud, and faith
 
 The pair's click is on a **cloud** -- one of the small ones drifting over
