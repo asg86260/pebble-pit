@@ -18,8 +18,8 @@
 //    checks, and act 3's bills take far more of them than a hole holds at once);
 //  - rebel for the posts and the stations past the saw mill, granted in one
 //    block once the axe's and the mill's have been earned off the bubbles;
-//  - the timber the paper mill's and the press's bills take, granted a bill
-//    at a time: the one plot's planks all go on signs, and the grove's pace
+//  - the timber the press's bill takes (and the paper mill's, should it
+//    name any), granted a bill at a time: the one plot's planks all go on signs, and the grove's pace
 //    is the pacing tool's, not this check's.
 import { group, ok, run, yard, P } from './helpers.mjs';
 import { AFTER_GATES, AFTER_BUILDS, AFTER_UPGRADES, AFTER_POST_DUST, GESTURE_STUMP_DRAG, AFTER_FIRST_MEMBERS } from '../src/config.js';
