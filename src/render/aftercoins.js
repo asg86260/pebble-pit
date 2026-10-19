@@ -11,9 +11,9 @@
 // yard's own (game.js, `fly`): eased in and out, lifted on a half sine.
 
 import { S } from '../state.js';
-import { P, AFTER_COIN_UP, AFTER_COIN_RISE_S, AFTER_COIN_FLY_S, AFTER_COIN_LIFE_S as LIFE_S, AFTER_COIN_LIFT,
+import { P, GREY, GREY_DUST_FROM, AFTER_COIN_UP, AFTER_COIN_RISE_S, AFTER_COIN_FLY_S, AFTER_COIN_LIFE_S as LIFE_S, AFTER_COIN_LIFT,
          AFTER_COIN_FADE_S } from '../config.js';
-import { shadeOf } from '../grid.js';
+import { nearest, K } from './after/kit.js';
 import { ctx } from './ctx.js';
 
 const ease = e => e * e * (3 - 2 * e);
@@ -30,8 +30,9 @@ export function coinAt(m, t) {
   return { x: m.x0 + (m.tx - m.x0) * e, y: topY + (m.ty - topY) * e - Math.sin(e * Math.PI) * AFTER_COIN_LIFT, ink };
 }
 
-// Drawn the way the yard draws its paid grains (render/cores.js): a cell of
-// the grain's own tone, on the grid's size.
+// Drawn the way the yard draws its paid grains (render/cores.js): a cell on
+// the grid's size, the grain's own shade of dust put on the nearest of the
+// act's four tones.
 export function drawAfterCoins() {
   const a = S.after;
   if (!a?.coins?.length) return;
@@ -40,9 +41,9 @@ export function drawAfterCoins() {
     const at = coinAt(m, a.t);
     if (!at) continue;
     ctx.globalAlpha = was * at.ink;
-    ctx.fillStyle = shadeOf(m.v);
+    ctx.fillStyle = GREY[nearest(GREY_DUST_FROM + Math.min(6, Math.max(1, m.v)) - 1)];
     ctx.fillRect(Math.round(at.x - P / 2), Math.round(at.y - P / 2), P, P);
   }
   ctx.globalAlpha = was;
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = GREY[K];
 }

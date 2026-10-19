@@ -23,7 +23,7 @@ const TURN = Math.PI / 16;                                 // a held step of a t
 const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
 import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT } from '../../config.js';
-import { K, W, PULP, DUST, hash, clamp01, silhouette, pileAlpha, countAt } from './kit.js';
+import { K, W, PALE, MID, DUST, toward, hash, clamp01, silhouette, pileAlpha, countAt } from './kit.js';
 import { signsJoined } from '../../after/press.js';
 import { paperPulls } from '../../after/mill.js';
 
@@ -44,7 +44,7 @@ const cut = (d, x, y, w, h, tone = W) => d.px(x * P + 2, y * P + 2, w * P - 4, h
 // stands at the ground's foot.
 const MW = { cx: 19, cy: -9, r: 6 }, CRANK = 1.5, KNOB = MW.r + 2, MILL_TURN = Math.PI / 8;
 const MILL = { L: 32, R: 47, head: -21, bed: -6, bx: 40, logX0: 27, logLen: 14, body: 7 };
-const BARK = [4, 5, 4, 6], WOOD = [2, 3, 2, 3], RIP = [0, 1, 2, 3];
+const BARK = [MID, MID, PALE, MID], WOOD = [PALE, W, PALE, PALE], RIP = [0, 1, 2, 3];
 function flywheel(d, a) {
   const { cx, cy, r } = MW;
   d.px(cx * P - 3, cy * P, 6, -cy * P, K); d.r(cx - 3, -1, 6, 1, K);       // its post and foot
@@ -63,7 +63,7 @@ function flywheel(d, a) {
 function millBlade(d, x, y0, y1, o) {
   for (let y = y0; y <= y1; y++) {
     const k = RIP[(((y - o) % 4) + 4) % 4];
-    d.c(x, y, 2); d.c(x + 1, y, K);
+    d.c(x, y, PALE); d.c(x + 1, y, K);
     if (k) d.r(x - k, y, k, 1, K);
   }
 }
@@ -136,7 +136,7 @@ function chTooth(d, x, row, dir) {
 function chLog(d, x, len) {
   const y = CH.slotY * P;
   d.px(x * P - 2, y - 2, len * P + 4, 2 * P + 4, W);
-  d.px(x * P, y, len * P, 2 * P, K); d.px(x * P + 2, y + 2, P - 2, 2 * P - 4, 3);
+  d.px(x * P, y, len * P, 2 * P, K); d.px(x * P + 2, y + 2, P - 2, 2 * P - 4, PALE);
 }
 function chArm(d, p) {
   const pv = CH.pivot, k = CH.knob[p];
@@ -175,7 +175,7 @@ function chipper(d, work, t, h) {
       d.px((CH.block - 1) * P, CH.slotY * P, P, 2 * P, W);
       for (let j = 0; j < 6; j++) for (let i = 0; i < 3; i++) {
         const q = hash(i * 7 + j * 13 + cuts * 31 + idx);
-        if (q > 0.3) d.px((CH.block - 1) * P + i * 2, CH.slotY * P + j * 2, 2, 2, q > 0.75 ? K : q > 0.5 ? 7 : 5);
+        if (q > 0.3) d.px((CH.block - 1) * P + i * 2, CH.slotY * P + j * 2, 2, 2, q > 0.75 ? K : q > 0.5 ? MID : PALE);
       }
     }
   }
@@ -212,9 +212,7 @@ const CHIP_T = 4.2;
 const PADDLE_MID = 18, PADDLE_REACH = 3, SURFACE = -7, LINE_Y = -18, SHEET_TOP = -16, MOULD_REST = -6;
 const LIFT_N = MOULD_REST - SHEET_TOP, SLOT0 = 14, SLOT_W = 5, PEEL_UNDER = (SHEET_TOP + 3) * P;
 const PT = { slide: 0.1, lift: 0.09, hang: 0.35, peg: 0.25, lower: 0.05, peelUp: 0.06, unpeg: 0.25, peelDown: 0.06, land: 0.3, sway: 0.3 };
-const DRY_S = 16, WET = 6, WET_POOL = 7, STIR_T = 0.3, PADDLE_X = [15, 18, 21, 18];
-// Two greys blended by f, as one flat grey a held step at a time.
-const mixT = (x, y, f) => Math.round(x + (y - x) * Math.round(clamp01(f) * 4) / 4);
+const DRY_S = 16, WET = MID, STIR_T = 0.3, PADDLE_X = [15, 18, 21, 18];
 export const lineOf = slots => { const LAST = SLOT0 + SLOT_W * (slots - 1); return { LAST, stackX: LAST, peelX: LAST + 4, loftX: LAST + 5, postR: LAST + 9, lineX1: LAST + 10 }; };
 // The line's record: the pull and the loft hand, each on its held steps.
 let line = null;
@@ -283,10 +281,10 @@ function leanOf(q, t, dry) {
   const v = g * (0.35 + 0.65 * dry);
   return Math.abs(v) > 0.45 ? Math.sign(v) : 0;
 }
-// A sheet four cells by three, drying from the wet grey to paper, its bottom
-// row pooled a step darker and dry last; a lean kicks the bottom row a cell.
+// A sheet four cells by three, drying from the mid grey through the pale to
+// paper, its bottom row pooled and dry last; a lean kicks the bottom row a cell.
 function wetSheet(d, x, top, dry, bot = 0) {
-  const off = [0, 0, bot], w = 4 * P, fill = mixT(WET, W, dry), pool = mixT(WET_POOL, W, (dry - 0.25) / 0.75);
+  const off = [0, 0, bot], w = 4 * P, fill = toward(WET, W, dry), pool = toward(WET, W, (dry - 0.4) / 0.6);
   for (let r = 0; r < 3; r++) d.px((x + off[r]) * P, (top + r) * P, w, P, K);
   for (let r = 0; r < 3; r++) d.px((x + off[r]) * P + 2, (top + r) * P + (r === 0 ? 2 : 0), w - 4, P - (r === 0 ? 2 : 0) - (r === 2 ? 2 : 0), r === 2 ? pool : fill);
   if (bot) { const a0 = x * P + 2, b0 = (x + bot) * P + 2, Y = (top + 2) * P; d.px(Math.min(a0, b0), Y - 2, P, 2, K); d.px(Math.max(a0, b0) + w - 4 - P, Y, P, 2, K); }
@@ -305,15 +303,16 @@ function vat(d, fill) {
   d.r(11, -9, 2, 8, K); d.r(25, -9, 2, 8, K);               // walls
   d.r(12, -2, 14, 1, K);                                    // floor
   d.r(11, -1, 3, 1, K); d.r(24, -1, 3, 1, K);               // feet
-  // The pulp: thin and pale after a pull, each cell thickening on its own as the batch fills.
+  // The pulp: thin after a pull, paper flecked pale, each cell thickening on
+  // its own as the batch fills to pale flecked mid.
   for (let j = 0; j < 5; j++) for (let i = 0; i < 12; i++) {
     const hh = hash((13 + i) * 5.1 + j * 9.3), hh2 = hash((13 + i) * 2.7 + j * 4.1);
-    d.c(13 + i, SURFACE + j, mixT(hh < 0.6 ? 2 : 3, hh2 < 0.45 ? 3 : hh2 < 0.85 ? 4 : 5, (fill - hh * 0.6) / 0.4));
+    d.c(13 + i, SURFACE + j, toward(hh < 0.45 ? W : PALE, hh2 < 0.6 ? PALE : MID, (fill - hh * 0.6) / 0.4));
   }
 }
 function crest(d, x, dir) {
   const c = dir > 0 ? x + 2 : x - 3, tr = dir > 0 ? x - 3 : x + 2;
-  if (c >= 13 && c + 2 <= 25) d.r(c, SURFACE - 1, 2, 1, 3);
+  if (c >= 13 && c + 2 <= 25) d.r(c, SURFACE - 1, 2, 1, PALE);
   if (tr >= 13 && tr + 2 <= 25) d.r(tr, SURFACE, 2, 1, W);
 }
 // The pulper's lean, off what the pull is doing.
@@ -385,17 +384,17 @@ function pips(d, nails) {
     if (n === 0) d.px(x + 1, y0 + 1, pw - 2, pw - 2, W); else if (n === 1) d.px(x + 1, y0 + 1, pw - 2, 2, W);
   });
 }
-// A board edge-on: two cells deep, its rim and grey grain.
+// A board edge-on: two cells deep, its rim, pale face and mid grain.
 function wsBoard(d, x, ypx, w = BOARD.w) {
-  d.px(x * P, ypx, w * P, BOARD.h * P, K); d.px(x * P + 2, ypx + 2, w * P - 4, BOARD.h * P - 4, 3);
-  d.px(x * P + 2, ypx + 5, w * P - 4, 2, 5);
+  d.px(x * P, ypx, w * P, BOARD.h * P, K); d.px(x * P + 2, ypx + 2, w * P - 4, BOARD.h * P - 4, PALE);
+  d.px(x * P + 2, ypx + 5, w * P - 4, 2, MID);
 }
 function wsNail(d, col, ypx, n) { const sh = SHANK[n]; if (sh) d.px(col * P + 2, ypx - sh, 2, sh, K); d.px(col * P - 1, ypx - sh - 3, P + 2, 3, K); }
 const nailed = (d, x, ypx, nails) => { wsBoard(d, x, ypx); NAILS.forEach((c, i) => wsNail(d, x - BOARD.x + c, ypx, nails[i])); };
 function wsHammer(d, pose, bx, hy, by = JY * P) {
   const hand = bx * P;
   if (pose === 'up') { d.px(hand - 4, by, 4, 12, K); d.px(hand - 7, by - 6, 10, 6, K); }
-  else if (pose === 'swing') { d.px(hand - 7, by - 6, 10, 6, 2); d.px(hand - 12, by + 2, 8, 8, 4); d.px(hand - 6, by + 8, 6, 4, 4); }
+  else if (pose === 'swing') { d.px(hand - 7, by - 6, 10, 6, PALE); d.px(hand - 12, by + 2, 8, 8, PALE); d.px(hand - 6, by + 8, 6, 4, PALE); }
   else { const top = hy - 10; d.px(hand - 2 * P, top, P, 10, K); d.px(hand - P, top + 3, P, 4, K); }
 }
 // The carrier's walk with a sign, by seconds since it was joined: in from
@@ -424,8 +423,8 @@ function workshop(d, work, t, h, body = false, at = {}) {
   const nails = h ? h.nails : [0, 0, 0, 0];
   roofA(d);
   pips(d, nails);
-  d.r(9, -8, 14, 8, 1);                                       // the stand, pale and edgeless
-  for (const y of [-7, -5, -3]) d.px(9 * P + 2, y * P + 2, 14 * P - 4, 2, 2);
+  d.r(9, -8, 14, 8, W);                                       // the stand, paper and edgeless, read by its pale slats
+  for (const y of [-7, -5, -3]) d.px(9 * P + 2, y * P + 2, 14 * P - 4, 2, PALE);
   d.r(8, -4, 13, 2, K); d.r(9, -2, 2, 2, K); d.r(17, -2, 2, 2, K);   // the bench
   // The carrier, while it walks a sign out: the board where it has it.
   const joined = signsJoined(), last = joined.length ? joined[joined.length - 1] : -1e9, since = t - last;

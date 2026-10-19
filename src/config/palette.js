@@ -49,3 +49,14 @@ export const COIN_DARK = { ore: '#7d9cf0', crop: '#6fd08a', spark: '#f06a55' };
 // deep's black, as the coins are on a dark page (`COIN_DARK`); `deep` is the
 // tone as it is seen there.
 export const GOLD = { yard: '#c99406', deep: '#f2c14e' };
+
+// Act 3's four tones (the owner, 2026-10-19), as rungs of GREY: the paper,
+// one pale grey, one mid grey and the ink, and nothing between them, for the
+// whole of the afterlife -- stations, bodies, the sky's crowd, clouds, the
+// floor, piles, cues and bubbles. Depth in the crowd is which of the four a
+// band takes and how densely, never a fifth grey. God's light alone stands
+// outside them (render/aftercrowd.js, drawn raw). The two greys sit a third
+// of the way down from either end, so on the dark page, where the yard's map
+// squeezes paper to ink into a quarter of the range, each step is still a
+// clear one at 1x.
+export const AFTER_TONES = { paper: 0, pale: 3, mid: 6, ink: 10 };

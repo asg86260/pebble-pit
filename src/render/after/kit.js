@@ -9,19 +9,29 @@
 // mocks' `G - 1`. A flipped frame is turned about its own ground's width, so
 // a drawing faces the other way without a second copy of it.
 
-import { P, GREY, AFTER_PILE_FADE_S } from '../../config.js';
+import { P, GREY, AFTER_PILE_FADE_S, AFTER_TONES } from '../../config.js';
 import { S } from '../../state.js';
 import { ctx } from '../ctx.js';
 
-export const K = 10, W = 0;            // ink and paper, rungs of GREY
+// The act's four tones (config, AFTER_TONES), rungs of GREY: every cell up
+// here is one of them.
+export const { ink: K, paper: W, pale: PALE, mid: MID } = AFTER_TONES;
+export const FOUR = [W, PALE, MID, K];
 export const clamp01 = v => Math.max(0, Math.min(1, v));
+// A held step of the four from tone a to tone b, f of the way: what a thing
+// drying, thickening or fading in tone walks along instead of a grey between.
+export const toward = (a, b, f) => { const i = FOUR.indexOf(a), j = FOUR.indexOf(b); return FOUR[Math.round(i + (j - i) * clamp01(f))]; };
+// The one of the four nearest a rung of GREY, the lighter on a tie: for a
+// tone that comes from outside the act (a yard grain paid up into it).
+export const nearest = g => FOUR.reduce((a, b) => (Math.abs(b - g) < Math.abs(a - g) ? b : a));
 // A fixed number in [0, 1) for a cell or a seed: tones pick off it, so they
 // hold still frame to frame.
 export const hash = n => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
-// The materials' greys (the mocks'): sawdust, pulp, soil.
-export const DUST = [3, 4, 5, 4, 6];
-export const PULP = [3, 3, 4];
-export const SOIL = [5, 6, 7, 6];
+// The materials, a mix of the four a cell: sawdust pale flecked mid, soil
+// mid with a pale crumb (never the ink, which up here is the masses: a
+// pine, a station).
+export const DUST = [PALE, MID, PALE, PALE, MID];
+export const SOIL = [MID, MID, PALE, MID, MID, MID];
 export const toneOf = (pal, x, y, seed = 0) => pal[Math.floor(hash(x * 13.1 + y * 7.7 + seed) * pal.length)];
 export const now = () => (S.after ? S.after.t : 0);
 export const inView = (x, w) => x + w >= S.camX && x <= S.camX + S.viewW;
@@ -41,12 +51,6 @@ export function frame(ox, oy, flip = 0, sink = null) {
     },
     r(x, y, w, h, tone = K) { d.px(x * P, y * P, w * P, h * P, tone); },
     c(x, y, tone = K) { d.r(x, y, 1, 1, tone); },
-    // cell rows, '#' ink and a digit its grey
-    spr(rows, x, y) {
-      rows.forEach((row, j) => [...row].forEach((ch, i) => {
-        if (ch === '#') d.c(x + i, y + j, K); else if (ch >= '0' && ch <= '9') d.c(x + i, y + j, +ch);
-      }));
-    },
     // a line `w` px thick between two points in cells, laid on whole pixels
     line(x0, y0, x1, y1, w = 2, tone = K, centered = true) {
       const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * P), o = centered ? w / 2 : 0;

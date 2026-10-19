@@ -17,7 +17,7 @@ import { P, AFTER_FALL_S, AFTER_FALL_POSES, AFTER_CROWN_FADE_S, AFTER_BUILD_FADE
          TREE_CHOPS, AFTER_ART_WORK_S, AFTER_PILE_FADE_S } from '../../config.js';
 import { plotX, afterFloor, pineOf, inPine, PINE_GROWN, STUMP, SAW_ROWS, ICON_DOT } from '../../after/place.js';
 import { trees } from '../../after/grove.js';
-import { frame, K, W, SOIL, DUST, toneOf, now, inView, pileState, clamp01 } from './kit.js';
+import { frame, K, W, PALE, MID, SOIL, DUST, toneOf, now, inView, pileState, clamp01 } from './kit.js';
 import { logPile } from './piles.js';
 import { gestureView, groveIcons } from '../../after/gestures.js';
 import { ctx } from '../ctx.js';
@@ -85,8 +85,8 @@ function stump(d, a, dug, up = 0) {
   d.fade(a, () => {
     const [x0, w, h] = STUMP.map(v => v * P);
     up = Math.round(up / 2) * 2;
-    d.px(x0, -h - up, w, h, K); d.px(x0 + 2, -h + 2 - up, w - 4, 2, 3);
-    if (up) { d.px(x0 + 2, -up, w - 4, up, 5); d.px(x0 - 2, -2, 2, 2, 5); d.px(x0 + w, -2, 2, 2, 5); }
+    d.px(x0, -h - up, w, h, K); d.px(x0 + 2, -h + 2 - up, w - 4, 2, PALE);
+    if (up) { d.px(x0 + 2, -up, w - 4, up, MID); d.px(x0 - 2, -2, 2, 2, MID); d.px(x0 + w, -2, 2, 2, MID); }
     // a root given takes a cell off its top
     for (let k = 0; k < Math.min(dug, AFTER_DIG_CLICKS); k++) d.px((-1 + k) * P, -2 * P - up, P, P, W);
   });
@@ -102,7 +102,7 @@ function sawCells(o) {
   for (let r = -8; r <= -2; r++) for (let u = -15; u <= -11; u++) {
     const edge = r === -8 || r === -2 || u === -15 || u === -11, hole = r >= -6 && r <= -4 && u >= -14 && u <= -13;
     if (u === -15 && (r === -8 || r === -2)) continue;
-    add(u, r, hole ? W : edge ? K : 6, true);
+    add(u, r, hole ? W : edge ? K : MID, true);
   }
   for (let r = -7; r <= -3; r++) add(-14, r, K, true);
   for (let u = -14; u <= -12; u++) { add(u, -7, K, true); add(u, -3, K, true); }
@@ -110,7 +110,7 @@ function sawCells(o) {
   for (let u = -10; u <= 9; u++) {
     const top = u <= -4 ? -8 : u <= 3 ? -7 : -6;
     add(u, top, K);
-    for (let r = top + 1; r <= -5; r++) add(u, r, 2);
+    for (let r = top + 1; r <= -5; r++) add(u, r, PALE);
     for (let k = 1; k <= RIP[(u + 10) % 4]; k++) add(u, -5 + k, K);
   }
   for (let r = -6; r <= -5; r++) add(9, r, K);
