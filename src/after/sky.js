@@ -1,101 +1,141 @@
-// The afterlife's sky as a frame (docs/mocks/act3-skycrowd-2026-10-18, round
-// 2; docs/wave-act3-build.md, track B): where God's crowd stands, where God
-// sits, and how the camera's middle moves both. Read by the camera (view.js)
-// and the drawing (render/aftercrowd.js) alike, so the dive arrives on the
-// face the drawing puts there.
+// The afterlife's sky and depth as a frame (DESIGN.md, "The camps are far
+// apart for the eye, not for the walk", "God's camp stands in the clouds"):
+// where the horizon is, how deep a thing stands and where that puts it, where
+// God sits and his crowd. Read by the camera (view.js) and the drawing
+// (render/aftercrowd.js, render/after/cloudfloor.js) alike.
+//
+// The camera only slides. Depth is the one camera every far thing goes
+// through: a floor point at floor x `u` and depth `d` (the near layer, where
+// the workshops and the union's camp stand, at 1) is drawn, with the window's
+// middle at `cx`, at world x `cx + (u - cx) / d`, its foot AFTER_HORIZON / d
+// cells under the horizon, 1/d its size. So it slides 1/d as fast as the
+// camera -- the sliding camera is a perspective camera stepping sideways --
+// and a body walking back into depth shrinks and slows as it goes, at its
+// own depth's speed. The near layer is the world as the sim has it.
 //
 // The sky is laid out off the window the place has at rest -- its floor where
-// the yard's ground stands, at the yard's zoom -- so a band's top is a share
-// of the sky a player sees there, and the dive magnifies that picture rather
-// than laying it out again.
-//
-// Every layer pans at its own rate: a thing at layer x stands, with the
-// window's middle at `cx`, at world x `layerX(x, rate, cx)`, so it stands
-// where its x says when the act opens and slides `rate` as fast as the
-// camera from there. God is the exception past the opening: the dive turns
-// toward him, pulling him to the window's middle as it goes in.
+// the yard's ground stands, at the yard's zoom.
 
 import { S } from '../state.js';
-import { P, SKY_BANK, SKY_TOPS, SKY_BANDS, GOD_CELLS, GOD_FIT, GOD_UP, GOD_OPEN_AT, GOD_RATE,
-         AFTER_ZOOM_MAX, AFTER_FOCUS_AT } from '../config.js';
+import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_DEPTH, GOD_FAR, GOD_CROWD, GOD_SIGN_DEEP, AFTER_HORIZON,
+         CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW } from '../config.js';
 import { yardCell } from '../world.js';
 import { actPlace } from '../acts.js';
-import { afterFloor, afterTop, afterX0, afterX1, afterOpenX, workshopsX1, unionX1, godX0 } from './place.js';
+import { afterFloor, afterTop, afterX1, afterOpenX, unionX1, campEdges, crowdX1 } from './place.js';
 import { smoothstep } from '../motion.js';
 
-const clamp01 = v => Math.max(0, Math.min(1, v));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
 const snap = (v, q) => Math.round(v / q) * q;
 
 // The window the place has at rest, in world px, and its top.
 export const restW = () => S.W * P / yardCell();
 export const restH = () => S.H * P / yardCell();
 export const restTop = () => afterFloor() + actPlace('after').margin - restH();
-// The furthest right the window's middle goes: the last window the place has.
-export const afterEnd = () => afterX1() - restW() / 2;
 
-// The dive: none left of where the act opens, all of it at the end of the
-// pan. `pullAt` is the ease of the way there (how far God is pulled to the
-// middle, and the face to its height); the zoom is its square.
-export function panAt(cx) {
-  const a = afterOpenX(), b = afterEnd();
-  return b > a ? clamp01((cx - a) / (b - a)) : 0;
-}
-export const pullAt = cx => smoothstep(panAt(cx));
-export const zoomAt = cx => 1 + (AFTER_ZOOM_MAX - 1) * pullAt(cx) ** 2;
+// --- the depth camera ---------------------------------------------------------------
+export const horizonY = () => afterFloor() - AFTER_HORIZON * P;
+// A floor point's foot, world y, at depth d; and the depth under world y.
+export const footY = d => horizonY() + AFTER_HORIZON * P / d;
+export const depthAtY = y => AFTER_HORIZON * P / Math.max(1e-3, y - horizonY());
+// A floor point's world x with the window's middle at `cx`, and back.
+export const seenX = (u, d, cx) => cx + (u - cx) / d;
+export const floorX = (x, d, cx) => cx + (x - cx) * d;
+
+// God's throne's floor x: GOD_FAR windows past the union's camp, so his
+// layer and the union's would only meet past the window's right edge.
+export const godU = () => unionX1() + GOD_FAR * restW();
+// The furthest right the window's middle goes: God's throne in its middle,
+// or the place's own last window if that is further.
+export const afterEnd = () => Math.max(afterX1() - restW() / 2, godU());
+// The camera's right limit (acts.js, the place's `x1`).
+export const afterReach = () => afterEnd() + restW() / 2;
+// God's middle, world x, with the window's middle at `cx`.
+export const godMid = cx => seenX(godU(), GOD_DEPTH, cx);
+// God's camp slides as one at his depth's speed, his crowd and what stands in
+// it with him (the voted mock's), so it stays a band at his feet however the
+// camera stands: a point of it is drawn off his middle, its offset from his
+// floor x at its own depth's scale.
+export const campX = (u, d, cx) => godMid(cx) + (u - godU()) / d;
+// A floor point `p` ({ u, d, k }) drawn, world x: `k` of the way from the
+// near layer's camera (0) to God's camp's (1).
+export const pointX = (p, cx) => { const a = seenX(p.u, p.d, cx); return a + (campX(p.u, p.d, cx) - a) * (p.k || 0); };
+// And back: the floor x a world x stands at, at depth d, `k` into the camp.
+export const pointU = (x, d, k, cx) => {
+  const a = seenX(0, d, cx), b = campX(0, d, cx), o = a + (b - a) * k;
+  return (x - o) * d;
+};
 
 let frame = null, frameKey = '';
 export function skyFrame() {
   // The window's top at rest, or the place's own where the window shows past
-  // it: the camera is never let above the place, so the dive could not reach
-  // a sky laid out higher.
-  const top = Math.max(restTop(), afterTop()), W = restW(), key = `${top}|${W}|${afterOpenX()}`;
+  // it: the camera is never let above the place.
+  const top = Math.max(restTop(), afterTop()), W = restW(), key = `${top}|${W}`;
   if (frame && key === frameKey) return frame;
-  const floor = afterFloor(), bank = floor - SKY_BANK, sky = bank - top;
+  const floor = afterFloor(), bank = footY(GOD_DEPTH), sky = bank - top;
   const gc = GOD_CELLS.find(c => c * GOD_FIT <= sky) || GOD_CELLS[GOD_CELLS.length - 1];
-  const XR = afterOpenX();
+  // God's square's top, its crown's spikes GOD_UP of the sky down off the top.
+  const gy0 = top + snap(sky * GOD_UP + 19 * gc, gc);
   frame = {
-    floor, top, bank, sky, W, H: restH(), gc, XR,
-    tops: SKY_TOPS.map(f => top + snap(sky * f, P)),
-    // God's square's top, its crown's spikes GOD_UP of the sky down off the top.
-    gy0: top + snap(sky * GOD_UP + 19 * gc, gc),
-    // The window's middle at its furthest left and right.
-    c0: afterX0() + W / 2, c1: Math.max(afterEnd(), XR),
-    // Each plane's left edge in its own layer (`layerX` of it is where it
-    // stands) before it gives up any ground: past the union's camp, and far
-    // enough right that it is still off the window's right edge when the
-    // workshops' end comes in at it, so no plane shows over the workshops
-    // whatever its rate -- and, slower than the camera, it only draws away
-    // from them further left.
-    edge0: SKY_BANDS.map(b => Math.max(unionX1(), workshopsX1() + P * 4 + (XR - workshopsX1() + W / 2) * (1 - b.rate)))
+    floor, top, bank, sky, W, H: restH(), gc, XR: afterOpenX(), hor: horizonY(), gy0,
+    // A sky cell, world px: half a God-cell, or less where the sky is too
+    // short to hold the mock's layout under him.
+    h: Math.max(1, Math.floor(Math.min(gc / 2, (bank - gy0) / SKY_FIT) * 2) / 2)
   };
   frameKey = key;
   return frame;
 }
-
-// A layer's x in the world, with the window's middle at `cx`.
-export const layerX = (x, rate, cx) => x + (cx - skyFrame().XR) * (1 - rate);
-// God's middle, world x: GOD_OPEN_AT across the window when the act opens,
-// sliding at his rate walking toward the camp, pulled to the middle walking on.
-export function godMid(cx) {
-  const f = skyFrame(), open = f.XR + (GOD_OPEN_AT - 0.5) * f.W;
-  if (cx <= f.XR) return open + (cx - f.XR) * (1 - GOD_RATE);
-  const at = GOD_OPEN_AT + (0.5 - GOD_OPEN_AT) * pullAt(cx);
-  return cx + (at - 0.5) * f.W / zoomAt(cx);
-}
 // God's face, world y: the middle of his square.
 export const faceY = () => { const f = skyFrame(); return f.gy0 + 9 * f.gc; };
-// The window's top with the middle at `cx`, at zoom `z` (1 at rest): the
-// face carried from where it stands at rest to AFTER_FOCUS_AT down the window.
-export function topAt(cx, z) {
-  const f = skyFrame(), y = faceY();
-  const r = restTop(), at = (y - r) / f.H + (AFTER_FOCUS_AT - (y - r) / f.H) * pullAt(cx);
-  return y - at * f.H / z;
-}
 
-// A plane's left edge in its own layer with `k` of the way to the strike won:
-// its ground given up toward God's camp, never past his crowd's first file,
-// so every sign in it stands on it.
-export function bandEdge(i, k) {
-  const f = skyFrame(), a = f.edge0[i], b = Math.max(a, godX0());
-  return a + (b - a) * SKY_BANDS[i].give * smoothstep(Math.max(0, Math.min(1, k)));
+// --- God's crowd on the floor ------------------------------------------------------
+// The crowd's half-width as drawn at depth d, world px, lerped from its
+// front to its back.
+const crowdK = d => clamp((d - GOD_CROWD.front) / (GOD_CROWD.back - GOD_CROWD.front), 0, 1);
+export const crowdHalf = d => lerp(GOD_CROWD.hf, GOD_CROWD.hb, crowdK(d)) * skyFrame().h;
+// A soul of the sim's field (file `f`, rank `r`, either fractional) as a
+// floor point in God's crowd: its file across the crowd at its depth, its
+// rank from the front row back. Signs, posters and the bodies among them
+// stand there.
+export function crowdPoint(f, r) {
+  const d = lerp(GOD_CROWD.front, GOD_CROWD.back, clamp(r / GOD_SIGN_DEEP, 0, 1));
+  const a = clamp((f + 0.5) / CROWD_FILES, 0, 1) * 2 - 1;
+  return { u: godU() + a * crowdHalf(d) * d * 0.85, d, k: 1 };
+}
+// A sim body over God's yard's field, its rank read back off its height.
+const rankOf = y => {
+  const up = afterFloor() - P * 2 - y, near = CROWD_NEAR * CROWD_ROW;
+  return up < near ? Math.max(0, up / CROWD_ROW) : CROWD_NEAR + (up - near) / CROWD_FAR_ROW;
+};
+// Where a sim point is drawn in depth: the near layer as it is up to the
+// union's camp's edge on God's side; from there to God's yard the way runs
+// back into depth, a straight line on the floor to his crowd's front, handed
+// over from the near layer's camera to his camp's as it goes; over his yard,
+// its spot in the crowd. { u, d, k }: the floor point (`pointX`). The walk
+// in the yard stays the sim's; only the eye's way is long.
+export function walkPoint(x, y) {
+  const a = campEdges()[1], b = CROWD_X0 - CROWD_PITCH;
+  if (x <= a) return { u: x, d: 1, k: 0 };
+  const front = crowdPoint((x - CROWD_X0 - P) / CROWD_PITCH, 0);
+  if (x < b) {
+    const k = (x - a) / (b - a);
+    return { u: lerp(a, front.u, k), d: lerp(1, front.d, k), k };
+  }
+  if (x > crowdX1() + CROWD_PITCH) {
+    // Past the field, toward the throne's foot.
+    const k = clamp((x - crowdX1() - CROWD_PITCH) / (CROWD_PITCH * 8), 0, 1);
+    const end = crowdPoint(CROWD_FILES, rankOf(y));
+    return { u: lerp(end.u, godU(), k), d: lerp(end.d, GOD_DEPTH * 0.96, k), k: 1 };
+  }
+  return crowdPoint((x - CROWD_X0 - P) / CROWD_PITCH, rankOf(y));
+}
+// The share of the way into depth a sim x stands, 0 on the near layer: for
+// what is drawn there as the near layer draws it and what is not.
+export const deepAt = x => smoothstep(clamp((x - campEdges()[1]) / (P * 6), 0, 1));
+// Whether world point (x, y) is on God's camp as drawn with the window's
+// middle at `cx`: from his crown down to his crowd's front, across his
+// crowd. A click there is a click on his crowd (after/gestures.js).
+export function godCampAt(x, y, cx) {
+  const f = skyFrame(), hw = crowdHalf(GOD_CROWD.front);
+  return y >= f.gy0 - 12 * f.gc && y <= footY(GOD_CROWD.front) + P && Math.abs(x - godMid(cx)) <= hw;
 }

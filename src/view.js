@@ -28,7 +28,7 @@
 
 import { S } from './state.js';
 import { CELL, P, VIEW_GLIDE_S, SHAFT_HAND_FADE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN } from './config.js';
-import { clampCam, setZoom, setZoomNow, setZoomFree, yardCell } from './world.js';
+import { clampCam, setZoom, setZoomNow, yardCell } from './world.js';
 import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor } from './deep/place.js';
 import { reducedMotion } from './prefs.js';
 import { dropLift } from './cutscene.js';
@@ -36,7 +36,7 @@ import { smoothstep as ease } from './motion.js';
 import { actPlace, placeOpen, isActView } from './acts.js';
 import { portalEnd } from './portals.js';
 import { zoomHeld } from './shot.js';
-import { afterEnd, zoomAt, pullAt, topAt } from './after/sky.js';
+import { afterEnd } from './after/sky.js';
 
 // Each farther place and the nearer one it is reached from: the deep and the
 // afterlife off the yard, hell off the deep.
@@ -96,40 +96,26 @@ const zoomOf = v => (v === 'deep' ? deepZoom() : isActView(v) ? placeZoom(v) : 1
 // twice the deep's fit.
 export const restZoom = (v = S.view) => zoomOf(v);
 
-// --- the afterlife's camera (track B) ------------------------------------------------
-// Act 3's camera zooms as it pans (docs/mocks/act3-skycrowd-2026-10-18): at
-// 1x from the grove to where the act opens, then panning right it turns
-// toward God and goes in on his face (after/sky.js, `zoomAt`, `topAt`). The
-// zoom is read off where the window's middle stands, never the other way
-// about, so a pan, a resize and the zoom that follows them all agree: the
-// middle is the one fact, and the zoom and the window's left and top are
-// worked out from it. The middle is held at the last window the place has,
-// so the dive never runs past God.
+// --- the afterlife's camera ------------------------------------------------------------
+// Act 3's camera only slides (DESIGN.md, "The camps are far apart for the
+// eye"): at the place's own whole zoom all along, the window's middle held
+// at the last window the place has, God's throne in its middle
+// (after/sky.js, `afterEnd`).
 export { afterEnd };
+function frameAfter() {
+  const cx = Math.min(S.camX + S.viewW / 2, afterEnd());
+  // A cutscene's move that carries the zoom has it (the rise gliding into
+  // heaven's): the place takes it back once the move has landed.
+  const k = placeZoom('after');
+  if (!zoomHeld() && (S.zoomShow !== S.zoom || Math.abs(S.zoom - snapped(k)) > 1e-9)) setZoomNow(k);
+  S.camX = cx - S.viewW / 2;
+  clampCam();
+}
 // The zoom as `setZoom` keeps it, whole device pixels a cell, worked out
 // without setting it (for `placeCamera`).
 function snapped(k) {
   const unit = yardCell() * S.dpr;
   return yardZoom() * Math.max(1, Math.round(unit * k)) / unit;
-}
-// The afterlife framed off its window's middle, held there. The lift is
-// the dive's own: a height held by anything else is left alone at rest.
-let lifted = false;
-function frameAfter() {
-  const cx = Math.min(S.camX + S.viewW / 2, afterEnd());
-  const k = placeZoom('after') * zoomAt(cx);
-  // The dive follows the pan exactly, at any value; at the camp end, where
-  // there is no dive, the place's own whole zoom.
-  // A cutscene's move that carries the zoom has it (the rise gliding into
-  // heaven's): the place takes it back once the move has landed.
-  if (!zoomHeld()) {
-    if (pullAt(cx) > 0) setZoomFree(yardZoom() * k);
-    else if (S.zoomShow !== S.zoom || Math.abs(S.zoom - snapped(k)) > 1e-9) setZoomNow(k);
-  }
-  S.camX = cx - S.viewW / 2;
-  if (pullAt(cx) > 0) { S.camLockY = topAt(cx, S.zoomShow / yardZoom()); lifted = true; }
-  else if (lifted) { S.camLockY = null; lifted = false; }
-  clampCam();
 }
 
 // Where each half is looked at from: the floor of the deep on the bottom of
@@ -173,12 +159,11 @@ export function placeCamera(v, x = actPlace(v).open()) {
   const pl = actPlace(v);
   // The afterlife's zoom and lift off where its middle stands (`frameAfter`).
   const cx = v === 'after' ? Math.min(x, afterEnd()) : x;
-  const e = v === 'after' ? pullAt(cx) : 0;
-  const zoom = v === 'after' ? (e > 0 ? yardZoom() * placeZoom(v) * zoomAt(cx) : snapped(placeZoom(v))) : yardZoom() * placeZoom(v);
+  const zoom = v === 'after' ? snapped(placeZoom(v)) : yardZoom() * placeZoom(v);
   const viewW = S.W / zoom, viewH = S.H / zoom;
   const x0 = pl.x0();
   const camX = Math.max(x0, Math.min(cx - viewW / 2, Math.max(x0, pl.x1() - viewW)));
-  return { zoom, viewW, viewH, camX, camY: e > 0 ? topAt(cx, zoom / yardZoom()) : pl.floor() + pl.margin - viewH };
+  return { zoom, viewW, viewH, camX, camY: pl.floor() + pl.margin - viewH };
 }
 
 export function deepGlass() {

@@ -17,10 +17,6 @@ export const AFTER_BUILD_DROP_S = 0.5;     // a load set down on the pile
 export const AFTER_BUILD_LAY_S = 0.4;      // a load laid into a band
 export const AFTER_BUILD_HOLD_S = 1;       // the pile stands complete this long before the first band
 
-// A plain click this many cells up off the floor over God's crowd opens its
-// status board (track C's 'crowd'): its near rows and the mass behind them.
-export const CROWD_CLICK_ROWS = 40;
-
 // The paper mill's line (docs/mocks/act3-papermill-2026-10-18): sheets it
 // holds drying, and with its drying line (a second batch at once).
 export const AFTER_LINE_SHORT = 4;

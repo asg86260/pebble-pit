@@ -45,11 +45,12 @@ import { P, AFTER_SIGN_TIMBER, AFTER_SIGN_S, GESTURE_CUE_USES, GESTURE_CUE_FADE_
          GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S, GESTURE_JOINER_WAIT_S,
          GESTURE_BAR_DRAG, GESTURE_BAR_RATE, GESTURE_BAR_RETURN, GESTURE_BAR_PRINT, GESTURE_BAR_RESET, GESTURE_BAR_EASE,
          GESTURE_FLING_MIN, GESTURE_FLING_MAX, GESTURE_FLING_LOADS, GESTURE_FLING_WINDOW_S, GESTURE_FLING_GRAV,
-         GESTURE_FLING_LIFT, GESTURE_LOAD_FADE_S, GESTURE_PAD_PULL, GESTURE_PAD_TURN, CROWD_CLICK_ROWS } from '../config.js';
+         GESTURE_FLING_LIFT, GESTURE_LOAD_FADE_S, GESTURE_PAD_PULL, GESTURE_PAD_TURN } from '../config.js';
 import { afterlifeOn } from '../acts.js';
 import { secs } from './util.js';
 import { built } from './levels.js';
-import { stationParts, stationBox, plotX, afterFloor, overCrowd } from './place.js';
+import { stationParts, stationBox, plotX, afterFloor } from './place.js';
+import { godCampAt } from './sky.js';
 import { standing, stumped, chopTree, digStump, trees } from './grove.js';
 import { tipSawdust } from './mill.js';
 import { pairBuilding } from './build.js';
@@ -399,7 +400,7 @@ const iconAt = (x, y) => groveIcons().find(c => c.kind === 'saw' && inBox(x, y, 
 // --- what a plain click opens ----------------------------------------------------------
 // The board a world point opens on a plain click: a standing station's
 // drawing; the grove's trees, stumps and soil; the heap, the saw mill's;
-// God's crowd, its status board (track C's 'crowd').
+// God's camp as drawn, his crowd's status board (track C's 'crowd').
 function boardAt(x, y) {
   for (const key of ['mill', 'chipper', 'papermill', 'workshop', 'press', 'shack', 'pedestal']) {
     if (!built(key)) continue;
@@ -414,7 +415,7 @@ function boardAt(x, y) {
     const top = standing(p) ? stationParts('tree', i).box.y : fl - P * 6;
     if (y >= top) return 'grove';
   }
-  if (overCrowd(x) && y <= fl + P && y >= fl - P * CROWD_CLICK_ROWS) return 'crowd';
+  if (godCampAt(x, y, S.camX + S.viewW / 2)) return 'crowd';
   return null;
 }
 function askBoard(key, x, y) { asked = { key, at: T() }; openAfterBoard(key, { x, y }); }

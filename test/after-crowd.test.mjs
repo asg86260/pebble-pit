@@ -1,18 +1,19 @@
-// Act 3's sky: God's crowd filling it, God, and the camera's dive toward him
-// (render/aftercrowd.js, after/sky.js, view.js's afterlife camera;
-// docs/mocks/act3-skycrowd-2026-10-18, round 2). The drawing is asked through
+// Act 3's sky: God's camp far back on the cloud floor, his crowd standing in
+// it, and the camera that only slides (render/aftercrowd.js, after/sky.js,
+// view.js's afterlife camera; DESIGN.md, "God's camp stands in the clouds",
+// "The camps are far apart for the eye"). The drawing is asked through
 // a sheet that counts what it is told to fill: no check here can see a
 // picture, so what is checked is what a picture costs and what it is drawn
 // from. The crowd's shape is set through the act's rims (a slot set to 9 is
 // a member already gone, with no walk), the setup these checks are not about.
 import { group, ok, run, yard } from './helpers.mjs';
-import { STRIKE_SHARE, AFTER_FOCUS_AT } from '../src/config.js';
-import { afterFloor, afterOpenX, soulX } from '../src/after/place.js';
+import { STRIKE_SHARE, GOD_DEPTH } from '../src/config.js';
+import { afterFloor, afterOpenX, soulX, unionX1 } from '../src/after/place.js';
 import { stepAfter } from '../src/after/index.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawSkyCrowd, drawAfterCrowd, crowdDrawn, glareAlpha, raysLeft } from '../src/render/aftercrowd.js';
 import { afterEnd } from '../src/view.js';
-import { godMid, faceY } from '../src/after/sky.js';
+import { godMid, godU } from '../src/after/sky.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -46,7 +47,7 @@ const lookAt = x => { window.__look(x - S.viewW / 2); run(1 / 30); };
 group('a crowd of any size costs the frame the same bounded fills', async () => {
   up();
   crowd(1200);
-  lookAt(afterOpenX());
+  lookAt(godU());
   draw(); run(1);
   const small = draw();
   crowd(24000, i => (i % 7 === 0 ? 9 : i % 5 === 0 ? 2 : 0));
@@ -62,7 +63,7 @@ group('a crowd of any size costs the frame the same bounded fills', async () => 
 group('a 24,000-soul crowd steps and draws in a couple of milliseconds a frame', async () => {
   up();
   crowd(24000, i => (i % 9 === 0 ? 9 : i % 4 === 0 ? 1 : 0));
-  lookAt(afterOpenX());
+  lookAt(godU());
   run(1); draw();
   const FR = 300;
   const t0 = performance.now();
@@ -72,19 +73,18 @@ group('a 24,000-soul crowd steps and draws in a couple of milliseconds a frame',
   return [ok(ms < 2, 'the afterlife\'s step and the whole sky\'s drawing with 24000 souls stay within two milliseconds a frame', `${ms.toFixed(3)} ms`)];
 });
 
-// The bands sink as support rises, the far one first (DESIGN.md, "The sky,
-// redrawn flat") and give up ground toward God's camp, so fewer souls stand
-// in view there, and a low strip of the near band stands at the strike.
+// God's crowd empties from the front as support rises (DESIGN.md, "God's
+// camp stands in the clouds"), so fewer souls stand in view there, and a
+// thin scatter at the back stands at the strike.
 group('the crowd thins as support rises', async () => {
   up();
-  lookAt(soulX(20));
-  const at = k => { won(4000, k); run(2); draw(); draw(); const d = crowdDrawn(); return { souls: d.souls, cells: d.cells }; };
-  const steps = [0.05, 0.3, 0.6, 1].map(at);
+  lookAt(godU());
+  const at = k => { won(4000, k); run(2); draw(); draw(); return crowdDrawn().souls; };
+  const souls = [0.05, 0.3, 0.6, 1].map(at);
   window.__actsOn(null);
-  const souls = steps.map(s => s.souls), cells = steps.map(s => Math.round(s.cells));
   return [
-    ok(souls.every((v, i) => i === 0 || v <= souls[i - 1]) && souls[3] < souls[2], 'the near band\'s souls drawn fall as support rises, the near band last', souls.join(' ')),
-    ok(cells.every((v, i) => i === 0 || v < cells[i - 1]), 'and the far bands\' cells', cells.join(' ')),
+    ok(souls[0] > 100, 'a packed crowd round the throne before anyone has walked out', `${souls[0]}`),
+    ok(souls.every((v, i) => i === 0 || v < souls[i - 1]), 'the souls standing fall as support rises, from the front', souls.join(' ')),
     ok(souls[3] > 0 && souls[3] < souls[0] * 0.4, 'a thin scatter left at the strike', `${souls[3]} of ${souls[0]}`)
   ];
 });
@@ -125,32 +125,30 @@ group('the rays fade to nothing at the strike, and the glare with them', async (
   ];
 });
 
-// Panning right of where the act opens turns toward God and goes in on his
-// face; the camp end stays at the yard's zoom.
-group('the view zooms in toward God, and holds there', async () => {
+// The camera only slides (DESIGN.md, "The camps are far apart for the
+// eye"): the same zoom and the same height all along the pan, and God, a
+// third as fast as the camera, drawn in to the window's middle at its end.
+group('the view only slides, God drawn in to the middle at the end of the pan', async () => {
   const out = [];
   for (const [w, h] of [[2000, 967], [800, 600]]) {
     S.W = w; S.H = h;
     up();
-    lookAt(afterOpenX() - 200);
-    const camp = S.zoom;
-    lookAt(afterOpenX() + (afterEnd() - afterOpenX()) * 0.5);
-    const mid = S.zoom;
-    lookAt(afterEnd());
-    const end = S.zoom;
+    const seen = [afterOpenX() - 200, afterOpenX(), (afterOpenX() + afterEnd()) / 2, afterEnd()].map(x => {
+      lookAt(x);
+      return { zoom: S.zoom, y: S.camY, x: S.camX, god: godMid(S.camX + S.viewW / 2) };
+    });
     const cx = S.camX + S.viewW / 2;
-    const faceAt = (faceY() - S.camY) / S.viewH, godOff = Math.abs(godMid(cx) - cx);
     run(1);
-    const held = Math.abs(S.camX + S.viewW / 2 - cx) < 1 && S.zoom === end;
-    lookAt(afterOpenX() - 200);
-    const back = S.zoom;
+    const held = Math.abs(S.camX + S.viewW / 2 - cx) < 1;
+    // His rate: a pan moves him across the window a third as far as it
+    // moves the near layer.
+    const a = seen[1], b = seen[2], rate = -((b.god - b.x) - (a.god - a.x)) / (b.x - a.x);
     window.__actsOn(null);
     out.push(
-      ok(end > camp * 1.6, `${w}x${h}: the zoom at the far end is well past the camp's`, `${camp.toFixed(3)} -> ${mid.toFixed(3)} -> ${end.toFixed(3)}`),
-      ok(mid > camp && mid < end, `${w}x${h}: going in along the pan`),
-      ok(godOff < 2 && Math.abs(faceAt - AFTER_FOCUS_AT) < 0.03, `${w}x${h}: his face pulled to the window's middle`, `${godOff.toFixed(1)} px off, at ${faceAt.toFixed(2)}`),
-      ok(held, `${w}x${h}: it holds where it is`),
-      ok(back === camp, `${w}x${h}: and lets go coming back`, `${back}`));
+      ok(seen.every(v => v.zoom === seen[0].zoom && v.y === seen[0].y), `${w}x${h}: one zoom and one height all along the pan`, seen.map(v => v.zoom.toFixed(3)).join(' ')),
+      ok(Math.abs(rate - 1 / GOD_DEPTH) < 0.01, `${w}x${h}: God slides a third as fast as the camera`, rate.toFixed(3)),
+      ok(Math.abs(seen[3].god - cx) < 2, `${w}x${h}: and stands in the window's middle at the pan's end`, `${(seen[3].god - cx).toFixed(1)} px off`),
+      ok(held, `${w}x${h}: it holds where it is`));
   }
   return out;
 });
@@ -175,21 +173,28 @@ group("at the camp end, act 3 is framed at the yard's zoom and the yard's floor 
   return out;
 });
 
-// God in the window from where the act opens to the dive's end: at its right
-// edge over the union's camp (his camp is past it, DESIGN.md, "The level,
-// the two crowds and the flags"), drawn in to its middle along the pan.
-group('God stands in the window all along the pan toward him', async () => {
+// God in the window from where the act opens to the pan's end: at its right
+// edge past the union's camp (his camp is past it, DESIGN.md, "The level,
+// the two crowds and the flags"), drawn in to its middle along the pan; and
+// the union's camp, on the near layer, never comes up level with him: the
+// two layers would only meet past the window's right edge.
+group("God stands in the window all along the pan toward him, the union's camp always left of him", async () => {
   const out = [];
   for (const [w, h] of [[2000, 967], [800, 600]]) {
     S.W = w; S.H = h;
     up();
-    const offs = [0, 0.25, 0.5, 0.75, 1].map(k => {
+    const ks = [0, 0.25, 0.5, 0.75, 1];
+    const offs = [], left = [];
+    for (const k of ks) {
       lookAt(afterOpenX() + (afterEnd() - afterOpenX()) * k);
-      return (godMid(S.camX + S.viewW / 2) - S.camX) / S.viewW;
-    });
+      const g = godMid(S.camX + S.viewW / 2);
+      offs.push((g - S.camX) / S.viewW);
+      left.push(unionX1() < g);
+    }
     window.__actsOn(null);
-    out.push(ok(offs.every(v => v > 0.1 && v < 1) && offs.slice(1).every(v => v < 0.9), `${w}x${h}: his middle in the window, at its right edge over the union's camp and well inside past it`, offs.map(v => v.toFixed(2)).join(' ')),
-             ok(offs.every((v, i) => i === 0 || v < offs[i - 1]), `${w}x${h}: drawn in toward the middle along the pan`));
+    out.push(ok(offs.every(v => v > 0.1 && v < 1) && offs.slice(1).every(v => v < 0.9), `${w}x${h}: his middle in the window, at its right edge past the union's camp and well inside past it`, offs.map(v => v.toFixed(2)).join(' ')),
+             ok(offs.every((v, i) => i === 0 || v < offs[i - 1]), `${w}x${h}: drawn in toward the middle along the pan`),
+             ok(left.every(Boolean), `${w}x${h}: the union's camp left of him all along`));
   }
   return out;
 });
@@ -198,7 +203,7 @@ group('a reload stands the sky back as it was, and draws it the same', async () 
   up();
   crowd(24000, i => (i % 11 === 0 ? 9 : i % 6 === 0 ? 3 : 0));
   run(1);
-  lookAt(afterOpenX());
+  lookAt(godU());
   draw(); run(2); draw();
   yard.persist();
   const rims = S.after.rims, was = crowdDrawn();
@@ -208,7 +213,7 @@ group('a reload stands the sky back as it was, and draws it the same', async () 
   window.__actsOn(null);
   return [
     ok(S.after.rims.length === rims.length && S.after.rims.slice(0, 4000) === rims.slice(0, 4000), 'every soul\'s rim comes back from the save', `${S.after.rims.length} souls`),
-    ok(Math.abs(now.souls - was.souls) <= 2, 'and the near band draws the same souls', `${was.souls} -> ${now.souls}`)
+    ok(was.souls > 0 && Math.abs(now.souls - was.souls) <= 2, "and God's crowd draws the same souls", `${was.souls} -> ${now.souls}`)
   ];
 });
 

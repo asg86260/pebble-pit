@@ -24,7 +24,7 @@ import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { buildPileAt, overCrowd, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, floorAt, afterFloor, ART } from '../after/place.js';
+import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, floorAt, afterFloor, ART } from '../after/place.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel.js';
 import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
@@ -32,6 +32,9 @@ import { postsOf, bodiesOf, atStation, bodyInk } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
 import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, hash, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
+import { deepAt } from '../after/sky.js';
+import { drawCloudFloor } from './after/cloudfloor.js';
+import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf, boardPile } from './after/stations.js';
 import { heap, heapCells, logPile, plankPile, sheetPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
@@ -48,10 +51,14 @@ const fadeIn = at => (at == null ? 1 : Math.min(1, (now() - at) / AFTER_BUILD_FA
 export const crowdSpan = () => ({ f0: fileAt(S.camX - P * 4), f1: fileAt(S.camX + S.viewW + P * 4), r1: rankAtY(S.camY - P * 4) });
 
 // --- the page and the floor ------------------------------------------------------------
+// The paper, the sky's ranges of cloud at the horizon, the cloud floor in
+// depth under them, and the near layer's ground line over it.
 export function drawAfterBackdrop() {
   clearCounts();
   ctx.fillStyle = GREY[W];
   ctx.fillRect(S.camX, S.camY, S.viewW, S.viewH);
+  drawCloudSky();
+  drawCloudFloor();
   drawFloor();
   ctx.fillStyle = GREY[K];
 }
@@ -273,11 +280,13 @@ function drawMember(w) {
 export function drawAfterMembers() {
   const a = A();
   if (!a) return;
-  // Those over God's crowd are drawn through its rows (render/aftercrowd.js).
+  // Those out on the way to God's camp are drawn in depth, among his crowd
+  // (render/aftercrowd.js), crossed over from here in the way's first cells.
   // Each faded as it steps out of our crowd or walks back into it.
   for (const w of a.bodies) {
-    if (overCrowd(w.x) || !inView(w.x - P * 4, P * 8)) continue;
-    ctx.globalAlpha = bodyInk(w);
+    const deep = deepAt(w.x);
+    if (deep >= 1 || !inView(w.x - P * 4, P * 8)) continue;
+    ctx.globalAlpha = bodyInk(w) * (1 - deep);
     drawMember(w);
     ctx.globalAlpha = 1;
   }

@@ -41,6 +41,7 @@ import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt } from './after/place.js';
 import { afterEnd } from './view.js';
+import { godU } from './after/sky.js';
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE } from './config.js';
 import { FINALE_HOUSE_W } from './config.js';
 import { houseX } from './home.js';
@@ -659,7 +660,7 @@ function levelAt(share, at, won = null) {
   // The workshops standing, so their zone is seen with its stations.
   for (const k of ['mill', 'chipper', 'papermill', 'workshop', 'press']) if (!S.after.built.includes(k)) S.after.built.push(k);
   window.__fast(2);
-  const cx = () => (at === 'works' ? workshopsX1() - S.viewW * 0.3 : at === 'union' ? afterOpenX() : at === 'god' ? soulX(18) : at);
+  const cx = () => (at === 'works' ? workshopsX1() - S.viewW * 0.3 : at === 'union' ? afterOpenX() : at === 'god' ? godU() : at);
   window.__look(cx() - S.viewW / 2); window.__fast(1 / 30);
   if (won != null) {
     skyWatch();
@@ -3086,14 +3087,16 @@ export const SCENES = {
     run: () => levelAt(0.1, 'union') },
   'level-union-high': { about: 'the acts', say: "the union's camp at seven tenths of the way to the strike: God's crowd sunk and drawn back toward his camp",
     run: () => levelAt(0.7, 'union') },
-  'level-god': { about: 'the acts', say: "God's camp: his crowd in two planes, the fist flags planted in both with their auras",
+  'level-pan': { about: 'the acts', say: "half way along the pan: the union's camp gone left, God's camp far back on the cloud sliding in at a third of the speed",
+    run: () => levelAt(0.1, (afterOpenX() + godU()) / 2) },
+  'level-god': { about: 'the acts', say: "God's camp in the clouds: the throne in the cloud floor, his crowd standing in it round the base, the fist flags planted among them",
     run: () => levelAt(0.1, 'god') },
-  'level-god-high': { about: 'the acts', say: "God's camp at seven tenths of the way to the strike: the planes sunk, giving up ground",
+  'level-god-high': { about: 'the acts', say: "God's camp at seven tenths of the way to the strike: his crowd emptied from the front",
     run: () => levelAt(0.7, 'god') },
   'level-won-orbit': { about: 'the acts', say: 'a soul a sign has won, darkened to ink, half way round its turn and a half about the flag',
     run: () => levelAt(0.1, 'god', 4.5) },
   'level-won-drift': { about: 'the acts', say: "a won soul half way across from God's crowd to the union's camp",
-    run: () => levelAt(0.1, (soulX(16) + unionJoinAt().x) / 2, 17) },
+    run: () => levelAt(0.1, (godU() + unionJoinAt().x) / 2, 17) },
 
   // --- the acts' connective tissue (actbeats.js, portals.js, mansion.js) --------
   // Each off a yard past the snatch with the wizards' portal up and a crew to
