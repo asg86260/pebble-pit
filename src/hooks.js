@@ -1483,7 +1483,7 @@ HANDLES.__hellAt = (what, i) => {
 // granted, the crowd's rims set, where the pair, the trees and the stumps
 // stand.
 import { clickAfter } from './after/index.js';
-import { afterRow, buyAfter, AFTER_ROWS, afterBill, afterMaxed, cardAt } from './after/rows.js';
+import { afterRow, buyAfter, AFTER_ROWS, afterBill, afterMaxed, cardAt, openAfterBoard } from './after/rows.js';
 import { setCrowd, support as afterSupport, union as afterUnion, crowdSize } from './after/union.js';
 import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut } from './after/bodies.js';
@@ -1533,6 +1533,10 @@ HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...S.after.stock,
 HANDLES.__afterCardAt = (x, y) => cardAt(x, y);
 // The axe in hand without buying it: a scene's setup.
 HANDLES.__afterAxe = () => { if (S.after) S.after.axe = true; return !!S.after?.axe; };
+// Track C: a board opened as Track A's plain click on a station opens it
+// (after/rows.js `openAfterBoard`): `key` a card or 'crowd', `at` the world
+// point clicked.
+HANDLES.__openAfterBoard = (key, at = null) => openAfterBoard(key, at);
 // The hand's motions up there (after/gestures.js), made as input.js makes
 // them: 'down', 'move' and 'up' at a world point; where a station's parts
 // stand; each station's record; the stump's wobble.
