@@ -39,9 +39,9 @@ export const easeInOut = k => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2)
 // Each place once: its left and right, the line the window's foot rests on
 // (its floor, and the margin under it), and the top of its sky. The yard's
 // sky is the world's own top; the afterlife's is its place's top, so the
-// space between the yard and the cloud floor, which neither draws, is never
-// framed. The bands may hang over a limit -- what is seen between them may
-// not pass it.
+// space between the yard and the cloud floor, the road, is framed only by the
+// rise that rides up it (`ROAD`). The bands may hang over a limit -- what is
+// seen between them may not pass it.
 const ofAct = v => ({
   x0: () => actPlace(v).x0(), x1: () => actPlace(v).x1(),
   foot: () => actPlace(v).floor() + actPlace(v).margin, top: () => actPlace(v).top()
@@ -52,7 +52,23 @@ export const PLACE_LIMITS = {
   after: ofAct('after'),
   hell: ofAct('hell')
 };
-export const limitsOf = (place = S.view) => PLACE_LIMITS[place] || PLACE_LIMITS.yard;
+// The road up from the yard to the afterlife, framed only while the rise is
+// ridden (actbeats.js): one column from the yard's floor to heaven's, the gap
+// between them included, so the camera can climb it in one shot. Its ceiling
+// is not a sky but heaven's own resting window -- the frame the ride ends on
+// is the one the afterlife holds, so letting the road go moves nothing.
+const ROAD = {
+  x0: () => Math.max(PLACE_LIMITS.yard.x0(), PLACE_LIMITS.after.x0()),
+  x1: () => Math.min(PLACE_LIMITS.yard.x1(), PLACE_LIMITS.after.x1()),
+  foot: () => PLACE_LIMITS.yard.foot(),
+  top: () => PLACE_LIMITS.after.top(),
+  lo: h => PLACE_LIMITS.after.foot() - h
+};
+let riding = false;
+export const rideRoad = on => { riding = !!on; };
+export const ridingRoad = () => riding;
+export const limitsOf = (place = S.view) =>
+  (riding && (place === 'yard' || place === 'after') ? ROAD : PLACE_LIMITS[place] || PLACE_LIMITS.yard);
 
 // How many cells deep each band stands at full: a share of the window's
 // height, in whole cells of the window's grid; and in the world's pixels at
@@ -70,7 +86,7 @@ export function clampX(x, w = S.viewW, place = S.view) {
 // keeps its floor.
 export function clampY(y, h = S.viewH, band = 0, place = S.view) {
   const L = limitsOf(place);
-  const hi = L.foot() - h + band, lo = L.top() - band;
+  const hi = L.foot() - h + band, lo = L.lo ? L.lo(h, band) : L.top() - band;
   return lo > hi ? hi : Math.max(lo, Math.min(hi, y));
 }
 // Where the window's top rests when nothing lifts it: a height the place's
@@ -143,8 +159,12 @@ export const zoomHeld = () => !!aim && aim.zTo != null;
 // share of the place's own, glided on the same curve and the same clock as
 // the pan; `middle`, the box centered between the bands rather than let in
 // by the least move; `s`, the fewest seconds the move may take, for a scene
-// whose story wants a slower pull than the distance does; and `key`, which
-// starts a new move when it changes.
+// whose story wants a slower pull than the distance does; `zs`, for a follow,
+// the seconds the zoom takes on its own clock while the frame keeps with the
+// box (the rise, whose zoom goes from the yard's to heaven's over the whole
+// ride, not over the glide that starts it); and `key`, which starts a new
+// move when it changes. A move is under way until its pan and its zoom have
+// both landed.
 export function stepAim(t, box, move = 'glide', how = {}) {
   if (!aim || (how.key !== undefined && aim.key !== how.key)) newAim(how.key);
   lastBox = box;
@@ -153,6 +173,7 @@ export function stepAim(t, box, move = 'glide', how = {}) {
     aim.from = { x: S.camX + S.viewW / 2, y: S.camY + S.viewH / 2, w: S.viewW };
     aim.zFrom = S.zoomShow || S.zoom || 1;
     aim.zTo = how.zoom != null ? zoomOn(restZoom() * how.zoom) : null;
+    aim.zs = how.zs > 0 ? how.zs * 1000 : null;
     aim.middle = !!how.middle;
     const end = fitBox(box, aim.zTo ?? aim.zFrom, aim.middle);
     // Its top speed, halfway along an ease in and out, is twice the average,
@@ -167,20 +188,29 @@ export function stepAim(t, box, move = 'glide', how = {}) {
     // is not gone to but kept with from here: a glide's ease out of rest
     // would let a walker it was already on walk off the edge of it.
     const zoomed = aim.zTo != null && Math.abs(aim.zTo - aim.zFrom) > 1e-9;
-    if (move === 'follow' && !zoomed && inWindow(box)) aim.ms = 0;
+    if (move === 'follow' && (!zoomed || aim.zs) && inWindow(box)) aim.ms = 0;
     aim.done = false;
     aim.pos = null;
   }
   const k = reducedMotion() || !aim.ms ? 1 : Math.min(1, (t - aim.at) / aim.ms);
   const e = easeInOut(k);
+  // The zoom on its own clock, when it has one, else the pan's.
+  const kz = aim.zs == null ? k : reducedMotion() ? 1 : Math.min(1, (t - aim.at) / aim.zs);
   // The zoom first, so the window is its size for this frame: the window's
   // width is what moves evenly, so its corners ride the same curve as its
   // middle.
   if (aim.zTo != null) {
-    const z = k >= 1 ? aim.zTo : 1 / (1 / aim.zFrom + (1 / aim.zTo - 1 / aim.zFrom) * e);
+    const z = kz >= 1 ? aim.zTo : 1 / (1 / aim.zFrom + (1 / aim.zTo - 1 / aim.zFrom) * easeInOut(kz));
     if (Math.abs(z - S.zoomShow) > 1e-9) setZoomFree(z);
   }
-  const want = fitBox(box, aim.zTo ?? S.zoomShow, aim.middle);
+  // A zoom on its own clock is fitted at the size it has now, so the box is
+  // kept between the bands all the way and not only where the zoom ends.
+  const want = fitBox(box, aim.zs == null ? aim.zTo ?? S.zoomShow : S.zoomShow, aim.middle);
+  // A follow that is to come to rest on a window of its own as its box lands
+  // (the rise, onto the afterlife's resting frame as they stand on its
+  // floor): the window's top eased from the box's frame to that one by
+  // `toward.k`, asked afresh every frame.
+  if (how.toward) want.y += (how.toward.y - want.y) * Math.max(0, Math.min(1, how.toward.k));
   const to = { x: want.x + want.w / 2, y: want.y + want.h / 2 };
   let at;
   if (k < 1) {
@@ -190,8 +220,9 @@ export function stepAim(t, box, move = 'glide', how = {}) {
   } else {
     at = to;
   }
-  aim.landing = k >= 1 && !aim.done;
-  if (k >= 1) aim.done = true;
+  const landed = k >= 1 && kz >= 1;
+  aim.landing = landed && !aim.done;
+  if (landed) aim.done = true;
   aim.last = to;
   return { x: at.x - S.viewW / 2, y: at.y - S.viewH / 2 };
 }

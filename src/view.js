@@ -36,6 +36,7 @@ import { dropLift } from './cutscene.js';
 import { smoothstep as ease } from './motion.js';
 import { actPlace, placeOpen, isActView } from './acts.js';
 import { portalEnd } from './portals.js';
+import { zoomHeld } from './shot.js';
 
 // Each farther place and the nearer one it is reached from: the deep and the
 // afterlife off the yard, hell off the deep.
@@ -143,8 +144,12 @@ function frameAfter() {
   const k = placeZoom('after') * (1 + (AFTER_ZOOM_MAX - 1) * e);
   // The dive follows the pan exactly, at any value; at the camp end, where
   // there is no dive, the place's own whole zoom.
-  if (e > 0) setZoomFree(k);
-  else if (S.zoomShow !== S.zoom) setZoomNow(placeZoom('after'));
+  // A cutscene's move that carries the zoom has it (the rise gliding into
+  // heaven's): the place takes it back once the move has landed.
+  if (!zoomHeld()) {
+    if (e > 0) setZoomFree(k);
+    else if (S.zoomShow !== S.zoom) setZoomNow(placeZoom('after'));
+  }
   S.camX = cx - S.viewW / 2;
   if (e > 0) { S.camLockY = afterTopAt(e, S.viewH, cx); lifted = true; }
   else if (lifted) { S.camLockY = null; lifted = false; }
@@ -233,10 +238,17 @@ export const canGoDown = () => !!S.portalOpen;
 // real dust, so while the deep is on screen the yard's sky goes on being laid
 // out against the window the yard was left in. A yard reloaded in the deep
 // has no such window, and is given the one it opens on at the portal.
-let yardCam = null;
+// The rise that rides up the road (actbeats.js) holds the yard's sky where
+// the yard was left too, while the camera is still in the yard: the yard's
+// clouds drop away below with its ground rather than ride up the glass.
+let yardCam = null, skyHeld = false;
 const keepYard = () => { yardCam = { x: S.camX, y: S.camY, w: S.viewW, h: S.viewH }; };
+export function holdSky(on) {
+  if (on && !skyHeld && S.view === 'yard') keepYard();
+  skyHeld = !!on;
+}
 export function skyCam() {
-  if (S.view === 'yard') return { x: S.camX, y: S.camY, w: S.viewW, h: S.viewH };
+  if (S.view === 'yard' && !(skyHeld && yardCam)) return { x: S.camX, y: S.camY, w: S.viewW, h: S.viewH };
   if (yardCam) return yardCam;
   const z = yardZoom(), w = S.W / z, h = S.H / z;
   return { x: Math.max(0, portalX() - w / 2), y: S.worldH - h, w, h };
@@ -315,6 +327,17 @@ export const travel = (v, key, x = null) => start(v, key, x);
 // The last arrival by an act portal, read once: the place and the portal.
 let arrivedVia = null;
 export function arrivedThrough() { const was = arrivedVia; arrivedVia = null; return was; }
+
+// Over into the place next to this one with the camera left exactly where it
+// is: the rise riding up the road out of the yard into the afterlife, where
+// the window has climbed out of one place and into the other by itself, so
+// there is no ripple to hide anything and nothing to frame afresh. The
+// yard's window is kept on the way out, as a ripple keeps it.
+export function crossTo(v) {
+  if (S.view === v || gliding()) return;
+  if (S.view === 'yard' && !skyHeld) keepYard();
+  S.view = v;
+}
 
 // Straight there, for scenes and checks (`__view`). An act's place only with
 // its act on; anything else is the yard.
