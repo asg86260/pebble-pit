@@ -1,61 +1,55 @@
-// Act 3's two crowds and God, drawn (the round 3 crowd mock, the main
-// option, docs/mocks/act3-crowd-2026-10-18; the owner, 2026-10-18: "lets
-// build it. we can refine later"). God and the throne are placeholders.
+// Act 3's sky, drawn: God's crowd filling it, God on his tower throne, the
+// sermon and the tithe line (docs/mocks/act3-skycrowd-2026-10-18, round 2,
+// the owner's vote, with horns and a harder scowl added after it;
+// docs/wave-act3-build.md, track B). Every place is after/sky.js's.
 //
-// God's crowd stands right of the camp. Its front is the sim's first rank,
-// bodies on the floor; behind them nine near rows of souls shrinking with
-// distance, each its own parallax layer; and behind those the mass, three
-// flat bands of grey cells, palest furthest, that stand for every soul too
-// far back to be one. Every soul in the near rows is a slot of the sim
-// (after/union.js): it inks a piece at a time, and a member walks out of it.
-// The rows close up behind a member gone, a soul stepping forward out of the
-// file into the hole, so a file's depth is the souls still standing in it:
-// the mass thins from the back as the union wins, unevenly, in dips where
-// the signs have worked. The mass's ink clumps are the inked rims of the
-// souls it stands for and the share walked out.
+// The crowd is seven parallax bands from the window's top down to a cloud
+// bank over the floor: six far bands of grey cells, palest furthest, and a
+// near band of souls with ink rims and eyes on God. It thins soul by soul as
+// support rises -- each soul and far cell has its own threshold, the back
+// rows first -- and each band sinks as it empties, so the top of the sky
+// clears first and God is left alone by the strike. A member walking out is
+// a near soul in view inking its rim and fading.
 //
-// Our crowd, the members who have walked out, stands behind the camp on the
-// left, in the same rows and bands, filling front to back from the end
-// nearest God's yard (`drawCampCrowd`). Support reads as the two masses'
-// balance: a sea and a handful at the start, the other way about at the
-// strike. God's glare dims as support rises, gone at the strike's share.
+// Its life is the sea (one long wave through every band, held steps) and the
+// rings: a rally off a sign or a poster, the throne's roar and grumble, each
+// running out through every band, its width and jump by the band's rate.
+// Those are the drawing's own, read off the act's clock, so nothing of them
+// is saved and a reload stands them where they were.
 //
-// Every layer pans at its own rate about the window's middle: a thing at
-// front-row x stands at `cx + (x - cx) * rate`, `cx` the window's middle,
-// so the rows draw in toward it with distance. God stands far off on the
-// slowest layer, at the end of the pan (view.js, `afterEnd`), so the dive
-// arrives on the top of the throne.
+// God is a light source on either page: he, his glare, halo, rays and gaze
+// are drawn in raw tones (src/ink.js), and only the stone -- the throne's
+// back and the tower -- takes the page's map. His rays shorten and fade as
+// support rises, gone at the strike.
 //
-// The frame's cost: the near rows are a few hundred souls, the files in
-// view of each; the bands and God are bitmaps, each band's taken again only
-// once a step (CROWD_MASS_STEP_S) and crossfaded into the last, so a crowd
-// of any size costs the frame the same few blits. Nothing here is saved:
-// every fact drawn is the sim's, and the easing between them is the
-// drawing's own.
+// The frame's cost: each far band is a canvas a texel a cell, its cells'
+// opacities written again only when its share of support moves
+// (SKY_REDRAW_STEP), drawn as a few column slices a frame; God, his stone,
+// the halo, the cloud bank and every standing sign are bitmaps taken once a
+// zoom (God once a pose). What is drawn live is the near band's souls, the
+// tithe line, the gaze and the bubbles.
 
 import { S } from '../state.js';
-import { P, GREY, CROWD_FILES, CROWD_PITCH, CROWD_X0, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW, RIM_PIECES,
-         STRIKE_SHARE, CROWD_FRONT_BODY, CROWD_NEAR_SIZES, CROWD_NEAR_RANKS, CROWD_NEAR_RATE, CROWD_NEAR_LIFT,
-         CROWD_RIM, CROWD_RIM_FROM, CROWD_PIECES_FROM, CROWD_NEAR_TONES, CROWD_FRONT_TONES, CROWD_INK_FADE,
-         CROWD_STEP_UP, CROWD_BANDS, CROWD_MASS_ALT, CROWD_MASS_ALT_GRAIN, CROWD_MASS_HEADS, CROWD_MASS_TAPER, CROWD_MASS_STEP_S,
-         CROWD_MASS_READ_S, CROWD_INK_LOCAL, CROWD_INK_WON, CROWD_CLUMP, CROWD_CLUMP_K, CROWD_CLUMP_R, CROWD_CLUMP_TALL, CROWD_CLUMP_LEAST,
-         GOD_RATE, GOD_FAR, GOD_FAR_ALPHA, GOD_HORIZON_UP, GOD_THRONE, GOD_SEAT, GOD_FACE, GOD_CROWN, GOD_HAZE_TONE, GOD_GLARE,
-         GOD_LEDGES, GOD_FLIGHTS, GOD_TITHE_PATH, GOD_CARRIERS, GOD_CARRIER_LAP_S,
-         AFTER_BURN_S, AFTER_POSTER_FADE_S } from '../config.js';
+import { P, GREY, STRIKE_SHARE, CROWD_X0, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, AFTER_SPEECH_WARN_S,
+         SKY_BANDS, SKY_NEAR, SKY_BANK_RATE, SKY_SIGN_RATE, SKY_CLOUDS_AFTER, SKY_CLOUD_DRIFT, SKY_EDGE,
+         SKY_THIN, SKY_KEEP_SOFT, SKY_SINK, SKY_SUPPORT_EASE, SKY_REDRAW_STEP, SKY_JOIN,
+         SKY_SEA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT, SKY_RING_STEP,
+         GOD_RATE, GOD_GLARE_R, GOD_HALO_R, GOD_SPOKES, GOD_IDLE, GOD_GAZE_HOLD_S,
+         AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_SIGN, SKY_POSTER,
+         TITHE_CARRIERS, TITHE_LAP, TITHE_GLARE_R, SKY_DRIFT } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
-import { afterFloor, slotX, overCrowd } from '../after/place.js';
-import { drawFloorLip } from './after/floor.js';
-import { souls, support, OUT_RIM } from '../after/union.js';
-import { afterEnd, afterPan, godScaleAt } from '../view.js';
+import { raw, inkOf } from '../ink.js';
+import { afterFloor, afterX0, slotX, soulX, overCrowd, crowdX1, stationBox } from '../after/place.js';
+import { support, union, speechTarget } from '../after/union.js';
+import { skyFrame, layerX, godMid, pullAt, restW } from '../after/sky.js';
 import { smoothstep } from '../motion.js';
 
-const F = CROWD_FILES;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, k) => a + (b - a) * k;
+const frac = v => v - Math.floor(v);
+const snap = (v, q) => Math.round(v / q) * q;
 const now = () => (S.after ? S.after.t : 0);
-// A fixed hash and a smooth noise on it: every tone and edge holds still
-// frame to frame, and what drifts, drifts through the noise.
 function hsh(a, b = 0, c = 0) {
   let h = (a * 374761393 + b * 668265263 + c * 2246822519) | 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16;
@@ -63,660 +57,850 @@ function hsh(a, b = 0, c = 0) {
 }
 function vnoise(x, y, seed) {
   const xi = Math.floor(x), yi = Math.floor(y), xf = smoothstep(x - xi), yf = smoothstep(y - yi);
-  const a = hsh(xi, yi, seed), b = hsh(xi + 1, yi, seed), c = hsh(xi, yi + 1, seed), d = hsh(xi + 1, yi + 1, seed);
-  return lerp(lerp(a, b, xf), lerp(c, d, xf), yf);
+  return lerp(lerp(hsh(xi, yi, seed), hsh(xi + 1, yi, seed), xf), lerp(hsh(xi, yi + 1, seed), hsh(xi + 1, yi + 1, seed), xf), yf);
 }
 
 // --- the frame's camera ---------------------------------------------------------------
-// The device pixels a world pixel takes, and the window's middle, read once
-// a frame. A rect's two edges are each put on a whole device pixel, so a
-// 2 px stroke stays whole at any zoom (render/frame.js, `fillOnPixels`).
-let K = 1, CX = 0;
-const camFrame = () => { K = S.zoom * S.dpr; CX = S.camX + S.viewW / 2; };
-const at = (x, rate) => CX + (x - CX) * rate;
+// The device pixels a world pixel takes, the window's middle, the zoom over
+// the rest frame, and the sky's frame, read once a frame. A rect's edges are
+// each put on a whole device pixel, so a stroke stays whole at any zoom.
+let K = 1, CX = 0, Z = 1, F = null;
+function camFrame() {
+  K = S.zoom * S.dpr; CX = S.camX + S.viewW / 2; F = skyFrame();
+  Z = restW() / Math.max(1, S.viewW);
+}
+const onPx = v => Math.round(v * K) / K;
 function rect(x, y, w, h, tone) {
   if (tone != null) ctx.fillStyle = GREY[tone];
   const x0 = Math.round(x * K), y0 = Math.round(y * K);
   const ww = Math.round((x + w) * K) - x0, hh = Math.round((y + h) * K) - y0;
   if (ww > 0 && hh > 0) ctx.fillRect(x0 / K, y0 / K, ww / K, hh / K);
 }
-const onPx = v => Math.round(v * K) / K;
-
-// --- the rows' shape ---------------------------------------------------------------------
-// A visual rank is a soul's place in its file counted from the front, the
-// holes closed up: 0 the front row, then the near rows, each one rank or
-// two (the second half a file over). NEAR is how many there are; past it a
-// soul is the mass's.
-const ROWS = (() => {
-  const rows = [{ s: CROWD_FRONT_BODY, rate: 1, foot: 0 }];
-  let foot = CROWD_FRONT_BODY + CROWD_NEAR_LIFT;
-  CROWD_NEAR_SIZES.forEach((s, k) => {
-    rows.push({ s, rate: lerp(CROWD_NEAR_RATE[0], CROWD_NEAR_RATE[1], k / (CROWD_NEAR_SIZES.length - 1)), foot });
-    foot += s + Math.max(1, Math.round(s * 0.25));
-  });
-  return rows;
-})();
-// Each visual rank's row, and how far across it stands off its file.
-const VIS = [{ row: 0, off: 0 }];
-CROWD_NEAR_RANKS.forEach((n, k) => { for (let j = 0; j < n; j++) VIS.push({ row: k + 1, off: j * CROWD_PITCH / 2 }); });
-export const NEAR = VIS.length;
-// Every band's foot, px off the floor: the top of the back near row, so the
-// bands stand on the rows and no soul is drawn over a band.
-const BAND_FOOT = (() => { const r = ROWS[ROWS.length - 1]; return r.foot + r.s; })();
-// A visual depth's layout, any depth: rate, size, foot (px up off the
-// floor) and offset across, eased between ranks so a soul stepping forward
-// or a body walking through the rows moves smoothly. Past the near rows, the
-// mass's bands, a body the size of a band's cell.
-function layout(d, bandL) {
-  if (d < NEAR - 1) {
-    const v = Math.max(0, Math.floor(d)), u = Math.max(0, d - v);
-    const a = ROWS[VIS[v].row], b = ROWS[VIS[v + 1].row];
-    return { rate: lerp(a.rate, b.rate, u), s: lerp(a.s, b.s, u), foot: lerp(a.foot, b.foot, u),
-             off: lerp(VIS[v].off, VIS[v + 1].off, u) };
-  }
-  const last = ROWS[VIS[NEAR - 1].row];
-  const m = (d - (NEAR - 1)) / Math.max(1, bandL);
-  if (m <= 1) {
-    const bd = CROWD_BANDS[0];
-    return { rate: lerp(last.rate, bd.rate, m), s: lerp(last.s, bd.cell, m), foot: lerp(last.foot, BAND_FOOT + bd.rows * bd.cell * 0.5, m), off: 0 };
-  }
-  const b = Math.min(CROWD_BANDS.length - 1, Math.floor(m - 1)), bd = CROWD_BANDS[b];
-  const u = clamp(m - 1 - b, 0, 1);
-  return { rate: bd.rate, s: bd.cell, foot: BAND_FOOT + bd.rows * bd.cell * u, off: 0 };
+// A light: the same tone on either page.
+function lit(x, y, w, h, tone) { ctx.fillStyle = raw(GREY[tone]); rect(x, y, w, h); }
+function alpha(a, fn) {
+  if (a <= 0.001) return;
+  const was = ctx.globalAlpha;
+  ctx.globalAlpha = was * Math.min(1, a);
+  fn();
+  ctx.globalAlpha = was;
 }
-// A soul's file middle at the front row's scale.
-const fileMid = f => CROWD_X0 + f * CROWD_PITCH + CROWD_FRONT_BODY / 2;
-
-// --- what the crowd is, read off the sim --------------------------------------------------
-// The near souls by file and visual rank (refreshed whenever the rims
-// change, a short walk down each file), and, throttled, every file's
-// standing souls band by band and its prefix counts (for where a body
-// standing in the crowd is drawn).
-const read = {
-  after: null, str: null, n: 0, near: new Int32Array(F * NEAR).fill(-1),
-  t: -1e9, bandStr: null, ranks: 0, bandL: 1,
-  present: CROWD_BANDS.map(() => new Float32Array(F)), ink: CROWD_BANDS.map(() => new Float32Array(F)),
-  prefix: new Uint16Array(0),
-  shownVis: new Float32Array(0), shownInk: new Float32Array(0), primed: false, lastT: 0
-};
-function readNear(a) {
-  const n = a.length, near = read.near;
-  near.fill(-1);
-  for (let f = 0; f < F; f++) {
-    let v = 0;
-    for (let i = f; i < n && v < NEAR; i += F) if (a[i] !== OUT_RIM) near[f * NEAR + v++] = i;
-  }
+const inView = (x, w) => x + w >= S.camX && x <= S.camX + S.viewW;
+function canvas(w, h) {
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h));
+  return c;
 }
-function readBands(a) {
-  const n = a.length, R = Math.ceil(n / F);
-  read.ranks = R;
-  read.bandL = Math.max(1, Math.ceil((R - NEAR) / CROWD_BANDS.length));
-  if (read.prefix.length !== F * (R + 1)) read.prefix = new Uint16Array(F * (R + 1));
-  for (const p of read.present) p.fill(0);
-  for (const k of read.ink) k.fill(0);
-  for (let f = 0; f < F; f++) {
-    let v = 0;
-    const base = f * (R + 1);
-    for (let r = 0; r < R; r++) {
-      read.prefix[base + r] = v;
-      const i = r * F + f;
-      if (i >= n || a[i] === OUT_RIM) continue;
-      if (v >= NEAR) {
-        const b = Math.min(CROWD_BANDS.length - 1, Math.floor((v - NEAR) / read.bandL));
-        read.present[b][f]++;
-        read.ink[b][f] += a[i];
-      }
-      v++;
-    }
-    read.prefix[base + R] = v;
-  }
-  read.bandStr = S.after.rims;
-}
-function readCrowd() {
-  const A = S.after, a = souls();
-  if (read.after !== A || read.n > a.length) {
-    read.after = A; read.primed = false; read.bandStr = null; read.str = null; read.t = -1e9;
-    read.shownVis.fill(NaN); read.shownInk.fill(NaN);
-  }
-  if (read.shownVis.length < a.length) {
-    const grow = (old, fill) => { const b = new Float32Array(Math.max(a.length, old.length * 2)).fill(fill); b.set(old); return b; };
-    read.shownVis = grow(read.shownVis, NaN); read.shownInk = grow(read.shownInk, NaN);
-  }
-  read.n = a.length;
-  if (A.rims !== read.str) { readNear(a); read.str = A.rims; }
-  if (read.bandStr !== A.rims && now() - read.t >= CROWD_MASS_READ_S) { readBands(a); read.t = now(); }
-  return a;
-}
-// God's glare: full at the start, dimming as support rises, gone at the
-// strike's share.
-export const glareAlpha = () => clamp(1 - support() / STRIKE_SHARE, 0, 1);
-
-// The visual depth of a sim point standing in God's crowd: its rank off its
-// height (place.js, `soulY`, inverted), the holes in front of it in its file
-// closed up. A body on the floor is at 0.
-function depthAt(x, y) {
-  const d = afterFloor() - y;
-  if (d <= 0) return 0;
-  const nearH = CROWD_NEAR * CROWD_ROW;
-  const rho = d < nearH ? d / CROWD_ROW : CROWD_NEAR + (d - nearH) / CROWD_FAR_ROW;
-  const R = read.ranks;
-  if (!R || !read.prefix.length) return rho;
-  const ff = clamp((x - CROWD_X0 - CROWD_FRONT_BODY / 2) / CROWD_PITCH, 0, F - 1);
-  const vis = f => {
-    const r = Math.min(R - 1, Math.floor(rho)), u = Math.min(1, rho - r), p = read.prefix, b = f * (R + 1);
-    return p[b + r] + u * (p[b + r + 1] - p[b + r]);
+// A bitmap painted in world px about its own top left at the frame's device
+// scale; `paint(r, lit)` fills mapped and raw rects.
+function sprite(w, h, paint) {
+  const c = canvas(w * K + 1, h * K + 1), g = c.getContext('2d');
+  c.w = w; c.h = h;
+  if (!g) return c;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  const fill = (x, y, ww, hh) => {
+    const x0 = Math.round(x * K), y0 = Math.round(y * K);
+    const a = Math.round((x + ww) * K) - x0, b = Math.round((y + hh) * K) - y0;
+    if (a > 0 && b > 0) g.fillRect(x0, y0, a, b);
   };
-  const f0 = Math.floor(ff), f1 = Math.min(F - 1, f0 + 1);
-  return lerp(vis(f0), vis(f1), ff - f0);
+  paint((x, y, ww, hh, tone) => { g.fillStyle = GREY[tone]; fill(x, y, ww, hh); },
+        (x, y, ww, hh, tone) => { g.fillStyle = raw(GREY[tone]); fill(x, y, ww, hh); });
+  return c;
 }
-// Where a sim point standing in the crowd is drawn, and how big a body is
-// there (1 at the front row), for anything drawn over the crowd: the
-// members walking out, the carriers going in, the wardens.
+const blit = (pic, x, y) => ctx.drawImage(pic, onPx(x), onPx(y), pic.width / K, pic.height / K);
+
+// --- support, read off the sim ---------------------------------------------------------------
+// The share of the way to the strike won (1 at STRIKE_SHARE), eased so a
+// band empties smoothly; snapped on a new act or a reload.
+const shown = { after: null, s: 0, lastT: null, members: 0, joins: new Map(), tithe: 0 };
+const share = () => clamp(support() / STRIKE_SHARE, 0, 1);
+export const skyShare = () => shown.s;
+function stepShown() {
+  const A = S.after, t = now();
+  if (shown.after !== A) {
+    shown.after = A; shown.s = share(); shown.lastT = t; shown.members = union(); shown.joins.clear(); shown.tithe = 0;
+  }
+  const gap = t - shown.lastT, dt = clamp(gap, 0, 0.25);
+  shown.lastT = t;
+  const want = share();
+  // Time passed undrawn (the camera elsewhere, a jump of the clock): caught up.
+  if (gap > 1) shown.s = want;
+  shown.s += clamp(want - shown.s, -dt * SKY_SUPPORT_EASE, dt * SKY_SUPPORT_EASE);
+  return dt;
+}
+// God's glare: full at the start, dimming as support rises, gone at the strike.
+export const glareAlpha = () => clamp(1 - support() / STRIKE_SHARE, 0, 1);
+// His rays: shorter and fainter as support rises, none at the strike.
+export const raysLeft = () => 1 - shown.s;
+
+// A band's share emptied: band k starts at SKY_THIN.from + step a band.
+function bandL(k) {
+  const L = clamp((shown.s - SKY_THIN.from - k * SKY_THIN.step) / SKY_THIN.span, 0, 1);
+  return k === SKY_BANDS.length ? Math.min(SKY_THIN.nearCap, L) : L;
+}
+const thrOf = (h, u) => 0.75 * h + 0.25 * u;
+const keep = (thr, L) => clamp((thr + SKY_KEEP_SOFT - L * (1 + SKY_KEEP_SOFT)) / SKY_KEEP_SOFT, 0, 1);
+const sinkOf = (k, L) => L * SKY_SINK * (F.bank - F.tops[k]);
+const sea = (xl, k) => Math.round(Math.sin(xl / SKY_SEA.len - now() * SKY_SEA.hz + k * SKY_SEA.lag) * SKY_SEA.amp);
+
+// --- the rings: rallies, roars, grumbles ---------------------------------------------------------
+// Each a fact of the clock: the n-th of each falls at a time read off n, so
+// a ring running is the same ring after a reload. None while the speech is
+// warned: the sky holds its breath.
+const rallyAt = n => n * 7.5 + (SKY_RALLY.every[1] - SKY_RALLY.every[0]) * (hsh(n, 9) - 0.5);
+const roarAt = n => n * SKY_ROAR.every + 2.5;
+const GRUMBLE_MID = (SKY_GRUMBLE.every[0] + SKY_GRUMBLE.every[1]) / 2;
+const grumbleAt = n => n * GRUMBLE_MID + (SKY_GRUMBLE.every[1] - SKY_GRUMBLE.every[0]) * 0.5 * (hsh(n, 8) - 0.5);
+const quiet = at => {
+  const sp = S.after?.speech;
+  return !!sp && !!sp.target && at >= sp.next - AFTER_SPEECH_WARN_S && at < sp.next;
+};
+// What stands for a rally to start at: the signs and posters not burning, by id.
+const standingThings = () => [...S.after.signs.filter(q => q.burnt == null).map(q => ({ kind: 'sign', q })),
+                              ...S.after.posters.filter(q => q.burnt == null && q.torn == null).map(q => ({ kind: 'poster', q }))]
+  .sort((a, b) => a.q.id - b.q.id);
+function eventsNow() {
+  const t = now(), out = { rallies: [], roars: [] };
+  const things = standingThings();
+  if (things.length) for (let n = Math.floor((t - SKY_RALLY.life) / 7.5) - 1; n <= Math.floor(t / 7.5) + 1; n++) {
+    const at = rallyAt(n);
+    if (at > t || t - at >= SKY_RALLY.life || at < 0 || quiet(at)) continue;
+    out.rallies.push({ at, thing: things[Math.floor(hsh(n, 5) * things.length)] });
+  }
+  for (let n = Math.max(0, Math.floor((t - SKY_ROAR.life) / SKY_ROAR.every) - 1); roarAt(n) <= t; n++) {
+    const at = roarAt(n);
+    if (t - at < SKY_ROAR.life && !quiet(at)) out.roars.push({ at, kind: 'roar', g: ROARS[Math.floor(hsh(n, 2) * 4)] });
+  }
+  for (let n = Math.max(0, Math.floor((t - SKY_ROAR.life) / GRUMBLE_MID) - 1); grumbleAt(n) <= t; n++) {
+    const at = grumbleAt(n);
+    if (at >= 0 && t - at < SKY_GRUMBLE.bubble + 2 && !quiet(at)) out.roars.push({ at, kind: 'grumble', g: GRUMBLES[Math.floor(hsh(n, 4) * 3)] });
+  }
+  // The speech's own roar, a bolt, as it falls.
+  const b = S.after.speech?.burnt;
+  if (b && t >= b.at - 0.6 && t - (b.at - 0.6) < SKY_ROAR.life) out.roars.push({ at: b.at - 0.6, kind: 'roar', g: ROARS[4], big: true });
+  // ...and before it has fallen, the moment it will.
+  const sp = S.after.speech;
+  if (sp && sp.target && t >= sp.next - 0.6 && t < sp.next) out.roars.push({ at: sp.next - 0.6, kind: 'roar', g: ROARS[4], big: true });
+  return out;
+}
+let EV = { rallies: [], roars: [] }, RINGS = [];
+function ringsNow() {
+  const t = now(), out = [];
+  for (const r of EV.rallies) {
+    const s = thingAt(r.thing.kind, r.thing.q);
+    out.push({ kind: 'rally', x: s.x + s.w / 2, y: s.y + s.h / 2, rad: SKY_RALLY.speed * (t - r.at) });
+  }
+  const foot = godFoot();
+  for (const r of EV.roars) {
+    const big = r.kind === 'roar', rad = (big ? SKY_ROAR.speed : SKY_GRUMBLE.speed) * (t - r.at);
+    if (!big && rad > SKY_GRUMBLE.reach) continue;
+    out.push({ kind: big ? 'roar' : 'grumble', x: foot.x, y: foot.y, rad });
+  }
+  return out;
+}
+const ringW = rate => SKY_RING_W[0] + SKY_RING_W[1] * rate;
+const ringLift = (rate, p) => Math.max(p, snap(SKY_RING_LIFT[0] + SKY_RING_LIFT[1] * rate, p));
+// What the rings do at one near soul: raised arms, a duck, or a short lift.
+function ringsAt(x, y, rate) {
+  let lift = 0, arms = false, duck = false;
+  for (const r of RINGS) {
+    const w = ringW(rate) * (r.kind === 'grumble' ? 0.5 : 1);
+    if (Math.abs(Math.hypot(x - r.x, y - r.y) - r.rad) >= w) continue;
+    if (r.kind === 'rally') { arms = true; lift = -ringLift(rate, 2); }
+    else if (r.kind === 'roar') { duck = true; lift = ringLift(rate, 2) / 2; }
+    else if (!arms && !duck) lift = -2;
+  }
+  return { lift, arms, duck };
+}
+
+// --- the far bands: a canvas each, a texel a cell ---------------------------------------------------
+// A band's layer x runs from where the left edge of the furthest-left window
+// shows it to where the right edge of the furthest-right one does.
+const layerSpan = rate => {
+  const half = F.W / 2;
+  return [F.c0 - half - (F.c0 - F.XR) * (1 - rate) - SKY_EDGE, F.c1 + half - (F.c1 - F.XR) * (1 - rate) + SKY_EDGE];
+};
+const PALETTE = () => GREY.map(c => { const m = inkOf(c); return parseInt(String(m).slice(1, 3), 16); });
+let bands = [];
+const drawn = { souls: 0, cells: 0, rewrites: 0, slices: 0 };
+export const crowdDrawn = () => ({ ...drawn, joins: shown.joins.size, bands: bands.map(b => b && b.L) });
+function bandCanvas(k) {
+  const b = SKY_BANDS[k];
+  let bc = bands[k];
+  if (!bc) {
+    const [x0, x1] = layerSpan(b.rate);
+    const tw = Math.ceil((x1 - x0) / b.q), th = Math.ceil((F.bank - F.tops[k] + 8 * b.p) / b.q);
+    const cv = canvas(tw, th), g = cv.getContext('2d');
+    const cols = Math.ceil(tw / b.cp), rows = Math.ceil(th / b.cp);
+    const thr = new Float32Array(cols * rows), tone = new Uint8Array(cols * rows);
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const n = j * cols + i;
+      if (j === 0 && hsh(i, 1, k) < 0.4) { thr[n] = -1; continue; }      // a lumpy top of heads
+      thr[n] = thrOf(hsh(i, j, k + 60), j / rows);
+      const r = hsh(i, j, k + 20);
+      tone[n] = clamp(Math.round(b.tone + (j < 2 ? 1.2 : 0) + (r < 0.09 ? -1 : r > 0.91 ? 1 : 0)), 0, 10);
+    }
+    bc = bands[k] = { cv, g, img: g && g.createImageData ? g.createImageData(tw, th) : null, x0, tw, th, cols, rows, thr, tone, L: -1, kept: 0 };
+  }
+  const L = snap(bandL(k), SKY_REDRAW_STEP);
+  if (bc.L !== L) {
+    let kept = 0;
+    if (bc.img) {
+      const pal = PALETTE(), px = new Uint32Array(bc.img.data.buffer);
+      px.fill(0);
+      for (let j = 0; j < bc.rows; j++) for (let i = 0; i < bc.cols; i++) {
+        const n = j * bc.cols + i, t = bc.thr[n];
+        if (t < 0) continue;
+        const a = keep(t, L);
+        if (a <= 0) continue;
+        kept += a;
+        const gv = pal[bc.tone[n]], word = ((Math.round(a * 255) << 24) | (gv << 16) | (gv << 8) | gv) >>> 0;
+        const ox = i * b.cp + (b.st && (j % 2) ? b.st : 0), oy = j * b.cp;
+        for (let y = 0; y < b.hs && oy + y < bc.th; y++) {
+          const row = (oy + y) * bc.tw;
+          for (let x = 0; x < b.hs; x++) if (ox + x < bc.tw) px[row + ox + x] = word;
+        }
+      }
+      bc.g.putImageData(bc.img, 0, 0);
+    }
+    bc.L = L; bc.kept = kept;
+    drawn.rewrites++;
+  }
+  return bc;
+}
+function drawBand(k) {
+  const b = SKY_BANDS[k], L = bandL(k);
+  const a = 1 - smoothstep((L - 0.85) / 0.15);
+  if (a <= 0) return;
+  const bc = bandCanvas(k), img = bc.cv;
+  drawn.cells += bc.kept;
+  const yTop = F.tops[k] + snap(sinkOf(k, L), b.p);
+  const colPx = b.cp * b.q, shift = (CX - F.XR) * (1 - b.rate);
+  const toCol = wx => (wx - shift - bc.x0) / colPx;
+  const i0 = Math.max(0, Math.floor(toCol(S.camX)) - 1), i1 = Math.min(Math.floor(bc.tw / b.cp) - 1, Math.ceil(toCol(S.camX + S.viewW)) + 1);
+  if (F.bank + 2 * b.p - yTop <= 0 || i1 < i0) return;
+  alpha(a, () => {
+    // The sea: column runs sharing a step, each one slice.
+    let start = i0, off = null;
+    const flush = end => {
+      if (off == null) return;
+      const y = yTop + off * b.p, hh = F.bank + 2 * b.p - y, sh = Math.min(hh / b.q, bc.th);
+      if (hh > 0) {
+        ctx.drawImage(img, start * b.cp, 0, (end - start) * b.cp, sh, onPx(bc.x0 + shift + start * colPx), onPx(y), (end - start) * colPx, sh * b.q);
+        drawn.slices++;
+      }
+    };
+    for (let i = i0; i <= i1 + 1; i++) {
+      const o = i <= i1 ? sea(bc.x0 + i * colPx, k) : null;
+      if (o !== off) { flush(i); start = i; off = o; }
+    }
+    // The rings: inside each the crowd jumps and inks (a rally) or ducks and
+    // pales (a roar), slice by slice, in steps of this band's own size.
+    const step = SKY_RING_STEP / Z;
+    for (const r of RINGS) {
+      const w = ringW(b.rate) * (r.kind === 'grumble' ? 0.5 : 1);
+      const lift = (r.kind === 'rally' ? -1 : r.kind === 'roar' ? 0.6 : -0.5) * ringLift(b.rate, b.p);
+      const tone = r.kind === 'rally' ? 10 : 0, oa = (r.kind === 'rally' ? 0.3 : r.kind === 'roar' ? 0.35 : 0.15) * (1 - L);
+      if (r.rad - w > Math.hypot(S.viewW, S.viewH) * 1.5) continue;
+      const lo = Math.max(S.camX, Math.floor((r.x - r.rad - w) / step) * step), hi = Math.min(S.camX + S.viewW, r.x + r.rad + w);
+      for (let sx = lo; sx < hi; sx += step) {
+        const dx = Math.abs(sx + step / 2 - r.x);
+        if (dx >= r.rad + w) continue;
+        const ho = Math.sqrt((r.rad + w) ** 2 - dx * dx), hiR = dx < r.rad - w ? Math.sqrt((r.rad - w) ** 2 - dx * dx) : 0;
+        for (const [s0, s1] of [[r.y - ho, r.y - hiR], [r.y + hiR, r.y + ho]]) {
+          const y0 = Math.max(s0, yTop), y1 = Math.min(s1, F.bank);
+          if (y1 - y0 < 2) continue;
+          const lx = sx - shift - bc.x0, ly = y0 - yTop;
+          ctx.drawImage(img, lx / b.q, ly / b.q, step / b.q, (y1 - y0) / b.q, onPx(sx), onPx(y0 + lift), step, y1 - y0);
+          alpha(oa, () => rect(sx, y0 + lift, step, y1 - y0, tone));
+          drawn.slices++;
+        }
+      }
+    }
+  });
+}
+
+// Thin cloud strips between bands: broken billows of near-white cells.
+function drawCloudStrip(k) {
+  const y = F.tops[k + 1] - P, rate = (SKY_BANDS[k].rate + (SKY_BANDS[k + 1] || SKY_NEAR).rate) / 2;
+  const drift = now() * (SKY_CLOUD_DRIFT + k), shift = (CX - F.XR) * (1 - rate);
+  const i0 = Math.floor((S.camX - shift + drift) / P) - 1, i1 = Math.ceil((S.camX + S.viewW - shift + drift) / P) + 1;
+  alpha(0.9, () => {
+    for (let i = i0; i <= i1; i++) {
+      const n = vnoise(i / 14, k, 50);
+      if (n < 0.42) continue;
+      const tall = P * Math.min(3, 1 + Math.floor((n - 0.42) * 8 + hsh(i, k, 52)));
+      for (let j = 0; j < tall; j += P) rect(i * P - drift + shift, y - tall + j + P, P, P, hsh(i, j + k, 51) < 0.3 ? 1 : 0);
+    }
+  });
+}
+
+// --- the near band, soul by soul ------------------------------------------------------------------
+// The near band's rows, top to bank, and whether a soul (col, row) is one
+// joining: inked, held, fading out.
+const nearRows = () => Math.ceil((F.bank - F.tops[SKY_BANDS.length] + 10) / SKY_NEAR.rowp);
+const nearKey = (col, row) => col * 64 + row;
+function nearAt(col, row, L, rows) {
+  const b = SKY_NEAR, sink = snap(sinkOf(SKY_BANDS.length, L), 2), shift = (CX - F.XR) * (1 - b.rate);
+  const xl = afterX0() - SKY_EDGE + col * b.pitch + (row % 2 ? b.pitch / 2 : 0);
+  return { xl, x: xl + shift, y: F.tops[SKY_BANDS.length] + sink + row * b.rowp, thr: thrOf(hsh(col, row, 67), row / rows) };
+}
+// A member walked out since the last frame: a near soul in view, standing
+// whole, the next its threshold would take, inks and fades.
+function pickJoins() {
+  const n = union(), gained = n - shown.members;
+  shown.members = n;
+  if (gained <= 0 || S.view !== 'after') return;
+  const b = SKY_NEAR, L = bandL(SKY_BANDS.length), rows = nearRows(), shift = (CX - F.XR) * (1 - b.rate);
+  const c0 = Math.ceil((S.camX + P * 10 - shift - afterX0() + SKY_EDGE) / b.pitch), c1 = Math.floor((S.camX + S.viewW - P * 10 - shift - afterX0() + SKY_EDGE) / b.pitch);
+  if (c1 <= c0) return;
+  for (let k = 0; k < Math.min(gained, SKY_JOIN.most); k++) {
+    let best = null;
+    for (let tries = 0; tries < 24; tries++) {
+      const col = c0 + Math.floor(hsh(n, k, tries) * (c1 - c0)), row = Math.floor(hsh(n, k, tries + 50) * Math.max(1, rows - 1));
+      const key = nearKey(col, row);
+      if (shown.joins.has(key)) continue;
+      const s = nearAt(col, row, L, rows);
+      if (keep(s.thr, L) < 0.95) continue;
+      if (!best || s.thr < best.thr) best = { key, thr: s.thr };
+    }
+    if (best) shown.joins.set(best.key, now());
+  }
+}
+function joinFade(key) {
+  const t0 = shown.joins.get(key);
+  if (t0 == null) return { a: 1, inked: false };
+  const tau = now() - t0;
+  return { a: tau < SKY_JOIN.hold ? 1 : clamp(1 - (tau - SKY_JOIN.hold) / SKY_JOIN.fade, 0, 1), inked: true };
+}
+function drawNearSouls() {
+  const b = SKY_NEAR, L = bandL(SKY_BANDS.length), rows = nearRows(), shift = (CX - F.XR) * (1 - b.rate);
+  const c0 = Math.floor((S.camX - shift - afterX0() + SKY_EDGE) / b.pitch) - 1, c1 = Math.ceil((S.camX + S.viewW - shift - afterX0() + SKY_EDGE) / b.pitch) + 1;
+  const gx = godMid(CX), t = now(), s = b.soul;
+  let count = 0;
+  for (let row = 0; row < rows; row++) for (let col = c0; col <= c1; col++) {
+    const p = nearAt(col, row, L, rows);
+    if (p.y > F.bank + P) continue;
+    const j = joinFade(nearKey(col, row));
+    const a = keep(p.thr, L) * j.a;
+    if (a <= 0.01) continue;
+    const rg = ringsAt(p.x, p.y, b.rate);
+    const x = p.x + Math.round(Math.sin(p.xl / SKY_SEA.swayLen - t * SKY_SEA.swayHz)) * 2;
+    const y = p.y + sea(p.xl, SKY_BANDS.length) * 2 + rg.lift;
+    if (!inView(x - 2, s + 4)) continue;
+    const tone = hsh(col, row, 68) < 0.3 ? 1 : 0, look = p.x < gx - 40 ? 1 : p.x > gx + 40 ? -1 : 0;
+    count++;
+    alpha(a, () => {
+      rect(x, y, s, s, j.inked ? 10 : 8);
+      rect(x + 2, y + 2, s - 4, s - 4, tone);
+      if (rg.duck) { rect(x + 3, y + 5, 2, 1, 8); rect(x + 7, y + 5, 2, 1, 8); }
+      else { rect(x + 3 + look, y + 4, 2, 2, 8); rect(x + 7 + look, y + 4, 2, 2, 8); }
+      if (rg.arms) { rect(x - 2, y - 8, 2, 8, 10); rect(x + s, y - 8, 2, 8, 10); }
+    });
+  }
+  drawn.souls = count;
+}
+
+// --- God ---------------------------------------------------------------------------------------------
+// God-cells about his square's top left; every pose held, never tweened.
+function godPose() {
+  const t = now();
+  const breath = frac(t / GOD_IDLE.breath_s) < 0.45 ? 1 : 0;
+  const dp = frac(t / GOD_IDLE.drum_s) * GOD_IDLE.drum_s, finger = dp < 0.9 ? Math.floor(dp / 0.15) % 3 : -1;
+  const cp = ((t - 4) % GOD_IDLE.crown_s + GOD_IDLE.crown_s) % GOD_IDLE.crown_s;
+  let tilt = 0, hand = 0;
+  if (cp < 3) tilt = 1;
+  else if (cp < 3.3) { tilt = 1; hand = 1; }
+  else if (cp < 3.7) hand = 2;
+  else if (cp < 4.0) hand = 1;
+  return { breath, finger, tilt, hand };
+}
+const GC = () => F.gc;
+// His square's top left, world.
+const godX = () => godMid(CX) - 9 * GC();
+const godFoot = () => ({ x: godMid(CX), y: F.gy0 + 28 * GC() });
+const cache = { key: '', stone: null, halo: null, poses: new Map(), signs: new Map(), bank: null };
+function freshCaches() {
+  const key = `${K}|${F.gc}|${F.top}|${F.W}`;
+  if (key === cache.key) return;
+  cache.key = key; cache.stone = null; cache.halo = null; cache.poses.clear(); cache.signs.clear(); cache.bank = null;
+  bands = [];
+}
+// The stone: the throne's spiked back, its arms and seat, and the tall slit
+// tower down to the cloud bank -- the only part of him that takes the map.
+// Painted from 8 cells left of the square and 16 above it.
+const STONE_X = -8, STONE_Y = -16;
+function stone() {
+  if (cache.stone) return cache.stone;
+  const c = GC(), towerTo = (F.bank + 20 - F.gy0) / c;
+  cache.stone = sprite(34 * c, (towerTo - STONE_Y) * c, (r) => {
+    const Fr = (x, y, w, h, tone) => r((x - STONE_X) * c, (y - STONE_Y) * c, w * c, h * c, tone);
+    // the tower
+    Fr(4, 30, 10, towerTo - 30, 10);
+    for (let y = 30; y < towerTo; y++) for (let x = 5; x < 13; x++) Fr(x, y, 1, 1, hsh(x, y, 70) < 0.3 ? 5 : 6);
+    for (let y = 34; y < towerTo; y += 7) Fr(8, y, 2, 3, 10);
+    Fr(1, 30, 16, 3, 10); Fr(2, 31, 14, 1, 7);
+    // the back, spiked
+    const spike = (x, top) => { Fr(x, top, 3, -5 - top, 10); for (let y = top + 1; y < -5; y++) Fr(x + 1, y, 1, 1, 4); };
+    [-4, 3, 12, 19].forEach(x => spike(x, -11)); spike(7.5, -15);
+    Fr(-4, -6, 26, 34, 10);
+    for (let y = -5; y < 27; y++) for (let x = -3; x < 21; x++) Fr(x, y, 1, 1, hsh(x, y, 71) < 0.25 ? 4 : 5);
+    Fr(-7, 18, 6, 3, 10); Fr(19, 18, 6, 3, 10); Fr(-7, 21, 2, 7, 10); Fr(23, 21, 2, 7, 10);
+    Fr(-7, 26, 32, 4, 10);
+  });
+  return cache.stone;
+}
+// God himself, lit from within: a white square edged in ink, horns, slit
+// eyes under heavy brows in a hard scowl, a white pinpoint each, teeth when
+// he roars; the robe, the crown in an ink outline, the hands.
+function godSprite(pose, gaze, roaring) {
+  const key = `${pose.breath}${pose.finger}${pose.tilt}${pose.hand}|${gaze.look}${gaze.squint ? 1 : 0}|${roaring ? 1 : 0}`;
+  let pic = cache.poses.get(key);
+  if (pic) return pic;
+  const c = GC();
+  pic = sprite(34 * c, 47 * c, (r, L) => {
+    const Fd = (x, y, w, h, tone) => L((x - STONE_X) * c, (y - STONE_Y) * c, w * c, h * c, tone);
+    const top = -pose.breath;
+    // the horns, out of the square's top corners and up past the crown
+    const horn = [[-1, 3], [-1, 2], [-2, 2], [-2, 1], [-3, 1], [-3, 0], [-4, 0], [-4, -1], [-4, -2], [-4, -3], [-4, -4], [-3, -5], [-3, -6], [-2, -7]];
+    for (const side of [0, 1]) {
+      const cells = horn.map(([x, y]) => [side ? 17 - x : x, y + top]);
+      cells.forEach(([x, y]) => Fd(x - 1, y - 1, 3, 3, 10));
+      cells.forEach(([x, y]) => Fd(x, y, 1, 1, 0));
+    }
+    Fd(0, top, 18, 18 - top, 10);
+    Fd(1, top + 1, 16, 16 - top, 0);
+    for (let y = top + 1; y < 17; y++) for (let x = 1; x < 17; x++) if (hsh(x, y, 72) < 0.14) Fd(x, y, 1, 1, 1);
+    const ey = 6 + top;
+    [[3, 1], [10, -1]].forEach(([ex, side]) => {
+      const outer = side > 0 ? ex : ex + 2, inner = side > 0 ? ex + 1 : ex;
+      // the brow: two heavy ink bars stepping down hard to the nose
+      if (!gaze.squint) { Fd(side > 0 ? ex - 1 : ex + 3, ey - 1, 2, 1, 10); Fd(outer, ey, 3, 1, 10); }
+      Fd(inner, ey + 1, 4, 1, 10);
+      Fd(ex + 2 + gaze.look, ey + 1, 1, 1, 0);
+    });
+    // the furrow between the brows
+    Fd(8, ey - 1, 1, 2, 10); Fd(9, ey - 1, 1, 2, 10);
+    if (roaring) { Fd(5, 11 + top, 8, 3, 10); for (const x of [6, 8, 10, 12]) Fd(x, 11 + top, 1, 1, 0); }
+    else { Fd(6, 12 + top, 6, 1, 10); Fd(5, 13 + top, 1, 1, 10); Fd(12, 13 + top, 1, 1, 10); }
+    // the robe, widening down over the seat
+    for (let y = 15; y < 30; y++) {
+      const half = 9 + Math.floor((y - 15) / 3);
+      Fd(9 - half, y, half * 2, 1, 10);
+      for (let x = 9 - half + 1; x < 9 + half - 1; x++) Fd(x, y, 1, 1, hsh(x, y, 73) < 0.3 ? 2 : 3);
+      Fd(8, y, 2, 1, y === 15 ? 10 : 0);
+    }
+    Fd(0, 15, 18, 1, 10);
+    // the crown, a step askew when slipped
+    const cy = -3 + top, crown = [];
+    for (let x = 1; x < 17; x++) {
+      const d = pose.tilt && x < 9 ? 1 : 0, tall = x <= 3 || (x >= 8 && x <= 10) || x >= 15;
+      for (let y = tall ? -3 : 0; y < 2; y++) crown.push([x, cy + d + y]);
+    }
+    crown.forEach(([x, y]) => Fd(x - 1, y - 1, 3, 3, 10));
+    crown.forEach(([x, y]) => Fd(x, y, 1, 1, 0));
+    Fd(8, cy, 2, 1, 10);
+    // hands: the left on its arm or up at the crown; the right drumming
+    const hl = [[-6, 15], [-5, 6], [-2, cy - 1]][pose.hand];
+    Fd(hl[0], hl[1], 4, 3, 10); Fd(hl[0] + 1, hl[1] + 1, 2, 1, 0);
+    Fd(20, 15, 4, 3, 10); Fd(21, 16, 2, 1, 0);
+    for (let f = 0; f < 3; f++) Fd(20 + f, 18 - (pose.finger === f ? 1 : 0), 1, 1, 10);
+  });
+  if (cache.poses.size > 64) cache.poses.clear();
+  cache.poses.set(key, pic);
+  return pic;
+}
+// The halo: a white band edged grey either side, a fainter inner ring and
+// marks between, so it reads faintly as an iris. Taken once a zoom.
+function halo() {
+  if (cache.halo) return cache.halo;
+  const c = GC(), R = (GOD_HALO_R + 2) * c, sq = Math.max(2, snap(c * 0.67, 2));
+  cache.halo = sprite(R * 2, R * 2, (r, L) => {
+    const at = (a, d) => [snap(R + Math.cos(a) * d, sq), snap(R + Math.sin(a) * d, sq)];
+    const ring = (rad, thick, tone) => {
+      const n = Math.ceil(2 * Math.PI * rad / (sq * 0.7));
+      for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI; for (let d = 0; d < thick; d += sq) { const [x, y] = at(a, rad + d); L(x, y, sq, sq, tone); } }
+    };
+    ring(GOD_HALO_R * c - sq, sq, 4); ring(GOD_HALO_R * c + c, sq, 4); ring(GOD_HALO_R * c, c, 0);
+    ring(16 * c, sq, 3);
+    for (let i = 0; i < 28; i++) { const a = i / 28 * 2 * Math.PI; for (let d = 16.5 * c; d < 20 * c; d += sq) { const [x, y] = at(a, d); L(x, y, sq, sq, 3); } }
+  });
+  cache.halo.R = R;
+  return cache.halo;
+}
+function drawGodBack() {
+  const c = GC(), cx = godMid(CX), cy = F.gy0 + 6 * c, gx = godX();
+  // the glare: a pale disc behind the throne, lifting the far crowd round him
+  const rad = GOD_GLARE_R * c, q = c >= 6 ? 6 : 3;
+  alpha(0.85 - 0.3 * shown.s, () => {
+    ctx.fillStyle = raw(GREY[0]);
+    for (let y = -rad; y < rad; y += q) { const hw = snap(Math.sqrt(Math.max(0, rad * rad - y * y)), q); rect(cx - hw, cy + y, hw * 2, q); }
+  });
+  const h = halo();
+  alpha(0.8, () => blit(h, cx - h.R, cy - h.R));
+  // the spokes, turning about the ring: shorter and fainter as support
+  // rises, gone at the strike
+  const left = raysLeft(), sq = Math.max(2, snap(c * 0.67, 2));
+  if (left > 0.02) alpha(Math.pow(left, 0.7), () => {
+    const th = now() * 2 * Math.PI / GOD_SPOKES.turn_s;
+    for (let i = 0; i < GOD_SPOKES.n; i++) {
+      const a = th + i / GOD_SPOKES.n * 2 * Math.PI, len = (i % 2 ? GOD_SPOKES.short : GOD_SPOKES.long) * c * left;
+      for (let d = GOD_SPOKES.r * c; d < GOD_SPOKES.r * c + len; d += sq * 1.5) {
+        const x = snap(cx + Math.cos(a) * d, sq), y = snap(cy + Math.sin(a) * d, sq);
+        lit(x - 2, y - 2, sq + 4, sq + 4, 4); lit(x, y, sq, sq, 0);
+      }
+    }
+  });
+  blit(stone(), gx + STONE_X * c, F.gy0 + STONE_Y * c);
+}
+function drawGod(gz) {
+  const c = GC(), t = now();
+  const roaring = EV.roars.some(r => r.kind === 'roar' && t - r.at < SKY_ROAR.mouth);
+  blit(godSprite(godPose(), gz, roaring), godX() + STONE_X * c, F.gy0 + STONE_Y * c);
+}
+
+// --- the gaze ----------------------------------------------------------------------------------------
+// It sweeps right, center and left of the sky, then holds on the camp; the
+// speech swings it onto its mark and holds it there narrowed.
+function sweepFoot() {
+  const f = F, gx = godMid(CX), vw = f.W / Z, half = 9 * GC();
+  const camp = { x: clamp(CX - 0.3 * vw, afterX0(), stationBox('pedestal').x), y: f.floor - 12 };
+  const pts = [
+    { x: gx - half + 0.36 * vw, y: f.top + f.sky * 0.66, hold: 0.8, move: 2.2 },
+    { x: gx - half - 0.10 * vw, y: f.top + f.sky * 0.52, hold: 0.3, move: 1.8 },
+    { x: gx - half - 0.32 * vw, y: f.top + f.sky * 0.80, hold: 0.6, move: 1.6 },
+    { ...camp, hold: GOD_GAZE_HOLD_S, move: 2.4, camp: true },
+    { x: gx - half + 0.08 * vw, y: f.top + f.sky * 0.62, hold: 0.4, move: 2.4 }
+  ];
+  const total = pts.reduce((a, p) => a + p.hold + p.move, 0);
+  let u = frac(now() / total) * total;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], q = pts[(i + 1) % pts.length];
+    if (u < p.hold) return { x: p.x, y: p.y, camp: !!p.camp };
+    u -= p.hold;
+    if (u < p.move) { const k = smoothstep(u / p.move); return { x: lerp(p.x, q.x, k), y: lerp(p.y, q.y, k), camp: false }; }
+    u -= p.move;
+  }
+  return { x: pts[0].x, y: pts[0].y, camp: false };
+}
+function gazeNow() {
+  const sw = sweepFoot(), A = S.after, t = now(), sp = A.speech;
+  let foot = sw, narrow = 0, on = null, marks = 0;
+  const target = speechTarget();
+  if (target && sp) {
+    const kind = A.signs.includes(target) ? 'sign' : 'poster', g = thingAt(kind, target), s = { x: g.x + g.w / 2, y: g.y + g.h / 2 };
+    const tau = t - (sp.next - AFTER_SPEECH_WARN_S), span = AFTER_SPEECH_WARN_S - AFTER_GAZE_SETTLE_S;
+    if (tau < AFTER_GAZE_SETTLE_S) { const k = smoothstep(tau / AFTER_GAZE_SETTLE_S); foot = { x: lerp(sw.x, s.x, k), y: lerp(sw.y, s.y, k) }; }
+    else { foot = s; narrow = smoothstep((tau - AFTER_GAZE_SETTLE_S) / 0.6); }
+    on = target; marks = clamp((tau - AFTER_GAZE_SETTLE_S) / span, 0, 1);
+  } else if (sp && sp.burnt && t - sp.burnt.at < 1) {
+    // back from the ash to the sweep
+    const q = (sp.burnt.kind === 'sign' ? A.signs : A.posters).find(o => o.id === sp.burnt.id);
+    if (q) { const g = thingAt(sp.burnt.kind, q), k = smoothstep(t - sp.burnt.at); foot = { x: lerp(g.x + g.w / 2, sw.x, k), y: lerp(g.y + g.h / 2, sw.y, k) }; }
+  }
+  const eye = { x: godMid(CX), y: F.gy0 + 7 * GC() };
+  const dx = foot.x - eye.x, vw = F.W / Z;
+  return { eye, foot, narrow, on, marks, look: dx < -vw * 0.08 ? -1 : dx > vw * 0.08 ? 1 : 0, squint: !!sw.camp && !target };
+}
+function drawGaze(gz) {
+  const { eye, foot } = gz;
+  const len = Math.hypot(foot.x - eye.x, foot.y - eye.y), row = 3, c = GC();
+  const hwF = lerp(Math.max(24, len * 0.09), Math.max(12, len * 0.035), gz.narrow);
+  const seat = F.gy0 + 30 * c, chin = F.gy0 + 15 * c;
+  if (foot.y <= eye.y) return;
+  alpha(0.5 + 0.15 * gz.narrow, () => {
+    ctx.fillStyle = raw(GREY[0]);
+    for (let y = eye.y; y < foot.y; y += row) {
+      if (y < seat) continue;
+      const k = (y - eye.y) / (foot.y - eye.y), cx = lerp(eye.x, foot.x, k), hw = lerp(c, hwF, k);
+      if (inView(cx - hw, hw * 2)) rect(cx - hw, y, hw * 2, row);
+    }
+  });
+  ctx.fillStyle = raw(GREY[4]);
+  let n = 0;
+  for (let y = eye.y; y < foot.y; y += row, n++) {
+    if (n % 2 || y < chin) continue;
+    const k = (y - eye.y) / (foot.y - eye.y), cx = lerp(eye.x, foot.x, k), hw = lerp(c, hwF, k);
+    rect(cx - hw, y, 2, 2); rect(cx + hw - 2, y, 2, 2);
+  }
+}
+
+// --- the sermon's bubbles ------------------------------------------------------------------------------
+const GL = {
+  '!': ['.#.', '.#.', '.#.', '.#.', '.#.', '...', '.#.'],
+  '?': ['.###.', '#...#', '...#.', '..#..', '..#..', '.....', '..#..'],
+  '#': ['.#.#.', '#####', '.#.#.', '.#.#.', '#####', '.#.#.', '.....'],
+  'k': ['.###.', '#####', '#.#.#', '#####', '.###.', '.#.#.', '.....'],
+  'z': ['...##', '..##.', '.##..', '#####', '..##.', '.##..', '##...', '#....'],
+  '~': ['.....', '.....', '.#...', '#.#.#', '...#.', '.....', '.....'],
+  '.': ['.', '.', '.', '.', '.', '.', '#']
+};
+const ROARS = [['!', '!'], ['?', '!'], ['#', '!'], ['k', '!'], ['z']];
+const GRUMBLES = [['~'], ['.', '.', '.'], ['~', '~']];
+function drawBubbles() {
+  const c = GC(), t = now(), gx = godX();
+  for (const r of EV.roars) {
+    const tau = t - r.at, life = r.kind === 'roar' ? SKY_ROAR.bubble : SKY_GRUMBLE.bubble;
+    if (tau > life || tau < 0) continue;
+    const a = Math.min(1, tau / 0.2) * (tau > life - 0.4 ? (life - tau) / 0.4 : 1);
+    const gp = r.kind === 'roar' ? Math.round((r.big ? 1.5 : 1.0) * c * 0.67) : Math.max(2, Math.round(c / 3));
+    const glyphW = r.g.reduce((s, k) => s + GL[k][0].length + 1, -1);
+    const bw = (glyphW + 4) * gp, bh = 12 * gp;
+    const bx = r.kind === 'roar' ? gx + 18 * c + 2 * c : gx - 2 * c - bw;
+    const by = r.kind === 'roar' ? F.gy0 - 6 * c - bh * 0.4 : F.gy0 + 2 * c;
+    const ink = r.kind === 'roar' ? 10 : 6, u = Math.max(2, gp);
+    alpha(a, () => {
+      rect(bx + u, by, bw - 2 * u, bh, ink); rect(bx, by + u, bw, bh - 2 * u, ink);
+      rect(bx + u, by + u, bw - 2 * u, bh - 2 * u, 0);
+      const tx = r.kind === 'roar' ? bx + u : bx + bw - 2 * u;
+      for (let i = 0; i < 3; i++) rect(tx + (r.kind === 'roar' ? -i * u : i * u), by + bh + i * u - u, 2 * u, 2 * u, ink);
+      let x = bx + 2 * gp;
+      for (const k of r.g) {
+        GL[k].forEach((line, j) => { for (let i = 0; i < line.length; i++) if (line[i] === '#') rect(x + i * gp, by + 2 * gp + j * gp, gp, gp, ink); });
+        x += (GL[k][0].length + 1) * gp;
+      }
+    });
+  }
+}
+
+// --- the tithe line -------------------------------------------------------------------------------------
+// Its path at the act's opening, each point with its rate and a carrier's
+// size there; a point at God's rate rides with God through the dive.
+function tithePath() {
+  const c = GC(), b = stationBox('pedestal'), campRight = b.x + b.w;
+  const g0 = F.XR + (godMid(F.XR) - F.XR), Gs = 18 * c, gX = g0 - Gs / 2, seatB = F.gy0 + 30 * c;
+  const pts = [
+    { x: campRight - 10, y: F.floor, r: 1, s: 14 },
+    { x: campRight + 80, y: F.bank + 8, r: 0.9, s: 11 },
+    { x: gX + Gs + 2.2 * Gs, y: lerp(seatB, F.bank, 0.72), r: 0.78, s: 8 },
+    { x: gX - 2.2 * Gs, y: lerp(seatB, F.bank, 0.45), r: 0.70, s: 7 },
+    { x: gX + Gs + 1.4 * Gs, y: lerp(seatB, F.bank, 0.18), r: 0.66, s: 6 },
+    { x: gX - 7 * c, y: F.gy0 + 27 * c, r: GOD_RATE, s: 6 }
+  ];
+  const ride = godMid(CX) - layerX(g0, GOD_RATE, CX);
+  let L = 0;
+  return pts.map((p, i) => {
+    const q = { ...p, x: layerX(p.x, p.r, CX) + ride * clamp((1 - p.r) / (1 - GOD_RATE), 0, 1) };
+    if (i) L += Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y);
+    q.L = L;
+    return q;
+  });
+}
+function pathAt(path, u) {
+  const d = u * path[path.length - 1].L;
+  for (let i = 1; i < path.length; i++) if (d <= path[i].L || i === path.length - 1) {
+    const a = path[i - 1], b = path[i], k = clamp((d - a.L) / Math.max(1e-6, b.L - a.L), 0, 1);
+    return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), s: lerp(a.s, b.s, k), dir: Math.sign(b.x - a.x) || 1 };
+  }
+  return path[0];
+}
+function drawTithe(dt) {
+  const s = shown.s, path = tithePath(), N = TITHE_CARRIERS;
+  shown.tithe += dt * (s >= 0.98 ? 0 : TITHE_LAP * (1 - 0.6 * s));
+  const thin = Math.min(0.93, s * 1.05);
+  // the ledge: grey steps under their feet
+  alpha(1 - 0.85 * thin, () => {
+    ctx.fillStyle = GREY[4];
+    for (let u = 0.03; u < 0.985; u += 0.005) { const q = pathAt(path, u); if (inView(q.x, 2)) rect(q.x, q.y, 2, 2); }
+  });
+  for (let i = 0; i < N; i++) {
+    const pres = clamp((hsh(i, 0, 80) + 0.2 - 1.2 * thin) / 0.2, 0, 1);
+    if (pres <= 0.01) continue;
+    const u = frac(i / N + shown.tithe), q = pathAt(path, u);
+    const sz = Math.max(4, snap(q.s, 2)), bw = sz, bh = Math.round(sz * 0.75);
+    const up = s >= 0.98 ? 0 : (Math.floor(now() * 4 + i) % 2);
+    const x = q.x - bw / 2, y = q.y - bh - up;
+    if (!inView(x - sz, sz * 3)) continue;
+    const a = pres * clamp(u / 0.03, 0, 1) * clamp((1 - u) / 0.05, 0, 1);
+    const loadA = clamp((0.94 - u) / 0.04, 0, 1), rim = sz >= 10 ? 2 : 1;
+    alpha(a, () => {
+      rect(x, y, bw, bh, 10); rect(x + rim, y + rim, bw - 2 * rim, bh - 2 * rim, 0);
+      const hs = Math.max(2, snap(sz * 0.4, 1));
+      rect(q.dir > 0 ? x + bw - 1 : x - hs + 1, y + bh - hs - 1, hs, hs, 10);      // the head, bowed low
+      alpha(loadA, () => {
+        if (i % 3 === 0) { const ls = Math.round(sz * 0.8); rect(x + (bw - ls) / 2, y - ls + 1, ls, ls, 10); rect(x + (bw - ls) / 2 + rim, y - ls + 1 + rim, ls - 2 * rim, ls - 2 * rim, 1); }
+        else { const pl = Math.round(sz * 1.8), th = Math.max(2, Math.round(sz / 4)); rect(x + bw / 2 - pl / 2, y - th, pl, th, 7); }
+      });
+    });
+  }
+  // the glare at his left hand that takes the load, then the carrier
+  const end = path[path.length - 1], c = GC(), rad = TITHE_GLARE_R * c, q = c >= 6 ? 3 : 2;
+  alpha(0.92 - 0.3 * s, () => {
+    ctx.fillStyle = raw(GREY[0]);
+    for (let y = -rad; y < rad; y += q) { const hw = Math.sqrt(Math.max(0, rad * rad - y * y)); rect(snap(end.x - hw, q), end.y - 2 * c + y, snap(hw * 2, q), q); }
+  });
+}
+
+// --- signs and posters --------------------------------------------------------------------------------
+// Each stands in the near band, at its own x and the signs' rate: a board
+// on a pole down into the cloud bank. Where it is drawn (its board's box).
+function thingAt(kind, q) {
+  const poster = kind === 'poster', d = poster ? SKY_POSTER : SKY_SIGN;
+  const x0 = poster ? slotX(q.slot) : soulX(q.f), up = poster ? 108 : 96 + Math.min(q.r || 0, 10) * 2;
+  const lift = EV.rallies.some(r => r.thing.q === q && now() - r.at < SKY_RALLY.lift) ? -P : 0;
+  return { x: layerX(x0 - d.w / 2, SKY_SIGN_RATE, CX), y: F.bank - up + lift, w: d.w, h: d.h, poster };
+}
+// A board's cells: tone of (cx, cy), the pole two cells down its middle.
+function boardCells(poster, fn) {
+  const d = poster ? SKY_POSTER : SKY_SIGN, cw = d.w / d.cell, ch = d.h / d.cell;
+  for (let cy = 0; cy < ch; cy++) for (let cx = 0; cx < cw; cx++) {
+    const edge = cx === 0 || cy === 0 || cx === cw - 1 || cy === ch - 1;
+    let tone = edge ? 10 : 0;
+    if (!poster && !edge && (cy === 3 || cy === 6 || cy === 8) && cx > 2 && cx < cw - 3 - (cy === 8 ? 5 : 0)) tone = 5;
+    if (poster && !edge) {
+      // a crossed-out crown, the placeholder picture
+      if (cy >= 6 && cy <= 7 && cx > 2 && cx < 11) tone = 9;
+      if (cy >= 3 && cy <= 5 && (cx === 3 || cx === 6 || cx === 7 || cx === 10)) tone = 9;
+      if (cy >= 2 && cy <= 11 && Math.abs(cx - 1.5 - (cy - 2) * 1.05) < 0.8) tone = 10;
+      if ((cy === 14 || cy === 16) && cx > 2 && cx < 11) tone = 5;
+    }
+    fn(cx, cy, tone, cy * 40 + cx);
+  }
+}
+function boardSprite(poster, poleH) {
+  const key = `${poster ? 'p' : 's'}${Math.round(poleH)}`;
+  let pic = cache.signs.get(key);
+  if (pic) return pic;
+  const d = poster ? SKY_POSTER : SKY_SIGN, cell = d.cell;
+  pic = sprite(d.w, d.h + poleH, r => {
+    r(d.w / 2 - cell, d.h, cell * 2, poleH, 10);
+    boardCells(poster, (cx, cy, tone) => r(cx * cell, cy * cell, cell, cell, tone));
+  });
+  cache.signs.set(key, pic);
+  return pic;
+}
+function drawThings(gz) {
+  const A = S.after, t = now();
+  const all = [...A.posters.map(q => ['poster', q]), ...A.signs.map(q => ['sign', q])];
+  for (const [kind, q] of all) {
+    const g = thingAt(kind, q), d = g.poster ? SKY_POSTER : SKY_SIGN, cell = d.cell;
+    if (!inView(g.x - 20, g.w + 40)) continue;
+    const poleH = F.bank + 12 - (g.y + g.h);
+    // the warning: four ink corner marks closing in on it in held steps
+    if (gz.on === q) {
+      const m = 6 + 6 * (3 - Math.min(3, Math.floor(gz.marks * 4))), L = 10;
+      for (const [cx, cy, sx, sy] of [[g.x - m, g.y - m, 1, 1], [g.x + g.w + m, g.y - m, -1, 1], [g.x - m, g.y + g.h + m, 1, -1], [g.x + g.w + m, g.y + g.h + m, -1, -1]]) {
+        rect(sx > 0 ? cx : cx - L, sy > 0 ? cy : cy - 2, L, 2, 10);
+        rect(sx > 0 ? cx : cx - 2, sy > 0 ? cy : cy - L, 2, L, 10);
+      }
+    }
+    const fading = q.torn != null ? clamp(1 - (t - q.torn) / AFTER_POSTER_FADE_S, 0, 1) : 1;
+    if (q.burnt == null) { alpha(fading, () => blit(boardSprite(g.poster, poleH), g.x, g.y)); continue; }
+    // Burning: charred from the foot up, cell by cell, raw soot on either
+    // page, each charred cell then burning away; embers rising.
+    const burn = (t - q.burnt) * (4.6 / AFTER_BURN_S), i = q.id, ch = d.h / cell, total = ch + poleH / cell;
+    const cellAt = (cx, cy, tone, id) => {
+      const charAt = hsh(id, i, 90) * 0.5 + (1 - cy / total) * 0.7;
+      const fa = 1 - clamp((burn - (1.2 + hsh(id, i, 91) * 1.6)) / 0.4, 0, 1);
+      if (fa <= 0) return;
+      alpha(fa, () => (burn > charAt ? lit(g.x + cx * cell, g.y + cy * cell, cell, cell, 10) : rect(g.x + cx * cell, g.y + cy * cell, cell, cell, tone)));
+    };
+    for (let j = 0; j < poleH / cell; j++) { cellAt(d.w / cell / 2 - 1, ch + j, 10, 1000 + j); cellAt(d.w / cell / 2, ch + j, 10, 2000 + j); }
+    boardCells(g.poster, cellAt);
+    if (burn > 0.6 && burn < 4.5) for (let e = 0; e < 14; e++) {
+      const k = (burn - (0.6 + hsh(e, i, 92) * 2.4)) / 1.4;
+      if (k < 0 || k > 1) continue;
+      alpha(1 - k, () => rect(snap(g.x + hsh(e, i, 93) * g.w + Math.sin(e + burn * 3) * 3, 2), snap(g.y + g.h * 0.6 - k * 50, 2), 2, 2, 9));
+    }
+  }
+}
+
+// --- the cloud bank --------------------------------------------------------------------------------
+// A lumpy billow of near-white cells over the crowd's feet, the only horizon.
+function drawBank() {
+  const [x0, x1] = layerSpan(SKY_BANK_RATE);
+  if (!cache.bank) cache.bank = sprite(x1 - x0, 60, r => {
+    for (let i = 0; i < (x1 - x0) / P; i++) {
+      const top = 2 + Math.round(vnoise(i / 5, 0, 31) * 3 + hsh(i, 0, 32));
+      for (let j = top; j < 10; j++) r(i * P, j * P, P, P, hsh(i, j, 33) < 0.25 ? 2 : 1);
+    }
+  });
+  const shift = (CX - F.XR) * (1 - SKY_BANK_RATE), pic = cache.bank;
+  const sx = clamp((S.camX - shift - x0) * K, 0, pic.width), sw = clamp(S.viewW * K + 2 * K, 0, pic.width - sx);
+  if (sw > 0) ctx.drawImage(pic, sx, 0, sw, pic.height, onPx(x0 + shift + sx / K), onPx(F.bank - 12), sw / K, pic.height / K);
+  rect(S.camX, F.bank + 48, S.viewW, F.floor - P * 3 - F.bank - 48, 0);
+}
+
+// --- bodies standing in God's yard ----------------------------------------------------------------
+// The floor where the crowd stood is drawn as the cloud bank: a body walking
+// in climbs it at the edge and stands up in the near band, among the signs,
+// smaller and at their rate; a member walking out climbs down. Where a sim
+// point there is drawn, and how big a body is (1 on the floor).
+const NEAR_K = SKY_NEAR.soul / (P * 3);
 export function seenAt(x, y) {
   if (!S.after) return { x, y, k: 1 };
   camFrame();
-  // Off the crowd's ends (the stair, the camp) a body is where it stands.
-  if (y < afterFloor() && (x < CROWD_X0 - CROWD_PITCH || x > CROWD_X0 + (F + 1) * CROWD_PITCH)) return { x, y, k: 1 };
-  const L = layout(depthAt(x, y), read.bandL);
-  return { x: at(x, L.rate), y: afterFloor() - L.foot, k: L.s / CROWD_FRONT_BODY };
+  const edge = CROWD_PITCH * 2;
+  const w = smoothstep((x - (CROWD_X0 - edge)) / edge) * smoothstep((crowdX1() + edge - x) / edge);
+  if (w <= 0) return { x, y, k: 1 };
+  const d = clamp((afterFloor() - y) / (CROWD_NEAR * CROWD_ROW), 0, 1.5);
+  const rate = 1 + (SKY_SIGN_RATE - 1) * w;
+  return { x: layerX(x, rate, CX), y: lerp(y, F.bank - d * 24, w), k: lerp(1, NEAR_K, w) };
 }
-
-// --- a near soul ----------------------------------------------------------------------------
-// A pale soul is a grey rim on paper, a member an ink one; in a row big
-// enough each of its RIM_PIECES pieces inks on its own, clockwise from the
-// top left, the last piece in fading; in a smaller row the rim darkens as a
-// whole; the smallest rows are filled squares. `ink` is pieces (0..8),
-// eased; `a` the soul's opacity.
-function soul(x, y, s, ink, tone, a) {
-  const was = ctx.globalAlpha;
-  if (a < 1) ctx.globalAlpha = was * a;
-  if (s < CROWD_RIM_FROM) {
-    rect(x, y, s, s, tone);
-    if (ink > 0) { ctx.globalAlpha = was * a * Math.min(1, ink / RIM_PIECES); rect(x, y, s, s, 10); }
-    ctx.globalAlpha = was;
-    return;
-  }
-  const R = CROWD_RIM;
-  rect(x, y, s, s, tone);
-  if (s < CROWD_PIECES_FROM) {
-    if (ink > 0) { ctx.globalAlpha = was * a * Math.min(1, ink / RIM_PIECES); rect(x, y, s, s, 10); ctx.globalAlpha = was * a; }
-    rect(x + R, y + R, s - 2 * R, s - 2 * R, 0);
-    ctx.globalAlpha = was;
-    return;
-  }
-  rect(x + R, y + R, s - 2 * R, s - 2 * R, 0);
-  const h = Math.round(s / 2);
-  const pieces = [[x, y, h, R], [x + h, y, s - h, R], [x + s - R, y, R, h], [x + s - R, y + h, R, s - h],
-                  [x + h, y + s - R, s - h, R], [x, y + s - R, h, R], [x, y + h, R, s - h], [x, y, R, h]];
-  ctx.fillStyle = GREY[10];
-  for (let k = 0; k < RIM_PIECES && k < ink; k++) {
-    const p = pieces[k], part = Math.min(1, ink - k);
-    if (part < 1) ctx.globalAlpha = was * a * part;
-    rect(p[0], p[1], p[2], p[3]);
-  }
-  ctx.globalAlpha = was;
-}
-const paleTone = (s, i) => {
-  const tones = s >= CROWD_FRONT_BODY ? CROWD_FRONT_TONES : s >= 8 ? CROWD_NEAR_TONES[0] : CROWD_NEAR_TONES[1];
-  return tones[Math.floor(hsh(i, 5) * tones.length)];
-};
-
-// --- a body over the crowd ------------------------------------------------------------------
-// The place's body (render/after.js's placeholder, a square of `rim` with a
-// pale middle, its load overhead, an arm out on the blow, the agitator's
-// shout mark), drawn at `k` of its size where it stands in the crowd.
-function body(w, rim, fill) {
+function body(w) {
   const v = seenAt(w.x, w.y), u = P * v.k;
   const x = onPx(v.x - u * 1.5), y = onPx(v.y - u * 3);
-  rect(x, y, u * 3, u * 3, rim);
-  rect(x + u, y + u, u, u, fill);
+  rect(x, y, u * 3, u * 3, 10);
+  rect(x + u, y + u, u, u, 1);
   if (w.load === 'log') for (let c = -1; c <= 3; c++) rect(x + c * u, y - u, u, u, c === 1 ? 2 : 8);
   else if (w.load === 'sign') { rect(x + u, y - u, u, u, 10); rect(x, y - u * 2, u * 3, u, 1); }
   else if (w.load === 'posters') { rect(x, y - u, u, u, 0); rect(x + u, y - u, u, u, 2); rect(x + u * 2, y - u, u, u, 0); }
-  else if (w.load === 'tip') { rect(x, y - u, u * 2, u, 4); }
+  else if (w.load === 'tip') rect(x, y - u, u * 2, u, 4);
   if (w.swing != null) {
     if (w.job === AFTER_JOB.AGITATE) { rect(x + u, y - u * 5, u, u * 2, 10); rect(x + u, y - u * 2, u, u, 10); }
     else for (let k = 1; k <= 2; k++) rect(x + (w.face > 0 ? 2 + k : -k) * u, y - k * u, u, u, 10);
   }
-  return v;
 }
 
-// --- the bands, as bitmaps ------------------------------------------------------------------
-// A band's picture: its columns of cells, each column's depth its share of
-// the band still standing, a head over most in runs, soft patches of cells
-// a step off its grey (never on the top), and ink in clumps where a slow
-// noise falls under the column's share won. Taken on a canvas of its own at
-// the frame's device scale.
-function canvas(w, h) {
-  const c = document.createElement('canvas');
-  c.width = Math.max(1, w); c.height = Math.max(1, h);
-  return c;
-}
-// Keep a marked cell only where it is part of a whole 2 by 2 block of marks:
-// no single cell, no one-cell spur or line, ever (`at(j, r)` the mark).
-function opened(cols, rows, at) {
-  const out = new Uint8Array(cols * rows);
-  for (let j = 0; j + 1 < cols; j++) for (let r = 0; r + 1 < rows; r++) {
-    if (at(j, r) && at(j + 1, r) && at(j, r + 1) && at(j + 1, r + 1))
-      out[r * cols + j] = out[r * cols + j + 1] = out[(r + 1) * cols + j] = out[(r + 1) * cols + j + 1] = 1;
-  }
-  return out;
-}
-// Clear every patch of marks smaller than `least` cells, in place: what is
-// left of a clump a column's top cut short is a fleck, not a blob.
-function noFlecks(marks, cols, rows, least) {
-  const seen = new Uint8Array(marks.length), stack = [], patch = [];
-  for (let k0 = 0; k0 < marks.length; k0++) {
-    if (!marks[k0] || seen[k0]) continue;
-    stack.push(k0); seen[k0] = 1; patch.length = 0;
-    while (stack.length) {
-      const k = stack.pop(), j = k % cols, r = (k - j) / cols;
-      patch.push(k);
-      for (const [dj, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-        const jj = j + dj, rr = r + dr, kk = rr * cols + jj;
-        if (jj >= 0 && jj < cols && rr >= 0 && rr < rows && marks[kk] && !seen[kk]) { seen[kk] = 1; stack.push(kk); }
-      }
-    }
-    if (patch.length < least) for (const k of patch) marks[k] = 0;
-  }
-  return marks;
-}
-function paintBand(bd, seed, cols, column, drift) {
-  const cw = Math.ceil(cols * bd.cell * K), chRows = bd.rows + 2, ch = Math.ceil(chRows * bd.cell * K);
-  const c = canvas(cw, ch), g = c.getContext('2d');
-  if (!g) return c;
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  g.imageSmoothingEnabled = false;
-  const cell = (j, r, h, tone) => {
-    g.fillStyle = GREY[tone];
-    const x0 = Math.round(j * bd.cell * K), y0 = Math.round((chRows - r - h) * bd.cell * K);
-    g.fillRect(x0, y0, Math.round((j + 1) * bd.cell * K) - x0, Math.round((chRows - r) * bd.cell * K) - y0);
-  };
-  const cs = Array.from({ length: cols }, (_, j) => column(j));
-  const tops = cs.map(q => (q.h > 0 ? q.h + (q.head ? 1 : 0) : 0));
-  const inside = j => j >= 0 && j < cols;
-  const share = j => (inside(j) ? cs[j].ink : 0), height = j => (inside(j) ? cs[j].h : 0);
-  const ink = noFlecks(opened(cols, chRows, (j, r) => r < tops[j] && inClump(j + drift, r, share, height, drift, seed, clumpFloor(bd), bd.rows)), cols, chRows, CROWD_CLUMP_LEAST);
-  const [ga, gb] = CROWD_MASS_ALT_GRAIN;
-  const alt = opened(cols, chRows, (j, r) => r < cs[j].h - 1 && vnoise(j * ga, r * gb, seed + 7) > CROWD_MASS_ALT);
-  for (let j = 0; j < cols; j++) {
-    if (tops[j] <= 0) continue;
-    cell(j, 0, tops[j], bd.tone);
-    for (let r = 0; r < tops[j]; r++) {
-      const k = r * cols + j;
-      if (ink[k] || alt[k]) cell(j, r, 1, ink[k] ? 10 : bd.alt);
-    }
-  }
-  return c;
-}
-// Whether a band's cell is in an ink clump: the band is cut in a coarse
-// grid (CROWD_CLUMP), each square holding a clump or not by the share won
-// there, a clump a soft oval of a few cells off the square's middle with a
-// lumpy edge. Whole clumps, few or many, never a scatter of single cells.
-// Whether a clump stands is asked once, at its middle (`share(col)` and
-// `top(col)` the band's there, `drift` the clumps' slow walk across), so a
-// clump is all there or not at all: placed whole inside the band's depth,
-// never cut flat by its foot, and never on a column too short to hold it
-// (the band's sloping ends).
-// The row a band's clumps stand clear of: the top of the band in front of
-// it, so a clump is never half hidden behind the nearer band.
-const clumpFloor = bd => {
-  const b = CROWD_BANDS.indexOf(bd), front = CROWD_BANDS[b - 1];
-  return front ? Math.ceil((front.rows + 1) * front.cell / bd.cell) : 0;
-};
-function inClump(x, r, share, top, drift, seed, lo, hi) {
-  const [gw, gh] = CROWD_CLUMP, cx = Math.floor(x / gw), cy = Math.floor(r / gh);
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-    const qx = cx + dx, qy = cy + dy;
-    const r0 = CROWD_CLUMP_R[0] + (CROWD_CLUMP_R[1] - CROWD_CLUMP_R[0]) * hsh(qx, qy, seed + 14);
-    const ry = Math.min(r0 * CROWD_CLUMP_TALL, (hi - lo) / 2), rx = ry / CROWD_CLUMP_TALL;
-    if (ry < CROWD_CLUMP_R[0] * CROWD_CLUMP_TALL) continue;
-    const mx = (qx + 0.2 + 0.6 * hsh(qx, qy, seed + 12)) * gw;
-    const my = hi - lo > 2 * ry ? clamp((qy + 0.2 + 0.6 * hsh(qx, qy, seed + 13)) * gh, lo + ry, hi - ry) : (lo + hi) / 2;
-    const col = Math.floor(mx - drift), w = Math.ceil(rx);
-    if (hsh(qx, qy, seed + 11) >= Math.min(1, share(col) * CROWD_CLUMP_K)) continue;
-    if (my + ry > Math.min(top(col - w), top(col), top(col + w))) continue;
-    const ex = (x + 0.5 - mx) / rx, ey = (r + 0.5 - my) / ry;
-    if (ex * ex + ey * ey < 0.75 + 0.35 * vnoise(x * 0.5, r * 0.5, seed + 15)) return true;
-  }
-  return false;
-}
-// A band's two pictures, this step's and the next's, and the next's fading
-// in over the step: the crossfade summed exactly on a scratch sheet
-// ('lighter' adds the two weighted pictures), so a cell leaving fades out
-// as one arriving fades in, and nothing pops.
-function makeCache(b, seed) {
-  return { b, seed, K: 0, step: null, A: null, B: null, scratch: null, builds: 0 };
-}
-function drawBandCache(cache, cols, column, x, rate, phase) {
-  const bd = CROWD_BANDS[cache.b];
-  const t = (now() + phase) / CROWD_MASS_STEP_S, i = Math.floor(t), f = t - i;
-  const take = k => { cache.builds++; return paintBand(bd, cache.seed, cols, column, k); };
-  if (cache.K !== K || cache.cols !== cols || cache.step == null || Math.abs(i - cache.step) > 1) {
-    cache.A = take(i); cache.B = take(i + 1); cache.K = K; cache.cols = cols; cache.step = i;
-  } else if (i !== cache.step) {
-    cache.A = cache.B; cache.B = take(i + 1); cache.step = i;
-  }
-  const w = cache.A.width / K, h = cache.A.height / K;
-  const x0 = onPx(at(x, rate)), y0 = onPx(afterFloor() - BAND_FOOT - (bd.rows + 2) * bd.cell);
-  if (x0 > S.camX + S.viewW || x0 + w < S.camX) return;
-  let pic = cache.A;
-  if (f > 0.002) {
-    if (!cache.scratch || cache.scratch.width !== cache.A.width || cache.scratch.height !== cache.A.height)
-      cache.scratch = canvas(cache.A.width, cache.A.height);
-    const g = cache.scratch.getContext('2d');
-    if (g) {
-      g.setTransform(1, 0, 0, 1, 0, 0);
-      g.globalCompositeOperation = 'source-over';
-      g.clearRect(0, 0, cache.scratch.width, cache.scratch.height);
-      g.globalAlpha = 1 - f; g.drawImage(cache.A, 0, 0);
-      g.globalCompositeOperation = 'lighter';
-      g.globalAlpha = f; g.drawImage(cache.B, 0, 0);
-      g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
-      pic = cache.scratch;
-    }
-  }
-  ctx.drawImage(pic, x0, y0, w, h);
-}
-// A column's height in cells off its share of the band: the band's slow rise
-// and fall, and its ends eased down to its foot, a shoulder rather than a
-// stair, so the bands' ends at their three rates read as one slope.
-const bandH = (rows, fill, j, cols, seed) => {
-  const end = Math.min(j, cols - 1 - j), ease = smoothstep(clamp((end + 0.5) / CROWD_MASS_TAPER, 0, 1));
-  return Math.max(0, Math.round((rows * fill + 2 * vnoise(j * 0.13, 0, seed) - 1) * ease));
-};
-const hasHead = (j, seed) => vnoise(j * 0.45, 3, seed) < CROWD_MASS_HEADS;
-
-// --- God's crowd -------------------------------------------------------------------------------
-const godBands = CROWD_BANDS.map((_, b) => makeCache(b, 31 + b));
-const godCols = b => Math.floor(F * CROWD_PITCH * CROWD_BANDS[b].rate / CROWD_BANDS[b].cell);
-// A file's share of a band still standing, and its share won, eased across
-// to the band's column, blurred a file each way so the edge is calm.
-function godColumn(b) {
-  const bd = CROWD_BANDS[b], cols = godCols(b), L = read.bandL, won = support();
-  const pres = read.present[b], ink = read.ink[b];
-  const fileAt = f => {
-    let p = 0, k = 0, w = 0;
-    for (let d = -1; d <= 1; d++) {
-      const g = clamp(f + d, 0, F - 1), wt = d ? 0.25 : 0.5;
-      p += wt * pres[g] / L; k += wt * (pres[g] ? ink[g] / (pres[g] * RIM_PIECES) : 0); w += wt;
-    }
-    return { fill: p / w, ink: k / w };
-  };
-  const files = Array.from({ length: F }, (_, f) => fileAt(f));
-  return j => {
-    const ff = clamp((j + 0.5) / cols * F - 0.5, 0, F - 1), f0 = Math.floor(ff), f1 = Math.min(F - 1, f0 + 1), u = ff - f0;
-    const fill = clamp(lerp(files[f0].fill, files[f1].fill, u), 0, 1);
-    const inked = lerp(files[f0].ink, files[f1].ink, u);
-    const h = fill > 0.02 ? bandH(bd.rows, fill, j, cols, 31 + b) : 0;
-    return { h, head: h > 0 && hasHead(j, 31 + b), ink: CROWD_INK_LOCAL * inked + CROWD_INK_WON * won };
-  };
-}
-
-// The near souls of God's crowd, back rank first: each at the depth it is
-// stepping toward, its rim's pieces eased toward the sim's; a soul newly in
-// the near rows steps out of the mass. Then the signs among them, and the
-// bodies, each after the rank it stands in.
-const drawnNow = { files: 0, souls: 0, bandBuilds: 0, ours: 0, oursMass: 0 };
-export const crowdDrawn = () => ({ ...drawnNow, bandBuilds: godBands.reduce((n, c) => n + c.builds, 0) });
-function nearSouls(a, dt) {
-  const floor = afterFloor(), pad = CROWD_FRONT_BODY + CROWD_PITCH;
-  const posters = S.after.posters.filter(p => p.torn == null).map(p => slotX(p.slot));
-  const bodies = S.after.bodies.filter(w => overCrowd(w.x)).map(w => ({ w, rim: 10, fill: 1 }))
-    .map(o => ({ ...o, d: depthAt(o.w.x, o.w.y) })).sort((p, q) => q.d - p.d);
-  let next = 0;
-  const bodiesTo = d => {
-    for (; next < bodies.length && bodies[next].d >= d; next++) {
-      const o = bodies[next];
-      body(o.w, o.rim, o.fill);
-    }
-  };
-  bodiesTo(NEAR);
-  const step = CROWD_STEP_UP * dt, inkStep = CROWD_INK_FADE * dt;
-  let files = 0, count = 0;
-  for (let v = NEAR - 1; v >= 0; v--) {
-    const row = ROWS[VIS[v].row];
-    const lo = CX + (S.camX - pad - CX) / row.rate, hi = CX + (S.camX + S.viewW + pad - CX) / row.rate;
-    const f0 = clamp(Math.floor((lo - CROWD_X0) / CROWD_PITCH) - 1, 0, F - 1);
-    const f1 = clamp(Math.ceil((hi - CROWD_X0) / CROWD_PITCH) + 1, 0, F - 1);
-    files = Math.max(files, f1 - f0 + 1);
-    for (let f = f0; f <= f1; f++) {
-      const i = read.near[f * NEAR + v];
-      if (i < 0) continue;
-      let sv = read.shownVis[i], si = read.shownInk[i];
-      if (Number.isNaN(sv)) sv = read.primed ? NEAR : v;
-      if (Number.isNaN(si)) si = a[i];
-      sv = sv > v ? Math.max(v, sv - step) : v;
-      si = si < a[i] ? Math.min(a[i], si + inkStep) : Math.max(a[i], si - inkStep);
-      read.shownVis[i] = sv; read.shownInk[i] = si;
-      const L = layout(sv, read.bandL), s = Math.round(L.s);
-      const x = onPx(at(fileMid(f) + L.off, L.rate) - s / 2);
-      if (x + s < S.camX || x > S.camX + S.viewW) continue;
-      // A front soul standing at a poster is behind it.
-      if (v === 0 && posters.some(px => Math.abs(px + P / 2 - fileMid(f)) < CROWD_PITCH / 2)) continue;
-      const fade = sv > NEAR - 1 ? clamp(NEAR - sv, 0, 1) : 1;
-      soul(x, onPx(floor - L.foot - s), s, si, paleTone(s, i), fade);
-      count++;
-    }
-    bodiesTo(v);
-  }
-  bodiesTo(-1);
-  // The cloud's puffs in front of the front row: its feet stand in them.
-  drawFloorLip();
-  read.primed = true;
-  drawnNow.files = files; drawnNow.souls = count;
-}
-// The signs planted in the crowd, where their slot is drawn: a post and a
-// board (wider when it reaches further), knocked a cell over when askew,
-// faint while a warden pulls it up.
-function signs() {
-  const floor = afterFloor();
-  for (const s of S.after.signs) {
-    const x0 = CROWD_X0 + s.f * CROWD_PITCH + CROWD_FRONT_BODY / 2;
-    const v = seenAt(x0, floor - (s.r < CROWD_NEAR ? s.r * CROWD_ROW : CROWD_NEAR * CROWD_ROW + (s.r - CROWD_NEAR) * CROWD_FAR_ROW));
-    const u = P * v.k, x = onPx(v.x - u / 2), y = v.y;
-    if (x + u * 3 < S.camX || x - u * 3 > S.camX + S.viewW) continue;
-    const was = ctx.globalAlpha;
-    if (s.burnt != null) ctx.globalAlpha = was * clamp(1 - (now() - s.burnt) / AFTER_BURN_S, 0, 1);
-    rect(x, y - u * 3, u, u * 3, 10);
-    const off = s.askew ? u : 0, half = s.big ? 2 : 1;
-    rect(x - u * half + off, y - u * 5, u * (half * 2 + 1), u * 2, 10);
-    rect(x + off, y - u * 5 + Math.max(1, u / 3), u, Math.max(1, u / 3), 1);
-    ctx.globalAlpha = was;
+// --- souls drifting up from the camp ---------------------------------------------------------------
+const DRIFT_MID = (SKY_DRIFT.every[0] + SKY_DRIFT.every[1]) / 2;
+function drawDrift() {
+  const t = now(), b = stationBox('pedestal'), x0 = stationBox('mill')?.x ?? afterX0(), x1 = b.x + b.w + P * 60;
+  for (let n = Math.max(0, Math.floor((t - SKY_DRIFT.life) / DRIFT_MID) - 1); n * DRIFT_MID <= t; n++) {
+    const at = n * DRIFT_MID + (hsh(n, 14) - 0.5) * (SKY_DRIFT.every[1] - SKY_DRIFT.every[0]), tau = t - at;
+    if (tau < 0 || tau > SKY_DRIFT.life) continue;
+    const a = Math.min(1, tau / 1.2) * Math.min(1, (SKY_DRIFT.life - tau) / 3) * 0.9;
+    const x = snap(lerp(x0, x1, hsh(n, 12)) + Math.sin(tau * 0.8 + hsh(n, 13) * 6) * 6, 2), y = snap(F.floor - 40 - tau * SKY_DRIFT.rise, 2);
+    if (inView(x, 6)) alpha(a, () => { rect(x, y, 6, 6, 6); rect(x + 2, y + 2, 2, 2, 0); });
   }
 }
 
-// --- God -----------------------------------------------------------------------------------------
-// Taken once a zoom: the far scenery (the switchback's ledges and flights),
-// the throne hazed and the throne in ink, and the glare. Drawn each frame
-// at God's place on the slowest layer: the ink over the haze as the camera
-// arrives, the glare pulsing at the share of support still to win.
-const god = { K: 0, box: null, haze: null, ink: null, glare: null, scenery: null, horizon: null };
-function billow(cols, seed) {
-  const el = new Array(cols).fill(0);
-  let c = 0, i = 0;
-  while (c < cols) {
-    const n = 5 + Math.floor(hsh(seed, i, 1) * 4);
-    for (let j = 0; j < n && c + j < cols; j++) el[c + j] = Math.max(el[c + j], Math.round(Math.pow(Math.sin(Math.PI * (j + 0.5) / n), 0.6)));
-    c += n - 1; i++;
-  }
-  return el;
-}
-// A sprite painted in God's own px about (0, floor 0), drawn at `s` of its
-// size about the horizon (God far off is God smaller on the horizon). Every
-// rect keeps a device pixel at least, so a far stroke thins and never drops
-// out. Its box, scaled, rides on the canvas for `blit`.
-const sx = (x, s) => x * s, sy = (y, s) => -GOD_HORIZON_UP + (y + GOD_HORIZON_UP) * s;
-function sprite(box, paint, s = 1) {
-  const sb = { x: sx(box.x, s), y: sy(box.y, s), w: box.w * s, h: box.h * s };
-  const c = canvas(Math.ceil(sb.w * K) + 1, Math.ceil(sb.h * K) + 1), g = c.getContext('2d');
-  c.box = sb;
-  if (!g) return c;
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  const r = (x, y, w, h, tone) => {
-    g.fillStyle = GREY[tone];
-    const x0 = Math.round((sx(x, s) - sb.x) * K), y0 = Math.round((sy(y, s) - sb.y) * K);
-    const ww = Math.max(1, Math.round((sx(x + w, s) - sb.x) * K) - x0), hh = Math.max(1, Math.round((sy(y + h, s) - sb.y) * K) - y0);
-    if (w > 0 && h > 0) g.fillRect(x0, y0, ww, hh);
-  };
-  paint(r);
-  return c;
-}
-// A billow edge: the cloud's top line, its steps, and the paper under it.
-function edge(r, el, x0, yTop, tone, fill, yBot) {
-  for (let j = 0; j < el.length; j++) {
-    const x = x0 + j * P, y = yTop - el[j] * P;
-    const cutL = j > 0 && el[j - 1] < el[j], cutR = j < el.length - 1 && el[j + 1] < el[j];
-    if (fill != null) r(x, y + (cutL || cutR ? 2 : 0), P, yBot - y, fill);
-    r(x + (cutL ? 2 : 0), y, P - (cutL ? 2 : 0) - (cutR ? 2 : 0), 2, tone);
-    if (j > 0 && el[j] !== el[j - 1]) {
-      const a = yTop - Math.max(el[j], el[j - 1]) * P, b = yTop - Math.min(el[j], el[j - 1]) * P;
-      r(el[j] > el[j - 1] ? x : x - 2, a + 2, 2, b - a, tone);
-    }
-  }
-}
-// God's figure, about (0, floor 0): the throne's back, the seat and its
-// legs, God the big square, two eyes and a crown. `fill` paints the paper
-// inside; the ink pass leaves it out, so the crossfade never greys it.
-function throne(r, tone, fill) {
-  const box = (x, y, w, h) => {
-    if (fill) r(x, y, w, h, 0);
-    r(x, y, w, 2, tone); r(x, y + h - 2, w, 2, tone); r(x, y + 2, 2, h - 4, tone); r(x + w - 2, y + 2, 2, h - 4, tone);
-  };
-  box(-GOD_THRONE.w / 2, -GOD_THRONE.top, GOD_THRONE.w, GOD_THRONE.h);
-  box(-GOD_SEAT.w / 2, -GOD_SEAT.up, GOD_SEAT.w, GOD_SEAT.h);
-  const legY = -GOD_SEAT.up + GOD_SEAT.h, legH = GOD_SEAT.h + 4;
-  r(-GOD_SEAT.w / 2 + 10, legY, 2, legH, tone); r(GOD_SEAT.w / 2 - 12, legY, 2, legH, tone);
-  box(-GOD_FACE.w / 2, -GOD_FACE.up, GOD_FACE.w, GOD_FACE.w);
-  for (const ex of GOD_FACE.eyeAt) r(ex, -GOD_FACE.eyeUp, GOD_FACE.eye, GOD_FACE.eye, tone);
-  const [pw, ph] = GOD_CROWN.prong, [bw, bh] = GOD_CROWN.band;
-  const gap = (bw - 8 - pw) / (GOD_CROWN.prongs - 1);
-  for (let k = 0; k < GOD_CROWN.prongs; k++) r(-bw / 2 + 4 + k * gap, -GOD_CROWN.up, pw, ph, tone);
-  r(-bw / 2, -GOD_CROWN.up + ph - 2, bw, bh, tone);
-}
-function takeGod(s) {
-  god.K = K; god.s = s;
-  const reach = GOD_GLARE.r1[1] + 4;
-  const glareBox = { x: -reach, y: -GOD_GLARE.up - reach, w: reach * 2, h: reach * 2 };
-  god.glare = sprite(glareBox, r => {
-    for (let k = 0; k < GOD_GLARE.rays; k++) {
-      const an = k / GOD_GLARE.rays * Math.PI * 2, r1 = GOD_GLARE.r1[k % 2 ? 0 : 1];
-      for (let d = GOD_GLARE.r0; d < r1; d += 2)
-        r(Math.round(Math.cos(an) * d) - 1, Math.round(-GOD_GLARE.up + Math.sin(an) * d) - 1, 2, 2, GOD_GLARE.tone);
-    }
-  }, s);
-  god.glareBox = glareBox;
-  const tw = Math.max(GOD_SEAT.w, GOD_THRONE.w) + 4;
-  const tbox = { x: -tw / 2, y: -GOD_THRONE.top - 2, w: tw, h: GOD_THRONE.top - GOD_SEAT.up + GOD_SEAT.h * 3 };
-  god.haze = sprite(tbox, r => throne(r, GOD_HAZE_TONE, true), s);
-  god.ink = sprite(tbox, r => throne(r, 10, false), s);
-  god.box = tbox;
-  const xs = [...GOD_LEDGES.flatMap(l => [l[0], l[1]]), ...GOD_FLIGHTS.flatMap(l => [l[0], l[2]])];
-  const sbox = { x: Math.min(...xs) - P, y: -Math.max(...GOD_LEDGES.map(l => l[2])) - P * 2, w: Math.max(...xs) - Math.min(...xs) + P * 2,
-                 h: GOD_HORIZON_UP + P * 2 };
-  sbox.h = -sbox.y - GOD_HORIZON_UP + P * 4;
-  god.scenery = sprite(sbox, r => {
-    GOD_LEDGES.forEach(([a, b, up], k) => {
-      const cols = Math.round((b - a) / P);
-      const el = billow(cols, 61 + k); el[0] = 0; el[cols - 1] = 0;
-      edge(r, el, a, -up, 3, 0, -up + 24);
-      edge(r, billow(cols, 66 + k).map(v => -v), a, -up + 18, 2, null, 0);
-    });
-    for (const [x0, u0, x1, u1] of GOD_FLIGHTS) {
-      const n = Math.max(2, Math.round((u1 - u0) / 8)), dx = (x1 - x0) / n, dy = (u1 - u0) / n;
-      for (let s = 0; s < n; s++) {
-        const x = x0 + dx * s, y = -u0 - dy * (s + 1);
-        r(Math.min(x, x + dx), y, Math.abs(dx) + 2, 2, 3);
-        r(dx > 0 ? x : x + dx + Math.abs(dx), y, 2, dy + 2, 3);
-      }
-    }
-  }, s);
-  god.sceneryBox = sbox;
-  // The far horizon: a billow line a tile long, laid end to end across the window.
-  const tile = P * 40;
-  god.horizonBox = { x: 0, y: -GOD_HORIZON_UP - P * 2, w: tile, h: P * 3 };
-  god.horizon = sprite(god.horizonBox, r => edge(r, billow(tile / P, 41), 0, -GOD_HORIZON_UP, 2, null, 0));
-}
-const blit = (pic, box, x, y) => { const b = pic.box || box; ctx.drawImage(pic, onPx(x + b.x), onPx(y + b.y), pic.width / K, pic.height / K); };
-// God's size this frame (view.js, `godScaleAt`), held to a device pixel of
-// the throne's height so the sprites are taken again only when he has grown
-// by one; and how strongly he shows, fainter the further off.
-const godSize = () => {
-  const s = godScaleAt(CX), unit = GOD_THRONE.top * K;
-  return Math.max(1 / unit, Math.round(s * unit) / unit);
-};
-function drawGod() {
-  const s = godSize();
-  if (god.K !== K || god.s !== s) takeGod(s);
-  const floor = afterFloor(), G = at(afterEnd(), GOD_RATE), t = now();
-  const far = clamp((s - GOD_FAR) / (1 - GOD_FAR), 0, 1), show = lerp(GOD_FAR_ALPHA, 1, far);
-  // The horizon, its tiles at God's rate.
-  const tile = god.horizonBox.w, x0 = at(0, GOD_RATE);
-  const first = Math.floor((S.camX - x0) / tile);
-  for (let k = first; x0 + k * tile < S.camX + S.viewW; k++) blit(god.horizon, god.horizonBox, x0 + k * tile, floor);
-  const was = ctx.globalAlpha;
-  ctx.globalAlpha = was * show;
-  const glare = glareAlpha() * (0.55 + 0.45 * (0.5 + 0.5 * Math.sin(t * GOD_GLARE.pulse)));
-  if (glare > 0) { ctx.globalAlpha = was * show * glare; blit(god.glare, god.glareBox, G, floor); ctx.globalAlpha = was * show; }
-  blit(god.scenery, god.sceneryBox, G, floor);
-  blit(god.haze, god.box, G, floor);
-  const near = smoothstep(afterPan(CX)) ** 1.5;
-  if (near > 0) { ctx.globalAlpha = was * show * near; blit(god.ink, god.box, G, floor); ctx.globalAlpha = was * show; }
-  // The tithe carriers on the switchback, tiny, fading in at its foot and
-  // out into the glare at the seat.
-  const pts = GOD_TITHE_PATH, lens = pts.slice(1).map((q, i) => Math.hypot(q[0] - pts[i][0], q[1] - pts[i][1]));
-  const tot = lens.reduce((s, l) => s + l, 0);
-  for (let k = 0; k < GOD_CARRIERS; k++) {
-    const q = (((t / GOD_CARRIER_LAP_S + k / GOD_CARRIERS) % 1) + 1) % 1;
-    let d = q * tot, i = 0;
-    while (i < lens.length - 1 && d > lens[i]) d -= lens[i++];
-    const u = d / lens[i], px = G + sx(lerp(pts[i][0], pts[i + 1][0], u), s), py = floor + sy(-lerp(pts[i][1], pts[i + 1][1], u), s);
-    const c = Math.max(1 / K, s);
-    ctx.globalAlpha = was * show * Math.min(1, q * 20, (1 - q) * 12);
-    const x = onPx(px - 3 * c), y = onPx(py - 6 * c);
-    rect(x, y, 6 * c, 6 * c, 5); rect(x + 2 * c, y + 2 * c, 2 * c, 2 * c, 0); rect(x + c, y - 2 * c, 4 * c, 2 * c, 4);
-  }
-  ctx.globalAlpha = was;
-}
-
-let lastT = null;
-const frameDt = () => { const t = now(), d = lastT == null ? 0 : clamp(t - lastT, 0, 0.25); lastT = t; return d; };
-
-// God's side: God on the horizon, the mass's bands far to near, the near
-// rows and the front row, the signs and the bodies among them.
-export function drawAfterCrowd(c) {
+// --- the layers ------------------------------------------------------------------------------------
+// The sky behind the camp: the far bands and their clouds, God, the near
+// bands, the tithe line and the signs, the cloud bank over their feet.
+let GZ = null, lastDt = 0;
+export function drawSkyCrowd() {
   if (!S.after) return;
   camFrame();
-  const a = readCrowd();
-  const dt = frameDt();
-  drawGod();
-  for (let b = CROWD_BANDS.length - 1; b >= 0; b--) {
-    if (read.ranks <= NEAR) continue;
-    drawBandCache(godBands[b], godCols(b), godColumn(b), CROWD_X0, CROWD_BANDS[b].rate, b * 1.3);
+  freshCaches();
+  lastDt = stepShown();
+  drawn.cells = 0; drawn.slices = 0;
+  EV = eventsNow();
+  RINGS = ringsNow();
+  GZ = gazeNow();
+  pickJoins();
+  const far = SKY_BANDS.length;
+  for (let k = 0; k < far - 1; k++) {
+    drawBand(k);
+    if (SKY_CLOUDS_AFTER.includes(k) && k !== far - 2) drawCloudStrip(k);
   }
-  nearSouls(a, dt);
-  signs();
-  pushback();
+  drawGodBack();
+  drawGod(GZ);
+  drawCloudStrip(far - 2);
+  drawBand(far - 1);
+  drawNearSouls();
+  drawTithe(lastDt);
+  drawThings(GZ);
+  drawBank();
 }
-
-// God's pushback over the front (the placeholder's, kept through the crowd's
-// redraw): the posters on the fence, a torn one's every other strip gone and
-// the rest fading; and the throne's speech, its band of files framed in grey
-// cells fading in over its warning, then washed white while it is held,
-// the wash fading off.
-function pushback() {
-  const A = S.after, floor = afterFloor(), t = now(), was = ctx.globalAlpha;
-  for (const p of A.posters) {
-    const x = slotX(p.slot);
-    if (x + P * 2 < S.camX || x - P > S.camX + S.viewW) continue;
-    ctx.globalAlpha = was * (p.burnt != null ? clamp(1 - (t - p.burnt) / AFTER_BURN_S, 0, 1) : p.torn != null ? clamp(1 - (t - p.torn) / AFTER_POSTER_FADE_S, 0, 1) : 1);
-    const rows = p.big ? 5 : 3, top = floor - P * (3 + rows);
-    rect(x - P, top, P * 3, P * (rows + 1), 10);
-    for (let r = 0; r < rows; r++) {
-      if (p.torn != null && r % 2) continue;
-      rect(x - P + 1, top + 1 + r * P, P * 3 - 2, P - (r === rows - 1 ? 2 : 0), r % 2 ? 2 : 0);
-    }
-  }
-  ctx.globalAlpha = was;
+// Over the camp: the bodies standing in God's yard, the souls drifting up,
+// the gaze, which lights whatever it crosses, and the throne's bubbles.
+export function drawAfterCrowd() {
+  if (!S.after) return;
+  camFrame();
+  if (!GZ) return;
+  for (const w of S.after.bodies) if (overCrowd(w.x)) body(w);
+  drawDrift();
+  drawGaze(GZ);
+  drawBubbles();
 }
-

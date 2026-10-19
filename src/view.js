@@ -27,8 +27,7 @@
 // end coming back. `goPlace` is the straight cut for scenes and checks.
 
 import { S } from './state.js';
-import { CELL, P, VIEW_GLIDE_S, SHAFT_HAND_FADE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM,
-         CROWD_X0, AFTER_ZOOM_MAX, AFTER_FOCUS_UP, AFTER_FOCUS_AT, GOD_HORIZON_UP, GOD_FAR } from './config.js';
+import { CELL, P, VIEW_GLIDE_S, SHAFT_HAND_FADE_S, DEEP_H, DEEP_SURFACE, DEEP_FLOOR_MARGIN, KILL_ZOOM } from './config.js';
 import { clampCam, setZoom, yardCell } from './world.js';
 import { portalX, portalCircle, deepPortal, deepX0, deepX1, deepFloor, deepTop } from './deep/place.js';
 import { reducedMotion } from './prefs.js';
@@ -36,6 +35,7 @@ import { dropLift } from './cutscene.js';
 import { smoothstep as ease } from './motion.js';
 import { actPlace, placeOpen, isActView } from './acts.js';
 import { portalEnd } from './portals.js';
+import { afterEnd, zoomAt, pullAt, topAt } from './after/sky.js';
 
 // Each farther place and the nearer one it is reached from: the deep and the
 // afterlife off the yard, hell off the deep.
@@ -95,55 +95,31 @@ function placeZoom(v) {
 }
 const zoomOf = v => (v === 'deep' ? deepZoom() : isActView(v) ? placeZoom(v) : 1);
 
-// --- the afterlife's camera (track C) ------------------------------------------------
-// Act 3's camera zooms as it pans (the round 3 crowd mock, the main option):
-// at 1x over the grove and the camp, near it through God's crowd, then a
-// dive at the far end toward the top of the throne. The zoom is read off
-// where the window's middle stands, never the other way about, so a pan, a
-// resize and the zoom that follows them all agree: the middle is the one
-// fact, and the zoom and the window's left are worked out from it.
-//
-// The pan runs from the crowd's front to the middle of the last window the
-// place has at rest: that end is where God stands (render/aftercrowd.js),
-// and the middle is held there, so the dive never runs past the throne.
-const restViewW = v => S.W / (yardZoom() * placeZoom(v));
-export const afterEnd = () => actPlace('after').x1() - restViewW('after') / 2;
-export function afterPan(cx) {
-  const a = CROWD_X0, b = afterEnd();
-  return b > a ? Math.max(0, Math.min(1, (cx - a) / (b - a))) : 0;
-}
-// How far into the dive, 0..1: the cube of an ease, slow through the crowd.
-export const afterDive = cx => ease(afterPan(cx)) ** 3;
-export const afterZoomAt = cx => 1 + (AFTER_ZOOM_MAX - 1) * afterDive(cx);
-// God's size where the window's middle stands, 1 at the throne end: small
-// on the horizon from the camp and the crowd's front, growing into view
-// across the pan, so he reads as far off until the camera has walked to him.
-export const godScaleAt = cx => GOD_FAR + (1 - GOD_FAR) * ease(afterPan(cx));
+// --- the afterlife's camera (track B) ------------------------------------------------
+// Act 3's camera zooms as it pans (docs/mocks/act3-skycrowd-2026-10-18): at
+// 1x from the grove to where the act opens, then panning right it turns
+// toward God and goes in on his face (after/sky.js, `zoomAt`, `topAt`). The
+// zoom is read off where the window's middle stands, never the other way
+// about, so a pan, a resize and the zoom that follows them all agree: the
+// middle is the one fact, and the zoom and the window's left and top are
+// worked out from it. The middle is held at the last window the place has,
+// so the dive never runs past God.
+export { afterEnd };
 // The zoom as `setZoom` keeps it, whole device pixels a cell, worked out
 // without setting it (for `placeCamera`).
 function snapped(k) {
   const unit = yardCell() * S.dpr;
   return yardZoom() * Math.max(1, Math.round(unit * k)) / unit;
 }
-// The window's top: the floor on the window's foot at rest, lifted as the
-// dive goes in until the throne's top stands AFTER_FOCUS_AT down the window.
-function afterTopAt(e, viewH, cx) {
-  const pl = actPlace('after');
-  const rest = pl.floor() + pl.margin - viewH;
-  const up = GOD_HORIZON_UP + (AFTER_FOCUS_UP - GOD_HORIZON_UP) * godScaleAt(cx);
-  const lift = Math.min(rest, pl.floor() - up - AFTER_FOCUS_AT * viewH);
-  return rest + (lift - rest) * e;
-}
 // The afterlife framed off its window's middle, held there. The lift is
 // the dive's own: a height held by anything else is left alone at rest.
 let lifted = false;
 function frameAfter() {
   const cx = Math.min(S.camX + S.viewW / 2, afterEnd());
-  const e = afterDive(cx);
-  const k = placeZoom('after') * (1 + (AFTER_ZOOM_MAX - 1) * e);
+  const k = placeZoom('after') * zoomAt(cx);
   if (Math.abs(S.zoom - snapped(k)) > 1e-9) setZoom(k);
   S.camX = cx - S.viewW / 2;
-  if (e > 0) { S.camLockY = afterTopAt(e, S.viewH, cx); lifted = true; }
+  if (pullAt(cx) > 0) { S.camLockY = topAt(cx, S.zoom / yardZoom()); lifted = true; }
   else if (lifted) { S.camLockY = null; lifted = false; }
   clampCam();
 }
@@ -184,12 +160,12 @@ export function placeCamera(v, x = actPlace(v).open()) {
   const pl = actPlace(v);
   // The afterlife's zoom and lift off where its middle stands (`frameAfter`).
   const cx = v === 'after' ? Math.min(x, afterEnd()) : x;
-  const e = v === 'after' ? afterDive(cx) : 0;
-  const zoom = v === 'after' ? snapped(placeZoom(v) * (1 + (AFTER_ZOOM_MAX - 1) * e)) : yardZoom() * placeZoom(v);
+  const e = v === 'after' ? pullAt(cx) : 0;
+  const zoom = v === 'after' ? snapped(placeZoom(v) * zoomAt(cx)) : yardZoom() * placeZoom(v);
   const viewW = S.W / zoom, viewH = S.H / zoom;
   const x0 = pl.x0();
   const camX = Math.max(x0, Math.min(cx - viewW / 2, Math.max(x0, pl.x1() - viewW)));
-  return { zoom, viewW, viewH, camX, camY: e > 0 ? afterTopAt(e, viewH, cx) : pl.floor() + pl.margin - viewH };
+  return { zoom, viewW, viewH, camX, camY: e > 0 ? topAt(cx, zoom / yardZoom()) : pl.floor() + pl.margin - viewH };
 }
 
 export function deepGlass() {

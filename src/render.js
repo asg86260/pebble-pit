@@ -65,7 +65,7 @@ import { drawHome } from './render/home.js';
 import { drawActsYard, drawActsDeep, drawActsAfter, drawActsHell, drawActBodies, drawActCaption } from './render/portals.js';
 import { drawMansion } from './render/mansion.js';
 import { drawAfterBackdrop, drawAfterGrove, drawAfterCamp, drawAfterMembers, drawAfterSky, drawAfterCounts } from './render/after.js';
-import { drawAfterCrowd } from './render/aftercrowd.js';
+import { drawAfterCrowd, drawSkyCrowd } from './render/aftercrowd.js';
 import { drawAfterCues } from './render/aftercues.js';
 import { drawAfterCoins } from './render/aftercoins.js';
 import { drawAfterCard } from './render/aftercard.js';
@@ -205,10 +205,12 @@ const LAYERS = [
   { name: 'acts-yard', draw: drawActsYard },      // heaven's tear over the ruin and its cloud stair, the rock on the ruin, the go-on card (render/portals.js)
   { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
   // Act 3's afterlife (render/after.js), drawn only with the camera up there,
-  // back to front: the page and the cloud floor, the sky's clouds, the grove
-  // and the camp, God's crowd and the throne (render/aftercrowd.js), and the
-  // members walking and working over all of it.
+  // back to front: the page and the cloud floor, God's crowd filling the sky
+  // with God over it (render/aftercrowd.js), the sky's clouds, the grove and
+  // the camp, and the members walking and working over all of it, God's gaze
+  // and his bubbles last.
   { name: 'after backdrop', draw: drawAfterBackdrop },
+  { name: 'after heaven', draw: drawSkyCrowd },     // God's crowd filling the sky, God, the tithe line, the signs (render/aftercrowd.js)
   { name: 'after sky', draw: drawAfterSky },
   { name: 'after grove', draw: drawAfterGrove },
   { name: 'after camp', draw: drawAfterCamp },
@@ -390,7 +392,7 @@ const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'roster
                       'work bars', 'build sites', 'done marks', 'pile marks', 'pad focus']);
 // The acts' places (acts.js), each with only its own layers: none of the
 // yard's or the deep's world is anywhere near them.
-const AFTER = new Set(['after backdrop', 'after sky', 'after camp crowd', 'after grove', 'after camp', 'after crowd', 'after members', 'after coins', 'after cues', 'acts-after', 'acts-after-bodies']);
+const AFTER = new Set(['after backdrop', 'after heaven', 'after sky', 'after grove', 'after camp', 'after crowd', 'after members', 'after coins', 'after cues', 'acts-after', 'acts-after-bodies']);
 const HELL = new Set(['hell backdrop', 'hell chambers', 'hell seams', 'hell forge', 'hell barriers', 'hell cage', 'acts-hell', 'acts-hell-bodies']);
 const placeOf = name => (DEEP.has(name) ? 'deep' : AFTER.has(name) ? 'after' : HELL.has(name) ? 'hell' : 'yard');
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
