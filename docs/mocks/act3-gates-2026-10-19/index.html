@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[ph] Stair and Gates</title>
+<style>
+  :root { --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --face: ui-monospace, "Courier New", monospace; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36; } }
+  :root[data-theme="dark"] { --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--face); }
+  main { max-width: 2040px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 4px; } h2 { font-size: 15px; margin: 0 0 6px; } h3 { font-size: 13px; margin: 12px 0 4px; }
+  p, li { color: var(--muted); margin: 0 0 8px; max-width: 1100px; }
+  b { color: var(--fg); }
+  .ph::before { content: "[ph] "; color: var(--muted); font-weight: normal; font-size: 11px; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; position: sticky; top: 0; background: var(--bg); padding: 6px 0; z-index: 2; }
+  .bar button { font: inherit; background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 16px; }
+  canvas { display: block; image-rendering: pixelated; max-width: 100%; height: auto; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+  figure { margin: 0; max-width: 100%; } figcaption { font-size: 11px; color: var(--muted); }
+  .beat { font-size: 12px; color: var(--fg); min-height: 18px; }
+  .rec { border-left: 3px solid var(--fg); padding-left: 10px; }
+  .sw { display: inline-block; width: 14px; height: 14px; border: 1px solid var(--line); vertical-align: middle; }
+</style>
+</head>
+<body>
+<main>
+  <h1 class="ph">Act 3: heaven's portal as a stair up to pearly gates, three takes</h1>
+  <p class="ph">A <b>mock</b> drawn from plain shapes, not the game. It replaces the purple tear over the ruin and the purple ring over heaven's cloud floor. Each take is drawn at the game's framing: zoom 1, 6 px cells, 3-cell bodies, at 2000 by 967 and 800 by 600, with 3x crops of the 800 frame. Stone, cloud and metal use the act's four tones only: paper, pale, mid and ink. The gates' light is the one exception. It stays raw white on both pages, like God's, so on the dark page it is the brightest thing on screen.</p>
+  <p class="ph">Each loop runs: idle with the hand, a click, the gates open in four held steps, the ripple out of the gates to heaven, heaven's side of the same gates, a click, the ripple back, then the gates close in four held steps. The "road" frame shows the walks with the gates open: souls rise out of the ruin and climb, and the ghost pair come down. Every word on this page is a placeholder.</p>
+  <div class="bar">
+    <button data-t="auto" class="on ph">auto</button><button data-t="light" class="ph">light</button><button data-t="dark" class="ph">dark</button>
+    <button id="pause" class="ph">pause</button>
+    <span class="ph" style="color:var(--muted)">palette:</span><span id="sw"></span>
+  </div>
+  <div id="takes"></div>
+
+  <section class="card">
+    <h2 class="ph">Self-critique, round 1 (first build, before fixes)</h2>
+    <ul id="crit1"></ul>
+    <h2 class="ph">Self-critique, round 2 (after the round 1 fixes)</h2>
+    <ul id="crit2"></ul>
+  </section>
+
+  <section class="card rec">
+    <h2 class="ph" id="rech">Recommendation</h2>
+    <ul id="rec"></ul>
+  </section>
+
+  <section class="card">
+    <h2 class="ph">What this mock cannot show</h2>
+    <ul>
+      <li class="ph">The camera. In the game the view glides and lands on heaven's own framing; here each place has a still camera, and the ripple simply opens from the gates' middle.</li>
+      <li class="ph">Where the two ends sit in the world. Today the yard end hangs 34 cells over the house and heaven's end hangs 14 cells over the cloud floor. Here the yard gates stand on the stair's top landing 30 cells up, and heaven's gates stand on the cloud floor with the light coming up through it. That moves heaven's end down onto the floor (ACT_HEAVEN_HANG near 0). The light between them is today's straight ride, now drawn as a stair of light.</li>
+      <li class="ph">The portal opening for the first time (as the souls rise at the house's fall). The stair would be let down a step at a time, faded in by opacity, and the gates would fade in after it. That is not drawn here.</li>
+      <li class="ph">Real bodies, wardrobe, the ghosts' looks and the real rock; the sky crowd and the camp are simplified redraws; the hand is the built glyph, inked in the act's tones instead of purple.</li>
+    </ul>
+  </section>
+</main>
+<script>
+// ---- the four tones: paper, pale, mid, ink. Dark page: by lightness onto #1f1f1f .. #e0e0e0 ----
+const P = 6;
+const FOUR = ['#ffffff', '#d6d6d6', '#8a8a8a', '#000000'];
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+const hex = v => '#' + Math.round(v).toString(16).padStart(2, '0').repeat(3);
+const MAPPED = FOUR.map(c => hex((LP + (LI - LP) * (1 - parseInt(c.slice(1, 3), 16) / 255)) * 255));
+const RAW = '#ffffff';                 // the gates' light, raw on both pages
+const SOUL_RIM = FOUR[1];              // a soul's rim, seen at the light page's lightness on both pages
+let DARK = false;
+const T = i => (DARK ? MAPPED : FOUR)[i];
+const frac = v => v - Math.floor(v), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function hsh(a, b = 0, c = 0) { let h = (a * 374761393 + b * 668265263 + c * 2246822519) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+const bay = (x, y) => (BAYER[(x & 3) + 4 * (y & 3)] + 0.5) / 16;
+
+let g = null;
+const fill = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x * P, y * P, w * P, h * P); };
+const C = (x, y, c) => fill(x, y, 1, 1, c);
+const alpha = (a, fn) => { if (a <= 0) return; const o = g.globalAlpha; g.globalAlpha = o * clamp(a, 0, 1); fn(); g.globalAlpha = o; };
+
+// ---- a cloud: a mask of whole cells, pale on top so it reads on paper, mid underneath ----
+function Mask() { const m = new Map(); return { m, add(x, y) { m.set(x + ',' + y, 1); }, has(x, y) { return m.has(x + ',' + y); } }; }
+function puff(M, cx, cy, r, squash = 1.6) {
+  for (let y = Math.floor(cy - r); y <= cy + r; y++) for (let x = Math.floor(cx - r * 1.4); x <= cx + r * 1.4; x++) {
+    const dx = (x + 0.5 - cx) / 1.4, dy = (y + 0.5 - cy) * squash / 1.6;
+    if (dx * dx + dy * dy * squash <= r * r) M.add(x, y);
+  }
+}
+function paintCloud(M, seed = 7) {
+  for (const k of M.m.keys()) {
+    const [x, y] = k.split(',').map(Number);
+    const up = M.has(x, y - 1), dn = M.has(x, y + 1), lf = M.has(x - 1, y), rt = M.has(x + 1, y);
+    let tone;
+    if (!up) tone = 1;
+    else if (!dn) tone = 2;
+    else if (!lf || !rt) tone = 1;
+    else if (!M.has(x, y + 2)) tone = 1;
+    else tone = hsh(x, y, seed) < 0.18 ? 1 : 0;
+    C(x, y, T(tone));
+  }
+}
+
+// ---- the framing: the game's ground line at 0.6 of the window, the house a third across ----
+function frameOf(W, H) {
+  const cw = Math.ceil(W / P), ch = Math.ceil(H / P), Gy = Math.round(H / P * 0.6), Cx = Math.round(W / P * 0.3);
+  return { W, H, cw, ch, Gy, Cx, Ty: Gy - 30 };
+}
+
+// ---- bodies: 3 cells, a soul's rim pale, the pair's inked pieces in ink ----
+const RIM = [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2], [1, 2], [0, 2], [0, 1]];
+function body(px, py, kind, a = 1, inked = 0, carry = false) {
+  alpha(a, () => {
+    const X = Math.round(px), Y = Math.round(py);
+    RIM.forEach(([c, r], i) => { g.fillStyle = kind === 'live' ? T(3) : (i < inked ? T(3) : SOUL_RIM); g.fillRect(X + c * P, Y + r * P, P, P); });
+    g.fillStyle = T(0); g.fillRect(X + P, Y + P, P, P);
+    if (carry) { g.fillStyle = T(2); g.fillRect(X + P / 2, Y - P, 2 * P, P); }
+  });
+}
+// a body by its feet: x the middle, y the line it stands on, both in cells
+const bodyAtFeet = (fx, fy, kind, a, inked, carry) => body(fx * P - 1.5 * P, fy * P - 3 * P, kind, a, inked, carry);
+
+// ---- a walk: points in cells (feet), a dwell where a point carries w ----
+function makePath(pts) {
+  const out = [{ ...pts[0], L: 0 }];
+  for (let i = 1; i < pts.length; i++) {
+    const a = out[out.length - 1], b = pts[i];
+    out.push({ ...b, L: a.L + Math.hypot(b.x - a.x, b.y - a.y) + (b.w || 0) });
+  }
+  return out;
+}
+function pathAt(path, s) {
+  if (s <= 0) return { x: path[0].x, y: path[0].y };
+  for (let i = 1; i < path.length; i++) {
+    const a = path[i - 1], b = path[i];
+    if (s <= b.L) {
+      const seg = b.L - a.L - (b.w || 0), into = s - a.L;
+      if (into <= (b.w || 0)) return { x: a.x, y: a.y };       // the dwell, before the move
+      const k = seg > 0 ? (into - (b.w || 0)) / seg : 1;
+      return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+    }
+  }
+  const z = path[path.length - 1]; return { x: z.x, y: z.y };
+}
+// a side-on flight: a cell along to the riser, two up, two along: a tread of three, n times
+function flight(pts, x0, y0, d, n) {
+  let x = x0, y = y0;
+  for (let k = 1; k <= n; k++) { x += d; pts.push({ x, y }); y -= 2; pts.push({ x, y }); x += 2 * d; pts.push({ x, y }); }
+  return { x, y };
+}
+// the treads of that flight: [left col, row] of each, 3 cells wide, its top row the feet line
+const treads = (x0, y0, d, n) => [...Array(n)].map((_, i) => { const k = i + 1; return [d > 0 ? x0 + 3 * k - 2 : x0 - 3 * k - 1, y0 - 2 * k, d]; });
+
+// ---- the pointing hand: the built glyph, its tip on the gates' middle line ----
+const HANDLEFT = ['.....##...', '....#oo#..', '.######o##', '#oooooooo#', '.####oooo#', '...#ooooo#', '....#ooo##', '...#ooo#..', '....#o##..', '.....##...'];
+function hand(x, y, pressed) {
+  const ox = x - (pressed ? 1 : 0);
+  HANDLEFT.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === '#') C(ox + c, y + r, T(3)); else if (ch === 'o') C(ox + c, y + r, T(0)); }));
+}
+
+// ---- the gates' leaves, common to every take: two of five cells, sixteen tall, open bars
+// with the light between them, hinged on the outside, swinging toward whoever is looking in four held steps. k 0 shut .. 4 edge-on ----
+const LEAF_W = [5, 4, 3, 2, 1], GH = 16, GW = 5;
+function leaves(cx, ty, k, side, bead) {
+  const w = LEAF_W[k], top = ty - GH, bot = ty - 1, mid = ty - 8;
+  for (const s of [-1, 1]) {
+    const col = j => (s < 0 ? cx - GW + j : cx + GW - 1 - j);
+    if (w >= 4) {
+      const bars = [...new Set([...Array(w).keys()].filter(j => j % 2 === 0).concat([w - 1]))];
+      for (let j = 0; j < w; j++) { C(col(j), top, T(2)); C(col(j), bot, T(2)); C(col(j), mid, T(2)); }
+      for (const j of bars) for (let y = top; y <= bot; y++) C(col(j), y, bead && j !== 0 && j !== w - 1 && y !== mid && (y - top) % 3 === 1 ? RAW : T(2));
+      for (let y = top; y <= bot; y++) C(col(w - 1), y, T(3));          // the meeting stile, inked
+      if (side === 'heaven') {                                              // the back: a brace, hinge foot to free head
+        for (let y = mid + 1; y < bot; y++) { const j = Math.round((bot - 1 - y) * (w - 1) / (bot - mid - 2)); C(col(j), y, T(3)); }
+        for (let y = top + 1; y < mid; y++) { const j = Math.round((mid - 1 - y) * (w - 1) / (mid - top - 2)); C(col(j), y, T(3)); }
+      }
+      for (const j of bars) C(col(j), top - 1, RAW);                       // a pearl on every bar
+      for (let j = 1; j < w - 1; j += 2) C(col(j), top - 1, T(1));
+    } else {
+      // turning edge-on: the bars close up into one solid leaf, its free edge inked
+      for (let j = 0; j < w; j++) for (let y = top; y <= bot; y++) C(col(j), y, j === w - 1 ? T(3) : (y === mid ? T(3) : T(2)));
+      C(col(w - 1), top - 1, RAW);
+    }
+  }
+}
+// the light in the gateway, behind the leaves
+const gateway = (cx, ty) => fill(cx - GW - 1, ty - GH - 1, 2 * GW + 2, GH + 1, RAW);
+
+// a pearl: a raw cell, ringed pale so it reads on paper
+function pearl(x, y, big) {
+  if (big) { fill(x, y - 1, 2, 4, T(1)); fill(x - 1, y, 4, 2, T(1)); fill(x, y, 2, 2, RAW); return; }
+  C(x - 1, y, T(1)); C(x + 1, y, T(1)); C(x, y - 1, T(1)); C(x, y + 1, T(1)); C(x, y, RAW);
+}
+
+// ---- the stair of light: the ride between the two places, now a climb. A pale rung every
+// third row across the width, so it reads as steps on either page. `fade` thins it with depth ----
+function shaft(cx, y0, y1, a, fade) {
+  alpha(a, () => {
+    for (let y = y0; y < y1; y++) {
+      const keep = fade ? 1 - (y - y0) / (y1 - y0) : 1;
+      for (let x = cx - 4; x < cx + 4; x++) {
+        if (fade && bay(x, y) > keep + 0.15) continue;
+        C(x, y, x === cx - 4 || x === cx + 3 || (y % 3) === 0 ? T(1) : RAW);
+      }
+    }
+  });
+}
+
+// ---- the yard's own furniture ----
+function sky(F) {
+  fill(0, 0, F.cw, F.ch, T(0));
+  const M = Mask();
+  [[0.06, 9, 3], [0.17, 17, 2.5], [0.52, 8, 3.5], [0.66, 19, 2.5], [0.82, 11, 3], [0.94, 21, 2.5]].forEach(([fx, row, r]) => {
+    const x = Math.round(F.cw * fx); if (Math.abs(x - F.Cx) < 22 || (x > F.Cx && x < F.Cx + 30)) return;
+    puff(M, x, row, r); puff(M, x + r * 1.6, row + 1, r * 0.7); puff(M, x - r * 1.5, row + 1, r * 0.6);
+  });
+  paintCloud(M, 3);
+}
+function ground(F) {
+  g.fillStyle = T(3); g.fillRect(0, F.Gy * P, F.W, 2);
+  for (let y = F.Gy; y < F.ch; y++) for (let x = 0; x < F.cw; x++) if (hsh(x, y, 9) < 0.05) C(x, y, T(1));
+}
+function ruin(F, lifted) {
+  const hx = F.Cx - 9, gy = F.Gy - 1, HW = 18;
+  const bits = lifted ? [[-1, 0, 3], [HW - 2, 0, 3]] : [[-1, 0, 3], [1, -1, 2], [HW - 2, 0, 3], [HW, -1, 2], [HW + 1, 0, 2]];
+  for (const [c, r, w] of bits) for (let i = 0; i < w; i++) C(hx + c + i, gy + r, (c + i) % 2 ? T(3) : T(1));
+}
+function rock(F) {
+  const w = 7, h = 5, x0 = F.Cx - 3, y0 = F.Gy - h;
+  for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+    const u = (c + 0.5) / w * 2 - 1, v = (r + 0.5) / h * 2 - 1;
+    if (u * u + Math.max(0, v) * v * 0.15 + Math.min(0, v) * v > 1) continue;
+    C(x0 + c, y0 + r, hsh(c * 7.3 + r * 1.9) < 0.55 ? T(3) : T(2));
+  }
+}
+function crew(F, t) {
+  for (let i = 0; i < 2; i++) {
+    const span = 14, u = frac(t / 9 + i * 0.4), x = F.Cx + 34 + i * 6 + (u < 0.5 ? u * 2 : 2 - u * 2) * span;
+    bodyAtFeet(Math.round(x * 2) / 2, F.Gy, 'live', 1);
+  }
+}
+
+// ---- heaven's own furniture: a simplified sky crowd and the cloud floor ----
+function heavenBack(F) {
+  fill(0, 0, F.cw, F.ch, T(0));
+  const Fy = F.Gy, bandTop = Math.round(Fy * 0.12);
+  // far bands of the crowd: ordered dither, pale far off, mid near
+  const bands = [[0.0, 0.6], [0.22, 0.85], [0.44, 1.05], [0.62, 1.3]];
+  bands.forEach(([f, tone], b) => {
+    const y0 = bandTop + Math.round((Fy - 10 - bandTop) * f), y1 = bandTop + Math.round((Fy - 10 - bandTop) * (bands[b + 1] ? bands[b + 1][0] : 0.86));
+    for (let y = y0; y < y1; y++) for (let x = 0; x < F.cw; x++) {
+      const t = tone + (y - y0 < 2 ? 0.35 : 0) - (y > y1 - 2 ? 0.4 : 0);
+      const v = Math.floor(t) + (bay(x, y) < frac(t) ? 1 : 0);
+      if (v > 0) C(x, y, T(Math.min(2, v)));
+    }
+  });
+  // the near band: souls' faces in rows
+  for (let row = 0; row < 2; row++) for (let x = (row % 2) * 2; x < F.cw; x += 4) {
+    const y = Fy - 10 + row * 3;
+    C(x, y, T(2)); C(x + 1, y, T(2)); C(x + 2, y, T(2)); C(x, y + 1, T(2)); C(x + 2, y + 1, T(2)); C(x + 1, y + 1, T(0));
+  }
+  // the cloud floor: a billowed edge, pale under it, paper below
+  for (let x = 0; x < F.cw; x++) {
+    const lift = hsh(Math.floor(x / 3), 0, 11) < 0.45 ? 1 : 0;
+    for (let y = Fy - lift; y < F.ch; y++) {
+      const d = y - (Fy - lift);
+      C(x, y, d === 0 ? T(2) : d < 3 ? (hsh(x, y, 12) < 0.5 ? T(1) : T(0)) : (hsh(x, y, 13) < 0.06 ? T(1) : T(0)));
+    }
+  }
+  // the camp's tree, for scale
+  const tx = F.Cx - 24;
+  for (let i = 0; i < 4; i++) { const w = 2 + i * 2, y = Fy - 18 + i * 3; fill(tx - w, y, 2 * w + 1, 3, T(3)); }
+  fill(tx, Fy - 6, 1, 6, T(3));
+}
+const bgCache = new Map();
+function cachedBack(F, which) {
+  const key = `${which}${F.W}x${F.H}${DARK}`;
+  if (!bgCache.has(key)) {
+    const cv = document.createElement('canvas'); cv.width = F.W; cv.height = F.H;
+    const keep = g; g = cv.getContext('2d');
+    which === 'yard' ? (sky(F), ground(F)) : heavenBack(F);
+    g = keep; bgCache.set(key, cv);
+  }
+  g.drawImage(bgCache.get(key), 0, 0);
+}
+
+// ================================================================================
+// the takes. Each gives: back (behind the gates), stair (yard), gate (posts, crest,
+// leaves), front (what the gates stand on), the soul's walk, the ghosts' walk, how
+// far its posts reach (for the hand), and its heaven-side dressing.
+// ================================================================================
+function sideWalk(F) {
+  // the ruin, along to the foot, up the first flight, the landing, up the second, to the gates
+  const pts = [{ x: F.Cx, y: F.Gy }, { x: F.Cx + 6, y: F.Gy }];
+  const a = flight(pts, F.Cx + 6, F.Gy, 1, 7);
+  pts.push({ x: a.x + 3, y: a.y });
+  flight(pts, a.x + 3, a.y, -1, 8);
+  pts.push({ x: F.Cx, y: F.Ty });
+  return pts;
+}
+const sideTreads = F => [...treads(F.Cx + 6, F.Gy, 1, 7), ...treads(F.Cx + 30, F.Gy - 14, -1, 8)];
+const sideSoul = F => makePath([...sideWalk(F), { x: F.Cx, y: -4 }]);
+const sideGhost = F => makePath([{ x: F.Cx, y: -4 }, ...sideWalk(F).reverse(), { x: F.cw + 6, y: F.Gy }]);
+
+const TAKES = {
+  cloud: {
+    name: 'Take A: a cloud stair to ornate gates in a cloud bank',
+    blurb: 'A stair of cloud climbs from beside the ruin in two flights, turning on a cloud landing, to a long cloud bank 30 cells up. Tall, ornate gates stand in the bank: a scrolled crest with pearls along it, a big pearl on each post, pearls on every bar. Their light is raw white. Billows behind the posts give it something to shine against on the light page.',
+    ext: 8,
+    back(F, cx, ty) {
+      const M = Mask();
+      puff(M, cx - 12, ty - 4, 5); puff(M, cx + 12, ty - 4, 5); puff(M, cx - 18, ty - 1, 3.5); puff(M, cx + 18, ty - 1, 3.5);
+      puff(M, cx - 9, ty - 9, 3.2); puff(M, cx + 9, ty - 9, 3.2);
+      paintCloud(M, 21);
+    },
+    stair(F) {
+      const M = Mask();
+      for (const [c, r] of sideTreads(F)) {
+        for (let x = c; x < c + 3; x++) for (let y = r; y < r + 3; y++) M.add(x, y);
+        if (hsh(c, r, 4) < 0.7) M.add(c + Math.floor(hsh(c, r, 5) * 3), r + 3);
+      }
+      for (let x = F.Cx + 25; x < F.Cx + 32; x++) for (let y = F.Gy - 14; y < F.Gy - 11; y++) M.add(x, y);
+      puff(M, F.Cx + 29, F.Gy - 11, 2.2);
+      paintCloud(M, 31);
+    },
+    front(F, cx, ty, k) {
+      const M = Mask();
+      for (let x = cx - 20; x <= cx + 20; x++) { M.add(x, ty); M.add(x, ty + 1); if (Math.abs(x - cx) < 17) M.add(x, ty + 2); }
+      puff(M, cx - 13, ty + 2, 3); puff(M, cx + 13, ty + 2.5, 3.5); puff(M, cx - 2, ty + 3, 3);
+      paintCloud(M, 41);
+      spill(cx, ty, k, 3);
+    },
+    gate(F, cx, ty, k, side) {
+      gateway(cx, ty);
+      // the crest: a scrolled arch over the leaves, light under it, filigree bars
+      const base = ty - 18, arcY = x => base - Math.round(6 * (1 - Math.pow((x + 0.5 - cx) / 7.5, 2)));
+      for (let x = cx - 7; x < cx + 7; x++) {
+        const a = arcY(x);
+        for (let y = a + 1; y < base; y++) C(x, y, (x - cx) % 2 === 0 && y > a + 1 ? T(2) : RAW);
+        C(x, a, T(2));
+      }
+      for (let x = cx - 7; x < cx + 7; x++) C(x, base, T(2));
+      for (const x of [cx - 6, cx - 3, cx + 2, cx + 5]) pearl(x, arcY(x) - 1, false);
+      pearl(cx - 1, arcY(cx) - 3, true);
+      // the scrolls at the crest's feet
+      for (const [x, d] of [[cx - 9, -1], [cx + 8, 1]]) { C(x, base - 1, T(2)); C(x + d, base - 2, T(2)); C(x + 2 * d, base - 1, T(2)); C(x + d, base, T(2)); }
+      // posts: two cells, inked on the outside, a big pearl on top
+      for (const x0 of [cx - 8, cx + 6]) {
+        for (let y = ty - 19; y < ty; y++) { C(x0, y, x0 < cx ? T(3) : T(2)); C(x0 + 1, y, x0 < cx ? T(2) : T(3)); }
+        fill(x0, ty - 19, 2, 1, T(3));
+        pearl(x0, ty - 22, true);
+      }
+      leaves(cx, ty, k, side, false);
+    },
+    soul: sideSoul, ghost: sideGhost,
+    heaven(F, cx, fy) {
+      const M = Mask();
+      for (let x = cx - 18; x <= cx + 18; x++) { M.add(x, fy); M.add(x, fy + 1); }
+      puff(M, cx - 12, fy - 2, 4); puff(M, cx + 12, fy - 2, 4); puff(M, cx - 17, fy, 3); puff(M, cx + 17, fy, 3);
+      for (const key of [...M.m.keys()]) { const [x] = key.split(',').map(Number); if (x >= cx - 5 && x <= cx + 4) M.m.delete(key); }
+      return M;
+    }
+  },
+  grand: {
+    name: 'Take B: a grand stone stair to gates in an arch',
+    blurb: 'A broad stone stair seen head on, fifteen steps, flaring wide at its foot and narrowing as it climbs. Its foot is behind the rock on the ruin, so the souls come up out of the house. Cloud wisps cling to its sides and gather at the top. There, a round stone arch on two pillars, with a pearl in the keystone, holds the gates, and the light fills the arch. Two files: souls go up the left, the ghosts come down the right.',
+    ext: 10,
+    back(F, cx, ty) {},
+    stair(F) {
+      const cx = F.Cx;
+      for (let k = 1; k <= 15; k++) {
+        const hw = Math.round(14 - (k - 1) * 7 / 14), tr = F.Gy - 2 * k, top = k === 15;
+        const L = cx - hw - (top ? 5 : 0), Wd = 2 * hw + (top ? 10 : 0);
+        fill(L, tr, Wd, 1, T(0)); fill(L, tr + 1, Wd, 1, T(2));
+        C(L, tr, T(3)); C(L + Wd - 1, tr, T(3)); C(L, tr + 1, T(3)); C(L + Wd - 1, tr + 1, T(3));
+        for (let x = L + 1; x < L + Wd - 1; x++) if (hsh(x, tr, 70) < 0.12) C(x, tr + 1, T(1));
+      }
+      const M = Mask();
+      puff(M, cx - 16, F.Gy - 5, 3); puff(M, cx - 19, F.Gy - 4, 2.2); puff(M, cx + 14, F.Gy - 13, 2.8); puff(M, cx + 17, F.Gy - 12, 2);
+      puff(M, cx - 12, F.Gy - 22, 2.6); puff(M, cx - 15, F.Gy - 21, 1.8);
+      paintCloud(M, 71);
+    },
+    front(F, cx, ty, k) {
+      const M = Mask();
+      puff(M, cx - 15, ty - 1, 3.4); puff(M, cx - 19, ty, 2.4); puff(M, cx + 15, ty - 1, 3.4); puff(M, cx + 19, ty, 2.4);
+      paintCloud(M, 72);
+      spill(cx, ty, k, 2);
+    },
+    gate(F, cx, ty, k, side) {
+      const sy = ty - 17;
+      // the arch: voussoirs pale and mid by turns, inked outside, light inside
+      for (let y = sy - 11; y < sy; y++) for (let x = cx - 11; x < cx + 11; x++) {
+        const d = Math.hypot(x + 0.5 - cx, y + 0.5 - sy);
+        if (d < 7) C(x, y, RAW);
+        else if (d < 10.5) { const seg = Math.floor(Math.atan2(sy - y - 0.5, x + 0.5 - cx) / (Math.PI / 11)); C(x, y, d >= 9.7 ? T(3) : seg % 2 ? T(1) : T(2)); }
+      }
+      fill(cx - 7, sy, 14, ty - sy, RAW);
+      fill(cx - 1, sy - 11, 2, 4, T(3)); C(cx - 1, sy - 9, RAW); C(cx, sy - 9, RAW);
+      // the pillars: three cells of stone, a capital, inked outside
+      for (const [x0, out] of [[cx - 10, cx - 10], [cx + 7, cx + 9]]) {
+        for (let y = sy + 1; y < ty; y++) for (let x = x0; x < x0 + 3; x++) C(x, y, x === out ? T(3) : ((y - sy) % 3 === 0 ? T(2) : T(1)));
+        fill(x0 - 1, sy, 5, 1, T(3)); fill(x0 - 1, ty - 1, 5, 1, T(2));
+      }
+      leaves(cx, ty, k, side, false);
+    },
+    soul(F) {
+      const pts = [{ x: F.Cx, y: F.Gy }, { x: F.Cx - 2, y: F.Gy }];
+      for (let k = 1; k <= 15; k++) pts.push({ x: F.Cx - 2, y: F.Gy - 2 * k + 1, w: 0.6 });
+      pts.push({ x: F.Cx, y: F.Ty + 1 }, { x: F.Cx, y: -4 });
+      return makePath(pts);
+    },
+    ghost(F) {
+      const pts = [{ x: F.Cx, y: -4 }, { x: F.Cx, y: F.Ty + 1 }, { x: F.Cx + 2, y: F.Ty + 1 }];
+      for (let k = 14; k >= 0; k--) pts.push({ x: F.Cx + 2, y: k ? F.Gy - 2 * k + 1 : F.Gy, w: 0.6 });
+      pts.push({ x: F.cw + 6, y: F.Gy });
+      return makePath(pts);
+    },
+    heaven(F, cx, fy) {
+      const M = Mask();
+      puff(M, cx - 15, fy - 1, 3.4); puff(M, cx - 19, fy, 2.4); puff(M, cx + 15, fy - 1, 3.4); puff(M, cx + 19, fy, 2.4);
+      return M;
+    }
+  },
+  boards: {
+    name: 'Take C: the house\'s own boards as the stair, gates strung of pearls',
+    blurb: 'The stair is the fallen house. Its boards lift off the ruin and float up in two flights, each step one board bent into a tread and a riser, ink and mid by turns. The gates are literally pearly: posts and crest strung of pearls, beads on the bars. They hang in a disc of raw light dithered out into the sky, so the glow reads on the paper page as well as the dark one.',
+    ext: 8,
+    lifted: true,
+    back(F, cx, ty) {
+      const cy = ty - 11;
+      for (let y = cy - 20; y <= cy + 20; y++) for (let x = cx - 20; x <= cx + 20; x++) {
+        const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+        // dithered from the gateway outward, so the crest's pearls sit on grey, not on white
+        if (d < 19 && bay(x, y) < 0.95 - Math.max(0, d - 6) / 13) C(x, y, T(1));
+      }
+    },
+    stair(F) {
+      sideTreads(F).forEach(([c, r, d], i) => {
+        const tone = i % 2 ? T(2) : T(3), lead = d > 0 ? c : c + 2;
+        for (let x = c; x < c + 3; x++) C(x, r, tone);
+        C(lead, r + 1, tone); C(lead, r + 2, tone);
+      });
+      for (let x = F.Cx + 25; x < F.Cx + 32; x++) C(x, F.Gy - 14, T(3));
+    },
+    front(F, cx, ty, k) {
+      for (let x = cx - 11; x <= cx + 10; x++) C(x, ty, T(3));
+      spill(cx, ty, k, 1);
+    },
+    gate(F, cx, ty, k, side) {
+      gateway(cx, ty);
+      // the crest: a half ring of pearls on a string, light inside it
+      const cy = ty - 17;
+      for (let y = cy - 9; y < cy; y++) for (let x = cx - 9; x < cx + 9; x++) {
+        const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+        if (d < 6.5) C(x, y, RAW); else if (d < 7.5) C(x, y, T(2));
+      }
+      for (let i = 0; i <= 6; i++) { const a = Math.PI * i / 6; pearl(Math.floor(cx + Math.cos(a) * 7 - 0.5 + (i < 3 ? 0 : 0)), Math.floor(cy - 0.5 - Math.sin(a) * 7), false); }
+      fill(cx - 7, cy, 14, 1, T(2));
+      // posts: strings of pearls, a mid knot between beads
+      for (const x0 of [cx - 8, cx + 6]) for (let y = ty - 17; y < ty; y++) {
+        const b = (ty - y) % 3;
+        if (b === 0) { C(x0, y, T(2)); C(x0 + 1, y, T(2)); }
+        else { C(x0, y, RAW); C(x0 + 1, y, RAW); C(x0 + (x0 < cx ? -1 : 2), y, T(1)); }
+      }
+      leaves(cx, ty, k, side, true);
+    },
+    soul: sideSoul, ghost: sideGhost,
+    heaven(F, cx, fy) { return null; }
+  }
+};
+
+// light spilling out of the open gates onto what they stand on, in the same held steps
+function spill(cx, ty, k, rows) {
+  if (k <= 0) return;
+  const half = GW - LEAF_W[k];
+  alpha(0.85, () => {
+    for (let r = 0; r < rows + k; r++) {
+      const w = half + Math.floor(r * 0.7);
+      for (let x = cx - w; x < cx + w; x++) if (r === 0 || bay(x, ty + r) < 0.6 - r * 0.08) C(x, ty + r, RAW);
+    }
+  });
+}
+
+// ---- one place, drawn. k is the gates' step, 0 shut .. 4 open ----
+function yardScene(F, key, t, k, o = {}) {
+  const S = TAKES[key], cx = F.Cx, ty = F.Ty;
+  cachedBack(F, 'yard');
+  S.back(F, cx, ty);
+  shaft(cx, -2, ty - GH - 1, k / 4);
+  S.stair(F);
+  S.front(F, cx, ty, k);
+  ruin(F, S.lifted);
+  const bodies = [];
+  if (o.bodies) {
+    const sp = S.soul(F), L = sp[sp.length - 1].L, gap = 8, v = 5;
+    for (let i = 0; i < Math.floor(L / gap); i++) {
+      const s = frac((t * v + i * gap) / L) * L, q = pathAt(sp, s);
+      bodies.push({ q, a: clamp(s / 2.5, 0, 1), inked: 0 });
+    }
+    const gp = S.ghost(F), Lg = gp[gp.length - 1].L, per = Lg + 30;
+    for (let j = 0; j < 2; j++) {
+      const s = ((t * 4) % per) - j * 4;
+      if (s >= 0 && s <= Lg) bodies.push({ q: pathAt(gp, s), a: 1, inked: 3 + j * 2, carry: j === 0 });
+    }
+  }
+  const draw = b => bodyAtFeet(b.q.x, b.q.y, 'soul', b.a, b.inked, b.carry);
+  bodies.filter(b => b.q.y < ty - 0.01).forEach(draw);            // in the gateway and on the light: behind the crest
+  S.gate(F, cx, ty, k, 'yard');
+  bodies.filter(b => b.q.y >= ty - 0.01).forEach(draw);
+  rock(F);
+  crew(F, t);
+  if (o.hand) hand(cx + S.ext + 2, ty - 8 - 3, o.pressed);
+}
+function heavenScene(F, key, t, o = {}) {
+  const S = TAKES[key], cx = F.Cx, fy = F.Gy, k = 4;
+  cachedBack(F, 'heaven');
+  S.back(F, cx, fy);
+  // the light coming up through a gap in the floor, thinning with depth
+  fill(cx - 4, fy, 8, F.ch - fy, T(0));
+  shaft(cx, fy, F.ch, 1, true);
+  const bodies = [];
+  const sp = makePath([{ x: cx, y: F.ch + 4 }, { x: cx, y: fy }, { x: -6, y: fy }]), L = sp[sp.length - 1].L;
+  for (let i = 0; i < Math.floor(L / 8); i++) { const s = frac((t * 5 + i * 8) / L) * L; bodies.push({ q: pathAt(sp, s), inked: 0 }); }
+  const gp = makePath([{ x: -6, y: fy }, { x: cx, y: fy }, { x: cx, y: F.ch + 4 }]), Lg = gp[gp.length - 1].L, per = Lg + 30;
+  for (let j = 0; j < 2; j++) { const s = ((t * 4 + 17) % per) - j * 4; if (s >= 0 && s <= Lg) bodies.push({ q: pathAt(gp, s), inked: 3 + j * 2, carry: j === 0 }); }
+  const draw = b => bodyAtFeet(b.q.x, b.q.y, 'soul', 1, b.inked, b.carry);
+  bodies.filter(b => b.q.y > fy + 0.01).forEach(draw);              // on the light, coming up through the floor
+  S.gate(F, cx, fy, k, 'heaven');
+  const M = S.heaven(F, cx, fy); if (M) paintCloud(M, 51);
+  // the floor's lip either side of the gap, so a body rises out from behind it
+  for (const x of [cx - 5, cx + 4]) { C(x, fy, T(2)); C(x, fy + 1, T(1)); }
+  bodies.filter(b => b.q.y <= fy + 0.01).forEach(draw);
+  if (o.hand) hand(cx + S.ext + 2, fy - 8 - 3, o.pressed);
+}
+
+// ---- the loop: idle, click, open, ripple up, heaven, click, ripple down, close ----
+const LOOP = 15;
+const PH = [
+  [0, 2.6, 'idle', 'idle: the gates shut, light through the bars, the hand pressing'],
+  [2.6, 2.8, 'click', 'clicked'],
+  [2.8, 4.2, 'open', 'the gates swing open: four held steps, the stair of light fading in with them'],
+  [4.2, 5.8, 'up', 'the ripple out of the gates: heaven shows through it'],
+  [5.8, 9.0, 'heaven', 'heaven: the same gates from behind, the light coming up through the floor, souls arriving, the ghost pair going down'],
+  [9.0, 9.2, 'hclick', 'clicked, from heaven\'s side'],
+  [9.2, 10.8, 'down', 'the ripple back out of heaven\'s gates: the yard shows through'],
+  [10.8, 12.8, 'back', 'the yard again, the gates still open'],
+  [12.8, 14.2, 'close', 'the gates swing shut in the same four held steps'],
+  [14.2, 15, 'idle', 'idle']
+];
+const phaseAt = tt => PH.find(p => tt >= p[0] && tt < p[1]) || PH[0];
+const pressedAt = t => (t % 1.3) >= 1.0;
+const offs = new Map();
+const offFor = (W, H) => { const k = W + 'x' + H; if (!offs.has(k)) { const c = document.createElement('canvas'); c.width = W; c.height = H; offs.set(k, c); } return offs.get(k); };
+
+function ripple(cv, near, far, cxp, cyp, k) {
+  // the far place inside a circle of whole cells, four rings at its edge, the leading one inked
+  const W = cv.width, H = cv.height;
+  const rMax = Math.max(Math.hypot(cxp, cyp), Math.hypot(W - cxp, cyp), Math.hypot(cxp, H - cyp), Math.hypot(W - cxp, H - cyp)) / P + 13;
+  const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, r = Math.round(e * rMax);
+  const cxc = cxp / P, cyc = cyp / P;
+  for (let y = 0; y < Math.ceil(H / P); y++) {
+    const dy = y + 0.5 - cyc; if (Math.abs(dy) >= r) continue;
+    const hw = Math.round(Math.sqrt(r * r - dy * dy)), x0 = Math.max(0, Math.round(cxc) - hw), x1 = Math.min(Math.ceil(W / P), Math.round(cxc) + hw);
+    if (x1 > x0) g.drawImage(far, x0 * P, y * P, (x1 - x0) * P, P, x0 * P, y * P, (x1 - x0) * P, P);
+  }
+  const tones = [3, 2, 2, 1];
+  for (let j = 0; j < 4; j++) {
+    const rr = r - j * 3; if (rr <= 1) continue;
+    const n = Math.ceil(Math.PI * 2 * rr * 1.2);
+    for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; C(Math.round(cxc + Math.cos(a) * rr - 0.5), Math.round(cyc + Math.sin(a) * rr - 0.5), T(tones[j])); }
+  }
+}
+
+function loopScene(cv, key, t) {
+  g = cv.getContext('2d');
+  const F = frameOf(cv.width, cv.height), tt = t % LOOP, ph = phaseAt(tt), kind = ph[2];
+  const step = (a, b) => clamp(Math.floor((tt - a) / ((b - a) / 4)) + 1, 0, 4);
+  const yardK = kind === 'open' ? step(2.8, 4.2) : kind === 'close' ? 4 - step(12.8, 14.2) : (kind === 'up' || kind === 'heaven' || kind === 'hclick' || kind === 'down' || kind === 'back') ? 4 : 0;
+  const pressed = kind === 'click' || kind === 'hclick' || pressedAt(tt);
+  const yardHand = kind === 'idle' || kind === 'click';
+  if (kind === 'up' || kind === 'down') {
+    const far = offFor(cv.width, cv.height), keep = g;
+    g = far.getContext('2d');
+    if (kind === 'up') heavenScene(F, key, t, {}); else yardScene(F, key, t, 4, {});
+    g = keep;
+    if (kind === 'up') yardScene(F, key, t, 4, {}); else heavenScene(F, key, t, {});
+    const cyp = (kind === 'up' ? F.Ty - 9 : F.Gy - 9) * P;
+    ripple(cv, null, far, F.Cx * P, cyp, (tt - ph[0]) / (ph[1] - ph[0]));
+  } else if (kind === 'heaven' || kind === 'hclick') {
+    heavenScene(F, key, t, { hand: true, pressed });
+  } else {
+    yardScene(F, key, t, yardK, { hand: yardHand, pressed });
+  }
+  return ph[3];
+}
+function roadScene(cv, key, t) { g = cv.getContext('2d'); yardScene(frameOf(cv.width, cv.height), key, t, 4, { bodies: true }); }
+
+// ---- 3x crops of the 800 by 600 frame ----
+const CROPS = [
+  ['idle', 'yard, idle, with the hand', 1.0],
+  ['opening', 'yard, gates opening: step 2 of 4', 3.35],
+  ['heaven', 'heaven\'s side of the same gates', 7.4],
+  ['road', 'the road: souls up, the ghost pair down', 31.0]
+];
+function cropScene(cv, key, which, t) {
+  if (!offs.has('crop')) { const c = document.createElement('canvas'); c.width = 800; c.height = 600; offs.set('crop', c); }
+  const off = offs.get('crop');
+  const F = frameOf(800, 600);
+  if (which === 'road') roadScene(off, key, t); else loopScene(off, key, t);
+  const w = cv.width / 3, h = cv.height / 3;
+  let cx = F.Cx * P + 24, cy = (which === 'heaven' ? F.Gy - 12 : F.Ty - 13) * P;
+  if (which === 'road') { cx = (F.Cx + 14) * P; cy = (F.Ty + 9) * P; }
+  const sx = clamp(Math.round(cx - w / 2), 0, 800 - w), sy = clamp(Math.round(cy - h / 2), 0, 600 - h);
+  const gx = cv.getContext('2d'); gx.imageSmoothingEnabled = false;
+  gx.drawImage(off, sx, sy, w, h, 0, 0, cv.width, cv.height);
+}
+
+// ---- the page ----
+const live = [], host = document.getElementById('takes');
+for (const key of Object.keys(TAKES)) {
+  const s = document.createElement('section'); s.className = 'card';
+  s.innerHTML = `<h2 class="ph">${TAKES[key].name}</h2><p class="ph">${TAKES[key].blurb}</p>`;
+  const add = (w, h, kind, label, css, extra) => {
+    const f = document.createElement('figure'), cv = document.createElement('canvas');
+    cv.width = w; cv.height = h; cv.id = `${key}-${kind}`; if (css) cv.style.width = css;
+    f.append(cv);
+    const fc = document.createElement('figcaption'); fc.className = 'ph'; fc.textContent = label; f.append(fc);
+    let beat = null;
+    if (kind === '2000' || kind === '800') { beat = document.createElement('div'); beat.className = 'beat ph'; f.append(beat); }
+    live.push({ cv, key, kind, beat, ...extra }); return f;
+  };
+  s.append(add(2000, 967, '2000', '2000 by 967, zoom 1, the full loop', '100%'));
+  const row = document.createElement('div'); row.className = 'row';
+  row.append(add(800, 600, '800', '800 by 600, the full loop'));
+  row.append(add(800, 600, 'road', '800 by 600, the road with the gates open'));
+  s.append(row);
+  const crops = document.createElement('div'); crops.className = 'row';
+  for (const [which, label, at] of CROPS) crops.append(add(780, 600, 'crop-' + which, '3x crop: ' + label, '390px', { which, at }));
+  s.append(Object.assign(document.createElement('h3'), { className: 'ph', textContent: '3x crops of the 800 by 600 frame' }), crops);
+  host.append(s);
+}
+const sw = document.getElementById('sw');
+function swatches() { sw.innerHTML = [0, 1, 2, 3].map(i => `<span class="sw" style="background:${T(i)}"></span>`).join(' ') + ` <span class="sw" style="background:${RAW}" title="raw light"></span>`; }
+
+const CRIT1 = [
+  "The side-on stairs (A and C) read as a lightning bolt, not a stair. Each step went one across and two up, and its four-cell tread overlapped the next, so the steps merged into one pale slope. Now each tread is three cells with a two-cell rise. A's cloud is a solid sawtooth three rows deep. C's board is bent into a tread and a riser.",
+  "The gates were 12 by 12 cells and squat. The crest and pearls were unreadable at 800 by 600, and at 2000 they were a grey stamp. Now the leaves are 16 tall and the posts 19, with the crest to about 25 cells.",
+  "Take A's backing was one tall billow behind the gates, and it read as a bell. Now it is a long, low bank, with billows only behind the posts.",
+  "The stair of light was a checker of pale squares and read as a strip of film. Now it has a full-width pale rung every third row and pale edges, so it reads as steps on both pages.",
+  "In heaven, the light column ran to the bottom of the frame at full strength and read as a pole stuck down through the floor. Now it thins with depth, by ordered dither.",
+  "Souls walking heaven's floor sat right under the near band of the crowd, and both are pale-rimmed squares, so they merged into one row. The band is now two rows higher. At 2000 they still sit close.",
+  "Take C's gates stood in a solid raw disc, so the crest's pearls were white on white and vanished. Now the dither runs right up to the gateway, so the pearls sit on grey.",
+  "The 3x crops cut off the top of the crest. They are re-centered."
+];
+const CRIT2 = [
+  "Fixed in this round: the shut gates read as an office block with lit windows. Each leaf was six cells, so a bar stood against the stile, and scroll cells filled the gaps. Now a leaf is five cells (stile, light, bar, light, stile). The panels are empty, so the gates are open bars over the light, and the ornament lives in the crest and the pearls.",
+  "Fixed in this round: the big pearls on A's posts were 4-cell squares and read as boxes. Their corners are now cut.",
+  "Still wrong, light page: raw light is the same white as paper. In A and B the gateway reads only because the bars and the stone frame it. The spill on the landing and the stair of light vanish into the sky, down to their pale rungs. Only C's dithered disc gives a glow you can see on paper.",
+  "Still wrong, dark page: an edge-on leaf is one ink cell, which maps to #e0e0e0, beside raw #fff. So the open gates nearly vanish into their own light. The bars are mid for this reason; the stiles are not.",
+  "Still wrong, 2000 by 967: each take is about 80 px across. The gates read, but a pearl is one cell, and A's cloud stair is a faint pale diagonal. B is the only one that holds as a silhouette at that size.",
+  "B, head on, is stripes: tread and riser alternate every row. A 3-cell soul with a pale rim is lost against them on the road, especially on the left file. B also reads as a temple, or a lighthouse at a glance, planted on the house's plot. That is the ground the mansion goes up on in act 4, so it would have to move or come down.",
+  "A and C have the same problem, only smaller. The stair's foot is over the house's right half, and the first flight runs 20 cells past it. The mansion's wings have to stand clear of it, or the stair is let up before the build.",
+  "C: the board stair is a one-cell sawtooth line. At 800 it reads as a drawing of a stair, and at 2000 as a diagram. Boards lifting off the ruin would also have to be seen to lift, a board at a time; floating there is not enough. Its beaded leaves read as H-shapes up close.",
+  "All takes: the yard's gates stand on a landing 30 cells up, and heaven's stand on the floor. They are the same gates only because both ends draw them, as both ends draw today's tear and ring. The stair of light between them is today's straight ride. I think that is right for a portal, but it is a fiction, and the build has to keep the two drawings identical."
+];
+const REC_H = 'Recommendation: take A, the cloud stair to gates in a cloud bank';
+const REC = [
+  "<b>A</b> is the picture the owner asked for: stairs up into the sky, ending at pearly gates in cloud. It reads as that at 800 by 600 without a caption. Its cloud is heaven's own material, the act's high-key white, so the round trip is one place: you climb cloud, go through the gates, and come out on cloud. It keeps today's cloud stair and its tones, so the stair is a redraw, not a new system.",
+  "Borrow one thing from C: the dithered disc of light behind the gates. It is the only thing on the page that makes the light read on the paper page, and it costs nothing on the dark one.",
+  "<b>B</b> is the strongest shape and the only one that survives 2000 by 967. But it is a building, it sits on the mansion's ground, and its stripes swallow the souls who walk it.",
+  "<b>C</b> has the best idea (the fallen house becomes the way up), but the drawing is the weakest. A one-cell board line reads as a diagram, and the lift would need its own animation. Its pearl-strung gates are the most literally pearly. The beads could go onto A's posts if the owner likes them."
+];
+document.getElementById('crit1').innerHTML = CRIT1.map(s => `<li class="ph">${s}</li>`).join('');
+document.getElementById('crit2').innerHTML = CRIT2.map(s => `<li class="ph">${s}</li>`).join('');
+document.getElementById('rech').textContent = REC_H;
+document.getElementById('rec').innerHTML = REC.map(s => `<li class="ph">${s}</li>`).join('');
+
+let t = 0, paused = false, last = performance.now(), acc = 0;
+function drawAll(at = t, crops = false) {
+  for (const L of live) {
+    if (L.kind.startsWith('crop')) { if (crops) cropScene(L.cv, L.key, L.which, L.at); continue; }
+    if (L.kind === 'road') { roadScene(L.cv, L.key, at + 20); continue; }
+    const beat = loopScene(L.cv, L.key, at);
+    if (L.beat) L.beat.textContent = beat;
+  }
+}
+function loop(n) {
+  const dt = Math.min(0.1, (n - last) / 1000); last = n;
+  if (!paused) t += dt;
+  acc += dt;
+  if (acc >= 1 / 12) { acc = 0; drawAll(Math.floor(t * 12) / 12); }
+  if (!window.__manual) requestAnimationFrame(loop);
+}
+function setTheme(m) {
+  document.querySelectorAll('[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === m));
+  if (m === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = m;
+  DARK = m === 'dark' || (m === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  swatches();
+  drawAll(Math.floor(t * 12) / 12, true);
+}
+document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => setTheme(b.dataset.t));
+document.getElementById('pause').onclick = e => { paused = !paused; e.target.classList.toggle('on', paused); };
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+setTheme('auto');
+if (reduce) { window.__manual = true; t = 7.4; drawAll(t, true); } else requestAnimationFrame(loop);
+
+// for the headless snaps: one canvas at one moment
+window.mock = {
+  setTheme, manual() { window.__manual = true; },
+  shot(key, which, at, size = 2000) {
+    const cv = document.createElement('canvas');
+    if (which === 'crop') { cv.width = 780; cv.height = 600; cropScene(cv, key, at.which, at.t); }
+    else { cv.width = size; cv.height = size === 2000 ? 967 : 600; if (which === 'road') roadScene(cv, key, at); else loopScene(cv, key, at); }
+    return cv.toDataURL('image/png');
+  }
+};
+</script>
+</body>
+</html>
