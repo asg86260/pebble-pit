@@ -7,6 +7,7 @@
 import { P, ROCK_CLEAR, HOUSE_TO, HOUSE_CUBE, HOUSE_COLS, HOUSE_FLIP_MS, HOUSE_SHUT,
          HOUSE_CURTAIN, HOUSE_PUFF_MS, DOOR_W, DOOR_H, SHACK_EAVE } from './config.js';
 import { S, bench } from './state.js';
+import { light } from './ink.js';
 import { puff } from './puff.js';
 import { rockLeft } from './world.js';
 import { rand } from './rng.js';
@@ -195,7 +196,7 @@ export function drawHouses(ctx) {
   const home = homeCount();
   for (const h of holes()) {
     ctx.fillStyle = h.door ? '#fff'
-      : lit(h.i, home) && !S.shutters.includes(h.i) ? '#fff'
+      : lit(h.i, home) && !S.shutters.includes(h.i) ? light('#fff')   // a light on either page
       : HOUSE_CURTAIN;
     ctx.fillRect(h.x, h.y, h.w, h.h);
   }

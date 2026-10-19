@@ -406,6 +406,9 @@ set-touch-off = сенсор: выкл
 set-dark-on = тёмная: вкл
 
 # settings dark switch
+set-dark-dim = тёмная: тусклая
+
+# settings dark switch
 set-dark-off = тёмная: выкл
 
 # settings sound switch

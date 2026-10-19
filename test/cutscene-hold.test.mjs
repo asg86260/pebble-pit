@@ -7,7 +7,7 @@
 //
 // The scene is the first muck, reached the way a player reaches it: a dirty
 // sky, the yard's own storm, and the first body that goes for its muck.
-import { group, ok, run, runUntil, state, makeItRain, reloads } from './helpers.mjs';
+import { group, ok, run, runUntil, state, makeItRain, reloads, restartReloadClock } from './helpers.mjs';
 import { S } from '../src/state.js';
 import { WORKER, CELL } from '../src/config.js';
 import { outOfYard } from '../src/crew/records.js';
@@ -101,6 +101,7 @@ group('the first muck: the bands only while it holds, the haulers faded, the gan
 group('a scene costs the yard the gang\'s pause and nothing else', async () => {
   const measure = skip => {
     window.__seed(20261012);
+    restartReloadClock();
     const started = toTheMuck();
     if (skip) window.__skipBeat('camera');
     const m0 = mined(), s0 = S.stored;

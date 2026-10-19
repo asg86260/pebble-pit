@@ -18,6 +18,7 @@ import { bridgeSpan } from '../world.js';
 import { buriedAt } from '../intro.js';
 import { beatRunning } from '../beats.js';
 import { MEET_CLEAR } from '../config.js';
+import { sfx } from '../audio.js';
 
 // --- the dance ----------------------------------------------------------------
 // A body is a symmetrical filled square drawn from `x` and `y` alone, so a
@@ -286,6 +287,7 @@ export function workJig(w, at, zone = null) {
     const ended = w.moveAt + w.moveBeats * beatMs(w, move);
     w.y = w.foot;
     w.lunge = 1;
+    sfx('build-blow', { x: w.x + WORKER / 2 });
     // One puff per hit, off the body's waist rather than its feet: a chip at
     // ground level is drawn on the ground line, which is already black.
     spawnGrit(w.x + WORKER / 2, w.foot + WORKER / 2, { floor: w.foot + WORKER });

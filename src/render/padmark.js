@@ -12,10 +12,9 @@
 import { PAD_ACCENT, PAD_DEEP_ACCENT, PAD_HALO, PAD_DEEP_HALO, PAD_ARM_MIN, PAD_ARM_MAX } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
-import { darkPage, turned } from '../ink.js';
+import { seen } from '../ink.js';
 import { markAt, bracketCells, haloCells } from '../padglide.js';
 
-const seen = c => (darkPage ? turned(c) : c);
 
 // Drawn whenever padglide.js has a mark, a fading one included: put away (a
 // mouse move, the held sheet, a scene), it fades out where it stood.

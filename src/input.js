@@ -8,7 +8,7 @@ import { closeWindow } from './modal.js';
 import { P, MINE_DELAY, WORKER, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H, TOSS_DELAY, THUMB, BRUSH } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
-import { clampCam, unfollow, bindScroller, lookAt, lockScroller } from './world.js';
+import { clampCam, unfollow, bindScroller, lookAt, lockScroller, toWorld, toScreen } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, dustUnder } from './hands.js';
 import { startle, overBird } from './weather.js';
@@ -106,10 +106,7 @@ let lastWx = null, lastWy = null;
 
 export function pos(e) {
   const r = canvas.getBoundingClientRect();
-  return {
-    x: (e.clientX - r.left) / S.zoom + S.camX,
-    y: (e.clientY - r.top) / S.zoom + S.camY
-  };
+  return toWorld(e.clientX - r.left, e.clientY - r.top);
 }
 
 // The right button belongs to the crew, so the browser's menu is not wanted.
@@ -272,14 +269,14 @@ canvas.addEventListener('pointermove', e => {
   }
 
   if (wheelPan !== null) {                   // middle button: drag the view along
-    pan((wheelPan - e.clientX) / S.zoom);
+    pan((wheelPan - e.clientX) / S.zoomShow);
     wheelPan = e.clientX;
     return;
   }
 
   if (panning && down.size >= 2) {           // two fingers: drag the view along
     const now = middle();
-    pan((panning.x - now.x) / S.zoom);
+    pan((panning.x - now.x) / S.zoomShow);
     panning = now;
     return;
   }
@@ -575,8 +572,8 @@ function askedAbout(x, y, cx, cy) {
   // cursor: a body being carried is the one you are asking about.
   const w = lifted() || workerAt(x, y);
   if (w) {
-    showTipAt(card(w), (w.x + WORKER + P * 2 - S.camX) * S.zoom,
-                       (w.y - P * 3 - S.camY) * S.zoom);
+    const at = toScreen(w.x + WORKER + P * 2, w.y - P * 3);
+    showTipAt(card(w), at.x, at.y);
     return true;
   }
   for (const p of markedPiles()) {
@@ -622,7 +619,8 @@ function askedAbout(x, y, cx, cy) {
   }
   const label = polledWhatIsAt(x, y);
   if (label) {
-    showTipAt(label, (x - S.camX) * S.zoom + P * 2, (y - S.camY) * S.zoom - P * 2);
+    const at = toScreen(x, y);
+    showTipAt(label, at.x + P * 2, at.y - P * 2);
     return true;
   }
   showTip(null);
@@ -708,7 +706,7 @@ bindScroller(scroller, spacer, viewTaken);
 // glass (`THUMB`), never less than the brush itself. A press that lands a
 // little off the pile is still a sweep, since the thumb's contact point is
 // not where the player sees it; only clear ground and sky scroll.
-const fingerReach = () => Math.max(BRUSH, Math.ceil(THUMB / (S.zoom * P)));
+const fingerReach = () => Math.max(BRUSH, Math.ceil(THUMB / (S.zoomShow * P)));
 // Claiming is two things, because saying no was not enough on its own:
 // iPhone Safari, with the game framed in itch's page, went on scrolling the
 // yard under a sweep whose touchstart and every touchmove had been refused

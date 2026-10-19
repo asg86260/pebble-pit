@@ -26,16 +26,16 @@
 //
 // `S.finale` is the beat while it plays, and the house's last hold under the
 // sheet: `{ phase, u, T, hurry, st, her, heir, pair, joined, bursts, kit,
-// glide, house }` -- the phase and the seconds into it, the seconds since the
+// house }` -- the phase and the seconds into it, the seconds since the
 // yard part began, the station she fought at, her body's uid while she is
 // still one of the crew, the one who takes the gear up, the two of them where
 // they are once they are not crew, how many have fallen in, the fireworks up,
-// where the gear is while it moves, the camera's glide, and the build.
+// where the gear is while it moves, and the build.
 // Only the phase is written down: a reload mid-finale lands at its end
 // (`land`), the house standing, the pair in it and the sheet to come.
 
 import { S, pit, quarry } from './state.js';
-import { P, WORKER, KILL_GLIDE_S,
+import { P, WORKER, KILL_GLIDE_S, KILL_ZOOM,
          FINALE_SWIM_PX_S, FINALE_SWIM_MAX_S, FINALE_LIFT_S, FINALE_HANG_S,
          FINALE_HEART_S, FINALE_HEIR_MAX_S, FINALE_TAKE_S, FINALE_WATCH_S, FINALE_UP_PX_S, FINALE_UP_MAX_S,
          FINALE_RING_S, FINALE_OUT_S, FINALE_OUT_STEPS, FINALE_WALK_PX_S, FINALE_WALK_MAX_S, FINALE_LEAD,
@@ -55,8 +55,10 @@ import { postX, postY, deepPortal, portalCircle, deepFloor, propRect } from './d
 import { swim } from './deep/arms.js';
 import { abyssLine } from './pit.js';
 import { feetOn, ways, belowYard, wayAt, keepTo, stepRoute, rockSpan } from './route.js';
-import { killFrame, gliding, goUp, setView, canGoDown } from './view.js';
-import { clampCam, lockScroller } from './world.js';
+import { gliding, goUp, setView, canGoDown } from './view.js';
+import { lockScroller } from './world.js';
+import { shoot } from './cutscene.js';
+import { union } from './shot.js';
 import { rebalance } from './staffing.js';
 import { syncWorkers, retask } from './crew.js';
 import { onYard } from './crew/body.js';
@@ -70,7 +72,6 @@ import { pairBody, namePair } from './wardrobe.js';
 
 const F = () => S.finale;
 const clamp01 = k => Math.max(0, Math.min(1, k));
-const easeInOut = k => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 const snap = v => Math.round(v / P) * P;
 // A held step: `k` 0..1 in `n` whole steps, each taken as its stretch begins.
 const stepped = (k, n) => Math.min(1, Math.ceil(clamp01(k) * n) / n);
@@ -125,7 +126,7 @@ export function handOver(x, y) {
   namePair('sqouse', her);
   const st = her.station ? stationById(her.station) : null;
   S.finale = { phase: 'swim', u: 0, T: 0, hurry: 1, st: st ? st.id : null, her: her.uid, heir: null,
-               pair: [null, { x, y, face: -1 }], joined: 0, bursts: [], kit: null, glide: null, swum: null,
+               pair: [null, { x, y, face: -1 }], joined: 0, bursts: [], kit: null, swum: null,
                house: null, landing: {} };
   takeBuilders(S.finale);
   return true;
@@ -163,16 +164,6 @@ function toward(o, tx, ty, step) {
 // the way is longer than `most` seconds of it.
 const paceFor = (d, perS, most) => Math.max(perS, d / most) / 60;
 
-// The camera's glide from where it is to `x`, over KILL_GLIDE_S of the
-// finale's own seconds, held there once it has arrived; a new target starts
-// a new glide.
-function glideX(key, x) {
-  const f = F();
-  if (!f.glide || f.glide.key !== key) f.glide = { key, at: f.T, from: S.camX + S.viewW / 2 };
-  const k = easeInOut(clamp01((f.T - f.glide.at) / KILL_GLIDE_S));
-  return f.glide.from + (x - f.glide.from) * k;
-}
-
 // Where the gear hangs on a station: a body's top-left (in pixels) stood in
 // the prop's own right-hand end, on its foot, so the kit is drawn there as
 // it would be held -- in the rack, against the stand -- with nobody in it.
@@ -206,7 +197,7 @@ export function stepFinale(t) {
     const she = !w || swim(w, hx, hy, f.swum * f.hurry);
     const he = toward(him, hx + WORKER + FINALE_PAIR_GAP, hy, f.swum * f.hurry * frames());
     if (w) { w.pose = null; w.beam = null; w.goal = 'back'; }
-    deepFrame(st ? postX(st) + WORKER : him.x, 1);
+    shoot(t, deepShot(st));
     if (!(she && he)) return true;
     if (w) w.face = 1;
     him.face = -1;
@@ -216,7 +207,7 @@ export function stepFinale(t) {
     return true;
   }
   if (f.phase === 'lift' || f.phase === 'hang') {
-    deepFrame(postX(st) + WORKER, 1);
+    shoot(t, deepShot(st));
     if (f.phase === 'lift' && f.u >= FINALE_LIFT_S) next('hang');
     else if (f.phase === 'hang' && f.u >= FINALE_HANG_S) { retire(f); next('heart'); }
     return true;
@@ -232,7 +223,7 @@ export function stepFinale(t) {
     }
   }
   if (f.phase === 'heart') {
-    deepFrame(st ? postX(st) + WORKER : him.x, 1);
+    shoot(t, deepShot(st));
     if (f.u >= FINALE_HEART_S) next(f.heir && st && st.hung ? 'heir' : 'up');
     return true;
   }
@@ -240,7 +231,7 @@ export function stepFinale(t) {
     // Watched while it swims over and takes the gear up (deep/classes.js,
     // `takeUp`); then a beat on it with the gear before the two of them go.
     const w = S.workers.find(o => o.uid === f.heir);
-    deepFrame(st ? postX(st) + WORKER : him.x, 1);
+    shoot(t, deepShot(st));
     if (st && st.hung && w && f.u < FINALE_HEIR_MAX_S + FINALE_TAKE_S) { f.took = null; return true; }
     f.took ??= f.u;
     if (f.u - f.took >= FINALE_WATCH_S) next('up');
@@ -248,23 +239,21 @@ export function stepFinale(t) {
   }
   if (f.phase === 'up') {
     // Up to the deep's end of the portal together, the frame easing back to
-    // the deep's own as it follows them.
+    // the deep's own size as it keeps with them.
     const pc = deepPortal(), her = f.pair[0];
     const tx = pc.x - WORKER - FINALE_PAIR_GAP / 2, ty = pc.y - WORKER / 2;
     f.upPace ??= paceFor(Math.hypot(tx - her.x, ty - her.y), FINALE_UP_PX_S, FINALE_UP_MAX_S);
     const step = f.upPace * frames() * f.hurry;
     const a = toward(her, tx, ty, step), b = toward(him, tx + WORKER + FINALE_PAIR_GAP, ty, step);
-    const k = 1 - easeInOut(clamp01(f.u / KILL_GLIDE_S));
-    deepFrame((her.x + him.x) / 2 + WORKER / 2, k, her.y + WORKER / 2);
+    shoot(t, { key: 'up', frame: pairBox(), move: 'follow', zoom: 1, middle: true, s: KILL_GLIDE_S });
     if (a && b) next('ring');
     return true;
   }
   if (f.phase === 'ring') {
-    deepFrame(deepPortal().x, 0, f.pair[0].y + WORKER / 2);
+    shoot(t, { key: 'up', frame: pairBox(), move: 'follow', zoom: 1, middle: true, s: KILL_GLIDE_S });
     if (f.u < FINALE_RING_S) return true;
     // Through: the deep draws back into its end of the portal and the yard
     // is left (view.js, the way up).
-    killFrame(0, deepPortal().x);
     if (S.view === 'deep') goUp();
     next('through');
     return true;
@@ -277,7 +266,6 @@ export function stepFinale(t) {
     f.pair[1] = { x: f.pair[0].x + WORKER + FINALE_PAIR_GAP, y: f.pair[0].y, face: -1 };
     f.from = f.pair.map(o => ({ x: o.x, y: o.y }));
     f.T = 0;
-    f.glide = null;
     // The walk's length is known now, and the build is fitted to it: done as
     // they reach the door. With nobody to build it, it is stood up here,
     // a whole yard away from anybody looking.
@@ -303,7 +291,7 @@ export function stepFinale(t) {
       o.y = over > 0 ? snap(surf + (feetOn(ways().yard, o.x) - surf) * over - lift) : snap(s.y + (surf - s.y) * up);
       o.face = -1;
     });
-    yardFrame(f.pair[0].x);
+    shoot(t, yardShot(f.pair[0].x));
     if (f.u < FINALE_OUT_S) return true;
     f.walkT = f.T;
     f.nextFw = f.T + FIREWORK_FIRST_S;
@@ -314,7 +302,7 @@ export function stepFinale(t) {
     // The length of the yard in whole pixels; the crowd falls in.
     const x = Math.max(endX(), Math.round(f.walkFrom - f.walkPace * f.u));
     placePair(x);
-    yardFrame(x);
+    shoot(t, yardShot(x));
     joinCrowd(x);
     launch(f);
     if (x > endX()) return true;
@@ -322,7 +310,7 @@ export function stepFinale(t) {
     return true;
   }
   placePair(endX());
-  yardFrame(endX());
+  shoot(t, yardShot(endX()));
   if (f.phase === 'arrive') {
     // At the door; held there until the house is done, the crowd still
     // falling in from anywhere it was not passed.
@@ -374,19 +362,28 @@ function placePair(x) {
   him.y = feetOn(way, him.x);
 }
 
-// The deep's frame on `x`, pulled in by `k` of the kill's closeness, and
-// held on height `y` while pulled in.
-function deepFrame(x, k, y = null) {
-  killFrame(k, glideX('deep', x), k > 0 && y != null ? y : null);
+// The finale's frames, as the shot's requests (shot.js, `stepAim`). In the
+// deep, her station: its prop, her post and the water beside it where the
+// two of them stand aside, at the kill's closeness, which the kill handed
+// over. Where they are going rather than where she swims from, so the frame
+// is still while she comes into it.
+function deepShot(st) {
+  const at = st ? [propBox(st), { x: postX(st), y: postY(), w: WORKER * 3 + FINALE_PAIR_GAP * 2, h: WORKER }]
+                : finaleSubject();
+  return { key: 'deep', frame: union(at), move: 'follow', zoom: 1 + KILL_ZOOM };
 }
-// The yard's: the pair a share of the window in from its left. At the door
-// it stays there, the house coming into view as the camera arrives.
-function yardFrame(x) {
-  S.follow = null;
-  S.camTo = null;
-  S.camLockY = null;
-  S.camX = glideX('yard', x + WORKER - FINALE_LEAD * S.viewW + S.viewW / 2) - S.viewW / 2;
-  clampCam();
+// The two of them, on their way up.
+const pairBox = () => union(F().pair.filter(Boolean).map(o => ({ x: o.x, y: o.y, w: WORKER, h: WORKER })));
+// The yard's: the pair FINALE_LEAD of the window in from its left, and the
+// road behind them that the crowd falls in on, from the pair's feet to the
+// top of what the finale is about (the house, at the door). At the door it
+// stays there, the house coming into view as the camera arrives.
+function yardShot(x) {
+  const about = union(finaleSubject());
+  const w = WORKER + (1 - 2 * FINALE_LEAD) * S.viewW;
+  const y0 = about ? Math.min(about.y, F().pair[0].y) : F().pair[0].y;
+  const y1 = Math.max(about ? about.y + about.h : 0, F().pair[0].y + WORKER);
+  return { key: 'yard', frame: { x, y: y0, w, h: y1 - y0 }, move: 'follow' };
 }
 
 // Her off the crew: out of the workers where she stands, off the count and
@@ -684,7 +681,7 @@ export function land(her = null) {
   const y = S.groundY - WORKER;
   S.finale = { phase: 'held', u: FINALE_HOLD_S, T: 0, hurry: 1, st: null, her: null, heir: null,
                pair: [{ x: endX(), y, face: -1 }, { x: himAt(endX()), y, face: -1 }], joined: 0, bursts: [],
-               kit: null, glide: null, house: null, landing: {} };
+               kit: null, house: null, landing: {} };
   finishHouse(S.finale);
   markDone('freed', 'finale');
 }
@@ -733,11 +730,13 @@ export function finaleSubject() {
   }
   const at = [...f.pair, herBody()].filter(Boolean).map(o => ({ x: o.x, y: o.y, w: WORKER, h: WORKER }));
   const st = f.st ? stationById(f.st) : null;
-  if (st && DEEP.has(f.phase) && f.phase !== 'up' && f.phase !== 'ring') {
-    const r = propRect(st);
-    at.push({ x: r.x, y: r.y, w: Math.max(r.w, postX(st) + WORKER - r.x), h: deepFloor() - r.y });
-  }
+  if (st && DEEP.has(f.phase) && f.phase !== 'up' && f.phase !== 'ring') at.push(propBox(st));
   return at;
+}
+// A station's prop, from its top to the floor, and her post beside it.
+function propBox(st) {
+  const r = propRect(st);
+  return { x: r.x, y: r.y, w: Math.max(r.w, postX(st) + WORKER - r.x), h: deepFloor() - r.y };
 }
 
 // Where the walk ends, for the checks: the door, and him beside her.

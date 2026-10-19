@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cutscenes</title>
+<style>
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body { background: #fff; color: #111; display: grid;
+         grid-template-columns: minmax(12em, 20em) minmax(0, 1fr); grid-template-rows: 100%;
+         font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  .list { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid #ddd; }
+  .list h1 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; margin: 0; padding: 12px 12px 4px; }
+  .list .keys { color: #777; padding: 0 12px 8px; }
+  .list .keys b { color: #111; font-weight: normal; border: 1px solid #bbb; border-radius: 2px; padding: 0 3px; }
+  .list input { margin: 0 12px 8px; font: inherit; padding: 2px 4px; border: 1px solid #bbb; }
+  .parts { overflow: auto; flex: 1; padding-bottom: 12px; }
+  .row { display: block; padding: 2px 12px; cursor: pointer; border: 0; background: none; font: inherit;
+         text-align: left; width: 100%; color: #111; }
+  .row small { display: block; color: #777; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row:hover { background: #eee; }
+  .row.on { background: #111; color: #fff; }
+  .row.on small { color: #bbb; }
+  .row[hidden] { display: none; }
+  .row.grey { color: #aaa; cursor: not-allowed; }
+  .row.grey:hover { background: none; }
+  .stage { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; min-height: 0; min-width: 0; }
+  .bar { display: flex; gap: 8px; align-items: baseline; padding: 6px 12px; border-bottom: 1px solid #ddd; }
+  .bar .name { font-weight: bold; }
+  .bar .say { color: #555; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar button { font: inherit; padding: 0 6px; }
+  #ov.on { background: #111; color: #fff; }
+  .pic { position: relative; min-height: 0; background: #eee; }
+  iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+  #view { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
+          image-rendering: pixelated; background: #fff; }
+  #view[hidden] { display: none; }
+  #note { position: absolute; left: 8px; top: 6px; background: #111; color: #fff; padding: 0 6px; }
+  #note[hidden] { display: none; }
+  .readout { padding: 4px 12px; border-top: 1px solid #ddd; white-space: pre-wrap; min-height: 3em; }
+  .readout b { font-weight: normal; color: #777; }
+  .tl { position: relative; height: 84px; margin: 0 12px 10px; user-select: none; }
+  .tl .marks { position: absolute; left: 0; right: 0; top: 0; height: 36px; }
+  .tl .mark { position: absolute; font: inherit; font-size: 11px; padding: 0 4px; background: #fff; color: #111;
+              border: 1px solid #111; border-left-width: 3px; cursor: pointer; white-space: nowrap; line-height: 16px; }
+  .tl .mark:hover { background: #111; color: #fff; }
+  #track { position: absolute; left: 0; right: 0; top: 38px; height: 44px; width: 100%; background: #f4f4f4;
+           border: 1px solid #bbb; box-sizing: border-box; cursor: ew-resize; }
+  @media (max-width: 900px) { body { grid-template-columns: minmax(9em, 14em) minmax(0, 1fr); }
+    .row small { display: none; } .bar { flex-wrap: wrap; } }
+  #tip { position: fixed; background: #111; color: #fff; padding: 2px 6px; pointer-events: none; z-index: 5; }
+  #tip[hidden] { display: none; }
+</style>
+</head>
+<body>
+<!-- The cutscene bench: the game in a frame, and every cutscene down the side.
+     A cutscene is played once with the clock held still and a frame kept
+     every tenth of a second, and the timeline under the picture scrubs the
+     frames; the phases are marked along it and clicking one plays from there.
+     DESIGN.md, "One camera for every cutscene, and a bench to watch them on".
+     The frame is play.html?bench, staged from boot like scenes.html's, so it
+     never touches the save. -->
+<div class="list">
+  <h1>the cutscenes</h1>
+  <div class="keys"><b>&larr;</b> <b>&rarr;</b> step &middot; <b>space</b> play &middot; <b>r</b> again &middot; <b>o</b> overlay</div>
+  <input id="find" type="search" placeholder="find a cutscene" autocomplete="off">
+  <div class="parts" id="rows"></div>
+</div>
+<div class="stage">
+  <div class="bar">
+    <span class="name" id="name">pick a cutscene</span>
+    <span class="say" id="say"></span>
+    <button id="rec" type="button" title="record it again (r)">record</button>
+    <button id="play" type="button" title="play at real speed (space)">play</button>
+    <button id="ov" type="button" title="the overlay (o)">overlay</button>
+  </div>
+  <div class="pic">
+    <iframe id="yard" src="./play.html?bench" title="the yard"></iframe>
+    <canvas id="view" hidden></canvas>
+    <div id="note" hidden></div>
+  </div>
+  <div class="readout" id="readout"></div>
+  <div class="tl" id="tl">
+    <div class="marks" id="marks"></div>
+    <canvas id="track"></canvas>
+  </div>
+</div>
+<div id="tip" hidden></div>
+<script type="module" src="./src/cutbench/main.js"></script>
+</body>
+</html>

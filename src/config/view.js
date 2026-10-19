@@ -15,12 +15,16 @@ export const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
 // never came off the rock. Six rungs of the one grey ramp (palette.js), the
 // last of them the buildings' black, so a heap and a wall share one black.
 export const SHADES = GREY.slice(GREY_DUST_FROM, GREY_DUST_FROM + 6);
-// The page's two inks, and the dark page's (DESIGN.md, "Dark mode"): not
-// white on black but a light gray on charcoal, so the dark page is a page and
-// not a negative. ink.js maps every other color between them by lightness,
-// and the stylesheet's variables carry the same four (style.css, `:root`).
+// The page's two inks, and the dark page's (DESIGN.md, "Dark mode: black
+// stays black"): a graphite paper light enough for pure black to sit on it,
+// and a light ink for words and lines. ink.js sends white to the paper and
+// keeps black black, and the stylesheet's variables carry the same four
+// (style.css, `:root`). The first dark page, light gray on charcoal turned by
+// lightness, is the dim page now (prefs.js, `theme`), and the deep draws in
+// it on the dark page too: it was drawn for that and reads right in it.
 export const LIGHT_PAPER = '#ffffff', LIGHT_INK = '#000000';
-export const DARK_PAPER = '#1f1f1f', DARK_INK = '#e0e0e0';
+export const DARK_PAPER = '#3a3a3a', DARK_INK = '#ececec';
+export const DEEP_PAPER = '#1f1f1f', DEEP_INK = '#e0e0e0';
 // Cells above the shades are not dust, but they are one cell exactly like a
 // grain of dust: they fall, heap, slump, are scooped and are carried by the
 // same code, and differ only in the mark drawn on them and what they are worth
@@ -105,6 +109,9 @@ export const MESS_TAG_CAP = 99;
 // the page (render/counter.js).
 export const FLOAT_SHADOW = 6;
 export const FLOAT_SHADOW_ALPHA = 0.2;
+// and on the dark page, where the shadow is still black but the graphite
+// under it is darker, so it takes more to be seen (--shadow-ink there)
+export const FLOAT_SHADOW_ALPHA_DARK = 0.45;
 // The most the landing page waits for its picture (the demo frame's first
 // drawn frame) before lifting its veil regardless: a frame that will not come
 // must not hold the page white.

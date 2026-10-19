@@ -17,7 +17,7 @@
 
 import { P, GREY, WARD_UNIT as U, LAMP_CONE as C } from '../config.js';
 import { GREYS } from './deeptones.js';
-import { darkPage } from '../ink.js';
+import { turnedOver } from '../ink.js';
 import { fill } from './wardrobe.js';
 
 const SEEN = { head: new WeakMap(), hat: new WeakMap() };
@@ -46,7 +46,7 @@ export function lampCone(g, x, y, dir, { on, key = null, t = 0, deep = false, sr
   const tone = deep ? GREYS[C.deepRung] : GREY[C.rung];
   const was = g.globalAlpha, op = g.globalCompositeOperation;
   g.globalAlpha = was * a;
-  g.globalCompositeOperation = darkPage ? 'lighten' : 'darken';
+  g.globalCompositeOperation = turnedOver() ? 'lighten' : 'darken';
   for (let d = 0; d < C.reach; d += U) {
     const half = Math.round((C.from + d * C.spread) / U) * U, mid = cy + Math.round(d * C.tilt / U) * U;
     fill(g, dir > 0 ? front + d : front - d - U, mid - half, U, 2 * half, tone);

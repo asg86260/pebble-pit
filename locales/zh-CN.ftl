@@ -401,6 +401,9 @@ set-touch-off = 触屏：关
 set-dark-on = 深色：开
 
 # settings dark switch
+set-dark-dim = 深色：柔和
+
+# settings dark switch
 set-dark-off = 深色：关
 
 # settings sound switch

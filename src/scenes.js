@@ -2885,6 +2885,17 @@ export const SCENES = {
       for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
       pinCamera(houseX() + FINALE_HOUSE_W * P / 2 - S.viewW / 2);
     } },
+  // The act 3 intro just through the tear (wave shot, track A): the ripple
+  // landed in the afterlife, the shot held on the cloud floor where the two of
+  // them will come up, the bands full, the zoom the yard's.
+  'act3-rise': { about: 'the acts', say: 'act 3\'s rise just through the tear: the afterlife framed on the patch of cloud floor the two of them come up through',
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
+      for (let i = 0; i < 60 * 60 && !(S.view === 'after' && S.viewTo == null); i++) window.__fast(1 / 60);
+      window.__fast(1);
+      window.__holdShot();
+    } },
   // The opening played from the go-on card's press to the refusal's last
   // phase: the two of them up the pillar's face onto the pedestal, the
   // road's drawing of them fading off over the pedestal's own.

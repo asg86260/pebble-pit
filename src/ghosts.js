@@ -108,6 +108,21 @@ export function placeFor(y) {
   return 'hell';
 }
 
+// Where the pair are next seen: where they stand, while that is in a place;
+// crossing between two (the sky from heaven's tear to the cloud floor, the
+// rock from the deep's floor to hell), where the leg they are on comes out.
+// Nobody draws a body on the road between two places, so a camera that
+// watched where they are in between watched an empty window; it frames the
+// far end of the leg instead, and they walk up into it (shot.js, rule 5).
+export function seenAt(p = S.acts && S.acts.pair) {
+  if (!p) return null;
+  if (placeAt(p.y)) return { x: p.x, y: p.y };
+  const L = p.route && ROUTES[p.route][p.leg];
+  if (L && L.v) return { x: p.x, y: L.v() };
+  if (L && L.to) return L.to();
+  return { x: p.x, y: p.y };
+}
+
 // The pair's two bodies, [first, second]: the second GHOST_GAP behind the way
 // the first is facing. Null with no pair.
 export function pairBodies() {

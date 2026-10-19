@@ -11,7 +11,7 @@ import { msg } from '../lang.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { now } from '../clock.js';
-import { darkPage, turned } from '../ink.js';
+import { seen } from '../ink.js';
 import { coilCeiling, coilEnds } from '../deep/place.js';
 import { arrowBox } from './shaftway.js';
 import { barK } from '../abyssintro.js';
@@ -29,8 +29,6 @@ import { P, BAR_W, BAR_H, BAR_TOP, BAR_PAD, BAR_HAND_GAP, BAR_ALONG, BAR_PIP, BA
          BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP,
          SERPENT_PHASES, BREAK_DIVE, BREAK_ROAR, BAR_LEVEL_GAP, NUM_FONT_PX, NUM_DROP, LEVEL_KNOCK_S } from '../config.js';
 
-// As fightnums.js: the deep on the dark page is drawn turned, so the bar is too.
-const seen = c => darkPage ? turned(c) : c;
 
 // The picture's memory. `shown` is the fill as drawn, 0..1; `healLo` where the purple starts (null for none), `healIn` when
 // the heal finished flowing in (null while it still is); `refilling` while a

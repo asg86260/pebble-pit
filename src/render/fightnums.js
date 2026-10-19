@@ -11,7 +11,7 @@
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { now } from '../clock.js';
-import { darkPage, turned } from '../ink.js';
+import { seen } from '../ink.js';
 import { blowK } from '../deep/serpent.js';
 import { kickTop, leaveOf } from './barflight.js';
 import { barShown, barRect, barLeft } from './serpentbar.js';
@@ -22,9 +22,8 @@ import { NUM_FONT_PX, NUM_FACE, NUM_DROP, NUM_LIFE_S, NUM_HEAL_LIFE_S, NUM_IN_S,
          NUM_HEAL_SWELL, NUM_HEAL_SWELL_LAG, NUM_HEAL_FADE, NUM_HEAL_FACES, NUM_HEAL_DROPS,
          NUM_BAR_IN_S, NUM_BAR_BITE_S } from '../config.js';
 
-// On the dark page every color is mapped by its lightness (ink.js), and the
-// deep there is drawn turned so the map brings it back: the numbers too.
-const seen = c => darkPage ? turned(c) : c;
+// Written as seen (ink.js, `seen`): a number reads the same way round in
+// whichever map it is drawn.
 
 // A number's opacity over its life, in whole steps, so it passes through the
 // tones of whatever is behind it: in quickly, held, out over its last share.

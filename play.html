@@ -14,15 +14,18 @@
 <title data-l10n-id="play-doctitle">Pebble Pit</title>
 <link rel="icon" href="./icon.png">
 <link rel="stylesheet" href="./src/style.css">
-<!-- Dark mode before the first paint, straight from the store, so the page
-     never opens white and then goes dark. The same question prefs.js's
-     `dark` asks, in the same order. -->
+<!-- The page's look before the first paint, straight from the store, so the
+     page never opens white and then goes dark. The same question prefs.js's
+     `theme` asks, in the same order: `dark` on both dark pages, and `dim` too
+     on the first one. -->
 <script>
 try {
-  var d = /[?&]dark\b/.test(location.search) || null;
-  if (d == null) { var p = JSON.parse(localStorage.getItem('boulder-clicker/prefs')); d = p && p.dark; }
-  if (d == null) d = matchMedia('(prefers-color-scheme: dark)').matches;
-  if (d) document.documentElement.classList.add('dark');
+  var p = JSON.parse(localStorage.getItem('boulder-clicker/prefs'));
+  var t = /[?&]dim\b/.test(location.search) ? 'dim' : /[?&]dark\b/.test(location.search) ? 'dark' : null;
+  if (t == null && p) t = p.theme || (p.dark === true ? 'dark' : p.dark === false ? 'light' : null);
+  if (t == null) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  if (t !== 'light') document.documentElement.classList.add('dark');
+  if (t === 'dim') document.documentElement.classList.add('dim');
   if (/[?&]readable\b/.test(location.search) || (p && p.readable)) document.documentElement.classList.add('readable');
 } catch (e) {}
 </script>

@@ -13,6 +13,7 @@ import { dialRect } from './render/filter.js';
 import { siteBox } from './works.js';
 import { nameOf } from './stations.js';
 import { S } from './state.js';
+import { toScreen } from './world.js';
 import { take } from './upgrades.js';
 import { subject, bandCells, liftArrived } from './cutscene.js';
 import { CELL } from './config.js';
@@ -41,8 +42,7 @@ window.__dialRect = dialRect;
 // the bands all the way in and the camera's move between them made.
 window.__framed = () => {
   const box = subject(), band = bandCells() * CELL;
-  const rect = box && { x: (box.x - S.camX) * S.zoom, y: (box.y - S.camY) * S.zoom,
-                        w: box.w * S.zoom, h: box.h * S.zoom };
+  const rect = box && { ...toScreen(box.x, box.y), w: box.w * S.zoomShow, h: box.h * S.zoomShow };
   return { hush: S.hush, band, W: S.W, H: S.H, rect, framed: !!box && S.hush >= 1 && liftArrived() };
 };
 
@@ -50,7 +50,7 @@ window.__framed = () => {
 // press the pointer on it; null with no orb up.
 window.__orbAt = () => {
   const o = orbOn(), c = o && orbMiddle(o.st);
-  return c && { x: (c.x - S.camX) * S.zoom, y: (c.y - S.camY) * S.zoom, left: o.left, max: o.max };
+  return c && { ...toScreen(c.x, c.y), left: o.left, max: o.max };
 };
 
 window.__state = () => ({

@@ -11,7 +11,7 @@ import { WORK_BASE } from './config.js';
 import { S, bench } from './state.js';
 import { canAfford } from './upgrades.js';
 import { registerRows, start, workOn } from './works.js';
-import { lookAt } from './world.js';
+import { lookAt, toScreen } from './world.js';
 
 // On no board. It needs a row because works.js finishes a work by calling
 // `rowFor(w.key).buy()`, which is how a work coming back out of a save knows
@@ -45,7 +45,7 @@ export function raiseBench() {
   // The view goes to it if it is not already there: a window that opens on
   // the rock alone has the bench off to the left.
   const mid = bench.x + bench.w / 2;
-  const sx = (mid - S.camX) * S.zoom;
+  const sx = toScreen(mid, 0).x;
   if (sx < 0 || sx > S.W) lookAt(mid);
   return start('yard', RAISE_BENCH, mid);
 }

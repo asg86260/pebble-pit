@@ -37,6 +37,7 @@ import { registerRows, ahead } from './works.js';
 import { JOB, TYPE } from './jobs.js';
 import { registerBoard } from './boardrows.js';
 import { msg } from './lang.js';
+import { sfx } from './audio.js';
 
 // Where the two quarry ladders stand, clamped to their length (`tierLevel`).
 export const paceLadder = () => tierLevel('quarryPaceLevel');
@@ -502,6 +503,7 @@ export function stepQuarrier(w, now, ctx = null) {
   // a cut should look worked whether or not it is about to pay.
   if (now >= w.swingAt) {
     w.lunge = 1;
+    sfx('pick-swing', { x: w.x + WORKER / 2 });
     w.swingAt = now + QUARRY_SWING * (0.7 + rand() * 0.6);
   }
 
@@ -581,6 +583,7 @@ export function stepQuarrier(w, now, ctx = null) {
   // Hand work never fouls the sky, anywhere; a machine's stack is the only
   // thing that does (`foul` refuses everything else).
   w.lunge = 1;
+  sfx('pick-swing', { x: w.x + WORKER / 2 });
   w.swingAt = now + QUARRY_SWING;
   // A hearty stew quickens this body's own digging (apothecary.js).
   w.next = now + beatMs() / speedBoost(w) * (0.85 + rand() * 0.3);

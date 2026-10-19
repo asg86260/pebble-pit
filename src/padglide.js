@@ -34,7 +34,7 @@ const unitOf = sp => (sp === 'page' ? PAD_PAGE_CELL : P);
 const easeInOut = k => (1 - Math.cos(Math.PI * k)) / 2;
 // The glass and back. The yard's box is world units under the camera; the
 // page's is already CSS pixels.
-const zoom = () => S.zoom || 1;
+const zoom = () => S.zoomShow || S.zoom || 1;
 const onGlass = (b, sp) => (sp === 'yard'
   ? { x: (b.x - S.camX) * zoom(), y: (b.y - S.camY) * zoom(), w: b.w * zoom(), h: b.h * zoom(), u: P * zoom() }
   : { x: b.x, y: b.y, w: b.w, h: b.h, u: PAD_PAGE_CELL });
