@@ -12,12 +12,14 @@ export const OURS_X0 = P * 14;
 
 // --- the level's three zones (DESIGN.md, "The level, the two crowds and the flags") ---
 // Left to right: the workshops, the union's camp, God's camp, this many cells
-// of open floor between each (a walk of about fourteen seconds), so a window
-// on one camp shows little or nothing of the next.
-export const AFTER_ZONE_GAP = 120;
+// of open floor between each. Every member and carrier walks it, so it is
+// the act's pace as much as its picture: at 40 cells the strike no longer
+// comes inside test/after-playthrough's stretch, and at 120 the speech burns
+// each sign before it wins anyone. Wider wants the pace moved with it.
+export const AFTER_ZONE_GAP = 24;
 // The union's camp's floor, in cells, the pedestal at its middle: room for
 // its crowd round and behind the pair (the crowd itself is not built yet).
-export const AFTER_UNION_W = 64;
+export const AFTER_UNION_W = 32;
 
 // --- the sky's frame ----------------------------------------------------------------
 // The crowd stands from its bands' tops down to a cloud bank this far up off
