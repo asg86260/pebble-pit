@@ -20796,8 +20796,8 @@ act3-seat, act3-dais, act3-arrive, act3-bless, act3-gaze cards):
   souls `#9a9a9a`, and God and his light white -- the brightest thing on
   the page.
 
-Open: whether the tithe load fades in his hands at the blessing (the
-build assumes so; the owner has not said).
+The tithe load each soul carries up fades in his hands at the blessing
+(the owner, 2026-10-19).
 
 ##### The click: a cloud, and faith
 

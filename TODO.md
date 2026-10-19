@@ -36,7 +36,7 @@ built sky down to squares of one flat tone, God outlined behind the mass
 crowd, the block throne on a black stepped base, a single file blessed on
 the top step, and turns of blessing and glaring with a grey-edged cone
 (DESIGN.md, "The sky, redrawn flat"). Building on `act3-sky-flat`; the
-open call is whether the tithe load fades in his hands at the blessing.
+load fades in his hands at the blessing (the owner).
 
 **Scaffold built** (2026-10-17, branch `acts-scaffold`): the switches, the
 two places and their cameras, the empty steps, the stub modules, the save
