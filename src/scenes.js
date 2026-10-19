@@ -656,6 +656,8 @@ function levelAt(share, at, won = null) {
   S.after.speech = { next: S.after.t + 1e6, target: null, burnt: null };
   for (const [f, r] of LEVEL_SIGNS) S.after.signs.push({ id: 96000 + f, f, r, askew: false, pull: null, big: false, age: 0 });
   for (const slot of [8, 22, 36]) S.after.posters.push({ id: 95000 + slot, slot, age: 0, torn: null, big: false });
+  // The workshops standing, so their zone is seen with its stations.
+  for (const k of ['mill', 'chipper', 'papermill', 'workshop', 'press']) if (!S.after.built.includes(k)) S.after.built.push(k);
   window.__fast(2);
   const cx = () => (at === 'works' ? workshopsX1() - S.viewW * 0.3 : at === 'union' ? afterOpenX() : at === 'god' ? soulX(18) : at);
   window.__look(cx() - S.viewW / 2); window.__fast(1 / 30);
