@@ -10,7 +10,7 @@ import { P, GREY, AFTER_W, AFTER_DRIFT_ROWS, AFTER_DRIFT_RATE, AFTER_BILLOW_SEED
 import { S } from '../../state.js';
 import { afterX0, afterFloor, floorProfile, floorFlats, billow, notchX, crowdLip, sitesKey, sited } from '../../after/place.js';
 import { ctx } from '../ctx.js';
-import { K, W, now, clamp01 } from './kit.js';
+import { K, W, PALE, now, clamp01, hash } from './kit.js';
 
 const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(x, y, w, h); };
 
@@ -32,10 +32,11 @@ function edge(el, j0, j1, x0, yTop, tone, fill, yBot, skip) {
 
 // A contour that drifts: a run of one-cell puffs in `tone`, sliding a cell
 // at a time and crossfaded between the two cells it is between, so it never
-// jumps.
+// jumps. `gaps` of its columns are left open, so the deeper of the two reads
+// fainter in the same pale tone.
 const PERIOD = 40;
 let drifts = null;
-function drifting(k, j0, j1, y, tone) {
+function drifting(k, j0, j1, y, tone, gaps = 0) {
   drifts ||= AFTER_DRIFT_ROWS.map((_, i) => billow(Math.ceil(AFTER_W / P) + PERIOD + 2, AFTER_BILLOW_SEED + 11 + i * 12, 1));
   const s = now() * AFTER_DRIFT_RATE[k], i = Math.floor(s), f = s - i;
   for (const [off, a] of [[i, 1 - f], [i + 1, f]]) {
@@ -44,6 +45,7 @@ function drifting(k, j0, j1, y, tone) {
     ctx.globalAlpha = was * a;
     const view = j => el[Math.max(0, j + o) % el.length];
     for (let j = j0; j < j1; j++) {
+      if (gaps && hash(((j + o) % el.length) * 3.7 + k) < gaps) continue;
       const v = view(j), x = afterX0() + j * P, yy = y - v * P;
       const l = view(j - 1), r = view(j + 1), cutL = l < v, cutR = r < v;
       fr(x + (cutL ? 2 : 0), yy, P - (cutL ? 2 : 0) - (cutR ? 2 : 0), 2, tone);
@@ -76,18 +78,18 @@ export function drawFloor() {
     ctx.globalAlpha = g * (1 - f); edge(was, j0, j1, afterX0(), top, K, false, bot, near);
     ctx.globalAlpha = g;
   }
-  // One pale cell under a valley's line, where two puffs meet.
+  // A pale dash under a valley's line, where two puffs meet.
   const flats = floorFlats();
   for (let j = Math.max(1, j0); j < Math.min(j1, el.length - 1); j++) {
-    if (el[j] === 0 && (el[j - 1] > 0 || el[j + 1] > 0) && !flats.some(([a, b]) => j >= a - 1 && j < b + 1)) fr(afterX0() + j * P, top + 2, P, P - 2, 1);
+    if (el[j] === 0 && (el[j - 1] > 0 || el[j + 1] > 0) && !flats.some(([a, b]) => j >= a - 1 && j < b + 1)) fr(afterX0() + j * P + 2, top + 4, P - 4, 2, PALE);
   }
-  AFTER_DRIFT_ROWS.forEach((rows, k) => { if (bot - top > P * (rows + 1)) drifting(k, j0, j1, top + rows * P, k ? 1 : 2); });
+  AFTER_DRIFT_ROWS.forEach((rows, k) => { if (bot - top > P * (rows + 1)) drifting(k, j0, j1, top + rows * P, PALE, k ? 0.45 : 0); });
   // The notch's walls: the line turned down a cell, then the cloud's depth in
   // pale steps either side, the gap left white.
   if (!sited('mill')) return;
   const nx = notchX();
   fr(nx - 2, top, 2, P + 2, K); fr(nx + 2 * P, top, 2, P + 2, K);
-  for (let r = 1; r < 4; r++) { fr(nx - 2, top + r * P, 2, P, 3); fr(nx + 2 * P, top + r * P, 2, P, 3); }
+  for (let r = 1; r < 4; r++) { fr(nx - 2, top + r * P, 2, P, PALE); fr(nx + 2 * P, top + r * P, 2, P, PALE); }
 }
 
 // The puffs again over God's crowd, drawn after its front row (render/

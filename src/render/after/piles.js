@@ -4,13 +4,13 @@
 // when), so a log coming on or going off fades. Cells off the frame's ground.
 
 import { P } from '../../config.js';
-import { K, W, DUST, hash, pileAlpha, countAt } from './kit.js';
+import { K, W, PALE, MID, DUST, hash, pileAlpha, countAt } from './kit.js';
 
 // The count two cells over a pile's top, at a frame cell (cx, cy), in world px.
 function count(d, n, cx, cy) { const at = d.world(cx, cy); countAt(at.x, at.y, n); }
 
-// A log seen end on: a two-cell square, black rim, a grey cut face, a dark heart.
-export function logEnd(d, x, y) { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, 3); d.px(x * P + 5, y * P + 5, 2, 2, 6); }
+// A log seen end on: a two-cell square, black rim, a pale cut face, a mid heart.
+export function logEnd(d, x, y) { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, PALE); d.px(x * P + 5, y * P + 5, 2, 2, MID); }
 // Logs, bricked: three on the floor, two on them, one on top.
 const SPOTS = [[0, 0], [2, 0], [4, 0], [1, 1], [3, 1], [2, 2]];
 export function logPile(d, x, st, cap = SPOTS.length) {
@@ -24,11 +24,11 @@ export function plankPile(d, x, st, cap = 6) {
   const m = Math.min(Math.max(st.n, st.prev), cap);
   for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => {
     const y = -1 - i, dx = i % 2 ? 0.5 : 0;
-    d.px((x + dx) * P, y * P, 6 * P, P, K); d.px((x + dx) * P + 2, y * P + 2, 6 * P - 4, P - 4, 4);
+    d.px((x + dx) * P, y * P, 6 * P, P, K); d.px((x + dx) * P + 2, y * P + 2, 6 * P - 4, P - 4, PALE);
   });
   count(d, st.n, x + 3.25, -Math.max(1, Math.min(st.n, cap)) - 2.5);
 }
-// A heap of grains, in the sawdust's greys a cell, growing as a triangle from
+// A heap of grains, in the sawdust's tones a cell, growing as a triangle from
 // its middle column `cx`, `R` cells high at its brim. `st` counts cells.
 const HEAPS = {};
 export function heapCells(R) {
@@ -51,13 +51,13 @@ export function heap(d, cx, R, st, n, tipped = false, pal = DUST) {
   }
   count(d, n, cx + 0.5, -1 - top - 3);
 }
-// Paper: a white stack, a sheet three pixels, ruled in grey; posters the
-// same with the top one's print showing.
+// Paper: a white stack, a sheet three pixels, every other one ruled pale;
+// posters the same with the top one's print showing.
 export function sheetPile(d, x, st, cap = 6, print = false) {
   const m = Math.min(Math.max(st.n, st.prev), cap), w = 4 * P;
   for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => {
     const y = -2 - (i + 1) * 3;
-    d.px(x * P, y, w, 3, K); d.px(x * P + 2, y, w - 4, 2, i === m - 1 ? W : 1);
+    d.px(x * P, y, w, 3, K); d.px(x * P + 2, y, w - 4, 2, i === m - 1 || i % 2 ? W : PALE);
   });
   const shown = Math.min(st.n, cap), topY = -2 - shown * 3;
   if (print && shown > 0) {
@@ -92,8 +92,8 @@ export const BUILD_SLOTS = [
   { x: 0, y: -1, k: 'plank' }, { x: 0.5, y: -2, k: 'plank' }, { x: 7, y: -2, k: 'block' }, { x: 9, y: -2, k: 'block' },
   { x: 0, y: -3, k: 'plank' }, { x: 8, y: -4, k: 'block' }, { x: 0.5, y: -4, k: 'plank' }, { x: 2, y: -6, k: 'block' }
 ];
-export const plankAt = (d, x, y, w = 6) => { d.px(x * P, y * P, w * P, P, K); d.px(x * P + 2, y * P + 2, w * P - 4, P - 4, 4); };
-export const blockAt = (d, x, y) => { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, 6); d.px(x * P + 4, y * P + 4, 4, 4, W); };
+export const plankAt = (d, x, y, w = 6) => { d.px(x * P, y * P, w * P, P, K); d.px(x * P + 2, y * P + 2, w * P - 4, P - 4, PALE); };
+export const blockAt = (d, x, y) => { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, MID); d.px(x * P + 4, y * P + 4, 4, 4, W); };
 // The pile, each slot at the ink `alpha(i)` gives (fading on as it is set
 // down and off as it is taken).
 export function buildPile(d, x, alpha) {

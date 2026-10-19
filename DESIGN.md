@@ -20728,6 +20728,15 @@ pale and goes to ink; the stair's line starts full and thins. Those three
 changes are the act's whole progress, and all three are on screen at
 once.
 
+**Four tones (built; the owner, 2026-10-19).** The act is drawn in paper,
+one pale grey, one mid grey and ink (`AFTER_TONES`) and nothing between
+them: stations, bodies, the sky's crowd, clouds, the floor, piles, cues
+and bubbles. Depth in the crowd is which of the four a band takes and how
+densely it is screened (an ordered dither), never a fifth grey; the near
+souls keep their mid rims off the band behind with a hair of paper. God's
+light -- he, his glare, halo, rays and gaze -- is the one thing outside
+them. `test/after-palette.test.mjs` goes red on a fifth tone.
+
 ##### The click: a cloud, and faith
 
 The pair's click is on a **cloud** -- one of the small ones drifting over

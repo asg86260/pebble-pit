@@ -10,7 +10,7 @@ import { S } from '../../state.js';
 import { afterFloor, speakerAt, stationX0, pileX } from '../../after/place.js';
 import { bubbles, pairSpeaking } from '../../after/bubbles.js';
 import { ctx } from '../ctx.js';
-import { frame, K, W } from './kit.js';
+import { frame, K, W, PALE, MID } from './kit.js';
 
 const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
 
@@ -28,7 +28,7 @@ export function drawPillar() {
   });
   fr(x0 + P - 2, fl - (TOP[0]) * P, 2, TOP[0] * P, K);
   fr(x0 + P * 11, fl - TOP[TOP.length - 1] * P, 2, TOP[TOP.length - 1] * P, K);
-  fr(x0 + P * 3, fl - P * 2, P * 3, 2, 2); fr(x0 + P * 7, fl - P, P * 2, 2, 2);
+  fr(x0 + P * 3, fl - P * 2, P * 3, 2, PALE); fr(x0 + P * 7, fl - P, P * 2, 2, PALE);
 }
 
 // The shout mark: three short rays over a head, held.
@@ -73,14 +73,14 @@ export function drawBubbles() {
   }
 }
 
-// The rebel pile at the foot: a stepped heap two cells high, darker at its
-// core, wider by a cell a power of ten of rebel.
+// The rebel pile at the foot: a stepped heap two cells high, mid at its core
+// and pale over it, wider by a cell a power of ten of rebel.
 export function drawRebelPile() {
   if (!S.after) return;
   const cols = Math.min(8, 2 + Math.floor(Math.log10(1 + S.after.rebel)));
   const d = frame(pileX(), afterFloor());
   for (let j = 0; j < cols; j++) {
     const hh = Math.max(1, Math.round(2 * Math.sin(Math.PI * (j + 0.5) / cols)));
-    for (let r = 0; r < hh; r++) d.c(j, -1 - r, 3 + ((j + r) % 3 === 0 ? 1 : 0) - (r === hh - 1 ? 1 : 0));
+    for (let r = 0; r < hh; r++) d.c(j, -1 - r, r === hh - 1 && hh > 1 ? PALE : (j + r) % 3 === 0 ? MID : PALE);
   }
 }

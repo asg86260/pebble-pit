@@ -17,6 +17,7 @@ import { S } from '../state.js';
 import { gestureView, partsOf, lowestBubble, groveIcons } from '../after/gestures.js';
 import { stationParts, afterFloor } from '../after/place.js';
 import { drawGroveIcons } from './after/pine.js';
+import { K, W, PALE, MID } from './after/kit.js';
 
 const D = GESTURE_CUE_DOT;
 const snap = v => Math.round(v / P) * P;
@@ -25,7 +26,7 @@ const cell = (x, y, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(snap(x),
 const now = () => S.after.t;
 
 // The ghost hand: a pointing mitten (its point the fingertip) and a fist (its
-// point the middle of the grip). '#' its outline, 'o' its fill.
+// point the middle of the grip). '#' its outline, mid, 'o' its fill, paper.
 export const HAND = {
   point: { at: [3.5, 0], m: ['...##.....', '..#oo#....', '..#oo#....', '..#oo#....', '..#oo####.', '.##oooooo#',
                              '#o#oooooo#', '#oooooooo#', '.#ooooooo#', '..#oooooo#', '...######.'] },
@@ -36,7 +37,7 @@ export function handOn(g, x, y, pose) {
   for (let j = 0; j < h.m.length; j++) for (let i = 0; i < h.m[j].length; i++) {
     const ch = h.m[j][i];
     if (ch === '.') continue;
-    g.fillStyle = GREY[ch === '#' ? 8 : 1];
+    g.fillStyle = GREY[ch === '#' ? MID : W];
     g.fillRect(x0 + i * D, y0 + j * D, D, D);
   }
 }
@@ -51,14 +52,14 @@ const FIG = {
 export function figureOn(g, x, y, n) {
   const chars = ['x', ...String(n)], w = (chars.length * 4 - 1) * D;
   x = dsnap(x); y = dsnap(y);
-  g.fillStyle = GREY[0];
+  g.fillStyle = GREY[W];
   g.fillRect(x - D, y - D, w + D * 2, 5 * D + D * 2);
-  g.fillStyle = GREY[10];
+  g.fillStyle = GREY[K];
   chars.forEach((ch, k) => { const f = FIG[ch]; for (let j = 0; j < 5; j++) for (let i = 0; i < 3; i++) if (f[j][i] === '#') g.fillRect(x + (k * 4 + i) * D, y + j * D, D, D); });
 }
 // The impact star: eight thin rays round the struck point.
 export function starOn(g, x, y) {
-  g.fillStyle = GREY[10];
+  g.fillStyle = GREY[K];
   for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
     const n = dx && dy ? 4 : 6, k = dx && dy ? 0.75 : 1;
     for (let s = 0; s < n; s++) { const d = (4 + s) * D; g.fillRect(dsnap(x + dx * d * k) - D / 2, dsnap(y + dy * d * k) - D / 2, D, D); }
@@ -86,17 +87,17 @@ function drawLoad(ld, t) {
   if (ld.mode === 'gone') { x = edge; y = afterFloor() + (t - ld.at) * P * 12; a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S); }
   else if (ld.mode === 'back') a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S);
   ctx.globalAlpha = a;
-  for (let k = 0; k < Math.min(4, ld.n * 2); k++) cell(x + (k % 2) * P, y - Math.floor(k / 2) * P, k % 3 ? 4 : 5);
+  for (let k = 0; k < Math.min(4, ld.n * 2); k++) cell(x + (k % 2) * P, y - Math.floor(k / 2) * P, k % 3 ? PALE : MID);
 }
 
 // A log off the chipper's pile in the hand, on its way to the jaws: six
-// cells side on, its end grain grey, in a paper rim so it reads over ink.
+// cells side on, its end grain pale, in a paper rim so it reads over ink.
 function heldLog(x, y) {
   const x0 = snap(x - P * 3), y0 = snap(y - P);
   ctx.globalAlpha = 1;
-  ctx.fillStyle = GREY[0]; ctx.fillRect(x0 - 2, y0 - 2, P * 6 + 4, P * 2 + 4);
-  ctx.fillStyle = GREY[10]; ctx.fillRect(x0, y0, P * 6, P * 2);
-  ctx.fillStyle = GREY[3]; ctx.fillRect(x0 + 2, y0 + 2, P - 2, P * 2 - 4);
+  ctx.fillStyle = GREY[W]; ctx.fillRect(x0 - 2, y0 - 2, P * 6 + 4, P * 2 + 4);
+  ctx.fillStyle = GREY[K]; ctx.fillRect(x0, y0, P * 6, P * 2);
+  ctx.fillStyle = GREY[PALE]; ctx.fillRect(x0 + 2, y0 + 2, P - 2, P * 2 - 4);
 }
 
 // Where each station's ghost hand is now and how it is held, acting its

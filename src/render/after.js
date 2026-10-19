@@ -7,10 +7,11 @@
 // God's crowd, the throne and the camp's own crowd behind the stations are
 // render/aftercrowd.js's.
 //
-// High key, black and white only: white cloud, black for the masses and the
-// rims, grey only for material, every material grey picked a cell at a time
-// off a fixed hash of where the cell stands (no flat fills, no random draw,
-// so it holds still frame to frame). Everything that comes or goes fades.
+// High key, the act's four tones only (config, AFTER_TONES): white cloud,
+// black for the masses and the rims, the pale and the mid grey only for
+// material, every material tone picked a cell at a time off a fixed hash of
+// where the cell stands (no flat fills, no random draw, so it holds still
+// frame to frame). Everything that comes or goes fades.
 
 import { P, GREY, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
@@ -29,7 +30,7 @@ import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
 import { postsOf, bodiesOf, atStation, bodyInk } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
-import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, hash, backing } from './after/kit.js';
+import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, hash, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { drawGrove } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf, boardPile } from './after/stations.js';
@@ -49,14 +50,14 @@ export const crowdSpan = () => ({ f0: fileAt(S.camX - P * 4), f1: fileAt(S.camX 
 // --- the page and the floor ------------------------------------------------------------
 export function drawAfterBackdrop() {
   clearCounts();
-  ctx.fillStyle = GREY[0];
+  ctx.fillStyle = GREY[W];
   ctx.fillRect(S.camX, S.camY, S.viewW, S.viewH);
   drawFloor();
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = GREY[K];
 }
 
 // --- the sky ---------------------------------------------------------------------------
-// The clouds, scenery, each an oval of pale cells with a grey edge; the motes
+// The clouds, scenery, each an oval of paper flecked pale with a pale edge; the motes
 // of rebel coming down to the pile.
 const toneAt = (c, r, tones) => tones[Math.floor(hash(c * 13.1 + r * 7.7) * tones.length)];
 export function drawAfterSky() {
@@ -70,13 +71,13 @@ export function drawAfterSky() {
     const x0 = snap(c.x);
     for (const [i, j] of cells) {
       const rim = !set.has(`${i - 1},${j}`) || !set.has(`${i + 1},${j}`) || !set.has(`${i},${j - 1}`) || !set.has(`${i},${j + 1}`);
-      cell(x0 + i * P, c.y + j * P, rim ? 4 : toneAt(i + c.id, j, [1, 1, 2]));
+      cell(x0 + i * P, c.y + j * P, rim ? PALE : toneAt(i + c.id, j, [W, W, W, PALE]));
     }
     ctx.globalAlpha = 1;
   }
   for (const m of airMotes()) {
-    ctx.fillStyle = '#000'; ctx.fillRect(snap(m.x), snap(m.y), P, P);
-    ctx.fillStyle = GREY[1]; ctx.fillRect(snap(m.x) + 1, snap(m.y) + 1, P - 2, P - 2);
+    ctx.fillStyle = GREY[K]; ctx.fillRect(snap(m.x), snap(m.y), P, P);
+    ctx.fillStyle = GREY[W]; ctx.fillRect(snap(m.x) + 1, snap(m.y) + 1, P - 2, P - 2);
   }
 }
 
@@ -112,7 +113,7 @@ function extras(key) {
   return { paper: A().stock.paper, moulds: vatSheets(), slots: vats() > 1 ? AFTER_LINE_LONG : AFTER_LINE_SHORT, fill };
 }
 // A station's posts: a stake each along its top, black while a member holds
-// one or is walking to it, hollow grey while it waits; the newest fades in.
+// one or is walking to it, hollow pale while it waits; the newest fades in.
 function drawPosts(key, b) {
   let k = 0;
   for (const job of AFTER_JOBS.filter(j => AFTER_JOB_POST[j] === key)) {
@@ -120,8 +121,8 @@ function drawPosts(key, b) {
     for (let n = 0; n < posts; n++, k++) {
       const x = b.x + P + k * AFTER_POST_STEP, y = key === 'pedestal' ? b.y + P : b.y - P * 2;
       ctx.globalAlpha = n === posts - 1 ? fadeIn(A().postAt[job]) : 1;
-      cell(x, y, n < held ? 10 : 3);
-      cell(x, y + P, n < held ? 10 : 4);
+      cell(x, y, n < held ? K : PALE);
+      cell(x, y + P, n < held ? K : PALE);
     }
     ctx.globalAlpha = 1;
   }
@@ -199,7 +200,7 @@ function drawSawdust() {
   for (const sp of airSpills()) {
     const k = sp.age / AFTER_SPILL_S;
     ctx.globalAlpha = Math.max(0, 1 - k);
-    for (let g = 0; g < Math.min(6, sp.n); g++) cell(nx + (g % 2) * P, snap(fl - P * 2 + k * P * 5 + g * P), g % 2 ? 4 : 5);
+    for (let g = 0; g < Math.min(6, sp.n); g++) cell(nx + (g % 2) * P, snap(fl - P * 2 + k * P * 5 + g * P), g % 2 ? PALE : MID);
     ctx.globalAlpha = 1;
   }
   if (heapFull()) warning(heapMid() + P / 2, fl + P * 5);   // under the heap, clear of the window's foot
@@ -235,17 +236,17 @@ export function drawAfterCamp() {
 // overhead, an arm out held on the blow, the shout mark while it gives a line.
 function body(x, y, dx = 0, h = 3 * P) {
   const bx = snap(x) - P + dx, by = Math.round(y) - h;
-  ctx.fillStyle = '#000'; ctx.fillRect(bx, by, 3 * P, h);
-  ctx.fillStyle = GREY[0]; ctx.fillRect(bx + 2, by + 2, 3 * P - 4, h - 4);
+  ctx.fillStyle = GREY[K]; ctx.fillRect(bx, by, 3 * P, h);
+  ctx.fillStyle = GREY[W]; ctx.fillRect(bx + 2, by + 2, 3 * P - 4, h - 4);
   return { x: bx, y: by };
 }
-function shoutMark(x, y) { ctx.fillStyle = '#000'; ctx.fillRect(x + 8, y - 12, 2, 6); ctx.fillRect(x + 1, y - 9, 2, 2); ctx.fillRect(x + 3, y - 7, 2, 2); ctx.fillRect(x + 15, y - 9, 2, 2); ctx.fillRect(x + 13, y - 7, 2, 2); }
+function shoutMark(x, y) { ctx.fillStyle = GREY[K]; ctx.fillRect(x + 8, y - 12, 2, 6); ctx.fillRect(x + 1, y - 9, 2, 2); ctx.fillRect(x + 3, y - 7, 2, 2); ctx.fillRect(x + 15, y - 9, 2, 2); ctx.fillRect(x + 13, y - 7, 2, 2); }
 // A station's load on a head, a paper rim round it so it stands clear of
 // the black station rising behind it: a plank across, or a block.
 function carried(x, y, s) {
   const plank = s.k === 'plank', lx = plank ? x - P * 1.5 : x + P / 2, ly = plank ? y - P : y - P * 2;
   const w = plank ? P * 6 : P * 2, h = plank ? P : P * 2;
-  ctx.fillStyle = GREY[0]; ctx.fillRect(lx - 2, ly - 2, w + 4, h + 4);
+  ctx.fillStyle = GREY[W]; ctx.fillRect(lx - 2, ly - 2, w + 4, h + 4);
   const d = frame(lx, ly);
   if (plank) plankAt(d, 0, 0); else blockAt(d, 0, 0);
 }
@@ -258,15 +259,15 @@ function drawMember(w) {
   const ground = Math.abs(w.y - afterFloor()) < 1 ? floorAt(w.x) : w.y;
   const at = body(w.x, ground);
   const x = at.x, y = at.y;
-  ctx.fillStyle = '#000';
-  if (w.load === 'log') { ctx.fillRect(x - P, y - P, 5 * P, P); cell(x + P, y - P, 3); }
-  else if (w.load === 'sign') { ctx.fillRect(x + P + 2, y - P, 2, P); ctx.fillRect(x, y - P * 3, P * 3, P * 2); ctx.fillStyle = GREY[0]; ctx.fillRect(x + 2, y - P * 3 + 2, P * 3 - 4, P * 2 - 4); }
-  else if (w.load === 'posters') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[0]; ctx.fillRect(x + 4, y - 8, 10, 6); }
+  ctx.fillStyle = GREY[K];
+  if (w.load === 'log') { ctx.fillRect(x - P, y - P, 5 * P, P); cell(x + P, y - P, PALE); }
+  else if (w.load === 'sign') { ctx.fillRect(x + P + 2, y - P, 2, P); ctx.fillRect(x, y - P * 3, P * 3, P * 2); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 2, y - P * 3 + 2, P * 3 - 4, P * 2 - 4); }
+  else if (w.load === 'posters') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 4, y - 8, 10, 6); }
   else if (w.load === 'carry' || w.load === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
-  else if (w.load === 'tip') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[4]; ctx.fillRect(x + 4, y - 8, 10, 6); }
+  else if (w.load === 'tip') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
   if (w.swing != null) {
     if (w.job === AFTER_JOB.AGITATE) shoutMark(x, y);
-    else for (let k = 1; k <= 2; k++) cell(x + (w.face > 0 ? 2 + k : -k) * P, y - k * P, 10);
+    else for (let k = 1; k <= 2; k++) cell(x + (w.face > 0 ? 2 + k : -k) * P, y - k * P, K);
   }
 }
 export function drawAfterMembers() {
@@ -291,7 +292,7 @@ export function drawAfterCounts() {
   for (const c of pendingCounts()) {
     const at = screenAt(c.x, c.y), str = String(c.n);
     const w = widthOf(drawable(str), NUM_FONT_PX), h = GH * NUM_FONT_PX, pad = AFTER_COUNT_PAD;
-    ctx.fillStyle = GREY[0];
+    ctx.fillStyle = GREY[W];
     ctx.fillRect(Math.round(at.x - w / 2) - pad, Math.round(at.y - h / 2) - pad, w + pad * 2, h + pad * 2);
     writeCount(ctx, str, at.x, at.y);
   }

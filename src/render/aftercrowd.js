@@ -4,8 +4,10 @@
 // docs/wave-act3-build.md, track B). Every place is after/sky.js's.
 //
 // The crowd is seven parallax bands from the window's top down to a cloud
-// bank over the floor: six far bands of grey cells, palest furthest, and a
-// near band of souls with ink rims and eyes on God. It thins soul by soul as
+// bank over the floor: six far bands of cells, the three furthest the pale
+// grey and the three nearer the mid, each denser than the one behind, and a
+// near band of souls with rims and eyes on God -- act 3's four tones only
+// (AFTER_TONES), depth carried by tone and density, never a grey between. It thins soul by soul as
 // support rises -- each soul and far cell has its own threshold, the back
 // rows first -- and each band sinks as it empties, so the top of the sky
 // clears first and God is left alone by the strike. A member walking out is
@@ -18,8 +20,9 @@
 // is saved and a reload stands them where they were.
 //
 // God is a light source on either page: he, his glare, halo, rays and gaze
-// are drawn in raw tones (src/ink.js), and only the stone -- the throne's
-// back and the tower -- takes the page's map. His rays shorten and fade as
+// are drawn in raw tones (src/ink.js), the one thing up here outside the
+// four, and only the stone -- the throne's back and the tower -- takes the
+// page's map, in the four like the rest. His rays shorten and fade as
 // support rises, gone at the strike.
 //
 // The frame's cost: each far band is a canvas a texel a cell, its cells'
@@ -36,7 +39,7 @@ import { P, GREY, STRIKE_SHARE, CROWD_X0, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, AF
          SKY_SEA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT, SKY_RING_STEP,
          GOD_RATE, GOD_GLARE_R, GOD_HALO_R, GOD_SPOKES, GOD_IDLE, GOD_GAZE_HOLD_S,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_SIGN, SKY_POSTER,
-         TITHE_CARRIERS, TITHE_LAP, TITHE_GLARE_R, SKY_DRIFT } from '../config.js';
+         TITHE_CARRIERS, TITHE_LAP, TITHE_GLARE_R, SKY_DRIFT, AFTER_TONES } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { raw, inkOf } from '../ink.js';
@@ -44,6 +47,7 @@ import { afterFloor, afterX0, slotX, soulX, overCrowd, crowdX1, stationBox } fro
 import { support, union, speechTarget } from '../after/union.js';
 import { skyFrame, layerX, godMid, pullAt, restW } from '../after/sky.js';
 import { smoothstep } from '../motion.js';
+import { K as INK, W, PALE, MID } from './after/kit.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -225,6 +229,9 @@ let bands = [];
 const drawn = { souls: 0, cells: 0, rewrites: 0, slices: 0 };
 let rewrote = false;
 const BUCKETS = 1024;
+// The 4x4 ordered dither, a threshold in (0, 1) a cell.
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+const dither = (i, j) => (BAYER[(j & 3) * 4 + (i & 3)] + 0.5) / 16;
 const bucketOf = t => Math.min(BUCKETS - 1, Math.floor(t * BUCKETS));
 export const crowdDrawn = () => ({ ...drawn, joins: shown.joins.size, bands: bands.map(b => b && b.L) });
 function bandCanvas(k) {
@@ -239,9 +246,13 @@ function bandCanvas(k) {
     for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
       const n = j * cols + i;
       if (j === 0 && hsh(i, 1, k) < 0.4) { thr[n] = -1; continue; }      // a lumpy top of heads
+      // Under the heads, only the band's share of cells stands, picked off
+      // an ordered dither so a thin band reads as an even screen of its tone
+      // rather than as noise; a few are a fleck of the other grey.
+      if (j >= 2 && dither(i, j) >= b.fill) { thr[n] = -1; continue; }
       thr[n] = thrOf(hsh(i, j, k + 60), j / rows);
-      const r = hsh(i, j, k + 20);
-      tone[n] = clamp(Math.round(b.tone + (j < 2 ? 1.2 : 0) + (r < 0.09 ? -1 : r > 0.91 ? 1 : 0)), 0, 10);
+      const body = AFTER_TONES[b.tone];
+      tone[n] = j < 2 ? AFTER_TONES[b.edge] : hsh(i, j, k + 20) < 0.07 ? (body === PALE ? MID : PALE) : body;
     }
     // The cells by threshold, in buckets, so a move of support touches only
     // the cells whose opacity it can change.
@@ -314,7 +325,7 @@ function drawBand(k) {
     for (const r of RINGS) {
       const w = ringW(b.rate) * (r.kind === 'grumble' ? 0.5 : 1);
       const lift = (r.kind === 'rally' ? -1 : r.kind === 'roar' ? 0.6 : -0.5) * ringLift(b.rate, b.p);
-      const tone = r.kind === 'rally' ? 10 : 0, oa = (r.kind === 'rally' ? 0.3 : r.kind === 'roar' ? 0.35 : 0.15) * (1 - L);
+      const tone = r.kind === 'rally' ? INK : W, oa = (r.kind === 'rally' ? 0.3 : r.kind === 'roar' ? 0.35 : 0.15) * (1 - L);
       if (r.rad - w > Math.hypot(S.viewW, S.viewH) * 1.5) continue;
       const lo = Math.max(S.camX, Math.floor((r.x - r.rad - w) / step) * step), hi = Math.min(S.camX + S.viewW, r.x + r.rad + w);
       for (let sx = lo; sx < hi; sx += step) {
@@ -334,7 +345,7 @@ function drawBand(k) {
   });
 }
 
-// Thin cloud strips between bands: broken billows of near-white cells.
+// Thin cloud strips between bands: broken billows of paper cells, flecked pale.
 function drawCloudStrip(k) {
   const y = F.tops[k + 1] - P, rate = (SKY_BANDS[k].rate + (SKY_BANDS[k + 1] || SKY_NEAR).rate) / 2;
   const drift = now() * (SKY_CLOUD_DRIFT + k), shift = (CX - F.XR) * (1 - rate);
@@ -344,7 +355,7 @@ function drawCloudStrip(k) {
       const n = vnoise(i / 14, k, 50);
       if (n < 0.42) continue;
       const tall = P * Math.min(3, 1 + Math.floor((n - 0.42) * 8 + hsh(i, k, 52)));
-      for (let j = 0; j < tall; j += P) rect(i * P - drift + shift, y - tall + j + P, P, P, hsh(i, j + k, 51) < 0.3 ? 1 : 0);
+      for (let j = 0; j < tall; j += P) rect(i * P - drift + shift, y - tall + j + P, P, P, hsh(i, j + k, 51) < 0.15 ? PALE : W);
     }
   });
 }
@@ -402,14 +413,16 @@ function drawNearSouls() {
     const x = p.x + Math.round(Math.sin(p.xl / SKY_SEA.swayLen - t * SKY_SEA.swayHz)) * 2;
     const y = p.y + sea(p.xl, SKY_BANDS.length) * 2 + rg.lift;
     if (!inView(p.x - 4, s + 8)) continue;   // culled by its column, sway and all, so a soul at the edge is in or out for good
-    const tone = hsh(col, row, 68) < 0.3 ? 1 : 0, look = p.x < gx - 40 ? 1 : p.x > gx + 40 ? -1 : 0;
+    const tone = hsh(col, row, 68) < 0.08 ? PALE : W, look = p.x < gx - 40 ? 1 : p.x > gx + 40 ? -1 : 0;
     count++;
     alpha(a, () => {
-      rect(x, y, s, s, j.inked ? 10 : 8);
+      // a hair of paper round each, so its mid rim stands off the mid band behind
+      rect(x - 1, y - 1, s + 2, s + 2, W);
+      rect(x, y, s, s, j.inked ? INK : MID);
       rect(x + 2, y + 2, s - 4, s - 4, tone);
-      if (rg.duck) { rect(x + 3, y + 5, 2, 1, 8); rect(x + 7, y + 5, 2, 1, 8); }
-      else { rect(x + 3 + look, y + 4, 2, 2, 8); rect(x + 7 + look, y + 4, 2, 2, 8); }
-      if (rg.arms) { rect(x - 2, y - 8, 2, 8, 10); rect(x + s, y - 8, 2, 8, 10); }
+      if (rg.duck) { rect(x + 3, y + 5, 2, 1, MID); rect(x + 7, y + 5, 2, 1, MID); }
+      else { rect(x + 3 + look, y + 4, 2, 2, MID); rect(x + 7 + look, y + 4, 2, 2, MID); }
+      if (rg.arms) { rect(x - 2, y - 8, 2, 8, INK); rect(x + s, y - 8, 2, 8, INK); }
     });
   }
   drawn.souls = count;
@@ -450,17 +463,19 @@ function stone() {
   cache.stone = sprite(34 * c, (towerTo - STONE_Y) * c, (r) => {
     const Fr = (x, y, w, h, tone) => r((x - STONE_X) * c, (y - STONE_Y) * c, w * c, h * c, tone);
     // the tower
-    Fr(4, 30, 10, towerTo - 30, 10);
-    for (let y = 30; y < towerTo; y++) for (let x = 5; x < 13; x++) Fr(x, y, 1, 1, hsh(x, y, 70) < 0.3 ? 5 : 6);
-    for (let y = 34; y < towerTo; y += 7) Fr(8, y, 2, 3, 10);
-    Fr(1, 30, 16, 3, 10); Fr(2, 31, 14, 1, 7);
+    // the tower, mid stone with a clod of ink; the throne a lighter stone,
+    // mid flecked pale
+    Fr(4, 30, 10, towerTo - 30, INK);
+    for (let y = 30; y < towerTo; y++) for (let x = 5; x < 13; x++) Fr(x, y, 1, 1, hsh(x, y, 70) < 0.12 ? INK : MID);
+    for (let y = 34; y < towerTo; y += 7) Fr(8, y, 2, 3, INK);
+    Fr(1, 30, 16, 3, INK); Fr(2, 31, 14, 1, MID);
     // the back, spiked
-    const spike = (x, top) => { Fr(x, top, 3, -5 - top, 10); for (let y = top + 1; y < -5; y++) Fr(x + 1, y, 1, 1, 4); };
+    const spike = (x, top) => { Fr(x, top, 3, -5 - top, INK); for (let y = top + 1; y < -5; y++) Fr(x + 1, y, 1, 1, PALE); };
     [-4, 3, 12, 19].forEach(x => spike(x, -11)); spike(7.5, -15);
-    Fr(-4, -6, 26, 34, 10);
-    for (let y = -5; y < 27; y++) for (let x = -3; x < 21; x++) Fr(x, y, 1, 1, hsh(x, y, 71) < 0.25 ? 4 : 5);
-    Fr(-7, 18, 6, 3, 10); Fr(19, 18, 6, 3, 10); Fr(-7, 21, 2, 7, 10); Fr(23, 21, 2, 7, 10);
-    Fr(-7, 26, 32, 4, 10);
+    Fr(-4, -6, 26, 34, INK);
+    for (let y = -5; y < 27; y++) for (let x = -3; x < 21; x++) Fr(x, y, 1, 1, hsh(x, y, 71) < 0.25 ? PALE : MID);
+    Fr(-7, 18, 6, 3, INK); Fr(19, 18, 6, 3, INK); Fr(-7, 21, 2, 7, INK); Fr(23, 21, 2, 7, INK);
+    Fr(-7, 26, 32, 4, INK);
   });
   return cache.stone;
 }
@@ -688,10 +703,10 @@ function drawBubbles() {
     const bw = (glyphW + 4) * gp, bh = 12 * gp;
     const bx = r.kind === 'roar' ? gx + 18 * c + 2 * c : gx - 2 * c - bw;
     const by = r.kind === 'roar' ? F.gy0 - 6 * c - bh * 0.4 : F.gy0 + 2 * c;
-    const ink = r.kind === 'roar' ? 10 : 6, u = Math.max(2, gp);
+    const ink = r.kind === 'roar' ? INK : MID, u = Math.max(2, gp);
     alpha(a, () => {
       rect(bx + u, by, bw - 2 * u, bh, ink); rect(bx, by + u, bw, bh - 2 * u, ink);
-      rect(bx + u, by + u, bw - 2 * u, bh - 2 * u, 0);
+      rect(bx + u, by + u, bw - 2 * u, bh - 2 * u, W);
       const tx = r.kind === 'roar' ? bx + u : bx + bw - 2 * u;
       for (let i = 0; i < 3; i++) rect(tx + (r.kind === 'roar' ? -i * u : i * u), by + bh + i * u - u, 2 * u, 2 * u, ink);
       let x = bx + 2 * gp;
@@ -738,9 +753,9 @@ function drawTithe(dt) {
   const s = shown.s, path = tithePath(), N = TITHE_CARRIERS;
   shown.tithe += dt * (s >= 0.98 ? 0 : TITHE_LAP * (1 - 0.6 * s));
   const thin = Math.min(0.93, s * 1.05);
-  // the ledge: grey steps under their feet
+  // the ledge: pale steps under their feet
   alpha(1 - 0.85 * thin, () => {
-    ctx.fillStyle = GREY[4];
+    ctx.fillStyle = GREY[PALE];
     for (let u = 0.03; u < 0.985; u += 0.005) { const q = pathAt(path, u); if (inView(q.x, 2)) rect(q.x, q.y, 2, 2); }
   });
   for (let i = 0; i < N; i++) {
@@ -754,12 +769,12 @@ function drawTithe(dt) {
     const a = pres * clamp(u / 0.03, 0, 1) * clamp((1 - u) / 0.05, 0, 1);
     const loadA = clamp((0.94 - u) / 0.04, 0, 1), rim = sz >= 10 ? 2 : 1;
     alpha(a, () => {
-      rect(x, y, bw, bh, 10); rect(x + rim, y + rim, bw - 2 * rim, bh - 2 * rim, 0);
+      rect(x, y, bw, bh, INK); rect(x + rim, y + rim, bw - 2 * rim, bh - 2 * rim, W);
       const hs = Math.max(2, snap(sz * 0.4, 1));
-      rect(q.dir > 0 ? x + bw - 1 : x - hs + 1, y + bh - hs - 1, hs, hs, 10);      // the head, bowed low
+      rect(q.dir > 0 ? x + bw - 1 : x - hs + 1, y + bh - hs - 1, hs, hs, INK);      // the head, bowed low
       alpha(loadA, () => {
-        if (i % 3 === 0) { const ls = Math.round(sz * 0.8); rect(x + (bw - ls) / 2, y - ls + 1, ls, ls, 10); rect(x + (bw - ls) / 2 + rim, y - ls + 1 + rim, ls - 2 * rim, ls - 2 * rim, 1); }
-        else { const pl = Math.round(sz * 1.8), th = Math.max(2, Math.round(sz / 4)); rect(x + bw / 2 - pl / 2, y - th, pl, th, 7); }
+        if (i % 3 === 0) { const ls = Math.round(sz * 0.8); rect(x + (bw - ls) / 2, y - ls + 1, ls, ls, INK); rect(x + (bw - ls) / 2 + rim, y - ls + 1 + rim, ls - 2 * rim, ls - 2 * rim, W); }
+        else { const pl = Math.round(sz * 1.8), th = Math.max(2, Math.round(sz / 4)); rect(x + bw / 2 - pl / 2, y - th, pl, th, MID); }
       });
     });
   }
@@ -785,14 +800,15 @@ function boardCells(poster, fn) {
   const d = poster ? SKY_POSTER : SKY_SIGN, cw = d.w / d.cell, ch = d.h / d.cell;
   for (let cy = 0; cy < ch; cy++) for (let cx = 0; cx < cw; cx++) {
     const edge = cx === 0 || cy === 0 || cx === cw - 1 || cy === ch - 1;
-    let tone = edge ? 10 : 0;
-    if (!poster && !edge && (cy === 3 || cy === 6 || cy === 8) && cx > 2 && cx < cw - 3 - (cy === 8 ? 5 : 0)) tone = 5;
+    let tone = edge ? INK : W;
+    if (!poster && !edge && (cy === 3 || cy === 6 || cy === 8) && cx > 2 && cx < cw - 3 - (cy === 8 ? 5 : 0)) tone = MID;
     if (poster && !edge) {
       // a crossed-out crown, the placeholder picture
-      if (cy >= 6 && cy <= 7 && cx > 2 && cx < 11) tone = 9;
-      if (cy >= 3 && cy <= 5 && (cx === 3 || cx === 6 || cx === 7 || cx === 10)) tone = 9;
-      if (cy >= 2 && cy <= 11 && Math.abs(cx - 1.5 - (cy - 2) * 1.05) < 0.8) tone = 10;
-      if ((cy === 14 || cy === 16) && cx > 2 && cx < 11) tone = 5;
+      // (the crown mid under the ink stroke that crosses it out)
+      if (cy >= 6 && cy <= 7 && cx > 2 && cx < 11) tone = MID;
+      if (cy >= 3 && cy <= 5 && (cx === 3 || cx === 6 || cx === 7 || cx === 10)) tone = MID;
+      if (cy >= 2 && cy <= 11 && Math.abs(cx - 1.5 - (cy - 2) * 1.05) < 0.8) tone = INK;
+      if ((cy === 14 || cy === 16) && cx > 2 && cx < 11) tone = MID;
     }
     fn(cx, cy, tone, cy * 40 + cx);
   }
@@ -803,7 +819,7 @@ function boardSprite(poster, poleH) {
   if (pic) return pic;
   const d = poster ? SKY_POSTER : SKY_SIGN, cell = d.cell;
   pic = sprite(d.w, d.h + poleH, r => {
-    r(d.w / 2 - cell, d.h, cell * 2, poleH, 10);
+    r(d.w / 2 - cell, d.h, cell * 2, poleH, INK);
     boardCells(poster, (cx, cy, tone) => r(cx * cell, cy * cell, cell, cell, tone));
   });
   cache.signs.set(key, pic);
@@ -820,8 +836,8 @@ function drawThings(gz) {
     if (gz.on === q) {
       const m = 6 + 6 * (3 - Math.min(3, Math.floor(gz.marks * 4))), L = 10;
       for (const [cx, cy, sx, sy] of [[g.x - m, g.y - m, 1, 1], [g.x + g.w + m, g.y - m, -1, 1], [g.x - m, g.y + g.h + m, 1, -1], [g.x + g.w + m, g.y + g.h + m, -1, -1]]) {
-        rect(sx > 0 ? cx : cx - L, sy > 0 ? cy : cy - 2, L, 2, 10);
-        rect(sx > 0 ? cx : cx - 2, sy > 0 ? cy : cy - L, 2, L, 10);
+        rect(sx > 0 ? cx : cx - L, sy > 0 ? cy : cy - 2, L, 2, INK);
+        rect(sx > 0 ? cx : cx - 2, sy > 0 ? cy : cy - L, 2, L, INK);
       }
     }
     const fading = q.torn != null ? clamp(1 - (t - q.torn) / AFTER_POSTER_FADE_S, 0, 1) : 1;
@@ -833,32 +849,32 @@ function drawThings(gz) {
       const charAt = hsh(id, i, 90) * 0.5 + (1 - cy / total) * 0.7;
       const fa = 1 - clamp((burn - (1.2 + hsh(id, i, 91) * 1.6)) / 0.4, 0, 1);
       if (fa <= 0) return;
-      alpha(fa, () => (burn > charAt ? lit(g.x + cx * cell, g.y + cy * cell, cell, cell, 10) : rect(g.x + cx * cell, g.y + cy * cell, cell, cell, tone)));
+      alpha(fa, () => (burn > charAt ? lit(g.x + cx * cell, g.y + cy * cell, cell, cell, INK) : rect(g.x + cx * cell, g.y + cy * cell, cell, cell, tone)));
     };
-    for (let j = 0; j < poleH / cell; j++) { cellAt(d.w / cell / 2 - 1, ch + j, 10, 1000 + j); cellAt(d.w / cell / 2, ch + j, 10, 2000 + j); }
+    for (let j = 0; j < poleH / cell; j++) { cellAt(d.w / cell / 2 - 1, ch + j, INK, 1000 + j); cellAt(d.w / cell / 2, ch + j, INK, 2000 + j); }
     boardCells(g.poster, cellAt);
     if (burn > 0.6 && burn < 4.5) for (let e = 0; e < 14; e++) {
       const k = (burn - (0.6 + hsh(e, i, 92) * 2.4)) / 1.4;
       if (k < 0 || k > 1) continue;
-      alpha(1 - k, () => rect(snap(g.x + hsh(e, i, 93) * g.w + Math.sin(e + burn * 3) * 3, 2), snap(g.y + g.h * 0.6 - k * 50, 2), 2, 2, 9));
+      alpha(1 - k, () => rect(snap(g.x + hsh(e, i, 93) * g.w + Math.sin(e + burn * 3) * 3, 2), snap(g.y + g.h * 0.6 - k * 50, 2), 2, 2, INK));
     }
   }
 }
 
 // --- the cloud bank --------------------------------------------------------------------------------
-// A lumpy billow of near-white cells over the crowd's feet, the only horizon.
+// A lumpy billow of paper cells flecked pale over the crowd's feet, the only horizon.
 function drawBank() {
   const [x0, x1] = layerSpan(SKY_BANK_RATE);
   if (!cache.bank) cache.bank = sprite(x1 - x0, 60, r => {
     for (let i = 0; i < (x1 - x0) / P; i++) {
       const top = 2 + Math.round(vnoise(i / 5, 0, 31) * 3 + hsh(i, 0, 32));
-      for (let j = top; j < 10; j++) r(i * P, j * P, P, P, hsh(i, j, 33) < 0.25 ? 2 : 1);
+      for (let j = top; j < 10; j++) r(i * P, j * P, P, P, hsh(i, j, 33) < 0.15 ? PALE : W);
     }
   });
   const shift = (CX - F.XR) * (1 - SKY_BANK_RATE), pic = cache.bank;
   const sx = clamp((S.camX - shift - x0) * K, 0, pic.width), sw = clamp(S.viewW * K + 2 * K, 0, pic.width - sx);
   if (sw > 0) ctx.drawImage(pic, sx, 0, sw, pic.height, onPx(x0 + shift + sx / K), onPx(F.bank - 12), sw / K, pic.height / K);
-  rect(S.camX, F.bank + 48, S.viewW, F.floor - P * 3 - F.bank - 48, 0);
+  rect(S.camX, F.bank + 48, S.viewW, F.floor - P * 3 - F.bank - 48, W);
 }
 
 // --- bodies standing in God's yard ----------------------------------------------------------------
@@ -880,15 +896,15 @@ export function seenAt(x, y) {
 function body(w) {
   const v = seenAt(w.x, w.y), u = P * v.k;
   const x = onPx(v.x - u * 1.5), y = onPx(v.y - u * 3);
-  rect(x, y, u * 3, u * 3, 10);
-  rect(x + u, y + u, u, u, 1);
-  if (w.load === 'log') for (let c = -1; c <= 3; c++) rect(x + c * u, y - u, u, u, c === 1 ? 2 : 8);
-  else if (w.load === 'sign') { rect(x + u, y - u, u, u, 10); rect(x, y - u * 2, u * 3, u, 1); }
-  else if (w.load === 'posters') { rect(x, y - u, u, u, 0); rect(x + u, y - u, u, u, 2); rect(x + u * 2, y - u, u, u, 0); }
-  else if (w.load === 'tip') rect(x, y - u, u * 2, u, 4);
+  rect(x, y, u * 3, u * 3, INK);
+  rect(x + u, y + u, u, u, W);
+  if (w.load === 'log') for (let c = -1; c <= 3; c++) rect(x + c * u, y - u, u, u, c === 1 ? PALE : INK);
+  else if (w.load === 'sign') { rect(x + u, y - u, u, u, INK); rect(x, y - u * 2, u * 3, u, W); }
+  else if (w.load === 'posters') { rect(x, y - u, u, u, W); rect(x + u, y - u, u, u, PALE); rect(x + u * 2, y - u, u, u, W); }
+  else if (w.load === 'tip') rect(x, y - u, u * 2, u, PALE);
   if (w.swing != null) {
-    if (w.job === AFTER_JOB.AGITATE) { rect(x + u, y - u * 5, u, u * 2, 10); rect(x + u, y - u * 2, u, u, 10); }
-    else for (let k = 1; k <= 2; k++) rect(x + (w.face > 0 ? 2 + k : -k) * u, y - k * u, u, u, 10);
+    if (w.job === AFTER_JOB.AGITATE) { rect(x + u, y - u * 5, u, u * 2, INK); rect(x + u, y - u * 2, u, u, INK); }
+    else for (let k = 1; k <= 2; k++) rect(x + (w.face > 0 ? 2 + k : -k) * u, y - k * u, u, u, INK);
   }
 }
 
@@ -901,7 +917,7 @@ function drawDrift() {
     if (tau < 0 || tau > SKY_DRIFT.life) continue;
     const a = Math.min(1, tau / 1.2) * Math.min(1, (SKY_DRIFT.life - tau) / 3) * 0.9;
     const x = snap(lerp(x0, x1, hsh(n, 12)) + Math.sin(tau * 0.8 + hsh(n, 13) * 6) * 6, 2), y = snap(F.floor - 40 - tau * SKY_DRIFT.rise, 2);
-    if (inView(x, 6)) alpha(a, () => { rect(x, y, 6, 6, 6); rect(x + 2, y + 2, 2, 2, 0); });
+    if (inView(x, 6)) alpha(a, () => { rect(x, y, 6, 6, MID); rect(x + 2, y + 2, 2, 2, W); });
   }
 }
 

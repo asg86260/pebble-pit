@@ -17,15 +17,20 @@ export const SKY_BANK = P * 17;
 // furthest first; the last is the near band of souls.
 export const SKY_TOPS = [0.07, 0.20, 0.33, 0.45, 0.57, 0.69, 0.81];
 // The six far bands, furthest first: px a texel (`q`) and a row (`p`), a
-// cell `cp` texels apart and `hs` across, every other row staggered `st`; its
-// grey (each band's top two rows a step darker again), and its parallax rate.
+// cell `cp` texels apart and `hs` across, every other row staggered `st`;
+// its tone, one of act 3's four (AFTER_TONES) by name, and the share of its
+// cells that stand (`fill`), so the far bands are the pale one thinly and
+// the nearer ones the mid grey more densely -- depth by which tone and how
+// dense, never a grey between; the tone of its top two rows of heads
+// (`edge`), standing whole, so each band's top reads as a line against the
+// one behind; and its parallax rate.
 export const SKY_BANDS = [
-  { p: 2, q: 2, cp: 1, hs: 1, st: 0, tone: 1.6, rate: 0.24 },
-  { p: 2, q: 2, cp: 1, hs: 1, st: 0, tone: 2.2, rate: 0.31 },
-  { p: 3, q: 3, cp: 1, hs: 1, st: 0, tone: 2.8, rate: 0.39 },
-  { p: 4, q: 1, cp: 4, hs: 3, st: 2, tone: 3.4, rate: 0.47 },
-  { p: 5, q: 1, cp: 5, hs: 4, st: 2, tone: 4.0, rate: 0.55 },
-  { p: 8, q: 2, cp: 4, hs: 3, st: 2, tone: 4.6, rate: 0.70 }
+  { p: 2, q: 2, cp: 1, hs: 1, st: 0, tone: 'pale', fill: 0.45, edge: 'pale', rate: 0.24 },
+  { p: 2, q: 2, cp: 1, hs: 1, st: 0, tone: 'pale', fill: 0.7, edge: 'mid', rate: 0.31 },
+  { p: 3, q: 3, cp: 1, hs: 1, st: 0, tone: 'pale', fill: 0.95, edge: 'mid', rate: 0.39 },
+  { p: 4, q: 1, cp: 4, hs: 3, st: 2, tone: 'mid', fill: 0.5, edge: 'mid', rate: 0.47 },
+  { p: 5, q: 1, cp: 5, hs: 4, st: 2, tone: 'mid', fill: 0.75, edge: 'mid', rate: 0.55 },
+  { p: 8, q: 2, cp: 4, hs: 3, st: 2, tone: 'mid', fill: 0.95, edge: 'mid', rate: 0.70 }
 ];
 // The near band: souls a body's two thirds square, this far apart across and
 // down, an ink rim and two eyes on God.
