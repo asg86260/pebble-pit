@@ -21651,24 +21651,31 @@ a plain label in locales/en.ftl for the owner to rewrite.
   the abyss to the deep's floor, along it and down through the slit. The
   camera follows a body across by the ripple.
 - **Heaven's gates (built; the owner's take A of
-  docs/mocks/act3-gates-2026-10-19, 2026-10-19).** The tear and the ring are
-  replaced by pearly gates: in the yard on a long cloud bank 30 cells up
-  (`ACT_GATES_SKY`), a cloud stair climbing to them in two flights from
-  beside the ruin and turning on a landing; in the afterlife the same gates
-  seen from behind, standing on the cloud floor with the light coming up
-  through it between them. Their middle stands clear of the mansion's ground
-  and its tower (`ACT_GATES_CELL`, past the farther of the ruin's and the
-  mansion's right ends), so the stair's foot is beside the ruin on its
-  mansion-free side, under the gates, and the first flight climbs away from
-  the house. A press swings the leaves open in four held steps (5 cells to 1,
-  `ACT_GATES_LEAF`), holds the last a step, then ripples, in the act's tones,
-  out of the gateway; after the camera has come through they shut the same
-  way. Anyone at the gateway has them open. The souls walk the stair up at
-  the fall and are ridden up the light from the gates; the ghosts walk down
-  it; the freed souls come down out of the light and down it to their files.
-  Plain A, no glow disc: on the light page the raw light is the paper's
-  white, so it is read by what bounds it -- the bars, the pale rungs up the
-  light, the spill over the bank's pale top, and broken pale rays out across
+  docs/mocks/act3-gates-2026-10-19, 2026-10-19; higher and the only way
+  through, the owner's review the same day).** The tear and the ring are
+  replaced by pearly gates: in the yard on a long cloud bank 40 cells up
+  (`ACT_GATES_SKY`, every step's rise), a switchback cloud stair climbing to
+  them in four flights of five steps (`ACT_STAIR_FLIGHTS`) from beside the
+  ruin, turning on landings; in the afterlife the same gates seen from
+  behind, standing on the cloud floor. Their middle stands clear of the
+  mansion's ground and its tower (`ACT_GATES_CELL`, past the farther of the
+  ruin's and the mansion's right ends), so the stair's foot is beside the
+  ruin on its mansion-free side, under the gates, and every flight and
+  landing stays right of the mansion. **The gates are the portal**: nothing
+  stands over them -- no light going up, no ladder, none coming up through
+  heaven's floor -- and going through the open gates is the trip. A press
+  swings the leaves open in four held steps (5 cells to 1, `ACT_GATES_LEAF`),
+  holds the last a step, then ripples, in the act's tones, out of the
+  gateway; after the camera has come through they shut the same way. Anyone
+  at the gateway has them open. A body going through fades into the gateway
+  at one end and out of it at the other (`ACT_GATES_PASS` cells of walk
+  each), the one move it makes unseen, and the camera follows by the ripple:
+  the souls climb the stair at the fall and come out on heaven's floor (the
+  ride up the road, pick B, is gone with the light); the ghosts come out of
+  the yard's gates and walk down; the freed souls come out of the gates and
+  down the stair to their files. Plain A, no glow disc: on the light page
+  the raw light is the paper's white, so it is read by what bounds it -- the
+  bars, the spill over the bank's pale top, and broken pale rays out across
   the cloud behind the posts, lengthening with the leaves.
 - **What starts act 3** (call 7, as recommended): a go-on card over the
   house once the finale's sheet is down. Pressed, the house's fall plays.

@@ -1,0 +1,223 @@
+{
+ "title": "Act 3 gates, round 2",
+ "lede": "Higher switchback stair; the shaft above the gates removed; going through the gates is the trip.",
+ "base": "8b64f251",
+ "head": "0b15be9e",
+ "items": [
+  {
+   "id": "gates-opening",
+   "title": "gates-opening",
+   "what": "heaven's gates: higher stair, no light above, the gates are the portal",
+   "shots": [
+    {
+     "scene": "gates-opening",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "gates-opening",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "gates-opening",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "gates-opening",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "gates-climb",
+   "title": "gates-climb",
+   "what": "heaven's gates: higher stair, no light above, the gates are the portal",
+   "shots": [
+    {
+     "scene": "gates-climb",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "gates-climb",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "gates-climb",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "gates-climb",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "gates-road",
+   "title": "gates-road",
+   "what": "heaven's gates: higher stair, no light above, the gates are the portal",
+   "shots": [
+    {
+     "scene": "gates-road",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "gates-road",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "gates-road",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "gates-road",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "portal-heaven",
+   "title": "portal-heaven",
+   "what": "heaven's gates: higher stair, no light above, the gates are the portal",
+   "shots": [
+    {
+     "scene": "portal-heaven",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "portal-heaven",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "portal-heaven",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "portal-heaven",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "mansion-end",
+   "title": "mansion-end",
+   "what": "heaven's gates: higher stair, no light above, the gates are the portal",
+   "shots": [
+    {
+     "scene": "mansion-end",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "mansion-end",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "mansion-end",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "mansion-end",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  }
+ ]
+}

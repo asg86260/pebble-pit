@@ -25,7 +25,7 @@ import { P, WORKER, MANSION_AT, MANSION_FLOORS, MANSION_FLOOR_ROWS, MANSION_WING
          MANSION_BUILDERS, MANSION_BLOCKS_AT, MANSION_BLOCKS_W, MANSION_TAKE_S, MANSION_SET_S, MANSION_FADE_S,
          MANSION_SOULS, MANSION_SOUL_EVERY_S, MANSION_SHEET_AFTER_S, MANSION_FILE_W, MANSION_FILE_AT,
          ACT_ROCK_H, ACT_ROCK_W, GHOST_PX_S, FINALE_PILE_CELL, FINALE_PILE_W, FINALE_HOUSE_W } from './config.js';
-import { lightDown, alongWalk, walkLength } from './ghosts.js';
+import { stairDown, alongWalk, walkLength } from './ghosts.js';
 import { frames } from './clock.js';
 import { commutePace } from './levels.js';
 import { feetOn, ways, keepTo, stepRoute, belowYard } from './route.js';
@@ -247,17 +247,17 @@ export function mansionHeld(w) {
 export function beginGathering() { const m = M(); if (m && m.G == null) m.G = 0; }
 export function stepGathering(c) { const m = M(); if (m && m.G != null) m.G += c.dt / 1000; }
 export const gatherAt = () => (M() && M().G != null ? M().G : null);
-// Soul i, freed: out of the light over heaven's open gates at its turn, down
-// through them and the cloud stair (ghosts.js, `lightDown`), and along the
-// ground to its place in the files. Where it is at gathering second `g`,
-// top-left, whether it is still on the stair, and how far it has come out of
-// the light (`k`, its fade in), or null before its turn.
+// Soul i, freed: out of heaven's open gates at its turn, down the cloud stair
+// (ghosts.js, `stairDown`), and along the ground to its place in the files.
+// Where it is at gathering second `g`, top-left, whether it is still on the
+// stair, and how far it has come out of the gateway (`k`, its fade in), or
+// null before its turn.
 const slotX = i => (MANSION_FILE_AT + (i % MANSION_FILE_W) * 4 + Math.floor(i / MANSION_FILE_W) * 2) * P;
 export function soulAt(i, g = gatherAt()) {
   if (g == null) return null;
   const u = g - i * MANSION_SOUL_EVERY_S;
   if (u < 0) return null;
-  const way = lightDown(), d = u * GHOST_PX_S, k = Math.min(1, u / 0.5);
+  const way = stairDown(), d = u * GHOST_PX_S, k = Math.min(1, u / 0.5);
   const on = alongWalk(way, d);
   if (!on.done) return { x: on.x, y: on.y, stair: true, k };
   const foot = way[way.length - 1], to = slotX(i);
@@ -270,7 +270,7 @@ export function gathered() {
   if (g == null) return false;
   const last = MANSION_SOULS - 1, at = soulAt(last, g);
   if (!at || at.stair || Math.abs(at.x - slotX(last)) > 0.5) return false;
-  const way = lightDown(), foot = way[way.length - 1];
+  const way = stairDown(), foot = way[way.length - 1];
   const walk = (walkLength(way) + Math.abs(slotX(last) - foot.x)) / GHOST_PX_S;
   return g >= last * MANSION_SOUL_EVERY_S + walk + MANSION_SHEET_AFTER_S;
 }

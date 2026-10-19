@@ -1,33 +1,32 @@
 // Heaven's gates and the cloud stair up to them, drawn (docs/mocks/act3-
 // gates-2026-10-19, take A; portals.js has where they stand and how far open,
 // ghosts.js the walk up the stair). The same gates at both ends: in the yard
-// on a long cloud bank at the top of a stair of cloud in two flights from
-// beside the ruin, seen from in front; in the afterlife standing on the cloud
-// floor, seen from behind, the light coming up through the floor between
-// them.
+// on a long cloud bank at the top of a switchback stair of cloud from beside
+// the ruin, seen from in front; in the afterlife standing on the cloud floor,
+// seen from behind. The gates are the portal and nothing stands over them:
+// no light going up, none coming up through the floor (the owner,
+// 2026-10-19).
 //
 // Act 3's four tones (config, AFTER_TONES) for the cloud, the posts, the
 // crest and the leaves; the light alone is raw white, on either page, so on
 // the dark one it is the brightest thing there. On the light page raw white
 // is the paper's own white, so the light is read by what bounds it: the bars
-// and the posts over it, the pale rungs and edges of the light going up, the
-// light spilling across the bank's pale top, and rays of pale cells fanned out
+// and the posts over it, the light spilling across the bank's pale top, and
+// rays of pale cells fanned out
 // from the gateway across the cloud behind the posts -- broken rays, a cell in
 // every other, never a filled disc -- lengthening with the leaves' held steps.
 //
-// The yard's end is two layers: what stands behind the bodies (the light
-// going up, the cloud behind the posts and its rays, the stair, the bank, the
-// light in the gateway), and the gates themselves in front of them
-// (`drawGatesFront`), so the two of them go up into the gateway and the light
-// behind the posts and the crest rather than over them.
+// The yard's end is two layers: what stands behind the bodies (the cloud
+// behind the posts and its rays, the stair, the bank, the light in the
+// gateway), and the gates themselves in front of them (`drawGatesFront`), so
+// the two of them walk into the gateway behind the posts and the leaves.
 
 import { S } from '../state.js';
-import { P, GREY, AFTER_TONES, ACT_GATES_LEAF, ACT_GATES_H, ACT_STAIR_TREAD, ACT_STAIR_RISE, ACT_STAIR_UP,
-         ACT_STAIR_LANDING, ACT_GATES_SKY } from '../config.js';
+import { P, GREY, AFTER_TONES, ACT_GATES_LEAF, ACT_GATES_H, ACT_STAIR_TREAD, ACT_STAIR_RISE, ACT_STAIR_FLIGHTS,
+         ACT_STAIR_LANDING } from '../config.js';
 import { ctx } from './ctx.js';
 import { raw } from '../ink.js';
-import { portalOpenK, portalEnd, gatesStep, GATES_OPEN } from '../portals.js';
-import { afterUnder } from '../acts.js';
+import { portalOpenK, portalEnd, gatesStep } from '../portals.js';
 
 // The four, as the page draws them, and the light.
 const TONE = [GREY[AFTER_TONES.paper], GREY[AFTER_TONES.pale], GREY[AFTER_TONES.mid], GREY[AFTER_TONES.ink]];
@@ -159,26 +158,29 @@ function rays(cx, ty, k) {
     }
   }
 }
-// The light going up out of the open gates, the camera's way to the cloud
-// floor: a column with pale edges and a pale rung every third row, so it
-// reads as a stair of light on either page.
-function shaft(cx, y0, y1) {
-  for (let y = y0; y < y1; y++) for (let x = cx - 4; x < cx + 4; x++) C(x, y, x === cx - 4 || x === cx + 3 || (y % 3 + 3) % 3 === 0 ? T(1) : LIGHT);
-}
-
 // --- the stair -----------------------------------------------------------------------------
-// Its treads in cells, [left column, top row] each, three cells of cloud deep:
-// the cells under the walk (ghosts.js, `stairWalk`) from the foot under the
-// gates, away from the ruin, across the landing and back.
-function stairTreads(foot, g) {
+// Its pieces in walk order, in cells, three cells of cloud deep: each tread
+// [left column, right column, top row], and each landing the same with
+// `landing` set -- the cells under the walk (ghosts.js, `stairWalk`) from the
+// foot under the gates, away from the ruin, across a landing and back, flight
+// by flight.
+function stairPieces(foot, g) {
   const out = [];
   let x = foot, y = g;
-  for (let k = 1; k <= ACT_STAIR_UP; k++) out.push([x + ACT_STAIR_TREAD * k, y - ACT_STAIR_RISE * k]);
-  x += ACT_STAIR_TREAD * ACT_STAIR_UP + ACT_STAIR_LANDING; y -= ACT_STAIR_RISE * ACT_STAIR_UP;
-  const landing = [x - ACT_STAIR_LANDING, y];
-  const back = ACT_GATES_SKY / P / ACT_STAIR_RISE - ACT_STAIR_UP;
-  for (let k = 1; k <= back; k++) out.push([x - ACT_STAIR_TREAD * k, y - ACT_STAIR_RISE * k]);
-  return { treads: out, landing };
+  ACT_STAIR_FLIGHTS.forEach((n, i) => {
+    const d = i % 2 ? -1 : 1;
+    for (let k = 1; k <= n; k++) {
+      const c = x + d * ACT_STAIR_TREAD * k;
+      out.push({ x0: c, x1: c + ACT_STAIR_TREAD - 1, r: y - ACT_STAIR_RISE * k });
+    }
+    x += d * ACT_STAIR_TREAD * n; y -= ACT_STAIR_RISE * n;
+    if (i < ACT_STAIR_FLIGHTS.length - 1) {
+      const to = x + d * ACT_STAIR_LANDING;
+      out.push({ x0: Math.min(x, to), x1: Math.max(x, to) + ACT_STAIR_TREAD - 1, r: y, landing: true });
+      x = to;
+    }
+  });
+  return out;
 }
 
 // --- in the yard -----------------------------------------------------------------------------
@@ -193,8 +195,6 @@ export function drawGatesBehind() {
   if (k <= 0) return;
   const e = yardEnd(), cx = Math.round(e.x / P), ty = Math.round(e.feet / P), g = Math.round(S.groundY / P);
   const step = gatesStep(), a = gatesIn(k);
-  // the light going up, from the crest to the cloud floor's underside
-  if (step > 0) faded(a * step / GATES_OPEN, () => shaft(cx, Math.max(Math.floor(S.camY / P), Math.ceil(afterUnder() / P)), ty - GH - 1));
   faded(a, () => {
     const m = mask();
     puff(m, cx - 10, ty - 4, 2.8); puff(m, cx + 12, ty - 4, 5); puff(m, cx + 18, ty - 1, 3.5);
@@ -203,19 +203,14 @@ export function drawGatesBehind() {
     rays(cx, ty, step);
   });
   // the stair, from the foot under the gates (a body's left, ghosts.js)
-  const foot = Math.round(e.x / P - 1.5), { treads, landing } = stairTreads(foot, g);
-  treads.forEach(([c, r], i) => faded(treadIn(k, i, treads.length + 1), () => {
+  const pieces = stairPieces(Math.round(e.x / P - 1.5), g);
+  pieces.forEach(({ x0, x1, r, landing }, i) => faded(treadIn(k, i, pieces.length), () => {
     const m = mask();
-    for (let x = c; x < c + ACT_STAIR_TREAD; x++) for (let y = r; y < r + 3; y++) add(m, x, y);
-    if (hsh(c, r, 4) < 0.7) add(m, c + Math.floor(hsh(c, r, 5) * ACT_STAIR_TREAD), r + 3);
-    paint(m, 31);
+    for (let x = x0 - (landing ? 1 : 0); x <= x1 + (landing ? 1 : 0); x++) for (let y = r; y < r + 3; y++) add(m, x, y);
+    if (landing) puff(m, (x0 + x1 + 1) / 2, r + 3, 2.2);
+    else if (hsh(x0, r, 4) < 0.7) add(m, x0 + Math.floor(hsh(x0, r, 5) * ACT_STAIR_TREAD), r + 3);
+    paint(m, landing ? 33 : 31);
   }));
-  faded(treadIn(k, ACT_STAIR_UP, treads.length + 1), () => {
-    const m = mask();
-    for (let x = landing[0] - 1; x < landing[0] + ACT_STAIR_LANDING + ACT_STAIR_TREAD + 1; x++) for (let y = landing[1]; y < landing[1] + 3; y++) add(m, x, y);
-    puff(m, landing[0] + 3, landing[1] + 3, 2.2);
-    paint(m, 33);
-  });
   // the bank they stand in, longer on the stair's side, and the light in the gateway
   faded(a, () => {
     const m = mask();
@@ -234,31 +229,19 @@ export function drawGatesFront() {
 }
 
 // --- in the afterlife -----------------------------------------------------------------------
-// The same gates from behind, on the cloud floor: the light coming up through
-// a gap in the floor between them, thinning with depth, and the floor heaped
+// The same gates from behind, standing on the cloud floor, the floor heaped
 // either side of their feet.
 export function drawGatesAfter() {
   const k = portalOpenK('heaven');
   if (k <= 0) return;
   const e = portalEnd('heaven', 'after'), cx = Math.round(e.x / P), fy = Math.round(e.feet / P);
-  const bottom = Math.ceil((S.camY + S.viewH) / P) + 1;
   faded(k, () => {
-    fill(cx - 4, fy, 8, bottom - fy, T(0));
-    for (let y = fy; y < bottom; y++) {
-      const keep = 1 - (y - fy) / Math.max(1, bottom - fy);
-      for (let x = cx - 4; x < cx + 4; x++) {
-        if (bay(x, y) > keep + 0.15) continue;
-        C(x, y, x === cx - 4 || x === cx + 3 || (y % 3 + 3) % 3 === 0 ? T(1) : LIGHT);
-      }
-    }
     gateway(cx, fy);
     rays(cx, fy, gatesStep());
     gate(cx, fy, gatesStep(), true);
     const m = mask();
     for (let x = cx - 18; x <= cx + 18; x++) { add(m, x, fy); add(m, x, fy + 1); }
     puff(m, cx - 12, fy - 2, 4); puff(m, cx + 12, fy - 2, 4); puff(m, cx - 17, fy, 3); puff(m, cx + 17, fy, 3);
-    for (const [key, [x]] of [...m.entries()]) if (x >= cx - 5 && x <= cx + 4) m.delete(key);
     paint(m, 51);
-    for (const x of [cx - 5, cx + 4]) { C(x, fy, T(2)); C(x, fy + 1, T(1)); }
   });
 }
