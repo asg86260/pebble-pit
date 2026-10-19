@@ -190,7 +190,6 @@ this section; the release that switches it on moves these under Unreleased.
 - Settings, on the pause sheet and the title page, is one page in four tabs -- graphics, audio, controls and language -- with the controls table and the languages right under their tabs, LB and RB to turn them on a pad, and the title page's volume slider drawn like the pause sheet's (src/selftest/settings.js, "four tabs"; src/selftest/language.js).
 - Every zoom glides instead of stepping, the picture scaled sharp on the way, and the pointer stays on what it points at through it (test/zoom-glide.test.mjs).
 
-- On the free build, "keep playing" on the "to be continued in the full game!" sheet no longer crashes the game, and the sheet stays down after a reload (test/keep-playing.test.mjs).
 - A card's long name, its gain and its cancel / another strip are no longer cut short at the card's edge; the board widens to fit them (src/selftest/boardwords.js).
 - The smallest words in the menus -- the appearance page's tabs and tile names, the boards' row names, the controls table, the settings tabs, the title page's foot -- are no longer too small to read, and every grey word in the menus is dark enough to read on the light page and the dark (src/selftest/textaa.js; test/ui-tokens.test.mjs).
 - The appearance page stays one height as you change slots, switch between you and your sqouse, or step through a new yard's build steps (src/selftest/wardrobe.js, "one height").
@@ -202,6 +201,10 @@ this section; the release that switches it on moves these under Unreleased.
 - A cutscene's widescreen bands stay black in dark mode instead of turning light grey, and a beat's line on them stays light (`GAME=…/play.html?dark node tools/look.mjs leaving`).
 - The act 3 intro keeps its widescreen bands and its zoom through the tear, and lands in the afterlife on the cloud floor where the two of them come up instead of in the empty sky under it, climbing (test/shot.test.mjs).
 - The opening, the serpent's kill, the walk home and the first trip down glide their camera and their zoom together instead of cutting across the deep or stepping the zoom, and keep who they are about in the frame (test/shot.test.mjs; cutscenes.html, the finale, snatch-kill, opening and first-trip rows).
+
+## v0.6.1 — 2026-10-19
+
+- On the free build, "keep playing" on the "to be continued in the full game!" sheet no longer crashes the game, and the sheet stays down after a reload (test/keep-playing.test.mjs).
 
 ## v0.6.0 — 2026-10-16
 
