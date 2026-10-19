@@ -234,13 +234,14 @@ group('a soul whose rim closes walks out of God\'s yard to the camp', async () =
   ];
 });
 
-// Stations bought on the shack, each in turn, and the clock turned until it
-// stands (one may need the one before).
+// Stations bought on the shack, each in turn (one may need the one before),
+// and stood up at once: the carry and the raising are checked on their own
+// above, and their walks are minutes of setup no other check is about.
 function raise(...keys) {
-  return keys.every(k => window.__buy(`after-build-${k}`) && runUntil(() => read().built.includes(k), 180));
+  return keys.every(k => { const took = window.__buy(`after-build-${k}`); if (took) S.after.built.push(k); run(0.1); return took; });
 }
 
-group('a station bought on the shack is raised a piece at a time by a member from the camp', async () => {
+group('a station bought on the shack is carried in as a pile and raised off it a band at a time', async () => {
   up();
   settle();
   window.__afterGrant({ rebel: 200 });
@@ -249,20 +250,31 @@ group('a station bought on the shack is raised a piece at a time by a member fro
   const camp0 = read().camp;
   const bought = window.__buy('after-build-mill');
   run(0.1);
-  const builder = S.after.bodies.find(b => b.job === 'builder');
-  const pieces = [];
-  runUntil(() => { const r = S.after.raising.mill; if (r && pieces.at(-1) !== r.n) pieces.push(r.n); return read().built.includes('mill'); }, 120);
+  const crew = S.after.bodies.filter(b => b.job === 'builder');
+  // Turned a tenth at a time, so every band and the pile's top are seen.
+  const bands = [], piles = [];
+  let carried = false;
+  for (let k = 0; k < 6000 && !read().built.includes('mill'); k++) {
+    run(0.1);
+    const r = S.after.raising.mill;
+    if (bands.at(-1) !== r.n) bands.push(r.n);
+    const on = r.brought - r.taken;
+    if (piles.at(-1) !== on) piles.push(on);
+    carried ||= S.after.bodies.some(b => b.load === 'carry');
+  }
   const n = S.after.raising.mill.at.length;
-  run(30);
+  run(60);
   const back = read().camp;
   window.__actsOn(null);
   return [
     ok(['mill', 'chipper', 'workshop', 'papermill', 'press'].every(k => shown.includes(`after-build-${k}`)),
        'every station is on the shack\'s board from the start', shown.join(' ')),
     ok(!locked, 'one that needs another first cannot be bought before it'),
-    ok(bought && builder && builder.pair == null && read().camp <= camp0, 'bought, a member leaves the camp to build it'),
-    ok(pieces.join(' ') === '0 1 2 3 4' && n === AFTER_BUILD_PIECES, 'it goes up a piece at a time, standing only with the last', pieces.join(' ')),
-    ok(back === camp0, 'and the builder walks back to the camp after', `${camp0} -> ${back}`)
+    ok(bought && crew.length === Math.min(4, camp0) && crew.every(b => b.pair == null), 'bought, members leave the camp to carry it', `${crew.length} of ${camp0}`),
+    ok(carried && Math.max(...piles) === 8, 'they carry its eight loads onto its spot as a pile', piles.join(' ')),
+    ok(bands.join(' ') === '0 1 2 3 4' && n === AFTER_BUILD_PIECES, 'it goes up a band at a time, standing only with the last', bands.join(' ')),
+    ok(piles.at(-1) === 0, 'and the pile is used up as it goes', piles.join(' ')),
+    ok(back === camp0, 'and every hand walks back out of the camp after', `${camp0} -> ${back}`)
   ];
 });
 
@@ -275,13 +287,13 @@ group('with nobody in the camp the pair step down and build, and climb back up',
   run(0.1);
   const pair = S.after.bodies.filter(b => b.job === 'builder' && b.pair != null).length;
   const quiet = !line();
-  const stood = runUntil(() => read().built.includes('chipper'), 120);
-  const home = runUntil(() => !S.after.bodies.some(b => b.job === 'builder'), 60);
+  const stood = runUntil(() => read().built.includes('chipper'), 600);
+  const home = runUntil(() => !S.after.bodies.some(b => b.job === 'builder'), 120);
   window.__actsOn(null);
   return [
     ok(pair === 2, 'the two of them come down off the pedestal', `${pair}`),
     ok(quiet, 'and while they are down a click on the pedestal gives no line'),
-    ok(stood && home, 'the station stands and they climb back up')
+    ok(stood && home, 'the station stands and they climb back up', `${stood} ${home}`)
   ];
 });
 

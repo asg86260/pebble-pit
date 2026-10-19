@@ -82,3 +82,23 @@ export function signPile(d, x, st, cap = 3) {
   for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => sign(d, x + i * 2, -6 - (i % 2)));
   count(d, st.n, x + 2 + (Math.max(1, Math.min(st.n, cap)) - 1), -9.5);
 }
+
+// --- a station's loads, while it is raised (pile a, docs/mocks/act3-unbuilt-2026-10-18)
+// Planks six cells long stacked staggered, as the timber pile stacks them,
+// and two-cell blocks beside and on top: a builder's heap that visibly loses
+// a load as each band goes up. Slots in the pile's cells, its left column at
+// x and row -1 standing on the floor; a block's y is its top row.
+export const BUILD_SLOTS = [
+  { x: 0, y: -1, k: 'plank' }, { x: 0.5, y: -2, k: 'plank' }, { x: 7, y: -2, k: 'block' }, { x: 9, y: -2, k: 'block' },
+  { x: 0, y: -3, k: 'plank' }, { x: 8, y: -4, k: 'block' }, { x: 0.5, y: -4, k: 'plank' }, { x: 2, y: -6, k: 'block' }
+];
+export const plankAt = (d, x, y, w = 6) => { d.px(x * P, y * P, w * P, P, K); d.px(x * P + 2, y * P + 2, w * P - 4, P - 4, 4); };
+export const blockAt = (d, x, y) => { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, 6); d.px(x * P + 4, y * P + 4, 4, 4, W); };
+// The pile, each slot at the ink `alpha(i)` gives (fading on as it is set
+// down and off as it is taken).
+export function buildPile(d, x, alpha) {
+  BUILD_SLOTS.forEach((s, i) => {
+    const a = alpha(i);
+    if (a > 0) d.fade(a, () => (s.k === 'plank' ? plankAt(d, x + s.x, s.y) : blockAt(d, x + s.x, s.y)));
+  });
+}

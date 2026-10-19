@@ -1,9 +1,10 @@
 // The construction shack's work: a station bought is carried in and raised
 // (the owner, 2026-10-18; docs/mocks/act3-unbuilt-2026-10-18, pile a). Until
 // it is ordered its spot is open floor and nothing else. Ordered, members
-// walk in from the camp's edge with its loads, planks and blocks, and set
-// each down on its spot, where the pile grows a load at a time; once the
-// pile is whole the first two stay on as builders and the station goes up
+// come in at the camp's edge, fetch its loads, planks and blocks, from the
+// shack's door, and set each down on its spot, where the pile grows a load
+// at a time; once the pile is whole the first two stay on as builders and
+// the station goes up
 // AFTER_BUILD_PIECES bands from the floor up, each band two loads taken off
 // the pile and laid in, fading in as the second lands, until the pile is
 // gone and the station stands. The rest walk back out of the camp.
@@ -28,7 +29,7 @@ import { P, AFTER_BUILD_PIECES, AFTER_BUILD_A_BAND, AFTER_BUILD_CARRIERS, AFTER_
          AFTER_BUILD_LAY_S, AFTER_BUILD_HOLD_S } from '../config.js';
 import { nextId } from './util.js';
 import { built } from './levels.js';
-import { campSpot, speakerAt, buildPileAt, buildLayAt } from './place.js';
+import { campSpot, speakerAt, stationDoor, buildPileAt, buildLayAt } from './place.js';
 
 // Every load a station takes: two a band.
 export const BUILD_LOADS = AFTER_BUILD_PIECES * AFTER_BUILD_A_BAND;
@@ -92,7 +93,7 @@ export function layPiece(key) {
 }
 
 // One frame of a body raising a station, `go` its walk (bodies.js). A
-// carrier fetches a load at the camp's edge and sets it down on the pile;
+// carrier fetches a load at the shack's door and sets it down on the pile;
 // once every load is claimed a builder takes them off the pile two a band
 // and lays them in, and the rest walk back out of the camp. The station up,
 // home: a member back out of the camp, the pair back up onto the pedestal.
@@ -128,10 +129,9 @@ export function stepBuilder(w, dt, go) {
     if (r.laid >= (r.n + 1) * AFTER_BUILD_A_BAND) layPiece(w.site);
     return;
   }
-  // Empty-handed: a load still to fetch, fetched at the camp's edge.
+  // Empty-handed: a load still to fetch, fetched at the shack's door.
   if (r.claimed < BUILD_LOADS) {
-    const edge = campSpot(buildPileAt(w.site));
-    if (!go(w, edge.x, fl, dt)) return;
+    if (!go(w, stationDoor('shack'), fl, dt)) return;
     w.load = 'carry'; w.slot = r.claimed++; w.t = 0;
     return;
   }

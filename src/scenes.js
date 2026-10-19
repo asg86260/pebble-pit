@@ -504,6 +504,23 @@ function afterChain(slow) {
                    ...(slow ? ['after-vat', 'after-stack'] : [])]) window.__buy(u);
 }
 
+// Track A: the workshop ordered with the saw mill and the press standing
+// either side of its spot, four members in the camp to carry it, run on
+// until `until(site)` holds (null: never ordered), framed on the spot.
+function afterSite(until) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  for (const k of ['mill', 'chipper', 'papermill', 'press']) if (!S.after.built.includes(k)) S.after.built.push(k);
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  S.after.camp = 4;
+  window.__afterGrant({ rebel: 400, timber: 40 }); yardPurse();
+  if (until) {
+    window.__buy('after-build-workshop');
+    for (let k = 0; k < 2400 && !(S.after.raising.workshop && until(S.after.raising.workshop)); k++) window.__fast(0.1);
+  }
+  const b = stationBox('workshop');
+  window.__look(b.x + b.w / 2 - S.viewW / 2); window.__holdShot();
+}
+
 // Act 3's crowds and God at a point of the pan (track C, render/aftercrowd.js):
 // a crowd of 24,000 with patches walked out and a few rims inking, three
 // signs in the near rows, and the camera's middle `pan` of the way from the
@@ -2847,6 +2864,19 @@ export const SCENES = {
       window.__fast(AFTER_COIN_UNDER_S + 0.5);
       window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot();
     } },
+
+  // --- track A of the act-3 build: the camp (docs/wave-act3-build.md) ---------------
+  // A station ordered on the shack (docs/mocks/act3-unbuilt-2026-10-18, pile
+  // a): the empty spot between its neighbors, members carrying its loads
+  // onto it, the pile whole, and a band going up off it.
+  'after-site-empty': { about: 'the acts', say: "an unbuilt station's spot: open floor between its neighbors, nothing drawn",
+    run: () => afterSite(null) },
+  'after-site-carry': { about: 'the acts', say: 'the workshop ordered: members carrying its planks and blocks onto its spot',
+    run: () => afterSite(r => r.brought >= 3) },
+  'after-site-pile': { about: 'the acts', say: "the workshop's pile whole on its spot, the two builders beside it",
+    run: () => afterSite(r => r.whole != null) },
+  'after-site-band': { about: 'the acts', say: 'the workshop going up a band at a time, the pile shrinking',
+    run: () => afterSite(r => r.n >= 2) },
 
   // Act 3's crowds, God and the camera's zoom (track C): the camp end with
   // both crowds in frame, the middle of God's crowd, and the dive's end.

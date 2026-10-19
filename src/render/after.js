@@ -12,7 +12,7 @@
 // off a fixed hash of where the cell stands (no flat fills, no random draw,
 // so it holds still frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
+import { P, GREY, AFTER_BUILD_DROP_S, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
@@ -23,7 +23,7 @@ import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { overCrowd, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, floorAt, afterFloor, ART } from '../after/place.js';
+import { buildPileAt, overCrowd, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, floorAt, afterFloor, ART } from '../after/place.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel.js';
 import { built, heapBrim } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
@@ -33,7 +33,8 @@ import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, has
 import { drawFloor } from './after/floor.js';
 import { drawGrove } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
-import { heap, heapCells, logPile, plankPile, sheetPile, signPile } from './after/piles.js';
+import { heap, heapCells, logPile, plankPile, sheetPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
+import { siteOf } from '../after/build.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
 
 const A = () => S.after;
@@ -115,11 +116,14 @@ function drawPosts(key, b) {
     ctx.globalAlpha = 1;
   }
 }
-// Where a station will stand, before it is bought: its box, dashed in pale grey.
-function ghostBox(b) {
-  ctx.fillStyle = GREY[3];
-  for (let x = b.x; x < b.x + b.w; x += P * 2) { ctx.fillRect(x, b.y, P, 2); ctx.fillRect(x, b.y + b.h - 2, P, 2); }
-  for (let y = b.y; y < b.y + b.h; y += P * 2) { ctx.fillRect(b.x, y, 2, P); ctx.fillRect(b.x + b.w - 2, y, 2, P); }
+// A station's loads on its spot while it is raised (after/build.js): each
+// fading on as it is set down and off as a builder takes it.
+const ramp = (t, t0, dur) => (t0 == null ? 0 : clamp01((t - t0) / dur));
+function drawSite(key) {
+  const r = siteOf(key);
+  if (!r) return;
+  const t = now(), d = frame(0, afterFloor());
+  buildPile(d, buildPileAt(key) / P, i => ramp(t, r.drop[i], AFTER_BUILD_DROP_S) * (1 - ramp(t, r.pick[i], AFTER_PILE_FADE_S)));
 }
 // The glyph over a station, `at` of it built, faded in and out at the ends
 // of its window: hung where the yard hangs one, seven cells over the top.
@@ -134,13 +138,14 @@ function drawStation(key) {
   const b = stationBox(key);
   if (!inView(b.x - P * 16, b.w + P * 32)) return;
   const a = A(), r = a.raising[key];
-  if (!built(key) && !r) { ghostBox(b); return; }
+  // Nothing stands on a spot nobody has ordered: it is open floor.
+  if (!built(key) && !r) return;
   // Each drawn on its paper backing, so the camp's crowd behind it does not
   // show through its open parts; the pillar is paper through already.
   const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { backing(d, backOf(key)); DRAW[key](d, work, t, hands[key]); };
   if (!built(key)) {
     // Raised a band a piece, the floor up, each fading in from when it landed.
-    ghostBox(b);
+    drawSite(key);
     const rows = b.h / P, d = frameOf(key);
     for (let k = 0; k < r.n; k++) {
       const top = Math.round(rows * (k + 1) / AFTER_BUILD_PIECES), bot = Math.round(rows * k / AFTER_BUILD_PIECES);
@@ -225,6 +230,15 @@ function body(x, y, dx = 0, h = 3 * P) {
   return { x: bx, y: by };
 }
 function shoutMark(x, y) { ctx.fillStyle = '#000'; ctx.fillRect(x + 8, y - 12, 2, 6); ctx.fillRect(x + 1, y - 9, 2, 2); ctx.fillRect(x + 3, y - 7, 2, 2); ctx.fillRect(x + 15, y - 9, 2, 2); ctx.fillRect(x + 13, y - 7, 2, 2); }
+// A station's load on a head, a paper rim round it so it stands clear of
+// the black station rising behind it: a plank across, or a block.
+function carried(x, y, s) {
+  const plank = s.k === 'plank', lx = plank ? x - P * 1.5 : x + P / 2, ly = plank ? y - P : y - P * 2;
+  const w = plank ? P * 6 : P * 2, h = plank ? P : P * 2;
+  ctx.fillStyle = GREY[0]; ctx.fillRect(lx - 2, ly - 2, w + 4, h + 4);
+  const d = frame(lx, ly);
+  if (plank) plankAt(d, 0, 0); else blockAt(d, 0, 0);
+}
 function drawMember(w) {
   // The first worker through a working station's door stands in its pose.
   if (w.at && DRAW[w.at] && atStation(w.at)[0] === w) {
@@ -238,6 +252,7 @@ function drawMember(w) {
   if (w.load === 'log') { ctx.fillRect(x - P, y - P, 5 * P, P); cell(x + P, y - P, 3); }
   else if (w.load === 'sign') { ctx.fillRect(x + P + 2, y - P, 2, P); ctx.fillRect(x, y - P * 3, P * 3, P * 2); ctx.fillStyle = GREY[0]; ctx.fillRect(x + 2, y - P * 3 + 2, P * 3 - 4, P * 2 - 4); }
   else if (w.load === 'posters') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[0]; ctx.fillRect(x + 4, y - 8, 10, 6); }
+  else if (w.load === 'carry' || w.load === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
   else if (w.load === 'tip') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[4]; ctx.fillRect(x + 4, y - 8, 10, 6); }
   if (w.swing != null) {
     if (w.job === AFTER_JOB.AGITATE) shoutMark(x, y);
