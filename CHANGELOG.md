@@ -201,7 +201,6 @@ this section; the release that switches it on moves these under Unreleased.
 - A cutscene's widescreen bands stay black in dark mode instead of turning light grey, and a beat's line on them stays light (`GAME=…/play.html?dark node tools/look.mjs leaving`).
 - The act 3 intro keeps its widescreen bands and its zoom through the tear, and lands in the afterlife on the cloud floor where the two of them come up instead of in the empty sky under it, climbing (test/shot.test.mjs).
 - The opening, the serpent's kill, the walk home and the first trip down glide their camera and their zoom together instead of cutting across the deep or stepping the zoom, and keep who they are about in the frame (test/shot.test.mjs; cutscenes.html, the finale, snatch-kill, opening and first-trip rows).
-- On the dark page the afterlife's two greys stand well apart from the graphite and from each other instead of a murky band of near-blacks (test/after-palette.test.mjs).
 
 ## v0.6.1 — 2026-10-19
 
