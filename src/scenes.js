@@ -38,7 +38,7 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, stationBox, soulX, afterOpenX } from './after/place.js';
+import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX } from './after/place.js';
 import { afterEnd } from './view.js';
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE } from './config.js';
 import { FINALE_HOUSE_W } from './config.js';
@@ -467,7 +467,9 @@ const lookAtOrb = () => {
 // `slow` carries the crowd past the slowdown and buys its branch.
 // Act 3's bills take the yard's coins too (DESIGN.md, "The yard pays too"): the
 // yard given enough of each for every row a scene buys, the setup no shot is about.
-const yardPurse = () => window.__grant({ dust: 40000, spores: 5000, shards: 2000, sparks: 400 });
+// Enough of the yard's coins for every act-3 bill a scene buys, at the paced
+// prices (config/after.js, the pacing pass): the scales from the ore band on.
+const yardPurse = () => window.__grant({ dust: 2e6, spores: 5e5, shards: 5e5, scales: 3e4, sparks: 5e4 });
 // Station `key`'s hand-work card opened by a click on the station, then its
 // round part (`ring`, the card's wheel or vat) turned on the card at `rev`
 // turns a second for `frames` frames, the press held (after/gestures.js).
@@ -2754,7 +2756,7 @@ export const SCENES = {
   'after-grove': { about: 'the acts', say: "the afterlife's grove: four plots, a tree coming down, a stump half dug, a sapling, logs lying",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-      window.__afterGrant({ rebel: 600, timber: 60 }); yardPurse();
+      window.__afterGrant({ rebel: 2000, timber: 300 }); yardPurse();
       for (let k = 0; k < 3; k++) window.__buy('after-plot');
       window.__buy('after-tree');
       window.__afterAxe();
@@ -2922,6 +2924,17 @@ export const SCENES = {
       for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
       pinCamera(houseX() + FINALE_HOUSE_W * P / 2 - S.viewW / 2);
     } },
+  // The act 3 intro just through the tear (wave shot, track A): the ripple
+  // landed in the afterlife, the shot held on the cloud floor where the two of
+  // them will come up, the bands full, the zoom the yard's.
+  'act3-rise': { about: 'the acts', say: 'act 3\'s rise just through the tear: the afterlife framed on the patch of cloud floor the two of them come up through',
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
+      for (let i = 0; i < 60 * 60 && !(S.view === 'after' && S.viewTo == null); i++) window.__fast(1 / 60);
+      window.__fast(1);
+      window.__holdShot();
+    } },
   // The opening played from the go-on card's press to the refusal's last
   // phase: the two of them up the pillar's face onto the pedestal, the
   // road's drawing of them fading off over the pedestal's own.
@@ -2935,6 +2948,12 @@ export const SCENES = {
     } },
   'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp half built (saw mill, chipper, workshop, posts filled), a fifth of God\'s yard walked out, the axe in hand',
     run: act3Mid },
+  // Track C: each of act 3's boards open in the yard's sheet over the act-3-mid
+  // camp, as a plain click on its station opens it (after/rows.js
+  // `openAfterBoard`); the paper mill and the press stood up for their own.
+  ...Object.fromEntries(['shack', 'grove', 'pedestal', 'mill', 'chipper', 'papermill', 'workshop', 'press', 'crowd'].map(key =>
+    [`act3-board-${key}`, { about: 'the acts', say: `act 3's ${key} board open in the yard's sheet, its shelves, bills in the act's marks`,
+      run: () => act3Board(key) }])),
   // God's pushback as drawn (render/aftercrowd.js): the throne's speech
   // warned, his gaze settled on a sign with the corner marks closing in; then
   // the sign burning away.
@@ -2991,6 +3010,24 @@ function act3Mid() {
   window.__fast(20);
   // between the workshop and the pedestal, the camp's middle
   pinCamera((stationX0('workshop') + stationX0('pedestal')) / 2 - S.viewW / 2);
+}
+
+// Track C: the act-3-mid camp, framed on one station (the crowd's front for
+// the crowd), and that station's board opened as its click opens it. The
+// paper mill and the press are stood up for their own boards; rebel and
+// timber enough for some tiles and short of others, so both edges show.
+function act3Board(key) {
+  act3Mid();
+  for (const st of ['papermill', 'press']) if ((key === st || key === 'press') && !S.after.built.includes(st)) S.after.built.push(st);
+  window.__afterGrant({ rebel: 200, timber: 40 });
+  window.__fast(1);
+  const b = key === 'crowd' ? null : key === 'grove' ? { x: plotX(0), w: groveX1() - plotX(0) } : stationBox(key);
+  const mid = key === 'crowd' ? soulX(6) : b.x + b.w / 2;
+  pinCamera(mid - S.viewW / 2);
+  window.__look(mid - S.viewW / 2);
+  window.__fast(1 / 60);
+  window.__openAfterBoard(key, key === 'crowd' ? { x: mid, y: afterFloor() - P * 30 } : null);
+  window.__holdShot();
 }
 
 // God's pushback at a moment (`what`: 'warned', 'burn'): the opening

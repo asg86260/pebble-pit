@@ -23,7 +23,7 @@ export function workerAt(x, y) {
   if (crewView() === 'hide') return null;
   // On a thumb a cell is small, so the body's reach is the least a finger can
   // land on, whatever the zoom.
-  const pad = Math.max(P * 1.5, coarse() ? (TOUCH_TARGET / S.zoom - WORKER) / 2 : 0);
+  const pad = Math.max(P * 1.5, coarse() ? (TOUCH_TARGET / S.zoomShow - WORKER) / 2 : 0);
   for (let i = S.workers.length - 1; i >= 0; i--) {
     const w = S.workers[i];
     if (w.inside || underground(w)) continue;

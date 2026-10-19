@@ -66,7 +66,7 @@ function vnoise(x, y, seed) {
 // each put on a whole device pixel, so a stroke stays whole at any zoom.
 let K = 1, CX = 0, Z = 1, F = null;
 function camFrame() {
-  K = S.zoom * S.dpr; CX = S.camX + S.viewW / 2; F = skyFrame();
+  K = (S.zoomShow || S.zoom) * S.dpr; CX = S.camX + S.viewW / 2; F = skyFrame();
   Z = restW() / Math.max(1, S.viewW);
 }
 const onPx = v => Math.round(v * K) / K;

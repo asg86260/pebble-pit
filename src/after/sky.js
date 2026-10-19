@@ -20,7 +20,7 @@ import { P, SKY_BANK, SKY_TOPS, GOD_CELLS, GOD_FIT, GOD_UP, GOD_OPEN_AT, GOD_RAT
          AFTER_ZOOM_MAX, AFTER_FOCUS_AT } from '../config.js';
 import { yardCell } from '../world.js';
 import { actPlace } from '../acts.js';
-import { afterFloor, afterX0, afterX1, afterOpenX } from './place.js';
+import { afterFloor, afterTop, afterX0, afterX1, afterOpenX } from './place.js';
 import { smoothstep } from '../motion.js';
 
 const clamp01 = v => Math.max(0, Math.min(1, v));
@@ -45,7 +45,10 @@ export const zoomAt = cx => 1 + (AFTER_ZOOM_MAX - 1) * pullAt(cx) ** 2;
 
 let frame = null, frameKey = '';
 export function skyFrame() {
-  const top = restTop(), W = restW(), key = `${top}|${W}|${afterOpenX()}`;
+  // The window's top at rest, or the place's own where the window shows past
+  // it: the camera is never let above the place, so the dive could not reach
+  // a sky laid out higher.
+  const top = Math.max(restTop(), afterTop()), W = restW(), key = `${top}|${W}|${afterOpenX()}`;
   if (frame && key === frameKey) return frame;
   const floor = afterFloor(), bank = floor - SKY_BANK, sky = bank - top;
   const gc = GOD_CELLS.find(c => c * GOD_FIT <= sky) || GOD_CELLS[GOD_CELLS.length - 1];
@@ -78,6 +81,6 @@ export const faceY = () => { const f = skyFrame(); return f.gy0 + 9 * f.gc; };
 // face carried from where it stands at rest to AFTER_FOCUS_AT down the window.
 export function topAt(cx, z) {
   const f = skyFrame(), y = faceY();
-  const at = (y - f.top) / f.H + (AFTER_FOCUS_AT - (y - f.top) / f.H) * pullAt(cx);
+  const r = restTop(), at = (y - r) / f.H + (AFTER_FOCUS_AT - (y - r) / f.H) * pullAt(cx);
   return y - at * f.H / z;
 }

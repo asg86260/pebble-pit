@@ -12,6 +12,7 @@ import { restOnRock } from '../rock.js';
 import { JOB_OF } from '../levels.js';
 import { now, frames } from '../clock.js';
 import { settle, retask } from './commute.js';
+import { sfx } from '../audio.js';
 
 // One frame of a knocked-off hat falling. Runs whatever its owner is doing --
 // a hat in the air does not wait for the body that lost it to be put down.
@@ -111,6 +112,7 @@ export function fall(w) {
   w.vy = 0;
   w.vx = 0;
   w.falling = false;
+  sfx('body-land', { x: w.x + WORKER / 2 });
   w.foot = w.footAt = null;        // it climbs to wherever it is standing now
   // and if it was shaken on the way up, it stands there seeing stars first
   if (w.dizzyFor) {

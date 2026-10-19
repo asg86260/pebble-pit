@@ -483,6 +483,9 @@ set-touch-off = touch: off
 # settings dark switch
 set-dark-on = dark: on
 
+# settings dark switch: the first dark page, light gray on charcoal
+set-dark-dim = dark: dim
+
 # settings dark switch
 set-dark-off = dark: off
 
@@ -3475,12 +3478,6 @@ board-hell-wall = the barrier
 # act 3's coin (placeholder): rebel, knocked off the pair's speech
 after-coin-rebel = rebel
 
-# act 3's stock on a card's bill (placeholder): timber off the saw mill
-after-coin-timber = timber
-
-# act 3's stock on a card's bill (placeholder): paper off the paper mill
-after-coin-paper = paper
-
 # act 3 card row (placeholder): the pedestal's bigger speech, more rebel a click
 after-row-shout = bigger speech
 
@@ -3600,3 +3597,53 @@ after-hand-stump = stump
 
 # act 3 hand-work card's title (placeholder): the sawdust heap, tipped
 after-hand-heap = sawdust heap
+
+## Act 3 boards (track C, placeholder)
+
+# act 3 board title (placeholder): the pedestal's board, the speech and the agitators
+after-board-pedestal = pedestal
+
+# act 3 board title (placeholder): the construction shack's board, every station to build
+after-board-shack = construction shack
+
+# act 3 board title (placeholder): the grove's board, the axe and the trees
+after-board-grove = grove
+
+# act 3 board title (placeholder): God's crowd's board, readings only
+after-board-crowd = God's crowd
+
+# act 3 crowd board heading (placeholder): how the union stands
+after-sect-crowd = the crowd
+
+# act 3 crowd board heading (placeholder): the three gates
+after-sect-gates = gates
+
+# act 3 crowd board reading (placeholder): the share of God's yard walked out
+after-crowd-share = share won
+
+# act 3 crowd board reading (placeholder): the souls walked out to the camp
+after-crowd-members = members
+
+# act 3 crowd board reading (placeholder): the time to the throne's next speech
+after-crowd-speech = next speech
+
+# act 3 crowd board reading (placeholder): the first gate
+after-crowd-meeting = the meeting
+
+# act 3 crowd board reading (placeholder): the second gate
+after-crowd-slowdown = the slowdown
+
+# act 3 crowd board reading (placeholder): the last gate
+after-crowd-strike = the strike
+
+# act 3 crowd board value (placeholder): a gate already reached
+after-crowd-reached = reached
+
+# act 3 crowd board value (placeholder): how far toward a gate, what there is of what it wants
+after-crowd-of = { $have } of { $want }
+
+# act 3 crowd board value (placeholder): a share, in whole percent
+after-crowd-pct = { $n }%
+
+# act 3 crowd board value (placeholder): no speech set yet
+after-crowd-none = none due

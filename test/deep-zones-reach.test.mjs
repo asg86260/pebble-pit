@@ -13,7 +13,7 @@ const S = yard.S;
 const { drawDeepZones } = await import('../src/render/fauna.js');
 const { drawDeepFloor, deepWindow } = await import('../src/render/deep.js');
 const { paintOn } = await import('../src/render/ctx.js');
-const { killFrame } = await import('../src/view.js');
+const { clampCam } = await import('../src/world.js');
 const { deepTop, deepFloor, deepX0, deepX1 } = await import('../src/deep/place.js');
 
 const WINDOWS = {
@@ -76,12 +76,14 @@ for (const [name, win] of Object.entries(WINDOWS)) {
     window.__view('deep');
     const checks = [];
     // The deep's own framing, then the camera at each end of it and lifted
-    // to the ceiling (the finale's way up holds it there).
+    // to the ceiling (a cutscene's shot can frame up there: the finale's way
+    // up, the first trip down's push in on the belly).
+    const lift = y => { S.camLockY = y; S.camX = (deepX0() + deepX1()) / 2 - S.viewW / 2; clampCam(); };
     const framings = [
       ['framed', () => {}],
       ['at the left end', () => window.__look(-1e6)],
       ['at the right end', () => window.__look(1e6)],
-      ['lifted to the ceiling', () => killFrame(0, (deepX0() + deepX1()) / 2, deepTop())],
+      ['lifted to the ceiling', () => lift(deepTop())],
     ];
     for (const [where, frame] of framings) {
       frame();
@@ -93,7 +95,8 @@ for (const [name, win] of Object.entries(WINDOWS)) {
       const g = short({ ...ground, y: deepFloor() }, w, deepFloor());
       checks.push(ok(g.left + g.right === 0, `${where}, the floor runs the window's width`, say(g, w)));
     }
-    killFrame(0, 0);
+    S.camLockY = null;
+    clampCam();
     return checks;
   });
 }

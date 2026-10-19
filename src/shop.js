@@ -174,14 +174,16 @@ export const COIN_ORDER = ['scale', 'dust', 'spore', 'shard', 'spark'];
 // row wrote its bill in. The work's time is not part of it (the owner,
 // 2026-10-10). The story's card wears the same tag on its buy
 // (objbarrier.js), so the two cannot disagree.
-export const coinsOf = full => full.filter(([m]) => m !== 'time')
-  .sort((a, b) => COIN_ORDER.indexOf(a[0]) - COIN_ORDER.indexOf(b[0]));
+// A row that writes its coins in another order says so (`coinOrder`): act
+// 3's cards put the act's own coins first (config/after.js, AFTER_TAG_ORDER).
+export const coinsOf = (full, order = COIN_ORDER) => full.filter(([m]) => m !== 'time')
+  .sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
 const isUnlock = u => u.key.startsWith('unlock');
 
 export function tagOf(u, full = billOf(u)) {
   const said = ([money, n]) =>
     `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, n)}</span>`;
-  const bill = coinsOf(full).map(said).join('');
+  const bill = coinsOf(full, u.coinOrder).map(said).join('');
   return { bill };
 }
 
@@ -898,7 +900,9 @@ export function buildBoard(which) {
   const b = boardOf(which);
   // The house's sheet is the crew, built by `buildCrew`.
   if (!b || which === 'house') return;
-  build(shopOf(which), boardList(which), b.sections(), stationRow(which)?.empty || '', b.count, b.ledger);
+  // A board with no row in stations.js (an act's: boardrows.js) says its own
+  // empty line.
+  build(shopOf(which), boardList(which), b.sections(), stationRow(which)?.empty || b.empty?.() || '', b.count, b.ledger);
 }
 
 // Every board. The sim never calls this: it raises `S.shopStale` and the

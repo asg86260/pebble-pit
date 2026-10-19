@@ -25,7 +25,7 @@ import { readPads, seeFamily, glyph, rumble, fakePad, BUTTON } from './padread.j
 import { stops, stopById, stopMid } from './stops.js';
 import { station } from './stations.js';
 import { showPanel, openBoard, showTip, showTipAt } from './board.js';
-import { panTo, unfollow } from './world.js';
+import { panTo, unfollow, toWorld, toScreen } from './world.js';
 import { knockOff, topOfRock, overBoulder } from './rock.js';
 import { sweep, release, track } from './hands.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
@@ -73,7 +73,7 @@ function raiseStop() {
   const b = el.getBoundingClientRect();
   if (!b.width) return null;
   return { id: 'raise', kind: 'raise', key: 'raise', half: 'yard', el,
-           r: { x: b.left / S.zoom + S.camX, y: b.top / S.zoom + S.camY, w: b.width / S.zoom, h: b.height / S.zoom } };
+           r: { ...toWorld(b.left, b.top), w: b.width / S.zoomShow, h: b.height / S.zoomShow } };
 }
 // The stops in the half on screen, left to right.
 function yardStops() {
@@ -172,7 +172,7 @@ function setFocus(id, look = false) {
 // camera glide and the bracket glide").
 function lookTo(x) {
   unfollow();
-  panTo(x, Math.max(PAD_PAN_MS, PAD_PAN_LEAD * glideMs(Math.abs(x - S.camX - S.viewW / 2) * S.zoom)));
+  panTo(x, Math.max(PAD_PAN_MS, PAD_PAN_LEAD * glideMs(Math.abs(x - S.camX - S.viewW / 2) * S.zoomShow)));
   viewTaken();
 }
 
@@ -226,7 +226,7 @@ function land(it, from) {
 // thing the focus stood on. Down from there comes back (`pagePresses`).
 function upToCorner(r) {
   const c = r ? mid(r) : { x: S.camX + S.viewW / 2, y: S.camY };
-  enterCorner(true, { x: (c.x - S.camX) * S.zoom, y: (c.y - S.camY) * S.zoom });
+  enterCorner(true, toScreen(c.x, c.y));
 }
 
 function hop(dir) {
@@ -702,7 +702,8 @@ export function paintPad(t = performance.now()) {
 function sayTip(box) {
   const id = S.padFocus;
   if (id === 'body' && body) {
-    showTipAt(card(body), (body.x + WORKER + P * 2 - S.camX) * S.zoom, (body.y - P * 3 - S.camY) * S.zoom, false, false, glyph('a'));
+    const at = toScreen(body.x + WORKER + P * 2, body.y - P * 3);
+    showTipAt(card(body), at.x, at.y, false, false, glyph('a'));
     return;
   }
   if (!id || id.includes('|')) return;

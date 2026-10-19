@@ -28,7 +28,7 @@ import { built, stumpsOn } from './levels.js';
 import { afterFloor, stationDoor, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, agitatorX, speakerAt, overCrowd, crowdEdge } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, takeLog } from './grove.js';
-import { sweepDue, tipSawdust } from './mill.js';
+import { sweepDue, tipSawdust, vatOf } from './mill.js';
 import { signSpot, plantSign, freeSlot, pastePoster } from './press.js';
 import { workAfter } from './work.js';
 import { fillBuilders, layPiece, pieceS } from './build.js';
@@ -194,7 +194,11 @@ const JOB_STEP = {
     stationWork(w, 'mill', AFTER_SAW_S, dt);
   },
   feeder(w, dt) { stationWork(w, 'chipper', AFTER_CHIP_S, dt); },
-  pulper(w, dt) { stationWork(w, 'papermill', AFTER_PULP_S, dt); },
+  pulper(w, dt) {
+    // A vat its own, or at the door its clock held until one is (mill.js, `vatOf`).
+    if (vatOf(w) == null && built('papermill')) { if (go(w, stationDoor('papermill') + (w.id % 3) * P, floorY(), dt)) w.at = null; return; }
+    stationWork(w, 'papermill', AFTER_PULP_S, dt);
+  },
   joiner(w, dt) { stationWork(w, 'workshop', AFTER_SIGN_S, dt); },
   printer(w, dt) { stationWork(w, 'press', AFTER_PRESS_S, dt); },
   builder(w, dt) {

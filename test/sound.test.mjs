@@ -66,7 +66,8 @@ group('forty grains in one frame are one sound', async () => {
   window.__crew(0);
   run(2);                                        // clear any window from before
   const before = snap();
-  for (let i = 0; i < 40; i++) sfx('grain-land', { x: 200 + i });
+  // in view: grains landing are heard on screen only
+  for (let i = 0; i < 40; i++) sfx('grain-land', { x: S.camX + 200 + i });
   const asked = snap();
   frame();
   const after = snap();
@@ -94,7 +95,7 @@ group('the ceiling drops rather than defers', async () => {
   const before = snap();
   // A grain on every frame for two seconds: sixty a second against a window
   // that admits one per SND_FOLD_MS and a ceiling of four a second.
-  for (let i = 0; i < 120; i++) { sfx('grain-land', { x: 300 }); frame(); }
+  for (let i = 0; i < 120; i++) { sfx('grain-land', { x: S.camX + 300 }); frame(); }
   const under = snap();
   // Then silence for a window and a bit. A ceiling that deferred would still
   // be paying out the backlog here; this one has nothing to pay.
@@ -209,15 +210,17 @@ group('a cap full of gravel gives way to the next strike', async () => {
   // noise -- then one more. A strike rings for a fraction of a second and a
   // window is eighty milliseconds, so the cap is brought down to what a
   // couple of windows can fill, through its own knob, and put back after.
-  // The grain is unmapped -- silent -- and a silent event takes no slot, so
-  // it is given the rock's recipe for the length of the group, through the
-  // same door the dev panel's paste goes through, and it is taken back after.
+  // A cell giving way is a fold the camera does not gate (grains landing are
+  // heard on screen only, and a strike off screen takes no slot). It is given
+  // the rock's recipe for the length of the group, through the same door the
+  // dev panel's paste goes through, and what it had is put back after.
   const voices = knob('SND_VOICES');
   voices.set(2);
-  const laid = applySounds({ 'grain-land': 'stone', 'boulder-land': 'stone' });
+  const was = { 'rock-through': SOUNDS['rock-through'].recipe, 'boulder-land': SOUNDS['boulder-land'].recipe };
+  const laid = applySounds({ 'rock-through': 'stone', 'boulder-land': 'stone' });
   let i = 0;
   while (d().fired - before.fired < 2) {
-    sfx('grain-land', { x: 100, big: true });
+    sfx('rock-through', { x: 100, big: true });
     run(SND_FOLD_MS / 1000 + FRAME);
     i++;
     if (i > 8) break;
@@ -226,9 +229,9 @@ group('a cap full of gravel gives way to the next strike', async () => {
   sfx('boulder-land', { x: 100, big: true });
   const after = snap();
   voices.set(SND_VOICES);
-  applySounds({ 'grain-land': null, 'boulder-land': null });
+  applySounds(was);
   return [
-    ok(laid === 2 && SOUNDS['grain-land'].recipe === null, 'a mapping lays over the table and comes off again'),
+    ok(laid === 2 && SOUNDS['rock-through'].recipe === was['rock-through'], 'a mapping lays over the table and comes off again'),
     ok(full.fired - before.fired >= 2, 'the cap is full of the yard',
        `${full.fired - before.fired} up`),
     ok(after.stolen - full.stolen >= 1, 'and the next strike takes one',

@@ -395,6 +395,9 @@ set-touch-off = 터치: 끔
 set-dark-on = 어둡게: 켬
 
 # settings dark switch
+set-dark-dim = 어둡게: 흐리게
+
+# settings dark switch
 set-dark-off = 어둡게: 끔
 
 # settings sound switch

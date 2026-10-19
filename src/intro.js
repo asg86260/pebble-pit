@@ -14,7 +14,7 @@
 // as it has the yard. Every phase function here is a declaration, not a
 // const, because beats.js reads them at load and imports this file in a ring.
 
-import { P, CELL, WORKER, GRAV, INTRO_ZOOM, INTRO_LEAD, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
+import { P, CELL, WORKER, GRAV, INTRO_ZOOM, INTRO_GROUND, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
          INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL, HELP_BANG_MS, HELP_BANGS, BURIED_CALL_MS, BURIED_CALL_JITTER, BURIED_CALL_HOT_MS, BURIED_CALLS,
          INTRO_SHOW_DUST, INTRO_SHOW_MAX,
          MEET_IN_MS, MEET_MS, PART_MS,
@@ -25,7 +25,9 @@ import { now, frames } from './clock.js';
 import { makeBoulder, dropZone, boulderAlive } from './rock.js';
 import { spawnChip, spawnSpoil, aim } from './dust.js';
 import { shadeNear } from './grid.js';
-import { walkY, setZoom, clampCam, lookAt, openingCamX, yardCell } from './world.js';
+import { walkY, setZoomNow, zoomOn, clampCam, lookAt, openingCamX, yardCell } from './world.js';
+import { shoot } from './cutscene.js';
+import { union } from './shot.js';
 
 // The close-up the opening starts on, as a share of the yard's own zoom: held at
 // the same size on the glass on a phone, whose yard is drawn smaller.
@@ -39,7 +41,6 @@ import { reducedMotion } from './prefs.js';
 import { doorAt } from './house.js';
 import { namePair, whoIs } from './wardrobe.js';
 import { beatDone, beatRunning, ownsYard, markDone, startBeat } from './beats.js';
-import { outCubic as ease } from './motion.js';
 
 // Where the two of them stand: either side of the spot the rock lands on.
 // The one on the left is the one it lands on.
@@ -102,7 +103,7 @@ export function startIntro() {
   for (const b of S.pair) b.y = walkY(b.x + WORKER / 2);
   // and the view is on the door before the first frame, so the walk out is
   // watched from the house rather than glided to from wherever the seat was
-  setZoom(introZoom());
+  setZoomNow(introZoom());
   S.camX = door + WORKER / 2 - S.viewW / 2;
   S.camTo = null;
   clampCam();       // and written through to the page's scroller, or the next frame reads the old seat back
@@ -306,60 +307,58 @@ export function stepPart(t) {
 
 export function letGo() {
   S.camLockY = null;
-  setZoom(1);
+  setZoomNow(1);
   S.danceUntil = 0;
 }
 
 
-// The view, for as long as the opening owns it: right in on the pair, and
-// easing back out over the last stretch. Nothing else in this game moves the
-// zoom but the cutscenes.
+// Where the show's grain is thrown: well inside the mouth rather than just
+// over the lip, since an arc has a spread, and aimed at the edge half of them
+// come down short.
+const intoX = () => pit.x + P * 24;
+
+// The view, for as long as the opening owns it, as the shot's requests
+// (shot.js, `stepAim`): right in on the pair, and easing back out over the
+// last stretch. The second act pulls back in and then out again. Each pull
+// takes its beat's own length, so the view is still moving when the beat's
+// moment comes and arrives as it ends.
 function hold(t, key) {
-  // The show walks the view with the body at the yard's own size. The rescue
-  // happens in a working yard, and whether it is pulled in on is the shield
-  // cutscene's call.
-  if (key === 'show' || key === 'rescue') return;
-
-  // The walk out: the seat starts on the door and eases after the pair's
-  // midpoint, stopping at the spot where the chat holds it. Under reduced
-  // motion every beat is watched from where it ends.
-  if (key === 'leave') {
-    setZoom(introZoom());
-    S.camLockY = S.groundY - S.viewH * 0.66;
-    const mid = reducedMotion() || !S.pair.length ? S.cx
-              : S.pair.reduce((a, b) => a + b.x + WORKER / 2, 0) / S.pair.length;
-    const want = Math.min(mid, S.cx) - S.viewW / 2;
-    // ...and never so far behind that they leave the frame: the lag is a
-    // distance, and a phone's frame is not wide enough to hold it.
-    S.camX = reducedMotion() ? want
-           : Math.max(S.camX + (want - S.camX) * 0.06, want - S.viewW * INTRO_LEAD);
-    S.camTo = null;
-    clampCam();
-    return;
+  // The rescue happens in a working yard, and whether it is pulled in on is
+  // the shield cutscene's call.
+  if (key === 'rescue') return;
+  shoot(t, introShot(key));
+}
+function introShot(key) {
+  // The show watches the body at the yard's own size; once the grain is
+  // thrown, the throw, from the body to the mouth it goes into, glided out
+  // to rather than chased (a thrown grain outruns any pan), or the mouth
+  // alone if the two do not fit. Under reduced motion it sits between the
+  // rock and the mouth from the start.
+  if (key === 'show') {
+    const w = S.workers[0], mouth = { x: intoX() - WORKER / 2, y: buriedAt().y, w: WORKER, h: WORKER };
+    const body = w ? { x: w.x, y: w.y, w: WORKER, h: WORKER } : mouth;
+    if (reducedMotion()) return { key, frame: union([{ ...mouth, x: S.cx }, mouth]), zoom: 1 };
+    if (!S.introThrew) return { key, frame: body, move: 'follow', zoom: 1 };
+    const both = union([body, mouth]);
+    return { key: 'throw', frame: both.w <= S.viewW - WORKER * 2 ? both : mouth, zoom: 1 };
   }
-
-  // How far out the view is, nought being right in on them. The opening pulls
-  // out at the end; the second act pulls back in and then out again. Under
-  // reduced motion the easing goes and the view changes only where one beat
-  // hands over to the next.
-  const k0 = reducedMotion() ? Infinity : (t - S.introAt);
-  const out = key === 'up' ? ease(Math.min(1, k0 / INTRO_UP_MS))
-            : key === 'meet' ? 1 - ease(Math.min(1, k0 / MEET_IN_MS))
-            : key === 'part' ? ease(Math.min(1, k0 / PART_MS))
-            : 0;
-  const k = introZoom() + (1 - introZoom()) * out;
-
-  // The ground line sits low in the frame, and is walked back to the yard's
-  // own height over the same stretch the zoom is: dropping forty pixels in
-  // one frame at the end is a hitch you feel.
-  S.camLockY = null;
-  setZoom(k);
-  const close = S.groundY - S.viewH * 0.66;
-  const rest = S.worldH - S.viewH;
-  S.camLockY = close + (rest - close) * out;
-  S.camX = S.cx - S.viewW / 2;
-  S.camTo = null;
-  clampCam();
+  // Pulled in, the ground line stands INTRO_GROUND down the window the pull
+  // arrives at; let out, the yard rests on its own floor.
+  const close = key !== 'up' && key !== 'part';
+  S.camLockY = close ? S.groundY - S.H / zoomOn(introZoom()) * INTRO_GROUND : null;
+  // The spot the two of them stand either side of, with the room they stand
+  // in; on the walk out, the seat comes with them from the door until it
+  // reaches it. Under reduced motion every beat is watched from where it ends.
+  const mid = key !== 'leave' || reducedMotion() || !S.pair.length ? S.cx
+            : S.pair.reduce((a, b) => a + b.x + WORKER / 2, 0) / S.pair.length;
+  const c = Math.min(mid, S.cx), half = INTRO_APART + WORKER / 2;
+  const frame = { x: c - half, y: buriedAt().y, w: half * 2, h: WORKER };
+  if (key === 'up') return { key, frame, move: 'glide', zoom: 1, s: INTRO_UP_MS / 1000 };
+  if (key === 'part') return { key, frame, move: 'glide', zoom: 1, s: PART_MS / 1000 };
+  if (key === 'meet') return { key, frame, move: 'glide', zoom: introZoom(), s: MEET_IN_MS / 1000 };
+  // The walk out and the chat, the fall and the lying there: one move, kept
+  // with the pair while they walk and held once they stand.
+  return { key: 'close', frame, move: 'follow', zoom: introZoom() };
 }
 
 // Out of the door and over to the spot, talking as they go, at the pace
@@ -522,7 +521,7 @@ export function begin(t) {
   }
 
   S.camLockY = null;                           // the yard has its view back
-  setZoom(1);
+  setZoomNow(1);
 }
 
 // It knocks a couple of cells off and throws one into the hole. Thrown, not
@@ -534,22 +533,8 @@ export function stepShow(t) {
   const w = S.workers[0];
   if (!w) { finish(); return false; }
 
-  // Watching the body while it works and the grain once it is in the air.
-  // Under reduced motion the view sits halfway between the rock and the
-  // mouth, the same target the throw is aimed at.
-  //
-  // Well inside the mouth rather than just over the lip: an arc has a
-  // spread, and aimed at the edge half of them come down short.
-  const into = pit.x + P * 24;
-  if (reducedMotion()) {
-    S.camX = (S.cx + into) / 2 - S.viewW / 2;
-  } else {
-    const chip = S.chips.find(c => c.intro);
-    const eye = chip ? chip.x : w.x + WORKER / 2;
-    S.camX += ((eye - S.viewW / 2) - S.camX) * 0.06;
-  }
-  S.camTo = null;
-  clampCam();
+  // The view is the shot's (`hold`), on the body and then the throw.
+  const into = intoX();
 
   // Enough off the rock, and it throws one from up on the crest. It stays a
   // rockhand while it does it: handed to the hauling rules mid-scene, it
@@ -587,7 +572,7 @@ function finish() {
   rebalance();
   syncWorkers();
   S.camLockY = null;               // the yard has its own view back
-  setZoom(1);
+  setZoomNow(1);
   // Back to the opening seat: the show walked the view out to the hole, and
   // the call to build the bench, the first thing the player is asked to
   // press, was being pressed with the bench out of shot.

@@ -7,7 +7,7 @@
 // played, and coins granted (`__grant` the yard's, `__afterGrant` the act's).
 import { group, ok, run, yard } from './helpers.mjs';
 import { AFTER_BUILDS, AFTER_UPGRADES, AFTER_COIN_UNDER_S, AFTER_COIN_LIFE_S, AFTER_COIN_STAGGER_S,
-         AFTER_COIN_MOTES } from '../src/config.js';
+         AFTER_COIN_MOTES, SCALE_SHADE, SCALE_SPREAD } from '../src/config.js';
 import { patchAt, afterTag, afterRow } from '../src/after/rows.js';
 import { coinAt } from '../src/render/aftercoins.js';
 
@@ -49,7 +49,7 @@ group('short of a yard coin, the buy refuses and takes nothing', async () => {
   return [
     ok(!bought, 'a dust short, the saw mill is not bought'),
     ok(S.stored === dust0 && S.after.rebel === rebel0, 'and neither purse moved', `${dust0} -> ${S.stored}, ${rebel0} -> ${S.after.rebel}`),
-    ok(/class="short"><i class="dust">/.test(tag) && /class="have">rebel/.test(tag),
+    ok(/class="short"><i class="dust">/.test(tag) && /class="have"><i class="rebel">/.test(tag),
       'the card says which coin is short, the dust in the yard\'s mark', tag)
   ];
 });
@@ -58,7 +58,7 @@ group('a spark-band upgrade needs a spark', async () => {
   up();
   const bill = AFTER_UPGRADES['after-tree'].bills[0];
   window.__afterGrant({ rebel: billOf(bill, 'rebel'), timber: billOf(bill, 'timber') });
-  window.__grant({ dust: billOf(bill, 'dust'), spores: billOf(bill, 'spore'), shards: billOf(bill, 'shard') });
+  window.__grant({ dust: billOf(bill, 'dust'), spores: billOf(bill, 'spore'), shards: billOf(bill, 'shard'), scales: billOf(bill, 'scale') });
   const without = window.__buy('after-tree');
   window.__grant({ sparks: billOf(bill, 'spark') });
   const sparks0 = S.sparks;
@@ -71,10 +71,40 @@ group('a spark-band upgrade needs a spark', async () => {
   ];
 });
 
+// The deep's scales ride with the yard's coins from the ore band on (the
+// owner, 2026-10-18): off the deep's purse, a scale's mark on the card, and up
+// out of the patch in a scale's shade. The workshop stood up is setup.
+group('an ore-band upgrade asks the deep\'s scales: refused short, and takes them when paid', async () => {
+  up();
+  S.after.built.push('mill', 'workshop');
+  const bill = AFTER_UPGRADES['after-bench'].bills[0];
+  window.__afterGrant({ rebel: billOf(bill, 'rebel'), timber: billOf(bill, 'timber') });
+  window.__grant({ dust: billOf(bill, 'dust'), spores: billOf(bill, 'spore'), shards: billOf(bill, 'shard'),
+                   scales: billOf(bill, 'scale') - 1 });
+  const short0 = S.scales, rebel0 = S.after.rebel;
+  const tag = afterTag(afterRow('after-bench'));
+  const without = window.__buy('after-bench');
+  const kept = S.scales === short0 && S.after.rebel === rebel0;
+  window.__grant({ scales: 1 });
+  const scales0 = S.scales;
+  const coins0 = S.after.coins?.length || 0;
+  const withIt = window.__buy('after-bench');
+  const motes = S.after.coins.slice(coins0).map(m => m.v);
+  window.__actsOn(null);
+  return [
+    ok(billOf(bill, 'scale') > 0, 'a second bench asks scales', JSON.stringify(bill)),
+    ok(/class="short"><i class="scale">/.test(tag), 'the card shows the scales short, in the deep\'s mark', tag),
+    ok(!without && kept, 'a scale short, refused, and nothing taken', `${short0} -> ${S.scales}`),
+    ok(withIt && scales0 - S.scales === billOf(bill, 'scale'), 'paid in full, the scales come off the deep\'s purse', `${scales0} -> ${S.scales}`),
+    ok(motes.some(v => Math.abs(v - SCALE_SHADE) <= SCALE_SPREAD) && motes.every(Number.isFinite),
+      'and they come up out of the patch as motes in a scale\'s shade', motes.join(' '))
+  ];
+});
+
 group('the yard\'s coins fly: up off the pile to the patch, then out of it to the station', async () => {
   up();
   window.__afterGrant({ rebel: 100 });
-  window.__grant({ dust: 2000 });
+  window.__grant({ dust: billOf(MILL, 'dust') });
   const paid0 = S.paid.length;
   window.__buy('after-build-mill');
   const patch = patchAt();
@@ -101,7 +131,7 @@ group('the yard\'s coins fly: up off the pile to the patch, then out of it to th
 group('a reload mid-flight stands every mote back where it was', async () => {
   up();
   window.__afterGrant({ rebel: 100 });
-  window.__grant({ dust: 2000 });
+  window.__grant({ dust: billOf(MILL, 'dust') });
   window.__buy('after-build-mill');
   run(AFTER_COIN_UNDER_S + 0.5);
   yard.persist();

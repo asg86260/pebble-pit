@@ -7,22 +7,28 @@
 // draw them itself, on top.
 
 import { SHADES, FIND_COLOR } from './config.js';
-import { inkOf } from './ink.js';   // the bytes go straight in, past the context's setter
+import { inkOf, inkMode } from './ink.js';   // the bytes go straight in, past the context's setter
 
 const rgb = h => {
   const n = parseInt(h.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 };
 
-// the shades as packed RGBA, so a grain is four array writes
-const RGBA = SHADES.map(h => rgb(inkOf(h)));
-
-// The colors for the cells that are not dust: a shard in a pile is painted by
-// the same pass as the dust around it. Anything with no color here is left
-// clear for its owner to draw on top.
-const EXTRA = new Map();
-for (const [base, tones] of Object.entries(FIND_COLOR)) {
-  tones.forEach((h, i) => EXTRA.set(+base + i, rgb(inkOf(h))));
+// The shades as packed RGBA, so a grain is four array writes; and the colors
+// for the cells that are not dust, so a shard in a pile is painted by the same
+// pass as the dust around it. Anything with no color here is left clear for
+// its owner to draw on top. One table a map (ink.js): the deep's bed is drawn
+// in the deep's, a heap in the yard's.
+const TABLES = new Map();
+function tablesFor(m) {
+  let t = TABLES.get(m);
+  if (t) return t;
+  const extra = new Map();
+  for (const [base, tones] of Object.entries(FIND_COLOR)) {
+    tones.forEach((h, i) => extra.set(+base + i, rgb(inkOf(h, m))));
+  }
+  TABLES.set(m, t = { shades: SHADES.map(h => rgb(inkOf(h, m))), extra });
+  return t;
 }
 
 // Cells rewritten since the last reset, the same handle `settleWork` in grid.js
@@ -53,6 +59,7 @@ export function makePainter(b) {
   // twice is listed once.
   let flag = null, dirty = [], tCols = 0, tRows = 0;
   let all = true;                          // true means push the whole grid across
+  let inks = null, inkedIn = null;         // the table the image was written in, and its map
 
   const mark = (c, r) => {
     if (!flag) return;                     // nothing sized yet: the next paint is a full one
@@ -79,7 +86,7 @@ export function makePainter(b) {
       for (let c = c0; c < cEnd; c++) {
         const v = b.grid[r * b.cols + c];
         const i = (py * b.cols + c) * 4;
-        const col = v >= 1 && v <= RGBA.length ? RGBA[v - 1] : EXTRA.get(v);
+        const col = v >= 1 && v <= inks.shades.length ? inks.shades[v - 1] : inks.extra.get(v);
         if (!col) { d[i + 3] = 0; continue; }
         d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255;
       }
@@ -89,6 +96,8 @@ export function makePainter(b) {
 
   const paint = (into, x, y, w, h) => {
     if (!b.grid) return;
+    // A grid painted in another map than last time is painted afresh.
+    if (inkedIn !== inkMode()) { inkedIn = inkMode(); inks = tablesFor(inkedIn); all = true; }
     if (canvas.width !== b.cols || canvas.height !== b.rows) {
       canvas.width = b.cols;
       canvas.height = b.rows;

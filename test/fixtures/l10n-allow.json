@@ -8,6 +8,7 @@
   "src/console.js",
   "src/scenes.js",
   "src/scenesheet.js",
+  "src/cutbench/",
   "src/report.js",
   "src/verify.js",
   "src/migrations/",

@@ -172,6 +172,18 @@ export const GLYPH_OF = {
   // its rails, not as cards, and wears its kind's drawing (`KINDS` in
   // stations.js)
   pod: ['house'],
+  // act 3's boards (after/rows.js): borrowed drawings until the owner draws
+  // the camp's own. A post is a member wanted, the yard's post drawing.
+  'after-post-agitator': ['fist', 'plus'], 'after-post-woodcutter': ['cap', 'plus'], 'after-post-hauler': ['cart', 'plus'],
+  'after-post-sawyer': ['cap', 'plus'], 'after-post-feeder': ['cap', 'plus'], 'after-post-pulper': ['cap', 'plus'],
+  'after-post-joiner': ['cap', 'plus'], 'after-post-carrier': ['cart', 'plus'], 'after-post-printer': ['cap', 'plus'],
+  'after-post-paster': ['cap', 'plus'],
+  'after-shout': ['bell', 'up'], 'after-axe': ['blade'], 'after-plot': ['furrow', 'plus'], 'after-grow': ['ear', 'up'],
+  'after-tree': ['ear', 'plus'], 'after-stumps': ['shovel'], 'after-blade': ['blade', 'plus'], 'after-heap': ['sack', 'plus'],
+  'after-drum': ['jaw', 'plus'], 'after-spout': ['bucket', 'plus'], 'after-vat': ['pot', 'plus'], 'after-dry': ['ledger', 'plus'],
+  'after-bench': ['bench', 'plus'], 'after-signreach': ['planks', 'up'], 'after-stack': ['ledger', 'up'], 'after-posterreach': ['bell', 'plus'],
+  'after-build-mill': ['blade'], 'after-build-chipper': ['jaw'], 'after-build-papermill': ['pot'],
+  'after-build-workshop': ['bench'], 'after-build-press': ['ram'],
 };
 
 // A row's drawing: its own, else the drawing of the station that sells it

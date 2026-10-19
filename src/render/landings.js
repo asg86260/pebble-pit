@@ -7,6 +7,7 @@ import { puff } from '../puff.js';
 import { farmShed, quarryShed, shakeView } from '../world.js';
 import { casino, lab, outhouse, filter, tower } from '../state.js';
 import { rising as risingAt } from './rise.js';
+import { sfx } from '../audio.js';
 
 // The frame a rising place lands: a puff over the middle of the roof and a
 // knock on the view (`BUILD_SHAKE`). Watched here rather than from `stepWorks`,
@@ -23,12 +24,12 @@ export function stepRiseLandings() {
                  : place === 'filter' ? filter : place === 'outhouse' ? outhouse
                  : place === 'quarry' ? quarryShed() : place === 'farm' ? farmShed()
                  : null;
-      if (rect) { puff(rect.x + rect.w / 2, rect.y); shakeView(BUILD_SHAKE); }
+      if (rect) { puff(rect.x + rect.w / 2, rect.y); shakeView(BUILD_SHAKE); sfx('place-land', { x: rect.x + rect.w / 2 }); }
       else {
         // The house: the room that just landed is the last one `cubes` hands
         // back now that `S.crew` has grown.
         const room = houseCubes()[houseCubes().length - 1];
-        if (room) { puff(room.x + HOUSE_CUBE / 2, room.y); shakeView(BUILD_SHAKE); }
+        if (room) { puff(room.x + HOUSE_CUBE / 2, room.y); shakeView(BUILD_SHAKE); sfx('place-land', { x: room.x + HOUSE_CUBE / 2 }); }
       }
     }
     wasRising[place] = rising;

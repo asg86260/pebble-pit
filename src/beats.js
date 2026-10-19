@@ -27,11 +27,11 @@ import { startIntro, cutOpening, stepLeave, arriveChat, stepChat, crush, stepFal
          startDown, stepDown, startUp, stepUp, begin, stepShow,
          startMeet, stepMeet, cutMeet, parted, stepPart, letGo,
          startRescue, stepRescue, cutRescue } from './intro.js';
-import { cameraCues, play, stepShot, release, stepDeepShot, dropDeepShot, stepHush } from './cutscene.js';
+import { cameraCues, play, stepShot, release, dropShot, stepHush } from './cutscene.js';
 import { abyssDue, startAbyss, stepAbyss, cutAbyss, endAbyss } from './abyssintro.js';
 import { snatchDue, startSnatch, stepSnatch, cutSnatch, startFreed, stepFreed, cutFreed, serpentOn, deepOn } from './snatch.js';
 import { shieldUp, KINDS } from './shield.js';
-import { setZoom, clampCam } from './world.js';
+import { setZoomNow, clampCam } from './world.js';
 import { firstMuckDue, startFirstMuck } from './firstmuck.js';
 import { startFinale, stepFinale, cutFinale, sheetDown, workPaused } from './finale.js';
 import { afterlifeOn, hellOn, owed, paid } from './acts.js';
@@ -229,13 +229,13 @@ export const BEATS = [
 
 const ROW = new Map(BEATS.map(r => [r.key, r]));
 
-// The first trip down's frame: the scene says where to look, the deep's
-// framing holds it, and its end lets the camera go.
+// The first trip down's frame: the scene says where to look, the shot frames
+// it, and its end lets the camera go.
 function abyssShot(t) {
   const s = stepAbyss(t);
-  if (s.gone) { dropDeepShot(); endAbyss(); return false; }
+  if (s.gone) { dropShot(); endAbyss(); return false; }
   if (s.over) release();
-  if (stepDeepShot(t, s.want)) return true;
+  if (stepShot(t, s.want)) return true;
   endAbyss();
   return false;
 }
@@ -304,7 +304,7 @@ export const SAVE = {
     if (S.shot && S.shot.name !== S.beat.camera) {
       const center = S.camX + S.viewW / 2;
       S.shot = null;
-      setZoom(1);
+      setZoomNow(1);
       S.camX = center - S.viewW / 2;
       clampCam();
     }

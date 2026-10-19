@@ -10,7 +10,8 @@ import { group, ok, run, runUntil, yard, P } from './helpers.mjs';
 import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
          ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_SHOUT_REBEL, AFTER_SHOUT_REBEL_UP, AFTER_PLOTS0, AFTER_PLOT_MAX,
          AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL,
-         AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_SAW_S, AFTER_TIP_LOAD, AFTER_CHIP_SAWDUST, AFTER_BURN_S } from '../src/config.js';
+         AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_SAW_S, AFTER_TIP_LOAD, AFTER_CHIP_SAWDUST,
+         AFTER_BUILDS, AFTER_POST_DUST, AFTER_PULP_S, AFTER_VAT_SHEETS, AFTER_DRY_VATS, AFTER_PULP_SAWDUST, AFTER_SIGN_INK_S, AFTER_BURN_S } from '../src/config.js';
 import { speechTarget } from '../src/after/union.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
@@ -22,8 +23,14 @@ const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 
 // Act 3's bills take the yard's coins too (DESIGN.md, "The yard pays too"):
 // the yard given enough of each for every path bought below, which is setup
-// no check here is about (test/after-yard-coins.test.mjs is).
-const YARD_PURSE = { dust: 40000, spores: 5000, shards: 2000, sparks: 400 };
+// no check here is about (test/after-yard-coins.test.mjs is): every bill on
+// every card once, and posts enough at the dearest post's dust.
+const YARD_PURSE = (() => {
+  const sum = { dust: AFTER_POST_DUST[AFTER_POST_DUST.length - 1] * 40, spore: 0, shard: 0, scale: 0, spark: 0 };
+  const bills = [...Object.values(AFTER_BUILDS).map(b => b.bill), ...Object.values(AFTER_UPGRADES).flatMap(u => u.bills)];
+  for (const bill of bills) for (const [c, n] of bill) if (c in sum) sum[c] += n;
+  return { dust: sum.dust, spores: sum.spore, shards: sum.shard, scales: sum.scale, sparks: sum.spark };
+})();
 const up = () => {
   window.__actsOn(true);
   window.__goPlace('after');
@@ -131,18 +138,19 @@ group('a member bought into a post steps out of our crowd near it: the grove and
   ];
 });
 
-group('the axe is bought on the pedestal\'s card, its beat hands it over, and a click chops', async () => {
+group('the axe is bought on the grove\'s card, its beat hands it over, and a click chops', async () => {
   up();
   const t = tree(0);
   const early = window.__afterClick(t.x, t.y);
   window.__afterGrant({ rebel: 50 });
+  const card = window.__afterRows().find(r => r.key === 'after-axe').card;
   const bought = window.__buy('after-axe');
   const told = runUntil(() => S.beatsDone.includes('axe'), 4 * ACT_CAPTION_S);
   const chop = window.__afterClick(t.x, t.y);
   window.__actsOn(null);
   return [
     ok(!early && S.after.plots[0].chops <= 1, 'before the axe, a click on a tree chops nothing'),
-    ok(bought, 'the axe is a row on the pedestal\'s card, paid in rebel'),
+    ok(bought && card === 'grove', 'the axe is a row on the grove\'s card, paid in rebel', card),
     ok(told && read().axe, 'its beat plays and hands the axe over'),
     ok(chop && S.after.plots[0].chops === 1, 'and from then on a click on a grown tree is a chop', `${S.after.plots[0].chops}`)
   ];
@@ -184,7 +192,7 @@ group('a felled tree leaves a stump that blocks the plot until it is dug, and di
 group('a woodcutter chops but leaves the stump until stump removal is bought; then the plot cycles', async () => {
   up();
   settle();
-  window.__afterGrant({ rebel: 1000, timber: 100 });
+  window.__afterGrant({ rebel: 3000, timber: 400 });
   const post = window.__buy('after-post-woodcutter');
   const fell = runUntil(() => S.after.plots[0].stump, 90);
   run(30);
@@ -202,7 +210,7 @@ group('a woodcutter chops but leaves the stump until stump removal is bought; th
 
 group('the grove\'s card clears plots, each with its sapling, to its most', async () => {
   up();
-  window.__afterGrant({ rebel: 1000, timber: 100 });
+  window.__afterGrant({ rebel: 3000, timber: 400 });
   const bought = [];
   for (let k = 0; k < AFTER_PLOT_MAX; k++) bought.push(window.__buy('after-plot'));
   const plots = S.after.plots;
@@ -399,8 +407,9 @@ group('the chain makes timber and sawdust, then signs, and a sawyer tips the ful
 
 group('signs and posters win souls, and God\'s yard empties', async () => {
   buildChain();
+  S.after.speech = { next: 1e9, f0: 0, held: null };   // the throne's speech is another check's
   const s0 = read();
-  run(240);
+  run(2 * RIM_PIECES * AFTER_SIGN_INK_S);   // long enough for a sign to ink a pale soul full, twice over
   const s1 = read();
   window.__actsOn(null);
   return [
@@ -491,6 +500,45 @@ group('the mill\'s second blade saws two logs a cut, at the fixed split', async 
   ];
 });
 
+// The paper mill's two upgrades are two things (the owner, 2026-10-18): the
+// bigger vat is more paper a batch, the drying line a second batch stirred
+// at once, a pulper at each vat.
+group('the bigger vat makes more paper a batch; the drying line stirs a second batch beside it', async () => {
+  up();
+  members(3);
+  window.__afterGrant({ rebel: 20000, timber: 400, paper: 100 });
+  raise('mill', 'chipper', 'papermill');
+  const at = window.__afterAt('papermill');
+  const batch = () => { window.__afterGrant({ sawdust: 40 }); const p0 = read().paper; window.__afterClick(at.x, at.y); return read().paper - p0; };
+  const plain = batch();
+  const vat = window.__buy('after-vat');
+  const big = batch();
+  const pulping = () => S.after.bodies.filter(b => b.job === 'pulper' && b.at === 'papermill').length;
+  const posts = [window.__buy('after-post-pulper'), window.__buy('after-post-pulper')];
+  window.__afterGrant({ sawdust: 4000 });
+  runUntil(() => S.after.bodies.filter(b => b.job === 'pulper').length === 2 && pulping() === 1, 90);
+  run(2);
+  const one = pulping();
+  const p0 = read().paper;
+  run(10 * AFTER_PULP_S);
+  const single = read().paper - p0;
+  const dry = window.__buy('after-dry');
+  runUntil(() => pulping() === 2, 30);
+  const two = pulping();
+  const p1 = read().paper;
+  run(10 * AFTER_PULP_S);
+  const double = read().paper - p1;
+  const dried = batch();
+  window.__actsOn(null);
+  return [
+    ok(plain === 1 && vat && big === AFTER_VAT_SHEETS, 'a batch is a sheet; with the bigger vat, more', `${plain} -> ${big}`),
+    ok(posts.every(Boolean) && one === 1, 'two pulpers posted, one vat: one stirs, the other waits at the door', `${one} stirring`),
+    ok(dry && two === AFTER_DRY_VATS, 'the drying line puts the second at a vat of its own', `${two} stirring`),
+    ok(double >= single * 1.8, 'and the mill pulls twice the batches in the same time', `${single} -> ${double} sheets`),
+    ok(dried === AFTER_VAT_SHEETS, 'a batch is still the vat\'s sheets: the drying line adds batches, not sheets', `${dried}`)
+  ];
+});
+
 // The throne's speech (docs/wave-act3-build.md, track B): warned first by God's
 // gaze settling on one sign or poster, then that one burnt away. Souls are
 // never knocked back, and nobody walks rounds.
@@ -532,7 +580,7 @@ group('every act-3 card sells two or three named upgrades, none of them a ladder
   const coins = new Set(ups.flatMap(([, u]) => u.bills.flat().map(([c]) => c)));
   window.__actsOn(null);
   return [
-    ok(perCard.every(([c, n]) => n >= 1 && n <= 4), 'a card\'s upgrades are few', JSON.stringify(perCard)),
+    ok(perCard.every(([c, n]) => n >= 1 && n <= 5), 'a card\'s upgrades are few (the grove\'s five, the axe among them)', JSON.stringify(perCard)),
     ok(long.length === 0, 'each is bought once, but for the grove\'s plots', long.join(', ')),
     ok([...coins].every(c => ['rebel', 'timber', 'paper', ...AFTER_YARD_COINS].includes(c)), 'paid in rebel, timber and paper and the yard\'s coins', [...coins].join(' ')),
     ok(rows.every(r => !r.bill.some(([c]) => c === 'pledge' || c === 'faith' || c === 'ink')), 'no pledge, no faith, no ink on any bill')

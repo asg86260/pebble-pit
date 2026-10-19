@@ -25,6 +25,7 @@ import { downTheHole, downTheCut, nearestCutDust, cutDustAt, load, roomToTake, t
 import { takeMess } from './shovel.js';
 import { strollTo, elbowIdle, amble, stepable, ROAM_PACE } from './idle.js';
 import { park } from './lifts.js';
+import { sfx } from '../audio.js';
 
 // Everybody who hauls: the haulers, and the forklifts, which are not crew but
 // share the haulers' books (crew/lifts.js).
@@ -478,6 +479,7 @@ export function haulerWork(w, c) {
         const v = aim(fx, fy, land, P, rise);
         spawnChip(fx, fy, v.vx, v.vy, w.load?.[i] || 1);
       }
+      sfx('cart-tip', { x: from });
       w.stored = (w.stored || 0) + w.carry;
       w.carry = 0;
       w.load = [];

@@ -20,7 +20,7 @@ import { JOB, DEEP_JOBS, TYPE_OF } from './jobs.js';
 import { shown, onSnap } from './tween.js';
 import { garage, hasGarage } from './crew/lifts.js';
 import { HATS, HATS_TIGHT, spriteW, spriteH } from './sprites.js';
-import { darkPage } from './ink.js';
+import { turnedOver } from './ink.js';
 import { now } from './clock.js';
 import { reducedMotion } from './prefs.js';
 import { writeCount } from './render/numfont.js';
@@ -674,7 +674,7 @@ function drawCountsPass(ctx, screenAt) {
     // turned over under it, so a deep post's number is written in the
     // paper's white to stand on the black water like the post's own marks,
     // its keyline the water's black.
-    const inv = p.deep && !darkPage;
+    const inv = p.deep && !turnedOver();
     const look = { ink: inv ? '#fff' : '#000', paper: inv ? '#000' : '#fff' };
     const b = boxes(p);
     // A counter is its own count up to its rows; past them, the rest under
