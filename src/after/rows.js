@@ -235,3 +235,6 @@ export function cardAt(x, y) {
   if (built('grove') && x >= plotX(0) - P * 4 && x < groveX1() && y <= afterFloor() && y >= afterFloor() - P * 20) return 'grove';
   return null;
 }
+
+// Track A stub until track C lands its board (docs/wave-act3-build.md).
+export function openAfterBoard(){}

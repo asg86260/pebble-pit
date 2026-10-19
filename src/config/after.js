@@ -94,12 +94,14 @@ export const AFTER_PLOT_MAX = 4;           // ...and the most its card clears
 // clicks it, after/place.js lays it out): its trunk [width, height] in cells,
 // and its tiers { v0, h, s }: a tier's foot v0 cells over the top of the
 // trunk, h rows tall, its top row 2s+1 wide. The big pine (the grove's bigger
-// trees) is the grown one with a tier more under it.
+// trees) is the grown one with a tier more under it. A grown trunk stands ten
+// cells (the owner, 2026-10-18), so the handsaw works in open air under the
+// skirt with wood above and below its cut.
 export const AFTER_PINE = {
   1: { trunk: [1, 1], tiers: [{ v0: 0, h: 3, s: 0 }] },
   2: { trunk: [1, 1], tiers: [{ v0: 0, h: 4, s: 1 }, { v0: 4, h: 3, s: 0 }] },
-  3: { trunk: [3, 2], tiers: [{ v0: 0, h: 6, s: 2 }, { v0: 6, h: 5, s: 1 }, { v0: 11, h: 4, s: 0 }] },
-  big: { trunk: [3, 3], tiers: [{ v0: 0, h: 7, s: 3 }, { v0: 7, h: 6, s: 2 }, { v0: 13, h: 5, s: 1 }, { v0: 18, h: 4, s: 0 }] }
+  3: { trunk: [3, 10], tiers: [{ v0: 0, h: 6, s: 2 }, { v0: 6, h: 5, s: 1 }, { v0: 11, h: 4, s: 0 }] },
+  big: { trunk: [3, 11], tiers: [{ v0: 0, h: 7, s: 3 }, { v0: 7, h: 6, s: 2 }, { v0: 13, h: 5, s: 1 }, { v0: 18, h: 4, s: 0 }] }
 };
 // A plot is as wide as the big pine's foot, its widest row (the bottom
 // tier's bottom row, h - 1 + s cells either side of the trunk), and a gap,
