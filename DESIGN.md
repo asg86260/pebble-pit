@@ -20740,11 +20740,64 @@ once.
 **Four tones (built; the owner, 2026-10-19).** The act is drawn in paper,
 one pale grey, one mid grey and ink (`AFTER_TONES`) and nothing between
 them: stations, bodies, the sky's crowd, clouds, the floor, piles, cues
-and bubbles. Depth in the crowd is which of the four a band takes and how
-densely it is screened (an ordered dither), never a fifth grey; the near
-souls keep their mid rims off the band behind with a hair of paper. God's
-light -- he, his glare, halo, rays and gaze -- is the one thing outside
-them. `test/after-palette.test.mjs` goes red on a fifth tone.
+and bubbles. Depth in the crowd is which of the four a band takes, never a
+fifth grey. God's light -- he, his glare, halo, rays and gaze -- is the one
+thing outside them. `test/after-palette.test.mjs` goes red on a fifth tone.
+
+**The sky, redrawn flat (design, not built; the owner, 2026-10-19).** The
+first build of the sky read as noise: flecks of a second tone in every
+fill, a dithered crowd, faces on every soul, ink outlines round the crown
+and throne. The owner voted it down to this, a mock at a time
+(`docs/mocks/act3-sky-flat-2026-10-19/`, the board's act3-clean-look,
+act3-seat, act3-dais, act3-arrive, act3-bless, act3-gaze cards):
+
+- **Everything is squares, one flat tone a shape.** No flecks, no dither,
+  no per-cell variation: act 3 is the exception to the house rule. The
+  only outline in the sky is God's.
+- **The crowd is the mass.** Each band is souls as flat squares packed
+  with no gaps, so a band is solid and only its top edge steps square by
+  square (heights off by up to two cells). No heads, no faces. Far: pale,
+  3-cell squares. Near: mid, 5-cell squares. As support rises the bands
+  sink, the far one first, as now.
+- **God is a white square, outlined in ink, behind the whole crowd** --
+  40 cells, a 2-cell outline, his face and the halo-crown over him (ink
+  crown on the light page, white on the dark), his two hands white squares
+  outlined like him. No robe. As the crowd sinks, more of him shows. White
+  is his alone.
+- **The block throne, on a black stepped base.** A back up to his cheeks,
+  a broad seat under him, and below the seat black steps stepping out a
+  soul's width (4 cells) a step (4 rows), down into the crowd. It stands
+  behind the crowd like him, so only its upper steps show over the crowd's
+  heads at first. Black on the light page; on the dark page the seat tone,
+  one step above the near crowd.
+- **The line of souls climbs it in single file**, up the middle of the
+  steps: 4-cell squares, pale on the light page and the light grey on the
+  dark, a step at a time, coming up out of the crowd. The tithe-carriers
+  are this line.
+- **Each is blessed on the top step.** Both his hands come in either side
+  of it; its square is edged in his light and short rays stand out from
+  its edges, widening and fading in held steps; the hands go back. Then
+  it walks off along the seat and down the base's side, back behind the
+  crowd. Nothing pops: the light fades, the soul walks.
+- **He takes turns.** A while blessing the line, then a while glaring
+  round the crowd while the line waits on its steps, then back.
+- **The gaze is a cone from his eyes**, across his face and down to a
+  round spot of his light on the crowd: a body of his light, each edge one
+  grey (`#8a8a8a`) on both pages, the spot a flattened stepped disc with
+  the same rim. His pupils turn to his light inside black sockets while he
+  glares. It sweeps in held steps, settles on a sign and narrows on it in
+  three steps (the warning), and the speech burns the sign: the board
+  chars to ink in held steps and fades.
+- **The rays and the rallies stay**: his rays are runs of square cells,
+  pale on the light page, his light on the dark, shortening as support
+  rises; a rally still lifts a band's squares as it passes.
+- **The dark page is the same order turned**: paper `#121212`, pale
+  `#262626`, mid `#3a3a3a`, ink `#666666`, the seat `#4a4a4a`, the line's
+  souls `#9a9a9a`, and God and his light white -- the brightest thing on
+  the page.
+
+Open: whether the tithe load fades in his hands at the blessing (the
+build assumes so; the owner has not said).
 
 ##### The click: a cloud, and faith
 

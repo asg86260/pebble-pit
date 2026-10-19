@@ -31,6 +31,13 @@ so the master limits about 3 dB harder than it needs to -- a by-ear call on
 
 ## Acts 3 and 4: the afterlife and hell -- LOOPS CHOSEN, THIRTEEN CALLS OPEN, SCAFFOLD BUILT (2026-10-17)
 
+**The act 3 sky is being redrawn flat** (2026-10-19): the owner voted the
+built sky down to squares of one flat tone, God outlined behind the mass
+crowd, the block throne on a black stepped base, a single file blessed on
+the top step, and turns of blessing and glaring with a grey-edged cone
+(DESIGN.md, "The sky, redrawn flat"). Building on `act3-sky-flat`; the
+open call is whether the tithe load fades in his hands at the blessing.
+
 **Scaffold built** (2026-10-17, branch `acts-scaffold`): the switches, the
 two places and their cameras, the empty steps, the stub modules, the save
 fields, the beat rows and two scenes -- nothing playable (DESIGN.md, the

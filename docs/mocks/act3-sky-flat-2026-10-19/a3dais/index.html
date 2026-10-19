@@ -1,0 +1,184 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Act 3 dais</title>
+<style>
+:root{--bg:#f4f4f4;--fg:#111;--line:#ccc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1b;--fg:#eee;--line:#444}}
+:root[data-theme="dark"]{--bg:#1b1b1b;--fg:#eee;--line:#444}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 ui-monospace,Menlo,Consolas,monospace}
+header{padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;border-bottom:1px solid var(--line)}
+header b{font-size:15px}
+.tag{background:var(--fg);color:var(--bg);padding:1px 6px}
+label{display:inline-flex;gap:6px;align-items:center}
+button{font:inherit;padding:3px 10px;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer}
+button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.wrap{padding:12px 16px}
+canvas{width:100%;height:auto;image-rendering:pixelated;display:block}
+p{margin:8px 0;max-width:900px}
+</style></head><body>
+<header>
+  <span class="tag">MOCK</span><b>Act 3 dais</b>
+  <span>page <button data-k="theme" data-v="light">light</button><button data-k="theme" data-v="dark">dark</button></span>
+  <span>line <button data-k="line" data-v="file">a single file</button><button data-k="line" data-v="queue">b a soul a step</button><button data-k="line" data-v="two">c two files</button></span>
+  <span>dais <button data-k="dais" data-v="ink">1 the throne's black</button><button data-k="dais" data-v="face">2 no dais, up the throne</button><button data-k="dais" data-v="treads">3 black, lit tread ends</button><button data-k="dais" data-v="pale">old: pale</button></span>
+  <label>support <input id="sup" type="range" min="0" max="1" step="0.01" value="0.1"></label>
+  <button id="play" aria-pressed="true">moving</button>
+</header>
+<div class="wrap">
+  <canvas id="c" width="2000" height="967"></canvas>
+  <p>Drawn from plain shapes at your window size (2000x967), on the game's 6 px grid. It is not the game. It leaves out the camp, the bubbles, the gaze and the burning.</p>
+  <p>Kept from your picks: everything is squares, the packed-mass crowd, God white and outlined behind the crowd, the block throne, the dais behind the crowd. This round is about keeping the dais from blending into the crowd: 1 is a black stepped base under the seat, the throne's own stone, with pale souls climbing it; 2 drops the dais and the souls climb the throne's black front; 3 is 1 with each step's end lit pale, so the steps read one by one.</p>
+</div>
+<script>
+const P = 6, cv = document.getElementById('c'), g = cv.getContext('2d');
+const st = { theme: 'light', throne: 'block', line: 'file', dais: 'ink', s: 0.1, play: true };
+const TONES = {
+  light: { paper: '#ffffff', pale: '#bdbdbd', mid: '#757575', ink: '#000000', soul: '#000000', seat: '#000000' },
+  dark:  { paper: '#121212', pale: '#262626', mid: '#3a3a3a', ink: '#666666', soul: '#9a9a9a', seat: '#4a4a4a' }
+};
+const GOD = '#ffffff', FEAT = '#000000';
+let T;
+const cell = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x * P, y * P, w * P, h * P); };
+const hsh = (a, b = 0) => { let h = (a * 374761393 + b * 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const ss = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+const lerp = (a, b, k) => a + (b - a) * k;
+const W = 334, BANK = 109, GROUND = 121, GX = 207;
+const N = 40, GY = 22, SEAT = GY + N;           // God's square, and the seat's top under it
+let tick = 0;
+
+// The crowd: every soul a flat square, packed with no gaps, so a band is
+// solid and only its top edge steps square by square.
+function band(top, tone, n, seed) {
+  cell(0, top + n, W, BANK - top - n + 1, tone);
+  for (let i = 0, x = -(seed % n); x < W; i++, x += n) {
+    const up = Math.floor(hsh(i, seed) * 3), bob = ((i * 5 + tick) % 13 === 0) ? 1 : 0;
+    cell(x, top - up - bob, n, n + up + bob, tone);
+  }
+}
+
+function rays(s) {
+  const left = 1 - s; if (left < 0.02) return;
+  const cx = GX, cy = GY + N / 2, n = 16, th = tick * 0.05;
+  g.globalAlpha = (st.theme === 'dark' ? 0.6 : 1) * left;
+  for (let i = 0; i < n; i++) {
+    const a = th + i / n * Math.PI * 2, len = (i % 2 ? 24 : 40) * left;
+    for (let d = 36; d < 36 + len; d += 2) cell(Math.round((cx + Math.cos(a) * d) / 2) * 2, Math.round((cy + Math.sin(a) * d) / 2) * 2, 2, 2, st.theme === 'dark' ? GOD : T.pale);
+  }
+  g.globalAlpha = 1;
+}
+
+// The throne, in the seat tone, its foot down in the crowd.
+function throne() {
+  const c = T.seat;
+  if (st.throne === 'block') {
+    cell(GX - 30, GY + 14, 60, SEAT - GY - 14, c);        // the back, up to his cheeks
+    cell(GX - 36, SEAT, 72, st.dais === 'face' ? BANK - SEAT : 8, c);   // the seat; a block down into the crowd when there's no dais
+  } else if (st.throne === 'tiers') {
+    cell(GX - 16, GY - 12, 32, 12, c);                     // stepped back, rising over him
+    cell(GX - 26, GY, 52, 14, c);
+    cell(GX - 34, GY + 14, 68, SEAT - GY - 14, c);
+    cell(GX - 42, SEAT, 84, BANK - SEAT, c);
+  } else {
+    cell(GX - 26, GY - 16, 52, SEAT - GY + 16, c);         // a tall back past his crown
+    cell(GX - 40, SEAT - 14, 14, 14, c); cell(GX + 26, SEAT - 14, 14, 14, c);   // the arms
+    cell(GX - 40, SEAT, 80, BANK - SEAT, c);
+  }
+}
+
+function god() {
+  const E = 2, x0 = GX - N / 2, br = (tick % 8 < 4) ? 0 : 1, y0 = GY - br;
+  cell(x0 - E, y0 - E, N + 2 * E, SEAT - y0 + E, FEAT); cell(x0, y0, N, SEAT - y0, GOD);
+  const look = [0, 2, 0, -2][Math.floor(tick / 6) % 4];
+  for (const ox of [6, 24]) { cell(x0 + ox, y0 + 14, 10, 2, FEAT); cell(x0 + ox + 3 + look, y0 + 16, 4, 2, FEAT); }
+  cell(x0 + 12, y0 + 26, 2, 2, FEAT); cell(x0 + 14, y0 + 28, 12, 2, FEAT); cell(x0 + 26, y0 + 26, 2, 2, FEAT);
+  // the hands, on the seat either side of him
+  for (const hx of [x0 - 10, x0 + N + 4]) { cell(hx - E, SEAT - 6 - E, 6 + 2 * E, 6 + 2 * E, FEAT); cell(hx, SEAT - 6, 6, 6, GOD); }
+  const cy = y0 - 8, cells = new Set();
+  for (let i = 0; i < 160; i++) { const a = i / 160 * 2 * Math.PI; cells.add(2 * Math.floor((N / 2 + Math.cos(a) * (N / 2 + 1)) / 2) + ',' + 2 * Math.round((cy + Math.sin(a) * 3) / 2)); }
+  for (const [x, h] of [[2, 4], [10, 6], [18, 8], [20, 8], [28, 6], [36, 4]]) for (let k = 2; k <= h; k += 2) cells.add(x + ',' + (2 * Math.round(cy / 2) - 2 - k));
+  // ink against the sky; white where a tall back stands behind it
+  const crown = st.theme === 'dark' || st.throne !== 'block' ? GOD : FEAT;
+  for (const c of cells) { const [x, y] = c.split(',').map(Number); cell(x0 + x, y, 2, 2, crown); }
+}
+
+// The dais: a stepped pyramid up the throne's front to his feet, standing
+// behind the crowd, so only its upper steps show over their heads. The
+// souls come up out of the crowd onto it.
+const STEP = 4;
+function dais() {
+  if (st.dais === 'face') return;
+  const c = st.dais === 'pale' ? T.pale : T.seat;
+  // under the seat, black steps stepping out a soul's width each, down into the crowd
+  for (let k = 0, y = SEAT + 8; y < BANK; k++, y += STEP) {
+    cell(GX - 40 - 4 * k, y, 80 + 8 * k, STEP, c);
+    if (st.dais === 'treads') cell(GX - 40 - 4 * k, y, 4, 1, T.pale), cell(GX + 36 + 4 * k, y, 4, 1, T.pale);
+  }
+}
+const soulTone = () => st.theme === 'dark' ? T.soul : (st.dais === 'pale' ? T.soul : T.pale);
+function line() {
+  const top = SEAT, n = Math.floor((BANK - SEAT) / STEP);
+  if (st.line === 'queue') {
+    // one soul to a step; every so often the whole line steps up at once
+    const phase = Math.floor(tick / 6) % 2;
+    for (let k = 0; k < n; k++) cell(GX - 1, top + k * STEP - 3 - (phase ? 1 : 0), 3, 3, soulTone());
+    return;
+  }
+  const files = st.line === 'two' ? [-1, 1] : [0];
+  for (const side of files) {
+    const span = BANK - top, gap = 7, m = Math.ceil(span / gap) + 1;
+    for (let i = 0; i < m; i++) {
+      const y = BANK - ((i * gap + Math.floor(tick * 0.5) + (side > 0 ? 3 : 0)) % span);
+      const k = Math.max(0, Math.floor((y - top) / STEP)), half = 10 + 4 * k;
+      const x = side === 0 ? GX - 2 : side < 0 ? GX - half + 2 : GX + half - 6;
+      cell(x, Math.ceil(y / STEP) * STEP - 4, 4, 4, soulTone());
+    }
+  }
+}
+
+const SIGNS = [60, 96, 270, 292, 304, 318];
+function signs() {
+  for (const [i, x] of SIGNS.entries()) {
+    const y = 90 + (i % 2) * 2;
+    cell(x + 5, y + 7, 1, BANK - y - 6, T.ink);
+    cell(x, y, 11, 7, T.paper);
+    cell(x + 2, y + 2, 7, 1, T.ink); cell(x + 2, y + 4, 5, 1, T.ink);
+  }
+}
+
+function bank() {
+  cell(0, BANK + 1, W, GROUND - BANK, T.paper);
+  for (let i = 0; i < W; i++) if (Math.sin(i / 5) + hsh(i, 7) * 0.6 > 0.5) cell(i, BANK, 1, 1, T.paper);
+  cell(0, GROUND, W, 1, T.mid);
+  cell(0, GROUND + 1, W, 40, T.paper);
+}
+
+function draw() {
+  T = TONES[st.theme];
+  const s = st.s;
+  cell(0, 0, W, 162, T.paper);
+  const far = Math.round(lerp(84, BANK - 2, ss(s / 0.6))), near = Math.round(lerp(97, BANK - 4, ss((s - 0.25) / 0.75)));
+  rays(s); throne(); god(); dais(); line();
+  if (far < BANK - 2) band(far, T.pale, 3, 11);
+  if (near < BANK - 4) band(near, T.mid, 5, 23);
+  signs(); bank();
+}
+
+function sync() {
+  for (const b of document.querySelectorAll('button[data-k]')) b.setAttribute('aria-pressed', String(st[b.dataset.k] === b.dataset.v));
+  document.documentElement.dataset.theme = st.theme;
+  draw();
+}
+document.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => { st[b.dataset.k] = b.dataset.v; sync(); });
+document.getElementById('sup').oninput = e => { st.s = +e.target.value; draw(); };
+const pl = document.getElementById('play');
+pl.onclick = () => { st.play = !st.play; pl.setAttribute('aria-pressed', String(st.play)); };
+setInterval(() => { if (st.play) { tick++; draw(); } }, 250);
+const q = new URLSearchParams(location.hash.slice(1));
+for (const k of ['theme', 'throne', 'line', 'dais']) if (q.get(k)) st[k] = q.get(k);
+if (q.get('s')) st.s = +q.get('s');
+if (q.get('still')) { st.play = false; pl.setAttribute('aria-pressed', 'false'); }
+document.getElementById('sup').value = st.s;
+sync();
+</script>
+</body></html>
