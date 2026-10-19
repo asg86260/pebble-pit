@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benevolent God</title>
+<style>
+  :root { --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --face: ui-monospace, "Courier New", monospace; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36; } }
+  :root[data-theme="dark"] { --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--face); }
+  main { max-width: 2040px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 4px; } h2 { font-size: 15px; margin: 0 0 6px; }
+  p, li { color: var(--muted); margin: 0 0 8px; max-width: 1100px; }
+  b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; position: sticky; top: 0; background: var(--bg); padding: 6px 0; z-index: 2; }
+  .bar button { font: inherit; background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 16px; }
+  canvas { display: block; image-rendering: pixelated; max-width: 100%; height: auto; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+  figure { margin: 0; max-width: 100%; } figcaption { font-size: 11px; color: var(--muted); }
+  .rec { border-left: 3px solid var(--fg); padding-left: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Act 3: God, benevolent on the surface</h1>
+  <p>This is a <b>mock</b> drawn from plain shapes, not the game. It redraws the built figure with the game's own cells, greys and dark-page map: the tower throne, the robe, the crown, the glare, the halo and its rays, drawn as a light source (raw tones) on both pages. The horns, the scowl, the slit eyes and the teeth are gone. Each option below is a face on the same square. A roar is shown as a holy proclamation: the mouth opens round, the right hand rises in a blessing, the bubble is the game's. It cannot show the sim, the crowd's life, the gaze's sweep or the unmasking.</p>
+  <div class="bar">
+    <button data-t="auto" class="on">auto</button><button data-t="light">light</button><button data-t="dark">dark</button>
+    <button id="pause">pause</button>
+  </div>
+
+  <section class="card">
+    <h2>The three faces at 3x, idle and roaring</h2>
+    <p>Each row: the idle loop playing live, then held frames: at rest, a breath, drumming, the crown slipping, the left hand straightening it, a glance (or blink), and the roar.</p>
+    <div id="faces"></div>
+  </section>
+
+  <section class="card">
+    <h2>At the game's scale: 2000 by 967 (a God-cell 9 px)</h2>
+    <div class="row" id="big"></div>
+  </section>
+  <section class="card">
+    <h2>At the game's scale: 800 by 600 (a God-cell 4 px)</h2>
+    <div class="row" id="small"></div>
+  </section>
+
+  <section class="card rec">
+    <h2>Recommendation: (c), serene</h2>
+    <ul>
+      <li><b>(a) closed-eye smile</b> reads kindest at a glance but is a cartoon of bliss. With his eyes closed the gaze searchlight has no source, and he looks asleep at 800 by 600, where the arcs are one pixel tall.</li>
+      <li><b>(b) open kind eyes</b> reads friendliest up close, but the round eyes and small smile are childlike. At 4 px cells it is a smiley; a giant on a tower reads as a mascot.</li>
+      <li><b>(c) serene, half-lidded</b> keeps the pupils, so the searchlight still comes from his eyes and the glance still reads. The calm lids and quiet smile read as holy and a little remote, which is right for a disguise. It is the one the unmasking can turn: the lids lift and the smile goes, with nothing added.</li>
+      <li>In every option the roar opens the mouth round and lifts the right hand, so the big beat reads as a proclamation, not a snarl.</li>
+    </ul>
+  </section>
+</main>
+<script>
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+const hex = v => '#' + Math.round(v).toString(16).padStart(2, '0').repeat(3);
+const MAPPED = GREY.map(c => hex((LP + (LI - LP) * (1 - parseInt(c.slice(1, 3), 16) / 255)) * 255));
+let DARK = false;
+const T = (i, lit) => (DARK && !lit ? MAPPED : GREY)[Math.max(0, Math.min(10, Math.round(i)))];
+const frac = v => v - Math.floor(v), snap = (v, q) => Math.round(v / q) * q;
+function hsh(a, b = 0, c = 0) { let h = (a * 374761393 + b * 668265263 + c * 2246822519) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+
+// ---- the faces, in God-cells on the 18-cell square (inner 1..16); `top` the breath ----
+// Each draws eyes and mouth for a pose { glance, blink, roar }.
+const FACES = {
+  a: { name: '(a) soft closed-eye smile', draw(F, top, p) {
+    const ey = 7 + top;
+    for (const ox of [3, 11]) { F(ox, ey, 1, 1, 10); F(ox + 1, ey - 1, 2, 1, 10); F(ox + 3, ey, 1, 1, 10); }
+    F(3, 10 + top, 2, 1, 3); F(13, 10 + top, 2, 1, 3);
+    if (p.roar) roundMouth(F, top);
+    else { F(6, 11 + top, 1, 1, 10); F(7, 12 + top, 4, 1, 10); F(11, 11 + top, 1, 1, 10); }
+  } },
+  b: { name: '(b) open kind eyes, small smile', draw(F, top, p) {
+    const ey = 6 + top, g = p.glance;
+    for (const ox of [4, 11]) {
+      F(ox, ey - 2, 3, 1, 6);                                   // a soft brow, raised
+      if (p.blink) { F(ox, ey + 1, 3, 1, 10); continue; }
+      F(ox, ey, 3, 3, 10); F(ox + 1 + g, ey, 1, 1, 0);          // the eye and its light
+    }
+    F(3, 10 + top, 2, 1, 3); F(13, 10 + top, 2, 1, 3);
+    if (p.roar) roundMouth(F, top);
+    else { F(7, 12 + top, 1, 1, 10); F(8, 13 + top, 2, 1, 10); F(10, 12 + top, 1, 1, 10); }
+  } },
+  c: { name: '(c) serene, eyes half-lidded', draw(F, top, p) {
+    const ey = 7 + top, g = p.glance;
+    for (const ox of [3, 11]) {
+      F(ox, ey, 4, 1, 10);                                      // the lid, level and calm
+      F(ox + 1 + g, ey + 1, 2, 1, 10);                          // the pupil under it
+    }
+    if (p.roar) roundMouth(F, top);
+    else { F(6, 12 + top, 1, 1, 10); F(7, 13 + top, 4, 1, 10); F(11, 12 + top, 1, 1, 10); }
+  } },
+};
+// The proclamation: the mouth open round, no teeth.
+function roundMouth(F, top) {
+  F(7, 11 + top, 4, 1, 10); F(6, 12 + top, 1, 2, 10); F(11, 12 + top, 1, 2, 10); F(7, 14 + top, 4, 1, 10);
+  F(7, 12 + top, 4, 2, 4);
+}
+
+// ---- the idle, as the game holds it ----
+function poseAt(t) {
+  const breath = frac(t / 4.6) < 0.45 ? 1 : 0;
+  const dp = frac(t / 3.2) * 3.2, finger = dp < 0.9 ? Math.floor(dp / 0.15) % 3 : -1;
+  const cp = ((t - 4) % 11 + 11) % 11;
+  let tilt = 0, hand = 0;
+  if (cp < 3) tilt = 1; else if (cp < 3.3) { tilt = 1; hand = 1; } else if (cp < 3.7) hand = 2; else if (cp < 4.0) hand = 1;
+  const gp = frac(t / 7);
+  const glance = gp < 0.2 ? -1 : gp > 0.55 && gp < 0.75 ? 1 : 0;
+  const blink = frac(t / 5.3) > 0.97;
+  const roar = frac(t / 6.5) > 0.8;
+  return { breath, finger, tilt, hand, glance, blink, roar };
+}
+const HELD = [
+  ['at rest', { breath: 0, finger: -1, tilt: 0, hand: 0, glance: 0, blink: false, roar: false }],
+  ['a breath', { breath: 1, finger: -1, tilt: 0, hand: 0, glance: 0, blink: false, roar: false }],
+  ['drumming', { breath: 0, finger: 1, tilt: 0, hand: 0, glance: 0, blink: false, roar: false }],
+  ['crown slipped', { breath: 0, finger: -1, tilt: 1, hand: 0, glance: 0, blink: false, roar: false }],
+  ['setting it straight', { breath: 0, finger: -1, tilt: 0, hand: 2, glance: 0, blink: false, roar: false }],
+  ['a glance', { breath: 0, finger: -1, tilt: 0, hand: 0, glance: -1, blink: false, roar: false }],
+  ['a blink', { breath: 0, finger: -1, tilt: 0, hand: 0, glance: 0, blink: true, roar: false }],
+  ['the roar', { breath: 1, finger: -1, tilt: 0, hand: 0, glance: 0, blink: false, roar: true }],
+];
+
+// ---- God, the built figure: x0,y0 his square's top left in px, c a God-cell ----
+function drawGod(g, x0, y0, c, face, p, bankY, sup = 0.1, t = 0) {
+  const r = (x, y, w, h, tone, lit) => { g.fillStyle = T(tone, lit); g.fillRect(Math.round(x), Math.round(y), Math.round(x + w) - Math.round(x), Math.round(y + h) - Math.round(y)); };
+  const F = (x, y, w, h, tone) => r(x0 + x * c, y0 + y * c, w * c, h * c, tone, false);
+  const L = (x, y, w, h, tone) => r(x0 + x * c, y0 + y * c, w * c, h * c, tone, true);
+  const cx = x0 + 9 * c, cy = y0 + 6 * c;
+  // the glare
+  g.globalAlpha = 0.85 - 0.3 * sup;
+  const rad = 19 * c, q = c >= 6 ? 6 : 3;
+  for (let y = -rad; y < rad; y += q) { const hw = snap(Math.sqrt(Math.max(0, rad * rad - y * y)), q); r(cx - hw, cy + y, hw * 2, q, 0, true); }
+  g.globalAlpha = 1;
+  // the halo, read faintly as an iris
+  const sq = Math.max(2, snap(c * 0.67, 2));
+  const at = (a, d) => [snap(cx + Math.cos(a) * d, sq), snap(cy + Math.sin(a) * d, sq)];
+  const ring = (rr, thick, tone) => { const n = Math.ceil(2 * Math.PI * rr / (sq * 0.7)); for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI; for (let d = 0; d < thick; d += sq) { const [x, y] = at(a, rr + d); r(x, y, sq, sq, tone, true); } } };
+  g.globalAlpha = 0.8;
+  ring(21 * c - sq, sq, 4); ring(22 * c, sq, 4); ring(21 * c, c, 0); ring(16 * c, sq, 3);
+  for (let i = 0; i < 28; i++) { const a = i / 28 * 2 * Math.PI; for (let d = 16.5 * c; d < 20 * c; d += sq) { const [x, y] = at(a, d); r(x, y, sq, sq, 3, true); } }
+  // the rays, shorter and fainter as support rises
+  const left = 1 - sup;
+  g.globalAlpha = Math.pow(left, 0.7);
+  for (let i = 0; i < 12; i++) {
+    const a = t * 2 * Math.PI / 50 + i / 12 * 2 * Math.PI, len = (i % 2 ? 3 : 5) * c * left;
+    for (let d = 23 * c; d < 23 * c + len; d += sq * 1.5) { const [x, y] = at(a, d); r(x - 2, y - 2, sq + 4, sq + 4, 4, true); r(x, y, sq, sq, 0, true); }
+  }
+  g.globalAlpha = 1;
+  // the stone: tower and throne back (mapped)
+  const towerTo = (bankY - y0) / c + 3;
+  F(4, 30, 10, towerTo - 30, 10);
+  for (let y = 30; y < towerTo; y++) for (let x = 5; x < 13; x++) F(x, y, 1, 1, hsh(x, y, 70) < 0.3 ? 5 : 6);
+  for (let y = 34; y < towerTo; y += 7) F(8, y, 2, 3, 10);
+  F(1, 30, 16, 3, 10); F(2, 31, 14, 1, 7);
+  const spike = (x, top) => { F(x, top, 3, -5 - top, 10); for (let y = top + 1; y < -5; y++) F(x + 1, y, 1, 1, 4); };
+  [-4, 3, 12, 19].forEach(x => spike(x, -11)); spike(7.5, -15);
+  F(-4, -6, 26, 34, 10);
+  for (let y = -5; y < 27; y++) for (let x = -3; x < 21; x++) F(x, y, 1, 1, hsh(x, y, 71) < 0.25 ? 4 : 5);
+  F(-7, 18, 6, 3, 10); F(19, 18, 6, 3, 10); F(-7, 21, 2, 7, 10); F(23, 21, 2, 7, 10); F(-7, 26, 32, 4, 10);
+  // God, lit from within
+  const top = -p.breath;
+  L(0, top, 18, 18 - top, 10); L(1, top + 1, 16, 16 - top, 0);
+  for (let y = top + 1; y < 17; y++) for (let x = 1; x < 17; x++) if (hsh(x, y, 72) < 0.14) L(x, y, 1, 1, 1);
+  FACES[face].draw(L, top, p);
+  for (let y = 15; y < 30; y++) {
+    const half = 9 + Math.floor((y - 15) / 3);
+    L(9 - half, y, half * 2, 1, 10);
+    for (let x = 9 - half + 1; x < 9 + half - 1; x++) L(x, y, 1, 1, hsh(x, y, 73) < 0.3 ? 2 : 3);
+    L(8, y, 2, 1, y === 15 ? 10 : 0);
+  }
+  L(0, 15, 18, 1, 10);
+  const cyc = -3 + top, crown = [];
+  for (let x = 1; x < 17; x++) { const d = p.tilt && x < 9 ? 1 : 0, tall = x <= 3 || (x >= 8 && x <= 10) || x >= 15; for (let y = tall ? -3 : 0; y < 2; y++) crown.push([x, cyc + d + y]); }
+  crown.forEach(([x, y]) => L(x - 1, y - 1, 3, 3, 10)); crown.forEach(([x, y]) => L(x, y, 1, 1, 0));
+  L(8, cyc, 2, 1, 10);
+  const hl = [[-6, 15], [-5, 6], [-2, cyc - 1]][p.hand];
+  L(hl[0], hl[1], 4, 3, 10); L(hl[0] + 1, hl[1] + 1, 2, 1, 0);
+  if (p.roar) {
+    // the right hand up in a blessing: the sleeve, the open palm, four fingers and a thumb
+    L(20, 9, 4, 6, 10); L(21, 10, 2, 5, 2);
+    L(19, 4, 6, 5, 10); L(20, 5, 4, 3, 0);
+    for (const [fx, fy] of [[19, 2], [21, 1], [22, 1], [24, 2]]) { L(fx, fy, 1, 3, 10); }
+    L(18, 6, 1, 2, 10);
+  }
+  else { L(20, 15, 4, 3, 10); L(21, 16, 2, 1, 0); for (let f = 0; f < 3; f++) L(20 + f, 18 - (p.finger === f ? 1 : 0), 1, 1, 10); }
+  if (p.roar) {
+    // the bubble, as the game draws it
+    const gp = Math.round(c * 0.67), bw = 9 * gp, bh = 12 * gp, bx = x0 + 20 * c, by = y0 - 6 * c - bh * 0.4, u = Math.max(2, gp);
+    r(bx + u, by, bw - 2 * u, bh, 10); r(bx, by + u, bw, bh - 2 * u, 10); r(bx + u, by + u, bw - 2 * u, bh - 2 * u, 0);
+    for (let i = 0; i < 3; i++) r(bx + u - i * u, by + bh + i * u - u, 2 * u, 2 * u, 10);
+    for (const gx of [2, 5]) { r(bx + gx * gp, by + 2 * gp, gp, 5 * gp, 10); r(bx + gx * gp, by + 8 * gp, gp, gp, 10); }
+  }
+}
+
+// ---- a plain sky behind him: grey bands, a near row of souls, the bank, the camp floor ----
+function drawSky(g, W, H, floorY) {
+  const bank = floorY - 102, sky = bank;
+  g.fillStyle = T(0); g.fillRect(0, 0, W, H);
+  const tops = [0.07, 0.20, 0.33, 0.45, 0.57, 0.69].map(f => snap(sky * f, 6)), tones = [1.6, 2.2, 2.8, 3.4, 4.0, 4.6], cells = [2, 2, 3, 4, 5, 6];
+  tops.forEach((y0, k) => { const cs = cells[k]; for (let y = y0; y < bank; y += cs) for (let x = 0; x < W; x += cs) { if (y === y0 && hsh(x, k, 3) < 0.4) continue; const rr = hsh(x, y, k + 9); g.fillStyle = T(tones[k] + (y - y0 < 2 * cs ? 1.2 : 0) + (rr < 0.09 ? -1 : rr > 0.91 ? 1 : 0)); g.fillRect(x, y, cs - (k > 2 ? 1 : 0), cs - (k > 2 ? 1 : 0)); } });
+  return bank;
+}
+function drawNear(g, W, bank, sky) {
+  const top = snap(sky * 0.81, 6);
+  for (let row = 0, y = top; y < bank; row++, y += 15) for (let x = (row % 2) * 8 - 16; x < W; x += 16) {
+    g.fillStyle = T(8); g.fillRect(x, y, 12, 12); g.fillStyle = T(hsh(x, row, 68) < 0.3 ? 1 : 0); g.fillRect(x + 2, y + 2, 8, 8);
+    g.fillStyle = T(8); g.fillRect(x + 3, y + 4, 2, 2); g.fillRect(x + 7, y + 4, 2, 2);
+  }
+  for (let x = 0; x < W; x += 6) { const tp = 2 + Math.round(hsh(x, 0, 32) * 3); for (let j = tp; j < 10; j++) { g.fillStyle = T(hsh(x, j, 33) < 0.25 ? 2 : 1); g.fillRect(x, bank - 12 + j * 6, 6, 6); } }
+}
+function scene(cv, face, pose, t) {
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  const floorY = H >= 900 ? 727 : 355;           // the floor where the game stands it, at the yard's height
+  const c = H >= 900 ? 9 : 4;
+  const bank = drawSky(g, W, H, floorY);
+  const gx = snap(W * 0.62 - 9 * c, c), gy0 = snap(bank * 0.03 + 19 * c, c);
+  drawGod(g, gx, gy0, c, face, pose, bank, 0.1, t);
+  drawNear(g, W, bank, bank);
+  g.fillStyle = T(0); g.fillRect(0, bank + 48, W, H - bank - 48);
+  g.fillStyle = T(10); g.fillRect(0, floorY, W, 2);
+  return { gx, gy0, c };
+}
+function crop(cv, face, pose, t) {
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height, c = 9;
+  g.fillStyle = T(2); g.fillRect(0, 0, W, H);
+  for (let y = 0; y < H; y += 3) for (let x = 0; x < W; x += 3) if (hsh(x, y, 5) < 0.3) { g.fillStyle = T(3); g.fillRect(x, y, 3, 3); }
+  drawGod(g, W / 2 - 9 * c, 30 * c - 6 * c + 20, c, face, pose, H + 200, 0.1, t);
+}
+
+// ---- the page ----
+const live = [];
+const faces = document.getElementById('faces');
+for (const key of Object.keys(FACES)) {
+  const sec = document.createElement('div'); sec.style.marginBottom = '14px';
+  sec.innerHTML = `<h2>${FACES[key].name}</h2>`;
+  const row = document.createElement('div'); row.className = 'row';
+  const mk = (label, pose) => {
+    const f = document.createElement('figure'), cv = document.createElement('canvas');
+    cv.width = 460; cv.height = 470; cv.style.width = '230px';
+    f.append(cv); const fc = document.createElement('figcaption'); fc.textContent = label; f.append(fc); row.append(f);
+    return cv;
+  };
+  const lv = mk('live idle', null); lv.id = `live-${key}`; live.push({ cv: lv, key, kind: 'crop' });
+  for (const [label, pose] of HELD) { const cv = mk(label, pose); cv.id = `held-${key}-${label.replace(/\W+/g, '-')}`; live.push({ cv, key, kind: 'crop', pose }); }
+  sec.append(row); faces.append(sec);
+}
+const big = document.getElementById('big'), small = document.getElementById('small');
+for (const key of Object.keys(FACES)) for (const [host, w, h] of [[big, 2000, 967], [small, 800, 600]]) {
+  for (const roar of [false, true]) {
+    const f = document.createElement('figure'), cv = document.createElement('canvas');
+    cv.width = w; cv.height = h; cv.id = `scene-${key}-${w}${roar ? '-roar' : ''}`;
+    if (w === 2000) cv.style.width = '100%'; f.append(cv);
+    const fc = document.createElement('figcaption'); fc.textContent = `${FACES[key].name}${roar ? ', roaring' : ', idle'}`; f.append(fc); host.append(f);
+    live.push({ cv, key, kind: 'scene', pose: roar ? HELD[7][1] : null });
+  }
+}
+let t = 0, paused = false, last = performance.now();
+function frame(at = t) {
+  for (const L of live) {
+    const pose = L.pose || poseAt(at);
+    if (L.kind === 'crop') crop(L.cv, L.key, pose, at); else scene(L.cv, L.key, pose, at);
+  }
+}
+function loop(n) { const dt = Math.min(0.1, (n - last) / 1000); last = n; if (!paused) t += dt; frame(); if (!window.__manual) requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+function setTheme(m) {
+  document.querySelectorAll('[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === m));
+  if (m === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = m;
+  DARK = m === 'dark' || (m === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+}
+document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => setTheme(b.dataset.t));
+document.getElementById('pause').onclick = e => { paused = !paused; e.target.classList.toggle('on', paused); };
+setTheme('auto');
+window.mock = { setTheme, frame, manual() { window.__manual = true; }, png: id => document.getElementById(id).toDataURL('image/png'), ids: () => live.map(l => l.cv.id) };
+</script>
+</body>
+</html>
