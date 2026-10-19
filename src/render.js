@@ -67,7 +67,7 @@ import { drawActsYard, drawActsDeep, drawActsAfter, drawActsHell, drawActBodies,
 import { drawMansion } from './render/mansion.js';
 import { drawRoadSky, roadUp } from './render/road.js';
 import { drawAfterBackdrop, drawAfterGrove, drawAfterCamp, drawAfterMembers, drawAfterSky, drawAfterCounts } from './render/after.js';
-import { drawAfterCrowd, drawCampCrowd } from './render/aftercrowd.js';
+import { drawAfterCrowd, drawSkyCrowd } from './render/aftercrowd.js';
 import { drawAfterCues } from './render/aftercues.js';
 import { drawAfterCoins } from './render/aftercoins.js';
 import { drawAfterCard } from './render/aftercard.js';
@@ -212,13 +212,13 @@ const LAYERS = [
   { name: 'acts-yard', draw: drawActsYard },      // heaven's tear over the ruin and its cloud stair, the rock on the ruin, the go-on card (render/portals.js)
   { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
   // Act 3's afterlife (render/after.js), drawn only with the camera up there,
-  // back to front: the page and the cloud floor, the sky's clouds, the
-  // camp's own crowd behind the stations (render/aftercrowd.js), the grove
-  // and the camp in front of it, God's crowd and the throne, and the members
-  // walking and working over all of it.
+  // back to front: the page and the cloud floor, God's crowd filling the sky
+  // with God over it (render/aftercrowd.js), the sky's clouds, the grove and
+  // the camp, and the members walking and working over all of it, God's gaze
+  // and his bubbles last.
   { name: 'after backdrop', draw: drawAfterBackdrop },
+  { name: 'after heaven', draw: drawSkyCrowd },     // God's crowd filling the sky, God, the tithe line, the signs (render/aftercrowd.js)
   { name: 'after sky', draw: drawAfterSky },
-  { name: 'after camp crowd', draw: drawCampCrowd },
   { name: 'after grove', draw: drawAfterGrove },
   { name: 'after camp', draw: drawAfterCamp },
   { name: 'after crowd', draw: drawAfterCrowd },
@@ -400,7 +400,7 @@ const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'roster
                       'work bars', 'build sites', 'done marks', 'pile marks', 'pad focus']);
 // The acts' places (acts.js), each with only its own layers: none of the
 // yard's or the deep's world is anywhere near them.
-const AFTER = new Set(['after backdrop', 'after sky', 'after camp crowd', 'after grove', 'after camp', 'after crowd', 'after members', 'after coins', 'after cues', 'acts-after', 'acts-after-bodies']);
+const AFTER = new Set(['after backdrop', 'after heaven', 'after sky', 'after grove', 'after camp', 'after crowd', 'after members', 'after coins', 'after cues', 'acts-after', 'acts-after-bodies']);
 const HELL = new Set(['hell backdrop', 'hell chambers', 'hell seams', 'hell forge', 'hell barriers', 'hell cage', 'acts-hell', 'acts-hell-bodies']);
 // The road between the yard and the afterlife is drawn by both: the two of
 // them on it are in front of the cloud floor's body as well as the yard's sky.

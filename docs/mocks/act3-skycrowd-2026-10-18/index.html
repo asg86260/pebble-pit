@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Act 3 Sky Crowd</title>
+<style>
+  :root {
+    --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2;
+    --face: ui-monospace, "Courier New", monospace;
+  }
+  /* the game's dark page: #e0e0e0 ink on #1f1f1f paper, greys mapped by lightness */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36; }
+  }
+  :root[data-theme="dark"] { --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--face); }
+  main { max-width: 2040px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 0 0 6px; }
+  p, li { color: var(--muted); margin: 0 0 8px; max-width: 1100px; }
+  b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; align-items: center; position: sticky; top: 0; background: var(--bg); padding: 6px 0; z-index: 2; }
+  .bar button { font: inherit; background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .bar label { display: flex; gap: 8px; align-items: center; }
+  .bar input[type=range] { width: 200px; max-width: 40vw; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 16px; }
+  canvas { display: block; image-rendering: pixelated; max-width: 100%; height: auto; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+  figure { margin: 0; max-width: 100%; }
+  figcaption { font-size: 11px; color: var(--muted); }
+  .stats { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .ph { border-bottom: 1px dotted var(--muted); }
+  .note { border-left: 3px solid var(--muted); padding-left: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Act 3: God's crowd fills the sky (round 2)</h1>
+  <p>This is a <b>mock</b> drawn from plain shapes in a canvas. It is <b>not the game</b>: there is no sim and no game renderer. It uses the game's grid (P = 6, a body is 3 cells), its eleven greys and the dark page's lightness map, at the game's zoom 1. Every name on this page in <span class="ph">dotted underline</span> is a placeholder word, and so are God, the throne, the signs, the posters and every symbol in a bubble.</p>
+  <p class="note">This draws the owner's decisions as they were given. The crowd fills the whole sky and ours behind the camp is dropped. The crowd's life is rolling waves plus rallies. God sits high in the center on a tower throne, with a halo, rays and a searchlight gaze. There is a symbol sermon and a burning speech with a gaze warning, and a tithe line climbing to the glare. Small souls drift up. Panning right zooms in on God. The mock decides nothing beyond those.</p>
+  <div class="bar" id="bar">
+    <button data-t="auto" class="on">auto</button><button data-t="light">light</button><button data-t="dark">dark</button>
+    <button id="pause">pause</button><button id="slow">quarter speed</button>
+    <label><span class="ph">support</span> <input id="sup" type="range" min="0" max="100" value="10"> <b id="supv">10%</b></label>
+    <button data-s="10">10%</button><button data-s="50">50%</button><button data-s="90">90%</button><button data-s="100">100%</button>
+    <label>pan <input id="pan" type="range" min="0" max="100" value="0"> <b id="panv">0%</b></label>
+    <button id="autopan">auto-pan</button>
+    <button id="speech"><span class="ph">speech</span> now</button>
+    <button id="rally"><span class="ph">rally</span> now</button>
+  </div>
+
+  <section class="card">
+    <h2>2000 by 967, zoom 1</h2>
+    <figure><canvas id="cMain" width="2000" height="967"></canvas><figcaption>The whole window, one world pixel to one screen pixel when not zoomed. Drag "pan" to the right to move across the place and zoom in toward God. <span class="ph">members</span>: <b id="members">0</b> (a placeholder count: a soul that fades out has joined)</figcaption></figure>
+    <div class="stats" id="stMain"></div>
+  </section>
+
+  <section class="card">
+    <div class="row">
+      <figure><canvas id="cSmall" width="800" height="600"></canvas><figcaption>800 by 600: the same place in the smallest window. The sky is shorter, so every band and God are fitted to it.</figcaption><div class="stats" id="stSmall"></div></figure>
+      <figure><canvas id="cGod" width="1200" height="1140"></canvas><figcaption>God at 3x, a crop of the 2000-wide frame that follows him</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Round 2: what changed (the owner's four answers)</h2>
+    <ul>
+      <li><b>1. God is always a light source.</b> God himself, his glare, the halo, the rays, the gaze and the glare that takes the tithe are drawn in raw tones, outside the lightness map (the game's <code>raw</code>, src/ink.js, the way hell's heat and the deep's lit things are handled). On both pages they lighten whatever they cross. On the dark page raw white is brighter than the page's own ink (#e0e0e0), so God and his glare are the brightest things in the sky, and the cone lifts the crowd toward light. God is now a white square with an ink edge, black slit eyes with a white pinpoint pupil, and a toothed mouth when he roars. The menace is his shape and his look, not darkness. A new disc of glare behind the throne lifts the far crowd round him. The halo is a white band with a grey edge either side, so it still reads against paper. Only the throne's back and the tower, which are stone, still take the map.</li>
+      <li><b>2. The crowd thins and shrinks.</b> Every soul and every far cell now has its own threshold: three parts chance, one part row, so the back rows go first. Past its threshold it fades out, so a band empties by scattered souls dropping out and never by whole columns. Each band's top also sinks by half its height as it goes, so the crowd gets visibly smaller and lower. A far band is now a small canvas of its cells, drawn up to size, and its cells' opacities are rewritten only when support moves.</li>
+      <li><b>3. Roars and rallies are bigger and travel through the whole crowd.</b> A ring now runs out to beyond the frame (rally 320 px/s, roar 380 px/s), across every band from near to far. In each band the ring's width and jump are scaled by that band's parallax rate: about 33 px wide and 6 px of jump in the back band, 70 px and 12 px in the near one. Inside a rally's ring the crowd jumps up and inks (the near souls raise both arms). Inside a roar's ring it ducks and pales (the near souls drop and shut their eyes). Grumbles stay small and harmless.</li>
+      <li><b>4. God is bigger.</b> A God-cell is now 6 px in the 800 by 600 window (was 3) and 9 px in the 2000-wide one (was 6). The square is 108 px and 162 px across, the throne 192 px and 288 px. He sits a little lower so his halo and rays fit. The zoom at the right end is 1.8x (was 2.6x), since he is already large. The tithe line's zigzag now climbs below him, not across him, to the glare at his left hand.</li>
+    </ul>
+    <h2 style="margin-top:12px">Before and after</h2>
+    <div class="row">
+      <figure><img src="snaps/before/speech-warning-dark.png" width="640" alt="before, dark"><figcaption>1, before: in dark mode God is dark-mapped and the gaze is a cone of shadow</figcaption></figure>
+      <figure><img src="snaps/speech-warning-dark.png" width="640" alt="after, dark"><figcaption>1, after: God, glare, halo and gaze are lights on the dark page</figcaption></figure>
+    </div>
+    <div class="row">
+      <figure><img src="snaps/before/zoom-right-dark.png" width="640" alt="before, dark zoom"><figcaption>1, before: the zoomed end in dark</figcaption></figure>
+      <figure><img src="snaps/zoom-right-dark.png" width="640" alt="after, dark zoom"><figcaption>1, after</figcaption></figure>
+    </div>
+    <div class="row">
+      <figure><img src="snaps/before/main-50-light.png" width="640" alt="before, 50%"><figcaption>2, before: at 50% the far bands drop by whole columns, as pillars</figcaption></figure>
+      <figure><img src="snaps/main-50-light.png" width="640" alt="after, 50%"><figcaption>2, after: scattered souls drop out and the bands sink</figcaption></figure>
+    </div>
+    <div class="row">
+      <figure><img src="snaps/before/main-90-light.png" width="640" alt="before, 90%"><figcaption>2, before: 90%</figcaption></figure>
+      <figure><img src="snaps/main-90-light.png" width="640" alt="after, 90%"><figcaption>2, after: 90%, a low scatter</figcaption></figure>
+    </div>
+    <div class="row">
+      <figure><img src="snaps/before/rally-light.png" width="640" alt="before, rally"><figcaption>3, before: a rally, near band only</figcaption></figure>
+      <figure><img src="snaps/rally-far-light.png" width="640" alt="after, rally"><figcaption>3, after: the rally's ring climbing through every band</figcaption></figure>
+    </div>
+    <div class="row">
+      <figure><img src="snaps/before/small-10-light.png" width="400" alt="before, small"><figcaption>4, before: 800 by 600</figcaption></figure>
+      <figure><img src="snaps/small-10-light.png" width="400" alt="after, small"><figcaption>4, after: God twice the size</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>How each piece reads</h2>
+    <ul>
+      <li><b>The crowd fills the sky.</b> There are seven parallax bands, from the cloud floor up to near the top of the sky. The five far bands are grey cells: 2, 2 and 3 px cells, then staggered 3 and 4 px heads. The top band is palest and each band below it is a step darker. Each band's top two rows are a step darker again, so its lumpy edge reads against the band behind. Band 6 is staggered 6 px heads. The nearest band, just above the cloud floor, is 12 px souls, each with an ink rim, two eyes looking toward God, and its own paper tone. The bands pan at 0.24 to 0.80 of the camp's rate.</li>
+      <li><b>Thin clouds</b> drift between bands 2 and 3, 4 and 5, and 5 and 6: broken billows of near-white cells on their own clocks.</li>
+      <li><b>Thinning and shrinking.</b> Band k starts to go at 12% + 11% × k of support and is gone 30% later; the near band keeps a scatter. Souls drop out one by one, the back rows first, fading as they go, and each band's top sinks as it empties. At 100% a thin, low scatter of the near band is all that is left.</li>
+      <li><b>Joining.</b> About once a second and a half, a near soul's rim goes black, holds half a second, and the soul fades out; the <span class="ph">members</span> count goes up. (In the mock it fades back in fourteen seconds later.)</li>
+      <li><b>A, the sea.</b> A long wave rolls through every band at once, heads rising and falling a cell at a time in held steps. The near souls also sway a cell across.</li>
+      <li><b>C, a rally.</b> Every six to nine seconds a sign or poster lifts a cell. A ring runs out from it through the whole crowd and on past the frame. Inside the ring heads jump up and ink, and the near souls raise both arms.</li>
+      <li><b>God</b> sits high in the center, in front of the five far bands and behind the two near ones. He is a white square with an ink edge, lit from within. He has black slit eyes slanted into a scowl, each with a white pinpoint pupil, and a white crown in an ink outline. Below the square is a pale robe with a white seam, and his hands rest on the throne's arms. Behind him is a mid-grey spiked throne back, on a tall, narrow, slit-windowed stone tower. His idle loop is in held poses. He breathes, and his pupils follow the gaze; the eyes narrow to one row while the gaze lingers on the camp. His right hand's fingers drum. Every eleven seconds the crown slips a step, and the left hand comes up in two poses to straighten it.</li>
+      <li><b>The glare and the halo.</b> A white disc of glare sits behind the throne and lightens the far crowd round him. Outside it is the halo: a white band with grey edges, an inner ring and radial marks between them, so it reads faintly as an iris. Twelve spokes orbit the halo. They shorten and fade as support rises and are gone at 100%; the glare dims a little.</li>
+      <li><b>The gaze.</b> Two dotted grey edges and a white wedge of light run from below his chin onto the crowd, lighting what they cross on both pages. The gaze sweeps right, center and left, then holds 2.6 s on the camp, whose bodies look up.</li>
+      <li><b>The sermon.</b> About every six and a half seconds God roars a symbol bubble ("!!", "?!", "#!", a skull and "!", a bolt) and bares his teeth. The roar's ring runs out from the throne through every band, and heads duck and pale as it passes. Small grey grumble bubbles ("~", "...") send a short, harmless ring.</li>
+      <li><b>The burning speech</b> runs on "speech now" and every thirty seconds. The gaze swings onto a sign both windows can see and settles there. Four ink corner marks close in on the sign in three held steps (about 2 s). Then God roars a bolt, and the sign chars to ink cell by cell, burns away with embers rising, and is gone. (In the mock it fades back thirteen seconds later.)</li>
+      <li><b>The tithe line</b> is seventy bowed carriers with planks or sheets. They leave the camp, cross the cloud floor and zigzag up a dotted ledge, below God, to a white glare at his left hand that takes the load and then the carrier. They shrink with depth, and their parallax eases from the camp's rate to God's. As support rises the line thins, slows and fades its ledge; at 100% the few left stand still.</li>
+      <li><b>Small souls</b> drift up from the camp every few seconds. There are no spires and no dashed horizon line.</li>
+      <li><b>The camera.</b> Every layer pans at its own rate. Panning right zooms about God's face up to 1.8x and pulls his face to the middle of the frame.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Self-critique after round 2</h2>
+    <ul>
+      <li><b>Exciting? Yes, more:</b> a rally's ring now climbs the whole sky, and a roar's runs past the frame. But the rings' edges are 12 px steps, and where a ring's side runs straight up and down it reads briefly as a pale or dark slab. A finer step would cost more slices a frame.</li>
+      <li><b>Readable? God is now the focal point</b> in both windows. In light mode a white God reads by his ink edge against the grey throne. It is less "dark lord" than before; the scowl and the teeth carry the menace, and the owner should judge whether that is enough.</li>
+      <li><b>The light reads on both pages.</b> In light mode, white light on a pale sky shows only where it crosses the crowd, so the gaze is faint over the empty sky at 90%. On the dark page it is unmistakable.</li>
+      <li><b>Thinning by souls reads as people leaving.</b> At 50% the far bands are speckled and lower rather than broken. Because each band sinks as it thins, the top of the sky clears first, which also leaves God more alone as the strike nears.</li>
+      <li><b>Char is raw black too.</b> A burning sign's char is soot on both pages; mapped, it went pale on the dark page and read as glowing, not burnt.</li>
+      <li><b>Cost while support moves.</b> A band whose share is changing rewrites its cell canvas every frame (a few ms each in the headless shell). A still slider costs only the blits.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Round 1 page: harsh self-critique, pass 1 (the first build's shots)</h2>
+    <ul>
+      <li><b>Readable? No: the clouds read as a dashed horizon line, which the owner ruled out.</b> They were thin white dashes in rows, three of them across the sky. Fix: broken billows one to three cells tall, with lumpy tops.</li>
+      <li><b>Readable? No: the sky was one grey felt.</b> The band edges did not show, so it read as static rather than as layers. Fix: a pale-to-dark ramp from the top band down, a darker top row of heads on every band, and less speckle (a step either side on 1 cell in 6, not 1 in 3).</li>
+      <li><b>The back band was already gone at 10%.</b> Thinning started at 0. Fix: the back band starts at 12% of support, so 10% is a full sky.</li>
+      <li><b>God was a black blob on a black throne,</b> with eyes that read as four white dots. Fix: the throne's back is now mid grey, so the square stands off it. The eyes are slanted almonds, one pupil each, and they scowl. The robe is mid grey with a seam, so the square still reads as a square.</li>
+      <li><b>God was off the top of the frame,</b> with the spikes cut off. Fix: he sits lower.</li>
+      <li><b>The halo was hidden behind the throne,</b> because its ring was smaller than the throne's back. Fix: a ring of 20 God-cells.</li>
+      <li><b>Exciting? The burning sign was invisible.</b> A 42 px sign charring on a 2000-wide frame went unseen, and so did the warning frame (2 px of grey). Fix: signs at 60 by 36 and posters at 42 by 60. The warning is now four ink corner marks that close in in held steps, the way a target is marked without a flash.</li>
+      <li><b>The gaze painted a stripe down God's own robe.</b> Fix: the light pool starts below the seat, and only its dotted edges run up to the eyes.</li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>Round 1 page: harsh self-critique, pass 2 (the four questions the owner then answered; see "Round 2" above)</h2>
+    <ul>
+      <li><b>Exciting? The roar, the big beat, is a one-cell duck.</b> In the near band it reads: the souls drop and shut their eyes. In the far bands it is a faint ridge on a 2000-wide frame. The rally is the same: two clear arcs of raised arms in the near band, and little above it. Both rings may want a tone step on the far bands as they pass, flat and held. That is not drawn here.</li>
+      <li><b>Readable at 800 by 600? Busy in the middle.</b> God, the halo, the gaze, the tithe zigzag and two signs share about 460 px of sky, and the zigzag crosses the tower. At 2000 by 967 it has room. The small window may want two zigzags, not three.</li>
+      <li><b>The holes read as pillars.</b> A band thins by whole columns, so at 50% the far bands show vertical stripes and gaps. That reads more as a broken wall than as a thinning crowd. Holes by patch rather than by column would look more like people leaving.</li>
+      <li><b>Thinning reads, but not as walking out.</b> 90% plainly looks emptier than 10%, but nothing goes toward the camp: a soul fades where it stands. That is what was decided ("fades out and counts as a member"), but the camp never visibly gains, and the counter is the only reward.</li>
+      <li><b>Dark mode inverts the mood.</b> Under the lightness map God's near-black becomes near-white, so in dark mode he is a pale square. The searchlight's paper becomes the dark grey, so it is a cone of shadow, and the glare is a dark disc. The dotted edges keep the gaze readable, but "Sauron" reads only in light mode. If he must be dark in both modes, he needs an exception to the map.</li>
+      <li><b>On an empty sky the gaze vanishes.</b> At 90% the pale wedge lies on paper and only the dots show. That may be right, since nothing is left to light, but it means the gaze fades out with the crowd.</li>
+      <li><b>God at zoom 1 is small for "giant".</b> The square is 108 px in the 2000-wide window and 54 px in 800 by 600, three bodies across in the small one. The tower and halo give him size, but the face reads as menacing only at the zoomed right end or in the 3x crop.</li>
+      <li><b>Off the P = 6 grid.</b> These are all finer than P = 6: the far bands' cells (2 to 5 px), the halo, rays and iris marks (2 or 4 px), the spike on God's center line, and God's own cells in the small window (3 px). It is deliberate, for distance, but it breaks the house grid, and the owner should accept or refuse it.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>What the mock cannot show</h2>
+    <ul>
+      <li><b>The frame cost in the real renderer.</b> The number under each canvas is this page's own draw time. In a headless shell, round 2 drew about 5 to 7 ms a frame for the 2000-wide canvas and about 3 ms for 800 by 600 with the slider still. A band whose share of support is moving rewrites its cell canvas, and those frames rose to about 19 ms. The five far bands are cached bitmaps, drawn as column slices, and the near souls, the cloud floor and the carriers are a few thousand rects. The game draws through its own layers, ink map and camera, beside the camp and its sim. Nobody has measured this in the game. The full-sky crowd is several times the area of the current mass, so expect it to cost more than today's three bands.</li>
+      <li><b>The sim.</b> The thinning here is a noise field shaped by the slider, not a count of souls. A join is a random near soul on a timer, and it fades back after fourteen seconds so the mock does not run out. A burnt sign fades back too. In the game, neither would return.</li>
+      <li><b>How the camp and the stations look today.</b> The camp here is a few placeholder boxes and four bodies.</li>
+      <li><b>What the player does when zoomed in on God</b>, and how the real camera pans: by drag, wheel or key, and how it comes back.</li>
+      <li><b>Sound</b>, weather, smog, and the act's other cutscenes.</li>
+      <li>Whether the symbol bubbles are readable as anger without any words, to a new player.</li>
+      <li>Every sign, poster, glyph and the God figure itself are placeholders, each still waiting on its own mock.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+// ============================================================ palette, grid and helpers
+const P = 6;
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+const hex = v => '#' + Math.round(v).toString(16).padStart(2, '0').repeat(3);
+const MAPPED = GREY.map(c => hex((LP + (LI - LP) * (1 - parseInt(c.slice(1, 3), 16) / 255)) * 255));
+let DARK = false;
+let RAW = false;
+const T = i => (DARK && !RAW ? MAPPED : GREY)[clamp(Math.round(i), 0, 10)];
+// a light source: raw tones, the same on both pages (the game's `raw`, src/ink.js)
+function lit(fn) { const o = RAW; RAW = true; try { fn(); } finally { RAW = o; } }
+const lerp = (a, b, k) => a + (b - a) * k;
+const smooth = k => { k = clamp(k, 0, 1); return k * k * (3 - 2 * k); };
+const frac = v => v - Math.floor(v);
+function hsh(a, b = 0, c = 0) { let h = (a * 374761393 + b * 668265263 + c * 2246822519) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+function vnoise(x, y, seed) {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = smooth(x - xi), yf = smooth(y - yi);
+  return lerp(lerp(hsh(xi, yi, seed), hsh(xi + 1, yi, seed), xf), lerp(hsh(xi, yi + 1, seed), hsh(xi + 1, yi + 1, seed), xf), yf);
+}
+const snap = (v, q) => Math.round(v / q) * q;
+
+// ============================================================ glyphs (symbols only, placeholders)
+const GL = {
+  '!': ['.#.', '.#.', '.#.', '.#.', '.#.', '...', '.#.'],
+  '?': ['.###.', '#...#', '...#.', '..#..', '..#..', '.....', '..#..'],
+  '#': ['.#.#.', '#####', '.#.#.', '.#.#.', '#####', '.#.#.', '.....'],
+  'k': ['.###.', '#####', '#.#.#', '#####', '.###.', '.#.#.', '.....'],
+  'z': ['...##', '..##.', '.##..', '#####', '..##.', '.##..', '##...', '#....'],
+  '~': ['.....', '.....', '.#...', '#.#.#', '...#.', '.....', '.....'],
+  '.': ['.', '.', '.', '.', '.', '.', '#'],
+};
+const ROARS = [['!', '!'], ['?', '!'], ['#', '!'], ['k', '!'], ['z']];
+const GRUMBLES = [['~'], ['.', '.', '.'], ['~', '~']];
+
+// ============================================================ the shared clock and events
+const BANDS = [
+  { p: 2, q: 2, cp: 1, hs: 1, st: 0, tone: 1.6, rate: 0.24 },
+  { p: 2, q: 2, cp: 1, hs: 1, st: 0, tone: 2.2, rate: 0.31 },
+  { p: 3, q: 3, cp: 1, hs: 1, st: 0, tone: 2.8, rate: 0.39 },
+  { p: 4, q: 1, cp: 4, hs: 3, st: 2, tone: 3.4, rate: 0.47 },
+  { p: 5, q: 1, cp: 5, hs: 4, st: 2, tone: 4.0, rate: 0.55 },
+  { p: 8, q: 2, cp: 4, hs: 3, st: 2, tone: 4.6, rate: 0.70 },
+  { soul: 12, pitch: 16, rowp: 15, rate: 0.80 },
+];
+const TOPS = [0.07, 0.20, 0.33, 0.45, 0.57, 0.69, 0.81];
+const CLOUDS_AFTER = [1, 3, 4];   // a thin cloud strip drawn between band k and k+1
+const RG = 0.62, RSIGN = 0.85, RCLOUD = 0.9, PAN = 1200, ZMAX = 1.8;
+const SIGNS = [{ f: 0.10, kind: 'sign' }, { f: 0.27, kind: 'poster' }, { f: 0.45, kind: 'sign' }, { f: 0.62, kind: 'poster' }, { f: 0.80, kind: 'sign' }];
+
+const st = {
+  t: 0, sup: 0.10, sS: 0.10, pan: 0, autoPan: false, paused: false, speed: 1,
+  speech: null, rallies: [], roars: [], joins: new Map(), members: 0, drift: [],
+  nextRally: 3, nextRoar: 2.5, nextGrumble: 1.2, nextJoin: 1, nextSpeech: 9, nextDrift: 0.5,
+  tithe: 0, crownT0: 4,
+};
+SIGNS.forEach(s => { s.burn = null; s.lift = -9; });
+
+function liveSigns() { return SIGNS.map((s, i) => i).filter(i => !SIGNS[i].burn); }
+function startSpeech() {
+  if (st.speech) return;
+  // a sign both windows can see, if there is one, then one the big window can see
+  const both = liveSigns().filter(i => inView(MAIN, signLayerX(MAIN, i), RSIGN) && inView(SMALL, signLayerX(SMALL, i), RSIGN));
+  const ok = both.length ? both : liveSigns().filter(i => inView(MAIN, signLayerX(MAIN, i), RSIGN));
+  const pool = ok.length ? ok : liveSigns();
+  if (!pool.length) return;
+  const i = pool[Math.floor(hsh(Math.floor(st.t * 7), 3) * pool.length)];
+  st.speech = { t0: st.t, sign: i, roared: false };
+}
+function startRally(i) {
+  const pool = liveSigns(); if (!pool.length) return;
+  if (i == null) i = pool[Math.floor(hsh(Math.floor(st.t * 13), 5) * pool.length)];
+  st.rallies.push({ t0: st.t, sign: i }); SIGNS[i].lift = st.t;
+}
+
+function step(dt) {
+  st.t += dt;
+  const t = st.t;
+  st.sS += clamp(st.sup - st.sS, -dt * 0.8, dt * 0.8);
+  if (st.autoPan) st.pan = 0.5 - 0.5 * Math.cos(t * 2 * Math.PI / 40);
+  // the tithe line slows as support rises and stands still at the strike
+  const sp = st.sS >= 0.98 ? 0 : 0.010 * (1 - 0.6 * st.sS);
+  st.tithe += dt * sp;
+  const warn = st.speech && t - st.speech.t0 < 3.4;
+  if (t >= st.nextRally) { if (!warn) startRally(); st.nextRally = t + 6 + 3 * hsh(Math.floor(t), 9); }
+  if (t >= st.nextRoar) { if (!warn) st.roars.push({ t0: t, kind: 'roar', g: ROARS[Math.floor(hsh(Math.floor(t), 2) * 4)] }); st.nextRoar = t + 6.5; }
+  if (t >= st.nextGrumble) { if (!warn) st.roars.push({ t0: t, kind: 'grumble', g: GRUMBLES[Math.floor(hsh(Math.floor(t * 3), 4) * 3)] }); st.nextGrumble = t + 2.3 + hsh(Math.floor(t), 8); }
+  if (t >= st.nextSpeech) { startSpeech(); st.nextSpeech = t + 30; }
+  if (st.speech) {
+    const tau = t - st.speech.t0;
+    if (tau >= 2.2 && !st.speech.roared) { st.speech.roared = true; st.roars.push({ t0: t, kind: 'roar', g: ROARS[4], big: true }); }
+    if (tau >= 2.8 && !SIGNS[st.speech.sign].burn) SIGNS[st.speech.sign].burn = { t0: t };
+    if (tau > 4.6) st.speech = null;
+  }
+  SIGNS.forEach(s => { if (s.burn && t - s.burn.t0 > 15) s.burn = null; });
+  st.rallies = st.rallies.filter(r => t - r.t0 < 8);
+  st.roars = st.roars.filter(r => t - r.t0 < 6);
+  // joins: a near soul inks, holds and fades; in the mock it refills after a while
+  if (t >= st.nextJoin) { pickJoin(MAIN); st.nextJoin = t + 1.0 + hsh(Math.floor(t * 5), 6) * 1.0; }
+  for (const [k, j] of st.joins) { if (!j.counted && t - j.t0 > 0.5) { j.counted = true; st.members++; } if (t - j.t0 > 16) st.joins.delete(k); }
+  if (t >= st.nextDrift) { st.drift.push({ t0: t, f: hsh(Math.floor(t * 11), 12), w: hsh(Math.floor(t * 11), 13) }); st.nextDrift = t + 2.5 + 2 * hsh(Math.floor(t), 14); }
+  st.drift = st.drift.filter(d => t - d.t0 < 14);
+}
+
+// ============================================================ one canvas: geometry and camera
+function makeView(cv) {
+  const W = cv.width, H = cv.height;
+  const floorY = H - 36, cloudTop = floorY - 102, sky = cloudTop;
+  const gc = H >= 800 ? 9 : 6, Gs = 18 * gc;
+  const gX = snap(W / 2 - Gs / 2, gc);
+  const gy0 = snap(sky * 0.03 + 19 * gc, gc);
+  const tops = TOPS.map(f => snap(sky * f, 6));
+  const campRight = snap(W < 1200 ? W * 0.42 : W * 0.36, 6);
+  const v = { cv, g: cv.getContext('2d'), W, H, floorY, cloudTop, sky, gc, Gs, gX, gy0, tops, campRight, tex: null, texDark: null, bc: [], cost: [] };
+  const seatB = gy0 + 30 * gc;
+  // the tithe path, in pan-0 screen coordinates, each point with its parallax rate and body size
+  v.path = [
+    { x: campRight - 10, y: floorY, r: 1, s: 14 },
+    { x: campRight + 80, y: cloudTop + 8, r: 0.9, s: 11 },
+    { x: gX + Gs + 2.2 * Gs, y: lerp(seatB, cloudTop, 0.72), r: 0.78, s: 8 },
+    { x: gX - 2.2 * Gs, y: lerp(seatB, cloudTop, 0.45), r: 0.70, s: 7 },
+    { x: gX + Gs + 1.4 * Gs, y: lerp(seatB, cloudTop, 0.18), r: 0.66, s: 6 },
+    { x: gX - 7 * gc, y: gy0 + 27 * gc, r: RG, s: 6 },
+  ];
+  let L = 0; v.path.forEach((p, i) => { if (i) L += Math.hypot(p.x - v.path[i - 1].x, p.y - v.path[i - 1].y); p.L = L; });
+  v.pathLen = L;
+  return v;
+}
+let V = null, g = null, R = 1;
+// the camera this frame: pan, zoom about God's face, and the pull of his face to the frame's middle
+function camera(v) {
+  const e = smooth(st.pan);
+  v.camX = st.pan * PAN; v.Z = 1 + (ZMAX - 1) * e * e; v.k = e;
+  v.Fx = v.gX + v.Gs / 2 - v.camX * RG; v.Fy = v.gy0 + v.Gs / 2;
+  v.Tx = v.W / 2; v.Ty = v.H * 0.42;
+}
+const SX = (x, r = R) => V.Fx + (x - V.camX * r - V.Fx) * V.Z + (V.Tx - V.Fx) * V.k;
+const SY = y => V.Fy + (y - V.Fy) * V.Z + (V.Ty - V.Fy) * V.k;
+// the layer x seen at screen x, for culling
+const unX = (sx, r) => V.Fx + (sx - V.Fx - (V.Tx - V.Fx) * V.k) / V.Z + V.camX * r;
+function fr(x, y, w, h, tone) {
+  if (tone != null) g.fillStyle = T(tone);
+  const X = Math.round(SX(x)), Y = Math.round(SY(y));
+  const Wd = Math.round(SX(x + w)) - X, Hd = Math.round(SY(y + h)) - Y;
+  if (Wd > 0 && Hd > 0 && X < V.W && Y < V.H && X + Wd > 0 && Y + Hd > 0) g.fillRect(X, Y, Wd, Hd);
+}
+function alpha(a, fn) { if (a <= 0.001) return; const o = g.globalAlpha; g.globalAlpha = o * clamp(a, 0, 1); fn(); g.globalAlpha = o; }
+function inView(v, x, r) { const sv = V, sr = R; V = v; camera(v); const s = SX(x, r); V = sv; R = sr; return s > 40 && s < v.W - 40; }
+
+// ============================================================ the shared fields: support per band, waves, rings
+// A band thins from the back: band k starts at 12% + 11% a band of support and is gone 30% later
+// (the near band keeps a scatter).
+function bandL(k) { const L = clamp((st.sS - 0.12 - k * 0.11) / 0.30, 0, 1); return k === 6 ? Math.min(0.9, L) : L; }
+// Every soul (or far cell) has its own threshold, mostly chance, a little by row: the back
+// rows of a band go first, so the band shrinks as it thins. Past its threshold a soul fades out.
+const thrOf = (h, u) => 0.75 * h + 0.25 * u;
+const keep = (thr, L) => clamp((thr + 0.06 - L * 1.06) / 0.06, 0, 1);
+// how far a band's top has sunk, px: the crowd gets lower as well as thinner
+const sinkOf = (k, L) => L * 0.5 * (V.cloudTop - V.tops[k]);
+// the sea: one long wave through every band, in whole steps
+function sea(xl, k) { return Math.round(Math.sin(xl / 230 - st.t * 0.85 + k * 0.35) * 1.2); }
+function godFoot() { return { x: SX(V.gX + V.Gs / 2, RG), y: SY(V.gy0 + 28 * V.gc) }; }
+// Every ring in flight, in screen px. A ring is a circle about its source; it crosses every
+// band near to far, and in each band its width and its jump are scaled by that band's rate.
+function ringsNow() {
+  const out = [];
+  for (const r of st.rallies) {
+    const s = signScreen(r.sign); if (!s) continue;
+    out.push({ kind: 'rally', x: s.x, y: s.y, rad: 320 * (st.t - r.t0) * V.Z });
+  }
+  const gf = godFoot();
+  for (const r of st.roars) {
+    const big = r.kind === 'roar';
+    const rad = (big ? 380 : 220) * (st.t - r.t0) * V.Z;
+    if (!big && rad > 420 * V.Z) continue;
+    out.push({ kind: big ? 'roar' : 'grumble', x: gf.x, y: gf.y, rad });
+  }
+  return out;
+}
+const ringW = rate => (16 + 70 * rate) * V.Z;
+const ringLift = (rate, p) => Math.max(p, snap(3 + 12 * rate, p));
+// at one near soul: raised arms, a duck, or a short lift
+function rings(sx, sy, rate) {
+  let lift = 0, arms = false, duck = false;
+  for (const r of V.rings) {
+    const w = ringW(rate) * (r.kind === 'grumble' ? 0.5 : 1);
+    if (Math.abs(Math.hypot(sx - r.x, sy - r.y) - r.rad) >= w) continue;
+    if (r.kind === 'rally') { arms = true; lift = -ringLift(rate, 2); }
+    else if (r.kind === 'roar') { duck = true; lift = ringLift(rate, 2) / 2; }
+    else if (!arms && !duck) lift = -2;
+  }
+  return { lift, arms, duck };
+}
+
+// ============================================================ the far bands: one canvas each, a texel a cell
+// Each far band is a small canvas of its cells, drawn up to size: q px a texel; a cell is cp
+// texels apart, hs across, every other row staggered st. Its cells' opacities are written
+// again only when the band's share of support moves, so a still crowd costs a few blits.
+function bandCanvas(v, k) {
+  const b = BANDS[k];
+  let bc = v.bc[k];
+  if (!bc) {
+    const TW = v.W + PAN * b.rate + 400, TH = v.cloudTop - v.tops[k] + 8 * b.p;
+    const tw = Math.ceil(TW / b.q), th = Math.ceil(TH / b.q);
+    const cv = canvasOf(tw, th), cx = cv.getContext('2d');
+    const cols = Math.ceil(tw / b.cp), rows = Math.ceil(th / b.cp);
+    const thr = new Float32Array(cols * rows), tone = new Uint8Array(cols * rows);
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const n = j * cols + i;
+      if (j === 0 && hsh(i, 1, k) < 0.4) { thr[n] = -1; continue; }       // a lumpy top of heads
+      thr[n] = thrOf(hsh(i, j, k + 60), j / rows);
+      const r = hsh(i, j, k + 20);
+      tone[n] = clamp(Math.round(b.tone + (j < 2 ? 1.2 : 0) + (r < 0.09 ? -1 : r > 0.91 ? 1 : 0)), 0, 10);
+    }
+    bc = v.bc[k] = { cv, cx, img: cx.createImageData(tw, th), tw, th, cols, rows, thr, tone, L: -1, dark: null };
+  }
+  const L = bandL(k);
+  if (Math.abs(bc.L - L) > 0.002 || bc.dark !== DARK) {
+    const pal = (DARK ? MAPPED : GREY).map(c => parseInt(c.slice(1, 3), 16));
+    const px = new Uint32Array(bc.img.data.buffer);
+    px.fill(0);
+    for (let j = 0; j < bc.rows; j++) for (let i = 0; i < bc.cols; i++) {
+      const n = j * bc.cols + i, t = bc.thr[n];
+      if (t < 0) continue;
+      const a = keep(t, L);
+      if (a <= 0) continue;
+      const gv = pal[bc.tone[n]], word = ((Math.round(a * 255) << 24) | (gv << 16) | (gv << 8) | gv) >>> 0;
+      const ox = i * b.cp + (b.st && (j % 2) ? b.st : 0), oy = j * b.cp;
+      for (let y = 0; y < b.hs; y++) { const row = (oy + y) * bc.tw; if (oy + y >= bc.th) break; for (let x = 0; x < b.hs; x++) if (ox + x < bc.tw) px[row + ox + x] = word; }
+    }
+    bc.cx.putImageData(bc.img, 0, 0);
+    bc.L = L; bc.dark = DARK;
+  }
+  return bc;
+}
+function canvasOf(w, h) { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; }
+function buildTex(v) {
+  // the cloud floor: a lumpy billow of near-white cells, the only horizon
+  const TW = v.W + PAN * RCLOUD + 400, c = canvasOf(TW, 60), x = c.getContext('2d');
+  for (let i = 0; i < TW / 6; i++) {
+    const top = 2 + Math.round(vnoise(i / 5, 0, 31) * 3 + hsh(i, 0, 32));
+    for (let j = top; j < 10; j++) { const r = hsh(i, j, 33); x.fillStyle = T(r < 0.25 ? 2 : 1); x.fillRect(i * 6, j * 6, 6, 6); }
+  }
+  return { cloud: c };
+}
+function texFor(v) { const key = DARK ? 'texDark' : 'tex'; if (!v[key]) v[key] = buildTex(v); return v[key]; }
+
+// draw a texture slice: layer rect -> screen, edges rounded after the camera
+function slice(img, sx, sy, sw, sh, x, y, w, h) {
+  const X = Math.round(SX(x)), Y = Math.round(SY(y));
+  const Wd = Math.round(SX(x + w)) - X, Hd = Math.round(SY(y + h)) - Y;
+  if (Wd > 0 && Hd > 0 && X < V.W && X + Wd > 0) g.drawImage(img, sx, sy, sw, sh, X, Y, Wd, Hd);
+}
+const unY = sy => V.Fy + (sy - V.Fy - (V.Ty - V.Fy) * V.k) / V.Z;
+
+function drawTexBand(k) {
+  const b = BANDS[k], L = bandL(k);
+  const a = 1 - smooth((L - 0.85) / 0.15);
+  if (a <= 0) return;
+  const bc = bandCanvas(V, k), img = bc.cv;
+  R = b.rate;
+  const yTop = V.tops[k] + snap(sinkOf(k, L), b.p);
+  const colPx = b.cp * b.q;
+  const i0 = Math.max(0, Math.floor((unX(0, R) + 200) / colPx) - 1), i1 = Math.min(Math.floor(bc.tw / b.cp) - 1, Math.ceil((unX(V.W, R) + 200) / colPx) + 1);
+  const hgt = V.cloudTop + 2 * b.p - yTop;
+  if (hgt <= 0) return;
+  alpha(a, () => {
+    // the sea: column runs that share a step, each drawn as one slice
+    let runStart = i0, runOff = null;
+    const flush = end => {
+      if (runOff == null) return;
+      const xl = -200 + runStart * colPx, w = (end - runStart) * colPx, y = yTop + runOff * b.p;
+      const hh = V.cloudTop + 2 * b.p - y;
+      const sh = Math.min(hh / b.q, bc.th);
+      if (hh > 0) slice(img, runStart * b.cp, 0, (end - runStart) * b.cp, sh, xl, y, w, sh * b.q);
+    };
+    for (let i = i0; i <= i1 + 1; i++) {
+      const off = i <= i1 ? sea(-200 + i * colPx, k) : null;
+      if (off !== runOff) { flush(i); runStart = i; runOff = off; }
+    }
+    // the rings: inside each ring's band the crowd jumps (a rally's arms, up, and inked) or
+    // ducks (a roar, down, and pale), in steps of this band's own size
+    const yA = SY(yTop), yB = SY(V.cloudTop);
+    const S = 12;
+    for (const r of V.rings) {
+      const w = ringW(b.rate) * (r.kind === 'grumble' ? 0.5 : 1);
+      const lift = (r.kind === 'rally' ? -1 : r.kind === 'roar' ? 0.6 : -0.5) * ringLift(b.rate, b.p) * V.Z;
+      const tone = r.kind === 'rally' ? 10 : 0, oa = r.kind === 'rally' ? 0.3 : r.kind === 'roar' ? 0.35 : 0.15;
+      if (r.rad - w > Math.hypot(V.W, V.H) * 1.5) continue;
+      for (let sx = Math.max(0, Math.floor((r.x - r.rad - w) / S) * S); sx < Math.min(V.W, r.x + r.rad + w); sx += S) {
+        const dx = Math.abs(sx + S / 2 - r.x);
+        if (dx >= r.rad + w) continue;
+        const ho = Math.sqrt((r.rad + w) ** 2 - dx * dx), hi = dx < r.rad - w ? Math.sqrt((r.rad - w) ** 2 - dx * dx) : 0;
+        for (const [s0, s1] of [[r.y - ho, r.y - hi], [r.y + hi, r.y + ho]]) {
+          const y0 = Math.max(s0, yA), y1 = Math.min(s1, yB);
+          if (y1 - y0 < 2) continue;
+          const lx = unX(sx, R) + 200, ly = unY(y0) - yTop;
+          if (ly < 0 && lift > 0) continue;
+          g.drawImage(img, lx / b.q, Math.max(0, ly) / b.q, S / V.Z / b.q, (y1 - y0) / V.Z / b.q, sx, Math.round(y0 + lift), S, Math.round(y1 - y0));
+          const o = g.globalAlpha; g.globalAlpha = o * oa; g.fillStyle = T(tone);
+          g.fillRect(sx, Math.round(y0 + lift), S, Math.round(y1 - y0)); g.globalAlpha = o;
+        }
+      }
+    }
+  });
+}
+
+// thin drifting cloud strips between bands
+function drawCloudStrip(k) {
+  const y = V.tops[k + 1] - 6, r = (BANDS[k].rate + BANDS[k + 1].rate) / 2;
+  R = r;
+  const drift = st.t * (3 + k);
+  const i0 = Math.floor((unX(0, r) + drift) / 6) - 1, i1 = Math.ceil((unX(V.W, r) + drift) / 6) + 1;
+  alpha(0.9, () => {
+    for (let i = i0; i <= i1; i++) {
+      const n = vnoise(i / 14, k, 50);
+      if (n < 0.42) continue;
+      const tall = 6 * Math.min(3, 1 + Math.floor((n - 0.42) * 8 + hsh(i, k, 52)));
+      for (let j = 0; j < tall; j += 6) fr(i * 6 - drift, y - tall + j + 6, 6, 6, hsh(i, j + k, 51) < 0.3 ? 1 : 0);
+    }
+  });
+}
+
+// ============================================================ the near bands, soul by soul
+function drawNearSouls() {
+  const b = BANDS[6], top = V.tops[6], L = bandL(6);
+  R = b.rate;
+  const Hvis = V.cloudTop - top, sink = snap(sinkOf(6, L), 2);
+  const rows = Math.ceil((Hvis + 10) / b.rowp);
+  const c0 = Math.floor((unX(0, R) + 200) / b.pitch) - 1, c1 = Math.ceil((unX(V.W, R) + 200) / b.pitch) + 1;
+  const gfx = SX(V.gX + V.Gs / 2, RG);
+  for (let row = 0; row < rows; row++) for (let col = c0; col <= c1; col++) {
+    const xl = -200 + col * b.pitch + (row % 2 ? b.pitch / 2 : 0), y0 = top + sink + row * b.rowp;
+    if (y0 > V.cloudTop + 6) continue;
+    let a = keep(thrOf(hsh(col, row, 67), row / rows), L);
+    const j = st.joins.get(col + ',' + row);
+    let inked = false;
+    if (j) { const tau = st.t - j.t0; inked = tau < 1.7; a *= tau < 0.5 ? 1 : tau < 1.7 ? 1 - (tau - 0.5) / 1.2 : tau < 14 ? 0 : (tau - 14) / 2; }
+    if (a <= 0.01) continue;
+    const sx = SX(xl, R);
+    const rg = rings(sx, SY(y0), b.rate);
+    const x = xl + Math.round(Math.sin(xl / 240 - st.t * 0.7)) * 2;
+    const y = y0 + sea(xl, 6) * 2 + rg.lift;
+    const s = b.soul, tone = hsh(col, row, 68) < 0.3 ? 1 : 0;
+    alpha(a, () => {
+      fr(x, y, s, s, inked ? 10 : 8);
+      fr(x + 2, y + 2, s - 4, s - 4, tone);
+      const look = sx < gfx - 40 ? 1 : sx > gfx + 40 ? -1 : 0;
+      if (rg.duck) { fr(x + 3, y + 5, 2, 1, 8); fr(x + 7, y + 5, 2, 1, 8); }
+      else { fr(x + 3 + look, y + 4, 2, 2, 8); fr(x + 7 + look, y + 4, 2, 2, 8); }
+      if (rg.arms) { fr(x - 2, y - 8, 2, 8, 10); fr(x + s, y - 8, 2, 8, 10); }
+    });
+  }
+}
+function pickJoin(v) {
+  const sv = V, sr = R; V = v; camera(v);
+  const b = BANDS[6], L = bandL(6);
+  R = b.rate;
+  const c0 = Math.floor((unX(60, R) + 200) / b.pitch), c1 = Math.floor((unX(v.W - 60, R) + 200) / b.pitch);
+  const rows = Math.ceil((v.cloudTop - v.tops[6]) / b.rowp);
+  for (let n = 0; n < 12; n++) {
+    const col = c0 + Math.floor(Math.random() * (c1 - c0)), row = Math.floor(Math.random() * Math.max(1, rows - 2));
+    const key = col + ',' + row;
+    if (st.joins.has(key)) continue;
+    if (keep(thrOf(hsh(col, row, 67), row / rows), L) < 0.95) continue;
+    st.joins.set(key, { t0: st.t }); break;
+  }
+  V = sv; R = sr;
+}
+
+// ============================================================ God, the throne, the halo
+// God's own cells: gc px each, about the square's top-left. Every pose is held, never tweened.
+function godPose() {
+  const t = st.t;
+  const breath = frac(t / 4.6) < 0.45 ? 1 : 0;
+  // drumming: three fingers in turn, twice, then a rest
+  const dp = frac(t / 3.2) * 3.2, finger = dp < 0.9 ? Math.floor(dp / 0.15) % 3 : -1;
+  // the crown slips every eleven seconds and is put straight three seconds later
+  const cp = (t - st.crownT0) % 11;
+  let tilt = 0, hand = 0;
+  if (cp >= 0 && cp < 3) tilt = 1;
+  else if (cp >= 3 && cp < 3.3) { tilt = 1; hand = 1; }
+  else if (cp >= 3.3 && cp < 3.7) { tilt = 0; hand = 2; }
+  else if (cp >= 3.7 && cp < 4.0) { hand = 1; }
+  return { breath, finger, tilt, hand };
+}
+// God is a light source: his glare, halo, rays and gaze are drawn in raw tones (the game's
+// `raw`, src/ink.js), so on either page they are the brightest things in the sky and lighten
+// whatever they cross. On the dark page raw white is brighter than the page's own ink.
+// The glare: a pale disc behind the throne that lifts the far crowd round him.
+function drawGodGlare() {
+  const c = V.gc, cx = V.gX + 9 * c, cy = V.gy0 + 6 * c, rad = 19 * c;
+  R = RG;
+  const q = c >= 6 ? 6 : 3;
+  lit(() => alpha(0.85 - 0.3 * st.sS, () => {
+    for (let y = -rad; y < rad; y += q) { const hw = snap(Math.sqrt(Math.max(0, rad * rad - y * y)), q); fr(cx - hw, cy + y, hw * 2, q, 0); }
+  }));
+}
+function drawHalo() {
+  const c = V.gc, cx = V.gX + 9 * c, cy = V.gy0 + 6 * c;
+  R = RG;
+  const sq = Math.max(2, snap(c * 0.67, 2));
+  const at = (a, d) => [snap(cx + Math.cos(a) * d, sq), snap(cy + Math.sin(a) * d, sq)];
+  const ring = (rad, thick, tone) => {
+    const n = Math.ceil(2 * Math.PI * rad / (sq * 0.7));
+    for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI; for (let d = 0; d < thick; d += sq) { const [x, y] = at(a, rad + d); fr(x, y, sq, sq, tone); } }
+  };
+  lit(() => {
+    // the ring: a white band with a grey edge either side, so it reads on paper and on dark alike
+    ring(21 * c - sq, sq, 4); ring(21 * c + c, sq, 4); ring(21 * c, c, 0);
+    // the iris: a fainter inner ring and radial marks between
+    alpha(0.8, () => {
+      ring(16 * c, sq, 3);
+      for (let i = 0; i < 28; i++) { const a = i / 28 * 2 * Math.PI; for (let d = 16.5 * c; d < 20 * c; d += sq) { const [x, y] = at(a, d); fr(x, y, sq, sq, 3); } }
+    });
+    // spokes turning about the ring: shorter and fainter as support rises, gone at the strike
+    const left = 1 - st.sS;
+    if (left > 0.02) alpha(Math.pow(left, 0.7), () => {
+      const th = st.t * 2 * Math.PI / 50;
+      for (let i = 0; i < 12; i++) {
+        const a = th + i / 12 * 2 * Math.PI, len = (i % 2 ? 3 : 5) * c * left;
+        for (let d = 23 * c; d < 23 * c + len; d += sq * 1.5) { const [x, y] = at(a, d); fr(x - 2, y - 2, sq + 4, sq + 4, 4); fr(x, y, sq, sq, 0); }
+      }
+    });
+  });
+}
+function drawTower() {
+  const c = V.gc, x0 = V.gX, y0 = V.gy0;
+  R = RG;
+  const tx = x0 + 4 * c, tw = 10 * c, ty = y0 + 30 * c, bottom = V.cloudTop + 20;
+  fr(tx, ty, tw, bottom - ty, 10);
+  for (let y = ty; y < bottom; y += c) for (let x = tx + c; x < tx + tw - c; x += c) fr(x, y, c, c, hsh(x, y, 70) < 0.3 ? 5 : 6);
+  for (let y = ty + 4 * c; y < bottom; y += 7 * c) { fr(tx + 4 * c, y, 2 * c, 3 * c, 10); }
+  fr(x0 + c, ty, 16 * c, 3 * c, 10); fr(x0 + 2 * c, ty + c, 14 * c, c, 7);
+}
+function drawGod() {
+  const c = V.gc, x0 = V.gX, y0 = V.gy0, pose = godPose();
+  R = RG;
+  const F = (x, y, w, h, tone) => fr(x0 + x * c, y0 + y * c, w * c, h * c, tone);
+  // the throne's back, a mid grey slab with spikes: stone, so it takes the page's map
+  const spike = (x, top) => { F(x, top, 3, -5 - top, 10); for (let y = top + 1; y < -5; y++) F(x + 1, y, 1, 1, 4); };
+  [-4, 3, 12, 19].forEach(x => spike(x, -11)); spike(7.5, -15);
+  F(-4, -6, 26, 34, 10);
+  for (let y = -5; y < 27; y++) for (let x = -3; x < 21; x++) F(x, y, 1, 1, hsh(x, y, 71) < 0.25 ? 4 : 5);
+  F(-7, 18, 6, 3, 10); F(19, 18, 6, 3, 10); F(-7, 21, 2, 7, 10); F(23, 21, 2, 7, 10);
+  F(-7, 26, 32, 4, 10);
+  // God himself is lit from within: raw white, ink-edged, the same on both pages.
+  // The menace is his shape and his look: black slits, a white pinpoint, a scowl.
+  lit(() => {
+    const top = -pose.breath;
+    F(0, top, 18, 18 - top, 10);
+    F(1, top + 1, 16, 16 - top, 0);
+    for (let y = top + 1; y < 17; y++) for (let x = 1; x < 17; x++) if (hsh(x, y, 72) < 0.14) F(x, y, 1, 1, 1);
+    const gz = V.gaze || { look: 0, squint: false };
+    const ey = 6 + top;
+    [[3, 1], [10, -1]].forEach(([ex, side]) => {
+      const outer = side > 0 ? ex : ex + 2, inner = side > 0 ? ex + 1 : ex;
+      // the brow: a heavy ink bar slanting down to the nose
+      if (!gz.squint) F(outer, ey, 3, 1, 10);
+      F(inner, ey + 1, 4, 1, 10);
+      F(ex + 2 + gz.look, ey + 1, 1, 1, 0);
+    });
+    const roaring = st.roars.some(r => r.kind === 'roar' && st.t - r.t0 < 1.6);
+    if (roaring) { F(5, 11 + top, 8, 3, 10); F(6, 11 + top, 1, 1, 0); F(8, 11 + top, 1, 1, 0); F(10, 11 + top, 1, 1, 0); F(12, 11 + top, 1, 1, 0); }
+    else F(6, 12 + top, 6, 1, 10);
+    // the robe over the square's lower third, widening down over the seat
+    for (let y = 15; y < 30; y++) {
+      const half = 9 + Math.floor((y - 15) / 3);
+      F(9 - half, y, half * 2, 1, 10);
+      for (let x = 9 - half + 1; x < 9 + half - 1; x++) F(x, y, 1, 1, hsh(x, y, 73) < 0.3 ? 2 : 3);
+      F(8, y, 2, 1, y === 15 ? 10 : 0);
+    }
+    F(0, 15, 18, 1, 10);
+    // the crown, tilted a step when slipped: white in an ink outline
+    const cy = -3 + top, crown = [];
+    for (let x = 1; x < 17; x++) {
+      const d = pose.tilt ? (x < 9 ? 1 : 0) : 0;
+      const tall = x <= 3 || (x >= 8 && x <= 10) || x >= 15;
+      for (let y = tall ? -3 : 0; y < 2; y++) crown.push([x, cy + d + y]);
+    }
+    crown.forEach(([x, y]) => F(x - 1, y - 1, 3, 3, 10));
+    crown.forEach(([x, y]) => F(x, y, 1, 1, 0));
+    F(8, cy + (pose.tilt ? 0 : 0), 2, 1, 10);
+    // hands: the left rests on its arm or goes up to the crown; the right drums
+    const hl = [[-6, 15], [-5, 6], [-2, cy - 1]][pose.hand];
+    F(hl[0], hl[1], 4, 3, 10); F(hl[0] + 1, hl[1] + 1, 2, 1, 0);
+    F(20, 15, 4, 3, 10); F(21, 16, 2, 1, 0);
+    for (let f = 0; f < 3; f++) F(20 + f, 18 - (pose.finger === f ? 1 : 0), 1, 1, 10);
+  });
+}
+
+// ============================================================ the gaze: a pale wedge from his eyes
+function sweepFoot() {
+  const c = V.gc;
+  const pts = [
+    { x: V.gX + 0.36 * V.W, y: V.sky * 0.66, r: RG, hold: 0.8, move: 2.2 },
+    { x: V.gX - 0.10 * V.W, y: V.sky * 0.52, r: RG, hold: 0.3, move: 1.8 },
+    { x: V.gX - 0.32 * V.W, y: V.sky * 0.80, r: RG, hold: 0.6, move: 1.6 },
+    { x: V.campRight / 2, y: V.floorY - 12, r: 1, hold: 2.6, move: 2.4, camp: true },
+    { x: V.gX + 0.08 * V.W, y: V.sky * 0.62, r: RG, hold: 0.4, move: 2.4 },
+  ];
+  const total = pts.reduce((a, p) => a + p.hold + p.move, 0);
+  let u = frac(st.t / total) * total;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], q = pts[(i + 1) % pts.length];
+    const A = { x: SX(p.x, p.r), y: SY(p.y) };
+    if (u < p.hold) return { ...A, camp: !!p.camp };
+    u -= p.hold;
+    if (u < p.move) { const B = { x: SX(q.x, q.r), y: SY(q.y) }, k = smooth(u / p.move); return { x: lerp(A.x, B.x, k), y: lerp(A.y, B.y, k), camp: false }; }
+    u -= p.move;
+  }
+  return { x: SX(pts[0].x, pts[0].r), y: SY(pts[0].y), camp: false };
+}
+function signScreen(i) {
+  const s = SIGNS[i], geo = signGeo(V, i);
+  return { x: SX(geo.x + geo.w / 2, RSIGN), y: SY(geo.y + geo.h / 2) };
+}
+function gazeNow() {
+  const sw = sweepFoot();
+  let foot = sw, narrow = 0, onSign = -1;
+  if (st.speech) {
+    const tau = st.t - st.speech.t0, s = signScreen(st.speech.sign);
+    if (tau < 0.9) foot = { x: lerp(sw.x, s.x, smooth(tau / 0.9)), y: lerp(sw.y, s.y, smooth(tau / 0.9)) };
+    else if (tau < 3.4) { foot = s; narrow = smooth((tau - 0.9) / 0.6); onSign = st.speech.sign; }
+    else foot = { x: lerp(s.x, sw.x, smooth((tau - 3.4) / 1)), y: lerp(s.y, sw.y, smooth((tau - 3.4) / 1)) };
+  }
+  const eye = { x: SX(V.gX + 9 * V.gc, RG), y: SY(V.gy0 + 7 * V.gc) };
+  const dx = foot.x - eye.x;
+  const look = dx < -V.W * 0.08 ? -1 : dx > V.W * 0.08 ? 1 : 0;
+  return { eye, foot, narrow, onSign, look, squint: !!sw.camp && !st.speech };
+}
+function drawGaze(gz) {
+  const { eye, foot } = gz;
+  const len = Math.hypot(foot.x - eye.x, foot.y - eye.y);
+  const row = 3 * Math.max(1, Math.round(V.Z));
+  const hwF = lerp(Math.max(24, len * 0.09), Math.max(12, len * 0.035), gz.narrow);
+  const ys = Math.round(eye.y), ye = Math.round(foot.y);
+  g.save();
+  RAW = true;
+  g.globalAlpha = 0.5 + 0.15 * gz.narrow;
+  g.fillStyle = T(0);
+  const seat = SY(V.gy0 + 30 * V.gc);
+  for (let y = ys; y < ye; y += row) {
+    if (y < seat) continue;
+    const k = (y - ys) / Math.max(1, ye - ys), cx = lerp(eye.x, foot.x, k), hw = lerp(V.gc, hwF, k);
+    g.fillRect(Math.round(cx - hw), y, Math.round(hw * 2), row);
+  }
+  g.globalAlpha = 1;
+  g.fillStyle = T(4);
+  const chin = SY(V.gy0 + 15 * V.gc);
+  for (let y = ys, n = 0; y < ye; y += row, n++) {
+    if (n % 2 || y < chin) continue;
+    const k = (y - ys) / Math.max(1, ye - ys), cx = lerp(eye.x, foot.x, k), hw = lerp(V.gc, hwF, k);
+    g.fillRect(Math.round(cx - hw), y, 2, 2); g.fillRect(Math.round(cx + hw) - 2, y, 2, 2);
+  }
+  RAW = false;
+  g.restore();
+}
+
+// ============================================================ the sermon's bubbles
+function drawBubbles() {
+  const c = V.gc;
+  R = RG;
+  for (const r of st.roars) {
+    const tau = st.t - r.t0, life = r.kind === 'roar' ? 1.9 : 1.2;
+    if (tau > life) continue;
+    const a = Math.min(1, tau / 0.2) * (tau > life - 0.4 ? (life - tau) / 0.4 : 1);
+    const gp = r.kind === 'roar' ? Math.round((r.big ? 1.5 : 1.0) * c * 0.67) : Math.max(2, Math.round(c / 3));
+    const glyphW = r.g.reduce((s, k) => s + GL[k][0].length + 1, -1);
+    const bw = (glyphW + 4) * gp, bh = (8 + 4) * gp;
+    const bx = r.kind === 'roar' ? V.gX + V.Gs + 2 * c : V.gX - 2 * c - bw;
+    const by = r.kind === 'roar' ? V.gy0 - 6 * c - bh * 0.4 : V.gy0 + 2 * c;
+    const ink = r.kind === 'roar' ? 10 : 6, u = Math.max(2, gp);
+    alpha(a, () => {
+      fr(bx + u, by, bw - 2 * u, bh, ink); fr(bx, by + u, bw, bh - 2 * u, ink);
+      fr(bx + u, by + u, bw - 2 * u, bh - 2 * u, 0);
+      // the tail, stepping toward his mouth
+      const tx = r.kind === 'roar' ? bx + u : bx + bw - 2 * u;
+      for (let i = 0; i < 3; i++) fr(tx + (r.kind === 'roar' ? -i * u : i * u), by + bh + i * u - u, 2 * u, 2 * u, ink);
+      let gx = bx + 2 * gp;
+      for (const k of r.g) {
+        const rows = GL[k];
+        rows.forEach((line, j) => { for (let i = 0; i < line.length; i++) if (line[i] === '#') fr(gx + i * gp, by + 2 * gp + j * gp, gp, gp, ink); });
+        gx += (rows[0].length + 1) * gp;
+      }
+    });
+  }
+}
+
+// ============================================================ the tithe line
+function pathAt(u) {
+  const d = u * V.pathLen, p = V.path;
+  for (let i = 1; i < p.length; i++) if (d <= p[i].L || i === p.length - 1) {
+    const k = clamp((d - p[i - 1].L) / (p[i].L - p[i - 1].L), 0, 1);
+    return { x: lerp(p[i - 1].x, p[i].x, k), y: lerp(p[i - 1].y, p[i].y, k), r: lerp(p[i - 1].r, p[i].r, k), s: lerp(p[i - 1].s, p[i].s, k), dir: Math.sign(p[i].x - p[i - 1].x) || 1 };
+  }
+}
+function drawTithe() {
+  // the ledge: grey steps under their feet
+  const N = 70;
+  const thin = Math.min(0.93, st.sS * 1.05);
+  g.save(); g.globalAlpha = 1 - 0.85 * thin; g.fillStyle = T(4);
+  for (let u = 0.03; u < 0.985; u += 0.005) {
+    const q = pathAt(u);
+    const X = Math.round(SX(q.x, q.r)), Y = Math.round(SY(q.y));
+    if (X > -4 && X < V.W + 4) g.fillRect(X, Y, Math.max(2, Math.round(2 * V.Z)), Math.max(2, Math.round(2 * V.Z)));
+  }
+  g.restore();
+  for (let i = 0; i < N; i++) {
+    const pres = clamp((hsh(i, 0, 80) + 0.2 - 1.2 * thin) / 0.2, 0, 1);
+    if (pres <= 0.01) continue;
+    const u = frac(i / N + st.tithe);
+    const q = pathAt(u); R = q.r;
+    const s = Math.max(4, snap(q.s, 2)), bw = s, bh = Math.round(s * 0.75);
+    const stepUp = st.sS >= 0.98 ? 0 : (Math.floor(st.t * 4 + i) % 2);
+    const x = q.x - bw / 2, y = q.y - bh - stepUp;
+    const a = pres * clamp(u / 0.03, 0, 1) * clamp((1 - u) / 0.05, 0, 1);
+    const loadA = clamp((0.94 - u) / 0.04, 0, 1);
+    const rim = s >= 10 ? 2 : 1;
+    alpha(a, () => {
+      fr(x, y, bw, bh, 10); fr(x + rim, y + rim, bw - 2 * rim, bh - 2 * rim, 0);
+      const hs = Math.max(2, snap(s * 0.4, 1));
+      fr(q.dir > 0 ? x + bw - 1 : x - hs + 1, y + bh - hs - 1, hs, hs, 10);       // the head, bowed forward and low
+      alpha(loadA, () => {
+        if (i % 3 === 0) { const ls = Math.round(s * 0.8); fr(x + (bw - ls) / 2, y - ls + 1, ls, ls, 10); fr(x + (bw - ls) / 2 + rim, y - ls + 1 + rim, ls - 2 * rim, ls - 2 * rim, 1); }
+        else { const pl = Math.round(s * 1.8), th = Math.max(2, Math.round(s / 4)); fr(x + bw / 2 - pl / 2, y - th, pl, th, 7); }
+      });
+    });
+  }
+}
+function drawGlare() {
+  const c = V.gc, end = V.path[V.path.length - 1];
+  R = RG;
+  const cx = end.x, cy = end.y - 2 * c, rad = 6 * c, a = 0.92 - 0.3 * st.sS;
+  lit(() => alpha(a, () => {
+    const q = c >= 6 ? 3 : 2;
+    for (let y = -rad; y < rad; y += q) { const hw = Math.sqrt(Math.max(0, rad * rad - y * y)); fr(snap(cx - hw, q), cy + y, snap(hw * 2, q), q, 0); }
+  }));
+}
+
+// ============================================================ signs and posters
+function signGeo(v, i) {
+  const s = SIGNS[i], x = s.f * (v.W + PAN * RSIGN);
+  const poster = s.kind === 'poster';
+  const w = poster ? 42 : 60, h = poster ? 60 : 36;
+  const y = v.cloudTop - (poster ? 108 : 96);
+  return { x, y, w, h, poster };
+}
+const signLayerX = (v, i) => signGeo(v, i).x;
+function drawSigns(gz) {
+  R = RSIGN;
+  SIGNS.forEach((s, i) => {
+    const geo = signGeo(V, i);
+    const lift = st.t - s.lift < 1.2 ? -6 : 0;
+    const x = geo.x, y = geo.y + lift, w = geo.w, h = geo.h;
+    const burn = s.burn ? st.t - s.burn.t0 : null;
+    let alive = 1;
+    if (burn != null && burn > 13) alive = (burn - 13) / 2;      // the mock's refill
+    const cell = 3;
+    // the warning frame while the gaze settles on it
+    // the warning: four ink corner marks close in on it in held steps while the gaze settles
+    if (gz.onSign === i) {
+      const m = 6 + 6 * (3 - Math.min(3, Math.floor(gz.narrow * 4))), L = 10;
+      [[x - m, y - m, 1, 1], [x + w + m, y - m, -1, 1], [x - m, y + h + m, 1, -1], [x + w + m, y + h + m, -1, -1]].forEach(([cx, cy, sx, sy]) => {
+        fr(sx > 0 ? cx : cx - L, sy > 0 ? cy : cy - 2, L, 2, 10);
+        fr(sx > 0 ? cx : cx - 2, sy > 0 ? cy : cy - L, 2, L, 10);
+      });
+    }
+    const cellsW = w / cell, cellsH = h / cell, poleH = V.cloudTop + 12 - (y + h);
+    const draw = (cx, cy, tone, id) => {
+      // char from the bottom, then burn away cell by cell
+      if (burn != null && burn <= 13) {
+        const ch = hsh(id, i, 90) * 0.5 + (1 - cy / (cellsH + poleH / cell)) * 0.7;
+        if (burn > ch) tone = 10;
+        const bt = 1.2 + hsh(id, i, 91) * 1.6;
+        const fa = 1 - clamp((burn - bt) / 0.4, 0, 1);
+        if (fa <= 0) return;
+        // char is soot on both pages: raw black, so it never turns pale on the dark page
+        const charred = burn > ch;
+        alpha(fa, () => charred ? lit(() => fr(x + cx * cell, y + cy * cell, cell, cell, 10)) : fr(x + cx * cell, y + cy * cell, cell, cell, tone));
+        return;
+      }
+      fr(x + cx * cell, y + cy * cell, cell, cell, tone);
+    };
+    alpha(alive, () => {
+      // the pole
+      for (let j = 0; j < poleH / cell; j++) draw(w / cell / 2 - 1, cellsH + j, 10, 1000 + j), draw(w / cell / 2, cellsH + j, 10, 2000 + j);
+      for (let cy = 0; cy < cellsH; cy++) for (let cx = 0; cx < cellsW; cx++) {
+        const edge = cx === 0 || cy === 0 || cx === cellsW - 1 || cy === cellsH - 1;
+        let tone = edge ? 10 : 0;
+        if (!geo.poster && !edge && (cy === 3 || cy === 6 || cy === 8) && cx > 2 && cx < cellsW - 3 - (cy === 8 ? 5 : 0)) tone = 5;
+        if (geo.poster && !edge) {
+          // a crossed-out crown, the placeholder picture
+          if (cy >= 6 && cy <= 7 && cx > 2 && cx < 11) tone = 9;
+          if (cy >= 3 && cy <= 5 && (cx === 3 || cx === 6 || cx === 7 || cx === 10)) tone = 9;
+          if (cy >= 2 && cy <= 11 && Math.abs(cx - 1.5 - (cy - 2) * 1.05) < 0.8) tone = 10;
+          if ((cy === 14 || cy === 16) && cx > 2 && cx < 11) tone = 5;
+        }
+        draw(cx, cy, tone, cy * 40 + cx);
+      }
+    });
+    // embers rising off a burning sign
+    if (burn != null && burn > 0.6 && burn < 4.5) for (let e = 0; e < 14; e++) {
+      const te = 0.6 + hsh(e, i, 92) * 2.4, k = (burn - te) / 1.4;
+      if (k < 0 || k > 1) continue;
+      alpha(1 - k, () => fr(snap(x + hsh(e, i, 93) * w + Math.sin(e + burn * 3) * 3, 2), snap(y + h * 0.6 - k * 50, 2), 2, 2, 9));
+    }
+  });
+}
+
+// ============================================================ the camp, the cloud floor, drifting souls
+function drawCloudFloor(tex) {
+  R = RCLOUD;
+  const img = tex.cloud;
+  const x0 = Math.max(0, unX(0, R) + 200 - 12), x1 = Math.min(img.width, unX(V.W, R) + 200 + 12);
+  slice(img, x0, 0, x1 - x0, img.height, x0 - 200, V.cloudTop - 12, x1 - x0, img.height);
+  fr(x0 - 200, V.cloudTop + 48, x1 - x0, V.floorY - V.cloudTop - 48, 0);
+}
+function drawCamp(gz) {
+  R = 1;
+  const F = V.floorY, x1 = Math.max(V.W, unX(V.W, 1)) + 50;
+  fr(-200, F, x1 + 400, V.H - F + 200, 1);
+  for (let x = -200; x < x1; x += 6) if (hsh(x, 0, 100) < 0.25) fr(x, F + 6 + 6 * Math.floor(hsh(x, 1, 100) * 3), 6, 6, 2);
+  fr(-200, F, x1 + 400, 2, 10);
+  // placeholder stations
+  for (let x = 24, n = 0; x < V.campRight - 70; x += 118, n++) {
+    const w = 54 + 12 * (n % 3), h = 42 + 18 * ((n * 7) % 3);
+    fr(x, F - h, w, h, 10); fr(x + 2, F - h + 2, w - 4, h - 4, 0);
+    fr(x - 6, F - h - 6, w + 12, 6, 10);
+    fr(x + 8, F - h + 12, w - 16, 6, 4);
+  }
+  // four bodies walking the camp; they look up while the gaze rests on them
+  for (let b = 0; b < 4; b++) {
+    const span = V.campRight - 60, u = frac(st.t / (14 + b * 5) + b * 0.27);
+    const k = u < 0.5 ? u * 2 : 2 - u * 2, dir = u < 0.5 ? 1 : -1;
+    const x = snap(30 + span * k, 2), bob = Math.floor(st.t * 3 + b) % 2 ? 2 : 0;
+    const y = F - 18 - bob;
+    fr(x, y, 18, 18, 10); fr(x + 2, y + 2, 14, 14, 0);
+    const up = gz.squint && Math.abs(SX(x, 1) - gz.foot.x) < 260;
+    const ex = x + (dir > 0 ? 8 : 4), ey = up ? y + 3 : y + 6;
+    fr(ex, ey, 2, 2, 10); fr(ex + 4, ey, 2, 2, 10);
+  }
+}
+function drawDrift() {
+  R = 1;
+  for (const d of st.drift) {
+    const tau = st.t - d.t0;
+    const a = Math.min(1, tau / 1.2) * Math.min(1, (14 - tau) / 3) * 0.9;
+    const x = snap(30 + d.f * (V.campRight + 400) + Math.sin(tau * 0.8 + d.w * 6) * 6, 2);
+    const y = snap(V.floorY - 40 - tau * 22, 2);
+    alpha(a, () => { fr(x, y, 6, 6, 6); fr(x + 2, y + 2, 2, 2, 0); });
+  }
+}
+
+// ============================================================ the frame
+function draw(v) {
+  const t0 = performance.now();
+  V = v; g = v.g; camera(v);
+  const tex = texFor(v);
+  v.rings = ringsNow();
+  g.globalAlpha = 1;
+  g.fillStyle = T(0); g.fillRect(0, 0, v.W, v.H);
+  const gz = gazeNow(); v.gaze = gz;
+  for (let k = 0; k <= 4; k++) {
+    drawTexBand(k);
+    if (CLOUDS_AFTER.includes(k) && k !== 4) drawCloudStrip(k);
+  }
+  drawGodGlare(); drawHalo(); drawTower(); drawGod();
+  drawCloudStrip(4);
+  drawTexBand(5);
+  drawNearSouls();
+  drawTithe(); drawGlare();
+  drawSigns(gz);
+  drawCloudFloor(tex);
+  drawCamp(gz);
+  drawDrift();
+  drawGaze(gz);
+  drawBubbles();
+  v.face = { x: SX(v.gX + v.Gs / 2, RG), y: SY(v.gy0 + v.Gs / 2), z: v.Z };
+  v.cost.push(performance.now() - t0); if (v.cost.length > 60) v.cost.shift();
+}
+
+const MAIN = makeView(document.getElementById('cMain'));
+const SMALL = makeView(document.getElementById('cSmall'));
+const godCv = document.getElementById('cGod'), godG = godCv.getContext('2d');
+function drawGodCrop() {
+  const f = MAIN.face, w = 400, h = 380;
+  godG.imageSmoothingEnabled = false;
+  const sx = clamp(Math.round(f.x - w / 2), 0, MAIN.W - w), sy = clamp(Math.round(f.y - h * 0.5), 0, MAIN.H - h);
+  godG.drawImage(MAIN.cv, sx, sy, w, h, 0, 0, w * 3, h * 3);
+}
+function frame() {
+  draw(MAIN); draw(SMALL); drawGodCrop();
+  document.getElementById('members').textContent = (Math.round(st.sS * 48000) + st.members).toLocaleString();
+}
+const avg = a => a.length ? (a.reduce((x, y) => x + y, 0) / a.length).toFixed(1) : '-';
+const mx = a => a.length ? Math.max(...a).toFixed(1) : '-';
+let last = performance.now(), statT = 0;
+function loop(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (!st.paused) step(dt * st.speed);
+  frame();
+  if ((statT += dt) > 0.5) {
+    statT = 0;
+    document.getElementById('stMain').textContent = `draw time on this page: ${avg(MAIN.cost)} ms mean, ${mx(MAIN.cost)} ms worst of the last 60 frames`;
+    document.getElementById('stSmall').textContent = `draw time: ${avg(SMALL.cost)} ms mean, ${mx(SMALL.cost)} ms worst`;
+  }
+  if (!window.__manual) requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ============================================================ the bar
+function setTheme(m) {
+  document.querySelectorAll('[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === m));
+  if (m === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = m;
+  DARK = m === 'dark' || (m === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+}
+document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => setTheme(b.dataset.t));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (!document.documentElement.dataset.theme) setTheme('auto'); });
+setTheme('auto');
+const sup = document.getElementById('sup'), pan = document.getElementById('pan');
+function setSup(v, now) { st.sup = v / 100; if (now) st.sS = st.sup; sup.value = v; document.getElementById('supv').textContent = v + '%'; }
+function setPan(v) { st.pan = v / 100; pan.value = v; document.getElementById('panv').textContent = v + '%'; }
+sup.oninput = () => setSup(+sup.value);
+document.querySelectorAll('[data-s]').forEach(b => b.onclick = () => setSup(+b.dataset.s));
+pan.oninput = () => { st.autoPan = false; document.getElementById('autopan').classList.remove('on'); setPan(+pan.value); };
+document.getElementById('autopan').onclick = e => { st.autoPan = !st.autoPan; e.target.classList.toggle('on', st.autoPan); };
+document.getElementById('pause').onclick = e => { st.paused = !st.paused; e.target.classList.toggle('on', st.paused); };
+document.getElementById('slow').onclick = e => { st.speed = st.speed === 1 ? 0.25 : 1; e.target.classList.toggle('on', st.speed !== 1); };
+document.getElementById('speech').onclick = () => startSpeech();
+document.getElementById('rally').onclick = () => startRally();
+setInterval(() => { if (st.autoPan) { const v = Math.round(st.pan * 100); pan.value = v; document.getElementById('panv').textContent = v + '%'; } }, 200);
+
+// handles for the snapshot script: step the clock by hand and read a canvas back
+window.mock = {
+  st, SIGNS, MAIN, SMALL, setSup, setPan, setTheme, startSpeech, startRally,
+  manual() { window.__manual = true; },
+  run(sec, dt = 1 / 30) { for (let s = 0; s < sec; s += dt) step(dt); frame(); },
+  png(id) { return document.getElementById(id).toDataURL('image/png'); },
+};
+</script>
+</body>
+</html>

@@ -33,6 +33,9 @@ export function seatObjective(t) {
   el.hidden = hide;
   el.classList.toggle('scened', scene);
   el.classList.toggle('deep', S.view === 'deep');
+  // Up in act 3 the yard's line is not the place's: it fades out where it
+  // stands (`.away` in style.css) and back in on the way down.
+  el.classList.toggle('away', S.view === 'after');
   if (hide || scene) return;
   seatRoom();
   const key = want ? want.key : null;

@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Act 3 Unbuilt Station</title>
+<!--
+  Act 3: a station not yet bought is nothing but cloud floor; ordered on the
+  shack's board, members carry a pile of materials onto its spot, then
+  builders use the pile up band by band as the station rises (the owner,
+  2026-10-18). Three takes on what the pile looks like. Drawn by this page
+  from plain cells at the yard's scale (a cell six px at one times, a body
+  three cells), not by render/after/stations.js. Every word is a placeholder.
+-->
+<style>
+  :root { --bg: #ffffff; --fg: #000000; --muted: #5f5f5f; --line: #d6d6d6; --soft: #efefef; --warn: #757575; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a; }
+  }
+  :root[data-theme="dark"] { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #989898; --line: #3e3e3e; --soft: #2b2b2b; --warn: #8a8a8a; }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--fg); }
+  body { margin: 0; font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1240px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 6px; }
+  h3 { font-size: 14px; margin: 10px 0 4px; }
+  p { margin: 0 0 8px; color: var(--muted); max-width: 110ch; }
+  ul, ol { margin: 4px 0 8px; padding-left: 18px; color: var(--muted); }
+  main b { color: var(--fg); }
+  .ph { border-bottom: 1px dashed currentColor; }
+  .ph::after { content: '*'; color: var(--warn); }
+  .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
+  .bar button { font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .bar label { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+  .bar input[type=range] { accent-color: var(--fg); }
+  #scrub { width: min(520px, 100%); }
+  .sticky { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); padding: 4px 0; }
+  .phase { color: var(--fg); font-weight: bold; min-width: 30ch; }
+  .rec { border-left: 3px solid var(--fg); padding: 4px 10px; background: var(--soft); color: var(--fg); }
+  section { border-top: 1px solid var(--line); padding: 14px 0; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  .row { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+  figure { margin: 0; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 4px; max-width: 760px; }
+  .take { border: 1px solid var(--line); border-radius: 4px; padding: 10px; margin: 0 0 12px; }
+  .take.picked { border: 2px solid var(--fg); }
+  .take h3 { margin-top: 0; }
+  .scrollx { overflow-x: auto; max-width: 100%; }
+  .rounds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .rounds > div { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; font-size: 12px; }
+  .rounds h3 { margin: 0 0 4px; font-size: 13px; }
+  .rounds ol { padding-left: 16px; margin: 0; }
+  @media (max-width: 760px) { .rounds { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1><span class="ph">act 3: a station before it is built, and how it goes up</span></h1>
+  <p><span class="ph">The owner: an unbuilt station shows nothing, just cloud floor; stations are only seen on the shack's board. Ordered from the shack, members carry a pile of materials onto its spot, each load set down and faded onto the pile; then builders take from the pile and the station's bands fade in from the bottom up, the pile shrinking as the station grows, until the pile is gone and the station stands. Here: the saw mill (take 2, through the beams), an empty spot, and the press, a station's width of floor between them. The station raised on the spot is the workshop's shed. Drawn at the yard's scale (a cell six px, a body three cells).</span></p>
+  <p class="rec"><b><span class="ph">pick, pending the owner's vote:</span></b> <span class="ph" id="pick-line"></span></p>
+
+  <div class="sticky">
+    <div class="bar">
+      <button id="order"><span class="ph">order the station</span></button>
+      <button id="play"><span class="ph">pause</span></button>
+      <button id="reset"><span class="ph">back to before ordering</span></button>
+      <label><span class="ph">speed</span> <input id="speed" type="range" min="0.25" max="8" step="0.25" value="2"> <span id="speed-v"></span></label>
+      <button data-theme-btn="light"><span class="ph">light</span></button>
+      <button data-theme-btn="dark"><span class="ph">dark</span></button>
+    </div>
+    <div class="bar">
+      <label><span class="ph">timeline</span> <input id="scrub" type="range" min="-3" step="0.05" value="-3"></label>
+      <span id="tv"></span>
+      <span class="phase"><span class="ph" id="phase"></span></span>
+    </div>
+    <div class="bar" id="jumps"></div>
+  </div>
+
+  <section id="sec-empty">
+    <h2><span class="ph">the empty spot, before ordering: three times</span></h2>
+    <p><span class="ph">Left: as it is, just floor between the two stations. Right, optional: the same floor while the shack's board is open, two faint floor marks at the spot's ends. Without the board open there is no mark at all.</span></p>
+    <div class="row">
+      <figure id="empty-plain"><canvas></canvas><figcaption><span class="ph">board closed: floor only</span></figcaption></figure>
+      <figure id="empty-hint"><canvas></canvas><figcaption><span class="ph">optional: board open, a faint mark at the spot's two ends</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section id="sec-takes">
+    <h2><span class="ph">the three piles, on one clock</span></h2>
+    <div id="takes"></div>
+  </section>
+
+  <section id="sec-rounds">
+    <h2><span class="ph">two rounds of harsh critique</span></h2>
+    <div class="rounds">
+      <div><h3><span class="ph">round 1</span></h3><ol id="round1"></ol></div>
+      <div><h3><span class="ph">round 2</span></h3><ol id="round2"></ol></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="ph">what this page cannot show</span></h2>
+    <ul id="cannot"></ul>
+  </section>
+</main>
+<script>
+'use strict';
+// ---------------------------------------------------------------------------
+// The ramp, the grid
+// ---------------------------------------------------------------------------
+const P = 6;
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+// Dark is the light ramp mapped by lightness onto #e0e0e0 on #1f1f1f, never inverted.
+const DARKG = GREY.map(h => { const v = parseInt(h.slice(1, 3), 16) / 255; const c = Math.round(0x1f + (0xe0 - 0x1f) * (1 - v)).toString(16).padStart(2, '0'); return '#' + c + c + c; });
+const K = 10, W = 0, BARK = [4, 5, 4, 6], WOOD = [2, 3, 2, 3];
+let PAL = GREY;
+const hash = n => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+const toneOf = (pal, x, y, seed = 0) => pal[Math.floor(hash(x * 13.1 + y * 7.7 + seed) * pal.length)];
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const ramp = (t, t0, dur) => clamp01((t - t0) / dur);
+const isDark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+
+// A drawer at 1x on a canvas, its origin at cell (ox, 0): the floor line,
+// row -1 the bottom row standing on it (kit.js's frame).
+// With `halo`, every rect is paper two px bigger all round: drawn first, it
+// stands a load clear of the black station rising behind it.
+function drawer(g, ox, floorPx, halo = false) {
+  const d = {
+    px(x, y, w, h, tone) {
+      if (halo) { g.fillStyle = PAL[W]; g.fillRect(Math.round(ox * P + x) - 2, Math.round(floorPx + y) - 2, Math.round(w) + 4, Math.round(h) + 4); return; }
+      g.fillStyle = PAL[tone]; g.fillRect(Math.round(ox * P + x), Math.round(floorPx + y), Math.round(w), Math.round(h));
+    },
+    r(x, y, w, h, tone = K) { d.px(x * P, y * P, w * P, h * P, tone); },
+    c(x, y, tone = K) { d.r(x, y, 1, 1, tone); },
+    line(x0, y0, x1, y1, w = 2, tone = K, centered = true) {
+      const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * P), o = centered ? w / 2 : 0;
+      for (let i = 0; i <= n; i++) { const f = n ? i / n : 0; d.px(Math.round((x0 + (x1 - x0) * f) * P - o), Math.round((y0 + (y1 - y0) * f) * P - o), w, w, tone); }
+    },
+    cut(x, y, w, h, tone = W) { d.px(x * P + 2, y * P + 2, w * P - 4, h * P - 4, tone); },
+    body(x, y, dx = 0, squat = false) { const by = y * P + (squat ? P : 0), h = squat ? 12 : 18; d.px(x * P + dx, by, 18, h, K); d.px(x * P + dx + 2, by + 2, 14, h - 4, W); },
+    fade(a, fn) { if (a <= 0) return; const was = g.globalAlpha; g.globalAlpha = was * clamp01(a); fn(); g.globalAlpha = was; }
+  };
+  return d;
+}
+
+// ---------------------------------------------------------------------------
+// The camp's stretch: cells across, the floor line's row
+// ---------------------------------------------------------------------------
+const COLS = 160, ROWS_UP = 30, ROWS_DOWN = 6;          // the view at one times
+const MILL_OX = 10, SHED_OX = 72, PRESS_OX = 118;       // each station's frame origin
+const FOOT = { mill: [7, 49], shed: [77, 97], press: [127, 147] };   // what each one covers, cells
+// The spot is the station's ground, not only its drawing (after/place.js,
+// ART: the workshop's ground is 37 cells, its sign pile at cell 28). The
+// materials go where its own pile will later stand.
+const GROUND = [SHED_OX, SHED_OX + 37];
+const PILE_X = SHED_OX + 27;                             // the pile's left column
+const SHED_ROWS = 21;                                    // the shed's height in rows, the bands' ruler
+const BANDS = 4;                                         // AFTER_BUILD_PIECES
+const BAND_FADE = 2;                                     // AFTER_BUILD_FADE_S
+
+// --- the saw mill, take 2 (docs/mocks/act3-sawmill-2026-10-18), its piles left off
+const WHEEL = { cx: 9, cy: -9, r: 6 }, CRANK = 1.5, KNOB = WHEEL.r + 2, TURN = Math.PI / 8;
+function wheel(d, a) {
+  const { cx, cy, r } = WHEEL;
+  d.px(cx * P - 3, cy * P, 6, -cy * P, K); d.r(cx - 3, -1, 6, 1, K);
+  for (let y = Math.floor(cy - r - 2); y <= cy + r + 2; y++) for (let x = Math.floor(cx - r - 2); x <= cx + r + 2; x++) {
+    const dd = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+    if (dd > r - 1 && dd <= r + 1) d.c(x, y, K);
+  }
+  for (let k = 0; k < 4; k++) { const b = a + Math.PI / 4 + k * Math.PI / 2; d.line(cx, cy, cx + Math.cos(b) * (r - 0.5), cy + Math.sin(b) * (r - 0.5), 5); }
+  d.r(cx - 1.5, cy - 1.5, 3, 3, K);
+  const kx = cx + Math.cos(a) * KNOB, ky = cy + Math.sin(a) * KNOB;
+  d.line(cx + Math.cos(a) * (r + 0.5), cy + Math.sin(a) * (r + 0.5), kx, ky, 4);
+  return { kx, ky, pin: { x: cx + Math.cos(a) * CRANK, y: cy + Math.sin(a) * CRANK } };
+}
+function crankPin(d, pin) { d.px(Math.round(pin.x * P) - 3, Math.round(pin.y * P) - 3, 6, 6, K); d.px(Math.round(pin.x * P) - 1, Math.round(pin.y * P) - 1, 2, 2, W); }
+const strokeOf = a => Math.round(1.5 + 1.5 * Math.sin(a));
+function hand(d, k) {
+  d.body(-3, -3);
+  const fx = Math.round(k.kx * P) - 7, fy = Math.round(k.ky * P) - 7;
+  d.line(0, -2, k.kx, k.ky, 2);
+  d.px(fx, fy, 14, 14, K); d.px(fx + 2, fy + 2, 10, 10, W); d.px(fx + 5, fy + 5, 4, 4, K);
+}
+const RIP = [0, 1, 2, 3];
+function blade(d, x, y0, y1, o) {
+  for (let y = y0; y <= y1; y++) { const k = RIP[(((y - o) % 4) + 4) % 4]; d.c(x, y, 2); d.c(x + 1, y, K); if (k) d.r(x - k, y, k, 1, K); }
+}
+function rod(d, x0, y0, x1, y1) { d.line(x0, y0, x1, y1, 7, W); d.line(x0, y0, x1, y1, 3); }
+function pinned(d, x, y, w, h) { d.r(x, y, w, h, K); d.px((x + w / 2) * P - 2, (y + h / 2) * P - 2, 4, 4, W); }
+const LOG_LEN = 14, LOG_X0 = 17, LOG_T = 6.4;
+function log(d, x, y, bx) {
+  for (let i = 0; i < LOG_LEN; i++) {
+    const c = x + i;
+    if (c >= bx - 3 && c < bx + 2) { if (c < bx) d.r(c, y, 1, 3, W); continue; }
+    if (c < bx) {
+      d.r(c, y, 1, 3, K); d.px(c * P, y * P + 2, P, 3 * P - 4, toneOf(BARK, c - x, 1));
+      const h = hash(c - x + 0.5), row = h < 0.5 ? 6 : 10;
+      d.px(c * P + (h < 0.25 || h > 0.75 ? 0 : 2), y * P + row, h < 0.25 || h > 0.75 ? P : P - 2, 2, W);
+    } else {
+      d.px(c * P, y * P, P, 8, K); d.px(c * P, y * P + 2, P, 4, toneOf(WOOD, c - x, 3));
+      d.px(c * P, y * P + 10, P, 8, K); d.px(c * P, y * P + 12, P, 4, toneOf(WOOD, c - x, 4));
+    }
+  }
+}
+function logAt(t, bx, x0) {
+  const u = Math.max(0, t), k = Math.floor(u / LOG_T), ph = u / LOG_T - k, since = u - k * LOG_T;
+  const steps = bx + 2 - x0, i = Math.min(steps, Math.floor(ph * (steps + 2)));
+  const a = since < 0.4 ? since / 0.4 : ph > 0.92 ? 1 - (ph - 0.92) / 0.08 : 1;
+  return { x: x0 + i, a };
+}
+function mill(d, t) {
+  const a = Math.floor(t / 0.1) * TURN, o = strokeOf(a);
+  const L = 22, R = 37, head = -21, bed = -6, bx = 30;
+  const k = wheel(d, a);
+  rod(d, k.pin.x, k.pin.y, bx - 2.5, head - 4 + o);
+  d.r(L, head, 2, bed - head, K); d.r(R, head, 2, bed - head, K);
+  d.r(L - 1, head, R - L + 4, 3, K);
+  d.r(L - 1, bed, R - L + 4, 4, K);
+  d.r(L, -2, 2, 2, K); d.r(R, -2, 2, 2, K); d.r(L - 1, -1, 3, 1, K); d.r(R, -1, 3, 1, K);
+  const ly = bed - 3, lg = logAt(t, bx, LOG_X0);
+  d.fade(lg.a, () => log(d, lg.x, ly, bx));
+  blade(d, bx, head + 3, bed - 1, o);
+  d.r(bx, head - 3 + o, 2, 3 - o, K);
+  pinned(d, bx - 3, head - 5 + o, 6, 2);
+  crankPin(d, k.pin);
+  hand(d, k);
+}
+
+// --- the press, as built (render/after/stations.js, the same numbers) ----------
+const PR = { postL: 10, postR: 22, headY: -14, scX: 15, scW: 3, plX: 12, plW: 9, sheetY: -4, bodyX: 26 };
+const PR_SEQ = [0, 0, 1, 2, 2, 2, 1, 0], PRESS_T = 2.8;
+function press(d, t) {
+  const u = Math.max(0, t), ph = u / PRESS_T - Math.floor(u / PRESS_T), drop = PR_SEQ[Math.floor(ph * 8)];
+  d.r(PR.postL, -3, PR.postR - PR.postL + 1, 2, K);
+  d.r(PR.plX, PR.sheetY, PR.plW, 1, K); d.px(PR.plX * P + 2, PR.sheetY * P + 2, PR.plW * P - 4, P - 4, W);
+  const plY = -8 + drop, scTop = plY - 10;
+  d.r(PR.scX, scTop, PR.scW, 10, K);
+  for (let j = 1; j < 9; j += 1.5) { const y0 = (scTop + j) * P; for (let i = 2; i < PR.scW * P - 2; i++) d.px(PR.scX * P + i, Math.round(y0 - i / 3), 1, 2, W); }
+  d.r(PR.scX - 1, scTop - 1, PR.scW + 2, 1, K);
+  d.r(PR.postL, PR.headY, 1, -3 - PR.headY, K); d.r(PR.postR, PR.headY, 1, -3 - PR.headY, K);
+  d.r(PR.postL - 1, -1, 2, 1, K); d.r(PR.postR, -1, 2, 1, K);
+  d.r(PR.postL - 1, PR.headY, PR.postR - PR.postL + 3, 2, K);
+  d.r(PR.plX, plY, PR.plW, 2, K);
+  const barY = plY - 3, bx0 = PR.scX - 1, bx1 = PR.bodyX;
+  d.px(PR.postR * P - 2, barY * P - 2, P + 4, P + 4, W);
+  d.r(bx0, barY, bx1 - bx0, 1, K);
+  const knobY = drop === 2 ? -4 : -5;
+  d.line(bx1 - 1.25, barY + 1, bx1 - 1.25, knobY, 3, K, false);
+  d.r(bx1 - 2, knobY, 2, 2, K);
+  d.r(PR.bodyX, -1, 3, 1, K);
+  d.body(PR.bodyX, -4, 0, drop === 2);
+}
+
+// --- the workshop's shed, at rest (render/after/stations.js) -------------------
+function signBlank(d, x0, y0 = -8) { d.r(x0, y0, 6, 4, K); d.cut(x0, y0, 6, 4); d.px(x0 * P + 6, y0 * P + 7, 22, 3, K); d.px(x0 * P + 6, y0 * P + 13, 14, 3, K); }
+function shed(d) {
+  d.r(5, -18, 21, 1, K);
+  d.r(7, -19, 17, 1, K); d.r(10, -20, 11, 1, K); d.r(13, -21, 5, 1, K);
+  d.px(11 * P + 2, -20 * P + 2, 9 * P - 4, P + 4, W);
+  d.px(12 * P + 2, -20 * P + 5, 7 * P - 4, 2, K);
+  d.r(6, -17, 19, 17, K); d.r(8, -16, 15, 16, W);
+  d.r(9, -4, 11, 2, K); d.r(10, -2, 2, 2, K); d.r(17, -2, 2, 2, K);
+  signBlank(d, 11);
+  d.r(20, -6, 3, 6, K);
+  for (const y of [-5, -3, -1]) d.px(20 * P + 3, y * P + 1, 3 * P - 6, 2, W);
+  d.r(15, -11, 2, 3, K); d.px(17 * P, -10 * P + 1, 3 * P + 2, 4, K);
+}
+
+// ---------------------------------------------------------------------------
+// The three piles. Each has eight loads (two a band), slots in pile cells
+// (x across from PILE_X, y the top row), what a load looks like carried on a
+// head, and the order the builders take them in.
+// ---------------------------------------------------------------------------
+// A plank: six cells, a cell deep, pale wood in an ink rim (the timber pile's
+// plank). A block: two by two, ink with a grey face and a white check.
+const plank = (d, x, y, w = 6) => { d.px(x * P, y * P, w * P, P, K); d.px(x * P + 2, y * P + 2, w * P - 4, P - 4, 4); };
+const block = (d, x, y) => { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, 6); d.px(x * P + 4, y * P + 4, 4, 4, W); };
+// A crate: three by three, ink, a pale grey face slatted across in ink.
+const crate = (d, x, y) => { d.r(x, y, 3, 3, K); d.cut(x, y, 3, 3, 3); d.px(x * P + 2, y * P + 6, 3 * P - 4, 2, K); d.px(x * P + 2, y * P + 10, 3 * P - 4, 2, K); };
+// A board of the kit: ten cells long and a cell deep, every one the same,
+// pale in ink with its end grain darker, so a stack of them is a ruler.
+const panel = (d, x, y) => { d.r(x, y, 10, 1, K); d.px(x * P + 2, y * P + 2, 10 * P - 4, P - 4, 4); d.px(x * P + 2, y * P + 2, P - 2, P - 4, 6); d.px((x + 9) * P, y * P + 2, P - 2, P - 4, 6); };
+// The tarp, folded: three cells by one, mid grey in ink.
+const tarpFold = (d, x, y) => { d.r(x, y, 3, 1, K); d.px(x * P + 2, y * P + 2, 3 * P - 4, P - 4, 6); };
+
+const TAKES = [
+  {
+    id: 'a', name: 'planks and blocks',
+    say: 'The camp\'s own timber: planks six cells long stacked staggered, as on the saw mill\'s timber pile, and two-cell blocks stacked beside and on top. A loose builder\'s heap; what is left reads as a count of things, not a height.',
+    slots: [
+      { x: 0, y: -1, k: 'plank' }, { x: 0.5, y: -2, k: 'plank' }, { x: 7, y: -2, k: 'block' }, { x: 9, y: -2, k: 'block' },
+      { x: 0, y: -3, k: 'plank' }, { x: 8, y: -4, k: 'block' }, { x: 0.5, y: -4, k: 'plank' }, { x: 2, y: -6, k: 'block' }
+    ],
+    order: [7, 6, 5, 4, 3, 2, 1, 0],
+    drawSlot(d, s, i, t) { if (s.k === 'plank') plank(d, PILE_X + s.x, s.y); else block(d, PILE_X + s.x, s.y); },
+    carried(d, x, s) { if (s.k === 'plank') plank(d, x - 1.5, -4); else block(d, x + 0.5, -5); }
+  },
+  {
+    id: 'b', name: 'crates under a tarp',
+    say: 'Seven crates, four and three, and a tarp brought last and thrown over them, tied at the foot. The first builder folds the tarp back to the pile\'s foot; it goes up with the last band (the shed\'s roof cloth) so nothing is left behind.',
+    slots: [
+      { x: 0, y: -3, k: 'crate' }, { x: 3, y: -3, k: 'crate' }, { x: 6, y: -3, k: 'crate' }, { x: 9, y: -3, k: 'crate' },
+      { x: 1.5, y: -6, k: 'crate' }, { x: 4.5, y: -6, k: 'crate' }, { x: 7.5, y: -6, k: 'crate' }, { x: 0, y: 0, k: 'tarp' }
+    ],
+    order: [6, 5, 4, 3, 2, 1, 0, 7],
+    drawSlot(d, s, i, t, st) {
+      if (s.k === 'crate') { crate(d, PILE_X + s.x, s.y); return; }
+    },
+    carried(d, x, s) { if (s.k === 'crate') crate(d, x, -6); else tarpFold(d, x, -4); },
+    // The tarp over the pile: thrown on it whole, then folded to the foot
+    // when the build starts. Drawn over the crates.
+    over(d, t, sch, alphaOf) {
+      const on = alphaOf(7), fold = ramp(t, sch.TB, 0.6), gone = sch.itemPick(7) != null ? 1 - ramp(t, sch.itemPick(7), 0.4) : 1;
+      if (on <= 0) return;
+      // draped over the crates that are left: the cap over the top row, the
+      // skirt down the bottom row's ends
+      d.fade(on * (1 - fold), () => {
+        const x = PILE_X;
+        // ink first, the grey sheet inside it: the cap over the top tier,
+        // stepping out a cell to the skirts that hang down the bottom row's ends
+        d.r(x + 1, -7, 10, 4, K); d.r(x, -4, 12, 3, K);
+        d.px((x + 1) * P + 2, -7 * P + 2, 10 * P - 4, 4 * P - 2, 6);
+        d.px(x * P + 2, -4 * P + 2, 12 * P - 4, P - 2, 6);
+        d.px(x * P + 2, -3 * P, P - 4, 2 * P - 2, 6); d.px((x + 11) * P + 2, -3 * P, P - 4, 2 * P - 2, 6);
+        d.px((x + 1) * P, -3 * P, 10 * P, 2 * P, W);              // open under the skirt: the bottom crates show
+        for (let i = 0; i < 4; i++) crate(d, x + i * 3, -3);
+        d.px(x * P, -3 * P, 2, 2 * P, K); d.px((x + 12) * P - 2, -3 * P, 2, 2 * P, K);
+        d.px((x + 6) * P - 1, -7 * P + 2, 2, 4 * P - 2, W);        // the fold down its middle
+        d.px((x + 2) * P, -5 * P, 8 * P, 2, K);                    // the cord round it
+      });
+      d.fade(on * fold * gone, () => tarpFold(d, PILE_X + 12, -1));
+    }
+  },
+  {
+    id: 'c', name: 'the kit, a ruler of boards',
+    say: 'My idea: the station comes as a kit of eight equal boards, stacked square on the floor, a board a load. The stack is a ruler: eight boards, eight rows, and each band that goes up takes two rows off the top, so the pile\'s height is exactly how much of the station is still to come.',
+    slots: [0, 1, 2, 3, 4, 5, 6, 7].map(i => ({ x: 0, y: -1 - i, k: 'panel' })),
+    order: [7, 6, 5, 4, 3, 2, 1, 0],
+    drawSlot(d, s) { panel(d, PILE_X + s.x, s.y); },
+    carried(d, x) { panel(d, x - 3.5, -4); }
+  }
+];
+
+// ---------------------------------------------------------------------------
+// The schedule: every body and every load as a pure function of the clock,
+// so the scrubber can stand anywhere. t = 0 is the order on the shack.
+// ---------------------------------------------------------------------------
+const V = 10;                    // a walk, cells a second
+const XS = COLS + 3;             // off the view's right, toward the shack and the camp
+const DROP = 0.5, PICK = 0.4, LAY = 0.4, HOLD = 1, PREP = 0.8;
+const CARRIERS = 4, LOADS = 8;
+function track() {
+  const k = [];
+  return {
+    k,
+    at(t, x) { k.push([t, x]); return t; },
+    walk(t, x0, x1) { k.push([t, x0]); const t1 = t + Math.abs(x1 - x0) / V; k.push([t1, x1]); return t1; },
+    x(t) {
+      if (t <= k[0][0]) return k[0][1];
+      for (let i = 1; i < k.length; i++) if (t <= k[i][0]) { const [t0, x0] = k[i - 1], [t1, x1] = k[i]; return t1 === t0 ? x1 : x0 + (x1 - x0) * (t - t0) / (t1 - t0); }
+      return k[k.length - 1][1];
+    }
+  };
+}
+function schedule(take) {
+  const bodies = [], loads = [];
+  const DROP_X = PILE_X + 12;
+  // The carriers: four members out of the camp, two trips each, a load a trip.
+  for (let c = 0; c < CARRIERS; c++) bodies.push({ tr: track(), carry: [] });
+  for (let i = 0; i < LOADS; i++) {
+    const c = i % CARRIERS, trip = Math.floor(i / CARRIERS), b = bodies[c];
+    const t0 = c * 1.2 + trip * (2 * (XS - DROP_X) / V + DROP);
+    const tDrop = b.tr.walk(t0, XS, DROP_X);
+    loads.push({ i, c, t0, tDrop });
+    b.carry.push({ i, from: t0, until: tDrop + DROP, up: null, down: tDrop });
+    const last = trip === Math.ceil(LOADS / CARRIERS) - 1;
+    if (!(last && c < 2)) b.tr.walk(tDrop + DROP, DROP_X, XS);       // the first two stay on to build
+    else b.tr.at(tDrop + DROP, DROP_X + (c ? 3 : 0));
+  }
+  const pileDone = Math.max(...loads.map(l => l.tDrop + DROP));
+  const TB = pileDone + HOLD;                                       // the build starts
+  // The builders: the first two carriers, two loads a band, side by side.
+  const pick = new Map(), lay = new Map(), bandAt = [];
+  const PICK_X = [PILE_X - 3, PILE_X + 12], LAY_X = [FOOT.shed[0] - 4, FOOT.shed[1] + 1];   // a builder each side of the rising shed
+  let t = TB + PREP, pos = [DROP_X, DROP_X + 3];
+  for (let band = 0; band < BANDS; band++) {
+    const ends = [];
+    for (let j = 0; j < 2; j++) {
+      const b = bodies[j], item = take.order[band * 2 + j];
+      let u = b.tr.walk(t + j * 0.3, pos[j], PICK_X[j]);
+      pick.set(item, u); b.tr.at(u + PICK, PICK_X[j]);
+      u = b.tr.walk(u + PICK, PICK_X[j], LAY_X[j]);
+      lay.set(item, u); b.tr.at(u + LAY, LAY_X[j]);
+      b.carry.push({ i: item, from: pick.get(item), until: u + LAY, up: pick.get(item), down: u });
+      pos[j] = LAY_X[j]; ends.push(u);
+    }
+    bandAt.push(Math.max(...ends));
+    t = Math.max(...ends) + LAY + 0.6;
+  }
+  const builtAt = bandAt[BANDS - 1] + BAND_FADE;
+  // Home: back the way they came, toward the shack.
+  let END = 0;
+  for (let j = 0; j < 2; j++) END = Math.max(END, bodies[j].tr.walk(builtAt - 1 + j * 0.4, pos[j], XS));
+  return {
+    bodies, loads, TB, pileDone, bandAt, builtAt, END: END + 0.5,
+    itemPick: i => pick.get(i), itemLay: i => lay.get(i)
+  };
+}
+// How much of load i is on the pile at t.
+function pileAlpha(sch, i, t) {
+  const l = sch.loads[i], p = sch.itemPick(i);
+  return ramp(t, l.tDrop, DROP) * (p == null ? 1 : 1 - ramp(t, p, PICK));
+}
+function carryAlpha(c, t) {
+  if (t < c.from || t > c.until) return 0;
+  return (c.up == null ? 1 : ramp(t, c.up, PICK)) * (1 - ramp(t, c.down, c.until - c.down));
+}
+function phaseOf(sch, t) {
+  if (t < 0) return 'before ordering: floor only';
+  if (t < sch.pileDone) return 'carriers bring the pile';
+  if (t < sch.TB + PREP) return 'the pile complete';
+  for (let k = 0; k < BANDS; k++) if (t < sch.bandAt[k] + BAND_FADE) return `builders raise band ${k + 1} of ${BANDS}`;
+  return 'complete';
+}
+
+// ---------------------------------------------------------------------------
+// The floor: the line every body stands on, puffs one or two cells high,
+// pressed flat under a station. Under the spot and the pile they are
+// pressed flat as the pile lands and the first band goes in, faded, never
+// popped.
+// ---------------------------------------------------------------------------
+const EL = Array.from({ length: COLS }, (_, j) => { const h = hash(Math.floor(j / 3) * 3.7 + 1); return h < 0.55 ? 0 : h < 0.85 ? 1 : 2; });
+function pressed(j, sch, t) {
+  for (const k of ['mill', 'press']) if (j >= FOOT[k][0] - 1 && j <= FOOT[k][1] + 1) return 1;
+  if (j >= GROUND[0] && j < GROUND[1] + 4) return   // a pile twelve wide overruns the ground by a few cells
+    t < 0 ? 0 : ramp(t, sch.loads[0].tDrop, DROP);
+  return 0;
+}
+function floor(g, floorPx, sch, t) {
+  const fr = (x, y, w, h, tone) => { g.fillStyle = PAL[tone]; g.fillRect(x, y, w, h); };
+  const line = (el, j0, j1, tone) => {
+    for (let j = j0; j < j1; j++) {
+      const x = j * P, y = floorPx - el(j) * P, l = el(j - 1), r = el(j + 1), v = el(j);
+      const cutL = l < v, cutR = r < v;
+      fr(x + (cutL ? 2 : 0), y, P - (cutL ? 2 : 0) - (cutR ? 2 : 0), 2, tone);
+      if (j > 0 && v !== l) fr(v > l ? x : x - 2, floorPx - Math.max(v, l) * P + 2, 2, Math.abs(v - l) * P, tone);
+    }
+  };
+  // A column fully pressed is flat; one being pressed is its puff fading out
+  // over the flat line fading in; its neighbors read it as unpressed.
+  const prof = i => { const c = Math.max(0, Math.min(COLS - 1, i)); return pressed(c, sch, t) >= 1 ? 0 : EL[c]; };
+  for (let j = 0; j < COLS; j++) {
+    const f = pressed(j, sch, t), was = g.globalAlpha;
+    if (f <= 0 || f >= 1) line(prof, j, j + 1, 5);
+    else {
+      g.globalAlpha = 1 - f; line(prof, j, j + 1, 5);
+      g.globalAlpha = f; line(i => (i === j ? 0 : prof(i)), j, j + 1, 5);
+    }
+    g.globalAlpha = was;
+  }
+}
+// The contours want their own rows; drawn by shifting the floor's origin.
+function contours(g, floorPx) {
+  const fr = (x, y, w, h, tone) => { g.fillStyle = PAL[tone]; g.fillRect(x, y, w, h); };
+  for (const [row, tone, seed] of [[3, 2, 9], [5, 1, 21]]) {
+    const el = i => (hash(Math.floor(i / 4) * 5.3 + seed) < 0.5 ? 0 : 1), y0 = floorPx + row * P;
+    for (let j = 0; j < COLS; j++) {
+      const v = el(j), l = el(j - 1), r = el(j + 1), x = j * P, cutL = l < v, cutR = r < v;
+      fr(x + (cutL ? 2 : 0), y0 - v * P, P - (cutL ? 2 : 0) - (cutR ? 2 : 0), 2, tone);
+      if (v !== l) fr(v > l ? x : x - 2, y0 - P + 2, 2, P, tone);
+    }
+  }
+}
+// The optional mark, only while the shack's board is open: two floor-level
+// corners a cell up at the spot's ends, in the faintest grey.
+function hintMarks(d, a) {
+  d.fade(a, () => {
+    const [x0, x1] = FOOT.shed;
+    d.px(x0 * P, -2, 2 * P, 2, 4); d.px(x0 * P, -2 * P, 2, 2 * P, 4);
+    d.px((x1 - 1) * P, -2, 2 * P, 2, 4); d.px((x1 + 1) * P - 2, -2 * P, 2, 2 * P, 4);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// One frame of the stretch at one times
+// ---------------------------------------------------------------------------
+function scene(g, take, sch, t, hint) {
+  const floorPx = ROWS_UP * P, Wd = COLS * P, H = (ROWS_UP + ROWS_DOWN) * P;
+  g.globalAlpha = 1; g.fillStyle = PAL[W]; g.fillRect(0, 0, Wd, H);
+  floor(g, floorPx, sch, t);
+  contours(g, floorPx);
+  const at = ox => drawer(g, ox, floorPx), w0 = drawer(g, 0, floorPx);
+  const clock = t + 40;                       // the built stations run on their own
+  mill(at(MILL_OX), clock);
+  press(at(PRESS_OX), clock);
+  if (hint > 0) hintMarks(w0, hint * (t < 0 ? 1 : 1 - ramp(t, 0, 0.4)));
+  // The shed, a band at a time from the floor up, each fading in as it is laid.
+  if (t >= 0) for (let k = 0; k < BANDS; k++) {
+    const a = ramp(t, sch.bandAt[k], BAND_FADE);
+    if (a <= 0) continue;
+    const top = Math.round(SHED_ROWS * (k + 1) / BANDS), bot = Math.round(SHED_ROWS * k / BANDS);
+    g.save(); g.beginPath(); g.rect((FOOT.shed[0] - 4) * P, floorPx - top * P, (FOOT.shed[1] - FOOT.shed[0] + 8) * P, (top - bot) * P); g.clip();
+    g.globalAlpha = a; shed(at(SHED_OX)); g.restore();
+  }
+  // The pile, slot by slot.
+  const alphaOf = i => (t < 0 ? 0 : pileAlpha(sch, i, t)), h0 = drawer(g, 0, floorPx, true);
+  for (const dd of [w0]) {
+    if (take.under) take.under(dd, alphaOf, t, sch);
+    take.slots.forEach((s, i) => { const a = alphaOf(i); if (a > 0 && s.k !== 'tarp') dd.fade(a, () => take.drawSlot(dd, s, i, t)); });
+    if (take.over) take.over(dd, t, sch, alphaOf);
+  }
+  // The bodies and what they carry: a load on the head.
+  if (t >= 0) for (const b of sch.bodies) {
+    const x = Math.round(b.tr.x(t));
+    if (x > COLS + 1) continue;
+    w0.body(x, -3);
+    for (const dd of [h0, w0]) for (const c of b.carry) { const a = carryAlpha(c, t); if (a > 0) dd.fade(a, () => take.carried(dd, x, take.slots[c.i])); }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The page
+// ---------------------------------------------------------------------------
+const PICK_ID = 'a';
+const ZOOM = { x0: 62, x1: 127, y0: -27, y1: 5 };       // the three-times crop, in cells
+const views = [];
+let T = -3, PLAYING = false, SPEED = 2, HINT = false;
+let SCH = null;
+function build() {
+  const host = document.getElementById('takes');
+  for (const take of TAKES) {
+    take.sch = schedule(take);
+    const box = document.createElement('div'); box.className = 'take' + (take.id === PICK_ID ? ' picked' : ''); box.id = 'take-' + take.id;
+    box.innerHTML = `<h3>${take.id} · <span class="ph">${take.name}</span>${take.id === PICK_ID ? ' <span class="ph">(pick)</span>' : ''}</h3>
+      <p><span class="ph">${take.say}</span></p>
+      <div class="scrollx"><figure><canvas class="one"></canvas><figcaption><span class="ph">one times, zoom one: the saw mill, the spot, the press</span></figcaption></figure></div>
+      <div class="scrollx"><figure><canvas class="three"></canvas><figcaption><span class="ph">three times, the spot and the pile</span></figcaption></figure></div>`;
+    host.appendChild(box);
+    views.push({ take, one: box.querySelector('canvas.one'), three: box.querySelector('canvas.three') });
+  }
+  SCH = TAKES[0].sch;
+  const scrub = document.getElementById('scrub');
+  scrub.max = Math.max(...TAKES.map(k => k.sch.END)).toFixed(2);
+  const jumps = document.getElementById('jumps');
+  for (const [name, at] of Object.entries(times())) {
+    const b = document.createElement('button'); b.innerHTML = `<span class="ph">${name}</span>`;
+    b.addEventListener('click', () => { PLAYING = false; setT(at); });
+    jumps.appendChild(b);
+  }
+}
+// The moments the snaps are taken at, off the schedule (the takes share it).
+function times() {
+  const s = SCH;
+  return {
+    'empty spot': -1,
+    'carriers bringing the pile': s.loads[5].tDrop + 0.25,
+    'the pile complete': s.TB,
+    'mid-build': s.bandAt[1] + BAND_FADE * 0.5 + 0.6,
+    'complete': s.END
+  };
+}
+function crop(src, dst, z, s = 3) {
+  const w = (z.x1 - z.x0) * P, h = (z.y1 - z.y0) * P;
+  if (dst.width !== w * s) { dst.width = w * s; dst.height = h * s; }
+  const g = dst.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.drawImage(src, z.x0 * P, (ROWS_UP + z.y0) * P, w, h, 0, 0, w * s, h * s);
+}
+function paint() {
+  for (const v of views) {
+    const cv = v.one; cv.width = COLS * P; cv.height = (ROWS_UP + ROWS_DOWN) * P;
+    scene(cv.getContext('2d'), v.take, v.take.sch, T, HINT ? 1 : 0);
+    crop(cv, v.three, ZOOM);
+  }
+  // The empty spot, both ways, before any order.
+  for (const [id, h] of [['empty-plain', 0], ['empty-hint', 1]]) {
+    const off = document.createElement('canvas'); off.width = COLS * P; off.height = (ROWS_UP + ROWS_DOWN) * P;
+    scene(off.getContext('2d'), TAKES[0], TAKES[0].sch, -1, h);
+    crop(off, document.querySelector(`#${id} canvas`), { x0: 44, x1: 132, y0: -24, y1: 3 }, 2);
+  }
+  document.getElementById('scrub').value = T;
+  document.getElementById('tv').textContent = T.toFixed(1) + ' s';
+  document.getElementById('phase').textContent = phaseOf(SCH, T);
+}
+function setT(t) { T = Math.max(-3, Math.min(+document.getElementById('scrub').max, t)); paint(); }
+let last = null;
+function frame(ts) {
+  if (PLAYING && last != null) {
+    T += Math.min(0.05, (ts - last) / 1000) * SPEED;
+    if (T >= SCH.END + 2) { T = SCH.END + 2; PLAYING = false; }
+    setT(T);
+  }
+  last = ts;
+  document.getElementById('play').innerHTML = `<span class="ph">${PLAYING ? 'pause' : 'play'}</span>`;
+  requestAnimationFrame(frame);
+}
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  PAL = t === 'dark' ? DARKG : GREY;
+  document.querySelectorAll('[data-theme-btn]').forEach(b => b.classList.toggle('on', b.dataset.themeBtn === t));
+  paint();
+}
+
+const PICK_LINE = 'take a, planks and blocks: it is the camp’s own timber (the saw mill’s planks, drawn as its timber pile draws them), it reads as building stuff at one times where the others read as goods or as a block, two shapes of load make the carry read as several trips, and the heap visibly loses things as the shed gains bands. Second: take c, the ruler, which says exactly how much is left but reads as one striped block. Weakest: take b, whose tarp is a step that carries no meaning and whose crates read as product, not as material.';
+const ROUND1 = [
+  'The pile stood in front of the rising shed (on the spot, as worded) and merged with its black bench into one jumble. It now stands on the station’s ground where its own sign pile will stand (after/place.js: the workshop’s ground is 37 cells, its pile at cell 28), clear of the drawing.',
+  'The paper halo that stands carried loads clear of the black shed also erased the floor line under the pile. The halo is on carried loads only.',
+  'Take b’s crates, cut white with an ink cross, read as four-paned windows: the pile looked like a little building. They are pale grey and slatted across.',
+  'Take b’s folded tarp landed on the shed’s wall. It folds to the pile’s far foot and goes up with the last band.',
+  'Take c’s solid ink panels with a white slot read as a radiator. They are pale boards with darker end grain, all the same, so the stack reads as a ruler.',
+  'The floor’s puffs under the pile were pressed flat and stayed flat after the pile was gone, a scar where nothing stands. The whole ground is pressed when the first load lands, faded, and stays pressed under the station.',
+  'A riser was missing where pressed floor met a puff: a hole in the line. Each column now reads its neighbors off one profile.',
+  'The carrying snap caught no carriers (they were off the crop), and the three-times crop ran past the page and was clipped. The moment is a set-down; the crop is sixty-five cells.',
+  'Builders laying from inside the shed’s open front read as part of its bench. They lay from either side of it.'
+];
+const ROUND2 = [
+  'Take c’s two sleepers read as bench legs at one times: the pile looked like a table. Gone; the boards stand on the floor.',
+  'Take b’s pile is twelve cells and ran past the ground’s end onto puffs. Moved a cell in and the pressing runs four cells past the ground. Not really fixed: the workshop’s 37-cell ground does not hold a 21-cell drawing and a 12-cell pile with room to walk between.',
+  'Unfixed, the owner’s call: the floor flattening across the ground as the first load lands is itself a visible change. It fades, and it says the ground is taken, but it is not nothing.',
+  'Unfixed, a page shortcut: a body standing off the pressed floor hides the puff behind it, so the line looks broken at its feet.',
+  'Unfixed: at one times a load on a head is a blob of one or two cells; the planks read, the blocks and crates barely.',
+  'Unfixed: the far builder walks the shed’s whole front, across the bench, to lay from its far side. Honest, busy. Both on the near side is the other option.',
+  'Unfixed, as in the game today: the top band goes in from a body on the floor eighteen rows below it, no scaffold; and bands are rows, so a band’s edge cuts the sign blank and the hammer through the middle while it fades.'
+];
+const CANNOT = [
+  'The real renderer: these cells are drawn by this page, not by render/after/stations.js, piles.js or floor.js. The camp\'s crowd behind the stations, the posts and the glyphs are left out; the floor is a simplified billow with still contours.',
+  'Where members really come from: here they walk in off the view\'s right, toward the shack. In the game a member steps out of the camp\'s crowd front nearest the site (after/build.js, campSpot), so the walk would be shorter and from behind.',
+  'How many hands: four carriers and two builders are this page\'s numbers. The game raises a station with one builder (or the pair off the pedestal); the carry is new.',
+  'Reach: a body is three cells and the shed is twenty-one; the top band goes in from the floor with no ladder or scaffold drawn, as it does in the game today.',
+  'Counts: nothing on the pile says how many loads are left, and the shack\'s board, its card and its price are not drawn.'
+];
+build();
+document.getElementById('pick-line').textContent = PICK_LINE;
+for (const [id, list] of [['round1', ROUND1], ['round2', ROUND2], ['cannot', CANNOT]]) document.getElementById(id).innerHTML = list.map(s => `<li><span class="ph">${s}</span></li>`).join('');
+setTheme(isDark() ? 'dark' : 'light');
+document.querySelectorAll('[data-theme-btn]').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.themeBtn)));
+document.getElementById('order').addEventListener('click', () => { setT(0); PLAYING = true; });
+document.getElementById('play').addEventListener('click', () => { if (T >= SCH.END + 2) setT(-3); PLAYING = !PLAYING; });
+document.getElementById('reset').addEventListener('click', () => { PLAYING = false; setT(-3); });
+const sp = document.getElementById('speed'), spv = document.getElementById('speed-v');
+const showSpeed = () => { SPEED = +sp.value; spv.textContent = SPEED + 'x'; };
+sp.addEventListener('input', showSpeed); showSpeed();
+document.getElementById('scrub').addEventListener('input', e => { PLAYING = false; setT(+e.target.value); });
+requestAnimationFrame(frame);
+window.__mock = { theme: setTheme, at: setT, play: p => { PLAYING = p; }, hint: h => { HINT = h; paint(); }, times, sch: () => SCH };
+</script>
+</body>
+</html>

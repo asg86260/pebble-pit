@@ -22,20 +22,17 @@
 // empties as the union wins, and the gates read off how empty it is
 // (`support`, the share walked out).
 //
-// God's pushback: the throne's speech, warned ahead, sweeping a band of files
-// and stripping every half-won soul in it back to pale -- a member is gone
-// from the yard by then and never un-made -- and knocking the signs in it
-// askew; and the wardens, walking rounds, tearing posters down and carrying
-// signs up the stair into the glare. Nobody fights them.
+// God's pushback: the throne's speech, warned ahead by his gaze settling on a
+// sign or a poster, burning it (docs/wave-act3-build.md, track B). Souls are
+// never knocked back and nobody walks rounds: the wardens are dropped.
 
 import { S } from '../state.js';
 import { P, RIM_PIECES, POSTER_CAP, CROWD_FILES, AFTER_CROWD, AFTER_FIRST_MEMBERS, AFTER_KIN_SHARE,
          AFTER_KIN_PIECES, AFTER_RISE_S, AFTER_SPREAD_HZ, AFTER_SIGN_INK_S, AFTER_POSTER_INK_S, AFTER_SPEECH_S,
-         AFTER_SPEECH_WARN_S, AFTER_SPEECH_FILES, AFTER_SPEECH_HOLD_S, AFTER_WARDENS, AFTER_WARDEN_REST_S,
-         AFTER_TEAR_S, AFTER_PULL_S, CROWD_X0, CROWD_PITCH } from '../config.js';
-import { arand, secs, walk, nextId } from './util.js';
+         AFTER_SPEECH_WARN_S, AFTER_BURN_S, CROWD_X0, CROWD_PITCH } from '../config.js';
+import { arand, secs, nextId } from './util.js';
 import { signReach, posterReach } from './levels.js';
-import { soulX, soulY, fileOf, rankOf, slotX, afterFloor, throneAt, stairFoot } from './place.js';
+import { soulX, soulY, fileOf, rankOf, slotX } from './place.js';
 
 const OUT = 9;           // a slot whose member walked out to the camp
 // The empty slot's value, read by the drawing (render/aftercrowd.js).
@@ -150,7 +147,7 @@ function spread(dt) {
   // to the full, while it stands straight.
   for (const s of A.signs) {
     s.age = (s.age || 0) + dt;
-    if (s.askew || s.pull != null) continue;
+    if (s.askew || s.pull != null || s.burnt != null) continue;
     s.acc = (s.acc || 0) + dt;
     const R = signReach(s.big);
     while (s.acc >= AFTER_SIGN_INK_S) {
@@ -165,7 +162,7 @@ function spread(dt) {
   // Posters: the poster's reach of souls down the file passing its wall, a
   // piece each AFTER_POSTER_INK_S, to half.
   for (const p of A.posters) {
-    if (p.torn != null) continue;
+    if (p.torn != null || p.burnt != null) continue;
     p.acc = (p.acc || 0) + dt;
     const R = posterReach(p.big);
     while (p.acc >= AFTER_POSTER_INK_S) {
@@ -181,92 +178,53 @@ function spread(dt) {
 }
 
 // --- God's pushback --------------------------------------------------------------------
-// The speech's state: when the next one comes, the files it sweeps, and when
-// the last was held (for the drawing). Its period halves past the slowdown.
+// The throne's speech: warned AFTER_SPEECH_WARN_S ahead by God's gaze
+// settling on one sign or poster, then that one burnt -- charring away over
+// AFTER_BURN_S, inking nobody from the moment it catches, and gone. Nothing
+// else: a soul is never knocked back, a rim never stripped. Its period
+// halves past the slowdown. With nothing standing to burn when the warning
+// would start, it is a roar and nothing more, and the next is timed.
+//
+// `S.after.speech` is { next, target, burnt }: when it falls, what it is
+// aimed at once warned ({ kind: 'sign' | 'poster', id }), and the last one
+// burnt ({ at, kind, id }), for the drawing.
 const speechEvery = () => AFTER_SPEECH_S * (S.after.gate >= 2 ? 0.5 : 1);
-export const speechWarned = () => { const sp = S.after?.speech; return !!sp && S.after.t >= sp.next - AFTER_SPEECH_WARN_S; };
-export const speechHeld = () => { const sp = S.after?.speech; return !!sp && sp.held != null && S.after.t - sp.held < AFTER_SPEECH_HOLD_S; };
+export const speechWarned = () => { const sp = S.after?.speech; return !!sp && !!sp.target && S.after.t >= sp.next - AFTER_SPEECH_WARN_S; };
+// The thing the speech is aimed at, while warned: a sign or a poster.
+export function speechTarget() {
+  const A = S.after, sp = A?.speech;
+  if (!sp || !sp.target || !speechWarned()) return null;
+  const list = sp.target.kind === 'sign' ? A.signs : A.posters;
+  return list.find(q => q.id === sp.target.id) || null;
+}
+const standing = q => q.burnt == null && q.torn == null && q.pull == null;
+function pickTarget() {
+  const A = S.after;
+  const all = [...A.signs.filter(standing).map(q => ({ kind: 'sign', id: q.id })),
+               ...A.posters.filter(standing).map(q => ({ kind: 'poster', id: q.id }))];
+  return all.length ? all[Math.floor(arand() * all.length)] : null;
+}
 function stepSpeech() {
   const A = S.after;
-  if (!A.speech) A.speech = { next: A.t + speechEvery(), f0: Math.floor(arand() * (CROWD_FILES - AFTER_SPEECH_FILES)), held: null };
+  if (!A.speech) A.speech = { next: A.t + speechEvery(), target: null, burnt: null };
   const sp = A.speech;
+  // A burnt thing gone once its char has faded.
+  A.signs = A.signs.filter(q => q.burnt == null || A.t - q.burnt < AFTER_BURN_S);
+  A.posters = A.posters.filter(q => q.burnt == null || A.t - q.burnt < AFTER_BURN_S);
+  if (A.t < sp.next - AFTER_SPEECH_WARN_S) return;
+  // Aimed as the warning starts, and again if its mark went first.
+  const list = t => (t.kind === 'sign' ? A.signs : A.posters);
+  if (!sp.target || !list(sp.target).some(q => q.id === sp.target.id && standing(q))) sp.target = pickTarget();
   if (A.t < sp.next) return;
-  const a = souls(), n = a.length;
-  for (let r = 0; r * CROWD_FILES < n; r++)
-    for (let f = sp.f0; f < sp.f0 + AFTER_SPEECH_FILES; f++) {
-      const i = r * CROWD_FILES + f;
-      if (i < n && a[i] > 0 && a[i] < RIM_PIECES) { a[i] = 0; field.dirty = true; }
-    }
-  for (const s of A.signs) if (s.f >= sp.f0 && s.f < sp.f0 + AFTER_SPEECH_FILES) s.askew = true;
-  sp.held = A.t; sp.swept = sp.f0;          // the band it swept, for the drawing while it is held
+  if (sp.target) {
+    const q = list(sp.target).find(o => o.id === sp.target.id);
+    if (q) { q.burnt = A.t; sp.burnt = { at: A.t, kind: sp.target.kind, id: q.id }; }
+  }
+  sp.target = null;
   sp.next = A.t + speechEvery();
-  sp.f0 = Math.floor(arand() * (CROWD_FILES - AFTER_SPEECH_FILES));
 }
 
-// The wardens on rounds: their number by the gate reached, each walking down
-// from the throne, to a poster (torn down where it hangs) or a sign (pulled up
-// and carried up the stair into the glare, where it fades), and resting at
-// the stair's foot between rounds. A round goes only after a thing that has
-// stood a rest's length: a warden rested and waiting would otherwise be on
-// every new sign the moment it was planted, and a lone sign, the opening's
-// only kind, would be pulled before it had closed a single rim.
-export const wardensDue = () => AFTER_WARDENS[Math.min(AFTER_WARDENS.length - 1, S.after.gate)];
-const noticed = thing => (thing.age ?? Infinity) >= AFTER_WARDEN_REST_S;
-function pickRound(w) {
-  const A = S.after;
-  const posters = A.posters.filter(p => p.torn == null && noticed(p) && !A.wardens.some(o => o !== w && o.goal === 'poster' && o.target === p.id));
-  const signs = A.signs.filter(s => s.pull == null && noticed(s) && !A.wardens.some(o => o !== w && o.goal === 'sign' && o.target === s.id));
-  if (!posters.length && !signs.length) return false;
-  const takeSign = signs.length && (!posters.length || arand() < 0.5);
-  if (takeSign) { const s = signs[Math.floor(arand() * signs.length)]; w.goal = 'sign'; w.target = s.id; }
-  else { const p = posters[Math.floor(arand() * posters.length)]; w.goal = 'poster'; w.target = p.id; }
-  w.state = 'go';
-  return true;
-}
-function stepWarden(w, dt) {
-  const A = S.after, floor = afterFloor(), th = throneAt();
-  w.t = (w.t || 0) + dt;
-  if (w.state === 'rest') {
-    walk(w, stairFoot(), floor, dt);
-    if (w.t >= AFTER_WARDEN_REST_S && pickRound(w)) w.t = 0;
-    return;
-  }
-  if (w.state === 'go') {
-    const p = w.goal === 'poster' ? A.posters.find(q => q.id === w.target && q.torn == null) : null;
-    const s = w.goal === 'sign' ? A.signs.find(q => q.id === w.target && q.pull == null) : null;
-    if (!p && !s) { w.state = 'rest'; w.t = 0; return; }
-    const tx = p ? slotX(p.slot) : soulX(s.f) + P / 2, ty = p ? floor : soulY(s.r) + P * 2;
-    if (walk(w, tx, ty, dt)) { w.state = p ? 'tear' : 'pull'; w.t = 0; }
-    return;
-  }
-  if (w.state === 'tear') {
-    const p = A.posters.find(q => q.id === w.target && q.torn == null);
-    if (!p) { w.state = 'rest'; w.t = 0; return; }
-    if (w.t >= AFTER_TEAR_S) { p.torn = A.t; w.state = 'rest'; w.t = 0; }
-    return;
-  }
-  if (w.state === 'pull') {
-    const s = A.signs.find(q => q.id === w.target);
-    if (!s) { w.state = 'rest'; w.t = 0; return; }
-    if (s.pull == null) s.pull = A.t;
-    if (w.t >= AFTER_PULL_S) {
-      A.signs = A.signs.filter(q => q !== s);
-      w.load = 'sign'; w.state = 'carry'; w.t = 0;
-    }
-    return;
-  }
-  if (w.state === 'carry') {
-    if (walk(w, th.x, th.y, dt)) { w.load = null; w.dropped = A.t; w.state = 'rest'; w.t = 0; }
-  }
-}
-function stepWardens(dt) {
-  const A = S.after, th = throneAt();
-  while (A.wardens.length < wardensDue())
-    A.wardens.push({ id: nextId(), x: th.x, y: th.y, state: 'rest', t: 0, goal: null, target: null, load: null, dropped: null, face: -1 });
-  for (const w of A.wardens) stepWarden(w, dt);
-}
-
-// One frame of the crowd, the members walking out, the speech and the wardens.
+// One frame of the crowd, the members walking out, and the speech.
 let riseIn = AFTER_RISE_S;
 export function stepUnion(c) {
   const dt = secs(c);
@@ -277,6 +235,5 @@ export function stepUnion(c) {
   riseIn -= dt;
   if (riseIn <= 0) { riseIn = AFTER_RISE_S; addSoul(arand() < AFTER_KIN_SHARE ? 1 : 0); }
   stepSpeech();
-  stepWardens(dt);
   syncRims();
 }

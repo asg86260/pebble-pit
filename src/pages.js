@@ -6,6 +6,7 @@
 // import ring that loads this.
 
 import { station } from './stations.js';
+import { boardOf } from './boardrows.js';
 
 const pageId = key => station(key)?.page || `${key}board`;
 const shopId = key => station(key)?.shop || `${key}shop`;
@@ -21,7 +22,7 @@ export function pageOf(key) {
   el.hidden = true;
   const title = document.createElement('div');
   title.className = 'title';
-  title.textContent = station(key)?.name || key;
+  title.textContent = station(key)?.name || boardOf(key)?.name?.() || key;
   const rows = document.createElement('div');
   rows.id = shopId(key);
   rows.className = 'rows';

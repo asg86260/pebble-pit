@@ -707,6 +707,19 @@ body.still #scroller { scroll-behavior: auto; }
   -webkit-mask: var(--scale-mark) 0 0 / 100% 100% no-repeat;
   mask: var(--scale-mark) 0 0 / 100% 100% no-repeat;
 }
+/* Act 3's coins: a flag for rebel, two planks for timber, a sheet with its
+   corner turned for paper, at the scale's size and drawn its way, from
+   AFTER_COIN_MARKS in config/after.js, handed over by board.js. Ink only:
+   red stays the machines'. */
+.rebel, .timber, .paper {
+  display: inline-block;
+  vertical-align: baseline;
+  width: 9px; height: 9px;
+  background: currentColor;
+}
+.rebel { -webkit-mask: var(--rebel-mark) 0 0 / 100% 100% no-repeat; mask: var(--rebel-mark) 0 0 / 100% 100% no-repeat; }
+.timber { -webkit-mask: var(--timber-mark) 0 0 / 100% 100% no-repeat; mask: var(--timber-mark) 0 0 / 100% 100% no-repeat; }
+.paper { -webkit-mask: var(--paper-mark) 0 0 / 100% 100% no-repeat; mask: var(--paper-mark) 0 0 / 100% 100% no-repeat; }
 
 /* What the row gives you. It sits left in its own column rather than right
    against the price, because every one of them starts with a plus and a column
@@ -2439,6 +2452,10 @@ body.still .messtag { transition: none; }
 /* A scene holding the yard: the card fades out where it stands and back in
    after (objline.js), as the letterbox steps in and out. */
 #objective.scened { opacity: 0; transition: opacity .6s ease; }
+/* Up in act 3 the yard's line and its call to build the bench are not the
+   place's: faded out where they stand, untouchable, and back on the way down. */
+#objective, #raise { transition: opacity .6s ease; }
+#objective.away, #raise.away { opacity: 0 !important; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { #objective, #objective.going { transition: none; translate: none; } }
 
 /* The rescue's sheet leaving with the second half on (ending.js): it rises

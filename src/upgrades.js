@@ -260,6 +260,10 @@ export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 // or a sheet shutting on a bill you cannot pay looks like it took the money.
 export function buy(u) {
   if (u.job || u.dial) return false;
+  // A row bought by its own act's purse (act 3's cards: after/rows.js
+  // `buyAfter`) is pressed on the yard's board the way any row is, and paid
+  // there; the yard's boards being shut is not about it.
+  if (u.buyVia) return u.buyVia(u);
   // The yard's boards are shut while the two of them are dead in the cloud
   // (act 3, call 5): the yard runs on the rungs it had. Open again in act 4.
   if (boardsShut()) return false;   // a job row moves bodies and a dial sets a number
