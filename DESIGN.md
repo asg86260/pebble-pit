@@ -20844,8 +20844,21 @@ act3-union2, act3-level and act3-flaglogo cards; `docs/mocks/act3-level-2026-10-
 - **God's crowd stands all round the throne**, either side of his stepped
   base and out in front, with an aisle up the middle for the line, packed
   row behind row so no floor shows through it until it thins.
-- Gaps still open: how far apart the zones sit (the walk between them),
-  and the workshops' own drawings (the camp card).
+- **The camps are far apart for the eye, not for the walk** (the board's
+  act3-campgap2). The camera stays the game's: it slides sideways and never
+  turns. The workshops and the union's camp stand on the near layer
+  (speed 1); God's camp stands three times as deep and slides at a third
+  of the speed, drawn as a giant seen from afar -- still the largest,
+  darkest thing on screen, his crowd a band at his feet. The way between
+  runs back into depth, so carriers and won souls shrink and slow as they
+  go, each at its own depth's speed: the walk is short in the yard and
+  long to the eye, and the act's pace is not retuned. A wide gap at one
+  depth was the alternative, and it broke the act -- a carrier's round
+  trip outlasted God's speech. The camps are placed so their layers would
+  only meet past the screen's right edge; the union's camp is always left
+  of the throne. The union's crowd is drawn light (loose rows, near souls
+  a grey body under an ink cap) so God stays the eye's anchor.
+- Gaps still open: the workshops' own drawings (the camp card).
 
 **God's camp stands in the clouds (design, not built; the owner,
 2026-10-19).** Voted a mock at a time (the board's act3-cloudfloor,
