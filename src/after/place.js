@@ -14,7 +14,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PEDESTAL_H, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
-         AFTER_SKY_LO, AFTER_SKY_HI, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL } from '../config.js';
+         AFTER_SKY_LO, AFTER_SKY_HI, AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL } from '../config.js';
 
 import { S } from '../state.js';
 import { ART as BASE_ART } from './art.js';
@@ -110,6 +110,24 @@ export const campSpot = (to = null) => {
 // Where across it the camera opens: just past the pedestal, so the pair and
 // the front of the crowd are what the act opens on.
 export const afterOpenX = () => { const b = stationBox('pedestal'); return snap(b.x + b.w + P * 8); };
+// --- the level's three zones ---------------------------------------------------------
+// (DESIGN.md, "The level, the two crowds and the flags"; config/after.js lays
+// them out.) Read off where things stand, so a station added or moved
+// carries the zones with it: the workshops end where the last station's
+// ground but the pedestal's does; God's camp starts a file short of his
+// crowd's first; the union's camp is the floor round the pedestal, the open
+// floor between it and each neighbor.
+export const workshopsX1 = () => Math.max(...Object.keys(AFTER_STATIONS).filter(k => k !== 'pedestal').map(k => stationX0(k) + ART[k].ground * P));
+export const godX0 = () => CROWD_X0 - CROWD_PITCH;
+export const unionX0 = () => workshopsX1() + AFTER_ZONE_GAP * P;
+export const unionX1 = () => unionX0() + AFTER_UNION_W * P;
+const pedMid = () => stationX0('pedestal') + ART.pedestal.ground * P / 2;
+// Where a soul won over in God's crowd ends its drift across to the union's
+// camp (render/aftercrowd.js): over the floor on God's side of the pedestal,
+// a body's height up. One point, so the union's own crowd, when it is
+// drawn, takes them in there.
+export const unionJoinAt = () => ({ x: snap(pedMid() + P * 12), y: afterFloor() - P * 6 });
+
 // The place as the camera reads it (acts.js, `PLACES`).
 export const AFTER_PLACE = { x0: afterX0, x1: afterX1, top: afterTop, floor: afterFloor, open: afterOpenX,
                              margin: AFTER_FLOOR_MARGIN, h: AFTER_H };
