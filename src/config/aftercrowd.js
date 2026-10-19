@@ -10,6 +10,17 @@ import { P } from './yard.js';
 // (after/place.js, `campSpot`).
 export const OURS_X0 = P * 14;
 
+// --- the level's three zones (DESIGN.md, "The level, the two crowds and the flags") ---
+// Left to right: the workshops, the union's camp, God's camp, this many cells
+// of open floor between each. Every member and carrier walks it, so it is
+// the act's pace as much as its picture: at 40 cells the strike no longer
+// comes inside test/after-playthrough's stretch, and at 120 the speech burns
+// each sign before it wins anyone. Wider wants the pace moved with it.
+export const AFTER_ZONE_GAP = 24;
+// The union's camp's floor, in cells, the pedestal at its middle: room for
+// its crowd round and behind the pair (the crowd itself is not built yet).
+export const AFTER_UNION_W = 32;
+
 // --- the sky's frame ----------------------------------------------------------------
 // The crowd stands from its bands' tops down to a cloud bank this far up off
 // the floor, worked out off the window the place has at rest (after/sky.js),
@@ -18,35 +29,49 @@ export const SKY_BANK = P * 17;
 // The sky cells from God's square's top down to the bank in the mock, so a
 // sky too short for half a God-cell a cell is laid out at a cell that fits.
 export const SKY_FIT = 87;
-// The bands of the mass, furthest first, as many as are listed; the last is
-// the near band, whose souls a member walks out of. Each: its top, a share
-// of the sky from the window's top to the bank (the mock's 84 and 97 of
-// 109); a soul a flat square `n` cells across, packed with no gaps, its
-// column's top up to `up` cells over the band's own; its tone, one of act
-// 3's four by name; its parallax rate; and how it sinks as support rises --
-// from `from` of the way to the strike over `span` more, its top down to
-// `to` cells over the bank, fading out over the last `fade` of it, stopping
-// `cap` of the way (the near band's low strip at the strike).
+// The planes of God's crowd, furthest first, as many as are listed (one tone
+// each, a big step in square size between them); the last is the near
+// plane, whose souls a member walks out of. Each: its top, a share of the
+// sky from the window's top to the bank (the mock's 84 and 97 of 109); a
+// soul a flat square `n` cells across, packed with no gaps, its column's
+// top up to `up` cells over the plane's own; its tone, one of act 3's four
+// by name; its parallax rate; how it sinks as support rises -- from `from`
+// of the way to the strike over `span` more, its top down to `to` cells over
+// the bank, fading out over the last `fade` of it, stopping `cap` of the way
+// (the near plane's low strip at the strike); `give`, the share of the
+// floor between the union's camp and God's camp it gives up by the strike;
+// and `flag`, the cell of a flag planted in it, in sky cells (the near
+// plane's flag 2.6 of its souls across, as the level's mock has it; a far
+// one in proportion).
 export const SKY_BANDS = [
-  { top: 0.77, n: 3, up: 2, tone: 'pale', rate: 0.7, seed: 11, from: 0, span: 0.75, to: 2, fade: 0.15, cap: 1 },
-  { top: 0.89, n: 5, up: 2, tone: 'mid', rate: 0.8, seed: 23, from: 0.25, span: 0.75, to: 4, fade: 0, cap: 0.9 }
+  { top: 0.77, n: 3, up: 2, tone: 'pale', rate: 0.7, seed: 11, from: 0, span: 0.75, to: 2, fade: 0.15, cap: 1, give: 0.85, flag: 0.6 },
+  { top: 0.89, n: 5, up: 2, tone: 'mid', rate: 0.8, seed: 23, from: 0.25, span: 0.75, to: 4, fade: 0, cap: 0.9, give: 0.7, flag: 1 }
 ];
+// A sign stands in the plane its rank is in: this many ranks of God's crowd
+// a plane, the near plane's from the front (rank 0).
+export const SKY_SIGN_RANKS = 20;
+// A plane's left edge, where it gives up ground: its first columns stepped
+// down this many, a cell a column, and the column going fading.
+export const SKY_EDGE_STEPS = 3;
 // The bands' tops, read by the sky's frame (after/sky.js).
 export const SKY_TOPS = SKY_BANDS.map(b => b.top);
 // A column bobs a cell for a tick, column i on the ticks where
 // (i * mul + tick) % every is 0 (the mock's band).
 export const SKY_BOB = { every: 13, mul: 5 };
 export const SKY_BANK_RATE = 0.9;          // the cloud bank's own parallax
-export const SKY_SIGN_RATE = 0.85;         // the signs and posters, standing in the near band
 // The layers' pan reaches this far past the window either side, so a band
 // is never seen to end.
 export const SKY_EDGE = P * 34;
 export const SKY_TICK_S = 0.25;            // the mock's tick: every pose in the sky held this long
 
 export const SKY_SUPPORT_EASE = 0.8;       // support's share a second the drawing eases toward the sim's
-// A member walking out: a near soul at the band's top inks, holds, then
-// rises a cell a tick and fades; at most this many a frame.
-export const SKY_JOIN = { hold: 0.5, fade: 1.2, most: 3 };
+// A member won by a sign (docs/mocks/act3-level-2026-10-19, a3level): a
+// soul lifts out of the sign's plane over `lift` ticks, darkening toward the
+// union's ink, orbits the sign a turn and a half in `orbit` ticks (a step of
+// an eighth of a turn every `step`), then drifts across to the union's camp
+// over `drift` ticks, arcing up `arc` sky cells at its middle, and fades by
+// opacity over the last `fade` of the way. At most `most` in the sky at once.
+export const SKY_WON = { lift: 6, orbit: 24, step: 2, drift: 80, arc: 18, fade: 0.15, most: 24 };
 
 // --- the crowd's life: the rings ----------------------------------------------------------
 // A rally: a sign or poster lifts a cell and a ring runs out from it through
@@ -67,7 +92,7 @@ export const SKY_RING_LIFT = [3, 12];      // its jump, px, plus this times the 
 export const GOD_CELLS = [9, 6, 4, 3];
 export const GOD_FIT = 52;
 export const GOD_RATE = 0.62;              // his parallax walking toward the camp
-export const GOD_OPEN_AT = 0.62;           // where across the window he stands when the act opens
+export const GOD_OPEN_AT = 0.95;           // where across the window he stands when the act opens: at its right edge, over God's camp past the union's
 export const GOD_UP = 0.03;                // his crown's spikes this share of the sky down off the window's top, and 19 cells
 // His square, its outline, the crown's ring over it and its points (x off
 // the square's left, height), the eyes' lids, the mouth and the hands, in
@@ -109,8 +134,25 @@ export const GAZE = { sweep: [-0.5, -0.26, 0.28, -0.02, -0.17, 0.4, 0.12, -0.38]
                       w: 16, narrow: [12, 9, 6], flat: 0.6, w0: 8, body: 0.7, bodyDark: 0.35, spot: 0.8, spotDark: 0.5 };
 export const AFTER_GAZE_SETTLE_S = 0.9;
 export const AFTER_BURN_S = 4;
-export const SKY_SIGN = { w: 60, h: 36, cell: 3 };
-export const SKY_POSTER = { w: 42, h: 60, cell: 3 };
+// A sign is a flag (a3flag, emblem 1): the union's ink, `w` by `h` of its
+// plane's flag cells, the raised fist in paper `x` cells in and `y` down,
+// flying off a pole a flag cell wide, its foot `up` flag cells over its
+// plane's top. It ripples in held steps: a column a third of a flag cell
+// wide, its drop a sine along the flag, one of `phases` poses a tick, `amp`
+// flag cells at most.
+export const SKY_FLAG = { w: 13, h: 11, x: 2, y: 1, up: 3, phases: 12, amp: 0.6,
+  fist: ['..X.X.X..', '.XXXXXXX.', 'XXXXXXXXX', 'XXXXXXXXX', 'XXXXXXXX.', '.XXXXXX..', '..XXXX...', '..XXXX...', '..XXXX...'] };
+// A poster on the fence at the crowd's front: the flag turned, a paper sheet
+// `w` by `h` sky cells with the fist in ink on it, flat, on a pole down to
+// the bank, its foot `up` cells over the near plane's top.
+export const SKY_POSTER = { w: 11, h: 13, x: 1, y: 2, up: 2 };
+// A sign's aura: a faint disc of the union's ink, `r` of the flag's width
+// across the half and `pad` cells more, breathing a cell every `breath`
+// ticks, at `disc` opacity (`discDark` on the dark page), and a ring of ink
+// squares on its rim (a sky cell each), a square every other
+// of `per` a cell of radius, turning half a square every `turn` ticks, at
+// `ring` opacity.
+export const SKY_AURA = { r: 0.9, pad: 2, breath: 4, disc: 0.14, discDark: 0.2, ring: 0.6, per: 1.2, turn: 2 };
 
 // --- souls drifting up from the camp ---------------------------------------------------------
 export const SKY_DRIFT = { every: [2.5, 4.5], life: 14, rise: 22 };

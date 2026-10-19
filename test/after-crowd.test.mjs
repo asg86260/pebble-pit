@@ -7,7 +7,7 @@
 // a member already gone, with no walk), the setup these checks are not about.
 import { group, ok, run, yard } from './helpers.mjs';
 import { STRIKE_SHARE, AFTER_FOCUS_AT } from '../src/config.js';
-import { afterFloor, afterOpenX } from '../src/after/place.js';
+import { afterFloor, afterOpenX, soulX } from '../src/after/place.js';
 import { stepAfter } from '../src/after/index.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawSkyCrowd, drawAfterCrowd, crowdDrawn, glareAlpha, raysLeft } from '../src/render/aftercrowd.js';
@@ -73,11 +73,11 @@ group('a 24,000-soul crowd steps and draws in a couple of milliseconds a frame',
 });
 
 // The bands sink as support rises, the far one first (DESIGN.md, "The sky,
-// redrawn flat"), so fewer souls stand in view, and a low strip of the near
-// band stands at the strike.
+// redrawn flat") and give up ground toward God's camp, so fewer souls stand
+// in view there, and a low strip of the near band stands at the strike.
 group('the crowd thins as support rises', async () => {
   up();
-  lookAt(afterOpenX());
+  lookAt(soulX(20));
   const at = k => { won(4000, k); run(2); draw(); draw(); const d = crowdDrawn(); return { souls: d.souls, cells: d.cells }; };
   const steps = [0.05, 0.3, 0.6, 1].map(at);
   window.__actsOn(null);
@@ -89,18 +89,25 @@ group('the crowd thins as support rises', async () => {
   ];
 });
 
-// A member walking out of God's yard is a near soul in view inking and fading.
-group('a member walking out takes a soul out of the sky', async () => {
+// A member walking out of God's yard beside a sign is a soul won by it,
+// lifting out of the sky by the sign's flag; one walking out with no sign by
+// it raises none.
+group('a member won by a sign lifts a soul out of the sky by its flag', async () => {
   up();
   crowd(4000);
-  lookAt(afterOpenX());
+  S.after.signs.push({ id: 97000, f: 20, r: 6, askew: false, pull: null, big: false, age: 0 });
+  lookAt(soulX(20));
   run(2); draw(); draw();
-  const was = crowdDrawn().joins;
-  window.__afterCrowd((i, v) => (i === 300 ? 8 : v));
+  const was = crowdDrawn().won;
+  window.__afterCrowd((i, v) => (i === 7 * 40 + 20 ? 8 : v));
   run(1 / 30); draw();
-  const now = crowdDrawn().joins;
+  const one = crowdDrawn().won;
+  window.__afterCrowd((i, v) => (i === 60 * 40 + 2 ? 8 : v));
+  run(1 / 30); draw();
+  const far = crowdDrawn().won;
   window.__actsOn(null);
-  return [ok(now === was + 1, 'one near soul joins for the one member', `${was} -> ${now}`)];
+  return [ok(one === was + 1, 'one soul for the one member by the sign', `${was} -> ${one}`),
+          ok(far === one, 'and none for a member with no sign by it', `${one} -> ${far}`)];
 });
 
 group('the rays fade to nothing at the strike, and the glare with them', async () => {
@@ -168,7 +175,9 @@ group("at the camp end, act 3 is framed at the yard's zoom and the yard's floor 
   return out;
 });
 
-// God high in the window from where the act opens to the dive's end.
+// God in the window from where the act opens to the dive's end: at its right
+// edge over the union's camp (his camp is past it, DESIGN.md, "The level,
+// the two crowds and the flags"), drawn in to its middle along the pan.
 group('God stands in the window all along the pan toward him', async () => {
   const out = [];
   for (const [w, h] of [[2000, 967], [800, 600]]) {
@@ -179,7 +188,8 @@ group('God stands in the window all along the pan toward him', async () => {
       return (godMid(S.camX + S.viewW / 2) - S.camX) / S.viewW;
     });
     window.__actsOn(null);
-    out.push(ok(offs.every(v => v > 0.1 && v < 0.9), `${w}x${h}: his middle stays well inside the window`, offs.map(v => v.toFixed(2)).join(' ')));
+    out.push(ok(offs.every(v => v > 0.1 && v < 1) && offs.slice(1).every(v => v < 0.9), `${w}x${h}: his middle in the window, at its right edge over the union's camp and well inside past it`, offs.map(v => v.toFixed(2)).join(' ')),
+             ok(offs.every((v, i) => i === 0 || v < offs[i - 1]), `${w}x${h}: drawn in toward the middle along the pan`));
   }
   return out;
 });

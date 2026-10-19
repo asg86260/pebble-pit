@@ -1,0 +1,393 @@
+{
+ "title": "Act 3: the level in three zones, flags, won souls",
+ "lede": "Three zones, God's crowd in planes clear of the workshops, signs as fist flags with auras, won souls orbiting and drifting to the union's camp.",
+ "base": "87dbe85e",
+ "head": "ab2731faba92cf4d39eb3cab3679842349b364f9",
+ "items": [
+  {
+   "id": "opening",
+   "title": "Where the act opens",
+   "what": "the union's camp: the pedestal, God at the window's right edge, his crowd off past it",
+   "shots": [
+    {
+     "scene": "heaven-10",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "heaven-10",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "heaven-10",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "heaven-10",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "works",
+   "title": "The workshops",
+   "what": "open sky behind the stations, no crowd",
+   "shots": [
+    {
+     "scene": "level-works",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-works",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-works",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-works",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "union-low",
+   "title": "The union's camp, low support",
+   "what": "the pair on the pedestal, God's crowd starting past the camp",
+   "shots": [
+    {
+     "scene": "level-union",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-union",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-union",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-union",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "union-high",
+   "title": "The union's camp, high support",
+   "what": "God's crowd sunk and drawn back toward his camp",
+   "shots": [
+    {
+     "scene": "level-union-high",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-union-high",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-union-high",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-union-high",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "god",
+   "title": "God's camp",
+   "what": "two planes, fist flags in both with auras, posters along the front",
+   "shots": [
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "god-high",
+   "title": "God's camp, high support",
+   "what": "the planes sunk and giving up ground",
+   "shots": [
+    {
+     "scene": "level-god-high",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-god-high",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-god-high",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-god-high",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "won-orbit",
+   "title": "A won soul mid-orbit",
+   "what": "darkened, going round its flag",
+   "shots": [
+    {
+     "scene": "level-won-orbit",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-won-orbit",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-won-orbit",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-won-orbit",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "won-drift",
+   "title": "A won soul mid-drift",
+   "what": "half way across to the union's camp",
+   "shots": [
+    {
+     "scene": "level-won-drift",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-won-drift",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-won-drift",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-won-drift",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "flag",
+   "title": "A flag close",
+   "what": "the near plane's flag rippling, its aura and ring",
+   "shots": [
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "zoom": 3,
+     "label": "2000x967 light, x3"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "zoom": 3,
+     "label": "2000x967 dark, x3"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "gif": {
+      "seconds": 3,
+      "fps": 4
+     },
+     "zoom": 2,
+     "label": "rippling, x2"
+    }
+   ]
+  }
+ ]
+}

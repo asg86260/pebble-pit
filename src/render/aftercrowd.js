@@ -11,13 +11,16 @@
 // hold the mock's layout under him -- so the picture is the mock's at every
 // window. A pose is held a tick (SKY_TICK_S), the mock's quarter second.
 //
-// The crowd is bands of souls packed with no gaps (SKY_BANDS, as many as are
-// listed: now the far one pale and the near one mid), so a band is solid and only its top edge steps square by
-// square. As support rises each sinks toward the bank, the far one first
-// and fading out at the end, the near one stopping low, so God shows more
-// and more over them. A member walking out is a near soul at the band's top
-// inking, then rising off it and fading. A rally off a sign lifts the squares
-// it passes; the throne's roar ducks them.
+// The crowd is planes of souls packed with no gaps (SKY_BANDS, as many as are
+// listed: now the far one pale and the near one mid), so a plane is solid and
+// only its top edge steps square by square. It stands in God's camp, never
+// over the workshops (after/sky.js, `bandEdge`). As support rises each sinks
+// toward the bank, the far one first and fading out at the end, the near one
+// stopping low, and gives up ground toward God's camp, so God shows more and
+// more over them. A sign is a fist flag planted in the plane its rank is in,
+// an aura round it (DESIGN.md, "The level, the two crowds and the flags");
+// a member it wins orbits it and drifts across to the union's camp. A rally
+// off a sign lifts the squares it passes; the throne's roar ducks them.
 //
 // God is a light source on either page: he, his rays, his light and his
 // gaze are drawn raw (src/ink.js), outside the act's four tones, and so are
@@ -34,18 +37,19 @@
 // live is the rays, the hands, the line, the gaze and the bubbles.
 
 import { S } from '../state.js';
-import { P, GREY, STRIKE_SHARE, CROWD_X0, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, AFTER_SPEECH_WARN_S,
-         SKY_BANDS, SKY_BOB, SKY_BANK_RATE, SKY_SIGN_RATE, SKY_EDGE, SKY_TICK_S, SKY_FIT,
-         SKY_SUPPORT_EASE, SKY_JOIN, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
+import { P, GREY, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, AFTER_SPEECH_WARN_S,
+         SKY_BANDS, SKY_BOB, SKY_BANK_RATE, SKY_EDGE, SKY_TICK_S, SKY_FIT, SKY_SIGN_RANKS, SKY_EDGE_STEPS,
+         SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
          GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, TITHE, GAZE,
-         AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_SIGN, SKY_POSTER, SKY_DRIFT,
+         AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_POSTER, SKY_DRIFT,
          AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, AFTER_TONES } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { raw, darkPage } from '../ink.js';
-import { afterFloor, afterX0, slotX, soulX, overCrowd, crowdX1, stationBox } from '../after/place.js';
-import { support, union, speechTarget } from '../after/union.js';
-import { skyFrame, layerX, godMid, restW } from '../after/sky.js';
+import { afterFloor, afterX0, slotX, soulX, overCrowd, crowdX1, stationBox, unionJoinAt } from '../after/place.js';
+import { support, union, souls, OUT_RIM, speechTarget } from '../after/union.js';
+import { signReach } from '../after/levels.js';
+import { skyFrame, layerX, godMid, restW, bandEdge } from '../after/sky.js';
 import { smoothstep } from '../motion.js';
 import { K as INK, W, PALE, MID } from './after/kit.js';
 
@@ -72,6 +76,9 @@ const LINE_TONE = darkPage ? AFTER_LINE_DARK : PALE;
 const CROWN_TONE = darkPage ? WHITE : BLACK;
 const RAY_TONE = darkPage ? WHITE : PALE;
 const BAND_TONE = SKY_BANDS.map(b => AFTER_TONES[b.tone]);
+// The union's ink: the flags, the auras and a won soul's darkening; on the
+// dark page the light grey the line's souls wear, as the mocks have it.
+const UNION_TONE = darkPage ? AFTER_LINE_DARK : INK;
 
 // --- the frame's camera ---------------------------------------------------------------
 // The device pixels a world pixel takes, the window's middle, the zoom over
@@ -128,13 +135,13 @@ const blit = (pic, x, y) => ctx.drawImage(pic, onPx(x), onPx(y), pic.width / K, 
 // The share of the way to the strike won (1 at STRIKE_SHARE), eased so a
 // band sinks smoothly; snapped on a new act or a reload. `line` is the line's
 // own clock, in ticks, run only while he blesses.
-const shown = { after: null, s: 0, lastT: null, members: 0, joins: new Map(), line: 0 };
+const shown = { after: null, s: 0, lastT: null, line: 0, out: new Uint8Array(0), outN: 0, won: [] };
 const share = () => clamp(support() / STRIKE_SHARE, 0, 1);
 export const skyShare = () => shown.s;
 function stepShown() {
   const A = S.after, t = now();
   if (shown.after !== A) {
-    shown.after = A; shown.s = share(); shown.lastT = t; shown.members = union(); shown.joins.clear();
+    shown.after = A; shown.s = share(); shown.lastT = t; shown.won.length = 0; resyncOut();
     shown.line = lineAtOpen(t);
   }
   const gap = t - shown.lastT, dt = clamp(gap, 0, 0.25);
@@ -235,11 +242,14 @@ function ringsAt(x, y, rate, sq) {
 
 // --- the mass ---------------------------------------------------------------------------------------
 // A band's columns: a soul's square across, from the layer's own left edge,
-// so a column keeps its height however the camera pans.
+// so a column keeps its height however the camera pans. `e` is the column
+// its left edge is in, and `fe` how far through it the edge stands.
 const bandOrigin = () => afterX0() - SKY_EDGE;
 function bandCols(k) {
   const b = SKY_BANDS[k], n = b.n * H, shift = (CX - F.XR) * (1 - b.rate), x0 = bandOrigin() + shift;
-  return { n, x0, i0: Math.floor((S.camX - x0) / n) - 1, i1: Math.ceil((S.camX + S.viewW - x0) / n) + 1 };
+  const ex = layerX(bandEdge(k, shown.s), b.rate, CX), ef = (ex - x0) / n, e = Math.floor(ef);
+  const i0 = Math.max(e, Math.floor((S.camX - x0) / n) - 1);
+  return { n, x0, e, fe: ef - e, i0, i1: Math.ceil((S.camX + S.viewW - x0) / n) + 1 };
 }
 // A column's top over the band's own: up to `up` cells, a bob a tick.
 const colUp = (k, i) => {
@@ -247,54 +257,120 @@ const colUp = (k, i) => {
   return Math.floor(hsh(i, b.seed) * (b.up + 1)) + (((i * SKY_BOB.mul + TK) % SKY_BOB.every + SKY_BOB.every) % SKY_BOB.every === 0 ? 1 : 0);
 };
 const drawn = { souls: 0, cells: 0, runs: 0 };
-export const crowdDrawn = () => ({ ...drawn, joins: shown.joins.size, bands: SKY_BANDS.map((b, k) => bandL(k)) });
+export const crowdDrawn = () => ({ ...drawn, won: shown.won.length, bands: SKY_BANDS.map((b, k) => bandL(k)) });
+// A band's alpha: whole, or fading out over the last of its sinking.
+const bandAlpha = k => { const b = SKY_BANDS[k], L = bandL(k); return b.fade > 0 ? 1 - smoothstep((L - (1 - b.fade)) / b.fade) : 1; };
+// One plane of God's crowd: a body of packed squares from its left edge on,
+// only its top edge stepping square by square; its first SKY_EDGE_STEPS
+// columns stepped down toward the edge, the column the edge is in fading as
+// the plane gives it up.
 function drawBand(k) {
-  const b = SKY_BANDS[k], L = bandL(k);
-  const a = b.fade > 0 ? 1 - smoothstep((L - (1 - b.fade)) / b.fade) : 1;
-  const top = bandTop(k), { n, x0, i0, i1 } = bandCols(k);
+  const b = SKY_BANDS[k], a = bandAlpha(k);
+  const top = bandTop(k), { n, x0, e, fe, i0, i1 } = bandCols(k);
   // How many souls stand in view: a fact of support, not of the bob or the rings.
-  const count = a > 0.001 ? (i1 - i0 + 1) * Math.max(0, F.bank - top) / n : 0;
+  const count = a > 0.001 && i1 >= i0 ? (i1 - i0 + 1) * Math.max(0, F.bank - top) / n : 0;
   if (k === NEAR) drawn.souls = count; else drawn.cells += count;
-  if (a <= 0.001) return;
+  if (a <= 0.001 || i1 < i0) return;
+  const foot = F.bank + 2 * H, colY = i => top - colUp(k, i) * H + ringsAt(x0 + (i + 0.5) * n, top, b.rate, n);
   alpha(a, () => {
     ctx.fillStyle = style(BAND_TONE[k]);
-    rect(S.camX, top + n, S.viewW, F.bank + 2 * H - top - n);
+    const body = Math.max(i0, e + SKY_EDGE_STEPS), bx = Math.max(S.camX, x0 + body * n);
+    rect(bx, top + n, S.camX + S.viewW - bx, foot - top - n);
+    // the edge: each column stepped down half a soul more toward it, the
+    // outermost fading
+    for (let i = Math.max(i0, e); i < body && i <= i1; i++) {
+      const y = colY(i) + (e + SKY_EDGE_STEPS - i) * Math.ceil(b.n / 2) * H;
+      if (i === e) alpha(1 - fe, () => rect(x0 + i * n, y, n, foot - y)); else rect(x0 + i * n, y, n, foot - y);
+    }
     // the top edge: a run of columns sharing a top, one fill
-    let start = i0, at = null;
+    let start = body, at = null;
     const flush = end => { if (at != null && at < top + n) { rect(x0 + start * n, at, (end - start) * n, top + n - at); drawn.runs++; } };
-    for (let i = i0; i <= i1 + 1; i++) {
-      const y = i <= i1 ? top - colUp(k, i) * H + ringsAt(x0 + (i + 0.5) * n, top, b.rate, n) : null;
+    for (let i = body; i <= i1 + 1; i++) {
+      const y = i <= i1 ? colY(i) : null;
       if (y !== at) { flush(i); start = i; at = y; }
     }
   });
 }
-// A member walked out since the last frame: a near soul in view, at the
-// band's top, inks; it holds, then rises a cell a tick and fades.
-function pickJoins() {
-  const n = union(), gained = n - shown.members, t = now();
-  shown.members = n;
-  for (const [key, t0] of shown.joins) if (t - t0 > SKY_JOIN.hold + SKY_JOIN.fade + 1) shown.joins.delete(key);
-  if (gained <= 0 || S.view !== 'after') return;
-  const { i0, i1 } = bandCols(NEAR), c0 = i0 + 3, c1 = i1 - 3;
-  if (c1 <= c0) return;
-  for (let k = 0; k < Math.min(gained, SKY_JOIN.most); k++) {
-    for (let tries = 0; tries < 24; tries++) {
-      const col = c0 + Math.floor(hsh(n, k, tries) * (c1 - c0));
-      if (shown.joins.has(col)) continue;
-      shown.joins.set(col, t);
-      break;
-    }
-  }
+// God's crowd: its planes far to near, and after each what stands in it
+// (`inPlane(k)`). The one place the crowd's own shape is drawn, so a crowd
+// drawn another way (rows, say) is this function and what it reads; the
+// flags stand at their signs' spots whatever draws it.
+function drawGodsCrowd(planes, inPlane) {
+  for (let k = 0; k < planes.length; k++) { drawBand(k); inPlane(k); }
 }
-function drawJoins() {
-  const { n, x0 } = bandCols(NEAR), top = bandTop(NEAR), t = now();
-  for (const [col, t0] of shown.joins) {
-    const tau = t - t0;
-    if (tau > SKY_JOIN.hold + SKY_JOIN.fade) continue;
-    const rise = tau < SKY_JOIN.hold ? 0 : Math.floor((tau - SKY_JOIN.hold) / SKY_TICK_S) + 1;
-    const a = tau < SKY_JOIN.hold ? 1 : 1 - (tau - SKY_JOIN.hold) / SKY_JOIN.fade;
-    const x = x0 + col * n;
-    if (inView(x, n)) alpha(a, () => rect(x, top - colUp(NEAR, col) * H - rise * H, n, n, INK));
+
+// --- souls won over ----------------------------------------------------------------------------------
+// A member walking out of God's yard (union.js, `walkOuts`) beside a sign is
+// a soul won by it: it lifts out of the sign's plane, darkening toward the
+// union's ink, orbits the sign a turn and a half in held steps, then drifts
+// sideways across to the union's camp (place.js, `unionJoinAt`) and fades
+// there. Read off the field: the slots newly emptied since the last frame,
+// each matched to the nearest standing sign whose reach it is in. A member
+// with no sign by it (one of the first) raises none.
+function resyncOut() {
+  const a = souls();
+  if (shown.out.length !== a.length) shown.out = new Uint8Array(a.length);
+  let n = 0;
+  for (let i = 0; i < a.length; i++) { const o = a[i] === OUT_RIM ? 1 : 0; shown.out[i] = o; n += o; }
+  shown.outN = n;
+}
+function signBy(i) {
+  const f = i % CROWD_FILES, r = Math.floor(i / CROWD_FILES);
+  let best = null, bd = Infinity;
+  for (const q of S.after.signs) {
+    if (q.burnt != null) continue;
+    const d = Math.max(Math.abs(q.f - f), Math.abs(q.r - r));
+    if (d <= signReach(q.big) && d < bd) { bd = d; best = q; }
+  }
+  return best;
+}
+const wonLife = () => (SKY_WON.lift + SKY_WON.orbit + SKY_WON.drift) * SKY_TICK_S;
+function pickWon() {
+  const a = souls(), n = union(), t = now();
+  if (shown.won.length) shown.won = shown.won.filter(w => t - w.t0 < wonLife());
+  if (n === shown.outN && shown.out.length === a.length) return;
+  if (n < shown.outN) { resyncOut(); return; }
+  if (shown.out.length !== a.length) {
+    const o = new Uint8Array(a.length);
+    o.set(shown.out.subarray(0, Math.min(a.length, shown.out.length)));
+    shown.out = o;
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== OUT_RIM || shown.out[i]) continue;
+    shown.out[i] = 1;
+    if (S.view !== 'after' || shown.won.length >= SKY_WON.most) continue;
+    const q = signBy(i);
+    if (q) shown.won.push({ t0: t, f: q.f, r: q.r, big: q.big });
+  }
+  shown.outN = n;
+}
+// Where a won soul is `T` ticks on: its middle in the world, its alpha, how
+// dark it has gone (0 its plane's tone, 1 the union's ink), and whether it
+// has left its plane for the drift across.
+function wonAt(w, T) {
+  const W0 = SKY_WON, g = flagBox(w), R = auraR(g, 0) * H, top = bandTop(g.k);
+  if (T < W0.lift) { const u = T / W0.lift; return { x: g.cx + R * 0.7, y: lerp(top, g.cy + R * 0.7, u), a: 1, dk: 0.3 * u, out: false }; }
+  if (T < W0.lift + W0.orbit) {
+    const ang = Math.PI / 4 + Math.floor((T - W0.lift) / W0.step) * Math.PI / 4;
+    return { x: g.cx + Math.cos(ang) * R, y: g.cy + Math.sin(ang) * R, a: 1, dk: 0.3 + 0.7 * (T - W0.lift) / W0.orbit, out: false };
+  }
+  const u = Math.min(1, (T - W0.lift - W0.orbit) / W0.drift), to = unionJoinAt();
+  const ang = Math.PI / 4 + (W0.orbit / W0.step) * Math.PI / 4, x0 = g.cx + Math.cos(ang) * R, y0 = g.cy + Math.sin(ang) * R;
+  return { x: lerp(x0, to.x, u), y: lerp(y0, to.y, u) - Math.sin(u * Math.PI) * W0.arc * H,
+           a: u < 1 - W0.fade ? 1 : (1 - u) / W0.fade, dk: 1, out: true };
+}
+// The won souls of plane `k` still at their sign, or (`out`) every one
+// drifting across, over the whole crowd.
+function drawWon(k, out) {
+  const t = now();
+  for (const w of shown.won) {
+    const T = Math.floor((t - w.t0) / SKY_TICK_S), g = planeOf(w);
+    if (!out && g !== k) continue;
+    const p = wonAt(w, T);
+    if (p.out !== out) continue;
+    const sz = Math.max(2, SKY_BANDS[g].n - 1) * H, x = snap(p.x - sz / 2, H), y = snap(p.y - sz / 2, H);
+    if (!inView(x, sz)) continue;
+    alpha(p.a, () => { rect(x, y, sz, sz, BAND_TONE[g]); alpha(p.dk, () => rect(x, y, sz, sz, UNION_TONE)); });
   }
 }
 
@@ -622,59 +698,121 @@ function drawBubbles() {
 }
 
 // --- signs and posters --------------------------------------------------------------------------------
-// Each stands in the near band, at its own x and the signs' rate: a board
-// on a pole down into the cloud bank. Where it is drawn (its board's box).
+// A sign is a flag (docs/mocks/act3-level-2026-10-19, a3flag, the fist):
+// planted at its sign's spot in the plane its rank stands in, at that
+// plane's scale and parallax, behind the planes nearer than it. A poster is
+// on the fence at the crowd's front, in the near plane.
+const planeOf = q => NEAR - Math.min(NEAR, Math.floor(q.r / SKY_SIGN_RANKS));
+const rallied = q => EV.rallies.some(r => r.thing.q === q && now() - r.at < SKY_RALLY.lift);
+// A flag's box: `px` its pole's left, the flag from a flag cell (`U`) right
+// of it, `y` its top at rest, its middle (`cx`, `cy`), and its plane `k`.
+function flagBox(q) {
+  const k = planeOf(q), b = SKY_BANDS[k], U = b.flag * H, FL = SKY_FLAG;
+  const px = snap(layerX(soulX(q.f) + P / 2, b.rate, CX), H), w = FL.w * U, h = FL.h * U;
+  const y = bandTop(k) - FL.up * U - h - (q.id != null && rallied(q) ? U : 0);
+  return { k, U, px, x: px + U, y, w, h, cx: px + U + w / 2, cy: y + h / 2 };
+}
+function posterBox(q) {
+  const b = SKY_BANDS[NEAR], PO = SKY_POSTER, w = PO.w * H, h = PO.h * H;
+  const x = snap(layerX(slotX(q.slot) + P / 2, b.rate, CX) - w / 2, H);
+  const y = bandTop(NEAR) - PO.up * H - h - (rallied(q) ? H : 0);
+  return { x, y, w, h };
+}
+// Where a sign or poster is drawn (its flag's or its sheet's box), for the
+// rings and the gaze.
 function thingAt(kind, q) {
-  const poster = kind === 'poster', d = poster ? SKY_POSTER : SKY_SIGN;
-  const x0 = poster ? slotX(q.slot) : soulX(q.f), up = poster ? 108 : 96 + Math.min(q.r || 0, 10) * 2;
-  const lift = EV.rallies.some(r => r.thing.q === q && now() - r.at < SKY_RALLY.lift) ? -P : 0;
-  return { x: layerX(x0 - d.w / 2, SKY_SIGN_RATE, CX), y: F.bank - up + lift, w: d.w, h: d.h, poster };
+  const g = kind === 'poster' ? posterBox(q) : flagBox(q);
+  return { x: g.x, y: g.y, w: g.w, h: g.h, poster: kind === 'poster' };
 }
-// A board's cells, flat: the paper, lettered in ink (a sign's lines; a
-// poster's crossed-out crown, the placeholder picture), no edge.
-function boardCells(poster, fn) {
-  const d = poster ? SKY_POSTER : SKY_SIGN, cw = d.w / d.cell, ch = d.h / d.cell;
-  for (let cy = 0; cy < ch; cy++) for (let cx = 0; cx < cw; cx++) {
-    let tone = W;
-    if (!poster && (cy === 3 || cy === 4 || cy === 7 || cy === 8) && cx > 3 && cx < cw - 4 - (cy > 6 ? 4 : 0)) tone = INK;
-    if (poster) {
-      if (cy >= 6 && cy <= 7 && cx > 2 && cx < 11) tone = MID;
-      if (cy >= 3 && cy <= 5 && (cx === 3 || cx === 6 || cx === 7 || cx === 10)) tone = MID;
-      if (cy >= 2 && cy <= 11 && Math.abs(cx - 1.5 - (cy - 2) * 1.05) < 0.8) tone = INK;
-      if ((cy === 14 || cy === 16) && cx > 2 && cx < 11) tone = INK;
-    }
-    fn(cx, cy, tone);
-  }
-}
-// The pole, a cell wide down the board's middle.
-const poleX = d => Math.floor((d.w - d.cell) / 2);
-function boardSprite(poster, poleH) {
-  const key = `${poster ? 'p' : 's'}${Math.round(poleH)}`;
+// The flag in one of its ripple's poses (a3flag's): columns a third of a
+// flag cell (`c` sky cells) wide, each dropped by a sine along the flag in
+// thirds of a cell, the fist riding the same ripple. `fist` the fist's tone
+// (paper; pale, then ink, as it chars).
+function flagSprite(c, phase, fist) {
+  const key = `f${c}|${phase}|${fist}`;
   let pic = cache.signs.get(key);
   if (pic) return pic;
-  const d = poster ? SKY_POSTER : SKY_SIGN, cell = d.cell;
-  pic = sprite(d.w, d.h + poleH, r => {
-    r(poleX(d), d.h, cell, poleH, INK);
-    boardCells(poster, (cx, cy, tone) => r(cx * cell, cy * cell, cell, cell, tone));
+  const FL = SKY_FLAG, U = c * H, t = U / 3, A = Math.max(1, Math.round(FL.amp * 3)), cols = FL.w * 3;
+  pic = sprite(FL.w * U, FL.h * U + 2 * A * t, fill => {
+    for (let i = 0; i < cols; i++) {
+      const d = Math.round(Math.sin(i / (cols / 3) - phase / FL.phases * Math.PI * 2) * FL.amp * 3), y0 = (A + d) * t;
+      fill(i * t, y0, t, FL.h * U, UNION_TONE);
+      const gi = Math.floor(i / 3) - FL.x;
+      if (gi >= 0 && gi < FL.fist[0].length) FL.fist.forEach((row, j) => { if (row[gi] === 'X') fill(i * t, y0 + (FL.y + j) * U, t, U, fist); });
+    }
   });
   cache.signs.set(key, pic);
   return pic;
 }
-function drawThings() {
-  const A = S.after, t = now();
-  const all = [...A.posters.map(q => ['poster', q]), ...A.signs.map(q => ['sign', q])];
-  for (const [kind, q] of all) {
-    const g = thingAt(kind, q), d = g.poster ? SKY_POSTER : SKY_SIGN;
+// The poster's sheet: paper, the fist in ink on it, flat.
+function posterSprite(sheet, fist) {
+  const key = `p|${sheet}|${fist}`;
+  let pic = cache.signs.get(key);
+  if (pic) return pic;
+  const PO = SKY_POSTER;
+  pic = sprite(PO.w * H, PO.h * H, fill => {
+    fill(0, 0, PO.w * H, PO.h * H, sheet);
+    SKY_FLAG.fist.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === 'X') fill((PO.x + i) * H, (PO.y + j) * H, H, H, fist); }));
+  });
+  cache.signs.set(key, pic);
+  return pic;
+}
+// A sign's aura, in sky cells across the half: breathing a cell.
+const auraR = (g, breath) => Math.round(SKY_AURA.r * SKY_FLAG.w * SKY_BANDS[g.k].flag) + SKY_AURA.pad + breath;
+function discSprite(R) {
+  const key = `d${R}`;
+  let pic = cache.signs.get(key);
+  if (pic) return pic;
+  pic = sprite((2 * R + 1) * H, (2 * R + 1) * H, fill => {
+    for (let dy = -R; dy <= R; dy++) { const w = Math.round(Math.sqrt(R * R - dy * dy)); fill((R - w) * H, (R + dy) * H, 2 * w * H, H, UNION_TONE); }
+  });
+  cache.signs.set(key, pic);
+  return pic;
+}
+// The aura: a faint disc of the union's ink round the flag, and a ring of
+// ink squares on its rim turning slowly round it.
+function drawAura(g, q) {
+  const AU = SKY_AURA, R = auraR(g, (Math.floor(TK / AU.breath) + q.f) % 2), c = H;
+  const cx = snap(g.cx, H), cy = snap(g.cy, H);
+  alpha(darkPage ? AU.discDark : AU.disc, () => blit(discSprite(R), cx - R * H, cy - R * H));
+  alpha(AU.ring, () => {
+    ctx.fillStyle = style(UNION_TONE);
+    const m = Math.max(10, Math.round(R * AU.per));
+    for (let i = 0; i < m; i += 2) {
+      const a = (i + Math.floor(TK / AU.turn) * 0.5) / m * Math.PI * 2;
+      rect(snap(cx + Math.cos(a) * R * H - c / 2, H), snap(cy + Math.sin(a) * R * H - c / 2, H), c, c);
+    }
+  });
+}
+// The flags of plane `k`, each with its aura behind it and the souls it is
+// winning round it. Burning, a flag chars in held steps -- the fist going
+// pale, then all ink -- and fades by the time it is gone.
+function drawFlags(k) {
+  const t = now(), phase = TK % SKY_FLAG.phases;
+  for (const q of S.after.signs) {
+    if (planeOf(q) !== k) continue;
+    const g = flagBox(q), A = Math.max(1, Math.round(SKY_FLAG.amp * 3)) * g.U / 3;
+    if (!inView(g.px - 60 * H, g.w + 120 * H)) continue;
+    const u = q.burnt == null ? null : clamp((t - q.burnt) / AFTER_BURN_S, 0, 1), st = u == null ? -1 : Math.floor(u * 4);
+    const fist = st < 0 ? W : st === 0 ? PALE : UNION_TONE;
+    alpha(u == null ? 1 : u < 0.5 ? 1 : 1 - (u - 0.5) / 0.5, () => {
+      if (u == null) drawAura(g, q);
+      rect(g.px, g.y - A, g.U, F.bank + 12 - g.y + A, UNION_TONE);
+      blit(flagSprite(SKY_BANDS[k].flag, (phase + q.f) % SKY_FLAG.phases, fist), g.x, g.y - A);
+    });
+  }
+  drawWon(k, false);
+}
+function drawPosters() {
+  const t = now();
+  for (const q of S.after.posters) {
+    const g = posterBox(q);
     if (!inView(g.x - 20, g.w + 40)) continue;
-    const poleH = F.bank + 12 - (g.y + g.h);
     const fading = q.torn != null ? clamp(1 - (t - q.torn) / AFTER_POSTER_FADE_S, 0, 1) : 1;
-    if (q.burnt == null) { alpha(fading, () => blit(boardSprite(g.poster, poleH), g.x, g.y)); continue; }
-    // Burning: the board chars to ink in held steps -- the paper going pale,
-    // then all ink -- and the char fades out by the time it is gone.
-    const u = clamp((t - q.burnt) / AFTER_BURN_S, 0, 1), k = Math.floor(u * 4);
-    alpha(u < 0.5 ? 1 : 1 - (u - 0.5) / 0.5, () => {
-      rect(g.x + poleX(d), g.y + d.h, d.cell, poleH, INK);
-      rect(g.x, g.y, d.w, d.h, k === 0 ? PALE : INK);
+    const u = q.burnt == null ? null : clamp((t - q.burnt) / AFTER_BURN_S, 0, 1), st = u == null ? -1 : Math.floor(u * 4);
+    alpha(fading * (u == null || u < 0.5 ? 1 : 1 - (u - 0.5) / 0.5), () => {
+      rect(snap(g.x + g.w / 2 - H / 2, H), g.y + g.h, H, F.bank + 12 - g.y - g.h, UNION_TONE);
+      blit(posterSprite(st < 0 ? W : st === 0 ? PALE : UNION_TONE, UNION_TONE), g.x, g.y);
     });
   }
 }
@@ -712,7 +850,7 @@ export function seenAt(x, y) {
   const w = smoothstep((x - (CROWD_X0 - edge)) / edge) * smoothstep((crowdX1() + edge - x) / edge);
   if (w <= 0) return { x, y, k: 1 };
   const d = clamp((afterFloor() - y) / (CROWD_NEAR * CROWD_ROW), 0, 1.5);
-  const rate = 1 + (SKY_SIGN_RATE - 1) * w;
+  const rate = 1 + (SKY_BANDS[NEAR].rate - 1) * w;
   return { x: layerX(x, rate, CX), y: lerp(y, F.bank - d * 24, w), k: lerp(1, NEAR_K, w) };
 }
 // A body there: a flat square of ink, its load flat over it.
@@ -745,8 +883,10 @@ function drawDrift() {
 
 // --- the layers ------------------------------------------------------------------------------------
 // The sky behind the camp, back to front: his rays, the throne and its base,
-// God and his hands, the line, the far and near bands of the crowd, the gaze
-// on them, the signs held up out of the crowd, and the cloud bank over its feet.
+// God and his hands, the line, then the planes of his crowd far to near, the
+// flags planted in each behind the nearer ones (the gaze on the near one, the
+// posters along its front), the souls won drifting across to the union's
+// camp, and the cloud bank over the crowd's feet.
 let GZ = null;
 export function drawSkyCrowd() {
   if (!S.after) return;
@@ -760,18 +900,29 @@ export function drawSkyCrowd() {
   // The line waits on its steps while he glares; it slows as support rises
   // and stands still at the strike.
   if (GZ.g <= 0 && shown.s < 0.98) shown.line += dt / SKY_TICK_S * (1 - TITHE.slow * shown.s);
-  pickJoins();
+  pickWon();
   drawRays();
   const th = throne();
   blit(th, gx() + th.X0 * H, F.gy0 + th.Y0 * H);
   drawGod(GZ);
   const B = drawLine(), rest = handsRest();
   hand(...(B ? B.l : rest.l)); hand(...(B ? B.r : rest.r));
-  for (let k = 0; k < SKY_BANDS.length; k++) drawBand(k);
-  drawJoins();
-  drawGaze(GZ);
-  drawThings();
+  drawGodsCrowd(SKY_BANDS, k => {
+    if (k === NEAR) drawGaze(GZ);
+    drawFlags(k);
+    if (k === NEAR) drawPosters();
+  });
+  drawWon(null, true);
   drawBank();
+}
+// For a scene: the members walked out since the sky last looked, seen now,
+// as the next frame drawn would see them, so a scene can turn the clock on to
+// a won soul's moment before any frame is drawn.
+export function skyWatch() {
+  if (!S.after) return;
+  camFrame();
+  stepShown();
+  pickWon();
 }
 // Over the camp: the bodies standing in God's yard, the souls drifting up,
 // and the throne's bubbles.

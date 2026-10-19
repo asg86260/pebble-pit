@@ -31,7 +31,7 @@ import { sweep } from './hands.js';
 import { windowS, startMeal, landAt } from './deep/meals.js';
 import { startleFauna, faunaWhen } from './deep/fauna.js';
 import { nextWave } from './render/deepwave.js';
-import { skyMoment } from './render/aftercrowd.js';
+import { skyMoment, skyWatch } from './render/aftercrowd.js';
 import { buildStation, nextSlot } from './deep/party.js';
 import { lookAt } from './deep/rails.js';
 import { press as pressBuildButton } from './deep/buildbutton.js';
@@ -39,7 +39,7 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX } from './after/place.js';
+import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt } from './after/place.js';
 import { afterEnd } from './view.js';
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE } from './config.js';
 import { FINALE_HOUSE_W } from './config.js';
@@ -638,6 +638,38 @@ function heavenTurn(want) {
   heavenAt(0.1);
   window.__holdShot(0);
   for (let k = 0; k < 2400 && !want(skyMoment()); k++) window.__fast(0.25);
+  window.__holdShot();
+}
+
+// Act 3's level in its three zones (DESIGN.md, "The level, the two crowds and
+// the flags"): a crowd of 4,000 `share` of the way to the strike, signs in
+// both planes of God's crowd (a plane's ranks: SKY_SIGN_RANKS) and posters on
+// the fence, the camera on `at` -- 'works' the workshops' end, 'union' the
+// pedestal where the act opens, 'god' God's crowd, or a world x. With `won`,
+// a member beside the first sign walks out and the clock runs on `won`
+// seconds into its soul's way round the sign and across to the union's camp.
+const LEVEL_SIGNS = [[16, 12], [6, 30], [27, 14], [34, 24]];
+function levelAt(share, at, won = null) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  const n = 4000, gone = Math.round(n * share * STRIKE_SHARE);
+  S.after.rims = Array.from({ length: n }, (_, i) => (i < gone ? '9' : '0')).join('');
+  S.after.speech = { next: S.after.t + 1e6, target: null, burnt: null };
+  for (const [f, r] of LEVEL_SIGNS) S.after.signs.push({ id: 96000 + f, f, r, askew: false, pull: null, big: false, age: 0 });
+  for (const slot of [8, 22, 36]) S.after.posters.push({ id: 95000 + slot, slot, age: 0, torn: null, big: false });
+  // The workshops standing, so their zone is seen with its stations.
+  for (const k of ['mill', 'chipper', 'papermill', 'workshop', 'press']) if (!S.after.built.includes(k)) S.after.built.push(k);
+  window.__fast(2);
+  const cx = () => (at === 'works' ? workshopsX1() - S.viewW * 0.3 : at === 'union' ? afterOpenX() : at === 'god' ? soulX(18) : at);
+  window.__look(cx() - S.viewW / 2); window.__fast(1 / 30);
+  if (won != null) {
+    skyWatch();
+    const [f, r] = LEVEL_SIGNS[0];
+    window.__afterCrowd((i, v) => (i === (r + 1) * CROWD_FILES + f ? 8 : v));
+    window.__fast(1 / 60);
+    skyWatch();
+    window.__fast(won);
+    window.__look(cx() - S.viewW / 2); window.__fast(1 / 60);
+  }
   window.__holdShot();
 }
 
@@ -3044,6 +3076,24 @@ export const SCENES = {
     run: () => heavenTurn(m => m.bless != null && m.bless >= 0.4 && m.bless < 0.6 && m.glare === 0) },
   'heaven-glare': { about: 'the acts', say: 'God glaring round the crowd: the cone from his lit eyes to a round spot on the crowd, the line waiting on its steps',
     run: () => heavenTurn(m => m.glare === 1) },
+  // Act 3's level in three zones (DESIGN.md, "The level, the two crowds and
+  // the flags"): the workshops with open sky behind them, the union's camp
+  // with God's crowd off past it, God's crowd with its flags, and a soul a
+  // sign has won on its way round the sign and across.
+  'level-works': { about: 'the acts', say: "the workshops' end: the stations under open sky, no crowd behind them",
+    run: () => levelAt(0.1, 'works') },
+  'level-union': { about: 'the acts', say: "the union's camp where the act opens: the pair on their pedestal, God's crowd off past it",
+    run: () => levelAt(0.1, 'union') },
+  'level-union-high': { about: 'the acts', say: "the union's camp at seven tenths of the way to the strike: God's crowd sunk and drawn back toward his camp",
+    run: () => levelAt(0.7, 'union') },
+  'level-god': { about: 'the acts', say: "God's camp: his crowd in two planes, the fist flags planted in both with their auras",
+    run: () => levelAt(0.1, 'god') },
+  'level-god-high': { about: 'the acts', say: "God's camp at seven tenths of the way to the strike: the planes sunk, giving up ground",
+    run: () => levelAt(0.7, 'god') },
+  'level-won-orbit': { about: 'the acts', say: 'a soul a sign has won, darkened to ink, half way round its turn and a half about the flag',
+    run: () => levelAt(0.1, 'god', 4.5) },
+  'level-won-drift': { about: 'the acts', say: "a won soul half way across from God's crowd to the union's camp",
+    run: () => levelAt(0.1, (soulX(16) + unionJoinAt().x) / 2, 17) },
 
   // --- the acts' connective tissue (actbeats.js, portals.js, mansion.js) --------
   // Each off a yard past the snatch with the wizards' portal up and a crew to

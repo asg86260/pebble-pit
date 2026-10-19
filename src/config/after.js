@@ -6,7 +6,8 @@
 // to stand the act up, marked so in its comment, for the pace tool to move.
 import { P } from './yard.js';
 import { AFTER_JOB as J } from '../jobs.js';
-import { campLayout } from '../after/art.js';
+import { campLayout, ART as CAMP_ART, CAMP_ORDER } from '../after/art.js';
+import { AFTER_ZONE_GAP, AFTER_UNION_W } from './aftercrowd.js';
 
 // The switch for the act (DESIGN.md, "Held-back flags"), set by the build:
 // `VITE_AFTERLIFE=1`, which no build sets yet, so the free itch build, the
@@ -127,9 +128,15 @@ export const AFTER_COUNT_PAD = 2;
 // place's left (`at`); its piles and its drawing are laid off that.
 export const AFTER_CAMP_GAP = 12;
 const CAMP = campLayout(GROVE_END + 12, AFTER_CAMP_GAP);
+// The level's three zones (DESIGN.md, "The level, the two crowds and the
+// flags"): the workshops -- the grove and every station but the pedestal --
+// then AFTER_ZONE_GAP cells of open floor, the union's camp AFTER_UNION_W
+// cells across with the pedestal at its middle, as much open floor again,
+// and God's camp (config/aftercrowd.js).
+const WORKS_END = Math.max(...CAMP_ORDER.filter(k => k !== 'pedestal').map(k => CAMP.stations[k].at + CAMP_ART[k].ground));
+const UNION_END = WORKS_END + AFTER_ZONE_GAP + AFTER_UNION_W;
+CAMP.stations.pedestal.at = WORKS_END + AFTER_ZONE_GAP + Math.round((AFTER_UNION_W - CAMP_ART.pedestal.ground) / 2);
 export const AFTER_STATIONS = CAMP.stations;
-// The walk across, in cells, from the pedestal's ground to God's crowd's first file.
-const WALK_ACROSS = 22;
 // The pedestal is a lump of the cloud floor pushed up, this many cells high.
 export const AFTER_PEDESTAL_H = 4;
 // The stations standing from the act's first frame: the pedestal the pair
@@ -144,7 +151,7 @@ export const AFTER_BUILD_PIECE_S = 3;      // a builder's piece
 // The crowd field: files across God's yard, the near ranks drawn as bodies
 // (a soul and its eight rim cells, three cells square) and the far ranks a
 // cell a soul, thinning back up the screen.
-export const CROWD_X0 = P * (CAMP.end + WALK_ACROSS);   // the first file's left, past the walk across from the pedestal
+export const CROWD_X0 = P * (UNION_END + AFTER_ZONE_GAP);   // the first file's left: God's camp, the open floor past the union's
 export const CROWD_FILES = 40;
 export const CROWD_PITCH = P * 4;          // across a file
 export const CROWD_NEAR = 5;               // ranks drawn as bodies
