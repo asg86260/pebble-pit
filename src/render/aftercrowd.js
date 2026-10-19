@@ -1,4 +1,4 @@
-// Act 3's sky, drawn: God's crowd filling it, God on his tower throne, the
+// Act 3's sky, drawn: God's crowd filling it, God on his block throne, the
 // sermon and the tithe line (docs/mocks/act3-skycrowd-2026-10-18, round 2,
 // the owner's vote; God's face docs/mocks/act3-god-2026-10-19, face (c);
 // docs/wave-act3-build.md, track B). Every place is after/sky.js's.
@@ -21,9 +21,11 @@
 //
 // God is a light source on either page: he, his glare, halo, rays and gaze
 // are drawn in raw tones (src/ink.js), the one thing up here outside the
-// four, and only the stone -- the throne's back and the tower -- takes the
-// page's map, in the four like the rest. His rays shorten and fade as
-// support rises, gone at the strike.
+// four, and his stone -- the block seat, the tower and the cloud stair the
+// tithe climbs (docs/mocks/act3-throne-2026-10-19, take 1; the crown and
+// seat docs/mocks/act3-crown-2026-10-19, 3C) -- takes the page's map, in
+// the four like the rest. His rays shorten and fade as support rises, gone
+// at the strike.
 //
 // The frame's cost: each far band is a canvas a texel a cell, its cells'
 // opacities written again only when its share of support moves
@@ -37,12 +39,12 @@ import { P, GREY, STRIKE_SHARE, CROWD_X0, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, AF
          SKY_BANDS, SKY_NEAR, SKY_BANK_RATE, SKY_SIGN_RATE, SKY_CLOUDS_AFTER, SKY_CLOUD_DRIFT, SKY_EDGE,
          SKY_THIN, SKY_KEEP_SOFT, SKY_SINK, SKY_SUPPORT_EASE, SKY_REDRAW_STEP, SKY_JOIN,
          SKY_SEA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT, SKY_RING_STEP,
-         GOD_RATE, GOD_GLARE_R, GOD_HALO_R, GOD_SPOKES, GOD_IDLE, GOD_GAZE_HOLD_S,
+         GOD_GLARE_R, GOD_HALO_R, GOD_SPOKES, GOD_IDLE, GOD_GAZE_HOLD_S,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_SIGN, SKY_POSTER,
-         TITHE_CARRIERS, TITHE_LAP, TITHE_GLARE_R, SKY_DRIFT, AFTER_TONES } from '../config.js';
+         TITHE_STAIR, TITHE_GAP, TITHE_PACE, TITHE_GLARE_R, SKY_DRIFT, AFTER_TONES } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
-import { raw, inkOf } from '../ink.js';
+import { raw, inkOf, darkPage } from '../ink.js';
 import { afterFloor, afterX0, slotX, soulX, overCrowd, crowdX1, stationBox } from '../after/place.js';
 import { support, union, speechTarget } from '../after/union.js';
 import { skyFrame, layerX, godMid, pullAt, restW } from '../after/sky.js';
@@ -442,42 +444,170 @@ function godPose() {
   else if (cp < 4.0) hand = 1;
   return { breath, finger, tilt, hand };
 }
+// The halo-crown (docs/mocks/act3-crown-2026-10-19, crown C): its ring's
+// row over his breath, its points (x, height in cells) and the points its
+// rays leave from, the middle pair's one ray between them.
+const crownY = pose => -4 - pose.breath;
+const CROWN_POINTS = [[1, 2], [5, 3], [8, 4], [9, 4], [12, 3], [16, 2]];
+const CROWN_RAYS = [[1, 2], [5, 3], [8.5, 4], [12, 3], [16, 2]];
 const GC = () => F.gc;
 // His square's top left, world.
 const godX = () => godMid(CX) - 9 * GC();
 const godFoot = () => ({ x: godMid(CX), y: F.gy0 + 28 * GC() });
-const cache = { key: '', stone: null, halo: null, poses: new Map(), signs: new Map(), bank: null };
+const cache = { key: '', stone: null, stair: null, lip: null, halo: null, poses: new Map(), signs: new Map(), bank: null };
 function freshCaches() {
   const key = `${K}|${F.gc}|${F.top}|${F.W}`;
   if (key === cache.key) return;
-  cache.key = key; cache.stone = null; cache.halo = null; cache.poses.clear(); cache.signs.clear(); cache.bank = null;
+  cache.key = key; cache.stone = null; cache.stair = null; cache.lip = null; cache.halo = null;
+  cache.poses.clear(); cache.signs.clear(); cache.bank = null;
   bands = [];
 }
-// The stone: the throne's spiked back, its arms and seat, and the tall slit
-// tower down to the cloud bank -- the only part of him that takes the map.
-// Painted from 8 cells left of the square and 16 above it.
+// The throne (docs/mocks/act3-crown-2026-10-19, 3C, the owner's pick) and
+// the tithe stair under it (docs/mocks/act3-throne-2026-10-19, take 1): a
+// plain block seat -- a low slab of back stopping at his cheeks, one wide
+// block under him -- on the slit tower down to the cloud floor, and a cliff
+// of cloud banked against the tower's open side with the stair cut into its
+// face, ledges joined by whole-cell flights. Nothing of it rises past his
+// face, so above his shoulders the halo, glare and rays are his alone. It
+// stands in front of the near band, its foot down in the cloud floor, and
+// takes the page's map in the four tones like the rest. God-cells off his
+// square's top left, as the sprites are.
 const STONE_X = -8, STONE_Y = -16;
+// Mid flecked pale; on the dark page, where the mid lands next to the ink,
+// pale flecked mid, so the stone stays a step off its own edge.
+const stoneTone = (x, y, s) => ((hsh(x, y, s) < 0.22) !== darkPage ? PALE : MID);
+function cellMask() {
+  const m = new Map();
+  return { m, set: (x, y, t) => m.set(x + ',' + y, t), has: (x, y) => m.has(x + ',' + y),
+           each: fn => { for (const [k, t] of m) { const [x, y] = k.split(',').map(Number); fn(x, y, t); } } };
+}
+const boxOf = (M, x, y, w, h, s, tone) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) M.set(i, j, tone ?? stoneTone(i, j, s)); };
+// A mask of whole cells, each its tone, edged `ew` px of ink wherever it
+// meets nothing. On the dark page the map takes every grey toward the ink,
+// so the ink edge alone sinks into the crowd behind: a rim of the paper, the
+// lightest of the four there, runs round outside it.
+function paintCells(M, Fp, c, ew) {
+  const rw = 2 * ew;
+  if (darkPage) M.each((x, y) => {
+    const px = x * c, py = y * c;
+    if (!M.has(x, y - 1)) Fp(px - rw, py - rw, c + 2 * rw, rw, W);
+    if (!M.has(x, y + 1)) Fp(px - rw, py + c, c + 2 * rw, rw, W);
+    if (!M.has(x - 1, y)) Fp(px - rw, py, rw, c, W);
+    if (!M.has(x + 1, y)) Fp(px + c, py, rw, c, W);
+  });
+  M.each((x, y, t) => Fp(x * c, y * c, c, c, t));
+  M.each((x, y) => {
+    const px = x * c, py = y * c;
+    if (!M.has(x, y - 1)) Fp(px, py, c, ew, INK);
+    if (!M.has(x, y + 1)) Fp(px, py + c - ew, c, ew, INK);
+    if (!M.has(x - 1, y)) Fp(px, py, ew, c, INK);
+    if (!M.has(x + 1, y)) Fp(px + c - ew, py, ew, c, INK);
+  });
+}
+// The ink edge, a third of a cell.
+const edgeW = c => Math.max(2, Math.round(c / 3));
+
+// The stair's plan: as many ledges as the height under the seat (row 30)
+// down to its foot holds, a flight of p steps between each at alternate
+// ends; the cliff, the treads, and the line's path from the bottom flight to
+// the glare, in God-cells. `rest` is the camp's end of the path as the act
+// opens, which the path's lengths are measured from, so a carrier holds its
+// place on the stair however the camp slides past.
+function stairPlan() {
+  if (cache.stair) return cache.stair;
+  const c = GC(), T = TITHE_STAIR;
+  const foot = Math.max(34, Math.round((F.bank + T.foot * (F.floor - F.bank) - F.gy0) / c));
+  const h = foot - 30, K = clamp(Math.round(h / T.rise) - 1, 1, T.ledges), p = Math.round(h / (K + 1));
+  const s = Array.from({ length: K + 1 }, (_, k) => 30 + k * p), L = T.left, Rt = T.right, E = T.end;
+  const n = foot - s[K], dir = k => (k % 2 ? -1 : 1);
+  const cloud = cellMask(), tread = new Set(), step = (x, y) => tread.add(x + ',' + y);
+  // pale cloud flecked paper, billowed out on its open side in whole cells
+  for (let y = 30; y <= foot; y++) {
+    const xl = L - 1 - Math.floor(vnoise(y / 2.2, 0, 44) * 3);
+    for (let x = xl; x < 4; x++) cloud.set(x, y, hsh(x, y, 45) < 0.12 ? W : PALE);
+  }
+  for (let x = L - 3; x < L; x++) if (vnoise(x / 1.5, 0, 46) > 0.35) cloud.set(x, 29, PALE);   // a puff over its top corner
+  // the treads: each ledge only where the line walks it, each flight a step a cell
+  for (let x = L; x < -7; x++) step(x, s[0]);
+  for (let k = 1; k <= K; k++) {
+    const x0 = dir(k) > 0 ? (k === K ? L + p - n : L) : L + p, x1 = dir(k) > 0 ? Rt - p + 1 : (k === K ? Rt + 2 - n : Rt + 1);
+    for (let x = x0; x < x1; x++) step(x, s[k]);
+    for (let j = 0; j < p; j++) step(dir(k) > 0 ? Rt - p + 1 + j : L + p - 1 - j, s[k] - (j + 1));
+  }
+  for (let j = 0; j < n; j++) step(dir(K) > 0 ? L + p - n + j : Rt - j, foot - (j + 1));
+  const path = [];
+  if (dir(K) > 0) path.push({ x: L + p - n, y: foot, kind: 'walk' }, { x: L + p, y: s[K], kind: 'stair' });
+  else path.push({ x: Rt + 1, y: foot, kind: 'walk' }, { x: Rt + 1 - n, y: s[K], kind: 'stair' });
+  for (let k = K; k >= 1; k--) {
+    if (dir(k) > 0) path.push({ x: Rt - p + 1, y: s[k], kind: 'walk' }, { x: Rt + 1, y: s[k - 1], kind: 'stair' });
+    else path.push({ x: L + p, y: s[k], kind: 'walk' }, { x: L, y: s[k - 1], kind: 'stair' });
+  }
+  path.push({ x: E, y: s[0], kind: 'walk' });
+  const rest = campEnd(godMid(F.XR) - 9 * c);
+  let len = 0;
+  [rest, ...path].forEach((q, i, all) => { if (i) len += Math.hypot(q.x - all[i - 1].x, q.y - all[i - 1].y); q.L = len; });
+  cache.stair = { foot, cloud, tread, path, rest, len, end: { x: E, y: s[0] - 2 } };
+  return cache.stair;
+}
+// Where the line leaves the camp, in God-cells off a square at world x `gx`.
+function campEnd(gx) {
+  const b = stationBox('pedestal'), c = GC();
+  return { x: (b.x + b.w - 10 - gx) / c, y: (F.floor - F.gy0) / c };
+}
 function stone() {
   if (cache.stone) return cache.stone;
-  const c = GC(), towerTo = (F.bank + 20 - F.gy0) / c;
-  cache.stone = sprite(34 * c, (towerTo - STONE_Y) * c, (r) => {
-    const Fr = (x, y, w, h, tone) => r((x - STONE_X) * c, (y - STONE_Y) * c, w * c, h * c, tone);
-    // the tower
-    // the tower, mid stone with a clod of ink; the throne a lighter stone,
-    // mid flecked pale
-    Fr(4, 30, 10, towerTo - 30, INK);
-    for (let y = 30; y < towerTo; y++) for (let x = 5; x < 13; x++) Fr(x, y, 1, 1, hsh(x, y, 70) < 0.12 ? INK : MID);
-    for (let y = 34; y < towerTo; y += 7) Fr(8, y, 2, 3, INK);
-    Fr(1, 30, 16, 3, INK); Fr(2, 31, 14, 1, MID);
-    // the back, spiked
-    const spike = (x, top) => { Fr(x, top, 3, -5 - top, INK); for (let y = top + 1; y < -5; y++) Fr(x + 1, y, 1, 1, PALE); };
-    [-4, 3, 12, 19].forEach(x => spike(x, -11)); spike(7.5, -15);
-    Fr(-4, -6, 26, 34, INK);
-    for (let y = -5; y < 27; y++) for (let x = -3; x < 21; x++) Fr(x, y, 1, 1, hsh(x, y, 71) < 0.25 ? PALE : MID);
-    Fr(-7, 18, 6, 3, INK); Fr(19, 18, 6, 3, INK); Fr(-7, 21, 2, 7, INK); Fr(23, 21, 2, 7, INK);
-    Fr(-7, 26, 32, 4, INK);
+  const c = GC(), ew = edgeW(c), { foot, cloud, tread } = stairPlan();
+  const X0 = -27, Y0 = 8;
+  cache.stone = sprite(58 * c, (foot + 2 - Y0) * c, (r) => {
+    const Fp = (x, y, w, h, tone) => r(x - X0 * c, y - Y0 * c, w, h, tone);
+    // the tower, mid stone flecked pale, its slits ink
+    const tower = cellMask();
+    boxOf(tower, 4, 30, 10, foot + 1 - 30, 70);
+    paintCells(tower, Fp, c, ew);
+    for (let y = 34; y + 3 < foot; y += 6) Fp(8 * c, y * c, c, 3 * c, INK);
+    // the cliff, then the stair cut into it: a paper tread inked along its
+    // top and riser, the cloud's shadow mid under its lip
+    paintCells(cloud, Fp, c, ew);
+    const on = (x, y) => tread.has(x + ',' + y);
+    for (const k of tread) { const [x, y] = k.split(',').map(Number); if (!on(x, y + 1) && cloud.has(x, y + 1)) Fp(x * c, (y + 1) * c, c, c, MID); }
+    for (const k of tread) {
+      const [x, y] = k.split(',').map(Number), px = x * c, py = y * c;
+      Fp(px, py, c, c, W); Fp(px, py, c, ew, INK);
+      if (on(x + 1, y + 1)) Fp(px + c - ew, py, ew, c, INK);
+      if (on(x - 1, y + 1)) Fp(px, py, ew, c, INK);
+    }
+    // the block seat: the back, then the seat, each with a pale chamfer
+    // along its top (two cells on the dark page) and a rule across the seat
+    const back = cellMask(), seat = cellMask(), ch = darkPage ? 2 : 1;
+    boxOf(back, -7, 9, 32, 14, 71); boxOf(back, -7, 9, 32, ch, 0, PALE);
+    boxOf(seat, -10, 21, 38, 9, 71); boxOf(seat, -10, 21, 38, ch, 0, PALE);
+    paintCells(back, Fp, c, ew); paintCells(seat, Fp, c, ew);
+    Fp(-10 * c, 27 * c, 38 * c, ew, INK);
   });
+  cache.stone.X0 = X0; cache.stone.Y0 = Y0;
   return cache.stone;
+}
+// The cloud floor's lip over the stair's foot and the line's feet there, in
+// the bank's own cells.
+function lip() {
+  if (cache.lip) return cache.lip;
+  const c = GC(), { foot } = stairPlan(), w = 60 * c;
+  cache.lip = sprite(w, 5 * P, r => {
+    for (let i = 0; i < w / P; i++) {
+      const tp = 1 + Math.round(vnoise(i / 4, 0, 35) * 1.6);
+      for (let j = 3 - tp; j < 5; j++) r(i * P, j * P, P, P, hsh(i, j, 36) < 0.15 ? PALE : W);
+    }
+  });
+  cache.lip.y = foot * c - 3 * P;
+  return cache.lip;
+}
+function drawThrone() {
+  const pic = stone();
+  blit(pic, godX() + pic.X0 * GC(), F.gy0 + pic.Y0 * GC());
+}
+function drawLip() {
+  const pic = lip();
+  blit(pic, godX() - 29 * GC(), F.gy0 + pic.y);
 }
 // God's face (docs/mocks/act3-god-2026-10-19, face (c), the owner's pick):
 // on the surface a calm, benevolent square -- level lids over visible
@@ -538,18 +668,21 @@ function godSprite(pose, gaze, roaring, face = godFace()) {
       Fd(8, y, 2, 1, y === 15 ? 10 : 0);
     }
     Fd(0, 15, 18, 1, 10);
-    // the crown, a step askew when slipped
-    const cy = -3 + top, crown = [];
-    for (let x = 1; x < 17; x++) {
-      const d = pose.tilt && x < 9 ? 1 : 0, tall = x <= 3 || (x >= 8 && x <= 10) || x >= 15;
-      for (let y = tall ? -3 : 0; y < 2; y++) crown.push([x, cy + d + y]);
+    // the halo-crown: a ring of light seen edge on over his head, points
+    // standing on its back rim; slipped, its left half a cell down
+    const cy = crownY(pose), cells = new Set();
+    const add = (x, y) => cells.add(x + ',' + (y + (pose.tilt && x < 9 ? 1 : 0)));
+    for (let i = 0; i < 64; i++) {
+      const a = i / 64 * 2 * Math.PI;
+      add(Math.floor(9 + Math.cos(a) * 9.6), Math.round(cy + Math.sin(a) * 1.2));
     }
+    for (const [x, h] of CROWN_POINTS) for (let k = 1; k <= h; k++) add(x, cy - 1 - k);
+    const crown = [...cells].map(s => s.split(',').map(Number));
     crown.forEach(([x, y]) => Fd(x - 1, y - 1, 3, 3, 10));
     crown.forEach(([x, y]) => Fd(x, y, 1, 1, 0));
-    Fd(8, cy, 2, 1, 10);
     // hands: the left on its arm or up at the crown; the right drumming, or
     // raised open in blessing while he proclaims
-    const hl = [[-6, 15], [-5, 6], [-2, cy - 1]][pose.hand];
+    const hl = [[-6, 15], [-5, 6], [-3, cy - 1]][pose.hand];
     Fd(hl[0], hl[1], 4, 3, 10); Fd(hl[0] + 1, hl[1] + 1, 2, 1, 0);
     if (roaring && !mask) {
       Fd(20, 9, 4, 6, 10); Fd(21, 10, 2, 5, 2);                 // the sleeve
@@ -584,7 +717,7 @@ function halo() {
   return cache.halo;
 }
 function drawGodBack() {
-  const c = GC(), cx = godMid(CX), cy = F.gy0 + 6 * c, gx = godX();
+  const c = GC(), cx = godMid(CX), cy = F.gy0 + 6 * c;
   // the glare: a pale disc behind the throne, lifting the far crowd round him
   const rad = GOD_GLARE_R * c, q = c >= 6 ? 6 : 3;
   alpha(0.85 - 0.3 * shown.s, () => {
@@ -606,12 +739,30 @@ function drawGodBack() {
       }
     }
   });
-  blit(stone(), gx + STONE_X * c, F.gy0 + STONE_Y * c);
+}
+// The halo-crown's rays: from each point's tip out along the halo's radius
+// to its ring, so the crown is the halo's hub. Each dot is edged in ink, so
+// they read on the light page's paper as on the dark; fainter as support
+// rises, with the spokes.
+function drawCrownRays(pose) {
+  const c = GC(), gx = godX(), hx = gx + 9 * c, hy = F.gy0 + 6 * c, cy = crownY(pose);
+  const sq = Math.max(2, snap(c * 0.67, 2)), e = Math.max(1, Math.round(sq / 4)), left = raysLeft();
+  if (left > 0.02) alpha(0.85 * Math.pow(left, 0.7), () => {
+    for (const [x, h] of CROWN_RAYS) {
+      const px = gx + (x + 0.5) * c, py = F.gy0 + (cy - 1 - h + (pose.tilt && x < 9 ? 1 : 0)) * c;
+      const dx = px - hx, dy = py - hy, d0 = Math.hypot(dx, dy), ux = dx / d0, uy = dy / d0;
+      for (let d = d0 + 1.5 * c; d < (GOD_HALO_R - 0.5) * c; d += sq * 1.5) {
+        const x1 = snap(hx + ux * d, sq), y1 = snap(hy + uy * d, sq);
+        lit(x1 - e, y1 - e, sq + 2 * e, sq + 2 * e, INK); lit(x1, y1, sq, sq, 0);
+      }
+    }
+  });
 }
 function drawGod(gz) {
-  const c = GC(), t = now();
+  const c = GC(), t = now(), pose = godPose();
   const roaring = EV.roars.some(r => r.kind === 'roar' && t - r.at < SKY_ROAR.mouth);
-  blit(godSprite(godPose(), gz, roaring), godX() + STONE_X * c, F.gy0 + STONE_Y * c);
+  drawCrownRays(pose);
+  blit(godSprite(pose, gz, roaring), godX() + STONE_X * c, F.gy0 + STONE_Y * c);
 }
 
 // --- the gaze ----------------------------------------------------------------------------------------
@@ -719,70 +870,67 @@ function drawBubbles() {
 }
 
 // --- the tithe line -------------------------------------------------------------------------------------
-// Its path at the act's opening, each point with its rate and a carrier's
-// size there; a point at God's rate rides with God through the dive.
+// From the camp across the cloud floor to the stair's foot and up it, ledge
+// by ledge, to the glare under his left hand (stairPlan). The camp's end
+// stands where the camp is; the rest rides with God, through the dive too.
+// The lengths are the act's opening's, so a carrier keeps its tread.
 function tithePath() {
-  const c = GC(), b = stationBox('pedestal'), campRight = b.x + b.w;
-  const g0 = F.XR + (godMid(F.XR) - F.XR), Gs = 18 * c, gX = g0 - Gs / 2, seatB = F.gy0 + 30 * c;
-  const pts = [
-    { x: campRight - 10, y: F.floor, r: 1, s: 14 },
-    { x: campRight + 80, y: F.bank + 8, r: 0.9, s: 11 },
-    { x: gX + Gs + 2.2 * Gs, y: lerp(seatB, F.bank, 0.72), r: 0.78, s: 8 },
-    { x: gX - 2.2 * Gs, y: lerp(seatB, F.bank, 0.45), r: 0.70, s: 7 },
-    { x: gX + Gs + 1.4 * Gs, y: lerp(seatB, F.bank, 0.18), r: 0.66, s: 6 },
-    { x: gX - 7 * c, y: F.gy0 + 27 * c, r: GOD_RATE, s: 6 }
-  ];
-  const ride = godMid(CX) - layerX(g0, GOD_RATE, CX);
-  let L = 0;
-  return pts.map((p, i) => {
-    const q = { ...p, x: layerX(p.x, p.r, CX) + ride * clamp((1 - p.r) / (1 - GOD_RATE), 0, 1) };
-    if (i) L += Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y);
-    q.L = L;
-    return q;
-  });
+  const c = GC(), gx = godX(), plan = stairPlan(), camp = campEnd(gx);
+  const at = (q, L) => ({ x: gx + q.x * c, y: F.gy0 + q.y * c, kind: q.kind, L });
+  return [at(camp, 0), ...plan.path.map(q => at(q, q.L))];
 }
+// A point `u` of the way along: a flight's height is taken a whole step a
+// cell, so a carrier climbs it tread by tread.
 function pathAt(path, u) {
-  const d = u * path[path.length - 1].L;
+  const c = GC(), d = u * path[path.length - 1].L;
   for (let i = 1; i < path.length; i++) if (d <= path[i].L || i === path.length - 1) {
     const a = path[i - 1], b = path[i], k = clamp((d - a.L) / Math.max(1e-6, b.L - a.L), 0, 1);
-    return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), s: lerp(a.s, b.s, k), dir: Math.sign(b.x - a.x) || 1 };
+    const x = lerp(a.x, b.x, k);
+    let y = lerp(a.y, b.y, k);
+    if (b.kind === 'stair') {
+      const n = Math.round(Math.abs(b.y - a.y) / c), sy = Math.sign(b.y - a.y);
+      y = k <= 0 ? a.y : a.y + sy * c * Math.min(n, Math.floor(Math.abs(x - a.x) / c) + 1);
+    }
+    return { x, y, dir: Math.sign(b.x - a.x) || 1 };
   }
-  return path[0];
+  return { ...path[0], dir: 1 };
 }
 function drawTithe(dt) {
-  const s = shown.s, path = tithePath(), N = TITHE_CARRIERS;
-  shown.tithe += dt * (s >= 0.98 ? 0 : TITHE_LAP * (1 - 0.6 * s));
+  const s = shown.s, path = tithePath(), c = GC(), total = stairPlan().len;
+  const N = Math.max(6, Math.floor(total / TITHE_GAP)), big = Math.max(7, 1.5 * c), small = Math.max(5, 1.1 * c);
+  shown.tithe += dt * (s >= 0.98 ? 0 : TITHE_PACE * (1 - 0.6 * s) / total);
   const thin = Math.min(0.93, s * 1.05);
-  // the ledge: pale steps under their feet
-  alpha(1 - 0.85 * thin, () => {
-    ctx.fillStyle = GREY[PALE];
-    for (let u = 0.03; u < 0.985; u += 0.005) { const q = pathAt(path, u); if (inView(q.x, 2)) rect(q.x, q.y, 2, 2); }
-  });
   for (let i = 0; i < N; i++) {
     const pres = clamp((hsh(i, 0, 80) + 0.2 - 1.2 * thin) / 0.2, 0, 1);
     if (pres <= 0.01) continue;
     const u = frac(i / N + shown.tithe), q = pathAt(path, u);
-    const sz = Math.max(4, snap(q.s, 2)), bw = sz, bh = Math.round(sz * 0.75);
+    const sz = Math.max(4, snap(lerp(big, small, u), 2)), bw = sz, bh = Math.round(sz * 0.75);
     const up = s >= 0.98 ? 0 : (Math.floor(now() * 4 + i) % 2);
     const x = q.x - bw / 2, y = q.y - bh - up;
     if (!inView(x - sz, sz * 3)) continue;
-    const a = pres * clamp(u / 0.03, 0, 1) * clamp((1 - u) / 0.05, 0, 1);
-    const loadA = clamp((0.94 - u) / 0.04, 0, 1), rim = sz >= 10 ? 2 : 1;
+    const a = pres * clamp(u / 0.02, 0, 1) * clamp((1 - u) / 0.04, 0, 1);
+    const loadA = clamp((0.95 - u) / 0.05, 0, 1), rim = sz >= 10 ? 2 : 1;
     alpha(a, () => {
-      rect(x, y, bw, bh, INK); rect(x + rim, y + rim, bw - 2 * rim, bh - 2 * rim, W);
+      // a solid ink back, so a carrier never reads as one of the white-faced souls
+      rect(x, y, bw, bh, INK);
       const hs = Math.max(2, snap(sz * 0.4, 1));
       rect(q.dir > 0 ? x + bw - 1 : x - hs + 1, y + bh - hs - 1, hs, hs, INK);      // the head, bowed low
       alpha(loadA, () => {
-        if (i % 3 === 0) { const ls = Math.round(sz * 0.8); rect(x + (bw - ls) / 2, y - ls + 1, ls, ls, INK); rect(x + (bw - ls) / 2 + rim, y - ls + 1 + rim, ls - 2 * rim, ls - 2 * rim, W); }
-        else { const pl = Math.round(sz * 1.8), th = Math.max(2, Math.round(sz / 4)); rect(x + bw / 2 - pl / 2, y - th, pl, th, MID); }
+        if (i % 3 === 0) { const ls = Math.round(sz * 0.8), lx = x + (bw - ls) / 2, ly = y - ls + 1; rect(lx, ly, ls, ls, INK); rect(lx + rim, ly + rim, ls - 2 * rim, ls - 2 * rim, W); }
+        else {
+          const pl = Math.round(sz * 1.8), th = Math.max(2, Math.round(sz / 4)), px = x + bw / 2 - pl / 2;
+          rect(px, y - th, pl, th, INK);
+          if (th > 2) rect(px + 1, y - th + 1, pl - 2, th - 2, MID);
+        }
       });
     });
   }
-  // the glare at his left hand that takes the load, then the carrier
-  const end = path[path.length - 1], c = GC(), rad = TITHE_GLARE_R * c, q = c >= 6 ? 3 : 2;
+  // the glare under his left hand that takes the loads
+  const end = stairPlan().end, ex = godX() + end.x * c, ey = F.gy0 + end.y * c;
+  const rad = TITHE_GLARE_R * c, q = c >= 6 ? 3 : 2;
   alpha(0.92 - 0.3 * s, () => {
     ctx.fillStyle = raw(GREY[0]);
-    for (let y = -rad; y < rad; y += q) { const hw = Math.sqrt(Math.max(0, rad * rad - y * y)); rect(snap(end.x - hw, q), end.y - 2 * c + y, snap(hw * 2, q), q); }
+    for (let y = -rad; y < rad; y += q) { const hw = Math.sqrt(Math.max(0, rad * rad - y * y)); rect(snap(ex - hw, q), ey + y, snap(hw * 2, q), q); }
   });
 }
 
@@ -922,8 +1070,9 @@ function drawDrift() {
 }
 
 // --- the layers ------------------------------------------------------------------------------------
-// The sky behind the camp: the far bands and their clouds, God, the near
-// bands, the tithe line and the signs, the cloud bank over their feet.
+// The sky behind the camp: the far bands and their clouds, God's light, the
+// near bands and the cloud bank, then God on his throne and stair with the
+// tithe line, and the signs.
 let GZ = null, lastDt = 0;
 export function drawSkyCrowd() {
   if (!S.after) return;
@@ -941,13 +1090,17 @@ export function drawSkyCrowd() {
     if (SKY_CLOUDS_AFTER.includes(k) && k !== far - 2) drawCloudStrip(k);
   }
   drawGodBack();
-  drawGod(GZ);
   drawCloudStrip(far - 2);
   drawBand(far - 1);
   drawNearSouls();
-  drawTithe(lastDt);
-  drawThings(GZ);
   drawBank();
+  // God, his throne and the stair in front of the near band, their foot in
+  // the cloud floor under its lip; the signs, held up out of the crowd, over all.
+  drawThrone();
+  drawGod(GZ);
+  drawTithe(lastDt);
+  drawLip();
+  drawThings(GZ);
 }
 // Over the camp: the bodies standing in God's yard, the souls drifting up,
 // the gaze, which lights whatever it crosses, and the throne's bubbles.
