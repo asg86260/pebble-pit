@@ -6,23 +6,21 @@
 // stand the placeholder up, for the owner and the mocks to move; nothing in
 // it is tuned. Seconds unless named; a pace is world pixels a second.
 import { P } from './yard.js';
+import { FINALE_END_CELLS, FINALE_DOOR_CELL, FINALE_HOUSE_W } from './finale.js';
 import { GREY, PURPLE } from './palette.js';
 
 // --- the portals -------------------------------------------------------------
 // A portal is the camera's way between two places, never a body's (bodies
-// walk the road, ghosts.js), and it has an end in each. Heaven's is a tear
-// in the sky ACT_HEAVEN_SKY over the house, the cloud stair let down from it
-// to the ruin; its end in the afterlife is the patch of cloud floor straight
-// above, the ring drawn ACT_HEAVEN_HANG over it. Hell's is a white-hot slit
+// walk the road, ghosts.js), and it has an end in each. Heaven's is a pair of
+// pearly gates (below, "heaven's gates"): in the yard on a cloud bank up a
+// cloud stair from beside the ruin, in the afterlife standing on the cloud
+// floor straight above. Hell's is a white-hot slit
 // in the deep's floor straight over hell's road down (hell/place.js, `roadX`),
 // and the landing; its end in hell ACT_HELL_HANG over the landing's floor.
 export const ACT_PORTAL_R = P * 5;           // a ring's radius
-export const ACT_HEAVEN_SKY = P * 34;
-export const ACT_HEAVEN_HANG = P * 14;
 export const ACT_HELL_HANG = P * 14;
 export const ACT_PORTAL_OPEN_S = 2;          // a ring opening, by opacity and size
 export const ACT_PORTAL_SPIN_HZ = 0.6;       // its cells turning, steps a second
-export const ACT_PORTAL_TONES = [PURPLE[13], PURPLE[11], PURPLE[9], PURPLE[7]];
 // The pointing hand beside an act portal, as the yard portal's: shown until
 // the player has been through and back by their own hand, then faded.
 export const ACT_HAND_SIDE = P * 2;          // the gap between the ring and the hand
@@ -61,8 +59,6 @@ export const ACT_ROCK_TONES = [GREY[10], GREY[9], GREY[8]];
 export const ACT_SOUL_LIFT_S = 1.5;          // out of the wreck, fading in
 export const ACT_SOUL_RIM = GREY[3];         // a soul's rim, the pale grey (DESIGN.md)
 export const ACT_SOUL_PAPER = GREY[0];
-export const ACT_STAIR_TONES = [GREY[1], GREY[2], GREY[1], GREY[3]];   // the cloud stair's cells
-export const ACT_STAIR_STEP = 2;             // cells a step, down and across
 export const ACT_SLIT_TONES = [GREY[0], PURPLE[13], GREY[1]];          // the slit, white-hot
 
 // --- the ghosts on the road (call 5: carry, not work) -----------------------
@@ -116,13 +112,46 @@ export const MANSION_SET_S = 0.7;
 export const MANSION_FADE_S = 0.6;
 export const MANSION_GREYS = [GREY[10], GREY[8], GREY[6], GREY[4], GREY[2]];
 export const MANSION_LIT = PURPLE[12];
+// --- heaven's gates (docs/mocks/act3-gates-2026-10-19, take A; the owner,
+// 2026-10-19) ------------------------------------------------------------------
+// Tall pearly gates in a long cloud bank ACT_GATES_SKY over the ground, a
+// cloud stair up to them from beside the ruin in two flights turning on a
+// landing: the first ACT_STAIR_UP steps away from the ruin, the second back,
+// so its top comes out over its foot. A step is ACT_STAIR_TREAD cells along
+// and ACT_STAIR_RISE up. The gates' middle stands ACT_GATES_CLEAR cells past
+// the farther of the ruin's right end and the mansion's, so neither the stair
+// nor the gates nor the bank stands on the mansion's ground or in its tower.
+// Two leaves, each ACT_GATES_LEAF[0] cells wide and ACT_GATES_H tall, swing
+// open in held steps a cell narrower each (ACT_GATES_LEAF), a step every
+// ACT_GATES_STEP_S, and stand open ACT_GATES_HOLD_S after the camera has come
+// through before they close the same way.
+export const ACT_GATES_SKY = P * 30;
+export const ACT_GATES_CLEAR = 4;
+export const ACT_GATES_CELL = Math.max(FINALE_END_CELLS - FINALE_DOOR_CELL + FINALE_HOUSE_W + 3,
+                                       MANSION_AT + MANSION_WING_W * 2 + MANSION_MAIN_W) + ACT_GATES_CLEAR;
+export const ACT_GATES_LEAF = [5, 4, 3, 2, 1];
+export const ACT_GATES_H = 16;
+export const ACT_GATES_REACH = P * 8;        // the middle to a post's outside
+export const ACT_GATES_STEP_S = 0.3;
+export const ACT_GATES_HOLD_S = 1.5;
+export const ACT_GATES_NEAR = P * 6;         // a body this near the gateway has them open
+export const ACT_STAIR_TREAD = 3;
+export const ACT_STAIR_RISE = 2;
+export const ACT_STAIR_UP = 8;
+export const ACT_STAIR_LANDING = 6;           // so the second flight starts clear of the first's top
+// The stair's far end, cells off the yard's left edge: the landing's.
+export const ACT_STAIR_END = ACT_GATES_CELL + ACT_STAIR_UP * ACT_STAIR_TREAD + ACT_STAIR_LANDING + 2;
+// The light over the open gates, cells up from their crest, that the freed
+// souls come down out of.
+export const ACT_GATES_LIGHT = 24;
+
 // The gathering: the freed souls coming down heaven's cloud stair and
 // standing in files beside the mansion, MANSION_SOULS of them, a soul every
 // MANSION_SOUL_EVERY_S; then the sheet after MANSION_SHEET_AFTER_S.
 export const MANSION_SOULS = 24;
 export const MANSION_SOUL_EVERY_S = 0.4;
 export const MANSION_FILE_W = 8;             // souls a file
-export const MANSION_FILE_AT = 54;           // the files' left end, cells off the yard's left edge
+export const MANSION_FILE_AT = ACT_STAIR_END + 3;   // the files' left end, cells off the yard's left edge: past the stair
 export const MANSION_SHEET_AFTER_S = 4;
 
 // --- act 3 flow (the playthrough track, 2026-10-18) ---

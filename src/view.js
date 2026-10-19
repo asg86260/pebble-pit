@@ -243,6 +243,9 @@ function backToYard() {
 // `S.view` already is.
 let through = null, via = null, glides = 0, landX = null;
 export const glideNo = () => glides;
+// The act portal the glide under way goes by, or null (heaven's gates stand
+// open for it, portals.js).
+export const glidingBy = () => (gliding() ? via : null);
 // The ring a glide opens out of or closes onto, in `place`: the wizards'
 // portal's ends, or an act portal's (portals.js).
 function ringIn(place, how = via) {

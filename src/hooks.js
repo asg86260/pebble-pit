@@ -1390,9 +1390,15 @@ HANDLES.__actFrames = () => ({ after: afterFrames(), hell: hellFrames() });
 // the ones before it. The acts' facts, as they stand after.
 import { ensureActs, forgetActs } from './actbeats.js';
 import { retiredIn } from './home.js';
-import { openPortal, freePortal } from './portals.js';
+import { openPortal, freePortal, throughPortal } from './portals.js';
 import { beginMansion, mansionPieces } from './mansion.js';
-import { ruinX, yardFeet, sendPair } from './ghosts.js';
+import { ruinX, yardFeet, sendPair, threshold } from './ghosts.js';
+// A press on an act portal's end, as the pointer's lands (input.js), and the
+// pair sent off on a route from where they stand, for the scenes about them.
+HANDLES.__pressPortal = key => throughPortal(key);
+HANDLES.__sendPair = (route, leg = 0) => sendPair(route, leg);
+// The top of heaven's stair, where the walk goes in at the gates (ghosts.js).
+HANDLES.__gateWalk = () => threshold();
 import { speakerAt as actsSpeakerAt } from './after/place.js';
 import { WORKER as ACTS_WORKER, ACT_RIM_PIECES, MANSION_FADE_S } from './config.js';
 import { WALL_BEATS } from './hell/story.js';

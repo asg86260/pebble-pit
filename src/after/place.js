@@ -14,7 +14,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PEDESTAL_H, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
-         AFTER_SKY_LO, AFTER_SKY_HI, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST } from '../config.js';
+         AFTER_SKY_LO, AFTER_SKY_HI, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL } from '../config.js';
 
 import { S } from '../state.js';
 import { ART as BASE_ART } from './art.js';
@@ -208,6 +208,9 @@ export function floorFlats() {
   const [l0, l1] = crowdLip();
   out.push([l0 - 2, l0 + 2], [l1 - 2, l1 + 2]);
   out.push([c(stairFoot()) - 2, c(afterX1())]);
+  // Heaven's gates, standing on the floor with the light coming up between
+  // them (render/gates.js), and the floor heaped either side.
+  out.push([ACT_GATES_CELL - 20, ACT_GATES_CELL + 20]);
   return out;
 }
 // Whether a station's ground is taken: standing, or ordered and going up.

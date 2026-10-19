@@ -21,14 +21,13 @@
 // (`S.portalDown`, `S.portalRound`, `S.portalHand`; view.js) kept per portal.
 
 import { S } from './state.js';
-import { P, ACT_PORTAL_R, ACT_HEAVEN_SKY, ACT_HEAVEN_HANG, ACT_HELL_HANG,
-         ACT_PORTAL_OPEN_S, ACT_HAND_FADE_S, FINALE_HOUSE_W } from './config.js';
-import { houseX } from './home.js';
+import { P, ACT_PORTAL_R, ACT_HELL_HANG, ACT_PORTAL_OPEN_S, ACT_HAND_FADE_S, ACT_GATES_SKY, ACT_GATES_CELL,
+         ACT_GATES_LEAF, ACT_GATES_H, ACT_GATES_REACH, ACT_GATES_STEP_S, ACT_GATES_HOLD_S, VIEW_GLIDE_S } from './config.js';
 import { afterX0, afterFloor } from './after/place.js';
 import { roadX, chamberFloor } from './hell/place.js';
 import { deepFloor } from './deep/place.js';
 import { afterlifeOn, hellOn } from './acts.js';
-import { travel, gliding } from './view.js';
+import { travel, gliding, glidingBy } from './view.js';
 
 const snap = v => Math.round(v / P) * P;
 
@@ -39,10 +38,11 @@ export const PORTALS = {
   heaven: {
     outer: 'yard', inner: 'after', on: afterlifeOn,
     end: {
-      yard: () => ({ x: snap(houseX() + FINALE_HOUSE_W * P / 2), y: snap(S.groundY - ACT_HEAVEN_SKY), r: ACT_PORTAL_R }),
-      // Straight over the yard's end: the souls rise through the one tear
-      // and come up through the cloud floor above it.
-      after: () => ({ x: Math.max(afterX0(), snap(houseX() + FINALE_HOUSE_W * P / 2)), y: snap(afterFloor() - ACT_HEAVEN_HANG), r: ACT_PORTAL_R })
+      // The gates on their bank, up the stair from beside the ruin.
+      yard: () => gatesEnd(snap(S.groundY) - ACT_GATES_SKY),
+      // Straight over the yard's end, standing on the cloud floor: the road
+      // comes up through the floor between them.
+      after: () => gatesEnd(snap(afterFloor()))
     }
   },
   hell: {
@@ -56,6 +56,44 @@ export const PORTALS = {
   }
 };
 export const PORTAL_KEYS = Object.keys(PORTALS);
+
+// --- heaven's gates ---------------------------------------------------------------
+// Either end of heaven's portal is the same pair of gates, standing on the line
+// `feet`: the middle of the gateway (where the ripple opens and the hand
+// points), the reach to a post's outside, and the box a press lands in, from
+// the crest's top pearl down to the feet.
+export const gatesX = () => Math.max(afterX0(), ACT_GATES_CELL * P);
+export const GATES_TALL = ACT_GATES_H + 10;           // the leaves, the crest over them and its pearl
+function gatesEnd(feet) {
+  const x = gatesX();
+  return { x, y: feet - (ACT_GATES_H / 2) * P, r: ACT_GATES_REACH, feet, top: feet - GATES_TALL * P };
+}
+// How far open they stand: a step of ACT_GATES_LEAF, 0 shut, the last open.
+// This session's (`S.gates`): a reload finds them shut.
+export const GATES_OPEN = ACT_GATES_LEAF.length - 1;
+const gates = () => (S.gates ||= { step: 0, u: 0, held: 0, go: null });
+export const gatesStep = () => (S.gates ? S.gates.step : 0);
+export const gatesBusy = () => !!(S.gates && S.gates.go);
+// One frame of them, a held step at a time toward open while anything wants
+// them open -- a press waiting to go through, the camera going through, a
+// hold after it has, or a body at the gateway (`near`, actbeats.js) -- and
+// shut otherwise. A press waiting goes through once they stand open.
+function stepGates(dt, near) {
+  const g = gates();
+  if (glidingBy() === 'heaven') g.held = ACT_GATES_HOLD_S;
+  else g.held = Math.max(0, g.held - dt);
+  const want = g.go || g.held > 0 || near ? GATES_OPEN : 0;
+  // A press waiting holds them open a step more before the ripple, so the
+  // last step is seen standing.
+  const hold = g.step === want && !(g.go && want === GATES_OPEN);
+  if (hold) g.u = 0;
+  else if ((g.u += dt) >= ACT_GATES_STEP_S) { g.u = 0; if (g.step !== want) g.step += Math.sign(want - g.step); else g.u = ACT_GATES_STEP_S; }
+  if (g.go && g.step === GATES_OPEN && g.u >= ACT_GATES_STEP_S && !gliding()) {
+    const go = g.go;
+    g.go = null;
+    if (travel(go.to, 'heaven')) { g.held = ACT_GATES_HOLD_S; countTrip('heaven', go.to, go.byHand); }
+  }
+}
 
 // A portal's end in `place`, or null if it has none there.
 export const portalEnd = (key, place) => {
@@ -89,9 +127,10 @@ export function freePortal(key) {
 
 // One frame: each ring opening, and each hand fading once its round trip is
 // made, the yard portal's own rule (view.js, `stepView`).
-export function stepPortals(c) {
+export function stepPortals(c, near = false) {
   if (!S.acts) return;
   const dt = c.dt / 1000;
+  stepGates(dt, near);
   for (const key of PORTAL_KEYS) {
     const r = rec(key);
     if (!r) continue;
@@ -110,25 +149,39 @@ export const handAlpha = key => (rec(key) ? rec(key).hand ?? 1 : 0);
 // Through `key` from whichever of its ends the camera is at; the player's own
 // press when `byHand`, which is what the hand counts. False if it cannot be
 // taken from here.
+// Heaven's opens its gates first and goes through once they stand open
+// (`stepGates`), so the press is answered now and the ripple follows.
 export function throughPortal(key, byHand = true) {
   const row = PORTALS[key];
   if (!row || gliding()) return false;
   const from = S.view;
   const to = from === row.outer ? row.inner : from === row.inner ? row.outer : null;
   if (!to || (byHand && !portalFree(key))) return false;
+  if (key === 'heaven') {
+    const g = gates();
+    if (g.go) return false;
+    g.go = { to, byHand };
+    return true;
+  }
   if (!travel(to, key)) return false;
-  const r = rec(key);
-  if (byHand && r) { if (to === row.inner) r.down = true; else if (r.down) r.round = true; }
+  countTrip(key, to, byHand);
   return true;
+}
+// The hand's count: down by the player's own press, then back.
+function countTrip(key, to, byHand) {
+  const r = rec(key);
+  if (byHand && r) { if (to === PORTALS[key].inner) r.down = true; else if (r.down) r.round = true; }
 }
 
 // The portal end a press at (x, y) in the place on screen lands on: its ring
-// and a cell round it. The key, or null.
+// and a cell round it, or the gates' box. The key, or null.
 export function portalAt(x, y) {
   for (const key of PORTAL_KEYS) {
     if (!portalFree(key)) continue;
     const e = portalEnd(key, S.view);
-    if (e && Math.hypot(x - e.x, y - e.y) <= e.r + P) return key;
+    if (!e) continue;
+    if (e.feet != null ? Math.abs(x - e.x) <= e.r + P && y >= e.top - P && y <= e.feet + P
+                       : Math.hypot(x - e.x, y - e.y) <= e.r + P) return key;
   }
   return null;
 }

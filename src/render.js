@@ -6,7 +6,7 @@
 // for one the crew switch fades or hides. Every draw lives in `src/render/`; this file
 // draws nothing.
 
-import { CREW_FADE, P, MAGIC_TONES, RIPPLE_RINGS, RIPPLE_GAP } from './config.js';
+import { CREW_FADE, P, MAGIC_TONES, RIPPLE_RINGS, RIPPLE_GAP, GREY, AFTER_TONES } from './config.js';
 import { crewView } from './prefs.js';
 import { ctx, canvas, paintOn } from './render/ctx.js';
 import { inkMode } from './ink.js';
@@ -50,7 +50,7 @@ import { drawRoombaDock, drawRoombas } from './render/roomba.js';
 import { drawShack } from './render/shack.js';
 import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMotes,
          drawSwimmers, drawDeepInvert } from './render/deep.js';
-import { ripple, deepCamera, canGoDown, gliding } from './view.js';
+import { ripple, deepCamera, canGoDown, gliding, glidingBy } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb, drawBarrier, drawFocusLines, drawMeal, drawMealUnder } from './render/serpent.js';
 import { drawDeepZones, drawDeepFauna } from './render/fauna.js';
@@ -63,7 +63,7 @@ import { drawLevelUpBack, drawLevelUpFront } from './render/levelup.js';   // tr
 import { drawSinking, drawLifting, drawIntoCrusher } from './render/scales.js';
 import { drawFireworks, drawHungKits, drawFinaleDeep, drawFinaleYard } from './render/finale.js';
 import { drawHome } from './render/home.js';
-import { drawActsYard, drawActsDeep, drawActsAfter, drawActsHell, drawActBodies, drawActCaption } from './render/portals.js';
+import { drawActsYard, drawActsDeep, drawActsAfter, drawActsHell, drawActBodies, drawActCaption, drawActsGates } from './render/portals.js';
 import { drawMansion } from './render/mansion.js';
 import { drawRoadSky, roadUp } from './render/road.js';
 import { drawAfterBackdrop, drawAfterGrove, drawAfterCamp, drawAfterMembers, drawAfterSky, drawAfterCounts } from './render/after.js';
@@ -208,7 +208,7 @@ const LAYERS = [
   { name: 'garage', draw: drawGarage },           // where the forklifts go when there is nothing to fetch
   { name: 'home', draw: drawHome },               // the two of them's house at the left end, and its woodpile (render/home.js)
   { name: 'mansion', draw: drawMansion },         // and the mansion raised on its ground at the end (render/mansion.js)
-  { name: 'acts-yard', draw: drawActsYard },      // heaven's tear over the ruin and its cloud stair, the rock on the ruin, the go-on card (render/portals.js)
+  { name: 'acts-yard', draw: drawActsYard },      // heaven's cloud stair, bank and light, the rock on the ruin, the go-on card (render/portals.js)
   { name: 'dropped hats', draw: drawDroppedHats, dim: 1 },// and any that has been shaken off somebody
   // Act 3's afterlife (render/after.js), drawn only with the camera up there,
   // back to front: the page and the cloud floor, God's crowd filling the sky
@@ -300,6 +300,7 @@ const LAYERS = [
   { name: 'finale', draw: drawFinaleYard },      // the two of them, down the yard and at its end for good
   { name: 'acts-bodies', draw: () => drawActBodies('yard') },   // the souls and ghosts on the road, the mansion's gathering (render/portals.js)
   { name: 'acts-road-bodies', draw: () => drawActBodies('road') },   // and the two of them up the road between the yard and the cloud floor
+  { name: 'acts-gates', draw: drawActsGates },   // heaven's gates over them, so they go in behind the posts and the crest (render/gates.js)
   { name: 'puffs', draw: drawPuffs },            // what the crew are putting up there right now
   { name: 'smog', draw: drawSmog },              // and what it has gathered into up there
   // The serpent's head over the liquid it came out of, and the one it takes
@@ -651,14 +652,18 @@ function drawDeepUnseen() {
 
 // The rings: the leading one bright, three more following it in darker
 // purples, each a ring of cells on the screen's own cell grid.
+// Through heaven's gates the rings are act 3's own four tones, ink leading, as
+// the gates are (render/gates.js); every other way's are the magic purples.
+const HEAVEN_RINGS = [AFTER_TONES.ink, AFTER_TONES.mid, AFTER_TONES.mid, AFTER_TONES.pale].map(i => GREY[i]);
 function drawRipples(rip) {
+  const tones = glidingBy() === 'heaven' ? HEAVEN_RINGS : MAGIC_TONES;
   const cell = P * S.zoom;
   ctx.save();
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   for (let n = 0; n < RIPPLE_RINGS; n++) {
     const r = rip.r - n * cell * RIPPLE_GAP;
     if (r <= 0) continue;
-    ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1, n)];
+    ctx.fillStyle = tones[Math.min(tones.length - 1, n)];
     const steps = Math.max(12, Math.ceil(Math.PI * 2 * r / cell));
     for (let k = 0; k < steps; k++) {
       const a = k / steps * Math.PI * 2;

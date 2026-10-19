@@ -541,6 +541,10 @@ export const S = {
   // The acts' connective tissue (actbeats.js): the go-on, the house, the
   // portals, the pair on the road, the mansion; null until the player says go on.
   acts: null,
+  // Heaven's gates swinging (portals.js): the held step they stand at, the
+  // clock to the next, the hold after the camera came through, and a press
+  // waiting for them to stand open. A reload finds them shut.
+  gates: null,
   // The constrict's orb (deep/phases.js): the station its fighter is at, the
   // seconds it has left of the `max` it closed with (its time is its health),
   // the seconds blows have cut off it, and when it closed.
@@ -848,6 +852,7 @@ export const SAVED_BY_HAND = [
 // thinking about it is a failing test.
 export const EPHEMERAL = [
   'orbBurst',
+  'gates',                // heaven's gates swinging, and a press waiting on them (portals.js)
   'still',
   'muckScene', 'muckPull',  // the first muck's scene and its sent body; the beat's name is saved
   // A bite out of the serpent's hide closes in seconds; a reload finds it closed.

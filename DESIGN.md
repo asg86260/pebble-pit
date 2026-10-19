@@ -21552,6 +21552,26 @@ a plain label in locales/en.ftl for the owner to rewrite.
   the tear at `ghost-road`; the act-4 road runs into the drowned pit, down
   the abyss to the deep's floor, along it and down through the slit. The
   camera follows a body across by the ripple.
+- **Heaven's gates (built; the owner's take A of
+  docs/mocks/act3-gates-2026-10-19, 2026-10-19).** The tear and the ring are
+  replaced by pearly gates: in the yard on a long cloud bank 30 cells up
+  (`ACT_GATES_SKY`), a cloud stair climbing to them in two flights from
+  beside the ruin and turning on a landing; in the afterlife the same gates
+  seen from behind, standing on the cloud floor with the light coming up
+  through it between them. Their middle stands clear of the mansion's ground
+  and its tower (`ACT_GATES_CELL`, past the farther of the ruin's and the
+  mansion's right ends), so the stair's foot is beside the ruin on its
+  mansion-free side, under the gates, and the first flight climbs away from
+  the house. A press swings the leaves open in four held steps (5 cells to 1,
+  `ACT_GATES_LEAF`), holds the last a step, then ripples, in the act's tones,
+  out of the gateway; after the camera has come through they shut the same
+  way. Anyone at the gateway has them open. The souls walk the stair up at
+  the fall and are ridden up the light from the gates; the ghosts walk down
+  it; the freed souls come down out of the light and down it to their files.
+  Plain A, no glow disc: on the light page the raw light is the paper's
+  white, so it is read by what bounds it -- the bars, the pale rungs up the
+  light, the spill over the bank's pale top, and broken pale rays out across
+  the cloud behind the posts, lengthening with the leaves.
 - **What starts act 3** (call 7, as recommended): a go-on card over the
   house once the finale's sheet is down. Pressed, the house's fall plays.
 - **Who a beat holds:** every act beat owns the camera only, so the yard,
