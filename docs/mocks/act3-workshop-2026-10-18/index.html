@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workshop Roofs Nails</title>
+<style>
+  :root { --bg: #ffffff; --fg: #000000; --muted: #5f5f5f; --line: #d6d6d6; --ph: #8a8a8a; }
+  :root[data-theme="dark"] { --bg: #1f1f1f; --fg: #e0e0e0; --muted: #a4a4a4; --line: #464646; --ph: #8a8a8a; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width: 1900px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  h2 { font-size: 15px; margin: 22px 0 6px; border-top: 2px solid var(--fg); padding-top: 10px; }
+  h3 { font-size: 13px; margin: 0 0 4px; }
+  p, li { color: var(--muted); margin: 0 0 8px; max-width: 120ch; }
+  b { color: var(--fg); }
+  .bar { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; align-items: center; }
+  .bar button { font: inherit; background: var(--bg); color: var(--fg); border: 2px solid var(--line); padding: 3px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .bar label { color: var(--muted); font-size: 13px; display: inline-flex; gap: 4px; align-items: center; }
+  canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border: 1px solid var(--line); }
+  figure { margin: 0; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 3px; max-width: 70ch; }
+  .row1 { display: flex; gap: 12px; flex-wrap: wrap; }
+  .grid3 { display: grid; grid-template-columns: repeat(2, max-content); gap: 14px; }
+  .opt { border: 1px solid var(--line); padding: 8px; }
+  .opt.rec { border: 2px solid var(--fg); }
+  .wide { overflow-x: auto; max-width: 100%; }
+  .play { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  .stage { position: relative; }
+  #big, #small { touch-action: none; cursor: pointer; }
+  #cue { position: absolute; font-size: 13px; color: var(--fg); background: var(--bg); padding: 0 4px; pointer-events: none; white-space: nowrap; }
+  #ro { font-size: 12px; color: var(--muted); white-space: pre; min-width: 280px; }
+  .ph { border-bottom: 1px dotted var(--ph); }
+  .ph::after { content: "ph"; font-size: 9px; vertical-align: super; color: var(--ph); margin-left: 1px; }
+  .recline { margin-top: 10px; padding: 6px 10px; border-left: 4px solid var(--fg); }
+  ol, ul { padding-left: 22px; }
+  .crit li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<main>
+<h1><span class="ph">The workshop</span>: a roof for the shed, and nailing signs by hand</h1>
+<p>A playable mock drawn from plain cells on the game's grid (P = 6, the game's eleven greys, a body the game's 18-pixel square with a 2-pixel rim), <b>not the game</b>. The shed body is take B as built (<code>wsB</code> in <code>src/render/after/stations.js</code>: walls 6..24, the open front 8..22), with the same numbers; only the roof and what happens on the bench are new. The <span class="ph">press</span> is redrawn from the same file, working, as the bar the shed has to sit beside.</p>
+<p><b>Every word on this page is a placeholder</b> (marked <span class="ph">like this</span>, and the whole page is): station, job, roof and cue words are working names. The canvases draw no words, only counts. The owner writes the player's words.</p>
+<div class="bar">
+  <button data-theme="light" class="on">light</button><button data-theme="dark">dark</button>
+  <button id="pause">pause</button>
+  <label><input type="checkbox" id="crowd" checked> the camp's crowd behind</label>
+</div>
+<p style="font-size:12px">Dark is ink #e0e0e0 on paper #1f1f1f, each grey mapped by its lightness (black to the ink, white to the paper, a grey to the same step between). It is not an inversion.</p>
+
+<h2>1. Four roofs on the same shed, each beside the <span class="ph">press</span></h2>
+<p>The same body, bench and joiner under each roof, held mid-sign (two nails flush, one half, one raised; the joiner on the strike). The four pips over the door are that sign's progress (section 2). At 1x first, the game's zoom, then 3x.</p>
+<div class="row1" id="roofs1"></div>
+<div class="grid3" id="roofs3" style="margin-top:12px"></div>
+<div class="recline" id="recline"></div>
+<h3 style="margin-top:14px">The pick beside the <span class="ph">press</span></h3>
+<div class="row1" id="pick"></div>
+
+<h2>2. Nailing, playable, under roof <span id="pickname"></span></h2>
+<p><b>Tap a nail</b> on the bench (mouse or a finger, on the 3x picture or the 1x one). The first tap on a nail sinks it halfway, the second drives it flush. A tap that lands on no nail, or on a nail already flush, does nothing. When all four are flush the <span class="ph">carrier</span> takes the sign out to the <span class="ph">sign pile</span>, fetches a blank from the <span class="ph">blanks</span> and lays it on the bench, and the next four nails go in.</p>
+<div class="bar">
+  <label><input type="checkbox" id="joiner" checked> <span class="ph">joiner</span> taps on their own when you stop</label>
+  <button id="speed">speed x1</button>
+  <button id="reset">reset</button>
+</div>
+<div class="play">
+  <div class="wide stage" id="stage"><canvas id="big"></canvas><div id="cue"><span class="ph">tap each nail</span></div>
+    <figcaption>3x, playable</figcaption></div>
+  <div id="ro"></div>
+</div>
+<div class="wide" style="margin-top:10px"><figure><canvas id="small"></canvas><figcaption>1x, the game's zoom, the same yard, playable too</figcaption></figure></div>
+<div class="wide" style="margin-top:10px"><figure><canvas id="states"></canvas><figcaption>3x, held: a nail raised, half, flush; the hammer up, swinging, on the strike; the pips at 0, 1, 2 per nail</figcaption></figure></div>
+
+<h2>How it reads</h2>
+<ol>
+  <li><b>The nails.</b> The blank lies on the bench edge-on, twelve cells long and one deep, and the four nails stand up out of its top edge three cells apart, so each nail owns a three-cell column to aim at. A raised nail is a two-pixel shank eight pixels tall under a one-cell head: it stands well clear of the board. Half is the same nail with half the shank showing. Flush is the head alone, a two-pixel bump on the board's top edge. The three are told apart by height, which is what reads at 1x.</li>
+  <li><b>The hammer.</b> The joiner stands behind the bench on a slatted stand and walks along it a cell at a time to the nail tapped (nothing jumps), hammer raised. Then three held poses as built: up (handle plumb, head level over the shoulder), a grey smear for one step, and the strike (head plumb, standing on the nail's head, handle level back to the hand). The nail changes on the strike, not on the tap, so the click is the cause and the blow is the effect.</li>
+  <li><b>Taps queue.</b> Tap all four nails twice as fast as you like: each tap is a blow in the joiner's queue, done in order. A third tap on a nail is a miss (it would have nowhere to go).</li>
+  <li><b>The pips</b> are cut into the sign over the door: a ring for a raised nail, half-filled for half, solid for flush. They are the station's readout and need no words.</li>
+  <li><b>The ghost hand</b> points down at the next nail that still wants a tap, tapping in two held poses, and walks to the next nail a cell at a time. It shows for the first three signs and fades out over the fourth. Its words (<span class="ph">tap each nail</span>) are page text beside it, not drawn.</li>
+  <li><b>The finished sign</b> slides along the bench a cell a step onto the <span class="ph">carrier</span>'s head, is walked out to the <span class="ph">sign pile</span>, lowered onto it a row a step and fades into the pile as the count ticks. The carrier walks on to the <span class="ph">blanks</span>, lifts the top one off, walks it back and slides it onto the bench; the four new nails fade in standing.</li>
+  <li><b>The joiner on their own</b> taps one blow about every second, left to right, once you have not tapped for a second and a half. You tap up to about three times as fast; the walk out and back is the same for both.</li>
+</ol>
+
+<h2>Self-critique</h2>
+<h3>Round one (after the first shots)</h3>
+<ol class="crit" id="crit1"></ol>
+<h3>Round two (after fixing round one)</h3>
+<ol class="crit" id="crit2"></ol>
+
+<h2>What the mock cannot show</h2>
+<ul>
+  <li>The real camp: the cloud floor, the stair, the build in bands, the glyph stack over the station and the pile-full mark. The crowd behind is the r2 mock's stand-in.</li>
+  <li>The hand's real box in <code>after/place.js</code>, or how a tap on a nail would compete with a tap on a body or a pile standing in front of the shed. Here the only thing tappable is a nail.</li>
+  <li>The game's sign: the camp's signs are drawn on a post (<code>sign()</code> in the r2 mock). Here the product stays a board edge-on, so the pile is a stack of boards with nail heads; whether a finished board should stand up into the post-sign before it is carried is open.</li>
+  <li>Who brings blanks to the <span class="ph">blanks</span> pile (the timber from the <span class="ph">saw mill</span>): the stack here counts down from a fixed number.</li>
+  <li>Whether a joiner standing behind the bench breaks anything in the game's members layer, which draws bodies on the floor. The stand behind the bench is new.</li>
+  <li>Sound, and what a finger feels on a phone at 1x: a nail's column is 18 px wide at the game's zoom.</li>
+</ul>
+
+<h2>Open questions for the owner</h2>
+<ul>
+  <li>Should the joiner keep tapping on their own while the player is tapping too (both hammers' worth of blows), or stop whenever the hand is on it, as here?</li>
+  <li>The <span class="ph">carrier</span> is a second body at the station. It could be the joiner stepping down instead (the player waits longer) or a carrier from the camp's pool.</li>
+  <li>Four nails a sign makes eight taps a sign. Is a sign worth eight taps against the other stations' gestures?</li>
+</ul>
+</main>
+
+<script>
+// ---------------------------------------------------------------------------
+// Grid, greys, dark map (the r2 mock's).
+const P = 6;
+const GREY = ['#ffffff', '#efefef', '#d6d6d6', '#bdbdbd', '#a4a4a4', '#8a8a8a',
+              '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#000000'];
+const K = 10, W = 0;
+let DARK = false, PAUSED = false, SPEED = 1, CROWD = true;
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+function hex(tone) {
+  const c = GREY[tone];
+  if (!DARK) return c;
+  const v = parseInt(c.slice(1, 3), 16) / 255;
+  const n = Math.round((LP + (LI - LP) * (1 - v)) * 255).toString(16).padStart(2, '0');
+  return '#' + n + n + n;
+}
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const cyc = (t, T) => { const u = Math.max(0, t), k = Math.floor(u / T); return { ph: u / T - k, since: u - k * T, k }; };
+const FADE = 0.3;
+
+function frame(g, ox, oy, sink = null) {
+  const d = {
+    g, ox, oy,
+    px(x, y, w, h, tone) {
+      if (sink) { sink(x, y, w, h); return; }
+      g.fillStyle = hex(tone);
+      g.fillRect(Math.round(ox + x), Math.round(oy + y), Math.round(w), Math.round(h));
+    },
+    r(x, y, w, h, tone = K) { d.px(x * P, y * P, w * P, h * P, tone); },
+    c(x, y, tone = K) { d.r(x, y, 1, 1, tone); },
+    line(x0, y0, x1, y1, w = 2, tone = K, centered = true) {
+      const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * P), o = centered ? w / 2 : 0;
+      for (let i = 0; i <= n; i++) { const f = n ? i / n : 0; d.px(Math.round((x0 + (x1 - x0) * f) * P - o), Math.round((y0 + (y1 - y0) * f) * P - o), w, w, tone); }
+    },
+    fade(a, fn) { if (sink) { fn(); return; } const was = g.globalAlpha; g.globalAlpha = was * clamp01(a); fn(); g.globalAlpha = was; },
+    body(x, y, dypx = 0) { const bx = x * P, by = y * P + dypx; d.px(bx, by, 18, 18, K); d.px(bx + 2, by + 2, 14, 14, W); },
+    world: (x, y) => ({ x: ox + x * P, y: oy + y * P })
+  };
+  return d;
+}
+const cut = (d, x, y, w, h, tone = W) => d.px(x * P + 2, y * P + 2, w * P - 4, h * P - 4, tone);
+function silhouette(draw) {
+  const rows = new Map();
+  draw(frame(null, 0, 0, (x, y, w, h) => {
+    if (w <= 0 || h <= 0) return;
+    for (let r = Math.floor(y / P); r < Math.ceil((y + h) / P); r++) {
+      const a = Math.floor(x / P), b = Math.ceil((x + w) / P) - 1, s = rows.get(r);
+      rows.set(r, s ? [Math.min(s[0], a), Math.max(s[1], b)] : [a, b]);
+    }
+  }));
+  return [...rows].map(([r, [a, b]]) => [r, a, b]);
+}
+const backing = (d, rows) => { for (const [r, a, b] of rows) d.r(a, r, b - a + 1, 1, W); };
+
+// Counts: the yard's count font with its paper key.
+const NUM = {
+  '0': ['.##.', '#..#', '#..#', '#..#', '#..#', '.##.'], '1': ['.#..', '##..', '.#..', '.#..', '.#..', '###.'],
+  '2': ['.##.', '#..#', '..#.', '.#..', '#...', '####'], '3': ['###.', '...#', '.##.', '...#', '...#', '###.'],
+  '4': ['#..#', '#..#', '####', '...#', '...#', '...#'], '5': ['####', '#...', '###.', '...#', '...#', '###.'],
+  '6': ['.##.', '#...', '###.', '#..#', '#..#', '.##.'], '7': ['####', '...#', '..#.', '.#..', '.#..', '.#..'],
+  '8': ['.##.', '#..#', '.##.', '#..#', '#..#', '.##.'], '9': ['.##.', '#..#', '#..#', '.###', '...#', '.##.']
+};
+function count(d, n, cx, cy) {
+  const at = d.world(cx, cy), g = d.g, s = String(Math.round(n)), px = 2;
+  const left = Math.round(at.x - (s.length * 5 - 1) * px / 2), top = Math.round(at.y - 6);
+  const ink = new Set(), key = new Set();
+  [...s].forEach((ch, i) => NUM[ch].forEach((row, r) => [...row].forEach((v, c) => { if (v === '#') ink.add((i * 5 + c) + ',' + r); })));
+  for (const k of ink) { const [x, y] = k.split(',').map(Number); for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) { const kk = (x + dx) + ',' + (y + dy); if (!ink.has(kk)) key.add(kk); } }
+  g.fillStyle = hex(W); for (const k of key) { const [x, y] = k.split(',').map(Number); g.fillRect(left + x * px, top + y * px, px, px); }
+  g.fillStyle = hex(K); for (const k of ink) { const [x, y] = k.split(',').map(Number); g.fillRect(left + x * px, top + y * px, px, px); }
+}
+
+// ---------------------------------------------------------------------------
+// The press, as built (stations.js), working on its own clock.
+const PR = { postL: 10, postR: 22, headY: -14, scX: 15, scW: 3, plX: 12, plW: 9, sheetY: -4, bodyX: 26 };
+const PR_SEQ = [0, 0, 1, 2, 2, 2, 1, 0], PRESS_T = 2.8;
+const prDrop = t => PR_SEQ[Math.floor(cyc(t, PRESS_T).ph * 8)];
+function press(d, t, still = false) {
+  const drop = still ? 0 : prDrop(t);
+  d.r(PR.postL, -3, PR.postR - PR.postL + 1, 2, K);
+  d.r(PR.plX, PR.sheetY, PR.plW, 1, K); d.px(PR.plX * P + 2, PR.sheetY * P + 2, PR.plW * P - 4, P - 4, W);
+  const plY = -8 + drop, scTop = plY - 10;
+  d.r(PR.scX, scTop, PR.scW, 10, K);
+  for (let j = 1; j < 9; j += 1.5) { const y0 = (scTop + j) * P; for (let i = 2; i < PR.scW * P - 2; i++) d.px(PR.scX * P + i, Math.round(y0 - i / 3), 1, 2, W); }
+  d.r(PR.scX - 1, scTop - 1, PR.scW + 2, 1, K);
+  d.r(PR.postL, PR.headY, 1, -3 - PR.headY, K); d.r(PR.postR, PR.headY, 1, -3 - PR.headY, K);
+  d.r(PR.postL - 1, -1, 2, 1, K); d.r(PR.postR, -1, 2, 1, K);
+  d.r(PR.postL - 1, PR.headY, PR.postR - PR.postL + 3, 2, K);
+  d.r(PR.plX, plY, PR.plW, 2, K);
+  const barY = plY - 3, bx0 = PR.scX - 1, bx1 = PR.bodyX;
+  d.px(PR.postR * P - 2, barY * P - 2, P + 4, P + 4, W);
+  d.r(bx0, barY, bx1 - bx0, 1, K);
+  const knobY = drop === 2 ? -4 : -5;
+  d.line(bx1 - 1.25, barY + 1, bx1 - 1.25, knobY, 3, K, false);
+  d.r(bx1 - 2, knobY, 2, 2, K);
+  d.r(PR.bodyX, -1, 3, 1, K);
+  if (!still) d.body(PR.bodyX, -4, drop === 2 ? P : 0);
+}
+const pressBack = silhouette(d => press(d, 0, true));
+
+// ---------------------------------------------------------------------------
+// The shed body as built (wsB), and the four roofs. Every roof keeps the
+// walls 6..24 and puts a white sign over the door; the sign is where the
+// pips go.
+function shedBody(d) { d.r(6, -17, 19, 17, K); d.r(8, -16, 15, 16, W); }
+const ROOFS = {
+  A: { name: 'clean gable', sign: { x: 10, y: -20, w: 11, h: 2 },
+    note: 'One even stair, a cell up for every two in, five rows to a five-cell ridge; the eaves a cell past each wall, and a white trim line cut along their underside.',
+    draw(d) {
+      d.r(5, -18, 21, 1, K);
+      d.px(5 * P, -17 * P - 2, 21 * P, 2, W);                 // the trim under the eaves
+      d.r(7, -19, 17, 1, K); d.r(9, -20, 13, 1, K); d.r(11, -21, 9, 1, K); d.r(13, -22, 5, 1, K);
+    } },
+  B: { name: 'lean-to', sign: { x: 6, y: -20, w: 11, h: 2 },
+    note: 'One slope, a cell down for every four across, from a plumb high back at the left to the low front eave at the right, a cell over each wall. Seen front-on, back and front become left and right.',
+    draw(d) {
+      d.r(5, -18, 21, 1, K);
+      d.r(5, -19, 17, 1, K); d.r(5, -20, 13, 1, K); d.r(5, -21, 9, 1, K);
+    } },
+  C: { name: 'flat on a lintel', sign: { x: 10, y: -19, w: 11, h: 2 },
+    note: 'The press\'s head: a lintel two cells deep a cell past each wall, and a flat roof slab a cell thick two cells past, the sign cut into the lintel.',
+    draw(d) {
+      d.r(4, -20, 23, 1, K);
+      d.px(4 * P + 2, -19 * P - 2, 23 * P - 4, 2, W);         // a white seam between slab and lintel
+      d.r(5, -19, 21, 2, K);
+    } },
+  D: { name: 'shingled gable', sign: { x: 11, y: -15, w: 9, h: 2 }, hang: true,
+    note: 'A exactly (stair, overhang, trim), with the four rows over the eave cut into shingles: a white course line under each row and a white joint every three cells, staggered a cell and a half row on row. The gable is all roofing, so the sign hangs under the eave on two rods.',
+    draw(d) {
+      ROOFS.A.draw(d);
+      [[7, -19, 17], [9, -20, 13], [11, -21, 9], [13, -22, 5]].forEach(([x, y, w], k) => {
+        d.px(x * P + 2, y * P + P - 2, w * P - 4, 2, W);                                      // the course line
+        for (let c = x + 1.5 + (k % 2) * 1.5; c < x + w - 1; c += 3) d.px(Math.round(c * P) - 1, y * P, 2, P - 2, W);   // the joints
+      });
+    } }
+};
+function roofSign(d, roof) {
+  const s = ROOFS[roof].sign;
+  if (ROOFS[roof].hang) {
+    d.px((s.x + 1) * P, -16 * P, 2, P, K); d.px((s.x + s.w - 1) * P - 2, -16 * P, 2, P, K);   // the rods from the wall's top
+    d.r(s.x, s.y, s.w, s.h, K);
+  }
+  cut(d, s.x, s.y, s.w, s.h);
+}
+// Four pips in the sign: a ring for a raised nail, half filled for half, solid for flush.
+function pips(d, roof, nails, a = 1) {
+  const s = ROOFS[roof].sign, cw = s.w * P, gap = 8, pw = 6, tot = 4 * pw + 3 * gap;
+  const x0 = s.x * P + Math.round((cw - tot) / 2), y0 = s.y * P + Math.round((s.h * P - pw) / 2);
+  nails.forEach((n, i) => {
+    const x = x0 + i * (pw + gap);
+    d.fade(a, () => {
+      d.px(x, y0, pw, pw, K);
+      if (n === 0) d.px(x + 1, y0 + 1, pw - 2, pw - 2, W);
+      else if (n === 1) d.px(x + 1, y0 + 1, pw - 2, 2, W);
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// The bench, the stand behind it, the blank, the nails and the hammer.
+const NAILS = [9, 12, 15, 18];                               // each nail's column
+const BOARD = { x: 8, w: 12, row: -6, h: 2 };                // the blank, two cells deep, on the bench
+const JY = -11;                                              // the joiner's top row, on the stand
+const REST_X = 12;                                           // the joiner between blows
+function stand(d) {                                          // behind the bench, pale and edgeless, so the work reads over it
+  d.r(9, -8, 14, 8, 1);
+  for (const y of [-7, -5, -3]) d.px(9 * P + 2, y * P + 2, 14 * P - 4, 2, 2);
+}
+function bench(d) {
+  d.r(8, -4, 13, 2, K);
+  d.r(9, -2, 2, 2, K); d.r(17, -2, 2, 2, K);
+}
+// A board edge-on: two cells deep, a rim and a grey grain. Top-left at (x cells, y px).
+function board(d, x, ypx, w = BOARD.w) {
+  d.px(x * P, ypx, w * P, BOARD.h * P, K); d.px(x * P + 2, ypx + 2, w * P - 4, BOARD.h * P - 4, 3);
+  d.px(x * P + 2, ypx + 5, w * P - 4, 2, 5);                 // a grain line
+}
+// A nail at column `col` on a board whose top edge is at ypx: 0 raised, 1 half,
+// 2 flush. The head is a cell and a third wide and three pixels deep.
+const SHANK = [9, 4, 0];
+function nailHeadY(ypx, n) { return ypx - SHANK[n] - 3; }
+function nail(d, col, ypx, n) {
+  const sh = SHANK[n];
+  if (sh) d.px(col * P + 2, ypx - sh, 2, sh, K);
+  d.px(col * P - 1, ypx - sh - 3, P + 2, 3, K);
+}
+function boardWithNails(d, x, ypx, nails, na = 1) {
+  board(d, x, ypx);
+  d.fade(na, () => NAILS.forEach((c, i) => nail(d, x - BOARD.x + c, ypx, nails[i])));
+}
+// The hammer, drawn off the body (bx its left edge in cells, by its top in
+// px) and, for the strike, the nail's head height hy (px).
+function hammer(d, pose, bx, hy, by = JY * P) {
+  const hand = bx * P;
+  if (pose === 'up') {
+    d.px(hand - 4, by, 4, 12, K);                            // handle plumb, up from the hand
+    d.px(hand - 7, by - 6, 10, 6, K);                        // head level over it
+  } else if (pose === 'swing') {
+    d.px(hand - 7, by - 6, 10, 6, 2);                        // where it was, faint
+    d.px(hand - 12, by + 2, 8, 8, 4);                        // half way, darker
+    d.px(hand - 6, by + 8, 6, 4, 4);
+  } else {
+    const top = hy - 10;
+    d.px(hand - 2 * P, top, P, 10, K);                       // head plumb, standing on the nail's head
+    d.px(hand - P, top + 3, P, 4, K);                        // handle level, back to the hand
+  }
+}
+function impact(d, col, hy, a) {
+  d.fade(a, () => {
+    d.px(col * P - 5, hy - 4, 3, 2, K); d.px(col * P - 4, hy - 9, 2, 3, K);
+    d.px(col * P + P + 2, hy - 4, 3, 2, K);
+  });
+}
+// The ghost hand: a pointing finger, its tip at (x, y) px.
+// From the fingertip up: the finger, the curled knuckles cut white, the
+// thumb out to the left, the cuff with a white band.
+const HAND = ['...##.....', '...##.....', '...##.....', '...##.....', '.#######..', '.#o#o#o##.',
+              '#########.', '##########', '.########.', '..######..', '..#oooo#..', '..######..'];
+// The hand's rows above, tip pointing down: flip the sprite.
+// The sprite's rows run from the fingertip up, two pixels a dot, with the
+// count font's paper key round it so it reads over the hammer or the wall.
+function ghostDown(d, x, y, a) {
+  const ink = new Set(), key = new Set();
+  const cutw = new Set();
+  HAND.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') ink.add(i + ',' + j); else if (ch === 'o') { ink.add(i + ',' + j); cutw.add(i + ',' + j); } }));
+  for (const k of ink) { const [i, j] = k.split(',').map(Number); for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) { const kk = (i + di) + ',' + (j + dj); if (!ink.has(kk)) key.add(kk); } }
+  const at = (k, tone) => { const [i, j] = k.split(',').map(Number); d.px(x - 6 + i * 2, y - 2 - j * 2, 2, 2, tone); };
+  d.fade(a, () => { for (const k of key) at(k, W); for (const k of ink) at(k, cutw.has(k) ? W : 5); });
+}
+
+// Piles outside the shed: finished signs and blanks, boards edge-on.
+const SIGNS_X = 27, BLANKS_X = 40, CAP = 4;
+function pileAlpha(i, st) { const f = clamp01(st.since / FADE); if (i < Math.min(st.n, st.prev)) return 1; return st.n > st.prev ? f : 1 - f; }
+function pile(d, x, st, nails, hide = 0) {
+  const m = Math.min(Math.max(st.n, st.prev), CAP);
+  for (let i = 0; i < m - hide; i++) d.fade(pileAlpha(i, st), () => {
+    const y = (-2 - 2 * i) * P; board(d, x, y);
+    if (nails) NAILS.forEach(c => nail(d, x - BOARD.x + c, y, 2));
+  });
+  if (st.n > 0) count(d, st.n, x + BOARD.w / 2, -2 * Math.min(st.n, CAP) - 2.4);
+}
+
+// The whole station at one state.
+function drawShed(d, roof, s) {
+  ROOFS[roof].draw(d); shedBody(d); roofSign(d, roof);
+  pips(d, roof, s.pips || s.nails, s.pipA == null ? 1 : s.pipA);
+  stand(d);
+  d.body(s.jx, JY);
+  bench(d);
+  if (s.board && s.board.on === 'bench') boardWithNails(d, s.board.x, s.board.row * P, s.nails, s.nailA == null ? 1 : s.nailA);
+  if (s.pose) hammer(d, s.pose, s.jx, s.hy);
+  if (s.imp) impact(d, s.imp.col, s.imp.hy, s.imp.a);
+}
+const shedBack = {};
+for (const k in ROOFS) shedBack[k] = silhouette(d => { ROOFS[k].draw(d); shedBody(d); roofSign(d, k); });
+
+// ---------------------------------------------------------------------------
+// The play: the yard's state, stepped at 120 a second.
+const WALK = 0.05, UP_T = 0.07, SW_T = 0.06, ST_T = 0.14, CSTEP = 0.03, AUTO_GAP = 1.0, IDLE_HAND = 1.5;
+const CARRY = { wait: 25, at: 20, signs: SIGNS_X + 4, blanks: BLANKS_X + 4 };
+const CFG = { roof: 'A', joiner: true };
+let S;
+function reset() {
+  S = { t: 0, nails: [0, 0, 0, 0], q: [], act: null,
+        j: { x: REST_X, pose: 'up', since: 9, walkT: 0 },
+        board: { on: 'bench', x: BOARD.x, row: BOARD.row }, nailA: 1, nailSince: 9,
+        car: { x: CARRY.wait, st: 'wait', t: 0 },
+        phase: 'work', doneT: 0,
+        signs: { n: 0, prev: 0, since: 9 }, blanks: { n: 14, prev: 14, since: 9 },
+        made: 0, imp: null, lastTap: 0, lastAuto: -9,
+        cue: { a: 1, x: NAILS[0], stepT: 0 }, taps: { hit: 0, miss: 0, mine: 0, his: 0 } };
+}
+reset();
+const pending = i => S.q.filter(n => n === i).length + (S.act && S.act.nail === i && !S.act.struck ? 1 : 0);
+const wants = i => S.nails[i] + pending(i) < 2;
+function tapNail(i, who = 'hand') {
+  if (S.phase !== 'work' || i < 0 || !wants(i)) { S.taps.miss++; return false; }
+  S.q.push(i); S.taps.hit++;
+  if (who === 'hand') { S.lastTap = S.t; S.taps.mine++; } else S.taps.his++;
+  return true;
+}
+function stepJoiner(dt) {
+  const j = S.j;
+  j.since += dt;
+  if (!S.act && S.q.length) { S.act = { nail: S.q.shift(), st: 'walk', t: 0 }; if (j.pose !== 'up') { j.pose = 'up'; j.since = 0; } }
+  const a = S.act;
+  const homeX = S.phase === 'work' ? null : REST_X;
+  if (!a) {
+    if (homeX != null && j.x !== homeX) { j.walkT += dt; if (j.walkT >= WALK) { j.walkT = 0; j.x += Math.sign(homeX - j.x); } }
+    return;
+  }
+  a.t += dt;
+  if (a.st === 'walk') {
+    const tx = NAILS[a.nail] + 2;
+    if (j.x === tx) { a.st = 'up'; a.t = 0; return; }
+    j.walkT += dt; if (j.walkT >= WALK) { j.walkT = 0; j.x += Math.sign(tx - j.x); }
+  } else if (a.st === 'up') {
+    if (a.t >= UP_T) { a.st = 'swing'; a.t = 0; j.pose = 'swing'; j.since = 0; }
+  } else if (a.st === 'swing') {
+    if (a.t >= SW_T) {
+      a.st = 'strike'; a.t = 0; j.pose = 'strike'; j.since = 0;
+      S.nails[a.nail] = Math.min(2, S.nails[a.nail] + 1); a.struck = true; j.last = a.nail;
+      S.imp = { col: NAILS[a.nail], hy: nailHeadY(BOARD.row * P, S.nails[a.nail]), t: 0 };
+    }
+  } else if (a.st === 'strike') {
+    if (a.t >= ST_T) { S.act = null; j.pose = 'up'; j.since = 0; if (S.nails.every(n => n === 2) && !S.q.length) { S.phase = 'done'; S.doneT = 0; j.pose = 'up'; j.since = 0; } }
+  }
+}
+// The carrier: in, the board slid onto the head, out to the signs, laid on,
+// on to the blanks, one lifted off, back, slid onto the bench, home.
+function stepCarrier(dt) {
+  const c = S.car, b = S.board;
+  c.t += dt;
+  const tick = () => { if (c.t >= CSTEP) { c.t = 0; return true; } return false; };
+  const walkTo = (x, next) => { if (c.x === x) { c.st = next; c.t = 0; return; } if (tick()) c.x += Math.sign(x - c.x); if (b.on === 'head') b.x = c.x - 4; };
+  if (S.phase === 'done') { S.doneT += dt; if (S.doneT > 0.35 && c.st === 'wait') { c.st = 'in'; c.t = 0; S.phase = 'carry'; } }
+  switch (c.st) {
+    case 'wait': break;
+    case 'in': walkTo(CARRY.at, 'slide'); break;
+    case 'slide': if (tick()) { if (b.x < c.x - 4) b.x++; else { b.on = 'head'; b.row = -5; c.st = 'out'; } } break;
+    case 'out': walkTo(CARRY.signs, 'lay'); break;
+    case 'lay': {
+      const top = -2 - 2 * Math.min(S.signs.n, CAP - 1);
+      if (tick()) { if (b.row < top) b.row++; else if (b.row > top) b.row--; else { b.on = null; S.signs.prev = S.signs.n; S.signs.n++; S.signs.since = 0; S.made++; c.st = 'fetch'; } }
+      break;
+    }
+    case 'fetch': walkTo(CARRY.blanks, 'pick'); break;
+    case 'pick': {
+      if (b.on !== 'lift') { b.on = 'lift'; b.x = BLANKS_X; b.row = -2 * Math.min(S.blanks.n, CAP); S.blanks.prev = S.blanks.n; S.blanks.n--; S.blanks.since = 9; }
+      else if (tick()) { if (b.row > -5) b.row--; else if (b.row < -5) b.row++; else { b.on = 'head'; c.st = 'back'; } }
+      break;
+    }
+    case 'back': walkTo(CARRY.at, 'raise'); break;
+    case 'raise': if (tick()) { b.row = BOARD.row; c.st = 'place'; b.on = 'slide'; } break;
+    case 'place': if (tick()) { if (b.x > BOARD.x) b.x--; else { b.on = 'bench'; S.nails = [0, 0, 0, 0]; S.nailSince = 0; S.phase = 'work'; c.st = 'home'; } } break;
+    case 'home': walkTo(CARRY.wait, 'wait'); break;
+  }
+}
+function step(dt) {
+  S.t += dt;
+  S.signs.since += dt; S.blanks.since += dt; S.nailSince += dt;
+  if (S.imp) { S.imp.t += dt; if (S.imp.t > 0.3) S.imp = null; }
+  if (CFG.joiner && S.phase === 'work' && !S.act && !S.q.length && S.t - S.lastTap > IDLE_HAND && S.t - S.lastAuto > AUTO_GAP) {
+    const i = [0, 1, 2, 3].find(wants);
+    if (i != null) { tapNail(i, 'joiner'); S.lastAuto = S.t; }
+  }
+  stepJoiner(dt);
+  stepCarrier(dt);
+  // the cue: shown for the first three signs, fading over the fourth
+  const target = S.phase === 'work' ? [0, 1, 2, 3].find(wants) : undefined;
+  const want = target != null && S.made < 3 ? 1 : 0;
+  S.cue.a += Math.sign(want - S.cue.a) * Math.min(Math.abs(want - S.cue.a), dt / (S.made >= 3 ? 1.2 : 0.3));
+  if (target != null) { S.cue.stepT += dt; if (S.cue.stepT >= 0.04) { S.cue.stepT = 0; S.cue.x += Math.sign(NAILS[target] - S.cue.x); } }
+}
+function stateNow() {
+  const a = S.act, n = a ? a.nail : S.j.last;
+  let pose = S.j.pose, hy = 0;
+  if (pose === 'strike') { if (S.board.on !== 'bench' || n == null) pose = 'up'; else hy = nailHeadY(BOARD.row * P, S.nails[n]); }
+  return { jx: S.j.x, pose, hy, nails: S.nails, board: S.board, nailA: clamp01(S.nailSince / FADE),
+           imp: S.imp ? { ...S.imp, a: 1 - S.imp.t / 0.3 } : null };
+}
+
+// ---------------------------------------------------------------------------
+// The camp's crowd (the r2 mock's stand-in), paper, ground.
+function crowd(g, x0, x1, oy) {
+  if (!CROWD) return;
+  const rows = [[-15, 1, 1.5, 0], [-13.5, 1, 1.3, 0.4], [-11.5, 2, 3, 0.2], [-7, 2, 4, 1.1]];
+  for (const [ry, s, st, o] of rows) for (let x = x0 + o * P; x < x1 - s * P; x += st * P) {
+    const px = Math.round(x), py = Math.round(oy + ry * P), w = s * P;
+    g.fillStyle = hex(7); g.fillRect(px, py, w, w);
+    g.fillStyle = hex(W); g.fillRect(px + (s > 1 ? 2 : 1), py + (s > 1 ? 2 : 1), w - (s > 1 ? 4 : 2), w - (s > 1 ? 4 : 2));
+  }
+}
+const paper = (g, w, h) => { g.fillStyle = hex(W); g.fillRect(0, 0, w, h); };
+const ground = (g, x0, x1, oy) => { g.fillStyle = hex(K); g.fillRect(x0, oy, x1 - x0, 2); };
+
+// ---------------------------------------------------------------------------
+// Section 1: each roof held mid-sign beside the working press.
+const DEMO = { jx: NAILS[2] + 2, pose: 'strike', hy: nailHeadY(BOARD.row * P, 1), nails: [2, 2, 1, 0], board: { on: 'bench', x: BOARD.x, row: BOARD.row } };
+const R1 = { w: 56, h: 26, oy: 24, shedX: 1, pressX: 24 };
+function drawPair(g, roof, t, ox = 0) {
+  const oy = R1.oy * P;
+  const ds = frame(g, ox + R1.shedX * P, oy), dp = frame(g, ox + R1.pressX * P, oy);
+  backing(ds, shedBack[roof]); backing(dp, pressBack);
+  drawShed(ds, roof, DEMO);
+  press(dp, t);
+}
+const pairs = [];
+function makePair(host, roof, scale, rec, crop = null) {
+  const box = document.createElement('div'); box.className = 'opt' + (rec ? ' rec' : '');
+  const c = document.createElement('canvas'), off = document.createElement('canvas');
+  off.width = R1.w * P; off.height = R1.h * P;
+  const cr = crop || { x: 0, y: 0, w: off.width, h: off.height };
+  c.width = cr.w * scale; c.height = cr.h * scale;
+  const f = document.createElement('figure'), cap = document.createElement('figcaption');
+  cap.innerHTML = `<b>${roof}: <span class="ph">${ROOFS[roof].name}</span></b>${rec ? ' (recommended)' : ''}, ${scale}x` + (scale === 3 ? `<br>${ROOFS[roof].note}` : '');
+  f.append(c, cap); box.appendChild(f); host.appendChild(box);
+  pairs.push(t => {
+    const g = off.getContext('2d'); paper(g, off.width, off.height); crowd(g, 0, off.width, R1.oy * P); ground(g, 0, off.width, R1.oy * P);
+    drawPair(g, roof, t);
+    const gc = c.getContext('2d'); gc.imageSmoothingEnabled = false; gc.drawImage(off, cr.x, cr.y, cr.w, cr.h, 0, 0, c.width, c.height);
+  });
+}
+const PICK = 'A';
+for (const k of 'ABCD') makePair(document.getElementById('roofs1'), k, 1, k === PICK);
+const CROP3 = { x: 5 * P, y: 1 * P, w: 50 * P, h: 25 * P };
+for (const k of 'ABCD') makePair(document.getElementById('roofs3'), k, 3, k === PICK, CROP3);
+makePair(document.getElementById('pick'), PICK, 1, true);
+makePair(document.getElementById('pick'), PICK, 3, true, CROP3);
+document.getElementById('pickname').innerHTML = `${PICK}, <span class="ph">${ROOFS[PICK].name}</span>`;
+document.getElementById('recline').innerHTML = `<b>Recommendation: ${PICK}, <span class="ph">${ROOFS[PICK].name}</span>.</b> It speaks the press's language: solid black, every edge level or plumb, the slope made of whole-cell steps, one white cut-out (the sign) and one white key (the trim, like the press's bar where it crosses the post). The pips sit in the gable sign, where the eye lands first. <b>D</b> reads most as roofing, but at 1x its joints turn the gable into a grey brick field that fights the pips and the press's screw threads (the family's one patterned part should be the moving one), and its hanging sign moves the readout into the opening beside the hammer. <b>C</b> is the press's own head and the closest family match, but it is a booth again, not a shed. <b>B</b> cannot show its slope front-on: high back and low front become left and right, and it reads as a box on one corner.`;
+
+// ---------------------------------------------------------------------------
+// Section 2: the playable yard.
+const big = document.getElementById('big'), small = document.getElementById('small'), cueEl = document.getElementById('cue');
+const Y2 = { w: 58, h: 26, oy: 24, ox: 1 }, BIGK = 3;
+const off2 = document.createElement('canvas'); off2.width = Y2.w * P; off2.height = Y2.h * P;
+big.width = off2.width * BIGK; big.height = off2.height * BIGK;
+small.width = off2.width; small.height = off2.height;
+function drawYard(g) {
+  const oy = Y2.oy * P, d = frame(g, Y2.ox * P, oy), roof = CFG.roof;
+  paper(g, off2.width, off2.height); crowd(g, 0, off2.width, oy); ground(g, 0, off2.width, oy);
+  backing(d, shedBack[roof]);
+  const s = stateNow();
+  drawShed(d, roof, s);
+  const b = S.board;
+  pile(d, SIGNS_X, S.signs, true);
+  pile(d, BLANKS_X, S.blanks, false);
+  if (b.on === 'lift') board(d, b.x, b.row * P);              // being lifted off the stack, behind the carrier
+  if (b.on === 'head' && S.car.st === 'lay') boardWithNails(d, b.x, b.row * P, [2, 2, 2, 2]);
+  const blank = S.car.st === 'pick' || S.car.st === 'back' || S.car.st === 'raise' || S.car.st === 'place';
+  d.body(S.car.x, -3);
+  if ((b.on === 'head' && S.car.st !== 'lay') || b.on === 'slide') {
+    if (blank) board(d, b.x, b.row * P); else boardWithNails(d, b.x, b.row * P, [2, 2, 2, 2]);
+  }
+  // the ghost hand over the next nail
+  if (S.cue.a > 0.01) {
+    const bob = Math.floor(S.t / 0.35) % 2 ? 0 : -4;
+    const tgt = [0, 1, 2, 3].find(wants), n = tgt == null ? 2 : S.nails[tgt];
+    ghostDown(d, S.cue.x * P + 1, nailHeadY(BOARD.row * P, n) - 4 + bob, S.cue.a);
+  }
+  return d;
+}
+function drawPlay() {
+  const g = off2.getContext('2d'); drawYard(g);
+  const gb = big.getContext('2d'); gb.imageSmoothingEnabled = false; gb.drawImage(off2, 0, 0, big.width, big.height);
+  small.getContext('2d').drawImage(off2, 0, 0);
+  // the cue's words beside the hand, on the page
+  cueEl.style.opacity = S.cue.a.toFixed(2);
+  const k = big.getBoundingClientRect().width / big.width * BIGK;
+  cueEl.style.left = ((Y2.ox + S.cue.x - 5) * P * k) + 'px';
+  cueEl.style.top = ((Y2.oy - 14.5) * P * k) + 'px';
+}
+function readout() {
+  const NM = ['raised', 'half', 'flush'], a = S.act;
+  document.getElementById('ro').textContent = [
+    `nails     ${S.nails.map(n => NM[n]).join(' ')}`,
+    `queue     ${S.q.map(n => n + 1).join(' ') || '-'}${a ? '   blow on ' + (a.nail + 1) + ' (' + a.st + ')' : ''}`,
+    `phase     ${S.phase}   carrier ${S.car.st}`,
+    `signs     ${S.signs.n}   blanks ${S.blanks.n}`,
+    `taps      ${S.taps.hit} hit, ${S.taps.miss} missed (did nothing)`,
+    `blows     ${S.taps.mine} yours, ${S.taps.his} the joiner's`,
+    `cue       ${Math.round(S.cue.a * 100)}%`,
+    `t         ${S.t.toFixed(1)} s`
+  ].join('\n') + '\n\n(every label here is a placeholder)';
+}
+
+// The held states strip.
+function drawStates() {
+  const cv = document.getElementById('states'), o = document.createElement('canvas');
+  o.width = 46 * P; o.height = 14 * P;
+  const g = o.getContext('2d'), d = frame(g, 0, 12 * P);
+  paper(g, o.width, o.height);
+  [0, 1, 2].forEach((n, i) => { board(d, 1 + i * 4, -2 * P, 3); nail(d, 2 + i * 4, -2 * P, n); });
+  // the hammer over a half-driven nail, the body four cells over the board's top as on the stand
+  ['up', 'swing', 'strike'].forEach((p, i) => { const bx = 17 + i * 6; board(d, bx - 3, -2 * P, 3); nail(d, bx - 2, -2 * P, 1); d.body(bx, -7); hammer(d, p, bx, nailHeadY(-2 * P, 1), -7 * P); });
+  // pips: draw in a mock sign
+  const fake = { x: 35, y: -6, w: 10, h: 2 };
+  ROOFS.__s = { sign: fake }; d.r(fake.x, fake.y, fake.w, fake.h, K); cut(d, fake.x, fake.y, fake.w, fake.h);
+  pips(d, '__s', [0, 1, 2, 2]); delete ROOFS.__s;
+  cv.width = o.width * 3; cv.height = o.height * 3;
+  const gc = cv.getContext('2d'); gc.imageSmoothingEnabled = false; gc.drawImage(o, 0, 0, cv.width, cv.height);
+}
+
+// The hand: a tap picks the nail whose column it lands in.
+function cellAt(cv, e) {
+  const r = cv.getBoundingClientRect(), k = cv === big ? BIGK : 1, sx = cv.width / r.width;
+  return { x: (((e.clientX - r.left) * sx) / k - Y2.ox * P) / P, y: (((e.clientY - r.top) * sx) / k - Y2.oy * P) / P };
+}
+function nailAt(c) {
+  if (S.board.on !== 'bench' || c.y < -12 || c.y > -3) return -1;
+  let best = -1, bd = 1e9;
+  NAILS.forEach((col, i) => { const dd = Math.abs(c.x - (col + 0.5)); if (dd <= 1.5 && dd < bd) { bd = dd; best = i; } });
+  return best;
+}
+for (const cv of [big, small]) cv.addEventListener('pointerdown', e => { e.preventDefault(); tapNail(nailAt(cellAt(cv, e))); });
+
+// Time.
+let lastT = performance.now();
+function loop(now) {
+  const real = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+  if (!PAUSED) { const n = Math.max(1, Math.round(real * SPEED * 120)), dt = real * SPEED / n; for (let i = 0; i < n; i++) step(dt); }
+  drawAll();
+  requestAnimationFrame(loop);
+}
+let clock = 0;
+function drawAll() { if (!PAUSED) clock = performance.now() / 1000; for (const f of pairs) f(clock); drawPlay(); readout(); }
+requestAnimationFrame(loop);
+
+function setTheme(th) {
+  DARK = th === 'dark'; document.documentElement.dataset.theme = th;
+  document.querySelectorAll('button[data-theme]').forEach(b => b.classList.toggle('on', b.dataset.theme === th));
+  drawStates(); drawAll();
+}
+document.querySelectorAll('button[data-theme]').forEach(b => b.onclick = () => setTheme(b.dataset.theme));
+document.getElementById('pause').onclick = e => { PAUSED = !PAUSED; e.target.textContent = PAUSED ? 'play' : 'pause'; };
+document.getElementById('speed').onclick = e => { SPEED = SPEED === 1 ? 4 : 1; e.target.textContent = 'speed x' + SPEED; };
+document.getElementById('joiner').onchange = e => { CFG.joiner = e.target.checked; };
+document.getElementById('crowd').onchange = e => { CROWD = e.target.checked; drawAll(); };
+document.getElementById('reset').onclick = () => reset();
+drawStates();
+
+// The critique, filled in after the shots.
+const CRIT1 = [
+  '<b>The nails could not be seen.</b> On a one-cell board with a two-pixel head, a flush nail was a pixel bump and the board merged with the black top edge of the stand behind it; at 1x the bench was one black bar. Fixed: the board is two cells deep with a grey grain, a head is eight pixels by three, a raised shank nine pixels, and the stand is pale and edgeless.',
+  '<b>The hammer hid the nail it had just driven.</b> Held on the strike, its head sat on the nail, so the half or flush state was never seen until the next blow. Fixed: after the strike is held (0.14 s) the hammer goes back up.',
+  '<b>The ghost hand read as a grey tree.</b> A round fist on a stick. Fixed: a finger, white-cut knuckles, a thumb and a cuff with a white band, and the count font\'s paper key round it so it reads over the hammer or a wall.',
+  '<b>B read as a chimney.</b> A plumb block five rows tall at one corner. Cut a row; it still cannot show front and back front-on (see the recommendation).',
+  '<b>D thinned the eave to a hairline.</b> A course line under every row, the eave included, left a two-pixel black eave. Fixed: D is now A exactly with only the four rows over the eave shingled, so A and D compare one thing.',
+  '<b>The joiner tapped before the player could.</b> The idle clock started at minus nine seconds, so a blow landed on the first frame. Fixed: it waits for 1.5 s with no tap from load.',
+  '<b>A floating 0 over the empty sign pile</b>, and the 3x press cut off by the page width. Both fixed.'
+];
+const CRIT2 = [
+  '<b>The fourth nail sat inside the joiner.</b> With the body\'s bottom row level with the raised nails, the nail it stood over was drawn through the body\'s white middle. Fixed: the joiner stands a cell higher, its feet level with the tops of the raised nails.',
+  '<b>The carry was longer than the nailing.</b> Measured through the page\'s own step: the fastest hand nails a sign in about 4 s and the carry took 4.9 s, so most of the loop was watching. The carrier now steps every 0.03 s (3 s a round trip). Still open: the round trip is out to the signs, on to the blanks and back, so it cannot get much shorter without the blanks moving into the shed.',
+  '<b>Tap order costs time and nothing says so.</b> Tapping 1, 2, 3, 4, 1, 2, 3, 4 walks the joiner across the bench twice; tapping each nail twice in a row is quicker. That may be a nice small skill, or it may read as lag. Not changed.',
+  '<b>The joiner still floats.</b> The stand behind the bench is drawn pale on purpose (an edge there collides with the raised nail heads), so at 1x the body looks hung in the opening. A body behind a bench is new to the camp; the game draws bodies on the floor.',
+  '<b>The ghost hand is the largest grey thing in the shed.</b> At 1x it is 20 by 24 px over a 6 px nail and covers the joiner while the first nail is the target. It fades out after three signs, which is the only reason it is tolerable.',
+  '<b>A\'s gable reads a little like a pagoda.</b> The five-cell flat ridge and the eave a cell wider than every step make a temple outline at 3x. At 1x it reads as a roof. A steeper stair (a cell up for every cell in) would be taller than the press\'s head; not tried.'
+];
+for (const [id, list] of [['crit1', CRIT1], ['crit2', CRIT2]]) for (const s of list) { const li = document.createElement('li'); li.innerHTML = s; document.getElementById(id).appendChild(li); }
+
+// Handles for the headless check.
+window.__mock = {
+  state: () => ({ t: S.t, nails: [...S.nails], q: [...S.q], act: S.act && { ...S.act }, phase: S.phase, car: { ...S.car }, board: { ...S.board }, signs: S.signs.n, blanks: S.blanks.n, made: S.made, taps: { ...S.taps }, cue: S.cue.a, jx: S.j.x }),
+  pause: b => { PAUSED = b; drawAll(); },
+  theme: setTheme,
+  set: o => { if ('joiner' in o) document.getElementById('joiner').checked = CFG.joiner = o.joiner; },
+  reset: () => { reset(); drawAll(); },
+  warp: s => { const n = Math.round(s * 120); for (let i = 0; i < n; i++) step(1 / 120); drawAll(); },
+  // a station cell, in client px on the big picture
+  client: (x, y) => { const r = big.getBoundingClientRect(), k = r.width / big.width * BIGK; return { x: r.left + (Y2.ox + x) * P * k, y: r.top + (Y2.oy + y) * P * k }; },
+  nail: i => window.__mock.client(NAILS[i] + 0.5, -6.5),
+  rect: sel => { const r = document.querySelector(sel).getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height }; },
+  NAILS,
+  // One sign by the fastest hand (all eight taps at once) and one by the
+  // joiner alone, through the same step(): seconds nailing, seconds carrying.
+  measure: () => {
+    const keep = S, kj = CFG.joiner, dt = 1 / 120, out = {};
+    for (const who of ['hand', 'joiner']) {
+      reset(); CFG.joiner = who === 'joiner';
+      if (who === 'hand') for (const i of [0, 1, 2, 3, 0, 1, 2, 3]) tapNail(i);
+      while (S.phase === 'work') step(dt); const t1 = S.t;
+      while (S.phase !== 'work') step(dt);
+      out[who] = { nailing: +t1.toFixed(2), carry: +(S.t - t1).toFixed(2) };
+    }
+    S = keep; CFG.joiner = kj; return out;
+  }
+};
+</script>
+</body>
+</html>
