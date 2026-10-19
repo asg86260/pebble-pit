@@ -1,0 +1,198 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The pair's podium</title>
+<style>
+:root{--bg:#f4f4f4;--fg:#111;--line:#ccc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1b;--fg:#eee;--line:#444}}
+:root[data-theme="dark"]{--bg:#1b1b1b;--fg:#eee;--line:#444}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 ui-monospace,Menlo,Consolas,monospace}
+header{padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;border-bottom:1px solid var(--line)}
+.tag{background:var(--fg);color:var(--bg);padding:1px 6px}
+label{display:inline-flex;gap:6px;align-items:center}
+button{font:inherit;padding:3px 10px;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer}
+button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.wrap{padding:12px 16px}
+canvas{width:100%;height:auto;image-rendering:pixelated;display:block}
+p{margin:8px 0;max-width:1000px}
+</style></head><body>
+<header><span class="tag">MOCK</span><b>The pair's podium</b>
+<span>page <button data-k="theme" data-v="light">light</button><button data-k="theme" data-v="dark">dark</button></span>
+<span>podium <button data-k="pod" data-v="crate">A soapbox crate</button><button data-k="pod" data-v="stage">B plank stage, fist banner</button><button data-k="pod" data-v="cloud">C cloud mound, steps</button></span>
+<span>support <button data-k="auto" data-v="on">plays</button><button data-k="auto" data-v="off">held</button></span>
+<label><input id="sup" type="range" min="0" max="1" step="0.01" value="0.5"></label>
+</header>
+<div class="wrap">
+<canvas id="c" width="2004" height="967"></canvas>
+<p>Drawn from plain shapes on the game's 6 px grid at your window size. It is not the game. The union's camp, as you asked: the pair's podium is low and in the first plane, near the camera, in front of their crowd (straight rows, walking in, hops); the pair stand big on it. Three takes on the podium: A a soapbox, a timber crate with planks and a cross-brace and a little fist flag on its corner (the union builds from timber); B a low stage of planks with the union's fist banner on its front and a banner bar over the pair; C a low cloud mound with three steps up its side.</p>
+
+</div>
+<script>
+const P = 6, cv = document.getElementById('c'), g = cv.getContext('2d');
+const st = { theme: 'light', rows: 'straight', cheer: 'hop', arrive: 'walk', pod: 'crate', auto: 'on', s: 0.5 };
+const TONES = { light: { paper: '#fff', pale: '#bdbdbd', mid: '#757575', ink: '#000' }, dark: { paper: '#121212', pale: '#3a3a3a', mid: '#5a5a5a', ink: '#9a9a9a' } };
+let T, tick = 0;
+const cell = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, w * P, h * P); };
+const hsh = (a, b = 0) => { let h = (a * 374761393 + b * 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, k) => a + (b - a) * k;
+const W = 334, BANK = 109, GROUND = 121, PX = 160, GX = 500;
+const sup = () => st.auto === 'on' ? 0.5 + 0.45 * Math.sin(tick * 0.02) : st.s;
+const GOD = '#ffffff', FEAT = '#000000';
+const ink = () => st.theme === 'dark' ? '#9a9a9a' : FEAT;
+const BUB = 24, cheerNow = () => { const t = tick % BUB; return t >= 18 && t < 22; };
+
+// One gathered crowd: ROWS rows facing a leader at cx, each row back smaller,
+// closer, higher and paler. `keep(r, i)` says how much of each soul stands
+// (0..1, faded by opacity); `near` marks the rows that cheer.
+const ROWS = 9;
+function rowGeom(r, cx, wide) {
+  const k = r / (ROWS - 1), n = Math.max(2, Math.round(lerp(6, 2, k))), gap = r < 2 ? 2 : 1, pitch = n + gap;
+  return { k, n, pitch, half: Math.round(lerp(wide * 0.45, wide, k)), y: Math.round(BANK - 2 - n - lerp(0, 44, k)) };
+}
+function crowd(cx, wide, tones, keep, front, cheers, part) {
+  for (let r = ROWS - 1; r >= 0; r--) {
+    if ((r <= 1) !== front) continue;
+    const G = rowGeom(r, cx, wide), c = T[tones[r < 3 ? 0 : r < 6 ? 1 : 2]];
+    let i = 0;
+    for (let x = cx - G.half + ((r % 2) * G.pitch >> 1); x < cx + G.half; x += G.pitch, i++) {
+      if (typeof part === 'function' ? part(x + G.n / 2, G.y) : (r < 2 && Math.abs(x + G.n / 2 - cx) < part)) continue;
+      const a = keep(r, i, x); if (a <= 0.01) continue;
+      // curved rows bow up toward their ends, round the leader
+      const bow = st.rows === 'curved' ? Math.round(((x + G.n / 2 - cx) / G.half) ** 2 * lerp(6, 14, G.k)) : 0;
+      let y = G.y - bow, dx = 0;
+      const cheer = cheers && r < 3 && cheerNow() && hsh(i, r) < 0.7;
+      if (cheer && st.cheer === 'hop') y -= 1;
+      g.globalAlpha = Math.min(1, a);
+      if (a < 1 && st.arrive === 'walk' && cheers) dx = Math.round((1 - a) * 40);     // walking in from the right
+      cell(x + dx, y, G.n, G.n, c);
+      if (cheer && st.cheer === 'fists') { const f = Math.max(1, G.n >> 2); cell(x + dx + G.n - f, y - 2 * f, f, f * 2, c); cell(x + dx + G.n - f - f, y - 3 * f, f * 2, f * 2, c); }
+      g.globalAlpha = 1;
+    }
+  }
+}
+// The union's crowd fills in row by row from the front as support rises.
+const unionKeep = (r, i) => clamp(sup() * ROWS * 1.1 - r - (hsh(i, r + 3) * 0.6), 0, 1);
+// God's crowd empties soul by soul as support rises, the back rows first.
+const SEAT = 54;
+const onDais = (x, y) => y >= SEAT - 2 && Math.abs(x - GX) < 40 + 4 * Math.max(0, Math.floor((y - SEAT - 8) / 4)) + 4;
+const godKeep = (r, i) => clamp((1 - sup()) * 1.6 - (r / ROWS) * 0.6 - hsh(i, r + 9) * 0.5 + 0.2, 0, 1);
+
+// The pair's podium: low, in the first plane, near the camera, in front of
+// their crowd; the pair on it big. Their bubble rises over the crowd.
+const PB = 128;       // the podium's foot, nearer the camera than the crowd's floor
+function pedestal() {
+  const ink = st.theme === 'dark' ? '#9a9a9a' : FEAT, pap = T.paper;
+  let top;
+  if (st.pod === 'crate') {
+    const w = 30, h = 14, x = PX - w / 2; top = PB - h;
+    cell(x - 1, top - 1, w + 2, h + 1, pap);
+    cell(x, top, w, h, ink); cell(x + 2, top + 2, w - 4, h - 4, pap);
+    for (let y = top + 5; y < PB - 2; y += 4) cell(x + 2, y, w - 4, 1, ink);
+    for (let i = 0; i < w - 4; i += 2) cell(x + 2 + i, top + 2 + Math.round(i * (h - 4) / (w - 4)), 2, 1, ink);
+    cell(x + w - 3, top - 16, 1, 16, ink); cell(x + w - 2, top - 16, 7, 6, ink); cell(x + w, top - 14, 3, 2, pap);
+  } else if (st.pod === 'stage') {
+    const w = 54, h = 10, x = PX - w / 2; top = PB - h;
+    cell(x - 1, top - 19, w + 2, h + 19, pap);
+    cell(x, top, w, 2, ink); cell(x + 2, top + 2, 2, h - 2, ink); cell(x + w - 4, top + 2, 2, h - 2, ink);
+    cell(x + 14, top + 2, w - 28, h - 1, ink);
+    const F = ['.X.X.X.', 'XXXXXXX', 'XXXXXX.', '.XXXX..', '..XXX..'];
+    F.forEach((r, j) => [...r].forEach((ch, i) => { if (ch === 'X') cell(PX - 3 + i, top + 3 + j, 1, 1, pap); }));
+    for (const dx of [-24, 22]) cell(PX + dx, top - 18, 1, 18, ink);
+    cell(PX - 23, top - 18, 46, 4, ink);
+  } else {
+    top = PB - 12;
+    for (let y = top; y < PB; y += 2) { const k = (y - top) / 12, hw = Math.round(lerp(12, 20, Math.sqrt(k))); cell(PX - hw, y, 2 * hw, 2, T.pale); }
+    for (let i = 0; i < 3; i++) cell(PX + 12 + i * 3, PB - 3 - i * 3, 6, 3, T.pale);
+  }
+  // a cell of paper round the pair, so their ink edge stands off the crowd's ink behind them
+  cell(PX - 13, top - 13, 26, 14, pap);
+  for (const dx of [-11, 1]) { cell(PX + dx - 1, top - 11, 12, 12, FEAT); cell(PX + dx + 1, top - 9, 8, 8, GOD); }
+  const t = tick % BUB, u = t / 18;
+  if (t < 18) { const bx = Math.round(PX + 6 + u * 30), by = Math.round(top - 30 - u * 14); g.globalAlpha = u < 0.2 ? u / 0.2 : 1;
+    cell(bx - 1, by - 1, 13, 11, FEAT); cell(bx, by, 11, 9, GOD); cell(bx + 5, by + 1, 1, 5, FEAT); cell(bx + 5, by + 7, 1, 1, FEAT); g.globalAlpha = 1; }
+}
+function god() {
+  const N = 40, x0 = GX - N / 2, y0 = 14, seat = y0 + N;
+  cell(GX - 30, y0 + 14, 60, seat - y0 - 14, ink());
+  cell(GX - 36, seat, 72, 8, ink());
+  for (let k = 0, y = seat + 8; y < BANK; k++, y += 4) cell(GX - 40 - 4 * k, y, 80 + 8 * k, 4, ink());
+  cell(x0 - 2, y0 - 2, N + 4, N + 2, FEAT); cell(x0, y0, N, N, GOD);
+  for (const ox of [6, 24]) { cell(x0 + ox, y0 + 14, 10, 2, FEAT); cell(x0 + ox + 3, y0 + 16, 4, 2, FEAT); }
+  cell(x0 + 12, y0 + 26, 2, 2, FEAT); cell(x0 + 14, y0 + 28, 12, 2, FEAT); cell(x0 + 26, y0 + 26, 2, 2, FEAT);
+  const cr = st.theme === 'dark' ? GOD : FEAT;
+  cell(x0 - 1, y0 - 6, N + 2, 2, cr); for (const px of [2, 10, 19, 28, 36]) cell(x0 + px, y0 - 10, 2, 4, cr);
+}
+// The fist flags among God's rows, each scaled to its row, rippling.
+const FIST = ['.X.X.X.', 'XXXXXXX', 'XXXXXXX', 'XXXXXX.', '.XXXX..', '..XXX..', '..XXX..'];
+const FLAGS = [[2, -150], [4, -100], [1, 110], [6, 150], [3, 190], [5, -200], [7, 60]];
+function flags(back) {
+  for (const [r, off] of FLAGS) {
+    if ((r >= 2) !== back) continue;
+    const G = rowGeom(r, GX, 230), u = Math.max(1, Math.round(G.n / 3)), x = GX + off, fw = 9 * u, fh = 9 * u;
+    const bow = st.rows === 'curved' ? Math.round((off / G.half) ** 2 * lerp(6, 14, G.k)) : 0;
+    const base = G.y - bow + G.n, top = base - fh - 4 * u;
+    cell(x, top, u, base - top, ink());
+    for (let i = 0; i < fw; i++) {
+      const d = Math.round(Math.sin(i / Math.max(2, fw / 3) - tick * 0.5) * Math.max(1, u * 0.6));
+      cell(x + u + i, top + d, 1, fh, ink());
+      const gi = Math.floor((i - u) / u);
+      if (gi >= 0 && gi < 7) FIST.forEach((row, j) => { if (row[gi] === 'X') cell(x + u + i, top + d + u + j * u, 1, u, T.paper); });
+    }
+  }
+}
+// God's crowd comes toward the viewer: its back row stands small at his
+// base's foot, and each row nearer the camera is lower on the screen, bigger
+// and wider, their backs to us, facing him. As support rises it empties
+// from the front, receding toward the throne.
+const GROWS = 8;
+function godRow(r) {     // r = 0 at the throne's foot, GROWS-1 nearest the viewer
+  const k = r / (GROWS - 1), n = Math.round(lerp(3, 9, k)), gap = r < 3 ? 1 : 2, pitch = n + gap;
+  return { k, n, pitch, half: Math.round(lerp(70, 300, k)), y: Math.round(BANK - 4 + lerp(0, 44, k * k)) };
+}
+const godKeepFwd = (r, i) => clamp((1 - sup()) * 1.7 - (r / GROWS) * 0.8 - hsh(i, r + 9) * 0.5 + 0.25, 0, 1);
+function godCrowd() {
+  for (let r = 0; r < GROWS; r++) {
+    const G = godRow(r), c = T[r < 3 ? 'pale' : 'mid'];
+    let i = 0;
+    for (let x = GX - G.half + ((r % 2) * G.pitch >> 1); x < GX + G.half; x += G.pitch, i++) {
+      if (r === 0 && Math.abs(x + G.n / 2 - GX) < 46) continue;      // the back row stands either side of the base
+      const a = godKeepFwd(r, i); if (a <= 0.01) continue;
+      const bow = st.rows === 'curved' ? -Math.round(((x + G.n / 2 - GX) / G.half) ** 2 * lerp(2, 10, G.k)) : 0;
+      g.globalAlpha = Math.min(1, a); cell(x, G.y + bow, G.n, G.n, c); g.globalAlpha = 1;
+    }
+    // the flags planted in this row, scaled to it
+    for (const [fr, off] of FLAGS2) if (fr === r) flagAt(GX + off, G, r);
+  }
+}
+const FLAGS2 = [[1, -120], [2, 130], [3, -200], [4, 60], [5, -60], [6, 230], [7, -280]];
+function flagAt(x, G, r) {
+  const u = Math.max(1, Math.round(G.n / 3)), fw = 9 * u, fh = 9 * u;
+  const bow = st.rows === 'curved' ? -Math.round(((x - GX) / G.half) ** 2 * lerp(2, 10, G.k)) : 0;
+  const base = G.y + bow + G.n, top = base - fh - 5 * u;
+  cell(x, top, u, base - top, ink());
+  for (let i = 0; i < fw; i++) {
+    const d = Math.round(Math.sin(i / Math.max(2, fw / 3) - tick * 0.5) * Math.max(1, u * 0.6));
+    cell(x + u + i, top + d, 1, fh, ink());
+    const gi = Math.floor((i - u) / u);
+    if (gi >= 0 && gi < 7) FIST.forEach((row, j) => { if (row[gi] === 'X') cell(x + u + i, top + d + u + j * u, 1, u, T.paper); });
+  }
+}
+function draw() {
+  T = TONES[st.theme];
+  cell(0, 0, W, 162, T.paper);
+  cell(0, GROUND, W, 1, T.mid);
+  // the union's camp
+  crowd(PX, 150, ['ink', 'ink', 'mid'], unionKeep, false, true, 0); crowd(PX, 150, ['ink', 'ink', 'mid'], unionKeep, true, true, 0); pedestal();
+}
+function sync() { for (const b of document.querySelectorAll('button[data-k]')) b.setAttribute('aria-pressed', String(st[b.dataset.k] === b.dataset.v)); document.documentElement.dataset.theme = st.theme; draw(); }
+document.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => { st[b.dataset.k] = b.dataset.v; sync(); });
+document.getElementById('sup').oninput = e => { st.s = +e.target.value; st.auto = 'off'; sync(); };
+window.setTick = t => { tick = t; draw(); };
+const q = new URLSearchParams(location.hash.slice(1));
+for (const k of ['theme', 'rows', 'cheer', 'arrive', 'auto', 'pod']) if (q.get(k)) st[k] = q.get(k);
+if (q.get('s')) st.s = +q.get('s');
+if (q.get('t')) tick = +q.get('t');
+let play = !q.get('still');
+setInterval(() => { if (play) { tick++; draw(); } }, 250);
+sync();
+</script>
+</body></html>

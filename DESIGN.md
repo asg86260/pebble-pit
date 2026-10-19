@@ -20810,17 +20810,24 @@ act3-union2, act3-level and act3-flaglogo cards; `docs/mocks/act3-level-2026-10-
   right, **God's camp**: his crowd, the throne, the line and the gaze. The
   camera pans the whole run; no crowd plane may show over the workshops
   (a band's extent ends short of them, whatever its parallax).
-- **The pedestal moves to the union's camp, near the front.** The pair on
-  top, their symbol bubbles drifting out toward God's side.
-- **The union has its own crowd again**, round the pair. Its look is still in design rounds (the board's act3-ucrowd cards); the build places the pedestal in the union's camp and leaves the crowd out until it is voted.
-- **God's crowd stands in planes** (one tone each, a big step in square
-  size between them), giving up ground and sinking as support rises.
+- **Both crowds are gathered** (the board's act3-ucrowd1..3): one crowd facing
+  its leader in straight rows. **The union's** stands round and behind the
+  pair, rows stepping up and back, each row back smaller, closer and paler
+  (ink in front); it fills in from the front as support rises, newcomers
+  walking in from the right into their row, and the near rows hop a cell,
+  held a beat, when the pair's bubble pops. **God's** comes toward the
+  viewer: its back row small at the foot of his base, each row nearer the
+  camera lower, bigger and wider, backs to us, facing him, in his greys; as
+  support rises it empties from the front, receding toward the throne.
+- **The pair's podium is low and in the first plane**, near the camera, in
+  front of their crowd, the pair big on it, a cell of paper round them so
+  they stand off the crowd's ink. Its look is on the board (act3-podium).
 - **Signs are flags**: the union's ink, the **raised fist** in paper on
-  it, rippling in held steps, planted in every plane of God's crowd at
-  that plane's scale and behind the nearer planes.
+  it, rippling in held steps, planted among God's rows, each scaled to
+  its row and behind the rows nearer the camera.
 - **Each sign has an aura**: a faint breathing disc of the union's ink and
   a slow ring of ink squares turning round it.
-- **A won-over soul** lifts out of its plane beside the sign, darkening
+- **A won-over soul** lifts out of its row beside the sign, darkening
   toward ink as it rises, orbits the sign a turn and a half in held steps,
   then drifts across to the union's camp and joins its front. Rising and
   fading upward is God's language (the blessing); going sideways to the

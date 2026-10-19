@@ -1,0 +1,176 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Two gathered crowds</title>
+<style>
+:root{--bg:#f4f4f4;--fg:#111;--line:#ccc}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1b1b;--fg:#eee;--line:#444}}
+:root[data-theme="dark"]{--bg:#1b1b1b;--fg:#eee;--line:#444}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 ui-monospace,Menlo,Consolas,monospace}
+header{padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;border-bottom:1px solid var(--line)}
+.tag{background:var(--fg);color:var(--bg);padding:1px 6px}
+label{display:inline-flex;gap:6px;align-items:center}
+button{font:inherit;padding:3px 10px;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer}
+button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.wrap{padding:12px 16px}
+canvas{width:100%;height:auto;image-rendering:pixelated;display:block}
+p{margin:8px 0;max-width:1000px}
+</style></head><body>
+<header><span class="tag">MOCK</span><b>Two gathered crowds, round 2</b>
+<span>page <button data-k="theme" data-v="light">light</button><button data-k="theme" data-v="dark">dark</button></span>
+<span>rows <button data-k="rows" data-v="straight">straight</button><button data-k="rows" data-v="curved">curved round</button></span>
+<span>cheer <button data-k="cheer" data-v="hop">hop</button><button data-k="cheer" data-v="fists">fists up</button></span>
+<span>newcomers <button data-k="arrive" data-v="fade">fade into place</button><button data-k="arrive" data-v="walk">walk in</button></span>
+<span>support <button data-k="auto" data-v="on">plays</button><button data-k="auto" data-v="off">held</button></span>
+<label><input id="sup" type="range" min="0" max="1" step="0.01" value="0.5"></label>
+</header>
+<div class="wrap">
+<canvas id="c" width="4008" height="967"></canvas>
+<p>Drawn from plain shapes on the game's 6 px grid, two windows wide: the union's camp on the left, God's on the right, the gap between them shortened to fit. It is not the game. Both crowds are now the gathered kind you picked: one crowd facing its leader, rows stepping up and back like an amphitheater, front rows big separate squares, each row back smaller, closer and paler. The union's crowd is the union's ink and fills in from the front as support rises; God's crowd is his greys and comes toward you: its back row stands small at the foot of his base, and each row nearer the camera is lower, bigger and wider, their backs to us, facing him; as support rises it empties from the front, receding toward the throne. The fist flags stand among God's rows, scaled to the row they're planted in.</p>
+<p>Round 2 choices for the shape: rows straight, or curved round the pedestal/throne; the cheer when the pair's bubble pops, a hop or little fists raised; newcomers fading into their places, or walking in from the right and stepping into their row.</p>
+</div>
+<script>
+const P = 6, cv = document.getElementById('c'), g = cv.getContext('2d');
+const st = { theme: 'light', rows: 'straight', cheer: 'hop', arrive: 'walk', auto: 'on', s: 0.5 };
+const TONES = { light: { paper: '#fff', pale: '#bdbdbd', mid: '#757575', ink: '#000' }, dark: { paper: '#121212', pale: '#3a3a3a', mid: '#5a5a5a', ink: '#9a9a9a' } };
+let T, tick = 0;
+const cell = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * P, Math.round(y) * P, w * P, h * P); };
+const hsh = (a, b = 0) => { let h = (a * 374761393 + b * 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, k) => a + (b - a) * k;
+const W = 668, BANK = 109, GROUND = 121, PX = 160, GX = 500;
+const sup = () => st.auto === 'on' ? 0.5 + 0.45 * Math.sin(tick * 0.02) : st.s;
+const GOD = '#ffffff', FEAT = '#000000';
+const ink = () => st.theme === 'dark' ? '#9a9a9a' : FEAT;
+const BUB = 24, cheerNow = () => { const t = tick % BUB; return t >= 18 && t < 22; };
+
+// One gathered crowd: ROWS rows facing a leader at cx, each row back smaller,
+// closer, higher and paler. `keep(r, i)` says how much of each soul stands
+// (0..1, faded by opacity); `near` marks the rows that cheer.
+const ROWS = 9;
+function rowGeom(r, cx, wide) {
+  const k = r / (ROWS - 1), n = Math.max(2, Math.round(lerp(6, 2, k))), gap = r < 2 ? 2 : 1, pitch = n + gap;
+  return { k, n, pitch, half: Math.round(lerp(wide * 0.45, wide, k)), y: Math.round(BANK - 2 - n - lerp(0, 44, k)) };
+}
+function crowd(cx, wide, tones, keep, front, cheers, part) {
+  for (let r = ROWS - 1; r >= 0; r--) {
+    if ((r <= 1) !== front) continue;
+    const G = rowGeom(r, cx, wide), c = T[tones[r < 3 ? 0 : r < 6 ? 1 : 2]];
+    let i = 0;
+    for (let x = cx - G.half + ((r % 2) * G.pitch >> 1); x < cx + G.half; x += G.pitch, i++) {
+      if (typeof part === 'function' ? part(x + G.n / 2, G.y) : (r < 2 && Math.abs(x + G.n / 2 - cx) < part)) continue;
+      const a = keep(r, i, x); if (a <= 0.01) continue;
+      // curved rows bow up toward their ends, round the leader
+      const bow = st.rows === 'curved' ? Math.round(((x + G.n / 2 - cx) / G.half) ** 2 * lerp(6, 14, G.k)) : 0;
+      let y = G.y - bow, dx = 0;
+      const cheer = cheers && r < 3 && cheerNow() && hsh(i, r) < 0.7;
+      if (cheer && st.cheer === 'hop') y -= 1;
+      g.globalAlpha = Math.min(1, a);
+      if (a < 1 && st.arrive === 'walk' && cheers) dx = Math.round((1 - a) * 40);     // walking in from the right
+      cell(x + dx, y, G.n, G.n, c);
+      if (cheer && st.cheer === 'fists') { const f = Math.max(1, G.n >> 2); cell(x + dx + G.n - f, y - 2 * f, f, f * 2, c); cell(x + dx + G.n - f - f, y - 3 * f, f * 2, f * 2, c); }
+      g.globalAlpha = 1;
+    }
+  }
+}
+// The union's crowd fills in row by row from the front as support rises.
+const unionKeep = (r, i) => clamp(sup() * ROWS * 1.1 - r - (hsh(i, r + 3) * 0.6), 0, 1);
+// God's crowd empties soul by soul as support rises, the back rows first.
+const SEAT = 54;
+const onDais = (x, y) => y >= SEAT - 2 && Math.abs(x - GX) < 40 + 4 * Math.max(0, Math.floor((y - SEAT - 8) / 4)) + 4;
+const godKeep = (r, i) => clamp((1 - sup()) * 1.6 - (r / ROWS) * 0.6 - hsh(i, r + 9) * 0.5 + 0.2, 0, 1);
+
+function pedestal() {
+  const top = 52, w = 14, x = PX - w / 2;
+  for (let y = top; y < BANK; y += 3) { const o = ((y / 3) | 0) % 3 === 0 ? 1 : 0; cell(x - o, y, w + 2 * o, 3, T.pale); }
+  for (const dx of [0, 8]) { cell(x + dx - 1, top - 8, 8, 8, FEAT); cell(x + dx, top - 7, 6, 6, GOD); }
+  const t = tick % BUB, u = t / 18;
+  if (t < 18) { const bx = Math.round(PX + 4 + u * 26), by = Math.round(top - 18 - u * 12); g.globalAlpha = u < 0.2 ? u / 0.2 : 1;
+    cell(bx - 1, by - 1, 11, 9, FEAT); cell(bx, by, 9, 7, GOD); cell(bx + 4, by + 1, 1, 3, FEAT); cell(bx + 4, by + 5, 1, 1, FEAT); g.globalAlpha = 1; }
+}
+function god() {
+  const N = 40, x0 = GX - N / 2, y0 = 14, seat = y0 + N;
+  cell(GX - 30, y0 + 14, 60, seat - y0 - 14, ink());
+  cell(GX - 36, seat, 72, 8, ink());
+  for (let k = 0, y = seat + 8; y < BANK; k++, y += 4) cell(GX - 40 - 4 * k, y, 80 + 8 * k, 4, ink());
+  cell(x0 - 2, y0 - 2, N + 4, N + 2, FEAT); cell(x0, y0, N, N, GOD);
+  for (const ox of [6, 24]) { cell(x0 + ox, y0 + 14, 10, 2, FEAT); cell(x0 + ox + 3, y0 + 16, 4, 2, FEAT); }
+  cell(x0 + 12, y0 + 26, 2, 2, FEAT); cell(x0 + 14, y0 + 28, 12, 2, FEAT); cell(x0 + 26, y0 + 26, 2, 2, FEAT);
+  const cr = st.theme === 'dark' ? GOD : FEAT;
+  cell(x0 - 1, y0 - 6, N + 2, 2, cr); for (const px of [2, 10, 19, 28, 36]) cell(x0 + px, y0 - 10, 2, 4, cr);
+}
+// The fist flags among God's rows, each scaled to its row, rippling.
+const FIST = ['.X.X.X.', 'XXXXXXX', 'XXXXXXX', 'XXXXXX.', '.XXXX..', '..XXX..', '..XXX..'];
+const FLAGS = [[2, -150], [4, -100], [1, 110], [6, 150], [3, 190], [5, -200], [7, 60]];
+function flags(back) {
+  for (const [r, off] of FLAGS) {
+    if ((r >= 2) !== back) continue;
+    const G = rowGeom(r, GX, 230), u = Math.max(1, Math.round(G.n / 3)), x = GX + off, fw = 9 * u, fh = 9 * u;
+    const bow = st.rows === 'curved' ? Math.round((off / G.half) ** 2 * lerp(6, 14, G.k)) : 0;
+    const base = G.y - bow + G.n, top = base - fh - 4 * u;
+    cell(x, top, u, base - top, ink());
+    for (let i = 0; i < fw; i++) {
+      const d = Math.round(Math.sin(i / Math.max(2, fw / 3) - tick * 0.5) * Math.max(1, u * 0.6));
+      cell(x + u + i, top + d, 1, fh, ink());
+      const gi = Math.floor((i - u) / u);
+      if (gi >= 0 && gi < 7) FIST.forEach((row, j) => { if (row[gi] === 'X') cell(x + u + i, top + d + u + j * u, 1, u, T.paper); });
+    }
+  }
+}
+// God's crowd comes toward the viewer: its back row stands small at his
+// base's foot, and each row nearer the camera is lower on the screen, bigger
+// and wider, their backs to us, facing him. As support rises it empties
+// from the front, receding toward the throne.
+const GROWS = 8;
+function godRow(r) {     // r = 0 at the throne's foot, GROWS-1 nearest the viewer
+  const k = r / (GROWS - 1), n = Math.round(lerp(3, 9, k)), gap = r < 3 ? 1 : 2, pitch = n + gap;
+  return { k, n, pitch, half: Math.round(lerp(70, 300, k)), y: Math.round(BANK - 4 + lerp(0, 44, k * k)) };
+}
+const godKeepFwd = (r, i) => clamp((1 - sup()) * 1.7 - (r / GROWS) * 0.8 - hsh(i, r + 9) * 0.5 + 0.25, 0, 1);
+function godCrowd() {
+  for (let r = 0; r < GROWS; r++) {
+    const G = godRow(r), c = T[r < 3 ? 'pale' : 'mid'];
+    let i = 0;
+    for (let x = GX - G.half + ((r % 2) * G.pitch >> 1); x < GX + G.half; x += G.pitch, i++) {
+      if (r === 0 && Math.abs(x + G.n / 2 - GX) < 46) continue;      // the back row stands either side of the base
+      const a = godKeepFwd(r, i); if (a <= 0.01) continue;
+      const bow = st.rows === 'curved' ? -Math.round(((x + G.n / 2 - GX) / G.half) ** 2 * lerp(2, 10, G.k)) : 0;
+      g.globalAlpha = Math.min(1, a); cell(x, G.y + bow, G.n, G.n, c); g.globalAlpha = 1;
+    }
+    // the flags planted in this row, scaled to it
+    for (const [fr, off] of FLAGS2) if (fr === r) flagAt(GX + off, G, r);
+  }
+}
+const FLAGS2 = [[1, -120], [2, 130], [3, -200], [4, 60], [5, -60], [6, 230], [7, -280]];
+function flagAt(x, G, r) {
+  const u = Math.max(1, Math.round(G.n / 3)), fw = 9 * u, fh = 9 * u;
+  const bow = st.rows === 'curved' ? -Math.round(((x - GX) / G.half) ** 2 * lerp(2, 10, G.k)) : 0;
+  const base = G.y + bow + G.n, top = base - fh - 5 * u;
+  cell(x, top, u, base - top, ink());
+  for (let i = 0; i < fw; i++) {
+    const d = Math.round(Math.sin(i / Math.max(2, fw / 3) - tick * 0.5) * Math.max(1, u * 0.6));
+    cell(x + u + i, top + d, 1, fh, ink());
+    const gi = Math.floor((i - u) / u);
+    if (gi >= 0 && gi < 7) FIST.forEach((row, j) => { if (row[gi] === 'X') cell(x + u + i, top + d + u + j * u, 1, u, T.paper); });
+  }
+}
+function draw() {
+  T = TONES[st.theme];
+  cell(0, 0, W, 162, T.paper);
+  cell(0, GROUND, W, 1, T.mid);
+  // the union's camp
+  crowd(PX, 150, ['ink', 'ink', 'mid'], unionKeep, false, true, 10); pedestal(); crowd(PX, 150, ['ink', 'ink', 'mid'], unionKeep, true, true, 10);
+  // God's camp
+  god(); godCrowd();
+}
+function sync() { for (const b of document.querySelectorAll('button[data-k]')) b.setAttribute('aria-pressed', String(st[b.dataset.k] === b.dataset.v)); document.documentElement.dataset.theme = st.theme; draw(); }
+document.querySelectorAll('button[data-k]').forEach(b => b.onclick = () => { st[b.dataset.k] = b.dataset.v; sync(); });
+document.getElementById('sup').oninput = e => { st.s = +e.target.value; st.auto = 'off'; sync(); };
+window.setTick = t => { tick = t; draw(); };
+const q = new URLSearchParams(location.hash.slice(1));
+for (const k of ['theme', 'rows', 'cheer', 'arrive', 'auto']) if (q.get(k)) st[k] = q.get(k);
+if (q.get('s')) st.s = +q.get('s');
+if (q.get('t')) tick = +q.get('t');
+let play = !q.get('still');
+setInterval(() => { if (play) { tick++; draw(); } }, 250);
+sync();
+</script>
+</body></html>
