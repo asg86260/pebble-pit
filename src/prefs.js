@@ -10,7 +10,7 @@ const DEFAULTS = {
   muted: false,      // the mute (DESIGN.md, the sound of the yard)
   volume: 1,         // the slider: a share of SND_MASTER, 0..1, so 1 is "quiet"
   touch: null,       // null = follow the pointer; true = a thumb; false = a mouse
-  dark: null,        // null = follow the system; true = white on black; false = black on white
+  theme: null,       // null = follow the system; else one of THEMES (DESIGN.md, "Dark mode: black stays black")
   readable: false,   // the page's words in the readable face (readable.js)
   crew: 'show',      // the crew drawn 'show', 'fade' or 'hide', so a crowded yard can still be read
   language: null,    // null = follow Steam, the system or the browser; else a file in locales/ (lang.js); read at boot
@@ -31,6 +31,10 @@ try {
     // null or chosen, so this reads only the ones from before.
     if (had && typeof had === 'object' && !('language' in had)) prefs.language = 'en';
     delete prefs.lang;
+    // Preferences kept before 2026-10-18 carry `dark: true | false`, from when
+    // there was one dark page. A player who chose dark gets the new one.
+    if (prefs.theme == null && typeof had?.dark === 'boolean') prefs.theme = had.dark ? 'dark' : 'light';
+    delete prefs.dark;
   }
 } catch {
   // no storage, or a bad blob: the defaults are the preference
@@ -76,18 +80,29 @@ export function coarse() {
 let forced = null;
 export const forceCoarse = v => { forced = v; };
 
-// Whether the page is the dark one (DESIGN.md, "Dark mode"): `?dark` in the
-// address for a shot, else the sheet's switch, else what the system asks
-// for. Asked once, at boot: the palette is fixed for the life of the page
-// (ink.js says why), so the switch reloads rather than repainting. The node
-// yard has no `matchMedia` and reads "off", which is what every check is
-// written against. The head of each page asks the same question of the
-// store directly, before the first paint (play.html, index.html).
-export function dark() {
-  if (typeof location !== 'undefined' && /[?&]dark\b/.test(location.search)) return true;
-  if (prefs.dark != null) return prefs.dark;
-  return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches;
+// The page's look (DESIGN.md, "Dark mode: black stays black"): the light
+// page; dim, the first dark page, light gray on charcoal turned by
+// lightness; or dark, the graphite page where black stays black. `?dim` or
+// `?dark` in the address for a shot, else the sheet's switch, else what the
+// system asks for, which is the dark one. Asked once, at boot: the palette
+// is fixed for the life of the page (ink.js says why), so the switch reloads
+// rather than repainting. The node yard has no `matchMedia` and reads light,
+// which is what every check is written against. The head of each page asks
+// the same question of the store directly, before the first paint
+// (play.html, index.html).
+export const THEMES = ['light', 'dim', 'dark'];
+export function theme() {
+  if (typeof location !== 'undefined') {
+    if (/[?&]dim\b/.test(location.search)) return 'dim';
+    if (/[?&]dark\b/.test(location.search)) return 'dark';
+  }
+  if (THEMES.includes(prefs.theme)) return prefs.theme;
+  return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
+// Either dark page: what the deep, the veils and the checks ask.
+export const dark = () => theme() !== 'light';
+// The switch's next look, in the order the sheet steps through them.
+export const nextTheme = () => THEMES[(THEMES.indexOf(theme()) + 1) % THEMES.length];
 
 // Whether the page's words are set in the readable face (readable.js): `?readable`
 // in the address for a shot, else the sheet's switch. The head of each page

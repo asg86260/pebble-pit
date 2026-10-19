@@ -84,7 +84,7 @@
   margin: calc(var(--shelf-plank, 5px) + var(--shelf-top, 8px)) 0 var(--shelf-sign, 6px);
   /* the section sign of style.css's `.rows .sect`, said again past the
      firewall's revert */
-  --paper: var(--c-ink); --ink: var(--c-paper);
+  --paper: var(--c-fill); --ink: var(--c-on-fill); --fill: var(--c-on-fill); --on-fill: var(--c-fill);
   padding: 3px 10px 4px;
   border: 0;
   background: var(--paper);
@@ -358,7 +358,7 @@
 .rows.shelves > .tile .strip > i.dead { color: var(--ink-5); cursor: default; }
 .rows.shelves > .tile.stripped { cursor: default; padding-bottom: calc(var(--shelf-foot, 8px) + var(--shelf-refund, 18px)); }
 @media (hover: hover) {
-  .rows.shelves > .tile .strip > i:not(.dead):hover { background: var(--ink); color: var(--paper); }
+  .rows.shelves > .tile .strip > i:not(.dead):hover { background: var(--fill); color: var(--on-fill); }
 }
 /* The new-corner is top-LEFT on a tile: the pips stand down the right edge,
    and a notch over them read as the top of the ladder. */
@@ -630,7 +630,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 }
 /* the section sign, as on a board (style.css, `.rows .sect`) */
 .rows.ledger > .sect {
-  --paper: var(--c-ink); --ink: var(--c-paper);
+  --paper: var(--c-fill); --ink: var(--c-on-fill); --fill: var(--c-on-fill); --on-fill: var(--c-fill);
   display: table;
   margin: 12px 0 4px;
   padding: 3px 10px 4px;
@@ -707,7 +707,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
    by deep/rails.js (`showTip`), in the board's face and size. */
 .rl-tip {
   position: fixed; z-index: 21; pointer-events: none;
-  background: var(--ink); color: var(--paper); padding: var(--pad-s); white-space: nowrap;
+  background: var(--fill); color: var(--on-fill); padding: var(--pad-s); white-space: nowrap;
 }
 .rl-tip[hidden] { display: none; }
 /* A row: what it is, a line of what it does, its bill in the corner. */
@@ -727,8 +727,8 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 .rails .rl-row .rl-tag .short { color: var(--ink-5); }
 .rails .rl-row:disabled { border-style: dashed; color: var(--ink-5); cursor: default; }
 @media (hover: hover) {
-  .rails .rl-row:hover:not(:disabled) { background: var(--ink); color: var(--paper); }
-  .rails .rl-row:hover:not(:disabled) .rl-s, .rails .rl-row:hover:not(:disabled) .rl-tag .short { color: var(--paper); }
+  .rails .rl-row:hover:not(:disabled) { background: var(--fill); color: var(--on-fill); }
+  .rails .rl-row:hover:not(:disabled) .rl-s, .rails .rl-row:hover:not(:disabled) .rl-tag .short { color: var(--on-fill); }
 }
 .rails .rl-top { font-size: var(--fs-body); color: var(--ink); }
 .rails .rl-reset {
@@ -747,7 +747,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 .rails .rl-st { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; }
 .rails .rl-fx.cap .rl-st { color: var(--accent); }
 @media (hover: hover) {
-  .rails .rl-row:hover:not(:disabled) .rl-st, .rails .rl-row:hover:not(:disabled) .rl-fx i.mv { color: var(--paper); }
+  .rails .rl-row:hover:not(:disabled) .rl-st, .rails .rl-row:hover:not(:disabled) .rl-fx i.mv { color: var(--on-fill); }
 }
 .rails .rl-glyph { display: block; flex: none; }
 /* A root over its fork: its name centered, a stem, a crossbar that ends at
@@ -775,7 +775,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   background: var(--paper); color: var(--ink); border: 1px solid var(--ink); padding: 3px 4px; cursor: pointer;
 }
 .rails .rl-node .rl-ic { display: flex; gap: 1px; }
-.rails .rl-node.on { background: var(--ink); color: var(--paper); }
+.rails .rl-node.on { background: var(--fill); color: var(--on-fill); }
 .rails .rl-node.locked { border-style: dashed; color: var(--ink-5); cursor: default; }
 .rails .rl-pick { display: grid; gap: 8px; border: 1px solid var(--ink); padding: 6px 8px; }
 /* The tree reads as the rows do, not as the board's headings. Its prose never
@@ -816,7 +816,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 }
 #buildbtn .count { font-weight: normal; }
 @media (hover: hover) {
-  #buildbtn:hover { background: var(--ink); color: var(--paper); }
+  #buildbtn:hover { background: var(--fill); color: var(--on-fill); }
 }
 @media (prefers-reduced-motion: reduce) {
   #buildbtn, #buildbtn.on { transition: none; }

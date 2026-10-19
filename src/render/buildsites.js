@@ -6,7 +6,7 @@ import { PURPLES } from './deeptones.js';
 import { S } from '../state.js';
 import { SITES, rowFor, siteBox, worksAt } from '../works.js';
 import { ctx } from './ctx.js';
-import { darkPage, xorInk } from '../ink.js';
+import { turnedOver, xorInk } from '../ink.js';
 import { invertByFilter } from './invert.js';
 import { groundOf } from '../deep/place.js';
 
@@ -112,7 +112,7 @@ function paintGrit(sea) {
   let any = false;
   for (const g of S.grit) if (!g.sea === !sea) { any = true; break; }
   if (!any) return;
-  if (!darkPage && invertByFilter(ctx)) turnGrit(sea);
+  if (!turnedOver() && invertByFilter(ctx)) turnGrit(sea);
   else xorGrit(sea);
 }
 
@@ -166,7 +166,7 @@ function turnGrit(sea) {
 function xorGrit(sea) {
   ctx.save();
   ctx.globalCompositeOperation = 'difference';
-  ctx.fillStyle = xorInk;
+  ctx.fillStyle = xorInk();
   for (const g of S.grit) {
     if (!g.sea !== !sea) continue;
     ctx.globalAlpha = fade(g);

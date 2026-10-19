@@ -25,7 +25,7 @@ import { readPads, seeFamily, glyph, rumble, fakePad, BUTTON } from './padread.j
 import { stops, stopById, stopMid } from './stops.js';
 import { station } from './stations.js';
 import { showPanel, openBoard, showTip, showTipAt } from './board.js';
-import { panTo, unfollow } from './world.js';
+import { panTo, unfollow, toWorld, toScreen } from './world.js';
 import { knockOff, topOfRock, overBoulder } from './rock.js';
 import { sweep, release, track } from './hands.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
@@ -48,7 +48,8 @@ import { crewView } from './prefs.js';
 import { hear } from './audio.js';
 import { hold, pan, viewTaken, whatIsAt } from './input.js';
 import { aim, markAt, glideMs } from './padglide.js';
-import { padGesture, cardOpen, openCard, closeCard, stepCard, CARD_KEYS } from './after/gestures.js';
+import { padGesture } from './after/gestures.js';
+import { openAfterBoard } from './after/rows.js';
 import { fillControls } from './controls.js';
 import { wardrobePad, wardrobeHolds, wardrobeNav } from './wardrobepage.js';
 import { padTabs } from './settingstabs.js';
@@ -73,7 +74,7 @@ function raiseStop() {
   const b = el.getBoundingClientRect();
   if (!b.width) return null;
   return { id: 'raise', kind: 'raise', key: 'raise', half: 'yard', el,
-           r: { x: b.left / S.zoom + S.camX, y: b.top / S.zoom + S.camY, w: b.width / S.zoom, h: b.height / S.zoom } };
+           r: { ...toWorld(b.left, b.top), w: b.width / S.zoomShow, h: b.height / S.zoomShow } };
 }
 // The stops in the half on screen, left to right.
 function yardStops() {
@@ -172,7 +173,7 @@ function setFocus(id, look = false) {
 // camera glide and the bracket glide").
 function lookTo(x) {
   unfollow();
-  panTo(x, Math.max(PAD_PAN_MS, PAD_PAN_LEAD * glideMs(Math.abs(x - S.camX - S.viewW / 2) * S.zoom)));
+  panTo(x, Math.max(PAD_PAN_MS, PAD_PAN_LEAD * glideMs(Math.abs(x - S.camX - S.viewW / 2) * S.zoomShow)));
   viewTaken();
 }
 
@@ -226,7 +227,7 @@ function land(it, from) {
 // thing the focus stood on. Down from there comes back (`pagePresses`).
 function upToCorner(r) {
   const c = r ? mid(r) : { x: S.camX + S.viewW / 2, y: S.camY };
-  enterCorner(true, { x: (c.x - S.camX) * S.zoom, y: (c.y - S.camY) * S.zoom });
+  enterCorner(true, toScreen(c.x, c.y));
 }
 
 function hop(dir) {
@@ -578,32 +579,12 @@ function yardPresses(p, dirs, pressed, released, lx, ly, dt) {
 
   for (const d of dirs) hop(d);
 
-  // An act-3 card open while the d-pad hops: it steps with the focus to the
-  // station hopped to, and shuts once the focus leaves the hand work.
-  if (dirs.length && cardOpen()) {
-    const f = S.padFocus || '', key = f.startsWith('ag:') ? f.slice(3) : null;
-    if (!key || !CARD_KEYS.includes(key)) closeCard();
-    else if (cardOpen().key !== key) openCard(key);
-  }
-
-  // An act-3 station under the focus: A opens its card, then A and the
-  // stick work the station's own motion on it (after/gestures.js), LB and RB
-  // step the open card to the neighboring station with the camera following,
-  // B shuts it; the d-pad still hops off it. The pedestal has no card: A
-  // pops its bubbles where they rise.
+  // An act-3 station under the focus: A and the stick work its own motion
+  // where it stands (after/gestures.js), Y opens its board (the grove's for
+  // a tree or a stump, the saw mill's for its heap); the d-pad hops off it.
   if ((S.padFocus || '').startsWith('ag:')) {
-    const key = S.padFocus.slice(3), card = cardOpen();
-    if (CARD_KEYS.includes(key) && !(card && card.key === key)) {
-      if (pressed('a')) openCard(key);
-      else if ((pressed('lb') || pressed('rb')) && !carried) turnBoard(pressed('rb') ? 1 : -1);
-      return;
-    }
-    if (CARD_KEYS.includes(key) && pressed('b')) { closeCard(); return; }
-    if (CARD_KEYS.includes(key) && (pressed('lb') || pressed('rb'))) {
-      const id = stepCard(pressed('rb') ? 1 : -1);
-      if (id) setFocus(id, true);
-      return;
-    }
+    const key = S.padFocus.slice(3);
+    if (pressed('y')) { openAfterBoard(key === 'tree' || key === 'stump' ? 'grove' : key === 'heap' ? 'mill' : key); return; }
     padGesture(key, { a: !!p.down.a, pressed: pressed('a'), released: released('a'), lx, ly });
     if ((pressed('lb') || pressed('rb')) && !carried) turnBoard(pressed('rb') ? 1 : -1);
     return;
@@ -702,7 +683,8 @@ export function paintPad(t = performance.now()) {
 function sayTip(box) {
   const id = S.padFocus;
   if (id === 'body' && body) {
-    showTipAt(card(body), (body.x + WORKER + P * 2 - S.camX) * S.zoom, (body.y - P * 3 - S.camY) * S.zoom, false, false, glyph('a'));
+    const at = toScreen(body.x + WORKER + P * 2, body.y - P * 3);
+    showTipAt(card(body), at.x, at.y, false, false, glyph('a'));
     return;
   }
   if (!id || id.includes('|')) return;

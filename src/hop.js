@@ -13,7 +13,7 @@
 import { HOP_Y, HOP_SIZE } from './config.js';
 import { S } from './state.js';
 import { coarse } from './prefs.js';
-import { lookAt } from './world.js';
+import { lookAt, toScreen } from './world.js';
 import { showPanel } from './board.js';
 import { station } from './stations.js';
 import { GLYPHS, drawGlyph } from './glyphs.js';
@@ -67,7 +67,7 @@ export function refreshHop() {
   // height, so the sky it stands in is the phone's own -- and never lower
   // than the middle of the sky, since a phone on its side has its ground
   // line above HOP_Y and an arrow on the ground reads as a thing in the yard.
-  const ground = (S.groundY - S.camY) * S.zoom;
+  const ground = toScreen(0, S.groundY).y;
   const y = Math.round(Math.min(S.H * HOP_Y, ground / 2) - HOP_SIZE / 2);
   if (y !== putY) { putY = y; hopEl.style.transform = `translate3d(0, ${y}px, 0)`; }
   for (const dir of [-1, 1]) {

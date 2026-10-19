@@ -2,12 +2,12 @@
 // that is not the yard. This file wires the shelf; escape and resume are
 // input.js's.
 
-import { pref, setPref, reducedMotion, coarse, dark } from './prefs.js';
+import { pref, setPref, reducedMotion, coarse, theme, nextTheme } from './prefs.js';
 import { version } from './version.js';
 import { exportSave, importSave, persist, switchSlot, restore, bootYard, reset } from './persist.js';
 import { S } from './state.js';
 import { storeTrouble, storeSettled, openSlot, slotRaw } from './save.js';
-import { VEIL_MS, LIGHT_PAPER, DARK_PAPER, TOAST_MS } from './config.js';
+import { VEIL_MS, LIGHT_PAPER, DARK_PAPER, DEEP_PAPER, TOAST_MS } from './config.js';
 import { showRecord, recordLabel } from './record.js';
 import { showSlots, slotsLabel } from './slots.js';
 import { fillControls } from './controls.js';
@@ -163,19 +163,22 @@ touchEl.addEventListener('click', () => {
   sayTouch();
 });
 
-// And the dark switch: a desk that asked its system for dark reads "on"
-// before the switch is ever touched. Pressing it is a reload, since the
-// page's palette is fixed at boot (ink.js): the veil goes up in the color of
-// the page that is coming, the page comes back under it and the veil
-// lifts, so the change is one fade and not a cut.
+// And the dark switch, stepping light, dim, dark (prefs.js, `theme`): a desk
+// that asked its system for dark reads "on" before the switch is ever
+// touched. Pressing it is a reload, since the page's palette is fixed at boot
+// (ink.js): the veil goes up in the color of the page that is coming, the
+// page comes back under it and the veil lifts, so the change is one fade and
+// not a cut.
 const darkEl = document.getElementById('dark');
+const THEME_WORD = { light: 'set-dark-off', dim: 'set-dark-dim', dark: 'set-dark-on' };
+const THEME_PAPER = { light: LIGHT_PAPER, dim: DEEP_PAPER, dark: DARK_PAPER };
 function sayDark() {
-  darkEl.textContent = dark() ? msg('set-dark-on') : msg('set-dark-off');
+  darkEl.textContent = msg(THEME_WORD[theme()]);
 }
 darkEl.addEventListener('click', () => {
-  setPref('dark', !dark());
+  setPref('theme', nextTheme());
   sayDark();
-  document.getElementById('veil').style.background = dark() ? DARK_PAPER : LIGHT_PAPER;
+  document.getElementById('veil').style.background = THEME_PAPER[theme()];
   leave(location.href);
 });
 

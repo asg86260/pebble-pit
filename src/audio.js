@@ -15,7 +15,10 @@
 // A strike is a recipe (`RECIPES` in config/sound.js, mapped to events by
 // `SOUNDS`) rendered sample by sample into a buffer, the same arithmetic the
 // hit bench runs, so a recipe landed by ear on the bench ships as it was
-// heard.
+// heard -- or a recorded take (`{ sample: [...] }`, short files in
+// public/sfx/), which is a strike recorded instead of computed and goes
+// through the same fold, ceilings, cap, scatter and pan (DESIGN.md, "The
+// yard's sound set, by lanes").
 
 import { SND_MASTER, SND_LOWPASS_HZ, SND_LOWPASS_Q, SND_LIMIT_DB, SND_LIMIT_RATIO,
          SND_LIMIT_RELEASE_S, SND_LIMIT_ATTACK_S, SND_LIMIT_KNEE_DB, SND_MUTE_S,
@@ -25,7 +28,7 @@ import { SND_MASTER, SND_LOWPASS_HZ, SND_LOWPASS_Q, SND_LIMIT_DB, SND_LIMIT_RATI
          SND_HARD_DROP, SND_HARD_DULL, SND_THUMP_HZ, SND_THUMP_FALL, SND_THUMP_S,
          SND_THUMP_LEVEL,
          SND_FOLD_MS, SND_FOLD_GAIN_DB, SND_FOLD_GAIN_MAX_DB, SND_FOLD_WIDEN,
-         SND_FOLD_PER_S, SND_PUNCT_PER_S, SND_EACH_PER_S } from './config.js';
+         SND_FOLD_PER_S, SND_PUNCT_PER_S, SND_EACH_PER_S, SND_SAMPLE_DIR, SND_ONSCREEN_PAD } from './config.js';
 import { S } from './state.js';
 import { now } from './clock.js';
 import { rand, seed, stream } from './rng.js';
@@ -39,7 +42,7 @@ let muted = false;
 // `firedBy` what got through, `pending` the open fold windows (nought a
 // window after the yard goes quiet), `byEvent` the asks by event.
 const decisions = {
-  fired: 0, dropped: 0, folded: 0, stolen: 0, pending: 0,
+  fired: 0, dropped: 0, folded: 0, stolen: 0, pending: 0, unseen: 0,
   byClass: { hand: 0, fold: 0, punct: 0, each: 0 },
   firedBy: { hand: 0, fold: 0, punct: 0, each: 0 },
   byEvent: {}
@@ -94,6 +97,13 @@ function over(event, cls, t, ceiling) {
   return kept.length >= ceiling;
 }
 const mark = (event, cls, t) => recent[cls].get(event).push(t);
+// A row may set its own ceiling, under its class's: the families that fire
+// most (footsteps, the belt) are thinned harder than the rest of the work.
+const capOf = (event, ceiling) => Math.min(ceiling, SOUNDS[event]?.perS ?? Infinity);
+// Whether world x is in the view, give or take a margin. A row marked
+// `onScreen` is asked for and counted off screen (`unseen`), and goes no
+// further: a yard of a hundred haulers is heard where you are looking.
+const seen = x => x == null || !S.viewW || (x > S.camX - SND_ONSCREEN_PAD && x < S.camX + S.viewW + SND_ONSCREEN_PAD);
 
 // The cap. Oldest-and-quietest goes first, and the player's own hand is
 // never taken: it is allowed to be the clearest thing in the mix.
@@ -119,6 +129,7 @@ const field = (spec, k) => spec[k] ?? RECIPE_DEFAULTS[k];
 // How long a recipe sounds, in seconds: its longest envelope run out, plus
 // the thump if it carries one.
 function ringOf(spec, o) {
+  if (spec.sample) return spec.seconds || 0.5;
   const sub = field(spec, 'sub');
   const longest = Math.max(spec.decay * SND_RELEASE_TAILS + field(spec, 'bodyHold'),
                            spec.noiseMs * SND_RELEASE_TAILS + field(spec, 'noiseHold'),
@@ -145,7 +156,10 @@ function fire(event, o, cls, t, n = 1, counted = false) {
   makeRoom();
   const v = { at: t, level, cls, until: t + delay + ring * 1000, env: null };
   active.push(v);
-  if (ctx) v.env = play(spec, o, { level, widen, delay, detune, ring });
+  // a recorded strike picks one of its takes, so no two in a row need match
+  const take = spec.sample ? spec.sample[Math.floor(rand() * spec.sample.length)] : null;
+  for (const fn of struck) fn({ event, t, spec, o, level, widen, delay, detune, take, ring });
+  if (ctx) v.env = take ? playTake(take, o, { level, delay, detune }) : play(spec, o, { level, widen, delay, detune, ring });
 }
 
 // Something physically happened at world x. `event` is a key in SOUNDS --
@@ -163,6 +177,11 @@ function fire(event, o, cls, t, n = 1, counted = false) {
 // that only wakes on a pointer's gesture.
 const heard = [];
 export const hear = fn => { heard.push(fn); };
+// And whoever wants every strike as it is decided, with all it will play:
+// the offline audition (tools/node/sound-audition.mjs) mixes a logged yard
+// from exactly what the decision half let through.
+const struck = [];
+export const onStrike = fn => { struck.push(fn); };
 
 export function sfx(event, opts = {}) {
   for (const fn of heard) fn(event, opts);
@@ -170,10 +189,14 @@ export function sfx(event, opts = {}) {
   const cls = CLASSES.has(opts.cls) ? opts.cls : (SOUNDS[event] ? SOUNDS[event].cls : 'fold');
   decisions.byClass[cls]++;
   decisions.byEvent[event] = (decisions.byEvent[event] || 0) + 1;
+  // Judged where it happened, before it can join a window: a window's place
+  // is the average of all it holds, and a yard's worth of steps averages to
+  // its middle, wherever the camera is.
+  if (SOUNDS[event]?.onScreen && !seen(opts.x)) { decisions.unseen++; return; }
   const t = clock();
   if (cls === 'hand') { fire(event, opts, cls, t); return; }
   if (cls === 'punct' || cls === 'each') {
-    if (over(event, cls, t, cls === 'punct' ? SND_PUNCT_PER_S : SND_EACH_PER_S)) { decisions.dropped++; return; }
+    if (over(event, cls, t, capOf(event, cls === 'punct' ? SND_PUNCT_PER_S : SND_EACH_PER_S))) { decisions.dropped++; return; }
     mark(event, cls, t);
     fire(event, opts, cls, t);
     return;
@@ -188,7 +211,7 @@ export function sfx(event, opts = {}) {
     decisions.folded++;
     return;
   }
-  if (over(event, cls, t, SND_FOLD_PER_S)) { decisions.dropped++; return; }
+  if (over(event, cls, t, capOf(event, SND_FOLD_PER_S))) { decisions.dropped++; return; }
   mark(event, cls, t);
   // The decision is made now and counted now; the sound waits for the window
   // to close so everything landing inside it is in it.
@@ -223,6 +246,7 @@ export function wakeAudio() {
   const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
   if (!AC) return;
   try { ctx = new AC(); build(); } catch { ctx = null; return; }
+  loadTakes();
   if (ctx.state === 'suspended') ctx.resume();
 }
 
@@ -261,6 +285,7 @@ export function applySounds(map) {
     SOUNDS[k].recipe = r;
     n++;
   }
+  if (ctx) loadTakes();
   return n;
 }
 
@@ -337,6 +362,9 @@ let noise = null;
 // dulls the grit; `big` puts the thump under it; a fold's `widen` opens the
 // grit's band and its `level` carries the fold gain. One pass over the
 // buffer, then the pixel stage, then the recipe's own lowpass and a soft clip.
+// Exported for tools/node/sound-audition.mjs, which mixes a logged yard
+// offline through the same arithmetic the page plays.
+export function renderStrike(spec, o, opts) { return render(spec, o, opts); }
 function render(spec, o, { level, widen, detune }) {
   if (!noise) noise = stream(seed());
   const SR = SND_RATE;
@@ -428,6 +456,46 @@ function play(spec, o, { level, widen, delay, detune }) {
   src.buffer = buf;
   const env = ctx.createGain();
   env.gain.value = 1;
+  src.connect(env);
+  let out = env;
+  if (ctx.createStereoPanner) {
+    const pan = ctx.createStereoPanner();
+    pan.pan.value = panOf(o.x);
+    env.connect(pan);
+    out = pan;
+  }
+  out.connect(nodes.yard);
+  src.start(ctx.currentTime + delay / 1000);
+  return { env, sources: [src] };
+}
+
+// The recorded takes, decoded once the context exists. A take still loading
+// is a strike that is decided and silent, the same as an unmapped event.
+const takes = new Map();
+function loadTakes() {
+  for (const row of Object.values(SOUNDS)) {
+    const r = row.recipe;
+    if (!r || typeof r !== 'object' || !r.sample) continue;
+    for (const file of r.sample) {
+      if (takes.has(file)) continue;
+      takes.set(file, null);
+      const url = new URL(SND_SAMPLE_DIR + file, document.baseURI).href;
+      fetch(url).then(res => res.arrayBuffer()).then(b => ctx.decodeAudioData(b))
+        .then(buf => takes.set(file, buf)).catch(() => {});
+    }
+  }
+}
+
+// One recorded strike: the take at the scattered rate (a little higher or
+// lower, a little shorter or longer, as a hit is), the level, the pan.
+function playTake(file, o, { level, delay, detune }) {
+  const buf = takes.get(file);
+  if (!buf) return null;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.playbackRate.value = cents(detune);
+  const env = ctx.createGain();
+  env.gain.value = level;
   src.connect(env);
   let out = env;
   if (ctx.createStereoPanner) {

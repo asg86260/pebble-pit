@@ -29,7 +29,7 @@ export const AFTER_STORY = {
   // and following the pair to the camp's bare patch, the pair up on the
   // pedestal and the first line of their speech.
   'refuse': stub(),
-  // The axe handed over once it is bought on the pedestal's card (call 15,
+  // The axe handed over once it is bought on the grove's card (call 15,
   // settled): due while rebel.js's `axeDue` says so. The member walking over
   // from the grove with it is a mock before it is a drawing; until then the
   // beat hands the axe over on its first frame, so the click chops from then on.

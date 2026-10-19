@@ -6,12 +6,12 @@
 import { primeStore, openSlot, setSlot, slotRaw, clear, saveRaw, savePrev, isSave, storeSettled } from './save.js';
 import { playLabel, slotsLabel, showSlots } from './slots.js';
 import { recordListOf, recordLabelOf, showRecord, NONE_TITLE } from './record.js';
-import { pref, setPref, reducedMotion, dark } from './prefs.js';
+import { pref, setPref, reducedMotion, theme, nextTheme } from './prefs.js';
 import { version } from './version.js';
 import { fillControls } from './controls.js';
 import { copyOut } from './copyout.js';
 import { showCloud, showFoot, showConflicts } from './cloudsheet.js';
-import { VEIL_MS, PICTURE_WAIT_MS, PICTURE_UP, LIGHT_PAPER, DARK_PAPER } from './config.js';
+import { VEIL_MS, PICTURE_WAIT_MS, PICTURE_UP, LIGHT_PAPER, DARK_PAPER, DEEP_PAPER } from './config.js';
 import { msg } from './lang.js';
 import { mountReadable, sayReadable } from './readable.js';
 import { fillLanguages, inForce } from './langpage.js';
@@ -131,7 +131,10 @@ const darkEl = document.getElementById('dark');
 const soundEl = document.getElementById('sound');
 const volumeEl = document.getElementById('volume');
 const sayMotion = () => { motionEl.textContent = reducedMotion() ? msg('set-motion-less') : msg('set-motion-full'); };
-const sayDark = () => { darkEl.textContent = dark() ? msg('set-dark-on') : msg('set-dark-off'); };
+// light, dim, dark (prefs.js, `theme`), as on the held sheet (settings.js)
+const THEME_WORD = { light: 'set-dark-off', dim: 'set-dark-dim', dark: 'set-dark-on' };
+const THEME_PAPER = { light: LIGHT_PAPER, dim: DEEP_PAPER, dark: DARK_PAPER };
+const sayDark = () => { darkEl.textContent = msg(THEME_WORD[theme()]); };
 const saySound = () => { soundEl.textContent = pref('muted') ? msg('set-sound-off') : msg('set-sound-on'); };
 motionEl.addEventListener('click', () => {
   setPref('motion', !reducedMotion());
@@ -144,12 +147,13 @@ motionEl.addEventListener('click', () => {
 // reloaded in the new palette (ink.js says why a reload), and the veil lifts
 // once the picture is there, with the same ceiling the boot's wait has.
 darkEl.addEventListener('click', async () => {
-  setPref('dark', !dark());
+  setPref('theme', nextTheme());
   const veil = document.getElementById('veil');
-  veil.style.background = dark() ? DARK_PAPER : LIGHT_PAPER;
+  veil.style.background = THEME_PAPER[theme()];
   veil.classList.add('up');
   await new Promise(r => setTimeout(r, reducedMotion() ? 0 : VEIL_MS));
-  document.documentElement.classList.toggle('dark', dark());
+  document.documentElement.classList.toggle('dark', theme() !== 'light');
+  document.documentElement.classList.toggle('dim', theme() === 'dim');
   sayDark();
   const up = pictureDrawn(true);
   yard.contentWindow?.location.reload();

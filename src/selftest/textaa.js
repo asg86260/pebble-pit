@@ -118,17 +118,19 @@ export function readWords(win) {
   return out;
 }
 
-// The words on the page as it stands, on both pages: the root's `dark`
-// turned for the second reading and put back.
+// The words on the page as it stands, on all three pages: the root's `dark`
+// and `dim` turned for each reading and put back.
 function both(win, view, into) {
-  const root = win.document.documentElement, was = root.classList.contains('dark');
-  for (const mode of ['light', 'dark']) {
-    root.classList.toggle('dark', mode === 'dark');
+  const root = win.document.documentElement, was = root.classList.contains('dark'), wasDim = root.classList.contains('dim');
+  for (const mode of ['light', 'dim', 'dark']) {
+    root.classList.toggle('dark', mode !== 'light');
+    root.classList.toggle('dim', mode === 'dim');
     // a page turned fades in (style.css, `turn`): read it come to rest
     for (const a of win.document.getAnimations()) { try { a.finish(); } catch {} }
     for (const w of readWords(win)) into.push({ view, mode, ...w });
   }
   root.classList.toggle('dark', was);
+  root.classList.toggle('dim', wasDim);
 }
 
 // The game's pages at one size: every scene above, the held sheet's every

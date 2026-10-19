@@ -176,6 +176,8 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The yard has a sound for each kind of work, each in its own register so a busy yard stays clear: footsteps, picks, hammers, shovels, carts tipping, the belt, grains landing, bodies thrown, stations landing, birds, the casino's win and loss, and the dome and the rift; the busiest are heard only where you are looking (test/sound-lanes.test.mjs).
+- The dark switch steps light, dim and dark: dim is the old dark page, and dark is a new one drawn for the dark -- a graphite paper where black stays black (the rock, the pit, hats, banners, chips and selected rows), words and lines in a light ink, lit windows and the portal still lit, and the deep as it was (test/settings.test.mjs; test/ui-tokens.test.mjs; src/selftest/textaa.js).
 - The game's words are set in Courier Prime, a Courier drawn for reading, bundled so every machine sees the same face (test/l10n-type.test.mjs).
 - A "readable text" switch on the settings' graphics tab sets the game's words in DM Mono, a size up, without the wide spacing, and tooltips and board notes in their own case (src/selftest/settings.js).
 - At a new yard you build who you are and then your sqouse -- a name, one of sqwife, sqouse or sqhusband, and what each wears, with a die on every row, a randomize all that leaves the name alone and a clear -- and every story line, card, sheet, the index and the books name the two of you that way; the rescue achievement now says "complete act 1" (test/who-you-are.test.mjs; src/selftest/wardrobe.js).
@@ -185,6 +187,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The back items are drawn finer: the capes billow out behind on the walk, the balloon lags behind on a stepped string, the flag is a pennant streaming back, and the backpack has a flap and a buckle.
 - On a short window, down to a laptop's 1280x800, only the appearance page's grid scrolls, so the close-up, its slots and the buttons stay in view, and the arrows walk every row of the grid before leaving it (src/selftest/wardrobe.js, "short window").
 - Settings, on the pause sheet and the title page, is one page in four tabs -- graphics, audio, controls and language -- with the controls table and the languages right under their tabs, LB and RB to turn them on a pad, and the title page's volume slider drawn like the pause sheet's (src/selftest/settings.js, "four tabs"; src/selftest/language.js).
+- Every zoom glides instead of stepping, the picture scaled sharp on the way, and the pointer stays on what it points at through it (test/zoom-glide.test.mjs).
 
 - A card's long name, its gain and its cancel / another strip are no longer cut short at the card's edge; the board widens to fit them (src/selftest/boardwords.js).
 - The smallest words in the menus -- the appearance page's tabs and tile names, the boards' row names, the controls table, the settings tabs, the title page's foot -- are no longer too small to read, and every grey word in the menus is dark enough to read on the light page and the dark (src/selftest/textaa.js; test/ui-tokens.test.mjs).
@@ -195,6 +198,8 @@ this section; the release that switches it on moves these under Unreleased.
 - A late yard with a big crew runs faster, above ground and in the deep (`node tools/node/late-perf.mjs`).
 - The apothecary's brew notes and who-first heading are dark enough to read in both themes (src/selftest/contrast.js).
 - A cutscene's widescreen bands stay black in dark mode instead of turning light grey, and a beat's line on them stays light (`GAME=…/play.html?dark node tools/look.mjs leaving`).
+- The act 3 intro keeps its widescreen bands and its zoom through the tear, and lands in the afterlife on the cloud floor where the two of them come up instead of in the empty sky under it, climbing (test/shot.test.mjs).
+- The opening, the serpent's kill, the walk home and the first trip down glide their camera and their zoom together instead of cutting across the deep or stepping the zoom, and keep who they are about in the frame (test/shot.test.mjs; cutscenes.html, the finale, snatch-kill, opening and first-trip rows).
 
 ## v0.6.0 — 2026-10-16
 

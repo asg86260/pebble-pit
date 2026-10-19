@@ -22,7 +22,7 @@
 const TURN = Math.PI / 16;                                 // a held step of a turning part
 const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
-import { P, GESTURE_WHEEL_LOG, GESTURE_FEED_LOG } from '../../config.js';
+import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG } from '../../config.js';
 import { K, W, PULP, DUST, hash, clamp01, silhouette } from './kit.js';
 
 const cyc = (t, T) => { const u = Math.max(0, t), k = Math.floor(u / T); return { ph: u / T - k, since: u - k * T }; };
@@ -107,7 +107,7 @@ function chFeed(ph) {
 function chipper(d, work, t, h) {
   // Held by the hand, the log goes in as far as the feed has taken it and
   // the jaw chews for as long as it is held.
-  const hand = !!h && h.hold, c = hand ? { ph: (h.prog || 0) / GESTURE_FEED_LOG * SWALLOW, since: 1 } : cyc(t, CHIP_T);
+  const hand = !!h && h.hold, c = hand ? { ph: (h.prog || 0) / GESTURE_ARM_LOG * SWALLOW, since: 1 } : cyc(t, CHIP_T);
   const jawStep = hand ? CHEW + Math.floor(t / (CHIP_T / JAW.length)) % (JAW.length - CHEW) : Math.min(JAW.length - 1, Math.floor(c.ph * JAW.length));
   const chewing = hand || (work && c.ph >= POUR);
   if (work || hand) {

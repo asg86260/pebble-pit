@@ -92,13 +92,19 @@ test('coarse follows the switch, remembers, and can be forced without being writ
 test('dark follows the switch and remembers; the light page maps no color', async () => {
   localStorage.removeItem(KEY);
   const m = await fresh(8);
-  assert.equal(m.dark(), false, 'no matchMedia: the light page');
-  m.setPref('dark', true);
+  assert.equal(m.theme(), 'light', 'no matchMedia: the light page');
+  assert.equal(m.nextTheme(), 'dim', 'the switch steps light, dim, dark');
+  m.setPref('theme', 'dark');
   assert.equal(m.dark(), true, 'the switch says dark');
   const again = await fresh(9);
-  assert.equal(again.dark(), true, 'and the next load reads it back');
-  again.setPref('dark', null);
+  assert.equal(again.theme(), 'dark', 'and the next load reads it back');
+  assert.equal(again.nextTheme(), 'light');
+  again.setPref('theme', null);
   assert.equal(again.dark(), false);
+  // a store from before the dim page, which said dark: true, opens the dark one
+  localStorage.setItem(KEY, JSON.stringify({ dark: true, language: null }));
+  const old = await fresh(10);
+  assert.equal(old.theme(), 'dark');
   localStorage.removeItem(KEY);
   const ink = await import('../src/ink.js?1');
   assert.equal(ink.paper, '#ffffff');

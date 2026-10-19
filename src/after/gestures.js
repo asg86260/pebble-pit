@@ -35,7 +35,7 @@
 // clock with `run` and reads a fact about the game, not about the machine.
 
 import { S } from '../state.js';
-import { P, GESTURE_CUE_USES, GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S,
+import { P, AFTER_SIGN_TIMBER, GESTURE_CUE_USES, GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S,
          GESTURE_BUBBLE_CRIT, GESTURE_BUBBLE_SLACK, GESTURE_GRAB_SLACK,
          GESTURE_SAW_AMP, GESTURE_SAW_VMAX, GESTURE_SAW_FOLLOW, GESTURE_SAW_END, GESTURE_SAW_EASE,
          GESTURE_STUMP_DRAG, GESTURE_STUMP_MAX, GESTURE_STUMP_FOLLOW, GESTURE_STUMP_SINK, GESTURE_STRAIN_LIFT, GESTURE_STRAIN_S,
@@ -275,7 +275,7 @@ const DEFS = {
       const t = T();
       // A tap off a nail, or a nail already flush, is a miss: nothing.
       if (k == null || k < 0 || t - g.strike < GESTURE_SWING_S) return 'tap';
-      if (!(S.after.stock.timber > 0) && g.nails.every(n => n === 0)) return 'tap';
+      if (S.after.stock.timber < AFTER_SIGN_TIMBER && g.nails.every(n => n === 0)) return 'tap';   // no blank without timber
       g.strike = t; g.hit = k; g.last = t;
       g.nails[k] += 1;
       used(g);
@@ -286,8 +286,10 @@ const DEFS = {
       // Once the hand stops, the joiner at the bench taps the rest on its own.
       const t = T(), joiner = S.after.bodies.some(b => b.at === 'workshop');
       if (!joiner || t - g.last < GESTURE_JOINER_WAIT_S || t - g.auto < GESTURE_JOINER_TAP_S) return;
-      const k = g.nails.findIndex(n => n > 0 && n < GESTURE_NAIL_TAPS);
-      if (k < 0) return;
+      // Only a sign the hand has started: an untouched blank is left for the
+      // joiner's own clock (bodies.js).
+      if (!g.nails.some(n => n > 0)) return;
+      const k = g.nails.findIndex(n => n < GESTURE_NAIL_TAPS);
       g.auto = t; g.strike = t; g.hit = k; g.nails[k] += 1;
       settleSign(g);
     },
@@ -358,12 +360,20 @@ function settleSign(g) {
 }
 export const GESTURE_KEYS = Object.keys(DEFS);
 
-// The records, for this `S.after`: a new game or a read save stands them all
-// still, nothing held.
+// The records, for this act: a new one stands them all still, nothing
+// held. An act is known by the seed it began with (`S.after.begun`), carried
+// in its save, so the session's motion is kept across the act's state being
+// read back (a reload of the page starts the session itself afresh).
 let G = null, seen = null, held = null, heldWhat = null, lastPress = null, pressAt = null, asked = null;
+const actId = () => (S.after ? S.after.begun : null);
+// An act begun afresh in the same session (a new game) may share a seed with
+// the last, but its clock starts again: that stands everything still too.
+let lastT = 0;
 function recs() {
-  if (seen !== S.after) {
-    seen = S.after; held = null; heldWhat = null; lastPress = null; pressAt = null;
+  const back = S.after && S.after.t < lastT;
+  lastT = S.after ? S.after.t : 0;
+  if (seen !== actId() || back) {
+    seen = actId(); held = null; heldWhat = null; lastPress = null; pressAt = null; asked = null;
     G = Object.fromEntries(GESTURE_KEYS.map(k => [k, { ...fresh(), ...DEFS[k].init() }]));
   }
   return G;
@@ -407,7 +417,7 @@ function boardAt(x, y) {
 function askBoard(key, x, y) { asked = { key, at: T() }; openAfterBoard(key, { x, y }); }
 // The last board a plain click asked for, { key, at }: for the checks, which
 // have no page for the board to open on.
-export const boardAsked = () => (live() && seen === S.after ? asked : null);
+export const boardAsked = () => (live() && seen === actId() ? asked : null);
 
 // The moving part under a world point: { key, what } for a station that can
 // be worked now.
@@ -473,18 +483,20 @@ export function gestureUnder(x, y) {
   return (DEFS.pedestal.open() && !!bubbleAt(x, y)) || !!iconAt(x, y) || !!partAt(x, y);
 }
 export function gestureMove(x, y) {
-  if (!live() || !held) return;
-  const d = DEFS[held];
-  if (d.move) d.move(recs()[held], x, y);
+  if (!live()) return;
+  const g = recs();
+  if (held && DEFS[held].move) DEFS[held].move(g[held], x, y);
 }
 export function gestureUp(x, y) {
-  if (!held || !S.after) { held = null; return; }
+  if (!S.after) { held = null; return; }
+  const g = recs();
+  if (!held) return;
   const d = DEFS[held];
-  if (d.up) d.up(recs()[held], x, y);
+  if (d.up) d.up(g[held], x, y);
   held = null; heldWhat = null;
 }
 // The station a press is holding now, or null.
-export const gestureHeld = () => (S.after && seen === S.after ? held : null);
+export const gestureHeld = () => (S.after && seen === actId() ? held : null);
 
 // --- a frame ---------------------------------------------------------------------------
 // Every station's motion one frame along, then its cue's ink: the ghost hand

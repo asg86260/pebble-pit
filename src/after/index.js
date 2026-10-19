@@ -34,7 +34,8 @@ import { secs } from './util.js';
 // (`raising`), and how many times each named upgrade is bought (`ups`); the
 // gate reached. When the last post of each job and each upgrade was bought
 // (`postAt`, `upAt`), so what it puts on screen fades in. And what the loop
-// added to stand it up: the act's clock (`t`) and its chance (`seed`), the
+// added to stand it up: the act's clock (`t`) and its chance (`seed`) and
+// the seed it began with (`begun`, which names the act to the hand work), the
 // axe bought and in hand, the pair's last line (`shout`), the heap last
 // tipped and each station last worked by hand (`tipAt`, `workAt`), the
 // clouds and the motes coming down, the bodies -- members walking out, at
@@ -57,6 +58,7 @@ export const blankAfter = () => ({
   gate: 0,
   t: 0,
   seed: 1,
+  begun: 0,
   axeBought: false,
   axe: false,
   shout: null,
@@ -80,6 +82,7 @@ export function beginAfter() {
   if (S.after) return S.after;
   S.after = blankAfter();
   S.after.seed = (S.tick * 2654435761) | 0 || 1;
+  S.after.begun = S.after.seed;
   S.after.plots = blankPlots();
   S.after.built = [...AFTER_START_BUILT];
   seedCrowd();

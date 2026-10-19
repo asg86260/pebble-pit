@@ -15,7 +15,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP, QUARRY_SHED_GAP,
         APOTH_POT_ROW, POT_PITCH, POT_W, BOARD_H, BOARD_LEG, BOARD_W, padOf, hangOf, KIT_OUT, STAND_REACH, GARAGE_W, GARAGE_CLEAR, HOUSE_TO, HOUSE_COLS, HOUSE_CUBE,
         BRIDGE_RISE, BRIDGE_RUN,
-        OPENING_MARGIN, OPENING_ROCK_AT, DEEP_FLOOR_MARGIN, shieldWidth, ROCK_W_MAX, PHONE_MARGIN_CELLS } from './config.js';
+        OPENING_MARGIN, OPENING_ROCK_AT, shieldWidth, ROCK_W_MAX, PHONE_MARGIN_CELLS, ZOOM_GLIDE_S } from './config.js';
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, cut, farm, apothecary, sky, casino, filter, table, tray, tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
@@ -27,9 +27,10 @@ import { wakeGrid } from './grid.js';
 import { DOME_RINGS } from './config.js';
 import { JOB } from './jobs.js';
 import { reducedMotion, coarse } from './prefs.js';
-import { deepX0, deepX1, deepFloor } from './deep/place.js';
+import { deepX1 } from './deep/place.js';
 import { actPlace } from './acts.js';
 import { frameHeight } from './cutscene.js';
+import { clampX, clampY, restY, bandWorld, easeInOut, zoomHeld } from './shot.js';
 
 const canvas = document.getElementById('c');
 
@@ -601,9 +602,14 @@ export function resize(after) {
   // A small window does not shrink the yard, it shows less of it. About
   // 830px of height shows the sky, the ground and the whole depth of the
   // pit; anything shorter loses sky off the top.
-  S.zoom = cell / P;
+  // A cutscene's move holding the zoom (shot.js, `zoomHeld`) keeps it: the
+  // window changing size under a held frame is not a zoom step.
+  const kept = zoomHeld() ? S.zoomShow : null;
+  S.zoom = S.zoomShow = cell / P;
   S.viewW = S.W / S.zoom;
   S.viewH = S.H / S.zoom;
+  zoomGlide = null;
+  if (kept) showZoom(kept);
 
   // fixed places, laid out once and never moved
   S.groundY = SKY;
@@ -767,6 +773,7 @@ function readScroll() {
 
 // one frame of that glide
 export function stepCamera(t) {
+  stepZoom(t);
   readScroll();
   const w = following(t);
   if (w) lookAt(w.x + WORKER / 2);
@@ -808,21 +815,86 @@ export function panTo(x, ms) {
 }
 
 // The view, pulled in or let back out: the one exception to a cell being a
-// cell, for the opening and the cutscenes.
+// cell. Two zooms (DESIGN.md, "Zooming is smooth"): `S.zoomShow` is the one
+// on the glass, any value, and what the window covers (`viewW`, `viewH`) is
+// measured off it; `S.zoom` is the one the world is drawn at, the shown one
+// snapped down to a whole number of device pixels a cell, so nothing is ever
+// drawn at a fractional size. The sand grids are blitted up from a scratch
+// canvas at one pixel a cell, and a fractional scale resampled the whole pile
+// into see-through ground; while the two differ the picture drawn at `S.zoom`
+// is scaled up onto the glass in one sharp blit instead (render.js, `draw`).
+const zoomUnit = () => yardCell() * S.dpr;      // device pixels a cell takes at 1x
+// `k` (a share of the yard's own zoom) as the zoom on the glass, snapped to
+// whole device pixels a cell the way every target is.
+const asZoom = k => (yardCell() / P) * Math.max(1, Math.round(zoomUnit() * k)) / zoomUnit();
+export const zoomOn = asZoom;
+function showZoom(z) {
+  const unit = zoomUnit(), base = yardCell() / P;
+  S.zoomShow = z;
+  S.zoom = base * Math.max(1, Math.floor(unit * z / base + 1e-6)) / unit;
+  S.viewW = S.W / S.zoomShow;
+  S.viewH = S.H / S.zoomShow;
+}
+// The glide under way: from the zoom on the glass when it was asked for, to
+// the target, over ZOOM_GLIDE_S on the yard's clock. Never saved.
+let zoomGlide = null;
+export const zoomTarget = () => (zoomGlide ? zoomGlide.to : S.zoomShow);
+export const zoomGliding = () => !!zoomGlide;
+// A new zoom: a target the glass eases to, about the middle of the window.
+// The same target again changes nothing; a new one while a glide runs takes
+// that glide over from where it stands, on its own clock, so a target asked
+// for a frame at a time is followed smoothly. Under reduced motion it cuts.
+// While a cutscene's move holds the zoom (shot.js, `zoomHeld`) the zoom is
+// the shot's and this is refused: a place re-taking its own every frame
+// would otherwise pull a held frame back out.
 export function setZoom(k) {
-  // Snapped so a cell is still a whole number of device pixels, the rule
-  // `resize` keeps: the sand grids are blitted up from a scratch canvas at
-  // one pixel a cell, so a fractional scale resamples the whole pile and
-  // the ground reads as see-through. The zoom steps through whole cell
-  // sizes rather than sliding.
-  const cell = yardCell();
-  const unit = cell * S.dpr;                    // device pixels a cell takes at 1x
-  const px = Math.max(1, Math.round(unit * k));
-  S.zoom = (cell / P) * (px / unit);
-  S.viewW = S.W / S.zoom;
-  S.viewH = S.H / S.zoom;
+  if (zoomHeld()) return;
+  const to = asZoom(k);
+  if (Math.abs(to - zoomTarget()) < 1e-9) return;
+  if (reducedMotion() || !(S.zoomShow > 0)) { setZoomNow(k); return; }
+  if (zoomGlide && !zoomGlide.done) { zoomGlide.to = to; return; }
+  if (Math.abs(to - S.zoomShow) < 1e-9) { zoomGlide = null; return; }
+  zoomGlide = { from: S.zoomShow, to, at: null, done: false };
+}
+// The old cut, for a resize, a boot, a scene stood up and a reload, and for
+// the ripple's landing, where the far place's picture already covers the
+// glass at its own zoom.
+export function setZoomNow(k) {
+  zoomGlide = null;
+  showZoom(asZoom(k));
   clampCam();
 }
+// A zoom that is a function of where the camera is (the afterlife's dive
+// toward the throne): set straight onto the glass at any value, unsnapped,
+// because the scroll that drives it is already smooth. Parked between two
+// whole sizes, the frame stays on the scaled sheet.
+export function setZoomFree(z) {
+  zoomGlide = null;
+  showZoom(z);
+  clampCam();
+}
+// One frame of the glide, about the window's middle: the point the camera is
+// framing stays where it is on the glass while the zoom moves round it
+// (`clampCam` still holds the floor where a place keeps it).
+export function stepZoom(t) {
+  const g = zoomGlide;
+  if (!g) return;
+  if (g.at == null) g.at = t;
+  const k = Math.min(1, (t - g.at) / (ZOOM_GLIDE_S * 1000));
+  const cx = S.camX + S.viewW / 2, cy = S.camY + S.viewH / 2;
+  showZoom(k >= 1 ? g.to : g.from + (g.to - g.from) * easeInOut(k));
+  S.camX = cx - S.viewW / 2;
+  S.camY = cy - S.viewH / 2;
+  if (k >= 1) zoomGlide = null;
+  clampCam();
+}
+
+// Screen and world meet here and nowhere else: every pointer, touch and
+// hover, and everything laid over the world on the glass, converts through
+// these two, which read the zoom on the glass. One reading `S.zoom` for it
+// is a pointer a few pixels off for the length of every zoom glide.
+export const toWorld = (sx, sy) => ({ x: sx / S.zoomShow + S.camX, y: sy / S.zoomShow + S.camY });
+export const toScreen = (wx, wy) => ({ x: (wx - S.camX) * S.zoomShow, y: (wy - S.camY) * S.zoomShow });
 
 // The safe area at the foot of the glass (the home indicator, in landscape),
 // read off the page when it is laid out: the counter stands above it.
@@ -834,33 +906,18 @@ export function measureSafeArea() {
 export const safeBottom = () => safeFoot;
 
 export function clampCam() {
-  // In the deep (view.js) the view is held to the deep's own width and its
-  // floor sits a band up off the bottom of the window, the roster in the band. The deep lies inside the world's width, so the scroller's
-  // spacer covers both halves.
-  if (S.view === 'deep') {
-    const x0 = deepX0();
-    S.camX = Math.max(x0, Math.min(S.camX, Math.max(x0, deepX1() - S.viewW)));
-    S.camY = frameHeight(S.camLockY != null ? S.camLockY : deepFloor() + DEEP_FLOOR_MARGIN - S.viewH);
-    writeScroll();
-    return;
-  }
-  // In an act's place (acts.js) the same, held to that place's width with its
-  // floor on the window's foot, up off it by the place's own margin.
-  const pl = actPlace(S.view);
-  if (pl) {
-    const x0 = pl.x0();
-    S.camX = Math.max(x0, Math.min(S.camX, Math.max(x0, pl.x1() - S.viewW)));
-    S.camY = frameHeight(S.camLockY != null ? S.camLockY : pl.floor() + pl.margin - S.viewH);
-    writeScroll();
-    return;
-  }
-  S.camX = Math.max(0, Math.min(S.camX, Math.max(0, S.worldW - S.viewW)));
-  // The bottom of the world sits on the bottom of the window, always, except
-  // when a scene locks the height: pulled in close, half as much world
-  // measured up from the pit floor is all pit.
-  // And either is framed again between the letterbox's bands while a scene
-  // holds (cutscene.js, `frameHeight`).
-  S.camY = frameHeight(S.camLockY != null ? S.camLockY : S.worldH - S.viewH);
+  // Every place is held the same way, off its own limits (shot.js,
+  // `PLACE_LIMITS`): across, to its own width -- the deep's, an act's, the
+  // yard's; up and down, its floor on the foot of the window (the yard's pit
+  // floor; the deep's a band up off it, the roster in the band; an act's up
+  // off it by the place's own margin), except where a height is held
+  // (`S.camLockY`: the opening's close-up, the afterlife's dive, the deep's
+  // kill). Either is framed again between the letterbox's bands while a
+  // scene holds (cutscene.js, `frameHeight`), and what shows between the
+  // bands never passes the place's floor or the top of its sky. The deep and
+  // the acts' places lie inside the scroller's span (`writeScroll`).
+  S.camX = clampX(S.camX);
+  S.camY = clampY(frameHeight(restY()), S.viewH, S.hush > 0 ? bandWorld() * S.hush : 0);
   // And the platform is told where the view now is, so the next fling
   // starts from here and not from where the last one ended.
   writeScroll();

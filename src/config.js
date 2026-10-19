@@ -111,6 +111,7 @@ import { DEEP_DRAW_KNOBS } from './config/deepdraw.js';
 import { MEAL_KNOBS } from './config/meals.js';
 import { DEEP_BOARD_KNOBS } from './config/deepboard.js';
 import { ROOMBA_KNOBS } from './config/roomba.js';
+import { CUT_KNOBS } from './config/cutscene.js';   // wave shot, track A
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
@@ -119,7 +120,8 @@ export const TUNABLE = [
   ...ROCK_KNOBS, ...EFFECT_KNOBS, ...RIFT_KNOBS, ...SOUND_KNOBS, ...RUNG_KNOBS,
   ...CASINO_KNOBS, ...HOUSE_KNOBS,
   ...DEEP_KNOBS, ...DEEP_CREW_KNOBS, ...DEEP_DRAW_KNOBS, ...MEAL_KNOBS, ...DEEP_BOARD_KNOBS,
-  ...ROOMBA_KNOBS
+  ...ROOMBA_KNOBS,
+  ...CUT_KNOBS                      // wave shot, track A
 ];
 
 // A knob with no row throws rather than reading `undefined`: setting one

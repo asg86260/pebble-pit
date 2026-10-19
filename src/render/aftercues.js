@@ -1,9 +1,8 @@
-// Act 3's hand work, cued in the place itself (after/gestures.js): what of it
-// is not on a card (render/aftercard.js). The pedestal's ghost hand at the
-// lowest bubble and a big bubble's held star and figure, since the bubbles
-// are popped where they rise; and the heap's load, flung on its card, flying
-// over the station itself into the notch. One layer of render.js's LAYERS,
-// over the place, drawn only with the camera up there.
+// Act 3's hand work, cued in the place itself (after/gestures.js): each
+// station's ghost hand on its moving part acting the motion out until it has
+// been done a few times, a big bubble's held star and figure, and the heap's
+// load in the hand or flying into the notch. One layer of render.js's
+// LAYERS, over the place, drawn only with the camera up there.
 //
 // The hand is drawn at its own pixel, finer than a cell (GESTURE_CUE_DOT): it
 // is a pointer over the place, not more of its material, as the mock drew
@@ -11,12 +10,13 @@
 // Everything fades by opacity, nothing flashes and nothing shakes; the crit
 // is a held star.
 
-import { P, GREY, GESTURE_CUE_ALPHA, GESTURE_CUE_DOT, GESTURE_CUE_TAP_S, GESTURE_STAR_HOLD_S, GESTURE_STAR_FADE_S,
-         GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S, GESTURE_LOAD_FADE_S } from '../config.js';
+import { P, GREY, GESTURE_CUE_ALPHA, GESTURE_CUE_DOT, GESTURE_CUE_TAP_S, GESTURE_CUE_LOOP_S, GESTURE_STAR_HOLD_S, GESTURE_STAR_FADE_S,
+         GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S, GESTURE_LOAD_FADE_S, GESTURE_SAW_AMP } from '../config.js';
 import { ctx } from './ctx.js';
 import { S } from '../state.js';
-import { gestureView, partsOf, lowestBubble } from '../after/gestures.js';
-import { stationParts } from '../after/place.js';
+import { gestureView, partsOf, lowestBubble, groveIcons } from '../after/gestures.js';
+import { stationParts, afterFloor } from '../after/place.js';
+import { drawGroveIcons } from './after/pine.js';
 
 const D = GESTURE_CUE_DOT;
 const snap = v => Math.round(v / P) * P;
@@ -25,8 +25,7 @@ const cell = (x, y, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(snap(x),
 const now = () => S.after.t;
 
 // The ghost hand: a pointing mitten (its point the fingertip) and a fist (its
-// point the middle of the grip). '#' its outline, 'o' its fill. The card
-// draws the same hands (render/aftercard.js).
+// point the middle of the grip). '#' its outline, 'o' its fill.
 export const HAND = {
   point: { at: [3.5, 0], m: ['...##.....', '..#oo#....', '..#oo#....', '..#oo#....', '..#oo####.', '.##oooooo#',
                              '#o#oooooo#', '#oooooooo#', '.#ooooooo#', '..#oooooo#', '...######.'] },
@@ -76,33 +75,72 @@ export function markOn(g, m, t, cellPx) {
 }
 
 const tapDown = () => (now() % GESTURE_CUE_TAP_S) < GESTURE_CUE_TAP_S * 0.4;
+const loop = () => (now() % GESTURE_CUE_LOOP_S) / GESTURE_CUE_LOOP_S;
+const mid = b => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
 
-// The heap's load over the station: its way along the card from where it
-// was taken to the edge, as a share of the heap's way to the notch, arched
-// over the heap; through the notch, falling and fading.
+// The heap's load where the hand has it, flying, or falling through the
+// notch and fading.
 function drawLoad(ld, t) {
-  const p = stationParts('heap'), x0 = p.heap.x + p.heap.w / 2, x1 = p.edge, top = p.heap.y;
-  const edge = partsOf('heap').edge, f = Math.max(0, Math.min(1, (ld.x - ld.x0) / Math.max(1, edge - ld.x0)));
-  let x = x0 + f * (x1 - x0), y = top - P - Math.sin(Math.PI * f) * P * 3, a = 1;
-  if (ld.mode === 'gone') { x = x1; y = p.notch.y + (t - ld.at) * P * 12; a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S); }
+  const edge = stationParts('heap').edge;
+  let x = ld.x, y = ld.y, a = 1;
+  if (ld.mode === 'gone') { x = edge; y = afterFloor() + (t - ld.at) * P * 12; a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S); }
   else if (ld.mode === 'back') a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S);
   ctx.globalAlpha = a;
   for (let k = 0; k < Math.min(4, ld.n * 2); k++) cell(x + (k % 2) * P, y - Math.floor(k / 2) * P, k % 3 ? 4 : 5);
+}
+
+// Where each station's ghost hand is now and how it is held, acting its
+// motion out on the part; null where there is nothing to show it on.
+function cueAt(key, r) {
+  const u = loop(), turn = u * 2 * Math.PI;
+  if (key === 'pedestal') {
+    const b = lowestBubble(), box = partsOf('pedestal').box;
+    return b ? { x: b.x + b.w / 2, y: b.y + b.h + (tapDown() ? D * 2 : 0), pose: 'point' } : { x: box.x + box.w / 2, y: box.y + P + (tapDown() ? D * 2 : 0), pose: 'point' };
+  }
+  if (key === 'tree') {
+    const icon = groveIcons().find(c => c.kind === 'saw');
+    if (r.i == null) return icon ? { x: icon.x, y: icon.y + (tapDown() ? D * 2 : 0), pose: 'point' } : null;
+    const b = partsOf('tree', r.i).sawBox;
+    return { x: b.x + P * 2 + Math.sin(turn) * GESTURE_SAW_AMP, y: b.y + b.h / 2, pose: 'grab' };
+  }
+  if (key === 'stump') {
+    const c = groveIcons().find(k => k.kind === 'shovel');
+    if (!c) return null;
+    const b = partsOf('stump', c.i).stump;
+    return { x: b.x + b.w / 2, y: b.y - Math.round(u * 3) * P, pose: 'grab' };
+  }
+  if (key === 'mill') { const w = partsOf('mill').wheel; return { x: w.x + Math.cos(turn) * w.r, y: w.y + Math.sin(turn) * w.r, pose: 'grab' }; }
+  if (key === 'papermill') { const v = partsOf('papermill').vat; return { x: v.x + Math.cos(turn) * v.rx, y: v.y + Math.sin(turn) * v.ry, pose: 'grab' }; }
+  if (key === 'chipper') {
+    const p = partsOf('chipper');
+    if (r.log !== 'in') { const a = mid(p.pile), b = mid(p.mouth); return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u, pose: 'grab' }; }
+    return { x: p.arm.x + p.arm.w / 2, y: p.arm.y + Math.round(u * 3) * P, pose: 'grab' };
+  }
+  if (key === 'workshop') {
+    const nails = partsOf('workshop').nails, k = r.nails.findIndex(n => n < 2);
+    const n = nails[Math.max(0, k)];
+    return { x: n.x + n.w / 2, y: n.y + (tapDown() ? D * 2 : 0), pose: 'point' };
+  }
+  if (key === 'press') { const h = partsOf('press').handle; return { x: h.x + h.w / 2, y: h.y + P + Math.round(u * 3) * P, pose: 'grab' }; }
+  if (key === 'heap') {
+    const p = partsOf('heap'), a = mid(p.heap);
+    return { x: a.x + (p.edge - a.x) * u, y: p.heap.y, pose: 'grab' };
+  }
+  return null;
 }
 
 export function drawAfterCues() {
   const view = gestureView();
   if (!view) return;
   const t = now();
+  drawGroveIcons();
   for (const r of view) {
-    if (r.key === 'pedestal' && r.open && r.cueA > 0.01) {
-      const b = lowestBubble(), box = partsOf('pedestal').box;
-      ctx.globalAlpha = r.cueA * GESTURE_CUE_ALPHA;
-      if (b) handOn(ctx, b.x + b.w / 2, b.y + b.h + (tapDown() ? D * 2 : 0), 'point');
-      else handOn(ctx, box.x + box.w / 2, box.y + P + (tapDown() ? D * 2 : 0), 'point');
+    if (r.open && r.cueA > 0.01 && !r.held) {
+      const at = cueAt(r.key, r);
+      if (at && at.x >= S.camX - P * 4 && at.x <= S.camX + S.viewW + P * 4) { ctx.globalAlpha = r.cueA * GESTURE_CUE_ALPHA; handOn(ctx, at.x, at.y, at.pose); }
     }
-    for (const m of r.marks) if (!m.card) markOn(ctx, m, t, P);
-    if (r.key === 'heap' && r.load && r.load.mode !== 'held') drawLoad(r.load, t);
+    for (const m of r.marks) markOn(ctx, m, t, P);
+    if (r.key === 'heap' && r.load) drawLoad(r.load, t);
   }
   ctx.globalAlpha = 1;
 }

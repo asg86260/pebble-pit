@@ -16,7 +16,7 @@
 // at her own station's work already.
 //
 // The beat is a row of BEATS that owns the camera (beats.js); the framing is
-// cutscene.js's deep path, asking this file where to look. This file is
+// the shot's (shot.js), asking this file what each phase is to see. This file is
 // imported by the crew and the drawing, so it imports nothing of the story's:
 // the beat's state is read straight off `S`. `S.abyss` is the scene while it
 // plays, ephemeral -- a reload plays it again from the top, from the saved
@@ -25,23 +25,19 @@
 import { P, WORKER, SWIM_PACE, ABYSS_CLOSE, ABYSS_WIDE, ABYSS_PUSH_S, ABYSS_CALL_S, ABYSS_HOP_S,
          ABYSS_WAIT_S, ABYSS_WIDE_S, ABYSS_ANSWER_S, ABYSS_MARK_S, ABYSS_SWIM_K, ABYSS_UNDER,
          ABYSS_CHARGE_POSE_S, ABYSS_CHARGE_PX_S, ABYSS_IMPACT_S, ABYSS_BLOW_MAX_S,
-         ABYSS_BAR_IN_S, CUT_GLIDE } from './config.js';
+         ABYSS_BAR_IN_S } from './config.js';
 import { S } from './state.js';
-import { frames, now } from './clock.js';
+import { now } from './clock.js';
 import { reducedMotion } from './prefs.js';
 import { commutePace } from './levels.js';
 import { TYPE } from './jobs.js';
 import { deepPortal, deepFloor, bellyAt, coilAt, coilThick, segAbove, postX, postY, slotX } from './deep/place.js';
 import { fighterAt, classOf } from './deep/party.js';
 import { swim, mid } from './deep/arms.js';
-import { poseAt, smoothstep as ease, topOf } from './motion.js';
+import { poseAt, topOf } from './motion.js';
 import { HOP_POSES } from './config.js';
 
 export const KEY = 'abyss';
-
-const mix = (a, b, k) => ({ k: a.k + (b.k - a.k) * k, x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k });
-// Under reduced motion a glide between two framings is a cut.
-const glided = (t, at, s) => (reducedMotion() ? 1 : ease((t - at) / (s * 1000)));
 
 // Her: the first station's fighter, who leapt in after him at the snatch and
 // has stood at it since (snatch.js, `giveBack`).
@@ -83,53 +79,54 @@ function mark(w, t) {
 export function startAbyss(t) {
   const w = her();
   S.abyss = { at: t, phase: 'push', phaseAt: t, uid: w ? w.uid : null, freeAt: null,
-              from: { k: 1, x: S.camX + S.viewW / 2, y: S.camY + S.viewH / 2 }, cam: null,
               there: false, charge: null, hitAt: null, said: false };
   if (w) { w.pose = null; w.beam = null; w.walking = false; w.route = null; }
 }
 
-const next = (a, phase, t) => { a.phase = phase; a.phaseAt = t; a.from = a.cam || a.from; };
+const next = (a, phase, t) => { a.phase = phase; a.phaseAt = t; };
 
-// Where the frame looks while she is in it: on her, wide, the coil under her
-// kept in the shot.
-function onHer(w, t) {
+// What each phase is to see, as the shot's request (shot.js, `stepAim`):
+// him in the belly, pulled in close and kept with as the coil sways; then
+// her, pulled back, with the coil under her kept in the frame. Both in the
+// middle between the bands, as the deep has no floor line to rest them on.
+function bellyShot(t) {
+  const b = bellyAt(t);
+  return { key: 'belly', frame: { x: b.x - WORKER / 2, y: b.y - WORKER / 2, w: WORKER, h: WORKER },
+           move: 'follow', zoom: ABYSS_CLOSE, middle: true, s: ABYSS_PUSH_S };
+}
+function herShot(w, t) {
   const c = coilAt(segAbove(mid(w), t), t);
-  return { k: ABYSS_WIDE, x: mid(w), y: (w.y + WORKER / 2 + c.y) / 2 };
+  const y0 = Math.min(w.y, c.y), y1 = Math.max(w.y + WORKER, c.y);
+  return { key: 'her', frame: { x: w.x, y: y0, w: WORKER, h: y1 - y0 },
+           move: 'follow', zoom: ABYSS_WIDE, middle: true, s: ABYSS_WIDE_S };
 }
 
-// One frame of the scene: where the camera wants to look, and whether the
-// scene is over (`over`) or the deep has been left under it (`gone`).
+// One frame of the scene: what the camera is to see (`want`, the shot's
+// request), and whether the scene is over (`over`) or the deep has been left
+// under it (`gone`).
 export function stepAbyss(t) {
   if (!S.abyss) startAbyss(t);
   const a = S.abyss, w = her();
   if (S.view !== 'deep') return { gone: true };
   if (a.freeAt != null) return { want: null, over: true };
   if (!w) { a.freeAt = t; return { want: null, over: true }; }
-  const b = bellyAt(t), belly = { k: ABYSS_CLOSE, x: b.x, y: b.y };
   const into = t - a.phaseAt;
   if (a.phase === 'push') {
-    a.cam = mix(a.from, belly, glided(t, a.phaseAt, ABYSS_PUSH_S));
     if (into >= ABYSS_PUSH_S * 1000) next(a, 'call', t);
   } else if (a.phase === 'call') {
-    a.cam = belly;
     if (into >= ABYSS_CALL_S * 1000 && (a.there || into >= (ABYSS_CALL_S + ABYSS_WAIT_S) * 1000)) next(a, 'wide', t);
   } else if (a.phase === 'wide') {
-    a.cam = mix(a.from, onHer(w, t), glided(t, a.phaseAt, ABYSS_WIDE_S));
     if (!a.said && into >= ABYSS_ANSWER_S * 1000) {
       a.said = true;
       w.say = { mark: 'bang', until: t + ABYSS_MARK_S * 1000 };
     }
     if (into >= ABYSS_WIDE_S * 1000) next(a, 'charge', t);
-  } else {
-    // With her, at the glide every scene follows a moving thing at.
-    const want = onHer(w, t), k = reducedMotion() ? 1 : Math.min(1, CUT_GLIDE * frames());
-    a.cam = mix(a.cam || want, want, k);
-    if (a.phase === 'blow') {
-      if (a.hitAt == null && w.struckAt >= a.phaseAt) a.hitAt = w.struckAt;
-      if ((a.hitAt != null && t - a.hitAt >= ABYSS_IMPACT_S * 1000) || into >= ABYSS_BLOW_MAX_S * 1000) a.freeAt = t;
-    }
+  } else if (a.phase === 'blow') {
+    if (a.hitAt == null && w.struckAt >= a.phaseAt) a.hitAt = w.struckAt;
+    if ((a.hitAt != null && t - a.hitAt >= ABYSS_IMPACT_S * 1000) || into >= ABYSS_BLOW_MAX_S * 1000) a.freeAt = t;
   }
-  return { want: a.cam, over: a.freeAt != null };
+  const want = a.phase === 'push' || a.phase === 'call' ? bellyShot(t) : herShot(w, t);
+  return { want, over: a.freeAt != null };
 }
 
 // The space bar: the camera goes, the moment does not. She is let go where

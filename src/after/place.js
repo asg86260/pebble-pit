@@ -272,6 +272,15 @@ export const STUMP = [-1, 3, 2];
 export const GROVE_LOGS_AT = 2;
 
 // --- each station's moving part, for the hand ----------------------------------------
+// The handsaw across a grown trunk, in cells off its middle column: the
+// columns its grip and blade span at rest, and the rows (row -1 the bottom)
+// it stands in (docs/mocks/act3-saw-2026-10-18, saw 3, its partner's peg cut).
+export const SAW_SPAN = [-15, 9];
+export const SAW_ROWS = [-8, -2];
+// The grove's icons, [width, height] in their own dots of ICON_DOT px: the
+// saw over a grown tree and the shovel over a stump (render/after/pine.js).
+export const ICON_DOT = 3;
+export const ICON = { saw: [13, 8], shovel: [5, 13] };
 // What the hand's motion at each station aims at (after/gestures.js,
 // `partsOf`), in world px, read off the numbers the drawing uses
 // (render/after/stations.js, pine.js, pedestal.js). Every key has `box`, the
@@ -291,14 +300,22 @@ export function stationParts(key, i = 0) {
     // column's left on the floor line), and the box round them.
     const bx = plotX(i), rows = pineRows(PINE_GROWN, i >= 0 && treeBig(i));
     const a = Math.min(...rows.map(r => r[1])), b = Math.max(...rows.map(r => r[2])), top = Math.min(...rows.map(r => r[0]));
-    return { box: box(bx, a, top, b - a + 1, -top), rows, foot: { x: bx, y: fl }, saw: { x: bx + P / 2, y: fl - P * 2 + 3 },
-             cut: { x0: bx - 2 * P, x1: bx + 3 * P, y: fl - P * 2 + 2 } };
+    // `sawBox` the handsaw across its trunk at rest (render/after/pine.js,
+    // SAW: its grip at the near end, its tip past the far side), and `icon`
+    // the saw icon over its crown, a box and its middle.
+    const ic = { w: ICON.saw[0] * ICON_DOT, h: ICON.saw[1] * ICON_DOT };
+    const icon = { x: bx + P / 2, y: fl + top * P - P * 2, box: { x: Math.round(bx + P / 2 - ic.w / 2), y: fl + top * P - P * 2 - ic.h, w: ic.w, h: ic.h } };
+    return { box: box(bx, a, top, b - a + 1, -top), rows, foot: { x: bx, y: fl }, top: fl + top * P,
+             sawBox: box(bx, SAW_SPAN[0], SAW_ROWS[0], SAW_SPAN[1] - SAW_SPAN[0] + 1, SAW_ROWS[1] - SAW_ROWS[0] + 1), icon };
   }
   if (key === 'stump') {
-    // `stump` the block as drawn (render/after/pine.js, `stump`); `box` a
-    // cell round it, where the hand's lift is worked.
-    const bx = plotX(i);
-    return { box: box(bx, -2, -4, 5, 4), at: { x: bx + P / 2, y: fl }, stump: box(bx, STUMP[0], -STUMP[2], STUMP[1], STUMP[2]) };
+    // `stump` the block as drawn (render/after/pine.js, `stump`); `grip`
+    // round it and up over it, where the hand takes hold to lift it; `icon`
+    // the shovel over it.
+    const bx = plotX(i), ic = { w: ICON.shovel[0] * ICON_DOT, h: ICON.shovel[1] * ICON_DOT };
+    const iy = fl - (STUMP[2] + 2) * P;
+    return { box: box(bx, -2, -4, 5, 4), at: { x: bx + P / 2, y: fl }, stump: box(bx, STUMP[0], -STUMP[2], STUMP[1], STUMP[2]),
+             grip: box(bx, -2, -6, 5, 7), icon: { x: bx + P / 2, y: iy, box: { x: Math.round(bx + P / 2 - ic.w / 2), y: iy - ic.h, w: ic.w, h: ic.h } } };
   }
   if (key === 'heap') {
     const x0 = heapX(), edge = notchX();
@@ -315,10 +332,13 @@ export function stationParts(key, i = 0) {
   const worked = { x: b.x, y: b.y + P * TOP_STRIP, w: b.w, h: b.h - P * TOP_STRIP };
   const x0 = stationX0(key);
   if (key === 'mill') return { box: worked, wheel: { ...at(x0, 15, -8), r: 6 * P }, knob: 6.8 * P, frame: box(x0, 21, -18, 15, 18) };
-  if (key === 'chipper') return { box: worked, mouth: box(x0, 14, -14, 10, 14), jaw: box(x0, 14, -14, 10, 5), block: box(x0, 8, -15, 6, 15), chute: box(x0, 3, -19, 8, 5) };
+  if (key === 'chipper') return { box: worked, mouth: box(x0, 14, -14, 10, 14), jaw: box(x0, 14, -14, 10, 5), block: box(x0, 8, -15, 6, 15), chute: box(x0, 3, -19, 8, 5),
+                                   arm: box(x0, 0, -16, 3, 8), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - P * 6, w: PILE_W * P, h: P * 6 } };
   if (key === 'papermill') return { box: worked, vat: { ...at(x0, 19, -4.5), rx: 6 * P, ry: 2.5 * P }, line: box(x0, 9, -18, 20, 1), step: box(x0, 5, -9, 4, 9) };
-  if (key === 'workshop') return { box: worked, sign: box(x0, 11, -8, 6, 4), hammer: box(x0, 15, -15, 6, 6), hand: at(x0, 20, -9) };
-  if (key === 'press') return { box: worked, bar: { ...at(x0, 14, -11), len: 12 * P }, knob: box(x0, 24, -6, 2, 2), platen: box(x0, 12, -8, 9, 2) };
+  if (key === 'workshop') return { box: worked, sign: box(x0, 11, -8, 6, 4), hammer: box(x0, 15, -15, 6, 6), hand: at(x0, 20, -9),
+                                    nails: [[11, -8], [16, -8], [11, -5], [16, -5]].map(([c, r]) => box(x0, c, r, 1, 1)) };
+  if (key === 'press') return { box: worked, bar: { ...at(x0, 14, -11), len: 12 * P }, knob: box(x0, 24, -6, 2, 2), platen: box(x0, 12, -8, 9, 2),
+                                handle: box(x0, 23, -12, 4, 8) };
   return { box: worked };
 }
 // Whether plot i's tree was planted big (the grove's bigger trees).

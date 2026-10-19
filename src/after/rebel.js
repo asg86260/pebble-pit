@@ -9,12 +9,8 @@
 // line of their own on a slow clock, worth less than the pair's. Rebel is all
 // either makes: a speech wins nobody (signs and posters do, union.js).
 //
-// A click on a station works it by hand (work.js), and on the sawdust heap
-// tips a load (mill.js).
-//
-// With the axe -- bought on the pedestal's card (call 15, settled), which
-// owes the `axe` beat that hands it over -- a click on a grown tree is a chop;
-// a click on a stump is a swing digging it out (grove.js), axe or no axe.
+// The stations, the trees and the heap are worked by the hand's own motions
+// where they stand (after/gestures.js), not by this click.
 //
 // The clouds drift over the place as scenery and nothing clicks them. They
 // and the motes in the air are saved (`S.after.clouds`, `S.after.motes`): a
@@ -25,12 +21,8 @@ import { P, AFTER_CLOUDS, AFTER_CLOUD_EVERY_S, AFTER_CLOUD_DRIFT, AFTER_CLOUD_SI
          AFTER_MOTE_FALL, AFTER_MOTE_RISE, AFTER_MOTES_A_HIT, AFTER_AGITATE_REBEL, WORKER } from '../config.js';
 import { arand, secs, nextId } from './util.js';
 import { shoutRebel } from './levels.js';
-import { afterX0, afterX1, afterFloor, skyLo, skyHi, stationBox, speakerAt, pileX, heapX, notchX } from './place.js';
-import { treeAt, chopTree, stumpAt, digStump } from './grove.js';
+import { afterX0, afterX1, afterFloor, skyLo, skyHi, speakerAt, pileX } from './place.js';
 import { pairBuilding } from './build.js';
-import { tipSawdust } from './mill.js';
-import { workAfter, WORKED } from './work.js';
-import { built } from './levels.js';
 
 // --- a cloud's shape ----------------------------------------------------------------
 // A cloud of `size` puffs is an oval of cells (2·size + 2) across and size + 1
@@ -96,39 +88,18 @@ export function shout(from = null) {
 // An agitator's line, off its own head: rebel only.
 export const agitate = w => { shed(w.x, w.y - WORKER, AFTER_AGITATE_REBEL); };
 
-// The sawdust heap under a world point: its ground from the heap's foot to
-// the notch, a few cells up.
-const onHeap = (x, y) => x >= heapX() && x < notchX() + P * 2 && y <= afterFloor() + P && y >= afterFloor() - P * 9;
-// A station worked by the click under a world point: its box, below the
-// strip along its roof that a board will open on.
-export function workAt(x, y) {
-  for (const key of WORKED) {
-    const b = stationBox(key);
-    if (built(key) && x >= b.x && x < b.x + b.w && y >= b.y + P * 2 && y <= b.y + b.h) return key;
-  }
-  return null;
-}
-
-// A click on the place, in world pixels: true if it was the afterlife's -- a
-// grown tree chopped with the axe, a stump dug at, the sawdust heap tipped, a
-// station worked, or the pair given a line while they stand on the pedestal
-// (the pedestal itself opens its card, rows.js `cardAt`).
+// A click on the place, in world pixels: true if it was the afterlife's -- the
+// pair given a line while they stand on the pedestal. Everything else up
+// here is the hand work's, tried first (after/gestures.js): a station's
+// moving part dragged, a tree sawn, a stump lifted, the heap tipped, and a
+// plain click on a station its board.
 export function clickPlace(x, y) {
   if (!S.after) return false;
-  if (S.after.axe) {
-    const t = treeAt(x, y);
-    if (t != null) { chopTree(t, true); return true; }
-  }
-  const st = stumpAt(x, y);
-  if (st != null) { digStump(st, true); return true; }
-  if (onHeap(x, y)) return tipSawdust() > 0;
-  const key = workAt(x, y);
-  if (key) { workAfter(key, 1, true); return true; }
   if (!pairBuilding() && inBox(x, y, pairBox())) { shout(); return true; }
   return false;
 }
 
-// The axe: bought on the pedestal's card, owed until the beat hands it over
+// The axe: bought on the grove's card, owed until the beat hands it over
 // (story.js). Track C's actbeats.js reads `axeDue`.
 export const axeDue = () => !!S.after && !!S.after.axeBought && !S.after.axe;
 export const giveAxe = () => { if (S.after) S.after.axe = true; };

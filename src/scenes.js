@@ -38,7 +38,7 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor } from './after/place.js';
+import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1 } from './after/place.js';
 import { afterEnd } from './view.js';
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S } from './config.js';
 import { FINALE_HOUSE_W } from './config.js';
@@ -467,18 +467,31 @@ const lookAtOrb = () => {
 // `slow` carries the crowd past the slowdown and buys its branch.
 // Act 3's bills take the yard's coins too (DESIGN.md, "The yard pays too"): the
 // yard given enough of each for every row a scene buys, the setup no shot is about.
-const yardPurse = () => window.__grant({ dust: 40000, spores: 5000, shards: 2000, sparks: 400 });
-// Station `key`'s hand-work card opened by a click on the station, then its
-// round part (`ring`, the card's wheel or vat) turned on the card at `rev`
-// turns a second for `frames` frames, the press held (after/gestures.js).
-function handCard(key, ring, rev, frames) {
-  const b = stationBox(key);
-  window.__gesture('down', b.x + b.w / 2, b.y + b.h / 2); window.__gesture('up');
-  window.__fast(0.3);
+// Enough of the yard's coins for every act-3 bill a scene buys, at the paced
+// prices (config/after.js, the pacing pass): the scales from the ore band on.
+const yardPurse = () => window.__grant({ dust: 2e6, spores: 5e5, shards: 5e5, scales: 3e4, sparks: 5e4 });
+// Station `key`'s round part (`ring`, the saw mill's wheel or the paper
+// mill's vat) taken hold of where it stands and turned at `rev` turns a
+// second for `frames` frames, the press held (after/gestures.js).
+function handTurn(key, ring, rev, frames) {
   const w = window.__gestureParts(key)[ring], rx = w.r || w.rx, ry = w.r || w.ry;
-  const at = a => { const p = window.__card.at(w.x + Math.cos(a) * rx, w.y + Math.sin(a) * ry); return [p.x, p.y]; };
+  const at = a => [w.x + Math.cos(a) * rx, w.y + Math.sin(a) * ry];
   window.__gesture('down', ...at(0));
   for (let f = 1; f <= frames; f++) { window.__gesture('move', ...at(f / 60 * rev * 2 * Math.PI)); window.__fast(1 / 60); }
+}
+// The grove's first tree with the saw put on it by its icon, sawn back and
+// forth `strokes` times at a stroke a `per` seconds, the press held at the
+// end of the last; framed on the plot.
+function handSaw(strokes, per = 0.5) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  window.__afterAxe(); window.__fast(0.5);
+  const icon = window.__groveIcons().find(c => c.kind === 'saw');
+  window.__gesture('down', icon.x, icon.y - 4); window.__gesture('up');
+  const b = window.__gestureParts('tree', 0).sawBox, x0 = b.x + P * 2, y = b.y + b.h / 2;
+  window.__gesture('down', x0, y);
+  const frames = Math.round(strokes * per * 60);
+  for (let f = 1; f <= frames; f++) { window.__gesture('move', x0 + Math.sin(f / 60 / per * Math.PI) * P * 6, y); window.__fast(1 / 60); }
+  window.__look(0); window.__holdShot();
 }
 function afterChain(slow) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
@@ -2752,7 +2765,7 @@ export const SCENES = {
   'after-grove': { about: 'the acts', say: "the afterlife's grove: four plots, a tree coming down, a stump half dug, a sapling, logs lying",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-      window.__afterGrant({ rebel: 600, timber: 60 }); yardPurse();
+      window.__afterGrant({ rebel: 2000, timber: 300 }); yardPurse();
       for (let k = 0; k < 3; k++) window.__buy('after-plot');
       window.__buy('after-tree');
       window.__afterAxe();
@@ -2769,11 +2782,10 @@ export const SCENES = {
       window.__afterClick(st.sx, st.sy);
       window.__fast(0.4); window.__look(0); window.__holdShot();
     } },
-  // Act 3's hand work on its card (after/gestures.js, render/aftercard.js):
-  // the stations of the chain standing, nobody at a post, the saw mill's card
-  // open and its flywheel being spun on it, the speed gauge filling and the
-  // station's own wheel turning in step under it.
-  'after-hands': { about: 'the acts', say: "the afterlife's hand work: the saw mill's card open, its flywheel spun on it and the gauge filling",
+  // Act 3's hand work in the world (after/gestures.js; track A): the
+  // stations of the chain standing, nobody at a post, the saw mill's
+  // flywheel taken hold of and spun where it stands.
+  'after-hands': { about: 'the acts', say: "the afterlife's hand work: the saw mill's flywheel spun by hand where it stands, a log going through",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       for (const k of ['mill', 'chipper', 'workshop', 'papermill', 'press']) if (!S.after.built.includes(k)) S.after.built.push(k);
@@ -2781,32 +2793,31 @@ export const SCENES = {
       window.__afterAxe();
       window.__look(stationX0('mill') - P * 20);
       window.__fast(0.5);
-      handCard('mill', 'wheel', 1.6, 90);
+      handTurn('mill', 'wheel', 1.6, 90);
       window.__holdShot();
     } },
-  // A card open on each of the two round motions, the camp drawn as the art
-  // scene draws it (`after-camp-art`): the saw mill's flywheel and the paper
-  // mill's vat, each mid-turn on its card over its station.
-  'after-card-mill': { about: 'the acts', say: "the camp's stations working, the saw mill's hand-work card open over it, its flywheel spun on the card",
-    run: () => { afterChain(true); window.__afterGrant({ logs: 4, timber: 6 }); window.__fast(60); window.__look(stationX0('mill') - P * 30);
-                 window.__fast(0.2); handCard('mill', 'wheel', 1.6, 90); window.__holdShot(); } },
-  'after-card-papermill': { about: 'the acts', say: "the camp's stations working, the paper mill's hand-work card open over it, its vat stirred on the card",
+  'after-stir': { about: 'the acts', say: "the camp's stations working, the paper mill's vat stirred by hand where it stands",
     run: () => { afterChain(true); window.__afterGrant({ timber: 12, sawdust: 12 }); window.__fast(60); window.__look(stationX0('papermill') - P * 40);
-                 window.__fast(0.2); handCard('papermill', 'vat', 1, 90); window.__holdShot(); } },
-  // The stump's crit: its card open, held low, yanked the frame it wobbles,
-  // out in one pull with the star and its figure held on the card.
-  'after-yank': { about: 'the acts', say: "the afterlife's stump yanked on its card as it wobbles: out in one pull, the crit's star and figure",
+                 window.__fast(0.2); handTurn('papermill', 'vat', 1, 90); window.__holdShot(); } },
+  // The grove's hand work: the saw icon over a grown tree; the handsaw put
+  // on it and mid-cut, its kerf half open; a stump lifted half out by hand,
+  // its shovel faded under the hand.
+  'after-saw-icon': { about: 'the acts', say: "the grove's grown tree with its saw icon over it, waiting to be clicked",
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); window.__afterAxe(); window.__fast(0.6);
+                 window.__look(0); window.__holdShot(); } },
+  'after-saw': { about: 'the acts', say: "the handsaw on the grove's tree, dragged back and forth, its kerf half open",
+    run: () => handSaw(6) },
+  'after-fall': { about: 'the acts', say: "the grove's tree sawn through, coming down whole about its cut",
+    run: () => { handSaw(9); window.__fast(0.5); window.__holdShot(); } },
+  'after-dig': { about: 'the acts', say: "a stump with its shovel icon, dragged half up out of the ground by hand, its roots showing",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       Object.assign(S.after.plots[0], { stage: 0, stump: true, dug: 0 });
-      window.__look(0);
-      window.__card.open('stump', 0); window.__fast(0.3);
-      const a = window.__gestureParts('stump').at, at = (x, y) => { const p = window.__card.at(x, y); return [p.x, p.y]; };
-      window.__gesture('down', ...at(a.x, a.y)); window.__gesture('move', ...at(a.x, a.y - 12));
-      for (let k = 0; k < 600 && !(window.__stumpWobble() && window.__stumpWobble().wobbling); k++) window.__fast(1 / 60);
-      window.__gesture('move', ...at(a.x, a.y - 48));
-      for (let k = 0; k < 6; k++) window.__fast(1 / 60);
-      window.__gesture('up');
+      window.__look(0); window.__fast(0.5);
+      const g = window.__gestureParts('stump', 0).stump, x = g.x + g.w / 2, y = g.y + g.h / 2;
+      window.__gesture('down', x, y);
+      for (let f = 1; f <= 30; f++) { window.__gesture('move', x, y - f * 2); window.__fast(1 / 60); }
+      window.__fast(0.3);
       window.__holdShot();
     } },
   // The pedestal: the pair mid-line over the rebel pile, motes on their way
@@ -2913,6 +2924,17 @@ export const SCENES = {
       for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
       pinCamera(houseX() + FINALE_HOUSE_W * P / 2 - S.viewW / 2);
     } },
+  // The act 3 intro just through the tear (wave shot, track A): the ripple
+  // landed in the afterlife, the shot held on the cloud floor where the two of
+  // them will come up, the bands full, the zoom the yard's.
+  'act3-rise': { about: 'the acts', say: 'act 3\'s rise just through the tear: the afterlife framed on the patch of cloud floor the two of them come up through',
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
+      for (let i = 0; i < 60 * 60 && !(S.view === 'after' && S.viewTo == null); i++) window.__fast(1 / 60);
+      window.__fast(1);
+      window.__holdShot();
+    } },
   // The opening played from the go-on card's press to the refusal's last
   // phase: the two of them up the pillar's face onto the pedestal, the
   // road's drawing of them fading off over the pedestal's own.
@@ -2926,6 +2948,12 @@ export const SCENES = {
     } },
   'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp half built (saw mill, chipper, workshop, posts filled), a fifth of God\'s yard walked out, the axe in hand',
     run: act3Mid },
+  // Track C: each of act 3's boards open in the yard's sheet over the act-3-mid
+  // camp, as a plain click on its station opens it (after/rows.js
+  // `openAfterBoard`); the paper mill and the press stood up for their own.
+  ...Object.fromEntries(['shack', 'grove', 'pedestal', 'mill', 'chipper', 'papermill', 'workshop', 'press', 'crowd'].map(key =>
+    [`act3-board-${key}`, { about: 'the acts', say: `act 3's ${key} board open in the yard's sheet, its shelves, bills in the act's marks`,
+      run: () => act3Board(key) }])),
   // God's pushback over the crowd as drawn (render/aftercrowd.js): the
   // throne's speech warned over its band of files, then held across them,
   // stripping the half-won; and the wardens at a poster and a sign.
@@ -2984,6 +3012,24 @@ function act3Mid() {
   window.__fast(20);
   // between the workshop and the pedestal, the camp's middle
   pinCamera((stationX0('workshop') + stationX0('pedestal')) / 2 - S.viewW / 2);
+}
+
+// Track C: the act-3-mid camp, framed on one station (the crowd's front for
+// the crowd), and that station's board opened as its click opens it. The
+// paper mill and the press are stood up for their own boards; rebel and
+// timber enough for some tiles and short of others, so both edges show.
+function act3Board(key) {
+  act3Mid();
+  for (const st of ['papermill', 'press']) if ((key === st || key === 'press') && !S.after.built.includes(st)) S.after.built.push(st);
+  window.__afterGrant({ rebel: 200, timber: 40 });
+  window.__fast(1);
+  const b = key === 'crowd' ? null : key === 'grove' ? { x: plotX(0), w: groveX1() - plotX(0) } : stationBox(key);
+  const mid = key === 'crowd' ? soulX(6) : b.x + b.w / 2;
+  pinCamera(mid - S.viewW / 2);
+  window.__look(mid - S.viewW / 2);
+  window.__fast(1 / 60);
+  window.__openAfterBoard(key, key === 'crowd' ? { x: mid, y: afterFloor() - P * 30 } : null);
+  window.__holdShot();
 }
 
 // God's pushback at a moment (`what`: 'warned', 'held', 'wardens'): the

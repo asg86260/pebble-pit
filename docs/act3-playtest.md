@@ -40,8 +40,8 @@ your own yard back.
 
 | station | the hand's motion | what it turns into what | its card sells |
 |---|---|---|---|
-| pedestal | pop bubbles | speech into rebel | bigger speech, the axe, agitator posts |
-| grove (tree) | drag the saw back and forth (axe needed) | tree into logs; the stump stays | plots, faster growth, bigger trees, stump removal, woodcutter and hauler posts |
+| pedestal | pop bubbles | speech into rebel | bigger speech, agitator posts |
+| grove (tree) | drag the saw back and forth (axe needed) | tree into logs; the stump stays | the axe, plots, faster growth, bigger trees, stump removal, woodcutter and hauler posts |
 | grove (stump) | hold the grip up for one root at a time, or yank it as it wobbles | stump out, sapling in | |
 | shack | none | builds every other station; a member raises it piece by piece, or the pair do if the camp is empty | the five stations |
 | saw mill | spin the flywheel | log into timber and sawdust | second blade, bigger heap, sawyer posts |
@@ -85,14 +85,11 @@ your own yard back.
 
 ## Known rough edges
 
-- **Act 3's cards can't be opened with the pointer yet.** Hovering over a
-  station opens no board, and the yard's board system doesn't know act 3's
-  rows (`after/rows.js` registers boards that nothing opens, and `buy()`,
-  `purse()` and the tags don't know rebel, timber or paper). The checks buy
-  through the row's own buy. Until boards are wired up, you can buy from
-  the console with `__buy('after-axe')`, `__buy('after-build-mill')`,
-  `__buy('after-post-hauler')` and so on. **This blocks a real playtest
-  past the first bubbles.**
+- **Boards** (track C, 2026-10-18): a station's board opens in the yard's
+  sheet through `openAfterBoard(key)` (after/rows.js), which Track A's plain
+  click on a station calls; until that click is wired, `__openAfterBoard('mill')`
+  from the console opens one. Bills buy through the board and show the act's
+  coins as marks.
 - **The first stretch is slow.** With the starting six members, one plot
   and one woodcutter, the first signs win few souls. In the end-to-end
   check, the meeting comes about 25 minutes in and the strike about an
@@ -104,5 +101,3 @@ your own yard back.
   but part of the cloud floor can still sit under the foot band.
 - Bubbles in the air are lost on a reload (they are a moment, not a
   holding). Rebel already falling is kept.
-- The yard's objective banner and its build-the-bench button stay on
-  screen up there.

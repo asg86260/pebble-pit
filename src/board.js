@@ -2,10 +2,11 @@
 // above the pit that chases the number.
 
 import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_REFUND, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_GAP, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS,
-         SHEET_MS, SCALE_MARK } from './config.js';
-import { fmt } from './words.js';
+         SHEET_MS, SCALE_MARK, AFTER_COIN_MARKS, AFTER_ACT_COINS } from './config.js';
+import { fmt, MARK } from './words.js';
 import { fitSlot } from './slotfit.js';
 import { S, bench } from './state.js';
+import { toScreen } from './world.js';
 import { seatObjective } from './objline.js';
 import { STATIONS as ROWS, station, open, standRect, nearStation } from './stations.js';
 import { crewRows } from './crewboard.js';
@@ -31,7 +32,7 @@ import { JOB } from './jobs.js';
 import { coarse } from './prefs.js';
 import { sheetSeat } from './sheet.js';
 import { stepWindow } from './modal.js';
-import { boardOf } from './boardrows.js';
+import { boardOf, setBoardOpener } from './boardrows.js';
 import { pageOf, shopOf } from './pages.js';
 import { BOARDS } from './stations.js';
 import { msg } from './lang.js';
@@ -56,11 +57,24 @@ document.documentElement.style.setProperty?.('--scale-mark',
   `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${SCALE_MARK[0].length}" height="${SCALE_MARK.length}" shape-rendering="crispEdges">${scaleInk.join('')}</svg>`)}")`);
 document.documentElement.style.setProperty?.('--scale-w', `${SCALE_MARK[0].length}px`);
 document.documentElement.style.setProperty?.('--scale-h', `${SCALE_MARK.length}px`);
+// Act 3's coins the same way, each its own mask (`.rebel`, `.timber`, `.paper`).
+for (const [coin, rows] of Object.entries(AFTER_COIN_MARKS)) {
+  const ink = rows.flatMap((row, y) => [...row].map((c, x) => c === '#' ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : ''));
+  document.documentElement.style.setProperty?.(`--${coin}-mark`,
+    `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${rows[0].length}" height="${rows.length}" shape-rendering="crispEdges">${ink.join('')}</svg>`)}")`);
+}
 // Where you stand to open each board, and where the board goes up: the same
 // place, for every station today, read off the table in stations.js. The
 // house grows a room per body and the sheds move with the grounds, so a
 // rectangle is read live, never gathered.
-const anchor = which => station(which)?.stand?.();
+// A board with no row in the table (an act's, boardrows.js) says its own.
+const anchor = which => station(which)?.stand?.() || boardOf(which)?.stand?.();
+// Whether a key names a board that opens off the table, by a click on its
+// place (act 3's: after/rows.js). Each one opened is remembered so its page
+// is hidden with the rest.
+const offTable = which => !!boardOf(which)?.offTable;
+const offOpened = new Set();
+const pageKeys = () => [...BOARDS, ...offOpened];
 // Read inside a function, not gathered at load: the imports come round in a
 // ring, and a table built while the ring is still closing gets `undefined` for
 // whichever list had not been reached yet.
@@ -223,17 +237,17 @@ function place(el, at) {
   // Centered over the station: the farm is a row as wide as its furrows, and a
   // board pinned to its left edge read as belonging to whatever was next along.
   const mid = at.x + (at.w || 0) / 2;
-  const want = (mid - S.camX) * S.zoom - w / 2;
+  const want = toScreen(mid, 0).x - w / 2;
   const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
 
-  const stands = S.H - (at.y - S.camY) * S.zoom + P * 3;
+  const stands = S.H - toScreen(0, at.y).y + P * 3;
 
   // Clear of the rosters, which stand in their own strip under the ground line:
   // a board taller than the room above its station is pushed down by the
   // window clamp, and the counters are the worst thing it could land on. A
   // station in the deep has the deep's floor for its ground.
   const floorY = inDeep(mid, at.y) ? deepFloor() : S.groundY;
-  const strip = (floorY + P * 11 - S.camY) * S.zoom;         // where the counters begin
+  const strip = toScreen(0, floorY + P * 11).y;         // where the counters begin
   const lowest = Math.max(GAP, S.H - strip);
   // and under the notice card while one is up at the top of the glass, or a
   // tall board's title bar is under the card -- when the whole board fits
@@ -318,6 +332,9 @@ let callAt = { x: null, y: null };
 // (a narrow window opens on the rock) it stays at the edge nearest the bench
 // and says which way; pressing it turns the view there too (`raiseBench`).
 export function seatCall() {
+  // Up in act 3 there is no bench to point at: it fades out where it stands
+  // (`.away` in style.css) and back in on the way down.
+  raiseEl.classList.toggle('away', S.view === 'after');
   if (!callOut() || !panelEl.hidden || S.view === 'deep') {
     if (!raiseEl.hidden) { raiseEl.hidden = true; callAt = { x: null, y: null }; }
     return;
@@ -332,7 +349,7 @@ export function seatCall() {
     raiseEl.hidden = false;
     callSize = { w: raiseEl.offsetWidth, h: raiseEl.offsetHeight };
   }
-  const left = (bench.x - S.camX) * S.zoom, right = (bench.x + bench.w - S.camX) * S.zoom;
+  const left = toScreen(bench.x, 0).x, right = toScreen(bench.x + bench.w, 0).x;
   const side = right <= GAP ? '◀ ' : left >= S.W - GAP ? '' : null;
   const say = side === null ? CALL_TEXT : side === '' ? `${CALL_TEXT} ▶` : `${side}${CALL_TEXT}`;
   if (raiseEl.textContent !== say) {
@@ -342,10 +359,10 @@ export function seatCall() {
   // Centered on the bench and kept inside the window: the opening seat stands
   // the bench nearer the edge than half this is wide.
   const mid = bench.x + bench.w / 2;
-  const want = (mid - S.camX) * S.zoom - callSize.w / 2;
+  const want = toScreen(mid, 0).x - callSize.w / 2;
   const x = Math.round(Math.max(GAP, Math.min(want, S.W - callSize.w - GAP)));
   // Its foot a couple of cells clear of the bench's top.
-  const stands = S.H - (bench.y - S.camY) * S.zoom + P * 2;
+  const stands = S.H - toScreen(0, bench.y).y + P * 2;
   const bottom = Math.round(Math.max(GAP, Math.min(stands, S.H - callSize.h - GAP)));
   if (x === callAt.x && bottom === callAt.y) return;
   callAt = { x, y: bottom };
@@ -378,7 +395,7 @@ export const openBoardRect = () => (panelEl.hidden ? null : panelRect());
 function apexAt(which) {
   const r = anchor(which);
   if (!r) return null;
-  return { x: (r.x + r.w / 2 - S.camX) * S.zoom, y: (r.y + r.h - S.camY) * S.zoom };
+  return toScreen(r.x + r.w / 2, r.y + r.h);
 }
 
 const side = (a, b, px, py) => (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
@@ -470,12 +487,13 @@ let tipFor = null;
 let tipCam = null;
 export function tipFollowsView() {
   if (tipFor === null || !tipCam) return;
-  if (tipCam[0] !== S.camX || tipCam[1] !== S.camY || tipCam[2] !== S.zoom) showTipAt(null);
+  if (tipCam[0] !== S.camX || tipCam[1] !== S.camY || tipCam[2] !== S.zoomShow) showTipAt(null);
 }
 
 export function showTip(text, at, lead = null) {
   if (!text) return showTipAt(null);
-  showTipAt(text, (at.x - S.camX) * S.zoom, (at.y - S.camY) * S.zoom + P * 4, true, false, lead);
+  const sp = toScreen(at.x, at.y);
+  showTipAt(text, sp.x, sp.y + P * 4, true, false, lead);
 }
 
 // The same tip, seated in screen space for things on the page. `over` lets the
@@ -495,7 +513,7 @@ export function showTipAt(text, sx, sy, centred, over = false, lead = null) {
     tipEl.hidden = false;
     tipFor = said;
   }
-  tipCam = [S.camX, S.camY, S.zoom];
+  tipCam = [S.camX, S.camY, S.zoomShow];
   const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
   let x = centred ? sx - w / 2 : sx;
 
@@ -538,7 +556,7 @@ export function showPanel(want, now = false) {
   // A key that is not a station (the lab that was), or a station with no
   // board (the casino, whose decisions are levers on the building), is
   // nowhere to hang a board: it is asked for as nothing.
-  if (want && !station(want)?.board) want = null;
+  if (want && !station(want)?.board && !offTable(want)) want = null;
   // Back where it was, before it had gone anywhere: nothing happened.
   if (want === at) { clearTimeout(leaving); leaving = 0; return; }
 
@@ -580,13 +598,14 @@ function settle(want) {
     closing = setTimeout(() => {
       if (at) return;                            // opened again on the way out
       panelEl.hidden = true;
-      for (const k of BOARDS) pageOf(k).hidden = true;
+      for (const k of pageKeys()) pageOf(k).hidden = true;
     }, panelEl.classList.contains('bottom') ? SHEET_MS : 140);
     return;
   }
 
   clearTimeout(closing);
-  for (const k of BOARDS) pageOf(k).hidden = k !== want;
+  if (offTable(want)) offOpened.add(want);
+  for (const k of pageKeys()) pageOf(k).hidden = k !== want;
   // opening the bench reads every heading on it
   if (want === 'bench') markSectionsSeen();
   panelEl.hidden = false;
@@ -650,7 +669,10 @@ function fill(which) {
 // What you have to spend, beside the board asking for it. A currency appears
 // the first time you have seen one: nothing here names a thing you have not
 // met.
+// Up in act 3 the act's own coins head it, as its bills write them.
+const upThere = () => S.view === 'after' && !!S.after;
 const PURSE = [
+  ...AFTER_ACT_COINS.map(coin => [coin, upThere, () => (coin === 'rebel' ? S.after.rebel : S.after.stock[coin] || 0)]),
   ['dust', () => true, () => S.stored],
   ['shard', () => S.seenShard, () => S.shards],
   ['spore', () => S.seenSpore, () => S.spores],
@@ -667,7 +689,7 @@ let purseWas = null;
 function fillPurse() {
   let html = '';
   for (const [mark, n] of purseCoins())
-    html += `<div class="coin"><i class="${mark}"></i><b>${fmt(shown('purse:' + mark, n))}</b></div>`;
+    html += `<div class="coin">${MARK[mark]}<b>${fmt(shown('purse:' + mark, n))}</b></div>`;
   if (html === purseWas) return;
   // A row appearing or going resizes the panel; a digit does not, since the
   // count sits in a slot of its own width.
@@ -716,6 +738,11 @@ function hush() {
   hushed = want;
   panelEl.classList.toggle('hushed', want);
 }
+
+// An act's board, opened by a click on its place (after/rows.js
+// `openAfterBoard`): at once, as any asked-for close or open is. True when
+// it stands open.
+setBoardOpener(key => { if (!offTable(key)) return false; showPanel(key, true); return at === key; });
 
 export function hud() {
   hush();

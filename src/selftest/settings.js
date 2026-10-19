@@ -5,7 +5,7 @@
 
 import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
          boulderWorld, onScreen, point } from './kit.js';
-import { pref, setPref, reducedMotion, coarse, dark, readable } from '../prefs.js';
+import { pref, setPref, reducedMotion, coarse, dark, theme, readable } from '../prefs.js';
 import { setSlot, storeSettled, clear, slotRaw, writeSlot } from '../save.js';
 import { S } from '../state.js';
 import { version } from '../version.js';
@@ -87,7 +87,7 @@ function tabRows(root) {
 // The rows each tab should show, on the held sheet or the landing page (which
 // has no touch or fullscreen row).
 function wantRows(tab, landing) {
-  if (tab === 'graphics') return ['motion: ' + (reducedMotion() ? 'less' : 'full'), 'dark: ' + (dark() ? 'on' : 'off'),
+  if (tab === 'graphics') return ['motion: ' + (reducedMotion() ? 'less' : 'full'), 'dark: ' + ({ light: 'off', dim: 'dim', dark: 'on' })[theme()],
     'readable text: ' + (readable() ? 'on' : 'off'),
     ...(landing ? [] : [fullscreenAble() ? 'fullscreen: off' : msg('set-fullscreen-note')])];
   if (tab === 'audio') return ['sound: ' + (pref('muted') ? 'off' : 'on'), 'slider volume'];

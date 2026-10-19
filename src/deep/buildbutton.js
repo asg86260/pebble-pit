@@ -13,6 +13,7 @@
 
 import { msg } from '../lang.js';
 import { S } from '../state.js';
+import { toScreen } from '../world.js';
 import { FANG_MARK, BUILD_BUTTON_UP, BUILD_FADE_MS } from '../config.js';
 import { canBuild, nextSlot, layStation } from './party.js';
 import { slotX, deepFloor } from './place.js';
@@ -70,9 +71,9 @@ export function seatBuildButton() {
   // inside the window, as every board is.
   const inside = (x, w) => Math.round(Math.max(EDGE, Math.min(x, S.W - w - EDGE)));
   const w = btn.offsetWidth || 0;
-  const mid = (slotX(offer.slot) - S.camX) * S.zoom;
+  const mid = toScreen(slotX(offer.slot), 0).x;
   const x = inside(mid - w / 2, w);
-  const bottom = Math.round(S.H - (deepFloor() - BUILD_BUTTON_UP - S.camY) * S.zoom);
+  const bottom = Math.round(S.H - toScreen(0, deepFloor() - BUILD_BUTTON_UP).y);
   if (x !== at.x || bottom !== at.y) {
     at = { x, y: bottom };
     btn.style.transform = `translate3d(${x}px, ${-bottom}px, 0)`;

@@ -1,13 +1,10 @@
-// Act 3's hand work (after/gestures.js; docs/mocks/act3-gestures-2026-10-18,
-// and the card it is made on, docs/mocks/act3-handcontrol-2026-10-18):
-// every station worked by its own motion on its card's big part, the faster
-// the sooner, two crits that are moments of timing, and the ghost hand that
-// fades once the motion is learned. Each card is opened the way the pointer
-// opens it -- a click on the station -- and each motion made the way the
-// pointer makes it, on the card: a press, moves and a release through the
-// very calls input.js makes (`gestureDown`, `gestureMove`, `gestureUp`), at
-// the world points the pointer gives over the card's part, a frame of the
-// act's clock between moves; the pad's through `__pad`. The setup each check
+// Act 3's hand work in the world (after/gestures.js; docs/wave-act3-build.md,
+// track A): every station worked by dragging its own moving part where it
+// stands, the faster the sooner, and a plain click on a station asking for
+// its board. Each motion is made the way the pointer makes it -- a press,
+// moves and a release through the very calls input.js makes, at the world
+// points where the part is drawn, a frame of the act's clock between moves
+// (test/after-hands.mjs); the pad's through `__pad`. The setup each check
 // is not about (the act up, a station standing, stock on its pile, the axe
 // in hand) goes through the act's hooks.
 //
@@ -16,17 +13,17 @@
 // so the reload harness is kept out: `{ reload: false }`.
 import { group, ok, run, yard, P } from './helpers.mjs';
 import { AFTER_SHOUT_REBEL, AFTER_TIP_LOAD, AFTER_DIG_CLICKS, TREE_CHOPS, GESTURE_BUBBLE_CRIT, GESTURE_CUE_USES,
-         GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_SAW_AMP, GESTURE_BAR_DRAG, GESTURE_SWING_S, GESTURE_SIGN_BLOWS,
-         GESTURE_STUMP_DRAG, CARD_IN_S } from '../src/config.js';
-import { gestureDown, gestureMove, gestureUp, gestureView, partsOf, useBubbles, stumpWobble, cardOpen, cardToWorld,
-         cardsView } from '../src/after/gestures.js';
-import { stationBox, stationParts } from '../src/after/place.js';
+         GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_STRAIN_S, GESTURE_ARM_POSES, GESTURE_ARM_SPRING_S,
+         GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS, AFTER_CHIP_SAWDUST } from '../src/config.js';
+import { gestureDown, gestureMove, gestureUp, gestureView, partsOf, useBubbles, boardAsked, groveIcons } from '../src/after/gestures.js';
+import { stationBox } from '../src/after/place.js';
+import { FRAME, frame, click, timeTo, sawOn, saw, lift, spin, feedLog, pullArm, nailSign, pullBar } from './after-hands.mjs';
 
 const S = yard.S;
 const read = () => window.__afterRead();
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 const NO_RELOAD = { reload: false };
-const FRAME = 1 / 60;
+const mid = b => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
 
 // A fresh act each time: the place stood up again from nothing, so a second
 // trial in a group starts as still as the first.
@@ -40,58 +37,9 @@ function up(stand = [], stock = {}) {
   window.__afterGrant(stock);
 }
 const rec = key => gestureView().find(r => r.key === key);
-const frame = () => run(FRAME);
-const mid = b => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
-// Where a click on a station lands: the middle of its drawing, a tree's
-// crown, a stump's block, the heap.
-function stationAt(key, i = 0) {
-  if (key === 'tree') { const t = window.__afterTrees()[i]; return { x: t.x, y: t.y }; }
-  if (key === 'stump') { const t = window.__afterTrees()[i]; return { x: t.sx, y: t.sy }; }
-  if (key === 'heap') return mid(stationParts('heap').heap);
-  return mid(stationBox(key));
-}
-// A click: a press and a release at a world point.
-const click = p => { const took = gestureDown(p.x, p.y); gestureUp(p.x, p.y); return took; };
-// Station `key`'s card opened by a click on it, and given its fade in.
-function openOn(key, i = 0) {
-  click(stationAt(key, i));
-  run(CARD_IN_S * 2);
-  return cardOpen();
-}
-// The pointer on the open card's grid: card px in, world px out.
-const on = (x, y) => cardToWorld(x, y);
-const down = (x, y) => { const p = on(x, y); return gestureDown(p.x, p.y); };
-const move = (x, y) => { const p = on(x, y); gestureMove(p.x, p.y); };
-const lift = (x, y) => { const p = on(x, y); if (p) gestureUp(p.x, p.y); else gestureUp(); };
 
-// Frames until `done`, each first moved by `motion(t)` (t the seconds since
-// it began); the seconds it took, or Infinity past `limit`.
-function timeTo(motion, done, limit = 40) {
-  for (let f = 0; f < limit * 60; f++) {
-    motion(f * FRAME);
-    frame();
-    if (done()) return (f + 1) * FRAME;
-  }
-  return Infinity;
-}
-// A pointer turning round the card's part at `rev` turns a second: pressed
-// on its rim, then moved along it a frame at a time.
-function spin(part, rev, done, limit) {
-  const at = a => ({ x: part.x + Math.cos(a) * (part.r || part.rx), y: part.y + Math.sin(a) * (part.r || part.ry) });
-  const p0 = at(0);
-  down(p0.x, p0.y);
-  const secs = timeTo(t => { const p = at(t * rev * 2 * Math.PI); move(p.x, p.y); }, done, limit);
-  lift(p0.x, p0.y);
-  return secs;
-}
-
-group('the saw mill: a faster spin of the flywheel on its card cuts a log sooner, up to its cap', async () => {
-  const trial = rev => {
-    up(['mill'], { logs: 5 });
-    openOn('mill');
-    const t0 = read().timber;
-    return spin(partsOf('mill').wheel, rev, () => read().timber > t0, 40);
-  };
+group('the saw mill: its flywheel spun faster where it stands cuts a log sooner, up to its cap', async () => {
+  const trial = rev => { up(['mill'], { logs: 5 }); const t0 = read().timber; return spin('mill', rev, () => read().timber > t0, 40); };
   const slow = trial(0.5), fast = trial(2), past = trial(4);
   window.__actsOn(null);
   return [
@@ -101,103 +49,125 @@ group('the saw mill: a faster spin of the flywheel on its card cuts a log sooner
   ];
 }, NO_RELOAD);
 
-group('the paper mill: a faster stir of the vat on its card fills the batch sooner', async () => {
-  const trial = rev => {
-    up(['mill', 'papermill'], { sawdust: 10 });
-    openOn('papermill');
-    const p0 = read().paper;
-    return spin(partsOf('papermill').vat, rev, () => read().paper > p0, 40);
-  };
+group('the paper mill: its vat stirred faster fills the batch sooner', async () => {
+  const trial = rev => { up(['mill', 'papermill'], { sawdust: 10 }); const p0 = read().paper; return spin('papermill', rev, () => read().paper > p0, 40); };
   const slow = trial(0.4), fast = trial(1.2);
   window.__actsOn(null);
   return [ok(fast < slow && Number.isFinite(slow), 'stirred three times as fast, the sheet comes sooner', `${slow.toFixed(2)} s -> ${fast.toFixed(2)} s`)];
 }, NO_RELOAD);
 
-group('the chipper: its feed held down on the card ramps up, and chips a log sooner than pecks', async () => {
-  const trial = pulse => {
-    up(['chipper'], { chiplogs: 4 });
-    openOn('chipper');
-    const at = mid(partsOf('chipper').box), d0 = read().sawdust;
-    let held = false;
-    const secs = timeTo(t => {
-      const want = !pulse || (t % (pulse * 2)) < pulse;
-      if (want && !held) { down(at.x, at.y); held = true; }
-      if (!want && held) { lift(at.x, at.y); held = false; }
-    }, () => read().sawdust > d0, 40);
-    lift(at.x, at.y);
-    return secs;
-  };
-  const held = trial(0), pecked = trial(0.3);
-  window.__actsOn(null);
-  return [ok(held < pecked, 'held, the log is chipped sooner than pressed in pecks', `${pecked.toFixed(2)} s pecked, ${held.toFixed(2)} s held`)];
-}, NO_RELOAD);
-
-group('the workshop: each tap on the card\'s pad a blow, faster taps join a sign sooner, no faster than the swing', async () => {
-  const trial = every => {
-    up(['mill', 'workshop'], { timber: 10 });
-    openOn('workshop');
-    const at = mid(partsOf('workshop').box), s0 = S.after.stock.signs;
-    return timeTo(t => { if (Math.floor(t / every) !== Math.floor((t - FRAME) / every) || t === 0) { down(at.x, at.y); lift(at.x, at.y); } },
-                  () => S.after.stock.signs > s0, 40);
-  };
-  const slow = trial(0.5), fast = trial(0.15), mashed = trial(FRAME);
+group('the chipper: a log dragged into the jaws, then the arm pulled down and held, chips it; let go, the arm springs back a pose at a time', async () => {
+  up(['chipper'], { chiplogs: 3 });
+  const d0 = read().sawdust;
+  // The arm pulled with nothing in the jaws chips nothing.
+  pullArm(4);
+  const empty = read().sawdust === d0;
+  const laid = feedLog() && rec('chipper').log === 'in';
+  // Pulled, then let go at once: the arm comes back up in held steps and the jaws stop.
+  const a = mid(partsOf('chipper').arm);
+  gestureDown(a.x, a.y); gestureMove(a.x, a.y + 200); frame(); gestureUp(a.x, a.y + 200);
+  const poses = new Set();
+  for (let f = 0; f < 30; f++) { frame(); poses.add(Math.round(rec('chipper').k * (GESTURE_ARM_POSES - 1))); }
+  const sprang = rec('chipper').k === 0 && poses.size >= GESTURE_ARM_POSES - 1;
+  const stopped = read().sawdust === d0;
+  // Held down: a steady feed, and the log goes through.
+  pullArm(4);
+  const chipped = read().sawdust - d0;
   window.__actsOn(null);
   return [
-    ok(fast < slow, 'tapped faster, the sign is done sooner', `${slow.toFixed(2)} s -> ${fast.toFixed(2)} s`),
-    ok(mashed >= (GESTURE_SIGN_BLOWS - 1) * GESTURE_SWING_S, 'mashed every frame, no sooner than a blow a swing', `${mashed.toFixed(2)} s mashed`)
+    ok(empty, 'the arm pulled with no log in the jaws chips nothing'),
+    ok(laid, 'a log dragged off the pile into the jaws is laid in them'),
+    ok(sprang, 'let go, the arm springs back up a held pose at a time', [...poses].join(' ')),
+    ok(stopped, 'and the jaws stop: nothing chipped'),
+    ok(chipped === AFTER_CHIP_SAWDUST, 'pulled down and held, the log is chipped', `${chipped} sawdust`)
   ];
 }, NO_RELOAD);
 
-group('the press: the card\'s bar dragged down to its stop prints, a quicker pull sooner', async () => {
-  const trial = pull => {
+group('the workshop: four nails a sign, two taps each; a miss does nothing; the joiner taps on once the hand stops', async () => {
+  up(['mill', 'workshop'], { timber: 10, rebel: 500 });
+  window.__grant({ dust: 40000, spores: 5000, shards: 2000, scales: 3000, sparks: 400 });
+  const s0 = S.after.stock.signs;
+  // Off the nails, on the blank: nothing.
+  const sign = partsOf('workshop').sign;
+  click({ x: sign.x + sign.w / 2, y: sign.y + sign.h / 2 }); run(0.3);
+  const missed = rec('workshop').nails.every(n => n === 0);
+  // One tap drives a nail half in, the second flush.
+  click(mid(partsOf('workshop').nails[0])); run(0.3);
+  const half = rec('workshop').nails[0] === 1;
+  click(mid(partsOf('workshop').nails[0])); run(0.3);
+  const flush = rec('workshop').nails[0] === GESTURE_NAIL_TAPS;
+  click(mid(partsOf('workshop').nails[0])); run(0.3);
+  const still = rec('workshop').nails[0] === GESTURE_NAIL_TAPS;
+  for (let k = 1; k < 4; k++) for (let n = 0; n < GESTURE_NAIL_TAPS; n++) { click(mid(partsOf('workshop').nails[k])); run(0.3); }
+  const one = S.after.stock.signs - s0;
+  // A nail half in, then a joiner at the bench: it drives the rest alone.
+  window.__afterGrant({ timber: 20 });
+  click(mid(partsOf('workshop').nails[2])); run(0.3);
+  const t0 = S.after.t;
+  S.after.camp += 1;
+  window.__buy('after-post-joiner');
+  const joined = timeTo(() => {}, () => rec('workshop').nails.every(n => n === 0) && rec('workshop').auto > t0, 120);
+  window.__actsOn(null);
+  return [
+    ok(missed, 'a tap off the nails does nothing'),
+    ok(half && flush && still, 'a nail goes half in, then flush, and a flush nail takes no more'),
+    ok(one === 1, 'four nails flush: a sign', `${one}`),
+    ok(Number.isFinite(joined) && joined > GESTURE_JOINER_WAIT_S, 'the joiner taps the rest on its own once the hand has stopped', `${joined}`)
+  ];
+}, NO_RELOAD);
+
+group('the press: its bar dragged down to its stop prints, a quicker pull sooner', async () => {
+  const trial = secs => {
     up(['mill', 'papermill', 'press'], { paper: 4 });
-    openOn('press');
-    const b = partsOf('press').box, x = b.x + b.w / 2, y0 = b.y + P, s0 = S.after.stock.posters;
-    down(x, y0);
-    const secs = timeTo(t => move(x, y0 + Math.min(1, t / pull) * GESTURE_BAR_DRAG * 1.2), () => S.after.stock.posters > s0, 20);
-    lift(x, y0);
-    return secs;
+    const s0 = S.after.stock.posters, h = mid(partsOf('press').handle);
+    gestureDown(h.x, h.y);
+    const t = timeTo(t => gestureMove(h.x, h.y + Math.min(1, t / secs) * 80), () => S.after.stock.posters > s0, 20);
+    gestureUp(h.x, h.y);
+    return t;
   };
   const slow = trial(1.5), fast = trial(0.1);
   window.__actsOn(null);
   return [ok(fast < slow && Number.isFinite(slow), 'pulled quickly, the poster prints sooner', `${slow.toFixed(2)} s -> ${fast.toFixed(2)} s`)];
 }, NO_RELOAD);
 
-group('a tree: the card\'s two-person saw dragged back and forth, a stroke a chop, faster fells it sooner', async () => {
+group('a tree: its saw icon clicked puts the handsaw on it; dragged back and forth, a stroke a chop, faster fells it sooner', async () => {
   const trial = period => {
     up();
     window.__afterAxe();
-    openOn('tree', 0);
-    const s = partsOf('tree').saw;
-    down(s.x, s.y);
-    const secs = timeTo(t => move(s.x + Math.sin(t / period * 2 * Math.PI) * GESTURE_SAW_AMP * 1.2, s.y),
-                        () => S.after.plots[0].fall != null, 60);
-    lift(s.x, s.y);
-    return secs;
+    run(0.5);
+    const icon = groveIcons().some(c => c.kind === 'saw' && c.i === 0);
+    const on = sawOn(0) && rec('tree').i === 0;
+    return { icon, on, secs: saw(0, () => S.after.plots[0].fall != null, period) };
   };
   const slow = trial(3), fast = trial(0.6);
+  // A plain click on the trunk asks for the grove's board.
+  up();
+  window.__afterAxe();
+  const t = window.__afterTrees()[0];
+  click({ x: t.x, y: t.y });
+  const asked = boardAsked();
   window.__actsOn(null);
   return [
-    ok(fast < slow && Number.isFinite(slow), `sawn faster, it falls sooner (${TREE_CHOPS} strokes)`, `${slow.toFixed(2)} s -> ${fast.toFixed(2)} s`)
+    ok(slow.icon && slow.on, 'the saw icon shows over the grown tree, and a click on it puts the saw on'),
+    ok(fast.secs < slow.secs && Number.isFinite(slow.secs), `sawn faster, it falls sooner (${TREE_CHOPS} strokes)`, `${slow.secs.toFixed(2)} s -> ${fast.secs.toFixed(2)} s`),
+    ok(asked && asked.key === 'grove', 'a plain click on the tree asks for the grove\'s board', JSON.stringify(asked))
   ];
 }, NO_RELOAD);
 
-group('the sawdust heap: a load on its card dragged to the edge tips one, a fling tips up to three', async () => {
-  const trial = (secs) => {
+group('the sawdust heap: a load dragged to the notch tips one, a fling tips up to three', async () => {
+  const trial = secs => {
     up(['mill'], { sawdust: 24 });
-    openOn('heap');
-    const p = partsOf('heap'), x0 = p.box.x + P, y = p.box.y + p.box.h - P * 2, d0 = read().sawdust;
-    down(x0, y);
-    const dist = p.edge - x0 + P * 2;
-    timeTo(t => move(x0 + Math.min(1, t / secs) * dist, y), () => false, secs + FRAME);
-    lift(x0 + dist, y);
+    const p = partsOf('heap'), a = mid(p.heap), d0 = read().sawdust, dist = p.edge - a.x + P * 2;
+    gestureDown(a.x, a.y);
+    timeTo(t => gestureMove(a.x + Math.min(1, t / secs) * dist, a.y), () => false, secs + FRAME);
+    gestureUp(a.x + dist, a.y);
     run(1);
     return (d0 - read().sawdust) / AFTER_TIP_LOAD;
   };
   const carried = trial(2), flung = trial(0.05);
   window.__actsOn(null);
   return [
-    ok(carried === 1, 'carried slowly to the edge, one load tips', `${carried}`),
+    ok(carried === 1, 'carried slowly to the notch, one load tips', `${carried}`),
     ok(flung === 3, 'flung hard, three go', `${flung}`)
   ];
 }, NO_RELOAD);
@@ -213,10 +183,10 @@ group('the pedestal: a popped bubble is a line of the speech, and the big one pa
     const r0 = read().rebel;
     const hit = gestureDown(b.x + b.w / 2, b.y + b.h / 2);
     gestureUp();
-    const marks = rec('pedestal').marks.length, card = cardOpen();
+    const marks = rec('pedestal').marks.length, asked = boardAsked();
     run(10);
     useBubbles(null);
-    return { hit, paid: read().rebel - r0, marks, card };
+    return { hit, paid: read().rebel - r0, marks, asked };
   };
   const one = trial(small), five = trial(big);
   window.__actsOn(null);
@@ -224,7 +194,7 @@ group('the pedestal: a popped bubble is a line of the speech, and the big one pa
     ok(one.hit && one.paid === AFTER_SHOUT_REBEL, 'a small bubble popped pays a line', `${one.paid}`),
     ok(five.hit && five.paid === AFTER_SHOUT_REBEL * GESTURE_BUBBLE_CRIT, `the big one pays ${GESTURE_BUBBLE_CRIT} lines`, `${five.paid}`),
     ok(one.marks === 0 && five.marks === 1, 'and only the big one leaves the crit\'s mark', `${one.marks} / ${five.marks}`),
-    ok(!one.card && !five.card, 'popped where it rises: the pedestal opens no card', JSON.stringify([one.card, five.card]))
+    ok(!one.asked && !five.asked, 'popped where it rises: no board asked for', JSON.stringify([one.asked, five.asked]))
   ];
 }, NO_RELOAD);
 
@@ -252,98 +222,48 @@ group('the pedestal: a popped bubble\'s rebel starts at the bubble and is counte
   ];
 }, NO_RELOAD);
 
-group('a stump: its card\'s grip held up gives a root at a time; yanked as it wobbles it comes out in one pull', async () => {
-  const stump = () => { up(); Object.assign(S.after.plots[0], { stage: 0, stump: true, dug: 0 }); openOn('stump', 0); return partsOf('stump').at; };
-  // Held high and kept there: a root a strain.
-  let a = stump();
-  const opened = cardOpen();
-  down(a.x, a.y);
-  move(a.x, a.y - 3 * P / GESTURE_STUMP_DRAG);
-  run(1);
-  const oneRoot = S.after.plots[0].dug, stillIn = S.after.plots[0].stump;
-  lift(a.x, a.y);
-  // Held low, then yanked the frame the stump starts to wobble.
-  a = stump();
-  down(a.x, a.y);
-  move(a.x, a.y - P / GESTURE_STUMP_DRAG);
-  let waited = 0;
-  while (!(stumpWobble() && stumpWobble().wobbling) && waited++ < 600) frame();
-  const dug0 = S.after.plots[0].dug;
-  move(a.x, a.y - 4 * P / GESTURE_STUMP_DRAG);
-  for (let f = 0; f < 15; f++) frame();
-  lift(a.x, a.y);
-  const out = !S.after.plots[0].stump, marks = rec('stump').marks;
-  window.__actsOn(null);
-  return [
-    ok(opened && opened.key === 'stump' && opened.i === 0, 'a click on the stump opens its card', JSON.stringify(opened)),
-    ok(oneRoot === 1 && stillIn, 'held up a second, one root snaps and the stump stays', `dug ${oneRoot}`),
-    ok(waited < 600 && dug0 === 0, 'held low it waits for the wobble with every root in', `${waited} frames, dug ${dug0}`),
-    ok(out, 'yanked in the wobble it comes out at once, and a sapling is set'),
-    ok(marks.length === 1 && marks[0].n === AFTER_DIG_CLICKS && marks[0].card, `the crit's mark on the card counts the ${AFTER_DIG_CLICKS} roots`, JSON.stringify(marks))
-  ];
-}, NO_RELOAD);
-
-group('the card: a click opens it, a click on another station swaps it, a floor click shuts it', async () => {
-  up(['mill', 'papermill', 'workshop'], { timber: 10, logs: 5 });
-  const shut0 = cardOpen();
-  openOn('papermill');
-  const first = cardOpen(), shown = cardsView().map(c => c.key);
-  // Another station: the one open swaps, both on the glass a moment, the
-  // leaving one sliding aside as it goes.
-  const r0 = cardsView().find(c => c.key === 'papermill').rect.x;
-  click(stationAt('workshop'));
-  run(1 / 10);
-  const both = cardsView().map(c => c.key).sort(), slid = cardsView().find(c => c.key === 'papermill');
-  run(1);
-  const swapped = cardOpen(), after = cardsView().map(c => c.key);
-  // The floor, well away from every station: shut, and the click is still the place's.
-  const b = stationBox('workshop');
-  const floorTook = click({ x: b.x + b.w + P * 6, y: b.y + b.h - P });
-  run(1);
-  const shut = cardOpen(), gone = cardsView().length;
-  window.__actsOn(null);
-  return [
-    ok(shut0 === null, 'no card is open at first', JSON.stringify(shut0)),
-    ok(first && first.key === 'papermill' && shown.join() === 'papermill', 'a click on the paper mill opens its card', JSON.stringify(first)),
-    ok(both.join() === 'papermill,workshop' && slid && !slid.want && slid.rect.x !== r0, 'a click on the workshop: the two are up together a moment, the leaving one sliding aside',
-       `${both} ${slid && slid.rect.x} from ${r0}`),
-    ok(swapped && swapped.key === 'workshop' && after.join() === 'workshop', 'then only the workshop\'s card is open', JSON.stringify(after)),
-    ok(!floorTook && shut === null && gone === 0, 'a click on the floor shuts it and is still the place\'s click', `${floorTook} ${JSON.stringify(shut)} ${gone}`)
-  ];
-}, NO_RELOAD);
-
-group('the card: a press on its paper away from the part does nothing, and the station is worked only on its part', async () => {
-  up(['mill', 'workshop'], { timber: 10, logs: 5 });
-  openOn('workshop');
-  const s0 = S.after.stock.signs, b0 = rec('workshop').blows, uses0 = rec('workshop').uses;
-  // The paper off the pad (the right of the grid), and the title band: a no-op.
-  const pad = partsOf('workshop').box;
-  const paper = [[pad.x + pad.w + P * 2, pad.y + P * 2], [P * 4, -P * 2]];
-  const took = paper.map(([x, y]) => { const t = down(x, y); lift(x, y); run(0.2); return t; });
-  const still = cardOpen(), blows = rec('workshop').blows, uses = rec('workshop').uses;
-  // A press on the station itself, the card open: not a blow, the card stays.
-  click(stationAt('workshop'));
+group('a stump: its shovel shows; dragged up and held, a root gives at a time until it is out, no crit', async () => {
+  up();
+  Object.assign(S.after.plots[0], { stage: 0, stump: true, dug: 0 });
   run(0.2);
-  const onStation = rec('workshop').blows;
-  // And on the pad: a blow.
-  const at = mid(pad);
-  down(at.x, at.y); lift(at.x, at.y);
-  const struck = rec('workshop').blows;
+  const shovel = groveIcons().some(c => c.kind === 'shovel' && c.i === 0);
+  lift(0, 3, GESTURE_STRAIN_S * 1.5);
+  const oneRoot = S.after.plots[0].dug, stillIn = S.after.plots[0].stump;
+  lift(0, 3, GESTURE_STRAIN_S * (AFTER_DIG_CLICKS + 1));
+  const out = !S.after.plots[0].stump && S.after.plots[0].stage === 1;
+  const marks = rec('stump').marks.length, gone = !groveIcons().some(c => c.kind === 'shovel');
   window.__actsOn(null);
   return [
-    ok(took.every(t => t === true), 'the press is the card\'s, so nothing behind it takes it', JSON.stringify(took)),
-    ok(blows === b0 && uses === uses0 && S.after.stock.signs === s0, 'and it strikes nothing', `${b0} -> ${blows} blows`),
-    ok(still && still.key === 'workshop', 'the card stays open', JSON.stringify(still)),
-    ok(onStation === b0, 'a click on the station opens (keeps) its card, it is no blow', `${onStation}`),
-    ok(struck === b0 + 1, 'a press on the pad is a blow', `${struck}`)
+    ok(shovel, 'a stump shows its shovel icon'),
+    ok(oneRoot === 1 && stillIn, 'held up a moment, one root gives and the stump stays', `dug ${oneRoot}`),
+    ok(out && gone, 'held long enough it comes out, a sapling is set, and the shovel goes'),
+    ok(marks === 0, 'and no crit is marked', `${marks}`)
+  ];
+}, NO_RELOAD);
+
+group('a plain click on a station asks for its board; a click on open floor asks for nothing', async () => {
+  up(['mill', 'papermill', 'workshop', 'press']);
+  const asked = [];
+  for (const k of ['papermill', 'workshop', 'press', 'shack', 'pedestal']) {
+    const b = k === 'pedestal' ? partsOf('pedestal').top : stationBox(k);
+    click({ x: b.x + P, y: b.y + b.h - P });
+    const a = boardAsked();
+    asked.push(a && a.key);
+  }
+  const before = boardAsked(), b = stationBox('workshop');
+  const floorTook = click({ x: b.x + b.w + P * 8, y: b.y + b.h - P });
+  const after = boardAsked();
+  window.__actsOn(null);
+  return [
+    ok(asked.join() === 'papermill,workshop,press,shack,pedestal', 'each station\'s board, by a click on its drawing', asked.join()),
+    ok(!floorTook && after === before, 'the open floor asks for none, and the click is still the place\'s', `${floorTook}`)
   ];
 }, NO_RELOAD);
 
 group('the ghost hand shows until the motion is done three times, then fades, and comes back after a long idle', async () => {
   up(['mill', 'workshop'], { timber: 20 });
-  openOn('workshop');
-  const at = mid(partsOf('workshop').box);
-  const tap = () => { down(at.x, at.y); lift(at.x, at.y); run(0.3); };
+  let k = 0;
+  const tap = () => { click(mid(partsOf('workshop').nails[k++ % 4])); run(0.3); };
   const a0 = rec('workshop').cueA;
   for (let k = 0; k < GESTURE_CUE_USES - 1; k++) tap();
   run(GESTURE_CUE_FADE_S * 2);
@@ -365,7 +285,7 @@ group('the ghost hand shows until the motion is done three times, then fades, an
   ];
 }, NO_RELOAD);
 
-group('the pad: A opens the card, A mashed on it joins a sign, LB steps the card on, the stick spins the saw mill', async () => {
+group('the pad: A on the workshop taps nails into a sign, the stick turned round spins the saw mill', async () => {
   const pad = window.__pad;
   up(['mill', 'workshop'], { timber: 10, logs: 5 });
   pad.on();
@@ -373,16 +293,9 @@ group('the pad: A opens the card, A mashed on it joins a sign, LB steps the card
   // The focus put on the station: the check is about what A and the stick do there.
   S.padFocus = 'ag:workshop';
   const s0 = S.after.stock.signs;
-  const blind = rec('workshop').blows;
-  pad.press('a');
-  run(0.3);
-  const opened = cardOpen(), firstBlows = rec('workshop').blows;
-  for (let k = 0; k < 12; k++) { pad.press('a'); run(0.2); }
+  for (let k = 0; k < 10; k++) { pad.press('a'); run(0.2); }
   const signs = S.after.stock.signs - s0;
-  // LB steps the card to the saw mill, the station to its left, and the focus with it.
-  pad.press('lb');
-  run(0.3);
-  const stepped = cardOpen(), focus = S.padFocus;
+  S.padFocus = 'ag:mill';
   const t0 = read().timber;
   for (let f = 0; f < 60 * 6; f++) {
     const a = f / 60 * 1.5 * 2 * Math.PI;
@@ -392,15 +305,10 @@ group('the pad: A opens the card, A mashed on it joins a sign, LB steps the card
   }
   pad.stick(0, 0); pad.step(FRAME);
   const timber = read().timber - t0;
-  pad.press('b');
-  const shut = cardOpen();
   pad.off();
   window.__actsOn(null);
   return [
-    ok(opened && opened.key === 'workshop' && firstBlows === blind, 'A on the station opens its card, and is not yet a blow', `${JSON.stringify(opened)} ${firstBlows}`),
-    ok(signs >= 1, 'A mashed on the card is blows, and a sign is joined', `${signs}`),
-    ok(stepped && stepped.key === 'mill' && focus === 'ag:mill', 'LB steps the open card to the saw mill, the focus with it', `${JSON.stringify(stepped)} ${focus}`),
-    ok(timber > 0, 'the stick turned round spins the flywheel and cuts', `${timber}`),
-    ok(shut === null, 'B shuts the card', JSON.stringify(shut))
+    ok(signs >= 1, 'A mashed on the workshop drives the nails, and a sign is joined', `${signs}`),
+    ok(timber > 0, 'the stick turned round spins the flywheel and cuts', `${timber}`)
   ];
 }, NO_RELOAD);

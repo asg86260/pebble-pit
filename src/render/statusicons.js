@@ -11,7 +11,7 @@ import { msg, FACE } from '../lang.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { now } from '../clock.js';
-import { darkPage, turned } from '../ink.js';
+import { seen } from '../ink.js';
 import { crispText } from './crisptext.js';
 import { DEEP_SEEN_GREYS } from './deeptones.js';
 import { inspiredK, hasted } from '../deep/statuses.js';
@@ -22,7 +22,6 @@ import { STATUS_ICONS, STATUS_PX, STATUS_GAP, STATUS_STEPS, STATUS_RENEW_MS, STA
          STATUS_FOE, STATUS_FACE, STATUS_TIMER, STATUS_SPENT, STATUS_POST, STATUS_POST_OUT, STATUS_POST_FOOT,
          STATUS_COUNT, STATUS_WARN_HZ, RESIST_TURN_S, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS, STATUS_NAMES, MECHANICS, STATUS_BAR_PX, STATUS_LABEL_PX, STATUS_LABEL_GAP, STATUS_LABEL_GROUND } from '../config.js';
 
-const seen = c => darkPage ? turned(c) : c;
 
 // Where each tile stood this frame, in screen pixels, and what its hover says:
 // the pointer asks `statusAt` (input.js). The bar's row and the posts, apart.

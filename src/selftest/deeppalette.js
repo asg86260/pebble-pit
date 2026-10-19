@@ -88,6 +88,7 @@ export const TESTS = [
   // The dark page's map squeezes and lifts what it is given; the deep is written
   // so it lands each tone itself (ink.js, `landed`), so the furnace's fire, its
   // door, its brick and its mortar are as apart there as on the light page.
+  // Read in the deep's own map, which is the one its half is drawn in.
   ['deep palette: the deep lands its tones on the dark page as the light page has them', async () => {
     if (!darkPage) return [ok(true, 'read on the dark page')];
     const near = (a, b) => [1, 3, 5].every(k => Math.abs(parseInt(a.slice(k, k + 2), 16) - parseInt(b.slice(k, k + 2), 16)) <= 3);
@@ -96,9 +97,9 @@ export const TESTS = [
       if (c === '#ffffff' || c === '#000000') continue;
       const l = (parseInt(c.slice(1, 3), 16) + parseInt(c.slice(3, 5), 16) + parseInt(c.slice(5, 7), 16)) / 765;
       if (l < 0.16) continue;   // darker than the dark page's paper: the map cannot reach it
-      out.push(ok(near(inkOf(seen(c)), c), `${c} lands as drawn`, inkOf(seen(c))));
+      out.push(ok(near(inkOf(seen(c), 'deep'), c), `${c} lands as drawn`, inkOf(seen(c), 'deep')));
     }
-    const fire = inkOf(LIGHT.mid), mouth = inkOf(TONE.hole), brick = inkOf(TONE.stone);
+    const fire = inkOf(LIGHT.mid, 'deep'), mouth = inkOf(TONE.hole, 'deep'), brick = inkOf(TONE.stone, 'deep');
     out.push(ok(fire !== mouth && fire !== brick, 'the fire is not the mouth or the brick', `${fire} ${mouth} ${brick}`));
     return out;
   }],

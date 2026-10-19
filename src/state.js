@@ -10,6 +10,7 @@ export const S = {
   // --- the window and the view ---
   W: 0, H: 0,             // the window, in screen pixels
   zoom: 1,                // shrinks to fit a small window, never rearranges
+  zoomShow: 1,            // the zoom on the glass: `zoom` is it snapped down to a whole cell
   dpr: 1,                 // device pixels per screen pixel
   viewW: 0, viewH: 0,     // what the window covers, in world units
   camX: 0, camY: 0,       // how far the view has been scrolled over the world
@@ -858,6 +859,7 @@ export const EPHEMERAL = [
   'beltRun',              // the band's run since its load last shifted: under a cell
   // The window and the view, all measured at boot.
   'W', 'H', 'zoom', 'dpr', 'viewW', 'viewH', 'camY', 'camTo', 'camWas',
+  'zoomShow',             // the zoom on the glass, gliding to `zoom`'s target (wave shot, track A)
   'follow', 'camLockY', 'shake', 'shakePh', 'shakeX', 'shakeY',
   'worldW', 'worldH', 'cx', 'cy', 'groundY',
   // Read off the rock and the ground again every frame, or every survey.

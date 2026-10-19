@@ -1483,15 +1483,16 @@ HANDLES.__hellAt = (what, i) => {
 // granted, the crowd's rims set, where the pair, the trees and the stumps
 // stand.
 import { clickAfter } from './after/index.js';
-import { afterRow, buyAfter, AFTER_ROWS, afterBill, afterMaxed, cardAt } from './after/rows.js';
+import { afterRow, buyAfter, AFTER_ROWS, afterBill, afterMaxed, cardAt, openAfterBoard } from './after/rows.js';
 import { setCrowd, support as afterSupport, union as afterUnion, crowdSize } from './after/union.js';
 import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut } from './after/bodies.js';
 import { plotX, afterFloor, stationBox, heapX } from './after/place.js';
 import { afterGate, strikeDue } from './after/strike.js';
-import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, stumpWobble, openCard, closeCard, cardOpen,
-         cardToWorld, cardsView } from './after/gestures.js';
-HANDLES.__afterClick = (x, y) => clickAfter(x, y);
+import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, boardAsked, groveIcons } from './after/gestures.js';
+// A click up there as input.js makes it: the hand work's first (a part, a
+// bubble, an icon, a station's board), then the place's.
+HANDLES.__afterClick = (x, y) => { if (gestureDown(x, y)) { gestureUp(x, y); return true; } return clickAfter(x, y); };
 {
   const yardBuy = HANDLES.__buy;
   HANDLES.__buy = key => (afterRow(key) ? buyAfter(key) : yardBuy(key));
@@ -1533,18 +1534,19 @@ HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...S.after.stock,
 HANDLES.__afterCardAt = (x, y) => cardAt(x, y);
 // The axe in hand without buying it: a scene's setup.
 HANDLES.__afterAxe = () => { if (S.after) S.after.axe = true; return !!S.after?.axe; };
+// Track C: a board opened as Track A's plain click on a station opens it
+// (after/rows.js `openAfterBoard`): `key` a card or 'crowd', `at` the world
+// point clicked.
+HANDLES.__openAfterBoard = (key, at = null) => openAfterBoard(key, at);
 // The hand's motions up there (after/gestures.js), made as input.js makes
 // them: 'down', 'move' and 'up' at a world point; where a station's parts
-// stand; each station's record; the stump's wobble.
+// stand; each station's record; the icons over the grove; the last board a
+// plain click asked for.
 HANDLES.__gesture = (what, x, y) => (what === 'down' ? gestureDown(x, y) : what === 'move' ? gestureMove(x, y) : gestureUp(x, y));
 HANDLES.__gestureParts = (key, i = 0) => gestureParts(key, i);
 HANDLES.__gestureView = () => gestureView();
-HANDLES.__stumpWobble = () => stumpWobble();
-// The hand-work card: open one on a station (plot `i` for the grove's), shut
-// it, the one open, a point on its grid (card px) as the world point the
-// pointer would give, and every card on the glass with its rectangle.
-HANDLES.__card = { open: (key, i) => openCard(key, i), close: () => closeCard(), now: () => cardOpen(),
-                   at: (x, y) => cardToWorld(x, y), list: () => cardsView() };
+HANDLES.__groveIcons = () => groveIcons();
+HANDLES.__boardAsked = () => boardAsked();
 
 // --- the two of them (wardrobe.js) ---
 // Who they are and what they wear, read for a check: each one's uid, the
@@ -1573,3 +1575,39 @@ HANDLES.__pairAt = () => Object.fromEntries(['sqouse', 'you'].map((k, i) => {
   const o = pairBody(k) || (S.finale && S.finale.pair[i]) || (k === 'you' && freedBody()) || null;
   return [k, o ? { x: (o.x - S.camX) * S.zoom, y: (o.y - S.camY) * S.zoom, s: WORKER * S.zoom } : null];
 }));
+
+// --- wave shot, track A ---
+// The camera as the shot holds it (shot.js), for the cutscene bench and the
+// checks: the place, both zooms, the window, the frame it is on (null with
+// no scene), the bands' depth in world pixels at the zoom on the glass, the
+// hush, the beat and its phase, and whether anything is moving the camera on
+// purpose -- the shot's glide, the ripple, a zoom glide.
+import { shotFrame as shotFrameNow } from './cutscene.js';
+import { aimGliding as shotAimGliding, bandWorld as shotBandWorld } from './shot.js';
+import { actPhase as shotActPhase } from './actbeats.js';
+import { gliding as shotViewGliding } from './view.js';
+import { zoomGliding as shotZoomGliding, setZoom as shotSetZoom, setZoomNow as shotSetZoomNow } from './world.js';
+HANDLES.__shot = () => {
+  const f = shotFrameNow();
+  return {
+    place: S.view, zoom: S.zoom, zoomShow: S.zoomShow, camX: S.camX, camY: S.camY, viewW: S.viewW, viewH: S.viewH,
+    frame: f ? { x: f.x, y: f.y, w: f.w, h: f.h } : null,
+    bands: shotBandWorld(), hush: S.hush,
+    beat: S.beat.camera || S.beat.yard || null,
+    phase: shotActPhase() ?? S.finale?.phase ?? S.abyss?.phase ?? S.snatch?.phase ?? null,
+    gliding: shotAimGliding() || shotViewGliding() || shotZoomGliding()
+  };
+};
+// A zoom asked for by hand, a share of the yard's own: glided, or cut with
+// `now`. For looking at the glide's picture; nothing in the game calls it.
+HANDLES.__zoom = (k, now = false) => { (now ? shotSetZoomNow : shotSetZoom)(k); return S.zoomShow; };
+// wave shot, track B
+// The cutscene bench's reading of the camera (cutscenes.html), for a frame
+// that has no `__shot` yet: the exact fields, not the rounded ones the
+// snapshot keeps, plus the facts a row's `done` asks (`beatsDone`).
+HANDLES.__cutRead = () => ({
+  place: S.view, zoom: S.zoom, zoomShow: S.zoomShow ?? S.zoom,
+  camX: S.camX, camY: S.camY, viewW: S.viewW, viewH: S.viewH, hush: S.hush,
+  beat: S.beat.camera || S.beat.yard || S.beat.sheet || (S.shot && S.shot.name) || null,
+  done: [...S.beatsDone],
+});

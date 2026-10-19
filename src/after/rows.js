@@ -20,42 +20,37 @@
 // are lifted off the yard's pile and fly up to the thin patch in the cloud
 // floor, and come out of it as motes that arc to the station bought
 // (`S.after.coins`, drawn by render/aftercoins.js). The cards keep the
-// yard's shape -- `rung`, `rungs`, `from`, `to`, `bill`, `show`, `dead` -- so
-// a board can draw them the way it draws any row; which board opens where is
-// `cardAt`.
+// yard's shape -- `rung`, `rungs`, `from`, `to`, `bill`, `show`, `dead` -- and the yard's
+// board draws them as it draws any row: a click on a station opens its board
+// (`openAfterBoard`, the yard's sheet, its posts' shelf then its upgrades'),
+// the yard's purse and marks know the act's coins (words.js), and a press
+// on a tile comes back here through the row's `buyVia`. Which board a world
+// point opens is `cardAt`.
 
 import { S } from '../state.js';
 import { msg } from '../lang.js';
 import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_POST_REBEL0, AFTER_POST_RATE, AFTER_BUILDS,
          AFTER_CARDS, AFTER_POST_DUST, AFTER_YARD_COINS, AFTER_TAG_ORDER, AFTER_PATCH_AT,
          AFTER_COIN_MOTES, AFTER_COIN_UNDER_S, AFTER_COIN_STAGGER_S, AFTER_COIN_SPREAD, AFTER_COIN_LIFE_S,
-         SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES } from '../config.js';
-import { registerBoard } from '../boardrows.js';
-import { purse, MARK, priceText } from '../words.js';
+         MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, CROWD_X0, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
+import { registerBoard, openBoardByKey } from '../boardrows.js';
+import { purse, MARK, priceText, leftText } from '../words.js';
 import { take } from '../upgrades.js';
 import { payTo } from '../pit.js';
 import { upCount, built, raising } from './levels.js';
 import { postsOf, postCount, addPost } from './bodies.js';
 import { clearPlot } from './grove.js';
 import { raiseStation } from './build.js';
-import { stationBox, plotX, groveX1, afterFloor, afterX0 } from './place.js';
+import { stationBox, plotX, groveX1, afterFloor, afterX0, crowdX1 } from './place.js';
+import { union, support } from './union.js';
 
 // --- the purse ---------------------------------------------------------------------------
 const isYardCoin = coin => AFTER_YARD_COINS.includes(coin);
-// What the camp holds of a coin: rebel on the act, the yard's coins the
-// yard's purse, the rest the chain's stock.
-export function afterPurse(coin) {
-  if (isYardCoin(coin)) return purse(coin);
-  const a = S.after;
-  if (!a) return 0;
-  if (coin === 'rebel') return a.rebel;
-  return a.stock[coin] || 0;
-}
-// The act's coin's name, a plain label until the owner words it, for a
-// board's bill once the act's boards are on the pointer.
+// What the camp holds of a coin: the yard's purse knows the act's coins
+// (words.js `purse`: rebel on the act, timber and paper the chain's stock).
+export const afterPurse = coin => purse(coin);
+// The act's coin's name, a plain label until the owner words it.
 export const rebelSaid = () => msg('after-coin-rebel');
-// The act's own coins, said as words: the yard's are drawn as the yard's marks.
-const ACT_SAID = { rebel: rebelSaid, timber: () => msg('after-coin-timber'), paper: () => msg('after-coin-paper') };
 function spendCoin(coin, n) {
   const a = S.after;
   if (coin === 'rebel') a.rebel -= n; else a.stock[coin] -= n;
@@ -75,7 +70,11 @@ const landAt = key => {
 // a find's tone of its kind, stepped by the mote's place in its run so a
 // handful is a speckle the way a heap is.
 const FIND_BASE = { spore: SPORE_CELL, shard: SHARD_CELL, spark: SPARK_CELL };
-const toneOf = (coin, i) => (coin === 'dust' ? 1 + (i % SHADES.length) : FIND_BASE[coin] + (i % FIND_TONES));
+// A scale is no grain of the yard's: its mote is in a scale's own shade, stepped
+// either side of it as the deep deals them (deep/scales.js, `shadeNear`).
+const toneOf = (coin, i) => (coin === 'dust' ? 1 + (i % SHADES.length)
+  : coin === 'scale' ? SCALE_SHADE + (i % (2 * SCALE_SPREAD + 1)) - SCALE_SPREAD
+  : FIND_BASE[coin] + (i % FIND_TONES));
 // The yard's share of a bill paid: off the yard's pile through `take`, its
 // grains sent up to the patch (`payTo`), and the motes that come out of the
 // patch after them, each stamped with when it comes out and where it lands.
@@ -85,7 +84,7 @@ function payYard(bill, key) {
   const patch = patchAt(), to = landAt(key);
   a.coins = (a.coins || []).filter(m => a.t - m.at < AFTER_COIN_LIFE_S);
   payTo(patch.x, patch.y);
-  for (const [coin, n] of bill) take(coin, n);
+  for (const [coin, n] of bill) take(coin, n, patch);   // the deep's scales lift off the bed bound for the patch too
   payTo();
   let k = 0;
   for (const [coin, n] of bill) {
@@ -99,6 +98,11 @@ function payYard(bill, key) {
 
 // Whether a station's card is up: its station standing.
 export const cardOpen = card => built(card);
+
+// What every row up here carries for the yard's board: its bill written the
+// act's coins first, and a press on its tile bought here (`buyAfter`), off
+// the camp's purse and the yard's, never the yard's `buy`.
+const ACT_ROW = { coinOrder: AFTER_TAG_ORDER, buyVia: u => buyAfter(u) };
 
 // --- the named upgrades ----------------------------------------------------------------------
 const UP_NAMES = {
@@ -121,7 +125,7 @@ const UP_DOES = {
 const upRow = key => {
   const { card, bills } = AFTER_UPGRADES[key];
   return {
-    key, name: UP_NAMES[key](), card,
+    key, name: UP_NAMES[key](), card, ...ACT_ROW,
     rung: () => upCount(key), rungs: () => bills.length,
     bill: () => bills[Math.min(upCount(key), bills.length - 1)].map(([c, n]) => [c, n]),
     show: () => cardOpen(card),
@@ -140,7 +144,7 @@ const POST_NAMES = {
   paster: () => msg('after-job-paster')
 };
 const postRow = job => ({
-  key: `after-post-${job}`, name: POST_NAMES[job](), card: AFTER_JOB_POST[job], repeats: true, post: job,
+  key: `after-post-${job}`, name: POST_NAMES[job](), card: AFTER_JOB_POST[job], repeats: true, post: job, ...ACT_ROW,
   from: () => postsOf(job), to: () => postsOf(job) + 1,
   bill: () => [['rebel', postRebel()], ['dust', postDust()]],
   show: () => cardOpen(AFTER_JOB_POST[job]),
@@ -159,7 +163,10 @@ const WAITS = { workshop: () => msg('after-wait-mill'), papermill: () => msg('af
                 press: () => msg('after-wait-papermill') };
 const needsMet = st => { const n = AFTER_BUILDS[st].needs; return !n.length || n.some(k => built(k)); };
 const buildRow = st => ({
-  key: `after-build-${st}`, name: BUILD_NAMES[st](), card: 'shack', lands: st,
+  key: `after-build-${st}`, name: BUILD_NAMES[st](), card: 'shack', lands: st, ...ACT_ROW,
+  // A station standing stays on the shack's board, done, whatever the
+  // finished-rows switch says: the board is the list of what the camp has.
+  keep: true,
   rung: () => (built(st) || raising(st) ? 1 : 0), rungs: () => 1,
   bill: () => AFTER_BUILDS[st].bill.map(([c, n]) => [c, n]),
   show: () => !!S.after,
@@ -180,14 +187,14 @@ export const afterMaxed = u => !!u.rung && u.rung() >= u.rungs();
 export const afterBill = u => (u.bill ? u.bill() : []);
 export const afterCanPay = u => afterBill(u).every(([c, n]) => afterPurse(c) >= n);
 // A row's price tag, written the way a yard card writes one (shop.js
-// `tagOf`): a cell a coin, `have` or `short` off what is held of it, so a
-// card short of any coin takes the dashed edge (style.css), the yard's coins
-// in the yard's marks and the act's said as words, the act's first.
+// `tagOf`, which the board itself uses): a cell a coin, `have` or `short` off
+// what is held of it, so a card short of any coin takes the dashed edge
+// (style.css), every coin in its mark, the act's first.
 export function afterTag(u) {
   const bill = afterBill(u).filter(([, n]) => n > 0)
     .sort((a, b) => AFTER_TAG_ORDER.indexOf(a[0]) - AFTER_TAG_ORDER.indexOf(b[0]));
   return bill.map(([c, n]) => `<span class="${afterPurse(c) >= n ? 'have' : 'short'}">`
-    + `${isYardCoin(c) ? MARK[c] : ACT_SAID[c]()} ${priceText(c, n)}</span>`).join('');
+    + `${MARK[c]} ${priceText(c, n)}</span>`).join('');
 }
 // True when something was bought: offered, not dead, not finished, paid in
 // full, and then the row's own `buy`. The act's coins come off the camp; the
@@ -206,19 +213,79 @@ export function buyAfter(u) {
 }
 
 // --- the boards ----------------------------------------------------------------------------
-// A card's rows, and its planks: its posts, then its upgrades; the shack,
-// every station. Registered under `after-<card>` so a
-// board can be opened on one the way any station's is (boardrows.js).
+// A card's rows, and its planks (tabs choice A, the owner, 2026-10-18): its
+// posts' shelf, its heading counting the members posted there, then its
+// upgrades'; the shack one shelf, every station in camp order. Registered
+// under `after-<card>`, off the station table (boardrows.js): opened by a
+// click on the station (`openAfterBoard`), never by walking up.
+const jobsAt = card => AFTER_JOBS.filter(j => AFTER_JOB_POST[j] === card);
 const sectionsOf = card => {
   if (card === 'shack') return [{ key: 'after-build', title: msg('after-sect-build'), keys: Object.keys(AFTER_BUILDS).map(s => `after-build-${s}`) }];
   const rows = AFTER_ROWS.filter(u => u.card === card);
-  return [{ key: `after-${card}-posts`, title: msg('after-sect-posts'), keys: rows.filter(u => u.post).map(u => u.key) },
+  return [{ key: `after-${card}-posts`, title: msg('after-sect-posts'), keys: rows.filter(u => u.post).map(u => u.key),
+            heads: () => jobsAt(card).reduce((n, j) => n + postsOf(j), 0) },
           { key: `after-${card}`, title: msg('after-sect-card'), keys: rows.filter(u => !u.post).map(u => u.key) }]
     .filter(s => s.keys.length);
 };
 export const afterBoard = card => ({ rows: AFTER_ROWS.filter(u => u.card === card), sections: sectionsOf(card) });
+// Each board's title, and the ground it stands over: a station's box, the
+// grove's plots up to a grown pine's crown.
+const BOARD_NAMES = { pedestal: () => msg('after-board-pedestal'), shack: () => msg('after-board-shack'),
+                      grove: () => msg('after-board-grove'), ...BUILD_NAMES };
+const GROVE_UP = 22;      // cells over the grove's floor its board stands clear of: a big pine's crown
+const standOf = card => () => {
+  if (!S.after) return null;
+  if (card !== 'grove') return stationBox(card);
+  const x = plotX(0) - P * 4;
+  return { x, y: afterFloor() - P * GROVE_UP, w: groveX1() - x, h: P * GROVE_UP };
+};
 for (const card of AFTER_CARDS)
-  registerBoard(`after-${card}`, { rows: () => afterBoard(card).rows, sections: () => afterBoard(card).sections });
+  registerBoard(`after-${card}`, { rows: () => afterBoard(card).rows, sections: () => afterBoard(card).sections,
+                                   offTable: true, name: BOARD_NAMES[card], stand: standOf(card) });
+
+// --- the crowd's board -----------------------------------------------------------------------
+// God's crowd sells nothing: its board is readings (a ledger, as the yard's
+// books are), how the union stands against the throne -- the share of God's
+// yard won, the members, each gate and how near, and when the throne next
+// speaks. Read live off the sim every frame it is open.
+const pctSaid = v => msg('after-crowd-pct', { n: Math.floor(v * 100) });
+// A gate's reading: reached, or how far along toward it.
+const gateSays = (k, have, want, say) => () =>
+  (S.after && S.after.gate > k ? msg('after-crowd-reached') : msg('after-crowd-of', { have: say(have()), want: say(want) }));
+const readout = (key, name, price) => ({ key, name, price, read: true, show: () => !!S.after,
+                                         dead: () => false, cost: () => 0, buy: () => {} });
+// Seconds to the throne's next speech, or null while none is set.
+export const speechIn = () => { const sp = S.after?.speech; return sp ? Math.max(0, sp.next - S.after.t) : null; };
+export const CROWD_ROWS = [
+  readout('after-crowd-share', msg('after-crowd-share'), () => pctSaid(S.after ? support() : 0)),
+  readout('after-crowd-members', msg('after-crowd-members'), () => String(S.after ? union() : 0)),
+  readout('after-crowd-speech', msg('after-crowd-speech'), () => { const s = speechIn(); return s == null ? msg('after-crowd-none') : leftText(s * 1000); }),
+  readout('after-crowd-meeting', msg('after-crowd-meeting'), gateSays(0, () => union(), MEET_MEMBERS, String)),
+  readout('after-crowd-slowdown', msg('after-crowd-slowdown'), gateSays(1, () => support(), SLOW_SHARE, pctSaid)),
+  readout('after-crowd-strike', msg('after-crowd-strike'), gateSays(2, () => support(), STRIKE_SHARE, pctSaid))
+];
+const CROWD_SECTIONS = [
+  { key: 'after-crowd', title: msg('after-sect-crowd'), keys: ['after-crowd-share', 'after-crowd-members', 'after-crowd-speech'] },
+  { key: 'after-gates', title: msg('after-sect-gates'), keys: ['after-crowd-meeting', 'after-crowd-slowdown', 'after-crowd-strike'] }
+];
+// Where the crowd's board stands: over the point it was opened from, else
+// over the middle of the crowd.
+const CROWD_UP = 40;      // cells over the floor the crowd's board stands when no point is given
+let crowdAt = null;
+registerBoard('after-crowd', { rows: () => CROWD_ROWS, sections: () => CROWD_SECTIONS, ledger: true, offTable: true,
+  name: () => msg('after-board-crowd'),
+  stand: () => (crowdAt ? { x: crowdAt.x - P, y: crowdAt.y - P, w: P * 2, h: P * 2 }
+                        : { x: (CROWD_X0 + crowdX1()) / 2 - P, y: afterFloor() - P * CROWD_UP, w: P * 2, h: P * 2 }) });
+
+// Opens a board in the yard's sheet, for Track A's plain click on a station
+// (gestures.js): `key` a card of AFTER_CARDS or 'crowd', `at` the world
+// point clicked, which the crowd's board stands over. True when it opened;
+// false with no page to open it on (the node checks).
+export function openAfterBoard(key, at = null) {
+  if (!S.after || !(AFTER_CARDS.includes(key) || key === 'crowd')) return false;
+  if (key === 'crowd') crowdAt = at;
+  return openBoardByKey(`after-${key}`);
+}
 
 // The card a world point opens: the strip along a standing station's roof,
 // its posts (the box below is worked by the click, rebel.js `workAt`), or
@@ -235,6 +302,3 @@ export function cardAt(x, y) {
   if (built('grove') && x >= plotX(0) - P * 4 && x < groveX1() && y <= afterFloor() && y >= afterFloor() - P * 20) return 'grove';
   return null;
 }
-
-// Track A stub until track C lands its board (docs/wave-act3-build.md).
-export function openAfterBoard(){}
