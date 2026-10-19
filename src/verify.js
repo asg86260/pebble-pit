@@ -647,7 +647,7 @@ export function verifyWorld() {
 // stands, one a station, and a station holds one fighter; the serpent drops a
 // fang at each of its first breaks, so no more have dropped than breaks have
 // happened or than it has fangs to drop; and a fighter is the deep's, its
-// feet never in the yard. A station names its fighter by the body's uid, so
+// feet never in the yard but to put its yard kit back. A station names its fighter by the body's uid, so
 // no two bodies share one, and a station manned on a call (`CALLED`) has its
 // body chosen on the same call: never so at the end of a frame. Exported so
 // a check can ask these alone of a party it stood up by hand.
@@ -672,6 +672,19 @@ export function verifyParty() {
     if (uids.has(w.uid)) fail('two bodies share a uid', `${uids.get(w.uid)} and ${who(w)}: ${w.uid}`);
     uids.set(w.uid, who(w));
   }
+  // The one way a fighter is in the yard: a trained yard body sent down puts
+  // its yard kit back first (crew/commute.js, `retask`), then walks to the
+  // shaft. The kit leg is seen on the body; the walk after it is not, so the
+  // bodies seen on it are remembered until their commute ends -- and a save
+  // read back mid-walk is taken as it stands.
+  const fresh = yardReads !== kitReads;
+  kitReads = yardReads;
+  if (fresh) kitWalkers.clear();
+  for (const w of S.workers) {
+    if (w.type !== TYPE.FIGHTER) continue;
+    if (w.leg === 'drop' || (fresh && w.leg === 'work' && w.walking)) kitWalkers.add(w.uid);
+    else if (w.leg !== 'work' || !w.walking) kitWalkers.delete(w.uid);
+  }
   const at = new Map();
   for (const w of S.workers) {
     if (w.type !== TYPE.FIGHTER) continue;
@@ -682,7 +695,8 @@ export function verifyParty() {
     at.set(st.id, who(w));
     if (st.fighter !== w.uid) fail('a fighter stands at a station that names another', `${who(w)} (${w.uid}) at ${st.id}, which names ${st.fighter}`);
     // A body in the cursor's hand or falling is on its way, not standing.
-    if (!belowYard(w) && !w.lifted && !w.falling) fail('a fighter is in the yard', `${who(w)}`);
+    if (!belowYard(w) && !w.lifted && !w.falling && !kitWalkers.has(w.uid))
+      fail('a fighter is in the yard', `${who(w)} (leg ${w.leg})`);
   }
   if (!Number.isInteger(S.fangs) || S.fangs < 0)
     fail('the fangs are a count that is not a count', `${S.fangs}`);
@@ -712,6 +726,8 @@ export function verifyParty() {
   droppedReads = yardReads;
 }
 let droppedWas = 0, droppedReads = -1;
+const kitWalkers = new Set();
+let kitReads = -1;
 
 // What the party holds past the first station and the fangs that have
 // dropped, and what a setup or a save was let start with.
