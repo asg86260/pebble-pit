@@ -4,6 +4,18 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## A fighter walks the yard to put her hauler's kit back -- OPEN (2026-10-19)
+
+test/fixtures/report-5.json (a 0.6.0 free-build save, past the teaser's
+sheet): the deep's first fighter, `u24`, was a trained hauler, and `retask`
+(crew/commute.js) gave her a `drop` leg to the haulers' stand before her
+station's `work` leg. About four seconds after the sheet goes down she climbs
+the shaft and walks the yard, and verify.js's "a fighter is in the yard"
+fires. Nothing teleports, so the hat cannot just vanish; blocked on the
+owner's call: does a body bound for the deep put its yard kit back first (and
+the rule allows it on a `drop` leg), or does it go down wearing it?
+test/keep-playing.test.mjs stops short of that moment on purpose.
+
 ## The yard's sound set, by lanes -- BUILT, NOT LISTENED TO IN THE GAME (2026-10-18)
 
 DESIGN.md, "The yard's sound set, by lanes". Open: the owner's ear on every
