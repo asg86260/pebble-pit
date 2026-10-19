@@ -313,11 +313,14 @@ export const AFTER_POST_RATE = 1.08;       // each one dearer, every station's c
 // locked only behind a station it truly needs first: timber comes off the
 // saw mill, sawdust off the saw mill or the chipper, and posters are printed
 // on paper. `needs` is the stations any one of which must stand first.
-// Listed in camp order, the order the shack's board lists them.
+// Listed in camp order, the order the shack's board lists them. The paper
+// mill names no timber: until it stands the heap brims, the chipper's feeder
+// fills each load the sawyer tips while the sawyer walks back, and the saw
+// makes next to no timber for posts alone to bank.
 export const AFTER_BUILDS = {
   mill:      { needs: [],                   bill: [['rebel', 40], ['dust', 15000]] },
   chipper:   { needs: [],                   bill: [['rebel', 60], ['dust', 20000]] },
-  papermill: { needs: ['mill', 'chipper'],  bill: [['rebel', 250], ['timber', 40], ['dust', 60000], ['spore', 15000], ['shard', 15000], ['scale', 800]] },
+  papermill: { needs: ['mill', 'chipper'],  bill: [['rebel', 250], ['dust', 60000], ['spore', 15000], ['shard', 15000], ['scale', 800]] },
   workshop:  { needs: ['mill'],             bill: [['rebel', 60], ['dust', 25000], ['spore', 3500]] },
   press:     { needs: ['papermill'],        bill: [['rebel', 300], ['timber', 60], ['dust', 90000], ['spore', 20000], ['shard', 25000], ['scale', 1200]] }
 };
@@ -336,7 +339,10 @@ export const AFTER_UPGRADES = {
                                                     [['rebel', 400], ['timber', 60], ['dust', 80000], ['spore', 20000], ['shard', 20000], ['scale', 800]]] },   // a plot cleared, AFTER_PLOT_MAX in all
   'after-grow':        { card: 'grove',     bills: [[['rebel', 150], ['timber', 10], ['dust', 30000], ['spore', 8000]]] },                    // faster growth
   'after-tree':        { card: 'grove',     bills: [[['rebel', 450], ['timber', 120], ['dust', 100000], ['spore', 35000], ['shard', 40000], ['scale', 2000], ['spark', 8000]]] },  // bigger trees
-  'after-stumps':      { card: 'grove',     bills: [[['rebel', 200], ['timber', 30], ['dust', 40000], ['spore', 10000]]] },                   // stump removal: woodcutters dig stumps too
+  // Stump removal names no timber: the first trees are the only timber until
+  // it is had, and a player who never digs a stump by hand fells them, spends
+  // the timber on signs and has no way to the next tree.
+  'after-stumps':      { card: 'grove',     bills: [[['rebel', 200], ['dust', 40000], ['spore', 10000]]] },                                   // stump removal: woodcutters dig stumps too
   'after-blade':       { card: 'mill',      bills: [[['rebel', 180], ['timber', 30], ['dust', 35000], ['spore', 8000]]] },                    // a second blade
   'after-heap':        { card: 'mill',      bills: [[['rebel', 80], ['timber', 15], ['dust', 15000]]] },                                      // a bigger heap
   'after-bench':       { card: 'workshop',  bills: [[['rebel', 300], ['timber', 60], ['dust', 70000], ['spore', 18000], ['shard', 18000], ['scale', 1000]]] },  // a second bench
