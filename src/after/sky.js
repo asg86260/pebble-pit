@@ -16,11 +16,11 @@
 // toward him, pulling him to the window's middle as it goes in.
 
 import { S } from '../state.js';
-import { P, SKY_BANK, SKY_TOPS, GOD_CELLS, GOD_FIT, GOD_UP, GOD_OPEN_AT, GOD_RATE,
+import { P, SKY_BANK, SKY_TOPS, SKY_BANDS, GOD_CELLS, GOD_FIT, GOD_UP, GOD_OPEN_AT, GOD_RATE,
          AFTER_ZOOM_MAX, AFTER_FOCUS_AT } from '../config.js';
 import { yardCell } from '../world.js';
 import { actPlace } from '../acts.js';
-import { afterFloor, afterTop, afterX0, afterX1, afterOpenX } from './place.js';
+import { afterFloor, afterTop, afterX0, afterX1, afterOpenX, workshopsX1, unionX1, godX0 } from './place.js';
 import { smoothstep } from '../motion.js';
 
 const clamp01 = v => Math.max(0, Math.min(1, v));
@@ -59,7 +59,14 @@ export function skyFrame() {
     // God's square's top, its crown's spikes GOD_UP of the sky down off the top.
     gy0: top + snap(sky * GOD_UP + 19 * gc, gc),
     // The window's middle at its furthest left and right.
-    c0: afterX0() + W / 2, c1: Math.max(afterEnd(), XR)
+    c0: afterX0() + W / 2, c1: Math.max(afterEnd(), XR),
+    // Each plane's left edge in its own layer (`layerX` of it is where it
+    // stands) before it gives up any ground: past the union's camp, and far
+    // enough right that it is still off the window's right edge when the
+    // workshops' end comes in at it, so no plane shows over the workshops
+    // whatever its rate -- and, slower than the camera, it only draws away
+    // from them further left.
+    edge0: SKY_BANDS.map(b => Math.max(unionX1(), workshopsX1() + P * 4 + (XR - workshopsX1() + W / 2) * (1 - b.rate)))
   };
   frameKey = key;
   return frame;
@@ -83,4 +90,12 @@ export function topAt(cx, z) {
   const f = skyFrame(), y = faceY();
   const r = restTop(), at = (y - r) / f.H + (AFTER_FOCUS_AT - (y - r) / f.H) * pullAt(cx);
   return y - at * f.H / z;
+}
+
+// A plane's left edge in its own layer with `k` of the way to the strike won:
+// its ground given up toward God's camp, never past his crowd's first file,
+// so every sign in it stands on it.
+export function bandEdge(i, k) {
+  const f = skyFrame(), a = f.edge0[i], b = Math.max(a, godX0());
+  return a + (b - a) * SKY_BANDS[i].give * smoothstep(Math.max(0, Math.min(1, k)));
 }
