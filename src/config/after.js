@@ -443,3 +443,8 @@ export const AFTER_COIN_MARKS = {
 };
 // The act's coins, in the order the purse lists them ahead of the yard's.
 export const AFTER_ACT_COINS = ['rebel', 'timber', 'paper'];
+// Tiles a plank of a camp board holds before they wrap onto another row (the
+// owner, 2026-10-18: "narrow the shops a bit, make a couple rows"): the
+// shack's five stations and the grove's five upgrades in two rows, the yard's
+// own wrapping (board.js `pinWidth`), against the yard's SHELF_SLOTS.
+export const AFTER_BOARD_SLOTS = 3;

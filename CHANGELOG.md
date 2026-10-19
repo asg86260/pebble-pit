@@ -176,6 +176,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The rise into heaven rides up with them: one shot from the ruined house up the road through the clouds to the cloud floor, about eight seconds (test/shot.test.mjs).
 - The yard has a sound for each kind of work, each in its own register so a busy yard stays clear: footsteps, picks, hammers, shovels, carts tipping, the belt, grains landing, bodies thrown, stations landing, birds, the casino's win and loss, and the dome and the rift; the busiest are heard only where you are looking (test/sound-lanes.test.mjs).
 - The dark switch steps light, dim and dark: dim is the old dark page, and dark is a new one drawn for the dark -- a graphite paper where black stays black (the rock, the pit, hats, banners, chips and selected rows), words and lines in a light ink, lit windows and the portal still lit, and the deep as it was (test/settings.test.mjs; test/ui-tokens.test.mjs; src/selftest/textaa.js).
 - The game's words are set in Courier Prime, a Courier drawn for reading, bundled so every machine sees the same face (test/l10n-type.test.mjs).

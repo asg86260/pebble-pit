@@ -574,6 +574,15 @@ GUESTS.spot = cloudSpot;
 // The color the air is this frame, as a cloud's underside shows it: what a
 // balloon is drawing in is drawn in this (render/balloon.js), so the haze
 // going into the box is the same brown the clouds are.
+// The sky's cloud tones at depth `far`, lit crown to shaded base, as fill
+// styles: the road up to heaven draws its clouds in these (render/road.js),
+// so they are the yard's own sky continued, murk and storm and all.
+export function roadTones(far) {
+  const sw = swell(), mk = murk();
+  return cloudTones(partColor('body', mk, sw), partColor('under', mk, sw), far)
+    .map(c => `rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`);
+}
+
 export function murkTone() {
   const col = partColor('under', murk(), swell());
   return `rgb(${Math.round(col[0])},${Math.round(col[1])},${Math.round(col[2])})`;

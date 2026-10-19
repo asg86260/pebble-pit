@@ -49,7 +49,8 @@ export const ACT_CAPTION_GREY = GREY[0];     // the words, on the letterbox's bl
 
 // The house's fall: the rock out of the sky over ACT_ROCK_FALL_S, from
 // ACT_ROCK_FROM over the ground, in held steps; the dust; then the two souls
-// out of the wreck and straight up through the tear at ACT_SOUL_PX_S.
+// out of the wreck and straight up through the tear, ridden up the road to
+// the cloud floor (below).
 export const ACT_ROCK_FALL_S = 2.2;
 export const ACT_ROCK_FROM = P * 40;
 export const ACT_ROCK_STEPS = 18;
@@ -58,7 +59,6 @@ export const ACT_ROCK_H = 11;
 export const ACT_ROCK_DUST_S = 1.6;
 export const ACT_ROCK_TONES = [GREY[10], GREY[9], GREY[8]];
 export const ACT_SOUL_LIFT_S = 1.5;          // out of the wreck, fading in
-export const ACT_SOUL_PX_S = P * 14;         // rising, up through the tear to the cloud floor
 export const ACT_SOUL_RIM = GREY[3];         // a soul's rim, the pale grey (DESIGN.md)
 export const ACT_SOUL_PAPER = GREY[0];
 export const ACT_STAIR_TONES = [GREY[1], GREY[2], GREY[1], GREY[3]];   // the cloud stair's cells
@@ -129,3 +129,41 @@ export const MANSION_SHEET_AFTER_S = 4;
 // The pair up on the pedestal after the refusal: the road's drawing of them
 // fades off over the pedestal's own (and back on before they climb down).
 export const ACT_PEDESTAL_FADE_S = 0.6;
+
+// --- the rise, ridden (the owner's pick B, 2026-10-18) -----------------------
+// One shot from the ruin to heaven's floor: the camera rides up the road with
+// the two of them (DESIGN.md, "The rise rides up with them"). The road from
+// the tear to the cloud floor takes ACT_RIDE_S whatever its length, so their
+// pace on it is that length over this. ACT_ROAD_CLOUDS clouds are spread up
+// the road above the yard's own window, ACT_ROAD_CLOUD_W cells wide at the
+// least and the most, ACT_ROAD_CLOUD_H rows high at most; the cloud floor's
+// underside is ACT_ROAD_UNDER under the deepest the afterlife's own window
+// shows of it, and billows down ACT_ROAD_BILLOW rows more (seeded by
+// ACT_ROAD_SEED, as the floor's top is).
+export let ACT_RIDE_S = 8;
+export let ACT_ROAD_CLOUDS = 14;
+export const ACT_ROAD_CLOUD_W = [10, 24];
+export const ACT_ROAD_CLOUD_H = 4;
+export const ACT_ROAD_UNDER = P * 4;
+export const ACT_ROAD_BILLOW = 2;
+export const ACT_ROAD_SEED = 71;
+// The road's clouds are as near as the yard's nearest sheet, the camera
+// passing close by them: their tones are the yard's clouds' at this far
+// (weather.js, `roadTones`).
+export const ACT_ROAD_FAR = 0.4;
+// Across, the clouds spread over this share of the yard's window, round the
+// tear; up, each sits off its even place on the road by up to this share of
+// the step between two; each row of one is drawn in at its ends by its height
+// squared over this; and this share of their cells (and the underside's
+// shaded row) take a tone a step darker, so none is a flat slab.
+export const ACT_ROAD_SPREAD = 1.3;
+export const ACT_ROAD_JITTER = 0.6;
+export const ACT_ROAD_ROUND = 2.4;
+export const ACT_ROAD_SPECKLE = 0.25;
+
+export const ACT_KNOBS = [
+  { key: 'ACT_RIDE_S', label: 'the rise, ridden, s', min: 2, max: 30, step: 0.5,
+    get: () => ACT_RIDE_S, set: v => { ACT_RIDE_S = v; } },
+  { key: 'ACT_ROAD_CLOUDS', label: 'clouds up the road', min: 0, max: 40, step: 1,
+    get: () => ACT_ROAD_CLOUDS, set: v => { ACT_ROAD_CLOUDS = v; } }
+];

@@ -415,6 +415,16 @@ function stepLift(step) {
 // had the window, and the move starts again from the new framing.
 // A shot under way starts its move again from the new framing.
 export function dropLift() { want = 0; lift = 0; if (shotHolds()) newAim(); }
+// The limits the window is held in changed under it (the rise taking the
+// road between the yard and the afterlife, and letting it go): the move is
+// measured again off the new resting height, so the window stays exactly
+// where it stands.
+export function holdWindow(change) {
+  const y = S.camY;
+  change();
+  want = lift = y - restY();
+  clampCam();
+}
 // For the checks: whether the move has come all the way to what the subject
 // needs from the view as it stands now -- for the shot, its glide arrived.
 export function liftArrived() {
