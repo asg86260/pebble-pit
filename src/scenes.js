@@ -2995,21 +2995,21 @@ function act3Mid() {
 
 // God's pushback at a moment (`what`: 'warned', 'burn'): the opening
 // played, the crowd half won in its front files, posters along the fence and
-// a sign among the files, the speech aimed at the sign, the camera on the
-// crowd's front.
+// a sign among the files, the speech aimed at the sign, the camera where
+// the act opens.
 function pushback(what) {
   actsYard('fallen');
   window.__goPlace('after');
   const A = S.after;
   window.__afterCrowd((i, v) => (i % CROWD_FILES < 24 ? 3 + (i * 7) % 4 : v));
-  for (let s = 0; s < 12; s += 4) A.posters.push({ id: 91000 + s, slot: s, age: 0, torn: null, big: false });
-  A.signs.push({ id: 92000, f: 14, r: 1, askew: false, pull: null, big: false, age: 0 });
+  for (const s of [1, 8]) A.posters.push({ id: 91000 + s, slot: s, age: 0, torn: null, big: false });
+  A.signs.push({ id: 92000, f: 4, r: 1, askew: false, pull: null, big: false, age: 0 });
   A.speech = { next: A.t + 1e6, target: null, burnt: null };
   window.__fast(0.5);
   A.speech = { next: A.t + (what === 'warned' ? 3 : 0.6), target: { kind: 'sign', id: 92000 }, burnt: null };
   window.__fast(what === 'warned' ? 0.1 : 1.6);
   window.__holdShot();
-  pinCamera(CROWD_X0 - P * 10);
+  pinCamera(afterOpenX() - S.viewW / 2);
 }
 
 // Wake the checks' pad and hop it along the stops until it is on `id` (or,

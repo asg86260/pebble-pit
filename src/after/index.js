@@ -131,8 +131,7 @@ export const SAVE = {
   write(out) { if (S.after) syncRims(); out.after = S.after ? JSON.parse(JSON.stringify(S.after)) : null; },
   read(s) {
     const a = s.after;
-    // The wardens were dropped (track B, 2026-10-18): a save that still has
-    // them is read without.
+    // An older save's wardens, which nothing reads, are left out.
     const { wardens, ...kept } = a && typeof a === 'object' ? a : {};
     S.after = a && typeof a === 'object' ? { ...blankAfter(), ...kept, stock: { ...blankAfter().stock, ...(a.stock || {}) } } : null;
   },

@@ -223,6 +223,9 @@ const layerSpan = rate => {
 const PALETTE = () => GREY.map(c => { const m = inkOf(c); return parseInt(String(m).slice(1, 3), 16); });
 let bands = [];
 const drawn = { souls: 0, cells: 0, rewrites: 0, slices: 0 };
+let rewrote = false;
+const BUCKETS = 1024;
+const bucketOf = t => Math.min(BUCKETS - 1, Math.floor(t * BUCKETS));
 export const crowdDrawn = () => ({ ...drawn, joins: shown.joins.size, bands: bands.map(b => b && b.L) });
 function bandCanvas(k) {
   const b = SKY_BANDS[k];
@@ -240,30 +243,41 @@ function bandCanvas(k) {
       const r = hsh(i, j, k + 20);
       tone[n] = clamp(Math.round(b.tone + (j < 2 ? 1.2 : 0) + (r < 0.09 ? -1 : r > 0.91 ? 1 : 0)), 0, 10);
     }
-    bc = bands[k] = { cv, g, img: g && g.createImageData ? g.createImageData(tw, th) : null, x0, tw, th, cols, rows, thr, tone, L: -1, kept: 0 };
+    // The cells by threshold, in buckets, so a move of support touches only
+    // the cells whose opacity it can change.
+    const start = new Uint32Array(BUCKETS + 1);
+    for (let n = 0; n < thr.length; n++) if (thr[n] >= 0) start[bucketOf(thr[n]) + 1]++;
+    for (let i = 0; i < BUCKETS; i++) start[i + 1] += start[i];
+    const order = new Uint32Array(start[BUCKETS]), fill = start.slice(0, BUCKETS);
+    for (let n = 0; n < thr.length; n++) if (thr[n] >= 0) order[fill[bucketOf(thr[n])]++] = n;
+    bc = bands[k] = { cv, g, img: g && g.createImageData ? g.createImageData(tw, th) : null, x0, tw, th, cols, rows, thr, tone,
+                      start, order, al: new Uint8Array(cols * rows), L: -1, kept: 0 };
   }
+  // One band's cells written a frame at most, a new one's always: while
+  // support moves, the bands take turns rather than all landing on one frame.
   const L = snap(bandL(k), SKY_REDRAW_STEP);
-  if (bc.L !== L) {
-    let kept = 0;
-    if (bc.img) {
-      const pal = PALETTE(), px = new Uint32Array(bc.img.data.buffer);
-      px.fill(0);
-      for (let j = 0; j < bc.rows; j++) for (let i = 0; i < bc.cols; i++) {
-        const n = j * bc.cols + i, t = bc.thr[n];
-        if (t < 0) continue;
-        const a = keep(t, L);
-        if (a <= 0) continue;
-        kept += a;
-        const gv = pal[bc.tone[n]], word = ((Math.round(a * 255) << 24) | (gv << 16) | (gv << 8) | gv) >>> 0;
-        const ox = i * b.cp + (b.st && (j % 2) ? b.st : 0), oy = j * b.cp;
-        for (let y = 0; y < b.hs && oy + y < bc.th; y++) {
-          const row = (oy + y) * bc.tw;
-          for (let x = 0; x < b.hs; x++) if (ox + x < bc.tw) px[row + ox + x] = word;
-        }
+  if (bc.L !== L && (bc.L < 0 || !rewrote)) {
+    rewrote = true;
+    const soft = SKY_KEEP_SOFT, full = bc.L < 0;
+    const lo = full ? 0 : Math.min(bc.L, L) * (1 + soft) - soft, hi = full ? 1 : Math.max(bc.L, L) * (1 + soft);
+    const b0 = bucketOf(Math.max(0, lo)), b1 = bucketOf(Math.min(1, hi));
+    const pal = PALETTE(), px = bc.img ? new Uint32Array(bc.img.data.buffer) : null;
+    for (let o = bc.start[b0]; o < bc.start[b1 + 1]; o++) {
+      const n = bc.order[o], byte = Math.round(keep(bc.thr[n], L) * 255);
+      if (byte === bc.al[n]) continue;
+      bc.kept += (byte - bc.al[n]) / 255;
+      bc.al[n] = byte;
+      if (!px) continue;
+      const i = n % bc.cols, j = (n - i) / bc.cols, gv = pal[bc.tone[n]];
+      const word = byte ? ((byte << 24) | (gv << 16) | (gv << 8) | gv) >>> 0 : 0;
+      const ox = i * b.cp + (b.st && (j % 2) ? b.st : 0), oy = j * b.cp;
+      for (let y = 0; y < b.hs && oy + y < bc.th; y++) {
+        const row = (oy + y) * bc.tw;
+        for (let x = 0; x < b.hs; x++) if (ox + x < bc.tw) px[row + ox + x] = word;
       }
-      bc.g.putImageData(bc.img, 0, 0);
     }
-    bc.L = L; bc.kept = kept;
+    if (px) bc.g.putImageData(bc.img, 0, 0);
+    bc.L = L;
     drawn.rewrites++;
   }
   return bc;
@@ -874,7 +888,7 @@ export function drawSkyCrowd() {
   camFrame();
   freshCaches();
   lastDt = stepShown();
-  drawn.cells = 0; drawn.slices = 0;
+  drawn.cells = 0; drawn.slices = 0; rewrote = false;
   EV = eventsNow();
   RINGS = ringsNow();
   GZ = gazeNow();
