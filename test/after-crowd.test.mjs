@@ -72,8 +72,9 @@ group('a 24,000-soul crowd steps and draws in a couple of milliseconds a frame',
   return [ok(ms < 2, 'the afterlife\'s step and the whole sky\'s drawing with 24000 souls stay within two milliseconds a frame', `${ms.toFixed(3)} ms`)];
 });
 
-// Souls thin one by one as support rises, the far bands first, and a scatter
-// of the near band stands at the strike.
+// The bands sink as support rises, the far one first (DESIGN.md, "The sky,
+// redrawn flat"), so fewer souls stand in view, and a low strip of the near
+// band stands at the strike.
 group('the crowd thins as support rises', async () => {
   up();
   lookAt(afterOpenX());

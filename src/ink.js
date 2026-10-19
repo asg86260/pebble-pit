@@ -22,13 +22,12 @@
 // - 'deep', for the deep's whole half: the same turn between the old dark
 //   page's charcoal and light gray. The deep was drawn for that, as a dark
 //   field on either page, and it is left as it was.
-// - 'after', for act 3's layers (render.js, AFTER): black still black and
-//   white still the paper, but the act's two greys stood up off the paper
-//   rather than squeezed between it and the ink. The act is drawn in four
-//   tones and no others (config, AFTER_TONES), and the yard's map puts all
-//   four inside the paper's quarter of the range, a murk at 1x. Here they
-//   sit an equal lightness step apart, the step the paper already is above
-//   the ink: ink, paper, pale, mid, at 0, 1, 2 and 3 steps (`afterSpread`).
+// - 'after', for act 3's layers (render.js, AFTER): the act is drawn in four
+//   tones and no others (config, AFTER_TONES), and the yard's map would put
+//   all four inside the paper's quarter of the range, a murk at 1x. Here
+//   they are the light page's order turned (AFTER_DARK, `afterSpread`): the
+//   paper a near-black, pale and mid a step above it each, the ink lightest,
+//   and God's raw white over them all.
 //
 // Two tags decide a color at the call, past the map, as `raw` does:
 // `light(c)` for a thing that shines (a lit window, the portal, a fire),
@@ -44,7 +43,7 @@
 // cached on a scratch canvas was drawn in the palette of the moment, and
 // the palette cannot be changed under it.
 
-import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, DEEP_PAPER, DEEP_INK, GREY, AFTER_TONES } from './config.js';
+import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, DEEP_PAPER, DEEP_INK, GREY, AFTER_TONES, AFTER_DARK } from './config.js';
 import { theme } from './prefs.js';
 
 const look = theme();
@@ -91,7 +90,7 @@ function fromHsl(h, s, l) {
 const DEEP_ENDS = [lightOf(DEEP_PAPER), lightOf(DEEP_INK)];
 const ENDS = dim ? { yard: DEEP_ENDS, line: DEEP_ENDS, deep: DEEP_ENDS, after: DEEP_ENDS } : {
   yard: [lightOf(DARK_PAPER), 0],
-  after: [lightOf(DARK_PAPER), 0],
+  after: [lightOf(AFTER_DARK.paper), lightOf(AFTER_DARK.ink)],
   line: [lightOf(DARK_PAPER), lightOf(DARK_INK)],
   deep: DEEP_ENDS,
 };
@@ -99,21 +98,15 @@ const ENDS = dim ? { yard: DEEP_ENDS, line: DEEP_ENDS, deep: DEEP_ENDS, after: D
 // the spread of its channels, faded in between the two so no hue jumps.
 const DULL = 0.22, KEPT = 0.42;
 
-// Act 3's dark spread: where each of its four tones lands, as lightness, for
-// a paper of lightness `p`. One step is the paper's own height over the ink,
-// and pale and mid climb on past the paper by that step each, so every pair
-// of neighbors is the same distance apart and the lightest, mid, is three
-// times the paper -- under the light ink and God's raw white, which stays the
-// brightest thing in the act. A paper too light for three steps
-// would have them shared out between it and white instead.
-export function afterSpread(p) {
-  const step = Math.min(p, (1 - p) / 3);
-  return { ink: 0, paper: p, pale: p + step, mid: p + 2 * step };
-}
+// Act 3's dark spread: where each of its four tones lands, as lightness
+// (AFTER_DARK). The light page's order turned: the paper darkest, then pale,
+// mid and the ink, each a clear step above the last, all well under God's
+// raw white, which stays the brightest thing in the act.
+export const afterSpread = () => Object.fromEntries(Object.entries(AFTER_DARK).map(([k, c]) => [k, lightOf(c)]));
 // The map as knots, written lightness to drawn lightness, from the darkest:
 // a tone between two of the four lands between theirs.
 const AFTER_KNOTS = (() => {
-  const to = afterSpread(lightOf(DARK_PAPER));
+  const to = afterSpread();
   return Object.entries(AFTER_TONES).map(([k, i]) => [lightOf(GREY[i]), to[k]]).sort((a, b) => a[0] - b[0]);
 })();
 function afterLight(l) {

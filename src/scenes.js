@@ -31,6 +31,7 @@ import { sweep } from './hands.js';
 import { windowS, startMeal, landAt } from './deep/meals.js';
 import { startleFauna, faunaWhen } from './deep/fauna.js';
 import { nextWave } from './render/deepwave.js';
+import { skyMoment } from './render/aftercrowd.js';
 import { buildStation, nextSlot } from './deep/party.js';
 import { lookAt } from './deep/rails.js';
 import { press as pressBuildButton } from './deep/buildbutton.js';
@@ -629,6 +630,15 @@ function heavenAt(share, pan = 0, what = null) {
   window.__fast(wait);
   const a = afterOpenX(), cx = a + (afterEnd() - a) * pan;
   window.__look(cx - S.viewW / 2); window.__fast(1 / 30); window.__holdShot();
+}
+
+// The sky a tenth of the way to the strike, its clock run on a tick at a
+// time until `want` says the line and his turns are at the moment, held.
+function heavenTurn(want) {
+  heavenAt(0.1);
+  window.__holdShot(0);
+  for (let k = 0; k < 2400 && !want(skyMoment()); k++) window.__fast(0.25);
+  window.__holdShot();
 }
 
 const snatchAt = (phase, into = 0, pin = false) => () => {
@@ -3027,6 +3037,13 @@ export const SCENES = {
     run: () => heavenAt(0.1, 0, 'roar') },
   'heaven-unmasked': { about: 'the acts', say: 'God unmasked, once the unmask beat has played: the horns, the lids lifted into slits, the smile gone',
     run: () => { heavenAt(0.1, 1, 'roar'); if (!S.beatsDone.includes('unmask')) S.beatsDone.push('unmask'); window.__fast(1 / 30); } },
+  // The flat sky's turns (DESIGN.md, "The sky, redrawn flat"): the clock run
+  // on to a soul on the top step mid-blessing, and to God glaring round the
+  // crowd while the line waits on its steps.
+  'heaven-bless': { about: 'the acts', say: 'a soul blessed on the top step of the throne\'s base: both hands in, its square edged in his light, short rays standing out',
+    run: () => heavenTurn(m => m.bless != null && m.bless >= 0.4 && m.bless < 0.6 && m.glare === 0) },
+  'heaven-glare': { about: 'the acts', say: 'God glaring round the crowd: the cone from his lit eyes to a round spot on the crowd, the line waiting on its steps',
+    run: () => heavenTurn(m => m.glare === 1) },
 
   // --- the acts' connective tissue (actbeats.js, portals.js, mansion.js) --------
   // Each off a yard past the snatch with the wizards' portal up and a crew to

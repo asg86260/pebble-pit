@@ -54,9 +54,20 @@ export const GOLD = { yard: '#c99406', deep: '#f2c14e' };
 // one pale grey, one mid grey and the ink, and nothing between them, for the
 // whole of the afterlife -- stations, bodies, the sky's crowd, clouds, the
 // floor, piles, cues and bubbles. Depth in the crowd is which of the four a
-// band takes and how densely, never a fifth grey. God's light alone stands
-// outside them (render/aftercrowd.js, drawn raw). The two greys sit a third
-// of the way down from either end, so on the dark page, where the yard's map
-// squeezes paper to ink into a quarter of the range, each step is still a
-// clear one at 1x.
+// band takes, never a fifth grey. God, his light and his throne alone stand
+// outside them (render/aftercrowd.js, drawn raw, below). On the dark page
+// each lands on its step of AFTER_DARK.
 export const AFTER_TONES = { paper: 0, pale: 3, mid: 6, ink: 10 };
+
+// Act 3 on the dark page (DESIGN.md, "The sky, redrawn flat"): the same order
+// turned, each of the four tones where it lands there (src/ink.js, the
+// 'after' map) -- the paper darkest, the ink lightest, a clear step between
+// each. God and his light stay white, the brightest thing on the page.
+export const AFTER_DARK = { paper: '#121212', pale: '#262626', mid: '#3a3a3a', ink: '#666666' };
+// The sky's tones outside the four, drawn raw: God's throne and base, black
+// on the light page and on the dark a step above the near crowd; the souls of
+// the line, pale on the light page and the light grey on the dark; and the
+// gaze's edge, one grey on both pages, a step off his white and the dark.
+export const AFTER_SEAT_DARK = '#4a4a4a';
+export const AFTER_LINE_DARK = '#9a9a9a';
+export const AFTER_GAZE_EDGE = '#8a8a8a';
