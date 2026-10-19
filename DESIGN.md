@@ -20812,12 +20812,7 @@ act3-union2, act3-level and act3-flaglogo cards; `docs/mocks/act3-level-2026-10-
   (a band's extent ends short of them, whatever its parallax).
 - **The pedestal moves to the union's camp, near the front.** The pair on
   top, their symbol bubbles drifting out toward God's side.
-- **The union has its own crowd again**, in groups round and behind the
-  pair, several depths deep, each at its own parallax. In front every soul
-  is its own square, a cell or two apart (ink); each depth back the squares
-  are smaller, closer and a tone lighter, until the back groups are a pale
-  packed mass. Groups stand up a depth at a time as support rises, so the
-  crowd grows away from the pair toward the back.
+- **The union has its own crowd again**, round the pair. Its look is still in design rounds (the board's act3-ucrowd cards); the build places the pedestal in the union's camp and leaves the crowd out until it is voted.
 - **God's crowd stands in planes** (one tone each, a big step in square
   size between them), giving up ground and sinking as support rises.
 - **Signs are flags**: the union's ink, the **raised fist** in paper on
