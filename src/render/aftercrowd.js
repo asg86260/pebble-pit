@@ -724,23 +724,23 @@ function thingAt(kind, q) {
   const g = kind === 'poster' ? posterBox(q) : flagBox(q);
   return { x: g.x, y: g.y, w: g.w, h: g.h, poster: kind === 'poster' };
 }
-// The flag in one of its ripple's poses: each column a cell of the sky wide,
-// dropped by a sine along the flag, the fist riding the same ripple. `fist`
-// the fist's tone (paper; pale, then ink, as it chars).
+// The flag in one of its ripple's poses (a3flag's): columns a third of a
+// flag cell (`c` sky cells) wide, each dropped by a sine along the flag in
+// thirds of a cell, the fist riding the same ripple. `fist` the fist's tone
+// (paper; pale, then ink, as it chars).
 function flagSprite(c, phase, fist) {
   const key = `f${c}|${phase}|${fist}`;
   let pic = cache.signs.get(key);
   if (pic) return pic;
-  const FL = SKY_FLAG, cols = FL.w * c, A = Math.max(1, Math.round(FL.amp * c));
-  pic = sprite(cols * H, (FL.h * c + 2 * A) * H, fill => {
+  const FL = SKY_FLAG, U = c * H, t = U / 3, A = Math.max(1, Math.round(FL.amp * 3)), cols = FL.w * 3;
+  pic = sprite(FL.w * U, FL.h * U + 2 * A * t, fill => {
     for (let i = 0; i < cols; i++) {
-      const d = Math.round(Math.sin(i / Math.max(2, cols / 3) - phase / FL.phases * Math.PI * 2) * A), y0 = (A + d) * H;
-      fill(i * H, y0, H, FL.h * c * H, UNION_TONE);
-      const gi = Math.floor((i - FL.x * c) / c);
-      if (gi >= 0 && gi < FL.fist[0].length) FL.fist.forEach((row, j) => { if (row[gi] === 'X') fill(i * H, y0 + (FL.y + j) * c * H, H, c * H, fist); });
+      const d = Math.round(Math.sin(i / (cols / 3) - phase / FL.phases * Math.PI * 2) * FL.amp * 3), y0 = (A + d) * t;
+      fill(i * t, y0, t, FL.h * U, UNION_TONE);
+      const gi = Math.floor(i / 3) - FL.x;
+      if (gi >= 0 && gi < FL.fist[0].length) FL.fist.forEach((row, j) => { if (row[gi] === 'X') fill(i * t, y0 + (FL.y + j) * U, t, U, fist); });
     }
   });
-  pic.A = A;
   cache.signs.set(key, pic);
   return pic;
 }
@@ -772,7 +772,7 @@ function discSprite(R) {
 // The aura: a faint disc of the union's ink round the flag, and a ring of
 // ink squares on its rim turning slowly round it.
 function drawAura(g, q) {
-  const AU = SKY_AURA, R = auraR(g, (Math.floor(TK / AU.breath) + q.f) % 2), c = Math.max(1, Math.floor(SKY_BANDS[g.k].flag / 2)) * H;
+  const AU = SKY_AURA, R = auraR(g, (Math.floor(TK / AU.breath) + q.f) % 2), c = H;
   const cx = snap(g.cx, H), cy = snap(g.cy, H);
   alpha(darkPage ? AU.discDark : AU.disc, () => blit(discSprite(R), cx - R * H, cy - R * H));
   alpha(AU.ring, () => {
@@ -791,7 +791,7 @@ function drawFlags(k) {
   const t = now(), phase = TK % SKY_FLAG.phases;
   for (const q of S.after.signs) {
     if (planeOf(q) !== k) continue;
-    const g = flagBox(q), A = Math.max(1, Math.round(SKY_FLAG.amp * SKY_BANDS[k].flag)) * H;
+    const g = flagBox(q), A = Math.max(1, Math.round(SKY_FLAG.amp * 3)) * g.U / 3;
     if (!inView(g.px - 60 * H, g.w + 120 * H)) continue;
     const u = q.burnt == null ? null : clamp((t - q.burnt) / AFTER_BURN_S, 0, 1), st = u == null ? -1 : Math.floor(u * 4);
     const fist = st < 0 ? W : st === 0 ? PALE : UNION_TONE;

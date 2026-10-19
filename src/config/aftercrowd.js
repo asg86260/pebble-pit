@@ -40,10 +40,12 @@ export const SKY_FIT = 87;
 // the bank, fading out over the last `fade` of it, stopping `cap` of the way
 // (the near plane's low strip at the strike); `give`, the share of the
 // floor between the union's camp and God's camp it gives up by the strike;
-// and `flag`, the cell of a flag planted in it, in sky cells.
+// and `flag`, the cell of a flag planted in it, in sky cells (the near
+// plane's flag 2.6 of its souls across, as the level's mock has it; a far
+// one in proportion).
 export const SKY_BANDS = [
-  { top: 0.77, n: 3, up: 2, tone: 'pale', rate: 0.7, seed: 11, from: 0, span: 0.75, to: 2, fade: 0.15, cap: 1, give: 0.85, flag: 1 },
-  { top: 0.89, n: 5, up: 2, tone: 'mid', rate: 0.8, seed: 23, from: 0.25, span: 0.75, to: 4, fade: 0, cap: 0.9, give: 0.7, flag: 2 }
+  { top: 0.77, n: 3, up: 2, tone: 'pale', rate: 0.7, seed: 11, from: 0, span: 0.75, to: 2, fade: 0.15, cap: 1, give: 0.85, flag: 0.6 },
+  { top: 0.89, n: 5, up: 2, tone: 'mid', rate: 0.8, seed: 23, from: 0.25, span: 0.75, to: 4, fade: 0, cap: 0.9, give: 0.7, flag: 1 }
 ];
 // A sign stands in the plane its rank is in: this many ranks of God's crowd
 // a plane, the near plane's from the front (rank 0).
@@ -134,9 +136,10 @@ export const AFTER_GAZE_SETTLE_S = 0.9;
 export const AFTER_BURN_S = 4;
 // A sign is a flag (a3flag, emblem 1): the union's ink, `w` by `h` of its
 // plane's flag cells, the raised fist in paper `x` cells in and `y` down,
-// flying off a pole a flag cell wide, its foot `up` cells over its plane's
-// top. It ripples in held steps: a column's drop a sine along the flag, one
-// of `phases` poses a tick, `amp` flag cells at most.
+// flying off a pole a flag cell wide, its foot `up` flag cells over its
+// plane's top. It ripples in held steps: a column a third of a flag cell
+// wide, its drop a sine along the flag, one of `phases` poses a tick, `amp`
+// flag cells at most.
 export const SKY_FLAG = { w: 13, h: 11, x: 2, y: 1, up: 3, phases: 12, amp: 0.6,
   fist: ['..X.X.X..', '.XXXXXXX.', 'XXXXXXXXX', 'XXXXXXXXX', 'XXXXXXXX.', '.XXXXXX..', '..XXXX...', '..XXXX...', '..XXXX...'] };
 // A poster on the fence at the crowd's front: the flag turned, a paper sheet
@@ -146,7 +149,7 @@ export const SKY_POSTER = { w: 11, h: 13, x: 1, y: 2, up: 2 };
 // A sign's aura: a faint disc of the union's ink, `r` of the flag's width
 // across the half and `pad` cells more, breathing a cell every `breath`
 // ticks, at `disc` opacity (`discDark` on the dark page), and a ring of ink
-// squares on its rim (half a flag cell, or a sky cell), a square every other
+// squares on its rim (a sky cell each), a square every other
 // of `per` a cell of radius, turning half a square every `turn` ticks, at
 // `ring` opacity.
 export const SKY_AURA = { r: 0.9, pad: 2, breath: 4, disc: 0.14, discDark: 0.2, ring: 0.6, per: 1.2, turn: 2 };
