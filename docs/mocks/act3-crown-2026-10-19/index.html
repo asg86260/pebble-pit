@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[ph] Throne and Crown</title>
+<style>
+  :root { --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --face: ui-monospace, "Courier New", monospace; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36; } }
+  :root[data-theme="dark"] { --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--face); }
+  main { max-width: 2040px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 4px; } h2 { font-size: 15px; margin: 0 0 6px; } h3 { font-size: 13px; margin: 0 0 4px; }
+  p, li { color: var(--muted); margin: 0 0 8px; max-width: 1100px; }
+  b { color: var(--fg); }
+  .ph::before { content: "[ph] "; color: var(--muted); font-weight: normal; font-size: 11px; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; position: sticky; top: 0; background: var(--bg); padding: 6px 0; z-index: 2; }
+  .bar button { font: inherit; background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 16px; }
+  canvas { display: block; image-rendering: pixelated; max-width: 100%; height: auto; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .grid .cell { border: 1px solid var(--line); border-radius: 6px; padding: 8px; min-width: 0; }
+  .grid .cell.pick { border: 2px solid var(--fg); }
+  .grid .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .grid canvas { width: 100%; }
+  .keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 10px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+  figure { margin: 0; max-width: 100%; } figcaption { font-size: 11px; color: var(--muted); }
+  .rec { border-left: 3px solid var(--fg); padding-left: 10px; }
+  .sw { display: inline-block; width: 14px; height: 14px; border: 1px solid var(--line); vertical-align: middle; }
+  @media (max-width: 900px) { .grid, .keys { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<main>
+  <h1 class="ph">Act 3: God's throne and crown, nine combinations</h1>
+  <p class="ph">A <b>mock</b> drawn from plain shapes, not the game. God is a redraw of the built figure, face (c) serene, with his breath and the crown slipping and set straight by his left hand (held poses, the built timings). The glare, halo and rays are the built ones, simplified. The stair under every throne is take 1, the cloud switchback, as voted. Stone and cloud use four tones only: paper, pale grey, mid grey and ink. God, his crown, glare, halo and rays are raw light on both pages, so they stay the brightest things. It cannot show the camera's pan or dive, parallax, the crowd thinning, the gaze, the roar, the unmasked face or the signs.</p>
+  <div class="bar">
+    <button data-t="auto" class="on ph">auto</button><button data-t="light" class="ph">light</button><button data-t="dark" class="ph">dark</button>
+    <button id="pause" class="ph">pause</button>
+    <span class="ph" style="color:var(--muted)">palette:</span><span id="sw"></span>
+  </div>
+
+  <section class="card">
+    <h2 class="ph">The grid: rows are thrones, columns are crowns</h2>
+    <p class="ph">Each cell: left, a 1x crop of the 2000 by 967 frame (a God-cell 9 px); right, the 800 by 600 frame (a God-cell 4 px) blown up 3x. The cell with the heavy border is the pick.</p>
+    <div class="keys" id="keys"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="card">
+    <h2 class="ph" id="rec-h">The pick, full frame, with the cloud switchback</h2>
+    <figure><canvas id="rec-2000" width="2000" height="967" style="width:100%"></canvas><figcaption class="ph">2000 by 967, a God-cell 9 px</figcaption></figure>
+    <div class="row" style="margin-top:12px">
+      <figure><canvas id="rec-800" width="800" height="600"></canvas><figcaption class="ph">800 by 600, a God-cell 4 px</figcaption></figure>
+      <figure><canvas id="rec-crop" width="630" height="675"></canvas><figcaption class="ph">the 800 by 600 frame, 3x round the throne</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="ph">Self-critique, round 1 (first build, before fixes)</h2>
+    <ul id="crit1"></ul>
+    <h2 class="ph">Self-critique, round 2 (after the round 1 fixes)</h2>
+    <ul id="crit2"></ul>
+  </section>
+
+  <section class="card rec">
+    <h2 class="ph" id="pick-h"></h2>
+    <ul id="pick"></ul>
+  </section>
+</main>
+<script>
+// ---- the four tones: paper, pale, mid, ink. Dark page: by lightness onto #1f1f1f .. #e0e0e0 ----
+const FOUR = ['#ffffff', '#d6d6d6', '#8a8a8a', '#000000'];
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+const hex = v => '#' + Math.round(v).toString(16).padStart(2, '0').repeat(3);
+const MAPPED = FOUR.map(c => hex((LP + (LI - LP) * (1 - parseInt(c.slice(1, 3), 16) / 255)) * 255));
+let DARK = false;
+// tone 0..3; lit = God's light, raw on both pages
+const T = (i, lit) => (DARK && !lit ? MAPPED : FOUR)[Math.max(0, Math.min(3, i | 0))];
+const frac = v => v - Math.floor(v), snap = (v, q) => Math.round(v / q) * q, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+function hsh(a, b = 0, c = 0) { let h = (a * 374761393 + b * 668265263 + c * 2246822519) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+function vnoise(x, s) { const i = Math.floor(x), f = x - i, a = hsh(i, 0, s), b = hsh(i + 1, 0, s); return a + (b - a) * f * f * (3 - 2 * f); }
+
+let g = null;
+const R = (x, y, w, h, tone, lit) => { g.fillStyle = T(tone, lit); const X = Math.round(x), Y = Math.round(y); g.fillRect(X, Y, Math.round(x + w) - X, Math.round(y + h) - Y); };
+const alpha = (a, fn) => { const o = g.globalAlpha; g.globalAlpha = o * clamp(a, 0, 1); fn(); g.globalAlpha = o; };
+// a bitmap drawn once: fn paints it with R about (ox, oy); kept per key
+const BMP = new Map();
+function bmp(key, w, h, ox, oy, fn) {
+  let b = BMP.get(key);
+  if (!b) {
+    b = document.createElement('canvas'); b.width = w; b.height = h; b.ox = ox; b.oy = oy;
+    const keep = g; g = b.getContext('2d'); fn(ox, oy); g = keep; BMP.set(key, b);
+  }
+  return b;
+}
+
+// ---- a mask of whole cells, filled per cell and edged in ink where it meets nothing ----
+function Mask() { const m = new Map(); return { m, set(x, y, tone) { m.set(x + ',' + y, tone); }, has(x, y) { return m.has(x + ',' + y); }, get(x, y) { return m.get(x + ',' + y); }, del(x, y) { m.delete(x + ',' + y); } }; }
+function paintMask(M, X0, Y0, c, ew, edge = 3) {
+  for (const [k, tone] of M.m) { const [x, y] = k.split(',').map(Number); R(X0 + x * c, Y0 + y * c, c, c, tone); }
+  for (const k of M.m.keys()) {
+    const [x, y] = k.split(',').map(Number), px = X0 + x * c, py = Y0 + y * c;
+    if (!M.has(x, y - 1)) R(px, py, c, ew, edge);
+    if (!M.has(x, y + 1)) R(px, py + c - ew, c, ew, edge);
+    if (!M.has(x - 1, y)) R(px, py, ew, c, edge);
+    if (!M.has(x + 1, y)) R(px + c - ew, py, ew, c, edge);
+  }
+}
+
+// ---- the sky crowd, simplified (as the throne mock): six far bands, the near band, the bank ----
+const TOPS = [0.07, 0.20, 0.33, 0.45, 0.57, 0.69], BT = [0.6, 0.8, 0.95, 1.1, 1.25, 1.4], BC = [2, 2, 3, 4, 5, 8];
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+const ord = (t, i, j) => Math.floor(t) + ((BAYER[(i & 3) + 4 * (j & 3)] + 0.5) / 16 < frac(t) ? 1 : 0);
+function drawFar(W, H, top, bank) {
+  R(0, 0, W, H, 0);
+  const sky = bank - top;
+  TOPS.forEach((f, k) => {
+    const y0 = top + snap(sky * f, 6), cs = BC[k], gap = k > 2 ? 1 : 0;
+    for (let y = y0; y < bank; y += cs) for (let x = 0; x < W; x += cs) {
+      if (y === y0 && hsh(x, k, 3) < 0.4) continue;
+      const t = BT[k] + (y - y0 < 2 * cs ? 0.4 : 0);
+      R(x, y, cs - gap, cs - gap, ord(t, x / cs, y / cs));
+    }
+    if (k === 1 || k === 3 || k === 4) {
+      const sy = top + snap(sky * TOPS[k + 1], 6) - 6;
+      for (let i = 0; i < W / 6; i++) { const n = vnoise(i / 14, k + 50); if (n < 0.42) continue; const tall = 6 * Math.min(3, 1 + Math.floor((n - 0.42) * 8)); for (let j = 0; j < tall; j += 6) R(i * 6, sy - tall + j + 6, 6, 6, hsh(i, j + k, 51) < 0.3 ? 1 : 0); }
+    }
+  });
+}
+function drawNear(W, sTop, bank) {
+  const top = sTop + snap((bank - sTop) * 0.81, 6);
+  for (let row = 0, y = top; y < bank; row++, y += 15) for (let x = (row % 2) * 8 - 16; x < W; x += 16) {
+    R(x, y, 12, 12, 3); R(x + 2, y + 2, 8, 8, hsh(x, row, 68) < 0.3 ? 1 : 0);
+    R(x + 3, y + 4, 2, 2, 3); R(x + 7, y + 4, 2, 2, 3);
+  }
+}
+function drawBank(W, H, bank, floorY) {
+  for (let i = 0; i < W / 6; i++) { const tp = 2 + Math.round(vnoise(i / 5, 31) * 3 + hsh(i, 0, 32)); for (let j = tp; j < 10; j++) R(i * 6, bank - 12 + j * 6, 6, 6, hsh(i, j, 33) < 0.25 ? 1 : 0); }
+  R(0, bank + 48, W, H - bank - 48, 0);
+  R(0, floorY, W, 2, 3);
+}
+function drawLip(W, fy) {
+  for (let i = 0; i < W / 6; i++) { const tp = 1 + Math.round(vnoise(i / 4, 35) * 1.6); for (let j = -tp; j < 2; j++) R(i * 6, fy + j * 6, 6, 6, hsh(i, j, 36) < 0.25 ? 1 : 0); }
+}
+function drawCamp(floorY, campX, small) {
+  const u = small ? 3 : 6;
+  R(campX - 10 * u, floorY - 11 * u, 10 * u, 11 * u, 3); R(campX - 8 * u, floorY - 9 * u, 6 * u, 2 * u, 0); R(campX - 6 * u, floorY - 7 * u, 2 * u, 7 * u, 0);
+  for (let i = 0; i < 4; i++) { const x = campX - 18 * u - i * 5 * u; R(x, floorY - 4 * u, 3 * u, 4 * u, 3); R(x + u / 2, floorY - 3.5 * u, 2 * u, 3 * u, 0); }
+}
+
+// ---- God's light: the glare (live), the halo (a bitmap), the rays (turning) ----
+const sqOf = c => Math.max(2, snap(c * 0.67, 2));
+function haloBmp(c) {
+  const sq = sqOf(c), Rr = 23 * c;
+  return bmp(`halo|${c}`, 2 * Rr, 2 * Rr, Rr, Rr, (cx, cy) => {
+    const at = (a, d) => [snap(cx + Math.cos(a) * d, sq), snap(cy + Math.sin(a) * d, sq)];
+    const ring = (rr, thick, tone) => { const n = Math.ceil(2 * Math.PI * rr / (sq * 0.7)); for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI; for (let d = 0; d < thick; d += sq) { const [x, y] = at(a, rr + d); R(x, y, sq, sq, tone, true); } } };
+    ring(21 * c - sq, sq, 2); ring(22 * c, sq, 2); ring(21 * c, c, 0); ring(16 * c, sq, 1);
+    for (let i = 0; i < 28; i++) { const a = i / 28 * 2 * Math.PI; for (let d = 16.5 * c; d < 20 * c; d += sq) { const [x, y] = at(a, d); R(x, y, sq, sq, 1, true); } }
+  });
+}
+function godBack(x0, y0, c, t) {
+  const cx = x0 + 9 * c, cy = y0 + 6 * c, rad = 19 * c, q = c >= 6 ? 6 : 3, sq = sqOf(c);
+  alpha(0.82, () => { for (let y = -rad; y < rad; y += q) { const hw = snap(Math.sqrt(Math.max(0, rad * rad - y * y)), q); R(cx - hw, cy + y, hw * 2, q, 0, true); } });
+  const h = haloBmp(c);
+  alpha(0.8, () => g.drawImage(h, cx - h.ox, cy - h.oy));
+  const at = (a, d) => [snap(cx + Math.cos(a) * d, sq), snap(cy + Math.sin(a) * d, sq)];
+  alpha(0.9, () => {
+    for (let i = 0; i < 12; i++) {
+      const a = t * 2 * Math.PI / 50 + i / 12 * 2 * Math.PI, len = (i % 2 ? 3 : 5) * c;
+      for (let d = 23 * c; d < 23 * c + len; d += sq * 1.5) { const [x, y] = at(a, d); R(x - 2, y - 2, sq + 4, sq + 4, 2, true); R(x, y, sq, sq, 0, true); }
+    }
+  });
+}
+
+// ---- the thrones: masks in God-cells off his square's top left, four tones, ink-edged ----
+const stoneTone = (x, y, s) => hsh(x, y, s) < 0.22 ? 1 : 2;
+const box = (M, x, y, w, h, s = 71, tone) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) M.set(i, j, tone ?? stoneTone(i, j, s)); };
+// a pointed arch about his middle (x = 9): half-width w at the spring row sy, apex row ay
+function arch(w, sy, ay, each) {
+  const h = sy - ay, r = (w * w + h * h) / (2 * w);
+  for (let y = ay; y < sy; y++) {
+    const dy = sy - (y + 0.5); if (dy > r) continue;
+    const hw = w - r + Math.sqrt(r * r - dy * dy);
+    for (let x = Math.round(9 - hw); x < Math.round(9 + hw); x++) each(x, y);
+  }
+}
+// the built arms and slab, shared by the cathedral back
+function armsAndSlab(M) { box(M, -7, 18, 6, 3); box(M, 19, 18, 6, 3); box(M, -7, 21, 2, 5); box(M, 23, 21, 2, 5); box(M, -7, 26, 32, 4); }
+const THRONES = {
+  cathedral: {
+    name: 'Throne 1: tall cathedral back',
+    blurb: 'A lancet arch of stone rising behind him to a finial, with a pinnacle at each shoulder. Its middle is open: a pointed window above his head, ringed by a pale archivolt, so the glare, the inner ring of the halo and the crown are framed by the arch point. The built arms and slab below.',
+    paint(X0, Y0, c, ew) {
+      const M = Mask();
+      arch(19, 4, -19, (x, y) => M.set(x, y, stoneTone(x, y, 71)));
+      box(M, -10, 4, 38, 23);
+      box(M, 8, -21, 2, 2);                                              // the finial
+      for (const x of [-12, 28]) { box(M, x, -4, 2, 31); M.set(x === -12 ? -12 : 29, -5, 2); }   // the flanking pinnacles
+      arch(13, 3, -17, (x, y) => M.set(x, y, 1));                        // the archivolt
+      arch(11, 3, -15, (x, y) => M.del(x, y));                           // the window, open to the glare
+      for (let y = 3; y < 15; y++) { M.del(-2, y); M.del(19, y); }       // the window's jambs run down beside him
+      box(M, -10, 18, 7, 3); box(M, 21, 18, 7, 3); box(M, -10, 21, 2, 5); box(M, 26, 21, 2, 5);
+      box(M, -12, 26, 42, 4);
+      paintMask(M, X0, Y0, c, ew);
+      for (const x of [-7, 25]) R(X0 + x * c, Y0 + 4 * c, ew, 14 * c, 3);   // pilaster lines
+      for (let x = -10; x < 28; x++) if (M.has(x, 4)) R(X0 + x * c, Y0 + 4 * c, c, ew, 3);   // the string course at the spring, on the stone only
+      R(X0 - 12 * c, Y0 + 27 * c, 42 * c, ew, 3);
+    }
+  },
+  cloud: {
+    name: 'Throne 2: cloud throne',
+    blurb: 'The back, arms and seat are billows of cloud, each puff its own ink-edged lobe, laid back to front so the seams read as a heap, pale with paper flecks and a mid-grey shadow under every lobe, the same treatment as the switchback cliff it sits on.',
+    paint(X0, Y0, c, ew) {
+      // back to front: the crest, the shoulders, the flanks, the arms, then the seat
+      const P = [[9, -7, 8], [-1, -1, 7.5], [19, -1, 7.5], [-8, 8, 7], [26, 8, 7], [9, 10, 13],
+                 [-9, 20, 5], [27, 20, 5], [-9, 27, 4], [-1, 27.5, 4.5], [9, 27, 4.5], [19, 27.5, 4.5], [27, 27, 4]];
+      P.forEach(([px, py, r], k) => {
+        const M = Mask();
+        for (let y = Math.floor(py - r); y <= py + r; y++) for (let x = Math.floor(px - r); x <= px + r; x++) {
+          if ((x + 0.5 - px) ** 2 + (y + 0.5 - py) ** 2 > r * r) continue;
+          M.set(x, y, hsh(x, y, 45 + k) < 0.12 ? 0 : 1);
+        }
+        // a shadow under the lobe: the cells near its lower rim
+        for (const key of [...M.m.keys()]) { const [x, y] = key.split(',').map(Number); if (!M.has(x, y + 2) && (x + 0.5 - px) ** 2 + (y + 0.5 - py) ** 2 > (r - 1.6) ** 2) M.set(x, y, 2); }
+        paintMask(M, X0, Y0, c, ew);
+      });
+    }
+  },
+  block: {
+    name: 'Throne 3: simple block seat',
+    blurb: 'A plain stone seat: one wide block under him and a low slab of back that stops at his cheeks, a pale chamfer along each top edge. Nothing rises past his face, so above the shoulders there is only God, the crown, the glare and the halo.',
+    paint(X0, Y0, c, ew) {
+      const back = Mask(), seat = Mask();
+      box(back, -7, 9, 32, 14); box(back, -7, 9, 32, 1, 0, 1);
+      box(seat, -10, 21, 38, 9); box(seat, -10, 21, 38, 1, 0, 1);
+      paintMask(back, X0, Y0, c, ew); paintMask(seat, X0, Y0, c, ew);
+      R(X0 - 10 * c, Y0 + 27 * c, 38 * c, ew, 3);
+    }
+  }
+};
+function throneBmp(key, c, ew) {
+  return bmp(`throne|${key}|${c}|${DARK}`, 44 * c, 60 * c, 12 * c, 26 * c, (X0, Y0) => THRONES[key].paint(X0, Y0, c, ew));
+}
+
+// ---- the crowns, in God-cells; 'top' is his breath, 'tilt' the slip (the left half a cell down) ----
+// Each returns the cells of its ink-outlined white body, plus any extra marks, and the point
+// his left hand takes it by.
+const SPIRES = [
+  '........##........',
+  '........##........',
+  '.......####.......',
+  '....#..####..#....',
+  '...###.####.###...',
+  '.#.###.####.###.#.',
+  '.#.###.####.###.#.',
+  '.#.###.####.###.#.',
+  '.################.',
+  '.################.'];
+const CROWNS = {
+  spires: {
+    name: 'Crown A: tall spires',
+    blurb: "Five points off a two-cell band, the middle one tall with a broad shaft, the outer pair short: the built crown's three points made taller and five. The slip drops its left half a cell, so the middle spire breaks.",
+    draw(L, c, top, tilt, t, X0, Y0) {
+      const cells = [];
+      SPIRES.forEach((row, j) => { for (let x = 0; x < 18; x++) if (row[x] === '#') cells.push([x, -11 + j + top + (tilt && x < 9 ? 1 : 0)]); });
+      cells.forEach(([x, y]) => L(x - 1, y - 1, 3, 3, 3)); cells.forEach(([x, y]) => L(x, y, 1, 1, 0));
+      L(8, -2 + top, 2, 1, 3);
+      return [-2, -4 + top];
+    }
+  },
+  circlet: {
+    name: 'Crown B: circlet with a gem',
+    blurb: 'A slim grey band round his brow, three cells under the top of his head, with one white jewel at the front in an ink lozenge that catches a glint now and then. It slips as one piece, the left end a cell down, and it is the only crown that sits on the face, not over it.',
+    draw(L, c, top, tilt, t, X0, Y0) {
+      const y0 = 2 + top, d = x => (tilt && x < 9 ? 1 : 0);
+      for (let x = -1; x < 19; x++) L(x, y0 - 1 + d(x), 1, 3, 3);
+      for (let x = 0; x < 18; x++) L(x, y0 + d(x), 1, 1, 2);
+      // the gem: a lozenge of ink round a white heart, on the band's middle
+      const gy = y0 - 1 + (tilt ? 1 : 0);
+      L(8, gy - 1, 2, 1, 3); L(7, gy, 4, 3, 3); L(8, gy + 3, 2, 1, 3);
+      L(8, gy, 2, 3, 0); L(9, gy + 2, 1, 1, 1);
+      // the glint, faded in and out every five seconds
+      const gp = frac(t / 5), ga = gp < 0.16 ? Math.sin(gp / 0.16 * Math.PI) : 0;
+      if (ga > 0.02) alpha(ga, () => {
+        const sx = X0 + 8 * c - c / 2, sy = Y0 + gy * c, a = Math.max(1, c / 3 | 0);
+        R(sx - 2 * c, sy + c / 2 - a / 2 - a, 4 * c + 2 * c, 3 * a, 3, true); R(sx + c - a * 1.5, sy - 2 * c, 3 * a, 4 * c + c, 3, true);
+        R(sx - 2 * c + a, sy + c / 2 - a / 2, 4 * c + 2 * c - 2 * a, a, 0, true); R(sx + c - a / 2, sy - 2 * c + a, a, 4 * c + c - 2 * a, 0, true);
+      });
+      return [-3, y0 - 1];
+    }
+  },
+  halo: {
+    name: 'Crown C: halo-crown',
+    blurb: "A ring of light seen edge on, floating over his head, with five short points standing on its back rim; from each point a dotted ray runs out to the big halo, so the crown is the halo's hub. There is no metal: it reads holy rather than royal. The slip tilts the ring, its left end a cell down.",
+    draw(L, c, top, tilt, t, X0, Y0) {
+      const cy = -4 + top, cells = new Set(), add = (x, y) => cells.add(x + ',' + y);
+      for (let i = 0; i < 64; i++) {
+        const a = i / 64 * 2 * Math.PI, x = Math.floor(9 + Math.cos(a) * 9.6), y = Math.round(cy + Math.sin(a) * 1.2);
+        add(x, y + (tilt && x < 9 ? 1 : 0));
+      }
+      const pts = [[1, 2], [5, 3], [8, 4], [9, 4], [12, 3], [16, 2]];
+      for (const [x, h] of pts) for (let k = 1; k <= h; k++) add(x, cy - 1 - k + (k === h && (x === 8 || x === 9) ? 0 : 0) + (tilt && x < 9 ? 1 : 0));
+      const list = [...cells].map(s => s.split(',').map(Number));
+      list.forEach(([x, y]) => L(x - 1, y - 1, 3, 3, 3)); list.forEach(([x, y]) => L(x, y, 1, 1, 0));
+      // the rays: from each point's tip out along the halo's radius to the ring at 21 cells
+      const sq = sqOf(c), hx = X0 + 9 * c, hy = Y0 + 6 * c;
+      alpha(0.85, () => {
+        for (const [x, h] of [[1, 2], [5, 3], [8.5, 4], [12, 3], [16, 2]]) {
+          const px = X0 + (x + 0.5) * c, py = Y0 + (cy - 1 - h + (tilt && x < 9 ? 1 : 0)) * c;
+          const dx = px - hx, dy = py - hy, d0 = Math.hypot(dx, dy), ux = dx / d0, uy = dy / d0;
+          for (let d = d0 + 1.5 * c; d < 20.5 * c; d += sq * 1.5) {
+            const x1 = snap(hx + ux * d, sq), y1 = snap(hy + uy * d, sq);
+            R(x1 - 2, y1 - 2, sq + 4, sq + 4, 2, true); R(x1, y1, sq, sq, 0, true);
+          }
+        }
+      });
+      return [-3, cy - 1];
+    }
+  }
+};
+
+// ---- God himself, the built figure: square, face (c) serene, robe, hands; the crown by key ----
+function godFigure(x0, y0, c, p, crownKey, t) {
+  const L = (x, y, w, h, tone) => R(x0 + x * c, y0 + y * c, w * c, h * c, tone, true);
+  const top = -p.breath;
+  L(0, top, 18, 18 - top, 3); L(1, top + 1, 16, 16 - top, 0);
+  for (let y = top + 1; y < 15; y++) for (let x = 1; x < 17; x++) if (hsh(x, y, 72) < 0.06) L(x, y, 1, 1, 1);
+  const ey = 7 + top;
+  for (const ox of [3, 11]) { L(ox, ey, 4, 1, 3); L(ox + 1 + p.glance, ey + 1, 2, 1, 3); }
+  L(6, 12 + top, 1, 1, 3); L(7, 13 + top, 4, 1, 3); L(11, 12 + top, 1, 1, 3);
+  for (let y = 15; y < 30; y++) {
+    const half = 9 + Math.floor((y - 15) / 3);
+    L(9 - half, y, half * 2, 1, 3);
+    for (let x = 9 - half + 1; x < 9 + half - 1; x++) L(x, y, 1, 1, hsh(x, y, 73) < 0.3 ? 0 : 1);
+    L(8, y, 2, 1, y === 15 ? 3 : 0);
+  }
+  L(0, 15, 18, 1, 3);
+  const grip = CROWNS[crownKey].draw(L, c, top, p.tilt, t, x0, y0);
+  const hl = [[-6, 15], [-5, 6], grip][p.hand];
+  L(hl[0], hl[1], 4, 3, 3); L(hl[0] + 1, hl[1] + 1, 2, 1, 0);
+  L(20, 15, 4, 3, 3); L(21, 16, 2, 1, 0); for (let f = 0; f < 3; f++) L(20 + f, 18 - (p.finger === f ? 1 : 0), 1, 1, 3);
+}
+// the built idle: GOD_IDLE = { breath_s: 4.6, drum_s: 3.2, crown_s: 11 }
+function poseAt(t) {
+  const breath = frac(t / 4.6) < 0.45 ? 1 : 0;
+  const dp = frac(t / 3.2) * 3.2, finger = dp < 0.9 ? Math.floor(dp / 0.15) % 3 : -1;
+  const cp = ((t - 4) % 11 + 11) % 11;
+  let tilt = 0, hand = 0;
+  if (cp < 3) tilt = 1; else if (cp < 3.3) { tilt = 1; hand = 1; } else if (cp < 3.7) hand = 2; else if (cp < 4.0) hand = 1;
+  const gp = frac(t / 7), glance = gp < 0.2 ? -1 : gp > 0.55 && gp < 0.75 ? 1 : 0;
+  return { breath, finger, tilt, hand, glance };
+}
+
+// ---- the cloud switchback, take 1 as voted (copied from the throne mock) ----
+function makePath(pts) { let L = 0; pts.forEach((p, i) => { if (i) L += Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y); p.L = L; }); return pts; }
+function pathAt(path, u) {
+  const d = u * path[path.length - 1].L;
+  for (let i = 1; i < path.length; i++) if (d <= path[i].L || i === path.length - 1) {
+    const a = path[i - 1], b = path[i], k = clamp((d - a.L) / Math.max(1e-6, b.L - a.L), 0, 1);
+    let x = lerp(a.x, b.x, k), y = lerp(a.y, b.y, k);
+    if (b.kind === 'stair') { const n = Math.abs(b.y - a.y), sy = Math.sign(b.y - a.y); y = a.y + sy * Math.min(n, Math.floor(Math.abs(x - a.x)) + 1); if (k <= 0) y = a.y; }
+    return { x, y, dir: Math.sign(b.x - a.x) || 1 };
+  }
+  return { ...path[0], dir: 1 };
+}
+function carrier(x, y, sz, dir, i, loadA, a, t) {
+  sz = Math.max(4, snap(sz, 2));
+  const bw = sz, bh = Math.round(sz * 0.75), rim = sz >= 10 ? 2 : 1, up = Math.floor(t * 4 + i) % 2;
+  const X = Math.round(x - bw / 2), Y = Math.round(y - bh - up);
+  alpha(a, () => {
+    R(X, Y, bw, bh, 3);
+    const hs = Math.max(2, snap(sz * 0.4, 1));
+    R(dir > 0 ? X + bw - 1 : X - hs + 1, Y + bh - hs - 1, hs, hs, 3);
+    alpha(loadA, () => {
+      if (i % 3 === 0) { const ls = Math.round(sz * 0.8), lx = X + Math.round((bw - ls) / 2), ly = Y - ls + 1; R(lx, ly, ls, ls, 3); R(lx + rim, ly + rim, ls - 2 * rim, ls - 2 * rim, 0); }
+      else { const pl = Math.round(sz * 1.8), th = Math.max(2, Math.round(sz / 4)); R(X + Math.round(bw / 2 - pl / 2), Y - th, pl, th, 3); if (th > 2) R(X + Math.round(bw / 2 - pl / 2) + 1, Y - th + 1, pl - 2, th - 2, 2); }
+    });
+  });
+}
+function switchback(foot, campC) {
+  const h = foot - 30, K = clamp(Math.round(h / 6.5) - 1, 1, 3), p = Math.round(h / (K + 1));
+  const s = Array.from({ length: K + 1 }, (_, k) => 30 + k * p), L = -20, Rt = 3, E = -9;
+  const n = foot - s[K], dir = k => k % 2 ? -1 : 1;
+  const cloud = Mask(), stone = Mask(), tread = new Set(), T2 = (x, y) => tread.add(x + ',' + y);
+  for (let y = 30; y <= foot; y++) { const xl = L - 1 - Math.floor(vnoise(y / 2.2, 44) * 3); for (let x = xl; x < 4; x++) cloud.set(x, y, hsh(x, y, 45) < 0.12 ? 0 : 1); }
+  for (let x = L - 3; x < L; x++) if (vnoise(x / 1.5, 46) > 0.35) cloud.set(x, 29, 1);
+  for (let x = L; x < -7; x++) T2(x, s[0]);
+  for (let k = 1; k <= K; k++) {
+    const x0 = dir(k) > 0 ? (k === K ? L + p - n : L) : L + p, x1 = dir(k) > 0 ? Rt - p + 1 : (k === K ? Rt + 2 - n : Rt + 1);
+    for (let x = x0; x < x1; x++) T2(x, s[k]);
+    for (let j = 0; j < p; j++) T2(dir(k) > 0 ? Rt - p + 1 + j : L + p - 1 - j, s[k] - (j + 1));
+  }
+  for (let j = 0; j < n; j++) T2(dir(K) > 0 ? L + p - n + j : Rt - j, foot - (j + 1));
+  box(stone, 4, 30, 10, foot + 1 - 30, 70);
+  const P = [{ x: campC, y: foot }];
+  if (dir(K) > 0) P.push({ x: L + p - n, y: foot, kind: 'walk' }, { x: L + p, y: s[K], kind: 'stair' });
+  else P.push({ x: Rt + 1, y: foot, kind: 'walk' }, { x: Rt + 1 - n, y: s[K], kind: 'stair' });
+  for (let k = K; k >= 1; k--) {
+    if (dir(k) > 0) P.push({ x: Rt - p + 1, y: s[k], kind: 'walk' }, { x: Rt + 1, y: s[k - 1], kind: 'stair' });
+    else P.push({ x: L + p, y: s[k], kind: 'walk' }, { x: L, y: s[k - 1], kind: 'stair' });
+  }
+  P.push({ x: E, y: s[0], kind: 'walk' });
+  return {
+    path: makePath(P), end: { x: E, y: s[0] - 2 },
+    struct(X0, Y0, c, ew) {
+      paintMask(stone, X0, Y0, c, ew);
+      for (let y = 34; y + 3 < foot; y += 6) R(X0 + 8 * c, Y0 + y * c, c, 3 * c, 3);
+      paintMask(cloud, X0, Y0, c, ew);
+      const on = (x, y) => tread.has(x + ',' + y);
+      for (const k of tread) { const [x, y] = k.split(',').map(Number); if (!on(x, y + 1) && cloud.has(x, y + 1)) R(X0 + x * c, Y0 + (y + 1) * c, c, c, 2); }
+      for (const k of tread) {
+        const [x, y] = k.split(',').map(Number), px = X0 + x * c, py = Y0 + y * c;
+        R(px, py, c, c, 0); R(px, py, c, ew, 3);
+        if (on(x + 1, y + 1)) R(px + c - ew, py, ew, c, 3);
+        if (on(x - 1, y + 1)) R(px, py, ew, c, 3);
+      }
+    }
+  };
+}
+function line(path, X0, Y0, c, t, size) {
+  const total = path[path.length - 1].L, N = Math.max(6, Math.floor(total / 5)), lap = total / 0.9;
+  for (let i = 0; i < N; i++) {
+    const u = frac(i / N + t / lap), q = pathAt(path, u), sz = lerp(size[0], size[1], u);
+    const a = clamp(u / 0.02, 0, 1) * clamp((1 - u) / 0.04, 0, 1), loadA = clamp((0.95 - u) / 0.05, 0, 1);
+    carrier(X0 + q.x * c, Y0 + q.y * c, sz, q.dir, i, loadA, a, t);
+  }
+}
+function titheGlare(X, Y, c) {
+  const rad = 4 * c, q = c >= 6 ? 3 : 2;
+  alpha(0.92, () => { for (let y = -rad; y < rad; y += q) { const hw = Math.sqrt(Math.max(0, rad * rad - y * y)); R(snap(X - hw, q), Y + y, snap(hw * 2, q), q, 0, true); } });
+}
+
+// ---- a frame at the game's framing (read off the built shots, as the throne mock) ----
+const FRAMES = {
+  2000: { W: 2000, H: 967, top: 105, floorY: 727, bank: 625, c: 9, ew: 3, campX: 860, small: false },
+  800: { W: 800, H: 600, top: 8, floorY: 358, bank: 288, c: 4, ew: 2, campX: 245, small: true }
+};
+for (const f of Object.values(FRAMES)) {
+  f.x0 = snap(f.W * 0.62 - 9 * f.c, f.c); f.y0 = f.top + snap((f.bank - f.top) * 0.03 + 19 * f.c, f.c);
+  const footY = f.bank + Math.round(0.3 * (f.floorY - f.bank)); f.foot = Math.round((footY - f.y0) / f.c);
+  f.sb = switchback(f.foot, (f.campX - f.x0) / f.c); f.size = [Math.max(7, 1.5 * f.c), Math.max(5, 1.1 * f.c)];
+}
+// draw frame `fk` into ctx `cx` with (sx, sy) of the frame at the canvas's top left
+function scene(cx, fk, throne, crown, t, sx = 0, sy = 0) {
+  const f = FRAMES[fk], { W, H, c, ew, x0, y0 } = f;
+  g = cx; g.setTransform(1, 0, 0, 1, -sx, -sy); g.imageSmoothingEnabled = false;
+  g.drawImage(bmp(`far|${fk}|${DARK}`, W, H, 0, 0, () => drawFar(W, H, f.top, f.bank)), 0, 0);
+  godBack(x0, y0, c, t);
+  g.drawImage(bmp(`near|${fk}|${DARK}`, W, H, 0, 0, () => { drawNear(W, f.top, f.bank); drawBank(W, H, f.bank, f.floorY); }), 0, 0);
+  const sb = bmp(`sb|${fk}|${DARK}`, 60 * c, (f.foot - 25) * c, 30 * c, -28 * c, (X0, Y0) => f.sb.struct(X0, Y0, c, ew));
+  g.drawImage(sb, x0 - sb.ox, y0 - sb.oy);
+  const th = throneBmp(throne, c, ew);
+  g.drawImage(th, x0 - th.ox, y0 - th.oy);
+  godFigure(x0, y0, c, poseAt(t), crown, t);
+  line(f.sb.path, x0, y0, c, t, f.size);
+  titheGlare(x0 + f.sb.end.x * c, y0 + f.sb.end.y * c, c);
+  g.drawImage(bmp(`lip|${fk}|${DARK}`, W, H, 0, 0, () => { drawLip(W, y0 + f.foot * c); drawCamp(f.floorY, f.campX, f.small); }), 0, 0);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+// the two crops: 560 by 590 of the 2000 frame at 1x; 190 by 215 of the 800 frame at 3x
+const CROP = { big: { w: 560, h: 600, fk: 2000 }, small: { w: 210, h: 225, fk: 800, z: 3 } };
+for (const k of Object.values(CROP)) { const f = FRAMES[k.fk]; k.sx = clamp(f.x0 + 9 * f.c - k.w / 2, 0, f.W - k.w); k.sy = k.fk === 2000 ? 60 : 0; }
+const off = document.createElement('canvas'); off.width = CROP.small.w; off.height = CROP.small.h;
+function drawCrop(cv, which, throne, crown, t) {
+  const k = CROP[which];
+  if (!k.z) return scene(cv.getContext('2d'), k.fk, throne, crown, t, k.sx, k.sy);
+  scene(off.getContext('2d'), k.fk, throne, crown, t, k.sx, k.sy);
+  const cx = cv.getContext('2d'); cx.imageSmoothingEnabled = false; cx.drawImage(off, 0, 0, cv.width, cv.height);
+}
+
+// ---- the page ----
+const PICK = { throne: 'block', crown: 'spires' };
+const live = [];
+const keys = document.getElementById('keys'), grid = document.getElementById('grid');
+for (const ck of Object.keys(CROWNS)) { const d = document.createElement('div'); d.innerHTML = `<h3 class="ph">${CROWNS[ck].name}</h3><p class="ph">${CROWNS[ck].blurb}</p>`; keys.append(d); }
+for (const tk of Object.keys(THRONES)) for (const ck of Object.keys(CROWNS)) {
+  const cell = document.createElement('div'); cell.className = 'cell' + (tk === PICK.throne && ck === PICK.crown ? ' pick' : '');
+  const n1 = Object.keys(THRONES).indexOf(tk) + 1, n2 = 'ABC'[Object.keys(CROWNS).indexOf(ck)];
+  cell.innerHTML = `<h3 class="ph">${n1}${n2}: ${THRONES[tk].name.split(': ')[1]} + ${CROWNS[ck].name.split(': ')[1]}</h3>`;
+  if (ck === 'spires') cell.innerHTML += `<p class="ph">${THRONES[tk].blurb}</p>`;
+  const pair = document.createElement('div'); pair.className = 'pair';
+  for (const which of ['big', 'small']) {
+    const k = CROP[which], cv = document.createElement('canvas');
+    cv.width = k.w * (k.z || 1); cv.height = k.h * (k.z || 1); cv.id = `g-${tk}-${ck}-${which}`;
+    pair.append(cv); live.push({ cv, draw: t => drawCrop(cv, which, tk, ck, t) });
+  }
+  cell.append(pair); grid.append(cell);
+}
+const rec = id => document.getElementById(id);
+live.push({ cv: rec('rec-2000'), draw: t => scene(rec('rec-2000').getContext('2d'), 2000, PICK.throne, PICK.crown, t) });
+live.push({ cv: rec('rec-800'), draw: t => scene(rec('rec-800').getContext('2d'), 800, PICK.throne, PICK.crown, t) });
+live.push({ cv: rec('rec-crop'), draw: t => drawCrop(rec('rec-crop'), 'small', PICK.throne, PICK.crown, t) });
+const sw = document.getElementById('sw');
+function swatches() { sw.innerHTML = [0, 1, 2, 3].map(i => `<span class="sw" style="background:${T(i)}"></span>`).join(' '); }
+
+const CRIT1 = [
+  "Throne 1 read as long grey hair, not architecture. The arch was no wider than his robe, so it hugged his head like a hood. It is now wider than the robe, with pinnacles standing free at each side, pilaster lines, a string course at the spring, and the window carried down beside his head as two slits, so it reads as a doorway he sits in.",
+  "Throne 1's string course was one ink line drawn across the whole width, so it ran through the open window as a stray hairline. It is now drawn only on stone cells.",
+  "Throne 2 read as a judge's wig: small round puffs hugging his cheeks were curls. The lobes are now fewer and larger and set further out, with one big lobe behind his body, so they read as a cloud bank more than a hairdo. It still leans that way; see round 2.",
+  "Throne 3's back and seat were no wider than the robe, so all that showed was two grey posts by his elbows, the built arms again. Both are now wider than the robe at the hem, so the block reads as a seat.",
+  "Crown B sat low across his brow in three heavy rows, and with the gem it read as goggles. It now sits a row higher with a smaller lozenge, four cells wide, not six.",
+  "Crown C was a wide, thick ellipse and read as a dish or a flying saucer with spikes. The ring is now narrower than his head plus a cell each side and flatter. The points are thinner, and the rays out to the halo are drawn denser.",
+  "The 800 by 600 crop at 3x cut off his seat and the halo's sides. It is wider and taller now."
+];
+const CRIT2 = [
+  "Crown C on the light page: the rays out to the halo are raw white on paper, so they barely show, and without them the halo-crown is just a crown with a brim. The idea only reads on the dark page. On the light page its one advantage over A is gone.",
+  "Crown C, in the slip: the ring tilts a cell and the points stay upright, so the slip reads as a broken plate, not a tilted halo. The gag is weaker than with A.",
+  "Crown B at 800 by 600: the band is one grey row and the gem two pixels of white. At game scale it is a headband, and the slip is a one-pixel step nobody will see. The quietest crown is also the one the straighten gag cannot carry.",
+  "Throne 2 on the dark page: cloud is mapped by lightness like stone, so the pale lobes turn dark grey and read as storm cloud or boulders. The four tones leave no lighter tone for cloud that is not God's light. On the light page it still has a hint of the wig.",
+  "Throne 1 hides the glare and most of the halo behind stone; only the window shows it. It is the grandest shape, but it competes with God for the eye, and it is the tallest throne. The finial reaches 21 cells above his square, the window's top at 2000 by 967. GOD_FIT would have to grow, which shrinks God at small windows.",
+  "Throne 3 on the dark page: the block is mid grey against a mid-grey crowd and nearly drops out at 800 by 600. An ink-heavier edge, or the pale chamfer drawn wider, would hold it. That is tuning, not a different shape.",
+  "All: the switchback is still two short ledges at 2000 by 967 at rest, as in the throne mock. No throne here changes that, and throne 1 makes the base no wider. Throne 2 is the only one whose seat melts into the cliff, which is its strongest point.",
+  "All: the halo is behind every throne. Only throne 3 leaves the whole ring and all the rays in view, and the ring is what makes his face read as an iris (the built intent)."
+];
+const PICK_TEXT = {
+  head: 'Recommendation: 3A, the simple block seat with the tall spires',
+  items: [
+    "<b>3A</b> keeps the whole halo, the glare and all twelve rays in view. The halo is the drawing's biggest shape and reads as an iris round his face. The block puts nothing above his shoulders to fight it.",
+    "<b>The spires</b> are the only crown that reads at 800 by 600, and the only one where the slip is a joke you can see from the camp: the middle spire breaks in two and the left half hangs a cell low until the hand comes up. It is also the built crown made bigger, so no new idea has to be learned.",
+    "Runner-up: <b>1A</b>, the cathedral with the spires. The window's point frames the crown perfectly, and it is the most regal picture. But it hides the halo, needs a taller fit (GOD_FIT) and adds the most stone. Take it if the owner wants him grander rather than clearer.",
+    "Not recommended: <b>C</b> only works on the dark page; <b>B</b> is lost at game scale; <b>throne 2</b> reads as a wig on the light page and as storm cloud on the dark one.",
+    "Cost of 3A: the block on the dark page needs a firmer edge (round 2). Smaller throne, so GOD_FIT could shrink and God draw a little larger at small windows. Worth measuring in the build."
+  ]
+};
+function fill() {
+  document.getElementById('crit1').innerHTML = CRIT1.map(s => `<li class="ph">${s}</li>`).join('');
+  document.getElementById('crit2').innerHTML = CRIT2.map(s => `<li class="ph">${s}</li>`).join('');
+  document.getElementById('pick-h').textContent = PICK_TEXT.head;
+  document.getElementById('pick').innerHTML = PICK_TEXT.items.map(s => `<li class="ph">${s}</li>`).join('');
+}
+fill();
+
+let t = 3, paused = false, last = performance.now();
+function frame(at = t) { for (const L of live) L.draw(at); }
+function loop(n) { const dt = Math.min(0.1, (n - last) / 1000); last = n; if (!paused) t += dt; frame(); if (!window.__manual) requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+function setTheme(m) {
+  document.querySelectorAll('[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === m));
+  if (m === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = m;
+  DARK = m === 'dark' || (m === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  swatches();
+}
+document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => setTheme(b.dataset.t));
+document.getElementById('pause').onclick = e => { paused = !paused; e.target.classList.toggle('on', paused); };
+setTheme('auto');
+// the grid as one picture, for the snaps: each cell its two crops side by side
+function gridPng() {
+  const cw = CROP.big.w + 10 + CROP.small.w * 3, ch = CROP.small.h * 3, pad = 16;
+  const out = document.createElement('canvas'); out.width = 3 * cw + 4 * pad; out.height = 3 * ch + 4 * pad;
+  const o = out.getContext('2d'); o.fillStyle = DARK ? '#141417' : '#f4f4f1'; o.fillRect(0, 0, out.width, out.height);
+  Object.keys(THRONES).forEach((tk, r) => Object.keys(CROWNS).forEach((ck, k) => {
+    const x = pad + k * (cw + pad), y = pad + r * (ch + pad);
+    o.drawImage(document.getElementById(`g-${tk}-${ck}-big`), x, y);
+    o.drawImage(document.getElementById(`g-${tk}-${ck}-small`), x + CROP.big.w + 10, y);
+    if (tk === PICK.throne && ck === PICK.crown) { o.strokeStyle = DARK ? '#e9e9ee' : '#1b1b1f'; o.lineWidth = 6; o.strokeRect(x - 5, y - 5, cw + 10, ch + 10); }
+  }));
+  return out.toDataURL('image/png');
+}
+window.mock = { setTheme, frame, manual() { window.__manual = true; }, png: id => document.getElementById(id).toDataURL('image/png'), gridPng };
+</script>
+</body>
+</html>
