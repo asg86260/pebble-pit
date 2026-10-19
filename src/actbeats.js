@@ -16,8 +16,9 @@
 // on decides the place the camera is in: when the pair walk out of one place
 // into the next, the camera follows by the ripple through the portal between
 // (view.js, `travel`), landed on the frame they will have over there, never
-// a cut -- but for the rise out of the ruin, which the camera rides up the
-// road with them in one shot (`ride`). The pair
+// a cut -- but for the rise from heaven's gates, which the camera rides up
+// the road with them in one shot (`ride`), once it has followed them up the
+// cloud stair to the gates. The pair
 // themselves only ever walk (ghosts.js). A click or the held space bar
 // hurries a beat ACT_HURRY times; nothing in it is cut.
 //
@@ -48,7 +49,7 @@ import { rideRoad, ridingRoad, PLACE_LIMITS, bandWorld, easeInOut } from './shot
 import { beatDone } from './beats.js';
 import { openPortal, freePortal, portalEnd, portalBetween, stepPortals } from './portals.js';
 import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, takeLoad, LOOP_CAGE, ghostPace, ridePace, rideLeft,
-         tear, seenAt } from './ghosts.js';
+         tear, seenAt, atGates, STAIR_POINTS } from './ghosts.js';
 import { beginMansion, mansionDone, mansionX, MANSION_W, beginGathering, gathered, stepMansion, stepGathering,
          forgetMansionHands } from './mansion.js';
 import { houseX, IN_DONE_S } from './home.js';
@@ -98,7 +99,12 @@ function makePair() {
 function pairForAct4(there = null) {
   const p = makePair();
   if (p.mode === 'soul') { p.mode = 'ghost'; p.lift = 1; }
-  // still up in the cloud: down the road first, walking
+  // still up in the cloud, or on the stair: down the road first, walking
+  // (from the stair, down from the step they were making for: `down`'s stair
+  // legs from its third on are the climb's run back)
+  if (p.at === 'climb' || (p.route === 'climb' && p.leg > 0)) {
+    sendPair('down', p.at === 'climb' ? 2 : STAIR_POINTS - p.leg + 1); p.then = 'loop'; return p;
+  }
   if (p.y < tear().y - WORKER) { if (p.route !== 'down') { sendPair('down'); p.then = 'loop'; } return p; }
   // on the loop unless already where the beat wants them
   if (!p.route && p.at !== there) sendPair('loop');
@@ -226,6 +232,9 @@ const BODIES = {
     { frame: atHouse, s: ACT_ROCK_FALL_S, skipIf: fallen, end: houseFalls },
     { frame: atHouse, s: ACT_ROCK_DUST_S, enter: () => openPortal('heaven'), say: 'act-house-fall', skipIf: () => !!pair() },
     { frame: onPair, s: ACT_SOUL_LIFT_S, enter: makePair, step: u => { pair().lift = Math.min(1, u / ACT_SOUL_LIFT_S); }, skipIf: () => !!pair() && pair().lift >= 1 },
+    // up the cloud stair to the gates, followed; they stand open as the two come to them
+    { frame: onPair, move: 'follow', enter: () => { makePair().lift = 1; if (!pairAt('climb')) sendPair('climb'); }, until: () => pairAt('climb'),
+      skipIf: () => !!pair() && (pairAt('rise') || pair().route === 'rise' || placeAt(pair().y) !== 'yard') },
     { frame: onPair, ride: true, enter: () => { makePair().lift = 1; if (!pairAt('rise')) sendPair('rise'); },
       until: () => pairAt('rise') && restingUp() }
   ],
@@ -305,7 +314,7 @@ function scene(key) {
   registered.add(key);
   // The phase's frame, as the runner last read it, and how it moves.
   addScene(key, { s: 1e9, frame: () => box, move: () => moving,
-                  front: ['acts-yard', 'acts-bodies', 'acts-road-bodies', 'acts-after', 'acts-after-bodies', 'acts-hell', 'acts-hell-bodies',
+                  front: ['acts-yard', 'acts-bodies', 'acts-road-bodies', 'acts-gates', 'acts-after', 'acts-after-bodies', 'acts-hell', 'acts-hell-bodies',
                           'acts-deep', 'acts-deep-bodies', 'mansion', 'home', 'workers'] });
 }
 
@@ -427,7 +436,7 @@ export function actBody(key, next) {
 export function stepActs(c) {
   goOnFor = goOnDue() ? goOnFor + c.dt / 1000 : 0;
   if (!S.acts || !afterlifeOn()) return;
-  stepPortals(c);
+  stepPortals(c, atGates());
   const p = pair();
   // The road's drawing of the two of them over the pedestal's: faded off
   // once they stand on it, back on when they are to climb down.

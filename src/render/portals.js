@@ -1,16 +1,15 @@
 // The acts' connective tissue, drawn (actbeats.js, portals.js, ghosts.js):
-// heaven's tear in the sky over the house and the cloud stair let down from
-// it, the rock out of the sky and lying on the ruin, the go-on card, hell's
+// heaven's gates up their cloud stair beside the ruin (render/gates.js), the rock out of the sky and lying on the ruin, the go-on card, hell's
 // white-hot slit in the deep's floor, each portal's far end, the pointing
 // hands, the two of them as souls and ghosts on the road, the freed souls
 // coming down to the mansion, the blocks in the builders' hands, and a beat's
-// line in the band. Placeholders all, before the mocks are voted (the tear
-// and the slit are the review's picks, H-A and L-A, in plain cells). Flat
+// line in the band. Placeholders, but for the gates (the owner's take A),
+// before the mocks are voted (the slit is the review's pick, L-A). Flat
 // cells on the grid; a fade is opacity, never a pop.
 
 import { S } from '../state.js';
-import { P, WORKER, GREY, FINALE_GREYS, FINALE_HOUSE_W, ACT_PORTAL_TONES, ACT_PORTAL_SPIN_HZ, ACT_ROCK_W, ACT_ROCK_H,
-         ACT_ROCK_FROM, ACT_ROCK_STEPS, ACT_ROCK_TONES, ACT_SOUL_RIM, ACT_SOUL_PAPER, ACT_STAIR_TONES, ACT_STAIR_STEP,
+import { P, WORKER, GREY, FINALE_GREYS, FINALE_HOUSE_W, ACT_PORTAL_SPIN_HZ, ACT_ROCK_W, ACT_ROCK_H, AFTER_TONES,
+         ACT_ROCK_FROM, ACT_ROCK_STEPS, ACT_ROCK_TONES, ACT_SOUL_RIM, ACT_SOUL_PAPER,
          ACT_SLIT_TONES, ACT_GOON_ABOVE, ACT_GOON_PAD, ACT_GOON_FONT_PX, ACT_CAPTION_FONT_PX, ACT_CAPTION_GREY,
          ACT_RIM_PIECES, MANSION_SOULS, ABYSS_TONES } from '../config.js';
 import { now } from '../clock.js';
@@ -26,7 +25,8 @@ import { drawHand } from './hand.js';
 import { GREYS, PURPLES } from './deeptones.js';
 import { houseX } from '../home.js';
 import { portalOpenK, portalEnd, handShown, handAlpha, handBox, PORTALS } from '../portals.js';
-import { pairBodies, placeAt, onRoad, tear, stairFoot } from '../ghosts.js';
+import { pairBodies, placeAt, onRoad } from '../ghosts.js';
+import { drawGatesBehind, drawGatesFront, drawGatesAfter } from './gates.js';
 import { goOnDue, goOnAlpha, fallNow, actCaption } from '../actbeats.js';
 import { rockRowsLeft, soulAt, mansionHeld } from '../mansion.js';
 import { afterFloor, floorAt } from '../after/place.js';
@@ -48,7 +48,7 @@ function faded(k, draw) {
 
 // --- a portal's far end, and its hand -------------------------------------------------
 // A ring of turning purple cells: the mark of where the camera comes through.
-function drawRing(e, k, tones = ACT_PORTAL_TONES) {
+function drawRing(e, k, tones) {
   const t = now() / 1000, turn = Math.floor(t * ACT_PORTAL_SPIN_HZ * 8);
   const n = Math.max(12, Math.ceil(Math.PI * 2 * e.r / P));
   faded(k, () => {
@@ -69,49 +69,9 @@ export function drawActsYard() {
   if (!S.acts) { drawGoOn(); return; }
   drawRuin();
   drawRock();
-  drawTear();
-  drawStair();
-  drawHandAt('heaven', 'yard', ACT_PORTAL_TONES[2], GREY[0]);
+  drawGatesBehind();
   drawGoOn();
   ctx.fillStyle = '#000';
-}
-
-// The tear: a lens of sky ripped open, its lip ragged in dark cells round a
-// mouth of the afterlife's white with purple at its seam. Grows to whole as it
-// opens (portals.js), and fades in by opacity.
-function drawTear() {
-  const k = portalOpenK('heaven');
-  if (k <= 0) return;
-  const e = tear(), rx = e.r * 1.2, ry = e.r * 2 * k;
-  faded(k, () => {
-    for (let dy = -ry - P; dy <= ry + P; dy += P) {
-      for (let dx = -rx - P; dx <= rx + P; dx += P) {
-        const d = Math.hypot(dx / rx, dy / Math.max(P, ry));
-        const jag = hash((e.x + dx) * 0.37 + (e.y + dy) * 0.11) * 0.35;
-        const x = snap(e.x + dx), y = snap(e.y + dy);
-        if (d < 0.55) cellAt(x, y, light(GREY[0]));   // the afterlife's white shines on either page
-        else if (d < 0.8) cellAt(x, y, ACT_PORTAL_TONES[0]);
-        else if (d < 1 + jag) cellAt(x, y, d < 0.95 ? ACT_PORTAL_TONES[2] : GREY[8]);
-      }
-    }
-  });
-}
-
-// The cloud stair, let down from the tear to beside the ruin once the road
-// is open: a slab of pale cells a step, ACT_STAIR_STEP cells down and across.
-let stairSeen = 0;
-function drawStair() {
-  if (!S.acts.road) { stairSeen = 0; return; }
-  stairSeen = Math.min(1, stairSeen + 1 / 90);
-  const e = tear(), foot = stairFoot();
-  const top = { x: snap(e.x), y: snap(e.y + e.r) };
-  const steps = Math.max(1, Math.round((foot.y + WORKER - top.y) / (ACT_STAIR_STEP * P)));
-  const shown = Math.ceil(steps * stairSeen);
-  for (let s = 0; s < shown; s++) {
-    const x = snap(top.x + (foot.x - top.x) * s / steps), y = top.y + s * ACT_STAIR_STEP * P;
-    for (let i = 0; i < 4; i++) cellAt(x + i * P, y, ACT_STAIR_TONES[(s + i) % ACT_STAIR_TONES.length]);
-    cellAt(x + P, y + P, GREY[2]);
-  }
 }
 
 // The rock out of the sky: coming down in held steps while the fall plays,
@@ -218,14 +178,21 @@ export function drawActsDeep() {
 
 // --- up there, and down there: each portal's far end ------------------------------------------
 export function drawActsAfter() {
-  const k = portalOpenK('heaven');
-  if (k > 0) {
-    // the patch of cloud floor the road comes up through, thin and pale
-    const e = portalEnd('heaven', 'after'), y = afterFloor();
-    faded(k, () => { for (let i = -3; i <= 3; i++) cellAt(snap(e.x) + i * P, y, i % 2 ? ACT_PORTAL_TONES[0] : GREY[0]); });
-    drawRing(e, k);
-    drawHandAt('heaven', 'after', ACT_PORTAL_TONES[2], GREY[0]);
+  if (portalOpenK('heaven') > 0) {
+    drawGatesAfter();
+    drawHandAt('heaven', 'after', HAND_LINE, HAND_FILL);
   }
+  ctx.fillStyle = '#000';
+}
+// Heaven's gates in front of the bodies on the stair and the light, and the
+// hand beside them, in the act's ink and paper (render/gates.js): its paper
+// lit, as the souls' is, so on the dark page it is a white hand drawn in ink
+// rather than ink on graphite.
+const HAND_LINE = GREY[AFTER_TONES.ink], HAND_FILL = light(GREY[AFTER_TONES.paper]);
+export function drawActsGates() {
+  if (!S.acts) return;
+  drawGatesFront();
+  drawHandAt('heaven', 'yard', HAND_LINE, HAND_FILL);
   ctx.fillStyle = '#000';
 }
 export function drawActsHell() {
@@ -285,7 +252,7 @@ export function drawActBodies(place) {
   for (let i = 0; i < MANSION_SOULS; i++) {
     const s = soulAt(i);
     if (!s) continue;
-    faded(s.stair ? 1 : s.k ?? 1, () => drawSoul(snap(s.x), Math.round(s.y), 0, null));
+    faded(s.k ?? 1, () => drawSoul(snap(s.x), Math.round(s.y), 0, null));
   }
   // what the mansion's builders carry: a block over the head, a pole upright
   for (const w of S.workers) {

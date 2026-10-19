@@ -3031,10 +3031,34 @@ export const SCENES = {
   // --- the acts' connective tissue (actbeats.js, portals.js, mansion.js) --------
   // Each off a yard past the snatch with the wizards' portal up and a crew to
   // borrow, stood at its point of the acts' story (`__actsAt`).
-  'portal-heaven': { about: 'the acts', say: 'heaven\'s tear over the ruin, the cloud stair let down, the rock on the ruin, the ghosts setting off',
+  'portal-heaven': { about: 'the acts', say: 'heaven\'s gates on their cloud bank up the stair from beside the ruin, shut, the hand beside them, the rock on the ruin',
     run: () => { actsYard('act4'); window.__fast(2); pinCamera(0); window.__holdShot(); } },
-  'portal-heaven-up': { about: 'the acts', say: 'heaven\'s portal\'s other end, over the patch of cloud floor the road comes up through',
+  'portal-heaven-up': { about: 'the acts', say: 'heaven\'s gates from behind, standing on the cloud floor, the light coming up through it between them',
     run: () => { actsYard('road'); S.beatsDone.push('haunt'); S.acts.pair.mode = 'ghost'; window.__goPlace('after'); window.__fast(2); window.__holdShot(); } },
+  // Heaven's gates at work (portals.js, render/gates.js): pressed and half
+  // open, a held step before the ripple; the two of them walking up the
+  // stair as souls at the house's fall; the two coming down it as ghosts.
+  'gates-opening': { about: 'the acts', say: 'heaven\'s gates pressed: the leaves two held steps open, the light going up, the ripple still to come',
+    run: () => { actsYard('act4'); window.__fast(2); pinCamera(0); window.__pressPortal('heaven'); window.__fast(0.65); window.__still(true); window.__holdShot(); } },
+  'gates-climb': { about: 'the acts', say: 'the house\'s fall: the two of them as souls walking up the cloud stair to the gates, the gates opening as they come',
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
+      for (let i = 0; i < 60 * 90 && !(S.acts?.pair?.route === 'climb' && S.acts.pair.leg >= 18); i++) window.__fast(1 / 60);
+      window.__holdShot();
+    } },
+  'gates-road': { about: 'the acts', say: 'the ghost road: the two of them coming down out of the light through the gates and down the cloud stair',
+    run: () => {
+      actsYard('road');
+      S.beatsDone.push('haunt');
+      const p = S.acts.pair;
+      Object.assign(p, { x: window.__gateWalk().x, y: afterFloor() - P * 3, mode: 'ghost', at: null, top: 0, route: null, then: null });
+      window.__sendPair('down', 1);
+      window.__view('yard');
+      for (let i = 0; i < 60 * 90 && !(p.route === 'down' && p.leg >= 14); i++) window.__fast(1 / 60);
+      pinCamera(0);
+      window.__holdShot();
+    } },
   'after-pair': { about: 'the acts', say: 'act 3 as it stands after the refusal: the pair as souls at the foot of the cloud pillar',
     run: () => { actsYard('fallen'); window.__goPlace('after'); window.__fast(2); window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot(); } },
   'portal-hell': { about: 'the acts', say: 'hell\'s white-hot slit in the deep\'s floor, and its hand',
