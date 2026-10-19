@@ -22324,6 +22324,34 @@ and the frame is drawn as it is today, pin sharp.
   glides only when the player has the camera, or as a cutscene's own
   deliberate `zoom` move.
 
+### The rise rides up with them (the owner's pick B, 2026-10-18)
+
+The mock-and-vote of call 3 (four options: cut at the tear, ride up with
+them, heaven gets ready, watch them go) chose **B**. The act 3 intro's rise
+is one continuous shot from the ruin to heaven's floor, with no ripple:
+
+- **One column.** Heaven already stands above the yard in world space
+  (`afterFloor() = -AFTER_GAP`), so the road between the tear and the cloud
+  floor is real ground for the camera. The shot `follow`s the pair up it the
+  whole way. The view does not hop places by portal on the way: the yard
+  drops out of the bottom of the window, then heaven's floor comes over from
+  underneath and they come up through it.
+- **The road is drawn.** Between the tear and the cloud floor the sky is
+  the yard's sky continued, with clouds streaming down past as the camera
+  climbs (`ACT_ROAD_CLOUDS` of them, spread up the gap, in the sky's own
+  tones, with per-cell variation). The floor's underside is drawn as a
+  billowing edge, so it reads as cloud from below. The pair are drawn on
+  the road (`seenAt`'s "nobody draws it in between" no longer holds).
+- **About eight seconds.** The ride takes `ACT_RIDE_S = 8` from the tear to
+  the floor, whatever the gap: the pair's pace on the road is derived from
+  the distance, not ACT_SOUL_PX_S (which would make it about thirty
+  seconds).
+- **The zoom moves on the way**, from the yard's to heaven's, as the
+  cutscene's own deliberate `zoom` move, gliding over the ride, never in a
+  held frame. Rule 2 is kept: it moves only while the shot is moving.
+- **The captions** stay the game's own: "the house falls" over the fall,
+  "the afterlife" once they stand on the floor.
+
 ### The owner's calls (2026-10-18)
 
 1. **The zoom across places changes under the ripple.** Each place keeps its
