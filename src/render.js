@@ -65,6 +65,7 @@ import { drawFireworks, drawHungKits, drawFinaleDeep, drawFinaleYard } from './r
 import { drawHome } from './render/home.js';
 import { drawActsYard, drawActsDeep, drawActsAfter, drawActsHell, drawActBodies, drawActCaption } from './render/portals.js';
 import { drawMansion } from './render/mansion.js';
+import { drawRoadSky, roadUp } from './render/road.js';
 import { drawAfterBackdrop, drawAfterGrove, drawAfterCamp, drawAfterMembers, drawAfterSky, drawAfterCounts } from './render/after.js';
 import { drawAfterCrowd, drawSkyCrowd } from './render/aftercrowd.js';
 import { drawAfterCues } from './render/aftercues.js';
@@ -72,6 +73,8 @@ import { drawAfterCoins } from './render/aftercoins.js';
 import { drawHellBackdrop, drawHellChambers, drawHellSeams, drawHellForge, drawHellBarriers, drawHellCage } from './render/hell.js';
 import { S } from './state.js';
 import { recede, frontLayers } from './cutscene.js';
+import { ridingRoad, bandWorld } from './shot.js';
+import { afterUnder } from './acts.js';
 import { wash, setPass, backInk, byInk, hudInk, drawLetterbox } from './render/recede.js';
 
 // The drawing side's public surface: the rest of the game imports every one of
@@ -118,6 +121,9 @@ const LAYERS = [
   // entry far below, in front of the yard, where the whole shower used to be.
   { name: 'rain behind', draw: drawRainBack },
   { name: 'clouds', draw: drawClouds },
+  // The road up to heaven over the yard's own window: its clouds and the
+  // cloud floor's underside, seen only by the rise riding up it (render/road.js).
+  { name: 'road sky', draw: drawRoadSky },
   { name: 'birds', draw: drawBirds },
   { name: 'world:done', draw: leaveWorld },
 
@@ -293,6 +299,7 @@ const LAYERS = [
   { name: 'says', draw: drawSays, dim: 1 },      // and what any of them stood about is saying
   { name: 'finale', draw: drawFinaleYard },      // the two of them, down the yard and at its end for good
   { name: 'acts-bodies', draw: () => drawActBodies('yard') },   // the souls and ghosts on the road, the mansion's gathering (render/portals.js)
+  { name: 'acts-road-bodies', draw: () => drawActBodies('road') },   // and the two of them up the road between the yard and the cloud floor
   { name: 'puffs', draw: drawPuffs },            // what the crew are putting up there right now
   { name: 'smog', draw: drawSmog },              // and what it has gathered into up there
   // The serpent's head over the liquid it came out of, and the one it takes
@@ -393,7 +400,10 @@ const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'roster
 // yard's or the deep's world is anywhere near them.
 const AFTER = new Set(['after backdrop', 'after heaven', 'after sky', 'after grove', 'after camp', 'after crowd', 'after members', 'after coins', 'after cues', 'acts-after', 'acts-after-bodies']);
 const HELL = new Set(['hell backdrop', 'hell chambers', 'hell seams', 'hell forge', 'hell barriers', 'hell cage', 'acts-hell', 'acts-hell-bodies']);
-const placeOf = name => (DEEP.has(name) ? 'deep' : AFTER.has(name) ? 'after' : HELL.has(name) ? 'hell' : 'yard');
+// The road between the yard and the afterlife is drawn by both: the two of
+// them on it are in front of the cloud floor's body as well as the yard's sky.
+const ROAD = new Set(['acts-road-bodies']);
+const placeOf = name => (DEEP.has(name) ? 'deep' : AFTER.has(name) ? 'after' : HELL.has(name) ? 'hell' : ROAD.has(name) ? 'road' : 'yard');
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
 const shared = (layer, i) => BOTH.has(layer.name) || i > SCREEN_FROM;
 const actPlace = place => place === 'after' || place === 'hell';
@@ -401,7 +411,7 @@ const actPlace = place => place === 'after' || place === 'hell';
 // place, only the shared layers pinned to the window or in screen pixels --
 // the marks the yard and the deep share stand over things in those two.
 const inHalf = (layer, i, place) => {
-  if (!shared(layer, i)) return placeOf(layer.name) === place;
+  if (!shared(layer, i)) return placeOf(layer.name) === place || (placeOf(layer.name) === 'road' && (place === 'yard' || place === 'after'));
   if (!actPlace(place)) return true;
   return PINNED.has(layer.name) || i > SCREEN_FROM;
 };
@@ -501,8 +511,8 @@ function drawLayer(layer, i, place) {
 // the bands, as they were.
 const GLASS = new Set(['letterbox', 'acts-caption', 'flash', 'press']);
 export function draw() {
-  if (Math.abs(S.zoomShow - S.zoom) > 1e-9) scaledWorld(() => drawHalf(S.view, 0, SCREEN_FROM));
-  else drawHalf(S.view, 0, SCREEN_FROM);
+  if (Math.abs(S.zoomShow - S.zoom) > 1e-9) scaledWorld(drawWorld);
+  else drawWorld();
   onGlass(() => drawHalf(S.view, SCREEN_FROM, LAYERS.length, GLASS));
   const rip = ripple();
   if (!rip) { if (!picture) warmRipple(canWarm, drawDeepUnseen); }
@@ -525,6 +535,34 @@ export function draw() {
       if (GLASS.has(layer.name) && (!layer.when || layer.when())) drawLayer(layer, i, S.view);
     }
   });
+}
+
+// The world in the window. While the rise rides up the road (actbeats.js)
+// the window climbs out of the yard and into the afterlife with no ripple
+// between, so which of the two it shows is read off where it stands, not off
+// the place it is in: under the cloud floor's underside the yard (its sky,
+// the road's clouds and the underside with it), over it the afterlife, and
+// both while what shows between the bands straddles that line -- the yard
+// first, then the afterlife cut off at the line over it. Every other frame
+// is the place on screen alone.
+const NO_PAGE = new Set(['page']);
+function drawWorld() {
+  if (!ridingRoad() || !roadUp() || (S.view !== 'yard' && S.view !== 'after')) { drawHalf(S.view, 0, SCREEN_FROM); return; }
+  const line = afterUnder(), band = bandWorld() * S.hush;
+  const top = S.camY + band, bottom = S.camY + S.viewH - band;
+  if (bottom <= line) { asView('after', () => drawHalf('after', 0, SCREEN_FROM)); return; }
+  asView('yard', () => drawHalf('yard', 0, SCREEN_FROM));
+  if (top >= line) return;
+  asView('after', () => {
+    clipToHalf(false, line);
+    try { drawHalf('after', 0, SCREEN_FROM, NO_PAGE); } finally { ctx.restore(); }
+  });
+}
+// `S.view` read as `place` for the length of `fn`, the camera left as it is.
+function asView(place, fn) {
+  const was = S.view;
+  S.view = place;
+  try { fn(); } finally { S.view = was; }
 }
 
 // The glass's layers read `S.zoom` to stand a thing over the world: for their

@@ -5,26 +5,29 @@
 // frame at a time. On every frame, from the bands first standing full to the
 // arrival's last:
 //   - both bands at their full depth;
-//   - the zoom on the glass moving only under the ripple between two places;
-//   - what shows between the bands never under the place's floor or over the
-//     top of its sky;
-//   - the frame the shot is on never off the window for longer than one
-//     glide and one ripple;
-// and, the bug the owner saw, nothing drops or climbs once the ripple has
-// landed in the afterlife: the window held on the cloud floor where the two of
-// them come up, not walked up through the empty sky beneath it.
+//   - the zoom on the glass moving only while the shot says it is moving;
+//   - what shows between the bands never under the floor or over the sky of
+//     what the camera may frame (the road, while the rise is ridden);
+//   - the frame the shot is on never off the window for longer than one glide;
+// and the rise ridden as the owner chose it (pick B, "The rise rides up with
+// them"): no ripple anywhere from the fall to the arrival, the two of them
+// between the bands on every frame of the road, standing on the cloud floor
+// within ACT_RIDE_S of leaving the tear, and nothing dropping or climbing once
+// the ride has handed the window to the afterlife.
 //
 // Frames are turned with `__fast` rather than `run`: a reload drops a scene
 // (persist.js reads no yard beat back) and this is about one scene's frames.
 import { yard, group, ok } from './helpers.mjs';
 import { SCENES } from '../src/scenes.js';
-import { CUT_PAN_MAX_S, VIEW_GLIDE_S } from '../src/config.js';
+import { CUT_PAN_MAX_S, ACT_RIDE_S } from '../src/config.js';
 
 const S = yard.S;
-const { bandCells, PLACE_LIMITS } = await import('../src/shot.js');
+const { bandCells, limitsOf } = await import('../src/shot.js');
 const { beatDone } = await import('../src/beats.js');
+const { tear, pairBodies, pairAt } = await import('../src/ghosts.js');
+const { WORKER } = await import('../src/config.js');
 
-group('the act 3 intro holds its bands, its zoom and its frame from the fall to the arrival', async () => {
+group('the act 3 intro rides up the road with them, its bands, zoom and frame held, from the fall to the arrival', async () => {
   window.__board = () => {};
   SCENES['act3-start'].run();
   let n = 0;
@@ -32,24 +35,26 @@ group('the act 3 intro holds its bands, its zoom and its frame from the fall to 
   const pressed = n < 60 * 30;
 
   const full = bandCells();
-  let frames = 0, banded = false, thin = null, zoomed = null, under = null, over = null;
-  let off = 0, offMost = 0, offAt = null, landedAt = null, climb = 0, climbAt = null, wasZoom = S.zoomShow;
-  let landY = null, places = new Set();
+  let frames = 0, banded = false, thin = null, zoomed = null, under = null, over = null, rippled = null;
+  let off = 0, offMost = 0, offAt = null, lost = null, roadFrames = 0, tearAt = null, stoodAt = null;
+  let handedAt = null, handY = null, climb = 0, climbAt = null, wasZoom = S.zoomShow;
+  const places = new Set();
   for (let f = 0; f < 60 * 120 && !beatDone('arrive'); f++) {
     window.__fast(1 / 60);
     frames++;
     const sh = window.__shot();
     places.add(sh.place);
     const at = `frame ${f} ${sh.beat}/${sh.phase} in ${sh.place}`;
+    if (S.viewTo != null && !rippled) rippled = `${at}: through to ${S.viewTo}`;
     // the bands: full from the first frame they stand full
     const drawn = Math.round(S.hush * full);
     if (drawn >= full) banded = true;
     else if (banded && !thin) thin = `${at}: ${drawn} of ${full} cells`;
-    // the zoom moves under the ripple, and only there
-    if (Math.abs(sh.zoomShow - wasZoom) > 1e-9 && S.viewTo == null && !zoomed) zoomed = `${at}: ${wasZoom} to ${sh.zoomShow}`;
+    // the zoom moves only while the shot moves
+    if (Math.abs(sh.zoomShow - wasZoom) > 1e-9 && !sh.gliding && !zoomed) zoomed = `${at}: ${wasZoom} to ${sh.zoomShow}`;
     wasZoom = sh.zoomShow;
-    // what shows between the bands stays inside the place
-    const L = PLACE_LIMITS[sh.place], band = sh.bands * S.hush;
+    // what shows between the bands stays inside what may be framed
+    const L = limitsOf(sh.place), band = sh.bands * S.hush;
     if (sh.camY + sh.viewH - band > L.foot() + 0.5 && !under) under = `${at}: foot ${(sh.camY + sh.viewH - band).toFixed(0)} under ${L.foot()}`;
     const roomy = L.foot() - L.top() >= sh.viewH - 2 * band;
     if (roomy && sh.camY + band < L.top() - 0.5 && !over) over = `${at}: top ${(sh.camY + band).toFixed(0)} over ${L.top()}`;
@@ -59,25 +64,41 @@ group('the act 3 intro holds its bands, its zoom and its frame from the fall to 
       && fr.y >= sh.camY - 0.5 && fr.y + fr.h <= sh.camY + sh.viewH + 0.5;
     off = fr && !inside ? off + 1 : 0;
     if (off > offMost) { offMost = off; offAt = at; }
-    // once landed up there, the window holds
-    if (sh.place === 'after' && S.viewTo == null && landedAt == null) { landedAt = f; landY = sh.camY; }
-    if (landedAt != null && !beatDone('house-fall')) {
-      const d = Math.abs(sh.camY - landY);
+    // the road: from leaving the tear to standing on the floor, both of them
+    // between the bands every frame
+    const p = S.acts && S.acts.pair, bodies = pairBodies();
+    if (p && p.route === 'rise' && p.y < tear().y) {
+      if (tearAt == null) tearAt = f;
+      roadFrames++;
+      for (const b of bodies) {
+        const seen = b.x >= sh.camX && b.x + WORKER <= sh.camX + sh.viewW && b.y >= sh.camY + band && b.y + WORKER <= sh.camY + sh.viewH - band;
+        if (!seen && !lost) lost = `${at}: body at ${b.x.toFixed(0)},${b.y.toFixed(0)}`;
+      }
+    }
+    if (stoodAt == null && pairAt('rise')) stoodAt = f;
+    // once the ride has let go, the window holds
+    if (handedAt == null && beatDone('house-fall')) { handedAt = f; handY = sh.camY; }
+    if (handedAt != null) {
+      const d = Math.abs(sh.camY - handY);
       if (d > climb) { climb = d; climbAt = at; }
     }
   }
   const arrived = beatDone('arrive');
-  const glideMost = Math.ceil((CUT_PAN_MAX_S + VIEW_GLIDE_S) * 60);
+  const glideMost = Math.ceil(CUT_PAN_MAX_S * 60);
+  const rideS = tearAt != null && stoodAt != null ? (stoodAt - tearAt) / 60 : null;
   return [
     ok(pressed, 'the go-on card answers'),
     ok(arrived, 'the fall plays through to the arrival', `${frames} frames, ${S.beatsDone.slice(-3).join(' ')}`),
     ok(places.has('yard') && places.has('after'), 'from the yard into the afterlife', [...places].join(' ')),
+    ok(!rippled, 'with no ripple anywhere between: the camera climbs the road', rippled || ''),
     ok(banded && !thin, 'both bands stand full from the first frame they reach full to the arrival\'s last', thin || ''),
-    ok(!zoomed, 'the zoom on the glass moves only while the ripple covers the window', zoomed || ''),
-    ok(!under, 'what shows between the bands is never under the place\'s floor', under || ''),
+    ok(!zoomed, 'the zoom on the glass moves only while the shot is moving', zoomed || ''),
+    ok(!under, 'what shows between the bands is never under the floor of what may be framed', under || ''),
     ok(!over, 'and never over the top of its sky', over || ''),
-    ok(offMost <= glideMost, 'the frame is never off the window for longer than one glide and one ripple', `${offMost} frames at ${offAt}`),
-    ok(landedAt != null && climb < 1, 'nothing drops or climbs once the ripple has landed in the afterlife', `${climb.toFixed(1)} px at ${climbAt}`)
+    ok(offMost <= glideMost, 'the frame is never off the window for longer than one glide', `${offMost} frames at ${offAt}`),
+    ok(roadFrames > 0 && !lost, 'both of them between the bands on every frame of the road', lost || `${roadFrames} frames`),
+    ok(rideS != null && rideS <= ACT_RIDE_S + 0.25, 'standing on the cloud floor within ACT_RIDE_S of leaving the tear', `${rideS} s`),
+    ok(handedAt != null && climb < 1, 'nothing drops or climbs once the ride has handed the window to the afterlife', `${climb.toFixed(1)} px at ${climbAt}`)
   ];
 });
 

@@ -22183,7 +22183,7 @@ learn the parts from the sentence on each one.
   effects and knobs that exist and reads clean through `validate`, and the
   preview and `mix.py` each handle every type.
 
-## One camera for every cutscene, and a bench to watch them on (built 2026-10-18; the rise open)
+## One camera for every cutscene, and a bench to watch them on (built 2026-10-18)
 
 The act 3 intro is the case that made this necessary: the house falls, the
 souls rise to heaven's tear, and the shot falls apart. Taken frame by frame
@@ -22323,6 +22323,50 @@ and the frame is drawn as it is today, pin sharp.
   a held frame, so between two places it still changes under the ripple. It
   glides only when the player has the camera, or as a cutscene's own
   deliberate `zoom` move.
+
+### The rise rides up with them (the owner's pick B, 2026-10-18)
+
+The mock-and-vote of call 3 (four options: cut at the tear, ride up with
+them, heaven gets ready, watch them go) chose **B**. The act 3 intro's rise
+is one continuous shot from the ruin to heaven's floor, with no ripple:
+
+- **One column.** Heaven already stands above the yard in world space
+  (`afterFloor() = -AFTER_GAP`), so the road between the tear and the cloud
+  floor is real ground for the camera. The shot `follow`s the pair up it the
+  whole way. The view does not hop places by portal on the way: the yard
+  drops out of the bottom of the window, then heaven's floor comes over from
+  underneath and they come up through it.
+- **The road is drawn.** Between the tear and the cloud floor the sky is
+  the yard's sky continued, with clouds streaming down past as the camera
+  climbs (`ACT_ROAD_CLOUDS` of them, spread up the gap, in the sky's own
+  tones, with per-cell variation). The floor's underside is drawn as a
+  billowing edge, so it reads as cloud from below. The pair are drawn on
+  the road (`seenAt`'s "nobody draws it in between" no longer holds).
+- **About eight seconds.** The ride takes `ACT_RIDE_S = 8` from the tear to
+  the floor, whatever the gap: the pair's pace on the road is derived from
+  the distance, not ACT_SOUL_PX_S (which would make it about thirty
+  seconds).
+- **The zoom moves on the way**, from the yard's to heaven's, as the
+  cutscene's own deliberate `zoom` move, gliding over the ride, never in a
+  held frame. Rule 2 is kept: it moves only while the shot is moving.
+- **The captions** stay the game's own: "the house falls" over the fall,
+  "the afterlife" once they stand on the floor.
+
+*Built 2026-10-18 (rise-ride): the house-fall beat's last phase is a `ride`
+(actbeats.js). While it plays the shot frames the road (shot.js, `ROAD`: the
+yard's floor to heaven's resting window), the window crosses into the
+afterlife by climbing (view.js, `crossTo`), and both places are drawn while
+what shows between the bands straddles the cloud floor's underside, the
+afterlife cut off at that line over the yard (render.js, `drawWorld`). The
+road's clouds and the underside are render/road.js, hung above the yard's
+own window so the yard never sees them; the yard's sky is held where the
+yard was left (`holdSky`). Two amendments from building it: the underside
+stands under the deepest the afterlife's own window shows of its floor (that
+window shows the pit's depth of cloud, not AFTER_GAP's), and over the road's
+last half window the frame eases off the pair's middle onto heaven's resting
+frame, so the camera comes to rest as they land and letting the road go
+moves nothing. The zoom move rides its own clock over the ride (`zs`); at
+every window today heaven's zoom is the yard's, so it does not move.*
 
 ### The owner's calls (2026-10-18)
 

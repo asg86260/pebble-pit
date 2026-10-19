@@ -26,7 +26,7 @@ import { drawHand } from './hand.js';
 import { GREYS, PURPLES } from './deeptones.js';
 import { houseX } from '../home.js';
 import { portalOpenK, portalEnd, handShown, handAlpha, handBox, PORTALS } from '../portals.js';
-import { pairBodies, placeAt, tear, stairFoot } from '../ghosts.js';
+import { pairBodies, placeAt, onRoad, tear, stairFoot } from '../ghosts.js';
 import { goOnDue, goOnAlpha, fallNow, actCaption } from '../actbeats.js';
 import { rockRowsLeft, soulAt, mansionHeld } from '../mansion.js';
 import { afterFloor, floorAt } from '../after/place.js';
@@ -266,7 +266,9 @@ export function drawActBodies(place) {
     // it (actbeats.js, `top`).
     const k = Math.min(p.lift ?? 1, 1 - (p.inside || 0), 1 - (p.top || 0));
     pair.forEach((b, i) => {
-      if (placeAt(b.y) !== place) return;
+      // on the road up between the yard and the cloud floor, the road's own
+      // layer draws them (render/road.js)
+      if ((placeAt(b.y) || (onRoad(b.y) ? 'road' : null)) !== place) return;
       // Up there, a body standing on the cloud floor stands on its puffs.
       const x = Math.round(b.x), y = Math.round(b.y) + (place === 'after' ? onCloud(b) : 0);
       const look = lookFor(WHO[i], {}, b.x, { face: p.face || null, deep: place === 'deep' });

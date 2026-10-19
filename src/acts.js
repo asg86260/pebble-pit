@@ -13,7 +13,7 @@
 // not code: what sets off the house's fall (call 7) is `owed('house-fall')`
 // below until it is decided.
 
-import { AFTERLIFE_ON, HELL_ON } from './config.js';
+import { AFTERLIFE_ON, HELL_ON, ACT_ROAD_UNDER } from './config.js';
 import { demoOn } from './demo.js';
 import { AFTER_PLACE } from './after/place.js';
 import { HELL_PLACE } from './hell/place.js';
@@ -45,6 +45,10 @@ const AFTER_AT_YARD = {
   get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; }
 };
 export const PLACES = { after: AFTER_AT_YARD, hell: HELL_PLACE };
+// The cloud floor's underside, as the road up from the yard sees it: past
+// the deepest the afterlife's own window ever shows of the cloud under its
+// floor, so only the rise riding up the road sees it.
+export const afterUnder = () => AFTER_AT_YARD.floor() + AFTER_AT_YARD.margin + ACT_ROAD_UNDER;
 export const actPlace = v => PLACES[v] || null;
 // Whether a place's act is on: a view into one whose act is off is sent back
 // to the yard (view.js, `stepView`).

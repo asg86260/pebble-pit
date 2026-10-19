@@ -20,7 +20,7 @@
 // they stood, on the leg they were walking.
 
 import { S, pit } from './state.js';
-import { P, WORKER, FINALE_HOUSE_W, GHOST_PX_S, GHOST_LOAD, GHOST_GAP, HELL_TIERS } from './config.js';
+import { P, WORKER, FINALE_HOUSE_W, GHOST_PX_S, GHOST_LOAD, GHOST_GAP, HELL_TIERS, ACT_RIDE_S } from './config.js';
 import { houseX } from './home.js';
 import { feetOn, ways } from './route.js';
 import { afterFloor, afterTop, stationBox, stationX0, speakerAt } from './after/place.js';
@@ -108,15 +108,19 @@ export function placeFor(y) {
   return 'hell';
 }
 
+// On the heaven road: in the sky between the tear and the cloud floor, where
+// the road's own layer draws a body (render/road.js).
+export const onRoad = y => !placeAt(y) && y < tear().y && y > afterTop();
+
 // Where the pair are next seen: where they stand, while that is in a place;
-// crossing between two (the sky from heaven's tear to the cloud floor, the
-// rock from the deep's floor to hell), where the leg they are on comes out.
-// Nobody draws a body on the road between two places, so a camera that
-// watched where they are in between watched an empty window; it frames the
-// far end of the leg instead, and they walk up into it (shot.js, rule 5).
+// on the way up from the ruin, where they are, since the rise is ridden up
+// the road in one shot (actbeats.js); crossing between two places any other
+// way (down the sky from the cloud floor to the tear, the rock from the
+// deep's floor to hell), where the leg they are on comes out -- the camera
+// goes there by the ripple and they walk into it (shot.js, rule 5).
 export function seenAt(p = S.acts && S.acts.pair) {
   if (!p) return null;
-  if (placeAt(p.y)) return { x: p.x, y: p.y };
+  if (placeAt(p.y) || (p.route === 'rise' && onRoad(p.y))) return { x: p.x, y: p.y };
   const L = p.route && ROUTES[p.route][p.leg];
   if (L && L.v) return { x: p.x, y: L.v() };
   if (L && L.to) return L.to();
@@ -213,3 +217,8 @@ export function takeLoad(p) {
 
 // The pace the road is walked at.
 export const ghostPace = () => GHOST_PX_S;
+// The rise's: the road from the tear to the cloud floor in ACT_RIDE_S,
+// however far apart the two stand.
+export const ridePace = () => Math.max(P, tear().y - afterFeet()) / ACT_RIDE_S;
+// The seconds of the rise still to go from height y.
+export const rideLeft = (y = S.acts && S.acts.pair ? S.acts.pair.y : afterFeet()) => Math.max(0, y - afterFeet()) / ridePace();

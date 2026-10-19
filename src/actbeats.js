@@ -16,7 +16,8 @@
 // on decides the place the camera is in: when the pair walk out of one place
 // into the next, the camera follows by the ripple through the portal between
 // (view.js, `travel`), landed on the frame they will have over there, never
-// a cut. The pair
+// a cut -- but for the rise out of the ruin, which the camera rides up the
+// road with them in one shot (`ride`). The pair
 // themselves only ever walk (ghosts.js). A click or the held space bar
 // hurries a beat ACT_HURRY times; nothing in it is cut.
 //
@@ -36,16 +37,18 @@
 
 import { S } from './state.js';
 import { P, WORKER, FINALE_HOUSE_W, AFTER_GATES, HELL_TIERS, ACT_HURRY, ACT_CAPTION_S, ACT_CAPTION_FADE_S,
-         ACT_ROCK_FALL_S, ACT_ROCK_DUST_S, ACT_SOUL_LIFT_S, ACT_SOUL_PX_S, ACT_RIM_PIECES, ACT_RIM_STEP_S,
+         ACT_ROCK_FALL_S, ACT_ROCK_DUST_S, ACT_SOUL_LIFT_S, ACT_RIM_PIECES, ACT_RIM_STEP_S,
          ACT_CALL_K, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, MANSION_FILE_AT, MANSION_FILE_W,
          ACT_PEDESTAL_FADE_S } from './config.js';
 import { frameMs } from './clock.js';
-import { afterlifeOn, hellOn, owed } from './acts.js';
-import { play, stepShot, release, addScene } from './cutscene.js';
-import { travel, gliding, setView, goDeep, goUp, canGoDown } from './view.js';
+import { afterlifeOn, hellOn, owed, afterUnder } from './acts.js';
+import { play, stepShot, release, addScene, holdWindow } from './cutscene.js';
+import { travel, gliding, setView, goDeep, goUp, canGoDown, crossTo, holdSky, restZoom } from './view.js';
+import { rideRoad, ridingRoad, PLACE_LIMITS, bandWorld, easeInOut } from './shot.js';
 import { beatDone } from './beats.js';
 import { openPortal, freePortal, portalEnd, portalBetween, stepPortals } from './portals.js';
-import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, takeLoad, LOOP_CAGE, ghostPace, tear, seenAt } from './ghosts.js';
+import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, takeLoad, LOOP_CAGE, ghostPace, ridePace, rideLeft,
+         tear, seenAt } from './ghosts.js';
 import { beginMansion, mansionDone, mansionX, MANSION_W, beginGathering, gathered, stepMansion, stepGathering,
          forgetMansionHands } from './mansion.js';
 import { houseX, IN_DONE_S } from './home.js';
@@ -148,10 +151,6 @@ export const actDue = key => !!(TRIGGERS[key] && TRIGGERS[key]());
 // `placeFor`).
 const around = s => ({ x: s.x - WORKER * 2, y: s.y - WORKER, w: WORKER * 4, h: WORKER * 2 + P, place: placeFor(s.y) });
 const spotted = spot => () => around(spot());
-const union = (a, b) => {
-  const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
-  return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y, place: a.place };
-};
 const houseSpot = () => ({ x: houseX() + FINALE_HOUSE_W * P / 2, y: S.groundY - WORKER });
 const throne = () => ({ x: afterX1() - P * 60, y: afterFloor() - WORKER });
 // The pair where they are seen: where they walk, or, crossing between two
@@ -159,15 +158,28 @@ const throne = () => ({ x: afterX1() - P * 60, y: afterFloor() - WORKER });
 const pairSpot = () => { const s = seenAt(); return s ? { x: s.x + WORKER / 2, y: s.y } : houseSpot(); };
 const onPair = spotted(pairSpot);
 const tearAbove = () => { const e = portalEnd('heaven', 'after'); return { x: e.x, y: afterFloor() - WORKER }; };
-// The rise: the pair and heaven's tear above them -- the yard's end while
-// they rise to it, the cloud floor's end over the patch they come up through
-// once they are past it, so the frame over there is the one they arrive in.
-const ringBox = e => ({ x: e.x - e.r, y: e.y - e.r, w: e.r * 2, h: e.r * 2 });
-const riseFrame = () => {
-  const box = onPair();
-  const e = portalEnd('heaven', box.place === 'after' ? 'after' : 'yard');
-  return e ? union(box, ringBox(e)) : box;
+// The rise, ridden (DESIGN.md, "The rise rides up with them"): one shot from
+// the ruin to heaven's floor, the camera keeping the two of them in the
+// middle of the window the whole way up the road (shot.js, `ROAD`) while the
+// zoom goes from the yard's to heaven's over the ride. No portal: the window
+// is in whichever place it has climbed into, the afterlife once all it shows
+// is over the cloud floor's underside, and both places are drawn while it
+// straddles them (render.js, `drawWorld`).
+const windowIn = () => (S.camY + S.viewH - bandWorld() * S.hush <= afterUnder() ? 'after' : 'yard');
+// The afterlife's resting window, as its top: the frame the ride ends on.
+const heavenRest = () => PLACE_LIMITS.after.foot() - S.viewH;
+// Kept in the middle of the window up the road; over the last half window
+// of it the frame eases onto heaven's resting one, so they rise from the
+// middle to where they will stand and the camera comes to rest as they land.
+const rideAsk = box => {
+  const left = Math.max(0, pair().y - (afterFloor() - WORKER)), k = 1 - left / (S.viewH / 2);
+  return { frame: box, move: 'follow', middle: true, zoom: restZoom('after') / restZoom(), zs: rideLeft(),
+           toward: { y: heavenRest(), k: easeInOut(Math.max(0, Math.min(1, k))) } };
 };
+// The ride is over once they stand on the floor and the window rests where
+// the afterlife holds it, so letting the road go moves nothing.
+const restingUp = () => S.view === 'after' && Math.abs(S.camY - heavenRest()) < 0.5;
+function offRoad() { if (ridingRoad()) holdWindow(() => rideRoad(false)); holdSky(false); }
 // Hell's chambers, where the camera holds each (hell/place.js).
 const chamber = i => spotted(() => ({ x: typeof HELLPLACE.chamberFocusX === 'function' ? HELLPLACE.chamberFocusX(i) : cageX(),
                                        y: hellFloor() - WORKER }));
@@ -204,7 +216,8 @@ function leavePedestal() {
 }
 
 // The phases of each beat. `frame` is what the camera frames (and so the
-// place it stands in), and `move` 'follow' for a frame that walks; `s` a hold
+// place it stands in), and `move` 'follow' for a frame that walks, or `ride`
+// for the rise followed up the road with no portal between; `s` a hold
 // in seconds, or `until` a fact; `say` the band's line; `enter`, `step` and
 // `end` what it does on the way.
 const BODIES = {
@@ -213,7 +226,8 @@ const BODIES = {
     { frame: atHouse, s: ACT_ROCK_FALL_S, skipIf: fallen, end: houseFalls },
     { frame: atHouse, s: ACT_ROCK_DUST_S, enter: () => openPortal('heaven'), say: 'act-house-fall', skipIf: () => !!pair() },
     { frame: onPair, s: ACT_SOUL_LIFT_S, enter: makePair, step: u => { pair().lift = Math.min(1, u / ACT_SOUL_LIFT_S); }, skipIf: () => !!pair() && pair().lift >= 1 },
-    { frame: riseFrame, move: 'follow', enter: () => { makePair().lift = 1; if (!pairAt('rise')) sendPair('rise'); }, until: () => pairAt('rise') }
+    { frame: onPair, ride: true, enter: () => { makePair().lift = 1; if (!pairAt('rise')) sendPair('rise'); },
+      until: () => pairAt('rise') && restingUp() }
   ],
   'arrive': [{ frame: onPair, s: ACT_CAPTION_S, enter: beginAct3, say: 'act-arrive' }],
   'meet-god': [{ frame: atThrone, s: ACT_CAPTION_S + 1, say: 'act-meet-god' }],
@@ -291,12 +305,13 @@ function scene(key) {
   registered.add(key);
   // The phase's frame, as the runner last read it, and how it moves.
   addScene(key, { s: 1e9, frame: () => box, move: () => moving,
-                  front: ['acts-yard', 'acts-bodies', 'acts-after', 'acts-after-bodies', 'acts-hell', 'acts-hell-bodies',
+                  front: ['acts-yard', 'acts-bodies', 'acts-road-bodies', 'acts-after', 'acts-after-bodies', 'acts-hell', 'acts-hell-bodies',
                           'acts-deep', 'acts-deep-bodies', 'mansion', 'home', 'workers'] });
 }
 
 function begin(key, t) {
   ensureActs();
+  offRoad();
   run = { key, i: 0, u: 0, hurry: 1, framed: null, out: false };
   const story = storyOf(key);
   if (story[key] && typeof story[key].enter === 'function') story[key].enter(t);
@@ -336,19 +351,30 @@ function step(key, next, t) {
   const ph = phases[run.i];
   if (ph) {
     const fr = ph.frame();
-    // A place the camera cannot stand in (the deep before the wizards'
-    // portal, in a yard stood up for a check) is watched from where it is.
-    const want = fr.place;
-    const place = want === 'deep' && !canGoDown() ? S.view : want;
-    box = fr; moving = ph.move || 'glide';
-    if (S.view !== place) {
-      if (!gliding()) hop(place, fr.x + fr.w / 2);
-      run.framed = null;
-      return true;
+    box = fr; moving = ph.ride ? 'follow' : ph.move || 'glide';
+    if (ph.ride) {
+      // Up the road: the window crosses into the afterlife by climbing into
+      // it, never by the ripple.
+      if (gliding()) return true;
+      if (!ridingRoad()) holdWindow(() => rideRoad(true));
+      holdSky(true);
+      if (run.framed !== 'road') { scene(key); play(key); run.framed = 'road'; }
+      stepShot(t, rideAsk(fr));
+      crossTo(windowIn());
+    } else {
+      // A place the camera cannot stand in (the deep before the wizards'
+      // portal, in a yard stood up for a check) is watched from where it is.
+      const want = fr.place;
+      const place = want === 'deep' && !canGoDown() ? S.view : want;
+      if (S.view !== place) {
+        if (!gliding()) hop(place, fr.x + fr.w / 2);
+        run.framed = null;
+        return true;
+      }
+      if (gliding()) return true;
+      if (run.framed !== place) { scene(key); play(key); run.framed = place; }
+      stepShot(t);
     }
-    if (gliding()) return true;
-    if (run.framed !== place) { scene(key); play(key); run.framed = place; }
-    stepShot(t);
     const dt = frameMs() / 1000 * run.hurry;
     run.u += dt;
     if (ph.step) ph.step(run.u, dt);
@@ -357,6 +383,7 @@ function step(key, next, t) {
     const done = ph.until ? ph.until() : run.u >= hold;
     if (!done) return true;
     if (ph.end) ph.end();
+    if (ph.ride) offRoad();
     // the next phase glides the camera from here to what it looks at
     run.i++; run.u = 0; run.framed = null;
     enterPhase(phases);
@@ -410,7 +437,7 @@ export function stepActs(c) {
     if (p.off && p.at !== 'pedestal' && p.route !== 'pedestal') p.off = false;
   }
   if (p && p.route) {
-    const base = p.route === 'rise' ? ACT_SOUL_PX_S : ghostPace();
+    const base = p.route === 'rise' ? ridePace() : ghostPace();
     const k = (p.hold ? ACT_CALL_K : 1) * (run ? run.hurry : 1);
     stepPair(base * k * c.dt / 1000);
   }
@@ -446,5 +473,6 @@ export const SAVE = {
 };
 export function forgetActs() {
   run = null; caption = null;
+  offRoad();
   forgetMansionHands();
 }
