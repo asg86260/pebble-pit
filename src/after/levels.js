@@ -5,7 +5,7 @@
 
 import { S } from '../state.js';
 import { AFTER_UPGRADES, AFTER_PLOTS0, AFTER_SHOUT_REBEL, AFTER_SHOUT_REBEL_UP, TREE_GROW_S, AFTER_GROW_S_UP,
-         AFTER_BLADE_LOGS, AFTER_BENCH_SIGNS, AFTER_VAT_SHEETS, AFTER_DRY_SHEETS, AFTER_STACK, AFTER_STACK_UP,
+         AFTER_BLADE_LOGS, AFTER_BENCH_SIGNS, AFTER_VAT_SHEETS, AFTER_DRY_VATS, AFTER_STACK, AFTER_STACK_UP,
          AFTER_SAWDUST_BRIM, AFTER_SAWDUST_BRIM_UP, AFTER_CHIP_LOGS, AFTER_CHIP_SAWDUST, AFTER_CHIP_SAWDUST_UP,
          SIGN_REACH, SIGN_REACH_UP, POSTER_REACH, POSTER_REACH_UP } from '../config.js';
 
@@ -27,7 +27,9 @@ export const heapBrim = () => (has('after-heap') ? AFTER_SAWDUST_BRIM_UP : AFTER
 export const chipLogs = () => (has('after-drum') ? AFTER_CHIP_LOGS : 1);
 export const chipSawdust = () => (has('after-spout') ? AFTER_CHIP_SAWDUST_UP : AFTER_CHIP_SAWDUST);
 export const benchSigns = () => (has('after-bench') ? AFTER_BENCH_SIGNS : 1);
-export const vatSheets = () => (has('after-vat') ? AFTER_VAT_SHEETS : 1) * (has('after-dry') ? AFTER_DRY_SHEETS : 1);
+export const vatSheets = () => (has('after-vat') ? AFTER_VAT_SHEETS : 1);
+// Batches the paper mill stirs at once: a second with the drying line.
+export const vats = () => (has('after-dry') ? AFTER_DRY_VATS : 1);
 export const stackOf = () => (has('after-stack') ? AFTER_STACK_UP : AFTER_STACK);
 export const signReach = big => (big ? SIGN_REACH_UP : SIGN_REACH);
 export const posterReach = big => (big ? POSTER_REACH_UP : POSTER_REACH);

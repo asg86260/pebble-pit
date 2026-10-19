@@ -42,7 +42,7 @@ export const AFTER_PUFF_LEAST = 4;        // cells: a run of billow narrower tha
 // card (call 15, settled), and a tree then takes TREE_CHOPS chops. Defaults.
 export const TREE_CHOPS = 8;               // default
 // A tree's three held stages, sapling to pole to crown, seconds a stage. Default.
-export const TREE_GROW_S = 90;
+export const TREE_GROW_S = 30;
 
 // --- how support spreads ---------------------------------------------------------
 // Signs and posters are the only way a soul is won. A soul's lean is the
@@ -52,10 +52,10 @@ export const TREE_GROW_S = 90;
 // defaults, each with the reach its card's upgrade buys.
 export const RIM_PIECES = 8;
 export const POSTER_CAP = RIM_PIECES / 2;
-export const SIGN_REACH = 2;               // files round a planted sign (default; "a few files")
-export const SIGN_REACH_UP = 3;            // ...with the workshop's bigger sign (default)
-export const POSTER_REACH = 30;            // the length of file that walks past a wall, in souls (default)
-export const POSTER_REACH_UP = 60;         // ...with the press's further reach (default)
+export const SIGN_REACH = 1;               // files round a planted sign (default; "a few files")
+export const SIGN_REACH_UP = 2;            // ...with the workshop's bigger sign (default)
+export const POSTER_REACH = 15;            // the length of file that walks past a wall, in souls (default)
+export const POSTER_REACH_UP = 30;         // ...with the press's further reach (default)
 
 // --- the gates -------------------------------------------------------------------
 // Each reads off how empty God's yard is: the first meeting a count of souls
@@ -153,13 +153,13 @@ export const CROWD_PITCH = P * 4;          // across a file
 export const CROWD_NEAR = 5;               // ranks drawn as bodies
 export const CROWD_ROW = P * 4;            // a near rank's depth up the screen
 export const CROWD_FAR_ROW = P * 2;        // a far rank's, every other one staggered half a file
-export const AFTER_CROWD = 1200;           // souls standing at the act's start
+export const AFTER_CROWD = 1600;           // souls standing at the act's start
 // Inked full by the refusal, in the front rank: the camp's first members, the
 // hands for the first posts (a woodcutter, a hauler, a sawyer, a joiner, a
-// carrier, and one to agitate or spare).
-export const AFTER_FIRST_MEMBERS = 6;
-export const AFTER_KIN_SHARE = 0.15;       // souls of the player's own lines, arriving part-inked
-export const AFTER_KIN_PIECES = 3;         // ...up to this many pieces
+// carrier, and three for the chipper, a second carrier or an agitator).
+export const AFTER_FIRST_MEMBERS = 8;
+export const AFTER_KIN_SHARE = 0.25;       // souls of the player's own lines, arriving part-inked
+export const AFTER_KIN_PIECES = 5;         // ...up to this many pieces
 export const AFTER_RISE_S = 30;            // a soul rising into the back of the crowd (the spec's "a soul every half-minute")
 export const AFTER_WALL_STEP = P * 4;      // a poster's slot along the fence at the crowd's front
 export const AFTER_STAIR_X = P * (GROVE_END + 492);   // the stair's head, the throne's ground
@@ -197,9 +197,9 @@ export const AFTER_AGITATE_REBEL = 1;
 // --- the grove ---
 // A tree's logs, and a big one's (planted after the grove's "bigger trees");
 // its shape is AFTER_PINE, above.
-export const AFTER_LOGS_A_TREE = 3;
-export const AFTER_LOGS_BIG_TREE = 5;
-export const AFTER_GROW_S_UP = 45;         // seconds a growth stage with the grove's "faster growth"
+export const AFTER_LOGS_A_TREE = 6;
+export const AFTER_LOGS_BIG_TREE = 9;
+export const AFTER_GROW_S_UP = 15;         // seconds a growth stage with the grove's "faster growth"
 export const AFTER_FALL_FRAMES = 4;        // a falling tree's held frames, upright to down
 export const AFTER_FALL_S = 1.6;           // ...over this
 export const AFTER_CROWN_FADE_S = 2.5;     // the fallen crown's cells fading off
@@ -217,7 +217,7 @@ export const AFTER_DIG_S = 4;              // a woodcutter digging a stump out
 // workshop joins a sign, on the press pulls a stack; its mark held a moment.
 // A post bought on its card then works it on the worker's clock, slower.
 export const AFTER_WORK_HOLD_S = 0.3;
-export const AFTER_LOG_TIMBER = 2;         // what a log saws into: timber (the fence is cut, a fixed split)
+export const AFTER_LOG_TIMBER = 6;         // what a log saws into: timber (the fence is cut, a fixed split)
 export const AFTER_LOG_SAWDUST = 2;        // ...and sawdust
 export const AFTER_BLADE_LOGS = 2;         // logs a cut takes with the mill's second blade
 export const AFTER_SAWDUST_BRIM = 24;      // the heap's brim while there is no paper mill
@@ -232,9 +232,9 @@ export const AFTER_SPILL_S = 1.2;          // the grains falling through the not
 export const AFTER_NOTCH_AT = 5;           // the notch, cells right of the heap's middle: just past its foot
 export const AFTER_HEAP_R = 4;             // the sawdust heap at its brim, a triangle this many cells high
 export const AFTER_SWEEP_WAIT_S = 8;       // the heap stands at its brim, its mark up, this long before a sawyer tips
-export const AFTER_SAW_S = 4;              // a sawyer's cut
-export const AFTER_SIGN_TIMBER = 2;        // timber a sign: signs are timber alone (call 11)
-export const AFTER_SIGN_S = 6;             // a joiner's sign
+export const AFTER_SAW_S = 3;              // a sawyer's cut
+export const AFTER_SIGN_TIMBER = 8;        // timber a sign: signs are timber alone (call 11)
+export const AFTER_SIGN_S = 25;             // a joiner's sign
 export const AFTER_BENCH_SIGNS = 2;        // signs a joining with the workshop's second bench
 // The chipper: logs into sawdust only, no timber.
 export const AFTER_CHIP_SAWDUST = 4;       // sawdust a log
@@ -244,7 +244,11 @@ export const AFTER_CHIP_S = 4;             // a feeder's feed
 export const AFTER_PULP_SAWDUST = 2;       // sawdust a sheet of paper
 export const AFTER_PULP_S = 4;             // a pulper's pull
 export const AFTER_VAT_SHEETS = 2;         // sheets a pull with the paper mill's bigger vat
-export const AFTER_DRY_SHEETS = 2;         // ...and again with its drying line, a second sheet at once
+// The drying line takes a batch off the vat to dry, so a second can be stirred
+// beside it (the owner, 2026-10-18: the bigger vat is more paper a batch, the
+// drying line a second batch at once): batches stirred at once with it, one
+// without, a pulper to each.
+export const AFTER_DRY_VATS = 2;
 export const AFTER_POSTER_PAPER = 1;       // paper a stack: posters are paper alone (call 11)
 export const AFTER_STACK = 2;              // posters a stack
 export const AFTER_STACK_UP = 4;           // ...with the press's bigger stack
@@ -252,22 +256,22 @@ export const AFTER_PRESS_S = 5;            // a printer pulling a stack
 export const AFTER_PLANT_S = 1.5;          // a carrier planting a sign
 export const AFTER_PASTE_S = 1.2;          // a paster pasting a poster
 export const AFTER_PASTE_LOAD = 4;         // posters a paster carries out
-export const AFTER_SIGN_GAP = 4;           // files at least between two signs
+export const AFTER_SIGN_GAP = 2;           // files at least between two signs
 
 // --- how support spreads ---
 export const AFTER_SPREAD_HZ = 4;          // the crowd is worked this many times a second
-export const AFTER_SIGN_INK_S = 6;         // a sign inks a piece on each soul in reach, this often
+export const AFTER_SIGN_INK_S = 36;         // a sign inks a piece on each soul in reach, this often
 export const AFTER_POSTER_INK_S = 10;      // a poster, to half
 export const AFTER_POSTER_LIFE_S = 240;    // a poster weathers off after this
 export const AFTER_POSTER_FADE_S = 2;      // a torn poster's strips fading
 
 // --- God's pushback ---
-export const AFTER_SPEECH_S = 150;         // between the throne's speeches; halved past the slowdown
+export const AFTER_SPEECH_S = 100;         // between the throne's speeches; halved past the slowdown
 export const AFTER_SPEECH_WARN_S = 6;      // warned this long ahead
-export const AFTER_SPEECH_FILES = 12;      // files its sweep crosses
+export const AFTER_SPEECH_FILES = 16;      // files its sweep crosses
 export const AFTER_SPEECH_HOLD_S = 1.5;    // the glare held across them
-export const AFTER_WARDENS = [1, 1, 2, 4]; // wardens on rounds, by gate reached (the slowdown doubles them)
-export const AFTER_WARDEN_REST_S = 25;     // a warden's rest between rounds
+export const AFTER_WARDENS = [0, 2, 4, 4]; // wardens on rounds, by gate reached: none until the first meeting, and the slowdown doubles them
+export const AFTER_WARDEN_REST_S = 60;     // a warden's rest between rounds
 export const AFTER_TEAR_S = 3;             // a warden tearing a poster down
 export const AFTER_PULL_S = 2;             // ...or pulling a sign up
 
@@ -275,7 +279,7 @@ export const AFTER_PULL_S = 2;             // ...or pulling a sign up
 // Members in the camp are not workers (call 14, settled): a post is bought at
 // a station with rebel, each dearer than the last, and a member walks from
 // the camp to hold it. A post with nobody waiting in the camp stands empty.
-export const AFTER_WALK = 42;              // px/s, every body up here
+export const AFTER_WALK = 50;              // px/s, every body up here
 export const AFTER_JOBS = [J.AGITATE, J.CUT, J.HAUL, J.SAW, J.CHIP, J.PULP, J.JOIN, J.CARRY, J.PRINT, J.PASTE];
 // The station each job's post is bought at, so which card sells it and which
 // station must stand before it is offered.
@@ -284,8 +288,11 @@ export const AFTER_JOB_POST = {
   [J.PULP]: 'papermill', [J.JOIN]: 'workshop', [J.CARRY]: 'workshop',
   [J.PRINT]: 'press', [J.PASTE]: 'press'
 };
+// Paced (tools/node/act3-pace.mjs): a post's rebel climbs slowly enough that
+// one comes within reach every minute or two the whole act through, and
+// the posts are what carries the union from the first meeting to the strike.
 export const AFTER_POST_REBEL0 = 12;       // the first post
-export const AFTER_POST_RATE = 1.15;       // each one dearer, every station's counted together
+export const AFTER_POST_RATE = 1.08;       // each one dearer, every station's counted together
 
 // --- the cards ---
 // Every bill up here takes the yard's coins too (DESIGN.md, "The yard pays
@@ -293,12 +300,22 @@ export const AFTER_POST_RATE = 1.15;       // each one dearer, every station's c
 // dead, so a well-kept yard funds the union. They are added in the order the
 // yard hands them out -- the cheapest and earliest bills rebel and dust, then
 // crops (`spore`), then ore (`shard`), the top upgrades a spark -- with
-// timber and paper on the bigger ones as before. Every amount is a default,
-// sized against a late yard's ladders (config/rungs.js: a top rung there is
-// 7,500 to 25,000 dust; a machine's rung 360 to 1,000 sparks), so the first
-// stations are a few minutes of a late yard's dust and the top upgrades a
-// long stretch of its finds. The yard's coins keep the yard's own names, so
-// a card draws them with the yard's marks (words.js `MARK`).
+// timber and paper on the bigger ones as before. The yard's share is sized
+// in seconds of a finished yard's income (act3-pace.mjs, LATE_YARD: about
+// 900 dust, 240 crops, 300 ore and 65 sparks a second, read off a played
+// yard at the deep's door): a quarter of a minute of it for the first
+// stations, a minute or so for the paper mill and the press, two to four for
+// the top upgrades. From the ore band on a bill names the deep's scales too
+// (AFTER_YARD_COINS), sized to a late deep: seven stations at their top
+// rungs shed about 25 a second (tools/node/deep-pace.mjs --table) and the
+// floor holds some ten thousand, so a bill is one to three thousand, a
+// minute or three of the deep's, and the ten that name them take about
+// fifteen thousand across the act. Across the act that is about a third of what the yard
+// makes, so it matters, and paced against the rebel it is never the only
+// thing a bill waits on. The rebel tops out near three minutes of the
+// speech's, so nothing on a card is ever a long wait. The yard's coins keep
+// the yard's own names, so a card draws them with the yard's marks (words.js
+// `MARK`).
 //
 // Every station the shack can build, all of them on its board and priced
 // from the start (the owner, 2026-10-18: the gates offer nothing), each
@@ -306,11 +323,11 @@ export const AFTER_POST_RATE = 1.15;       // each one dearer, every station's c
 // saw mill, sawdust off the saw mill or the chipper, and posters are printed
 // on paper. `needs` is the stations any one of which must stand first.
 export const AFTER_BUILDS = {
-  mill:      { needs: [],                   bill: [['rebel', 40], ['dust', 500]] },
-  chipper:   { needs: [],                   bill: [['rebel', 50], ['dust', 600]] },
-  workshop:  { needs: ['mill'],             bill: [['rebel', 60], ['dust', 1000], ['spore', 150]] },
-  papermill: { needs: ['mill', 'chipper'],  bill: [['rebel', 200], ['timber', 30], ['dust', 2500], ['spore', 400], ['shard', 120]] },
-  press:     { needs: ['papermill'],        bill: [['rebel', 250], ['timber', 40], ['dust', 4000], ['spore', 600], ['shard', 200]] }
+  mill:      { needs: [],                   bill: [['rebel', 40], ['dust', 15000]] },
+  chipper:   { needs: [],                   bill: [['rebel', 60], ['dust', 20000]] },
+  workshop:  { needs: ['mill'],             bill: [['rebel', 60], ['dust', 25000], ['spore', 3500]] },
+  papermill: { needs: ['mill', 'chipper'],  bill: [['rebel', 250], ['timber', 40], ['dust', 60000], ['spore', 15000], ['shard', 15000], ['scale', 800]] },
+  press:     { needs: ['papermill'],        bill: [['rebel', 300], ['timber', 60], ['dust', 90000], ['spore', 20000], ['shard', 25000], ['scale', 1200]] }
 };
 // Every station's upgrades: no bands, no ladders (call 12, settled -- act 3 is
 // outside the eight-rungs rule): two or three short named upgrades a card,
@@ -320,33 +337,37 @@ export const AFTER_BUILDS = {
 // sold beside them (rows.js); the stations themselves on the shack
 // (AFTER_BUILDS).
 export const AFTER_UPGRADES = {
-  'after-shout':       { card: 'pedestal',  bills: [[['rebel', 30], ['dust', 200]]] },                   // a bigger speech
-  'after-axe':         { card: 'pedestal',  bills: [[['rebel', 50], ['dust', 300]]] },                   // the axe (call 15)
-  'after-plot':        { card: 'grove',     bills: [[['rebel', 40], ['dust', 400]],
-                                                    [['rebel', 80], ['timber', 10], ['dust', 1000], ['spore', 150]],
-                                                    [['rebel', 160], ['timber', 30], ['dust', 2500], ['spore', 400], ['shard', 120]]] },   // a plot cleared, AFTER_PLOT_MAX in all
-  'after-grow':        { card: 'grove',     bills: [[['rebel', 60], ['timber', 10], ['dust', 1000], ['spore', 200]]] },                  // faster growth
-  'after-tree':        { card: 'grove',     bills: [[['rebel', 120], ['timber', 30], ['dust', 5000], ['spore', 800], ['shard', 300], ['spark', 50]]] },  // bigger trees
-  'after-stumps':      { card: 'grove',     bills: [[['rebel', 100], ['timber', 20], ['dust', 1500], ['spore', 300]]] },                 // stump removal: woodcutters dig stumps too
-  'after-blade':       { card: 'mill',      bills: [[['rebel', 80], ['timber', 20], ['dust', 1200], ['spore', 250]]] },                  // a second blade
-  'after-heap':        { card: 'mill',      bills: [[['rebel', 60], ['timber', 10], ['dust', 800]]] },                                   // a bigger heap
-  'after-bench':       { card: 'workshop',  bills: [[['rebel', 120], ['timber', 40], ['dust', 2500], ['spore', 400], ['shard', 150]]] },  // a second bench
-  'after-signreach':   { card: 'workshop',  bills: [[['rebel', 200], ['timber', 40], ['paper', 10], ['dust', 6000], ['spore', 1000], ['shard', 400], ['spark', 60]]] },  // a bigger sign
-  'after-drum':        { card: 'chipper',   bills: [[['rebel', 70], ['timber', 15], ['dust', 1000], ['spore', 200]]] },                  // a second drum
-  'after-spout':       { card: 'chipper',   bills: [[['rebel', 90], ['timber', 20], ['dust', 1500], ['spore', 300]]] },                  // a wider spout: more sawdust a log
-  'after-vat':         { card: 'papermill', bills: [[['rebel', 150], ['timber', 30], ['dust', 3000], ['spore', 500], ['shard', 200]]] },  // a bigger vat
-  'after-dry':         { card: 'papermill', bills: [[['rebel', 180], ['timber', 30], ['paper', 10], ['dust', 6000], ['spore', 1000], ['shard', 400], ['spark', 60]]] },  // a drying line
-  'after-stack':       { card: 'press',     bills: [[['rebel', 200], ['timber', 30], ['paper', 20], ['dust', 4000], ['spore', 600], ['shard', 250]]] },  // a bigger stack
-  'after-posterreach': { card: 'press',     bills: [[['rebel', 300], ['timber', 40], ['paper', 30], ['dust', 10000], ['spore', 1500], ['shard', 600], ['spark', 100]]] }   // a bigger poster, reaching further
+  'after-shout':       { card: 'pedestal',  bills: [[['rebel', 30], ['dust', 5000]]] },                  // a bigger speech
+  'after-axe':         { card: 'pedestal',  bills: [[['rebel', 50], ['dust', 8000]]] },                  // the axe (call 15)
+  'after-plot':        { card: 'grove',     bills: [[['rebel', 60], ['dust', 15000]],
+                                                    [['rebel', 200], ['timber', 10], ['dust', 40000], ['spore', 10000]],
+                                                    [['rebel', 400], ['timber', 60], ['dust', 80000], ['spore', 20000], ['shard', 20000], ['scale', 800]]] },   // a plot cleared, AFTER_PLOT_MAX in all
+  'after-grow':        { card: 'grove',     bills: [[['rebel', 150], ['timber', 10], ['dust', 30000], ['spore', 8000]]] },                    // faster growth
+  'after-tree':        { card: 'grove',     bills: [[['rebel', 450], ['timber', 120], ['dust', 100000], ['spore', 35000], ['shard', 40000], ['scale', 2000], ['spark', 8000]]] },  // bigger trees
+  'after-stumps':      { card: 'grove',     bills: [[['rebel', 200], ['timber', 30], ['dust', 40000], ['spore', 10000]]] },                   // stump removal: woodcutters dig stumps too
+  'after-blade':       { card: 'mill',      bills: [[['rebel', 180], ['timber', 30], ['dust', 35000], ['spore', 8000]]] },                    // a second blade
+  'after-heap':        { card: 'mill',      bills: [[['rebel', 80], ['timber', 15], ['dust', 15000]]] },                                      // a bigger heap
+  'after-bench':       { card: 'workshop',  bills: [[['rebel', 300], ['timber', 60], ['dust', 70000], ['spore', 18000], ['shard', 18000], ['scale', 1000]]] },  // a second bench
+  'after-signreach':   { card: 'workshop',  bills: [[['rebel', 600], ['timber', 150], ['paper', 40], ['dust', 120000], ['spore', 45000], ['shard', 50000], ['scale', 2500], ['spark', 10000]]] },  // a bigger sign
+  'after-drum':        { card: 'chipper',   bills: [[['rebel', 160], ['timber', 25], ['dust', 30000], ['spore', 8000]]] },                    // a second drum
+  'after-spout':       { card: 'chipper',   bills: [[['rebel', 220], ['timber', 30], ['dust', 40000], ['spore', 10000]]] },                   // a wider spout: more sawdust a log
+  'after-vat':         { card: 'papermill', bills: [[['rebel', 300], ['timber', 50], ['dust', 70000], ['spore', 18000], ['shard', 20000], ['scale', 1000]]] },  // a bigger vat
+  'after-dry':         { card: 'papermill', bills: [[['rebel', 400], ['timber', 80], ['paper', 40], ['dust', 90000], ['spore', 30000], ['shard', 35000], ['scale', 2000], ['spark', 6000]]] },  // a drying line
+  'after-stack':       { card: 'press',     bills: [[['rebel', 350], ['timber', 60], ['paper', 60], ['dust', 90000], ['spore', 22000], ['shard', 25000], ['scale', 1200]]] },  // a bigger stack
+  'after-posterreach': { card: 'press',     bills: [[['rebel', 700], ['timber', 150], ['paper', 100], ['dust', 150000], ['spore', 55000], ['shard', 60000], ['scale', 3000], ['spark', 12000]]] }   // a bigger poster, reaching further
 };
 // What a post costs the yard, by how many posts stand already (every
 // station's counted together, as the rebel is): the cheapest bills up here,
-// so dust alone; the last entry for every post past the table.
-export const AFTER_POST_DUST = [100, 150, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1500];
+// so dust alone, a second of the yard's for the first and a quarter of a
+// minute by the twentieth; the last entry for every post past the table.
+export const AFTER_POST_DUST = [1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7500, 9000, 10500, 12000];
 // The yard's coins a bill can name, in the order the yard hands them out
 // (shop.js `COIN_ORDER`), and the order a card writes a bill in: the act's
-// coins first.
-export const AFTER_YARD_COINS = ['dust', 'spore', 'shard', 'spark'];
+// coins first. The deep's scales ride with them (the owner, 2026-10-18:
+// "incorporate scales into the act 3 pricing"), named from the ore band on:
+// they come off the deep's own purse (`take`), and up through the same
+// patch as motes in a scale's shade.
+export const AFTER_YARD_COINS = ['dust', 'spore', 'shard', 'scale', 'spark'];
 export const AFTER_TAG_ORDER = ['rebel', 'timber', 'paper', ...AFTER_YARD_COINS];
 
 // --- the yard's coins coming up --------------------------------------------------

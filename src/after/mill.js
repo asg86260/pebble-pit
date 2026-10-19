@@ -9,14 +9,15 @@
 // and the chipper stop until it is tipped: a click on the heap tips a load
 // through the notch in the cloud floor beside it, and a sawyer tips one there
 // too once the heap has stood full a while, so the saw never stops for good.
-// The paper mill pulps sawdust into sheets. Each is worked by the click first
+// The paper mill pulps sawdust into sheets, a batch a vat. Each is worked by the click first
 // and then by a member at a post (work.js, bodies.js): the work itself is
 // here, the same whoever does it.
 
 import { S } from '../state.js';
 import { AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_TIP_LOAD, AFTER_SWEEP_WAIT_S, AFTER_PULP_SAWDUST,
          AFTER_SPILL_S } from '../config.js';
-import { built, bladeLogs, vatSheets, heapBrim, chipLogs, chipSawdust } from './levels.js';
+import { AFTER_JOB } from '../jobs.js';
+import { built, bladeLogs, vatSheets, vats, heapBrim, chipLogs, chipSawdust } from './levels.js';
 import { secs } from './util.js';
 
 // The heap is at its brim while nothing takes sawdust away: the saw and the
@@ -45,7 +46,8 @@ export function chipLog() {
   return true;
 }
 
-// A pull at the paper mill: false while the sawdust is short of a sheet.
+// A batch pulled at the paper mill, its sheets the vat's (the bigger vat's
+// more): false while the sawdust is short of a sheet.
 export function pulpSheet() {
   const st = S.after.stock;
   const n = Math.min(vatSheets(), Math.floor(st.sawdust / AFTER_PULP_SAWDUST));
@@ -53,6 +55,14 @@ export function pulpSheet() {
   st.sawdust -= AFTER_PULP_SAWDUST * n;
   st.paper += n;
   return true;
+}
+// The batches stirring at once, a pulper to each: one, or two with the
+// drying line taking a batch off to dry (`vats`). The pulpers take the vats
+// in the order they came to their posts, so which one stirs never flickers;
+// one past them waits at the door, its clock held, until a vat is its.
+export function vatOf(w) {
+  const k = S.after.bodies.filter(b => b.job === AFTER_JOB.PULP).indexOf(w);
+  return k >= 0 && k < vats() ? k : null;
 }
 
 // --- tipping the heap ------------------------------------------------------------------

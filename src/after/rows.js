@@ -29,7 +29,7 @@ import { msg } from '../lang.js';
 import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_POST_REBEL0, AFTER_POST_RATE, AFTER_BUILDS,
          AFTER_CARDS, AFTER_POST_DUST, AFTER_YARD_COINS, AFTER_TAG_ORDER, AFTER_PATCH_AT,
          AFTER_COIN_MOTES, AFTER_COIN_UNDER_S, AFTER_COIN_STAGGER_S, AFTER_COIN_SPREAD, AFTER_COIN_LIFE_S,
-         SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES } from '../config.js';
+         SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
 import { registerBoard } from '../boardrows.js';
 import { purse, MARK, priceText } from '../words.js';
 import { take } from '../upgrades.js';
@@ -75,7 +75,11 @@ const landAt = key => {
 // a find's tone of its kind, stepped by the mote's place in its run so a
 // handful is a speckle the way a heap is.
 const FIND_BASE = { spore: SPORE_CELL, shard: SHARD_CELL, spark: SPARK_CELL };
-const toneOf = (coin, i) => (coin === 'dust' ? 1 + (i % SHADES.length) : FIND_BASE[coin] + (i % FIND_TONES));
+// A scale is no grain of the yard's: its mote is in a scale's own shade, stepped
+// either side of it as the deep deals them (deep/scales.js, `shadeNear`).
+const toneOf = (coin, i) => (coin === 'dust' ? 1 + (i % SHADES.length)
+  : coin === 'scale' ? SCALE_SHADE + (i % (2 * SCALE_SPREAD + 1)) - SCALE_SPREAD
+  : FIND_BASE[coin] + (i % FIND_TONES));
 // The yard's share of a bill paid: off the yard's pile through `take`, its
 // grains sent up to the patch (`payTo`), and the motes that come out of the
 // patch after them, each stamped with when it comes out and where it lands.
@@ -85,7 +89,7 @@ function payYard(bill, key) {
   const patch = patchAt(), to = landAt(key);
   a.coins = (a.coins || []).filter(m => a.t - m.at < AFTER_COIN_LIFE_S);
   payTo(patch.x, patch.y);
-  for (const [coin, n] of bill) take(coin, n);
+  for (const [coin, n] of bill) take(coin, n, patch);   // the deep's scales lift off the bed bound for the patch too
   payTo();
   let k = 0;
   for (const [coin, n] of bill) {
