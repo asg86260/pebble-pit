@@ -3589,15 +3589,6 @@ after-sect-build = build
 # act 3 station card heading (placeholder)
 after-sect-card = upgrades
 
-# act 3 hand-work card's title (placeholder): a grown tree, sawn
-after-hand-tree = tree
-
-# act 3 hand-work card's title (placeholder): a stump, pulled
-after-hand-stump = stump
-
-# act 3 hand-work card's title (placeholder): the sawdust heap, tipped
-after-hand-heap = sawdust heap
-
 ## Act 3 boards (track C, placeholder)
 
 # act 3 board title (placeholder): the pedestal's board, the speech and the agitators
