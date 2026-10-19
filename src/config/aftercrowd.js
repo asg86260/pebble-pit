@@ -72,8 +72,8 @@ export const SKY_RING_LIFT = [3, 12];      // its jump, px, plus this times the 
 export const SKY_RING_STEP = 12;           // screen px a slice of a band moved by a ring
 
 // --- God -----------------------------------------------------------------------------------
-// High in the sky's middle on a tower throne, between the five far bands and
-// the two near ones. A God-cell is the largest of GOD_CELLS px that fits
+// High in the sky's middle on a block-seat throne atop a tower, in front of
+// the near band (docs/mocks/act3-crown-2026-10-19, 3C, the owner's pick). A God-cell is the largest of GOD_CELLS px that fits
 // GOD_FIT cells -- spikes to tower foot -- in the sky; God is 18 cells
 // square. He is a light source on either page (raw tones, src/ink.js).
 export const GOD_CELLS = [9, 6, 4, 3];
@@ -103,11 +103,17 @@ export const SKY_POSTER = { w: 42, h: 60, cell: 3 };
 
 // --- the tithe line ---------------------------------------------------------------------------
 // Bowed carriers with planks and sheets from the camp across the cloud floor
-// and up a dotted ledge under God to the glare at his left hand; thinning
-// and slowing as support rises, standing still at the strike.
-export const TITHE_CARRIERS = 70;
-export const TITHE_LAP = 0.010;            // the line's share of its path a second at the start
-export const TITHE_GLARE_R = 6;            // the glare that takes the loads, God-cells
+// and up the stair under God (docs/mocks/act3-throne-2026-10-19, take 1, the
+// owner's pick) to the glare at his left hand; thinning and slowing as
+// support rises, standing still at the strike. The stair is a cloud cliff
+// banked against the tower, God-cells off his square's top left: its foot
+// `foot` of the way from the bank down to the floor, its open side at
+// `left`, its flights turning at `right`, the line ending at `end` under his
+// left hand; a ledge for every `rise` cells of height, `ledges` at most.
+export const TITHE_STAIR = { foot: 0.3, left: -20, right: 3, end: -9, rise: 6.5, ledges: 3 };
+export const TITHE_GAP = 5;                // God-cells between carriers
+export const TITHE_PACE = 0.9;             // God-cells a carrier walks a second at the start
+export const TITHE_GLARE_R = 4;            // the glare that takes the loads, God-cells
 
 // --- souls drifting up from the camp ---------------------------------------------------------
 export const SKY_DRIFT = { every: [2.5, 4.5], life: 14, rise: 22 };
