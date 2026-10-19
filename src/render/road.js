@@ -11,7 +11,8 @@
 // cloud tones (weather.js, `roadTones`), lit on top and shaded under, each
 // cell picking its tone off a hash so no cloud is a flat slab of paint.
 
-import { P, ACT_ROAD_CLOUDS, ACT_ROAD_CLOUD_W, ACT_ROAD_CLOUD_H, ACT_ROAD_BILLOW, ACT_ROAD_SEED, ACT_ROAD_FAR, AFTER_W } from '../config.js';
+import { P, GREY, ACT_ROAD_CLOUDS, ACT_ROAD_CLOUD_W, ACT_ROAD_CLOUD_H, ACT_ROAD_BILLOW, ACT_ROAD_SEED, ACT_ROAD_FAR,
+         ACT_ROAD_SPREAD, ACT_ROAD_JITTER, ACT_ROAD_ROUND, ACT_ROAD_SPECKLE, AFTER_W } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { afterX0, billow } from '../after/place.js';
@@ -40,30 +41,33 @@ function clouds(tones) {
   const hi = afterUnder() + P * (ACT_ROAD_BILLOW + ACT_ROAD_CLOUD_H * 2);
   const n = ACT_ROAD_CLOUDS;
   if (!(lo > hi) || n <= 0) return;
-  const step = (lo - hi) / n, mid = tear().x, span = sky.w * 1.3;
+  const step = (lo - hi) / n, mid = tear().x, span = sky.w * ACT_ROAD_SPREAD;
   const [wMin, wMax] = ACT_ROAD_CLOUD_W;
   for (let i = 0; i < n; i++) {
     const w = wMin + Math.floor(hsh(i, 1) * (wMax - wMin + 1));
     const h = Math.max(2, Math.min(ACT_ROAD_CLOUD_H, 2 + Math.floor(w / 8)));
-    const base = snap(lo - step * (i + 0.5 + (hsh(i, 2) - 0.5) * 0.6));
+    const base = snap(lo - step * (i + 0.5 + (hsh(i, 2) - 0.5) * ACT_ROAD_JITTER));
     const x0 = snap(mid + (hsh(i, 3) - 0.5) * span - (w * P) / 2);
     if (base < S.camY - P || base - h * P > S.camY + S.viewH || x0 > S.camX + S.viewW || x0 + w * P < S.camX) continue;
     // A mound on a flat base: each row up drawn in a little further at
     // either end, the base row the shaded one and the crown the lit.
     for (let r = 0; r < h; r++) {
-      const inset = Math.round((r * r * w) / (h * h * 2.4)) + (r && hsh(i, r, 5) < 0.5 ? 1 : 0);
+      const inset = Math.round((r * r * w) / (h * h * ACT_ROAD_ROUND)) + (r && hsh(i, r, 5) < 0.5 ? 1 : 0);
       const t = r === 0 ? 2 : r === h - 1 ? 0 : 1;
       for (let c = inset; c < w - inset; c++) {
-        const k = Math.min(tones.length - 1, t + (hsh(i, r * 97 + c, 7) < 0.22 ? 1 : 0));
+        const k = Math.min(tones.length - 1, t + (hsh(i, r * 97 + c, 7) < ACT_ROAD_SPECKLE ? 1 : 0));
         fill(x0 + c * P, base - (r + 1) * P, tones[k]);
       }
     }
   }
 }
 
-// The floor's underside: the cloud's own body hanging a row under its
-// underside line everywhere and a puff or two more where it billows, its
-// lowest cell of every column in the shade and the cells over it lit.
+// The floor's underside, the floor's own billowed edge turned over (render/
+// after/floor.js): the cloud's white body hanging a row under its underside
+// line everywhere and a puff or two more where it billows, its outline a
+// thin line in the sky's shaded tone with each convex corner cut by a step,
+// and the row over that line in the shade, cell by cell.
+const EDGE = 2;     // the outline's thickness, in world px, as the floor's top line is
 let under = null;
 function underside(tones) {
   const line = afterUnder();
@@ -72,12 +76,20 @@ function underside(tones) {
   under ||= billow(cols, ACT_ROAD_SEED, ACT_ROAD_BILLOW);
   const j0 = Math.max(0, Math.floor((S.camX - afterX0()) / P) - 1);
   const j1 = Math.min(cols, Math.ceil((S.camX + S.viewW - afterX0()) / P) + 1);
+  const ink = tones[tones.length - 1], body = GREY[0];
+  const hang = j => 1 + (under[j] || 0);
   for (let j = j0; j < j1; j++) {
-    const hang = 1 + (under[j] || 0), x = afterX0() + j * P;
-    for (let k = 0; k < hang; k++) {
-      const low = k === hang - 1;
-      const t = low ? 2 + (hsh(j, k, 11) < 0.3 ? 1 : 0) : (hsh(j, k, 13) < 0.35 ? 1 : 0);
-      fill(x, line + k * P, tones[Math.min(tones.length - 1, t)]);
+    const h = hang(j), x = afterX0() + j * P, foot = line + h * P;
+    ctx.fillStyle = body; ctx.fillRect(x, line, P, h * P);
+    // the shade along the inside of the outline, a cell a column, toned off a hash
+    fill(x, foot - P, tones[Math.min(tones.length - 2, 1 + (hsh(j, h, 11) < ACT_ROAD_SPECKLE ? 1 : 0))]);
+    const cutL = j > 0 && hang(j - 1) < h, cutR = hang(j + 1) < h;
+    ctx.fillStyle = ink;
+    ctx.fillRect(x + (cutL ? EDGE : 0), foot - EDGE, P - (cutL ? EDGE : 0) - (cutR ? EDGE : 0), EDGE);
+    // a riser where the outline steps from this column's depth to the last's
+    if (j > j0 && hang(j - 1) !== h) {
+      const deep = line + Math.max(h, hang(j - 1)) * P, shallow = line + Math.min(h, hang(j - 1)) * P;
+      ctx.fillRect(h > hang(j - 1) ? x : x - EDGE, shallow - EDGE, EDGE, deep - shallow);
     }
   }
 }
