@@ -170,6 +170,10 @@ this section; the release that switches it on moves these under Unreleased.
 
 ## Unreleased
 
+## v0.6.1 — 2026-10-19
+
+- On the free build, "keep playing" on the "to be continued in the full game!" sheet no longer crashes the game, and the sheet stays down after a reload (test/keep-playing.test.mjs).
+
 ## v0.6.0 — 2026-10-16
 
 **New this release**

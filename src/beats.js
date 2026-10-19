@@ -11,7 +11,8 @@
 // every frame while the beat has not played; `step` returns true while it
 // runs; `skip` is the click, lands the fact the beat was about, and returns
 // false only when the beat has to carry on after it (a rescue cut mid-dig
-// still walks the body out: nothing teleports). `next` follows straight on.
+// still walks the body out: nothing teleports); a sheet with nothing to land
+// has none, and is put down all the same. `next` follows straight on.
 //
 // The bodies of the rows live with the things they move: intro.js walks the
 // pair, cutscene.js points the camera, ending.js draws the sheet. This file is
@@ -321,7 +322,7 @@ export function skipBeat(t = now(), owner = null) {
     if (!key) continue;
     const row = ROW.get(key);
     cut = true;
-    if (row.skip(t) === false) continue;      // it carries on, on its own legs
+    if (row.skip?.(t) === false) continue;    // it carries on, on its own legs
     markDone(...chain(key));
   }
   return cut;
