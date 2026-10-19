@@ -401,7 +401,7 @@ function drawNearSouls() {
     const rg = ringsAt(p.x, p.y, b.rate);
     const x = p.x + Math.round(Math.sin(p.xl / SKY_SEA.swayLen - t * SKY_SEA.swayHz)) * 2;
     const y = p.y + sea(p.xl, SKY_BANDS.length) * 2 + rg.lift;
-    if (!inView(x - 2, s + 4)) continue;
+    if (!inView(p.x - 4, s + 8)) continue;   // culled by its column, sway and all, so a soul at the edge is in or out for good
     const tone = hsh(col, row, 68) < 0.3 ? 1 : 0, look = p.x < gx - 40 ? 1 : p.x > gx + 40 ? -1 : 0;
     count++;
     alpha(a, () => {

@@ -2,11 +2,10 @@
 // (the owner, 2026-10-18; docs/mocks/act3-unbuilt-2026-10-18, pile a). Until
 // it is ordered its spot is open floor and nothing else. Ordered, members
 // come in at the camp's edge, fetch its loads, planks and blocks, from the
-// shack's door, and set each down on its spot, where the pile grows a load
-// at a time; once the pile is whole the first two stay on as builders and
-// the station goes up
-// AFTER_BUILD_PIECES bands from the floor up, each band two loads taken off
-// the pile and laid in, fading in as the second lands, until the pile is
+// shack's door or that edge, whichever is nearer, and set each down on its
+// spot, where the pile grows a load at a time; once the pile is whole the
+// first two stay on as builders and the station goes up AFTER_BUILD_PIECES
+// bands from the floor up, each band two loads taken off the pile and laid in, fading in as the second lands, until the pile is
 // gone and the station stands. The rest walk back out of the camp.
 //
 // The hands are members from the camp, up to AFTER_BUILD_CARRIERS of them.
@@ -83,6 +82,9 @@ export function fillBuilders() {
   }
 }
 
+// Where a site's loads are fetched: the shack's door or the camp's edge,
+// whichever is nearer its pile.
+const fetchAt = key => { const p = buildPileAt(key), a = stationDoor('shack'), b = campSpot(p).x; return Math.abs(a - p) <= Math.abs(b - p) ? a : b; };
 // A band laid at `key`: true when that was the last, the station standing.
 export function layPiece(key) {
   const a = S.after, r = siteOf(key);
@@ -129,9 +131,10 @@ export function stepBuilder(w, dt, go) {
     if (r.laid >= (r.n + 1) * AFTER_BUILD_A_BAND) layPiece(w.site);
     return;
   }
-  // Empty-handed: a load still to fetch, fetched at the shack's door.
+  // Empty-handed: a load still to fetch, fetched where it is nearest the
+  // site -- the shack's door, or the camp's edge it comes in at.
   if (r.claimed < BUILD_LOADS) {
-    if (!go(w, stationDoor('shack'), fl, dt)) return;
+    if (!go(w, fetchAt(w.site), fl, dt)) return;
     w.load = 'carry'; w.slot = r.claimed++; w.t = 0;
     return;
   }

@@ -3,7 +3,7 @@
 // card over the house; the house's fall, the arrival, the meeting and the
 // refusal, each beat played to its end, the two of them up on the pedestal;
 // the pair's speech bubbles popped for rebel; the axe bought, a tree sawn
-// down on its card and its stump pulled; the saw mill raised off the shack
+// down by hand and its stump pulled; the saw mill raised off the shack
 // and its flywheel spun; posts bought that members walk out to; the chain
 // built on to the press; signs and posters winning souls who walk out to our
 // crowd; the gates stepping; the strike due and played, and the unmasking
@@ -21,8 +21,9 @@
 //    at a time: the one plot's planks all go on signs, and the grove's pace
 //    is the pacing tool's, not this check's.
 import { group, ok, run, yard, P } from './helpers.mjs';
-import { AFTER_GATES, AFTER_BUILDS, CARD_IN_S, GESTURE_SAW_AMP, GESTURE_STUMP_DRAG, AFTER_FIRST_MEMBERS } from '../src/config.js';
-import { gestureDown, gestureMove, gestureUp, partsOf, cardOpen, cardToWorld } from '../src/after/gestures.js';
+import { AFTER_GATES, AFTER_BUILDS, GESTURE_STUMP_DRAG, AFTER_FIRST_MEMBERS } from '../src/config.js';
+import { gestureDown, gestureMove, gestureUp, partsOf } from '../src/after/gestures.js';
+import { sawOn, saw, spin } from './after-hands.mjs';
 import { bubbles } from '../src/after/bubbles.js';
 import { stationBox } from '../src/after/place.js';
 import { postRebel } from '../src/after/rows.js';
@@ -54,9 +55,6 @@ const inOrder = keys => keys.every(k => S.beatsDone.filter(d => d === k).length 
 const mid = b => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
 // A click as the pointer makes one up there: a press and a release.
 const click = p => { const took = gestureDown(p.x, p.y); gestureUp(p.x, p.y); return took; };
-const on = (x, y) => cardToWorld(x, y);
-function openOn(p) { click(p); yard.fast(CARD_IN_S * 2); return cardOpen(); }
-
 // Every bubble up now popped, the way the pointer pops one: a press on it.
 function popAll() {
   let n = 0;
@@ -70,45 +68,28 @@ function earn(want, limit) {
   return popped;
 }
 
-// The tree's card: its saw dragged back and forth until the tree falls.
+// A tree's saw put on by its icon, dragged back and forth until it falls.
 function sawTree(i) {
-  const t = window.__afterTrees()[i];
-  const card = openOn({ x: t.x, y: t.y });
-  if (!card || card.key !== 'tree') return { card, fell: false };
-  const s = partsOf('tree').saw, p0 = on(s.x, s.y);
-  gestureDown(p0.x, p0.y);
-  let f = 0;
-  for (; f < 60 * 60 && S.after.plots[i].fall == null; f++) {
-    const p = on(s.x + Math.sin(f * FRAME / 0.6 * 2 * Math.PI) * GESTURE_SAW_AMP * 1.2, s.y);
-    gestureMove(p.x, p.y); frame();
-  }
-  gestureUp(p0.x, p0.y);
-  return { card, fell: S.after.plots[i].fall != null, secs: +(f * FRAME).toFixed(2) };
+  const on = sawOn(i);
+  if (!on) return { on, fell: false };
+  const secs = saw(i, () => S.after.plots[i].fall != null, 0.6, 60);
+  return { on, fell: S.after.plots[i].fall != null, secs: +secs.toFixed(2) };
 }
-// The stump's card: its grip held up until the roots give.
+// A stump taken hold of where it stands and held up until the roots give.
 function pullStump(i) {
-  const t = window.__afterTrees()[i];
-  const card = openOn({ x: t.sx, y: t.sy });
-  if (!card || card.key !== 'stump') return { card, out: false };
-  const a = partsOf('stump').at, p0 = on(a.x, a.y), p1 = on(a.x, a.y - 3 * P / GESTURE_STUMP_DRAG);
+  const g = partsOf('stump', i).stump, p0 = { x: g.x + g.w / 2, y: g.y + g.h / 2 }, p1 = { x: p0.x, y: p0.y - 3 * P / GESTURE_STUMP_DRAG };
   gestureDown(p0.x, p0.y); gestureMove(p1.x, p1.y);
   let f = 0;
   for (; f < 60 * 30 && S.after.plots[i].stump; f++) frame();
   gestureUp(p1.x, p1.y);
-  return { card, out: !S.after.plots[i].stump, secs: +(f * FRAME).toFixed(2) };
+  return { out: !S.after.plots[i].stump, secs: +(f * FRAME).toFixed(2) };
 }
-// The saw mill's card: its flywheel spun, two turns a second, until `n` logs
-// are sawn.
+// The saw mill's flywheel spun where it stands, two turns a second, until
+// `n` logs are sawn.
 function spinMill(n) {
-  const card = openOn(mid(stationBox('mill')));
-  if (!card || card.key !== 'mill') return { card, cut: 0 };
-  const w = partsOf('mill').wheel, l0 = read().logs;
-  const at = a => on(w.x + Math.cos(a) * w.r, w.y + Math.sin(a) * w.r);
-  const p0 = at(0);
-  gestureDown(p0.x, p0.y);
-  for (let f = 1; f < 60 * 60 && l0 - read().logs < n; f++) { const p = at(f * FRAME * 2 * 2 * Math.PI); gestureMove(p.x, p.y); frame(); }
-  gestureUp(p0.x, p0.y);
-  return { card, cut: l0 - read().logs };
+  const l0 = read().logs;
+  spin('mill', 2, () => l0 - read().logs >= n, 60);
+  return { cut: l0 - read().logs };
 }
 // A station bought on the shack and the clock turned until it stands.
 const raise = key => window.__buy(`after-build-${key}`) && until(() => read().built.includes(key), 240) < Infinity;
@@ -138,7 +119,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   const axe = window.__buy('after-axe');
   const handed = until(() => beatDone('axe') && read().axe, 60, 0.25);
   note(`popped ${popped} earned ${earned} axe ${axe} ${handed}`);
-  // A tree sawn down on its card, and its stump pulled out on its own.
+  // A tree sawn down by hand, and its stump pulled out on its own.
   const sawn = sawTree(0);
   run(3);
   const logsDown = S.after.plots[0].logs;
@@ -150,7 +131,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   earn(AFTER_BUILDS.mill.bill.find(([c]) => c === 'rebel')[1] + postRebel(), 300);
   const mill = raise('mill');
   // A hauler's post: a member walks out of the camp to it and carries the logs
-  // in; the flywheel spun on the mill's card saws one.
+  // in; the flywheel spun by hand saws one.
   const camp0 = read().camp;
   const post = window.__buy('after-post-hauler');
   run(0.25);
@@ -208,10 +189,10 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
     ok(camped < Infinity, 'the refusal\'s first members walk out to the camp', `${read().camp}`),
     ok(popped > 0 && earned >= 50, 'bubbles popped off the pair as they rise earn the axe\'s rebel', `${popped} popped, ${earned} rebel`),
     ok(axe && handed < Infinity, 'the axe is bought on the pedestal\'s card and its beat hands it over', `${axe} ${handed}`),
-    ok(sawn.fell && logsDown > 0, 'a tree sawn on its card falls and lies as logs', JSON.stringify(sawn)),
-    ok(pulled.out && replanted === 1, 'its stump pulled on its card comes out and a sapling is set', JSON.stringify(pulled)),
+    ok(sawn.fell && logsDown > 0, 'a tree sawn by hand falls and lies as logs', JSON.stringify(sawn)),
+    ok(pulled.out && replanted === 1, 'its stump pulled by hand comes out and a sapling is set', JSON.stringify(pulled)),
     ok(mill && post && left === camp0 - 1 && fed < Infinity, 'the saw mill raised off the shack, a hauler walks out of the camp to its post and carries the logs in', story),
-    ok(spun.cut >= 1 && sawnInto > 0, 'the flywheel spun on the mill\'s card saws a log into timber', JSON.stringify(spun)),
+    ok(spun.cut >= 1 && sawnInto > 0, 'the flywheel spun by hand saws a log into timber', JSON.stringify(spun)),
     ok(rows.every(([, b]) => b), 'the posts, the workshop, the chipper, the paper mill and the press are all bought through their rows',
        JSON.stringify(rows.filter(([, b]) => !b))),
     ok(signed < Infinity && planted > 0 && pasted > 0, 'signs are planted in the crowd and posters pasted on the fence', `${planted} signs, ${pasted} posters`),
