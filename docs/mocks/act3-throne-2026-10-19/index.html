@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[ph] Throne and Stair</title>
+<style>
+  :root { --bg: #f4f4f1; --fg: #1b1b1f; --muted: #5d5d66; --card: #ffffff; --line: #d8d8d2; --face: ui-monospace, "Courier New", monospace; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36; } }
+  :root[data-theme="dark"] { --bg: #141417; --fg: #e9e9ee; --muted: #9a9aa4; --card: #1a1a1d; --line: #2e2e36; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--face); }
+  main { max-width: 2040px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 4px; } h2 { font-size: 15px; margin: 0 0 6px; } h3 { font-size: 13px; margin: 10px 0 4px; }
+  p, li { color: var(--muted); margin: 0 0 8px; max-width: 1100px; }
+  b { color: var(--fg); }
+  .ph::before { content: "[ph] "; color: var(--muted); font-weight: normal; font-size: 11px; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; position: sticky; top: 0; background: var(--bg); padding: 6px 0; z-index: 2; }
+  .bar button { font: inherit; background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .bar button.on { border-color: var(--fg); font-weight: bold; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 16px; }
+  canvas { display: block; image-rendering: pixelated; max-width: 100%; height: auto; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+  figure { margin: 0; max-width: 100%; } figcaption { font-size: 11px; color: var(--muted); }
+  .rec { border-left: 3px solid var(--fg); padding-left: 10px; }
+  .sw { display: inline-block; width: 14px; height: 14px; border: 1px solid var(--line); vertical-align: middle; }
+</style>
+</head>
+<body>
+<main>
+  <h1 class="ph">Act 3: the throne and the tithe stair, three takes</h1>
+  <p class="ph">A <b>mock</b> drawn from plain shapes, not the game. God (face c, serene), his glare, halo and rays, the throne back and the sky crowd are simplified redraws of what is built. Each take replaces the tower and the dotted ledge. Stone and cloud use four tones only: paper, pale grey, mid grey and ink. God's light is the one exception, kept raw, so it stays the brightest thing on both pages. It cannot show the camera's pan or dive, parallax, the crowd thinning, the gaze, signs or the speech.</p>
+  <p class="ph">Layer change in every take: the throne and the stair stand <b>in front of</b> the near band of souls, with their foot in the cloud bank. In the game today the tower is painted before the last far band, which hides it. The tithe line is already painted at this depth.</p>
+  <div class="bar">
+    <button data-t="auto" class="on ph">auto</button><button data-t="light" class="ph">light</button><button data-t="dark" class="ph">dark</button>
+    <button id="pause" class="ph">pause</button>
+    <span class="ph" style="color:var(--muted)">palette:</span><span id="sw"></span>
+  </div>
+  <div id="takes"></div>
+
+  <section class="card">
+    <h2 class="ph">Self-critique, round 1 (first build, before fixes)</h2>
+    <ul id="crit1"></ul>
+    <h2 class="ph">Self-critique, round 2 (after the round 1 fixes)</h2>
+    <ul id="crit2"></ul>
+  </section>
+
+  <section class="card rec">
+    <h2 class="ph">Recommendation: take 2, the grand straight stair</h2>
+    <ul>
+      <li class="ph"><b>Take 2, the grand stair</b>, is the only take that reads at both sizes. At 2000 by 967 at rest there are about ten God-cells between his seat and the cloud floor. The stair needs no more than that: the walls, the steps and the flare all show, and the line visibly climbs to his feet. It is also the most one-piece: the stair is the pedestal, so the throne and the stair are one stone object. The approach is head on, which suits the joke: the tithe is worship.</li>
+      <li class="ph"><b>Take 1, the cloud switchback</b>, fixes "it reads as dots" outright. The path is cut into a solid cloud cliff, with white treads, grey shadows and turns you can see. It is the best of the three at 800 by 600, where it gets three ledges. At 2000 it shrinks to two short ledges, and the top one sits in the glare. On the dark page the cliff turns grey and reads as rock as much as cloud.</li>
+      <li class="ph"><b>Take 3, the spiral</b>, is the most interesting idea, and carriers vanishing behind the stone is the best motion of the three. But it needs height it does not have. At 800 by 600 it reads as barber-pole stripes. At 2000 at rest it gets one turn, mostly under the cloud lip. It would come into its own in the dive, which this mock cannot show.</li>
+      <li class="ph">Cost of take 2: the carriers are seen from behind as small backs, so the bowed side view only shows on the walk along the cloud floor. The glare at his feet also covers the hem of his robe. Both are tuning, not a different shape.</li>
+    </ul>
+  </section>
+</main>
+<script>
+// ---- the four tones: paper, pale, mid, ink. Dark page: by lightness onto #1f1f1f .. #e0e0e0 ----
+const FOUR = ['#ffffff', '#d6d6d6', '#8a8a8a', '#000000'];
+const LP = 0x1f / 255, LI = 0xe0 / 255;
+const hex = v => '#' + Math.round(v).toString(16).padStart(2, '0').repeat(3);
+const MAPPED = FOUR.map(c => hex((LP + (LI - LP) * (1 - parseInt(c.slice(1, 3), 16) / 255)) * 255));
+let DARK = false;
+// tone 0..3; lit = God's light, raw on both pages
+const T = (i, lit) => (DARK && !lit ? MAPPED : FOUR)[Math.max(0, Math.min(3, i | 0))];
+const frac = v => v - Math.floor(v), snap = (v, q) => Math.round(v / q) * q, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+function hsh(a, b = 0, c = 0) { let h = (a * 374761393 + b * 668265263 + c * 2246822519) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+function vnoise(x, s) { const i = Math.floor(x), f = x - i, a = hsh(i, 0, s), b = hsh(i + 1, 0, s); return a + (b - a) * f * f * (3 - 2 * f); }
+// a continuous tone 0..3 dithered per cell between its two neighbours
+const dith = (t, x, y, s) => Math.floor(t) + (hsh(x, y, s) < frac(t) ? 1 : 0);
+
+let g = null;
+const R = (x, y, w, h, tone, lit) => { g.fillStyle = T(tone, lit); const X = Math.round(x), Y = Math.round(y); g.fillRect(X, Y, Math.round(x + w) - X, Math.round(y + h) - Y); };
+const alpha = (a, fn) => { const o = g.globalAlpha; g.globalAlpha = o * clamp(a, 0, 1); fn(); g.globalAlpha = o; };
+
+// ---- a mask of whole cells, filled per cell and edged in ink where it meets nothing ----
+function Mask() { const m = new Map(); return { m, set(x, y, tone) { m.set(x + ',' + y, tone); }, has(x, y) { return m.has(x + ',' + y); }, del(x, y) { m.delete(x + ',' + y); } }; }
+function paintMask(M, X0, Y0, c, ew, edge = 3) {
+  for (const [k, tone] of M.m) { const [x, y] = k.split(',').map(Number); R(X0 + x * c, Y0 + y * c, c, c, tone); }
+  for (const k of M.m.keys()) {
+    const [x, y] = k.split(',').map(Number), px = X0 + x * c, py = Y0 + y * c;
+    if (!M.has(x, y - 1)) R(px, py, c, ew, edge);
+    if (!M.has(x, y + 1)) R(px, py + c - ew, c, ew, edge);
+    if (!M.has(x - 1, y)) R(px, py, ew, c, edge);
+    if (!M.has(x + 1, y)) R(px + c - ew, py, ew, c, edge);
+  }
+}
+
+// ---- the sky crowd, simplified: six far bands dithered pale to mid, the near band, the bank ----
+const TOPS = [0.07, 0.20, 0.33, 0.45, 0.57, 0.69], BT = [0.6, 0.8, 0.95, 1.1, 1.25, 1.4], BC = [2, 2, 3, 4, 5, 8];
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+const ord = (t, i, j) => Math.floor(t) + ((BAYER[(i & 3) + 4 * (j & 3)] + 0.5) / 16 < frac(t) ? 1 : 0);
+function drawFar(W, H, top, bank) {
+  R(0, 0, W, H, 0);
+  const sky = bank - top;
+  TOPS.forEach((f, k) => {
+    const y0 = top + snap(sky * f, 6), cs = BC[k], gap = k > 2 ? 1 : 0;
+    for (let y = y0; y < bank; y += cs) for (let x = 0; x < W; x += cs) {
+      if (y === y0 && hsh(x, k, 3) < 0.4) continue;
+      const t = BT[k] + (y - y0 < 2 * cs ? 0.4 : 0);
+      R(x, y, cs - gap, cs - gap, ord(t, x / cs, y / cs));
+    }
+    if (k === 1 || k === 3 || k === 4) {          // a thin cloud strip under the band
+      const sy = top + snap(sky * TOPS[k + 1], 6) - 6;
+      for (let i = 0; i < W / 6; i++) { const n = vnoise(i / 14, k + 50); if (n < 0.42) continue; const tall = 6 * Math.min(3, 1 + Math.floor((n - 0.42) * 8)); for (let j = 0; j < tall; j += 6) R(i * 6, sy - tall + j + 6, 6, 6, hsh(i, j + k, 51) < 0.3 ? 1 : 0); }
+    }
+  });
+}
+function drawNear(W, sTop, bank) {
+  const top = sTop + snap((bank - sTop) * 0.81, 6);
+  for (let row = 0, y = top; y < bank; row++, y += 15) for (let x = (row % 2) * 8 - 16; x < W; x += 16) {
+    R(x, y, 12, 12, 3); R(x + 2, y + 2, 8, 8, hsh(x, row, 68) < 0.3 ? 1 : 0);
+    R(x + 3, y + 4, 2, 2, 3); R(x + 7, y + 4, 2, 2, 3);
+  }
+}
+function drawBank(W, H, bank, floorY) {
+  for (let i = 0; i < W / 6; i++) { const tp = 2 + Math.round(vnoise(i / 5, 31) * 3 + hsh(i, 0, 32)); for (let j = tp; j < 10; j++) R(i * 6, bank - 12 + j * 6, 6, 6, hsh(i, j, 33) < 0.25 ? 1 : 0); }
+  R(0, bank + 48, W, H - bank - 48, 0);
+  R(0, floorY, W, 2, 3);
+}
+// a lip of billows over the stair's foot and the line's feet, so both stand in the cloud
+function drawLip(W, fy) {
+  for (let i = 0; i < W / 6; i++) { const tp = 1 + Math.round(vnoise(i / 4, 35) * 1.6); for (let j = -tp; j < 2; j++) R(i * 6, fy + j * 6, 6, 6, hsh(i, j, 36) < 0.25 ? 1 : 0); }
+}
+function drawCamp(W, floorY, campX, small) {
+  // the pedestal and a few members waiting, for scale only
+  const u = small ? 3 : 6;
+  R(campX - 10 * u, floorY - 11 * u, 10 * u, 11 * u, 3); R(campX - 8 * u, floorY - 9 * u, 6 * u, 2 * u, 0); R(campX - 6 * u, floorY - 7 * u, 2 * u, 7 * u, 0);
+  for (let i = 0; i < 4; i++) { const x = campX - 18 * u - i * 5 * u; R(x, floorY - 4 * u, 3 * u, 4 * u, 3); R(x + u / 2, floorY - 3.5 * u, 2 * u, 3 * u, 0); }
+}
+
+// ---- God: glare, halo and rays (raw), the throne back (stone, four tones), the figure (raw) ----
+function godBack(x0, y0, c, t) {
+  const cx = x0 + 9 * c, cy = y0 + 6 * c, rad = 19 * c, q = c >= 6 ? 6 : 3;
+  alpha(0.82, () => { for (let y = -rad; y < rad; y += q) { const hw = snap(Math.sqrt(Math.max(0, rad * rad - y * y)), q); R(cx - hw, cy + y, hw * 2, q, 0, true); } });
+  const sq = Math.max(2, snap(c * 0.67, 2));
+  const at = (a, d) => [snap(cx + Math.cos(a) * d, sq), snap(cy + Math.sin(a) * d, sq)];
+  const ring = (rr, thick, tone) => { const n = Math.ceil(2 * Math.PI * rr / (sq * 0.7)); for (let i = 0; i < n; i++) { const a = i / n * 2 * Math.PI; for (let d = 0; d < thick; d += sq) { const [x, y] = at(a, rr + d); R(x, y, sq, sq, tone, true); } } };
+  alpha(0.8, () => {
+    ring(21 * c - sq, sq, 2); ring(22 * c, sq, 2); ring(21 * c, c, 0); ring(16 * c, sq, 1);
+    for (let i = 0; i < 28; i++) { const a = i / 28 * 2 * Math.PI; for (let d = 16.5 * c; d < 20 * c; d += sq) { const [x, y] = at(a, d); R(x, y, sq, sq, 1, true); } }
+  });
+  alpha(0.9, () => {
+    for (let i = 0; i < 12; i++) {
+      const a = t * 2 * Math.PI / 50 + i / 12 * 2 * Math.PI, len = (i % 2 ? 3 : 5) * c;
+      for (let d = 23 * c; d < 23 * c + len; d += sq * 1.5) { const [x, y] = at(a, d); R(x - 2, y - 2, sq + 4, sq + 4, 2, true); R(x, y, sq, sq, 0, true); }
+    }
+  });
+}
+function throneStone(x0, y0, c, ew) {
+  // the spiked back, the arms, the base slab: one mask, so its edge is one ink line
+  const M = Mask(), add = (x, y, w, h) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) M.set(i, j, hsh(i, j, 71) < 0.22 ? 1 : 2); };
+  add(-4, -6, 26, 32);
+  for (const x of [-4, 3, 12, 19]) add(x, -11, 3, 5);
+  add(7, -15, 4, 9);
+  add(-7, 18, 6, 3); add(19, 18, 6, 3); add(-7, 21, 2, 5); add(23, 21, 2, 5);
+  add(-7, 26, 32, 4);
+  paintMask(M, x0, y0, c, ew);
+  R(x0 - 6 * c, y0 + 27 * c, 30 * c, ew, 3);                     // the slab's joint
+}
+function godFigure(x0, y0, c, p) {
+  const L = (x, y, w, h, tone) => R(x0 + x * c, y0 + y * c, w * c, h * c, tone, true);
+  const top = -p.breath;
+  L(0, top, 18, 18 - top, 3); L(1, top + 1, 16, 16 - top, 0);
+  for (let y = top + 1; y < 15; y++) for (let x = 1; x < 17; x++) if (hsh(x, y, 72) < 0.06) L(x, y, 1, 1, 1);
+  const ey = 7 + top;
+  for (const ox of [3, 11]) { L(ox, ey, 4, 1, 3); L(ox + 1 + p.glance, ey + 1, 2, 1, 3); }
+  if (p.roar) { L(7, 11 + top, 4, 1, 3); L(6, 12 + top, 1, 2, 3); L(11, 12 + top, 1, 2, 3); L(7, 14 + top, 4, 1, 3); L(7, 12 + top, 4, 2, 2); }
+  else { L(6, 12 + top, 1, 1, 3); L(7, 13 + top, 4, 1, 3); L(11, 12 + top, 1, 1, 3); }
+  for (let y = 15; y < 30; y++) {
+    const half = 9 + Math.floor((y - 15) / 3);
+    L(9 - half, y, half * 2, 1, 3);
+    for (let x = 9 - half + 1; x < 9 + half - 1; x++) L(x, y, 1, 1, hsh(x, y, 73) < 0.3 ? 0 : 1);
+    L(8, y, 2, 1, y === 15 ? 3 : 0);
+  }
+  L(0, 15, 18, 1, 3);
+  const cy = -3 + top, crown = [];
+  for (let x = 1; x < 17; x++) { const d = p.tilt && x < 9 ? 1 : 0, tall = x <= 3 || (x >= 8 && x <= 10) || x >= 15; for (let y = tall ? -3 : 0; y < 2; y++) crown.push([x, cy + d + y]); }
+  crown.forEach(([x, y]) => L(x - 1, y - 1, 3, 3, 3)); crown.forEach(([x, y]) => L(x, y, 1, 1, 0));
+  L(8, cy, 2, 1, 3);
+  const hl = [[-6, 15], [-5, 6], [-2, cy - 1]][p.hand];
+  L(hl[0], hl[1], 4, 3, 3); L(hl[0] + 1, hl[1] + 1, 2, 1, 0);
+  L(20, 15, 4, 3, 3); L(21, 16, 2, 1, 0); for (let f = 0; f < 3; f++) L(20 + f, 18 - (p.finger === f ? 1 : 0), 1, 1, 3);
+}
+function poseAt(t) {
+  const breath = frac(t / 4.6) < 0.45 ? 1 : 0;
+  const dp = frac(t / 3.2) * 3.2, finger = dp < 0.9 ? Math.floor(dp / 0.15) % 3 : -1;
+  const cp = ((t - 4) % 11 + 11) % 11;
+  let tilt = 0, hand = 0;
+  if (cp < 3) tilt = 1; else if (cp < 3.3) { tilt = 1; hand = 1; } else if (cp < 3.7) hand = 2; else if (cp < 4.0) hand = 1;
+  const gp = frac(t / 7), glance = gp < 0.2 ? -1 : gp > 0.55 && gp < 0.75 ? 1 : 0;
+  return { breath, finger, tilt, hand, glance, roar: false };
+}
+
+// ---- a path in cells: points with a kind for the leg that ends there ----
+// 'walk' moves level; 'stair' rises one whole cell per cell across (the feet always on a tread);
+// 'climb' rises straight up, a cell at a time (head on); `back` marks a leg behind the tower.
+function makePath(pts) {
+  let L = 0;
+  pts.forEach((p, i) => { if (i) L += Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y); p.L = L; });
+  return pts;
+}
+function pathAt(path, u) {
+  const d = u * path[path.length - 1].L;
+  for (let i = 1; i < path.length; i++) if (d <= path[i].L || i === path.length - 1) {
+    const a = path[i - 1], b = path[i], k = clamp((d - a.L) / Math.max(1e-6, b.L - a.L), 0, 1);
+    let x = lerp(a.x, b.x, k), y = lerp(a.y, b.y, k);
+    if (b.kind === 'stair') { const n = Math.abs(b.y - a.y), sy = Math.sign(b.y - a.y); y = a.y + sy * Math.min(n, Math.floor(Math.abs(x - a.x)) + 1); if (k <= 0) y = a.y; }
+    if (b.kind === 'climb') y = Math.round(y);
+    return { x, y, dir: b.kind === 'climb' ? 0 : Math.sign(b.x - a.x) || 1, back: !!b.back, k, i };
+  }
+  return { ...path[0], dir: 1 };
+}
+
+// ---- a carrier: a bowed body, the head low in front, a sheet or a plank on the back ----
+function carrier(x, y, sz, dir, i, loadA, a, t) {
+  sz = Math.max(4, snap(sz, 2));
+  const bw = sz, bh = Math.round(sz * 0.75), rim = sz >= 10 ? 2 : 1, up = Math.floor(t * 4 + i) % 2;
+  const X = Math.round(x - bw / 2), Y = Math.round(y - bh - up);
+  alpha(a, () => {
+    R(X, Y, bw, bh, 3);                                                                // a solid ink back, so a carrier never reads as one of the white-faced souls
+    const hs = Math.max(2, snap(sz * 0.4, 1));
+    if (dir === 0) R(X + (bw - hs) / 2, Y - Math.round(hs / 3), hs, hs, 3);             // from behind: the head sunk between the shoulders
+    else R(dir > 0 ? X + bw - 1 : X - hs + 1, Y + bh - hs - 1, hs, hs, 3);             // side on: the head bowed low in front
+    alpha(loadA, () => {
+      if (i % 3 === 0) { const ls = Math.round(sz * 0.8), lx = X + Math.round((bw - ls) / 2), ly = Y - ls + 1; R(lx, ly, ls, ls, 3); R(lx + rim, ly + rim, ls - 2 * rim, ls - 2 * rim, 0); }
+      else { const pl = Math.round(sz * 1.8), th = Math.max(2, Math.round(sz / 4)); R(X + Math.round(bw / 2 - pl / 2), Y - th, pl, th, 3); if (th > 2) R(X + Math.round(bw / 2 - pl / 2) + 1, Y - th + 1, pl - 2, th - 2, 2); }
+    });
+  });
+}
+function line(path, X0, Y0, c, t, size, filter) {
+  const total = path[path.length - 1].L, gap = 5, N = Math.max(6, Math.floor(total / gap)), lap = total / 0.9;
+  for (let i = 0; i < N; i++) {
+    const u = frac(i / N + t / lap), q = pathAt(path, u);
+    if (!filter(q)) continue;
+    const sz = lerp(size[0], size[1], u);
+    const a = clamp(u / 0.02, 0, 1) * clamp((1 - u) / 0.04, 0, 1), loadA = clamp((0.95 - u) / 0.05, 0, 1);
+    carrier(X0 + q.x * c, Y0 + q.y * c, sz, q.dir, i, loadA, a, t);
+  }
+}
+function titheGlare(X, Y, c) {
+  const rad = 4 * c, q = c >= 6 ? 3 : 2;
+  alpha(0.92, () => { for (let y = -rad; y < rad; y += q) { const hw = Math.sqrt(Math.max(0, rad * rad - y * y)); R(snap(X - hw, q), Y + y, snap(hw * 2, q), q, 0, true); } });
+}
+const stoneTone = (x, y, s) => hsh(x, y, s) < 0.22 ? 1 : 2;
+function tower(M, x0, x1, y0, y1, s = 70) { for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) M.set(x, y, stoneTone(x, y, s)); }
+function slits(X0, Y0, c, xs, y0, y1, skip = () => false) { for (const x of xs) for (let y = y0; y + 3 < y1; y += 6) if (!skip(x, y)) R(X0 + x * c, Y0 + y * c, c, 3 * c, 3); }
+
+// ---- the three takes. Each: (geometry in God-cells off his square's top left) ----
+// foot: the row the line walks along the bank. All return { path, draw(phase) }.
+const TAKES = {
+  cloud: {
+    name: 'Take 1: a cloud switchback',
+    blurb: "A cliff of cloud banked against the tower and tucked under the throne's slab, billowed out in whole cells on its open side like the cloud floor. The path is cut into its face: level ledges, each a white tread with a grey shadow under its lip, joined by flights of whole-cell steps at alternate ends. The carriers walk a ledge, turn and climb the next flight.",
+    build(foot, campC) {
+      // as many ledges as the height under the throne holds, a flight of p steps between each
+      const h = foot - 30, K = clamp(Math.round(h / 6.5) - 1, 1, 3), p = Math.round(h / (K + 1));
+      const s = Array.from({ length: K + 1 }, (_, k) => 30 + k * p), L = -20, Rt = 3, E = -9;
+      const n = foot - s[K], dir = k => k % 2 ? -1 : 1;
+      // a cliff of cloud against the tower, under the slab, with the path cut into its face:
+      // pale cloud, billowed out on its open side in whole cells, edged in ink
+      const cloud = Mask(), stone = Mask(), tread = new Set(), T2 = (x, y) => tread.add(x + ',' + y);
+      for (let y = 30; y <= foot; y++) {
+        const xl = L - 1 - Math.floor(vnoise(y / 2.2, 44) * 3);
+        for (let x = xl; x < 4; x++) cloud.set(x, y, hsh(x, y, 45) < 0.12 ? 0 : 1);
+      }
+      for (let x = L - 3; x < L; x++) if (vnoise(x / 1.5, 46) > 0.35) cloud.set(x, 29, 1);    // a puff over the top corner
+      // the treads: each ledge only where the line walks it, and the flights a step a cell
+      T2; for (let x = L; x < -7; x++) T2(x, s[0]);
+      for (let k = 1; k <= K; k++) {
+        const x0 = dir(k) > 0 ? (k === K ? L + p - n : L) : L + p, x1 = dir(k) > 0 ? Rt - p + 1 : (k === K ? Rt + 2 - n : Rt + 1);
+        for (let x = x0; x < x1; x++) T2(x, s[k]);
+        for (let j = 0; j < p; j++) T2(dir(k) > 0 ? Rt - p + 1 + j : L + p - 1 - j, s[k] - (j + 1));
+      }
+      for (let j = 0; j < n; j++) T2(dir(K) > 0 ? L + p - n + j : Rt - j, foot - (j + 1));
+      tower(stone, 4, 14, 30, foot + 1);
+      const paintTreads = (X0, Y0, c, ew) => {
+        const on = (x, y) => tread.has(x + ',' + y);
+        for (const k of tread) { const [x, y] = k.split(',').map(Number); if (!on(x, y + 1) && cloud.has(x, y + 1)) R(X0 + x * c, Y0 + (y + 1) * c, c, c, 2); }
+        for (const k of tread) {
+          const [x, y] = k.split(',').map(Number), px = X0 + x * c, py = Y0 + y * c;
+          R(px, py, c, c, 0); R(px, py, c, ew, 3);
+          if (on(x + 1, y + 1)) R(px + c - ew, py, ew, c, 3);
+          if (on(x - 1, y + 1)) R(px, py, ew, c, 3);
+        }
+      };
+      const P = [{ x: campC, y: foot }];
+      if (dir(K) > 0) P.push({ x: L + p - n, y: foot, kind: 'walk' }, { x: L + p, y: s[K], kind: 'stair' });
+      else P.push({ x: Rt + 1, y: foot, kind: 'walk' }, { x: Rt + 1 - n, y: s[K], kind: 'stair' });
+      for (let k = K; k >= 1; k--) {
+        if (dir(k) > 0) P.push({ x: Rt - p + 1, y: s[k], kind: 'walk' }, { x: Rt + 1, y: s[k - 1], kind: 'stair' });
+        else P.push({ x: L + p, y: s[k], kind: 'walk' }, { x: L, y: s[k - 1], kind: 'stair' });
+      }
+      P.push({ x: E, y: s[0], kind: 'walk' });
+      const path = makePath(P);
+      return {
+        path, end: { x: E, y: s[0] - 2 },
+        draw(ph, X0, Y0, c, ew, t, size) {
+          if (ph === 'struct') { paintMask(stone, X0, Y0, c, ew); slits(X0, Y0, c, [8], 34, foot); paintMask(cloud, X0, Y0, c, ew); paintTreads(X0, Y0, c, ew); }
+          if (ph === 'front') line(path, X0, Y0, c, t, size, () => true);
+        }
+      };
+    }
+  },
+  grand: {
+    name: 'Take 2: a grand straight stair',
+    blurb: 'The tower widens into the throne\'s pedestal and one long stair runs straight up its middle to his feet, walled either side, flaring wide over the cloud bank at the bottom like a cathedral approach. The line walks along the bank to the foot, turns, and climbs head on in two files, smaller as it goes up.',
+    build(foot, campC) {
+      const stone = Mask(), stair = Mask(), n = foot - 30, mid = 30 + Math.floor(n / 2);
+      tower(stone, 0, 18, 30, foot + 1);
+      const hw = y => y < mid ? 4 : Math.min(4 + (y - mid) + 1, 15);
+      for (let y = 30; y < foot + 1; y++) { const h = hw(y); for (let x = 9 - h; x < 9 + h; x++) { stone.del(x, y); stair.set(x, y, hsh(x, y, 60) < 0.1 ? 0 : 1); } }
+      // the parapets: a plumb ink-capped wall either side of the upper flight
+      for (let y = 30; y < mid; y++) { stair.del(4, y); stair.del(13, y); stone.set(4, y, 2); stone.set(13, y, 2); }
+      const path = makePath([
+        { x: campC, y: foot }, { x: 7.5, y: foot, kind: 'walk' }, { x: 7.5, y: 31, kind: 'climb' }
+      ]);
+      return {
+        path, end: { x: 9, y: 29 },
+        draw(ph, X0, Y0, c, ew, t, size) {
+          if (ph === 'struct') {
+            paintMask(stone, X0, Y0, c, ew); slits(X0, Y0, c, [2, 15], 33, mid);
+            paintMask(stair, X0, Y0, c, ew);
+            for (let y = 31; y < foot + 1; y++) { const h = hw(y), l = y < mid ? 5 : 9 - h; R(X0 + l * c, Y0 + y * c, (y < mid ? 8 : 2 * h) * c, ew, 3); }  // each step's nosing
+          }
+          if (ph === 'front') {
+            // two files on the flight: odd carriers step a file to the right as they turn up
+            const total = path[path.length - 1].L, gap = 4, N = Math.max(6, Math.floor(total / gap)), lap = total / 0.9;
+            const order = [];
+            for (let i = 0; i < N; i++) { const u = frac(i / N + t / lap); order.push([u, i]); }
+            order.sort((a, b) => a[0] - b[0]);                  // the higher (further) ones first, the nearer ones over them
+            for (const [u, i] of order.reverse()) {
+              const q = pathAt(path, u), climbing = q.i === 2;
+              const dx = climbing && i % 2 ? 3 * Math.min(1, (foot - q.y) / 2) : 0;
+              const sz = climbing ? lerp(size[0], size[1] * 0.9, (foot - q.y) / (foot - 31)) : size[0];
+              const a = clamp(u / 0.02, 0, 1) * clamp((1 - u) / 0.04, 0, 1), loadA = clamp((0.95 - u) / 0.05, 0, 1);
+              carrier(X0 + (q.x + dx) * c, Y0 + q.y * c, sz, q.dir, i, loadA, a, t);
+            }
+          }
+        }
+      };
+    }
+  },
+  spiral: {
+    name: 'Take 3: a spiral round the tower',
+    blurb: 'The stair is cut into the tower and winds round it twice. On the front it is a stepped band climbing left to right; it turns at the edge, passes behind the stone (its end is seen past each side) and comes back out on the left a turn higher. The last turn lands on a stone landing under the throne\'s left arm, at his hand.',
+    build(foot, campC) {
+      // one turn round the tower, or two where the height under the throne allows it
+      const h = foot - 30, turns = h >= 14 ? 2 : 1, r = Math.max(2, Math.floor((h - 2) / (2 * turns)));
+      const Lw = 1, Rw = 17, xs = Lw - 3, xe = Rw + 3, runW = xe - xs, TK = [...Array(turns).keys()];
+      const ya = TK.map(k => 30 + 2 * r * (turns - k)), n = foot - ya[0];
+      const towerM = Mask(), front = Mask(), back = Mask(), land = Mask();
+      tower(towerM, Lw, Rw, 30, foot + 1);
+      const fs = (k, x) => ya[k] - Math.floor((x - xs) * r / runW);
+      const bs = (k, x) => ya[k] - r - Math.floor((xe - 1 - x) * r / runW);
+      for (const k of TK) for (let x = xs; x < xe; x++) {
+        const f = fs(k, x), b = bs(k, x);
+        front.set(x, f, hsh(x, f, 62) < 0.12 ? 1 : 0); front.set(x, f + 1, 1); front.set(x, f + 2, 1);
+        back.set(x, b, 2); back.set(x, b + 1, 3);
+      }
+      for (let j = 0; j < n; j++) { const x = xs - n + j, top = foot - (j + 1); for (let y = top; y < foot + 1; y++) front.set(x, y, y === top ? 0 : 1); }
+      for (let x = -12; x < Lw; x++) { land.set(x, 30, x < xs ? 1 : 2); land.set(x, 31, 2); }
+      for (let x = -10; x < Lw; x++) land.set(x, 32, 2);
+      for (let x = -7; x < Lw; x++) land.set(x, 33, 2);
+      // the treads on the front: a tread per cell column change, so the steps read as steps
+      const P = [{ x: campC, y: foot }, { x: xs - n, y: foot, kind: 'walk' }, { x: xs, y: ya[0], kind: 'stair' }];
+      for (const k of TK) {
+        // front run: walk each tread, step up at each change
+        let y = ya[k];
+        for (let x = xs; x < xe; x++) { const f = fs(k, x); if (f !== y) { P.push({ x, y, kind: 'walk' }); P.push({ x: x + 1, y: f, kind: 'stair' }); y = f; } }
+        P.push({ x: xe, y, kind: 'walk' });
+        // round the corner and behind
+        let yb = bs(k, xe - 1); P.push({ x: xe, y: yb, kind: 'stair', back: true });
+        for (let x = xe - 1; x >= xs; x--) { const b = bs(k, x); if (b !== yb) { P.push({ x: x + 1, y: yb, kind: 'walk', back: true }); P.push({ x, y: b, kind: 'stair', back: true }); yb = b; } }
+        P.push({ x: xs, y: yb, kind: 'walk', back: true });
+        P.push({ x: xs - 1, y: k === turns - 1 ? 30 : ya[k + 1], kind: 'stair' });
+      }
+      P.push({ x: -9, y: 30, kind: 'walk' });
+      const path = makePath(P);
+      const isBack = q => q.back;
+      return {
+        path, end: { x: -9, y: 28 },
+        draw(ph, X0, Y0, c, ew, t, size) {
+          if (ph === 'behind') { paintMask(back, X0, Y0, c, ew); line(path, X0, Y0, c, t, size, isBack); }
+          if (ph === 'struct') {
+            paintMask(towerM, X0, Y0, c, ew); paintMask(land, X0, Y0, c, ew);
+            paintMask(front, X0, Y0, c, ew);
+          }
+          if (ph === 'front') line(path, X0, Y0, c, t, size, q => !q.back);
+        }
+      };
+    }
+  }
+};
+
+// ---- a scene at the game's framing ----
+function scene(cv, key, t) {
+  g = cv.getContext('2d');
+  const W = cv.width, H = cv.height, big = H >= 900;
+  // the game's own framing, read off the built shots: the window's top, the bank, the floor
+  const top = big ? 105 : 8, floorY = big ? 727 : 358, bank = big ? 625 : 288, c = big ? 9 : 4, ew = big ? 3 : 2;
+  const x0 = snap(W * 0.62 - 9 * c, c), y0 = top + snap((bank - top) * 0.03 + 19 * c, c);
+  // the stair stands in front of the near band, so its foot is lower than theirs: on the bank's floor
+  const footY = bank + Math.round(0.3 * (floorY - bank)), foot = Math.round((footY - y0) / c), campX = big ? 860 : 245;
+  const take = TAKES[key].build(foot, (campX - x0) / c), size = [Math.max(7, 1.5 * c), Math.max(5, 1.1 * c)];
+  drawFar(W, H, top, bank);
+  godBack(x0, y0, c, t);
+  drawNear(W, top, bank);
+  drawBank(W, H, bank, floorY);
+  take.draw('behind', x0, y0, c, ew, t, size);
+  take.draw('struct', x0, y0, c, ew, t, size);
+  throneStone(x0, y0, c, ew);
+  godFigure(x0, y0, c, poseAt(t));
+  take.draw('front', x0, y0, c, ew, t, size);
+  titheGlare(x0 + take.end.x * c, y0 + take.end.y * c, c);
+  drawLip(W, y0 + foot * c);
+  drawCamp(W, floorY, campX, !big);
+  return { x0, y0, c, foot };
+}
+// a 3x crop of the 800 by 600 frame, round the throne and stair
+const off = document.createElement('canvas'); off.width = 800; off.height = 600;
+function crop(cv, key, t) {
+  const at = scene(off, key, t), gx = cv.getContext('2d');
+  gx.imageSmoothingEnabled = false;
+  const w = cv.width / 3, h = cv.height / 3, sx = clamp(at.x0 + 2 * at.c - w / 2, 0, 800 - w), sy = clamp(at.y0 - 4 * at.c, 0, 600 - h);
+  gx.drawImage(off, sx, sy, w, h, 0, 0, cv.width, cv.height);
+}
+
+// ---- the page ----
+const live = [], host = document.getElementById('takes');
+for (const key of Object.keys(TAKES)) {
+  const s = document.createElement('section'); s.className = 'card';
+  s.innerHTML = `<h2 class="ph">${TAKES[key].name}</h2><p class="ph">${TAKES[key].blurb}</p>`;
+  const add = (w, h, kind, label, css) => {
+    const f = document.createElement('figure'), cv = document.createElement('canvas');
+    cv.width = w; cv.height = h; cv.id = `${key}-${kind}`; if (css) cv.style.width = css;
+    f.append(cv); const fc = document.createElement('figcaption'); fc.className = 'ph'; fc.textContent = label; f.append(fc);
+    live.push({ cv, key, kind }); return f;
+  };
+  s.append(add(2000, 967, '2000', '2000 by 967, a God-cell 9 px', '100%'));
+  const row = document.createElement('div'); row.className = 'row';
+  row.append(add(800, 600, '800', '800 by 600, a God-cell 4 px'));
+  row.append(add(1200, 780, 'crop', 'the 800 by 600 frame, 3x round the throne'));
+  s.append(row); host.append(s);
+}
+const sw = document.getElementById('sw');
+function swatches() { sw.innerHTML = [0, 1, 2, 3].map(i => `<span class="sw" style="background:${T(i)}"></span>`).join(' '); }
+
+const CRIT1 = [
+  "Framing was wrong: God sat a band too high, because I laid the sky out from the canvas top. I re-read the window top, the bank and the floor off the built shots. The real finding: at 2000 by 967 at rest there are only about seven God-cells between his seat and the bank, and no take can climb seven cells.",
+  "Every stair stood behind the near band of souls, so half of each was hidden. The structure now stands in front of the near band. Its foot sits lower than theirs, on the cloud floor, with a lip of billows over the foot and over the line's feet. That gives ten cells at 2000 and twenty-four at 800. It is a layer change in the game.",
+  "Take 1 was free-floating white slabs with souls showing through the gaps, and it read as a stack of boxes. I rebuilt it as a cliff of cloud against the tower, under the slab, with the path cut into its face: white treads, grey shadow under each lip, and an ink edge on each tread and riser.",
+  "The carriers had white bodies edged in ink, the same as the souls behind them, and vanished into the crowd. Their backs are now solid ink, with a white sheet or a grey plank on top.",
+  "Carriers were spaced 3.4 cells apart and jammed into a queue on every ledge. Now they are 5 apart (4 on the grand stair).",
+  "The far crowd was random-dithered pale and mid, read as sand and fought the throne for attention. It now uses an ordered dither, a step lighter.",
+  "The glare that takes the loads was the built 6 cells across. It covered the top ledge, his arm and the landing. It is now 4.",
+  "The structures ran a row past the cloud lip and showed a stray ink edge under the floor. They are clipped to the lip now."
+];
+const CRIT2 = [
+  "Take 3 at 2000 at rest: one turn, its front band mostly under the lip. It reads as a stair across the base, not as a spiral. Not fixable without more height under the seat.",
+  "Take 3 at 800: the bands read as barber-pole stripes on the tower, not as a stair you could climb. The tower's slits added to the clutter between the bands, so they are gone from this take.",
+  "Take 1 at 2000: two short ledges, and the top one ends inside the glare, so the hand-off blurs into white. The cloud cliff is a flat pale wedge with billows only on its open side; its top edge is level and reads as stone.",
+  "Take 1 on the dark page: the cliff maps to a dark grey and reads as rock as much as cloud. The four tones leave nothing lighter for cloud that is not God's light.",
+  "Take 2: the head-on climb turns each carrier into a small back with a load, so the bowed walk only shows along the cloud floor. Two files of four-pixel backs at 800 are barely more than specks.",
+  "Take 2: the glare at his feet washes out his robe's hem and the top steps. A glare set one row lower, on the top step, would keep the hem.",
+  "All, light page: the treads are paper white, as white as the glare. God's light is the brightest thing only on the dark page. On the light page it ties with the paper.",
+  "All, in the game: the throne rides at God's rate and the near band at 0.8. A structure painted in front of the band would slide slower than what is behind it as the camera pans. The pan has to be checked in the build; this mock has a still camera."
+];
+document.getElementById('crit1').innerHTML = CRIT1.map(s => `<li class="ph">${s}</li>`).join('');
+document.getElementById('crit2').innerHTML = CRIT2.map(s => `<li class="ph">${s}</li>`).join('');
+
+let t = 3, paused = false, last = performance.now();
+function frame(at = t) { for (const L of live) { if (L.kind === 'crop') crop(L.cv, L.key, at); else scene(L.cv, L.key, at); } }
+function loop(n) { const dt = Math.min(0.1, (n - last) / 1000); last = n; if (!paused) t += dt; frame(); if (!window.__manual) requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+function setTheme(m) {
+  document.querySelectorAll('[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === m));
+  if (m === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = m;
+  DARK = m === 'dark' || (m === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  swatches();
+}
+document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => setTheme(b.dataset.t));
+document.getElementById('pause').onclick = e => { paused = !paused; e.target.classList.toggle('on', paused); };
+setTheme('auto');
+window.mock = { setTheme, frame, manual() { window.__manual = true; }, png: id => document.getElementById(id).toDataURL('image/png'), ids: () => live.map(l => l.cv.id) };
+</script>
+</body>
+</html>
