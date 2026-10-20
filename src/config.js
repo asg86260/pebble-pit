@@ -154,3 +154,6 @@ export * from './config/pad.js';
 
 // the feedback form: its worker's address, its caps and its short lists
 export * from './config/feedback.js';
+
+// the clouds: the one way a cloud is drawn, its tones, field, clock and kinds
+export * from './config/clouds.js';

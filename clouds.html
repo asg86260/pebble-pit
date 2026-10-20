@@ -1,0 +1,205 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>clouds</title>
+<style>
+  /* The cloud bench: every kind of cloud drawn through the real module
+     (src/render/clouds.js), alone or together, on either page, at the size
+     the yard's camera draws a cell -- with a strip of the yard beside them
+     (a worker, a station, the rock, the ground line) so a cloud is judged at
+     the size it will be seen. Nothing here is the game; the clouds are. */
+  body { margin: 0; background: #fff; color: #000; font: 12px/1.4 ui-monospace, "Courier New", monospace; }
+  body.dark { background: #121212; color: #d6d6d6; }
+  .bar { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; padding: 8px 12px; }
+  .bar label { display: flex; gap: 5px; align-items: center; }
+  .bar b { letter-spacing: .18em; text-transform: uppercase; }
+  canvas { display: block; image-rendering: pixelated; }
+  .stats { white-space: pre; padding: 6px 12px; opacity: .7; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>clouds</b>
+  <label>show <select id="show">
+    <option value="all">all together</option><option value="far">far bank</option><option value="mid">middle bank</option>
+    <option value="puff">clickable clouds</option><option value="ground">ground billows</option></select></label>
+  <label>window <select id="win"><option value="2000x967">2000 x 967</option><option value="800x600">800 x 600</option></select></label>
+  <label><input type="checkbox" id="dark"> dark</label>
+  <label>tones <select id="tones"><option value="2">two a cloud</option><option value="1">one a cloud</option></select></label>
+  <label><input type="checkbox" id="lit"> lit cap</label>
+  <label><input type="checkbox" id="ref" checked> yard strip</label>
+  <label>camera <input type="range" id="cam" min="0" max="600" step="0.1" value="0"></label>
+  <label><input type="checkbox" id="auto" checked> slide</label>
+  <label>slide <input type="range" id="slide" min="0" max="40" step="0.5" value="4"> <span id="slideV"></span> cells/s</label>
+  <label>time <input type="range" id="speed" min="0" max="40" step="0.5" value="1"> <span id="speedV"></span>x</label>
+</div>
+<canvas id="c"></canvas>
+<div class="stats" id="stats"></div>
+<script type="module">
+import { cloudSheet, tickClouds, setLook, drawCloud, drawBand, cloudAt, spursOf } from '/src/render/clouds.js';
+
+const $ = id => document.getElementById(id);
+const cv = $('c'), g = cv.getContext('2d');
+// A cell as the yard's camera draws it at its default zoom (CELL in
+// config/yard.js) on a one-to-one screen: five pixels.
+const CELLPX = 5;
+
+// The yard strip, measured off the yard scene at 2000 x 967 (look.mjs crew):
+// the ground line 727 px down, so 48 cells of ground under it; a worker three
+// cells wide and six tall with the hat; the rock about forty cells across.
+const YARD = { groundUp: 48, worker: [3, 6], station: [24, 16], rock: [40, 18] };
+
+// Where each layer sits and how it moves: parallax against the camera, and
+// wind, in cells a second.
+const LAYERS = {
+  far:    { parallax: 0.15, wind: 0.04 },
+  mid:    { parallax: 0.4, wind: 0.1 },
+  puff:   { parallax: 0.6, wind: 0.22 },
+  ground: { parallax: 1, wind: 0 }
+};
+
+let W = 2000, H = 967, cols, rows, sheets = {}, puffs = [], t = 0, cam = 0, manual = false;
+const look = { page: 'light', twoTone: true, litOn: false };
+
+function build() {
+  cv.width = W; cv.height = H;
+  cols = Math.ceil(W / CELLPX); rows = Math.ceil(H / CELLPX);
+  // bands a good way wider than the window, so a slide shows new sky
+  sheets = {
+    far: cloudSheet({ kind: 'far', seed: 3, w: cols + 260 }),
+    mid: cloudSheet({ kind: 'mid', seed: 5, w: cols + 340 }),
+    ground: cloudSheet({ kind: 'ground', seed: 9, w: cols + 400 })
+  };
+  puffs = [0, 1, 2, 3].map(i => ({ sh: cloudSheet({ kind: 'puff', seed: 21 + i }), x0: 40 + i * (cols + 60) / 4, row: 0.36 + 0.07 * (i % 2), fade: 1, gone: false, back: 0 }));
+  for (const sh of all()) setLook(sh, look);
+}
+const all = () => [sheets.far, sheets.mid, ...puffs.map(p => p.sh), sheets.ground];
+function shown() {
+  const s = $('show').value;
+  return { far: s === 'all' || s === 'far', mid: s === 'all' || s === 'mid', puff: s === 'all' || s === 'puff', ground: s === 'all' || s === 'ground' };
+}
+
+// Where things stand, in cells from the top: the ground's top a fixed share
+// down, the bands above it, as the act's sky would hang them.
+function layout() {
+  const groundTop = rows - sheets.ground.h + Math.round(sheets.ground.h * 0.08);
+  return { far: Math.round(rows * 0.12), mid: Math.round(rows * 0.2), ground: groundTop };
+}
+
+const stat = { bake: [], draw: [] };
+function frame(dt) {
+  const speed = +$('speed').value;
+  t += dt * speed;
+  if ($('auto').checked) { cam += dt * +$('slide').value; $('cam').value = cam % 600; } else cam = +$('cam').value;
+  for (const p of puffs) {
+    if (p.gone) { p.fade = Math.max(0, p.fade - dt); if (!p.fade && (p.back -= dt) <= 0) { p.gone = false; p.x0 -= 70; } }
+    else p.fade = Math.min(1, p.fade + dt / 1.5);
+  }
+  const on = shown();
+  const live = [...(on.far ? [sheets.far] : []), ...(on.mid ? [sheets.mid] : []), ...(on.puff ? puffs.map(p => p.sh) : []), ...(on.ground ? [sheets.ground] : [])];
+  const bake = tickClouds(live, t);
+  const d0 = performance.now();
+  const sky = look.page === 'dark' ? '#121212' : '#ffffff';
+  g.fillStyle = sky; g.fillRect(0, 0, W, H);
+  const at = layout(), C = CELLPX;
+  const pos = (L, extra = 0) => (cam * LAYERS[L].parallax + LAYERS[L].wind * t + extra) * C;
+  if (on.far) drawBand(g, sheets.far, pos('far'), at.far * C, C, W);
+  if (on.mid) drawBand(g, sheets.mid, pos('mid'), at.mid * C, C, W);
+  if (on.puff) {
+    const span = (cols + 80) * C;
+    for (const p of puffs) {
+      // a clickable cloud wraps round a world a little wider than the window
+      const x = (((p.x0 * C - pos('puff', 0)) % span) + span) % span - 40 * C;
+      p.at = drawCloud(g, p.sh, x, Math.round(rows * p.row) * C, C, 1, p.fade);
+      p.y = Math.round(rows * p.row);
+    }
+  }
+  if (on.ground) drawBand(g, sheets.ground, pos('ground'), at.ground * C, C, W);
+  if ($('ref').checked) yardStrip();
+  stat.bake.push(bake); stat.draw.push(performance.now() - d0);
+  if (stat.bake.length > 240) { stat.bake.shift(); stat.draw.shift(); }
+  if (Math.round(t * 60) % 15 === 0 || dt === 0) report(live);
+}
+
+// The yard at its own scale, bottom left: what a cloud is measured against.
+function yardStrip() {
+  const C = CELLPX, ink = look.page === 'dark' ? '#d6d6d6' : '#000000', gy = H - YARD.groundUp * C;
+  g.fillStyle = ink;
+  g.fillRect(0, gy, 140 * C, C);                                   // the ground line
+  const [rw, rh] = YARD.rock;                                       // the rock, a mound
+  for (let i = 0; i < rw; i++) { const h = Math.round(rh * Math.sqrt(1 - ((i - rw / 2) / (rw / 2)) ** 2)); g.fillRect((8 + i) * C, gy - h * C, C, h * C); }
+  const [sw, shh] = YARD.station;                                  // a station's box
+  g.fillRect(70 * C, gy - shh * C, sw * C, shh * C);
+  g.fillStyle = look.page === 'dark' ? '#121212' : '#ffffff';
+  g.fillRect(72 * C, gy - (shh - 2) * C, (sw - 4) * C, (shh - 4) * C);
+  g.fillStyle = ink;
+  for (const x of [52, 58, 100, 112]) {                             // workers, three by six with the hat
+    const [ww, wh] = YARD.worker;
+    g.fillRect(x * C, gy - wh * C, ww * C, wh * C);
+  }
+  g.font = '12px ui-monospace, monospace';
+  g.fillText('yard at its own scale: rock, workers, a station, the ground line', 4, gy + 20);
+}
+
+function report(live) {
+  const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return (s[Math.floor(p * (s.length - 1))] || 0).toFixed(2); };
+  $('stats').textContent = `bake ${q(stat.bake, 0.5)} ms median, ${q(stat.bake, 0.95)} p95, ${q(stat.bake, 1)} max  |  draw ${q(stat.draw, 0.5)} ms median\n` +
+    live.filter((sh, i) => sh.kind !== 'puff' || i === live.findIndex(s => s.kind === 'puff')).map(sh =>
+      `${sh.kind.padEnd(7)} ${sh.w}x${sh.h} cells  re-toned last step ${String(sh.flips).padStart(5)}  went back ${String(sh.backs).padStart(3)}  spurs ${spursOf(sh)}`).join('\n');
+}
+
+let last = performance.now();
+function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; if (!manual) frame(dt); requestAnimationFrame(loop); }
+
+cv.addEventListener('click', e => {
+  const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  for (const p of puffs) if (!p.gone && p.at !== undefined &&
+      cloudAt(p.sh, Math.floor((x - p.at) / CELLPX), Math.floor(y / CELLPX) - p.y)) { p.gone = true; p.back = 3; return; }
+});
+function setLookFromUi() {
+  look.page = $('dark').checked ? 'dark' : 'light';
+  look.twoTone = $('tones').value === '2';
+  look.litOn = $('lit').checked;
+  document.body.classList.toggle('dark', look.page === 'dark');
+  for (const sh of all()) setLook(sh, look);
+}
+for (const id of ['dark', 'tones', 'lit']) $(id).onchange = setLookFromUi;
+$('win').onchange = () => { [W, H] = $('win').value.split('x').map(Number); build(); setLookFromUi(); };
+const vals = () => { $('slideV').textContent = $('slide').value; $('speedV').textContent = $('speed').value; };
+$('slide').oninput = vals; $('speed').oninput = vals; vals();
+
+const qs = new URLSearchParams(location.search);
+if (qs.has('dark')) $('dark').checked = true;
+if (qs.get('win')) $('win').value = qs.get('win');
+if (qs.get('show')) $('show').value = qs.get('show');
+if (qs.has('one')) $('tones').value = '1';
+if (qs.has('lit')) $('lit').checked = true;
+manual = qs.has('manual');
+[W, H] = $('win').value.split('x').map(Number);
+build(); setLookFromUi();
+frame(0);
+requestAnimationFrame(loop);
+
+// Handles for the headless checks (tools/clouds-check.mjs).
+window.bench = {
+  frame, build, sheets: () => sheets, puffs: () => puffs, all,
+  set(o) {
+    if ('t' in o) t = o.t; if ('cam' in o) cam = o.cam;
+    for (const k of ['speed', 'slide']) if (k in o) $(k).value = o[k];
+    if ('auto' in o) $('auto').checked = o.auto;
+    if ('show' in o) $('show').value = o.show;
+    if ('ref' in o) $('ref').checked = o.ref;
+    if ('dark' in o) $('dark').checked = o.dark;
+    if ('one' in o) $('tones').value = o.one ? '1' : '2';
+    if ('lit' in o) $('lit').checked = o.lit;
+    if ('win' in o) { $('win').value = o.win; [W, H] = o.win.split('x').map(Number); build(); }
+    setLookFromUi();
+    if (o.restart) for (const sh of all()) sh.k0 = null;
+  },
+  pos: () => ({ cam, t }),
+  stats: () => ({ text: $('stats').textContent })
+};
+</script>
+</body>
+</html>
