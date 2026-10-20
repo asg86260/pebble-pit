@@ -24,7 +24,7 @@
 // and draws them where its own camera puts them. Nothing here reads S.
 
 import { CLOUDS_TONES, CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_BUDGET_MS, CLOUDS_SLICE,
-         CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN, CLOUDS_CORE_MIN, CLOUDS_LOBE_LIGHT, CLOUDS_SEA,
+         CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN, CLOUDS_CORE_MIN, CLOUDS_LOBE_LIGHT, CLOUDS_SEA, CLOUDS_HELD_FIT,
          CLOUDS_TREATMENTS, CLOUDS_SKY, CLOUDS_LOD, CLOUDS_BANK, CLOUDS_LIFE, CLOUDS_SHAPES, CLOUDS_VOLUME, CLOUDS_TIERS,
          CLOUDS_FLOW, CLOUDS_GROUND_FLOW, CLOUDS_PALETTE, CLOUDS_DEPTH_BANDS, CLOUDS_LIGHT, CLOUDS_VOLUME_BANDS,
          CLOUDS_GROUND_DEPTHS } from '../config.js';
@@ -925,7 +925,10 @@ export function cloudLayer({ kind = 'cumulus', R = 8, seed = 1, flat = 1, d = 0.
 // it to swell to `grow` times its size. Its circles at rest are handed back
 // too (`bumps`: x across from its left end, y up from its base as a negative,
 // r, and each one's own squash `f`), which is what the sky's report counts.
-export function heldCloud({ kind = 'cumulus', wide = 20, seed = 1, flat = 1, grow = 1.5 }) {
+// `tall`, when given, is the height it stands to over its base: its puffs are
+// stood up or pressed down to it (within CLOUDS_HELD_FIT), so a cloud keeps
+// the build the sky gave it as well as its width.
+export function heldCloud({ kind = 'cumulus', wide = 20, tall = 0, seed = 1, flat = 1, grow = 1.5 }) {
   const make = R => { const ps = []; cloudPuffs(gen(seed * 7919 + 8111), kind, 0, 0, R, flat, null, 0, ps); return ps; };
   const span = ps => { let l = Infinity, r = -Infinity; for (const p of ps) { l = Math.min(l, p.x - p.r); r = Math.max(r, p.x + p.r); } return [l, r]; };
   // sized so it stands `wide` across: worked once at a guess and once more
@@ -933,6 +936,12 @@ export function heldCloud({ kind = 'cumulus', wide = 20, seed = 1, flat = 1, gro
   let [l, r] = span(make(wide / 3));
   const puffs = make(wide / 3 * wide / Math.max(1, r - l));
   [l, r] = span(puffs);
+  if (tall > 0) {
+    let h = 0;
+    for (const p of puffs) h = Math.max(h, -p.y + p.r * p.flat);
+    const k = Math.min(CLOUDS_HELD_FIT[1], Math.max(CLOUDS_HELD_FIT[0], tall / Math.max(1, h)));
+    for (const p of puffs) { p.y *= k; p.flat *= k; }
+  }
   const bumps = puffs.map(p => ({ x: p.x - l, y: p.y, r: p.r, f: p.flat }));
   let top = 0, bottom = 0, left = 0, right = 0;
   for (const p of puffs) {

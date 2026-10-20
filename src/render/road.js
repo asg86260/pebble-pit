@@ -8,8 +8,9 @@
 // The clouds are hung above the window the yard was left in (view.js,
 // `skyCam`), never inside it, so the yard never sees one: the road is only
 // there for the camera that goes up it. They are drawn in the yard's own
-// cloud tones (weather.js, `roadTones`), lit on top and shaded under, each
-// cell picking its tone off a hash so no cloud is a flat slab of paint.
+// cloud tones (weather.js, `roadTones`) on the one cloud renderer; with no
+// WebGL2, as mounds lit on top and shaded under, each cell picking its tone
+// off a hash so no cloud is a flat slab of paint.
 
 import { P, GREY, ACT_ROAD_CLOUDS, ACT_ROAD_CLOUD_W, ACT_ROAD_CLOUD_H, ACT_ROAD_BILLOW, ACT_ROAD_SEED, ACT_ROAD_FAR,
          ACT_ROAD_SPREAD, ACT_ROAD_JITTER, ACT_ROAD_ROUND, ACT_ROAD_SPECKLE, AFTER_W } from '../config.js';
@@ -20,6 +21,9 @@ import { tear } from '../ghosts.js';
 import { skyCam } from '../view.js';
 import { roadTones } from '../weather.js';
 import { afterlifeOn, afterUnder } from '../acts.js';
+import { heldCloud } from './clouds.js';
+import { cloudCard, cellOnPage, workClouds, putCells, heldLook } from './cloudpage.js';
+import { onPixel } from './frame.js';
 
 const snap = v => Math.round(v / P) * P;
 const hsh = (a, b = 0, c = 0) => {
@@ -94,10 +98,42 @@ function underside(tones) {
   }
 }
 
+// The same clouds on the one cloud renderer (render/clouds.js, `heldCloud`):
+// each as wide and as tall as its mound above, at the same place, its turrets
+// lit off the same tones. They hold still -- the road is a climb past them --
+// so each is worked once a frame at one moment and shown at once.
+const held = [];
+function heldAt(i, w, h) {
+  return (held[i] ||= { ...heldCloud({ kind: hsh(i, 9) < 0.5 ? 'cumulus' : 'heap', wide: w, tall: h, seed: ACT_ROAD_SEED * 31 + i, grow: 1 }), look: null });
+}
+function liquid(tones) {
+  const sky = skyCam();
+  const lo = Math.min(sky.y, tear().y) - P * ACT_ROAD_CLOUD_H * 2;
+  const hi = afterUnder() + P * (ACT_ROAD_BILLOW + ACT_ROAD_CLOUD_H * 2);
+  const n = ACT_ROAD_CLOUDS;
+  if (!(lo > hi) || n <= 0) return;
+  const step = (lo - hi) / n, mid = tear().x, span = sky.w * ACT_ROAD_SPREAD, cw = cellOnPage(P);
+  const [wMin, wMax] = ACT_ROAD_CLOUD_W, views = [], at = [];
+  for (let i = 0; i < n; i++) {
+    const w = wMin + Math.floor(hsh(i, 1) * (wMax - wMin + 1));
+    const h = Math.max(2, Math.min(ACT_ROAD_CLOUD_H, 2 + Math.floor(w / 8)));
+    const base = lo - step * (i + 0.5 + (hsh(i, 2) - 0.5) * ACT_ROAD_JITTER);
+    const x0 = mid + (hsh(i, 3) - 0.5) * span - (w * P) / 2;
+    const c = heldAt(i, w, h), L = c.layer;
+    const x = onPixel(x0 - c.ox * cw), y = onPixel(base - L.baseRow * cw);
+    if (y > S.camY + S.viewH || y + L.h * cw < S.camY || x > S.camX + S.viewW || x + L.w * cw < S.camX) continue;
+    c.look = heldLook(L, tones, c.look);
+    views.push({ key: 'road' + i, layer: L, ox: 0, w: L.w, h: L.h, look: c.look, every: 1 });
+    at.push({ x, y, cw });
+  }
+  const pic = workClouds(views, 0, 1);
+  if (pic) views.forEach((v, k) => putCells(ctx, pic.canvas, pic.at.get(v.key), at[k].x, at[k].y, at[k].cw));
+}
+
 export function drawRoadSky() {
   if (!roadUp()) return;
   const tones = roadTones(ACT_ROAD_FAR);
-  clouds(tones);
+  if (cloudCard()) liquid(tones); else clouds(tones);
   underside(tones);
   ctx.fillStyle = '#000';
 }

@@ -28,10 +28,9 @@ import { meet } from './met.js';
 import { sfx } from './audio.js';
 import { earn } from './notices.js';
 import { smoothstep as smooth } from './motion.js';
-import { heldCloud, layerLook } from './render/clouds.js';
-import { cloudCard, cellOnPage, workClouds, putCells } from './render/cloudpage.js';
+import { heldCloud } from './render/clouds.js';
+import { cloudCard, cellOnPage, workClouds, putCells, heldLook } from './render/cloudpage.js';
 import { onPixel } from './render/frame.js';
-import { inkOf as pageInk } from './ink.js';
 
 const BIRD_TAIL = P * 90;    // how far off either side of the view a lot may stretch
 
@@ -240,7 +239,8 @@ function makeCloud(x, sheet, storm = false) {
   // already made, never a draw of its own, so the run's stream is the same
   // number for number as before the sky was redrawn.
   const seed = (Math.floor(wide * 977 + H * 131 + bumps[0].r * 7919) % 100003) + 1;
-  const held = heldCloud({ kind: HELD[kind.name], wide: w, seed, flat: L.flat, grow: 1 + CLOUD_GROW_R });
+  const tall = -Math.min(...bumps.map(b => b.y - b.r)) * L.flat;
+  const held = heldCloud({ kind: HELD[kind.name], wide: w, tall, seed, flat: L.flat, grow: 1 + CLOUD_GROW_R });
   return { x, yb, w: held.w, bumps: held.bumps, layer: held.layer, ox: held.ox, id: ++cloudIds, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
            give: 0.7 + (off + 1) / 2 * 0.6, storm, age: 0, melt: 0 };
 }
@@ -636,31 +636,13 @@ function cellTone(h, peak, cx, r, u) {
 // changes its cells. Its swell is its circles' (`swellOf`); a cloud the front
 // lets go of shrinks and fades out by its melt. Its tones are the sky's this
 // frame (`cloudTones`: the murk's brown, the storm's grey, the air's fade by
-// depth), each through the page's ink, since a picture copied off the card
-// never passes the ink's fill hook.
+// depth), through the page's ink (render/cloudpage.js, `heldLook`).
 const key = c => 'sky' + c.id;
 const forget = c => { const gl = cloudCard(); if (gl) gl.forget(key(c)); };
 let skyT = 0, lastT = null;
-const rgbaOf = css => {
-  const v = pageInk(css), m = /^#([0-9a-f]{6})$/i.exec(v);
-  if (m) { const n = parseInt(m[1], 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1]; }
-  const r = /rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/.exec(v);
-  return r ? [r[1] / 255, r[2] / 255, r[3] / 255, 1] : [1, 1, 1, 1];
-};
-// A cloud's look, made once (its bands' depths), with its colors filled in
-// each frame: a role's tone number is its role's, so the cleanup's idea of
-// one shape never moves as the colors slide. The rear tier's lit face takes
-// the body's tone, a step deeper, as the renderer's own look does.
+// A cloud's look, made once, its colors filled in each frame (`heldLook`).
 function lookOf(c, tones) {
-  const L = c.look || (c.look = layerLook(c.layer, { page: 'light' }));
-  const css = tones.map(col => `rgb(${Math.round(col[0])},${Math.round(col[1])},${Math.round(col[2])})`);
-  for (let j = 0; j < c.layer.nt; j++) for (let k = 1; k <= 4; k++) {
-    const t = j === 0 && k === 1 ? 1 : k - 1;
-    L.lut.set(rgbaOf(css[Math.min(t, css.length - 1)]), (j * 5 + k) * 4);
-    L.tone[j * 5 + k] = t + 1;
-  }
-  L.tone[0] = 9;
-  return L;
+  return (c.look = heldLook(c.layer, tones.map(col => `rgb(${Math.round(col[0])},${Math.round(col[1])},${Math.round(col[2])})`), c.look || null));
 }
 function drawCloudsLiquid(order, visitors, sw, crown, base) {
   const dt = lastT === null ? 0 : Math.max(0, Math.min(0.1, skyT - lastT));

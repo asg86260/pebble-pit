@@ -341,6 +341,11 @@ export const CLOUDS_LIGHT = [-0.6, -0.8];
 export const CLOUDS_VOLUME_BANDS = { lit: 0.42, shade: 0.4, base: 0.16, core: 0.2 };
 // The ground's rows, back to front, as depths for the bands above.
 export const CLOUDS_GROUND_DEPTHS = [0.1, 0.62, 1];
+// A held cloud (the yard's, render/clouds.js `heldCloud`) stood up or pressed
+// down to the height asked of it by no more than these, least and most: past
+// them its turrets would read as stretched.
+export const CLOUDS_HELD_FIT = [0.8, 2.6];
+
 // --- the cloud sea ---------------------------------------------------------------
 // The ground in the liquid sky (render/clouds.js, groundLayer): rows of
 // billows back to front, each row a tier and each smaller than the one in

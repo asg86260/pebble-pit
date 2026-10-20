@@ -14,6 +14,8 @@
 import { S } from '../state.js';
 import { skyGL } from './cloudgl.js';
 import { layerAt } from './frame.js';
+import { layerLook } from './clouds.js';
+import { inkOf } from '../ink.js';
 
 let card;   // the card's passes, null with no WebGL2; undefined until asked
 export function cloudCard() {
@@ -62,4 +64,28 @@ export function putCells(g, canvas, a, x, y, cw, from = 0, rows = a.h) {
   g.imageSmoothingEnabled = false;
   g.drawImage(canvas, a.x, a.y + from, a.w, rows, x, y + from * cw, a.w * cw, rows * cw);
   g.imageSmoothingEnabled = smooth;
+}
+
+// A held cloud's look (render/clouds.js, `heldCloud`) in colors handed in this
+// frame -- the yard's sky's, which slide with the murk and the storm -- lit
+// face to core, each through the page's ink: a picture copied off the card
+// never passes the ink's fill hook. Its bands' depths are made once (`into`,
+// kept by the caller); a role's tone number is its role's, so the cleanup's
+// idea of one shape never moves as the colors slide. The rear tier's lit face
+// takes the body's tone, a step deeper, as the renderer's own look does.
+const rgbaOf = css => {
+  const v = inkOf(css), m = /^#([0-9a-f]{6})$/i.exec(v);
+  if (m) { const n = parseInt(m[1], 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1]; }
+  const r = /rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/.exec(v);
+  return r ? [r[1] / 255, r[2] / 255, r[3] / 255, 1] : [1, 1, 1, 1];
+};
+export function heldLook(layer, css, into = null) {
+  const L = into || layerLook(layer, { page: 'light' });
+  for (let j = 0; j < layer.nt; j++) for (let k = 1; k <= 4; k++) {
+    const t = Math.min(css.length - 1, j === 0 && k === 1 ? 1 : k - 1);
+    L.lut.set(rgbaOf(css[t]), (j * 5 + k) * 4);
+    L.tone[j * 5 + k] = t + 1;
+  }
+  L.tone[0] = css.length + 1;
+  return L;
 }
