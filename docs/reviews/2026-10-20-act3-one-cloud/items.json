@@ -1,0 +1,137 @@
+{
+ "title": "Act 3: one cloud system, one sheet of sky, slower",
+ "lede": "The drifting oval clouds are gone; the sky is only the liquid renderer. Every sky cloud sits on one sheet seen out to the horizon: near ones big and high, far ones small, flat and crowding the horizon. The sky changes over minutes.",
+ "base": "34ae4d8a",
+ "head": "150a5cd5",
+ "items": [
+  {
+   "id": "union",
+   "title": "The union's camp",
+   "what": "the sky as one receding sheet, no oval clouds",
+   "shots": [
+    {
+     "scene": "level-union",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-union",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-union",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-union",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "god",
+   "title": "God's camp",
+   "what": "the same sheet round God's stage",
+   "shots": [
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "still-1x",
+   "title": "Twelve seconds at real speed",
+   "what": "the camera held, the sky at 1x: it barely changes, as asked",
+   "shots": [
+    {
+     "scene": "level-god",
+     "window": [
+      1000,
+      484
+     ],
+     "theme": "light",
+     "label": "1x, 12 s",
+     "wait": 0,
+     "gif": {
+      "seconds": 12,
+      "fps": 10
+     }
+    }
+   ]
+  },
+  {
+   "id": "pan",
+   "title": "A pan along the path",
+   "what": "parallax from depth on the one sheet",
+   "shots": [
+    {
+     "scene": "level-pan",
+     "window": [
+      1000,
+      484
+     ],
+     "theme": "light",
+     "label": "pan, 1000x484 light",
+     "wait": 0,
+     "setup": "(() => { let x = window.__state().camX; const f = () => { x = window.__look(x + 5); requestAnimationFrame(f); }; requestAnimationFrame(f); })()",
+     "gif": {
+      "seconds": 5,
+      "fps": 20
+     }
+    }
+   ]
+  }
+ ]
+}
