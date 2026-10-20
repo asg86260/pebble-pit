@@ -23012,3 +23012,10 @@ again (docs/act3-fixlist-2026-10-20.md, items 2 and 3).
   seats, a row a station, climbing like the act's other rows. The roster
   draws the seats as the yard's does (`capOf` / `roomAt`, the seat pips):
   plus stops at the seats bought.
+- **Loads carried the yard's way** (the owner, 2026-10-20: "The act 3
+  resources should be carried the same as act 1. But take up more slots.").
+  A body carries act 3's goods the way a yard hauler carries grains: a `load`
+  of items up to the yard's carry (`haulCap`), drawn in its arms the yard's
+  way, picked up and dropped the yard's way. An act 3 item is heavier: each
+  takes several of the carry's slots (a log, a plank, a sheet, a sign, its own
+  weight in config), so a body carries few of them at once.
