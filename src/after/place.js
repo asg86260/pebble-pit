@@ -114,10 +114,11 @@ export const agitatorX = k => { const b = stationBox('pedestal'); return b.x - P
 // The members waiting are counted, not stood anywhere (the owner, 2026-10-18:
 // our crowd behind the camp is dropped). A member comes into the camp, and
 // goes back out of it, at one of its two edges, fading as it crosses: the
-// place's left past the grove, and the open floor past the pedestal where
-// one walking out of God's yard arrives. `campSpot(to)` is the edge nearest
-// world x `to`; with no `to`, the edge on God's yard's side.
-export const campEdges = () => [snap(afterX0() + P * 4), snap(stationX0('pedestal') + ART.pedestal.ground * P + P * 4)];
+// floor just left of the grove (past heaven's gates, which stand before it),
+// and the open floor past the pedestal where one walking out of God's yard
+// arrives. `campSpot(to)` is the edge nearest world x `to`; with no `to`,
+// the edge on God's yard's side.
+export const campEdges = () => [snap(afterX0() + AFTER_GROVE_X0 - P * 8), snap(stationX0('pedestal') + ART.pedestal.ground * P + P * 4)];
 export const campSpot = (to = null) => {
   const [x0, x1] = campEdges();
   return { x: to == null || Math.abs(to - x1) <= Math.abs(to - x0) ? x1 : x0, y: afterFloor() };
@@ -329,7 +330,7 @@ export const ICON = { saw: [13, 8], shovel: [5, 13] };
 // idle, pulled down), the heap's `edge` (the notch's x), a tree's `saw` {x, y}
 // (the middle of its cut) and a stump's `at` {x, y} (its foot) for plot `i`;
 // and the rest of each moving part for the cues to point at.
-const TOP_STRIP = 2;   // cells along a station's top that open its card (after/rows.js, `cardAt`)
+const TOP_STRIP = 2;   // cells along a station's top, its roof, that a press does not work
 export function stationParts(key, i = 0) {
   const fl = afterFloor();
   const at = (x0, x, y) => ({ x: x0 + x * P, y: fl + y * P });
