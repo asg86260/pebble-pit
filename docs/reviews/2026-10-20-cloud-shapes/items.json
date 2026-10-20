@@ -1,0 +1,116 @@
+{
+ "title": "Act 3: the cloud sea and cumulus that stack",
+ "lede": "Ground billows as a deep, varied sea; cumulus built as turrets rising off a flat base the whole field shares, each turret lit as its own rounded form.",
+ "base": "42552860",
+ "head": "9b0891a3",
+ "items": [
+  {
+   "id": "union",
+   "title": "The union's camp",
+   "what": "the sky's stacked cumulus, the sea under the path, the path by night",
+   "shots": [
+    {
+     "scene": "level-union",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-union",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-union",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-union",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "god",
+   "title": "God's camp",
+   "what": "the same round God's stage",
+   "shots": [
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "pan",
+   "title": "A pan along the path",
+   "what": "every layer at its own rate, the clouds flowing on the act's clock",
+   "shots": [
+    {
+     "scene": "level-pan",
+     "window": [
+      1000,
+      484
+     ],
+     "theme": "light",
+     "label": "pan, 1000x484 light",
+     "wait": 0,
+     "setup": "(() => { let x = window.__state().camX; const f = () => { x = window.__look(x + 5); requestAnimationFrame(f); }; requestAnimationFrame(f); })()",
+     "gif": {
+      "seconds": 5,
+      "fps": 20
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -27,7 +27,7 @@
 // page to draw scaled up at the layer's true position (drawCloud in
 // clouds.js's terms: one rounding for the whole layer).
 
-import { CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_FADE_S } from '../config.js';
+import { CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_FADE_S, CLOUDS_SETTLE } from '../config.js';
 import { puffAt } from './clouds.js';
 
 const REACH = 1 / Math.sqrt(1 - Math.cbrt(CLOUDS_THRESHOLD));
@@ -38,18 +38,27 @@ in vec2 a; void main() { gl_Position = vec4(a, 0., 1.); }`;
 
 const FIELD = `#version 300 es
 precision highp float; precision highp int; precision highp usampler2D;
-uniform sampler2D uPuffs;   // x, y, reach, flat (row 0); tier (row 1)
+uniform sampler2D uPuffs;   // x, y, reach, flat (row 0); tier, base cut (row 1)
 uniform sampler2D uStrips;  // per 8-column strip: first, count
 uniform sampler2D uIndex;   // puff indices, strip by strip
 uniform usampler2D uPrev;   // last frame's tier + 1
 uniform ivec2 uShift;       // where last frame's cell is, from this one
 uniform int uFresh;
-uniform float uFill[4];     // a row's solid underneath starts here (the ground), else far below
-out uint o;
+uniform int uTiers;
+uniform float uFill[8];     // a row's solid underneath starts here (the ground), else far below
+uniform int uLobe[8];       // 1: a tier whose lobes are each lit and shadowed as rounded forms; 2: lit only
+uniform vec4 uLobeAt;       // lit cap: facing, rim; shadow: facing, rim (CLOUDS_LOBE_LIGHT)
+uniform float uLobeMin;     // the least reach of a lobe lit on its own
+uniform vec2 uLightN;       // toward the light, unit
+out uint o;                 // tier + 1, and the lobe's light (0, 1 lit, 2 shadow) times 16
 void main() {
   ivec2 c = ivec2(gl_FragCoord.xy);
   vec2 p = vec2(c) + 0.5;
-  vec4 s = vec4(0.);
+  float s[8] = float[8](0., 0., 0., 0., 0., 0., 0., 0.);
+  // each tier's strongest lobe at this cell: how strong, which way the cell
+  // is from its middle as a share of its visible radius, and its reach
+  float w[8] = float[8](0., 0., 0., 0., 0., 0., 0., 0.);
+  vec3 d[8];
   vec2 st = texelFetch(uStrips, ivec2(c.x / ${STRIP}, 0), 0).xy;
   int first = int(st.x), n = int(st.y);
   for (int k = 0; k < n; k++) {
@@ -57,59 +66,91 @@ void main() {
     vec4 a = texelFetch(uPuffs, ivec2(i, 0), 0);
     float dx = p.x - a.x, dy = (p.y - a.y) / a.w;
     float q = 1. - (dx * dx + dy * dy) / (a.z * a.z);
-    if (q > 0.) {
-      int t = int(texelFetch(uPuffs, ivec2(i, 1), 0).x);
+    vec4 b = texelFetch(uPuffs, ivec2(i, 1), 0);
+    // nothing of a puff below its cloud's base line: a cumulus's bottom is
+    // flat, at the height the whole field shares
+    if (q > 0. && p.y <= b.y) {
+      int j = int(b.x);
       float v = q * q * q;
-      if (t == 0) s.x += v; else if (t == 1) s.y += v; else if (t == 2) s.z += v; else s.w += v;
+      s[j] += v;
+      if (v > w[j]) { w[j] = v; d[j] = vec3(vec2(dx, dy) / (a.z * ${(1 / REACH).toFixed(5)}), a.z); }
     }
   }
-  for (int j = 0; j < 4; j++) s[j] += clamp((p.y - uFill[j]) / 3. + 0.5, 0., 1.) * ${(CLOUDS_THRESHOLD * 2).toFixed(4)};
+  for (int j = 0; j < 8; j++) s[j] += clamp((p.y - uFill[j]) / 3. + 0.5, 0., 1.) * ${(CLOUDS_THRESHOLD * 2).toFixed(4)};
   float up = ${(CLOUDS_THRESHOLD * (1 + CLOUDS_HYST)).toFixed(5)}, dn = ${(CLOUDS_THRESHOLD * (1 - CLOUDS_HYST)).toFixed(5)};
   int lo = -1, hi = -1;
-  for (int j = 3; j >= 0; j--) { if (hi < 0 && s[j] > dn) hi = j; if (s[j] > up) { lo = j; break; } }
+  for (int j = uTiers - 1; j >= 0; j--) { if (hi < 0 && s[j] > dn) hi = j; if (s[j] > up) { lo = j; break; } }
   if (hi < lo) hi = lo;
   int was = lo;
   ivec2 q = c + uShift, sz = textureSize(uPrev, 0);
-  if (uFresh == 0 && q.x >= 0 && q.y >= 0 && q.x < sz.x && q.y < sz.y) was = int(texelFetch(uPrev, q, 0).r) - 1;
-  o = uint(clamp(was, lo, hi) + 1);
+  if (uFresh == 0 && q.x >= 0 && q.y >= 0 && q.x < sz.x && q.y < sz.y) was = int(texelFetch(uPrev, q, 0).r & 15u) - 1;
+  int t = clamp(was, lo, hi);
+  // a lobe in the round: its cap toward the light lit, the side away from it
+  // in shadow, read off the lobe the cell belongs to (the strongest of its
+  // tier there), so every turret of a cloud and every smaller one clustered
+  // on it shows as its own rounded form, its edge against its neighbor a
+  // lit cap meeting a shadow
+  uint h = 0u;
+  if (t >= 0 && uLobe[t] > 0 && w[t] > 0. && d[t].z >= uLobeMin) {
+    float u = length(d[t].xy), f = u > 0. ? dot(d[t].xy / u, uLightN) : 0.;
+    if (f > uLobeAt.x && u > uLobeAt.y) h = 1u;
+    else if (uLobe[t] == 1 && f < -uLobeAt.z && u > uLobeAt.w) h = 2u;
+  }
+  o = uint(t + 1) | (h << 4);
 }`;
 
+// The volume of a cloud, by looking from each cell a set depth along the
+// light and against it, never by slope. A tier's roles are j * 5 + k:
+//   k 1  its lit face: the cell toward the light is open sky, so this is
+//        the side of the cloud the light falls on
+//   k 2  its plain body
+//   k 3  its shadowed side: the cell away from the light is open sky; and
+//        its underside over open sky
+//   k 3  also where a nearer lobe stands just below it: the shadow where
+//        lobes meet
+//   k 4  the lower half of its underside, the darkest of it
+// A ground row's crevice is its shadowed side where the next row stands.
 const ROLES = `#version 300 es
 precision highp float; precision highp int; precision highp usampler2D;
 uniform usampler2D uT;
-uniform ivec4 uShade, uCrease, uLit;   // depths a tier
-uniform ivec4 uRow;                    // which cloud a tier is (the ground's rows differ)
-uniform int uBottom;                   // what is under the last row: a tier + 1, or 0
-uniform int uInside;                   // bellies over farther tiers too, not just sky
-uniform int uRimSky;                   // a rim against open sky too (by night)
+uniform int uLit[8], uShade[8], uBase[8], uCore[8], uRow[8];   // depths a tier, and which cloud it is
+uniform vec2 uLight;       // toward the light, a unit step
+uniform int uBottom;       // what is under the last row: a tier + 1, or 0
 out uint o;
 int at(ivec2 c) {
   ivec2 sz = textureSize(uT, 0);
   if (c.y < 0) return -1;
   if (c.y >= sz.y) return uBottom - 1;
   if (c.x < 0 || c.x >= sz.x) return -2;
-  return int(texelFetch(uT, c, 0).r) - 1;
+  return int(texelFetch(uT, c, 0).r & 15u) - 1;
 }
+// the lobe's own light at a cell (FIELD): 0, 1 lit, 2 shadow
+int lobe(ivec2 c) { return int(texelFetch(uT, c, 0).r >> 4); }
+// open sky, or -- where the tier's lobes are modeled inside the cloud (a core
+// band) -- a farther lobe of the same cloud: a front lobe's top is lit where
+// it stands against the lobe behind it, so it reads as standing in front
+bool behind(int b, int j) { return b == -1 || (uCore[j] > 0 && b >= 0 && b < j && uRow[b] == uRow[j]); }
+// open sky only: a cloud is shadowed as a whole, on its outer edge
+bool open(int b) { return b == -1; }
 void main() {
   ivec2 c = ivec2(gl_FragCoord.xy);
   int j = at(c);
   if (j < 0) { o = 0u; return; }
-  // a tier's roles are j * 5 + 1 in the light, + 2 in its own shadow (its
-  // underside over open sky, a belly hung in front of the cloud's farther
-  // lobes, a crevice on the ground), + 3 the rim, + 4 the deepest of its
-  // base: the lower half of the underside band, so the shadow steps darker
-  // toward the bottom
-  int r = j * 5 + 1, l = uLit[j], s = uShade[j], k = uCrease[j];
-  if (l > 0) { int u = at(c - ivec2(0, l)), d = at(c - ivec2(l * 7 / 10, l * 7 / 10)); if ((u != j && u != -2 && (uRimSky == 1 || u >= 0)) || (d != j && d != -2 && (uRimSky == 1 || d >= 0))) r = j * 5 + 3; }
-  if (s > 0) { int b = at(c + ivec2(0, s)); if (b == -1) r = at(c + ivec2(0, (s + 1) / 2)) == -1 ? j * 5 + 4 : j * 5 + 2; else if (uInside == 1 && b >= 0 && b < j) r = j * 5 + 2; }
-  if (k > 0) { int b = at(c + ivec2(0, k)); if (b > j && uRow[b] != uRow[j]) r = j * 5 + 2; }
-  o = uint(r);
+  int k = 2, h = lobe(c);
+  if (h == 1) k = 1; else if (h == 2) k = 3;
+  int l = uLit[j], s = uShade[j], b = uBase[j], co = uCore[j];
+  if (l > 0 && behind(at(c + ivec2(round(uLight * float(l)))), j)) k = 1;
+  if (s > 0 && open(at(c - ivec2(round(uLight * float(s)))))) k = 3;
+  if (s > 0) { int n = at(c + ivec2(0, s)); if (n > j && uRow[n] != uRow[j]) k = 3; }
+  if (b > 0 && at(c + ivec2(0, b)) == -1) k = at(c + ivec2(0, (b + 1) / 2)) == -1 ? 4 : 3;
+  if (co > 0) { int n = at(c + ivec2(0, co)); if (n > j && uRow[n] == uRow[j]) k = 3; }
+  o = uint(j * 5 + k);
 }`;
 
 const CLEAN = `#version 300 es
 precision highp float; precision highp int; precision highp usampler2D;
 uniform usampler2D uR;
-uniform int uTone[24];   // a role's tone, so two tiers in one tone are one shape
+uniform int uTone[40];   // a role's tone, so two tiers in one tone are one shape
 out uint o;
 uint at(ivec2 c) { ivec2 sz = textureSize(uR, 0); c = clamp(c, ivec2(0), sz - 1); return texelFetch(uR, c, 0).r; }
 void main() {
@@ -152,7 +193,7 @@ void main() {
   uvec4 was = texelFetch(uPrev, q, 0);
   if (want == was.r) { o = uvec4(was.r, want, 0u, 0u); return; }
   uint n = want == was.g ? was.b + 1u : 1u;
-  o = n >= ${4}u ? uvec4(want, want, 0u, 0u) : uvec4(was.r, want, n, 0u);
+  o = n >= ${CLOUDS_SETTLE}u ? uvec4(want, want, 0u, 0u) : uvec4(was.r, want, n, 0u);
 }`;
 
 const FADE = `#version 300 es
@@ -161,7 +202,7 @@ uniform usampler2D uR;     // shown, wanted, frames wanted: the shown role is .r
 uniform sampler2D uPrev;
 uniform ivec2 uShift;
 uniform int uFresh;
-uniform vec4 uLut[24];
+uniform vec4 uLut[40];
 uniform float uStep;
 out vec4 o;
 void main() {
@@ -254,32 +295,37 @@ export function skyGL() {
   }
 
   const q = {};
-  let tmp = new Float32Array(4096 * 5);
+  let tmp = new Float32Array(4096 * 6);
   // The puffs that reach this window, at time t, as the field pass reads them:
   // their places and sizes, and which 8-column strips each reaches (a counting
   // sort into one index list). Typed arrays kept from frame to frame, so a
   // frame makes no garbage.
-  function upload(s, layer, t, ox) {
+  function upload(s, layer, t, ox, oy) {
     const { w } = s, W = layer.W;
     let n = 0;
     for (const p of layer.puffs) {
       // where its current can have carried it at most: past that the sines
       // are not worked out at all, which is most of a wide layer's puffs
-      // (a crust lump goes where its lobe goes: its lobe's reach, and how far
-      // off the lobe it sits, swelled as the lobe swells)
-      const lobe = p.follow || p;
+      // (a lobe that rides another -- a crust lump, a turret on a turret --
+      // goes where the one at the root of its chain goes: that one's reach,
+      // and how far off it this one sits, with every wander on the way)
+      let lobe = p, ride = 0;
+      while (lobe.follow) { ride += lobe.a[0] + lobe.a[1]; lobe = lobe.follow; }
       const reach = p.reach || (p.reach = (lobe.r * 1.08 + lobe.a[0] + lobe.a[1] + lobe.a[2]) * REACH + 1 +
-        (p.follow ? (Math.abs(p.x - lobe.x) + p.r * 1.2 + p.a[0]) * REACH : 0));
+        (p.follow ? (Math.abs(p.x - lobe.x) + p.r * 1.2 + ride) * REACH : 0));
       let near = lobe.x + lobe.stray * t - ox; near -= W * Math.floor(near / W);
       if (near > w + reach && near < W - reach) continue;
       puffAt(p, t, q);
       const R = q.r * REACH;
       if (R <= 0.05) continue;
       // every copy of a wrapping layer that reaches the window
+      // and none that cannot reach the window's rows
+      if (q.y - oy + R * q.flat < 0 || q.y - oy - R * q.flat > s.h) continue;
       let x = q.x - ox; x -= W * Math.floor(x / W);
       for (let c = x - W; c < w + R; c += W) if (c + R > 0 && c - R < w) {
-        if ((n + 1) * 5 > tmp.length) { const g = new Float32Array(tmp.length * 2); g.set(tmp); tmp = g; }
-        tmp[n * 5] = c; tmp[n * 5 + 1] = q.y; tmp[n * 5 + 2] = R; tmp[n * 5 + 3] = q.flat; tmp[n * 5 + 4] = p.tier;
+        if ((n + 1) * 6 > tmp.length) { const g = new Float32Array(tmp.length * 2); g.set(tmp); tmp = g; }
+        tmp[n * 6] = c; tmp[n * 6 + 1] = q.y - oy; tmp[n * 6 + 2] = R; tmp[n * 6 + 3] = q.flat; tmp[n * 6 + 4] = p.tier;
+        tmp[n * 6 + 5] = p.cut === undefined ? 1e9 : p.cut - oy;
         n++;
       }
     }
@@ -293,12 +339,12 @@ export function skyGL() {
     if (s.count.length < strips + 1) { s.count = new Int32Array(strips + 1); s.st = new Float32Array(strips * 4); }
     const A = s.row0, B = s.row1, C = s.count, st = s.st;
     C.fill(0);
-    const k0 = i => Math.max(0, Math.floor((tmp[i * 5] - tmp[i * 5 + 2]) / STRIP));
-    const k1 = i => Math.min(strips - 1, Math.floor((tmp[i * 5] + tmp[i * 5 + 2]) / STRIP));
+    const k0 = i => Math.max(0, Math.floor((tmp[i * 6] - tmp[i * 6 + 2]) / STRIP));
+    const k1 = i => Math.min(strips - 1, Math.floor((tmp[i * 6] + tmp[i * 6 + 2]) / STRIP));
     let total = 0;
     for (let i = 0; i < n; i++) {
-      A[i * 4] = tmp[i * 5]; A[i * 4 + 1] = tmp[i * 5 + 1]; A[i * 4 + 2] = tmp[i * 5 + 2]; A[i * 4 + 3] = tmp[i * 5 + 3];
-      B[i * 4] = tmp[i * 5 + 4];
+      A[i * 4] = tmp[i * 6]; A[i * 4 + 1] = tmp[i * 6 + 1]; A[i * 4 + 2] = tmp[i * 6 + 2]; A[i * 4 + 3] = tmp[i * 6 + 3];
+      B[i * 4] = tmp[i * 6 + 4]; B[i * 4 + 1] = tmp[i * 6 + 5];
       for (let k = k0(i), e = k1(i); k <= e; k++) { C[k]++; total++; }
     }
     const rows = Math.max(1, Math.ceil(total / 4096));
@@ -321,9 +367,9 @@ export function skyGL() {
     return n;
   }
 
-  // Draw every window this frame. A view is { key, layer, ox (its first
-  // column, in the layer's cells), w, h, look: { shade, crease, lit, row,
-  // bottom, inside, tone, lut }, idle, every }: `idle` skips its passes this
+  // Draw every window this frame. A view is { key, layer, ox and oy (its
+  // first column and row, in the layer's cells), w, h, look (layerLook),
+  // idle, every }: `idle` skips its passes this
   // frame (a far layer worked one frame in `every`); dt is the frame's
   // seconds of game time, for the fade. Returns where each window is in
   // `canvas`.
@@ -337,26 +383,31 @@ export function skyGL() {
       const s = windowOf(v.key, v.w, v.h), L = v.look;
       // a far layer that is not due this frame, and has not moved a cell,
       // keeps last frame's picture: its puffs move too little to tell
-      if (v.idle && !s.fresh && s.ox === v.ox) { at.push({ key: v.key, x: 0, y, w: v.w, h: v.h }); y += v.h; continue; }
-      const shift = s.ox === null ? 0 : v.ox - s.ox;
-      const fresh = s.fresh || Math.abs(shift) >= v.w;
-      s.ox = v.ox;
+      const oy = v.oy || 0;
+      if (v.idle && !s.fresh && s.ox === v.ox && s.oy === oy) { at.push({ key: v.key, x: 0, y, w: v.w, h: v.h }); y += v.h; continue; }
+      const shift = s.ox === null ? 0 : v.ox - s.ox, lift = s.ox === null ? 0 : oy - s.oy;
+      const fresh = s.fresh || Math.abs(shift) >= v.w || Math.abs(lift) >= v.h;
+      s.ox = v.ox; s.oy = oy;
       const u0 = performance.now();
-      puffs += upload(s, v.layer, t, v.ox);
+      puffs += upload(s, v.layer, t, v.ox, oy);
       uploadMs += performance.now() - u0;
       const a = s.k, b = 1 - s.k;
       // the field and its tiers
       pass(P.field, s.T[b].f, v.w, v.h);
       bind(0, s.puffs); bind(1, s.strips); bind(2, s.index); bind(3, s.T[a].t);
       gl.uniform1i(P.field.u.uPuffs, 0); gl.uniform1i(P.field.u.uStrips, 1); gl.uniform1i(P.field.u.uIndex, 2); gl.uniform1i(P.field.u.uPrev, 3);
-      gl.uniform2i(P.field.u.uShift, shift, 0); gl.uniform1i(P.field.u.uFresh, fresh ? 1 : 0);
-      gl.uniform1fv(P.field.u.uFill, (v.layer.fills || []).concat([null, null, null, null]).slice(0, 4).map(f => (f === null || f === undefined ? 1e9 : f)));
+      gl.uniform2i(P.field.u.uShift, shift, lift); gl.uniform1i(P.field.u.uFresh, fresh ? 1 : 0);
+      gl.uniform1i(P.field.u.uTiers, v.layer.nt);
+      gl.uniform1fv(P.field.u.uFill, Array.from({ length: 8 }, (_, j) => { const f = (v.layer.fills || [])[j]; return f === null || f === undefined ? 1e9 : f - oy; }));
+      gl.uniform1iv(P.field.u.uLobe, L.lobe); gl.uniform4fv(P.field.u.uLobeAt, L.lobeAt); gl.uniform1f(P.field.u.uLobeMin, L.lobeMin);
+      gl.uniform2f(P.field.u.uLightN, L.lightN[0], L.lightN[1]);
       draw();
       // the roles
       pass(P.roles, s.R[0].f, v.w, v.h);
       bind(0, s.T[b].t); gl.uniform1i(P.roles.u.uT, 0);
-      gl.uniform4iv(P.roles.u.uShade, L.shade); gl.uniform4iv(P.roles.u.uCrease, L.crease); gl.uniform4iv(P.roles.u.uLit, L.lit);
-      gl.uniform4iv(P.roles.u.uRow, L.row); gl.uniform1i(P.roles.u.uBottom, L.bottom); gl.uniform1i(P.roles.u.uInside, L.inside ? 1 : 0); gl.uniform1i(P.roles.u.uRimSky, L.rimSky ? 1 : 0);
+      gl.uniform1iv(P.roles.u.uLit, L.lit); gl.uniform1iv(P.roles.u.uShade, L.shade); gl.uniform1iv(P.roles.u.uBase, L.base);
+      gl.uniform1iv(P.roles.u.uCore, L.core); gl.uniform1iv(P.roles.u.uRow, L.row);
+      gl.uniform2f(P.roles.u.uLight, L.light[0], L.light[1]); gl.uniform1i(P.roles.u.uBottom, L.bottom);
       draw();
       // two cleanups
       gl.useProgram(P.clean.p); gl.uniform1i(P.clean.u.uR, 0); gl.uniform1iv(P.clean.u.uTone, L.tone);
@@ -369,13 +420,13 @@ export function skyGL() {
       pass(P.settle, s.Q[b].f, v.w, v.h);
       bind(0, s.R[0].t); bind(1, s.Q[a].t);
       gl.uniform1i(P.settle.u.uR, 0); gl.uniform1i(P.settle.u.uPrev, 1);
-      gl.uniform2i(P.settle.u.uShift, shift, 0); gl.uniform1i(P.settle.u.uFresh, fresh ? 1 : 0);
+      gl.uniform2i(P.settle.u.uShift, shift, lift); gl.uniform1i(P.settle.u.uFresh, fresh ? 1 : 0);
       draw();
       // the fade
       pass(P.fade, s.D[b].f, v.w, v.h);
       bind(0, s.Q[b].t); bind(1, s.D[a].t);
       gl.uniform1i(P.fade.u.uR, 0); gl.uniform1i(P.fade.u.uPrev, 1);
-      gl.uniform2i(P.fade.u.uShift, shift, 0); gl.uniform1i(P.fade.u.uFresh, fresh ? 1 : 0);
+      gl.uniform2i(P.fade.u.uShift, shift, lift); gl.uniform1i(P.fade.u.uFresh, fresh ? 1 : 0);
       gl.uniform4fv(P.fade.u.uLut, L.lut); gl.uniform1f(P.fade.u.uStep, Math.min(1, (dt * (v.every || 1)) / CLOUDS_FADE_S));
       draw();
       s.k = b; s.fresh = false;
@@ -405,7 +456,7 @@ export function skyGL() {
     gl.bindFramebuffer(gl.FRAMEBUFFER, s.T[s.k].f);
     gl.readPixels(0, 0, s.w, s.h, gl.RGBA_INTEGER, gl.UNSIGNED_INT, buf);
     const out = new Int8Array(s.w * s.h);
-    for (let i = 0; i < out.length; i++) out[i] = buf[i * 4] - 1;
+    for (let i = 0; i < out.length; i++) out[i] = (buf[i * 4] & 15) - 1;
     return { w: s.w, h: s.h, tiers: out };
   }
   // A window's tones as drawn (the cleaned roles through the look's tone

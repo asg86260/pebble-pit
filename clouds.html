@@ -26,12 +26,13 @@
   <label>show <select id="show">
     <option value="all">the whole sky</option><option value="l0">layer 0 (horizon)</option><option value="l1">layer 1</option>
     <option value="l2">layer 2</option><option value="l3">layer 3</option><option value="l4">layer 4 (nearest)</option>
-    <option value="ground">ground</option><option value="puffs">clickable clouds</option></select></label>
+    <option value="ground">ground</option><option value="puffs">clickable clouds</option>
+    <option value="one">one big cloud</option></select></label>
   <label>window <select id="win"><option value="2000x967">2000 x 967</option><option value="800x600">800 x 600</option></select></label>
   <label><input type="checkbox" id="dark"> dark</label>
   <label>treatment <select id="treat">
-    <option value="A">A: one tone</option><option value="B">B: undersides</option>
-    <option value="C" selected>C: every belly</option><option value="D">D: C and the rim</option></select></label>
+    <option value="A">A: one tone</option><option value="B">B: light and shadow</option>
+    <option value="C" selected>C: in the round</option></select></label>
   <label><input type="checkbox" id="ref" checked> yard strip</label>
   <label>camera <input type="range" id="cam" min="0" max="600" step="0.1" value="0"></label>
   <label><input type="checkbox" id="auto" checked> slide</label>
@@ -58,14 +59,17 @@ const YARD = { groundUp: 48, worker: [3, 6], station: [24, 16], rock: [40, 18] }
 const PUFFS = 3;
 
 const gpu = skyGL();
-let W = 2000, H = 967, cols, rows, layers = [], ground, puffs = [], t = 0, cam = 0, manual = false, looks = new Map();
+let W = 2000, H = 967, cols, rows, layers = [], ground, one, puffs = [], t = 0, cam = 0, manual = false, looks = new Map();
 let placed = {}, frames = 0;
 
+let oneSeed = 12;   // the one big cloud's seed (bench.set({ seed }))
 function build() {
   cv.width = W; cv.height = H;
   cols = Math.ceil(W / CELLPX); rows = Math.ceil(H / CELLPX);
   const round = Math.max(cols * 2, 700);
-  layers = Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: 7, W: round }));
+  const sky = rows - 48;
+  layers = Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: 7, W: round, sky }));
+  one = cloudLayer({ kind: 'cumulus', R: Math.round(rows * 0.2), seed: oneSeed, d: 1 });
   ground = groundLayer({ seed: 7, W: round });
   puffs = Array.from({ length: PUFFS }, (_, i) => ({
     layer: cloudLayer({ kind: ['cumulus', 'heap', 'tower'][i % 3], R: 6 + 2 * i, seed: 31 + i }),
@@ -97,13 +101,20 @@ function frame(dt) {
   }
   const s = show(), hz = horizon(), views = [], draws = [];
   const want = k => s === 'all' || s === k;
+  // each layer's row of the horizon on the horizon; only the rows of it on
+  // screen are worked
   layers.forEach((L, i) => {
     if (!want('l' + i)) return;
-    const sc = scroll(L.P), ox = Math.floor(sc);
-    const top = hz - Math.round(L.P.rise * hz) - L.baseRow;
-    views.push({ key: 'l' + i, layer: L, ox, w: cols + 2, h: L.h, look: look(L), every: L.P.every, idle: (frames + i) % L.P.every !== 0 });
-    draws.push({ key: 'l' + i, x: (ox - sc) * CELLPX, y: top * CELLPX, alpha: 1 });
+    const sc = scroll(L.P), ox = Math.floor(sc), top = hz - L.baseRow;
+    const oy = Math.max(0, -top), h = Math.min(L.h, rows - top) - oy;
+    if (h <= 0) return;
+    views.push({ key: 'l' + i, layer: L, ox, oy, w: cols + 2, h, look: look(L), every: L.P.every, idle: (frames + i) % L.P.every !== 0 });
+    draws.push({ key: 'l' + i, x: (ox - sc) * CELLPX, y: (top + oy) * CELLPX, alpha: 1 });
   });
+  if (s === 'one') {
+    views.push({ key: 'one', layer: one, ox: 0, w: one.w, h: one.h, look: look(one) });
+    draws.push({ key: 'one', x: Math.round((cols - one.w) / 2) * CELLPX, y: Math.max(0, Math.round((rows - one.h) / 2)) * CELLPX, alpha: 1 });
+  }
   if (want('puffs')) {
     const span = (cols + 80) * CELLPX;
     puffs.forEach((p, i) => {
@@ -134,7 +145,7 @@ function frame(dt) {
     g.drawImage(r.canvas, 0, a.y, a.w, a.h, x, y, a.w * CELLPX, a.h * CELLPX);
   });
   g.globalAlpha = 1;
-  if ($('ref').checked && s === 'all') yardStrip();
+  if ($('ref').checked && (s === 'all' || s === 'one')) yardStrip();
   stat.cpu.push(t1 - t0); stat.frame.push(performance.now() - t0);
   if (stat.cpu.length > 4000) { stat.cpu.shift(); stat.frame.shift(); }
   if ((Math.round(t * 60) % 20 === 0) || dt === 0) report(r);
@@ -199,6 +210,7 @@ window.bench = {
     for (const k of ['auto', 'ref', 'dark', 'sync']) if (k in o) $(k).checked = o[k];
     for (const k of ['show', 'treat']) if (k in o) $(k).value = o[k];
     if ('win' in o && o.win !== $('win').value) { $('win').value = o.win; [W, H] = o.win.split('x').map(Number); build(); }
+    if ('seed' in o && o.seed !== oneSeed) { oneSeed = o.seed; build(); }
     if (o.rebuild) build();
     if (o.fresh) { stat.cpu.length = 0; stat.frame.length = 0; }
     restyle();

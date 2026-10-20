@@ -10,16 +10,21 @@
 // nothing on it moves but what is built on it.
 
 import { P, GREY, AFTER_BUILD_FADE_S, GROUND_PATH } from '../../config.js';
+import { darkPage } from '../../ink.js';
 import { S } from '../../state.js';
 import { afterX0, afterFloor, floorProfile, notchX, crowdLip, sitesKey, sited } from '../../after/place.js';
 import { ctx } from '../ctx.js';
 import { fillOnPixels } from '../frame.js';
 import { K, W, PALE, MID, now, clamp01 } from './kit.js';
-import { putAfterCloud } from './cloudsky.js';
+import { putAfterCloud, pathTone } from './cloudsky.js';
 
 // Every fill on whole device pixels, so a thin line never blends into a
 // tone between the four.
 const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; fillOnPixels(ctx, x, y, w, h); };
+// The path's own surface: paper by day; by night the cloud's tone it is the
+// top of (render/after/cloudsky.js, `pathTone`), so it reads as cloud lit
+// from above and not as a gap of night between the camp and the sea.
+const surface = (x, y, w, h) => { if (!darkPage) return fr(x, y, w, h, W); ctx.fillStyle = pathTone(); fillOnPixels(ctx, x, y, w, h); };
 
 // A stepped top edge along a profile, columns j0..j1 of it, in `tone`, with
 // paper under it down to yBot when `fill`; columns `skip` says are left open.
@@ -28,7 +33,7 @@ function edge(el, j0, j1, x0, yTop, tone, fill, yBot, skip) {
     if (skip && skip(j)) continue;
     const x = x0 + j * P, y = yTop - (el[j] || 0) * P;
     const cutL = j > 0 && (el[j - 1] || 0) < (el[j] || 0), cutR = (el[j + 1] || 0) < (el[j] || 0);
-    if (fill) fr(x, y + (cutL || cutR ? 2 : 0), P, yBot - y, W);
+    if (fill) surface(x, y + (cutL || cutR ? 2 : 0), P, yBot - y);
     fr(x + (cutL ? 2 : 0), y, P - (cutL ? 2 : 0) - (cutR ? 2 : 0), 2, tone);
     if (j > 0 && (el[j] || 0) !== (el[j - 1] || 0) && !(skip && skip(j - 1))) {
       const hi = yTop - Math.max(el[j], el[j - 1]) * P, lo = yTop - Math.min(el[j], el[j - 1]) * P;

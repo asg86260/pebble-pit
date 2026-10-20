@@ -22762,3 +22762,153 @@ The camera and clouds go in with act 3's layout rebuild.
 **Save.** No released build turns acts 3 or 4 on (`VITE_AFTERLIFE` and
 `VITE_HELL` are set by no build script, and no fixture holds an act save),
 so the act blobs may change shape freely. The yard's save must not move.
+
+## Clouds stack the way cumulus does (built 2026-10-20)
+
+The owner approved the depth direction and asked for "a little bit harder on
+the shapes, and how they stack". The depth round built a cloud as horizontal
+rows of lobes (rear, crown, body, base), and each row read as a slab: the
+stripes. A cumulus is not rows. What the renderer builds now
+(render/clouds.js, `volume`; CLOUDS_VOLUME):
+
+- **One flat base for the whole field.** The WMO's low-cloud code describes
+  cumulus with "domes or towers", and cloud-classification guides note that
+  cumulus bases are often flat and at the same height
+  ([WMO code tables](https://epic2-clone.awi.de/29962/1/WMO2011d.pdf),
+  [cloud classification](https://woitalia.it/reports/wxfacts/Cloud-classification.htm)).
+  Every puff of a cloud carries its base line as a cut, and nothing of it is
+  drawn below the cut (cloudgl.js, FIELD; `sumsAt` the same). So the bottom
+  is flat, not scalloped, and it stays put while the turrets churn above,
+  the way the condensation level does. Clouds at one height in a layer share
+  the line.
+- **Turrets rising off a broad shelf.** The shelf is wide, squashed, and in
+  the rear. Turrets stand side by side on it, overlapping, each rooted in
+  the shelf so none floats. The middle one is the tallest and has another
+  turret stood on top of it.
+- **Smaller turrets clustered on bigger ones**, two generations down. Each is
+  set on its parent's upper edge, a step in front of or behind it. A turret
+  is never in its parent's tier, so it shows its own round edge instead of
+  melting into the parent. Each rides its parent's current, so it stays on
+  its parent as the cloud swells and thins.
+- **Each lobe lit in the round.** Pixel-art cloud guides put the highlight
+  on the edges the light hits and darker tones on the undersides and in the
+  crevices ([one such](https://piepzeru.digitalpress.blog/how-to-create-pixel-art-clouds/)).
+  The field pass now finds the strongest lobe of its tier at every cell.
+  The cap facing the light is lit and the side away from it is in shadow
+  (CLOUDS_LOBE_LIGHT), so every turret reads as a separate rounded form.
+  Only lobes of five cells or more are lit this way; a far cloud is too
+  small to carry it.
+- **Steady.** More tier edges meant more places for a cell to chatter. A
+  cell now takes a new tone only after wanting it for a tenth of a second
+  (CLOUDS_SETTLE), and the smallest kid turrets and crust lumps are not
+  made.
+
+**The ground is a cloud sea** (CLOUDS_SEA). It has rows of billows back to
+front, each row smaller and paler toward the back. The billows come in every
+size, log-normal round the row's size, and are spaced by their own radius, so
+nothing repeats. Now and then a mound rises out of a row with smaller billows
+on it. Each billow gets only its lit cap; its shadow is the crevice where
+the row in front stands. In act 3 the sea rolls under the path in six rows.
+The path's own surface fills the valleys between the billows that lap it, so
+the path never shows a notch of night. By night that surface is the cloud
+palette's haze, so it reads as the lit top of cloud and not as a gap
+(CLOUDS_ACT3.path).
+
+## The yard's sky on the cloud renderer (design, not built)
+
+The clouds bench (`clouds.html`, `render/clouds.js`, `render/cloudgl.js`)
+draws a liquid sky: puffs in a field worked on the graphics card each frame,
+so clouds merge, part and breathe, in depth by distance and height, a cloud
+in the round lit from one side. The owner wants it to be the yard's sky too
+(2026-10-20, "think about using this for the surface clouds as well"). This
+is the plan for that move; nothing here is built.
+
+**The bargain.** The yard's clouds are not scenery. They are the storm's
+warning (they swell before a front), the smog's readout (they brown with the
+murk), the balloons' moorings, and the sheets the rain falls from. The move
+swaps how a cloud is *drawn* and keeps every one of those jobs where it
+lives now. A player who never reads this should notice only that the sky got
+better: the front still swells on the same clock, the dirty sky is still the
+same brown, a balloon still hangs under the same cloud.
+
+### What stays in weather.js and smog/
+
+- **The clock.** `swell()`, the brew, the pour, `CLOUD_SETTLE_S`, the front's
+  own storm clouds (`CLOUDS_STORM`, dealt nearest sheet first) and their
+  melt as the front lets go. Rain, embers, bolts and the wash (`smog/rain.js`)
+  are untouched.
+- **The colors as facts.** `murk()`, `partColor` (pale, browned by the murk
+  up to `CLOUD_MURK_TINT`, greyed by the storm), a balloon's `drawn` paling,
+  `roadTones` and `murkTone`. These become what the renderer's palette is
+  built from each frame (below), not a second palette.
+- **The cloud list.** `CLOUDS` stays the list of clouds that matter to play:
+  each with its sheet, depth (`far`), position, drift, `give`, `storm`,
+  `melt` and `drawn`. `cloudSpot`, `GUESTS.clouds`, `skyReport` and the
+  balloons read it as now. `test/weather.test.mjs` keeps asking it.
+- **The sheets.** `CLOUD_LAYERS` stays the list of depths: the rain sheets
+  (`render/smog.js`, `farOf`, `cellOf`) and the balloons' sizes read their
+  `far` and `cell`, and the renderer's layers are made from them rather than
+  from `CLOUDS_SKY`'s own five.
+
+### What the renderer takes over
+
+- **The shapes.** `makeCloud`'s spine and puffs, `columnsOf`, `cellTone` and
+  `drawClouds`' row-by-row runs go. Each cloud in `CLOUDS` instead carries a
+  set of puffs from `shape()` (a cumulus, a heap, a tower; a storm cloud the
+  tower or anvil), placed by `volume()`, flowing on `CLOUDS_FLOW`.
+- **The swell as size.** Today the swell grows the bumps' radii from fixed
+  centers. On the renderer it scales each puff's radius by the same
+  `1 + CLOUD_GROW_R * k`, so a cloud swells the same way and only ever grows
+  through the brew. A storm cloud's puffs grow from nothing, as now.
+- **The melt as a fade.** A melting cloud's puffs shrink with `1 - melt` and
+  its cells fade out through the renderer's own per-cell fade, which is the
+  "nothing pops" the edge steps were for.
+- **Light and depth.** The roles (lit face, body, shade, core, base) and the
+  depth bands replace `cellTone`'s three bands. Lit from the same side as
+  the yard's light.
+- **The tones each frame.** The palette is a `CLOUDS_PALETTE`-shaped table
+  worked out from `partColor` each frame: the pale page's ladder, browned
+  and greyed by the murk and the storm, every tone shifted alike so the
+  steps between roles hold. A cloud a balloon is drawing in gets its own
+  ladder. The renderer's lookup table (`lut`) is uploaded per frame already,
+  so a moving color costs nothing new.
+- **Interleaving.** The balloons are drawn between sheets by depth. The
+  renderer works every layer into one canvas and hands back each layer's
+  rectangle, so the sky is placed layer by layer, farthest first, with the
+  guests drawn between, as `drawClouds` does now.
+
+### The order of the work
+
+1. A dev toggle that draws the yard's sky through the renderer beside the
+   old one (TODO.md's "mocks inside the real game"), with `CLOUDS` driving
+   both. Shots at the owner's window, light and dark, clean and smoggy,
+   brewing and pouring.
+2. The swell, the melt and the murk colors on the renderer, with
+   `test/weather.test.mjs` read through `skyReport` unchanged (it counts
+   cells: the report's counts come from the renderer's tiers instead).
+3. The balloons and the rain checked against the new sheets.
+4. The old drawing deleted, `jitter-check` on `yard` and the sky scenes.
+
+### Risks
+
+- **WebGL2 missing.** The yard must still have a sky. The fallback draws the
+  baked sheets `render/clouds.js` already makes on the CPU (`cloudSheet`):
+  no flow, the same shapes and tones. Phones and the desk build are both to
+  be checked.
+- **Cost on weak cards.** About 0.5 ms a frame on this machine's card for
+  the bench's whole sky; the software renderer the headless checks use is
+  far slower, so the perf gate must measure the real card or leave the sky
+  out of its budget.
+- **Copying the canvas onto the page** is the expensive step on a software
+  renderer (9 to 17 ms), and the yard's page is drawn with a zoom and a
+  device-pixel ratio. The sky must be placed at a whole device pixel to keep
+  the slide check's zero shear.
+- **The swell reshapes the field.** Growing puffs merge neighbors that were
+  apart, so a swelling front changes a cloud's outline as well as its size.
+  That is likely the better look, but the "only ever grows" rule in
+  `weather.test.mjs` must be checked against it, not assumed.
+- **Brown on a ladder.** The roles were tuned in greys, at fixed lightness
+  steps (`test/after-palette.test.mjs`). A browned ladder must keep its
+  steps; a murk that pressed two roles together would draw stripes.
+- **Saves.** `CLOUDS` is not saved now (it is reseeded); the puffs must not
+  become saved either, so a reload is a fresh sky with the same swell.
