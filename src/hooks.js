@@ -20,7 +20,7 @@ import { SKY, DROPS, fillSky, forceStrike, pinHeft, poopCols, moteX, moteY, clea
 import { overPitMouth } from './world.js';
 import { makeMeteor } from './meteor.js';
 import { WIZ_BREW_MS, WORKER } from './config.js';
-import { seatRift } from './rift.js';
+import { seatRift, anyoneInTheHole } from './rift.js';
 import { now as clockNow } from './clock.js';
 import { syncWorkers, drop as dropHeld, lift as liftHeld, shakeHeld } from './crew.js';
 
@@ -531,7 +531,10 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
     // the cutscene over every scene on a rich yard; a grant is a handout, so
     // the event is dropped the way a save drops it and the rift is simply
     // open.
-    const room = pitRoom();
+    // Nothing goes on the pile over a body down a torn hole: a hole's worth
+    // laid in one frame closes over it faster than anything climbs, so it all
+    // goes the overflow's way. A solid hole has no other way to go.
+    const room = S.riftOpen && anyoneInTheHole() ? 0 : pitRoom();
     const gulp = S.riftGulp || 0;
     const got = room > 0 ? give(Math.min(o.dust, room)) : 0;
     if ((S.riftGulp || 0) > gulp) dropTear(gulp);
