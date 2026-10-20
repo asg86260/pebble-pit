@@ -135,8 +135,27 @@ const WORKS_END = Math.max(...CAMP_ORDER.filter(k => k !== 'pedestal').map(k => 
 const UNION_END = WORKS_END + AFTER_ZONE_GAP + AFTER_UNION_W;
 CAMP.stations.pedestal.at = WORKS_END + AFTER_ZONE_GAP + Math.round((AFTER_UNION_W - CAMP_ART.pedestal.ground) / 2);
 export const AFTER_STATIONS = CAMP.stations;
-// The pedestal is a lump of the cloud floor pushed up, this many cells high.
-export const AFTER_PEDESTAL_H = 4;
+// The pair's podium (DESIGN.md, "The level, the two crowds and the flags"):
+// a ladder of five, low and in the first plane -- a soapbox crate, crates
+// stacked two high with a plank, a plank stage with the fist banner, a cloud
+// plinth of squared blocks with steps, the Greek cloud column -- drawn in the
+// mock's cells (docs/mocks/act3-level-2026-10-19, a3podium2) at AFTER_PODIUM_U
+// px a cell, so the soapbox is about the pair's height. Each one's top over
+// the floor, in those cells, where the pair stand; and the pair's two left
+// edges off the podium's middle, px.
+export const AFTER_PODIUM_U = 2;
+export const AFTER_PODIUM_TOPS = [10, 20, 12, 18, 34];
+// ...and each one's half across at its widest, in those cells.
+export const AFTER_PODIUM_HALF = [11, 22, 24, 24, 22];
+export const AFTER_PODIUM_PAIR = [-19, 1];
+// The rebel pile at the podium's foot, this many cells off its middle: clear
+// of the widest of them.
+export const AFTER_PODIUM_PILE = 9;
+// A rung bought, the new podium is built where the old stood over this: the
+// old fading out over the first `fade` of it, the new standing up a course at
+// a time from `rise[0]` to `rise[1]`, the pair stepping up onto it from
+// `step[0]` to `step[1]`.
+export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0.8, 0.9] };
 // The stations standing from the act's first frame: the pedestal the pair
 // speak from and the construction shack that sells every other.
 export const AFTER_START_BUILT = ['pedestal', 'shack'];
@@ -185,8 +204,9 @@ export const AFTER_CLOUD_FADE_S = 1.2;     // a cloud fades in, and out, over th
 // The speech: a click on the pair is a line of it, a pose held with a shout
 // mark over them, and its rebel knocked off as motes that fall to the pile
 // beside the pedestal and are counted there.
-export const AFTER_SHOUT_REBEL = 2;        // a line's rebel
-export const AFTER_SHOUT_REBEL_UP = 5;     // ...with the pedestal's bigger speech
+// A line's rebel, by the podium the pair speak from: the higher, the further
+// the speech carries.
+export const AFTER_PODIUM_REBEL = [2, 3, 5, 7, 10];
 export const AFTER_SHOUT_HOLD_S = 0.35;    // the pose and the mark held after a line
 export const AFTER_MOTE_FALL = 60;         // px/s a mote of rebel comes down
 export const AFTER_MOTE_RISE = P * 6;      // how far up off a speaker's head a mote is knocked before it falls
@@ -337,7 +357,11 @@ export const AFTER_BUILDS = {
 // sold beside them (rows.js); the stations themselves on the shack
 // (AFTER_BUILDS).
 export const AFTER_UPGRADES = {
-  'after-shout':       { card: 'pedestal',  bills: [[['rebel', 30], ['dust', 5000]]] },                  // a bigger speech
+  // The podium ladder: a rung a bill, each opening when support reaches its
+  // mark, a share of the strike's (`marks`).
+  'after-podium':      { card: 'pedestal',  bills: [[['rebel', 30], ['timber', 4]], [['rebel', 80], ['timber', 12]],
+                                                    [['rebel', 200], ['timber', 30]], [['rebel', 500], ['timber', 80]]],
+                         marks: [0.1, 0.25, 0.45, 0.7] },
   'after-axe':         { card: 'grove',     bills: [[['rebel', 50], ['dust', 8000]]] },                  // the axe (call 15)
   'after-plot':        { card: 'grove',     bills: [[['rebel', 60], ['dust', 15000]],
                                                     [['rebel', 200], ['timber', 10], ['dust', 40000], ['spore', 10000]],

@@ -7994,11 +7994,11 @@
   "text": "rebel"
  },
  {
-  "id": "after-row-shout",
+  "id": "after-row-podium",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the pedestal's bigger speech, more rebel a click",
-  "text": "bigger speech"
+  "context": "act 3 card row (placeholder): the pedestal's podium ladder, five podiums, each higher and more rebel a line",
+  "text": "podium"
  },
  {
   "id": "after-row-axe",
@@ -8230,6 +8230,13 @@
   "where": "src/after/rows.js",
   "context": "act 3 shack row's wait (placeholder): the paper mill must stand first",
   "text": "needs the paper mill"
+ },
+ {
+  "id": "after-wait-support",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 podium row's wait (placeholder): the union's support must reach the rung's mark, a share of the strike's",
+  "text": "needs ${share}% support"
  },
  {
   "id": "after-sect-posts",

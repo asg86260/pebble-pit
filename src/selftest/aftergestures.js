@@ -7,7 +7,7 @@
 
 import { S } from '../state.js';
 import { newRun, settle, raf, ok, point, P } from './kit.js';
-import { AFTER_SHOUT_REBEL, GESTURE_BUBBLE_CRIT } from '../config.js';
+import { AFTER_PODIUM_REBEL, GESTURE_BUBBLE_CRIT } from '../config.js';
 import { partsOf, useBubbles, boardAsked } from '../after/gestures.js';
 import { stationBox } from '../after/place.js';
 import { toScreen } from '../world.js';
@@ -81,7 +81,7 @@ export const TESTS = [
     return [
       ok(popped, 'the pointer\'s click pops the bubble'),
       ok(asked === null, 'and asks for no board', JSON.stringify(asked)),
-      ok(paid === AFTER_SHOUT_REBEL * GESTURE_BUBBLE_CRIT, `the big one pays ${GESTURE_BUBBLE_CRIT} lines`, `${paid} rebel`)
+      ok(paid === AFTER_PODIUM_REBEL[0] * GESTURE_BUBBLE_CRIT, `the big one pays ${GESTURE_BUBBLE_CRIT} lines`, `${paid} rebel`)
     ];
   }],
 ];

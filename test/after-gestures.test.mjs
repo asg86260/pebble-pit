@@ -12,7 +12,7 @@
 // motion is this session's by design (a reload stands every station still),
 // so the reload harness is kept out: `{ reload: false }`.
 import { group, ok, run, yard, P } from './helpers.mjs';
-import { AFTER_SHOUT_REBEL, AFTER_TIP_LOAD, AFTER_DIG_CLICKS, TREE_CHOPS, GESTURE_BUBBLE_CRIT, GESTURE_CUE_USES,
+import { AFTER_PODIUM_REBEL, AFTER_TIP_LOAD, AFTER_DIG_CLICKS, TREE_CHOPS, GESTURE_BUBBLE_CRIT, GESTURE_CUE_USES,
          GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_STRAIN_S, GESTURE_ARM_POSES, GESTURE_ARM_SPRING_S,
          GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS, AFTER_CHIP_SAWDUST } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, gestureView, partsOf, useBubbles, boardAsked, groveIcons } from '../src/after/gestures.js';
@@ -192,8 +192,8 @@ group('the pedestal: a popped bubble is a line of the speech, and the big one pa
   const one = trial(small), five = trial(big);
   window.__actsOn(null);
   return [
-    ok(one.hit && one.paid === AFTER_SHOUT_REBEL, 'a small bubble popped pays a line', `${one.paid}`),
-    ok(five.hit && five.paid === AFTER_SHOUT_REBEL * GESTURE_BUBBLE_CRIT, `the big one pays ${GESTURE_BUBBLE_CRIT} lines`, `${five.paid}`),
+    ok(one.hit && one.paid === AFTER_PODIUM_REBEL[0], 'a small bubble popped pays a line', `${one.paid}`),
+    ok(five.hit && five.paid === AFTER_PODIUM_REBEL[0] * GESTURE_BUBBLE_CRIT, `the big one pays ${GESTURE_BUBBLE_CRIT} lines`, `${five.paid}`),
     ok(one.marks === 0 && five.marks === 1, 'and only the big one leaves the crit\'s mark', `${one.marks} / ${five.marks}`),
     ok(!one.asked && !five.asked, 'popped where it rises: no board asked for', JSON.stringify([one.asked, five.asked]))
   ];
@@ -218,8 +218,8 @@ group('the pedestal: a popped bubble\'s rebel starts at the bubble and is counte
   window.__actsOn(null);
   return [
     ok(fromBubble, 'every mote starts at the bubble', JSON.stringify({ at, motes })),
-    ok(early === 0 && carried === AFTER_SHOUT_REBEL, 'carrying the line, and nothing counted on the pop', `${carried} carried, ${early} counted`),
-    ok(paid === AFTER_SHOUT_REBEL, 'counted once they land on the pile', `${paid}`)
+    ok(early === 0 && carried === AFTER_PODIUM_REBEL[0], 'carrying the line, and nothing counted on the pop', `${carried} carried, ${early} counted`),
+    ok(paid === AFTER_PODIUM_REBEL[0], 'counted once they land on the pile', `${paid}`)
   ];
 }, NO_RELOAD);
 

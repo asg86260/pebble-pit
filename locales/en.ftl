@@ -3478,8 +3478,8 @@ board-hell-wall = the barrier
 # act 3's coin (placeholder): rebel, knocked off the pair's speech
 after-coin-rebel = rebel
 
-# act 3 card row (placeholder): the pedestal's bigger speech, more rebel a click
-after-row-shout = bigger speech
+# act 3 card row (placeholder): the pedestal's podium ladder, five podiums, each higher and more rebel a line
+after-row-podium = podium
 
 # act 3 card row (placeholder): the axe, bought: a click on a grown tree chops it
 after-row-axe = axe
@@ -3579,6 +3579,9 @@ after-wait-sawdust = needs the saw mill or the chipper
 
 # act 3 shack row's wait (placeholder): the paper mill must stand first
 after-wait-papermill = needs the paper mill
+
+# act 3 podium row's wait (placeholder): the union's support must reach the rung's mark, a share of the strike's
+after-wait-support = needs { $share }% support
 
 # act 3 card heading (placeholder): the station's posts
 after-sect-posts = posts

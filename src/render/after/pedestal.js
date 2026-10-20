@@ -1,34 +1,103 @@
-// The pedestal, pedestal C (docs/mocks/act3-place-2026-10-18, section 3,
-// "cloud pillar"): a lump of the floor pushed up, billow-topped like floor A,
-// two pale strokes of cloud on its face; the pair on top, a line of the
-// speech a held pose -- a crouch, then up a cell with the shout mark -- and
-// their speech bubbles rising off them and fading (after/bubbles.js). The
-// rebel pile at its foot, a small grey heap a power of ten.
+// The pair's podium (DESIGN.md, "The level, the two crowds and the flags";
+// docs/mocks/act3-level-2026-10-19, a3podium2): low, in the first plane, in
+// front of their crowd -- a ladder of five, a soapbox crate, crates stacked
+// two high with a plank, a plank stage with the fist banner on its front, a
+// cloud plinth of squared blocks with steps, the Greek cloud column. A rung
+// bought, the new one is built where the old stood: the old fades, the new
+// stands up a course at a time, and the pair step up onto it. The pair on
+// top, a cell of paper round them so they stand off the crowd's ink; a line
+// of the speech a held pose -- a crouch, then up a cell with the shout mark
+// -- and their speech bubbles rising off them and fading (after/bubbles.js).
+// The rebel pile at its foot, a small grey heap a power of ten.
 
-import { P, GREY, AFTER_PEDESTAL_H, AFTER_SHOUT_HOLD_S } from '../../config.js';
+import { P, GREY, AFTER_SHOUT_HOLD_S, AFTER_PODIUM_U as U, AFTER_PODIUM_CLIMB as CLIMB } from '../../config.js';
 import { S } from '../../state.js';
-import { afterFloor, speakerAt, stationX0, pileX } from '../../after/place.js';
+import { afterFloor, speakerAt, pileX, podiumMid, podiumTopOf } from '../../after/place.js';
+import { podiumRung } from '../../after/levels.js';
 import { bubbles, pairSpeaking } from '../../after/bubbles.js';
 import { ctx } from '../ctx.js';
 import { frame, K, W, PALE, MID } from './kit.js';
 
 const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const FIST = ['.X.X.X.', 'XXXXXXX', 'XXXXXX.', '.XXXX..', '..XXX..'];
 
-// The pillar's top, a cell a column off its left, cells over the floor.
-const TOP = [3, 4, 4, 4, 4, 4, 4, 4, 4, 3].map(v => v - 4 + AFTER_PEDESTAL_H);
-export function drawPillar() {
-  const x0 = stationX0('pedestal'), fl = afterFloor();
-  // The paper mass first, then its line, each convex corner cut a 2 px step.
-  TOP.forEach((v, j) => {
-    const x = x0 + (j + 1) * P, y = fl - v * P;
-    const cutL = j > 0 && TOP[j - 1] < v, cutR = j < TOP.length - 1 && TOP[j + 1] < v;
-    fr(x, y + (cutL || cutR ? 2 : 0), P, fl - y, W);
-    fr(x + (cutL ? 2 : 0), y, P - (cutL ? 2 : 0) - (cutR ? 2 : 0), 2, K);
-    if (j > 0 && v !== TOP[j - 1]) { const hi = fl - Math.max(v, TOP[j - 1]) * P; fr(v > TOP[j - 1] ? x : x - 2, hi + 2, 2, Math.abs(v - TOP[j - 1]) * P, K); }
+// Each podium about its middle `x` with its foot on `y`, in the mock's cells
+// (U px each); `c(dx, dy, w, h, tone)` a rect off them, dy up from the foot.
+const PODS = [
+  // the soapbox: a slatted crate, a diagonal brace across its face
+  c => {
+    const w = 22, h = 10;
+    c(-w / 2, -h, w, h, K); c(-w / 2 + 2, -h + 2, w - 4, h - 4, W);
+    for (let y = -h + 4; y < -2; y += 3) c(-w / 2 + 2, y, w - 4, 1, K);
+    for (let i = 0; i < w - 4; i += 2) c(-w / 2 + 2 + i, -h + 2 + Math.round(i * (h - 4) / (w - 4)), 2, 1, K);
+  },
+  // crates stacked two high, a plank laid across the top
+  c => {
+    const w = 20, h = 9;
+    for (const [x, y] of [[-21, -h], [1, -h], [-10, -2 * h]]) { c(x, y, w, h, K); c(x + 2, y + 2, w - 4, h - 4, W); c(x + 2, y + 4, w - 4, 1, K); }
+    c(-16, -2 * h - 2, 32, 2, K);
+  },
+  // a plank stage, its legs and the fist banner hung on its front
+  c => {
+    const w = 48, h = 12;
+    c(-w / 2, -h, w, 2, K); c(-w / 2 + 2, -h + 2, 2, h - 2, K); c(w / 2 - 4, -h + 2, 2, h - 2, K);
+    c(-12, -h + 2, 24, h - 2, K);
+    FIST.forEach((r, j) => [...r].forEach((ch, i) => { if (ch === 'X') c(-3 + i, -h + 4 + j, 1, 1, W); }));
+  },
+  // a cloud plinth: three squared courses stepping in, each top edged, steps up its side
+  c => {
+    for (const [dy, hw] of [[-6, 24], [-12, 18], [-18, 12]]) { c(-hw, dy, 2 * hw, 6, PALE); c(-hw, dy, 2 * hw, 1, MID); }
+    for (let i = 0; i < 3; i++) c(24 - 4 - i * 2, -2 - i * 2, 4, 1, MID);
+  },
+  // the Greek cloud column: a fluted shaft on a cloud base, a capital under the pair
+  c => {
+    const t = -34;
+    for (const [dx, r] of [[-14, 6], [-4, 7], [7, 6], [16, 5]]) for (let dy = -r; dy <= 0; dy++) { const hw = Math.round(Math.sqrt(r * r - dy * dy)); c(dx - hw, -2 + dy, 2 * hw, 1, PALE); }
+    c(-9, t + 6, 18, -8 - t - 6, PALE);
+    for (let i = -7; i <= 7; i += 3) c(i, t + 7, 1, -9 - t - 7, MID);
+    c(-13, t + 3, 26, 3, PALE); c(-13, t + 3, 26, 1, MID);
+    for (const sx of [-14, 11]) { c(sx, t + 3, 3, 3, MID); c(sx + 1, t + 4, 1, 1, PALE); }
+    c(-15, t, 30, 3, PALE); c(-15, t + 2, 30, 1, MID);
+  }
+];
+// Podium `n` drawn, `k` of it standing (bottom course first: a course is a
+// cell, and those above the line are not yet up), at `alpha`.
+function podium(n, k = 1, alpha = 1) {
+  if (k <= 0 || alpha <= 0) return;
+  const x = podiumMid(), y = afterFloor(), h = podiumTopOf(n), shown = Math.ceil(h / U * k) * U;
+  const was = ctx.globalAlpha;
+  ctx.globalAlpha = was * alpha;
+  PODS[n]((dx, dy, w, hh, tone) => {
+    // a rect clipped to the courses standing: from the foot up `shown`
+    const top = y + dy * U, bot = top + hh * U, cut = Math.max(top, y - shown);
+    if (bot > cut) fr(x + dx * U, cut, w * U, bot - cut, tone);
   });
-  fr(x0 + P - 2, fl - (TOP[0]) * P, 2, TOP[0] * P, K);
-  fr(x0 + P * 11, fl - TOP[TOP.length - 1] * P, 2, TOP[TOP.length - 1] * P, K);
-  fr(x0 + P * 3, fl - P * 2, P * 3, 2, PALE); fr(x0 + P * 7, fl - P, P * 2, 2, PALE);
+  ctx.globalAlpha = was;
+}
+// How far through the climb to rung `n` the place is, 0 to 1, or null when
+// no climb is going on.
+function climb() {
+  const n = podiumRung(), at = S.after?.upAt?.['after-podium'];
+  if (!n || at == null) return null;
+  const u = (S.after.t - at) / CLIMB.s;
+  return u >= 0 && u < 1 ? u : null;
+}
+export function drawPillar() {
+  if (!S.after) return;
+  const n = podiumRung(), u = climb();
+  if (u == null) { podium(n); return; }
+  // the old fading where it stood, the new standing up a course at a time
+  podium(n - 1, 1, 1 - clamp01(u / CLIMB.fade));
+  podium(n, clamp01((u - CLIMB.rise[0]) / (CLIMB.rise[1] - CLIMB.rise[0])));
+}
+// The pair's feet, world y: the top they stand on, stepping up onto the new
+// one a cell at a time over the climb's step.
+function pairFeet() {
+  const u = climb(), fl = afterFloor();
+  if (u == null || u < CLIMB.step[0]) return speakerAt(0).y;
+  const n = podiumRung(), a = podiumTopOf(n - 1), b = podiumTopOf(n), k = clamp01((u - CLIMB.step[0]) / (CLIMB.step[1] - CLIMB.step[0]));
+  return fl - (a + Math.floor((b - a) * k / P) * P);
 }
 
 // The shout mark: three short rays over a head, held.
@@ -36,16 +105,19 @@ function shout(x, y) { fr(x + 8, y - 12, 2, 6, K); fr(x + 1, y - 9, 2, 2, K); fr
 // A body, the yard's square: 18 px, a 2 px rim round a white middle.
 function body(x, y, h = 18) { fr(x, y, 18, h, K); fr(x + 2, y + 2, 14, h - 4, W); }
 
-// The pair, while they stand up there: the left one speaking on a line --
-// crouched for the first third of the hold, then up a cell with the mark.
+// The pair, while they stand up there: a cell of paper round the two of them,
+// the left one speaking on a line -- crouched for the first third of the
+// hold, then up a cell with the mark.
 export function drawPair() {
   if (!S.after || !pairSpeaking()) return;
-  const a = S.after, since = a.shout == null ? 1e9 : a.t - a.shout;
+  const a = S.after, since = a.shout == null ? 1e9 : a.t - a.shout, feet = pairFeet();
+  const l = speakerAt(0).x, r = speakerAt(1).x + 18;
+  fr(l - P, feet - 18 - P - (since < AFTER_SHOUT_HOLD_S ? P : 0), r - l + 2 * P, 18 + P, W);
   for (let k = 0; k < 2; k++) {
-    const at = speakerAt(k);
-    if (k === 0 && since < AFTER_SHOUT_HOLD_S / 3) body(at.x, at.y - 18 + 4, 14);
-    else if (k === 0 && since < AFTER_SHOUT_HOLD_S) { body(at.x, at.y - 18 - P); shout(at.x, at.y - 18 - P); }
-    else body(at.x, at.y - 18);
+    const x = speakerAt(k).x;
+    if (k === 0 && since < AFTER_SHOUT_HOLD_S / 3) body(x, feet - 18 + 4, 14);
+    else if (k === 0 && since < AFTER_SHOUT_HOLD_S) { body(x, feet - 18 - P); shout(x, feet - 18 - P); }
+    else body(x, feet - 18);
   }
 }
 

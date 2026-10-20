@@ -181,7 +181,8 @@ export const ROWS = [
   // `buyAfter` and are not among the yard's rows (`__rows`), so this walk
   // never meets them; test/after-loop.test.mjs buys them as a player does and
   // reads the act back from a save. None is a ladder (DESIGN.md, act 3's
-  // call 12).
+  // call 12) but the pair's podium, a rung a support mark, which it buys
+  // rung by rung at its marks and reads back after a reload.
 
   // --- act 4, hell (upgrades/rows-hell.js) -------------------------------------
   // Off every board until hell has begun; its cards are paid in brimstone

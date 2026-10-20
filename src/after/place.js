@@ -11,7 +11,7 @@
 // picture shows.
 
 import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
-         AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PEDESTAL_H, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
+         AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
          AFTER_SKY_LO, AFTER_SKY_HI, AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL } from '../config.js';
@@ -34,7 +34,9 @@ export const inAfter = (x, y) => y >= afterTop() && y <= afterFloor() && x >= af
 // Each station's drawing as ground, and the camp's order, are after/art.js's,
 // where the config lays the camp out off them; the pedestal stands as high
 // as the config says.
-export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal, box: [1, 10, AFTER_PEDESTAL_H] } };
+// The pedestal is the pair's podium (render/after/pedestal.js), its box as
+// tall as the podium they stand on.
+export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal, get box() { return [1, 10, Math.ceil(podiumTop() / P)]; } } };
 // The paper mill's stack stands at its line's far end, which its drying
 // line carries four sheets further along (render/after/stations.js).
 const longLine = () => !!S.after && (S.after.ups['after-dry'] || 0) > 0;
@@ -91,9 +93,22 @@ export const heapX = () => heapMid() - AFTER_HEAP_R * P;
 export const notchX = () => heapMid() + AFTER_NOTCH_AT * P;
 // Where the pair stand to speak: on the pillar's top, their feet on it, two
 // cells apart. A speaker's spot is its left edge.
-export const speakerAt = k => ({ x: stationX0('pedestal') + (k ? 7 : 2) * P, y: afterFloor() - AFTER_PEDESTAL_H * P });
+// The podium the pair stand on, 0 the soapbox: the rungs bought (the ladder's
+// row, after/rows.js), but the last until they have stepped up onto the new
+// one part of the way through its building (AFTER_PODIUM_CLIMB). Read here
+// off `S.after`, so the place does not import the upgrades; its top over the
+// floor, px.
+export const podiumStood = () => {
+  const a = S.after, n = Math.max(0, Math.min(AFTER_PODIUM_TOPS.length - 1, (a && a.ups['after-podium']) || 0));
+  const at = a?.upAt?.['after-podium'];
+  return n > 0 && at != null && a.t - at < AFTER_PODIUM_CLIMB.s * AFTER_PODIUM_CLIMB.step[1] ? n - 1 : n;
+};
+export const podiumTopOf = n => AFTER_PODIUM_TOPS[n] * AFTER_PODIUM_U;
+export const podiumTop = () => podiumTopOf(podiumStood());
+export const podiumMid = () => stationX0('pedestal') + ART.pedestal.ground * P / 2;
+export const speakerAt = k => ({ x: podiumMid() + AFTER_PODIUM_PAIR[k ? 1 : 0], y: afterFloor() - podiumTop() });
 // The rebel pile at the pedestal's foot, on God's-yard side, where the motes land.
-export const pileX = () => stationX0('pedestal') + 13 * P;
+export const pileX = () => snap(podiumMid() + AFTER_PODIUM_PILE * P);
 // Where an agitator stands: in a row behind the pedestal, a spot a post.
 export const agitatorX = k => { const b = stationBox('pedestal'); return b.x - P * 3 - k * P * 4; };
 // The members waiting are counted, not stood anywhere (the owner, 2026-10-18:
@@ -121,7 +136,7 @@ export const workshopsX1 = () => Math.max(...Object.keys(AFTER_STATIONS).filter(
 export const godX0 = () => CROWD_X0 - CROWD_PITCH;
 export const unionX0 = () => workshopsX1() + AFTER_ZONE_GAP * P;
 export const unionX1 = () => unionX0() + AFTER_UNION_W * P;
-const pedMid = () => stationX0('pedestal') + ART.pedestal.ground * P / 2;
+const pedMid = () => podiumMid();
 // Where a soul won over in God's crowd ends its drift across to the union's
 // camp (render/aftercrowd.js): over the floor on God's side of the pedestal,
 // a body's height up. One point, so the union's own crowd, when it is
@@ -349,7 +364,8 @@ export function stationParts(key, i = 0) {
   }
   if (key === 'pedestal') {
     const a = speakerAt(0), b = speakerAt(1);
-    return { box: { x: a.x, y: a.y - P * 3, w: b.x + P * 3 - a.x, h: P * 3 }, top: box(stationX0(key), 1, -AFTER_PEDESTAL_H, 10, AFTER_PEDESTAL_H) };
+    const h = Math.ceil(podiumTop() / P);
+    return { box: { x: a.x, y: a.y - P * 3, w: b.x + P * 3 - a.x, h: P * 3 }, top: box(stationX0(key), 1, -h, 10, h) };
   }
   const b = stationBox(key);
   if (!b) return null;

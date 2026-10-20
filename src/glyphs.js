@@ -178,7 +178,7 @@ export const GLYPH_OF = {
   'after-post-sawyer': ['cap', 'plus'], 'after-post-feeder': ['cap', 'plus'], 'after-post-pulper': ['cap', 'plus'],
   'after-post-joiner': ['cap', 'plus'], 'after-post-carrier': ['cart', 'plus'], 'after-post-printer': ['cap', 'plus'],
   'after-post-paster': ['cap', 'plus'],
-  'after-shout': ['bell', 'up'], 'after-axe': ['blade'], 'after-plot': ['furrow', 'plus'], 'after-grow': ['ear', 'up'],
+  'after-podium': ['bell', 'up'], 'after-axe': ['blade'], 'after-plot': ['furrow', 'plus'], 'after-grow': ['ear', 'up'],
   'after-tree': ['ear', 'plus'], 'after-stumps': ['shovel'], 'after-blade': ['blade', 'plus'], 'after-heap': ['sack', 'plus'],
   'after-drum': ['jaw', 'plus'], 'after-spout': ['bucket', 'plus'], 'after-vat': ['pot', 'plus'], 'after-dry': ['ledger', 'plus'],
   'after-bench': ['bench', 'plus'], 'after-signreach': ['planks', 'up'], 'after-stack': ['ledger', 'up'], 'after-posterreach': ['bell', 'plus'],

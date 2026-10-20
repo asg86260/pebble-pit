@@ -42,7 +42,7 @@ import { goDeep, goUp, poseGlide } from './view.js';
 import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt, campEdges } from './after/place.js';
 import { afterEnd } from './view.js';
 import { godU } from './after/sky.js';
-import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE } from './config.js';
+import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB } from './config.js';
 import { FINALE_HOUSE_W } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
@@ -672,6 +672,18 @@ function levelAt(share, at, won = null) {
     window.__look(cx() - S.viewW / 2); window.__fast(1 / 60);
   }
   window.__holdShot();
+}
+
+// The pair's podium at rung `n` (0 the soapbox) with the union's crowd at
+// `share` of the way to the strike, framed on the union's camp; with `into`,
+// the rung just bought and its building that share of the way through; with
+// `hop`, a line of their speech just gone up, the near rows hopping.
+function podiumAt(n, share, into = null, hop = false) {
+  levelAt(share, 'union');
+  S.after.ups['after-podium'] = n;
+  S.after.upAt['after-podium'] = into == null ? S.after.t - 1e3 : S.after.t - into * AFTER_PODIUM_CLIMB.s;
+  if (hop) S.after.shout = S.after.t - 0.1;
+  window.__fast(1 / 30); window.__holdShot();
 }
 
 const snatchAt = (phase, into = 0, pin = false) => () => {
@@ -2982,14 +2994,13 @@ export const SCENES = {
       for (let k = 0; k < 80 && !(S.after.raising.mill && S.after.raising.mill.n >= 2); k++) window.__fast(0.5);
       window.__look(stationX0('shack') - S.viewW / 2); window.__holdShot();
     } },
-  // The yard paying (DESIGN.md, "The yard pays too"): the bigger speech bought
-  // on the pedestal's card, its dust come up out of the thin patch as motes and
-  // arcing over to the pedestal.
+  // The yard paying (DESIGN.md, "The yard pays too"): the axe bought on the
+  // grove's card, its dust come up out of the thin patch as motes and arcing
+  // over to the grove.
   'after-coins': { about: 'the acts', say: "the yard's coins up through the thin patch in the cloud floor, arcing to the station bought",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       window.__afterGrant({ rebel: 400 }); yardPurse();
-      window.__buy('after-shout');
       window.__buy('after-axe');
       window.__fast(AFTER_COIN_UNDER_S + 0.5);
       window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot();
@@ -3085,6 +3096,15 @@ export const SCENES = {
     run: () => levelAt(0.1, 'works') },
   'level-union': { about: 'the acts', say: "the union's camp where the act opens: the pair on their pedestal, God's crowd off past it",
     run: () => levelAt(0.1, 'union') },
+  'level-union-mid': { about: 'the acts', say: "the union's camp at two fifths of the way to the strike: its crowd filling in from the front",
+    run: () => levelAt(0.4, 'union') },
+  'podium-1': { about: 'the acts', say: "the pair's podium, rung 1: the soapbox", run: () => podiumAt(0, 0.3) },
+  'podium-2': { about: 'the acts', say: "the pair's podium, rung 2: crates stacked two high with a plank", run: () => podiumAt(1, 0.4) },
+  'podium-3': { about: 'the acts', say: "the pair's podium, rung 3: the plank stage with the fist banner", run: () => podiumAt(2, 0.55) },
+  'podium-4': { about: 'the acts', say: "the pair's podium, rung 4: the cloud plinth", run: () => podiumAt(3, 0.75) },
+  'podium-5': { about: 'the acts', say: "the pair's podium, rung 5: the Greek cloud column", run: () => podiumAt(4, 0.9) },
+  'podium-climb': { about: 'the acts', say: "the plank stage going up where the crates stood, a course at a time, the crates fading", run: () => podiumAt(2, 0.55, 0.55) },
+  'union-hop': { about: 'the acts', say: "a line of the pair's speech just gone up: the union's near rows hopping a cell", run: () => podiumAt(1, 0.5, null, true) },
   'level-union-high': { about: 'the acts', say: "the union's camp at seven tenths of the way to the strike: God's crowd sunk and drawn back toward his camp",
     run: () => levelAt(0.7, 'union') },
   'level-pan': { about: 'the acts', say: "half way along the pan: the union's camp gone left, God's camp far back on the cloud sliding in at a third of the speed",

@@ -64,7 +64,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   // each, then the upgrades. A post named twice is two posts.
   const PLAN = [
     'after-axe', 'after-build-mill', 'after-post-hauler', 'after-post-sawyer', 'after-build-workshop',
-    'after-post-carrier', 'after-shout', 'after-post-woodcutter', 'after-post-joiner', 'after-plot',
+    'after-post-carrier', 'after-podium', 'after-post-woodcutter', 'after-post-joiner', 'after-plot',
     'after-build-chipper', 'after-post-feeder', 'after-post-carrier', 'after-post-agitator', 'after-heap', 'after-blade', 'after-plot',
     'after-build-papermill', 'after-post-pulper', 'after-build-press', 'after-post-printer', 'after-post-paster',
     'after-stumps', 'after-grow', 'after-drum', 'after-vat', 'after-post-hauler', 'after-post-woodcutter',

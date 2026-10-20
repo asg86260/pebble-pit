@@ -8,7 +8,7 @@
 // beats marked played, since the story before the loop is not what is checked.
 import { group, ok, run, runUntil, yard, P } from './helpers.mjs';
 import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
-         ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_SHOUT_REBEL, AFTER_SHOUT_REBEL_UP, AFTER_PLOTS0, AFTER_PLOT_MAX,
+         ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_PODIUM_REBEL, AFTER_PODIUM_CLIMB, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_PLOTS0, AFTER_PLOT_MAX,
          AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL,
          AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_SAW_S, AFTER_TIP_LOAD, AFTER_CHIP_SAWDUST,
          AFTER_BUILDS, AFTER_POST_DUST, AFTER_PULP_S, AFTER_VAT_SHEETS, AFTER_DRY_VATS, AFTER_PULP_SAWDUST, AFTER_SIGN_INK_S, AFTER_BURN_S,
@@ -16,7 +16,7 @@ import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIE
 import { speechTarget } from '../src/after/union.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
-import { pileAt, stationBox, plotX } from '../src/after/place.js';
+import { pileAt, stationBox, plotX, speakerAt, afterFloor } from '../src/after/place.js';
 import { groveIcons } from '../src/after/gestures.js';
 import { sawOn, saw, lift, spin, feedLog, pullArm, tipHeap } from './after-hands.mjs';
 
@@ -68,21 +68,47 @@ group('rebel is counted where it lands, not on the click', async () => {
   return [
     ok(hit, 'a click on the pair on the pedestal is a line of their speech'),
     ok(onClick === r0 && motes > 0, 'nothing is counted on the click: the rebel is in the air', `${r0} -> ${onClick}, ${motes} motes`),
-    ok(landed === r0 + AFTER_SHOUT_REBEL, 'the motes land on the pile and are counted there', `${r0} -> ${landed}`)
+    ok(landed === r0 + AFTER_PODIUM_REBEL[0], 'the motes land on the pile and are counted there', `${r0} -> ${landed}`)
   ];
 });
 
-group('the bigger speech is bought on the pedestal\'s card and pays more a line', async () => {
+// The pair's podium is a ladder of five (DESIGN.md, "The level, the two
+// crowds and the flags"): bought a rung at a time on the pedestal's card,
+// each rung opening when the union's support reaches its mark; the new
+// podium goes up where the old stood and the pair step up onto it partway
+// through; from up there a line carries further, and a reload keeps it.
+group("the podium is a ladder bought on the pedestal's card, a rung at each support mark, and the pair step up onto it", async () => {
   up();
-  window.__afterGrant({ rebel: 30 });
-  const bought = window.__buy('after-shout');
-  const again = window.__buy('after-shout');
+  S.after.speech = { next: 1e9, f0: 0, held: null };   // the throne's speech is another check's
+  window.__afterGrant({ rebel: 5000, timber: 500 });
+  const short = window.__buy('after-podium');
+  const { marks } = AFTER_UPGRADES['after-podium'];
+  const n = rims().length, toMark = k => window.__afterCrowd((i, v) => (i < Math.ceil(n * marks[k] * STRIKE_SHARE) + 2 ? 9 : v));
+  toMark(0); run(0.1);
+  const y0 = speakerAt(0).y;
+  const bought = window.__buy('after-podium'), early = window.__buy('after-podium');
+  run(AFTER_PODIUM_CLIMB.s * AFTER_PODIUM_CLIMB.rise[1]);
+  const yMid = speakerAt(0).y;
+  run(AFTER_PODIUM_CLIMB.s);
+  const y1 = speakerAt(0).y;
   const r0 = read().rebel;
   line(); run(10);
+  const paid = read().rebel - r0;
+  const rungs = [];
+  for (let k = 1; k < marks.length; k++) { toMark(k); run(0.1); rungs.push(window.__buy('after-podium')); run(AFTER_PODIUM_CLIMB.s); }
+  const done = window.__buy('after-podium');
+  const top = afterFloor() - speakerAt(0).y;
+  yard.persist(); window.__reload(); run(0.1);
+  const kept = S.after.ups['after-podium'], keptTop = afterFloor() - speakerAt(0).y;
   window.__actsOn(null);
   return [
-    ok(bought && !again, 'bought once, and then it is done'),
-    ok(read().rebel - r0 === AFTER_SHOUT_REBEL_UP, 'a line pays the bigger speech\'s rebel', `${read().rebel - r0}`)
+    ok(!short, 'shut before the union\'s support reaches the first mark'),
+    ok(bought && !early, 'the first rung bought at its mark, and the next shut until its own', `${bought} ${early}`),
+    ok(y0 === afterFloor() - AFTER_PODIUM_TOPS[0] * AFTER_PODIUM_U && yMid === y0, 'the pair stay on the soapbox while the crates go up', `${y0} ${yMid}`),
+    ok(y1 === afterFloor() - AFTER_PODIUM_TOPS[1] * AFTER_PODIUM_U, 'then step up onto them', `${y1}`),
+    ok(paid === AFTER_PODIUM_REBEL[1], 'and a line from up there carries further', `${paid}`),
+    ok(rungs.every(Boolean) && !done, 'every rung bought at its mark, and the ladder ends at the column', rungs.join()),
+    ok(top === AFTER_PODIUM_TOPS[4] * AFTER_PODIUM_U && kept === 4 && keptTop === top, 'the column stands after a reload', `${top} ${kept} ${keptTop}`)
   ];
 });
 
@@ -113,7 +139,7 @@ group('an agitator post is filled from the camp and makes rebel, and wins nobody
     ok(camp0 === AFTER_FIRST_MEMBERS, 'the refusal\'s members walked out and stand in the camp', `${camp0}`),
     ok(posts.every(Boolean) && camp1 === camp0 - 2, 'two posts bought, two members leave the camp for them', `${camp0} -> ${camp1}`),
     ok(agitators.length === 2 && made > 0, 'the agitators stand by the pedestal and their lines make rebel', `${agitators.length}, +${made}`),
-    ok(made < 30 / 0.25 * AFTER_SHOUT_REBEL, 'less than a click\'s worth', `${made}`),
+    ok(made < 30 / 0.25 * AFTER_PODIUM_REBEL[0], 'less than a click\'s worth', `${made}`),
     ok(inked(n0) === ink0, 'and nobody in the crowd is inked by it', `${ink0} -> ${inked(n0)}`),
     ok(empty && filled, 'a post with nobody in the camp stands empty until a member walks in to it', `${empty} ${filled}`)
   ];
@@ -589,13 +615,15 @@ group('a speech burns a sign after its warning, and knocks no soul back', async 
 
 // Act 3 is outside the eight-rungs rule (call 12, settled): no card is a
 // ladder. Every station's upgrades are a short list of named ones.
-group('every act-3 card sells two or three named upgrades, none of them a ladder', async () => {
+group('every act-3 card sells two or three named upgrades, none of them a ladder but the podium', async () => {
   up();
   const rows = window.__afterRows();
   const ups = Object.entries(AFTER_UPGRADES);
   const perCard = AFTER_CARDS.filter(c => c !== 'shack')
     .map(c => [c, ups.filter(([, u]) => u.card === c).length]);
-  const long = ups.filter(([k, u]) => u.bills.length > (k === 'after-plot' ? AFTER_PLOT_MAX - AFTER_PLOTS0 : 1)).map(([k]) => k);
+  // The podium is the one ladder (DESIGN.md, "The level, the two crowds and
+  // the flags"): a rung a support mark, not the yard's bands.
+  const long = ups.filter(([k, u]) => u.bills.length > (k === 'after-plot' ? AFTER_PLOT_MAX - AFTER_PLOTS0 : u.marks ? u.marks.length : 1)).map(([k]) => k);
   const coins = new Set(ups.flatMap(([, u]) => u.bills.flat().map(([c]) => c)));
   window.__actsOn(null);
   return [

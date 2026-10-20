@@ -106,7 +106,7 @@ const ACT_ROW = { coinOrder: AFTER_TAG_ORDER, buyVia: u => buyAfter(u) };
 
 // --- the named upgrades ----------------------------------------------------------------------
 const UP_NAMES = {
-  'after-shout': () => msg('after-row-shout'), 'after-axe': () => msg('after-row-axe'),
+  'after-podium': () => msg('after-row-podium'), 'after-axe': () => msg('after-row-axe'),
   'after-plot': () => msg('after-row-plot'), 'after-grow': () => msg('after-row-grow'),
   'after-tree': () => msg('after-row-tree'), 'after-stumps': () => msg('after-row-stumps'),
   'after-blade': () => msg('after-row-blade'), 'after-heap': () => msg('after-row-heap'),
@@ -122,6 +122,11 @@ const UP_DOES = {
   'after-plot': () => clearPlot(),
   'after-axe': () => { S.after.axeBought = true; }
 };
+// A row with `marks` (the podium ladder) opens each rung when the union's
+// support reaches its mark, a share of the strike's: dead until then, saying
+// the share it waits on.
+const markOf = key => AFTER_UPGRADES[key].marks?.[upCount(key)];
+const waitsOn = key => { const m = markOf(key); return m != null && support() < m * STRIKE_SHARE; };
 const upRow = key => {
   const { card, bills } = AFTER_UPGRADES[key];
   return {
@@ -129,6 +134,8 @@ const upRow = key => {
     rung: () => upCount(key), rungs: () => bills.length,
     bill: () => bills[Math.min(upCount(key), bills.length - 1)].map(([c, n]) => [c, n]),
     show: () => cardOpen(card),
+    dead: () => waitsOn(key),
+    waits: () => (waitsOn(key) ? msg('after-wait-support', { share: Math.round(markOf(key) * 100) }) : null),
     buy: () => { S.after.ups[key] = upCount(key) + 1; S.after.upAt[key] = S.after.t; UP_DOES[key]?.(); }
   };
 };

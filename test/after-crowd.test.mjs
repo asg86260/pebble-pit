@@ -7,11 +7,12 @@
 // from. The crowd's shape is set through the act's rims (a slot set to 9 is
 // a member already gone, with no walk), the setup these checks are not about.
 import { group, ok, run, yard } from './helpers.mjs';
-import { STRIKE_SHARE, GOD_DEPTH, CROWD_X0, CROWD_PITCH, P } from '../src/config.js';
+import { STRIKE_SHARE, GOD_DEPTH, CROWD_X0, CROWD_PITCH, P, UNION_CROWD } from '../src/config.js';
 import { afterFloor, afterOpenX, soulX, soulY, unionX1, campEdges } from '../src/after/place.js';
 import { stepAfter } from '../src/after/index.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawSkyCrowd, drawAfterCrowd, crowdDrawn, glareAlpha, raysLeft } from '../src/render/aftercrowd.js';
+import { drawUnionCrowd, unionDrawn } from '../src/render/after/unioncrowd.js';
 import { afterEnd } from '../src/view.js';
 import { godMid, godU, walkSeen, stage, stageHalf } from '../src/after/sky.js';
 
@@ -233,6 +234,29 @@ group("a carrier's way onto the stage is unbroken, and carriers spread to their 
   }
   window.__actsOn(null);
   return out;
+});
+
+// The union's crowd fills in from the front as support rises (DESIGN.md,
+// "The level, the two crowds and the flags"): nobody before anyone has walked
+// out, more and more as support rises, and a newcomer walks in rather than
+// popping -- a soul due the moment support rises is not yet standing a
+// moment later, only once its walk in is done.
+group("the union's crowd fills in as support rises, its newcomers walking in", async () => {
+  up();
+  lookAt(afterOpenX());
+  const sheet = fn => paintOn({ getContext: () => new Proxy({}, { get: (o, k) => (k in o ? o[k] : () => ({})), set: (o, k, v) => { o[k] = v; return true; } }), width: S.W, height: S.H }, fn);
+  const at = k => { won(4000, k); run(3); sheet(drawUnionCrowd); run(UNION_CROWD.walkS + 1); sheet(drawUnionCrowd); return unionDrawn.souls; };
+  const counts = [0, 0.2, 0.5, 0.9].map(at);
+  // a step of support, read at once and then once the walk is done
+  won(4000, 0.5); run(1 / 30); sheet(drawUnionCrowd); won(4000, 0.7); run(1 / 30); sheet(drawUnionCrowd);
+  const now = unionDrawn.souls; run(UNION_CROWD.walkS + 0.5); sheet(drawUnionCrowd);
+  const later = unionDrawn.souls;
+  window.__actsOn(null);
+  return [
+    ok(counts[0] === 0, 'nobody before anyone has walked out', counts.join(' ')),
+    ok(counts.every((v, i) => i === 0 || v > counts[i - 1]), 'more as support rises', counts.join(' ')),
+    ok(later > now, 'newcomers stand only once they have walked in', `${now} -> ${later}`)
+  ];
 });
 
 group('a reload stands the sky back as it was, and draws it the same', async () => {

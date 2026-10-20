@@ -216,3 +216,22 @@ export const CLOUD_SKY = {
 // by night tops catching a grey light over bodies sunk into the night.
 export const CLOUD_SKY_TONES = { light: ['paper', 'paper', 'pale', 'mid', 'pale', 'paper'],
                                  dark: ['paper', 'pale', 'paper', 'ink', 'mid', 'mid'] };
+
+// --- the union's crowd (DESIGN.md, "The level, the two crowds and the flags") ---
+// Gathered round and behind the pair in straight rows, `rows` of them, each
+// row back smaller, higher and paler: a soul `n` px across from the front row
+// to the back, a loose `gap` of its own size between souls, the rows' feet
+// rising `rise` px over the floor from front to back, the rows `half` px
+// across the half (the back row kept off the workshops), the front `clear` px
+// either side of the podium's half-width left open. The front `cap` rows are
+// a mid body under an ink cap `capH` px deep, the rows to `midTo` mid, the
+// rest pale: drawn light, so God stays the eye's anchor. It fills in from the
+// front as support rises, a soul standing once (share * rows * `fill`) -
+// its row - a fixed chance * `luck` is over 0; a newcomer walks in from God's
+// side `walk` px over `walkS` seconds, fading in over the first `fadeIn` of it,
+// and one leaving fades over `fadeOut` seconds. When a line of the pair's
+// speech goes up, a share `hop` of the front `hopRows` rows hop a cell, held
+// `hopS` seconds.
+export const UNION_CROWD = { rows: 9, n: [12, 4], gap: 0.45, rise: 88, half: [100, 228], clear: 6, cap: 3, capH: 2, midTo: 6,
+                             fill: 1.1, luck: 0.6, walk: 80, walkS: 3, fadeIn: 0.3, fadeOut: 1,
+                             hop: 0.7, hopRows: 3, hopS: 0.5 };

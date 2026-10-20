@@ -40,6 +40,7 @@ import { DRAW, workerPose, GLYPHS, backOf, boardPile } from './after/stations.js
 import { heap, heapCells, logPile, plankPile, sheetPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
 import { siteOf } from '../after/build.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
+import { drawUnionCrowd } from './after/unioncrowd.js';
 
 const A = () => S.after;
 const snap = v => Math.round(v / P) * P;
@@ -227,6 +228,9 @@ export function drawAfterCamp() {
   const a = A();
   if (!a) return;
   readHands();
+  // The union's crowd behind everything of the camp's: the pair's podium
+  // stands in front of it.
+  drawUnionCrowd();
   for (const key of AFTER_CARDS) if (key !== 'grove') drawStation(key);
   drawShackOrder();
   if (built('mill') || built('chipper')) drawSawdust();
