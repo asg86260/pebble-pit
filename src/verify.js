@@ -47,6 +47,22 @@ import { yardReads } from './persist.js';
 import { afterlifeOn, hellOn } from './acts.js';
 import { AFTER_STORY } from './after/story.js';
 import { HELL_STORY } from './hell/story.js';
+import { allOverlaps } from './footprints.js';
+
+// The pairs that share ground TODAY, each with what it is. This list is the
+// to-do list for placing things apart, and it only ever shrinks: a pair is
+// taken off it the day it is moved apart (test/no-overlap.test.mjs is red
+// for an entry that no longer overlaps), and nothing is added to it without
+// the owner (2026-10-19: no two objects of different kinds overlap, as a
+// hard rule). Keyed `place:a|b`, the two ids in sorted order.
+export const KNOWN_OVERLAPS = {
+  'yard:casino|heaven-stairway':
+    'the casino keeps the back of the yard from HOME_GROUND on (config/sites.js), and heaven stair and bank run out past it, from ACT_GATES_CELL (config/acts.js)',
+  'deep:pods|s1':
+    'the pods stand at DEEP_SPOTS.pods and the first station at DEEP_SLOTS[0], both fractions of the deep width (config/deep.js, config/deepboard.js), and a class prop is drawn wider than the gap between them',
+  'deep:crusher|hell-slit':
+    'the hell slit hangs over roadX (hell/place.js: ROAD_AT cells into chamber 0) and the crusher stands at DEEP_SPOTS.crusher of the deep width (config), both on the deep floor'
+};
 
 // The jobs the roster is made of, and the count on S that owns each: every
 // body type and its job, read off the one table (jobs.js) rather than kept
@@ -634,6 +650,19 @@ export function verifyWorld() {
       fail('the bodies on the deep\'s jobs are not its crew', `${bodies} on them, ${S.deepCrew} down there`);
     if (S.tick % LEDGER_EVERY === 0 && deepBed.grid && deepBed.n !== count(deepBed))
       fail('the bed has lost count of itself', `ledger says ${deepBed.n}, the cells say ${count(deepBed)}`);
+  }
+
+  // --- rule 21: no two objects of different kinds share ground -----------------
+  // The footprints (footprints.js) are what each placed object takes up over
+  // its whole life, read off the numbers it is drawn from; a pair that shares
+  // a cell and is not in KNOWN_OVERLAPS is a new overlap. Asked once a second:
+  // the objects are placed, not moved, and a sequence of frames that makes
+  // them meet is wrong on every frame after the first.
+  if (S.tick % LEDGER_EVERY === 0) {
+    const fresh = allOverlaps().filter(o => !(o.key in KNOWN_OVERLAPS));
+    if (fresh.length)
+      fail('two objects stand on the same ground',
+           fresh.map(o => `${o.place}: ${o.a} and ${o.b} share ${o.w} by ${o.h} cells`).join('; '));
   }
 
   verifyParty();

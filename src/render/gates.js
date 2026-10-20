@@ -164,7 +164,7 @@ function rays(cx, ty, k) {
 // `landing` set -- the cells under the walk (ghosts.js, `stairWalk`) from the
 // foot under the gates, away from the ruin, across a landing and back, flight
 // by flight.
-function stairPieces(foot, g) {
+export function stairPieces(foot, g) {
   const out = [];
   let x = foot, y = g;
   ACT_STAIR_FLIGHTS.forEach((n, i) => {
@@ -184,6 +184,9 @@ function stairPieces(foot, g) {
 }
 
 // --- in the yard -----------------------------------------------------------------------------
+// The bank's reach either side of the gates' middle column and its depth, in cells: its ground, for
+// the map's no-overlap rule (footprints.js).
+export const GATES_BANK = { left: 11, right: 20, deep: 3 };
 const yardEnd = () => portalEnd('heaven', 'yard');
 // How far in it is: the stair let down a tread at a time from the foot up,
 // each fading in, and the bank and the gates faded in after it.
@@ -214,7 +217,7 @@ export function drawGatesBehind() {
   // the bank they stand in, longer on the stair's side, and the light in the gateway
   faded(a, () => {
     const m = mask();
-    for (let x = cx - 11; x <= cx + 20; x++) { add(m, x, ty); add(m, x, ty + 1); if (x > cx - 9 && x < cx + 17) add(m, x, ty + 2); }
+    for (let x = cx - GATES_BANK.left; x <= cx + GATES_BANK.right; x++) { add(m, x, ty); add(m, x, ty + 1); if (x > cx - 9 && x < cx + 17) add(m, x, ty + 2); }
     puff(m, cx - 8, ty + 2, 2.6); puff(m, cx + 13, ty + 2.5, 3.5); puff(m, cx - 1, ty + 3, 3);
     paint(m, 41);
     gateway(cx, ty);
