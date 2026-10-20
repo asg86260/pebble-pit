@@ -23,11 +23,13 @@
   <b>clouds</b>
   <label>show <select id="show">
     <option value="all">all together</option><option value="far">far bank</option><option value="mid">middle bank</option>
-    <option value="puff">clickable clouds</option><option value="ground">ground billows</option></select></label>
+    <option value="puff">clickable clouds</option><option value="ground">ground billows</option>
+    <option value="sheet">treatment sheet</option></select></label>
   <label>window <select id="win"><option value="2000x967">2000 x 967</option><option value="800x600">800 x 600</option></select></label>
   <label><input type="checkbox" id="dark"> dark</label>
-  <label>tones <select id="tones"><option value="2">two a cloud</option><option value="1">one a cloud</option></select></label>
-  <label><input type="checkbox" id="lit"> lit cap</label>
+  <label>treatment <select id="treat">
+    <option value="A">A: one tone</option><option value="B">B: two tones, underside</option>
+    <option value="C" selected>C: two tones, every belly</option><option value="D">D: C and the moonlit rim</option></select></label>
   <label><input type="checkbox" id="ref" checked> yard strip</label>
   <label>camera <input type="range" id="cam" min="0" max="600" step="0.1" value="0"></label>
   <label><input type="checkbox" id="auto" checked> slide</label>
@@ -60,7 +62,7 @@ const LAYERS = {
 };
 
 let W = 2000, H = 967, cols, rows, sheets = {}, puffs = [], t = 0, cam = 0, manual = false;
-const look = { page: 'light', twoTone: true, litOn: false };
+const look = { page: 'light', treat: 'C' };
 
 function build() {
   cv.width = W; cv.height = H;
@@ -72,9 +74,28 @@ function build() {
     ground: cloudSheet({ kind: 'ground', seed: 9, w: cols + 400 })
   };
   puffs = [0, 1, 2, 3].map(i => ({ sh: cloudSheet({ kind: 'puff', seed: 21 + i }), x0: 40 + i * (cols + 60) / 4, row: 0.36 + 0.07 * (i % 2), fade: 1, gone: false, back: 0 }));
-  for (const sh of all()) setLook(sh, look);
+  for (const sh of scene()) setLook(sh, look);
 }
-const all = () => [sheets.far, sheets.mid, ...puffs.map(p => p.sh), sheets.ground];
+const scene = () => [sheets.far, sheets.mid, ...puffs.map(p => p.sh), sheets.ground];
+// The treatment sheet: the same three clouds (one seed each) in every
+// treatment, down the page, light beside dark, at twice the size, so the
+// treatments are judged side by side and a change to one is one shot. The
+// ground is drawn at its own size, below them.
+const TREATS = ['A', 'B', 'C', 'D'], PAGES = ['light', 'dark'], SHEET_CELL = 10, PANEL = [1000, 900];
+let panels = [];
+function buildSheet() {
+  panels = [];
+  for (const treat of TREATS) for (const page of PAGES) {
+    const p = { treat, page,
+      mid: cloudSheet({ kind: 'mid', seed: 5, R: 11, single: true }),
+      puff: cloudSheet({ kind: 'puff', seed: 22, R: 8 }),
+      ground: cloudSheet({ kind: 'ground', seed: 9, w: 200, R: 16 }) };
+    for (const sh of [p.mid, p.puff, p.ground]) setLook(sh, { page, treat });
+    panels.push(p);
+  }
+}
+const all = () => $('show').value === 'sheet' ? panels.flatMap(p => [p.mid, p.puff, p.ground])
+  : scene();
 function shown() {
   const s = $('show').value;
   return { far: s === 'all' || s === 'far', mid: s === 'all' || s === 'mid', puff: s === 'all' || s === 'puff', ground: s === 'all' || s === 'ground' };
@@ -96,6 +117,7 @@ function frame(dt) {
     if (p.gone) { p.fade = Math.max(0, p.fade - dt); if (!p.fade && (p.back -= dt) <= 0) { p.gone = false; p.x0 -= 70; } }
     else p.fade = Math.min(1, p.fade + dt / 1.5);
   }
+  if ($('show').value === 'sheet') return sheetFrame();
   const on = shown();
   const live = [...(on.far ? [sheets.far] : []), ...(on.mid ? [sheets.mid] : []), ...(on.puff ? puffs.map(p => p.sh) : []), ...(on.ground ? [sheets.ground] : [])];
   const bake = tickClouds(live, t);
@@ -120,6 +142,25 @@ function frame(dt) {
   stat.bake.push(bake); stat.draw.push(performance.now() - d0);
   if (stat.bake.length > 240) { stat.bake.shift(); stat.draw.shift(); }
   if (Math.round(t * 60) % 15 === 0 || dt === 0) report(live);
+}
+
+function sheetFrame() {
+  const live = all(), bake = tickClouds(live, t), C = SHEET_CELL;
+  if (cv.width !== PANEL[0] * 2 || cv.height !== PANEL[1] * 4) { cv.width = PANEL[0] * 2; cv.height = PANEL[1] * 4; }
+  g.font = '16px ui-monospace, monospace';
+  panels.forEach((p, i) => {
+    const px = (i % 2) * PANEL[0], py = Math.floor(i / 2) * PANEL[1], dark = p.page === 'dark';
+    g.fillStyle = dark ? '#121212' : '#ffffff'; g.fillRect(px, py, PANEL[0], PANEL[1]);
+    g.fillStyle = dark ? '#d6d6d6' : '#000000';
+    g.fillText(`${p.treat}  ${p.page}`, px + 12, py + 22);
+    drawCloud(g, p.mid, px + 20, py + 30, C);
+    drawCloud(g, p.puff, px + 20, py + 40 + p.mid.h * C, C);
+    const gy = py + PANEL[1] - p.ground.h * CELLPX;
+    g.save(); g.beginPath(); g.rect(px, gy, PANEL[0], p.ground.h * CELLPX); g.clip();
+    drawBand(g, p.ground, cam * CELLPX, gy, CELLPX, px + PANEL[0]);
+    g.restore();
+  });
+  stat.bake.push(bake); if (stat.bake.length > 240) stat.bake.shift();
 }
 
 // The yard at its own scale, bottom left: what a cloud is measured against.
@@ -159,12 +200,12 @@ cv.addEventListener('click', e => {
 });
 function setLookFromUi() {
   look.page = $('dark').checked ? 'dark' : 'light';
-  look.twoTone = $('tones').value === '2';
-  look.litOn = $('lit').checked;
+  look.treat = $('treat').value;
   document.body.classList.toggle('dark', look.page === 'dark');
-  for (const sh of all()) setLook(sh, look);
+  if ($('show').value !== 'sheet') for (const sh of all()) setLook(sh, look);
 }
-for (const id of ['dark', 'tones', 'lit']) $(id).onchange = setLookFromUi;
+for (const id of ['dark', 'treat']) $(id).onchange = setLookFromUi;
+$('show').onchange = () => { if ($('show').value === 'sheet') buildSheet(); else { [W, H] = $('win').value.split('x').map(Number); build(); } setLookFromUi(); };
 $('win').onchange = () => { [W, H] = $('win').value.split('x').map(Number); build(); setLookFromUi(); };
 const vals = () => { $('slideV').textContent = $('slide').value; $('speedV').textContent = $('speed').value; };
 $('slide').oninput = vals; $('speed').oninput = vals; vals();
@@ -173,11 +214,10 @@ const qs = new URLSearchParams(location.search);
 if (qs.has('dark')) $('dark').checked = true;
 if (qs.get('win')) $('win').value = qs.get('win');
 if (qs.get('show')) $('show').value = qs.get('show');
-if (qs.has('one')) $('tones').value = '1';
-if (qs.has('lit')) $('lit').checked = true;
+if (qs.get('treat')) $('treat').value = qs.get('treat');
 manual = qs.has('manual');
 [W, H] = $('win').value.split('x').map(Number);
-build(); setLookFromUi();
+build(); if ($('show').value === 'sheet') buildSheet(); setLookFromUi();
 frame(0);
 requestAnimationFrame(loop);
 
@@ -188,11 +228,10 @@ window.bench = {
     if ('t' in o) t = o.t; if ('cam' in o) cam = o.cam;
     for (const k of ['speed', 'slide']) if (k in o) $(k).value = o[k];
     if ('auto' in o) $('auto').checked = o.auto;
-    if ('show' in o) $('show').value = o.show;
+    if ('show' in o) { $('show').value = o.show; if (o.show === 'sheet') buildSheet(); }
     if ('ref' in o) $('ref').checked = o.ref;
     if ('dark' in o) $('dark').checked = o.dark;
-    if ('one' in o) $('tones').value = o.one ? '1' : '2';
-    if ('lit' in o) $('lit').checked = o.lit;
+    if ('treat' in o) $('treat').value = o.treat;
     if ('win' in o) { $('win').value = o.win; [W, H] = o.win.split('x').map(Number); build(); }
     setLookFromUi();
     if (o.restart) for (const sh of all()) sh.k0 = null;

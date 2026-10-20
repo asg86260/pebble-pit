@@ -24,7 +24,8 @@
 // and draws them where its own camera puts them. Nothing here reads S.
 
 import { CLOUDS_TONES, CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_BUDGET_MS, CLOUDS_SLICE,
-         CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS } from '../config.js';
+         CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN,
+         CLOUDS_TREATMENTS } from '../config.js';
 
 // A cloud's shape is its own seed's, not a draw from the yard's `rand()`: a
 // drawing must never move the game's stream, or a seeded run would play out
@@ -39,7 +40,14 @@ function gen(seed) {
   };
 }
 const lerp = (r, [a, b]) => a + (b - a) * r;
-const depth = (share, r) => (share ? Math.max(2, Math.round(share * r)) : 0);
+// A band (a belly, a rim) a share of a tier's lobe radius deep,
+// and none on a tier whose lobes are under CLOUDS_BAND_MIN times that: on a
+// small lobe the band would be the whole lobe and read as a line, so a small
+// or far cloud is drawn plainer, which is depth by scale.
+const depth = (share, r) => {
+  const d = share ? Math.max(2, Math.round(share * r)) : 0;
+  return d && r >= CLOUDS_BAND_MIN * d ? d : 0;
+};
 const TAU = Math.PI * 2;
 const puff = (rnd, x, y, r) => ({ x, y, r, ph: rnd() * TAU, ph2: rnd() * TAU, pace: 0.8 + rnd() * 0.4 });
 
@@ -103,9 +111,10 @@ function billows(rnd, w, top, R, K, tiers, fills) {
 // --- a sheet -------------------------------------------------------------------
 // The cells of one cloud (a 'puff'), of a bank of them across a wrapping strip
 // ('far', 'mid'), or of the ground. `w` and `h` in cells; a band wraps at `w`.
-export function cloudSheet({ kind, seed = 1, w, h, R, scale = 1 }) {
+// `single` draws one cloud of a band's kind on its own.
+export function cloudSheet({ kind, seed = 1, w, h, R, scale = 1, single = false }) {
   const K = CLOUDS_KINDS[kind], rnd = gen(seed * 7919 + 13);
-  const ground = kind === 'ground', band = kind === 'far' || kind === 'mid';
+  const ground = kind === 'ground', band = !single && (kind === 'far' || kind === 'mid');
   const nt = ground ? K.rows : K.tiers.length;
   const tiers = Array.from({ length: nt }, () => []), fills = [];
   const size = () => (R || lerp(rnd(), K.R)) * scale;
@@ -118,8 +127,10 @@ export function cloudSheet({ kind, seed = 1, w, h, R, scale = 1 }) {
     billows(rnd, w, top, s, K, tiers, fills);
   } else if (band) {
     // clouds of different sizes along the strip, sometimes with sky between
+    // the crown stands up to 2.2 R over the base line and the base's lobes
+    // hang up to 0.9 R under it
     const top = K.R[1] * scale * 2.3;
-    h = h || Math.ceil(top + K.R[1] * scale * 0.6);
+    h = h || Math.ceil(top + K.R[1] * scale * 1.0);
     let x = rnd() * 8;
     for (;;) {
       const s = size(), half = s * 2.2;
@@ -130,8 +141,8 @@ export function cloudSheet({ kind, seed = 1, w, h, R, scale = 1 }) {
   } else {
     const s = size();
     w = w || Math.ceil(s * 6 + 4);
-    h = h || Math.ceil(s * 2.5 + 3);
-    cumulus(rnd, w / 2, h - Math.max(2, s * 0.3), s, K.tiers, tiers);
+    h = h || Math.ceil(s * 3.2 + 3);
+    cumulus(rnd, w / 2, Math.ceil(s * 2.25 + 1), s, K.tiers, tiers);
   }
   // each tier's tone with two tones a cloud and with one; the depth of its
   // sunlit cap (the ground's: the tops of its billows catch the light and the
@@ -145,8 +156,10 @@ export function cloudSheet({ kind, seed = 1, w, h, R, scale = 1 }) {
     rowOf: tiers.map((_, j) => (ground ? j : 0)),
     tone1: tiers.map((_, j) => (ground ? CLOUDS_ONE_TONE_ROWS[j] : K.one)),
     // each tier's belly, crevice and rim depths, a share of its lobes' size
-    shadeOf: lobe.map(r => depth(K.shade, r)),
-    creaseOf: lobe.map(r => depth(K.crease, r)),
+    // one belly depth for a whole cumulus, off its base's lobes, so its
+    // underside is one even scalloped band wherever any tier reaches it
+    shadeOf: lobe.map(r => depth(K.shade, ground ? r : lobe[nt - 1])),
+    creaseOf: lobe.map(r => (K.crease && r >= CLOUDS_CREASE_MIN ? Math.max(2, Math.round(K.crease * r)) : 0)),
     litOf: lobe.map(r => depth(K.lit, r)),
     sums: Array.from({ length: nt }, () => new Float32Array(n)),
     T: new Int8Array(n).fill(-1),
@@ -155,7 +168,7 @@ export function cloudSheet({ kind, seed = 1, w, h, R, scale = 1 }) {
     diff: new Int32Array(n), nd: 0,
     phase: rnd() * K.step,                            // so sheets do not all turn on one frame
     k0: null, unit: 0, nextT: 0, full: true,
-    page: 'light', twoTone: true, litOn: false, lut: null,
+    page: 'light', treat: 'C', lut: null,
     canvas: null, ctx: null, img: null,
     flips: 0, backs: 0, last: new Uint8Array(n)       // for the checks: cells re-toned, and gone back
   };
@@ -224,23 +237,22 @@ function tierRows(sh, y0, y1) {
 //   belly    the cell `shade` below is open sky or a tier farther back
 //   crevice  the cell `crease` below is a nearer row's dome (the ground)
 //   rim      the cell `lit` above, or up and to the left toward the light,
-//            is not this tier, when the rim is on (and not sky, by day)
+//            is not this tier, where the treatment and the page draw one
+// The treatment (CLOUDS_TREATMENTS) says which of these a cloud is drawn with.
 function roleRows(sh, out, y0, y1) {
   const { w, h, T, rowOf } = sh, bottom = sh.ground ? sh.nt - 1 : -1;
   const at = (x, y) => (y >= h ? bottom : y < 0 ? -1 : T[y * w + x]);
   const atx = (x, y) => (x < 0 || x >= w ? (sh.wrap ? at((x + w) % w, y) : -1) : at(x, y));
-  // where the rim's tone is the sky's (the paper by day), a rim against the
-  // sky would eat the cloud's own edge: there it shows only against a cloud
-  const skyRim = CLOUDS_TONES[sh.page].rimSky;
-  const rim = (b, j) => b !== j && (skyRim || b >= 0);
+  const D = CLOUDS_TREATMENTS[sh.treat], rimOn = D.rim && CLOUDS_TONES[sh.page].rim;
+  const inside = D.belly === 'inside', bellies = D.belly !== 'none';
   for (let y = y0; y < y1; y++) for (let x = 0; x < w; x++) {
     const j = T[y * w + x];
     let r = 0;
     if (j >= 0) {
-      const s = sh.shadeOf[j], c = sh.creaseOf[j], l = sh.litOn ? sh.litOf[j] : 0;
+      const s = bellies ? sh.shadeOf[j] : 0, c = bellies ? sh.creaseOf[j] : 0, l = rimOn ? sh.litOf[j] : 0;
       r = j * 4 + 1;
-      if (l && (rim(at(x, y - l), j) || rim(atx(x - Math.round(l * 0.7), y - Math.round(l * 0.7)), j))) r = j * 4 + 3;
-      if (s) { const b = at(x, y + s); if (b < j) r = j * 4 + 2; }
+      if (l && (at(x, y - l) !== j || atx(x - Math.round(l * 0.7), y - Math.round(l * 0.7)) !== j)) r = j * 4 + 3;
+      if (s) { const b = at(x, y + s); if (b < 0 || (inside && b < j)) r = j * 4 + 2; }
       if (c) { const b = at(x, y + c); if (b > j && rowOf[b] !== rowOf[j]) r = j * 4 + 2; }
     }
     out[y * w + x] = r;
@@ -288,20 +300,21 @@ export function bakeNow(sh, t, out = sh.next) { bakeUnits(sh, t, out, 0, total(s
 function lutOf(sh) {
   const L = CLOUDS_TONES[sh.page], lut = new Array(4 * sh.nt + 4).fill(null);
   for (let j = 0; j < sh.nt; j++) {
-    const one = sh.tone1[j], [body, shade] = sh.K.tones;
-    lut[j * 4 + 1] = hexRgb(L.steps[sh.twoTone ? body : one]);
-    lut[j * 4 + 2] = hexRgb(L.steps[sh.twoTone ? shade : one]);
+    const one = sh.tone1[j], [body, shade] = sh.K.tones[sh.page];
+    const two = CLOUDS_TREATMENTS[sh.treat].tones === 2;
+    lut[j * 4 + 1] = hexRgb(L.steps[two ? body : one]);
+    lut[j * 4 + 2] = hexRgb(L.steps[two ? shade : one]);
     lut[j * 4 + 3] = hexRgb(L.lit);
   }
   return lut;
 }
 function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
 
-// The page, the tone count and the cap. The cap changes the bake, so the
-// sheet starts its clock again; the others only repaint.
-export function setLook(sh, { page = sh.page, twoTone = sh.twoTone, litOn = sh.litOn } = {}) {
-  const rebake = litOn !== sh.litOn || page !== sh.page;
-  sh.page = page; sh.twoTone = twoTone; sh.litOn = litOn;
+// The page and the treatment. Both change the bake (the rim is drawn by
+// night only), so the sheet starts its clock again.
+export function setLook(sh, { page = sh.page, treat = sh.treat } = {}) {
+  const rebake = treat !== sh.treat || page !== sh.page;
+  sh.page = page; sh.treat = treat;
   sh.lut = lutOf(sh); sh.full = true;
   if (rebake) sh.k0 = null;
 }
