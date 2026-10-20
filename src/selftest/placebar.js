@@ -33,7 +33,8 @@ export const WALKUP_GAPS = [
 export const WORK_GAPS = [
 ];
 export const DARK_GAPS = [
-  'after:dark:off', 'hell:dark:off',
+  // hell's a few hundred pixels at the rock's edges; act 3's backdrop tens of thousands
+  'after:after backdrop:dark', 'after:after camp:dark', 'after:after heaven:dark', 'hell:hell backdrop:dark', 'hell:hell chambers:dark',
 ];
 
 const same = (name, found, listed) => {
@@ -142,8 +143,9 @@ export async function darkOff(scene, place) {
     if (!booted()) return null;
     w.__scene(scene);
     w.__goPlace(place);
+    w.__holdShot(0);
     for (let i = 0; i < 90; i++) w.__fast(1 / 60);
-    w.__drawFullInk();
+    w.__still(true);   // the page's own frames held, so each read is the frame drawn for it
     const map = w.__mapOf(place);
     const tones = [...GREY, ...PURPLE, ...Object.values(COIN_TONES).flat(), '#000000', '#ffffff',
                    ...Object.values(CLOUDS_PALETTE.light), ...Object.values(CLOUDS_PALETTE.dark || {})];
@@ -152,13 +154,28 @@ export async function darkOff(scene, place) {
     for (const c of Object.values(AFTER_TONES)) allowed.add(w.__inkOf(GREY[c], 'after').toLowerCase());
     allowed.add('#ffffff');
     const c = f.contentDocument.getElementById('c'), g = c.getContext('2d');
-    const d = g.getImageData(0, 0, c.width, c.height).data;
-    const seen = new Map();
-    for (let y = 0; y < c.height; y += 2) for (let x = 0; x < c.width; x++) {
-      const h = hex(d, (y * c.width + x) * 4);
-      if (!allowed.has(h)) seen.set(h, (seen.get(h) || 0) + 1);
+    // The colors off the map on a frame drawn with `skip` left out.
+    const offWith = skip => {
+      w.__drawFullInk(skip);
+      const d = g.getImageData(0, 0, c.width, c.height).data;
+      const seen = new Map();
+      for (let y = 0; y < c.height; y += 2) for (let x = 0; x < c.width; x++) {
+        const h = hex(d, (y * c.width + x) * 4);
+        if (!allowed.has(h)) seen.set(h, (seen.get(h) || 0) + 1);
+      }
+      return [...seen].filter(([, n]) => n >= MIN_PX).sort((a, b) => b[1] - a[1]);
+    };
+    const sum = o => o.reduce((n, [, k]) => n + k, 0);
+    const off = offWith(null), total = sum(off);
+    // Which layers draw them: the ones whose absence takes some away (as the
+    // deep's palette check names them, selftest/deeppalette.js).
+    const by = [];
+    if (total) for (const name of w.__layerNames(place)) {
+      if (['page', 'world', 'world:done', 'screen', 'press'].includes(name)) continue;
+      if (total - sum(offWith(name)) >= MIN_PX) by.push(name);
     }
-    return { map, off: [...seen].filter(([, n]) => n >= MIN_PX).sort((a, b) => b[1] - a[1]) };
+    w.__still(false);
+    return { map, off, by };
   } finally { f.remove(); }
 }
 
@@ -190,7 +207,8 @@ export const TESTS = [
     for (const [scene, place] of [['hell-forge', 'hell'], ['act3-mid', 'after']]) {
       const r = await darkOff(scene, place);
       if (!r) { out.push(ok(false, `${place}: the game boots on the dark page in a frame`)); continue; }
-      if (r.off.length) found.add(`${place}:dark:off`);
+      for (const name of r.by) found.add(`${place}:${name}:dark`);
+      if (r.off.length && !r.by.length) found.add(`${place}:dark:off`);
       out.push(ok(true, `${place} in map ${r.map}`, r.off.slice(0, 6).map(([h, n]) => `${h} x${n}`).join(' ')));
     }
     return [...out, ...same('dark page', found, DARK_GAPS)];

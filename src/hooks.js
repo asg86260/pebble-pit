@@ -1629,23 +1629,39 @@ import { inkOf as inkOfNow } from './ink.js';
 import { draw as drawNow, mapOf as mapOfNow, LAYERS as LAYERS_NOW } from './render.js';
 HANDLES.__inkOf = (c, m) => String(inkOfNow(c, m));
 HANDLES.__mapOf = place => mapOfNow(LAYERS_NOW.find(l => l.in === place) || { name: '', in: place }, place);
-HANDLES.__drawFullInk = () => {
+// `skip` a layer's name left out of that frame, to say which layer drew what.
+HANDLES.__drawFullInk = (skip = null) => {
   const g = document.getElementById('c').getContext('2d');
+  const off = LAYERS_NOW.filter(l => l.name === skip), was = off.map(l => l.when);
+  off.forEach(l => { l.when = () => false; });
   Object.defineProperty(g, 'globalAlpha', { configurable: true, get: () => 1, set: () => {} });
   globalThis.__pinInk = true;
-  try { drawNow(); } finally { globalThis.__pinInk = false; delete g.globalAlpha; }
+  try { drawNow(); } finally { globalThis.__pinInk = false; delete g.globalAlpha; off.forEach((l, i) => { l.when = was[i]; }); }
 };
+HANDLES.__layerNames = place => LAYERS_NOW.filter(l => (l.in || 'yard') === place || (Array.isArray(l.in) && l.in.includes(place))).map(l => l.name);
 
-// Every handle but the clock's is a setup: what it stands up or moves is
-// taken as it stands by the motion rules (verify.js, rule 22). Last, so it
-// wraps every handle above.
+// A handle that stands bodies up or moves them is a setup: what it did is
+// taken as it stands by the motion rules (verify.js, rule 22). Told by the
+// bodies themselves -- how many there are in every place and where -- so a
+// handle that only reads leaves the rule watching. Last, so it wraps every
+// handle above; never the clock's.
 import { touchSetup } from './verify.js';
+import { PLACES as BODY_PLACES } from './acts.js';
+import { JOB_OF as JOB_OF_TYPE } from './jobs.js';
+// and by the counts the bodies are made from, which the next frame stands up
+const bodiesPrint = () => {
+  let n = 0, sum = 0;
+  for (const list of [S.workers, ...Object.values(BODY_PLACES).map(p => p.crew.list() || [])])
+    for (const w of list) { n++; sum += (w.x || 0) * 3 + (w.y || 0); }
+  const counts = Object.values(JOB_OF_TYPE).map(k => S[k]).join();
+  return `${n}:${sum}:${counts}:${S.crew}:${S.deepCrew}:${JSON.stringify(S.after?.posts || null)}:${S.hell?.muster}:${S.view}`;
+};
 for (const [k, fn] of Object.entries(HANDLES)) {
   if (typeof fn !== 'function' || k === '__fast') continue;
   HANDLES[k] = function (...a) {
-    touchSetup();
+    const was = bodiesPrint();
     const out = fn.apply(this, a);
-    touchSetup();
+    if (bodiesPrint() !== was) touchSetup();
     return out;
   };
 }

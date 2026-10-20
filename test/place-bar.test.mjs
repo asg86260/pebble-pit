@@ -14,7 +14,9 @@
 // today's, and the last group asks that the two are the same set: a new gap
 // is red, and so is a gap fixed but still listed. The list only shrinks.
 
-import { group, ok, run, runUntil, yard } from './helpers.mjs';
+import { group, ok, run, runUntil, yard, buyBuilt } from './helpers.mjs';
+import { doneAt } from '../src/works.js';
+import { doneMarkAt } from '../src/render.js';
 import { hear } from '../src/audio.js';
 import { lift, drop, shakeHeld } from '../src/crew/pointer.js';
 import { STATIONS, stationAt, nearStation, hitRect, standRect } from '../src/stations.js';
@@ -37,6 +39,9 @@ const S = yard.S;
 export const KNOWN_GAPS = [
   // an act's loads have no ground to lie on yet (each act's own design)
   'after:fall:spill', 'hell:fall:spill',
+  // made nothing in five seconds free, so the door is not proved (no input, not built, worked by hand)
+  'after:after-mill:door-idle', 'after:after-papermill:door-idle', 'after:after-pedestal:door-idle', 'after:after-press:door-idle',
+  'after:after-shack:door-idle', 'after:after-workshop:door-idle', 'hell:hell-furnace:door-idle',
   'after:after-chipper:glyph', 'after:after-chipper:stop', 'after:after-crowd:glyph', 'after:after-crowd:made', 'after:after-crowd:stop', 'after:after-grove:glyph', 'after:after-grove:made', 'after:after-grove:stop', 'after:after-mill:glyph', 'after:after-mill:stop', 'after:after-papermill:glyph', 'after:after-papermill:stop', 'after:after-pedestal:glyph', 'after:after-pedestal:stop', 'after:after-press:glyph', 'after:after-press:stop', 'after:after-shack:glyph', 'after:after-shack:stop', 'after:after-workshop:glyph', 'after:after-workshop:stop',
   'deep:crusher:hover', 'deep:crusher:made', 'deep:pods:hover', 'deep:pods:made', 'deep:pods:pan', 'deep:s1:hover', 'deep:s1:made', 'deep:s1:pan', 'deep:s2:hover', 'deep:s2:made', 'deep:s3:hover', 'deep:s3:made', 'deep:s4:hover', 'deep:s4:made', 'deep:s5:glyph', 'deep:s5:hover', 'deep:s5:made', 'deep:s6:hover', 'deep:s6:made', 'deep:s6:pan', 'deep:s7:glyph', 'deep:s7:hover', 'deep:s7:made',
   'hell:hell-anvil:glyph', 'hell:hell-face:glyph', 'hell:hell-furnace:glyph', 'hell:hell-muster:glyph', 'hell:hell-muster:made', 'hell:hell-wall:glyph', 'hell:hell-wall:made',
@@ -141,17 +146,22 @@ function walk(place) {
 // Through the door: every body of the place held off, and five seconds of the
 // clock move nothing any row has made. Held by the hand's own flag, which
 // every stage of every crew passes over.
+// The control first: five seconds with the bodies free, in which a row must
+// make something, or holding them proves nothing about it (`door-idle`).
 function door(place) {
   const rows = STATIONS.filter(r => r.stand && r.name && placeOf(r) === place && r.open() && r.made);
-  const list = bodiesOf(place);
-  for (const w of list) w.lifted = true;
-  const before = rows.map(r => r.made());
   // The place's own clock, so a held-still place cannot pass for a quiet one.
   const clock = () => (place === 'after' ? S.after.t : place === 'hell' ? S.hell.clock : S.tick);
+  const free = rows.map(r => r.made());
+  run(5);
+  const busy = rows.map((r, i) => r.made() !== free[i]);
+  rows.forEach((r, i) => { if (!busy[i]) gap(place, r.key, 'door-idle'); });
+  for (const w of bodiesOf(place)) w.lifted = true;
+  const before = rows.map(r => r.made());
   const t0 = clock();
   run(5);
   if (!(clock() > t0)) gap(place, 'clock', 'still');
-  rows.forEach((r, i) => { if (r.made() !== before[i]) gap(place, r.key, 'door'); });
+  rows.forEach((r, i) => { if (busy[i] && r.made() !== before[i]) gap(place, r.key, 'door'); });
   for (const w of bodiesOf(place)) { w.lifted = false; w.falling = true; w.vx = w.vy = 0; }
   return rows.length;
 }
@@ -176,6 +186,15 @@ group('the yard: every station meets the bar', async () => {
   run(2);
   const keys = walk('yard');
   const held = door('yard');
+  // A finished rung's tick over its station, inside the station's reach:
+  // the cursor there is the question mark, as over any mark (§6).
+  window.__grant({ shards: 100000, dust: 40000 });
+  window.__kit({ learned: true });
+  buyBuilt('carter');
+  const site = Object.keys(S.siteDone).find(s => doneAt(s).length);
+  const m = site && doneMarkAt(site);
+  if (!m) gap('yard', 'done', 'none');
+  else if (cursorAt(m.x, m.y) !== 'help') gap('yard', site, 'donehelp');
   return [ok(keys.length >= 8 && held >= 1, 'the yard stands its stations', keys.join(' '))];
 }, QUIET);
 
@@ -191,9 +210,14 @@ group('the deep: every station meets the bar', async () => {
 }, QUIET);
 
 group('act 3: every station meets the bar', async () => {
-  SCENES['act3-mid'].run();
+  // The chain running: the saw mill, the chipper and the workshop at work.
+  SCENES['after-chain'].run();
   window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__goPlace('after');
+  // The scene's ninety seconds leave the grove felled: its inputs, the setup
+  // this check is not about, so every station has something to work.
+  window.__afterGrant({ logs: 40, chiplogs: 40, timber: 200, paper: 40 });
+  S.after.stock.sawdust = 0;   // the heap at its brim stops the saw (a full pile)
   run(2);
   const keys = walk('after');
   const held = door('after');
