@@ -43,7 +43,7 @@
 // gaze and the bubbles.
 
 import { S } from '../state.js';
-import { P, GREY, GOD_BACK, AFTER_GOD_LOOK, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AFTER_SPEECH_WARN_S,
+import { P, GREY, GOD_BACK, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AFTER_SPEECH_WARN_S,
          SKY_TICK_S, GOD_CROWD, GOD_STAGE, GOD_FLAG,
          SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
          GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, TITHE, GAZE,
@@ -56,7 +56,7 @@ import { raw, darkPage } from '../ink.js';
 import { afterX0, slotX, stationBox, unionJoinAt, afterFloor } from '../after/place.js';
 import { support, union, souls, OUT_RIM, speechTarget } from '../after/union.js';
 import { signReach } from '../after/levels.js';
-import { skyFrame, campX0, rateAt, stage, stageHalf, stageFore, stageSpot, stageSoul, walkSeen, deepAt, redone } from '../after/sky.js';
+import { skyFrame, campX0, rateAt, stage, stageHalf, stageFore, stageSpot, stageSoul, walkSeen, deepAt } from '../after/sky.js';
 import { K as INK, W, PALE, MID, square } from './after/kit.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -76,7 +76,9 @@ const WHITE = '#ffffff', BLACK = '#000000';
 const SEAT_TONE = darkPage ? AFTER_SEAT_DARK : INK;
 const LINE_TONE = darkPage ? AFTER_LINE_DARK : PALE;
 const CROWN_TONE = darkPage ? WHITE : BLACK;
-const RAY_TONE = darkPage ? WHITE : PALE;
+// His rays and the light round a blessed soul: white on the dark page; on
+// the light one mid, since the day's sky and its clouds are paper and pale.
+const RAY_TONE = darkPage ? WHITE : MID;
 // The stage's top: paper on the light page, the light ink on the dark, never
 // the cloud's pale; its risers mid. His souls alternate mid and pale by row
 // (the mock's second grey is a fifth tone; the act has four).
@@ -269,14 +271,14 @@ function drawStage() {
 // the middle kept clear. A fact of the window.
 let ROWS = [], rowsKey = '';
 function crowdRows() {
-  const st = stage(), G = GOD_CROWD, key = `${st.yb}|${st.yf}|${st.mx}|${AFTER_GOD_LOOK}`;
+  const st = stage(), G = GOD_CROWD, key = `${st.yb}|${st.yf}|${st.mx}`;
   if (key === rowsKey) return ROWS;
   const out = [];
-  // Redone, straight rows a soul and a row's gap apart, every soul one size.
-  const step = n => (redone() ? n + GOD_BACK.row : Math.max(P, snap(n * G.rows, P)));
+  // Straight rows a soul and a row's gap apart, every soul one size.
+  const step = n => n + GOD_BACK.row;
   for (let y = st.yf - P, r = 0; y > st.yb + P; r++) {
     const n = stageSoul(st, y);
-    out.push({ y: redone() ? y : snap(y, P), n, k: stageFore(st, y), r });
+    out.push({ y, n, k: stageFore(st, y), r });
     y -= step(n);
   }
   rowsKey = key; ROWS = out.reverse();
@@ -286,34 +288,20 @@ function crowdRows() {
 // from the front first as support rises, fading through the last of it.
 function standing(r, n, i) {
   const G = GOD_CROWD, fore = n > 1 ? r / (n - 1) : 1;
-  const R = redone() ? GOD_BACK : G;
+  const R = GOD_BACK;
   const v = (1 - shown.s) * R.keep - fore * R.fore - hsh(i, r + 9) * R.luck + R.base;
   return clamp(v / G.soft, 0, 1);
 }
 const drawn = { souls: 0 };
 export const crowdDrawn = () => ({ ...drawn, won: shown.won.length });
-// The souls of row r in view, each { r, i, x, y, w, a }: x its left, y its foot.
+// The souls of row r in view, each { r, i, x, y, w, a }: x its left, y its
+// foot. Straight files, every row's souls on the same columns either side of
+// the camp's middle, a soul and a file's gap apart; the throne's foot and the
+// aisle in front of it kept clear. A file's index is its place off the
+// middle, so it keeps its soul as the rows change.
 function rowSouls(r, R, n, out) {
-  const G = GOD_CROWD, st = stage(), mid = gxAt(R.y), god = gx(), w = R.n, gap = G.gap * st.mx, pitch = w + gap;
+  const G = GOD_CROWD, st = stage(), mid = gxAt(R.y), god = gx(), w = R.n;
   const hw = stageHalf(st, R.y) - G.margin * st.mx, clear = st.throne + w / 2 + 2 * st.mx, aisle = G.aisle * st.mx + w / 2;
-  if (redone()) { orderedSouls(r, R, n, out, { st, mid, god, w, hw, clear, aisle }); return; }
-  let i = 0;
-  for (let cx = mid - hw + ((R.r & 1) * pitch) / 2; cx < mid + hw - w; cx += pitch, i++) {
-    const c = cx + w / 2;
-    // behind the throne's foot, or in the aisle in front of it: kept clear
-    if (R.y - w < st.throneY + P && Math.abs(c - god) < clear) continue;
-    if (R.y > st.throneY && Math.abs(c - mid) < aisle) continue;
-    const x0 = mid + snap(cx - mid + (hsh(i, R.r, 5) - 0.5) * 2 * G.jit * st.mx, 2);
-    if (x0 + w < S.camX - P || x0 > S.camX + S.viewW + P) continue;
-    const a = standing(r, n, i);
-    if (a > 0.001) out.push({ r, i, x: x0, y: R.y - (hsh(i, R.r, 6) < G.lift ? P : 0), w, a });
-  }
-}
-// Redone: straight files, every row's souls on the same columns either side
-// of the camp's middle, a soul and a file's gap apart, none jittered or
-// lifted; the throne's foot and the aisle kept clear as before. A file's
-// index is its place off the middle, so it keeps its soul as the rows change.
-function orderedSouls(r, R, n, out, { st, mid, god, w, hw, clear, aisle }) {
   const pitch = w + GOD_BACK.gap, K = Math.floor((hw - w / 2) / pitch);
   for (let k = -K; k <= K; k++) {
     const c = mid + k * pitch, x0 = c - w / 2;
@@ -341,9 +329,8 @@ function drawGodsCrowd(rows, between) {
       const lift = ringsAt(s.x + s.w / 2, s.y, 1, s.w);
       const was = ctx.globalAlpha;
       if (s.a < 1) ctx.globalAlpha = was * s.a;
-      // redone, each soul the yard's square (render/after/kit.js)
-      if (redone()) square(rect, s.x, s.y - s.w + lift, s.w, s.w - Math.max(0, lift));
-      else rect(s.x, s.y - s.w + lift, s.w, s.w - Math.max(0, lift));
+      // each soul the yard's square (render/after/kit.js)
+      square(rect, s.x, s.y - s.w + lift, s.w, s.w - Math.max(0, lift));
       ctx.globalAlpha = was;
     }
   });
@@ -555,7 +542,9 @@ function drawRays() {
   const R = GOD_RAYS, left = raysLeft();
   if (left < 0.02) return;
   const ox = gx(), oy = F.gy0 + (GOD_N / 2) * H, th = TK * R.turn, c = R.cell;
-  alpha((darkPage ? R.dark : 1) * left, () => {
+  // Whole until support has taken most of them, then faded out with the
+  // last of their length, so they read on the day's paper to the end.
+  alpha((darkPage ? R.dark : 1) * clamp(left * R.hold, 0, 1), () => {
     ctx.fillStyle = style(RAY_TONE);
     for (let i = 0; i < R.n; i++) {
       const a = th + i / R.n * Math.PI * 2, len = (i % 2 ? R.short : R.long) * left;
@@ -624,15 +613,17 @@ function blessing(b) {
   return { l: mix(rest.l, at.l), r: mix(rest.r, at.r), light: u >= T.light && u < T.out ? (u - T.light) / (T.out - T.light) : null,
            load: clamp(1 - Math.floor((u - T.light) / (T.back - T.light) * 4) / 4, 0, 1) };
 }
-// The light round the blessed soul's square, in held steps.
+// The light round the blessed soul's square, in held steps: a white rim
+// round it, ringed in the rays' tone, and short rays out of it.
 function glow(L) {
   const st4 = Math.floor(L * 4), ox = gx(), oy = F.gy0, [x, y] = TOP;
-  const c = (cx, cy, w, h) => rect(ox + cx * H, oy + cy * H, w * H, h * H, WHITE);
+  const c = (cx, cy, w, h, tone = WHITE) => rect(ox + cx * H, oy + cy * H, w * H, h * H, tone);
+  c(x - 2, y - 2, S4 + 4, S4 + 4, RAY_TONE);
   c(x - 1, y - 1, S4 + 2, S4 + 2);
   alpha(1 - st4 / 4, () => {
     const len = 2 + st4, mx = x + S4 / 2, my = y + S4 / 2;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1], [0, 1], [1, -1], [-1, -1]])
-      for (let d = 5; d < 5 + len; d++) c(mx + dx * d - 1, my + dy * d - 1, 1, 1);
+      for (let d = 5; d < 5 + len; d++) c(mx + dx * d - 1, my + dy * d - 1, 1, 1, RAY_TONE);
   });
 }
 // The line drawn, and what his hands are doing for God's own drawing.
@@ -943,8 +934,15 @@ function body(w) {
   });
 }
 
-// A carried sign over a body's head at (x, y), u its cell.
-function carriedSign(x, y, u) { rect(x + u, y - u, u, u, INK); rect(x, y - u * 2, u * 3, u, UNION_TONE); }
+// A carried sign over a body's head at (x, y), u its cell: the planted fist
+// flag (`flagSprite`) a third of the body's cell to its cell, held high on
+// a pole up off the body's middle, as the main plane carries it.
+function carriedSign(x, y, u) {
+  const FL = SKY_FLAG, U = Math.max(1, Math.round(u / 3)), t = Math.max(1, U / 3), A = Math.max(1, Math.round(FL.amp * U / t)) * t;
+  const px = x + u, top = y - u * 4 - FL.h * U;
+  rect(px, top - A, U, y - top + A, UNION_TONE);
+  blit(flagSprite(U, TK % FL.phases, W), px + U, top - A);
+}
 // A sign set down: when a carrier's load goes from a sign to nothing it has
 // planted it, and the sign it carried fades out where it was, on the stage,
 // over the span the planted flag fades in over (`drawFlag`). Drawing state.
@@ -1009,7 +1007,7 @@ export function drawSkyCrowd() {
   const items = [];
   for (const q of S.after.signs) items.push({ y: flagBox(q).foot, draw: () => drawFlag(q) });
   for (const q of S.after.posters) items.push({ y: posterBox(q).foot + 0.5, draw: () => drawPoster(q) });
-  for (const w of S.after.bodies) if (deepAt(w.x) > 0) items.push({ y: seenAt(w.x, w.y).ord + 0.25, draw: () => body(w) });
+  for (const w of S.after.bodies) if (!w.lifted && deepAt(w.x) > 0) items.push({ y: seenAt(w.x, w.y).ord + 0.25, draw: () => body(w) });
   watchSigns();
   for (const g of setDown) items.push({ y: g.ord, draw: () => drawSetDown(g) });
   items.sort((a, b) => a.y - b.y);

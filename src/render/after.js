@@ -291,9 +291,10 @@ export function drawAfterMembers() {
   if (!a) return;
   // Those out on the way to God's camp are drawn in depth, among his crowd
   // (render/aftercrowd.js), crossed over from here in the way's first cells.
-  // Each faded as it steps out of our crowd or walks back into it.
+  // Each faded as it steps out of our crowd or walks back into it. One the
+  // hand has lifted is drawn here, on the cursor, wherever it is held.
   for (const w of a.bodies) {
-    const deep = deepAt(w.x);
+    const deep = w.lifted ? 0 : deepAt(w.x);
     if (deep >= 1 || !inView(w.x - P * 4, P * 8)) continue;
     ctx.globalAlpha = bodyInk(w) * (1 - deep);
     drawMember(w);

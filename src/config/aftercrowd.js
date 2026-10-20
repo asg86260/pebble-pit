@@ -103,7 +103,8 @@ export const GOD_HAND = { w: 6, rest: -6 };   // a hand's square, and its rest o
 export const GOD_THRONE = { backTop: 14, backHalf: 30, seatHalf: 36, seatH: 8, baseHalf: 40, step: 4 };
 // His rays: runs of square cells from his middle, every other one short,
 // turning a step a tick, shortening as support rises; fainter on the dark page.
-export const GOD_RAYS = { n: 16, r: 36, long: 40, short: 24, cell: 2, turn: 0.05, dark: 0.6 };
+// Whole until support leaves them `1 / hold` of their length, faded after.
+export const GOD_RAYS = { n: 16, r: 36, long: 40, short: 24, cell: 2, turn: 0.05, dark: 0.6, hold: 3 };
 // His breath (a cell up and down), and the pupils looking round, in ticks.
 export const GOD_IDLE = { breath: 8, look: 6 };
 
@@ -165,29 +166,19 @@ export const AFTER_HORIZON = 28;
 export const GOD_RATE = 1 / 3;
 export const GOD_FOOT = 19;
 
-// --- God's camp, redone (branch act3-godcrowd, for the owner's vote) -------------------
-// The owner, 2026-10-20: "re do gods crowd and their paralax, its really
-// wonky, and should be further back into the background, maybe a more
-// organized crowd as well ... we have our square design already. lets use
-// it". With AFTER_GOD_LOOK at 1 the whole camp -- throne, stage, crowd, flags
-// -- is one layer at GOD_RATE, the far cloud's own rate, so it stands on the
-// far cloud and slides with it as one; nothing on it leans. It stands
-// further back: his foot `foot` cells over the main plane's line (on the
-// horizon) and laid out in `size` of the sky he had, so he is smaller; his
-// stage's front edge `front` cells over the line,
-// up among the far cloud's rows rather than down on the plane. His crowd
-// stands on it in straight rows and files, every soul the yard's square
-// (render/after/kit.js, `square`) `soul` px across with `gap` px between
-// files and `row` px between rows, emptying from the front as support rises
-// a row at a time (GOD_CROWD's rule with these `keep`, `fore`, `luck` and
-// `base`: the front row gone early, the back row standing to the strike).
-// 0 is the look as built.
-export let AFTER_GOD_LOOK = 1;
-export const GOD_BACK = { foot: AFTER_HORIZON, size: 0.6, front: 12, soul: 12, gap: 6, row: 6, keep: 1.1, fore: 1, luck: 0.12, base: 0.2 };
-export const GOD_KNOBS = [
-  { key: 'AFTER_GOD_LOOK', label: "God's camp: 0 as built, 1 redone", min: 0, max: 1, step: 1,
-    get: () => AFTER_GOD_LOOK, set: v => { AFTER_GOD_LOOK = v; } }
-];
+// --- God's camp, stood back ------------------------------------------------------------
+// The whole camp -- throne, stage, crowd, flags -- is one layer at GOD_RATE,
+// the far cloud's own rate, so it stands on the far cloud and slides with it
+// as one; nothing on it leans. His foot is `foot` cells over the main plane's
+// line (on the horizon) and he is laid out in `size` of the sky he would have
+// standing on the plane; his stage's front edge `front` cells over the line,
+// up among the far cloud's rows. His crowd stands on it in straight rows and
+// files, every soul the yard's square (render/after/kit.js, `square`) `soul`
+// px across with `gap` px between files and `row` px between rows, emptying
+// from the front as support rises a row at a time (GOD_CROWD's rule with
+// these `keep`, `fore`, `luck` and `base`: the front row gone early, the back
+// row standing to the strike).
+export const GOD_BACK = { foot: AFTER_HORIZON, size: 1, front: 12, soul: 12, gap: 6, row: 6, keep: 1.1, fore: 1, luck: 0.12, base: 0.2 };
 
 // --- the ground (render/after/ground.js, render/after/floor.js) ----------------------
 // Three rigid layers, nothing rolling. The far cloud between the horizon and
