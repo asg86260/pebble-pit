@@ -39,7 +39,7 @@ import { upCount, built, raising } from './levels.js';
 import { postsOf, postCount, addPost } from './bodies.js';
 import { clearPlot } from './grove.js';
 import { raiseStation } from './build.js';
-import { stationBox, plotX, groveX1, afterFloor, afterX0, AP } from './place.js';
+import { stationBox, plotX, groveX1, afterFloor, afterX0, AP, closed } from './place.js';
 import { union, support } from './union.js';
 import { setCrowdAt } from './stations.js';
 
@@ -194,6 +194,9 @@ export const afterBill = u => (u.bill ? u.bill() : []);
 // under `after-<card>` (boardrows.js), the key of the card's station row.
 const jobsAt = card => AFTER_JOBS.filter(j => AFTER_JOB_POST[j] === card);
 const sectionsOf = card => {
+  // A station standing closed: its board is its rebuild, the shack's build
+  // row for it.
+  if (closed(card)) return [{ key: `after-${card}-rebuild`, title: msg('after-sect-rebuild'), keys: [`after-build-${card}`] }];
   if (card === 'shack') return [{ key: 'after-build', title: msg('after-sect-build'), keys: Object.keys(AFTER_BUILDS).map(s => `after-build-${s}`) }];
   const rows = AFTER_ROWS.filter(u => u.card === card);
   return [{ key: `after-${card}-posts`, title: msg('after-sect-posts'), keys: rows.filter(u => u.post).map(u => u.key),
@@ -201,7 +204,7 @@ const sectionsOf = card => {
           { key: `after-${card}`, title: msg('after-sect-card'), keys: rows.filter(u => !u.post).map(u => u.key) }]
     .filter(s => s.keys.length);
 };
-export const afterBoard = card => ({ rows: AFTER_ROWS.filter(u => u.card === card), sections: sectionsOf(card) });
+export const afterBoard = card => ({ rows: closed(card) ? [afterRow(`after-build-${card}`)] : AFTER_ROWS.filter(u => u.card === card), sections: sectionsOf(card) });
 // Each board's title, the ground it stands over and the click that opens it
 // are its station row's (after/stations.js, in the one station table).
 for (const card of AFTER_CARDS)

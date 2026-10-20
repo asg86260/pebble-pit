@@ -3589,6 +3589,9 @@ after-sect-posts = posts
 # act 3 shack heading (placeholder): the stations to build
 after-sect-build = build
 
+# act 3 ruined station's card heading (placeholder): its rebuild
+after-sect-rebuild = rebuild
+
 # act 3 station card heading (placeholder)
 after-sect-card = upgrades
 
