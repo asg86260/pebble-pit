@@ -112,6 +112,8 @@ export const resetSettleWork = () => { work = 0; };
 // crew/hauler.js).
 let clock = 0;
 export const tickGrid = () => { clock++; };
+// The frame's count, for a reader that may take one walk of a grid a frame.
+export const gridFrame = () => clock;
 export const ageAt = (b, c, r) => b.age ? b.age[r * b.cols + c] : 0;
 
 export const put = (b, c, r, v) => {

@@ -13,12 +13,13 @@
 import { S, deepBed } from '../state.js';
 import { P, WORKER, GATHER_SCOOP } from '../config.js';
 import { haulCap, haulSpeed } from '../levels.js';
-import { topRow } from '../grid.js';
+import { topRow, gridFrame } from '../grid.js';
 import { frames } from '../clock.js';
 import { tossX } from './place.js';
 import { scoop, nextStretch, bedX, tossIn } from './scales.js';
 import { mid, feet, working, swim } from './arms.js';
 import { rest } from './rest.js';
+import { TYPE } from '../jobs.js';
 
 // How far either side of where it stands a gatherer reaches for scales.
 const REACH = P * 3;
@@ -29,9 +30,21 @@ const REACH = P * 3;
 // tossing. `w.col` is not saved: after a reload each picks again in turn,
 // and the claims come back from the picks.
 const APART = 2 * REACH / P;
+// The gatherers among the crew and their places in it, found once a frame:
+// each of forty asking the whole crew about every other, every frame, was most
+// of the endgame's step.
+let crewAt = -1, gang = [], order = new Map();
+function gangNow() {
+  if (crewAt !== gridFrame()) {
+    gang = []; order = new Map();
+    S.workers.forEach((o, i) => { order.set(o, i); if (o.type === TYPE.GATHER) gang.push(o); });
+    crewAt = gridFrame();
+  }
+  return gang;
+}
 const claimed = w => {
   const kept = [];
-  for (const o of S.workers) if (o !== w && o.type === w.type && o.col >= 0 && o.goal !== 'haul') kept.push(o.col);
+  for (const o of gangNow()) if (o !== w && o.type === w.type && o.col >= 0 && o.goal !== 'haul') kept.push(o.col);
   return kept;
 };
 
@@ -43,11 +56,11 @@ const claimed = w => {
 // moving: one stood scooping is swum past, never waited on.
 const ahead = (w, o, dir, step) => {
   const d = (o.x - w.x) * dir;
-  return d < WORKER + step && (d > 0 || (d === 0 && S.workers.indexOf(o) < S.workers.indexOf(w)));
+  return d < WORKER + step && (d > 0 || (d === 0 && order.get(o) < order.get(w)));
 };
 const go = (w, tx, ty, pace) => {
   const dir = Math.sign(tx - w.x), step = pace * frames();
-  if (dir && S.workers.some(o => o !== w && o.type === w.type && o.heading === dir &&
+  if (dir && gangNow().some(o => o !== w && o.type === w.type && o.heading === dir &&
                                  (o.goal === 'go' || o.goal === 'haul') &&
                                  Math.abs(o.y - w.y) < WORKER && ahead(w, o, dir, step))) return false;
   w.heading = dir;

@@ -15,7 +15,7 @@ import { P, SHADES, DEEP_W, DEEP_BED_ROWS, DEEP_GRAV, DEEP_DRAG, DEEP_CURRENT,
          DEEP_CURRENT_MS, SCALE_KICK, SCALE_SHADE, SCALE_SPREAD, LIFT_PACE, LIFT_FLECKS,
          LIFT_STAGGER, SETTLE_BUDGET, DEEP_BED_BRIM, GATHER_TOSS_FRAMES, GATHER_TOSS_RISE, GATHER_TOSS_STAGGER,
          CRUSH_HEAT, CRUSH_HEAT_KEEP, SPRAY_GAIN, SPRAY_FAN } from '../config.js';
-import { put, addGrain, settleSome, recount, wakeGrid, topRow, surfaceY, colOf, shadeNear } from '../grid.js';
+import { put, addGrain, settleSome, recount, wakeGrid, topRow, surfaceY, colOf, shadeNear, gridFrame } from '../grid.js';
 import { makePainter } from '../painter.js';
 import { frames, now } from '../clock.js';
 import { rand } from '../rng.js';
@@ -118,11 +118,24 @@ export function scoop(x, n, reach) {
 // stretches the other gatherers are on) is theirs, so a second body goes for
 // other scales, or along the same heap clear of the first. -1 on a bare
 // floor, or one with nothing on it that is not spoken for.
+// How tall each column of the bed stands, walked once a frame: every gatherer
+// at rest asks for a stretch every frame, and forty of them walking the whole
+// bed each was the endgame's largest cost. A scoop later in the frame leaves a
+// column a grain lower than this says; the stretch it picks is found bare and
+// picked again on the next frame.
+let lyingAt = -1, lyingCols = null;
+function lyingNow() {
+  if (lyingAt !== gridFrame() || !lyingCols || lyingCols.length !== deepBed.cols) {
+    lyingCols = new Array(deepBed.cols);
+    for (let c = 0; c < deepBed.cols; c++) lyingCols[c] = topRow(deepBed, c) + 1;
+    lyingAt = gridFrame();
+  }
+  return lyingCols;
+}
 export function nextStretch(x, want, drop, reach, kept = [], apart = 0) {
   if (!deepBed.grid || !deepBed.n) return -1;
   const span = Math.max(0, Math.round(reach / P));
-  const lying = new Array(deepBed.cols);
-  for (let c = 0; c < deepBed.cols; c++) lying[c] = topRow(deepBed, c) + 1;
+  const lying = lyingNow();
   let best = -1, score = -Infinity, near = 0;
   for (let c = Math.max(0, -span); c <= Math.min(deepBed.cols - 1, span - 1); c++) near += lying[c];
   for (let c = 0; c < deepBed.cols; c++) {
