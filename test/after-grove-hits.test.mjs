@@ -11,7 +11,8 @@ import { group, ok, run, yard, P } from './helpers.mjs';
 import { GREY, AFTER_PLOT_GAP } from '../src/config.js';
 import { afterFloor, plotX } from '../src/after/place.js';
 import { treeAt, stumpAt } from '../src/after/grove.js';
-import { gestureDown, gestureUp, gestureView, boardAsked, groveIcons } from '../src/after/gestures.js';
+import { gestureDown, gestureUp, gestureView, groveIcons } from '../src/after/gestures.js';
+import { stationAt } from '../src/stations.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawAfterGrove } from '../src/render/after.js';
 
@@ -64,9 +65,10 @@ group('a press lands on a pine and a stump exactly where they are drawn', async 
   // The crown's tip, the tree's highest inked cell, pressed by the hand.
   window.__afterAxe();
   const tip = [...ink].map(k => k.split(',').map(Number)).filter(([cx]) => cx === plotX(0) / P).reduce((a, b) => (b[1] < a[1] ? b : a));
-  gestureDown(tip[0] * P + P / 2, tip[1] * P + P / 2);
+  // as input.js answers a press: the hand work's first, else the station under it
+  const tx = tip[0] * P + P / 2, ty = tip[1] * P + P / 2;
+  const asked = gestureDown(tx, ty) ? null : stationAt(tx, ty);
   gestureUp();
-  const asked = boardAsked();
   run(0.5);
   const icon = groveIcons().find(c => c.kind === 'saw' && c.i === 0);
   gestureDown(icon.x, icon.y - 2);
@@ -77,7 +79,7 @@ group('a press lands on a pine and a stump exactly where they are drawn', async 
     ok(ink.size > 100, 'the grove drew its pines and its stump', `${ink.size} cells`),
     ok(gap >= AFTER_PLOT_GAP, 'two big pines stand clear of each other', `${gap} clear columns between them, ${AFTER_PLOT_GAP} at least`),
     ok(!wrong.length, 'every inked cell is its plot\'s, and every paper cell round it nobody\'s', wrong.slice(0, 6).join('; ')),
-    ok(asked && asked.key === 'grove', 'a press on the crown\'s tip asks for the grove\'s board', JSON.stringify(asked)),
+    ok(asked === 'after-grove', 'a press on the crown\'s tip asks for the grove\'s board', JSON.stringify(asked)),
     ok(on === 0, 'and one on the saw icon over it puts the saw on that tree', String(on))
   ];
 }, { reload: false });

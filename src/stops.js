@@ -49,7 +49,8 @@ function every() {
   const rock = rockRect();
   if (rock) out.push({ id: 'rock', kind: 'rock', key: 'rock', r: rock, half: 'yard' });
   for (const row of STATIONS) {
-    if (!row.stand || !row.name) continue;
+    // Act 3's stations are its gestures' stops (below), one a station.
+    if (!row.stand || !row.name || row.place === 'after') continue;
     const r = standRect(row.key);
     if (!r) continue;
     out.push({ id: `st:${row.key}`, kind: 'station', key: row.key, board: !!row.board, r, half: half(r) });

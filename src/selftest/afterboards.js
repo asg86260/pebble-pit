@@ -7,11 +7,14 @@
 // sim, are the node tier's (test/after-boards.test.mjs).
 
 import { S } from '../state.js';
-import { newRun, settle, sleep, ok, panel } from './kit.js';
+import { newRun, settle, sleep, raf, ok, panel, point, canvas } from './kit.js';
 import { AFTER_CARDS } from '../config.js';
 import { shopOf } from '../pages.js';
 import { support } from '../after/union.js';
 import { msg } from '../lang.js';
+import { openBoard } from '../board.js';
+import { stationBox } from '../after/place.js';
+import { toScreen } from '../world.js';
 
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 async function upThere() {
@@ -56,6 +59,10 @@ export const TESTS = [
     // Every station standing (the setup the rest is not about), then each
     // station's board, every tile on it pressed once.
     for (const st of ['mill', 'chipper', 'papermill', 'workshop', 'press']) if (!S.after.built.includes(st)) S.after.built.push(st);
+    // ...and the union's support past the podium ladder's first mark, which
+    // its first rung waits on (after/rows.js `waitsOn`).
+    window.__afterCrowd(0.6);
+    await settle(0.2);
     for (const card of AFTER_CARDS.filter(c => c !== 'shack')) {
       window.__openAfterBoard(card);
       await settle(0.2);
@@ -97,6 +104,29 @@ export const TESTS = [
       ok(share === msg('after-crowd-pct', { n: Math.floor(support() * 100) }), 'the share won is the sim\'s', `${share} vs ${r.support}`),
       ok(members === String(r.union), 'the members are the souls walked out', `${members} vs ${r.union}`),
       ok(buys.length === 0, 'every line a reading', buys.map(b => b.dataset.key).join(' '))
+    ];
+  }],
+  ['act 3: the pointer walked up to a station opens its board, the cursor says so, and a pan off it closes it', async () => {
+    newRun();
+    await settle();
+    await upThere();
+    // The shack where it is drawn, its middle on the glass, as the pointer gives it.
+    const b = stationBox('shack'), r = canvas().getBoundingClientRect();
+    window.__look(b.x + b.w / 2 - S.viewW / 2);
+    await settle(0.2);
+    const s = toScreen(b.x + b.w / 2, b.y + b.h / 2);
+    point('pointermove', r.left + s.x, r.top + s.y, 0);
+    await sleep(250);
+    const open = openBoard(), cursor = canvas().style.cursor;
+    // The wheel pans the shack out of the window: its board goes, as the yard's do.
+    for (let k = 0; k < 6; k++) { canvas().dispatchEvent(new WheelEvent('wheel', { deltaY: 1200, bubbles: true, cancelable: true })); await raf(); }
+    for (let k = 0; k < 40 && openBoard(); k++) await raf();
+    const gone = openBoard(), off = b.x + b.w < S.camX || b.x > S.camX + S.viewW;
+    window.__actsOn(null);
+    return [
+      ok(open === 'after-shack', 'the pointer over the shack opens its board', String(open)),
+      ok(cursor === 'pointer', 'and the cursor turns to the pointing hand', cursor),
+      ok(off && gone === null, 'panned off it, the board closes', `${off} ${gone}`)
     ];
   }],
   ['act 3: the yard\'s objective line and its call to build the bench fade out up there, and come back down below', async () => {

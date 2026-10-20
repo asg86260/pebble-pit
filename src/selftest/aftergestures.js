@@ -8,7 +8,8 @@
 import { S } from '../state.js';
 import { newRun, settle, raf, ok, point, P } from './kit.js';
 import { AFTER_PODIUM_REBEL, GESTURE_BUBBLE_CRIT } from '../config.js';
-import { partsOf, useBubbles, boardAsked } from '../after/gestures.js';
+import { partsOf, useBubbles } from '../after/gestures.js';
+import { openBoard } from '../board.js';
 import { stationBox } from '../after/place.js';
 import { toScreen } from '../world.js';
 
@@ -52,11 +53,11 @@ export const TESTS = [
     point('pointerdown', ...st);
     point('pointerup', ...st);
     await settle(0.2);
-    const asked = boardAsked();
+    const asked = openBoard();
     window.__actsOn(null);
     return [
       ok(cut > 0, 'spun round by the pointer for six seconds, the flywheel cuts a log', `${cut} timber`),
-      ok(asked && asked.key === 'mill', 'a plain click on the station asks for its board', JSON.stringify(asked))
+      ok(asked === 'after-mill', 'a plain click on the station opens its board', JSON.stringify(asked))
     ];
   }],
   ['act 3: a bubble clicked by the pointer pops where it rises, and the big one pays five lines', async () => {
@@ -73,7 +74,7 @@ export const TESTS = [
     const at = glass(big.x + big.w / 2, big.y + big.h / 2);
     point('pointerdown', ...at);
     point('pointerup', ...at);
-    const popped = air.length === 0, asked = boardAsked();
+    const popped = air.length === 0, asked = openBoard();
     window.__fast(10);
     const paid = S.after.rebel - r0;
     useBubbles(null);

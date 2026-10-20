@@ -1489,13 +1489,13 @@ HANDLES.__hellAt = (what, i) => {
 // granted, the crowd's rims set, where the pair, the trees and the stumps
 // stand.
 import { clickAfter } from './after/index.js';
-import { afterRow, buyAfter, AFTER_ROWS, afterBill, afterMaxed, cardAt, openAfterBoard } from './after/rows.js';
+import { afterRow, buyAfter, AFTER_ROWS, afterBill, afterMaxed, openAfterBoard } from './after/rows.js';
 import { setCrowd, support as afterSupport, union as afterUnion, crowdSize } from './after/union.js';
 import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut } from './after/bodies.js';
 import { plotX, afterFloor, stationBox, heapX } from './after/place.js';
 import { afterGate, strikeDue } from './after/strike.js';
-import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, boardAsked, groveIcons } from './after/gestures.js';
+import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, groveIcons } from './after/gestures.js';
 // A click up there as input.js makes it: the hand work's first (a part, a
 // bubble, an icon, a station's board), then the place's.
 HANDLES.__afterClick = (x, y) => { if (gestureDown(x, y)) { gestureUp(x, y); return true; } return clickAfter(x, y); };
@@ -1537,22 +1537,19 @@ HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...S.after.stock,
   posted: S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD).length, motes: S.after.motes.length,
   built: [...S.after.built], camped: S.after.camp,
   due: afterGate(), strike: strikeDue() } : null);
-HANDLES.__afterCardAt = (x, y) => cardAt(x, y);
 // The axe in hand without buying it: a scene's setup.
 HANDLES.__afterAxe = () => { if (S.after) S.after.axe = true; return !!S.after?.axe; };
-// Track C: a board opened as Track A's plain click on a station opens it
-// (after/rows.js `openAfterBoard`): `key` a card or 'crowd', `at` the world
-// point clicked.
+// A board opened by its card, as the pad's Y opens it (after/rows.js
+// `openAfterBoard`): `key` a card or 'crowd', `at` the world point the
+// crowd's board stands over.
 HANDLES.__openAfterBoard = (key, at = null) => openAfterBoard(key, at);
 // The hand's motions up there (after/gestures.js), made as input.js makes
 // them: 'down', 'move' and 'up' at a world point; where a station's parts
-// stand; each station's record; the icons over the grove; the last board a
-// plain click asked for.
+// stand; each station's record; the icons over the grove.
 HANDLES.__gesture = (what, x, y) => (what === 'down' ? gestureDown(x, y) : what === 'move' ? gestureMove(x, y) : gestureUp(x, y));
 HANDLES.__gestureParts = (key, i = 0) => gestureParts(key, i);
 HANDLES.__gestureView = () => gestureView();
 HANDLES.__groveIcons = () => groveIcons();
-HANDLES.__boardAsked = () => boardAsked();
 
 // --- the two of them (wardrobe.js) ---
 // Who they are and what they wear, read for a check: each one's uid, the
