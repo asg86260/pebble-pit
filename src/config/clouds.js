@@ -258,3 +258,31 @@ export const CLOUDS_RIM = 0.12;
 // over `arc` of its edge (half-turns, from its left round its top to its
 // right), each `r` of its radius, centered `out` of its radius from its own.
 export const CLOUDS_BUBBLES = { from: 7, per: 0.32, arc: [-1.15, 0.15], r: [0.18, 0.3], out: 0.92 };
+
+// --- act 3 ------------------------------------------------------------------------
+// The afterlife's clouds, all on the one renderer (render/after/cloudsky.js;
+// the owner, 2026-10-20: "wire them in"). Every place is in act 3's own
+// cells, a world cell (P) each; a `rate` is how fast a layer slides against
+// the camera (1 the main plane), set where the act opens.
+//   sky    the sky's layers (CLOUDS_SKY), standing on the horizon: `rows`
+//          cells of sky over it whatever the window, so a cloud's height has
+//          nothing to do with how tall the window is; each layer slides at
+//          its own parallax times `rate`, and wraps every `W` cells
+//   far    a bank of ground billows from the horizon down behind the main
+//          plane, `down` cells under the horizon, `rows` rows of billows
+//          `R` cells at the nearest, each row at its `depths` for its tones
+//          (CLOUDS_DEPTH_BANDS)
+//   edge   small billows lapping the path's near edge from under it, their
+//          tops `lap` cells up over the edge: the path itself stays clear
+//   fore   big billows rolling below the path, `down` cells under its near
+//          edge, faster than the camera, solid to the bottom of the window
+//   crest  a ground layer is placed by the row its tallest billows reach:
+//          all but this share of its back row's tops stop under it
+//   seed   the act's clouds' seed
+export const CLOUDS_ACT3 = {
+  seed: 7, crest: 0.15,
+  sky: { rows: 120, rate: 0.4, W: 1200 },
+  far: { rate: 1 / 3, down: 1, R: 7, rows: 3, depths: [0.1, 0.3, 0.45], W: 900 },
+  edge: { rate: 1, lap: 1, R: 5, rows: 2, depths: [0.9, 1], W: 900 },
+  fore: { rate: 1.3, down: 3, R: 16, rows: 2, depths: [0.7, 1], W: 900 }
+};

@@ -47,8 +47,11 @@ place engine's early steps, 6 and 7 come before more act 3 art.
    rows, growth direction, tones and fill/empty rules serves both.
    Blocked on: act 3 step 2 landing.
 4. **One cloud renderer for every place, the yard included.** The cloud
-   bench (`clouds-bench`, in progress) builds it for act 3; the yard's sky,
-   smog and rain clouds (`src/smog/`, ~1.8k lines) move onto it after.
+   bench built it; act 3's sky and ground clouds are on it
+   (`render/after/cloudsky.js`, branch `act3-clouds-wire`). The yard's sky,
+   smog and rain clouds (`src/smog/`, ~1.8k lines) move onto it next;
+   the plan is on `clouds-bench` (DESIGN.md there, "The yard's sky on the
+   cloud renderer"), awaiting the owner.
 5. **Fades as the only way in or out.** One shared appear/leave every new
    thing uses (fade.js), so a pop like act 3's sign plant cannot happen by
    accident.

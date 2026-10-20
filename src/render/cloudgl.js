@@ -211,9 +211,16 @@ function program(gl, fs) {
 export function skyGL() {
   if (typeof document === 'undefined') return null;
   const canvas = document.createElement('canvas');
+  // a real WebGL2 context or none: a stand-in canvas (the node yard's) hands
+  // back something truthy that is not one, and a card that cannot build the
+  // passes is no card
+  if (typeof WebGL2RenderingContext === 'undefined') return null;
   const gl = canvas.getContext('webgl2', { premultipliedAlpha: true, antialias: false, preserveDrawingBuffer: true });
-  if (!gl) return null;
-  const P = { field: program(gl, FIELD), roles: program(gl, ROLES), clean: program(gl, CLEAN), settle: program(gl, SETTLE), fade: program(gl, FADE), blit: program(gl, BLIT) };
+  if (!(gl instanceof WebGL2RenderingContext)) return null;
+  let P;
+  try {
+    P = { field: program(gl, FIELD), roles: program(gl, ROLES), clean: program(gl, CLEAN), settle: program(gl, SETTLE), fade: program(gl, FADE), blit: program(gl, BLIT) };
+  } catch { return null; }
   const quad = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, quad);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);

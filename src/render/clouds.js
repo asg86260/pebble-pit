@@ -436,6 +436,19 @@ function paint(sh, a) {
   if (sh.box) sh.ctx.putImageData(sh.img, 0, 0, ...sh.box);
 }
 
+// A sheet baked once and held still: the drawing a page without WebGL2 shows
+// in place of the liquid sky. Its one step is both of the steps it shows, so
+// every cell is its tone exactly and nothing is ever re-baked.
+export function stillSheet(opts, look = {}) {
+  const sh = cloudSheet(opts);
+  setLook(sh, look);
+  bakeNow(sh, 0, sh.roles[0]);
+  sh.roles[1].set(sh.roles[0]);
+  sh.k0 = 0; sh.full = true; sh.nd = 0; sh.box = null;
+  paint(sh, 0);
+  return sh;
+}
+
 // --- placing a sheet --------------------------------------------------------------
 // `x`, `y` are where the sheet's first cell goes, in the context's own units,
 // and `cell` is a cell's size in them. `px` is one device pixel in the same
@@ -629,8 +642,11 @@ export function skyLayer({ i, seed = 1, W }) {
 
 // The ground in the liquid sky: the billow rows of CLOUDS_KINDS.ground, each
 // puff on a current of its own, each row filled solid beneath.
-export function groundLayer({ seed = 1, W }) {
-  const K = CLOUDS_KINDS.ground, G = CLOUDS_GROUND_FLOW, rnd = gen(seed * 7919 + 977);
+// `R` is its nearest row's billow size, `rows` how many rows and `depths`
+// each row's depth for its tones (CLOUDS_DEPTH_BANDS), where a place wants a
+// ground of its own measure (act 3's far bank, its foreground).
+export function groundLayer({ seed = 1, W, R = CLOUDS_GROUND_FLOW.R, rows = CLOUDS_KINDS.ground.rows, depths = CLOUDS_GROUND_DEPTHS }) {
+  const K = { ...CLOUDS_KINDS.ground, rows }, G = { ...CLOUDS_GROUND_FLOW, R }, rnd = gen(seed * 7919 + 977);
   const tiers = Array.from({ length: K.rows }, () => []), fills = [];
   let depthSum = 0;
   for (let row = 1; row < K.rows; row++) depthSum += K.rowDrop * G.R * Math.pow(K.rowGrow, row - (K.rows - 1));
@@ -642,7 +658,7 @@ export function groundLayer({ seed = 1, W }) {
   // splinters
   tiers.forEach((ps, j) => ps.forEach(p => puffs.push(flowPuff(rnd, p.x, p.y, p.r, 1, j, null, 0, F))));
   return { i: -1, P: { d: 1, R: G.R, parallax: 1, wind: 0, shade: 0, every: G.every }, W, puffs, h: Math.ceil(top + depthSum + G.R * 0.9),
-           baseRow: 0, ground: true, nt: K.rows, rowOf: tiers.map((_, j) => j), fills };
+           baseRow: 0, ground: true, nt: K.rows, rowOf: tiers.map((_, j) => j), fills, depths };
 }
 
 // Where a puff is at time t, in its layer's own cells (x not yet wrapped),
@@ -724,7 +740,7 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
   const belly = D.belly !== 'none' && !layer.ground ? Math.round(P.shade * P.R) : 0;
   const crease = j => (D.belly !== 'none' && layer.ground && lobes[j] >= CLOUDS_CREASE_MIN ? Math.max(2, Math.round(CLOUDS_KINDS.ground.crease * lobes[j])) : 0);
   const rim = D.rim ? Math.max(2, Math.round(CLOUDS_RIM * P.R)) : 0;
-  const depthOf = j => (layer.ground ? CLOUDS_GROUND_DEPTHS[j] : P.e);
+  const depthOf = j => (layer.ground ? (layer.depths || CLOUDS_GROUND_DEPTHS)[j] : P.e);
   const lut = new Float32Array(24 * 4), tone = new Int32Array(24);
   const rgba = (h, a = 1) => { const n = parseInt(h.slice(1), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, a]; };
   for (let j = 0; j < nt; j++) {
