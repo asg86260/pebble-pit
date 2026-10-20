@@ -49,6 +49,8 @@ place engine's early steps, 6 and 7 come before more act 3 art.
 4. **One cloud renderer for every place, the yard included.** The cloud
    bench (`clouds-bench`, in progress) builds it for act 3; the yard's sky,
    smog and rain clouds (`src/smog/`, ~1.8k lines) move onto it after.
+   The move is designed, awaiting the owner's approval: DESIGN.md, "The
+   yard's sky on the cloud renderer".
 5. **Fades as the only way in or out.** One shared appear/leave every new
    thing uses (fade.js), so a pop like act 3's sign plant cannot happen by
    accident.

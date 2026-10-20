@@ -39,6 +39,12 @@ export const CLOUDS_TREATMENTS = {
 // plain.)
 export const CLOUDS_BAND_MIN = 1.6;
 export const CLOUDS_CREASE_MIN = 6;
+// A tier's lobes are modeled inside the cloud -- a front lobe's top lit
+// against the lobe behind it, the shadow where they meet -- only when its
+// lobes are at least this many cells across their radius. Smaller clouds get
+// their outer edge's light and shadow alone: two bands a junction on a lobe a
+// few cells high read as hatching, not as lobes.
+export const CLOUDS_CORE_MIN = 7;
 
 // --- the field ------------------------------------------------------------------
 // A puff of radius r adds (1 - d^2/R^2)^3 to every cell within R of its
@@ -200,9 +206,11 @@ export const CLOUDS_LIFE = {
 //           over the base, and `domes` smaller ones stepping out from it,
 //           each `fall` the last
 //   body    the front lobes across the lower face, `r` of R, `at` their own r
-//           over the base, spaced `step` of their r, across `span` R
+//           over the base, spaced `step` of their r, their centers across
+//           `span` of the crown's whole width
 //   base    the base: smaller lobes squashed `flat`, hung `at` their r about
-//           the base line, so the bottom is darker and flatter than the top
+//           the base line, across `span` of the crown's width, so the bottom
+//           is darker and flatter than the top
 //   crust   small lumps on a lobe's edge: `per` a cell of its radius on the
 //           front tiers, `back` of that on the rear, `r` of the lobe's
 //           radius, over `arc` of its edge (half-turns, left round the top
@@ -210,8 +218,8 @@ export const CLOUDS_LIFE = {
 export const CLOUDS_VOLUME = {
   rear: { n: [3, 6], r: [0.45, 0.7], span: 0.85, at: [0.8, 1.3] },
   crown: { r: [0.55, 0.8], at: [0.85, 1.15], step: [0.45, 0.7], lean: 0.3, domes: [3, 4], fall: 0.78 },
-  body: { r: [0.42, 0.6], at: [0.45, 0.9], span: 1.15, step: [1.2, 1.6] },
-  base: { r: [0.38, 0.55], at: [-0.25, 0.15], span: 1.25, step: [1.1, 1.45], flat: 0.55 },
+  body: { r: [0.42, 0.6], at: [0.45, 0.9], span: 0.8, step: [1.2, 1.6] },
+  base: { r: [0.38, 0.55], at: [-0.25, 0.15], span: 0.85, step: [1.1, 1.45], flat: 0.55 },
   crust: { from: 6, per: 0.45, back: 0.2, r: [0.16, 0.3], arc: [-1.1, 0.1], out: 0.9 }
 };
 // The tiers a sky layer's puffs fall in, back to front: high wisps behind
@@ -226,16 +234,18 @@ export const CLOUDS_TIERS = ['high', 'rear', 'crown', 'body', 'base'];
 //            domes
 //   stratus  a long low sheet: `count` small squashed puffs strung `length` R
 //   scrap    a few small puffs, loose
-//   cirrus   high streaks: `streaks` thin lines of `count` tiny puffs,
-//            squashed `flat`, each `length` R long and climbing `slant` of
-//            its length, a hook at its end
+//   cirrus   high streaks: `streaks` thin lines of tiny puffs `step` of
+//            their radius apart, squashed `flat`, each `length` R long and climbing `slant` of
+//            its length, a hook at its end; a puff at least `least` cells
+//            across its radius and `thick` cells high, so a far streak still
+//            crosses the field's threshold
 export const CLOUDS_SHAPES = {
-  tower: { levels: [2, 4], shrink: 0.8, climb: 0.95, wander: 0.3 },
+  tower: { levels: [2, 4], shrink: 0.92, climb: 0.95, wander: 0.3 },
   anvil: { reach: [1.8, 3], flat: 0.35, r: [0.35, 0.5] },
   heap: { span: 2.6, crown: [0, 2], crownR: [0.45, 0.6], flat: 0.75 },
   stratus: { count: [6, 14], length: [4, 9], r: [0.22, 0.4], flat: 0.38, wander: 0.4 },
   scrap: { count: [2, 4], r: [0.18, 0.38], spread: 1.2 },
-  cirrus: { streaks: [1, 3], count: [8, 16], length: [5, 10], r: [0.12, 0.22], flat: 0.22, slant: 0.18 }
+  cirrus: { streaks: [1, 3], length: [5, 10], r: [0.12, 0.22], step: 1.1, flat: 0.22, slant: 0.18, least: 1.3, thick: 1.1 }
 };
 
 // --- the flow -----------------------------------------------------------------------

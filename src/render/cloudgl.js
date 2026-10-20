@@ -96,10 +96,10 @@ int at(ivec2 c) {
   if (c.x < 0 || c.x >= sz.x) return -2;
   return int(texelFetch(uT, c, 0).r) - 1;
 }
-// open sky, or a farther lobe of the same cloud: a front lobe's top is lit
-// where it stands against the lobe behind it, so the front lobes read as
-// standing in front
-bool behind(int b, int j) { return b == -1 || (b >= 0 && b < j && uRow[b] == uRow[j]); }
+// open sky, or -- where the tier's lobes are modeled inside the cloud (a core
+// band) -- a farther lobe of the same cloud: a front lobe's top is lit where
+// it stands against the lobe behind it, so it reads as standing in front
+bool behind(int b, int j) { return b == -1 || (uCore[j] > 0 && b >= 0 && b < j && uRow[b] == uRow[j]); }
 // open sky only: a cloud is shadowed as a whole, on its outer edge
 bool open(int b) { return b == -1; }
 void main() {

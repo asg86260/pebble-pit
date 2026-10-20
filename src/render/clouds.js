@@ -24,7 +24,7 @@
 // and draws them where its own camera puts them. Nothing here reads S.
 
 import { CLOUDS_TONES, CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_BUDGET_MS, CLOUDS_SLICE,
-         CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN,
+         CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN, CLOUDS_CORE_MIN,
          CLOUDS_TREATMENTS, CLOUDS_SKY, CLOUDS_ALTITUDE, CLOUDS_LIFE, CLOUDS_SHAPES, CLOUDS_VOLUME, CLOUDS_TIERS,
          CLOUDS_FLOW, CLOUDS_GROUND_FLOW, CLOUDS_PALETTE, CLOUDS_DEPTH_BANDS, CLOUDS_LIGHT, CLOUDS_VOLUME_BANDS,
          CLOUDS_GROUND_DEPTHS } from '../config.js';
@@ -518,17 +518,21 @@ function volume(rnd, cx, base, R, flat, add) {
   // the crown: the tallest dome off the middle, smaller ones stepping out
   add('crown', mid, base - R * lerp(rnd(), C.at) * flat, R, flat);
   const reach = [0, 0];
+  let lo = mid - R, hi = mid + R;
   for (let k = 0, n = count(rnd, C.domes); k < n; k++) {
     const side = (k + (rnd() < 0.5 ? 0 : 1)) % 2, r = R * lerp(rnd(), C.r) * Math.pow(C.fall, reach[side]);
     const x = mid + (side ? 1 : -1) * (R * 0.55 + reach[side] * R * 0.5 + r * lerp(rnd(), C.step));
     add('crown', x, base - r * lerp(rnd(), C.at) * Math.pow(0.85, reach[side]) * flat, r, flat);
+    lo = Math.min(lo, x - r); hi = Math.max(hi, x + r);
     reach[side]++;
   }
-  // the body and the base: rows of lobes across the face, smaller to the ends
+  // the body and the base: rows of lobes under the crown's whole width, so no
+  // dome hangs over open sky, smaller to the ends
+  const at = (lo + hi) / 2, half = (hi - lo) / 2;
   for (const name of ['body', 'base']) {
-    const T = V[name], f = flat * (T.flat || 1);
-    for (let x = cx - T.span * R; x <= cx + T.span * R;) {
-      const edge = Math.abs(x - cx) / (T.span * R), r = R * lerp(rnd(), T.r) * (1 - 0.3 * edge * edge);
+    const T = V[name], f = flat * (T.flat || 1), w = T.span * half;
+    for (let x = at - w; x <= at + w;) {
+      const edge = Math.abs(x - at) / w, r = R * lerp(rnd(), T.r) * (1 - 0.3 * edge * edge);
       add(name, x, base - r * lerp(rnd(), T.at) * f, r, f);
       x += r * lerp(rnd(), T.step);
     }
@@ -586,11 +590,15 @@ function shape(rnd, kind, cx, base, R, flat, add) {
     // high streaks: thin climbing lines of tiny puffs, a hook at the end
     const T = H.cirrus;
     for (let s = 0, m = count(rnd, T.streaks); s < m; s++) {
-      const n = count(rnd, T.count), len = R * lerp(rnd(), T.length), f = T.flat;
+      const len = R * lerp(rnd(), T.length), f = T.flat;
       const x0 = cx + (rnd() - 0.5) * len, y0 = base - rnd() * R * 0.8;
-      for (let k = 0; k < n; k++) {
-        const u = k / (n - 1), hook = u > 0.8 ? (u - 0.8) * 5 : 0;
-        add('high', x0 + len * u, y0 - len * T.slant * u - hook * R * 0.4, R * lerp(rnd(), T.r) * (1 - 0.6 * Math.abs(u * 2 - 1)), f);
+      // puffs a share of their own radius apart, so a streak is one line at
+      // any distance, not a row of dots
+      for (let u = 0; u <= 1;) {
+        const hook = u > 0.8 ? (u - 0.8) * 5 : 0;
+        const r = Math.max(T.least, R * lerp(rnd(), T.r) * (1 - 0.6 * Math.abs(u * 2 - 1)));
+        add('high', x0 + len * u, y0 - len * T.slant * u - hook * R * 0.4, r, Math.max(f, T.thick / r));
+        u += r * T.step / len;
       }
     }
     return;
@@ -784,7 +792,7 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
     shade: eight(j => (layer.ground ? (D.tones === 2 && lobes[j] >= CLOUDS_CREASE_MIN ? Math.max(2, Math.round(CLOUDS_KINDS.ground.crease * lobes[j])) : 0)
       : round(j) && D.belly === 'inside' ? band(VB.shade, lobes[j]) : 0)),
     base: eight(j => (based(j) && !layer.ground ? Math.max(2, Math.round(VB.base * P.R)) : 0)),
-    core: eight(j => (round(j) && D.belly === 'inside' && !layer.ground && CLOUDS_TIERS[j] !== 'base' && CLOUDS_TIERS[j] !== 'high' ? band(VB.core, lobes[j]) : 0)),
+    core: eight(j => (round(j) && D.belly === 'inside' && !layer.ground && CLOUDS_TIERS[j] !== 'base' && CLOUDS_TIERS[j] !== 'high' && lobes[j] >= CLOUDS_CORE_MIN ? band(VB.core, lobes[j]) : 0)),
     row: eight(j => layer.rowOf[j]), bottom: layer.ground ? nt : 0,
     light: CLOUDS_LIGHT, tone, lut
   };
