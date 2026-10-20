@@ -683,9 +683,10 @@ const CURSORS = [
   [(x, y) => overRoster(x, y), 'pointer'],
   // the way through the surface, from either side, and the serpent to hit
   [(x, y) => onShaftArrow(x, y) || onPortal(x, y) || onCoil(x, y) || overOrb(x, y), 'pointer'],
-  [(x, y) => atStation(x, y), 'pointer'],
-  // a mark that will tell you why something has stopped
+  // a mark that will tell you why something has stopped, before the station
+  // it hangs over: a station's own pile hangs its mark inside its reach
   [(x, y) => overAnyMark(x, y), 'help'],
+  [(x, y) => atStation(x, y), 'pointer'],
   [(x, y) => inRect(dialRect(), x, y), 'help'],
   [(x, y) => overBird(x, y), 'pointer'],
   [(x, y) => S.view === 'deep' && overFauna(x, y), 'pointer']
