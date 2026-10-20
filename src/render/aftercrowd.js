@@ -13,17 +13,18 @@
 // to hold the mock's layout under him -- so the picture is the mock's at
 // every window. A pose is held a tick (SKY_TICK_S), the mock's quarter second.
 //
-// God's crowd (take G1) is rows of souls on the floor from his foot toward
-// the viewer, packed all round the throne with an aisle up the middle for
-// the line, each soul a flat square its row's size; a soul with nobody in
-// front of it has the cloud's lip over its feet. As support rises it empties
-// from the front. A sign is a fist flag planted at its soul's spot, scaled
-// to its row and behind the rows nearer the camera, an aura round it
-// (DESIGN.md, "The level, the two crowds and the flags"); a member it wins
-// orbits it and walks the long way back across to the union's camp, growing
-// as it comes. A rally off a sign lifts the souls it passes; the throne's
-// roar ducks them. The bodies out on the way between are drawn in depth
-// among them.
+// God's camp stands on a stage in the clouds (DESIGN.md, "God's camp stands
+// on a stage in the clouds"; docs/mocks/act3-clouds-2026-10-19/a3platform):
+// one broad paper stage tilted toward the viewer, its front a stepped plinth
+// in the throne base's family, the cloud sea lapping its foot. It slides as
+// one with his layer, so nothing on it skates. His crowd stands on it at a
+// giant's scale, rows of separate souls with the stage between them,
+// emptying from the front to bare stage as support rises. A sign is a fist
+// flag planted at its spot on the stage, an aura round it (DESIGN.md, "The
+// level, the two crowds and the flags"); a member it wins orbits it and
+// walks the long way back across to the union's camp. A rally off a sign
+// lifts the souls it passes. The bodies out on the way between are drawn
+// among them: across the cloud, up the plinth, out over the top.
 //
 // God is a light source on either page: he, his rays, his light and his
 // gaze are drawn raw (src/ink.js), outside the act's four tones, and so are
@@ -35,24 +36,25 @@
 // sim's speech, so a reload stands it where it was, the line give or take.
 //
 // The frame's cost: the throne and its base, God in each pose and every
-// board are bitmaps taken once a zoom; a soul is a fill or two. What is drawn
-// live is the crowd, the rays, the hands, the line, the gaze and the bubbles.
+// board are bitmaps taken once a zoom; the stage is a few fills; a soul is a
+// fill. What is drawn live is the crowd, the rays, the hands, the line, the
+// gaze and the bubbles.
 
 import { S } from '../state.js';
 import { P, GREY, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AFTER_SPEECH_WARN_S,
-         SKY_BOB, SKY_TICK_S, GOD_CROWD, CLOUD_LIP, CLOUD_LIP_THRONE,
+         SKY_TICK_S, GOD_CROWD, GOD_STAGE, GOD_FLAG,
          SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
          GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, TITHE, GAZE,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_POSTER, SKY_DRIFT,
-         AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE } from '../config.js';
+         AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { raw, darkPage } from '../ink.js';
 import { afterX0, slotX, stationBox, unionJoinAt, afterFloor } from '../after/place.js';
 import { support, union, souls, OUT_RIM, speechTarget } from '../after/union.js';
 import { signReach } from '../after/levels.js';
-import { skyFrame, godMid, pointX, pointU, footY, crowdHalf, crowdPoint, walkPoint, deepAt } from '../after/sky.js';
-import { bodyLip, lip } from './after/cloudfloor.js';
+import { skyFrame, godMid, stage, stageHalf, stageFore, stageSpot, stageSoul, walkSeen, deepAt } from '../after/sky.js';
+import { lip } from './after/cloudfloor.js';
 import { K as INK, W, PALE, MID } from './after/kit.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -73,7 +75,12 @@ const SEAT_TONE = darkPage ? AFTER_SEAT_DARK : INK;
 const LINE_TONE = darkPage ? AFTER_LINE_DARK : PALE;
 const CROWN_TONE = darkPage ? WHITE : BLACK;
 const RAY_TONE = darkPage ? WHITE : PALE;
-const CROWD_TONE = MID;
+// The stage's top: paper on the light page, the light ink on the dark, never
+// the cloud's pale; its risers mid. His souls alternate mid and pale by row
+// (the mock's second grey is a fifth tone; the act has four).
+const TOP_TONE = darkPage ? INK : W;
+const RISE_TONE = MID;
+const SOUL_TONES = [MID, PALE];
 // The union's ink: the flags, the auras and a won soul's darkening; on the
 // dark page the light grey the line's souls wear, as the mocks have it.
 const UNION_TONE = darkPage ? AFTER_LINE_DARK : INK;
@@ -127,8 +134,6 @@ function sprite(w, h, paint) {
 }
 const blit = (pic, x, y) => ctx.drawImage(pic, onPx(x), onPx(y), pic.width / K, pic.height / K);
 
-// A soul's side at depth d, in cells: GOD_CROWD.soul at the near layer.
-const soulN = d => Math.max(GOD_CROWD.least, Math.round(GOD_CROWD.soul / d));
 
 // --- support, read off the sim ---------------------------------------------------------------
 // The share of the way to the strike won (1 at STRIKE_SHARE), eased so the
@@ -141,13 +146,13 @@ function stepShown() {
   const A = S.after, t = now();
   if (shown.after !== A) {
     shown.after = A; shown.s = share(); shown.lastT = t; shown.won.length = 0; resyncOut();
-    shown.line = lineAtOpen(t);
+    shown.line = lineAtOpen(t); seeAllSigns();
   }
   const gap = t - shown.lastT, dt = clamp(gap, 0, 0.25);
   shown.lastT = t;
   const want = share();
   // Time passed undrawn (the camera elsewhere, a jump of the clock): caught up.
-  if (gap > 1) { shown.s = want; shown.line = lineAtOpen(t); }
+  if (gap > 1) { shown.s = want; shown.line = lineAtOpen(t); seeAllSigns(); }
   shown.s += clamp(want - shown.s, -dt * SKY_SUPPORT_EASE, dt * SKY_SUPPORT_EASE);
   return dt;
 }
@@ -229,83 +234,103 @@ function ringsAt(x, y, rate, sq) {
   return lift;
 }
 
-// --- the crowd ------------------------------------------------------------------------------
-// Its rows, back to front: each a depth, its foot on the cell row the floor
-// puts it, its souls' side; the next row back stands where the one in front
-// covers its feet, so the full crowd hides the floor. A fact of the window.
+// --- the stage -------------------------------------------------------------------------------
+// The top a trapezoid from its back edge to its front, the side face the
+// window can see (toward its middle) down its slanted edge, then under its
+// front its own riser and the steps, each a tread over a riser and wider a
+// side than the one above; at the foot, billows of the floor's own drawing
+// lapping up over the lowest riser, so no ruled line stands where the stage
+// meets the cloud.
+function drawStage() {
+  const st = stage(), G = GOD_STAGE, x = gx(), side = x > CX ? -1 : 1, sw = G.side * st.mx;
+  ctx.fillStyle = style(RISE_TONE);
+  for (let y = st.yb; y < st.yf + 3 * P; y += P) {
+    const hw = stageHalf(st, y);
+    rect(side < 0 ? x - hw - sw : x + hw, y, sw, P);
+  }
+  ctx.fillStyle = style(TOP_TONE);
+  for (let y = st.yb; y < st.yf; y += P) { const hw = stageHalf(st, y); rect(x - hw, y, 2 * hw, P); }
+  let y = st.yf;
+  rect(x - st.hf, y, 2 * st.hf, G.rise * P, RISE_TONE); y += G.rise * P;
+  for (let k = 0; k < G.steps; k++) {
+    const hw = st.hf + st.stepW * (k + 1);
+    rect(x - hw, y, 2 * hw, G.tread * P, TOP_TONE); rect(x - hw, y + G.tread * P, 2 * hw, G.riser * P, RISE_TONE);
+    y += (G.tread + G.riser) * P;
+  }
+  const hs = st.hf + st.stepW * G.steps + 12 * st.mx, base = Math.round(y / P) + 2;
+  for (let i = 0; i < G.billows; i++) {
+    const c = (x - hs + 2 * hs * (i + 0.2 + hsh(G.seed, i) * 0.6) / G.billows) / P;
+    const h = lerp(G.billowH[0], G.billowH[1], hsh(G.seed, i, 2) ** 1.5), up = Math.round(hsh(G.seed, i, 3) * G.billowUp);
+    lip(Math.round(c - h * G.billowW), Math.round(c + h * G.billowW), base - up, h, MID, G.seed * 31 + i, h * 1.1);
+  }
+}
+
+// --- the crowd on the stage ----------------------------------------------------------------
+// Rows from the front edge back, a soul growing from the back's size to the
+// front's, a gap between souls, each row stepping back a little more than
+// its soul so the stage shows between rows; the throne's foot and an aisle up
+// the middle kept clear. A fact of the window.
 let ROWS = [], rowsKey = '';
 function crowdRows() {
-  const key = `${F.hor}|${F.floor}`;
+  const st = stage(), G = GOD_CROWD, key = `${st.yb}|${st.yf}|${st.mx}`;
   if (key === rowsKey) return ROWS;
-  const out = [], yb = footY(GOD_CROWD.back);
-  for (let y = footY(GOD_CROWD.front); y > yb;) {
-    const d = (F.floor - F.hor) / (y - F.hor), n = soulN(d);
-    out.push({ d, y: snap(y, P), n });
-    y -= Math.max(1, n * GOD_CROWD.rows) * P;
+  const out = [];
+  for (let y = st.yf - P, r = 0; y > st.yb + P; r++) {
+    const n = stageSoul(st, y);
+    out.push({ y: snap(y, P), n, k: stageFore(st, y), r });
+    y -= Math.max(P, snap(n * G.rows, P));
   }
   rowsKey = key; ROWS = out.reverse();
   return ROWS;
 }
-// God's crowd's front row's foot, world y: where his gaze falls.
-const frontY = () => footY(GOD_CROWD.front);
-// How much a soul at row r of n, spot i, stands, 0 to 1: gone from the
-// front first as support rises, fading through the last of it.
+// How much a soul of row r (of n, 0 the back) at spot i stands, 0 to 1: gone
+// from the front first as support rises, fading through the last of it.
 function standing(r, n, i) {
   const G = GOD_CROWD, fore = n > 1 ? r / (n - 1) : 1;
   const v = (1 - shown.s) * G.keep - fore * G.fore - hsh(i, r + 9) * G.luck + G.base;
   return clamp(v / G.soft, 0, 1);
 }
-const drawn = { souls: 0, open: 0 };
+const drawn = { souls: 0 };
 export const crowdDrawn = () => ({ ...drawn, won: shown.won.length });
-// Across a row, a soul's spacing in floor px.
-const pitch = () => GOD_CROWD.soul * P * GOD_CROWD.pitch;
-// The souls of row r in view, each { r, i, x, y, n, a, d }: x its left, y its foot.
-function rowSouls(r, R, out) {
-  const G = GOD_CROWD, hw = crowdHalf(R.d) * R.d, pp = pitch(), n = R.n, w = n * P, mid = gx();
-  for (let i = Math.floor(-hw / pp) - 1; i <= Math.ceil(hw / pp) + 1; i++) {
-    const xl = (i + (r & 1) * 0.5) * pp;
-    if (Math.abs(xl) > hw + hsh(r, 1) * 0.5 * pp) continue;
-    // God's camp slides as one (after/sky.js, `campX`): off his middle.
-    const x = mid + xl / R.d, x0 = snap(x - w / 2, P);
+// The souls of row r in view, each { r, i, x, y, w, a }: x its left, y its foot.
+function rowSouls(r, R, n, out) {
+  const G = GOD_CROWD, st = stage(), mid = gx(), w = R.n, gap = G.gap * st.mx, pitch = w + gap;
+  const hw = stageHalf(st, R.y) - G.margin * st.mx, clear = st.throne + w / 2 + 2 * st.mx, aisle = G.aisle * st.mx + w / 2;
+  let i = 0;
+  for (let cx = mid - hw + ((R.r & 1) * pitch) / 2; cx < mid + hw - w; cx += pitch, i++) {
+    const c = cx + w / 2;
+    // behind the throne's foot, or in the aisle in front of it: kept clear
+    if (R.y - w < st.throneY + P && Math.abs(c - mid) < clear) continue;
+    if (R.y > st.throneY && Math.abs(c - mid) < aisle) continue;
+    const x0 = snap(cx + (hsh(i, R.r, 5) - 0.5) * 2 * G.jit * st.mx, 1);
     if (x0 + w < S.camX - P || x0 > S.camX + S.viewW + P) continue;
-    // The aisle up the middle kept clear for the line.
-    if (Math.abs(xl) / R.d < (G.aisle + n) * P) continue;
-    const a = standing(r, ROWS.length, i);
-    if (a > 0.001) out.push({ r, i, x: x0, y: R.y, n, a, d: R.d });
+    const a = standing(r, n, i);
+    if (a > 0.001) out.push({ r, i, x: x0, y: R.y - (hsh(i, R.r, 6) < G.lift ? P : 0), w, a });
   }
 }
-// A soul bobs a cell for a tick, now and then (the mock's band).
-const bob = i => (((i * SKY_BOB.mul + TK) % SKY_BOB.every) + SKY_BOB.every) % SKY_BOB.every === 0;
-// God's crowd: its rows far to near, and before each whatever stands in the
-// crowd deeper than it (`between(d)`, and `between(0)` for the rest after
-// the front row). The one place the crowd's own shape is drawn, so a crowd
-// drawn another way is this function and what it reads; the flags stand at
-// their signs' spots whatever draws it.
+// God's crowd: its rows back to front, and before each whatever stands on
+// the stage behind it (`between(y)` draws what stands with its foot above
+// world y, and `between(Infinity)` the rest after the front row). The one
+// place the crowd's own shape is drawn, so a crowd drawn another way is this
+// function and what it reads.
 function drawGodsCrowd(rows, between) {
-  const all = rows.map((R, r) => { const o = []; rowSouls(r, R, o); return o; });
-  const here = new Set();
-  for (const row of all) for (const s of row) if (s.a > 0.5) here.add(s.r * 100000 + s.i);
-  drawn.souls = here.size; drawn.open = 0;
+  let count = 0;
   rows.forEach((R, r) => {
-    between(R.d);
-    for (const s of all[r]) {
-      // Nobody standing just in front of it: the cloud's lip over its feet.
-      const j = s.r & 1 ? s.i + 1 : s.i - 1;
-      const open = r === rows.length - 1 || !(here.has((r + 1) * 100000 + s.i) && here.has((r + 1) * 100000 + j));
-      // The back row's tops a cell short now and then, so the mass's top
-      // edge steps soul by soul (a row in front stands over the one behind
-      // by less than a soul, so a short soul there would open the floor);
-      // lifted by a rally or a bob, a soul still reaches its foot.
-      const w = s.n * P, short = r === 0 && hsh(s.i, s.r, 77) < GOD_CROWD.short ? P : 0;
-      const lift = ringsAt(s.x + w / 2, s.y, 1 / s.d, w) || (bob(s.i + r * 7) ? -P : 0);
+    between(R.y);
+    const souls = [];
+    rowSouls(r, R, rows.length, souls);
+    ctx.fillStyle = style(SOUL_TONES[R.r & 1]);
+    for (const s of souls) {
+      if (s.a > 0.5) count++;
+      const lift = ringsAt(s.x + s.w / 2, s.y, 1, s.w);
       const was = ctx.globalAlpha;
       if (s.a < 1) ctx.globalAlpha = was * s.a;
-      rect(s.x, s.y - w + short + lift, w, w - short - lift, CROWD_TONE);
-      if (open && s.n >= CLOUD_LIP.least) { drawn.open++; bodyLip(Math.round(s.x / P), s.n, Math.round(s.y / P), s.r * 1000 + s.i); }
+      rect(s.x, s.y - s.w + lift, s.w, s.w - Math.max(0, lift));
       ctx.globalAlpha = was;
     }
   });
-  between(0);
+  drawn.souls = count;
+  between(Infinity);
 }
 
 // --- souls won over ----------------------------------------------------------------------------------
@@ -356,36 +381,45 @@ function pickWon() {
 }
 // Where a won soul is `T` ticks on: its middle in the world, its side, its
 // alpha, how dark it has gone (0 the crowd's tone, 1 the union's ink), its
-// depth, and whether it has left the crowd for the walk across.
+// painting order, and whether it has left its sign for the walk back.
 function wonAt(w, T) {
-  const W0 = SKY_WON, g = flagBox(w), R = auraR(g, 0) * g.U, sz = soulN(g.d) * P, top = g.foot - sz;
-  const o = { a: 1, d: g.d, sz };
+  const W0 = SKY_WON, g = flagBox(w), R = auraR(g, 0) * g.U, st = stage(), sz = stageSoul(st, g.foot), top = g.foot - sz;
+  const o = { a: 1, ord: g.foot, sz };
   if (T < W0.lift) { const u = T / W0.lift; return { ...o, x: g.cx + R * 0.7, y: lerp(top, g.cy + R * 0.7, u), dk: 0.3 * u, out: false }; }
   if (T < W0.lift + W0.orbit) {
     const ang = Math.PI / 4 + Math.floor((T - W0.lift) / W0.step) * Math.PI / 4;
     return { ...o, x: g.cx + Math.cos(ang) * R, y: g.cy + Math.sin(ang) * R, dk: 0.3 + 0.7 * (T - W0.lift) / W0.orbit, out: false };
   }
-  // The walk across: a straight line on the floor from under the orbit's end
-  // to the union's camp, its depth and its height off the floor both eased
-  // back to the near layer's, arcing up at its middle.
+  // The walk back, the carriers' way the other way about: across the top to
+  // its front corner, down the plinth, and back over the cloud to the
+  // union's camp (after/sky.js, `walkSeen`), fading there.
   const u = Math.min(1, (T - W0.lift - W0.orbit) / W0.drift), to = unionJoinAt();
   const ang = Math.PI / 4 + (W0.orbit / W0.step) * Math.PI / 4, x0 = g.cx + Math.cos(ang) * R, y0 = g.cy + Math.sin(ang) * R;
-  const d = lerp(g.d, 1, u), fu = lerp(pointU(x0, g.d, 1, CX), to.x, u);
-  const up = lerp((g.foot - y0) * g.d, afterFloor() - to.y, u) / d + Math.sin(u * Math.PI) * W0.arc * P / d;
-  return { x: pointX({ u: fu, d, k: 1 - u }, CX), y: footY(d) - up, a: u < 1 - W0.fade ? 1 : (1 - u) / W0.fade, dk: 1, out: true, d,
-           sz: Math.max(GOD_CROWD.least * P, GOD_CROWD.soul * P / d) };
+  const fade = u < 1 - W0.fade ? 1 : (1 - u) / W0.fade;
+  const A = W0.top, B = W0.top + W0.down;
+  if (u < A) {
+    // over the top to the front corner, coming down to its feet as it goes
+    const k = u / A, c = stageSpot(0, 0), cx = gx() + c.dx, foot = lerp(g.foot, st.yf - P, k), s = lerp(sz, stageSoul(st, st.yf), k);
+    return { x: lerp(x0, cx, k), y: lerp(y0, foot - s / 2, Math.min(1, k * 3)), sz: s, a: fade, dk: 1, out: true, ord: foot };
+  }
+  // then the sim's way back: down the plinth, and across the cloud
+  const edge = CROWD_X0 - CROWD_PITCH;
+  const x = u < B ? lerp(CROWD_X0 + P, edge, (u - A) / (B - A)) : lerp(edge, to.x, (u - B) / (1 - B));
+  const v = walkSeen(x, afterFloor(), CX);
+  return { x: v.x, y: v.y - v.s / 2, sz: v.s, a: fade, dk: 1, out: true, ord: v.ord };
 }
-// The won souls still at their sign deeper than `d0` and not yet drawn, or
-// (`out`) every one walking across.
-function drawWon(d0, out) {
+// The won souls with their feet above world y and not yet drawn, at their
+// signs or on their way back.
+function drawWon(y0) {
   const t = now();
   for (const w of shown.won) {
+    if (w.drawn === TK) continue;
     const T = Math.floor((t - w.t0) / SKY_TICK_S), p = wonAt(w, T);
-    if (p.out !== out || (!out && (p.d < d0 || w.drawn === TK))) continue;
-    if (!out) w.drawn = TK;
+    if (p.ord > y0) continue;
+    w.drawn = TK;
     const sz = p.sz, x = snap(p.x - sz / 2, 1), y = snap(p.y - sz / 2, 1);
     if (!inView(x, sz)) continue;
-    alpha(p.a, () => { rect(x, y, sz, sz, CROWD_TONE); alpha(p.dk, () => rect(x, y, sz, sz, UNION_TONE)); });
+    alpha(p.a, () => { rect(x, y, sz, sz, SOUL_TONES[0]); alpha(p.dk, () => rect(x, y, sz, sz, UNION_TONE)); });
   }
 }
 
@@ -404,8 +438,6 @@ function freshCaches() {
 }
 // The steps of the base, down from under the seat to his foot in the cloud.
 const baseSteps = () => Math.max(1, Math.ceil((F.bank - F.gy0 - (SEAT + GOD_THRONE.seatH) * H) / (GOD_THRONE.step * H)));
-// The base's half-width at its bottom step, world px.
-const baseHalf = () => (GOD_THRONE.baseHalf + GOD_THRONE.step * (baseSteps() - 1)) * H;
 
 // The block throne and its stepped base (the mock's): a back up to his
 // cheeks, a broad seat under him, and below the seat steps a soul's width
@@ -426,13 +458,6 @@ function throne() {
   pic.X0 = X0; pic.Y0 = Y0;
   return (cache.throne = pic);
 }
-// The throne's bottom step sits in the cloud: a lip of billow over it, in
-// the floor's own line tone.
-function throneLip() {
-  const hb = baseHalf(), x = gx();
-  lip(Math.round((x - hb) / P) - 3, Math.round((x + hb) / P) + 3, Math.round(F.bank / P) + 1, CLOUD_LIP_THRONE, MID, 77);
-}
-
 // God's face (docs/mocks/act3-god-2026-10-19, face (c), the owner's pick):
 // on the surface a calm square -- level lids over visible pupils, a quiet
 // smile -- and a roar opens his mouth. Unmasked, once the unmask beat has
@@ -626,13 +651,18 @@ function drawGod(gz) {
 // Glaring, it sweeps the crowd in held steps; warned, it moves onto the mark
 // and narrows on it in three steps, and holds there while the speech burns it.
 const GZ0 = { g: 0, x: 0, y: 0, w: GAZE.w, on: null };
+// Where on the stage the sweep runs: across its middle.
+const gazeY = () => { const st = stage(); return snap((st.yb + st.yf) / 2, P); };
+// The spot's scale: as wide, against a soul there, as the mock's against a
+// near soul.
+const gazeK = () => stageSoul(stage(), gazeY()) / (GAZE.soul * H);
 function gazeNow() {
   const g = glaring();
-  if (g <= 0) return { ...GZ0, x: gx(), y: frontY() };
+  if (g <= 0) return { ...GZ0, x: gx(), y: gazeY() };
   const A = S.after, sp = A.speech, t = now(), Tq = TK * SKY_TICK_S;
   const pts = GAZE.sweep, i = Math.floor(TK / GAZE.hold) % pts.length, k = (TK % GAZE.hold) / GAZE.move;
-  // The sweep's points are shares of the crowd's front, either side of him.
-  const y = frontY(), reach = 2 * crowdHalf(GOD_CROWD.front);
+  // The sweep's points are shares of the stage across, either side of him.
+  const y = gazeY(), reach = 2 * stageHalf(stage(), y);
   let x = gx() + lerp(pts[i], pts[(i + 1) % pts.length], eio(Math.min(1, k))) * reach, w = GAZE.w, on = null, yy = y;
   const target = speechTarget();
   const onThing = (kind, q) => { const b = thingAt(kind, q); return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; };
@@ -667,7 +697,7 @@ function drawGaze(gz) {
     let pl = null, pr = null;
     for (let y = y0; y <= y1; y++) {
       const k = (y - y0) / (y1 - y0), cx = Math.round(lerp(0, fx, k));
-      const hw = Math.max(2, Math.round(lerp(GAZE.w0, gz.w * soulN(GOD_CROWD.front) * P / (GAZE.soul * H), k)));
+      const hw = Math.max(2, Math.round(lerp(GAZE.w0, gz.w * gazeK(), k)));
       const l = cx - hw - 1, r = cx + hw;
       alpha(darkPage ? GAZE.bodyDark : GAZE.body, () => c(l + 1, y, r - l - 1, 1, WHITE));
       // each edge a joined line two cells thick: a run across to where the row above left off
@@ -675,9 +705,8 @@ function drawGaze(gz) {
       run(l - 1, pl); run(r, pr);
       pl = l - 1; pr = r;
     }
-    // The spot lies on the crowd at its own scale: as wide, against a soul
-    // of the front row, as the mock's against a near soul.
-    const hw = Math.max(3, Math.round(gz.w * soulN(GOD_CROWD.front) * P / (GAZE.soul * H)));
+    // The spot lies on the crowd at its own scale.
+    const hw = Math.max(3, Math.round(gz.w * gazeK()));
     const ry = Math.max(2, Math.round(hw * GAZE.flat)), rows = [], sx = Math.round(fx), sy = Math.round(fy);
     for (let dy = -ry; dy <= ry; dy++) rows.push([dy, Math.round(hw * Math.sqrt(1 - (dy / (ry + 0.5)) ** 2))]);
     alpha(darkPage ? GAZE.spotDark : GAZE.spot, () => { for (const [dy, w] of rows) c(sx - w, sy + dy, 2 * w, 1, WHITE); });
@@ -730,30 +759,29 @@ function drawBubbles() {
 
 // --- signs and posters --------------------------------------------------------------------------------
 // A sign is a flag (docs/mocks/act3-level-2026-10-19, a3flag, the fist):
-// planted at its soul's spot in God's crowd (after/sky.js, `crowdPoint`),
-// scaled to its row, behind the rows nearer than it. A poster is on the
-// fence along the crowd's front.
+// planted at its spot on the stage (after/sky.js, `stageSpot`), at a readable
+// size, bigger toward the front, among the souls in front of and behind it.
+// A poster is on the stage's front edge.
 const rallied = q => EV.rallies.some(r => r.thing.q === q && now() - r.at < SKY_RALLY.lift);
-// A flag's cell at depth d, world px: the flag 2.6 souls across, never
-// under a pixel a cell.
-const flagU = d => Math.max(1, Math.round(soulN(d) * P * 2.6 / SKY_FLAG.w));
+// A flag's cell, world px, for a flag `n` stage cells tall: the cloth about
+// as wide as the flag is tall.
+const flagU = n => Math.max(1, Math.round(n * stage().mx / SKY_FLAG.w));
 // A flag's box: `px` its pole's left, the flag a flag cell (`U`) right of
-// it, `y` its top at rest, its middle (`cx`, `cy`), its depth `d` and the
-// foot of the soul it stands among.
+// it, `y` its top at rest, its middle (`cx`, `cy`), and `foot` its pole's
+// foot on the stage.
 function flagBox(q) {
-  const p = crowdPoint(q.f, q.r), U = flagU(p.d), FL = SKY_FLAG, foot = snap(footY(p.d), P);
-  const px = snap(pointX(p, CX), 1), w = FL.w * U, h = FL.h * U;
-  const y = foot - soulN(p.d) * P - FL.up * U - h - (q.id != null && rallied(q) ? U : 0);
-  return { d: p.d, foot, U, px, x: px + U, y, w, h, cx: px + U + w / 2, cy: y + h / 2 };
+  const st = stage(), sp = stageSpot(q.f, q.r), foot = snap(sp.y, P), U = flagU(lerp(GOD_FLAG.n[0], GOD_FLAG.n[1], stageFore(st, foot)));
+  const FL = SKY_FLAG, px = snap(gx() + sp.dx, 1), w = FL.w * U, h = FL.h * U;
+  const y = foot - stageSoul(st, foot) - FL.up * U - h - (q.id != null && rallied(q) ? U : 0);
+  return { foot, U, px, x: px + U, y, w, h, cx: px + U + w / 2, cy: y + h / 2 };
 }
-// A poster on the fence: its slot's file at the crowd's front, its sheet a
-// flag cell a sheet cell.
+// A poster on the stage's front edge, at its slot along it.
 function posterBox(q) {
-  const p = crowdPoint((slotX(q.slot) - CROWD_X0 - P) / CROWD_PITCH, 0), U = flagU(p.d), PO = SKY_POSTER;
-  const w = PO.w * U, h = PO.h * U, foot = snap(footY(p.d), P);
-  const x = snap(pointX(p, CX) - w / 2, 1);
-  const y = foot - soulN(p.d) * P - PO.up * U - h - (rallied(q) ? U : 0);
-  return { d: p.d, foot, U, x, y, w, h };
+  const st = stage(), f = (slotX(q.slot) - CROWD_X0 - P) / CROWD_PITCH, sp = stageSpot(f, 0), foot = snap(st.yf - P, P);
+  const U = flagU(GOD_FLAG.n[0]), PO = SKY_POSTER, w = PO.w * U, h = PO.h * U;
+  const x = snap(gx() + sp.dx - w / 2, 1);
+  const y = foot - PO.up * U - h - (rallied(q) ? U : 0);
+  return { foot, U, x, y, w, h };
 }
 // Where a sign or poster is drawn (its flag's or its sheet's box), for the
 // rings and the gaze.
@@ -824,13 +852,20 @@ function drawAura(g, q) {
 }
 // A flag, its aura behind it. Burning, a flag chars in held steps -- the
 // fist going pale, then all ink -- and fades by the time it is gone.
+// When each sign was first seen, so one planted while the act is watched
+// fades in rather than popping; those standing when the drawing catches up
+// (a new act, a reload, a jump of the clock) are simply there. Drawing state.
+const seenSigns = new Map();
+function seeAllSigns() { seenSigns.clear(); for (const q of S.after.signs) seenSigns.set(q.id, -Infinity); }
 function drawFlag(q) {
   const t = now(), phase = TK % SKY_FLAG.phases;
+  if (!seenSigns.has(q.id)) seenSigns.set(q.id, t);
+  const born = clamp((t - seenSigns.get(q.id)) / SIGN_FADE_S, 0, 1);
   const g = flagBox(q), per = g.U / Math.max(1, g.U / 3), A = Math.max(1, Math.round(SKY_FLAG.amp * per)) * Math.max(1, g.U / 3);
   if (!inView(g.px - 40 * g.U, g.w + 80 * g.U)) return;
   const u = q.burnt == null ? null : clamp((t - q.burnt) / AFTER_BURN_S, 0, 1), st = u == null ? -1 : Math.floor(u * 4);
   const fist = st < 0 ? W : st === 0 ? PALE : UNION_TONE;
-  alpha(u == null ? 1 : u < 0.5 ? 1 : 1 - (u - 0.5) / 0.5, () => {
+  alpha(born * (u == null ? 1 : u < 0.5 ? 1 : 1 - (u - 0.5) / 0.5), () => {
     if (u == null) drawAura(g, q);
     rect(g.px, g.y - A, g.U, g.foot - g.y + A, UNION_TONE);
     blit(flagSprite(g.U, (phase + q.f) % SKY_FLAG.phases, fist), g.x, g.y - A);
@@ -847,20 +882,19 @@ function drawPoster(q) {
   });
 }
 
-// --- bodies out on the way, and in God's yard ---------------------------------------------------------
-// The sim's walk past the union's camp is short; the eye's runs back into
-// depth (after/sky.js, `walkPoint`), so a body there is drawn at its floor
-// point, its size 1/d of the near layer's, sliding at its depth's speed. On
-// the near layer it is drawn as the camp draws it (render/after.js), the two
-// crossed over the first cells of the way so nothing pops.
+// --- bodies out on the way, and on the stage ---------------------------------------------------------
+// The sim's walk past the union's camp is short; the eye's crosses the cloud,
+// climbs the plinth and spreads over the top (after/sky.js, `walkSeen`). On
+// the near layer a body is drawn as the camp draws it (render/after.js), the
+// two crossed over the first cells of the way so nothing pops.
 export function seenAt(x, y) {
   if (!S.after) return { x, y, k: 1 };
   camFrame();
-  const p = walkPoint(x, y);
-  return { x: pointX(p, CX), y: footY(p.d), k: 1 / p.d, d: p.d };
+  const v = walkSeen(x, y, CX);
+  return { x: v.x, y: v.y, k: v.s / (3 * P), ord: v.ord };
 }
-// A body there: the camp's square, a rim of ink round paper, smaller with
-// depth until it is all ink; its load over it.
+// A body there: the camp's square, a rim of ink round paper, its size the
+// way's; its load over it.
 function body(w) {
   const v = seenAt(w.x, w.y), u = P * v.k, s = u * 3;
   const x = onPx(v.x - s / 2), y = onPx(v.y - s);
@@ -892,11 +926,11 @@ function drawDrift() {
 }
 
 // --- the layers ------------------------------------------------------------------------------------
-// God's camp, back to front: his rays, the throne and its base sitting in
-// the cloud, God and his hands, the line, then his crowd's rows far to near
-// with what stands among them at its depth -- the flags, the posters along
-// its front, the gaze on its front, the won souls at their signs, the bodies
-// out on the way -- and last the won souls walking back across.
+// God's camp, back to front: his rays, the stage, the throne on it, God and
+// his hands, the line, then his crowd's rows back to front with what stands
+// on the stage among them by where its foot is -- the flags, the posters on
+// its front edge, the won souls, the bodies out on the way -- and the gaze
+// over them all.
 let GZ = null;
 export function drawSkyCrowd() {
   if (!S.after) return;
@@ -911,26 +945,25 @@ export function drawSkyCrowd() {
   if (GZ.g <= 0 && shown.s < 0.98) shown.line += dt / SKY_TICK_S * (1 - TITHE.slow * shown.s);
   pickWon();
   drawRays();
+  drawStage();
   const th = throne();
   blit(th, gx() + th.X0 * H, F.gy0 + th.Y0 * H);
-  throneLip();
   drawGod(GZ);
   const B = drawLine(), rest = handsRest();
   hand(...(B ? B.l : rest.l)); hand(...(B ? B.r : rest.r));
-  // What stands in the crowd, deepest first, drawn as the rows pass it.
+  // What stands among the crowd, by its foot, drawn as the rows pass it.
   const items = [];
-  for (const q of S.after.signs) items.push({ d: crowdPoint(q.f, q.r).d, draw: () => drawFlag(q) });
-  for (const q of S.after.posters) items.push({ d: posterBox(q).d - 1e-3, draw: () => drawPoster(q) });
-  for (const w of S.after.bodies) if (deepAt(w.x) > 0) items.push({ d: walkPoint(w.x, w.y).d - 2e-3, draw: () => body(w) });
-  items.push({ d: GOD_CROWD.front - 5e-3, draw: () => drawGaze(GZ) });
-  items.sort((a, b) => b.d - a.d);
+  for (const q of S.after.signs) items.push({ y: flagBox(q).foot, draw: () => drawFlag(q) });
+  for (const q of S.after.posters) items.push({ y: posterBox(q).foot + 0.5, draw: () => drawPoster(q) });
+  for (const w of S.after.bodies) if (deepAt(w.x) > 0) items.push({ y: seenAt(w.x, w.y).ord + 0.25, draw: () => body(w) });
+  items.sort((a, b) => a.y - b.y);
   let next = 0;
   for (const w of shown.won) w.drawn = null;
-  drawGodsCrowd(crowdRows(), d => {
-    while (next < items.length && items[next].d >= d) items[next++].draw();
-    drawWon(d, false);
+  drawGodsCrowd(crowdRows(), y => {
+    while (next < items.length && items[next].y <= y) items[next++].draw();
+    drawWon(y);
   });
-  drawWon(0, true);
+  drawGaze(GZ);
 }
 // For a scene: the members walked out since the sky last looked, seen now,
 // as the next frame drawn would see them, so a scene can turn the clock on to

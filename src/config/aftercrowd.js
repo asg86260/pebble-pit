@@ -26,40 +26,53 @@ export const AFTER_UNION_W = 32;
 // God's square from its top down to his foot in the cloud; a sky too short
 // for half a God-cell a sky cell is laid out at a cell that fits SKY_FIT.
 export const SKY_FIT = 87;
-// God's crowd stands round his throne in the cloud floor (DESIGN.md, "God's
-// camp stands in the clouds", G1): rows of souls from its back, at his foot,
-// to its front, each a floor point seen through the depth camera
-// (after/sky.js). `back` and `front` are the rows' depths, in near layers;
-// `hb` and `hf` its half-width there as drawn, in sky cells, so it keeps
-// its size against God's at any window; `pitch`
-// a soul's spacing across a row, in souls; `rows` the step from a row to the
-// one behind it, in souls; and `aisle` the cells kept clear either side of
-// the line up its middle. A soul is `soul` cells across at the near layer
-// and 1/d of that deeper, never under `least`, a share `short` of its back
-// row a cell shorter.
-// As support rises it empties from the front: a soul stands while
-// (1 - share) * `keep` - its frontness (0 the back row, 1 the front) *
-// `fore` - a fixed chance * `luck`
-// + `base` is over 0, and fades as that falls through the last `soft` of
-// it -- support's share is eased, so a soul fades rather than pops.
-export const GOD_CROWD = { back: 2.88, front: 1.5, hb: 84, hf: 88, pitch: 0.94, rows: 0.7, aisle: 4, soul: 3, least: 2, short: 0.35,
+// God's camp stands on a stage in the clouds (DESIGN.md, "God's camp stands
+// on a stage in the clouds"; docs/mocks/act3-clouds-2026-10-19/a3platform,
+// spec.md, the numbers here). Lengths across are the mock's cells, `mx` sky
+// cells a cell, so the stage keeps its size against his throne at any
+// window; lengths down are cells off the horizon, the depth camera's. Its
+// top is a trapezoid cheated deep, from `back` to `front`, `hb` and `hf`
+// across the half; under its front a riser `rise` deep, then `steps` steps,
+// each a `tread` over a `riser` and `stepW` wider a side; a face `side`
+// across runs down the slanted edge toward the window's middle. At its foot
+// `billows` billows of the floor's own drawing lap up over the lowest
+// riser, `billowH` high (skewed small), pushed up as much as `billowUp`,
+// `billowW` of their height across the half.
+export const GOD_STAGE = { mx: 1.25, back: -2, front: 30, hb: 100, hf: 135, rise: 4, steps: 2, tread: 2, riser: 4,
+                           stepW: 12, side: 3, billows: 16, billowH: [2.5, 9], billowUp: 3, billowW: 1.8, seed: 77 };
+// God's crowd on the stage at a giant's scale: rows from the back to the
+// front, a soul `n` cells across (stage cells), from the first at the back to
+// the second at the front; `gap` cells between souls in a row, each row
+// stepping back `rows` of its soul; each soul jittered `jit` cells across and
+// a share `lift` of them a row up; `margin` cells kept off the stage's edge;
+// the aisle up the middle `aisle` cells either side of the line. As support
+// rises it empties from the front: a soul stands while (1 - share) * `keep`
+// - its frontness (0 the back row, 1 the front) * `fore` - a fixed chance *
+// `luck` + `base` is over 0, and fades as that falls through the last `soft`
+// of it -- support's share is eased, so a soul fades rather than pops.
+export const GOD_CROWD = { n: [4, 8], gap: 2, rows: 1.1, jit: 1, lift: 0.4, margin: 3, aisle: 4,
                            keep: 1.4, fore: 0.8, luck: 0.6, base: 0.25, soft: 0.25 };
-// A sign stands in God's crowd by its rank: rank 0 the front row, rank
-// SIGN_DEEP or more the back.
+// A sign stands on the stage by its rank: rank 0 the front row, rank
+// SIGN_DEEP or more the back; its flag `flag` stage cells tall from the back
+// to the front, a carrier's no taller than `carried`.
 export const GOD_SIGN_DEEP = 40;
-// A column bobs a cell for a tick, column i on the ticks where
-// (i * mul + tick) % every is 0 (the mock's band).
-export const SKY_BOB = { every: 13, mul: 5 };
+export const GOD_FLAG = { n: [7, 10], carried: 7 };
+// A body out on the way, cells across at the near layer (1/d of it deeper):
+// the mock's carrier, a little under a soul.
+export const WALK_BODY = 2.7;
 export const SKY_TICK_S = 0.25;            // the mock's tick: every pose in the sky held this long
 
 export const SKY_SUPPORT_EASE = 0.8;       // support's share a second the drawing eases toward the sim's
 // A member won by a sign (docs/mocks/act3-level-2026-10-19, a3level): a
 // soul lifts out of the sign's plane over `lift` ticks, darkening toward the
 // union's ink, orbits the sign a turn and a half in `orbit` ticks (a step of
-// an eighth of a turn every `step`), then drifts across to the union's camp
-// over `drift` ticks, arcing up `arc` sky cells at its middle, and fades by
-// opacity over the last `fade` of the way. At most `most` in the sky at once.
-export const SKY_WON = { lift: 6, orbit: 24, step: 2, drift: 80, arc: 18, fade: 0.15, most: 24 };
+// an eighth of a turn every `step`), then walks back to the union's camp
+// over `drift` ticks -- the first `top` of it over the stage to its front
+// corner, the next `down` down the plinth, the rest across the cloud -- and
+// fades by opacity over the last `fade` of the way. At most `most` at once.
+export const SKY_WON = { lift: 6, orbit: 24, step: 2, drift: 80, top: 0.2, down: 0.1, fade: 0.15, most: 24 };
+// A sign newly planted fades in over this.
+export const SIGN_FADE_S = 0.6;
 
 // --- the crowd's life: the rings ----------------------------------------------------------
 // A rally: a sign or poster lifts a cell and a ring runs out from it through
@@ -168,18 +181,15 @@ export const GOD_FAR = 1.3;
 // Its lit cap is the circle `cap` (x, z, radius) of its own radius. Near the
 // feet they are pressed to `low` of their height, rising to whole between
 // depths `rise`; past a row `rowmin` cells deep the rows stop thinning and
-// only narrow. It rolls `roll` units toward the viewer a second, traced a
+// only narrow; rows under `shade` cells deep go unshaded and their lines
+// under `faint` are left out. It rolls
+// `roll` units toward the viewer a second, traced a
 // tick at a time (SKY_TICK_S), `slice` of its columns a frame, held
 // between, and slid row by row with the camera between traces; a pan of more
 // than `margin` of the window since the last trace traces it again at once.
 export const CLOUD_FLOOR = { f: 130, cam: 0.86, cap: [0.1, 0.17, 0.95], vary: 0.15, ez: 1.35, lx: 0.36, lz: 0.45,
                              jit: 0.3, r: [0.48, 0.62], amp: [0.21, 0.3], puff: 0.4, row: 0.5, roll: 0.024,
-                             low: 0.3, rise: [2.5, 9], rowmin: 1.6, far: 400, margin: 0.25, slice: 0.1 };
-// A lip of billow over a body's feet: as high as `h` of its size, round
-// tops `w` of it across, its line ink from `ink` cells of body up, mid below.
-export const CLOUD_LIP = { h: 0.4, w: 0.31, sink: 0.15, ink: 6, least: 4 };
-// The throne's bottom step's lip, in sky cells high.
-export const CLOUD_LIP_THRONE = 2.4;
+                             low: 0.3, rise: [2.5, 9], rowmin: 1.6, shade: 2.4, faint: 1.8, far: 400, margin: 0.25, slice: 0.1 };
 
 // --- the sky's ranges (take S3, taller) ----------------------------------------------
 // Three ranges of cloud, far to near, each a skyline of value noise over

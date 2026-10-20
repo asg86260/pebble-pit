@@ -24,7 +24,7 @@ import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, floorAt, afterFloor, ART } from '../after/place.js';
+import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, afterFloor, ART } from '../after/place.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel.js';
 import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
@@ -263,7 +263,9 @@ function drawMember(w) {
     const s = working(w.at), pose = workerPose(w.at, s.work, A().t);
     if (pose) { frameOf(w.at).body(pose.x, pose.y, pose.dx, 0, pose.squat); return; }
   }
-  const ground = Math.abs(w.y - afterFloor()) < 1 ? floorAt(w.x) : w.y;
+  // On the floor a body stands on the line, which is drawn flat (render/
+  // after/floor.js): it walks level over the cloud.
+  const ground = w.y;
   const at = body(w.x, ground);
   const x = at.x, y = at.y;
   ctx.fillStyle = GREY[K];

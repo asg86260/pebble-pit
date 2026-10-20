@@ -20,7 +20,7 @@
 // share of the camera's move since. A pan further than the sheet's margin
 // traces it again at once.
 
-import { P, GREY, CLOUD_FLOOR as C, CLOUD_LIP, AFTER_HORIZON, SKY_TICK_S } from '../../config.js';
+import { P, GREY, CLOUD_FLOOR as C, AFTER_HORIZON, SKY_TICK_S } from '../../config.js';
 import { S } from '../../state.js';
 import { ctx } from '../ctx.js';
 import { horizonY, depthAtY } from '../../after/sky.js';
@@ -141,7 +141,9 @@ function march(j, n) {
 }
 // Paint a marched job onto its sheet: white tops, shaded fronts, and the line
 // where a nearer billow stands in front of a farther one, its tone by how
-// thick the rows are there.
+// thick the rows are there. Rows thinner than `shade` cells have no shaded
+// fronts, and a line under `faint` cells is left out, so the floor runs calm
+// into the horizon rather than hatched.
 function paint(j) {
   const { cols, rows, ZB, CZ, OW, TN, RA } = j, g = j.sheet.g, gap = 0.25 * C.lz;
   g.clearRect(0, 0, j.sheet.c.width, j.sheet.c.height);
@@ -151,11 +153,11 @@ function paint(j) {
     const flush = end => { if (run >= 0) { g.fillStyle = GREY[TONE[run]]; g.fillRect(at, y, end - at, 1); } };
     for (let x = 0; x < cols; x++) {
       const k = y * cols + x, o = OW[k], me = CZ[k];
-      let tone = TN[k] === 2 && ps > 0.35 ? 1 : 0;
+      let tone = TN[k] === 2 && ps > C.shade ? 1 : 0;
       const edge = (y > 0 && OW[k - cols] !== o && CZ[k - cols] > me + gap)
         || (x > 0 && OW[k - 1] !== o && CZ[k - 1] > me + gap && ZB[k - 1] > ZB[k] * 1.3)
         || (x < cols - 1 && OW[k + 1] !== o && CZ[k + 1] > me + gap && ZB[k + 1] > ZB[k] * 1.3);
-      if (edge) { const pz = ps * lerp(0.8, 1.25, RA[k]); tone = pz > 6 ? 3 : pz > 3 ? 2 : pz > 0.5 ? 1 : tone; }
+      if (edge) { const pz = ps * lerp(0.8, 1.25, RA[k]); tone = pz > 6 ? 3 : pz > 3 ? 2 : pz > C.faint ? 1 : tone; }
       if (tone !== run) { flush(x); run = tone; at = x; }
     }
     flush(cols);
@@ -251,11 +253,4 @@ export function lip(x0, x1, base, h, line, seed, rw) {
     const lo = l < 1 || r < 1 ? 1 : Math.max(1, Math.min(t, t - Math.min(l, r) + 1));
     if (line != null) { ctx.fillStyle = GREY[line]; ctx.fillRect(x * P, (base - t - 1) * P, P, Math.min(lo, t) * P); }
   }
-}
-// The lip over a body `n` cells across standing on cell row `foot`, from
-// cell x `x0`: in the line tone the floor uses at that size.
-export function bodyLip(x0, n, foot, seed) {
-  if (n < CLOUD_LIP.least) return;
-  lip(x0 - 1, x0 + n + 1, foot + Math.max(1, Math.round(n * CLOUD_LIP.sink)), Math.max(1.6, n * CLOUD_LIP.h),
-      n >= CLOUD_LIP.ink ? K : MID, seed, Math.max(1.6, (n + 2) * CLOUD_LIP.w));
 }

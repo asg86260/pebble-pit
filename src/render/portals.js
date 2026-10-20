@@ -29,7 +29,6 @@ import { pairBodies, placeAt, onRoad, passAlpha } from '../ghosts.js';
 import { drawGatesBehind, drawGatesFront, drawGatesAfter } from './gates.js';
 import { goOnDue, goOnAlpha, fallNow, actCaption } from '../actbeats.js';
 import { rockRowsLeft, soulAt, mansionHeld } from '../mansion.js';
-import { afterFloor, floorAt } from '../after/place.js';
 import { deepFloor } from '../deep/place.js';
 
 const snap = v => Math.round(v / P) * P;
@@ -225,7 +224,6 @@ function drawSoul(x, y, inked, look) {
   if (look) { dressOn(ctx, x, y, look); dressHead(ctx, x, y, look); }
 }
 
-const onCloud = b => (Math.abs(b.y + WORKER - afterFloor()) < 1 ? floorAt(b.x + WORKER / 2) - afterFloor() : 0);
 export function drawActBodies(place) {
   const pair = pairBodies(), p = S.acts && S.acts.pair;
   if (pair && p) {
@@ -238,7 +236,7 @@ export function drawActBodies(place) {
       // layer draws them (render/road.js)
       if ((placeAt(b.y) || (onRoad(b.y) ? 'road' : null)) !== place) return;
       // Up there, a body standing on the cloud floor stands on its puffs.
-      const x = Math.round(b.x), y = Math.round(b.y) + (place === 'after' ? onCloud(b) : 0);
+      const x = Math.round(b.x), y = Math.round(b.y);
       const look = lookFor(WHO[i], {}, b.x, { face: p.face || null, deep: place === 'deep' });
       faded(k, () => {
         if (p.mode === 'alive') drawBody(x, y, look);

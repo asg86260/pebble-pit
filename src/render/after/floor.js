@@ -34,14 +34,14 @@ function edge(el, j0, j1, x0, yTop, tone, fill, yBot, skip) {
 // popped. Drawing state only.
 let was = null, wasKey = null, changedAt = -1e9;
 export function drawFloor() {
-  // Under the line is the cloud floor (render/after/cloudfloor.js), so the
-  // puffs are filled only down to the line.
-  const el = floorProfile(), top = afterFloor(), bot = top + 2;
+  // Under the line is the cloud floor (render/after/cloudfloor.js), and the
+  // line is drawn only where something stands on it -- a station's ground, a
+  // tree's foot: across the open floor the cloud floor itself is the ground,
+  // and a ruled line the width of the window would cut it in two.
+  const el = floorProfile(), top = afterFloor(), bot = top + 2, flats = floorFlats();
   const j0 = Math.max(0, Math.floor((S.camX - afterX0()) / P) - 1);
-  // Past the place's end (the camera reaches on to God's camp) the line runs
-  // on flat, one fill.
-  const jEnd = Math.ceil((S.camX + S.viewW - afterX0()) / P) + 2, j1 = Math.min(el.length, jEnd);
-  if (jEnd > el.length) { const a = Math.max(j0, el.length); fr(afterX0() + a * P, top, (jEnd - a) * P, 2, K); }
+  const j1 = Math.min(el.length, Math.ceil((S.camX + S.viewW - afterX0()) / P) + 2);
+  const bare = j => !flats.some(([a, b]) => j >= a && j < b);
   const key = sitesKey();
   if (key !== wasKey) { if (wasKey != null) { changedAt = now(); } else was = el.slice(); wasKey = key; }
   const f = clamp01((now() - changedAt) / AFTER_BUILD_FADE_S);
@@ -50,17 +50,12 @@ export function drawFloor() {
   // The notch beside the sawdust heap: a gap in the line two cells wide,
   // there once the saw mill's ground is taken.
   const n0 = sited('mill') ? Math.round((notchX() - afterX0()) / P) : -9, inNotch = j => j >= n0 && j < n0 + 2;
-  edge(el, j0, j1, afterX0(), top, K, true, bot, j => inNotch(j) || moving(j) || moving(j - 1));
+  edge(el, j0, j1, afterX0(), top, K, true, bot, j => bare(j) || inNotch(j) || moving(j) || moving(j - 1));
   if (f < 1) {
     const g = ctx.globalAlpha, near = j => !(moving(j) || moving(j - 1)) || inNotch(j);
     ctx.globalAlpha = g * f; edge(el, j0, j1, afterX0(), top, K, false, bot, near);
     ctx.globalAlpha = g * (1 - f); edge(was, j0, j1, afterX0(), top, K, false, bot, near);
     ctx.globalAlpha = g;
-  }
-  // A pale dash under a valley's line, where two puffs meet.
-  const flats = floorFlats();
-  for (let j = Math.max(1, j0); j < Math.min(j1, el.length - 1); j++) {
-    if (el[j] === 0 && (el[j - 1] > 0 || el[j + 1] > 0) && !flats.some(([a, b]) => j >= a - 1 && j < b + 1)) fr(afterX0() + j * P + 2, top + 4, P - 4, 2, PALE);
   }
   // The notch's walls: the line turned down a cell, then the cloud's depth in
   // pale steps either side, the gap left white.

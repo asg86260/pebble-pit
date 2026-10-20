@@ -7,13 +7,13 @@
 // from. The crowd's shape is set through the act's rims (a slot set to 9 is
 // a member already gone, with no walk), the setup these checks are not about.
 import { group, ok, run, yard } from './helpers.mjs';
-import { STRIKE_SHARE, GOD_DEPTH } from '../src/config.js';
-import { afterFloor, afterOpenX, soulX, unionX1 } from '../src/after/place.js';
+import { STRIKE_SHARE, GOD_DEPTH, CROWD_X0, CROWD_PITCH, P } from '../src/config.js';
+import { afterFloor, afterOpenX, soulX, soulY, unionX1, campEdges } from '../src/after/place.js';
 import { stepAfter } from '../src/after/index.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawSkyCrowd, drawAfterCrowd, crowdDrawn, glareAlpha, raysLeft } from '../src/render/aftercrowd.js';
 import { afterEnd } from '../src/view.js';
-import { godMid, godU } from '../src/after/sky.js';
+import { godMid, godU, walkSeen, stage, stageHalf } from '../src/after/sky.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -196,6 +196,42 @@ group("God stands in the window all along the pan toward him, the union's camp a
              ok(offs.every((v, i) => i === 0 || v < offs[i - 1]), `${w}x${h}: drawn in toward the middle along the pan`),
              ok(left.every(Boolean), `${w}x${h}: the union's camp left of him all along`));
   }
+  return out;
+});
+
+// God's camp stands on a stage (DESIGN.md, "God's camp stands on a stage in
+// the clouds"): a carrier's way crosses the cloud, climbs the plinth and
+// spreads over the top to its own spot, and nothing on the way teleports --
+// a step of the sim's walk is a short step of the drawing, its size too,
+// and two signs' carriers end in two places on the stage, not in a knot.
+group("a carrier's way onto the stage is unbroken, and carriers spread to their own spots", async () => {
+  const out = [];
+  up();
+  for (const at of [afterOpenX(), godU()]) {
+    lookAt(at);
+    const cx = S.camX + S.viewW / 2, st = stage(), a = campEdges()[1], fl = afterFloor();
+    // across the cloud and up the plinth, a pixel of the sim's walk at a time
+    let worst = 0, grow = 0, prev = null;
+    for (let x = a - 20; x <= CROWD_X0 + P; x += 1) {
+      const v = walkSeen(x, fl, cx);
+      if (prev) { worst = Math.max(worst, Math.hypot(v.x - prev.x, v.y - prev.y)); grow = Math.max(grow, Math.abs(v.s - prev.s)); }
+      prev = v;
+    }
+    // then out over the top, the sim's straight line from the yard's edge to a spot
+    const to = { x: soulX(30) + P / 2, y: soulY(12) + P * 2 };
+    for (let k = 0; k <= 200; k++) {
+      const v = walkSeen(CROWD_X0 + P + (to.x - CROWD_X0 - P) * k / 200, fl + (to.y - fl) * k / 200, cx);
+      worst = Math.max(worst, Math.hypot(v.x - prev.x, v.y - prev.y)); prev = v;
+    }
+    const end = prev, gm = godMid(cx);
+    const onTop = end.y > st.yb && end.y < st.yf && Math.abs(end.x - gm) < stageHalf(st, end.y);
+    const spots = [[4, 2], [20, 30], [34, 8]].map(([f, r]) => walkSeen(soulX(f) + P / 2, soulY(r) + P * 2, cx));
+    const apart = spots.every((p, i) => spots.every((q, j) => i === j || Math.hypot(p.x - q.x, p.y - q.y) > 3 * P));
+    out.push(ok(worst < 40 && grow <= 2, `camera at ${Math.round(at)}: no step of the way jumps`, `${worst.toFixed(1)} px, size ${grow.toFixed(1)}`),
+             ok(onTop, `camera at ${Math.round(at)}: the way ends on the stage's top`, JSON.stringify(end)),
+             ok(apart, `camera at ${Math.round(at)}: three signs, three spots`));
+  }
+  window.__actsOn(null);
   return out;
 });
 
