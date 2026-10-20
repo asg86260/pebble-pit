@@ -4,6 +4,18 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## No overlapping objects on the map -- HARD RULE, NOT BUILT (2026-10-20)
+
+The owner, 2026-10-20: zero overlap between elements of different objects,
+as a hard rule (CLAUDE.md, "Decided"). Seen now: in the yard the casino,
+heaven's stairs and the house overlap (`gates-opening` scene: the stair's
+foot stands in the heap by the house). Fix the system: every placed object
+declares its footprint over its whole life in one placement table, every
+position is derived from its neighbors plus a gap, and a rule in
+`src/verify.js` asserts no two footprints touch in any place, so every node
+group watches it. Then move what the rule finds. Blocked on: nothing; next in
+the orchestrated queue after act 3 step 2.
+
 ## One place engine for every act -- APPROVED, BUILDING IN ORDER (2026-10-20)
 
 DESIGN.md, "One place engine". Act 3 and hell carry parallel copies of the

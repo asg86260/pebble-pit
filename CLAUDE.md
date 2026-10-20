@@ -387,6 +387,13 @@ Two harness facts, each of which cost a full launch cycle:
 
 ## Decided, do not relitigate
 
+- **No two objects overlap on the map, ever** (the owner, 2026-10-20, a hard
+  rule). Stations, the house, the casino, the stairs and gates, trees,
+  piles, signs -- every placed thing claims its footprint over its whole
+  life (built, growing, animating), and no footprint of one object may
+  touch another's, in any place. A placement is derived from its neighbors
+  and a gap, never a hand-picked x that happens to clear today. The check
+  is a rule in `src/verify.js`, so every group watches it.
 - **Every act runs on the shared systems** (the owner, said many times;
   written down 2026-10-20). Stations and their table, jobs and the walk,
   bodies and routes, piles, boards and shop rows and buying, click and
