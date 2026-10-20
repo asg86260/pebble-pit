@@ -19,12 +19,12 @@
 
 import { P, AFTER_ART_SCALE as A, AFTER_FALL_S, AFTER_CROWN_FADE_S, AFTER_BUILD_FADE_S, AFTER_DIG_CLICKS,
          TREE_CHOPS, AFTER_ART_WORK_S, AFTER_PILE_FADE_S, AFTER_FALL_BOUNCE_S, AFTER_FALL_BOUNCE, AFTER_LOG_ROLL_S } from '../../config.js';
-import { plotX, afterFloor, pineOf, inPine, PINE_GROWN, STUMP, SAW_ROWS, ICON_DOT, AP } from '../../after/place.js';
+import { plotX, afterFloor, pineOf, inPine, PINE_GROWN, STUMP, sawGeom, ICON_DOT, AP } from '../../after/place.js';
 import { trees, groundLogs } from '../../after/grove.js';
 import { frame, K, W, PALE, MID, SOIL, DUST, toneOf, now, inView, clamp01 } from './kit.js';
 import { gestureView, groveIcons } from '../../after/gestures.js';
 import { ctx } from '../ctx.js';
-import { GREY } from '../../config.js';
+import { GREY, AFTER_SAW_GRIP, AFTER_SAW_BLADE_ROWS } from '../../config.js';
 
 // The pine's shape is place.js's (`PINE`), where the hand reads it too.
 const stageOf = pineOf;
@@ -182,12 +182,35 @@ function sawCells(o) {
   SAW.set(o, out);
   return out;
 }
-// The saw across trunk `w` x `h`, `kerf` columns cut from its near side.
+// The look-2 saw (config's AFTER_SAW_*, place.js `sawGeom`): a grip of
+// edge and a hole, and a blade of a spine, a pale body and a row of teeth,
+// all on the yard's grid, as cells like `sawCells`.
+function miniCells(g, o) {
+  const out = [], add = (c, r, t, front = false) => out.push([c + o, r, t, front]);
+  const [gw, gh] = AFTER_SAW_GRIP;
+  for (let r = g.top; r < g.top + gh; r++) for (let u = g.u0 - gw; u < g.u0; u++) {
+    const edge = r === g.top || r === g.top + gh - 1 || u === g.u0 - gw || u === g.u0 - 1;
+    add(u, r, edge ? K : W, true);
+  }
+  for (let u = g.u0; u < g.u0 + g.B; u++) {
+    add(u, g.b0, K);
+    for (let r = g.b0 + 1; r < g.b0 + AFTER_SAW_BLADE_ROWS - 1; r++) add(u, r, PALE);
+    if ((u - g.u0) % 2 === 0) add(u, g.b0 + AFTER_SAW_BLADE_ROWS - 1, K);
+  }
+  return out;
+}
+// The kerf's px: `kerf` of the trunk's w columns, from its near side, over the
+// rows the saw's blade cuts.
+const kerfRect = (w, kerf) => { const g = sawGeom(w); return { x: -(w - 1) / 2 * AP, y: g.kerf[0] * g.cs, w: kerf * AP, h: (g.kerf[1] - g.kerf[0] + 1) * g.cs }; };
+// The saw across trunk `w` x `h`, `kerf` columns cut from its near side, `o`
+// its cells along; drawn on the yard's grid in px, `d` a frame at scale 1.
 function saw(d, o, w, h, kerf) {
-  const t0 = -(w - 1) / 2, inTrunk = (c, r) => c >= t0 && c < t0 + w && r >= -h && r <= -1;
-  const cut = (c, r) => inTrunk(c, r) && c < t0 + kerf && r >= SAW_ROWS[0] && r <= SAW_ROWS[1];
-  for (let r = SAW_ROWS[0]; r <= SAW_ROWS[1]; r++) for (let k = 0; k < kerf; k++) d.c(t0 + k, r, W);
-  for (const [c, r, tone, front] of sawCells(o)) if (front || !inTrunk(c, r) || cut(c, r)) d.c(c, r, tone);
+  const g = sawGeom(w), cs = g.cs, tl = -(w - 1) / 2 * AP, tr = tl + w * AP, kr = kerfRect(w, kerf);
+  const inTrunk = (x, y) => x >= tl && x + cs <= tr && y >= -h * AP && y + cs <= 0;
+  const cut = (x, y) => inTrunk(x, y) && x < tl + kr.w && y >= kr.y && y + cs <= kr.y + kr.h;
+  if (kerf) d.px(kr.x, kr.y, kr.w, kr.h, W);
+  const cells = g.u0 == null ? sawCells(o).map(([c, r, t, f]) => [c + g.du, r + g.dr, t, f]) : miniCells(g, o);
+  for (const [c, r, tone, front] of cells) { const x = c * cs, y = r * cs; if (front || !inTrunk(x, y) || cut(x, y)) d.px(x, y, cs, cs, tone); }
 }
 
 // The grove's icons, in dots: '#' ink.
@@ -268,9 +291,10 @@ export function drawGrove() {
       if (p.stage === GROWN) {
         const st = stageOf(GROWN, big), [w, h] = st.trunk, kerf = Math.round(Math.min(1, p.chops / TREE_CHOPS) * w);
         const inHand = hand && hand.i === i, cutting = p.chip != null && t - p.chip < AFTER_ART_WORK_S;
-        if (inHand) saw(d, Math.round(hand.s / AP), w, h, kerf);
-        else if (cutting) saw(d, Math.floor(t / 0.25) % 2 ? 2 : -2, w, h, kerf);
-        else if (kerf) for (let r = SAW_ROWS[0]; r <= SAW_ROWS[1]; r++) for (let k = 0; k < kerf; k++) d.c(-(w - 1) / 2 + k, r, W);
+        const cs = sawGeom(w).cs, d1 = frame(bx, fl, 0, null, 1), kr = kerfRect(w, kerf);
+        if (inHand) saw(d1, Math.round(hand.s / cs), w, h, kerf);
+        else if (cutting) saw(d1, (Math.floor(t / 0.25) % 2 ? 2 : -2) * AP / cs, w, h, kerf);
+        else if (kerf) d1.px(kr.x, kr.y, kr.w, kr.h, W);
         for (let k = 0; k < Math.min(4, Math.floor(p.chops / 2)); k++) { d.c(-2 - (k >> 1), -1, toneOf(DUST, k, 1)); d.c(2 + (k >> 1), -1, toneOf(DUST, k, 2)); }
       }
     }

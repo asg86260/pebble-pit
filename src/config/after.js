@@ -543,3 +543,19 @@ export const AFTER_ACT_COINS = ['rebel', 'timber', 'paper'];
 // shack's five stations and the grove's five upgrades in two rows, the yard's
 // own wrapping (board.js `pinWidth`), against the yard's SHELF_SLOTS.
 export const AFTER_BOARD_SLOTS = 3;
+
+// --- the grove's handsaw: three sizes to choose between (temporary dial) ------------
+// AFTER_SAW_LOOK 0 is the saw as drawn, in art cells (AFTER_ART_SCALE a cell);
+// 1 the same drawing at the yard's own grid cell, like the bodies and the loads
+// they carry; 2 a saw drawn to the trunk it cuts, its blade AFTER_SAW_BLADE_PER_TRUNK
+// trunks long, on the yard's grid. The dial goes when the owner has picked:
+// `?saw=n` on the page sets it for a shot.
+const sawParam = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('saw') : null;
+export let AFTER_SAW_LOOK = sawParam == null ? 0 : +sawParam;
+export const AFTER_SAW_BLADE_PER_TRUNK = 1.5;   // look 2: the blade's length in trunk widths
+export const AFTER_SAW_GRIP = [3, 5];           // look 2: the grip's width and height, grid cells
+export const AFTER_SAW_BLADE_ROWS = 3;          // look 2: the blade's rows, its teeth the last
+export const AFTER_SAW_KNOBS = [
+  { key: 'AFTER_SAW_LOOK', label: 'grove saw size (0 art, 1 yard, 2 trunk)', min: 0, max: 2, step: 1,
+    get: () => AFTER_SAW_LOOK, set: v => { AFTER_SAW_LOOK = v; } }
+];

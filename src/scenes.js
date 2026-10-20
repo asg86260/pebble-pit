@@ -487,9 +487,9 @@ function handTurn(key, ring, rev, frames) {
 // The grove's first tree with the saw put on it by its icon, sawn back and
 // forth `strokes` times at a stroke a `per` seconds, the press held at the
 // end of the last; framed on the plot.
-function handSaw(strokes, per = 0.5) {
+function handSaw(strokes, per = 0.5, big = false) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  window.__afterAxe(); window.__fast(0.5);
+  window.__afterAxe(); if (big) S.after.plots[0].big = true; window.__fast(0.5);
   const icon = window.__groveIcons().find(c => c.kind === 'saw');
   window.__gesture('down', icon.x, icon.y - 4); window.__gesture('up');
   const b = window.__gestureParts('tree', 0).sawBox, x0 = b.x + P * 2, y = b.y + b.h / 2;
@@ -2941,6 +2941,8 @@ export const SCENES = {
                  window.__look(0); window.__holdShot(); } },
   'after-saw': { about: 'the acts', say: "the handsaw on the grove's tree, dragged back and forth, its kerf half open",
     run: () => handSaw(6) },
+  'after-saw-big': { about: 'the acts', say: 'TEMP: the handsaw on a big tree',
+    run: () => handSaw(6, 0.5, true) },
   'after-fall': { about: 'the acts', say: "the grove's tree sawn through, coming down whole about its cut",
     run: () => { handSaw(9); window.__fast(0.5); window.__holdShot(); } },
   'after-dig': { about: 'the acts', say: "a stump with its shovel icon, dragged half up out of the ground by hand, its roots showing",

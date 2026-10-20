@@ -14,7 +14,8 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, UNION_CROWD, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
-         AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL, AFTER_ART_SCALE } from '../config.js';
+         AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL, AFTER_ART_SCALE,
+         AFTER_SAW_LOOK, AFTER_SAW_BLADE_PER_TRUNK, AFTER_SAW_GRIP, AFTER_SAW_BLADE_ROWS } from '../config.js';
 
 import { S } from '../state.js';
 import { ART as BASE_ART } from './art.js';
@@ -330,6 +331,27 @@ export const STUMP = [-1, 3, 2];
 // it stands in (docs/mocks/act3-saw-2026-10-18, saw 3, its partner's peg cut).
 export const SAW_SPAN = [-15, 9];
 export const SAW_ROWS = [-8, -2];
+// The saw as the dial (AFTER_SAW_LOOK) has it, in cells of `cs` px off the
+// trunk's plot and the floor, for a trunk `w` art cells wide: `span` the
+// columns its grip and blade stand in, `box` the rows the whole saw stands in
+// and `kerf` the rows its blade cuts. Look 0 is the art cells above; look 1 the
+// same drawing at the grid cell (`du`, `dr` its shift from the art's columns and
+// rows), its middle where it was and its blade centered on the trunk; look 2 a
+// grip and a blade of AFTER_SAW_BLADE_PER_TRUNK trunks (`u0` its blade's first
+// column, `B` its length).
+export function sawGeom(w, look = AFTER_SAW_LOOK) {
+  const rows = SAW_ROWS[1] - SAW_ROWS[0] + 1;
+  const mid = Math.round((SAW_ROWS[0] + SAW_ROWS[1] + 1) / 2 * AP / P);   // the old saw's middle, grid rows
+  const tc = (-(w - 1) / 2 + w / 2) * AP / P;                              // the trunk's middle, grid columns
+  if (look === 0) return { cs: AP, span: SAW_SPAN, box: SAW_ROWS, kerf: SAW_ROWS, du: 0, dr: 0 };
+  if (look === 1) {
+    const du = Math.round(tc - 10), r0 = mid - Math.floor(rows / 2);   // the blade is the columns -10..9
+    return { cs: P, span: [SAW_SPAN[0] + du + 10, SAW_SPAN[1] + du + 10], box: [r0, r0 + rows - 1], kerf: [r0, r0 + rows - 1], du: du + 10, dr: r0 - SAW_ROWS[0] };
+  }
+  const B = Math.round(AFTER_SAW_BLADE_PER_TRUNK * w * AP / P), [gw, gh] = AFTER_SAW_GRIP;
+  const u0 = Math.round(tc - B / 2), top = mid - Math.floor(gh / 2), b0 = top + Math.floor((gh - AFTER_SAW_BLADE_ROWS) / 2);
+  return { cs: P, span: [u0 - gw, u0 + B - 1], box: [top, top + gh - 1], kerf: [b0, b0 + AFTER_SAW_BLADE_ROWS - 1], u0, B, b0, top, du: 0, dr: 0 };
+}
 // The grove's icons, [width, height] in their own dots of ICON_DOT px: the
 // saw over a grown tree and the shovel over a stump (render/after/pine.js), a
 // dot a grid cell, so the saw reads at a glance (the owner, 2026-10-20: "too
@@ -361,7 +383,7 @@ export function stationParts(key, i = 0) {
     const ic = { w: ICON.saw[0] * ICON_DOT, h: ICON.saw[1] * ICON_DOT };
     const icon = { x: bx + AP / 2, y: fl + top * AP - P * 2, box: { x: snap(bx + AP / 2 - ic.w / 2), y: fl + top * AP - P * 2 - ic.h, w: ic.w, h: ic.h } };
     return { box: box(bx, a, top, b - a + 1, -top), rows, foot: { x: bx, y: fl }, top: fl + top * AP,
-             sawBox: box(bx, SAW_SPAN[0], SAW_ROWS[0], SAW_SPAN[1] - SAW_SPAN[0] + 1, SAW_ROWS[1] - SAW_ROWS[0] + 1), icon };
+             sawBox: (g => ({ x: bx + g.span[0] * g.cs, y: fl + g.box[0] * g.cs, w: (g.span[1] - g.span[0] + 1) * g.cs, h: (g.box[1] - g.box[0] + 1) * g.cs }))(sawGeom(pineOf(PINE_GROWN, i >= 0 && treeBig(i)).trunk[0])), icon };
   }
   if (key === 'stump') {
     // `stump` the block as drawn (render/after/pine.js, `stump`); `grip`
