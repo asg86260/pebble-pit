@@ -7,6 +7,7 @@
 
 import { S } from '../state.js';
 import { claimSave } from '../persist.js';
+import { resetPrefs, reducedMotion } from '../prefs.js';
 
 // Real wall time, and the only thing in the suite that costs any. Dust in
 // flight, the counter tween, the board sliding and the save's debounce are
@@ -30,8 +31,12 @@ export const SEED = 20250830;
 // owns its save again: a group that played the game in a frame (the language
 // tab) leaves that frame's name on the slot, this page stands aside and stops
 // writing, and a group after it that reads the save back (the feedback
-// form's tick) finds the slot as the seed cleared it.
+// form's tick) finds the slot as the seed cleared it. And the preferences
+// are the defaults: a group that set one (the motion switch) leaves none
+// behind for its neighbor.
 export const newRun = () => {
+  resetPrefs();                                       // and the page that wears the motion one
+  document.body.classList.toggle('still', reducedMotion());
   claimSave();
   S.yielded = false;
   window.__seed(SEED);

@@ -336,7 +336,15 @@ export const TESTS = [
     out.push(ok(S.view === 'deep', 'deep: the arrow at the shaft takes the view down', S.view));
     window.setResources({ dust: 88888, shards: 88888, spores: 88888, sparks: 88888, scales: 88888 });
     S.seenScale = S.seenFang = true;
+    // The first trip down is a scene that owns the camera (abyssintro.js), in
+    // either motion; the pan is the player's once it lets go.
+    // The first trip down is a scene that owns the camera (abyssintro.js), in
+    // either motion; the pan is the player's once it lets go.
+    out.push(ok(await until(() => !S.beat.camera, 3000), 'deep: the first trip down lets the camera go', String(S.beat.camera)));
     out.push(...await panChecks('deep'));
+    // Reduced motion cuts the glide, never the pan: the same two ends.
+    window.__motion(true);
+    out.push(...await panChecks('deep, reduced motion'));
     out.push(...await stationChecks('deep'));
     out.push(...await buyCheck('deep', openRows()));
     out.push(...await scrollCloses('deep'));

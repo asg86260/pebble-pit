@@ -42,6 +42,13 @@ try {
 
 export const pref = name => prefs[name];
 
+// Every preference back to its default, kept: a fresh profile, for a check
+// that must not depend on what an earlier one set.
+export function resetPrefs() {
+  prefs = { ...DEFAULTS };
+  try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch {}
+}
+
 export function setPref(name, value) {
   prefs[name] = value;
   try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch {}
