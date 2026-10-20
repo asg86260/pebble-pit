@@ -37,7 +37,6 @@ body.title { overflow: hidden; }
 /* How far the column and the foot stand in from the window's edges. */
 body.title { --title-edge: 20px; }
 .col .gamename { font-size: var(--fs-title); letter-spacing: calc(var(--track-l) * var(--track)); line-height: 1.1; margin-bottom: 4px; }
-.col .line { text-transform: none; letter-spacing: calc(var(--track-s) * var(--track)); color: var(--ink-2); margin: 0 auto 14px; max-width: 20em; }
 .col .word { margin-bottom: 4px; }
 .col > button, .col > .pair, .col > .paste { min-width: var(--col-w); }
 /* what play opens, under it */

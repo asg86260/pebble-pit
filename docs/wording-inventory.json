@@ -1330,13 +1330,6 @@
   "text": "pebble<br>pit"
  },
  {
-  "id": "title-line",
-  "group": "Title page",
-  "where": "index.html",
-  "context": "landing page tagline",
-  "text": "a rock. a hole. a few people between them."
- },
- {
   "id": "title-play",
   "group": "Title page",
   "where": "index.html",
