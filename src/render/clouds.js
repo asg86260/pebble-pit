@@ -917,3 +917,33 @@ export function cloudLayer({ kind = 'cumulus', R = 8, seed = 1, flat = 1, d = 0.
            w: Math.ceil(ox + right) + 2, h: Math.ceil(oy + bottom) + 2, baseRow: oy, ground: false, nt: CLOUDS_TIERS.length,
            rowOf: CLOUDS_TIERS.map(() => 0), fills: null };
 }
+
+// A cloud of the yard's sky (weather.js): one cloud of a shape, `wide` cells
+// across at rest, squashed by `flat`, from its own seed, held whole -- no
+// life cycle, since its size is the storm's and the murk's readout and a
+// cloud breathing on its own would muddy it -- with room in its window for
+// it to swell to `grow` times its size. Its circles at rest are handed back
+// too (`bumps`: x across from its left end, y up from its base as a negative,
+// r, and each one's own squash `f`), which is what the sky's report counts.
+export function heldCloud({ kind = 'cumulus', wide = 20, seed = 1, flat = 1, grow = 1.5 }) {
+  const make = R => { const ps = []; cloudPuffs(gen(seed * 7919 + 8111), kind, 0, 0, R, flat, null, 0, ps); return ps; };
+  const span = ps => { let l = Infinity, r = -Infinity; for (const p of ps) { l = Math.min(l, p.x - p.r); r = Math.max(r, p.x + p.r); } return [l, r]; };
+  // sized so it stands `wide` across: worked once at a guess and once more
+  // at the size the guess says, from the same seed, so the shape is the same
+  let [l, r] = span(make(wide / 3));
+  const puffs = make(wide / 3 * wide / Math.max(1, r - l));
+  [l, r] = span(puffs);
+  const bumps = puffs.map(p => ({ x: p.x - l, y: p.y, r: p.r, f: p.flat }));
+  let top = 0, bottom = 0, left = 0, right = 0;
+  for (const p of puffs) {
+    const m = (p.r * grow + p.a[0] + p.a[1]) * REACH;
+    top = Math.min(top, p.y - m * p.flat); bottom = Math.max(bottom, p.y + m * p.flat);
+    left = Math.min(left, p.x - l - m); right = Math.max(right, p.x - l + m);
+  }
+  const ox = Math.ceil(-left) + 1, oy = Math.ceil(-top) + 1;
+  for (const p of puffs) { p.x += ox - l; p.y += oy; if (p.cut !== undefined) p.cut += oy; }
+  const layer = { i: -3, P: { d: 1, e: 1, R: wide / 3, parallax: 0, wind: 0, every: 1 }, W: 1e6, puffs,
+    w: Math.ceil(ox + right) + 2, h: Math.ceil(oy + Math.max(bottom, 0)) + 2, baseRow: oy, ground: false,
+    nt: CLOUDS_TIERS.length, rowOf: CLOUDS_TIERS.map(() => 0), fills: null };
+  return { layer, bumps, w: Math.ceil(r - l), ox };
+}

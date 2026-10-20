@@ -28,6 +28,10 @@ import { meet } from './met.js';
 import { sfx } from './audio.js';
 import { earn } from './notices.js';
 import { smoothstep as smooth } from './motion.js';
+import { heldCloud, layerLook } from './render/clouds.js';
+import { cloudCard, cellOnPage, workClouds, putCells } from './render/cloudpage.js';
+import { onPixel } from './render/frame.js';
+import { inkOf as pageInk } from './ink.js';
 
 const BIRD_TAIL = P * 90;    // how far off either side of the view a lot may stretch
 
@@ -230,9 +234,19 @@ function makeCloud(x, sheet, storm = false) {
   const off = rand() * 2 - 1;                // where in its sheet's thickness it sits
   const far = L.far + off * CLOUD_FAR_JITTER;
   const yb = between(CLOUD_LANES[L.name]) * P;   // its base, in pixels below the band's top
-  return { x, yb, w, bumps, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
+  // Its shape is the one cloud renderer's (render/clouds.js, DESIGN.md "The
+  // yard's sky on the cloud renderer"): turrets on a flat base, as wide as
+  // the cloud drawn above would have been. Its seed is read off the draws
+  // already made, never a draw of its own, so the run's stream is the same
+  // number for number as before the sky was redrawn.
+  const seed = (Math.floor(wide * 977 + H * 131 + bumps[0].r * 7919) % 100003) + 1;
+  const held = heldCloud({ kind: HELD[kind.name], wide: w, seed, flat: L.flat, grow: 1 + CLOUD_GROW_R });
+  return { x, yb, w: held.w, bumps: held.bumps, layer: held.layer, ox: held.ox, id: ++cloudIds, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
            give: 0.7 + (off + 1) / 2 * 0.6, storm, age: 0, melt: 0 };
 }
+// The renderer's shape for each of CLOUD_KINDS: a bank is a long low heap.
+const HELD = { puff: 'cumulus', heap: 'heap', tower: 'tower', bank: 'heap' };
+let cloudIds = 0;
 
 // a cloud's cell in world pixels: its sheet's
 const cellOf = c => P * CLOUD_LAYERS[c.sheet].cell;
@@ -248,28 +262,29 @@ const fade = c => Math.min(1, c.melt) * 0.9;
 // how many of a sheet's clouds are in the sky, not counting the ones going
 const inSheet = (sheet, storm) => CLOUDS.reduce((n, c) => n + (c.sheet === sheet && c.storm === storm && !melting(c)), 0);
 
-// The columns a cloud is drawn as this frame: for each column across it, how
-// many cells stand above the base line, and how many of the lowest are the
-// underside. Only the bumps' radii grow -- with the murk a little, with the
-// storm's swell a lot -- and never their centers, so every column only ever
-// gets taller as the swell climbs and the cloud never loses a cell on the way
-// up. A storm cloud's radii are scaled by the swell, from nothing.
-function columnsOf(c, sw) {
-  const flat = CLOUD_LAYERS[c.sheet].flat;
+// How far a cloud is swelled this frame: its circles' radii `grow` -- with the
+// murk a little, with the storm's swell a lot -- and never their centers, so
+// every column only ever gets taller as the swell climbs and the cloud never
+// loses a cell on the way up. A front's cloud also comes `up` out of nothing
+// (centers and radii together) over CLOUD_BLOOM_S of its own age -- on its own
+// clock, not the sky's, because the front adds its clouds as the swell climbs
+// and one born at nine tenths would otherwise be drawn at nine tenths on the
+// frame it was made. Growing the centers too is what makes it come up out of
+// the base line rather than arriving at full height in a few columns. The
+// drawing (`drawClouds`) and the report (`columnsOf`) both read this.
+function swellOf(c, sw) {
   const k = Math.min(1, (sw + murkOf(c) * CLOUD_MURK_GROW) * c.give);
   const grow = 1 + CLOUD_GROW_R * k;
-  // A front's cloud is nothing when it is born and comes up out of nothing
-  // over CLOUD_BLOOM_S -- on its own clock, not the sky's, because the front
-  // adds its clouds as the swell climbs and one born at nine tenths would
-  // otherwise be drawn at nine tenths on the frame it was made.
-  //
-  // `up` takes the circles' centers down with their radii, which the swell's
-  // own grow deliberately does not: a cloud that keeps its centers and shrinks
-  // only its radii still stands its full height wherever a circle covers a
-  // column at all, so it arrives at full height in a few columns and spreads
-  // sideways. That is the pop. Growing the centers too is what makes it come
-  // up out of the base line.
   const up = c.storm ? Math.min(1, c.age / CLOUD_BLOOM_S) * Math.min(1, sw * c.give) : 1;
+  return { grow, up };
+}
+
+// The columns a cloud stands as this frame: for each column across it, how
+// many cells stand above the base line, and how many of the lowest are the
+// underside, off its circles at rest swelled as `swellOf` says. The sky's
+// report counts these; with no WebGL2 they are also what is drawn.
+function columnsOf(c, sw) {
+  const { grow, up } = swellOf(c, sw);
   const h = [];
   let lo = Infinity, hi = -Infinity;
   for (const b of c.bumps) {
@@ -282,8 +297,9 @@ function columnsOf(c, sw) {
       // the column's height under this bump, from the base line up to the
       // bump's top edge -- kept as it falls, fraction and all: the part of a
       // cell the cloud fills is what says how solid that cell is drawn, and
-      // rounding here is what made a cell blink on and off as the sky swelled
-      const top = -(by - Math.sqrt(d2)) * flat;
+      // rounding here is what made a cell blink on and off as the sky swelled.
+      // A bump is already squashed (its `f`), its center already placed.
+      const top = -by + Math.sqrt(d2) * b.f;
       if (top <= 0) continue;
       h[cx] = Math.max(h[cx] || 0, top);
       if (cx < lo) lo = cx; if (cx > hi) hi = cx;

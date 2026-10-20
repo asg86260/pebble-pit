@@ -303,7 +303,10 @@ export function skyGL() {
   // their places and sizes, and which 8-column strips each reaches (a counting
   // sort into one index list). Typed arrays kept from frame to frame, so a
   // frame makes no garbage.
-  function upload(s, layer, t, ox, oy) {
+  // `sc`, for a cloud that swells (the yard's, weather.js): every puff's
+  // radius times `grow` and its height over the base row `base` times `rise`,
+  // as its circles are counted for the sky's report.
+  function upload(s, layer, t, ox, oy, sc = null) {
     const { w } = s, W = layer.W;
     let n = 0;
     for (const p of layer.puffs) {
@@ -319,6 +322,7 @@ export function skyGL() {
       let near = lobe.x + lobe.stray * t - ox; near -= W * Math.floor(near / W);
       if (near > w + reach && near < W - reach) continue;
       puffAt(p, t, q);
+      if (sc) { q.y = sc.base + (q.y - sc.base) * sc.rise; q.r *= sc.grow * sc.rise; }
       const R = q.r * REACH;
       if (R <= 0.05) continue;
       // every copy of a wrapping layer that reaches the window
@@ -392,7 +396,7 @@ export function skyGL() {
       const fresh = s.fresh || Math.abs(shift) >= v.w || Math.abs(lift) >= v.h;
       s.ox = v.ox; s.oy = oy;
       const u0 = performance.now();
-      puffs += upload(s, v.layer, t, v.ox, oy);
+      puffs += upload(s, v.layer, t, v.ox, oy, v.swell || null);
       uploadMs += performance.now() - u0;
       const a = s.k, b = 1 - s.k;
       // the field and its tiers
@@ -474,5 +478,14 @@ export function skyGL() {
     for (let i = 0; i < out.length; i++) out[i] = buf[i * 4] ? tone[buf[i * 4]] : 0;
     return { w: s.w, h: s.h, tones: out };
   }
-  return { render, canvas, gl, tonesOf, tiersOf, forget: key => windows.delete(key) };
+  // A window let go of, its textures and framebuffers with it: the yard's
+  // front brings clouds and takes them away all session long.
+  function forget(key) {
+    const s = windows.get(key);
+    if (!s) return;
+    for (const pair of [s.T, s.R, s.Q, s.D]) for (const x of pair) { gl.deleteFramebuffer(x.f); gl.deleteTexture(x.t); }
+    for (const t of [s.puffs, s.strips, s.index]) if (t) gl.deleteTexture(t);
+    windows.delete(key);
+  }
+  return { render, canvas, gl, tonesOf, tiersOf, forget };
 }
