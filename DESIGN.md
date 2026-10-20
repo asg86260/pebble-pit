@@ -20895,6 +20895,21 @@ What reads as ground is a floor *made of* cloud, seen in perspective:
   only the bottom third. The sky is recomputed every couple of seconds into
   a cached image and each frame blends the two nearest, so a changing cell
   fades across rather than flipping.
+- **God's camp stands on a stage in the clouds** (the board's
+  act3-platform, the owner's own idea, 2026-10-20; supersedes the crowd
+  standing in the floor above for his camp). Built, the crowd at his true
+  depth was 2 cells a soul and vanished. Instead his camp stands on one
+  broad paper stage tilted toward the viewer, its front a stepped plinth
+  in the throne base's family, the cloud sea lapping its foot in uneven
+  billows. The stage is drawn far deeper than his depth would give -- a
+  cheat, like the crowd's scale, so it reads as a stage -- and slides as
+  one with his layer, so nothing on it skates. His crowd stands on it at
+  a giant's scale, rows of separate souls with the stage showing between
+  them, emptying from the front to bare stage floor; the flags stand among
+  them at a readable size. Carriers cross the cloud, climb the front and
+  spread to their spots on the top. The union's camp stays on the clouds.
+  The mock's `spec.md` (`docs/mocks/act3-clouds-2026-10-19/a3platform/`)
+  carries the geometry and tones.
 - **Dark mode is redrawn, not swapped**: cloud tops catch a grey light,
   undersides sink into the night, and God glows against it.
 - God stays the brightest, most solid thing on screen; the sky's lines
