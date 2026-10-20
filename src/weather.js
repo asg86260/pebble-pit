@@ -8,9 +8,9 @@
 // ground when the view scrolls.
 
 import { P, ROCK_SKY, CLOUDS_ON, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_HELD, CLOUDS_LOD, CLOUD_BLOOM_S, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
+         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_HELD, CLOUDS_LOD, CLOUDS_PALETTE, CLOUD_BLOOM_S, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
          CLOUD_SPINE_R, CLOUD_SPINE_LAP, CLOUD_SPINE_LOW, CLOUD_PUFF_R, CLOUD_PUFF_SINK,
-         CLOUD_TOP, CLOUD_STORM_AREA, CLOUD_SETTLE_S,
+         CLOUD_TOP, CLOUD_STORM_COVER, CLOUD_SETTLE_S,
          CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S, CLOUD_MELT_SHRINK, CLOUDS_FLAT,
          CLOUD_MURK_GROW, CLOUD_MURK_TINT, CLOUD_MURK_POW, CLOUD_MURK_TONE, CLOUD_MURK_UNDER,
          CLOUD_STORM_TONE, CLOUD_STORM_UNDER, CLOUD_STORM_TINT, CLOUD_STORM_UNDER_TINT,
@@ -85,7 +85,7 @@ const LANES = (() => {
   const out = {}, H = CLOUD_HELD;
   let end = 0;
   for (const L of CLOUD_LAYERS.slice().reverse()) {
-    const room = Math.ceil(H.rows[L.name][1] * (1 + CLOUD_GROW_R) * L.cell) + 1;
+    const room = Math.ceil(H.rows[L.name][1] * (1 + CLOUD_GROW_R) * H.cell) + 1;
     const from = Math.max(room, end ? end + H.gap : 0);
     out[L.name] = [from, from + H.give];
     end = from + H.give;
@@ -216,17 +216,27 @@ function styleOf(col, k) {
 // as the swell goes. `sheet` is which of CLOUD_LAYERS it is born into, and it
 // stays there: its size, its grain and its depth are the sheet's. Its height
 // is not -- every cloud's base is in the one lane (CLOUD_LANE).
-const between = ([a, b]) => a + rand() * (b - a);
-const count = ([a, b]) => a + Math.floor(rand() * (b - a + 1));
+// The draws a cloud is made from: the run's own stream (`rand`), or, for the
+// far sheet's extra clouds, the sky's own (`skyDraw`), so adding clouds to
+// the far sky never moves the stream the rest of the run plays out on.
+let draw = rand;
+let skyState = 0;
+const skyDraw = () => {
+  let t = (skyState = (skyState + 0x6D2B79F5) | 0);
+  t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+const between = ([a, b]) => a + draw() * (b - a);
+const count = ([a, b]) => a + Math.floor(draw() * (b - a + 1));
 function pickKind() {
-  let x = rand() * CLOUD_KINDS.reduce((n, k) => n + k.share, 0);
+  let x = draw() * CLOUD_KINDS.reduce((n, k) => n + k.share, 0);
   for (const k of CLOUD_KINDS) if ((x -= k.share) < 0) return k;
   return CLOUD_KINDS[CLOUD_KINDS.length - 1];
 }
 function makeCloud(x, sheet, storm = false) {
   const L = CLOUD_LAYERS[sheet];
   const kind = pickKind();
-  const wide = (14 + Math.floor(rand() * 12)) * L.scale * between(kind.wide);
+  const wide = (14 + Math.floor(draw() * 12)) * L.scale * between(kind.wide);
   const H = wide * between(kind.tall);
   const spine = [];
   let bx = 0;
@@ -238,7 +248,7 @@ function makeCloud(x, sheet, storm = false) {
   const bumps = spine.slice();
   const x0 = spine[0].x, x1 = spine[spine.length - 1].x;
   for (let j = 0, m = count(kind.puffs); j < m; j++) {
-    const px = x0 + rand() * (x1 - x0);
+    const px = x0 + draw() * (x1 - x0);
     // the spine's surface at px, for the puff to sit on
     let top = 0;
     for (const sp of spine) top = Math.max(top, -(sp.y - Math.sqrt(Math.max(0, sp.r * sp.r - (px - sp.x) ** 2))));
@@ -249,7 +259,7 @@ function makeCloud(x, sheet, storm = false) {
   const left = Math.min(...bumps.map(b => b.x - b.r));
   for (const b of bumps) b.x -= left;
   const w = Math.ceil(Math.max(...bumps.map(b => b.x + b.r)));
-  const off = rand() * 2 - 1;                // where in its sheet's thickness it sits
+  const off = draw() * 2 - 1;                // where in its sheet's thickness it sits
   const far = L.far + off * CLOUD_FAR_JITTER;
   const yb = between(LANES[L.name]) * P;   // its base, in pixels below the band's top
   // Its shape is the one cloud renderer's (render/clouds.js, DESIGN.md "The
@@ -262,7 +272,11 @@ function makeCloud(x, sheet, storm = false) {
   const lerp2 = ([a, b], t) => a + (b - a) * t;
   const tall = Math.max(CLOUDS_LOD.least.h, lerp2(CLOUD_HELD.rows[L.name], u(1)));
   const across = Math.max(CLOUDS_LOD.least.w, tall * lerp2(CLOUD_HELD.aspect, u(2)));
-  const held = heldCloud({ kind: HELD[kind.name], wide: across, tall, seed, flat: L.flat, grow: 1 + CLOUD_GROW_R, depth: CLOUD_HELD.depth });
+  // far off it is plain, as act 3's far sky is (CLOUDS_LOD): a few big lobes
+  // in one tone
+  const depth = CLOUD_HELD.depth[L.name], plain = depth < CLOUDS_LOD.plain;
+  const held = heldCloud({ kind: plain ? 'blob' : HELD[kind.name], wide: across, tall, seed, flat: L.flat, grow: 1 + CLOUD_GROW_R, depth });
+  held.layer.plain = plain;
   return { x, yb, w: held.w, bumps: held.bumps, layer: held.layer, ox: held.ox, id: ++cloudIds, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
            give: 0.7 + (off + 1) / 2 * 0.6, storm, age: 0, melt: 0 };
 }
@@ -273,7 +287,7 @@ const HELD = { puff: 'cumulus', heap: 'cumulus', tower: 'cumulus', bank: 'cumulu
 let cloudIds = 0;
 
 // a cloud's cell in world pixels: its sheet's
-const cellOf = c => P * CLOUD_LAYERS[c.sheet].cell;
+const cellOf = () => P * CLOUD_HELD.cell;
 // A cloud's area at rest, in square world pixels: its cells unswelled, each a
 // cell of its sheet's. What the front adds clouds up to.
 const areaOf = c => c.area ??= cellsOf(c, 0, true) * cellOf(c) ** 2;
@@ -287,7 +301,14 @@ const melting = c => c.melt > 0;
 const fade = c => Math.min(1, c.melt) * 0.9;
 
 // how many of a sheet's clouds are in the sky, not counting the ones going
-const inSheet = (sheet, storm) => CLOUDS.reduce((n, c) => n + (c.sheet === sheet && c.storm === storm && !melting(c)), 0);
+const inSheet = (sheet, storm) => CLOUDS.reduce((n, c) => n + (c.sheet === sheet && c.storm === storm && !melting(c) && !c.extra), 0);
+// the far sky's extra clouds (CLOUD_HELD.extra), each sheet's, made off the
+// sky's own draws
+const extrasIn = sheet => CLOUDS.reduce((n, c) => n + (c.sheet === sheet && c.extra && !melting(c)), 0);
+function makeExtra(sheet) {
+  draw = skyDraw;
+  try { const c = makeCloud(0, sheet); c.extra = true; return c; } finally { draw = rand; }
+}
 
 // How far a cloud is swelled this frame: its circles' radii `grow` -- with the
 // murk a little, with the storm's swell a lot -- and never their centers, so
@@ -363,6 +384,7 @@ export function seedWeather() {
 // drawn out of the run's own chance, so one left standing is a fact of the
 // last run in this one -- which `the same seed is the same run` catches.
 export function resetWeather() {
+  skyState = CLOUD_HELD.seed;
   CLOUDS.forEach(forget);
   CLOUDS.length = 0;
   BIRDS.length = 0;
@@ -381,6 +403,12 @@ function spreadSky() {
       c.x = skyCam().x * c.far + (i + rand()) * (skyCam().w / L.n) - c.w * cellOf(c);
       CLOUDS.push(c);
     }
+    const e = CLOUD_HELD.extra[L.name] || 0;
+    for (let i = extrasIn(sheet); i < e; i++) {
+      const c = makeExtra(sheet);
+      c.x = skyCam().x * c.far + (i + skyDraw()) * (skyCam().w / e) - c.w * cellOf(c);
+      CLOUDS.push(c);
+    }
   });
 }
 
@@ -393,16 +421,21 @@ export function stepWeather(now) {
       c.x = skyCam().x * c.far - c.w * cellOf(c) - P * 4;    // in off the left, going right
       CLOUDS.push(c);
     }
+    while (extrasIn(sheet) < (CLOUD_HELD.extra[L.name] || 0)) {
+      const c = makeExtra(sheet);
+      c.x = skyCam().x * c.far - c.w * cellOf(c) - P * 4;
+      CLOUDS.push(c);
+    }
   });
   // The front's own clouds: more of them the heavier it is, born anywhere
   // across the strip since a storm cloud is nothing until the swell grows
   // it, and gone once the swell has let them shrink to nothing. Dealt round
   // the sheets from the nearest out, so the front is overhead first, until
-  // its clouds at rest cover the front's share of CLOUD_STORM_AREA.
+  // its clouds at rest cover CLOUD_STORM_COVER of the ordinary sky's area.
   const sw = swell();
-  const want = CLOUD_STORM_AREA * sw;
-  let storms = 0, area = 0;
-  for (const c of CLOUDS) if (c.storm) { storms++; area += areaOf(c); }
+  let storms = 0, area = 0, sky = 0;
+  for (const c of CLOUDS) if (c.storm) { storms++; area += areaOf(c); } else if (!melting(c)) sky += areaOf(c);
+  const want = CLOUD_STORM_COVER * sky * sw;
   while (CLOUDS_ON && area < want) {
     const sheet = CLOUD_LAYERS.length - 1 - (storms % CLOUD_LAYERS.length);
     const c = makeCloud(0, sheet, true);
@@ -670,6 +703,23 @@ function cellTone(h, peak, cx, r, u) {
 const key = c => 'sky' + c.id;
 const forget = c => { const gl = cloudCard(); if (gl) gl.forget(key(c)); };
 let skyT = 0, lastT = null;
+// A cloud's tones on the renderer: act 3's ladder of roles (CLOUDS_PALETTE,
+// lit face, body, shadow, core), browned by the murk and greyed by the storm
+// by the same shares as the crown and the underside above -- the lit face
+// and the body as the crown, the shadow and the core as the underside -- and
+// faded toward the page by depth. So the yard's clouds are act 3's clouds,
+// and still the sky's dirt and the storm's warning.
+const LADDER = (() => { const C = CLOUDS_PALETTE.light; return [C.lit, C.body, C.shade, C.core].map(rgb); })();
+function ladderTones(mk, sw, far) {
+  const fade = fadeAt(far);
+  return LADDER.map((base, k) => {
+    const part = k < 2 ? 'body' : 'under';
+    let col = base;
+    if (mk > 0) col = mix(col, MURKY[part], Math.min(1, mk) * CLOUD_MURK_TINT);
+    if (sw > 0) col = mix(col, STORMY[part], Math.min(1, sw) * (part === 'under' ? CLOUD_STORM_UNDER_TINT : CLOUD_STORM_TINT));
+    return fade > 0 ? mix(col, PAGE, fade) : col;
+  });
+}
 // A cloud's look, made once, its colors filled in each frame (`heldLook`).
 function lookOf(c, tones) {
   return (c.look = heldLook(c.layer, tones.map(col => `rgb(${Math.round(col[0])},${Math.round(col[1])},${Math.round(col[2])})`), c.look || null));
@@ -680,15 +730,13 @@ function drawCloudsLiquid(order, visitors, sw, crown, base) {
   const top = skyCam().y, glass = ctx.getTransform(), glassW = ctx.canvas.width;
   const views = [], at = new Map();
   for (const c of order) {
-    const cp = cellOnPage(P * CLOUD_LAYERS[c.sheet].cell), L = c.layer;
+    const cp = cellOnPage(cellOf(c)), L = c.layer;
     const x = onPixel(skyAt(c) - c.ox * cp), y = onPixel(cloudY(c) - L.baseRow * cp);
     if (glass.a * (x + L.w * cp) + glass.e < 0 || glass.a * x + glass.e > glassW) continue;
     const r0 = Math.max(0, Math.ceil((top - y) / cp));
     if (r0 >= L.h) continue;
     const { grow, up } = swellOf(c, sw), melt = Math.min(1, c.melt);
-    const tones = c.drawn > 0.01
-      ? cloudTones(partColor('body', murkOf(c), sw), partColor('under', murkOf(c), sw), c.far)
-      : cloudTones(crown, base, c.far);
+    const tones = ladderTones(murkOf(c), sw, c.far);
     views.push({ key: key(c), layer: L, ox: 0, w: L.w, h: L.h, look: lookOf(c, tones), every: 1,
                  swell: { grow: grow * (1 - CLOUD_MELT_SHRINK * melt), rise: up, base: L.baseRow } });
     at.set(c, { x, y, cp, r0, alpha: 1 - melt });
@@ -737,7 +785,7 @@ export function drawClouds() {
     const tones = c.drawn > 0.01
       ? cloudTones(partColor('body', murkOf(c), sw), partColor('under', murkOf(c), sw), c.far, fade(c))
       : cloudTones(crown, base, c.far, fade(c));
-    const cp = P * CLOUD_LAYERS[c.sheet].cell;      // the sheet's cell, in pixels
+    const cp = cellOf(c);      // a cloud's cell, in pixels
     const x = skyAt(c), y = cloudY(c);
     // The farthest any bump can reach at the fullest swell (`columnsOf`),
     // a cell over: the widest the cloud is ever drawn.
