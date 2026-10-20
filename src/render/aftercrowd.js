@@ -15,16 +15,18 @@
 //
 // God's camp stands on a stage in the clouds (DESIGN.md, "God's camp stands
 // on a stage in the clouds"; docs/mocks/act3-clouds-2026-10-19/a3platform):
-// one broad paper stage tilted toward the viewer, its front a stepped plinth
-// in the throne base's family, the cloud sea lapping its foot. It slides as
-// one with his layer, so nothing on it skates. His crowd stands on it at a
+// one broad stage from behind his throne forward to the main plane's line.
+// It spans the depths between, so each line of it slides at its own depth's
+// rate (after/sky.js, `campMid`) and the stage leans as the camera pans; a
+// row of his crowd, a flag or a body on it slides with its line, so nothing
+// on it skates. His crowd stands on it at a
 // giant's scale, rows of separate souls with the stage between them,
 // emptying from the front to bare stage as support rises. A sign is a fist
 // flag planted at its spot on the stage, an aura round it (DESIGN.md, "The
 // level, the two crowds and the flags"); a member it wins orbits it and
 // walks the long way back across to the union's camp. A rally off a sign
 // lifts the souls it passes. The bodies out on the way between are drawn
-// among them: across the cloud, up the plinth, out over the top.
+// among them: along the main plane, onto the front edge, out over the top.
 //
 // God is a light source on either page: he, his rays, his light and his
 // gaze are drawn raw (src/ink.js), outside the act's four tones, and so are
@@ -42,7 +44,7 @@
 
 import { S } from '../state.js';
 import { P, GREY, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AFTER_SPEECH_WARN_S,
-         SKY_TICK_S, GOD_CROWD, GOD_STAGE, GOD_FLAG, GOD_RATE,
+         SKY_TICK_S, GOD_CROWD, GOD_STAGE, GOD_FLAG,
          SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
          GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, TITHE, GAZE,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_POSTER, SKY_DRIFT,
@@ -54,7 +56,7 @@ import { raw, darkPage } from '../ink.js';
 import { afterX0, slotX, stationBox, unionJoinAt, afterFloor } from '../after/place.js';
 import { support, union, souls, OUT_RIM, speechTarget } from '../after/union.js';
 import { signReach } from '../after/levels.js';
-import { skyFrame, godX0, stage, stageHalf, stageFore, stageSpot, stageSoul, walkSeen, deepAt } from '../after/sky.js';
+import { skyFrame, campX0, rateAt, stage, stageHalf, stageFore, stageSpot, stageSoul, walkSeen, deepAt } from '../after/sky.js';
 import { K as INK, W, PALE, MID } from './after/kit.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -235,22 +237,29 @@ function ringsAt(x, y, rate, sq) {
 }
 
 // --- the stage -------------------------------------------------------------------------------
-// The top a trapezoid from behind his foot forward to the main plane's line,
+// The top from behind his foot forward to the main plane's line, a line at a
+// time at its own depth's place (`gxAt`), so it leans as the camera pans,
 // and a side face down each slanted edge: the top widens toward the window,
 // so both sides face it, wherever he stands on it (a face chosen by which
 // half of the window he is in would pop across as he passes its middle).
 // A plain shape; its front meets the main plane's path, which is drawn over
 // its foot (render/after/floor.js).
 function drawStage() {
-  const st = stage(), G = GOD_STAGE, x = gx(), sw = G.side * st.mx;
+  const st = stage(), G = GOD_STAGE, sw = G.side * st.mx;
+  // A line's face runs out from its own edge as far as the line above's or
+  // below's, whichever stands further out, so where the stage leans more
+  // than a face's width a line the edge stays one unbroken line.
+  const left = y => gxAt(y) - Math.round(stageHalf(st, y)), right = y => gxAt(y) + Math.round(stageHalf(st, y));
+  const near = y => clamp(y, st.yb, st.yf - P);
   ctx.fillStyle = style(RISE_TONE);
   for (let y = st.yb; y < st.yf; y += P) {
-    const hw = Math.round(stageHalf(st, y));
-    rect(x - hw - sw, y, sw, P);
-    rect(x + hw, y, sw, P);
+    const l0 = left(y), r0 = right(y);
+    const lo = Math.min(l0, left(near(y - P)), left(near(y + P))), hi = Math.max(r0, right(near(y - P)), right(near(y + P)));
+    rect(lo - sw, y, l0 - lo + sw, P);
+    rect(r0, y, hi - r0 + sw, P);
   }
   ctx.fillStyle = style(TOP_TONE);
-  for (let y = st.yb; y < st.yf; y += P) { const hw = Math.round(stageHalf(st, y)); rect(x - hw, y, 2 * hw, P); }
+  for (let y = st.yb; y < st.yf; y += P) { const x = gxAt(y), hw = Math.round(stageHalf(st, y)); rect(x - hw, y, 2 * hw, P); }
 }
 
 // --- the crowd on the stage ----------------------------------------------------------------
@@ -282,13 +291,13 @@ const drawn = { souls: 0 };
 export const crowdDrawn = () => ({ ...drawn, won: shown.won.length });
 // The souls of row r in view, each { r, i, x, y, w, a }: x its left, y its foot.
 function rowSouls(r, R, n, out) {
-  const G = GOD_CROWD, st = stage(), mid = gx(), w = R.n, gap = G.gap * st.mx, pitch = w + gap;
+  const G = GOD_CROWD, st = stage(), mid = gxAt(R.y), god = gx(), w = R.n, gap = G.gap * st.mx, pitch = w + gap;
   const hw = stageHalf(st, R.y) - G.margin * st.mx, clear = st.throne + w / 2 + 2 * st.mx, aisle = G.aisle * st.mx + w / 2;
   let i = 0;
   for (let cx = mid - hw + ((R.r & 1) * pitch) / 2; cx < mid + hw - w; cx += pitch, i++) {
     const c = cx + w / 2;
     // behind the throne's foot, or in the aisle in front of it: kept clear
-    if (R.y - w < st.throneY + P && Math.abs(c - mid) < clear) continue;
+    if (R.y - w < st.throneY + P && Math.abs(c - god) < clear) continue;
     if (R.y > st.throneY && Math.abs(c - mid) < aisle) continue;
     const x0 = mid + snap(cx - mid + (hsh(i, R.r, 5) - 0.5) * 2 * G.jit * st.mx, 2);
     if (x0 + w < S.camX - P || x0 > S.camX + S.viewW + P) continue;
@@ -387,7 +396,7 @@ function wonAt(w, T) {
   const A = W0.top, B = W0.top + W0.down;
   if (u < A) {
     // over the top to the front corner, coming down to its feet as it goes
-    const k = u / A, c = stageSpot(0, 0), cx = gx() + c.dx, foot = lerp(g.foot, st.yf - P, k), s = lerp(sz, stageSoul(st, st.yf), k);
+    const k = u / A, c = stageSpot(0, 0), cx = gxAt(st.yf - P) + c.dx, foot = lerp(g.foot, st.yf - P, k), s = lerp(sz, stageSoul(st, st.yf), k);
     return { x: lerp(x0, cx, k), y: lerp(y0, foot - s / 2, Math.min(1, k * 3)), sz: s, a: fade, dk: 1, out: true, ord: foot };
   }
   // then the sim's way back: down the plinth, and across the cloud
@@ -415,12 +424,15 @@ function drawWon(y0) {
 // Everything of his in sky cells off his middle (x) and his square's top at
 // rest (y), the mock's: his square 0 to GOD_N down, the seat under it.
 const SEAT = GOD_N;
-// God's middle (after/sky.js, `godMid`) as his layer's own slide: a fixed
-// place on a whole device pixel plus the layer's offset on one of its own,
-// as render/after/ground.js lays its layers. Everything of his camp is laid
-// off it, so the camp moves as one piece and never wobbles a pixel against
-// the camera's own rounding.
-const gx = () => Math.round(godX0() * K) / K + layerAt(0, GOD_RATE, F.XR);
+// The camp's middle at world y as drawn (after/sky.js, `campMid`): its fixed
+// place at that depth on a whole device pixel plus its depth's slide on one
+// of its own, as render/after/ground.js lays its layers. A row of the stage
+// is laid off one of these, so it moves as one piece and never wobbles a
+// pixel against the camera's own rounding; the back steps with the far
+// cloud, the front with the world. God, his throne and all above the
+// stage's back are the back's (`gx`).
+const gxAt = y => { const r = rateAt(stage(), y); return Math.round(campX0(r) * K) / K + layerAt(0, r, F.XR); };
+const gx = () => gxAt(-Infinity);
 const godFoot = () => ({ x: gx(), y: F.gy0 + (SEAT + GOD_THRONE.seatH) * H });
 const cache = { key: '', throne: null, poses: new Map(), signs: new Map() };
 function freshCaches() {
@@ -764,7 +776,7 @@ const flagU = n => Math.max(1, Math.round(n * stage().mx / SKY_FLAG.w));
 // foot on the stage.
 function flagBox(q) {
   const st = stage(), sp = stageSpot(q.f, q.r), foot = snap(sp.y, P), U = flagU(lerp(GOD_FLAG.n[0], GOD_FLAG.n[1], stageFore(st, foot)));
-  const FL = SKY_FLAG, px = snap(gx() + sp.dx, 1), w = FL.w * U, h = FL.h * U;
+  const FL = SKY_FLAG, px = snap(gxAt(foot) + sp.dx, 1), w = FL.w * U, h = FL.h * U;
   const y = foot - stageSoul(st, foot) - FL.up * U - h - (q.id != null && rallied(q) ? U : 0);
   return { foot, U, px, x: px + U, y, w, h, cx: px + U + w / 2, cy: y + h / 2 };
 }
@@ -772,7 +784,7 @@ function flagBox(q) {
 function posterBox(q) {
   const st = stage(), f = (slotX(q.slot) - CROWD_X0 - P) / CROWD_PITCH, sp = stageSpot(f, 0), foot = snap(st.yf - P, P);
   const U = flagU(GOD_FLAG.n[0]), PO = SKY_POSTER, w = PO.w * U, h = PO.h * U;
-  const x = snap(gx() + sp.dx - w / 2, 1);
+  const x = snap(gxAt(foot) + sp.dx - w / 2, 1);
   const y = foot - PO.up * U - h - (rallied(q) ? U : 0);
   return { foot, U, x, y, w, h };
 }
@@ -918,19 +930,19 @@ function carriedSign(x, y, u) { rect(x + u, y - u, u, u, INK); rect(x, y - u * 2
 const carrying = new Map();
 let setDown = [];
 function watchSigns() {
-  const t = now(), gm = gx();
+  const t = now();
   for (const w of S.after.bodies) {
     const was = carrying.get(w.id);
     if (was === 'sign' && w.load !== 'sign') {
       const v = seenAt(w.x, w.y), u = P * v.k, s = u * 3;
-      setDown.push({ at: t, dx: v.x - s / 2 - gm, y: v.y - s, u, ord: v.ord + 0.3 });
+      setDown.push({ at: t, dx: v.x - s / 2 - gxAt(v.y), foot: v.y, y: v.y - s, u, ord: v.ord + 0.3 });
     }
     carrying.set(w.id, w.load);
   }
   setDown = setDown.filter(g => t - g.at < SIGN_FADE_S && t >= g.at);
 }
 function drawSetDown(g) {
-  alpha(1 - (now() - g.at) / SIGN_FADE_S, () => carriedSign(onPx(gx() + g.dx), onPx(g.y), g.u));
+  alpha(1 - (now() - g.at) / SIGN_FADE_S, () => carriedSign(onPx(gxAt(g.foot) + g.dx), onPx(g.y), g.u));
 }
 
 // --- souls drifting up from the camp ---------------------------------------------------------------

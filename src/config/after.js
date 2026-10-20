@@ -190,10 +190,9 @@ export const AFTER_RISE_S = 30;            // a soul rising into the back of the
 export const AFTER_WALL_STEP = P * 4;      // a poster's slot along the fence at the crowd's front
 export const AFTER_STAIR_X = CROWD_X0 + P * 200;   // the stair's head, the throne's ground
 // Across the whole place: grove, camp, God's yard, the stair (the mock's
-// layout A), and AFTER_FAR_W cells of open cloud past them that the camera
-// pans over toward God, far back on his layer (after/sky.js, `godMid`): the
-// yard's own camera reaches the place's right end, where he stands in the
-// window's middle.
+// layout A), and AFTER_FAR_W cells of open cloud past them: room for the
+// camera's last window at any width, which ends half a window past God's
+// stage's front (acts.js, `PLACES`).
 export const AFTER_FAR_W = 456;
 export const AFTER_W = AFTER_STAIR_X + P * 4 + AFTER_FAR_W * P;
 export const AFTER_STAIR_W = P * 36;       // the stair's run, foot to head

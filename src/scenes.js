@@ -40,9 +40,10 @@ import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt, campEdges } from './after/place.js';
-import { afterX1 } from './after/place.js';
-// The window's middle at the camera's last window over act 3: God in it.
-const godView = () => afterX1() - S.viewW / 2;
+import { godFront } from './after/sky.js';
+// The window's middle at the camera's last window over act 3: God in it,
+// his stage square under him.
+const godView = () => godFront();
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S } from './config.js';
 import { FINALE_HOUSE_W } from './config.js';
 import { houseX } from './home.js';

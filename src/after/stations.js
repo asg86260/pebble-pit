@@ -21,7 +21,7 @@ import { godCampAt, godMid, faceY } from './sky.js';
 
 const live = () => afterlifeOn() && !!S.after;
 const inBox = (x, y, b) => !!b && x >= b.x && x < b.x + b.w && y >= b.y && y <= b.y + b.h;
-// The window's middle, the depth camera's (after/sky.js) for God's camp.
+// The window's middle, which God's camp is drawn against (after/sky.js).
 const mid = () => S.camX + S.viewW / 2;
 
 // Which act board is up: one at a time, as the yard's own flags are, each

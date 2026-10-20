@@ -31,9 +31,10 @@ export const SKY_FIT = 87;
 // behind his foot forward to the line the main plane's stations stand on,
 // `hb` and `hf` across the half there, in the mock's cells at `mx` sky cells
 // a cell, so it keeps its size against his throne at any window; a face
-// `side` across down the slanted edge toward the window's middle. A plain
-// shape for now (the stage's own drawing is the next step).
-export const GOD_STAGE = { mx: 1.25, back: 4, hb: 110, hf: 120, side: 3 };
+// `side` across down each slanted edge. Its front stands on the main plane
+// `gap` cells clear of the union's crowd at its widest (after/sky.js,
+// `godFront`).
+export const GOD_STAGE = { mx: 1.25, back: 4, hb: 110, hf: 120, side: 3, gap: 6 };
 // God's crowd on the stage at a giant's scale: rows from the back to the
 // front, a soul `n` cells across (stage cells), from the first at the back to
 // the second at the front; `gap` cells between souls in a row, each row
@@ -157,9 +158,10 @@ export const SKY_DRIFT = { every: [2.5, 4.5], life: 14, rise: 22 };
 // The horizon stands this many cells over the main plane's line: the sky's
 // ranges stand on it, and the far cloud runs from it down to the plane.
 export const AFTER_HORIZON = 28;
-// God's camp is a plain parallax layer behind the main plane (after/sky.js):
-// it slides GOD_RATE as fast as the camera, his foot GOD_FOOT cells over the
-// main plane's line.
+// God sits far back on a slow layer behind the main plane (after/sky.js): he
+// slides GOD_RATE as fast as the camera, his foot GOD_FOOT cells over the
+// main plane's line; his stage's lines slide from his rate at its back to the
+// world's at its front.
 export const GOD_RATE = 1 / 3;
 export const GOD_FOOT = 19;
 

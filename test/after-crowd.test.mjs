@@ -7,15 +7,15 @@
 // from. The crowd's shape is set through the act's rims (a slot set to 9 is
 // a member already gone, with no walk), the setup these checks are not about.
 import { group, ok, run, yard } from './helpers.mjs';
-import { STRIKE_SHARE, GOD_RATE, CROWD_X0, CROWD_PITCH, P, UNION_CROWD } from '../src/config.js';
-import { afterFloor, afterOpenX, afterX1, soulX, soulY, unionX1, campEdges } from '../src/after/place.js';
+import { STRIKE_SHARE, GOD_RATE, GOD_STAGE, CROWD_X0, CROWD_PITCH, P, UNION_CROWD } from '../src/config.js';
+import { afterFloor, afterOpenX, soulX, soulY, unionX1, campEdges, podiumMid, unionHalf } from '../src/after/place.js';
 // The window's middle at the camera's last window: God in it.
-const afterEnd = () => afterX1() - S.viewW / 2;
+const afterEnd = () => godFront();
 import { stepAfter } from '../src/after/index.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawSkyCrowd, drawAfterCrowd, crowdDrawn, glareAlpha, raysLeft } from '../src/render/aftercrowd.js';
 import { drawUnionCrowd, unionDrawn } from '../src/render/after/unioncrowd.js';
-import { godMid, walkSeen, stage, stageHalf } from '../src/after/sky.js';
+import { godMid, godFront, campMid, rateAt, walkSeen, stage, stageHalf } from '../src/after/sky.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -155,6 +155,33 @@ group('the view only slides, God drawn in to the middle at the end of the pan', 
   return out;
 });
 
+// God's stage spans the depths (after/sky.js, `campMid`): its front stands
+// on the main plane like a station, its back slides at his rate, so it leans
+// as the camera pans and stands square at the pan's end; and its front's
+// feet stand clear of the union's crowd at its widest, so the two camps
+// never share a cell of the plane, at a tall window and a short one.
+group("God's stage leans across the depths, its front clear of the union's crowd", async () => {
+  const out = [];
+  for (const [w, h] of [[2000, 967], [800, 600]]) {
+    S.W = w; S.H = h;
+    up();
+    const st = stage(), side = GOD_STAGE.side * st.mx, fronts = [], leans = [];
+    for (const x of [afterOpenX(), (afterOpenX() + afterEnd()) / 2, afterEnd()]) {
+      lookAt(x);
+      const cx = S.camX + S.viewW / 2;
+      fronts.push(campMid(cx, rateAt(st, st.yf)));
+      leans.push(campMid(cx, rateAt(st, st.yb)) - campMid(cx, rateAt(st, st.yf)));
+    }
+    const corner = afterEnd() - st.hf - side, union = podiumMid() + unionHalf();
+    window.__actsOn(null);
+    out.push(
+      ok(fronts.every(f => Math.abs(f - fronts[0]) < 0.01), `${w}x${h}: its front stays put on the main plane`, fronts.map(Math.round).join(' ')),
+      ok(leans[0] < leans[1] && leans[1] < 0 && Math.abs(leans[2]) < 0.01, `${w}x${h}: its back leans toward the window's middle, square at the end`, leans.map(Math.round).join(' ')),
+      ok(corner - union >= GOD_STAGE.gap * P - P, `${w}x${h}: its front corner clear of the union's crowd`, `${Math.round((corner - union) / P)} cells`));
+  }
+  return out;
+});
+
 // The camp end framed as the yard is at the same window: a body the size it
 // was in the yard, its floor as far up off the window's foot as the yard's
 // ground, at a tall window and a short one alike.
@@ -225,7 +252,7 @@ group("a carrier's way onto the stage is unbroken, and carriers spread to their 
       const v = walkSeen(CROWD_X0 + P + (to.x - CROWD_X0 - P) * k / 200, fl + (to.y - fl) * k / 200, cx);
       worst = Math.max(worst, Math.hypot(v.x - prev.x, v.y - prev.y)); prev = v;
     }
-    const end = prev, gm = godMid(cx);
+    const end = prev, gm = campMid(cx, rateAt(st, end.y));
     const onTop = end.y > st.yb && end.y < st.yf && Math.abs(end.x - gm) < stageHalf(st, end.y);
     const spots = [[4, 2], [20, 30], [34, 8]].map(([f, r]) => walkSeen(soulX(f) + P / 2, soulY(r) + P * 2, cx));
     const apart = spots.every((p, i) => spots.every((q, j) => i === j || Math.hypot(p.x - q.x, p.y - q.y) > 3 * P));
