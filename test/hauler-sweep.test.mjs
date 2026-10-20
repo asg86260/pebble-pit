@@ -5,6 +5,8 @@
 // this file is about everything after.
 
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, P } from './helpers.mjs';
+// A body stood somewhere by hand is a setup to the motion rules (verify.js).
+import { touchSetup } from '../src/verify.js';
 import { floor } from '../src/state.js';
 import { at } from '../src/grid.js';
 import { LADDER, LADDERS } from '../src/config.js';
@@ -224,7 +226,7 @@ group('a claimant already at its column keeps it against a sweeper', async () =>
   a.x = far; a.claim = -1; a.goal = 'seek';
   // stood on the second grain with a claim to it, and its scoop held off so
   // the sweeper gets its chance to walk over
-  b.x = s0.floorX + c * P; b.claim = c; b.goal = 'seek'; b.next = Infinity;
+  b.x = s0.floorX + c * P; b.claim = c; b.goal = 'seek'; b.next = Infinity; touchSetup();
   const r = firstToss();
   const kept = !!at(floor, c, 0) && b.claim === c;
   window.__crew(0, 0);

@@ -30,7 +30,8 @@ const COIN_CELLS = [[SHARD_CELL, 'shards'],
 const COIN_OF = Object.fromEntries(COIN_CELLS.map(([cell, key]) => [cell, key]));
 import { yardLeft } from './world.js';
 import { seed } from './rng.js';
-import { now } from './clock.js';
+import { now, frames } from './clock.js';
+import { homePace, commutePace } from './levels.js';
 import { JOB, TYPE, DEEP_JOBS, isDeepType, JOB_OF as JOB_OF_TYPE } from './jobs.js';
 import { BEATS } from './beats.js';
 import { LEDGER } from './smog/rain.js';
@@ -44,7 +45,7 @@ import { roombasOf, binOf } from './crew/roomba.js';
 import { deepBed } from './state.js';
 import { deepTop, deepFloor, deepX1, coilLine, coilThick, standOfStation } from './deep/place.js';
 import { yardReads } from './persist.js';
-import { afterlifeOn, hellOn } from './acts.js';
+import { afterlifeOn, hellOn, PLACES } from './acts.js';
 import { AFTER_STORY } from './after/story.js';
 import { HELL_STORY } from './hell/story.js';
 import { allOverlaps } from './footprints.js';
@@ -55,6 +56,18 @@ import { allOverlaps } from './footprints.js';
 // no two objects of different kinds overlap, as a hard rule). Keyed
 // `place:a|b`, the two ids in sorted order.
 export const KNOWN_OVERLAPS = {};
+
+// The bodies the two motion rules (rule 22, below) know move wrongly today,
+// each with what it is: keyed `place:job:rule`, the rule `jump` or `arrive`.
+// A listed case does not throw; it is written down in `MOTION_SEEN`, and
+// test/place-motion.test.mjs stages every listed one and is red for one that
+// no longer happens, so the list only shrinks and cannot hide a new case.
+export const KNOWN_MOTION = {
+  'yard:quarrier.yard:jump': "a quarrier at the cut's ladder head drops down it, or to it along the bank, in one frame",
+  'yard:builder-dance.yard:jump': 'a builder in the dance at a site goes up off the ground in one frame',
+  'yard:farmhand.yard:jump': 'a farmhand is carried with its plot when a site lands and the walk steps the farm along',
+};
+export const MOTION_SEEN = new Set();
 
 // The jobs the roster is made of, and the count on S that owns each: every
 // body type and its job, read off the one table (jobs.js) rather than kept
@@ -658,6 +671,84 @@ export function verifyWorld() {
   }
 
   verifyParty();
+  verifyMotion();
+}
+
+// --- rule 22: nothing teleports, nothing pops in ---------------------------------
+// Every body in every place (the yard's crew, and each act's own list): from
+// one frame to the next it moves no further than its place's fastest walk
+// covers in the frame, with slack, plus a cell; and a body new to a place's
+// list arrives faded or out of sight, never at full ink in the open.
+//
+// Asked only across a frame the sim made: the tick one on, no save read back
+// (`yardReads`), no handle called between (`touchSetup`, which every `__`
+// handle and scene calls) -- a setup is a new start, and the bodies it stands
+// up or moves are taken as they stand. A body in the hand, falling, aloft, at
+// home, in a seat or in the deep's water is not walking, and neither rule
+// says anything about it on that frame or the next.
+let setups = 0;
+export const touchSetup = () => { setups++; };
+const motionWas = new WeakMap();
+let motionTick = -1, motionReads = -1, motionSetups = -1, motionBeat = null;
+// How far past the fastest walk a frame may go: the tonic's boost and the
+// feet's climb onto a step ride inside it.
+const MOTION_SLACK = 2;
+const yardPace = () => Math.max(homePace(), commutePace()) * 60;   // px a second
+const stillYard = w => w.lifted || w.falling || w.aloft || w.inside || w.craft || w.vehicle || belowYard(w)
+  || S.tick - (w.aboardAt ?? -9) <= 1;
+function* everyBody() {
+  for (const w of S.workers) yield ['yard', w, null];
+  for (const [v, pl] of Object.entries(PLACES)) for (const w of pl.crew.list() || []) yield [v, w, pl.crew];
+}
+function motionFault(key, rule, detail) {
+  if (key in KNOWN_MOTION) { MOTION_SEEN.add(key); return; }
+  fail(rule, `${key}: ${detail}`);
+}
+function verifyMotion() {
+  const fresh = S.tick === motionTick + 1 && yardReads === motionReads && setups === motionSetups;
+  // and the frame a yard beat lets go of the yard: the bodies it was
+  // drawing as its own (the pair in the opening) are handed to the crew there
+  const beat = S.beat.yard || motionBeat;
+  motionBeat = S.beat.yard;
+  motionTick = S.tick; motionReads = yardReads; motionSetups = setups;
+  const f = frames();
+  for (const [place, w, crew] of everyBody()) {
+    // Rule 6 for an act's bodies too: a position is a position, inside its
+    // place (the yard's own are asked above).
+    if (crew) {
+      if (!Number.isFinite(w.x) || !Number.isFinite(w.y)) fail('a body has no place', `${place}'s ${w.job} at ${w.x},${w.y}`);
+      const pl = PLACES[place];
+      if (!crew.unseen?.(w) && (w.x < pl.x0() - OUTSIDE || w.x > pl.x1() + OUTSIDE))
+        fail('a body has left the world', `${place}'s ${w.job} at ${Math.round(w.x)}, the place runs ${Math.round(pl.x0())}..${Math.round(pl.x1())}`);
+    }
+    const still = crew ? !!(w.lifted || w.falling || crew.unseen?.(w)) : !!stillYard(w);
+    const was = motionWas.get(w);
+    const jig = w.jigAt != null;
+    motionWas.set(w, { x: w.x, y: w.y, still, jig });
+    // A beat holding the yard walks its own bodies at its own pace, hurried
+    // by the player's click, and draws only the ones it is about; its checks
+    // are its own (test/finale.test.mjs, test/ending-stage.test.mjs).
+    if (!fresh || still || !Number.isFinite(w.x) || (!crew && beat)) continue;
+    // A body in the dance is keyed apart from its trade's walk.
+    const job = crew ? w.job || 'none' : w.type + (jig || was?.jig ? '-dance' : '');
+    if (!was) {
+      const ink = crew ? (crew.ink ? crew.ink(w) : 1) : 1;
+      if (ink >= 1) motionFault(`${place}:${job}:arrive`, 'a body arrived at full ink',
+                                `${place}'s ${job} at ${Math.round(w.x)},${Math.round(w.y)}`);
+      continue;
+    }
+    if (was.still) continue;
+    const pace = crew ? crew.pace : yardPace();
+    const most = pace * MOTION_SLACK * f / 60 + P;
+    const d = Math.hypot(w.x - was.x, w.y - was.y);
+    if (d <= most) continue;
+    // Named by the way it was on as well, in the yard: a jump on the floor of
+    // the cut is not a jump on the ground, and listing one hides only it.
+    const on = crew ? '' : `.${wayAt(was.x, was.y, ways()).key}`;
+    motionFault(`${place}:${job}${on}:jump`, 'a body jumped',
+                              `${place}'s ${job} went ${Math.round(d)}px in a frame, at most ${Math.round(most)}, `
+                              + `${Math.round(was.x)},${Math.round(was.y)} to ${Math.round(w.x)},${Math.round(w.y)}`);
+  }
 }
 
 // --- wave party: STATE -----------------------------------------------------------

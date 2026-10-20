@@ -27,12 +27,20 @@
 //   lifted(w)     what a body taken off its walk forgets (its walk, its door)
 //   land(w)       the floor under a falling body, and the place's x range
 //   landed(w)     what a body that has come down picks up again
+//   spill(w)      what a body shaken in the hand lets go of where it lands
+//   place         the place's name, which its sounds carry
+//   pace, ink(w), unseen(w)  its fastest walk (px a second), how much of a
+//                 body is drawn, and whether it is drawn as one of a crowd:
+//                 what verify.js's motion rules ask
 //
 // The stages are the yard's, in its order (crew/step.js): a body in the hand
 // is not in the place; a body let go falls before anything else; then the
 // place's own stage, then the job.
 
-import { GRAV, HURL, HURL_MAX, HURL_DRAG } from './config.js';
+import { GRAV, HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, DIZZY_MS, WOBBLE, WOBBLE_BEAT } from './config.js';
+import { S } from './state.js';
+import { now } from './clock.js';
+import { sfx } from './audio.js';
 
 // A frame's seconds, clamped: a background tab's long frame is not a long
 // stride for every body.
@@ -75,7 +83,9 @@ export function walkWay(b, dt, speedOf) {
 // --- the fall --------------------------------------------------------------------
 // Let go of, a body falls under the yard's gravity with the yard's flick
 // (crew/falls.js, `fall`), in sixtieths of a second as those are written, and
-// lands on the place's floor under it.
+// lands on the place's floor under it, as the yard's do: with the landing's
+// sound, and, shaken on the way, seeing stars where it came down a spell
+// (`DIZZY_MS`) and letting go of what it held there (the place's `spill`).
 function fall(crew, w, dt) {
   const f = dt * 60, at = crew.land(w);
   if (w.vx) {
@@ -92,7 +102,44 @@ function fall(crew, w, dt) {
   w.y = foot;
   w.vx = w.vy = 0;
   w.falling = false;
+  heard('body-land', crew, w);
+  if (w.dizzyFor) {
+    w.dizzyUntil = now() + w.dizzyFor;
+    w.dizzyFor = 0;
+    crew.spill?.(w);
+  }
+  if (w.dizzyUntil) w.landedAt = w.x;
   crew.landed?.(w);
+}
+
+// Seeing stars: it rocks where it landed and does nothing until they clear
+// (crew/step.js, the yard's same stage).
+function dizzy(w) {
+  if (!w.dizzyUntil) return false;
+  const t = now();
+  if (t < w.dizzyUntil) {
+    w.x = w.landedAt + Math.sin(t / 1000 * WOBBLE_BEAT + (w.id || 0)) * WOBBLE;
+    return true;
+  }
+  w.x = w.landedAt;
+  w.dizzyUntil = 0;
+  w.landedAt = null;
+  return false;
+}
+
+// A sound at a body of a place, named with the place: heard only with the
+// camera in it, since `sfx` judges "on screen" against the camera standing.
+function heard(name, crew, w) {
+  if (crew.place === S.view) sfx(name, { x: w.x, place: crew.place });
+}
+
+// A footstep every body-width of ground, as the yard's (crew/step.js,
+// `faceTravel`): the bodies have no walk cycle, so the stride is the ground
+// covered. Not on the cursor or on the way down.
+function footstep(crew, w, x0) {
+  if (w.lifted || w.falling || !Number.isFinite(x0) || w.x === x0) return;
+  const step = crew.box(w).w;
+  if (Math.floor(x0 / step) !== Math.floor(w.x / step)) heard('footstep', crew, w);
 }
 
 // --- one frame -------------------------------------------------------------------
@@ -102,16 +149,23 @@ export function stepCrew(crew, c) {
   const f = { dt, ...(crew.begin?.(dt) || {}) };
   const list = crew.list();
   for (let k = 0; k < list.length; k++) {
-    const w = list[k];
+    const w = list[k], x0 = w.x;
     crew.tick?.(w, f);
-    if (w.lifted) continue;
-    if (w.falling) { fall(crew, w, dt); continue; }
-    if (crew.stage?.(w, f, k)) continue;
-    const row = crew.jobs[w.job];
-    if (row) row.step(w, dt, f); else crew.idle(w, dt, f);
+    one(crew, w, dt, f, k);
+    footstep(crew, w, x0);
   }
   crew.end?.(f);
   fill(crew);
+}
+
+// One body's frame, the stages in the yard's order.
+function one(crew, w, dt, f, k) {
+  if (w.lifted) return;
+  if (w.falling) { fall(crew, w, dt); return; }
+  if (dizzy(w)) return;
+  if (crew.stage?.(w, f, k)) return;
+  const row = crew.jobs[w.job];
+  if (row) row.step(w, dt, f); else crew.idle(w, dt, f);
 }
 
 // Every row the place fills by count, in the registry's order: a body made
@@ -151,11 +205,17 @@ export function liftBody(crew, w) {
 
 // Let go of, with the hand's flick (`throwVel`), a share of it and capped as
 // the yard's are.
+// A shaking in the hand (crew/pointer.js, `shakeHeld`, which counts it) is
+// one dizzy spell, carried down to the landing.
 export function dropBody(w, v) {
   w.lifted = false;
   w.falling = true;
   w.vx = Math.max(-HURL_MAX, Math.min(HURL_MAX, v.vx * HURL));
   w.vy = Math.max(-HURL_MAX, Math.min(HURL_MAX, v.vy * HURL));
+  if (w.shook >= SHAKE_TURNS) w.dizzyFor = DIZZY_MS;
+  w.shook = 0;
+  w.turnedAt = 0;
+  w.lastDir = 0;
 }
 
 // A list read back from a save: a body that was in the hand when it was

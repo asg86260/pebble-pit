@@ -19,6 +19,7 @@ import { drawRoster, kitStands } from '../roster.js';
 import { inBasket } from '../balloon.js';
 import { HATS, HATS_TIGHT, drawSprite, spriteH, spriteW } from '../sprites.js';
 import { S, bench, floor, pit } from '../state.js';
+import { PLACES } from '../acts.js';
 import { deepTop } from '../deep/place.js';
 import { abyssLine } from '../pit.js';
 import { ctx } from './ctx.js';
@@ -630,14 +631,16 @@ function underSurface(w) {
 // Each body ringed while the right button looks at the crew, so it stands out
 // of the veil behind it (`drawSightVeil`): a SIGHT_RING line a SIGHT_GAP clear
 // of its own edge.
-function ring(w) {
+const ring = w => ringBox({ x: w.x, y: w.y, w: WORKER, h: WORKER });
+// A ring round a body's box, the gap and the ring's width out from it.
+function ringBox(b) {
   ctx.fillStyle = '#000';
-  const x = Math.round(w.x) - SIGHT_GAP - SIGHT_RING, y = Math.round(w.y) - SIGHT_GAP - SIGHT_RING;
-  const s = WORKER + (SIGHT_GAP + SIGHT_RING) * 2;
-  ctx.fillRect(x, y, s, SIGHT_RING);
-  ctx.fillRect(x, y + s - SIGHT_RING, s, SIGHT_RING);
-  ctx.fillRect(x, y, SIGHT_RING, s);
-  ctx.fillRect(x + s - SIGHT_RING, y, SIGHT_RING, s);
+  const x = Math.round(b.x) - SIGHT_GAP - SIGHT_RING, y = Math.round(b.y) - SIGHT_GAP - SIGHT_RING;
+  const sw = b.w + (SIGHT_GAP + SIGHT_RING) * 2, sh = b.h + (SIGHT_GAP + SIGHT_RING) * 2;
+  ctx.fillRect(x, y, sw, SIGHT_RING);
+  ctx.fillRect(x, y + sh - SIGHT_RING, sw, SIGHT_RING);
+  ctx.fillRect(x, y, SIGHT_RING, sh);
+  ctx.fillRect(x + sw - SIGHT_RING, y, SIGHT_RING, sh);
 }
 
 // Holding the right button: what is behind the crew's plane veiled pale, in
@@ -653,6 +656,16 @@ export function drawSightVeil() {
   ctx.fillStyle = '#fff';
   ctx.fillRect(S.camX - P, S.camY - P, S.viewW + P * 2, S.viewH + P * 2);
   ctx.restore();
+}
+
+// The same look in an act's place, whose bodies are its own list
+// (placebodies.js): the veil, and a ring round each body the hand could take
+// up, off where the place draws it (`crew.box`). Before the bodies' layer.
+export function drawPlaceSight(place) {
+  if (S.crewSight == null) return;
+  drawSightVeil();
+  const crew = PLACES[place]?.crew;
+  for (const w of (crew && crew.list()) || []) if (!w.lifted && crew.pickable(w)) ringBox(crew.box(w));
 }
 
 // The same look in the deep, whose bodies are drawn by its own layers

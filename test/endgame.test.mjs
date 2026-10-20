@@ -8,6 +8,8 @@
 // with the ram at all.
 
 import { yard, group, ok, state, run, runUntil, openSites, haveRock, buyBuilt } from './helpers.mjs';
+// A body stood somewhere by hand is a setup to the motion rules (verify.js).
+import { touchSetup } from '../src/verify.js';
 import { specOf } from '../src/machines.js';
 import { haulCap } from '../src/levels.js';
 import { beltFrom } from '../src/dust.js';
@@ -48,7 +50,7 @@ group('the ram does not strike a rock that is still coming down', async () => {
   // is the machine's own rule, so the body is stood where the rule is asked.
   const tender = yard.S.workers.find(w => w.type === 'rockhand');
   const post = specOf('ram').tendAt();
-  if (tender) { tender.x = post; tender.walking = false; tender.route = null; tender.walkTo = null; }
+  if (tender) { tender.x = post; tender.walking = false; tender.route = null; tender.walkTo = null; touchSetup(); }
   const workedAtStart = ram().workedAt || 0;
   // Every frame of the fall: nothing off the hill.
   let struck = 0, frames = 0;

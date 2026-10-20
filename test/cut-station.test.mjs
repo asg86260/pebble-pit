@@ -9,6 +9,8 @@
 
 import { group, ok, run, runUntil, WORKER, P } from './helpers.mjs';
 import { yard } from './helpers.mjs';
+// A body stood somewhere by hand is a setup to the motion rules (verify.js).
+import { touchSetup } from '../src/verify.js';
 import { S, quarry } from '../src/state.js';
 import { persist } from '../src/persist.js';
 import { cutTop } from '../src/quarry.js';
@@ -78,7 +80,7 @@ group('the approach along the top of the cut is a walk, not the shuffle', async 
   runUntil(digging, 90);
   const w = quarriers()[0];
   w.goal = 'to'; w.route = null; w.cell = null;
-  w.x = quarry.x + quarry.w + P * 4; w.y = S.groundY - WORKER;
+  w.x = quarry.x + quarry.w + P * 4; w.y = S.groundY - WORKER; touchSetup();
   const from = w.x;
   const head = quarry.x;
   let frames = 0;

@@ -24,6 +24,7 @@ import { toScreen } from '../world.js';
 import { portalEnd } from '../portals.js';
 import { pairBox } from '../after/rebel.js';
 import { speakerAt } from '../after/place.js';
+import { bubbles } from '../after/bubbles.js';
 import { K as INK, W as PAPER } from '../render/after/kit.js';
 import { mouthX, portalX, portalCircle, deepPortal } from '../deep/place.js';
 import { arrowBox } from '../render/shaftway.js';
@@ -59,11 +60,11 @@ function pairOnGlass() {
 // Frames of the page until `fn`, or false after `frames`. Wall frames, because
 // the pan, a board's seating and the hover's intent are the page's; the yard's
 // clock is turned with `run`.
-const until = async (fn, frames = 90) => {
+export const until = async (fn, frames = 90) => {
   for (let i = 0; i < frames; i++) { if (fn()) return true; await raf(); }
   return !!fn();
 };
-const wheel = dy => canvas().dispatchEvent(new WheelEvent('wheel', { deltaY: dy, bubbles: true, cancelable: true }));
+export const wheel = dy => canvas().dispatchEvent(new WheelEvent('wheel', { deltaY: dy, bubbles: true, cancelable: true }));
 const keyOf = dir => (dir > 0 ? 'ArrowRight' : 'ArrowLeft');
 
 // The view driven to one end with the wheel or a held arrow until it stops
@@ -96,13 +97,24 @@ async function panChecks(name) {
 }
 
 // A world point on the glass, as the pointer gives it (input.js `pos`).
-const glass = (x, y) => { const r = canvas().getBoundingClientRect(), s = toScreen(x, y); return [r.left + s.x, r.top + s.y]; };
+export const glass = (x, y) => { const r = canvas().getBoundingClientRect(), s = toScreen(x, y); return [r.left + s.x, r.top + s.y]; };
 // The camera on a world x with nothing else moving it, a frame drawn.
-const lookAt = async x => { window.__look(x - S.viewW / 2); await settle(0.1); };
+export const lookAt = async x => { window.__look(x - S.viewW / 2); await settle(0.1); };
+
+// The pointer put on bare glass, and any board let go. The spot is a corner
+// of the glass outside the board's wedge (board.js, `inSafeZone`): a board
+// seats itself by its station, and a fixed corner was sometimes inside the
+// wedge, which held the last board up over the next station.
+export async function toBare() {
+  const W = innerWidth, H = innerHeight;
+  const bare = [[4, 4], [W - 4, 4], [4, H - 4], [W - 4, H - 4]].find(([x, y]) => !inSafeZone(x, y)) || [4, 4];
+  point('pointermove', bare[0], bare[1], 0);
+  await until(() => openBoard() === null, 90);
+}
 
 // The pointer walked up to a spot from a few steps off, the way a hand
 // arrives, rather than appearing on it.
-async function walkTo(sx, sy) {
+export async function walkTo(sx, sy) {
   for (let k = 8; k >= 1; k--) { point('pointermove', sx - k * 14, sy + k * 5, 0); await raf(); }
   point('pointermove', sx, sy, 0);
 }
@@ -126,7 +138,7 @@ const openRows = () => STATIONS.filter(r => r.board && r.stand && here(r) && r.o
 
 // A row's station visited: the camera on it, the pointer walked up, and what
 // the page said back.
-async function visit(row) {
+export async function visit(row) {
   // The camera on the station first and the spot found there: a station
   // drawn against the camera (God's camp) is somewhere else once it moves.
   const r0 = hitRect(row.key);
@@ -139,11 +151,8 @@ async function visit(row) {
   }
   // From a bare spot: a board already up for the neighbor holds its place
   // for a cursor heading toward it, which is the board's, not the walk's --
-  // so a corner of the window off the way to that board, wherever it sits
-  // (under a notice card or at the top of the glass).
-  const [bx, by] = [[4, 4], [S.W - 4, 4], [4, S.H - 4], [S.W - 4, S.H - 4]].find(([x, y]) => !inSafeZone(x, y)) || [4, 4];
-  point('pointermove', bx, by, 0);
-  await until(() => openBoard() === null, 90);
+  // so a corner of the window off the way to that board (`toBare`).
+  await toBare();
   const [sx, sy] = glass(at.x, at.y);
   await walkTo(sx, sy);
   const opened = await until(() => openBoard() === row.key, 90);
@@ -375,8 +384,15 @@ export const TESTS = [
     out.push(...await grabCheck('afterlife', PLACES.after.crew, ['woodcutter', 'agitator']));
     // The shout: a click on the pair on the pedestal sheds rebel.
     const pair = pairBox();
+    // Read between lines of the speech: a bubble a second old or less is a
+    // speaker mid-shout, drawn in that pose rather than standing.
     await lookAt(pair.x + pair.w / 2);
-    const glass = pairOnGlass();
+    let glass = pairOnGlass();
+    for (let i = 0; i < 10 && !bubbles().every(b => b.age > 1); i++) {
+      runUntil(() => bubbles().every(b => b.age > 1), 20);
+      await raf();
+      glass = pairOnGlass();
+    }
     out.push(ok(glass.every(g => g.ok), "afterlife: the pair are drawn on the pedestal, the act's ink round its paper where they stand",
                 JSON.stringify(glass)));
     const r0 = S.after.rebel, shouts0 = S.after.shout;

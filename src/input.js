@@ -19,7 +19,7 @@ import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, onMenu, standRect, openBoard } from './board.js';
-import { station, stationAt, STATIONS, here, nearStation } from './stations.js';
+import { station, stationAt, STATIONS, here, nearStation, workAt } from './stations.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { statusAt } from './render/statusicons.js';
 import { overChooseMark, chooseMarkAt } from './render/deep.js';
@@ -49,7 +49,8 @@ import { sayStore, showPane, pane } from './settings.js';
 import { isTap } from './tap.js';   // one definition of a tap for the whole page
 import { reducedMotion } from './prefs.js';
 import { goDeep, goUp, gliding } from './view.js';
-import { isActView } from './acts.js';
+import { isActView, actPlace, crewHolding } from './acts.js';
+import { AFTER_JOB, HELL_JOB } from './jobs.js';
 import { portalAt, handAt, throughPortal } from './portals.js';
 import { sayGoOn } from './actbeats.js';
 import { onGoOn } from './render/portals.js';
@@ -319,7 +320,10 @@ canvas.addEventListener('pointermove', e => {
     // be nothing. Unless the cursor is on the menu itself: the strip between
     // the board and the crew list is bare canvas over whatever station is next
     // along, and crossing it is reading the menu, not arriving.
-    if (want && !onMenu(e.clientX, e.clientY)) showPanel(want);
+    // Over a part worked by hand the work has the pointer: a board up from
+    // the station round it goes at once, so nothing stands over the part.
+    if (workAt(S.mouse.x, S.mouse.y)) showPanel(null, true);
+    else if (want && !onMenu(e.clientX, e.clientY)) showPanel(want);
     // The orb is reached across its station's ground, which opened the board
     // over it: it goes at once, not after the linger or the wedge.
     else if (overOrb(S.mouse.x, S.mouse.y)) showPanel(null, true);
@@ -511,10 +515,33 @@ const TYPE_SAID = {
   delver: msg('hover-delver'),
 };
 
+// An act's body reads as its job: act 3's members by their posts' words,
+// hell's ghosts by their own.
+const HELL_SAID = {
+  [HELL_JOB.MINE]: msg('hover-hell-miner'), [HELL_JOB.STOKE]: msg('hover-hell-stoker'),
+  [HELL_JOB.SMITH]: msg('hover-hell-smith'), [HELL_JOB.GANG]: msg('hover-hell-gang'), [HELL_JOB.HAUL]: msg('hover-hauler')
+};
+const ACT_SAID = {
+  after: job => (job === AFTER_JOB.BUILD ? msg('hover-builder') : msg(`after-job-${job}`)),
+  hell: job => HELL_SAID[job] || job
+};
+// The act body in the hand, or under the pointer in the act on screen (the
+// hand's own reach, crew/pointer.js `grabAt`): asked of the place's crew,
+// as the yard's `workerAt` asks the yard's.
+function actBodyAt(x, y) {
+  if (!isActView(S.view)) return null;
+  const up = inHand();
+  if (up && crewHolding(up)) return up;
+  const w = grabAt(x, y);
+  return w && w.job ? w : null;
+}
+
 // What is at a spot, in a word, or nothing. Asked in the order a thing would
 // catch your eye: somebody moving before the ground under them, a grain before
 // the building the pile stands beside.
 export function whatIsAt(x, y) {
+  const ab = actBodyAt(x, y);
+  if (ab) return ACT_SAID[S.view](ab.job);
   const w = lifted() || workerAt(x, y);
   if (w) return TYPE_SAID[w.type] || w.type;
   // Down there nothing of the yard is under the pointer: the way up, and the
@@ -572,7 +599,14 @@ function overOpenBoard(cx, cy) {
 function askedAbout(x, y, cx, cy) {
   // Somebody first: they are the only thing that moves, so a mark they are
   // over can still be read a moment later. In your hand before under the
-  // cursor: a body being carried is the one you are asking about.
+  // cursor: a body being carried is the one you are asking about. An act's
+  // body says its job, over its head.
+  const ab = actBodyAt(x, y);
+  if (ab) {
+    const b = actPlace(S.view).crew.box(ab), at = toScreen(b.x + b.w + P * 2, b.y - P * 3);
+    showTipAt(ACT_SAID[S.view](ab.job), at.x, at.y);
+    return true;
+  }
   const w = lifted() || workerAt(x, y);
   if (w) {
     const at = toScreen(w.x + WORKER + P * 2, w.y - P * 3);
@@ -641,13 +675,18 @@ const CURSORS = [
   // one, and closed while the left is down too (the owner, 2026-10-09)
   [() => S.crewSight != null && S.mining, 'grabbing'],
   [() => S.crewSight != null, 'grab'],
+  // a station's part worked by hand: the open hand over it, closed while it
+  // is held, and never the board's pointer (stations.js, `workAt`)
+  [() => !!gestureHeld(), 'grabbing'],
+  [(x, y) => workAt(x, y) != null, 'grab'],
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y), 'pointer'],
   // the way through the surface, from either side, and the serpent to hit
   [(x, y) => onShaftArrow(x, y) || onPortal(x, y) || onCoil(x, y) || overOrb(x, y), 'pointer'],
-  [(x, y) => atStation(x, y), 'pointer'],
-  // a mark that will tell you why something has stopped
+  // a mark that will tell you why something has stopped, before the station
+  // it hangs over: a station's own pile hangs its mark inside its reach
   [(x, y) => overAnyMark(x, y), 'help'],
+  [(x, y) => atStation(x, y), 'pointer'],
   [(x, y) => inRect(dialRect(), x, y), 'help'],
   [(x, y) => overBird(x, y), 'pointer'],
   [(x, y) => S.view === 'deep' && overFauna(x, y), 'pointer']
@@ -656,14 +695,18 @@ const CURSORS = [
 // The marks `askedAbout` shows a tooltip for, asked without showing one: the
 // cursor changes on the way *toward* the mark.
 function overAnyMark(x, y) {
-  for (const p of S.piles) if (S.pileFull[p.key] && overPileMark(p.key, x, y)) return true;
+  for (const p of markedPiles()) if (S.pileFull[p.key] && overPileMark(p.key, x, y)) return true;
   return !!overDoneMark(x, y);
 }
 
+// The cursor a point asks for, worn or not: what a check reads.
+export function cursorAt(x, y) {
+  for (const [is, name] of CURSORS) if (is(x, y)) return name;
+  return 'crosshair';
+}
 let wearing = '';
 function setCursor(x, y) {
-  let want = 'crosshair';
-  for (const [is, name] of CURSORS) if (is(x, y)) { want = name; break; }
+  const want = cursorAt(x, y);
   if (want === wearing) return;                // only when it actually changes
   wearing = want;
   canvas.style.cursor = want;
@@ -854,14 +897,14 @@ export function stepPan() {
 }
 
 // The places a digit can send the view: the rock, then every building that
-// stands today, right to left. Read on the press rather than kept, off the
+// stands today in the place on screen, right to left. Read on the press, off the
 // one list the hop arrows and the pad walk (stops.js), so a building that
 // went up since is on the list by existing. The noticeboard is furniture,
 // not a place, and stands in the house's own gap anyway. The rock is where
 // it stands even between rocks, which the stops' own rock box is not.
 function jumpStops() {
-  const places = stops().filter(s => s.kind === 'station' && s.key !== 'stats').map(stopMid);
-  return [S.cx, ...places.sort((p, q) => q - p)];
+  const places = stops(S.view).filter(s => s.kind === 'station' && s.key !== 'stats').map(stopMid);
+  return [...(S.view === 'yard' ? [S.cx] : []), ...places.sort((p, q) => q - p)];
 }
 function jumpTo(i) {
   const x = jumpStops()[i];

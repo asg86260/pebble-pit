@@ -25,6 +25,7 @@ import { flareWarning, flareBurning } from '../hell/chambers.js';
 import { hopperCount, trayCount } from '../hell/forge.js';
 import { hellSwing } from '../hell/index.js';
 import { CAGE } from '../hell/cage.js';
+import { inkOf } from '../ink.js';
 
 const N = HELL_TIERS.length;
 const hash = (c, r, k = 0) => (((c * 83492791) ^ (r * 2654435761) ^ (k * 19349663)) >>> 0) % 9973;
@@ -56,7 +57,10 @@ export function drawHellBackdrop() {
 // when what is cut changes (a seam moving back, a chamber opening): fifty
 // thousand cells a frame would be the frame.
 let rock = null, rockKey = '';
-const RGB = GREY.map(h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16)));
+// Written straight into the picture's pixels, past the fill setters that
+// carry the dark page's map (ink.js), so each tone is put through hell's map
+// here; the palette is fixed at boot, so once is enough.
+const RGB = GREY.map(h => { const c = inkOf(h, 'hell'); return [1, 3, 5].map(k => parseInt(c.slice(k, k + 2), 16)); });
 function cutRock() {
   const h = S.hell;
   const key = h ? `${h.chamber}|${h.seams.join(',')}` : '-';
@@ -305,10 +309,17 @@ function ghost(b) {
   ctx.globalAlpha = 1;
 }
 
-export function drawHellCage() {
+// The ghosts, a layer of their own so the corner's crew switch fades or
+// hides them and nothing else (render.js, `dim`).
+export function drawHellGhosts() {
   const h = S.hell;
   if (!h) return;
   for (const b of h.bodies) if (inView(b.x - P, b.x + P)) ghost(b);
+}
+
+export function drawHellCage() {
+  const h = S.hell;
+  if (!h) return;
   // The pair's own swing at the click, held a beat.
   const sw = hellSwing();
   if (sw && h.clock - sw.at < SWING_HOLD_S && h.clock >= sw.at) {
