@@ -174,3 +174,6 @@ export * from './config/wardrobe.js';
 // Track A of the act-3 build: the camp -- hand work in the world, the empty
 // sites and the carry that raises a station
 export * from './config/aftercamp.js';
+
+// the clouds: the one way a cloud is drawn, its tones, field, clock and kinds
+export * from './config/clouds.js';
