@@ -73,17 +73,23 @@ function offPosts(key, n) {
 export function fillBuilders() {
   const a = S.after;
   for (const key of sites()) {
-    if (crewOf(key).length || a.bodies.some(b => b.job === AFTER_JOB.BUILD && b.site === key && b.state === 'home')) continue;
+    const crew = crewOf(key);
+    if (a.bodies.some(b => b.job === AFTER_JOB.BUILD && b.site === key && b.state === 'home')) continue;
     const r = siteOf(key);
     const pile = buildPileAt(key);
+    // A site started with the camp still walking in is begun by whoever
+    // reached it first; the rest, arriving after, join it while loads are
+    // still to carry rather than leaving that one body to haul them all.
+    if (crew.length && (r.claimed >= BUILD_LOADS || crew.length >= AFTER_BUILD_CARRIERS || a.camp <= 0)) continue;
     if (a.camp > 0) {
-      const n = Math.min(AFTER_BUILD_CARRIERS, a.camp);
+      const n = Math.min(AFTER_BUILD_CARRIERS - crew.length, a.camp);
+      const builders = crew.filter(b => b.builds).length;
       a.camp -= n;
       const at = campSpot(pile);
       for (let k = 0; k < n; k++)
-        a.bodies.push({ id: nextId(), job: AFTER_JOB.BUILD, site: key, pair: null, builds: k < AFTER_BUILD_BUILDERS, x: at.x, y: at.y,
+        a.bodies.push({ id: nextId(), job: AFTER_JOB.BUILD, site: key, pair: null, builds: builders + k < AFTER_BUILD_BUILDERS, x: at.x, y: at.y,
                         face: 1, state: 'work', t: 0, load: null, slot: null, target: null, n: 0, born: a.t + k * 0.6 });
-    } else {
+    } else if (!crew.length) {
       for (const w of offPosts(key, AFTER_BUILD_BUILDERS))
         Object.assign(w, { job: AFTER_JOB.BUILD, site: key, pair: null, builds: true, at: null, to: null, swing: null,
                            t: 0, load: null, slot: null, target: null, n: 0 });
