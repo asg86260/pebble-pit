@@ -179,15 +179,6 @@ export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0
 // The stations standing from the act's first frame: the pedestal the pair
 // speak from and the construction shack that sells every other.
 export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry'];
-// The forestry shack's drawing, two takes for the owner's pick (render/after/
-// stations.js, FORESTRY): 0 a log cabin, 1 a woodshed with its saw hung up.
-export let AFTER_FORESTRY_LOOK = 0;
-export const FORESTRY_KNOBS = [
-  { key: 'AFTER_FORESTRY_LOOK', label: 'act 3 forestry shack: 0 log cabin, 1 woodshed', min: 0, max: 1, step: 1,
-    get: () => AFTER_FORESTRY_LOOK, set: v => { AFTER_FORESTRY_LOOK = v; } },
-  { key: 'AFTER_CLOSED_LOOK', label: 'act 3 closed station: 0 as it was, 1 unlit, 2 shut up, 3 outline', min: 0, max: 3, step: 1,
-    get: () => AFTER_CLOSED_LOOK, set: v => { AFTER_CLOSED_LOOK = v; } }
-];
 // The camp's other stations stand whole from the start, closed until they are
 // built (the owner, 2026-10-20: "lets just add a closed sign in front of
 // them"): a closed sign stands at each one's door, symbols only, and its
@@ -197,16 +188,10 @@ export const FORESTRY_KNOBS = [
 // cells (AP): a board `w` by `h`, crossed through (the owner's pick of two,
 // 2026-10-20), on a post `post` high.
 export const AFTER_CLOSED = { w: 6, h: 4, post: 3 };
-// How a closed station reads as not open yet (the owner, 2026-10-20: "seeing
-// them in game doesnt read as closed"), three takes for the vote and the look
-// as it stood: 0 whole, the board at its door; 1 unlit, the whole station in
-// paper and pale only, no ink, the board bigger; 2 shut up, its door boarded
-// across with crossed planks and its moving part chained still, the board
-// bigger and up at eye level; 3 an outline, a dotted plan of the station on
-// the grid, filled in a course a piece of the build. Each opens as its build
-// lands, a piece at a time, faded. The bigger board's size and post per take.
-export let AFTER_CLOSED_LOOK = 1;
-export const AFTER_CLOSED_TAKES = { 0: AFTER_CLOSED, 1: { w: 9, h: 6, post: 4 }, 2: { w: 9, h: 6, post: 9 }, 3: AFTER_CLOSED };
+// A closed station reads as not open yet (the owner, 2026-10-20: "seeing
+// them in game doesnt read as closed"; the pick of three, an outline): a
+// dotted plan of the station on the grid, its board at the door, filled in a
+// course a piece of the build as each lands, the plan and the board fading.
 // The product looks like the protest from the start (board card
 // act3-trees-to-rebellion, the owner's pick A, 2026-10-20): the workshop
 // letters the fist onto the sign as it works it, the finished signs stand in

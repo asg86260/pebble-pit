@@ -13,7 +13,7 @@
 // where the cell stands (no flat fills, no random draw, so it holds still
 // frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_CLOSED, AFTER_CLOSED_LOOK, AFTER_CLOSED_TAKES, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
+import { P, GREY, AFTER_CLOSED, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
@@ -29,8 +29,8 @@ import { airMotes } from '../after/rebel.js';
 import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
 import { postsOf, bodiesOf, atStation, bodyInk } from '../after/bodies.js';
-import { gestureView, partsOf } from '../after/gestures.js';
-import { frame, now, inView, clamp01, pileState, pileAlpha, countAt, clearCounts, pendingCounts, backing, withTones, K, W, PALE, MID } from './after/kit.js';
+import { gestureView } from '../after/gestures.js';
+import { frame, now, inView, clamp01, pileState, pileAlpha, countAt, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
 import { drawGround, drawForeground } from './after/ground.js';
@@ -143,9 +143,9 @@ function glyphOver(b, rows, at, alpha = 1) {
 // The closed sign at a station's door (config, AFTER_CLOSED), its foot on
 // the floor and `x` its middle, world px: a board on a post crossed through
 // corner to corner, symbols only, drawn on the act's art cell (AP) with its
-// rim the art's stroke; `C` its size and post (AFTER_CLOSED_TAKES).
-function closedSign(x, C = AFTER_CLOSED) {
-  const fl = afterFloor(), r = 2 * AFTER_ART_SCALE, u = AP;
+// rim the art's stroke.
+function closedSign(x) {
+  const C = AFTER_CLOSED, fl = afterFloor(), r = 2 * AFTER_ART_SCALE, u = AP;
   const w = C.w * u, h = C.h * u, x0 = snap(x) - Math.round(C.w / 2) * u, top = fl - (C.post + C.h) * u;
   ctx.fillStyle = GREY[K];
   ctx.fillRect(snap(x) - r, top + h, 2 * r, C.post * u);
@@ -164,42 +164,8 @@ function closedSign(x, C = AFTER_CLOSED) {
 // piece landed, faded in over AFTER_BUILD_FADE_S, its share.
 const openedBy = r => (r ? r.at.slice(0, r.n).reduce((s, at) => s + fadeIn(at), 0) / AFTER_BUILD_PIECES : 0);
 const alphaDo = (a, fn) => { if (a <= 0) return; const was = ctx.globalAlpha; ctx.globalAlpha = was * Math.min(1, a); fn(); ctx.globalAlpha = was; };
-// Take 1, unlit: ink and mid drawn as the pale, the paper kept.
-const UNLIT = t => (t === W ? W : PALE);
-// Take 2, shut up: two planks crossed over its door, a third across them, on
-// the art's cells, each a pale board in an ink rim; and a chain from its
-// moving part straight down to what it stands on, link by link.
-function plank(x0, y0, x1, y1) {
-  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) / AP;
-  for (let k = 0; k <= n; k++) {
-    const x = snap(x0 + (x1 - x0) * k / n), y = snap(y0 + (y1 - y0) * k / n);
-    ctx.fillStyle = GREY[K]; ctx.fillRect(x, y, AP, AP);
-  }
-  for (let k = 0; k <= n; k++) {
-    const x = snap(x0 + (x1 - x0) * k / n), y = snap(y0 + (y1 - y0) * k / n);
-    ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 2 * AFTER_ART_SCALE, y + 2 * AFTER_ART_SCALE, AP - 4 * AFTER_ART_SCALE, AP - 4 * AFTER_ART_SCALE);
-  }
-}
-function boarded(key) {
-  const fl = afterFloor(), x = stationDoor(key), half = AP * 3, top = fl - AP * 7;
-  plank(x - half, top, x + half - AP, fl - AP);
-  plank(x + half - AP, top, x - half, fl - AP);
-  plank(x - half - AP, top + AP * 2, x + half, top + AP * 2);
-}
-const CHAINED = { mill: p => p.wheel, chipper: p => ({ x: p.arm.x + p.arm.w / 2, y: p.arm.y + AP }), papermill: p => p.vat,
-                  workshop: p => ({ x: p.hammer.x + p.hammer.w / 2, y: p.hammer.y }), press: p => ({ x: p.handle.x + p.handle.w / 2, y: p.handle.y }) };
-function chained(key) {
-  const at = CHAINED[key] && CHAINED[key](partsOf(key));
-  if (!at) return;
-  const x = snap(at.x), r = AFTER_ART_SCALE * 2;
-  for (let y = snap(at.y), k = 0; y < afterFloor() - AP / 2; y += AP / 2, k++) {
-    const w = k % 2 ? r * 2 : r * 4, h = AP / 2 + r * 2;
-    ctx.fillStyle = GREY[K]; ctx.fillRect(x - w / 2, y - r, w, h);
-    ctx.fillStyle = GREY[W]; ctx.fillRect(x - w / 2 + r, y, w - 2 * r, h - 2 * r);
-  }
-}
-// Take 3, an outline: the drawing's own cells (its silhouette) at its edge,
-// every other one, in the mid grey: a plan of what will stand.
+// Its outline: the drawing's own cells (its silhouette) at its edge, every
+// other one, in the mid grey: a plan of what will stand.
 const OUTLINES = {};
 function outlineOf(key) {
   if (OUTLINES[key]) return OUTLINES[key];
@@ -213,29 +179,21 @@ function outlineOf(key) {
   }
   return (OUTLINES[key] = out);
 }
-// A closed station, and its build taking the closed look down as it lands.
+// A closed station (config, AFTER_CLOSED): its dotted outline and its board
+// at the door, faded off as its build lands, and the station going up a
+// course a piece, the floor up, each fading in as it lands.
 function closedStation(key, draw, opened) {
-  const look = AFTER_CLOSED_LOOK, d = frameOf(key), C = AFTER_CLOSED_TAKES[look] || AFTER_CLOSED, b = stationBox(key);
-  if (look === 1) {
-    withTones(UNLIT, () => draw(d, false, 0));
-    alphaDo(opened, () => draw(d, false, 0));
-  } else if (look === 3) {
-    alphaDo(1 - opened, () => { for (const [c, row] of outlineOf(key)) d.c(c, row, MID); });
-    // the station going up a course a piece, the floor up, each fading in
-    const r = A().raising[key], rows = b.h / P;
-    for (let k = 0; r && k < r.n; k++) {
-      const top = Math.round(rows * (k + 1) / AFTER_BUILD_PIECES), bot = Math.round(rows * k / AFTER_BUILD_PIECES);
-      ctx.save();
-      ctx.beginPath(); ctx.rect(b.x - AP * 4, afterFloor() - top * P, b.w + AP * 10, (top - bot) * P + (k ? 0 : P)); ctx.clip();
-      ctx.globalAlpha = fadeIn(r.at[k]);
-      draw(d, false, 0);
-      ctx.restore();
-    }
-  } else {
+  const d = frameOf(key), b = stationBox(key), r = A().raising[key], rows = b.h / P;
+  alphaDo(1 - opened, () => { for (const [c, row] of outlineOf(key)) d.c(c, row, MID); });
+  for (let k = 0; r && k < r.n; k++) {
+    const top = Math.round(rows * (k + 1) / AFTER_BUILD_PIECES), bot = Math.round(rows * k / AFTER_BUILD_PIECES);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(b.x - AP * 4, afterFloor() - top * P, b.w + AP * 10, (top - bot) * P + (k ? 0 : P)); ctx.clip();
+    ctx.globalAlpha = fadeIn(r.at[k]);
     draw(d, false, 0);
-    if (look === 2) alphaDo(1 - opened, () => { boarded(key); chained(key); });
+    ctx.restore();
   }
-  alphaDo(1 - opened, () => closedSign(stationDoor(key), C));
+  alphaDo(1 - opened, () => closedSign(stationDoor(key)));
 }
 function drawStation(key) {
   const b = stationBox(key);

@@ -53,20 +53,12 @@ export function square(fill, x, y, w, h = w, mid = W) {
 // a cell of its own (config/after.js, AFTER_ART_SCALE): every cell of it `s` grid cells
 // across, so a drawing at twice its size stays on the grid. A body stood in
 // it keeps the yard's size, its feet where the drawing puts them.
-// While `fn` runs, every frame's fills are laid in `map(tone)` instead: a
-// drawing drawn in other tones as it stands (a closed station, unlit).
-let toneMap = null;
-export function withTones(map, fn) {
-  const was = toneMap;
-  toneMap = map;
-  try { fn(); } finally { toneMap = was; }
-}
 export function frame(ox, oy, flip = 0, sink = null, s = 1) {
   const X = (x, w) => (flip ? ox + flip * P * s - x - w : ox + x);
   // a rect already in the frame's scaled px
   const put = (x, y, w, h, tone) => {
     if (sink) { sink(x, y, w, h); return; }
-    ctx.fillStyle = GREY[toneMap ? toneMap(tone) : tone];
+    ctx.fillStyle = GREY[tone];
     ctx.fillRect(Math.round(X(x, w)), Math.round(oy + y), Math.round(w), Math.round(h));
   };
   const d = {

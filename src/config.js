@@ -113,7 +113,6 @@ import { DEEP_BOARD_KNOBS } from './config/deepboard.js';
 import { ROOMBA_KNOBS } from './config/roomba.js';
 import { CUT_KNOBS } from './config/cutscene.js';   // wave shot, track A
 import { ACT_KNOBS } from './config/acts.js';       // the rise, ridden
-import { FORESTRY_KNOBS } from './config/after.js'; // act 3's forestry shack, two takes
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
@@ -124,8 +123,7 @@ export const TUNABLE = [
   ...DEEP_KNOBS, ...DEEP_CREW_KNOBS, ...DEEP_DRAW_KNOBS, ...MEAL_KNOBS, ...DEEP_BOARD_KNOBS,
   ...ROOMBA_KNOBS,
   ...CUT_KNOBS,                     // wave shot, track A
-  ...ACT_KNOBS,                     // the rise, ridden
-  ...FORESTRY_KNOBS                 // act 3's forestry shack, two takes
+  ...ACT_KNOBS                      // the rise, ridden
 ];
 
 // A knob with no row throws rather than reading `undefined`: setting one

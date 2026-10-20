@@ -21109,6 +21109,36 @@ a hand for good.
   way act 4's wall gang is its player's. (A call below, whether the act
   wants it or a fixed split.)
 
+##### The camp's second pass: the forestry shack, the fallen logs, closed stations (built 2026-10-20)
+
+The owner's feedback on the camp, and the picks voted on it:
+
+- **One gap.** Every station's ground runs from its first drawn column to its
+  last (`after/art.js` derives it from the drawing's box, piles, door and
+  reach), and every two neighbors stand `AFTER_STATION_GAP` (six art cells)
+  apart, the grove's end to the first station the same. A placement is
+  derived from its neighbors, never a hand-picked x.
+- **The forestry shack** stands in front of the grove, a log cabin (the
+  owner's pick of two): it holds the grove's board, and the pile of logs on
+  its grove side. A press on a tree is the saw's, never the board's: it puts
+  the saw on that tree, as the icon over it does.
+- **The fall is one motion.** A tree sawn through tips over as one drawing
+  turned by its true angle, quicker as it goes, hits with the dust coming up
+  and rocks back once; its trunk splits into logs that roll a little and lie
+  where they stop (`S.after.groundLogs`), and its crown fades. Nothing is held
+  in poses and nothing pops.
+- **Gatherers.** A grove post: a gatherer walks to each log lying still,
+  carries it to the forestry shack's pile, and the haulers take the pile on
+  to the saw mill and the chipper. Logs on the ground with nobody posted lie
+  there.
+- **A closed station is its outline** (the owner's pick of three: unlit,
+  shut up, outline). An unbuilt station stands as a dotted plan of itself on
+  the grid, a crossed board at its door, and its board offers its rebuild.
+  The build fills it in a course a piece as each piece lands, the plan and
+  the board fading off. Nothing broken or ruined.
+- The chipper's lever stands on top of its block, clear of the mouth; the
+  grove's icons are a grid cell a dot.
+
 ##### How support spreads
 
 **Support** is the union's measure: members (with volunteers) as a share

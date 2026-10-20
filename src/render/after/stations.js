@@ -22,7 +22,7 @@
 const TURN = Math.PI / 16;                                 // a held step of a turning part
 const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
-import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT, AFTER_FORESTRY_LOOK } from '../../config.js';
+import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT } from '../../config.js';
 import { K, W, PALE, MID, DUST, toward, hash, clamp01, silhouette } from './kit.js';
 import { signsJoined } from '../../after/press.js';
 import { paperPulls } from '../../after/mill.js';
@@ -510,47 +510,29 @@ function shack(d) {
 }
 
 // --- the forestry shack: the grove's, in front of its trees ---------------------------
-// Two takes for the owner's pick (config, AFTER_FORESTRY_LOOK): 0 a log cabin,
-// a stepped gable over walls of laid logs, a door and a window; 1 a woodshed,
-// a lean-to roof over an open front, a bow saw hung on its back wall and log
-// ends stacked under it. Each '#' ink, 'm' mid, '.' paper, ' ' open, sixteen
-// cells by thirteen, its box's left edge eight cells into its ground (after/
-// art.js), the logs' pile on its grove side. A cut-out: nothing on it moves.
+// A log cabin (the owner's pick of two, 2026-10-20): a stepped gable over
+// walls of laid logs, a door and a window. '#' ink, 'm' mid, '.' paper, ' '
+// open, sixteen cells by thirteen, its box's left edge eight cells into its
+// ground (after/art.js), the logs' pile on its grove side. A cut-out: nothing
+// on it moves.
 const FORESTRY = [
-  [
-    '       ##       ',
-    '     ######     ',
-    '   ##########   ',
-    ' ############## ',
-    '################',
-    ' #mmmmmmmmmmmm# ',
-    ' #............# ',
-    ' #mmm####mmmmm# ',
-    ' #...#..#.###.# ',
-    ' #mmm#..#m#.#m# ',
-    ' #...#..#.###.# ',
-    ' #mmm#..#mmmmm# ',
-    ' #####..####### ',
-  ],
-  [
-    '######          ',
-    '###########     ',
-    '################',
-    ' #............# ',
-    ' #.##########.# ',
-    ' #.#.#.#.#.#..# ',
-    ' #............# ',
-    ' #.mm.mm.mm...# ',
-    ' #m##m##m##m..# ',
-    ' #.mm.mm.mm...# ',
-    ' #m##m##m##m..# ',
-    ' #.mm.mm.mm...# ',
-    ' ############## ',
-  ]
+  '       ##       ',
+  '     ######     ',
+  '   ##########   ',
+  ' ############## ',
+  '################',
+  ' #mmmmmmmmmmmm# ',
+  ' #............# ',
+  ' #mmm####mmmmm# ',
+  ' #...#..#.###.# ',
+  ' #mmm#..#m#.#m# ',
+  ' #...#..#.###.# ',
+  ' #mmm#..#mmmmm# ',
+  ' #####..####### ',
 ];
 const FOREST_X = 8;
 function forestry(d) {
-  const rows = FORESTRY[AFTER_FORESTRY_LOOK] || FORESTRY[0];
+  const rows = FORESTRY;
   rows.forEach((row, j) => [...row].forEach((ch, i) => {
     const tone = ch === '#' ? K : ch === 'm' ? MID : ch === '.' ? W : null;
     if (tone != null) d.c(FOREST_X + i, j - rows.length, tone);
