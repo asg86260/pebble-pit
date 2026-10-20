@@ -244,8 +244,14 @@ millisecond, and the real spike was `addGrain` searching the whole floor.
   comment that restates the line under it.
 - **American English** — "center", "color", "behavior", "toward" — in comments,
   prose and commit messages.
-- Black and white only, flat shapes, no gradients, no textures. Everything sits
-  on the `P = 6` cell grid; half a cell off puts a hairline through the picture.
+- Black and white only, flat shapes, no gradients, no textures. **Art is drawn
+  on the `P = 6` cell grid; motion is smooth** (the owner, 2026-10-20, the
+  casino arm the model). A shape's own cells line up with each other -- half
+  a cell off inside one drawing puts a hairline through it -- but a thing that
+  moves (a body walking, a cloud drifting, a layer sliding with the camera, an
+  arm swinging) moves by its true position, not snapped a cell at a time.
+  Move the whole drawing as one piece (draw it, or cache it, on its own grid
+  and place it at the fractional position) so its insides never shear.
 - **Every new field on `S` goes in one of state.js's three lists** (`SAVED`,
   `SAVED_BY_HAND`, `EPHEMERAL`); `test/persist-roundtrip.test.mjs` is red for a
   field in none of them.
