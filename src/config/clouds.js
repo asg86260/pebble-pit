@@ -132,3 +132,129 @@ export const CLOUDS_KINDS = {
 // With one tone a cloud, the ground's rows step between these ladder steps
 // back to front, so the rows still part.
 export const CLOUDS_ONE_TONE_ROWS = [1, 2, 1, 2];
+
+// --- the sky ----------------------------------------------------------------------
+// A whole sky: `layers` bands from the horizon (0) to overhead (1), each a field
+// of clouds that run together into masses, with open sky between irregular
+// groups. Every number below is [at the horizon, nearest]; a layer between
+// takes its share of the way along depth^ease, so most layers crowd toward
+// the horizon, as distance does. Toward the horizon clouds are smaller,
+// flatter, slower, paler and plainer; overhead they are huge, towering,
+// shaded, and run off the frame.
+//
+//   R         a layer's typical cloud size (its biggest dome's radius)
+//   spread    how widely sizes scatter round R (a log-normal's sigma): a few
+//             clouds many times the typical one, many smaller
+//   tail      the biggest a cloud may be, in R
+//   flat      how far a puff is squashed top to bottom (1 round)
+//   rise      the layer's base line over the horizon, as a share of the sky
+//   group     how many clouds a group has, on average
+//   packing   their spacing within a group, in their own size: under the 4
+//             or so a cumulus spans, so a group runs into one mass
+//   gap       open sky between groups, on average, in R
+//   parallax  how far it moves against the camera
+//   wind      cells a second it drifts
+//   stray     how fast a cloud wanders against its layer, in its layer's
+//             wind: clouds overtake each other, meet and part
+//   shade     a belly's depth, as a share of R; none at the horizon
+//   step      seconds between bakes (the baked sheets' clock)
+//   every     frames between workings of its field on the card: a far
+//             layer's puffs move a hair a frame, so it is worked one frame
+//             in this many, its fade kept in step
+//   kinds     how often each shape is drawn (CLOUDS_SHAPES), at the horizon
+//             and nearest
+export const CLOUDS_SKY = {
+  layers: 5, ease: 1.7,
+  R: [2.6, 20], spread: [0.4, 0.6], tail: [2.2, 2.4], flat: [0.5, 1],
+  rise: [0.02, 0.42], group: [3, 1.4], packing: [1.1, 1.9], gap: [1.6, 7],
+  parallax: [0.04, 0.75], wind: [0.015, 0.22], stray: 0.5,
+  shade: [0, 0.3], step: [5, 4], every: [6, 1],
+  kinds: [{ stratus: 4, heap: 3, scrap: 2, cumulus: 2 },
+          { cumulus: 3, tower: 2, heap: 2, anvil: 1, scrap: 2, stratus: 1 }]
+};
+// How a cloud of each shape builds and dissolves: its size swells and wanes
+// over `life` seconds [least, most], never below `keep` of itself (a big mass
+// breathes; a scrap or a wisp is gone and comes back).
+export const CLOUDS_LIFE = {
+  cumulus: { life: [180, 420], keep: 0.55 }, tower: { life: [200, 460], keep: 0.5 },
+  anvil: { life: [260, 520], keep: 0.6 }, heap: { life: [160, 380], keep: 0.5 },
+  stratus: { life: [90, 220], keep: 0 }, scrap: { life: [50, 140], keep: 0 }
+};
+// The shapes beyond the plain cumulus (CLOUDS_RECIPE):
+//   tower    the cumulus with domes stacked on its crown, each `shrink` the
+//            last and `climb` of its radius higher, `levels` of them
+//   anvil    a tower whose top spreads downwind into a flat shelf `reach` R
+//            long, its puffs `flat`
+//   heap     wide and low: a long body over a flat, barely scalloped base
+//            and a few small domes
+//   stratus  a long wisp: `count` small squashed puffs strung `length` R
+//   scrap    a few small puffs, loose
+export const CLOUDS_SHAPES = {
+  tower: { levels: [1, 3], shrink: 0.78, climb: 0.95, wander: 0.35 },
+  anvil: { reach: [1.8, 3], flat: 0.35, r: [0.35, 0.5] },
+  heap: { span: 2.6, crown: [0, 2], crownR: [0.45, 0.6], flat: 0.75 },
+  stratus: { count: [6, 14], length: [4, 9], r: [0.22, 0.4], flat: 0.38, wander: 0.4 },
+  scrap: { count: [2, 4], r: [0.18, 0.38], spread: 1.2 }
+};
+
+// --- the flow -----------------------------------------------------------------------
+// The sky is liquid: every puff moves every frame on its own slow current and
+// the field is worked out afresh each frame (render/cloudgl.js), so two lobes
+// drifting together grow a neck that thickens until they are one, and a lobe
+// drifting off thins its neck until it pinches away. A puff's path is three
+// sines over time at its own periods and phases, each a share of its radius:
+//   wander  how far it strays, as a share of its radius, [least, most]
+//   period  seconds a stray takes, [least, most]
+//   lift    how much of the stray is up and down rather than across
+export const CLOUDS_FLOW = { wander: [0.35, 0.85], period: [30, 90], lift: 0.45 };
+// A cell that changes tone eases into the new one over this many seconds,
+// so an edge flowing across the grid glides rather than ticks.
+export const CLOUDS_FADE_S = 0.3;
+// The ground in the sky's flow: its rows' size, its puffs' wander and period,
+// and the frames between workings of its field (CLOUDS_SKY.every); its rows'
+// depth and the rest are CLOUDS_KINDS.ground's.
+export const CLOUDS_GROUND_FLOW = { R: 14, wander: [0.25, 0.6], period: [30, 80], every: 2 };
+
+// --- the palette -------------------------------------------------------------------
+// The clouds' tones, each named for the one job it does (the owner,
+// 2026-10-19: more tones than act 3's four, so long as each is used
+// distinctly). Two roles may share a tone -- the lit rim by day is the paper,
+// and by night the shadow is the haze, the step nearer the sky -- but no two
+// different tones sit closer than test/after-palette.test.mjs's step, on
+// either page.
+//   sky    the open sky
+//   haze   a cloud far off, toward the horizon: one flat step off the sky
+//   body   a cloud near enough to model, in the light; by night the middle
+//          distance's
+//   shade  by day, a near cloud's own shadow: its underside, a lobe's belly
+//          where it hangs in front of the cloud's farther lobes, the
+//          ground's crevices
+//   core   by day, the lower half of a near cloud's underside, so its shadow
+//          steps darker toward the bottom
+//   near   by night, a near cloud in the moonlight (its shadow is the body)
+//   lit    the sunlit or moonlit rim (treatment D); by day drawn only where a
+//          cloud stands in front of another, since by day it is the paper
+export const CLOUDS_PALETTE = {
+  light: { sky: '#ffffff', haze: '#ebebeb', body: '#d6d6d6', shade: '#a4a4a4', core: '#757575', lit: '#ffffff' },
+  dark: { sky: '#121212', haze: '#262626', body: '#3a3a3a', near: '#4e4e4e', lit: '#666666' }
+};
+// Which roles a cloud takes by how far off it is, on each page: a list of
+// bands, each [from this depth on (0 the horizon, 1 nearest), its role in the
+// light, in its own shadow, at its base], so contrast falls away toward the
+// horizon.
+// By night a shadow is the step nearer the sky, so the roles turn.
+export const CLOUDS_DEPTH_BANDS = {
+  light: [[0, 'haze', 'haze', 'haze'], [0.25, 'haze', 'body', 'body'], [0.6, 'body', 'shade', 'core']],
+  dark: [[0, 'haze', 'haze', 'haze'], [0.25, 'body', 'haze', 'haze'], [0.6, 'near', 'body', 'haze']]
+};
+// How deep a layer's lit rim and the ground's rows sit, for the tones above:
+// the ground's rows, back to front.
+export const CLOUDS_GROUND_DEPTHS = [0.1, 0.62, 1];
+// The rim's depth, as a share of a layer's typical cloud size, at least 2.
+export const CLOUDS_RIM = 0.12;
+
+// The crust of small lobes on a big one (render/clouds.js, shape): a lobe of
+// at least `from` cells wears `per` small ones a cell of its radius, spread
+// over `arc` of its edge (half-turns, from its left round its top to its
+// right), each `r` of its radius, centered `out` of its radius from its own.
+export const CLOUDS_BUBBLES = { from: 7, per: 0.32, arc: [-1.15, 0.15], r: [0.18, 0.3], out: 0.92 };

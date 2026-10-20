@@ -25,7 +25,8 @@
 
 import { CLOUDS_TONES, CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_BUDGET_MS, CLOUDS_SLICE,
          CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN,
-         CLOUDS_TREATMENTS } from '../config.js';
+         CLOUDS_TREATMENTS, CLOUDS_SKY, CLOUDS_LIFE, CLOUDS_SHAPES, CLOUDS_FLOW,
+         CLOUDS_GROUND_FLOW, CLOUDS_PALETTE, CLOUDS_DEPTH_BANDS, CLOUDS_GROUND_DEPTHS, CLOUDS_RIM, CLOUDS_BUBBLES } from '../config.js';
 
 // A cloud's shape is its own seed's, not a draw from the yard's `rand()`: a
 // drawing must never move the game's stream, or a seeded run would play out
@@ -471,4 +472,295 @@ export function spursOf(sh, R = sh.roles[1]) {
   let n = 0;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) n += spurAt(sh.toneOf, at, x, y);
   return n;
+}
+
+// --- the liquid sky -----------------------------------------------------------------
+// A sky is layers (CLOUDS_SKY), each a field of clouds of many shapes and
+// sizes run together into masses. Unlike a sheet above, a layer's puffs are
+// not baked a step at a time: each moves every frame on its own current
+// (CLOUDS_FLOW) and swells and wanes over its cloud's life (CLOUDS_LIFE), and
+// the field is worked out afresh each frame -- on the graphics card
+// (render/cloudgl.js), or here, cell by cell, for the checks and a hit test.
+
+// A layer's numbers: each [at the horizon, nearest] pair taken at its depth.
+export function layerParams(i) {
+  const S = CLOUDS_SKY, d = S.layers > 1 ? i / (S.layers - 1) : 1, e = Math.pow(d, S.ease);
+  const at = k => (Array.isArray(S[k]) ? S[k][0] + (S[k][1] - S[k][0]) * e : S[k]);
+  const kinds = {};
+  for (const k of new Set([...Object.keys(S.kinds[0]), ...Object.keys(S.kinds[1])]))
+    kinds[k] = (S.kinds[0][k] || 0) * (1 - e) + (S.kinds[1][k] || 0) * e;
+  const P = { d, e, kinds };
+  for (const k of ['R', 'spread', 'tail', 'flat', 'rise', 'group', 'packing', 'gap', 'parallax', 'wind', 'shade', 'step', 'every']) P[k] = at(k);
+  P.every = Math.max(1, Math.round(P.every));
+  return P;
+}
+
+const pick = (rnd, w) => {
+  let x = rnd() * Object.values(w).reduce((a, b) => a + b, 0);
+  for (const k in w) if ((x -= w[k]) < 0) return k;
+  return Object.keys(w)[0];
+};
+// a log-normal draw: most near 1, a long tail of big ones
+const lognormal = (rnd, sigma) => Math.exp(sigma * Math.sqrt(-2 * Math.log(1 - rnd() * 0.999)) * Math.cos(TAU * rnd()));
+const expo = (rnd, mean) => -mean * Math.log(1 - rnd() * 0.999);
+const TIERS = ['crown', 'shoulders', 'body', 'base'];
+
+// One cloud of a shape, size R, its base on `base`, middle `cx`, every puff
+// squashed by `flat` and handed to `add(tier, x, y, r, flat)`.
+function shape(rnd, kind, cx, base, R, flat, add0) {
+  const H = CLOUDS_SHAPES, B = CLOUDS_BUBBLES;
+  // every big lobe wears a crust of small ones round its upper side, as a
+  // cumulus is lumps on lumps: they ride the same flow, so its edge bubbles
+  const add = (tier, x, y, r, f) => {
+    const parent = add0(tier, x, y, r, f);
+    if (r < B.from) return;
+    const n = Math.round(r * B.per);
+    for (let k = 0; k < n; k++) {
+      const a = Math.PI * (B.arc[0] + (B.arc[1] - B.arc[0]) * (k + rnd()) / n), rr = r * lerp(rnd(), B.r);
+      // in the back tier, so a lump shows only where it stands out against
+      // the sky, and never shades the cloud it sits on
+      // it rides its lobe's current, so the crust moves with the lobe it
+      // crusts instead of floating off it
+      add0(0, x + Math.cos(a) * r * B.out, y + Math.sin(a) * r * B.out * f, rr, f, parent);
+    }
+  };
+  const tiers = TIERS.map(() => []);
+  const fromCumulus = () => {
+    cumulus(rnd, cx, base, R, TIERS, tiers);
+    tiers.forEach((ps, j) => ps.forEach(p => add(j, p.x, base - (base - p.y) * flat, p.r, flat)));
+  };
+  if (kind === 'cumulus') return fromCumulus();
+  if (kind === 'tower' || kind === 'anvil') {
+    fromCumulus();
+    // domes stacked up the crown, each smaller, wandering a little off line
+    const T = H.tower, n = T.levels[0] + Math.floor(rnd() * (T.levels[1] - T.levels[0] + 1));
+    let r = R * T.shrink, x = cx, y = base - R * 1.1 * flat;
+    for (let k = 0; k < n; k++) {
+      y -= r * T.climb * flat; x += (rnd() * 2 - 1) * T.wander * r;
+      add(0, x, y, r, flat);
+      add(1, x + (rnd() < 0.5 ? -1 : 1) * r * 0.7, y + r * 0.35 * flat, r * 0.6, flat);
+      r *= T.shrink;
+    }
+    if (kind === 'anvil') {
+      // the top spreads downwind into a flat shelf
+      const A = H.anvil, reach = R * lerp(rnd(), A.reach);
+      for (let dx = -R * 0.3; dx < reach; dx += R * 0.4) {
+        const rr = R * lerp(rnd(), A.r);
+        add(0, x + dx, y - r * 0.4 * flat + (rnd() - 0.5) * rr * 0.3, rr, flat * A.flat);
+      }
+    }
+    return;
+  }
+  if (kind === 'heap') {
+    // wide and low: a long body over a flat base, a few small domes
+    const T = H.heap, f = flat * T.flat;
+    for (let x = cx - T.span * R; x <= cx + T.span * R;) {
+      const r = R * (0.45 + 0.2 * rnd());
+      add(2, x, base - r * 0.55 * f, r, f);
+      add(3, x + r * 0.4, base - r * 0.1 * f, r * 0.7, f * 0.8);
+      x += r * (1.0 + 0.4 * rnd());
+    }
+    const n = T.crown[0] + Math.floor(rnd() * (T.crown[1] - T.crown[0] + 1));
+    for (let k = 0; k < n; k++) {
+      const r = R * lerp(rnd(), T.crownR);
+      add(0, cx + (rnd() * 2 - 1) * T.span * R * 0.6, base - R * 0.65 * f - r * 0.4 * f, r, f);
+    }
+    return;
+  }
+  if (kind === 'stratus') {
+    // a long wisp of small squashed puffs, wandering up and down
+    const T = H.stratus, n = T.count[0] + Math.floor(rnd() * (T.count[1] - T.count[0] + 1));
+    const len = R * lerp(rnd(), T.length), f = flat * T.flat;
+    let y = base - R * 0.3 * flat;
+    for (let k = 0; k < n; k++) {
+      const x = cx - len / 2 + len * (k + rnd() * 0.6) / n;
+      y += (rnd() - 0.5) * T.wander * R * f;
+      add(2, x, y, R * lerp(rnd(), T.r) * (1 - 0.5 * Math.abs(k / (n - 1) * 2 - 1)), f);
+    }
+    return;
+  }
+  // a scrap: a few small puffs, loose
+  const T = H.scrap, n = T.count[0] + Math.floor(rnd() * (T.count[1] - T.count[0] + 1));
+  for (let k = 0; k < n; k++)
+    add(2, cx + (rnd() - 0.5) * T.spread * R, base - R * (0.2 + 0.4 * rnd()) * flat, R * lerp(rnd(), T.r), flat);
+}
+
+// A puff of the liquid sky: where it rests, its size, its squash, its tier,
+// its cloud's life and wander, and its own current.
+function flowPuff(rnd, x, y, r, flat, tier, life, stray, F) {
+  const per = () => lerp(rnd(), F.period), amp = () => r * lerp(rnd(), F.wander);
+  return { x, y, r, flat, tier, life, stray,
+    a: [amp(), amp() * 0.6, amp() * 0.35], w: [TAU / per(), TAU / per(), TAU / per()],
+    p: [rnd() * TAU, rnd() * TAU, rnd() * TAU], q: [rnd() * TAU, rnd() * TAU, rnd() * TAU] };
+}
+
+// One layer of the sky, `W` cells round (it wraps), seeded.
+export function skyLayer({ i, seed = 1, W }) {
+  const P = layerParams(i), rnd = gen(seed * 7919 + 101 * (i + 1));
+  const puffs = [], F = CLOUDS_FLOW;
+  let x = rnd() * P.R * 3, top = 0, bottom = 0;
+  while (x < W) {
+    // a group: clouds packed close enough to run into one mass
+    const n = 1 + Math.floor(expo(rnd, P.group - 1));
+    for (let k = 0; k < n && x < W; k++) {
+      const kind = pick(rnd, P.kinds), L = CLOUDS_LIFE[kind];
+      const R = Math.min(P.R * P.tail, Math.max(P.R * 0.3, P.R * lognormal(rnd, P.spread)));
+      const life = { per: TAU / lerp(rnd(), L.life), ph: rnd() * TAU, keep: L.keep };
+      const stray = (rnd() * 2 - 1) * CLOUDS_SKY.stray * P.wind;
+      const base = (rnd() - 0.5) * P.R * 0.5 * P.flat;
+      shape(rnd, kind, x, base, R, P.flat, (tier, px, py, r, flat, parent) => {
+        const p = flowPuff(rnd, px, py, r, flat, tier, life, stray, F);
+        if (parent) { p.follow = parent; p.crust = true; p.a = p.a.map(v => v * 0.4); }
+        puffs.push(p);
+        top = Math.min(top, py - r * flat * 1.6); bottom = Math.max(bottom, py + r * flat * 1.6);
+        return p;
+      });
+      x += R * lerp(rnd(), [P.packing * 0.6, P.packing * 1.4]);
+    }
+    x += P.R * expo(rnd, P.gap);
+  }
+  // the layer's cells: its base line `baseRow` rows down, room for the
+  // tallest tower over it and the lowest belly under it
+  const baseRow = Math.ceil(-top) + 1;
+  for (const p of puffs) p.y += baseRow;
+  return { i, P, W, puffs, h: Math.ceil(baseRow + bottom) + 2, baseRow, ground: false, nt: 4,
+           rowOf: [0, 0, 0, 0], fills: null };
+}
+
+// The ground in the liquid sky: the billow rows of CLOUDS_KINDS.ground, each
+// puff on a current of its own, each row filled solid beneath.
+export function groundLayer({ seed = 1, W }) {
+  const K = CLOUDS_KINDS.ground, G = CLOUDS_GROUND_FLOW, rnd = gen(seed * 7919 + 977);
+  const tiers = Array.from({ length: K.rows }, () => []), fills = [];
+  let depthSum = 0;
+  for (let row = 1; row < K.rows; row++) depthSum += K.rowDrop * G.R * Math.pow(K.rowGrow, row - (K.rows - 1));
+  const top = G.R * Math.pow(K.rowGrow, 1 - K.rows) * 2.2;
+  billows(rnd, W, top, G.R, K, tiers, fills);
+  const F = { wander: G.wander, period: G.period };
+  const puffs = [];
+  // no crust on the billows: lumps on a row's top break its crevice into
+  // splinters
+  tiers.forEach((ps, j) => ps.forEach(p => puffs.push(flowPuff(rnd, p.x, p.y, p.r, 1, j, null, 0, F))));
+  return { i: -1, P: { d: 1, R: G.R, parallax: 1, wind: 0, shade: 0, every: G.every }, W, puffs, h: Math.ceil(top + depthSum + G.R * 0.9),
+           baseRow: 0, ground: true, nt: K.rows, rowOf: tiers.map((_, j) => j), fills };
+}
+
+// Where a puff is at time t, in its layer's own cells (x not yet wrapped),
+// and how big: on its current, and swollen or shrunk by its cloud's life.
+const lead = {};
+export function puffAt(p, t, out = {}) {
+  // a lobe is asked again for each lump of its crust in the same frame: its
+  // answer is kept for the frame
+  if (p._t === t) { out.x = p._x; out.y = p._y; out.r = p._r; out.flat = p.flat; return out; }
+  puffNow(p, t, out);
+  p._t = t; p._x = out.x; p._y = out.y; p._r = out.r;
+  return out;
+}
+function puffNow(p, t, out) {
+  if (p.follow) {
+    // a crust lump: its lobe's place and swell, its own small stray on top
+    puffAt(p.follow, t, lead);
+    const k = lead.r / p.follow.r;
+    out.x = lead.x + (p.x - p.follow.x) * k + p.a[0] * Math.sin(t * p.w[0] + p.p[0]);
+    out.y = lead.y + (p.y - p.follow.y) * k + CLOUDS_FLOW.lift * p.a[1] * Math.sin(t * p.w[1] + p.q[0]);
+    out.r = p.r * k * (1 + 0.1 * Math.sin(t * p.w[2] + p.q[1]));
+    out.flat = p.flat;
+    return out;
+  }
+  const life = p.life ? p.life.keep + (1 - p.life.keep) * (0.5 - 0.5 * Math.cos(t * p.life.per + p.life.ph)) : 1;
+  // two sines across and two up and down, at three periods between them, so
+  // no two lobes keep step and the path never quite repeats
+  const s1 = Math.sin(t * p.w[1] + p.p[1]);
+  out.x = p.x + p.stray * t + p.a[0] * Math.sin(t * p.w[0] + p.p[0]) + p.a[1] * s1;
+  out.y = p.y + CLOUDS_FLOW.lift * (p.a[0] * Math.sin(t * p.w[2] + p.q[0]) + p.a[1] * Math.sin(t * p.w[1] + p.q[1]));
+  // a life's swell is square-root shaped, so a cloud fills out fast and thins slow
+  out.r = p.r * Math.sqrt(life) * (1 + 0.06 * Math.sin(t * p.w[2] + p.q[0]));
+  out.flat = p.flat;
+  return out;
+}
+
+// The tier sums at one cell of a layer, at time t (the CPU's answer to what
+// the card works out): for the checks and to hit a clickable cloud.
+export function sumsAt(layer, t, cx, cy, out = [0, 0, 0, 0]) {
+  out.length = layer.nt; out.fill(0);
+  const q = {}, W = layer.W;
+  for (const p of layer.puffs) {
+    puffAt(p, t, q);
+    const R = q.r * REACH;
+    let dx = cx + 0.5 - q.x; dx -= W * Math.round(dx / W);
+    const dy = (cy + 0.5 - q.y) / q.flat;
+    const v = 1 - (dx * dx + dy * dy) / (R * R);
+    if (v > 0) out[p.tier] += v * v * v;
+  }
+  if (layer.fills) layer.fills.forEach((f, j) => { if (f !== null) out[j] += Math.max(0, Math.min(1, (cy + 0.5 - f) / 3 + 0.5)) * CLOUDS_THRESHOLD * 2; });
+  return out;
+}
+// The front-most tier at a cell, given the one it had (hysteresis, as
+// tierRows); -1 is open sky.
+export function tierOf(sums, was = null) {
+  const up = CLOUDS_THRESHOLD * (1 + CLOUDS_HYST), dn = CLOUDS_THRESHOLD * (1 - CLOUDS_HYST);
+  let lo = -1, hi = -1;
+  for (let j = sums.length - 1; j >= 0; j--) {
+    if (hi < 0 && sums[j] > dn) hi = j;
+    if (sums[j] > up) { lo = j; break; }
+  }
+  if (hi < lo) hi = lo;
+  if (was === null) return lo;
+  return was < lo ? lo : was > hi ? hi : was;
+}
+
+// How a layer is drawn, as the card's passes read it: each tier's belly,
+// crevice and rim depths, which cloud each tier is, what lies under the last
+// row, and each role's tone and color for the page and treatment.
+export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
+  const D = CLOUDS_TREATMENTS[treat], C = CLOUDS_PALETTE[page], P = layer.P, nt = layer.nt;
+  const named = Object.keys(C);
+  const four = a => Int32Array.from({ length: 4 }, (_, j) => (j < nt ? a(j) : 0));
+  const lobes = Array.from({ length: nt }, (_, j) => {
+    // the crust's small lumps are not what a tier's bands are sized by
+    const ps = layer.puffs.filter(p => p.tier === j && !p.crust);
+    return ps.reduce((a, p) => a + p.r, 0) / Math.max(1, ps.length);
+  });
+  const belly = D.belly !== 'none' && !layer.ground ? Math.round(P.shade * P.R) : 0;
+  const crease = j => (D.belly !== 'none' && layer.ground && lobes[j] >= CLOUDS_CREASE_MIN ? Math.max(2, Math.round(CLOUDS_KINDS.ground.crease * lobes[j])) : 0);
+  const rim = D.rim ? Math.max(2, Math.round(CLOUDS_RIM * P.R)) : 0;
+  const depthOf = j => (layer.ground ? CLOUDS_GROUND_DEPTHS[j] : P.e);
+  const lut = new Float32Array(24 * 4), tone = new Int32Array(24);
+  const rgba = (h, a = 1) => { const n = parseInt(h.slice(1), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, a]; };
+  for (let j = 0; j < nt; j++) {
+    const band = CLOUDS_DEPTH_BANDS[page].filter(b => b[0] <= depthOf(j)).pop();
+    const body = band[1], shade = D.tones === 2 ? band[2] : band[1], base = D.tones === 2 ? band[3] : band[1];
+    // a role's tone number is its color's, so two roles in one color are one
+    // shape to the cleanup
+    const id = role => named.findIndex(k => C[k] === C[role]) + 1;
+    lut.set(rgba(C[body]), (j * 5 + 1) * 4); tone[j * 5 + 1] = id(body);
+    lut.set(rgba(C[shade]), (j * 5 + 2) * 4); tone[j * 5 + 2] = id(shade);
+    lut.set(rgba(C.lit), (j * 5 + 3) * 4); tone[j * 5 + 3] = id('lit');
+    lut.set(rgba(C[base]), (j * 5 + 4) * 4); tone[j * 5 + 4] = id(base);
+  }
+  tone[0] = named.indexOf('sky') + 1;
+  return {
+    shade: four(() => (belly >= 2 ? belly : 0)), crease: four(crease), lit: four(() => rim),
+    row: four(j => layer.rowOf[j]), bottom: layer.ground ? nt : 0, inside: D.belly === 'inside',
+    rimSky: page === 'dark', tone, lut
+  };
+}
+
+// One lone cloud of a shape, as a layer that does not wrap: a clickable cloud.
+export function cloudLayer({ kind = 'cumulus', R = 8, seed = 1, flat = 1 }) {
+  const rnd = gen(seed * 7919 + 4243), puffs = [], L = CLOUDS_LIFE[kind];
+  const life = { per: TAU / lerp(rnd(), L.life), ph: rnd() * TAU, keep: Math.max(0.6, L.keep) };
+  let top = 0, bottom = 0, left = 0, right = 0;
+  shape(rnd, kind, 0, 0, R, flat, (tier, x, y, r, f, parent) => {
+    const p = flowPuff(rnd, x, y, r, f, tier, life, 0, CLOUDS_FLOW);
+    if (parent) { p.follow = parent; p.crust = true; p.a = p.a.map(v => v * 0.4); }
+    puffs.push(p);
+    top = Math.min(top, y - r * f * 1.7); bottom = Math.max(bottom, y + r * f * 1.7);
+    left = Math.min(left, x - r * 1.7); right = Math.max(right, x + r * 1.7);
+    return p;
+  });
+  const ox = Math.ceil(-left) + 1, oy = Math.ceil(-top) + 1;
+  for (const p of puffs) { p.x += ox; p.y += oy; }
+  return { i: -2, P: { d: 0.6, e: 0.6, R, shade: CLOUDS_SKY.shade[1] * 0.8, parallax: 0.6, wind: 0.2 }, W: 1e6, puffs,
+           w: Math.ceil(ox + right) + 2, h: Math.ceil(oy + bottom) + 2, baseRow: oy, ground: false, nt: 4, rowOf: [0, 0, 0, 0], fills: null };
 }
