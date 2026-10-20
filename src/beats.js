@@ -205,8 +205,6 @@ export const BEATS = [
   after('meet-god', 'refuse', false),
   after('refuse', null, false),
   after('axe'),
-  // The first sign, followed (config, AFTER_SIGN_BEAT): once, after the refusal.
-  after('first-sign'),
   after('strike', 'unmask'),
   after('unmask', 'hell-told', false),
   after('hell-told', 'ghost-road', false),

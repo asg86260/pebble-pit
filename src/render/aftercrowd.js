@@ -1037,7 +1037,7 @@ export function drawAfterCrowd() {
   drawBubbles();
 }
 
-// --- a fist flag anywhere (branch act3-signs, AFTER_SIGN_FLAG) ----------------------
+// --- a fist flag anywhere ------------------------------------------------------------
 // The planted flag's own drawing (`flagSprite`) on its pole, for a sign not
 // yet planted: racked outside the workshop, held high by a carrier, or being
 // lettered on the bench. `px` the pole's left and `foot` its foot, world px;
