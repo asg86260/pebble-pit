@@ -26,7 +26,7 @@ import { P, FARM_H, FARM_GAP, FINALE_WALL_ROWS, FINALE_ROOF, FINALE_CHIMNEY,
          FINALE_BENCH, FINALE_BENCH_W, FINALE_PILE_CELL, FINALE_PILE_W, FINALE_PILE_ROWS,
          MANSION_AT, MANSION_FLOORS, MANSION_FLOOR_ROWS, MANSION_WING_W, MANSION_WING_FLOORS, MANSION_MAIN_W,
          MANSION_TOWER_FLOORS, MANSION_TOWER_W, MANSION_BLOCKS_AT, MANSION_BLOCKS_W,
-         ACT_GATES_REACH, AFTER_PLOT_MAX, AFTER_STAIR_W, AFTER_STAIR_RISE, HELL_TIERS } from './config.js';
+         ACT_GATES_REACH, ACT_GATES_BANK, AFTER_PLOT_MAX, AFTER_STAIR_W, AFTER_STAIR_RISE, HELL_TIERS } from './config.js';
 import { STATIONS } from './stations.js';
 import { plotSlots, rockLeft, shackSpot } from './world.js';
 import { rockFootY, rockTopY, ramX } from './rock.js';
@@ -35,9 +35,9 @@ import { machine } from './machines.js';
 import { houseStands, houseX } from './home.js';
 import { mansionStands, mansionX } from './mansion.js';
 import { portalStands, portalEnd } from './portals.js';
-import { GATES_BANK, stairPieces } from './render/gates.js';
+import { stairPieces } from './render/gates.js';
 import { afterlifeOn, hellOn } from './acts.js';
-import { deepPortal, standOfStation } from './deep/place.js';
+import { deepPortal, standOfStation, deepFloor } from './deep/place.js';
 import { stationById } from './deep/party.js';
 import { PROPS } from './deep/props.js';
 import { afterFloor, stationBox, plotX, pineRows, PINE_GROWN, ART, pileAt, stairFoot, heapX, notchX } from './after/place.js';
@@ -141,10 +141,10 @@ function yardParts() {
 
 // The bank the gates stand in, in cells off the gates' middle column, and the
 // cloud three cells deep under each tread: both are drawn in render/gates.js,
-// which exports the numbers (GATES_BANK, stairPieces) for this.
+// off ACT_GATES_BANK (config/acts.js) and its exported `stairPieces`.
 function bank(e) {
-  const cx = Math.round(e.x / P), ty = Math.round(e.feet / P);
-  return [rect((cx - GATES_BANK.left) * P, ty * P, (GATES_BANK.left + GATES_BANK.right + 1) * P, GATES_BANK.deep * P)];
+  const cx = Math.round(e.x / P), ty = Math.round(e.feet / P), b = ACT_GATES_BANK;
+  return [rect((cx - b.left) * P, ty * P, (b.left + b.right + 1) * P, b.deep * P)];
 }
 function stairRects(e) {
   const g = Math.round(S.groundY / P);
@@ -170,8 +170,10 @@ function deepParts() {
     out.push({ id: 'deep-portal', rects: [rect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2)] });
   }
   if (hellOn() && portalStands('hell')) {
-    const e = portalEnd('hell', 'deep');
-    out.push({ id: 'hell-slit', rects: [rect(e.x - e.r, e.y - e.r, e.r * 2, e.r * 2)] });
+    // As drawn (render/portals.js, `drawActsDeep`): a row of cells on the
+    // floor, `r` either side of the middle one, and the glow a row over it.
+    const e = portalEnd('hell', 'deep'), half = Math.round(e.r / P), x = Math.round(e.x / P) * P;
+    out.push({ id: 'hell-slit', rects: [rect(x - half * P, Math.round(deepFloor() / P) * P - 2 * P, (2 * half + 1) * P, 2 * P)] });
   }
   return out;
 }

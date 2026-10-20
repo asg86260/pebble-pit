@@ -43,7 +43,7 @@ import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, gr
 import { afterEnd } from './view.js';
 import { godU } from './after/sky.js';
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB } from './config.js';
-import { FINALE_HOUSE_W } from './config.js';
+import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
 import { pref, setPref } from './prefs.js';
@@ -3160,6 +3160,19 @@ export const SCENES = {
     run: () => { actsYard('fallen'); window.__goPlace('after'); window.__fast(2); window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot(); } },
   'portal-hell': { about: 'the acts', say: 'hell\'s white-hot slit in the deep\'s floor, and its hand',
     run: () => { actsYard('act4'); window.__view('deep'); window.__fast(2); window.__holdShot(); } },
+  // The yard's left end at its most crowded, for the map's no-overlap rule
+  // (test/no-overlap.test.mjs stands the same yard): every site open and every
+  // pot bought, so the casino has stepped as far left as it goes, with the
+  // house standing and heaven's stair and gates beside it; and the same with
+  // the mansion on the house's ground.
+  'home-end': { about: 'the acts', say: 'the yard\'s left end at its widest: the house, heaven\'s stair and gates, the casino with every pot bought',
+    run: () => { widestYard(); window.__actsAt('act4'); window.__fast(2); window.__nocine(); window.__view('yard'); window.__fast(2); pinCamera(0); window.__holdShot(); } },
+  'home-end-mansion': { about: 'the acts', say: 'the yard\'s left end at its widest with the mansion built: the mansion, heaven\'s stair and gates, the casino',
+    run: () => { widestYard(); window.__actsAt('mansion', 999); for (let i = 0; i < 4; i++) { window.__fast(2); window.__nocine(); } window.__view('yard'); window.__fast(1); pinCamera(0); window.__holdShot(); } },
+  // The deep's left end with hell's slit open in its floor, the crusher, the
+  // pods and the first stations beside it.
+  'deep-slit': { about: 'the acts', say: 'the deep\'s left end with hell\'s slit open: the slit, the crusher, the pods and the first stations',
+    run: () => { SCENES.late.run(); window.__actsOn(null); window.__actsAt('act4'); window.__fast(2); window.__nocine(); window.__view('deep'); window.__fast(2); window.__look(deepX0()); window.__holdShot(); } },
   'house-fall': { about: 'the acts', say: 'the house\'s fall: the rock out of the sky over the house, the two of them indoors',
     run: () => {
       actsYard('home');
@@ -3227,6 +3240,17 @@ export const SCENES = {
 
 // A yard for the acts' scenes: rich, past the snatch with the wizards'
 // portal, a crew with spare hands, stood at `point` (`__actsAt`).
+// The endgame yard with every site open and every pot bought, the yard at its
+// widest, and the acts on: the setup the home-end scenes are not about.
+function widestYard() {
+  SCENES.everything.run();
+  for (const k of ['casino', 'filter', 'apothecary', 'outhouse', 'tower', 'meteor']) S[k + 'Open'] = true;
+  S.seenBench = true;
+  S.apothPots = APOTH_POTS_MAX;
+  window.__fullSites();
+  window.__actsOn(null);
+}
+
 function actsYard(point, pieces = 0) {
   window.__reset();
   window.__actsOn(null);

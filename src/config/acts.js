@@ -151,6 +151,15 @@ export const ACT_STAIR_END = ACT_GATES_CELL + ACT_STAIR_TREAD + 2 + ACT_STAIR_FL
   const d = i % 2 ? -1 : 1, to = x + d * (n * ACT_STAIR_TREAD + (i < ACT_STAIR_FLIGHTS.length - 1 ? ACT_STAIR_LANDING : 0));
   return [to, Math.max(far, to)];
 }, [0, 0])[1];
+// The cloud bank the gates stand in, in cells: its reach either side of the
+// gates' middle column and its depth under their feet (render/gates.js).
+export const ACT_GATES_BANK = { left: 11, right: 20, deep: 3 };
+// The whole stairway's right end, cells off the yard's left edge: the farther
+// of the stair's far end, the bank's and a gate post's. The yard keeps the
+// ground up to here for it (`HOME_GROUND`, config/sites.js), so no site is
+// laid out under the stair however far the walk steps the sites left.
+export const ACT_STAIRWAY_END = Math.max(ACT_STAIR_END, ACT_GATES_CELL + ACT_GATES_BANK.right + 1,
+                                         ACT_GATES_CELL + ACT_GATES_REACH / P);
 
 // The gathering: the freed souls coming down heaven's cloud stair and
 // standing in files beside the mansion, MANSION_SOULS of them, a soul every

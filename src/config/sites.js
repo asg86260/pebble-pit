@@ -13,7 +13,7 @@ import { ARCH_SPAN, DOME_SPAN, SHIELD_LEG_W } from './shields.js';
 import { GARAGE_CLEAR, GARAGE_W } from './kit.js';
 import { ROOMBA_DOCK_W } from './roomba.js';
 import { FINALE_END_CELLS, FINALE_DOOR_CELL, FINALE_HOUSE_W, FINALE_BENCH, FINALE_BENCH_W, FINALE_HOME_GAP } from './finale.js';
-import { MANSION_AT, MANSION_WING_W, MANSION_MAIN_W } from './acts.js';
+import { MANSION_AT, MANSION_WING_W, MANSION_MAIN_W, ACT_STAIRWAY_END } from './acts.js';
 
 export const TO_LEDGE = 636;     // rock center to the lip of the pit
 // The rock is the only thing on this side, so the ground is its spoil's: the
@@ -235,15 +235,16 @@ export const YARD_MARGIN = P * 10;
 const WALK = SITES.reduce((n, row) => n + row.w() + padOf(row) + hangOf(row) + (row.right ? row.right() : 0), 0)
   + STATION_GAP * (SITES.length - 1);
 // The ground at the yard's left end that the home stands on -- the house the
-// two of them retire to, and act 3's mansion on its plot -- both laid out in
-// cells off the yard's edge, so the first site starts past the further of
-// their right ends and FINALE_HOME_GAP of bare ground. Kept from the first
+// two of them retire to, act 3's mansion on its plot, and heaven's stair and
+// gates beside them, placed off the home's right end (ACT_GATES_CELL) -- all
+// laid out in cells off the yard's edge, so the first site starts past the
+// furthest of their right ends and FINALE_HOME_GAP of bare ground. Kept from the first
 // frame: the sites left of the apothecary step left as its pots are bought,
 // and a home that only fitted into the unbought pots' ground was buried in
 // the casino in a yard with all three.
 const HOUSE_END = FINALE_END_CELLS - FINALE_DOOR_CELL + Math.max(FINALE_HOUSE_W, FINALE_BENCH + FINALE_BENCH_W);
 const MANSION_END = MANSION_AT + MANSION_WING_W * 2 + MANSION_MAIN_W;
-export const HOME_GROUND = P * (Math.max(HOUSE_END, MANSION_END) + FINALE_HOME_GAP);
+export const HOME_GROUND = P * (Math.max(HOUSE_END, MANSION_END, ACT_STAIRWAY_END) + FINALE_HOME_GAP);
 export const GROUND_LEFT = Math.round((Math.max(YARD_MARGIN, HOME_GROUND) + WALK + TO_FIRST_SITE) / P) * P;
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
 export const ROCK_H = 20;        // and this tall

@@ -4,6 +4,8 @@
 // depths are the second half's `ABYSS_AT`, and they are tuned against the
 // first half's length once the whole half can be played.
 import { P } from './yard.js';
+import { HELL_X_IN, ROAD_AT } from './hell.js';
+import { ACT_PORTAL_R } from './acts.js';
 
 // The switch for the whole half, set by the build (DESIGN.md, "Three
 // builds"): on only in the paid full game (`VITE_FULL=1`, `npm run
@@ -42,7 +44,19 @@ export const DEEP_MOUTH = P * 40;    // the shaft, in from the pit's near lip: w
 // world pixels at a third, and the furnace's left side stands at 252, two and a
 // half cells clear. The pods moved over with it, the same air between the
 // gatherers' ground beside the crusher (deep/rest.js) and the stack as before.
-export const DEEP_SPOTS = { crusher: 0.11, pods: 0.245, altar: 0.335, well: 0.475, font: 0.62, circle: 0.76, spire: 0.9 };
+// Hell's slit opens in the floor straight over hell's road (portals.js), and
+// the road is laid out with hell's landing (config/hell.js), so the crusher
+// is placed off the slit rather than the reverse: its left side the further
+// in of the card's CRUSHER_CARD_AT cells and the slit's right end plus
+// DEEP_CLEAR of bare floor (the map's no-overlap rule, verify.js). The slit
+// is drawn ACT_PORTAL_R either side of the road's own cell (render/portals.js),
+// so its right end is that cell past its radius.
+export const CRUSHER_W = P * 30;           // the crusher (below, "the crusher")
+export const CRUSHER_H = P * 30;
+export const DEEP_CLEAR = 2;                  // cells of bare floor between two neighbors in the deep
+export const CRUSHER_CARD_AT = 42;            // cells in from the deep's left the card needs clear
+export const CRUSHER_AT = Math.max(CRUSHER_CARD_AT, HELL_X_IN + ROAD_AT + ACT_PORTAL_R / P + 1 + DEEP_CLEAR);
+export const DEEP_SPOTS = { crusher: (CRUSHER_AT * P + CRUSHER_W / 2) / DEEP_W, pods: 0.245, altar: 0.335, well: 0.475, font: 0.62, circle: 0.76, spire: 0.9 };
 // The pods: the deep's houses, a capsule a body, stacked POD_COLS abreast from
 // the floor up (DESIGN.md, "One crew, two homes").
 export const POD_W = P * 7;
@@ -57,8 +71,6 @@ export const DEEP_STAND_W = P * 30;
 // The purse's mouth, at the deep's left end (DESIGN.md, "The crusher"): a
 // scale is money once it lands in the hopper, and not before. The hopper is
 // the top of the machine, narrower than its body.
-export const CRUSHER_W = P * 30;
-export const CRUSHER_H = P * 30;
 export const HOPPER_W = P * 20;      // the mouth across the top
 export const HOPPER_LIP = P * 3;     // how far down into the hopper a scale has to fall to be taken
 // A gatherer's toss: from beside the crusher up and over into the hopper, on

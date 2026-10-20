@@ -160,12 +160,12 @@ group('a Recruit waiting on its first choice has the hand over its station, unti
 group("every prop's station, scaffold and all, keeps clear of the next slot", async () => {
   window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }] });
   const st = S.stations[0], mid = slotX(st.slot), mids = DEEP_SLOTS.map((_, i) => slotX(i)).sort((a, b) => a - b);
-  const pitch = Math.min(...mids.slice(1).map((m, i) => m - mids[i]));
+  const steps = mids.slice(1).map((m, i) => m - mids[i]), pitch = Math.min(...steps);
   const out = 5 * P, grounds = Object.keys(PROPS).map(k => standOfStation({ ...st, cls: k === 'flag' ? null : k }));
   const left = Math.max(...grounds.map(g => mid - g.x)), right = Math.max(...grounds.map(g => g.x + g.w - mid));
   const water = pitch - left - right, scaffolded = water - 2 * out;
   return [
-    ok(pitch === 49 * P, 'the slots stand 49 cells apart', `${pitch / P}`),
+    ok(Math.max(...steps) - pitch <= P, 'the slots stand evenly apart, to the cell', steps.map(d => d / P).join(', ')),
     ok(water >= 10 * P, 'built, ten cells of water or more between neighbors', `${water / P} cells`),
     ok(scaffolded >= 2 * P, 'and with both scaffolds up, still two cells between their posts', `${scaffolded / P} cells`)
   ];

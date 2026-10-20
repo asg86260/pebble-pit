@@ -12,7 +12,7 @@
 
 import { now } from '../clock.js';
 import { S, pit } from '../state.js';
-import { P, PLINTH_H, PLINTH_OVER, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS,
+import { P, PLINTH_H, PLINTH_OVER, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DEEP_W, DEEP_MOUTH, DEEP_SPOTS, DEEP_SLOTS, DEEP_SLOT_LAST, DEEP_CLEAR,
          COIL_SEGS, COIL_X0, COIL_X1, COIL_Y, COIL_AMP,
          COIL_WAVES, COIL_SWAY_MS, HEAD_SEGS, COIL_HEAD, COIL_NECK, COIL_NECK_EASE, COIL_GIRTH, COIL_TAIL_FROM, COIL_TIP, SPLIT_LENGTHS, SPLIT_WRITHE, SPLIT_WRITHE_MS, BELLY_AT, CRUSHER_W, CRUSHER_H, HOPPER_W, HOPPER_LIP,
          GATHER_TOSS_FROM, POD_W, POD_H, POD_GAP, POD_COLS, DEEP_PORTAL_R, DEEP_PORTAL_DOWN, DEEP_PORTAL_AT, PORTAL_INTO_WALL,
@@ -77,8 +77,22 @@ export const spotX = key => snap(deepX0() + DEEP_SPOTS[key] * DEEP_W);
 // --- the party's floor (docs/wave-party.md) ------------------------------------
 // A station stands at a floor slot, not at a spot of its kind's: a kind can
 // stand twice, and the floor fills in the order stations are bought. Slot
-// `i`'s middle, on the floor.
-export const slotX = i => snap(deepX0() + DEEP_SLOTS[i] * DEEP_W);
+// `i`'s middle, on the floor: its share of the floor between the leftmost
+// slot and the rightmost (DEEP_SLOTS, config/deepboard.js). The leftmost is
+// placed off the pods, so that a station there, whichever prop it stands
+// beside, keeps DEEP_CLEAR cells of floor between its ground and the stack
+// (the map's no-overlap rule, verify.js); the rightmost is the coil's last
+// share, DEEP_SLOT_LAST.
+export const slotX = i => {
+  const first = podsRight() + DEEP_CLEAR * P + slotReach();
+  const last = snap(deepX0() + DEEP_SLOT_LAST * DEEP_W);
+  return snap(first + (last - first) * DEEP_SLOTS[i] / (DEEP_SLOTS.length - 1));
+};
+// How far left of its slot's middle a station's ground reaches at the most,
+// over every prop it may stand beside (a station holds the ground of each in
+// turn, footprints.js): read off the drawings, so a wider prop drawn later
+// moves the slots rather than standing on the pods.
+const slotReach = () => Math.max(...Object.keys(PROPS).map(k => -standAt(postAt(0), k === 'flag' ? null : k).x));
 // A station is its fighter and a prop (DESIGN.md, "A station is its fighter
 // and a prop"). The fighter's post: the left of its body, standing on the
 // floor over its slot's middle -- where it swims to (deep/classes.js) and
@@ -86,7 +100,8 @@ export const slotX = i => snap(deepX0() + DEEP_SLOTS[i] * DEEP_W);
 // everything at rest is: a body three cells wide cannot be centered on a
 // cell line, and half a cell off, the gap to its prop was never a whole
 // number of cells.
-export const postX = st => snap(slotX(st.slot) - WORKER / 2);
+const postAt = mid => snap(mid - WORKER / 2);
+export const postX = st => postAt(slotX(st.slot));
 // The top of the plinth a station stands on (PLINTH_H), and the fighter's
 // post on it: where its body's top is, stood there.
 export const plinthTop = () => deepFloor() - PLINTH_H * P;
@@ -95,17 +110,20 @@ export const postY = () => plinthTop() - WORKER;
 // body's left column (PROP_GAP_OF where a class carries its kit further
 // off). Its own grid, top-left: a cell of the drawing is a cell here, and
 // the props are drawn big (deep/props.js), so this is most of the station.
-export function propRect(st) {
-  const key = propKey(st), rows = PROPS[key].rows;
-  const right = postX(st) / P - (PROP_GAP_OF[st.cls] ?? PROP_GAP);
+export const propRect = st => propAt(postX(st), st.cls);
+// The same, for a post at `post` beside class `cls`'s prop.
+function propAt(post, cls) {
+  const key = propKey({ cls }), rows = PROPS[key].rows;
+  const right = post / P - (PROP_GAP_OF[cls] ?? PROP_GAP);
   const w = rows[0].length * P, h = rows.length * P;
   return { key, x: (right + 1) * P - w, y: plinthTop() - h, w, h };
 }
 // The plinth: its top course from PLINTH_OVER cells left of the prop to as
 // far right of the body, each course under it a cell wider at both ends.
 // `x`, `w` are the top course's; `step` how much each course down gains a side.
-export function plinthRect(st) {
-  const x = propRect(st).x - PLINTH_OVER * P, right = postX(st) + WORKER + PLINTH_OVER * P;
+export const plinthRect = st => plinthAt(postX(st), st.cls);
+function plinthAt(post, cls) {
+  const x = propAt(post, cls).x - PLINTH_OVER * P, right = post + WORKER + PLINTH_OVER * P;
   return { x, y: plinthTop(), w: right - x, h: PLINTH_H * P, step: P };
 }
 // A station's ground: the prop and the fighter's post together, from the
@@ -114,8 +132,9 @@ export function plinthRect(st) {
 // scaffold stands round and the works stack over: read off the prop the
 // station stands beside now, so it answers to the picture. A station still
 // going up has no class, so its scaffold stands round the flag's ground.
-export function standOfStation(st) {
-  const p = propRect(st), b = plinthRect(st), out = (PLINTH_H - 1) * b.step;
+export const standOfStation = st => standAt(postX(st), st.cls);
+function standAt(post, cls) {
+  const p = propAt(post, cls), b = plinthAt(post, cls), out = (PLINTH_H - 1) * b.step;
   const y = Math.min(p.y, postY());
   return { x: b.x - out, y, w: b.w + 2 * out, h: deepFloor() - y };
 }
@@ -135,17 +154,18 @@ export const inHopper = (x, y) => {
 // Pod `i`, bottom course first and left to right within a course, standing
 // on the deep's floor at the pods' spot; and the ground the stack stands on,
 // for the build going up there and the pointer.
+const PODS_ACROSS = POD_COLS * (POD_W + POD_GAP) - POD_GAP;
+const podsLeft = () => snap(spotX('pods') - PODS_ACROSS / 2);
+const podsRight = () => podsLeft() + PODS_ACROSS;
 export function podAt(i) {
-  const across = POD_COLS * (POD_W + POD_GAP) - POD_GAP;
-  const left = snap(spotX('pods') - across / 2);
+  const left = podsLeft();
   const col = i % POD_COLS, row = Math.floor(i / POD_COLS);
   return { x: left + col * (POD_W + POD_GAP), y: deepFloor() - (row + 1) * (POD_H + POD_GAP) + POD_GAP,
            w: POD_W, h: POD_H };
 }
 export const podsRect = () => {
-  const a = podAt(0), top = podAt(Math.max(0, S.pods)).y;
-  const across = POD_COLS * (POD_W + POD_GAP) - POD_GAP;
-  return { x: a.x, y: top, w: across, h: deepFloor() - top };
+  const top = podAt(Math.max(0, S.pods)).y;
+  return { x: podsLeft(), y: top, w: PODS_ACROSS, h: deepFloor() - top };
 };
 
 // Where a gatherer stands to toss a load in: on the floor, beside the

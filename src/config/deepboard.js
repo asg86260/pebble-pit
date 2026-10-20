@@ -81,14 +81,18 @@ export const POD_WORK_STEP = 1.1;  // and each one after it
 export const POD_WORK_MAX = 8;
 
 // --- the party's floor (docs/wave-party.md, "Floor slots") -------------------
-// Where a station may stand, as fractions of DEEP_W from the deep's left edge:
-// the serpent's length (COIL_X0 to COIL_X1) cut into one share a station, a
-// station at the middle of each, so the party stands spread under the whole
-// coil. A station takes the lowest slot free when it is bought, and the order
-// below hands out every other share first, then the middle, then the gaps, so
-// a small party is already spread wide.
-const SLOT_ORDER = [0, 2, 4, 6, 3, 1, 5];
-export const DEEP_SLOTS = SLOT_ORDER.map(k => COIL_X0 + (COIL_X1 - COIL_X0) * (k + 0.5) / SLOT_ORDER.length);
+// Where a station may stand: one share of the floor a station, from the
+// leftmost to the rightmost, evenly apart, so the party stands spread under
+// the whole coil. The rightmost share's middle is the last of the serpent's
+// length (COIL_X0 to COIL_X1) cut into one share a station, DEEP_SLOT_LAST of
+// DEEP_W from the deep's left edge; the leftmost is placed off the pods, its
+// widest prop DEEP_CLEAR cells past the stack (`slotX`, deep/place.js). Each
+// entry is the share a slot stands at, nought the leftmost. A station takes
+// the lowest slot free when it is bought, and the order hands out every other
+// share first, then the middle, then the gaps, so a small party is already
+// spread wide.
+export const DEEP_SLOTS = [0, 2, 4, 6, 3, 1, 5];
+export const DEEP_SLOT_LAST = COIL_X0 + (COIL_X1 - COIL_X0) * (DEEP_SLOTS.length - 0.5) / DEEP_SLOTS.length;
 // The most stations there can be: a slot each. The first is free, the
 // story's three breaks drop a fang each and the kills after them the rest
 // (DESIGN.md, "Endless serpent").
