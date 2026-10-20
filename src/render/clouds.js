@@ -160,7 +160,8 @@ export function cloudSheet({ kind, seed = 1, w, h, R, scale = 1, single = false 
     // underside is one even scalloped band wherever any tier reaches it
     shadeOf: lobe.map(r => depth(K.shade, ground ? r : lobe[nt - 1])),
     creaseOf: lobe.map(r => (K.crease && r >= CLOUDS_CREASE_MIN ? Math.max(2, Math.round(K.crease * r)) : 0)),
-    litOf: lobe.map(r => depth(K.lit, r)),
+    // a rim under three cells deep stairs into one-cell slivers on a slope
+    litOf: lobe.map(r => { const d = depth(K.lit, r); return d && Math.max(3, d); }),
     sums: Array.from({ length: nt }, () => new Float32Array(n)),
     T: new Int8Array(n).fill(-1),
     roles: [new Uint8Array(n), new Uint8Array(n)],    // the step behind, the step ahead
@@ -170,7 +171,9 @@ export function cloudSheet({ kind, seed = 1, w, h, R, scale = 1, single = false 
     k0: null, unit: 0, nextT: 0, full: true,
     page: 'light', treat: 'C', lut: null,
     canvas: null, ctx: null, img: null,
-    flips: 0, backs: 0, last: new Uint8Array(n)       // for the checks: cells re-toned, and gone back
+    // for the checks: cells re-toned last step, and those that went straight
+    // back to what they were the step before; what each cell was and when
+    flips: 0, backs: 0, last: new Uint8Array(n), lastK: new Int32Array(n)
   };
   sh.lut = lutOf(sh);
   return sh;
@@ -258,30 +261,50 @@ function roleRows(sh, out, y0, y1) {
     out[y * w + x] = r;
   }
 }
-// A cell with at most one 4-neighbor of its own role takes its neighbors'
-// commonest one: no spur or sliver a cell wide survives a bake.
-function cleanRows(sh, R, y0, y1) {
-  const { w, h } = sh, bottom = sh.ground ? (sh.nt - 1) * 4 + 1 : 0;
+// A spur is a cell of a tone no neighbor shares; a one-cell bump on a flat
+// edge, its one neighbor of its tone having that tone on both sides across
+// the bump; or a sliver, a cell between two of one other tone across it
+// (a line a cell wide, which reads as a scratch, not a shape). A crescent's tapering tip is neither -- its last cell leans on the
+// row above or below -- and is left alone, or the cleanup would eat every
+// crescent from its tips in. Tones, not roles: two tiers in one tone are one
+// shape on screen.
+function spurAt(tone, at, x, y) {
+  const me = tone[at(x, y)];
+  const l = tone[at(x - 1, y)] === me, r = tone[at(x + 1, y)] === me, u = tone[at(x, y - 1)] === me, d = tone[at(x, y + 1)] === me;
+  const n = l + r + u + d;
+  if (n === 0) return true;
+  if ((!l && !r && tone[at(x - 1, y)] === tone[at(x + 1, y)]) || (!u && !d && tone[at(x, y - 1)] === tone[at(x, y + 1)])) return true;
+  if (n > 1) return false;
+  const [nx, ny] = l ? [x - 1, y] : r ? [x + 1, y] : u ? [x, y - 1] : [x, y + 1];
+  return nx !== x ? tone[at(nx, y - 1)] === me && tone[at(nx, y + 1)] === me
+                  : tone[at(x - 1, ny)] === me && tone[at(x + 1, ny)] === me;
+}
+// A spur takes the role of its neighbors' commonest tone.
+function cleanRows(sh, R, y0, y1, up = false) {
+  const { w, h } = sh, bottom = sh.ground ? (sh.nt - 1) * 4 + 1 : 0, tone = sh.toneOf;
   const at = (x, y) => (y < 0 ? 0 : y >= h ? bottom
     : x < 0 || x >= w ? (sh.wrap ? R[y * w + ((x + w) % w)] : 0) : R[y * w + x]);
-  for (let y = y0; y < y1; y++) for (let x = 0; x < w; x++) {
-    const i = y * w + x, r = R[i];
-    const a = at(x - 1, y), b = at(x + 1, y), c = at(x, y - 1), d = at(x, y + 1);
-    if ((a === r) + (b === r) + (c === r) + (d === r) > 1) continue;
-    let best = r, most = 0;
-    for (const v of [a, b, c, d]) if (v !== r) {
-      const m = (v === a) + (v === b) + (v === c) + (v === d);
-      if (m > most) { most = m; best = v; }
-    }
-    R[i] = best;
+  for (let k = y0; k < y1; k++) for (let x = 0; x < w; x++) {
+    const y = up ? y1 - 1 - (k - y0) : k;
+    if (!spurAt(tone, at, x, y)) continue;
+    // the neighbors' tones, commonest first; the first that leaves the cell
+    // no spur in its new tone wins (at a corner of three tones the commonest
+    // can be a one-cell bump itself)
+    const i = y * w + x, was = R[i], me = tone[was];
+    const n = [at(x - 1, y), at(x + 1, y), at(x, y - 1), at(x, y + 1)], t = n.map(v => tone[v]);
+    const order = [0, 1, 2, 3].filter(k => t[k] !== me)
+      .sort((a, b) => (t.filter(v => v === t[b]).length - t.filter(v => v === t[a]).length) || a - b);
+    let pick = order.length ? n[order[0]] : was;
+    for (const k of order) { R[i] = n[k]; if (!spurAt(tone, at, x, y)) { pick = n[k]; break; } }
+    R[i] = pick;
   }
 }
 // A bake is passes over the rows: a field per tier, the front-most tier, the
-// roles and two cleanups. A pass reads rows ahead of the one it is on, so it
+// roles and three cleanups. A pass reads rows ahead of the one it is on, so it
 // starts only once the pass before has finished; the work can stop after any
 // row of any pass and go on next frame. A field row costs about ten of any
 // other pass's, which is what `weight` says.
-const passes = sh => sh.nt + 4;
+const passes = sh => sh.nt + 5;
 const total = sh => passes(sh) * sh.h;
 const weight = (sh, u) => { const f = sh.nt * sh.h; return u < f ? u : f + (u - f) * 0.1; };
 function bakeUnits(sh, t, out, u0, u1) {
@@ -290,21 +313,27 @@ function bakeUnits(sh, t, out, u0, u1) {
     if (pass < sh.nt) fieldRows(sh, t, pass, y0, y1);
     else if (pass === sh.nt) tierRows(sh, y0, y1);
     else if (pass === sh.nt + 1) roleRows(sh, out, y0, y1);
-    else cleanRows(sh, out, y0, y1);
+    // every other cleanup runs bottom to top, so a fix that leaves a new spur
+    // above it is met by the next pass
+    else if ((pass - sh.nt) % 2) cleanRows(sh, out, y0, y1);
+    else cleanRows(sh, out, sh.h - y1, sh.h - y0, true);
     u += y1 - y0;
   }
 }
 export function bakeNow(sh, t, out = sh.next) { bakeUnits(sh, t, out, 0, total(sh)); return out; }
 
 // --- tones ------------------------------------------------------------------------
+// The colors of a sheet's roles, and each role's tone as a number (the
+// ladder step, the rim 9, the sky 0) for the cleanup to compare.
 function lutOf(sh) {
   const L = CLOUDS_TONES[sh.page], lut = new Array(4 * sh.nt + 4).fill(null);
+  const tone = sh.toneOf = new Int8Array(4 * sh.nt + 4);
   for (let j = 0; j < sh.nt; j++) {
     const one = sh.tone1[j], [body, shade] = sh.K.tones[sh.page];
     const two = CLOUDS_TREATMENTS[sh.treat].tones === 2;
-    lut[j * 4 + 1] = hexRgb(L.steps[two ? body : one]);
-    lut[j * 4 + 2] = hexRgb(L.steps[two ? shade : one]);
-    lut[j * 4 + 3] = hexRgb(L.lit);
+    lut[j * 4 + 1] = hexRgb(L.steps[tone[j * 4 + 1] = two ? body : one]);
+    lut[j * 4 + 2] = hexRgb(L.steps[tone[j * 4 + 2] = two ? shade : one]);
+    lut[j * 4 + 3] = hexRgb(L.lit); tone[j * 4 + 3] = 9;
   }
   return lut;
 }
@@ -326,23 +355,26 @@ function start(sh, t) {
   sh.T.fill(-1);
   bakeNow(sh, sh.k0 * sh.K.step - sh.phase, sh.roles[0]);
   bakeNow(sh, (sh.k0 + 1) * sh.K.step - sh.phase, sh.roles[1]);
-  sh.last.fill(0);
+  sh.last.fill(0); sh.lastK.fill(-9);
   diff(sh);
   sh.unit = 0; sh.nextT = (sh.k0 + 2) * sh.K.step - sh.phase;
   sh.full = true;
 }
 function diff(sh) {
-  const [A, B] = sh.roles; let nd = 0, backs = 0;
+  const [A, B] = sh.roles; let nd = 0, backs = 0, x0 = sh.w, x1 = -1, y0 = sh.h, y1 = -1;
   for (let i = 0; i < sh.n; i++) if (A[i] !== B[i]) {
     sh.diff[nd++] = i;
-    if (sh.last[i] === B[i] + 1) backs++;           // back to what it was a step ago
-    sh.last[i] = A[i] + 1;
+    const x = i % sh.w, y = (i - x) / sh.w;
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    if (sh.lastK[i] === sh.k0 - 1 && sh.last[i] === B[i] + 1) backs++;
+    sh.last[i] = A[i] + 1; sh.lastK[i] = sh.k0;
   }
   sh.nd = nd; sh.flips = nd; sh.backs = backs;
+  sh.box = nd ? [x0, y0, x1 - x0 + 1, y1 - y0 + 1] : null;   // the only cells a fade frame writes
 }
 // Turn every sheet's clock to `t` (game seconds) and work their bakes, the
-// slices of all of them inside one budget a frame (CLOUDS_BUDGET_MS). Returns
-// the milliseconds the bakes took.
+// slices of all of them inside one budget a frame (CLOUDS_BUDGET_MS), and
+// paint the fade. Returns the milliseconds it took.
 export function tickClouds(sheets, t) {
   const t0 = performance.now();
   for (const sh of sheets) {
@@ -370,12 +402,11 @@ export function tickClouds(sheets, t) {
       if (performance.now() - t0 >= CLOUDS_BUDGET_MS) break;
     }
   }
-  const ms = performance.now() - t0;
   for (const sh of sheets) {
     const a = Math.min(1, Math.max(0, (t + sh.phase) / sh.K.step - sh.k0));
     paint(sh, a * a * (3 - 2 * a));                   // eased, so a cell glides into its change
   }
-  return ms;
+  return performance.now() - t0;
 }
 
 // --- the sheet's pixels -------------------------------------------------------------
@@ -399,9 +430,9 @@ function paint(sh, a) {
     d[o] = c0[0] + (c1[0] - c0[0]) * a; d[o + 1] = c0[1] + (c1[1] - c0[1]) * a;
     d[o + 2] = c0[2] + (c1[2] - c0[2]) * a; d[o + 3] = 255;
   };
-  if (sh.full) { for (let i = 0; i < sh.n; i++) put(i); sh.full = false; }
-  else for (let k = 0; k < sh.nd; k++) put(sh.diff[k]);
-  sh.ctx.putImageData(sh.img, 0, 0);
+  if (sh.full) { for (let i = 0; i < sh.n; i++) put(i); sh.full = false; sh.ctx.putImageData(sh.img, 0, 0); return; }
+  for (let k = 0; k < sh.nd; k++) put(sh.diff[k]);
+  if (sh.box) sh.ctx.putImageData(sh.img, 0, 0, ...sh.box);
 }
 
 // --- placing a sheet --------------------------------------------------------------
@@ -432,16 +463,12 @@ export function cloudAt(sh, cx, cy) {
   const i = cy * sh.w + cx;
   return sh.roles[0][i] !== 0 || sh.roles[1][i] !== 0;
 }
-// Cells that have one or no 4-neighbors of their own role: what the cleanup
-// pass is meant to leave none of.
+// The spurs a sheet shows (spurAt): what the cleanup leaves none of.
 export function spursOf(sh, R = sh.roles[1]) {
   const { w, h } = sh, bottom = sh.ground ? (sh.nt - 1) * 4 + 1 : 0;
   const at = (x, y) => (y < 0 ? 0 : y >= h ? bottom
     : x < 0 || x >= w ? (sh.wrap ? R[y * w + ((x + w) % w)] : 0) : R[y * w + x]);
   let n = 0;
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const r = R[y * w + x];
-    if ((at(x - 1, y) === r) + (at(x + 1, y) === r) + (at(x, y - 1) === r) + (at(x, y + 1) === r) <= 1) n++;
-  }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) n += spurAt(sh.toneOf, at, x, y);
   return n;
 }

@@ -96,8 +96,9 @@ function buildSheet() {
 }
 const all = () => $('show').value === 'sheet' ? panels.flatMap(p => [p.mid, p.puff, p.ground])
   : scene();
+let solo = null, drawnAt = {};
 function shown() {
-  const s = $('show').value;
+  const s = solo || $('show').value;
   return { far: s === 'all' || s === 'far', mid: s === 'all' || s === 'mid', puff: s === 'all' || s === 'puff', ground: s === 'all' || s === 'ground' };
 }
 
@@ -126,6 +127,7 @@ function frame(dt) {
   g.fillStyle = sky; g.fillRect(0, 0, W, H);
   const at = layout(), C = CELLPX;
   const pos = (L, extra = 0) => (cam * LAYERS[L].parallax + LAYERS[L].wind * t + extra) * C;
+  drawnAt = { far: Math.round(pos('far')), mid: Math.round(pos('mid')), ground: Math.round(pos('ground')) };
   if (on.far) drawBand(g, sheets.far, pos('far'), at.far * C, C, W);
   if (on.mid) drawBand(g, sheets.mid, pos('mid'), at.mid * C, C, W);
   if (on.puff) {
@@ -134,13 +136,14 @@ function frame(dt) {
       // a clickable cloud wraps round a world a little wider than the window
       const x = (((p.x0 * C - pos('puff', 0)) % span) + span) % span - 40 * C;
       p.at = drawCloud(g, p.sh, x, Math.round(rows * p.row) * C, C, 1, p.fade);
+      drawnAt['puff' + puffs.indexOf(p)] = p.at;
       p.y = Math.round(rows * p.row);
     }
   }
   if (on.ground) drawBand(g, sheets.ground, pos('ground'), at.ground * C, C, W);
-  if ($('ref').checked) yardStrip();
+  if ($('ref').checked && !solo) yardStrip();
   stat.bake.push(bake); stat.draw.push(performance.now() - d0);
-  if (stat.bake.length > 240) { stat.bake.shift(); stat.draw.shift(); }
+  if (stat.bake.length > 5000) { stat.bake.shift(); stat.draw.shift(); }
   if (Math.round(t * 60) % 15 === 0 || dt === 0) report(live);
 }
 
@@ -237,6 +240,14 @@ window.bench = {
     if (o.restart) for (const sh of all()) sh.k0 = null;
   },
   pos: () => ({ cam, t }),
+  // for tools/clouds-check.mjs: draw one kind alone, where each sheet was
+  // drawn, every pixel along each cell row's middle line, and the timings
+  solo: k => { solo = k; },
+  drawnAt: () => drawnAt,
+  pxRows: () => { const d = g.getImageData(0, 0, W, H).data, out = new Uint8Array(Math.floor(H / CELLPX) * W);
+    for (let y = 0; y < Math.floor(H / CELLPX); y++) for (let x = 0; x < W; x++) out[y * W + x] = d[((y * CELLPX + 2) * W + x) * 4 + 1];
+    return Array.from(out); },
+  timings: () => ({ bake: stat.bake.slice(), draw: stat.draw.slice() }),
   stats: () => ({ text: $('stats').textContent })
 };
 </script>

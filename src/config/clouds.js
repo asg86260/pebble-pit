@@ -52,7 +52,7 @@ export const CLOUDS_THRESHOLD = 0.03;
 // A cell keeps the tier it showed last step until the sum has moved this
 // share of the threshold past it, so a lobe breathing across a cell's center
 // does not flip it one way and back the next step.
-export const CLOUDS_HYST = 0.12;
+export const CLOUDS_HYST = 0.25;
 
 // --- the clock ------------------------------------------------------------------
 // The field is worked out a step at a time (each kind's `step`), a slice of rows
