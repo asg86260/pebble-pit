@@ -46,12 +46,14 @@ export const GOD_STAGE = { mx: 1.25, back: -2, front: 30, hb: 100, hf: 135, rise
 // the second at the front; `gap` cells between souls in a row, each row
 // stepping back `rows` of its soul; each soul jittered `jit` cells across and
 // a share `lift` of them a row up; `margin` cells kept off the stage's edge;
-// the aisle up the middle `aisle` cells either side of the line. As support
-// rises it empties from the front: a soul stands while (1 - share) * `keep`
-// - its frontness (0 the back row, 1 the front) * `fore` - a fixed chance *
-// `luck` + `base` is over 0, and fades as that falls through the last `soft`
-// of it -- support's share is eased, so a soul fades rather than pops.
-export const GOD_CROWD = { n: [4, 8], gap: 2, rows: 1.1, jit: 1, lift: 0.4, margin: 3, aisle: 4,
+// the aisle up the middle `aisle` cells either side of the line; a body of
+// the sim's among them no wider than `fileFill` of a file's spacing. As
+// support rises it empties from the front: a soul stands while (1 - share)
+// * `keep` - its frontness (0 the back row, 1 the front) * `fore` - a fixed
+// chance * `luck` + `base` is over 0, and fades as that falls through the
+// last `soft` of it -- support's share is eased, so a soul fades rather
+// than pops.
+export const GOD_CROWD = { n: [4, 8], gap: 2, rows: 1.1, jit: 1, lift: 0.4, margin: 3, aisle: 4, fileFill: 0.7,
                            keep: 1.4, fore: 0.8, luck: 0.6, base: 0.25, soft: 0.25 };
 // A sign stands on the stage by its rank: rank 0 the front row, rank
 // SIGN_DEEP or more the back; its flag `flag` stage cells tall from the back
