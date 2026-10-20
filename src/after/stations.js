@@ -18,6 +18,7 @@ import { built } from './levels.js';
 import { stationBox, stationParts, closed } from './place.js';
 import { godCampAt, godMid, faceY } from './sky.js';
 import { madeAt } from './work.js';
+import { gestureUnder } from './gestures.js';
 
 const live = () => afterlifeOn() && !!S.after;
 const inBox = (x, y, b) => !!b && x >= b.x && x < b.x + b.w && y >= b.y && y <= b.y + b.h;
@@ -60,6 +61,10 @@ const row = (card, more) => {
     board: flag(key),
     // the hit is the drawing itself, never padded past it
     reach: { left: 0, right: 0, up: 0, down: 0 },
+    // and a part the hand works (a bubble, the saw's icon, a flywheel, a
+    // lever, a heap) is the hand's, never the board's: asked of the hand
+    // work's own hit test (after/gestures.js)
+    work: (x, y) => gestureUnder(x, y),
     ...more
   };
 };

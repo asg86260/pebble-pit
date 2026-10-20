@@ -118,6 +118,8 @@ for (const id of PARTY_IDS) {
 // that shows or staffs a place reads it off here. What it has made so far
 // (`made`, a count that only climbs while its bodies work) is what the polish
 // bar's door check holds still with nobody at it (test/place-bar.test.mjs).
+// Its hand-worked parts (`work`, a point test on what is drawn) are the
+// hand's and never its board's (`workAt`).
 //
 // Which place a row stands in (`place`: 'yard', 'deep', 'after' or 'hell';
 // 'yard' unless it says): the pointer asks only the rows of the place on
@@ -328,9 +330,20 @@ export function nearStation(key, x, y) {
   return !!r && x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h;
 }
 
+// The station whose hand-worked part is under a point (a row's `work`: the
+// flywheel, a lever, a face a blow lands on), or null: of the place on
+// screen only. A part worked by hand never opens a board, by walk-up, hover
+// or click (the owner, 2026-10-20: "the manual pieces of stations should not
+// open the shop menus"); the board opens from the rest of what is drawn.
+export function workAt(x, y) {
+  for (const s of STATIONS) if (s.work && here(s) && s.open() && s.work(x, y)) return s.key;
+  return null;
+}
+
 // The station a point on the ground asks for, in table order, or null: of
-// the place on screen only.
+// the place on screen only, and never over a part worked by hand.
 export function stationAt(x, y) {
+  if (workAt(x, y)) return null;
   for (const s of STATIONS) if (s.stand && here(s) && nearStation(s.key, x, y)) return s.key;
   return null;
 }

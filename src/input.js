@@ -19,7 +19,7 @@ import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, onMenu, standRect, openBoard } from './board.js';
-import { station, stationAt, STATIONS, here, nearStation } from './stations.js';
+import { station, stationAt, STATIONS, here, nearStation, workAt } from './stations.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { statusAt } from './render/statusicons.js';
 import { overChooseMark, chooseMarkAt } from './render/deep.js';
@@ -319,7 +319,10 @@ canvas.addEventListener('pointermove', e => {
     // be nothing. Unless the cursor is on the menu itself: the strip between
     // the board and the crew list is bare canvas over whatever station is next
     // along, and crossing it is reading the menu, not arriving.
-    if (want && !onMenu(e.clientX, e.clientY)) showPanel(want);
+    // Over a part worked by hand the work has the pointer: a board up from
+    // the station round it goes at once, so nothing stands over the part.
+    if (workAt(S.mouse.x, S.mouse.y)) showPanel(null, true);
+    else if (want && !onMenu(e.clientX, e.clientY)) showPanel(want);
     // The orb is reached across its station's ground, which opened the board
     // over it: it goes at once, not after the linger or the wedge.
     else if (overOrb(S.mouse.x, S.mouse.y)) showPanel(null, true);
@@ -641,6 +644,10 @@ const CURSORS = [
   // one, and closed while the left is down too (the owner, 2026-10-09)
   [() => S.crewSight != null && S.mining, 'grabbing'],
   [() => S.crewSight != null, 'grab'],
+  // a station's part worked by hand: the open hand over it, closed while it
+  // is held, and never the board's pointer (stations.js, `workAt`)
+  [() => !!gestureHeld(), 'grabbing'],
+  [(x, y) => workAt(x, y) != null, 'grab'],
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y), 'pointer'],
   // the way through the surface, from either side, and the serpent to hit

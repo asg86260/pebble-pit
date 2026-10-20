@@ -24,15 +24,13 @@ import { until, wheel, glass, lookAt, walkTo, visit } from './playcheck.js';
 import { gestureStops, gestureUnder, pressTaken, gestureUp } from '../after/gestures.js';
 import { GREY, PURPLE, COIN_TONES, AFTER_TONES, CLOUDS_PALETTE, HELL_TIERS, P } from '../config.js';
 import { barrierFallen } from '../hell/barriers.js';
+import { hellSwing } from '../hell/index.js';
 
 // --- the allowlists ---------------------------------------------------------------
 export const WALKUP_GAPS = [
-  'after:after-crowd:pan', 'hell:hell-anvil:walkup', 'hell:hell-furnace:walkup',
+  'after:after-crowd:pan',
 ];
 export const WORK_GAPS = [
-  'after:chipper:board', 'after:chipper:cursor', 'after:heap:board', 'after:heap:cursor', 'after:mill:board', 'after:mill:cursor',
-  'after:stump:board', 'after:stump:cursor', 'after:tree:board', 'after:tree:cursor', 'after:workshop:board', 'after:workshop:cursor',
-  'hell:face0:board', 'hell:face0:cursor', 'hell:wall0:board', 'hell:wall0:cursor', 'hell:wall0:press',
 ];
 export const DARK_GAPS = [
   'after:dark:off', 'hell:dark:off',
@@ -110,9 +108,10 @@ async function workChecks(place, targets, found) {
     for (let i = 0; i < 40; i++) { await raf(); if (openBoard() !== null) opened = true; }
     if (opened) found.add(`${place}:${t.key}:board`);
     if (canvas().style.cursor !== 'grab') found.add(`${place}:${t.key}:cursor`);
-    const before = place === 'hell' ? JSON.stringify([S.hell.blows, S.hell.ore, S.hell.faces]) : null;
+    // hell's: the pair's blow swung there (hell/index.js, `hellSwing`)
+    const before = place === 'hell' ? hellSwing() : null;
     point('pointerdown', sx, sy, 1, 0);
-    const took = place === 'hell' ? JSON.stringify([S.hell.blows, S.hell.ore, S.hell.faces]) !== before : pressTaken();
+    const took = place === 'hell' ? hellSwing() !== before : pressTaken();
     point('pointerup', sx, sy, 0, 0);
     if (place === 'after') gestureUp(t.x, t.y);
     for (let i = 0; i < 4; i++) { await raf(); if (openBoard() !== null) opened = true; }
