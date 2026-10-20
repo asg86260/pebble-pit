@@ -90,7 +90,7 @@ test('a shape is its seed, and a cloud never draws from the yard\'s chance', () 
 // --- the liquid sky (clouds.js's layers; the card's half is tools/clouds-check.mjs) ---
 
 import { skyLayer, groundLayer, layerParams, puffAt, sumsAt, tierOf } from '../src/render/clouds.js';
-import { CLOUDS_SKY, CLOUDS_TIERS } from '../src/config.js';
+import { CLOUDS_SKY } from '../src/config.js';
 
 test('toward the horizon a layer is smaller, flatter, slower, and worked less often', () => {
   const P = Array.from({ length: CLOUDS_SKY.layers }, (_, i) => layerParams(i));
@@ -121,22 +121,21 @@ test('a crust lump rides its lobe: it never drifts off it', () => {
 
 test('a flowing edge crosses a cell once: none chatters, hardly any comes back within a second', () => {
   // the nearest layer, a window over its busiest stretch, worked every
-  // frame for six seconds with the same hysteresis the card uses. A cell at
+  // frame for ten seconds (the sky changes over minutes, so a shorter look sees
+  // too little move) with the same hysteresis the card uses. A cell at
   // the far point of a lobe's sway is crossed out and back as the sway turns,
   // which is the flow and not flicker; a cell back within a tenth of a second
   // is flicker
   const L = skyLayer({ i: CLOUDS_SKY.layers - 1, seed: 7, W: 800 });
   const w = 40, h = L.h, by = x0 => L.puffs.filter(p => Math.abs(((p.x - x0 - w / 2) % 800 + 1200) % 800 - 400) < 90);
   let x0 = 0;
-  // busiest in cloud, not in the high wisps' tiny puffs
-  const body = x => by(x).filter(p => CLOUDS_TIERS[p.tier] !== 'high').length;
-  for (let x = 0; x < 800; x += 20) if (body(x) > body(x0)) x0 = x;
+  for (let x = 0; x < 800; x += 20) if (by(x).length > by(x0).length) x0 = x;
   const near = by(x0);
   const view = { ...L, puffs: near };
   const T = new Int8Array(w * h).fill(-9), when = new Float64Array(w * h).fill(-9), from = new Int8Array(w * h);
   let changes = 0, back = 0, chatter = 0;
   const s = [0, 0, 0, 0];
-  for (let f = 0; f <= 360; f++) {
+  for (let f = 0; f <= 600; f++) {
     const t = 40 + f / 60;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const i = y * w + x, was = T[i], now = tierOf(sumsAt(view, t, x0 + x, y, s), was === -9 ? null : was);

@@ -14,7 +14,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, UNION_CROWD, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
-         AFTER_SKY_LO, AFTER_SKY_HI, AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL, AFTER_ART_SCALE } from '../config.js';
+         AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL, AFTER_ART_SCALE } from '../config.js';
 
 import { S } from '../state.js';
 import { ART as BASE_ART } from './art.js';
@@ -195,11 +195,9 @@ export const fileAt = x => Math.max(0, Math.min(CROWD_FILES - 1, Math.floor((x -
 export const wallSlots = () => Math.floor((crowdX1() - CROWD_X0) / AFTER_WALL_STEP);
 export const slotX = s => CROWD_X0 + s * AFTER_WALL_STEP + P;
 
-// --- the stair and the sky -----------------------------------------------------------
+// --- the stair ------------------------------------------------------------------------
 export const stairFoot = () => AFTER_STAIR_X - AFTER_STAIR_W;
 export const throneAt = () => ({ x: AFTER_STAIR_X, y: afterFloor() - AFTER_STAIR_RISE });
-export const skyLo = () => afterFloor() - AFTER_SKY_LO;
-export const skyHi = () => afterFloor() - AFTER_SKY_HI;
 
 // --- the cloud floor's billow (floor A) -----------------------------------------------
 // A cell column's height over the floor line, in cells: puffs a few cells

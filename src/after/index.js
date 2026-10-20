@@ -41,7 +41,7 @@ import { readOver } from '../placesave.js';
 // save reader, which drops what the blank lacks, keeps them), the seed it began with (`begun`, which names the act to the hand work), the
 // axe bought and in hand, the pair's last line (`shout`), the heap last
 // tipped and each station last worked by hand (`tipAt`, `workAt`), the
-// clouds and the motes coming down, the bodies -- members walking out, at
+// motes coming down, the bodies -- members walking out, at
 // their posts and building -- the throne's speech, and the last id handed
 // out.
 export const blankAfter = () => ({
@@ -67,7 +67,6 @@ export const blankAfter = () => ({
   shout: null,
   tipAt: null,
   workAt: {},
-  clouds: [],
   coins: [],
   motes: [],
   bodies: [],

@@ -140,61 +140,55 @@ export const CLOUDS_KINDS = {
 export const CLOUDS_ONE_TONE_ROWS = [1, 2, 1, 2];
 
 // --- the sky ----------------------------------------------------------------------
-// A whole sky: `layers` bands of distance from the horizon (0) to overhead
-// (1), and in each, clouds at three heights (CLOUDS_ALTITUDE). Every [far,
-// near] pair below is taken at a layer's distance, a share of the way along
-// distance^ease, so most layers crowd toward the horizon as distance does.
-// A cloud's place, size, squash, speed and tone all come from its distance
-// and its height; nothing is placed by hand.
+// A whole sky as one sheet of cloud (the owner, 2026-10-20: "all the clouds
+// on the same vertical plane ... going out towards the horizon,
+// perspectively"): every cloud's base at one height, the sheet seen from
+// overhead out to the horizon. `layers` bands of distance cut it, the
+// nearest at distance 1 and the farthest at `far`, spaced evenly in the
+// distance's logarithm; a cloud stands somewhere in its band's slice
+// (`jitter` of it either way). Seen from under a sheet, a thing at distance z
+// is 1/z as big, 1/z as high over the horizon and moves 1/z as fast, so:
 //
-//   R         a layer's typical cloud size (its biggest dome's radius)
+//   R         a cloud's typical size at distance 1 (its biggest turret's
+//             radius), in cells
+//   lift      its base's height over the horizon at distance 1, as a share
+//             of the sky's height
+//   parallax  how far it moves against the camera, at distance 1
+//   wind      cells a second it drifts, at distance 1
+//
+// so a far cloud is small, low and slow, and the far ones crowd toward the
+// horizon. The rest are [far, near] pairs taken at a band's share of the
+// way out (0 the horizon, 1 nearest):
 //   spread    how widely sizes scatter round R (a log-normal's sigma): a few
 //             clouds many times the typical one, many smaller
 //   tail      the biggest a cloud may be, in R
-//   flat      how far a puff is squashed top to bottom (1 round)
-//   lift      how high a height of 1 stands over the horizon, as a share of
-//             the sky: a far cloud of any height sits near the horizon, a
-//             near one high up the sky (perspective)
+//   flat      how far a puff is squashed top to bottom (1 round): a far
+//             cloud is seen edge-on, so flatter
 //   group     how many clouds a group has, on average
 //   packing   their spacing within a group, in their own size: under the 4
 //             or so a cumulus spans, so a group runs into one mass
 //   gap       open sky between groups, on average, in R
-//   parallax  how far it moves against the camera
-//   wind      cells a second it drifts
-//   stray     how fast a cloud wanders against its layer, in its layer's
-//             wind: clouds overtake each other, meet and part
 //   every     frames between workings of its field on the card: a far
 //             layer's puffs move a hair a frame, so it is worked one frame
 //             in this many, its fade kept in step
+// and:
+//   stray     how fast a cloud wanders against its layer, in its layer's
+//             wind: clouds overtake each other, meet and part
+//   kinds     how often each shape forms (CLOUDS_SHAPES)
 export const CLOUDS_SKY = {
-  layers: 5, ease: 1.7,
-  R: [2.6, 18], spread: [0.4, 0.55], tail: [2.2, 2.4], flat: [0.5, 1],
-  lift: [0.22, 1.25], group: [3, 1.5], packing: [1.1, 1.8], gap: [1.6, 6],
-  parallax: [0.04, 0.75], wind: [0.015, 0.22], stray: 0.5, every: [6, 1]
-};
-// The three heights a cloud forms at, and what each makes:
-//   at      its base's height, as a share of the sky over the horizon (taken
-//           with its layer's `lift`), [least, most]
-//   share   how often a cloud of a layer forms at this height
-//   kinds   how often each shape forms here (CLOUDS_SHAPES)
-//   size    its size against its layer's R
-//   flat    its squash against its layer's
-//   speed   its drift against its layer's wind: high cloud is slow
-//   pale    true: drawn in its layer's palest tone, whatever its distance
-// A tower is rooted in the low band and reaches up through the others.
-export const CLOUDS_ALTITUDE = {
-  low: { at: [0, 0.06], share: 0.45, kinds: { heap: 3, stratus: 2, scrap: 2, tower: 1.2 }, size: 1, flat: 0.85, speed: 1 },
-  mid: { at: [0.12, 0.24], share: 0.4, kinds: { cumulus: 4, scrap: 1.5, anvil: 0.4 }, size: 0.85, flat: 1, speed: 1.15 },
-  high: { at: [0.42, 0.62], share: 0.15, kinds: { cirrus: 1 }, size: 0.55, flat: 1, speed: 0.4, pale: true }
+  layers: 5, far: 8, jitter: 0.5,
+  R: 18, lift: 0.8, parallax: 0.75, wind: 0.06,
+  spread: [0.4, 0.55], tail: [2.2, 2.4], flat: [0.45, 1], group: [3, 1.5], packing: [1.1, 1.8], gap: [1.6, 6],
+  every: [6, 1], stray: 0.4,
+  kinds: { cumulus: 4, heap: 2.5, scrap: 1.5, tower: 0.7, stratus: 1.2 }
 };
 // How a cloud of each shape builds and dissolves: its size swells and wanes
 // over `life` seconds [least, most], never below `keep` of itself (a big mass
 // breathes; a scrap or a wisp is gone and comes back).
 export const CLOUDS_LIFE = {
-  cumulus: { life: [180, 420], keep: 0.55 }, tower: { life: [200, 460], keep: 0.5 },
-  anvil: { life: [260, 520], keep: 0.6 }, heap: { life: [160, 380], keep: 0.5 },
-  stratus: { life: [90, 220], keep: 0 }, scrap: { life: [50, 140], keep: 0 },
-  cirrus: { life: [120, 300], keep: 0 }
+  cumulus: { life: [600, 1200], keep: 0.55 }, tower: { life: [700, 1300], keep: 0.5 },
+  anvil: { life: [800, 1500], keep: 0.6 }, heap: { life: [500, 1100], keep: 0.5 },
+  stratus: { life: [300, 700], keep: 0 }, scrap: { life: [200, 450], keep: 0 }
 };
 // A cloud in the round (render/clouds.js, volume), built the way a cumulus
 // stacks: a broad flat base at the height the whole field shares (its
@@ -227,10 +221,9 @@ export const CLOUDS_VOLUME = {
   kids: { n: [2, 4], shrink: [0.48, 0.7], arc: 0.45, out: [0.7, 0.92], front: 0.55, levels: 2, least: 2.5, ride: 0.5 },
   crust: { from: 6, per: 0.3, back: 0.2, r: [0.16, 0.28], arc: [-1.1, 0.1], out: 0.9 }
 };
-// The tiers a sky layer's puffs fall in, back to front: high wisps behind
-// all, then a cloud's own depths from its rear (the shelf and the turrets
-// behind) to its nearest turrets.
-export const CLOUDS_TIERS = ['high', 'rear', 'mid', 'front', 'near'];
+// The tiers a sky layer's puffs fall in, back to front: a cloud's own depths
+// from its rear (the shelf and the turrets behind) to its nearest turrets.
+export const CLOUDS_TIERS = ['rear', 'mid', 'front', 'near'];
 // The shapes beyond the plain cumulus (CLOUDS_VOLUME):
 //   tower    the cumulus with domes stacked on its crown, each `shrink` the
 //            last and `climb` of its radius higher, `levels` of them
@@ -240,18 +233,12 @@ export const CLOUDS_TIERS = ['high', 'rear', 'mid', 'front', 'near'];
 //            domes
 //   stratus  a long low sheet: `count` small squashed puffs strung `length` R
 //   scrap    a few small puffs, loose
-//   cirrus   high streaks: `streaks` thin lines of tiny puffs `step` of
-//            their radius apart, squashed `flat`, each `length` R long and climbing `slant` of
-//            its length, a hook at its end; a puff at least `least` cells
-//            across its radius and `thick` cells high, so a far streak still
-//            crosses the field's threshold
 export const CLOUDS_SHAPES = {
   tower: { levels: [2, 4], shrink: 0.92, climb: 0.95, wander: 0.3 },
   anvil: { reach: [1.8, 3], flat: 0.35, r: [0.35, 0.5] },
   heap: { span: 2.6, crown: [0, 2], crownR: [0.45, 0.6], flat: 0.75 },
   stratus: { count: [6, 14], length: [4, 9], r: [0.22, 0.4], flat: 0.38, wander: 0.4 },
-  scrap: { count: [2, 4], r: [0.18, 0.38], spread: 1.2 },
-  cirrus: { streaks: [1, 3], length: [5, 10], r: [0.12, 0.22], step: 1.1, flat: 0.22, slant: 0.18, least: 1.3, thick: 1.1 }
+  scrap: { count: [2, 4], r: [0.18, 0.38], spread: 1.2 }
 };
 
 // --- the flow -----------------------------------------------------------------------
@@ -263,7 +250,7 @@ export const CLOUDS_SHAPES = {
 //   wander  how far it strays, as a share of its radius, [least, most]
 //   period  seconds a stray takes, [least, most]
 //   lift    how much of the stray is up and down rather than across
-export const CLOUDS_FLOW = { wander: [0.35, 0.85], period: [30, 90], lift: 0.45 };
+export const CLOUDS_FLOW = { wander: [0.2, 0.45], period: [120, 300], lift: 0.45 };
 // A cell that changes tone eases into the new one over this many seconds,
 // so an edge flowing across the grid glides rather than ticks.
 export const CLOUDS_FADE_S = 0.3;
@@ -275,7 +262,7 @@ export const CLOUDS_SETTLE = 6;
 // The ground in the sky's flow: its rows' size, its puffs' wander and period,
 // and the frames between workings of its field (CLOUDS_SKY.every); its rows'
 // depth and the rest are CLOUDS_KINDS.ground's.
-export const CLOUDS_GROUND_FLOW = { R: 14, wander: [0.25, 0.6], period: [30, 80], every: 2 };
+export const CLOUDS_GROUND_FLOW = { R: 14, wander: [0.15, 0.35], period: [100, 240], every: 2 };
 
 // --- the palette -------------------------------------------------------------------
 // The clouds' tones, each named for the one job it does (the owner,
