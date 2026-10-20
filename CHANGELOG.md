@@ -176,6 +176,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The yard's clouds are drawn like act 3's: turrets on a flat base, drifting and churning slowly, still swelling before a storm and browning with a dirty sky (test/weather.test.mjs).
 - The rise into heaven rides up with them: one shot from the ruined house up the road through the clouds to the cloud floor, about eight seconds (test/shot.test.mjs).
 - The yard has a sound for each kind of work, each in its own register so a busy yard stays clear: footsteps, picks, hammers, shovels, carts tipping, the belt, grains landing, bodies thrown, stations landing, birds, the casino's win and loss, and the dome and the rift; the busiest are heard only where you are looking (test/sound-lanes.test.mjs).
 - The dark switch steps light, dim and dark: both turn the page over, white things dark and black things light, dim on charcoal and dark on near-black (test/settings.test.mjs; test/ui-tokens.test.mjs; src/selftest/textaa.js).

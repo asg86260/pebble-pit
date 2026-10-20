@@ -22880,7 +22880,29 @@ the path never shows a notch of night. By night that surface is the cloud
 palette's haze, so it reads as the lit top of cloud and not as a gap
 (CLOUDS_ACT3.path).
 
-## The yard's sky on the cloud renderer (design, not built)
+## The yard's sky on the cloud renderer (built 2026-10-21, as below with these changes)
+
+What was built differs from the plan in four places:
+- **The report counts circles, not the card's cells.** `skyReport` counts
+  each cloud's circles at rest, swelled by the same `swellOf` the drawing
+  uses. A count of the drawn field would dip whenever the flow moved a lobe,
+  and `weather.test.mjs`'s "never shrinking on the way up" would go red on
+  the flow and not on the swell. The report is the model; the drawing is
+  the model plus the flow.
+- **Yard clouds have no life cycle.** A yard cloud's size is the storm's and
+  the murk's readout, so it does not breathe on its own (`heldCloud`). It
+  only wanders slowly.
+- **No WebGL2 draws the old columns, not baked sheets.** The column drawer,
+  fed the same circles, already swells, blooms, melts, browns and pales for
+  a balloon, which a baked sheet held still cannot do. The dev panel's
+  "clouds as columns" (`CLOUDS_FLAT`) forces it on.
+- **Nothing in the game frames the road.** The road's clouds are on the
+  renderer too, but the ride up the road has no caller since the rise
+  became the gates' glide (`shot.js`, `rideRoad`). So they could not be shot.
+
+The sections below are the plan as approved.
+
+### The plan
 
 The clouds bench (`clouds.html`, `render/clouds.js`, `render/cloudgl.js`)
 draws a liquid sky: puffs in a field worked on the graphics card each frame,

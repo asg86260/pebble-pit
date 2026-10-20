@@ -344,7 +344,7 @@ export const CLOUDS_GROUND_DEPTHS = [0.1, 0.62, 1];
 // A held cloud (the yard's, render/clouds.js `heldCloud`) stood up or pressed
 // down to the height asked of it by no more than these, least and most: past
 // them its turrets would read as stretched.
-export const CLOUDS_HELD_FIT = [0.8, 2.6];
+export const CLOUDS_HELD_FIT = [0.8, 1.5];
 
 // --- the cloud sea ---------------------------------------------------------------
 // The ground in the liquid sky (render/clouds.js, groundLayer): rows of

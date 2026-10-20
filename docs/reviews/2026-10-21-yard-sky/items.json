@@ -1,0 +1,196 @@
+{
+ "title": "The yard's sky on the cloud renderer",
+ "lede": "Every yard cloud is the shared renderer's: turrets on a flat base, flowing slowly, swelling with the storm's clock and browning with the murk as before. Weather, rain, the storm clock and smog are unchanged.",
+ "base": "9370442c",
+ "head": "cad7fff2",
+ "items": [
+  {
+   "id": "clear",
+   "title": "A clear sky",
+   "what": "the ordinary sky",
+   "shots": [
+    {
+     "scene": "sky1",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light",
+     "wait": 3
+    },
+    {
+     "scene": "sky1",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark",
+     "wait": 3
+    },
+    {
+     "scene": "sky1",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light",
+     "wait": 3
+    },
+    {
+     "scene": "sky1",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark",
+     "wait": 3
+    }
+   ]
+  },
+  {
+   "id": "swell",
+   "title": "A front at the end of its brew",
+   "what": "the clouds swelled by the storm's clock",
+   "shots": [
+    {
+     "scene": "cloudswell",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "cloudswell",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "cloudswell",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "cloudswell",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "rain",
+   "title": "A full storm",
+   "what": "the rain under the swelled sky",
+   "shots": [
+    {
+     "scene": "cleanrain",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "cleanrain",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "cleanrain",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "cleanrain",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "acid",
+   "title": "The storm over a dirty sky",
+   "what": "the murk's brown in the clouds",
+   "shots": [
+    {
+     "scene": "acidrain",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    }
+   ]
+  },
+  {
+   "id": "fallback",
+   "title": "No WebGL2",
+   "what": "the same clouds as columns, as a page without WebGL2 draws them (CLOUDS_FLAT forced on)",
+   "shots": [
+    {
+     "scene": "cloudswell",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light, columns",
+     "setup": "window.__tune('CLOUDS_FLAT', 1)"
+    }
+   ]
+  },
+  {
+   "id": "pan",
+   "title": "A pan in the brew",
+   "what": "every cloud sliding as one piece",
+   "shots": [
+    {
+     "scene": "cloudswell",
+     "window": [
+      1000,
+      484
+     ],
+     "theme": "light",
+     "label": "pan",
+     "wait": 0,
+     "setup": "(() => { let x = window.__state().camX; const f = () => { x = window.__look(x + 5); requestAnimationFrame(f); }; requestAnimationFrame(f); })()",
+     "gif": {
+      "seconds": 5,
+      "fps": 20
+     }
+    }
+   ]
+  }
+ ]
+}

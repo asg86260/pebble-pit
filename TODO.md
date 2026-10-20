@@ -53,10 +53,13 @@ place engine's early steps, 6 and 7 come before more act 3 art.
    Blocked on: act 3 step 2 landing.
 4. **One cloud renderer for every place, the yard included.** The cloud
    bench built it; act 3's sky and ground clouds are on it
-   (`render/after/cloudsky.js`). The yard's sky, smog and rain clouds
-   (`src/smog/`, ~1.8k lines) move onto it next; the move is designed,
-   awaiting the owner's approval: DESIGN.md, "The yard's sky on the cloud
-   renderer".
+   (`render/after/cloudsky.js`), and so are the yard's sky clouds and the
+   road's (`weather.js`, `render/road.js`; DESIGN.md, "The yard's sky on
+   the cloud renderer"). Open: at the yard sheets' cell sizes a cloud is 8
+   to 26 cells across, too small for its turrets to show, so it reads
+   blockier than the old mounds. Bigger clouds or a finer cell for the sky
+   is the owner's call (the P-grid rule). The road is never framed in play
+   (`rideRoad` has no caller).
 5. **Fades as the only way in or out.** One shared appear/leave every new
    thing uses (fade.js), so a pop like act 3's sign plant cannot happen by
    accident.
