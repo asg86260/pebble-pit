@@ -14,12 +14,15 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, UNION_CROWD, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
-         AFTER_SKY_LO, AFTER_SKY_HI, AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL } from '../config.js';
+         AFTER_SKY_LO, AFTER_SKY_HI, AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL, AFTER_ART_SCALE } from '../config.js';
 
 import { S } from '../state.js';
 import { ART as BASE_ART } from './art.js';
 
 const snap = v => Math.round(v / P) * P;
+// An art cell, world px: a cell of act 3's drawings, AFTER_ART_SCALE grid
+// cells across. Everything laid off the art's own cells is laid off these.
+export const AP = P * AFTER_ART_SCALE;
 
 // The cloud floor's top: the yard's top is world y 0, so the afterlife's floor
 // stands AFTER_GAP above it and its own top AFTER_H above that.
@@ -36,7 +39,7 @@ export const inAfter = (x, y) => y >= afterTop() && y <= afterFloor() && x >= af
 // as the config says.
 // The pedestal is the pair's podium (render/after/pedestal.js), its box as
 // tall as the podium they stand on.
-export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal, get box() { return [1, 10, Math.ceil(podiumTop() / P)]; } } };
+export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal, get box() { return [1, 10, Math.ceil(podiumTop() / AP)]; } } };
 // The paper mill's stack stands at its line's far end, which its drying
 // line carries four sheets further along (render/after/stations.js).
 const longLine = () => !!S.after && (S.after.ups['after-dry'] || 0) > 0;
@@ -56,11 +59,16 @@ export const stationBox = key => {
   const s = AFTER_STATIONS[key], art = ART[key];
   if (!s || !art) return null;
   const [x, w, h] = art.box;
-  return { x: stationX0(key) + x * P, y: afterFloor() - h * P, w: w * P, h: h * P };
+  return { x: stationX0(key) + x * AP, y: afterFloor() - h * AP, w: w * AP, h: h * AP };
 };
+// Where a carrier takes a sign off the workshop's pile, and the sign march's
+// length from there to God's crowd's near edge, px: what the throne's
+// speech is paced against (config/after.js, AFTER_BURN_MARCHES).
+export const signFetchX = () => stationDoor('workshop') + AP * 4;
+export const signMarch = () => CROWD_X0 - signFetchX();
 // Where a body stands to work a station: the middle column of the worker the
 // mock draws there.
-export const stationDoor = key => (ART[key] ? stationX0(key) + ART[key].door * P : 0);
+export const stationDoor = key => (ART[key] ? stationX0(key) + ART[key].door * AP : 0);
 export const stationMid = key => { const b = stationBox(key); return b ? b.x + b.w / 2 : 0; };
 // A station's pile of `what`, its left edge in the world. A pile's place in
 // ART is in the drawing's own cells, so a turned drawing turns its piles too
@@ -68,29 +76,30 @@ export const stationMid = key => { const b = stationBox(key); return b ? b.x + b
 const PILE_W = 6;
 export const pileAt = (key, what) => {
   const art = ART[key], x = art.pile[what];
-  return stationX0(key) + (art.flip ? art.flip - x - PILE_W : x) * P;
+  return stationX0(key) + (art.flip ? art.flip - x - PILE_W : x) * AP;
 };
 // Where a station's loads are piled while it is raised (after/build.js): on
 // its ground beside its drawing, where its own product pile will stand,
-// BUILD_PILE_W cells across and kept on the ground. Its left edge.
+// BUILD_PILE_W art cells across and kept on the ground. Its left edge.
 export const BUILD_PILE_W = 12;
 export const buildPileAt = key => {
   const art = ART[key], x0 = stationX0(key);
   const last = Object.keys(art.pile).at(-1);
-  const want = last == null ? art.box[0] + art.box[1] + 1 : (pileAt(key, last) - x0) / P - 1;
-  return x0 + Math.max(0, Math.min(art.ground - BUILD_PILE_W, want)) * P;
+  const want = last == null ? art.box[0] + art.box[1] + 1 : (pileAt(key, last) - x0) / AP - 1;
+  return x0 + Math.max(0, Math.min(art.ground - BUILD_PILE_W, want)) * AP;
 };
 // Where a builder stands to lay a load into a band: either side of the
 // drawing (`side` 0 its left, 1 its right), a cell off it.
 export const buildLayAt = (key, side) => { const b = stationBox(key); return side ? b.x + b.w + P * 2 : b.x - P * 2; };
 // Its middle column, where a body puts a thing down on it.
-export const pileMid = (key, what) => pileAt(key, what) + (PILE_W / 2) * P;
-// The sawdust heap at the saw mill's right, where the chipper pours onto it
-// too, `heapMid` its middle column; the notch in the cloud floor just past
-// its foot, where a load is tipped through.
-export const heapMid = () => stationX0('mill') + (ART.mill.ground - AFTER_NOTCH_AT - 2) * P;
-export const heapX = () => heapMid() - AFTER_HEAP_R * P;
-export const notchX = () => heapMid() + AFTER_NOTCH_AT * P;
+export const pileMid = (key, what) => pileAt(key, what) + (PILE_W / 2) * AP;
+// The sawdust heap under the chipper's chute, at its ground's end (ART's
+// `heap`), where the saw mill's sawdust joins the chips, `heapMid` its middle
+// column; the notch in the cloud floor just past its foot, where a load is
+// tipped through.
+export const heapMid = () => stationX0('chipper') + ART.chipper.heap * AP;
+export const heapX = () => heapMid() - AFTER_HEAP_R * AP;
+export const notchX = () => heapMid() + AFTER_NOTCH_AT * AP;
 // Where the pair stand to speak: on the pillar's top, their feet on it, two
 // cells apart. A speaker's spot is its left edge.
 // The podium the pair stand on, 0 the soapbox: the rungs bought (the ladder's
@@ -105,13 +114,13 @@ export const podiumStood = () => {
 };
 export const podiumTopOf = n => AFTER_PODIUM_TOPS[n] * AFTER_PODIUM_U;
 export const podiumTop = () => podiumTopOf(podiumStood());
-export const podiumMid = () => stationX0('pedestal') + ART.pedestal.ground * P / 2;
+export const podiumMid = () => stationX0('pedestal') + ART.pedestal.ground * AP / 2;
 // The union's crowd (render/after/unioncrowd.js) across the half at most:
 // its back rows kept a cell short of the workshops' end.
 export const unionHalf = () => Math.min(UNION_CROWD.half[1], podiumMid() - workshopsX1() - P);
 export const speakerAt = k => ({ x: podiumMid() + AFTER_PODIUM_PAIR[k ? 1 : 0], y: afterFloor() - podiumTop() });
 // The rebel pile at the pedestal's foot, on God's-yard side, where the motes land.
-export const pileX = () => snap(podiumMid() + AFTER_PODIUM_PILE * P);
+export const pileX = () => snap(podiumMid() + AFTER_PODIUM_PILE * AP);
 // Where an agitator stands: in a row behind the pedestal, a spot a post.
 export const agitatorX = k => { const b = stationBox('pedestal'); return b.x - P * 3 - k * P * 4; };
 // The members waiting are counted, not stood anywhere (the owner, 2026-10-18:
@@ -121,7 +130,7 @@ export const agitatorX = k => { const b = stationBox('pedestal'); return b.x - P
 // and the open floor past the pedestal where one walking out of God's yard
 // arrives. `campSpot(to)` is the edge nearest world x `to`; with no `to`,
 // the edge on God's yard's side.
-export const campEdges = () => [snap(afterX0() + AFTER_GROVE_X0 - P * 8), snap(stationX0('pedestal') + ART.pedestal.ground * P + P * 4)];
+export const campEdges = () => [snap(afterX0() + AFTER_GROVE_X0 - P * 8), snap(stationX0('pedestal') + ART.pedestal.ground * AP + P * 4)];
 export const campSpot = (to = null) => {
   const [x0, x1] = campEdges();
   return { x: to == null || Math.abs(to - x1) <= Math.abs(to - x0) ? x1 : x0, y: afterFloor() };
@@ -136,7 +145,7 @@ export const afterOpenX = () => { const b = stationBox('pedestal'); return snap(
 // ground but the pedestal's does; God's camp starts a file short of his
 // crowd's first; the union's camp is the floor round the pedestal, the open
 // floor between it and each neighbor.
-export const workshopsX1 = () => Math.max(...Object.keys(AFTER_STATIONS).filter(k => k !== 'pedestal').map(k => stationX0(k) + ART[k].ground * P));
+export const workshopsX1 = () => Math.max(...Object.keys(AFTER_STATIONS).filter(k => k !== 'pedestal').map(k => stationX0(k) + ART[k].ground * AP));
 export const godX0 = () => CROWD_X0 - CROWD_PITCH;
 export const unionX0 = () => workshopsX1() + AFTER_ZONE_GAP * P;
 export const unionX1 = () => unionX0() + AFTER_UNION_W * P;
@@ -227,17 +236,17 @@ export function floorFlats() {
   const out = [];
   // A tree's foot, from the stump it leaves to the end of the logs cut off
   // it (render/after/pine.js lays them two cells off the trunk).
-  for (let i = 0; i < AFTER_PLOT_MAX; i++) out.push(span(plotX(i) + STUMP[0] * P, GROVE_LOGS_AT - STUMP[0] + PILE_W));
+  for (let i = 0; i < AFTER_PLOT_MAX; i++) out.push(span(plotX(i) + STUMP[0] * AP, (GROVE_LOGS_AT - STUMP[0] + PILE_W) * AFTER_ART_SCALE));
   // A station's whole ground, from the moment it is ordered: an unbuilt
   // spot is open floor like any other (the owner, 2026-10-18).
   for (const key of Object.keys(AFTER_STATIONS)) {
     if (!sited(key)) continue;
     const b = stationBox(key);
-    out.push(span(b.x, b.w / P), span(stationX0(key), ART[key].ground));
-    for (const what of Object.keys(ART[key].pile)) out.push(span(pileAt(key, what), PILE_W));
+    out.push(span(b.x, b.w / P), span(stationX0(key), ART[key].ground * AFTER_ART_SCALE));
+    for (const what of Object.keys(ART[key].pile)) out.push(span(pileAt(key, what), PILE_W * AFTER_ART_SCALE));
     out.push(span(stationDoor(key) - P, 3));
   }
-  if (sited('mill')) out.push(span(heapX(), AFTER_HEAP_R * 2 + 1), span(notchX(), 2));
+  if (sited('chipper')) out.push(span(heapX(), (AFTER_HEAP_R * 2 + 1) * AFTER_ART_SCALE), span(notchX(), 2 * AFTER_ART_SCALE));
   // The rebel pile at the pillar's foot.
   out.push(span(pileX(), 8));
   // Where a body steps from the floor into God's crowd's rows (`overCrowd`),
@@ -336,8 +345,8 @@ export const ICON = { saw: [13, 8], shovel: [5, 13] };
 const TOP_STRIP = 2;   // cells along a station's top, its roof, that a press does not work
 export function stationParts(key, i = 0) {
   const fl = afterFloor();
-  const at = (x0, x, y) => ({ x: x0 + x * P, y: fl + y * P });
-  const box = (x0, x, y, w, h) => ({ x: x0 + x * P, y: fl + y * P, w: w * P, h: h * P });
+  const at = (x0, x, y) => ({ x: x0 + x * AP, y: fl + y * AP });
+  const box = (x0, x, y, w, h) => ({ x: x0 + x * AP, y: fl + y * AP, w: w * AP, h: h * AP });
   if (key === 'tree') {
     // The grown pine as drawn (PINE): its rows' spans off `foot` (its trunk
     // column's left on the floor line), and the box round them.
@@ -347,8 +356,8 @@ export function stationParts(key, i = 0) {
     // SAW: its grip at the near end, its tip past the far side), and `icon`
     // the saw icon over its crown, a box and its middle.
     const ic = { w: ICON.saw[0] * ICON_DOT, h: ICON.saw[1] * ICON_DOT };
-    const icon = { x: bx + P / 2, y: fl + top * P - P * 2, box: { x: Math.round(bx + P / 2 - ic.w / 2), y: fl + top * P - P * 2 - ic.h, w: ic.w, h: ic.h } };
-    return { box: box(bx, a, top, b - a + 1, -top), rows, foot: { x: bx, y: fl }, top: fl + top * P,
+    const icon = { x: bx + AP / 2, y: fl + top * AP - P * 2, box: { x: Math.round(bx + AP / 2 - ic.w / 2), y: fl + top * AP - P * 2 - ic.h, w: ic.w, h: ic.h } };
+    return { box: box(bx, a, top, b - a + 1, -top), rows, foot: { x: bx, y: fl }, top: fl + top * AP,
              sawBox: box(bx, SAW_SPAN[0], SAW_ROWS[0], SAW_SPAN[1] - SAW_SPAN[0] + 1, SAW_ROWS[1] - SAW_ROWS[0] + 1), icon };
   }
   if (key === 'stump') {
@@ -356,37 +365,34 @@ export function stationParts(key, i = 0) {
     // round it and up over it, where the hand takes hold to lift it; `icon`
     // the shovel over it.
     const bx = plotX(i), ic = { w: ICON.shovel[0] * ICON_DOT, h: ICON.shovel[1] * ICON_DOT };
-    const iy = fl - (STUMP[2] + 2) * P;
-    return { box: box(bx, -2, -4, 5, 4), at: { x: bx + P / 2, y: fl }, stump: box(bx, STUMP[0], -STUMP[2], STUMP[1], STUMP[2]),
+    const iy = fl - (STUMP[2] + 2) * AP;
+    return { box: box(bx, -2, -4, 5, 4), at: { x: bx + AP / 2, y: fl }, stump: box(bx, STUMP[0], -STUMP[2], STUMP[1], STUMP[2]),
              grip: box(bx, -2, -6, 5, 7), icon: { x: bx + P / 2, y: iy, box: { x: Math.round(bx + P / 2 - ic.w / 2), y: iy - ic.h, w: ic.w, h: ic.h } } };
   }
   if (key === 'heap') {
     const x0 = heapX(), edge = notchX();
-    return { box: { x: x0, y: fl - P * (AFTER_HEAP_R + 4), w: edge + P * 2 - x0, h: P * (AFTER_HEAP_R + 5) }, edge,
-             heap: { x: x0, y: fl - (AFTER_HEAP_R + 1) * P, w: (AFTER_HEAP_R * 2 + 1) * P, h: (AFTER_HEAP_R + 1) * P },
-             notch: { x: edge, y: fl, w: P * 2, h: P * 3 } };
+    return { box: { x: x0, y: fl - AP * (AFTER_HEAP_R + 4), w: edge + AP * 2 - x0, h: AP * (AFTER_HEAP_R + 5) }, edge,
+             heap: { x: x0, y: fl - (AFTER_HEAP_R + 1) * AP, w: (AFTER_HEAP_R * 2 + 1) * AP, h: (AFTER_HEAP_R + 1) * AP },
+             notch: { x: edge, y: fl, w: AP * 2, h: AP * 3 } };
   }
   if (key === 'pedestal') {
     const a = speakerAt(0), b = speakerAt(1);
-    const h = Math.ceil(podiumTop() / P);
+    const h = Math.ceil(podiumTop() / AP);
     return { box: { x: a.x, y: a.y - P * 3, w: b.x + P * 3 - a.x, h: P * 3 }, top: box(stationX0(key), 1, -h, 10, h) };
   }
   const b = stationBox(key);
   if (!b) return null;
-  const worked = { x: b.x, y: b.y + P * TOP_STRIP, w: b.w, h: b.h - P * TOP_STRIP };
+  const worked = { x: b.x, y: b.y + AP * TOP_STRIP, w: b.w, h: b.h - AP * TOP_STRIP };
   const x0 = stationX0(key);
-  if (key === 'mill') return { box: worked, wheel: { ...at(x0, 19, -9), r: 6 * P }, knob: 8 * P, frame: box(x0, 31, -26, 19, 26) };
-  // The chipper is drawn turned (ART.chipper.flip): its parts, laid off
-  // the drawing's own cells, turned the same way.
+  if (key === 'mill') return { box: worked, wheel: { ...at(x0, 19, -9), r: 6 * AP }, knob: 8 * AP, frame: box(x0, 31, -26, 19, 26) };
   if (key === 'chipper') {
-    const f = ART.chipper.flip, tb = (c, y, w, h) => box(x0, f - c - w, y, w, h);
-    return { box: worked, mouth: tb(16, -13, 14, 14), jaw: tb(18, -14, 10, 5), block: tb(28, -15, 6, 15), chute: tb(31, -19, 7, 5),
-             arm: tb(7, -11, 11, 11), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - P * 6, w: PILE_W * P, h: P * 6 } };
+    return { box: worked, mouth: box(x0, 16, -13, 14, 14), jaw: box(x0, 18, -14, 10, 5), block: box(x0, 28, -15, 6, 15), chute: box(x0, 31, -19, 7, 5),
+             arm: box(x0, 7, -11, 11, 11), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - AP * 6, w: PILE_W * AP, h: AP * 6 } };
   }
-  if (key === 'papermill') return { box: worked, vat: { ...at(x0, 19, -4.5), rx: 6 * P, ry: 2.5 * P }, line: box(x0, 9, -18, 30, 1), step: box(x0, 5, -9, 4, 9) };
+  if (key === 'papermill') return { box: worked, vat: { ...at(x0, 19, -4.5), rx: 6 * AP, ry: 2.5 * AP }, line: box(x0, 9, -18, 30, 1), step: box(x0, 5, -9, 4, 9) };
   if (key === 'workshop') return { box: worked, sign: box(x0, 8, -6, 12, 2), hammer: box(x0, 8, -14, 14, 6), hand: at(x0, 13, -9),
                                     nails: [9, 12, 15, 18].map(c => box(x0, c - 0.5, -8.5, 2, 3)) };   // a nail's head and a half cell round it: the gaps between are misses
-  if (key === 'press') return { box: worked, bar: { ...at(x0, 14, -11), len: 12 * P }, knob: box(x0, 24, -6, 2, 2), platen: box(x0, 12, -8, 9, 2),
+  if (key === 'press') return { box: worked, bar: { ...at(x0, 14, -11), len: 12 * AP }, knob: box(x0, 24, -6, 2, 2), platen: box(x0, 12, -8, 9, 2),
                                 handle: box(x0, 23, -12, 4, 8) };
   return { box: worked };
 }

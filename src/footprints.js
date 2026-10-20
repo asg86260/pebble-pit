@@ -40,7 +40,7 @@ import { afterlifeOn, hellOn } from './acts.js';
 import { deepPortal, standOfStation, deepFloor } from './deep/place.js';
 import { stationById } from './deep/party.js';
 import { PROPS } from './deep/props.js';
-import { afterFloor, stationBox, plotX, pineRows, PINE_GROWN, ART, pileAt, stairFoot, heapX, notchX } from './after/place.js';
+import { afterFloor, stationBox, plotX, pineRows, PINE_GROWN, ART, pileAt, stairFoot, heapX, notchX, AP } from './after/place.js';
 import { furnaceBox, barrierBox } from './hell/place.js';
 import { riftOpen } from './rift.js';
 
@@ -190,15 +190,15 @@ function afterParts() {
     if (!b) continue;
     const rs = [b];
     // A station's piles lie on its own ground (after/place.js, `pileAt`).
-    for (const what of Object.keys(ART[key].pile || {})) rs.push(rect(pileAt(key, what), fl - P, 6 * P, P));
+    for (const what of Object.keys(ART[key].pile || {})) rs.push(rect(pileAt(key, what), fl - AP, 6 * AP, AP));
     out.push({ id: key, rects: rs });
   }
   // The grove at its fullest: every plot a big pine (the box the hand reads).
   const rows = pineRows(PINE_GROWN, true);
   const a = Math.min(...rows.map(r => r[1])), z = Math.max(...rows.map(r => r[2])), top = Math.min(...rows.map(r => r[0]));
   for (let i = 0; i < AFTER_PLOT_MAX; i++)
-    out.push({ id: `pine:${i}`, rects: [rect(plotX(i) + a * P, fl + top * P, (z - a + 1) * P, -top * P)] });
-  out.push({ id: 'heap:sawdust', rects: [rect(heapX(), fl - P, notchX() + P * 2 - heapX(), P)] });
+    out.push({ id: `pine:${i}`, rects: [rect(plotX(i) + a * AP, fl + top * AP, (z - a + 1) * AP, -top * AP)] });
+  out.push({ id: 'heap:sawdust', rects: [rect(heapX(), fl - AP, notchX() + AP * 2 - heapX(), AP)] });
   out.push({ id: 'throne-stair', rects: [rect(stairFoot(), fl - AFTER_STAIR_RISE, AFTER_STAIR_W, AFTER_STAIR_RISE)] });
   if (portalStands('heaven')) {
     const e = portalEnd('heaven', 'after');

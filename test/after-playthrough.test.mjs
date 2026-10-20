@@ -40,8 +40,10 @@ const FRAME = 1 / 60;
 // would be a release nobody made. Everything else runs under the harness.
 const frame = () => yard.fast(FRAME);
 // How long the player's stretch may take to reach the strike, in game
-// seconds: an hour and a half, about half again what it takes.
-const STRETCH_S = 5400;
+// seconds: two and a quarter hours, about half again what it takes with the
+// art at twice its size (the strike at about 7900 s of act 3, against about
+// 5600 s with the art at its first size: the camp is wider to walk).
+const STRETCH_S = 8100;
 const log = [];
 const note = s => { log.push(`${Math.round(S.after ? S.after.t : 0)}s ${s}`); };
 

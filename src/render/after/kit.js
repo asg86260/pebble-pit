@@ -38,17 +38,22 @@ export const inView = (x, w) => x + w >= S.camX && x <= S.camX + S.viewW;
 
 // With `sink`, the frame paints nothing and hands every rect, in its own
 // unturned px, to sink(x, y, w, h) instead: how a drawing's silhouette is
-// read off the drawing itself (`silhouette`).
-export function frame(ox, oy, flip = 0, sink = null) {
-  const X = (x, w) => (flip ? ox + flip * P - x - w : ox + x);
+// read off the drawing itself (`silhouette`). `s` is the drawing's grid cells
+// a cell of its own (config/after.js, AFTER_ART_SCALE): every cell of it `s` grid cells
+// across, so a drawing at twice its size stays on the grid. A body stood in
+// it keeps the yard's size, its feet where the drawing puts them.
+export function frame(ox, oy, flip = 0, sink = null, s = 1) {
+  const X = (x, w) => (flip ? ox + flip * P * s - x - w : ox + x);
+  // a rect already in the frame's scaled px
+  const put = (x, y, w, h, tone) => {
+    if (sink) { sink(x, y, w, h); return; }
+    ctx.fillStyle = GREY[tone];
+    ctx.fillRect(Math.round(X(x, w)), Math.round(oy + y), Math.round(w), Math.round(h));
+  };
   const d = {
     ox, oy, sinking: !!sink,
     // local px: a rect, whole pixels
-    px(x, y, w, h, tone) {
-      if (sink) { sink(x, y, w, h); return; }
-      ctx.fillStyle = GREY[tone];
-      ctx.fillRect(Math.round(X(x, w)), Math.round(oy + y), Math.round(w), Math.round(h));
-    },
+    px(x, y, w, h, tone) { put(x * s, y * s, w * s, h * s, tone); },
     r(x, y, w, h, tone = K) { d.px(x * P, y * P, w * P, h * P, tone); },
     c(x, y, tone = K) { d.r(x, y, 1, 1, tone); },
     // a line `w` px thick between two points in cells, laid on whole pixels
@@ -63,10 +68,10 @@ export function frame(ox, oy, flip = 0, sink = null) {
     // a body: the mocks' 18 px square, a black rim 2 px round a white middle;
     // squat, two rows high with its feet where they were
     body(x, y, dxpx = 0, dypx = 0, squat = false) {
-      const bx = x * P + dxpx, by = y * P + dypx + (squat ? P : 0), h = squat ? 12 : 18;
-      d.px(bx, by, 18, h, K); d.px(bx + 2, by + 2, 14, h - 4, W);
+      const h = squat ? 12 : 18, mid = (x * P + dxpx + 9) * s, foot = (y * P + dypx + 18) * s;
+      put(mid - 9, foot - h, 18, h, K); put(mid - 7, foot - h + 2, 14, h - 4, W);
     },
-    world: (x, y) => ({ x: X(x * P, 0), y: oy + y * P })
+    world: (x, y) => ({ x: X(x * P * s, 0), y: oy + y * P * s })
   };
   return d;
 }

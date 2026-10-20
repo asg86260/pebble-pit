@@ -13,9 +13,9 @@
 // tree the saw icon, over a stump the shovel, each a pointer's mark drawn in
 // its own finer dots, no plate under it.
 
-import { P, AFTER_FALL_S, AFTER_FALL_POSES, AFTER_CROWN_FADE_S, AFTER_BUILD_FADE_S, AFTER_DIG_CLICKS,
+import { P, AFTER_ART_SCALE as A, AFTER_FALL_S, AFTER_FALL_POSES, AFTER_CROWN_FADE_S, AFTER_BUILD_FADE_S, AFTER_DIG_CLICKS,
          TREE_CHOPS, AFTER_ART_WORK_S, AFTER_PILE_FADE_S } from '../../config.js';
-import { plotX, afterFloor, pineOf, inPine, PINE_GROWN, STUMP, SAW_ROWS, ICON_DOT } from '../../after/place.js';
+import { plotX, afterFloor, pineOf, inPine, PINE_GROWN, STUMP, SAW_ROWS, ICON_DOT, AP } from '../../after/place.js';
 import { trees } from '../../after/grove.js';
 import { frame, K, W, PALE, MID, SOIL, DUST, toneOf, now, inView, pileState, clamp01 } from './kit.js';
 import { logPile } from './piles.js';
@@ -169,10 +169,10 @@ export function drawGrove() {
   const view = gestureView() || [], hand = view.find(r => r.key === 'tree'), lift = view.find(r => r.key === 'stump');
   trees().forEach((p, i) => {
     const bx = plotX(i);
-    if (!inView(bx - P * 10, P * 30)) return;
-    const d = frame(bx, fl), s = plotSeen(i, p);
+    if (!inView(bx - AP * 16, AP * 32)) return;
+    const d = frame(bx, fl, 0, null, A), s = plotSeen(i, p);
     const cleared = p.at == null ? 1 : clamp01((t - p.at) / AFTER_BUILD_FADE_S);
-    d.fade(cleared, () => { for (let c = -5; c <= 5; c++) d.c(c, -1, toneOf(SOIL, bx / P + c, 0)); });
+    d.fade(cleared, () => { for (let c = -5; c <= 5; c++) d.c(c, -1, toneOf(SOIL, bx / AP + c, 0)); });
     const big = p.big;
     if (p.fall != null) {
       // The fall: held poses over AFTER_FALL_S, quicker as it goes.
@@ -196,7 +196,7 @@ export function drawGrove() {
       if (p.stage === GROWN) {
         const st = stageOf(GROWN, big), [w, h] = st.trunk, kerf = Math.round(Math.min(1, p.chops / TREE_CHOPS) * w);
         const inHand = hand && hand.i === i, cutting = p.chip != null && t - p.chip < AFTER_ART_WORK_S;
-        if (inHand) saw(d, Math.round(hand.s / P), w, h, kerf);
+        if (inHand) saw(d, Math.round(hand.s / AP), w, h, kerf);
         else if (cutting) saw(d, Math.floor(t / 0.25) % 2 ? 2 : -2, w, h, kerf);
         else if (kerf) for (let r = SAW_ROWS[0]; r <= SAW_ROWS[1]; r++) for (let k = 0; k < kerf; k++) d.c(-(w - 1) / 2 + k, r, W);
         for (let k = 0; k < Math.min(4, Math.floor(p.chops / 2)); k++) { d.c(-2 - (k >> 1), -1, toneOf(DUST, k, 1)); d.c(2 + (k >> 1), -1, toneOf(DUST, k, 2)); }

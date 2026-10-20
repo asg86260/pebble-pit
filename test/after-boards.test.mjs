@@ -60,7 +60,7 @@ group('the shack locks a station behind the one it needs, saying which, and a bu
   const bought = buy(afterRow('after-build-mill'));
   const mill = afterRow('after-build-mill');
   const raisingLock = say('workshop');
-  runUntil(() => S.after.built.includes('mill'), 240);
+  runUntil(() => S.after.built.includes('mill'), 480);   // the builders' walks at the art's scale: about 361 s
   const open = say('workshop');
   window.__actsOn(null);
   return [

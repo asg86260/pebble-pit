@@ -17,6 +17,15 @@ import { ACT_GATES_CELL, ACT_GATES_REACH } from './acts.js';
 // this says, the way they play the deep (acts.js, `afterlifeOn`), so work on
 // it goes on; `__actsOn(false)` plays a released build's yard.
 const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {};
+// Act 3's art is drawn at this many grid cells a cell of its own (the owner,
+// 2026-10-20: "if they need to be interacted with they should be larger"):
+// every station, the shack, the grove's pines at every stage, the stumps and
+// the felled trees, the pedestal and its podiums, and the piles, each cell of
+// the mocks' drawings this many cells across, so the art stays on the grid
+// and stands as tall as the yard's tallest. Everything laid off the art --
+// the camp's ground, the grove's plots, the doors, the piles, the parts the
+// hand works -- is laid off it times this. The bodies keep the yard's size.
+export const AFTER_ART_SCALE = 2;
 export const AFTERLIFE_ON = env.VITE_AFTERLIFE === '1';
 
 // --- where it is -----------------------------------------------------------------
@@ -113,7 +122,7 @@ export const AFTER_PINE = {
 // so the biggest trees stand clear of each other.
 const BIG_FOOT = (t => 2 * (t.h - 1 + t.s) + 1)(AFTER_PINE.big.tiers[0]);
 export const AFTER_PLOT_GAP = 2;           // cells of floor between two big pines' feet
-export const AFTER_PLOT_STEP = P * (BIG_FOOT + AFTER_PLOT_GAP);
+export const AFTER_PLOT_STEP = P * AFTER_ART_SCALE * (BIG_FOOT + AFTER_PLOT_GAP);
 // The grove's end, in cells: everything right of it is laid off it, so a
 // wider grove moves the camp, God's yard and the stair along with it.
 const GROVE_END = AFTER_GROVE_X0 / P + AFTER_PLOT_MAX * AFTER_PLOT_STEP / P;
@@ -126,35 +135,38 @@ export const AFTER_JOIN_FADE_S = 0.5;
 // A pile's count stands on a plate of paper this many screen px proud of its digits.
 export const AFTER_COUNT_PAD = 2;
 // The camp's stations, left to right (layout A, docs/mocks/act3-place-2026-10-18),
-// laid off the grove's end by after/art.js (track A, 2026-10-18): about one
-// station's width of open floor between neighbors (the owner), never under
-// AFTER_CAMP_GAP cells. Each is the left edge of its ground in cells off the
-// place's left (`at`); its piles and its drawing are laid off that.
-const CAMP = campLayout(GROVE_END + 12, AFTER_CAMP_GAP);
+// laid off the grove's end by after/art.js (track A, 2026-10-18), with
+// AFTER_STATION_GAP art cells of open floor between every two neighbors'
+// grounds (the owner, 2026-10-20: "a bit closer together"). Each is the
+// left edge of its ground in cells off the place's left (`at`); its piles
+// and its drawing are laid off that.
+export const AFTER_STATION_GAP = 12;
+const CAMP = campLayout(GROVE_END + 12, AFTER_STATION_GAP, AFTER_ART_SCALE);
 // The level's three zones (DESIGN.md, "The level, the two crowds and the
 // flags"): the workshops -- the grove and every station but the pedestal --
 // then AFTER_ZONE_GAP cells of open floor, the union's camp AFTER_UNION_W
 // cells across with the pedestal at its middle, as much open floor again,
 // and God's camp (config/aftercrowd.js).
-const WORKS_END = Math.max(...CAMP_ORDER.filter(k => k !== 'pedestal').map(k => CAMP.stations[k].at + CAMP_ART[k].ground));
+const WORKS_END = Math.max(...CAMP_ORDER.filter(k => k !== 'pedestal').map(k => CAMP.stations[k].at + CAMP_ART[k].ground * AFTER_ART_SCALE));
 const UNION_END = WORKS_END + AFTER_ZONE_GAP + AFTER_UNION_W;
-CAMP.stations.pedestal.at = WORKS_END + AFTER_ZONE_GAP + Math.round((AFTER_UNION_W - CAMP_ART.pedestal.ground) / 2);
+CAMP.stations.pedestal.at = WORKS_END + AFTER_ZONE_GAP + Math.round((AFTER_UNION_W - CAMP_ART.pedestal.ground * AFTER_ART_SCALE) / 2);
 export const AFTER_STATIONS = CAMP.stations;
 // The pair's podium (DESIGN.md, "The level, the two crowds and the flags"):
 // a ladder of five, low and in the first plane -- a soapbox crate, crates
 // stacked two high with a plank, a plank stage with the fist banner, a cloud
 // plinth of squared blocks with steps, the Greek cloud column -- drawn in the
 // mock's cells (docs/mocks/act3-level-2026-10-19, a3podium2) at AFTER_PODIUM_U
-// px a cell, so the soapbox is about the pair's height. Each one's top over
+// px a cell -- the mock's two, times the art's scale -- so the soapbox stands
+// over the pair's height. Each one's top over
 // the floor, in those cells, where the pair stand; and the pair's two left
 // edges off the podium's middle, px.
-export const AFTER_PODIUM_U = 2;
+export const AFTER_PODIUM_U = 2 * AFTER_ART_SCALE;
 export const AFTER_PODIUM_TOPS = [10, 20, 24, 30, 40];
 // ...and each one's half across at its widest, in those cells.
 export const AFTER_PODIUM_HALF = [11, 22, 24, 26, 22];
 export const AFTER_PODIUM_PAIR = [-19, 1];
-// The rebel pile at the podium's foot, this many cells off its middle: clear
-// of the widest of them.
+// The rebel pile at the podium's foot, this many art cells off its middle:
+// clear of the widest of them.
 export const AFTER_PODIUM_PILE = 9;
 // A rung bought, the new podium is built where the old stood over this: the
 // old fading out over the first `fade` of it, the new standing up a course at
@@ -297,7 +309,17 @@ export const AFTER_POSTER_LIFE_S = 240;    // a poster weathers off after this
 export const AFTER_POSTER_FADE_S = 2;      // a torn poster's strips fading
 
 // --- God's pushback ---
-export const AFTER_SPEECH_S = 100;         // between the throne's speeches; halved past the slowdown
+// The throne's speech burns a sign or a poster as often as a carrier can
+// march a sign out (the coordinator, 2026-10-20: the act's pace must not
+// hang on how wide the camp is drawn). Its interval is AFTER_BURN_MARCHES
+// sign marches -- a carrier's walk from where it takes a sign at the
+// workshop to God's crowd's near edge, at AFTER_WALK (after/place.js,
+// `signMarch`) -- halved past the slowdown. The multiple is the act's
+// balance as tuned: a speech every AFTER_SPEECH_S over the march of
+// AFTER_SPEECH_MARCH px it was tuned against (the camp at the art's first
+// size), so a wider camp gives the carriers the same race against the burn.
+export const AFTER_SPEECH_S = 100;
+export const AFTER_SPEECH_MARCH = 1236;
 export const AFTER_SPEECH_WARN_S = 6;      // warned this long ahead
 
 // --- the members and their posts ---
@@ -305,6 +327,7 @@ export const AFTER_SPEECH_WARN_S = 6;      // warned this long ahead
 // a station with rebel, each dearer than the last, and a member walks from
 // the camp to hold it. A post with nobody waiting in the camp stands empty.
 export const AFTER_WALK = 50;              // px/s, every body up here
+export const AFTER_BURN_MARCHES = AFTER_SPEECH_S / (AFTER_SPEECH_MARCH / AFTER_WALK);
 export const AFTER_JOBS = [J.AGITATE, J.CUT, J.HAUL, J.SAW, J.CHIP, J.PULP, J.JOIN, J.CARRY, J.PRINT, J.PASTE];
 // The station each job's post is bought at, so which card sells it and which
 // station must stand before it is offered.

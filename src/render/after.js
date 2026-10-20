@@ -13,7 +13,7 @@
 // where the cell stands (no flat fills, no random draw, so it holds still
 // frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
+import { P, GREY, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
@@ -24,7 +24,7 @@ import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, afterFloor, ART } from '../after/place.js';
+import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, afterFloor, ART, AP } from '../after/place.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel.js';
 import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
@@ -105,7 +105,7 @@ function working(key) {
   if (since < AFTER_ART_WORK_S) return { work: true, at: since / AFTER_ART_WORK_S, ink: clamp01(Math.min(since, AFTER_ART_WORK_S - since) / AFTER_PILE_FADE_S) };
   return { work: false, at: 0, ink: 0 };
 }
-const frameOf = key => frame(stationX0(key), afterFloor(), ART[key].flip || 0);
+const frameOf = key => frame(stationX0(key), afterFloor(), ART[key].flip || 0, null, AFTER_ART_SCALE);
 // The hand's motion at each station this frame (after/gestures.js), by key.
 let hands = {};
 const readHands = () => { hands = {}; for (const r of gestureView() || []) hands[r.key] = r; };
@@ -141,8 +141,8 @@ const ramp = (t, t0, dur) => (t0 == null ? 0 : clamp01((t - t0) / dur));
 function drawSite(key) {
   const r = siteOf(key);
   if (!r) return;
-  const t = now(), d = frame(0, afterFloor());
-  buildPile(d, buildPileAt(key) / P, i => ramp(t, r.drop[i], AFTER_BUILD_DROP_S) * (1 - ramp(t, r.pick[i], AFTER_PILE_FADE_S)));
+  const t = now(), d = frame(0, afterFloor(), 0, null, AFTER_ART_SCALE);
+  buildPile(d, buildPileAt(key) / AP, i => ramp(t, r.drop[i], AFTER_BUILD_DROP_S) * (1 - ramp(t, r.pick[i], AFTER_PILE_FADE_S)));
 }
 // The glyph over a station, `at` of it built, faded in and out at the ends
 // of its window: hung where the yard hangs one, seven cells over the top.
@@ -194,12 +194,12 @@ function drawShackOrder() {
   const last = r.at.length ? fadeIn(r.at[r.at.length - 1]) : 1;
   glyphOver(b, GLYPHS[key], (r.n - 1 + last) / AFTER_BUILD_PIECES);
 }
-// The sawdust heap between the saw mill and the chipper: its grains a cell
+// The sawdust heap under the chipper's chute: its grains a cell
 // each, its share of the brim, held tipped toward the notch a moment after a
 // tip; a tip's grains falling through the notch and fading; its pile-full
 // mark under it while it stands at the brim with nowhere to go.
 function drawSawdust() {
-  const a = A(), fl = afterFloor(), d = frame(heapMid(), fl);
+  const a = A(), fl = afterFloor(), d = frame(heapMid(), fl, 0, null, AFTER_ART_SCALE);
   const cells = heapCells(AFTER_HEAP_R).length;
   const n = Math.round(Math.min(1, a.stock.sawdust / heapBrim()) * cells);
   const tipped = a.tipAt != null && a.t - a.tipAt < AFTER_TIP_HOLD_S;
