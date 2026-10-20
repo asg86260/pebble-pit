@@ -14,6 +14,8 @@ import { load } from './hole.js';
 import { earn } from '../notices.js';
 import { crewView, coarse } from '../prefs.js';
 import { inOrb, breakOrb, orbLiftOf } from '../deep/phases.js';
+import { PLACES, actPlace, isActView, crewHolding } from '../acts.js';
+import { bodyAt, liftBody, dropBody } from '../placebodies.js';
 
 // --- picking somebody up ------------------------------------------------------
 export function workerAt(x, y) {
@@ -23,7 +25,7 @@ export function workerAt(x, y) {
   if (crewView() === 'hide') return null;
   // On a thumb a cell is small, so the body's reach is the least a finger can
   // land on, whatever the zoom.
-  const pad = Math.max(P * 1.5, coarse() ? (TOUCH_TARGET / S.zoomShow - WORKER) / 2 : 0);
+  const pad = handPad();
   for (let i = S.workers.length - 1; i >= 0; i--) {
     const w = S.workers[i];
     if (w.inside || underground(w)) continue;
@@ -39,6 +41,32 @@ export function workerAt(x, y) {
 
 export const lifted = () => S.workers.find(w => w.lifted) || null;
 
+// --- the hand in every place ----------------------------------------------------
+// The acts' places keep their bodies in their own lists (placebodies.js), and
+// the hand takes them up the same way: the body under the pointer in the
+// place the camera is in, the one in the hand wherever it is from, and the
+// held body put where the cursor is by its own place's way of standing.
+// The tooltip and the retraining stay the yard's (`workerAt`, `lifted`): an
+// act's member has no card and no station to be dropped on.
+const handPad = () => Math.max(P * 1.5, coarse() ? (TOUCH_TARGET / S.zoomShow - WORKER) / 2 : 0);
+export function grabAt(x, y) {
+  if (!isActView(S.view)) return workerAt(x, y);
+  if (crewView() === 'hide') return null;
+  return bodyAt(actPlace(S.view).crew, x, y, handPad());
+}
+export function held() {
+  const w = lifted();
+  if (w) return w;
+  for (const pl of Object.values(PLACES)) { const b = pl.crew.list()?.find(o => o.lifted); if (b) return b; }
+  return null;
+}
+export function holdBody(w, x, y) {
+  const crew = crewHolding(w);
+  if (crew) { crew.hold(w, x, y); return; }
+  w.x = x - WORKER / 2;
+  w.y = y - WORKER / 2;
+}
+
 // With the right button held (`S.crewSight`), the body under the cursor walks
 // slow, so it can be caught. The stamp is refreshed on every pointermove, so
 // the slow outlives the hover by HOVER_SLOW_MS and no more.
@@ -50,6 +78,14 @@ export function hoverAt(x, y) {
 
 export function lift(w) {
   if (!w) return false;
+  const crew = crewHolding(w);
+  if (crew) {
+    for (const o of S.workers) o.lifted = false;
+    for (const pl of Object.values(PLACES)) for (const o of pl.crew.list() || []) o.lifted = false;
+    liftBody(crew, w);
+    earn('lifted');
+    return true;
+  }
   // Lifted out of the constrict's orb: free at once, and the orb bursts. The
   // body is taken where it is drawn, and the hand, not the sink, brings it
   // down.
@@ -89,6 +125,7 @@ export function lift(w) {
 export function drop(w) {
   if (!w) return;
   const v = throwVel();
+  if (crewHolding(w)) { dropBody(w, v); return; }
   w.lifted = false;
   w.falling = true;
   // A drop onto a station with room is a retraining, not a throw: no hurl, so
@@ -156,7 +193,8 @@ function flingHat(w, dx) {
   earn('hatoff');
 }
 export function shakeHeld(w, dx) {
-  if (!w || Math.abs(dx) < 1) return;
+  // An act's member carries nothing the shaking sheds and wears no hat.
+  if (!w || Math.abs(dx) < 1 || crewHolding(w)) return;
   const dir = Math.sign(dx);
   const t = now();
   if (t - (w.turnedAt || 0) > SHAKE_WINDOW) w.shook = 0;   // lapsed: start again

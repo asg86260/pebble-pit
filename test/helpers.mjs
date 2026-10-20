@@ -14,6 +14,9 @@ import assert from 'node:assert/strict';
 import { newYard } from '../tools/node/yard.mjs';
 
 export const yard = await newYard();
+// The acts' places, each with its own crew (placebodies.js): read once the
+// yard stands, since the modules want its page.
+const { PLACES } = await import('../src/acts.js');
 
 export const state = () => yard.state();
 
@@ -62,7 +65,22 @@ export function reloadCheck() {
   // the opening's beats would only ever be measuring the restart.
   if (S.beat.yard || !S.beatsDone.includes('show')) return;
   const before = S.workers.map(w => ({ name: w.name, type: w.type, x: w.x, y: w.y }));
+  // And every act place's bodies, which live in the place's own list.
+  const places = Object.entries(PLACES).map(([v, pl]) => [v, pl.crew, (pl.crew.list() || []).map(w => ({ id: w.id, job: w.job, x: w.x, y: w.y }))]);
   window.__reload();
+  for (const [v, crew, was] of places) {
+    const now = crew.list() || [];
+    if (now.length !== was.length)
+      throw new Error(`a reload changed ${v}'s bodies: ${was.length} before, ${now.length} after  [frame ${S.tick}]`);
+    was.forEach((b, i) => {
+      const w = now[i];
+      if (w.id !== b.id || w.job !== b.job)
+        throw new Error(`a reload swapped ${v}'s body ${b.id} (${b.job}) for ${w.id} (${w.job})  [frame ${S.tick}]`);
+      if (Math.abs(w.x - b.x) > P || Math.abs(w.y - b.y) > P)
+        throw new Error(`a reload moved ${v}'s body ${b.id} (${b.job}) from ${Math.round(b.x)},${Math.round(b.y)} `
+          + `to ${Math.round(w.x)},${Math.round(w.y)}  [frame ${S.tick}]`);
+    });
+  }
   reloads++;
   // Matched by place in the list, not by name: the save writes the crew in
   // order and the load stands them up in order, and two of a big crew can

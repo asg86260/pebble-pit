@@ -18,6 +18,8 @@ import { demoOn } from './demo.js';
 import { AFTER_PLACE } from './after/place.js';
 import { godFront, restW } from './after/sky.js';
 import { HELL_PLACE } from './hell/place.js';
+import { AFTER_CREW } from './after/bodies.js';
+import { HELL_CREW } from './hell/bodies.js';
 import { S } from './state.js';
 
 // --- whether -----------------------------------------------------------------
@@ -45,9 +47,19 @@ export function forceActs(after, hell = after) { forcedAfter = after; forcedHell
 const AFTER_AT_YARD = {
   ...AFTER_PLACE,
   x1: () => Math.min(AFTER_PLACE.x1(), godFront() + restW() / 2),
-  get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; }
+  get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; },
+  get crew() { return AFTER_CREW; }
 };
-export const PLACES = { after: AFTER_AT_YARD, hell: HELL_PLACE };
+// Each place's crew (placebodies.js): its own body list, its JOBS registry,
+// its walk and how the hand takes one of its bodies up. Read through a
+// getter, since the bodies' modules import the places.
+const HELL_AT = { ...HELL_PLACE, get crew() { return HELL_CREW; } };
+export const PLACES = { after: AFTER_AT_YARD, hell: HELL_AT };
+// The crew whose list holds `w`, or null for one of the yard's.
+export const crewHolding = w => {
+  for (const pl of Object.values(PLACES)) { const list = pl.crew.list(); if (list && list.includes(w)) return pl.crew; }
+  return null;
+};
 // The cloud floor's underside, as the road up from the yard sees it: past
 // the deepest the afterlife's own window ever shows of the cloud under its
 // floor, so only the rise riding up the road sees it.

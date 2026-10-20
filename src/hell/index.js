@@ -21,6 +21,7 @@ import { stepBodies } from './bodies.js';
 import { stepCage, cageBroken } from './cage.js';
 import { chamberFocusX, faceX, faceTop, chamberFloor, furnaceBox, anvilX, storeX, roadX, barrierBox } from './place.js';
 import { P } from '../config.js';
+import { settleHeld } from '../placebodies.js';
 
 // The act's facts, every one a body or a count a body moves (bodies.js), so
 // all of it is saved and a reload stands the act back as it was:
@@ -160,6 +161,7 @@ export const SAVE = {
     const h = s.hell;
     if (!h || typeof h !== 'object') { S.hell = null; return; }
     S.hell = readOver(blankHell(), h);
+    settleHeld(S.hell.bodies);
   },
   blank() { S.hell = null; }
 };

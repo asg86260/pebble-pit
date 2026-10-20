@@ -33,7 +33,7 @@ import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
 import { holdAt, dragArm, releaseArm, tapAt, leverUnder, signUnder } from './levers.js';
-import { hoverAt } from './crew/pointer.js';
+import { hoverAt, grabAt, held, holdBody } from './crew/pointer.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
 import { houseRect } from './house.js';
@@ -158,7 +158,7 @@ canvas.addEventListener('pointerdown', e => {
   // as long as both are down.
   if (e.button === 0 && S.crewSight != null) {
     const p = pos(e);
-    const w = workerAt(p.x, p.y);
+    const w = grabAt(p.x, p.y);
     if (w) {
       lift(w);
       try { canvas.setPointerCapture(e.pointerId); } catch {}
@@ -265,9 +265,9 @@ canvas.addEventListener('pointermove', e => {
   // A second button pressed while one is already down arrives as a move,
   // not a press (Pointer Events: a chord): the left going down with the
   // right held takes the body under the hand.
-  if (S.crewSight != null && e.button === 0 && (e.buttons & 3) === 3 && !lifted()) {
+  if (S.crewSight != null && e.button === 0 && (e.buttons & 3) === 3 && !held()) {
     const p = pos(e);
-    const w = workerAt(p.x, p.y);
+    const w = grabAt(p.x, p.y);
     if (w) { S.mouse = p; lift(w); setCursor(p.x, p.y); return; }
   }
 
@@ -330,13 +330,12 @@ canvas.addEventListener('pointermove', e => {
     setCursor(S.mouse.x, S.mouse.y);
   }
   // somebody on the cursor goes where the cursor goes
-  const up = lifted();
+  const up = held();
   if (up) {
     // waggled back and forth: counted in the hand, spent on the drop
     // (`shakeHeld`)
     if (wasWx != null) shakeHeld(up, S.mouse.x - wasWx);
-    up.x = S.mouse.x - WORKER / 2;
-    up.y = S.mouse.y - WORKER / 2;
+    holdBody(up, S.mouse.x, S.mouse.y);
     if ((e.buttons & 3) !== 3) drop(up);       // either button let go somewhere else
     return;
   }
@@ -353,7 +352,7 @@ export function endDrag(e) {
   // the arm let go, wherever the pointer has got to, and any station's motion
   releaseArm();
   if (gestureHeld()) { const p = pos(e); gestureUp(p.x, p.y); }
-  const up = lifted();
+  const up = held();
   if (up) { drop(up); return; }
   const held = down.get(e.pointerId);
   down.delete(e.pointerId);
@@ -637,7 +636,7 @@ function askedAbout(x, y, cx, cy) {
 // because the ground state of this game is aiming at a rock.
 const CURSORS = [
   // carrying something: the hand is closed
-  [() => S.dragging || lifted(), 'grabbing'],
+  [() => S.dragging || held(), 'grabbing'],
   // the right button held, looking at the crew: the hand open, ready to take
   // one, and closed while the left is down too (the owner, 2026-10-09)
   [() => S.crewSight != null && S.mining, 'grabbing'],

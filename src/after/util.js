@@ -9,6 +9,7 @@
 
 import { S } from '../state.js';
 import { AFTER_WALK } from '../config.js';
+import { secs, walkLine } from '../placebodies.js';
 
 export const A = () => S.after;
 
@@ -23,20 +24,12 @@ export function arand() {
 }
 export const apick = list => list[Math.floor(arand() * list.length)];
 
-// A frame's seconds, clamped: a background tab's long frame is not a long
-// stride for every body up here.
-export const secs = c => Math.min(0.1, Math.max(0, (c.dt || 0) / 1000));
-
-// One frame of a body's walk toward (tx, ty): true once it stands there. Bodies
-// walk; nothing up here is set down where it is wanted.
-export function walk(w, tx, ty, dt) {
-  const dx = tx - w.x, dy = ty - w.y, d = Math.hypot(dx, dy);
-  const step = AFTER_WALK * dt;
-  if (d <= step) { w.x = tx; w.y = ty; return true; }
-  w.x += dx / d * step; w.y += dy / d * step;
-  if (dx) w.face = dx > 0 ? 1 : -1;
-  return false;
-}
+// A frame's seconds, clamped, and one frame of a body's straight walk toward
+// (tx, ty), true once it stands there: the place body engine's
+// (placebodies.js), at the act's pace. Bodies walk; nothing up here is set
+// down where it is wanted.
+export { secs };
+export const walk = (w, tx, ty, dt) => walkLine(w, tx, ty, AFTER_WALK, dt);
 
 // A fresh id for anything the act keeps a list of.
 export const nextId = () => { const a = S.after; a.ids = (a.ids || 0) + 1; return a.ids; };

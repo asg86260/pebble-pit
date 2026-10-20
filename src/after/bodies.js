@@ -11,10 +11,12 @@
 // count: the sawyer at the mill saws the log, the joiner at the workshop
 // makes the sign, and a carrier walks it out into the crowd.
 //
-// These are not the yard's crew (`S.workers`, crew/jobs.js): nobody dies up
-// here and none of the yard's stations or routes apply, so the act keeps its
-// own list, `S.after.bodies`, saved whole, so a reload stands every body back
-// where it was (test/after-loop.test.mjs). A member who has reached the camp
+// These are not the yard's crew (`S.workers`): nobody dies up here and the
+// yard's rebalance must never reach them, so the act keeps its own list,
+// `S.after.bodies`, saved whole, so a reload stands every body back where it
+// was (test/after-loop.test.mjs). The list is stepped, walked and picked up
+// by the place body engine (placebodies.js), which hell's ghosts share; what
+// is the act's is its registry of jobs and its walk on the floor (`go`). A member who has reached the camp
 // is only counted (`S.after.camp`) and stands in our crowd, so a crowd that
 // has walked out by the thousand costs the frame nothing while it waits.
 
@@ -24,8 +26,10 @@ import { P, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG
          AFTER_PASTE_LOAD, AFTER_PRESS_S, AFTER_SAW_S, AFTER_CHIP_S, AFTER_SIGN_S, AFTER_PULP_S, AFTER_CHOP_HOLD_S,
          AFTER_JOIN_FADE_S } from '../config.js';
 import { secs, walk, nextId } from './util.js';
+import { stepCrew } from '../placebodies.js';
+import { deepAt } from './sky.js';
 import { built, stumpsOn } from './levels.js';
-import { afterFloor, stationDoor, signFetchX, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, agitatorX, speakerAt, overCrowd, crowdEdge, AP } from './place.js';
+import { afterX0, afterX1, afterFloor, stationDoor, signFetchX, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, agitatorX, speakerAt, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, takeLog } from './grove.js';
 import { sweepDue, tipSawdust, vatOf } from './mill.js';
@@ -80,20 +84,16 @@ export const addPost = job => { const p = S.after.posts; p[job] = (p[job] || 0) 
 // Where a post of `job` first sends its member: the agitators' row behind
 // the pedestal, or the post's station door or grove edge.
 const postFor = (job, k) => (job === AFTER_JOB.AGITATE ? agitatorX(k) : postX({ job, id: 0 }));
-// Every post without a member walking to it or at it takes a member from the
-// camp, who steps out of our crowd's front nearest the post, fading in.
-// None waiting, it stays empty.
-function fillPosts() {
+// A post without a member walking to it or at it takes a member from the
+// camp, who steps out of our crowd's front nearest the post, fading in. The
+// engine asks this only while the camp has one (`spare`); none waiting, the
+// post stays empty.
+const memberFor = job => () => {
   const a = S.after;
-  for (const job of AFTER_JOBS) {
-    let want = postsOf(job) - bodiesOf(job).length;
-    while (want-- > 0 && a.camp > 0) {
-      a.camp -= 1;
-      const at = campSpot(postFor(job, bodiesOf(job).length));
-      a.bodies.push({ id: nextId(), job, x: at.x, y: at.y, face: 1, state: 'work', t: 0, load: null, target: null, n: 0, born: a.t });
-    }
-  }
-}
+  a.camp -= 1;
+  const at = campSpot(postFor(job, bodiesOf(job).length));
+  return { id: nextId(), job, x: at.x, y: at.y, face: 1, state: 'work', t: 0, load: null, target: null, n: 0, born: a.t };
+};
 // A body's ink: fading in as it steps out of our crowd, out as it walks into it.
 export const bodyInk = w => {
   const t = S.after ? S.after.t : 0;
@@ -264,27 +264,59 @@ const JOB_STEP = {
   }
 };
 
-// One frame of every member up here: those walking out to the camp, into
-// our crowd's front, counted in the camp as
-// they reach it and fading into the crowd; the posts filled from the camp;
-// and every post's job.
-export function stepBodies(c) {
-  const a = S.after, dt = secs(c);
-  let arrived = 0;
-  for (const w of a.bodies) {
-    if (w.swing != null && a.t - w.swing > AFTER_CHOP_HOLD_S) w.swing = null;
-    if (w.state === 'join') { if (bodyInk(w) <= 0) w.state = 'gone'; continue; }
-    if (w.state === 'out') {
-      // Into our crowd's front where it is nearest: its end, for one coming
-      // from God's yard; where it stands, for a builder done.
-      const at = campSpot(w.x);
-      if (go(w, at.x, at.y, dt)) { w.state = 'join'; w.joined = a.t; arrived++; }
-      continue;
-    }
-    (JOB_STEP[w.job] || idle)(w, dt);
-  }
-  if (arrived) a.camp += arrived;
-  if (a.bodies.some(w => w.state === 'gone')) a.bodies = a.bodies.filter(w => w.state !== 'gone');
-  fillBuilders();
-  fillPosts();
-}
+// The act's JOBS registry, shaped like the yard's (crew/jobs.js): a row a
+// post, in the order posts are filled, each with how many are wanted (the
+// posts bought), the member who takes one, and its frame; and the builders,
+// who are filled site by site (build.js, `fillBuilders`), not by a count.
+export const AFTER_JOB_ROWS = {
+  ...Object.fromEntries(AFTER_JOBS.map(job => [job, { want: () => postsOf(job), factory: memberFor(job), step: JOB_STEP[job] }])),
+  [AFTER_JOB.BUILD]: { step: JOB_STEP.builder }
+};
+
+// The act's crew, as the place body engine (placebodies.js) steps it and the
+// hand takes one up: the members walking out to the camp, into our crowd's
+// front, counted in the camp as they reach it and fading into the crowd;
+// every post's job; the sites given builders, then the posts filled from
+// the camp.
+const BODY_H = 3 * P;
+export const AFTER_CREW = {
+  list: () => (S.after ? S.after.bodies : null),
+  route: go,
+  jobs: AFTER_JOB_ROWS,
+  dt: secs,
+  begin: () => ({ arrived: 0 }),
+  tick(w) { if (w.swing != null && S.after.t - w.swing > AFTER_CHOP_HOLD_S) w.swing = null; },
+  stage(w, f) {
+    if (w.state === 'join') { if (bodyInk(w) <= 0) w.state = 'gone'; return true; }
+    if (w.state !== 'out') return false;
+    // Into our crowd's front where it is nearest: its end, for one coming
+    // from God's yard; where it stands, for a builder done.
+    const at = campSpot(w.x);
+    if (go(w, at.x, at.y, f.dt)) { w.state = 'join'; w.joined = S.after.t; f.arrived++; }
+    return true;
+  },
+  idle: (w, dt) => idle(w, dt),
+  end(f) {
+    const a = S.after;
+    if (f.arrived) a.camp += f.arrived;
+    if (a.bodies.some(w => w.state === 'gone')) a.bodies = a.bodies.filter(w => w.state !== 'gone');
+    fillBuilders();
+  },
+  spare: () => S.after.camp > 0,
+  // Drawn as the yard's square, x its middle column and y its feet
+  // (render/after.js, `body`).
+  box: w => ({ x: w.x - P, y: w.y - BODY_H, w: 3 * P, h: BODY_H }),
+  // Not one drawn somewhere else than where it stands: a body out among
+  // God's crowd (drawn in depth), one walking into ours or still fading in,
+  // the pair building (they are the pedestal's), and the first through a
+  // working station's door (drawn in the station's pose).
+  pickable: w => w.state !== 'join' && w.pair == null && bodyInk(w) >= 1 && deepAt(w.x) <= 0
+    && !(w.at && atStation(w.at)[0] === w),
+  hold(w, x, y) { w.x = x; w.y = y + BODY_H / 2; },
+  lifted(w) { w.at = null; },
+  land: w => ({ y: floorY(), x0: afterX0() + P, x1: afterX1() - P * 2 }),
+  landed() {}
+};
+
+// One frame of every member up here.
+export const stepBodies = c => stepCrew(AFTER_CREW, c);
