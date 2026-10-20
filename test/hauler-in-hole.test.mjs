@@ -8,8 +8,8 @@
 //  - the drowning, which puts the hole's way up at the plank in one frame
 //    (`pitTop` in pit.js). It waits, the way it waits for its camera, until
 //    nobody is down the hole, and nobody is sent down while it is owed;
-//  - a grant of dust (`__grant`, the checks' handout), which laid a hole's
-//    worth of pile in one frame. With the rift open and a body down the hole,
+//  - a grant (`__grant`, the checks' handout), whose dust and finds were
+//    laid as a hole's worth of pile in one frame. With the rift open and a body down the hole,
 //    it goes through the rift instead, which is where a grant's overflow
 //    goes already.
 //
@@ -18,7 +18,7 @@
 // ladder. Red before either fix is the buried rule, thrown out of the run.
 import { group, ok, run, yard, state, WORKER } from './helpers.mjs';
 
-const { ABYSS_AT } = await import('../src/config.js');
+const { ABYSS_AT, SPORE_CELL, findKind } = await import('../src/config.js');
 const { pitLadder, pitTop, NEAR } = await import('../src/pit.js');
 const { plant, wayAt } = await import('../src/route.js');
 
@@ -71,16 +71,18 @@ group('the pit does not drown over a hauler still down the hole', async () => {
   ];
 });
 
-group('a grant of dust does not bury a hauler down the torn hole', async () => {
+group('a grant does not bury a hauler down the torn hole', async () => {
   tornAndEmpty();
   const { w, down } = haulerDown();
   const before = state();
-  window.__grant({ dust: 30000 });
+  window.__grant({ dust: 30000, spores: 8000 });   // an act 3 bill's
   const granted = state();
 
   let threw = null;
   try { run(4); } catch (e) { threw = e.message; }
   const after = state();
+  let spores = 0;
+  for (const v of yard.pit.grid) if (findKind(v) === SPORE_CELL) spores++;
 
   return [
     ok(down && before.riftOpen && !before.drowned, 'the hauler is down a torn hole',
@@ -90,6 +92,8 @@ group('a grant of dust does not bury a hauler down the torn hole', async () => {
        `${before.stored} -> ${granted.stored}`),
     ok(after.stored - after.rift === after.pitDust, 'the counter is still the pile plus what is through',
        `${after.stored} - ${after.rift} vs ${after.pitDust}`),
+    ok(spores === S.spores - S.riftHeld.spores, 'and the finds are the pile plus what is through',
+       `${spores} in the hole, ${S.spores} owned, ${S.riftHeld.spores} through`),
     ok(out(w), 'and the hauler comes out', `${Math.round(w.x)},${Math.round(w.y)}`)
   ];
 });

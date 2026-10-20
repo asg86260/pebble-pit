@@ -13,7 +13,7 @@ import { at, put, addGrain, recount } from './grid.js';
 import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize, settleShack } from './world.js';
 import { makeBoulder, clearBoulder, rockSize, depthOf, knockOff, rockTopY, restOnRock } from './rock.js';
-import { bankDust, throughRift, spend as spendFromPit, pitTop as muckTopAt, pitRoom, seedPitCores } from './pit.js';
+import { bankDust, throughRift, spend as spendFromPit, pitTop as muckTopAt, pitRoom, seedPitCores, riftHeld } from './pit.js';
 import { spawnChip } from './dust.js';
 import { forceCrit } from './crit.js';
 import { SKY, DROPS, fillSky, forceStrike, pinHeft, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
@@ -513,6 +513,12 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
   // What will not fit tears the hole and counts as eaten when a save is
   // read; a grant is a handout, so the event and the eating are dropped the
   // way they are for dust below, and the rift is simply open.
+  // Nothing goes on the pile over a body down a torn hole: a hole's worth
+  // laid in one frame closes over it faster than anything climbs, so the
+  // grant goes the overflow's way, through the rift. A solid hole has no
+  // other way to go.
+  const through = S.riftOpen && anyoneInTheHole();
+  if (through) for (const k of ['shards', 'spores', 'sparks']) if (o[k]) riftHeld()[k] += o[k];
   if (o.shards || o.spores || o.sparks) {
     const gulp = S.riftGulp || 0, ate = S.riftAte || 0;
     seedPitCores();
@@ -531,10 +537,7 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
     // the cutscene over every scene on a rich yard; a grant is a handout, so
     // the event is dropped the way a save drops it and the rift is simply
     // open.
-    // Nothing goes on the pile over a body down a torn hole: a hole's worth
-    // laid in one frame closes over it faster than anything climbs, so it all
-    // goes the overflow's way. A solid hole has no other way to go.
-    const room = S.riftOpen && anyoneInTheHole() ? 0 : pitRoom();
+    const room = through ? 0 : pitRoom();
     const gulp = S.riftGulp || 0;
     const got = room > 0 ? give(Math.min(o.dust, room)) : 0;
     if ((S.riftGulp || 0) > gulp) dropTear(gulp);
