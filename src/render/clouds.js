@@ -24,7 +24,7 @@
 // and draws them where its own camera puts them. Nothing here reads S.
 
 import { CLOUDS_TONES, CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_BUDGET_MS, CLOUDS_SLICE,
-         CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN, CLOUDS_CORE_MIN,
+         CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN, CLOUDS_CORE_MIN, CLOUDS_LOBE_LIGHT, CLOUDS_SEA,
          CLOUDS_TREATMENTS, CLOUDS_SKY, CLOUDS_ALTITUDE, CLOUDS_LIFE, CLOUDS_SHAPES, CLOUDS_VOLUME, CLOUDS_TIERS,
          CLOUDS_FLOW, CLOUDS_GROUND_FLOW, CLOUDS_PALETTE, CLOUDS_DEPTH_BANDS, CLOUDS_LIGHT, CLOUDS_VOLUME_BANDS,
          CLOUDS_GROUND_DEPTHS } from '../config.js';
@@ -88,6 +88,33 @@ function cumulus(rnd, cx, base, R, names, tiers) {
       into.push(puff(rnd, x, base - r * lerp(rnd(), T.at), r));
       x += r * lerp(rnd(), T.step);
     }
+  }
+}
+
+// The cloud sea (CLOUDS_SEA): rows of billows of every size, back (0) to
+// front, each a tier, now and then a mound rising out of a row.
+function sea(rnd, w, top, rows, size, tiers, fills) {
+  const E = CLOUDS_SEA;
+  let line = top;
+  for (let row = 0; row < rows; row++) {
+    const r0 = size(row);
+    if (row) line += E.drop * r0;
+    for (let x = rnd() * r0; x < w + r0;) {
+      const r = r0 * Math.min(E.most, Math.max(E.least, lognormal(rnd, E.spread)));
+      const y = line - r * lerp(rnd(), E.at);
+      tiers[row].push({ x, y, r });
+      if (rnd() < E.mound) {
+        // a mound: a big billow standing up out of the row, smaller ones on it
+        const R = r0 * E.rise, my = line - R * 0.55;
+        tiers[row].push({ x, y: my, r: R });
+        for (let k = 0, n = count(rnd, E.kids); k < n; k++) {
+          const a = Math.PI * 0.45 * (rnd() * 2 - 1), rk = R * (0.4 + 0.25 * rnd());
+          tiers[row].push({ x: x + Math.sin(a) * R * 0.8, y: my - Math.cos(a) * R * 0.8, r: rk });
+        }
+      }
+      x += r * lerp(rnd(), E.step);
+    }
+    fills[row] = line + r0 * E.fill;
   }
 }
 
@@ -518,37 +545,57 @@ const TIER = Object.fromEntries(CLOUDS_TIERS.map((n, j) => [n, j]));
 const count = (rnd, [a, b]) => a + Math.floor(rnd() * (b - a + 1));
 
 // A cloud in the round, size R, its base on `base`, middle `cx`, every puff
-// squashed by `flat` and handed to `add(tier name, x, y, r, flat)`: rear
-// lobes behind and round the main dome, the dome, the front lobes across
-// its lower face, and a flatter base under them (CLOUDS_VOLUME).
+// squashed by `flat` and handed to `add(tier name, x, y, r, flat)`, the way a
+// cumulus stacks (CLOUDS_VOLUME): a broad shelf along the base line in the
+// rear, turrets rising off it, and smaller turrets clustered on each, each a
+// step in front of or behind the one it grows from, so every turret shows its
+// own round edge against its neighbors instead of melting into a slab.
+const DEPTH = ['rear', 'mid', 'front', 'near'];
 function volume(rnd, cx, base, R, flat, add) {
-  const V = CLOUDS_VOLUME, C = V.crown, lean = (rnd() * 2 - 1) * C.lean * R, mid = cx + lean;
-  // the rear: lobes peeking out behind the dome, over and round it
-  for (let k = 0, n = count(rnd, V.rear.n); k < n; k++) {
-    const r = R * lerp(rnd(), V.rear.r), x = mid + (rnd() * 2 - 1) * V.rear.span * R;
-    add('rear', x, base - R * lerp(rnd(), V.rear.at) * flat, r, flat);
+  const V = CLOUDS_VOLUME, B = V.base, T = V.turrets, K = V.kids;
+  // the turrets side by side, each overlapping the last by `close` of their
+  // radii, the group centered on the cloud's middle
+  const n = count(rnd, T.n), rs = [], xs = [];
+  for (let k = 0; k < n; k++) {
+    const u = n > 1 ? Math.abs((k / (n - 1)) * 2 - 1) : 0;
+    rs.push(R * lerp(rnd(), T.r) * (1 - T.ends * u));
+    xs.push(k ? xs[k - 1] + (rs[k - 1] + rs[k]) * lerp(rnd(), T.close) : 0);
   }
-  // the crown: the tallest dome off the middle, smaller ones stepping out
-  add('crown', mid, base - R * lerp(rnd(), C.at) * flat, R, flat);
-  const reach = [0, 0];
-  let lo = mid - R, hi = mid + R;
-  for (let k = 0, n = count(rnd, C.domes); k < n; k++) {
-    const side = (k + (rnd() < 0.5 ? 0 : 1)) % 2, r = R * lerp(rnd(), C.r) * Math.pow(C.fall, reach[side]);
-    const x = mid + (side ? 1 : -1) * (R * 0.55 + reach[side] * R * 0.5 + r * lerp(rnd(), C.step));
-    add('crown', x, base - r * lerp(rnd(), C.at) * Math.pow(0.85, reach[side]) * flat, r, flat);
-    lo = Math.min(lo, x - r); hi = Math.max(hi, x + r);
-    reach[side]++;
+  const lo = xs[0] - rs[0], hi = xs[n - 1] + rs[n - 1], shift = cx - (lo + hi) / 2;
+  // the shelf under them all, a little wider than the turrets
+  const half = (hi - lo) / 2 * lerp(rnd(), B.span), f = flat * B.flat;
+  for (let x = cx - half; x <= cx + half;) {
+    const r = R * lerp(rnd(), B.r);
+    add('rear', x, base - r * B.at * f, r, f);
+    x += r * lerp(rnd(), B.step);
   }
-  // the body and the base: rows of lobes under the crown's whole width, so no
-  // dome hangs over open sky, smaller to the ends
-  const at = (lo + hi) / 2, half = (hi - lo) / 2;
-  for (const name of ['body', 'base']) {
-    const T = V[name], f = flat * (T.flat || 1), w = T.span * half;
-    for (let x = at - w; x <= at + w;) {
-      const edge = Math.abs(x - at) / w, r = R * lerp(rnd(), T.r) * (1 - 0.3 * edge * edge);
-      add(name, x, base - r * lerp(rnd(), T.at) * f, r, f);
-      x += r * lerp(rnd(), T.step);
+  // a turret, and the smaller ones clustered on its upper edge
+  // (each rides the one it grows from, so it stays on it as the cloud
+  // swells and thins)
+  const grow = (x, y, r, z, gen, on = null) => {
+    const me = add(DEPTH[z], x, y, r, flat, on);
+    if (gen >= K.levels) return me;
+    for (let k = 0, m = count(rnd, K.n); k < m; k++) {
+      const rk = r * lerp(rnd(), K.shrink);
+      if (rk < K.least) continue;
+      const a = Math.PI * K.arc * (rnd() * 2 - 1), d = r * lerp(rnd(), K.out);
+      let zk = z + (rnd() < K.front ? 1 : -1);
+      if (zk < 0 || zk >= DEPTH.length) zk = z * 2 - zk;
+      grow(x + Math.sin(a) * d, y - Math.cos(a) * d * flat, rk, zk, gen + 1, me);
     }
+    return me;
+  };
+  // the one nearest the middle is the tallest; neighbors stand at different
+  // depths, so two turrets side by side part; every turret's foot is in the
+  // shelf, so none floats
+  let tall = 0;
+  for (let k = 1; k < n; k++) if (Math.abs(xs[k] + shift - cx) < Math.abs(xs[tall] + shift - cx)) tall = k;
+  const first = Math.floor(rnd() * 3);
+  for (let k = 0; k < n; k++) {
+    const x = xs[k] + shift, y = base - rs[k] * lerp(rnd(), T.rise) * flat, z = 1 + (first + k) % 3;
+    const me = grow(x, y, rs[k], z, 0);
+    // the tallest tower: a turret stood on top of it, rooted in it
+    if (k === tall) grow(x + (rnd() - 0.5) * rs[k] * 0.3, y - rs[k] * T.stack[0] * flat, rs[k] * T.stack[1], z === 1 ? 2 : z - 1, 0, me);
   }
 }
 
@@ -564,7 +611,7 @@ function shape(rnd, kind, cx, base, R, flat, add) {
     let r = R * T.shrink, x = cx, y = base - R * 1.1 * flat;
     for (let k = 0, n = count(rnd, T.levels); k < n; k++) {
       y -= r * T.climb * flat; x += (rnd() * 2 - 1) * T.wander * r;
-      add('crown', x, y, r, flat);
+      add(k % 2 ? 'front' : 'mid', x, y, r, flat);
       add('rear', x + (rnd() < 0.5 ? -1 : 1) * r * 0.7, y + r * 0.35 * flat, r * 0.6, flat);
       r *= T.shrink;
     }
@@ -581,12 +628,12 @@ function shape(rnd, kind, cx, base, R, flat, add) {
     const T = H.heap, f = flat * T.flat;
     for (let x = cx - T.span * R; x <= cx + T.span * R;) {
       const r = R * (0.45 + 0.2 * rnd());
-      add('body', x, base - r * 0.55 * f, r, f);
-      add('base', x + r * 0.4, base - r * 0.1 * f, r * 0.7, f * 0.7);
+      add('rear', x, base - r * 0.55 * f, r, f);
+      add(rnd() < 0.5 ? 'mid' : 'front', x + r * 0.4, base - r * 0.1 * f, r * 0.7, f * 0.7);
       x += r * (1.0 + 0.4 * rnd());
     }
     for (let k = 0, n = count(rnd, T.crown); k < n; k++)
-      add('crown', cx + (rnd() * 2 - 1) * T.span * R * 0.6, base - R * 0.8 * f, R * lerp(rnd(), T.crownR), f);
+      add('near', cx + (rnd() * 2 - 1) * T.span * R * 0.6, base - R * 0.8 * f, R * lerp(rnd(), T.crownR), f);
     return;
   }
   if (kind === 'stratus') {
@@ -595,7 +642,7 @@ function shape(rnd, kind, cx, base, R, flat, add) {
     let y = base - R * 0.3 * flat;
     for (let k = 0; k < n; k++) {
       y += (rnd() - 0.5) * T.wander * R * f;
-      add('body', cx - len / 2 + len * (k + rnd() * 0.6) / n, y, R * lerp(rnd(), T.r) * (1 - 0.5 * Math.abs(k / (n - 1) * 2 - 1)), f);
+      add('mid', cx - len / 2 + len * (k + rnd() * 0.6) / n, y, R * lerp(rnd(), T.r) * (1 - 0.5 * Math.abs(k / (n - 1) * 2 - 1)), f);
     }
     return;
   }
@@ -619,7 +666,7 @@ function shape(rnd, kind, cx, base, R, flat, add) {
   // a scrap: a few small puffs, loose
   const T = H.scrap;
   for (let k = 0, n = count(rnd, T.count); k < n; k++)
-    add('body', cx + (rnd() - 0.5) * T.spread * R, base - R * (0.2 + 0.4 * rnd()) * flat, R * lerp(rnd(), T.r), flat);
+    add(DEPTH[1 + (k % 3)], cx + (rnd() - 0.5) * T.spread * R, base - R * (0.2 + 0.4 * rnd()) * flat, R * lerp(rnd(), T.r), flat);
 }
 
 // A puff of the liquid sky: where it rests, its size, its squash, its tier,
@@ -636,17 +683,21 @@ function flowPuff(rnd, x, y, r, flat, tier, life, stray, F) {
 // front tiers and few on the rear, so the back of a cloud is softer.
 function cloudPuffs(rnd, kind, cx, base, R, flat, life, stray, puffs) {
   const K = CLOUDS_VOLUME.crust, F = CLOUDS_FLOW;
-  shape(rnd, kind, cx, base, R, flat, (name, x, y, r, f) => {
+  shape(rnd, kind, cx, base, R, flat, (name, x, y, r, f, on) => {
     const j = TIER[name], p = flowPuff(rnd, x, y, r, f, j, life, stray, F);
+    if (on) { p.follow = on; p.a = p.a.map(v => v * CLOUDS_VOLUME.kids.ride); }
+    // every puff of a cloud stops at its base line: the bottom is flat
+    if (name !== 'high') p.cut = base;
     puffs.push(p);
-    if (r < K.from || name === 'high' || name === 'base') return;
+    if (r < K.from || name === 'high') return p;
     const n = Math.round(r * K.per * (name === 'rear' ? K.back : 1));
     for (let k = 0; k < n; k++) {
       const a = Math.PI * (K.arc[0] + (K.arc[1] - K.arc[0]) * (k + rnd()) / n);
       const c = flowPuff(rnd, x + Math.cos(a) * r * K.out, y + Math.sin(a) * r * K.out * f, r * lerp(rnd(), K.r), f, j, life, stray, F);
-      c.follow = p; c.crust = true; c.a = c.a.map(v => v * 0.4);
+      c.follow = p; c.crust = true; c.a = c.a.map(v => v * 0.4); c.cut = p.cut;
       puffs.push(c);
     }
+    return p;
   });
 }
 
@@ -677,7 +728,7 @@ export function skyLayer({ i, seed = 1, W, sky = 145 }) {
   let top = 0, bottom = 0;
   for (const p of puffs) { top = Math.min(top, p.y - (p.r * 1.3 + p.a[0]) * p.flat * REACH); bottom = Math.max(bottom, p.y + (p.r * 1.3 + p.a[0]) * p.flat * REACH); }
   const baseRow = Math.ceil(-top) + 1;
-  for (const p of puffs) p.y += baseRow;
+  for (const p of puffs) { p.y += baseRow; if (p.cut !== undefined) p.cut += baseRow; }
   return { i, P, W, puffs, h: Math.ceil(baseRow + bottom) + 2, baseRow, ground: false, nt: CLOUDS_TIERS.length,
            rowOf: CLOUDS_TIERS.map(() => 0), fills: null };
 }
@@ -690,10 +741,11 @@ export function skyLayer({ i, seed = 1, W, sky = 145 }) {
 export function groundLayer({ seed = 1, W, R = CLOUDS_GROUND_FLOW.R, rows = CLOUDS_KINDS.ground.rows, depths = CLOUDS_GROUND_DEPTHS }) {
   const K = { ...CLOUDS_KINDS.ground, rows }, G = { ...CLOUDS_GROUND_FLOW, R }, rnd = gen(seed * 7919 + 977);
   const tiers = Array.from({ length: K.rows }, () => []), fills = [];
+  const E = CLOUDS_SEA, size = row => G.R * Math.pow(E.grow, row - (K.rows - 1));
   let depthSum = 0;
-  for (let row = 1; row < K.rows; row++) depthSum += K.rowDrop * G.R * Math.pow(K.rowGrow, row - (K.rows - 1));
-  const top = G.R * Math.pow(K.rowGrow, 1 - K.rows) * 2.2;
-  billows(rnd, W, top, G.R, K, tiers, fills);
+  for (let row = 1; row < K.rows; row++) depthSum += E.drop * size(row);
+  const top = size(0) * (E.rise + 1) + 1;
+  sea(rnd, W, top, K.rows, size, tiers, fills);
   const F = { wander: G.wander, period: G.period };
   const puffs = [];
   // no crust on the billows: lumps on a row's top break its crevice into
@@ -748,7 +800,7 @@ export function sumsAt(layer, t, cx, cy, out = []) {
     let dx = cx + 0.5 - q.x; dx -= W * Math.round(dx / W);
     const dy = (cy + 0.5 - q.y) / q.flat;
     const v = 1 - (dx * dx + dy * dy) / (R * R);
-    if (v > 0) out[p.tier] += v * v * v;
+    if (v > 0 && !(cy + 0.5 > p.cut)) out[p.tier] += v * v * v;
   }
   if (layer.fills) layer.fills.forEach((f, j) => { if (f !== null) out[j] += Math.max(0, Math.min(1, (cy + 0.5 - f) / 3 + 0.5)) * CLOUDS_THRESHOLD * 2; });
   return out;
@@ -773,7 +825,7 @@ export function tierOf(sums, was = null) {
 // and treatment. Roles are tier * 5 + 1 lit face, + 2 body, + 3 shadowed
 // side and underside, + 4 core (cloudgl.js, ROLES).
 export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
-  const D = CLOUDS_TREATMENTS[treat], C = CLOUDS_PALETTE[page], P = layer.P, nt = layer.nt, VB = CLOUDS_VOLUME_BANDS;
+  const LL = CLOUDS_LOBE_LIGHT, D = CLOUDS_TREATMENTS[treat], C = CLOUDS_PALETTE[page], P = layer.P, nt = layer.nt, VB = CLOUDS_VOLUME_BANDS;
   const eight = f => Int32Array.from({ length: 8 }, (_, j) => (j < nt ? f(j) : 0));
   const lobes = Array.from({ length: nt }, (_, j) => {
     // the crust's small lumps are not what a tier's bands are sized by
@@ -805,12 +857,19 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
   const band = (share, r) => depth(share, r);
   return {
     lit: eight(j => (round(j) && D.belly === 'inside' && !layer.ground ? band(VB.lit, lobes[j]) : 0)),
-    shade: eight(j => (layer.ground ? (D.tones === 2 && lobes[j] >= CLOUDS_CREASE_MIN ? Math.max(2, Math.round(CLOUDS_KINDS.ground.crease * lobes[j])) : 0)
+    shade: eight(j => (layer.ground ? (D.tones === 2 && lobes[j] >= CLOUDS_SEA.creaseMin ? Math.max(2, Math.round(CLOUDS_SEA.crease * lobes[j])) : 0)
       : round(j) && D.belly === 'inside' ? band(VB.shade, lobes[j]) : 0)),
     base: eight(j => (based(j) && !layer.ground ? Math.max(2, Math.round(VB.base * P.R)) : 0)),
-    core: eight(j => (round(j) && D.belly === 'inside' && !layer.ground && CLOUDS_TIERS[j] !== 'base' && CLOUDS_TIERS[j] !== 'high' && lobes[j] >= CLOUDS_CORE_MIN ? band(VB.core, lobes[j]) : 0)),
+    core: eight(j => (round(j) && D.belly === 'inside' && !layer.ground && CLOUDS_TIERS[j] !== 'near' && CLOUDS_TIERS[j] !== 'high' && lobes[j] >= CLOUDS_CORE_MIN ? band(VB.core, lobes[j]) : 0)),
     row: eight(j => layer.rowOf[j]), bottom: layer.ground ? nt : 0,
-    light: CLOUDS_LIGHT, tone, lut
+    light: CLOUDS_LIGHT, tone, lut,
+    // each lobe lit in the round, where the tier is drawn in the round
+    // (the ground's billows take only the lit cap: their shadow is the
+    // crevice where the row in front stands, and a crescent of their own on
+    // top of it reads as cracks)
+    lobe: eight(j => (layer.ground ? (D.tones === 2 ? 2 : 0) : round(j) ? 1 : 0)),
+    lobeAt: [LL.lit[0], LL.lit[1], LL.shade[0], LL.shade[1]], lobeMin: LL.least * REACH,
+    lightN: (() => { const [x, y] = CLOUDS_LIGHT, m = Math.hypot(x, y); return [x / m, y / m]; })()
   };
 }
 
@@ -828,7 +887,7 @@ export function cloudLayer({ kind = 'cumulus', R = 8, seed = 1, flat = 1, d = 0.
     left = Math.min(left, p.x - m); right = Math.max(right, p.x + m);
   }
   const ox = Math.ceil(-left) + 1, oy = Math.ceil(-top) + 1;
-  for (const p of puffs) { p.x += ox; p.y += oy; }
+  for (const p of puffs) { p.x += ox; p.y += oy; if (p.cut !== undefined) p.cut += oy; }
   return { i: -2, P: { d, e: d, R, parallax: 0.6, wind: 0.2 }, W: 1e6, puffs,
            w: Math.ceil(ox + right) + 2, h: Math.ceil(oy + bottom) + 2, baseRow: oy, ground: false, nt: CLOUDS_TIERS.length,
            rowOf: CLOUDS_TIERS.map(() => 0), fills: null };

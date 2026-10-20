@@ -24,12 +24,15 @@ import { ctx } from '../ctx.js';
 import { onPixel } from '../frame.js';
 import { darkPage } from '../../ink.js';
 import { horizonY } from '../../after/sky.js';
-import { afterFloor, afterOpenX } from '../../after/place.js';
-import { skyLayer, groundLayer, layerLook, stillSheet, drawBand } from '../clouds.js';
+import { afterFloor, afterOpenX, afterX0, afterX1 } from '../../after/place.js';
+import { skyLayer, groundLayer, layerLook, layerParams, stillSheet, drawBand } from '../clouds.js';
 import { cellOnPage, layerSpan, workClouds, putCells } from '../cloudpage.js';
 import { now } from './kit.js';
 
 const page = darkPage ? 'dark' : 'light';
+// The path's surface: the paper by day, by night the cloud palette's role
+// CLOUDS_ACT3.path names (render/after/floor.js draws the path in it too).
+export const pathTone = () => (darkPage ? CLOUDS_PALETTE.dark[A.path.dark] : CLOUDS_PALETTE.light.sky);
 const GROUNDS = ['far', 'edge', 'fore'];
 
 // A ground layer's crest: the row the tallest of its back row's billows
@@ -41,17 +44,20 @@ const crestOf = l => {
   return tops.length ? tops[Math.floor(tops.length * A.crest)] : 0;
 };
 // The body tone of a ground layer's front row, for its solid underneath.
-const bodyOf = k => CLOUDS_PALETTE[page][CLOUDS_DEPTH_BANDS[page].filter(b => b[0] <= k.depths[k.depths.length - 1]).pop()[1]];
+// (a band is [from, [lit face, body, shadow, core], flag])
+const bodyOf = k => CLOUDS_PALETTE[page][CLOUDS_DEPTH_BANDS[page].filter(b => b[0] <= k.depths[k.depths.length - 1]).pop()[1][1]];
 
 // The layers, made once: their puffs are fixed by the seed, and only where
 // they are drawn changes.
 let L = null;
 function layers() {
   if (L) return L;
-  L = { sky: Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: A.seed, W: A.sky.W, sky: A.sky.rows })) };
+  // a layer's round: the act's width as the layer slides past it, and a pad
+  const round = rate => Math.ceil((afterX1() - afterX0()) * rate / P) + A.pad;
+  L = { sky: Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: A.seed, W: round(layerParams(i).parallax * A.sky.rate), sky: A.sky.rows })) };
   for (const g of GROUNDS) {
     const k = A[g];
-    L[g] = groundLayer({ seed: A.seed + k.R, W: k.W, R: k.R, rows: k.rows, depths: k.depths });
+    L[g] = groundLayer({ seed: A.seed + k.R, W: round(k.rate), R: k.R, rows: k.rows, depths: k.depths });
     L[g].crest = crestOf(L[g]);
   }
   for (const l of [...L.sky, ...GROUNDS.map(g => L[g])]) l.look = layerLook(l, { page });
@@ -120,6 +126,13 @@ export function putAfterCloud(name) {
   if (!ctx) return;
   const sp = spans.get(name);
   if (!sp) return;
+  if (name === 'edge') {
+    // between the path's near edge and the solid of the billows lapping it,
+    // the path's own surface, so a valley between two billows is more path
+    // and never a notch of night
+    const l = layerOf('edge'), under = sp.y + Math.max(...l.fills) * sp.cw, bot = sp.y + (A.edge.lap + l.crest) * sp.cw;
+    if (under > bot) { ctx.fillStyle = pathTone(); ctx.fillRect(S.camX, bot, S.viewW, under - bot); }
+  }
   if (!pic) putStill(name, sp);
   else {
     const a = pic.at.get(name);

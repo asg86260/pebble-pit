@@ -196,35 +196,41 @@ export const CLOUDS_LIFE = {
   stratus: { life: [90, 220], keep: 0 }, scrap: { life: [50, 140], keep: 0 },
   cirrus: { life: [120, 300], keep: 0 }
 };
-// A cloud in the round (render/clouds.js, volume): lobes in tiers back to
-// front, each tier its own smooth union, so a front lobe overlaps the lobes
-// behind it and the edge between them is a lobe's own round edge.
-//   rear    lobes behind the main dome, peeking out round it and over its
-//           shoulders: `n` of them, `r` of R, across `span` R, their centers
-//           `at` R over the base
-//   crown   the main dome off the middle by up to `lean` R, `at` its own r
-//           over the base, and `domes` smaller ones stepping out from it,
-//           each `fall` the last
-//   body    the front lobes across the lower face, `r` of R, `at` their own r
-//           over the base, spaced `step` of their r, their centers across
-//           `span` of the crown's whole width
-//   base    the base: smaller lobes squashed `flat`, hung `at` their r about
-//           the base line, across `span` of the crown's width, so the bottom
-//           is darker and flatter than the top
-//   crust   small lumps on a lobe's edge: `per` a cell of its radius on the
-//           front tiers, `back` of that on the rear, `r` of the lobe's
-//           radius, over `arc` of its edge (half-turns, left round the top
-//           to right), from lobes of at least `from` cells
+// A cloud in the round (render/clouds.js, volume), built the way a cumulus
+// stacks: a broad flat base at the height the whole field shares (its
+// bottom cut flat there, every puff of it), turrets of rounded domes rising
+// off the base, and smaller turrets clustered on the bigger ones, each a step
+// in front of or behind the one it grows from. A tier is one smooth union,
+// so lobes in one tier melt together and a lobe in another tier shows its
+// own round edge against them; a turret is never in its parent's tier.
+//   base     the shelf: lobes `r` of R, squashed `flat`, their centers `at`
+//            their r over the base line, spaced `step` of their r, across
+//            `span` of the turrets' own width
+//   turrets  `n` rising off the shelf side by side, `r` of R (`ends` smaller
+//            at the ends of the row), each `close` of the two radii from the
+//            last, their centers `rise` of their r over the base line (under
+//            1, so every foot is in the shelf); on the one nearest the middle
+//            another stands, `stack` [its height up, its size] in its r
+//   kids     on each turret, `n` smaller ones `shrink` of its radius, set on
+//            its upper edge within `arc` half-turns of straight up, `out` of
+//            its radius from its center, in front of it a share `front` of
+//            the time (else behind), down `levels` generations, none under
+//            `least` cells; a kid rides its parent's current, its own
+//            wander `ride` of a free lobe's
+//   crust    small lumps on a lobe's edge: `per` a cell of its radius on the
+//            front tiers, `back` of that on the rear, `r` of the lobe's
+//            radius, over `arc` of its edge (half-turns, left round the top
+//            to right), from lobes of at least `from` cells
 export const CLOUDS_VOLUME = {
-  rear: { n: [3, 6], r: [0.45, 0.7], span: 0.85, at: [0.8, 1.3] },
-  crown: { r: [0.55, 0.8], at: [0.85, 1.15], step: [0.45, 0.7], lean: 0.3, domes: [3, 4], fall: 0.78 },
-  body: { r: [0.42, 0.6], at: [0.45, 0.9], span: 0.8, step: [1.2, 1.6] },
-  base: { r: [0.38, 0.55], at: [-0.25, 0.15], span: 0.85, step: [1.1, 1.45], flat: 0.55 },
-  crust: { from: 6, per: 0.45, back: 0.2, r: [0.16, 0.3], arc: [-1.1, 0.1], out: 0.9 }
+  base: { span: [1.05, 1.2], r: [0.38, 0.52], flat: 0.55, at: 0.2, step: [0.95, 1.25] },
+  turrets: { n: [2, 4], r: [0.62, 0.95], ends: 0.3, close: [0.55, 0.75], rise: [0.4, 0.8], stack: [0.95, 0.72] },
+  kids: { n: [2, 4], shrink: [0.48, 0.7], arc: 0.45, out: [0.7, 0.92], front: 0.55, levels: 2, least: 2.5, ride: 0.5 },
+  crust: { from: 6, per: 0.3, back: 0.2, r: [0.16, 0.28], arc: [-1.1, 0.1], out: 0.9 }
 };
 // The tiers a sky layer's puffs fall in, back to front: high wisps behind
-// all, then a cloud's rear lobes, its crown, its body and its base.
-export const CLOUDS_TIERS = ['high', 'rear', 'crown', 'body', 'base'];
+// all, then a cloud's own depths from its rear (the shelf and the turrets
+// behind) to its nearest turrets.
+export const CLOUDS_TIERS = ['high', 'rear', 'mid', 'front', 'near'];
 // The shapes beyond the plain cumulus (CLOUDS_VOLUME):
 //   tower    the cumulus with domes stacked on its crown, each `shrink` the
 //            last and `climb` of its radius higher, `levels` of them
@@ -297,6 +303,13 @@ export const CLOUDS_DEPTH_BANDS = {
   light: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['haze', 'haze', 'body', 'body'], 'base'], [0.6, ['lit', 'body', 'shade', 'core'], 'round']],
   dark: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['body', 'body', 'haze', 'haze'], 'base'], [0.6, ['lit', 'near', 'body', 'haze'], 'round']]
 };
+// Each lobe of a near cloud lit as a rounded form of its own (cloudgl.js,
+// FIELD): a cell belongs to the strongest lobe of its tier there, and is in
+// that lobe's lit cap when it faces the light by more than `lit[0]` (the
+// cosine) and stands past `lit[1]` of the lobe's radius from its middle, in
+// its shadow when it faces away by more than `shade[0]` past `shade[1]`. Only
+// lobes of at least `least` cells, so a far cloud is not speckled.
+export const CLOUDS_LOBE_LIGHT = { lit: [0.35, 0.6], shade: [0.3, 0.62], least: 5 };
 // Which way the light falls from: a step toward it, up and to the left.
 export const CLOUDS_LIGHT = [-0.6, -0.8];
 // How deep each band of a near cloud's volume is, as a share of the tier's
@@ -309,9 +322,28 @@ export const CLOUDS_LIGHT = [-0.6, -0.8];
 //          shadowed side's tone: the darkest step is the base's alone). Only
 //          the rear: the front tiers are one lit mass, parted from the rear
 //          by this shadow, and a band at every tier's edge read as stripes
-export const CLOUDS_VOLUME_BANDS = { lit: 0.42, shade: 0.4, base: 0.3, core: 0.2 };
+export const CLOUDS_VOLUME_BANDS = { lit: 0.42, shade: 0.4, base: 0.16, core: 0.2 };
 // The ground's rows, back to front, as depths for the bands above.
 export const CLOUDS_GROUND_DEPTHS = [0.1, 0.62, 1];
+// --- the cloud sea ---------------------------------------------------------------
+// The ground in the liquid sky (render/clouds.js, groundLayer): rows of
+// billows back to front, each row a tier and each smaller than the one in
+// front of it by `grow` (perspective), `drop` of its billows' size under the
+// one behind. A row's billows are of every size -- a log-normal of `spread`
+// round the row's size, between `least` and `most` of it -- set `step` of
+// their own radius apart, so big ones push their neighbors off and small
+// ones crowd, with no spacing to repeat; their centers `at` of their radius
+// over the row's line. Now and then (`mound`, a share of them) a billow is a
+// mound: `rise` times the row's size, with `kids` smaller ones on its top,
+// as a heap of cumulus rising out of the sea. Each row is solid from `fill`
+// of its size under its line, and its crevice -- the shadow where the row in
+// front stands -- is `crease` of its billows' size deep, on rows whose
+// billows are at least `creaseMin` cells.
+export const CLOUDS_SEA = {
+  grow: 1.3, drop: 0.75, spread: 0.5, least: 0.4, most: 2.2, step: [1.1, 1.6], at: [0.05, 0.55],
+  mound: 0.1, rise: 1.6, kids: [2, 3], fill: 0.2, crease: 0.45, creaseMin: 3
+};
+
 // --- act 3 ------------------------------------------------------------------------
 // The afterlife's clouds, all on the one renderer (render/after/cloudsky.js;
 // the owner, 2026-10-20: "wire them in"). Every place is in act 3's own
@@ -320,7 +352,7 @@ export const CLOUDS_GROUND_DEPTHS = [0.1, 0.62, 1];
 //   sky    the sky's layers (CLOUDS_SKY), standing on the horizon: `rows`
 //          cells of sky over it whatever the window, so a cloud's height has
 //          nothing to do with how tall the window is; each layer slides at
-//          its own parallax times `rate`, and wraps every `W` cells
+//          its own parallax times `rate`
 //   far    a bank of ground billows from the horizon down behind the main
 //          plane, `down` cells under the horizon, `rows` rows of billows
 //          `R` cells at the nearest, each row at its `depths` for its tones
@@ -331,11 +363,16 @@ export const CLOUDS_GROUND_DEPTHS = [0.1, 0.62, 1];
 //          edge, faster than the camera, solid to the bottom of the window
 //   crest  a ground layer is placed by the row its tallest billows reach:
 //          all but this share of its back row's tops stop under it
+//   path   the path's surface by night: the cloud palette's role it is
+//          drawn in (by day it is the paper)
+//   pad    a layer wraps at the act's width as it slides past at its rate,
+//          plus this many cells, so no stretch of cloud comes round twice
+//          in one pan
 //   seed   the act's clouds' seed
 export const CLOUDS_ACT3 = {
-  seed: 7, crest: 0.15,
-  sky: { rows: 120, rate: 0.4, W: 1200 },
-  far: { rate: 1 / 3, down: 1, R: 7, rows: 3, depths: [0.1, 0.3, 0.45], W: 900 },
-  edge: { rate: 1, lap: 1, R: 5, rows: 2, depths: [0.9, 1], W: 900 },
-  fore: { rate: 1.3, down: 3, R: 16, rows: 2, depths: [0.7, 1], W: 900 }
+  seed: 7, crest: 0.15, pad: 900, path: { dark: 'haze' },
+  sky: { rows: 120, rate: 0.4 },
+  far: { rate: 1 / 3, down: 1, R: 7, rows: 3, depths: [0.1, 0.3, 0.45] },
+  edge: { rate: 1, lap: 1, R: 5, rows: 2, depths: [0.9, 1] },
+  fore: { rate: 1.3, down: 1, R: 13, rows: 6, depths: [0.3, 0.45, 0.6, 0.75, 0.9, 1] }
 };

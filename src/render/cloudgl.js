@@ -38,7 +38,7 @@ in vec2 a; void main() { gl_Position = vec4(a, 0., 1.); }`;
 
 const FIELD = `#version 300 es
 precision highp float; precision highp int; precision highp usampler2D;
-uniform sampler2D uPuffs;   // x, y, reach, flat (row 0); tier (row 1)
+uniform sampler2D uPuffs;   // x, y, reach, flat (row 0); tier, base cut (row 1)
 uniform sampler2D uStrips;  // per 8-column strip: first, count
 uniform sampler2D uIndex;   // puff indices, strip by strip
 uniform usampler2D uPrev;   // last frame's tier + 1
@@ -46,11 +46,19 @@ uniform ivec2 uShift;       // where last frame's cell is, from this one
 uniform int uFresh;
 uniform int uTiers;
 uniform float uFill[8];     // a row's solid underneath starts here (the ground), else far below
-out uint o;
+uniform int uLobe[8];       // 1: a tier whose lobes are each lit and shadowed as rounded forms; 2: lit only
+uniform vec4 uLobeAt;       // lit cap: facing, rim; shadow: facing, rim (CLOUDS_LOBE_LIGHT)
+uniform float uLobeMin;     // the least reach of a lobe lit on its own
+uniform vec2 uLightN;       // toward the light, unit
+out uint o;                 // tier + 1, and the lobe's light (0, 1 lit, 2 shadow) times 16
 void main() {
   ivec2 c = ivec2(gl_FragCoord.xy);
   vec2 p = vec2(c) + 0.5;
   float s[8] = float[8](0., 0., 0., 0., 0., 0., 0., 0.);
+  // each tier's strongest lobe at this cell: how strong, and which way the
+  // cell is from its middle, as a share of its visible radius
+  float w[8] = float[8](0., 0., 0., 0., 0., 0., 0., 0.);
+  vec3 d[8];
   vec2 st = texelFetch(uStrips, ivec2(c.x / ${STRIP}, 0), 0).xy;
   int first = int(st.x), n = int(st.y);
   for (int k = 0; k < n; k++) {
@@ -58,7 +66,15 @@ void main() {
     vec4 a = texelFetch(uPuffs, ivec2(i, 0), 0);
     float dx = p.x - a.x, dy = (p.y - a.y) / a.w;
     float q = 1. - (dx * dx + dy * dy) / (a.z * a.z);
-    if (q > 0.) s[int(texelFetch(uPuffs, ivec2(i, 1), 0).x)] += q * q * q;
+    vec4 b = texelFetch(uPuffs, ivec2(i, 1), 0);
+    // nothing of a puff below its cloud's base line: a cumulus's bottom is
+    // flat, at the height the whole field shares
+    if (q > 0. && p.y <= b.y) {
+      int j = int(b.x);
+      float v = q * q * q;
+      s[j] += v;
+      if (v > w[j]) { w[j] = v; d[j] = vec3(vec2(dx, dy) / (a.z * ${(1 / REACH).toFixed(5)}), a.z); }
+    }
   }
   for (int j = 0; j < 8; j++) s[j] += clamp((p.y - uFill[j]) / 3. + 0.5, 0., 1.) * ${(CLOUDS_THRESHOLD * 2).toFixed(4)};
   float up = ${(CLOUDS_THRESHOLD * (1 + CLOUDS_HYST)).toFixed(5)}, dn = ${(CLOUDS_THRESHOLD * (1 - CLOUDS_HYST)).toFixed(5)};
@@ -67,8 +83,18 @@ void main() {
   if (hi < lo) hi = lo;
   int was = lo;
   ivec2 q = c + uShift, sz = textureSize(uPrev, 0);
-  if (uFresh == 0 && q.x >= 0 && q.y >= 0 && q.x < sz.x && q.y < sz.y) was = int(texelFetch(uPrev, q, 0).r) - 1;
-  o = uint(clamp(was, lo, hi) + 1);
+  if (uFresh == 0 && q.x >= 0 && q.y >= 0 && q.x < sz.x && q.y < sz.y) was = int(texelFetch(uPrev, q, 0).r & 15u) - 1;
+  int t = clamp(was, lo, hi);
+  // a lobe in the round: its cap toward the light lit, the side away from it
+  // in shadow, read off the lobe the cell belongs to, so every turret of a
+  // cloud is its own rounded form and a smaller one on a bigger one shows
+  uint h = 0u;
+  if (t >= 0 && uLobe[t] > 0 && w[t] > 0. && d[t].z >= uLobeMin) {
+    float u = length(d[t].xy), f = u > 0. ? dot(d[t].xy / u, uLightN) : 0.;
+    if (f > uLobeAt.x && u > uLobeAt.y) h = 1u;
+    else if (uLobe[t] == 1 && f < -uLobeAt.z && u > uLobeAt.w) h = 2u;
+  }
+  o = uint(t + 1) | (h << 4);
 }`;
 
 // The volume of a cloud, by looking from each cell a set depth along the
@@ -94,8 +120,10 @@ int at(ivec2 c) {
   if (c.y < 0) return -1;
   if (c.y >= sz.y) return uBottom - 1;
   if (c.x < 0 || c.x >= sz.x) return -2;
-  return int(texelFetch(uT, c, 0).r) - 1;
+  return int(texelFetch(uT, c, 0).r & 15u) - 1;
 }
+// the lobe's own light at a cell (FIELD): 0, 1 lit, 2 shadow
+int lobe(ivec2 c) { return int(texelFetch(uT, c, 0).r >> 4); }
 // open sky, or -- where the tier's lobes are modeled inside the cloud (a core
 // band) -- a farther lobe of the same cloud: a front lobe's top is lit where
 // it stands against the lobe behind it, so it reads as standing in front
@@ -106,7 +134,8 @@ void main() {
   ivec2 c = ivec2(gl_FragCoord.xy);
   int j = at(c);
   if (j < 0) { o = 0u; return; }
-  int k = 2;
+  int k = 2, h = lobe(c);
+  if (h == 1) k = 1; else if (h == 2) k = 3;
   int l = uLit[j], s = uShade[j], b = uBase[j], co = uCore[j];
   if (l > 0 && behind(at(c + ivec2(round(uLight * float(l)))), j)) k = 1;
   if (s > 0 && open(at(c - ivec2(round(uLight * float(s)))))) k = 3;
@@ -264,7 +293,7 @@ export function skyGL() {
   }
 
   const q = {};
-  let tmp = new Float32Array(4096 * 5);
+  let tmp = new Float32Array(4096 * 6);
   // The puffs that reach this window, at time t, as the field pass reads them:
   // their places and sizes, and which 8-column strips each reaches (a counting
   // sort into one index list). Typed arrays kept from frame to frame, so a
@@ -275,11 +304,13 @@ export function skyGL() {
     for (const p of layer.puffs) {
       // where its current can have carried it at most: past that the sines
       // are not worked out at all, which is most of a wide layer's puffs
-      // (a crust lump goes where its lobe goes: its lobe's reach, and how far
-      // off the lobe it sits, swelled as the lobe swells)
-      const lobe = p.follow || p;
+      // (a lobe that rides another -- a crust lump, a turret on a turret --
+      // goes where the one at the root of its chain goes: that one's reach,
+      // and how far off it this one sits, with every wander on the way)
+      let lobe = p, ride = 0;
+      while (lobe.follow) { ride += lobe.a[0] + lobe.a[1]; lobe = lobe.follow; }
       const reach = p.reach || (p.reach = (lobe.r * 1.08 + lobe.a[0] + lobe.a[1] + lobe.a[2]) * REACH + 1 +
-        (p.follow ? (Math.abs(p.x - lobe.x) + p.r * 1.2 + p.a[0]) * REACH : 0));
+        (p.follow ? (Math.abs(p.x - lobe.x) + p.r * 1.2 + ride) * REACH : 0));
       let near = lobe.x + lobe.stray * t - ox; near -= W * Math.floor(near / W);
       if (near > w + reach && near < W - reach) continue;
       puffAt(p, t, q);
@@ -290,8 +321,9 @@ export function skyGL() {
       if (q.y - oy + R * q.flat < 0 || q.y - oy - R * q.flat > s.h) continue;
       let x = q.x - ox; x -= W * Math.floor(x / W);
       for (let c = x - W; c < w + R; c += W) if (c + R > 0 && c - R < w) {
-        if ((n + 1) * 5 > tmp.length) { const g = new Float32Array(tmp.length * 2); g.set(tmp); tmp = g; }
-        tmp[n * 5] = c; tmp[n * 5 + 1] = q.y - oy; tmp[n * 5 + 2] = R; tmp[n * 5 + 3] = q.flat; tmp[n * 5 + 4] = p.tier;
+        if ((n + 1) * 6 > tmp.length) { const g = new Float32Array(tmp.length * 2); g.set(tmp); tmp = g; }
+        tmp[n * 6] = c; tmp[n * 6 + 1] = q.y - oy; tmp[n * 6 + 2] = R; tmp[n * 6 + 3] = q.flat; tmp[n * 6 + 4] = p.tier;
+        tmp[n * 6 + 5] = p.cut === undefined ? 1e9 : p.cut - oy;
         n++;
       }
     }
@@ -305,12 +337,12 @@ export function skyGL() {
     if (s.count.length < strips + 1) { s.count = new Int32Array(strips + 1); s.st = new Float32Array(strips * 4); }
     const A = s.row0, B = s.row1, C = s.count, st = s.st;
     C.fill(0);
-    const k0 = i => Math.max(0, Math.floor((tmp[i * 5] - tmp[i * 5 + 2]) / STRIP));
-    const k1 = i => Math.min(strips - 1, Math.floor((tmp[i * 5] + tmp[i * 5 + 2]) / STRIP));
+    const k0 = i => Math.max(0, Math.floor((tmp[i * 6] - tmp[i * 6 + 2]) / STRIP));
+    const k1 = i => Math.min(strips - 1, Math.floor((tmp[i * 6] + tmp[i * 6 + 2]) / STRIP));
     let total = 0;
     for (let i = 0; i < n; i++) {
-      A[i * 4] = tmp[i * 5]; A[i * 4 + 1] = tmp[i * 5 + 1]; A[i * 4 + 2] = tmp[i * 5 + 2]; A[i * 4 + 3] = tmp[i * 5 + 3];
-      B[i * 4] = tmp[i * 5 + 4];
+      A[i * 4] = tmp[i * 6]; A[i * 4 + 1] = tmp[i * 6 + 1]; A[i * 4 + 2] = tmp[i * 6 + 2]; A[i * 4 + 3] = tmp[i * 6 + 3];
+      B[i * 4] = tmp[i * 6 + 4]; B[i * 4 + 1] = tmp[i * 6 + 5];
       for (let k = k0(i), e = k1(i); k <= e; k++) { C[k]++; total++; }
     }
     const rows = Math.max(1, Math.ceil(total / 4096));
@@ -365,6 +397,8 @@ export function skyGL() {
       gl.uniform2i(P.field.u.uShift, shift, lift); gl.uniform1i(P.field.u.uFresh, fresh ? 1 : 0);
       gl.uniform1i(P.field.u.uTiers, v.layer.nt);
       gl.uniform1fv(P.field.u.uFill, Array.from({ length: 8 }, (_, j) => { const f = (v.layer.fills || [])[j]; return f === null || f === undefined ? 1e9 : f - oy; }));
+      gl.uniform1iv(P.field.u.uLobe, L.lobe); gl.uniform4fv(P.field.u.uLobeAt, L.lobeAt); gl.uniform1f(P.field.u.uLobeMin, L.lobeMin);
+      gl.uniform2f(P.field.u.uLightN, L.lightN[0], L.lightN[1]);
       draw();
       // the roles
       pass(P.roles, s.R[0].f, v.w, v.h);
@@ -420,7 +454,7 @@ export function skyGL() {
     gl.bindFramebuffer(gl.FRAMEBUFFER, s.T[s.k].f);
     gl.readPixels(0, 0, s.w, s.h, gl.RGBA_INTEGER, gl.UNSIGNED_INT, buf);
     const out = new Int8Array(s.w * s.h);
-    for (let i = 0; i < out.length; i++) out[i] = buf[i * 4] - 1;
+    for (let i = 0; i < out.length; i++) out[i] = (buf[i * 4] & 15) - 1;
     return { w: s.w, h: s.h, tiers: out };
   }
   // A window's tones as drawn (the cleaned roles through the look's tone
