@@ -54,7 +54,7 @@ export function grabAt(x, y) {
   if (crewView() === 'hide') return null;
   return bodyAt(actPlace(S.view).crew, x, y, handPad());
 }
-export function held() {
+export function inHand() {
   const w = lifted();
   if (w) return w;
   for (const pl of Object.values(PLACES)) { const b = pl.crew.list()?.find(o => o.lifted); if (b) return b; }

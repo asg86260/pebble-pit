@@ -26,6 +26,7 @@ import { pairBox } from '../after/rebel.js';
 import { mouthX, portalX, portalCircle, deepPortal } from '../deep/place.js';
 import { arrowBox } from '../render/shaftway.js';
 import { VIEW_GLIDE_S, P } from '../config.js';
+import { PLACES } from '../acts.js';
 
 // --- the hand -----------------------------------------------------------------
 // Frames of the page until `fn`, or false after `frames`. Wall frames, because
@@ -200,6 +201,51 @@ async function arrived(view) {
 // A click on a world spot.
 const clickAt = (wx, wy) => { const [x, y] = glass(wx, wy); point('pointerdown', x, y); point('pointerup', x, y); };
 
+// A body of the place picked up with the hand and put down again, the way
+// the yard's are (selftest/carry.js): the right button held, the left
+// pressed with it over the body, the pair carried off and let go. Taken off
+// the place's own crew (placebodies.js), the jobs in `prefer` first: a body
+// standing at its work, drawn where it stands.
+async function grabCheck(name, crew, prefer) {
+  // At its work: standing where it stood a second ago.
+  let was = new Map();
+  const free = w => crew.pickable(w) && !w.falling && !w.lifted && was.get(w) === `${w.x},${w.y}`;
+  const pick = () => {
+    const w = prefer.map(j => crew.list()?.find(o => o.job === j && free(o))).find(Boolean) || crew.list()?.find(free);
+    was = new Map((crew.list() || []).map(o => [o, `${o.x},${o.y}`]));
+    return w;
+  };
+  runUntil(() => !!pick(), 120);
+  const w = pick();
+  if (!w) return [ok(false, `${name}: a body stands to be picked up`, `${(crew.list() || []).length} bodies`)];
+  await lookAt(w.x);
+  const b = crew.box(w), x0 = w.x, y0 = w.y, job = w.job;
+  const [sx, sy] = glass(b.x + b.w / 2, b.y + b.h / 2);
+  point('pointerdown', sx, sy, 2, 2);
+  point('pointermove', sx, sy, 3, 0);
+  const took = !!w.lifted;
+  // Carried up and a little along, a step a frame, and held still before
+  // the release so it is let go, not thrown.
+  const to = { x: b.x + b.w / 2 - P * 6, y: b.y + b.h / 2 - P * 10 };
+  for (let k = 1; k <= 8; k++) { const [mx, my] = glass(b.x + b.w / 2 - P * 6 * k / 8, b.y + b.h / 2 - P * 10 * k / 8); point('pointermove', mx, my, 3, 0); await raf(); }
+  for (let i = 0; i < 12; i++) await raf();
+  const nb = crew.box(w), carried = Math.hypot(nb.x + nb.w / 2 - to.x, nb.y + nb.h / 2 - to.y);
+  const [ux, uy] = glass(to.x, to.y);
+  point('pointerup', ux, uy, 0, 2);
+  const fell = !w.lifted && w.falling;
+  run(3);
+  const floor = crew.land(w).y, landed = !w.falling && Math.abs(w.y - floor) < 1;
+  const back = runUntil(() => Math.hypot(w.x - x0, w.y - y0) < P * 2, 60);
+  return [
+    ok(took, `${name}: the right button held, the left takes the ${job} under the hand`, `${w.lifted}`),
+    ok(carried < P, `${name}: and it goes where the cursor goes`, `${Math.round(carried)} px off`),
+    ok(fell, `${name}: let go, it falls rather than being set down`, `lifted ${w.lifted} falling ${w.falling}`),
+    ok(landed, `${name}: and lands on the floor under it`, `${Math.round(w.y)} against ${Math.round(floor)}`),
+    ok(back && crew.list().includes(w) && w.job === job, `${name}: and walks back to its work`,
+       `${Math.round(w.x)},${Math.round(w.y)} against ${Math.round(x0)},${Math.round(y0)}, ${w.job}`)
+  ];
+}
+
 // --- the groups -----------------------------------------------------------------
 export const TESTS = [
   ['play: yard', async () => {
@@ -294,6 +340,9 @@ export const TESTS = [
     out.push(...await stationChecks('afterlife'));
     out.push(...await buyCheck('afterlife', [STATIONS.find(r => r.key === 'after-shack')]));
     out.push(...await scrollCloses('afterlife'));
+    // A member picked up with the hand and put down: it walks back to its post.
+    window.__buy('after-post-woodcutter');
+    out.push(...await grabCheck('afterlife', PLACES.after.crew, ['woodcutter', 'agitator']));
     // The shout: a click on the pair on the pedestal sheds rebel.
     const pair = pairBox();
     await lookAt(pair.x + pair.w / 2);
@@ -338,6 +387,8 @@ export const TESTS = [
     out.push(...await stationChecks('hell'));
     out.push(...await buyCheck('hell', [STATIONS.find(r => r.key === 'hell-face')]));
     out.push(...await scrollCloses('hell'));
+    // A ghost picked up with the hand and put down: it walks back to its work.
+    out.push(...await grabCheck('hell', PLACES.hell.crew, ['miner', 'smith']));
     // The main hand action: a blow at the face with the pick.
     const f = window.__hellAt('face', 0);
     await lookAt(f.x);
