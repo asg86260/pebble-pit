@@ -221,15 +221,8 @@ export const AFTER_STAIR_RISE = P * 50;    // how high the throne stands off the
 // holds it (or is walking to), hollow grey while it waits for one.
 export const AFTER_POST_STEP = P * 2;
 
-// --- the sky, and rebel ---
-// The clouds are scenery: they drift and nothing clicks them.
-export const AFTER_SKY_LO = P * 62;        // the lowest a cloud drifts, above the floor
-export const AFTER_SKY_HI = P * 92;        // the highest
-export const AFTER_CLOUDS = 5;             // clouds drifting at once
-export const AFTER_CLOUD_EVERY_S = 6;      // a new one drifting in, at most this often
-export const AFTER_CLOUD_DRIFT = [6, 14];  // px/s, slowest and fastest
-export const AFTER_CLOUD_SIZE = [3, 5];    // a cloud's puffs, fewest and most
-export const AFTER_CLOUD_FADE_S = 1.2;     // a cloud fades in, and out, over this
+// --- rebel ---
+// (The sky's clouds are the one cloud renderer's: config/clouds.js, CLOUDS_ACT3.)
 // The speech: a click on the pair is a line of it, a pose held with a shout
 // mark over them, and its rebel knocked off as motes that fall to the pile
 // beside the pedestal and are counted there.

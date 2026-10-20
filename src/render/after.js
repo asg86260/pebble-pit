@@ -25,12 +25,12 @@ import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
 import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, afterFloor, ART, AP } from '../after/place.js';
-import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel.js';
+import { airMotes } from '../after/rebel.js';
 import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
 import { postsOf, bodiesOf, atStation, bodyInk } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
-import { frame, now, inView, clamp01, pileState, pileAlpha, countAt, clearCounts, pendingCounts, hash, backing, K, W, PALE, MID } from './after/kit.js';
+import { frame, now, inView, clamp01, pileState, pileAlpha, countAt, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
 import { drawGround, drawForeground } from './after/ground.js';
@@ -66,24 +66,10 @@ export function drawAfterBackdrop() {
 }
 
 // --- the sky ---------------------------------------------------------------------------
-// The clouds, scenery, each an oval of paper flecked pale with a pale edge; the motes
-// of rebel coming down to the pile.
-const toneAt = (c, r, tones) => tones[Math.floor(hash(c * 13.1 + r * 7.7) * tones.length)];
+// The motes of rebel coming down to the pile. The sky's clouds are the one
+// cloud renderer's, drawn with the backdrop (render/after/cloudsky.js).
 export function drawAfterSky() {
   if (!A()) return;
-  const t = now();
-  for (const c of clouds()) {
-    const w = cloudW(c);
-    if (!inView(c.x, w)) continue;
-    const cells = cloudCells(c), set = new Set(cells.map(([i, j]) => `${i},${j}`));
-    ctx.globalAlpha = cloudAlpha(c, t);
-    const x0 = snap(c.x);
-    for (const [i, j] of cells) {
-      const rim = !set.has(`${i - 1},${j}`) || !set.has(`${i + 1},${j}`) || !set.has(`${i},${j - 1}`) || !set.has(`${i},${j + 1}`);
-      cell(x0 + i * P, c.y + j * P, rim ? PALE : toneAt(i + c.id, j, [W, W, W, PALE]));
-    }
-    ctx.globalAlpha = 1;
-  }
   for (const m of airMotes()) {
     ctx.fillStyle = GREY[K]; ctx.fillRect(snap(m.x), snap(m.y), P, P);
     ctx.fillStyle = GREY[W]; ctx.fillRect(snap(m.x) + 1, snap(m.y) + 1, P - 2, P - 2);
