@@ -37,7 +37,8 @@ import { readOver } from '../placesave.js';
 // gate reached. When the last post of each job and each upgrade was bought
 // (`postAt`, `upAt`), so what it puts on screen fades in. And what the loop
 // added to stand it up: the act's clock (`t`) and its chance (`seed`) and
-// the seed it began with (`begun`, which names the act to the hand work), the
+// the yard's coins coming up out of the patch (`coins`, rows.js: here so the
+// save reader, which drops what the blank lacks, keeps them), the seed it began with (`begun`, which names the act to the hand work), the
 // axe bought and in hand, the pair's last line (`shout`), the heap last
 // tipped and each station last worked by hand (`tipAt`, `workAt`), the
 // clouds and the motes coming down, the bodies -- members walking out, at
@@ -67,6 +68,7 @@ export const blankAfter = () => ({
   tipAt: null,
   workAt: {},
   clouds: [],
+  coins: [],
   motes: [],
   bodies: [],
   speech: null,

@@ -203,6 +203,8 @@ this section; the release that switches it on moves these under Unreleased.
 - The casino, heaven's stairs and the house no longer overlap; the deep's crusher, pods and hell's slit stand clear of each other and of the party's stations (test/no-overlap.test.mjs).
 - The opening, the serpent's kill, the walk home and the first trip down glide their camera and their zoom together instead of cutting across the deep or stepping the zoom, and keep who they are about in the frame (test/shot.test.mjs; cutscenes.html, the finale, snatch-kill, opening and first-trip rows).
 - A hauler down the hole when the pit drowns is no longer left buried in the abyss; the drowning waits until the hole is empty (test/hauler-in-hole.test.mjs).
+- The coins coming up out of the cloud after you buy at the camp survive a reload mid-flight (test/after-yard-coins.test.mjs).
+- Loading a save or importing one no longer leaves the noticeboard standing on the closet until the layout next changes (test/finished-save-snatch.test.mjs).
 
 ## v0.6.1 — 2026-10-19
 

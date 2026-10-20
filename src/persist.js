@@ -23,7 +23,7 @@ import { SAVE as MACHINES } from './machines.js';
 import { SAVE as METEOR } from './meteor.js';
 import { BUILD } from './version.js';
 import { at, fillFlat, isDust, recount, wakeGrid } from './grid.js';
-import { openingCamX, clampCam, SAVE as VIEW } from './world.js';
+import { openingCamX, clampCam, unlay, SAVE as VIEW } from './world.js';
 import { SAVE as CASINO } from './casino.js';
 import { SAVE as INTRO } from './intro.js';
 import { SAVE as PAIR } from './wardrobe.js';
@@ -542,6 +542,10 @@ function newYardName() {
 
 export function restore() {
   yardReads++;
+  // The ground was laid for the yard that was here: a save brings its own
+  // noticeboard rect, from whatever layout wrote it, and the lay is cached
+  // under a key the save does not change. Lay again on the next frame.
+  unlay();
   // A creature's reaction is this session's: read back on the clock that
   // wrote it, one under way carries on where it was rather than jump home.
   settleFauna();
@@ -589,6 +593,10 @@ export function reset(fresh = true) {
   // under it would erase the player's yard to make room for a picture.
   if (!S.staged) clear();
   yardReads++;
+  // The ground was laid for the yard that was here: a save brings its own
+  // noticeboard rect, from whatever layout wrote it, and the lay is cached
+  // under a key the save does not change. Lay again on the next frame.
+  unlay();
   S.runSeed = fresh ? reseed() : seed();
   // The same one line the "no save" arm of `restore` uses: a new game and a
   // game never played are the same yard.

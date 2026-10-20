@@ -130,6 +130,7 @@ export const liftX = () => {
 // ground is laid again when it changes: a new site gets its strip by
 // existing.
 let laid = null;
+export const unlay = () => { laid = null; };
 // Anything that can move a site has to be in here, or the yard keeps a
 // layout that was true a purchase ago. `buildOrder` because the sites are
 // walked in the order they were bought (`siteOrder`). The star's position
