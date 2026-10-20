@@ -406,6 +406,10 @@ export function stepActs(c) {
   if (beatDone('arrive') && !S.acts.portals.heaven.free) freePortal('heaven');
   stepPortals(c, atGates());
   const p = pair();
+  // Between the refusal and the haunting the pair's place is the pedestal,
+  // whatever cut the refusal's walk short (a skip, a save taken as its scene
+  // was leaving): with no beat holding them, they walk back up to it.
+  if (p && !run && !p.route && beatDone('refuse') && !beatDone('haunt') && p.mode === 'soul' && !pairAt('pedestal')) sendPair('pedestal');
   // The road's drawing of the two of them over the pedestal's: faded off
   // once they stand on it, back on when they are to climb down.
   if (p) {

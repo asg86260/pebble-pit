@@ -60,3 +60,21 @@ group('an owner who buys early: the camp emptied onto posts, the stations still 
     ok(s.get() >= SHARE, `the pair are up there at least ${pct(SHARE)} of the time`, pct(s.get()))
   ];
 });
+
+// The owner's save of 2026-10-20: the refusal marked played with the pair
+// left standing in the camp (`at: 'camp'`, no route), so they never spoke,
+// no member joined, and every post bought stood empty. Wherever the story
+// leaves them, they walk back up.
+group("a save with the refusal played and the pair left in the camp: they walk back up and speak", async () => {
+  window.__actsAt('fallen');
+  S.acts.pair = { x: 2082, y: -258, route: null, leg: 1, hold: null, carry: 0, mode: 'soul', rims: 0, face: 1, lift: 1, inside: 0, at: 'camp' };
+  const before = pairSpeaking();
+  run(120);
+  const r = [
+    ok(!before, 'the pair start off the pedestal, silent'),
+    ok(S.acts.pair.at === 'pedestal', 'the pair are back on the pedestal', S.acts.pair.at),
+    ok(pairSpeaking(), 'the pair speak again')
+  ];
+  window.__actsOn(null);
+  return r;
+});
