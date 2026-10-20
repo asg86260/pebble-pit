@@ -16,7 +16,7 @@ import { afterFloor, speakerAt, pileX, podiumMid, podiumTopOf } from '../../afte
 import { podiumRung } from '../../after/levels.js';
 import { bubbles, pairSpeaking } from '../../after/bubbles.js';
 import { ctx } from '../ctx.js';
-import { frame, K, W, PALE, MID } from './kit.js';
+import { frame, square, K, W, PALE, MID } from './kit.js';
 
 const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
 const clamp01 = v => Math.max(0, Math.min(1, v));
@@ -111,7 +111,7 @@ function pairFeet() {
 // The shout mark: three short rays over a head, held.
 function shout(x, y) { fr(x + 8, y - 12, 2, 6, K); fr(x + 1, y - 9, 2, 2, K); fr(x + 3, y - 7, 2, 2, K); fr(x + 15, y - 9, 2, 2, K); fr(x + 13, y - 7, 2, 2, K); }
 // A body, the yard's square: 18 px, a 2 px rim round a white middle.
-function body(x, y, h = 18) { fr(x, y, 18, h, K); fr(x + 2, y + 2, 14, h - 4, W); }
+const body = (x, y, h = 18) => square(fr, x, y, 18, h);
 
 // The pair, while they stand up there: a cell of paper round the two of them,
 // the left one speaking on a line -- crouched for the first third of the

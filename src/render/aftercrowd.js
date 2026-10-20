@@ -43,7 +43,7 @@
 // gaze and the bubbles.
 
 import { S } from '../state.js';
-import { P, GREY, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AFTER_SPEECH_WARN_S,
+import { P, GREY, GOD_BACK, AFTER_GOD_LOOK, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AFTER_SPEECH_WARN_S,
          SKY_TICK_S, GOD_CROWD, GOD_STAGE, GOD_FLAG,
          SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
          GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, TITHE, GAZE,
@@ -56,8 +56,8 @@ import { raw, darkPage } from '../ink.js';
 import { afterX0, slotX, stationBox, unionJoinAt, afterFloor } from '../after/place.js';
 import { support, union, souls, OUT_RIM, speechTarget } from '../after/union.js';
 import { signReach } from '../after/levels.js';
-import { skyFrame, campX0, rateAt, stage, stageHalf, stageFore, stageSpot, stageSoul, walkSeen, deepAt } from '../after/sky.js';
-import { K as INK, W, PALE, MID } from './after/kit.js';
+import { skyFrame, campX0, rateAt, stage, stageHalf, stageFore, stageSpot, stageSoul, walkSeen, deepAt, redone } from '../after/sky.js';
+import { K as INK, W, PALE, MID, square } from './after/kit.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -269,13 +269,15 @@ function drawStage() {
 // the middle kept clear. A fact of the window.
 let ROWS = [], rowsKey = '';
 function crowdRows() {
-  const st = stage(), G = GOD_CROWD, key = `${st.yb}|${st.yf}|${st.mx}`;
+  const st = stage(), G = GOD_CROWD, key = `${st.yb}|${st.yf}|${st.mx}|${AFTER_GOD_LOOK}`;
   if (key === rowsKey) return ROWS;
   const out = [];
+  // Redone, straight rows a soul and a row's gap apart, every soul one size.
+  const step = n => (redone() ? n + GOD_BACK.row : Math.max(P, snap(n * G.rows, P)));
   for (let y = st.yf - P, r = 0; y > st.yb + P; r++) {
     const n = stageSoul(st, y);
-    out.push({ y: snap(y, P), n, k: stageFore(st, y), r });
-    y -= Math.max(P, snap(n * G.rows, P));
+    out.push({ y: redone() ? y : snap(y, P), n, k: stageFore(st, y), r });
+    y -= step(n);
   }
   rowsKey = key; ROWS = out.reverse();
   return ROWS;
@@ -284,7 +286,8 @@ function crowdRows() {
 // from the front first as support rises, fading through the last of it.
 function standing(r, n, i) {
   const G = GOD_CROWD, fore = n > 1 ? r / (n - 1) : 1;
-  const v = (1 - shown.s) * G.keep - fore * G.fore - hsh(i, r + 9) * G.luck + G.base;
+  const R = redone() ? GOD_BACK : G;
+  const v = (1 - shown.s) * R.keep - fore * R.fore - hsh(i, r + 9) * R.luck + R.base;
   return clamp(v / G.soft, 0, 1);
 }
 const drawn = { souls: 0 };
@@ -293,6 +296,7 @@ export const crowdDrawn = () => ({ ...drawn, won: shown.won.length });
 function rowSouls(r, R, n, out) {
   const G = GOD_CROWD, st = stage(), mid = gxAt(R.y), god = gx(), w = R.n, gap = G.gap * st.mx, pitch = w + gap;
   const hw = stageHalf(st, R.y) - G.margin * st.mx, clear = st.throne + w / 2 + 2 * st.mx, aisle = G.aisle * st.mx + w / 2;
+  if (redone()) { orderedSouls(r, R, n, out, { st, mid, god, w, hw, clear, aisle }); return; }
   let i = 0;
   for (let cx = mid - hw + ((R.r & 1) * pitch) / 2; cx < mid + hw - w; cx += pitch, i++) {
     const c = cx + w / 2;
@@ -303,6 +307,21 @@ function rowSouls(r, R, n, out) {
     if (x0 + w < S.camX - P || x0 > S.camX + S.viewW + P) continue;
     const a = standing(r, n, i);
     if (a > 0.001) out.push({ r, i, x: x0, y: R.y - (hsh(i, R.r, 6) < G.lift ? P : 0), w, a });
+  }
+}
+// Redone: straight files, every row's souls on the same columns either side
+// of the camp's middle, a soul and a file's gap apart, none jittered or
+// lifted; the throne's foot and the aisle kept clear as before. A file's
+// index is its place off the middle, so it keeps its soul as the rows change.
+function orderedSouls(r, R, n, out, { st, mid, god, w, hw, clear, aisle }) {
+  const pitch = w + GOD_BACK.gap, K = Math.floor((hw - w / 2) / pitch);
+  for (let k = -K; k <= K; k++) {
+    const c = mid + k * pitch, x0 = c - w / 2;
+    if (R.y - w < st.throneY + P && Math.abs(c - god) < clear) continue;
+    if (R.y > st.throneY && Math.abs(c - mid) < aisle) continue;
+    if (x0 + w < S.camX - P || x0 > S.camX + S.viewW + P) continue;
+    const i = k + 1000, a = standing(r, n, i);
+    if (a > 0.001) out.push({ r, i, x: x0, y: R.y, w, a });
   }
 }
 // God's crowd: its rows back to front, and before each whatever stands on
@@ -322,7 +341,9 @@ function drawGodsCrowd(rows, between) {
       const lift = ringsAt(s.x + s.w / 2, s.y, 1, s.w);
       const was = ctx.globalAlpha;
       if (s.a < 1) ctx.globalAlpha = was * s.a;
-      rect(s.x, s.y - s.w + lift, s.w, s.w - Math.max(0, lift));
+      // redone, each soul the yard's square (render/after/kit.js)
+      if (redone()) square(rect, s.x, s.y - s.w + lift, s.w, s.w - Math.max(0, lift));
+      else rect(s.x, s.y - s.w + lift, s.w, s.w - Math.max(0, lift));
       ctx.globalAlpha = was;
     }
   });

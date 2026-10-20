@@ -36,6 +36,17 @@ export const toneOf = (pal, x, y, seed = 0) => pal[Math.floor(hash(x * 13.1 + y 
 export const now = () => (S.after ? S.after.t : 0);
 export const inView = (x, w) => x + w >= S.camX && x <= S.camX + S.viewW;
 
+// The yard's square, the one body drawing every body up here shares: a 2 px
+// ink rim round a middle (paper as the yard draws a worker), `w` across and
+// `h` high from its top left, laid by `fill(x, y, w, h, tone)` in whatever
+// space the caller draws in. A worker, the pair, and God's crowd's souls are
+// all this square.
+export const RIM = 2;
+export function square(fill, x, y, w, h = w, mid = W) {
+  fill(x, y, w, h, K);
+  fill(x + RIM, y + RIM, w - 2 * RIM, h - 2 * RIM, mid);
+}
+
 // With `sink`, the frame paints nothing and hands every rect, in its own
 // unturned px, to sink(x, y, w, h) instead: how a drawing's silhouette is
 // read off the drawing itself (`silhouette`). `s` is the drawing's grid cells
@@ -69,7 +80,7 @@ export function frame(ox, oy, flip = 0, sink = null, s = 1) {
     // squat, two rows high with its feet where they were
     body(x, y, dxpx = 0, dypx = 0, squat = false) {
       const h = squat ? 12 : 18, mid = (x * P + dxpx + 9) * s, foot = (y * P + dypx + 18) * s;
-      put(mid - 9, foot - h, 18, h, K); put(mid - 7, foot - h + 2, 14, h - 4, W);
+      square(put, mid - 9, foot - h, 18, h);
     },
     world: (x, y) => ({ x: X(x * P * s, 0), y: oy + y * P * s })
   };

@@ -19,7 +19,7 @@
 import { S } from '../state.js';
 import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_RATE, GOD_FOOT, GOD_CROWD, GOD_SIGN_DEEP, GOD_STAGE, AFTER_HORIZON,
          GOD_N, GOD_THRONE, WALK_BODY,
-         CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW } from '../config.js';
+         CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW, AFTER_GOD_LOOK, GOD_BACK } from '../config.js';
 import { yardCell } from '../world.js';
 import { actPlace } from '../acts.js';
 import { afterFloor, afterTop, afterOpenX, campEdges, podiumMid, unionHalf } from './place.js';
@@ -39,23 +39,30 @@ export const restTop = () => afterFloor() + actPlace('after').margin - restH();
 export const horizonY = () => afterFloor() - AFTER_HORIZON * P;
 
 
-let frame = null, frameKey = '';
-export function skyFrame() {
+const frames = new Map();
+// God's camp redone, for the owner's vote (config, AFTER_GOD_LOOK): one layer,
+// further back, its crowd in rows of the yard's square.
+export const redone = () => AFTER_GOD_LOOK === 1;
+export function skyFrame(look = AFTER_GOD_LOOK) {
   // The window's top at rest, or the place's own where the window shows past
   // it: the camera is never let above the place.
-  const top = Math.max(restTop(), afterTop()), W = restW(), key = `${top}|${W}`;
-  if (frame && key === frameKey) return frame;
-  const floor = afterFloor(), bank = floor - GOD_FOOT * P, sky = bank - top;
+  const top = Math.max(restTop(), afterTop()), W = restW(), key = `${top}|${W}`, back = look === 1;
+  const kept = frames.get(look);
+  if (kept && kept.key === key) return kept.frame;
+  const floor = afterFloor(), bank = floor - (back ? GOD_BACK.foot : GOD_FOOT) * P;
+  // Redone, he is laid out in a sky `size` as tall standing on his foot: the
+  // same picture, further off.
+  const sky = (bank - top) * (back ? GOD_BACK.size : 1), sTop = bank - sky;
   const gc = GOD_CELLS.find(c => c * GOD_FIT <= sky) || GOD_CELLS[GOD_CELLS.length - 1];
   // God's square's top, its crown's spikes GOD_UP of the sky down off the top.
-  const gy0 = top + snap(sky * GOD_UP + 19 * gc, gc);
-  frame = {
+  const gy0 = sTop + snap(sky * GOD_UP + 19 * gc, gc);
+  const frame = {
     floor, top, bank, sky, W, H: restH(), gc, XR: afterOpenX(), hor: horizonY(), gy0,
     // A sky cell, world px: half a God-cell, or less where the sky is too
     // short to hold the mock's layout under him.
     h: Math.max(1, Math.floor(Math.min(gc / 2, (bank - gy0) / SKY_FIT) * 2) / 2)
   };
-  frameKey = key;
+  frames.set(look, { key, frame });
   return frame;
 }
 // God's face, world y: the middle of his square.
@@ -70,9 +77,10 @@ export const faceY = () => { const f = skyFrame(); return f.gy0 + 9 * f.gc; };
 // is { dx, y }: world px across from the middle at y, and world y.
 let stageMemo = null, stageKey = '';
 export function stage() {
-  const f = skyFrame(), G = GOD_STAGE, key = `${f.hor}|${f.h}|${f.floor}`;
+  const f = skyFrame(), G = GOD_STAGE, key = `${f.hor}|${f.h}|${f.floor}|${AFTER_GOD_LOOK}`;
   if (stageMemo && key === stageKey) return stageMemo;
-  const mx = G.mx * f.h, yf = afterFloor();
+  // redone, its front stands up among the far cloud's rows, not on the plane
+  const mx = G.mx * f.h, yf = redone() ? afterFloor() - GOD_BACK.front * P : afterFloor();
   const steps = Math.max(1, Math.ceil((f.bank - f.gy0 - (GOD_N + GOD_THRONE.seatH) * f.h) / (GOD_THRONE.step * f.h)));
   stageMemo = {
     // from behind his foot forward to the main plane's line, which is its foot
@@ -94,14 +102,17 @@ export const stageFore = (st, y) => clamp((y - st.yb) / (st.yf - st.yb), 0, 1);
 // share a cell of the plane wherever the camera is. (Its back, slower, passes
 // behind the union's crowd as the camera pans, drawn behind it.) His scale is
 // the window's (skyFrame), so the front's half is, and with it this.
+// Laid off the camp as built whatever the look (config, AFTER_GOD_LOOK), so
+// the place's end, the throne's beats and the sim stand where they did and
+// only how God's camp is drawn changes.
 export const godFront = () => {
-  const st = stage();
-  return snap(podiumMid() + unionHalf() + GOD_STAGE.gap * P + st.hf + GOD_STAGE.side * st.mx, P);
+  const mx = GOD_STAGE.mx * skyFrame(0).h;
+  return snap(podiumMid() + unionHalf() + GOD_STAGE.gap * P + GOD_STAGE.hf * mx + GOD_STAGE.side * mx, P);
 };
 // How fast a line of the camp at world y slides, as a share of the camera's
 // speed: God's rate at the back and above it (the throne, him), the world's
 // at the front.
-export const rateAt = (st, y) => lerp(GOD_RATE, 1, stageFore(st, y));
+export const rateAt = (st, y) => (redone() ? GOD_RATE : lerp(GOD_RATE, 1, stageFore(st, y)));
 // The camp's middle at rate `r`, world x, with the window's middle at `cx`:
 // every line about the window whose middle is the front's middle.
 export const campMid = (cx, r) => { const e = godFront(); return e + (cx - e) * (1 - r); };
@@ -126,7 +137,7 @@ export function stageSpot(f, r) {
 }
 // A soul's side on the stage at world y, world px: the giant's scale, growing
 // toward the front, on the cell grid.
-export const stageSoul = (st, y) => Math.max(P, snap(lerp(GOD_CROWD.n[0], GOD_CROWD.n[1], stageFore(st, y)) * st.mx, P));
+export const stageSoul = (st, y) => (redone() ? GOD_BACK.soul : Math.max(P, snap(lerp(GOD_CROWD.n[0], GOD_CROWD.n[1], stageFore(st, y)) * st.mx, P)));
 // A body of the sim's on the top: a soul of its row's size, but no wider
 // than most of a file's spacing there, so the members standing side by side
 // in the front ranks stand apart and never close up into a bar.

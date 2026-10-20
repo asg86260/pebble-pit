@@ -15,7 +15,7 @@ import { stepAfter } from '../src/after/index.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawSkyCrowd, drawAfterCrowd, crowdDrawn, glareAlpha, raysLeft } from '../src/render/aftercrowd.js';
 import { drawUnionCrowd, unionDrawn } from '../src/render/after/unioncrowd.js';
-import { godMid, godFront, campMid, rateAt, walkSeen, stage, stageHalf } from '../src/after/sky.js';
+import { godMid, godFront, campMid, rateAt, walkSeen, stage, stageHalf, redone } from '../src/after/sky.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -85,7 +85,8 @@ group('the crowd thins as support rises', async () => {
   const souls = [0.05, 0.3, 0.6, 1].map(at);
   window.__actsOn(null);
   return [
-    ok(souls[0] > 100, 'a packed crowd round the throne before anyone has walked out', `${souls[0]}`),
+    // redone (config, AFTER_GOD_LOOK) his camp stands further back, smaller, in fewer straight rows
+    ok(souls[0] > (redone() ? 50 : 100), 'a packed crowd round the throne before anyone has walked out', `${souls[0]}`),
     ok(souls.every((v, i) => i === 0 || v < souls[i - 1]), 'the souls standing fall as support rises, from the front', souls.join(' ')),
     ok(souls[3] > 0 && souls[3] < souls[0] * 0.4, 'a thin scatter left at the strike', `${souls[3]} of ${souls[0]}`)
   ];
@@ -160,7 +161,7 @@ group('the view only slides, God drawn in to the middle at the end of the pan', 
 // as the camera pans and stands square at the pan's end; and its front's
 // feet stand clear of the union's crowd at its widest, so the two camps
 // never share a cell of the plane, at a tall window and a short one.
-group("God's stage leans across the depths, its front clear of the union's crowd", async () => {
+group("God's stage leans across the depths as built, or stands as one layer redone", async () => {
   const out = [];
   for (const [w, h] of [[2000, 967], [800, 600]]) {
     S.W = w; S.H = h;
@@ -174,7 +175,12 @@ group("God's stage leans across the depths, its front clear of the union's crowd
     }
     const corner = afterEnd() - st.hf - side, union = podiumMid() + unionHalf();
     window.__actsOn(null);
-    out.push(
+    // Redone (config, AFTER_GOD_LOOK) the camp is one layer: no line of the
+    // stage leans, and its front stands back off the main plane.
+    if (redone()) out.push(
+      ok(leans.every(l => Math.abs(l) < 0.01), `${w}x${h}: redone, the whole camp one layer, no line of its stage leaning`, leans.map(Math.round).join(' ')),
+      ok(st.yf < afterFloor() - P, `${w}x${h}: redone, its front stands back off the main plane`, `${Math.round((afterFloor() - st.yf) / P)} cells up`));
+    else out.push(
       ok(fronts.every(f => Math.abs(f - fronts[0]) < 0.01), `${w}x${h}: its front stays put on the main plane`, fronts.map(Math.round).join(' ')),
       ok(leans[0] < leans[1] && leans[1] < 0 && Math.abs(leans[2]) < 0.01, `${w}x${h}: its back leans toward the window's middle, square at the end`, leans.map(Math.round).join(' ')),
       ok(corner - union >= GOD_STAGE.gap * P - P, `${w}x${h}: its front corner clear of the union's crowd`, `${Math.round((corner - union) / P)} cells`));
@@ -221,7 +227,8 @@ group("God stands in the window all along the pan toward him, the union's camp a
       left.push(unionX1() < g);
     }
     window.__actsOn(null);
-    out.push(ok(offs[0] > 0.6 && Math.abs(offs[4] - 0.5) < 0.01, `${w}x${h}: right of the union's camp where the act opens, in the window's middle at the pan's end`, offs.map(v => v.toFixed(2)).join(' ')),
+    // redone he stands further back, so the pan draws him in less: right of the middle where it opens
+    out.push(ok(offs[0] > (redone() ? 0.5 : 0.6) && Math.abs(offs[4] - 0.5) < 0.01, `${w}x${h}: right of the union's camp where the act opens, in the window's middle at the pan's end`, offs.map(v => v.toFixed(2)).join(' ')),
              ok(offs.every((v, i) => i === 0 || v < offs[i - 1]), `${w}x${h}: drawn in toward the middle along the pan`),
              ok(left.every(Boolean), `${w}x${h}: the union's camp left of him all along`));
   }
