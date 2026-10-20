@@ -116,7 +116,7 @@ function frame(dt) {
   }
   if (want('ground')) {
     const sc = scroll(ground.P), ox = Math.floor(sc);
-    views.push({ key: 'g', layer: ground, ox, w: cols + 2, h: ground.h, look: look(ground) });
+    views.push({ key: 'g', layer: ground, ox, w: cols + 2, h: ground.h, look: look(ground), every: ground.P.every, idle: frames % ground.P.every !== 0 });
     draws.push({ key: 'g', x: (ox - sc) * CELLPX, y: (rows - ground.h) * CELLPX, alpha: 1 });
   }
   const r = gpu.render(views, t, dt * +$('speed').value);

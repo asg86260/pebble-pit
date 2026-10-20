@@ -641,7 +641,7 @@ export function groundLayer({ seed = 1, W }) {
   // no crust on the billows: lumps on a row's top break its crevice into
   // splinters
   tiers.forEach((ps, j) => ps.forEach(p => puffs.push(flowPuff(rnd, p.x, p.y, p.r, 1, j, null, 0, F))));
-  return { i: -1, P: { d: 1, R: G.R, parallax: 1, wind: 0, shade: 0, every: 1 }, W, puffs, h: Math.ceil(top + depthSum + G.R * 0.9),
+  return { i: -1, P: { d: 1, R: G.R, parallax: 1, wind: 0, shade: 0, every: G.every }, W, puffs, h: Math.ceil(top + depthSum + G.R * 0.9),
            baseRow: 0, ground: true, nt: K.rows, rowOf: tiers.map((_, j) => j), fills };
 }
 
@@ -649,6 +649,14 @@ export function groundLayer({ seed = 1, W }) {
 // and how big: on its current, and swollen or shrunk by its cloud's life.
 const lead = {};
 export function puffAt(p, t, out = {}) {
+  // a lobe is asked again for each lump of its crust in the same frame: its
+  // answer is kept for the frame
+  if (p._t === t) { out.x = p._x; out.y = p._y; out.r = p._r; out.flat = p.flat; return out; }
+  puffNow(p, t, out);
+  p._t = t; p._x = out.x; p._y = out.y; p._r = out.r;
+  return out;
+}
+function puffNow(p, t, out) {
   if (p.follow) {
     // a crust lump: its lobe's place and swell, its own small stray on top
     puffAt(p.follow, t, lead);
@@ -660,8 +668,11 @@ export function puffAt(p, t, out = {}) {
     return out;
   }
   const life = p.life ? p.life.keep + (1 - p.life.keep) * (0.5 - 0.5 * Math.cos(t * p.life.per + p.life.ph)) : 1;
-  out.x = p.x + p.stray * t + p.a[0] * Math.sin(t * p.w[0] + p.p[0]) + p.a[1] * Math.sin(t * p.w[1] + p.p[1]) + p.a[2] * Math.sin(t * p.w[2] + p.p[2]);
-  out.y = p.y + CLOUDS_FLOW.lift * (p.a[0] * Math.sin(t * p.w[1] + p.q[0]) + p.a[1] * Math.sin(t * p.w[2] + p.q[1]) + p.a[2] * Math.sin(t * p.w[0] + p.q[2]));
+  // two sines across and two up and down, at three periods between them, so
+  // no two lobes keep step and the path never quite repeats
+  const s1 = Math.sin(t * p.w[1] + p.p[1]);
+  out.x = p.x + p.stray * t + p.a[0] * Math.sin(t * p.w[0] + p.p[0]) + p.a[1] * s1;
+  out.y = p.y + CLOUDS_FLOW.lift * (p.a[0] * Math.sin(t * p.w[2] + p.q[0]) + p.a[1] * Math.sin(t * p.w[1] + p.q[1]));
   // a life's swell is square-root shaped, so a cloud fills out fast and thins slow
   out.r = p.r * Math.sqrt(life) * (1 + 0.06 * Math.sin(t * p.w[2] + p.q[0]));
   out.flat = p.flat;
@@ -714,17 +725,18 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
   const crease = j => (D.belly !== 'none' && layer.ground && lobes[j] >= CLOUDS_CREASE_MIN ? Math.max(2, Math.round(CLOUDS_KINDS.ground.crease * lobes[j])) : 0);
   const rim = D.rim ? Math.max(2, Math.round(CLOUDS_RIM * P.R)) : 0;
   const depthOf = j => (layer.ground ? CLOUDS_GROUND_DEPTHS[j] : P.e);
-  const lut = new Float32Array(20 * 4), tone = new Int32Array(20);
+  const lut = new Float32Array(24 * 4), tone = new Int32Array(24);
   const rgba = (h, a = 1) => { const n = parseInt(h.slice(1), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, a]; };
   for (let j = 0; j < nt; j++) {
     const band = CLOUDS_DEPTH_BANDS[page].filter(b => b[0] <= depthOf(j)).pop();
-    const body = band[1], shade = D.tones === 2 ? band[2] : band[1];
+    const body = band[1], shade = D.tones === 2 ? band[2] : band[1], base = D.tones === 2 ? band[3] : band[1];
     // a role's tone number is its color's, so two roles in one color are one
     // shape to the cleanup
     const id = role => named.findIndex(k => C[k] === C[role]) + 1;
-    lut.set(rgba(C[body]), (j * 4 + 1) * 4); tone[j * 4 + 1] = id(body);
-    lut.set(rgba(C[shade]), (j * 4 + 2) * 4); tone[j * 4 + 2] = id(shade);
-    lut.set(rgba(C.lit), (j * 4 + 3) * 4); tone[j * 4 + 3] = id('lit');
+    lut.set(rgba(C[body]), (j * 5 + 1) * 4); tone[j * 5 + 1] = id(body);
+    lut.set(rgba(C[shade]), (j * 5 + 2) * 4); tone[j * 5 + 2] = id(shade);
+    lut.set(rgba(C.lit), (j * 5 + 3) * 4); tone[j * 5 + 3] = id('lit');
+    lut.set(rgba(C[base]), (j * 5 + 4) * 4); tone[j * 5 + 4] = id(base);
   }
   tone[0] = named.indexOf('sky') + 1;
   return {

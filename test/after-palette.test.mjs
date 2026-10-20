@@ -7,8 +7,14 @@
 // checked is what the act's layers are told to fill: every fill, path, text
 // and image-data pixel, on a sheet that keeps them, across the act's scenes,
 // sprites and band canvases included.
+//
+// The palette may grow when every tone has its own job (the owner,
+// 2026-10-20): the clouds' tones (config/clouds.js, CLOUDS_PALETTE) are
+// named by role -- sky, haze, body, shade, core, near, lit -- and are allowed
+// here by name. What still fails is a tone no list names, and two different
+// tones of the clouds' palette too close to tell apart on their page.
 import { group, ok, run, yard } from './helpers.mjs';
-import { GREY, AFTER_TONES, AFTER_DARK } from '../src/config.js';
+import { GREY, AFTER_TONES, AFTER_DARK, CLOUDS_PALETTE } from '../src/config.js';
 import { setPref } from '../src/prefs.js';
 import { inkOf } from '../src/ink.js';
 import { SCENES } from '../src/scenes.js';
@@ -32,7 +38,7 @@ const hex6 = c => {
   if (/^#[0-9a-f]{3}$/i.test(c)) c = '#' + [...c.slice(1)].map(h => h + h).join('');
   return c.toLowerCase();
 };
-const FOUR = new Set(Object.values(AFTER_TONES).map(i => hex6(GREY[i])));
+const FOUR = new Set([...Object.values(AFTER_TONES).map(i => hex6(GREY[i])), ...Object.values(CLOUDS_PALETTE.light).map(hex6)]);
 const toHex = (r, g, b) => '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
 
 // A sheet that keeps every tone it is told to lay down, by the scene that
@@ -99,7 +105,7 @@ group("act 3's layers paint only its four tones, God's raw light aside", async (
   const off = [...seen].map(([c, where]) => `${c} (${[...where].slice(0, 3).join(', ')})`);
   return [
     ok(stood.length === SCENE_NAMES.length, 'every act-3 scene stood the act up', SCENE_NAMES.filter(n => !stood.includes(n)).join(', ')),
-    ok(off.length === 0, 'no tone outside paper, pale, mid and ink', off.join('; ')),
+    ok(off.length === 0, "no tone outside paper, pale, mid and ink, and the clouds' named tones", off.join('; ')),
   ];
 });
 
@@ -129,4 +135,24 @@ group("act 3's four tones sit apart on the dark page, turned, and the light page
     ok(lightness(to.ink) < 1, "God's raw white is still the lightest thing in the act", said),
     ok(Object.values(AFTER_TONES).every(i => inkOf(GREY[i], 'after') === GREY[i]), 'the light page draws the four as written'),
   ];
+});
+
+// The clouds' palette: each tone named for its role, and on each page every
+// two different tones a clear step apart (the same step as the act's four),
+// so a new tone is a new job and not a near-copy of an old one. Two roles
+// may share one tone; that is one tone, not two.
+group("the clouds' tones each have a role, and no two sit too close on a page", async () => {
+  const out = [];
+  for (const page of ['light', 'dark']) {
+    const roles = CLOUDS_PALETTE[page];
+    const tones = [...new Set(Object.values(roles).map(hex6))].sort((a, b) => lightness(a) - lightness(b));
+    const gaps = tones.slice(1).map((c, i) => lightness(c) - lightness(tones[i]));
+    const said = Object.entries(roles).map(([k, c]) => `${k} ${c}`).join(', ');
+    out.push(
+      ok(Object.entries(roles).every(([k, c]) => /^[a-z]+$/.test(k) && /^#[0-9a-f]{6}$/i.test(c)), `the ${page} page's cloud tones are each named for a role`, said),
+      ok(tones.length >= 3, `the ${page} page's clouds have a sky and at least two tones of cloud`, said),
+      ok(Math.min(...gaps) >= AFTER_STEP_MIN, `the ${page} page's cloud tones sit at least ${AFTER_STEP_MIN} apart`, `${said}; gaps ${gaps.map(g => g.toFixed(3)).join(', ')}`)
+    );
+  }
+  return out;
 });

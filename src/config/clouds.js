@@ -210,9 +210,10 @@ export const CLOUDS_FLOW = { wander: [0.35, 0.85], period: [30, 90], lift: 0.45 
 // A cell that changes tone eases into the new one over this many seconds,
 // so an edge flowing across the grid glides rather than ticks.
 export const CLOUDS_FADE_S = 0.3;
-// The ground in the sky's flow: its rows' size and depth (CLOUDS_KINDS.ground
-// keeps the rest).
-export const CLOUDS_GROUND_FLOW = { R: 14, wander: [0.25, 0.6], period: [30, 80] };
+// The ground in the sky's flow: its rows' size, its puffs' wander and period,
+// and the frames between workings of its field (CLOUDS_SKY.every); its rows'
+// depth and the rest are CLOUDS_KINDS.ground's.
+export const CLOUDS_GROUND_FLOW = { R: 14, wander: [0.25, 0.6], period: [30, 80], every: 2 };
 
 // --- the palette -------------------------------------------------------------------
 // The clouds' tones, each named for the one job it does (the owner,
@@ -225,22 +226,26 @@ export const CLOUDS_GROUND_FLOW = { R: 14, wander: [0.25, 0.6], period: [30, 80]
 //   haze   a cloud far off, toward the horizon: one flat step off the sky
 //   body   a cloud near enough to model, in the light; by night the middle
 //          distance's
-//   shade  by day, the belly and the crevices of a near cloud, in its own
-//          shadow
+//   shade  by day, a near cloud's own shadow: its underside, a lobe's belly
+//          where it hangs in front of the cloud's farther lobes, the
+//          ground's crevices
+//   core   by day, the lower half of a near cloud's underside, so its shadow
+//          steps darker toward the bottom
 //   near   by night, a near cloud in the moonlight (its shadow is the body)
 //   lit    the sunlit or moonlit rim (treatment D); by day drawn only where a
 //          cloud stands in front of another, since by day it is the paper
 export const CLOUDS_PALETTE = {
-  light: { sky: '#ffffff', haze: '#ebebeb', body: '#d6d6d6', shade: '#a4a4a4', lit: '#ffffff' },
+  light: { sky: '#ffffff', haze: '#ebebeb', body: '#d6d6d6', shade: '#a4a4a4', core: '#757575', lit: '#ffffff' },
   dark: { sky: '#121212', haze: '#262626', body: '#3a3a3a', near: '#4e4e4e', lit: '#666666' }
 };
 // Which roles a cloud takes by how far off it is, on each page: a list of
 // bands, each [from this depth on (0 the horizon, 1 nearest), its role in the
-// light, its role in shadow], so contrast falls away toward the horizon. By
-// night a shadow is the step nearer the sky, so the roles turn.
+// light, in its own shadow, at its base], so contrast falls away toward the
+// horizon.
+// By night a shadow is the step nearer the sky, so the roles turn.
 export const CLOUDS_DEPTH_BANDS = {
-  light: [[0, 'haze', 'haze'], [0.25, 'haze', 'body'], [0.6, 'body', 'shade']],
-  dark: [[0, 'haze', 'haze'], [0.25, 'body', 'haze'], [0.6, 'near', 'body']]
+  light: [[0, 'haze', 'haze', 'haze'], [0.25, 'haze', 'body', 'body'], [0.6, 'body', 'shade', 'core']],
+  dark: [[0, 'haze', 'haze', 'haze'], [0.25, 'body', 'haze', 'haze'], [0.6, 'near', 'body', 'haze']]
 };
 // How deep a layer's lit rim and the ground's rows sit, for the tones above:
 // the ground's rows, back to front.

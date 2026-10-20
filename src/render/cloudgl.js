@@ -94,17 +94,22 @@ void main() {
   ivec2 c = ivec2(gl_FragCoord.xy);
   int j = at(c);
   if (j < 0) { o = 0u; return; }
-  int r = j * 4 + 1, l = uLit[j], s = uShade[j], k = uCrease[j];
-  if (l > 0) { int u = at(c - ivec2(0, l)), d = at(c - ivec2(l * 7 / 10, l * 7 / 10)); if ((u != j && u != -2 && (uRimSky == 1 || u >= 0)) || (d != j && d != -2 && (uRimSky == 1 || d >= 0))) r = j * 4 + 3; }
-  if (s > 0) { int b = at(c + ivec2(0, s)); if (b == -1 || (uInside == 1 && b >= 0 && b < j)) r = j * 4 + 2; }
-  if (k > 0) { int b = at(c + ivec2(0, k)); if (b > j && uRow[b] != uRow[j]) r = j * 4 + 2; }
+  // a tier's roles are j * 5 + 1 in the light, + 2 in its own shadow (its
+  // underside over open sky, a belly hung in front of the cloud's farther
+  // lobes, a crevice on the ground), + 3 the rim, + 4 the deepest of its
+  // base: the lower half of the underside band, so the shadow steps darker
+  // toward the bottom
+  int r = j * 5 + 1, l = uLit[j], s = uShade[j], k = uCrease[j];
+  if (l > 0) { int u = at(c - ivec2(0, l)), d = at(c - ivec2(l * 7 / 10, l * 7 / 10)); if ((u != j && u != -2 && (uRimSky == 1 || u >= 0)) || (d != j && d != -2 && (uRimSky == 1 || d >= 0))) r = j * 5 + 3; }
+  if (s > 0) { int b = at(c + ivec2(0, s)); if (b == -1) r = at(c + ivec2(0, (s + 1) / 2)) == -1 ? j * 5 + 4 : j * 5 + 2; else if (uInside == 1 && b >= 0 && b < j) r = j * 5 + 2; }
+  if (k > 0) { int b = at(c + ivec2(0, k)); if (b > j && uRow[b] != uRow[j]) r = j * 5 + 2; }
   o = uint(r);
 }`;
 
 const CLEAN = `#version 300 es
 precision highp float; precision highp int; precision highp usampler2D;
 uniform usampler2D uR;
-uniform int uTone[20];   // a role's tone, so two tiers in one tone are one shape
+uniform int uTone[24];   // a role's tone, so two tiers in one tone are one shape
 out uint o;
 uint at(ivec2 c) { ivec2 sz = textureSize(uR, 0); c = clamp(c, ivec2(0), sz - 1); return texelFetch(uR, c, 0).r; }
 void main() {
@@ -156,7 +161,7 @@ uniform usampler2D uR;     // shown, wanted, frames wanted: the shown role is .r
 uniform sampler2D uPrev;
 uniform ivec2 uShift;
 uniform int uFresh;
-uniform vec4 uLut[20];
+uniform vec4 uLut[24];
 uniform float uStep;
 out vec4 o;
 void main() {
@@ -347,9 +352,10 @@ export function skyGL() {
       gl.uniform4iv(P.roles.u.uRow, L.row); gl.uniform1i(P.roles.u.uBottom, L.bottom); gl.uniform1i(P.roles.u.uInside, L.inside ? 1 : 0); gl.uniform1i(P.roles.u.uRimSky, L.rimSky ? 1 : 0);
       draw();
       // two cleanups
+      gl.useProgram(P.clean.p); gl.uniform1i(P.clean.u.uR, 0); gl.uniform1iv(P.clean.u.uTone, L.tone);
       for (const [from, to] of [[0, 1], [1, 0]]) {
         pass(P.clean, s.R[to].f, v.w, v.h);
-        bind(0, s.R[from].t); gl.uniform1i(P.clean.u.uR, 0); gl.uniform1iv(P.clean.u.uTone, L.tone);
+        bind(0, s.R[from].t);
         draw();
       }
       // the settle
