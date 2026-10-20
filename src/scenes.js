@@ -39,7 +39,7 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt } from './after/place.js';
+import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt, campEdges } from './after/place.js';
 import { afterEnd } from './view.js';
 import { godU } from './after/sky.js';
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE } from './config.js';
@@ -3093,6 +3093,13 @@ export const SCENES = {
     run: () => levelAt(0.1, 'god') },
   'level-god-high': { about: 'the acts', say: "God's camp at seven tenths of the way to the strike: his crowd emptied from the front",
     run: () => levelAt(0.7, 'god') },
+  'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
+    run: () => {
+      afterChain(true);
+      const a = campEdges()[1], on = w => w.load === 'sign' && w.x > a + (CROWD_X0 - a) * 0.5;
+      for (let k = 0; k < 2400 && !S.after.bodies.some(on); k++) window.__fast(0.25);
+      window.__look((afterOpenX() + godU()) / 2 - S.viewW / 2); window.__fast(1 / 30); window.__holdShot();
+    } },
   'level-won-orbit': { about: 'the acts', say: 'a soul a sign has won, darkened to ink, half way round its turn and a half about the flag',
     run: () => levelAt(0.1, 'god', 4.5) },
   'level-won-drift': { about: 'the acts', say: "a won soul half way across from God's crowd to the union's camp",

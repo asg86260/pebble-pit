@@ -7,7 +7,7 @@
 
 import { P, GREY, AFTER_BUILD_FADE_S } from '../../config.js';
 import { S } from '../../state.js';
-import { afterX0, afterFloor, floorProfile, floorFlats, notchX, crowdLip, sitesKey, sited } from '../../after/place.js';
+import { afterX0, afterFloor, floorProfile, floorFlats, notchX, crowdLip, sitesKey, sited, campEdges } from '../../after/place.js';
 import { ctx } from '../ctx.js';
 import { K, W, PALE, now, clamp01 } from './kit.js';
 
@@ -41,7 +41,9 @@ export function drawFloor() {
   const el = floorProfile(), top = afterFloor(), bot = top + 2, flats = floorFlats();
   const j0 = Math.max(0, Math.floor((S.camX - afterX0()) / P) - 1);
   const j1 = Math.min(el.length, Math.ceil((S.camX + S.viewW - afterX0()) / P) + 2);
-  const bare = j => !flats.some(([a, b]) => j >= a && j < b);
+  // (God's yard is drawn on his stage, far back: no line out there.)
+  const yard = Math.round((campEdges()[1] - afterX0()) / P);
+  const bare = j => j > yard || !flats.some(([a, b]) => j >= a && j < b);
   const key = sitesKey();
   if (key !== wasKey) { if (wasKey != null) { changedAt = now(); } else was = el.slice(); wasKey = key; }
   const f = clamp01((now() - changedAt) / AFTER_BUILD_FADE_S);
