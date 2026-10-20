@@ -16,7 +16,6 @@
 // The comments over the scenes say why each is set up as it is.
 
 import { S } from './state.js';
-import { touchSetup } from './verify.js';
 import { JOB, TYPE, AFTER_JOB } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs, ramX } from './rock.js';
@@ -3376,20 +3375,6 @@ function padTo(id) {
     if (pad.focus() === f) pad.press(then);
   }
   setPref('motion', was);
-}
-
-// A scene is a setup: the bodies it stands up or moves are taken as they
-// stand by the motion rules (verify.js, rule 22), before it and after it.
-for (const s of Object.values(SCENES)) {
-  if (typeof s.run !== 'function') continue;
-  const run = s.run;
-  s.run = (...a) => {
-    touchSetup();
-    const out = run(...a);
-    touchSetup();
-    if (out && typeof out.then === 'function') out.then(touchSetup, touchSetup);
-    return out;
-  };
 }
 
 // The names under each part, in ABOUT's order.

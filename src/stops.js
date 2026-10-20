@@ -41,8 +41,8 @@ function portalRect(deep) {
   return { x: c.x - c.r, y: c.y - c.r, w: c.r * 2, h: c.r * 2 };
 }
 
-// Every stop there is, in every place, unsorted. `half` is the place a stop
-// stands in: 'yard' or 'deep' by where its box is, an act's own name.
+// Every stop there is, in both halves, unsorted. `half` is 'yard' or
+// 'deep' for a stop that stands in one, by where its box is.
 function every() {
   const out = [];
   const half = r => (r.y >= deepTop() ? 'deep' : 'yard');
@@ -53,9 +53,7 @@ function every() {
     if (!row.stand || !row.name || row.place === 'after') continue;
     const r = standRect(row.key);
     if (!r) continue;
-    // An act's station stands in its act's place; the yard's and the deep's
-    // in whichever half their box is.
-    out.push({ id: `st:${row.key}`, kind: 'station', key: row.key, board: !!row.board, r, half: row.place === 'hell' ? 'hell' : half(r) });
+    out.push({ id: `st:${row.key}`, kind: 'station', key: row.key, board: !!row.board, r, half: half(r) });
   }
   if (arrowShown()) {
     out.push({ id: 'way:arrow:yard', kind: 'way', key: 'arrow', r: arrowBox(false), half: 'yard' });

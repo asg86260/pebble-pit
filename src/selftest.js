@@ -48,7 +48,6 @@ import { TESTS as aftergestures } from './selftest/aftergestures.js';   // act 3
 import { TESTS as afterboards } from './selftest/afterboards.js';   // track C: act 3's boards, bought through their tiles
 import { TESTS as playcheck } from './selftest/playcheck.js';   // a play check for each place, by the pointer
 import { TESTS as cutbench } from './selftest/cutbench.js';   // the cutscene bench (cutscenes.html)
-import { TESTS as placebar } from './selftest/placebar.js';   // the polish bar's browser gates
 
 // Every group there is, in file order.
 const TESTS = [
@@ -88,7 +87,6 @@ const TESTS = [
   ...afterboards,
   ...playcheck,
   ...cutbench,
-  ...placebar,
 ];
 
 // `__test()` runs the lot. `__test('casino')` runs the groups whose name says

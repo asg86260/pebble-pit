@@ -46,8 +46,8 @@ export const lifted = () => S.workers.find(w => w.lifted) || null;
 // the hand takes them up the same way: the body under the pointer in the
 // place the camera is in, the one in the hand wherever it is from, and the
 // held body put where the cursor is by its own place's way of standing.
-// The retraining stays the yard's (`workerAt`, `lifted`): an act's member
-// has no station to be dropped on. Its hover says its job (input.js).
+// The tooltip and the retraining stay the yard's (`workerAt`, `lifted`): an
+// act's member has no card and no station to be dropped on.
 const handPad = () => Math.max(P * 1.5, coarse() ? (TOUCH_TARGET / S.zoomShow - WORKER) / 2 : 0);
 export function grabAt(x, y) {
   if (!isActView(S.view)) return workerAt(x, y);
@@ -193,17 +193,14 @@ function flingHat(w, dx) {
   earn('hatoff');
 }
 export function shakeHeld(w, dx) {
-  if (!w || Math.abs(dx) < 1) return;
-  // An act's body wears no hat and sheds nothing in the air: its turns are
-  // counted, and its place's engine spends them on the drop (placebodies.js).
-  const act = !!crewHolding(w);
+  // An act's member carries nothing the shaking sheds and wears no hat.
+  if (!w || Math.abs(dx) < 1 || crewHolding(w)) return;
   const dir = Math.sign(dx);
   const t = now();
   if (t - (w.turnedAt || 0) > SHAKE_WINDOW) w.shook = 0;   // lapsed: start again
   if (w.lastDir && dir !== w.lastDir) {
     w.shook = (w.shook || 0) + 1;
     w.turnedAt = t;
-    if (act) { w.lastDir = dir; return; }
     // Stars while you are still shaking it; `drop` carries the same spell on
     // past the landing.
     if (w.shook >= SHAKE_TURNS) {

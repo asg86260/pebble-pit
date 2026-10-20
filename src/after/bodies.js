@@ -24,7 +24,7 @@ import { S } from '../state.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S, AFTER_PASTE_S,
          AFTER_PASTE_LOAD, AFTER_PRESS_S, AFTER_SAW_S, AFTER_CHIP_S, AFTER_SIGN_S, AFTER_PULP_S, AFTER_CHOP_HOLD_S,
-         AFTER_JOIN_FADE_S, AFTER_WALK } from '../config.js';
+         AFTER_JOIN_FADE_S } from '../config.js';
 import { secs, walk, nextId } from './util.js';
 import { stepCrew } from '../placebodies.js';
 import { deepAt } from './sky.js';
@@ -293,13 +293,7 @@ export const AFTER_JOB_ROWS = {
 // the camp.
 const BODY_H = 3 * P;
 export const AFTER_CREW = {
-  place: 'after',
   list: () => (S.after ? S.after.bodies : null),
-  // the fastest it goes, px a second, how much of it is drawn, and whether it
-  // is drawn as one of a crowd rather than as itself (verify.js)
-  pace: AFTER_WALK,
-  ink: w => bodyInk(w),
-  unseen: w => w.state === 'join' || w.state === 'gone' || deepAt(w.x) > 0,
   route: go,
   jobs: AFTER_JOB_ROWS,
   dt: secs,

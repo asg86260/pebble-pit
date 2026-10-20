@@ -191,7 +191,6 @@ this section; the release that switches it on moves these under Unreleased.
 - Every zoom glides instead of stepping, the picture scaled sharp on the way, and the pointer stays on what it points at through it (test/zoom-glide.test.mjs).
 
 - A yard with a big crew in the deep no longer lags: its gatherers stopped re-reading the whole floor and the whole crew every frame (`node tools/node/break-perf.mjs`, test/crusher.test.mjs).
-- A dizzy body picked up and set down somewhere else rocks where it came down, instead of jumping back to where it first landed (test/kit.test.mjs).
 - A card's long name, its gain and its cancel / another strip are no longer cut short at the card's edge; the board widens to fit them (src/selftest/boardwords.js).
 - The smallest words in the menus -- the appearance page's tabs and tile names, the boards' row names, the controls table, the settings tabs, the title page's foot -- are no longer too small to read, and every grey word in the menus is dark enough to read on the light page and the dark (src/selftest/textaa.js; test/ui-tokens.test.mjs).
 - The appearance page stays one height as you change slots, switch between you and your sqouse, or step through a new yard's build steps (src/selftest/wardrobe.js, "one height").

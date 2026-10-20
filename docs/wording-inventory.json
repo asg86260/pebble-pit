@@ -5817,34 +5817,6 @@
   "text": "delver"
  },
  {
-  "id": "hover-hell-miner",
-  "group": "Hover",
-  "where": "src/input.js",
-  "context": "act 4 (placeholder): the hover over a ghost in hell, as the job it does (a miner at a face)",
-  "text": "miner"
- },
- {
-  "id": "hover-hell-stoker",
-  "group": "Hover",
-  "where": "src/input.js",
-  "context": "act 4 (placeholder): the hover over a ghost in hell, as the job it does (a stoker feeding a furnace)",
-  "text": "stoker"
- },
- {
-  "id": "hover-hell-smith",
-  "group": "Hover",
-  "where": "src/input.js",
-  "context": "act 4 (placeholder): the hover over a ghost in hell, as the job it does (the smith at the anvil)",
-  "text": "smith"
- },
- {
-  "id": "hover-hell-gang",
-  "group": "Hover",
-  "where": "src/input.js",
-  "context": "act 4 (placeholder): the hover over a ghost in hell, as the job it does (one of the wall gang at a barrier)",
-  "text": "wall gang"
- },
- {
   "id": "hover-portal-up",
   "group": "Hover",
   "where": "src/input.js",

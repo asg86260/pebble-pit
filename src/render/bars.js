@@ -4,7 +4,6 @@ import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK, BUILD_DRIF
 import { now } from '../clock.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
 import { S, casino, lab, outhouse, filter, tower } from '../state.js';
-import { siteHere } from '../stations.js';
 import { OPENS_PLACE, SITES, DOWN_THERE, progressOf, rowFor, siteBox, worksAt, doneAt } from '../works.js';
 import { tintOf } from '../upgrades.js';
 import { farmShedRoofed, quarryShed } from '../world.js';
@@ -260,7 +259,6 @@ export function workSpots(site) {
 
 export function drawWorkBars() {
   for (const site of SITES) {
-    if (!siteHere(site)) continue;
     for (const { w, bar: b, glyph } of workSpots(site)) {
       if (b) { bar(b.x, b.y, progressOf(w)); continue; }
       const row = rowFor(w.key);

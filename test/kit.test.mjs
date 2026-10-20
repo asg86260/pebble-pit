@@ -8,8 +8,6 @@
 // are the two places the drawing and the errand both read from.
 
 import { group, ok, state, run, runUntil, yard, WORKER, buyBuilt } from './helpers.mjs';
-// A body stood somewhere by hand is a setup to the motion rules (verify.js).
-import { touchSetup } from '../src/verify.js';
 import { KIT, KIT_JOBS, KIT_MARK, TRADE_OF, boughtKit } from '../src/kit.js';
 import { DIZZY_MS } from '../src/config.js';
 
@@ -347,7 +345,6 @@ group('a hauler that picks the helmet up is a rockhand, and the swap is one body
   lift(owner);
   owner.x -= 600;
   owner.y -= 120;
-  touchSetup();
 
   // Run until the swap happens, rather than for a fixed stretch and then
   // looking at whatever is true by then.

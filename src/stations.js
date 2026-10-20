@@ -115,11 +115,7 @@ for (const id of PARTY_IDS) {
 // yard's builders on its ground (`stand`) unless it says otherwise
 // (`builtBy`). A row with a `pile` has a pile that can fill: the mark over it
 // and its hover come from that. So a new place is one row, and every system
-// that shows or staffs a place reads it off here. What it has made so far
-// (`made`, a count that only climbs while its bodies work) is what the polish
-// bar's door check holds still with nobody at it (test/place-bar.test.mjs).
-// Its hand-worked parts (`work`, a point test on what is drawn) are the
-// hand's and never its board's (`workAt`).
+// that shows or staffs a place reads it off here.
 //
 // Which place a row stands in (`place`: 'yard', 'deep', 'after' or 'hell';
 // 'yard' unless it says): the pointer asks only the rows of the place on
@@ -153,7 +149,7 @@ export const STATIONS = [
   // there.
   { key: 'quarry', name: msg('station-quarry'), glyph: 'hoist',
     empty: msg('station-quarry-empty'), post: { key: 'quarryjob', job: JOB.QUARRY, kit: true },
-    open: () => S.quarryOpen, stand: () => quarryShed(), board: 'quarryBoardOpen', made: () => S.shards,
+    open: () => S.quarryOpen, stand: () => quarryShed(), board: 'quarryBoardOpen',
     reach: { right: 1 },
     after: ['farm'],
     // the net failing opens it (DESIGN.md, "The barriers are the gates");
@@ -161,7 +157,7 @@ export const STATIONS = [
     needs: () => shieldDone('net') && !demoOn() },
   { key: 'farm', name: msg('station-farm'), glyph: 'furrow',
     empty: msg('station-farm-empty'), post: { key: 'farmjob', job: JOB.FARM, kit: true },
-    open: () => S.farmOpen, stand: () => farmShedRoofed(), board: 'farmBoardOpen', made: () => S.spores,
+    open: () => S.farmOpen, stand: () => farmShedRoofed(), board: 'farmBoardOpen',
     after: [],
     // Sticky: `nearly` reads the dust in the hole, and as a plain `show` the
     // door came and went every time you spent. The props failing opens it.
@@ -271,11 +267,6 @@ export const BOARDS = STATIONS.filter(r => r.board).map(r => r.key);
 const worldOf = place => (place === 'after' || place === 'hell' ? place : 'yard');
 // Whether a row stands in the world on screen, the one the pointer asks.
 export const here = row => !!row && worldOf(row.place) === worldOf(S.view);
-// Whether a site of the works (a station's key, or the rift and the meteor,
-// which are the yard's) stands in the world on screen: what the marks over
-// the stations -- the pile marks, the work bars, the done marks -- ask, so
-// one layer of each serves every place and draws only its own.
-export const siteHere = key => here(byKey.get(key) || { place: 'yard' });
 // The boards of the yard's world, for what is drawn or counted over its
 // stations alone (their flags, the snapshot's offers).
 export const YARD_BOARDS = STATIONS.filter(r => r.board && worldOf(r.place) === 'yard').map(r => r.key);
@@ -335,20 +326,9 @@ export function nearStation(key, x, y) {
   return !!r && x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h;
 }
 
-// The station whose hand-worked part is under a point (a row's `work`: the
-// flywheel, a lever, a face a blow lands on), or null: of the place on
-// screen only. A part worked by hand never opens a board, by walk-up, hover
-// or click (the owner, 2026-10-20: "the manual pieces of stations should not
-// open the shop menus"); the board opens from the rest of what is drawn.
-export function workAt(x, y) {
-  for (const s of STATIONS) if (s.work && here(s) && s.open() && s.work(x, y)) return s.key;
-  return null;
-}
-
 // The station a point on the ground asks for, in table order, or null: of
-// the place on screen only, and never over a part worked by hand.
+// the place on screen only.
 export function stationAt(x, y) {
-  if (workAt(x, y)) return null;
   for (const s of STATIONS) if (s.stand && here(s) && nearStation(s.key, x, y)) return s.key;
   return null;
 }

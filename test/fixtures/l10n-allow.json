@@ -106,7 +106,6 @@
    "after grove",
    "after camp",
    "after crowd",
-   "after sight",
    "after members",
    "after counts",
    "after cues",
@@ -116,8 +115,6 @@
    "hell seams",
    "hell forge",
    "hell barriers",
-   "hell sight",
-   "hell ghosts",
    "hell cage"
   ],
   "src/render/fish.js": [

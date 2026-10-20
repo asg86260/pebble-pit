@@ -7,7 +7,7 @@ import { P } from '../config.js';
 import { S, farm, sky } from '../state.js';
 import { ctx } from './ctx.js';
 import { sphereUp, shellR } from '../sphere.js';
-import { STATIONS, station, here, siteHere } from '../stations.js';
+import { STATIONS, station } from '../stations.js';
 
 // --- the ground a station pays out on to -------------------------------------
 // The strips in `S.piles` are unmarked ground: the heaps themselves are their
@@ -32,9 +32,7 @@ export function drawPileMarks() {
 
 // Every pile that can be full: the yard's strips, and every standing station
 // whose row has a pile of its own, its mark over the station.
-// Of the world on screen: one layer of marks serves every place.
-export const markedPiles = () => [...S.piles.filter(p => siteHere(p.key)),
-  ...STATIONS.filter(r => r.pile && here(r) && r.open()).map(r => ({ key: r.key }))];
+export const markedPiles = () => [...S.piles, ...STATIONS.filter(r => r.pile && r.open()).map(r => ({ key: r.key }))];
 // What the hover says over one: the row's own words, or the yard's.
 export const fullSays = key => station(key)?.full || msg('hover-pile-full');
 

@@ -12,19 +12,15 @@
 // on a press; the boards' rows are upgrades/rows-hell.js's.
 
 import { S } from '../state.js';
-import { P, GANG_MAX, HELL_TIERS } from '../config.js';
+import { P } from '../config.js';
 import { msg } from '../lang.js';
 import { hellOn } from '../acts.js';
-import { faceX, faceTop, faceStand, chamberFloor, furnaceBox, barrierBox, barrierStand, anvilX, storeX, roadX } from './place.js';
-import { onFace } from './ore.js';
-import { onBarrier } from './barriers.js';
+import { faceX, faceTop, chamberFloor, furnaceBox, barrierBox, anvilX, storeX, roadX } from './place.js';
 
 const live = () => hellOn() && !!S.hell;
 const inBox = (x, y, b) => x >= b.x && x < b.x + b.w && y >= b.y && y <= b.y + b.h;
 const chambers = () => { const out = []; for (let i = 0; i <= S.hell.chamber; i++) out.push(i); return out; };
 const mid = () => S.camX + S.viewW / 2;
-// What a row has made so far, over every ore (the polish bar's door check).
-const sum = o => Object.values(o || {}).reduce((n, v) => n + (v || 0), 0);
 
 // The same one-at-a-time flag as act 3's rows: this session's, never saved.
 let openKey = null;
@@ -48,21 +44,10 @@ const nearest = boxOf => {
   return best;
 };
 
-// A face as drawn, the cells it is cut back to and a cell either side, and
-// the ground its miners stand on to work it (`faceStand`, a body's two cells
-// and two more). The face itself is the blow's (`work`), so its board opens
-// from the miners' ground.
-const faceBox = i => {
-  const d = S.hell.seams[i] || 0, x = faceX(i, d) - P;
-  return { x, y: faceTop(i), w: faceStand(i, d) + 3 * P - x, h: chamberFloor(i) - faceTop(i) };
-};
-// A barrier and a cell either side of it, and the ground the wall gang
-// stands on before it, a slot a body (`barrierStand`); the barrier is the
-// blow's, so its board opens from the gang's ground.
-const wallBox = i => {
-  const b = barrierBox(i), x = barrierStand(i, GANG_MAX - 1) - P;
-  return { x, y: b.y, w: b.x + b.w + P - x, h: b.h };
-};
+// A face as drawn: the cells it is cut back to and a cell either side.
+const faceBox = i => ({ x: faceX(i, S.hell.seams[i]) - P, y: faceTop(i), w: 4 * P, h: chamberFloor(i) - faceTop(i) });
+// A barrier and a cell either side of it.
+const wallBox = i => { const b = barrierBox(i); return { x: b.x - P, y: b.y, w: b.w + 2 * P, h: b.h }; };
 // The landing's ground stations: a few cells either side of the spot, over
 // the six cells above the first floor.
 const AT_W = 3, AT_UP = 6;
@@ -82,15 +67,9 @@ const row = (kind, more) => {
 // In the order a press asks them: a face, a furnace, a barrier in each
 // chamber, then the anvil with its store and the road.
 export const HELL_STATION_ROWS = [
-  row('face', { stand: () => nearest(faceBox), hit: (x, y) => chambers().some(i => inBox(x, y, faceBox(i))),
-                work: (x, y) => chambers().some(i => onFace(i, x, y)),
-                made: () => sum(S.hell.mined) }),
-  row('furnace', { stand: () => nearest(furnaceBox), hit: (x, y) => chambers().some(i => inBox(x, y, furnaceBox(i))),
-                   made: () => sum(S.hell.smelted) }),
-  row('wall', { stand: () => nearest(wallBox), hit: (x, y) => chambers().some(i => inBox(x, y, wallBox(i))),
-                work: (x, y) => chambers().some(i => i < HELL_TIERS.length && onBarrier(i, x, y)) }),
-  // the tools made, and the strokes on the one under the hammer
-  row('anvil', { stand: () => landing(anvilX()), hit: (x, y) => inBox(x, y, landing(anvilX())) || inBox(x, y, landing(storeX())),
-                 made: () => S.hell.tool * 1000 + (S.hell.forge ? S.hell.forge.strokes + 1 : 0) }),
+  row('face', { stand: () => nearest(faceBox), hit: (x, y) => chambers().some(i => inBox(x, y, faceBox(i))) }),
+  row('furnace', { stand: () => nearest(furnaceBox), hit: (x, y) => chambers().some(i => inBox(x, y, furnaceBox(i))) }),
+  row('wall', { stand: () => nearest(wallBox), hit: (x, y) => chambers().some(i => inBox(x, y, wallBox(i))) }),
+  row('anvil', { stand: () => landing(anvilX()), hit: (x, y) => inBox(x, y, landing(anvilX())) || inBox(x, y, landing(storeX())) }),
   row('muster', { stand: () => landing(roadX()), hit: (x, y) => inBox(x, y, landing(roadX())) })
 ];

@@ -16,9 +16,6 @@
 // - 'deep', for the deep's whole half: the same turn between dim's charcoal
 //   and light gray. The deep was drawn for that, as a dark field on either
 //   page, and it is left as it was.
-// - 'hell', for hell's whole place: not turned. Hell is a black hollow with
-//   white fire on either page (it has no red; its fire is white), and turned
-//   its black strips came out light and its fire dark.
 // - 'after', for act 3's layers (render.js, AFTER): the act is drawn in four
 //   tones and no others (config, AFTER_TONES), and the yard's map would put
 //   all four inside the paper's quarter of the range, a murk at 1x. Here
@@ -85,12 +82,7 @@ function fromHsl(h, s, l) {
 
 // The ends of each map: where white lands and where black lands.
 const DEEP_ENDS = [lightOf(DEEP_PAPER), lightOf(DEEP_INK)];
-// Hell is drawn black with white fire on either page, so its map runs the
-// other way from the yard's: black to the dark paper, white to the light
-// ink, a hole kept a hole and what burns kept burning.
-const HELL_ENDS = dim ? [lightOf(DEEP_INK), lightOf(DEEP_PAPER)] : [lightOf(DARK_INK), lightOf(DARK_PAPER)];
-const ENDS = dim ? { yard: DEEP_ENDS, line: DEEP_ENDS, deep: DEEP_ENDS, after: DEEP_ENDS, hell: HELL_ENDS } : {
-  hell: HELL_ENDS,
+const ENDS = dim ? { yard: DEEP_ENDS, line: DEEP_ENDS, deep: DEEP_ENDS, after: DEEP_ENDS } : {
   yard: [lightOf(DARK_PAPER), lightOf(DARK_INK)],
   after: [lightOf(AFTER_DARK.paper), lightOf(AFTER_DARK.ink)],
   line: [lightOf(DARK_PAPER), lightOf(DARK_INK)],
@@ -124,7 +116,7 @@ let mode = 'yard';
 export function inkMode(m) { if (m) mode = m; return mode; }
 // Whether black is being drawn light: the turned maps, where a `darken`
 // becomes a `lighten` and the deep skips its negative.
-export const turnedOver = () => on && mode !== 'hell' && (dim || mode !== 'after');
+export const turnedOver = () => on && (dim || mode !== 'after');
 
 function mapRgb(r, g, b, m) {
   const [h, s, l] = toHsl(r, g, b);
@@ -181,7 +173,7 @@ export function line(c) {
 
 const NAMED = { black: [0, 0, 0], white: [255, 255, 255] };
 const RGB = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/;
-const caches = { yard: new Map(), line: new Map(), deep: new Map(), after: new Map(), hell: new Map() };
+const caches = { yard: new Map(), line: new Map(), deep: new Map(), after: new Map() };
 
 // The color the page draws for a color the code wrote, in the map in force.
 // Anything it cannot read -- a gradient, a pattern, a name it does not know --
@@ -212,8 +204,8 @@ export function inkOf(c, m = mode) {
 // as on the light page, the fill is white.
 const sum = (p, i) => { const [a, b, c] = hex(p), [d, e, f] = hex(i);
   return raw('#' + [a + d, b + e, c + f].map(v => Math.min(255, v).toString(16).padStart(2, '0')).join('')); };
-const XOR = dim ? { yard: sum(DEEP_PAPER, DEEP_INK), line: sum(DEEP_PAPER, DEEP_INK), deep: sum(DEEP_PAPER, DEEP_INK), after: sum(DEEP_PAPER, DEEP_INK), hell: sum(DEEP_PAPER, DEEP_INK) }
-  : { yard: sum(DARK_PAPER, DARK_INK), line: sum(DARK_PAPER, DARK_INK), deep: sum(DEEP_PAPER, DEEP_INK), after: raw('#ffffff'), hell: sum(DARK_PAPER, DARK_INK) };
+const XOR = dim ? { yard: sum(DEEP_PAPER, DEEP_INK), line: sum(DEEP_PAPER, DEEP_INK), deep: sum(DEEP_PAPER, DEEP_INK), after: sum(DEEP_PAPER, DEEP_INK) }
+  : { yard: sum(DARK_PAPER, DARK_INK), line: sum(DARK_PAPER, DARK_INK), deep: sum(DEEP_PAPER, DEEP_INK), after: raw('#ffffff') };
 export const xorInk = () => (on ? XOR[mode] : raw('#ffffff'));
 
 // The setters, on the prototype, so every context is covered. Only on the
