@@ -4,6 +4,17 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## The casino's payout can bury a hauler in an emptied hole -- FOUND, NOT FIXED (2026-10-20)
+
+`src/casino.js` (around lines 587 and 610) banks a pay lump straight into
+the hole in one frame when the air or the tray is full. A lump of ~7,800
+grains into a torn, emptied hole would bury a hauler on the ladder the way a
+`__grant` did (test/hauler-in-hole.test.mjs guards the drowning and the
+grant, not this). Not reproduced in play. Fix: stream the payout into the
+hole no faster than a body can climb, or route it through the rift while
+anyone is down the hole (`anyoneInTheHole()` in rift.js). Needs the owner's
+call on whether the payout may stream.
+
 ## One place engine for every act -- APPROVED, BUILDING IN ORDER (2026-10-20)
 
 DESIGN.md, "One place engine". Act 3 and hell carry parallel copies of the
