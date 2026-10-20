@@ -631,7 +631,9 @@ function shape(rnd, kind, cx, base, R, flat, add) {
     for (let x = cx - T.span * R; x <= cx + T.span * R;) {
       const r = R * (0.45 + 0.2 * rnd());
       add('rear', x, base - r * 0.55 * f, r, f);
-      add(rnd() < 0.5 ? 'mid' : 'front', x + r * 0.4, base - r * 0.1 * f, r * 0.7, f * 0.7);
+      // (its center well over the base, so the base's cut leaves a lobe and
+      // not a strip one or two cells high)
+      add(rnd() < 0.5 ? 'mid' : 'front', x + r * 0.4, base - r * 0.45 * f, r * 0.7, f);
       x += r * (1.0 + 0.4 * rnd());
     }
     for (let k = 0, n = count(rnd, T.crown); k < n; k++)
@@ -679,6 +681,7 @@ function cloudPuffs(rnd, kind, cx, base, R, flat, life, stray, puffs) {
   const K = CLOUDS_VOLUME.crust, F = CLOUDS_FLOW;
   shape(rnd, kind, cx, base, R, flat, (name, x, y, r, f, on) => {
     const j = TIER[name], p = flowPuff(rnd, x, y, r, f, j, life, stray, F);
+    p.kind = kind;
     if (on) { p.follow = on; p.a = p.a.map(v => v * CLOUDS_VOLUME.kids.ride); }
     // every puff of a cloud stops at its base line: the bottom is flat
     p.cut = base;

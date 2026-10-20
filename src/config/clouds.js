@@ -180,7 +180,7 @@ export const CLOUDS_SKY = {
   R: 18, lift: 0.8, parallax: 0.75, wind: 0.06,
   spread: [0.4, 0.55], tail: [2.2, 2.4], flat: [0.45, 1], group: [3, 1.5], packing: [1.1, 1.8], gap: [1.6, 6],
   every: [6, 1], stray: 0.4,
-  kinds: { cumulus: 4, heap: 2.5, tower: 0.7 }
+  kinds: { cumulus: 5, tower: 1 }
 };
 // What the sheet keeps far off (the owner, 2026-10-20: the distant clouds
 // read as "single cell lines and a bit messy"): the grid is a cell, so a
@@ -193,7 +193,7 @@ export const CLOUDS_SKY = {
 //            no shading, no lumps (CLOUDS_SHAPES.blob)
 //   bank     a layer nearer than this is no clouds at all but the horizon's
 //            one long bank (CLOUDS_BANK)
-export const CLOUDS_LOD = { least: { h: 4, w: 8 }, plain: 0.6, bank: 0.1 };
+export const CLOUDS_LOD = { least: { h: 6, w: 10 }, plain: 0.6, bank: 0.1 };
 // The horizon's bank: one row of low lobes the whole way round, each `r` of
 // its layer's R (scattered by `spread`), `step` of its radius apart, its
 // center `at` its radius over the horizon, squashed `flat`, so the horizon
@@ -233,7 +233,7 @@ export const CLOUDS_LIFE = {
 //            radius, over `arc` of its edge (half-turns, left round the top
 //            to right), from lobes of at least `from` cells
 export const CLOUDS_VOLUME = {
-  base: { span: [1.05, 1.2], r: [0.38, 0.52], flat: 0.55, at: 0.2, step: [0.95, 1.25] },
+  base: { span: [0.85, 1], r: [0.38, 0.52], flat: 0.7, at: 0.35, step: [0.95, 1.25] },
   turrets: { n: [2, 4], r: [0.62, 0.95], ends: 0.3, close: [0.55, 0.75], rise: [0.4, 0.8], stack: [0.95, 0.72] },
   kids: { n: [2, 4], shrink: [0.48, 0.7], arc: 0.45, out: [0.7, 0.92], front: 0.55, levels: 2, least: 2.5, ride: 0.5 },
   crust: { from: 6, per: 0.3, back: 0.2, r: [0.16, 0.28], arc: [-1.1, 0.1], out: 0.9 }

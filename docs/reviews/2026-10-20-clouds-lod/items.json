@@ -1,0 +1,115 @@
+{
+ "title": "Far clouds drawn whole",
+ "lede": "No cloud smaller than the grid draws whole; far clouds plain lobes in one tone; the horizon one bank; no one-cell lines or specks.",
+ "base": "de9178e1",
+ "head": "78b822b7",
+ "items": [
+  {
+   "id": "union",
+   "title": "The union's camp",
+   "what": "the far sky as plain clouds and a horizon bank",
+   "shots": [
+    {
+     "scene": "level-union",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-union",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-union",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-union",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "god",
+   "title": "God's camp",
+   "what": "the same round God's stage",
+   "shots": [
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "2000x967 light"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "2000x967 dark"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "light",
+     "label": "800x600 light"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      800,
+      600
+     ],
+     "theme": "dark",
+     "label": "800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "still-1x",
+   "title": "Twelve seconds at real speed",
+   "what": "the camera held, the sky at 1x",
+   "shots": [
+    {
+     "scene": "level-god",
+     "window": [
+      1000,
+      484
+     ],
+     "theme": "light",
+     "label": "1x, 12 s",
+     "wait": 0,
+     "gif": {
+      "seconds": 12,
+      "fps": 10
+     }
+    }
+   ]
+  }
+ ]
+}
