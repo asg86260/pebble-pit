@@ -13,7 +13,7 @@
 // where the cell stands (no flat fills, no random draw, so it holds still
 // frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
+import { P, GREY, AFTER_CLOSED, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
@@ -23,8 +23,7 @@ import { ctx } from './ctx.js';
 import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
-import { screenAt } from './frame.js';
-import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, afterFloor, ART, AP } from '../after/place.js';
+import { buildPileAt, stationBox, stationX0, stationDoor, heapMid, notchX, fileAt, rankAtY, afterFloor, ART, AP } from '../after/place.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel.js';
 import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
@@ -154,34 +153,56 @@ function glyphOver(b, rows, at, alpha = 1) {
   buildingGlyph(snap(b.x + b.w / 2), b.y - P * 7 - (SHELF_GLYPH_CELLS / 2 - 1.5) * P, rows, clamp01(at));
   ctx.globalAlpha = was;
 }
+// The closed sign at a station's door (config, AFTER_CLOSED), its foot on
+// the floor and `x` its middle, world px: symbols only, drawn on the act's
+// art cell (AP) with its rim the art's stroke. 0, a board on a post crossed
+// through corner to corner; 1, a barrier, a striped bar on crossed legs.
+function closedSign(x, design = AFTER_CLOSED.design) {
+  const C = AFTER_CLOSED, fl = afterFloor(), r = 2 * AFTER_ART_SCALE, u = AP;
+  const box = (x0, y0, w, h) => { ctx.fillStyle = GREY[K]; ctx.fillRect(x0, y0, w, h); ctx.fillStyle = GREY[W]; ctx.fillRect(x0 + r, y0 + r, w - 2 * r, h - 2 * r); };
+  // a cross corner to corner over a box, in ink: a stroke two rims thick
+  // laid in steps of a rim, each on the rim's grid
+  const cross = (x0, y0, w, h) => {
+    ctx.fillStyle = GREY[K];
+    const s = 2 * r, n = Math.round((w - s) / r) + 1;
+    for (let i = 0; i < n; i++) {
+      const y = y0 + Math.round((h - s) * i / (n - 1) / r) * r;
+      ctx.fillRect(x0 + i * r, y, s, s); ctx.fillRect(x0 + w - s - i * r, y, s, s);
+    }
+  };
+  const w = C.w * u, x0 = snap(x) - Math.round(C.w / 2) * u;
+  if (design === 0) {
+    const h = C.h * u, top = fl - (C.post + C.h) * u;
+    ctx.fillStyle = GREY[K]; ctx.fillRect(snap(x) - r, top + h, 2 * r, C.post * u);
+    box(x0, top, w, h);
+    cross(x0 + 2 * r, top + 2 * r, w - 4 * r, h - 4 * r);
+  } else {
+    const bar = u, top = fl - C.legs * u - bar;
+    cross(x0 + u, top + bar, w - 2 * u, C.legs * u);
+    box(x0, top, w, bar);
+    ctx.fillStyle = GREY[K];
+    for (let k = 1; k < C.w; k += 2) ctx.fillRect(x0 + k * u, top + r, u / 2, bar - 2 * r);
+  }
+}
 function drawStation(key) {
   const b = stationBox(key);
   if (!inView(b.x - P * 16, b.w + P * 32)) return;
   const a = A(), r = a.raising[key];
-  // Nothing stands on a spot nobody has ordered: it is open floor.
-  if (!built(key) && !r) return;
   // Each drawn on its paper backing, so the camp's crowd behind it does not
   // show through its open parts; the pillar is paper through already.
   const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { backing(d, backOf(key)); DRAW[key](d, work, t, hands[key], atStation(key).length > 0, extras(key)); };
   if (!built(key)) {
-    // Raised a band a piece, the floor up, each fading in from when it landed.
-    drawSite(key);
-    const rows = b.h / P, d = frameOf(key);
-    for (let k = 0; k < r.n; k++) {
-      const top = Math.round(rows * (k + 1) / AFTER_BUILD_PIECES), bot = Math.round(rows * k / AFTER_BUILD_PIECES);
-      ctx.save();
-      ctx.beginPath(); ctx.rect(b.x - P * 4, afterFloor() - top * P, b.w + P * 8, (top - bot) * P); ctx.clip();
-      ctx.globalAlpha = fadeIn(r.at[k]);
-      draw(d, false, 0);
-      ctx.restore();
-    }
+    // Standing whole and idle, closed: its sign at the door until the
+    // rebuild takes it down, faded out a piece of the build at a time as
+    // each lands, its loads on the spot while it goes on.
+    draw(frameOf(key), false, 0);
+    const down = r ? r.at.slice(0, r.n).reduce((s, at) => s + fadeIn(at), 0) / AFTER_BUILD_PIECES : 0;
+    if (down < 1) { ctx.globalAlpha = 1 - down; closedSign(stationDoor(key)); ctx.globalAlpha = 1; }
+    if (r) drawSite(key);
     return;
   }
   const s = working(key);
-  // A station finished a moment ago is still settling: its last band fading.
-  ctx.globalAlpha = r ? fadeIn(r.at[r.at.length - 1]) : 1;
   draw(frameOf(key), s.work, a.t);
-  ctx.globalAlpha = 1;
   drawPosts(key, b);
   if (s.work) glyphOver(b, GLYPHS[key], s.at, s.ink);
 }
@@ -321,10 +342,19 @@ export function drawAfterMembers() {
 // Each pile's count, in screen pixels after the world, where the piles put
 // it, on a plate of paper its own size, so the camp's crowd behind it does
 // not crowd its digits.
+// A world spot on the glass, in screen px, on the device pixel the world's
+// own drawing puts it on (render/frame.js, `enterWorld`, rounds the camera's
+// offset once and lays the drawing off it), so a count holds its place over
+// its pile as the camera pans instead of rounding a pixel either way of it.
+function onWorld(wx, wy) {
+  const k = S.zoom * S.dpr;
+  return { x: (Math.round(wx * k) + Math.round((-S.camX + S.shakeX) * k)) / S.dpr,
+           y: (Math.round(wy * k) + Math.round((-S.camY + S.shakeY) * k)) / S.dpr };
+}
 export function drawAfterCounts() {
   if (S.view !== 'after' || !A()) return;
   for (const c of pendingCounts()) {
-    const at = screenAt(c.x, c.y), str = String(c.n);
+    const at = onWorld(c.x, c.y), str = String(c.n);
     const w = widthOf(drawable(str), NUM_FONT_PX), h = GH * NUM_FONT_PX, pad = AFTER_COUNT_PAD;
     ctx.fillStyle = GREY[W];
     ctx.fillRect(Math.round(at.x - w / 2) - pad, Math.round(at.y - h / 2) - pad, w + pad * 2, h + pad * 2);

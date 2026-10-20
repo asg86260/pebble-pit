@@ -8253,6 +8253,13 @@
   "text": "build"
  },
  {
+  "id": "after-sect-rebuild",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 ruined station's card heading (placeholder): its rebuild",
+  "text": "rebuild"
+ },
+ {
   "id": "after-sect-card",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",

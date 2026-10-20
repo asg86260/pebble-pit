@@ -15,7 +15,7 @@ import { P } from '../config.js';
 import { msg } from '../lang.js';
 import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
-import { stationBox, stationParts, plotX, groveX1, afterFloor, AP } from './place.js';
+import { stationBox, stationParts, plotX, groveX1, afterFloor, AP, closed } from './place.js';
 import { trees, standing } from './grove.js';
 import { godCampAt, godMid, faceY } from './sky.js';
 
@@ -82,7 +82,8 @@ const row = (card, more) => {
 const STATION_CARDS = ['mill', 'chipper', 'papermill', 'workshop', 'press', 'shack', 'pedestal'];
 export const AFTER_STATION_ROWS = [
   ...STATION_CARDS.map(card => row(card, {
-    open: () => live() && built(card),
+    // closed too: its board offers its rebuild
+    open: () => live() && (built(card) || closed(card)),
     stand: () => stationBox(card),
     hit: (x, y) => inBox(x, y, drawn(card)) || (card === 'mill' && inBox(x, y, stationParts('heap').heap))
   })),

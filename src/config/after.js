@@ -176,6 +176,16 @@ export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0
 // The stations standing from the act's first frame: the pedestal the pair
 // speak from and the construction shack that sells every other.
 export const AFTER_START_BUILT = ['pedestal', 'shack'];
+// The camp's other stations stand whole from the start, closed until they are
+// built (the owner, 2026-10-20: "lets just add a closed sign in front of
+// them"): a closed sign stands at each one's door, symbols only, and its
+// board offers its rebuild, the shack's build row for it. The rebuild takes
+// the sign down a piece at a time, faded out as each piece of the build
+// lands, and the station works once it is built. The sign, in the act's art
+// cells (AP): `design` 0 a board crossed through on a post, 1 a barrier, a
+// striped bar on crossed legs; a board `w` by `h` on a post `post` high; a
+// bar `w` long on legs `legs` high.
+export const AFTER_CLOSED = { design: 0, w: 6, h: 4, post: 3, legs: 5 };
 // The product looks like the protest from the start (board card
 // act3-trees-to-rebellion, the owner's pick A, 2026-10-20): the workshop
 // letters the fist onto the sign as it works it, the finished signs stand in

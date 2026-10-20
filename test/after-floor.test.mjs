@@ -18,7 +18,6 @@ const flatUnder = k => {
   for (let j = col(b.x); j < col(b.x + b.w); j++) if (el[j]) return false;
   return floorAt(stationDoor(k)) === afterFloor();
 };
-const raisedUnder = k => { const el = floorProfile(), b = stationBox(k); return el.slice(col(b.x), col(b.x + b.w)).some(v => v > 0); };
 
 group('the cloud floor billows everywhere but under what stands on it', async () => {
   window.__actsOn(true);
@@ -32,27 +31,29 @@ group('the cloud floor billows everywhere but under what stands on it', async ()
   const [l0, l1] = crowdLip(), crowd = el.slice(l0 + 2, l1 - 2);
   window.__actsOn(null);
   return [
-    ok(raised / cols > 0.35, 'puffs rise along a good share of the floor', `${raised} of ${cols} columns`),
+    // every station stands from the start, closed or built, its ground pressed flat
+    ok(raised / cols > 0.2, 'puffs rise along a good share of the floor', `${raised} of ${cols} columns`),
     ok(el.every(v => v >= 0 && v <= 2) && el.includes(1) && el.includes(2), 'one and two cells high, no more', `${[...new Set(el)].sort()}`),
     ok(standing.length >= 2 && standing.every(flatUnder), 'flat under every station standing and level at its door', standing.join(' ')),
     ok(crowd.filter(v => v > 0).length > crowd.length / 2, "and it billows in front of God's crowd", crowd.join(''))
   ];
 });
 
-group('a spot nobody has ordered is open floor; bought on the shack, its ground is pressed flat', async () => {
+group('an unbuilt station stands closed on flat ground; bought on the shack, its ground stays flat', async () => {
   window.__actsOn(true);
   S.after = null;
   window.__goPlace('after');
   run(1);
   window.__grant({ dust: 40000, spores: 5000, shards: 2000, sparks: 400 });
   window.__afterGrant({ rebel: 400 });
-  const open = ['mill', 'chipper', 'papermill', 'workshop', 'press'].filter(k => !sited(k) && raisedUnder(k));
+  const five = ['mill', 'chipper', 'papermill', 'workshop', 'press'];
+  const standing = five.filter(k => sited(k) && flatUnder(k));
   const bought = window.__buy('after-build-mill');
   run(0.5);
   const pressed = flatUnder('mill');
   window.__actsOn(null);
   return [
-    ok(open.length >= 3, 'the floor billows across most unbuilt spots, nothing pressed for them', open.join(' ')),
+    ok(standing.length === five.length, 'each unbuilt station stands closed on flat ground', standing.join(' ')),
     ok(bought && pressed, 'ordered, the saw mill\'s ground goes flat at once, level at its door')
   ];
 });

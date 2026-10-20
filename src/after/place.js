@@ -261,7 +261,12 @@ export function floorFlats() {
 }
 // Whether a station's ground is taken: standing, or ordered and going up.
 // Before the act begins, the two that stand from its first frame.
-export const sited = key => (S.after ? S.after.built.includes(key) || !!S.after.raising[key] : AFTER_START_BUILT.includes(key));
+// Every station of the camp stands on its ground from the start, closed until
+// it is built (config, AFTER_CLOSED).
+export const sited = key => (S.after ? S.after.built.includes(key) || !!S.after.raising[key] || key in AFTER_STATIONS : AFTER_START_BUILT.includes(key));
+// Whether a station stands closed: standing whole but not built yet, its
+// closed sign in front of it until its rebuild takes it down.
+export const closed = key => !!S.after && !S.after.built.includes(key) && key in AFTER_STATIONS;
 // Which grounds are taken, as a key: the profile is worked out again only
 // when that changes.
 export const sitesKey = () => Object.keys(AFTER_STATIONS).filter(sited).join(',') + (longLine() ? '|line' : '');
