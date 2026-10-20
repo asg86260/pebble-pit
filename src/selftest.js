@@ -46,6 +46,7 @@ import { TESTS as wardrobe } from './selftest/wardrobe.js';   // the two of them
 import { TESTS as textaa } from './selftest/textaa.js';   // every word above the floor and at AA
 import { TESTS as aftergestures } from './selftest/aftergestures.js';   // act 3's hand work through the pointer
 import { TESTS as afterboards } from './selftest/afterboards.js';   // track C: act 3's boards, bought through their tiles
+import { TESTS as playcheck } from './selftest/playcheck.js';   // a play check for each place, by the pointer
 import { TESTS as cutbench } from './selftest/cutbench.js';   // the cutscene bench (cutscenes.html)
 
 // Every group there is, in file order.
@@ -84,6 +85,7 @@ const TESTS = [
   ...textaa,
   ...aftergestures,
   ...afterboards,
+  ...playcheck,
   ...cutbench,
 ];
 
