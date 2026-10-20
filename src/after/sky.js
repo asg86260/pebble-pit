@@ -145,7 +145,7 @@ export const godFront = () => {
 // walking in from God's side), and the pedestal and the pair on it.
 export const unionSpan = () => {
   const b = stationBox('pedestal'), C = UNION_CROWD, m = podiumMid(), h = unionHalf();
-  return [Math.min(b.x, speakerAt(0).x, m - h - C.jit), Math.max(b.x + b.w, speakerAt(1).x + WORKER, m + h + C.n[0] + C.jit + C.walk)];
+  return [Math.min(b.x, speakerAt(0).x, m - h - C.jit * P), Math.max(b.x + b.w, speakerAt(1).x + WORKER, m + h + (C.n[0] + C.jit) * P + C.walk)];
 };
 // His slice across with the window's middle at `cx`, world px: his crowd's
 // ends either side of his middle.
