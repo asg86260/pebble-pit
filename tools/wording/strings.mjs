@@ -109,6 +109,7 @@ export function looksLikeCopy(text) {
   if (/^\((prefers|pointer|hover|min-|max-)[\w-]*:/.test(text)) return false;                          // a media query
   if (/:scope\b/.test(text)) return false;                                                              // a scoped selector
   if (/^[\w.#:\[\]="$-]+(, [\w.#:\[\]="$-]+)+$/.test(text)) return false;                              // a selector list
+  if (/^\s*#version \d+/.test(text)) return false;                                                    // a shader's source (GLSL)
   return true;
 }
 
