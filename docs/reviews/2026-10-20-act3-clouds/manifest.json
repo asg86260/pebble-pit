@@ -1,0 +1,94 @@
+{
+ "base": "692ccd80a44dfc3d307cbcc994f3176469de4ff3",
+ "head": "bd77f2421340f85d9aa522084d888f042f8b3822",
+ "at": "2026-10-20T07:27:33.089Z",
+ "items": {
+  "union": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 2,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 3,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 4,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   }
+  ],
+  "god": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 2,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 3,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   },
+   {
+    "n": 4,
+    "before": {
+     "ext": "png"
+    },
+    "after": {
+     "ext": "png"
+    }
+   }
+  ],
+  "pan": [
+   {
+    "n": 1,
+    "before": {
+     "ext": "gif"
+    },
+    "after": {
+     "ext": "gif"
+    }
+   }
+  ]
+ }
+}
