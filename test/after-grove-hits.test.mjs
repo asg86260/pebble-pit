@@ -8,8 +8,8 @@
 // on that tree. The plots' shapes are the setup these checks are not about,
 // set on the act's state.
 import { group, ok, run, yard, P } from './helpers.mjs';
-import { GREY, AFTER_PLOT_GAP } from '../src/config.js';
-import { afterFloor, plotX } from '../src/after/place.js';
+import { GREY, AFTER_PLOT_GAP, AFTER_ART_SCALE } from '../src/config.js';
+import { afterFloor, plotX, pineRows, PINE_GROWN } from '../src/after/place.js';
 import { treeAt, stumpAt } from '../src/after/grove.js';
 import { gestureDown, gestureUp, gestureView, groveIcons } from '../src/after/gestures.js';
 import { stationAt } from '../src/stations.js';
@@ -53,7 +53,11 @@ group('a press lands on a pine and a stump exactly where they are drawn', async 
   const wrong = [];
   // Each cell is its nearest trunk's plot: no pine reaches onto another's ground.
   const owner = cx => [0, 1, 2, 3].reduce((a, b) => (Math.abs(cx - plotX(b) / P) < Math.abs(cx - plotX(a) / P) ? b : a));
-  for (let cx = plotX(0) / P - 12; cx <= plotX(3) / P + 12; cx++) for (let cy = fl - 40; cy < fl; cy++) {
+  // Asked over the biggest pine's whole reach and height, and a margin, in
+  // grid cells: its rows are its art's cells, AFTER_ART_SCALE grid cells each.
+  const big = pineRows(PINE_GROWN, true), A = AFTER_ART_SCALE;
+  const reach = (Math.max(...big.map(([, a, b]) => Math.max(-a, b))) + 2) * A, high = (2 - Math.min(...big.map(([r]) => r))) * A;
+  for (let cx = plotX(0) / P - reach; cx <= plotX(3) / P + reach; cx++) for (let cy = fl - high; cy < fl; cy++) {
     const x = cx * P + P / 2, y = cy * P + P / 2, drawn = ink.has(`${cx},${cy}`), i = owner(cx);
     const hit = treeAt(x, y) ?? stumpAt(x, y);
     if (drawn !== (hit === i)) wrong.push(`plot ${i} cell ${cx - plotX(i) / P},${cy - fl}: ${drawn ? `inked, got ${hit}` : `paper, got ${hit}`}`);

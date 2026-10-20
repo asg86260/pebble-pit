@@ -6,6 +6,7 @@
 // stump's yank. Every number below is the mock's own guess, carried over in
 // world pixels and seconds for the pace tool to move.
 import { P } from './yard.js';
+import { AFTER_ART_SCALE } from './after.js';
 
 // The ghost hand: shown until the motion has been done this many times, faded
 // over GESTURE_CUE_FADE_S, at this share of full ink; back after a station
@@ -32,8 +33,9 @@ export const GESTURE_BUBBLE_SLACK = P;
 // A tree: the two-person saw across its trunk. The handle travels this far
 // either side, no faster than the saw's top speed (px a second), following
 // the pointer at this rate; a stroke ends past this share of the travel.
-export const GESTURE_SAW_AMP = P * 5;
-export const GESTURE_SAW_VMAX = 220;
+// The travel and the speed are the trunk's art cells, so they grow with it.
+export const GESTURE_SAW_AMP = P * 5 * AFTER_ART_SCALE;
+export const GESTURE_SAW_VMAX = 220 * AFTER_ART_SCALE;
 export const GESTURE_SAW_FOLLOW = 25;
 export const GESTURE_SAW_END = 0.8;
 export const GESTURE_SAW_EASE = 8;

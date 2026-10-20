@@ -25,7 +25,7 @@ import { P, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG
          AFTER_JOIN_FADE_S } from '../config.js';
 import { secs, walk, nextId } from './util.js';
 import { built, stumpsOn } from './levels.js';
-import { afterFloor, stationDoor, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, agitatorX, speakerAt, overCrowd, crowdEdge } from './place.js';
+import { afterFloor, stationDoor, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, agitatorX, speakerAt, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, takeLog } from './grove.js';
 import { sweepDue, tipSawdust, vatOf } from './mill.js';
@@ -153,7 +153,7 @@ const JOB_STEP = {
       w.target = i; w.dig = dig; w.t = 0;
     }
     if (w.target == null) { idle(w, dt); return; }
-    if (!go(w, plotX(w.target) + P * 3, floorY(), dt)) return;
+    if (!go(w, plotX(w.target) + AP * 3, floorY(), dt)) return;
     w.t += dt;
     if (w.dig) { if (w.t >= AFTER_DIG_S) { digStump(w.target); w.target = null; w.t = 0; w.swing = a.t; } }
     else if (w.t >= AFTER_FELL_S) { chopTree(w.target); w.t = 0; w.swing = a.t; }
@@ -165,8 +165,8 @@ const JOB_STEP = {
       // behind on the way does not turn it round.
       if (!w.to || !built(w.to)) w.to = logTo();
       if (!w.to) { idle(w, dt); return; }
-      // Put down on the station's log pile, which the turned chipper lays on
-      // the side away from its jaw.
+      // Put down on the station's log pile, on its left, the side the logs
+      // come in from.
       if (go(w, pileMid(w.to, PILE[w.to]), floorY(), dt)) { a.stock[PILE[w.to]] += 1; w.load = null; w.target = null; w.to = null; }
       return;
     }
@@ -178,7 +178,7 @@ const JOB_STEP = {
       w.target = i < 0 ? null : i;
     }
     if (w.target == null) { idle(w, dt); return; }
-    if (!go(w, plotX(w.target) + P, floorY(), dt)) return;
+    if (!go(w, plotX(w.target) + AP, floorY(), dt)) return;
     if (takeLog(w.target)) { w.load = 'log'; w.to = logTo(); }
     w.target = null;
   },
@@ -228,7 +228,7 @@ const JOB_STEP = {
       return;
     }
     if (!w.load) {
-      if (!go(w, stationDoor('workshop') + P * 4, floorY(), dt)) return;
+      if (!go(w, stationDoor('workshop') + AP * 4, floorY(), dt)) return;
       if (a.stock.signs <= 0) return;
       const spot = signSpot();
       if (!spot) return;
@@ -244,7 +244,7 @@ const JOB_STEP = {
     if (!built('press')) { idle(w, dt); return; }
     if (!w.n) {
       w.load = null;
-      if (!go(w, stationDoor('press') + P * 4, floorY(), dt)) return;
+      if (!go(w, stationDoor('press') + AP * 4, floorY(), dt)) return;
       if (a.stock.posters <= 0 || freeSlot() == null) return;
       w.n = Math.min(AFTER_PASTE_LOAD, a.stock.posters);
       a.stock.posters -= w.n; w.load = 'posters'; w.target = null; w.t = 0;

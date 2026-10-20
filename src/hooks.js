@@ -1399,7 +1399,7 @@ HANDLES.__pressPortal = key => throughPortal(key);
 HANDLES.__sendPair = (route, leg = 0) => sendPair(route, leg);
 // The top of heaven's stair, where the walk goes in at the gates (ghosts.js).
 HANDLES.__gateWalk = () => threshold();
-import { speakerAt as actsSpeakerAt } from './after/place.js';
+import { speakerAt as actsSpeakerAt, AP } from './after/place.js';
 import { WORKER as ACTS_WORKER, ACT_RIM_PIECES, MANSION_FADE_S } from './config.js';
 import { WALL_BEATS } from './hell/story.js';
 // The go-on card pressed, as its click presses it (render/portals.js,
@@ -1523,12 +1523,12 @@ HANDLES.__afterCrowd = fn => {
 // worked box (below its roof's strip), each plot's trunk and stump.
 HANDLES.__afterPair = () => { const b = pairBox(); return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; };
 HANDLES.__afterAt = what => {
-  if (what === 'heap') return { x: heapX() + P, y: afterFloor() - P };
+  if (what === 'heap') return { x: heapX() + AP, y: afterFloor() - AP };
   const b = stationBox(what);
   return b ? { x: b.x + b.w / 2, y: b.y + b.h - P } : null;
 };
 HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage: p.stage, logs: p.logs, falling: p.fall != null,
-  stump: p.stump, x: plotX(i) + P / 2, y: afterFloor() - P * 5, sx: plotX(i) + P / 2, sy: afterFloor() - P / 2 })) : []);
+  stump: p.stump, x: plotX(i) + AP / 2, y: afterFloor() - AP * 5, sx: plotX(i) + AP / 2, sy: afterFloor() - AP / 2 })) : []);
 HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, shown: !!S.after && u.show(),
   bill: afterBill(u), rung: u.rung ? u.rung() : 0, done: afterMaxed(u) }));
 HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...S.after.stock, gate: S.after.gate,

@@ -41,7 +41,7 @@ import { upCount, built, raising } from './levels.js';
 import { postsOf, postCount, addPost } from './bodies.js';
 import { clearPlot } from './grove.js';
 import { raiseStation } from './build.js';
-import { stationBox, plotX, groveX1, afterFloor, afterX0 } from './place.js';
+import { stationBox, plotX, groveX1, afterFloor, afterX0, AP } from './place.js';
 import { union, support } from './union.js';
 import { setCrowdAt } from './stations.js';
 
@@ -63,7 +63,7 @@ export const patchAt = () => ({ x: afterX0() + AFTER_PATCH_AT * P, y: afterFloor
 // Where a bought row's coins land: over the station's roof, or over the
 // middle of the grove's ground.
 const landAt = key => {
-  if (key === 'grove') return { x: (plotX(0) + groveX1()) / 2, y: afterFloor() - P * 8 };
+  if (key === 'grove') return { x: (plotX(0) + groveX1()) / 2, y: afterFloor() - AP * 8 };
   const b = stationBox(key);
   return { x: b.x + b.w / 2, y: b.y - P * 2 };
 };

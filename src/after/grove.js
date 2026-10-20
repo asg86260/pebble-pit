@@ -24,7 +24,7 @@ import { P, TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_LOGS_BIG_TREE, AFTER_FALL_S, AF
          AFTER_PLOTS0 } from '../config.js';
 import { secs } from './util.js';
 import { growS, bigTrees } from './levels.js';
-import { PINE_GROWN, stationParts } from './place.js';
+import { PINE_GROWN, stationParts, AP } from './place.js';
 
 export const GROWN = PINE_GROWN;
 
@@ -47,7 +47,7 @@ export function treeAt(x, y) {
   for (let i = 0; i < plots.length; i++) {
     if (!standing(plots[i])) continue;
     const { foot, rows } = stationParts('tree', i);
-    const col = Math.floor((x - foot.x) / P), row = Math.floor((y - foot.y) / P);
+    const col = Math.floor((x - foot.x) / AP), row = Math.floor((y - foot.y) / AP);
     if (rows.some(([r, a, b]) => r === row && col >= a && col <= b)) return i;
   }
   return null;

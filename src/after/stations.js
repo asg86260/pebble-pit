@@ -15,7 +15,7 @@ import { P } from '../config.js';
 import { msg } from '../lang.js';
 import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
-import { stationBox, stationParts, plotX, groveX1, afterFloor } from './place.js';
+import { stationBox, stationParts, plotX, groveX1, afterFloor, AP } from './place.js';
 import { trees, standing } from './grove.js';
 import { godCampAt, godMid, faceY } from './sky.js';
 
@@ -48,18 +48,18 @@ const NAMES = {
   mill: () => msg('after-build-mill'), chipper: () => msg('after-build-chipper'), workshop: () => msg('after-build-workshop'),
   papermill: () => msg('after-build-papermill'), press: () => msg('after-build-press'), crowd: () => msg('after-board-crowd')
 };
-const GROVE_UP = 22;      // cells over the grove's floor its board stands clear of: a big pine's crown
+const GROVE_UP = 22;      // art cells over the grove's floor its board stands clear of: a big pine's crown
 
 // A station's drawing, the area a plain click on it opens its board in.
 const drawn = card => (card === 'pedestal' ? stationParts('pedestal').top : stationBox(card));
 // The grove's pines and stumps as drawn: a pine's crown down to the floor, a
-// stump's few cells over it.
+// stump's few art cells over it.
 function onGrove(x, y) {
   const fl = afterFloor(), ps = trees();
   for (let i = 0; i < ps.length; i++) {
     const bx = plotX(i);
-    if (x < bx - P * 5 || x > bx + P * 6 || y > fl + P) continue;
-    const top = standing(ps[i]) ? stationParts('tree', i).box.y : fl - P * 6;
+    if (x < bx - AP * 5 || x > bx + AP * 6 || y > fl + P) continue;
+    const top = standing(ps[i]) ? stationParts('tree', i).box.y : fl - AP * 6;
     if (y >= top) return true;
   }
   return false;
@@ -88,7 +88,7 @@ export const AFTER_STATION_ROWS = [
   })),
   row('grove', {
     open: live,
-    stand: () => { const x = plotX(0) - P * 4; return { x, y: afterFloor() - P * GROVE_UP, w: groveX1() - x, h: P * GROVE_UP }; },
+    stand: () => { const x = plotX(0) - AP * 4; return { x, y: afterFloor() - AP * GROVE_UP, w: groveX1() - x, h: AP * GROVE_UP }; },
     hit: onGrove
   }),
   row('crowd', {

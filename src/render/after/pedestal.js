@@ -10,7 +10,7 @@
 // -- and their speech bubbles rising off them and fading (after/bubbles.js).
 // The rebel pile at its foot, a small grey heap a power of ten.
 
-import { P, GREY, AFTER_SHOUT_HOLD_S, AFTER_PODIUM_U as U, AFTER_PODIUM_CLIMB as CLIMB } from '../../config.js';
+import { P, GREY, AFTER_ART_SCALE, AFTER_SHOUT_HOLD_S, AFTER_PODIUM_U as U, AFTER_PODIUM_CLIMB as CLIMB } from '../../config.js';
 import { S } from '../../state.js';
 import { afterFloor, speakerAt, pileX, podiumMid, podiumTopOf } from '../../after/place.js';
 import { podiumRung } from '../../after/levels.js';
@@ -158,7 +158,7 @@ export function drawBubbles() {
 export function drawRebelPile() {
   if (!S.after) return;
   const cols = Math.min(8, 2 + Math.floor(Math.log10(1 + S.after.rebel)));
-  const d = frame(pileX(), afterFloor());
+  const d = frame(pileX(), afterFloor(), 0, null, AFTER_ART_SCALE);
   for (let j = 0; j < cols; j++) {
     const hh = Math.max(1, Math.round(2 * Math.sin(Math.PI * (j + 0.5) / cols)));
     for (let r = 0; r < hh; r++) d.c(j, -1 - r, r === hh - 1 && hh > 1 ? PALE : (j + r) % 3 === 0 ? MID : PALE);

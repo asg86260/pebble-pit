@@ -16,7 +16,7 @@ import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIE
 import { speechTarget } from '../src/after/union.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
-import { pileAt, stationBox, plotX, speakerAt, afterFloor } from '../src/after/place.js';
+import { pileAt, stationBox, plotX, speakerAt, afterFloor, AP } from '../src/after/place.js';
 import { groveIcons } from '../src/after/gestures.js';
 import { sawOn, saw, lift, spin, feedLog, pullArm, tipHeap } from './after-hands.mjs';
 
@@ -159,7 +159,7 @@ group('a member bought into a post steps out of our crowd near it: the grove and
     while (s < 60) { run(1); s++; const w = S.after.bodies.find(b => b.job === job); if (w && there(w)) return s; }
     return Infinity;
   };
-  const cut = trip('woodcutter', w => Math.abs(w.x - (plotX(0) + P * 3)) < 1);
+  const cut = trip('woodcutter', w => Math.abs(w.x - (plotX(0) + AP * 3)) < 1);
   const agit = trip('agitator', w => w.t > 0);
   window.__actsOn(null);
   return [
