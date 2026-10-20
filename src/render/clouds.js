@@ -25,7 +25,7 @@
 
 import { CLOUDS_TONES, CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_BUDGET_MS, CLOUDS_SLICE,
          CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN, CLOUDS_CORE_MIN, CLOUDS_LOBE_LIGHT, CLOUDS_SEA,
-         CLOUDS_TREATMENTS, CLOUDS_SKY, CLOUDS_ALTITUDE, CLOUDS_LIFE, CLOUDS_SHAPES, CLOUDS_VOLUME, CLOUDS_TIERS,
+         CLOUDS_TREATMENTS, CLOUDS_SKY, CLOUDS_LIFE, CLOUDS_SHAPES, CLOUDS_VOLUME, CLOUDS_TIERS,
          CLOUDS_FLOW, CLOUDS_GROUND_FLOW, CLOUDS_PALETTE, CLOUDS_DEPTH_BANDS, CLOUDS_LIGHT, CLOUDS_VOLUME_BANDS,
          CLOUDS_GROUND_DEPTHS } from '../config.js';
 
@@ -516,19 +516,21 @@ export function spursOf(sh, R = sh.roles[1]) {
 }
 
 // --- the liquid sky -----------------------------------------------------------------
-// A sky is layers of distance (CLOUDS_SKY), and in each, clouds at three
-// heights (CLOUDS_ALTITUDE) of many shapes and sizes, run together into
-// masses. Unlike a sheet above, a layer's puffs are not baked a step at a
+// A sky is one sheet of cloud cut into layers of distance (CLOUDS_SKY), and
+// in each, clouds of many shapes and sizes, run together into masses. Unlike a sheet above, a layer's puffs are not baked a step at a
 // time: each moves every frame on its own current (CLOUDS_FLOW) and swells
 // and wanes over its cloud's life (CLOUDS_LIFE), and the field is worked out
 // afresh each frame -- on the graphics card (render/cloudgl.js), or here,
 // cell by cell, for the checks and a hit test.
 
-// A layer's numbers: each [far, near] pair taken at its distance.
+// A layer's numbers: its distance on the sheet (`z`, 1 the nearest, out to
+// CLOUDS_SKY.far), what comes of the distance (size, height, parallax, wind,
+// each over it), and each [far, near] pair taken at its share of the way in.
 export function layerParams(i) {
-  const S = CLOUDS_SKY, d = S.layers > 1 ? i / (S.layers - 1) : 1, e = Math.pow(d, S.ease);
-  const P = { d, e };
-  for (const k of Object.keys(S)) if (Array.isArray(S[k])) P[k] = S[k][0] + (S[k][1] - S[k][0]) * e;
+  const S = CLOUDS_SKY, d = S.layers > 1 ? i / (S.layers - 1) : 1, z = Math.pow(S.far, 1 - d);
+  const P = { d, e: d, z };
+  for (const k of Object.keys(S)) if (Array.isArray(S[k])) P[k] = S[k][0] + (S[k][1] - S[k][0]) * d;
+  for (const k of ['R', 'lift', 'parallax', 'wind']) P[k] = S[k] / z;
   P.every = Math.max(1, Math.round(P.every));
   return P;
 }
@@ -646,23 +648,6 @@ function shape(rnd, kind, cx, base, R, flat, add) {
     }
     return;
   }
-  if (kind === 'cirrus') {
-    // high streaks: thin climbing lines of tiny puffs, a hook at the end
-    const T = H.cirrus;
-    for (let s = 0, m = count(rnd, T.streaks); s < m; s++) {
-      const len = R * lerp(rnd(), T.length), f = T.flat;
-      const x0 = cx + (rnd() - 0.5) * len, y0 = base - rnd() * R * 0.8;
-      // puffs a share of their own radius apart, so a streak is one line at
-      // any distance, not a row of dots
-      for (let u = 0; u <= 1;) {
-        const hook = u > 0.8 ? (u - 0.8) * 5 : 0;
-        const r = Math.max(T.least, R * lerp(rnd(), T.r) * (1 - 0.6 * Math.abs(u * 2 - 1)));
-        add('high', x0 + len * u, y0 - len * T.slant * u - hook * R * 0.4, r, Math.max(f, T.thick / r));
-        u += r * T.step / len;
-      }
-    }
-    return;
-  }
   // a scrap: a few small puffs, loose
   const T = H.scrap;
   for (let k = 0, n = count(rnd, T.count); k < n; k++)
@@ -687,9 +672,9 @@ function cloudPuffs(rnd, kind, cx, base, R, flat, life, stray, puffs) {
     const j = TIER[name], p = flowPuff(rnd, x, y, r, f, j, life, stray, F);
     if (on) { p.follow = on; p.a = p.a.map(v => v * CLOUDS_VOLUME.kids.ride); }
     // every puff of a cloud stops at its base line: the bottom is flat
-    if (name !== 'high') p.cut = base;
+    p.cut = base;
     puffs.push(p);
-    if (r < K.from || name === 'high') return p;
+    if (r < K.from) return p;
     const n = Math.round(r * K.per * (name === 'rear' ? K.back : 1));
     for (let k = 0; k < n; k++) {
       const a = Math.PI * (K.arc[0] + (K.arc[1] - K.arc[0]) * (k + rnd()) / n);
@@ -701,26 +686,26 @@ function cloudPuffs(rnd, kind, cx, base, R, flat, life, stray, puffs) {
   });
 }
 
-// One layer of the sky, `W` cells round (it wraps), seeded: groups of clouds
-// along it, each cloud at a height drawn from CLOUDS_ALTITUDE. Its rows run
-// from the top of its highest cloud down past its lowest base; `baseRow` is
-// the horizon's row in them, `sky` the sky's height in cells that `lift` is
-// a share of.
+// One layer of the sky, `W` cells round (it wraps), seeded: a band of the
+// one sheet of cloud (CLOUDS_SKY), groups of clouds along it, each cloud
+// somewhere in the band's slice of distance, so its base stands at the
+// sheet's height seen from there. Its rows run from the top of its highest
+// cloud down past its lowest base; `baseRow` is the horizon's row in them,
+// `sky` the sky's height in cells that `lift` is a share of.
 export function skyLayer({ i, seed = 1, W, sky = 145 }) {
-  const P = layerParams(i), rnd = gen(seed * 7919 + 101 * (i + 1)), A = CLOUDS_ALTITUDE;
-  const puffs = [], bands = Object.keys(A), shares = Object.fromEntries(bands.map(b => [b, A[b].share]));
+  const S = CLOUDS_SKY, P = layerParams(i), rnd = gen(seed * 7919 + 101 * (i + 1));
+  const slice = Math.pow(S.far, 1 / Math.max(1, S.layers - 1)), puffs = [];
   let x = rnd() * P.R * 3;
   while (x < W) {
-    // a group: clouds at one height, packed close enough to run into a mass
-    const band = A[pick(rnd, shares)];
+    // a group: clouds packed close enough to run into a mass
     for (let k = 0, n = 1 + Math.floor(expo(rnd, P.group - 1)); k < n && x < W; k++) {
-      const kind = pick(rnd, band.kinds), L = CLOUDS_LIFE[kind];
-      const R = band.size * Math.min(P.R * P.tail, Math.max(P.R * 0.3, P.R * lognormal(rnd, P.spread)));
+      const kind = pick(rnd, S.kinds), L = CLOUDS_LIFE[kind];
+      // nearer or farther in the band: bigger and higher, or smaller and lower
+      const near = Math.pow(slice, S.jitter * (rnd() * 2 - 1));
+      const R = near * Math.min(P.R * P.tail, Math.max(P.R * 0.3, P.R * lognormal(rnd, P.spread)));
       const life = { per: TAU / lerp(rnd(), L.life), ph: rnd() * TAU, keep: L.keep };
-      // high cloud lags its layer's wind; every cloud wanders off it a little
-      const stray = (band.speed - 1) * P.wind + (rnd() * 2 - 1) * CLOUDS_SKY.stray * P.wind;
-      const base = -lerp(rnd(), band.at) * P.lift * sky;
-      cloudPuffs(rnd, kind, x, base, R, P.flat * band.flat, life, stray, puffs);
+      const stray = (rnd() * 2 - 1) * S.stray * P.wind;
+      cloudPuffs(rnd, kind, x, -P.lift * near * sky, R, P.flat, life, stray, puffs);
       x += R * lerp(rnd(), [P.packing * 0.6, P.packing * 1.4]);
     }
     x += P.R * expo(rnd, P.gap);
@@ -832,9 +817,7 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
     const ps = layer.puffs.filter(p => p.tier === j && !p.crust);
     return ps.reduce((a, p) => a + p.r * p.flat, 0) / Math.max(1, ps.length);
   });
-  // a pale tier (high cloud) takes the farthest band at any distance
-  const pale = j => !layer.ground && CLOUDS_TIERS[j] === 'high';
-  const depthOf = j => (layer.ground ? (layer.depths || CLOUDS_GROUND_DEPTHS)[j] : pale(j) ? 0 : P.e);
+  const depthOf = j => (layer.ground ? (layer.depths || CLOUDS_GROUND_DEPTHS)[j] : P.e);
   const bandOf = j => CLOUDS_DEPTH_BANDS[page].filter(b => b[0] <= depthOf(j)).pop();
   const ladderOf = j => bandOf(j)[1];
   const round = j => bandOf(j)[2] === 'round' && D.tones === 2, based = j => bandOf(j)[2] !== 'flat' && D.tones === 2;
@@ -860,7 +843,7 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
     shade: eight(j => (layer.ground ? (D.tones === 2 && lobes[j] >= CLOUDS_SEA.creaseMin ? Math.max(2, Math.round(CLOUDS_SEA.crease * lobes[j])) : 0)
       : round(j) && D.belly === 'inside' ? band(VB.shade, lobes[j]) : 0)),
     base: eight(j => (based(j) && !layer.ground ? Math.max(2, Math.round(VB.base * P.R)) : 0)),
-    core: eight(j => (round(j) && D.belly === 'inside' && !layer.ground && CLOUDS_TIERS[j] !== 'near' && CLOUDS_TIERS[j] !== 'high' && lobes[j] >= CLOUDS_CORE_MIN ? band(VB.core, lobes[j]) : 0)),
+    core: eight(j => (round(j) && D.belly === 'inside' && !layer.ground && CLOUDS_TIERS[j] !== 'near' && lobes[j] >= CLOUDS_CORE_MIN ? band(VB.core, lobes[j]) : 0)),
     row: eight(j => layer.rowOf[j]), bottom: layer.ground ? nt : 0,
     light: CLOUDS_LIGHT, tone, lut,
     // each lobe lit in the round, where the tier is drawn in the round
