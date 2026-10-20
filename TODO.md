@@ -15,6 +15,45 @@ against teleporting; hell's five boards cannot be opened (`hellBoardAt` has
 no caller); no hover or cursor in act places; act boards do not close on
 scroll (`viewTaken` reads `STATIONS` only).
 
+## Shared pieces and checks, after the place engine -- AGREED, QUEUED (2026-10-20)
+
+The owner agreed these on 2026-10-20, from what went wrong in act 3. Items
+1, 2, 6 and 7 would have prevented most of that day; 1 and 2 ride in the
+place engine's early steps, 6 and 7 come before more act 3 art.
+
+1. **One sprite-and-layer primitive for "art on the grid, motion smooth"**
+   (CLAUDE.md). 86 files snap positions to the grid by hand
+   (`Math.round(x * P)` and kin). A shared helper draws a shape on its own
+   grid once, caches it, and places it at a fractional position; a parallax
+   layer is the same at a rate. Walkers, clouds, flags and backdrops then
+   move smoothly one way and never shear. Blocked on: nothing; first
+   consumer is act 3's step 2.
+2. **Hit areas from the drawing.** A thing's click area comes from where it
+   was drawn, not a separate box table, so a camera change cannot leave
+   clicks behind the art. Rides with the place engine's step 1 (stations
+   with `place`).
+3. **One crowd renderer.** God's crowd (`render/aftercrowd.js`) and the
+   union's (`render/after/unioncrowd.js`) are separate; one renderer with
+   rows, growth direction, tones and fill/empty rules serves both.
+   Blocked on: act 3 step 2 landing.
+4. **One cloud renderer for every place, the yard included.** The cloud
+   bench (`clouds-bench`, in progress) builds it for act 3; the yard's sky,
+   smog and rain clouds (`src/smog/`, ~1.8k lines) move onto it after.
+5. **Fades as the only way in or out.** One shared appear/leave every new
+   thing uses (fade.js), so a pop like act 3's sign plant cannot happen by
+   accident.
+6. **Mocks inside the real game.** Candidate art as a dev-panel toggle drawn
+   on the real camera, not side HTML pages with their own camera -- the
+   cause of act 3's layout drift.
+7. **A play check for each act.** A browser test that plays each act's
+   first minutes with real clicks -- open boards, buy, portals, walk -- run
+   before every act landing.
+8. **A jitter check.** Pan the camera and count pixels that shear (the cloud
+   research's `screencheck.mjs` is the start); run on every scene with
+   motion.
+9. **Pan GIFs as the default review** (`tools/review/shoot.mjs`), since
+   motion is where act 3's problems were.
+
 ## The yard's sound set, by lanes -- BUILT, NOT LISTENED TO IN THE GAME (2026-10-18)
 
 DESIGN.md, "The yard's sound set, by lanes". Open: the owner's ear on every
