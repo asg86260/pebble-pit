@@ -25,7 +25,7 @@
 
 import { CLOUDS_TONES, CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_BUDGET_MS, CLOUDS_SLICE,
          CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN, CLOUDS_CORE_MIN, CLOUDS_LOBE_LIGHT, CLOUDS_SEA,
-         CLOUDS_TREATMENTS, CLOUDS_SKY, CLOUDS_LIFE, CLOUDS_SHAPES, CLOUDS_VOLUME, CLOUDS_TIERS,
+         CLOUDS_TREATMENTS, CLOUDS_SKY, CLOUDS_LOD, CLOUDS_BANK, CLOUDS_LIFE, CLOUDS_SHAPES, CLOUDS_VOLUME, CLOUDS_TIERS,
          CLOUDS_FLOW, CLOUDS_GROUND_FLOW, CLOUDS_PALETTE, CLOUDS_DEPTH_BANDS, CLOUDS_LIGHT, CLOUDS_VOLUME_BANDS,
          CLOUDS_GROUND_DEPTHS } from '../config.js';
 
@@ -631,7 +631,9 @@ function shape(rnd, kind, cx, base, R, flat, add) {
     for (let x = cx - T.span * R; x <= cx + T.span * R;) {
       const r = R * (0.45 + 0.2 * rnd());
       add('rear', x, base - r * 0.55 * f, r, f);
-      add(rnd() < 0.5 ? 'mid' : 'front', x + r * 0.4, base - r * 0.1 * f, r * 0.7, f * 0.7);
+      // (its center well over the base, so the base's cut leaves a lobe and
+      // not a strip one or two cells high)
+      add(rnd() < 0.5 ? 'mid' : 'front', x + r * 0.4, base - r * 0.45 * f, r * 0.7, f);
       x += r * (1.0 + 0.4 * rnd());
     }
     for (let k = 0, n = count(rnd, T.crown); k < n; k++)
@@ -646,6 +648,15 @@ function shape(rnd, kind, cx, base, R, flat, add) {
       y += (rnd() - 0.5) * T.wander * R * f;
       add('mid', cx - len / 2 + len * (k + rnd() * 0.6) / n, y, R * lerp(rnd(), T.r) * (1 - 0.5 * Math.abs(k / (n - 1) * 2 - 1)), f);
     }
+    return;
+  }
+  if (kind === 'blob') {
+    // a far cloud drawn plain: a few big lobes side by side on the base
+    const T = H.blob;
+    let x = cx;
+    const rs = Array.from({ length: count(rnd, T.n) }, () => R * lerp(rnd(), T.r));
+    x -= rs.reduce((a, r) => a + r * T.step[0], 0) / 2;
+    for (const r of rs) { add('mid', x, base - r * lerp(rnd(), T.rise) * flat, r, flat); x += r * lerp(rnd(), T.step); }
     return;
   }
   // a scrap: a few small puffs, loose
@@ -670,11 +681,12 @@ function cloudPuffs(rnd, kind, cx, base, R, flat, life, stray, puffs) {
   const K = CLOUDS_VOLUME.crust, F = CLOUDS_FLOW;
   shape(rnd, kind, cx, base, R, flat, (name, x, y, r, f, on) => {
     const j = TIER[name], p = flowPuff(rnd, x, y, r, f, j, life, stray, F);
+    p.kind = kind;
     if (on) { p.follow = on; p.a = p.a.map(v => v * CLOUDS_VOLUME.kids.ride); }
     // every puff of a cloud stops at its base line: the bottom is flat
     p.cut = base;
     puffs.push(p);
-    if (r < K.from) return p;
+    if (r < K.from || kind === 'blob') return p;
     const n = Math.round(r * K.per * (name === 'rear' ? K.back : 1));
     for (let k = 0; k < n; k++) {
       const a = Math.PI * (K.arc[0] + (K.arc[1] - K.arc[0]) * (k + rnd()) / n);
@@ -693,29 +705,57 @@ function cloudPuffs(rnd, kind, cx, base, R, flat, life, stray, puffs) {
 // cloud down past its lowest base; `baseRow` is the horizon's row in them,
 // `sky` the sky's height in cells that `lift` is a share of.
 export function skyLayer({ i, seed = 1, W, sky = 145 }) {
-  const S = CLOUDS_SKY, P = layerParams(i), rnd = gen(seed * 7919 + 101 * (i + 1));
+  const S = CLOUDS_SKY, D = CLOUDS_LOD, P = layerParams(i), rnd = gen(seed * 7919 + 101 * (i + 1));
   const slice = Math.pow(S.far, 1 / Math.max(1, S.layers - 1)), puffs = [];
-  let x = rnd() * P.R * 3;
-  while (x < W) {
-    // a group: clouds packed close enough to run into a mass
-    for (let k = 0, n = 1 + Math.floor(expo(rnd, P.group - 1)); k < n && x < W; k++) {
-      const kind = pick(rnd, S.kinds), L = CLOUDS_LIFE[kind];
-      // nearer or farther in the band: bigger and higher, or smaller and lower
-      const near = Math.pow(slice, S.jitter * (rnd() * 2 - 1));
-      const R = near * Math.min(P.R * P.tail, Math.max(P.R * 0.3, P.R * lognormal(rnd, P.spread)));
-      const life = { per: TAU / lerp(rnd(), L.life), ph: rnd() * TAU, keep: L.keep };
-      const stray = (rnd() * 2 - 1) * S.stray * P.wind;
-      cloudPuffs(rnd, kind, x, -P.lift * near * sky, R, P.flat, life, stray, puffs);
-      x += R * lerp(rnd(), [P.packing * 0.6, P.packing * 1.4]);
+  const plain = P.d < D.plain;
+  if (P.d < D.bank) bank(rnd, P, W, sky, puffs);
+  else {
+    let x = rnd() * P.R * 3;
+    while (x < W) {
+      // a group: clouds packed close enough to run into a mass
+      for (let k = 0, n = 1 + Math.floor(expo(rnd, P.group - 1)); k < n && x < W; k++) {
+        const kind = plain ? 'blob' : pick(rnd, S.kinds), L = CLOUDS_LIFE[kind] || CLOUDS_LIFE.heap;
+        // nearer or farther in the band: bigger and higher, or smaller and lower
+        const near = Math.pow(slice, S.jitter * (rnd() * 2 - 1));
+        const R0 = near * Math.min(P.R * P.tail, Math.max(P.R * 0.3, P.R * lognormal(rnd, P.spread)));
+        const life = { per: TAU / lerp(rnd(), L.life), ph: rnd() * TAU, keep: L.keep };
+        const stray = (rnd() * 2 - 1) * S.stray * P.wind, cs = Math.floor(rnd() * 1e9), base = -P.lift * near * sky;
+        // never smaller than the grid can draw whole: built again bigger
+        const make = R => { const ps = []; cloudPuffs(gen(cs), kind, x, base, R, P.flat, life, stray, ps); return ps; };
+        let ps = make(R0), R = R0;
+        const [w, h] = extent(ps, base), k = Math.max(D.least.w / Math.max(w, 1e-3), D.least.h / Math.max(h, 1e-3));
+        if (k > 1) ps = make(R = R0 * k);
+        puffs.push(...ps);
+        x += R * lerp(rnd(), [P.packing * 0.6, P.packing * 1.4]);
+      }
+      x += P.R * expo(rnd, P.gap);
     }
-    x += P.R * expo(rnd, P.gap);
   }
   let top = 0, bottom = 0;
   for (const p of puffs) { top = Math.min(top, p.y - (p.r * 1.3 + p.a[0]) * p.flat * REACH); bottom = Math.max(bottom, p.y + (p.r * 1.3 + p.a[0]) * p.flat * REACH); }
   const baseRow = Math.ceil(-top) + 1;
   for (const p of puffs) { p.y += baseRow; if (p.cut !== undefined) p.cut += baseRow; }
   return { i, P, W, puffs, h: Math.ceil(baseRow + bottom) + 2, baseRow, ground: false, nt: CLOUDS_TIERS.length,
-           rowOf: CLOUDS_TIERS.map(() => 0), fills: null };
+           rowOf: CLOUDS_TIERS.map(() => 0), fills: null, plain };
+}
+// A cloud's size as drawn, in cells: how wide, and how tall over its base.
+function extent(ps, base) {
+  let l = Infinity, r = -Infinity, t = base;
+  for (const p of ps) { l = Math.min(l, p.x - p.r); r = Math.max(r, p.x + p.r); t = Math.min(t, p.y - p.r * p.flat); }
+  return [r - l, base - t];
+}
+// The horizon's bank (CLOUDS_BANK): one row of low lobes all the way round,
+// sitting on the horizon, each at least as tall as CLOUDS_LOD lets a cloud be.
+function bank(rnd, P, W, sky, puffs) {
+  const B = CLOUDS_BANK, F = CLOUDS_FLOW, f = P.flat * B.flat, j = TIER.mid;
+  const least = CLOUDS_LOD.least.h / (f * (1 + B.at[0]));
+  for (let x = rnd() * P.R; x < W + P.R;) {
+    const r = Math.max(least, P.R * lerp(rnd(), B.r) * lognormal(rnd, B.spread));
+    const p = flowPuff(rnd, x, -r * lerp(rnd(), B.at) * f, r, f, j, null, 0, F);
+    p.cut = 0;
+    puffs.push(p);
+    x += r * lerp(rnd(), B.step);
+  }
 }
 
 // The ground in the liquid sky: the billow rows of CLOUDS_KINDS.ground, each
@@ -824,10 +864,12 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
   const lut = new Float32Array(40 * 4), tone = new Int32Array(40), named = Object.keys(C);
   const rgba = h => { const n = parseInt(h.slice(1), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1]; };
   const id = role => named.findIndex(k => C[k] === C[role]) + 1;
+  // a plain layer (CLOUDS_LOD): one flat tone, its band's body, and no bands
+  const plain = !!layer.plain;
   for (let j = 0; j < nt; j++) {
     const L = ladderOf(j);
     // A: one tone; B: the light and the shadow; C: lit face, body, shadow, core
-    const kinds = D.tones === 1 ? [1, 1, 1, 1] : D.belly === 'sky' ? [1, 1, 2, 2] : [0, 1, 2, 3];
+    const kinds = D.tones === 1 || plain ? [1, 1, 1, 1] : D.belly === 'sky' ? [1, 1, 2, 2] : [0, 1, 2, 3];
     // a rear lobe sits a step deeper: where a front lobe's face is lit, its
     // is in the body's tone
     if (!layer.ground && CLOUDS_TIERS[j] === 'rear') kinds[0] = Math.max(kinds[0], 1);
