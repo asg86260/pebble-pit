@@ -4,6 +4,17 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## One place engine for every act -- DESIGNED, AWAITING THE OWNER (2026-10-20)
+
+DESIGN.md, "One place engine". Act 3 and hell carry parallel copies of the
+yard's stations, bodies, buying and hit-tests; the deep shows the shared
+path works. Blocked on the owner's go on the order. Defects found by the
+survey, open whatever the refactor's timing: `reloadCheck`
+(test/helpers.mjs) compares `S.workers` only, so act bodies are not guarded
+against teleporting; hell's five boards cannot be opened (`hellBoardAt` has
+no caller); no hover or cursor in act places; act boards do not close on
+scroll (`viewTaken` reads `STATIONS` only).
+
 ## The yard's sound set, by lanes -- BUILT, NOT LISTENED TO IN THE GAME (2026-10-18)
 
 DESIGN.md, "The yard's sound set, by lanes". Open: the owner's ear on every

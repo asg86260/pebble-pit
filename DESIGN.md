@@ -22664,3 +22664,69 @@ Kenney's **Impact Sounds** and **RPG Audio** (both CC0: free for any use,
 no credit needed), downloaded once into a scratch folder, the takes chosen
 cut and loudness-matched by script, and only the chosen OGGs committed under
 `public/sfx/` with a `public/sfx/SOURCES.md` naming where each came from.
+
+## One place engine: every act on the shared systems (design, not built; the owner, 2026-10-20)
+
+The owner, said many times and written into CLAUDE.md on 2026-10-20: every
+act runs on the shared systems; an act supplies data, never a parallel copy.
+Act 3 broke the day its private camera moved and its private click test did
+not follow.
+
+**The deep already does it right.** Its stations are rows in `STATIONS`
+(stations.js), its jobs are in `JOBS` (crew/jobs.js), its buildings go
+through works.js, its ladders through `tierRows`, its walk through
+`ways().deep`. Act 3 (~7k lines) and hell (~1k) instead carry their own
+stations (`AFTER_STATIONS`, hell/place.js), bodies and walks
+(after/bodies.js, hell/bodies.js), piles (counts in `S.after.stock`), a
+side door into the board (`offTable`, seven branches in board.js), their own
+buy (`buyAfter`), their own hit-tests (gestures `boardAt`, a dead `cardAt`,
+an uncalled `hellBoardAt`), their own construction (after/build.js), their
+own render sets, and three different save backfills. What that costs today:
+no hover or cursor in either act, act boards that never close on scroll,
+no pile marks or work bars in act places, hell's five boards unopenable,
+and act bodies outside the reload check.
+
+**The engine.** Generalize along the deep's path: a `place` column on the
+shared tables, every shared reader filtering by place.
+
+1. **Stations.** `STATIONS` rows gain `place` ('yard' | 'deep' | 'after' |
+   'hell'). Act stations become rows (name, glyph, stand, board, open,
+   pile), so `stationAt`, `hitRect`, `standRect`, stops, hover, cursors and
+   pile marks serve them. `offTable`, `cardAt`, gestures `boardAt` and
+   `hellBoardAt` go. `stationAt` filters by the view's place; the yard's
+   row order is kept.
+2. **The place descriptor** (`PLACES`, acts.js) gains the place's route,
+   its body list, its purse, its render layers and its walk pace; render.js
+   reads layers from it instead of the hand-kept `DEEP`/`AFTER`/`HELL` sets.
+3. **One buy**, paying each coin through its place's purse. Rows declare
+   their ladder shape: `tierRows` bands, or a written bills table where an
+   owner call says so (act 3's podium).
+4. **One body engine** -- step and walk over any place's list -- with a
+   per-place `JOBS` registry shaped like the yard's. Act bodies stay in
+   their place's own list so the yard's rebalance never sees them.
+5. **Construction through works.js**, with a place-supplied way a site goes
+   up (act 3's carry-and-raise is one).
+6. **One save helper** for every act blob, and `reloadCheck` over every
+   place's bodies.
+7. **One cloud renderer** shared by every place that has sky: sky banks,
+   ground clouds and the clickable clouds from one technique (the cloud
+   research, 2026-10-20), only scale, distance and speed differing.
+8. **One camera.** Act 3's main plane is the yard's view exactly; far
+   things are parallax layers, not a second camera (`frameAfter` and the
+   depth camera in after/sky.js go).
+
+**What each act keeps:** its art and surroundings, its currencies, its
+ladder tables, its story beats, its route geometry, act 3's hand gestures
+and its crowd and union sim, hell's forge and barriers, act 3's flat-tone
+exception and its exemption from the eight-rung rule.
+
+**Order** -- one seam at a time, act 3 the first consumer in the same
+change, the game playable after every step: (1) stations with `place`,
+which is also act 3's click and buy fix; (2) render layers by place;
+(3) one buy; (4) hell as the second consumer of 1-3, its boards opening;
+(5) bodies and jobs; (6) construction; (7) save helper and reload check.
+The camera and clouds go in with act 3's layout rebuild.
+
+**Save.** No released build turns acts 3 or 4 on (`VITE_AFTERLIFE` and
+`VITE_HELL` are set by no build script, and no fixture holds an act save),
+so the act blobs may change shape freely. The yard's save must not move.
