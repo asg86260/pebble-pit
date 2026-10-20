@@ -71,7 +71,7 @@ function inBand() {
 // tall enough to be cut by the top of the window is a cloud overhead.
 function cloudBand() {
   const top = skyCam().y + CLOUD_TOP * P;
-  return { top, low: top + Math.max(...Object.values(LANES).map(l => l[1])) * P };
+  return { top, low: top + lanesFor(fitNow()).end * P };
 }
 // Where each sheet's bases sit, in cells below the top of the band: the near
 // sheet highest and each one behind it lower, so the sky reads as one level
@@ -80,18 +80,27 @@ function cloudBand() {
 // as far down as its sheet's tallest cloud stands at a full swell, so no
 // cloud is ever cut by the top of the window, and below the lane in front of
 // it. In cells, not a share of the sky, so the height a cloud sits at does
-// not move when the window is resized.
-const LANES = (() => {
+// not move when the window is resized -- unless the window's band is too
+// shallow for the whole sky: then the clouds born in it are drawn smaller,
+// by `fit` (never under CLOUDS_LOD.least), and their lanes with them, so
+// they stay up in the band and never hang down behind the works.
+function lanesFor(fit) {
   const out = {}, H = CLOUD_HELD;
+  const gap = Math.max(1, Math.round(H.gap * fit)), give = Math.max(1, Math.round(H.give * fit));
   let end = 0;
   for (const L of CLOUD_LAYERS.slice().reverse()) {
-    const room = Math.ceil(H.rows[L.name][1] * (1 + CLOUD_GROW_R) * H.cell) + 1;
-    const from = Math.max(room, end ? end + H.gap : 0);
-    out[L.name] = [from, from + H.give];
-    end = from + H.give;
+    const rows = Math.max(CLOUDS_LOD.least.h, H.rows[L.name][1] * fit);
+    const room = Math.ceil(rows * (1 + CLOUD_GROW_R) * H.cell) + 1;
+    const from = Math.max(room, end ? end + gap : 0);
+    out[L.name] = [from, from + give];
+    end = from + give;
   }
+  out.end = end;
   return out;
-})();
+}
+const FULL = lanesFor(1);
+// how much of the sky's full size this window's band has room for
+const fitNow = () => { const { top, low } = band(); return Math.min(1, (low - top) / P / FULL.end); };
 function cloudY(c) {
   return skyCam().y + CLOUD_TOP * P + (c.yb ?? 0);
 }
@@ -261,7 +270,8 @@ function makeCloud(x, sheet, storm = false) {
   const w = Math.ceil(Math.max(...bumps.map(b => b.x + b.r)));
   const off = draw() * 2 - 1;                // where in its sheet's thickness it sits
   const far = L.far + off * CLOUD_FAR_JITTER;
-  const yb = between(LANES[L.name]) * P;   // its base, in pixels below the band's top
+  const fit = fitNow();
+  const yb = between(lanesFor(fit)[L.name]) * P;   // its base, in pixels below the band's top
   // Its shape is the one cloud renderer's (render/clouds.js, DESIGN.md "The
   // yard's sky on the cloud renderer"): turrets on a flat base, its size its
   // sheet's (CLOUD_HELD), never under what the grid draws whole
@@ -270,7 +280,7 @@ function makeCloud(x, sheet, storm = false) {
   const seed = (Math.floor(wide * 977 + H * 131 + bumps[0].r * 7919) % 100003) + 1;
   const u = k => { const v = Math.sin(seed * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); };
   const lerp2 = ([a, b], t) => a + (b - a) * t;
-  const tall = Math.max(CLOUDS_LOD.least.h, lerp2(CLOUD_HELD.rows[L.name], u(1)));
+  const tall = Math.max(CLOUDS_LOD.least.h, lerp2(CLOUD_HELD.rows[L.name], u(1)) * fit);
   const across = Math.max(CLOUDS_LOD.least.w, tall * lerp2(CLOUD_HELD.aspect, u(2)));
   // far off it is plain, as act 3's far sky is (CLOUDS_LOD): a few big lobes
   // in one tone

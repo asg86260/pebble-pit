@@ -206,6 +206,15 @@ export let CUT_MS = 700;
 // drawing on a machine that has the card.
 export const CLOUD_MELT_SHRINK = 0.6;
 export let CLOUDS_FLAT = 0;
+// How much shading every cloud is drawn with, act 3's and the yard's alike
+// (render/cloudgl.js, the roles): 0 one flat tone a cloud, by its depth; 1
+// the body and one flat underside shade, as deep as CLOUDS_UNDER.share of
+// the cloud standing over each column and at most CLOUDS_UNDER.most of the
+// tier's base band, so its top edge follows the lobes; 2 the full look -- lit faces, each lobe in the round, the
+// shadow where lobes meet, the core. The motion, the merging and the
+// distance rules are the same in all three.
+export let CLOUDS_LOOK = 2;
+export const CLOUDS_UNDER = { share: 0.16, most: 2 };
 
 export const WEATHER_KNOBS = [
   { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50,
@@ -215,5 +224,7 @@ export const WEATHER_KNOBS = [
   { key: 'CLOUD_MURK_POW', label: 'murk bend', min: 0.2, max: 1, step: 0.05,
     get: () => CLOUD_MURK_POW, set: v => { CLOUD_MURK_POW = v; } },
   { key: 'CLOUDS_FLAT', label: 'clouds as columns', min: 0, max: 1, step: 1,
-    get: () => CLOUDS_FLAT, set: v => { CLOUDS_FLAT = v; } }
+    get: () => CLOUDS_FLAT, set: v => { CLOUDS_FLAT = v; } },
+  { key: 'CLOUDS_LOOK', label: 'cloud shading', min: 0, max: 2, step: 1,
+    get: () => CLOUDS_LOOK, set: v => { CLOUDS_LOOK = v; } }
 ];

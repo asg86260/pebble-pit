@@ -27,7 +27,7 @@
 // page to draw scaled up at the layer's true position (drawCloud in
 // clouds.js's terms: one rounding for the whole layer).
 
-import { CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_FADE_S, CLOUDS_SETTLE, CLOUDS_CLEAN } from '../config.js';
+import { CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_FADE_S, CLOUDS_SETTLE, CLOUDS_CLEAN, CLOUDS_LOOK, CLOUDS_UNDER } from '../config.js';
 import { puffAt } from './clouds.js';
 
 const REACH = 1 / Math.sqrt(1 - Math.cbrt(CLOUDS_THRESHOLD));
@@ -116,6 +116,8 @@ uniform usampler2D uT;
 uniform int uLit[8], uShade[8], uBase[8], uCore[8], uRow[8];   // depths a tier, and which cloud it is
 uniform vec2 uLight;       // toward the light, a unit step
 uniform int uBottom;       // what is under the last row: a tier + 1, or 0
+uniform int uLook;         // CLOUDS_LOOK: 0 one tone, 1 body and underside, 2 the full look
+uniform vec2 uUnder;       // the plain underside: its share of the cloud standing over it, and its most, in base bands
 out uint o;
 int at(ivec2 c) {
   ivec2 sz = textureSize(uT, 0);
@@ -144,6 +146,23 @@ void main() {
   if (s > 0) { int n = at(c + ivec2(0, s)); if (n > j && uRow[n] != uRow[j]) k = 3; }
   if (b > 0 && at(c + ivec2(0, b)) == -1) k = at(c + ivec2(0, (b + 1) / 2)) == -1 ? 4 : 3;
   if (co > 0) { int n = at(c + ivec2(0, co)); if (n > j && uRow[n] == uRow[j]) k = 3; }
+  if (uLook == 0) k = 2;
+  if (uLook == 1) {
+    // the body, a crevice where a ground row stands in front, and the
+    // underside over open sky, as deep as a share of the cloud standing over
+    // that column: deep under a tall lobe, thin under a low shoulder, nothing
+    // at the ends -- its top edge follows the lobes' own outline above it,
+    // never a ruled bar
+    k = 2;
+    if (s > 0) { int n = at(c + ivec2(0, s)); if (n > j && uRow[n] != uRow[j]) k = 3; }
+    int most = int(float(b) * uUnder.y + 0.5), e = 0;
+    for (int i = 1; i <= 16; i++) if (e == 0 && i <= most && at(c + ivec2(0, i)) == -1) e = i;
+    if (e > 0) {
+      int up = 0;
+      for (int i = 1; i <= 96; i++) { if (at(c - ivec2(0, i)) < 0) break; up = i; }
+      if (float(e) <= uUnder.x * float(e + up)) k = 3;
+    }
+  }
   o = uint(j * 5 + k);
 }`;
 
@@ -415,6 +434,7 @@ export function skyGL() {
       gl.uniform1iv(P.roles.u.uLit, L.lit); gl.uniform1iv(P.roles.u.uShade, L.shade); gl.uniform1iv(P.roles.u.uBase, L.base);
       gl.uniform1iv(P.roles.u.uCore, L.core); gl.uniform1iv(P.roles.u.uRow, L.row);
       gl.uniform2f(P.roles.u.uLight, L.light[0], L.light[1]); gl.uniform1i(P.roles.u.uBottom, L.bottom);
+      gl.uniform1i(P.roles.u.uLook, CLOUDS_LOOK); gl.uniform2f(P.roles.u.uUnder, CLOUDS_UNDER.share, CLOUDS_UNDER.most);
       draw();
       // the cleanups, in pairs so the last lands where the settle reads: a
       // band a cell too thin can leave another as it goes (CLOUDS_CLEAN)

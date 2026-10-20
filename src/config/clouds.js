@@ -233,7 +233,7 @@ export const CLOUDS_LIFE = {
 //            radius, over `arc` of its edge (half-turns, left round the top
 //            to right), from lobes of at least `from` cells
 export const CLOUDS_VOLUME = {
-  base: { span: [0.85, 1], r: [0.38, 0.52], flat: 0.7, at: 0.35, step: [0.95, 1.25] },
+  base: { span: [0.6, 0.8], r: [0.38, 0.52], flat: 0.7, at: 0.5, step: [0.95, 1.25] },
   turrets: { n: [2, 4], r: [0.62, 0.95], ends: 0.3, close: [0.55, 0.75], rise: [0.4, 0.8], stack: [0.95, 0.72] },
   kids: { n: [2, 4], shrink: [0.48, 0.7], arc: 0.45, out: [0.7, 0.92], front: 0.55, levels: 2, least: 2.5, ride: 0.5 },
   crust: { from: 6, per: 0.3, back: 0.2, r: [0.16, 0.28], arc: [-1.1, 0.1], out: 0.9 }
