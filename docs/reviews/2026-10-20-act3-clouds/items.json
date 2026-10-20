@@ -1,0 +1,18 @@
+{ "title": "Act 3's clouds on the one renderer", "lede": "The liked liquid sky (main's composition, not the depth round) wired into act 3: the sky's layers, a far bank behind the main plane, billows lapping the path's near edge, and a rolling foreground. The path stays a clear strip the crew walks.",
+  "base": "692ccd80", "head": "bd77f242",
+  "items": [
+    { "id": "union", "title": "The union's camp", "what": "sky, far bank, the path's lapped edge, the foreground",
+      "shots": [ { "scene": "level-union", "window": [2000, 967], "theme": "light", "label": "2000x967 light" },
+                 { "scene": "level-union", "window": [2000, 967], "theme": "dark", "label": "2000x967 dark" },
+                 { "scene": "level-union", "window": [800, 600], "theme": "light", "label": "800x600 light" },
+                 { "scene": "level-union", "window": [800, 600], "theme": "dark", "label": "800x600 dark" } ] },
+    { "id": "god", "title": "God's camp", "what": "the same clouds round God's stage",
+      "shots": [ { "scene": "level-god", "window": [2000, 967], "theme": "light", "label": "2000x967 light" },
+                 { "scene": "level-god", "window": [2000, 967], "theme": "dark", "label": "2000x967 dark" },
+                 { "scene": "level-god", "window": [800, 600], "theme": "light", "label": "800x600 light" },
+                 { "scene": "level-god", "window": [800, 600], "theme": "dark", "label": "800x600 dark" } ] },
+    { "id": "pan", "title": "A pan along the path", "what": "every layer at its own rate, the clouds flowing on the act's clock",
+      "shots": [ { "scene": "level-pan", "window": [1000, 484], "theme": "light", "label": "pan, 1000x484 light", "wait": 0,
+                   "setup": "(() => { let x = window.__state().camX; const f = () => { x = window.__look(x + 5); requestAnimationFrame(f); }; requestAnimationFrame(f); })()",
+                   "gif": { "seconds": 5, "fps": 20 } } ] }
+  ] }
