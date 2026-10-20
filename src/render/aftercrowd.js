@@ -51,7 +51,7 @@ import { P, GREY, GOD_BACK, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AF
          SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
          GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, GOD_TALK, GAZE,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_POSTER, SKY_DRIFT,
-         AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S, GOD_WAVE_TAKE } from '../config.js';
+         AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { layerAt } from './frame.js';
@@ -318,8 +318,8 @@ function hopAt(x, y) {
 }
 // The rings off his head: a word leaves his mouth as a ring of his light
 // widening round his head, over his throne and behind him, fading as it reaches
-// `head` cells past his square. Take b shows only the arcs either side of
-// his mouth, stepped sound marks.
+// `head` cells past his square, shown only as the arcs either side of his
+// mouth, stepped sound marks.
 function drawHeadRings() {
   const t = now(), T = GOD_TALK, c = T.cell * H, m = mouth(), r0 = (GOD_N / 2) * H, far = r0 + T.head * H;
   ctx.fillStyle = style(RAY_TONE);
@@ -327,12 +327,11 @@ function drawHeadRings() {
     const rad = WV.speed * (t - w.ts);
     if (rad > far) continue;
     const a = (1 - clamp((rad - r0) / (far - r0), 0, 1)) * (w.kind === 'roar' ? 1 : 0.6);
-    const marks = GOD_WAVE_TAKE === 1;
     alpha(a, () => {
       const n = Math.max(12, Math.ceil(2 * Math.PI * rad / c)), seen = new Set();
       for (let i = 0; i < n; i++) {
         const th = i / n * 2 * Math.PI, cs = Math.cos(th), sn = Math.sin(th);
-        if (marks && Math.abs(sn) > 0.45) continue;
+        if (Math.abs(sn) > 0.45) continue;
         const x = c * Math.round(cs * rad / c), y = c * Math.round(sn * rad / c), key = x + ',' + y;
         if (seen.has(key)) continue;
         seen.add(key);
@@ -341,33 +340,6 @@ function drawHeadRings() {
     });
   }
 }
-// Take a: each word's front drawn on the crowd, a ring of his light `deep`
-// cells deep lying flat on the stage round his foot, out to the crowd's ends.
-function drawFronts() {
-  if (GOD_WAVE_TAKE !== 0) return;
-  const t = now(), T = GOD_TALK, c = T.cell * H, st = stage();
-  ctx.fillStyle = style(RAY_TONE);
-  for (const w of WORDS) {
-    const out = WV.speed * (t - w.ts) - WV.drop;
-    if (out <= 0) continue;
-    const a = waveAmp(w, out + WV.drop);
-    if (a <= 0) continue;
-    alpha(a * (w.kind === 'roar' ? 1 : 0.7), () => {
-      const n = Math.max(16, Math.ceil(2 * Math.PI * out / c)), seen = new Set();
-      for (let i = 0; i < n; i++) {
-        const th = i / n * 2 * Math.PI, dx = Math.cos(th) * out, y = WV.fy + Math.sin(th) * out * T.flat;
-        if (y < st.yb || y > st.yf) continue;
-        if (Math.abs(dx) > crowdHalf(st, y)) continue;
-        if (y < st.throneY + P && Math.abs(dx) < st.throne) continue;
-        const x = c * Math.round(dx / c), yy = c * Math.round(y / c), key = x + ',' + yy;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        rect(WV.fx + x - c / 2, yy - T.deep * c, c, T.deep * c);
-      }
-    });
-  }
-}
-
 // --- the stage -------------------------------------------------------------------------------
 // The top from behind his foot forward to the main plane's line, a line at a
 // time at its own depth's place (`gxAt`), so it leans as the camera pans,
@@ -465,8 +437,8 @@ function drawGodsCrowd(rows, between) {
       // each soul the yard's square (render/after/kit.js)
       const y = s.y - s.w + lift;
       square(rect, s.x, y, s.w, s.w);
-      // take b: lit in his light as his word reaches it
-      if (GOD_WAVE_TAKE === 1 && hop.lit > 0.01) {
+      // lit in his light as his word reaches it
+      if (hop.lit > 0.01) {
         ctx.globalAlpha = was * s.a * hop.lit;
         rect(s.x, y, s.w, s.w, LIT_TONE);
       }
@@ -1088,7 +1060,6 @@ export function drawSkyCrowd() {
     while (next < items.length && items[next].y <= y) items[next++].draw();
     drawWon(y);
   });
-  drawFronts();
   drawGaze(GZ);
 }
 // For a scene: the members walked out since the sky last looked, seen now,

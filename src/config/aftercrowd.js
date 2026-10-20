@@ -98,15 +98,6 @@ export const SKY_GRUMBLE = { every: [2.3, 3.3], bubble: 1.2 };
 // a front `deep` cells deep.
 export const GOD_TALK = { beat: 2, open: 1, loud: 5, mutter: 2, big: 6, speed: 200, flat: 0.3, hop: 2, bigHop: 3, hopS: 0.3,
                           reach: 0.45, head: 26, cell: 2, deep: 2, fade: 0.55, unlit: 0.3 };
-// The wave's look, one of two takes for the owner's vote (the dev panel's
-// `god wave`): 0 (a) a ring of his light drawn on the crowd at the front;
-// 1 (b) no ring -- the souls the front reaches lit in his light as they hop,
-// and stepped sound marks out of his mouth.
-export let GOD_WAVE_TAKE = 0;
-export const AFTERCROWD_KNOBS = [
-  { key: 'GOD_WAVE_TAKE', label: 'god wave', min: 0, max: 1, step: 1,
-    get: () => GOD_WAVE_TAKE, set: v => { GOD_WAVE_TAKE = v; } }
-];
 export const SKY_RING_W = [16, 70];        // a ring's half-width, px, plus this times the band's rate
 export const SKY_RING_LIFT = [3, 12];      // its jump, px, plus this times the band's rate
 

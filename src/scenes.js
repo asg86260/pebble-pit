@@ -3123,8 +3123,7 @@ export const SCENES = {
     run: () => levelAt(0.7, 'god') },
   // God talking (the owner, 2026-10-20): the clock run on to just before a
   // loud phrase, so the shot's second lands among its syllables' waves out
-  // across the crowd (and a film from here starts on its first); the dev
-  // panel's `god wave` picks how the wave is drawn.
+  // across the crowd (and a film from here starts on its first).
   'level-god-talk': { about: 'the acts', say: "God talking to his crowd: his mouth open on a syllable, its wave rippling out through the rows, each soul hopping as it arrives",
     run: () => {
       levelAt(0.1, 'god');

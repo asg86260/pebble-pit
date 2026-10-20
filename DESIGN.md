@@ -20848,10 +20848,9 @@ every two ticks with his mouth open on its tick, and every syllable is a
 wave: rings of his light off his head, then a front out from his foot
 across his crowd, lying flat on the stage. Each soul hops the moment the
 front reaches it, read off the same clock that draws the front, so the
-ripple goes out from him in step with the sound. Two takes on the dev
-panel's `god wave`: (a) the front drawn as a ring on the crowd; (b) no
-ring -- the souls lit in his light as they hop, and sound marks either
-side of his mouth. The roar no longer ducks the crowd.
+ripple goes out from him in step with the sound. The front itself is not
+drawn: the souls light in his light as they hop, and sound marks stand
+either side of his mouth (the owner's take b, 2026-10-20). The roar no longer ducks the crowd.
 
 **The level, the two crowds and the flags (design, not built; the owner,
 2026-10-19).** Voted a mock at a time (the board's act3-depth, act3-union,
