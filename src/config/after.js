@@ -176,6 +176,31 @@ export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0
 // The stations standing from the act's first frame: the pedestal the pair
 // speak from and the construction shack that sells every other.
 export const AFTER_START_BUILT = ['pedestal', 'shack'];
+// How cutting trees becomes the rebellion (board card act3-trees-to-rebellion,
+// the owner's picks A and B, 2026-10-20), each a dev dial for the vote (branch
+// act3-signs), 0 off and 1 on:
+// A, AFTER_SIGN_FLAG: the product looks like the protest from the start. The
+// workshop letters the fist onto the sign as it works it, the finished signs
+// stand in a rack outside it as the fist flags planted in God's crowd, and a
+// carrier marches one out held high.
+// B, AFTER_SIGN_BEAT: follow the first sign. A one-time beat (actbeats.js,
+// 'first-sign'): the first sign finished, the camera after its carrier across
+// to God's crowd, the sign planted, the first soul it wins walking back to
+// the union. No words; the player has the camera back after. Each of its
+// waits gives up after AFTER_SIGN_BEAT_WAIT seconds.
+export let AFTER_SIGN_FLAG = 1;
+export let AFTER_SIGN_BEAT = 1;
+export const AFTER_SIGN_BEAT_WAIT = 600;
+// A's flags: a sign's flag cell, world px, held, racked and lettered; the
+// rack's flags this many cells apart; a carried one this many cells over the
+// carrier's head.
+export const AFTER_SIGN_FLAG_U = { rack: 3, held: 2, lettered: 4, apart: 8, up: 4 };
+export const SIGN_KNOBS = [
+  { key: 'AFTER_SIGN_FLAG', label: 'act 3 signs, A: the fist flag from the workshop on (1) or off (0)', min: 0, max: 1, step: 1,
+    get: () => AFTER_SIGN_FLAG, set: v => { AFTER_SIGN_FLAG = v; } },
+  { key: 'AFTER_SIGN_BEAT', label: 'act 3 signs, B: follow the first sign on (1) or off (0)', min: 0, max: 1, step: 1,
+    get: () => AFTER_SIGN_BEAT, set: v => { AFTER_SIGN_BEAT = v; } }
+];
 export const AFTER_BUILD_FADE_S = 2;       // a piece of a station, a plot cleared or a post put up fades in over this
 // A station bought on the shack is raised a piece at a time, a band of its
 // box from the floor up, by a builder at its door: a member from the camp,

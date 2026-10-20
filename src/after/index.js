@@ -42,8 +42,8 @@ import { readOver } from '../placesave.js';
 // axe bought and in hand, the pair's last line (`shout`), the heap last
 // tipped and each station last worked by hand (`tipAt`, `workAt`), the
 // clouds and the motes coming down, the bodies -- members walking out, at
-// their posts and building -- the throne's speech, and the last id handed
-// out.
+// their posts and building -- the throne's speech, the first sign's beat,
+// and the last id handed out.
 export const blankAfter = () => ({
   rebel: 0,
   stock: Object.fromEntries(AFTER_STOCK.map(k => [k, 0])),
@@ -74,6 +74,10 @@ export const blankAfter = () => ({
   speech: null,
   gateAt: null,
   brimAt: null,
+  // The first sign's beat (config, AFTER_SIGN_BEAT; actbeats.js): what it
+  // has landed -- its carrier, the sign planted, the walk-outs there were
+  // then and the first soul since -- so a reload plays it on, not over.
+  firstSign: null,
   ids: 0
 });
 

@@ -38,7 +38,7 @@ import { S } from './state.js';
 import { P, WORKER, FINALE_HOUSE_W, AFTER_GATES, HELL_TIERS, ACT_HURRY, ACT_CAPTION_S, ACT_CAPTION_FADE_S,
          ACT_ROCK_FALL_S, ACT_ROCK_DUST_S, ACT_SOUL_LIFT_S, ACT_RIM_PIECES, ACT_RIM_STEP_S,
          ACT_CALL_K, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, MANSION_FILE_AT, MANSION_FILE_W,
-         ACT_PEDESTAL_FADE_S } from './config.js';
+         ACT_PEDESTAL_FADE_S, AFTER_SIGN_BEAT, AFTER_SIGN_BEAT_WAIT } from './config.js';
 import { frameMs } from './clock.js';
 import { afterlifeOn, hellOn, owed } from './acts.js';
 import { play, stepShot, release, addScene } from './cutscene.js';
@@ -50,8 +50,8 @@ import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, 
 import { beginMansion, mansionDone, mansionX, MANSION_W, beginGathering, gathered, stepMansion, stepGathering,
          forgetMansionHands } from './mansion.js';
 import { houseX, IN_DONE_S } from './home.js';
-import { afterFloor } from './after/place.js';
-import { godFront } from './after/sky.js';
+import { afterFloor, signFetchX, soulX, soulY } from './after/place.js';
+import { godFront, walkSeen } from './after/sky.js';
 import { hellFloor } from './hell/place.js';
 import * as AFTER from './after/index.js';
 import * as REBEL from './after/rebel.js';
@@ -142,7 +142,10 @@ const TRIGGERS = {
     && (typeof STRIKE.strikeDue === 'function' ? !!STRIKE.strikeDue() : !!S.after && S.after.gate >= AFTER_GATES.length),
   'haunt': () => beatDone('ghost-road') && !!pair() && pair().mode === 'soul',
   'descend': () => beatDone('haunt') && !!A() && !A().wentDown && !!pair() && pair().route === 'loop' && pair().leg >= 1,
-  'unchain': () => beatDone('descend') && cageDown()
+  'unchain': () => beatDone('descend') && cageDown(),
+  // The first sign (config, AFTER_SIGN_BEAT): finished, and none planted yet.
+  'first-sign': () => AFTER_SIGN_BEAT === 1 && beatDone('refuse') && !!S.after && S.after.signs.length === 0
+    && (S.after.stock.signs > 0 || S.after.bodies.some(b => b.load === 'sign'))
 };
 for (let i = 0; i < lastWall; i++) TRIGGERS[`wall-${i + 1}`] = () => beatDone('wall-first') && wallDue(i);
 export const actDue = key => !!(TRIGGERS[key] && TRIGGERS[key]());
@@ -171,6 +174,27 @@ const files = () => ({ x: (MANSION_FILE_AT + MANSION_FILE_W * 2) * P, y: S.groun
 const atHouse = spotted(houseSpot), atThrone = spotted(throne), atTear = spotted(tearAbove),
       atMansion = spotted(mansionMid), atFiles = spotted(files);
 const storyOf = key => (key in AFTER_STORY ? AFTER_STORY : HELL_STORY);
+
+// --- the first sign, followed (config, AFTER_SIGN_BEAT) -----------------------------------
+// What the beat has landed is the act's, saved (`S.after.firstSign`): the
+// carrier taking the first sign out, the sign it planted, the walk-outs
+// there were then, and the first soul since. A reload plays the beat again
+// from its first phase, and each phase skips what has landed. Where the
+// camera last saw who it follows, and when each wait began, are this
+// session's.
+const fs = () => (S.after.firstSign ??= { carrier: null, planted: null, outs: null, soul: null });
+const bodyById = id => (S.after && id != null ? S.after.bodies.find(b => b.id === id) || null : null);
+// A body or a sign where it is drawn: on the main plane, or out on God's
+// stage (after/sky.js, `walkSeen`); a spot is its top's middle.
+const seenSpot = (x, y) => { const v = walkSeen(x, y, S.camX + S.viewW / 2); return { x: v.x, y: v.y - WORKER }; };
+const look = { last: null, since: 0 };
+const waitFrom = () => { look.since = S.after ? S.after.t : 0; };
+const waited = () => !!S.after && S.after.t - look.since > AFTER_SIGN_BEAT_WAIT;
+const atRack = spotted(() => ({ x: signFetchX(), y: afterFloor() - WORKER }));
+const plantedSpot = () => { const q = S.after.signs.find(o => o.id === fs().planted); return q ? seenSpot(soulX(q.f) + P / 2, soulY(q.r) + P * 2) : null; };
+const onSeen = spotted(() => look.last || plantedSpot() || { x: signFetchX(), y: afterFloor() - WORKER });
+// Held while it is followed: read where it is drawn.
+const watch = id => { const w = bodyById(id); if (w) look.last = seenSpot(w.x, w.y); return w; };
 
 // The house's fall: the two of them walked indoors first (nothing teleports),
 // then held there; the rock, then the house gone under it.
@@ -227,6 +251,33 @@ const BODIES = {
     { frame: onPair, s: 1.5 }
   ],
   'axe': [{ frame: onPair, s: ACT_CAPTION_S, say: 'act-axe' }],
+  // The first sign, followed (config, AFTER_SIGN_BEAT): at the workshop's
+  // rack until a carrier takes it up; after it across the camp and out to
+  // God's crowd until it is planted; held on it; then after the first soul
+  // it wins, walking back to the union. No words.
+  'first-sign': [
+    { frame: atRack, enter: () => { look.last = null; waitFrom(); }, skipIf: () => fs().carrier != null || fs().planted != null,
+      until: () => { const c = S.after.bodies.find(b => b.load === 'sign'); if (c) fs().carrier = c.id; return !!c || waited(); } },
+    { frame: onSeen, move: 'follow', enter: waitFrom, skipIf: () => fs().carrier == null || fs().planted != null,
+      until: () => {
+        const c = watch(fs().carrier), done = !c || c.load !== 'sign';
+        if (done && S.after.signs.length) fs().planted = S.after.signs[S.after.signs.length - 1].id;
+        return done || waited();
+      } },
+    { frame: onSeen, s: 2.5, enter: () => { look.last = plantedSpot() || look.last; }, skipIf: () => fs().outs != null,
+      end: () => { fs().outs = S.after.bodies.filter(b => b.state === 'out').map(b => b.id); } },
+    { frame: onSeen, move: 'follow', enter: waitFrom,
+      until: () => {
+        const f = fs();
+        if (f.soul == null) {
+          const w = S.after.bodies.find(b => b.state === 'out' && !(f.outs || []).includes(b.id));
+          if (w) f.soul = w.id;
+          return waited();
+        }
+        const w = watch(f.soul);
+        return !w || w.state !== 'out' || waited();
+      } }
+  ],
   'strike': [{ frame: atThrone, s: ACT_CAPTION_S + 1, enter: () => { ensureActs().struck = true; }, say: 'act-strike' }],
   'unmask': [{ frame: atThrone, s: ACT_CAPTION_S + 1, enter: () => openPortal('hell'), say: 'act-unmask' }],
   'hell-told': [{ frame: atThrone, s: ACT_CAPTION_S + 1, say: 'act-hell-told' }],
