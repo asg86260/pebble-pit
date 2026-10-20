@@ -1,7 +1,7 @@
 {
- "base": "9370442c6ce6c5f3807ec379ed9c8f234c358657",
- "head": "9bf0ee2e2efb1202fb78fad3fc9f196b57a53396",
- "at": "2026-10-20T20:10:43.400Z",
+ "base": "b052a1ac97fb26b682461de8e02e90861dbc0fdb",
+ "head": "c1544be7db56c700dced5a00197495d7dfccc0ff",
+ "at": "2026-10-20T20:35:29.243Z",
  "items": {
   "clear": [
    {
@@ -111,28 +111,6 @@
     "n": 4,
     "before": {
      "ext": "png"
-    },
-    "after": {
-     "ext": "png"
-    }
-   }
-  ],
-  "acid": [
-   {
-    "n": 1,
-    "before": {
-     "ext": "png"
-    },
-    "after": {
-     "ext": "png"
-    }
-   }
-  ],
-  "fallback": [
-   {
-    "n": 1,
-    "before": {
-     "note": "error: Error: no such knob: CLOUDS_FLAT"
     },
     "after": {
      "ext": "png"
