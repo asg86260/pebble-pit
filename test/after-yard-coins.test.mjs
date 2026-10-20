@@ -8,7 +8,8 @@
 import { group, ok, run, yard } from './helpers.mjs';
 import { AFTER_BUILDS, AFTER_UPGRADES, AFTER_COIN_UNDER_S, AFTER_COIN_LIFE_S, AFTER_COIN_STAGGER_S,
          AFTER_COIN_MOTES, SCALE_SHADE, SCALE_SPREAD } from '../src/config.js';
-import { patchAt, afterTag, afterRow } from '../src/after/rows.js';
+import { patchAt, afterRow } from '../src/after/rows.js';
+import { tagOf } from '../src/shop.js';
 import { coinAt } from '../src/render/aftercoins.js';
 
 const S = yard.S;
@@ -43,7 +44,7 @@ group('short of a yard coin, the buy refuses and takes nothing', async () => {
   window.__afterGrant({ rebel: 1000 });
   window.__grant({ dust: billOf(MILL, 'dust') - 1 });
   const dust0 = S.stored, rebel0 = S.after.rebel;
-  const tag = afterTag(afterRow('after-build-mill'));
+  const tag = tagOf(afterRow('after-build-mill')).bill;
   const bought = window.__buy('after-build-mill');
   window.__actsOn(null);
   return [
@@ -82,7 +83,7 @@ group('an ore-band upgrade asks the deep\'s scales: refused short, and takes the
   window.__grant({ dust: billOf(bill, 'dust'), spores: billOf(bill, 'spore'), shards: billOf(bill, 'shard'),
                    scales: billOf(bill, 'scale') - 1 });
   const short0 = S.scales, rebel0 = S.after.rebel;
-  const tag = afterTag(afterRow('after-bench'));
+  const tag = tagOf(afterRow('after-bench')).bill;
   const without = window.__buy('after-bench');
   const kept = S.scales === short0 && S.after.rebel === rebel0;
   window.__grant({ scales: 1 });

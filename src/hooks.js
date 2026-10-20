@@ -1485,11 +1485,11 @@ HANDLES.__hellAt = (what, i) => {
 // --- act 3's loop (after/; track A, reworked 2026-10-18) ---
 // The click as a player makes it, in world pixels; the act's rows bought
 // through `__buy` as any row is (its coins are the act's, so `__buy` hands an
-// act-3 key to `buyAfter`); and the setup a check is not about: coins
+// act-3 key to the one `buy`); and the setup a check is not about: coins
 // granted, the crowd's rims set, where the pair, the trees and the stumps
 // stand.
 import { clickAfter } from './after/index.js';
-import { afterRow, buyAfter, AFTER_ROWS, afterBill, afterMaxed, openAfterBoard } from './after/rows.js';
+import { afterRow, AFTER_ROWS, afterBill, afterMaxed, openAfterBoard } from './after/rows.js';
 import { setCrowd, support as afterSupport, union as afterUnion, crowdSize } from './after/union.js';
 import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut } from './after/bodies.js';
@@ -1501,7 +1501,7 @@ import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureVi
 HANDLES.__afterClick = (x, y) => { if (gestureDown(x, y)) { gestureUp(x, y); return true; } return clickAfter(x, y); };
 {
   const yardBuy = HANDLES.__buy;
-  HANDLES.__buy = key => (afterRow(key) ? buyAfter(key) : yardBuy(key));
+  HANDLES.__buy = key => (afterRow(key) ? buyRow(afterRow(key)) : yardBuy(key));
 }
 HANDLES.__afterGrant = (coins = {}) => {
   const a = S.after;

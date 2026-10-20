@@ -16,7 +16,7 @@ close-on-scroll now serve act 3. Step 2 is built (branch place-step2): every `LA
 names the places it draws in (`in`), and render.js's hand-kept DEEP / AFTER /
 HELL sets are gone; what draws where is unchanged, so enabling the shared
 marks (pile marks, work bars, build sites, done marks, roster) in act places
-is now a one-word edit per layer, and comes later. Hell's rows are next (step 4). Defects found
+is now a one-word edit per layer, and comes later. Step 3 is built (branch place-step3): one `buy` in upgrades.js pays every coin through `take` and its place's purse, act 3's rows say `place`, `flyFrom` and `paid` for the yard-coin fly-up, and `buyVia`, `buyAfter`, `afterCanPay` and `afterTag` are gone (the shared `tagOf` writes the tag). Hell's rows are next (step 4). Defects found
 by the survey, open whatever the refactor's timing: `reloadCheck`
 (test/helpers.mjs) compares `S.workers` only, so act bodies are not guarded
 against teleporting; hell's five boards cannot be opened (`hellBoardAt` has

@@ -14,18 +14,17 @@
 //
 // A bill names the act's coins (rebel, timber, paper: `S.after`) and the
 // yard's (dust, crops, ore, sparks: DESIGN.md, "The yard pays too"), so a
-// row here is bought through `buyAfter`, never `buy`: the act's coins come
-// off `S.after`, the yard's through the yard's own purse and `take`
-// (words.js, upgrades.js), the yard's counter dropping as they leave. They
-// are lifted off the yard's pile and fly up to the thin patch in the cloud
-// floor, and come out of it as motes that arc to the station bought
-// (`S.after.coins`, drawn by render/aftercoins.js). The cards keep the
+// row here is bought through the one `buy` (upgrades.js), each coin paid
+// through `take` and its place's purse (words.js): the act's coins come off
+// `S.after`, the yard's off the yard, its counter dropping as they leave. The
+// yard's are lifted off the pile and fly up to the thin patch in the cloud
+// floor (`flyFrom`), and come out of it as motes that arc to the station
+// bought (`paid`; `S.after.coins`, drawn by render/aftercoins.js). The cards keep the
 // yard's shape -- `rung`, `rungs`, `from`, `to`, `bill`, `show`, `dead` -- and the yard's
 // board draws them as it draws any row: the pointer at a station opens its
 // board as it does the yard's (each card is a row of the station table,
 // after/stations.js; the yard's sheet, its posts' shelf then its upgrades'),
-// the yard's purse and marks know the act's coins (words.js), and a press
-// on a tile comes back here through the row's `buyVia`.
+// the yard's purse and marks know the act's coins (words.js).
 
 import { S } from '../state.js';
 import { msg } from '../lang.js';
@@ -34,8 +33,7 @@ import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_POST_REBEL0, AFTER
          AFTER_COIN_MOTES, AFTER_COIN_UNDER_S, AFTER_COIN_STAGGER_S, AFTER_COIN_SPREAD, AFTER_COIN_LIFE_S,
          MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
 import { registerBoard, openBoardByKey } from '../boardrows.js';
-import { purse, MARK, priceText, leftText } from '../words.js';
-import { take } from '../upgrades.js';
+import { purse, leftText } from '../words.js';
 import { payTo } from '../pit.js';
 import { upCount, built, raising } from './levels.js';
 import { postsOf, postCount, addPost } from './bodies.js';
@@ -52,10 +50,6 @@ const isYardCoin = coin => AFTER_YARD_COINS.includes(coin);
 export const afterPurse = coin => purse(coin);
 // The act's coin's name, a plain label until the owner words it.
 export const rebelSaid = () => msg('after-coin-rebel');
-function spendCoin(coin, n) {
-  const a = S.after;
-  if (coin === 'rebel') a.rebel -= n; else a.stock[coin] -= n;
-}
 
 // --- the yard's coins coming up ---------------------------------------------------------
 // The thin patch in the cloud floor the yard's coins come up through.
@@ -76,19 +70,16 @@ const FIND_BASE = { spore: SPORE_CELL, shard: SHARD_CELL, spark: SPARK_CELL };
 const toneOf = (coin, i) => (coin === 'dust' ? 1 + (i % SHADES.length)
   : coin === 'scale' ? SCALE_SHADE + (i % (2 * SCALE_SPREAD + 1)) - SCALE_SPREAD
   : FIND_BASE[coin] + (i % FIND_TONES));
-// The yard's share of a bill paid: off the yard's pile through `take`, its
-// grains sent up to the patch (`payTo`), and the motes that come out of the
-// patch after them, each stamped with when it comes out and where it lands.
+// The motes that come out of the patch after the yard's grains, each stamped
+// with when it comes out and where it lands. `buy` has already taken the
+// coins (the grains rising to `flyFrom`); this is the show that follows.
 // Motes that have landed are cleared here, the one place the list is written.
-function payYard(bill, key) {
+function paid(u, bill) {
   const a = S.after;
-  const patch = patchAt(), to = landAt(key);
+  const patch = patchAt(), to = landAt(u.lands || u.card);
   a.coins = (a.coins || []).filter(m => a.t - m.at < AFTER_COIN_LIFE_S);
-  payTo(patch.x, patch.y);
-  for (const [coin, n] of bill) take(coin, n, patch);   // the deep's scales lift off the bed bound for the patch too
-  payTo();
   let k = 0;
-  for (const [coin, n] of bill) {
+  for (const [coin, n] of bill.filter(([c, n]) => isYardCoin(c) && n > 0)) {
     for (let i = 0; i < Math.min(n, AFTER_COIN_MOTES); i++, k++) {
       const off = ((k * 7) % (2 * AFTER_COIN_SPREAD + 1)) - AFTER_COIN_SPREAD;
       a.coins.push({ v: toneOf(coin, i), x0: patch.x + off * P, y0: patch.y, tx: to.x, ty: to.y,
@@ -101,9 +92,9 @@ function payYard(bill, key) {
 export const cardOpen = card => built(card);
 
 // What every row up here carries for the yard's board: its bill written the
-// act's coins first, and a press on its tile bought here (`buyAfter`), off
-// the camp's purse and the yard's, never the yard's `buy`.
-const ACT_ROW = { coinOrder: AFTER_TAG_ORDER, buyVia: u => buyAfter(u) };
+// act's coins first, its place (the yard's boards being shut is not about
+// it), the patch the yard's grains rise to and the motes that follow.
+const ACT_ROW = { coinOrder: AFTER_TAG_ORDER, place: 'after', flyFrom: () => patchAt(), paid };
 
 // --- the named upgrades ----------------------------------------------------------------------
 const UP_NAMES = {
@@ -183,42 +174,18 @@ const buildRow = st => ({
   buy: () => { raiseStation(st); }
 });
 
+// Nothing up here is for sale before the act has begun.
+const inAct = u => ({ ...u, show: () => !!S.after && u.show() });
 export const AFTER_ROWS = [
   ...AFTER_JOBS.map(postRow),
   ...Object.keys(AFTER_UPGRADES).map(upRow),
   ...Object.keys(AFTER_BUILDS).map(buildRow)
-];
+].map(inAct);
 export const afterRow = key => AFTER_ROWS.find(u => u.key === key) || null;
 
 // --- buying ------------------------------------------------------------------------------
 export const afterMaxed = u => !!u.rung && u.rung() >= u.rungs();
 export const afterBill = u => (u.bill ? u.bill() : []);
-export const afterCanPay = u => afterBill(u).every(([c, n]) => afterPurse(c) >= n);
-// A row's price tag, written the way a yard card writes one (shop.js
-// `tagOf`, which the board itself uses): a cell a coin, `have` or `short` off
-// what is held of it, so a card short of any coin takes the dashed edge
-// (style.css), every coin in its mark, the act's first.
-export function afterTag(u) {
-  const bill = afterBill(u).filter(([, n]) => n > 0)
-    .sort((a, b) => AFTER_TAG_ORDER.indexOf(a[0]) - AFTER_TAG_ORDER.indexOf(b[0]));
-  return bill.map(([c, n]) => `<span class="${afterPurse(c) >= n ? 'have' : 'short'}">`
-    + `${MARK[c]} ${priceText(c, n)}</span>`).join('');
-}
-// True when something was bought: offered, not dead, not finished, paid in
-// full, and then the row's own `buy`. The act's coins come off the camp; the
-// yard's off the yard, flying to the station bought (a shack row's station,
-// else its card's).
-export function buyAfter(u) {
-  if (typeof u === 'string') u = afterRow(u);
-  if (!u || u.dial || !S.after || !u.show() || u.dead?.() || afterMaxed(u) || !afterCanPay(u)) return false;
-  const bill = afterBill(u);
-  for (const [c, n] of bill) if (!isYardCoin(c)) spendCoin(c, n);
-  const yard = bill.filter(([c, n]) => isYardCoin(c) && n > 0);
-  if (yard.length) payYard(yard, u.lands || u.card);
-  u.buy();
-  S.shopStale = true;
-  return true;
-}
 
 // --- the boards ----------------------------------------------------------------------------
 // A card's rows, and its planks (tabs choice A, the owner, 2026-10-18): its

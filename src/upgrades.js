@@ -182,6 +182,9 @@ export function take(money, n, to = null) {
   else if (money === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
   else if (money === 'spore') { S.spores -= n; spendHeld(n, SPORE_CELL); }
   else if (money === 'spark') { S.sparks -= n; spendHeld(n, SPARK_CELL); }
+  // Act 3's: rebel on the act, timber and paper the chain's stock.
+  else if (money === 'rebel') S.after.rebel -= n;
+  else if (money === 'timber' || money === 'paper') S.after.stock[money] -= n;
 }
 
 // What a row costs, as [currency, amount] pairs. A row says `cost` and
@@ -260,13 +263,10 @@ export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 // or a sheet shutting on a bill you cannot pay looks like it took the money.
 export function buy(u) {
   if (u.job || u.dial) return false;
-  // A row bought by its own act's purse (act 3's cards: after/rows.js
-  // `buyAfter`) is pressed on the yard's board the way any row is, and paid
-  // there; the yard's boards being shut is not about it.
-  if (u.buyVia) return u.buyVia(u);
   // The yard's boards are shut while the two of them are dead in the cloud
   // (act 3, call 5): the yard runs on the rungs it had. Open again in act 4.
-  if (boardsShut()) return false;   // a job row moves bodies and a dial sets a number
+  // A row of another place (`place`: act 3's cards) is not on those boards.
+  if (!u.place && boardsShut()) return false;   // a job row moves bodies and a dial sets a number
   // A signpost costs nothing; pressing it only points somewhere.
   if (u.sign) { if (u.show() && !u.dead?.()) u.buy(); return false; }
   // A row with a payout on it instead of a price is not a purchase: nothing is
@@ -297,11 +297,13 @@ export function buy(u) {
   const box = u.site === 'yard' ? siteBox('yard', worksOf(u.key).at(-1) || null)
             : u.site           ? siteBox(u.site)
             : null;
-  const to = box && { x: box.x + box.w / 2, y: (box.y ?? S.groundY) - P * 2 };
+  // A place's row says where its grains rise to (`flyFrom`).
+  const to = u.flyFrom ? u.flyFrom() : box && { x: box.x + box.w / 2, y: (box.y ?? S.groundY) - P * 2 };
   if (to) payTo(to.x, to.y);
   // Nothing is taken until all of it can be (`canPay` above).
   for (const [money, n] of bill) take(money, n, to);
   payTo();
+  u.paid?.(u, bill);
 
   if (!takesTime(u)) u.buy();
   S.shopStale = true;

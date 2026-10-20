@@ -10,7 +10,7 @@
 // after it.
 //
 // Every purchase goes through the row's own buy (`__buy` hands an act-3 key
-// to `buyAfter`, what a card's press calls), every click and motion through
+// to `buy`, what a card's press calls), every click and motion through
 // the calls input.js makes (`__goOn`, `gestureDown` / `gestureMove` /
 // `gestureUp`). The setup the check is not about, and nothing else:
 //  - the yard's coins (dust, crops, ore, scales, sparks) a bill names,

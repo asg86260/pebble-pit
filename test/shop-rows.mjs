@@ -178,7 +178,7 @@ export const ROWS = [
 
   // --- act 3, the afterlife: no lines here --------------------------------------
   // Its rows (after/rows.js) are bought with the act's own coins through
-  // `buyAfter` and are not among the yard's rows (`__rows`), so this walk
+  // `buy` and are not among the yard's rows (`__rows`), so this walk
   // never meets them; test/after-loop.test.mjs buys them as a player does and
   // reads the act back from a save. None is a ladder (DESIGN.md, act 3's
   // call 12) but the pair's podium, a rung a support mark, which it buys

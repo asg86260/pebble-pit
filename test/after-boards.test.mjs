@@ -2,7 +2,7 @@
 // what order and on which shelf, read off the boards as the yard's board
 // builder reads them (boardrows.js), and the crowd's board's readings against
 // the sim. Every row is bought through the yard's own `buy`, the press a
-// tile makes (shop.js `pressRow`), which hands an act-3 row to `buyAfter`.
+// tile makes (shop.js `pressRow`), which hands an act-3 row to the one `buy`.
 // The pointer, the sheet and the drawn tiles are the browser tier's
 // (src/selftest/afterboards.js). The setup a check is not about goes through
 // the hooks: the dev travel up with the opening marked played, coins granted.
