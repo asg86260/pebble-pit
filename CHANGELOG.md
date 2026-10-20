@@ -190,6 +190,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Settings, on the pause sheet and the title page, is one page in four tabs -- graphics, audio, controls and language -- with the controls table and the languages right under their tabs, LB and RB to turn them on a pad, and the title page's volume slider drawn like the pause sheet's (src/selftest/settings.js, "four tabs"; src/selftest/language.js).
 - Every zoom glides instead of stepping, the picture scaled sharp on the way, and the pointer stays on what it points at through it (test/zoom-glide.test.mjs).
 
+- A dizzy body picked up and set down somewhere else rocks where it came down, instead of jumping back to where it first landed (test/kit.test.mjs).
 - A card's long name, its gain and its cancel / another strip are no longer cut short at the card's edge; the board widens to fit them (src/selftest/boardwords.js).
 - The smallest words in the menus -- the appearance page's tabs and tile names, the boards' row names, the controls table, the settings tabs, the title page's foot -- are no longer too small to read, and every grey word in the menus is dark enough to read on the light page and the dark (src/selftest/textaa.js; test/ui-tokens.test.mjs).
 - The appearance page stays one height as you change slots, switch between you and your sqouse, or step through a new yard's build steps (src/selftest/wardrobe.js, "one height").

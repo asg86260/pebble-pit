@@ -72,7 +72,7 @@ const pageKeys = () => BOARDS;
 // Read inside a function, not gathered at load: the imports come round in a
 // ring, and a table built while the ring is still closing gets `undefined` for
 // whichever list had not been reached yet.
-const listFor = which => (which === 'house' ? crewRows() : boardList(which));
+export const listFor = which => (which === 'house' ? crewRows() : boardList(which));
 
 // Every station of the yard's world that has a board; what is true of all of
 // them (the mark under the foot, for one) is written once against this list.

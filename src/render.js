@@ -450,7 +450,7 @@ function drawHalf(place, from = 0, to = LAYERS.length, skip = null) {
 // the deep's own, act 3's own layers in its own spread, and the rest turned
 // over between the dark page's paper and ink. On the light page every map is
 // the identity.
-const mapOf = (layer, place) => place === 'deep' ? 'deep' : READING.has(layer.name) ? 'line' : layer.in === 'after' ? 'after' : 'yard';
+export const mapOf = (layer, place) => place === 'deep' ? 'deep' : READING.has(layer.name) ? 'line' : layer.in === 'after' ? 'after' : 'yard';
 
 function drawLayer(layer, i, place) {
   // A `dim` layer is the crew's own plane, and the corner's crew switch

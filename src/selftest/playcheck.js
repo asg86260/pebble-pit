@@ -59,11 +59,11 @@ function pairOnGlass() {
 // Frames of the page until `fn`, or false after `frames`. Wall frames, because
 // the pan, a board's seating and the hover's intent are the page's; the yard's
 // clock is turned with `run`.
-const until = async (fn, frames = 90) => {
+export const until = async (fn, frames = 90) => {
   for (let i = 0; i < frames; i++) { if (fn()) return true; await raf(); }
   return !!fn();
 };
-const wheel = dy => canvas().dispatchEvent(new WheelEvent('wheel', { deltaY: dy, bubbles: true, cancelable: true }));
+export const wheel = dy => canvas().dispatchEvent(new WheelEvent('wheel', { deltaY: dy, bubbles: true, cancelable: true }));
 const keyOf = dir => (dir > 0 ? 'ArrowRight' : 'ArrowLeft');
 
 // The view driven to one end with the wheel or a held arrow until it stops
@@ -96,13 +96,13 @@ async function panChecks(name) {
 }
 
 // A world point on the glass, as the pointer gives it (input.js `pos`).
-const glass = (x, y) => { const r = canvas().getBoundingClientRect(), s = toScreen(x, y); return [r.left + s.x, r.top + s.y]; };
+export const glass = (x, y) => { const r = canvas().getBoundingClientRect(), s = toScreen(x, y); return [r.left + s.x, r.top + s.y]; };
 // The camera on a world x with nothing else moving it, a frame drawn.
-const lookAt = async x => { window.__look(x - S.viewW / 2); await settle(0.1); };
+export const lookAt = async x => { window.__look(x - S.viewW / 2); await settle(0.1); };
 
 // The pointer walked up to a spot from a few steps off, the way a hand
 // arrives, rather than appearing on it.
-async function walkTo(sx, sy) {
+export async function walkTo(sx, sy) {
   for (let k = 8; k >= 1; k--) { point('pointermove', sx - k * 14, sy + k * 5, 0); await raf(); }
   point('pointermove', sx, sy, 0);
 }
@@ -126,7 +126,7 @@ const openRows = () => STATIONS.filter(r => r.board && r.stand && here(r) && r.o
 
 // A row's station visited: the camera on it, the pointer walked up, and what
 // the page said back.
-async function visit(row) {
+export async function visit(row) {
   // The camera on the station first and the spot found there: a station
   // drawn against the camera (God's camp) is somewhere else once it moves.
   const r0 = hitRect(row.key);

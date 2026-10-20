@@ -21,6 +21,8 @@ const live = () => hellOn() && !!S.hell;
 const inBox = (x, y, b) => x >= b.x && x < b.x + b.w && y >= b.y && y <= b.y + b.h;
 const chambers = () => { const out = []; for (let i = 0; i <= S.hell.chamber; i++) out.push(i); return out; };
 const mid = () => S.camX + S.viewW / 2;
+// What a row has made so far, over every ore (the polish bar's door check).
+const sum = o => Object.values(o || {}).reduce((n, v) => n + (v || 0), 0);
 
 // The same one-at-a-time flag as act 3's rows: this session's, never saved.
 let openKey = null;
@@ -67,9 +69,13 @@ const row = (kind, more) => {
 // In the order a press asks them: a face, a furnace, a barrier in each
 // chamber, then the anvil with its store and the road.
 export const HELL_STATION_ROWS = [
-  row('face', { stand: () => nearest(faceBox), hit: (x, y) => chambers().some(i => inBox(x, y, faceBox(i))) }),
-  row('furnace', { stand: () => nearest(furnaceBox), hit: (x, y) => chambers().some(i => inBox(x, y, furnaceBox(i))) }),
+  row('face', { stand: () => nearest(faceBox), hit: (x, y) => chambers().some(i => inBox(x, y, faceBox(i))),
+                made: () => sum(S.hell.mined) }),
+  row('furnace', { stand: () => nearest(furnaceBox), hit: (x, y) => chambers().some(i => inBox(x, y, furnaceBox(i))),
+                   made: () => sum(S.hell.smelted) }),
   row('wall', { stand: () => nearest(wallBox), hit: (x, y) => chambers().some(i => inBox(x, y, wallBox(i))) }),
-  row('anvil', { stand: () => landing(anvilX()), hit: (x, y) => inBox(x, y, landing(anvilX())) || inBox(x, y, landing(storeX())) }),
+  // the tools made, and the strokes on the one under the hammer
+  row('anvil', { stand: () => landing(anvilX()), hit: (x, y) => inBox(x, y, landing(anvilX())) || inBox(x, y, landing(storeX())),
+                 made: () => S.hell.tool * 1000 + (S.hell.forge ? S.hell.forge.strokes + 1 : 0) }),
   row('muster', { stand: () => landing(roadX()), hit: (x, y) => inBox(x, y, landing(roadX())) })
 ];

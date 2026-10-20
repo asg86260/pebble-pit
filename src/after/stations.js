@@ -17,6 +17,7 @@ import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
 import { stationBox, stationParts, closed } from './place.js';
 import { godCampAt, godMid, faceY } from './sky.js';
+import { madeAt } from './work.js';
 
 const live = () => afterlifeOn() && !!S.after;
 const inBox = (x, y, b) => !!b && x >= b.x && x < b.x + b.w && y >= b.y && y <= b.y + b.h;
@@ -71,7 +72,9 @@ export const AFTER_STATION_ROWS = [
     // closed too: its board offers its rebuild
     open: () => live() && (built(card) || closed(card)),
     stand: () => stationBox(card),
-    hit: (x, y) => inBox(x, y, drawn(card)) || (card === 'mill' && inBox(x, y, stationParts('heap').heap))
+    hit: (x, y) => inBox(x, y, drawn(card)) || (card === 'mill' && inBox(x, y, stationParts('heap').heap)),
+    // what it has made, by hand or by its post (after/work.js)
+    made: () => madeAt(card)
   })),
   // The grove's board is the forestry shack's, in front of its trees (the
   // owner, 2026-10-20): a press on a tree is the saw's (after/gestures.js).

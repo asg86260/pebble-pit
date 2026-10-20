@@ -115,7 +115,9 @@ for (const id of PARTY_IDS) {
 // yard's builders on its ground (`stand`) unless it says otherwise
 // (`builtBy`). A row with a `pile` has a pile that can fill: the mark over it
 // and its hover come from that. So a new place is one row, and every system
-// that shows or staffs a place reads it off here.
+// that shows or staffs a place reads it off here. What it has made so far
+// (`made`, a count that only climbs while its bodies work) is what the polish
+// bar's door check holds still with nobody at it (test/place-bar.test.mjs).
 //
 // Which place a row stands in (`place`: 'yard', 'deep', 'after' or 'hell';
 // 'yard' unless it says): the pointer asks only the rows of the place on
@@ -149,7 +151,7 @@ export const STATIONS = [
   // there.
   { key: 'quarry', name: msg('station-quarry'), glyph: 'hoist',
     empty: msg('station-quarry-empty'), post: { key: 'quarryjob', job: JOB.QUARRY, kit: true },
-    open: () => S.quarryOpen, stand: () => quarryShed(), board: 'quarryBoardOpen',
+    open: () => S.quarryOpen, stand: () => quarryShed(), board: 'quarryBoardOpen', made: () => S.shards,
     reach: { right: 1 },
     after: ['farm'],
     // the net failing opens it (DESIGN.md, "The barriers are the gates");
@@ -157,7 +159,7 @@ export const STATIONS = [
     needs: () => shieldDone('net') && !demoOn() },
   { key: 'farm', name: msg('station-farm'), glyph: 'furrow',
     empty: msg('station-farm-empty'), post: { key: 'farmjob', job: JOB.FARM, kit: true },
-    open: () => S.farmOpen, stand: () => farmShedRoofed(), board: 'farmBoardOpen',
+    open: () => S.farmOpen, stand: () => farmShedRoofed(), board: 'farmBoardOpen', made: () => S.spores,
     after: [],
     // Sticky: `nearly` reads the dust in the hole, and as a plain `show` the
     // door came and went every time you spent. The props failing opens it.

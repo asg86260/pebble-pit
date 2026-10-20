@@ -114,6 +114,9 @@ export function fall(w) {
   w.falling = false;
   sfx('body-land', { x: w.x + WORKER / 2 });
   w.foot = w.footAt = null;        // it climbs to wherever it is standing now
+  // Still seeing stars from a shaking before, it rocks where it has come down
+  // now, not where it came down then.
+  if (w.dizzyUntil) w.landedAt = w.x;
   // and if it was shaken on the way up, it stands there seeing stars first
   if (w.dizzyFor) {
     w.dizzyUntil = now() + w.dizzyFor;

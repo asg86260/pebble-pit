@@ -660,10 +660,14 @@ function overAnyMark(x, y) {
   return !!overDoneMark(x, y);
 }
 
+// The cursor a point asks for, worn or not: what a check reads.
+export function cursorAt(x, y) {
+  for (const [is, name] of CURSORS) if (is(x, y)) return name;
+  return 'crosshair';
+}
 let wearing = '';
 function setCursor(x, y) {
-  let want = 'crosshair';
-  for (const [is, name] of CURSORS) if (is(x, y)) { want = name; break; }
+  const want = cursorAt(x, y);
   if (want === wearing) return;                // only when it actually changes
   wearing = want;
   canvas.style.cursor = want;

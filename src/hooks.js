@@ -1620,3 +1620,32 @@ HANDLES.__cutRead = () => ({
   beat: S.beat.camera || S.beat.yard || S.beat.sheet || (S.shot && S.shot.name) || null,
   done: [...S.beatsDone],
 });
+
+// The dark page, read by the polish bar's browser gate (src/selftest/
+// placebar.js) through a page loaded on it: a color as a map draws it, the
+// map a place's world layers are drawn in, and one frame drawn at full ink
+// (a fade is opacity and outside the palette, canvas.md "Fades").
+import { inkOf as inkOfNow } from './ink.js';
+import { draw as drawNow, mapOf as mapOfNow, LAYERS as LAYERS_NOW } from './render.js';
+HANDLES.__inkOf = (c, m) => String(inkOfNow(c, m));
+HANDLES.__mapOf = place => mapOfNow(LAYERS_NOW.find(l => l.in === place) || { name: '', in: place }, place);
+HANDLES.__drawFullInk = () => {
+  const g = document.getElementById('c').getContext('2d');
+  Object.defineProperty(g, 'globalAlpha', { configurable: true, get: () => 1, set: () => {} });
+  globalThis.__pinInk = true;
+  try { drawNow(); } finally { globalThis.__pinInk = false; delete g.globalAlpha; }
+};
+
+// Every handle but the clock's is a setup: what it stands up or moves is
+// taken as it stands by the motion rules (verify.js, rule 22). Last, so it
+// wraps every handle above.
+import { touchSetup } from './verify.js';
+for (const [k, fn] of Object.entries(HANDLES)) {
+  if (typeof fn !== 'function' || k === '__fast') continue;
+  HANDLES[k] = function (...a) {
+    touchSetup();
+    const out = fn.apply(this, a);
+    touchSetup();
+    return out;
+  };
+}
