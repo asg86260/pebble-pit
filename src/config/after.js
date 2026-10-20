@@ -309,7 +309,17 @@ export const AFTER_POSTER_LIFE_S = 240;    // a poster weathers off after this
 export const AFTER_POSTER_FADE_S = 2;      // a torn poster's strips fading
 
 // --- God's pushback ---
-export const AFTER_SPEECH_S = 100;         // between the throne's speeches; halved past the slowdown
+// The throne's speech burns a sign or a poster as often as a carrier can
+// march a sign out (the coordinator, 2026-10-20: the act's pace must not
+// hang on how wide the camp is drawn). Its interval is AFTER_BURN_MARCHES
+// sign marches -- a carrier's walk from where it takes a sign at the
+// workshop to God's crowd's near edge, at AFTER_WALK (after/place.js,
+// `signMarch`) -- halved past the slowdown. The multiple is the act's
+// balance as tuned: a speech every AFTER_SPEECH_S over the march of
+// AFTER_SPEECH_MARCH px it was tuned against (the camp at the art's first
+// size), so a wider camp gives the carriers the same race against the burn.
+export const AFTER_SPEECH_S = 100;
+export const AFTER_SPEECH_MARCH = 1236;
 export const AFTER_SPEECH_WARN_S = 6;      // warned this long ahead
 
 // --- the members and their posts ---
@@ -317,6 +327,7 @@ export const AFTER_SPEECH_WARN_S = 6;      // warned this long ahead
 // a station with rebel, each dearer than the last, and a member walks from
 // the camp to hold it. A post with nobody waiting in the camp stands empty.
 export const AFTER_WALK = 50;              // px/s, every body up here
+export const AFTER_BURN_MARCHES = AFTER_SPEECH_S / (AFTER_SPEECH_MARCH / AFTER_WALK);
 export const AFTER_JOBS = [J.AGITATE, J.CUT, J.HAUL, J.SAW, J.CHIP, J.PULP, J.JOIN, J.CARRY, J.PRINT, J.PASTE];
 // The station each job's post is bought at, so which card sells it and which
 // station must stand before it is offered.

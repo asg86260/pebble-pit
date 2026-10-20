@@ -25,7 +25,7 @@ import { P, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG
          AFTER_JOIN_FADE_S } from '../config.js';
 import { secs, walk, nextId } from './util.js';
 import { built, stumpsOn } from './levels.js';
-import { afterFloor, stationDoor, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, agitatorX, speakerAt, overCrowd, crowdEdge, AP } from './place.js';
+import { afterFloor, stationDoor, signFetchX, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, agitatorX, speakerAt, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, takeLog } from './grove.js';
 import { sweepDue, tipSawdust, vatOf } from './mill.js';
@@ -228,7 +228,7 @@ const JOB_STEP = {
       return;
     }
     if (!w.load) {
-      if (!go(w, stationDoor('workshop') + AP * 4, floorY(), dt)) return;
+      if (!go(w, signFetchX(), floorY(), dt)) return;
       if (a.stock.signs <= 0) return;
       const spot = signSpot();
       if (!spot) return;

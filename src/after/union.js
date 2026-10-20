@@ -28,11 +28,11 @@
 
 import { S } from '../state.js';
 import { P, RIM_PIECES, POSTER_CAP, CROWD_FILES, AFTER_CROWD, AFTER_FIRST_MEMBERS, AFTER_KIN_SHARE,
-         AFTER_KIN_PIECES, AFTER_RISE_S, AFTER_SPREAD_HZ, AFTER_SIGN_INK_S, AFTER_POSTER_INK_S, AFTER_SPEECH_S,
-         AFTER_SPEECH_WARN_S, AFTER_BURN_S, CROWD_X0, CROWD_PITCH } from '../config.js';
+         AFTER_KIN_PIECES, AFTER_RISE_S, AFTER_SPREAD_HZ, AFTER_SIGN_INK_S, AFTER_POSTER_INK_S,
+         AFTER_SPEECH_WARN_S, AFTER_BURN_S, CROWD_X0, CROWD_PITCH , AFTER_BURN_MARCHES, AFTER_WALK} from '../config.js';
 import { arand, secs, nextId } from './util.js';
 import { signReach, posterReach } from './levels.js';
-import { soulX, soulY, fileOf, rankOf, slotX } from './place.js';
+import { soulX, soulY, fileOf, rankOf, slotX, signMarch } from './place.js';
 
 const OUT = 9;           // a slot whose member walked out to the camp
 // The empty slot's value, read by the drawing (render/aftercrowd.js).
@@ -188,7 +188,7 @@ function spread(dt) {
 // `S.after.speech` is { next, target, burnt }: when it falls, what it is
 // aimed at once warned ({ kind: 'sign' | 'poster', id }), and the last one
 // burnt ({ at, kind, id }), for the drawing.
-const speechEvery = () => AFTER_SPEECH_S * (S.after.gate >= 2 ? 0.5 : 1);
+const speechEvery = () => AFTER_BURN_MARCHES * (signMarch() / AFTER_WALK) * (S.after.gate >= 2 ? 0.5 : 1);
 export const speechWarned = () => { const sp = S.after?.speech; return !!sp && !!sp.target && S.after.t >= sp.next - AFTER_SPEECH_WARN_S; };
 // The thing the speech is aimed at, while warned: a sign or a poster.
 export function speechTarget() {
