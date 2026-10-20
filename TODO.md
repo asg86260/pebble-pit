@@ -28,7 +28,10 @@ close-on-scroll now serve act 3. Hell's rows are next (step 4). Defects found
 by the survey, open whatever the refactor's timing: `reloadCheck`
 (test/helpers.mjs) compares `S.workers` only, so act bodies are not guarded
 against teleporting; hell's five boards cannot be opened (`hellBoardAt` has
-no caller).
+no caller); workers cannot be picked up in act places (their bodies are
+outside `S.workers`, so the yard's grab never sees them) -- step 5, one body
+engine, fixes it, and its done check is a real-pointer grab and drop in act 3
+and in hell.
 
 ## Shared pieces and checks, after the place engine -- AGREED, QUEUED (2026-10-20)
 
