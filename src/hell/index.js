@@ -22,6 +22,7 @@ import { stepCage, cageBroken } from './cage.js';
 import { chamberFocusX, faceX, faceTop, chamberFloor, furnaceBox, anvilX, storeX, roadX, barrierBox } from './place.js';
 import { P } from '../config.js';
 import { settleHeld } from '../placebodies.js';
+import { readOver } from '../placesave.js';
 
 // The act's facts, every one a body or a count a body moves (bodies.js), so
 // all of it is saved and a reload stands the act back as it was:
@@ -136,24 +137,8 @@ export const hellCamTarget = () => chamberFocusX(S.hell ? Math.min(S.hell.chambe
 export { hellWallDue, tellWall, wallsFallen, cageBroken };
 
 // The save (persist.js, `SAVERS`): written whole, null before the act
-// begins, read over a blank so a field added later comes back empty -- a
-// chamber's record field by field, a count by ore over the blank's.
-function readOver(b, h) {
-  const out = { ...b };
-  for (const [k, hv] of Object.entries(h)) {
-    if (!(k in b)) continue;
-    const bv = b[k];
-    if (Array.isArray(bv)) {
-      if (!Array.isArray(hv)) continue;
-      out[k] = bv.length && bv[0] && typeof bv[0] === 'object'
-        ? bv.map((e, i) => (hv[i] && typeof hv[i] === 'object' ? { ...e, ...hv[i] } : e))
-        : bv.length ? bv.map((n, i) => (+hv[i] || n)) : hv;
-    } else if (bv && typeof bv === 'object') out[k] = hv && typeof hv === 'object' ? { ...bv, ...hv } : bv;
-    else if (bv === null) out[k] = hv;
-    else out[k] = typeof hv === typeof bv ? hv : bv;
-  }
-  return out;
-}
+// begins, read over a blank (placesave.js) so a field added later comes
+// back empty.
 export const SAVE = {
   fields: ['hell'],
   write(out) { out.hell = S.hell ? JSON.parse(JSON.stringify(S.hell)) : null; },

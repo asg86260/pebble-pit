@@ -89,11 +89,11 @@ group('each act\'s facts round-trip a save', async () => {
   const nothing = [S.after, S.hell];
   window.__goPlace('after');
   window.__goPlace('hell');
-  S.after.faith = 7; S.after.stock.logs = 3; S.after.rims = '0128'; S.after.gate = 1;
+  S.after.rebel = 7; S.after.stock.logs = 3; S.after.rims = '0128'; S.after.gate = 1;
   S.hell.brimstone = 11; S.hell.blows[1] = 5; S.hell.ore.cinder = 2; S.hell.chamber = 1;
   const want = JSON.stringify([S.after, S.hell]);
   yard.persist();
-  S.after.faith = 0; S.hell.brimstone = 0; S.hell.blows[1] = 0;
+  S.after.rebel = 0; S.hell.brimstone = 0; S.hell.blows[1] = 0;
   yard.restore();
   const back = JSON.stringify([S.after, S.hell]);
   // A save from before a field was added comes back with it blank.

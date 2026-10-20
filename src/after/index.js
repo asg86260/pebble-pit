@@ -24,6 +24,7 @@ import { stepBodies } from './bodies.js';
 import { stepBubbles, forgetBubbles } from './bubbles.js';
 import { secs } from './util.js';
 import { settleHeld } from '../placebodies.js';
+import { readOver } from '../placesave.js';
 
 // The act's facts, as the spec's save shape names them and the owner's
 // settled calls (2026-10-18) reshaped them: rebel, the act's coin; the
@@ -135,9 +136,9 @@ export const SAVE = {
   write(out) { if (S.after) syncRims(); out.after = S.after ? JSON.parse(JSON.stringify(S.after)) : null; },
   read(s) {
     const a = s.after;
-    // An older save's wardens, which nothing reads, are left out.
-    const { wardens, ...kept } = a && typeof a === 'object' ? a : {};
-    S.after = a && typeof a === 'object' ? { ...blankAfter(), ...kept, stock: { ...blankAfter().stock, ...(a.stock || {}) } } : null;
+    // An older save's wardens, which nothing reads, fall away with every key
+    // the blank lacks (placesave.js).
+    S.after = a && typeof a === 'object' ? readOver(blankAfter(), a) : null;
     if (S.after) settleHeld(S.after.bodies);
   },
   blank() { S.after = null; }
