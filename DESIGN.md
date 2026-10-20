@@ -22763,6 +22763,57 @@ The camera and clouds go in with act 3's layout rebuild.
 `VITE_HELL` are set by no build script, and no fixture holds an act save),
 so the act blobs may change shape freely. The yard's save must not move.
 
+## Clouds stack the way cumulus does (built 2026-10-20)
+
+The owner approved the depth direction and asked for "a little bit harder on
+the shapes, and how they stack". The depth round built a cloud as horizontal
+rows of lobes (rear, crown, body, base), and each row read as a slab: the
+stripes. A cumulus is not rows. What the renderer builds now
+(render/clouds.js, `volume`; CLOUDS_VOLUME):
+
+- **One flat base for the whole field.** The WMO's low-cloud code describes
+  cumulus with "domes or towers", and cloud-classification guides note that
+  cumulus bases are often flat and at the same height
+  ([WMO code tables](https://epic2-clone.awi.de/29962/1/WMO2011d.pdf),
+  [cloud classification](https://woitalia.it/reports/wxfacts/Cloud-classification.htm)).
+  Every puff of a cloud carries its base line as a cut, and nothing of it is
+  drawn below the cut (cloudgl.js, FIELD; `sumsAt` the same). So the bottom
+  is flat, not scalloped, and it stays put while the turrets churn above,
+  the way the condensation level does. Clouds at one height in a layer share
+  the line.
+- **Turrets rising off a broad shelf.** The shelf is wide, squashed, and in
+  the rear. Turrets stand side by side on it, overlapping, each rooted in
+  the shelf so none floats. The middle one is the tallest and has another
+  turret stood on top of it.
+- **Smaller turrets clustered on bigger ones**, two generations down. Each is
+  set on its parent's upper edge, a step in front of or behind it. A turret
+  is never in its parent's tier, so it shows its own round edge instead of
+  melting into the parent. Each rides its parent's current, so it stays on
+  its parent as the cloud swells and thins.
+- **Each lobe lit in the round.** Pixel-art cloud guides put the highlight
+  on the edges the light hits and darker tones on the undersides and in the
+  crevices ([one such](https://piepzeru.digitalpress.blog/how-to-create-pixel-art-clouds/)).
+  The field pass now finds the strongest lobe of its tier at every cell.
+  The cap facing the light is lit and the side away from it is in shadow
+  (CLOUDS_LOBE_LIGHT), so every turret reads as a separate rounded form.
+  Only lobes of five cells or more are lit this way; a far cloud is too
+  small to carry it.
+- **Steady.** More tier edges meant more places for a cell to chatter. A
+  cell now takes a new tone only after wanting it for a tenth of a second
+  (CLOUDS_SETTLE), and the smallest kid turrets and crust lumps are not
+  made.
+
+**The ground is a cloud sea** (CLOUDS_SEA). It has rows of billows back to
+front, each row smaller and paler toward the back. The billows come in every
+size, log-normal round the row's size, and are spaced by their own radius, so
+nothing repeats. Now and then a mound rises out of a row with smaller billows
+on it. Each billow gets only its lit cap; its shadow is the crevice where
+the row in front stands. In act 3 the sea rolls under the path in six rows.
+The path's own surface fills the valleys between the billows that lap it, so
+the path never shows a notch of night. By night that surface is the cloud
+palette's haze, so it reads as the lit top of cloud and not as a gap
+(CLOUDS_ACT3.path).
+
 ## The yard's sky on the cloud renderer (design, not built)
 
 The clouds bench (`clouds.html`, `render/clouds.js`, `render/cloudgl.js`)

@@ -62,13 +62,14 @@ const gpu = skyGL();
 let W = 2000, H = 967, cols, rows, layers = [], ground, one, puffs = [], t = 0, cam = 0, manual = false, looks = new Map();
 let placed = {}, frames = 0;
 
+let oneSeed = 12;   // the one big cloud's seed (bench.set({ seed }))
 function build() {
   cv.width = W; cv.height = H;
   cols = Math.ceil(W / CELLPX); rows = Math.ceil(H / CELLPX);
   const round = Math.max(cols * 2, 700);
   const sky = rows - 48;
   layers = Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: 7, W: round, sky }));
-  one = cloudLayer({ kind: 'cumulus', R: Math.round(rows * 0.2), seed: 12, d: 1 });
+  one = cloudLayer({ kind: 'cumulus', R: Math.round(rows * 0.2), seed: oneSeed, d: 1 });
   ground = groundLayer({ seed: 7, W: round });
   puffs = Array.from({ length: PUFFS }, (_, i) => ({
     layer: cloudLayer({ kind: ['cumulus', 'heap', 'tower'][i % 3], R: 6 + 2 * i, seed: 31 + i }),
@@ -209,6 +210,7 @@ window.bench = {
     for (const k of ['auto', 'ref', 'dark', 'sync']) if (k in o) $(k).checked = o[k];
     for (const k of ['show', 'treat']) if (k in o) $(k).value = o[k];
     if ('win' in o && o.win !== $('win').value) { $('win').value = o.win; [W, H] = o.win.split('x').map(Number); build(); }
+    if ('seed' in o && o.seed !== oneSeed) { oneSeed = o.seed; build(); }
     if (o.rebuild) build();
     if (o.fresh) { stat.cpu.length = 0; stat.frame.length = 0; }
     restyle();
