@@ -33,7 +33,7 @@ import { gestureView } from '../after/gestures.js';
 import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, hash, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
-import { drawCloudFloor } from './after/cloudfloor.js';
+import { drawGround, drawForeground } from './after/ground.js';
 import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf, boardPile } from './after/stations.js';
@@ -52,15 +52,15 @@ const fadeIn = at => (at == null ? 1 : Math.min(1, (now() - at) / AFTER_BUILD_FA
 export const crowdSpan = () => ({ f0: fileAt(S.camX - P * 4), f1: fileAt(S.camX + S.viewW + P * 4), r1: rankAtY(S.camY - P * 4) });
 
 // --- the page and the floor ------------------------------------------------------------
-// The paper, the sky's ranges of cloud at the horizon, the cloud floor in
-// depth under them, and the near layer's ground line over it.
+// The paper, the sky's ranges of cloud at the horizon and the far cloud under
+// them (render/after/ground.js). The main plane's path and the foreground
+// are drawn with the camp, over God's stage, whose front meets the path.
 export function drawAfterBackdrop() {
   clearCounts();
   ctx.fillStyle = GREY[W];
   ctx.fillRect(S.camX, S.camY, S.viewW, S.viewH);
   drawCloudSky();
-  drawCloudFloor();
-  drawFloor();
+  drawGround();
   ctx.fillStyle = GREY[K];
 }
 
@@ -228,8 +228,11 @@ export function drawAfterCamp() {
   const a = A();
   if (!a) return;
   readHands();
-  // The union's crowd behind everything of the camp's: the pair's podium
-  // stands in front of it.
+  // The main plane's path and the foreground clouds under it, then the
+  // union's crowd behind everything of the camp's: the pair's podium stands
+  // in front of it.
+  drawFloor();
+  drawForeground();
   drawUnionCrowd();
   for (const key of AFTER_CARDS) if (key !== 'grove') drawStation(key);
   drawShackOrder();

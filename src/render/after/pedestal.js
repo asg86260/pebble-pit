@@ -38,27 +38,35 @@ const PODS = [
     for (const [x, y] of [[-21, -h], [1, -h], [-10, -2 * h]]) { c(x, y, w, h, K); c(x + 2, y + 2, w - 4, h - 4, W); c(x + 2, y + 4, w - 4, 1, K); }
     c(-16, -2 * h - 2, 32, 2, K);
   },
-  // a plank stage, its legs and the fist banner hung on its front
+  // a plank stage up on legs, taller than the crates, the fist banner hung
+  // from its deck
   c => {
-    const w = 48, h = 12;
-    c(-w / 2, -h, w, 2, K); c(-w / 2 + 2, -h + 2, 2, h - 2, K); c(w / 2 - 4, -h + 2, 2, h - 2, K);
-    c(-12, -h + 2, 24, h - 2, K);
-    FIST.forEach((r, j) => [...r].forEach((ch, i) => { if (ch === 'X') c(-3 + i, -h + 4 + j, 1, 1, W); }));
+    const w = 48, t = -24;
+    c(-w / 2, t, w, 2, K);
+    for (const x of [-w / 2 + 2, w / 2 - 4]) c(x, t + 2, 2, -t - 2, K);
+    c(-w / 2 + 4, -8, w - 8, 1, K);
+    c(-12, t + 2, 24, 12, K);
+    FIST.forEach((r, j) => [...r].forEach((ch, i) => { if (ch === 'X') c(-3 + i, t + 5 + j, 1, 1, W); }));
   },
-  // a cloud plinth: three squared courses stepping in, each top edged, steps up its side
+  // a cloud plinth: five squared courses stepping in, paper, each one's
+  // underside a mid line of shade -- paper against the crowd's greys
   c => {
-    for (const [dy, hw] of [[-6, 24], [-12, 18], [-18, 12]]) { c(-hw, dy, 2 * hw, 6, PALE); c(-hw, dy, 2 * hw, 1, MID); }
-    for (let i = 0; i < 3; i++) c(24 - 4 - i * 2, -2 - i * 2, 4, 1, MID);
+    [26, 22, 18, 14, 12].forEach((hw, k) => { const dy = -6 * (k + 1); c(-hw, dy, 2 * hw, 6, W); c(-hw, dy + 5, 2 * hw, 1, MID); });
   },
-  // the Greek cloud column: a fluted shaft on a cloud base, a capital under the pair
+  // the Greek cloud column: a fluted paper shaft on a paper cloud base, its
+  // flutes, the base's tops and the capital's undersides and scrolls mid --
+  // paper against the crowd's greys
   c => {
-    const t = -34;
-    for (const [dx, r] of [[-14, 6], [-4, 7], [7, 6], [16, 5]]) for (let dy = -r; dy <= 0; dy++) { const hw = Math.round(Math.sqrt(r * r - dy * dy)); c(dx - hw, -2 + dy, 2 * hw, 1, PALE); }
-    c(-9, t + 6, 18, -8 - t - 6, PALE);
+    const t = -40;
+    for (const [dx, r] of [[-14, 6], [-4, 7], [7, 6], [16, 5]]) for (let dy = -r; dy <= 0; dy++) {
+      const hw = Math.round(Math.sqrt(r * r - dy * dy));
+      c(dx - hw, -2 + dy, 2 * hw, 1, dy === -r ? MID : W);
+    }
+    c(-9, t + 6, 18, -8 - t - 6, W);
     for (let i = -7; i <= 7; i += 3) c(i, t + 7, 1, -9 - t - 7, MID);
-    c(-13, t + 3, 26, 3, PALE); c(-13, t + 3, 26, 1, MID);
-    for (const sx of [-14, 11]) { c(sx, t + 3, 3, 3, MID); c(sx + 1, t + 4, 1, 1, PALE); }
-    c(-15, t, 30, 3, PALE); c(-15, t + 2, 30, 1, MID);
+    c(-13, t + 3, 26, 3, W); c(-13, t + 5, 26, 1, MID);
+    for (const sx of [-14, 11]) { c(sx, t + 3, 3, 3, MID); c(sx + 1, t + 4, 1, 1, W); }
+    c(-15, t, 30, 3, W); c(-15, t + 2, 30, 1, MID);
   }
 ];
 // Podium `n` drawn, `k` of it standing (bottom course first: a course is a

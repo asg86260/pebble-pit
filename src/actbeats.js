@@ -50,7 +50,8 @@ import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, 
 import { beginMansion, mansionDone, mansionX, MANSION_W, beginGathering, gathered, stepMansion, stepGathering,
          forgetMansionHands } from './mansion.js';
 import { houseX, IN_DONE_S } from './home.js';
-import { afterX1, afterFloor } from './after/place.js';
+import { afterFloor } from './after/place.js';
+import { godFront } from './after/sky.js';
 import { hellFloor } from './hell/place.js';
 import * as AFTER from './after/index.js';
 import * as REBEL from './after/rebel.js';
@@ -155,7 +156,8 @@ export const actDue = key => !!(TRIGGERS[key] && TRIGGERS[key]());
 const around = s => ({ x: s.x - WORKER * 2, y: s.y - WORKER, w: WORKER * 4, h: WORKER * 2 + P, place: placeFor(s.y) });
 const spotted = spot => () => around(spot());
 const houseSpot = () => ({ x: houseX() + FINALE_HOUSE_W * P / 2, y: S.groundY - WORKER });
-const throne = () => ({ x: afterX1() - P * 60, y: afterFloor() - WORKER });
+// God, as the camera frames him: his stage square under him.
+const throne = () => ({ x: godFront(), y: afterFloor() - WORKER });
 // The pair where they are seen: where they walk, or, crossing between two
 // places, where they come out (ghosts.js, `seenAt`).
 const pairSpot = () => { const s = seenAt(); return s ? { x: s.x + WORKER / 2, y: s.y } : houseSpot(); };

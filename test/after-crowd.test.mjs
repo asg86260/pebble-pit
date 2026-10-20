@@ -7,14 +7,15 @@
 // from. The crowd's shape is set through the act's rims (a slot set to 9 is
 // a member already gone, with no walk), the setup these checks are not about.
 import { group, ok, run, yard } from './helpers.mjs';
-import { STRIKE_SHARE, GOD_DEPTH, CROWD_X0, CROWD_PITCH, P, UNION_CROWD } from '../src/config.js';
-import { afterFloor, afterOpenX, soulX, soulY, unionX1, campEdges } from '../src/after/place.js';
+import { STRIKE_SHARE, GOD_RATE, GOD_STAGE, CROWD_X0, CROWD_PITCH, P, UNION_CROWD } from '../src/config.js';
+import { afterFloor, afterOpenX, soulX, soulY, unionX1, campEdges, podiumMid, unionHalf } from '../src/after/place.js';
+// The window's middle at the camera's last window: God in it.
+const afterEnd = () => godFront();
 import { stepAfter } from '../src/after/index.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawSkyCrowd, drawAfterCrowd, crowdDrawn, glareAlpha, raysLeft } from '../src/render/aftercrowd.js';
 import { drawUnionCrowd, unionDrawn } from '../src/render/after/unioncrowd.js';
-import { afterEnd } from '../src/view.js';
-import { godMid, godU, walkSeen, stage, stageHalf } from '../src/after/sky.js';
+import { godMid, godFront, campMid, rateAt, walkSeen, stage, stageHalf } from '../src/after/sky.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -48,7 +49,7 @@ const lookAt = x => { window.__look(x - S.viewW / 2); run(1 / 30); };
 group('a crowd of any size costs the frame the same bounded fills', async () => {
   up();
   crowd(1200);
-  lookAt(godU());
+  lookAt(afterEnd());
   draw(); run(1);
   const small = draw();
   crowd(24000, i => (i % 7 === 0 ? 9 : i % 5 === 0 ? 2 : 0));
@@ -64,7 +65,7 @@ group('a crowd of any size costs the frame the same bounded fills', async () => 
 group('a 24,000-soul crowd steps and draws in a couple of milliseconds a frame', async () => {
   up();
   crowd(24000, i => (i % 9 === 0 ? 9 : i % 4 === 0 ? 1 : 0));
-  lookAt(godU());
+  lookAt(afterEnd());
   run(1); draw();
   const FR = 300;
   const t0 = performance.now();
@@ -79,7 +80,7 @@ group('a 24,000-soul crowd steps and draws in a couple of milliseconds a frame',
 // thin scatter at the back stands at the strike.
 group('the crowd thins as support rises', async () => {
   up();
-  lookAt(godU());
+  lookAt(afterEnd());
   const at = k => { won(4000, k); run(2); draw(); draw(); return crowdDrawn().souls; };
   const souls = [0.05, 0.3, 0.6, 1].map(at);
   window.__actsOn(null);
@@ -147,9 +148,36 @@ group('the view only slides, God drawn in to the middle at the end of the pan', 
     window.__actsOn(null);
     out.push(
       ok(seen.every(v => v.zoom === seen[0].zoom && v.y === seen[0].y), `${w}x${h}: one zoom and one height all along the pan`, seen.map(v => v.zoom.toFixed(3)).join(' ')),
-      ok(Math.abs(rate - 1 / GOD_DEPTH) < 0.01, `${w}x${h}: God slides a third as fast as the camera`, rate.toFixed(3)),
+      ok(Math.abs(rate - GOD_RATE) < 0.01, `${w}x${h}: God slides a third as fast as the camera`, rate.toFixed(3)),
       ok(Math.abs(seen[3].god - cx) < 2, `${w}x${h}: and stands in the window's middle at the pan's end`, `${(seen[3].god - cx).toFixed(1)} px off`),
       ok(held, `${w}x${h}: it holds where it is`));
+  }
+  return out;
+});
+
+// God's stage spans the depths (after/sky.js, `campMid`): its front stands
+// on the main plane like a station, its back slides at his rate, so it leans
+// as the camera pans and stands square at the pan's end; and its front's
+// feet stand clear of the union's crowd at its widest, so the two camps
+// never share a cell of the plane, at a tall window and a short one.
+group("God's stage leans across the depths, its front clear of the union's crowd", async () => {
+  const out = [];
+  for (const [w, h] of [[2000, 967], [800, 600]]) {
+    S.W = w; S.H = h;
+    up();
+    const st = stage(), side = GOD_STAGE.side * st.mx, fronts = [], leans = [];
+    for (const x of [afterOpenX(), (afterOpenX() + afterEnd()) / 2, afterEnd()]) {
+      lookAt(x);
+      const cx = S.camX + S.viewW / 2;
+      fronts.push(campMid(cx, rateAt(st, st.yf)));
+      leans.push(campMid(cx, rateAt(st, st.yb)) - campMid(cx, rateAt(st, st.yf)));
+    }
+    const corner = afterEnd() - st.hf - side, union = podiumMid() + unionHalf();
+    window.__actsOn(null);
+    out.push(
+      ok(fronts.every(f => Math.abs(f - fronts[0]) < 0.01), `${w}x${h}: its front stays put on the main plane`, fronts.map(Math.round).join(' ')),
+      ok(leans[0] < leans[1] && leans[1] < 0 && Math.abs(leans[2]) < 0.01, `${w}x${h}: its back leans toward the window's middle, square at the end`, leans.map(Math.round).join(' ')),
+      ok(corner - union >= GOD_STAGE.gap * P - P, `${w}x${h}: its front corner clear of the union's crowd`, `${Math.round((corner - union) / P)} cells`));
   }
   return out;
 });
@@ -193,7 +221,7 @@ group("God stands in the window all along the pan toward him, the union's camp a
       left.push(unionX1() < g);
     }
     window.__actsOn(null);
-    out.push(ok(offs.every(v => v > 0.1 && v < 1) && offs.slice(1).every(v => v < 0.9), `${w}x${h}: his middle in the window, at its right edge past the union's camp and well inside past it`, offs.map(v => v.toFixed(2)).join(' ')),
+    out.push(ok(offs[0] > 0.6 && Math.abs(offs[4] - 0.5) < 0.01, `${w}x${h}: right of the union's camp where the act opens, in the window's middle at the pan's end`, offs.map(v => v.toFixed(2)).join(' ')),
              ok(offs.every((v, i) => i === 0 || v < offs[i - 1]), `${w}x${h}: drawn in toward the middle along the pan`),
              ok(left.every(Boolean), `${w}x${h}: the union's camp left of him all along`));
   }
@@ -208,7 +236,7 @@ group("God stands in the window all along the pan toward him, the union's camp a
 group("a carrier's way onto the stage is unbroken, and carriers spread to their own spots", async () => {
   const out = [];
   up();
-  for (const at of [afterOpenX(), godU()]) {
+  for (const at of [afterOpenX(), afterEnd()]) {
     lookAt(at);
     const cx = S.camX + S.viewW / 2, st = stage(), a = campEdges()[1], fl = afterFloor();
     // across the cloud and up the plinth, a pixel of the sim's walk at a time
@@ -224,7 +252,7 @@ group("a carrier's way onto the stage is unbroken, and carriers spread to their 
       const v = walkSeen(CROWD_X0 + P + (to.x - CROWD_X0 - P) * k / 200, fl + (to.y - fl) * k / 200, cx);
       worst = Math.max(worst, Math.hypot(v.x - prev.x, v.y - prev.y)); prev = v;
     }
-    const end = prev, gm = godMid(cx);
+    const end = prev, gm = campMid(cx, rateAt(st, end.y));
     const onTop = end.y > st.yb && end.y < st.yf && Math.abs(end.x - gm) < stageHalf(st, end.y);
     const spots = [[4, 2], [20, 30], [34, 8]].map(([f, r]) => walkSeen(soulX(f) + P / 2, soulY(r) + P * 2, cx));
     const apart = spots.every((p, i) => spots.every((q, j) => i === j || Math.hypot(p.x - q.x, p.y - q.y) > 3 * P));
@@ -263,7 +291,7 @@ group('a reload stands the sky back as it was, and draws it the same', async () 
   up();
   crowd(24000, i => (i % 11 === 0 ? 9 : i % 6 === 0 ? 3 : 0));
   run(1);
-  lookAt(godU());
+  lookAt(afterEnd());
   draw(); run(2); draw();
   yard.persist();
   const rims = S.after.rims, was = crowdDrawn();

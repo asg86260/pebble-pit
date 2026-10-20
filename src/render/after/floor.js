@@ -1,17 +1,23 @@
-// The cloud floor, floor A (docs/mocks/act3-place-2026-10-18, section 1, "the
-// billow edge"): the line every body stands on goes lumpy, puffs one or two
-// cells high stepped on the grid and pressed flat under every station
-// (after/place.js, `floorProfile`): the near layer's ground, over the cloud
-// floor seen in depth (render/after/cloudfloor.js). Each convex corner of a
-// puff is cut by one 2 px step, so it reads round when near and soft when far.
+// The main plane's ground (the owner, 2026-10-20: "the plane should static
+// cloud like paths, not a flat plane"): a path of cloud on the world itself,
+// moving with the camera as the yard's ground does. Its near edge is floor
+// A's line (docs/mocks/act3-place-2026-10-18, "the billow edge"): puffs one
+// or two cells high stepped on the grid and pressed flat under every station
+// (after/place.js, `floorProfile`), so it stands where the sim stands it.
+// Under it paper, GROUND_PATH.depth cells down to the path's far edge, a pale
+// billow line. Each convex corner of a puff is cut by one 2 px step. Static:
+// nothing on it moves but what is built on it.
 
-import { P, GREY, AFTER_BUILD_FADE_S } from '../../config.js';
+import { P, GREY, AFTER_BUILD_FADE_S, GROUND_PATH } from '../../config.js';
 import { S } from '../../state.js';
-import { afterX0, afterFloor, floorProfile, floorFlats, notchX, crowdLip, sitesKey, sited, campEdges } from '../../after/place.js';
+import { afterX0, afterFloor, floorProfile, notchX, crowdLip, sitesKey, sited, billow } from '../../after/place.js';
 import { ctx } from '../ctx.js';
-import { K, W, PALE, now, clamp01 } from './kit.js';
+import { fillOnPixels } from '../frame.js';
+import { K, W, PALE, MID, now, clamp01 } from './kit.js';
 
-const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(x, y, w, h); };
+// Every fill on whole device pixels, so a thin line never blends into a
+// tone between the four.
+const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; fillOnPixels(ctx, x, y, w, h); };
 
 // A stepped top edge along a profile, columns j0..j1 of it, in `tone`, with
 // paper under it down to yBot when `fill`; columns `skip` says are left open.
@@ -33,17 +39,20 @@ function edge(el, j0, j1, x0, yTop, tone, fill, yBot, skip) {
 // puffs under a newly taken ground fade out as its flat line fades in, never
 // popped. Drawing state only.
 let was = null, wasKey = null, changedAt = -1e9;
+// The far edge's profile, repeating every FAR_N cells.
+const FAR_N = 512;
+let far = null;
 export function drawFloor() {
-  // Under the line is the cloud floor (render/after/cloudfloor.js), and the
-  // line is drawn only where something stands on it -- a station's ground, a
-  // tree's foot: across the open floor the cloud floor itself is the ground,
-  // and a ruled line the width of the window would cut it in two.
-  const el = floorProfile(), top = afterFloor(), bot = top + 2, flats = floorFlats();
-  const j0 = Math.max(0, Math.floor((S.camX - afterX0()) / P) - 1);
-  const j1 = Math.min(el.length, Math.ceil((S.camX + S.viewW - afterX0()) / P) + 2);
-  // (God's yard is drawn on his stage, far back: no line out there.)
-  const yard = Math.round((campEdges()[1] - afterX0()) / P);
-  const bare = j => j > yard || !flats.some(([a, b]) => j >= a && j < b);
+  const el = floorProfile(), top = afterFloor(), bot = top + GROUND_PATH.depth * P;
+  const j0 = Math.floor((S.camX - afterX0()) / P) - 1;
+  const j1 = Math.ceil((S.camX + S.viewW - afterX0()) / P) + 2;
+  // the path's far edge, a pale billow line a few cells down
+  far ||= billow(FAR_N, GROUND_PATH.seed, 1);
+  for (let j = j0; j < j1; j++) {
+    const v = far[((j % FAR_N) + FAR_N) % FAR_N], l = far[(((j - 1) % FAR_N) + FAR_N) % FAR_N], x = afterX0() + j * P;
+    fr(x, bot + v * P, P, 2, PALE);
+    if (v !== l) fr(v > l ? x : x - 2, bot + Math.min(v, l) * P, 2, Math.abs(v - l) * P + 2, PALE);
+  }
   const key = sitesKey();
   if (key !== wasKey) { if (wasKey != null) { changedAt = now(); } else was = el.slice(); wasKey = key; }
   const f = clamp01((now() - changedAt) / AFTER_BUILD_FADE_S);
@@ -52,11 +61,11 @@ export function drawFloor() {
   // The notch beside the sawdust heap: a gap in the line two cells wide,
   // there once the saw mill's ground is taken.
   const n0 = sited('mill') ? Math.round((notchX() - afterX0()) / P) : -9, inNotch = j => j >= n0 && j < n0 + 2;
-  edge(el, j0, j1, afterX0(), top, K, true, bot, j => bare(j) || inNotch(j) || moving(j) || moving(j - 1));
+  edge(el, j0, j1, afterX0(), top, MID, true, bot, j => inNotch(j) || moving(j) || moving(j - 1));
   if (f < 1) {
     const g = ctx.globalAlpha, near = j => !(moving(j) || moving(j - 1)) || inNotch(j);
-    ctx.globalAlpha = g * f; edge(el, j0, j1, afterX0(), top, K, false, bot, near);
-    ctx.globalAlpha = g * (1 - f); edge(was, j0, j1, afterX0(), top, K, false, bot, near);
+    ctx.globalAlpha = g * f; edge(el, j0, j1, afterX0(), top, MID, false, bot, near);
+    ctx.globalAlpha = g * (1 - f); edge(was, j0, j1, afterX0(), top, MID, false, bot, near);
     ctx.globalAlpha = g;
   }
   // The notch's walls: the line turned down a cell, then the cloud's depth in

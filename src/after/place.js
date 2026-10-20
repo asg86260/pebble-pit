@@ -11,7 +11,7 @@
 // picture shows.
 
 import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
-         AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
+         AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, UNION_CROWD, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
          AFTER_SKY_LO, AFTER_SKY_HI, AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL } from '../config.js';
@@ -106,6 +106,9 @@ export const podiumStood = () => {
 export const podiumTopOf = n => AFTER_PODIUM_TOPS[n] * AFTER_PODIUM_U;
 export const podiumTop = () => podiumTopOf(podiumStood());
 export const podiumMid = () => stationX0('pedestal') + ART.pedestal.ground * P / 2;
+// The union's crowd (render/after/unioncrowd.js) across the half at most:
+// its back rows kept a cell short of the workshops' end.
+export const unionHalf = () => Math.min(UNION_CROWD.half[1], podiumMid() - workshopsX1() - P);
 export const speakerAt = k => ({ x: podiumMid() + AFTER_PODIUM_PAIR[k ? 1 : 0], y: afterFloor() - podiumTop() });
 // The rebel pile at the pedestal's foot, on God's-yard side, where the motes land.
 export const pileX = () => snap(podiumMid() + AFTER_PODIUM_PILE * P);

@@ -40,9 +40,11 @@ import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt, campEdges } from './after/place.js';
-import { afterEnd } from './view.js';
-import { godU } from './after/sky.js';
-import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB } from './config.js';
+import { godFront } from './after/sky.js';
+// The window's middle at the camera's last window over act 3: God in it,
+// his stage square under him.
+const godView = () => godFront();
+import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S } from './config.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
@@ -610,7 +612,7 @@ function afterMass(pan) {
   for (const [f, r] of [[8, 1], [27, 3], [16, 0]]) S.after.signs.push({ id: 90000 + f, f, r, askew: false, pull: null, big: false });
   window.__fast(2);
   const ped = CROWD_X0 - P * 20;
-  const cx = pan == null ? ped : CROWD_X0 + (afterEnd() - CROWD_X0) * pan;
+  const cx = pan == null ? ped : CROWD_X0 + (godView() - CROWD_X0) * pan;
   window.__look(cx - S.viewW / 2); window.__fast(1); window.__holdShot();
 }
 
@@ -629,7 +631,7 @@ function heavenAt(share, pan = 0, what = null) {
   // A rally falls every 7.5 s or so, a roar every 6.5 (render/aftercrowd.js).
   const wait = what === 'rally' ? 7.5 - (t % 7.5) + 1.2 : what === 'roar' ? 6.5 - ((t - 2.5) % 6.5) + 0.8 : 2;
   window.__fast(wait);
-  const a = afterOpenX(), cx = a + (afterEnd() - a) * pan;
+  const a = afterOpenX(), cx = a + (godView() - a) * pan;
   window.__look(cx - S.viewW / 2); window.__fast(1 / 30); window.__holdShot();
 }
 
@@ -660,7 +662,7 @@ function levelAt(share, at, won = null) {
   // The workshops standing, so their zone is seen with its stations.
   for (const k of ['mill', 'chipper', 'papermill', 'workshop', 'press']) if (!S.after.built.includes(k)) S.after.built.push(k);
   window.__fast(2);
-  const cx = () => (at === 'works' ? workshopsX1() - S.viewW * 0.3 : at === 'union' ? afterOpenX() : at === 'god' ? godU() : at);
+  const cx = () => (at === 'works' ? workshopsX1() - S.viewW * 0.3 : at === 'union' ? afterOpenX() : at === 'god' ? godView() : at);
   window.__look(cx() - S.viewW / 2); window.__fast(1 / 30);
   if (won != null) {
     skyWatch();
@@ -3108,7 +3110,7 @@ export const SCENES = {
   'level-union-high': { about: 'the acts', say: "the union's camp at seven tenths of the way to the strike: God's crowd sunk and drawn back toward his camp",
     run: () => levelAt(0.7, 'union') },
   'level-pan': { about: 'the acts', say: "half way along the pan: the union's camp gone left, God's camp far back on the cloud sliding in at a third of the speed",
-    run: () => levelAt(0.1, (afterOpenX() + godU()) / 2) },
+    run: () => levelAt(0.1, (afterOpenX() + godView()) / 2) },
   'level-god': { about: 'the acts', say: "God's camp in the clouds: the throne in the cloud floor, his crowd standing in it round the base, the fist flags planted among them",
     run: () => levelAt(0.1, 'god') },
   'level-god-high': { about: 'the acts', say: "God's camp at seven tenths of the way to the strike: his crowd emptied from the front",
@@ -3118,12 +3120,21 @@ export const SCENES = {
       afterChain(true);
       const a = campEdges()[1], on = w => w.load === 'sign' && w.x > a + (CROWD_X0 - a) * 0.5;
       for (let k = 0; k < 2400 && !S.after.bodies.some(on); k++) window.__fast(0.25);
-      window.__look((afterOpenX() + godU()) / 2 - S.viewW / 2); window.__fast(1 / 30); window.__holdShot();
+      window.__look((afterOpenX() + godView()) / 2 - S.viewW / 2); window.__fast(1 / 30); window.__holdShot();
+    } },
+  'level-plant': { about: 'the acts', say: "a carrier planting its flag on God's stage: the carried sign fading out as the planted flag fades in",
+    run: () => {
+      afterChain(true);
+      // a carrier at its spot, a moment short of planting; the shot comes a
+      // second on, the planting drawn as it happens
+      const at = w => w.load === 'sign' && w.target && typeof w.target === 'object' && w.t >= AFTER_PLANT_S - 0.7;
+      for (let k = 0; k < 24000 && !S.after.bodies.some(at); k++) window.__fast(0.05);
+      window.__look(godView() - S.viewW / 2); window.__fast(1 / 30);
     } },
   'level-won-orbit': { about: 'the acts', say: 'a soul a sign has won, darkened to ink, half way round its turn and a half about the flag',
     run: () => levelAt(0.1, 'god', 4.5) },
   'level-won-drift': { about: 'the acts', say: "a won soul half way across from God's crowd to the union's camp",
-    run: () => levelAt(0.1, (godU() + unionJoinAt().x) / 2, 17) },
+    run: () => levelAt(0.1, (godView() + unionJoinAt().x) / 2, 17) },
 
   // --- the acts' connective tissue (actbeats.js, portals.js, mansion.js) --------
   // Each off a yard past the snatch with the wizards' portal up and a crew to

@@ -29,8 +29,8 @@ export const AFTER_H = P * 120;            // the place's top to its cloud floor
 export const AFTER_FLOOR_MARGIN = P * 9;   // the cloud floor stands this far up off the window's foot (default; the deep's)
 // The cloud floor (render/after/floor.js; docs/mocks/act3-place-2026-10-18,
 // floor A, the billow edge): the walking line itself billows in puffs of
-// one or two cells, pressed flat under every station, over the cloud floor
-// seen in depth (config/aftercrowd.js, CLOUD_FLOOR).
+// one or two cells, pressed flat under every station: the near edge of the
+// main plane's cloud path (config/aftercrowd.js, GROUND_PATH).
 export const AFTER_BILLOW_SEED = 3;        // which run of puffs (the mock's layout strip)
 export const AFTER_BILLOW_BIG = 0.55;      // the share of puffs two cells high, the rest one
 export const AFTER_PUFF_LEAST = 4;        // cells: a run of billow narrower than this between two flats is pressed flat too
@@ -149,9 +149,9 @@ export const AFTER_STATIONS = CAMP.stations;
 // the floor, in those cells, where the pair stand; and the pair's two left
 // edges off the podium's middle, px.
 export const AFTER_PODIUM_U = 2;
-export const AFTER_PODIUM_TOPS = [10, 20, 12, 18, 34];
+export const AFTER_PODIUM_TOPS = [10, 20, 24, 30, 40];
 // ...and each one's half across at its widest, in those cells.
-export const AFTER_PODIUM_HALF = [11, 22, 24, 24, 22];
+export const AFTER_PODIUM_HALF = [11, 22, 24, 26, 22];
 export const AFTER_PODIUM_PAIR = [-19, 1];
 // The rebel pile at the podium's foot, this many cells off its middle: clear
 // of the widest of them.
@@ -189,8 +189,12 @@ export const AFTER_KIN_PIECES = 5;         // ...up to this many pieces
 export const AFTER_RISE_S = 30;            // a soul rising into the back of the crowd (the spec's "a soul every half-minute")
 export const AFTER_WALL_STEP = P * 4;      // a poster's slot along the fence at the crowd's front
 export const AFTER_STAIR_X = CROWD_X0 + P * 200;   // the stair's head, the throne's ground
-// Across the whole place: grove, camp, God's yard, the stair (the mock's layout A).
-export const AFTER_W = AFTER_STAIR_X + P * 4;
+// Across the whole place: grove, camp, God's yard, the stair (the mock's
+// layout A), and AFTER_FAR_W cells of open cloud past them: room for the
+// camera's last window at any width, which ends half a window past God's
+// stage's front (acts.js, `PLACES`).
+export const AFTER_FAR_W = 456;
+export const AFTER_W = AFTER_STAIR_X + P * 4 + AFTER_FAR_W * P;
 export const AFTER_STAIR_W = P * 36;       // the stair's run, foot to head
 export const AFTER_STAIR_RISE = P * 50;    // how high the throne stands off the floor
 // A station's posts: a stake each along its roof, filled black while a member

@@ -26,31 +26,28 @@ export const AFTER_UNION_W = 32;
 // God's square from its top down to his foot in the cloud; a sky too short
 // for half a God-cell a sky cell is laid out at a cell that fits SKY_FIT.
 export const SKY_FIT = 87;
-// God's camp stands on a stage in the clouds (DESIGN.md, "God's camp stands
-// on a stage in the clouds"; docs/mocks/act3-clouds-2026-10-19/a3platform,
-// spec.md, the numbers here). Lengths across are the mock's cells, `mx` sky
-// cells a cell, so the stage keeps its size against his throne at any
-// window; lengths down are cells off the horizon, the depth camera's. Its
-// top is a trapezoid cheated deep, from `back` to `front`, `hb` and `hf`
-// across the half; under its front a riser `rise` deep, then `steps` steps,
-// each a `tread` over a `riser` and `stepW` wider a side; a face `side`
-// across runs down the slanted edge toward the window's middle. At its foot
-// `billows` billows of the floor's own drawing lap up over the lowest
-// riser, `billowH` high (skewed small), pushed up as much as `billowUp`,
-// `billowW` of their height across the half.
-export const GOD_STAGE = { mx: 1.25, back: -2, front: 30, hb: 100, hf: 135, rise: 4, steps: 2, tread: 2, riser: 4,
-                           stepW: 12, side: 3, billows: 16, billowH: [2.5, 9], billowUp: 3, billowW: 1.8, seed: 77 };
+// God's camp stands on a stage (the owner, 2026-10-20: "the stage should go
+// from the throne to the main plane"): its top a trapezoid from `back` cells
+// behind his foot forward to the line the main plane's stations stand on,
+// `hb` and `hf` across the half there, in the mock's cells at `mx` sky cells
+// a cell, so it keeps its size against his throne at any window; a face
+// `side` across down each slanted edge. Its front stands on the main plane
+// `gap` cells clear of the union's crowd at its widest (after/sky.js,
+// `godFront`).
+export const GOD_STAGE = { mx: 1.25, back: 4, hb: 110, hf: 120, side: 3, gap: 6 };
 // God's crowd on the stage at a giant's scale: rows from the back to the
 // front, a soul `n` cells across (stage cells), from the first at the back to
 // the second at the front; `gap` cells between souls in a row, each row
 // stepping back `rows` of its soul; each soul jittered `jit` cells across and
 // a share `lift` of them a row up; `margin` cells kept off the stage's edge;
-// the aisle up the middle `aisle` cells either side of the line. As support
-// rises it empties from the front: a soul stands while (1 - share) * `keep`
-// - its frontness (0 the back row, 1 the front) * `fore` - a fixed chance *
-// `luck` + `base` is over 0, and fades as that falls through the last `soft`
-// of it -- support's share is eased, so a soul fades rather than pops.
-export const GOD_CROWD = { n: [4, 8], gap: 2, rows: 1.1, jit: 1, lift: 0.4, margin: 3, aisle: 4,
+// the aisle up the middle `aisle` cells either side of the line; a body of
+// the sim's among them no wider than `fileFill` of a file's spacing. As
+// support rises it empties from the front: a soul stands while (1 - share)
+// * `keep` - its frontness (0 the back row, 1 the front) * `fore` - a fixed
+// chance * `luck` + `base` is over 0, and fades as that falls through the
+// last `soft` of it -- support's share is eased, so a soul fades rather
+// than pops.
+export const GOD_CROWD = { n: [4, 8], gap: 2, rows: 1.1, jit: 1, lift: 0.4, margin: 3, aisle: 4, fileFill: 0.7,
                            keep: 1.4, fore: 0.8, luck: 0.6, base: 0.25, soft: 0.25 };
 // A sign stands on the stage by its rank: rank 0 the front row, rank
 // SIGN_DEEP or more the back; its flag `flag` stage cells tall from the back
@@ -86,7 +83,7 @@ export const SKY_RING_W = [16, 70];        // a ring's half-width, px, plus this
 export const SKY_RING_LIFT = [3, 12];      // its jump, px, plus this times the band's rate
 
 // --- God -----------------------------------------------------------------------------------
-// He stands in his camp GOD_DEPTH near layers deep (after/sky.js), drawn as a
+// He stands in his camp on his slow layer (after/sky.js), drawn as a
 // giant seen from afar: a God-cell is the largest of GOD_CELLS px that fits
 // GOD_FIT cells in the sky; a sky cell is half of one. He is a light source
 // on either page (raw tones, src/ink.js).
@@ -157,39 +154,35 @@ export const SKY_AURA = { r: 0.9, pad: 2, breath: 4, disc: 0.14, discDark: 0.2, 
 // --- souls drifting up from the camp ---------------------------------------------------------
 export const SKY_DRIFT = { every: [2.5, 4.5], life: 14, rise: 22 };
 
-// --- the depth camera (DESIGN.md, "The camps are far apart for the eye") -----------------
-// The camera only slides. A thing at depth d (the near layer, where the
-// workshops and the union's camp stand, at 1) slides 1/d as fast as the
-// camera and is drawn 1/d its size, its foot AFTER_HORIZON / d cells under
-// the horizon: the near layer's floor is AFTER_HORIZON cells under it.
-export const AFTER_HORIZON = 12;
-// God's camp stands this many near layers deep, its throne's floor x
-// GOD_FAR windows (at rest) past the union's camp's right end: far enough
-// that his layer and the union's would only meet past the window's right
-// edge, so the union's camp is always left of the throne.
-export const GOD_DEPTH = 3;
-export const GOD_FAR = 1.3;
+// --- the horizon ------------------------------------------------------------------------
+// The horizon stands this many cells over the main plane's line: the sky's
+// ranges stand on it, and the far cloud runs from it down to the plane.
+export const AFTER_HORIZON = 28;
+// God sits far back on a slow layer behind the main plane (after/sky.js): he
+// slides GOD_RATE as fast as the camera, his foot GOD_FOOT cells over the
+// main plane's line; his stage's lines slide from his rate at its back to the
+// world's at its front.
+export const GOD_RATE = 1 / 3;
+export const GOD_FOOT = 19;
 
-// --- the cloud floor (take A2) ---------------------------------------------------------
-// Billows on the ground plane seen through one camera (docs/mocks/
-// act3-clouds-2026-10-19, a3cloudfloor3): a camera `f` cells from the
-// screen and `cam` units over the plane; the near layer AFTER_HORIZON cells
-// under the horizon stands at depth `f * cam / AFTER_HORIZON`. A billow is a
-// dome on a lattice `lx` across by `lz` deep, odd rows `row` of a cell
-// over, jittered `jit`, radius `r` of a cell, `ez` as deep as wide,
-// standing `amp` high and `puff` round; a share `vary` of them are bigger.
-// Its lit cap is the circle `cap` (x, z, radius) of its own radius. Near the
-// feet they are pressed to `low` of their height, rising to whole between
-// depths `rise`; past a row `rowmin` cells deep the rows stop thinning and
-// only narrow; rows under `shade` cells deep go unshaded and their lines
-// under `faint` are left out. It rolls
-// `roll` units toward the viewer a second, traced a
-// tick at a time (SKY_TICK_S), `slice` of its columns a frame, held
-// between, and slid row by row with the camera between traces; a pan of more
-// than `margin` of the window since the last trace traces it again at once.
-export const CLOUD_FLOOR = { f: 130, cam: 0.86, cap: [0.1, 0.17, 0.95], vary: 0.15, ez: 1.35, lx: 0.36, lz: 0.45,
-                             jit: 0.3, r: [0.48, 0.62], amp: [0.21, 0.3], puff: 0.4, row: 0.5, roll: 0.024,
-                             low: 0.3, rise: [2.5, 9], rowmin: 1.6, shade: 2.4, faint: 1.8, far: 400, margin: 0.25, slice: 0.1 };
+// --- the ground (render/after/ground.js, render/after/floor.js) ----------------------
+// Three rigid layers, nothing rolling. The far cloud between the horizon and
+// the main plane: rows of billow lines on the cell grid, `rows` cells under
+// the horizon, each broken into stretches of `seg` cells, a share `gaps` of
+// them left open, a
+// row's profile repeating every `period` of its cells, on God's slow layer
+// (`rate` of the camera's speed). The main plane's path: paper `depth` cells
+// down off the line the stations stand on, its far edge a pale billow line.
+// The foreground under it: rows of big calm clouds, `down` cells under the
+// path, one every `every` cells give or take, `w` cells across and `h`
+// high, a share `gaps` of the places left empty, sliding `rate` as fast as
+// the camera.
+export const GROUND_FAR = { rate: GOD_RATE, rows: [6, 10, 18], period: 512, seed: 41, seg: 40, gaps: 0.45 };
+export const GROUND_PATH = { depth: 5, seed: 9 };
+export const GROUND_FORE = { rate: 1.3, gaps: 0.35, rows: [{ down: 6, every: 64, w: [16, 28], h: [2, 3] },
+                                                            { down: 20, every: 90, w: [30, 50], h: [4, 6] }] };
+// The thin lines the far rows and the foreground clouds are drawn in, world px.
+export const GROUND_LINE = 2;
 
 // --- the sky's ranges (take S3, taller) ----------------------------------------------
 // Three ranges of cloud, far to near, each a skyline of value noise over
@@ -220,18 +213,22 @@ export const CLOUD_SKY_TONES = { light: ['paper', 'paper', 'pale', 'mid', 'pale'
 // --- the union's crowd (DESIGN.md, "The level, the two crowds and the flags") ---
 // Gathered round and behind the pair in straight rows, `rows` of them, each
 // row back smaller, higher and paler: a soul `n` px across from the front row
-// to the back, a loose `gap` of its own size between souls, the rows' feet
-// rising `rise` px over the floor from front to back, the rows `half` px
-// across the half (the back row kept off the workshops), the front `clear` px
-// either side of the podium's half-width left open. The front `cap` rows are
+// to the back (the front ones a body's size, as big as the pair), a loose
+// `gap` of its own size between souls, the rows' feet rising `rise` px over
+// the floor from front to back, the rows `half` px across the half -- never
+// past a cell short of the workshops' end, whatever the window -- the front
+// `clear` px either side of the podium's half-width left open. The front `cap` rows are
 // a mid body under an ink cap `capH` px deep, the rows to `midTo` mid, the
-// rest pale: drawn light, so God stays the eye's anchor. It fills in from the
+// rest pale: drawn light, so God stays the eye's anchor. Each soul stands
+// up to `jit` px off its place and a share `short` of them a cap shorter,
+// so a row reads as people and not as a pattern. It fills in from the
 // front as support rises, a soul standing once (share * rows * `fill`) -
 // its row - a fixed chance * `luck` is over 0; a newcomer walks in from God's
 // side `walk` px over `walkS` seconds, fading in over the first `fadeIn` of it,
 // and one leaving fades over `fadeOut` seconds. When a line of the pair's
 // speech goes up, a share `hop` of the front `hopRows` rows hop a cell, held
 // `hopS` seconds.
-export const UNION_CROWD = { rows: 9, n: [12, 4], gap: 0.45, rise: 88, half: [100, 228], clear: 6, cap: 3, capH: 2, midTo: 6,
+export const UNION_CROWD = { rows: 7, n: [20, 12], gap: 0.6, rise: 132, half: [160, 260], clear: 6, cap: 3, capH: 4, midTo: 5,
+                             jit: 3, short: 0.35,
                              fill: 1.1, luck: 0.6, walk: 80, walkS: 3, fadeIn: 0.3, fadeOut: 1,
-                             hop: 0.7, hopRows: 3, hopS: 0.5 };
+                             hop: 0.7, hopRows: 2, hopS: 0.5 };
