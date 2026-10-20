@@ -204,6 +204,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The opening, the serpent's kill, the walk home and the first trip down glide their camera and their zoom together instead of cutting across the deep or stepping the zoom, and keep who they are about in the frame (test/shot.test.mjs; cutscenes.html, the finale, snatch-kill, opening and first-trip rows).
 - A hauler down the hole when the pit drowns is no longer left buried in the abyss; the drowning waits until the hole is empty (test/hauler-in-hole.test.mjs).
 - Loading a save or importing one no longer leaves the noticeboard standing on the closet until the layout next changes (test/finished-save-snatch.test.mjs).
+- A big casino win with the tray full no longer drops on a hauler down the torn hole in one lump; the pay streams out of the hatch and is counted as each grain lands (test/hauler-in-hole.test.mjs).
 
 ## v0.6.1 — 2026-10-19
 

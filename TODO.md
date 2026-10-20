@@ -4,16 +4,17 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## The casino's payout can bury a hauler in an emptied hole -- FOUND, NOT FIXED (2026-10-20)
+## A tray capped mid-pay holds the hand forever -- FOUND, NOT FIXED (2026-10-20)
 
-`src/casino.js` (around lines 587 and 610) banks a pay lump straight into
-the hole in one frame when the air or the tray is full. A lump of ~7,800
-grains into a torn, emptied hole would bury a hauler on the ladder the way a
-`__grant` did (test/hauler-in-hole.test.mjs guards the drowning and the
-grant, not this). Not reproduced in play. Fix: stream the payout into the
-hole no faster than a body can climb, or route it through the rift while
-anyone is down the hole (`anyoneInTheHole()` in rift.js). Needs the owner's
-call on whether the payout may stream.
+`src/casino.js`: a pay grain that finds no cell sets `tray.capped`, which
+holds the next bin (`stepDrop`, `!chuteOpen()`). Only `trayOut` clears it,
+and `trayOut` returns while `trayHolds()` -- which is true for the whole pay
+stage -- so a tray that fills during a pay never empties and the hand never
+settles. Not seen in play: one hand lays at most a brim a kind (`shownFor`),
+under the tray's 108 x 20; it needs a previous hand's pile still standing.
+Seen in test/hauler-in-hole.test.mjs, whose forced-full tray has to be let
+go by hand. Fix: uncap when the pay stage holds on it, or let `trayOut` run
+while the bins wait on the chute.
 
 ## One place engine for every act -- APPROVED, BUILDING IN ORDER (2026-10-20)
 
