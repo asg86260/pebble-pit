@@ -23006,3 +23006,9 @@ again (docs/act3-fixlist-2026-10-20.md, items 2 and 3).
   assignments, filled from its members as far as they go, the rest idle.
 - **Builders** still come from idle members first, then off a station's
   roster, as now.
+- **One seat to start, more bought** (the owner, 2026-10-20: "Each station
+  should be locked to one worker, and more slots can be purchased per
+  station."). Every act 3 station holds one worker; its board sells more
+  seats, a row a station, climbing like the act's other rows. The roster
+  draws the seats as the yard's does (`capOf` / `roomAt`, the seat pips):
+  plus stops at the seats bought.
