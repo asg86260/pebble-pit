@@ -17,12 +17,12 @@
 // the yard's ground stands, at the yard's zoom.
 
 import { S } from '../state.js';
-import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_DEPTH, GOD_FAR, GOD_CROWD, GOD_SIGN_DEEP, GOD_STAGE, AFTER_HORIZON,
+import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_DEPTH, AFTER_CAMP_CLEAR, GOD_CROWD, GOD_SIGN_DEEP, GOD_STAGE, AFTER_HORIZON,
          GOD_N, GOD_THRONE, WALK_BODY,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW } from '../config.js';
 import { yardCell } from '../world.js';
 import { actPlace } from '../acts.js';
-import { afterFloor, afterTop, afterX1, afterOpenX, unionX1, campEdges } from './place.js';
+import { afterFloor, afterTop, afterX1, afterOpenX, campEdges, unionReach } from './place.js';
 import { smoothstep } from '../motion.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -43,9 +43,15 @@ export const depthAtY = y => AFTER_HORIZON * P / Math.max(1e-3, y - horizonY());
 export const seenX = (u, d, cx) => cx + (u - cx) / d;
 export const floorX = (x, d, cx) => cx + (x - cx) * d;
 
-// God's throne's floor x: GOD_FAR windows past the union's camp, so his
-// layer and the union's would only meet past the window's right edge.
-export const godU = () => unionX1() + GOD_FAR * restW();
+// God's throne's floor x, from the geometry, so the camps never crowd each
+// other for the eye. His stage slides a third as fast as the union's camp,
+// so as the camera goes left the union's crowd closes on the stage's left
+// edge on the window, and the tightest moment both are in view is when that
+// edge sits on the window's right edge: the camera's middle is then
+// uG - 3 (W/2 + reach), and the crowd's right end must stand AFTER_CAMP_CLEAR
+// cells short of it. Solved for uG: the crowd's reach, a window, three times
+// the stage's reach and the clearance. Further right the gap only grows.
+export const godU = () => unionReach() + restW() + 3 * stage().reach + AFTER_CAMP_CLEAR * P;
 // The furthest right the window's middle goes: God's throne in its middle,
 // or the place's own last window if that is further.
 export const afterEnd = () => Math.max(afterX1() - restW() / 2, godU());
@@ -105,7 +111,10 @@ export function stage() {
     mx, yb: at(G.back), yf: at(G.front), hb: G.hb * mx, hf: G.hf * mx, stepW: G.stepW * mx,
     foot: at(G.front + G.rise + G.steps * (G.tread + G.riser)),
     // the throne's base at its bottom step, across the half, and its foot
-    throne: (GOD_THRONE.baseHalf + GOD_THRONE.step * (steps - 1)) * f.h, throneY: f.bank
+    throne: (GOD_THRONE.baseHalf + GOD_THRONE.step * (steps - 1)) * f.h, throneY: f.bank,
+    // how far left of his middle anything of it is drawn: the lowest step,
+    // the billows past it and the widest of them
+    reach: (G.hf + G.stepW * G.steps + G.billowOut) * mx + G.billowH[1] * G.billowW * P
   };
   stageKey = key;
   return stageMemo;

@@ -257,7 +257,7 @@ function drawStage() {
     rect(x - hw, y, 2 * hw, G.tread * P, TOP_TONE); rect(x - hw, y + G.tread * P, 2 * hw, G.riser * P, RISE_TONE);
     y += (G.tread + G.riser) * P;
   }
-  const hs = st.hf + st.stepW * G.steps + 12 * st.mx, base = Math.round(y / P) + 2;
+  const hs = st.hf + st.stepW * G.steps + G.billowOut * st.mx, base = Math.round(y / P) + 2;
   for (let i = 0; i < G.billows; i++) {
     const c = (x - hs + 2 * hs * (i + 0.2 + hsh(G.seed, i) * 0.6) / G.billows) / P;
     const h = lerp(G.billowH[0], G.billowH[1], hsh(G.seed, i, 2) ** 1.5), up = Math.round(hsh(G.seed, i, 3) * G.billowUp);
@@ -856,7 +856,10 @@ function drawAura(g, q) {
 // fades in rather than popping; those standing when the drawing catches up
 // (a new act, a reload, a jump of the clock) are simply there. Drawing state.
 const seenSigns = new Map();
-function seeAllSigns() { seenSigns.clear(); for (const q of S.after.signs) seenSigns.set(q.id, -Infinity); }
+function seeAllSigns() {
+  seenSigns.clear(); for (const q of S.after.signs) seenSigns.set(q.id, -Infinity);
+  carrying.clear(); setDown = [];
+}
 function drawFlag(q) {
   const t = now(), phase = TK % SKY_FLAG.phases;
   if (!seenSigns.has(q.id)) seenSigns.set(q.id, t);
@@ -893,16 +896,18 @@ export function seenAt(x, y) {
   const v = walkSeen(x, y, CX);
   return { x: v.x, y: v.y, k: v.s / (3 * P), ord: v.ord };
 }
-// A body there: the camp's square, a rim of ink round paper, its size the
-// way's; its load over it.
+// A body there: one of the union's, as its crowd is drawn (render/after/
+// unioncrowd.js) -- a mid body under a cap of the union's ink, so out on God's
+// stage it is never taken for one of his souls -- its size the way's; its
+// load over it.
 function body(w) {
   const v = seenAt(w.x, w.y), u = P * v.k, s = u * 3;
   const x = onPx(v.x - s / 2), y = onPx(v.y - s);
   alpha(deepAt(w.x), () => {
-    rect(x, y, s, s, INK);
-    if (s >= 10) rect(x + 2, y + 2, s - 4, s - 4, W);
+    rect(x, y, s, s, MID);
+    rect(x, y, s, Math.max(2, Math.round(s / 5)), UNION_TONE);
     if (w.load === 'log') rect(x - u, y - u, u * 5, u, PALE);
-    else if (w.load === 'sign') { rect(x + u, y - u, u, u, INK); rect(x, y - u * 2, u * 3, u, UNION_TONE); }
+    else if (w.load === 'sign') carriedSign(x, y, u);
     else if (w.load === 'posters') rect(x, y - u, u * 3, u, PALE);
     else if (w.load === 'tip') rect(x, y - u, u * 2, u, PALE);
     if (w.swing != null) {
@@ -910,6 +915,29 @@ function body(w) {
       else for (let k = 1; k <= 2; k++) rect(x + (w.face > 0 ? 2 + k : -k) * u, y - k * u, u, u, INK);
     }
   });
+}
+
+// A carried sign over a body's head at (x, y), u its cell.
+function carriedSign(x, y, u) { rect(x + u, y - u, u, u, INK); rect(x, y - u * 2, u * 3, u, UNION_TONE); }
+// A sign set down: when a carrier's load goes from a sign to nothing it has
+// planted it, and the sign it carried fades out where it was, on the stage,
+// over the span the planted flag fades in over (`drawFlag`). Drawing state.
+const carrying = new Map();
+let setDown = [];
+function watchSigns() {
+  const t = now(), gm = gx();
+  for (const w of S.after.bodies) {
+    const was = carrying.get(w.id);
+    if (was === 'sign' && w.load !== 'sign') {
+      const v = seenAt(w.x, w.y), u = P * v.k, s = u * 3;
+      setDown.push({ at: t, dx: v.x - s / 2 - gm, y: v.y - s, u, ord: v.ord + 0.3 });
+    }
+    carrying.set(w.id, w.load);
+  }
+  setDown = setDown.filter(g => t - g.at < SIGN_FADE_S && t >= g.at);
+}
+function drawSetDown(g) {
+  alpha(1 - (now() - g.at) / SIGN_FADE_S, () => carriedSign(onPx(gx() + g.dx), onPx(g.y), g.u));
 }
 
 // --- souls drifting up from the camp ---------------------------------------------------------------
@@ -956,6 +984,8 @@ export function drawSkyCrowd() {
   for (const q of S.after.signs) items.push({ y: flagBox(q).foot, draw: () => drawFlag(q) });
   for (const q of S.after.posters) items.push({ y: posterBox(q).foot + 0.5, draw: () => drawPoster(q) });
   for (const w of S.after.bodies) if (deepAt(w.x) > 0) items.push({ y: seenAt(w.x, w.y).ord + 0.25, draw: () => body(w) });
+  watchSigns();
+  for (const g of setDown) items.push({ y: g.ord, draw: () => drawSetDown(g) });
   items.sort((a, b) => a.y - b.y);
   let next = 0;
   for (const w of shown.won) w.drawn = null;

@@ -17,7 +17,7 @@
 
 import { P, GREY, STRIKE_SHARE, UNION_CROWD as C, AFTER_PODIUM_U, AFTER_PODIUM_HALF } from '../../config.js';
 import { S } from '../../state.js';
-import { afterFloor, podiumMid } from '../../after/place.js';
+import { afterFloor, podiumMid, unionHalf } from '../../after/place.js';
 import { support } from '../../after/union.js';
 import { podiumRung } from '../../after/levels.js';
 import { ctx } from '../ctx.js';
@@ -37,7 +37,8 @@ function hsh(a, b = 0) {
 // across and its feet, front (r 0) to back.
 function row(r) {
   const k = r / (C.rows - 1), n = Math.max(2, snap2(lerp(C.n[0], C.n[1], k)));
-  return { k, n, pitch: n + Math.max(2, snap2(n * C.gap)), half: lerp(C.half[0], C.half[1], k), y: afterFloor() - Math.round(lerp(0, C.rise, k)) };
+  const half = Math.min(lerp(C.half[0], C.half[1], k), unionHalf());
+  return { k, n, pitch: n + Math.max(2, snap2(n * C.gap)), half, y: afterFloor() - Math.round(lerp(0, C.rise, k)) };
 }
 // Whether soul i of row r is due at this share of the way to the strike.
 const due = (s, r, i) => s * C.rows * C.fill - r - hsh(i, r + 3) * C.luck > 0;
@@ -83,9 +84,10 @@ export function drawUnionCrowd() {
       if (alpha <= 0.001) continue;
       if (want && u >= 1) count++;
       const lift = hop && r < C.hopRows && hsh(i, r) < C.hop ? P : 0;
-      const sx = Math.round(x) + dx, sy = R.y - R.n - lift;
+      const jit = Math.round((hsh(i, r + 17) - 0.5) * 2 * C.jit / 2) * 2, short = hsh(i, r + 29) < C.short ? C.capH : 0;
+      const sx = Math.round(x) + dx + jit, sy = R.y - R.n - lift + short, h = R.n - short;
       ctx.globalAlpha = was * alpha;
-      ctx.fillStyle = GREY[tone]; ctx.fillRect(sx, sy, R.n, R.n);
+      ctx.fillStyle = GREY[tone]; ctx.fillRect(sx, sy, R.n, h);
       if (r < C.cap) { ctx.fillStyle = GREY[K]; ctx.fillRect(sx, sy, R.n, C.capH); }
     }
   }
