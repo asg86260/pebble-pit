@@ -27,7 +27,7 @@
 // page to draw scaled up at the layer's true position (drawCloud in
 // clouds.js's terms: one rounding for the whole layer).
 
-import { CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_FADE_S } from '../config.js';
+import { CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_FADE_S, CLOUDS_SETTLE } from '../config.js';
 import { puffAt } from './clouds.js';
 
 const REACH = 1 / Math.sqrt(1 - Math.cbrt(CLOUDS_THRESHOLD));
@@ -55,8 +55,8 @@ void main() {
   ivec2 c = ivec2(gl_FragCoord.xy);
   vec2 p = vec2(c) + 0.5;
   float s[8] = float[8](0., 0., 0., 0., 0., 0., 0., 0.);
-  // each tier's strongest lobe at this cell: how strong, and which way the
-  // cell is from its middle, as a share of its visible radius
+  // each tier's strongest lobe at this cell: how strong, which way the cell
+  // is from its middle as a share of its visible radius, and its reach
   float w[8] = float[8](0., 0., 0., 0., 0., 0., 0., 0.);
   vec3 d[8];
   vec2 st = texelFetch(uStrips, ivec2(c.x / ${STRIP}, 0), 0).xy;
@@ -86,8 +86,10 @@ void main() {
   if (uFresh == 0 && q.x >= 0 && q.y >= 0 && q.x < sz.x && q.y < sz.y) was = int(texelFetch(uPrev, q, 0).r & 15u) - 1;
   int t = clamp(was, lo, hi);
   // a lobe in the round: its cap toward the light lit, the side away from it
-  // in shadow, read off the lobe the cell belongs to, so every turret of a
-  // cloud is its own rounded form and a smaller one on a bigger one shows
+  // in shadow, read off the lobe the cell belongs to (the strongest of its
+  // tier there), so every turret of a cloud and every smaller one clustered
+  // on it shows as its own rounded form, its edge against its neighbor a
+  // lit cap meeting a shadow
   uint h = 0u;
   if (t >= 0 && uLobe[t] > 0 && w[t] > 0. && d[t].z >= uLobeMin) {
     float u = length(d[t].xy), f = u > 0. ? dot(d[t].xy / u, uLightN) : 0.;
@@ -191,7 +193,7 @@ void main() {
   uvec4 was = texelFetch(uPrev, q, 0);
   if (want == was.r) { o = uvec4(was.r, want, 0u, 0u); return; }
   uint n = want == was.g ? was.b + 1u : 1u;
-  o = n >= ${4}u ? uvec4(want, want, 0u, 0u) : uvec4(was.r, want, n, 0u);
+  o = n >= ${CLOUDS_SETTLE}u ? uvec4(want, want, 0u, 0u) : uvec4(was.r, want, n, 0u);
 }`;
 
 const FADE = `#version 300 es

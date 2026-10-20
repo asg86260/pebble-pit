@@ -267,6 +267,11 @@ export const CLOUDS_FLOW = { wander: [0.35, 0.85], period: [30, 90], lift: 0.45 
 // A cell that changes tone eases into the new one over this many seconds,
 // so an edge flowing across the grid glides rather than ticks.
 export const CLOUDS_FADE_S = 0.3;
+// A cell takes a new role only once it has been wanted this many worked
+// frames running (cloudgl.js, SETTLE): a tenth of a second at sixty, so an
+// edge where two lobes' turrets meet and part cannot show a tone and take it
+// back inside that.
+export const CLOUDS_SETTLE = 6;
 // The ground in the sky's flow: its rows' size, its puffs' wander and period,
 // and the frames between workings of its field (CLOUDS_SKY.every); its rows'
 // depth and the rest are CLOUDS_KINDS.ground's.
