@@ -18,16 +18,15 @@ import { showPanel } from './board.js';
 import { station } from './stations.js';
 import { GLYPHS, drawGlyph } from './glyphs.js';
 import { onTap } from './tap.js';
-import { inDeep } from './view.js';
 import { stops, stopMid } from './stops.js';
 
 
-// Every standing station with a board in the half on screen, by where it
+// Every standing station with a board in the place on screen, by where it
 // stands, left to right: the deep's stations are under the world, and a hop
 // is a glide across, never down the shaft. Read off the one list of stops
 // the digit keys and the pad walk too (stops.js).
 const standing = () =>
-  stops(inDeep() ? 'deep' : 'yard').filter(s => s.kind === 'station' && s.board)
+  stops(S.view).filter(s => s.kind === 'station' && s.board)
     .map(s => ({ key: s.key, mid: stopMid(s) }));
 
 // The next station past the view's center, in a direction: the first whose

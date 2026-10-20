@@ -293,6 +293,7 @@ export const AFTER_JOB_ROWS = {
 // the camp.
 const BODY_H = 3 * P;
 export const AFTER_CREW = {
+  place: 'after',
   list: () => (S.after ? S.after.bodies : null),
   // the fastest it goes, px a second, how much of it is drawn, and whether it
   // is drawn as one of a crowd rather than as itself (verify.js)

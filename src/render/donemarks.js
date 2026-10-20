@@ -6,6 +6,7 @@ import { P, SHELF_GLYPH_CELLS } from '../config.js';
 import { glyphFor } from '../glyphs.js';
 import { S } from '../state.js';
 import { tintOf } from '../upgrades.js';
+import { siteHere } from '../stations.js';
 import { doneAt, doneBillsAt, rowFor, DOWN_THERE } from '../works.js';
 import { buildingGlyph, stackSlot, drift } from './bars.js';
 
@@ -107,6 +108,7 @@ function outsideEdge(glyph) {
 
 export function drawDoneMarks() {
   for (const site in S.siteDone) {
+    if (!siteHere(site)) continue;
     const bills = doneBillsAt(site);
     doneAt(site).forEach((key, i) => {
       const at = stackSlot(site, i);
@@ -153,6 +155,7 @@ export function doneMarkAt(site) {
 // where the cursor has to be to be asking what finished; says which site
 export function overDoneMark(mx, my) {
   for (const site in S.siteDone) {
+    if (!siteHere(site)) continue;
     const n = doneAt(site).length;
     if (!n) continue;
     const foot = stackSlot(site, 0), top = stackSlot(site, n - 1);

@@ -689,7 +689,7 @@ export function verifyWorld() {
 let setups = 0;
 export const touchSetup = () => { setups++; };
 const motionWas = new WeakMap();
-let motionTick = -1, motionReads = -1, motionSetups = -1;
+let motionTick = -1, motionReads = -1, motionSetups = -1, motionBeat = null;
 // How far past the fastest walk a frame may go: the tonic's boost and the
 // feet's climb onto a step ride inside it.
 const MOTION_SLACK = 2;
@@ -706,9 +706,21 @@ function motionFault(key, rule, detail) {
 }
 function verifyMotion() {
   const fresh = S.tick === motionTick + 1 && yardReads === motionReads && setups === motionSetups;
+  // and the frame a yard beat lets go of the yard: the bodies it was
+  // drawing as its own (the pair in the opening) are handed to the crew there
+  const beat = S.beat.yard || motionBeat;
+  motionBeat = S.beat.yard;
   motionTick = S.tick; motionReads = yardReads; motionSetups = setups;
   const f = frames();
   for (const [place, w, crew] of everyBody()) {
+    // Rule 6 for an act's bodies too: a position is a position, inside its
+    // place (the yard's own are asked above).
+    if (crew) {
+      if (!Number.isFinite(w.x) || !Number.isFinite(w.y)) fail('a body has no place', `${place}'s ${w.job} at ${w.x},${w.y}`);
+      const pl = PLACES[place];
+      if (!crew.unseen?.(w) && (w.x < pl.x0() - OUTSIDE || w.x > pl.x1() + OUTSIDE))
+        fail('a body has left the world', `${place}'s ${w.job} at ${Math.round(w.x)}, the place runs ${Math.round(pl.x0())}..${Math.round(pl.x1())}`);
+    }
     const still = crew ? !!(w.lifted || w.falling || crew.unseen?.(w)) : !!stillYard(w);
     const was = motionWas.get(w);
     const jig = w.jigAt != null;
@@ -716,7 +728,7 @@ function verifyMotion() {
     // A beat holding the yard walks its own bodies at its own pace, hurried
     // by the player's click, and draws only the ones it is about; its checks
     // are its own (test/finale.test.mjs, test/ending-stage.test.mjs).
-    if (!fresh || still || !Number.isFinite(w.x) || (!crew && S.beat.yard)) continue;
+    if (!fresh || still || !Number.isFinite(w.x) || (!crew && beat)) continue;
     // A body in the dance is keyed apart from its trade's walk.
     const job = crew ? w.job || 'none' : w.type + (jig || was?.jig ? '-dance' : '');
     if (!was) {

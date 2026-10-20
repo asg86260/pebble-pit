@@ -333,6 +333,7 @@ function chamberUnder(x) {
 // Hell's crew, as the place body engine (placebodies.js) steps it and the
 // hand takes one up.
 export const HELL_CREW = {
+  place: 'hell',
   list: () => (S.hell ? S.hell.bodies : null),
   // the fastest it goes, px a second, and how much of it is drawn (verify.js)
   pace: Math.max(GHOST_WALK, GHOST_CLIMB),

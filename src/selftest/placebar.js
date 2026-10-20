@@ -129,7 +129,7 @@ async function workChecks(place, targets, found) {
 // ('line'), plus the cloud palette's own tones for act 3 and God's raw light.
 const MIN_PX = 40;
 const hex = (d, k) => '#' + ((1 << 24) | (d[k] << 16) | (d[k + 1] << 8) | d[k + 2]).toString(16).slice(1);
-async function darkOff(scene, place) {
+export async function darkOff(scene, place) {
   const f = document.createElement('iframe');
   f.src = './play.html?dark&bench';
   f.style.cssText = 'position:fixed;left:0;top:0;width:1280px;height:800px;border:0;opacity:0;pointer-events:none;z-index:-1';

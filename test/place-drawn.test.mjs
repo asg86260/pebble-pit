@@ -101,9 +101,11 @@ function halfCell(place) {
 
 group('the yard and the deep: no world fill thinner than the thinnest line', async () => {
   SCENES.yard.run();
+  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   run(1);
   const n = thin('yard');
   SCENES.late.run();
+  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__view('deep');
   run(1);
   const m = thin('deep');
@@ -113,6 +115,7 @@ group('the yard and the deep: no world fill thinner than the thinnest line', asy
 
 group('act 3: no fill thinner than the thinnest line, and a body drawn where it stands', async () => {
   SCENES['act3-mid'].run();
+  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__goPlace('after');
   run(1);
   const n = thin('after');
@@ -124,6 +127,7 @@ group('act 3: no fill thinner than the thinnest line, and a body drawn where it 
 
 group('hell: no fill thinner than the thinnest line, a body drawn where it stands, and a palette with roles', async () => {
   SCENES['hell-forge'].run();
+  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__goPlace('hell');
   run(1);
   const n = thin('hell');

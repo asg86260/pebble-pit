@@ -19,7 +19,6 @@ const S = yard.S;
 // Today's gaps. The acts' own work sounds are a later, by-ear task.
 export const KNOWN_GAPS = [
   'after:work:none', 'hell:work:none',
-  'after:footstep:none', 'hell:footstep:none',
 ];
 
 // The sounds a station's work makes, as the yard's are named (polish bar §11).
@@ -50,8 +49,14 @@ function listen(place) {
 
 group('act 3: its bodies walking and working are heard', async () => {
   SCENES['after-chain'].run();
+  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__goPlace('after');
   run(1);
+  // The chain stands at its posts; a post bought sends a member out to it.
+  window.__grant({ dust: 5e6, spores: 2e6, shards: 2e6, scales: 2e5, sparks: 2e5 });
+  window.__afterGrant({ rebel: 1e5, timber: 1e4, paper: 1e4 });
+  window.__buy('after-post-hauler');
+  window.__buy('after-post-woodcutter');
   const walking = S.after.bodies.filter(b => b.job).length;
   listen('after');
   window.__view('yard');
@@ -61,6 +66,7 @@ group('act 3: its bodies walking and working are heard', async () => {
 
 group('hell: its bodies walking and working are heard', async () => {
   SCENES['hell-forge'].run();
+  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__goPlace('hell');
   run(1);
   const walking = S.hell.bodies.filter(b => b.job).length;

@@ -305,10 +305,17 @@ function ghost(b) {
   ctx.globalAlpha = 1;
 }
 
-export function drawHellCage() {
+// The ghosts, a layer of their own so the corner's crew switch fades or
+// hides them and nothing else (render.js, `dim`).
+export function drawHellGhosts() {
   const h = S.hell;
   if (!h) return;
   for (const b of h.bodies) if (inView(b.x - P, b.x + P)) ghost(b);
+}
+
+export function drawHellCage() {
+  const h = S.hell;
+  if (!h) return;
   // The pair's own swing at the click, held a beat.
   const sw = hellSwing();
   if (sw && h.clock - sw.at < SWING_HOLD_S && h.clock >= sw.at) {

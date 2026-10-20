@@ -35,6 +35,7 @@ group('a yard body moved a long way in a frame is reported', async () => {
 
 group('an act body moved a long way in a frame is reported, and one that pops in', async () => {
   SCENES['hell-forge'].run();
+  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__goPlace('hell');
   run(2);
   settle();
@@ -46,6 +47,7 @@ group('an act body moved a long way in a frame is reported, and one that pops in
   const popped = frame();
   S.hell.bodies.pop();
   SCENES['act3-mid'].run();
+  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__goPlace('after');
   run(2);
   settle();

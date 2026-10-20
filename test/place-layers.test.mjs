@@ -15,8 +15,6 @@ import { group, ok } from './helpers.mjs';
 import { LAYERS, mapOf } from '../src/render.js';
 
 export const KNOWN_GAPS = [
-  'after:pile marks:in', 'after:work bars:in', 'after:done marks:in', 'after:bodies:dim', 'after:sight:layer',
-  'hell:pile marks:in', 'hell:work bars:in', 'hell:done marks:in', 'hell:bodies:layer', 'hell:sight:layer', 'hell:map:own',
 ];
 
 const PLACES = ['yard', 'deep', 'after', 'hell'];

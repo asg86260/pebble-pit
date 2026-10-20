@@ -24,7 +24,7 @@ import { drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawBuried, drawIntro, drawKitStands,
-         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld, drawSightVeil, drawDeepSight } from './render/crew.js';
+         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld, drawSightVeil, drawDeepSight, drawPlaceSight } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
 import { drawPadMark } from './render/padmark.js';
 import { clearPage, clipToHalf, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
@@ -70,7 +70,7 @@ import { drawAfterBackdrop, drawAfterGrove, drawAfterCamp, drawAfterMembers, dra
 import { drawAfterCrowd, drawSkyCrowd } from './render/aftercrowd.js';
 import { drawAfterCues } from './render/aftercues.js';
 import { drawAfterCoins } from './render/aftercoins.js';
-import { drawHellBackdrop, drawHellChambers, drawHellSeams, drawHellForge, drawHellBarriers, drawHellCage } from './render/hell.js';
+import { drawHellBackdrop, drawHellChambers, drawHellSeams, drawHellForge, drawHellBarriers, drawHellGhosts, drawHellCage } from './render/hell.js';
 import { S } from './state.js';
 import { recede, frontLayers } from './cutscene.js';
 import { ridingRoad, bandWorld } from './shot.js';
@@ -200,7 +200,7 @@ const LAYERS = [
   { name: 'shaft arrow', draw: drawYardArrow },  // and over it, the way down
 
   { name: 'paid', draw: drawPaid },
-  { name: 'pile marks', in: YARD_DEEP, draw: drawPileMarks },   // and a bar over anything that has stopped for a full one
+  { name: 'pile marks', in: ALL, draw: drawPileMarks },   // and a bar over anything that has stopped for a full one
   { name: 'auras', draw: drawAuras },            // the hold-a-body ring; offers fly flags, painted far earlier
   { name: 'build sites', in: YARD_DEEP, draw: drawBuildSites }, // fenced off, for as long as it is under way
   { name: 'grit', draw: drawGrit },              // and the chips off the hammer, in FRONT of the walls
@@ -224,7 +224,8 @@ const LAYERS = [
   { name: 'after grove', in: 'after', draw: drawAfterGrove },
   { name: 'after camp', in: 'after', draw: drawAfterCamp },
   { name: 'after crowd', in: 'after', draw: drawAfterCrowd },
-  { name: 'after members', in: 'after', draw: drawAfterMembers },
+  { name: 'after sight', in: 'after', draw: () => drawPlaceSight('after') },   // the right button held: the camp veiled, each member ringed
+  { name: 'after members', in: 'after', draw: drawAfterMembers, dim: 1 },
   { name: 'after coins', in: 'after', draw: drawAfterCoins },  // the yard's coins out of the thin patch to the station bought (render/aftercoins.js)
   { name: 'after cues', in: 'after', draw: drawAfterCues },     // the hand work's ghost hands, gauges and crit marks (render/aftercues.js)
   // The acts' connective tissue up there (render/portals.js): heaven's tear in
@@ -237,6 +238,8 @@ const LAYERS = [
   { name: 'hell seams', in: 'hell', draw: drawHellSeams },
   { name: 'hell forge', in: 'hell', draw: drawHellForge },
   { name: 'hell barriers', in: 'hell', draw: drawHellBarriers },
+  { name: 'hell sight', in: 'hell', draw: () => drawPlaceSight('hell') },   // the right button held: the place veiled, each ghost ringed
+  { name: 'hell ghosts', in: 'hell', draw: drawHellGhosts, dim: 1 },
   { name: 'hell cage', in: 'hell', draw: drawHellCage },
   { name: 'acts-hell', in: 'hell', draw: drawActsHell },
   { name: 'acts-hell-bodies', in: 'hell', draw: () => drawActBodies('hell') },
@@ -291,8 +294,8 @@ const LAYERS = [
   // What a station is putting up and what it has finished hang over it in
   // front of the deep's domes as well as the yard's roofs: behind them, the
   // stack over a station on the deep's floor was inside its own dome.
-  { name: 'work bars', in: YARD_DEEP, draw: drawWorkBars },     // and whatever else the yard is putting up
-  { name: 'done marks', in: YARD_DEEP, draw: drawDoneMarks },   // a tick over any station that finished something
+  { name: 'work bars', in: ALL, draw: drawWorkBars },     // and whatever else the yard is putting up
+  { name: 'done marks', in: ALL, draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'sight veil', draw: drawSightVeil },   // the right button held: the yard behind the crew veiled pale
   { name: 'roster', in: YARD_DEEP, draw: drawRosterBodies },    // who is working here, under the place they work
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock
@@ -447,10 +450,12 @@ function drawHalf(place, from = 0, to = LAYERS.length, skip = null) {
 }
 
 // The dark page's map a layer is drawn in (ink.js): the deep's whole half in
-// the deep's own, act 3's own layers in its own spread, and the rest turned
-// over between the dark page's paper and ink. On the light page every map is
+// the deep's own, act 3's own layers in its own spread, hell's whole place in
+// its own (black kept black, its fire kept white), and the rest turned over
+// between the dark page's paper and ink. On the light page every map is
 // the identity.
-export const mapOf = (layer, place) => place === 'deep' ? 'deep' : READING.has(layer.name) ? 'line' : layer.in === 'after' ? 'after' : 'yard';
+export const mapOf = (layer, place) => place === 'deep' ? 'deep' : READING.has(layer.name) ? 'line' : place === 'hell' ? 'hell'
+  : layer.in === 'after' ? 'after' : 'yard';
 
 function drawLayer(layer, i, place) {
   // A `dim` layer is the crew's own plane, and the corner's crew switch

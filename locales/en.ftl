@@ -2700,6 +2700,18 @@ hover-gatherer = gatherer
 # the hover over a body, as the job it does (its type, delver)
 hover-delver = delver
 
+# act 4 (placeholder): the hover over a ghost in hell, as the job it does (a miner at a face)
+hover-hell-miner = miner
+
+# act 4 (placeholder): the hover over a ghost in hell, as the job it does (a stoker feeding a furnace)
+hover-hell-stoker = stoker
+
+# act 4 (placeholder): the hover over a ghost in hell, as the job it does (the smith at the anvil)
+hover-hell-smith = smith
+
+# act 4 (placeholder): the hover over a ghost in hell, as the job it does (one of the wall gang at a barrier)
+hover-hell-gang = wall gang
+
 # the hover over the portal, from the deep
 hover-portal-up = the portal — up to the yard
 

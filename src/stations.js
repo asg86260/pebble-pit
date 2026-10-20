@@ -271,6 +271,11 @@ export const BOARDS = STATIONS.filter(r => r.board).map(r => r.key);
 const worldOf = place => (place === 'after' || place === 'hell' ? place : 'yard');
 // Whether a row stands in the world on screen, the one the pointer asks.
 export const here = row => !!row && worldOf(row.place) === worldOf(S.view);
+// Whether a site of the works (a station's key, or the rift and the meteor,
+// which are the yard's) stands in the world on screen: what the marks over
+// the stations -- the pile marks, the work bars, the done marks -- ask, so
+// one layer of each serves every place and draws only its own.
+export const siteHere = key => here(byKey.get(key) || { place: 'yard' });
 // The boards of the yard's world, for what is drawn or counted over its
 // stations alone (their flags, the snapshot's offers).
 export const YARD_BOARDS = STATIONS.filter(r => r.board && worldOf(r.place) === 'yard').map(r => r.key);
