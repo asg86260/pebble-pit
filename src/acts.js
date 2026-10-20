@@ -16,7 +16,6 @@
 import { AFTERLIFE_ON, HELL_ON, ACT_ROAD_UNDER } from './config.js';
 import { demoOn } from './demo.js';
 import { AFTER_PLACE } from './after/place.js';
-import { afterReach } from './after/sky.js';
 import { HELL_PLACE } from './hell/place.js';
 import { S } from './state.js';
 
@@ -41,11 +40,8 @@ export function forceActs(after, hell = after) { forcedAfter = after; forcedHell
 // ground does (the pit's depth under it), so crossing over keeps the line a
 // body stands on where the eye left it, and the cloud fills under it as the
 // pit did.
-// Its right end is the camera's (after/sky.js, `afterReach`): far enough to
-// bring God's throne, far back on the cloud, to the window's middle.
 const AFTER_AT_YARD = {
   ...AFTER_PLACE,
-  x1: () => afterReach(),
   get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; }
 };
 export const PLACES = { after: AFTER_AT_YARD, hell: HELL_PLACE };

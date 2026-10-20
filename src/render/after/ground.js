@@ -16,7 +16,7 @@
 // the cell grid off that offset, so nothing in a layer shears against the
 // rest of it or jitters when the camera slides. Nothing rolls.
 
-import { P, GREY, AFTER_HORIZON, GROUND_FAR, GROUND_FORE, GROUND_PATH } from '../../config.js';
+import { P, GREY, GROUND_FAR, GROUND_FORE, GROUND_PATH } from '../../config.js';
 import { S } from '../../state.js';
 import { ctx } from '../ctx.js';
 import { layerAt, fillOnPixels } from '../frame.js';
@@ -41,9 +41,8 @@ const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; fill(x, y, w, h);
 const layerOff = rate => layerAt(0, rate, afterOpenX());
 
 // --- the far cloud --------------------------------------------------------------------
-// A few broken rows at depths along the way back, each a run of billow tops
-// a cell or two high, its cells 1/d of the near layer's across, in the pale
-// line tone: a stretch of `seg` cells drawn, or left open (a share `gaps` of
+// A few broken rows on the way back, each a run of billow tops a cell or two
+// high, its cells smaller the nearer the horizon, in the pale line tone: a stretch of `seg` cells drawn, or left open (a share `gaps` of
 // them), so no row is a ruled line across the window. A row's profile
 // repeats every `period` of its own cells.
 const farRows = new Map();
@@ -55,8 +54,8 @@ function farRow(i) {
 function drawFar() {
   const F = GROUND_FAR, off = layerOff(F.rate), hy = horizonY(), x0 = S.camX - off, x1 = x0 + S.viewW;
   ctx.fillStyle = GREY[PALE];
-  F.depths.forEach((d, i) => {
-    const y = Math.round((hy + AFTER_HORIZON * P / d) / 2) * 2, c = Math.max(2, Math.round(P / d / 2) * 2), el = farRow(i), n = el.length;
+  F.rows.forEach(([down, c], i) => {
+    const y = hy + down * P, el = farRow(i), n = el.length;
     const at = j => el[((j % n) + n) % n];
     for (let s = Math.floor(x0 / c / F.seg) - 1; s <= Math.ceil(x1 / c / F.seg); s++) {
       if (hsh(s, i, 5) < F.gaps) continue;

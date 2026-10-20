@@ -1,28 +1,25 @@
-// The afterlife's sky and depth as a frame (DESIGN.md, "The camps are far
-// apart for the eye, not for the walk", "God's camp stands in the clouds",
-// "God's camp stands on a stage in the clouds"): where the horizon is, how
-// deep a thing stands and where that puts it, where God sits, and his stage. Read by the camera (view.js) and the drawing
-// (render/aftercrowd.js, render/after/ground.js) alike.
+// The afterlife's sky as a frame (DESIGN.md, "God's camp stands on a stage in
+// the clouds"; the owner, 2026-10-20: the main plane is the yard's camera,
+// and only what surrounds it changes): where the horizon is, where God sits
+// and his stage. Read by the drawing (render/aftercrowd.js,
+// render/after/ground.js).
 //
-// The camera only slides. Depth is the one camera every far thing goes
-// through: a floor point at floor x `u` and depth `d` (the near layer, where
-// the workshops and the union's camp stand, at 1) is drawn, with the window's
-// middle at `cx`, at world x `cx + (u - cx) / d`, its foot AFTER_HORIZON / d
-// cells under the horizon, 1/d its size. So it slides 1/d as fast as the
-// camera -- the sliding camera is a perspective camera stepping sideways --
-// and a body walking back into depth shrinks and slows as it goes, at its
-// own depth's speed. The near layer is the world as the sim has it.
+// There is no camera of the act's own. The main plane -- the stations, the
+// workers, the pair -- is the world, framed by the yard's view (view.js) like
+// any place. God's camp is a plain parallax layer drawn behind it: it slides
+// GOD_RATE as fast as the camera, placed so that he stands in the window's
+// middle when the camera reaches the place's right end.
 //
 // The sky is laid out off the window the place has at rest -- its floor where
 // the yard's ground stands, at the yard's zoom.
 
 import { S } from '../state.js';
-import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_DEPTH, GOD_FAR, GOD_CROWD, GOD_SIGN_DEEP, GOD_STAGE, AFTER_HORIZON,
+import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_RATE, GOD_FOOT, GOD_CROWD, GOD_SIGN_DEEP, GOD_STAGE, AFTER_HORIZON,
          GOD_N, GOD_THRONE, WALK_BODY,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW } from '../config.js';
 import { yardCell } from '../world.js';
 import { actPlace } from '../acts.js';
-import { afterFloor, afterTop, afterX1, afterOpenX, unionX1, campEdges } from './place.js';
+import { afterFloor, afterTop, afterX1, afterOpenX, campEdges } from './place.js';
 import { smoothstep } from '../motion.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -34,36 +31,16 @@ export const restW = () => S.W * P / yardCell();
 export const restH = () => S.H * P / yardCell();
 export const restTop = () => afterFloor() + actPlace('after').margin - restH();
 
-// --- the depth camera ---------------------------------------------------------------
+// The horizon, world y: the sky's ranges stand on it and the far cloud runs
+// from it down to the main plane.
 export const horizonY = () => afterFloor() - AFTER_HORIZON * P;
-// A floor point's foot, world y, at depth d; and the depth under world y.
-export const footY = d => horizonY() + AFTER_HORIZON * P / d;
-// A floor point's world x with the window's middle at `cx`, and back.
-export const seenX = (u, d, cx) => cx + (u - cx) / d;
-export const floorX = (x, d, cx) => cx + (x - cx) * d;
 
-// God's throne's floor x: GOD_FAR windows past the union's camp, so his
-// layer and the union's would only meet past the window's right edge.
-export const godU = () => unionX1() + GOD_FAR * restW();
-// The furthest right the window's middle goes: God's throne in its middle,
-// or the place's own last window if that is further.
-export const afterEnd = () => Math.max(afterX1() - restW() / 2, godU());
-// The camera's right limit (acts.js, the place's `x1`).
-export const afterReach = () => afterEnd() + restW() / 2;
-// God's middle, world x, with the window's middle at `cx`.
-export const godMid = cx => seenX(godU(), GOD_DEPTH, cx);
-// God's camp slides as one at his depth's speed (his stage, below): a floor
-// point handed over to it is drawn off his middle, its offset from his floor
-// x at its own depth's scale.
-export const campX = (u, d, cx) => godMid(cx) + (u - godU()) / d;
-// A floor point `p` ({ u, d, k }) drawn, world x: `k` of the way from the
-// near layer's camera (0) to God's camp's (1).
-export const pointX = (p, cx) => { const a = seenX(p.u, p.d, cx); return a + (campX(p.u, p.d, cx) - a) * (p.k || 0); };
-// And back: the floor x a world x stands at, at depth d, `k` into the camp.
-export const pointU = (x, d, k, cx) => {
-  const a = seenX(0, d, cx), b = campX(0, d, cx), o = a + (b - a) * k;
-  return (x - o) * d;
-};
+// God's layer: his middle, world x, with the window's middle at `cx`. At the
+// camera's last window (the place's right end) he stands in its middle; from
+// there he slides GOD_RATE as fast as the camera.
+const lastMid = () => afterX1() - restW() / 2;
+export const godX0 = () => { const e = lastMid(); return e - (e - afterOpenX()) * (1 - GOD_RATE); };
+export const godMid = cx => godX0() + (cx - afterOpenX()) * (1 - GOD_RATE);
 
 let frame = null, frameKey = '';
 export function skyFrame() {
@@ -71,7 +48,7 @@ export function skyFrame() {
   // it: the camera is never let above the place.
   const top = Math.max(restTop(), afterTop()), W = restW(), key = `${top}|${W}`;
   if (frame && key === frameKey) return frame;
-  const floor = afterFloor(), bank = footY(GOD_DEPTH), sky = bank - top;
+  const floor = afterFloor(), bank = floor - GOD_FOOT * P, sky = bank - top;
   const gc = GOD_CELLS.find(c => c * GOD_FIT <= sky) || GOD_CELLS[GOD_CELLS.length - 1];
   // God's square's top, its crown's spikes GOD_UP of the sky down off the top.
   const gy0 = top + snap(sky * GOD_UP + 19 * gc, gc);
@@ -91,9 +68,9 @@ export const faceY = () => { const f = skyFrame(); return f.gy0 + 9 * f.gc; };
 // (DESIGN.md, "God's camp stands on a stage in the clouds"; config,
 // GOD_STAGE.) His camp is one flat card: the stage, the throne, his crowd,
 // its flags and whoever is up on it, all drawn off his middle and sliding
-// with him, so nothing on it skates. Its top is cheated far deeper than his
-// depth would give, so it reads as a stage seen from above. A point on it
-// is { dx, y }: world px across from his middle, and world y.
+// with him, so nothing on it skates. Its top runs from behind his foot
+// forward to the main plane's line. A point on it is { dx, y }: world px
+// across from his middle, and world y.
 let stageMemo = null, stageKey = '';
 export function stage() {
   const f = skyFrame(), G = GOD_STAGE, key = `${f.hor}|${f.h}|${f.floor}`;
@@ -141,27 +118,22 @@ const rankOf = y => {
 };
 // Where a sim point is drawn, with the window's middle at `cx`: { x, y, s,
 // ord } -- its middle, its foot, its side and its painting order (its foot).
-// The near layer as it is up to the union's camp's edge on God's side. From
-// there to God's yard the way crosses the cloud to the plinth's foot at its
-// left front corner, handed over from the near layer's slide to the stage's
-// as it goes (so a body there slides between the two speeds, the stage's at
-// the foot), growing to the stage's front row's size. (The stage stands far
-// lower on the window than his depth would put it -- the cheat -- so the
-// floor's own perspective from the near layer to that foot would sweep a
-// body across the window in a few steps.)
-// Into his yard it climbs straight up the plinth to the top's front edge,
+// On the main plane as it is up to the union's camp's edge on God's side.
+// From there to God's yard the way runs along the main plane to the stage's
+// left front corner, handed over from the world's slide to God's layer's as
+// it goes, growing to the stage's front row's size.
+// Into his yard it steps up onto the stage's front edge,
 // then out across the top to its spot (the sim walks a straight line from
 // the yard's edge to the spot, so where it is on that line is where it is
 // between the edge and the spot). The walk in the yard stays the sim's; only
 // the eye's way is long.
 export function walkSeen(x, y, cx) {
-  const a = campEdges()[1], b = CROWD_X0 - CROWD_PITCH, st = stage(), gm = godMid(cx);
-  const body = d => WALK_BODY * P / d;
-  if (x <= a) return { x, y, s: body(1), ord: y };
+  const a = campEdges()[1], b = CROWD_X0 - CROWD_PITCH, st = stage(), gm = godMid(cx), near = WALK_BODY * P;
+  if (x <= a) return { x, y, s: near, ord: y };
   const corner = stageSpot(0, 0), front = bodySoul(st, corner.y);
   if (x < b) {
     const k = smoothstep((x - a) / (b - a)), fy = lerp(afterFloor(), st.foot, k);
-    return { x: lerp(x, gm + corner.dx, k), y: fy, s: lerp(body(1), front, k), ord: fy };
+    return { x: lerp(x, gm + corner.dx, k), y: fy, s: lerp(near, front, k), ord: fy };
   }
   const f = (x - CROWD_X0 - P) / CROWD_PITCH;
   if (f < 0) {
@@ -172,11 +144,11 @@ export function walkSeen(x, y, cx) {
   const sp = stageSpot(Math.min(f, CROWD_FILES), rankOf(y));
   return { x: gm + sp.dx, y: sp.y, s: bodySoul(st, sp.y), ord: sp.y };
 }
-// The share of the way into depth a sim x stands, 0 on the near layer: for
-// what is drawn there as the near layer draws it and what is not.
+// The share of the way onto God's layer a sim x stands, 0 on the main
+// plane: for what is drawn there as the camp draws it and what is not.
 export const deepAt = x => smoothstep(clamp((x - campEdges()[1]) / (P * 6), 0, 1));
 // Whether world point (x, y) is on God's camp as drawn with the window's
-// middle at `cx`: from his crown down to the plinth's foot, across the stage.
+// middle at `cx`: from his crown down to the stage's front, across it.
 // A click there is a click on his crowd (after/gestures.js).
 export function godCampAt(x, y, cx) {
   const f = skyFrame(), st = stage(), dx = x - godMid(cx);

@@ -33,7 +33,7 @@ export const SKY_FIT = 87;
 // a cell, so it keeps its size against his throne at any window; a face
 // `side` across down the slanted edge toward the window's middle. A plain
 // shape for now (the stage's own drawing is the next step).
-export const GOD_STAGE = { mx: 1.25, back: 4, hb: 60, hf: 90, side: 3 };
+export const GOD_STAGE = { mx: 1.25, back: 4, hb: 110, hf: 120, side: 3 };
 // God's crowd on the stage at a giant's scale: rows from the back to the
 // front, a soul `n` cells across (stage cells), from the first at the back to
 // the second at the front; `gap` cells between souls in a row, each row
@@ -82,7 +82,7 @@ export const SKY_RING_W = [16, 70];        // a ring's half-width, px, plus this
 export const SKY_RING_LIFT = [3, 12];      // its jump, px, plus this times the band's rate
 
 // --- God -----------------------------------------------------------------------------------
-// He stands in his camp GOD_DEPTH near layers deep (after/sky.js), drawn as a
+// He stands in his camp on his slow layer (after/sky.js), drawn as a
 // giant seen from afar: a God-cell is the largest of GOD_CELLS px that fits
 // GOD_FIT cells in the sky; a sky cell is half of one. He is a light source
 // on either page (raw tones, src/ink.js).
@@ -153,24 +153,20 @@ export const SKY_AURA = { r: 0.9, pad: 2, breath: 4, disc: 0.14, discDark: 0.2, 
 // --- souls drifting up from the camp ---------------------------------------------------------
 export const SKY_DRIFT = { every: [2.5, 4.5], life: 14, rise: 22 };
 
-// --- the depth camera (DESIGN.md, "The camps are far apart for the eye") -----------------
-// The camera only slides. A thing at depth d (the near layer, where the
-// workshops and the union's camp stand, at 1) slides 1/d as fast as the
-// camera and is drawn 1/d its size, its foot AFTER_HORIZON / d cells under
-// the horizon: the near layer's floor is AFTER_HORIZON cells under it.
+// --- the horizon ------------------------------------------------------------------------
+// The horizon stands this many cells over the main plane's line: the sky's
+// ranges stand on it, and the far cloud runs from it down to the plane.
 export const AFTER_HORIZON = 28;
-// God's camp stands this many near layers deep, its throne's floor x
-// GOD_FAR windows (at rest) past the union's camp's right end: far enough
-// that his layer and the union's would only meet past the window's right
-// edge, so the union's camp is always left of the throne.
-export const GOD_DEPTH = 3;
-export const GOD_FAR = 1.3;
+// God's camp is a plain parallax layer behind the main plane (after/sky.js):
+// it slides GOD_RATE as fast as the camera, his foot GOD_FOOT cells over the
+// main plane's line.
+export const GOD_RATE = 1 / 3;
+export const GOD_FOOT = 19;
 
 // --- the ground (render/after/ground.js, render/after/floor.js) ----------------------
 // Three rigid layers, nothing rolling. The far cloud between the horizon and
-// the main plane: rows of billow lines at these depths (their foot
-// AFTER_HORIZON / d cells under the horizon, their cells 1/d across), each
-// broken into stretches of `seg` cells, a share `gaps` of them left open, a
+// the main plane: rows of billow lines, each [cells under the horizon, px a
+// cell of its billows] -- the nearer, the bigger -- each broken into stretches of `seg` cells, a share `gaps` of them left open, a
 // row's profile repeating every `period` of its cells, on God's slow layer
 // (`rate` of the camera's speed). The main plane's path: paper `depth` cells
 // down off the line the stations stand on, its far edge a pale billow line.
@@ -178,7 +174,7 @@ export const GOD_FAR = 1.3;
 // path, one every `every` cells give or take, `w` cells across and `h`
 // high, a share `gaps` of the places left empty, sliding `rate` as fast as
 // the camera.
-export const GROUND_FAR = { rate: 1 / 3, depths: [5, 2.8, 1.6], period: 512, seed: 41, seg: 40, gaps: 0.45 };
+export const GROUND_FAR = { rate: GOD_RATE, rows: [[6, 2], [10, 2], [18, 4]], period: 512, seed: 41, seg: 40, gaps: 0.45 };
 export const GROUND_PATH = { depth: 5, seed: 9 };
 export const GROUND_FORE = { rate: 1.3, gaps: 0.35, rows: [{ down: 6, every: 64, w: [16, 28], h: [2, 3] },
                                                             { down: 20, every: 90, w: [30, 50], h: [4, 6] }] };

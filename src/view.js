@@ -35,8 +35,6 @@ import { dropLift } from './cutscene.js';
 import { smoothstep as ease } from './motion.js';
 import { actPlace, placeOpen, isActView } from './acts.js';
 import { portalEnd } from './portals.js';
-import { zoomHeld } from './shot.js';
-import { afterEnd } from './after/sky.js';
 
 // Each farther place and the nearer one it is reached from: the deep and the
 // afterlife off the yard, hell off the deep.
@@ -96,28 +94,6 @@ const zoomOf = v => (v === 'deep' ? deepZoom() : isActView(v) ? placeZoom(v) : 1
 // twice the deep's fit.
 export const restZoom = (v = S.view) => zoomOf(v);
 
-// --- the afterlife's camera ------------------------------------------------------------
-// Act 3's camera only slides (DESIGN.md, "The camps are far apart for the
-// eye"): at the place's own whole zoom all along, the window's middle held
-// at the last window the place has, God's throne in its middle
-// (after/sky.js, `afterEnd`).
-export { afterEnd };
-function frameAfter() {
-  const cx = Math.min(S.camX + S.viewW / 2, afterEnd());
-  // A cutscene's move that carries the zoom has it (the rise gliding into
-  // heaven's): the place takes it back once the move has landed.
-  const k = placeZoom('after');
-  if (!zoomHeld() && (S.zoomShow !== S.zoom || Math.abs(S.zoom - snapped(k)) > 1e-9)) setZoomNow(k);
-  S.camX = cx - S.viewW / 2;
-  clampCam();
-}
-// The zoom as `setZoom` keeps it, whole device pixels a cell, worked out
-// without setting it (for `placeCamera`).
-function snapped(k) {
-  const unit = yardCell() * S.dpr;
-  return yardZoom() * Math.max(1, Math.round(unit * k)) / unit;
-}
-
 // Where each half is looked at from: the floor of the deep on the bottom of
 // the window (world.js, `clampCam`), and in the yard the pit floor there as
 // always. Across, each opens on its own end of the portal.
@@ -135,7 +111,6 @@ function frameOn(v, x = openX(v)) {
   S.camX = x - S.viewW / 2;
   S.camTo = null;
   clampCam();
-  if (v === 'after') frameAfter();
 }
 
 // The deep's camera as numbers, for drawing it through the ripple while the
@@ -157,9 +132,7 @@ export function deepCamera(x = openX('deep')) {
 // place while another place's camera stands (a glide, once one is built).
 export function placeCamera(v, x = actPlace(v).open()) {
   const pl = actPlace(v);
-  // The afterlife's zoom and lift off where its middle stands (`frameAfter`).
-  const cx = v === 'after' ? Math.min(x, afterEnd()) : x;
-  const zoom = v === 'after' ? snapped(placeZoom(v)) : yardZoom() * placeZoom(v);
+  const cx = x, zoom = yardZoom() * placeZoom(v);
   const viewW = S.W / zoom, viewH = S.H / zoom;
   const x0 = pl.x0();
   const camX = Math.max(x0, Math.min(cx - viewW / 2, Math.max(x0, pl.x1() - viewW)));
@@ -333,9 +306,7 @@ export function stepView(c) {
   if (S.view === 'deep' && !canGoDown()) { setView('yard'); return; }
   if (isActView(S.view)) {
     if (!placeOpen(S.view)) { setView('yard'); return; }
-    // Held every frame, as the deep's is: a resize lets go of it. The
-    // afterlife's is read off where the window's middle stands.
-    if (S.view === 'after') { frameAfter(); return; }
+    // Held every frame, as the deep's is: a resize lets go of it.
     setZoom(placeZoom(S.view));
     clampCam();
     return;

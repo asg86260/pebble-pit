@@ -42,7 +42,7 @@
 
 import { S } from '../state.js';
 import { P, GREY, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AFTER_SPEECH_WARN_S,
-         SKY_TICK_S, GOD_CROWD, GOD_STAGE, GOD_FLAG, GOD_DEPTH,
+         SKY_TICK_S, GOD_CROWD, GOD_STAGE, GOD_FLAG, GOD_RATE,
          SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
          GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, TITHE, GAZE,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_POSTER, SKY_DRIFT,
@@ -54,7 +54,7 @@ import { raw, darkPage } from '../ink.js';
 import { afterX0, slotX, stationBox, unionJoinAt, afterFloor } from '../after/place.js';
 import { support, union, souls, OUT_RIM, speechTarget } from '../after/union.js';
 import { signReach } from '../after/levels.js';
-import { skyFrame, godU, stage, stageHalf, stageFore, stageSpot, stageSoul, walkSeen, deepAt } from '../after/sky.js';
+import { skyFrame, godX0, stage, stageHalf, stageFore, stageSpot, stageSoul, walkSeen, deepAt } from '../after/sky.js';
 import { K as INK, W, PALE, MID } from './after/kit.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -413,11 +413,11 @@ function drawWon(y0) {
 // rest (y), the mock's: his square 0 to GOD_N down, the seat under it.
 const SEAT = GOD_N;
 // God's middle (after/sky.js, `godMid`) as his layer's own slide: a fixed
-// place on the cell grid plus the layer's offset put on a whole device pixel,
+// place on a whole device pixel plus the layer's offset on one of its own,
 // as render/after/ground.js lays its layers. Everything of his camp is laid
 // off it, so the camp moves as one piece and never wobbles a pixel against
 // the camera's own rounding.
-const gx = () => { const u = godU(); return Math.round((u + (F.XR - u) * (1 - 1 / GOD_DEPTH)) * K) / K + layerAt(0, 1 / GOD_DEPTH, F.XR); };
+const gx = () => Math.round(godX0() * K) / K + layerAt(0, GOD_RATE, F.XR);
 const godFoot = () => ({ x: gx(), y: F.gy0 + (SEAT + GOD_THRONE.seatH) * H });
 const cache = { key: '', throne: null, poses: new Map(), signs: new Map() };
 function freshCaches() {
