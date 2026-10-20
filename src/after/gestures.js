@@ -1,7 +1,7 @@
 // Act 3's hand work, in the world (docs/wave-act3-build.md, track A; the
 // owner, 2026-10-18): every station is worked by dragging its own moving
 // part where it stands, and a plain click on a station opens its board
-// (track C's `openAfterBoard`). The faster the motion the faster the work,
+// (the pointer's, off the one station table: after/stations.js). The faster the motion the faster the work,
 // up to a cap; one crit stays, a moment of timing -- the pedestal's big
 // bubble, paying GESTURE_BUBBLE_CRIT lines.
 //
@@ -49,13 +49,11 @@ import { P, AFTER_SIGN_TIMBER, AFTER_SIGN_S, GESTURE_CUE_USES, GESTURE_CUE_FADE_
 import { afterlifeOn } from '../acts.js';
 import { secs } from './util.js';
 import { built } from './levels.js';
-import { stationParts, stationBox, plotX, afterFloor } from './place.js';
-import { godCampAt } from './sky.js';
+import { stationParts, afterFloor } from './place.js';
 import { standing, stumped, chopTree, digStump, trees } from './grove.js';
 import { tipSawdust } from './mill.js';
 import { pairBuilding } from './build.js';
 import { workAfter } from './work.js';
-import { openAfterBoard } from './rows.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const wrap = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
@@ -366,7 +364,7 @@ export const GESTURE_KEYS = Object.keys(DEFS);
 // held. An act is known by the seed it began with (`S.after.begun`), carried
 // in its save, so the session's motion is kept across the act's state being
 // read back (a reload of the page starts the session itself afresh).
-let G = null, seen = null, held = null, heldWhat = null, lastPress = null, pressAt = null, asked = null;
+let G = null, seen = null, held = null, heldWhat = null, lastPress = null, pressAt = null;
 const actId = () => (S.after ? S.after.begun : null);
 // An act begun afresh in the same session (a new game) may share a seed with
 // the last, but its clock starts again: that stands everything still too.
@@ -375,7 +373,7 @@ function recs() {
   const back = S.after && S.after.t < lastT;
   lastT = S.after ? S.after.t : 0;
   if (seen !== actId() || back) {
-    seen = actId(); held = null; heldWhat = null; lastPress = null; pressAt = null; asked = null;
+    seen = actId(); held = null; heldWhat = null; lastPress = null; pressAt = null;
     G = Object.fromEntries(GESTURE_KEYS.map(k => [k, { ...fresh(), ...DEFS[k].init() }]));
   }
   return G;
@@ -397,32 +395,6 @@ export function groveIcons() {
 }
 const iconAt = (x, y) => groveIcons().find(c => c.kind === 'saw' && inBox(x, y, c.box, G_S)) || null;
 
-// --- what a plain click opens ----------------------------------------------------------
-// The board a world point opens on a plain click: a standing station's
-// drawing; the grove's trees, stumps and soil; the heap, the saw mill's;
-// God's camp as drawn, his crowd's status board (track C's 'crowd').
-function boardAt(x, y) {
-  for (const key of ['mill', 'chipper', 'papermill', 'workshop', 'press', 'shack', 'pedestal']) {
-    if (!built(key)) continue;
-    const b = key === 'pedestal' ? stationParts('pedestal').top : stationBox(key);
-    if (inBox(x, y, b)) return key;
-  }
-  if (built('mill') && inBox(x, y, stationParts('heap').heap)) return 'mill';
-  const fl = afterFloor();
-  for (let i = 0; i < trees().length; i++) {
-    const p = trees()[i], bx = plotX(i);
-    if (x < bx - P * 5 || x > bx + P * 6 || y > fl + P) continue;
-    const top = standing(p) ? stationParts('tree', i).box.y : fl - P * 6;
-    if (y >= top) return 'grove';
-  }
-  if (godCampAt(x, y, S.camX + S.viewW / 2)) return 'crowd';
-  return null;
-}
-function askBoard(key, x, y) { asked = { key, at: T() }; openAfterBoard(key, { x, y }); }
-// The last board a plain click asked for, { key, at }: for the checks, which
-// have no page for the board to open on.
-export const boardAsked = () => (live() && seen === actId() ? asked : null);
-
 // The moving part under a world point: { key, what } for a station that can
 // be worked now.
 function partAt(x, y) {
@@ -438,11 +410,10 @@ function partAt(x, y) {
 // --- the pointer -----------------------------------------------------------------------
 // A press on the place, in world px: true if the hand work took it. On a
 // bubble, the bubble's; on the saw icon, the saw put on that tree; on a
-// moving part, the part held until the release; on a station, its board
-// opened. A press on anything else is still the place's click (input.js tries
-// this before `clickAfter`). A finger (`touch`) opens a board only at its
-// release (`gestureTap`), since a press there may be the start of a swipe.
-export function gestureDown(x, y, touch = false) {
+// moving part, the part held until the release. A press on anything else is
+// the pointer's: a station's board (the one station table, stations.js), else
+// the place's click (input.js asks this first).
+export function gestureDown(x, y) {
   if (!live()) return false;
   const g = recs();
   held = null; heldWhat = null; pressAt = { x, y };
@@ -463,21 +434,12 @@ export function gestureDown(x, y, touch = false) {
     if (DEFS[part.key].down(g[part.key], part.what, x, y) === true) { held = part.key; heldWhat = part.what; }
     return true;
   }
-  const key = boardAt(x, y);
-  lastPress = key ? 'site' : 'floor';
-  if (!key) return false;
-  if (!touch) askBoard(key, x, y);
-  return true;
+  lastPress = 'floor';
+  return false;
 }
-// A finger's tap released: on a station, its board opened, true; anything
-// else false. A press that took a part, a bubble or an icon is not a tap.
-export function gestureTap(x, y, touch = true) {
-  if (!live() || lastPress !== 'site') return false;
-  recs();
-  const key = boardAt(x, y);
-  if (key && touch) askBoard(key, x, y);
-  return !!key;
-}
+// Whether the last press was the hand work's (a bubble, an icon, a part): its
+// release is no tap on a station.
+export const pressTaken = () => live() && seen === actId() && lastPress != null && lastPress !== 'floor';
 // Whether a press at a world point would be the hand work's, asked without
 // pressing: a finger landing on a part, a bubble or an icon is the game's,
 // never a scroll.

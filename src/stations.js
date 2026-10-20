@@ -31,6 +31,7 @@ import { bedAtBrim } from './deep/scales.js';
 import { registerSites } from './works.js';
 import { JOB } from './jobs.js';
 import { msg } from './lang.js';
+import { AFTER_STATION_ROWS } from './after/stations.js';
 
 // A door is shown once you are within reach of affording it: a price you have
 // no idea is coming is a price you cannot save for.
@@ -69,7 +70,7 @@ const whoOf = st => (st?.cls ? CLASSES[st.cls]?.name : st?.kind ? BASES[st.kind]
 function partyRow(id) {
   const st = () => stationById(id);
   return {
-    key: id, party: true,
+    key: id, party: true, place: 'deep',
     // A station is called by its fighter (DESIGN.md, "A station is its
     // fighter and a prop"). Two Fighters, or two Recruits, would be two
     // boards of one name, so a repeat is counted off the ids before it: "the
@@ -114,6 +115,11 @@ for (const id of PARTY_IDS) {
 // (`builtBy`). A row with a `pile` has a pile that can fill: the mark over it
 // and its hover come from that. So a new place is one row, and every system
 // that shows or staffs a place reads it off here.
+//
+// Which place a row stands in (`place`: 'yard', 'deep', 'after' or 'hell';
+// 'yard' unless it says): the pointer asks only the rows of the place on
+// screen (`here`). The yard and the deep are one world, the deep under the
+// yard, so their rows answer in either; an act's place is a world of its own.
 //
 // The rows, in the order the pointer asks them (`stationAt`), which is the
 // order that settles which wins where two patches overlap: the hut before the
@@ -214,18 +220,22 @@ export const STATIONS = [
 
   // The crusher, the deep's purse, stands from the snatch. It sells nothing
   // and nobody is put on it: its gatherers are lent haulers.
-  { key: 'crusher', name: msg('station-crusher'), glyph: 'sack', open: () => S.snatched, stand: () => crusherRect(), board: null,
+  { key: 'crusher', place: 'deep', name: msg('station-crusher'), glyph: 'sack', open: () => S.snatched, stand: () => crusherRect(), board: null,
     after: [], needs: () => false,
     // Its pile is the floor: scales lying at the brim, the gathering behind.
     pile: () => bedAtBrim(), full: msg('station-crusher-full') },
   // The pods, the deep's houses, standing from the snatch with the sqwife's
   // in them. Another pod is sold on their own board; nobody is put on them.
-  { key: 'pods', name: msg('station-pods'), glyph: 'house', empty: msg('station-pods-empty'),
+  { key: 'pods', place: 'deep', name: msg('station-pods'), glyph: 'house', empty: msg('station-pods-empty'),
     open: () => S.pods > 0, stand: () => podsRect(), board: 'podsBoardOpen',
     after: [], needs: () => false },
   // The party's stations (docs/wave-party.md): a row an id, not a kind, since
   // a kind can stand twice. Built from the floating button, in any order.
   ...PARTY_IDS.map(partyRow),
+
+  // Act 3's stations and God's crowd (after/stations.js): each stands where
+  // it is drawn up there, its hit the drawing itself.
+  ...AFTER_STATION_ROWS,
 
   // The shields, each offered only once its predecessor has failed and the
   // place before it stands (DESIGN.md, "The shields are the spine"). A shield
@@ -251,9 +261,18 @@ const byKey = new Map(STATIONS.map(r => [r.key, r]));
 // station with a board is on it by existing.
 export const BOARDS = STATIONS.filter(r => r.board).map(r => r.key);
 
+// The world a place is in: the yard and the deep are one, each act its own.
+const worldOf = place => (place === 'after' || place === 'hell' ? place : 'yard');
+// Whether a row stands in the world on screen, the one the pointer asks.
+export const here = row => !!row && worldOf(row.place) === worldOf(S.view);
+// The boards of the yard's world, for what is drawn or counted over its
+// stations alone (their flags, the snapshot's offers).
+export const YARD_BOARDS = STATIONS.filter(r => r.board && worldOf(r.place) === 'yard').map(r => r.key);
+
 // Every station that is a site for works, and its ground, handed to works.js
-// (which the boards import, and so cannot import this back).
-registerSites(STATIONS.filter(r => r.board || r.site).map(r => [r.key, r.builtBy || JOB.BUILD]),
+// (which the boards import, and so cannot import this back). An act's
+// stations are raised by its own builders (after/build.js), not the yard's.
+registerSites(STATIONS.filter(r => (r.board || r.site) && worldOf(r.place) === 'yard').map(r => [r.key, r.builtBy || JOB.BUILD]),
               key => byKey.get(key)?.stand?.() || null);
 
 // The row for a key, or undefined for a thing that is not a station (the
@@ -296,15 +315,19 @@ export function hitRect(key) {
            w: r.w + P * (c.left + c.right), h: r.h + P * (c.up + c.down) };
 }
 
-// Near enough to a station's ground to be interested in it: inside its hit box.
+// Near enough to a station's ground to be interested in it: inside its hit
+// box, or, for a row that says its `hit`, on what is drawn there.
 export function nearStation(key, x, y) {
+  const s = station(key);
+  if (s?.hit) return !!s.open() && !!s.hit(x, y);
   const r = hitRect(key);
   return !!r && x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h;
 }
 
-// The station a point on the ground asks for, in table order, or null.
+// The station a point on the ground asks for, in table order, or null: of
+// the place on screen only.
 export function stationAt(x, y) {
-  for (const s of STATIONS) if (s.stand && nearStation(s.key, x, y)) return s.key;
+  for (const s of STATIONS) if (s.stand && here(s) && nearStation(s.key, x, y)) return s.key;
   return null;
 }
 

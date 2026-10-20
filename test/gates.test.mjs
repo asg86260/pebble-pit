@@ -15,7 +15,8 @@ import { PARTY_IDS } from '../src/config.js';
 
 const S = () => yard.S;
 const keys = STATIONS.map(r => r.key);
-const doors = STATIONS.filter(r => r.stand);
+// The yard's world's places (an act's stand in its own: test/after-stations.test.mjs).
+const doors = STATIONS.filter(r => r.stand && r.place !== 'after' && r.place !== 'hell');
 const shields = STATIONS.filter(r => !r.stand);
 
 // The row on a board that opens a station: `unlock<key>` on the bench for a

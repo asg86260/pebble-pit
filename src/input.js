@@ -19,7 +19,7 @@ import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, onMenu, standRect, openBoard } from './board.js';
-import { station, stationAt, STATIONS } from './stations.js';
+import { station, stationAt, STATIONS, here, nearStation } from './stations.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { statusAt } from './render/statusicons.js';
 import { overChooseMark, chooseMarkAt } from './render/deep.js';
@@ -54,7 +54,7 @@ import { portalAt, handAt, throughPortal } from './portals.js';
 import { sayGoOn } from './actbeats.js';
 import { onGoOn } from './render/portals.js';
 import * as AFTER_PLACE from './after/index.js';
-import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, gestureTap } from './after/gestures.js';
+import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, pressTaken } from './after/gestures.js';
 import * as HELL_PLACE from './hell/index.js';
 import { onShaftArrow } from './render/shaftway.js';
 import { onPortal } from './render/portal.js';
@@ -199,13 +199,15 @@ canvas.addEventListener('pointerdown', e => {
   if (isActView(S.view)) {
     // Up there a press on a station's moving part works it where it stands
     // (after/gestures.js) and is held until the release, wherever that is;
-    // a plain click on a station opens its board. A finger opens a board at
-    // its tap's release (`endDrag`), since a press may be the start of a
-    // swipe. Anything else is the place's click.
-    if (S.view === 'after' && gestureDown(p.x, p.y, e.pointerType === 'touch')) {
+    // a plain click on a station opens its board, as the yard's do. A finger
+    // opens a board at its tap's release (`endDrag`), since a press may be
+    // the start of a swipe. Anything else is the place's click.
+    if (S.view === 'after' && gestureDown(p.x, p.y)) {
       if (gestureHeld()) try { canvas.setPointerCapture(e.pointerId); } catch {}
       return;
     }
+    const at = boardAt(p.x, p.y);
+    if (at) { if (e.pointerType !== 'touch') showPanel(at, true); return; }
     const click = S.view === 'after' ? AFTER_PLACE.clickAfter : HELL_PLACE.clickHell;
     if (typeof click === 'function') click(p.x, p.y);
     return;
@@ -363,9 +365,8 @@ export function endDrag(e) {
       isTap(held.x0, held.y0, e.clientX, e.clientY, now() - held.at)) {
     const p = pos(e);
     if (tapAt(p.x, p.y)) { S.mining = false; return; }
-    // Up there a tap on a station opens its card; anywhere else it shuts it.
-    if (S.view === 'after' && gestureTap(p.x, p.y, true)) { S.mining = false; return; }
-    const which = boardAt(p.x, p.y);
+    // Up there a tap the hand work took is no tap on a station.
+    const which = S.view === 'after' && pressTaken() ? null : boardAt(p.x, p.y);
     // A second tap on the station whose board is up puts it away.
     showPanel(which && !S[station(which).board] ? which : null, true);
   }
@@ -428,7 +429,9 @@ function cellLabel(v) {
 function buildingAt(x, y) {
   // Every standing place by its own row's name (`STATIONS`).
   for (const r of STATIONS) {
-    if (!r.name || !r.stand || !r.open()) continue;
+    if (!r.name || !r.stand || !here(r) || !r.open()) continue;
+    // a row that says its hit is named over what is drawn there
+    if (r.hit) { if (nearStation(r.key, x, y)) return r.name; continue; }
     const rect = standRect(r.key);
     if (rect && inRect(rect, x, y)) return r.name;
   }

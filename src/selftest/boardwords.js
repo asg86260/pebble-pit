@@ -12,7 +12,7 @@
 
 import { sleep, ok } from './kit.js';
 import { LANGS } from '../lang.js';
-import { BOARDS } from '../stations.js';
+import { YARD_BOARDS as BOARDS } from '../stations.js';
 import { UNFOLDING, overOf } from '../slotfit.js';
 
 // The yards to read, and the boards in each: every board at its fullest, then

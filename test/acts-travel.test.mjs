@@ -101,7 +101,7 @@ group("hell's portal: the deep and hell, by the ripple; a reload mid-glide lands
   ];
 });
 
-group('neither portal is the player\'s before its beat, though a beat may take the camera through', async () => {
+group('in act 3 heaven\'s gates are the player\'s, and hell\'s portal is not before its beat', async () => {
   window.__actsOn(true);
   window.__crew(2, 1);
   window.__actsAt('fallen');
@@ -115,7 +115,8 @@ group('neither portal is the player\'s before its beat, though a beat may take t
   run(1);
   window.__actsOn(null);
   return [
-    ok(!heaven.free && heaven.at === null && !heaven.went, 'in act 3 the gates carry nobody back down by a press', JSON.stringify(heaven)),
+    // the owner, 2026-10-19: the gates take you back down at any time in act 3
+    ok(heaven.free && heaven.at === 'heaven' && heaven.went, 'in act 3 a press on the yard\'s gates goes through them', JSON.stringify(heaven)),
     ok(!hell.free && !hell.went && S.view === 'deep', 'and hell\'s is not there to press', JSON.stringify(hell))
   ];
 });

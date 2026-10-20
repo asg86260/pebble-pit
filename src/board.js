@@ -67,22 +67,17 @@ for (const [coin, rows] of Object.entries(AFTER_COIN_MARKS)) {
 // place, for every station today, read off the table in stations.js. The
 // house grows a room per body and the sheds move with the grounds, so a
 // rectangle is read live, never gathered.
-// A board with no row in the table (an act's, boardrows.js) says its own.
-const anchor = which => station(which)?.stand?.() || boardOf(which)?.stand?.();
-// Whether a key names a board that opens off the table, by a click on its
-// place (act 3's: after/rows.js). Each one opened is remembered so its page
-// is hidden with the rest.
-const offTable = which => !!boardOf(which)?.offTable;
-const offOpened = new Set();
-const pageKeys = () => [...BOARDS, ...offOpened];
+const anchor = which => station(which)?.stand?.();
+const pageKeys = () => BOARDS;
 // Read inside a function, not gathered at load: the imports come round in a
 // ring, and a table built while the ring is still closing gets `undefined` for
 // whichever list had not been reached yet.
 const listFor = which => (which === 'house' ? crewRows() : boardList(which));
 
-// Every station that has a board; what is true of all of them (the mark under
-// the foot, for one) is written once against this list.
-export { BOARDS as STATIONS } from './stations.js';
+// Every station of the yard's world that has a board; what is true of all of
+// them (the mark under the foot, for one) is written once against this list.
+// An act's boards are on the table too (BOARDS) and drawn nothing over.
+export { YARD_BOARDS as STATIONS } from './stations.js';
 
 // whether a station is there at all yet
 const standing = which => open(which);
@@ -559,7 +554,7 @@ export function showPanel(want, now = false) {
   // A key that is not a station (the lab that was), or a station with no
   // board (the casino, whose decisions are levers on the building), is
   // nowhere to hang a board: it is asked for as nothing.
-  if (want && !station(want)?.board && !offTable(want)) want = null;
+  if (want && !station(want)?.board) want = null;
   // Back where it was, before it had gone anywhere: nothing happened.
   if (want === at) { clearTimeout(leaving); leaving = 0; return; }
 
@@ -607,7 +602,6 @@ function settle(want) {
   }
 
   clearTimeout(closing);
-  if (offTable(want)) offOpened.add(want);
   for (const k of pageKeys()) pageOf(k).hidden = k !== want;
   // opening the bench reads every heading on it
   if (want === 'bench') markSectionsSeen();
@@ -742,10 +736,10 @@ function hush() {
   panelEl.classList.toggle('hushed', want);
 }
 
-// An act's board, opened by a click on its place (after/rows.js
-// `openAfterBoard`): at once, as any asked-for close or open is. True when
-// it stands open.
-setBoardOpener(key => { if (!offTable(key)) return false; showPanel(key, true); return at === key; });
+// A board opened by its key from the sim's side (after/rows.js
+// `openAfterBoard`, the pad's Y): at once, as any asked-for close or open
+// is. True when it stands open.
+setBoardOpener(key => { if (!station(key)?.board) return false; showPanel(key, true); return at === key; });
 
 export function hud() {
   hush();

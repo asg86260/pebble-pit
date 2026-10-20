@@ -11,7 +11,7 @@
 import { sleep, ok } from './kit.js';
 import axe from 'axe-core';
 import { SCENES } from '../scenes.js';
-import { BOARDS } from '../stations.js';
+import { YARD_BOARDS as BOARDS } from '../stations.js';
 
 // The yards to read: every page scene as it stands, then the boards.
 const PAGES = Object.keys(SCENES).filter(k => SCENES[k].page);

@@ -12,14 +12,6 @@
 //   count     () => the one number the title wears, for a board with one group
 //   ledger    true for a board of readings rather than things to buy
 //
-// A board with no row in stations.js -- an act's, opened by a click on its
-// place rather than by walking up to it -- says the station row's parts
-// itself, and is marked so:
-//   offTable  true
-//   name      () => its title
-//   stand     () => the world rectangle it stands over, as a station's `stand`
-//   empty     () => what it says with nothing on it
-// and any board may say
 //   slots     the most tiles a plank holds before they wrap (SHELF_SLOTS else)
 
 const BOARD = {};

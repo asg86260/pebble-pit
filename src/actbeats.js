@@ -399,6 +399,9 @@ export function actBody(key, next) {
 export function stepActs(c) {
   goOnFor = goOnDue() ? goOnFor + c.dt / 1000 : 0;
   if (!S.acts || !afterlifeOn()) return;
+  // Heaven's gates are a way back down from the arrival on, at any time (the
+  // owner, 2026-10-19), and so for a save made up there before they were.
+  if (beatDone('arrive') && !S.acts.portals.heaven.free) freePortal('heaven');
   stepPortals(c, atGates());
   const p = pair();
   // The road's drawing of the two of them over the pedestal's: faded off

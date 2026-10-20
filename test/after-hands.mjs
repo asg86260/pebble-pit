@@ -7,12 +7,17 @@ import { run, yard, P } from './helpers.mjs';
 import { GESTURE_SAW_AMP, GESTURE_STUMP_DRAG, GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S, GESTURE_ARM_PULL,
          GESTURE_BAR_DRAG } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, groveIcons, partsOf } from '../src/after/gestures.js';
+import { stationAt } from '../src/stations.js';
 
 const S = yard.S;
 export const FRAME = 1 / 60;
 export const frame = () => run(FRAME);
 const mid = b => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
 export const click = p => { const took = gestureDown(p.x, p.y); gestureUp(p.x, p.y); return took; };
+// A plain press as input.js answers it up there: the hand work's first, else
+// the board of the station under it (the one station table, stations.js
+// `stationAt`), its key; null for neither.
+export const asks = p => (click(p) ? null : stationAt(p.x, p.y));
 
 // Frames until `done`, each first moved by `motion(t)` (t the seconds since
 // it began); the seconds it took, or Infinity past `limit`.

@@ -15,10 +15,10 @@ import { group, ok, run, yard, P } from './helpers.mjs';
 import { AFTER_PODIUM_REBEL, AFTER_TIP_LOAD, AFTER_DIG_CLICKS, TREE_CHOPS, GESTURE_BUBBLE_CRIT, GESTURE_CUE_USES,
          GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_STRAIN_S, GESTURE_ARM_POSES, GESTURE_ARM_SPRING_S,
          GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS, AFTER_CHIP_SAWDUST } from '../src/config.js';
-import { gestureDown, gestureMove, gestureUp, gestureView, partsOf, useBubbles, boardAsked, groveIcons } from '../src/after/gestures.js';
+import { gestureDown, gestureMove, gestureUp, gestureView, partsOf, useBubbles, groveIcons } from '../src/after/gestures.js';
 import { stationBox } from '../src/after/place.js';
 import { godMid, faceY } from '../src/after/sky.js';
-import { FRAME, frame, click, timeTo, sawOn, saw, lift, spin, feedLog, pullArm, nailSign, pullBar } from './after-hands.mjs';
+import { FRAME, frame, click, asks, timeTo, sawOn, saw, lift, spin, feedLog, pullArm, nailSign, pullBar } from './after-hands.mjs';
 
 const S = yard.S;
 const read = () => window.__afterRead();
@@ -145,13 +145,12 @@ group('a tree: its saw icon clicked puts the handsaw on it; dragged back and for
   up();
   window.__afterAxe();
   const t = window.__afterTrees()[0];
-  click({ x: t.x, y: t.y });
-  const asked = boardAsked();
+  const asked = asks({ x: t.x, y: t.y });
   window.__actsOn(null);
   return [
     ok(slow.icon && slow.on, 'the saw icon shows over the grown tree, and a click on it puts the saw on'),
     ok(fast.secs < slow.secs && Number.isFinite(slow.secs), `sawn faster, it falls sooner (${TREE_CHOPS} strokes)`, `${slow.secs.toFixed(2)} s -> ${fast.secs.toFixed(2)} s`),
-    ok(asked && asked.key === 'grove', 'a plain click on the tree asks for the grove\'s board', JSON.stringify(asked))
+    ok(asked === 'after-grove', 'a plain click on the tree asks for the grove\'s board', JSON.stringify(asked))
   ];
 }, NO_RELOAD);
 
@@ -184,7 +183,8 @@ group('the pedestal: a popped bubble is a line of the speech, and the big one pa
     const r0 = read().rebel;
     const hit = gestureDown(b.x + b.w / 2, b.y + b.h / 2);
     gestureUp();
-    const marks = rec('pedestal').marks.length, asked = boardAsked();
+    // a press the hand work took asks for no board (input.js stops there)
+    const marks = rec('pedestal').marks.length, asked = !hit;
     run(10);
     useBubbles(null);
     return { hit, paid: read().rebel - r0, marks, asked };
@@ -247,21 +247,17 @@ group('a plain click on a station asks for its board; a click on open floor asks
   const asked = [];
   for (const k of ['papermill', 'workshop', 'press', 'shack', 'pedestal']) {
     const b = k === 'pedestal' ? partsOf('pedestal').top : stationBox(k);
-    click({ x: b.x + P, y: b.y + b.h - P });
-    const a = boardAsked();
-    asked.push(a && a.key);
+    asked.push(asks({ x: b.x + P, y: b.y + b.h - P }));
   }
   // God's camp where it is drawn, far back on the cloud: a click on him.
-  click({ x: godMid(S.camX + S.viewW / 2), y: faceY() });
-  const crowd = boardAsked();
-  const before = boardAsked(), b = stationBox('workshop');
-  const floorTook = click({ x: b.x + b.w + P * 8, y: b.y + b.h - P });
-  const after = boardAsked();
+  const crowd = asks({ x: godMid(S.camX + S.viewW / 2), y: faceY() });
+  const b = stationBox('workshop'), floor = { x: b.x + b.w + P * 8, y: b.y + b.h - P };
+  const floorTook = click(floor), after = asks(floor);
   window.__actsOn(null);
   return [
-    ok(asked.join() === 'papermill,workshop,press,shack,pedestal', 'each station\'s board, by a click on its drawing', asked.join()),
-    ok(crowd && crowd.key === 'crowd', 'a click on the crowd of God asks for its status board', JSON.stringify(crowd)),
-    ok(!floorTook && after === before, 'the open floor asks for none, and the click is still the place\'s', `${floorTook}`)
+    ok(asked.join() === 'after-papermill,after-workshop,after-press,after-shack,after-pedestal', 'each station\'s board, by a click on its drawing', asked.join()),
+    ok(crowd === 'after-crowd', 'a click on the crowd of God asks for its status board', JSON.stringify(crowd)),
+    ok(!floorTook && after === null, 'the open floor asks for none, and the click is still the place\'s', `${floorTook}`)
   ];
 }, NO_RELOAD);
 

@@ -8,12 +8,15 @@ and CHANGELOG.md; the old entries are in git history.
 
 DESIGN.md, "One place engine". Act 3 and hell carry parallel copies of the
 yard's stations, bodies, buying and hit-tests; the deep shows the shared
-path works. The owner approved the order 2026-10-20; step 1 rides with act 3's click and buy fix. Defects found by the
-survey, open whatever the refactor's timing: `reloadCheck`
+path works. The owner approved the order 2026-10-20. Step 1 is built for act
+3 (branch act3-playable): a `place` column on `STATIONS`, act 3's cards and
+God's crowd as rows (after/stations.js), `stationAt` filtered by the view's
+place, `offTable`, `cardAt` and gestures' `boardAt` gone; hover, cursor and
+close-on-scroll now serve act 3. Hell's rows are next (step 4). Defects found
+by the survey, open whatever the refactor's timing: `reloadCheck`
 (test/helpers.mjs) compares `S.workers` only, so act bodies are not guarded
 against teleporting; hell's five boards cannot be opened (`hellBoardAt` has
-no caller); no hover or cursor in act places; act boards do not close on
-scroll (`viewTaken` reads `STATIONS` only).
+no caller).
 
 ## Shared pieces and checks, after the place engine -- AGREED, QUEUED (2026-10-20)
 
