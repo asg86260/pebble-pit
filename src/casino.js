@@ -584,7 +584,7 @@ function payBin(b) {
     }
   }
   for (const g of grains) {
-    if (S.tableAir.length >= IN_AIR) { bankDust(holeX(), g.s, g.worth); continue; }
+    if (S.tableAir.length >= IN_AIR) { owe(g.s, g.worth); continue; }
     // down through the foot into the tray
     S.tableAir.push({ x: g.x, y: g.y, s: g.s, worth: g.worth, big: g.big, t: 0, vx: 0, vy: 0.4 + rand() * 0.4, lands: 'tray' });
   }
@@ -607,12 +607,24 @@ function trayLand(k) {
   }
   if (!laid) {
     tray.capped = true;
-    bankDust(holeX(), k.s, worth);
+    owe(k.s, worth);
     return;
   }
   S.trayCells[kind] += laid; S.trayOwed[kind] += worth;
   S.trayAt = now();
   sfx('hopper-land', { x: k.x });
+}
+// A grain of the pay with nowhere to stand -- no cell in the tray, no room in
+// the air -- is owed rather than banked, and thrown out of the hatch with the
+// rest of what is owed (`payOutStep`). Banked here it was a square worth
+// thousands laid on the pile in one frame, over whoever was down the hole;
+// thrown, it lands as it arrives, and a torn pit takes it at the mouth.
+function owe(s, worth) {
+  const p = S.paying || (S.paying = { left: noKinds(), grains: 0 });
+  p.left[kindOf(s)] += worth;
+  // as many throws as the tray would have shown it as, so a big lump goes
+  // out as a stream and not as one square carrying all of it
+  if (kindOf(s) === 'dust') p.grains += Math.max(1, shownFor(worth));
 }
 // what one cell of a kind off the tray carries: an even share of what is
 // owed in that kind, the remainder on the last
@@ -812,7 +824,7 @@ function payOutStep(dt) {
   const coins = shownFor(p.left.spore) + shownFor(p.left.shard) + shownFor(p.left.spark);
   const grains = coins + (p.left.dust > 0 ? Math.max(1, Math.min(p.grains, p.left.dust)) : 0);
   let n = Math.min(grains, Math.max(1, Math.ceil(grains * (dt / TRICKLE_MS))));
-  while (n-- > 0 && payLeft() > 0) {
+  while (n-- > 0 && payLeft() > 0 && S.tableAir.length < IN_AIR) {
     const kind = ['spark', 'shard', 'spore'].find(k => p.left[k] > 0);
     const { x, y } = hatchAt();
     let v = kind ? someFind(COIN_CELL[kind]) : 1 + Math.floor(rand() * SHADES.length), worth = 1;
