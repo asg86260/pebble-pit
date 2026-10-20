@@ -306,6 +306,15 @@ export const CLOUDS_PALETTE = {
   light: { sky: '#ffffff', haze: '#ebebeb', lit: '#ebebeb', body: '#d6d6d6', shade: '#a4a4a4', core: '#757575' },
   dark: { sky: '#121212', haze: '#262626', body: '#3a3a3a', near: '#4e4e4e', lit: '#666666' }
 };
+// A far cloud's own tones under CLOUDS_FAR_LOOK, on each page: `under` its
+// underside (take 1), `lit` its crown (take 2) -- each one step off the far
+// body, the dark page's lit step being the near body -- and `soft`, how far
+// take 3 pulls the near ladder toward the far body. Two of these are not in
+// CLOUDS_PALETTE yet; one joins it, with its role, if its take is picked.
+export const CLOUDS_FAR_TONES = {
+  light: { under: '#d6d6d6', lit: '#f6f6f6', soft: 0.55 },
+  dark: { under: '#1c1c1c', lit: '#3a3a3a', soft: 0.55 }
+};
 // Which roles a cloud takes by how far off it is, on each page: a list of
 // bands, each [from this depth on (0 the horizon, 1 nearest), the ladder of
 // roles for [its lit face, its body, its shadowed side, its core]], so

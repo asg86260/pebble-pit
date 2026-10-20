@@ -16,6 +16,7 @@ import { skyGL } from './cloudgl.js';
 import { layerAt } from './frame.js';
 import { layerLook } from './clouds.js';
 import { inkOf } from '../ink.js';
+import { CLOUDS_FAR_TONES, CLOUDS_FAR_LOOK } from '../config.js';
 
 let card;   // the card's passes, null with no WebGL2; undefined until asked
 export function cloudCard() {
@@ -87,5 +88,23 @@ export function heldLook(layer, css, into = null) {
     L.tone[j * 5 + k] = t + 1;
   }
   L.tone[0] = css.length + 1;
+  // a far cloud's other takes (CLOUDS_FAR_LOOK), off its own ladder: take 1
+  // its underside the shadow's step, take 2 its crown the lit step, take 3
+  // every step pulled toward its body
+  // (only the take the dial is on, and none at the built look: this runs
+  // every frame for every far cloud)
+  if (L.far && CLOUDS_FAR_LOOK) {
+    const last = css.length - 1, ink = css.map(rgbaOf), at = i => ink[Math.min(last, i)], body = at(1), f = CLOUDS_FAR_TONES.light.soft;
+    for (let take = CLOUDS_FAR_LOOK; take === CLOUDS_FAR_LOOK; take++) {
+      const F = L.far[take];
+      for (let j = 0; j < layer.nt; j++) for (let k = 1; k <= 4; k++) {
+        const i = take === 1 ? (k >= 3 ? 2 : 1) : take === 2 ? (k === 1 ? 0 : 1) : j === 0 && k === 1 ? 1 : k - 1;
+        const c = take === 3 ? at(i).map((v, n) => v + (body[n] - v) * f) : at(i);
+        F.lut.set(c, (j * 5 + k) * 4);
+        F.tone[j * 5 + k] = take === 3 ? 10 + i : Math.min(last, i) + 1;
+      }
+      F.tone[0] = L.tone[0];
+    }
+  }
   return L;
 }

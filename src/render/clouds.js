@@ -27,7 +27,7 @@ import { CLOUDS_TONES, CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_BUDGET_MS, CLOUDS_S
          CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN, CLOUDS_CORE_MIN, CLOUDS_LOBE_LIGHT, CLOUDS_SEA, CLOUDS_HELD_FIT,
          CLOUDS_TREATMENTS, CLOUDS_SKY, CLOUDS_LOD, CLOUDS_BANK, CLOUDS_LIFE, CLOUDS_SHAPES, CLOUDS_VOLUME, CLOUDS_TIERS,
          CLOUDS_FLOW, CLOUDS_GROUND_FLOW, CLOUDS_PALETTE, CLOUDS_DEPTH_BANDS, CLOUDS_LIGHT, CLOUDS_VOLUME_BANDS,
-         CLOUDS_GROUND_DEPTHS } from '../config.js';
+         CLOUDS_GROUND_DEPTHS, CLOUDS_FAR_TONES } from '../config.js';
 
 // A cloud's shape is its own seed's, not a draw from the yard's `rand()`: a
 // drawing must never move the game's stream, or a seeded run would play out
@@ -880,6 +880,29 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
   }
   tone[0] = named.indexOf('sky') + 1;
   const band = (share, r) => depth(share, r);
+  // a plain layer's other takes (CLOUDS_FAR_LOOK), all made now so the dial
+  // turns live: take 1 its underside a step off its body, take 2 its crown,
+  // take 3 the near ladder pulled toward its body
+  let far = null;
+  if (plain) {
+    const F = CLOUDS_FAR_TONES[page], near = CLOUDS_DEPTH_BANDS[page].at(-1)[1];
+    const hex = h => (h.startsWith('#') ? h : C[h]);
+    const mix = (a, b, f) => { const x = rgba(a), y = rgba(b); return x.map((v, i) => v + (y[i] - v) * f); };
+    far = [{ lut, tone }];
+    for (let take = 1; take <= 3; take++) {
+      const lt = new Float32Array(lut), tn = new Int32Array(tone);
+      for (let j = 0; j < nt; j++) {
+        const body = hex(ladderOf(j)[1]);
+        for (let k = 1; k <= 4; k++) {
+          const c = take === 1 ? (k >= 3 ? F.under : body) : take === 2 ? (k === 1 ? F.lit : body) : null;
+          lt.set(c ? rgba(c) : mix(C[near[k - 1]], body, F.soft), (j * 5 + k) * 4);
+          // a tone of its own a step, so the cleanup takes each as a shape
+          tn[j * 5 + k] = c === body ? tone[j * 5 + 2] : take === 1 ? 23 : take === 2 ? 21 : 20 + k;
+        }
+      }
+      far.push({ lut: lt, tone: tn });
+    }
+  }
   return {
     lit: eight(j => (round(j) && D.belly === 'inside' && !layer.ground ? band(VB.lit, lobes[j]) : 0)),
     shade: eight(j => (layer.ground ? (D.tones === 2 && lobes[j] >= CLOUDS_SEA.creaseMin ? Math.max(2, Math.round(CLOUDS_SEA.crease * lobes[j])) : 0)
@@ -887,6 +910,11 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
     base: eight(j => (based(j) && !layer.ground ? Math.max(2, Math.round(VB.base * P.R)) : 0)),
     core: eight(j => (round(j) && D.belly === 'inside' && !layer.ground && CLOUDS_TIERS[j] !== 'near' && lobes[j] >= CLOUDS_CORE_MIN ? band(VB.core, lobes[j]) : 0)),
     row: eight(j => layer.rowOf[j]), bottom: layer.ground ? nt : 0,
+    // a plain layer's depths for its other takes: the full look's, at its size
+    far, farLit: eight(j => (plain ? Math.max(2, Math.round(VB.lit * lobes[j])) : 0)),
+    farShade: eight(j => (plain ? Math.max(2, Math.round(VB.shade * lobes[j])) : 0)),
+    farBase: eight(j => (plain ? Math.max(2, Math.round(VB.base * P.R)) : 0)),
+    farCore: eight(j => (plain && lobes[j] >= CLOUDS_CORE_MIN ? band(VB.core, lobes[j]) : 0)),
     light: CLOUDS_LIGHT, tone, lut,
     // each lobe lit in the round, where the tier is drawn in the round
     // (the ground's billows take only the lit cap: their shadow is the
