@@ -20829,6 +20829,25 @@ act3-seat, act3-dais, act3-arrive, act3-bless, act3-gaze cards):
 The tithe load each soul carries up fades in his hands at the blessing
 (the owner, 2026-10-19).
 
+**God talks; the line and the blessing are gone (built, on a dial for the
+owner's vote; the owner, 2026-10-20: "lets remove the blessing line, lets
+just have him talking. i want the talking and wave animation to be super
+connected").** The single file up the throne, the blessing, the hands
+coming in, the light square and its short rays are cut; his hands rest on
+the seat. The line was drawing only -- the members who leave his crowd are
+the sim's walk-outs, won by signs, and they still lift out by their flag
+and walk to the union's camp -- so nothing in play moved. His turns are
+now a while talking, then a while glaring. He talks in phrases (a loud one
+every 6.5 s, a mutter between, the speech's own as it burns), a syllable
+every two ticks with his mouth open on its tick, and every syllable is a
+wave: rings of his light off his head, then a front out from his foot
+across his crowd, lying flat on the stage. Each soul hops the moment the
+front reaches it, read off the same clock that draws the front, so the
+ripple goes out from him in step with the sound. Two takes on the dev
+panel's `god wave`: (a) the front drawn as a ring on the crowd; (b) no
+ring -- the souls lit in his light as they hop, and sound marks either
+side of his mouth. The roar no longer ducks the crowd.
+
 **The level, the two crowds and the flags (design, not built; the owner,
 2026-10-19).** Voted a mock at a time (the board's act3-depth, act3-union,
 act3-union2, act3-level and act3-flaglogo cards; `docs/mocks/act3-level-2026-10-19/`):
@@ -20925,6 +20944,18 @@ What reads as ground is a floor *made of* cloud, seen in perspective:
   only the bottom third. The sky is recomputed every couple of seconds into
   a cached image and each frame blends the two nearest, so a changing cell
   fades across rather than flipping.
+- **Each camp owns its own slice of the window** (the owner, 2026-10-20:
+  "gods crowd should be off to the right. each crowd needs their own full
+  vertical slice of the view, as well as enough space between them"). God's
+  crowd is vast again -- more rows, across the stage and out over the cloud
+  past it, thinning raggedly -- and his camp is placed, not picked: at no pan
+  that shows both does his slice come within AFTER_SLICE_GAP cells of the
+  union's (its crowd, the pedestal, the pair), at any window
+  (`test/after-slices.test.mjs`). His layer slides at a third of the camera,
+  so he comes in at the window's right edge only once the union's slice is
+  that gap clear of it, and gains on it from there; the pan to him is longer
+  for it, and at the act's opening his crowd's left end is just in at the
+  right edge.
 - **God's camp stands on a stage in the clouds** (the board's
   act3-platform, the owner's own idea, 2026-10-20; supersedes the crowd
   standing in the floor above for his camp). Built, the crowd at his true
