@@ -232,6 +232,10 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
       if (done(key, count[key])) continue;
       const u = afterRow(key);
       if (u.post && (free() <= 0 || ahead)) continue;
+      // A rung waiting on the union's support (the podium ladder's marks) is
+      // passed over, not waited on: the posts after it are what win the
+      // support it waits for.
+      if (u.dead?.() && u.waits?.()) continue;
       if (!u.show() || u.dead?.()) { ahead = true; continue; }
       if (!out.includes(key)) out.push(key);
       ahead = true;
