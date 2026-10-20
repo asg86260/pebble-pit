@@ -34,12 +34,11 @@ group('act 3: go on, the house falls, the souls rise into the afterlife, and the
   const views = [];
   const opened = runUntil(() => { views.push(S.view); return beatDone('refuse'); }, 240);
   const act3 = { house: S.acts.house, view: S.view, pair: S.acts.pair && { at: S.acts.pair.at, mode: S.acts.pair.mode, place: placeAt(S.acts.pair.y) },
-                 after: !!S.after, shut: (await import('../src/actbeats.js')).boardsShut() };
+                 after: !!S.after };
   // Track A's strike, as its scaffold fact: the last gate reached.
   S.after.gate = AFTER_GATES.length;
   const walked = runUntil(() => beatDone('haunt'), 400);
-  const act4 = { view: S.view, mode: S.acts.pair.mode, place: placeAt(S.acts.pair.y), hell: portalFree('hell'), heaven: portalFree('heaven'),
-                 shut: (await import('../src/actbeats.js')).boardsShut() };
+  const act4 = { view: S.view, mode: S.acts.pair.mode, place: placeAt(S.acts.pair.y), hell: portalFree('hell'), heaven: portalFree('heaven') };
   window.__actsOn(null);
   const story = ['house-fall', 'arrive', 'meet-god', 'refuse', 'strike', 'unmask', 'hell-told', 'ghost-road', 'haunt'];
   return [
@@ -47,10 +46,9 @@ group('act 3: go on, the house falls, the souls rise into the afterlife, and the
     ok(opened && inOrder(story.slice(0, 4)), 'the fall plays through the opening, in order', S.beatsDone.join(' ')),
     ok(act3.house === 'fallen' && act3.view === 'after' && act3.pair.place === 'after' && act3.pair.at === 'pedestal' && act3.after,
        'the house is under the rock, the souls stand up on the pedestal in the camp, and the camera is with them', JSON.stringify(act3)),
-    ok(act3.shut, 'and the yard\'s boards are shut while they are up there'),
     ok(walked && inOrder(story) && once(story), 'the strike plays through to the road, and the pair come down it, each beat once', S.beatsDone.join(' ')),
-    ok(act4.view === 'yard' && act4.mode === 'ghost' && act4.place === 'yard' && act4.hell && act4.heaven && !act4.shut,
-       'back on the yard as ghosts, both portals the player\'s, the boards open again', JSON.stringify(act4))
+    ok(act4.view === 'yard' && act4.mode === 'ghost' && act4.place === 'yard' && act4.hell && act4.heaven,
+       'back on the yard as ghosts, both portals the player\'s', JSON.stringify(act4))
   ];
 });
 

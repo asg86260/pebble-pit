@@ -146,7 +146,7 @@ group('an act\'s beats play behind its switch, each once', async () => {
 });
 
 group('with the switches off, the connective tissue is out of reach: no go-on, no portal, no mansion', async () => {
-  const { sayGoOn, goOnDue, boardsShut } = await import('../src/actbeats.js');
+  const { sayGoOn, goOnDue } = await import('../src/actbeats.js');
   const { portalStands, throughPortal } = await import('../src/portals.js');
   window.__actsOn(false);
   window.__crew(2, 1);
@@ -163,6 +163,6 @@ group('with the switches off, the connective tissue is out of reach: no go-on, n
   return [
     ok(!goOn.due && !goOn.said && goOn.acts === null, 'no go-on card after the finale, and no act begun', JSON.stringify(goOn)),
     ok(!portals.heaven && !portals.hell && !portals.went, 'neither portal stands or takes the camera', JSON.stringify(portals)),
-    ok(!ran && !boardsShut(), 'the mansion does not step and the yard\'s boards stay open', `${ran} ${boardsShut()}`)
+    ok(!ran, 'the mansion does not step', `${ran}`)
   ];
 });

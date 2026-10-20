@@ -425,10 +425,6 @@ export function stepActs(c) {
   if (hellOn()) { stepMansion(c); stepGathering(c); }
 }
 
-// The yard's boards in act 3 (call 5): shut from the house's fall until the
-// pair come back down as ghosts; open again in act 4.
-export const boardsShut = () => afterlifeOn() && fallen() && !beatDone('haunt');
-
 // --- the save ---------------------------------------------------------------------------
 // `S.acts` written whole, null until the player says go on; read over a
 // blank, so a field added later comes back empty. The beat's run and the

@@ -21794,8 +21794,9 @@ a plain label in locales/en.ftl for the owner to rewrite.
   camera beat it names, the phases skipping what has landed.
 - **The ghosts** (call 5, as recommended): carry only, the pair walking the
   road from the ruin to hell's store with a load of the yard's dust and back
-  empty; the yard's boards are shut from the house's fall until the pair
-  come back down as ghosts, open again in act 4.
+  empty; the yard's boards are open whenever the view is on the surface, in
+  every act (the owner, 2026-10-20: "if youre on the surface, you should be
+  able to open boards"; heaven's gates take the player down at any time).
 - **The mansion, the ending.** A standing job from the start of the cage's
   barrier, so it goes up through a stretch of act 4 and tops out during the
   walk home: the yard's own builders (spare hands if it has none), borrowed
