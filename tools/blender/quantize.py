@@ -305,7 +305,8 @@ def main():
             grids[n] = (t, c, o1, o2)
             for kind, g in (('four', t), ('four-clean', c), ('one', o1), ('two', o2)):
                 for page in ('light', 'dark'):
-                    paint(g, page).save(os.path.join(qdir, f'{name}-{n}-{kind}-{page}.png'))
+                    # the label rides in the name: a file posted alone is still not the game
+                    paint(g, page).save(os.path.join(qdir, f'blender-target-{name}-{n}-{kind}-{page}.png'))
             rep['sizes'][n] = {
                 'raw_isolated_slivers': faults(t), 'clean_isolated_slivers': faults(c),
                 'shares_raw': shares(t), 'shares_clean': shares(c),
