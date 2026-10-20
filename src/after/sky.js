@@ -140,6 +140,10 @@ export function stageSpot(f, r) {
 // A soul's side on the stage at world y, world px: the giant's scale, growing
 // toward the front, on the cell grid.
 export const stageSoul = (st, y) => Math.max(P, snap(lerp(GOD_CROWD.n[0], GOD_CROWD.n[1], stageFore(st, y)) * st.mx, P));
+// A body of the sim's on the top: a soul of its row's size, but no wider
+// than most of a file's spacing there, so the members standing side by side
+// in the front ranks stand apart and never close up into a bar.
+const bodySoul = (st, y) => Math.min(stageSoul(st, y), snap(GOD_CROWD.fileFill * 2 * stageHalf(st, y) / CROWD_FILES, 2));
 // A sim body over God's yard, its rank read back off its height.
 const rankOf = y => {
   const up = afterFloor() - P * 2 - y, near = CROWD_NEAR * CROWD_ROW;
@@ -164,7 +168,7 @@ export function walkSeen(x, y, cx) {
   const a = campEdges()[1], b = CROWD_X0 - CROWD_PITCH, st = stage(), gm = godMid(cx);
   const body = d => WALK_BODY * P / d;
   if (x <= a) return { x, y, s: body(1), ord: y };
-  const corner = stageSpot(0, 0), front = stageSoul(st, corner.y);
+  const corner = stageSpot(0, 0), front = bodySoul(st, corner.y);
   if (x < b) {
     const k = smoothstep((x - a) / (b - a)), fy = lerp(afterFloor(), st.foot, k);
     return { x: lerp(x, gm + corner.dx, k), y: fy, s: lerp(body(1), front, k), ord: fy };
@@ -176,7 +180,7 @@ export function walkSeen(x, y, cx) {
     return { x: gm + corner.dx, y: fy, s: front, ord: fy };
   }
   const sp = stageSpot(Math.min(f, CROWD_FILES), rankOf(y));
-  return { x: gm + sp.dx, y: sp.y, s: stageSoul(st, sp.y), ord: sp.y };
+  return { x: gm + sp.dx, y: sp.y, s: bodySoul(st, sp.y), ord: sp.y };
 }
 // The share of the way into depth a sim x stands, 0 on the near layer: for
 // what is drawn there as the near layer draws it and what is not.
