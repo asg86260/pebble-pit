@@ -13,7 +13,7 @@
 // where the cell stands (no flat fills, no random draw, so it holds still
 // frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_SIGN_FLAG, AFTER_SIGN_FLAG_U, SKY_FLAG, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
+import { P, GREY, AFTER_SIGN_FLAG, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
@@ -222,8 +222,10 @@ function signRack(d, x, st) {
   const FU = AFTER_SIGN_FLAG_U, at = d.world(x, 0), U = FU.rack, step = FU.apart * P, n = Math.min(Math.max(st.n, st.prev), 3);
   ctx.fillStyle = GREY[K]; ctx.fillRect(at.x - P, at.y - P, step * 3 + P, P);
   for (let i = 0; i < n; i++) d.fade(pileAlpha(i, st), () => drawFistFlag(at.x + i * step, at.y - P, U));
-  const s = working('workshop');
-  if (s.work && st.n < 3) drawFistFlag(at.x + st.n * step, at.y - P, U, s.at);
+  // The sign on the bench, lettered in the next slot a row of the fist a
+  // blow: as far along as its nails are driven, by the hand or the joiner.
+  const h = hands.workshop, done = h && h.nails ? h.nails.reduce((a, k) => a + k, 0) / (h.nails.length * GESTURE_NAIL_TAPS) : 0;
+  if (done > 0 && st.n < 3) drawFistFlag(at.x + st.n * step, at.y - P, U, done);
   countAt(at.x + step * 1.5, at.y - (SKY_FLAG.h + SKY_FLAG.up + 3) * U - P * 2, st.n);
 }
 // Each station's counted pile, on its own ground.
