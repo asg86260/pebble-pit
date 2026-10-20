@@ -25,6 +25,17 @@ export function enterWorld() {
                    Math.round((-S.camY + S.shakeY) * k));
 }
 
+// Where to lay a layer that slides `rate` as fast as the camera, its origin
+// at world x `x0` with the window's middle at `at`: the world x that lands it
+// on the glass on a whole device pixel of its own, rounded once against the
+// camera's own rounding above, so a slow layer steps as evenly as it slides
+// and nothing in it wobbles against the rest.
+export function layerAt(x0, rate, at) {
+  const k = S.zoom * S.dpr, t = Math.round((-S.camX + S.shakeX) * k);
+  const exact = (x0 + (S.camX + S.viewW / 2 - at) * (1 - rate) - S.camX + S.shakeX) * k;
+  return (Math.round(exact) - t) / k;
+}
+
 // A world rectangle filled with its edges on whole device pixels: at a zoom
 // that is not whole, a cell laid at a world pixel straddles device pixels and
 // its edge comes out a blend of two inks, a tone the deep's palette does not

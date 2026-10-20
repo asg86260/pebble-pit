@@ -26,21 +26,14 @@ export const AFTER_UNION_W = 32;
 // God's square from its top down to his foot in the cloud; a sky too short
 // for half a God-cell a sky cell is laid out at a cell that fits SKY_FIT.
 export const SKY_FIT = 87;
-// God's camp stands on a stage in the clouds (DESIGN.md, "God's camp stands
-// on a stage in the clouds"; docs/mocks/act3-clouds-2026-10-19/a3platform,
-// spec.md, the numbers here). Lengths across are the mock's cells, `mx` sky
-// cells a cell, so the stage keeps its size against his throne at any
-// window; lengths down are cells off the horizon, the depth camera's. Its
-// top is a trapezoid cheated deep, from `back` to `front`, `hb` and `hf`
-// across the half; under its front a riser `rise` deep, then `steps` steps,
-// each a `tread` over a `riser` and `stepW` wider a side; a face `side`
-// across runs down the slanted edge toward the window's middle. At its foot
-// `billows` billows of the floor's own drawing, spread `billowOut` stage
-// cells past the lowest step either side, lap up over the lowest riser,
-// `billowH` high (skewed small), pushed up as much as `billowUp`, `billowW`
-// of their height across the half.
-export const GOD_STAGE = { mx: 1.25, back: -2, front: 30, hb: 100, hf: 135, rise: 4, steps: 2, tread: 2, riser: 4,
-                           stepW: 12, side: 3, billows: 16, billowOut: 12, billowH: [2.5, 9], billowUp: 3, billowW: 1.8, seed: 77 };
+// God's camp stands on a stage (the owner, 2026-10-20: "the stage should go
+// from the throne to the main plane"): its top a trapezoid from `back` cells
+// behind his foot forward to the line the main plane's stations stand on,
+// `hb` and `hf` across the half there, in the mock's cells at `mx` sky cells
+// a cell, so it keeps its size against his throne at any window; a face
+// `side` across down the slanted edge toward the window's middle. A plain
+// shape for now (the stage's own drawing is the next step).
+export const GOD_STAGE = { mx: 1.25, back: 4, hb: 60, hf: 90, side: 3 };
 // God's crowd on the stage at a giant's scale: rows from the back to the
 // front, a soul `n` cells across (stage cells), from the first at the back to
 // the second at the front; `gap` cells between souls in a row, each row
@@ -165,34 +158,29 @@ export const SKY_DRIFT = { every: [2.5, 4.5], life: 14, rise: 22 };
 // workshops and the union's camp stand, at 1) slides 1/d as fast as the
 // camera and is drawn 1/d its size, its foot AFTER_HORIZON / d cells under
 // the horizon: the near layer's floor is AFTER_HORIZON cells under it.
-export const AFTER_HORIZON = 12;
-// God's camp stands this many near layers deep, his throne's floor x placed
-// so that, whatever the window and wherever the camera stands, his stage's
-// nearest edge keeps AFTER_CAMP_CLEAR cells of cloud between it and the
-// union's crowd while both are in view (after/sky.js, `godU`).
+export const AFTER_HORIZON = 28;
+// God's camp stands this many near layers deep, its throne's floor x
+// GOD_FAR windows (at rest) past the union's camp's right end: far enough
+// that his layer and the union's would only meet past the window's right
+// edge, so the union's camp is always left of the throne.
 export const GOD_DEPTH = 3;
-export const AFTER_CAMP_CLEAR = 12;
+export const GOD_FAR = 1.3;
 
-// --- the cloud floor (take A2) ---------------------------------------------------------
-// Billows on the ground plane seen through one camera (docs/mocks/
-// act3-clouds-2026-10-19, a3cloudfloor3): a camera `f` cells from the
-// screen and `cam` units over the plane; the near layer AFTER_HORIZON cells
-// under the horizon stands at depth `f * cam / AFTER_HORIZON`. A billow is a
-// dome on a lattice `lx` across by `lz` deep, odd rows `row` of a cell
-// over, jittered `jit`, radius `r` of a cell, `ez` as deep as wide,
-// standing `amp` high and `puff` round; a share `vary` of them are bigger.
-// Its lit cap is the circle `cap` (x, z, radius) of its own radius. Near the
-// feet they are pressed to `low` of their height, rising to whole between
-// depths `rise`; past a row `rowmin` cells deep the rows stop thinning and
-// only narrow; rows under `shade` cells deep go unshaded and their lines
-// under `faint` are left out. It rolls
-// `roll` units toward the viewer a second, traced a
-// tick at a time (SKY_TICK_S), `slice` of its columns a frame, held
-// between, and slid row by row with the camera between traces; a pan of more
-// than `margin` of the window since the last trace traces it again at once.
-export const CLOUD_FLOOR = { f: 130, cam: 0.86, cap: [0.1, 0.17, 0.95], vary: 0.15, ez: 1.35, lx: 0.36, lz: 0.45,
-                             jit: 0.3, r: [0.48, 0.62], amp: [0.21, 0.3], puff: 0.4, row: 0.5, roll: 0.024,
-                             low: 0.3, rise: [2.5, 9], rowmin: 1.6, shade: 2.4, faint: 1.8, far: 400, margin: 0.25, slice: 0.1 };
+// --- the ground (render/after/ground.js, render/after/floor.js) ----------------------
+// Three rigid layers, nothing rolling. The far cloud between the horizon and
+// the main plane: rows of billow lines at these depths (their foot
+// AFTER_HORIZON / d cells under the horizon, their cells 1/d across), a
+// row's profile repeating every `period` of its cells, on God's slow layer
+// (`rate` of the camera's speed). The main plane's path: paper `depth` cells
+// down off the line the stations stand on, its far edge a pale billow line.
+// The foreground under it: rows of big calm clouds, `down` cells under the
+// path, one every `every` cells give or take, `w` cells across and `h`
+// high, a share `gaps` of the places left empty, sliding `rate` as fast as
+// the camera.
+export const GROUND_FAR = { rate: 1 / 3, depths: [6, 4.2, 3.2, 2.4, 1.8, 1.35], period: 512, seed: 41 };
+export const GROUND_PATH = { depth: 5, seed: 9 };
+export const GROUND_FORE = { rate: 1.3, gaps: 0.35, rows: [{ down: 6, every: 64, w: [16, 28], h: [2, 3] },
+                                                            { down: 20, every: 90, w: [30, 50], h: [4, 6] }] };
 
 // --- the sky's ranges (take S3, taller) ----------------------------------------------
 // Three ranges of cloud, far to near, each a skyline of value noise over

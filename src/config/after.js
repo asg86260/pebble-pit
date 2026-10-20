@@ -29,8 +29,8 @@ export const AFTER_H = P * 120;            // the place's top to its cloud floor
 export const AFTER_FLOOR_MARGIN = P * 9;   // the cloud floor stands this far up off the window's foot (default; the deep's)
 // The cloud floor (render/after/floor.js; docs/mocks/act3-place-2026-10-18,
 // floor A, the billow edge): the walking line itself billows in puffs of
-// one or two cells, pressed flat under every station, over the cloud floor
-// seen in depth (config/aftercrowd.js, CLOUD_FLOOR).
+// one or two cells, pressed flat under every station: the near edge of the
+// main plane's cloud path (config/aftercrowd.js, GROUND_PATH).
 export const AFTER_BILLOW_SEED = 3;        // which run of puffs (the mock's layout strip)
 export const AFTER_BILLOW_BIG = 0.55;      // the share of puffs two cells high, the rest one
 export const AFTER_PUFF_LEAST = 4;        // cells: a run of billow narrower than this between two flats is pressed flat too

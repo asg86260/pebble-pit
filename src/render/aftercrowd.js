@@ -42,19 +42,19 @@
 
 import { S } from '../state.js';
 import { P, GREY, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AFTER_SPEECH_WARN_S,
-         SKY_TICK_S, GOD_CROWD, GOD_STAGE, GOD_FLAG,
+         SKY_TICK_S, GOD_CROWD, GOD_STAGE, GOD_FLAG, GOD_DEPTH,
          SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
          GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, TITHE, GAZE,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_POSTER, SKY_DRIFT,
          AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
+import { layerAt } from './frame.js';
 import { raw, darkPage } from '../ink.js';
 import { afterX0, slotX, stationBox, unionJoinAt, afterFloor } from '../after/place.js';
 import { support, union, souls, OUT_RIM, speechTarget } from '../after/union.js';
 import { signReach } from '../after/levels.js';
-import { skyFrame, godMid, stage, stageHalf, stageFore, stageSpot, stageSoul, walkSeen, deepAt } from '../after/sky.js';
-import { lip } from './after/cloudfloor.js';
+import { skyFrame, godU, stage, stageHalf, stageFore, stageSpot, stageSoul, walkSeen, deepAt } from '../after/sky.js';
 import { K as INK, W, PALE, MID } from './after/kit.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -235,34 +235,19 @@ function ringsAt(x, y, rate, sq) {
 }
 
 // --- the stage -------------------------------------------------------------------------------
-// The top a trapezoid from its back edge to its front, the side face the
-// window can see (toward its middle) down its slanted edge, then under its
-// front its own riser and the steps, each a tread over a riser and wider a
-// side than the one above; at the foot, billows of the floor's own drawing
-// lapping up over the lowest riser, so no ruled line stands where the stage
-// meets the cloud.
+// The top a trapezoid from behind his foot forward to the main plane's line,
+// and the side face the window can see (toward its middle) down its slanted
+// edge. A plain shape; its front meets the main plane's path, which is drawn
+// over its foot (render/after/floor.js).
 function drawStage() {
   const st = stage(), G = GOD_STAGE, x = gx(), side = x > CX ? -1 : 1, sw = G.side * st.mx;
   ctx.fillStyle = style(RISE_TONE);
-  for (let y = st.yb; y < st.yf + 3 * P; y += P) {
-    const hw = stageHalf(st, y);
+  for (let y = st.yb; y < st.yf; y += P) {
+    const hw = Math.round(stageHalf(st, y));
     rect(side < 0 ? x - hw - sw : x + hw, y, sw, P);
   }
   ctx.fillStyle = style(TOP_TONE);
-  for (let y = st.yb; y < st.yf; y += P) { const hw = stageHalf(st, y); rect(x - hw, y, 2 * hw, P); }
-  let y = st.yf;
-  rect(x - st.hf, y, 2 * st.hf, G.rise * P, RISE_TONE); y += G.rise * P;
-  for (let k = 0; k < G.steps; k++) {
-    const hw = st.hf + st.stepW * (k + 1);
-    rect(x - hw, y, 2 * hw, G.tread * P, TOP_TONE); rect(x - hw, y + G.tread * P, 2 * hw, G.riser * P, RISE_TONE);
-    y += (G.tread + G.riser) * P;
-  }
-  const hs = st.hf + st.stepW * G.steps + G.billowOut * st.mx, base = Math.round(y / P) + 2;
-  for (let i = 0; i < G.billows; i++) {
-    const c = (x - hs + 2 * hs * (i + 0.2 + hsh(G.seed, i) * 0.6) / G.billows) / P;
-    const h = lerp(G.billowH[0], G.billowH[1], hsh(G.seed, i, 2) ** 1.5), up = Math.round(hsh(G.seed, i, 3) * G.billowUp);
-    lip(Math.round(c - h * G.billowW), Math.round(c + h * G.billowW), base - up, h, MID, G.seed * 31 + i, h * 1.1);
-  }
+  for (let y = st.yb; y < st.yf; y += P) { const hw = Math.round(stageHalf(st, y)); rect(x - hw, y, 2 * hw, P); }
 }
 
 // --- the crowd on the stage ----------------------------------------------------------------
@@ -302,7 +287,7 @@ function rowSouls(r, R, n, out) {
     // behind the throne's foot, or in the aisle in front of it: kept clear
     if (R.y - w < st.throneY + P && Math.abs(c - mid) < clear) continue;
     if (R.y > st.throneY && Math.abs(c - mid) < aisle) continue;
-    const x0 = snap(cx + (hsh(i, R.r, 5) - 0.5) * 2 * G.jit * st.mx, 1);
+    const x0 = mid + snap(cx - mid + (hsh(i, R.r, 5) - 0.5) * 2 * G.jit * st.mx, 2);
     if (x0 + w < S.camX - P || x0 > S.camX + S.viewW + P) continue;
     const a = standing(r, n, i);
     if (a > 0.001) out.push({ r, i, x: x0, y: R.y - (hsh(i, R.r, 6) < G.lift ? P : 0), w, a });
@@ -427,7 +412,12 @@ function drawWon(y0) {
 // Everything of his in sky cells off his middle (x) and his square's top at
 // rest (y), the mock's: his square 0 to GOD_N down, the seat under it.
 const SEAT = GOD_N;
-const gx = () => godMid(CX);
+// God's middle (after/sky.js, `godMid`) as his layer's own slide: a fixed
+// place on the cell grid plus the layer's offset put on a whole device pixel,
+// as render/after/ground.js lays its layers. Everything of his camp is laid
+// off it, so the camp moves as one piece and never wobbles a pixel against
+// the camera's own rounding.
+const gx = () => { const u = godU(); return layerAt(u + (F.XR - u) * (1 - 1 / GOD_DEPTH), 1 / GOD_DEPTH, F.XR); };
 const godFoot = () => ({ x: gx(), y: F.gy0 + (SEAT + GOD_THRONE.seatH) * H });
 const cache = { key: '', throne: null, poses: new Map(), signs: new Map() };
 function freshCaches() {

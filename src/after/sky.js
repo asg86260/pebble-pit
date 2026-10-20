@@ -2,7 +2,7 @@
 // apart for the eye, not for the walk", "God's camp stands in the clouds",
 // "God's camp stands on a stage in the clouds"): where the horizon is, how
 // deep a thing stands and where that puts it, where God sits, and his stage. Read by the camera (view.js) and the drawing
-// (render/aftercrowd.js, render/after/cloudfloor.js) alike.
+// (render/aftercrowd.js, render/after/ground.js) alike.
 //
 // The camera only slides. Depth is the one camera every far thing goes
 // through: a floor point at floor x `u` and depth `d` (the near layer, where
@@ -17,12 +17,12 @@
 // the yard's ground stands, at the yard's zoom.
 
 import { S } from '../state.js';
-import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_DEPTH, AFTER_CAMP_CLEAR, GOD_CROWD, GOD_SIGN_DEEP, GOD_STAGE, AFTER_HORIZON,
+import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_DEPTH, GOD_FAR, GOD_CROWD, GOD_SIGN_DEEP, GOD_STAGE, AFTER_HORIZON,
          GOD_N, GOD_THRONE, WALK_BODY,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW } from '../config.js';
 import { yardCell } from '../world.js';
 import { actPlace } from '../acts.js';
-import { afterFloor, afterTop, afterX1, afterOpenX, campEdges, unionReach } from './place.js';
+import { afterFloor, afterTop, afterX1, afterOpenX, unionX1, campEdges } from './place.js';
 import { smoothstep } from '../motion.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -38,20 +38,13 @@ export const restTop = () => afterFloor() + actPlace('after').margin - restH();
 export const horizonY = () => afterFloor() - AFTER_HORIZON * P;
 // A floor point's foot, world y, at depth d; and the depth under world y.
 export const footY = d => horizonY() + AFTER_HORIZON * P / d;
-export const depthAtY = y => AFTER_HORIZON * P / Math.max(1e-3, y - horizonY());
 // A floor point's world x with the window's middle at `cx`, and back.
 export const seenX = (u, d, cx) => cx + (u - cx) / d;
 export const floorX = (x, d, cx) => cx + (x - cx) * d;
 
-// God's throne's floor x, from the geometry, so the camps never crowd each
-// other for the eye. His stage slides a third as fast as the union's camp,
-// so as the camera goes left the union's crowd closes on the stage's left
-// edge on the window, and the tightest moment both are in view is when that
-// edge sits on the window's right edge: the camera's middle is then
-// uG - 3 (W/2 + reach), and the crowd's right end must stand AFTER_CAMP_CLEAR
-// cells short of it. Solved for uG: the crowd's reach, a window, three times
-// the stage's reach and the clearance. Further right the gap only grows.
-export const godU = () => unionReach() + restW() + 3 * stage().reach + AFTER_CAMP_CLEAR * P;
+// God's throne's floor x: GOD_FAR windows past the union's camp, so his
+// layer and the union's would only meet past the window's right edge.
+export const godU = () => unionX1() + GOD_FAR * restW();
 // The furthest right the window's middle goes: God's throne in its middle,
 // or the place's own last window if that is further.
 export const afterEnd = () => Math.max(afterX1() - restW() / 2, godU());
@@ -103,18 +96,15 @@ export const faceY = () => { const f = skyFrame(); return f.gy0 + 9 * f.gc; };
 // is { dx, y }: world px across from his middle, and world y.
 let stageMemo = null, stageKey = '';
 export function stage() {
-  const f = skyFrame(), G = GOD_STAGE, key = `${f.hor}|${f.h}`;
+  const f = skyFrame(), G = GOD_STAGE, key = `${f.hor}|${f.h}|${f.floor}`;
   if (stageMemo && key === stageKey) return stageMemo;
-  const mx = G.mx * f.h, at = c => f.hor + c * P;
+  const mx = G.mx * f.h, yf = afterFloor();
   const steps = Math.max(1, Math.ceil((f.bank - f.gy0 - (GOD_N + GOD_THRONE.seatH) * f.h) / (GOD_THRONE.step * f.h)));
   stageMemo = {
-    mx, yb: at(G.back), yf: at(G.front), hb: G.hb * mx, hf: G.hf * mx, stepW: G.stepW * mx,
-    foot: at(G.front + G.rise + G.steps * (G.tread + G.riser)),
+    // from behind his foot forward to the main plane's line, which is its foot
+    mx, yb: Math.round((f.bank - G.back * P) / P) * P, yf, hb: G.hb * mx, hf: G.hf * mx, foot: yf,
     // the throne's base at its bottom step, across the half, and its foot
-    throne: (GOD_THRONE.baseHalf + GOD_THRONE.step * (steps - 1)) * f.h, throneY: f.bank,
-    // how far left of his middle anything of it is drawn: the lowest step,
-    // the billows past it and the widest of them
-    reach: (G.hf + G.stepW * G.steps + G.billowOut) * mx + G.billowH[1] * G.billowW * P
+    throne: (GOD_THRONE.baseHalf + GOD_THRONE.step * (steps - 1)) * f.h, throneY: f.bank
   };
   stageKey = key;
   return stageMemo;
@@ -190,5 +180,5 @@ export const deepAt = x => smoothstep(clamp((x - campEdges()[1]) / (P * 6), 0, 1
 // A click there is a click on his crowd (after/gestures.js).
 export function godCampAt(x, y, cx) {
   const f = skyFrame(), st = stage(), dx = x - godMid(cx);
-  return y >= f.gy0 - 12 * f.gc && y <= st.foot && Math.abs(dx) <= (y < st.yb ? st.throne : stageHalf(st, y) + 2 * st.stepW);
+  return y >= f.gy0 - 12 * f.gc && y <= st.foot && Math.abs(dx) <= (y < st.yb ? st.throne : stageHalf(st, y));
 }

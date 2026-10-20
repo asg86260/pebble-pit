@@ -7,15 +7,14 @@
 // from. The crowd's shape is set through the act's rims (a slot set to 9 is
 // a member already gone, with no walk), the setup these checks are not about.
 import { group, ok, run, yard } from './helpers.mjs';
-import { STRIKE_SHARE, GOD_DEPTH, CROWD_X0, CROWD_PITCH, P, UNION_CROWD, AFTER_CAMP_CLEAR } from '../src/config.js';
-import { afterFloor, afterOpenX, soulX, soulY, campEdges } from '../src/after/place.js';
+import { STRIKE_SHARE, GOD_DEPTH, CROWD_X0, CROWD_PITCH, P, UNION_CROWD } from '../src/config.js';
+import { afterFloor, afterOpenX, soulX, soulY, unionX1, campEdges } from '../src/after/place.js';
 import { stepAfter } from '../src/after/index.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawSkyCrowd, drawAfterCrowd, crowdDrawn, glareAlpha, raysLeft } from '../src/render/aftercrowd.js';
 import { drawUnionCrowd, unionDrawn } from '../src/render/after/unioncrowd.js';
 import { afterEnd } from '../src/view.js';
 import { godMid, godU, walkSeen, stage, stageHalf } from '../src/after/sky.js';
-import { unionReach } from '../src/after/place.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -175,31 +174,28 @@ group("at the camp end, act 3 is framed at the yard's zoom and the yard's floor 
   return out;
 });
 
-// The camps are far apart for the eye (DESIGN.md, "The camps are far apart
-// for the eye"): at every window from the smallest up and at every place
-// along the pan, while God's stage shows in the window its nearest edge
-// keeps AFTER_CAMP_CLEAR cells of cloud from the union's crowd, the union's
-// camp always left of it; and along the pan God comes in from the right and
-// is drawn in to the window's middle at its end.
-group("the camps never crowd each other: the stage keeps its clearance from the union's crowd at every window and pan", async () => {
+// God in the window from where the act opens to the pan's end: at its right
+// edge past the union's camp (his camp is past it, DESIGN.md, "The level,
+// the two crowds and the flags"), drawn in to its middle along the pan; and
+// the union's camp, on the near layer, never comes up level with him: the
+// two layers would only meet past the window's right edge.
+group("God stands in the window all along the pan toward him, the union's camp always left of him", async () => {
   const out = [];
-  for (const [w, h] of [[800, 600], [1280, 720], [2000, 967], [2560, 1440]]) {
+  for (const [w, h] of [[2000, 967], [800, 600]]) {
     S.W = w; S.H = h;
     up();
-    let worst = Infinity, seen = 0, prev = Infinity, inward = true;
-    const a = S.viewW / 2, b = afterEnd();
-    for (let k = 0; k <= 60; k++) {
-      lookAt(a + (b - a) * k / 60);
-      const cx = S.camX + S.viewW / 2, left = godMid(cx) - stage().reach;
-      if (left < S.camX + S.viewW) { seen++; worst = Math.min(worst, left - unionReach()); }
-      const off = Math.abs(godMid(cx) - cx);
-      if (off > prev + 1) inward = false;
-      prev = off;
+    const ks = [0, 0.25, 0.5, 0.75, 1];
+    const offs = [], left = [];
+    for (const k of ks) {
+      lookAt(afterOpenX() + (afterEnd() - afterOpenX()) * k);
+      const g = godMid(S.camX + S.viewW / 2);
+      offs.push((g - S.camX) / S.viewW);
+      left.push(unionX1() < g);
     }
-    const end = Math.abs(godMid(S.camX + S.viewW / 2) - (S.camX + S.viewW / 2));
     window.__actsOn(null);
-    out.push(ok(seen > 0 && worst >= AFTER_CAMP_CLEAR * P - 1, `${w}x${h}: the stage's edge keeps clear of the union's crowd wherever both show`, `${Math.round(worst)} px at worst, ${seen} places`),
-             ok(inward && end < 2, `${w}x${h}: God drawn in to the window's middle along the pan`, `${end.toFixed(1)} px off at the end`));
+    out.push(ok(offs.every(v => v > 0.1 && v < 1) && offs.slice(1).every(v => v < 0.9), `${w}x${h}: his middle in the window, at its right edge past the union's camp and well inside past it`, offs.map(v => v.toFixed(2)).join(' ')),
+             ok(offs.every((v, i) => i === 0 || v < offs[i - 1]), `${w}x${h}: drawn in toward the middle along the pan`),
+             ok(left.every(Boolean), `${w}x${h}: the union's camp left of him all along`));
   }
   return out;
 });

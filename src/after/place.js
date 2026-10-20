@@ -107,10 +107,8 @@ export const podiumTopOf = n => AFTER_PODIUM_TOPS[n] * AFTER_PODIUM_U;
 export const podiumTop = () => podiumTopOf(podiumStood());
 export const podiumMid = () => stationX0('pedestal') + ART.pedestal.ground * P / 2;
 // The union's crowd (render/after/unioncrowd.js) across the half at most:
-// its back rows kept a cell short of the workshops' end; and its right end
-// as far as a newcomer walking in starts, world x.
+// its back rows kept a cell short of the workshops' end.
 export const unionHalf = () => Math.min(UNION_CROWD.half[1], podiumMid() - workshopsX1() - P);
-export const unionReach = () => podiumMid() + unionHalf() + UNION_CROWD.walk + UNION_CROWD.n[0];
 export const speakerAt = k => ({ x: podiumMid() + AFTER_PODIUM_PAIR[k ? 1 : 0], y: afterFloor() - podiumTop() });
 // The rebel pile at the pedestal's foot, on God's-yard side, where the motes land.
 export const pileX = () => snap(podiumMid() + AFTER_PODIUM_PILE * P);
