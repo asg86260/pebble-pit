@@ -178,6 +178,8 @@ export const GROUND_FAR = { rate: GOD_RATE, rows: [[6, 2], [10, 2], [18, 4]], pe
 export const GROUND_PATH = { depth: 5, seed: 9 };
 export const GROUND_FORE = { rate: 1.3, gaps: 0.35, rows: [{ down: 6, every: 64, w: [16, 28], h: [2, 3] },
                                                             { down: 20, every: 90, w: [30, 50], h: [4, 6] }] };
+// The thin lines the far rows and the foreground clouds are drawn in, world px.
+export const GROUND_LINE = 2;
 
 // --- the sky's ranges (take S3, taller) ----------------------------------------------
 // Three ranges of cloud, far to near, each a skyline of value noise over

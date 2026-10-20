@@ -236,15 +236,18 @@ function ringsAt(x, y, rate, sq) {
 
 // --- the stage -------------------------------------------------------------------------------
 // The top a trapezoid from behind his foot forward to the main plane's line,
-// and the side face the window can see (toward its middle) down its slanted
-// edge. A plain shape; its front meets the main plane's path, which is drawn
-// over its foot (render/after/floor.js).
+// and a side face down each slanted edge: the top widens toward the window,
+// so both sides face it, wherever he stands on it (a face chosen by which
+// half of the window he is in would pop across as he passes its middle).
+// A plain shape; its front meets the main plane's path, which is drawn over
+// its foot (render/after/floor.js).
 function drawStage() {
-  const st = stage(), G = GOD_STAGE, x = gx(), side = x > CX ? -1 : 1, sw = G.side * st.mx;
+  const st = stage(), G = GOD_STAGE, x = gx(), sw = G.side * st.mx;
   ctx.fillStyle = style(RISE_TONE);
   for (let y = st.yb; y < st.yf; y += P) {
     const hw = Math.round(stageHalf(st, y));
-    rect(side < 0 ? x - hw - sw : x + hw, y, sw, P);
+    rect(x - hw - sw, y, sw, P);
+    rect(x + hw, y, sw, P);
   }
   ctx.fillStyle = style(TOP_TONE);
   for (let y = st.yb; y < st.yf; y += P) { const hw = Math.round(stageHalf(st, y)); rect(x - hw, y, 2 * hw, P); }
