@@ -35,11 +35,12 @@ export const SKY_FIT = 87;
 // across the half; under its front a riser `rise` deep, then `steps` steps,
 // each a `tread` over a `riser` and `stepW` wider a side; a face `side`
 // across runs down the slanted edge toward the window's middle. At its foot
-// `billows` billows of the floor's own drawing lap up over the lowest
-// riser, `billowH` high (skewed small), pushed up as much as `billowUp`,
-// `billowW` of their height across the half.
+// `billows` billows of the floor's own drawing, spread `billowOut` stage
+// cells past the lowest step either side, lap up over the lowest riser,
+// `billowH` high (skewed small), pushed up as much as `billowUp`, `billowW`
+// of their height across the half.
 export const GOD_STAGE = { mx: 1.25, back: -2, front: 30, hb: 100, hf: 135, rise: 4, steps: 2, tread: 2, riser: 4,
-                           stepW: 12, side: 3, billows: 16, billowH: [2.5, 9], billowUp: 3, billowW: 1.8, seed: 77 };
+                           stepW: 12, side: 3, billows: 16, billowOut: 12, billowH: [2.5, 9], billowUp: 3, billowW: 1.8, seed: 77 };
 // God's crowd on the stage at a giant's scale: rows from the back to the
 // front, a soul `n` cells across (stage cells), from the first at the back to
 // the second at the front; `gap` cells between souls in a row, each row
@@ -163,12 +164,12 @@ export const SKY_DRIFT = { every: [2.5, 4.5], life: 14, rise: 22 };
 // camera and is drawn 1/d its size, its foot AFTER_HORIZON / d cells under
 // the horizon: the near layer's floor is AFTER_HORIZON cells under it.
 export const AFTER_HORIZON = 12;
-// God's camp stands this many near layers deep, its throne's floor x
-// GOD_FAR windows (at rest) past the union's camp's right end: far enough
-// that his layer and the union's would only meet past the window's right
-// edge, so the union's camp is always left of the throne.
+// God's camp stands this many near layers deep, his throne's floor x placed
+// so that, whatever the window and wherever the camera stands, his stage's
+// nearest edge keeps AFTER_CAMP_CLEAR cells of cloud between it and the
+// union's crowd while both are in view (after/sky.js, `godU`).
 export const GOD_DEPTH = 3;
-export const GOD_FAR = 1.3;
+export const AFTER_CAMP_CLEAR = 12;
 
 // --- the cloud floor (take A2) ---------------------------------------------------------
 // Billows on the ground plane seen through one camera (docs/mocks/
@@ -220,18 +221,22 @@ export const CLOUD_SKY_TONES = { light: ['paper', 'paper', 'pale', 'mid', 'pale'
 // --- the union's crowd (DESIGN.md, "The level, the two crowds and the flags") ---
 // Gathered round and behind the pair in straight rows, `rows` of them, each
 // row back smaller, higher and paler: a soul `n` px across from the front row
-// to the back, a loose `gap` of its own size between souls, the rows' feet
-// rising `rise` px over the floor from front to back, the rows `half` px
-// across the half (the back row kept off the workshops), the front `clear` px
-// either side of the podium's half-width left open. The front `cap` rows are
+// to the back (the front ones a body's size, as big as the pair), a loose
+// `gap` of its own size between souls, the rows' feet rising `rise` px over
+// the floor from front to back, the rows `half` px across the half -- never
+// past a cell short of the workshops' end, whatever the window -- the front
+// `clear` px either side of the podium's half-width left open. The front `cap` rows are
 // a mid body under an ink cap `capH` px deep, the rows to `midTo` mid, the
-// rest pale: drawn light, so God stays the eye's anchor. It fills in from the
+// rest pale: drawn light, so God stays the eye's anchor. Each soul stands
+// up to `jit` px off its place and a share `short` of them a cap shorter,
+// so a row reads as people and not as a pattern. It fills in from the
 // front as support rises, a soul standing once (share * rows * `fill`) -
 // its row - a fixed chance * `luck` is over 0; a newcomer walks in from God's
 // side `walk` px over `walkS` seconds, fading in over the first `fadeIn` of it,
 // and one leaving fades over `fadeOut` seconds. When a line of the pair's
 // speech goes up, a share `hop` of the front `hopRows` rows hop a cell, held
 // `hopS` seconds.
-export const UNION_CROWD = { rows: 9, n: [12, 4], gap: 0.45, rise: 88, half: [100, 228], clear: 6, cap: 3, capH: 2, midTo: 6,
+export const UNION_CROWD = { rows: 7, n: [20, 12], gap: 0.6, rise: 132, half: [160, 260], clear: 6, cap: 3, capH: 4, midTo: 5,
+                             jit: 3, short: 0.35,
                              fill: 1.1, luck: 0.6, walk: 80, walkS: 3, fadeIn: 0.3, fadeOut: 1,
-                             hop: 0.7, hopRows: 3, hopS: 0.5 };
+                             hop: 0.7, hopRows: 2, hopS: 0.5 };

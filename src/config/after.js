@@ -144,9 +144,9 @@ export const AFTER_STATIONS = CAMP.stations;
 // the floor, in those cells, where the pair stand; and the pair's two left
 // edges off the podium's middle, px.
 export const AFTER_PODIUM_U = 2;
-export const AFTER_PODIUM_TOPS = [10, 20, 12, 18, 34];
+export const AFTER_PODIUM_TOPS = [10, 20, 24, 30, 40];
 // ...and each one's half across at its widest, in those cells.
-export const AFTER_PODIUM_HALF = [11, 22, 24, 24, 22];
+export const AFTER_PODIUM_HALF = [11, 22, 24, 26, 22];
 export const AFTER_PODIUM_PAIR = [-19, 1];
 // The rebel pile at the podium's foot, this many cells off its middle: clear
 // of the widest of them.

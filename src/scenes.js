@@ -42,7 +42,7 @@ import { goDeep, goUp, poseGlide } from './view.js';
 import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt, campEdges } from './after/place.js';
 import { afterEnd } from './view.js';
 import { godU } from './after/sky.js';
-import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB } from './config.js';
+import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S } from './config.js';
 import { FINALE_HOUSE_W } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
@@ -3119,6 +3119,15 @@ export const SCENES = {
       const a = campEdges()[1], on = w => w.load === 'sign' && w.x > a + (CROWD_X0 - a) * 0.5;
       for (let k = 0; k < 2400 && !S.after.bodies.some(on); k++) window.__fast(0.25);
       window.__look((afterOpenX() + godU()) / 2 - S.viewW / 2); window.__fast(1 / 30); window.__holdShot();
+    } },
+  'level-plant': { about: 'the acts', say: "a carrier planting its flag on God's stage: the carried sign fading out as the planted flag fades in",
+    run: () => {
+      afterChain(true);
+      // a carrier at its spot, a moment short of planting; the shot comes a
+      // second on, the planting drawn as it happens
+      const at = w => w.load === 'sign' && w.target && typeof w.target === 'object' && w.t >= AFTER_PLANT_S - 0.7;
+      for (let k = 0; k < 24000 && !S.after.bodies.some(at); k++) window.__fast(0.05);
+      window.__look(godU() - S.viewW / 2); window.__fast(1 / 30);
     } },
   'level-won-orbit': { about: 'the acts', say: 'a soul a sign has won, darkened to ink, half way round its turn and a half about the flag',
     run: () => levelAt(0.1, 'god', 4.5) },

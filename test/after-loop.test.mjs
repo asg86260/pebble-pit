@@ -108,7 +108,8 @@ group("the podium is a ladder bought on the pedestal's card, a rung at each supp
     ok(y1 === afterFloor() - AFTER_PODIUM_TOPS[1] * AFTER_PODIUM_U, 'then step up onto them', `${y1}`),
     ok(paid === AFTER_PODIUM_REBEL[1], 'and a line from up there carries further', `${paid}`),
     ok(rungs.every(Boolean) && !done, 'every rung bought at its mark, and the ladder ends at the column', rungs.join()),
-    ok(top === AFTER_PODIUM_TOPS[4] * AFTER_PODIUM_U && kept === 4 && keptTop === top, 'the column stands after a reload', `${top} ${kept} ${keptTop}`)
+    ok(top === AFTER_PODIUM_TOPS[4] * AFTER_PODIUM_U && kept === 4 && keptTop === top, 'the column stands after a reload', `${top} ${kept} ${keptTop}`),
+    ok(AFTER_PODIUM_TOPS.every((v, i) => i === 0 || v > AFTER_PODIUM_TOPS[i - 1]), 'each rung stands taller than the one before', AFTER_PODIUM_TOPS.join(' '))
   ];
 });
 
