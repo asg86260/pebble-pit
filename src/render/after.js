@@ -141,34 +141,23 @@ function glyphOver(b, rows, at, alpha = 1) {
   ctx.globalAlpha = was;
 }
 // The closed sign at a station's door (config, AFTER_CLOSED), its foot on
-// the floor and `x` its middle, world px: symbols only, drawn on the act's
-// art cell (AP) with its rim the art's stroke. 0, a board on a post crossed
-// through corner to corner; 1, a barrier, a striped bar on crossed legs.
-function closedSign(x, design = AFTER_CLOSED.design) {
+// the floor and `x` its middle, world px: a board on a post crossed through
+// corner to corner, symbols only, drawn on the act's art cell (AP) with its
+// rim the art's stroke.
+function closedSign(x) {
   const C = AFTER_CLOSED, fl = afterFloor(), r = 2 * AFTER_ART_SCALE, u = AP;
-  const box = (x0, y0, w, h) => { ctx.fillStyle = GREY[K]; ctx.fillRect(x0, y0, w, h); ctx.fillStyle = GREY[W]; ctx.fillRect(x0 + r, y0 + r, w - 2 * r, h - 2 * r); };
-  // a cross corner to corner over a box, in ink: a stroke two rims thick
-  // laid in steps of a rim, each on the rim's grid
-  const cross = (x0, y0, w, h) => {
-    ctx.fillStyle = GREY[K];
-    const s = 2 * r, n = Math.round((w - s) / r) + 1;
-    for (let i = 0; i < n; i++) {
-      const y = y0 + Math.round((h - s) * i / (n - 1) / r) * r;
-      ctx.fillRect(x0 + i * r, y, s, s); ctx.fillRect(x0 + w - s - i * r, y, s, s);
-    }
-  };
-  const w = C.w * u, x0 = snap(x) - Math.round(C.w / 2) * u;
-  if (design === 0) {
-    const h = C.h * u, top = fl - (C.post + C.h) * u;
-    ctx.fillStyle = GREY[K]; ctx.fillRect(snap(x) - r, top + h, 2 * r, C.post * u);
-    box(x0, top, w, h);
-    cross(x0 + 2 * r, top + 2 * r, w - 4 * r, h - 4 * r);
-  } else {
-    const bar = u, top = fl - C.legs * u - bar;
-    cross(x0 + u, top + bar, w - 2 * u, C.legs * u);
-    box(x0, top, w, bar);
-    ctx.fillStyle = GREY[K];
-    for (let k = 1; k < C.w; k += 2) ctx.fillRect(x0 + k * u, top + r, u / 2, bar - 2 * r);
+  const w = C.w * u, h = C.h * u, x0 = snap(x) - Math.round(C.w / 2) * u, top = fl - (C.post + C.h) * u;
+  ctx.fillStyle = GREY[K];
+  ctx.fillRect(snap(x) - r, top + h, 2 * r, C.post * u);
+  ctx.fillRect(x0, top, w, h);
+  ctx.fillStyle = GREY[W];
+  ctx.fillRect(x0 + r, top + r, w - 2 * r, h - 2 * r);
+  // the cross, a stroke two rims thick laid in steps of a rim on the rim's grid
+  ctx.fillStyle = GREY[K];
+  const cx = x0 + 2 * r, cy = top + 2 * r, cw = w - 4 * r, ch = h - 4 * r, s = 2 * r, n = Math.round((cw - s) / r) + 1;
+  for (let i = 0; i < n; i++) {
+    const y = cy + Math.round((ch - s) * i / (n - 1) / r) * r;
+    ctx.fillRect(cx + i * r, y, s, s); ctx.fillRect(cx + cw - s - i * r, y, s, s);
   }
 }
 function drawStation(key) {

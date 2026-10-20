@@ -182,10 +182,9 @@ export const AFTER_START_BUILT = ['pedestal', 'shack'];
 // board offers its rebuild, the shack's build row for it. The rebuild takes
 // the sign down a piece at a time, faded out as each piece of the build
 // lands, and the station works once it is built. The sign, in the act's art
-// cells (AP): `design` 0 a board crossed through on a post, 1 a barrier, a
-// striped bar on crossed legs; a board `w` by `h` on a post `post` high; a
-// bar `w` long on legs `legs` high.
-export const AFTER_CLOSED = { design: 0, w: 6, h: 4, post: 3, legs: 5 };
+// cells (AP): a board `w` by `h`, crossed through (the owner's pick of two,
+// 2026-10-20), on a post `post` high.
+export const AFTER_CLOSED = { w: 6, h: 4, post: 3 };
 // The product looks like the protest from the start (board card
 // act3-trees-to-rebellion, the owner's pick A, 2026-10-20): the workshop
 // letters the fist onto the sign as it works it, the finished signs stand in
