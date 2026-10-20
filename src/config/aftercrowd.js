@@ -121,9 +121,27 @@ export const GOD_HAND = { w: 6, rest: -6 };   // a hand's square, and its rest o
 // stepped base under the seat, a soul's width out a step down into the crowd.
 export const GOD_THRONE = { backTop: 14, backHalf: 30, seatHalf: 36, seatH: 8, baseHalf: 40, step: 4 };
 // His rays: runs of square cells from his middle, every other one short,
-// turning a step a tick, shortening as support rises; fainter on the dark page.
-// Whole until support leaves them `1 / hold` of their length, faded after.
-export const GOD_RAYS = { n: 16, r: 36, long: 40, short: 24, cell: 2, turn: 0.05, dark: 0.6, hold: 3 };
+// shortening as support rises; fainter on the dark page. Whole until support
+// leaves them `1 / hold` of their length, faded after. Each moves as one
+// piece by its true position on the act's clock, never a tick at a time, and
+// the cell at a ray's tip shows the share of it the length reaches, so a ray
+// grows and shrinks without a cell popping.
+//   turn    (GOD_RAY_MOTION 0) the ring turns `spin` radians a second, each
+//           ray a straight run of cells laid along its own angle
+//   pulse   (GOD_RAY_MOTION 1) the ring stands still on the grid; each ray
+//           breathes `breath` of its length over `period` seconds, the long
+//           and the short out of step, and a swell of light runs out from
+//           the crown along every ray, `wave` cells long, at `speed` cells a
+//           second, the rest of the ray `low` as bright
+export const GOD_RAYS = { n: 16, r: 36, long: 40, short: 24, cell: 2, dark: 0.6, hold: 3,
+                          spin: 0.2, breath: 0.2, period: 4, wave: 16, speed: 12, low: 0.4 };
+// Which of the rays' two motions is drawn, a dev dial while the owner
+// chooses between them: 0 turn, 1 pulse.
+export let GOD_RAY_MOTION = 0;
+export const GOD_KNOBS = [
+  { key: 'GOD_RAY_MOTION', label: 'the rays round his crown: 0 turn, 1 pulse', min: 0, max: 1, step: 1,
+    get: () => GOD_RAY_MOTION, set: v => { GOD_RAY_MOTION = v; } }
+];
 // His breath (a cell up and down), and the pupils looking round, in ticks.
 export const GOD_IDLE = { breath: 8, look: 6 };
 
@@ -132,15 +150,18 @@ export const GOD_IDLE = { breath: 8, look: 6 };
 // round it.
 // A cone of his light from his eyes to a round spot on the crowd, each edge
 // GAZE edge grey. Glaring, it sweeps the crowd: a point every `hold` ticks,
-// getting there over `move` of them, at these shares of his crowd's front
+// easing there over `move` of them, at these shares of his crowd's front
 // either side of him. Its spot is `w` cells across the half against a soul
 // `soul` cells across, scaled to the crowd's front row (a flattened disc,
 // `flat` as tall); warned, it moves onto the mark over AFTER_GAZE_SETTLE_S
-// and narrows on it in three steps (`narrow`) over the rest of the warning;
-// the speech chars the board to ink in held steps over AFTER_BURN_S, and it
-// fades.
+// and narrows on it to `narrow` cells, eased over the rest of the warning;
+// the speech chars the board to ink in held steps over AFTER_BURN_S, the
+// gaze held on it, then eases back to the sweep and its width over `back`
+// seconds. All of it on the act's clock, by true position: the gaze is
+// travel, not a reaction, so nothing in it is held a tick.
 export const GAZE = { phase: 64, sweep: [-0.5, -0.26, 0.28, -0.02, -0.17, 0.4, 0.12, -0.38], hold: 8, move: 5,
-                      w: 16, narrow: [12, 9, 6], flat: 0.35, soul: 5, w0: 8, body: 0.7, bodyDark: 0.35, spot: 0.8, spotDark: 0.5 };
+                      w: 16, narrow: 6, flat: 0.35, soul: 5, w0: 8, body: 0.7, bodyDark: 0.35, spot: 0.8, spotDark: 0.5,
+                      back: 1 };
 export const AFTER_GAZE_SETTLE_S = 0.9;
 export const AFTER_BURN_S = 4;
 // A sign is a flag (a3flag, emblem 1): the union's ink, `w` by `h` of its

@@ -49,9 +49,10 @@ import { S } from '../state.js';
 import { P, GREY, GOD_BACK, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AFTER_SPEECH_WARN_S,
          SKY_TICK_S, GOD_CROWD, GOD_STAGE, GOD_FLAG,
          SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
-         GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, GOD_TALK, GAZE,
+         GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_RAY_MOTION, GOD_IDLE, GOD_TALK, GAZE,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_POSTER, SKY_DRIFT,
          AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S } from '../config.js';
+import { lerp, smoothstep, quadInOut } from '../motion.js';
 import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { layerAt } from './frame.js';
@@ -63,9 +64,7 @@ import { skyFrame, campX0, rateAt, stage, stageHalf, crowdHalf, campHalf, stageF
 import { K as INK, W, PALE, MID, square } from './after/kit.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const lerp = (a, b, k) => a + (b - a) * k;
 const snap = (v, q) => Math.round(v / q) * q;
-const eio = u => (u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u));
 const now = () => (S.after ? S.after.t : 0);
 function hsh(a, b = 0, c = 0) {
   let h = (a * 374761393 + b * 668265263 + c * 2246822519) | 0;
@@ -97,12 +96,15 @@ const UNION_TONE = darkPage ? AFTER_LINE_DARK : INK;
 // --- the frame's camera ---------------------------------------------------------------
 // The device pixels a world pixel takes, the window's middle, the sky's
 // frame, its cell and the tick, read once a frame. A rect's edges are each
-// put on a whole device pixel, so a stroke stays whole at any zoom.
-let K = 1, CX = 0, F = null, H = 1, TK = 0;
+// put on a whole device pixel, so a stroke stays whole at any zoom. `TK`
+// is the whole tick, for the held poses; `TS` the same clock unrounded, for
+// what travels (the gaze, the rays), which must never move a tick at a time.
+let K = 1, CX = 0, F = null, H = 1, TK = 0, TS = 0;
 function camFrame() {
   K = (S.zoomShow || S.zoom) * S.dpr; CX = S.camX + S.viewW / 2; F = skyFrame();
   H = F.h;
-  TK = Math.floor(now() / SKY_TICK_S);
+  TS = now() / SKY_TICK_S;
+  TK = Math.floor(TS);
 }
 const onPx = v => Math.round(v * K) / K;
 // A tone: a rung of GREY by number, through the page's map; a color by
@@ -651,25 +653,69 @@ function hand(x, y) {
 }
 const handsRest = () => ({ l: [-GOD_N / 2 - 10, SEAT + GOD_HAND.rest], r: [GOD_N / 2 + 4, SEAT + GOD_HAND.rest] });
 
-// His rays: runs of square cells out from his middle, turning a step a tick,
-// shortening and fading as support rises; pale on the light page, his light
-// on the dark.
+// His rays: runs of square cells out from his middle, shortening and fading
+// as support rises; pale on the light page, his light on the dark. Two
+// motions on a dial (GOD_RAY_MOTION): the ring turning, or standing and
+// pulsing out from the crown.
+//
+// Turning, a ray's cells sit at their true places along its angle, not
+// snapped to the grid: snapped, every cell re-stairs on its own as the angle
+// moves and the ray crawls. Unsnapped, the run is one rigid piece that turns.
+// Its cells then overlap where the ray is not square to the grid, so the
+// whole cells go into one path filled once: a filled union, so the overlaps
+// are not drawn twice and do not bead on the dark page's thinned light.
+//
+// Standing, the cells are on the grid as drawn, and all that moves is light:
+// the length, and a swell running out along each ray, both as opacity.
+//
+// Either way the tip cell shows the share of it the length reaches, so a ray
+// that lengthens or shortens fades a cell in or out rather than popping one.
+const tipShare = (d, end, c) => clamp((end - d) / c, 0, 1);
+function rayPath(x, y, w, h) {
+  const x0 = Math.round(x * K), y0 = Math.round(y * K);
+  const ww = Math.round((x + w) * K) - x0, hh = Math.round((y + h) * K) - y0;
+  if (ww > 0 && hh > 0) ctx.rect(x0 / K, y0 / K, ww / K, hh / K);
+}
 function drawRays() {
   const R = GOD_RAYS, left = raysLeft();
   if (left < 0.02) return;
-  const ox = gx(), oy = F.gy0 + (GOD_N / 2) * H, th = TK * R.turn, c = R.cell;
+  const ox = gx(), oy = F.gy0 + (GOD_N / 2) * H, c = R.cell, t = now(), turning = GOD_RAY_MOTION === 0;
+  const th = turning ? t * R.spin : 0;
   // Whole until support has taken most of them, then faded out with the
   // last of their length, so they read on the day's paper to the end.
   alpha((darkPage ? R.dark : 1) * clamp(left * R.hold, 0, 1), () => {
     ctx.fillStyle = style(RAY_TONE);
+    const tips = [];
+    ctx.beginPath();
     for (let i = 0; i < R.n; i++) {
-      const a = th + i / R.n * Math.PI * 2, len = (i % 2 ? R.short : R.long) * left;
-      for (let d = R.r; d < R.r + len; d += c) {
-        const x = c * Math.round(Math.cos(a) * d / c), y = c * Math.round(Math.sin(a) * d / c);
-        rect(ox + x * H, oy + y * H, c * H, c * H);
+      const a = th + i / R.n * Math.PI * 2, long = i % 2 === 0;
+      let len = (long ? R.long : R.short) * left;
+      // the long and the short breathe half a breath apart
+      if (!turning) len *= 1 - R.breath / 2 + (R.breath / 2) * Math.sin(2 * Math.PI * t / R.period + (long ? 0 : Math.PI));
+      const end = R.r + len, cos = Math.cos(a), sin = Math.sin(a);
+      let px = null, py = null;
+      for (let d = R.r; d < end; d += c) {
+        const x = turning ? cos * d : c * Math.round(cos * d / c), y = turning ? sin * d : c * Math.round(sin * d / c);
+        // on the grid two steps can land on one cell; it is drawn once
+        if (x === px && y === py) continue;
+        px = x; py = y;
+        let k = tipShare(d, end, c);
+        if (!turning) k *= raySwell(d - R.r, t);
+        if (k >= 1) rayPath(ox + x * H, oy + y * H, c * H, c * H);
+        else if (k > 0.001) tips.push([ox + x * H, oy + y * H, k]);
       }
     }
+    ctx.fill();
+    for (const [x, y, k] of tips) alpha(k, () => rect(x, y, c * H, c * H));
   });
+}
+// How bright a standing ray is `s` cells out from its foot at `t`: `low`,
+// rising smoothly to whole under a swell `wave` cells long that runs out
+// from the crown at `speed` cells a second, wholly off the longest ray
+// before the next sets out, so none starts or ends on a ray in sight.
+function raySwell(s, t) {
+  const R = GOD_RAYS, run = R.long + R.wave, head = ((t * R.speed) % run) - R.wave / 2;
+  return R.low + (1 - R.low) * smoothstep(1 - Math.abs(s - head) / (R.wave / 2));
 }
 
 // --- the turns -------------------------------------------------------------------------------------
@@ -707,8 +753,9 @@ function drawGod(gz) {
 }
 
 // --- the gaze ----------------------------------------------------------------------------------------
-// Glaring, it sweeps the crowd in held steps; warned, it moves onto the mark
-// and narrows on it in three steps, and holds there while the speech burns it.
+// Glaring, it sweeps the crowd, easing from point to point; warned, it moves
+// onto the mark and narrows on it smoothly, and holds there while the speech
+// burns it.
 const GZ0 = { g: 0, x: 0, y: 0, w: GAZE.w, on: null };
 // Where on the stage the sweep runs: across its middle.
 const gazeY = () => { const st = stage(); return snap((st.yb + st.yf) / 2, P); };
@@ -718,63 +765,84 @@ const gazeK = () => stageSoul(stage(), gazeY()) / (GAZE.soul * H);
 function gazeNow() {
   const g = glaring();
   if (g <= 0) return { ...GZ0, x: gx(), y: gazeY() };
-  const A = S.after, sp = A.speech, t = now(), Tq = TK * SKY_TICK_S;
-  const pts = GAZE.sweep, i = Math.floor(TK / GAZE.hold) % pts.length, k = (TK % GAZE.hold) / GAZE.move;
+  const A = S.after, sp = A.speech, t = now();
+  // On the unrounded clock: the sweep eases from point to point every frame.
+  const pts = GAZE.sweep, i = Math.floor(TS / GAZE.hold) % pts.length, k = (TS % GAZE.hold) / GAZE.move;
   // The sweep's points are shares of the stage across, either side of him.
   const y = gazeY(), reach = 2 * stageHalf(stage(), y);
-  let x = gx() + lerp(pts[i], pts[(i + 1) % pts.length], eio(Math.min(1, k))) * reach, w = GAZE.w, on = null, yy = y;
+  let x = gx() + lerp(pts[i], pts[(i + 1) % pts.length], quadInOut(k)) * reach, w = GAZE.w, on = null, yy = y;
   const target = speechTarget();
   const onThing = (kind, q) => { const b = thingAt(kind, q); return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; };
   if (target && sp) {
     const kind = A.signs.includes(target) ? 'sign' : 'poster', m = onThing(kind, target);
-    const tau = Tq - (sp.next - AFTER_SPEECH_WARN_S), span = (AFTER_SPEECH_WARN_S - AFTER_GAZE_SETTLE_S) / GAZE.narrow.length;
-    if (tau < AFTER_GAZE_SETTLE_S) { const e = eio(clamp(tau / AFTER_GAZE_SETTLE_S, 0, 1)); x = lerp(x, m.x, e); yy = lerp(y, m.y, e); }
-    else { x = m.x; yy = m.y; w = GAZE.narrow[Math.min(GAZE.narrow.length - 1, Math.floor((tau - AFTER_GAZE_SETTLE_S) / span))]; }
+    const tau = t - (sp.next - AFTER_SPEECH_WARN_S);
+    const e = quadInOut(tau / AFTER_GAZE_SETTLE_S);
+    x = lerp(x, m.x, e); yy = lerp(y, m.y, e);
+    w = lerp(GAZE.w, GAZE.narrow, smoothstep((tau - AFTER_GAZE_SETTLE_S) / (AFTER_SPEECH_WARN_S - AFTER_GAZE_SETTLE_S)));
     on = target;
-  } else if (sp?.burnt && t >= sp.burnt.at && t - sp.burnt.at < AFTER_BURN_S + 1) {
+  } else if (sp?.burnt && t >= sp.burnt.at && t - sp.burnt.at < AFTER_BURN_S + GAZE.back) {
     // held on the ash, then back to the sweep
     const q = (sp.burnt.kind === 'sign' ? A.signs : A.posters).find(o => o.id === sp.burnt.id);
     const m = q ? onThing(sp.burnt.kind, q) : null;
     if (m) {
-      const e = eio(clamp((Tq - sp.burnt.at - AFTER_BURN_S) / 1, 0, 1));
-      x = lerp(m.x, x, e); yy = lerp(m.y, y, e); w = Math.round(lerp(GAZE.narrow[GAZE.narrow.length - 1], GAZE.w, e));
+      const e = quadInOut((t - sp.burnt.at - AFTER_BURN_S) / GAZE.back);
+      x = lerp(m.x, x, e); yy = lerp(m.y, y, e); w = lerp(GAZE.narrow, GAZE.w, e);
     }
   }
-  return { g, x: snap(x, H), y: snap(yy, H), w, on };
+  // Unsnapped: God's layer slides at its own rate under the camera, so a
+  // world-grid snap here would knock the spot a pixel against him as it pans.
+  return { g, x, y: yy, w, on };
 }
 // A cone of his light from his eyes, across his face, to a round spot on the
 // crowd: a body of his light, each edge a line of the gaze's grey two cells
 // thick, the spot a stepped disc flattened to lie on the crowd, its rim the
 // same grey.
+//
+// Every edge and width is the gaze's true value, unrounded: rounded to the
+// cell, the spot hopped a cell at a time as it swept and its rim jumped a
+// cell as it narrowed. The rows stay a cell tall on God's grid; the spot's
+// rows move together with it, so its insides never shear. Where the spot
+// grows a row, the new row comes in at nothing and fades in with its width,
+// and the rim it takes over from the old top row fades out as it does, so
+// narrowing and widening are smooth all the way and nothing pops.
 function drawGaze(gz) {
   if (gz.g <= 0) return;
   const ox = gx(), oy = F.gy0, eyeY = GOD_EYES.y + 2, fx = (gz.x - ox) / H, fy = (gz.y - oy) / H;
-  const y0 = eyeY + 2, y1 = Math.round(fy) + 4;
+  const y0 = eyeY + 2, y1 = fy + 4;
   if (y1 <= y0) return;
   const c = (x, y, w, h, tone) => rect(ox + x * H, oy + y * H, w * H, h * H, tone);
   alpha(gz.g, () => {
     let pl = null, pr = null;
-    for (let y = y0; y <= y1; y++) {
-      const k = (y - y0) / (y1 - y0), cx = Math.round(lerp(0, fx, k));
-      const hw = Math.max(2, Math.round(lerp(GAZE.w0, gz.w * gazeK(), k)));
+    for (let y = y0; y < y1; y++) {
+      // the last row only as deep as the cone reaches
+      const k = (y - y0) / (y1 - y0), cx = lerp(0, fx, k), h = Math.min(1, y1 - y);
+      const hw = Math.max(2, lerp(GAZE.w0, gz.w * gazeK(), k));
       const l = cx - hw - 1, r = cx + hw;
-      alpha(darkPage ? GAZE.bodyDark : GAZE.body, () => c(l + 1, y, r - l - 1, 1, WHITE));
+      alpha(darkPage ? GAZE.bodyDark : GAZE.body, () => c(l + 1, y, r - l - 1, h, WHITE));
       // each edge a joined line two cells thick: a run across to where the row above left off
-      const run = (x, px) => { const a = px == null ? x : Math.min(x, px), b = px == null ? x : Math.max(x, px); c(a, y, b - a + 2, 1, AFTER_GAZE_EDGE); };
+      const run = (x, px) => { const a = px == null ? x : Math.min(x, px), b = px == null ? x : Math.max(x, px); c(a, y, b - a + 2, h, AFTER_GAZE_EDGE); };
       run(l - 1, pl); run(r, pr);
       pl = l - 1; pr = r;
     }
-    // The spot lies on the crowd at its own scale.
-    const hw = Math.max(3, Math.round(gz.w * gazeK()));
-    const ry = Math.max(2, Math.round(hw * GAZE.flat)), rows = [], sx = Math.round(fx), sy = Math.round(fy);
-    for (let dy = -ry; dy <= ry; dy++) rows.push([dy, Math.round(hw * Math.sqrt(1 - (dy / (ry + 0.5)) ** 2))]);
-    alpha(darkPage ? GAZE.spotDark : GAZE.spot, () => { for (const [dy, w] of rows) c(sx - w, sy + dy, 2 * w, 1, WHITE); });
-    rows.forEach(([dy, w], i) => {
-      const out = Math.max(i ? rows[i - 1][1] : 0, i < rows.length - 1 ? rows[i + 1][1] : 0);
-      if (dy === -ry || dy === ry) { c(sx - w - 1, sy + dy, 2 * w + 2, 1, AFTER_GAZE_EDGE); return; }
-      c(sx - w - 1, sy + dy, Math.max(1, w - out + 1), 1, AFTER_GAZE_EDGE);
-      c(sx + Math.min(w, out), sy + dy, Math.max(1, w - out + 1), 1, AFTER_GAZE_EDGE);
-    });
+    // The spot lies on the crowd at its own scale: a disc of rows a cell
+    // tall, each as wide as the flattened circle is there, reaching out to
+    // any row the circle touches at all.
+    const hw = Math.max(3, gz.w * gazeK()), R = Math.max(2, hw * GAZE.flat) + 0.5, n = Math.ceil(R) - 1;
+    const rows = [];
+    for (let dy = -n; dy <= n; dy++) rows.push([dy, hw * Math.sqrt(Math.max(0, 1 - (dy / R) ** 2))]);
+    const wAt = dy => (Math.abs(dy) <= n ? rows[dy + n][1] : 0);
+    alpha(darkPage ? GAZE.spotDark : GAZE.spot, () => { for (const [dy, w] of rows) alpha(clamp(w, 0, 1), () => c(fx - w, fy + dy, 2 * w, 1, WHITE)); });
+    for (const [dy, w] of rows) {
+      // The rim: each end of a row in to the widest of its neighbors, a cell
+      // at the least; and across the whole of a row with nothing past it,
+      // fading out as the next row out comes in.
+      const out = Math.max(wAt(dy - 1), wAt(dy + 1)), past = dy < 0 ? wAt(dy - 1) : dy > 0 ? wAt(dy + 1) : 1;
+      alpha(clamp(w, 0, 1), () => {
+        alpha(1 - clamp(past, 0, 1), () => c(fx - w - 1, fy + dy, 2 * w + 2, 1, AFTER_GAZE_EDGE));
+        c(fx - w - 1, fy + dy, Math.max(1, w - out + 1), 1, AFTER_GAZE_EDGE);
+        c(fx + Math.min(w, out), fy + dy, Math.max(1, w - out + 1), 1, AFTER_GAZE_EDGE);
+      });
+    }
   });
 }
 
