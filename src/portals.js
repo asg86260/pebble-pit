@@ -9,9 +9,9 @@
 //
 // When each stands is the story's (actbeats.js): heaven's opens as the souls
 // rise out of the fallen house, hell's on the deep's floor as Satan is
-// unmasked. When each can be *taken* is the story's too: heaven's carries
-// the souls up and nothing back until the road opens (`ghost-road`), so act 3
-// is spent in the cloud; hell's waits for the pair to come back to the yard
+// unmasked. When each can be *taken* is the story's too: heaven's is the
+// player's from the arrival on, a way down and back up at any time
+// (actbeats.js frees it); hell's waits for the pair to come back to the yard
 // as ghosts (`haunt`). A beat takes the camera through either whenever it
 // needs to, open to the player or not.
 //

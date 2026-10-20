@@ -21713,9 +21713,11 @@ a plain label in locales/en.ftl for the owner to rewrite.
   the same ripple the wizards' portal uses, generalized: the nearer place
   stands while the farther shows through the ring, painted once on the
   click and frozen, never a second pass of the layers. Each has the yard
-  portal's pointing hand until the player's own round trip. Heaven's carries
-  nobody back by a press until the road opens (`ghost-road`); hell's waits
-  for the pair to come back as ghosts (`haunt`). The places are stacked, so
+  portal's pointing hand until the player's own round trip. Heaven's gates
+  are the player's from the arrival on, a way down to the yard and back up
+  at any time in act 3 (the owner, 2026-10-19: "it should take you back
+  down always"); the pair stay up there. Hell's waits for the pair to come
+  back as ghosts (`haunt`). The places are stacked, so
   bodies walk the road, never the portal: the souls rise straight up out of
   the ruin through the tear onto the cloud; the cloud stair is let down from
   the tear at `ghost-road`; the act-4 road runs into the drowned pit, down
