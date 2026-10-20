@@ -1036,3 +1036,27 @@ export function drawAfterCrowd() {
   drawDrift();
   drawBubbles();
 }
+
+// --- a fist flag anywhere ------------------------------------------------------------
+// The planted flag's own drawing (`flagSprite`) on its pole, for a sign not
+// yet planted: racked outside the workshop, held high by a carrier, or being
+// lettered on the bench. `px` the pole's left and `foot` its foot, world px;
+// `U` a flag cell; `lettered` how much of the fist is on it, 0 to 1, top down
+// in whole rows of the fist -- the cloth blank under the rows still to come;
+// `pole` world px more pole under the flag than a planted one stands on.
+export function drawFistFlag(px, foot, U, lettered = 1, pole = 0) {
+  if (!S.after) return;
+  camFrame();
+  freshCaches();
+  const FL = SKY_FLAG, phase = TK % FL.phases, t = Math.max(1, U / 3), A = Math.max(1, Math.round(FL.amp * U / t)) * t;
+  const y = foot - (FL.h + FL.up) * U - pole, x = px + U;
+  rect(px, y - A, U, foot - y + A, UNION_TONE);
+  const rows = Math.round(FL.fist.length * Math.max(0, Math.min(1, lettered)));
+  if (rows >= FL.fist.length) { blit(flagSprite(U, phase, W), x, y - A); return; }
+  blit(flagSprite(U, phase, UNION_TONE), x, y - A);
+  if (rows <= 0) return;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y - A, FL.w * U, (FL.y + rows) * U + A); ctx.clip();
+  blit(flagSprite(U, phase, W), x, y - A);
+  ctx.restore();
+}

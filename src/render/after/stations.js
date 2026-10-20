@@ -23,7 +23,7 @@ const TURN = Math.PI / 16;                                 // a held step of a t
 const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
 import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT } from '../../config.js';
-import { K, W, PALE, MID, DUST, toward, hash, clamp01, silhouette, pileAlpha, countAt } from './kit.js';
+import { K, W, PALE, MID, DUST, toward, hash, clamp01, silhouette } from './kit.js';
 import { signsJoined } from '../../after/press.js';
 import { paperPulls } from '../../after/mill.js';
 
@@ -447,13 +447,6 @@ function workshop(d, work, t, h, body = false, at = {}) {
   for (let i = 0; i < blanks; i++) wsBoard(d, BLANKS_X, (-2 - 2 * i) * P);
 }
 let wsLastJx = REST_X;
-// Signs at the pile: boards edge-on with their nails flush (piles.js's fade).
-export function boardPile(d, x, st) {
-  const m = Math.min(Math.max(st.n, st.prev), PILE_CAP);
-  for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => nailed(d, x, (-2 - 2 * i) * P, [2, 2, 2, 2]));
-  const at = d.world(x + BOARD.w / 2, -2 * Math.max(1, Math.min(st.n, PILE_CAP)) - 2.4);
-  countAt(at.x, at.y, st.n);
-}
 
 // --- the press: a screw and a platen in a frame -----------------------------------
 // The platen, the screw, the bar and its handle all ride one number, the drop

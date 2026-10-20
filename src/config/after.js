@@ -176,6 +176,14 @@ export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0
 // The stations standing from the act's first frame: the pedestal the pair
 // speak from and the construction shack that sells every other.
 export const AFTER_START_BUILT = ['pedestal', 'shack'];
+// The product looks like the protest from the start (board card
+// act3-trees-to-rebellion, the owner's pick A, 2026-10-20): the workshop
+// letters the fist onto the sign as it works it, the finished signs stand in
+// a rack outside it as the fist flags planted in God's crowd, and a carrier
+// marches one out held high. A sign's flag cell, world px, held and racked;
+// the rack's flags this many cells apart; a carried one this many cells over
+// the carrier's head.
+export const AFTER_SIGN_FLAG_U = { rack: 3, held: 2, apart: 8, up: 4 };
 export const AFTER_BUILD_FADE_S = 2;       // a piece of a station, a plot cleared or a post put up fades in over this
 // A station bought on the shack is raised a piece at a time, a band of its
 // box from the floor up, by a builder at its door: a member from the camp,

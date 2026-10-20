@@ -13,7 +13,7 @@
 // where the cell stands (no flat fills, no random draw, so it holds still
 // frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
+import { P, GREY, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
@@ -30,13 +30,14 @@ import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
 import { postsOf, bodiesOf, atStation, bodyInk } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
-import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, hash, backing, K, W, PALE, MID } from './after/kit.js';
+import { frame, now, inView, clamp01, pileState, pileAlpha, countAt, clearCounts, pendingCounts, hash, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
 import { drawGround, drawForeground } from './after/ground.js';
 import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove } from './after/pine.js';
-import { DRAW, workerPose, GLYPHS, backOf, boardPile } from './after/stations.js';
+import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
+import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, logPile, plankPile, sheetPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
 import { siteOf } from '../after/build.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
@@ -213,6 +214,20 @@ function drawSawdust() {
   }
   if (heapFull()) warning(heapMid() + P / 2, fl + P * 5);   // under the heap, clear of the window's foot
 }
+// The finished signs as the fist flags they will be planted as (config,
+// AFTER_SIGN_FLAG_U), stood in a rack on a low rail outside the workshop, each
+// fading in as it is laid; and while the joiner works, the next one standing
+// in the rack's next slot, its fist lettered on as the work goes.
+function signRack(d, x, st) {
+  const FU = AFTER_SIGN_FLAG_U, at = d.world(x, 0), U = FU.rack, step = FU.apart * P, n = Math.min(Math.max(st.n, st.prev), 3);
+  ctx.fillStyle = GREY[K]; ctx.fillRect(at.x - P, at.y - P, step * 3 + P, P);
+  for (let i = 0; i < n; i++) d.fade(pileAlpha(i, st), () => drawFistFlag(at.x + i * step, at.y - P, U));
+  // The sign on the bench, lettered in the next slot a row of the fist a
+  // blow: as far along as its nails are driven, by the hand or the joiner.
+  const h = hands.workshop, done = h && h.nails ? h.nails.reduce((a, k) => a + k, 0) / (h.nails.length * GESTURE_NAIL_TAPS) : 0;
+  if (done > 0 && st.n < 3) drawFistFlag(at.x + st.n * step, at.y - P, U, done);
+  countAt(at.x + step * 1.5, at.y - (SKY_FLAG.h + SKY_FLAG.up + 3) * U - P * 2, st.n);
+}
 // Each station's counted pile, on its own ground.
 function drawPiles() {
   const st = A().stock;
@@ -221,7 +236,7 @@ function drawPiles() {
   pile('mill', 'timber', plankPile, Math.floor(st.timber));
   pile('chipper', 'chiplogs', logPile, st.chiplogs);
   pile('papermill', 'paper', sheetPile, Math.floor(st.paper));
-  pile('workshop', 'signs', boardPile, Math.floor(st.signs));
+  pile('workshop', 'signs', signRack, Math.floor(st.signs));
   pile('press', 'posters', (d, x, s) => sheetPile(d, x, s, 6, true), Math.floor(st.posters));
 }
 export function drawAfterCamp() {
@@ -277,7 +292,7 @@ function drawMember(w) {
   const x = at.x, y = at.y;
   ctx.fillStyle = GREY[K];
   if (w.load === 'log') { ctx.fillRect(x - P, y - P, 5 * P, P); cell(x + P, y - P, PALE); }
-  else if (w.load === 'sign') { ctx.fillRect(x + P + 2, y - P, 2, P); ctx.fillRect(x, y - P * 3, P * 3, P * 2); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 2, y - P * 3 + 2, P * 3 - 4, P * 2 - 4); }
+  else if (w.load === 'sign') drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
   else if (w.load === 'posters') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 4, y - 8, 10, 6); }
   else if (w.load === 'carry' || w.load === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
   else if (w.load === 'tip') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
