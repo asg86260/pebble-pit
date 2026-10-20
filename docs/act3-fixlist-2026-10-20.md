@@ -19,8 +19,11 @@ Status: **open** / **in progress** / **fixed (commit)**.
    The save has 30 agitator, 2 woodcutter, 3 hauler and 8 sawyer posts bought,
    but only 6 bodies (all agitators) and 0 members in the camp. A post is
    filled from the camp; with the pair silent (item 1) no member ever joined.
-   Still wrong after item 1: the shop sells a post nobody can fill, and says
-   nothing about it.
+   Still wrong after item 1: only six members were ever won and all six sat on
+   agitator posts, so nothing could start again. The owner's answer: no
+   bought posts; idle members agitate at the podium and stations take members
+   through the yard's roster (DESIGN.md, "Act 3's crew: assigned like the
+   yard's"). In progress.
 
 3. **"the pedestal crowd isnt working"** -- open.
    Same root as items 1 and 2: no members, so the union's crowd never grows.

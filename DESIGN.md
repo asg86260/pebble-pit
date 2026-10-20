@@ -22978,3 +22978,31 @@ same brown, a balloon still hangs under the same cloud.
   steps; a murk that pressed two roles together would draw stripes.
 - **Saves.** `CLOUDS` is not saved now (it is reseeded); the puffs must not
   become saved either, so a reload is a fresh sky with the same swell.
+
+### Act 3's crew: assigned like the yard's (design, not built; the owner, 2026-10-20)
+
+The owner, verbatim: "I think agitators should be what workers do as they
+idle. When nothing is happening they hang at the podium. Otherwise they're
+moving goods and at stations. Stations shouldn't be purchasing workers, they
+should use the same worker assignment as the surface. Plus minus under each
+one with a sprite and pip count."
+
+Why: buying a post bought a job, not a person; a post was filled from the
+camp, and the camp grows only from signs, which need workers. The owner's save
+put all six members ever won on agitator posts and the act could never start
+again (docs/act3-fixlist-2026-10-20.md, items 2 and 3).
+
+- **One pool, the members.** Every member won over is a worker. None is
+  bought; members come only as souls are won.
+- **Idle is agitating.** A member with no job stands at the podium with the
+  pair and adds the agitators' rebel there. No agitator post, no agitator row.
+- **Assigned the yard's way.** Each act 3 station that takes a job carries the
+  yard's roster (`roster.js`) under it: the job's sprite, its pip count, and a
+  minus and a plus. Plus takes an idle member off the podium, who walks to the
+  station; minus sends one back to the podium. The grove's jobs (woodcutter,
+  gatherer, hauler) sit under the forestry shack. Same drawing, same hit
+  test, same hold-to-repeat as the surface: the shared roster, not a copy.
+- **The post rows go** from every act 3 board. A save's bought posts become
+  assignments, filled from its members as far as they go, the rest idle.
+- **Builders** still come from idle members first, then off a station's
+  roster, as now.
