@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <title>clouds</title>
 <style>
-  /* The cloud bench: every kind of cloud drawn through the real module
-     (src/render/clouds.js), alone or together, on either page, at the size
-     the yard's camera draws a cell -- with a strip of the yard beside them
-     (a worker, a station, the rock, the ground line) so a cloud is judged at
-     the size it will be seen. Nothing here is the game; the clouds are. */
+  /* The cloud bench: a whole liquid sky drawn through the real modules
+     (src/render/clouds.js for the clouds, src/render/cloudgl.js for the
+     field on the graphics card) at the size the yard's camera draws a cell,
+     with a strip of the yard beside it (a worker, a station, the rock, the
+     ground line) so a cloud is judged at the size it will be seen. Every
+     layer alone, the ground, the clickable clouds, or all of it together, on
+     either page, in each treatment. Nothing here is the game; the clouds are. */
   body { margin: 0; background: #fff; color: #000; font: 12px/1.4 ui-monospace, "Courier New", monospace; }
   body.dark { background: #121212; color: #d6d6d6; }
   .bar { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; padding: 8px 12px; }
@@ -22,194 +24,158 @@
 <div class="bar">
   <b>clouds</b>
   <label>show <select id="show">
-    <option value="all">all together</option><option value="far">far bank</option><option value="mid">middle bank</option>
-    <option value="puff">clickable clouds</option><option value="ground">ground billows</option>
-    <option value="sheet">treatment sheet</option></select></label>
+    <option value="all">the whole sky</option><option value="l0">layer 0 (horizon)</option><option value="l1">layer 1</option>
+    <option value="l2">layer 2</option><option value="l3">layer 3</option><option value="l4">layer 4 (nearest)</option>
+    <option value="ground">ground</option><option value="puffs">clickable clouds</option></select></label>
   <label>window <select id="win"><option value="2000x967">2000 x 967</option><option value="800x600">800 x 600</option></select></label>
   <label><input type="checkbox" id="dark"> dark</label>
   <label>treatment <select id="treat">
-    <option value="A">A: one tone</option><option value="B">B: two tones, underside</option>
-    <option value="C" selected>C: two tones, every belly</option><option value="D">D: C and the moonlit rim</option></select></label>
+    <option value="A">A: one tone</option><option value="B">B: undersides</option>
+    <option value="C" selected>C: every belly</option><option value="D">D: C and the rim</option></select></label>
   <label><input type="checkbox" id="ref" checked> yard strip</label>
   <label>camera <input type="range" id="cam" min="0" max="600" step="0.1" value="0"></label>
   <label><input type="checkbox" id="auto" checked> slide</label>
-  <label>slide <input type="range" id="slide" min="0" max="40" step="0.5" value="4"> <span id="slideV"></span> cells/s</label>
-  <label>time <input type="range" id="speed" min="0" max="40" step="0.5" value="1"> <span id="speedV"></span>x</label>
+  <label>slide <input type="range" id="slide" min="0" max="40" step="0.5" value="3"> <span id="slideV"></span> cells/s</label>
+  <label>time <input type="range" id="speed" min="0" max="20" step="0.5" value="1"> <span id="speedV"></span>x</label>
+  <label><input type="checkbox" id="sync"> wait for the card (timing)</label>
 </div>
 <canvas id="c"></canvas>
 <div class="stats" id="stats"></div>
 <script type="module">
-import { cloudSheet, tickClouds, setLook, drawCloud, drawBand, cloudAt, spursOf } from '/src/render/clouds.js';
+import { CLOUDS_SKY } from '/src/config/clouds.js';
+import { skyLayer, groundLayer, cloudLayer, layerLook, sumsAt, tierOf } from '/src/render/clouds.js';
+import { skyGL } from '/src/render/cloudgl.js';
 
 const $ = id => document.getElementById(id);
 const cv = $('c'), g = cv.getContext('2d');
 // A cell as the yard's camera draws it at its default zoom (CELL in
 // config/yard.js) on a one-to-one screen: five pixels.
 const CELLPX = 5;
-
 // The yard strip, measured off the yard scene at 2000 x 967 (look.mjs crew):
 // the ground line 727 px down, so 48 cells of ground under it; a worker three
 // cells wide and six tall with the hat; the rock about forty cells across.
 const YARD = { groundUp: 48, worker: [3, 6], station: [24, 16], rock: [40, 18] };
+const PUFFS = 3;
 
-// Where each layer sits and how it moves: parallax against the camera, and
-// wind, in cells a second.
-const LAYERS = {
-  far:    { parallax: 0.15, wind: 0.04 },
-  mid:    { parallax: 0.4, wind: 0.1 },
-  puff:   { parallax: 0.6, wind: 0.22 },
-  ground: { parallax: 1, wind: 0 }
-};
-
-let W = 2000, H = 967, cols, rows, sheets = {}, puffs = [], t = 0, cam = 0, manual = false;
-const look = { page: 'light', treat: 'C' };
+const gpu = skyGL();
+let W = 2000, H = 967, cols, rows, layers = [], ground, puffs = [], t = 0, cam = 0, manual = false, looks = new Map();
+let placed = {}, frames = 0;
 
 function build() {
   cv.width = W; cv.height = H;
   cols = Math.ceil(W / CELLPX); rows = Math.ceil(H / CELLPX);
-  // bands a good way wider than the window, so a slide shows new sky
-  sheets = {
-    far: cloudSheet({ kind: 'far', seed: 3, w: cols + 260 }),
-    mid: cloudSheet({ kind: 'mid', seed: 5, w: cols + 340 }),
-    ground: cloudSheet({ kind: 'ground', seed: 9, w: cols + 400 })
-  };
-  puffs = [0, 1, 2, 3].map(i => ({ sh: cloudSheet({ kind: 'puff', seed: 21 + i }), x0: 40 + i * (cols + 60) / 4, row: 0.36 + 0.07 * (i % 2), fade: 1, gone: false, back: 0 }));
-  for (const sh of scene()) setLook(sh, look);
+  const round = Math.max(cols * 2, 700);
+  layers = Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: 7, W: round }));
+  ground = groundLayer({ seed: 7, W: round });
+  puffs = Array.from({ length: PUFFS }, (_, i) => ({
+    layer: cloudLayer({ kind: ['cumulus', 'heap', 'tower'][i % 3], R: 6 + 2 * i, seed: 31 + i }),
+    x0: 60 + i * (cols + 80) / PUFFS, row: 0.32 + 0.08 * (i % 2), fade: 1, gone: false, back: 0 }));
+  looks.clear();
 }
-const scene = () => [sheets.far, sheets.mid, ...puffs.map(p => p.sh), sheets.ground];
-// The treatment sheet: the same three clouds (one seed each) in every
-// treatment, down the page, light beside dark, at twice the size, so the
-// treatments are judged side by side and a change to one is one shot. The
-// ground is drawn at its own size, below them.
-const TREATS = ['A', 'B', 'C', 'D'], PAGES = ['light', 'dark'], SHEET_CELL = 10, PANEL = [1000, 900];
-let panels = [];
-function buildSheet() {
-  panels = [];
-  for (const treat of TREATS) for (const page of PAGES) {
-    const p = { treat, page,
-      mid: cloudSheet({ kind: 'mid', seed: 5, R: 11, single: true }),
-      puff: cloudSheet({ kind: 'puff', seed: 22, R: 8 }),
-      ground: cloudSheet({ kind: 'ground', seed: 9, w: 200, R: 16 }) };
-    for (const sh of [p.mid, p.puff, p.ground]) setLook(sh, { page, treat });
-    panels.push(p);
-  }
+function look(layer) {
+  let L = looks.get(layer);
+  if (!L) { L = layerLook(layer, { page: page(), treat: $('treat').value }); looks.set(layer, L); }
+  return L;
 }
-const all = () => $('show').value === 'sheet' ? panels.flatMap(p => [p.mid, p.puff, p.ground])
-  : scene();
-let solo = null, drawnAt = {};
-function shown() {
-  const s = solo || $('show').value;
-  return { far: s === 'all' || s === 'far', mid: s === 'all' || s === 'mid', puff: s === 'all' || s === 'puff', ground: s === 'all' || s === 'ground' };
-}
+const page = () => ($('dark').checked ? 'dark' : 'light');
+const show = () => $('show').value;
 
-// Where things stand, in cells from the top: the ground's top a fixed share
-// down, the bands above it, as the act's sky would hang them.
-function layout() {
-  const groundTop = rows - sheets.ground.h + Math.round(sheets.ground.h * 0.08);
-  return { far: Math.round(rows * 0.12), mid: Math.round(rows * 0.2), ground: groundTop };
-}
+// Where things stand, in cells: the horizon where the ground's back row
+// tops out; each layer's base line its share of the sky over that.
+function horizon() { return rows - ground.h + 2; }
+const scroll = P => cam * P.parallax + P.wind * t;
 
-const stat = { bake: [], draw: [] };
+const stat = { cpu: [], frame: [] };
 function frame(dt) {
-  const speed = +$('speed').value;
-  t += dt * speed;
+  const t0 = performance.now();
+  frames++;
+  t += dt * +$('speed').value;
   if ($('auto').checked) { cam += dt * +$('slide').value; $('cam').value = cam % 600; } else cam = +$('cam').value;
   for (const p of puffs) {
     if (p.gone) { p.fade = Math.max(0, p.fade - dt); if (!p.fade && (p.back -= dt) <= 0) { p.gone = false; p.x0 -= 70; } }
     else p.fade = Math.min(1, p.fade + dt / 1.5);
   }
-  if ($('show').value === 'sheet') return sheetFrame();
-  const on = shown();
-  const live = [...(on.far ? [sheets.far] : []), ...(on.mid ? [sheets.mid] : []), ...(on.puff ? puffs.map(p => p.sh) : []), ...(on.ground ? [sheets.ground] : [])];
-  const bake = tickClouds(live, t);
-  const d0 = performance.now();
-  const sky = look.page === 'dark' ? '#121212' : '#ffffff';
-  g.fillStyle = sky; g.fillRect(0, 0, W, H);
-  const at = layout(), C = CELLPX;
-  const pos = (L, extra = 0) => (cam * LAYERS[L].parallax + LAYERS[L].wind * t + extra) * C;
-  drawnAt = { far: Math.round(pos('far')), mid: Math.round(pos('mid')), ground: Math.round(pos('ground')) };
-  if (on.far) drawBand(g, sheets.far, pos('far'), at.far * C, C, W);
-  if (on.mid) drawBand(g, sheets.mid, pos('mid'), at.mid * C, C, W);
-  if (on.puff) {
-    const span = (cols + 80) * C;
-    for (const p of puffs) {
-      // a clickable cloud wraps round a world a little wider than the window
-      const x = (((p.x0 * C - pos('puff', 0)) % span) + span) % span - 40 * C;
-      p.at = drawCloud(g, p.sh, x, Math.round(rows * p.row) * C, C, 1, p.fade);
-      drawnAt['puff' + puffs.indexOf(p)] = p.at;
-      p.y = Math.round(rows * p.row);
-    }
-  }
-  if (on.ground) drawBand(g, sheets.ground, pos('ground'), at.ground * C, C, W);
-  if ($('ref').checked && !solo) yardStrip();
-  stat.bake.push(bake); stat.draw.push(performance.now() - d0);
-  if (stat.bake.length > 5000) { stat.bake.shift(); stat.draw.shift(); }
-  if (Math.round(t * 60) % 15 === 0 || dt === 0) report(live);
-}
-
-function sheetFrame() {
-  const live = all(), bake = tickClouds(live, t), C = SHEET_CELL;
-  if (cv.width !== PANEL[0] * 2 || cv.height !== PANEL[1] * 4) { cv.width = PANEL[0] * 2; cv.height = PANEL[1] * 4; }
-  g.font = '16px ui-monospace, monospace';
-  panels.forEach((p, i) => {
-    const px = (i % 2) * PANEL[0], py = Math.floor(i / 2) * PANEL[1], dark = p.page === 'dark';
-    g.fillStyle = dark ? '#121212' : '#ffffff'; g.fillRect(px, py, PANEL[0], PANEL[1]);
-    g.fillStyle = dark ? '#d6d6d6' : '#000000';
-    g.fillText(`${p.treat}  ${p.page}`, px + 12, py + 22);
-    drawCloud(g, p.mid, px + 20, py + 30, C);
-    drawCloud(g, p.puff, px + 20, py + 40 + p.mid.h * C, C);
-    const gy = py + PANEL[1] - p.ground.h * CELLPX;
-    g.save(); g.beginPath(); g.rect(px, gy, PANEL[0], p.ground.h * CELLPX); g.clip();
-    drawBand(g, p.ground, cam * CELLPX, gy, CELLPX, px + PANEL[0]);
-    g.restore();
+  const s = show(), hz = horizon(), views = [], draws = [];
+  const want = k => s === 'all' || s === k;
+  layers.forEach((L, i) => {
+    if (!want('l' + i)) return;
+    const sc = scroll(L.P), ox = Math.floor(sc);
+    const top = hz - Math.round(L.P.rise * hz) - L.baseRow;
+    views.push({ key: 'l' + i, layer: L, ox, w: cols + 2, h: L.h, look: look(L), every: L.P.every, idle: (frames + i) % L.P.every !== 0 });
+    draws.push({ key: 'l' + i, x: (ox - sc) * CELLPX, y: top * CELLPX, alpha: 1 });
   });
-  stat.bake.push(bake); if (stat.bake.length > 240) stat.bake.shift();
+  if (want('puffs')) {
+    const span = (cols + 80) * CELLPX;
+    puffs.forEach((p, i) => {
+      const x = (((p.x0 - scroll(p.layer.P)) * CELLPX % span) + span) % span - 40 * CELLPX;
+      const y = Math.round(rows * p.row) - p.layer.baseRow;
+      views.push({ key: 'p' + i, layer: p.layer, ox: 0, w: p.layer.w, h: p.layer.h, look: look(p.layer) });
+      draws.push({ key: 'p' + i, x, y: y * CELLPX, alpha: p.fade });
+      p.at = [x, y];
+    });
+  }
+  if (want('ground')) {
+    const sc = scroll(ground.P), ox = Math.floor(sc);
+    views.push({ key: 'g', layer: ground, ox, w: cols + 2, h: ground.h, look: look(ground) });
+    draws.push({ key: 'g', x: (ox - sc) * CELLPX, y: (rows - ground.h) * CELLPX, alpha: 1 });
+  }
+  const r = gpu.render(views, t, dt * +$('speed').value);
+  if ($('sync').checked) gpu.gl.finish();
+  const t1 = performance.now();
+  g.imageSmoothingEnabled = false;
+  g.globalAlpha = 1;
+  g.fillStyle = page() === 'dark' ? '#121212' : '#ffffff'; g.fillRect(0, 0, W, H);
+  placed = {};
+  draws.forEach((d, i) => {
+    const a = r.at[i], x = Math.round(d.x), y = Math.round(d.y);
+    placed[d.key] = x;
+    g.globalAlpha = d.alpha;
+    g.drawImage(r.canvas, 0, a.y, a.w, a.h, x, y, a.w * CELLPX, a.h * CELLPX);
+  });
+  g.globalAlpha = 1;
+  if ($('ref').checked && s === 'all') yardStrip();
+  stat.cpu.push(t1 - t0); stat.frame.push(performance.now() - t0);
+  if (stat.cpu.length > 4000) { stat.cpu.shift(); stat.frame.shift(); }
+  if ((Math.round(t * 60) % 20 === 0) || dt === 0) report(r);
 }
 
 // The yard at its own scale, bottom left: what a cloud is measured against.
 function yardStrip() {
-  const C = CELLPX, ink = look.page === 'dark' ? '#d6d6d6' : '#000000', gy = H - YARD.groundUp * C;
+  const C = CELLPX, ink = page() === 'dark' ? '#d6d6d6' : '#000000', gy = H - YARD.groundUp * C;
   g.fillStyle = ink;
-  g.fillRect(0, gy, 140 * C, C);                                   // the ground line
-  const [rw, rh] = YARD.rock;                                       // the rock, a mound
+  g.fillRect(0, gy, 140 * C, C);
+  const [rw, rh] = YARD.rock;
   for (let i = 0; i < rw; i++) { const h = Math.round(rh * Math.sqrt(1 - ((i - rw / 2) / (rw / 2)) ** 2)); g.fillRect((8 + i) * C, gy - h * C, C, h * C); }
-  const [sw, shh] = YARD.station;                                  // a station's box
+  const [sw, shh] = YARD.station;
   g.fillRect(70 * C, gy - shh * C, sw * C, shh * C);
-  g.fillStyle = look.page === 'dark' ? '#121212' : '#ffffff';
+  g.fillStyle = page() === 'dark' ? '#121212' : '#ffffff';
   g.fillRect(72 * C, gy - (shh - 2) * C, (sw - 4) * C, (shh - 4) * C);
   g.fillStyle = ink;
-  for (const x of [52, 58, 100, 112]) {                             // workers, three by six with the hat
-    const [ww, wh] = YARD.worker;
-    g.fillRect(x * C, gy - wh * C, ww * C, wh * C);
-  }
+  for (const x of [52, 58, 100, 112]) { const [ww, wh] = YARD.worker; g.fillRect(x * C, gy - wh * C, ww * C, wh * C); }
   g.font = '12px ui-monospace, monospace';
   g.fillText('yard at its own scale: rock, workers, a station, the ground line', 4, gy + 20);
 }
 
-function report(live) {
+function report(r) {
   const q = (a, p) => { const s = [...a].sort((x, y) => x - y); return (s[Math.floor(p * (s.length - 1))] || 0).toFixed(2); };
-  $('stats').textContent = `bake ${q(stat.bake, 0.5)} ms median, ${q(stat.bake, 0.95)} p95, ${q(stat.bake, 1)} max  |  draw ${q(stat.draw, 0.5)} ms median\n` +
-    live.filter((sh, i) => sh.kind !== 'puff' || i === live.findIndex(s => s.kind === 'puff')).map(sh =>
-      `${sh.kind.padEnd(7)} ${sh.w}x${sh.h} cells  re-toned last step ${String(sh.flips).padStart(5)}  went back ${String(sh.backs).padStart(3)}  spurs ${spursOf(sh)}`).join('\n');
+  $("stats").textContent = `upload ${r.uploadMs.toFixed(2)} ms  |  main thread ${q(stat.cpu, 0.5)} ms median, ${q(stat.cpu, 0.95)} p95, ${q(stat.cpu, 1)} max (puffs moved and sent, passes queued` +
+    `${$('sync').checked ? ', waited for the card' : ''})  |  ${r.puffs} puffs in view\n` +
+    layers.map((L, i) => `layer ${i}: ${L.puffs.length} puffs, size ${L.P.R.toFixed(1)}, ${L.h} rows, parallax ${L.P.parallax.toFixed(2)}`).join('\n');
 }
 
 let last = performance.now();
 function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; if (!manual) frame(dt); requestAnimationFrame(loop); }
 
 cv.addEventListener('click', e => {
-  const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-  for (const p of puffs) if (!p.gone && p.at !== undefined &&
-      cloudAt(p.sh, Math.floor((x - p.at) / CELLPX), Math.floor(y / CELLPX) - p.y)) { p.gone = true; p.back = 3; return; }
+  const b = cv.getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
+  for (const p of puffs) if (!p.gone && p.at) {
+    const cx = Math.floor((x - p.at[0]) / CELLPX), cy = Math.floor(y / CELLPX) - p.at[1];
+    if (cx >= 0 && cy >= 0 && cx < p.layer.w && cy < p.layer.h && tierOf(sumsAt(p.layer, t, cx, cy)) >= 0) { p.gone = true; p.back = 3; return; }
+  }
 });
-function setLookFromUi() {
-  look.page = $('dark').checked ? 'dark' : 'light';
-  look.treat = $('treat').value;
-  document.body.classList.toggle('dark', look.page === 'dark');
-  if ($('show').value !== 'sheet') for (const sh of all()) setLook(sh, look);
-}
-for (const id of ['dark', 'treat']) $(id).onchange = setLookFromUi;
-$('show').onchange = () => { if ($('show').value === 'sheet') buildSheet(); else { [W, H] = $('win').value.split('x').map(Number); build(); } setLookFromUi(); };
-$('win').onchange = () => { [W, H] = $('win').value.split('x').map(Number); build(); setLookFromUi(); };
+function restyle() { document.body.classList.toggle('dark', page() === 'dark'); looks.clear(); }
+for (const id of ['dark', 'treat']) $(id).onchange = restyle;
+$('win').onchange = () => { [W, H] = $('win').value.split('x').map(Number); build(); };
 const vals = () => { $('slideV').textContent = $('slide').value; $('speedV').textContent = $('speed').value; };
 $('slide').oninput = vals; $('speed').oninput = vals; vals();
 
@@ -220,35 +186,28 @@ if (qs.get('show')) $('show').value = qs.get('show');
 if (qs.get('treat')) $('treat').value = qs.get('treat');
 manual = qs.has('manual');
 [W, H] = $('win').value.split('x').map(Number);
-build(); if ($('show').value === 'sheet') buildSheet(); setLookFromUi();
-frame(0);
-requestAnimationFrame(loop);
+if (!gpu) $('stats').textContent = 'this page has no WebGL2: the liquid sky needs it';
+else { build(); restyle(); frame(0); requestAnimationFrame(loop); }
 
 // Handles for the headless checks (tools/clouds-check.mjs).
 window.bench = {
-  frame, build, sheets: () => sheets, puffs: () => puffs, all,
+  frame, gpu,
   set(o) {
     if ('t' in o) t = o.t; if ('cam' in o) cam = o.cam;
     for (const k of ['speed', 'slide']) if (k in o) $(k).value = o[k];
-    if ('auto' in o) $('auto').checked = o.auto;
-    if ('show' in o) { $('show').value = o.show; if (o.show === 'sheet') buildSheet(); }
-    if ('ref' in o) $('ref').checked = o.ref;
-    if ('dark' in o) $('dark').checked = o.dark;
-    if ('treat' in o) $('treat').value = o.treat;
-    if ('win' in o) { $('win').value = o.win; [W, H] = o.win.split('x').map(Number); build(); }
-    setLookFromUi();
-    if (o.restart) for (const sh of all()) sh.k0 = null;
+    for (const k of ['auto', 'ref', 'dark', 'sync']) if (k in o) $(k).checked = o[k];
+    for (const k of ['show', 'treat']) if (k in o) $(k).value = o[k];
+    if ('win' in o && o.win !== $('win').value) { $('win').value = o.win; [W, H] = o.win.split('x').map(Number); build(); }
+    if (o.rebuild) build();
+    restyle();
   },
-  pos: () => ({ cam, t }),
-  // for tools/clouds-check.mjs: draw one kind alone, where each sheet was
-  // drawn, every pixel along each cell row's middle line, and the timings
-  solo: k => { solo = k; },
-  drawnAt: () => drawnAt,
-  pxRows: () => { const d = g.getImageData(0, 0, W, H).data, out = new Uint8Array(Math.floor(H / CELLPX) * W);
-    for (let y = 0; y < Math.floor(H / CELLPX); y++) for (let x = 0; x < W; x++) out[y * W + x] = d[((y * CELLPX + 2) * W + x) * 4 + 1];
+  placed: () => placed,
+  layers: () => layers,
+  pxRows: () => { const d = g.getImageData(0, 0, W, H).data, n = Math.floor(H / CELLPX), out = new Uint8Array(n * W);
+    for (let y = 0; y < n; y++) for (let x = 0; x < W; x++) out[y * W + x] = d[((y * CELLPX + 2) * W + x) * 4 + 1];
     return Array.from(out); },
-  timings: () => ({ bake: stat.bake.slice(), draw: stat.draw.slice() }),
-  stats: () => ({ text: $('stats').textContent })
+  timings: () => ({ cpu: stat.cpu.slice(), frame: stat.frame.slice() }),
+  stats: () => $('stats').textContent
 };
 </script>
 </body>
