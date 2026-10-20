@@ -55,11 +55,9 @@ place engine's early steps, 6 and 7 come before more act 3 art.
    bench built it; act 3's sky and ground clouds are on it
    (`render/after/cloudsky.js`), and so are the yard's sky clouds and the
    road's (`weather.js`, `render/road.js`; DESIGN.md, "The yard's sky on
-   the cloud renderer"). Open: at the yard sheets' cell sizes a cloud is 8
-   to 26 cells across, too small for its turrets to show, so it reads
-   blockier than the old mounds. Bigger clouds or a finer cell for the sky
-   is the owner's call (the P-grid rule). The road is never framed in play
-   (`rideRoad` has no caller).
+   the cloud renderer"). Open: the road is never framed in play (`rideRoad`
+   has no caller), so its clouds are unseen; at 800x600 the yard's sky band
+   is shallow and the far clouds hang behind the works.
 5. **Fades as the only way in or out.** One shared appear/leave every new
    thing uses (fade.js), so a pop like act 3's sign plant cannot happen by
    accident.

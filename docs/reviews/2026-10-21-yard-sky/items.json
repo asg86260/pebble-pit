@@ -1,8 +1,8 @@
 {
- "title": "The yard's sky on the cloud renderer: bigger clouds",
- "lede": "REAL GAME, before = main b052a1ac, after = yard-sky c1544be7. Bigger, fewer yard clouds on the shared renderer, each wholly inside the sky; the front adds clouds by area, so the storm reads the same.",
+ "title": "The yard's sky drawn as act 3's",
+ "lede": "REAL GAME, before = main b052a1ac, after = yard-sky 9c4d5681. The yard's clouds now take act 3's cell, size, tones and bands of distance, with the murk and the storm still in them. The diagnosis strip is diagnosis/one-cloud-flips.png.",
  "base": "b052a1ac",
- "head": "c1544be7",
+ "head": "9c4d5681",
  "items": [
   {
    "id": "clear",
@@ -10,7 +10,7 @@
    "what": "the ordinary yard sky",
    "shots": [
     {
-     "scene": "yard",
+     "scene": "crew",
      "window": [
       2000,
       967
@@ -19,7 +19,7 @@
      "label": "REAL GAME 2000x967 light"
     },
     {
-     "scene": "yard",
+     "scene": "crew",
      "window": [
       2000,
       967
@@ -28,7 +28,7 @@
      "label": "REAL GAME 2000x967 dark"
     },
     {
-     "scene": "yard",
+     "scene": "crew",
      "window": [
       800,
       600
@@ -37,7 +37,7 @@
      "label": "REAL GAME 800x600 light"
     },
     {
-     "scene": "yard",
+     "scene": "crew",
      "window": [
       800,
       600
@@ -50,7 +50,7 @@
   {
    "id": "swell",
    "title": "A front at the end of its brew",
-   "what": "the clouds swelled by the storm's clock",
+   "what": "the clouds swelled and greyed by the storm",
    "shots": [
     {
      "scene": "cloudswell",
@@ -130,6 +130,31 @@
      ],
      "theme": "dark",
      "label": "REAL GAME 800x600 dark"
+    }
+   ]
+  },
+  {
+   "id": "act3",
+   "title": "Act 3's sky, for comparison",
+   "what": "REAL GAME, act 3 on the same renderer",
+   "shots": [
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "light",
+     "label": "REAL GAME act 3 2000x967 light"
+    },
+    {
+     "scene": "level-god",
+     "window": [
+      2000,
+      967
+     ],
+     "theme": "dark",
+     "label": "REAL GAME act 3 2000x967 dark"
     }
    ]
   },

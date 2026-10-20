@@ -22900,7 +22900,28 @@ What was built differs from the plan in four places:
   renderer too, but the ride up the road has no caller since the rise
   became the gates' glide (`shot.js`, `rideRoad`). So they could not be shot.
 
-The sections below are the plan as approved.
+- **The yard's clouds are drawn as act 3's** (2026-10-21; the owner: "not
+  sure why they look so different on the surface"). One cloud drawn with
+  the same seed through both paths showed that two inputs made the
+  difference (docs/reviews/2026-10-21-yard-sky/diagnosis):
+  - **Size in cells.** Yard clouds were 8 to 12 cells tall, act 3's about
+    30. Every shading band switches on only past a size in cells: the lit
+    face and shadow per lobe (CLOUDS_LOBE_LIGHT.least), the core
+    (CLOUDS_CORE_MIN) and the bands' own minimum (CLOUDS_BAND_MIN). Under
+    them a cloud is one flat tone.
+  - **Tones.** The yard's ladder ran from its crown to its underside, a step
+    darker than act 3's, with no lit face.
+
+  The cell (1.5 P on the near sheet, against act 3's 1 P), breathing and
+  the shape's build counted for little. So yard clouds now sit on act 3's
+  cell and are sized like its sky (CLOUD_HELD.rows). Each is drawn on act
+  3's ladder of roles, with the murk and the storm tinting it by the old
+  crown and underside shares, which keeps the readout. Each sheet stands on
+  act 3's bands of distance, so the far sheet is plain. The front adds
+  clouds up to a share of the sky's area (CLOUD_STORM_COVER). The far sky's
+  extra clouds come off the sky's own stream, so the run's stream does not
+  move. The sheets' own cells still size the rain and the balloons by depth.
+
 
 ### The plan
 
