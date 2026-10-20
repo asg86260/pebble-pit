@@ -22665,7 +22665,7 @@ no credit needed), downloaded once into a scratch folder, the takes chosen
 cut and loudness-matched by script, and only the chosen OGGs committed under
 `public/sfx/` with a `public/sfx/SOURCES.md` naming where each came from.
 
-## One place engine: every act on the shared systems (design, not built; the owner, 2026-10-20)
+## One place engine: every act on the shared systems (design approved, building; the owner, 2026-10-20)
 
 The owner, said many times and written into CLAUDE.md on 2026-10-20: every
 act runs on the shared systems; an act supplies data, never a parallel copy.
