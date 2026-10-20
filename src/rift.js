@@ -14,12 +14,13 @@
 
 import { P, RIFT_W0, RIFT_WMAX, ABYSS_AT, RIFT_AT, RIFT_UP, RIFT_GULP,
          RIFT_GULP_SHOW, RIFT_SHAKE, RIFT_REACH0,
-         RIFT_INHALE_MAX, RIFT_INHALE_SHOW, RIFT_SWELL_S } from './config.js';
+         RIFT_INHALE_MAX, RIFT_INHALE_SHOW, RIFT_SWELL_S, WORKER } from './config.js';
 import { S, pit, rift } from './state.js';
 import { swallow, pitGrains, tearHole } from './pit.js';
 import { sfx } from './audio.js';
 import { now } from './clock.js';
 import { awaitingShot, cueUnread } from './cutscene.js';
+import { wayAt, belowYard } from './route.js';
 
 // --- how big it is -------------------------------------------------------------
 // The disc grows with what it has eaten (`S.riftAte`), or with the swell the
@@ -142,6 +143,11 @@ function owedArc(dt) {
 const WATCHED = new Set(['tear', 'drown']);
 function due() {
   if (cueUnread() || awaitingShot(WATCHED)) return false;
+  // Nor over a body still down the hole. The drowning puts the hole's way up
+  // at the plank in one frame (`pitTop`), so a body on its floor or on a
+  // rung would be a hole's depth inside the liquid; the haulers are sent home
+  // while it is owed (hauler.js), and it begins once they are out.
+  if (S.riftDue === 'drown' && S.workers.some(downTheHole)) return false;
   if (S.riftDue === 'drown') {
     S.drowned = true;
     sfx('rift-open', { x: pit.x + pit.w / 2 });
@@ -155,6 +161,11 @@ function due() {
   S.riftShake = RIFT_SHAKE;                   // knocked by whoever steps the world: see game.js
   return true;
 }
+
+// Under the ground line and over the hole: on its floor, on a ladder, or
+// falling in. Not indoors, and not the deep's.
+const downTheHole = w => !w.inside && !belowYard(w) && w.y + WORKER > S.groundY + 1
+  && wayAt(w.x, w.y).key === 'hole';
 
 // The tearing: the hole emptied over RIFT_GULP seconds, however much is in it.
 // The share is worked out against the time *left*, so whatever is in the hole

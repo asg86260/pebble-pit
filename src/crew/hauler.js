@@ -286,7 +286,9 @@ export function haulerWork(w, c) {
   const here = wayAt(w.x, w.y, all);
   const on = patch == null ? null : wayOver(patch - WORKER / 2, all);
   const away = here.key === 'hole' || here.key === 'past';
-  const through = on != null && (on.key === 'hole' || on.key === 'past');
+  // Not while the drowning is owed: it waits for the hole to be empty
+  // (rift.js), so a body down there comes home and nobody else goes down.
+  const through = on != null && (on.key === 'hole' || on.key === 'past') && S.riftDue !== 'drown';
 
   if (away || through) {
     if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
