@@ -619,12 +619,6 @@
  },
  {
   "file": "src/title.css",
-  "sel": ".col .line",
-  "prop": "letter-spacing",
-  "value": ".08em"
- },
- {
-  "file": "src/title.css",
   "sel": ".col .sub",
   "prop": "letter-spacing",
   "value": ".08em"

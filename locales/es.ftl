@@ -489,7 +489,6 @@ title-doctitle = Pebble Pit
 title-gamename = pebble<br>pit
 
 # landing page tagline
-title-line = una roca. un pozo. unos pocos en medio.
 
 # landing page main button
 title-play = jugar
