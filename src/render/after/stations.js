@@ -22,10 +22,12 @@
 const TURN = Math.PI / 16;                                 // a held step of a turning part
 const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
-import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT } from '../../config.js';
+import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT, AFTER_SAW_TEETH, AFTER_STIR_TURN_S, AFTER_STIR_SPAN } from '../../config.js';
 import { K, W, PALE, MID, DUST, toward, hash, clamp01, silhouette } from './kit.js';
 import { signsJoined } from '../../after/press.js';
 import { paperPulls } from '../../after/mill.js';
+import { ctx } from '../ctx.js';
+import { onDevice } from '../wardrobe.js';
 
 const cyc = (t, T) => { const u = Math.max(0, t), k = Math.floor(u / T); return { ph: u / T - k, since: u - k * T }; };
 const FADE = 0.4;
@@ -44,7 +46,9 @@ const cut = (d, x, y, w, h, tone = W) => d.px(x * P + 2, y * P + 2, w * P - 4, h
 // stands at the ground's foot.
 const MW = { cx: 19, cy: -9, r: 6 }, CRANK = 1.5, KNOB = MW.r + 2, MILL_TURN = Math.PI / 8;
 const MILL = { L: 32, R: 47, head: -21, bed: -6, bx: 40, logX0: 27, logLen: 14, body: 7 };
-const BARK = [MID, MID, PALE, MID], WOOD = [PALE, W, PALE, PALE], RIP = [0, 1, 2, 3];
+const BARK = [MID, MID, PALE, MID], WOOD = [PALE, W, PALE, PALE];
+// The teeth's reach out of the blade, in the drawing's cells: the log's kerf.
+const BITE = Math.ceil(Math.max(...AFTER_SAW_TEETH) / 2);
 function flywheel(d, a) {
   const { cx, cy, r } = MW;
   d.px(cx * P - 3, cy * P, 6, -cy * P, K); d.r(cx - 3, -1, 6, 1, K);       // its post and foot
@@ -59,12 +63,17 @@ function flywheel(d, a) {
   return { kx, ky, pin: { x: cx + Math.cos(a) * CRANK, y: cy + Math.sin(a) * CRANK } };
 }
 // The blade, plumb: its spine of ink, a grey plate, the rip teeth facing the
-// log, riding the stroke so they move with it.
+// log, riding the stroke so they move with it. The teeth are laid on the
+// world's grid, half a drawing cell a row (config, AFTER_SAW_TEETH), so they
+// stay fine against a blade two drawing cells wide.
 function millBlade(d, x, y0, y1, o) {
+  const g = P / 2, n = AFTER_SAW_TEETH.length;
   for (let y = y0; y <= y1; y++) {
-    const k = RIP[(((y - o) % 4) + 4) % 4];
     d.c(x, y, PALE); d.c(x + 1, y, K);
-    if (k) d.r(x - k, y, k, 1, K);
+    for (let half = 0; half < 2; half++) {
+      const k = AFTER_SAW_TEETH[(((2 * (y - o) + half) % n) + n) % n];
+      if (k) d.px(x * P - k * g, y * P + half * g, k * g, g, K);
+    }
   }
 }
 // The log: grey bark in an ink rim, its grain cut white; open kerf where the
@@ -72,7 +81,7 @@ function millBlade(d, x, y0, y1, o) {
 function millLog(d, x, y, bx) {
   for (let i = 0; i < MILL.logLen; i++) {
     const c = x + i;
-    if (c >= bx - 3 && c < bx + 2) { if (c < bx) d.r(c, y, 1, 3, W); continue; }
+    if (c >= bx - BITE && c < bx + 2) { if (c < bx) d.r(c, y, 1, 3, W); continue; }
     if (c < bx) {
       d.r(c, y, 1, 3, K); d.px(c * P, y * P + 2, P, 3 * P - 4, BARK[Math.floor(hash(c - x + 1.3) * BARK.length)]);
       const h = hash(c - x + 0.5), row = h < 0.5 ? 6 : 10;
@@ -211,10 +220,10 @@ const CHIP_T = 4.2;
 // sheet counted on the pull, mill.js), and the line plays each pull out from
 // the moment it was made (mill.js, `paperPulls`). A sheet is on the line a
 // few seconds after its count.
-const PADDLE_MID = 18, PADDLE_REACH = 3, SURFACE = -7, LINE_Y = -18, SHEET_TOP = -16, MOULD_REST = -6;
+const PADDLE_MID = (AFTER_STIR_SPAN[0] + AFTER_STIR_SPAN[1]) / 2, PADDLE_REACH = (AFTER_STIR_SPAN[1] - AFTER_STIR_SPAN[0]) / 2, SURFACE = -7, LINE_Y = -18, SHEET_TOP = -16, MOULD_REST = -6;
 const LIFT_N = MOULD_REST - SHEET_TOP, SLOT0 = 14, SLOT_W = 5, PEEL_UNDER = (SHEET_TOP + 3) * P;
 const PT = { slide: 0.1, lift: 0.09, hang: 0.35, peg: 0.25, lower: 0.05, peelUp: 0.06, unpeg: 0.25, peelDown: 0.06, land: 0.3, sway: 0.3 };
-const DRY_S = 16, WET = MID, STIR_T = 0.3, PADDLE_X = [15, 18, 21, 18];
+const DRY_S = 16, WET = MID;
 export const lineOf = slots => { const LAST = SLOT0 + SLOT_W * (slots - 1); return { LAST, stackX: LAST, peelX: LAST + 4, loftX: LAST + 5, postR: LAST + 9, lineX1: LAST + 10 }; };
 // The line's record: the pull and the loft hand, each on its held steps.
 let line = null;
@@ -332,16 +341,21 @@ function papermill(d, work, t, h, body = false, at = {}) {
   d.r(9, LINE_Y, G.lineX1 - 9, 1, K);                       // the line
   d.r(9, LINE_Y - 1, 2, 2, K); d.px(9 * P + 5, (LINE_Y - 1) * P + 5, 2, 2, W);  // the pulley
   d.px(9 * P + 1, (LINE_Y + 1) * P, 2, (-11 - LINE_Y - 1) * P, K);              // its cord to the pulper's hand
-  // The paddle: on the hand's circle, the pulper's four poses, or stood by.
-  let px = 21, dir = 0, held = false;
-  if (hand) { px = Math.max(15, Math.min(21, Math.round(PADDLE_MID + PADDLE_REACH * Math.cos(h.ang)))); dir = -Math.sin(h.ang) * h.w >= 0 ? 1 : -1; held = true; }
-  else if (work && pu.st === 'stir') { const k = Math.floor(t / STIR_T) % 4; px = PADDLE_X[k]; dir = k < 2 ? 1 : -1; held = true; }
-  if (held) {
-    crest(d, px, dir);
-    if (pu.st === 'stir') d.px(9 * P, -12 * P + 1, (px - 9) * P + 3, 4, K);
-    else d.px((px - 1) * P + 2, -12 * P + 1, 2 * P, 4, K);
-    d.px(px * P, -12 * P + 1, 4, 7 * P, K); d.r(px - 0.5, -5, 2, 3, K);
-  } else { d.px(22 * P, -12 * P + 1, 4, 7 * P, K); d.r(21.5, -5, 2, 3, K); d.px(21 * P + 2, -12 * P + 1, 2 * P, 4, K); }
+  // The paddle: on the hand's circle, round the vat on the pulper's turn, or
+  // stood by. It is one rigid drawing (`paddle`) at its shaft's true column,
+  // so it slides across the vat and never changes shape; the pulp's crest
+  // it pushes is the pulp's, on whole cells.
+  let px = 22, dir = 0, held = false;
+  if (hand) { px = PADDLE_MID + PADDLE_REACH * Math.cos(h.ang); dir = -Math.sin(h.ang) * h.w >= 0 ? 1 : -1; held = true; }
+  else if (work && pu.st === 'stir') { const a = 2 * Math.PI * t / AFTER_STIR_TURN_S; px = PADDLE_MID - PADDLE_REACH * Math.cos(a); dir = Math.sin(a) >= 0 ? 1 : -1; held = true; }
+  px = Math.max(AFTER_STIR_SPAN[0], Math.min(held ? AFTER_STIR_SPAN[1] : 22, px));
+  pulperLean = pu.st === 'lift' ? (pu.k % 2 ? -2 : -4) : pu.st === 'hang' ? -3 : pu.st === 'lower' ? -1 : held ? (px - AFTER_STIR_SPAN[0]) / 2 : 0;
+  if (held) crest(d, Math.round(px), dir);
+  const sx = Math.round(px * P * 2) / 2;               // the shaft's left edge, on a whole world pixel
+  // The pulper's arm out to the grip while it stirs: a thin line, its own
+  // and not the paddle's, from its shoulder wherever it leans.
+  if (held && body && pu.st === 'stir') { const ax = 9 * P + pulperLean * 2; d.px(ax, -12 * P + 2, sx - P + 2 - ax, 2, K); }
+  paddle(d, sx);
   const mt = MOULD_REST - pu.k, front = pu.st === 'lift' || pu.st === 'hang';
   for (const q of L.sheets) {
     const dry = q === lo.target && lo.st === 'unpeg' ? 1 : st.dryOf(q);
@@ -355,7 +369,20 @@ function papermill(d, work, t, h, body = false, at = {}) {
   d.px(G.peelX * P + 1, lo.y, 4, -2 * P - lo.y, K);
   if (lo.carry) d.fade(lo.carry.a, () => wetSheet(d, G.stackX, (lo.y - 3 * P) / P, 1));
   d.body(G.loftX, -3, lo.st === 'up' || lo.st === 'down' ? -1 : 0);
-  pulperLean = pu.st === 'lift' ? (pu.k % 2 ? -2 : -4) : pu.st === 'hang' ? -3 : pu.st === 'lower' ? -1 : held ? Math.round((px - 15) / 2) : 0;
+}
+// The paddle, its shaft's left edge at `sx` (the frame's px): the grip
+// across its top, the shaft, the blade at its foot, every part laid off `sx`
+// by whole pixels, so it moves as one piece; and the piece put with its
+// shaft on a whole device pixel (render/crew.js, `rigid`), so at a zoom that
+// is not whole every edge in it rounds the same way at every column.
+function paddle(d, sx) {
+  const m = !d.sinking && ctx.getTransform ? ctx.getTransform() : null;
+  const ax = d.world(sx / P, 0).x, dx = m ? onDevice(ax, m.a, m.e) - ax : 0;
+  if (dx) ctx.translate(dx, 0);
+  d.px(sx - P + 2, -12 * P + 1, 2 * P, 4, K);
+  d.px(sx, -12 * P + 1, 4, 7 * P, K);
+  d.px(sx - P / 2, -5 * P, 2 * P, 3 * P, K);
+  if (dx) ctx.translate(-dx, 0);
 }
 
 // --- the workshop: the shed, roof A ------------------------------------------------

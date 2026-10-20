@@ -369,12 +369,10 @@ export const CLOUDS_SEA = {
 //          cells of sky over it whatever the window, so a cloud's height has
 //          nothing to do with how tall the window is; each layer slides at
 //          its own parallax times `rate`
-//   far    a bank of ground billows from the horizon down behind the main
-//          plane, `down` cells under the horizon, `rows` rows of billows
-//          `R` cells at the nearest, each row at its `depths` for its tones
-//          (CLOUDS_DEPTH_BANDS)
 //   edge   small billows lapping the path's near edge from under it, their
-//          tops `lap` cells up over the edge: the path itself stays clear
+//          tops `lap` cells up over the edge, `rows` rows of billows `R`
+//          cells at the nearest, each row at its `depths` for its tones
+//          (CLOUDS_DEPTH_BANDS): the path itself stays clear
 //   fore   big billows rolling below the path, `down` cells under its near
 //          edge, faster than the camera, solid to the bottom of the window
 //   crest  a ground layer is placed by the row its tallest billows reach:
@@ -388,7 +386,6 @@ export const CLOUDS_SEA = {
 export const CLOUDS_ACT3 = {
   seed: 7, crest: 0.15, pad: 900, path: { dark: 'haze' },
   sky: { rows: 120, rate: 0.4 },
-  far: { rate: 1 / 3, down: 1, R: 7, rows: 3, depths: [0.1, 0.3, 0.45] },
   edge: { rate: 1, lap: 1, R: 5, rows: 2, depths: [0.9, 1] },
   fore: { rate: 1.3, down: 1, R: 13, rows: 6, depths: [0.3, 0.45, 0.6, 0.75, 0.9, 1] }
 };

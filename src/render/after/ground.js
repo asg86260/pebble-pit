@@ -1,17 +1,16 @@
-// The afterlife's ground, in three rigid layers (the owner, 2026-10-20: "for
+// The afterlife's ground, in two rigid layers (the owner, 2026-10-20: "for
 // the main plane, the plane where all the stations are on, where the workers
 // exist. that should be the same distance and camera setup as the yard ...
 // the only things that change are the surrounding aspects. the foreground, in
 // front of the main plane can be clouds, the plane should static cloud like
 // paths, not a flat plane"):
 //
-// - the far bank, between the horizon and the main plane, on God's slow layer;
 // - the main plane's own ground is render/after/floor.js's path, on the world
 //   itself (speed 1), the camera the yard's, its near edge lapped by cloud;
 // - the foreground, below the main plane, rolling cloud.
 //
-// The far bank and the foreground are the one cloud renderer's
-// (render/after/cloudsky.js): each layer set down as one piece at its offset
+// The foreground is the one cloud renderer's (render/after/cloudsky.js):
+// set down as one piece at its offset
 // off the world, so nothing in it shears or jitters as the camera slides.
 
 import { P, GREY } from '../../config.js';
@@ -30,15 +29,12 @@ const hsh = (a, b = 0, c = 0) => {
 // thin line never blends into a tone between the four.
 const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; fillOnPixels(ctx, x, y, w, h); };
 
-// --- the far bank and the foreground ------------------------------------------------------
-// Both are the one cloud renderer's ground billows (render/after/cloudsky.js,
-// CLOUDS_ACT3): the far bank from the horizon down behind the main plane, on
-// God's slow layer; the foreground rolling below the path, faster than the
-// camera, solid to the bottom of the window.
-export function drawGround() {
-  if (!ctx) return;
-  putAfterCloud('far');
-}
+// --- the foreground ---------------------------------------------------------------------
+// The one cloud renderer's ground billows (render/after/cloudsky.js,
+// CLOUDS_ACT3) rolling below the path, faster than the camera, solid to the
+// bottom of the window. Nothing stands between the horizon and the main
+// plane but the sky's own layers (the owner, 2026-10-20, a bank of cloud
+// behind the camp cut).
 export function drawForeground() {
   if (!ctx) return;
   putAfterCloud('fore');
