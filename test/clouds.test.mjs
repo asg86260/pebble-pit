@@ -161,3 +161,59 @@ test("a sky's shape is its seed's, and making it never draws from the yard's cha
   assert.deepEqual(a.puffs.map(p => [p.x, p.y, p.r]), b.puffs.map(p => [p.x, p.y, p.r]));
   assert.ok(g.puffs.length > 0);
 });
+
+// No cloud of the sky is drawn thinner than the grid can draw it whole (the
+// owner, 2026-10-20: far clouds "kind of look shoddy, single cell lines and a
+// bit messy"). Every layer's field is laid down cell by cell at a moment, as
+// the card lays it, and a cell of cloud that is one cell thick across or one
+// cell thick up and down -- a sliver, a line, a speck -- is counted. A field's
+// own rounded edge leaves a few where its curve turns on the grid;
+// past SLIVER_SHARE of a layer's cloud cells the layer is drawn in lines.
+const SLIVER_SHARE = 0.02;
+function slivers(L, t, w) {
+  const h = L.h, nt = L.nt, sums = Array.from({ length: nt }, () => new Float32Array(w * h)), q = {};
+  const REACH = 1 / Math.sqrt(1 - Math.cbrt(0.03));
+  for (const p of L.puffs) {
+    puffAt(p, t, q);
+    const R = q.r * REACH;
+    if (R <= 0.05) continue;
+    let x0 = q.x % L.W; if (x0 < 0) x0 += L.W;
+    for (const cxp of [x0, x0 - L.W]) {
+      const a = Math.max(0, Math.floor(cxp - R)), b = Math.min(w - 1, Math.ceil(cxp + R));
+      const c = Math.max(0, Math.floor(q.y - R * q.flat)), d = Math.min(h - 1, Math.ceil(q.y + R * q.flat));
+      for (let y = c; y <= d; y++) {
+        if (p.cut !== undefined && y + 0.5 > p.cut) continue;
+        for (let x = a; x <= b; x++) {
+          const dx = x + 0.5 - cxp, dy = (y + 0.5 - q.y) / q.flat, v = 1 - (dx * dx + dy * dy) / (R * R);
+          if (v > 0) sums[p.tier][y * w + x] += v * v * v;
+        }
+      }
+    }
+  }
+  const T = new Int8Array(w * h), s = [];
+  for (let i = 0; i < w * h; i++) { for (let j = 0; j < nt; j++) s[j] = sums[j][i]; T[i] = tierOf(s.slice(0, nt)); }
+  const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? -1 : T[y * w + x]);
+  let cloud = 0, thin = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const j = at(x, y);
+    if (j < 0) continue;
+    cloud++;
+    // one cell thick against the open sky: sky on both sides, across or up
+    // and down (a tone's own bands are the card's, clouds-check `slivers`)
+    if ((at(x - 1, y) < 0 && at(x + 1, y) < 0) || (at(x, y - 1) < 0 && at(x, y + 1) < 0)) thin++;
+  }
+  return { cloud, thin };
+}
+test('no layer of the sky is drawn in one-cell lines, slivers or specks', () => {
+  const out = [];
+  for (let i = 0; i < CLOUDS_SKY.layers; i++) {
+    const L = skyLayer({ i, seed: 7, W: 600 }), r = slivers(L, 200, 600);
+    out.push({ i, ...r, said: `layer ${i}: ${r.thin} of ${r.cloud} cloud cells one cell thick against the sky (${(100 * r.thin / Math.max(1, r.cloud)).toFixed(1)}%)` });
+  }
+  const said = out.map(o => o.said).join('; ');
+  console.log(said);
+  for (const o of out) {
+    assert.ok(o.cloud > 0, `layer ${o.i} has no cloud`);
+    assert.ok(o.thin <= o.cloud * SLIVER_SHARE, said);
+  }
+});

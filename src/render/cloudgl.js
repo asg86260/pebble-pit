@@ -27,7 +27,7 @@
 // page to draw scaled up at the layer's true position (drawCloud in
 // clouds.js's terms: one rounding for the whole layer).
 
-import { CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_FADE_S, CLOUDS_SETTLE } from '../config.js';
+import { CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_FADE_S, CLOUDS_SETTLE, CLOUDS_CLEAN } from '../config.js';
 import { puffAt } from './clouds.js';
 
 const REACH = 1 / Math.sqrt(1 - Math.cbrt(CLOUDS_THRESHOLD));
@@ -160,13 +160,16 @@ void main() {
   int tm = uTone[me], t[4];
   int same = 0;
   for (int k = 0; k < 4; k++) { t[k] = uTone[n[k]]; same += t[k] == tm ? 1 : 0; }
-  // only a cell alone in its tone: the bump and sliver rules of the baked
-  // sheets, asked afresh of a flowing field every frame, took a cell one
-  // frame and gave it back the next, which is the flicker they were for
-  bool spur = same == 0;
-  if (!spur) { o = me; return; }
+  // a cell one cell thick in its tone, across or up and down: a line, a
+  // sliver or a speck, which the grid cannot draw as a shape (the owner,
+  // 2026-10-20: "single cell lines"). It takes the tone it lies between,
+  // from the side it is thin on. Steadied by the settle pass after, so a
+  // band flowing a cell thinner for a frame does not blink.
+  bool across = t[0] != tm && t[1] != tm, upDown = t[2] != tm && t[3] != tm;
+  if (!across && !upDown) { o = me; return; }
   int best = -1, most = 0;
-  for (int k = 0; k < 4; k++) if (t[k] != tm) {
+  int k0 = across ? 0 : 2, k1 = across && upDown ? 4 : k0 + 2;
+  for (int k = k0; k < k1; k++) if (t[k] != tm) {
     int m = 0; for (int q = 0; q < 4; q++) m += t[q] == t[k] ? 1 : 0;
     if (m > most) { most = m; best = k; }
   }
@@ -409,9 +412,11 @@ export function skyGL() {
       gl.uniform1iv(P.roles.u.uCore, L.core); gl.uniform1iv(P.roles.u.uRow, L.row);
       gl.uniform2f(P.roles.u.uLight, L.light[0], L.light[1]); gl.uniform1i(P.roles.u.uBottom, L.bottom);
       draw();
-      // two cleanups
+      // the cleanups, in pairs so the last lands where the settle reads: a
+      // band a cell too thin can leave another as it goes (CLOUDS_CLEAN)
       gl.useProgram(P.clean.p); gl.uniform1i(P.clean.u.uR, 0); gl.uniform1iv(P.clean.u.uTone, L.tone);
-      for (const [from, to] of [[0, 1], [1, 0]]) {
+      for (let k = 0; k < 2 * CLOUDS_CLEAN; k++) {
+        const from = k % 2, to = 1 - from;
         pass(P.clean, s.R[to].f, v.w, v.h);
         bind(0, s.R[from].t);
         draw();

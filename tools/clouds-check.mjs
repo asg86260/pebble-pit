@@ -119,6 +119,32 @@ try {
         `${r.chatter} back within 0.1 s (${(chat * 100).toFixed(2)}%), ${r.back} back within 1 s (${(share * 100).toFixed(2)}%)`);
     }
   }
+  if (which === 'all' || which === 'slivers') {
+    // The drawn tones, as the card leaves them (bench.tones): no tone of a sky
+    // layer stands one cell thick -- a line, a sliver, a speck -- past a share
+    // SLIVER_SHARE of its cloud cells (the owner, 2026-10-20: far clouds read
+    // as "single cell lines and a bit messy"). The silhouette alone is checked
+    // in the node tier too (test/clouds.test.mjs); this is the bands on it.
+    const SLIVER_SHARE = 0.04;
+    for (const key of ['l0', 'l1', 'l2', 'l3', 'l4']) {
+      const r = await ev(`(() => {
+        bench.set({ win: '2000x967', show: 'all', t: 200, cam: 0, auto: false, slide: 0, speed: 1 });
+        for (let i = 0; i < 30; i++) bench.frame(1 / 60);
+        const { w, h, tones } = bench.tones(${JSON.stringify(key)}), at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? 0 : tones[y * w + x]);
+        let cloud = 0, thin = 0;
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+          const v = at(x, y);
+          if (!v) continue;
+          cloud++;
+          if ((at(x - 1, y) !== v && at(x + 1, y) !== v) || (at(x, y - 1) !== v && at(x, y + 1) !== v)) thin++;
+        }
+        return { key: ${JSON.stringify(key)}, cloud, thin };
+      })()`);
+      const share = r.cloud ? r.thin / r.cloud : 0, ok = r.cloud > 0 && share <= SLIVER_SHARE;
+      if (!ok) failed = true;
+      console.log(`${ok ? 'ok  ' : 'FAIL'} slivers ${r.key} ${r.thin} of ${r.cloud} drawn cloud cells one cell thick in their tone (${(share * 100).toFixed(1)}%)`);
+    }
+  }
   if (which === 'all' || which === 'cost') {
     for (const win of ['2000x967', '800x600']) for (const sync of [false, true]) {
       const r = await ev(`(() => { ${q}
