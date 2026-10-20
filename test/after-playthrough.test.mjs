@@ -165,7 +165,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   // then the paper branch, its timber granted a bill at a time.
   window.__afterGrant({ rebel: 3000 });
   const rows = [];
-  for (const job of ['woodcutter', 'gatherer', 'sawyer', 'hauler']) rows.push([job, buyRow(`post-${job}`)]);
+  for (const job of ['woodcutter', 'sawyer', 'hauler']) rows.push([job, buyRow(`post-${job}`)]);
   for (const k of ['workshop', 'chipper']) rows.push([k, raise(k)]);
   for (const job of ['joiner', 'carrier']) rows.push([job, buyRow(`post-${job}`)]);
   const signed = until(() => S.after.signs.length > 0, 600);
