@@ -320,22 +320,26 @@ group('a station bought on the shack is carried in as a pile and raised off it a
   ];
 });
 
-group('with nobody in the camp the pair step down and build, and climb back up', async () => {
+group('with nobody in the camp members step off their posts to build, and the pair stay up speaking', async () => {
   up();
   settle();
+  window.__afterGrant({ rebel: 2000 });
+  window.__buy('after-post-agitator');
+  window.__buy('after-post-agitator');
+  runUntil(() => S.after.bodies.filter(b => b.job === 'agitator' && b.state === 'work').length === 2, 60);
   S.after.camp = 0;
-  window.__afterGrant({ rebel: 200 });
   window.__buy('after-build-chipper');
   run(0.1);
-  const pair = S.after.bodies.filter(b => b.job === 'builder' && b.pair != null).length;
-  const quiet = !line();
-  const stood = runUntil(() => read().built.includes('chipper'), 600);
-  const home = runUntil(() => !S.after.bodies.some(b => b.job === 'builder'), 120);
+  const crew = S.after.bodies.filter(b => b.job === 'builder');
+  const borrowed = crew.length === 2 && crew.every(b => b.pair == null) && !S.after.bodies.some(b => b.job === 'agitator');
+  const speaks = !!line();
+  const stood = runUntil(() => read().built.includes('chipper'), 900);
+  const back = runUntil(() => !S.after.bodies.some(b => b.job === 'builder') && S.after.bodies.filter(b => b.job === 'agitator').length === 2, 180);
   window.__actsOn(null);
   return [
-    ok(pair === 2, 'the two of them come down off the pedestal', `${pair}`),
-    ok(quiet, 'and while they are down a click on the pedestal gives no line'),
-    ok(stood && home, 'the station stands and they climb back up', `${stood} ${home}`)
+    ok(borrowed, 'the two agitators step off their posts to build, and the pair do not come down', JSON.stringify(crew.map(b => b.pair))),
+    ok(speaks, 'and a click on the pedestal still gives a line'),
+    ok(stood && back, 'the station stands and the two walk back to their posts', `${stood} ${back}`)
   ];
 });
 

@@ -3052,10 +3052,10 @@ export const SCENES = {
   'after-bubbles': { about: 'the acts', say: "the pair's speech bubbles rising off the pillar at uneven gaps, small, middling and big, a symbol in each",
     run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(14);
                  window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot(); } },
-  // The pair down off the pillar to build: the saw mill bought on the shack
-  // with nobody waiting in the camp, so the two of them carry it themselves
-  // and the pillar stands empty for the whole walk to the grove's end.
-  'after-pair-build': { about: 'the acts', say: 'the saw mill bought with the camp empty: the pair down off the pillar, walking off to build it',
+  // The saw mill bought on the shack with nobody waiting in the camp: the
+  // pair stay up on the pillar speaking (they never come down to build), and
+  // the site waits for a member (after/build.js, `fillBuilders`).
+  'after-pair-build': { about: 'the acts', say: 'the saw mill bought with the camp empty: the pair still up on the pillar, speaking',
     run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(2);
                  window.__afterGrant({ rebel: 9000, timber: 40 }); yardPurse(); S.after.camp = 0;
                  window.__buy('after-build-mill'); window.__fast(8);

@@ -23,10 +23,37 @@ import { openBoard } from '../board.js';
 import { toScreen } from '../world.js';
 import { portalEnd } from '../portals.js';
 import { pairBox } from '../after/rebel.js';
+import { speakerAt } from '../after/place.js';
+import { K as INK, W as PAPER } from '../render/after/kit.js';
 import { mouthX, portalX, portalCircle, deepPortal } from '../deep/place.js';
 import { arrowBox } from '../render/shaftway.js';
-import { VIEW_GLIDE_S, P } from '../config.js';
+import { VIEW_GLIDE_S, P, GREY } from '../config.js';
 import { PLACES } from '../acts.js';
+
+// --- the pair on the glass -------------------------------------------------------
+// Act 3's pair, each the yard's square on the pedestal (render/after/pedestal.js):
+// read off the canvas at the spot place.js stands them, its rim the act's ink
+// and its middle the act's paper -- not cloud, sky or a crowd drawn over them.
+// The rim is two world px, under two screen px at the yard's zoom, so its
+// darkest pixel is read as near the ink, not on it.
+const lum = css => { const c = document.createElement('canvas').getContext('2d'); c.fillStyle = css; c.fillRect(0, 0, 1, 1); const d = c.getImageData(0, 0, 1, 1).data; return (d[0] + d[1] + d[2]) / 3; };
+function pairOnGlass() {
+  const g = canvas().getContext('2d'), k = S.dpr || 1, ink = lum(GREY[INK]), paper = lum(GREY[PAPER]);
+  // the darkest and lightest device pixel over a world rect
+  const span = (x, y, w, h) => {
+    const a = toScreen(x, y), b = toScreen(x + w, y + h);
+    const x0 = Math.floor(a.x * k), y0 = Math.floor(a.y * k), dw = Math.max(1, Math.ceil(b.x * k) - x0), dh = Math.max(1, Math.ceil(b.y * k) - y0);
+    const d = g.getImageData(x0, y0, dw, dh).data;
+    let lo = 255, hi = 0;
+    for (let i = 0; i < d.length; i += 4) { const v = (d[i] + d[i + 1] + d[i + 2]) / 3; lo = Math.min(lo, v); hi = Math.max(hi, v); }
+    return { lo, hi };
+  };
+  return [0, 1].map(n => {
+    const { x, y } = speakerAt(n);          // the square's left edge, and the feet on the podium's top
+    const rim = span(x, y - 12, 2, 6), mid = span(x + 6, y - 12, 6, 6);
+    return { rim: Math.round(rim.lo), mid: Math.round(mid.lo), ok: rim.lo - ink < 0.3 * (paper - ink) && Math.abs(mid.lo - paper) < 24 };
+  });
+}
 
 // --- the hand -----------------------------------------------------------------
 // Frames of the page until `fn`, or false after `frames`. Wall frames, because
@@ -346,6 +373,9 @@ export const TESTS = [
     // The shout: a click on the pair on the pedestal sheds rebel.
     const pair = pairBox();
     await lookAt(pair.x + pair.w / 2);
+    const glass = pairOnGlass();
+    out.push(ok(glass.every(g => g.ok), "afterlife: the pair are drawn on the pedestal, the act's ink round its paper where they stand",
+                JSON.stringify(glass)));
     const r0 = S.after.rebel, shouts0 = S.after.shout;
     clickAt(pair.x + pair.w / 2, pair.y + pair.h / 2);
     run(8);

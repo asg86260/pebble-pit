@@ -9,10 +9,12 @@
 // gone and the station stands. The rest walk back out of the camp.
 //
 // The hands are members from the camp, up to AFTER_BUILD_CARRIERS of them.
-// With nobody waiting there -- every member at a post -- the pair step down
-// off the pedestal and carry and raise it themselves, and climb back up when
-// it stands; so a camp with no free hands never leaves a bought station
-// unbuilt.
+// With nobody waiting there -- every member at a post -- members step off
+// their posts to raise it, and walk back into the camp when it stands, where
+// their posts take them again; so a camp with no free hands never leaves a
+// bought station unbuilt. The pair never come down to build: they are the
+// act's leads and stay up on the pedestal, speaking (the owner, 2026-10-20:
+// "the Couple still arent rendered on the pedestal").
 //
 // `S.after.raising` is each bought station's site: { n, at, claimed, brought,
 // taken, laid, drop, pick } -- `n` the bands up and `at` when each landed
@@ -56,8 +58,18 @@ export const pairBuilding = () => !!S.after && S.after.bodies.some(b => b.job ==
 const crewOf = key => S.after.bodies.filter(b => b.job === AFTER_JOB.BUILD && b.site === key && b.state === 'work');
 
 // Every site without hands gets them: members out of the camp, coming in at
-// its edge nearest the site, or, with none waiting and the pair on the
-// pedestal, the pair.
+// its edge nearest the site, or, with none waiting, members off their posts.
+// A post's member is taken empty-handed, the nearest the site first, so no
+// load in hand is dropped; with nobody in the camp or at a post the site
+// waits for the first member to walk in.
+// (A pair's builder, `pair` 0 or 1, is only ever one read from a save made
+// while they still built: it finishes and climbs back up.)
+function offPosts(key, n) {
+  const pile = buildPileAt(key);
+  const free = S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD && b.state === 'work' && b.load == null && b.target == null)
+    .sort((p, q) => Math.abs(p.x - pile) - Math.abs(q.x - pile));
+  return free.slice(0, n);
+}
 export function fillBuilders() {
   const a = S.after;
   for (const key of sites()) {
@@ -71,12 +83,10 @@ export function fillBuilders() {
       for (let k = 0; k < n; k++)
         a.bodies.push({ id: nextId(), job: AFTER_JOB.BUILD, site: key, pair: null, builds: k < AFTER_BUILD_BUILDERS, x: at.x, y: at.y,
                         face: 1, state: 'work', t: 0, load: null, slot: null, target: null, n: 0, born: a.t + k * 0.6 });
-    } else if (!pairBuilding()) {
-      for (const k of [0, 1]) {
-        const at = speakerAt(k);     // a speaker's spot is its left edge, a body's x its middle column
-        a.bodies.push({ id: nextId(), job: AFTER_JOB.BUILD, site: key, pair: k, builds: true, x: at.x + P, y: at.y, face: -1,
-                       state: 'work', t: 0, load: null, slot: null, target: null, n: 0 });
-      }
+    } else {
+      for (const w of offPosts(key, AFTER_BUILD_BUILDERS))
+        Object.assign(w, { job: AFTER_JOB.BUILD, site: key, pair: null, builds: true, at: null, to: null, swing: null,
+                           t: 0, load: null, slot: null, target: null, n: 0 });
     }
     if (r.brought >= BUILD_LOADS && r.whole == null) r.whole = a.t;
   }

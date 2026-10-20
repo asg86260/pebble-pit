@@ -20712,9 +20712,14 @@ same day; where this and the paragraph above differ, this is what runs.
   station, priced, locked only behind one it truly needs (the workshop and
   the paper mill on a sawdust or timber maker, the press on the paper mill).
   The gates offer nothing. A station bought is raised in `AFTER_BUILD_PIECES`
-  bands, each fading in, by a member from the camp, or by the pair down off
-  the pedestal when the camp is empty (they climb back up after; no line
-  while they are down). The hall is gone with the doors it sold.
+  bands, each fading in, by a member from the camp, or, when the camp is
+  empty, by members stepping off their posts, who walk back into the camp
+  when it stands and are posted again. The pair never come down to build
+  (the owner, 2026-10-20: "the Couple still arent rendered on the
+  pedestal"): they are the act's leads and stay up on the pedestal,
+  speaking. The opening never needed them: the refusal's first members are
+  in the camp before the shack sells anything, and with nobody in the camp
+  or at a post a site waits for the first member to walk in. The hall is gone with the doors it sold.
 - **Hand work first.** Every station is worked by the click before any
   post: a click saws a cut, chips a log, pulls a sheet, joins a sign, pulls
   a stack, all through one door, `workAfter(station, amount)` (after/work.js),
