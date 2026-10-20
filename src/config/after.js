@@ -8,6 +8,7 @@ import { P } from './yard.js';
 import { AFTER_JOB as J } from '../jobs.js';
 import { campLayout, ART as CAMP_ART, CAMP_ORDER } from '../after/art.js';
 import { AFTER_ZONE_GAP, AFTER_UNION_W } from './aftercrowd.js';
+import { ACT_GATES_CELL, ACT_GATES_REACH } from './acts.js';
 
 // The switch for the act (DESIGN.md, "Held-back flags"), set by the build:
 // `VITE_AFTERLIFE=1`, which no build sets yet, so the free itch build, the
@@ -86,7 +87,12 @@ export const AFTER_STOCK = ['logs', 'chiplogs', 'timber', 'sawdust', 'paper', 's
 // run; none is the spec's unless its comment says so.
 
 // --- the layout, left to right (place.js reads these) ---
-export const AFTER_GROVE_X0 = P * 12;      // the grove's first plot's left, clear of the counter in the view's corner
+// The place's left end is heaven's gates (portals.js), where the souls come
+// in; the grove's first plot starts past the gates' reach by the camp's own
+// spacing between neighbors (AFTER_CAMP_GAP), so its first pine stands
+// neither on the level's edge nor in the gateway.
+export const AFTER_CAMP_GAP = 12;
+export const AFTER_GROVE_X0 = P * (ACT_GATES_CELL + AFTER_CAMP_GAP) + ACT_GATES_REACH;
 export const AFTER_PLOTS0 = 1;             // plots the grove starts with, a grown tree in it (call 10, the owner's)
 export const AFTER_PLOT_MAX = 4;           // ...and the most its card clears
 // The grove's pine, a stage a row (render/after/pine.js draws it, after/grove.js
@@ -124,7 +130,6 @@ export const AFTER_COUNT_PAD = 2;
 // station's width of open floor between neighbors (the owner), never under
 // AFTER_CAMP_GAP cells. Each is the left edge of its ground in cells off the
 // place's left (`at`); its piles and its drawing are laid off that.
-export const AFTER_CAMP_GAP = 12;
 const CAMP = campLayout(GROVE_END + 12, AFTER_CAMP_GAP);
 // The level's three zones (DESIGN.md, "The level, the two crowds and the
 // flags"): the workshops -- the grove and every station but the pedestal --
