@@ -32,6 +32,7 @@ group('act 3\'s stations answer the pointer\'s one hit test where they are drawn
   at.pedestal = asks(mid(stationParts('pedestal').top));
   at.heap = asks(mid(stationParts('heap').heap));
   at.grove = asks({ x: plotX(0), y: afterFloor() - P * 2 });
+  at.forestry = asks(mid(stationBox('forestry')));
   at.crowd = asks({ x: godMid(S.camX + S.viewW / 2), y: faceY() });
   const rects = cards.every(k => standRect(`after-${k}`) && hitRect(`after-${k}`));
   // The yard's rows, asked up there over the whole window: none answers.
@@ -49,7 +50,10 @@ group('act 3\'s stations answer the pointer\'s one hit test where they are drawn
     ok(cards.every(k => at[k] === `after-${k}`) && at.pedestal === 'after-pedestal',
        'each standing station\'s drawing names its board', JSON.stringify(at)),
     ok(at.heap === 'after-mill', 'the sawdust heap is the saw mill\'s', String(at.heap)),
-    ok(at.grove === 'after-grove', 'a pine is the grove\'s', String(at.grove)),
+    // A press on a pine saws it (the camp's second pass); the grove's board is
+    // the forestry shack's.
+    ok(at.grove == null, 'a pine opens no board', String(at.grove)),
+    ok(at.forestry === 'after-grove', 'the forestry shack is the grove\'s', String(at.forestry)),
     ok(at.crowd === 'after-crowd', 'God as drawn, far back on his stage, is his crowd\'s', String(at.crowd)),
     ok(rects, 'each stands on its own ground and has a hit box, the yard\'s readers serving it'),
     ok(!leaks.size, 'no yard station answers in the afterlife', [...leaks].join(' ')),
