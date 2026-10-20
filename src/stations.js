@@ -32,6 +32,7 @@ import { registerSites } from './works.js';
 import { JOB } from './jobs.js';
 import { msg } from './lang.js';
 import { AFTER_STATION_ROWS } from './after/stations.js';
+import { HELL_STATION_ROWS } from './hell/stations.js';
 
 // A door is shown once you are within reach of affording it: a price you have
 // no idea is coming is a price you cannot save for.
@@ -236,6 +237,7 @@ export const STATIONS = [
   // Act 3's stations and God's crowd (after/stations.js): each stands where
   // it is drawn up there, its hit the drawing itself.
   ...AFTER_STATION_ROWS,
+  ...HELL_STATION_ROWS,
 
   // The shields, each offered only once its predecessor has failed and the
   // place before it stands (DESIGN.md, "The shields are the spine"). A shield

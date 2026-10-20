@@ -206,10 +206,12 @@ canvas.addEventListener('pointerdown', e => {
       if (gestureHeld()) try { canvas.setPointerCapture(e.pointerId); } catch {}
       return;
     }
+    // Down there the pick's blow on a face or a barrier is the hand's, asked
+    // before the station's board, which a walk-up has opened already.
+    if (S.view === 'hell' && HELL_PLACE.clickHell(p.x, p.y)) return;
     const at = boardAt(p.x, p.y);
     if (at) { if (e.pointerType !== 'touch') showPanel(at, true); return; }
-    const click = S.view === 'after' ? AFTER_PLACE.clickAfter : HELL_PLACE.clickHell;
-    if (typeof click === 'function') click(p.x, p.y);
+    if (S.view === 'after' && typeof AFTER_PLACE.clickAfter === 'function') AFTER_PLACE.clickAfter(p.x, p.y);
     return;
   }
   if (onShaftArrow(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }

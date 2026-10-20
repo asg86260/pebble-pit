@@ -25,7 +25,6 @@ import { portalEnd } from '../portals.js';
 import { pairBox } from '../after/rebel.js';
 import { mouthX, portalX, portalCircle, deepPortal } from '../deep/place.js';
 import { arrowBox } from '../render/shaftway.js';
-import { furnaceBox, anvilX, roadX, chamberFloor } from '../hell/place.js';
 import { VIEW_GLIDE_S, P } from '../config.js';
 
 // --- the hand -----------------------------------------------------------------
@@ -158,6 +157,7 @@ const liveTiles = () => [...panel().querySelectorAll('button[data-key]')]
 // Every coin the place spends, as numbers.
 const purse = () => {
   const v = { dust: S.stored, shards: S.shards, spores: S.spores, sparks: S.sparks, scales: S.scales };
+  if (S.hell) v.brimstone = S.hell.brimstone;
   if (S.after) { v.rebel = S.after.rebel; for (const [k, n] of Object.entries(S.after.stock || {})) v[`s.${k}`] = n; }
   return v;
 };
@@ -332,27 +332,12 @@ export const TESTS = [
     await settle(0.3);
     out.push(ok(S.view === 'hell', 'hell: the camera is down there', S.view));
     out.push(...await panChecks('hell'));
-    // KNOWN GAP (TODO.md, "One place engine"): hell's five boards cannot be
-    // opened, because hell's stations are not STATIONS rows yet and
-    // `hellBoardAt` has no caller. The pointer is walked up to a face, a
-    // furnace and the anvil; none opens a board today. When hell's stations
-    // become rows this goes red -- flip it to `stationChecks('hell')`, a
-    // buyCheck and a scrollCloses, as the other places have.
-    const { hellBoardAt } = await import('../hell/index.js');
-    const fb = furnaceBox(0);
-    const spots = [window.__hellAt('face', 0), { x: fb.x + fb.w / 2, y: fb.y + fb.h / 2 },
-                   { x: anvilX(), y: chamberFloor(0) - P * 3 }, { x: roadX(), y: chamberFloor(0) - P * 3 }];
-    const shown = [];
-    for (const at of spots) {
-      await lookAt(at.x);
-      const [sx, sy] = glass(at.x, at.y);
-      await walkTo(sx, sy);
-      await until(() => openBoard() !== null, 30);
-      shown.push(`${hellBoardAt(at.x, at.y)} -> ${openBoard()}`);
-      if (openBoard() !== null) break;
-    }
-    out.push(ok(openBoard() === null, 'hell: KNOWN GAP (TODO.md "One place engine") -- no board opens under the pointer; flip this check when hell has station rows',
-                `a board opened: ${shown.join(', ')}`));
+    // Hell's stations are rows of the table (hell/stations.js): the pointer
+    // walked up to each opens its board, and a press on a tile spends hell's coins.
+    window.__hell({ brimstone: 1e5 });
+    out.push(...await stationChecks('hell'));
+    out.push(...await buyCheck('hell', [STATIONS.find(r => r.key === 'hell-face')]));
+    out.push(...await scrollCloses('hell'));
     // The main hand action: a blow at the face with the pick.
     const f = window.__hellAt('face', 0);
     await lookAt(f.x);

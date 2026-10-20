@@ -110,7 +110,7 @@ export function stepHell(c) {
   stepCage(c);
 }
 
-// --- the pointer (Track C wires input.js) ------------------------------------
+// --- the hand (the boards are hell/stations.js's rows) ------------------------------------
 // The last click's swing, for the drawing: where, when on hell's clock, and
 // what the blow did. Not saved: a held pose a quarter of a second long.
 let lastSwing = null;
@@ -124,26 +124,6 @@ export function clickHell(wx, wy) {
   if (!hit) return false;
   lastSwing = { x: wx, y: wy, at: S.hell.clock, did: hit.did };
   return true;
-}
-
-// The board a point in hell would open, by the station under it, or null:
-// a face, a furnace, the anvil, the road's foot (the muster), a barrier.
-// Keys registered by upgrades/rows-hell.js; titles are Track C's to wire.
-export function hellBoardAt(wx, wy) {
-  const h = S.hell;
-  if (!h) return null;
-  for (let i = 0; i <= h.chamber; i++) {
-    const fx = faceX(i, h.seams[i]);
-    if (wx >= fx - P && wx <= fx + 3 * P && wy >= faceTop(i) && wy <= chamberFloor(i)) return 'hell-face';
-    const f = furnaceBox(i);
-    if (wx >= f.x && wx <= f.x + f.w && wy >= f.y && wy <= f.y + f.h) return 'hell-furnace';
-    const b = barrierBox(i);
-    if (wx >= b.x - P && wx <= b.x + b.w + P && wy >= b.y && wy <= b.y + b.h) return 'hell-wall';
-  }
-  const near = (x, w) => Math.abs(wx - x) <= w * P && wy >= chamberFloor(0) - 6 * P && wy <= chamberFloor(0);
-  if (near(anvilX(), 3) || near(storeX(), 3)) return 'hell-anvil';
-  if (near(roadX(), 3)) return 'hell-muster';
-  return null;
 }
 
 // --- the story's seams (Track C wires the beats) -------------------------------

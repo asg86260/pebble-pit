@@ -41,13 +41,13 @@ export const HELL_MUSTER_ROW = ladder('hellmuster', msg('row-hellmuster'), msg('
 // signpost row with nothing to pay.
 const gang = () => S.hell?.gang || 0;
 const GANG_UP = {
-  key: 'hellgangup', name: msg('row-hellgangup'), sign: true,
+  key: 'hellgangup', name: msg('row-hellgangup'), sign: true, bill: () => [], cost: () => 0,
   from: gang, to: () => Math.min(GANG_MAX, gang() + 1),
   show: inHell, dead: () => gang() >= GANG_MAX,
   buy: () => { S.hell.gang = Math.min(GANG_MAX, gang() + 1); S.shopStale = true; }
 };
 const GANG_DOWN = {
-  key: 'hellgangdown', name: msg('row-hellgangdown'), sign: true,
+  key: 'hellgangdown', name: msg('row-hellgangdown'), sign: true, bill: () => [], cost: () => 0,
   from: gang, to: () => Math.max(0, gang() - 1),
   show: inHell, dead: () => gang() <= 0,
   buy: () => { S.hell.gang = Math.max(0, gang() - 1); S.shopStale = true; }
@@ -69,8 +69,7 @@ const WATER = {
 export const HELL_UPGRADES = [HELL_FACE_ROW, HELL_FURNACE_ROW, HELL_ANVIL_ROW, HELL_MUSTER_ROW, GANG_UP, GANG_DOWN, WATER];
 registerRows(HELL_UPGRADES);
 
-// The boards, by the station a click in hell lands on (hell/index.js,
-// `hellBoardAt`). Their titles and pages are stations.js's rows, Track C's.
+// The boards, by the station that opens each (hell/stations.js, the rows of the same keys).
 const BOARDS = {
   'hell-face': { title: msg('board-hell-face'), rows: [HELL_FACE_ROW] },
   'hell-furnace': { title: msg('board-hell-furnace'), rows: [HELL_FURNACE_ROW] },

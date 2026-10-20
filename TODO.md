@@ -27,11 +27,10 @@ close-on-scroll now serve act 3. Step 2 is built (branch place-step2): every `LA
 names the places it draws in (`in`), and render.js's hand-kept DEEP / AFTER /
 HELL sets are gone; what draws where is unchanged, so enabling the shared
 marks (pile marks, work bars, build sites, done marks, roster) in act places
-is now a one-word edit per layer, and comes later. Step 3 is built (branch place-step3): one `buy` in upgrades.js pays every coin through `take` and its place's purse, act 3's rows say `place`, `flyFrom` and `paid` for the yard-coin fly-up, and `buyVia`, `buyAfter`, `afterCanPay` and `afterTag` are gone (the shared `tagOf` writes the tag). Hell's rows are next (step 4). Defects found
+is now a one-word edit per layer, and comes later. Step 3 is built (branch place-step3): one `buy` in upgrades.js pays every coin through `take` and its place's purse, act 3's rows say `place`, `flyFrom` and `paid` for the yard-coin fly-up, and `buyVia`, `buyAfter`, `afterCanPay` and `afterTag` are gone (the shared `tagOf` writes the tag). Step 4 is built (branch place-step4): hell's five stations are `STATIONS` rows with `place: 'hell'` (hell/stations.js), their boards open on a walk-up with hover and cursor and shut on a pan, `hellBoardAt` is gone, and the pick's blow stays the hand's (`clickHell`, asked first); the play check walks to each hell station and buys from the face board. Defects found
 by the survey, open whatever the refactor's timing: `reloadCheck`
 (test/helpers.mjs) compares `S.workers` only, so act bodies are not guarded
-against teleporting; hell's five boards cannot be opened (`hellBoardAt` has
-no caller); workers cannot be picked up in act places (their bodies are
+against teleporting; workers cannot be picked up in act places (their bodies are
 outside `S.workers`, so the yard's grab never sees them) -- step 5, one body
 engine, fixes it, and its done check is a real-pointer grab and drop in act 3
 and in hell.
