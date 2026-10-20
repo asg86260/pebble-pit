@@ -11,7 +11,7 @@ import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_D
          CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_LANES, CLOUD_BLOOM_S, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
          CLOUD_SPINE_R, CLOUD_SPINE_LAP, CLOUD_SPINE_LOW, CLOUD_PUFF_R, CLOUD_PUFF_SINK,
          CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S,
-         CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S,
+         CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S, CLOUD_MELT_SHRINK, CLOUDS_FLAT,
          CLOUD_MURK_GROW, CLOUD_MURK_TINT, CLOUD_MURK_POW, CLOUD_MURK_TONE, CLOUD_MURK_UNDER,
          CLOUD_STORM_TONE, CLOUD_STORM_UNDER, CLOUD_STORM_TINT, CLOUD_STORM_UNDER_TINT,
          SMOG_CAP, CLOUD_DRAWN_MAX,
@@ -325,7 +325,7 @@ function acrossView(s) {
 // itself a moment after the page comes up.
 let toSpread = true;
 export function seedWeather() {
-  if (!CLOUDS_ON) { CLOUDS.length = 0; return; }
+  if (!CLOUDS_ON) { CLOUDS.forEach(forget); CLOUDS.length = 0; return; }
   toSpread = true;
 }
 
@@ -335,6 +335,7 @@ export function seedWeather() {
 // drawn out of the run's own chance, so one left standing is a fact of the
 // last run in this one -- which `the same seed is the same run` catches.
 export function resetWeather() {
+  CLOUDS.forEach(forget);
   CLOUDS.length = 0;
   BIRDS.length = 0;
   nextBirds = 0;
@@ -388,6 +389,7 @@ export function stepWeather(now) {
   // the front has peaked and is letting go: neither brewing nor pouring
   const letting = !S.raining && S.stormFor < 0;
   const secs = f / 60;
+  skyT += secs;
   for (let i = CLOUDS.length - 1; i >= 0; i--) {
     const c = CLOUDS[i];
     c.x += (c.vx + lean) * f;
@@ -397,7 +399,7 @@ export function stepWeather(now) {
     // rather than hanging on after it, and every cell it sheds sinks back into
     // the page on the way (CLOUD_EDGE_STEPS).
     if (c.storm && letting) c.melt = Math.max(c.melt, 1 - sw);
-    if (c.melt >= 1) { CLOUDS.splice(i, 1); continue; }
+    if (c.melt >= 1) { forget(c); CLOUDS.splice(i, 1); continue; }
     // The ordinary sky wraps around the strip instead. A cloud only ever
     // crosses an edge well outside the window, so nobody sees it go; melting
     // it there would let a jump of the camera strand one dissolving in the
@@ -626,9 +628,81 @@ function cellTone(h, peak, cx, r, u) {
 
 // Farthest first, so a near cloud covers a far one and the overlap is what
 // says which is in front -- between the sheets and within one.
+// --- the clouds on the renderer --------------------------------------------------------
+// Each cloud a window of its own on the card (render/cloudgl.js), worked in one
+// pass a frame and set down one by one, farthest first, at its own depth's
+// place on a whole device pixel -- so it slides as one piece, a balloon is
+// drawn between the clouds by depth as before, and only its own flow ever
+// changes its cells. Its swell is its circles' (`swellOf`); a cloud the front
+// lets go of shrinks and fades out by its melt. Its tones are the sky's this
+// frame (`cloudTones`: the murk's brown, the storm's grey, the air's fade by
+// depth), each through the page's ink, since a picture copied off the card
+// never passes the ink's fill hook.
+const key = c => 'sky' + c.id;
+const forget = c => { const gl = cloudCard(); if (gl) gl.forget(key(c)); };
+let skyT = 0, lastT = null;
+const rgbaOf = css => {
+  const v = pageInk(css), m = /^#([0-9a-f]{6})$/i.exec(v);
+  if (m) { const n = parseInt(m[1], 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1]; }
+  const r = /rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/.exec(v);
+  return r ? [r[1] / 255, r[2] / 255, r[3] / 255, 1] : [1, 1, 1, 1];
+};
+// A cloud's look, made once (its bands' depths), with its colors filled in
+// each frame: a role's tone number is its role's, so the cleanup's idea of
+// one shape never moves as the colors slide. The rear tier's lit face takes
+// the body's tone, a step deeper, as the renderer's own look does.
+function lookOf(c, tones) {
+  const L = c.look || (c.look = layerLook(c.layer, { page: 'light' }));
+  const css = tones.map(col => `rgb(${Math.round(col[0])},${Math.round(col[1])},${Math.round(col[2])})`);
+  for (let j = 0; j < c.layer.nt; j++) for (let k = 1; k <= 4; k++) {
+    const t = j === 0 && k === 1 ? 1 : k - 1;
+    L.lut.set(rgbaOf(css[Math.min(t, css.length - 1)]), (j * 5 + k) * 4);
+    L.tone[j * 5 + k] = t + 1;
+  }
+  L.tone[0] = 9;
+  return L;
+}
+function drawCloudsLiquid(order, visitors, sw, crown, base) {
+  const dt = lastT === null ? 0 : Math.max(0, Math.min(0.1, skyT - lastT));
+  lastT = skyT;
+  const top = skyCam().y, glass = ctx.getTransform(), glassW = ctx.canvas.width;
+  const views = [], at = new Map();
+  for (const c of order) {
+    const cp = cellOnPage(P * CLOUD_LAYERS[c.sheet].cell), L = c.layer;
+    const x = onPixel(skyAt(c) - c.ox * cp), y = onPixel(cloudY(c) - L.baseRow * cp);
+    if (glass.a * (x + L.w * cp) + glass.e < 0 || glass.a * x + glass.e > glassW) continue;
+    const r0 = Math.max(0, Math.ceil((top - y) / cp));
+    if (r0 >= L.h) continue;
+    const { grow, up } = swellOf(c, sw), melt = Math.min(1, c.melt);
+    const tones = c.drawn > 0.01
+      ? cloudTones(partColor('body', murkOf(c), sw), partColor('under', murkOf(c), sw), c.far)
+      : cloudTones(crown, base, c.far);
+    views.push({ key: key(c), layer: L, ox: 0, w: L.w, h: L.h, look: lookOf(c, tones), every: 1,
+                 swell: { grow: grow * (1 - CLOUD_MELT_SHRINK * melt), rise: up, base: L.baseRow } });
+    at.set(c, { x, y, cp, r0, alpha: 1 - melt });
+  }
+  const pic = workClouds(views, skyT, dt);
+  let g = 0;
+  for (const c of order) {
+    while (g < visitors.length && visitors[g].far < c.far) visitors[g++].draw();
+    const w = at.get(c), a = pic && pic.at.get(key(c));
+    if (!w || !a) continue;
+    const ga = ctx.globalAlpha;
+    ctx.globalAlpha = ga * w.alpha;
+    putCells(ctx, pic.canvas, a, w.x, w.y, w.cp, w.r0, a.h - w.r0);
+    ctx.globalAlpha = ga;
+  }
+  while (g < visitors.length) visitors[g++].draw();
+  ctx.fillStyle = '#000';
+}
+
 export function drawClouds() {
   const sw = swell(), mk = murk();
   const crown = partColor('body', mk, sw), base = partColor('under', mk, sw);
+  if (cloudCard() && !CLOUDS_FLAT) {
+    const order = CLOUDS.slice().sort((a, b) => a.far - b.far);
+    return drawCloudsLiquid(order, GUESTS.list().slice().sort((a, b) => a.far - b.far), sw, crown, base);
+  }
   // Cut at the top of the window: a storm swollen past it is a ceiling there,
   // not a wall running up out of the sky. Not the band's top -- a cloud sits
   // *in* the band, base and all, and cutting there flattened every one that

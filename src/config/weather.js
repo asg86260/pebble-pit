@@ -188,11 +188,21 @@ export let CUT_MS = 700;
 
 // The dev panel's rows for the knobs above, beside the bindings because an
 // imported `let` is read-only; config.js gathers every file's rows into TUNABLE.
+// The sky on the cloud renderer (weather.js): a cloud the front lets go of
+// shrinks by this share of itself as it fades out, so it thins away rather
+// than only going pale; and the clouds drawn as columns of circles instead,
+// the way a page with no WebGL2 draws them (1 on the dev panel), to see that
+// drawing on a machine that has the card.
+export const CLOUD_MELT_SHRINK = 0.6;
+export let CLOUDS_FLAT = 0;
+
 export const WEATHER_KNOBS = [
   { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50,
     get: () => CUT_MS, set: v => { CUT_MS = v; } },
   { key: 'CLOUD_SETTLE_S', label: 'cloud settle', min: 0, max: 120, step: 1,
     get: () => CLOUD_SETTLE_S, set: v => { CLOUD_SETTLE_S = v; } },
   { key: 'CLOUD_MURK_POW', label: 'murk bend', min: 0.2, max: 1, step: 0.05,
-    get: () => CLOUD_MURK_POW, set: v => { CLOUD_MURK_POW = v; } }
+    get: () => CLOUD_MURK_POW, set: v => { CLOUD_MURK_POW = v; } },
+  { key: 'CLOUDS_FLAT', label: 'clouds as columns', min: 0, max: 1, step: 1,
+    get: () => CLOUDS_FLAT, set: v => { CLOUDS_FLAT = v; } }
 ];
