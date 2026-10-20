@@ -178,7 +178,7 @@ export const GOD_FOOT = 19;
 // from the front as support rises a row at a time (GOD_CROWD's rule with
 // these `keep`, `fore`, `luck` and `base`: the front row gone early, the back
 // row standing to the strike).
-export const GOD_BACK = { foot: AFTER_HORIZON, size: 1, front: 12, soul: 12, gap: 6, row: 6, keep: 1.1, fore: 1, luck: 0.12, base: 0.2 };
+export const GOD_BACK = { foot: AFTER_HORIZON, size: 0.85, front: 12, soul: 12, gap: 6, row: 6, keep: 1.1, fore: 1, luck: 0.12, base: 0.2 };
 
 // --- the ground (render/after/ground.js, render/after/floor.js) ----------------------
 // Three rigid layers, nothing rolling. The far cloud between the horizon and
