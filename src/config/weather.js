@@ -23,18 +23,21 @@ export const CLOUDS_ON = true;
 // CLOUD_FADE_FAR, read off a cloud's own `far`. `n` is how many of the sheet
 // are kept in the strip of sky in view.
 export const CLOUD_LAYERS = [
-  { name: 'far',  far: 0.06, scale: 1.2,  flat: 0.7, cell: 0.5, n: 5 },
-  { name: 'mid',  far: 0.18, scale: 0.95, flat: 0.9, cell: 1,   n: 3 },
+  { name: 'far',  far: 0.06, scale: 1.2,  flat: 0.7, cell: 0.5, n: 4 },
+  { name: 'mid',  far: 0.18, scale: 0.95, flat: 0.9, cell: 1,   n: 2 },
   { name: 'near', far: 0.40, scale: 0.6,  flat: 1.0, cell: 1.5, n: 2 }
 ];
-// Where a sheet's bases sit, in cells below the top of the band: the near
-// sheet highest and each one behind it a little lower, so the sky reads as one
-// level of cumulus seen in perspective rather than as three. A cell or two of
-// give within a sheet -- bases exactly level read as a shelf. In cells, not a
-// share of the sky, so the height a cloud sits at does not move when the
-// window is resized, and all of it near the top: the sky over the works is
-// mostly empty and the clouds belong up in it.
-export const CLOUD_LANES = { near: [5, 9], mid: [11, 15], far: [17, 21] };
+// A cloud's size, on the one cloud renderer (the owner, 2026-10-21: "bigger
+// yard clouds", fewer of them): `rows` how tall it stands at rest in its
+// sheet's cells, [least, most] by sheet -- never under CLOUDS_LOD.least, the
+// least a cloud can be drawn whole -- and `aspect` how many times as wide as
+// tall, the build a cumulus of turrets has. Its base's lane is derived from
+// the tallest a sheet's cloud swells to (weather.js, `LANES`), so no cloud is
+// ever cut by the top of the window: `gap` cells between one sheet's lane and
+// the next, `give` cells of a lane's own depth. `depth` is the band of
+// CLOUDS_DEPTH_BANDS a yard cloud is drawn with (1: lit faces, shadows and
+// base, as the near sky of act 3).
+export const CLOUD_HELD = { rows: { far: [6, 8], mid: [7, 10], near: [8, 12] }, aspect: [2.1, 2.8], gap: 2, give: 3, depth: 1 };
 export const CLOUDS_WANTED = CLOUD_LAYERS.reduce((n, l) => n + l.n, 0);
 // a sheet's clouds are not all at one exact depth: each is this far either
 // side of its sheet's `far`, so two in a sheet still slide past each other
@@ -98,10 +101,12 @@ export const CLOUD_PUFF_R = [0.25, 0.45];
 export const CLOUD_PUFF_SINK = [0.0, 0.4];
 // The clouds are the front. Through a storm's brew they swell -- each one
 // wider, taller, with a heavier underside -- and more come in off the sides,
-// up to CLOUDS_STORM at a full heft; through the taper and for CLOUD_SETTLE_S
-// after it they shed it all again. The swell is derived off the storm's clock
-// every frame and never saved (`swell` in weather.js).
-export const CLOUDS_STORM = 22;
+// until the front's own clouds cover CLOUD_STORM_AREA square world pixels at
+// a full heft (an area, not a count, so bigger clouds mean fewer of them for
+// the same storm); through the taper and for CLOUD_SETTLE_S after it they
+// shed it all again. The swell is derived off the storm's clock every frame
+// and never saved (`swell` in weather.js).
+export const CLOUD_STORM_AREA = 40000;
 export let CLOUD_SETTLE_S = 30;
 // How far a bump's radius grows at a full swell, as a share of itself: the
 // front is a bigger cloud, not a new shape.

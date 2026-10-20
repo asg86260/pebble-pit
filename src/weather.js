@@ -7,10 +7,10 @@
 // against the camera, so a thing at `far` 0.2 slides a fifth as fast as the
 // ground when the view scrolls.
 
-import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_LANES, CLOUD_BLOOM_S, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
+import { P, ROCK_SKY, CLOUDS_ON, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
+         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_HELD, CLOUDS_LOD, CLOUD_BLOOM_S, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
          CLOUD_SPINE_R, CLOUD_SPINE_LAP, CLOUD_SPINE_LOW, CLOUD_PUFF_R, CLOUD_PUFF_SINK,
-         CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S,
+         CLOUD_TOP, CLOUD_STORM_AREA, CLOUD_SETTLE_S,
          CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S, CLOUD_MELT_SHRINK, CLOUDS_FLAT,
          CLOUD_MURK_GROW, CLOUD_MURK_TINT, CLOUD_MURK_POW, CLOUD_MURK_TONE, CLOUD_MURK_UNDER,
          CLOUD_STORM_TONE, CLOUD_STORM_UNDER, CLOUD_STORM_TINT, CLOUD_STORM_UNDER_TINT,
@@ -71,8 +71,27 @@ function inBand() {
 // tall enough to be cut by the top of the window is a cloud overhead.
 function cloudBand() {
   const top = skyCam().y + CLOUD_TOP * P;
-  return { top, low: top + Math.max(...Object.values(CLOUD_LANES).map(l => l[1])) * P };
+  return { top, low: top + Math.max(...Object.values(LANES).map(l => l[1])) * P };
 }
+// Where each sheet's bases sit, in cells below the top of the band: the near
+// sheet highest and each one behind it lower, so the sky reads as one level
+// of cumulus seen in perspective rather than as three, with a few cells of
+// give within a sheet (bases exactly level read as a shelf). Each lane starts
+// as far down as its sheet's tallest cloud stands at a full swell, so no
+// cloud is ever cut by the top of the window, and below the lane in front of
+// it. In cells, not a share of the sky, so the height a cloud sits at does
+// not move when the window is resized.
+const LANES = (() => {
+  const out = {}, H = CLOUD_HELD;
+  let end = 0;
+  for (const L of CLOUD_LAYERS.slice().reverse()) {
+    const room = Math.ceil(H.rows[L.name][1] * (1 + CLOUD_GROW_R) * L.cell) + 1;
+    const from = Math.max(room, end ? end + H.gap : 0);
+    out[L.name] = [from, from + H.give];
+    end = from + H.give;
+  }
+  return out;
+})();
 function cloudY(c) {
   return skyCam().y + CLOUD_TOP * P + (c.yb ?? 0);
 }
@@ -232,24 +251,32 @@ function makeCloud(x, sheet, storm = false) {
   const w = Math.ceil(Math.max(...bumps.map(b => b.x + b.r)));
   const off = rand() * 2 - 1;                // where in its sheet's thickness it sits
   const far = L.far + off * CLOUD_FAR_JITTER;
-  const yb = between(CLOUD_LANES[L.name]) * P;   // its base, in pixels below the band's top
+  const yb = between(LANES[L.name]) * P;   // its base, in pixels below the band's top
   // Its shape is the one cloud renderer's (render/clouds.js, DESIGN.md "The
-  // yard's sky on the cloud renderer"): turrets on a flat base, as wide as
-  // the cloud drawn above would have been. Its seed is read off the draws
-  // already made, never a draw of its own, so the run's stream is the same
-  // number for number as before the sky was redrawn.
+  // yard's sky on the cloud renderer"): turrets on a flat base, its size its
+  // sheet's (CLOUD_HELD), never under what the grid draws whole
+  // (CLOUDS_LOD). Its seed and size are read off the draws already made,
+  // never draws of their own, so the run's stream is not moved by them.
   const seed = (Math.floor(wide * 977 + H * 131 + bumps[0].r * 7919) % 100003) + 1;
-  const tall = -Math.min(...bumps.map(b => b.y - b.r)) * L.flat;
-  const held = heldCloud({ kind: HELD[kind.name], wide: w, tall, seed, flat: L.flat, grow: 1 + CLOUD_GROW_R });
+  const u = k => { const v = Math.sin(seed * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); };
+  const lerp2 = ([a, b], t) => a + (b - a) * t;
+  const tall = Math.max(CLOUDS_LOD.least.h, lerp2(CLOUD_HELD.rows[L.name], u(1)));
+  const across = Math.max(CLOUDS_LOD.least.w, tall * lerp2(CLOUD_HELD.aspect, u(2)));
+  const held = heldCloud({ kind: HELD[kind.name], wide: across, tall, seed, flat: L.flat, grow: 1 + CLOUD_GROW_R, depth: CLOUD_HELD.depth });
   return { x, yb, w: held.w, bumps: held.bumps, layer: held.layer, ox: held.ox, id: ++cloudIds, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
            give: 0.7 + (off + 1) / 2 * 0.6, storm, age: 0, melt: 0 };
 }
-// The renderer's shape for each of CLOUD_KINDS: a bank is a long low heap.
-const HELD = { puff: 'cumulus', heap: 'heap', tower: 'tower', bank: 'heap' };
+// The renderer's shape for each of CLOUD_KINDS: all cumulus, since at a
+// sheet's cell sizes a low heap cut at its base reads as a bar and a tower
+// stood up to its height as a column.
+const HELD = { puff: 'cumulus', heap: 'cumulus', tower: 'cumulus', bank: 'cumulus' };
 let cloudIds = 0;
 
 // a cloud's cell in world pixels: its sheet's
 const cellOf = c => P * CLOUD_LAYERS[c.sheet].cell;
+// A cloud's area at rest, in square world pixels: its cells unswelled, each a
+// cell of its sheet's. What the front adds clouds up to.
+const areaOf = c => c.area ??= cellsOf(c, 0, true) * cellOf(c) ** 2;
 
 // A cloud on its way out: it thins from the bottom a cell at a time and climbs
 // as it goes, paling toward the page, the way a cloud actually breaks up. Only
@@ -283,8 +310,9 @@ function swellOf(c, sw) {
 // many cells stand above the base line, and how many of the lowest are the
 // underside, off its circles at rest swelled as `swellOf` says. The sky's
 // report counts these; with no WebGL2 they are also what is drawn.
-function columnsOf(c, sw) {
-  const { grow, up } = swellOf(c, sw);
+// (`rest`: the circles as made, unswelled and grown in full)
+function columnsOf(c, sw, rest = false) {
+  const { grow, up } = rest ? { grow: 1, up: 1 } : swellOf(c, sw);
   const h = [];
   let lo = Infinity, hi = -Infinity;
   for (const b of c.bumps) {
@@ -369,16 +397,18 @@ export function stepWeather(now) {
   // The front's own clouds: more of them the heavier it is, born anywhere
   // across the strip since a storm cloud is nothing until the swell grows
   // it, and gone once the swell has let them shrink to nothing. Dealt round
-  // the sheets from the nearest out, so the front is overhead first.
+  // the sheets from the nearest out, so the front is overhead first, until
+  // its clouds at rest cover the front's share of CLOUD_STORM_AREA.
   const sw = swell();
-  const want = Math.round((CLOUDS_STORM - CLOUDS_WANTED) * sw);
-  let storms = CLOUDS.reduce((n, c) => n + c.storm, 0);
-  while (CLOUDS_ON && storms < want) {
+  const want = CLOUD_STORM_AREA * sw;
+  let storms = 0, area = 0;
+  for (const c of CLOUDS) if (c.storm) { storms++; area += areaOf(c); }
+  while (CLOUDS_ON && area < want) {
     const sheet = CLOUD_LAYERS.length - 1 - (storms % CLOUD_LAYERS.length);
     const c = makeCloud(0, sheet, true);
     c.x = skyCam().x * c.far + rand() * skyCam().w - c.w * cellOf(c) / 2;
     CLOUDS.push(c);
-    storms++;
+    storms++; area += areaOf(c);
   }
   // Pixels a frame, stepped by how long the frame was, or the sky slows down
   // on a slow machine while the clock behind it does not -- on the
@@ -472,8 +502,8 @@ export function skyReport() {
 // height is carried as a fraction now (the part of the top cell the cloud
 // fills, which is how solid it is drawn), and counting those would make every
 // cloud's count change on every frame.
-function cellsOf(c, sw) {
-  const { lo, hi, h } = columnsOf(c, sw);
+function cellsOf(c, sw, rest = false) {
+  const { lo, hi, h } = columnsOf(c, sw, rest);
   let n = 0;
   for (let cx = lo; cx <= hi; cx++) n += Math.ceil(h[cx] || 0);
   return n;
