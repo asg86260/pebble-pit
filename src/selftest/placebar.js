@@ -20,7 +20,7 @@ import { ok, settle, raf, sleep, point, canvas, run, runUntil } from './kit.js';
 import { STATIONS, here } from '../stations.js';
 import { openBoard } from '../board.js';
 import { pageOf } from '../pages.js';
-import { until, wheel, glass, lookAt, walkTo, visit } from './playcheck.js';
+import { until, wheel, glass, lookAt, walkTo, visit, toBare } from './playcheck.js';
 import { gestureStops, gestureUnder, pressTaken, gestureUp } from '../after/gestures.js';
 import { GREY, PURPLE, COIN_TONES, AFTER_TONES, CLOUDS_PALETTE, HELL_TIERS, P } from '../config.js';
 import { barrierFallen } from '../hell/barriers.js';
@@ -99,7 +99,7 @@ function hellTargets() {
 // Then a press: the hand work took it (act 3), or the blow landed (hell).
 async function workChecks(place, targets, found) {
   for (const t of targets) {
-    point('pointermove', 4, 4, 0);
+    await toBare();
     await until(() => openBoard() === null, 90);
     await lookAt(t.x);
     const [sx, sy] = glass(t.x, t.y);

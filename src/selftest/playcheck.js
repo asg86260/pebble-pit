@@ -24,6 +24,7 @@ import { toScreen } from '../world.js';
 import { portalEnd } from '../portals.js';
 import { pairBox } from '../after/rebel.js';
 import { speakerAt } from '../after/place.js';
+import { bubbles } from '../after/bubbles.js';
 import { K as INK, W as PAPER } from '../render/after/kit.js';
 import { mouthX, portalX, portalCircle, deepPortal } from '../deep/place.js';
 import { arrowBox } from '../render/shaftway.js';
@@ -100,6 +101,17 @@ export const glass = (x, y) => { const r = canvas().getBoundingClientRect(), s =
 // The camera on a world x with nothing else moving it, a frame drawn.
 export const lookAt = async x => { window.__look(x - S.viewW / 2); await settle(0.1); };
 
+// The pointer put on bare glass, and any board let go. The spot is a corner
+// of the glass outside the board's wedge (board.js, `inSafeZone`): a board
+// seats itself by its station, and a fixed corner was sometimes inside the
+// wedge, which held the last board up over the next station.
+export async function toBare() {
+  const W = innerWidth, H = innerHeight;
+  const bare = [[4, 4], [W - 4, 4], [4, H - 4], [W - 4, H - 4]].find(([x, y]) => !inSafeZone(x, y)) || [4, 4];
+  point('pointermove', bare[0], bare[1], 0);
+  await until(() => openBoard() === null, 90);
+}
+
 // The pointer walked up to a spot from a few steps off, the way a hand
 // arrives, rather than appearing on it.
 export async function walkTo(sx, sy) {
@@ -139,11 +151,8 @@ export async function visit(row) {
   }
   // From a bare spot: a board already up for the neighbor holds its place
   // for a cursor heading toward it, which is the board's, not the walk's --
-  // so a corner of the window off the way to that board, wherever it sits
-  // (under a notice card or at the top of the glass).
-  const [bx, by] = [[4, 4], [S.W - 4, 4], [4, S.H - 4], [S.W - 4, S.H - 4]].find(([x, y]) => !inSafeZone(x, y)) || [4, 4];
-  point('pointermove', bx, by, 0);
-  await until(() => openBoard() === null, 90);
+  // so a corner of the window off the way to that board (`toBare`).
+  await toBare();
   const [sx, sy] = glass(at.x, at.y);
   await walkTo(sx, sy);
   const opened = await until(() => openBoard() === row.key, 90);
@@ -375,8 +384,15 @@ export const TESTS = [
     out.push(...await grabCheck('afterlife', PLACES.after.crew, ['woodcutter', 'agitator']));
     // The shout: a click on the pair on the pedestal sheds rebel.
     const pair = pairBox();
+    // Read between lines of the speech: a bubble a second old or less is a
+    // speaker mid-shout, drawn in that pose rather than standing.
     await lookAt(pair.x + pair.w / 2);
-    const glass = pairOnGlass();
+    let glass = pairOnGlass();
+    for (let i = 0; i < 10 && !bubbles().every(b => b.age > 1); i++) {
+      runUntil(() => bubbles().every(b => b.age > 1), 20);
+      await raf();
+      glass = pairOnGlass();
+    }
     out.push(ok(glass.every(g => g.ok), "afterlife: the pair are drawn on the pedestal, the act's ink round its paper where they stand",
                 JSON.stringify(glass)));
     const r0 = S.after.rebel, shouts0 = S.after.shout;
