@@ -381,6 +381,16 @@ Two harness facts, each of which cost a full launch cycle:
 
 ## Decided, do not relitigate
 
+- **Every act runs on the shared systems** (the owner, said many times;
+  written down 2026-10-20). Stations and their table, jobs and the walk,
+  bodies and routes, piles, boards and shop rows and buying, click and
+  hover hit-testing, and the camera are the yard's, shared by every place.
+  An act supplies data -- its stations, art, surroundings, currencies,
+  ladders, beats -- never its own parallel copy of a mechanism. Act 3
+  broke the day its private camera moved and its private click tests did
+  not follow. Before writing act-specific code, name the shared mechanism
+  it extends; if the shared one cannot serve the act, that is the defect.
+
 - **Sparks (red, ✚) are the machines' currency, end to end.** They buy every
   machine, every rung of each machine's three-rung ladder, and they tear and
   widen the rift. The machines' ladders were endless and are not since
