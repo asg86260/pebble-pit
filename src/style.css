@@ -40,10 +40,9 @@ html, body {
    grays the boards use as steps between them, numbered by how far from the
    ink they stand, in tenths. No rule below names a color; it names one of
    these. The dark page's ink and paper are the ones config/view.js gives the
-   canvas (DARK_PAPER, DARK_INK): a graphite light enough for black to sit
-   on, and a light ink for words and lines. Its grays are the light page's
-   steps taken from the other end, paper + (ink - paper) * (1 - v / 255),
-   with -4 and -5 lifted to AA, which the formula misses on graphite.
+   canvas (DARK_PAPER, DARK_INK): near-black and a light ink, the page turned
+   over. Its grays are the light page's steps taken from the other end,
+   paper + (ink - paper) * (1 - v / 255).
    Scrims (rgba black) are shade, not ink, and stay dark on both pages. A gray that words are set in (-2, -4,
    -5) is at least WCAG AA's 4.5:1 on its own paper, light and dark: -5 is
    the lightest step that is (TEXT_AA in config/view.js; checked on every
@@ -55,11 +54,9 @@ html, body {
      the deep's story card and every section sign are that. */
   --c-paper: #fff; --c-ink: #000;
   --paper: var(--c-paper); --ink: var(--c-ink);
-  /* A fill (DESIGN.md, "Dark mode: black stays black"): a chip, a banner, a
-     selected row -- black on both pages, with its words in --on-fill. On the
-     light page that is the ink and the paper; on the dark page the paper
-     changes and the black does not. A box that inks itself the other way
-     round swaps all four. */
+  /* A fill: a chip, a banner, a selected row, its words in --on-fill. It is
+     the ink and the paper, so on a dark page the fill is the light ink. A box
+     that inks itself the other way round swaps all four. */
   --c-fill: #000; --c-on-fill: #fff;
   --fill: var(--c-fill); --on-fill: var(--c-on-fill);
   --ink-2: #333; --ink-4: #666; --ink-5: #767676; --ink-7: #a4a4a4; --ink-8: #cfcfcf;
@@ -164,18 +161,16 @@ html, body {
 :root.readable:lang(ja) { --face: "DM Mono", "Pit JP", monospace; }
 :root.readable:lang(ko) { --face: "DM Mono", "Pit KR", monospace; }
 html.dark {
-  --c-paper: #3a3a3a; --c-ink: #ececec; --c-on-fill: #ececec;
+  --c-paper: #121212; --c-ink: #ececec; --c-fill: #ececec; --c-on-fill: #121212;
   --paper: var(--c-paper); --ink: var(--c-ink);
-  --ink-2: #c8c8c8; --ink-4: #b1b1b1; --ink-5: #a5a5a5; --ink-7: #7a7a7a; --ink-8: #5c5c5c;
+  --ink-2: #c0c0c0; --ink-4: #959595; --ink-5: #878787; --ink-7: #606060; --ink-8: #3b3b3b;
   --accent: #b79af2;
   --coin-ore: #7d9cf0; --coin-crop: #6fd08a; --coin-spark: #f06a55;
-  --shadow-ink: 45%;
+  --shadow-c: #ececec; --shadow-ink: 20%;
   --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23ececec' fill-opacity='.14'/%3E%3C/svg%3E");
 }
-/* The dim page (prefs.js, `theme`): the first dark page, kept as a choice --
-   light gray on charcoal, every fill in the light gray and its words in the
-   charcoal, the page turned over by lightness as the canvas's map is there
-   (DEEP_PAPER, DEEP_INK). */
+/* The dim page (prefs.js, `theme`): the dark page's turn on charcoal, light
+   gray on charcoal (DEEP_PAPER, DEEP_INK). */
 html.dark.dim {
   --c-paper: #1f1f1f; --c-ink: #e0e0e0; --c-fill: #e0e0e0; --c-on-fill: #1f1f1f;
   --paper: var(--c-paper); --ink: var(--c-ink);

@@ -3,8 +3,8 @@
 
 import { openBoardRect } from '../board.js';
 import { fmt } from '../words.js';
-import { NUM_FONT_PX, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FLOAT_SHADOW, FLOAT_SHADOW_ALPHA, FLOAT_SHADOW_ALPHA_DARK } from '../config.js';
-import { darkPage, inkMode, raw } from '../ink.js';
+import { NUM_FONT_PX, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FLOAT_SHADOW, FLOAT_SHADOW_ALPHA } from '../config.js';
+import { inkMode } from '../ink.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawCoin, drawMark } from './marks.js';
@@ -142,11 +142,10 @@ export function drawCount() {
   }
   // the shadow first, as the page's floating cards cast it, so the card
   // covers all of it but the strip down its right and along its foot
-  // A shadow is black on both pages, past the map: in the reading layers'
-  // turned map it would come out a light halo.
-  ctx.fillStyle = raw('#000');
+  // in the ink, as the boards' --shadow-c: a light shadow on a dark page
+  ctx.fillStyle = '#000';
   const was = ctx.globalAlpha;
-  ctx.globalAlpha = was * (darkPage ? FLOAT_SHADOW_ALPHA_DARK : FLOAT_SHADOW_ALPHA);
+  ctx.globalAlpha = was * FLOAT_SHADOW_ALPHA;
   ctx.fillRect(box.x + FLOAT_SHADOW, box.y + FLOAT_SHADOW, box.w, box.h);
   ctx.globalAlpha = was;
   ctx.fillStyle = '#fff';

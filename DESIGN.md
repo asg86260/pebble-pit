@@ -104,7 +104,37 @@ the fix is a window color read from the store, and it is not done.
 For a shot, `play.html?dark` opens the dark page whatever the store says
 (`GAME=http://localhost:<port>/play.html?dark node tools/look.mjs rock`).
 
-## Dark mode: black stays black (built 2026-10-18)
+## Dark mode: the page turned over (built 2026-10-19)
+
+The owner, 2026-10-19, looking at the graphite page in play: it reads as
+dark on dark. Black on `#3a3a3a` is under 2:1, so the pit's walls, the
+ladder and the hollow crew all but vanish and the clouds sink into murk.
+Back to lighter buildings: where the light page is white the dark page is
+black, and where the game is black it is white.
+
+**The bargain.** The dark page is the dim page's turn on a darker paper.
+`DARK_PAPER` is `#121212`, act 3's own dark paper, and `DARK_INK` the
+light ink `#ececec`. Every layer outside the deep and act 3 is drawn in
+one turned map (ink.js: 'yard' and 'line' share the same ends), a gray
+landing on its step between them with its hue kept. The rock, the
+buildings and the crew come out light on near-black. `light()` turns with
+everything else, so a lit window keeps its place against its wall. The deep
+keeps dim's ends, as it always has, and act 3 keeps its own spread. The
+boards follow: `html.dark` is the dim block's shape on near-black, fills
+in the light ink with their words in the paper, the float shadow in the
+ink at 20% (the counter's too, `FLOAT_SHADOW_ALPHA`).
+
+**What it gives back.** The glare the section below was built against
+returns in a softer form: a banner or a selected row is a light slab on a
+dark page. That is the owner's call: the dark page is a negative of the
+light one, and dim is the same negative on charcoal for anyone who finds
+near-black too stark.
+
+## Dark mode: black stays black (built 2026-10-18, replaced 2026-10-19)
+
+Replaced by the section above. Kept for its survey of where a turned page
+goes wrong.
+
 
 The owner, 2026-10-18: the dark page should be "less inversion and more
 designed around dark UI elements". The page above is the light page with
