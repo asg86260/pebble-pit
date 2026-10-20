@@ -52,10 +52,10 @@ place engine's early steps, 6 and 7 come before more act 3 art.
    Blocked on: act 3 step 2 landing.
 4. **One cloud renderer for every place, the yard included.** The cloud
    bench built it; act 3's sky and ground clouds are on it
-   (`render/after/cloudsky.js`, branch `act3-clouds-wire`). The yard's sky,
-   smog and rain clouds (`src/smog/`, ~1.8k lines) move onto it next;
-   the plan is on `clouds-bench` (DESIGN.md there, "The yard's sky on the
-   cloud renderer"), awaiting the owner.
+   (`render/after/cloudsky.js`). The yard's sky, smog and rain clouds
+   (`src/smog/`, ~1.8k lines) move onto it next; the move is designed,
+   awaiting the owner's approval: DESIGN.md, "The yard's sky on the cloud
+   renderer".
 5. **Fades as the only way in or out.** One shared appear/leave every new
    thing uses (fade.js), so a pop like act 3's sign plant cannot happen by
    accident.

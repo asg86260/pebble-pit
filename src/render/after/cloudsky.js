@@ -48,7 +48,7 @@ const bodyOf = k => CLOUDS_PALETTE[page][CLOUDS_DEPTH_BANDS[page].filter(b => b[
 let L = null;
 function layers() {
   if (L) return L;
-  L = { sky: Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: A.seed, W: A.sky.W })) };
+  L = { sky: Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: A.seed, W: A.sky.W, sky: A.sky.rows })) };
   for (const g of GROUNDS) {
     const k = A[g];
     L[g] = groundLayer({ seed: A.seed + k.R, W: k.W, R: k.R, rows: k.rows, depths: k.depths });
@@ -68,8 +68,9 @@ function placeOf(name, l, T, cw) {
   if (name === 'far') return { rate: A.far.rate, y: hz + (A.far.down - l.crest) * cw, drift: 0, solid: bot };
   if (name === 'edge') return { rate: A.edge.rate, y: bot - (A.edge.lap + l.crest) * cw, drift: 0, solid: S.camY + S.viewH };
   if (name === 'fore') return { rate: A.fore.rate, y: bot + (A.fore.down - l.crest) * cw, drift: 0, solid: S.camY + S.viewH };
-  // a sky layer: its base line its rise up the sky's rows, blowing on its wind
-  return { rate: l.P.parallax * A.sky.rate, y: hz - (Math.round(l.P.rise * A.sky.rows) + l.baseRow) * cw, drift: l.P.wind * T, solid: null };
+  // a sky layer: its horizon row on the horizon (its clouds stand at their
+  // heights over it, render/clouds.js), blowing on its wind
+  return { rate: l.P.parallax * A.sky.rate, y: hz - l.baseRow * cw, drift: l.P.wind * T, solid: null };
 }
 
 // The frame's picture: every window worked once, at the backdrop.

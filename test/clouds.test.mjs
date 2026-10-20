@@ -126,7 +126,10 @@ test('a flowing edge crosses a cell once: none chatters, hardly any comes back w
   // which is the flow and not flicker; a cell back within a tenth of a second
   // is flicker
   const L = skyLayer({ i: CLOUDS_SKY.layers - 1, seed: 7, W: 800 });
-  const x0 = 100, w = 40, h = L.h, near = L.puffs.filter(p => Math.abs(((p.x - x0 - w / 2) % 800 + 1200) % 800 - 400) < 90);
+  const w = 40, h = L.h, by = x0 => L.puffs.filter(p => Math.abs(((p.x - x0 - w / 2) % 800 + 1200) % 800 - 400) < 90);
+  let x0 = 0;
+  for (let x = 0; x < 800; x += 20) if (by(x).length > by(x0).length) x0 = x;
+  const near = by(x0);
   const view = { ...L, puffs: near };
   const T = new Int8Array(w * h).fill(-9), when = new Float64Array(w * h).fill(-9), from = new Int8Array(w * h);
   let changes = 0, back = 0, chatter = 0;
