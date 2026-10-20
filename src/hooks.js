@@ -967,7 +967,10 @@ export const HANDLES = {
   // `.stick(x, y)`, `.step()` -- the presses a player makes, read exactly as
   // a real pad's are.
   __pad: PAD_HANDLE,
-  __holdShot: (ms = 4000) => { heldUntil = performance.now() + ms; },   // `fast` above
+  // A shot's hold is the page's (look.mjs reads the frame while it lasts);
+  // the node yard takes no shots, and a hold there froze the clock for four
+  // wall seconds under whatever check stood a scene and then ran.
+  __holdShot: (ms = 4000) => { if (import.meta.env) heldUntil = performance.now() + ms; },   // `fast` above
   // The page's own frames held off the yard, so a capture steps it with
   // `__fast` alone and every frame is the time it asked for.
   __still: (on = true) => { S.still = !!on; },

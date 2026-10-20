@@ -169,7 +169,6 @@ function door(place) {
 // Every site of the yard open and every ladder topped (test/no-overlap.test.mjs).
 function fullYard() {
   SCENES.everything.run();
-  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   for (const k of ['casino', 'filter', 'apothecary', 'outhouse', 'tower', 'meteor']) S[k + 'Open'] = true;
   S.seenBench = true;
   S.apothPots = APOTH_POTS_MAX;
@@ -200,7 +199,6 @@ group('the yard: every station meets the bar', async () => {
 
 group('the deep: every station meets the bar', async () => {
   SCENES.late.run();
-  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__view('deep');
   run(2);
   const keys = walk('deep');
@@ -212,7 +210,6 @@ group('the deep: every station meets the bar', async () => {
 group('act 3: every station meets the bar', async () => {
   // The chain running: the saw mill, the chipper and the workshop at work.
   SCENES['after-chain'].run();
-  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__goPlace('after');
   // The scene's ninety seconds leave the grove felled: its inputs, the setup
   // this check is not about, so every station has something to work.
@@ -228,7 +225,6 @@ group('act 3: every station meets the bar', async () => {
 
 group('hell: every station meets the bar', async () => {
   SCENES['hell-forge'].run();
-  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__goPlace('hell');
   run(2);
   const keys = walk('hell');
@@ -263,12 +259,10 @@ function hand(place) {
 
 group('the acts: a body hovered, shaken and let go, as the yard\'s', async () => {
   SCENES['act3-mid'].run();
-  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__goPlace('after');
   run(2);
   hand('after');
   SCENES['hell-forge'].run();
-  window.__holdShot(0);
   window.__goPlace('hell');
   run(2);
   hand('hell');

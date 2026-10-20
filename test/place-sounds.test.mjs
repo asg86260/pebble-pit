@@ -49,7 +49,6 @@ function listen(place) {
 
 group('act 3: its bodies walking and working are heard', async () => {
   SCENES['after-chain'].run();
-  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__goPlace('after');
   run(1);
   // The chain stands at its posts; a post bought sends a member out to it.
@@ -66,7 +65,6 @@ group('act 3: its bodies walking and working are heard', async () => {
 
 group('hell: its bodies walking and working are heard', async () => {
   SCENES['hell-forge'].run();
-  window.__holdShot(0);   // a scene holds the clock for its shot; this is a check, not a shot
   window.__goPlace('hell');
   run(1);
   const walking = S.hell.bodies.filter(b => b.job).length;
