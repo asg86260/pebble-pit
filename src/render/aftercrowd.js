@@ -831,13 +831,17 @@ function drawGaze(gz) {
     const rows = [];
     for (let dy = -n; dy <= n; dy++) rows.push([dy, hw * Math.sqrt(Math.max(0, 1 - (dy / R) ** 2))]);
     const wAt = dy => (Math.abs(dy) <= n ? rows[dy + n][1] : 0);
-    alpha(darkPage ? GAZE.spotDark : GAZE.spot, () => { for (const [dy, w] of rows) alpha(clamp(w, 0, 1), () => c(fx - w, fy + dy, 2 * w, 1, WHITE)); });
+    // How far the disc reaches into a row, 0 to 1: the fades go by this and
+    // not by the row's width, which near the rim leaps up a square root as
+    // soon as the disc touches it and would pop the row in in a frame.
+    const cov = dy => clamp(R - Math.abs(dy), 0, 1);
+    alpha(darkPage ? GAZE.spotDark : GAZE.spot, () => { for (const [dy, w] of rows) alpha(cov(dy), () => c(fx - w, fy + dy, 2 * w, 1, WHITE)); });
     for (const [dy, w] of rows) {
       // The rim: each end of a row in to the widest of its neighbors, a cell
       // at the least; and across the whole of a row with nothing past it,
       // fading out as the next row out comes in.
-      const out = Math.max(wAt(dy - 1), wAt(dy + 1)), past = dy < 0 ? wAt(dy - 1) : dy > 0 ? wAt(dy + 1) : 1;
-      alpha(clamp(w, 0, 1), () => {
+      const out = Math.max(wAt(dy - 1), wAt(dy + 1)), past = dy < 0 ? cov(dy - 1) : dy > 0 ? cov(dy + 1) : 1;
+      alpha(cov(dy), () => {
         alpha(1 - clamp(past, 0, 1), () => c(fx - w - 1, fy + dy, 2 * w + 2, 1, AFTER_GAZE_EDGE));
         c(fx - w - 1, fy + dy, Math.max(1, w - out + 1), 1, AFTER_GAZE_EDGE);
         c(fx + Math.min(w, out), fy + dy, Math.max(1, w - out + 1), 1, AFTER_GAZE_EDGE);
