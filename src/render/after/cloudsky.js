@@ -18,6 +18,7 @@
 import { P, GREY, AFTER_TONES, CLOUD_SKY as K, CLOUD_SKY_TONES } from '../../config.js';
 import { S } from '../../state.js';
 import { ctx } from '../ctx.js';
+import { onPixel } from '../frame.js';
 import { darkPage } from '../../ink.js';
 import { horizonY } from '../../after/sky.js';
 import { now } from './kit.js';
@@ -139,13 +140,16 @@ export function drawCloudSky() {
   // The step after next worked out a slice a frame, done in the first share
   // of the step it waits through.
   work(stepAt(q + 2, cols, rows, false), Math.ceil((K.ranges.length * cols + 8 * rows) / (K.step * 60 * K.slice)));
-  const x0 = S.camX, smooth = ctx.imageSmoothingEnabled;
+  // Set on the camera's own device pixels: at the bare camera x the image
+  // would land a fraction of a pixel off it, rounded afresh as the camera
+  // slides, and its edges would shimmer against the still window.
+  const x0 = onPixel(S.camX), smooth = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(A, x0, top, cols * P, rows * P);
+  ctx.drawImage(A, x0, onPixel(top), cols * P, rows * P);
   if (a > 0.02) {
     const was = ctx.globalAlpha;
     ctx.globalAlpha = was * a;
-    ctx.drawImage(B, x0, top, cols * P, rows * P);
+    ctx.drawImage(B, x0, onPixel(top), cols * P, rows * P);
     ctx.globalAlpha = was;
   }
   ctx.imageSmoothingEnabled = smooth;
