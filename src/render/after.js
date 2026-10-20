@@ -23,7 +23,6 @@ import { ctx } from './ctx.js';
 import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
-import { screenAt } from './frame.js';
 import { buildPileAt, stationBox, stationX0, stationDoor, heapMid, notchX, fileAt, rankAtY, afterFloor, ART, AP } from '../after/place.js';
 import { clouds, cloudCells, cloudAlpha, airMotes, cloudW } from '../after/rebel.js';
 import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
@@ -155,32 +154,34 @@ function glyphOver(b, rows, at, alpha = 1) {
   ctx.globalAlpha = was;
 }
 // The closed sign at a station's door (config, AFTER_CLOSED), its foot on
-// the floor and `x` its middle, world px: symbols only. 0, a board on a post
-// crossed through corner to corner; 1, a barrier, a bar on crossed legs.
+// the floor and `x` its middle, world px: symbols only, drawn on the act's
+// art cell (AP) with its rim the art's stroke. 0, a board on a post crossed
+// through corner to corner; 1, a barrier, a striped bar on crossed legs.
 function closedSign(x, design = AFTER_CLOSED.design) {
-  const C = AFTER_CLOSED, fl = afterFloor(), r = 2;
+  const C = AFTER_CLOSED, fl = afterFloor(), r = 2 * AFTER_ART_SCALE, u = AP;
   const box = (x0, y0, w, h) => { ctx.fillStyle = GREY[K]; ctx.fillRect(x0, y0, w, h); ctx.fillStyle = GREY[W]; ctx.fillRect(x0 + r, y0 + r, w - 2 * r, h - 2 * r); };
-  // a cross of r-px squares corner to corner over a box, in ink
+  // a cross corner to corner over a box, in ink: a stroke two rims thick
+  // laid in steps of a rim, each on the rim's grid
   const cross = (x0, y0, w, h) => {
     ctx.fillStyle = GREY[K];
-    const n = Math.round(w / r);
+    const s = 2 * r, n = Math.round((w - s) / r) + 1;
     for (let i = 0; i < n; i++) {
-      const y = y0 + Math.round((h - r) * i / (n - 1) / r) * r;
-      ctx.fillRect(x0 + i * r, y, r, r); ctx.fillRect(x0 + w - r - i * r, y, r, r);
+      const y = y0 + Math.round((h - s) * i / (n - 1) / r) * r;
+      ctx.fillRect(x0 + i * r, y, s, s); ctx.fillRect(x0 + w - s - i * r, y, s, s);
     }
   };
-  const x0 = snap(x - C.w * P / 2);
+  const w = C.w * u, x0 = snap(x) - Math.round(C.w / 2) * u;
   if (design === 0) {
-    const w = C.w * P, h = C.h * P, top = fl - (C.post + C.h) * P;
-    ctx.fillStyle = GREY[K]; ctx.fillRect(snap(x) - P / 2, top + h, P, C.post * P);
+    const h = C.h * u, top = fl - (C.post + C.h) * u;
+    ctx.fillStyle = GREY[K]; ctx.fillRect(snap(x) - r, top + h, 2 * r, C.post * u);
     box(x0, top, w, h);
-    cross(x0 + r, top + r, w - 2 * r, h - 2 * r);
+    cross(x0 + 2 * r, top + 2 * r, w - 4 * r, h - 4 * r);
   } else {
-    const w = C.w * P, bar = P, top = fl - C.legs * P - bar;
-    cross(x0 + P, top + bar, w - 2 * P, C.legs * P);
-    box(x0, top, w, bar + r);
-    ctx.fillStyle = GREY[MID];
-    for (let k = 1; k < C.w; k += 2) ctx.fillRect(x0 + k * P, top + r, P, bar + r - 2 * r);
+    const bar = u, top = fl - C.legs * u - bar;
+    cross(x0 + u, top + bar, w - 2 * u, C.legs * u);
+    box(x0, top, w, bar);
+    ctx.fillStyle = GREY[K];
+    for (let k = 1; k < C.w; k += 2) ctx.fillRect(x0 + k * u, top + r, u / 2, bar - 2 * r);
   }
 }
 function drawStation(key) {
@@ -341,10 +342,19 @@ export function drawAfterMembers() {
 // Each pile's count, in screen pixels after the world, where the piles put
 // it, on a plate of paper its own size, so the camp's crowd behind it does
 // not crowd its digits.
+// A world spot on the glass, in screen px, on the device pixel the world's
+// own drawing puts it on (render/frame.js, `enterWorld`, rounds the camera's
+// offset once and lays the drawing off it), so a count holds its place over
+// its pile as the camera pans instead of rounding a pixel either way of it.
+function onWorld(wx, wy) {
+  const k = S.zoom * S.dpr;
+  return { x: (Math.round(wx * k) + Math.round((-S.camX + S.shakeX) * k)) / S.dpr,
+           y: (Math.round(wy * k) + Math.round((-S.camY + S.shakeY) * k)) / S.dpr };
+}
 export function drawAfterCounts() {
   if (S.view !== 'after' || !A()) return;
   for (const c of pendingCounts()) {
-    const at = screenAt(c.x, c.y), str = String(c.n);
+    const at = onWorld(c.x, c.y), str = String(c.n);
     const w = widthOf(drawable(str), NUM_FONT_PX), h = GH * NUM_FONT_PX, pad = AFTER_COUNT_PAD;
     ctx.fillStyle = GREY[W];
     ctx.fillRect(Math.round(at.x - w / 2) - pad, Math.round(at.y - h / 2) - pad, w + pad * 2, h + pad * 2);
