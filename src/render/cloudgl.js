@@ -19,8 +19,8 @@
 //           frame's answer within CLOUDS_HYST of it, so an edge does not
 //           chatter as it flows across a cell
 //   roles   bellies, crevices and rims, by looking a set depth below and above
-//   clean   a cell alone in its tone, a one-cell bump or a one-cell sliver
-//           takes its neighbors' tone
+//   clean   a cell alone in its tone takes its neighbors' tone
+//   settle  a cell takes a new role only once it has wanted it a few frames
 //   fade    each cell's color eases toward its tone over CLOUDS_FADE_S
 //
 // then every window is copied into one canvas, a pixel a cell, for the 2D
@@ -114,9 +114,10 @@ void main() {
   int tm = uTone[me], t[4];
   int same = 0;
   for (int k = 0; k < 4; k++) { t[k] = uTone[n[k]]; same += t[k] == tm ? 1 : 0; }
-  bool spur = same == 0
-    || (t[0] != tm && t[1] != tm && t[0] == t[1])
-    || (t[2] != tm && t[3] != tm && t[2] == t[3]);
+  // only a cell alone in its tone: the bump and sliver rules of the baked
+  // sheets, asked afresh of a flowing field every frame, took a cell one
+  // frame and gave it back the next, which is the flicker they were for
+  bool spur = same == 0;
   if (!spur) { o = me; return; }
   int best = -1, most = 0;
   for (int k = 0; k < 4; k++) if (t[k] != tm) {
@@ -126,9 +127,32 @@ void main() {
   o = best >= 0 ? n[best] : me;
 }`;
 
+// A cell takes a new role only once it has wanted it CLOUDS_SETTLE frames
+// running: an edge that wavers on a cell for a frame or two (a cleanup that
+// takes a spur one frame and not the next, a belly's edge on a row) does not
+// tick back and forth, and an edge that is really moving is a few frames
+// late, which no eye can tell.
+const SETTLE = `#version 300 es
+precision highp float; precision highp int; precision highp usampler2D;
+uniform usampler2D uR;      // the role wanted this frame
+uniform usampler2D uPrev;   // shown, wanted, frames wanted
+uniform ivec2 uShift;
+uniform int uFresh;
+out uvec4 o;
+void main() {
+  ivec2 c = ivec2(gl_FragCoord.xy);
+  uint want = texelFetch(uR, c, 0).r;
+  ivec2 q = c + uShift, sz = textureSize(uPrev, 0);
+  if (uFresh == 1 || q.x < 0 || q.y < 0 || q.x >= sz.x || q.y >= sz.y) { o = uvec4(want, want, 0u, 0u); return; }
+  uvec4 was = texelFetch(uPrev, q, 0);
+  if (want == was.r) { o = uvec4(was.r, want, 0u, 0u); return; }
+  uint n = want == was.g ? was.b + 1u : 1u;
+  o = n >= ${4}u ? uvec4(want, want, 0u, 0u) : uvec4(was.r, want, n, 0u);
+}`;
+
 const FADE = `#version 300 es
 precision highp float; precision highp int; precision highp usampler2D;
-uniform usampler2D uR;
+uniform usampler2D uR;     // shown, wanted, frames wanted: the shown role is .r
 uniform sampler2D uPrev;
 uniform ivec2 uShift;
 uniform int uFresh;
@@ -184,7 +208,7 @@ export function skyGL() {
   const canvas = document.createElement('canvas');
   const gl = canvas.getContext('webgl2', { premultipliedAlpha: true, antialias: false, preserveDrawingBuffer: true });
   if (!gl) return null;
-  const P = { field: program(gl, FIELD), roles: program(gl, ROLES), clean: program(gl, CLEAN), fade: program(gl, FADE), blit: program(gl, BLIT) };
+  const P = { field: program(gl, FIELD), roles: program(gl, ROLES), clean: program(gl, CLEAN), settle: program(gl, SETTLE), fade: program(gl, FADE), blit: program(gl, BLIT) };
   const quad = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, quad);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
@@ -201,6 +225,7 @@ export function skyGL() {
   const target = t => { const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0); return f; };
   const uint8 = (w, h) => { const t = tex(w, h, gl.R8UI, gl.RED_INTEGER, gl.UNSIGNED_BYTE); return { t, f: target(t) }; };
   const rgba = (w, h) => { const t = tex(w, h, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE); return { t, f: target(t) }; };
+  const urgba = (w, h) => { const t = tex(w, h, gl.RGBA8UI, gl.RGBA_INTEGER, gl.UNSIGNED_BYTE); return { t, f: target(t) }; };
   const bind = (unit, t) => { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); };
   const pass = (prog, out, w, h) => { gl.useProgram(prog.p); gl.bindFramebuffer(gl.FRAMEBUFFER, out); gl.viewport(0, 0, w, h); };
   const draw = () => gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -210,7 +235,7 @@ export function skyGL() {
   function windowOf(key, w, h) {
     let s = windows.get(key);
     if (s && s.w === w && s.h === h) return s;
-    s = { w, h, T: [uint8(w, h), uint8(w, h)], R: [uint8(w, h), uint8(w, h)], D: [rgba(w, h), rgba(w, h)], k: 0, ox: null, fresh: true,
+    s = { w, h, T: [uint8(w, h), uint8(w, h)], R: [uint8(w, h), uint8(w, h)], Q: [urgba(w, h), urgba(w, h)], D: [rgba(w, h), rgba(w, h)], k: 0, ox: null, fresh: true,
           puffs: null, strips: null, index: null, cap: 0 };
     windows.set(key, s);
     return s;
@@ -228,8 +253,12 @@ export function skyGL() {
     for (const p of layer.puffs) {
       // where its current can have carried it at most: past that the sines
       // are not worked out at all, which is most of a wide layer's puffs
-      const reach = p.reach || (p.reach = (p.r * 1.08 + p.a[0] + p.a[1] + p.a[2]) * REACH + 1);
-      let near = p.x + p.stray * t - ox; near -= W * Math.floor(near / W);
+      // (a crust lump goes where its lobe goes: its lobe's reach, and how far
+      // off the lobe it sits, swelled as the lobe swells)
+      const lobe = p.follow || p;
+      const reach = p.reach || (p.reach = (lobe.r * 1.08 + lobe.a[0] + lobe.a[1] + lobe.a[2]) * REACH + 1 +
+        (p.follow ? (Math.abs(p.x - lobe.x) + p.r * 1.2 + p.a[0]) * REACH : 0));
+      let near = lobe.x + lobe.stray * t - ox; near -= W * Math.floor(near / W);
       if (near > w + reach && near < W - reach) continue;
       puffAt(p, t, q);
       const R = q.r * REACH;
@@ -323,9 +352,15 @@ export function skyGL() {
         bind(0, s.R[from].t); gl.uniform1i(P.clean.u.uR, 0); gl.uniform1iv(P.clean.u.uTone, L.tone);
         draw();
       }
+      // the settle
+      pass(P.settle, s.Q[b].f, v.w, v.h);
+      bind(0, s.R[0].t); bind(1, s.Q[a].t);
+      gl.uniform1i(P.settle.u.uR, 0); gl.uniform1i(P.settle.u.uPrev, 1);
+      gl.uniform2i(P.settle.u.uShift, shift, 0); gl.uniform1i(P.settle.u.uFresh, fresh ? 1 : 0);
+      draw();
       // the fade
       pass(P.fade, s.D[b].f, v.w, v.h);
-      bind(0, s.R[0].t); bind(1, s.D[a].t);
+      bind(0, s.Q[b].t); bind(1, s.D[a].t);
       gl.uniform1i(P.fade.u.uR, 0); gl.uniform1i(P.fade.u.uPrev, 1);
       gl.uniform2i(P.fade.u.uShift, shift, 0); gl.uniform1i(P.fade.u.uFresh, fresh ? 1 : 0);
       gl.uniform4fv(P.fade.u.uLut, L.lut); gl.uniform1f(P.fade.u.uStep, Math.min(1, (dt * (v.every || 1)) / CLOUDS_FADE_S));
@@ -360,5 +395,15 @@ export function skyGL() {
     for (let i = 0; i < out.length; i++) out[i] = buf[i * 4] - 1;
     return { w: s.w, h: s.h, tiers: out };
   }
-  return { render, canvas, gl, tiersOf, forget: key => windows.delete(key) };
+  // A window's tones as drawn (the cleaned roles through the look's tone
+  // numbers), read back (slow; for the checks): 0 open sky.
+  function tonesOf(key, tone) {
+    const s = windows.get(key), buf = new Uint32Array(s.w * s.h * 4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, s.Q[s.k].f);
+    gl.readPixels(0, 0, s.w, s.h, gl.RGBA_INTEGER, gl.UNSIGNED_INT, buf);
+    const out = new Int8Array(s.w * s.h);
+    for (let i = 0; i < out.length; i++) out[i] = buf[i * 4] ? tone[buf[i * 4]] : 0;
+    return { w: s.w, h: s.h, tones: out };
+  }
+  return { render, canvas, gl, tonesOf, tiersOf, forget: key => windows.delete(key) };
 }

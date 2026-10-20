@@ -128,7 +128,8 @@ function frame(dt) {
   placed = {};
   draws.forEach((d, i) => {
     const a = r.at[i], x = Math.round(d.x), y = Math.round(d.y);
-    placed[d.key] = x;
+    placed[d.key] = x - views[i].ox * CELLPX;   // where the layer's own first cell is drawn
+    placed[d.key + ':ox'] = views[i].ox;          // and the first column of its window
     g.globalAlpha = d.alpha;
     g.drawImage(r.canvas, 0, a.y, a.w, a.h, x, y, a.w * CELLPX, a.h * CELLPX);
   });
@@ -199,8 +200,11 @@ window.bench = {
     for (const k of ['show', 'treat']) if (k in o) $(k).value = o[k];
     if ('win' in o && o.win !== $('win').value) { $('win').value = o.win; [W, H] = o.win.split('x').map(Number); build(); }
     if (o.rebuild) build();
+    if (o.fresh) { stat.cpu.length = 0; stat.frame.length = 0; }
     restyle();
   },
+  // a window's drawn tones, for the flicker check
+  tones: key => { const L = { l0: 0, l1: 1, l2: 2, l3: 3, l4: 4 }[key]; const layer = key === 'g' ? ground : layers[L]; return gpu.tonesOf(key, look(layer).tone); },
   placed: () => placed,
   layers: () => layers,
   pxRows: () => { const d = g.getImageData(0, 0, W, H).data, n = Math.floor(H / CELLPX), out = new Uint8Array(n * W);

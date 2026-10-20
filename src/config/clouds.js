@@ -206,7 +206,7 @@ export const CLOUDS_SHAPES = {
 //   wander  how far it strays, as a share of its radius, [least, most]
 //   period  seconds a stray takes, [least, most]
 //   lift    how much of the stray is up and down rather than across
-export const CLOUDS_FLOW = { wander: [0.45, 1.1], period: [18, 55], lift: 0.45 };
+export const CLOUDS_FLOW = { wander: [0.35, 0.85], period: [30, 90], lift: 0.45 };
 // A cell that changes tone eases into the new one over this many seconds,
 // so an edge flowing across the grid glides rather than ticks.
 export const CLOUDS_FADE_S = 0.3;

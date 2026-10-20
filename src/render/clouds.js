@@ -512,14 +512,16 @@ function shape(rnd, kind, cx, base, R, flat, add0) {
   // every big lobe wears a crust of small ones round its upper side, as a
   // cumulus is lumps on lumps: they ride the same flow, so its edge bubbles
   const add = (tier, x, y, r, f) => {
-    add0(tier, x, y, r, f);
+    const parent = add0(tier, x, y, r, f);
     if (r < B.from) return;
     const n = Math.round(r * B.per);
     for (let k = 0; k < n; k++) {
       const a = Math.PI * (B.arc[0] + (B.arc[1] - B.arc[0]) * (k + rnd()) / n), rr = r * lerp(rnd(), B.r);
       // in the back tier, so a lump shows only where it stands out against
       // the sky, and never shades the cloud it sits on
-      add0(0, x + Math.cos(a) * r * B.out, y + Math.sin(a) * r * B.out * f, rr, f);
+      // it rides its lobe's current, so the crust moves with the lobe it
+      // crusts instead of floating off it
+      add0(0, x + Math.cos(a) * r * B.out, y + Math.sin(a) * r * B.out * f, rr, f, parent);
     }
   };
   const tiers = TIERS.map(() => []);
@@ -606,9 +608,12 @@ export function skyLayer({ i, seed = 1, W }) {
       const life = { per: TAU / lerp(rnd(), L.life), ph: rnd() * TAU, keep: L.keep };
       const stray = (rnd() * 2 - 1) * CLOUDS_SKY.stray * P.wind;
       const base = (rnd() - 0.5) * P.R * 0.5 * P.flat;
-      shape(rnd, kind, x, base, R, P.flat, (tier, px, py, r, flat) => {
-        puffs.push(flowPuff(rnd, px, py, r, flat, tier, life, stray, F));
+      shape(rnd, kind, x, base, R, P.flat, (tier, px, py, r, flat, parent) => {
+        const p = flowPuff(rnd, px, py, r, flat, tier, life, stray, F);
+        if (parent) { p.follow = parent; p.crust = true; p.a = p.a.map(v => v * 0.4); }
+        puffs.push(p);
         top = Math.min(top, py - r * flat * 1.6); bottom = Math.max(bottom, py + r * flat * 1.6);
+        return p;
       });
       x += R * lerp(rnd(), [P.packing * 0.6, P.packing * 1.4]);
     }
@@ -642,7 +647,18 @@ export function groundLayer({ seed = 1, W }) {
 
 // Where a puff is at time t, in its layer's own cells (x not yet wrapped),
 // and how big: on its current, and swollen or shrunk by its cloud's life.
+const lead = {};
 export function puffAt(p, t, out = {}) {
+  if (p.follow) {
+    // a crust lump: its lobe's place and swell, its own small stray on top
+    puffAt(p.follow, t, lead);
+    const k = lead.r / p.follow.r;
+    out.x = lead.x + (p.x - p.follow.x) * k + p.a[0] * Math.sin(t * p.w[0] + p.p[0]);
+    out.y = lead.y + (p.y - p.follow.y) * k + CLOUDS_FLOW.lift * p.a[1] * Math.sin(t * p.w[1] + p.q[0]);
+    out.r = p.r * k * (1 + 0.1 * Math.sin(t * p.w[2] + p.q[1]));
+    out.flat = p.flat;
+    return out;
+  }
   const life = p.life ? p.life.keep + (1 - p.life.keep) * (0.5 - 0.5 * Math.cos(t * p.life.per + p.life.ph)) : 1;
   out.x = p.x + p.stray * t + p.a[0] * Math.sin(t * p.w[0] + p.p[0]) + p.a[1] * Math.sin(t * p.w[1] + p.p[1]) + p.a[2] * Math.sin(t * p.w[2] + p.p[2]);
   out.y = p.y + CLOUDS_FLOW.lift * (p.a[0] * Math.sin(t * p.w[1] + p.q[0]) + p.a[1] * Math.sin(t * p.w[2] + p.q[1]) + p.a[2] * Math.sin(t * p.w[0] + p.q[2]));
@@ -723,10 +739,13 @@ export function cloudLayer({ kind = 'cumulus', R = 8, seed = 1, flat = 1 }) {
   const rnd = gen(seed * 7919 + 4243), puffs = [], L = CLOUDS_LIFE[kind];
   const life = { per: TAU / lerp(rnd(), L.life), ph: rnd() * TAU, keep: Math.max(0.6, L.keep) };
   let top = 0, bottom = 0, left = 0, right = 0;
-  shape(rnd, kind, 0, 0, R, flat, (tier, x, y, r, f) => {
-    puffs.push(flowPuff(rnd, x, y, r, f, tier, life, 0, CLOUDS_FLOW));
+  shape(rnd, kind, 0, 0, R, flat, (tier, x, y, r, f, parent) => {
+    const p = flowPuff(rnd, x, y, r, f, tier, life, 0, CLOUDS_FLOW);
+    if (parent) { p.follow = parent; p.crust = true; p.a = p.a.map(v => v * 0.4); }
+    puffs.push(p);
     top = Math.min(top, y - r * f * 1.7); bottom = Math.max(bottom, y + r * f * 1.7);
     left = Math.min(left, x - r * 1.7); right = Math.max(right, x + r * 1.7);
+    return p;
   });
   const ox = Math.ceil(-left) + 1, oy = Math.ceil(-top) + 1;
   for (const p of puffs) { p.x += ox; p.y += oy; }
