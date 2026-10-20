@@ -34,7 +34,7 @@ export const WORK_GAPS = [
 ];
 export const DARK_GAPS = [
   // hell's a few hundred pixels at the rock's edges; act 3's backdrop tens of thousands
-  'after:after backdrop:dark', 'after:after camp:dark', 'after:after heaven:dark', 'hell:hell backdrop:dark', 'hell:hell chambers:dark',
+  'after:after backdrop:dark', 'after:after camp:dark', 'hell:hell backdrop:dark', 'hell:hell chambers:dark',
 ];
 
 const same = (name, found, listed) => {
