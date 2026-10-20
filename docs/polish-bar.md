@@ -1,7 +1,7 @@
 # The polish bar: what a place has to do, as the yard does it
 
-**Status: draft for the owner's approval (2026-10-20).** Once approved,
-CLAUDE.md and the orchestrate skill point every brief here.
+**Status: approved by the owner, 2026-10-20.** CLAUDE.md ("Decided")
+and the orchestrate skill point every brief here.
 
 The owner, 2026-10-20: "theres gotta be some way to inform agents to build
 things to the same level of detail and polish as what we have for act 1."
@@ -226,8 +226,8 @@ Exemplars: `src/crew/falls.js`, `src/placebodies.js`, `src/rock.js`,
       landing sounds (`body-land`).
 - [ ] A rock lands with `boulder-land`; the jolt knocks grains off the heaps,
       every body under it says `bang` and hops, and the view shakes in
-      proportion to the rock, in the yard view only. (canvas.md says "No
-      shake"; `src/rock.js` shakes -- **owner question**.)
+      proportion to the rock, in the yard view only -- a deliberate shake, kept
+      (the owner, 2026-10-20). Shakes in anything moving are banned.
 - [ ] A thing that breaks comes apart a piece at a time and each piece lands
       and is carried off; nothing vanishes.
 

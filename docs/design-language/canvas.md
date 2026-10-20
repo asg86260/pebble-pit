@@ -143,7 +143,11 @@ yard.
     against the ribs.
   - The jaw is `JAW_POSES` (shut, ajar, gape) through `jawPose`: the bite, the
     snatch and the roar.
-- No shake. The strike's flash is the one flash, and it is kept for effect:
+- A shake is deliberate or it is a bug (the owner, 2026-10-20): an impact may
+  shake the view on purpose -- a rock landing does (`src/rock.js`) -- but
+  anything moving or meant to be smooth never shakes, jitters or shears; that
+  is what `tools/jitter-check.mjs` measures.
+- The strike's flash is the one flash, and it is kept for effect:
   a dark pane over the frame for `BOLT_FLASH_S` with the bolt white on top
   (`drawFlash`), never in the deep.
   - A strained shield leans a held cell at a time (`SHIELD_LEAN`).

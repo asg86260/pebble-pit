@@ -291,8 +291,9 @@ Adding a station requires two things, neither optional:
    from there has a count on the boards and no bodies in the yard — `room[w.type]`
    comes back undefined and every body of that type is stood down on the frame
    it is made.
-2. Make the station's output depend on bodies **through the door** (`inFilter()`,
-   `inLab()`), never on the assigned count, or the walk is decoration.
+2. Make the station's output depend on bodies **through the door** (`atPot` /
+   `inMix` in `src/apothecary.js`), never on the assigned count, or the walk
+   is decoration.
 
 ### Systems a new station joins unasked
 
@@ -393,6 +394,13 @@ Two harness facts, each of which cost a full launch cycle:
 ---
 
 ## Decided, do not relitigate
+
+- **Every place is built to the polish bar** (`docs/polish-bar.md`, the
+  owner, 2026-10-20). It is act 1's level written down, one checkable line
+  per kind of piece, each naming the yard's file and scene to copy. Every
+  brief for a place carries it, every review checks against it, and its
+  gates (allowlists that only shrink) run before an act lands. A gap that is
+  a hole in shared code is fixed once in the shared file, never per act.
 
 - **No two objects overlap on the map, ever** (the owner, 2026-10-20, a hard
   rule). Stations, the house, the casino, the stairs and gates, trees,
