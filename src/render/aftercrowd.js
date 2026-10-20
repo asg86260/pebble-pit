@@ -417,7 +417,7 @@ const SEAT = GOD_N;
 // as render/after/ground.js lays its layers. Everything of his camp is laid
 // off it, so the camp moves as one piece and never wobbles a pixel against
 // the camera's own rounding.
-const gx = () => { const u = godU(); return layerAt(u + (F.XR - u) * (1 - 1 / GOD_DEPTH), 1 / GOD_DEPTH, F.XR); };
+const gx = () => { const u = godU(); return Math.round((u + (F.XR - u) * (1 - 1 / GOD_DEPTH)) * K) / K + layerAt(0, 1 / GOD_DEPTH, F.XR); };
 const godFoot = () => ({ x: gx(), y: F.gy0 + (SEAT + GOD_THRONE.seatH) * H });
 const cache = { key: '', throne: null, poses: new Map(), signs: new Map() };
 function freshCaches() {

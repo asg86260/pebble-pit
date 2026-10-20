@@ -19,7 +19,7 @@
 import { P, GREY, AFTER_HORIZON, GROUND_FAR, GROUND_FORE, GROUND_PATH } from '../../config.js';
 import { S } from '../../state.js';
 import { ctx } from '../ctx.js';
-import { layerAt } from '../frame.js';
+import { layerAt, fillOnPixels } from '../frame.js';
 import { horizonY } from '../../after/sky.js';
 import { afterFloor, afterOpenX, billow } from '../../after/place.js';
 import { W, PALE, MID } from './kit.js';
@@ -30,7 +30,10 @@ const hsh = (a, b = 0, c = 0) => {
   h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16;
   return (h >>> 0) / 4294967296;
 };
-const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(x, y, w, h); };
+// Every fill on whole device pixels, so a thin line never blends into a
+// tone between the four.
+const fill = (x, y, w, h) => fillOnPixels(ctx, x, y, w, h);
+const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; fill(x, y, w, h); };
 
 // A layer sliding `rate` as fast as the camera: its offset off the world,
 // landing on a whole device pixel of its own (render/frame.js, `layerAt`).
@@ -38,9 +41,11 @@ const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(x, y
 const layerOff = rate => layerAt(0, rate, afterOpenX());
 
 // --- the far cloud --------------------------------------------------------------------
-// Rows at depths along the way back, each a run of billow tops a cell or two
-// high, its cells 1/d of the near layer's across, in the pale line tone. A
-// row's profile repeats every `period` of its own cells.
+// A few broken rows at depths along the way back, each a run of billow tops
+// a cell or two high, its cells 1/d of the near layer's across, in the pale
+// line tone: a stretch of `seg` cells drawn, or left open (a share `gaps` of
+// them), so no row is a ruled line across the window. A row's profile
+// repeats every `period` of its own cells.
 const farRows = new Map();
 function farRow(i) {
   let el = farRows.get(i);
@@ -48,22 +53,20 @@ function farRow(i) {
   return el;
 }
 function drawFar() {
-  const off = layerOff(GROUND_FAR.rate), hy = horizonY(), x0 = S.camX - off, x1 = x0 + S.viewW;
-  GROUND_FAR.depths.forEach((d, i) => {
-    const y = Math.round((hy + AFTER_HORIZON * P / d) / 2) * 2, c = Math.max(2, Math.round(P / d / 2) * 2), el = farRow(i);
-    const j0 = Math.floor(x0 / c) - 1, j1 = Math.ceil(x1 / c) + 1, n = el.length;
-    ctx.fillStyle = GREY[PALE];
-    let run = j0, at = el[((j0 % n) + n) % n];
-    const flush = j => { if (j > run) ctx.fillRect(run * c + off, y - at * c, (j - run) * c, 2); };
-    for (let j = j0 + 1; j <= j1; j++) {
-      const v = el[((j % n) + n) % n];
-      if (v === at) continue;
-      flush(j);
-      // the step between the two, joined down
-      ctx.fillRect(j * c + off - (v > at ? 0 : 2), y - Math.max(v, at) * c, 2, Math.abs(v - at) * c);
-      run = j; at = v;
+  const F = GROUND_FAR, off = layerOff(F.rate), hy = horizonY(), x0 = S.camX - off, x1 = x0 + S.viewW;
+  ctx.fillStyle = GREY[PALE];
+  F.depths.forEach((d, i) => {
+    const y = Math.round((hy + AFTER_HORIZON * P / d) / 2) * 2, c = Math.max(2, Math.round(P / d / 2) * 2), el = farRow(i), n = el.length;
+    const at = j => el[((j % n) + n) % n];
+    for (let s = Math.floor(x0 / c / F.seg) - 1; s <= Math.ceil(x1 / c / F.seg); s++) {
+      if (hsh(s, i, 5) < F.gaps) continue;
+      const j0 = s * F.seg, j1 = j0 + Math.round(F.seg * (0.5 + 0.5 * hsh(s, i, 6)));
+      for (let j = j0; j < j1; j++) {
+        const v = at(j);
+        fill(j * c + off, y - v * c, c, 2);
+        if (j > j0 && v !== at(j - 1)) fill(j * c + off - (v > at(j - 1) ? 0 : 2), y - Math.max(v, at(j - 1)) * c, 2, c);
+      }
     }
-    flush(j1);
   });
 }
 

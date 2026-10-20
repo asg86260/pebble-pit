@@ -169,7 +169,8 @@ export const GOD_FAR = 1.3;
 // --- the ground (render/after/ground.js, render/after/floor.js) ----------------------
 // Three rigid layers, nothing rolling. The far cloud between the horizon and
 // the main plane: rows of billow lines at these depths (their foot
-// AFTER_HORIZON / d cells under the horizon, their cells 1/d across), a
+// AFTER_HORIZON / d cells under the horizon, their cells 1/d across), each
+// broken into stretches of `seg` cells, a share `gaps` of them left open, a
 // row's profile repeating every `period` of its cells, on God's slow layer
 // (`rate` of the camera's speed). The main plane's path: paper `depth` cells
 // down off the line the stations stand on, its far edge a pale billow line.
@@ -177,7 +178,7 @@ export const GOD_FAR = 1.3;
 // path, one every `every` cells give or take, `w` cells across and `h`
 // high, a share `gaps` of the places left empty, sliding `rate` as fast as
 // the camera.
-export const GROUND_FAR = { rate: 1 / 3, depths: [6, 4.2, 3.2, 2.4, 1.8, 1.35], period: 512, seed: 41 };
+export const GROUND_FAR = { rate: 1 / 3, depths: [5, 2.8, 1.6], period: 512, seed: 41, seg: 40, gaps: 0.45 };
 export const GROUND_PATH = { depth: 5, seed: 9 };
 export const GROUND_FORE = { rate: 1.3, gaps: 0.35, rows: [{ down: 6, every: 64, w: [16, 28], h: [2, 3] },
                                                             { down: 20, every: 90, w: [30, 50], h: [4, 6] }] };

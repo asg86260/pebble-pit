@@ -12,9 +12,12 @@ import { P, GREY, AFTER_BUILD_FADE_S, GROUND_PATH } from '../../config.js';
 import { S } from '../../state.js';
 import { afterX0, afterFloor, floorProfile, notchX, crowdLip, sitesKey, sited, billow } from '../../after/place.js';
 import { ctx } from '../ctx.js';
+import { fillOnPixels } from '../frame.js';
 import { K, W, PALE, MID, now, clamp01 } from './kit.js';
 
-const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(x, y, w, h); };
+// Every fill on whole device pixels, so a thin line never blends into a
+// tone between the four.
+const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; fillOnPixels(ctx, x, y, w, h); };
 
 // A stepped top edge along a profile, columns j0..j1 of it, in `tone`, with
 // paper under it down to yBot when `fill`; columns `skip` says are left open.
