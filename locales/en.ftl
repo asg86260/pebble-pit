@@ -3532,6 +3532,9 @@ after-job-agitator = agitator
 # act 3 card row (placeholder): a post for a woodcutter, held by a member from the camp
 after-job-woodcutter = woodcutter
 
+# act 3 card row (placeholder): a post for a gatherer, held by a member from the camp
+after-job-gatherer = gatherer
+
 # act 3 card row (placeholder): a post for a hauler, held by a member from the camp
 after-job-hauler = hauler
 

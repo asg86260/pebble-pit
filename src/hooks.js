@@ -1533,7 +1533,7 @@ HANDLES.__afterAt = what => {
   const b = stationBox(what);
   return b ? { x: b.x + b.w / 2, y: b.y + b.h - P } : null;
 };
-HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage: p.stage, logs: p.logs, falling: p.fall != null,
+HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage: p.stage, logs: S.after.groundLogs.filter(q => q.i === i).length, falling: p.fall != null,
   stump: p.stump, x: plotX(i) + AP / 2, y: afterFloor() - AP * 5, sx: plotX(i) + AP / 2, sy: afterFloor() - AP / 2 })) : []);
 HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, shown: !!S.after && u.show(),
   bill: afterBill(u), rung: u.rung ? u.rung() : 0, done: afterMaxed(u) }));

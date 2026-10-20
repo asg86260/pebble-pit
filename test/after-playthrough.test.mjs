@@ -22,7 +22,7 @@
 //    name any), granted a bill at a time: the one plot's planks all go on signs, and the grove's pace
 //    is the pacing tool's, not this check's.
 import { group, ok, run, yard, P } from './helpers.mjs';
-import { AFTER_GATES, AFTER_BUILDS, AFTER_UPGRADES, AFTER_POST_DUST, GESTURE_STUMP_DRAG, AFTER_FIRST_MEMBERS } from '../src/config.js';
+import { AFTER_GATES, AFTER_BUILDS, AFTER_UPGRADES, AFTER_POST_DUST, AFTER_POST_RATE, GESTURE_STUMP_DRAG, AFTER_FIRST_MEMBERS } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, partsOf } from '../src/after/gestures.js';
 import { sawOn, saw, spin } from './after-hands.mjs';
 import { bubbles } from '../src/after/bubbles.js';
@@ -139,18 +139,19 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   // A tree sawn down by hand, and its stump pulled out on its own.
   const sawn = sawTree(0);
   run(3);
-  const logsDown = S.after.plots[0].logs;
+  const logsDown = S.after.groundLogs.filter(q => q.i === 0).length;
   const pulled = pullStump(0);
   const replanted = S.after.plots[0].stage;
   note(`sawn ${JSON.stringify(sawn)} logs ${logsDown} pulled ${JSON.stringify(pulled)}`);
 
-  // The saw mill off the shack, and a post, for rebel the bubbles earn.
-  earn(AFTER_BUILDS.mill.bill.find(([c]) => c === 'rebel')[1] + postRebel(), 300);
+  // The saw mill off the shack, and two posts, for rebel the bubbles earn.
+  earn(AFTER_BUILDS.mill.bill.find(([c]) => c === 'rebel')[1] + Math.ceil(postRebel() * (2 + AFTER_POST_RATE)), 300);
   const mill = raise('mill');
-  // A hauler's post: a member walks out of the camp to it and carries the logs
-  // in; the flywheel spun by hand saws one.
+  // A gatherer's post and a hauler's: a member walks out of the camp to each,
+  // the one carrying the fallen logs to the forestry shack and the other
+  // on to the mill; the flywheel spun by hand saws one.
   const camp0 = read().camp;
-  const post = buyRow('post-hauler');
+  const post = buyRow('post-gatherer') && buyRow('post-hauler');
   run(0.25);
   const left = read().camp;
   const fed = until(() => read().logs > 0, 180);
@@ -164,7 +165,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   // then the paper branch, its timber granted a bill at a time.
   window.__afterGrant({ rebel: 3000 });
   const rows = [];
-  for (const job of ['woodcutter', 'sawyer', 'hauler']) rows.push([job, buyRow(`post-${job}`)]);
+  for (const job of ['woodcutter', 'gatherer', 'sawyer', 'hauler']) rows.push([job, buyRow(`post-${job}`)]);
   for (const k of ['workshop', 'chipper']) rows.push([k, raise(k)]);
   for (const job of ['joiner', 'carrier']) rows.push([job, buyRow(`post-${job}`)]);
   const signed = until(() => S.after.signs.length > 0, 600);
@@ -177,7 +178,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   // for is bought, the stumps the woodcutters leave are pulled by hand until
   // stump removal is, and the bubbles are popped, while the signs and
   // posters win souls, who walk out to the camp and fill the posts.
-  const want = ['plot', 'grow', 'stumps', 'plot', 'post-woodcutter', 'post-hauler', 'post-carrier', 'post-paster',
+  const want = ['plot', 'grow', 'stumps', 'plot', 'post-woodcutter', 'post-gatherer', 'post-hauler', 'post-carrier', 'post-paster',
                 'post-joiner', 'post-sawyer', 'post-carrier', 'post-paster', 'bench', 'blade', 'post-pulper',
                 'post-printer', 'post-carrier', 'post-paster'];
   const u0 = read().union, gates = [];
@@ -213,7 +214,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
     ok(axe && handed < Infinity, 'the axe is bought on the grove\'s card and its beat hands it over', `${axe} ${handed}`),
     ok(sawn.fell && logsDown > 0, 'a tree sawn by hand falls and lies as logs', JSON.stringify(sawn)),
     ok(pulled.out && replanted === 1, 'its stump pulled by hand comes out and a sapling is set', JSON.stringify(pulled)),
-    ok(mill && post && left === camp0 - 1 && fed < Infinity, 'the saw mill raised off the shack, a hauler walks out of the camp to its post and carries the logs in', story),
+    ok(mill && post && left === camp0 - 2 && fed < Infinity, 'the saw mill raised off the shack, a gatherer and a hauler walk out of the camp to their posts and carry the logs in', story),
     ok(spun.cut >= 1 && sawnInto > 0, 'the flywheel spun by hand saws a log into timber', JSON.stringify(spun)),
     ok(rows.every(([, b]) => b), 'the posts, the workshop, the chipper, the paper mill and the press are all bought through their rows',
        JSON.stringify(rows.filter(([, b]) => !b))),

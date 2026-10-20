@@ -141,16 +141,20 @@ group('a tree: its saw icon clicked puts the handsaw on it; dragged back and for
     return { icon, on, secs: saw(0, () => S.after.plots[0].fall != null, period) };
   };
   const slow = trial(3), fast = trial(0.6);
-  // A plain click on the trunk asks for the grove's board.
+  // A plain click on the trunk puts the saw on it, as the icon does (the
+  // owner, 2026-10-20: "clicking a tree starts the sawing"); the grove's
+  // board is the forestry shack's.
   up();
   window.__afterAxe();
   const t = window.__afterTrees()[0];
-  const asked = asks({ x: t.x, y: t.y });
+  const asked = asks({ x: t.x, y: t.y }), sawing = rec('tree').i === 0;
+  const shack = window.__afterAt('forestry'), board = asks(shack);
   window.__actsOn(null);
   return [
     ok(slow.icon && slow.on, 'the saw icon shows over the grown tree, and a click on it puts the saw on'),
     ok(fast.secs < slow.secs && Number.isFinite(slow.secs), `sawn faster, it falls sooner (${TREE_CHOPS} strokes)`, `${slow.secs.toFixed(2)} s -> ${fast.secs.toFixed(2)} s`),
-    ok(asked === 'after-grove', 'a plain click on the tree asks for the grove\'s board', JSON.stringify(asked))
+    ok(asked === null && sawing, 'a plain click on the tree puts the saw on it, no board asked for', JSON.stringify([asked, sawing])),
+    ok(board === 'after-grove', 'a click on the forestry shack asks for the grove\'s board', JSON.stringify(board))
   ];
 }, NO_RELOAD);
 

@@ -50,7 +50,7 @@ import { afterlifeOn } from '../acts.js';
 import { secs } from './util.js';
 import { built } from './levels.js';
 import { stationParts, afterFloor } from './place.js';
-import { standing, stumped, chopTree, digStump, trees } from './grove.js';
+import { standing, stumped, chopTree, digStump, trees, treeAt } from './grove.js';
 import { tipSawdust } from './mill.js';
 import { pairBuilding } from './build.js';
 import { workAfter } from './work.js';
@@ -394,6 +394,12 @@ export function groveIcons() {
   return out;
 }
 const iconAt = (x, y) => groveIcons().find(c => c.kind === 'saw' && inBox(x, y, c.box, G_S)) || null;
+// A grown tree under a world point that the saw is not on yet, as an icon is.
+const treeUnder = (x, y) => {
+  if (!DEFS.tree.open()) return null;
+  const i = treeAt(x, y);
+  return i == null || recs().tree.i === i ? null : { i };
+};
 
 // The moving part under a world point: { key, what } for a station that can
 // be worked now.
@@ -421,7 +427,9 @@ export function gestureDown(x, y) {
     const b = bubbleAt(x, y);
     if (b) { lastPress = 'bubble'; DEFS.pedestal.down(g.pedestal, b); return true; }
   }
-  const icon = iconAt(x, y);
+  // The saw's icon, or the tree itself (the owner, 2026-10-20: "clicking a
+  // tree starts the sawing"): the saw put on it.
+  const icon = iconAt(x, y) || treeUnder(x, y);
   if (icon) {
     lastPress = 'icon';
     Object.assign(g.tree, { i: icon.i, s: 0, target: 0, from: 0, v: 0, grab: false });
@@ -446,7 +454,7 @@ export const pressTaken = () => live() && seen === actId() && lastPress != null 
 export function gestureUnder(x, y) {
   if (!live()) return false;
   recs();
-  return (DEFS.pedestal.open() && !!bubbleAt(x, y)) || !!iconAt(x, y) || !!partAt(x, y);
+  return (DEFS.pedestal.open() && !!bubbleAt(x, y)) || !!iconAt(x, y) || !!treeUnder(x, y) || !!partAt(x, y);
 }
 export function gestureMove(x, y) {
   if (!live()) return;

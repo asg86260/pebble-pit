@@ -31,8 +31,9 @@ group('the cloud floor billows everywhere but under what stands on it', async ()
   const [l0, l1] = crowdLip(), crowd = el.slice(l0 + 2, l1 - 2);
   window.__actsOn(null);
   return [
-    // every station stands from the start, closed or built, its ground pressed flat
-    ok(raised / cols > 0.2, 'puffs rise along a good share of the floor', `${raised} of ${cols} columns`),
+    // every station stands from the start, closed or built, and the grove's
+    // whole floor is pressed flat for its fallen trees and logs
+    ok(raised / cols > 0.15, 'puffs rise along a good share of the floor', `${raised} of ${cols} columns`),
     ok(el.every(v => v >= 0 && v <= 2) && el.includes(1) && el.includes(2), 'one and two cells high, no more', `${[...new Set(el)].sort()}`),
     ok(standing.length >= 2 && standing.every(flatUnder), 'flat under every station standing and level at its door', standing.join(' ')),
     ok(crowd.filter(v => v > 0).length > crowd.length / 2, "and it billows in front of God's crowd", crowd.join(''))

@@ -8120,6 +8120,13 @@
   "text": "woodcutter"
  },
  {
+  "id": "after-job-gatherer",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): a post for a gatherer, held by a member from the camp",
+  "text": "gatherer"
+ },
+ {
   "id": "after-job-hauler",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",

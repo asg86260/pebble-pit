@@ -22,7 +22,7 @@
 const TURN = Math.PI / 16;                                 // a held step of a turning part
 const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
-import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT } from '../../config.js';
+import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT, AFTER_FORESTRY_LOOK } from '../../config.js';
 import { K, W, PALE, MID, DUST, toward, hash, clamp01, silhouette } from './kit.js';
 import { signsJoined } from '../../after/press.js';
 import { paperPulls } from '../../after/mill.js';
@@ -117,14 +117,16 @@ function mill(d, work, t, h, body = false) {
 // --- the chipper: the jaws and the arm ---------------------------------------------
 // docs/mocks/act3-chipper-2026-10-18, the chosen control: the jaws on a tall
 // back block with a chute off its top, and a slot-machine arm on a pivot box
-// at the jaws' foot. A log is dragged off the pile into the jaws; the arm is
+// on top of the block, clear of the jaws' mouth (the owner, 2026-10-20: "on
+// top of the chipper, not right in front of the mouth"), swinging down over
+// the top jaw toward the pile. A log is dragged off the pile into the jaws; the arm is
 // pulled down and held, and the top jaw bites at a steady pace, a cell of
 // log a bite, its teeth sinking into the wood; let go, the arm springs back
 // up a held pose at a time (plumb, half way, level) and the jaws stop. Drawn
 // facing right, in the mock's cells laid four to the left; its frame turns
 // it to face the saw mill.
-const CH = { slot: 22, slotY: -4, log: 6, block: 28, pivot: { x: 15, y: -3 },
-             knob: [{ x: 15, y: -9 }, { x: 11, y: -7 }, { x: 9, y: -3 }], body: 10 };
+const CH = { slot: 22, slotY: -4, log: 6, block: 28, pivot: { x: 29, y: -16 },
+             knob: [{ x: 29, y: -22 }, { x: 25, y: -20 }, { x: 23, y: -16 }], body: 10 };
 const ARM_BITE = [0, 1, 2, 4, 4, 4, 2, 1], BITE_S = 0.7, ARM_KERF = 3, ARM_CUT = 6;
 // The arm's held pose off how far it is pulled.
 const armPose = k => (k >= GESTURE_ARM_HOLD ? 2 : k >= 0.3 ? 1 : 0);
@@ -147,7 +149,7 @@ function chArm(d, p) {
   d.px(x, y, 3 * P, 3 * P, K);
   [[0, 0], [3 * P - 3, 0], [0, 3 * P - 3], [3 * P - 3, 3 * P - 3]].filter((c, i) => !(p === 1 && i === 3)).forEach(([cx, cy]) => d.px(x + cx, y + cy, 3, 3, W));
   d.px(x + 4, y + 4, 4, 2, W); d.px(x + 4, y + 6, 2, 2, W);
-  d.r(pv.x - 2, -1, 5, 1, K);                                 // the foot
+  d.r(pv.x - 2, pv.y + 1, 5, 1, K);                           // its mount on the block's top
   d.r(pv.x - 1, pv.y - 1, 3, 3, K);                           // the pivot box, a white ring round its pin
   d.px(pv.x * P - 2, pv.y * P - 2, P + 4, P + 4, W); d.px(pv.x * P, pv.y * P, P, P, K);
 }
@@ -507,7 +509,55 @@ function shack(d) {
   }));
 }
 
-export const DRAW = { mill, chipper, papermill, workshop, press, shack };
+// --- the forestry shack: the grove's, in front of its trees ---------------------------
+// Two takes for the owner's pick (config, AFTER_FORESTRY_LOOK): 0 a log cabin,
+// a stepped gable over walls of laid logs, a door and a window; 1 a woodshed,
+// a lean-to roof over an open front, a bow saw hung on its back wall and log
+// ends stacked under it. Each '#' ink, 'm' mid, '.' paper, ' ' open, sixteen
+// cells by thirteen, its box's left edge eight cells into its ground (after/
+// art.js), the logs' pile on its grove side. A cut-out: nothing on it moves.
+const FORESTRY = [
+  [
+    '       ##       ',
+    '     ######     ',
+    '   ##########   ',
+    ' ############## ',
+    '################',
+    ' #mmmmmmmmmmmm# ',
+    ' #............# ',
+    ' #mmm####mmmmm# ',
+    ' #...#..#.###.# ',
+    ' #mmm#..#m#.#m# ',
+    ' #...#..#.###.# ',
+    ' #mmm#..#mmmmm# ',
+    ' #####..####### ',
+  ],
+  [
+    '######          ',
+    '###########     ',
+    '################',
+    ' #............# ',
+    ' #.##########.# ',
+    ' #.#.#.#.#.#..# ',
+    ' #............# ',
+    ' #.mm.mm.mm...# ',
+    ' #m##m##m##m..# ',
+    ' #.mm.mm.mm...# ',
+    ' #m##m##m##m..# ',
+    ' #.mm.mm.mm...# ',
+    ' ############## ',
+  ]
+];
+const FOREST_X = 8;
+function forestry(d) {
+  const rows = FORESTRY[AFTER_FORESTRY_LOOK] || FORESTRY[0];
+  rows.forEach((row, j) => [...row].forEach((ch, i) => {
+    const tone = ch === '#' ? K : ch === 'm' ? MID : ch === '.' ? W : null;
+    if (tone != null) d.c(FOREST_X + i, j - rows.length, tone);
+  }));
+}
+
+export const DRAW = { mill, chipper, papermill, workshop, press, shack, forestry };
 
 // Each station's paper backing (kit.js, `silhouette`), read off its idle
 // drawing once: the moving parts swing inside it, and what they carry is

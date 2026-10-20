@@ -232,9 +232,9 @@ export function floorFlats() {
   const c = x => Math.round((x - afterX0()) / P);
   const span = (x, w) => [c(x) - 1, c(x) + w + 1];
   const out = [];
-  // A tree's foot, from the stump it leaves to the end of the logs cut off
-  // it (render/after/pine.js lays them two cells off the trunk).
-  for (let i = 0; i < AFTER_PLOT_MAX; i++) out.push(span(plotX(i) + STUMP[0] * AP, (GROVE_LOGS_AT - STUMP[0] + PILE_W) * AFTER_ART_SCALE));
+  // The grove, from the first stump to its end: a tree falls across its
+  // plot and its logs roll to rest anywhere along it (after/grove.js).
+  { const x = plotX(0) + STUMP[0] * AP; out.push(span(x, (groveX1() - x) / P)); }
   // A station's whole ground, from the moment it is ordered: an unbuilt
   // spot is open floor like any other (the owner, 2026-10-18).
   for (const key of Object.keys(AFTER_STATIONS)) {
@@ -264,7 +264,7 @@ export function floorFlats() {
 export const sited = key => (S.after ? S.after.built.includes(key) || !!S.after.raising[key] || key in AFTER_STATIONS : AFTER_START_BUILT.includes(key));
 // Whether a station stands closed: standing whole but not built yet, its
 // closed sign in front of it until its rebuild takes it down.
-export const closed = key => !!S.after && !S.after.built.includes(key) && key in AFTER_STATIONS;
+export const closed = key => !!S.after && !AFTER_START_BUILT.includes(key) && !S.after.built.includes(key) && key in AFTER_STATIONS;
 // Which grounds are taken, as a key: the profile is worked out again only
 // when that changes.
 export const sitesKey = () => Object.keys(AFTER_STATIONS).filter(sited).join(',') + (longLine() ? '|line' : '');
@@ -323,8 +323,6 @@ export function pineRows(stage, big) {
 }
 // The stump, [left, width, height] in cells off its plot's trunk column.
 export const STUMP = [-1, 3, 2];
-// Where a plot's logs lie, in cells off its trunk column (render/after/pine.js).
-export const GROVE_LOGS_AT = 2;
 
 // --- each station's moving part, for the hand ----------------------------------------
 // The handsaw across a grown trunk, in cells off its middle column: the
@@ -333,8 +331,10 @@ export const GROVE_LOGS_AT = 2;
 export const SAW_SPAN = [-15, 9];
 export const SAW_ROWS = [-8, -2];
 // The grove's icons, [width, height] in their own dots of ICON_DOT px: the
-// saw over a grown tree and the shovel over a stump (render/after/pine.js).
-export const ICON_DOT = 3;
+// saw over a grown tree and the shovel over a stump (render/after/pine.js), a
+// dot a grid cell, so the saw reads at a glance (the owner, 2026-10-20: "too
+// small") and stands on the grid.
+export const ICON_DOT = P;
 export const ICON = { saw: [13, 8], shovel: [5, 13] };
 // What the hand's motion at each station aims at (after/gestures.js,
 // `partsOf`), in world px, read off the numbers the drawing uses
@@ -359,7 +359,7 @@ export function stationParts(key, i = 0) {
     // SAW: its grip at the near end, its tip past the far side), and `icon`
     // the saw icon over its crown, a box and its middle.
     const ic = { w: ICON.saw[0] * ICON_DOT, h: ICON.saw[1] * ICON_DOT };
-    const icon = { x: bx + AP / 2, y: fl + top * AP - P * 2, box: { x: Math.round(bx + AP / 2 - ic.w / 2), y: fl + top * AP - P * 2 - ic.h, w: ic.w, h: ic.h } };
+    const icon = { x: bx + AP / 2, y: fl + top * AP - P * 2, box: { x: snap(bx + AP / 2 - ic.w / 2), y: fl + top * AP - P * 2 - ic.h, w: ic.w, h: ic.h } };
     return { box: box(bx, a, top, b - a + 1, -top), rows, foot: { x: bx, y: fl }, top: fl + top * AP,
              sawBox: box(bx, SAW_SPAN[0], SAW_ROWS[0], SAW_SPAN[1] - SAW_SPAN[0] + 1, SAW_ROWS[1] - SAW_ROWS[0] + 1), icon };
   }
@@ -370,7 +370,7 @@ export function stationParts(key, i = 0) {
     const bx = plotX(i), ic = { w: ICON.shovel[0] * ICON_DOT, h: ICON.shovel[1] * ICON_DOT };
     const iy = fl - (STUMP[2] + 2) * AP;
     return { box: box(bx, -2, -4, 5, 4), at: { x: bx + AP / 2, y: fl }, stump: box(bx, STUMP[0], -STUMP[2], STUMP[1], STUMP[2]),
-             grip: box(bx, -2, -6, 5, 7), icon: { x: bx + P / 2, y: iy, box: { x: Math.round(bx + P / 2 - ic.w / 2), y: iy - ic.h, w: ic.w, h: ic.h } } };
+             grip: box(bx, -2, -6, 5, 7), icon: { x: bx + P / 2, y: iy, box: { x: snap(bx + P / 2 - ic.w / 2), y: iy - ic.h, w: ic.w, h: ic.h } } };
   }
   if (key === 'heap') {
     const x0 = heapX(), edge = notchX();
@@ -390,7 +390,7 @@ export function stationParts(key, i = 0) {
   if (key === 'mill') return { box: worked, wheel: { ...at(x0, 19, -9), r: 6 * AP }, knob: 8 * AP, frame: box(x0, 31, -26, 19, 26) };
   if (key === 'chipper') {
     return { box: worked, mouth: box(x0, 16, -13, 14, 14), jaw: box(x0, 18, -14, 10, 5), block: box(x0, 28, -15, 6, 15), chute: box(x0, 31, -19, 7, 5),
-             arm: box(x0, 7, -11, 11, 11), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - AP * 6, w: PILE_W * AP, h: AP * 6 } };
+             arm: box(x0, 21, -24, 11, 10), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - AP * 6, w: PILE_W * AP, h: AP * 6 } };
   }
   if (key === 'papermill') return { box: worked, vat: { ...at(x0, 19, -4.5), rx: 6 * AP, ry: 2.5 * AP }, line: box(x0, 9, -18, 30, 1), step: box(x0, 5, -9, 4, 9) };
   if (key === 'workshop') return { box: worked, sign: box(x0, 8, -6, 12, 2), hammer: box(x0, 8, -14, 14, 6), hand: at(x0, 13, -9),

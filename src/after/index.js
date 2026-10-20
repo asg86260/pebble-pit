@@ -42,8 +42,8 @@ import { readOver } from '../placesave.js';
 // axe bought and in hand, the pair's last line (`shout`), the heap last
 // tipped and each station last worked by hand (`tipAt`, `workAt`), the
 // motes coming down, the bodies -- members walking out, at
-// their posts and building -- the throne's speech, and the last id handed
-// out.
+// their posts and building -- the throne's speech, the logs lying where
+// their trees fell (grove.js, `groundLogs`), and the last id handed out.
 export const blankAfter = () => ({
   rebel: 0,
   stock: Object.fromEntries(AFTER_STOCK.map(k => [k, 0])),
@@ -73,6 +73,7 @@ export const blankAfter = () => ({
   speech: null,
   gateAt: null,
   brimAt: null,
+  groundLogs: [],
   ids: 0
 });
 

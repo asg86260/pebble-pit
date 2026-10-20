@@ -202,7 +202,7 @@ group('a felled tree leaves a stump that blocks the plot until it is dug, and di
   // Read fresh each time: the harness reads the save back every five seconds.
   const plot = () => S.after.plots[0];
   const p0 = { ...plot() };
-  const down = p0.logs === AFTER_LOGS_A_TREE && p0.stump && p0.stage === 0;
+  const down = S.after.groundLogs.filter(q => q.i === 0).length === AFTER_LOGS_A_TREE && p0.stump && p0.stage === 0;
   run(200);
   const blocked = plot().stump && plot().stage === 0;
   const r0 = read().rebel;
@@ -398,8 +398,8 @@ group('the chipper turns logs into sawdust alone, and haulers feed the smaller p
   feedLog(); pullArm(6);
   const chipped = read().sawdust - d0 === AFTER_CHIP_SAWDUST && read().timber === t0;
   raise('mill');
-  window.__afterGrant({ logs: 3 });
-  S.after.plots[0].logs = 4;                 // logs lying in the grove, as a felled tree leaves them
+  // logs on the forestry shack's pile, as the gatherers leave them
+  window.__afterGrant({ logs: 3, grovelogs: 4 });
   settle();
   window.__buy('after-post-hauler');
   const fed = runUntil(() => read().chiplogs > 1, 240);

@@ -39,7 +39,7 @@ group('each board lists its rows on its shelves: posts, then upgrades; the shack
   const want = {
     shack: [[msg('after-sect-build'), ['mill', 'chipper', 'papermill', 'workshop', 'press'].map(s => `after-build-${s}`)]],
     pedestal: [[posts, ['after-post-agitator']], [ups, ['after-podium']]],
-    grove: [[posts, ['after-post-woodcutter', 'after-post-hauler']], [ups, ['after-axe', 'after-plot', 'after-grow', 'after-tree', 'after-stumps']]],
+    grove: [[posts, ['after-post-woodcutter', 'after-post-gatherer', 'after-post-hauler']], [ups, ['after-axe', 'after-plot', 'after-grow', 'after-tree', 'after-stumps']]],
     mill: [[posts, ['after-post-sawyer']], [ups, ['after-blade', 'after-heap']]],
     chipper: [[posts, ['after-post-feeder']], [ups, ['after-drum', 'after-spout']]],
     papermill: [[posts, ['after-post-pulper']], [ups, ['after-vat', 'after-dry']]],

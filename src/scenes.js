@@ -511,7 +511,7 @@ function afterChain(slow) {
   const waves = [['mill', 'chipper'], ['workshop', ...(slow ? ['papermill'] : [])], slow ? ['press'] : []];
   for (const wave of waves) {
     for (const st of wave) window.__buy(`after-build-${st}`);
-    for (let k = 0; k < 120 && wave.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
+    for (let k = 0; k < 300 && wave.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
   }
   const A = AFTER_JOB;
   const posts = [A.CUT, A.CUT, A.HAUL, A.HAUL, A.HAUL, A.SAW, A.CHIP, A.JOIN, A.CARRY, A.CARRY, A.AGITATE, A.AGITATE,
@@ -3304,7 +3304,7 @@ function act3Mid() {
   window.__afterGrant({ rebel: 600, timber: 20, logs: 6 });
   for (const wave of [['mill', 'chipper'], ['workshop']]) {
     for (const st of wave) window.__buy(`after-build-${st}`);
-    for (let k = 0; k < 120 && wave.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
+    for (let k = 0; k < 300 && wave.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
   }
   const A = AFTER_JOB;
   for (const j of [A.CUT, A.CUT, A.HAUL, A.HAUL, A.SAW, A.CHIP, A.JOIN, A.CARRY, A.CARRY, A.AGITATE]) window.__buy(`after-post-${j}`);

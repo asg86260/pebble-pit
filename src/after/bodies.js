@@ -31,7 +31,7 @@ import { deepAt } from './sky.js';
 import { built, stumpsOn } from './levels.js';
 import { afterX0, afterX1, afterFloor, stationDoor, signFetchX, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, agitatorX, speakerAt, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
-import { standing, stumped, chopTree, digStump, takeLog } from './grove.js';
+import { standing, stumped, chopTree, digStump, settled, takeGroundLog } from './grove.js';
 import { sweepDue, tipSawdust, vatOf } from './mill.js';
 import { signSpot, plantSign, freeSlot, pastePoster } from './press.js';
 import { workAfter } from './work.js';
@@ -158,6 +158,26 @@ const JOB_STEP = {
     if (w.dig) { if (w.t >= AFTER_DIG_S) { digStump(w.target); w.target = null; w.t = 0; w.swing = a.t; } }
     else if (w.t >= AFTER_FELL_S) { chopTree(w.target); w.t = 0; w.swing = a.t; }
   },
+  gatherer(w, dt) {
+    // The nearest log lying still on the ground that no other gatherer is
+    // walking to, up off it, and carried to the forestry shack's pile.
+    const a = S.after;
+    if (w.load === 'log') {
+      if (go(w, pileMid('forestry', 'grovelogs'), floorY(), dt)) { a.stock.grovelogs += 1; w.load = null; w.target = null; }
+      return;
+    }
+    let q = w.target != null ? a.groundLogs.find(o => o.id === w.target) : null;
+    if (!q || !settled(q)) {
+      const claimed = new Set(a.bodies.filter(o => o !== w && o.job === AFTER_JOB.GATHER && !o.load && o.target != null).map(o => o.target));
+      const free = a.groundLogs.filter(o => settled(o) && !claimed.has(o.id));
+      q = free.length ? free.reduce((b, o) => (Math.abs(o.x - w.x) < Math.abs(b.x - w.x) ? o : b)) : null;
+      w.target = q ? q.id : null;
+    }
+    if (!q) { idle(w, dt); return; }
+    if (!go(w, q.x + AP, floorY(), dt)) return;
+    if (takeGroundLog(q.id)) w.load = 'log';
+    w.target = null;
+  },
   hauler(w, dt) {
     const a = S.after;
     if (w.load === 'log') {
@@ -170,17 +190,10 @@ const JOB_STEP = {
       if (go(w, pileMid(w.to, PILE[w.to]), floorY(), dt)) { a.stock[PILE[w.to]] += 1; w.load = null; w.target = null; w.to = null; }
       return;
     }
+    // A log off the forestry shack's pile, where the gatherers bring them.
     if (!logTo()) { idle(w, dt); return; }
-    let i = w.target;
-    if (i == null || !a.plots[i] || a.plots[i].logs <= 0) {
-      const claimed = k => a.bodies.filter(o => o !== w && o.job === AFTER_JOB.HAUL && o.target === k && !o.load).length;
-      i = a.plots.findIndex((p, k) => p.logs > claimed(k));
-      w.target = i < 0 ? null : i;
-    }
-    if (w.target == null) { idle(w, dt); return; }
-    if (!go(w, plotX(w.target) + AP, floorY(), dt)) return;
-    if (takeLog(w.target)) { w.load = 'log'; w.to = logTo(); }
-    w.target = null;
+    if (!go(w, pileMid('forestry', 'grovelogs'), floorY(), dt)) return;
+    if (a.stock.grovelogs > 0) { a.stock.grovelogs -= 1; w.load = 'log'; w.to = logTo(); }
   },
   sawyer(w, dt) {
     // Off the saw while the heap has stood at its brim: to the notch beside

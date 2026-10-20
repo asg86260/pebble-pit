@@ -86,7 +86,7 @@ export const AFTER_CARDS = ['pedestal', 'shack', 'grove', 'mill', 'chipper', 'wo
 // What the chain holds, made and spent (S.after.stock). Signs and posters are
 // spent into the crowd, never a bill. The logs are two piles, the saw mill's
 // (`logs`) and the chipper's (`chiplogs`), each where its haulers drop them.
-export const AFTER_STOCK = ['logs', 'chiplogs', 'timber', 'sawdust', 'paper', 'signs', 'posters'];
+export const AFTER_STOCK = ['logs', 'chiplogs', 'timber', 'sawdust', 'paper', 'signs', 'posters', 'grovelogs'];
 
 // --- act 3's loop, placeholder (track A, 2026-10-17; reworked 2026-10-18) ----------
 // The grove and the press on the scaffold, every drawing a placeholder of
@@ -137,11 +137,14 @@ export const AFTER_COUNT_PAD = 2;
 // The camp's stations, left to right (layout A, docs/mocks/act3-place-2026-10-18),
 // laid off the grove's end by after/art.js (track A, 2026-10-18), with
 // AFTER_STATION_GAP art cells of open floor between every two neighbors'
-// grounds (the owner, 2026-10-20: "a bit closer together"). Each is the
+// grounds (the owner, 2026-10-20: "a bit closer together", then "too far
+// apart ... and inconsistently placed": six, the grove's end to the
+// forestry shack the same, each ground running from its first drawn column
+// to its last, after/art.js). Each is the
 // left edge of its ground in cells off the place's left (`at`); its piles
 // and its drawing are laid off that.
-export const AFTER_STATION_GAP = 12;
-const CAMP = campLayout(GROVE_END + 12, AFTER_STATION_GAP, AFTER_ART_SCALE);
+export const AFTER_STATION_GAP = 6;
+const CAMP = campLayout(GROVE_END, AFTER_STATION_GAP, AFTER_ART_SCALE);
 // The level's three zones (DESIGN.md, "The level, the two crowds and the
 // flags"): the workshops -- the grove and every station but the pedestal --
 // then AFTER_ZONE_GAP cells of open floor, the union's camp AFTER_UNION_W
@@ -175,7 +178,16 @@ export const AFTER_PODIUM_PILE = 9;
 export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0.8, 0.9] };
 // The stations standing from the act's first frame: the pedestal the pair
 // speak from and the construction shack that sells every other.
-export const AFTER_START_BUILT = ['pedestal', 'shack'];
+export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry'];
+// The forestry shack's drawing, two takes for the owner's pick (render/after/
+// stations.js, FORESTRY): 0 a log cabin, 1 a woodshed with its saw hung up.
+export let AFTER_FORESTRY_LOOK = 0;
+export const FORESTRY_KNOBS = [
+  { key: 'AFTER_FORESTRY_LOOK', label: 'act 3 forestry shack: 0 log cabin, 1 woodshed', min: 0, max: 1, step: 1,
+    get: () => AFTER_FORESTRY_LOOK, set: v => { AFTER_FORESTRY_LOOK = v; } },
+  { key: 'AFTER_CLOSED_LOOK', label: 'act 3 closed station: 0 as it was, 1 unlit, 2 shut up, 3 outline', min: 0, max: 3, step: 1,
+    get: () => AFTER_CLOSED_LOOK, set: v => { AFTER_CLOSED_LOOK = v; } }
+];
 // The camp's other stations stand whole from the start, closed until they are
 // built (the owner, 2026-10-20: "lets just add a closed sign in front of
 // them"): a closed sign stands at each one's door, symbols only, and its
@@ -185,6 +197,16 @@ export const AFTER_START_BUILT = ['pedestal', 'shack'];
 // cells (AP): a board `w` by `h`, crossed through (the owner's pick of two,
 // 2026-10-20), on a post `post` high.
 export const AFTER_CLOSED = { w: 6, h: 4, post: 3 };
+// How a closed station reads as not open yet (the owner, 2026-10-20: "seeing
+// them in game doesnt read as closed"), three takes for the vote and the look
+// as it stood: 0 whole, the board at its door; 1 unlit, the whole station in
+// paper and pale only, no ink, the board bigger; 2 shut up, its door boarded
+// across with crossed planks and its moving part chained still, the board
+// bigger and up at eye level; 3 an outline, a dotted plan of the station on
+// the grid, filled in a course a piece of the build. Each opens as its build
+// lands, a piece at a time, faded. The bigger board's size and post per take.
+export let AFTER_CLOSED_LOOK = 1;
+export const AFTER_CLOSED_TAKES = { 0: AFTER_CLOSED, 1: { w: 9, h: 6, post: 4 }, 2: { w: 9, h: 6, post: 9 }, 3: AFTER_CLOSED };
 // The product looks like the protest from the start (board card
 // act3-trees-to-rebellion, the owner's pick A, 2026-10-20): the workshop
 // letters the fist onto the sign as it works it, the finished signs stand in
@@ -253,8 +275,20 @@ export const AFTER_AGITATE_REBEL = 1;
 export const AFTER_LOGS_A_TREE = 6;
 export const AFTER_LOGS_BIG_TREE = 9;
 export const AFTER_GROW_S_UP = 15;         // seconds a growth stage with the grove's "faster growth"
-export const AFTER_FALL_FRAMES = 4;        // a falling tree's held frames, upright to down
-export const AFTER_FALL_S = 1.6;           // ...over this
+// A tree sawn through tips over as one drawing turned by its true angle,
+// quicker as it goes (the motion rule, the owner 2026-10-20), and hits the
+// ground in AFTER_FALL_S; it rocks back off the ground and settles over
+// AFTER_FALL_BOUNCE_S, AFTER_FALL_BOUNCE radians at most, the dust coming up
+// under it; then its trunk splits into its logs, which roll off along the
+// ground a little, AFTER_LOG_ROLL art cells at least and at most, slowing
+// to rest over AFTER_LOG_ROLL_S, where they wait for a gatherer. The logs
+// lie across AFTER_LOG_SPAN art cells of the fallen tree, off its trunk.
+export const AFTER_FALL_S = 1.6;
+export const AFTER_FALL_BOUNCE_S = 0.35;
+export const AFTER_FALL_BOUNCE = 0.06;
+export const AFTER_LOG_ROLL = [0.5, 1.5];
+export const AFTER_LOG_ROLL_S = 1.2;
+export const AFTER_LOG_SPAN = [2, 9];
 export const AFTER_CROWN_FADE_S = 2.5;     // the fallen crown's cells fading off
 export const AFTER_CHOP_HOLD_S = 0.25;     // a swing held on the blow
 export const AFTER_FELL_S = 1.5;           // a woodcutter's swing at a tree
@@ -338,11 +372,11 @@ export const AFTER_SPEECH_WARN_S = 6;      // warned this long ahead
 // the camp to hold it. A post with nobody waiting in the camp stands empty.
 export const AFTER_WALK = 50;              // px/s, every body up here
 export const AFTER_BURN_MARCHES = AFTER_SPEECH_S / (AFTER_SPEECH_MARCH / AFTER_WALK);
-export const AFTER_JOBS = [J.AGITATE, J.CUT, J.HAUL, J.SAW, J.CHIP, J.PULP, J.JOIN, J.CARRY, J.PRINT, J.PASTE];
+export const AFTER_JOBS = [J.AGITATE, J.CUT, J.GATHER, J.HAUL, J.SAW, J.CHIP, J.PULP, J.JOIN, J.CARRY, J.PRINT, J.PASTE];
 // The station each job's post is bought at, so which card sells it and which
 // station must stand before it is offered.
 export const AFTER_JOB_POST = {
-  [J.AGITATE]: 'pedestal', [J.CUT]: 'grove', [J.HAUL]: 'grove', [J.SAW]: 'mill', [J.CHIP]: 'chipper',
+  [J.AGITATE]: 'pedestal', [J.CUT]: 'grove', [J.GATHER]: 'grove', [J.HAUL]: 'grove', [J.SAW]: 'mill', [J.CHIP]: 'chipper',
   [J.PULP]: 'papermill', [J.JOIN]: 'workshop', [J.CARRY]: 'workshop',
   [J.PRINT]: 'press', [J.PASTE]: 'press'
 };
@@ -464,7 +498,6 @@ export const AFTER_COIN_SPREAD = 4;        // cells either side of the patch's m
 // mocks' cycle, so one click plays one turn of the moving part.
 export const AFTER_ART_WORK_S = 2.4;
 export const AFTER_PILE_FADE_S = 0.4;      // a thing coming onto or off a pile fades over this
-export const AFTER_FALL_POSES = [0.08, 0.3, 0.7, 1.15];   // a falling pine's held angles, radians, over AFTER_FALL_S
 // The pair's speech bubbles (after/bubbles.js): one sent up off a speaker's
 // head this often while they stand on the pedestal, rising and fading; every
 // AFTER_BUBBLE_BIG_EVERY-th one twice the size and quicker.

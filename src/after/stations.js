@@ -6,7 +6,7 @@
 //
 // A row's `hit` is the click area as drawn, where it is not its whole ground
 // padded: a station's drawing (the pedestal's podium top, the saw mill's heap
-// too), the grove's pines and stumps, God's camp on its stage. Their boards'
+// too), the forestry shack for the grove's, God's camp on its stage. Their boards'
 // rows are after/rows.js's (`registerBoard`); the moving parts a press works
 // are the hand's (after/gestures.js), asked before any of this.
 
@@ -15,8 +15,7 @@ import { P } from '../config.js';
 import { msg } from '../lang.js';
 import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
-import { stationBox, stationParts, plotX, groveX1, afterFloor, AP, closed } from './place.js';
-import { trees, standing } from './grove.js';
+import { stationBox, stationParts, closed } from './place.js';
 import { godCampAt, godMid, faceY } from './sky.js';
 
 const live = () => afterlifeOn() && !!S.after;
@@ -48,22 +47,9 @@ const NAMES = {
   mill: () => msg('after-build-mill'), chipper: () => msg('after-build-chipper'), workshop: () => msg('after-build-workshop'),
   papermill: () => msg('after-build-papermill'), press: () => msg('after-build-press'), crowd: () => msg('after-board-crowd')
 };
-const GROVE_UP = 22;      // art cells over the grove's floor its board stands clear of: a big pine's crown
 
 // A station's drawing, the area a plain click on it opens its board in.
 const drawn = card => (card === 'pedestal' ? stationParts('pedestal').top : stationBox(card));
-// The grove's pines and stumps as drawn: a pine's crown down to the floor, a
-// stump's few art cells over it.
-function onGrove(x, y) {
-  const fl = afterFloor(), ps = trees();
-  for (let i = 0; i < ps.length; i++) {
-    const bx = plotX(i);
-    if (x < bx - AP * 5 || x > bx + AP * 6 || y > fl + P) continue;
-    const top = standing(ps[i]) ? stationParts('tree', i).box.y : fl - AP * 6;
-    if (y >= top) return true;
-  }
-  return false;
-}
 
 const row = (card, more) => {
   const key = `after-${card}`;
@@ -87,10 +73,12 @@ export const AFTER_STATION_ROWS = [
     stand: () => stationBox(card),
     hit: (x, y) => inBox(x, y, drawn(card)) || (card === 'mill' && inBox(x, y, stationParts('heap').heap))
   })),
+  // The grove's board is the forestry shack's, in front of its trees (the
+  // owner, 2026-10-20): a press on a tree is the saw's (after/gestures.js).
   row('grove', {
     open: live,
-    stand: () => { const x = plotX(0) - AP * 4; return { x, y: afterFloor() - AP * GROVE_UP, w: groveX1() - x, h: AP * GROVE_UP }; },
-    hit: onGrove
+    stand: () => stationBox('forestry'),
+    hit: (x, y) => inBox(x, y, stationBox('forestry'))
   }),
   row('crowd', {
     open: live,

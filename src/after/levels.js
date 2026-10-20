@@ -4,7 +4,7 @@
 // reads an upgrade without importing the cards that sell it (rows.js).
 
 import { S } from '../state.js';
-import { AFTER_UPGRADES, AFTER_PLOTS0, AFTER_PODIUM_REBEL, TREE_GROW_S, AFTER_GROW_S_UP,
+import { AFTER_START_BUILT, AFTER_UPGRADES, AFTER_PLOTS0, AFTER_PODIUM_REBEL, TREE_GROW_S, AFTER_GROW_S_UP,
          AFTER_BLADE_LOGS, AFTER_BENCH_SIGNS, AFTER_VAT_SHEETS, AFTER_DRY_VATS, AFTER_STACK, AFTER_STACK_UP,
          AFTER_SAWDUST_BRIM, AFTER_SAWDUST_BRIM_UP, AFTER_CHIP_LOGS, AFTER_CHIP_SAWDUST, AFTER_CHIP_SAWDUST_UP,
          SIGN_REACH, SIGN_REACH_UP, POSTER_REACH, POSTER_REACH_UP } from '../config.js';
@@ -41,6 +41,8 @@ export const posterReach = big => (big ? POSTER_REACH_UP : POSTER_REACH);
 
 // Whether a station stands: raised to its last piece, or standing from the
 // start. The grove is open from the act's first frame.
-export const built = key => !!S.after && (key === 'grove' || S.after.built.includes(key));
+// The grove, and the stations standing from the act's first frame, stand in
+// any save, one made before a station was added to them too.
+export const built = key => !!S.after && (key === 'grove' || AFTER_START_BUILT.includes(key) || S.after.built.includes(key));
 // Whether it is bought and going up a piece at a time.
 export const raising = key => !!S.after && !!S.after.raising[key] && !built(key);

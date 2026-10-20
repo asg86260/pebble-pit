@@ -137,7 +137,7 @@ export const postRebel = () => Math.round(AFTER_POST_REBEL0 * Math.pow(AFTER_POS
 const postDust = () => AFTER_POST_DUST[Math.min(postCount(), AFTER_POST_DUST.length - 1)];
 const POST_NAMES = {
   agitator: () => msg('after-job-agitator'), woodcutter: () => msg('after-job-woodcutter'),
-  hauler: () => msg('after-job-hauler'), sawyer: () => msg('after-job-sawyer'), feeder: () => msg('after-job-feeder'),
+  gatherer: () => msg('after-job-gatherer'), hauler: () => msg('after-job-hauler'), sawyer: () => msg('after-job-sawyer'), feeder: () => msg('after-job-feeder'),
   pulper: () => msg('after-job-pulper'), joiner: () => msg('after-job-joiner'),
   carrier: () => msg('after-job-carrier'), printer: () => msg('after-job-printer'),
   paster: () => msg('after-job-paster')

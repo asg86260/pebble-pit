@@ -7,18 +7,21 @@
 // trunk ten cells tall; the handsaw across the trunk (saw 3 of
 // docs/mocks/act3-saw-2026-10-18, one person's: a grip at the near end, no
 // peg at the tip), its kerf opening from the near side a column at a time in
-// the blade's rows, sawdust at the foot; the fall in held poses; the tree
-// lying on its tiers and fading; the stump, a three-by-two block with a grey
-// cut face, lifted by the hand with its roots showing; the logs. Over a grown
+// the blade's rows, sawdust at the foot; the fall, the tree over the stump
+// turned as one drawing by its true angle about the cut, quicker as it goes
+// (the motion rule, the owner 2026-10-20), hitting the ground with the dust
+// coming up and rocking back once; then its trunk splitting into the logs,
+// which roll off a little and lie, and its crown fading; the stump, a
+// three-by-two block with a grey cut face, lifted by the hand with its roots
+// showing. Over a grown
 // tree the saw icon, over a stump the shovel, each a pointer's mark drawn in
 // its own finer dots, no plate under it.
 
-import { P, AFTER_ART_SCALE as A, AFTER_FALL_S, AFTER_FALL_POSES, AFTER_CROWN_FADE_S, AFTER_BUILD_FADE_S, AFTER_DIG_CLICKS,
-         TREE_CHOPS, AFTER_ART_WORK_S, AFTER_PILE_FADE_S } from '../../config.js';
+import { P, AFTER_ART_SCALE as A, AFTER_FALL_S, AFTER_CROWN_FADE_S, AFTER_BUILD_FADE_S, AFTER_DIG_CLICKS,
+         TREE_CHOPS, AFTER_ART_WORK_S, AFTER_PILE_FADE_S, AFTER_FALL_BOUNCE_S, AFTER_FALL_BOUNCE, AFTER_LOG_ROLL_S } from '../../config.js';
 import { plotX, afterFloor, pineOf, inPine, PINE_GROWN, STUMP, SAW_ROWS, ICON_DOT, AP } from '../../after/place.js';
-import { trees } from '../../after/grove.js';
-import { frame, K, W, PALE, MID, SOIL, DUST, toneOf, now, inView, pileState, clamp01 } from './kit.js';
-import { logPile } from './piles.js';
+import { trees, groundLogs } from '../../after/grove.js';
+import { frame, K, W, PALE, MID, SOIL, DUST, toneOf, now, inView, clamp01 } from './kit.js';
 import { gestureView, groveIcons } from '../../after/gestures.js';
 import { ctx } from '../ctx.js';
 import { GREY } from '../../config.js';
@@ -50,31 +53,93 @@ function tierCells(stage, th, lift) {
   return out;
 }
 const tiers = (d, stage, th = 0, lift = 0, dx = 0) => { for (const [x, y] of tierCells(stage, th, lift)) d.c(x + dx, y, K); };
-// What comes down when a tree is sawn through: the trunk above the stump and
-// the tiers on it, turned to the right by th about the near corner of the
-// cut (the trunk's right edge at the stump's top) and let `drop` rows down,
-// so a ten-cell trunk falls whole rather than leaving its crown in the air.
-const FALLEN = new Map();
-function fallenCells(stage, th, drop) {
-  const id = `${stage.trunk}|${stage.tiers.length}|${th}|${drop}`;
-  if (FALLEN.has(id)) return FALLEN.get(id);
-  const [w, h] = stage.trunk, sh = STUMP[2], px = (w + 1) / 2, cos = Math.cos(th), sin = Math.sin(th), on = new Set();
-  const isTree = (u, v) => (Math.abs(u) <= w / 2 && v >= sh && v < h) || (v >= h && inPine(stage.tiers, u, v - h));
-  for (let y = -48; y < 2; y++) for (let x = -8; x < 52; x++) {
-    const dx = x + 0.5 - px, dy = -(y + 0.5) + drop - sh;
-    const sx = dx * cos - dy * sin + px, sy = dx * sin + dy * cos + sh;
-    if (isTree(sx - 0.5, sy)) on.add(`${x},${y}`);
-  }
-  const out = [];
-  for (const k of on) {
-    const [x, y] = k.split(',').map(Number);
-    if (y >= 0) continue;
-    if (th === 0 || on.has(`${x + 1},${y}`) || on.has(`${x - 1},${y}`) || on.has(`${x},${y + 1}`) || on.has(`${x},${y - 1}`)) out.push([x, y]);
-  }
-  FALLEN.set(id, out);
+// A sheet to cache a drawing on: none where the page has no canvas (the node
+// tier), where what these sheets carry is not drawn at all.
+const paper = () => (typeof document === 'undefined' ? null : document.createElement('canvas'));
+// What comes down when a tree is sawn through, as one drawing each, cached:
+// the trunk above the stump (`trunk`) and the tiers on it (`crown`), in its
+// cells, each a sprite with the pivot it turns about, the near corner of the
+// cut (the trunk's right edge at the stump's top), in its own px.
+const PIECES = new Map();
+function piece(stage, part) {
+  const id = `${stage.trunk}|${stage.tiers.length}|${part}|${GREY[K]}`;
+  if (PIECES.has(id)) return PIECES.get(id);
+  const [w, h] = stage.trunk, sh = STUMP[2], cells = [];
+  if (part === 'trunk') { for (let y = -h; y < -sh; y++) for (let x = -(w - 1) / 2; x <= (w - 1) / 2; x++) cells.push([x, y]); }
+  else cells.push(...tierCells(stage, 0, 0));
+  const x0 = Math.min(...cells.map(c => c[0])), y0 = Math.min(...cells.map(c => c[1]));
+  const x1 = Math.max(...cells.map(c => c[0])), y1 = Math.max(...cells.map(c => c[1]));
+  const cv = paper();
+  if (!cv) return null;
+  cv.width = (x1 - x0 + 1) * AP; cv.height = (y1 - y0 + 1) * AP;
+  const g = cv.getContext('2d');
+  if (!g) return null;
+  g.fillStyle = GREY[K];
+  for (const [x, y] of cells) g.fillRect((x - x0) * AP, (y - y0) * AP, AP, AP);
+  const out = { cv, px: ((w + 1) / 2 - x0) * AP, py: (-sh - y0) * AP, at: (w + 1) / 2 * AP };
+  PIECES.set(id, out);
   return out;
 }
-const fallen = (d, stage, th, drop = 0) => { for (const [x, y] of fallenCells(stage, th, drop)) d.c(x, y, K); };
+// A piece of plot bx's tree turned th about the cut and let `drop` px down.
+function turned(pc, bx, th, drop, a = 1) {
+  if (!pc || a <= 0) return;
+  ctx.save();
+  ctx.globalAlpha *= a;
+  ctx.imageSmoothingEnabled = false;
+  ctx.translate(bx + pc.at, afterFloor() - STUMP[2] * AP + drop);
+  ctx.rotate(th);
+  ctx.drawImage(pc.cv, -pc.px, -pc.py);
+  ctx.restore();
+}
+// The tree's angle and drop through its fall and the rock back after the
+// hit: falling, over AFTER_FALL_S from `fall`, the angle and the drop
+// growing as the square of the time, so it goes over slowly and comes down
+// fast; landed, from `fell`, the crown lifted back off the ground and down
+// again once, AFTER_FALL_BOUNCE at most, settling over AFTER_FALL_BOUNCE_S.
+function fallPose(p, t) {
+  const sh = STUMP[2] * AP;
+  if (p.fall != null) { const u = clamp01((t - p.fall) / AFTER_FALL_S), k = u * u; return { th: Math.PI / 2 * k, drop: sh * k }; }
+  const v = clamp01((t - p.fell) / AFTER_FALL_BOUNCE_S);
+  return { th: Math.PI / 2 - AFTER_FALL_BOUNCE * Math.sin(Math.PI * v) * (1 - v), drop: sh };
+}
+// A log on the ground, end on: a round of bark, its pale cut face and a
+// grey heart off its middle, so its turn shows as it rolls. Cached.
+const LOG = new Map();
+function logSprite() {
+  const id = `${GREY[K]}|${GREY[PALE]}|${GREY[MID]}`;
+  if (LOG.has(id)) return LOG.get(id);
+  const s = 2 * AP, r = A * 2, cv = paper();
+  if (!cv) return null;
+  cv.width = cv.height = s;
+  const g = cv.getContext('2d');
+  if (!g) return null;
+  g.fillStyle = GREY[K]; g.fillRect(r, 0, s - 2 * r, s); g.fillRect(0, r, s, s - 2 * r);
+  g.fillStyle = GREY[PALE]; g.fillRect(r * 2, r, s - 4 * r, s - 2 * r); g.fillRect(r, r * 2, s - 2 * r, s - 4 * r);
+  g.fillStyle = GREY[MID]; g.fillRect(s / 2, r * 2, r * 2, r * 2);
+  LOG.set(id, cv);
+  return cv;
+}
+// Each log lying, or rolling to where it lies: faded in over the trunk as
+// it splits, then off along the ground, slowing to rest over
+// AFTER_LOG_ROLL_S, turned by how far it has rolled.
+const SPLIT_S = 0.15;
+function drawGroundLogs(t) {
+  const fl = afterFloor(), cv = logSprite(), R0 = AP;
+  if (!cv) return;
+  for (const q of groundLogs()) {
+    const since = t - q.at;
+    if (since < -SPLIT_S || !inView(q.x0 - AP * 2, q.x - q.x0 + AP * 6)) continue;
+    const r = clamp01(since / AFTER_LOG_ROLL_S), e = 1 - (1 - r) * (1 - r);
+    const x = q.x0 + (q.x - q.x0) * e;
+    ctx.save();
+    ctx.globalAlpha *= clamp01((since + SPLIT_S) / SPLIT_S);
+    ctx.imageSmoothingEnabled = false;
+    ctx.translate(x + R0, fl - R0);
+    ctx.rotate((x - q.x0) / R0);
+    ctx.drawImage(cv, -R0, -R0);
+    ctx.restore();
+  }
+}
 function pine(d, stage, a = 1) {
   if (!stage || a <= 0) return;
   d.fade(a, () => { const [w, h] = stage.trunk; d.r(-(w - 1) / 2, -h, w, h, K); tiers(d, stage); });
@@ -174,14 +239,21 @@ export function drawGrove() {
     const cleared = p.at == null ? 1 : clamp01((t - p.at) / AFTER_BUILD_FADE_S);
     d.fade(cleared, () => { for (let c = -5; c <= 5; c++) d.c(c, -1, toneOf(SOIL, bx / AP + c, 0)); });
     const big = p.big;
-    if (p.fall != null) {
-      // The fall: held poses over AFTER_FALL_S, quicker as it goes.
-      stump(d, 1, 0);
-      const k = Math.min(AFTER_FALL_POSES.length - 1, Math.floor((t - p.fall) / AFTER_FALL_S * AFTER_FALL_POSES.length));
-      fallen(d, stageOf(GROWN, big), AFTER_FALL_POSES[k]);
+    if (p.fall != null || p.fell != null) {
+      // Going over, or down and rocking back; once it has settled its trunk
+      // goes to its logs (faded out as they fade in over it) and its crown
+      // fades off where it lies.
+      if (p.fall != null) stump(d, 1, 0);
+      const st = stageOf(GROWN, big), { th, drop } = fallPose(p, t);
+      const down = p.fell == null ? 0 : t - p.fell - AFTER_FALL_BOUNCE_S;
+      turned(piece(st, 'trunk'), bx, th, drop, p.fell == null ? 1 : clamp01(-down / SPLIT_S));
+      turned(piece(st, 'crown'), bx, th, drop, p.fell == null ? 1 : 1 - clamp01(down / AFTER_CROWN_FADE_S));
+      // the dust coming up off the hit along the trunk and the crown
+      if (p.fell != null && t - p.fell < DUST_S) d.fade(1 - (t - p.fell) / DUST_S, () => {
+        const up = Math.floor((t - p.fell) / DUST_S * 3);
+        for (let k = 0; k < 12; k++) d.c(2 + k * 2, -1 - up - (k % 2), toneOf(DUST, k, 3));
+      });
     }
-    // Down on its tiers, lying, fading as the logs come off it.
-    if (p.fell != null) d.fade(Math.max(0, 1 - (t - p.fell) / AFTER_CROWN_FADE_S), () => fallen(d, stageOf(GROWN, big), Math.PI / 2, STUMP[2]));
     if (p.stump && p.fall == null) stump(d, 1, p.dug || 0, lift && lift.i === i ? lift.lift : 0);
     else if (!p.stump && t - s.gone < AFTER_BUILD_FADE_S) stump(d, 1 - (t - s.gone) / AFTER_BUILD_FADE_S, AFTER_DIG_CLICKS);
     if (p.fall == null && p.stage) {
@@ -202,8 +274,7 @@ export function drawGrove() {
         for (let k = 0; k < Math.min(4, Math.floor(p.chops / 2)); k++) { d.c(-2 - (k >> 1), -1, toneOf(DUST, k, 1)); d.c(2 + (k >> 1), -1, toneOf(DUST, k, 2)); }
       }
     }
-    // A plot's logs, counted only while there are some: an empty plot says nothing.
-    const logs = pileState(`plot${i}`, p.logs);
-    if (logs.n || logs.since < AFTER_PILE_FADE_S) logPile(d, 2, logs);
   });
+  drawGroundLogs(t);
 }
+const DUST_S = 0.8;

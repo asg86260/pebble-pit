@@ -4,8 +4,8 @@
 // cell it is told to fill, and every cell round the pine and the stump is
 // asked of the hit tests: inked, it is the plot's; paper, it is nobody's.
 // A press through the hand's own call (`gestureDown`) on the crown's tip
-// asks for the grove's board, and one on the saw icon over it puts the saw
-// on that tree. The plots' shapes are the setup these checks are not about,
+// puts the saw on that tree (the grove's board is the forestry shack's), as
+// one on the saw icon over it does. The plots' shapes are the setup these checks are not about,
 // set on the act's state.
 import { group, ok, run, yard, P } from './helpers.mjs';
 import { GREY, AFTER_PLOT_GAP, AFTER_ART_SCALE } from '../src/config.js';
@@ -73,8 +73,10 @@ group('a press lands on a pine and a stump exactly where they are drawn', async 
   const tx = tip[0] * P + P / 2, ty = tip[1] * P + P / 2;
   const asked = gestureDown(tx, ty) ? null : stationAt(tx, ty);
   gestureUp();
+  const tipSaws = gestureView().find(r => r.key === 'tree').i;
   run(0.5);
-  const icon = groveIcons().find(c => c.kind === 'saw' && c.i === 0);
+  // the saw is on the first tree now: the second's icon moves it there
+  const icon = groveIcons().find(c => c.kind === 'saw' && c.i === 1);
   gestureDown(icon.x, icon.y - 2);
   gestureUp();
   const on = gestureView().find(r => r.key === 'tree').i;
@@ -83,7 +85,7 @@ group('a press lands on a pine and a stump exactly where they are drawn', async 
     ok(ink.size > 100, 'the grove drew its pines and its stump', `${ink.size} cells`),
     ok(gap >= AFTER_PLOT_GAP, 'two big pines stand clear of each other', `${gap} clear columns between them, ${AFTER_PLOT_GAP} at least`),
     ok(!wrong.length, 'every inked cell is its plot\'s, and every paper cell round it nobody\'s', wrong.slice(0, 6).join('; ')),
-    ok(asked === 'after-grove', 'a press on the crown\'s tip asks for the grove\'s board', JSON.stringify(asked)),
-    ok(on === 0, 'and one on the saw icon over it puts the saw on that tree', String(on))
+    ok(asked === null && tipSaws === 0, 'a press on the crown\'s tip puts the saw on that tree, no board asked for', JSON.stringify([asked, tipSaws])),
+    ok(on === 1, 'and one on another tree\'s saw icon puts the saw on that tree', String(on))
   ];
 }, { reload: false });
