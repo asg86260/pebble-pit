@@ -197,12 +197,13 @@ group("at the camp end, act 3 is framed at the yard's zoom and the yard's floor 
   return out;
 });
 
-// God in the window from where the act opens to the pan's end: at its right
-// edge past the union's camp (his camp is past it, DESIGN.md, "The level,
-// the two crowds and the flags"), drawn in to its middle along the pan; and
+// God from where the act opens to the pan's end: right of the window's
+// middle past the union's camp -- off past its right edge where his camp
+// must stand clear of the pair (test/after-god-clear.test.mjs) -- drawn in
+// to its middle along the pan; and
 // the union's camp, on the near layer, never comes up level with him: the
 // two layers would only meet past the window's right edge.
-group("God stands in the window all along the pan toward him, the union's camp always left of him", async () => {
+group("God is drawn in toward the window's middle along the pan, the union's camp always left of him", async () => {
   const out = [];
   for (const [w, h] of [[2000, 967], [800, 600]]) {
     S.W = w; S.H = h;

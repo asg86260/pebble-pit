@@ -636,7 +636,7 @@ function heavenAt(share, pan = 0, what = null) {
 }
 
 // The sky a tenth of the way to the strike, its clock run on a tick at a
-// time until `want` says the line and his turns are at the moment, held.
+// time until `want` says his turns and his talk are at the moment, held.
 function heavenTurn(want) {
   heavenAt(0.1);
   window.__holdShot(0);
@@ -3080,7 +3080,7 @@ export const SCENES = {
     run: () => heavenAt(0.5) },
   'heaven-90': { about: 'the acts', say: "God's crowd nine tenths of the way to the strike: a low scatter of the near band, the rays nearly gone",
     run: () => heavenAt(0.9) },
-  'heaven-100': { about: 'the acts', say: "the strike's share won: a thin low scatter left, no rays, the tithe line standing still",
+  'heaven-100': { about: 'the acts', say: "the strike's share won: a thin low scatter left, no rays",
     run: () => heavenAt(1) },
   'heaven-pan': { about: 'the acts', say: 'the camera half way along the dive toward God',
     run: () => heavenAt(0.1, 0.5) },
@@ -3088,16 +3088,13 @@ export const SCENES = {
     run: () => heavenAt(0.1, 1) },
   'heaven-rally': { about: 'the acts', say: 'a rally off a sign: its ring climbing through every band, the near souls with their arms up',
     run: () => heavenAt(0.1, 0, 'rally') },
-  'heaven-roar': { about: 'the acts', say: "God's roar, a proclamation: his mouth open round, a hand raised in blessing, the ring ducking the crowd",
+  'heaven-roar': { about: 'the acts', say: "God's roar, a proclamation: his mouth open on a syllable, its wave out across the crowd, the souls hopping as it reaches them",
     run: () => heavenAt(0.1, 0, 'roar') },
   'heaven-unmasked': { about: 'the acts', say: 'God unmasked, once the unmask beat has played: the horns, the lids lifted into slits, the smile gone',
     run: () => { heavenAt(0.1, 1, 'roar'); if (!S.beatsDone.includes('unmask')) S.beatsDone.push('unmask'); window.__fast(1 / 30); } },
   // The flat sky's turns (DESIGN.md, "The sky, redrawn flat"): the clock run
-  // on to a soul on the top step mid-blessing, and to God glaring round the
-  // crowd while the line waits on its steps.
-  'heaven-bless': { about: 'the acts', say: 'a soul blessed on the top step of the throne\'s base: both hands in, its square edged in his light, short rays standing out',
-    run: () => heavenTurn(m => m.bless != null && m.bless >= 0.4 && m.bless < 0.6 && m.glare === 0) },
-  'heaven-glare': { about: 'the acts', say: 'God glaring round the crowd: the cone from his lit eyes to a round spot on the crowd, the line waiting on its steps',
+  // on to God glaring round the crowd.
+  'heaven-glare': { about: 'the acts', say: 'God glaring round the crowd: the cone from his lit eyes to a round spot on the crowd',
     run: () => heavenTurn(m => m.glare === 1) },
   // Act 3's level in three zones (DESIGN.md, "The level, the two crowds and
   // the flags"): the workshops with open sky behind them, the union's camp
@@ -3124,6 +3121,18 @@ export const SCENES = {
     run: () => levelAt(0.1, 'god') },
   'level-god-high': { about: 'the acts', say: "God's camp at seven tenths of the way to the strike: his crowd emptied from the front",
     run: () => levelAt(0.7, 'god') },
+  // God talking (the owner, 2026-10-20): the clock run on to just before a
+  // loud phrase, so the shot's second lands among its syllables' waves out
+  // across the crowd (and a film from here starts on its first); the dev
+  // panel's `god wave` picks how the wave is drawn.
+  'level-god-talk': { about: 'the acts', say: "God talking to his crowd: his mouth open on a syllable, its wave rippling out through the rows, each soul hopping as it arrives",
+    run: () => {
+      levelAt(0.1, 'god');
+      window.__holdShot(0);
+      for (let k = 0; k < 800; k++) { const m = skyMoment(); if (m && m.glare === 0 && m.next < 0.3) break; window.__fast(0.1); }
+      window.__look(godView() - S.viewW / 2); window.__fast(1 / 60);
+      window.__holdShot();
+    } },
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
       afterChain(true);

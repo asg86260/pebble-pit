@@ -34,20 +34,24 @@ export const SKY_FIT = 87;
 // `side` across down each slanted edge. Its front stands on the main plane
 // `gap` cells clear of the union's crowd at its widest (after/sky.js,
 // `godFront`).
-export const GOD_STAGE = { mx: 1.25, back: 4, hb: 110, hf: 120, side: 3, gap: 6 };
+// The open sky between the union's slice of the window and God's, cells:
+// at no pan that shows both does his reach into theirs (after/sky.js,
+// `godFront`).
+export const AFTER_SLICE_GAP = 8;
+export const GOD_STAGE = { mx: 1.25, back: 4, hb: 150, hf: 165, side: 3, gap: 6 };
 // God's crowd on the stage at a giant's scale: rows from the back to the
 // front, a soul `n` cells across (stage cells), from the first at the back to
 // the second at the front; `gap` cells between souls in a row, each row
 // stepping back `rows` of its soul; each soul jittered `jit` cells across and
 // a share `lift` of them a row up; `margin` cells kept off the stage's edge;
-// the aisle up the middle `aisle` cells either side of the line; a body of
-// the sim's among them no wider than `fileFill` of a file's spacing. As
+// a body of the sim's among them no wider than `fileFill` of a file's
+// spacing. As
 // support rises it empties from the front: a soul stands while (1 - share)
 // * `keep` - its frontness (0 the back row, 1 the front) * `fore` - a fixed
 // chance * `luck` + `base` is over 0, and fades as that falls through the
 // last `soft` of it -- support's share is eased, so a soul fades rather
 // than pops.
-export const GOD_CROWD = { n: [4, 8], gap: 2, rows: 1.1, jit: 1, lift: 0.4, margin: 3, aisle: 4, fileFill: 0.7,
+export const GOD_CROWD = { n: [4, 8], gap: 2, rows: 1.1, jit: 1, lift: 0.4, margin: 3, fileFill: 0.7,
                            keep: 1.4, fore: 0.8, luck: 0.6, base: 0.25, soft: 0.25 };
 // A sign stands on the stage by its rank: rank 0 the front row, rank
 // SIGN_DEEP or more the back; its flag `flag` stage cells tall from the back
@@ -73,12 +77,36 @@ export const SIGN_FADE_S = 0.6;
 
 // --- the crowd's life: the rings ----------------------------------------------------------
 // A rally: a sign or poster lifts a cell and a ring runs out from it through
-// both bands, lifting the squares it passes; the throne's roar ducks them and
-// a grumble lifts them a cell. Each ring's width and jump in a band scale by
-// the band's parallax rate.
+// the crowd, lifting the squares it passes. Its width and jump scale by the
+// band's parallax rate.
 export const SKY_RALLY = { every: [6, 9], speed: 320, life: 8, lift: 1.2 };
-export const SKY_ROAR = { every: 6.5, speed: 380, life: 6, mouth: 1.6, bubble: 1.9 };
-export const SKY_GRUMBLE = { every: [2.3, 3.3], speed: 220, reach: 420, bubble: 1.2 };
+// God talks (the owner, 2026-10-20: "lets just have him talking"): a loud
+// phrase every `every` seconds of SKY_ROAR, a mutter between them on
+// SKY_GRUMBLE's clock, each with its bubble held `bubble` seconds.
+export const SKY_ROAR = { every: 6.5, life: 6, bubble: 1.9 };
+export const SKY_GRUMBLE = { every: [2.3, 3.3], bubble: 1.2 };
+// A phrase is syllables a `beat` of ticks apart -- `loud`, `soft` or `big`
+// of them (the speech's own, as it burns; `mutter` for a mutter) -- his mouth open `open` ticks on
+// each. Every syllable sends a wave out of his mouth: rings round his head,
+// then down his throne and out across his crowd from his foot at `speed` sky
+// cells a second, its front lying flat on the stage (`flat` as deep as it is
+// wide). A soul hops the moment the front reaches it, `hop` sky cells up and
+// down over `hopS` seconds -- `bigHop` for the speech's -- a mutter's waves
+// dying out over `reach` of the crowd's half. A front fades out over its last
+// `fade` of the crowd's half. The rings round his head reach
+// `head` sky cells out past his square. `cell` sky cells a cell of a front,
+// a front `deep` cells deep.
+export const GOD_TALK = { beat: 2, open: 1, loud: 5, mutter: 2, big: 6, speed: 200, flat: 0.3, hop: 2, bigHop: 3, hopS: 0.3,
+                          reach: 0.45, head: 26, cell: 2, deep: 2, fade: 0.55, unlit: 0.3 };
+// The wave's look, one of two takes for the owner's vote (the dev panel's
+// `god wave`): 0 (a) a ring of his light drawn on the crowd at the front;
+// 1 (b) no ring -- the souls the front reaches lit in his light as they hop,
+// and stepped sound marks out of his mouth.
+export let GOD_WAVE_TAKE = 0;
+export const AFTERCROWD_KNOBS = [
+  { key: 'GOD_WAVE_TAKE', label: 'god wave', min: 0, max: 1, step: 1,
+    get: () => GOD_WAVE_TAKE, set: v => { GOD_WAVE_TAKE = v; } }
+];
 export const SKY_RING_W = [16, 70];        // a ring's half-width, px, plus this times the band's rate
 export const SKY_RING_LIFT = [3, 12];      // its jump, px, plus this times the band's rate
 
@@ -108,17 +136,9 @@ export const GOD_RAYS = { n: 16, r: 36, long: 40, short: 24, cell: 2, turn: 0.05
 // His breath (a cell up and down), and the pupils looking round, in ticks.
 export const GOD_IDLE = { breath: 8, look: 6 };
 
-// --- the line and the blessing ------------------------------------------------------------
-// He takes turns: PHASE ticks blessing the line, then PHASE glaring round the
-// crowd while the line waits on its steps. A soul starts up out of the
-// crowd every GAP ticks, a step every `climb` ticks; on the top step it is
-// blessed for BLESS ticks (the hands in over the first `in` of it, the light
-// from `light` to `out`, the hands back by the end), then walks off a cell a
-// tick along the seat and down the base's side. Its load fades in his hands.
-export const TITHE = { phase: 64, gap: 16, climb: 8, bless: 12, soul: 4, offset: 10,
-                       in: 0.25, light: 0.25, out: 0.75, back: 0.7, slow: 0.6 };
-
 // --- the gaze and the burning speech ----------------------------------------------------------
+// He takes turns: `phase` ticks talking to his crowd, then `phase` glaring
+// round it.
 // A cone of his light from his eyes to a round spot on the crowd, each edge
 // GAZE edge grey. Glaring, it sweeps the crowd: a point every `hold` ticks,
 // getting there over `move` of them, at these shares of his crowd's front
@@ -128,7 +148,7 @@ export const TITHE = { phase: 64, gap: 16, climb: 8, bless: 12, soul: 4, offset:
 // and narrows on it in three steps (`narrow`) over the rest of the warning;
 // the speech chars the board to ink in held steps over AFTER_BURN_S, and it
 // fades.
-export const GAZE = { sweep: [-0.5, -0.26, 0.28, -0.02, -0.17, 0.4, 0.12, -0.38], hold: 8, move: 5,
+export const GAZE = { phase: 64, sweep: [-0.5, -0.26, 0.28, -0.02, -0.17, 0.4, 0.12, -0.38], hold: 8, move: 5,
                       w: 16, narrow: [12, 9, 6], flat: 0.35, soul: 5, w0: 8, body: 0.7, bodyDark: 0.35, spot: 0.8, spotDark: 0.5 };
 export const AFTER_GAZE_SETTLE_S = 0.9;
 export const AFTER_BURN_S = 4;
@@ -174,11 +194,16 @@ export const GOD_FOOT = 19;
 // standing on the plane; his stage's front edge `front` cells over the line,
 // up among the far cloud's rows. His crowd stands on it in straight rows and
 // files, every soul the yard's square (render/after/kit.js, `square`) `soul`
-// px across with `gap` px between files and `row` px between rows, emptying
-// from the front as support rises a row at a time (GOD_CROWD's rule with
-// these `keep`, `fore`, `luck` and `base`: the front row gone early, the back
-// row standing to the strike).
-export const GOD_BACK = { foot: AFTER_HORIZON, size: 0.85, front: 12, soul: 12, gap: 6, row: 6, keep: 1.1, fore: 1, luck: 0.12, base: 0.2 };
+// cells across with `gap` cells between files and between rows -- on the
+// cell grid at every window -- across the stage and `beyond` stage
+// cells out over the cloud either side of it, thinning raggedly out there
+// (`fringe`: how much less a soul at the crowd's end stands than one on the
+// stage's edge), the owner's vast crowd (2026-10-20: "the crowd for god lost
+// its vastness"). It empties from the front as support rises a row at a time
+// (GOD_CROWD's rule with these `keep`, `fore`, `luck` and `base`: the front
+// row gone early, the back row standing to the strike).
+export const GOD_BACK = { foot: AFTER_HORIZON, size: 0.85, front: 5, soul: 2, gap: 1, beyond: 70, fringe: 0.9,
+                          keep: 1.1, fore: 1, luck: 0.12, base: 0.2 };
 
 // --- the ground (render/after/ground.js, render/after/floor.js) ----------------------
 // Three rigid layers, nothing rolling. The far cloud between the horizon and

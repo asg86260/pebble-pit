@@ -18,11 +18,11 @@
 
 import { S } from '../state.js';
 import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_RATE, GOD_FOOT, GOD_CROWD, GOD_SIGN_DEEP, GOD_STAGE, AFTER_HORIZON,
-         GOD_N, GOD_THRONE, WALK_BODY,
-         CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW, GOD_BACK } from '../config.js';
+         GOD_N, GOD_THRONE, WALK_BODY, WORKER,
+         CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW, GOD_BACK, UNION_CROWD, AFTER_SLICE_GAP } from '../config.js';
 import { yardCell } from '../world.js';
 import { actPlace } from '../acts.js';
-import { afterFloor, afterTop, afterOpenX, campEdges, podiumMid, unionHalf } from './place.js';
+import { afterFloor, afterTop, afterOpenX, campEdges, podiumMid, unionHalf, stationBox, speakerAt } from './place.js';
 import { smoothstep } from '../motion.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -97,18 +97,59 @@ export const stageHalf = (st, y) => lerp(st.hb, st.hf, clamp((y - st.yb) / (st.y
 // How far toward the front a world y on the top stands, 0 the back, 1 the front.
 export const stageFore = (st, y) => clamp((y - st.yb) / (st.yf - st.yb), 0, 1);
 
-// --- the camp across depths --------------------------------------------------------------
-// The stage's front middle, world x: on the main plane like any station, a
-// gap clear of the union's crowd at its widest, so the two camps' feet never
-// share a cell of the plane wherever the camera is. (Its back, slower, passes
-// behind the union's crowd as the camera pans, drawn behind it.) His scale is
-// the window's (skyFrame), so the front's half is, and with it this.
-// Laid off the near frame (`skyFrame(false)`), so the place's end, the
-// throne's beats and the sim stand where they did before his camp stood back.
-export const godFront = () => {
-  const mx = GOD_STAGE.mx * skyFrame(false).h;
-  return snap(podiumMid() + unionHalf() + GOD_STAGE.gap * P + GOD_STAGE.hf * mx + GOD_STAGE.side * mx, P);
+// His crowd across the half at world y: the stage's top and `beyond` stage
+// cells more out over the cloud either side of it (config, GOD_BACK).
+export const crowdHalf = (st, y) => stageHalf(st, y) + GOD_BACK.beyond * st.mx;
+// The camp's widest reach either side of its middle, world px: the crowd's
+// front row, a soul past it, or the stage's side faces, whichever is out
+// further.
+export const campHalf = () => {
+  const st = stage();
+  return Math.max(crowdHalf(st, st.yf) + stageSoul(), st.hf + GOD_STAGE.side * st.mx);
 };
+
+// --- the camp across depths --------------------------------------------------------------
+// The stage's front middle, world x, and the pan's end: God stands in the
+// window's middle when the camera's middle is here. Two things place it,
+// and it is the further of the two.
+//
+// Each camp owns its own slice of the window (the owner, 2026-10-20: "gods
+// crowd should be off to the right. each crowd needs their own full vertical
+// slice of the view, as well as enough space between them"): the union's --
+// its crowd, the pair, their podium -- and right of it his, from his crowd's
+// left end to its right, with AFTER_SLICE_GAP cells of open sky between. His
+// camp slides at GOD_RATE, a third of the camera, so as the camera pans
+// right he comes in at the window's right edge and then gains on the
+// union's slice, never closes on it. So it is enough that he comes in only
+// once the union's right end is the gap clear of that edge: with his reach
+// (`campHalf`) L, the window V and the union's right end u, his left end is
+// at the window's edge when the camera's middle is (e r - L - V/2) / r, and
+// that must be no sooner than u + gap - V/2 -- solved for the front e, the
+// first term below. From there on each has its own slice, at any window.
+//
+// And the old floor: its front a gap clear of the union's crowd at its
+// widest, laid off the near frame, as it stood before his camp stood back.
+const fronts = { key: '', x: 0 };
+export const godFront = () => {
+  const V = restW(), r = GOD_RATE, f = skyFrame(), [lo, hi] = unionSpan(), key = `${V}|${f.h}|${f.top}|${lo}|${hi}`;
+  if (key === fronts.key) return fronts.x;
+  const clear = hi + AFTER_SLICE_GAP * P - V / 2 + (campHalf() + V / 2) / r;
+  const mx = GOD_STAGE.mx * skyFrame(false).h;
+  const floor = podiumMid() + unionHalf() + GOD_STAGE.gap * P + GOD_STAGE.hf * mx + GOD_STAGE.side * mx;
+  fronts.key = key; fronts.x = snap(Math.max(clear, floor), P);
+  return fronts.x;
+};
+// The union's slice across, world px: its crowd's rows at their widest
+// (render/after/unioncrowd.js: a row's souls from the podium's middle out
+// its half either way, a soul and its jitter past the last, and a newcomer
+// walking in from God's side), and the pedestal and the pair on it.
+export const unionSpan = () => {
+  const b = stationBox('pedestal'), C = UNION_CROWD, m = podiumMid(), h = unionHalf();
+  return [Math.min(b.x, speakerAt(0).x, m - h - C.jit), Math.max(b.x + b.w, speakerAt(1).x + WORKER, m + h + C.n[0] + C.jit + C.walk)];
+};
+// His slice across with the window's middle at `cx`, world px: his crowd's
+// ends either side of his middle.
+export const godSpan = cx => { const m = campMid(cx, GOD_RATE), h = campHalf(); return [m - h, m + h]; };
 // How fast a line of the camp slides, as a share of the camera's speed: the
 // whole camp is one layer at God's rate, the far cloud's own, so nothing on
 // it leans.
@@ -135,8 +176,12 @@ export function stageSpot(f, r) {
   if (y < st.throneY + 8 * P && Math.abs(dx) < clear) dx = (dx < 0 ? -1 : 1) * lerp(clear, hw, Math.abs(dx) / clear * 0.5);
   return { dx, y };
 }
-// A soul's side on the stage, world px: every soul one size.
-export const stageSoul = () => GOD_BACK.soul;
+// A soul's side on the stage, world px, and the gap between two souls in a
+// row and between two rows: every soul one size, in whole cells, so the
+// crowd stays on the cell grid and a soul keeps its rim and its middle at
+// any window.
+export const stageSoul = () => GOD_BACK.soul * P;
+export const stageGap = () => GOD_BACK.gap * P;
 // A body of the sim's on the top: a soul of its row's size, but no wider
 // than most of a file's spacing there, so the members standing side by side
 // in the front ranks stand apart and never close up into a bar.
@@ -183,5 +228,5 @@ export const deepAt = x => smoothstep(clamp((x - campEdges()[1]) / (P * 6), 0, 1
 // A click there is a click on his crowd (after/gestures.js).
 export function godCampAt(x, y, cx) {
   const f = skyFrame(), st = stage(), dx = x - campMid(cx, rateAt(st, y));
-  return y >= f.gy0 - 12 * f.gc && y <= st.foot && Math.abs(dx) <= (y < st.yb ? st.throne : stageHalf(st, y));
+  return y >= f.gy0 - 12 * f.gc && y <= st.foot && Math.abs(dx) <= (y < st.yb ? st.throne : crowdHalf(st, y));
 }

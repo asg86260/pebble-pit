@@ -46,7 +46,7 @@ export function forceActs(after, hell = after) { forcedAfter = after; forcedHell
 // so the camera's last window is the one his stage stands square in.
 const AFTER_AT_YARD = {
   ...AFTER_PLACE,
-  x1: () => Math.min(AFTER_PLACE.x1(), godFront() + restW() / 2),
+  x1: () => godFront() + restW() / 2,
   get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; },
   get crew() { return AFTER_CREW; }
 };
