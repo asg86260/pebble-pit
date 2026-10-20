@@ -307,6 +307,12 @@ These are a given, not a follow-up request:
   a heap or a band reads as printed paint, not as material. **Act 3 is the
   exception** (the owner, 2026-10-19): there every shape is a square of one
   flat tone, and the only outline is God's (DESIGN.md, "The sky, redrawn flat").
+  **A palette may grow when every tone has its own job** (the owner,
+  2026-10-20): act 3's four tones are not a ceiling. The limit was against
+  near-duplicates (eight purples where two would do), so a new tone is added
+  only with a named role no existing tone fills -- a cloud's lit rim, its
+  core shadow -- and the palette check (`test/after-palette.test.mjs`) lists
+  each tone with its role.
 
 ---
 
