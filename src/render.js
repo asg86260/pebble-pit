@@ -109,11 +109,14 @@ export { drawBench, drawBody, drawCart, drawDroppedHats, drawHat, drawBuried, dr
 // between `world` and its `world:done` is in the yard and zooms and shakes with
 // it; what comes after `screen` is in screen pixels. The space is as much a
 // part of the order as the depth, so both are in the list.
+const ALL = ['yard', 'deep', 'after', 'hell'];
+const YARD_DEEP = ['yard', 'deep'];
+const ROAD = ['yard', 'after'];   // the road between them: drawn by both
 const LAYERS = [
-  { name: 'page', draw: clearPage },
+  { name: 'page', in: ALL, draw: clearPage },
 
   // The sky goes down first: clouds and birds are the far end of everything.
-  { name: 'world', draw: enterSky },
+  { name: 'world', in: ALL, draw: enterSky },
   // The rain out of the far sheets goes down before the clouds, not after:
   // it is scenery and never lands (DESIGN.md, "The rain has depth too"), and
   // drawn over them a far drop crosses a cloud nearer than itself, which is
@@ -125,13 +128,13 @@ const LAYERS = [
   // cloud floor's underside, seen only by the rise riding up it (render/road.js).
   { name: 'road sky', draw: drawRoadSky },
   { name: 'birds', draw: drawBirds },
-  { name: 'world:done', draw: leaveWorld },
+  { name: 'world:done', in: ALL, draw: leaveWorld },
 
   // The dust hangs in front of the clouds: it is weather in the yard, not
   // something on the horizon.
   { name: 'air', draw: drawAir },
 
-  { name: 'world', draw: enterWorld },
+  { name: 'world', in: ALL, draw: enterWorld },
   // The finale's sky (render/finale.js): the fireworks far off over the
   // walk, and the volley and the heart over the house. Behind the yard.
   { name: 'fireworks', draw: drawFireworks },
@@ -197,9 +200,9 @@ const LAYERS = [
   { name: 'shaft arrow', draw: drawYardArrow },  // and over it, the way down
 
   { name: 'paid', draw: drawPaid },
-  { name: 'pile marks', draw: drawPileMarks },   // and a bar over anything that has stopped for a full one
+  { name: 'pile marks', in: YARD_DEEP, draw: drawPileMarks },   // and a bar over anything that has stopped for a full one
   { name: 'auras', draw: drawAuras },            // the hold-a-body ring; offers fly flags, painted far earlier
-  { name: 'build sites', draw: drawBuildSites }, // fenced off, for as long as it is under way
+  { name: 'build sites', in: YARD_DEEP, draw: drawBuildSites }, // fenced off, for as long as it is under way
   { name: 'grit', draw: drawGrit },              // and the chips off the hammer, in FRONT of the walls
   { name: 'rise landings', draw: stepRiseLandings }, // a puff and a knock, the frame a rising place lands
   { name: 'tower waves', draw: drawTowerWaves }, // the tower pouring, while it is making a hat
@@ -215,28 +218,28 @@ const LAYERS = [
   // with God over it (render/aftercrowd.js), the sky's clouds, the grove and
   // the camp, and the members walking and working over all of it, God's gaze
   // and his bubbles last.
-  { name: 'after backdrop', draw: drawAfterBackdrop },
-  { name: 'after heaven', draw: drawSkyCrowd },     // God's crowd filling the sky, God, the tithe line, the signs (render/aftercrowd.js)
-  { name: 'after sky', draw: drawAfterSky },
-  { name: 'after grove', draw: drawAfterGrove },
-  { name: 'after camp', draw: drawAfterCamp },
-  { name: 'after crowd', draw: drawAfterCrowd },
-  { name: 'after members', draw: drawAfterMembers },
-  { name: 'after coins', draw: drawAfterCoins },  // the yard's coins out of the thin patch to the station bought (render/aftercoins.js)
-  { name: 'after cues', draw: drawAfterCues },     // the hand work's ghost hands, gauges and crit marks (render/aftercues.js)
+  { name: 'after backdrop', in: 'after', draw: drawAfterBackdrop },
+  { name: 'after heaven', in: 'after', draw: drawSkyCrowd },     // God's crowd filling the sky, God, the tithe line, the signs (render/aftercrowd.js)
+  { name: 'after sky', in: 'after', draw: drawAfterSky },
+  { name: 'after grove', in: 'after', draw: drawAfterGrove },
+  { name: 'after camp', in: 'after', draw: drawAfterCamp },
+  { name: 'after crowd', in: 'after', draw: drawAfterCrowd },
+  { name: 'after members', in: 'after', draw: drawAfterMembers },
+  { name: 'after coins', in: 'after', draw: drawAfterCoins },  // the yard's coins out of the thin patch to the station bought (render/aftercoins.js)
+  { name: 'after cues', in: 'after', draw: drawAfterCues },     // the hand work's ghost hands, gauges and crit marks (render/aftercues.js)
   // The acts' connective tissue up there (render/portals.js): heaven's tear in
   // the cloud floor, and the souls and ghosts walking the road.
-  { name: 'acts-after', draw: drawActsAfter },
-  { name: 'acts-after-bodies', draw: () => drawActBodies('after') },
+  { name: 'acts-after', in: 'after', draw: drawActsAfter },
+  { name: 'acts-after-bodies', in: 'after', draw: () => drawActBodies('after') },
   // Act 4's hell (render/hell.js), the same: drawn only with the camera down there.
-  { name: 'hell backdrop', draw: drawHellBackdrop },
-  { name: 'hell chambers', draw: drawHellChambers },
-  { name: 'hell seams', draw: drawHellSeams },
-  { name: 'hell forge', draw: drawHellForge },
-  { name: 'hell barriers', draw: drawHellBarriers },
-  { name: 'hell cage', draw: drawHellCage },
-  { name: 'acts-hell', draw: drawActsHell },
-  { name: 'acts-hell-bodies', draw: () => drawActBodies('hell') },
+  { name: 'hell backdrop', in: 'hell', draw: drawHellBackdrop },
+  { name: 'hell chambers', in: 'hell', draw: drawHellChambers },
+  { name: 'hell seams', in: 'hell', draw: drawHellSeams },
+  { name: 'hell forge', in: 'hell', draw: drawHellForge },
+  { name: 'hell barriers', in: 'hell', draw: drawHellBarriers },
+  { name: 'hell cage', in: 'hell', draw: drawHellCage },
+  { name: 'acts-hell', in: 'hell', draw: drawActsHell },
+  { name: 'acts-hell-bodies', in: 'hell', draw: () => drawActBodies('hell') },
   // The deep (render/deep.js), back to front, drawn only while the camera is
   // down there: the roof and the underside of the surface, the water, the
   // floor, the scales lying on it and its stations, then the serpent and
@@ -244,62 +247,62 @@ const LAYERS = [
   // post stands on the deep's floor like any other.
   // The zones' tint first: the water's field leaves its dark cells unpainted,
   // so the tint shows through them and the field's lit cells lie over it.
-  { name: 'deep zones', draw: drawDeepZones },
-  { name: 'deep water', draw: drawDeepWater },
-  { name: 'deep motes', draw: drawDeepMotes },
+  { name: 'deep zones', in: 'deep', draw: drawDeepZones },
+  { name: 'deep water', in: 'deep', draw: drawDeepWater },
+  { name: 'deep motes', in: 'deep', draw: drawDeepMotes },
   // The zones' creatures, in the world in front of the far stream and behind
   // the portal, the stations, the serpent and the bar, so nothing fought or
   // read is ever under one.
-  { name: 'deep fauna', draw: drawDeepFauna },
-  { name: 'deep portal', draw: drawDeepPortal }, // the way up, hanging in the water behind it all
-  { name: 'focus lines', draw: drawFocusLines },  // the serpent on the brink: rays in the water, behind the floor and all on it
-  { name: 'deep floor', draw: drawDeepFloor },
-  { name: 'acts-deep', draw: drawActsDeep },      // hell's white-hot slit in the floor (render/portals.js)
-  { name: 'serpent diving', draw: drawSerpentDiving },   // the first break's dive, behind the stations and the bed
+  { name: 'deep fauna', in: 'deep', draw: drawDeepFauna },
+  { name: 'deep portal', in: 'deep', draw: drawDeepPortal }, // the way up, hanging in the water behind it all
+  { name: 'focus lines', in: 'deep', draw: drawFocusLines },  // the serpent on the brink: rays in the water, behind the floor and all on it
+  { name: 'deep floor', in: 'deep', draw: drawDeepFloor },
+  { name: 'acts-deep', in: 'deep', draw: drawActsDeep },      // hell's white-hot slit in the floor (render/portals.js)
+  { name: 'serpent diving', in: 'deep', draw: drawSerpentDiving },   // the first break's dive, behind the stations and the bed
   // The scales, then the stations standing in front of them: the bed can
   // heap forty cells deep, and a station buried in its own coin could not
   // be found to be paid at.
-  { name: 'deep bed', draw: drawDeepBed },
+  { name: 'deep bed', in: 'deep', draw: drawDeepBed },
   { name: 'into crusher', draw: drawIntoCrusher }, // behind the furnace, dropping into its funnel
-  { name: 'deep stations', draw: drawDeepStations },
-  { name: 'hung kit', draw: drawHungKits },  // a station's gear hung up on it, with nobody wearing it
-  { name: 'meal gulped', draw: drawMealUnder },   // the meal's orb going into the jaws, behind the head
-  { name: 'serpent', draw: drawSerpent },
-  { name: 'barrier', draw: drawBarrier },  // the explosive resist, floating under the coil
-  { name: 'meal', draw: drawMeal },   // the meal's bolts and its orb with the creature in it, in front of the serpent
-  { name: 'deep sight', draw: drawDeepSight },   // the right button held: the deep behind its crew veiled, each ringed
-  { name: 'swimmers', draw: drawSwimmers },
+  { name: 'deep stations', in: 'deep', draw: drawDeepStations },
+  { name: 'hung kit', in: 'deep', draw: drawHungKits },  // a station's gear hung up on it, with nobody wearing it
+  { name: 'meal gulped', in: 'deep', draw: drawMealUnder },   // the meal's orb going into the jaws, behind the head
+  { name: 'serpent', in: 'deep', draw: drawSerpent },
+  { name: 'barrier', in: 'deep', draw: drawBarrier },  // the explosive resist, floating under the coil
+  { name: 'meal', in: 'deep', draw: drawMeal },   // the meal's bolts and its orb with the creature in it, in front of the serpent
+  { name: 'deep sight', in: 'deep', draw: drawDeepSight },   // the right button held: the deep behind its crew veiled, each ringed
+  { name: 'swimmers', in: 'deep', draw: drawSwimmers },
   // The fighters in front of the coil they strike and the swimmers passing,
   // and what leaves them -- arrows, beams, charges, hexes, notes -- over all
   // of the fighters (track RENDER, docs/wave-party.md).
-  { name: 'level-up back', draw: drawLevelUpBack },   // the blaze's turns behind the fighter
-  { name: 'charge', draw: drawCharge },   // her speed lines in the first trip down, behind her
-  { name: 'party', draw: drawFighters },
-  { name: 'freed', draw: drawFreed },   // him out of the serpent, walking to her
-  { name: 'finale deep', draw: drawFinaleDeep },  // and the two of them after, her gear coming off, the way up
-  { name: 'acts-deep-bodies', draw: () => drawActBodies('deep') },   // the ghosts on the road down
-  { name: 'orb', draw: drawOrb },       // the constrict's bolts and orb round a fighter
-  { name: 'level-up front', draw: drawLevelUpFront },
-  { name: 'shots', draw: drawShots },
-  { name: 'sinking', draw: drawSinking },        // the scales still in the water, in front of it all
-  { name: 'lifting', draw: drawLifting },
-  { name: 'deep arrow', draw: drawDeepArrow },   // the way up, under the deep's end of the portal
-  { name: 'silt', draw: drawSilt },              // off a builder's blows down there, in the water with the rest
+  { name: 'level-up back', in: 'deep', draw: drawLevelUpBack },   // the blaze's turns behind the fighter
+  { name: 'charge', in: 'deep', draw: drawCharge },   // her speed lines in the first trip down, behind her
+  { name: 'party', in: 'deep', draw: drawFighters },
+  { name: 'freed', in: 'deep', draw: drawFreed },   // him out of the serpent, walking to her
+  { name: 'finale deep', in: 'deep', draw: drawFinaleDeep },  // and the two of them after, her gear coming off, the way up
+  { name: 'acts-deep-bodies', in: 'deep', draw: () => drawActBodies('deep') },   // the ghosts on the road down
+  { name: 'orb', in: 'deep', draw: drawOrb },       // the constrict's bolts and orb round a fighter
+  { name: 'level-up front', in: 'deep', draw: drawLevelUpFront },
+  { name: 'shots', in: 'deep', draw: drawShots },
+  { name: 'sinking', in: 'deep', draw: drawSinking },        // the scales still in the water, in front of it all
+  { name: 'lifting', in: 'deep', draw: drawLifting },
+  { name: 'deep arrow', in: 'deep', draw: drawDeepArrow },   // the way up, under the deep's end of the portal
+  { name: 'silt', in: 'deep', draw: drawSilt },              // off a builder's blows down there, in the water with the rest
   // What a station is putting up and what it has finished hang over it in
   // front of the deep's domes as well as the yard's roofs: behind them, the
   // stack over a station on the deep's floor was inside its own dome.
-  { name: 'work bars', draw: drawWorkBars },     // and whatever else the yard is putting up
-  { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
+  { name: 'work bars', in: YARD_DEEP, draw: drawWorkBars },     // and whatever else the yard is putting up
+  { name: 'done marks', in: YARD_DEEP, draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'sight veil', draw: drawSightVeil },   // the right button held: the yard behind the crew veiled pale
-  { name: 'roster', draw: drawRosterBodies },    // who is working here, under the place they work
+  { name: 'roster', in: YARD_DEEP, draw: drawRosterBodies },    // who is working here, under the place they work
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock
   { name: 'forklifts', draw: drawForklifts },   // behind the crew, who walk in front of the machines
   { name: 'workers', draw: drawWorkers, dim: 1 },
   { name: 'brew steam', draw: drawBrewSteam },   // off the pots, on the crew's plane: in front of the buildings
-  { name: 'says', draw: drawSays, dim: 1 },      // and what any of them stood about is saying
+  { name: 'says', in: YARD_DEEP, draw: drawSays, dim: 1 },      // and what any of them stood about is saying
   { name: 'finale', draw: drawFinaleYard },      // the two of them, down the yard and at its end for good
   { name: 'acts-bodies', draw: () => drawActBodies('yard') },   // the souls and ghosts on the road, the mansion's gathering (render/portals.js)
-  { name: 'acts-road-bodies', draw: () => drawActBodies('road') },   // and the two of them up the road between the yard and the cloud floor
+  { name: 'acts-road-bodies', in: ROAD, draw: () => drawActBodies('road') },   // and the two of them up the road between the yard and the cloud floor
   { name: 'acts-gates', draw: drawActsGates },   // heaven's gates over them, so they go in behind the posts and the crest (render/gates.js)
   { name: 'puffs', draw: drawPuffs },            // what the crew are putting up there right now
   { name: 'smog', draw: drawSmog },              // and what it has gathered into up there
@@ -313,52 +316,52 @@ const LAYERS = [
   { name: 'rift', draw: drawRift },              // through the torn era, the disc growing over the mouth
   { name: 'rain', draw: drawRain },              // and whatever is coming down out of it, or going into the house
   { name: 'bolt', draw: drawBolt },              // and a strike, in front of the shower it came with
-  { name: 'held', draw: drawHeld, dim: 1 },      // the body in your hand, in front of all of it
-  { name: 'pointed', draw: drawPointed },        // and an arrow over whoever you just asked for by name
-  { name: 'cursor', draw: drawCursor },
+  { name: 'held', in: ALL, draw: drawHeld, dim: 1 },      // the body in your hand, in front of all of it
+  { name: 'pointed', in: YARD_DEEP, draw: drawPointed },        // and an arrow over whoever you just asked for by name
+  { name: 'cursor', in: ALL, draw: drawCursor },
   // A scene holding the yard: everything so far washed back toward the page,
   // and the layers the scene is about painted over it at full ink
   // (render/recede.js). Before the deep is turned over, so its background
   // settles toward the liquid as the yard's does toward the page.
-  { name: 'recede', draw: wash },
+  { name: 'recede', in: ALL, draw: wash },
   // Last in the world, over everything the deep drew: the negative of it.
-  { name: 'deep invert', draw: drawDeepInvert },
+  { name: 'deep invert', in: 'deep', draw: drawDeepInvert },
   // What the blows did and what the heal took back, over the finished deep
   // and not turned over with it: their tones are written as seen, so each
   // fades against the picture actually behind it, whichever way the deep was
   // turned (render/fightnums.js). Still in the world, for the deep's camera.
-  { name: 'fight numbers', draw: drawFightNumbers },
-  { name: 'status posts', draw: drawStationStatuses },   // and what is on each fighter, up a post at its station
+  { name: 'fight numbers', in: 'deep', draw: drawFightNumbers },
+  { name: 'status posts', in: 'deep', draw: drawStationStatuses },   // and what is on each fighter, up a post at its station
   // A pad's focus (render/padmark.js): over every body and mark it can stand
   // on, in both halves, and after the deep is turned so its purple is the
   // purple seen.
-  { name: 'pad focus', draw: drawPadMark },
-  { name: 'world:done', draw: leaveWorld },
+  { name: 'pad focus', in: YARD_DEEP, draw: drawPadMark },
+  { name: 'world:done', in: ALL, draw: leaveWorld },
 
   { name: 'air near', draw: drawAirNear },       // the nearest dust passes in front of the yard, not behind it
 
   // The roster's counts are in screen pixels so the digits stay sharp, but
   // moved with the yard rather than pinned to the window: the number belongs
   // to the badge beside it, shake and all.
-  { name: 'screen', draw: enterScreen },
-  { name: 'roster counts', draw: drawRosterBadgeCounts },
-  { name: 'kit counts', draw: drawKitStandCounts },   // and how many are waiting on each stand
-  { name: 'stock count', draw: drawStockCounts },     // and how many doses stand ready on the apothecary table
-  { name: 'after counts', draw: drawAfterCounts },    // and how much lies on each of the afterlife's piles
-  { name: 'pot labels', draw: drawPotLabels },        // the brew each pot is set to, as a color block under it
+  { name: 'screen', in: ALL, draw: enterScreen },
+  { name: 'roster counts', in: ALL, draw: drawRosterBadgeCounts },
+  { name: 'kit counts', in: ALL, draw: drawKitStandCounts },   // and how many are waiting on each stand
+  { name: 'stock count', in: ALL, draw: drawStockCounts },     // and how many doses stand ready on the apothecary table
+  { name: 'after counts', in: ALL, draw: drawAfterCounts },    // and how much lies on each of the afterlife's piles
+  { name: 'pot labels', in: ALL, draw: drawPotLabels },        // the brew each pot is set to, as a color block under it
 
-  { name: 'counter', draw: drawCount },          // last, and in screen pixels: it is read, not looked at
-  { name: 'serpent bar', draw: drawSerpentBar, when: barShown },  // and in the deep, what the defense up has left
+  { name: 'counter', in: ALL, draw: drawCount },          // last, and in screen pixels: it is read, not looked at
+  { name: 'serpent bar', in: ALL, draw: drawSerpentBar, when: barShown },  // and in the deep, what the defense up has left
   // The scene's bands, over everything that is read: they step in over the
   // counter rather than it vanishing under them.
-  { name: 'letterbox', draw: drawLetterbox },
-  { name: 'acts-caption', draw: drawActCaption },  // an act beat's placeholder line, in the band (render/portals.js)
+  { name: 'letterbox', in: ALL, draw: drawLetterbox },
+  { name: 'acts-caption', in: ALL, draw: drawActCaption },  // an act beat's placeholder line, in the band (render/portals.js)
 
   // A strike's instant, a dark pane over the finished frame. In screen pixels
   // it would be shared with the deep, which is under water and has no sky.
-  { name: 'flash', draw: drawFlash, when: () => S.view === 'yard' },
+  { name: 'flash', in: ALL, draw: drawFlash, when: () => S.view === 'yard' },
 
-  { name: 'press', draw: pressFrame },           // and then the filter, over the finished frame
+  { name: 'press', in: ALL, draw: pressFrame },           // and then the filter, over the finished frame
 ];
 
 export { LAYERS };
@@ -384,38 +387,21 @@ const READING = new Set(['pad focus', 'offer flags', 'paid', 'pile marks', 'aura
 let picture = false;
 export const asPicture = on => { picture = on; };
 
-// The deep's layers, and the ones both halves share: the spaces, the posts,
-// the pointer's own marks, and everything in screen pixels. With the camera
-// in the deep every other layer is the yard's and is not drawn; in the yard
-// the deep's are not. A glide draws whichever half the camera is in at that
-// moment (view.js moves it at the black).
-const DEEP = new Set(['deep zones', 'deep water', 'deep fauna', 'deep motes', 'deep portal', 'focus lines', 'deep floor', 'deep stations', 'hung kit', 'finale deep', 'deep bed',
-                      'meal gulped', 'meal', 'deep sight', 'serpent', 'barrier', 'serpent diving', 'swimmers', 'level-up back', 'charge', 'party', 'freed', 'orb', 'level-up front', 'shots', 'sinking', 'lifting', 'deep arrow', 'silt', 'deep invert',
-                      'fight numbers', 'status posts', 'acts-deep', 'acts-deep-bodies']);
-// The marks of work -- the bar over a work on the go, the tape round it, the
-// tick when it lands -- and the pile-full marks stand wherever their site
-// does, so they are drawn in both halves, each cut to its own (`PINNED`).
-const BOTH = new Set(['page', 'world', 'world:done', 'screen', 'recede', 'roster', 'says', 'held', 'pointed', 'cursor',
-                      'work bars', 'build sites', 'done marks', 'pile marks', 'pad focus']);
-// The acts' places (acts.js), each with only its own layers: none of the
-// yard's or the deep's world is anywhere near them.
-const AFTER = new Set(['after backdrop', 'after heaven', 'after sky', 'after grove', 'after camp', 'after crowd', 'after members', 'after coins', 'after cues', 'acts-after', 'acts-after-bodies']);
-const HELL = new Set(['hell backdrop', 'hell chambers', 'hell seams', 'hell forge', 'hell barriers', 'hell cage', 'acts-hell', 'acts-hell-bodies']);
-// The road between the yard and the afterlife is drawn by both: the two of
-// them on it are in front of the cloud floor's body as well as the yard's sky.
-const ROAD = new Set(['acts-road-bodies']);
-const placeOf = name => (DEEP.has(name) ? 'deep' : AFTER.has(name) ? 'after' : HELL.has(name) ? 'hell' : ROAD.has(name) ? 'road' : 'yard');
+// Which places a layer draws in is its `in` (see LAYERS): a name, or a list
+// of names, from the places there are -- 'yard', 'deep', 'after', 'hell' -- and
+// the yard when it says nothing. Each act's layers are tagged with their own
+// place and nothing else; the layers the yard and the deep share carry both,
+// and the ones pinned to the window or in screen pixels (`PINNED`, and
+// everything after 'screen') carry all four. A glide draws whichever half the
+// camera is in at that moment (view.js moves it at the black).
 const SCREEN_FROM = LAYERS.findIndex(l => l.name === 'screen');
-const shared = (layer, i) => BOTH.has(layer.name) || i > SCREEN_FROM;
+const drawsIn = (layer, place) => (layer.in || 'yard') === place || (Array.isArray(layer.in) && layer.in.includes(place));
+// A layer both the yard and the deep draw stands over something in the world
+// and is cut to its own half (`PINNED` ones are not).
+const shared = layer => drawsIn(layer, 'yard') && drawsIn(layer, 'deep');
 const actPlace = place => place === 'after' || place === 'hell';
-// A layer is in a place's picture if it is its own, or shared: in an act's
-// place, only the shared layers pinned to the window or in screen pixels --
-// the marks the yard and the deep share stand over things in those two.
-const inHalf = (layer, i, place) => {
-  if (!shared(layer, i)) return placeOf(layer.name) === place || (placeOf(layer.name) === 'road' && (place === 'yard' || place === 'after'));
-  if (!actPlace(place)) return true;
-  return PINNED.has(layer.name) || i > SCREEN_FROM;
-};
+const inHalf = drawsIn;
+
 // Of the shared layers, the ones pinned to the window rather than standing
 // over something in the world: the spaces, the pointer, the counter and the
 // frame's own finish. Every other shared layer is cut at the shaft's middle
@@ -439,7 +425,7 @@ function drawHalf(place, from = 0, to = LAYERS.length, skip = null) {
   for (let i = from; i < to; i++) {
     const layer = LAYERS[i];
     if (skip && skip.has(layer.name)) continue;
-    if (!inHalf(layer, i, place)) continue;
+    if (!inHalf(layer, place)) continue;
     if (picture && READING.has(layer.name)) continue;
     if (layer.when && !layer.when()) continue;
     if (held && (front.has(layer.name) || MIXED.has(layer.name))) later.push(i);
@@ -464,7 +450,7 @@ function drawHalf(place, from = 0, to = LAYERS.length, skip = null) {
 // the deep's own, act 3's own layers in its own spread, and the rest turned
 // over between the dark page's paper and ink. On the light page every map is
 // the identity.
-const mapOf = (name, place) => place === 'deep' ? 'deep' : READING.has(name) ? 'line' : AFTER.has(name) ? 'after' : 'yard';
+const mapOf = (layer, place) => place === 'deep' ? 'deep' : READING.has(layer.name) ? 'line' : layer.in === 'after' ? 'after' : 'yard';
 
 function drawLayer(layer, i, place) {
   // A `dim` layer is the crew's own plane, and the corner's crew switch
@@ -474,11 +460,11 @@ function drawLayer(layer, i, place) {
   // The alpha is put back the same frame: nothing else is ever drawn faint.
   const view = layer.dim ? crewView() : 'show';
   if (view === 'hide') return;
-  inkMode(mapOf(layer.name, place));
+  inkMode(mapOf(layer, place));
   const faint = view === 'fade';
   // Cut at the shaft's middle in the yard and the deep; an act's place draws
   // none of the layers the cut is for (`inHalf`).
-  const cut = shared(layer, i) && !PINNED.has(layer.name) && !actPlace(place);
+  const cut = shared(layer) && !PINNED.has(layer.name) && !actPlace(place);
   if (cut) clipToHalf(place === 'deep', halfLine());
   const was = ctx.globalAlpha;
   if (faint) ctx.globalAlpha = was * CREW_FADE;
@@ -644,7 +630,7 @@ const canWarm = () => S.view === 'yard' && canGoDown() && !gliding();
 // `warmRipple`): the ones that paint an image once or run the most code the
 // first time. Not the motes, which are stepped as they are drawn.
 const UNSEEN = LAYERS.filter(l => ['page', 'world', 'world:done'].includes(l.name) ||
-                                  (DEEP.has(l.name) && l.name !== 'deep motes'));
+                                  (l.in === 'deep' && l.name !== 'deep motes'));
 function drawDeepUnseen() {
   asDeep(() => { for (const layer of UNSEEN) if (!layer.when || layer.when()) layer.draw(); });
 }

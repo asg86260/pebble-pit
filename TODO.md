@@ -12,7 +12,11 @@ path works. The owner approved the order 2026-10-20. Step 1 is built for act
 3 (branch act3-playable): a `place` column on `STATIONS`, act 3's cards and
 God's crowd as rows (after/stations.js), `stationAt` filtered by the view's
 place, `offTable`, `cardAt` and gestures' `boardAt` gone; hover, cursor and
-close-on-scroll now serve act 3. Hell's rows are next (step 4). Defects found
+close-on-scroll now serve act 3. Step 2 is built (branch place-step2): every `LAYERS` entry
+names the places it draws in (`in`), and render.js's hand-kept DEEP / AFTER /
+HELL sets are gone; what draws where is unchanged, so enabling the shared
+marks (pile marks, work bars, build sites, done marks, roster) in act places
+is now a one-word edit per layer, and comes later. Hell's rows are next (step 4). Defects found
 by the survey, open whatever the refactor's timing: `reloadCheck`
 (test/helpers.mjs) compares `S.workers` only, so act bodies are not guarded
 against teleporting; hell's five boards cannot be opened (`hellBoardAt` has
