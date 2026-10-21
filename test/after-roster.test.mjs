@@ -112,10 +112,11 @@ group('the - walks one back to the podium on foot, and the rosters stand through
   runUntil(() => S.after.bodies.filter(b => (b.job === 'woodcutter' || b.job === 'gatherer') && b.on).length === 2, 300);
   // A save and a read back, mid-run: the counts, the bodies on them, where they stand.
   const before = { crew: { ...S.after.crew }, at: S.after.bodies.map(b => [b.id, b.job, Math.round(b.x)]) };
-  yard.persist(); window.__reload(); run(0.1);
+  const SETTLE = 0.1;
+  yard.persist(); window.__reload(); run(SETTLE);
   const after = { crew: { ...S.after.crew }, at: S.after.bodies.map(b => [b.id, b.job, Math.round(b.x)]) };
   const kept = JSON.stringify(before.crew) === JSON.stringify(after.crew)
-    && before.at.every(([id, job, x]) => after.at.some(([i, j, x2]) => i === id && j === job && Math.abs(x2 - x) <= STRIDE));
+    && before.at.every(([id, job, x]) => after.at.some(([i, j, x2]) => i === id && j === job && Math.abs(x2 - x) <= AFTER_WALK * SETTLE + STRIDE));
   const w = S.after.bodies.find(b => b.job === 'woodcutter');
   const id = w.id, x0 = w.x;
   const less = window.__afterPress('woodcutter', -1);
@@ -173,7 +174,8 @@ group('a save from when posts were bought: its posts become what the rosters wan
   for (const w of idle()) w.job = 'agitator';
   S.after.posts = { agitator: 30, woodcutter: 2, hauler: 3, sawyer: 8 };
   delete S.after.crew;
-  yard.persist(); window.__reload(); run(0.1);
+  const SETTLE = 0.1;
+  yard.persist(); window.__reload(); run(SETTLE);
   const crew = { ...S.after.crew }, on = Object.values(crew).reduce((a, b) => a + b, 0);
   const seats = ['woodcutter', 'hauler', 'sawyer'].map(j => roster(j)?.cap);
   run(5);

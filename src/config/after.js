@@ -365,7 +365,7 @@ export const AFTER_SPEECH_WARN_S = 6;      // warned this long ahead
 // the yard's"): one with no job stands at the podium and agitates there, and
 // a station takes members through the yard's roster under it, a seat at a
 // time, one seat to start and more bought on its board.
-export const AFTER_WALK = 50;              // px/s, every body up here
+export const AFTER_WALK = 150;             // px/s, every body up here (the owner, 2026-10-21: "a lot faster" than 50)
 export const AFTER_BURN_MARCHES = AFTER_SPEECH_S / (AFTER_SPEECH_MARCH / AFTER_WALK);
 export const AFTER_JOBS = [J.CUT, J.GATHER, J.HAUL, J.SAW, J.CHIP, J.PULP, J.JOIN, J.CARRY, J.PRINT, J.PASTE];
 // The station each job works at, so which station's roster it stands on and
