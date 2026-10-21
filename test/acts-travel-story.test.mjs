@@ -83,7 +83,7 @@ group('the walls and the cage play from hell\'s barriers, each once and in order
 // into the gateway at one end and out of it at the other, and that is the one
 // move a frame may make past a step, and only while it cannot be seen.
 const { pairBodies, threshold, stairFoot, campX, passAlpha } = await import('../src/ghosts.js');
-const { gatesStep, GATES_OPEN, portalEnd } = await import('../src/portals.js');
+const { gatesOpen, portalEnd } = await import('../src/portals.js');
 const { afterFloor } = await import('../src/after/place.js');
 const { P, WORKER, GHOST_GAP } = await import('../src/config.js');
 // What a walk did, frame by frame: the most either body moved in one, the
@@ -112,7 +112,7 @@ function walkWatch() {
       });
       wasSeen = seen;
       w.apart = Math.max(w.apart, Math.hypot(b[0].x - b[1].x, b[0].y - b[1].y));
-      if (Math.abs(b[0].x - t.x) < P * 4 && Math.abs(b[0].y - t.y) < P * 4 && gatesStep() === GATES_OPEN) w.open = true;
+      if (Math.abs(b[0].x - t.x) < P * 4 && Math.abs(b[0].y - t.y) < P * 4 && gatesOpen() === 1) w.open = true;
       was = b;
     }
   };

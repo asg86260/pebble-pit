@@ -6,15 +6,14 @@
 // stand the placeholder up, for the owner and the mocks to move; nothing in
 // it is tuned. Seconds unless named; a pace is world pixels a second.
 import { P } from './yard.js';
-import { FINALE_END_CELLS, FINALE_DOOR_CELL, FINALE_HOUSE_W } from './finale.js';
 import { GREY, PURPLE } from './palette.js';
 
 // --- the portals -------------------------------------------------------------
 // A portal is the camera's way between two places, never a body's (bodies
 // walk the road, ghosts.js), and it has an end in each. Heaven's is a pair of
 // pearly gates (below, "heaven's gates"): in the yard on a cloud bank up a
-// cloud stair from beside the ruin, in the afterlife standing on the cloud
-// floor straight above. Hell's is a white-hot slit
+// cloud stair at the yard's left end, left of the house, in the afterlife
+// standing on the cloud floor by the camp. Hell's is a white-hot slit
 // in the deep's floor straight over hell's road down (hell/place.js, `roadX`),
 // and the landing; its end in hell ACT_HELL_HANG over the landing's floor.
 export const ACT_PORTAL_R = P * 5;           // a ring's radius
@@ -77,12 +76,97 @@ export const ACT_CALL_K = 3;
 export const ACT_RIM_PIECES = 8;
 export const ACT_RIM_STEP_S = 0.5;
 
+// --- heaven's gates (docs/mocks/act3-gates-2026-10-19, take A; the owner,
+// 2026-10-19, and 2026-10-20: left of the house) ------------------------------
+// Tall pearly gates in a long cloud bank high over the ground, a cloud stair
+// up to them in switchback flights of ACT_STAIR_FLIGHTS steps each, turning
+// on a landing ACT_STAIR_LANDING cells long: the first away from the house,
+// the next back, and so on, an even count so its top comes out over its foot.
+// ACT_STAIR_SIDE is the first flight's way along the ground: the house stands
+// to the gates' right, so away from it is left. A step is ACT_STAIR_TREAD
+// cells along and ACT_STAIR_RISE up, so the bank stands ACT_GATES_SKY, every
+// step's rise, over the ground (the owner, 2026-10-19: higher, the climb
+// longer). The gates are the portal and nothing stands over them: going
+// through the open gates is the trip (the ripple plays as the camera goes
+// through), a body fading into the gateway at one end and out of it at the
+// other over ACT_GATES_PASS cells of walk.
+// Two leaves, each ACT_GATES_LEAF[0] cells wide and ACT_GATES_H tall, swing
+// open about their hinges by true angle, eased, over ACT_GATES_SWING_S, a
+// leaf narrowing to ACT_GATES_LEAF[1] cells as it turns edge-on; a press
+// waits ACT_GATES_STAND_S with them standing open before the ripple, and they
+// stand open ACT_GATES_HOLD_S after the camera has come through before they
+// swing shut the same way.
+export const ACT_STAIR_TREAD = 3;
+export const ACT_STAIR_RISE = 2;
+export const ACT_STAIR_FLIGHTS = [5, 5, 5, 5];
+export const ACT_STAIR_LANDING = 6;           // so each flight starts clear of the last one's top
+export const ACT_STAIR_SIDE = -1;
+export const ACT_GATES_SKY = P * ACT_STAIR_RISE * ACT_STAIR_FLIGHTS.reduce((a, n) => a + n, 0);
+export const ACT_GATES_PASS = 6;
+export const ACT_GATES_CLEAR = 4;
+export const ACT_GATES_LEAF = [5, 1];        // a leaf's width, cells: shut, and edge-on
+export const ACT_GATES_H = 16;
+export const ACT_GATES_REACH = P * 8;        // the middle to a post's outside
+export const ACT_GATES_SWING_S = 1.2;
+export const ACT_GATES_STAND_S = 0.3;
+export const ACT_GATES_HOLD_S = 1.5;
+export const ACT_GATES_NEAR = P * 6;         // a body this near the gateway has them open
+// The cloud bank the gates stand in, in cells: its reach on the stair's side
+// of the gates' middle column and on the house's, and its depth under their
+// feet (render/gates.js).
+export const ACT_GATES_BANK = { stair: 20, house: 11, deep: 3 };
+// The stair's foot, in cells off the gates' middle column: a body's left
+// edge standing under the gateway (ghosts.js, `tearX`, a worker three
+// cells wide), and the cells the treads and landings take either side of it.
+export const ACT_STAIR_FOOT = -1;
+export const ACT_STAIR_CELLS = ACT_STAIR_FLIGHTS.reduce((o, n, i) => {
+  const d = ACT_STAIR_SIDE * (i % 2 ? -1 : 1);
+  o.x += d * ACT_STAIR_TREAD * n;
+  o.lo = Math.min(o.lo, o.x); o.hi = Math.max(o.hi, o.x + ACT_STAIR_TREAD - 1);
+  if (i < ACT_STAIR_FLIGHTS.length - 1) {
+    o.x += d * ACT_STAIR_LANDING;
+    o.lo = Math.min(o.lo, o.x); o.hi = Math.max(o.hi, o.x + ACT_STAIR_TREAD - 1);
+  }
+  return o;
+}, { x: 0, lo: 0, hi: ACT_STAIR_TREAD - 1 });
+// The whole stairway, in cells off the gates' middle column: the farthest
+// of the stair, the bank and a gate post on each side, where `lo` is the
+// first cell and `hi` the last. The bank's puffs are drawn over it by a
+// cell or two (render/gates.js), inside ACT_GATES_CLEAR.
+export const ACT_GATES_BANK_CELLS = {
+  lo: -(ACT_STAIR_SIDE < 0 ? ACT_GATES_BANK.stair : ACT_GATES_BANK.house),
+  hi: ACT_STAIR_SIDE < 0 ? ACT_GATES_BANK.house : ACT_GATES_BANK.stair
+};
+export const ACT_STAIRWAY = {
+  lo: Math.min(ACT_STAIR_FOOT + ACT_STAIR_CELLS.lo, ACT_GATES_BANK_CELLS.lo, -ACT_GATES_REACH / P),
+  hi: Math.max(ACT_STAIR_FOOT + ACT_STAIR_CELLS.hi, ACT_GATES_BANK_CELLS.hi, ACT_GATES_REACH / P - 1)
+};
+// The gates' middle column over the yard, cells off its left edge: the
+// stairway is the first thing at the yard's left end, ACT_GATES_CLEAR of bare
+// ground in from the edge, and the home (the house, the mansion and its
+// blocks) is laid out ACT_GATES_CLEAR past its right end (`HOME_AT`).
+export const ACT_GATES_YARD_CELL = ACT_GATES_CLEAR - ACT_STAIRWAY.lo;
+// The whole stairway's right end, cells off the yard's left edge.
+export const ACT_STAIRWAY_END = ACT_GATES_YARD_CELL + ACT_STAIRWAY.hi + 1;
+// The home's left end, cells off the yard's left edge: past the stairway.
+export const HOME_AT = ACT_STAIRWAY_END + ACT_GATES_CLEAR;
+// The gates' middle column over the afterlife's cloud floor, cells off its
+// left edge. The camp is laid out from it (config/after.js), so it is its
+// own number: it was the yard's column until the yard's gates moved left of
+// the house (2026-10-20), and the camp stays where it was.
+export const ACT_GATES_CELL = 54;
+
 // --- the mansion (the owner, 2026-10-17 night) ------------------------------
 // On the house's ground, bigger than the house: a main block MANSION_FLOORS
 // floors high between two lower wings and two towers. In cells, from its
-// left end at MANSION_AT cells off the yard's left edge; the door is the
-// main block's middle. A floor is MANSION_FLOOR_ROWS rows.
-export const MANSION_AT = 6;
+// left end at MANSION_AT cells off the yard's left edge, just past its blocks
+// pile at the home's left end; the door is the main block's middle. A floor
+// is MANSION_FLOOR_ROWS rows. The old house stood on its ground with its left
+// wall MANSION_HOUSE_AT cells in (config/finale.js places it off this).
+export const MANSION_BLOCKS_W = 4;
+export const MANSION_BLOCKS_AT = HOME_AT;
+export const MANSION_AT = MANSION_BLOCKS_AT + MANSION_BLOCKS_W + 1;
+export const MANSION_HOUSE_AT = 23;
 export const MANSION_FLOORS = 4;
 export const MANSION_FLOOR_ROWS = 6;
 export const MANSION_WING_W = 10;            // each wing, cells
@@ -99,75 +183,24 @@ export const MANSION_POLES = [11, 20, 28, 37];   // the scaffold's poles, cells 
 // the yard's own builders (spare hands if it has none), a piece a trip.
 // First the scaffold, a pole a trip off the old house's woodpile; then the
 // fallen rock broken up, a row a trip, onto the blocks pile at
-// MANSION_BLOCKS_AT cells off the yard's left edge, which is where every
+// MANSION_BLOCKS_AT (above), which is where every
 // piece after comes from; the scaffold carried down last. A body takes
 // MANSION_TAKE_S at a pile and MANSION_SET_S at the piece; a set piece fades
 // in over MANSION_FADE_S.
 export const MANSION_BUILDERS = 6;
-export const MANSION_BLOCKS_AT = 1;
-export const MANSION_BLOCKS_W = 4;
 export const MANSION_BLOCK_CELLS = 4;          // the rock's cells a block on the pile stands for
 export const MANSION_TAKE_S = 0.5;
 export const MANSION_SET_S = 0.7;
 export const MANSION_FADE_S = 0.6;
 export const MANSION_GREYS = [GREY[10], GREY[8], GREY[6], GREY[4], GREY[2]];
 export const MANSION_LIT = PURPLE[12];
-// --- heaven's gates (docs/mocks/act3-gates-2026-10-19, take A; the owner,
-// 2026-10-19) ------------------------------------------------------------------
-// Tall pearly gates in a long cloud bank high over the ground, a cloud stair
-// up to them from beside the ruin in switchback flights of ACT_STAIR_FLIGHTS
-// steps each, turning on a landing ACT_STAIR_LANDING cells long: the first
-// away from the ruin, the next back, and so on, an even count so its top
-// comes out over its foot. A step is ACT_STAIR_TREAD cells along and
-// ACT_STAIR_RISE up, so the bank stands ACT_GATES_SKY, every step's rise, over
-// the ground (the owner, 2026-10-19: higher, the climb longer). The gates
-// are the portal and nothing stands over them: going through the open gates
-// is the trip (the ripple plays as the camera goes through), a body fading
-// into the gateway at one end and out of it at the other over
-// ACT_GATES_PASS cells of walk. The gates' middle stands ACT_GATES_CLEAR cells past
-// the farther of the ruin's right end and the mansion's, so neither the stair
-// nor the gates nor the bank stands on the mansion's ground or in its tower.
-// Two leaves, each ACT_GATES_LEAF[0] cells wide and ACT_GATES_H tall, swing
-// open in held steps a cell narrower each (ACT_GATES_LEAF), a step every
-// ACT_GATES_STEP_S, and stand open ACT_GATES_HOLD_S after the camera has come
-// through before they close the same way.
-export const ACT_STAIR_TREAD = 3;
-export const ACT_STAIR_RISE = 2;
-export const ACT_STAIR_FLIGHTS = [5, 5, 5, 5];
-export const ACT_STAIR_LANDING = 6;           // so each flight starts clear of the last one's top
-export const ACT_GATES_SKY = P * ACT_STAIR_RISE * ACT_STAIR_FLIGHTS.reduce((a, n) => a + n, 0);
-export const ACT_GATES_PASS = 6;
-export const ACT_GATES_CLEAR = 4;
-export const ACT_GATES_CELL = Math.max(FINALE_END_CELLS - FINALE_DOOR_CELL + FINALE_HOUSE_W + 3,
-                                       MANSION_AT + MANSION_WING_W * 2 + MANSION_MAIN_W) + ACT_GATES_CLEAR;
-export const ACT_GATES_LEAF = [5, 4, 3, 2, 1];
-export const ACT_GATES_H = 16;
-export const ACT_GATES_REACH = P * 8;        // the middle to a post's outside
-export const ACT_GATES_STEP_S = 0.3;
-export const ACT_GATES_HOLD_S = 1.5;
-export const ACT_GATES_NEAR = P * 6;         // a body this near the gateway has them open
-// The stair's far end, cells off the yard's left edge: the farthest landing's.
-export const ACT_STAIR_END = ACT_GATES_CELL + ACT_STAIR_TREAD + 2 + ACT_STAIR_FLIGHTS.reduce(([x, far], n, i) => {
-  const d = i % 2 ? -1 : 1, to = x + d * (n * ACT_STAIR_TREAD + (i < ACT_STAIR_FLIGHTS.length - 1 ? ACT_STAIR_LANDING : 0));
-  return [to, Math.max(far, to)];
-}, [0, 0])[1];
-// The cloud bank the gates stand in, in cells: its reach either side of the
-// gates' middle column and its depth under their feet (render/gates.js).
-export const ACT_GATES_BANK = { left: 11, right: 20, deep: 3 };
-// The whole stairway's right end, cells off the yard's left edge: the farther
-// of the stair's far end, the bank's and a gate post's. The yard keeps the
-// ground up to here for it (`HOME_GROUND`, config/sites.js), so no site is
-// laid out under the stair however far the walk steps the sites left.
-export const ACT_STAIRWAY_END = Math.max(ACT_STAIR_END, ACT_GATES_CELL + ACT_GATES_BANK.right + 1,
-                                         ACT_GATES_CELL + ACT_GATES_REACH / P);
-
 // The gathering: the freed souls coming down heaven's cloud stair and
 // standing in files beside the mansion, MANSION_SOULS of them, a soul every
 // MANSION_SOUL_EVERY_S; then the sheet after MANSION_SHEET_AFTER_S.
 export const MANSION_SOULS = 24;
 export const MANSION_SOUL_EVERY_S = 0.4;
 export const MANSION_FILE_W = 8;             // souls a file
-export const MANSION_FILE_AT = ACT_STAIR_END + 3;   // the files' left end, cells off the yard's left edge: past the stair
+export const MANSION_FILE_AT = MANSION_AT + MANSION_WING_W * 2 + MANSION_MAIN_W + 3;   // the files' left end, cells off the yard's left edge: past the mansion
 export const MANSION_SHEET_AFTER_S = 4;
 
 // --- act 3 flow (the playthrough track, 2026-10-18) ---

@@ -236,7 +236,7 @@ const WALK = SITES.reduce((n, row) => n + row.w() + padOf(row) + hangOf(row) + (
   + STATION_GAP * (SITES.length - 1);
 // The ground at the yard's left end that the home stands on -- the house the
 // two of them retire to, act 3's mansion on its plot, and heaven's stair and
-// gates beside them, placed off the home's right end (ACT_GATES_CELL) -- all
+// gates left of them (ACT_STAIRWAY_END, config/acts.js) -- all
 // laid out in cells off the yard's edge, so the first site starts past the
 // furthest of their right ends and FINALE_HOME_GAP of bare ground. Kept from the first
 // frame: the sites left of the apothecary step left as its pots are bought,

@@ -26,7 +26,7 @@ import { P, FARM_H, FARM_GAP, FINALE_WALL_ROWS, FINALE_ROOF, FINALE_CHIMNEY,
          FINALE_BENCH, FINALE_BENCH_W, FINALE_PILE_CELL, FINALE_PILE_W, FINALE_PILE_ROWS,
          MANSION_AT, MANSION_FLOORS, MANSION_FLOOR_ROWS, MANSION_WING_W, MANSION_WING_FLOORS, MANSION_MAIN_W,
          MANSION_TOWER_FLOORS, MANSION_TOWER_W, MANSION_BLOCKS_AT, MANSION_BLOCKS_W,
-         ACT_GATES_REACH, ACT_GATES_BANK, AFTER_PLOT_MAX, AFTER_STAIR_W, AFTER_STAIR_RISE, HELL_TIERS } from './config.js';
+         ACT_GATES_REACH, ACT_GATES_BANK_CELLS, ACT_GATES_BANK, AFTER_PLOT_MAX, AFTER_STAIR_W, AFTER_STAIR_RISE, HELL_TIERS } from './config.js';
 import { STATIONS } from './stations.js';
 import { plotSlots, rockLeft, shackSpot } from './world.js';
 import { rockFootY, rockTopY, ramX } from './rock.js';
@@ -130,7 +130,7 @@ function yardParts() {
   }
 
   // Heaven's gates over the yard: the leaves and their crest, the cloud bank
-  // under them, and the stair of cloud down to the ground beside the ruin.
+  // under them, and the stair of cloud down to the ground, left of the house.
   if (afterlifeOn() && portalStands('heaven')) {
     const e = portalEnd('heaven', 'yard');
     // One object: the stair climbs into the bank, which is where it ends.
@@ -141,14 +141,14 @@ function yardParts() {
 
 // The bank the gates stand in, in cells off the gates' middle column, and the
 // cloud three cells deep under each tread: both are drawn in render/gates.js,
-// off ACT_GATES_BANK (config/acts.js) and its exported `stairPieces`.
+// off ACT_GATES_BANK_CELLS (config/acts.js) and its exported `stairPieces`.
 function bank(e) {
-  const cx = Math.round(e.x / P), ty = Math.round(e.feet / P), b = ACT_GATES_BANK;
-  return [rect((cx - b.left) * P, ty * P, (b.left + b.right + 1) * P, b.deep * P)];
+  const cx = Math.round(e.x / P), ty = Math.round(e.feet / P), b = ACT_GATES_BANK_CELLS;
+  return [rect((cx + b.lo) * P, ty * P, (b.hi - b.lo + 1) * P, ACT_GATES_BANK.deep * P)];
 }
 function stairRects(e) {
   const g = Math.round(S.groundY / P);
-  return stairPieces(Math.round(e.x / P - 1.5), g).map(({ x0, x1, r }) => rect(x0 * P, r * P, (x1 - x0 + 1) * P, 3 * P));
+  return stairPieces(Math.round(e.x / P), g).map(({ x0, x1, r }) => rect(x0 * P, r * P, (x1 - x0 + 1) * P, 3 * P));
 }
 
 // --- the deep ---------------------------------------------------------------

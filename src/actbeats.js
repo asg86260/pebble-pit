@@ -46,7 +46,7 @@ import { travel, gliding, setView, goDeep, goUp, canGoDown } from './view.js';
 import { beatDone } from './beats.js';
 import { openPortal, freePortal, portalEnd, portalBetween, stepPortals } from './portals.js';
 import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, takeLoad, LOOP_CAGE, ghostPace,
-         tear, seenAt, atGates, STAIR_POINTS } from './ghosts.js';
+         tear, seenAt, atGates, STAIR_POINTS, stairFoot } from './ghosts.js';
 import { beginMansion, mansionDone, mansionX, MANSION_W, beginGathering, gathered, stepMansion, stepGathering,
          forgetMansionHands } from './mansion.js';
 import { houseX, IN_DONE_S } from './home.js';
@@ -84,12 +84,13 @@ export function ensureActs() {
 const A = () => S.acts;
 const pair = () => (S.acts ? S.acts.pair : null);
 
-// The pair, made where they are: two souls rising out of the ruin.
+// The pair, made where they are: two souls rising out of the ruin, facing
+// the stair they will climb.
 function makePair() {
   const acts = ensureActs();
   if (acts.pair) return acts.pair;
   const x = ruinX();
-  acts.pair = { x, y: yardFeet(x), route: null, leg: 0, hold: null, carry: 0, mode: 'soul', rims: 0, face: 1, lift: 0, inside: 0, at: null };
+  acts.pair = { x, y: yardFeet(x), route: null, leg: 0, hold: null, carry: 0, mode: 'soul', rims: 0, face: Math.sign(stairFoot().x - x) || 1, lift: 0, inside: 0, at: null };
   return acts.pair;
 }
 // A pair stood up for a beat owed with no story behind it (a check, a

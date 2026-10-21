@@ -18,6 +18,7 @@ import { pieces, pieceUp, houseDone, houseStands, spotOf, benchAt, benchX } from
 import { placeSites } from '../src/world.js';
 import { migrate } from '../src/migrations/index.js';
 import finale from '../src/migrations/2026-10-12-finale.js';
+import gatesLeft from '../src/migrations/2026-10-20-gates-left.js';
 
 const LAST = SERPENT_PHASES - 1;
 
@@ -228,6 +229,18 @@ group('an old save past the kill gets the two of them at the left end, off the c
     ok(s.crew === 3 && s.deepCrew === 1, 'and off the counts', `${s.crew} ${s.deepCrew}`),
     ok(s.stations[0].fighter === null && s.stations[0].hung === true, 'her gear hung on her station', JSON.stringify(s.stations[0]))
   ];
+});
+
+// A save from before heaven's stairway moved left of the house: the two of
+// them were saved at the old door (cell 40) and move right with the house.
+group('an old save at home finds the two of them at the moved house\'s door', async () => {
+  const old = 40 * P;
+  const s = { saveV: gatesLeft.v - 1, beatsDone: ['freed', 'finale'],
+              retired: { x: [old, old + 24], mode: 'sit', left: 1, u: 0, home: old } };
+  migrate(s);
+  const d = FINALE_END_CELLS * P - old;
+  return [ok(s.retired.home === FINALE_END_CELLS * P && s.retired.x[0] === old + d && s.retired.x[1] === old + 24 + d,
+             'home and both of them moved by the house\'s move', JSON.stringify(s.retired))];
 });
 
 // Everybody falls in, wherever their work had them: a quarrier down the cut

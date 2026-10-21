@@ -7,6 +7,7 @@
 // unless named; a pace is pixels a second.
 import { P } from './yard.js';
 import { GREY, PURPLE } from './palette.js';
+import { MANSION_AT, MANSION_HOUSE_AT } from './acts.js';
 
 // The kill settles the yard at once: the background still from its first
 // frame, the bands stepping in over this rather than CUT_SETTLE_S.
@@ -42,7 +43,6 @@ export const FINALE_OUT_STEPS = 6;
 export const FINALE_WALK_PX_S = P * 30;
 export const FINALE_WALK_MAX_S = 30;
 export const FINALE_LEAD = 0.38;          // where the pair stand in the window, a share of it from the left
-export const FINALE_END_CELLS = 40;       // where they stop: the door, cells off the yard's left edge
 export const FINALE_PAIR_GAP = P;         // between the two of them, hand in hand
 
 // --- the crowd --------------------------------------------------------------------
@@ -97,6 +97,9 @@ export const FINALE_LIFT_TAIL = 1;        // ranks behind the last of the crowd 
 // FINALE_DOOR_CELL in, so the door is where the walk ends. Rows are cells
 // up from the ground line (negative is up).
 export const FINALE_DOOR_CELL = 11;
+// Where the walk stops: the door, cells off the yard's left edge, the house
+// standing on the mansion's plot (config/acts.js), past heaven's stairway.
+export const FINALE_END_CELLS = MANSION_AT + MANSION_HOUSE_AT + FINALE_DOOR_CELL;
 export const FINALE_HOUSE_W = 18;         // left wall to right post
 export const FINALE_WALL_ROWS = 9;        // walls, a board row a trip each side
 export const FINALE_WINDOW = [3, -6, 3, 2];   // x, row, w, h

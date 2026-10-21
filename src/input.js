@@ -645,6 +645,9 @@ const CURSORS = [
   [(x, y) => overRoster(x, y), 'pointer'],
   // the way through the surface, from either side, and the serpent to hit
   [(x, y) => onShaftArrow(x, y) || onPortal(x, y) || onCoil(x, y) || overOrb(x, y), 'pointer'],
+  // the acts' portals and their hands, asked as the press is (heaven's gates
+  // only once they are the player's to take)
+  [(x, y) => !gliding() && !!(portalAt(x, y) || handAt(x, y)), 'pointer'],
   [(x, y) => atStation(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],

@@ -11,7 +11,7 @@ const S = yard.S;
 const KEY = 'boulder-clicker/v4';
 const { mansionPieces, mansionDone, rockRowsLeft, pieceIn } = await import('../src/mansion.js');
 const { beatDone } = await import('../src/beats.js');
-const { WORKER, P } = await import('../src/config.js');
+const { WORKER, P, MANSION_AT } = await import('../src/config.js');
 
 group('the yard\'s own hands raise the mansion while the two of them walk home, and the end sheet follows', async () => {
   window.__actsOn(true);
@@ -49,7 +49,7 @@ group('the yard\'s own hands raise the mansion while the two of them walk home, 
     ok(walkingAt != null && setAtHome != null && setAtHome > walkingAt, 'pieces go up while the two of them walk home', `${walkingAt} at the start, ${setAtHome} at home`),
     ok(done && mansionDone() && all.every((_, i) => pieceIn(i) >= 1 || !all[i].segs.length), 'every piece set and faded in', String(mansionDone())),
     ok(rockRowsLeft() === 0, 'the rock on the ruin broken up to the last row', String(rockRowsLeft())),
-    ok(setters.length > 0 && setters.filter(s => s.kind === 'floor').every(s => Math.abs(s.x - (6 * P + Math.round(all[s.i].cx - WORKER / P / 2) * P)) <= P),
+    ok(setters.length > 0 && setters.filter(s => s.kind === 'floor').every(s => Math.abs(s.x - (MANSION_AT * P + Math.round(all[s.i].cx - WORKER / P / 2) * P)) <= P),
        'each piece set by a body standing at its place', JSON.stringify(setters.slice(0, 3))),
     ok(S.acts.house === 'mansion' && S.acts.ended && sheet === 'mansionsheet', 'the two of them in, the souls gathered, the end sheet up', `${S.acts.house} ${S.acts.ended} ${sheet}`),
     ok(borrowed === 0, 'and every borrowed hand let go back to its work', String(borrowed))

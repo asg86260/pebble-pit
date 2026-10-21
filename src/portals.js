@@ -1,6 +1,6 @@
 // The acts' two portals (DESIGN.md, "Acts 3 and 4", "The portals and the
-// mansion"): heaven's, whose yard end hangs in the sky over the house and
-// whose other end hangs over the afterlife's cloud floor; and hell's, whose
+// mansion"): heaven's, whose yard end stands in the sky at the yard's left end, left of the house,
+// and whose other end stands on the afterlife's cloud floor; and hell's, whose
 // deep end stands on the deep's floor and whose other end hangs in hell. Each
 // is a real way between two places, as the wizards' portal is between the
 // yard and the deep: a click on either end takes the view through it on the
@@ -22,7 +22,8 @@
 
 import { S } from './state.js';
 import { P, ACT_PORTAL_R, ACT_HELL_HANG, ACT_PORTAL_OPEN_S, ACT_HAND_FADE_S, ACT_GATES_SKY, ACT_GATES_CELL,
-         ACT_GATES_LEAF, ACT_GATES_H, ACT_GATES_REACH, ACT_GATES_STEP_S, ACT_GATES_HOLD_S, VIEW_GLIDE_S } from './config.js';
+         ACT_GATES_YARD_CELL, ACT_GATES_H, ACT_GATES_REACH, ACT_GATES_SWING_S, ACT_GATES_STAND_S, ACT_GATES_HOLD_S } from './config.js';
+import { smoothstep } from './motion.js';
 import { afterX0, afterFloor } from './after/place.js';
 import { roadX, chamberFloor } from './hell/place.js';
 import { deepFloor } from './deep/place.js';
@@ -38,11 +39,11 @@ export const PORTALS = {
   heaven: {
     outer: 'yard', inner: 'after', on: afterlifeOn,
     end: {
-      // The gates on their bank, up the stair from beside the ruin.
-      yard: () => gatesEnd(snap(S.groundY) - ACT_GATES_SKY),
-      // Straight over the yard's end, standing on the cloud floor: the road
-      // comes up through the floor between them.
-      after: () => gatesEnd(snap(afterFloor()))
+      // The gates on their bank, up the stair at the yard's left end, left
+      // of the house.
+      yard: () => gatesEnd(ACT_GATES_YARD_CELL * P, snap(S.groundY) - ACT_GATES_SKY),
+      // Standing on the cloud floor at the camp's own column.
+      after: () => gatesEnd(Math.max(afterX0(), ACT_GATES_CELL * P), snap(afterFloor()))
     }
   },
   hell: {
@@ -59,36 +60,37 @@ export const PORTAL_KEYS = Object.keys(PORTALS);
 
 // --- heaven's gates ---------------------------------------------------------------
 // Either end of heaven's portal is the same pair of gates, standing on the line
-// `feet`: the middle of the gateway (where the ripple opens and the hand
-// points), the reach to a post's outside, and the box a press lands in, from
-// the crest's top pearl down to the feet.
-export const gatesX = () => Math.max(afterX0(), ACT_GATES_CELL * P);
+// `feet` with their middle at `x`: the middle of the gateway (where the
+// ripple opens and the hand points), the reach to a post's outside, and the
+// box a press lands in, from the crest's top pearl down to the feet.
 export const GATES_TALL = ACT_GATES_H + 10;           // the leaves, the crest over them and its pearl
-function gatesEnd(feet) {
-  const x = gatesX();
+function gatesEnd(x, feet) {
   return { x, y: feet - (ACT_GATES_H / 2) * P, r: ACT_GATES_REACH, feet, top: feet - GATES_TALL * P };
 }
-// How far open they stand: a step of ACT_GATES_LEAF, 0 shut, the last open.
-// This session's (`S.gates`): a reload finds them shut.
-export const GATES_OPEN = ACT_GATES_LEAF.length - 1;
-const gates = () => (S.gates ||= { step: 0, u: 0, held: 0, go: null });
-export const gatesStep = () => (S.gates ? S.gates.step : 0);
+// How far open they stand: `open` the share of the swing made, 0 shut and
+// 1 open, run on at an even pace over ACT_GATES_SWING_S either way, so a
+// swing turned back partway goes back from where it is. This session's
+// (`S.gates`): a reload finds them shut.
+const gates = () => (S.gates ||= { open: 0, stood: 0, held: 0, go: null });
+export const gatesOpen = () => (S.gates ? S.gates.open : 0);
+// The leaves' turn, 0 shut to 1 edge-on, eased at both ends of the swing
+// (render/gates.js draws them by it).
+export const gatesTurn = () => smoothstep(gatesOpen());
 export const gatesBusy = () => !!(S.gates && S.gates.go);
-// One frame of them, a held step at a time toward open while anything wants
-// them open -- a press waiting to go through, the camera going through, a
-// hold after it has, or a body at the gateway (`near`, actbeats.js) -- and
-// shut otherwise. A press waiting goes through once they stand open.
+// One frame of them, swinging toward open while anything wants them open --
+// a press waiting to go through, the camera going through, a hold after it
+// has, or a body at the gateway (`near`, actbeats.js) -- and shut otherwise.
+// A press waiting goes through once they have stood open ACT_GATES_STAND_S,
+// so the open gates are seen before the ripple.
 function stepGates(dt, near) {
   const g = gates();
   if (glidingBy() === 'heaven') g.held = ACT_GATES_HOLD_S;
   else g.held = Math.max(0, g.held - dt);
-  const want = g.go || g.held > 0 || near ? GATES_OPEN : 0;
-  // A press waiting holds them open a step more before the ripple, so the
-  // last step is seen standing.
-  const hold = g.step === want && !(g.go && want === GATES_OPEN);
-  if (hold) g.u = 0;
-  else if ((g.u += dt) >= ACT_GATES_STEP_S) { g.u = 0; if (g.step !== want) g.step += Math.sign(want - g.step); else g.u = ACT_GATES_STEP_S; }
-  if (g.go && g.step === GATES_OPEN && g.u >= ACT_GATES_STEP_S && !gliding()) {
+  const want = g.go || g.held > 0 || near ? 1 : 0;
+  const d = dt / ACT_GATES_SWING_S;
+  g.open = want > g.open ? Math.min(want, g.open + d) : Math.max(want, g.open - d);
+  g.stood = g.open >= 1 ? g.stood + dt : 0;
+  if (g.go && g.stood >= ACT_GATES_STAND_S && !gliding()) {
     const go = g.go;
     g.go = null;
     if (travel(go.to, 'heaven')) { g.held = ACT_GATES_HOLD_S; countTrip('heaven', go.to, go.byHand); }
