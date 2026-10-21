@@ -23030,7 +23030,13 @@ be able to pick up and move resources themselves between stations"
 - **A work panel for each hand-worked station** (the mill's wheel, the
   chipper's lever, the paper mill's paddle, the press's bar): a full UI
   element with its own graphic that says what to do and shows it being done.
-  Its shape is a vote (mock, vote, build); mocks first.
+  Voted 2026-10-20: **B, in the world** (the board's act3-handwork card;
+  mock at scratchpad m/handwork). No panel: on hover the part itself grows a
+  cell with a paper rim, a dotted ghost of its motion loops round it with the
+  game's pointing hand then grabbing hand, and a strip under the station fills
+  with the unit's progress and a short verb tag. The chipper's ghost arcs from
+  the log pile into the jaws, then down the arm. Grown, a part must not cover
+  its own station's other parts (the mock's press bar did).
 - **Goods by hand.** The player picks up a station's goods (a log, a plank,
   a sheet, a sign) the way a worker is picked up, through the shared grab,
   and drops them on another station's pile. A load in the hand is the
