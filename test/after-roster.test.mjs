@@ -188,3 +188,26 @@ group('a save from when posts were bought: its posts become what the rosters wan
     ok(agitators === 0, 'and nobody stands on the agitators\' old post', `${agitators}`)
   ];
 });
+
+// Idle hands take signs and posters out themselves (the owner, 2026-10-21:
+// made, "but nobody is using them"): with nobody on the workshop's carrier
+// or the press's paster, a member with no job runs the round as an errand,
+// keeping no job, and goes back to the podium once the pile is gone.
+group('idle members plant the signs and paste the posters nobody is on, then go back to the podium', async () => {
+  up(4);
+  for (const st of ['workshop', 'press']) S.after.built.push(st);
+  window.__afterGrant({ signs: 2, posters: 2 });
+  const errands = new Set();
+  const done = runUntil(() => {
+    for (const b of S.after.bodies) if (b.errand) errands.add(b.errand);
+    return S.after.signs.length >= 2 && S.after.posters.length >= 2;
+  }, 240);
+  const back = runUntil(() => !S.after.bodies.some(b => b.errand || b.load), 120);
+  const jobs = Object.values(S.after.crew).reduce((n, k) => n + k, 0);
+  window.__actsOn(null);
+  return [
+    ok(done, 'the signs are planted and the posters pasted', `${S.after.signs.length} signs, ${S.after.posters.length} posters, stock ${JSON.stringify(S.after.stock)}`),
+    ok(errands.has('carrier') && errands.has('paster') && jobs === 0, 'by members on errands, nobody put on a job', `${[...errands]} ${jobs}`),
+    ok(back && idle().length >= Math.min(4, idleSpots()), 'and they go back to the podium empty-handed', `${back} ${idle().length}`)
+  ];
+});

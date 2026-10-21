@@ -164,7 +164,7 @@ function putDown(w, dt, add) {
 // A body put on a job, from where it stands: it forgets what it was doing
 // and walks to the job (the job's own frame takes it there).
 function takeJob(w, job) {
-  Object.assign(w, { job, on: false, at: null, target: null, to: null, t: 0, n: 0, swing: null, dig: false, load: null, carry: 0, pick: false });
+  Object.assign(w, { job, errand: null, on: false, at: null, target: null, to: null, t: 0, n: 0, swing: null, dig: false, load: null, carry: 0, pick: false });
 }
 // A body taken off its job, back to the podium on foot.
 function dropJob(w) {
@@ -395,7 +395,7 @@ const JOB_STEP = {
       if (w.pick || !carried(w)) return;
       w.target = null; w.t = 0;
     }
-    const others = a.bodies.filter(o => o !== w && o.job === AFTER_JOB.PASTE && o.target != null).map(o => o.target);
+    const others = a.bodies.filter(o => o !== w && (o.job || o.errand) === AFTER_JOB.PASTE && o.target != null).map(o => o.target);
     if (w.target == null || a.posters.some(p => p.slot === w.target) || others.includes(w.target)) {
       const slot = freeSlot(0, others);
       if (slot == null) { w.target = null; return; }
@@ -410,6 +410,27 @@ const JOB_STEP = {
     }
   }
 };
+
+// Idle hands take the camp's signs and posters out themselves while they
+// wait at the stations (the owner, 2026-10-21: made, "but nobody is using
+// them"): a member with no job runs the carrier's or the paster's round as an
+// errand (`w.errand`), keeping no job, while more lie waiting than the hands
+// already on their way to them will take, and goes back to the podium once
+// the pile is gone. Read off the piles only: where a sign goes is the
+// carrier's own pick, made at the door.
+const ERRANDS = [
+  { job: AFTER_JOB.CARRY, kind: 'sign', left: () => (built('workshop') ? S.after.stock.signs : 0) },
+  { job: AFTER_JOB.PASTE, kind: 'posters', left: () => (built('press') && freeSlot() != null ? S.after.stock.posters : 0) }
+];
+const fetching = job => S.after.bodies.filter(o => (o.job || o.errand) === job && !carried(o)).length;
+const errandFor = () => ERRANDS.find(e => e.left() > fetching(e.job) * holds(e.kind))?.job || null;
+function runErrand(w, dt) {
+  if (w.errand && !carried(w) && w.target == null && !ERRANDS.find(e => e.job === w.errand).left()) w.errand = null;
+  if (!w.errand && !carried(w)) w.errand = errandFor();
+  if (!w.errand) return false;
+  JOB_STEP[w.errand](w, dt);
+  return true;
+}
 
 // The act's JOBS registry, shaped like the yard's (crew/jobs.js): a row a
 // job, in the order the roster lists them, each with its frame; the builders
@@ -449,10 +470,11 @@ export const AFTER_CREW = {
     w.state = 'join'; w.joined = S.after.t; w.full = false; f.arrived++;
     return true;
   },
-  // No job (or a job the act no longer has, read from an older save): at the
-  // podium.
+  // No job (or a job the act no longer has, read from an older save): an
+  // errand while signs or posters wait, else at the podium.
   idle(w, dt, f) {
     if (w.job != null) { dropJob(w); if (!f.idle.includes(w)) f.idle.push(w); }
+    if (runErrand(w, dt)) { const k = f.idle.indexOf(w); if (k >= 0) f.idle.splice(k, 1); return; }
     agitating(w, dt, f);
   },
   end(f) {

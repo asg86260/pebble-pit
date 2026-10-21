@@ -36,7 +36,9 @@ import { campSpot, speakerAt, stationDoor, buildPileAt, buildLayAt } from './pla
 // A member with no job: at the podium, or walking there (bodies.js). A pair's
 // builder, `pair` 0 or 1, is only ever one read from a save made while they
 // still built, and is never idle.
-export const isIdle = w => w.job == null && w.state === 'work' && w.pair == null;
+// One out on an errand with its hands full (bodies.js) is not idle until it
+// has put them down: put on a job then, what it carries would go with it.
+export const isIdle = w => w.job == null && w.state === 'work' && w.pair == null && !(w.errand && w.load);
 
 // Every load a station takes: two a band.
 export const BUILD_LOADS = AFTER_BUILD_PIECES * AFTER_BUILD_A_BAND;
