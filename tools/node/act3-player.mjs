@@ -24,7 +24,7 @@ import { wallSlots } from '../../src/after/place.js';
 export const mm = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, human = 0.7, yard = 1, bank = 120,
-                           log = false, tick = s => globalThis.__fast(s) } = {}) {
+                           carry = null, log = false, tick = s => globalThis.__fast(s) } = {}) {
   const MINUTES = minutes, SEED = seed, POP = pop, HAND = hand, HUMAN = human, YARD = yard, LOG = log;
   const g = globalThis;
   // A late yard's income, coins a second: a played yard at the deep's door
@@ -172,6 +172,9 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   for (const k of ['house-fall', 'arrive', 'meet-god', 'refuse']) if (!S.beatsDone.includes(k)) S.beatsDone.push(k);
   // The yard's own counters emptied: this tool's purse is the yard's.
   S.shards = 0; S.spores = 0; S.sparks = 0; S.scales = 0;
+  // The yard's carry level, which act 3's loads are counted in (`carry`; null
+  // leaves the yard's own).
+  if (carry != null) S.haulCarryLevel = carry;
 
   // --- the milestones ------------------------------------------------------------------
   const marks = [];

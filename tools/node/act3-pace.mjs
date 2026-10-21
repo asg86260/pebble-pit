@@ -58,11 +58,11 @@ const { S } = yard;
 const { playAct3, mm } = await import('./act3-player.mjs');
 const { union } = await import('../../src/after/union.js');
 const { haulCap } = await import('../../src/levels.js');
-S.haulCarryLevel = CARRY;
+
 
 const wall0 = Date.now();
 const { marks, bought, longest, blocked, yardPaid, handDid, LATE_YARD, YARD_COINS, BANK_S } =
-  playAct3({ minutes: MINUTES, seed: SEED, pop: POP, hand: HAND, human: HUMAN, yard: YARD, bank: BANK, log: LOG });
+  playAct3({ minutes: MINUTES, seed: SEED, pop: POP, hand: HAND, human: HUMAN, yard: YARD, bank: BANK, carry: CARRY, log: LOG });
 const a = S.after;
 
 console.log(`act 3 pace: seed ${SEED}, pop ${POP}, hand ${HAND} at ${HUMAN}, yard x${YARD} (bank ${BANK_S} s), ` +
