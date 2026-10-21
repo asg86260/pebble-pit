@@ -23020,6 +23020,99 @@ again (docs/act3-fixlist-2026-10-20.md, items 2 and 3).
   takes several of the carry's slots (a log, a plank, a sheet, a sign, its own
   weight in config), so a body carries few of them at once.
 
+### Act 3's workers are bought with rebel (design, not built; the owner, 2026-10-21)
+
+The owner, verbatim: "its hard to know how many workers are avail in act 3,
+can we use rebellion to buy workers instead of it happening automatically?
+everything goes from convincing peopple to generating more rebel, the signs,
+etc". Three calls settled up front: a won soul pays rebel and waits in God's
+crowd; the gates count souls won, hired or not; workers are bought on a row
+of the pedestal's board.
+
+**Why.** Today a soul whose rim closes walks out on that frame and is a
+worker, so the crew grows on its own, in a far crowd, a few at a time, and
+nothing on screen says how many there are or are coming. Rebel and workers
+are two ledgers that never meet. Folding them into one makes every lever the
+player pulls -- a line from the pair, a sign planted, a poster pasted -- pay
+into the one number they spend, and makes hiring a decision with a price.
+
+**The bargain.** Convincing is still the act's spine: it is what the gates
+read and what the throne's speech fights. What changes is what a convinced
+soul is worth to you: rebel now, and a worker only once you pay for one.
+This supersedes "One pool, the members ... None is bought" in "Act 3's crew:
+assigned like the yard's"; the rosters, seats, idle-is-agitating and the
+carry there all stand.
+
+- **A won soul pays rebel and waits.** The frame a soul's rim closes it pays
+  AFTER_WON_REBEL rebel as motes that rise off it and drift to the rebel pile
+  at the pedestal, counted where they land (the pair's own rule: nothing
+  teleports). The soul stays in its slot, drawn won (its rim full), and does
+  not walk.
+- **The gates read souls won.** `support` is the share of God's yard won,
+  hired or not; the meeting counts souls won. The throne's speech and its
+  burn are unchanged.
+- **A worker is bought on the pedestal's board.** A "recruit" row, endless
+  like the yard's house (`HOUSE_COST0` / `HOUSE_RATE`, the yard's precedent
+  for hiring): its price in rebel climbs AFTER_RECRUIT_RATE a body from
+  AFTER_RECRUIT_COST0. Bought, the won soul nearest the front walks out of
+  God's yard to the podium and stands idle, agitating, until the roster's
+  plus puts it to work, as members do now. With no won soul waiting the row
+  is dead and says why.
+- **How many is on screen.** The recruit row reads the won souls waiting
+  ("12 ready"); the pedestal board's seats header reads the camp's idle and
+  working counts. Both are the sim's numbers, read live.
+- **The refusal's eight** walk out free on the act's first frame, as now:
+  the act cannot start with nobody to plant the first sign.
+- **Builders** come from idle workers first, as now; a bought recruit is
+  idle until assigned.
+- **Saves.** A slot already walked out stays a worker; no migration. A save
+  holding a soul at a full rim that never walked (none can today) reads as
+  won and waiting.
+- **Pace.** The defaults below are a first cut to stand the loop up; the
+  check that a hands-off player still strikes inside its bound
+  (test/after-hands-off.test.mjs) is what they are tuned against, with the
+  player buying a recruit whenever one is affordable.
+
+Defaults (config/after.js): AFTER_WON_REBEL 3; AFTER_RECRUIT_COST0 10 rebel;
+AFTER_RECRUIT_RATE 1.15.
+
+Checks, the player's way: a sign planted inks a soul to full and the rebel
+lands on the pile with no body walking out; the recruit row bought on the
+pedestal's board walks the front won soul out to the podium; the + then puts
+it on a station; the row is dead with nobody won; `support` counts won souls
+hired or not; the gates open on won souls.
+
+### Act 3's shops are signs (built; the owner, 2026-10-21)
+
+The owner: "i dont like how on hover they pop open a slightly bigger version
+of the same thing, as well as open the shop menu. we should create a smaller
+sign with a dollar sign on it to indicate the shop, so the station loses its
+shop target, and the sign next to each station becomes the target." Voted
+from three mocks (a post sign, a hanging shingle, a ground tag): **A, the
+post sign**; the hover's grow goes; every act 3 station with a board gets
+one, God's crowd (which sells nothing) does not.
+
+- **The drawing is the hand's, the sign the shop's.** Hovering or pressing a
+  station works its parts and shows the ghost and the strip, and never opens
+  a board; the board is asked for on the sign's board (not its post, where
+  members stand) and stands beside it. The forestry shack's sign is the
+  grove's.
+- **One sign a station, from the start.** It is the closed sign that stood
+  at a closed station's door, moved to its own column: crossed through while
+  the station is closed (its board the rebuild), the cross fading off as the
+  build lands and the $ on. While its board is up it is drawn in ink, the
+  mark cut out of it.
+- **On the shared table.** A station row may carry a `sign` (stations.js):
+  with one, the pointer's hit test and the board's anchor are the sign, and
+  its ground (`stand`) stays the station's for the flags, the stops and the
+  rosters. A place that sells from a sign is one field, not a mechanism.
+- **It claims its ground.** The sign is a column of its station's ground in
+  after/art.js, a cell past everything else it draws, so the camp's layout,
+  the floor's flats and the footprints make room for it and no rule is
+  re-tuned. The pedestal's stands on the workshops' side: God's side holds
+  the rebel pile. The camp is a sign a station wider, so its walks are a
+  little longer.
+
 ### Act 3's hand work and hand carrying (design, not built; the owner, 2026-10-20)
 
 The owner, verbatim: "the motion work stations that are manually done, should
@@ -23031,12 +23124,12 @@ be able to pick up and move resources themselves between stations"
   chipper's lever, the paper mill's paddle, the press's bar): a full UI
   element with its own graphic that says what to do and shows it being done.
   Voted 2026-10-20: **B, in the world** (the board's act3-handwork card;
-  mock at scratchpad m/handwork). No panel: on hover the part itself grows a
-  cell with a paper rim, a dotted ghost of its motion loops round it with the
-  game's pointing hand then grabbing hand, and a strip under the station fills
-  with the unit's progress and a short verb tag. The chipper's ghost arcs from
-  the log pile into the jaws, then down the arm. Grown, a part must not cover
-  its own station's other parts (the mock's press bar did).
+  mock at scratchpad m/handwork). No panel: on hover a dotted ghost of the
+  part's motion loops round it with the game's pointing hand then grabbing
+  hand, and a strip under the station fills with the unit's progress and a
+  short verb tag. The chipper's ghost arcs from the log pile into the jaws,
+  then down the arm. The part grew a cell on hover too until 2026-10-21,
+  when the owner cut it with the shop's move to a sign (below).
 - **Goods by hand.** The player picks up a station's goods (a log, a plank,
   a sheet, a sign) the way a worker is picked up, through the shared grab,
   and drops them on another station's pile. A load in the hand is the

@@ -13,7 +13,7 @@ import { shopOf } from '../pages.js';
 import { support } from '../after/union.js';
 import { msg } from '../lang.js';
 import { openBoard } from '../board.js';
-import { stationBox } from '../after/place.js';
+import { stationBox, signBoard } from '../after/place.js';
 import { toScreen } from '../world.js';
 
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -105,12 +105,12 @@ export const TESTS = [
       ok(buys.length === 0, 'every line a reading', buys.map(b => b.dataset.key).join(' '))
     ];
   }],
-  ['act 3: the pointer walked up to a station opens its board, the cursor says so, and a pan off it closes it', async () => {
+  ['act 3: the pointer on a station\'s sign opens its board, the cursor says so, and a pan off it closes it', async () => {
     newRun();
     await settle();
     await upThere();
-    // The shack where it is drawn, its middle on the glass, as the pointer gives it.
-    const b = stationBox('shack'), r = canvas().getBoundingClientRect();
+    // The shack's sign where it is drawn, its middle on the glass, as the pointer gives it.
+    const b = signBoard('shack'), r = canvas().getBoundingClientRect();
     window.__look(b.x + b.w / 2 - S.viewW / 2);
     await settle(0.2);
     const s = toScreen(b.x + b.w / 2, b.y + b.h / 2);
@@ -123,7 +123,7 @@ export const TESTS = [
     const gone = openBoard(), off = b.x + b.w < S.camX || b.x > S.camX + S.viewW;
     window.__actsOn(null);
     return [
-      ok(open === 'after-shack', 'the pointer over the shack opens its board', String(open)),
+      ok(open === 'after-shack', 'the pointer over the shack\'s sign opens its board', String(open)),
       ok(cursor === 'pointer', 'and the cursor turns to the pointing hand', cursor),
       ok(off && gone === null, 'panned off it, the board closes', `${off} ${gone}`)
     ];

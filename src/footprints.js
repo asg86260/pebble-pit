@@ -40,7 +40,7 @@ import { afterlifeOn, hellOn } from './acts.js';
 import { deepPortal, standOfStation, deepFloor } from './deep/place.js';
 import { stationById } from './deep/party.js';
 import { PROPS } from './deep/props.js';
-import { afterFloor, stationBox, plotX, pineRows, PINE_GROWN, ART, pileAt, stairFoot, heapX, notchX, AP } from './after/place.js';
+import { afterFloor, stationBox, signBox, plotX, pineRows, PINE_GROWN, ART, pileAt, stairFoot, heapX, notchX, AP } from './after/place.js';
 import { furnaceBox, barrierBox } from './hell/place.js';
 import { riftOpen } from './rift.js';
 
@@ -191,6 +191,7 @@ function afterParts() {
     const rs = [b];
     // A station's piles lie on its own ground (after/place.js, `pileAt`).
     for (const what of Object.keys(ART[key].pile || {})) rs.push(rect(pileAt(key, what), fl - AP, 6 * AP, AP));
+    rs.push(signBox(key));
     out.push({ id: key, rects: rs });
   }
   // The grove at its fullest: every plot a big pine (the box the hand reads).

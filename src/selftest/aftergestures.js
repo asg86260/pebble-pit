@@ -11,7 +11,7 @@ import { AFTER_PODIUM_REBEL, GESTURE_BUBBLE_CRIT } from '../config.js';
 import { partsOf, useBubbles } from '../after/gestures.js';
 import { handworkShown } from '../render/aftercues.js';
 import { openBoard } from '../board.js';
-import { stationBox } from '../after/place.js';
+import { stationBox, signBoard } from '../after/place.js';
 import { toScreen } from '../world.js';
 
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -32,7 +32,7 @@ const glass = (x, y) => { const r = document.getElementById('c').getBoundingClie
                           return [r.left + s.x, r.top + s.y]; };
 
 export const TESTS = [
-  ['act 3: the saw mill\'s flywheel dragged round where it stands cuts a log; a click on its frame asks for its board', async () => {
+  ['act 3: the saw mill\'s flywheel dragged round where it stands cuts a log; a click on its frame asks for no board, one on its sign for its board', async () => {
     newRun();
     await settle();
     await upThere(['mill'], { logs: 4 });
@@ -50,15 +50,17 @@ export const TESTS = [
     }
     point('pointerup', ...at(0));
     const cut = S.after.stock.timber - t0;
-    const fr = partsOf('mill').frame, st = glass(fr.x + fr.w / 2, fr.y + P);
-    point('pointerdown', ...st);
-    point('pointerup', ...st);
-    await settle(0.2);
-    const asked = openBoard();
+    const press = async (x, y) => { const at = glass(x, y); point('pointerdown', ...at); point('pointerup', ...at); await settle(0.2); return openBoard(); };
+    const fr = partsOf('mill').frame, sg = signBoard('mill');
+    const onFrame = await press(fr.x + fr.w / 2, fr.y + P);
+    window.__look(sg.x + sg.w / 2 - S.viewW / 2);
+    await settle(0.1);
+    const asked = await press(sg.x + sg.w / 2, sg.y + P * 2);
     window.__actsOn(null);
     return [
       ok(cut > 0, 'spun round by the pointer for six seconds, the flywheel cuts a log', `${cut} timber`),
-      ok(asked === 'after-mill', 'a plain click on the station opens its board', JSON.stringify(asked))
+      ok(onFrame === null, 'a plain click on the station opens no board', JSON.stringify(onFrame)),
+      ok(asked === 'after-mill', 'a plain click on its sign opens its board', JSON.stringify(asked))
     ];
   }],
   ['act 3: a bubble clicked by the pointer pops where it rises, and the big one pays five lines', async () => {
@@ -89,7 +91,7 @@ export const TESTS = [
   // The hand work shown in the world (DESIGN.md, "Act 3's hand work and hand
   // carrying", take B): read off what the cue layer drew, so it is a fact
   // about the picture and not only the sim.
-  ['act 3: the pointer over the flywheel grows it and shows its motion; worked, the ghost goes and the strip fills', async () => {
+  ['act 3: the pointer over the flywheel shows its motion and opens no board; worked, the ghost goes and the strip fills', async () => {
     newRun();
     await settle();
     await upThere(['mill'], { logs: 4 });
@@ -103,7 +105,7 @@ export const TESTS = [
     point('pointermove', ...at(0), 0);
     for (let f = 0; f < 40; f++) { window.__fast(1 / 60); if (f % 10 === 0) await raf(); }
     await raf(); await raf();
-    const hovered = shown();
+    const hovered = shown(), board = openBoard();
     point('pointerdown', ...at(0));
     let most = 0, hintWorking = 1;
     for (let f = 1; f <= 3 * 60; f++) {
@@ -115,8 +117,9 @@ export const TESTS = [
     point('pointerleave', ...at(0), 0);
     window.__actsOn(null);
     return [
-      ok(!(before.growA > 0) && !(before.hintA > 0), 'before the pointer comes, nothing shows', JSON.stringify(before)),
-      ok(hovered.growA === 1 && hovered.hintA > 0.5 && hovered.stripA > 0.5, 'the pointer on the wheel grows it, its ghost and its strip show', JSON.stringify(hovered)),
+      ok(!(before.hintA > 0), 'before the pointer comes, nothing shows', JSON.stringify(before)),
+      ok(hovered.hintA > 0.5 && hovered.stripA > 0.5, 'the pointer on the wheel shows its ghost and its strip', JSON.stringify(hovered)),
+      ok(board === null, 'and opens no board: the shop is the sign\'s', String(board)),
       ok(hintWorking === 0, 'spun, the ghost is gone', `${hintWorking}`),
       ok(most > 0, 'and the strip fills as the log is fed', `${most} of ${hovered.of}`)
     ];

@@ -39,7 +39,7 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, stationBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt, campEdges } from './after/place.js';
+import { stationX0, stationBox, signBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt, campEdges } from './after/place.js';
 import { godFront } from './after/sky.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
@@ -3280,8 +3280,9 @@ export const SCENES = {
   'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp half built (saw mill, chipper, workshop, posts filled), a fifth of God\'s yard walked out, the axe in hand',
     run: act3Mid },
   // Track C: each of act 3's boards open in the yard's sheet over the act-3-mid
-  // camp, as a plain click on its station opens it (after/rows.js
-  // `openAfterBoard`); the paper mill and the press stood up for their own.
+  // camp, as a plain click on its station's sign opens it, the camera on the
+  // sign the board stands by (after/rows.js `openAfterBoard`); the paper mill
+  // and the press stood up for their own.
   ...Object.fromEntries(['shack', 'grove', 'pedestal', 'mill', 'chipper', 'papermill', 'workshop', 'press', 'crowd'].map(key =>
     [`act3-board-${key}`, { about: 'the acts', say: `act 3's ${key} board open in the yard's sheet, its shelves, bills in the act's marks`,
       run: () => act3Board(key) }])),
@@ -3363,7 +3364,7 @@ function act3Board(key) {
   for (const st of ['papermill', 'press']) if ((key === st || key === 'press') && !S.after.built.includes(st)) S.after.built.push(st);
   window.__afterGrant({ rebel: 200, timber: 40 });
   window.__fast(1);
-  const b = key === 'crowd' ? null : key === 'grove' ? { x: plotX(0), w: groveX1() - plotX(0) } : stationBox(key);
+  const b = key === 'crowd' ? null : key === 'grove' ? { x: plotX(0), w: groveX1() - plotX(0) } : signBox(key);
   const mid = key === 'crowd' ? soulX(6) : b.x + b.w / 2;
   pinCamera(mid - S.viewW / 2);
   window.__look(mid - S.viewW / 2);

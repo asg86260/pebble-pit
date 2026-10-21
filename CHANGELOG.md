@@ -190,6 +190,8 @@ this section; the release that switches it on moves these under Unreleased.
 - On a short window, down to a laptop's 1280x800, only the appearance page's grid scrolls, so the close-up, its slots and the buttons stay in view, and the arrows walk every row of the grid before leaving it (src/selftest/wardrobe.js, "short window").
 - Settings, on the pause sheet and the title page, is one page in four tabs -- graphics, audio, controls and language -- with the controls table and the languages right under their tabs, LB and RB to turn them on a pad, and the title page's volume slider drawn like the pause sheet's (src/selftest/settings.js, "four tabs"; src/selftest/language.js).
 - Every zoom glides instead of stepping, the picture scaled sharp on the way, and the pointer stays on what it points at through it (test/zoom-glide.test.mjs).
+- Act 3's stations sell from a small $ sign beside each one, inverted while its board is up; hovering a station no longer grows its part or opens its shop, and a closed station's sign is crossed through (test/after-gestures.test.mjs; src/selftest/aftergestures.js).
+- Everyone in act 3 walks three times as fast; the throne's speech keeps its pace (test/after-roster.test.mjs).
 
 - A yard with a big crew in the deep no longer lags: its gatherers stopped re-reading the whole floor and the whole crew every frame (`node tools/node/break-perf.mjs`, test/crusher.test.mjs).
 - A card's long name, its gain and its cancel / another strip are no longer cut short at the card's edge; the board widens to fit them (src/selftest/boardwords.js).

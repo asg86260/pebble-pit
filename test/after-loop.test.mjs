@@ -65,13 +65,15 @@ group('rebel is counted where it lands, not on the click', async () => {
   const r0 = read().rebel;
   const hit = line();
   const onClick = read().rebel, motes = read().motes;
-  run(10);
+  // The members agitate on their own clock meanwhile, so the line's share
+  // is a floor, not the whole of what lands.
+  runUntil(() => read().motes === 0, 10);
   const landed = read().rebel;
   window.__actsOn(null);
   return [
     ok(hit, 'a click on the pair on the pedestal is a line of their speech'),
     ok(onClick === r0 && motes > 0, 'nothing is counted on the click: the rebel is in the air', `${r0} -> ${onClick}, ${motes} motes`),
-    ok(landed === r0 + AFTER_PODIUM_REBEL[0], 'the motes land on the pile and are counted there', `${r0} -> ${landed}`)
+    ok(landed >= r0 + AFTER_PODIUM_REBEL[0], 'the motes land on the pile and are counted there', `${r0} -> ${landed}`)
   ];
 });
 
@@ -347,7 +349,7 @@ group('a station is worked by hand before any member, and a post works it slower
   const byHand = read().timber - t0;
   settle();
   putOn('sawyer');
-  runUntil(() => S.after.bodies.some(b => b.at === 'mill'), 60);
+  runUntil(() => S.after.bodies.some(b => b.job === 'sawyer' && b.at === 'mill'), 120);
   const l0 = read().logs;
   run(12);
   const byPost = l0 - read().logs;
