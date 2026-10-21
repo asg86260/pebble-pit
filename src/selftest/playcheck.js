@@ -385,13 +385,21 @@ export const TESTS = [
     out.push(ok(S.after.shout !== shouts0, 'afterlife: a click on the pair is a line of the speech', `${shouts0} -> ${S.after.shout}`));
     out.push(ok(S.after.rebel > r0, 'afterlife: and rebel comes down on the pile', `${r0} -> ${S.after.rebel}`));
     // Heaven's gates, both ways, always open to the player.
+    // The pointer over either end says a press will go through.
+    const hover = (wx, wy) => {
+      const r = canvas().getBoundingClientRect(), s = toScreen(wx, wy);
+      point('pointermove', r.left + s.x, r.top + s.y, 0);
+      return canvas().style.cursor;
+    };
     const gate = portalEnd('heaven', 'after');
     await lookAt(gate.x);
+    out.push(ok(hover(gate.x, gate.y) === 'pointer', "afterlife: the cursor over heaven's gates is the pointer", canvas().style.cursor));
     clickAt(gate.x, gate.y);
     await arrived('yard');
     out.push(ok(S.view === 'yard', "afterlife: heaven's gates take the view down to the yard", S.view));
     const low = portalEnd('heaven', 'yard');
     await lookAt(low.x);
+    out.push(ok(hover(low.x, low.y) === 'pointer', "yard: the cursor over heaven's gates is the pointer", canvas().style.cursor));
     clickAt(low.x, low.y);
     await arrived('after');
     out.push(ok(S.view === 'after', "afterlife: and the yard's gates bring it back", S.view));
