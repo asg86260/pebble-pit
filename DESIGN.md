@@ -23020,6 +23020,68 @@ again (docs/act3-fixlist-2026-10-20.md, items 2 and 3).
   takes several of the carry's slots (a log, a plank, a sheet, a sign, its own
   weight in config), so a body carries few of them at once.
 
+### Act 3's workers are bought with rebel (design, not built; the owner, 2026-10-21)
+
+The owner, verbatim: "its hard to know how many workers are avail in act 3,
+can we use rebellion to buy workers instead of it happening automatically?
+everything goes from convincing peopple to generating more rebel, the signs,
+etc". Three calls settled up front: a won soul pays rebel and waits in God's
+crowd; the gates count souls won, hired or not; workers are bought on a row
+of the pedestal's board.
+
+**Why.** Today a soul whose rim closes walks out on that frame and is a
+worker, so the crew grows on its own, in a far crowd, a few at a time, and
+nothing on screen says how many there are or are coming. Rebel and workers
+are two ledgers that never meet. Folding them into one makes every lever the
+player pulls -- a line from the pair, a sign planted, a poster pasted -- pay
+into the one number they spend, and makes hiring a decision with a price.
+
+**The bargain.** Convincing is still the act's spine: it is what the gates
+read and what the throne's speech fights. What changes is what a convinced
+soul is worth to you: rebel now, and a worker only once you pay for one.
+This supersedes "One pool, the members ... None is bought" in "Act 3's crew:
+assigned like the yard's"; the rosters, seats, idle-is-agitating and the
+carry there all stand.
+
+- **A won soul pays rebel and waits.** The frame a soul's rim closes it pays
+  AFTER_WON_REBEL rebel as motes that rise off it and drift to the rebel pile
+  at the pedestal, counted where they land (the pair's own rule: nothing
+  teleports). The soul stays in its slot, drawn won (its rim full), and does
+  not walk.
+- **The gates read souls won.** `support` is the share of God's yard won,
+  hired or not; the meeting counts souls won. The throne's speech and its
+  burn are unchanged.
+- **A worker is bought on the pedestal's board.** A "recruit" row, endless
+  like the yard's house (`HOUSE_COST0` / `HOUSE_RATE`, the yard's precedent
+  for hiring): its price in rebel climbs AFTER_RECRUIT_RATE a body from
+  AFTER_RECRUIT_COST0. Bought, the won soul nearest the front walks out of
+  God's yard to the podium and stands idle, agitating, until the roster's
+  plus puts it to work, as members do now. With no won soul waiting the row
+  is dead and says why.
+- **How many is on screen.** The recruit row reads the won souls waiting
+  ("12 ready"); the pedestal board's seats header reads the camp's idle and
+  working counts. Both are the sim's numbers, read live.
+- **The refusal's eight** walk out free on the act's first frame, as now:
+  the act cannot start with nobody to plant the first sign.
+- **Builders** come from idle workers first, as now; a bought recruit is
+  idle until assigned.
+- **Saves.** A slot already walked out stays a worker; no migration. A save
+  holding a soul at a full rim that never walked (none can today) reads as
+  won and waiting.
+- **Pace.** The defaults below are a first cut to stand the loop up; the
+  check that a hands-off player still strikes inside its bound
+  (test/after-hands-off.test.mjs) is what they are tuned against, with the
+  player buying a recruit whenever one is affordable.
+
+Defaults (config/after.js): AFTER_WON_REBEL 3; AFTER_RECRUIT_COST0 10 rebel;
+AFTER_RECRUIT_RATE 1.15.
+
+Checks, the player's way: a sign planted inks a soul to full and the rebel
+lands on the pile with no body walking out; the recruit row bought on the
+pedestal's board walks the front won soul out to the podium; the + then puts
+it on a station; the row is dead with nobody won; `support` counts won souls
+hired or not; the gates open on won souls.
+
 ### Act 3's shops are signs (built; the owner, 2026-10-21)
 
 The owner: "i dont like how on hover they pop open a slightly bigger version
