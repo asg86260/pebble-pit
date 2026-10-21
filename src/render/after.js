@@ -13,12 +13,11 @@
 // where the cell stands (no flat fills, no random draw, so it holds still
 // frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_CLOSED, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_JOBS, AFTER_JOB_POST, AFTER_BUILD_PIECES, AFTER_POST_STEP,
+import { P, GREY, AFTER_CARRY_SHOWN, AFTER_CLOSED, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
 import { S } from '../state.js';
-import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
@@ -28,7 +27,7 @@ import { buildPileAt, stationBox, stationX0, stationDoor, heapMid, notchX, fileA
 import { airMotes } from '../after/rebel.js';
 import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
-import { postsOf, bodiesOf, atStation, bodyInk } from '../after/bodies.js';
+import { atStation, bodyInk, carried as carryOf } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
 import { frame, now, inView, clamp01, pileState, pileAlpha, countAt, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
@@ -42,6 +41,7 @@ import { heap, heapCells, logPile, plankPile, sheetPile, signPile, buildPile, BU
 import { siteOf } from '../after/build.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
 import { drawUnionCrowd } from './after/unioncrowd.js';
+import { drawRoster } from '../roster.js';
 
 const A = () => S.after;
 const snap = v => Math.round(v / P) * P;
@@ -104,21 +104,6 @@ function extras(key) {
   const h = hands.papermill, w = atStation('papermill')[0];
   const fill = h && h.prog ? h.prog / GESTURE_STIR_TURNS : w ? w.t / AFTER_PULP_S : 0;
   return { paper: A().stock.paper, moulds: vatSheets(), slots: vats() > 1 ? AFTER_LINE_LONG : AFTER_LINE_SHORT, fill };
-}
-// A station's posts: a stake each along its top, black while a member holds
-// one or is walking to it, hollow pale while it waits; the newest fades in.
-function drawPosts(key, b) {
-  let k = 0;
-  for (const job of AFTER_JOBS.filter(j => AFTER_JOB_POST[j] === key)) {
-    const held = bodiesOf(job).length, posts = postsOf(job);
-    for (let n = 0; n < posts; n++, k++) {
-      const x = b.x + P + k * AFTER_POST_STEP, y = key === 'pedestal' ? b.y + P : b.y - P * 2;
-      ctx.globalAlpha = n === posts - 1 ? fadeIn(A().postAt[job]) : 1;
-      cell(x, y, n < held ? K : PALE);
-      cell(x, y + P, n < held ? K : PALE);
-    }
-    ctx.globalAlpha = 1;
-  }
 }
 // A station's loads on its spot while it is raised (after/build.js): each
 // fading on as it is set down and off as a builder takes it.
@@ -210,7 +195,6 @@ function drawStation(key) {
   }
   const s = working(key);
   draw(frameOf(key), s.work, a.t);
-  drawPosts(key, b);
   if (s.work) glyphOver(b, GLYPHS[key], s.at, s.ink);
 }
 // The shack, ordering: the glyph of the station going up filling over it a
@@ -322,13 +306,23 @@ function drawMember(w) {
   const at = body(w.x, ground);
   const x = at.x, y = at.y;
   ctx.fillStyle = GREY[K];
-  if (w.load === 'log') { ctx.fillRect(x - P, y - P, 5 * P, P); cell(x + P, y - P, PALE); }
-  else if (w.load === 'sign') drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
-  else if (w.load === 'posters') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 4, y - 8, 10, 6); }
+  // A load stacked over the head the yard's way (render/crew.js), a thing a
+  // row, as many rows as it carries, up to AFTER_CARRY_SHOWN.
+  const n = Math.min(AFTER_CARRY_SHOWN, carryOf(w));
+  if (w.load === 'log') for (let k = 0; k < n; k++) { const ly = y - P - k * 2 * P; ctx.fillStyle = GREY[K]; ctx.fillRect(x - P, ly, 5 * P, P); cell(x + P, ly, PALE); }
+  else if (w.load === 'sign') {
+    // The one in front held up on its post; the rest boards on the shoulder.
+    drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
+    ctx.fillStyle = GREY[K];
+    for (let k = 1; k < n; k++) ctx.fillRect(x - P, y - k * 2 * P, 3 * P, P);
+  } else if (w.load === 'posters') for (let k = 0; k < n; k++) {
+    const sy = y - 10 - k * 2 * P;
+    ctx.fillStyle = GREY[K]; ctx.fillRect(x + 2, sy, 14, 10); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 4, sy + 2, 10, 6);
+  }
   else if (w.load === 'carry' || w.load === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
   else if (w.load === 'tip') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
   if (w.swing != null) {
-    if (w.job === AFTER_JOB.AGITATE) shoutMark(x, y);
+    if (w.job == null) shoutMark(x, y);
     else for (let k = 1; k <= 2; k++) cell(x + (w.face > 0 ? 2 + k : -k) * P, y - k * P, K);
   }
 }
@@ -371,4 +365,13 @@ export function drawAfterCounts() {
     writeCount(ctx, str, at.x, at.y);
   }
   clearCounts();
+}
+
+// --- the rosters ---------------------------------------------------------------------
+// Under each station, the yard's roster (roster.js; after/roster.js hands it
+// the act's posts): its counter's sprite a member as drawn up here, x its
+// middle column and y its feet off the box the roster hands over.
+export function drawAfterRoster() {
+  if (!A()) return;
+  drawRoster(ctx, (x, y) => body(x + P, y + 3 * P), () => {}, null, null);
 }

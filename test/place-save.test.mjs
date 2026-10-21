@@ -17,7 +17,7 @@ group('a mid-act act 3 and hell yard read back equal', async () => {
   window.__goPlace('hell');
   run(6);
   S.hell.brimstone = 11; S.hell.blows[1] = 5; S.hell.ore.cinder = 2; S.hell.chamber = 1;
-  S.after.rebel = 9; S.after.stock.logs = 3; S.after.posts = { a: 1 };
+  S.after.rebel = 9; S.after.stock.logs = 3; S.after.crew = { woodcutter: 1 };
   yard.persist();
   const want = JSON.stringify([S.after, S.hell]);
   const blob = saved();

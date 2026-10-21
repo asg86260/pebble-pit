@@ -233,9 +233,6 @@ export const AFTER_FAR_W = 456;
 export const AFTER_W = AFTER_STAIR_X + P * 4 + AFTER_FAR_W * P;
 export const AFTER_STAIR_W = P * 36;       // the stair's run, foot to head
 export const AFTER_STAIR_RISE = P * 50;    // how high the throne stands off the floor
-// A station's posts: a stake each along its roof, filled black while a member
-// holds it (or is walking to), hollow grey while it waits for one.
-export const AFTER_POST_STEP = P * 2;
 
 // --- rebel ---
 // (The sky's clouds are the one cloud renderer's: config/clouds.js, CLOUDS_ACT3.)
@@ -249,8 +246,8 @@ export const AFTER_SHOUT_HOLD_S = 0.35;    // the pose and the mark held after a
 export const AFTER_MOTE_FALL = 60;         // px/s a mote of rebel comes down
 export const AFTER_MOTE_RISE = P * 6;      // how far up off a speaker's head a mote is knocked before it falls
 export const AFTER_MOTES_A_HIT = 4;        // motes a line at most, its rebel shared among them
-// An agitator: a member at a post beside the pedestal, a line of their own on
-// a slow clock, worth less than the pair's (they win nobody: rebel only).
+// A member with no job, agitating at the podium: a line of their own on a
+// slow clock, worth less than the pair's (they win nobody: rebel only).
 export const AFTER_AGITATE_S = 4;
 export const AFTER_AGITATE_REBEL = 1;
 
@@ -327,7 +324,16 @@ export const AFTER_STACK_UP = 4;           // ...with the press's bigger stack
 export const AFTER_PRESS_S = 5;            // a printer pulling a stack
 export const AFTER_PLANT_S = 1.5;          // a carrier planting a sign
 export const AFTER_PASTE_S = 1.2;          // a paster pasting a poster
-export const AFTER_PASTE_LOAD = 4;         // posters a paster carries out
+// What a thing up here takes of the yard's carry (`haulCap`, grains a load;
+// the owner, 2026-10-20: "The act 3 resources should be carried the same as
+// act 1. But take up more slots."): a body carries as many as its load holds,
+// one at the least, picked up and set down one a beat (AFTER_PUT_S). Keyed
+// by what a body's `load` says it carries.
+export const AFTER_CARRY_SLOTS = { log: 2, sign: 2, posters: 1 };
+export const AFTER_PUT_S = 0.3;
+// The most of a load drawn stacked over a head: past it the stack would
+// stand taller than the camp's stations.
+export const AFTER_CARRY_SHOWN = 6;
 export const AFTER_SIGN_GAP = 2;           // files at least between two signs
 
 // --- how support spreads ---
@@ -351,25 +357,45 @@ export const AFTER_SPEECH_S = 100;
 export const AFTER_SPEECH_MARCH = 1236;
 export const AFTER_SPEECH_WARN_S = 6;      // warned this long ahead
 
-// --- the members and their posts ---
-// Members in the camp are not workers (call 14, settled): a post is bought at
-// a station with rebel, each dearer than the last, and a member walks from
-// the camp to hold it. A post with nobody waiting in the camp stands empty.
+// --- the members and their jobs ---
+// Every member won over is a worker (DESIGN.md, "Act 3's crew: assigned like
+// the yard's"): one with no job stands at the podium and agitates there, and
+// a station takes members through the yard's roster under it, a seat at a
+// time, one seat to start and more bought on its board.
 export const AFTER_WALK = 50;              // px/s, every body up here
 export const AFTER_BURN_MARCHES = AFTER_SPEECH_S / (AFTER_SPEECH_MARCH / AFTER_WALK);
-export const AFTER_JOBS = [J.AGITATE, J.CUT, J.GATHER, J.HAUL, J.SAW, J.CHIP, J.PULP, J.JOIN, J.CARRY, J.PRINT, J.PASTE];
-// The station each job's post is bought at, so which card sells it and which
-// station must stand before it is offered.
+export const AFTER_JOBS = [J.CUT, J.GATHER, J.HAUL, J.SAW, J.CHIP, J.PULP, J.JOIN, J.CARRY, J.PRINT, J.PASTE];
+// The station each job works at, so which station's roster it stands on and
+// which board sells its seats; the grove's are the forestry shack's.
 export const AFTER_JOB_POST = {
-  [J.AGITATE]: 'pedestal', [J.CUT]: 'grove', [J.GATHER]: 'grove', [J.HAUL]: 'grove', [J.SAW]: 'mill', [J.CHIP]: 'chipper',
+  [J.CUT]: 'grove', [J.GATHER]: 'grove', [J.HAUL]: 'grove', [J.SAW]: 'mill', [J.CHIP]: 'chipper',
   [J.PULP]: 'papermill', [J.JOIN]: 'workshop', [J.CARRY]: 'workshop',
   [J.PRINT]: 'press', [J.PASTE]: 'press'
 };
-// Paced (tools/node/act3-pace.mjs): a post's rebel climbs slowly enough that
-// one comes within reach every minute or two the whole act through, and
-// the posts are what carries the union from the first meeting to the strike.
-export const AFTER_POST_REBEL0 = 12;       // the first post
-export const AFTER_POST_RATE = 1.08;       // each one dearer, every station's counted together
+// The idle members' spots behind the pedestal, a body and a cell apart; as
+// many stand there as the floor holds up to the last workshop, the rest in
+// the crowd, agitating all the same.
+export const AFTER_IDLE_STEP = P * 4;
+// A roster stands this far under the cloud floor, as the yard's stands under
+// its ground line (roster.js, `postAt`): its sprite clear of the floor and
+// of what lies on it.
+export const AFTER_ROSTER_DOWN = P * 10;
+// A job's seats past the first, the bill for each in turn (the owner,
+// 2026-10-20: "Each station should be locked to one worker, and more slots
+// can be purchased per station"): rebel and dust first, then timber and
+// crops, then ore, the last the deep's scales; one row a job, so the grove's
+// three jobs and the two at the workshop and the press are bought apart.
+export const AFTER_SEAT_BILLS = [
+  [['rebel', 15], ['dust', 2000]],
+  [['rebel', 30], ['dust', 4000]],
+  [['rebel', 50], ['dust', 8000], ['spore', 2000]],
+  [['rebel', 80], ['timber', 5], ['dust', 12000], ['spore', 4000]],
+  [['rebel', 120], ['timber', 10], ['dust', 20000], ['spore', 6000]],
+  [['rebel', 180], ['timber', 20], ['dust', 30000], ['spore', 9000], ['shard', 8000]],
+  [['rebel', 260], ['timber', 30], ['dust', 45000], ['spore', 12000], ['shard', 12000]],
+  [['rebel', 360], ['timber', 45], ['dust', 60000], ['spore', 16000], ['shard', 16000]],
+  [['rebel', 500], ['timber', 60], ['dust', 80000], ['spore', 20000], ['shard', 20000], ['scale', 800]]
+];
 
 // --- the cards ---
 // Every bill up here takes the yard's coins too (DESIGN.md, "The yard pays
@@ -414,8 +440,8 @@ export const AFTER_BUILDS = {
 // outside the eight-rungs rule): two or three short named upgrades a card,
 // each a change on screen, paid in rebel, timber and paper and the yard's
 // coins. Each row is its card and its bills, one bill a time it can be
-// bought -- once for all but the grove's plots, a plot a bill. The posts are
-// sold beside them (rows.js); the stations themselves on the shack
+// bought -- once for all but the grove's plots, a plot a bill. The seats are
+// sold beside them (rows.js, AFTER_SEAT_BILLS); the stations themselves on the shack
 // (AFTER_BUILDS).
 export const AFTER_UPGRADES = {
   // The podium ladder: a rung a bill, each opening when support reaches its
@@ -444,11 +470,6 @@ export const AFTER_UPGRADES = {
   'after-stack':       { card: 'press',     bills: [[['rebel', 350], ['timber', 60], ['paper', 60], ['dust', 90000], ['spore', 22000], ['shard', 25000], ['scale', 1200]]] },  // a bigger stack
   'after-posterreach': { card: 'press',     bills: [[['rebel', 700], ['timber', 150], ['paper', 100], ['dust', 150000], ['spore', 55000], ['shard', 60000], ['scale', 3000], ['spark', 12000]]] }   // a bigger poster, reaching further
 };
-// What a post costs the yard, by how many posts stand already (every
-// station's counted together, as the rebel is): the cheapest bills up here,
-// so dust alone, a second of the yard's for the first and a quarter of a
-// minute by the twentieth; the last entry for every post past the table.
-export const AFTER_POST_DUST = [1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7500, 9000, 10500, 12000];
 // The yard's coins a bill can name, in the order the yard hands them out
 // (shop.js `COIN_ORDER`), and the order a card writes a bill in: the act's
 // coins first. The deep's scales ride with them (the owner, 2026-10-18:

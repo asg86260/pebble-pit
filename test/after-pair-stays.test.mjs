@@ -32,13 +32,15 @@ group("act3-pace's player: the pair stand on the pedestal through the act's firs
   ];
 });
 
-group('an owner who buys early: the camp emptied onto posts, the stations still raised and the pair still up', async () => {
+group('an owner who buys early: every member put on a job, the stations still raised and the pair still up', async () => {
   window.__reset();
   window.__actsOn(true);
   window.__actsAt('fallen');
   window.__goPlace('after');
-  const ROWS = ['after-axe', 'after-post-hauler', 'after-post-woodcutter', 'after-post-carrier', 'after-post-agitator', 'after-post-agitator',
+  const ROWS = ['after-axe', 'after-seat-hauler', 'after-seat-woodcutter', 'after-seat-carrier',
                 'after-build-mill', 'after-build-chipper', 'after-build-workshop'];
+  const JOBS = ['hauler', 'woodcutter', 'carrier'];
+  const idle = () => S.after.camp + S.after.bodies.filter(b => b.job == null && b.state === 'work' && b.pair == null).length;
   const s = share(run);
   let emptied = false;
   for (let t = 0; t < MINUTES * 60; t += 0.5) {
@@ -46,8 +48,11 @@ group('an owner who buys early: the camp emptied onto posts, the stations still 
     // a half minute at a time, since every grant lays its coins in the hole.
     if (t % 30 === 0) window.__grant({ dust: 5e5, spores: 2e5, shards: 2e5, scales: 2e4, sparks: 2e4 });
     window.__afterGrant({ rebel: 2000, timber: 200, paper: 100 });
+    // Every member put on a job the moment one is idle, a seat bought
+    // whenever a job's are full.
+    for (const j of JOBS) window.__afterPress(j);
     for (const k of ROWS) {
-      if (k.startsWith('after-build') && S.after.camp === 0) emptied = true;
+      if (k.startsWith('after-build') && idle() === 0) emptied = true;
       window.__buy(k);
     }
     s.tick(0.5);
@@ -55,7 +60,7 @@ group('an owner who buys early: the camp emptied onto posts, the stations still 
   const raised = ['mill', 'chipper'].filter(k => S.after.built.includes(k));
   window.__actsOn(null);
   return [
-    ok(emptied, 'a station is ordered with nobody waiting in the camp'),
+    ok(emptied, 'a station is ordered with nobody idle'),
     ok(raised.length === 2, 'and the stations ordered then still stand', raised.join(' ')),
     ok(s.get() >= SHARE, `the pair are up there at least ${pct(SHARE)} of the time`, pct(s.get()))
   ];

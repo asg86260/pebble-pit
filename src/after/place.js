@@ -14,7 +14,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, UNION_CROWD, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
-         AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL, AFTER_ART_SCALE,
+         AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL, AFTER_ART_SCALE, AFTER_IDLE_STEP,
          HANDWORK_GROW, HANDWORK_ANCHOR } from '../config.js';
 
 import { S } from '../state.js';
@@ -125,8 +125,11 @@ export const unionHalf = () => Math.min(UNION_CROWD.half[1], podiumMid() - works
 export const speakerAt = k => ({ x: podiumMid() + AFTER_PODIUM_PAIR[k ? 1 : 0], y: afterFloor() - podiumTop() });
 // The rebel pile at the pedestal's foot, on God's-yard side, where the motes land.
 export const pileX = () => snap(podiumMid() + AFTER_PODIUM_PILE * AP);
-// Where an agitator stands: in a row behind the pedestal, a spot a post.
-export const agitatorX = k => { const b = stationBox('pedestal'); return b.x - P * 3 - k * P * 4; };
+// Where an idle member stands, agitating: in a row behind the pedestal, a
+// spot each, as many spots as the floor holds between the pedestal and the
+// last workshop (one at the least); the rest wait in the crowd.
+export const idleX = k => { const b = stationBox('pedestal'); return b.x - P * 3 - k * AFTER_IDLE_STEP; };
+export const idleSpots = () => Math.max(1, Math.floor((idleX(0) - P * 3 - workshopsX1()) / AFTER_IDLE_STEP) + 1);
 // The members waiting are counted, not stood anywhere (the owner, 2026-10-18:
 // our crowd behind the camp is dropped). A member comes into the camp, and
 // goes back out of it, at one of its two edges, fading as it crosses: the

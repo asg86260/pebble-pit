@@ -474,6 +474,12 @@ const lookAtOrb = () => {
 // Enough of the yard's coins for every act-3 bill a scene buys, at the paced
 // prices (config/after.js, the pacing pass): the scales from the ore band on.
 const yardPurse = () => window.__grant({ dust: 2e6, spores: 5e5, shards: 5e5, scales: 3e4, sparks: 5e4 });
+// Act 3's members put on their jobs as a player puts them: the + on each
+// job's roster, a seat bought on the station's board first where the job's
+// seats are full. A job named twice is two members.
+const staffAfter = jobs => {
+  for (const j of jobs) if (!window.__afterPress(j, 1)) { window.__buy(`after-seat-${j}`); window.__afterPress(j, 1); }
+};
 // Station `key`'s round part (`ring`, the saw mill's wheel or the paper
 // mill's vat) taken hold of where it stands and turned at `rev` turns a
 // second for `frames` frames, the press held (after/gestures.js).
@@ -514,9 +520,8 @@ function afterChain(slow) {
     for (let k = 0; k < 300 && wave.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
   }
   const A = AFTER_JOB;
-  const posts = [A.CUT, A.CUT, A.HAUL, A.HAUL, A.HAUL, A.SAW, A.CHIP, A.JOIN, A.CARRY, A.CARRY, A.AGITATE, A.AGITATE,
-                 ...(slow ? [A.PULP, A.PRINT, A.PASTE, A.PASTE] : [])];
-  for (const j of posts) window.__buy(`after-post-${j}`);
+  staffAfter([A.CUT, A.CUT, A.GATHER, A.HAUL, A.HAUL, A.HAUL, A.SAW, A.CHIP, A.JOIN, A.CARRY, A.CARRY,
+              ...(slow ? [A.PULP, A.PRINT, A.PASTE, A.PASTE] : [])]);
   for (const u of ['after-plot', 'after-plot', 'after-stumps', 'after-blade', 'after-bench',
                    ...(slow ? ['after-vat', 'after-stack'] : [])]) window.__buy(u);
 }
@@ -2954,12 +2959,46 @@ export const SCENES = {
       window.__holdShot();
     } },
   // The pedestal: the pair mid-line over the rebel pile, motes on their way
-  // down, and agitators behind them at their own lines.
-  'after-pedestal': { about: 'the acts', say: 'the pair on the pedestal mid-speech, rebel falling to the pile, agitators behind them',
+  // down, and the idle members behind them at their own lines.
+  // The camp mid-act with every station standing and members on its jobs:
+  // the yard's roster under each station, the grove's three under the
+  // forestry shack, `at` the station framed (the camp's middle by default).
+  'after-roster': { about: 'the acts', say: "act 3's rosters: under each station its jobs' sprite, pips, minus and plus; the idle at the podium",
+    run: (at = 'workshop') => {
+      act3Mid();
+      for (const st of ['papermill', 'press']) if (!S.after.built.includes(st)) S.after.built.push(st);
+      staffAfter([AFTER_JOB.PULP, AFTER_JOB.PRINT]);
+      window.__fast(30);
+      const b = stationBox(at);
+      pinCamera(b.x + b.w / 2 - S.viewW / 2);
+      window.__look(b.x + b.w / 2 - S.viewW / 2);
+      window.__fast(1 / 60);
+      window.__holdShot();
+    } },
+  'after-roster-grove': { about: 'the acts', say: "act 3's rosters at the grove: the woodcutter's, the gatherer's and the hauler's side by side under the forestry shack",
+    run: () => SCENES['after-roster'].run('forestry') },
+  // The carry: the yard's carry bought well up, so the haulers and gatherers
+  // walk under stacks of logs, a log taking two of its slots.
+  'after-carry': { about: 'the acts', say: "act 3's goods carried the yard's way: haulers under a stack of logs, as many as the yard's carry holds",
+    run: () => {
+      act3Mid();
+      S.haulCarryLevel = 6;           // after the yard is stood up, which sets its own
+      window.__afterGrant({ grovelogs: 40 });
+      window.__fast(90);              // the haulers' walk from the podium
+      // Held on a hauler walking its stack of logs to the mill.
+      const under = () => S.after.bodies.find(w => w.job === AFTER_JOB.HAUL && w.to && w.carry >= 2);
+      for (let k = 0; k < 600 && !under(); k++) window.__fast(0.1);
+      window.__fast(1);
+      const h = under(), mid = h ? h.x : stationBox('forestry').x;
+      pinCamera(mid - S.viewW / 2);
+      window.__look(mid - S.viewW / 2);
+      window.__fast(1 / 60);
+      window.__holdShot();
+    } },
+  'after-pedestal': { about: 'the acts', say: 'the pair on the pedestal mid-speech, rebel falling to the pile, idle members behind them agitating',
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       S.after.camp = 3; window.__afterGrant({ rebel: 200 }); yardPurse();
-      for (let k = 0; k < 3; k++) window.__buy('after-post-agitator');
       window.__fast(45);
       const at = window.__afterPair();
       for (let k = 0; k < 4; k++) { window.__afterClick(at.x, at.y); window.__fast(0.15); }
@@ -3307,7 +3346,7 @@ function act3Mid() {
     for (let k = 0; k < 300 && wave.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
   }
   const A = AFTER_JOB;
-  for (const j of [A.CUT, A.CUT, A.HAUL, A.HAUL, A.SAW, A.CHIP, A.JOIN, A.CARRY, A.CARRY, A.AGITATE]) window.__buy(`after-post-${j}`);
+  staffAfter([A.CUT, A.CUT, A.GATHER, A.HAUL, A.HAUL, A.SAW, A.CHIP, A.JOIN, A.CARRY, A.CARRY]);
   for (const u of ['after-plot', 'after-plot']) window.__buy(u);
   window.__goPlace('after');
   window.__fast(20);

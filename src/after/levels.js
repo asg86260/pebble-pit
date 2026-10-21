@@ -7,7 +7,7 @@ import { S } from '../state.js';
 import { AFTER_START_BUILT, AFTER_UPGRADES, AFTER_PLOTS0, AFTER_PODIUM_REBEL, TREE_GROW_S, AFTER_GROW_S_UP,
          AFTER_BLADE_LOGS, AFTER_BENCH_SIGNS, AFTER_VAT_SHEETS, AFTER_DRY_VATS, AFTER_STACK, AFTER_STACK_UP,
          AFTER_SAWDUST_BRIM, AFTER_SAWDUST_BRIM_UP, AFTER_CHIP_LOGS, AFTER_CHIP_SAWDUST, AFTER_CHIP_SAWDUST_UP,
-         SIGN_REACH, SIGN_REACH_UP, POSTER_REACH, POSTER_REACH_UP } from '../config.js';
+         SIGN_REACH, SIGN_REACH_UP, POSTER_REACH, POSTER_REACH_UP, AFTER_SEAT_BILLS } from '../config.js';
 import { podiumStood } from './place.js';
 
 export const upCount = key => Math.max(0, Math.min(AFTER_UPGRADES[key].bills.length, (S.after && S.after.ups[key]) || 0));
@@ -15,6 +15,12 @@ export const has = key => upCount(key) > 0;
 
 // The podium bought, 0 the soapbox.
 export const podiumRung = () => upCount('after-podium');
+
+// A job's seats: one to start and each bought on its station's board, the
+// seat rows' count kept beside the named upgrades' (rows.js).
+export const seatKey = job => 'after-seat-' + job;
+export const seatsBought = job => Math.max(0, Math.min(AFTER_SEAT_BILLS.length, (S.after && S.after.ups[seatKey(job)]) || 0));
+export const seatsOf = job => 1 + seatsBought(job);
 // A line's rebel: the higher the podium they stand on (place.js,
 // `podiumStood`), the further the speech carries.
 export const shoutRebel = () => AFTER_PODIUM_REBEL[podiumStood()];

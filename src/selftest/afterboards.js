@@ -30,10 +30,9 @@ async function upThere() {
 // The open board's tiles, by key, as drawn.
 const tiles = key => [...shopOf(`after-${key}`).querySelectorAll('button[data-key]')];
 const rowsNow = () => Object.fromEntries(window.__afterRows().map(r => [r.key, r]));
-// What a press changed: a rung climbed, or a post more.
+// What a press changed: a rung climbed (a seat row's too).
 const bought = (key, was) => {
   const r = rowsNow()[key];
-  if (key.startsWith('after-post-')) return (S.after.posts[key.slice('after-post-'.length)] || 0) > (was.posts[key.slice('after-post-'.length)] || 0);
   return r.rung > was.rows[key].rung;
 };
 
@@ -51,7 +50,7 @@ export const TESTS = [
     const press = tiles('shack').find(b => b.dataset.key === 'after-build-press');
     const pressLocked = !!press && press.classList.contains('locked') && press.textContent.includes(msg('after-wait-papermill'));
     for (const key of ['after-build-mill', 'after-build-chipper']) {
-      const was = { rows: rowsNow(), posts: { ...S.after.posts } };
+      const was = { rows: rowsNow() };
       tiles('shack').find(b => b.dataset.key === key)?.click();
       await sleep(60);
       if (!bought(key, was)) missed.push(key);
@@ -70,7 +69,7 @@ export const TESTS = [
       opened.push(`${card}:${drawn.length}`);
       for (const b of drawn) {
         const key = b.dataset.key;
-        const was = { rows: rowsNow(), posts: { ...S.after.posts } };
+        const was = { rows: rowsNow() };
         b.click();
         await sleep(40);
         if (!bought(key, was)) missed.push(key);
@@ -127,6 +126,41 @@ export const TESTS = [
       ok(open === 'after-shack', 'the pointer over the shack opens its board', String(open)),
       ok(cursor === 'pointer', 'and the cursor turns to the pointing hand', cursor),
       ok(off && gone === null, 'panned off it, the board closes', `${off} ${gone}`)
+    ];
+  }],
+  ['act 3: a click on a roster\'s + under the saw mill puts a member on, and on its - takes one off; no board opens', async () => {
+    newRun();
+    await settle();
+    await upThere();
+    // The setup it is not about: the saw mill standing and a member waiting.
+    if (!S.after.built.includes('mill')) S.after.built.push('mill');
+    S.after.camp += 1;
+    await settle(0.3);
+    const b = stationBox('mill'), r = canvas().getBoundingClientRect();
+    window.__look(b.x + b.w / 2 - S.viewW / 2);
+    await settle(0.3);
+    const press = async at => {
+      const s = toScreen(at[0], at[1]);
+      point('pointermove', r.left + s.x, r.top + s.y, 0);
+      await raf();
+      const cursor = canvas().style.cursor;
+      point('pointerdown', r.left + s.x, r.top + s.y);
+      point('pointerup', r.left + s.x, r.top + s.y);
+      await sleep(60);
+      return cursor;
+    };
+    const saw = () => window.__afterRoster().find(q => q.job === 'sawyer');
+    const n0 = saw()?.n;
+    const over = await press(saw().more);
+    const n1 = saw().n, board = openBoard();
+    await press(saw().less);
+    const n2 = saw().n;
+    window.__actsOn(null);
+    return [
+      ok(n0 === 0 && n1 === 1, 'the + under the saw mill, clicked, puts a member on', `${n0} -> ${n1}`),
+      ok(over === 'pointer', 'the cursor over it is the pointing hand', over),
+      ok(board === null, 'and the click is the roster\'s, not the station\'s board', String(board)),
+      ok(n2 === 0, 'the - clicked takes the member off again', `${n2}`)
     ];
   }],
   ['act 3: the yard\'s objective line and its call to build the bench fade out up there, and come back down below', async () => {

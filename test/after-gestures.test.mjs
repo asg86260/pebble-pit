@@ -109,7 +109,7 @@ group('the workshop: four nails a sign, two taps each; a miss does nothing; the 
   click(mid(partsOf('workshop').nails[2])); run(0.3);
   const t0 = S.after.t;
   S.after.camp += 1;
-  window.__buy('after-post-joiner');
+  window.__afterPress('joiner');
   const joined = timeTo(() => {}, () => rec('workshop').nails.every(n => n === 0) && rec('workshop').auto > t0, 120);
   window.__actsOn(null);
   return [

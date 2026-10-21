@@ -8,11 +8,12 @@
 // bands from the floor up, each band two loads taken off the pile and laid in, fading in as the second lands, until the pile is
 // gone and the station stands. The rest walk back out of the camp.
 //
-// The hands are members from the camp, up to AFTER_BUILD_CARRIERS of them.
-// With nobody waiting there -- every member at a post -- members step off
-// their posts to raise it, and walk back into the camp when it stands, where
-// their posts take them again; so a camp with no free hands never leaves a
-// bought station unbuilt. The pair never come down to build: they are the
+// The hands are idle members, up to AFTER_BUILD_CARRIERS of them: those at
+// the podium first, then those waiting in the crowd. With nobody idle --
+// every member on a station's roster -- members step off their jobs to raise
+// it, and go back to the podium when it stands, where their rosters take
+// them again; so a camp with no free hands never leaves a bought station
+// unbuilt. The pair never come down to build: they are the
 // act's leads and stay up on the pedestal, speaking (the owner, 2026-10-20:
 // "the Couple still arent rendered on the pedestal").
 //
@@ -31,6 +32,11 @@ import { P, AFTER_BUILD_PIECES, AFTER_BUILD_A_BAND, AFTER_BUILD_CARRIERS, AFTER_
 import { nextId } from './util.js';
 import { built } from './levels.js';
 import { campSpot, speakerAt, stationDoor, buildPileAt, buildLayAt } from './place.js';
+
+// A member with no job: at the podium, or walking there (bodies.js). A pair's
+// builder, `pair` 0 or 1, is only ever one read from a save made while they
+// still built, and is never idle.
+export const isIdle = w => w.job == null && w.state === 'work' && w.pair == null;
 
 // Every load a station takes: two a band.
 export const BUILD_LOADS = AFTER_BUILD_PIECES * AFTER_BUILD_A_BAND;
@@ -57,16 +63,19 @@ const sites = () => Object.keys(S.after.raising).filter(k => !built(k));
 export const pairBuilding = () => !!S.after && S.after.bodies.some(b => b.job === AFTER_JOB.BUILD && b.pair != null);
 const crewOf = key => S.after.bodies.filter(b => b.job === AFTER_JOB.BUILD && b.site === key && b.state === 'work');
 
-// Every site without hands gets them: members out of the camp, coming in at
-// its edge nearest the site, or, with none waiting, members off their posts.
-// A post's member is taken empty-handed, the nearest the site first, so no
-// load in hand is dropped; with nobody in the camp or at a post the site
-// waits for the first member to walk in.
+// Every site without hands gets them: idle members off the podium, the
+// nearest first, then members out of the crowd, coming in at the camp's edge
+// nearest the site, or, with none idle, members off their jobs.
+// A member is taken off its job empty-handed, the nearest the site first, so
+// no load in hand is dropped (a tree or a log it was making for is only let
+// go); with nobody idle or on a job the site waits for the first member to
+// walk in. The job stays wanted on its roster, and takes the builder back
+// when the station stands.
 // (A pair's builder, `pair` 0 or 1, is only ever one read from a save made
 // while they still built: it finishes and climbs back up.)
 function offPosts(key, n) {
   const pile = buildPileAt(key);
-  const free = S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD && b.state === 'work' && b.load == null && b.target == null)
+  const free = S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD && b.state === 'work' && b.load == null)
     .sort((p, q) => Math.abs(p.x - pile) - Math.abs(q.x - pile));
   return free.slice(0, n);
 }
@@ -80,10 +89,16 @@ export function fillBuilders() {
     // A site started with the camp still walking in is begun by whoever
     // reached it first; the rest, arriving after, join it while loads are
     // still to carry rather than leaving that one body to haul them all.
-    if (crew.length && (r.claimed >= BUILD_LOADS || crew.length >= AFTER_BUILD_CARRIERS || a.camp <= 0)) continue;
-    if (a.camp > 0) {
-      const n = Math.min(AFTER_BUILD_CARRIERS - crew.length, a.camp);
-      const builders = crew.filter(b => b.builds).length;
+    const free = a.bodies.filter(isIdle).sort((p, q) => Math.abs(p.x - pile) - Math.abs(q.x - pile));
+    if (crew.length && (r.claimed >= BUILD_LOADS || crew.length >= AFTER_BUILD_CARRIERS || (a.camp <= 0 && !free.length))) continue;
+    if (free.length || a.camp > 0) {
+      let builders = crew.filter(b => b.builds).length, n = AFTER_BUILD_CARRIERS - crew.length;
+      for (const w of free.slice(0, n)) {
+        Object.assign(w, { job: AFTER_JOB.BUILD, site: key, pair: null, builds: builders++ < AFTER_BUILD_BUILDERS, at: null, to: null,
+                           swing: null, on: true, t: 0, load: null, slot: null, target: null, n: 0 });
+        n--;
+      }
+      n = Math.min(n, a.camp);
       a.camp -= n;
       const at = campSpot(pile);
       for (let k = 0; k < n; k++)
@@ -125,7 +140,7 @@ export function stepBuilder(w, dt, go) {
   const r = siteOf(w.site);
   if (!r || built(w.site)) {
     if (w.pair != null) { w.state = 'home'; return; }
-    w.job = null; w.state = 'out'; w.site = null; w.load = null; return;
+    w.job = null; w.on = false; w.site = null; w.load = null; return;
   }
   if (w.born != null && a.t < w.born) return;                  // still to come in at the edge
   const fl = campSpot().y;
@@ -154,7 +169,7 @@ export function stepBuilder(w, dt, go) {
     w.load = 'carry'; w.slot = r.claimed++; w.t = 0;
     return;
   }
-  if (!w.builds) { w.job = null; w.state = 'out'; w.site = null; return; }
+  if (!w.builds) { w.job = null; w.on = false; w.site = null; return; }
   // A builder: the pile whole and stood a beat, a load off its top.
   const crew = S.after.bodies.filter(b => b.job === AFTER_JOB.BUILD && b.site === w.site && b.builds);
   w.side = Math.max(0, crew.indexOf(w)) % 2;

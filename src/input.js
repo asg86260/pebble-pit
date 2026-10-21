@@ -202,6 +202,9 @@ canvas.addEventListener('pointerdown', e => {
     // a plain click on a station opens its board, as the yard's do. A finger
     // opens a board at its tap's release (`endDrag`), since a press may be
     // the start of a swipe. Anything else is the place's click.
+    // The rosters under the stations first: the yard's own (roster.js), a
+    // press on a button never a swing at what stands behind it.
+    if (rosterHit(p.x, p.y)) return;
     if (S.view === 'after' && gestureDown(p.x, p.y)) {
       if (gestureHeld()) try { canvas.setPointerCapture(e.pointerId); } catch {}
       return;

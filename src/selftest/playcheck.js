@@ -370,9 +370,12 @@ export const TESTS = [
     out.push(...await stationChecks('afterlife'));
     out.push(...await buyCheck('afterlife', [STATIONS.find(r => r.key === 'after-shack')]));
     out.push(...await scrollCloses('afterlife'));
-    // A member picked up with the hand and put down: it walks back to its post.
-    window.__buy('after-post-woodcutter');
-    out.push(...await grabCheck('afterlife', PLACES.after.crew, ['woodcutter', 'agitator']));
+    // A member picked up with the hand and put down: it walks back to its
+    // spot at the podium (the setup: one waiting in the crowd, who steps out
+    // to it).
+    S.after.camp += 1;
+    run(30);
+    out.push(...await grabCheck('afterlife', PLACES.after.crew, [null]));
     // The shout: a click on the pair on the pedestal sheds rebel.
     const pair = pairBox();
     await lookAt(pair.x + pair.w / 2);

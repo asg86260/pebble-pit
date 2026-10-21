@@ -8,6 +8,7 @@
 //   node tools/node/act3-pace.mjs --pop 0.85 --hand 0.25 --human 0.7
 //   node tools/node/act3-pace.mjs --yard 0.5 --bank 0  # half the late yard's income, nothing banked
 //   node tools/node/act3-pace.mjs --log                # every purchase, as it lands
+//   node tools/node/act3-pace.mjs --carry 8            # the yard's carry bought to its top
 //
 // The player, the way the page has one:
 //   - Pops the pair's bubbles: each one the pedestal sends up is popped with
@@ -49,15 +50,19 @@ const HUMAN = +arg('human', 0.7);
 const YARD = +arg('yard', 1);
 const BANK = +arg('bank', 120);
 const LOG = process.argv.includes('--log');
+// The yard's carry level (`haulCarryLevel`), which act 3's loads are counted in.
+const CARRY = +arg('carry', 0);
 
 const yard = await newYard();
 const { S } = yard;
 const { playAct3, mm } = await import('./act3-player.mjs');
 const { union } = await import('../../src/after/union.js');
+const { haulCap } = await import('../../src/levels.js');
+
 
 const wall0 = Date.now();
 const { marks, bought, longest, blocked, yardPaid, handDid, LATE_YARD, YARD_COINS, BANK_S } =
-  playAct3({ minutes: MINUTES, seed: SEED, pop: POP, hand: HAND, human: HUMAN, yard: YARD, bank: BANK, log: LOG });
+  playAct3({ minutes: MINUTES, seed: SEED, pop: POP, hand: HAND, human: HUMAN, yard: YARD, bank: BANK, carry: CARRY, log: LOG });
 const a = S.after;
 
 console.log(`act 3 pace: seed ${SEED}, pop ${POP}, hand ${HAND} at ${HUMAN}, yard x${YARD} (bank ${BANK_S} s), ` +
@@ -72,5 +77,5 @@ console.log(`the yard paid up: ${YARD_COINS.map(c => `${c} ${Math.round(yardPaid
 console.log(`the hand: ${Object.entries(handDid).map(([k, n]) => `${k} ${n}`).join(', ')}`);
 console.log(`at the end: rebel ${Math.round(a.rebel)}, stock ${JSON.stringify(a.stock)}, camp ${a.camp}, union ${union()}, ` +
             `signs ${a.signs.length}, posters ${a.posters.length}`);
-console.log(`posts: ${JSON.stringify(a.posts)}`);
+console.log(`rosters: ${JSON.stringify(a.crew)}, seats bought: ${JSON.stringify(Object.fromEntries(Object.entries(a.ups).filter(([k]) => k.startsWith('after-seat-'))))}, the yard's carry ${haulCap()} a load`);
 console.log(`bought ${bought.length}: ` + bought.map(b => `${mm(b.t)} ${b.key.replace('after-', '')}`).join(', '));
