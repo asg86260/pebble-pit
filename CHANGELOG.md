@@ -213,6 +213,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A hauler down the hole when the pit drowns is no longer left buried in the abyss; the drowning waits until the hole is empty (test/hauler-in-hole.test.mjs).
 - Loading a save or importing one no longer leaves the noticeboard standing on the closet until the layout next changes (test/finished-save-snatch.test.mjs).
 - A big casino win with the tray full no longer drops on a hauler down the torn hole in one lump; the pay streams out of the hatch and is counted as each grain lands (test/hauler-in-hole.test.mjs).
+- In heaven, members holding posters when the fence is full put them back at the press and come free for work again (test/after-full-fence.test.mjs).
 
 ## v0.6.1 — 2026-10-19
 

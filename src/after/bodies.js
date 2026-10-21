@@ -388,8 +388,9 @@ const JOB_STEP = {
     const a = S.after;
     if (!built('press')) { idle(w, dt); return; }
     // At the press: posters taken up a sheet a beat, as many as the load holds.
+    const door = stationDoor('press') + AP * 4;
     if (!carried(w) || w.pick) {
-      if (!go(w, stationDoor('press') + AP * 4, floorY(), dt)) return;
+      if (!go(w, door, floorY(), dt)) return;
       if (!carried(w) && (a.stock.posters <= 0 || freeSlot() == null)) return;
       w.pick = !pickUp(w, dt, 'posters', () => a.stock.posters, () => { a.stock.posters -= 1; });
       if (w.pick || !carried(w)) return;
@@ -398,7 +399,10 @@ const JOB_STEP = {
     const others = a.bodies.filter(o => o !== w && (o.job || o.errand) === AFTER_JOB.PASTE && o.target != null).map(o => o.target);
     if (w.target == null || a.posters.some(p => p.slot === w.target) || others.includes(w.target)) {
       const slot = freeSlot(0, others);
-      if (slot == null) { w.target = null; return; }
+      // The fence full: those in hand go back on the press's pile, as the
+      // carrier's signs do, or the hand holds them for ever.
+      w.target = null;
+      if (slot == null) { if (go(w, door, floorY(), dt)) while (carried(w)) putDown(w, AFTER_PUT_S, () => { a.stock.posters += 1; }); return; }
       w.target = slot;
     }
     if (!go(w, slotX(w.target), floorY(), dt)) return;
