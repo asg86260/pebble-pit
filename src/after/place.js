@@ -15,7 +15,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
          AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL, AFTER_ART_SCALE, AFTER_IDLE_STEP,
-         HANDWORK_GROW, HANDWORK_ANCHOR } from '../config.js';
+         AFTER_SIGN_BOARD } from '../config.js';
 
 import { S } from '../state.js';
 import { ART as BASE_ART } from './art.js';
@@ -24,9 +24,6 @@ const snap = v => Math.round(v / P) * P;
 // An art cell, world px: a cell of act 3's drawings, AFTER_ART_SCALE grid
 // cells across. Everything laid off the art's own cells is laid off these.
 export const AP = P * AFTER_ART_SCALE;
-// A hovered hand-worked part is drawn a scale up (config, HANDWORK_GROW): its
-// art cell.
-export const GP = P * (AFTER_ART_SCALE + HANDWORK_GROW);
 
 // The cloud floor's top: the yard's top is world y 0, so the afterlife's floor
 // stands AFTER_GAP above it and its own top AFTER_H above that.
@@ -74,6 +71,14 @@ export const signMarch = () => CROWD_X0 - signFetchX();
 // mock draws there.
 export const stationDoor = key => (ART[key] ? stationX0(key) + ART[key].door * AP : 0);
 export const stationMid = key => { const b = stationBox(key); return b ? b.x + b.w / 2 : 0; };
+// A station's shop sign (after/art.js, SIGN), post and board, and the board
+// alone: where its board is asked for, over the heads of anyone standing at
+// the post.
+export const signBox = key => {
+  const C = AFTER_SIGN_BOARD;
+  return ART[key] && { x: stationX0(key) + ART[key].sign * AP, y: afterFloor() - (C.post + C.h) * AP, w: C.w * AP, h: (C.post + C.h) * AP };
+};
+export const signBoard = key => { const b = signBox(key); return b && { ...b, h: AFTER_SIGN_BOARD.h * AP }; };
 // A station's pile of `what`, its left edge in the world. A pile's place in
 // ART is in the drawing's own cells, so a turned drawing turns its piles too
 // (a pile is six cells across).
@@ -250,6 +255,7 @@ export function floorFlats() {
     out.push(span(b.x, b.w / P), span(stationX0(key), ART[key].ground * AFTER_ART_SCALE));
     for (const what of Object.keys(ART[key].pile)) out.push(span(pileAt(key, what), PILE_W * AFTER_ART_SCALE));
     out.push(span(stationDoor(key) - P, 3));
+    out.push(span(signBox(key).x, AFTER_SIGN_BOARD.w * AFTER_ART_SCALE));
   }
   if (sited('chipper')) out.push(span(heapX(), (AFTER_HEAP_R * 2 + 1) * AFTER_ART_SCALE), span(notchX(), 2 * AFTER_ART_SCALE));
   // The rebel pile at the pillar's foot.
@@ -267,7 +273,7 @@ export function floorFlats() {
 // Whether a station's ground is taken: standing, or ordered and going up.
 // Before the act begins, the two that stand from its first frame.
 // Every station of the camp stands on its ground from the start, closed until
-// it is built (config, AFTER_CLOSED).
+// it is built, its sign crossed through (render/after.js).
 export const sited = key => (S.after ? S.after.built.includes(key) || !!S.after.raising[key] || key in AFTER_STATIONS : AFTER_START_BUILT.includes(key));
 // Whether a station stands closed: standing whole but not built yet, its
 // closed sign in front of it until its rebuild takes it down.
@@ -346,13 +352,12 @@ export const ICON = { saw: [13, 8], shovel: [5, 13] };
 // What the hand's motion at each station aims at (after/gestures.js,
 // `partsOf`), in world px, read off the numbers the drawing uses
 // (render/after/stations.js, pine.js, pedestal.js). Every key has `box`, the
-// area a press works (below a station's top strip, where its card opens);
+// area a press works;
 // besides it: the mill's `wheel` {x, y, r}, the paper mill's `vat` {x, y, rx,
 // ry}, the press's `bar` {x, y, len} (its pivot at the screw, level when
 // idle, pulled down), the heap's `edge` (the notch's x), a tree's `saw` {x, y}
 // (the middle of its cut) and a stump's `at` {x, y} (its foot) for plot `i`;
 // and the rest of each moving part for the cues to point at.
-const TOP_STRIP = 2;   // cells along a station's top, its roof, that a press does not work
 export function stationParts(key, i = 0) {
   const fl = afterFloor();
   const at = (x0, x, y) => ({ x: x0 + x * AP, y: fl + y * AP });
@@ -392,32 +397,18 @@ export function stationParts(key, i = 0) {
   }
   const b = stationBox(key);
   if (!b) return null;
-  const worked = { x: b.x, y: b.y + AP * TOP_STRIP, w: b.w, h: b.h - AP * TOP_STRIP };
   const x0 = stationX0(key);
-  // `grown` the wheel and the arm as drawn while hovered (`grownOrigin`):
-  // a press on the bigger part takes it as the small one does.
-  if (key === 'mill') {
-    const g = HANDWORK_ANCHOR.mill.to;
-    return { box: worked, wheel: { ...at(x0, 19, -9), r: 6 * AP }, knob: 8 * AP, frame: box(x0, 31, -26, 19, 26),
-             grown: { ...at(x0, g[0], g[1]), r: 8 * GP } };
-  }
+  if (key === 'mill') return { box: b, wheel: { ...at(x0, 19, -9), r: 6 * AP }, knob: 8 * AP, frame: box(x0, 31, -26, 19, 26) };
   if (key === 'chipper') {
-    return { box: worked, mouth: box(x0, 16, -13, 14, 14), jaw: box(x0, 18, -14, 10, 5), block: box(x0, 28, -15, 6, 15), chute: box(x0, 31, -19, 7, 5),
-             arm: box(x0, 21, -24, 11, 10), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - AP * 6, w: PILE_W * AP, h: AP * 6 },
-             grownArm: (o => ({ x: o.x + 21 * GP, y: o.y - 24 * GP, w: 11 * GP, h: 10 * GP }))(grownOrigin('chipper')) };
+    return { box: b, mouth: box(x0, 16, -13, 14, 14), jaw: box(x0, 18, -14, 10, 5), block: box(x0, 28, -15, 6, 15), chute: box(x0, 31, -19, 7, 5),
+             arm: box(x0, 21, -24, 11, 10), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - AP * 6, w: PILE_W * AP, h: AP * 6 } };
   }
-  if (key === 'papermill') return { box: worked, vat: { ...at(x0, 19, -4.5), rx: 6 * AP, ry: 2.5 * AP }, line: box(x0, 9, -18, 30, 1), step: box(x0, 5, -9, 4, 9) };
-  if (key === 'workshop') return { box: worked, sign: box(x0, 8, -6, 12, 2), hammer: box(x0, 8, -14, 14, 6), hand: at(x0, 13, -9),
+  if (key === 'papermill') return { box: b, vat: { ...at(x0, 19, -4.5), rx: 6 * AP, ry: 2.5 * AP }, line: box(x0, 9, -18, 30, 1), step: box(x0, 5, -9, 4, 9) };
+  if (key === 'workshop') return { box: b, sign: box(x0, 8, -6, 12, 2), hammer: box(x0, 8, -14, 14, 6), hand: at(x0, 13, -9),
                                     nails: [9, 12, 15, 18].map(c => box(x0, c - 0.5, -8.5, 2, 3)) };   // a nail's head and a half cell round it: the gaps between are misses
-  if (key === 'press') return { box: worked, bar: { ...at(x0, 14, -11), len: 12 * AP }, knob: box(x0, 24, -6, 2, 2), platen: box(x0, 12, -8, 9, 2),
+  if (key === 'press') return { box: b, bar: { ...at(x0, 14, -11), len: 12 * AP }, knob: box(x0, 24, -6, 2, 2), platen: box(x0, 12, -8, 9, 2),
                                 handle: box(x0, 23, -12, 4, 8) };
-  return { box: worked };
-}
-// The world origin of the frame a hovered part is drawn in a scale up: the
-// part's own art cell `at` laid on the station's art cell `to` (config,
-// HANDWORK_ANCHOR). None of the hand-worked stations is turned.
-export function grownOrigin(key, at = HANDWORK_ANCHOR[key].at, to = HANDWORK_ANCHOR[key].to) {
-  return { x: stationX0(key) + to[0] * AP - at[0] * GP, y: afterFloor() + to[1] * AP - at[1] * GP };
+  return { box: b };
 }
 // Whether plot i's tree was planted big (the grove's bigger trees).
 const treeBig = i => !!(S.after && S.after.plots[i] && S.after.plots[i].big);

@@ -6,7 +6,7 @@
 // to stand the act up, marked so in its comment, for the pace tool to move.
 import { P } from './yard.js';
 import { AFTER_JOB as J } from '../jobs.js';
-import { campLayout, ART as CAMP_ART, CAMP_ORDER } from '../after/art.js';
+import { campLayout, ART as CAMP_ART, CAMP_ORDER, SIGN as CAMP_SIGN } from '../after/art.js';
 import { AFTER_ZONE_GAP, AFTER_UNION_W } from './aftercrowd.js';
 import { ACT_GATES_CELL, ACT_GATES_REACH } from './acts.js';
 
@@ -181,13 +181,16 @@ export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0
 export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry'];
 // The camp's other stations stand whole from the start, closed until they are
 // built (the owner, 2026-10-20: "lets just add a closed sign in front of
-// them"): a closed sign stands at each one's door, symbols only, and its
-// board offers its rebuild, the shack's build row for it. The rebuild takes
-// the sign down a piece at a time, faded out as each piece of the build
-// lands, and the station works once it is built. The sign, in the act's art
-// cells (AP): a board `w` by `h`, crossed through (the owner's pick of two,
-// 2026-10-20), on a post `post` high.
-export const AFTER_CLOSED = { w: 6, h: 4, post: 3 };
+// them"): its shop sign is crossed through, symbols only, and its board
+// offers its rebuild, the shack's build row for it. The rebuild takes the
+// cross down a piece at a time, faded out as each piece of the build lands,
+// and the station works once it is built. The sign, in the act's art cells
+// (AP): a board `w` by `h` (the owner's pick of two, 2026-10-20), on a post
+// `post` high, where after/art.js lays it.
+export const AFTER_SIGN_BOARD = CAMP_SIGN;
+// The shop's mark on an open station's sign, in the sign's stroke (the
+// owner, 2026-10-21: a dollar).
+export const AFTER_SIGN_MARK = ['..##..', '.#####', '##....', '.####.', '....##', '#####.', '..##..'];
 // A closed station reads as not open yet (the owner, 2026-10-20: "seeing
 // them in game doesnt read as closed"; the pick of three, an outline): a
 // dotted plan of the station on the grid, its board at the door, filled in a

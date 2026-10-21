@@ -129,29 +129,6 @@ export const GESTURE_CUE_TAP_S = 0.4;
 
 // --- act 3's hand work, shown in the world (DESIGN.md, "Act 3's hand work and
 // hand carrying", take B, the owner's vote 2026-10-20) ----------------------
-// Hovered, a hand-worked part is drawn a whole game cell bigger an art cell
-// (the station's scale and one more), as one piece in a paper rim a game cell
-// wide, faded in over HANDWORK_GROW_S; the scale itself never eases, which
-// would shear the drawing off its grid.
-export const HANDWORK_GROW = 1;
-export const HANDWORK_GROW_S = 0.25;
-export const HANDWORK_RIM = P;
-// Where each grown part stands: its own art cell `at` laid on the station's
-// art cell `to`, picked so the grown part and its rim clear the station's
-// other parts (test/after-gestures.test.mjs). The flywheel is lifted and
-// moved off the frame's post, its stand run down to the floor; the arm moved
-// off the chute and lifted off the block; the press's handle hung off the
-// bar where it leaves the post (its row is the bar's, as the bar comes
-// down), its knob kept on the same row it is pulled from; the paddle on its
-// shaft's column, its foot a rim over the vat's floor, its shaft cut to
-// HANDWORK_PADDLE_TOP so its grip and rim stay under the sheets on the line.
-export const HANDWORK_ANCHOR = {
-  mill: { at: [19, -9], to: [17, -12] },
-  chipper: { at: [29, -14], to: [27.5, -15.5] },
-  press: { at: [23, 0], to: [24, 0] },
-  papermill: { foot: -2 }
-};
-export const HANDWORK_PADDLE_TOP = -8.5;
 // The ghost of the motion: a dotted path round the part, a dot a game cell,
 // HANDWORK_DOTS of them, a cell of ink running along them HANDWORK_DOT_RUN
 // dots a second, the path HANDWORK_PATH_OUT outside the part's own reach;

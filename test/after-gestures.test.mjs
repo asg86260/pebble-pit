@@ -16,10 +16,8 @@ import { AFTER_PODIUM_REBEL, AFTER_TIP_LOAD, AFTER_DIG_CLICKS, TREE_CHOPS, GESTU
          GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_STRAIN_S, GESTURE_ARM_POSES, GESTURE_ARM_SPRING_S,
          GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS, AFTER_CHIP_SAWDUST } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, gestureView, gestureHover, partsOf, useBubbles, groveIcons } from '../src/after/gestures.js';
-import { stationBox, stationX0, afterFloor } from '../src/after/place.js';
-import { DRAW, drawGrown } from '../src/render/after/stations.js';
-import { frame as artFrame } from '../src/render/after/kit.js';
-import { AFTER_ART_SCALE, HANDWORK_GROW_S, HANDWORK_HINT_S } from '../src/config.js';
+import { stationBox, signBoard } from '../src/after/place.js';
+import { HANDWORK_HINT_S } from '../src/config.js';
 import { godMid, faceY } from '../src/after/sky.js';
 import { FRAME, frame, click, asks, timeTo, sawOn, saw, lift, spin, feedLog, pullArm, nailSign, pullBar } from './after-hands.mjs';
 
@@ -151,13 +149,13 @@ group('a tree: its saw icon clicked puts the handsaw on it; dragged back and for
   window.__afterAxe();
   const t = window.__afterTrees()[0];
   const asked = asks({ x: t.x, y: t.y }), sawing = rec('tree').i === 0;
-  const shack = window.__afterAt('forestry'), board = asks(shack);
+  const board = asks(mid(signBoard('forestry')));
   window.__actsOn(null);
   return [
     ok(slow.icon && slow.on, 'the saw icon shows over the grown tree, and a click on it puts the saw on'),
     ok(fast.secs < slow.secs && Number.isFinite(slow.secs), `sawn faster, it falls sooner (${TREE_CHOPS} strokes)`, `${slow.secs.toFixed(2)} s -> ${fast.secs.toFixed(2)} s`),
     ok(asked === null && sawing, 'a plain click on the tree puts the saw on it, no board asked for', JSON.stringify([asked, sawing])),
-    ok(board === 'after-grove', 'a click on the forestry shack asks for the grove\'s board', JSON.stringify(board))
+    ok(board === 'after-grove', 'a click on the forestry shack\'s sign asks for the grove\'s board', JSON.stringify(board))
   ];
 }, NO_RELOAD);
 
@@ -249,12 +247,15 @@ group('a stump: its shovel shows; dragged up and held, a root gives at a time un
   ];
 }, NO_RELOAD);
 
-group('a plain click on a station asks for its board; a click on open floor asks for nothing', async () => {
-  up(['mill', 'papermill', 'workshop', 'press']);
-  const asked = [];
-  for (const k of ['papermill', 'workshop', 'press', 'shack', 'pedestal']) {
+// The drawing is the hand's and the sign the shop's (the owner, 2026-10-21).
+const CARDS = { mill: 'mill', chipper: 'chipper', papermill: 'papermill', workshop: 'workshop', press: 'press', shack: 'shack', pedestal: 'pedestal', forestry: 'grove' };
+group('a plain click on a station\'s sign asks for its board, on its drawing for none; a click on open floor asks for nothing', async () => {
+  up(['mill', 'chipper', 'papermill', 'workshop', 'press']);
+  const signs = {}, drawings = {};
+  for (const k of Object.keys(CARDS)) {
+    signs[k] = asks(mid(signBoard(k)));
     const b = k === 'pedestal' ? partsOf('pedestal').top : stationBox(k);
-    asked.push(asks({ x: b.x + P, y: b.y + b.h - P }));
+    drawings[k] = asks({ x: b.x + P, y: b.y + P });
   }
   // God's camp where it is drawn, far back on the cloud: a click on him.
   const crowd = asks({ x: godMid(S.camX + S.viewW / 2), y: faceY() });
@@ -262,7 +263,8 @@ group('a plain click on a station asks for its board; a click on open floor asks
   const floorTook = click(floor), after = asks(floor);
   window.__actsOn(null);
   return [
-    ok(asked.join() === 'after-papermill,after-workshop,after-press,after-shack,after-pedestal', 'each station\'s board, by a click on its drawing', asked.join()),
+    ok(Object.entries(CARDS).every(([k, c]) => signs[k] === `after-${c}`), 'each station\'s board, by a click on its sign', JSON.stringify(signs)),
+    ok(Object.values(drawings).every(v => v == null), 'and none by a click on its drawing', JSON.stringify(drawings)),
     ok(crowd === 'after-crowd', 'a click on the crowd of God asks for its status board', JSON.stringify(crowd)),
     ok(!floorTook && after === null, 'the open floor asks for none, and the click is still the place\'s', `${floorTook}`)
   ];
@@ -321,48 +323,17 @@ group('the pad: A on the workshop taps nails into a sign, the stick turned round
   ];
 }, NO_RELOAD);
 
-// Hovered, a hand-worked part is drawn a scale up (render/after/stations.js,
-// `drawGrown`), and grown it must not lay itself, or its paper rim, over any
-// other part of its station, in any pose it is drawn in (DESIGN.md, "Act 3's
-// hand work and hand carrying"). Every world pixel the station fills but its
-// part, against every one the grown part and its rim fill. Left out by name
-// (`clearance`): the wheel's own rod to its pin, the pulp the paddle stands
-// in, and the mould's cord the paddle crosses at its small size too.
-group('the hovered part drawn a scale up clears every other part of its station, in every pose', async () => {
-  up(['mill', 'chipper', 'papermill', 'press']);
-  const POSES = {
-    mill: Array.from({ length: 16 }, (_, i) => ({ ang: i * Math.PI / 8, grab: true })),
-    chipper: [0, 0.5, 1].map(k => ({ k, arm: true, log: null })),
-    papermill: Array.from({ length: 12 }, (_, i) => ({ ang: i * Math.PI / 6, w: 1, grab: true })),
-    press: [0.02, 0.5, 1].map(k => ({ k }))
-  };
-  const fill = (set, x, y, w, h) => {
-    for (let j = Math.round(y); j < Math.round(y + h); j++) for (let i = Math.round(x); i < Math.round(x + w); i++) set.add(i * 100000 + j);
-  };
-  const hits = [];
-  for (const [key, poses] of Object.entries(POSES)) for (const pose of poses) {
-    const x0 = stationX0(key), fl = afterFloor(), others = new Set(), grown = new Set();
-    DRAW[key](artFrame(x0, fl, 0, (x, y, w, h) => fill(others, x0 + x, fl + y, w, h), AFTER_ART_SCALE), false, 0, { ...pose, growA: 1 }, false, { clearance: true });
-    drawGrown(key, (x, y, w, h) => fill(grown, x, y, w, h));
-    let n = 0;
-    for (const p of grown) if (others.has(p)) n++;
-    if (n || !grown.size) hits.push(`${key} ${JSON.stringify(pose)}: ${n} px over, ${grown.size} px grown`);
-  }
-  window.__actsOn(null);
-  return [ok(hits.length === 0, 'no grown part, rim and all, lies over its station\'s other parts', hits.slice(0, 6).join('; ') || 'clear')];
-}, NO_RELOAD);
-
 // The hover's showing, the way a mouse makes it (input.js calls
-// `gestureHover` on every move): the part grown and its ghost shown while
-// the pointer is on it and it stands still; the ghost gone once it is
+// `gestureHover` on every move): its ghost shown while the pointer is on it
+// and it stands still, the part drawn at its own size; the ghost gone once it is
 // worked, the strip filling; back once it stops with the unit unfinished.
-group('hovered, the flywheel grows and shows its motion; worked, the ghost goes and the strip fills; stopped, the ghost comes back', async () => {
+group('hovered, the flywheel shows its motion; worked, the ghost goes and the strip fills; stopped, the ghost comes back', async () => {
   up(['mill'], { logs: 0 });
   const r = () => rec('mill'), w = partsOf('mill').wheel, at = a => [w.x + Math.cos(a) * w.r, w.y + Math.sin(a) * w.r];
-  const before = { grow: r().growA, hint: r().hintA };
+  const before = { hint: r().hintA };
   gestureHover(...at(0));
-  run(Math.max(HANDWORK_GROW_S, HANDWORK_HINT_S) + 0.1);
-  const shown = { grow: r().growA, hint: r().hintA, strip: r().stripA };
+  run(HANDWORK_HINT_S + 0.1);
+  const shown = { hint: r().hintA, strip: r().stripA };
   gestureDown(...at(0));
   for (let f = 1; f <= 120; f++) { gestureMove(...at(f / 60 * 2 * 2 * Math.PI)); gestureHover(...at(f / 60 * 2 * 2 * Math.PI)); frame(); }
   const working = { hint: r().hintA, strip: r().stripA, prog: r().prog };
@@ -371,13 +342,13 @@ group('hovered, the flywheel grows and shows its motion; worked, the ghost goes 
   const after = { hint: r().hintA, prog: r().prog };
   gestureHover(null);
   run(1);
-  const gone = { grow: r().growA, hint: r().hintA, strip: r().stripA };
+  const gone = { hint: r().hintA, strip: r().stripA };
   window.__actsOn(null);
   return [
-    ok(before.grow === 0 && before.hint === 0, 'unhovered, nothing shows', JSON.stringify(before)),
-    ok(shown.grow === 1 && shown.hint === 1 && shown.strip === 1, 'hovered, the part grows, its ghost and the strip show', JSON.stringify(shown)),
+    ok(before.hint === 0, 'unhovered, nothing shows', JSON.stringify(before)),
+    ok(shown.hint === 1 && shown.strip === 1, 'hovered, its ghost and the strip show', JSON.stringify(shown)),
     ok(working.hint === 0 && working.prog > 0 && working.strip === 1, 'spun, the ghost is gone and the unit fills', JSON.stringify(working)),
     ok(after.hint === 1 && after.prog > 0, 'let go and stood still with the log uncut, the ghost is back', JSON.stringify(after)),
-    ok(gone.grow === 0 && gone.hint === 0 && gone.strip === 0, 'the pointer gone, it all fades', JSON.stringify(gone))
+    ok(gone.hint === 0 && gone.strip === 0, 'the pointer gone, it all fades', JSON.stringify(gone))
   ];
 }, NO_RELOAD);

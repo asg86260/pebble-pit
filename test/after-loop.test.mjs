@@ -347,7 +347,7 @@ group('a station is worked by hand before any member, and a post works it slower
   const byHand = read().timber - t0;
   settle();
   putOn('sawyer');
-  runUntil(() => S.after.bodies.some(b => b.at === 'mill'), 60);
+  runUntil(() => S.after.bodies.some(b => b.job === 'sawyer' && b.at === 'mill'), 120);
   const l0 = read().logs;
   run(12);
   const byPost = l0 - read().logs;

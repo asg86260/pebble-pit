@@ -114,7 +114,9 @@ for (const id of PARTY_IDS) {
 // works it is a site for (every row with a board, or `site`), built by the
 // yard's builders on its ground (`stand`) unless it says otherwise
 // (`builtBy`). A row with a `pile` has a pile that can fill: the mark over it
-// and its hover come from that. So a new place is one row, and every system
+// and its hover come from that. A row with a `sign` sells from it: the sign,
+// not the ground, is where the pointer asks for its board and where the
+// board stands, so the station itself is left to the hand. So a new place is one row, and every system
 // that shows or staffs a place reads it off here.
 //
 // Which place a row stands in (`place`: 'yard', 'deep', 'after' or 'hell';
@@ -318,9 +320,11 @@ export function hitRect(key) {
 }
 
 // Near enough to a station's ground to be interested in it: inside its hit
-// box, or, for a row that says its `hit`, on what is drawn there.
+// box, or, for a row that says its `sign` or its `hit`, on that.
+const inBox = (b, x, y) => !!b && x >= b.x && x < b.x + b.w && y >= b.y && y <= b.y + b.h;
 export function nearStation(key, x, y) {
   const s = station(key);
+  if (s?.sign) return !!s.open() && inBox(s.sign(), x, y);
   if (s?.hit) return !!s.open() && !!s.hit(x, y);
   const r = hitRect(key);
   return !!r && x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h;

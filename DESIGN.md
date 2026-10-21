@@ -23020,6 +23020,37 @@ again (docs/act3-fixlist-2026-10-20.md, items 2 and 3).
   takes several of the carry's slots (a log, a plank, a sheet, a sign, its own
   weight in config), so a body carries few of them at once.
 
+### Act 3's shops are signs (built; the owner, 2026-10-21)
+
+The owner: "i dont like how on hover they pop open a slightly bigger version
+of the same thing, as well as open the shop menu. we should create a smaller
+sign with a dollar sign on it to indicate the shop, so the station loses its
+shop target, and the sign next to each station becomes the target." Voted
+from three mocks (a post sign, a hanging shingle, a ground tag): **A, the
+post sign**; the hover's grow goes; every act 3 station with a board gets
+one, God's crowd (which sells nothing) does not.
+
+- **The drawing is the hand's, the sign the shop's.** Hovering or pressing a
+  station works its parts and shows the ghost and the strip, and never opens
+  a board; the board is asked for on the sign's board (not its post, where
+  members stand) and stands beside it. The forestry shack's sign is the
+  grove's.
+- **One sign a station, from the start.** It is the closed sign that stood
+  at a closed station's door, moved to its own column: crossed through while
+  the station is closed (its board the rebuild), the cross fading off as the
+  build lands and the $ on. While its board is up it is drawn in ink, the
+  mark cut out of it.
+- **On the shared table.** A station row may carry a `sign` (stations.js):
+  with one, the pointer's hit test and the board's anchor are the sign, and
+  its ground (`stand`) stays the station's for the flags, the stops and the
+  rosters. A place that sells from a sign is one field, not a mechanism.
+- **It claims its ground.** The sign is a column of its station's ground in
+  after/art.js, a cell past everything else it draws, so the camp's layout,
+  the floor's flats and the footprints make room for it and no rule is
+  re-tuned. The pedestal's stands on the workshops' side: God's side holds
+  the rebel pile. The camp is a sign a station wider, so its walks are a
+  little longer.
+
 ### Act 3's hand work and hand carrying (design, not built; the owner, 2026-10-20)
 
 The owner, verbatim: "the motion work stations that are manually done, should
@@ -23031,12 +23062,12 @@ be able to pick up and move resources themselves between stations"
   chipper's lever, the paper mill's paddle, the press's bar): a full UI
   element with its own graphic that says what to do and shows it being done.
   Voted 2026-10-20: **B, in the world** (the board's act3-handwork card;
-  mock at scratchpad m/handwork). No panel: on hover the part itself grows a
-  cell with a paper rim, a dotted ghost of its motion loops round it with the
-  game's pointing hand then grabbing hand, and a strip under the station fills
-  with the unit's progress and a short verb tag. The chipper's ghost arcs from
-  the log pile into the jaws, then down the arm. Grown, a part must not cover
-  its own station's other parts (the mock's press bar did).
+  mock at scratchpad m/handwork). No panel: on hover a dotted ghost of the
+  part's motion loops round it with the game's pointing hand then grabbing
+  hand, and a strip under the station fills with the unit's progress and a
+  short verb tag. The chipper's ghost arcs from the log pile into the jaws,
+  then down the arm. The part grew a cell on hover too until 2026-10-21,
+  when the owner cut it with the shop's move to a sign (below).
 - **Goods by hand.** The player picks up a station's goods (a log, a plank,
   a sheet, a sign) the way a worker is picked up, through the shared grab,
   and drops them on another station's pile. A load in the hand is the

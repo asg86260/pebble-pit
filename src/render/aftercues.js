@@ -23,7 +23,7 @@ import { crispText } from './crisptext.js';
 import { gestureView, partsOf, lowestBubble, groveIcons, HANDWORK_KEYS } from '../after/gestures.js';
 import { stationParts, stationBox, afterFloor } from '../after/place.js';
 import { drawGroveIcons } from './after/pine.js';
-import { drawGrown, grownGrips } from './after/stations.js';
+import { grips } from './after/stations.js';
 import { K, W, PALE, MID, FOUR } from './after/kit.js';
 
 const D = GESTURE_CUE_DOT;
@@ -150,9 +150,7 @@ function cueAt(key, r) {
 
 // --- the hand work, shown in the world (DESIGN.md, "Act 3's hand work and
 // hand carrying", take B) ----------------------------------------------------
-// Hovered, a hand-worked part is drawn a scale up over everything
-// (render/after/stations.js, `drawGrown`); a dotted ghost of its motion
-// loops round it, the pointing hand on where to take it and then the
+// Hovered, a dotted ghost of a hand-worked part's motion loops round it, the pointing hand on where to take it and then the
 // grabbing hand playing the motion through (motion.js's curve); and a strip
 // under the station fills with the unit in the gesture's own units, a verb
 // on a tag under it. Each fades by its own share (after/gestures.js).
@@ -163,7 +161,7 @@ const arcPts = (c, rx, ry, a0, a1, n) => Array.from({ length: n }, (_, i) => { c
 const hopPts = (a, b, lift, n) => Array.from({ length: n }, (_, i) => { const k = i / (n - 1); return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k) - Math.sin(k * Math.PI) * lift }; });
 const TURN_SPAN = Math.PI * 5 / 3;                      // a turn's ghost: most of the way round, so its head shows
 function motionOf(key, r) {
-  const g = grownGrips(key), N = HANDWORK_DOTS;
+  const g = grips(key), N = HANDWORK_DOTS;
   if (!g) return null;
   if (key === 'mill') {
     const a0 = Math.atan2(g.knob.y - g.hub.y, g.knob.x - g.hub.x);
@@ -260,8 +258,7 @@ function drawHandwork(view, t) {
   for (const r of view) {
     if (!HANDWORK_KEYS.includes(r.key) || !r.open) continue;
     const u = unitOf(r.key, r, t);
-    shown[r.key] = { growA: r.growA, hintA: r.hintA, stripA: r.stripA, n: u.n, of: u.of, verb: u.verb };
-    if (r.growA > 0.001) { ctx.globalAlpha = r.growA; drawGrown(r.key); }
+    shown[r.key] = { hintA: r.hintA, stripA: r.stripA, n: u.n, of: u.of, verb: u.verb };
     if (r.stripA > 0.001) drawStrip(r.key, r, u);
     if (r.hintA > 0.001) drawGhost(r.key, r, t);
   }
@@ -276,7 +273,7 @@ export function drawAfterCues() {
   drawHandwork(view, t);
   for (const r of view) {
     // the first-uses ghost hand gives way to the hover's
-    const over = Math.max(r.hintA || 0, r.growA || 0);
+    const over = r.hintA || 0;
     if (r.open && r.cueA > 0.01 && !r.held && over < 1) {
       const at = cueAt(r.key, r);
       if (at && at.x >= S.camX - P * 4 && at.x <= S.camX + S.viewW + P * 4) { ctx.globalAlpha = r.cueA * GESTURE_CUE_ALPHA * (1 - over); handOn(ctx, at.x, at.y, at.pose); }

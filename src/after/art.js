@@ -34,20 +34,29 @@ const DRAWN = {
   // grove's board, and the pile its gatherers bring the fallen logs to,
   // on its grove side, where the haulers fetch them from.
   forestry:  { box: [8, 16, 13], door: 10, pile: { grovelogs: 0 } },
-  pedestal:  { box: [1, 10, 4], door: 6, pile: {}, ground: 16 }
+  // Its sign on the workshops' side, clear of the widest podium's overhang
+  // (config/after.js, AFTER_PODIUM_HALF): God's side holds the rebel pile.
+  pedestal:  { box: [1, 10, 4], door: 6, pile: {}, ground: 16, sign: -8 }
 };
+// Every station's shop is a sign on a post on its own ground (the owner,
+// 2026-10-21: the drawing is the hand work's, the sign the board's): `w`
+// and `h` its board, `post` its post, in cells; it stands a cell past the
+// rest of its ground unless the row says where (`sign`). A closed station's
+// sign is crossed through; open, it carries the shop's mark.
+export const SIGN = { w: 6, h: 4, post: 3 };
 // A pile is six cells across, and a body stands three wide on its door.
 const PILE_CELLS = 6;
 // Each station's ground, derived from what it draws: from its first drawn
 // column (`lead`) to the column past its last (`ground`), its box, its piles,
-// its door and its `reach` all inside, so every two neighbors stand the one
+// its door, its `reach` and its sign all inside, so every two neighbors stand the one
 // gap apart however each is drawn. The pedestal's ground is the union's
 // camp's (config/after.js lays it at the camp's middle).
 const span = a => {
   const piles = Object.values(a.pile);
   const lead = Math.min(a.box[0], a.door - 1, ...piles);
   const end = Math.max(a.box[0] + a.box[1], a.door + 2, ...piles.map(x => x + PILE_CELLS), a.reach || 0);
-  return { lead, ground: a.ground != null ? a.ground : end };
+  const sign = a.sign ?? end + 1;
+  return { sign, lead: Math.min(lead, sign), ground: a.ground ?? Math.max(end, sign + SIGN.w) };
 };
 export const ART = Object.fromEntries(Object.entries(DRAWN).map(([k, a]) => [k, { ...a, ...span(a) }]));
 

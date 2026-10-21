@@ -13,7 +13,7 @@
 // where the cell stands (no flat fills, no random draw, so it holds still
 // frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_CARRY_SHOWN, AFTER_CLOSED, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
+import { P, GREY, AFTER_CARRY_SHOWN, AFTER_SIGN_BOARD, AFTER_SIGN_MARK, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
@@ -23,12 +23,13 @@ import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { buildPileAt, stationBox, stationX0, stationDoor, heapMid, notchX, fileAt, rankAtY, afterFloor, ART, AP } from '../after/place.js';
+import { buildPileAt, stationBox, signBox, stationX0, heapMid, notchX, fileAt, rankAtY, afterFloor, ART, AP } from '../after/place.js';
 import { airMotes } from '../after/rebel.js';
 import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
 import { atStation, bodyInk, carried as carryOf } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
+import { signUp } from '../after/stations.js';
 import { frame, now, inView, clamp01, pileState, pileAlpha, countAt, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
@@ -123,30 +124,40 @@ function glyphOver(b, rows, at, alpha = 1) {
   buildingGlyph(snap(b.x + b.w / 2), b.y - P * 7 - (SHELF_GLYPH_CELLS / 2 - 1.5) * P, rows, clamp01(at));
   ctx.globalAlpha = was;
 }
-// The closed sign at a station's door (config, AFTER_CLOSED), its foot on
-// the floor and `x` its middle, world px: a board on a post crossed through
-// corner to corner, symbols only, drawn on the act's art cell (AP) with its
-// rim the art's stroke.
-function closedSign(x) {
-  const C = AFTER_CLOSED, fl = afterFloor(), r = 2 * AFTER_ART_SCALE, u = AP;
-  const w = C.w * u, h = C.h * u, x0 = snap(x) - Math.round(C.w / 2) * u, top = fl - (C.post + C.h) * u;
-  ctx.fillStyle = GREY[K];
-  ctx.fillRect(snap(x) - r, top + h, 2 * r, C.post * u);
-  ctx.fillRect(x0, top, w, h);
-  ctx.fillStyle = GREY[W];
-  ctx.fillRect(x0 + r, top + r, w - 2 * r, h - 2 * r);
-  // the cross, a stroke two rims thick laid in steps of a rim on the rim's grid
-  ctx.fillStyle = GREY[K];
-  const cx = x0 + 2 * r, cy = top + 2 * r, cw = w - 4 * r, ch = h - 4 * r, s = 2 * r, n = Math.round((cw - s) / r) + 1;
-  for (let i = 0; i < n; i++) {
-    const y = cy + Math.round((ch - s) * i / (n - 1) / r) * r;
-    ctx.fillRect(cx + i * r, y, s, s); ctx.fillRect(cx + cw - s - i * r, y, s, s);
-  }
-}
 // How far a station's build has taken its closed look down, 0 to 1: each
 // piece landed, faded in over AFTER_BUILD_FADE_S, its share.
 const openedBy = r => (r ? r.at.slice(0, r.n).reduce((s, at) => s + fadeIn(at), 0) / AFTER_BUILD_PIECES : 0);
+const openedOf = key => { const r = A().raising[key]; return built(key) ? (r ? openedBy(r) : 1) : openedBy(r); };
 const alphaDo = (a, fn) => { if (a <= 0) return; const was = ctx.globalAlpha; ctx.globalAlpha = was * Math.min(1, a); fn(); ctx.globalAlpha = was; };
+// A station's shop sign (place.js, `signBox`), its foot on the floor: a board
+// on a post, symbols only, drawn on the act's art cell (AP) with its rim the
+// art's stroke and everything on it laid on the rim's grid. Closed, crossed
+// through corner to corner, the cross fading off as its build lands and the
+// shop's mark (config, AFTER_SIGN_MARK) on; with its board up, in ink, the
+// mark cut out of it.
+function shopSign(key) {
+  const C = AFTER_SIGN_BOARD, b = signBox(key), r = 2 * AFTER_ART_SCALE, opened = openedOf(key);
+  if (!inView(b.x, b.w)) return;
+  const w = b.w, h = C.h * AP, x0 = b.x, top = b.y, up = signUp(key);
+  ctx.fillStyle = GREY[K];
+  ctx.fillRect(x0 + w / 2 - r, top + h, 2 * r, C.post * AP);
+  ctx.fillRect(x0, top, w, h);
+  ctx.fillStyle = GREY[up ? K : W];
+  ctx.fillRect(x0 + r, top + r, w - 2 * r, h - 2 * r);
+  ctx.fillStyle = GREY[up ? W : K];
+  // the cross, a stroke two rims thick laid in steps of a rim
+  alphaDo(1 - opened, () => {
+    const cx = x0 + 2 * r, cy = top + 2 * r, cw = w - 4 * r, ch = h - 4 * r, s = 2 * r, n = Math.round((cw - s) / r) + 1;
+    for (let i = 0; i < n; i++) {
+      const y = cy + Math.round((ch - s) * i / (n - 1) / r) * r;
+      ctx.fillRect(cx + i * r, y, s, s); ctx.fillRect(cx + cw - s - i * r, y, s, s);
+    }
+  });
+  alphaDo(opened, () => {
+    const M = AFTER_SIGN_MARK, mx = x0 + Math.round((w - M[0].length * r) / 2 / r) * r, my = top + Math.round((h - M.length * r) / 2 / r) * r;
+    M.forEach((row, j) => [...row].forEach((c, i) => { if (c === '#') ctx.fillRect(mx + i * r, my + j * r, r, r); }));
+  });
+}
 // Its outline: the drawing's own cells (its silhouette) at its edge, every
 // other one, in the mid grey: a plan of what will stand.
 const OUTLINES = {};
@@ -162,9 +173,9 @@ function outlineOf(key) {
   }
   return (OUTLINES[key] = out);
 }
-// A closed station (config, AFTER_CLOSED): its dotted outline and its board
-// at the door, faded off as its build lands, and the station going up a
-// course a piece, the floor up, each fading in as it lands.
+// A closed station: its dotted outline, faded off as its build lands, and
+// the station going up a course a piece, the floor up, each fading in as it
+// lands.
 function closedStation(key, draw, opened) {
   const d = frameOf(key), b = stationBox(key), r = A().raising[key], rows = b.h / P;
   alphaDo(1 - opened, () => { for (const [c, row] of outlineOf(key)) d.c(c, row, MID); });
@@ -176,7 +187,6 @@ function closedStation(key, draw, opened) {
     draw(d, false, 0);
     ctx.restore();
   }
-  alphaDo(1 - opened, () => closedSign(stationDoor(key)));
 }
 function drawStation(key) {
   const b = stationBox(key);
@@ -187,7 +197,7 @@ function drawStation(key) {
   const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { backing(d, backOf(key)); DRAW[key](d, work, t, hands[key], atStation(key).length > 0, extras(key)); };
   // Closed, or just built and its closed look still fading off as the last
   // piece lands: its loads on the spot while it goes up.
-  const opened = built(key) ? (r ? openedBy(r) : 1) : openedBy(r);
+  const opened = openedOf(key);
   if (opened < 1 && key !== 'pedestal' && !AFTER_START_BUILT.includes(key)) {
     closedStation(key, draw, opened);
     if (!built(key)) { if (r) drawSite(key); return; }
@@ -263,8 +273,7 @@ export function drawAfterCamp() {
   drawForeground();
   drawUnionCrowd();
   // the forestry shack, the grove's, then the cards' stations
-  drawStation('forestry');
-  for (const key of AFTER_CARDS) if (key !== 'grove') drawStation(key);
+  for (const key of Object.keys(AFTER_STATIONS)) { drawStation(key); shopSign(key); }
   drawShackOrder();
   if (built('mill') || built('chipper')) drawSawdust();
   drawPiles();

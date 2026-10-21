@@ -1500,7 +1500,7 @@ import { setCrowd, support as afterSupport, union as afterUnion, crowdSize } fro
 import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut, idleBodies } from './after/bodies.js';
 import { rosterReport, rosterHit } from './roster.js';
-import { plotX, afterFloor, stationBox, heapX } from './after/place.js';
+import { plotX, afterFloor } from './after/place.js';
 import { afterGate, strikeDue } from './after/strike.js';
 import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, groveIcons } from './after/gestures.js';
 // A click up there as input.js makes it: the hand work's first (a part, a
@@ -1526,14 +1526,8 @@ HANDLES.__afterCrowd = fn => {
   else setCrowd(fn);
   return { support: afterSupport(), union: afterUnion(), size: crowdSize() };
 };
-// Where to click: the pair on the pedestal, the sawdust heap, a station's
-// worked box (below its roof's strip), each plot's trunk and stump.
+// Where to click: the pair on the pedestal, each plot's trunk and stump.
 HANDLES.__afterPair = () => { const b = pairBox(); return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; };
-HANDLES.__afterAt = what => {
-  if (what === 'heap') return { x: heapX() + AP, y: afterFloor() - AP };
-  const b = stationBox(what);
-  return b ? { x: b.x + b.w / 2, y: b.y + b.h - P } : null;
-};
 HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage: p.stage, logs: S.after.groundLogs.filter(q => q.i === i).length, falling: p.fall != null,
   stump: p.stump, x: plotX(i) + AP / 2, y: afterFloor() - AP * 5, sx: plotX(i) + AP / 2, sy: afterFloor() - AP / 2 })) : []);
 HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, shown: !!S.after && u.show(),
