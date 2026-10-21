@@ -2953,6 +2953,17 @@ export const SCENES = {
       window.__fast(0.3);
       window.__holdShot();
     } },
+  // The same stump taken hold of and pulled up past the strain, and never let
+  // go: the scene runs on through every root to the stump coming free.
+  'after-pull': { about: 'the acts', say: "a stump pulled by hand and held, straining root by root until it rips out",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      Object.assign(S.after.plots[0], { stage: 0, stump: true, dug: 0 });
+      window.__look(0); window.__fast(0.5);
+      const g = window.__gestureParts('stump', 0).stump, x = g.x + g.w / 2, y = g.y + g.h / 2;
+      window.__gesture('down', x, y);
+      for (let f = 1; f <= 30; f++) { window.__gesture('move', x, y - f * 2); window.__fast(1 / 60); }
+    } },
   // The pedestal: the pair mid-line over the rebel pile, motes on their way
   // down, and agitators behind them at their own lines.
   'after-pedestal': { about: 'the acts', say: 'the pair on the pedestal mid-speech, rebel falling to the pile, agitators behind them',
