@@ -15,10 +15,10 @@
 
 import { S } from '../state.js';
 import { AFTER_GATES, MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE } from '../config.js';
-import { union, support } from './union.js';
+import { won, support } from './union.js';
 
 // Whether gate `k` (0 the meeting) stands met by the crowd as it is now.
-const met = k => k === 0 ? union() >= MEET_MEMBERS
+const met = k => k === 0 ? won() >= MEET_MEMBERS
               : k === 1 ? support() >= SLOW_SHARE
               : support() >= STRIKE_SHARE;
 

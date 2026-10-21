@@ -4,14 +4,6 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Act 3's workers bought with rebel -- DESIGNED, AWAITING APPROVAL (2026-10-21)
-
-DESIGN.md, "Act 3's workers are bought with rebel". A won soul pays rebel
-and waits in God's crowd; a "recruit" row on the pedestal's board buys one
-out to the podium; the gates read souls won. Touches after/union.js
-(`walkOuts`, `support`), after/rows.js (the row), config/after.js. Blocker:
-the owner's approval of the design and its defaults.
-
 ## A tray capped mid-pay holds the hand forever -- FOUND, NOT FIXED (2026-10-20)
 
 `src/casino.js`: a pay grain that finds no cell sets `tray.capped`, which

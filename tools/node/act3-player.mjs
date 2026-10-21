@@ -16,9 +16,9 @@ import { tipSawdust, heapFull } from '../../src/after/mill.js';
 import { bubbles } from '../../src/after/bubbles.js';
 import { built } from '../../src/after/levels.js';
 import { afterRow, afterBill, afterMaxed } from '../../src/after/rows.js';
-import { crewAt, spareMembers, holds } from '../../src/after/bodies.js';
+import { crewAt, spareMembers, walkingOut, holds } from '../../src/after/bodies.js';
 import { seatsOf, seatKey } from '../../src/after/levels.js';
-import { union, support } from '../../src/after/union.js';
+import { union, won, support } from '../../src/after/union.js';
 import { wallSlots } from '../../src/after/place.js';
 
 export const mm = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -193,7 +193,8 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     for (const k of Object.keys(C.AFTER_BUILDS)) if (built(k)) mark(`b-${k}`, `${k} stands`);
     if (a.signs.length) mark('sign', 'first sign planted');
     if (a.posters.length) mark('poster', 'first poster pasted');
-    if (union() > C.AFTER_FIRST_MEMBERS) mark('member', 'first member won');
+    if (won() > C.AFTER_FIRST_MEMBERS) mark('member', 'first soul won');
+    if (union() > C.AFTER_FIRST_MEMBERS) mark('hired', 'first worker hired');
     for (let k = 0; k < a.gate; k++) mark(`g-${k}`, `gate: ${C.AFTER_GATES[k]}`);
   }
 
@@ -284,6 +285,10 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     const saving = first && shortOf(afterBill(row(first))).includes('rebel') && nextRebel() * 4 > firstRebel;
     laterKey = next && !planPost && !saving && crewAt('carrier') && free() >= (out.length ? RESERVE : 1) ? next : null;
     if (laterKey) out.push(laterKey);
+    // Workers are bought out of the souls won (DESIGN.md, "Act 3's workers
+    // are bought with rebel"): one first, while fewer than RESERVE stand idle.
+    const recruit = afterRow('after-recruit');
+    if (free() + walkingOut() < RESERVE && recruit.show() && !recruit.dead()) out.unshift(recruit.key);
     return out;
   };
   const bought = [];

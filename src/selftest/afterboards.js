@@ -59,8 +59,9 @@ export const TESTS = [
     // station's board, every tile on it pressed once.
     for (const st of ['mill', 'chipper', 'papermill', 'workshop', 'press']) if (!S.after.built.includes(st)) S.after.built.push(st);
     // ...and the union's support past the podium ladder's first mark, which
-    // its first rung waits on (after/rows.js `waitsOn`).
-    window.__afterCrowd(0.6);
+    // its first rung waits on (after/rows.js `waitsOn`), the souls won left
+    // waiting for the recruit row.
+    window.__afterCrowd(0.6, true);
     await settle(0.2);
     for (const card of AFTER_CARDS.filter(c => c !== 'shack')) {
       window.__openAfterBoard(card);

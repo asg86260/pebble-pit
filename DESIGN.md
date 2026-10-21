@@ -23020,7 +23020,7 @@ again (docs/act3-fixlist-2026-10-20.md, items 2 and 3).
   takes several of the carry's slots (a log, a plank, a sheet, a sign, its own
   weight in config), so a body carries few of them at once.
 
-### Act 3's workers are bought with rebel (design, not built; the owner, 2026-10-21)
+### Act 3's workers are bought with rebel (built; the owner, 2026-10-21)
 
 The owner, verbatim: "its hard to know how many workers are avail in act 3,
 can we use rebellion to buy workers instead of it happening automatically?
@@ -23058,11 +23058,14 @@ carry there all stand.
   God's yard to the podium and stands idle, agitating, until the roster's
   plus puts it to work, as members do now. With no won soul waiting the row
   is dead and says why.
-- **How many is on screen.** The recruit row reads the won souls waiting
-  ("12 ready"); the pedestal board's seats header reads the camp's idle and
-  working counts. Both are the sim's numbers, read live.
+- **How many is on screen.** The recruit row's line reads the won souls
+  waiting and the workers free ("12 ready, 3 idle"), greyed and still
+  saying both while nobody is ready. The sim's numbers, read live.
 - **The refusal's eight** walk out free on the act's first frame, as now:
-  the act cannot start with nobody to plant the first sign.
+  the act cannot start with nobody to plant the first sign. On its first
+  frame, not when the crowd is seeded: a yard jumped past act 3 never steps
+  it, and bodies left standing up there were found to unsettle the yard's
+  scenes (test/scenes-stand-acts.test.mjs).
 - **Builders** come from idle workers first, as now; a bought recruit is
   idle until assigned.
 - **Saves.** A slot already walked out stays a worker; no migration. A save

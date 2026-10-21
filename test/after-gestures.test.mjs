@@ -177,10 +177,14 @@ group('the sawdust heap: a load dragged to the notch tips one, a fling tips up t
   ];
 }, NO_RELOAD);
 
+// The camp's members agitate rebel onto the same pile on their own clock:
+// another check's (test/after-roster.test.mjs), so these stand none.
+const noAgitators = () => { S.after.bodies = []; S.after.camp = 0; };
 group('the pedestal: a popped bubble is a line of the speech, and the big one pays five', async () => {
   const small = { x: 0, y: 0, w: P * 7, h: P * 4, big: false }, big = { x: 0, y: 0, w: P * 10, h: P * 6, big: true };
   const trial = b => {
     up();
+    noAgitators();
     const pair = partsOf('pedestal').box;
     Object.assign(b, { x: pair.x, y: pair.y - P * 12 });
     let air = [b];
@@ -208,6 +212,7 @@ group('the pedestal: a popped bubble is a line of the speech, and the big one pa
 // pair's heads, and is counted only when it lands on the pile.
 group('the pedestal: a popped bubble\'s rebel starts at the bubble and is counted where it lands', async () => {
   up();
+  noAgitators();
   const pair = partsOf('pedestal').box, b = { x: pair.x + P * 20, y: pair.y - P * 24, w: P * 7, h: P * 4, big: false };
   let air = [b];
   useBubbles({ list: () => air, pop: x => { const had = air.includes(x); air = air.filter(y => y !== x); return had; } });

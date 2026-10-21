@@ -3283,6 +3283,10 @@ export const SCENES = {
   // camp, as a plain click on its station's sign opens it, the camera on the
   // sign the board stands by (after/rows.js `openAfterBoard`); the paper mill
   // and the press stood up for their own.
+  // The pedestal's recruit row live: souls won in God's yard waiting to be
+  // hired (DESIGN.md, "Act 3's workers are bought with rebel").
+  'act3-recruit': { about: 'the acts', say: "act 3's pedestal board with souls won and waiting: the recruit row's count of ready and idle",
+    run: () => { act3Board('pedestal'); window.__afterCrowd((i, v) => (i >= CROWD_FILES * 2 && i < CROWD_FILES * 2 + 12 ? 8 : v), true); window.__holdShot(); } },
   ...Object.fromEntries(['shack', 'grove', 'pedestal', 'mill', 'chipper', 'papermill', 'workshop', 'press', 'crowd'].map(key =>
     [`act3-board-${key}`, { about: 'the acts', say: `act 3's ${key} board open in the yard's sheet, its shelves, bills in the act's marks`,
       run: () => act3Board(key) }])),
