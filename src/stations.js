@@ -308,10 +308,11 @@ export function standRect(key) {
 }
 
 // A station's hit box: its ground padded by its reach, where the pointer
-// opens its board.
+// opens its board; for a row that sells from a sign, the sign.
 export function hitRect(key) {
   const s = station(key);
   if (!s || !s.stand || !s.open()) return null;
+  if (s.sign) return s.sign();
   const r = s.stand();
   if (!r) return null;
   const c = { ...REACH, ...(s.reach || {}) };
