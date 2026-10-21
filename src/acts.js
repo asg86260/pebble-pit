@@ -20,6 +20,7 @@ import { AFTER_PLACE } from './after/place.js';
 import { godFront, restW } from './after/sky.js';
 import { HELL_PLACE } from './hell/place.js';
 import { AFTER_CREW } from './after/bodies.js';
+import { AFTER_GOODS } from './after/hand.js';
 import { HELL_CREW } from './hell/bodies.js';
 import { S } from './state.js';
 
@@ -49,7 +50,9 @@ const AFTER_AT_YARD = {
   ...AFTER_PLACE,
   x1: () => godFront() + restW() / 2,
   get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; },
-  get crew() { return AFTER_CREW; }
+  get crew() { return AFTER_CREW; },
+  // The goods the hand takes up off its piles and floor (after/hand.js).
+  get goods() { return AFTER_GOODS; }
 };
 // Each place's crew (placebodies.js): its own body list, its JOBS registry,
 // its walk and how the hand takes one of its bodies up. Read through a

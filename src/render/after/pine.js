@@ -133,6 +133,7 @@ function drawGroundLogs(t) {
   if (!cv) return;
   for (const q of groundLogs()) {
     const since = t - q.at;
+    if (q.fall != null) continue;            // the hand's, drawn over the camp (`drawLaidGoods`)
     if (since < -SPLIT_S || !inView(q.x0 - AP * 2, q.x - q.x0 + AP * 6)) continue;
     const r = clamp01(since / AFTER_LOG_ROLL_S), e = 1 - (1 - r) * (1 - r);
     const x = q.x0 + (q.x - q.x0) * e;
@@ -143,6 +144,26 @@ function drawGroundLogs(t) {
     ctx.rotate((x - q.x0) / R0);
     ctx.drawImage(cv, -R0, -R0);
     ctx.restore();
+  }
+}
+// The goods the hand let go of off any pile (after/hand.js), each falling
+// straight down under the yard's gravity from where it was let go and lying
+// where it lands, drawn over the camp's stations so one let go in front of a
+// station is seen: a log end on, a plank and a sheet flat, a sign on its back.
+// The whole good moves as one piece by its true height; its cells are the
+// piles' own (render/after/piles.js), at the art's scale.
+export function drawLaidGoods(t) {
+  const fl = afterFloor(), cv = logSprite();
+  for (const q of groundLogs()) {
+    if (q.fall == null) continue;
+    const kind = q.kind || 'log', u = q.fall > 0 ? clamp01((t - q.at) / q.fall) : 1;
+    if (!inView(q.x - AP * 2, AP * 10)) continue;
+    const y = Math.round((q.y0 ?? fl) + (fl - (q.y0 ?? fl)) * u * u);
+    if (kind === 'log') { if (cv) { ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(cv, Math.round(q.x), y - 2 * AP); ctx.restore(); } continue; }
+    const d = frame(Math.round(q.x), y, 0, null, A);
+    if (kind === 'plank') { d.px(0, -P, 6 * P, P, K); d.px(2, -P + 2, 6 * P - 4, P - 4, PALE); }
+    else if (kind === 'sheet') { d.px(0, -3, 4 * P, 3, K); d.px(2, -3, 4 * P - 4, 2, W); }
+    else if (kind === 'sign') { d.px(0, -P, 4 * P, P, K); d.px(2, -P + 2, 4 * P - 4, P - 4, W); d.px(4 * P, -P / 2 - 1, 2 * P, 2, K); }
   }
 }
 function pine(d, stage, a = 1) {

@@ -19,6 +19,7 @@ import { P, GREY, AFTER_CARRY_SHOWN, AFTER_SIGN_BOARD, AFTER_SIGN_MARK, AFTER_ST
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
+import { shown } from '../tween.js';
 import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
@@ -34,7 +35,7 @@ import { frame, now, inView, clamp01, pileState, pileAlpha, countAt, clearCounts
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
 import { drawCloudSky } from './after/cloudsky.js';
-import { drawGrove } from './after/pine.js';
+import { drawGrove, drawLaidGoods } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, logPile, plankPile, sheetPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
@@ -247,7 +248,7 @@ function signRack(d, x, st) {
   // blow: as far along as its nails are driven, by the hand or the joiner.
   const h = hands.workshop, done = h && h.nails ? h.nails.reduce((a, k) => a + k, 0) / (h.nails.length * GESTURE_NAIL_TAPS) : 0;
   if (done > 0 && st.n < 3) drawFistFlag(at.x + st.n * step, at.y - P, U, done);
-  countAt(at.x + step * 1.5, at.y - (SKY_FLAG.h + SKY_FLAG.up + 3) * U - P * 2, st.n);
+  countAt(at.x + step * 1.5, at.y - (SKY_FLAG.h + SKY_FLAG.up + 3) * U - P * 2, shown(`after-pile:${st.key}`, st.n));
 }
 // Each station's counted pile, on its own ground.
 function drawPiles() {
@@ -275,6 +276,7 @@ export function drawAfterCamp() {
   drawShackOrder();
   if (built('mill') || built('chipper')) drawSawdust();
   drawPiles();
+  drawLaidGoods(a.t);
   drawRebelPile();
   drawPair();
   drawBubbles();
@@ -301,6 +303,40 @@ function carried(x, y, s) {
   const d = frame(lx, ly);
   if (plank) plankAt(d, 0, 0); else blockAt(d, 0, 0);
 }
+// A load of `n` of a good stacked the yard's way (render/crew.js), a thing a
+// row, as many rows as it carries, up to AFTER_CARRY_SHOWN: over a head whose
+// top left is (x, y), or in the hand at the cursor (`drawHand`).
+function drawLoad(x, y, kind, n) {
+  n = Math.min(AFTER_CARRY_SHOWN, n);
+  if (kind === 'log') for (let k = 0; k < n; k++) { const ly = y - P - k * 2 * P; ctx.fillStyle = GREY[K]; ctx.fillRect(x - P, ly, 5 * P, P); cell(x + P, ly, PALE); }
+  else if (kind === 'plank') for (let k = 0; k < n; k++) {
+    const ly = y - P - k * 2 * P;
+    ctx.fillStyle = GREY[K]; ctx.fillRect(x - P * 2, ly, 7 * P, P); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x - P * 2 + 2, ly + 2, 7 * P - 4, P - 4);
+  } else if (kind === 'sheet') for (let k = 0; k < n; k++) {
+    const sy = y - 6 - k * P;
+    ctx.fillStyle = GREY[K]; ctx.fillRect(x + 2, sy, 14, 6); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 4, sy + 2, 10, 2);
+  } else if (kind === 'sign') {
+    // The one in front held up on its post; the rest boards on the shoulder.
+    drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
+    ctx.fillStyle = GREY[K];
+    for (let k = 1; k < n; k++) ctx.fillRect(x - P, y - k * 2 * P, 3 * P, P);
+  } else if (kind === 'posters') for (let k = 0; k < n; k++) {
+    const sy = y - 10 - k * 2 * P;
+    ctx.fillStyle = GREY[K]; ctx.fillRect(x + 2, sy, 14, 10); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 4, sy + 2, 10, 6);
+  }
+}
+// The goods in the player's hand (after/hand.js): the load a member would
+// carry over its head, its foot on the cursor's point, moved by the hand's
+// true position as one piece; let go over a pile, the same load standing
+// there and shrinking a good at a time as it is set down.
+function drawHand() {
+  const h = A().hand;
+  if (!h || !h.n) return;
+  ctx.save();
+  ctx.translate(Math.round(h.x - 1.5 * P), Math.round(h.y) + P);
+  drawLoad(0, 0, h.kind, h.n);
+  ctx.restore();
+}
 function drawMember(w) {
   // The first worker through a working station's door stands in its pose.
   if (w.at && DRAW[w.at] && atStation(w.at)[0] === w) {
@@ -313,20 +349,8 @@ function drawMember(w) {
   const at = body(w.x, ground);
   const x = at.x, y = at.y;
   ctx.fillStyle = GREY[K];
-  // A load stacked over the head the yard's way (render/crew.js), a thing a
-  // row, as many rows as it carries, up to AFTER_CARRY_SHOWN.
-  const n = Math.min(AFTER_CARRY_SHOWN, carryOf(w));
-  if (w.load === 'log') for (let k = 0; k < n; k++) { const ly = y - P - k * 2 * P; ctx.fillStyle = GREY[K]; ctx.fillRect(x - P, ly, 5 * P, P); cell(x + P, ly, PALE); }
-  else if (w.load === 'sign') {
-    // The one in front held up on its post; the rest boards on the shoulder.
-    drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
-    ctx.fillStyle = GREY[K];
-    for (let k = 1; k < n; k++) ctx.fillRect(x - P, y - k * 2 * P, 3 * P, P);
-  } else if (w.load === 'posters') for (let k = 0; k < n; k++) {
-    const sy = y - 10 - k * 2 * P;
-    ctx.fillStyle = GREY[K]; ctx.fillRect(x + 2, sy, 14, 10); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 4, sy + 2, 10, 6);
-  }
-  else if (w.load === 'carry' || w.load === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
+  drawLoad(x, y, w.load, carryOf(w));
+  if (w.load === 'carry' || w.load === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
   else if (w.load === 'tip') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
   if (w.swing != null) {
     if (w.job == null) shoutMark(x, y);
@@ -347,6 +371,8 @@ export function drawAfterMembers() {
     drawMember(w);
     ctx.globalAlpha = 1;
   }
+  // and the goods in the hand, over every body, as a lifted one is
+  drawHand();
 }
 
 // --- the counts ----------------------------------------------------------------------

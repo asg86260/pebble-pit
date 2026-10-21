@@ -48,19 +48,30 @@ export const lifted = () => S.workers.find(w => w.lifted) || null;
 // held body put where the cursor is by its own place's way of standing.
 // The tooltip and the retraining stay the yard's (`workerAt`, `lifted`): an
 // act's member has no card and no station to be dropped on.
+// A place may also hand its goods to the hand (`goods`, after/hand.js): a
+// thing off a pile or the floor, taken by the same press and hold as a body
+// and let go the same way, a body under the pointer asked first.
 const handPad = () => Math.max(P * 1.5, coarse() ? (TOUCH_TARGET / S.zoomShow - WORKER) / 2 : 0);
+const goodsOf = o => { for (const pl of Object.values(PLACES)) if (pl.goods?.owns(o)) return pl.goods; return null; };
 export function grabAt(x, y) {
   if (!isActView(S.view)) return workerAt(x, y);
-  if (crewView() === 'hide') return null;
-  return bodyAt(actPlace(S.view).crew, x, y, handPad());
+  const pl = actPlace(S.view), w = crewView() === 'hide' ? null : bodyAt(pl.crew, x, y, handPad());
+  return w || pl.goods?.at(x, y, handPad()) || null;
 }
+// Goods under the pointer the hand could take, for the cursor.
+export const goodsUnder = (x, y) => isActView(S.view) && !!actPlace(S.view).goods?.at(x, y, handPad());
 export function inHand() {
   const w = lifted();
   if (w) return w;
-  for (const pl of Object.values(PLACES)) { const b = pl.crew.list()?.find(o => o.lifted); if (b) return b; }
+  for (const pl of Object.values(PLACES)) {
+    const b = pl.crew.list()?.find(o => o.lifted) || pl.goods?.held();
+    if (b) return b;
+  }
   return null;
 }
 export function holdBody(w, x, y) {
+  const goods = goodsOf(w);
+  if (goods) { goods.hold(w, x, y); return; }
   const crew = crewHolding(w);
   if (crew) { crew.hold(w, x, y); return; }
   w.x = x - WORKER / 2;
@@ -79,6 +90,8 @@ export function hoverAt(x, y) {
 
 export function lift(w) {
   if (!w) return false;
+  const goods = goodsOf(w);
+  if (goods) return goods.lift(w);
   const crew = crewHolding(w);
   if (crew) {
     for (const o of S.workers) o.lifted = false;
@@ -125,6 +138,8 @@ export function lift(w) {
 // a very long walk back.
 export function drop(w) {
   if (!w) return;
+  const goods = goodsOf(w);
+  if (goods) { goods.drop(w); return; }
   const v = throwVel();
   if (crewHolding(w)) { dropBody(w, v); return; }
   w.lifted = false;
@@ -194,8 +209,9 @@ function flingHat(w, dx) {
   earn('hatoff');
 }
 export function shakeHeld(w, dx) {
-  // An act's member carries nothing the shaking sheds and wears no hat.
-  if (!w || Math.abs(dx) < 1 || crewHolding(w)) return;
+  // An act's member carries nothing the shaking sheds and wears no hat, and
+  // goods in the hand are no body.
+  if (!w || Math.abs(dx) < 1 || crewHolding(w) || goodsOf(w)) return;
   const dir = Math.sign(dx);
   const t = now();
   if (t - (w.turnedAt || 0) > SHAKE_WINDOW) w.shook = 0;   // lapsed: start again

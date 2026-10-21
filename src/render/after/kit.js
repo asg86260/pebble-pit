@@ -119,7 +119,7 @@ export function pileState(key, n) {
   let s = seen.get(key);
   if (!s || t < s.at) { s = { n, prev: n, at: -1e9 }; seen.set(key, s); }
   if (n !== s.n) { s.prev = s.n; s.n = n; s.at = t; }
-  return { n, prev: s.prev, since: t - s.at };
+  return { key, n, prev: s.prev, since: t - s.at };
 }
 export function pileAlpha(i, st) {
   const f = clamp01(st.since / AFTER_PILE_FADE_S);

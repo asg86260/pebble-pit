@@ -5,9 +5,12 @@
 
 import { P } from '../../config.js';
 import { K, W, PALE, MID, DUST, hash, pileAlpha, countAt } from './kit.js';
+import { shown } from '../../tween.js';
 
 // The count two cells over a pile's top, at a frame cell (cx, cy), in world px.
-function count(d, n, cx, cy) { const at = d.world(cx, cy); countAt(at.x, at.y, n); }
+// Through the shared counts tween (tween.js, `shown`) by the pile's name, so a
+// count taken from or added to runs a good at a time rather than jumping.
+function count(d, n, cx, cy, key) { const at = d.world(cx, cy); countAt(at.x, at.y, key ? shown(`after-pile:${key}`, n) : n); }
 
 // A log seen end on: a two-cell square, black rim, a pale cut face, a mid heart.
 export function logEnd(d, x, y) { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, PALE); d.px(x * P + 5, y * P + 5, 2, 2, MID); }
@@ -17,7 +20,7 @@ export function logPile(d, x, st, cap = SPOTS.length) {
   const m = Math.min(Math.max(st.n, st.prev), cap);
   for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => logEnd(d, x + SPOTS[i][0], -2 - SPOTS[i][1] * 2));
   const shown = Math.min(st.n, cap), top = shown <= 3 ? 1 : shown <= 5 ? 2 : 3;
-  count(d, st.n, x + 3, -top * 2 - 2.5);
+  count(d, st.n, x + 3, -top * 2 - 2.5, st.key);
 }
 // Timber: planks six cells long and a cell deep, every other one set in half a cell.
 export function plankPile(d, x, st, cap = 6) {
@@ -26,7 +29,7 @@ export function plankPile(d, x, st, cap = 6) {
     const y = -1 - i, dx = i % 2 ? 0.5 : 0;
     d.px((x + dx) * P, y * P, 6 * P, P, K); d.px((x + dx) * P + 2, y * P + 2, 6 * P - 4, P - 4, PALE);
   });
-  count(d, st.n, x + 3.25, -Math.max(1, Math.min(st.n, cap)) - 2.5);
+  count(d, st.n, x + 3.25, -Math.max(1, Math.min(st.n, cap)) - 2.5, st.key);
 }
 // A heap of grains, in the sawdust's tones a cell, growing as a triangle from
 // its middle column `cx`, `R` cells high at its brim. `st` counts cells.
@@ -69,7 +72,7 @@ export function sheetPile(d, x, st, cap = 6, print = false) {
     });
   }
   const top = print && shown > 0 ? topY - 4 * P : topY;
-  count(d, st.n, x + 2, top / P - 2.5);
+  count(d, st.n, x + 2, top / P - 2.5, st.key);
 }
 // Signs: a board on a post, stood in a row.
 export function sign(d, x, y) {
@@ -80,7 +83,7 @@ export function sign(d, x, y) {
 export function signPile(d, x, st, cap = 3) {
   const m = Math.min(Math.max(st.n, st.prev), cap);
   for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => sign(d, x + i * 2, -6 - (i % 2)));
-  count(d, st.n, x + 2 + (Math.max(1, Math.min(st.n, cap)) - 1), -9.5);
+  count(d, st.n, x + 2 + (Math.max(1, Math.min(st.n, cap)) - 1), -9.5, st.key);
 }
 
 // --- a station's loads, while it is raised (pile a, docs/mocks/act3-unbuilt-2026-10-18)

@@ -23,14 +23,16 @@
 // fell, laid on the ground on its first frame. A log on the ground is a row
 // of `S.after.groundLogs`: { id, i, x0, x, at } -- its plot, where it split
 // off the trunk and where it comes to rest (world px), and when it set off
+// rolling. A good the hand let go of lies in the same list, `kind` saying
+// what it is, `i` null, falling from `y0` for `fall` seconds instead of
 // rolling.
 
 import { S } from '../state.js';
 import { P, TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_LOGS_BIG_TREE, AFTER_FALL_S, AFTER_CROWN_FADE_S, AFTER_DIG_CLICKS,
-         AFTER_PLOTS0, AFTER_FALL_BOUNCE_S, AFTER_LOG_ROLL, AFTER_LOG_ROLL_S, AFTER_LOG_SPAN } from '../config.js';
+         AFTER_PLOTS0, AFTER_FALL_BOUNCE_S, AFTER_LOG_ROLL, AFTER_LOG_ROLL_S, AFTER_LOG_SPAN, GRAV } from '../config.js';
 import { secs, nextId } from './util.js';
 import { growS, bigTrees } from './levels.js';
-import { PINE_GROWN, stationParts, plotX, AP } from './place.js';
+import { PINE_GROWN, stationParts, plotX, afterFloor, AP } from './place.js';
 
 export const GROWN = PINE_GROWN;
 
@@ -108,8 +110,20 @@ function dropLogs(i, n, at) {
     S.after.groundLogs.push({ id, i, x0: from, x: snap(from + roll), at });
   }
 }
-// Whether a log has stopped rolling: a gatherer takes it up only then.
-export const settled = q => S.after.t >= q.at + AFTER_LOG_ROLL_S;
+// Whether a log has stopped rolling, or a good let go of by the hand has
+// come down (`fall`, its seconds): a gatherer takes it up only then.
+export const settled = q => S.after.t >= q.at + (q.fall ?? AFTER_LOG_ROLL_S);
+// What a thing lying on the floor is: a felled tree's log, or whatever the
+// hand let go of there (after/hand.js, `kind`).
+export const kindOf = q => q.kind || 'log';
+// A good let go of by the hand at (x, y), off any pile: it falls under the
+// yard's gravity (GRAV, px a frame a frame) straight down to the floor at
+// x, and lies there as a felled log does until a gatherer or the hand takes
+// it up.
+export function layGood(kind, x, y) {
+  const a = S.after, h = Math.max(0, afterFloor() - y);
+  a.groundLogs.push({ id: nextId(), i: null, kind, x0: x, x, y0: Math.min(y, afterFloor()), at: a.t, fall: Math.sqrt(2 * h / GRAV) / 60 });
+}
 // A gatherer taking log `id` up off the ground.
 export function takeGroundLog(id) {
   const a = S.after, k = a.groundLogs.findIndex(q => q.id === id);

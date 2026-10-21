@@ -23,6 +23,7 @@ import { stepPress, forgetSigns } from './press.js';
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
 import { stepBodies } from './bodies.js';
+import { stepHand, settleHand } from './hand.js';
 import './roster.js';                   // the act's posts, stood on the yard's roster
 import { stepBubbles, forgetBubbles } from './bubbles.js';
 import { secs } from './util.js';
@@ -47,7 +48,8 @@ import { readOver } from '../placesave.js';
 // tipped and each station last worked by hand (`tipAt`, `workAt`), the
 // motes coming down, the bodies -- members walking out, at
 // the podium, at their jobs and building -- the throne's speech, the logs lying where
-// their trees fell (grove.js, `groundLogs`), and the last id handed out.
+// their trees fell (grove.js, `groundLogs`), the goods in the player's hand
+// (hand.js, `hand`), and the last id handed out.
 export const blankAfter = () => ({
   rebel: 0,
   stock: Object.fromEntries(AFTER_STOCK.map(k => [k, 0])),
@@ -79,6 +81,7 @@ export const blankAfter = () => ({
   gateAt: null,
   brimAt: null,
   groundLogs: [],
+  hand: null,
   ids: 0
 });
 
@@ -119,6 +122,7 @@ export function stepAfter(c) {
   stepRebel(c);
   stepGrove(c);
   stepBodies(c);
+  stepHand(c);
   stepMill(c);
   stepPress(c);
   stepUnion(c);
@@ -192,7 +196,7 @@ export const SAVE = {
     S.after = a && typeof a === 'object' ? readOver(blankAfter(), a) : null;
     if (S.after) foldJobs(S.after);
     if (S.after && a.posts && typeof a.posts === 'object' && !a.crew) fromPosts(S.after, a.posts);
-    if (S.after) settleHeld(S.after.bodies);
+    if (S.after) { settleHeld(S.after.bodies); settleHand(); }
   },
   blank() { S.after = null; }
 };

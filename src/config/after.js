@@ -354,8 +354,26 @@ export const AFTER_PASTE_S = 1.2;          // a paster pasting a poster
 // act 1. But take up more slots."): a body carries as many as its load holds,
 // one at the least, picked up and set down one a beat (AFTER_PUT_S). Keyed
 // by what a body's `load` says it carries.
-export const AFTER_CARRY_SLOTS = { log: 2, sign: 2, posters: 1 };
+// A plank and a sheet are the hand's goods' defaults: a plank a log's
+// weight, a sheet a poster's.
+export const AFTER_CARRY_SLOTS = { log: 2, plank: 2, sheet: 1, sign: 2, posters: 1 };
 export const AFTER_PUT_S = 0.3;
+// --- goods by hand (DESIGN.md, "Act 3's hand work and hand carrying") ---
+// What each counted pile holds, as a load names it (AFTER_CARRY_SLOTS): the
+// hand takes that good off it, and a load of that good let go over it is
+// set down on it. Posters are the pasters' and not taken by hand.
+export const AFTER_PILE_GOODS = { grovelogs: 'log', logs: 'log', chiplogs: 'log', timber: 'plank', paper: 'sheet', signs: 'sign' };
+// The pile a good lying on the floor is carried back to by a gatherer: the
+// one its station makes it onto.
+export const AFTER_GOODS_HOME = { log: 'grovelogs', plank: 'timber', sheet: 'paper', sign: 'signs' };
+// A pile's reach for the hand, art cells up off the floor: its tallest
+// stack (a sign on its post) and a cell over.
+export const AFTER_PILE_REACH = 10;
+// A good lying on the floor, art cells across where the hand finds it (a
+// log lies end on, two cells; a plank its length), and the art cells
+// between two let go from one load.
+export const AFTER_GOODS_FOOT = { log: 2, plank: 6, sheet: 4, sign: 4 };
+export const AFTER_LAY_GAP = 1;
 // The most of a load drawn stacked over a head: past it the stack would
 // stand taller than the camp's stations.
 export const AFTER_CARRY_SHOWN = 6;

@@ -28,15 +28,15 @@ import { S } from '../state.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S, AFTER_PASTE_S,
          AFTER_CARRY_SLOTS, AFTER_PUT_S, AFTER_PRESS_S, AFTER_SAW_S, AFTER_CHIP_S, AFTER_SIGN_S, AFTER_PULP_S, AFTER_CHOP_HOLD_S,
-         AFTER_JOIN_FADE_S } from '../config.js';
+         AFTER_JOIN_FADE_S, AFTER_GOODS_HOME } from '../config.js';
 import { secs, walk, nextId } from './util.js';
 import { stepCrew } from '../placebodies.js';
 import { haulCap } from '../levels.js';
 import { deepAt } from './sky.js';
 import { built, stumpsOn, seatsOf } from './levels.js';
-import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
+import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
-import { standing, stumped, chopTree, digStump, settled, takeGroundLog } from './grove.js';
+import { standing, stumped, chopTree, digStump, settled, takeGroundLog, kindOf } from './grove.js';
 import { sweepDue, tipSawdust, vatOf } from './mill.js';
 import { signSpot, plantSign, freeSlot, pastePoster } from './press.js';
 import { workAfter } from './work.js';
@@ -265,28 +265,35 @@ function fetchLogs(w, key, dt) {
   if (go(w, pileMid(key, mine), floorY(), dt)) putDown(w, dt, () => { a.stock[mine] += 1; });
   return true;
 }
-// Logs lying still in the grove, taken up nearest first while the load has
-// room (the yard's carter) and carried to the forestry shack's pile, a log a
-// beat; `w.log` is the one walked to, so no two go for the same. False with
-// nothing in hand and nothing lying free.
-const looseLogs = () => S.after.groundLogs.filter(settled);
+// Goods lying still on the floor -- the grove's felled logs, and whatever the
+// hand let go of off a pile (after/hand.js) -- taken up nearest first, the
+// next of the same kind while the load has room (the yard's carter), and
+// carried to that kind's pile (AFTER_GOODS_HOME: a log the forestry shack's,
+// a plank the saw mill's timber) a good a beat; `w.log` is the one walked
+// to, so no two go for the same. A good whose pile's station is not
+// standing is left lying. False with nothing in hand and nothing lying free.
+const homeOf = kind => AFTER_GOODS_HOME[kind] || AFTER_GOODS_HOME.log;
+const looseLogs = (kind = null) => S.after.groundLogs.filter(o => settled(o)
+  && (kind ? kindOf(o) === kind : built(pileOwner(homeOf(kindOf(o))))));
 function gather(w, dt) {
   const a = S.after;
   if (w.to === 'pile') {
-    if (go(w, pileMid('forestry', 'grovelogs'), floorY(), dt) && putDown(w, dt, () => { a.stock.grovelogs += 1; })) w.to = null;
+    const what = homeOf(w.load);
+    if (go(w, pileMid(pileOwner(what), what), floorY(), dt) && putDown(w, dt, () => { a.stock[what] += 1; })) w.to = null;
     return true;
   }
+  const kind = carried(w) ? w.load : null;
   let q = w.log != null ? a.groundLogs.find(o => o.id === w.log) : null;
-  if (!q || !settled(q)) {
+  if (!q || !settled(q) || (kind && kindOf(q) !== kind)) {
     const claimed = new Set(a.bodies.filter(o => o !== w && o.log != null).map(o => o.log));
-    const free = looseLogs().filter(o => !claimed.has(o.id));
+    const free = looseLogs(kind).filter(o => !claimed.has(o.id));
     q = free.length ? free.reduce((b, o) => (Math.abs(o.x - w.x) < Math.abs(b.x - w.x) ? o : b)) : null;
     w.log = q ? q.id : null;
   }
-  if (carried(w) && (carried(w) >= holds('log') || !q)) { w.to = 'pile'; w.log = null; w.t = 0; return true; }
+  if (kind && (carried(w) >= holds(kind) || !q)) { w.to = 'pile'; w.log = null; w.t = 0; return true; }
   if (!q) return false;
   if (!go(w, q.x + AP, floorY(), dt)) return true;
-  if (takeGroundLog(q.id)) { w.carry = carried(w) + 1; w.load = 'log'; }
+  if (takeGroundLog(q.id)) { w.carry = carried(w) + 1; w.load = kindOf(q); }
   w.log = null;
   return true;
 }

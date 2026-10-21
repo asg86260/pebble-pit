@@ -91,6 +91,11 @@ export const pileAt = (key, what) => {
   const art = ART[key], x = art.pile[what];
   return stationX0(key) + (art.flip ? art.flip - x - PILE_W : x) * AP;
 };
+// The station a counted pile lies on, by the pile's stock key, and the box
+// the hand finds it in: its six cells across, `reach` art cells up off the
+// floor.
+export const pileOwner = what => Object.keys(ART).find(k => what in ART[k].pile) || null;
+export const pileBox = (key, what, reach) => ({ x: pileAt(key, what), y: afterFloor() - reach * AP, w: PILE_W * AP, h: reach * AP });
 // Where a station's loads are piled while it is raised (after/build.js): on
 // its ground beside its drawing, where its own product pile will stand,
 // BUILD_PILE_W art cells across and kept on the ground. Its left edge.

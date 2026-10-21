@@ -34,7 +34,7 @@ import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
 import { holdAt, dragArm, releaseArm, tapAt, leverUnder, signUnder } from './levers.js';
-import { hoverAt, grabAt, inHand, holdBody } from './crew/pointer.js';
+import { hoverAt, grabAt, inHand, holdBody, goodsUnder } from './crew/pointer.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
 import { houseRect } from './house.js';
@@ -667,6 +667,8 @@ const CURSORS = [
   // up in act 3, a part the hand works: open on it, closed while it is held
   [() => gestureHeld(), 'grabbing'],
   [(x, y) => S.view === 'after' && gestureUnder(x, y), 'grab'],
+  // a pile or the floor with goods the hand can take up (after/hand.js)
+  [(x, y) => goodsUnder(x, y), 'grab'],
   [(x, y) => atStation(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],
