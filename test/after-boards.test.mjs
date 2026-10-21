@@ -39,12 +39,12 @@ group('each board lists its rows on its shelves: seats, then upgrades; the shack
   const want = {
     shack: [[msg('after-sect-build'), ['mill', 'chipper', 'papermill', 'workshop', 'press'].map(s => `after-build-${s}`)]],
     pedestal: [[ups, ['after-recruit', 'after-podium']]],
-    grove: [[seats, ['after-seat-woodcutter', 'after-seat-gatherer', 'after-seat-hauler']], [ups, ['after-axe', 'after-plot', 'after-grow', 'after-tree', 'after-stumps']]],
+    grove: [[seats, ['after-seat-woodcutter']], [ups, ['after-axe', 'after-plot', 'after-grow', 'after-tree', 'after-stumps']]],
     mill: [[seats, ['after-seat-sawyer']], [ups, ['after-blade', 'after-heap']]],
     chipper: [[seats, ['after-seat-feeder']], [ups, ['after-drum', 'after-spout']]],
     papermill: [[seats, ['after-seat-pulper']], [ups, ['after-vat', 'after-dry']]],
-    workshop: [[seats, ['after-seat-joiner', 'after-seat-carrier']], [ups, ['after-bench', 'after-signreach']]],
-    press: [[seats, ['after-seat-printer', 'after-seat-paster']], [ups, ['after-stack', 'after-posterreach']]]
+    workshop: [[seats, ['after-seat-joiner']], [ups, ['after-bench', 'after-signreach']]],
+    press: [[seats, ['after-seat-printer']], [ups, ['after-stack', 'after-posterreach']]]
   };
   const off = Object.entries(want).filter(([k, v]) => JSON.stringify(all[k]) !== JSON.stringify(v)).map(([k]) => k);
   const crowdBuys = boardOf('after-crowd').rows().filter(u => !u.read);

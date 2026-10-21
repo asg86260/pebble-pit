@@ -183,5 +183,33 @@ export const TESTS = [
       ok(up.obj && up.raise && up.seen === 0 && up.raiseSeen === 0, 'up in act 3 both are faded out', JSON.stringify(up)),
       ok(!back.obj && !back.raise, 'and back down in the yard both return', JSON.stringify(back))
     ];
+  }],
+  ['act 3: the pointer on a roster says what its job does, or why it is standing still', async () => {
+    newRun();
+    await settle();
+    await upThere();
+    S.after.built.push('mill');
+    S.after.stock.logs = 0; S.after.stock.grovelogs = 0;
+    const b = stationBox('mill'), r = canvas().getBoundingClientRect();
+    window.__look(b.x + b.w / 2 - S.viewW / 2);
+    await settle(0.2);
+    const hover = async () => {
+      const q = window.__afterRoster().find(o => o.job === 'sawyer');
+      const s = toScreen((q.less[0] + q.more[0]) / 2, q.less[1]);
+      point('pointermove', r.left + s.x, r.top + s.y, 0);
+      await sleep(250);
+      const t = document.getElementById('tip');
+      return t && !t.hidden ? t.textContent.trim() : '';
+    };
+    const stalled = await hover();
+    window.__afterGrant({ grovelogs: 3 });
+    point('pointermove', r.left + 4, r.top + 4, 0);
+    await sleep(100);
+    const working = await hover();
+    window.__actsOn(null);
+    return [
+      ok(stalled.includes(msg('after-stall-logs')), 'with no logs anywhere the sawyer\'s roster says it waits on logs', stalled),
+      ok(working.includes(msg('after-job-sawyer.says')), 'with logs at the shack it says what the sawyer does', working)
+    ];
   }]
 ];

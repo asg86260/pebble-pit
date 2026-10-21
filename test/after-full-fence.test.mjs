@@ -20,3 +20,15 @@ group('with the fence full, posters in hand go back to the press and their hands
     ok(S.after.bodies.filter(isIdle).length >= 2 + n, 'and their hands are idle again', `${S.after.bodies.filter(isIdle).length} idle`)
   ];
 });
+
+// The same yard's other dead end: its one sawyer stood at a bare mill while
+// 46 logs lay in the grove, with no gatherer or hauler to bring them (DESIGN.md,
+// "Act 3: one job a station"). Idle hands carry them in now, and the sawyer
+// fetches its own.
+group('the yard\'s idle hands bring the grove\'s logs in and its sawyer saws them, nobody else put on', async () => {
+  localStorage.setItem('boulder-clicker/v4', readFileSync(new URL('./fixtures/act3-full-fence.json', import.meta.url), 'utf8'));
+  yard.restore();
+  const S = yard.S, t0 = S.after.stock.timber, lying = S.after.groundLogs.length;
+  const sawn = runUntil(() => S.after.stock.timber > t0, 300);
+  return [ok(lying > 0 && sawn, 'timber rises off the logs that lay in the grove', `${lying} lying, timber ${t0} -> ${S.after.stock.timber}`)];
+});

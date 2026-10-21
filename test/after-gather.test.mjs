@@ -1,11 +1,11 @@
-// Act 3's fallen logs (after/grove.js, `groundLogs`; after/bodies.js, the
-// gatherer): a tree sawn down by hand splits into its logs, which roll a
-// little off the fall and come to rest on the grove's floor; a gatherer,
-// its post bought on the grove's board, walks to each, carries it to the
-// forestry shack's pile, and a hauler takes them from there to the saw
-// mill. Nothing lands in a pile without a body carrying it there. The
-// harness reads the save back every five seconds, so a log mid-roll and a
-// gatherer mid-walk stand where they were.
+// Act 3's fallen logs (after/grove.js, `groundLogs`; after/bodies.js,
+// `gather`): a tree sawn down by hand splits into its logs, which roll a
+// little off the fall and come to rest on the grove's floor; idle members
+// walk to each on an errand and carry it to the forestry shack's pile, and
+// the saw mill's sawyer fetches them from there to its own (DESIGN.md, "Act
+// 3: one job a station"). Nothing lands in a pile without a body carrying
+// it there. The harness reads the save back every five seconds, so a log
+// mid-roll and a body mid-walk stand where they were.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
 import { AFTER_LOGS_A_TREE, AFTER_LOG_ROLL_S, AFTER_FALL_S, AFTER_FALL_BOUNCE_S } from '../src/config.js';
 import { plotX } from '../src/after/place.js';
@@ -15,7 +15,7 @@ const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 const read = () => window.__afterRead();
 
-group('a felled tree\'s logs roll to rest, and a gatherer carries each to the forestry shack, a hauler on to the mill', async () => {
+group('a felled tree\'s logs roll to rest, idle hands carry each to the forestry shack, and the sawyer fetches them to the mill', async () => {
   window.__actsOn(true);
   S.after = null;
   window.__goPlace('after');
@@ -34,28 +34,22 @@ group('a felled tree\'s logs roll to rest, and a gatherer carries each to the fo
   const fell = S.after.plots[0].fell, rolling = split.length && split.every(q => q.x > q.x0 && q.at > fell);
   run(AFTER_FALL_BOUNCE_S + AFTER_LOG_ROLL_S + 0.5);
   const lying = S.after.groundLogs.length, inGrove = S.after.groundLogs.every(q => q.x > plotX(0) && q.x < plotX(1));
-  const pile0 = read().grovelogs;
-  // Nothing comes off the ground with nobody posted to it.
-  run(20);
-  const untouched = S.after.groundLogs.length === lying && read().grovelogs === pile0;
-  // A gatherer put on through the roster under the forestry shack.
-  window.__afterGrant({ rebel: 5000 });
-  const post = window.__afterPress('gatherer');
+  // Nobody on a job: the idle at the podium go for them.
   let carried = false;
   const all = runUntil(() => {
-    carried = carried || S.after.bodies.some(b => b.job === 'gatherer' && b.load === 'log');
+    carried = carried || S.after.bodies.some(b => b.job == null && b.errand === 'gatherer' && b.load === 'log');
     return S.after.groundLogs.length === 0 && read().grovelogs === AFTER_LOGS_A_TREE;
   }, 600);
-  // A hauler, and the saw mill standing: the pile goes on to the mill.
+  // A sawyer, the saw mill standing: it fetches the pile on to the mill.
+  window.__afterGrant({ rebel: 5000 });
   S.after.built.push('mill');
-  const hauler = window.__afterPress('hauler');
-  const fed = runUntil(() => read().logs > 0, 600);
+  const sawyer = window.__afterPress('sawyer');
+  const fed = runUntil(() => read().logs > 0 || read().timber > 0, 600);
   window.__actsOn(null);
   return [
     ok(split.length === AFTER_LOGS_A_TREE && rolling, 'down, the trunk splits into its logs, each rolling on along the ground', `${split.length} logs`),
     ok(lying === AFTER_LOGS_A_TREE && inGrove, 'they come to rest on the grove\'s floor, inside the plot', `${lying} lying`),
-    ok(untouched, 'with nobody on the job they lie where they stopped'),
-    ok(post && carried && all < Infinity, 'a gatherer carries every one to the forestry shack\'s pile', `post ${post} carried ${carried} in ${all} s, pile ${read().grovelogs}`),
-    ok(hauler && fed < Infinity && read().grovelogs < AFTER_LOGS_A_TREE, 'a hauler takes them from that pile to the saw mill', `in ${fed} s, ${read().logs} at the mill`)
+    ok(carried && all < Infinity, 'idle hands carry every one to the forestry shack\'s pile', `carried ${carried} in ${all} s, pile ${read().grovelogs}`),
+    ok(sawyer && fed < Infinity && read().grovelogs < AFTER_LOGS_A_TREE, 'the sawyer fetches them from that pile to the saw mill', `${read().logs} at the mill, ${read().grovelogs} at the shack`)
   ];
 });

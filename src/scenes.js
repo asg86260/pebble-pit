@@ -2975,18 +2975,18 @@ export const SCENES = {
       window.__fast(1 / 60);
       window.__holdShot();
     } },
-  'after-roster-grove': { about: 'the acts', say: "act 3's rosters at the grove: the woodcutter's, the gatherer's and the hauler's side by side under the forestry shack",
+  'after-roster-grove': { about: 'the acts', say: "act 3's roster at the grove: the woodcutter's, under the forestry shack",
     run: () => SCENES['after-roster'].run('forestry') },
-  // The carry: the yard's carry bought well up, so the haulers and gatherers
-  // walk under stacks of logs, a log taking two of its slots.
-  'after-carry': { about: 'the acts', say: "act 3's goods carried the yard's way: haulers under a stack of logs, as many as the yard's carry holds",
+  // The carry: the yard's carry bought well up, so the woodcutters and the
+  // sawyer fetching walk under stacks of logs, a log taking two of its slots.
+  'after-carry': { about: 'the acts', say: "act 3's goods carried the yard's way: logs carried in a stack, as many as the yard's carry holds",
     run: () => {
       act3Mid();
       S.haulCarryLevel = 6;           // after the yard is stood up, which sets its own
       window.__afterGrant({ grovelogs: 40 });
-      window.__fast(90);              // the haulers' walk from the podium
-      // Held on a hauler walking its stack of logs to the mill.
-      const under = () => S.after.bodies.find(w => w.job === AFTER_JOB.HAUL && w.to && w.carry >= 2);
+      window.__fast(90);              // the walk from the podium
+      // Held on a body walking a stack of logs.
+      const under = () => S.after.bodies.find(w => w.load === 'log' && w.carry >= 2);
       for (let k = 0; k < 600 && !under(); k++) window.__fast(0.1);
       window.__fast(1);
       const h = under(), mid = h ? h.x : stationBox('forestry').x;
@@ -3351,7 +3351,7 @@ function act3Mid() {
     for (let k = 0; k < 300 && wave.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
   }
   const A = AFTER_JOB;
-  staffAfter([A.CUT, A.CUT, A.GATHER, A.HAUL, A.HAUL, A.SAW, A.CHIP, A.JOIN, A.CARRY, A.CARRY]);
+  staffAfter([A.CUT, A.CUT, A.CUT, A.SAW, A.CHIP, A.JOIN, A.JOIN]);
   for (const u of ['after-plot', 'after-plot']) window.__buy(u);
   window.__goPlace('after');
   window.__fast(20);

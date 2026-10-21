@@ -375,14 +375,17 @@ export const AFTER_SPEECH_WARN_S = 6;      // warned this long ahead
 // time, one seat to start and more bought on its board.
 export const AFTER_WALK = 150;             // px/s, every body up here (the owner, 2026-10-21: "a lot faster" than 50)
 export const AFTER_BURN_MARCHES = AFTER_SPEECH_S / (AFTER_SPEECH_MARCH / AFTER_WALK);
-export const AFTER_JOBS = [J.CUT, J.GATHER, J.HAUL, J.SAW, J.CHIP, J.PULP, J.JOIN, J.CARRY, J.PRINT, J.PASTE];
+// One job a station (DESIGN.md, "Act 3: one job a station"): its worker
+// runs the station's whole round, its input fetched and its output taken out.
+export const AFTER_JOBS = [J.CUT, J.SAW, J.CHIP, J.PULP, J.JOIN, J.PRINT];
 // The station each job works at, so which station's roster it stands on and
-// which board sells its seats; the grove's are the forestry shack's.
+// which board sells its seats; the woodcutter's is the forestry shack's.
 export const AFTER_JOB_POST = {
-  [J.CUT]: 'grove', [J.GATHER]: 'grove', [J.HAUL]: 'grove', [J.SAW]: 'mill', [J.CHIP]: 'chipper',
-  [J.PULP]: 'papermill', [J.JOIN]: 'workshop', [J.CARRY]: 'workshop',
-  [J.PRINT]: 'press', [J.PASTE]: 'press'
+  [J.CUT]: 'grove', [J.SAW]: 'mill', [J.CHIP]: 'chipper', [J.PULP]: 'papermill', [J.JOIN]: 'workshop', [J.PRINT]: 'press'
 };
+// The jobs folded away, each into its station's one (a save's crew, seats and
+// bodies follow them, after/index.js).
+export const AFTER_JOB_FOLD = { [J.GATHER]: J.CUT, [J.HAUL]: J.CUT, [J.CARRY]: J.JOIN, [J.PASTE]: J.PRINT };
 // The idle members' spots behind the pedestal, a body and a cell apart; as
 // many stand there as the floor holds up to the last workshop, the rest in
 // the crowd, agitating all the same.

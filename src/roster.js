@@ -526,6 +526,19 @@ export const overRoster = (x, y) => live().some(p => {
   return inside(hit(b.less), x, y) || inside(hit(b.more), x, y) || !!pipAt(p, b, x, y);
 });
 
+// What a post says with the cursor on it, for a place that gives its posts
+// words (`says`; the yard's have none): the text and the world point under
+// the roster it hangs from, or null.
+export function rosterSays(x, y) {
+  for (const p of live()) {
+    if (!p.says) continue;
+    const b = boxes(p), g = held.get(p.key)?.box;
+    const top = Math.min(b.badge.y, g ? g.t : b.badge.y), foot = Math.max(b.num.y + b.num.h, g ? g.b : 0);
+    if (x >= b.less.x && x < b.more.x + b.more.w && y >= top && y < foot) return { text: p.says(), at: { x: (b.less.x + b.more.x + b.more.w) / 2, y: foot } };
+  }
+  return null;
+}
+
 // The seat pip a point is over: { kind, at } where `at` counts from one
 // inside the plain counter, or null. A crowd's pips are bodies, not seats,
 // and are not switches.

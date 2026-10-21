@@ -4,15 +4,6 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Act 3: one job a station -- DESIGNED, AWAITING APPROVAL (2026-10-21)
-
-DESIGN.md, "Act 3: one job a station". The owner's save showed ten rosters
-with one filled, and the chain dead at the missing gatherer. The design
-folds the grove's three jobs and the workshop's and press's two each into
-one roster a station, adds a hover line and a stall reason to each roster,
-and migrates saves onto the six jobs. Blocked on the owner's approval of
-the design.
-
 ## A tray capped mid-pay holds the hand forever -- FOUND, NOT FIXED (2026-10-20)
 
 `src/casino.js`: a pay grain that finds no cell sets `tray.capped`, which

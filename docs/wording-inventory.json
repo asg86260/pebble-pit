@@ -8134,18 +8134,11 @@
   "text": "woodcutter"
  },
  {
-  "id": "after-job-gatherer",
+  "id": "after-job-woodcutter.says",
   "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 job name (placeholder): a gatherer, named on its seat row",
-  "text": "gatherer"
- },
- {
-  "id": "after-job-hauler",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 job name (placeholder): a hauler, named on its seat row",
-  "text": "hauler"
+  "where": "src/after/roster.js",
+  "context": "act 3 job name (placeholder): a woodcutter, named on its seat row",
+  "text": "fells the grove's trees and carries their logs to the forestry shack"
  },
  {
   "id": "after-job-sawyer",
@@ -8155,11 +8148,25 @@
   "text": "sawyer"
  },
  {
+  "id": "after-job-sawyer.says",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 job name (placeholder): a sawyer, named on its seat row",
+  "text": "fetches logs from the forestry shack and saws them into timber and sawdust"
+ },
+ {
   "id": "after-job-feeder",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
   "context": "act 3 card row (placeholder): a post for a feeder at the chipper, held by a member from the camp",
   "text": "feeder"
+ },
+ {
+  "id": "after-job-feeder.says",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 card row (placeholder): a post for a feeder at the chipper, held by a member from the camp",
+  "text": "fetches logs from the forestry shack and chips them into sawdust"
  },
  {
   "id": "after-job-pulper",
@@ -8169,6 +8176,13 @@
   "text": "pulper"
  },
  {
+  "id": "after-job-pulper.says",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 job name (placeholder): a pulper, named on its seat row",
+  "text": "pulps sawdust into paper"
+ },
+ {
   "id": "after-job-joiner",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
@@ -8176,11 +8190,11 @@
   "text": "joiner"
  },
  {
-  "id": "after-job-carrier",
+  "id": "after-job-joiner.says",
   "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 job name (placeholder): a carrier, named on its seat row",
-  "text": "carrier"
+  "where": "src/after/roster.js",
+  "context": "act 3 job name (placeholder): a joiner, named on its seat row",
+  "text": "nails timber into signs and plants them in God's crowd"
  },
  {
   "id": "after-job-printer",
@@ -8190,11 +8204,67 @@
   "text": "printer"
  },
  {
-  "id": "after-job-paster",
+  "id": "after-job-printer.says",
   "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 job name (placeholder): a paster, named on its seat row",
-  "text": "paster"
+  "where": "src/after/roster.js",
+  "context": "act 3 job name (placeholder): a printer, named on its seat row",
+  "text": "prints posters on paper and pastes them on the fence"
+ },
+ {
+  "id": "after-roster-tip",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): a job's name and what it does, or why it is standing still",
+  "text": "${job}: ${line}"
+ },
+ {
+  "id": "after-stall-trees",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "waiting on a tree to grow"
+ },
+ {
+  "id": "after-stall-logs",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "waiting on logs"
+ },
+ {
+  "id": "after-stall-heap",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "the sawdust heap is full: build the paper mill"
+ },
+ {
+  "id": "after-stall-sawdust",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "waiting on sawdust"
+ },
+ {
+  "id": "after-stall-timber",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "waiting on timber"
+ },
+ {
+  "id": "after-stall-paper",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "waiting on paper"
+ },
+ {
+  "id": "after-stall-fence",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "the fence is full"
  },
  {
   "id": "after-build-mill",

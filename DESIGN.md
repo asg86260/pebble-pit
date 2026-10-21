@@ -23146,7 +23146,7 @@ be able to pick up and move resources themselves between stations"
   yard's carry, its weight in slots (the bullet above). Built after the crew's
   carry lands, on that same carry.
 
-### Act 3: one job a station (design, not built; the owner, 2026-10-21)
+### Act 3: one job a station (built; the owner, 2026-10-21)
 
 The owner, verbatim: "bro the workers just dont do anything. theres too many
 slots to assign workers and no description for what they are." Then: "yea
@@ -23159,6 +23159,10 @@ has a body, and nothing says which link is missing. The owner's save showed
 it plainly: one sawyer assigned, 46 logs lying in the grove, nobody to
 gather or haul them, and the mill idle with nothing to say why. Ten
 unlabeled pluses read as busywork, not as choices.
+
+The owner's call on the one open question: each station fetches its own
+input (the sawyer and the feeder walk to the forestry pile), rather than the
+woodcutter delivering on.
 
 **The bargain.** One roster a station, and the body on it runs the
 station's whole round: its input in, its work, its output out. The player
