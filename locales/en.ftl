@@ -3484,6 +3484,8 @@ after-row-podium = podium
 after-row-recruit = recruit
 # its line: the souls won and waiting to be hired, and the workers idle at the podium
 after-recruit-ready = { $ready } ready, { $idle } idle
+# its line while nobody is won: why it is greyed (not its price), and how souls are won
+after-recruit-none = no souls won yet: plant signs
 
 # act 3 card row (placeholder): the axe, bought: a click on a grown tree chops it
 after-row-axe = axe

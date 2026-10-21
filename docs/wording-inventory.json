@@ -8008,6 +8008,13 @@
   "text": "${ready} ready, ${idle} idle"
  },
  {
+  "id": "after-recruit-none",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "its line while nobody is won: why it is greyed (not its price), and how souls are won",
+  "text": "no souls won yet: plant signs"
+ },
+ {
   "id": "after-row-axe",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
