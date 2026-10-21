@@ -9,6 +9,7 @@ import { S } from '../state.js';
 import { newRun, settle, raf, ok, point, P } from './kit.js';
 import { AFTER_PODIUM_REBEL, GESTURE_BUBBLE_CRIT } from '../config.js';
 import { partsOf, useBubbles } from '../after/gestures.js';
+import { handworkShown } from '../render/aftercues.js';
 import { openBoard } from '../board.js';
 import { stationBox } from '../after/place.js';
 import { toScreen } from '../world.js';
@@ -83,6 +84,41 @@ export const TESTS = [
       ok(popped, 'the pointer\'s click pops the bubble'),
       ok(asked === null, 'and asks for no board', JSON.stringify(asked)),
       ok(paid === AFTER_PODIUM_REBEL[0] * GESTURE_BUBBLE_CRIT, `the big one pays ${GESTURE_BUBBLE_CRIT} lines`, `${paid} rebel`)
+    ];
+  }],
+  // The hand work shown in the world (DESIGN.md, "Act 3's hand work and hand
+  // carrying", take B): read off what the cue layer drew, so it is a fact
+  // about the picture and not only the sim.
+  ['act 3: the pointer over the flywheel grows it and shows its motion; worked, the ghost goes and the strip fills', async () => {
+    newRun();
+    await settle();
+    await upThere(['mill'], { logs: 4 });
+    const b = stationBox('mill');
+    window.__look(b.x + b.w / 2 - S.viewW / 2);
+    await settle(0.1);
+    const w = partsOf('mill').wheel;
+    const at = a => glass(w.x + Math.cos(a) * w.r, w.y + Math.sin(a) * w.r);
+    const shown = () => handworkShown().mill || {};
+    const before = shown();
+    point('pointermove', ...at(0), 0);
+    for (let f = 0; f < 40; f++) { window.__fast(1 / 60); if (f % 10 === 0) await raf(); }
+    await raf(); await raf();
+    const hovered = shown();
+    point('pointerdown', ...at(0));
+    let most = 0, hintWorking = 1;
+    for (let f = 1; f <= 3 * 60; f++) {
+      point('pointermove', ...at(f / 60 * 2 * 2 * Math.PI));
+      window.__fast(1 / 60);
+      if (f % 20 === 0) { await raf(); most = Math.max(most, shown().n || 0); if (f >= 60) hintWorking = Math.min(hintWorking, shown().hintA); }
+    }
+    point('pointerup', ...at(0), 0);
+    point('pointerleave', ...at(0), 0);
+    window.__actsOn(null);
+    return [
+      ok(!(before.growA > 0) && !(before.hintA > 0), 'before the pointer comes, nothing shows', JSON.stringify(before)),
+      ok(hovered.growA === 1 && hovered.hintA > 0.5 && hovered.stripA > 0.5, 'the pointer on the wheel grows it, its ghost and its strip show', JSON.stringify(hovered)),
+      ok(hintWorking === 0, 'spun, the ghost is gone', `${hintWorking}`),
+      ok(most > 0, 'and the strip fills as the log is fed', `${most} of ${hovered.of}`)
     ];
   }],
 ];

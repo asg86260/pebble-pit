@@ -18,6 +18,14 @@ import { take } from './upgrades.js';
 import { subject, bandCells, liftArrived } from './cutscene.js';
 import { CELL } from './config.js';
 import { orbOn, orbMiddle } from './deep/phases.js';
+import { partsOf, HANDWORK_KEYS } from './after/gestures.js';
+import { handworkShown } from './render/aftercues.js';
+
+// Act 3's hand work for a capture tool: each hand-worked station's parts in
+// the world, what the hint drew last frame, and a world point on the glass
+// in client pixels, where a dispatched pointer lands on it.
+window.__handwork = () => ({ parts: Object.fromEntries(HANDWORK_KEYS.map(k => [k, partsOf(k)])), shown: handworkShown() });
+window.__toGlass = (x, y) => { const r = document.getElementById('c').getBoundingClientRect(), s = toScreen(x, y); return [r.left + s.x, r.top + s.y]; };
 
 // Everything hooks.js offers, under the name the checks call it by.
 Object.assign(window, {

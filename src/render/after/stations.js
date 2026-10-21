@@ -22,12 +22,27 @@
 const TURN = Math.PI / 16;                                 // a held step of a turning part
 const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
-import { P, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT, AFTER_SAW_TEETH, AFTER_STIR_TURN_S, AFTER_STIR_SPAN } from '../../config.js';
-import { K, W, PALE, MID, DUST, toward, hash, clamp01, silhouette } from './kit.js';
+import { P, GREY, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT, AFTER_SAW_TEETH, AFTER_STIR_TURN_S, AFTER_STIR_SPAN,
+         AFTER_ART_SCALE, HANDWORK_GROW, HANDWORK_ANCHOR, HANDWORK_PADDLE_TOP, HANDWORK_RIM } from '../../config.js';
+import { K, W, PALE, MID, DUST, toward, hash, clamp01, silhouette, frame } from './kit.js';
+import { grownOrigin, stationX0, afterFloor } from '../../after/place.js';
 import { signsJoined } from '../../after/press.js';
 import { paperPulls } from '../../after/mill.js';
 import { ctx } from '../ctx.js';
 import { onDevice } from '../wardrobe.js';
+
+// The hand-worked part hovered (after/gestures.js, `growA`): drawn here
+// faded off as its copy a scale up fades on over everything (`drawGrown`,
+// from render/aftercues.js), and not at all once that is full. `posed` is
+// the pose each station drew its part in this frame, which the grown copy
+// is drawn in.
+const growOf = h => (h && h.growA) || 0;
+const partFade = (d, g, fn) => { if (g < 1) d.fade(1 - g, fn); };
+const posed = {};
+const GS = AFTER_ART_SCALE + HANDWORK_GROW, GK = GS / AFTER_ART_SCALE;
+// A point of the grown part, in its own art cells, in the station's.
+const grownCell = (key, x, y, at = HANDWORK_ANCHOR[key].at, to = HANDWORK_ANCHOR[key].to) =>
+  ({ x: to[0] + (x - at[0]) * GK, y: to[1] + (y - at[1]) * GK });
 
 const cyc = (t, T) => { const u = Math.max(0, t), k = Math.floor(u / T); return { ph: u / T - k, since: u - k * T }; };
 const FADE = 0.4;
@@ -49,9 +64,12 @@ const MILL = { L: 32, R: 47, head: -21, bed: -6, bx: 40, logX0: 27, logLen: 14, 
 const BARK = [MID, MID, PALE, MID], WOOD = [PALE, W, PALE, PALE];
 // The teeth's reach out of the blade, in the drawing's cells: the log's kerf.
 const BITE = Math.ceil(Math.max(...AFTER_SAW_TEETH) / 2);
-function flywheel(d, a) {
+// The wheel at angle `a`, its post down to the floor's row `floor` (the
+// grown copy's floor is higher up its own frame).
+const wheelAt = a => { const { cx, cy } = MW; return { kx: cx + Math.cos(a) * KNOB, ky: cy + Math.sin(a) * KNOB, pin: { x: cx + Math.cos(a) * CRANK, y: cy + Math.sin(a) * CRANK } }; };
+function flywheel(d, a, floor = 0) {
   const { cx, cy, r } = MW;
-  d.px(cx * P - 3, cy * P, 6, -cy * P, K); d.r(cx - 3, -1, 6, 1, K);       // its post and foot
+  d.px(cx * P - 3, cy * P, 6, (floor - cy) * P, K); d.r(cx - 3, floor - 1, 6, 1, K);       // its post and foot
   for (let y = Math.floor(cy - r - 2); y <= cy + r + 2; y++) for (let x = Math.floor(cx - r - 2); x <= cx + r + 2; x++) {
     const dd = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
     if (dd > r - 1 && dd <= r + 1) d.c(x, y, K);
@@ -60,8 +78,8 @@ function flywheel(d, a) {
   d.r(cx - 1.5, cy - 1.5, 3, 3, K);
   const kx = cx + Math.cos(a) * KNOB, ky = cy + Math.sin(a) * KNOB;
   d.line(cx + Math.cos(a) * (r + 0.5), cy + Math.sin(a) * (r + 0.5), kx, ky, 4);   // the knob's stub
-  return { kx, ky, pin: { x: cx + Math.cos(a) * CRANK, y: cy + Math.sin(a) * CRANK } };
 }
+const crankPin = (d, pin) => { d.px(Math.round(pin.x * P) - 3, Math.round(pin.y * P) - 3, 6, 6, K); d.px(Math.round(pin.x * P) - 1, Math.round(pin.y * P) - 1, 2, 2, W); };
 // The blade, plumb: its spine of ink, a grey plate, the rip teeth facing the
 // log, riding the stroke so they move with it. The teeth are laid on the
 // world's grid, half a drawing cell a row (config, AFTER_SAW_TEETH), so they
@@ -98,12 +116,21 @@ function millLogAt(ph, since) {
   const steps = MILL.bx + 2 - MILL.logX0, i = Math.min(steps, Math.floor(ph * (steps + 2)));
   return { x: MILL.logX0 + i, a: since < FADE ? since / FADE : ph > 0.92 ? 1 - (ph - 0.92) / 0.08 : 1 };
 }
-function mill(d, work, t, h, body = false) {
-  const hand = turning(h);
+function mill(d, work, t, h, body = false, at = {}) {
+  const hand = turning(h), g = growOf(h);
   const a = hand ? Math.round(h.ang / MILL_TURN) * MILL_TURN : work ? Math.floor(t / 0.1) * MILL_TURN : 0;
   const o = Math.round(1.5 + 1.5 * Math.sin(a)), { L, R, head, bed, bx } = MILL;
-  const k = flywheel(d, a);
-  d.line(k.pin.x, k.pin.y, bx - 2.5, head - 4 + o, 7, W); d.line(k.pin.x, k.pin.y, bx - 2.5, head - 4 + o, 3);   // the rod, in a paper rim
+  posed.mill = { a };
+  const k = wheelAt(a);
+  partFade(d, g, () => flywheel(d, a));
+  // The rod, in a paper rim, off the crank pin: the wheel's, and as the
+  // wheel grows the grown wheel's pin, so it stays joined. (The clearance
+  // check leaves it out: it is the wheel's own rod.)
+  const rod = pin => { d.line(pin.x, pin.y, bx - 2.5, head - 4 + o, 7, W); d.line(pin.x, pin.y, bx - 2.5, head - 4 + o, 3); };
+  if (!at.clearance) {
+    partFade(d, g, () => rod(k.pin));
+    if (g > 0) d.fade(g, () => rod(grownCell('mill', k.pin.x, k.pin.y)));
+  }
   d.r(L, head, 2, bed - head, K); d.r(R, head, 2, bed - head, K);         // posts
   d.r(L - 1, head, R - L + 4, 3, K);                                      // the head
   d.r(L - 1, bed, R - L + 4, 4, K);                                       // the bed, on legs
@@ -114,13 +141,14 @@ function mill(d, work, t, h, body = false) {
   millBlade(d, bx, head + 3, bed - 1, o);
   d.r(bx, head - 3 + o, 2, 3 - o, K);                                     // its strap up out of the head
   d.r(bx - 3, head - 5 + o, 6, 2, K); d.px((bx) * P - 2, (head - 4 + o) * P - 2, 4, 4, W);   // the crosshead
-  d.px(Math.round(k.pin.x * P) - 3, Math.round(k.pin.y * P) - 3, 6, 6, K); d.px(Math.round(k.pin.x * P) - 1, Math.round(k.pin.y * P) - 1, 2, 2, W);
-  // A body at the wheel: its arm to its fist round the knob.
-  if (body) {
+  partFade(d, g, () => crankPin(d, k.pin));
+  // A body at the wheel: its arm to its fist round the knob (gone with the
+  // wheel while it is drawn grown).
+  if (body) partFade(d, g, () => {
     const fx = Math.round(k.kx * P) - 7, fy = Math.round(k.ky * P) - 7;
     d.line(MILL.body + 3, -2, k.kx, k.ky, 2);
     d.px(fx, fy, 14, 14, K); d.px(fx + 2, fy + 2, 10, 10, W); d.px(fx + 5, fy + 5, 4, 4, K);
-  }
+  });
 }
 
 // --- the chipper: the jaws and the arm ---------------------------------------------
@@ -149,7 +177,7 @@ function chLog(d, x, len) {
   d.px(x * P - 2, y - 2, len * P + 4, 2 * P + 4, W);
   d.px(x * P, y, len * P, 2 * P, K); d.px(x * P + 2, y + 2, P - 2, 2 * P - 4, PALE);
 }
-function chArm(d, p) {
+function chArm(d, p, mount = true) {
   const pv = CH.pivot, k = CH.knob[p];
   if (p === 0) d.r(pv.x, k.y + 1, 1, pv.y - k.y, K);
   else if (p === 2) d.r(k.x + 1, pv.y, pv.x - k.x, 1, K);
@@ -158,7 +186,7 @@ function chArm(d, p) {
   d.px(x, y, 3 * P, 3 * P, K);
   [[0, 0], [3 * P - 3, 0], [0, 3 * P - 3], [3 * P - 3, 3 * P - 3]].filter((c, i) => !(p === 1 && i === 3)).forEach(([cx, cy]) => d.px(x + cx, y + cy, 3, 3, W));
   d.px(x + 4, y + 4, 4, 2, W); d.px(x + 4, y + 6, 2, 2, W);
-  d.r(pv.x - 2, pv.y + 1, 5, 1, K);                           // its mount on the block's top
+  if (mount) d.r(pv.x - 2, pv.y + 1, 5, 1, K);                // its mount on the block's top
   d.r(pv.x - 1, pv.y - 1, 3, 3, K);                           // the pivot box, a white ring round its pin
   d.px(pv.x * P - 2, pv.y * P - 2, P + 4, P + 4, W); d.px(pv.x * P, pv.y * P, P, P, K);
 }
@@ -194,7 +222,11 @@ function chipper(d, work, t, h) {
   for (let i = 0; i < 5; i++) chTooth(d, 19 + i * 2, jy + 4, 1);
   d.px(CH.block * P, -6 * P, 2, 5 * P, K);
   d.r(31, -18, 2, 3, K); d.r(31, -19, 7, 2, K); d.r(36, -17, 2, 2, K); d.r(35, -15, 4, 1, K);   // the chute
-  chArm(d, pose);
+  // The arm on its mount; hovered, the arm alone is drawn grown and the
+  // mount stays the block's.
+  posed.chipper = { pose };
+  d.r(CH.pivot.x - 2, CH.pivot.y + 1, 5, 1, K);
+  partFade(d, growOf(h), () => chArm(d, pose, false));
   // The chips: dashes falling a cell every tenth of a second from the chute
   // while the jaws bite.
   if (!biting) return;
@@ -301,22 +333,26 @@ function wetSheet(d, x, top, dry, bot = 0) {
   if (bot) { const a0 = x * P + 2, b0 = (x + bot) * P + 2, Y = (top + 2) * P; d.px(Math.min(a0, b0), Y - 2, P, 2, K); d.px(Math.max(a0, b0) + w - 4 - P, Y, P, 2, K); }
 }
 const pegs = (d, x, top, a) => d.fade(a, () => { d.px(x * P + 3, (top - 1) * P, 3, P + 2, K); d.px((x + 4) * P - 6, (top - 1) * P, 3, P + 2, K); });
-function mould(d, top, moulds, full) {
+// `cord` its cord up to the line (left out of the clearance check: the
+// paddle stands across it at its small size too).
+function mould(d, top, moulds, full, cord = true) {
   const x0 = SLOT0 - 1, x1 = SLOT0 + SLOT_W * moulds - 1, cx = (x0 + x1 + 1) / 2;
-  d.px(cx * P - 1, (LINE_Y + 1) * P, 2, (top - 1 - LINE_Y - 1) * P, K);
+  if (cord) d.px(cx * P - 1, (LINE_Y + 1) * P, 2, (top - 1 - LINE_Y - 1) * P, K);
   if (full) for (let i = 0; i < moulds; i++) wetSheet(d, SLOT0 + SLOT_W * i, top, 0);
   for (let i = 0; i <= moulds; i++) d.px((x0 + SLOT_W * i) * P, (top - 1) * P, P, 4 * P + 2, K);
   d.px(x0 * P, (top - 1) * P, (x1 - x0 + 1) * P, 3, K);
   d.px(x0 * P, (top + 3) * P, (x1 - x0 + 1) * P, 2, K);
 }
-function vat(d, fill) {
+// `pulp` whether the pulp is drawn: the clearance check leaves it out, the
+// paddle standing in it.
+function vat(d, fill, pulp = true) {
   d.r(10, -10, 4, 1, K); d.r(24, -10, 4, 1, K);             // the rim's lips
   d.r(11, -9, 2, 8, K); d.r(25, -9, 2, 8, K);               // walls
   d.r(12, -2, 14, 1, K);                                    // floor
   d.r(11, -1, 3, 1, K); d.r(24, -1, 3, 1, K);               // feet
   // The pulp: thin after a pull, paper flecked pale, each cell thickening on
   // its own as the batch fills to pale flecked mid.
-  for (let j = 0; j < 5; j++) for (let i = 0; i < 12; i++) {
+  for (let j = 0; j < 5 && pulp; j++) for (let i = 0; i < 12; i++) {
     const hh = hash((13 + i) * 5.1 + j * 9.3), hh2 = hash((13 + i) * 2.7 + j * 4.1);
     d.c(13 + i, SURFACE + j, toward(hh < 0.45 ? W : PALE, hh2 < 0.6 ? PALE : MID, (fill - hh * 0.6) / 0.4));
   }
@@ -335,7 +371,7 @@ function papermill(d, work, t, h, body = false, at = {}) {
   const { L } = st, pu = L.pul, lo = L.loft;
   d.r(5, -9, 4, 9, K);                                      // the step
   for (let y = -8; y < 0; y += 2) d.px(5 * P + 3, y * P + 1, 4 * P - 6, 2, W);
-  vat(d, at.fill || 0);
+  vat(d, at.fill || 0, !at.clearance);
   d.r(10, LINE_Y + 1, 1, -10 - LINE_Y - 1, K);              // the left post, off the vat's lip
   d.r(G.postR, LINE_Y + 1, 1, -LINE_Y - 2, K); d.r(G.postR - 1, -1, 3, 1, K);   // the far post and its foot
   d.r(9, LINE_Y, G.lineX1 - 9, 1, K);                       // the line
@@ -350,19 +386,20 @@ function papermill(d, work, t, h, body = false, at = {}) {
   else if (work && pu.st === 'stir') { const a = 2 * Math.PI * t / AFTER_STIR_TURN_S; px = PADDLE_MID - PADDLE_REACH * Math.cos(a); dir = Math.sin(a) >= 0 ? 1 : -1; held = true; }
   px = Math.max(AFTER_STIR_SPAN[0], Math.min(held ? AFTER_STIR_SPAN[1] : 22, px));
   pulperLean = pu.st === 'lift' ? (pu.k % 2 ? -2 : -4) : pu.st === 'hang' ? -3 : pu.st === 'lower' ? -1 : held ? (px - AFTER_STIR_SPAN[0]) / 2 : 0;
-  if (held) crest(d, Math.round(px), dir);
+  if (held && !at.clearance) crest(d, Math.round(px), dir);
   const sx = Math.round(px * P * 2) / 2;               // the shaft's left edge, on a whole world pixel
   // The pulper's arm out to the grip while it stirs: a thin line, its own
   // and not the paddle's, from its shoulder wherever it leans.
   if (held && body && pu.st === 'stir') { const ax = 9 * P + pulperLean * 2; d.px(ax, -12 * P + 2, sx - P + 2 - ax, 2, K); }
-  paddle(d, sx);
+  posed.papermill = { sx };
+  partFade(d, growOf(h), () => paddle(d, sx));
   const mt = MOULD_REST - pu.k, front = pu.st === 'lift' || pu.st === 'hang';
   for (const q of L.sheets) {
     const dry = q === lo.target && lo.st === 'unpeg' ? 1 : st.dryOf(q);
     wetSheet(d, q.x, SHEET_TOP, dry, q === lo.target ? 0 : leanOf(q, t, dry)); pegs(d, q.x, SHEET_TOP, q.peg);
   }
-  if (front) mould(d, mt, moulds, pu.st === 'lift');
-  else { const ex = d.px; d.px = (x, y, w, h, tone) => { const top = Math.min(y + h, SURFACE * P); if (top > y) ex(x, y, w, top - y, tone); }; mould(d, mt, moulds, false); d.px = ex; }
+  if (front) mould(d, mt, moulds, pu.st === 'lift', !at.clearance);
+  else { const ex = d.px; d.px = (x, y, w, h, tone) => { const top = Math.min(y + h, SURFACE * P); if (top > y) ex(x, y, w, top - y, tone); }; mould(d, mt, moulds, false, !at.clearance); d.px = ex; }
   // The far end: the peel's head and its pole to the loft hand, a dry sheet
   // carried down on it to the stack (the stack is the paper pile, piles.js).
   d.px(G.stackX * P, lo.y, 5 * P, 3, K);
@@ -375,12 +412,14 @@ function papermill(d, work, t, h, body = false, at = {}) {
 // by whole pixels, so it moves as one piece; and the piece put with its
 // shaft on a whole device pixel (render/crew.js, `rigid`), so at a zoom that
 // is not whole every edge in it rounds the same way at every column.
-function paddle(d, sx) {
+// `top` the grip's row: the grown copy's shaft is cut shorter, so it stays
+// under the sheets on the line.
+function paddle(d, sx, top = -12) {
   const m = !d.sinking && ctx.getTransform ? ctx.getTransform() : null;
   const ax = d.world(sx / P, 0).x, dx = m ? onDevice(ax, m.a, m.e) - ax : 0;
   if (dx) ctx.translate(dx, 0);
-  d.px(sx - P + 2, -12 * P + 1, 2 * P, 4, K);
-  d.px(sx, -12 * P + 1, 4, 7 * P, K);
+  d.px(sx - P + 2, top * P + 1, 2 * P, 4, K);
+  d.px(sx, top * P + 1, 4, (-5 - top) * P, K);
   d.px(sx - P / 2, -5 * P, 2 * P, 3 * P, K);
   if (dx) ctx.translate(-dx, 0);
 }
@@ -500,13 +539,21 @@ function press(d, work, t, h) {
   d.r(PR.plX, plY, PR.plW, 2, K);                                   // the platen, wide and two deep
   // The bar through the screw out past the post, a white key where it
   // crosses the post; the handle down from its end to a knob at the hand.
-  const barY = plY - 3, bx0 = PR.scX - 1, bx1 = PR.bodyX;
+  const barY = plY - 3, bx0 = PR.scX - 1;
   d.px(PR.postR * P - 2, barY * P - 2, P + 4, P + 4, W);
-  d.r(bx0, barY, bx1 - bx0, 1, K);
+  d.r(bx0, barY, PR.postR + 1 - bx0, 1, K);
   const knobY = drop === 2 ? -4 : -5;
-  d.line(bx1 - 1.25, barY + 1, bx1 - 1.25, knobY, 3, K, false);
-  d.r(bx1 - 2, knobY, 2, 2, K);
+  posed.press = { barY, knobY };
+  partFade(d, growOf(h), () => pressHandle(d, barY, knobY));
   d.r(PR.bodyX, -1, 3, 1, K);                                       // the step
+}
+// The bar's end out past the post, its handle down to the knob at `knob`:
+// the part the hand pulls.
+function pressHandle(d, bar, knob) {
+  const bx1 = PR.bodyX;
+  d.r(PR.postR + 1, bar, bx1 - PR.postR - 1, 1, K);
+  d.line(bx1 - 1.25, bar + 1, bx1 - 1.25, knob, 3, K, false);
+  d.r(bx1 - 2, knob, 2, 2, K);
 }
 
 // --- the construction shack: B's cut-out with C's mallet --------------------------
@@ -567,6 +614,53 @@ function forestry(d) {
 }
 
 export const DRAW = { mill, chipper, papermill, workshop, press, shack, forestry };
+
+// --- the hovered part, a scale up --------------------------------------------------
+// Each hand-worked part drawn grown in the pose its station drew it in this
+// frame (`posed`), on a frame of the next scale up (place.js, `grownOrigin`):
+// one rigid drawing on its own grid. Its frame's origin, and the part.
+const PADDLE_FOOT = HANDWORK_ANCHOR.papermill.foot;
+const knobOf = q => Math.floor(q.barY + (q.knobY + 2 - q.barY) / GK - 2);
+const GROWN = {
+  mill: { at: () => grownOrigin('mill'),
+          draw: (d, q) => { const a = HANDWORK_ANCHOR.mill; flywheel(d, q.a, Math.round(a.at[1] - a.to[1] / GK)); crankPin(d, wheelAt(q.a).pin); } },
+  chipper: { at: () => grownOrigin('chipper'), draw: (d, q) => chArm(d, q.pose, false) },
+  // the paddle's shaft where the small one's is, its foot a rim over the vat's floor
+  papermill: { at: q => ({ x: stationX0('papermill') + q.sx * (AFTER_ART_SCALE - GS), y: afterFloor() + PADDLE_FOOT * P * (AFTER_ART_SCALE - GS) - HANDWORK_RIM }),
+               draw: (d, q) => paddle(d, q.sx, HANDWORK_PADDLE_TOP) },
+  // hung off the bar's row, its knob kept above the row the small knob's foot is on
+  press: { at: q => grownOrigin('press', [HANDWORK_ANCHOR.press.at[0], q.barY], [HANDWORK_ANCHOR.press.to[0], q.barY]),
+           draw: (d, q) => pressHandle(d, q.barY, knobOf(q)) }
+};
+// The grown part at the context's ink: a paper rim HANDWORK_RIM round it
+// (the part laid four times in paper, a rim off each side), then the part.
+// With `sink`, every world rect it would fill handed over instead (the
+// clearance check, test/after-gestures.test.mjs).
+export function drawGrown(key, sink = null) {
+  const q = posed[key], G = GROWN[key];
+  if (!q || !G) return;
+  const o = G.at(q);
+  const rimAt = (dx, dy) => (x, y, w, h) => {
+    if (sink) { sink(o.x + x + dx, o.y + y + dy, w, h); return; }
+    ctx.fillStyle = GREY[W]; ctx.fillRect(Math.round(o.x + x + dx), Math.round(o.y + y + dy), Math.round(w), Math.round(h));
+  };
+  for (const [dx, dy] of [[-HANDWORK_RIM, 0], [HANDWORK_RIM, 0], [0, -HANDWORK_RIM], [0, HANDWORK_RIM]]) G.draw(frame(o.x, o.y, 0, rimAt(dx, dy), GS), q);
+  G.draw(frame(o.x, o.y, 0, sink ? rimAt(0, 0) : null, GS), q);
+}
+// Where the hand takes each grown part, world px, for the ghost of its
+// motion (render/aftercues.js): the wheel's hub, its knob and the knob's
+// reach; the arm's pivot and its ball upright and down; the paddle's grip;
+// the press's knob.
+export function grownGrips(key) {
+  const q = posed[key], G = GROWN[key];
+  if (!q || !G) return null;
+  const o = G.at(q), w = (x, y) => ({ x: o.x + x * P * GS, y: o.y + y * P * GS });
+  if (key === 'mill') { const k = wheelAt(q.a); return { hub: w(MW.cx, MW.cy), reach: KNOB * P * GS, knob: w(k.kx, k.ky) }; }
+  if (key === 'chipper') return { pivot: w(CH.pivot.x + 0.5, CH.pivot.y + 0.5), up: w(CH.knob[0].x + 0.5, CH.knob[0].y + 0.5), down: w(CH.knob[2].x + 0.5, CH.knob[2].y + 0.5) };
+  if (key === 'papermill') return { grip: { x: o.x + (q.sx + 2) * GS, y: o.y + (HANDWORK_PADDLE_TOP * P + 3) * GS } };
+  if (key === 'press') return { knob: w(PR.bodyX - 1, knobOf(q) + 1) };
+  return null;
+}
 
 // Each station's paper backing (kit.js, `silhouette`), read off its idle
 // drawing once: the moving parts swing inside it, and what they carry is

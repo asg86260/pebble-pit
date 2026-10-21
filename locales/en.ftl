@@ -3646,3 +3646,18 @@ after-crowd-pct = { $n }%
 
 # act 3 crowd board value (placeholder): no speech set yet
 after-crowd-none = none due
+
+# act 3 hand work (placeholder): the tag under the saw mill while its wheel is worked
+handwork-spin = spin
+
+# act 3 hand work (placeholder): the tag under the chipper before a log is in its jaws
+handwork-drag = drag
+
+# act 3 hand work (placeholder): the tag under the chipper while its arm is to be held down
+handwork-hold = hold
+
+# act 3 hand work (placeholder): the tag under the paper mill while its vat is stirred
+handwork-stir = stir
+
+# act 3 hand work (placeholder): the tag under the press while its bar is pulled
+handwork-pull = pull

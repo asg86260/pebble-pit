@@ -8377,5 +8377,40 @@
   "where": "src/after/rows.js",
   "context": "act 3 crowd board value (placeholder): no speech set yet",
   "text": "none due"
+ },
+ {
+  "id": "handwork-spin",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/render/aftercues.js",
+  "context": "act 3 hand work (placeholder): the tag under the saw mill while its wheel is worked",
+  "text": "spin"
+ },
+ {
+  "id": "handwork-drag",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/render/aftercues.js",
+  "context": "act 3 hand work (placeholder): the tag under the chipper before a log is in its jaws",
+  "text": "drag"
+ },
+ {
+  "id": "handwork-hold",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/render/aftercues.js",
+  "context": "act 3 hand work (placeholder): the tag under the chipper while its arm is to be held down",
+  "text": "hold"
+ },
+ {
+  "id": "handwork-stir",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/render/aftercues.js",
+  "context": "act 3 hand work (placeholder): the tag under the paper mill while its vat is stirred",
+  "text": "stir"
+ },
+ {
+  "id": "handwork-pull",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/render/aftercues.js",
+  "context": "act 3 hand work (placeholder): the tag under the press while its bar is pulled",
+  "text": "pull"
  }
 ]

@@ -126,3 +126,60 @@ export const GESTURE_PAD_TURN = 0.5;
 export const GESTURE_CUE_DOT = 2;
 export const GESTURE_CUE_LOOP_S = 1.4;
 export const GESTURE_CUE_TAP_S = 0.4;
+
+// --- act 3's hand work, shown in the world (DESIGN.md, "Act 3's hand work and
+// hand carrying", take B, the owner's vote 2026-10-20) ----------------------
+// Hovered, a hand-worked part is drawn a whole game cell bigger an art cell
+// (the station's scale and one more), as one piece in a paper rim a game cell
+// wide, faded in over HANDWORK_GROW_S; the scale itself never eases, which
+// would shear the drawing off its grid.
+export const HANDWORK_GROW = 1;
+export const HANDWORK_GROW_S = 0.25;
+export const HANDWORK_RIM = P;
+// Where each grown part stands: its own art cell `at` laid on the station's
+// art cell `to`, picked so the grown part and its rim clear the station's
+// other parts (test/after-gestures.test.mjs). The flywheel is lifted and
+// moved off the frame's post, its stand run down to the floor; the arm moved
+// off the chute and lifted off the block; the press's handle hung off the
+// bar where it leaves the post (its row is the bar's, as the bar comes
+// down), its knob kept on the same row it is pulled from; the paddle on its
+// shaft's column, its foot a rim over the vat's floor, its shaft cut to
+// HANDWORK_PADDLE_TOP so its grip and rim stay under the sheets on the line.
+export const HANDWORK_ANCHOR = {
+  mill: { at: [19, -9], to: [17, -12] },
+  chipper: { at: [29, -14], to: [27.5, -15.5] },
+  press: { at: [23, 0], to: [24, 0] },
+  papermill: { foot: -2 }
+};
+export const HANDWORK_PADDLE_TOP = -8.5;
+// The ghost of the motion: a dotted path round the part, a dot a game cell,
+// HANDWORK_DOTS of them, a cell of ink running along them HANDWORK_DOT_RUN
+// dots a second, the path HANDWORK_PATH_OUT outside the part's own reach;
+// one loop of the hand every HANDWORK_HINT_LOOP_S, pointing for the first
+// HANDWORK_HINT_POINT of it, then grabbing and playing the motion. It fades
+// over HANDWORK_HINT_S, out once the part is being worked and back once it
+// stands still: below HANDWORK_IDLE_SPEED of its cap it is not.
+export const HANDWORK_DOTS = 28;
+export const HANDWORK_DOT_RUN = 12;
+export const HANDWORK_PATH_OUT = P * 2;
+export const HANDWORK_HINT_LOOP_S = 2.6;
+export const HANDWORK_HINT_POINT = 0.3;
+export const HANDWORK_HINT_S = 0.4;
+export const HANDWORK_IDLE_SPEED = 0.05;
+// The hint's hand, the cue's own drawing (render/aftercues.js, HAND) at a
+// game cell a pixel, as the mock drew it.
+export const HANDWORK_HAND_DOT = P;
+// The chipper's ghost: the log's arc off the pile into the jaws this high
+// over the straight line, and its share of the loop's grab before the arm.
+export const HANDWORK_LOG_ARC = P * 8;
+export const HANDWORK_LOG_SHARE = 0.5;
+// The strip under the station: HANDWORK_STRIP_DROP under the floor line,
+// HANDWORK_STRIP_H deep, its segments a game cell apart, on a paper rim; the
+// verb's tag under it, its type HANDWORK_TAG_PX, padded a cell. It fades over
+// HANDWORK_STRIP_S, and a finished unit holds full for HANDWORK_DONE_S.
+export const HANDWORK_STRIP_DROP = P * 2;
+export const HANDWORK_STRIP_H = P * 2;
+export const HANDWORK_TAG_PX = 18;
+export const HANDWORK_TAG_PAD = P;
+export const HANDWORK_STRIP_S = 0.3;
+export const HANDWORK_DONE_S = 0.8;

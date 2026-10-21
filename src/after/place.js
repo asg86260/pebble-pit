@@ -14,7 +14,8 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, UNION_CROWD, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
-         AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL, AFTER_ART_SCALE } from '../config.js';
+         AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL, AFTER_ART_SCALE,
+         HANDWORK_GROW, HANDWORK_ANCHOR } from '../config.js';
 
 import { S } from '../state.js';
 import { ART as BASE_ART } from './art.js';
@@ -23,6 +24,9 @@ const snap = v => Math.round(v / P) * P;
 // An art cell, world px: a cell of act 3's drawings, AFTER_ART_SCALE grid
 // cells across. Everything laid off the art's own cells is laid off these.
 export const AP = P * AFTER_ART_SCALE;
+// A hovered hand-worked part is drawn a scale up (config, HANDWORK_GROW): its
+// art cell.
+export const GP = P * (AFTER_ART_SCALE + HANDWORK_GROW);
 
 // The cloud floor's top: the yard's top is world y 0, so the afterlife's floor
 // stands AFTER_GAP above it and its own top AFTER_H above that.
@@ -387,10 +391,17 @@ export function stationParts(key, i = 0) {
   if (!b) return null;
   const worked = { x: b.x, y: b.y + AP * TOP_STRIP, w: b.w, h: b.h - AP * TOP_STRIP };
   const x0 = stationX0(key);
-  if (key === 'mill') return { box: worked, wheel: { ...at(x0, 19, -9), r: 6 * AP }, knob: 8 * AP, frame: box(x0, 31, -26, 19, 26) };
+  // `grown` the wheel and the arm as drawn while hovered (`grownOrigin`):
+  // a press on the bigger part takes it as the small one does.
+  if (key === 'mill') {
+    const g = HANDWORK_ANCHOR.mill.to;
+    return { box: worked, wheel: { ...at(x0, 19, -9), r: 6 * AP }, knob: 8 * AP, frame: box(x0, 31, -26, 19, 26),
+             grown: { ...at(x0, g[0], g[1]), r: 8 * GP } };
+  }
   if (key === 'chipper') {
     return { box: worked, mouth: box(x0, 16, -13, 14, 14), jaw: box(x0, 18, -14, 10, 5), block: box(x0, 28, -15, 6, 15), chute: box(x0, 31, -19, 7, 5),
-             arm: box(x0, 21, -24, 11, 10), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - AP * 6, w: PILE_W * AP, h: AP * 6 } };
+             arm: box(x0, 21, -24, 11, 10), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - AP * 6, w: PILE_W * AP, h: AP * 6 },
+             grownArm: (o => ({ x: o.x + 21 * GP, y: o.y - 24 * GP, w: 11 * GP, h: 10 * GP }))(grownOrigin('chipper')) };
   }
   if (key === 'papermill') return { box: worked, vat: { ...at(x0, 19, -4.5), rx: 6 * AP, ry: 2.5 * AP }, line: box(x0, 9, -18, 30, 1), step: box(x0, 5, -9, 4, 9) };
   if (key === 'workshop') return { box: worked, sign: box(x0, 8, -6, 12, 2), hammer: box(x0, 8, -14, 14, 6), hand: at(x0, 13, -9),
@@ -398,6 +409,12 @@ export function stationParts(key, i = 0) {
   if (key === 'press') return { box: worked, bar: { ...at(x0, 14, -11), len: 12 * AP }, knob: box(x0, 24, -6, 2, 2), platen: box(x0, 12, -8, 9, 2),
                                 handle: box(x0, 23, -12, 4, 8) };
   return { box: worked };
+}
+// The world origin of the frame a hovered part is drawn in a scale up: the
+// part's own art cell `at` laid on the station's art cell `to` (config,
+// HANDWORK_ANCHOR). None of the hand-worked stations is turned.
+export function grownOrigin(key, at = HANDWORK_ANCHOR[key].at, to = HANDWORK_ANCHOR[key].to) {
+  return { x: stationX0(key) + to[0] * AP - at[0] * GP, y: afterFloor() + to[1] * AP - at[1] * GP };
 }
 // Whether plot i's tree was planted big (the grove's bigger trees).
 const treeBig = i => !!(S.after && S.after.plots[i] && S.after.plots[i].big);
