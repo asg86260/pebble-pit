@@ -23145,3 +23145,66 @@ be able to pick up and move resources themselves between stations"
   and drops them on another station's pile. A load in the hand is the
   yard's carry, its weight in slots (the bullet above). Built after the crew's
   carry lands, on that same carry.
+
+### Act 3: one job a station (design, not built; the owner, 2026-10-21)
+
+The owner, verbatim: "bro the workers just dont do anything. theres too many
+slots to assign workers and no description for what they are." Then: "yea
+one job per station. keep hiring the same."
+
+**Why.** Six stations carry ten jobs. The grove alone has three rosters
+(woodcutter, gatherer, hauler), and the workshop and the press have two each
+(joiner and carrier, printer and paster). A chain only runs when every link
+has a body, and nothing says which link is missing. The owner's save showed
+it plainly: one sawyer assigned, 46 logs lying in the grove, nobody to
+gather or haul them, and the mill idle with nothing to say why. Ten
+unlabeled pluses read as busywork, not as choices.
+
+**The bargain.** One roster a station, and the body on it runs the
+station's whole round: its input in, its work, its output out. The player
+decides where workers go, not how a chain is wired. The cost is that a
+body walks more and works less, so one worker at a station is slower than
+today's full chain. The seats bought per station (`AFTER_SEAT_BILLS`, now
+one row a station) are how the player buys that pace back. Hiring is
+unchanged (the recruit row, above).
+
+- **Six jobs.** Each is named for its station, with a one-line description
+  read through `msg()`:
+  - **woodcutter** (forestry): fells the nearest grown tree (a stump with
+    stump removal bought), picks up its logs and carries them to the
+    forestry shack's pile.
+  - **sawyer** (mill): fetches logs from the forestry pile to the mill's
+    pile, saws them, and tips the heap when it is at its brim (as today).
+  - **feeder** (chipper): fetches logs from the forestry pile to its own
+    pile and feeds them through.
+  - **pulper** (papermill): unchanged. Sawdust is one shared heap, and
+    nobody carries it.
+  - **joiner** (workshop): nails signs. Once a load of them is waiting, it
+    takes them out and plants them, then goes back to the bench.
+  - **printer** (press): prints posters. Once a load of them is waiting,
+    it pastes them on the fence, then goes back to the press.
+- **The rule for fetching.** A station's worker fetches its own input when
+  its pile is empty, and takes its own output out when a full load is
+  waiting. A pile that has nowhere to go (a full fence, every sign spot
+  taken) is left where it stands. This one rule replaces the gatherer, the
+  hauler, the carrier and the paster.
+- **Idle errands stay.** Idle members still plant signs and paste posters
+  that are waiting (above). They now also gather logs lying in the grove
+  and carry them to the forestry pile. A free hand always helps the chain,
+  and the assigned worker never waits on one.
+- **The roster says what the job is.** Hovering a roster's sign shows the
+  job's name and its line. With the job stalled, the line reads why:
+  "waiting on logs", "the fence is full", "the heap is full". The reason is
+  read off the same test that holds the body, so it cannot drift from what
+  the body is doing.
+- **Saves.** Bodies on gatherer or hauler move to the woodcutter. Carrier
+  goes to joiner, and paster goes to printer. A body holding a load finishes
+  its trip first. The seats bought on a dropped job carry to its station's
+  job, the larger of the two, so nothing paid for is lost (the precedent is
+  `after/index.js`'s seat carry).
+- **Checks.** Bought the player's way: buy a station, press its + once, and
+  the chain from tree to timber runs with one body at the forestry and one
+  at the mill. A full-fence press holds its printer at the bench with the
+  stall note shown. The owner's save (`test/fixtures/act3-full-fence.json`)
+  reaches timber with no further assignment beyond what it already has
+  plus one woodcutter.
