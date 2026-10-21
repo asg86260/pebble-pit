@@ -704,7 +704,11 @@ function cloudPuffs(rnd, kind, cx, base, R, flat, life, stray, puffs) {
 // sheet's height seen from there. Its rows run from the top of its highest
 // cloud down past its lowest base; `baseRow` is the horizon's row in them,
 // `sky` the sky's height in cells that `lift` is a share of.
-export function skyLayer({ i, seed = 1, W, sky = 145 }) {
+// `lane`, when given, is where the layer's bases sit instead: [highest,
+// lowest] in cells below the layer's top row (its first row at y 0), a
+// nearer, bigger cloud of the band higher in it -- the yard's lanes, for a
+// place whose clouds keep to the top of its sky (act 3, render/after/cloudsky.js).
+export function skyLayer({ i, seed = 1, W, sky = 145, lane = null }) {
   const S = CLOUDS_SKY, D = CLOUDS_LOD, P = layerParams(i), rnd = gen(seed * 7919 + 101 * (i + 1));
   const slice = Math.pow(S.far, 1 / Math.max(1, S.layers - 1)), puffs = [];
   const plain = P.d < D.plain;
@@ -719,7 +723,9 @@ export function skyLayer({ i, seed = 1, W, sky = 145 }) {
         const near = Math.pow(slice, S.jitter * (rnd() * 2 - 1));
         const R0 = near * Math.min(P.R * P.tail, Math.max(P.R * 0.3, P.R * lognormal(rnd, P.spread)));
         const life = { per: TAU / lerp(rnd(), L.life), ph: rnd() * TAU, keep: L.keep };
-        const stray = (rnd() * 2 - 1) * S.stray * P.wind, cs = Math.floor(rnd() * 1e9), base = -P.lift * near * sky;
+        const stray = (rnd() * 2 - 1) * S.stray * P.wind, cs = Math.floor(rnd() * 1e9);
+        const u = Math.log(near) / Math.log(slice) / Math.max(S.jitter, 1e-6) * 0.5 + 0.5;
+        const base = lane ? lane[1] - (lane[1] - lane[0]) * u : -P.lift * near * sky;
         // never smaller than the grid can draw whole: built again bigger
         const make = R => { const ps = []; cloudPuffs(gen(cs), kind, x, base, R, P.flat, life, stray, ps); return ps; };
         let ps = make(R0), R = R0;

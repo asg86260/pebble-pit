@@ -365,10 +365,17 @@ export const CLOUDS_SEA = {
 // the owner, 2026-10-20: "wire them in"). Every place is in act 3's own
 // cells, a world cell (P) each; a `rate` is how fast a layer slides against
 // the camera (1 the main plane), set where the act opens.
-//   sky    the sky's layers (CLOUDS_SKY), standing on the horizon: `rows`
-//          cells of sky over it whatever the window, so a cloud's height has
-//          nothing to do with how tall the window is; each layer slides at
-//          its own parallax times `rate`
+//   sky    the sky's layers (CLOUDS_SKY), each sliding at its own parallax
+//          times `rate`. The horizon's bank stands on the horizon, `rows`
+//          cells of sky over it; every other layer keeps to the top of the
+//          sky the way the yard's clouds do (config/weather.js, CLOUD_LANES;
+//          the owner, 2026-10-21: "they should appear higher and stay higher,
+//          like act 1"): its bases in its `lanes` entry, [highest, lowest] in
+//          cells below the top of the act's resting window, far to near --
+//          the nearest highest, each farther one a little lower, so the sheet
+//          still reads in perspective. In cells, so a cloud's height does not
+//          move when the window is resized. A cloud is cut flat at its base,
+//          so however it swells or flows it never hangs below its lane.
 //   edge   small billows lapping the path's near edge from under it, their
 //          tops `lap` cells up over the edge, `rows` rows of billows `R`
 //          cells at the nearest, each row at its `depths` for its tones
@@ -385,7 +392,7 @@ export const CLOUDS_SEA = {
 //   seed   the act's clouds' seed
 export const CLOUDS_ACT3 = {
   seed: 7, crest: 0.15, pad: 900, path: { dark: 'haze' },
-  sky: { rows: 120, rate: 0.4 },
+  sky: { rows: 120, rate: 0.4, lanes: [null, [31, 34], [29, 32], [26, 30], [22, 27]] },
   edge: { rate: 1, lap: 1, R: 5, rows: 2, depths: [0.9, 1] },
   fore: { rate: 1.3, down: 1, R: 13, rows: 6, depths: [0.3, 0.45, 0.6, 0.75, 0.9, 1] }
 };
