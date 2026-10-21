@@ -8227,7 +8227,7 @@
  {
   "id": "after-stall-logs",
   "group": "Act 4 (placeholder)",
-  "where": "src/after/roster.js",
+  "where": "src/selftest/afterboards.js",
   "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
   "text": "waiting on logs"
  },
