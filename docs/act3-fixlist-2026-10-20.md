@@ -15,7 +15,7 @@ Status: **open** / **in progress** / **fixed (commit)**.
    and the haunting, a pair with no beat holding them walks back to the
    pedestal. Check: `test/after-pair-stays.test.mjs`, the camp group.
 
-2. **"hiring workers for stations dont do anything"** -- open.
+2. **"hiring workers for stations dont do anything"** -- built (branch act3-roster), to check on the owner's save in the real game.
    The save has 30 agitator, 2 woodcutter, 3 hauler and 8 sawyer posts bought,
    but only 6 bodies (all agitators) and 0 members in the camp. A post is
    filled from the camp; with the pair silent (item 1) no member ever joined.
@@ -23,7 +23,7 @@ Status: **open** / **in progress** / **fixed (commit)**.
    agitator posts, so nothing could start again. The owner's answer: no
    bought posts; idle members agitate at the podium and stations take members
    through the yard's roster (DESIGN.md, "Act 3's crew: assigned like the
-   yard's"). In progress.
+   yard's"). Built: test/after-roster.test.mjs; the save, driven through the rosters in node, moves its logs into signs.
 
 3. **"the pedestal crowd isnt working"** -- open.
    Same root as items 1 and 2: no members, so the union's crowd never grows.

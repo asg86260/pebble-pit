@@ -52,7 +52,6 @@ import { P, GREY, GOD_BACK, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AF
          GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, GOD_TALK, GAZE,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_POSTER, SKY_DRIFT,
          AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S } from '../config.js';
-import { AFTER_JOB } from '../jobs.js';
 import { ctx } from './ctx.js';
 import { layerAt } from './frame.js';
 import { raw, darkPage } from '../ink.js';
@@ -970,7 +969,7 @@ function body(w) {
     else if (w.load === 'posters') rect(x, y - u, u * 3, u, PALE);
     else if (w.load === 'tip') rect(x, y - u, u * 2, u, PALE);
     if (w.swing != null) {
-      if (w.job === AFTER_JOB.AGITATE) { rect(x + u, y - u * 5, u, u * 2, INK); rect(x + u, y - u * 2, u, u, INK); }
+      if (w.job == null) { rect(x + u, y - u * 5, u, u * 2, INK); rect(x + u, y - u * 2, u, u, INK); }
       else for (let k = 1; k <= 2; k++) rect(x + (w.face > 0 ? 2 + k : -k) * u, y - k * u, u, u, INK);
     }
   });

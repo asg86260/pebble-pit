@@ -38,9 +38,9 @@ group('a felled tree\'s logs roll to rest, and a gatherer carries each to the fo
   // Nothing comes off the ground with nobody posted to it.
   run(20);
   const untouched = S.after.groundLogs.length === lying && read().grovelogs === pile0;
-  // A gatherer's post, bought on the grove's board.
+  // A gatherer put on through the roster under the forestry shack.
   window.__afterGrant({ rebel: 5000 });
-  const post = window.__buy('after-post-gatherer');
+  const post = window.__afterPress('gatherer');
   let carried = false;
   const all = runUntil(() => {
     carried = carried || S.after.bodies.some(b => b.job === 'gatherer' && b.load === 'log');
@@ -48,13 +48,13 @@ group('a felled tree\'s logs roll to rest, and a gatherer carries each to the fo
   }, 600);
   // A hauler, and the saw mill standing: the pile goes on to the mill.
   S.after.built.push('mill');
-  const hauler = window.__buy('after-post-hauler');
+  const hauler = window.__afterPress('hauler');
   const fed = runUntil(() => read().logs > 0, 600);
   window.__actsOn(null);
   return [
     ok(split.length === AFTER_LOGS_A_TREE && rolling, 'down, the trunk splits into its logs, each rolling on along the ground', `${split.length} logs`),
     ok(lying === AFTER_LOGS_A_TREE && inGrove, 'they come to rest on the grove\'s floor, inside the plot', `${lying} lying`),
-    ok(untouched, 'with nobody posted they lie where they stopped'),
+    ok(untouched, 'with nobody on the job they lie where they stopped'),
     ok(post && carried && all < Infinity, 'a gatherer carries every one to the forestry shack\'s pile', `post ${post} carried ${carried} in ${all} s, pile ${read().grovelogs}`),
     ok(hauler && fed < Infinity && read().grovelogs < AFTER_LOGS_A_TREE, 'a hauler takes them from that pile to the saw mill', `in ${fed} s, ${read().logs} at the mill`)
   ];

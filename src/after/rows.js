@@ -2,13 +2,13 @@
 // (DESIGN.md, "Acts 3 and 4", act 3; the owner's settled calls, 2026-10-18).
 //
 // No bands and no ladders up here (call 12, settled: act 3 is outside the
-// eight-rungs rule). A card sells its posts and two or three short named
-// upgrades, each a change on screen, paid in rebel, timber and paper and the
-// yard's coins (AFTER_UPGRADES): bought once, but for the grove's plots, a
-// plot a press. A post is a member wanted at the station (bodies.js): rebel
-// and dust a post, each dearer, every station's counted together, and a
-// member walks from the camp
-// to hold it -- nobody waiting, it stands empty. The construction shack sells
+// eight-rungs rule). A card sells its jobs' seats and two or three short
+// named upgrades, each a change on screen, paid in rebel, timber and paper
+// and the yard's coins (AFTER_UPGRADES): bought once, but for the grove's
+// plots, a plot a press. Nobody is bought: a station's members are put on
+// through the roster under it (after/roster.js), each job holding one to
+// start, and a seat row a job buys it room for one more (AFTER_SEAT_BILLS,
+// the owner, 2026-10-20). The construction shack sells
 // every station, all of them on its board and priced from the start, each
 // raised a piece at a time once bought (build.js).
 //
@@ -28,15 +28,15 @@
 
 import { S } from '../state.js';
 import { msg } from '../lang.js';
-import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_POST_REBEL0, AFTER_POST_RATE, AFTER_BUILDS,
-         AFTER_CARDS, AFTER_POST_DUST, AFTER_YARD_COINS, AFTER_TAG_ORDER, AFTER_PATCH_AT,
+import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_SEAT_BILLS, AFTER_BUILDS,
+         AFTER_CARDS, AFTER_YARD_COINS, AFTER_TAG_ORDER, AFTER_PATCH_AT,
          AFTER_COIN_MOTES, AFTER_COIN_UNDER_S, AFTER_COIN_STAGGER_S, AFTER_COIN_SPREAD, AFTER_COIN_LIFE_S,
          MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
 import { registerBoard, openBoardByKey } from '../boardrows.js';
 import { purse, leftText } from '../words.js';
 import { payTo } from '../pit.js';
-import { upCount, built, raising } from './levels.js';
-import { postsOf, postCount, addPost } from './bodies.js';
+import { upCount, built, raising, seatKey, seatsBought } from './levels.js';
+import { crewAt } from './bodies.js';
 import { clearPlot } from './grove.js';
 import { raiseStation } from './build.js';
 import { stationBox, plotX, groveX1, afterFloor, afterX0, AP, closed } from './place.js';
@@ -132,22 +132,22 @@ const upRow = key => {
   };
 };
 
-// --- the posts ---------------------------------------------------------------------------
-export const postRebel = () => Math.round(AFTER_POST_REBEL0 * Math.pow(AFTER_POST_RATE, postCount()));
-const postDust = () => AFTER_POST_DUST[Math.min(postCount(), AFTER_POST_DUST.length - 1)];
-const POST_NAMES = {
-  agitator: () => msg('after-job-agitator'), woodcutter: () => msg('after-job-woodcutter'),
+// --- the seats ---------------------------------------------------------------------------
+// A row a job: a seat more at its station, a bill a seat (AFTER_SEAT_BILLS),
+// the roster under the station drawing the seats and its + stopping at them.
+const JOB_NAMES = {
+  woodcutter: () => msg('after-job-woodcutter'),
   gatherer: () => msg('after-job-gatherer'), hauler: () => msg('after-job-hauler'), sawyer: () => msg('after-job-sawyer'), feeder: () => msg('after-job-feeder'),
   pulper: () => msg('after-job-pulper'), joiner: () => msg('after-job-joiner'),
   carrier: () => msg('after-job-carrier'), printer: () => msg('after-job-printer'),
   paster: () => msg('after-job-paster')
 };
-const postRow = job => ({
-  key: `after-post-${job}`, name: POST_NAMES[job](), card: AFTER_JOB_POST[job], repeats: true, post: job, ...ACT_ROW,
-  from: () => postsOf(job), to: () => postsOf(job) + 1,
-  bill: () => [['rebel', postRebel()], ['dust', postDust()]],
+const seatRow = job => ({
+  key: seatKey(job), name: msg('after-row-seat', { job: JOB_NAMES[job]() }), card: AFTER_JOB_POST[job], seat: job, ...ACT_ROW,
+  rung: () => seatsBought(job), rungs: () => AFTER_SEAT_BILLS.length,
+  bill: () => AFTER_SEAT_BILLS[Math.min(seatsBought(job), AFTER_SEAT_BILLS.length - 1)].map(([c, n]) => [c, n]),
   show: () => cardOpen(AFTER_JOB_POST[job]),
-  buy: () => { addPost(job); }
+  buy: () => { S.after.ups[seatKey(job)] = seatsBought(job) + 1; S.after.upAt[seatKey(job)] = S.after.t; }
 });
 
 // --- the shack: every station ------------------------------------------------------------
@@ -177,7 +177,7 @@ const buildRow = st => ({
 // Nothing up here is for sale before the act has begun.
 const inAct = u => ({ ...u, show: () => !!S.after && u.show() });
 export const AFTER_ROWS = [
-  ...AFTER_JOBS.map(postRow),
+  ...AFTER_JOBS.map(seatRow),
   ...Object.keys(AFTER_UPGRADES).map(upRow),
   ...Object.keys(AFTER_BUILDS).map(buildRow)
 ].map(inAct);
@@ -189,8 +189,8 @@ export const afterBill = u => (u.bill ? u.bill() : []);
 
 // --- the boards ----------------------------------------------------------------------------
 // A card's rows, and its planks (tabs choice A, the owner, 2026-10-18): its
-// posts' shelf, its heading counting the members posted there, then its
-// upgrades'; the shack one shelf, every station in camp order. Registered
+// jobs' seats' shelf, its heading counting the members at work there, then
+// its upgrades'; the shack one shelf, every station in camp order. Registered
 // under `after-<card>` (boardrows.js), the key of the card's station row.
 const jobsAt = card => AFTER_JOBS.filter(j => AFTER_JOB_POST[j] === card);
 const sectionsOf = card => {
@@ -199,9 +199,9 @@ const sectionsOf = card => {
   if (closed(card)) return [{ key: `after-${card}-rebuild`, title: msg('after-sect-rebuild'), keys: [`after-build-${card}`] }];
   if (card === 'shack') return [{ key: 'after-build', title: msg('after-sect-build'), keys: Object.keys(AFTER_BUILDS).map(s => `after-build-${s}`) }];
   const rows = AFTER_ROWS.filter(u => u.card === card);
-  return [{ key: `after-${card}-posts`, title: msg('after-sect-posts'), keys: rows.filter(u => u.post).map(u => u.key),
-            heads: () => jobsAt(card).reduce((n, j) => n + postsOf(j), 0) },
-          { key: `after-${card}`, title: msg('after-sect-card'), keys: rows.filter(u => !u.post).map(u => u.key) }]
+  return [{ key: `after-${card}-seats`, title: msg('after-sect-seats'), keys: rows.filter(u => u.seat).map(u => u.key),
+            heads: () => jobsAt(card).reduce((n, j) => n + crewAt(j), 0) },
+          { key: `after-${card}`, title: msg('after-sect-card'), keys: rows.filter(u => !u.seat).map(u => u.key) }]
     .filter(s => s.keys.length);
 };
 export const afterBoard = card => ({ rows: closed(card) ? [afterRow(`after-build-${card}`)] : AFTER_ROWS.filter(u => u.card === card), sections: sectionsOf(card) });

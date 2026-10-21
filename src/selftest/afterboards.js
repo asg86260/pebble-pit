@@ -30,10 +30,9 @@ async function upThere() {
 // The open board's tiles, by key, as drawn.
 const tiles = key => [...shopOf(`after-${key}`).querySelectorAll('button[data-key]')];
 const rowsNow = () => Object.fromEntries(window.__afterRows().map(r => [r.key, r]));
-// What a press changed: a rung climbed, or a post more.
+// What a press changed: a rung climbed (a seat row's too).
 const bought = (key, was) => {
   const r = rowsNow()[key];
-  if (key.startsWith('after-post-')) return (S.after.posts[key.slice('after-post-'.length)] || 0) > (was.posts[key.slice('after-post-'.length)] || 0);
   return r.rung > was.rows[key].rung;
 };
 
@@ -51,7 +50,7 @@ export const TESTS = [
     const press = tiles('shack').find(b => b.dataset.key === 'after-build-press');
     const pressLocked = !!press && press.classList.contains('locked') && press.textContent.includes(msg('after-wait-papermill'));
     for (const key of ['after-build-mill', 'after-build-chipper']) {
-      const was = { rows: rowsNow(), posts: { ...S.after.posts } };
+      const was = { rows: rowsNow() };
       tiles('shack').find(b => b.dataset.key === key)?.click();
       await sleep(60);
       if (!bought(key, was)) missed.push(key);
@@ -70,7 +69,7 @@ export const TESTS = [
       opened.push(`${card}:${drawn.length}`);
       for (const b of drawn) {
         const key = b.dataset.key;
-        const was = { rows: rowsNow(), posts: { ...S.after.posts } };
+        const was = { rows: rowsNow() };
         b.click();
         await sleep(40);
         if (!bought(key, was)) missed.push(key);

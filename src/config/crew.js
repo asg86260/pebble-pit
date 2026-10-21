@@ -221,6 +221,10 @@ export const COUNTER_ROW_W = COUNTER_ROW * (SEAT_PIP + SEAT_GAP) - SEAT_GAP;
 // on one post.
 export const COUNTER_SPRITE_GAP = P;
 export const COUNTER_PAIR_GAP = P * 4;
+// The air between two posts standing side by side under one building (act 3's
+// forestry shack, workshop and press): wider than a pair's, so two posts
+// never read as one post's two counters.
+export const COUNTER_GROUP_GAP = P * 6;
 // The block hangs from its first row: that row's middle is on the post's
 // line, where the -/+ stand, so a row added below moves neither.
 export const COUNTER_TOP_DROP = SEAT_PIP / 2;

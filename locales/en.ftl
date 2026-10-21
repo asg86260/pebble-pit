@@ -3525,37 +3525,37 @@ after-row-stack = bigger stack
 # act 3 card row (placeholder): the press's bigger poster, a further reach
 after-row-posterreach = bigger poster
 
-# act 3 card row (placeholder): a post for a agitator, held by a member from the camp
-after-job-agitator = agitator
+# act 3 card row (placeholder): one more seat for a job at its station, the job named
+after-row-seat = { $job } seat
 
-# act 3 card row (placeholder): a post for a woodcutter, held by a member from the camp
+# act 3 job name (placeholder): a woodcutter, named on its seat row
 after-job-woodcutter = woodcutter
 
-# act 3 card row (placeholder): a post for a gatherer, held by a member from the camp
+# act 3 job name (placeholder): a gatherer, named on its seat row
 after-job-gatherer = gatherer
 
-# act 3 card row (placeholder): a post for a hauler, held by a member from the camp
+# act 3 job name (placeholder): a hauler, named on its seat row
 after-job-hauler = hauler
 
-# act 3 card row (placeholder): a post for a sawyer, held by a member from the camp
+# act 3 job name (placeholder): a sawyer, named on its seat row
 after-job-sawyer = sawyer
 
 # act 3 card row (placeholder): a post for a feeder at the chipper, held by a member from the camp
 after-job-feeder = feeder
 
-# act 3 card row (placeholder): a post for a pulper, held by a member from the camp
+# act 3 job name (placeholder): a pulper, named on its seat row
 after-job-pulper = pulper
 
-# act 3 card row (placeholder): a post for a joiner, held by a member from the camp
+# act 3 job name (placeholder): a joiner, named on its seat row
 after-job-joiner = joiner
 
-# act 3 card row (placeholder): a post for a carrier, held by a member from the camp
+# act 3 job name (placeholder): a carrier, named on its seat row
 after-job-carrier = carrier
 
-# act 3 card row (placeholder): a post for a printer, held by a member from the camp
+# act 3 job name (placeholder): a printer, named on its seat row
 after-job-printer = printer
 
-# act 3 card row (placeholder): a post for a paster, held by a member from the camp
+# act 3 job name (placeholder): a paster, named on its seat row
 after-job-paster = paster
 
 # act 3 shack row (placeholder): build the saw mill
@@ -3585,8 +3585,8 @@ after-wait-papermill = needs the paper mill
 # act 3 podium row's wait (placeholder): the union's support must reach the rung's mark, a share of the strike's
 after-wait-support = needs { $share }% support
 
-# act 3 card heading (placeholder): the station's posts
-after-sect-posts = posts
+# act 3 card heading (placeholder): the seats for the station's jobs
+after-sect-seats = seats
 
 # act 3 shack heading (placeholder): the stations to build
 after-sect-build = build

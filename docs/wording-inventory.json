@@ -8099,38 +8099,38 @@
   "text": "bigger poster"
  },
  {
-  "id": "after-job-agitator",
+  "id": "after-row-seat",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): a post for a agitator, held by a member from the camp",
-  "text": "agitator"
+  "context": "act 3 card row (placeholder): one more seat for a job at its station, the job named",
+  "text": "${job} seat"
  },
  {
   "id": "after-job-woodcutter",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): a post for a woodcutter, held by a member from the camp",
+  "context": "act 3 job name (placeholder): a woodcutter, named on its seat row",
   "text": "woodcutter"
  },
  {
   "id": "after-job-gatherer",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): a post for a gatherer, held by a member from the camp",
+  "context": "act 3 job name (placeholder): a gatherer, named on its seat row",
   "text": "gatherer"
  },
  {
   "id": "after-job-hauler",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): a post for a hauler, held by a member from the camp",
+  "context": "act 3 job name (placeholder): a hauler, named on its seat row",
   "text": "hauler"
  },
  {
   "id": "after-job-sawyer",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): a post for a sawyer, held by a member from the camp",
+  "context": "act 3 job name (placeholder): a sawyer, named on its seat row",
   "text": "sawyer"
  },
  {
@@ -8144,35 +8144,35 @@
   "id": "after-job-pulper",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): a post for a pulper, held by a member from the camp",
+  "context": "act 3 job name (placeholder): a pulper, named on its seat row",
   "text": "pulper"
  },
  {
   "id": "after-job-joiner",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): a post for a joiner, held by a member from the camp",
+  "context": "act 3 job name (placeholder): a joiner, named on its seat row",
   "text": "joiner"
  },
  {
   "id": "after-job-carrier",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): a post for a carrier, held by a member from the camp",
+  "context": "act 3 job name (placeholder): a carrier, named on its seat row",
   "text": "carrier"
  },
  {
   "id": "after-job-printer",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): a post for a printer, held by a member from the camp",
+  "context": "act 3 job name (placeholder): a printer, named on its seat row",
   "text": "printer"
  },
  {
   "id": "after-job-paster",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): a post for a paster, held by a member from the camp",
+  "context": "act 3 job name (placeholder): a paster, named on its seat row",
   "text": "paster"
  },
  {
@@ -8239,11 +8239,11 @@
   "text": "needs ${share}% support"
  },
  {
-  "id": "after-sect-posts",
+  "id": "after-sect-seats",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card heading (placeholder): the station's posts",
-  "text": "posts"
+  "context": "act 3 card heading (placeholder): the seats for the station's jobs",
+  "text": "seats"
  },
  {
   "id": "after-sect-build",

@@ -2,21 +2,21 @@
 // press", reworked to the owner's settled calls of 2026-10-18), on placeholder
 // drawings. Reached the way a player reaches it wherever a player can: a click
 // on the pair, a tree or a stump through the place's click (`__afterClick`,
-// what input.js calls), every row bought through `__buy`. The setup a check is
+// what input.js calls), every row bought through `__buy`, every member put on through its roster's + (`__afterPress`). The setup a check is
 // not about goes through the act's hooks: coins granted, the crowd's rims set
 // (`__afterCrowd`), the dev travel up (`__goPlace`) with the act's opening
 // beats marked played, since the story before the loop is not what is checked.
 import { group, ok, run, runUntil, yard, P } from './helpers.mjs';
 import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
          ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_PODIUM_REBEL, AFTER_PODIUM_CLIMB, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_PLOTS0, AFTER_PLOT_MAX,
-         AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL,
+         AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL, AFTER_AGITATE_S,
          AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_SAW_S, AFTER_TIP_LOAD, AFTER_CHIP_SAWDUST,
-         AFTER_BUILDS, AFTER_POST_DUST, AFTER_PULP_S, AFTER_VAT_SHEETS, AFTER_DRY_VATS, AFTER_PULP_SAWDUST, AFTER_SIGN_INK_S, AFTER_BURN_S,
+         AFTER_BUILDS, AFTER_SEAT_BILLS, AFTER_WALK, AFTER_PULP_S, AFTER_VAT_SHEETS, AFTER_DRY_VATS, AFTER_PULP_SAWDUST, AFTER_SIGN_INK_S, AFTER_BURN_S,
          GESTURE_STRAIN_S } from '../src/config.js';
 import { speechTarget } from '../src/after/union.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
-import { pileAt, stationBox, plotX, speakerAt, afterFloor, AP } from '../src/after/place.js';
+import { pileAt, stationBox, plotX, speakerAt, afterFloor, idleSpots, AP } from '../src/after/place.js';
 import { groveIcons } from '../src/after/gestures.js';
 import { sawOn, saw, lift, spin, feedLog, pullArm, tipHeap } from './after-hands.mjs';
 
@@ -27,10 +27,10 @@ const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 // Act 3's bills take the yard's coins too (DESIGN.md, "The yard pays too"):
 // the yard given enough of each for every path bought below, which is setup
 // no check here is about (test/after-yard-coins.test.mjs is): every bill on
-// every card once, and posts enough at the dearest post's dust.
+// every card once, and every seat twice over.
 const YARD_PURSE = (() => {
-  const sum = { dust: AFTER_POST_DUST[AFTER_POST_DUST.length - 1] * 40, spore: 0, shard: 0, scale: 0, spark: 0 };
-  const bills = [...Object.values(AFTER_BUILDS).map(b => b.bill), ...Object.values(AFTER_UPGRADES).flatMap(u => u.bills)];
+  const sum = { dust: 0, spore: 0, shard: 0, scale: 0, spark: 0 };
+  const bills = [...Object.values(AFTER_BUILDS).map(b => b.bill), ...Object.values(AFTER_UPGRADES).flatMap(u => u.bills), ...AFTER_SEAT_BILLS, ...AFTER_SEAT_BILLS];
   for (const bill of bills) for (const [c, n] of bill) if (c in sum) sum[c] += n;
   return { dust: sum.dust, spores: sum.spore, shards: sum.shard, scales: sum.scale, sparks: sum.spark };
 })();
@@ -48,6 +48,9 @@ const rims = () => S.after.rims;
 const inked = (n = Infinity) => rims().slice(0, n).split('').reduce((t, c) => t + (c === '9' ? 0 : +c), 0);
 // The first members, or any set walking, turned on until they stand in the camp.
 const settle = () => runUntil(() => read().walking === 0, 120);
+// A member put on `job` as a player puts one: the + on its roster, and with
+// its seats full a seat bought on its station's board first.
+const putOn = job => window.__afterPress(job) || (!!window.__buy(`after-seat-${job}`) && window.__afterPress(job));
 const line = () => { const at = window.__afterPair(); return window.__afterClick(at.x, at.y); };
 // The camp given members, as the signs would send them: the front of the crowd
 // made members, and the clock turned until they have walked out and stand on
@@ -91,9 +94,12 @@ group("the podium is a ladder bought on the pedestal's card, a rung at each supp
   const yMid = speakerAt(0).y;
   run(AFTER_PODIUM_CLIMB.s);
   const y1 = speakerAt(0).y;
-  const r0 = read().rebel;
-  line(); run(10);
-  const paid = read().rebel - r0;
+  // The line's own motes, read as they are knocked off: the idle members at
+  // the podium are giving lines of their own the while.
+  const m0 = S.after.motes.length;
+  line();
+  const paid = S.after.motes.slice(m0).reduce((s, m) => s + m.v, 0);
+  run(10);
   const rungs = [];
   for (let k = 1; k < marks.length; k++) { toMark(k); run(0.1); rungs.push(window.__buy('after-podium')); run(AFTER_PODIUM_CLIMB.s); }
   const done = window.__buy('after-podium');
@@ -113,58 +119,45 @@ group("the podium is a ladder bought on the pedestal's card, a rung at each supp
   ];
 });
 
-group('an agitator post is filled from the camp and makes rebel, and wins nobody', async () => {
+group('the idle members stand at the podium and make rebel, and win nobody', async () => {
   up();
   settle();                                 // the first members walk out to the camp
   S.after.speech = { next: 1e9, f0: 0, held: null };   // the throne's speech is another check's
-  const camp0 = read().camp;
-  window.__afterGrant({ rebel: 400 });
-  const posts = [0, 1].map(() => window.__buy('after-post-agitator'));
-  run(0.1);
-  const camp1 = read().camp;
+  const idle = () => S.after.bodies.filter(b => b.job == null && b.state === 'work');
+  const members0 = read().camp;
   const n0 = rims().length, ink0 = inked(n0), r0 = read().rebel;
   run(30);
-  const agitators = S.after.bodies.filter(b => b.job === 'agitator');
   const made = read().rebel - r0;
-  // A post with nobody waiting stands empty until a member walks in.
-  S.after.camp = 0;
-  window.__afterGrant({ rebel: 400 });
-  window.__buy('after-post-agitator');
-  run(2);
-  const agitating = () => S.after.bodies.filter(b => b.job === 'agitator').length;
-  const empty = agitating() === 2;
-  window.__afterCrowd((i, v) => (i === 200 ? RIM_PIECES : v));
-  const filled = runUntil(() => agitating() === 3, 120);
+  const atPodium = idle().every(w => w.x < stationBox('pedestal').x);
   window.__actsOn(null);
   return [
-    ok(camp0 === AFTER_FIRST_MEMBERS, 'the refusal\'s members walked out and stand in the camp', `${camp0}`),
-    ok(posts.every(Boolean) && camp1 === camp0 - 2, 'two posts bought, two members leave the camp for them', `${camp0} -> ${camp1}`),
-    ok(agitators.length === 2 && made > 0, 'the agitators stand by the pedestal and their lines make rebel', `${agitators.length}, +${made}`),
+    ok(members0 === AFTER_FIRST_MEMBERS, 'the refusal\'s members walked out, nobody on a job yet', `${members0}`),
+    ok(idle().length === Math.min(AFTER_FIRST_MEMBERS, idleSpots()) && atPodium && made > 0,
+       'they stand behind the pedestal, as many as its spots hold, and their lines make rebel', `${idle().length}, +${made}`),
+    ok(made >= Math.floor(30 / AFTER_AGITATE_S) * AFTER_FIRST_MEMBERS * AFTER_AGITATE_REBEL - AFTER_FIRST_MEMBERS,
+       'those past the spots, in the crowd, agitating at the same pace', `+${made}`),
     ok(made < 30 / 0.25 * AFTER_PODIUM_REBEL[0], 'less than a click\'s worth', `${made}`),
-    ok(inked(n0) === ink0, 'and nobody in the crowd is inked by it', `${ink0} -> ${inked(n0)}`),
-    ok(empty && filled, 'a post with nobody in the camp stands empty until a member walks in to it', `${empty} ${filled}`)
+    ok(inked(n0) === ink0, 'and nobody in the crowd is inked by it', `${ink0} -> ${inked(n0)}`)
   ];
 });
 
-group('a member bought into a post steps out of our crowd near it: the grove and the pedestal both a short walk', async () => {
+group('a member put on through the roster walks off the podium to the grove in a short walk', async () => {
   up();
   settle();
   S.after.speech = { next: 1e9, f0: 0, held: null };
-  window.__afterGrant({ rebel: 2000, timber: 200 });
-  // Seconds from the post bought until its member stands where the post
-  // first sends it: a woodcutter at its tree, an agitator behind the pedestal.
+  // Seconds from the press until the member stands at its tree.
   const trip = (job, there) => {
-    if (!window.__buy(`after-post-${job}`)) return Infinity;
+    if (!window.__afterPress(job)) return Infinity;
     let s = 0;
-    while (s < 60) { run(1); s++; const w = S.after.bodies.find(b => b.job === job); if (w && there(w)) return s; }
+    while (s < 120) { run(1); s++; const w = S.after.bodies.find(b => b.job === job); if (w && there(w)) return s; }
     return Infinity;
   };
   const cut = trip('woodcutter', w => Math.abs(w.x - (plotX(0) + AP * 3)) < 1);
-  const agit = trip('agitator', w => w.t > 0);
   window.__actsOn(null);
+  // The walk is the camp's length, podium to grove, at the act's pace.
+  const far = Math.ceil((stationBox('pedestal').x - plotX(0)) / AFTER_WALK) + 2;
   return [
-    ok(cut <= 12, 'a woodcutter is at its tree within twelve seconds', `${cut} s`),
-    ok(agit <= 12, 'an agitator is at its spot within twelve seconds', `${agit} s`)
+    ok(cut <= far, `a woodcutter is at its tree within the walk's ${far} seconds`, `${cut} s`)
   ];
 });
 
@@ -216,7 +209,7 @@ group('a felled tree leaves a stump that blocks the plot until it is dug, and di
     ok(down, 'down, it lies as logs and leaves a stump', JSON.stringify(p0)),
     ok(blocked, 'the stump blocks the plot: nothing grows there'),
     ok(still && !p.stump && p.stage === 1, 'lifted and held, its roots give one by one, and out it comes with a sapling set in the plot', 'stage ' + p.stage),
-    ok(read().rebel === r0, 'the sapling is free')
+    ok(read().rebel >= r0, 'the sapling is free: no rebel paid for it')
   ];
 });
 
@@ -224,8 +217,8 @@ group('a woodcutter chops but leaves the stump until stump removal is bought; th
   up();
   settle();
   window.__afterGrant({ rebel: 3000, timber: 400 });
-  const post = window.__buy('after-post-woodcutter');
-  const fell = runUntil(() => S.after.plots[0].stump, 90);
+  const post = putOn('woodcutter');
+  const fell = runUntil(() => S.after.plots[0].stump, 240);   // the walk from the podium is the camp's length
   run(30);
   const left = S.after.plots[0].stump;
   const upgraded = window.__buy('after-stumps');
@@ -233,7 +226,7 @@ group('a woodcutter chops but leaves the stump until stump removal is bought; th
   const stage = S.after.plots[0].stage;
   window.__actsOn(null);
   return [
-    ok(post && fell, 'a woodcutter walks from the camp to its post and fells the grown tree'),
+    ok(post && fell, 'a woodcutter walks from the podium to the grove and fells the grown tree'),
     ok(left, 'before stump removal it leaves the stump standing'),
     ok(upgraded && dug && stage >= 1, 'with stump removal bought it digs the stump out and the plot replants', `stage ${stage}`)
   ];
@@ -320,26 +313,28 @@ group('a station bought on the shack is carried in as a pile and raised off it a
   ];
 });
 
-group('with nobody in the camp members step off their posts to build, and the pair stay up speaking', async () => {
+group('with nobody idle members step off their jobs to build, and the pair stay up speaking', async () => {
   up();
   settle();
-  window.__afterGrant({ rebel: 2000 });
-  window.__buy('after-post-agitator');
-  window.__buy('after-post-agitator');
-  runUntil(() => S.after.bodies.filter(b => b.job === 'agitator' && b.state === 'work').length === 2, 60);
+  window.__afterGrant({ rebel: 2000, timber: 200 });
   S.after.camp = 0;
+  // Every member there is put on the grove's woodcutting, a seat bought for each past the first.
+  const n = S.after.bodies.filter(b => b.job == null && b.state === 'work').length;
+  for (let k = 0; k < n; k++) putOn('woodcutter');
+  const cutting = () => S.after.bodies.filter(b => b.job === 'woodcutter' && b.state === 'work').length;
+  runUntil(() => cutting() === n, 60);
   window.__buy('after-build-chipper');
   run(0.1);
   const crew = S.after.bodies.filter(b => b.job === 'builder');
-  const borrowed = crew.length === 2 && crew.every(b => b.pair == null) && !S.after.bodies.some(b => b.job === 'agitator');
+  const borrowed = n >= 2 && crew.length === 2 && crew.every(b => b.pair == null) && cutting() === n - 2;
   const speaks = !!line();
   const stood = runUntil(() => read().built.includes('chipper'), 900);
-  const back = runUntil(() => !S.after.bodies.some(b => b.job === 'builder') && S.after.bodies.filter(b => b.job === 'agitator').length === 2, 180);
+  const back = runUntil(() => !S.after.bodies.some(b => b.job === 'builder') && cutting() === n, 180);
   window.__actsOn(null);
   return [
-    ok(borrowed, 'the two agitators step off their posts to build, and the pair do not come down', JSON.stringify(crew.map(b => b.pair))),
+    ok(borrowed, 'two woodcutters step off their job to build, and the pair do not come down', `${n} on, ${JSON.stringify(crew.map(b => b.pair))}`),
     ok(speaks, 'and a click on the pedestal still gives a line'),
-    ok(stood && back, 'the station stands and the two walk back to their posts', `${stood} ${back}`)
+    ok(stood && back, 'the station stands and the two walk back to the grove', `${stood} ${back}`)
   ];
 });
 
@@ -351,7 +346,7 @@ group('a station is worked by hand before any member, and a post works it slower
   spin('mill', 2, () => read().timber - t0 >= 5 * AFTER_LOG_TIMBER);
   const byHand = read().timber - t0;
   settle();
-  window.__buy('after-post-sawyer');
+  putOn('sawyer');
   runUntil(() => S.after.bodies.some(b => b.at === 'mill'), 60);
   const l0 = read().logs;
   run(12);
@@ -401,7 +396,7 @@ group('the chipper turns logs into sawdust alone, and haulers feed the smaller p
   // logs on the forestry shack's pile, as the gatherers leave them
   window.__afterGrant({ logs: 3, grovelogs: 4 });
   settle();
-  window.__buy('after-post-hauler');
+  putOn('hauler');
   const fed = runUntil(() => read().chiplogs > 1, 240);
   window.__actsOn(null);
   return [
@@ -422,7 +417,7 @@ function buildChain() {
   const bought = [['raised', raise('mill', 'workshop')]];
   for (const k of ['after-plot', 'after-plot', 'after-stumps']) bought.push([k, window.__buy(k)]);
   for (const job of ['woodcutter', 'woodcutter', 'hauler', 'hauler', 'hauler', 'sawyer', 'sawyer', 'joiner', 'carrier', 'carrier'])
-    bought.push([job, window.__buy(`after-post-${job}`)]);
+    bought.push([job, putOn(job)]);
   return bought;
 }
 
@@ -439,12 +434,12 @@ group('the chain makes timber and sawdust, then signs, and a sawyer tips the ful
   window.__afterGrant({ timber: 100, rebel: 2000 });
   S.after.camp += 6;                         // hands for the branch: the walk out is checked above
   const raised = raise('papermill', 'press');
-  const b2 = ['after-post-pulper', 'after-post-printer', 'after-post-paster'].map(k => [k, window.__buy(k)]);
+  const b2 = ['pulper', 'printer', 'paster'].map(k => [k, putOn(k)]);
   run(150);
   const end = read();
   window.__actsOn(null);
   return [
-    ok(bought.every(([, b]) => b), 'the stations and the posts are bought through their rows', JSON.stringify(bought.filter(([, b]) => !b))),
+    ok(bought.every(([, b]) => b), 'the stations bought through their rows, the members put on through the rosters', JSON.stringify(bought.filter(([, b]) => !b))),
     ok(mid.timber > 0 || mid.signs > 0 || S.after.signs.length > 0, 'logs reach the mill and are sawn into timber', JSON.stringify(mid)),
     ok(brim && tipped, 'the sawdust heaps to its brim and a sawyer tips a load through the notch', `brim ${brim} tipped ${tipped}`),
     ok(S.after.signs.length > 0, 'the workshop makes signs and a carrier plants them in the crowd', `${S.after.signs.length}`),
@@ -535,7 +530,7 @@ group('the mill\'s second blade saws two logs a cut, at the fixed split', async 
   members(2);
   window.__afterGrant({ rebel: 2000, timber: 60 });
   raise('mill');
-  window.__buy('after-post-sawyer');
+  putOn('sawyer');
   const blade = window.__buy('after-blade');
   window.__afterGrant({ logs: 6 });
   const t0 = read().timber, d0 = read().sawdust;
@@ -564,7 +559,7 @@ group('the bigger vat makes more paper a batch; the drying line stirs a second b
   const vat = window.__buy('after-vat');
   const big = batch();
   const pulping = () => S.after.bodies.filter(b => b.job === 'pulper' && b.at === 'papermill').length;
-  const posts = [window.__buy('after-post-pulper'), window.__buy('after-post-pulper')];
+  const posts = [putOn('pulper'), putOn('pulper')];
   window.__afterGrant({ sawdust: 4000 });
   runUntil(() => S.after.bodies.filter(b => b.job === 'pulper').length === 2 && pulping() === 1, 90);
   run(2);

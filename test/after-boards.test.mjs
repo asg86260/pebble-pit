@@ -7,7 +7,7 @@
 // (src/selftest/afterboards.js). The setup a check is not about goes through
 // the hooks: the dev travel up with the opening marked played, coins granted.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { AFTER_BUILDS, AFTER_CARDS, MEET_MEMBERS, SLOW_SHARE, AFTER_POST_DUST } from '../src/config.js';
+import { AFTER_BUILDS, AFTER_CARDS, MEET_MEMBERS, SLOW_SHARE, AFTER_SEAT_BILLS } from '../src/config.js';
 import { boardOf } from '../src/boardrows.js';
 import { afterRow, openAfterBoard, speechIn } from '../src/after/rows.js';
 import { buy } from '../src/upgrades.js';
@@ -27,7 +27,7 @@ const up = () => {
 const shelves = key => boardOf(`after-${key}`).sections().map(s => [s.title, s.keys]);
 const reading = key => boardOf('after-crowd').rows().find(u => u.key === key).price();
 
-group('each board lists its rows on its shelves: posts, then upgrades; the shack one shelf in camp order', async () => {
+group('each board lists its rows on its shelves: seats, then upgrades; the shack one shelf in camp order', async () => {
   up();
   // An unbuilt station stands closed and its board is its rebuild; built,
   // it is the spec's shelves.
@@ -35,16 +35,16 @@ group('each board lists its rows on its shelves: posts, then upgrades; the shack
   const closedOff = unbuilt.filter(k => JSON.stringify(shelves(k)) !== JSON.stringify([[msg('after-sect-rebuild'), [`after-build-${k}`]]]));
   for (const k of unbuilt) S.after.built.push(k);
   const all = Object.fromEntries([...AFTER_CARDS, 'crowd'].map(k => [k, shelves(k)]));
-  const posts = msg('after-sect-posts'), ups = msg('after-sect-card');
+  const seats = msg('after-sect-seats'), ups = msg('after-sect-card');
   const want = {
     shack: [[msg('after-sect-build'), ['mill', 'chipper', 'papermill', 'workshop', 'press'].map(s => `after-build-${s}`)]],
-    pedestal: [[posts, ['after-post-agitator']], [ups, ['after-podium']]],
-    grove: [[posts, ['after-post-woodcutter', 'after-post-gatherer', 'after-post-hauler']], [ups, ['after-axe', 'after-plot', 'after-grow', 'after-tree', 'after-stumps']]],
-    mill: [[posts, ['after-post-sawyer']], [ups, ['after-blade', 'after-heap']]],
-    chipper: [[posts, ['after-post-feeder']], [ups, ['after-drum', 'after-spout']]],
-    papermill: [[posts, ['after-post-pulper']], [ups, ['after-vat', 'after-dry']]],
-    workshop: [[posts, ['after-post-joiner', 'after-post-carrier']], [ups, ['after-bench', 'after-signreach']]],
-    press: [[posts, ['after-post-printer', 'after-post-paster']], [ups, ['after-stack', 'after-posterreach']]]
+    pedestal: [[ups, ['after-podium']]],
+    grove: [[seats, ['after-seat-woodcutter', 'after-seat-gatherer', 'after-seat-hauler']], [ups, ['after-axe', 'after-plot', 'after-grow', 'after-tree', 'after-stumps']]],
+    mill: [[seats, ['after-seat-sawyer']], [ups, ['after-blade', 'after-heap']]],
+    chipper: [[seats, ['after-seat-feeder']], [ups, ['after-drum', 'after-spout']]],
+    papermill: [[seats, ['after-seat-pulper']], [ups, ['after-vat', 'after-dry']]],
+    workshop: [[seats, ['after-seat-joiner', 'after-seat-carrier']], [ups, ['after-bench', 'after-signreach']]],
+    press: [[seats, ['after-seat-printer', 'after-seat-paster']], [ups, ['after-stack', 'after-posterreach']]]
   };
   const off = Object.entries(want).filter(([k, v]) => JSON.stringify(all[k]) !== JSON.stringify(v)).map(([k]) => k);
   const crowdBuys = boardOf('after-crowd').rows().filter(u => !u.read);
@@ -80,16 +80,20 @@ group('the shack locks a station behind the one it needs, saying which, and a bu
   ];
 });
 
-group('the pedestal\'s agitator posts have no cap: bought past a dozen, each a little dearer', async () => {
+group('a job\'s seats climb a written table, each no cheaper than the last, and end', async () => {
   up();
-  const row = afterRow('after-post-agitator');
-  window.__afterGrant({ rebel: 1e5 });
+  S.after.built.push('mill');
+  const row = afterRow('after-seat-sawyer');
+  window.__afterGrant({ rebel: 1e5, timber: 1e4 });
   const bills = [];
-  for (let k = 0; k < AFTER_POST_DUST.length + 3; k++) { bills.push(row.bill()[0][1]); if (!buy(row)) break; }
+  for (let k = 0; k < AFTER_SEAT_BILLS.length + 2; k++) { bills.push(row.bill()[0][1]); if (!buy(row)) break; }
+  const seats = window.__afterRoster().find(r => r.job === 'sawyer')?.cap;
   window.__actsOn(null);
   return [
-    ok(bills.length === AFTER_POST_DUST.length + 3 && S.after.posts.agitator >= AFTER_POST_DUST.length + 2, 'every press bought another', `${S.after?.posts?.agitator ?? '?'} of ${bills.length}`),
-    ok(bills.every((b, i) => i === 0 || b >= bills[i - 1]), 'each post\'s rebel no cheaper than the last', bills.join(' '))
+    ok(row.rung() === AFTER_SEAT_BILLS.length && seats === AFTER_SEAT_BILLS.length + 1,
+       'every seat on the table bought, the roster holding one more each', `${row.rung()} rungs, ${seats} seats`),
+    ok(bills.length === AFTER_SEAT_BILLS.length + 1, 'and the press past the last refused', String(bills.length)),
+    ok(bills.every((b, i) => i === 0 || b >= bills[i - 1]), 'each seat\'s rebel no cheaper than the last', bills.join(' '))
   ];
 });
 

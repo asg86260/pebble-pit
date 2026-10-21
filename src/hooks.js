@@ -1498,7 +1498,8 @@ import { clickAfter } from './after/index.js';
 import { afterRow, AFTER_ROWS, afterBill, afterMaxed, openAfterBoard } from './after/rows.js';
 import { setCrowd, support as afterSupport, union as afterUnion, crowdSize } from './after/union.js';
 import { pairBox } from './after/rebel.js';
-import { campCount, walkingOut } from './after/bodies.js';
+import { campCount, walkingOut, idleBodies } from './after/bodies.js';
+import { rosterReport, rosterHit } from './roster.js';
 import { plotX, afterFloor, stationBox, heapX } from './after/place.js';
 import { afterGate, strikeDue } from './after/strike.js';
 import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, groveIcons } from './after/gestures.js';
@@ -1538,13 +1539,29 @@ HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage:
 HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, shown: !!S.after && u.show(),
   bill: afterBill(u), rung: u.rung ? u.rung() : 0, done: afterMaxed(u) }));
 HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...S.after.stock, gate: S.after.gate,
-  axe: S.after.axe, support: afterSupport(), union: afterUnion(), camp: campCount(), walking: walkingOut(),
+  axe: S.after.axe, support: afterSupport(), union: afterUnion(), camp: campCount() + idleBodies().length, walking: walkingOut(),
   size: crowdSize(), signs: S.after.signs.length, posters: S.after.posters.length, bodies: S.after.bodies.length,
   posted: S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD).length, motes: S.after.motes.length,
   built: [...S.after.built], camped: S.after.camp,
   due: afterGate(), strike: strikeDue() } : null);
 // The axe in hand without buying it: a scene's setup.
 HANDLES.__afterAxe = () => { if (S.after) S.after.axe = true; return !!S.after?.axe; };
+// The rosters under act 3's stations (after/roster.js, on the yard's
+// roster.js) as the checks read them; and a press on one's + (`d` 1) or -
+// (-1), made as a click there makes it: `rosterHit` at the button's middle,
+// with the camera up there while it lands (a click is only ever the view's).
+// True when the count moved.
+HANDLES.__afterRoster = () => rosterReport('after');
+HANDLES.__afterPress = (job, d = 1) => {
+  const was = S.view;
+  S.view = 'after';
+  try {
+    const r = rosterReport('after').find(q => q.job === job);
+    if (!r) return false;
+    rosterHit(...(d > 0 ? r.more : r.less));
+    return rosterReport('after').find(q => q.job === job).n !== r.n;
+  } finally { S.view = was; }
+};
 // A board opened by its card, as the pad's Y opens it (after/rows.js
 // `openAfterBoard`): `key` a card or 'crowd', `at` the world point the
 // crowd's board stands over.

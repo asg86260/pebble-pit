@@ -12,7 +12,9 @@
 // else (DESIGN.md, "Rules and consequences to check", the save shape).
 
 import { S } from '../state.js';
-import { AFTER_STOCK, AFTER_START_BUILT } from '../config.js';
+import { AFTER_STOCK, AFTER_START_BUILT, AFTER_JOBS, AFTER_SEAT_BILLS } from '../config.js';
+import { AFTER_JOB } from '../jobs.js';
+import { seatKey } from './levels.js';
 import { afterlifeOn } from '../acts.js';
 import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
@@ -21,6 +23,7 @@ import { stepPress, forgetSigns } from './press.js';
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
 import { stepBodies } from './bodies.js';
+import './roster.js';                   // the act's posts, stood on the yard's roster
 import { stepBubbles, forgetBubbles } from './bubbles.js';
 import { secs } from './util.js';
 import { settleHeld } from '../placebodies.js';
@@ -29,28 +32,30 @@ import { readOver } from '../placesave.js';
 // The act's facts, as the spec's save shape names them and the owner's
 // settled calls (2026-10-18) reshaped them: rebel, the act's coin; the
 // chain's stock; each soul's inked rim pieces, a character a soul
-// (union.js); the members waiting in the camp (`camp`, a count: each stands
-// on its spot) and the posts bought at each station by job (`posts`); the
-// grove's plots and each tree's growth; the signs planted and posters
-// pasted; the camp's stations built and those going up a piece at a time
-// (`raising`), and how many times each named upgrade is bought (`ups`); the
-// gate reached. When the last post of each job and each upgrade was bought
-// (`postAt`, `upAt`), so what it puts on screen fades in. And what the loop
+// (union.js); the idle members waiting in the crowd past the podium's spots
+// (`camp`, a count), the share of their next line owed (`lines`) and the
+// spot it was last said at (`said`), and how many of each job the rosters
+// want (`crew`); the grove's plots and each tree's growth; the signs planted
+// and posters pasted; the camp's stations built and those going up a piece
+// at a time (`raising`), and how many times each named upgrade and each
+// job's seat is bought (`ups`); the gate reached. When each upgrade was
+// bought (`upAt`), so what it puts on screen fades in. And what the loop
 // added to stand it up: the act's clock (`t`) and its chance (`seed`) and
 // the yard's coins coming up out of the patch (`coins`, rows.js: here so the
 // save reader, which drops what the blank lacks, keeps them), the seed it began with (`begun`, which names the act to the hand work), the
 // axe bought and in hand, the pair's last line (`shout`), the heap last
 // tipped and each station last worked by hand (`tipAt`, `workAt`), the
 // motes coming down, the bodies -- members walking out, at
-// their posts and building -- the throne's speech, the logs lying where
+// the podium, at their jobs and building -- the throne's speech, the logs lying where
 // their trees fell (grove.js, `groundLogs`), and the last id handed out.
 export const blankAfter = () => ({
   rebel: 0,
   stock: Object.fromEntries(AFTER_STOCK.map(k => [k, 0])),
   rims: '',
   camp: 0,
-  posts: {},
-  postAt: {},
+  crew: {},
+  lines: 0,
+  said: 0,
   plots: [],
   signs: [],
   posters: [],
@@ -129,6 +134,27 @@ export function clickAfter(wx, wy) {
   return clickPlace(wx, wy);
 }
 
+// A save from when a station's jobs were posts bought (`posts`, by job): the
+// agitators' posts are gone, every agitator standing at the podium idle as
+// any member with no job; each other job's posts become what its roster
+// wants, filled from the members the save has as far as they go, in the
+// rosters' order, the rest idle; and a job's posts past its one seat become
+// seats bought, so nothing paid for is lost.
+function fromPosts(a, posts) {
+  let left = a.camp + a.bodies.filter(b => b.state === 'work' && b.pair == null).length;
+  for (const job of AFTER_JOBS) {
+    const bought = Math.max(0, Math.floor(posts[job] || 0));
+    if (bought > 1) a.ups[seatKey(job)] = Math.min(AFTER_SEAT_BILLS.length, Math.max(a.ups[seatKey(job)] || 0, bought - 1));
+    const n = Math.min(bought, left);
+    if (n > 0) { a.crew[job] = n; left -= n; }
+  }
+  for (const b of a.bodies) {
+    if (b.job != null && b.job !== AFTER_JOB.BUILD && !AFTER_JOBS.includes(b.job)) b.job = null;
+    // A body at its post in the old save has got there.
+    if (b.job && b.state === 'work') b.on = true;
+  }
+}
+
 // The save (persist.js, `SAVERS`): written whole, null before the act
 // begins, and read over a blank so a save from before a field was added
 // comes back with that field empty rather than missing. The crowd's rims are
@@ -141,6 +167,7 @@ export const SAVE = {
     // An older save's wardens, which nothing reads, fall away with every key
     // the blank lacks (placesave.js).
     S.after = a && typeof a === 'object' ? readOver(blankAfter(), a) : null;
+    if (S.after && a.posts && typeof a.posts === 'object' && !a.crew) fromPosts(S.after, a.posts);
     if (S.after) settleHeld(S.after.bodies);
   },
   blank() { S.after = null; }

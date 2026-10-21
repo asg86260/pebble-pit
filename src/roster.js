@@ -4,7 +4,7 @@
 // it is on nothing. Its count is there to be read.
 
 import { P, WORKER, DEEP_POST_DOWN, SEAT_PIP, SEAT_GAP, SEAT_RING, SEAT_EMPTY_INK, SEAT_LEAVE_MS,
-         COUNTER_ROW, COUNTER_ROWS, COUNTER_SPRITE_GAP, COUNTER_PAIR_GAP, COUNTER_TOP_DROP,
+         COUNTER_ROW, COUNTER_ROWS, COUNTER_SPRITE_GAP, COUNTER_PAIR_GAP, COUNTER_GROUP_GAP, COUNTER_TOP_DROP,
          COUNTER_PLUS_DOWN, COUNTER_PLUS_ROOM, GARAGE_W, CART_W, LIFT_W, LIFT_FORK, LIFT_SEAT,
          LIFT_ANTENNA } from './config.js';
 import { deepFloor, deepTop } from './deep/place.js';
@@ -83,11 +83,44 @@ const GARAGE_POST = {
 };
 const allPosts = () => [...yardPosts(), GARAGE_POST];
 
+// --- the places ----------------------------------------------------------------
+// An act's place keeps its own crew and its own counts, but stands its posts
+// on this same roster: the same counters, buttons, hit test and drawing. A
+// place hands over its posts (`rosterPlace`) and each post carries `src`,
+// the place's answers to what the yard answers off `S` and `S.workers`:
+//
+//   count(p)        how many are on the post's job
+//   press(p, d)     one more (d 1) or one fewer (d -1) put on it
+//   spare()         how many could be put on anything
+//   cap(p)          the seats the post's station holds
+//   bodies(p)       the bodies on its job
+//   coming(w)       whether a body on it is still on its way there
+//   left(w)         how far it still has to walk
+//   uid(w)          a key for a body, for its pip's walk
+//
+// A place's post also says `place` (the view it stands in), its `at` and
+// `y`, and a `group`: posts of one group stand side by side under one
+// building, centered there as one, in the order handed over.
+// The places are kept on the function itself: a place's module registers
+// while this one may still be loading (the act's modules and the yard's
+// import each other round a ring), and a function declaration is the one
+// thing of a module standing before its body has run.
+export function rosterPlace(place, list) { (rosterPlace.places ||= new Map()).set(place, list); }
+const placePosts = () => [...(rosterPlace.places || new Map()).values()].flatMap(f => f());
+// Every post this roster stands, the yard's and every place's.
+const everyPost = () => [...allPosts(), ...placePosts()];
+
 // How many stand at a post, and whether each of its buttons would do anything.
-const count = p => (p.lifts ? liftsOf() : S[p.job]);
+const count = p => (p.src ? p.src.count(p) : p.lifts ? liftsOf() : S[p.job]);
+const capAt = p => (p.src ? p.src.cap(p) : capOf(p.job));
+const roomOf = p => (p.src ? capAt(p) - count(p) : roomAt(p.job));
+const spareOf = p => (p.src ? p.src.spare() : idle());
 const canLess = (p, n) => n > 0;
-const canMore = (p, spare) => spare > 0 && roomAt(p.job) > 0;
-const press = (p, d) => assign(p.job, d);
+const canMore = (p, spare) => spare > 0 && roomOf(p) > 0;
+const press = (p, d) => (p.src ? p.src.press(p, d) : assign(p.job, d));
+// Only the yard's posts have machines standing in for them: a place's job
+// that shares a yard job's name (act 3's hauler) is not the belt's.
+const machineOn = p => !p.src && machineAt(p.job);
 
 // --- the seats ----------------------------------------------------------------
 // A station with a floor plan is counted in seats: a pip a place to stand,
@@ -97,7 +130,7 @@ const press = (p, d) => assign(p.job, d);
 // holds, and every one of them still gets a pip.
 const seatsOf = p => {
   if (p.fixed) return 0;
-  const cap = capOf(p.job);
+  const cap = capAt(p);
   return Number.isFinite(cap) && cap >= 1 ? Math.max(cap, count(p)) : 0;
 };
 
@@ -108,8 +141,9 @@ const seatsOf = p => {
 // outside a pass, it is a walk of the crew as ever.
 let byType = null;
 const NOBODY = [];
-const bodiesOf = p => byType ? byType.get(TYPE_OF[p.job]) || NOBODY
-                             : S.workers.filter(w => w.type === TYPE_OF[p.job]);
+const bodiesOf = p => p.src ? p.src.bodies(p)
+  : byType ? byType.get(TYPE_OF[p.job]) || NOBODY
+           : S.workers.filter(w => w.type === TYPE_OF[p.job]);
 function overPosts(fn) {
   byType = new Map();
   for (const w of S.workers) {
@@ -122,7 +156,8 @@ function overPosts(fn) {
 // On its way: a commute whose last leg is the work (crew/commute.js), the
 // hat fetched first included. A hat errand ends on 'back', not 'work': that
 // body never left the job, so its seat stays full.
-const comingTo = w => (w.walking && w.leg === 'work') || !!w.legs?.some(l => l.do === 'work');
+const comingYard = w => (w.walking && w.leg === 'work') || !!w.legs?.some(l => l.do === 'work');
+const comingTo = (w, p) => (p.src ? p.src.coming(w) : comingYard(w));
 
 // What is left of the walk, along the ground: this leg and every leg after it.
 function still(w) {
@@ -135,10 +170,11 @@ function still(w) {
 // pip fills by the share of the walk behind it. A fact about the screen, not
 // the yard (like tween.js's runs): nothing saves it.
 const setOut = new Map();
-function walked(w) {
-  const left = still(w);
-  let r = setOut.get(w.uid);
-  if (!r || r.type !== w.type) setOut.set(w.uid, r = { type: w.type, d: left });
+const uidOf = (w, p) => (p.src ? p.src.uid(w) : w.uid);
+function walked(w, p) {
+  const left = p.src ? p.src.left(w) : still(w), id = uidOf(w, p), type = p.src ? w.job : w.type;
+  let r = setOut.get(id);
+  if (!r || r.type !== type) setOut.set(id, r = { type, d: left });
   return r.d > 0 ? Math.max(0, Math.min(1, 1 - left / r.d)) : 0;
 }
 
@@ -148,7 +184,7 @@ function walked(w) {
 const leftAt = new Map();
 onSnap(() => { leftAt.clear(); setOut.clear(); });
 function leaving(p, on) {
-  const key = p.job, t = now();
+  const key = p.src ? p.key : p.job, t = now();
   let m = leftAt.get(key);
   if (!m) leftAt.set(key, m = { n: on, out: [] });
   if (on < m.n && !reducedMotion()) for (let i = on; i < m.n; i++) m.out.push(t);
@@ -171,7 +207,7 @@ const wearsOn = (w, p) => !!p.kit && (w.wanting === p.job || (w.trained && w.kit
 // `seatsAt` does.
 function hatsAtWork(p) {
   let n = 0;
-  for (const w of bodiesOf(p)) if (!comingTo(w) && w.trained && w.kitOf === p.job) n++;
+  for (const w of bodiesOf(p)) if (!comingTo(w, p) && w.trained && w.kitOf === p.job) n++;
   return Math.min(n, count(p));
 }
 
@@ -185,8 +221,8 @@ export function seatsAt(p) {
   let here = 0, brims = 0;
   const walking = [], hatBound = [];
   for (const w of bodiesOf(p)) {
-    if (comingTo(w)) { (wearsOn(w, p) ? hatBound : walking).push(walked(w)); continue; }
-    setOut.delete(w.uid);
+    if (comingTo(w, p)) { (wearsOn(w, p) ? hatBound : walking).push(walked(w, p)); continue; }
+    setOut.delete(uidOf(w, p));
     here++;
     if (w.trained && w.kitOf === p.job) brims++;
   }
@@ -212,7 +248,7 @@ const topOf = p => {
   if (!p.kit || !seatsOf(p)) return { worn: 0, wearing: 0, spare: 0 };
   const worn = hatsAtWork(p);
   let wearing = 0, claimed = 0;
-  for (const w of bodiesOf(p)) if (comingTo(w) && wearsOn(w, p)) { wearing++; if (w.wanting === p.job) claimed++; }
+  for (const w of bodiesOf(p)) if (comingTo(w, p) && wearsOn(w, p)) { wearing++; if (w.wanting === p.job) claimed++; }
   wearing = Math.min(wearing, Math.max(0, count(p) - worn));
   // A hat seat a plain body already stands in is not shown: the seat is
   // taken, and the regular counter must hold every plain body at work.
@@ -242,7 +278,7 @@ function seatPips(p) {
 // The rock, carrying and the garage have no seats to count: the rock has no
 // floor plan, carrying is not a place, and nobody is put on a forklift. Each
 // is a pip a body all the same, solid where a body is at work.
-const crowded = p => !seatsOf(p) && (p.fixed || !Number.isFinite(capOf(p.job)));
+const crowded = p => !seatsOf(p) && (p.fixed || !Number.isFinite(capAt(p)));
 
 function crowdPips(p) {
   if (p.lifts) return { top: [], plain: Array.from({ length: liftsOf() }, () => ({ k: 3 })) };
@@ -250,11 +286,11 @@ function crowdPips(p) {
   let here = 0, brims = 0, claimed = 0;
   const walking = [], hatBound = [];
   for (const w of bodiesOf(p)) {
-    if (comingTo(w)) {
-      if (wearsOn(w, p)) { hatBound.push(walked(w)); if (w.wanting === p.job) claimed++; } else walking.push(walked(w));
+    if (comingTo(w, p)) {
+      if (wearsOn(w, p)) { hatBound.push(walked(w, p)); if (w.wanting === p.job) claimed++; } else walking.push(walked(w, p));
       continue;
     }
-    setOut.delete(w.uid);
+    setOut.delete(uidOf(w, p));
     here++;
     if (w.trained && w.kitOf === p.job) brims++;
   }
@@ -304,7 +340,7 @@ function countersOf(p) {
   if (!seated && !crowded(p)) return null;
   const { top, plain } = seated ? seatPips(p) : crowdPips(p);
   const list = [
-    { sprite: spriteOf(p, p.job === JOB.HAUL ? 'cart' : 'hat'), pips: top, top: true },
+    { sprite: spriteOf(p, !p.src && p.job === JOB.HAUL ? 'cart' : 'hat'), pips: top, top: true },
     { sprite: spriteOf(p, p.lifts ? 'lift' : 'body'), pips: plain, top: false }
   ];
   const some = list.filter(c => c.pips.length);
@@ -385,7 +421,21 @@ function setTo(p, want) {
 // height (the deep's) stands there instead.
 export function postAt(p) {
   const y = p.y?.() ?? S.groundY + P * 10;
-  return { x: Math.round(p.at() / P) * P, y: Math.round(y / P) * P };
+  return { x: Math.round((p.group ? groupAt(p) : p.at()) / P) * P, y: Math.round(y / P) * P };
+}
+
+// A post of a group, side by side with the others under its building: the
+// group as wide as its posts and a gap between each two, centered on the
+// building's middle, each post at the middle of its own width.
+function groupAt(p) {
+  const side = everyPost().filter(q => q.group === p.group && q.show());
+  const ws = side.map(widthOf), total = ws.reduce((s, w) => s + w, 0) + COUNTER_GROUP_GAP * (side.length - 1);
+  let x = p.at() - total / 2;
+  for (let i = 0; i < side.length; i++) {
+    if (side[i] === p) return x + ws[i] / 2;
+    x += ws[i] + COUNTER_GROUP_GAP;
+  }
+  return p.at();
 }
 
 // The machine's mark stands under the count, at the foot of the post.
@@ -431,6 +481,11 @@ function boxes(p) {
 }
 
 export const posts = () => allPosts().filter(p => p.show());
+// The posts a click or the pointer can be on: those standing in the view the
+// camera is in. The yard's are the yard's and the deep's, a place's its own.
+const PLACE_VIEWS = new Set(['after', 'hell']);
+const here = p => (p.place ? S.view === p.place : !PLACE_VIEWS.has(S.view));
+const live = () => everyPost().filter(p => p.show() && here(p));
 
 // --- the kit stand ------------------------------------------------------------
 // A hat belongs to the station, so a hat nobody is wearing waits at it: one
@@ -465,7 +520,7 @@ const hit = b => ({ x: b.x - HIT_X, y: b.y - HIT_Y,
 
 // The yard is one canvas, so nothing in it carries a cursor of its own;
 // somebody has to ask every time the mouse moves.
-export const overRoster = (x, y) => posts().some(p => {
+export const overRoster = (x, y) => live().some(p => {
   if (p.fixed) return false;
   const b = boxes(p);
   return inside(hit(b.less), x, y) || inside(hit(b.more), x, y) || !!pipAt(p, b, x, y);
@@ -488,7 +543,7 @@ function pipAt(p, b, x, y) {
 // A click on a roster, in world units: true if it was one, so the yard knows
 // not to treat it as a swing at the ground.
 export function rosterHit(x, y) {
-  for (const p of posts()) {
+  for (const p of live()) {
     if (p.fixed) continue;
     const b = boxes(p);
     // a near miss on either button still counts as that button rather than as a
@@ -514,7 +569,7 @@ export function rosterHit(x, y) {
     // The machine's mark is not a button either (a machine is stopped by
     // taking its tender off, the `-` beside the count), but a click there is
     // not a swing at the ground.
-    if (machineAt(p.job) && inside(hit(b.run), x, y)) return true;
+    if (machineOn(p) && inside(hit(b.run), x, y)) return true;
   }
   return false;
 }
@@ -523,7 +578,7 @@ export function rosterHit(x, y) {
 // to stand on (pad.js): a press there is `rosterHit` at the button's middle,
 // the very call a click makes. Null for a post not standing or not a switch.
 export function rosterButtons(key) {
-  const p = posts().find(q => q.key === key && !q.fixed);
+  const p = live().find(q => q.key === key && !q.fixed);
   if (!p) return null;
   const b = boxes(p);
   return { less: b.less, more: b.more };
@@ -542,16 +597,15 @@ export function drawRoster(ctx, drawBody, drawHat, drawRun, sprites) {
 }
 // The roster is cut to the half it stands in (frame.js, `clipToHalf`), so a
 // post in the other half is never seen and is not worked out.
-const inHalf = p => !!p.deep === (S.view === 'deep');
+const inHalf = p => (p.place ? S.view === p.place : !PLACE_VIEWS.has(S.view) && !!p.deep === (S.view === 'deep'));
 function drawRosterPass(ctx, drawBody, drawHat, drawRun, sprites) {
-  const spare = idle();
-  for (const p of posts()) {
-    if (!inHalf(p)) continue;
+  for (const p of everyPost()) {
+    if (!p.show() || !inHalf(p)) continue;
     const b = boxes(p);
-    const n = count(p);
+    const n = count(p), spare = spareOf(p);
 
     // Only on the stations that have a machine standing.
-    if (machineAt(p.job) && drawRun) drawRun(b.run, JOB_MACHINE[p.job]);
+    if (machineOn(p) && drawRun) drawRun(b.run, JOB_MACHINE[p.job]);
 
     if (b.counters) {
       for (const c of b.counters.list) {
@@ -668,8 +722,8 @@ export function drawRosterCounts(ctx, screenAt) {
 }
 function drawCountsPass(ctx, screenAt) {
   // In the number font, keyed in paper, in the middle of its own slot.
-  for (const p of posts()) {
-    if (!inHalf(p)) continue;
+  for (const p of everyPost()) {
+    if (!p.show() || !inHalf(p)) continue;
     // Drawn over the finished frame: on the light page the deep has been
     // turned over under it, so a deep post's number is written in the
     // paper's white to stand on the black water like the post's own marks,
@@ -708,8 +762,17 @@ export const machineAt = job => {
 };
 
 // what the roster is showing and where its buttons are, for the checks
-export function rosterReport() {
-  return posts().map(p => {
+// The yard's posts by default; a place's (`place` 'after') on its own, so a
+// check of the yard never reads an act's posts, nor the other way about.
+export function rosterReport(place = null) {
+  const list = place ? placePosts().filter(p => p.place === place && p.show()) : posts();
+  return list.map(p => (p.src
+    ? { ...postReport(p), hats: 0, worn: 0, spareKit: 0, machine: false, hands: null, trade: null,
+        room: Math.min(99, roomOf(p)), cap: capAt(p) }
+    : postReport(p)));
+}
+function postReport(p) {
+  {
     const b = boxes(p);
     const H = hit(b.less);
     const set = b.counters;
@@ -758,5 +821,5 @@ export function rosterReport() {
              block: set && b.seated ? { ...set.block } : null,
              less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],
              more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2] };
-  });
+  }
 }

@@ -22979,7 +22979,7 @@ same brown, a balloon still hangs under the same cloud.
 - **Saves.** `CLOUDS` is not saved now (it is reseeded); the puffs must not
   become saved either, so a reload is a fresh sky with the same swell.
 
-### Act 3's crew: assigned like the yard's (design, not built; the owner, 2026-10-20)
+### Act 3's crew: assigned like the yard's (built; the owner, 2026-10-20)
 
 The owner, verbatim: "I think agitators should be what workers do as they
 idle. When nothing is happening they hang at the podium. Otherwise they're

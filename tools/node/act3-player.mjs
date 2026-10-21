@@ -15,7 +15,9 @@ import { chopTree, digStump, standing, stumped } from '../../src/after/grove.js'
 import { tipSawdust, heapFull } from '../../src/after/mill.js';
 import { bubbles } from '../../src/after/bubbles.js';
 import { built } from '../../src/after/levels.js';
-import { afterRow, afterBill, afterMaxed, postRebel } from '../../src/after/rows.js';
+import { afterRow, afterBill, afterMaxed } from '../../src/after/rows.js';
+import { crewAt, spareMembers } from '../../src/after/bodies.js';
+import { seatsOf, seatKey } from '../../src/after/levels.js';
 import { union, support } from '../../src/after/union.js';
 import { wallSlots } from '../../src/after/place.js';
 
@@ -61,11 +63,15 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   // The axe and the saw mill first (the logs lie where a tree falls until a
   // hauler carries them, so one goes with it), the workshop and a carrier to
   // get signs into the crowd, then the chain's other stations and a post at
-  // each, then the upgrades. A post named twice is two posts.
+  // each, then the upgrades. A post is a member put on that job through the
+  // roster under its station (`row`, below), its seat bought first where the
+  // job's seats are full; a post named twice is two members. The logs lie
+  // where a tree falls until a gatherer brings them to the forestry shack,
+  // where the hauler takes them on.
   const PLAN = [
-    'after-axe', 'after-build-mill', 'after-post-hauler', 'after-post-sawyer', 'after-build-workshop',
+    'after-axe', 'after-build-mill', 'after-post-gatherer', 'after-post-hauler', 'after-post-sawyer', 'after-build-workshop',
     'after-post-carrier', 'after-podium', 'after-post-woodcutter', 'after-post-joiner', 'after-plot',
-    'after-build-chipper', 'after-post-feeder', 'after-post-carrier', 'after-post-agitator', 'after-heap', 'after-blade', 'after-plot',
+    'after-build-chipper', 'after-post-feeder', 'after-post-carrier', 'after-heap', 'after-blade', 'after-plot',
     'after-build-papermill', 'after-post-pulper', 'after-build-press', 'after-post-printer', 'after-post-paster',
     'after-stumps', 'after-grow', 'after-drum', 'after-vat', 'after-post-hauler', 'after-post-woodcutter',
     'after-bench', 'after-stack', 'after-spout', 'after-plot', 'after-dry', 'after-post-pulper',
@@ -75,8 +81,28 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   // piles would put one: a joiner while carriers wait on signs with timber in,
   // a hauler while logs lie in the grove, a woodcutter while grown trees
   // stand, a printer or a paster likewise at the press; else a carrier, the
-  // post that wins members, and an agitator every fourth.
+  // post that wins members. Whoever is left idle agitates at the podium.
   let laterN = 0, laterKey = null;
+  // A post on the plan, read as a row: shown with its seat row (its station
+  // standing), free while a seat is free and the seat's bill once they are
+  // full, dead once the seats are all bought and full.
+  const jobRows = new Map();
+  function row(key) {
+    if (!key.startsWith('after-post-')) return afterRow(key);
+    const job = key.slice('after-post-'.length), seat = () => afterRow(seatKey(job));
+    if (!jobRows.has(key)) jobRows.set(key, {
+      key, post: job,
+      full: () => crewAt(job) >= seatsOf(job),
+      show: () => seat().show(),
+      bill: () => (crewAt(job) >= seatsOf(job) ? afterBill(seat()) : []),
+      dead: () => crewAt(job) >= seatsOf(job) && afterMaxed(seat()),
+      from: () => crewAt(job)
+    });
+    return jobRows.get(key);
+  }
+  // The rebel the next post round the chain's end would cost: its seat's, or
+  // none while one is free.
+  const nextRebel = () => { const k = nextLater(); return k ? (afterBill(row(k)).find(([c]) => c === 'rebel') || [0, 0])[1] : 0; };
   // The most of an act's coin any row still on the plan asks: a post that would
   // eat it (a joiner the timber, a printer the paper) waits until that is in.
   function planNeeds(coin) {
@@ -85,17 +111,19 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     for (const key of PLAN) {
       count[key] = (count[key] || 0) + 1;
       if (done(key, count[key])) continue;
-      most = Math.max(most, (afterBill(afterRow(key)).find(([c]) => c === coin) || [0, 0])[1]);
+      most = Math.max(most, (afterBill(row(key)).find(([c]) => c === coin) || [0, 0])[1]);
     }
     return most;
   }
   function nextLater() {
-    const a = S.after, st = a.stock, n = j => a.posts[j] || 0;
-    const lying = a.plots.reduce((s, p) => s + p.logs, 0);
-    const open = j => afterRow(`after-post-${j}`).show();
-    const pick = (laterN % 4 === 3 ? 'agitator'
-      : st.signs < n('carrier') && st.timber >= 8 * C.AFTER_SIGN_TIMBER + planNeeds('timber') && open('joiner') ? 'joiner'
-      : st.timber < 10 * C.AFTER_SIGN_TIMBER && lying > 3 * C.AFTER_LOGS_A_TREE * Math.max(1, n('hauler')) ? 'hauler'
+    const a = S.after, st = a.stock, n = j => crewAt(j);
+    // The logs lying on the grove's floor (a gatherer's) and on the forestry
+    // shack's pile (a hauler's).
+    const lying = a.groundLogs.length, piled = st.grovelogs;
+    const open = j => row(`after-post-${j}`).show();
+    const pick = (st.signs < n('carrier') && st.timber >= 8 * C.AFTER_SIGN_TIMBER + planNeeds('timber') && open('joiner') ? 'joiner'
+      : st.timber < 10 * C.AFTER_SIGN_TIMBER && lying > 3 * C.AFTER_LOGS_A_TREE * Math.max(1, n('gatherer')) ? 'gatherer'
+      : st.timber < 10 * C.AFTER_SIGN_TIMBER && piled > 3 * C.AFTER_LOGS_A_TREE * Math.max(1, n('hauler')) ? 'hauler'
       : st.timber < 10 * C.AFTER_SIGN_TIMBER && a.plots.filter(standing).length > n('woodcutter') ? 'woodcutter'
       : st.posters < n('paster') && st.paper >= 8 * C.AFTER_POSTER_PAPER + planNeeds('paper') && open('printer') ? 'printer'
       : open('paster') && st.posters > 4 * C.AFTER_PASTE_LOAD && a.posters.length < wallSlots() - n('paster') * C.AFTER_PASTE_LOAD ? 'paster'
@@ -114,20 +142,25 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   // A row as the plan names it, the nth time: a post is had once n stand, the
   // grove's plots once n are cleared, anything else once bought.
   function done(key, n) {
-    const u = afterRow(key);
+    const u = row(key);
     if (!u) return true;
     if (u.post) return u.from() >= n;
     if (key === 'after-plot') return afterMaxed(u) || u.rung() >= n;
     return afterMaxed(u);
   }
   function buy(key) {
-    const u = afterRow(key);
+    const u = row(key);
     if (!u || !u.show() || u.dead?.() || afterMaxed(u)) return false;
     const bill = afterBill(u);
     if (shortOf(bill).length) return false;
     const yardPart = Object.fromEntries(bill.filter(([c]) => YARD_COINS.includes(c)).map(([c, n]) => [GRANT_KEY[c], n]));
     if (Object.keys(yardPart).length) g.__grant(yardPart);
-    if (!g.__buy(key)) return false;
+    if (u.post) {
+      // A member put on: the job's seat bought first where its seats are
+      // full, then the + on its roster.
+      if (u.full() && !g.__buy(seatKey(u.post))) return false;
+      if (!g.__afterPress(u.post, 1)) return false;
+    } else if (!g.__buy(key)) return false;
     for (const [c, n] of bill) if (YARD_COINS.includes(c)) { yardPurse[c] -= n; yardPaid[c] += n; }
     return true;
   }
@@ -171,7 +204,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     // Signs and posters piling up at the door are the carriers' wait, not the
     // hand's: it makes more only while there are few, and leaves the timber
     // and paper alone while the next thing on the plan is short of them.
-    const want = wanted()[0], short = want ? shortOf(afterBill(afterRow(want))) : [];
+    const want = wanted()[0], short = want ? shortOf(afterBill(row(want))) : [];
     if (built('press') && st.paper >= C.AFTER_POSTER_PAPER && st.posters < 8 && !short.includes('paper')) return 'press';
     if (built('workshop') && st.timber >= C.AFTER_SIGN_TIMBER && st.signs < 3 && !short.includes('timber')) return 'workshop';
     if (built('papermill') && st.sawdust >= C.AFTER_PULP_SAWDUST) return 'papermill';
@@ -223,14 +256,14 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   const RESERVE = 3;
   // The members waiting in the camp that no post bought already has sent for:
   // a post is filled on the frame after it is bought.
-  const free = () => S.after.camp - Object.entries(S.after.posts).reduce((n, [j, k]) => n + k - S.after.bodies.filter(b => b.job === j).length, 0);
+  const free = () => spareMembers();
   const wanted = () => {
     const count = {}, out = [];
     let ahead = false;
     for (const key of PLAN) {
       count[key] = (count[key] || 0) + 1;
       if (done(key, count[key])) continue;
-      const u = afterRow(key);
+      const u = row(key);
       if (u.post && (free() <= 0 || ahead)) continue;
       // A rung waiting on the union's support (the podium ladder's marks) is
       // passed over, not waited on: the posts after it are what win the
@@ -240,13 +273,13 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
       if (!out.includes(key)) out.push(key);
       ahead = true;
     }
-    const planPost = out.some(k => afterRow(k).post);
+    const planPost = out.some(k => row(k).post);
     const next = nextLater();
     // ...and not while the plan saves its rebel for a dearer row: a post
     // then only if it is a small share of that row's.
-    const first = out[0], firstRebel = first ? (afterBill(afterRow(first)).find(([c]) => c === 'rebel') || [0, 0])[1] : 0;
-    const saving = first && shortOf(afterBill(afterRow(first))).includes('rebel') && postRebel() * 4 > firstRebel;
-    laterKey = next && !planPost && !saving && S.after.posts.carrier && free() >= (out.length ? RESERVE : 1) ? next : null;
+    const first = out[0], firstRebel = first ? (afterBill(row(first)).find(([c]) => c === 'rebel') || [0, 0])[1] : 0;
+    const saving = first && shortOf(afterBill(row(first))).includes('rebel') && nextRebel() * 4 > firstRebel;
+    laterKey = next && !planPost && !saving && crewAt('carrier') && free() >= (out.length ? RESERVE : 1) ? next : null;
     if (laterKey) out.push(laterKey);
     return out;
   };
@@ -263,10 +296,10 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     // The first thing wanted that can be paid, bought; again while one can.
     for (let k = 0; k < 8; k++) {
       const want = wanted();
-      const key = want.find(w => !shortOf(afterBill(afterRow(w))).length);
+      const key = want.find(w => !shortOf(afterBill(row(w))).length);
       if (!key || !buy(key)) {
         if (want.length) {
-          const sh = shortOf(afterBill(afterRow(want[0])));
+          const sh = shortOf(afterBill(row(want[0])));
           if (sh.length && sh.every(c => YARD_COINS.includes(c))) blocked.yard += STEP;
           else if (sh.length) blocked.act += STEP;
         }

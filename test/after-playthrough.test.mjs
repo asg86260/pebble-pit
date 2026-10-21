@@ -4,7 +4,7 @@
 // refusal, each beat played to its end, the two of them up on the pedestal;
 // the pair's speech bubbles popped for rebel; the axe bought, a tree sawn
 // down by hand and its stump pulled; the saw mill raised off the shack
-// and its flywheel spun; posts bought that members walk out to; the chain
+// and its flywheel spun; members put on their jobs through the rosters; the chain
 // built on to the press; signs and posters winning souls who walk out to our
 // crowd; the gates stepping; the strike due and played, and the unmasking
 // after it.
@@ -16,18 +16,17 @@
 //  - the yard's coins (dust, crops, ore, scales, sparks) a bill names,
 //    granted just before that bill is bought (the yard's earning is act 2's
 //    checks, and act 3's bills take far more of them than a hole holds at once);
-//  - rebel for the posts and the stations past the saw mill, granted in one
+//  - rebel for the seats and the stations past the saw mill, granted in one
 //    block once the axe's and the mill's have been earned off the bubbles;
 //  - the timber the press's bill takes (and the paper mill's, should it
 //    name any), granted a bill at a time: the one plot's planks all go on signs, and the grove's pace
 //    is the pacing tool's, not this check's.
 import { group, ok, run, yard, P } from './helpers.mjs';
-import { AFTER_GATES, AFTER_BUILDS, AFTER_UPGRADES, AFTER_POST_DUST, AFTER_POST_RATE, GESTURE_STUMP_DRAG, AFTER_FIRST_MEMBERS } from '../src/config.js';
+import { AFTER_GATES, AFTER_BUILDS, AFTER_UPGRADES, AFTER_SEAT_BILLS, GESTURE_STUMP_DRAG, AFTER_FIRST_MEMBERS } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, partsOf } from '../src/after/gestures.js';
 import { sawOn, saw, spin } from './after-hands.mjs';
 import { bubbles } from '../src/after/bubbles.js';
 import { stationBox } from '../src/after/place.js';
-import { postRebel } from '../src/after/rows.js';
 import { goOnAlpha } from '../src/actbeats.js';
 import { beatDone } from '../src/beats.js';
 
@@ -98,14 +97,25 @@ function spinMill(n) {
 // and paper are the act's own and are left to the check.
 const YARD = { dust: 'dust', spore: 'spores', shard: 'shards', scale: 'scales', spark: 'sparks' };
 const fund = bill => window.__grant(Object.fromEntries(bill.filter(([c]) => YARD[c]).map(([c, n]) => [YARD[c], n])));
-// The next bill of an act-3 row by its key past `after-`: a post's is dust
-// alone, at the dearest rung of the posts' table.
+// A `post-<job>` on the lists below is a member put on that job, as a player
+// puts one: the + on its roster under the station, its seat bought on the
+// station's board first where the job's seats are full.
+const jobOf = key => (key.startsWith('post-') ? key.slice('post-'.length) : null);
+const full = job => { const r = window.__afterRoster().find(q => q.job === job); return !r || r.n >= r.cap; };
+// The next bill of an act-3 row by its key past `after-`: a post's is its
+// seat's while the job's seats are full, and nothing while one is free.
 const billOf = key => {
-  if (key.startsWith('post-')) return [['dust', AFTER_POST_DUST[AFTER_POST_DUST.length - 1]]];
+  const job = jobOf(key);
+  if (job) return full(job) ? AFTER_SEAT_BILLS[Math.min(S.after.ups[`after-seat-${job}`] || 0, AFTER_SEAT_BILLS.length - 1)] : [];
   const bills = AFTER_UPGRADES[`after-${key}`].bills, n = S.after.ups[`after-${key}`] || 0;
   return bills[Math.min(n, bills.length - 1)];
 };
-const buyRow = key => { fund(billOf(key)); return window.__buy(`after-${key}`); };
+const take = key => {
+  const job = jobOf(key);
+  if (!job) return window.__buy(`after-${key}`);
+  return (!full(job) || !!window.__buy(`after-seat-${job}`)) && window.__afterPress(job);
+};
+const buyRow = key => { fund(billOf(key)); return take(key); };
 // A station bought on the shack and the clock turned until it stands: up to
 // ten minutes, since with the camp emptied onto posts the pair step down and
 // carry its loads across the camp themselves (after/build.js).
@@ -131,7 +141,9 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
 
   // The pair's speech: bubbles popped as they rise, for the axe's rebel.
   const r0 = read().rebel;
-  const popped = earn(50, 300);
+  // (The idle members at the podium give lines of their own the while: the
+  // bubbles are to earn fifty more than they have.)
+  const popped = earn(r0 + 50, 300);
   const earned = read().rebel - r0;
   const axe = buyRow('axe');
   const handed = until(() => beatDone('axe') && read().axe, 60, 0.25);
@@ -144,8 +156,9 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   const replanted = S.after.plots[0].stage;
   note(`sawn ${JSON.stringify(sawn)} logs ${logsDown} pulled ${JSON.stringify(pulled)}`);
 
-  // The saw mill off the shack, and two posts, for rebel the bubbles earn.
-  earn(AFTER_BUILDS.mill.bill.find(([c]) => c === 'rebel')[1] + Math.ceil(postRebel() * (2 + AFTER_POST_RATE)), 300);
+  // The saw mill off the shack, for rebel the bubbles earn, and two members put
+  // on (a job's first seat is free).
+  earn(AFTER_BUILDS.mill.bill.find(([c]) => c === 'rebel')[1], 300);
   const mill = raise('mill');
   // A gatherer's post and a hauler's: a member walks out of the camp to each,
   // the one carrying the fallen logs to the forestry shack and the other
@@ -153,12 +166,12 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   const camp0 = read().camp;
   const post = buyRow('post-gatherer') && buyRow('post-hauler');
   run(0.25);
-  const left = read().camp;
+  const left = read().camp, onJobs = S.after.bodies.filter(b => (b.job === 'gatherer' || b.job === 'hauler') && b.state === 'work').length;
   const fed = until(() => read().logs > 0, 180);
   const t0 = read().timber;
   const spun = spinMill(1);
   const sawnInto = read().timber - t0;
-  note(`mill ${mill} post ${post} camp ${camp0}->${left} fed ${fed} spun ${JSON.stringify(spun)} +${sawnInto} timber`);
+  note(`mill ${mill} post ${post} on ${onJobs} idle ${camp0}->${left} fed ${fed} spun ${JSON.stringify(spun)} +${sawnInto} timber`);
 
   // On through the chain, rebel granted for its bills (see the head): the
   // first members onto the posts, the workshop and the chipper off the shack,
@@ -188,7 +201,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   let funded = -1;
   for (let t = 0; t < STRETCH_S && !beatDone('strike'); t += 5) {
     if (want.length && funded !== want.length) { fund(billOf(want[0])); funded = want.length; }
-    for (let k = 0; k < want.length; k++) if (window.__buy(`after-${want[k]}`)) want.splice(k--, 1);
+    for (let k = 0; k < want.length; k++) if (take(want[k])) want.splice(k--, 1);
     const st = S.after.plots.findIndex(p => p.stump && p.fall == null);
     if (st >= 0 && !S.after.ups['after-stumps']) pullStump(st);
     popAll();
@@ -214,7 +227,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
     ok(axe && handed < Infinity, 'the axe is bought on the grove\'s card and its beat hands it over', `${axe} ${handed}`),
     ok(sawn.fell && logsDown > 0, 'a tree sawn by hand falls and lies as logs', JSON.stringify(sawn)),
     ok(pulled.out && replanted === 1, 'its stump pulled by hand comes out and a sapling is set', JSON.stringify(pulled)),
-    ok(mill && post && left === camp0 - 2 && fed < Infinity, 'the saw mill raised off the shack, a gatherer and a hauler walk out of the camp to their posts and carry the logs in', story),
+    ok(mill && post && onJobs === 2 && left <= camp0 - 2 && fed < Infinity, 'the saw mill raised off the shack, a gatherer and a hauler walk off the podium to their jobs and carry the logs in', story),
     ok(spun.cut >= 1 && sawnInto > 0, 'the flywheel spun by hand saws a log into timber', JSON.stringify(spun)),
     ok(rows.every(([, b]) => b), 'the posts, the workshop, the chipper, the paper mill and the press are all bought through their rows',
        JSON.stringify(rows.filter(([, b]) => !b))),

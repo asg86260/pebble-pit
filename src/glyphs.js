@@ -173,11 +173,11 @@ export const GLYPH_OF = {
   // stations.js)
   pod: ['house'],
   // act 3's boards (after/rows.js): borrowed drawings until the owner draws
-  // the camp's own. A post is a member wanted, the yard's post drawing.
-  'after-post-agitator': ['fist', 'plus'], 'after-post-woodcutter': ['cap', 'plus'], 'after-post-hauler': ['cart', 'plus'],
-  'after-post-sawyer': ['cap', 'plus'], 'after-post-feeder': ['cap', 'plus'], 'after-post-pulper': ['cap', 'plus'],
-  'after-post-joiner': ['cap', 'plus'], 'after-post-carrier': ['cart', 'plus'], 'after-post-printer': ['cap', 'plus'],
-  'after-post-paster': ['cap', 'plus'],
+  // the camp's own. A seat is room for one more at a job, the yard's post drawing.
+  'after-seat-woodcutter': ['cap', 'plus'], 'after-seat-gatherer': ['cap', 'plus'], 'after-seat-hauler': ['cart', 'plus'],
+  'after-seat-sawyer': ['cap', 'plus'], 'after-seat-feeder': ['cap', 'plus'], 'after-seat-pulper': ['cap', 'plus'],
+  'after-seat-joiner': ['cap', 'plus'], 'after-seat-carrier': ['cart', 'plus'], 'after-seat-printer': ['cap', 'plus'],
+  'after-seat-paster': ['cap', 'plus'],
   'after-podium': ['bell', 'up'], 'after-axe': ['blade'], 'after-plot': ['furrow', 'plus'], 'after-grow': ['ear', 'up'],
   'after-tree': ['ear', 'plus'], 'after-stumps': ['shovel'], 'after-blade': ['blade', 'plus'], 'after-heap': ['sack', 'plus'],
   'after-drum': ['jaw', 'plus'], 'after-spout': ['bucket', 'plus'], 'after-vat': ['pot', 'plus'], 'after-dry': ['ledger', 'plus'],
