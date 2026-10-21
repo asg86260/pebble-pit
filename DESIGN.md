@@ -23019,3 +23019,20 @@ again (docs/act3-fixlist-2026-10-20.md, items 2 and 3).
   way, picked up and dropped the yard's way. An act 3 item is heavier: each
   takes several of the carry's slots (a log, a plank, a sheet, a sign, its own
   weight in config), so a body carries few of them at once.
+
+### Act 3's hand work and hand carrying (design, not built; the owner, 2026-10-20)
+
+The owner, verbatim: "the motion work stations that are manually done, should
+get a more involved ui. i want like a full ui element and graphic for doing
+work. right now its still a bit hard to tell what to do. also players should
+be able to pick up and move resources themselves between stations"
+
+- **A work panel for each hand-worked station** (the mill's wheel, the
+  chipper's lever, the paper mill's paddle, the press's bar): a full UI
+  element with its own graphic that says what to do and shows it being done.
+  Its shape is a vote (mock, vote, build); mocks first.
+- **Goods by hand.** The player picks up a station's goods (a log, a plank,
+  a sheet, a sign) the way a worker is picked up, through the shared grab,
+  and drops them on another station's pile. A load in the hand is the
+  yard's carry, its weight in slots (the bullet above). Built after the crew's
+  carry lands, on that same carry.
