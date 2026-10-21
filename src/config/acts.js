@@ -236,7 +236,12 @@ export const ACT_ROAD_JITTER = 0.6;
 export const ACT_ROAD_ROUND = 2.4;
 export const ACT_ROAD_SPECKLE = 0.25;
 
+// TEMP dial: the grove's stump pulled, 0 as it was, 1 strain and rip, 2 the
+// creep (render/after/pine.js), until the owner picks one.
+export let AFTER_STUMP_LOOK = 1;
+
 export const ACT_KNOBS = [
+  { key: 'AFTER_STUMP_LOOK', label: 'stump pull look', min: 0, max: 2, step: 1, get: () => AFTER_STUMP_LOOK, set: v => { AFTER_STUMP_LOOK = v; } },
   { key: 'ACT_ROAD_CLOUDS', label: 'clouds up the road', min: 0, max: 40, step: 1,
     get: () => ACT_ROAD_CLOUDS, set: v => { ACT_ROAD_CLOUDS = v; } }
 ];
