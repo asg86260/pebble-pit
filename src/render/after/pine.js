@@ -170,6 +170,13 @@ function stump(d, a, dug, up = 0) {
 const ROOTS = [[2, 0], [4, 0], [8, 0], [12, 0], [14, 0], [1, 2], [5, 2], [8, 2], [13, 2], [16, 2],
                [-1, 4], [6, 4], [9, 4], [17, 4], [-3, 6], [9, 6], [19, 6], [10, 8]];
 const ROOT_M = 4, ROOT_D = 12;
+// The block, its cut face and its roots, in art px off the block's foot-left;
+// with `under`, a root only as far as it is out of the ground `under` px.
+function stumpParts(put, under = Infinity) {
+  const [, w, h] = STUMP.map(v => v * P);
+  put(0, -h, w, h, K); put(2, -h + 2, w - 4, 2, PALE);
+  for (const [x, y] of ROOTS) { const hh = Math.min(2, under - y); if (hh > 0) put(x, y, 2, hh, K); }
+}
 const STUMP_SPRITE = new Map();
 function stumpSprite() {
   const id = `${GREY[K]}|${GREY[PALE]}`;
@@ -179,9 +186,7 @@ function stumpSprite() {
   cv.width = (w + ROOT_M * 2) * A; cv.height = (h + ROOT_D) * A;
   const g = cv.getContext('2d');
   if (!g) return null;
-  const px = (x, y, ww, hh, tone) => { g.fillStyle = GREY[tone]; g.fillRect((x + ROOT_M) * A, (y + h) * A, ww * A, hh * A); };
-  px(0, -h, w, h, K); px(2, -h + 2, w - 4, 2, PALE);
-  for (const [x, y] of ROOTS) px(x, y, 2, 2, K);
+  stumpParts((x, y, ww, hh, tone) => { g.fillStyle = GREY[tone]; g.fillRect((x + ROOT_M) * A, (y + h) * A, ww * A, hh * A); });
   // `ox`, `oy` the block's foot-left in the sheet, in screen px
   const out = { cv, ox: ROOT_M * A, oy: h * A, w: w * A, h: h * A };
   STUMP_SPRITE.set(id, out);
@@ -271,12 +276,17 @@ function pulledStump(d, p, i, s, rec, t, bx) {
   const held = !!(rec && rec.i === i && rec.grab && p.stump);
   if (held !== s.held) { s.held = held; s.heldAt = t; }
   const ra = held ? clamp01((t - s.heldAt) / STUMP_ROPE_FADE_S) : 1 - clamp01((t - s.heldAt) / STUMP_ROPE_FADE_S);
-  if (!sp || a <= 0) return;
+  if (a <= 0) return;
   // the block's foot corner it leans on, and the point the rope is tied to
-  const left = th < 0, pvx = left ? x0 : x0 + sp.w, pvy = fl - up;
-  const cos = Math.cos(th), sin = Math.sin(th), tx = x0 + sp.w / 2 - pvx, ty = -sp.h;
+  const bw = STUMP[1] * AP, bh = STUMP[2] * AP;
+  const pvx = th < 0 ? x0 : x0 + bw, pvy = fl - up;
+  const cos = Math.cos(th), sin = Math.sin(th), tx = x0 + bw / 2 - pvx, ty = -bh;
   const top = { x: pvx + tx * cos - ty * sin, y: pvy + tx * sin + ty * cos };
   if (s.handY != null) rope(top, s.handY, s.slack ?? 1, ra * a);
+  // Upright, it is drawn rect for rect at its lift, the roots cut at the
+  // ground line, so a test that reads the grove's ink sees it; tilted, it is
+  // the sprite turned whole.
+  if (!sp || th === 0) { d.fade(a, () => { const u = up / A, bx0 = STUMP[0] * P; stumpParts((x, y, w, h, tone) => d.px(bx0 + x, y - u, w, h, tone), u); }); return; }
   ctx.save();
   ctx.beginPath(); ctx.rect(x0 - AP * 4, fl - AP * 20, sp.w + AP * 8, AP * 20); ctx.clip();
   ctx.globalAlpha *= a;
