@@ -17,10 +17,13 @@
 // lines arrives part-inked (a share, until lineage exists to say whose).
 // Souls keep rising from the running yard into the back of the crowd.
 //
-// A member walks out: the frame its rim closes, its slot is left empty and a
-// body sets off from where it stood to the camp (bodies.js), so God's yard
-// empties as the union wins, and the gates read off how empty it is
-// (`support`, the share walked out).
+// A soul is won the frame its rim closes: it pays AFTER_WON_REBEL rebel,
+// motes off its head that drift to the pile (rebel.js), and stays in its
+// slot, won and waiting (the owner, 2026-10-21: "use rebellion to buy
+// workers instead of it happening automatically"). It walks out only when a
+// worker is bought (`hire`, the pedestal's recruit row): its slot left empty
+// and a body set off from where it stood to the camp (bodies.js). The gates
+// read the share won, hired or not (`support`).
 //
 // God's pushback: the throne's speech, warned ahead by his gaze settling on a
 // sign or a poster, burning it (docs/wave-act3-build.md, track B). Souls are
@@ -33,13 +36,14 @@ import { P, RIM_PIECES, POSTER_CAP, CROWD_FILES, AFTER_CROWD, AFTER_FIRST_MEMBER
 import { arand, secs, nextId } from './util.js';
 import { signReach, posterReach } from './levels.js';
 import { soulX, soulY, fileOf, rankOf, slotX, signMarch } from './place.js';
+import { wonRebel } from './rebel.js';
 
 const OUT = 9;           // a slot whose member walked out to the camp
 // The empty slot's value, read by the drawing (render/aftercrowd.js).
 export const OUT_RIM = OUT;
 
 // --- the field, mirrored off the save ------------------------------------------------
-const field = { ref: null, str: null, arr: new Uint8Array(0), dirty: false, out: 0 };
+const field = { ref: null, str: null, arr: new Uint8Array(0), dirty: false, out: 0, ready: 0 };
 function rebuild() {
   const s = S.after.rims || '';
   const arr = new Uint8Array(s.length);
@@ -53,9 +57,9 @@ export function souls() {
   return field.arr;
 }
 function recount() {
-  let o = 0;
-  for (const v of field.arr) if (v === OUT) o++;
-  field.out = o;
+  let o = 0, r = 0;
+  for (const v of field.arr) if (v === OUT) o++; else if (v === RIM_PIECES) r++;
+  field.out = o; field.ready = r;
 }
 // The string the save carries, brought up to the field.
 export function syncRims() {
@@ -78,21 +82,35 @@ function addSoul(v) {
 
 export const soulPos = i => ({ x: soulX(fileOf(i)) + P / 2, y: soulY(rankOf(i)) + P * 2 });
 
-// Every member still standing in the field walks out: its slot emptied, a
-// body set off from it toward the camp, walking (bodies.js, 'out').
-function walkOuts() {
-  const a = souls(), A = S.after;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== RIM_PIECES) continue;
-    a[i] = OUT; field.dirty = true; field.out++;
-    const at = soulPos(i);
-    A.bodies.push({ id: nextId(), job: null, state: 'out', x: at.x, y: at.y, face: -1, t: 0, load: null, target: null, n: 0 });
-  }
+// The won soul nearest the front walks out to be a worker: its slot emptied,
+// a body set off from it toward the camp (bodies.js, 'out'). False with none
+// won and waiting.
+export function hire() {
+  const i = souls().indexOf(RIM_PIECES);
+  if (i < 0) return false;
+  walkOut(i);
+  return true;
+}
+// Every soul won walks out at once: a check's or a scene's setup, in one pass.
+export function hireAll() {
+  const a = souls();
+  for (let i = 0; i < a.length; i++) if (a[i] === RIM_PIECES) walkOut(i);
+}
+function walkOut(i) {
+  souls()[i] = OUT; field.dirty = true; field.out++; field.ready--;
+  const at = soulPos(i);
+  S.after.bodies.push({ id: nextId(), job: null, state: 'out', x: at.x, y: at.y, face: -1, t: 0, load: null, target: null, n: 0 });
+}
+// A piece of ink on soul i; the piece that closes its rim wins it.
+function ink(a, i) {
+  a[i]++; field.dirty = true;
+  if (a[i] === RIM_PIECES) { field.ready++; wonRebel(soulPos(i)); }
 }
 
 // The crowd stood up at the act's start: AFTER_CROWD souls, a share part-inked
-// (the player's own lines), the first members inked full in the front rank
-// (they walk out on the first frame).
+// (the player's own lines), the first members won in the front rank. They
+// walk out free on the act's first frame (`stepUnion`): nobody would plant
+// the first sign otherwise.
 export function seedCrowd() {
   const a = S.after;
   let s = '';
@@ -110,10 +128,13 @@ export function seedCrowd() {
 // --- the reads -----------------------------------------------------------------------
 export const crowdSize = () => (S.after ? souls().length : 0);
 export const crowdRanks = () => Math.ceil(crowdSize() / CROWD_FILES);
-// The souls who have walked out of God's yard, and their share of the crowd
-// as it stands: what the gates read.
+// The souls who have walked out of God's yard to work; those won and waiting
+// to be hired; all won, hired or not, and their share of the crowd as it
+// stands: what the gates read.
 export const union = () => (S.after ? (souls(), field.out) : 0);
-export const support = () => { const n = crowdSize(); return n ? union() / n : 0; };
+export const ready = () => (S.after ? (souls(), field.ready) : 0);
+export const won = () => union() + ready();
+export const support = () => { const n = crowdSize(); return n ? won() / n : 0; };
 export const rimOf = i => souls()[i];
 // The ink in the 3 by 3 block round a slot, for picking where a sign goes: an
 // empty slot counts full.
@@ -130,8 +151,8 @@ export function inkAround(f, r) {
 }
 
 // For a check or a scene: every soul's rim set by `fn(i, v)`, the setup a
-// check is not about (`__afterCrowd`). A rim set full walks out on the next
-// frame like any other; a slot set to 9 is one already gone, with no body.
+// check is not about (`__afterCrowd`). A rim set full is won and waiting,
+// paying nothing; a slot set to 9 is one already gone, with no body.
 export function setCrowd(fn) {
   const a = souls();
   for (let i = 0; i < a.length; i++) a[i] = Math.max(0, Math.min(OUT, fn(i, a[i]) | 0));
@@ -155,7 +176,7 @@ function spread(dt) {
       for (let r = Math.max(0, s.r - R); r <= s.r + R; r++)
         for (let f = Math.max(0, s.f - R); f <= Math.min(F - 1, s.f + R); f++) {
           const i = r * F + f;
-          if (i < n && a[i] < RIM_PIECES) { a[i]++; field.dirty = true; }
+          if (i < n && a[i] < RIM_PIECES) ink(a, i);
         }
     }
   }
@@ -171,7 +192,7 @@ function spread(dt) {
       for (let k = 0; k < R; k++) {
         const i = k * F + f;
         if (i >= n) break;
-        if (a[i] < POSTER_CAP) { a[i]++; field.dirty = true; }
+        if (a[i] < POSTER_CAP) ink(a, i);
       }
     }
   }
@@ -224,14 +245,15 @@ function stepSpeech() {
   sp.next = A.t + speechEvery();
 }
 
-// One frame of the crowd, the members walking out, and the speech.
+// One frame of the crowd and the speech.
 let riseIn = AFTER_RISE_S;
 export function stepUnion(c) {
   const dt = secs(c);
   souls();
+  // Nobody hired yet is the act's first frame: the refusal's members go.
+  if (!field.out) for (let k = 0; k < AFTER_FIRST_MEMBERS; k++) hire();
   spreadIn += dt;
   if (spreadIn >= 1 / AFTER_SPREAD_HZ) { spread(spreadIn); spreadIn = 0; }
-  walkOuts();
   riseIn -= dt;
   if (riseIn <= 0) { riseIn = AFTER_RISE_S; addSoul(arand() < AFTER_KIN_SHARE ? 1 : 0); }
   stepSpeech();

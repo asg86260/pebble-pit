@@ -253,6 +253,13 @@ export const AFTER_MOTES_A_HIT = 4;        // motes a line at most, its rebel sh
 // slow clock, worth less than the pair's (they win nobody: rebel only).
 export const AFTER_AGITATE_S = 4;
 export const AFTER_AGITATE_REBEL = 1;
+// A soul won pays this rebel, and a worker is bought out of the won with it
+// on the pedestal's recruit row, priced as the yard prices a house: the
+// first AFTER_RECRUIT_COST0, each after AFTER_RECRUIT_RATE dearer (DESIGN.md,
+// "Act 3's workers are bought with rebel"; a first cut, to tune).
+export const AFTER_WON_REBEL = 3;
+export const AFTER_RECRUIT_COST0 = 10;
+export const AFTER_RECRUIT_RATE = 1.15;
 
 // --- the grove ---
 // A tree's logs, and a big one's (planted after the grove's "bigger trees");

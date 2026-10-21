@@ -7,7 +7,8 @@
 // pedestal's foot and are counted where they land, never on the click
 // (nothing teleports). An agitator at a post beside the pedestal gives a
 // line of their own on a slow clock, worth less than the pair's. Rebel is all
-// either makes: a speech wins nobody (signs and posters do, union.js).
+// either makes: a speech wins nobody (signs and posters do, union.js, and
+// each soul they win pays rebel of its own).
 //
 // The stations, the trees and the heap are worked by the hand's own motions
 // where they stand (after/gestures.js), not by this click.
@@ -18,7 +19,7 @@
 // lose it on the way down.
 
 import { S } from '../state.js';
-import { P, AFTER_MOTE_FALL, AFTER_MOTE_RISE, AFTER_MOTES_A_HIT, AFTER_AGITATE_REBEL, WORKER } from '../config.js';
+import { P, AFTER_MOTE_FALL, AFTER_MOTE_RISE, AFTER_MOTES_A_HIT, AFTER_AGITATE_REBEL, AFTER_WON_REBEL, WORKER } from '../config.js';
 import { secs } from './util.js';
 import { shoutRebel } from './levels.js';
 import { afterFloor, speakerAt, pileX } from './place.js';
@@ -59,6 +60,8 @@ export function shout(from = null) {
 }
 // An agitator's line, off its own head: rebel only.
 export const agitate = w => { shed(w.x, w.y - WORKER, AFTER_AGITATE_REBEL); };
+// A soul won in God's crowd (union.js), its rebel off its head at `at`.
+export const wonRebel = at => { shed(at.x, at.y - WORKER, AFTER_WON_REBEL); };
 
 // A click on the place, in world pixels: true if it was the afterlife's -- the
 // pair given a line while they stand on the pedestal. Everything else up

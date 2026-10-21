@@ -67,6 +67,8 @@ export const TESTS = [
     newRun();
     await settle();
     await upThere();
+    // The members agitate rebel onto the same pile: another check's.
+    S.after.bodies = []; S.after.camp = 0;
     const pair = partsOf('pedestal').box;
     let air = [{ x: pair.x, y: pair.y - P * 12, w: P * 10, h: P * 6, big: true }];
     const big = air[0];

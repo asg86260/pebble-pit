@@ -5,7 +5,8 @@
 // eight-rungs rule). A card sells its jobs' seats and two or three short
 // named upgrades, each a change on screen, paid in rebel, timber and paper
 // and the yard's coins (AFTER_UPGRADES): bought once, but for the grove's
-// plots, a plot a press. Nobody is bought: a station's members are put on
+// plots, a plot a press. A worker is bought on the pedestal's recruit row
+// out of the souls won; a station's members are put on
 // through the roster under it (after/roster.js), each job holding one to
 // start, and a seat row a job buys it room for one more (AFTER_SEAT_BILLS,
 // the owner, 2026-10-20). The construction shack sells
@@ -31,16 +32,16 @@ import { msg } from '../lang.js';
 import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_SEAT_BILLS, AFTER_BUILDS,
          AFTER_CARDS, AFTER_YARD_COINS, AFTER_TAG_ORDER, AFTER_PATCH_AT,
          AFTER_COIN_MOTES, AFTER_COIN_UNDER_S, AFTER_COIN_STAGGER_S, AFTER_COIN_SPREAD, AFTER_COIN_LIFE_S,
-         MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
+         AFTER_RECRUIT_COST0, AFTER_RECRUIT_RATE, MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
 import { registerBoard, openBoardByKey } from '../boardrows.js';
 import { purse, leftText } from '../words.js';
 import { payTo } from '../pit.js';
 import { upCount, built, raising, seatKey, seatsBought } from './levels.js';
-import { crewAt } from './bodies.js';
+import { crewAt, spareMembers } from './bodies.js';
 import { clearPlot } from './grove.js';
 import { raiseStation } from './build.js';
 import { stationBox, plotX, groveX1, afterFloor, afterX0, AP, closed } from './place.js';
-import { union, support } from './union.js';
+import { union, won, ready, hire, support } from './union.js';
 import { setCrowdAt } from './stations.js';
 
 // --- the purse ---------------------------------------------------------------------------
@@ -174,6 +175,25 @@ const buildRow = st => ({
   buy: () => { raiseStation(st); }
 });
 
+// --- the recruit ----------------------------------------------------------------------------
+// A worker bought out of the souls won (union.js, `hire`), endless as the
+// yard's house is and priced the same way; it walks out to the podium and
+// waits there, agitating, for the roster's plus. Its line counts the won
+// waiting and the idle, the two numbers a hire is a choice between, and
+// still says them while nobody won leaves it dead.
+const RECRUIT = 'after-recruit';
+const recruits = () => (S.after && S.after.ups[RECRUIT]) || 0;
+const recruitLine = () => msg('after-recruit-ready', { ready: ready(), idle: spareMembers() });
+const recruitRow = {
+  key: RECRUIT, name: msg('after-row-recruit'), card: 'pedestal', ...ACT_ROW, repeats: true, from: recruits,
+  bill: () => [['rebel', Math.round(AFTER_RECRUIT_COST0 * Math.pow(AFTER_RECRUIT_RATE, recruits()))]],
+  show: () => !!S.after,
+  dead: () => ready() < 1,
+  waits: () => (ready() < 1 ? recruitLine() : null),
+  get blurb() { return S.after ? recruitLine() : ''; },
+  buy: () => { if (hire()) { S.after.ups[RECRUIT] = recruits() + 1; S.after.upAt[RECRUIT] = S.after.t; } }
+};
+
 // Nothing up here is for sale before the act has begun.
 const inAct = u => ({ ...u, show: () => !!S.after && u.show() });
 export const AFTER_ROWS = [
@@ -181,6 +201,8 @@ export const AFTER_ROWS = [
   ...Object.keys(AFTER_UPGRADES).map(upRow),
   ...Object.keys(AFTER_BUILDS).map(buildRow)
 ].map(inAct);
+// First on the pedestal's board; its line is a getter, so it is not spread.
+AFTER_ROWS.unshift(recruitRow);
 export const afterRow = key => AFTER_ROWS.find(u => u.key === key) || null;
 
 // --- buying ------------------------------------------------------------------------------
@@ -228,7 +250,7 @@ export const CROWD_ROWS = [
   readout('after-crowd-share', msg('after-crowd-share'), () => pctSaid(S.after ? support() : 0)),
   readout('after-crowd-members', msg('after-crowd-members'), () => String(S.after ? union() : 0)),
   readout('after-crowd-speech', msg('after-crowd-speech'), () => { const s = speechIn(); return s == null ? msg('after-crowd-none') : leftText(s * 1000); }),
-  readout('after-crowd-meeting', msg('after-crowd-meeting'), gateSays(0, () => union(), MEET_MEMBERS, String)),
+  readout('after-crowd-meeting', msg('after-crowd-meeting'), gateSays(0, () => won(), MEET_MEMBERS, String)),
   readout('after-crowd-slowdown', msg('after-crowd-slowdown'), gateSays(1, () => support(), SLOW_SHARE, pctSaid)),
   readout('after-crowd-strike', msg('after-crowd-strike'), gateSays(2, () => support(), STRIKE_SHARE, pctSaid))
 ];

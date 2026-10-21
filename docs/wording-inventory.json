@@ -7994,6 +7994,20 @@
   "text": "podium"
  },
  {
+  "id": "after-row-recruit",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row: the pedestal's recruit, a won soul bought out of God's yard to work for rebel",
+  "text": "recruit"
+ },
+ {
+  "id": "after-recruit-ready",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "its line: the souls won and waiting to be hired, and the workers idle at the podium",
+  "text": "${ready} ready, ${idle} idle"
+ },
+ {
   "id": "after-row-axe",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",

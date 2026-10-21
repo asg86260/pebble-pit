@@ -192,6 +192,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Every zoom glides instead of stepping, the picture scaled sharp on the way, and the pointer stays on what it points at through it (test/zoom-glide.test.mjs).
 - Act 3's stations sell from a small $ sign beside each one, inverted while its board is up; hovering a station no longer grows its part or opens its shop, and a closed station's sign is crossed through (test/after-gestures.test.mjs; src/selftest/aftergestures.js).
 - Everyone in act 3 walks three times as fast; the throne's speech keeps its pace (test/after-roster.test.mjs).
+- Act 3's workers are bought with rebel: a soul a sign or poster wins pays rebel and waits in God's yard, and the pedestal's recruit row hires one, its line saying how many are ready and how many idle (test/after-recruit.test.mjs).
 
 - A yard with a big crew in the deep no longer lags: its gatherers stopped re-reading the whole floor and the whole crew every frame (`node tools/node/break-perf.mjs`, test/crusher.test.mjs).
 - A card's long name, its gain and its cancel / another strip are no longer cut short at the card's edge; the board widens to fit them (src/selftest/boardwords.js).

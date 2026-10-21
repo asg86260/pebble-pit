@@ -5,8 +5,8 @@
 // the pair's speech bubbles popped for rebel; the axe bought, a tree sawn
 // down by hand and its stump pulled; the saw mill raised off the shack
 // and its flywheel spun; members put on their jobs through the rosters; the chain
-// built on to the press; signs and posters winning souls who walk out to our
-// crowd; the gates stepping; the strike due and played, and the unmasking
+// built on to the press; signs and posters winning souls, who are hired on
+// the pedestal's recruit row and walk out to our crowd; the gates stepping; the strike due and played, and the unmasking
 // after it.
 //
 // Every purchase goes through the row's own buy (`__buy` hands an act-3 key
@@ -116,9 +116,14 @@ const take = key => {
   return (!full(job) || !!window.__buy(`after-seat-${job}`)) && window.__afterPress(job);
 };
 const buyRow = key => { fund(billOf(key)); return take(key); };
+// A worker hired as a player hires one: the recruit row bought on the
+// pedestal's board while nobody stands free and a won soul waits.
+let hired = 0;
+const hireIfNone = () => { if (read().camp < 1 && read().ready > 0 && window.__buy('after-recruit')) hired++; };
 // A member put on as a player puts one, once one is free to put on: the
-// press tried as the clock turns, up to ten minutes, while the signs win more.
-const putOnWhenFree = job => until(() => buyRow(`post-${job}`), 600) < Infinity;
+// press tried as the clock turns, up to ten minutes, while the signs win more
+// and the recruit row hires them.
+const putOnWhenFree = job => until(() => { hireIfNone(); return buyRow(`post-${job}`); }, 600) < Infinity;
 // A station bought on the shack and the clock turned until it stands: up to
 // ten minutes, since with the camp emptied onto posts the pair step down and
 // carry its loads across the camp themselves (after/build.js).
@@ -204,6 +209,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   let funded = -1;
   for (let t = 0; t < STRETCH_S && !beatDone('strike'); t += 5) {
     if (want.length && funded !== want.length) { fund(billOf(want[0])); funded = want.length; }
+    hireIfNone();
     for (let k = 0; k < want.length; k++) if (take(want[k])) want.splice(k--, 1);
     const st = S.after.plots.findIndex(p => p.stump && p.fall == null);
     if (st >= 0 && !S.after.ups['after-stumps']) pullStump(st);
@@ -235,7 +241,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
     ok(rows.every(([, b]) => b), 'the posts, the workshop, the chipper, the paper mill and the press are all bought through their rows',
        JSON.stringify(rows.filter(([, b]) => !b))),
     ok(signed < Infinity && planted > 0 && pasted > 0, 'signs are planted in the crowd and posters pasted on the fence', `${planted} signs, ${pasted} posters`),
-    ok(read().union > u0 && peakCamp > AFTER_FIRST_MEMBERS, 'the souls they win walk out of God\'s yard to our camp', `${u0} -> ${read().union}, camp up to ${peakCamp}`),
+    ok(hired > 0 && read().union > u0, 'the souls they win are hired on the recruit row and walk out of God\'s yard to our camp', `${hired} hired, ${u0} -> ${read().union}, camp up to ${peakCamp}`),
     ok(gates.join(' ') === AFTER_GATES.map((_, i) => i + 1).join(' '), 'the gates step, the meeting, the slowdown and the strike, in order', story),
     ok(due && struck && inOrder(act3), 'the strike falls due and plays, after everything before it', story),
     ok(unmasked < Infinity, 'and the unmasking follows it', S.beatsDone.join(' '))

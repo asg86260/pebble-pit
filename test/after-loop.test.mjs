@@ -62,18 +62,18 @@ function members(n) {
 
 group('rebel is counted where it lands, not on the click', async () => {
   up();
+  // The members agitate rebel onto the same pile: another check's.
+  S.after.bodies = []; S.after.camp = 0;
   const r0 = read().rebel;
   const hit = line();
   const onClick = read().rebel, motes = read().motes;
-  // The members agitate on their own clock meanwhile, so the line's share
-  // is a floor, not the whole of what lands.
-  runUntil(() => read().motes === 0, 10);
+  run(10);
   const landed = read().rebel;
   window.__actsOn(null);
   return [
     ok(hit, 'a click on the pair on the pedestal is a line of their speech'),
     ok(onClick === r0 && motes > 0, 'nothing is counted on the click: the rebel is in the air', `${r0} -> ${onClick}, ${motes} motes`),
-    ok(landed >= r0 + AFTER_PODIUM_REBEL[0], 'the motes land on the pile and are counted there', `${r0} -> ${landed}`)
+    ok(landed === r0 + AFTER_PODIUM_REBEL[0], 'the motes land on the pile and are counted there', `${r0} -> ${landed}`)
   ];
 });
 
@@ -451,7 +451,7 @@ group('the chain makes timber and sawdust, then signs, and a sawyer tips the ful
   ];
 });
 
-group('signs and posters win souls, and God\'s yard empties', async () => {
+group('signs and posters win souls, who wait in God\'s yard to be hired', async () => {
   buildChain();
   S.after.speech = { next: 1e9, f0: 0, held: null };   // the throne's speech is another check's
   const s0 = read();
@@ -461,12 +461,13 @@ group('signs and posters win souls, and God\'s yard empties', async () => {
   const s1 = read();
   window.__actsOn(null);
   return [
-    ok(s1.union > s0.union, 'souls walk out as the signs ink them', `${s0.union} -> ${s1.union}`),
-    ok(s1.support > s0.support, 'the share walked out rises', `${s0.support.toFixed(3)} -> ${s1.support.toFixed(3)}`)
+    ok(s1.ready > s0.ready, 'souls are won as the signs ink them', `${s0.ready} -> ${s1.ready}`),
+    ok(s1.union === s0.union, 'and none walks out unhired', `${s0.union} -> ${s1.union}`),
+    ok(s1.support > s0.support, 'the share won rises', `${s0.support.toFixed(3)} -> ${s1.support.toFixed(3)}`)
   ];
 });
 
-group('the gates open in order off the share walked out, and the strike falls due', async () => {
+group('the gates open in order off the share won, and the strike falls due', async () => {
   up();
   const gates = [];
   window.__afterCrowd((i, v) => (i < MEET_MEMBERS ? RIM_PIECES : v));
@@ -481,7 +482,7 @@ group('the gates open in order off the share walked out, and the strike falls du
   window.__actsOn(null);
   return [
     ok(gates[0] === 1 && gates[1] === 2, 'the meeting, then the slowdown', gates.join(' ')),
-    ok(due, 'the strike\'s share walked out reaches the last gate', `${read().support.toFixed(3)}`),
+    ok(due, 'the strike\'s share won reaches the last gate', `${read().support.toFixed(3)}`),
     ok(S.beatsDone.includes('strike'), 'and the strike beat plays', S.beatsDone.filter(k => /strike|unmask/.test(k)).join(' '))
   ];
 });

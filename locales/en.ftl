@@ -3480,6 +3480,11 @@ after-coin-rebel = rebel
 # act 3 card row (placeholder): the pedestal's podium ladder, five podiums, each higher and more rebel a line
 after-row-podium = podium
 
+# act 3 card row: the pedestal's recruit, a won soul bought out of God's yard to work for rebel
+after-row-recruit = recruit
+# its line: the souls won and waiting to be hired, and the workers idle at the podium
+after-recruit-ready = { $ready } ready, { $idle } idle
+
 # act 3 card row (placeholder): the axe, bought: a click on a grown tree chops it
 after-row-axe = axe
 

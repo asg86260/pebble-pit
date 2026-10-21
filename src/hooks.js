@@ -1496,7 +1496,7 @@ HANDLES.__hellAt = (what, i) => {
 // stand.
 import { clickAfter } from './after/index.js';
 import { afterRow, AFTER_ROWS, afterBill, afterMaxed, openAfterBoard } from './after/rows.js';
-import { setCrowd, support as afterSupport, union as afterUnion, crowdSize } from './after/union.js';
+import { setCrowd, hireAll, support as afterSupport, union as afterUnion, ready as afterReady, crowdSize } from './after/union.js';
 import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut, idleBodies } from './after/bodies.js';
 import { rosterReport, rosterHit } from './roster.js';
@@ -1519,11 +1519,13 @@ HANDLES.__afterGrant = (coins = {}) => {
   return { rebel: a.rebel, ...a.stock };
 };
 // Every soul's rim by `fn(i, v)`, or with a number, that share of the crowd
-// made members from the front back (they walk out on the next frame).
-HANDLES.__afterCrowd = fn => {
+// made members from the front back: every soul won walks out to work, as if
+// hired, unless `waiting` leaves them won and waiting.
+HANDLES.__afterCrowd = (fn, waiting = false) => {
   if (!S.after) return null;
   if (typeof fn === 'number') { const n = Math.floor(crowdSize() * fn); setCrowd((i, v) => (i < n ? 8 : v)); }
   else setCrowd(fn);
+  if (!waiting) hireAll();
   return { support: afterSupport(), union: afterUnion(), size: crowdSize() };
 };
 // Where to click: the pair on the pedestal, each plot's trunk and stump.
@@ -1531,9 +1533,9 @@ HANDLES.__afterPair = () => { const b = pairBox(); return { x: b.x + b.w / 2, y:
 HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage: p.stage, logs: S.after.groundLogs.filter(q => q.i === i).length, falling: p.fall != null,
   stump: p.stump, x: plotX(i) + AP / 2, y: afterFloor() - AP * 5, sx: plotX(i) + AP / 2, sy: afterFloor() - AP / 2 })) : []);
 HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, shown: !!S.after && u.show(),
-  bill: afterBill(u), rung: u.rung ? u.rung() : 0, done: afterMaxed(u) }));
+  bill: afterBill(u), rung: u.rung ? u.rung() : u.from ? u.from() : 0, done: afterMaxed(u) }));
 HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...S.after.stock, gate: S.after.gate,
-  axe: S.after.axe, support: afterSupport(), union: afterUnion(), camp: campCount() + idleBodies().length, walking: walkingOut(),
+  axe: S.after.axe, support: afterSupport(), union: afterUnion(), ready: afterReady(), camp: campCount() + idleBodies().length, walking: walkingOut(),
   size: crowdSize(), signs: S.after.signs.length, posters: S.after.posters.length, bodies: S.after.bodies.length,
   posted: S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD).length, motes: S.after.motes.length,
   built: [...S.after.built], camped: S.after.camp,
