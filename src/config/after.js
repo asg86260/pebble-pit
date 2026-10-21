@@ -324,7 +324,16 @@ export const AFTER_STACK_UP = 4;           // ...with the press's bigger stack
 export const AFTER_PRESS_S = 5;            // a printer pulling a stack
 export const AFTER_PLANT_S = 1.5;          // a carrier planting a sign
 export const AFTER_PASTE_S = 1.2;          // a paster pasting a poster
-export const AFTER_PASTE_LOAD = 4;         // posters a paster carries out
+// What a thing up here takes of the yard's carry (`haulCap`, grains a load;
+// the owner, 2026-10-20: "The act 3 resources should be carried the same as
+// act 1. But take up more slots."): a body carries as many as its load holds,
+// one at the least, picked up and set down one a beat (AFTER_PUT_S). Keyed
+// by what a body's `load` says it carries.
+export const AFTER_CARRY_SLOTS = { log: 2, sign: 2, posters: 1 };
+export const AFTER_PUT_S = 0.3;
+// The most of a load drawn stacked over a head: past it the stack would
+// stand taller than the camp's stations.
+export const AFTER_CARRY_SHOWN = 6;
 export const AFTER_SIGN_GAP = 2;           // files at least between two signs
 
 // --- how support spreads ---

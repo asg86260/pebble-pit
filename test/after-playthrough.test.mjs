@@ -116,6 +116,9 @@ const take = key => {
   return (!full(job) || !!window.__buy(`after-seat-${job}`)) && window.__afterPress(job);
 };
 const buyRow = key => { fund(billOf(key)); return take(key); };
+// A member put on as a player puts one, once one is free to put on: the
+// press tried as the clock turns, up to ten minutes, while the signs win more.
+const putOnWhenFree = job => until(() => buyRow(`post-${job}`), 600) < Infinity;
 // A station bought on the shack and the clock turned until it stands: up to
 // ten minutes, since with the camp emptied onto posts the pair step down and
 // carry its loads across the camp themselves (after/build.js).
@@ -178,13 +181,13 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   // then the paper branch, its timber granted a bill at a time.
   window.__afterGrant({ rebel: 3000 });
   const rows = [];
-  for (const job of ['woodcutter', 'sawyer', 'hauler']) rows.push([job, buyRow(`post-${job}`)]);
+  for (const job of ['woodcutter', 'sawyer', 'hauler']) rows.push([job, putOnWhenFree(job)]);
   for (const k of ['workshop', 'chipper']) rows.push([k, raise(k)]);
-  for (const job of ['joiner', 'carrier']) rows.push([job, buyRow(`post-${job}`)]);
+  for (const job of ['joiner', 'carrier']) rows.push([job, putOnWhenFree(job)]);
   const signed = until(() => S.after.signs.length > 0, 600);
   const timberOf = k => (AFTER_BUILDS[k].bill.find(([c]) => c === 'timber') || [, 0])[1];
   for (const k of ['papermill', 'press']) { window.__afterGrant({ timber: timberOf(k) }); rows.push([k, raise(k)]); }
-  for (const job of ['pulper', 'printer', 'paster']) rows.push([job, buyRow(`post-${job}`)]);
+  for (const job of ['pulper', 'printer', 'paster']) rows.push([job, putOnWhenFree(job)]);
   note(`rows ${JSON.stringify(rows)} first sign ${signed}`);
 
   // A player's stretch: every few seconds whatever on the list can be paid

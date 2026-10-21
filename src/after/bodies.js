@@ -27,10 +27,11 @@
 import { S } from '../state.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S, AFTER_PASTE_S,
-         AFTER_PASTE_LOAD, AFTER_PRESS_S, AFTER_SAW_S, AFTER_CHIP_S, AFTER_SIGN_S, AFTER_PULP_S, AFTER_CHOP_HOLD_S,
+         AFTER_CARRY_SLOTS, AFTER_PUT_S, AFTER_PRESS_S, AFTER_SAW_S, AFTER_CHIP_S, AFTER_SIGN_S, AFTER_PULP_S, AFTER_CHOP_HOLD_S,
          AFTER_JOIN_FADE_S } from '../config.js';
 import { secs, walk, nextId } from './util.js';
 import { stepCrew } from '../placebodies.js';
+import { haulCap } from '../levels.js';
 import { deepAt } from './sky.js';
 import { built, stumpsOn, seatsOf } from './levels.js';
 import { afterX0, afterX1, afterFloor, stationDoor, stationBox, signFetchX, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
@@ -129,14 +130,45 @@ export function walkLeft(w) {
   return z ? Math.max(0, z[0] - w.x, w.x - z[1]) : 0;
 }
 
+// --- the carry -----------------------------------------------------------------------
+// The yard's carry (levels.js, `haulCap`, grains a load), each thing up here
+// taking several of its slots (AFTER_CARRY_SLOTS): how many of `kind` a body
+// holds, one at the least. `carry` is how many it has; a body read from a
+// save from before the carry holds the one its `load` names (a paster then
+// counted its sheets in `n`).
+export const holds = kind => Math.max(1, Math.floor(haulCap() / AFTER_CARRY_SLOTS[kind]));
+export const carried = w => w.carry ?? (w.load === 'posters' ? w.n || 1 : w.load ? 1 : 0);
+// Taken up the yard's way, one a beat (AFTER_PUT_S), until the load is full
+// or none is left: true once done, holding however many it got.
+function pickUp(w, dt, kind, left, take) {
+  if (carried(w) >= holds(kind) || left() <= 0) return true;
+  w.t += dt;
+  if (w.t < AFTER_PUT_S) return false;
+  w.t = 0; take();
+  w.load = kind; w.carry = carried(w) + 1;
+  return carried(w) >= holds(kind) || left() <= 0;
+}
+// Set down the same way, the load shrinking as the pile grows: true once
+// the hands are empty.
+function putDown(w, dt, add) {
+  if (!carried(w)) { w.load = null; return true; }
+  w.t += dt;
+  if (w.t < AFTER_PUT_S) return false;
+  w.t = 0; add();
+  w.carry = carried(w) - 1;
+  if (w.carry > 0) return false;
+  w.carry = 0; w.load = null;
+  return true;
+}
+
 // A body put on a job, from where it stands: it forgets what it was doing
 // and walks to the job (the job's own frame takes it there).
 function takeJob(w, job) {
-  Object.assign(w, { job, on: false, at: null, target: null, to: null, t: 0, n: 0, swing: null, dig: false, load: null });
+  Object.assign(w, { job, on: false, at: null, target: null, to: null, t: 0, n: 0, swing: null, dig: false, load: null, carry: 0, pick: false });
 }
 // A body taken off its job, back to the podium on foot.
 function dropJob(w) {
-  Object.assign(w, { job: null, on: false, at: null, target: null, to: null, t: 0, n: 0, swing: null, dig: false });
+  Object.assign(w, { job: null, on: false, at: null, target: null, to: null, t: 0, n: 0, swing: null, dig: false, pick: false });
 }
 // A member out of the crowd, who steps out of its front at the camp's edge
 // by the pedestal, fading in: put on `job`, or (null) to stand at the podium.
@@ -248,40 +280,45 @@ const JOB_STEP = {
   },
   gatherer(w, dt) {
     // The nearest log lying still on the ground that no other gatherer is
-    // walking to, up off it, and carried to the forestry shack's pile.
+    // walking to, up off it, and the next nearest while the load has room
+    // (the yard's carter, taking what is nearest until its hands are full);
+    // full, or nothing left lying, carried to the forestry shack's pile and
+    // set down there a log a beat.
     const a = S.after;
-    if (w.load === 'log') {
-      if (go(w, pileMid('forestry', 'grovelogs'), floorY(), dt)) { a.stock.grovelogs += 1; w.load = null; w.target = null; }
+    if (w.to === 'pile') {
+      if (go(w, pileMid('forestry', 'grovelogs'), floorY(), dt) && putDown(w, dt, () => { a.stock.grovelogs += 1; })) w.to = null;
       return;
     }
     let q = w.target != null ? a.groundLogs.find(o => o.id === w.target) : null;
     if (!q || !settled(q)) {
-      const claimed = new Set(a.bodies.filter(o => o !== w && o.job === AFTER_JOB.GATHER && !o.load && o.target != null).map(o => o.target));
+      const claimed = new Set(a.bodies.filter(o => o !== w && o.job === AFTER_JOB.GATHER && o.target != null).map(o => o.target));
       const free = a.groundLogs.filter(o => settled(o) && !claimed.has(o.id));
       q = free.length ? free.reduce((b, o) => (Math.abs(o.x - w.x) < Math.abs(b.x - w.x) ? o : b)) : null;
       w.target = q ? q.id : null;
     }
+    if (carried(w) && (carried(w) >= holds('log') || !q)) { w.to = 'pile'; w.target = null; w.t = 0; return; }
     if (!q) { idle(w, dt); return; }
     if (!go(w, q.x + AP, floorY(), dt)) return;
-    if (takeGroundLog(q.id)) w.load = 'log';
+    if (takeGroundLog(q.id)) { w.load = 'log'; w.carry = carried(w) + 1; }
     w.target = null;
   },
   hauler(w, dt) {
     const a = S.after;
-    if (w.load === 'log') {
-      // Chosen as it sets off with the log, and kept: a pile that drops
+    if (w.to) {
+      // Chosen as it sets off with its logs, and kept: a pile that drops
       // behind on the way does not turn it round.
-      if (!w.to || !built(w.to)) w.to = logTo();
+      if (!built(w.to)) w.to = logTo();
       if (!w.to) { idle(w, dt); return; }
-      // Put down on the station's log pile, on its left, the side the logs
-      // come in from.
-      if (go(w, pileMid(w.to, PILE[w.to]), floorY(), dt)) { a.stock[PILE[w.to]] += 1; w.load = null; w.target = null; w.to = null; }
+      // Set down on the station's log pile, on its left, the side the logs
+      // come in from, a log a beat.
+      if (go(w, pileMid(w.to, PILE[w.to]), floorY(), dt) && putDown(w, dt, () => { a.stock[PILE[w.to]] += 1; })) w.to = null;
       return;
     }
-    // A log off the forestry shack's pile, where the gatherers bring them.
+    // Logs off the forestry shack's pile, where the gatherers bring them, a
+    // log a beat until the load is full or the pile bare.
     if (!logTo()) { idle(w, dt); return; }
     if (!go(w, pileMid('forestry', 'grovelogs'), floorY(), dt)) return;
-    if (a.stock.grovelogs > 0) { a.stock.grovelogs -= 1; w.load = 'log'; w.to = logTo(); }
+    if (pickUp(w, dt, 'log', () => a.stock.grovelogs, () => { a.stock.grovelogs -= 1; }) && carried(w)) { w.to = logTo(); w.t = 0; }
   },
   sawyer(w, dt) {
     // Off the saw while the heap has stood at its brim: to the notch beside
@@ -328,27 +365,35 @@ const JOB_STEP = {
       if (w.t >= AFTER_PLANT_S) { s.askew = false; w.target = null; w.t = 0; }
       return;
     }
-    if (!w.load) {
+    // At the workshop's door: signs taken up a sign a beat, as many as the
+    // load holds; with nowhere left to plant one, those in hand put back.
+    if (!carried(w) || w.target == null) {
       if (!go(w, signFetchX(), floorY(), dt)) return;
-      if (a.stock.signs <= 0) return;
-      const spot = signSpot();
-      if (!spot) return;
-      a.stock.signs -= 1; w.load = 'sign'; w.target = spot; w.t = 0;
+      if (!signSpot()) { while (carried(w)) putDown(w, AFTER_PUT_S, () => { a.stock.signs += 1; }); return; }
+      if (!pickUp(w, dt, 'sign', () => a.stock.signs, () => { a.stock.signs -= 1; }) || !carried(w)) return;
+      w.target = signSpot(); w.t = 0;
+      if (!w.target) return;
     }
     const s = w.target;
     if (!go(w, soulX(s.f) + P / 2, soulY(s.r) + P * 2, dt)) return;
     w.t += dt;
-    if (w.t >= AFTER_PLANT_S) { plantSign(s.f, s.r); w.load = null; w.target = null; w.t = 0; }
+    if (w.t >= AFTER_PLANT_S) {
+      plantSign(s.f, s.r); w.t = 0;
+      // The next in hand to the next spot free, or back to the door.
+      w.carry = carried(w) - 1;
+      if (w.carry <= 0) { w.carry = 0; w.load = null; w.target = null; } else w.target = signSpot();
+    }
   },
   paster(w, dt) {
     const a = S.after;
     if (!built('press')) { idle(w, dt); return; }
-    if (!w.n) {
-      w.load = null;
+    // At the press: posters taken up a sheet a beat, as many as the load holds.
+    if (!carried(w) || w.pick) {
       if (!go(w, stationDoor('press') + AP * 4, floorY(), dt)) return;
-      if (a.stock.posters <= 0 || freeSlot() == null) return;
-      w.n = Math.min(AFTER_PASTE_LOAD, a.stock.posters);
-      a.stock.posters -= w.n; w.load = 'posters'; w.target = null; w.t = 0;
+      if (!carried(w) && (a.stock.posters <= 0 || freeSlot() == null)) return;
+      w.pick = !pickUp(w, dt, 'posters', () => a.stock.posters, () => { a.stock.posters -= 1; });
+      if (w.pick || !carried(w)) return;
+      w.target = null; w.t = 0;
     }
     const others = a.bodies.filter(o => o !== w && o.job === AFTER_JOB.PASTE && o.target != null).map(o => o.target);
     if (w.target == null || a.posters.some(p => p.slot === w.target) || others.includes(w.target)) {
@@ -359,8 +404,9 @@ const JOB_STEP = {
     if (!go(w, slotX(w.target), floorY(), dt)) return;
     w.t += dt;
     if (w.t >= AFTER_PASTE_S) {
-      pastePoster(w.target); w.n -= 1; w.target = null; w.t = 0;
-      if (!w.n) w.load = null;
+      pastePoster(w.target); w.target = null; w.t = 0;
+      w.carry = carried(w) - 1;
+      if (w.carry <= 0) { w.carry = 0; w.load = null; }
     }
   }
 };

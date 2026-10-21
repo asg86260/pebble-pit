@@ -13,7 +13,7 @@
 // where the cell stands (no flat fills, no random draw, so it holds still
 // frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_CLOSED, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
+import { P, GREY, AFTER_CARRY_SHOWN, AFTER_CLOSED, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
@@ -27,7 +27,7 @@ import { buildPileAt, stationBox, stationX0, stationDoor, heapMid, notchX, fileA
 import { airMotes } from '../after/rebel.js';
 import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
-import { atStation, bodyInk } from '../after/bodies.js';
+import { atStation, bodyInk, carried as carryOf } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
 import { frame, now, inView, clamp01, pileState, pileAlpha, countAt, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
@@ -306,9 +306,19 @@ function drawMember(w) {
   const at = body(w.x, ground);
   const x = at.x, y = at.y;
   ctx.fillStyle = GREY[K];
-  if (w.load === 'log') { ctx.fillRect(x - P, y - P, 5 * P, P); cell(x + P, y - P, PALE); }
-  else if (w.load === 'sign') drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
-  else if (w.load === 'posters') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 4, y - 8, 10, 6); }
+  // A load stacked over the head the yard's way (render/crew.js), a thing a
+  // row, as many rows as it carries, up to AFTER_CARRY_SHOWN.
+  const n = Math.min(AFTER_CARRY_SHOWN, carryOf(w));
+  if (w.load === 'log') for (let k = 0; k < n; k++) { const ly = y - P - k * 2 * P; ctx.fillStyle = GREY[K]; ctx.fillRect(x - P, ly, 5 * P, P); cell(x + P, ly, PALE); }
+  else if (w.load === 'sign') {
+    // The one in front held up on its post; the rest boards on the shoulder.
+    drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
+    ctx.fillStyle = GREY[K];
+    for (let k = 1; k < n; k++) ctx.fillRect(x - P, y - k * 2 * P, 3 * P, P);
+  } else if (w.load === 'posters') for (let k = 0; k < n; k++) {
+    const sy = y - 10 - k * 2 * P;
+    ctx.fillStyle = GREY[K]; ctx.fillRect(x + 2, sy, 14, 10); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 4, sy + 2, 10, 6);
+  }
   else if (w.load === 'carry' || w.load === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
   else if (w.load === 'tip') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
   if (w.swing != null) {

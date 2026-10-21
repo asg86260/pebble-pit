@@ -2977,6 +2977,24 @@ export const SCENES = {
     } },
   'after-roster-grove': { about: 'the acts', say: "act 3's rosters at the grove: the woodcutter's, the gatherer's and the hauler's side by side under the forestry shack",
     run: () => SCENES['after-roster'].run('forestry') },
+  // The carry: the yard's carry bought well up, so the haulers and gatherers
+  // walk under stacks of logs, a log taking two of its slots.
+  'after-carry': { about: 'the acts', say: "act 3's goods carried the yard's way: haulers under a stack of logs, as many as the yard's carry holds",
+    run: () => {
+      act3Mid();
+      S.haulCarryLevel = 6;           // after the yard is stood up, which sets its own
+      window.__afterGrant({ grovelogs: 40 });
+      window.__fast(90);              // the haulers' walk from the podium
+      // Held on a hauler walking its stack of logs to the mill.
+      const under = () => S.after.bodies.find(w => w.job === AFTER_JOB.HAUL && w.to && w.carry >= 2);
+      for (let k = 0; k < 600 && !under(); k++) window.__fast(0.1);
+      window.__fast(1);
+      const h = under(), mid = h ? h.x : stationBox('forestry').x;
+      pinCamera(mid - S.viewW / 2);
+      window.__look(mid - S.viewW / 2);
+      window.__fast(1 / 60);
+      window.__holdShot();
+    } },
   'after-pedestal': { about: 'the acts', say: 'the pair on the pedestal mid-speech, rebel falling to the pile, idle members behind them agitating',
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);

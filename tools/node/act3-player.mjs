@@ -16,7 +16,7 @@ import { tipSawdust, heapFull } from '../../src/after/mill.js';
 import { bubbles } from '../../src/after/bubbles.js';
 import { built } from '../../src/after/levels.js';
 import { afterRow, afterBill, afterMaxed } from '../../src/after/rows.js';
-import { crewAt, spareMembers } from '../../src/after/bodies.js';
+import { crewAt, spareMembers, holds } from '../../src/after/bodies.js';
 import { seatsOf, seatKey } from '../../src/after/levels.js';
 import { union, support } from '../../src/after/union.js';
 import { wallSlots } from '../../src/after/place.js';
@@ -126,7 +126,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
       : st.timber < 10 * C.AFTER_SIGN_TIMBER && piled > 3 * C.AFTER_LOGS_A_TREE * Math.max(1, n('hauler')) ? 'hauler'
       : st.timber < 10 * C.AFTER_SIGN_TIMBER && a.plots.filter(standing).length > n('woodcutter') ? 'woodcutter'
       : st.posters < n('paster') && st.paper >= 8 * C.AFTER_POSTER_PAPER + planNeeds('paper') && open('printer') ? 'printer'
-      : open('paster') && st.posters > 4 * C.AFTER_PASTE_LOAD && a.posters.length < wallSlots() - n('paster') * C.AFTER_PASTE_LOAD ? 'paster'
+      : open('paster') && st.posters > 4 * holds('posters') && a.posters.length < wallSlots() - n('paster') * holds('posters') ? 'paster'
       : 'carrier');
     return open(pick) ? `after-post-${pick}` : null;
   }
