@@ -128,6 +128,41 @@ export const TESTS = [
       ok(off && gone === null, 'panned off it, the board closes', `${off} ${gone}`)
     ];
   }],
+  ['act 3: a click on a roster\'s + under the saw mill puts a member on, and on its - takes one off; no board opens', async () => {
+    newRun();
+    await settle();
+    await upThere();
+    // The setup it is not about: the saw mill standing and a member waiting.
+    if (!S.after.built.includes('mill')) S.after.built.push('mill');
+    S.after.camp += 1;
+    await settle(0.3);
+    const b = stationBox('mill'), r = canvas().getBoundingClientRect();
+    window.__look(b.x + b.w / 2 - S.viewW / 2);
+    await settle(0.3);
+    const press = async at => {
+      const s = toScreen(at[0], at[1]);
+      point('pointermove', r.left + s.x, r.top + s.y, 0);
+      await raf();
+      const cursor = canvas().style.cursor;
+      point('pointerdown', r.left + s.x, r.top + s.y);
+      point('pointerup', r.left + s.x, r.top + s.y);
+      await sleep(60);
+      return cursor;
+    };
+    const saw = () => window.__afterRoster().find(q => q.job === 'sawyer');
+    const n0 = saw()?.n;
+    const over = await press(saw().more);
+    const n1 = saw().n, board = openBoard();
+    await press(saw().less);
+    const n2 = saw().n;
+    window.__actsOn(null);
+    return [
+      ok(n0 === 0 && n1 === 1, 'the + under the saw mill, clicked, puts a member on', `${n0} -> ${n1}`),
+      ok(over === 'pointer', 'the cursor over it is the pointing hand', over),
+      ok(board === null, 'and the click is the roster\'s, not the station\'s board', String(board)),
+      ok(n2 === 0, 'the - clicked takes the member off again', `${n2}`)
+    ];
+  }],
   ['act 3: the yard\'s objective line and its call to build the bench fade out up there, and come back down below', async () => {
     newRun();
     await settle(0.5);
