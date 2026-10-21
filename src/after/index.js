@@ -12,7 +12,7 @@
 // else (DESIGN.md, "Rules and consequences to check", the save shape).
 
 import { S } from '../state.js';
-import { AFTER_STOCK, AFTER_START_BUILT, AFTER_JOBS, AFTER_SEAT_BILLS } from '../config.js';
+import { AFTER_STOCK, AFTER_START_BUILT, AFTER_JOBS, AFTER_JOB_FOLD, AFTER_SEAT_BILLS } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { seatKey } from './levels.js';
 import { afterlifeOn } from '../acts.js';
@@ -155,6 +155,29 @@ function fromPosts(a, posts) {
   }
 }
 
+// A save from when a station had several jobs (DESIGN.md, "Act 3: one job
+// a station"): a folded job's seats go to its station's one, the larger
+// kept, and its crew too, as far as those seats go; its bodies take that
+// job, a gatherer's log still the one walked to and a carrier or a paster
+// with anything in hand out on its round until it is empty.
+function foldJobs(a) {
+  for (const [from, to] of Object.entries(AFTER_JOB_FOLD)) {
+    const seats = a.ups[seatKey(from)];
+    if (seats != null) { a.ups[seatKey(to)] = Math.max(a.ups[seatKey(to)] || 0, seats); delete a.ups[seatKey(from)]; }
+    if (!a.crew[from]) continue;
+    a.crew[to] = Math.min(1 + Math.min(AFTER_SEAT_BILLS.length, a.ups[seatKey(to)] || 0), (a.crew[to] || 0) + a.crew[from]);
+    delete a.crew[from];
+  }
+  for (const b of a.bodies) {
+    const to = AFTER_JOB_FOLD[b.job];
+    if (!to) continue;
+    if (b.job === AFTER_JOB.GATHER) { b.log = b.target; b.target = null; }
+    else if (b.job === AFTER_JOB.HAUL) { b.to = b.load ? 'pile' : null; b.target = null; }
+    else b.out = !!(b.load || b.pick || b.target != null);
+    b.job = to;
+  }
+}
+
 // The save (persist.js, `SAVERS`): written whole, null before the act
 // begins, and read over a blank so a save from before a field was added
 // comes back with that field empty rather than missing. The crowd's rims are
@@ -167,6 +190,7 @@ export const SAVE = {
     // An older save's wardens, which nothing reads, fall away with every key
     // the blank lacks (placesave.js).
     S.after = a && typeof a === 'object' ? readOver(blankAfter(), a) : null;
+    if (S.after) foldJobs(S.after);
     if (S.after && a.posts && typeof a.posts === 'object' && !a.crew) fromPosts(S.after, a.posts);
     if (S.after) settleHeld(S.after.bodies);
   },

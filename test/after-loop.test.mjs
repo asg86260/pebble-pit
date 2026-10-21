@@ -387,7 +387,7 @@ group('with no paper mill the heap stops the saw, and a load dragged off it tips
   ];
 });
 
-group('the chipper turns logs into sawdust alone, and haulers feed the smaller pile', async () => {
+group('the chipper turns logs into sawdust alone, and its feeder fetches its own logs', async () => {
   up();
   window.__afterGrant({ rebel: 2000, chiplogs: 2 });
   raise('chipper');
@@ -395,15 +395,17 @@ group('the chipper turns logs into sawdust alone, and haulers feed the smaller p
   feedLog(); pullArm(6);
   const chipped = read().sawdust - d0 === AFTER_CHIP_SAWDUST && read().timber === t0;
   raise('mill');
-  // logs on the forestry shack's pile, as the gatherers leave them
+  // logs on the forestry shack's pile, as the woodcutters leave them, and
+  // the chipper's own bare
+  S.after.stock.chiplogs = 0;
   window.__afterGrant({ logs: 3, grovelogs: 4 });
   settle();
-  putOn('hauler');
-  const fed = runUntil(() => read().chiplogs > 1, 240);
+  putOn('feeder');
+  const fed = runUntil(() => read().chiplogs > 0, 240);
   window.__actsOn(null);
   return [
     ok(chipped, 'a log fed to the chipper by hand turns into sawdust, no timber', `${read().sawdust - d0} sawdust`),
-    ok(fed && read().logs === 3, 'a hauler takes the grove\'s logs to the chipper, the smaller pile', `${read().logs} ${read().chiplogs}`)
+    ok(fed && read().logs === 3, 'the feeder fetches the grove\'s logs to the chipper\'s pile, the mill\'s left alone', `${read().logs} ${read().chiplogs}`)
   ];
 });
 
@@ -418,7 +420,7 @@ function buildChain() {
   window.__afterGrant({ rebel: 5000, timber: 60, logs: 16 });
   const bought = [['raised', raise('mill', 'workshop')]];
   for (const k of ['after-plot', 'after-plot', 'after-stumps']) bought.push([k, window.__buy(k)]);
-  for (const job of ['woodcutter', 'woodcutter', 'hauler', 'hauler', 'hauler', 'sawyer', 'sawyer', 'joiner', 'carrier', 'carrier'])
+  for (const job of ['woodcutter', 'woodcutter', 'woodcutter', 'sawyer', 'sawyer', 'joiner', 'joiner'])
     bought.push([job, putOn(job)]);
   return bought;
 }
@@ -436,7 +438,7 @@ group('the chain makes timber and sawdust, then signs, and a sawyer tips the ful
   window.__afterGrant({ timber: 100, rebel: 2000 });
   S.after.camp += 6;                         // hands for the branch: the walk out is checked above
   const raised = raise('papermill', 'press');
-  const b2 = ['pulper', 'printer', 'paster'].map(k => [k, putOn(k)]);
+  const b2 = ['pulper', 'printer', 'printer'].map(k => [k, putOn(k)]);
   run(150);
   const end = read();
   window.__actsOn(null);
@@ -444,10 +446,10 @@ group('the chain makes timber and sawdust, then signs, and a sawyer tips the ful
     ok(bought.every(([, b]) => b), 'the stations bought through their rows, the members put on through the rosters', JSON.stringify(bought.filter(([, b]) => !b))),
     ok(mid.timber > 0 || mid.signs > 0 || S.after.signs.length > 0, 'logs reach the mill and are sawn into timber', JSON.stringify(mid)),
     ok(brim && tipped, 'the sawdust heaps to its brim and a sawyer tips a load through the notch', `brim ${brim} tipped ${tipped}`),
-    ok(S.after.signs.length > 0, 'the workshop makes signs and a carrier plants them in the crowd', `${S.after.signs.length}`),
+    ok(S.after.signs.length > 0, 'the workshop makes signs and its joiner plants them in the crowd', `${S.after.signs.length}`),
     ok(raised && b2.every(([, b]) => b), 'the paper mill and the press are raised and posted', JSON.stringify(b2)),
     ok(end.paper > 0 || end.posters > 0 || S.after.posters.length > 0, 'the paper mill pulps sawdust into paper', JSON.stringify(end)),
-    ok(S.after.posters.length > 0, 'the press prints posters and a paster pastes them on the fence', `${S.after.posters.length}`)
+    ok(S.after.posters.length > 0, 'the press prints posters and its printer pastes them on the fence', `${S.after.posters.length}`)
   ];
 });
 
@@ -456,7 +458,7 @@ group('signs and posters win souls, who wait in God\'s yard to be hired', async 
   S.after.speech = { next: 1e9, f0: 0, held: null };   // the throne's speech is another check's
   const s0 = read();
   // Long enough for a sign to ink a pale soul full, twice over, and for the
-  // carriers' walk across the wide camp (track A) to plant it.
+  // joiners' walk across the wide camp (track A) to plant it.
   run(2 * RIM_PIECES * AFTER_SIGN_INK_S + 120);
   const s1 = read();
   window.__actsOn(null);

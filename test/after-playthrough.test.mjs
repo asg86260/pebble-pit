@@ -168,13 +168,13 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   // on (a job's first seat is free).
   earn(AFTER_BUILDS.mill.bill.find(([c]) => c === 'rebel')[1], 300);
   const mill = raise('mill');
-  // A gatherer's post and a hauler's: a member walks out of the camp to each,
-  // the one carrying the fallen logs to the forestry shack and the other
-  // on to the mill; the flywheel spun by hand saws one.
+  // A woodcutter's post and a sawyer's: a member walks out of the camp to
+  // each, the one carrying the fallen logs to the forestry shack and the
+  // other fetching them on to the mill; the flywheel spun by hand saws one.
   const camp0 = read().camp;
-  const post = buyRow('post-gatherer') && buyRow('post-hauler');
+  const post = buyRow('post-woodcutter') && buyRow('post-sawyer');
   run(0.25);
-  const left = read().camp, onJobs = S.after.bodies.filter(b => (b.job === 'gatherer' || b.job === 'hauler') && b.state === 'work').length;
+  const left = read().camp, onJobs = S.after.bodies.filter(b => (b.job === 'woodcutter' || b.job === 'sawyer') && b.state === 'work').length;
   const fed = until(() => read().logs > 0, 180);
   const t0 = read().timber;
   const spun = spinMill(1);
@@ -186,22 +186,22 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   // then the paper branch, its timber granted a bill at a time.
   window.__afterGrant({ rebel: 3000 });
   const rows = [];
-  for (const job of ['woodcutter', 'sawyer', 'hauler']) rows.push([job, putOnWhenFree(job)]);
+  for (const job of ['woodcutter', 'sawyer']) rows.push([job, putOnWhenFree(job)]);
   for (const k of ['workshop', 'chipper']) rows.push([k, raise(k)]);
-  for (const job of ['joiner', 'carrier']) rows.push([job, putOnWhenFree(job)]);
+  for (const job of ['joiner']) rows.push([job, putOnWhenFree(job)]);
   const signed = until(() => S.after.signs.length > 0, 600);
   const timberOf = k => (AFTER_BUILDS[k].bill.find(([c]) => c === 'timber') || [, 0])[1];
   for (const k of ['papermill', 'press']) { window.__afterGrant({ timber: timberOf(k) }); rows.push([k, raise(k)]); }
-  for (const job of ['pulper', 'printer', 'paster']) rows.push([job, putOnWhenFree(job)]);
+  for (const job of ['pulper', 'printer']) rows.push([job, putOnWhenFree(job)]);
   note(`rows ${JSON.stringify(rows)} first sign ${signed}`);
 
   // A player's stretch: every few seconds whatever on the list can be paid
   // for is bought, the stumps the woodcutters leave are pulled by hand until
   // stump removal is, and the bubbles are popped, while the signs and
   // posters win souls, who walk out to the camp and fill the posts.
-  const want = ['plot', 'grow', 'stumps', 'plot', 'post-woodcutter', 'post-gatherer', 'post-hauler', 'post-carrier', 'post-paster',
-                'post-joiner', 'post-sawyer', 'post-carrier', 'post-paster', 'bench', 'blade', 'post-pulper',
-                'post-printer', 'post-carrier', 'post-paster'];
+  const want = ['plot', 'grow', 'stumps', 'plot', 'post-woodcutter', 'post-woodcutter', 'post-sawyer', 'post-joiner', 'post-printer',
+                'post-joiner', 'post-sawyer', 'post-joiner', 'post-printer', 'bench', 'blade', 'post-pulper',
+                'post-printer', 'post-joiner', 'post-printer'];
   const u0 = read().union, gates = [];
   let pasted = 0, planted = 0, peakCamp = 0, due = false;
   // The yard's coins for the next row on the list, once each: the yard
@@ -236,7 +236,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
     ok(axe && handed < Infinity, 'the axe is bought on the grove\'s card and its beat hands it over', `${axe} ${handed}`),
     ok(sawn.fell && logsDown > 0, 'a tree sawn by hand falls and lies as logs', JSON.stringify(sawn)),
     ok(pulled.out && replanted === 1, 'its stump pulled by hand comes out and a sapling is set', JSON.stringify(pulled)),
-    ok(mill && post && onJobs === 2 && left <= camp0 - 2 && fed < Infinity, 'the saw mill raised off the shack, a gatherer and a hauler walk off the podium to their jobs and carry the logs in', story),
+    ok(mill && post && onJobs === 2 && left <= camp0 - 2 && fed < Infinity, 'the saw mill raised off the shack, a woodcutter and a sawyer walk off the podium to their jobs and carry the logs in', story),
     ok(spun.cut >= 1 && sawnInto > 0, 'the flywheel spun by hand saws a log into timber', JSON.stringify(spun)),
     ok(rows.every(([, b]) => b), 'the posts, the workshop, the chipper, the paper mill and the press are all bought through their rows',
        JSON.stringify(rows.filter(([, b]) => !b))),

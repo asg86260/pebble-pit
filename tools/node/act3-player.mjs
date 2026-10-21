@@ -16,10 +16,9 @@ import { tipSawdust, heapFull } from '../../src/after/mill.js';
 import { bubbles } from '../../src/after/bubbles.js';
 import { built } from '../../src/after/levels.js';
 import { afterRow, afterBill, afterMaxed } from '../../src/after/rows.js';
-import { crewAt, spareMembers, walkingOut, holds } from '../../src/after/bodies.js';
+import { crewAt, spareMembers, walkingOut } from '../../src/after/bodies.js';
 import { seatsOf, seatKey } from '../../src/after/levels.js';
 import { union, won, support } from '../../src/after/union.js';
-import { wallSlots } from '../../src/after/place.js';
 
 export const mm = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
@@ -60,22 +59,20 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   const handS = k => Math.max(0.25, HAND_S[k] / HUMAN);
 
   // --- the plan: what a sensible player buys, in order -------------------------------
-  // The axe and the saw mill first (the logs lie where a tree falls until a
-  // hauler carries them, so one goes with it), the workshop and a carrier to
-  // get signs into the crowd, then the chain's other stations and a post at
-  // each, then the upgrades. A post is a member put on that job through the
-  // roster under its station (`row`, below), its seat bought first where the
-  // job's seats are full; a post named twice is two members. The logs lie
-  // where a tree falls until a gatherer brings them to the forestry shack,
-  // where the hauler takes them on.
+  // The axe and the saw mill first, a woodcutter carrying the felled logs to
+  // the forestry shack and a sawyer fetching them on, the workshop and its
+  // joiner to get signs into the crowd, then the chain's other stations and
+  // a post at each, then the upgrades. A post is a member put on that job
+  // through the roster under its station (`row`, below), its seat bought
+  // first where the job's seats are full; a post named twice is two members.
   const PLAN = [
-    'after-axe', 'after-build-mill', 'after-post-gatherer', 'after-post-hauler', 'after-post-sawyer', 'after-build-workshop',
-    'after-post-carrier', 'after-podium', 'after-post-woodcutter', 'after-post-joiner', 'after-plot',
-    'after-build-chipper', 'after-post-feeder', 'after-post-carrier', 'after-heap', 'after-blade', 'after-plot',
-    'after-build-papermill', 'after-post-pulper', 'after-build-press', 'after-post-printer', 'after-post-paster',
-    'after-stumps', 'after-grow', 'after-drum', 'after-vat', 'after-post-hauler', 'after-post-woodcutter',
+    'after-axe', 'after-build-mill', 'after-post-woodcutter', 'after-post-sawyer', 'after-build-workshop',
+    'after-post-joiner', 'after-podium', 'after-post-woodcutter', 'after-plot',
+    'after-build-chipper', 'after-post-feeder', 'after-post-joiner', 'after-heap', 'after-blade', 'after-plot',
+    'after-build-papermill', 'after-post-pulper', 'after-build-press', 'after-post-printer',
+    'after-stumps', 'after-grow', 'after-drum', 'after-vat', 'after-post-sawyer', 'after-post-woodcutter',
     'after-bench', 'after-stack', 'after-spout', 'after-plot', 'after-dry', 'after-post-pulper',
-    'after-post-carrier', 'after-post-paster', 'after-tree', 'after-signreach', 'after-posterreach'
+    'after-post-joiner', 'after-post-printer', 'after-tree', 'after-signreach', 'after-posterreach'
   ];
   // Past the plan, a post where the chain is short, as a player watching the
   // piles would put one: a joiner while carriers wait on signs with timber in,
@@ -117,17 +114,15 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   }
   function nextLater() {
     const a = S.after, st = a.stock, n = j => crewAt(j);
-    // The logs lying on the grove's floor (a gatherer's) and on the forestry
-    // shack's pile (a hauler's).
-    const lying = a.groundLogs.length, piled = st.grovelogs;
+    // The logs waiting on the sawyers, lying in the grove or piled at the
+    // forestry shack.
+    const logs = a.groundLogs.length + st.grovelogs;
     const open = j => row(`after-post-${j}`).show();
-    const pick = (st.signs < n('carrier') && st.timber >= 8 * C.AFTER_SIGN_TIMBER + planNeeds('timber') && open('joiner') ? 'joiner'
-      : st.timber < 10 * C.AFTER_SIGN_TIMBER && lying > 3 * C.AFTER_LOGS_A_TREE * Math.max(1, n('gatherer')) ? 'gatherer'
-      : st.timber < 10 * C.AFTER_SIGN_TIMBER && piled > 3 * C.AFTER_LOGS_A_TREE * Math.max(1, n('hauler')) ? 'hauler'
+    const pick = (st.timber >= 8 * C.AFTER_SIGN_TIMBER + planNeeds('timber') && open('joiner') ? 'joiner'
+      : st.timber < 10 * C.AFTER_SIGN_TIMBER && logs > 3 * C.AFTER_LOGS_A_TREE * Math.max(1, n('sawyer')) ? 'sawyer'
       : st.timber < 10 * C.AFTER_SIGN_TIMBER && a.plots.filter(standing).length > n('woodcutter') ? 'woodcutter'
-      : st.posters < n('paster') && st.paper >= 8 * C.AFTER_POSTER_PAPER + planNeeds('paper') && open('printer') ? 'printer'
-      : open('paster') && st.posters > 4 * holds('posters') && a.posters.length < wallSlots() - n('paster') * holds('posters') ? 'paster'
-      : 'carrier');
+      : st.paper >= 8 * C.AFTER_POSTER_PAPER + planNeeds('paper') && open('printer') ? 'printer'
+      : 'joiner');
     return open(pick) ? `after-post-${pick}` : null;
   }
 
@@ -283,7 +278,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     // then only if it is a small share of that row's.
     const first = out[0], firstRebel = first ? (afterBill(row(first)).find(([c]) => c === 'rebel') || [0, 0])[1] : 0;
     const saving = first && shortOf(afterBill(row(first))).includes('rebel') && nextRebel() * 4 > firstRebel;
-    laterKey = next && !planPost && !saving && crewAt('carrier') && free() >= (out.length ? RESERVE : 1) ? next : null;
+    laterKey = next && !planPost && !saving && crewAt('joiner') && free() >= (out.length ? RESERVE : 1) ? next : null;
     if (laterKey) out.push(laterKey);
     // Workers are bought out of the souls won (DESIGN.md, "Act 3's workers
     // are bought with rebel"): one first, while fewer than RESERVE stand idle.

@@ -13,6 +13,8 @@ import { group, ok, run, runUntil, yard } from './helpers.mjs';
 import { RIM_PIECES, AFTER_WALK, AFTER_AGITATE_S, AFTER_AGITATE_REBEL, AFTER_CARRY_SLOTS } from '../src/config.js';
 import { haulCap } from '../src/levels.js';
 import { stationBox, stationDoor, idleX, idleSpots } from '../src/after/place.js';
+import { jobSays } from '../src/after/roster.js';
+import { msg } from '../src/lang.js';
 
 const S = yard.S;
 const read = () => window.__afterRead();
@@ -108,8 +110,9 @@ group('the + walks a member off the podium to its station; the seat stops a seco
 
 group('the - walks one back to the podium on foot, and the rosters stand through a reload', async () => {
   up(3);
-  const pressed = [window.__afterPress('woodcutter', 1), window.__afterPress('gatherer', 1)];
-  runUntil(() => S.after.bodies.filter(b => (b.job === 'woodcutter' || b.job === 'gatherer') && b.on).length === 2, 300);
+  S.after.built.push('mill');
+  const pressed = [window.__afterPress('woodcutter', 1), window.__afterPress('sawyer', 1)];
+  runUntil(() => S.after.bodies.filter(b => (b.job === 'woodcutter' || b.job === 'sawyer') && b.on).length === 2, 300);
   // A save and a read back, mid-run: the counts, the bodies on them, where they stand.
   const before = { crew: { ...S.after.crew }, at: S.after.bodies.map(b => [b.id, b.job, Math.round(b.x)]) };
   const SETTLE = 0.1;
@@ -126,11 +129,11 @@ group('the - walks one back to the podium on foot, and the rosters stand through
   const r = roster('woodcutter');
   window.__actsOn(null);
   return [
-    ok(pressed.every(Boolean), 'a woodcutter and a gatherer put on under the forestry shack'),
+    ok(pressed.every(Boolean), 'a woodcutter and a sawyer put on'),
     ok(kept, 'a reload stands the rosters and every body back where they were', `${JSON.stringify(before.crew)} -> ${JSON.stringify(after.crew)}`),
     ok(less && off && off.job == null && Math.abs(off.x - x0) <= STRIDE, 'a press on the - takes it off where it stands', `${off && off.job} at ${off && Math.round(off.x)} from ${Math.round(x0)}`),
     ok(back.w && back.most <= STRIDE && back.t < 400, 'and it walks back to its spot at the podium, never a jump', `most ${back.most.toFixed(1)} px, ${back.t.toFixed(1)} s`),
-    ok(r.n === 0 && roster('gatherer').n === 1, 'the woodcutter\'s roster reads nobody, the gatherer\'s still one', `${r.n} ${roster('gatherer').n}`)
+    ok(r.n === 0 && roster('sawyer').n === 1, 'the woodcutter\'s roster reads nobody, the sawyer\'s still one', `${r.n} ${roster('sawyer').n}`)
   ];
 });
 
@@ -142,13 +145,13 @@ group('logs are carried the yard\'s way: as many as the yard\'s carry holds, a l
   S.haulCarryLevel = 4;
   const want = Math.floor(haulCap() / AFTER_CARRY_SLOTS.log);
   window.__afterGrant({ grovelogs: 20 });
-  const pressed = window.__afterPress('hauler', 1);
+  const pressed = window.__afterPress('sawyer', 1);
   let most = 0, stepped = true, last = 0;
   const total = () => S.after.stock.grovelogs + S.after.stock.logs + S.after.bodies.reduce((n, b) => n + (b.load === 'log' ? b.carry || 0 : 0), 0);
   const t0 = total();
-  for (let t = 0; t < 240 && S.after.stock.logs < want; t += 1 / 60) {
+  for (let t = 0; t < 240 && !(most && !last); t += 1 / 60) {
     run(1 / 60);
-    const w = S.after.bodies.find(b => b.job === 'hauler');
+    const w = S.after.bodies.find(b => b.job === 'sawyer');
     const n = w && w.load === 'log' ? w.carry : 0;
     if (Math.abs(n - last) > 1) stepped = false;
     last = n; most = Math.max(most, n);
@@ -157,27 +160,27 @@ group('logs are carried the yard\'s way: as many as the yard\'s carry holds, a l
   S.haulCarryLevel = 0;
   window.__actsOn(null);
   return [
-    ok(pressed && want > 1, 'a hauler put on, the yard\'s carry holding more than one log', `${want}`),
+    ok(pressed && want > 1, 'a sawyer put on, the yard\'s carry holding more than one log', `${want}`),
     ok(most === want, 'it takes as many logs as its load holds', `${most} of ${want}`),
     ok(stepped, 'picked up and set down a log at a time'),
-    ok(S.after.stock.logs >= want && kept, 'and sets them all on the mill\'s pile, none lost', `${S.after.stock.logs} at the mill`)
+    ok(S.after.stock.logs === want && kept, 'and fetches them to the mill\'s own pile, none lost', `${S.after.stock.logs} at the mill`)
   ];
 });
 
 group('a save from when posts were bought: its posts become what the rosters want, as far as its members go, the rest seats', async () => {
   up(0);
-  S.after.built.push('mill');
+  S.after.built.push('mill', 'chipper');
   S.after.camp = 0;
   // The old shape, written as that save wrote it: agitator bodies on posts
   // bought, more posts bought than members, no rosters.
   const members = idle().length;
   for (const w of idle()) w.job = 'agitator';
-  S.after.posts = { agitator: 30, woodcutter: 2, hauler: 3, sawyer: 8 };
+  S.after.posts = { agitator: 30, woodcutter: 2, feeder: 3, sawyer: 8 };
   delete S.after.crew;
   const SETTLE = 0.1;
   yard.persist(); window.__reload(); run(SETTLE);
   const crew = { ...S.after.crew }, on = Object.values(crew).reduce((a, b) => a + b, 0);
-  const seats = ['woodcutter', 'hauler', 'sawyer'].map(j => roster(j)?.cap);
+  const seats = ['woodcutter', 'feeder', 'sawyer'].map(j => roster(j)?.cap);
   run(5);
   const agitators = S.after.bodies.filter(b => b.job === 'agitator').length;
   window.__actsOn(null);
@@ -190,8 +193,8 @@ group('a save from when posts were bought: its posts become what the rosters wan
 });
 
 // Idle hands take signs and posters out themselves (the owner, 2026-10-21:
-// made, "but nobody is using them"): with nobody on the workshop's carrier
-// or the press's paster, a member with no job runs the round as an errand,
+// made, "but nobody is using them"): with nobody on the workshop or the
+// press, a member with no job runs the round as an errand,
 // keeping no job, and goes back to the podium once the pile is gone.
 group('idle members plant the signs and paste the posters nobody is on, then go back to the podium', async () => {
   up(4);
@@ -209,5 +212,39 @@ group('idle members plant the signs and paste the posters nobody is on, then go 
     ok(done, 'the signs are planted and the posters pasted', `${S.after.signs.length} signs, ${S.after.posters.length} posters, stock ${JSON.stringify(S.after.stock)}`),
     ok(errands.has('carrier') && errands.has('paster') && jobs === 0, 'by members on errands, nobody put on a job', `${[...errands]} ${jobs}`),
     ok(back && idle().length >= Math.min(4, idleSpots()), 'and they go back to the podium empty-handed', `${back} ${idle().length}`)
+  ];
+});
+
+// One job a station (DESIGN.md, "Act 3: one job a station"): a maker takes
+// its own goods out, so the chain runs with nobody idle to run errands.
+group('a lone joiner plants its own signs and a lone printer pastes its own posters', async () => {
+  up(2);
+  S.after.built.push('workshop', 'press');
+  S.after.bodies = idle().slice(0, 2); S.after.camp = 0;
+  window.__afterGrant({ timber: 40, paper: 20 });
+  const pressed = [window.__afterPress('joiner', 1), window.__afterPress('printer', 1)];
+  const out = runUntil(() => S.after.signs.length > 0 && S.after.posters.length > 0, 300);
+  const back = runUntil(() => S.after.bodies.some(b => b.job === 'joiner' && b.at === 'workshop'), 120);
+  window.__actsOn(null);
+  return [
+    ok(pressed.every(Boolean), 'a joiner and a printer put on, nobody else in the camp'),
+    ok(out, 'the joiner plants a sign and the printer pastes a poster', `${S.after.signs.length} signs, ${S.after.posters.length} posters`),
+    ok(back, 'and the joiner goes back to its bench')
+  ];
+});
+
+group('a roster says what its job does, or why it is standing still', async () => {
+  up(1);
+  S.after.built.push('mill');
+  S.after.stock.logs = 0; S.after.stock.grovelogs = 0;
+  const p = window.__afterRoster().find(r => r.job === 'sawyer');
+  const stalled = jobSays('sawyer');
+  window.__afterGrant({ grovelogs: 3 });
+  const working = jobSays('sawyer');
+  window.__actsOn(null);
+  return [
+    ok(stalled === msg('after-roster-tip', { job: msg('after-job-sawyer'), line: msg('after-stall-logs') }), 'with no logs anywhere it says it waits on logs', stalled),
+    ok(working === msg('after-roster-tip', { job: msg('after-job-sawyer'), line: msg('after-job-sawyer.says') }), 'with logs at the shack it says what it does', working),
+    ok(!!p, 'on the roster under the mill')
   ];
 });

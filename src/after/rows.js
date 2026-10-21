@@ -136,12 +136,9 @@ const upRow = key => {
 // --- the seats ---------------------------------------------------------------------------
 // A row a job: a seat more at its station, a bill a seat (AFTER_SEAT_BILLS),
 // the roster under the station drawing the seats and its + stopping at them.
-const JOB_NAMES = {
-  woodcutter: () => msg('after-job-woodcutter'),
-  gatherer: () => msg('after-job-gatherer'), hauler: () => msg('after-job-hauler'), sawyer: () => msg('after-job-sawyer'), feeder: () => msg('after-job-feeder'),
-  pulper: () => msg('after-job-pulper'), joiner: () => msg('after-job-joiner'),
-  carrier: () => msg('after-job-carrier'), printer: () => msg('after-job-printer'),
-  paster: () => msg('after-job-paster')
+export const JOB_NAMES = {
+  woodcutter: () => msg('after-job-woodcutter'), sawyer: () => msg('after-job-sawyer'), feeder: () => msg('after-job-feeder'),
+  pulper: () => msg('after-job-pulper'), joiner: () => msg('after-job-joiner'), printer: () => msg('after-job-printer')
 };
 const seatRow = job => ({
   key: seatKey(job), name: msg('after-row-seat', { job: JOB_NAMES[job]() }), card: AFTER_JOB_POST[job], seat: job, ...ACT_ROW,

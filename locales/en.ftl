@@ -3537,33 +3537,51 @@ after-row-seat = { $job } seat
 
 # act 3 job name (placeholder): a woodcutter, named on its seat row
 after-job-woodcutter = woodcutter
-
-# act 3 job name (placeholder): a gatherer, named on its seat row
-after-job-gatherer = gatherer
-
-# act 3 job name (placeholder): a hauler, named on its seat row
-after-job-hauler = hauler
+    .says = fells the grove's trees and carries their logs to the forestry shack
 
 # act 3 job name (placeholder): a sawyer, named on its seat row
 after-job-sawyer = sawyer
+    .says = fetches logs from the forestry shack and saws them into timber and sawdust
 
 # act 3 card row (placeholder): a post for a feeder at the chipper, held by a member from the camp
 after-job-feeder = feeder
+    .says = fetches logs from the forestry shack and chips them into sawdust
 
 # act 3 job name (placeholder): a pulper, named on its seat row
 after-job-pulper = pulper
+    .says = pulps sawdust into paper
 
 # act 3 job name (placeholder): a joiner, named on its seat row
 after-job-joiner = joiner
-
-# act 3 job name (placeholder): a carrier, named on its seat row
-after-job-carrier = carrier
+    .says = nails timber into signs and plants them in God's crowd
 
 # act 3 job name (placeholder): a printer, named on its seat row
 after-job-printer = printer
+    .says = prints posters on paper and pastes them on the fence
 
-# act 3 job name (placeholder): a paster, named on its seat row
-after-job-paster = paster
+# act 3 roster hover (placeholder): a job's name and what it does, or why it is standing still
+after-roster-tip = { $job }: { $line }
+
+# act 3 roster hover (placeholder): why a station's worker is standing still
+after-stall-trees = waiting on a tree to grow
+
+# act 3 roster hover (placeholder): why a station's worker is standing still
+after-stall-logs = waiting on logs
+
+# act 3 roster hover (placeholder): why a station's worker is standing still
+after-stall-heap = the sawdust heap is full: build the paper mill
+
+# act 3 roster hover (placeholder): why a station's worker is standing still
+after-stall-sawdust = waiting on sawdust
+
+# act 3 roster hover (placeholder): why a station's worker is standing still
+after-stall-timber = waiting on timber
+
+# act 3 roster hover (placeholder): why a station's worker is standing still
+after-stall-paper = waiting on paper
+
+# act 3 roster hover (placeholder): why a station's worker is standing still
+after-stall-fence = the fence is full
 
 # act 3 shack row (placeholder): build the saw mill
 after-build-mill = saw mill

@@ -27,7 +27,7 @@ const CHOOSE_SAYS = msg('hover-choose');
 import { markedPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { fadeIn, fadeOut } from './fade.js';
-import { rosterHit, overRoster } from './roster.js';
+import { rosterHit, overRoster, rosterSays } from './roster.js';
 import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
@@ -590,6 +590,12 @@ function askedAbout(x, y, cx, cy) {
   for (const p of markedPiles()) {
     if (!S.pileFull[p.key] || !overPileMark(p.key, x, y)) continue;
     showTip(fullSays(p.key), pileMarkAt(p.key));
+    return true;
+  }
+
+  const roster = rosterSays(x, y);
+  if (roster) {
+    showTip(roster.text, roster.at);
     return true;
   }
 
