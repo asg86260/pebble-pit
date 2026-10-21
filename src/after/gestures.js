@@ -45,7 +45,9 @@ import { P, AFTER_SIGN_TIMBER, AFTER_SIGN_S, GESTURE_CUE_USES, GESTURE_CUE_FADE_
          GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S, GESTURE_JOINER_WAIT_S,
          GESTURE_BAR_DRAG, GESTURE_BAR_RATE, GESTURE_BAR_RETURN, GESTURE_BAR_PRINT, GESTURE_BAR_RESET, GESTURE_BAR_EASE,
          GESTURE_FLING_MIN, GESTURE_FLING_MAX, GESTURE_FLING_LOADS, GESTURE_FLING_WINDOW_S, GESTURE_FLING_GRAV,
-         GESTURE_FLING_LIFT, GESTURE_LOAD_FADE_S, GESTURE_PAD_PULL, GESTURE_PAD_TURN } from '../config.js';
+         GESTURE_FLING_LIFT, GESTURE_LOAD_FADE_S, GESTURE_PAD_PULL, GESTURE_PAD_TURN,
+         HANDWORK_GROW_S, HANDWORK_HINT_S, HANDWORK_STRIP_S, HANDWORK_IDLE_SPEED, HANDWORK_DONE_S } from '../config.js';
+import { smoothstep } from '../motion.js';
 import { afterlifeOn } from '../acts.js';
 import { secs } from './util.js';
 import { built } from './levels.js';
@@ -80,7 +82,10 @@ export const lowestBubble = () => (BUBBLES.list() || []).reduce((a, b) => (!a ||
 // --- the hand's state, a station a record ----------------------------------------------
 // `uses` the motions done since the ghost hand last showed, `cueA` its ink,
 // `marks` the crit's (in the world).
-const fresh = () => ({ uses: 0, lastUse: null, cueA: 1, marks: [] });
+// `grow`, `hint` and `strip` the hand work's showing in the world, each
+// 0..1 linear (gestureView eases them): the part drawn bigger, the ghost of
+// its motion, the strip of the unit's progress.
+const fresh = () => ({ uses: 0, lastUse: null, cueA: 1, marks: [], grow: 0, hint: 0, strip: 0 });
 function used(g) { g.uses++; g.lastUse = T(); }
 function crit(g, x, y, n) { g.marks.push({ x, y, n, at: T() }); }
 
@@ -176,7 +181,10 @@ const DEFS = {
   mill: {
     init: () => ({ ang: 0, w: 0, grab: false, pa: 0, acc: 0, prog: 0 }),
     open: () => built('mill'),
-    grab(g, x, y) { const c = stationParts('mill').wheel; return Math.hypot(x - c.x, y - c.y) <= c.r + G_S * 2 ? true : null; },
+    grab(g, x, y) {
+      const p = stationParts('mill'), c = p.wheel, b = p.grown;
+      return Math.hypot(x - c.x, y - c.y) <= c.r + G_S * 2 || (g.grow >= 1 && Math.hypot(x - b.x, y - b.y) <= b.r + G_S) ? true : null;
+    },
     down(g, h, x, y) { const c = stationParts('mill').wheel; g.grab = true; g.pa = Math.atan2(y - c.y, x - c.x); return true; },
     move(g, x, y) {
       const c = stationParts('mill').wheel, na = Math.atan2(y - c.y, x - c.x), d = wrap(na - g.pa);
@@ -204,7 +212,7 @@ const DEFS = {
     open: () => built('chipper'),
     grab(g, x, y) {
       const p = stationParts('chipper');
-      if (inBox(x, y, p.arm, G_S)) return 'arm';
+      if (inBox(x, y, p.arm, G_S) || (g.grow >= 1 && inBox(x, y, p.grownArm, G_S))) return 'arm';
       if (g.log !== 'in' && S.after.stock.chiplogs > 0 && inBox(x, y, p.pile, G_S)) return 'log';
       return null;
     },
@@ -364,7 +372,7 @@ export const GESTURE_KEYS = Object.keys(DEFS);
 // held. An act is known by the seed it began with (`S.after.begun`), carried
 // in its save, so the session's motion is kept across the act's state being
 // read back (a reload of the page starts the session itself afresh).
-let G = null, seen = null, held = null, heldWhat = null, lastPress = null, pressAt = null;
+let G = null, seen = null, held = null, heldWhat = null, lastPress = null, pressAt = null, hovered = null;
 const actId = () => (S.after ? S.after.begun : null);
 // An act begun afresh in the same session (a new game) may share a seed with
 // the last, but its clock starts again: that stands everything still too.
@@ -373,7 +381,7 @@ function recs() {
   const back = S.after && S.after.t < lastT;
   lastT = S.after ? S.after.t : 0;
   if (seen !== actId() || back) {
-    seen = actId(); held = null; heldWhat = null; lastPress = null; pressAt = null;
+    seen = actId(); held = null; heldWhat = null; lastPress = null; pressAt = null; hovered = null;
     G = Object.fromEntries(GESTURE_KEYS.map(k => [k, { ...fresh(), ...DEFS[k].init() }]));
   }
   return G;
@@ -469,6 +477,21 @@ export function gestureUp(x, y) {
   if (d.up) d.up(g[held], x, y);
   held = null; heldWhat = null;
 }
+// The hand-worked stations shown in the world on a hover (DESIGN.md, "Act
+// 3's hand work and hand carrying", take B): the part grown, the ghost of its
+// motion, the strip of the unit.
+export const HANDWORK_KEYS = ['mill', 'chipper', 'papermill', 'press'];
+// The pointer over the place, no button needed (input.js, on every move of a
+// mouse; null when it leaves): which hand-worked station it is on. On a part
+// it is that part's; once on, the rest of its station keeps it, so the part
+// grown under the pointer does not let go of it by growing.
+export function gestureHover(x, y) {
+  if (!live() || x == null) { hovered = null; return; }
+  recs();
+  const p = partAt(x, y);
+  if (p && HANDWORK_KEYS.includes(p.key)) hovered = p.key;
+  else if (!(hovered && DEFS[hovered].open() && inBox(x, y, stationParts(hovered).box, G_S))) hovered = null;
+}
 // The station a press is holding now, or null.
 export const gestureHeld = () => (S.after && seen === actId() ? held : null);
 
@@ -488,7 +511,22 @@ export function stepGestures(c) {
     const want = r.uses < GESTURE_CUE_USES ? 1 : 0;
     r.cueA = clamp(r.cueA + clamp(want - r.cueA, -dt / GESTURE_CUE_FADE_S, dt / GESTURE_CUE_FADE_S), 0, 1);
     if (r.marks.length) r.marks = r.marks.filter(m => t - m.at < GESTURE_MARK_HOLD_S + GESTURE_MARK_FADE_S);
+    if (HANDWORK_KEYS.includes(key)) showing(key, r, d, dt, t);
   }
+}
+
+// The hand work's showing, a frame along: the part grown while the pointer is
+// on it or has it; the ghost while it is on it and the part stands still,
+// gone once it is worked and back when it stops; the strip while it is on it,
+// the part is going, or a unit has just been made.
+const ease = (v, want, s, dt) => clamp(v + clamp(want - v, -dt / s, dt / s), 0, 1);
+function showing(key, r, d, dt, t) {
+  const open = d.open(), on = open && (hovered === key || held === key);
+  const busy = held === key || d.speed(r) > HANDWORK_IDLE_SPEED;
+  const done = r.lastUse != null && t - r.lastUse < HANDWORK_DONE_S;
+  r.grow = ease(r.grow, on ? 1 : 0, HANDWORK_GROW_S, dt);
+  r.hint = ease(r.hint, open && hovered === key && !busy ? 1 : 0, HANDWORK_HINT_S, dt);
+  r.strip = ease(r.strip, on || (open && (busy || done) && r.grow > 0) ? 1 : 0, HANDWORK_STRIP_S, dt);
 }
 
 // --- the pad ---------------------------------------------------------------------------
@@ -565,7 +603,8 @@ export function gestureStops() {
 export function gestureView() {
   if (!live()) return null;
   const g = recs();
-  return GESTURE_KEYS.map(key => ({ key, open: DEFS[key].open(), held: held === key, ...g[key] }));
+  return GESTURE_KEYS.map(key => ({ key, open: DEFS[key].open(), held: held === key, ...g[key],
+                                    growA: smoothstep(g[key].grow), hintA: smoothstep(g[key].hint), stripA: smoothstep(g[key].strip) }));
 }
 // Where each station's parts stand, in the world (place.js).
 export const partsOf = (key, i = 0) => stationParts(key, i);

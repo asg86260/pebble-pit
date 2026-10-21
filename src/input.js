@@ -54,7 +54,7 @@ import { portalAt, handAt, throughPortal } from './portals.js';
 import { sayGoOn } from './actbeats.js';
 import { onGoOn } from './render/portals.js';
 import * as AFTER_PLACE from './after/index.js';
-import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, pressTaken } from './after/gestures.js';
+import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, gestureHover, pressTaken } from './after/gestures.js';
 import * as HELL_PLACE from './hell/index.js';
 import { onShaftArrow } from './render/shaftway.js';
 import { onPortal } from './render/portal.js';
@@ -311,6 +311,7 @@ canvas.addEventListener('pointermove', e => {
     if (S.crewSight != null && !(e.buttons & 2)) S.crewSight = null;
     hoverAt(S.mouse.x, S.mouse.y);
     potHover(S.mouse.x, S.mouse.y);
+    gestureHover(S.mouse.x, S.mouse.y);
     // The table's order settles which wins where two patches overlap.
     const want = boardAt(S.mouse.x, S.mouse.y);
     // Standing at a station outranks being on the way to the open board: a
@@ -398,7 +399,7 @@ addEventListener('blur', () => {
 });
 
 // The cursor leaving the canvas takes any label with it.
-canvas.addEventListener('pointerleave', () => showTipAt(null));
+canvas.addEventListener('pointerleave', () => { showTipAt(null); gestureHover(null); });
 
 
 // --- the hover registry ---------------------------------------------------------
@@ -648,6 +649,9 @@ const CURSORS = [
   // the acts' portals and their hands, asked as the press is (heaven's gates
   // only once they are the player's to take)
   [(x, y) => !gliding() && !!(portalAt(x, y) || handAt(x, y)), 'pointer'],
+  // up in act 3, a part the hand works: open on it, closed while it is held
+  [() => gestureHeld(), 'grabbing'],
+  [(x, y) => S.view === 'after' && gestureUnder(x, y), 'grab'],
   [(x, y) => atStation(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],

@@ -15,8 +15,11 @@ import { group, ok, run, yard, P } from './helpers.mjs';
 import { AFTER_PODIUM_REBEL, AFTER_TIP_LOAD, AFTER_DIG_CLICKS, TREE_CHOPS, GESTURE_BUBBLE_CRIT, GESTURE_CUE_USES,
          GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_STRAIN_S, GESTURE_ARM_POSES, GESTURE_ARM_SPRING_S,
          GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS, AFTER_CHIP_SAWDUST } from '../src/config.js';
-import { gestureDown, gestureMove, gestureUp, gestureView, partsOf, useBubbles, groveIcons } from '../src/after/gestures.js';
-import { stationBox } from '../src/after/place.js';
+import { gestureDown, gestureMove, gestureUp, gestureView, gestureHover, partsOf, useBubbles, groveIcons } from '../src/after/gestures.js';
+import { stationBox, stationX0, afterFloor } from '../src/after/place.js';
+import { DRAW, drawGrown } from '../src/render/after/stations.js';
+import { frame as artFrame } from '../src/render/after/kit.js';
+import { AFTER_ART_SCALE, HANDWORK_GROW_S, HANDWORK_HINT_S } from '../src/config.js';
 import { godMid, faceY } from '../src/after/sky.js';
 import { FRAME, frame, click, asks, timeTo, sawOn, saw, lift, spin, feedLog, pullArm, nailSign, pullBar } from './after-hands.mjs';
 
@@ -315,5 +318,66 @@ group('the pad: A on the workshop taps nails into a sign, the stick turned round
   return [
     ok(signs >= 1, 'A mashed on the workshop drives the nails, and a sign is joined', `${signs}`),
     ok(timber > 0, 'the stick turned round spins the flywheel and cuts', `${timber}`)
+  ];
+}, NO_RELOAD);
+
+// Hovered, a hand-worked part is drawn a scale up (render/after/stations.js,
+// `drawGrown`), and grown it must not lay itself, or its paper rim, over any
+// other part of its station, in any pose it is drawn in (DESIGN.md, "Act 3's
+// hand work and hand carrying"). Every world pixel the station fills but its
+// part, against every one the grown part and its rim fill. Left out by name
+// (`clearance`): the wheel's own rod to its pin, the pulp the paddle stands
+// in, and the mould's cord the paddle crosses at its small size too.
+group('the hovered part drawn a scale up clears every other part of its station, in every pose', async () => {
+  up(['mill', 'chipper', 'papermill', 'press']);
+  const POSES = {
+    mill: Array.from({ length: 16 }, (_, i) => ({ ang: i * Math.PI / 8, grab: true })),
+    chipper: [0, 0.5, 1].map(k => ({ k, arm: true, log: null })),
+    papermill: Array.from({ length: 12 }, (_, i) => ({ ang: i * Math.PI / 6, w: 1, grab: true })),
+    press: [0.02, 0.5, 1].map(k => ({ k }))
+  };
+  const fill = (set, x, y, w, h) => {
+    for (let j = Math.round(y); j < Math.round(y + h); j++) for (let i = Math.round(x); i < Math.round(x + w); i++) set.add(i * 100000 + j);
+  };
+  const hits = [];
+  for (const [key, poses] of Object.entries(POSES)) for (const pose of poses) {
+    const x0 = stationX0(key), fl = afterFloor(), others = new Set(), grown = new Set();
+    DRAW[key](artFrame(x0, fl, 0, (x, y, w, h) => fill(others, x0 + x, fl + y, w, h), AFTER_ART_SCALE), false, 0, { ...pose, growA: 1 }, false, { clearance: true });
+    drawGrown(key, (x, y, w, h) => fill(grown, x, y, w, h));
+    let n = 0;
+    for (const p of grown) if (others.has(p)) n++;
+    if (n || !grown.size) hits.push(`${key} ${JSON.stringify(pose)}: ${n} px over, ${grown.size} px grown`);
+  }
+  window.__actsOn(null);
+  return [ok(hits.length === 0, 'no grown part, rim and all, lies over its station\'s other parts', hits.slice(0, 6).join('; ') || 'clear')];
+}, NO_RELOAD);
+
+// The hover's showing, the way a mouse makes it (input.js calls
+// `gestureHover` on every move): the part grown and its ghost shown while
+// the pointer is on it and it stands still; the ghost gone once it is
+// worked, the strip filling; back once it stops with the unit unfinished.
+group('hovered, the flywheel grows and shows its motion; worked, the ghost goes and the strip fills; stopped, the ghost comes back', async () => {
+  up(['mill'], { logs: 0 });
+  const r = () => rec('mill'), w = partsOf('mill').wheel, at = a => [w.x + Math.cos(a) * w.r, w.y + Math.sin(a) * w.r];
+  const before = { grow: r().growA, hint: r().hintA };
+  gestureHover(...at(0));
+  run(Math.max(HANDWORK_GROW_S, HANDWORK_HINT_S) + 0.1);
+  const shown = { grow: r().growA, hint: r().hintA, strip: r().stripA };
+  gestureDown(...at(0));
+  for (let f = 1; f <= 120; f++) { gestureMove(...at(f / 60 * 2 * 2 * Math.PI)); gestureHover(...at(f / 60 * 2 * 2 * Math.PI)); frame(); }
+  const working = { hint: r().hintA, strip: r().stripA, prog: r().prog };
+  gestureUp(...at(0));
+  run(8);
+  const after = { hint: r().hintA, prog: r().prog };
+  gestureHover(null);
+  run(1);
+  const gone = { grow: r().growA, hint: r().hintA, strip: r().stripA };
+  window.__actsOn(null);
+  return [
+    ok(before.grow === 0 && before.hint === 0, 'unhovered, nothing shows', JSON.stringify(before)),
+    ok(shown.grow === 1 && shown.hint === 1 && shown.strip === 1, 'hovered, the part grows, its ghost and the strip show', JSON.stringify(shown)),
+    ok(working.hint === 0 && working.prog > 0 && working.strip === 1, 'spun, the ghost is gone and the unit fills', JSON.stringify(working)),
+    ok(after.hint === 1 && after.prog > 0, 'let go and stood still with the log uncut, the ghost is back', JSON.stringify(after)),
+    ok(gone.grow === 0 && gone.hint === 0 && gone.strip === 0, 'the pointer gone, it all fades', JSON.stringify(gone))
   ];
 }, NO_RELOAD);
