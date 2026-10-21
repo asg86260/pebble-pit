@@ -376,7 +376,12 @@ export const TESTS = [
     // The shout: a click on the pair on the pedestal sheds rebel.
     const pair = pairBox();
     await lookAt(pair.x + pair.w / 2);
-    const glass = pairOnGlass();
+    // The pedestal's ghost hand (render/aftercues.js) points at the foot of the
+    // lowest bubble, which sweeps over the right one now and then, so the pair
+    // are read on the first frame the hand is not on them. A pair that is not
+    // drawn fails on every frame; the hand is gone in a few tenths of a second.
+    let glass = pairOnGlass();
+    for (let i = 0; i < 60 && !glass.every(g => g.ok); i++) { run(0.05); await raf(); await raf(); glass = pairOnGlass(); }
     out.push(ok(glass.every(g => g.ok), "afterlife: the pair are drawn on the pedestal, the act's ink round its paper where they stand",
                 JSON.stringify(glass)));
     const r0 = S.after.rebel, shouts0 = S.after.shout;
