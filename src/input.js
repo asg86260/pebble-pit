@@ -435,6 +435,10 @@ function buildingAt(x, y) {
   // Every standing place by its own row's name (`STATIONS`).
   for (const r of STATIONS) {
     if (!r.name || !r.stand || !here(r) || !r.open()) continue;
+    // A station that sells from a sign is worked by hand where it stands, and
+    // a label over it there is in the way of the work (the owner,
+    // 2026-10-21); its board says its name.
+    if (r.sign) continue;
     // a row that says its hit is named over what is drawn there
     if (r.hit) { if (nearStation(r.key, x, y)) return r.name; continue; }
     const rect = standRect(r.key);
