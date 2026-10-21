@@ -5,8 +5,6 @@
 //
 // - the sky: the liquid sky's layers standing on the horizon, far to near,
 //   each sliding at its own parallax;
-// - the far bank: ground billows from the horizon down behind the main plane,
-//   on God's slow layer (render/after/ground.js puts it);
 // - the edge: small billows lapping the path's near edge from under it, on
 //   the world itself, so the path stays a clear walkable surface framed by
 //   cloud (render/after/floor.js puts it);
@@ -33,7 +31,7 @@ const page = darkPage ? 'dark' : 'light';
 // The path's surface: the paper by day, by night the cloud palette's role
 // CLOUDS_ACT3.path names (render/after/floor.js draws the path in it too).
 export const pathTone = () => (darkPage ? CLOUDS_PALETTE.dark[A.path.dark] : CLOUDS_PALETTE.light.sky);
-const GROUNDS = ['far', 'edge', 'fore'];
+const GROUNDS = ['edge', 'fore'];
 
 // A ground layer's crest: the row the tallest of its back row's billows
 // reach (all but a share A.crest of them stop under it), which is what a
@@ -71,7 +69,6 @@ const layerOf = name => (name.startsWith('sky') ? layers().sky[+name.slice(3)] :
 // body is carried solid (a world y, or none).
 function placeOf(name, l, T, cw) {
   const hz = onPixel(horizonY()), floor = onPixel(afterFloor()), bot = floor + GROUND_PATH.depth * P;
-  if (name === 'far') return { rate: A.far.rate, y: hz + (A.far.down - l.crest) * cw, drift: 0, solid: bot };
   if (name === 'edge') return { rate: A.edge.rate, y: bot - (A.edge.lap + l.crest) * cw, drift: 0, solid: S.camY + S.viewH };
   if (name === 'fore') return { rate: A.fore.rate, y: bot + (A.fore.down - l.crest) * cw, drift: 0, solid: S.camY + S.viewH };
   // a sky layer: its horizon row on the horizon (its clouds stand at their

@@ -762,7 +762,7 @@ function bank(rnd, P, W, sky, puffs) {
 // puff on a current of its own, each row filled solid beneath.
 // `R` is its nearest row's billow size, `rows` how many rows and `depths`
 // each row's depth for its tones (CLOUDS_DEPTH_BANDS), where a place wants a
-// ground of its own measure (act 3's far bank, its foreground).
+// ground of its own measure (act 3's lapped edge, its foreground).
 export function groundLayer({ seed = 1, W, R = CLOUDS_GROUND_FLOW.R, rows = CLOUDS_KINDS.ground.rows, depths = CLOUDS_GROUND_DEPTHS }) {
   const K = { ...CLOUDS_KINDS.ground, rows }, G = { ...CLOUDS_GROUND_FLOW, R }, rnd = gen(seed * 7919 + 977);
   const tiers = Array.from({ length: K.rows }, () => []), fills = [];

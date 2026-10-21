@@ -31,3 +31,16 @@ export const AFTER_LINE_LONG = 8;
 export const AFTER_BUBBLE_GAP = [0.45, 1.6];
 export const AFTER_BUBBLE_MID_SHARE = 0.35;
 export const AFTER_BUBBLE_MID = 1.5;
+
+// --- act 3 drawing fixes (2026-10-20, the fix list's #13 and #14) ---
+// The frame saw's rip teeth (render/after/stations.js, `millBlade`): a
+// tooth's width out of the blade, in world grid cells (P), on each grid row
+// down the blade, the pattern repeating. Two grid cells is one of the
+// drawing's own cells, the most a tooth may stand out of a blade two of
+// them wide; four rows a tooth is two of its cells, so a stroke of one cell
+// shows in the teeth.
+export const AFTER_SAW_TEETH = [0, 1, 1, 2];
+// The paper mill's paddle: one turn round the vat this many seconds while
+// the pulper stirs, its shaft between these columns of the drawing (cells).
+export const AFTER_STIR_TURN_S = 1.2;
+export const AFTER_STIR_SPAN = [15, 21];
