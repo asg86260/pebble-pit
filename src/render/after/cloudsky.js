@@ -26,6 +26,7 @@ import { afterFloor, afterOpenX, afterX0, afterX1 } from '../../after/place.js';
 import { skyLayer, groundLayer, layerLook, layerParams, stillSheet, drawBand } from '../clouds.js';
 import { cellOnPage, layerSpan, workClouds, putCells } from '../cloudpage.js';
 import { now } from './kit.js';
+import { restY } from '../../shot.js';
 
 const page = darkPage ? 'dark' : 'light';
 // The path's surface: the paper by day, by night the cloud palette's role
@@ -52,7 +53,7 @@ function layers() {
   if (L) return L;
   // a layer's round: the act's width as the layer slides past it, and a pad
   const round = rate => Math.ceil((afterX1() - afterX0()) * rate / P) + A.pad;
-  L = { sky: Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: A.seed, W: round(layerParams(i).parallax * A.sky.rate), sky: A.sky.rows })) };
+  L = { sky: Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: A.seed, W: round(layerParams(i).parallax * A.sky.rate), sky: A.sky.rows, lane: A.sky.lanes[i] })) };
   for (const g of GROUNDS) {
     const k = A[g];
     L[g] = groundLayer({ seed: A.seed + k.R, W: round(k.rate), R: k.R, rows: k.rows, depths: k.depths });
@@ -71,9 +72,13 @@ function placeOf(name, l, T, cw) {
   const hz = onPixel(horizonY()), floor = onPixel(afterFloor()), bot = floor + GROUND_PATH.depth * P;
   if (name === 'edge') return { rate: A.edge.rate, y: bot - (A.edge.lap + l.crest) * cw, drift: 0, solid: S.camY + S.viewH };
   if (name === 'fore') return { rate: A.fore.rate, y: bot + (A.fore.down - l.crest) * cw, drift: 0, solid: S.camY + S.viewH };
-  // a sky layer: its horizon row on the horizon (its clouds stand at their
-  // heights over it, render/clouds.js), blowing on its wind
-  return { rate: l.P.parallax * A.sky.rate, y: hz - l.baseRow * cw, drift: l.P.wind * T, solid: null };
+  // a sky layer, blowing on its wind: the bank's horizon row on the horizon
+  // (its lobes stand over it, render/clouds.js); a laned layer's top row at
+  // the top of the act's resting window, so its clouds keep to the top of
+  // the sky (CLOUDS_ACT3.sky) and still slide with the world as the camera
+  // lifts off its rest
+  const ref = A.sky.lanes[l.i] ? onPixel(restY()) : hz;
+  return { rate: l.P.parallax * A.sky.rate, y: ref - l.baseRow * cw, drift: l.P.wind * T, solid: null };
 }
 
 // The frame's picture: every window worked once, at the backdrop.
@@ -109,8 +114,11 @@ function stills() {
 function putStill(name, sp) {
   const st = stills(), sh = st[name];
   if (!sh) return;
-  // the sky's bands stand on the horizon, the ground's where their layers do
-  const y = name.startsWith('sky') ? onPixel(horizonY()) - sh.h * sp.cw * (name === 'sky0' ? 1.6 : 1) : sp.y;
+  // the bank stands on the horizon, the sky's band in its layer's lane at the
+  // top of the sky, the ground's where their layers do
+  const lane = A.sky.lanes[+name.slice(3)];
+  const y = name === 'sky0' ? onPixel(horizonY()) - sh.h * sp.cw * 1.6
+    : name.startsWith('sky') ? onPixel(restY()) + lane[1] * sp.cw - sh.h * sp.cw : sp.y;
   const k = S.zoom * S.dpr, was = ctx.getTransform();
   // drawBand lays its copies from x 0 across a width: from the window's left edge
   ctx.translate(S.camX, 0);
