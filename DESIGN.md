@@ -23068,6 +23068,13 @@ carry there all stand.
   scenes (test/scenes-stand-acts.test.mjs).
 - **Builders** come from idle workers first, as now; a bought recruit is
   idle until assigned.
+- **Idle hands run errands** (the owner, 2026-10-21: signs and posters made
+  "but nobody is using them"). With the eight free members all on other
+  jobs, nobody carried a sign, so nobody was won and nobody could be hired:
+  a dead end. A member with no job now runs the carrier's or the paster's
+  round as an errand while signs or posters wait, keeping no job, and goes
+  back to agitating once the pile is gone. Put on a job, an empty-handed
+  one goes; one with its hands full finishes first.
 - **Saves.** A slot already walked out stays a worker; no migration. A save
   holding a soul at a full rim that never walked (none can today) reads as
   won and waiting.

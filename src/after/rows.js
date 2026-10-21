@@ -179,8 +179,7 @@ const buildRow = st => ({
 // A worker bought out of the souls won (union.js, `hire`), endless as the
 // yard's house is and priced the same way; it walks out to the podium and
 // waits there, agitating, for the roster's plus. Its line counts the won
-// waiting and the idle, the two numbers a hire is a choice between, and
-// still says them while nobody won leaves it dead.
+// waiting and the idle, the two numbers a hire is a choice between.
 const RECRUIT = 'after-recruit';
 const recruits = () => (S.after && S.after.ups[RECRUIT]) || 0;
 const recruitLine = () => msg('after-recruit-ready', { ready: ready(), idle: spareMembers() });
@@ -189,7 +188,8 @@ const recruitRow = {
   bill: () => [['rebel', Math.round(AFTER_RECRUIT_COST0 * Math.pow(AFTER_RECRUIT_RATE, recruits()))]],
   show: () => !!S.after,
   dead: () => ready() < 1,
-  waits: () => (ready() < 1 ? recruitLine() : null),
+  // Greyed for want of a soul, not of rebel: it says so, and how one is won.
+  waits: () => (ready() < 1 ? msg('after-recruit-none') : null),
   get blurb() { return S.after ? recruitLine() : ''; },
   buy: () => { if (hire()) { S.after.ups[RECRUIT] = recruits() + 1; S.after.upAt[RECRUIT] = S.after.t; } }
 };

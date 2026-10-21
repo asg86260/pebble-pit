@@ -139,11 +139,12 @@ export const AFTER_COUNT_PAD = 2;
 // AFTER_STATION_GAP art cells of open floor between every two neighbors'
 // grounds (the owner, 2026-10-20: "a bit closer together", then "too far
 // apart ... and inconsistently placed": six, the grove's end to the
-// forestry shack the same, each ground running from its first drawn column
-// to its last, after/art.js). Each is the
+// forestry shack the same; ten once each stood a shop sign at its end,
+// 2026-10-21, "they run together a bit"; each ground running from its first
+// drawn column to its last, after/art.js). Each is the
 // left edge of its ground in cells off the place's left (`at`); its piles
 // and its drawing are laid off that.
-export const AFTER_STATION_GAP = 6;
+export const AFTER_STATION_GAP = 10;
 const CAMP = campLayout(GROVE_END, AFTER_STATION_GAP, AFTER_ART_SCALE);
 // The level's three zones (DESIGN.md, "The level, the two crowds and the
 // flags"): the workshops -- the grove and every station but the pedestal --
