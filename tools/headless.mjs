@@ -74,4 +74,9 @@ if (shot) {
 if (tab.logs.length) console.log(['--- console ---', ...tab.logs].join(String.fromCharCode(10)));
 await tab.close();
 own?.kill();
-process.exit(0);
+// A suite's answer fails the run when a check failed or the page threw, so a
+// shard in CI goes red; a plain expression, or a shot, only fails if it threw.
+const v = out.result?.result?.value;
+const red = out.result?.exceptionDetails || (v && typeof v === 'object' && 'total' in v
+  && (v.passed < v.total || v.errors?.length));
+process.exit(red ? 1 : 0);
