@@ -84,7 +84,7 @@ group('the walls and the cage play from hell\'s barriers, each once and in order
 // move a frame may make past a step, and only while it cannot be seen.
 const { pairBodies, threshold, stairFoot, campX, passAlpha } = await import('../src/ghosts.js');
 const { gatesOpen, portalEnd } = await import('../src/portals.js');
-const { afterFloor } = await import('../src/after/place.js');
+const { floorAt } = await import('../src/after/place.js');
 const { P, WORKER, GHOST_GAP } = await import('../src/config.js');
 // What a walk did, frame by frame: the most either body moved in one, the
 // farthest the two stood apart, whether each stood at the gates' threshold and
@@ -142,13 +142,14 @@ group('heaven\'s road up: the souls up the cloud stair at the fall and through t
 group('heaven\'s road down: the ghosts down through the gates and the cloud stair to the ruin, walked', async () => {
   window.__actsOn(true);
   window.__crew(2, 2);
-  // from the camp along the cloud floor to the gates, as the haunt sends them
+  // from the camp along the cloud floor to the gates, as the haunt sends them;
+  // the camp stands on its shelves of cloud now, so on the ground there
   window.__actsAt('road');
   S.beatsDone.push('haunt');
-  Object.assign(S.acts.pair, { x: campX(), y: afterFloor() - WORKER, mode: 'ghost', at: null, top: 0, route: null, then: null, face: Math.sign(threshold().x - campX()) || 1 });
+  Object.assign(S.acts.pair, { x: campX(), y: floorAt(campX()) - WORKER, mode: 'ghost', at: null, top: 0, route: null, then: null, face: Math.sign(threshold().x - campX()) || 1 });
   window.__sendPair('down');
   const down = walkWatch();
-  for (let i = 0; i < 60 * 150 && S.acts.pair.at !== 'down'; i++) { run(1 / 60); down.see(); }
+  for (let i = 0; i < 60 * 240 && S.acts.pair.at !== 'down'; i++) { run(1 / 60); down.see(); }
   const p = S.acts.pair;
   const came = { at: p.at, place: placeAt(p.y), ...down.w };
   window.__actsOn(null);
