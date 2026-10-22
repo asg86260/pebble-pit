@@ -6,7 +6,11 @@
 #   cloud    the cloud worker's own checks (cloud/test)
 #   browser  the browser tier (src/selftest), an eighth of the groups a job,
 #            each job serving the game on its own vite and driving it with
-#            playwright's headless shell (tools/cdp.mjs finds it)
+#            playwright's headless shell (tools/cdp.mjs finds it), at three
+#            windows: the tools' own 800x600, a 1080p desk and a phone's
+#            390x844. Half the checks red on main in October were red at one
+#            size only (a full bench taller than one window and not another,
+#            a tick off its pixels at one zoom), so one size is not enough.
 #
 # A red job names the failing checks in its log; a flaky one gets one re-run
 # of that job, never of the whole run.
@@ -55,12 +59,16 @@ jobs:
       - run: node --test --test-concurrency=4 cloud/test/*.test.mjs
 
   browser:
+    name: browser ${{ matrix.window }} ${{ matrix.shard }}/8
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
+        window: ['800,600', '1920,1080', '390,844']
         shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    env:
+      WINDOW: ${{ matrix.window }}
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
