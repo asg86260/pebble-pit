@@ -8,7 +8,7 @@
 
 import { S } from '../state.js';
 import { newRun, settle, sleep, raf, ok, panel, point, canvas } from './kit.js';
-import { AFTER_CARDS } from '../config.js';
+import { AFTER_CARDS, P } from '../config.js';
 import { shopOf } from '../pages.js';
 import { support } from '../after/union.js';
 import { msg } from '../lang.js';
@@ -210,6 +210,40 @@ export const TESTS = [
     return [
       ok(stalled.includes(msg('after-stall-logs')), 'with no logs anywhere the sawyer\'s roster says it waits on logs', stalled),
       ok(working.includes(msg('after-job-sawyer.says')), 'with logs at the shack it says what the sawyer does', working)
+    ];
+  }],
+  ['act 3: the right button held slows the member under the cursor, and the left takes it up', async () => {
+    newRun();
+    await settle();
+    await upThere();
+    window.__fast(20);
+    S.after.built.push('mill');
+    window.__fast(1 / 60);
+    const pressed = window.__afterPress('sawyer', 1);
+    window.__fast(1 / 60);
+    const w = S.after.bodies.find(b => b.job === 'sawyer');
+    if (!w) { window.__actsOn(null); return [ok(false, 'a member put on the saw mill', `${pressed} ${S.after.bodies.length} bodies`)]; }
+    const r = canvas().getBoundingClientRect();
+    const at = () => { const s = toScreen(w.x + P / 2, w.y - P); return [r.left + s.x, r.top + s.y]; };
+    const pace = async held => {
+      const x0 = w.x;
+      for (let k = 0; k < 30; k++) { window.__look(w.x - S.viewW / 2); if (held) point('pointermove', ...at(), 2, 2); window.__fast(1 / 60); await raf(); }
+      return Math.abs(w.x - x0);
+    };
+    const free = await pace(false);
+    point('pointerdown', ...at(), 2, 2);
+    const sight = S.crewSight != null;
+    const slowed = await pace(true);
+    point('pointerdown', ...at(), 3, 0);
+    const taken = !!w.lifted;
+    point('pointerup', ...at(), 2, 0);
+    point('pointerup', ...at(), 0, 2);
+    await settle(0.5);
+    window.__actsOn(null);
+    return [
+      ok(sight, 'the right button looks at the crew up here too'),
+      ok(free > 0 && slowed < free * 0.7, 'the member under the cursor walks slow', `${slowed.toFixed(1)} px held, ${free.toFixed(1)} px free`),
+      ok(taken, 'and the left button takes it up')
     ];
   }]
 ];

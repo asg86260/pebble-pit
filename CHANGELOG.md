@@ -216,6 +216,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A big casino win with the tray full no longer drops on a hauler down the torn hole in one lump; the pay streams out of the hatch and is counted as each grain lands (test/hauler-in-hole.test.mjs).
 - In heaven, members holding posters when the fence is full put them back at the press and come free for work again (test/after-full-fence.test.mjs).
 - In heaven, an idle member's first sign, poster or log picked up no longer counts as two (test/after-gather.test.mjs).
+- In heaven, holding the right button now veils the camp and rings each member, and the one under the cursor slows so it can be picked up (src/selftest/afterboards.js).
 
 ## v0.6.1 — 2026-10-19
 

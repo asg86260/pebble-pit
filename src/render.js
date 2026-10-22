@@ -24,7 +24,7 @@ import { drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawBuried, drawIntro, drawKitStands,
-         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld, drawSightVeil, drawDeepSight } from './render/crew.js';
+         drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld, drawSightVeil, drawDeepSight, drawPlaceSight } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
 import { drawPadMark } from './render/padmark.js';
 import { clearPage, clipToHalf, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
@@ -224,6 +224,7 @@ const LAYERS = [
   { name: 'after grove', in: 'after', draw: drawAfterGrove },
   { name: 'after camp', in: 'after', draw: drawAfterCamp },
   { name: 'after crowd', in: 'after', draw: drawAfterCrowd },
+  { name: 'after sight', in: 'after', draw: drawPlaceSight },   // the right button held: the camp behind its members veiled, each ringed
   { name: 'after members', in: 'after', draw: drawAfterMembers },
   { name: 'after roster', in: 'after', draw: drawAfterRoster },   // who is on each job, under its station, on the yard's roster
   { name: 'after coins', in: 'after', draw: drawAfterCoins },  // the yard's coins out of the thin patch to the station bought (render/aftercoins.js)

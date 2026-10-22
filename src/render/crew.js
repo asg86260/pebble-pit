@@ -6,6 +6,7 @@ import { finalePose } from '../finale.js';
 import { drawHopMarks, drawHeldPiece } from './finale.js';
 import { atPot, tonicColor } from '../apothecary.js';
 import { now } from '../clock.js';
+import { actPlace } from '../acts.js';
 import { bodyInk } from './recede.js';
 import { MUCK_TONE, P, SHARD_CELL, WORKER, BODY_RIM, BURIED_SUNK_C, BURIED_DIRT_TONE, LEAN_HOLD, LAND_HOP_MS, LAND_HOP_H, HOP_POSES, LIFT_SEAT, CART_W, CART_H, LIFT_W, LIFT_FORK, LIFT_MAST, LIFT_ANTENNA, SIGHT_VEIL, SIGHT_IN_MS, SIGHT_STEPS, SIGHT_RING, SIGHT_GAP, DEEP_SURFACE } from '../config.js';
 import { atHome } from '../crew.js';
@@ -630,14 +631,15 @@ function underSurface(w) {
 // Each body ringed while the right button looks at the crew, so it stands out
 // of the veil behind it (`drawSightVeil`): a SIGHT_RING line a SIGHT_GAP clear
 // of its own edge.
-function ring(w) {
+const ring = w => ringBox({ x: w.x, y: w.y, w: WORKER, h: WORKER });
+function ringBox(b) {
   ctx.fillStyle = '#000';
-  const x = Math.round(w.x) - SIGHT_GAP - SIGHT_RING, y = Math.round(w.y) - SIGHT_GAP - SIGHT_RING;
-  const s = WORKER + (SIGHT_GAP + SIGHT_RING) * 2;
-  ctx.fillRect(x, y, s, SIGHT_RING);
-  ctx.fillRect(x, y + s - SIGHT_RING, s, SIGHT_RING);
-  ctx.fillRect(x, y, SIGHT_RING, s);
-  ctx.fillRect(x + s - SIGHT_RING, y, SIGHT_RING, s);
+  const x = Math.round(b.x) - SIGHT_GAP - SIGHT_RING, y = Math.round(b.y) - SIGHT_GAP - SIGHT_RING;
+  const sw = b.w + (SIGHT_GAP + SIGHT_RING) * 2, sh = b.h + (SIGHT_GAP + SIGHT_RING) * 2;
+  ctx.fillRect(x, y, sw, SIGHT_RING);
+  ctx.fillRect(x, y + sh - SIGHT_RING, sw, SIGHT_RING);
+  ctx.fillRect(x, y, SIGHT_RING, sh);
+  ctx.fillRect(x + sw - SIGHT_RING, y, SIGHT_RING, sh);
 }
 
 // Holding the right button: what is behind the crew's plane veiled pale, in
@@ -665,6 +667,17 @@ export function drawDeepSight() {
   drawSightVeil();
   const cut = deepTop() + DEEP_SURFACE + P;
   for (const w of S.workers) if (!w.lifted && inTheDeep(w) && w.y >= cut) ring(w);
+}
+
+// The same look up in an act's place, whose bodies its own layers draw: the
+// veil over everything behind them and a ring round each the hand may take,
+// by the box the hand takes it by (placebodies.js, `bodyAt`).
+export function drawPlaceSight() {
+  if (S.crewSight == null) return;
+  const crew = actPlace(S.view)?.crew;
+  if (!crew) return;
+  drawSightVeil();
+  for (const w of crew.list() || []) if (!w.lifted && !w.falling && crew.pickable(w)) ringBox(crew.box(w));
 }
 
 export function drawWorkers() {
