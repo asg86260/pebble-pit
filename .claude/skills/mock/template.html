@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TITLE Mock</title>
+<style>
+:root{--bg:#fff;--ink:#000}
+body{margin:0;padding:16px;background:var(--bg);color:var(--ink);font:13px ui-monospace,Menlo,monospace}
+h1{font-size:15px;margin:0 0 4px}p{margin:0 0 12px;max-width:860px;line-height:1.45}
+.row{display:flex;flex-direction:column;gap:16px}
+figure{margin:0;border:2px solid #000;padding:8px;max-width:100%;overflow-x:auto}
+figcaption{margin-top:6px;max-width:860px;line-height:1.4}
+canvas{display:block;max-width:100%;image-rendering:pixelated}
+</style></head><body>
+<!-- The skill (.claude/skills/mock/SKILL.md) says what goes where. Fill in the
+     heading, the plain-shapes note, and OPTS; leave the scaffolding alone. -->
+<h1>HEADING: what is being decided</h1>
+<p>Plain shapes, not the game: SAY WHAT EACH SHAPE STANDS FOR. It can't show SAY WHAT IT CANNOT SHOW (the real sprites, the night palette, touch...).</p>
+<div class="row" id="row"></div>
+<script>
+// The game's grid: art is drawn on P-pixel cells (CLAUDE.md, "Art is drawn on
+// the P = 6 cell grid"). Sized in cells so a mock reads at the game's scale.
+const P = 6, COLS = 160, ROWS = 40, W = COLS * P, H = ROWS * P;
+// The light page's tones. A cloud or a heap reads through its tones, not its
+// outline: an outline alone on white reads as noise.
+const K = '#000', MID = '#8c8c8c', SHADE = '#bdbdbd', PALE = '#d9d9d9', PAPER = '#fff';
+// A stable pseudo-random in [0, 1): the same layout every load.
+const hash = (a, b = 0) => { let h = (a * 374761393 + b * 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+// A cell, or a run of them, at cell coordinates.
+const cell = (x, c, i, j, w = 1, h = 1) => { x.fillStyle = c; x.fillRect(i * P, j * P, w * P, h * P); };
+// The game's pointer, for showing where a player hovers or clicks.
+function cursor(x, px, py) {
+  x.fillStyle = K; x.beginPath(); x.moveTo(px, py); x.lineTo(px, py + 16); x.lineTo(px + 4, py + 12); x.lineTo(px + 10, py + 12); x.closePath(); x.fill();
+  x.strokeStyle = PAPER; x.lineWidth = 1; x.stroke();
+}
+// A loop's phase, 0..1, over `secs`: motion in a mock is a loop.
+const phase = (t, secs) => (t % secs) / secs;
+
+// The options, side by side: [letter, name, draw(ctx, t seconds), caption].
+// A caption says what the option is AND what it costs (a sim change, what it
+// hides, what it moves).
+const OPTS = [
+  ['A', 'NAME', (x, t) => {
+    cell(x, K, 10, 20, 12, 8);
+  }, 'WHAT IT IS, AND WHAT IT COSTS.'],
+  ['B', 'NAME', (x, t) => {
+    cell(x, K, 10 + 20 * phase(t, 3), 20, 12, 8);
+  }, 'WHAT IT IS, AND WHAT IT COSTS.']
+];
+
+const views = OPTS.map(([k, name, fn, say]) => {
+  const f = document.createElement('figure'), c = document.createElement('canvas');
+  c.width = W; c.height = H; f.append(c);
+  const cap = document.createElement('figcaption'); cap.innerHTML = `<b>${k}. ${name}</b><br>${say}`; f.append(cap);
+  document.getElementById('row').append(f);
+  return { x: c.getContext('2d'), fn };
+});
+function frame(now) {
+  for (const v of views) { v.x.fillStyle = PAPER; v.x.fillRect(0, 0, W, H); v.fn(v.x, now / 1000); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script></body></html>

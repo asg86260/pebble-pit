@@ -2,7 +2,9 @@ node_modules/
 dist/
 release/
 .DS_Store
-.claude/
+# agents' worktrees and local settings; the repo's own skills are tracked
+.claude/*
+!.claude/skills/
 .playwright-mcp/
 vite-*.log
 bs*.log
