@@ -8,8 +8,13 @@ export const TESTS = [
   // The story's line (objectives.js, objline.js) is up from the first frame
   // of a fresh game, top left, and asks for the rock.
   ['the line of the story asks for the rock, top left, from the start', async () => {
+    // A page that booted on a save further along strikes that save's line
+    // through for a second before the fresh game's comes up (objline.js,
+    // STRIKE_MS): read once it has.
+    const el = document.getElementById('objective');
+    for (let i = 0; i < 90 && (el.hidden || el.classList.contains('going')); i++) await raf();
     await raf(); await raf();
-    const el = document.getElementById('objective'), r = el.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
     const say = el.querySelector('.say').textContent;
     return [
       ok(!el.hidden && say === 'dig the boulder to save your sqwife!', 'the line is up and asks for the rock', `hidden ${el.hidden}, "${say}"`),
