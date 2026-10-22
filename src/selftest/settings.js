@@ -48,10 +48,13 @@ function slotColumns(btns) {
     its.forEach((e, i) => {
       const kind = e.classList.contains('lone') ? 'rock' : e.classList[1];
       (left[kind] ||= new Set()).add(Math.round(e.getBoundingClientRect().left));
-      if (i) gap = Math.min(gap, e.getBoundingClientRect().left - its[i - 1].getBoundingClientRect().right);
+      // between neighbors on one line: a row too wide for the window stacks
+      // its when under its number by design (slots.js, `fit`)
+      const r = e.getBoundingClientRect(), was = i && its[i - 1].getBoundingClientRect();
+      if (i && Math.abs(r.top - was.top) < r.height / 2) gap = Math.min(gap, r.left - was.right);
     });
   }
-  return { aligned: Object.values(left).every(l => l.size === 1) && Object.keys(left).length >= 2, gap: Math.round(gap), left: Object.fromEntries(Object.entries(left).map(([k, v]) => [k, [...v]])) };
+  return { aligned: Object.values(left).every(l => l.size === 1) && Object.keys(left).length >= 2, gap: gap === Infinity ? NaN : Math.round(gap), left: Object.fromEntries(Object.entries(left).map(([k, v]) => [k, [...v]])) };
 }
 
 // What a player reads, top to bottom. The record's button carries a count
