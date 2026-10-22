@@ -370,7 +370,8 @@ export const CLOUDS_SEA = {
 //          cells of sky over it; every other layer keeps to the top of the
 //          sky the way the yard's clouds do (config/weather.js, CLOUD_LANES;
 //          the owner, 2026-10-21: "they should appear higher and stay higher,
-//          like act 1"): its bases in its `lanes` entry, [highest, lowest] in
+//          like act 1"; six cells lower, 2026-10-22, "lets lower the cloud
+//          band a bit"): its bases in its `lanes` entry, [highest, lowest] in
 //          cells below the top of the act's resting window, far to near --
 //          the nearest highest, each farther one a little lower, so the sheet
 //          still reads in perspective. In cells, so a cloud's height does not
@@ -384,5 +385,5 @@ export const CLOUDS_SEA = {
 //   seed   the act's clouds' seed
 export const CLOUDS_ACT3 = {
   seed: 7, pad: 900, path: { dark: 'haze' },
-  sky: { rows: 120, rate: 0.4, lanes: [null, [31, 34], [29, 32], [26, 30], [22, 27]] }
+  sky: { rows: 120, rate: 0.4, lanes: [null, [37, 40], [35, 38], [32, 36], [28, 33]] }
 };
