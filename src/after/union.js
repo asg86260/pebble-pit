@@ -160,7 +160,6 @@ export function setCrowd(fn) {
 }
 
 // --- the spread ------------------------------------------------------------------------
-let spreadIn = 0;
 function spread(dt) {
   const a = souls(), n = a.length, F = CROWD_FILES;
   const A = S.after;
@@ -245,17 +244,19 @@ function stepSpeech() {
   sp.next = A.t + speechEvery();
 }
 
+// Whether the act's clock crossed a multiple of `every` this frame. The spread
+// and the rise are facts of the saved clock, so a reload or a new game keeps
+// their beat rather than a module's leftover count.
+const crossed = (dt, every) => Math.floor(S.after.t / every) > Math.floor((S.after.t - dt) / every);
+
 // One frame of the crowd and the speech.
-let riseIn = AFTER_RISE_S;
 export function stepUnion(c) {
   const dt = secs(c);
   souls();
   // Nobody hired yet is the act's first frame: the refusal's members go.
   if (!field.out) for (let k = 0; k < AFTER_FIRST_MEMBERS; k++) hire();
-  spreadIn += dt;
-  if (spreadIn >= 1 / AFTER_SPREAD_HZ) { spread(spreadIn); spreadIn = 0; }
-  riseIn -= dt;
-  if (riseIn <= 0) { riseIn = AFTER_RISE_S; addSoul(arand() < AFTER_KIN_SHARE ? 1 : 0); }
+  if (crossed(dt, 1 / AFTER_SPREAD_HZ)) spread(1 / AFTER_SPREAD_HZ);
+  if (crossed(dt, AFTER_RISE_S)) addSoul(arand() < AFTER_KIN_SHARE ? 1 : 0);
   stepSpeech();
   syncRims();
 }
