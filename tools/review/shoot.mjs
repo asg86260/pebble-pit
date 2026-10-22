@@ -32,7 +32,7 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, rmdirSync, 
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
-import { browser, openTab, standScene } from '../cdp.mjs';
+import { browser, openTab, standScene, profileDir } from '../cdp.mjs';
 import { decodePng, encodePng, encodeGif, tile } from './pixels.mjs';
 
 const args = process.argv.slice(2);
@@ -252,7 +252,7 @@ try {
   let cdpPort = 0;
   if (needsPage) {
     cdpPort = await freePort();
-    made.profile = `${process.env.TEMP || tmpdir()}/boulder-headless-${cdpPort}`;
+    made.profile = profileDir(`headless-${cdpPort}`);
     rmSync(made.profile, { recursive: true, force: true });
     process.env.WINDOW ||= '1920,1200';
     made.shell = (await browser({ port: cdpPort })).own;

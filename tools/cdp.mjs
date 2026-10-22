@@ -10,10 +10,11 @@
 // seconds to photograph.
 //
 // Nothing here is installed: node's own WebSocket and fetch, and the shell
-// playwright already put in %LOCALAPPDATA%/ms-playwright.
+// playwright already keeps (`shellExe`).
 
 import { spawn } from 'node:child_process';
-import { writeFileSync, readdirSync } from 'node:fs';
+import { writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { homedir, platform, tmpdir } from 'node:os';
 
 // The game is `play.html` (index.html is the landing page); a GAME that names
 // only the server gets it appended, and one naming a page is taken as is.
@@ -22,11 +23,28 @@ export function gameUrl() {
   return base.endsWith('/') ? base + 'play.html' : base;
 }
 
-function shellExe() {
-  const root = `${process.env.LOCALAPPDATA}/ms-playwright`;
-  const dir = readdirSync(root).find(d => d.startsWith('chromium_headless_shell-'));
-  return `${root}/${dir}/chrome-headless-shell-win64/chrome-headless-shell.exe`;
+// The headless shell playwright keeps, on whichever machine this is: under
+// PLAYWRIGHT_BROWSERS_PATH where that is set (a cloud container, CI), else
+// playwright's own cache for the platform. Its folder and file are named
+// per platform and per playwright version, so the one there is looked for
+// rather than spelled.
+const SHELL_NAMES = ['chrome-headless-shell.exe', 'chrome-headless-shell', 'headless_shell'];
+export function shellExe() {
+  const os = platform();
+  const root = process.env.PLAYWRIGHT_BROWSERS_PATH
+    || (os === 'win32' ? `${process.env.LOCALAPPDATA}/ms-playwright`
+      : os === 'darwin' ? `${homedir()}/Library/Caches/ms-playwright` : `${homedir()}/.cache/ms-playwright`);
+  const dir = existsSync(root) && readdirSync(root).find(d => d.startsWith('chromium_headless_shell-'));
+  if (dir) for (const sub of readdirSync(`${root}/${dir}`)) for (const n of SHELL_NAMES)
+    if (existsSync(`${root}/${dir}/${sub}/${n}`)) return `${root}/${dir}/${sub}/${n}`;
+  throw new Error(`no playwright headless shell under ${root} (npx playwright install chromium-headless-shell)`);
 }
+// A shell's own profile folder, by name: in the machine's temp folder.
+export const profileDir = name => `${tmpdir()}/boulder-${name}`;
+// The flags every shell starts with: no first-run sheet, and, run as root (a
+// container), no sandbox, which Chrome refuses to start without otherwise.
+export const shellFlags = port => [`--remote-debugging-port=${port}`, '--no-first-run',
+  ...(process.getuid?.() === 0 ? ['--no-sandbox'] : [])];
 
 const alive = async port => {
   try { await fetch(`http://127.0.0.1:${port}/json/version`); return true; }
@@ -45,7 +63,7 @@ const alive = async port => {
 // profile holds nothing worth keeping between runs; a shell reads it in
 // under a second when it is fresh.
 export async function browser({ port }) {
-  const profile = `${process.env.TEMP}/boulder-headless-${port}`;
+  const profile = profileDir(`headless-${port}`);
   let own = null;
   if (!await alive(port)) {
     // `WINDOW=1600,1000` for a shot you want to see the sky in: this game wants
@@ -59,8 +77,7 @@ export async function browser({ port }) {
     const win = process.env.WINDOW ? [`--window-size=${process.env.WINDOW}`] : [];
     // Muted: a headless shell still plays the game's sound out of the speakers
     // of whoever is sitting at this machine.
-    own = spawn(shellExe(), [`--remote-debugging-port=${port}`, '--no-first-run', '--mute-audio',
-                             ...win, `--user-data-dir=${profile}`], { stdio: 'ignore' });
+    own = spawn(shellExe(), [...shellFlags(port), '--mute-audio', ...win, `--user-data-dir=${profile}`], { stdio: 'ignore' });
     for (let i = 0; i < 40 && !await alive(port); i++) await new Promise(r => setTimeout(r, 250));
   }
   return { port, own };

@@ -670,6 +670,12 @@ function drawRipples(rip) {
 // into its board and filled, and the floating button over the next free floor
 // slot. Page elements, not paint, and last, so the camera they are seated by
 // is the one the frame was drawn with.
+//
+// Both are seated in every place, not only the deep: each decides for itself
+// whether it shows, and the one place it must hear that it does not is
+// whichever place is up when it should fade out. A layer naming no place
+// draws in the yard alone, which kept the button from ever showing in the
+// deep it is for.
 import { seatRails } from './deep/rails.js';
 import { seatBuildButton } from './deep/buildbutton.js';
-LAYERS.push({ name: 'rails', draw: seatRails }, { name: 'build button', draw: seatBuildButton });
+LAYERS.push({ name: 'rails', in: ALL, draw: seatRails }, { name: 'build button', in: ALL, draw: seatBuildButton });

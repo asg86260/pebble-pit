@@ -31,7 +31,14 @@ const flag = key => {
   Object.defineProperty(S, name, {
     enumerable: false, configurable: true,
     get: () => openKey === key,
-    set: v => { if (v) openKey = key; else if (openKey === key) openKey = null; }
+    set: v => {
+      const was = openKey;
+      if (v) openKey = key; else if (openKey === key) openKey = null;
+      // The point the crowd's board was asked over is that opening's only:
+      // left behind once it shut, it stood the crowd's ground somewhere God
+      // is not drawn, and the next hand to reach for him found nothing there.
+      if (was === CROWD && openKey !== CROWD) crowdAt = null;
+    }
   });
   return name;
 };
@@ -44,6 +51,9 @@ export const signUp = key => !!openKey && ground(openKey.slice('after-'.length))
 
 // The point God's crowd's board was asked over (after/rows.js
 // `openAfterBoard`), or null: over God as drawn.
+// Held only while that board is up (`flag` lets go of it when it shuts), so a
+// later opening by the hand stands over God again.
+const CROWD = 'after-crowd';
 let crowdAt = null;
 export const setCrowdAt = at => { crowdAt = at; };
 

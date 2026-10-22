@@ -9,7 +9,7 @@
 // tools/wording/page.js. A capture tool only: nothing here changes the game.
 
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, statSync } from 'node:fs';
-import { browser, closeOtherTabs, openTab } from './cdp.mjs';
+import { browser, closeOtherTabs, openTab, profileDir } from './cdp.mjs';
 import { SURFACES, REASONS } from './wording/surfaces.mjs';
 
 const OUT = 'shots/wording';
@@ -20,7 +20,7 @@ const base = (process.env.GAME || 'http://localhost:5302/').replace(/play\.html$
 const only = process.argv[2] ? new Set(process.argv[2].split(',')) : null;
 
 const PORT = +(process.env.CDP_PORT || 9402);
-if (!only) try { rmSync(`${process.env.TEMP}/boulder-headless-${PORT}`, { recursive: true, force: true }); } catch {}
+if (!only) try { rmSync(profileDir(`headless-${PORT}`), { recursive: true, force: true }); } catch {}
 process.env.WINDOW = '1280,800';
 const { own } = await browser({ port: PORT });
 await closeOtherTabs(PORT);

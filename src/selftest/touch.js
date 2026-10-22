@@ -9,7 +9,7 @@
 // writing the preference, and every group puts it back.
 
 import { sleep, state, ok, canvas, run, runUntil, raf, tap, touch, finger, haveBench, newRun, settle, cardShows } from './kit.js';
-import { TAP_SLOP, TAP_TIME, HOP_Y, HOP_SIZE, SKIP_HOLD_MS, SHEET_H, SHEET_MS, PROP_FROM, THUMB, BRUSH, P } from '../config.js';
+import { TAP_SLOP, TAP_TIME, HOP_Y, HOP_SIZE, SKIP_HOLD_MS, SHEET_H, SHEET_MS, PROP_FROM, THUMB, BRUSH, P, HOUSE_CUBE, HOUSE_COLS } from '../config.js';
 import { S } from '../state.js';
 import { purse } from '../words.js';
 import { workOn } from '../works.js';
@@ -203,10 +203,22 @@ export const TESTS = [
   ['a notice is drawn over a building that reaches into the sky', async () => {
     // A settlement tall enough to reach the top edge, where the card lands;
     // the card is the top layer and stands over the rooms, whole.
+    // How many is read off the window, not written down: a fixed sixty-five
+    // stood eleven storeys, which reached the card on an 800x600 glass and
+    // stopped a third of the way short of it on a 1400x900 one. Enough
+    // courses to climb from the ground to the top of the view reach the card
+    // on any glass, since the card always lands in that top band.
     window.__nocine();
     window.__crew(35, 30, 0, 0);
     run(3);
-    const h = state().stands.house;
+    let h = state().stands.house;
+    window.__look(h.x + h.w / 2 - state().viewW / 2);
+    await frames(3);
+    const courses = Math.ceil((S.groundY - S.camY) / HOUSE_CUBE) + 1;
+    const rooms = Math.max(65, courses * HOUSE_COLS);   // a room a body, and the doorway
+    window.__crew(rooms - 1 - 30, 30, 0, 0);
+    run(3);
+    h = state().stands.house;
     window.__look(h.x + h.w / 2 - state().viewW / 2);
     await frames(3);
     for (let i = 0; i < 40 && document.getElementById('toast').hidden; i++) await frames(1);

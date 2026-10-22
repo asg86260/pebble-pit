@@ -51,11 +51,23 @@ function offPalette(hide = null) {
   const off = LAYERS.filter(l => l.name === 'deep bed' || l === hide), was = off.map(l => l.when);
   off.forEach(l => { l.when = () => false; });
   const c = document.getElementById('c'), g = c.getContext('2d'), k = devicePixelRatio || 1;
-  Object.defineProperty(g, 'globalAlpha', { configurable: true, get: () => 1, set: () => {} });
+  // The pin goes on every context the frame is painted through, not the
+  // window's alone: a zoom on its way paints the world on a sheet of its own
+  // and lays that on the glass (render.js, `scaledWorld`), as the ripple does
+  // its far half (ctx.js, `paintOn`), and a fade drawn on that sheet came
+  // through unpinned -- the recede's wash over the deep's water and motes,
+  // thousands of blended tones in a scene that holds the yard mid-zoom
+  // (deep-freed). Every such sheet is the window's size by design, which no
+  // sprite cache is, so the size says which contexts are the frame's.
+  const proto = Object.getPrototypeOf(g), alpha = Object.getOwnPropertyDescriptor(proto, 'globalAlpha');
+  const frames = h => h.canvas.width === c.width && h.canvas.height === c.height;
+  Object.defineProperty(proto, 'globalAlpha', { configurable: true,
+    get() { return frames(this) ? 1 : alpha.get.call(this); },
+    set(v) { if (!frames(this)) alpha.set.call(this, v); } });
   globalThis.__pinInk = true;
   try { draw(); } finally {
     globalThis.__pinInk = false;
-    delete g.globalAlpha;
+    Object.defineProperty(proto, 'globalAlpha', alpha);
     off.forEach((l, i) => { l.when = was[i]; });
   }
   const d = g.getImageData(0, 0, c.width, c.height).data;

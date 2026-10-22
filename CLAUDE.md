@@ -80,9 +80,12 @@ live near the change are not covered by "the files covering the change".
 
 **The budget for full suites, while the work is in flight, is zero.** Not one at
 the end, not one before landing. The full suite has exactly one home: **main,
-after the merge** — kick off both tiers there in the background, once, and
-report what they say. A red result there is a fix on main, not a reason to have
-run it earlier.
+after the merge**, where the `tests` workflow (.github/workflows/tests.yml)
+runs both tiers, sharded, on every push. Nobody starts it and no machine of
+yours runs it: after a merge, read its result (`gh run list --workflow tests`,
+or the Actions tab) and report what it says. A red result there is a fix on
+main, not a reason to have run it earlier. A flaky shard gets one re-run of
+that job, never of the whole run.
 
 **One sweep of a tier at a time, on the whole machine.** `npm test` and the
 `test:browser*` scripts go through `tools/sweep.mjs`, which refuses (exit 3)
@@ -113,7 +116,8 @@ is touched until the user has voted on them. Then build the one chosen, and
 a follow-up tweak to it ("make it weirder", "try the pattern still") is a new
 mock before it is new code, not an edit to see how it looks. The mock is a
 page drawn from plain shapes, not the game; say so, and say what it cannot
-show.
+show The `mock` skill (.claude/skills/mock) holds the page's template and the
+steps.
 
 ---
 
@@ -336,15 +340,29 @@ work up front; do not survey every option.
 
 ## Worktrees, servers and waves
 
-- **Port 5183 is the user's own game and its save. Never point anything at it.**
-  Tests run against 5184 (`bun run dev:test`).
+- **On the owner's machine, port 5183 is their own game and its save. Never
+  point anything at it.** Tests run against 5184 (`bun run dev:test`), the
+  tools' default.
+- **The browser tools run anywhere.** `tools/cdp.mjs` finds playwright's
+  headless shell on Windows, a Mac, Linux, a cloud container or CI
+  (PLAYWRIGHT_BROWSERS_PATH, else playwright's cache) and starts it itself;
+  `look.mjs` and `headless.mjs` need only a dev server up. No environment
+  shims, no browser started by hand.
+- **The Playwright MCP (`.mcp.json`, tools/playwright-mcp.mjs) is for playing
+  the game the way a player does**: open `http://localhost:5184/play.html`,
+  click through a board, a menu or a first-run page, read the accessibility
+  tree, and see what a real pointer gets. It is not the way to stand up a
+  scene (that is `look.mjs`, faster and repeatable) or to check anything (a
+  check belongs in a test tier). Shots go in `.playwright-mcp/`, ignored; a
+  bare filename lands in the working directory, so give it that folder.
 - **Your own worktree, always.** Never enter or `cd` into an existing worktree
   another agent created. If cwd is already under `.claude/worktrees/` but the
   tree holds uncommitted changes you did not make, do not build on it — say so
   and make a fresh one. "Already isolated" does not mean "yours".
-- **A worktree has no `node_modules` of its own.** Start its server with the
-  root's binary, on a port nobody else is using:
-  `"C:/git/boulder-clicker/node_modules/.bin/vite" --port <n> --strictPort`.
+- **A worktree has no `node_modules` of its own.** Link the main checkout's
+  (`ln -s <main checkout>/node_modules node_modules`) or start its server with
+  the root's binary, on a port nobody else is using:
+  `<main checkout>/node_modules/.bin/vite --port <n> --strictPort`.
   Confirm it is serving *this* checkout before trusting a run
   (`curl -s localhost:<n>/src/<changed file> | grep <new symbol>`), then point
   the suite at it with `GAME=http://localhost:<n>/` and a distinct `CDP_PORT`.
@@ -352,8 +370,9 @@ work up front; do not survey every option.
   done, and verify the port is dead. Leave alone anything that was already
   running. A stale server from another checkout silently answers on the port the
   browser suite targets, so it reports passes for code that was never tested.
-- **Landing work:** the `worktree-to-main` skill — ExitWorktree, then
-  fast-forward main in the shared checkout.
+- **Landing work:** a pull request into main, merged once the files covering
+  the change are green; then the `tests` workflow speaks for the full suites
+  (see "The loop").
 
 ### Waves
 

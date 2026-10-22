@@ -8,7 +8,7 @@
 
 import { sleep, state, ok, run, raf, haveBench, settle, asScreen, openCrewList, hoverStation, touch, tap } from './kit.js';
 import { workOn } from '../works.js';
-import { SHEET_H, SHEET_TALL, SHEET_MS, SHEET_RAIL_W } from '../config.js';
+import { SHEET_H, SHEET_TALL, SHEET_MS, SHEET_RAIL_W, TWEEN_MAX_MS } from '../config.js';
 import { S } from '../state.js';
 import { sheetRail, sheetStop } from '../board.js';
 
@@ -330,12 +330,21 @@ export const TESTS = [
     phone(true);
     window.__board('bench');
     await settled();
+    // A count rolls to its value (tween.js), setting out on the first frame
+    // that paints it, so it is read at rest: a painted frame, then the
+    // longest roll there is on the game's clock. Read on the wall's clock it
+    // was wherever the window's frame rate had got it to -- 914 on its way to
+    // 1005 in a large window -- and the digits were the roll's, not the
+    // purse's.
+    const rest = async () => { await frames(1); run(TWEEN_MAX_MS / 1000); await frames(2); };
+    await rest();
     const lefts = () => [...document.querySelectorAll('#purse .coin')].map(c => Math.round(c.getBoundingClientRect().left));
     const words = () => [...document.querySelectorAll('#purse .coin b')].map(b => b.textContent);
     const before = lefts(), said = words();
     // the carry rung costs twenty: a thousand becomes hundreds, one digit fewer
     await tap(document.querySelector('#shop button[data-key="carry"]'));
     await settle(1.5);
+    await rest();
     const after = lefts(), saidAfter = words();
     window.__board(null);
     phone(false);
@@ -378,6 +387,10 @@ export const TESTS = [
     ];
   }],
 
+  // A list that can scroll at all is the premise, and whether the shack's
+  // rows outgrow the seat depends on the window: on a 900-high glass they fit.
+  // So the window is stood short enough that the seat shows three quarters of
+  // the rows as measured -- the phone held sideways -- whatever the screen.
   ['the list pulled down from its top pulls the sheet down; scrolled, it only scrolls', async () => {
     window.__nocine();
     window.__crew(3, 3, 5, 7);
@@ -387,23 +400,31 @@ export const TESTS = [
     phone(true);
     window.__board('shack');
     await settled();
-    const el = list();
-    const overflows = el.scrollHeight > el.clientHeight + 1;
-    const contain = getComputedStyle(el).overscrollBehaviorY;
-    // scrolled a little: a pull is the list's, and the sheet stays
-    el.scrollTop = 40;
-    await raf();
-    const took1 = await pullList(seatPx() * 3 / 4);
-    const stayed = !panel().hidden;
-    // back at the top: the same pull is the sheet's, through its stops
-    el.scrollTop = 0;
-    await raf();
-    const took2 = await pullList(seatPx() * 3 / 4);
-    const gone = panel().hidden;
+    // the rows alone: the list's foot is padded by what the seat hides below the glass
+    const rows = list().scrollHeight - parseFloat(getComputedStyle(list()).paddingBottom);
+    const short = Math.round(rows * 3 / 4 / (1 - SHEET_H));
+    const out = await asScreen(state().W, short, devicePixelRatio, async () => {
+      await settled();
+      const el = list();
+      const overflows = el.scrollHeight > el.clientHeight + 1;
+      const contain = getComputedStyle(el).overscrollBehaviorY;
+      // scrolled a little: a pull is the list's, and the sheet stays
+      el.scrollTop = 40;
+      await raf();
+      const took1 = await pullList(seatPx() * 3 / 4);
+      const stayed = !panel().hidden;
+      // back at the top: the same pull is the sheet's, through its stops
+      el.scrollTop = 0;
+      await raf();
+      const took2 = await pullList(seatPx() * 3 / 4);
+      const gone = panel().hidden;
+      return { overflows, contain, took1, stayed, took2, gone };
+    });
+    const { overflows, contain, took1, stayed, took2, gone } = out;
     phone(false);
     await frames(2);
     return [
-      ok(overflows, 'the shack board has more rows than the seat shows'),
+      ok(overflows, 'the shack board has more rows than the seat shows', `${Math.round(rows)} rows in a ${short} window`),
       ok(contain === 'contain', 'the list keeps its overscroll to itself', contain),
       ok(!took1 && stayed, 'pulled with the list scrolled, the sheet stays', `took ${took1}`),
       ok(took2 && gone, 'pulled from the very top, the sheet goes', `took ${took2}, hidden ${gone}`),

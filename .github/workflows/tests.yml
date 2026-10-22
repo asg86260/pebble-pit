@@ -1,0 +1,77 @@
+# The full suites, on main after every merge (CLAUDE.md, "The loop": the full
+# suite has exactly one home, main after the merge), and by hand from the
+# Actions tab. Nobody's machine runs them and nobody has to remember to.
+#
+#   node     the node tier (test/*.test.mjs), a quarter of the files a job
+#   cloud    the cloud worker's own checks (cloud/test)
+#   browser  the browser tier (src/selftest), an eighth of the groups a job,
+#            each job serving the game on its own vite and driving it with
+#            playwright's headless shell (tools/cdp.mjs finds it)
+#
+# A red job names the failing checks in its log; a flaky one gets one re-run
+# of that job, never of the whole run.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - run: node --test --test-concurrency=4 --test-shard=${{ matrix.shard }}/4 test/*.test.mjs
+
+  cloud:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - run: node --test --test-concurrency=4 cloud/test/*.test.mjs
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - run: npx -y playwright@1.55.0 install --with-deps chromium-headless-shell
+      - name: serve the game
+        run: |
+          node_modules/.bin/vite --port 5184 --strictPort > vite.log 2>&1 &
+          for i in $(seq 60); do curl -sf localhost:5184/play.html > /dev/null && exit 0; sleep 1; done
+          cat vite.log; exit 1
+      - run: node tools/headless.mjs --shard ${{ matrix.shard }}/8

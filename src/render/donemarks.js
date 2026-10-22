@@ -13,6 +13,7 @@ import { buildingGlyph, stackSlot, drift } from './bars.js';
 const STATION_BUILD = 'station-';
 import { ctx } from './ctx.js';
 import { onPixel } from './frame.js';
+import { fillOnDevice } from './pixelpath.js';
 
 // The thing that finished stays where it stood in the stack over the station
 // (`drawWorkBars`), drawn whole with a tick laid over it, and the next thing
@@ -26,26 +27,15 @@ import { onPixel } from './frame.js';
 const TICK = [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]];
 
 // cells on the grid about the origin, a cell at nought starting on it
-// Every edge on a whole device pixel at the scale it is drawn at (`onPixel`),
-// so a cell or a stroke between cells is never a blend of two inks; a path
-// a shape a scale.
+// Every edge on a whole device pixel at the scale it is drawn at
+// (render/pixelpath.js), so a cell or a stroke between cells is never a
+// blend of two inks; a path a shape a scale.
 const FILLS = new WeakMap();
 const pathsOf = (map, cells) => { let m = map.get(cells); if (!m) map.set(cells, m = new Map()); return m; };
-const scaleNow = () => (ctx.getTransform ? ctx.getTransform().a : S.zoom * S.dpr);
-function snappedRect(path, x0, y0, x1, y1, k) {
-  const at = v => Math.round(v * k) / k;
-  path.rect(at(x0), at(y0), at(x1) - at(x0), at(y1) - at(y0));
-}
 function fillCells(cells, color) {
-  const k = scaleNow(), m = pathsOf(FILLS, cells);
-  let path = m.get(k);
-  if (!path) {
-    path = new Path2D();
-    for (const [dx, dy] of cells) snappedRect(path, dx * P, dy * P, dx * P + P, dy * P + P, k);
-    m.set(k, path);
-  }
-  ctx.fillStyle = color;
-  ctx.fill(path);
+  fillOnDevice(pathsOf(FILLS, cells), rect => {
+    for (const [dx, dy] of cells) rect(dx * P, dy * P, dx * P + P, dy * P + P);
+  }, color);
 }
 
 // A line round the outside of a shape, a third of a cell thick: each ink
@@ -54,22 +44,16 @@ function fillCells(cells, color) {
 // frame, and the flood under it never changes.
 const STROKES = new WeakMap();
 function strokeCells(cells, color) {
-  const k = scaleNow(), m = pathsOf(STROKES, cells);
-  let path = m.get(k);
-  if (!path) {
-    path = new Path2D();
+  fillOnDevice(pathsOf(STROKES, cells), rect => {
     const t = Math.max(1, P / 3);
     for (const [ox, oy] of outsideEdge(cells))
       for (const [dx, dy] of cells) {
         if (Math.abs(dx - ox) > 1 || Math.abs(dy - oy) > 1) continue;
         const x0 = Math.max(ox * P, dx * P - t), x1 = Math.min(ox * P + P, dx * P + P + t);
         const y0 = Math.max(oy * P, dy * P - t), y1 = Math.min(oy * P + P, dy * P + P + t);
-        if (x1 > x0 && y1 > y0) snappedRect(path, x0, y0, x1, y1, k);
+        if (x1 > x0 && y1 > y0) rect(x0, y0, x1, y1);
       }
-    m.set(k, path);
-  }
-  ctx.fillStyle = color;
-  ctx.fill(path);
+  }, color);
 }
 
 // The empty cells round a shape that touch it from the outside, corners

@@ -4,6 +4,16 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## A pad check leaks in behind the sheet groups -- FOUND, NOT FIXED (2026-10-22)
+
+`src/selftest/pad.js`, "pad: Menu holds the yard, the sheet is walked, B
+lets it go", fails when run straight after the other "sheet" groups
+(`node tools/headless.mjs --only sheet`), at 800x600 and 1400x900, and
+passes alone, in the full suite and in every CI shard: an earlier group
+leaves something (an open sheet, a focus, a held pad) that a fresh game does
+not reset. Not seen in any order CI runs. Next: bisect the sheet groups that
+run before it, then reset what leaks in `newRun`, not in the check.
+
 ## A tray capped mid-pay holds the hand forever -- FOUND, NOT FIXED (2026-10-20)
 
 `src/casino.js`: a pay grain that finds no cell sets `tray.capped`, which

@@ -9,8 +9,8 @@
 //
 // It drives Chrome's debugging protocol over node's own WebSocket (`cdp.mjs`
 // is the driving), so there is nothing to install. It needs a dev server up
-// (`bun run dev`) and the headless shell playwright keeps in
-// %LOCALAPPDATA%/ms-playwright.
+// (`bun run dev:test`) and the headless shell playwright keeps, found on any
+// platform (cdp.mjs, `shellExe`).
 //
 // It closes every other tab first, on purpose: tabs on one origin share the
 // save, and a second live one writes over it every second, which fails the save
@@ -74,4 +74,9 @@ if (shot) {
 if (tab.logs.length) console.log(['--- console ---', ...tab.logs].join(String.fromCharCode(10)));
 await tab.close();
 own?.kill();
-process.exit(0);
+// A suite's answer fails the run when a check failed or the page threw, so a
+// shard in CI goes red; a plain expression, or a shot, only fails if it threw.
+const v = out.result?.result?.value;
+const red = out.result?.exceptionDetails || (v && typeof v === 'object' && 'total' in v
+  && (v.passed < v.total || v.errors?.length));
+process.exit(red ? 1 : 0);
