@@ -201,6 +201,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The recruit row, greyed while nobody is won, says so and how to win one instead of reading like a price you cannot pay (test/after-recruit.test.mjs).
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 
+- In a narrow window a board uses the whole width under the purse instead of squeezing into a sliver beside where the purse would be, so its cards keep their words inside them and several tiles share a plank (src/selftest/boards.js, "no row on any board sits on top of itself").
 - The tick and the glyph over a station that finished something are crisp at every window size in the deep, instead of a faint seam along their edges on a large window (src/selftest/deeppalette.js).
 - What crosses behind the rift, or the serpent's glimpse, no longer stays up for a frame as the camera leaves for heaven or the deep through a portal (src/verify.js, rules 17 and 18; src/selftest/playcheck.js).
 - A board's list of options, opened while the board is still sliding over to its station, now stays hung under the control that opened it instead of being left behind where the control had been (src/selftest/boards.js).

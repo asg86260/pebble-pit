@@ -157,8 +157,12 @@ function pinWidth() {
   // The room the sheet may take, written onto it so a stylesheet that sizes it
   // by content (the shelf) can cap itself without knowing the purse.
   // On a phone the sheet is the window's width and the purse lies inside it,
-  // so the room is the glass (DESIGN.md, "Boards as bottom sheets").
-  const purseW = coarse() ? 0 : purseEl.offsetWidth;
+  // so the room is the glass (DESIGN.md, "Boards as bottom sheets"); in a
+  // narrow window the purse stands above the sheet, not beside it, and takes
+  // none of its width. Read off the panel, so the stylesheet says which.
+  const beside = !coarse() && typeof getComputedStyle === 'function'
+    && getComputedStyle(panelEl).flexDirection === 'row';
+  const purseW = beside ? purseEl.offsetWidth : 0;
   sheet.style.setProperty('--sheet-room', `${S.W - (purseW ? purseW + panelGap() : 0) - 2 * GAP}px`);
   // And the height it may take, off the same measured window `place` clamps
   // it against. The stylesheet's own `dvh` was a second reading of the window
