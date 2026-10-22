@@ -31,11 +31,12 @@
 // own must stay asleep, or its frame loop would close our fold windows under us.
 
 import { spawn } from 'node:child_process';
-import { writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { shellExe, shellFlags, profileDir } from './cdp.mjs';
 
 const URL_ = process.env.GAME || 'http://localhost:5184/';
 const PORT = +(process.env.CDP_PORT || 9353);
-const PROFILE = `${process.env.TEMP}/boulder-listen`;
+const PROFILE = profileDir('listen');
 const OUT = 'shots/sound';
 const strip = process.argv.includes('--strip');
 
@@ -103,15 +104,11 @@ const SEG = (at, len) => `(() => {
 })()`;
 
 // --- the browser, as headless.mjs drives it ---------------------------------------
-const root = `${process.env.LOCALAPPDATA}/ms-playwright`;
-const dir = readdirSync(root).find(d => d.startsWith('chromium_headless_shell-'));
-const exe = `${root}/${dir}/chrome-headless-shell-win64/chrome-headless-shell.exe`;
 const alive = async () => { try { await fetch(`http://127.0.0.1:${PORT}/json/version`); return true; }
                             catch { return false; } };
 let own = null;
 if (!await alive()) {
-  own = spawn(exe, [`--remote-debugging-port=${PORT}`, '--no-first-run', `--user-data-dir=${PROFILE}`],
-              { stdio: 'ignore' });
+  own = spawn(shellExe(), [...shellFlags(PORT), `--user-data-dir=${PROFILE}`], { stdio: 'ignore' });
   for (let i = 0; i < 40 && !await alive(); i++) await new Promise(r => setTimeout(r, 250));
 }
 for (const t of await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json())

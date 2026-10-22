@@ -9,8 +9,8 @@
 //
 // It drives Chrome's debugging protocol over node's own WebSocket (`cdp.mjs`
 // is the driving), so there is nothing to install. It needs a dev server up
-// (`bun run dev`) and the headless shell playwright keeps in
-// %LOCALAPPDATA%/ms-playwright.
+// (`bun run dev:test`) and the headless shell playwright keeps, found on any
+// platform (cdp.mjs, `shellExe`).
 //
 // It closes every other tab first, on purpose: tabs on one origin share the
 // save, and a second live one writes over it every second, which fails the save
