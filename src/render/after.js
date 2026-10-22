@@ -33,7 +33,6 @@ import { signUp } from '../after/stations.js';
 import { frame, now, inView, clamp01, pileState, pileAlpha, countAt, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
-import { drawForeground } from './after/ground.js';
 import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
@@ -266,11 +265,10 @@ export function drawAfterCamp() {
   const a = A();
   if (!a) return;
   readHands();
-  // The main plane's path and the foreground clouds under it, then the
-  // union's crowd behind everything of the camp's: the pair's podium stands
-  // in front of it.
+  // The main plane's path, then the union's crowd behind everything of the
+  // camp's: the pair's podium stands in front of it. The lip of billows
+  // along the path's front is drawn after the members (render.js).
   drawFloor();
-  drawForeground();
   drawUnionCrowd();
   // the forestry shack, the grove's, then the cards' stations
   for (const key of Object.keys(AFTER_STATIONS)) { drawStation(key); shopSign(key); }

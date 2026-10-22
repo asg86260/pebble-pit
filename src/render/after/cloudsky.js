@@ -3,27 +3,23 @@
 // owner, 2026-10-20: "wire them in. They're better than what we have now ...
 // use those clouds as the ground clouds. Clouds around the main path"):
 //
-// - the sky: the liquid sky's layers standing on the horizon, far to near,
-//   each sliding at its own parallax;
-// - the edge: small billows lapping the path's near edge from under it, on
-//   the world itself, so the path stays a clear walkable surface framed by
-//   cloud (render/after/floor.js puts it);
-// - the foreground: big billows rolling below the path, faster than the
-//   camera (render/after/ground.js puts it).
+// the sky's layers standing on the horizon, far to near, each sliding at its
+// own parallax. The ground clouds that lapped the path and rolled below it
+// are gone (the owner, 2026-10-22): the path's front is its own lip of
+// billows now (render/after/ground.js).
 //
-// Every layer's windows are worked in one pass on the card at the backdrop,
-// the sky drawn then, and the rest set down from that same picture when their
-// turn in the painting order comes. The flow runs on the act's own clock, so
-// a held scene holds its clouds. Numbers in config/clouds.js, CLOUDS_ACT3.
+// Every layer's windows are worked in one pass on the card at the backdrop.
+// The flow runs on the act's own clock, so a held scene holds its clouds.
+// Numbers in config/clouds.js, CLOUDS_ACT3.
 
-import { P, GROUND_PATH, CLOUDS_ACT3 as A, CLOUDS_SKY, CLOUDS_PALETTE, CLOUDS_DEPTH_BANDS } from '../../config.js';
+import { P, CLOUDS_ACT3 as A, CLOUDS_SKY, CLOUDS_PALETTE } from '../../config.js';
 import { S } from '../../state.js';
 import { ctx } from '../ctx.js';
 import { onPixel } from '../frame.js';
 import { darkPage } from '../../ink.js';
 import { horizonY } from '../../after/sky.js';
-import { afterFloor, afterOpenX, afterX0, afterX1 } from '../../after/place.js';
-import { skyLayer, groundLayer, layerLook, layerParams, stillSheet, drawBand } from '../clouds.js';
+import { afterOpenX, afterX0, afterX1 } from '../../after/place.js';
+import { skyLayer, layerLook, layerParams, stillSheet, drawBand } from '../clouds.js';
 import { cellOnPage, layerSpan, workClouds, putCells } from '../cloudpage.js';
 import { now } from './kit.js';
 import { restY } from '../../shot.js';
@@ -32,19 +28,6 @@ const page = darkPage ? 'dark' : 'light';
 // The path's surface: the paper by day, by night the cloud palette's role
 // CLOUDS_ACT3.path names (render/after/floor.js draws the path in it too).
 export const pathTone = () => (darkPage ? CLOUDS_PALETTE.dark[A.path.dark] : CLOUDS_PALETTE.light.sky);
-const GROUNDS = ['edge', 'fore'];
-
-// A ground layer's crest: the row the tallest of its back row's billows
-// reach (all but a share A.crest of them stop under it), which is what a
-// placement lines up with the path or the horizon, so a path stays clear of
-// all but the odd top lapping it.
-const crestOf = l => {
-  const tops = l.puffs.filter(p => p.tier === 0).map(p => p.y - p.r * p.flat).sort((a, b) => a - b);
-  return tops.length ? tops[Math.floor(tops.length * A.crest)] : 0;
-};
-// The body tone of a ground layer's front row, for its solid underneath.
-// (a band is [from, [lit face, body, shadow, core], flag])
-const bodyOf = k => CLOUDS_PALETTE[page][CLOUDS_DEPTH_BANDS[page].filter(b => b[0] <= k.depths[k.depths.length - 1]).pop()[1][1]];
 
 // The layers, made once: their puffs are fixed by the seed, and only where
 // they are drawn changes.
@@ -54,31 +37,23 @@ function layers() {
   // a layer's round: the act's width as the layer slides past it, and a pad
   const round = rate => Math.ceil((afterX1() - afterX0()) * rate / P) + A.pad;
   L = { sky: Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: A.seed, W: round(layerParams(i).parallax * A.sky.rate), sky: A.sky.rows, lane: A.sky.lanes[i] })) };
-  for (const g of GROUNDS) {
-    const k = A[g];
-    L[g] = groundLayer({ seed: A.seed + k.R, W: round(k.rate), R: k.R, rows: k.rows, depths: k.depths });
-    L[g].crest = crestOf(L[g]);
-  }
-  for (const l of [...L.sky, ...GROUNDS.map(g => L[g])]) l.look = layerLook(l, { page });
+  for (const l of L.sky) l.look = layerLook(l, { page });
   return L;
 }
-const NAMES = () => [...layers().sky.map((_, i) => 'sky' + i), ...GROUNDS];
-const layerOf = name => (name.startsWith('sky') ? layers().sky[+name.slice(3)] : layers()[name]);
+const NAMES = () => layers().sky.map((_, i) => 'sky' + i);
+const layerOf = name => layers().sky[+name.slice(3)];
 
 // Where a layer stands this frame: its rate against the camera, the world y
-// of its first row, its drift in cells, and how far down its front row's
-// body is carried solid (a world y, or none).
+// of its first row and its drift in cells.
 function placeOf(name, l, T, cw) {
-  const hz = onPixel(horizonY()), floor = onPixel(afterFloor()), bot = floor + GROUND_PATH.depth * P;
-  if (name === 'edge') return { rate: A.edge.rate, y: bot - (A.edge.lap + l.crest) * cw, drift: 0, solid: S.camY + S.viewH };
-  if (name === 'fore') return { rate: A.fore.rate, y: bot + (A.fore.down - l.crest) * cw, drift: 0, solid: S.camY + S.viewH };
+  const hz = onPixel(horizonY());
   // a sky layer, blowing on its wind: the bank's horizon row on the horizon
   // (its lobes stand over it, render/clouds.js); a laned layer's top row at
   // the top of the act's resting window, so its clouds keep to the top of
   // the sky (CLOUDS_ACT3.sky) and still slide with the world as the camera
   // lifts off its rest
   const ref = A.sky.lanes[l.i] ? onPixel(restY()) : hz;
-  return { rate: l.P.parallax * A.sky.rate, y: ref - l.baseRow * cw, drift: l.P.wind * T, solid: null };
+  return { rate: l.P.parallax * A.sky.rate, y: ref - l.baseRow * cw, drift: l.P.wind * T };
 }
 
 // The frame's picture: every window worked once, at the backdrop.
@@ -93,32 +68,29 @@ function work() {
     // rows off the top or the bottom of the window are not drawn
     const r0 = Math.max(0, Math.floor((S.camY - at.y) / cw)), r1 = Math.min(l.h, Math.ceil((S.camY + S.viewH - at.y) / cw));
     spans.set(name, { ...at, ...sp, r0, r1, cw });
-    const below = at.solid != null && at.solid > at.y + l.h * cw;
-    if (r1 <= r0 && !below) continue;
+    if (r1 <= r0) continue;
     views.push({ key: name, layer: l, ox: sp.ox, w: sp.cols, h: l.h, look: l.look, every: (l.P && l.P.every) || 1, phase: views.length });
   }
   pic = workClouds(views, T, dt);
 }
 
 // --- with no card: baked sheets, held still --------------------------------------------
-// The sky as bands of the baked kinds and the ground layers as baked ground,
-// each where its liquid layer stands.
+// The sky as bands of the baked kinds, each where its liquid layer stands.
 let still = null;
 function stills() {
   if (still) return still;
   const look = { page, treat: 'C' };
   still = { sky0: stillSheet({ kind: 'far', seed: A.seed, w: 512 }, look), sky2: stillSheet({ kind: 'mid', seed: A.seed + 1, w: 512 }, look) };
-  for (const g of GROUNDS) still[g] = stillSheet({ kind: 'ground', seed: A.seed + A[g].R, w: 512, R: A[g].R }, look);
   return still;
 }
 function putStill(name, sp) {
   const st = stills(), sh = st[name];
   if (!sh) return;
   // the bank stands on the horizon, the sky's band in its layer's lane at the
-  // top of the sky, the ground's where their layers do
+  // top of the sky
   const lane = A.sky.lanes[+name.slice(3)];
   const y = name === 'sky0' ? onPixel(horizonY()) - sh.h * sp.cw * 1.6
-    : name.startsWith('sky') ? onPixel(restY()) + lane[1] * sp.cw - sh.h * sp.cw : sp.y;
+    : onPixel(restY()) + lane[1] * sp.cw - sh.h * sp.cw;
   const k = S.zoom * S.dpr, was = ctx.getTransform();
   // drawBand lays its copies from x 0 across a width: from the window's left edge
   ctx.translate(S.camX, 0);
@@ -127,27 +99,13 @@ function putStill(name, sp) {
 }
 
 // One layer set down, from this frame's picture or its still sheet.
-export function putAfterCloud(name) {
-  if (!ctx) return;
+function putAfterCloud(name) {
   const sp = spans.get(name);
   if (!sp) return;
-  if (name === 'edge') {
-    // between the path's near edge and the solid of the billows lapping it,
-    // the path's own surface, so a valley between two billows is more path
-    // and never a notch of night
-    const l = layerOf('edge'), under = sp.y + Math.max(...l.fills) * sp.cw, bot = sp.y + (A.edge.lap + l.crest) * sp.cw;
-    if (under > bot) { ctx.fillStyle = pathTone(); ctx.fillRect(S.camX, bot, S.viewW, under - bot); }
-  }
   if (!pic) putStill(name, sp);
   else {
     const a = pic.at.get(name);
     if (a) putCells(ctx, pic.canvas, a, sp.off + sp.ox * sp.cw, sp.y, sp.cw, sp.r0, sp.r1 - sp.r0);
-  }
-  // under a ground layer's front row, its body carried solid as far as asked
-  const bottom = sp.y + layerOf(name).h * sp.cw;
-  if (sp.solid != null && sp.solid > bottom && !name.startsWith('sky')) {
-    ctx.fillStyle = bodyOf(A[name]);
-    ctx.fillRect(S.camX, bottom, S.viewW, sp.solid - bottom);
   }
 }
 

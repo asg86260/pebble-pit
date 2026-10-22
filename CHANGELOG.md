@@ -177,6 +177,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New this release**
 - In heaven each station stands on its own shelf of cloud, further apart, with ramps between, and everybody walks up and down them (test/after-floor.test.mjs).
+- In heaven a lip of cloud billows runs along the path's front in place of the clouds drawn below it (scene after-camp-art).
 - In heaven each station has one job, its worker fetching its own logs and taking its own signs and posters out, and hovering a roster says what the job does or why it is stuck (test/after-roster.test.mjs).
 - Heaven's gates stand left of the house, appear only once it is smashed, swing open smoothly, and show the pointer when they can be clicked (test/acts-travel.test.mjs).
 - The rise into heaven rides up with them: one shot from the ruined house up the road through the clouds to the cloud floor, about eight seconds (test/shot.test.mjs).

@@ -4,8 +4,8 @@
 // A's line (docs/mocks/act3-place-2026-10-18, "the billow edge"): puffs one
 // or two cells high stepped on the grid and pressed flat under every station
 // (after/place.js, `floorProfile`), so it stands where the sim stands it.
-// Under it paper, GROUND_PATH.depth cells down to the path's near edge, where
-// the cloud the path rides on laps up over it (render/after/cloudsky.js).
+// Under it paper, GROUND_PATH.depth cells down; its front is a lip of
+// billows drawn over the members' feet (render/after/ground.js).
 // Each convex corner of a puff is cut by one 2 px step. The path is static:
 // nothing on it moves but what is built on it.
 
@@ -16,7 +16,7 @@ import { afterX0, afterFloor, groundOf, floorProfile, notchX, crowdLip, sitesKey
 import { ctx } from '../ctx.js';
 import { fillOnPixels } from '../frame.js';
 import { K, W, PALE, MID, now, clamp01 } from './kit.js';
-import { putAfterCloud, pathTone } from './cloudsky.js';
+import { pathTone } from './cloudsky.js';
 
 // Every fill on whole device pixels, so a thin line never blends into a
 // tone between the four.
@@ -59,9 +59,6 @@ export function drawFloor() {
   // there once the saw mill's ground is taken.
   const n0 = sited('mill') ? Math.round((notchX() - afterX0()) / P) : -9, inNotch = j => j >= n0 && j < n0 + 2;
   edge(el, j0, j1, afterX0(), top, MID, true, bot, j => inNotch(j) || moving(j) || moving(j - 1));
-  // the path's near edge, lapped from under it by the cloud the path rides
-  // on (render/after/cloudsky.js): the path itself stays clear
-  putAfterCloud('edge');
   if (f < 1) {
     const g = ctx.globalAlpha, near = j => !(moving(j) || moving(j - 1)) || inNotch(j);
     ctx.globalAlpha = g * f; edge(el, j0, j1, afterX0(), top, MID, false, bot, near);

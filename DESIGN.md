@@ -23236,3 +23236,12 @@ bit").
   is the ground under it, a body walking along keeps its feet on it
   (`floorAt`, joined straight between column middles so the climb is
   smooth), and the pair's legs up there ride it too (ghosts.js).
+- **The path's front is a lip of billows** (the owner, 2026-10-22: "a little
+  cloud edge that comes up off the path a bit in the front, to paint cloud
+  billows. insetad of the foreground drawn clouds"; mock A, the low lip,
+  voted over a taller bank and a whole hanging cloud). Overlapping round
+  billows stand just in front of the path, following its shelves and ramps,
+  lit along each crest and pale through the body, drawn after the members
+  so feet and station feet tuck behind them (render/after/ground.js,
+  AFTER_LIP). The ground clouds that lapped the path's edge and rolled
+  below it are gone from the cloud renderer; below the lip is the page.

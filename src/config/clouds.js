@@ -376,14 +376,6 @@ export const CLOUDS_SEA = {
 //          still reads in perspective. In cells, so a cloud's height does not
 //          move when the window is resized. A cloud is cut flat at its base,
 //          so however it swells or flows it never hangs below its lane.
-//   edge   small billows lapping the path's near edge from under it, their
-//          tops `lap` cells up over the edge, `rows` rows of billows `R`
-//          cells at the nearest, each row at its `depths` for its tones
-//          (CLOUDS_DEPTH_BANDS): the path itself stays clear
-//   fore   big billows rolling below the path, `down` cells under its near
-//          edge, faster than the camera, solid to the bottom of the window
-//   crest  a ground layer is placed by the row its tallest billows reach:
-//          all but this share of its back row's tops stop under it
 //   path   the path's surface by night: the cloud palette's role it is
 //          drawn in (by day it is the paper)
 //   pad    a layer wraps at the act's width as it slides past at its rate,
@@ -391,8 +383,6 @@ export const CLOUDS_SEA = {
 //          in one pan
 //   seed   the act's clouds' seed
 export const CLOUDS_ACT3 = {
-  seed: 7, crest: 0.15, pad: 900, path: { dark: 'haze' },
-  sky: { rows: 120, rate: 0.4, lanes: [null, [31, 34], [29, 32], [26, 30], [22, 27]] },
-  edge: { rate: 1, lap: 1, R: 5, rows: 2, depths: [0.9, 1] },
-  fore: { rate: 1.3, down: 1, R: 13, rows: 6, depths: [0.3, 0.45, 0.6, 0.75, 0.9, 1] }
+  seed: 7, pad: 900, path: { dark: 'haze' },
+  sky: { rows: 120, rate: 0.4, lanes: [null, [31, 34], [29, 32], [26, 30], [22, 27]] }
 };

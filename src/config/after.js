@@ -49,6 +49,12 @@ export const AFTER_PUFF_LEAST = 4;        // cells: a run of billow narrower tha
 // eased ramp of cloud between two shelves at different heights. The grove,
 // the pedestal and God's crowd stand on the line itself; the sawdust heap
 // and its notch are the chipper's.
+// The lip of billows along the path's front (render/after/ground.js; the
+// owner, 2026-10-22, mock A): billows of radius r cells, as tall as `round`
+// of that, `step` of a diameter apart so they overlap; their foot `drop`
+// cells under the path's edge, a lit crest `crest` cells deep, the body
+// hanging `hang` cells and a half-height billow more under that.
+export const AFTER_LIP = { seed: 17, r: [5, 8], round: 0.45, step: 0.8, drop: 2, crest: 2, hang: 2 };
 export const AFTER_SHELF = { forestry: 0, mill: 3, chipper: 5, papermill: 2, workshop: 6, press: 3, shack: 2, pedestal: 0 };
 
 // --- the click: the pair's speech, and rebel ------------------------------------

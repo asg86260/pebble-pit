@@ -67,6 +67,7 @@ import { drawActsYard, drawActsDeep, drawActsAfter, drawActsHell, drawActBodies,
 import { drawMansion } from './render/mansion.js';
 import { drawRoadSky, roadUp } from './render/road.js';
 import { drawAfterBackdrop, drawAfterGrove, drawAfterCamp, drawAfterMembers, drawAfterSky, drawAfterCounts, drawAfterRoster } from './render/after.js';
+import { drawFrontLip } from './render/after/ground.js';
 import { drawAfterCrowd, drawSkyCrowd } from './render/aftercrowd.js';
 import { drawAfterCues } from './render/aftercues.js';
 import { drawAfterCoins } from './render/aftercoins.js';
@@ -226,6 +227,7 @@ const LAYERS = [
   { name: 'after crowd', in: 'after', draw: drawAfterCrowd },
   { name: 'after sight', in: 'after', draw: drawPlaceSight },   // the right button held: the camp behind its members veiled, each ringed
   { name: 'after members', in: 'after', draw: drawAfterMembers },
+  { name: 'after lip', in: 'after', draw: drawFrontLip },       // the billows along the path's front, over the members' feet (render/after/ground.js)
   { name: 'after roster', in: 'after', draw: drawAfterRoster },   // who is on each job, under its station, on the yard's roster
   { name: 'after coins', in: 'after', draw: drawAfterCoins },  // the yard's coins out of the thin patch to the station bought (render/aftercoins.js)
   { name: 'after cues', in: 'after', draw: drawAfterCues },     // the hand work's ghost hands, gauges and crit marks (render/aftercues.js)
