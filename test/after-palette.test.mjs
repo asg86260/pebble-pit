@@ -64,6 +64,11 @@ function keeper(seen, where) {
           for (let i = 0; i < d.length; i += 4) if (d[i + 3]) take(toHex(d[i], d[i + 1], d[i + 2]));
         };
         if (k === 'measureText') return () => ({ width: 0 });
+        // a fresh sheet's transform and pixels, blank when read back: the
+        // type's own scrap (render/crisptext.js) and the sky's still clouds
+        // (render/after/cloudsky.js) read them
+        if (k === 'getTransform') return () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 });
+        if (k === 'getImageData') return (x, y, w, h) => ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4) });
         return k in o ? o[k] : () => ({});
       },
       set: (o, k, v) => { o[k] = v; return true; },

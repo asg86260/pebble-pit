@@ -18,7 +18,13 @@ const MIGRATIONS = fileURLToPath(new URL('../migrations/', import.meta.url));
 const SCHEMA = readdirSync(MIGRATIONS).filter(f => f.endsWith('.sql')).sort()
   .map(f => readFileSync(join(MIGRATIONS, f), 'utf8')).join(';\n');
 
-const plain = v => (v instanceof ArrayBuffer ? new Uint8Array(v) : v);
+// An empty blob as a fresh empty array: node's SQLite binds an array over a
+// zero-length buffer as NULL, which the NOT NULL body of a cleared slot
+// refuses, where D1 stores the empty blob it was given.
+const plain = v => {
+  const u = v instanceof ArrayBuffer ? new Uint8Array(v) : v;
+  return u instanceof Uint8Array && u.byteLength === 0 ? new Uint8Array(0) : u;
+};
 
 export function makeD1() {
   const db = new DatabaseSync(':memory:');
