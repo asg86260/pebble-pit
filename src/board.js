@@ -25,7 +25,7 @@ import { OUTHOUSE_UPGRADES } from './outhouse.js';
 import { shackRows } from './shack.js';
 import { inDeep, deepFloor } from './deep/place.js';
 import { refresh, buildCrew, buildShop, buildBoard, boardMoved,
-         boardReworded, shutOpts, boardList } from './shop.js';
+         boardReworded, shutOpts, followOpts, boardList } from './shop.js';
 import { now } from './clock.js';
 import { shown } from './tween.js';
 import { JOB } from './jobs.js';
@@ -160,6 +160,12 @@ function pinWidth() {
   // so the room is the glass (DESIGN.md, "Boards as bottom sheets").
   const purseW = coarse() ? 0 : purseEl.offsetWidth;
   sheet.style.setProperty('--sheet-room', `${S.W - (purseW ? purseW + panelGap() : 0) - 2 * GAP}px`);
+  // And the height it may take, off the same measured window `place` clamps
+  // it against. The stylesheet's own `dvh` was a second reading of the window
+  // that `place` never saw, so the two could disagree about where the glass
+  // ends -- and a check standing the yard in a smaller window moved one
+  // reading and not the other.
+  sheet.style.setProperty('--sheet-tall', `${S.H - 2 * GAP}px`);
   // A shelf is as many slots wide as its fullest plank or its longest sign,
   // capped. It cannot size itself: `auto-fill` needs a definite width to count
   // against. Signs are measured as a range, not as the box, since a sign's box
@@ -460,6 +466,7 @@ export const openBoard = () => at;
 export function placeBoard() {
   if (!at) return;
   place(panelEl, anchor(at));
+  followOpts();                // a list dropped off a dial goes where its board went
 }
 
 // Two readings for the checks. Plain exports rather than `window.__` handles:

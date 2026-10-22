@@ -2,7 +2,7 @@
 // where a board seats itself.
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
-  haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows } from './kit.js';
+  haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows, asScreen } from './kit.js';
 import { TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
 import { offered } from '../stations.js';
 import { handsOf } from '../levels.js';
@@ -937,28 +937,42 @@ export const TESTS = [
     ];
   }],
 
-  // A full bench is taller than the suite's window, as it is than a 1080p
-  // browser's: its last row has to be reachable by scrolling the sheet, not
-  // hanging off the bottom of the glass.
+  // A board taller than the window -- a full bench on a short laptop -- has
+  // its last row reachable by scrolling the sheet, not hanging off the bottom
+  // of the glass. Whether the bench is that tall depends on the window the
+  // suite runs in (686 px fits a 900 one), so the window is stood shorter
+  // than the bench measures, which is the situation this is about on any
+  // screen.
   ['a board taller than the window scrolls to its last row', async () => {
     newRun();
     window.__crew(3, 3, 5, 7);
     window.__grant({ sparks: 9999, shards: 9999, spores: 9999, dust: 90000 });
     window.__board('bench');
     await settle();
-    const sheet = board().closest('.sheet');
-    const r = sheet.getBoundingClientRect();
-    const tall = sheet.scrollHeight > innerHeight;
-    sheet.scrollTop = sheet.scrollHeight;
-    await raf();
-    const last = [...shop().querySelectorAll('[data-key]')].pop().getBoundingClientRect();
-    const cols = [...new Set([...shop().querySelectorAll('[data-key]')]
-      .map(el => Math.round(el.getBoundingClientRect().left)))].length;
+    const holds = board().closest('.sheet').scrollHeight;
+    const out = await asScreen(state().W, Math.round(holds * 3 / 4), devicePixelRatio, async () => {
+      await settle();
+      const H = state().H;
+      const sheet = board().closest('.sheet');
+      const r = sheet.getBoundingClientRect();
+      const tall = sheet.scrollHeight > H;
+      sheet.scrollTop = sheet.scrollHeight;
+      await raf();
+      const last = [...shop().querySelectorAll('[data-key]')].pop().getBoundingClientRect();
+      const cols = [...new Set([...shop().querySelectorAll('[data-key]')]
+        .map(el => Math.round(el.getBoundingClientRect().left)))].length;
+      return { H, tall, r, last, cols, held: sheet.scrollHeight };
+    });
+    const { H, tall, r, last, cols, held } = out;
     window.__board(null);
     return [
       ok(tall, 'the bench holds more than the window has room for',
-         `${sheet.scrollHeight} in ${innerHeight}`),
-      ok(r.top >= 0 && r.bottom <= innerHeight, 'the board stands inside the window', JSON.stringify(r)),
+         `${held} in ${H}`),
+      // The board is seated by its foot from the page's foot (`place`), and
+      // the stood-in window only tells the game its height, so the glass it
+      // stands in is the bottom H of the real one.
+      ok(r.top >= innerHeight - H && r.bottom <= innerHeight, 'the board stands inside the window',
+         `${Math.round(r.top)}..${Math.round(r.bottom)} in ${innerHeight - H}..${innerHeight}`),
       ok(last.top >= r.top && last.bottom <= r.bottom, 'and its last row scrolls into view',
          `${Math.round(last.top)}..${Math.round(last.bottom)} in ${Math.round(r.top)}..${Math.round(r.bottom)}`),
       // the scrollbar comes out of the words' width unless it is given back

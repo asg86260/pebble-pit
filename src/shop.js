@@ -146,11 +146,34 @@ export function openOptsAt(r, opts, row = null, align = 'right') {
   opts.style.top = `${Math.round(top)}px`;
   opts.style.left = `${Math.round(left)}px`;
   row?.classList.add('open');
-  openList = { row, opts };
+  openList = { row, opts, by: null, at: null };
 }
 
-const showOpts = (row, chosen, opts) =>
-  openOptsAt(chosen.getBoundingClientRect(), opts, row);
+// A board's list remembers the control it hangs from and where that stood:
+// the board is still gliding to its station when a quick hand opens a dial,
+// and a list seated once in window space was left standing where the control
+// had been, a gap or an overlap between two halves of one piece of paper.
+const showOpts = (row, chosen, opts) => {
+  const r = chosen.getBoundingClientRect();
+  openOptsAt(r, opts, row);
+  openList.by = chosen;
+  openList.at = r;
+};
+
+// Every frame the board is seated (board.js, `placeBoard`): an open list whose
+// control has moved is seated again under it. Nothing is written while it
+// holds still. The pot's picker has no control to follow (potpick.js seats it
+// itself), so it is left alone.
+export function followOpts() {
+  if (!openList?.by) return;
+  const r = openList.by.getBoundingClientRect();
+  const was = openList.at;
+  if (r.left === was.left && r.top === was.top && r.width === was.width && r.height === was.height) return;
+  const { row, by } = openList;
+  openOptsAt(r, openList.opts, row);
+  openList.by = by;
+  openList.at = r;
+}
 
 // A press anywhere else puts it away. `pointerdown` rather than `click` so it
 // is shut before whatever was pressed acts on it.
