@@ -34,7 +34,7 @@ import { stepCrew } from '../placebodies.js';
 import { haulCap } from '../levels.js';
 import { deepAt } from './sky.js';
 import { built, stumpsOn, seatsOf } from './levels.js';
-import { afterX0, afterX1, afterFloor, stationDoor, stationBox, signFetchX, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
+import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, settled, takeGroundLog } from './grove.js';
 import { sweepDue, tipSawdust, vatOf } from './mill.js';
@@ -47,22 +47,30 @@ const floorY = () => afterFloor();
 // screen, so a body goes up into them only over the crowd, and anything off
 // the floor elsewhere (the pedestal's top) is climbed straight up to and
 // down from. Off the floor where it should not be, it comes down first.
-// True once there.
+// The floor rises and falls (after/place.js, `floorAt`), so a spot asked
+// for on its line is the ground under it, and a body walking along keeps
+// its feet on the ground. True once there.
+function along(w, tx, dt) {
+  const there = walk(w, tx, w.y, dt);
+  w.y = floorAt(w.x);
+  return there;
+}
 function go(w, tx, ty, dt) {
-  const fl = floorY(), onFloor = Math.abs(w.y - fl) < 0.5, toFloor = Math.abs(ty - fl) < 0.5;
-  if (onFloor && toFloor) return walk(w, tx, ty, dt);
-  if (overCrowd(w.x) && overCrowd(tx)) return walk(w, tx, ty, dt);
+  const toFloor = Math.abs(ty - floorY()) < 0.5, gy = toFloor ? floorAt(tx) : ty;
+  const onFloor = Math.abs(w.y - floorAt(w.x)) < 0.5;
+  if (onFloor && toFloor) return along(w, tx, dt);
+  if (overCrowd(w.x) && overCrowd(tx)) return walk(w, tx, gy, dt);
   if (!onFloor) {
     // In the crowd's rows bound out of them, or up on the pedestal bound
     // elsewhere: straight down to the floor.
-    if (Math.abs(w.x - tx) < 0.5) return walk(w, tx, ty, dt);
-    walk(w, w.x, fl, dt);
+    if (Math.abs(w.x - tx) < 0.5) return walk(w, tx, gy, dt);
+    walk(w, w.x, floorAt(w.x), dt);
     return false;
   }
   // On the floor, bound up: along it to the crowd's edge or to under the spot.
   const ex = overCrowd(tx) ? crowdEdge(w.x) : tx;
-  if (Math.abs(w.x - ex) >= 0.5) { walk(w, ex, fl, dt); return false; }
-  return walk(w, tx, ty, dt);
+  if (Math.abs(w.x - ex) >= 0.5) { along(w, ex, dt); return false; }
+  return walk(w, tx, gy, dt);
 }
 // Where a member waits for work at its post: its station's door, or the
 // grove's edge.
@@ -527,7 +535,7 @@ export const AFTER_CREW = {
     && !(w.at && atStation(w.at)[0] === w),
   hold(w, x, y) { w.x = x; w.y = y + BODY_H / 2; },
   lifted(w) { w.at = null; },
-  land: w => ({ y: floorY(), x0: afterX0() + P, x1: afterX1() - P * 2 }),
+  land: w => ({ y: floorAt(w.x), x0: afterX0() + P, x1: afterX1() - P * 2 }),
   landed() {}
 };
 

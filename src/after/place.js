@@ -14,7 +14,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, UNION_CROWD, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
-         AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL, AFTER_ART_SCALE, AFTER_IDLE_STEP,
+         AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, AFTER_SWELL_W, AFTER_SWELL_RUN, AFTER_SWELL_TOP, ACT_GATES_CELL, AFTER_ART_SCALE, AFTER_IDLE_STEP,
          AFTER_SIGN_BOARD } from '../config.js';
 
 import { S } from '../state.js';
@@ -212,15 +212,14 @@ export const stairFoot = () => AFTER_STAIR_X - AFTER_STAIR_W;
 export const throneAt = () => ({ x: AFTER_STAIR_X, y: afterFloor() - AFTER_STAIR_RISE });
 
 // --- the cloud floor's billow (floor A) -----------------------------------------------
-// A cell column's height over the floor line, in cells: puffs a few cells
-// wide, one or two cells high, their edges a step lower than their middles,
-// butting so the valleys are where their low edges meet. Pressed flat only
-// where something built stands on the line -- a station's drawing, its piles
-// and its door, the heap and the notch, a tree's foot, the pillar's pile,
-// the stair -- so it stands where the sim stands it. Everywhere else
-// billows, God's crowd's front row on the puffs too (render/aftercrowd.js),
-// and a body walks up and over them (`floorAt`). Worked out again only when
-// a station is ordered.
+// A cell column's height over the floor line, in cells. Pressed flat where
+// something built stands on the line -- a station's drawing, its piles and
+// its door, the heap and the notch, a tree's foot, the pillar's pile, the
+// stair -- so it stands where the sim stands it. Between those, rolling
+// swells (`swell`); under God's crowd, puffs a few cells wide and one or two
+// high (`billow`), its front row standing on them (render/aftercrowd.js).
+// A body walks up and over both (`floorAt`). Worked out again only when a
+// station is ordered.
 const hsh = (a, b = 0, c = 0) => {
   let h = (a * 374761393 + b * 668265263 + c * 2246822519) | 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296;
@@ -235,6 +234,18 @@ export function billow(cols, seed, maxK = 2, big = AFTER_BILLOW_BIG) {
     c += n - 1; i++;                     // the next puff overlaps this one's last cell
   }
   return el;
+}
+// A run of open floor, columns j..k, risen in long low hills: about
+// AFTER_SWELL_W cells a hill, a cell high for every AFTER_SWELL_RUN of its
+// width up to AFTER_SWELL_TOP, each a little lower or higher off the seed so
+// no two read alike, and eased to the line at both ends. A run too short to
+// rise a cell stays flat.
+function swell(el, j, k) {
+  const n = k - j, hills = Math.max(1, Math.round(n / AFTER_SWELL_W)), w = n / hills;
+  for (let h = 0; h < hills; h++) {
+    const top = Math.min(AFTER_SWELL_TOP, w / AFTER_SWELL_RUN) * (0.6 + 0.4 * hsh(AFTER_BILLOW_SEED, j, h));
+    for (let q = Math.round(j + h * w); q < Math.round(j + (h + 1) * w); q++) el[q] = Math.round(top * Math.sin(Math.PI * (q + 0.5 - j - h * w) / w));
+  }
 }
 // God's crowd's columns, [from, to) in cells: where its lip is drawn.
 export const crowdLip = () => [Math.round((CROWD_X0 - CROWD_PITCH - afterX0()) / P), Math.round((CROWD_X0 + (CROWD_FILES + 1) * CROWD_PITCH - afterX0()) / P)];
@@ -286,25 +297,28 @@ export function floorProfile() {
   const key = sitesKey();
   if (profile && key === profileKey) return profile;
   profileKey = key;
-  const cols = Math.ceil(AFTER_W / P);
-  profile = billow(cols, AFTER_BILLOW_SEED);
-  for (const [a, b] of floorFlats()) for (let j = Math.max(0, a); j < Math.min(cols, b); j++) profile[j] = 0;
-  // A gap between two flats too narrow for a puff would stand a lone post
-  // of cloud: pressed flat too.
+  const cols = Math.ceil(AFTER_W / P), flat = new Uint8Array(cols);
+  for (const [a, b] of floorFlats()) flat.fill(1, Math.max(0, a), Math.min(cols, b));
+  const [l0, l1] = crowdLip(), puffs = billow(cols, AFTER_BILLOW_SEED);
+  profile = new Array(cols).fill(0);
   for (let j = 0; j < cols;) {
-    if (!profile[j]) { j++; continue; }
+    if (flat[j]) { j++; continue; }
     let k = j;
-    while (k < cols && profile[k]) k++;
-    if (k - j < AFTER_PUFF_LEAST) profile.fill(0, j, k);
+    while (k < cols && !flat[k]) k++;
+    // A gap between two flats too narrow for a puff would stand a lone post
+    // of cloud: left flat.
+    if (j < l0 || k > l1) swell(profile, j, k);
+    else if (k - j >= AFTER_PUFF_LEAST) for (let q = j; q < k; q++) profile[q] = puffs[q];
     j = k;
   }
   return profile;
 }
-// The floor's top under a body standing with its middle at world x: the
-// highest cell under its three columns, so its feet land on the puff.
+// The floor's top under world x, where a body standing there has its feet:
+// the columns' heights joined straight between their middles, so a body
+// walking a swell rises and falls with it rather than a cell at a time.
 export const floorAt = x => {
-  const el = floorProfile(), j = Math.floor((x - afterX0()) / P);
-  return afterFloor() - Math.max(el[j - 1] || 0, el[j] || 0, el[j + 1] || 0) * P;
+  const el = floorProfile(), u = (x - afterX0()) / P - 0.5, j = Math.floor(u), f = u - j;
+  return afterFloor() - ((el[j] || 0) * (1 - f) + (el[j + 1] || 0) * f) * P;
 };
 
 // --- the pine, as drawn ------------------------------------------------------------

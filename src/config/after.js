@@ -43,6 +43,12 @@ export const AFTER_FLOOR_MARGIN = P * 9;   // the cloud floor stands this far up
 export const AFTER_BILLOW_SEED = 3;        // which run of puffs (the mock's layout strip)
 export const AFTER_BILLOW_BIG = 0.55;      // the share of puffs two cells high, the rest one
 export const AFTER_PUFF_LEAST = 4;        // cells: a run of billow narrower than this between two flats is pressed flat too
+// Rolling swells (the owner, 2026-10-22, voted off the path mock): the open
+// floor between the flats rises in long low hills, the puffs above kept
+// only under God's crowd, whose front row's lip is drawn off them.
+export const AFTER_SWELL_W = 36;          // cells: about this wide a hill; a longer run holds more than one
+export const AFTER_SWELL_RUN = 3;         // cells of a hill's width to each cell of its height: about a cell up a cell across at its steepest
+export const AFTER_SWELL_TOP = 6;         // cells: the tallest a hill stands
 
 // --- the click: the pair's speech, and rebel ------------------------------------
 // The act's coin is rebel (the owner, 2026-10-18; a working name, the label
