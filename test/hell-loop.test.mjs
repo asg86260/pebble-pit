@@ -5,7 +5,7 @@
 // coins in the store, a tool already made -- by `__hell`. Every group runs
 // under the reload harness, so the act's save is asked every five seconds
 // of every one.
-import { group, ok, run, runUntil, yard } from './helpers.mjs';
+import { bestMs, group, ok, run, runUntil, yard } from './helpers.mjs';
 import { HELL_TIERS, BARRIER_BLOWS, LUMP_BLOWS, ORE_A_BAR, TOOL_RECIPES } from '../src/config.js';
 const { cellsDown } = await import('../src/hell/barriers.js');
 
@@ -213,12 +213,7 @@ group('a full hell costs a small share of a frame', async () => {
   run(90);
   const bodies = S.hell.bodies.length;
   const c = { now: 0, dt: 1000 / 60 };
-  let best = Infinity;
-  for (let pass = 0; pass < 3; pass++) {
-    const t0 = performance.now();
-    for (let k = 0; k < 600; k++) stepHell(c);
-    best = Math.min(best, (performance.now() - t0) / 600);
-  }
+  const best = bestMs(() => stepHell(c), 600);
   end();
   return [
     ok(bodies === 14, 'the full muster is down', `${bodies}`),

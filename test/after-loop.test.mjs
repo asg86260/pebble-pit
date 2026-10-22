@@ -6,7 +6,7 @@
 // not about goes through the act's hooks: coins granted, the crowd's rims set
 // (`__afterCrowd`), the dev travel up (`__goPlace`) with the act's opening
 // beats marked played, since the story before the loop is not what is checked.
-import { group, ok, run, runUntil, yard, P } from './helpers.mjs';
+import { bestMs, group, ok, run, runUntil, yard, P } from './helpers.mjs';
 import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
          ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_PODIUM_REBEL, AFTER_PODIUM_CLIMB, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_PLOTS0, AFTER_PLOT_MAX,
          AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL, AFTER_AGITATE_S,
@@ -513,10 +513,7 @@ group('a big crowd costs the frame little, and only its files in view are drawn'
   const n = 24000;
   S.after.rims = '1'.repeat(n);
   run(1);
-  const t0 = performance.now();
-  const FR = 600;
-  for (let k = 0; k < FR; k++) stepAfter({ now: 0, dt: 1000 / 60 });
-  const ms = (performance.now() - t0) / FR;
+  const ms = bestMs(() => stepAfter({ now: 0, dt: 1000 / 60 }), 600);
   const span = crowdSpan();
   const files = span.f1 - span.f0 + 1;
   // The far field stops at the view's top: the ranks drawn are those whose row

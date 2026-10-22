@@ -6,7 +6,7 @@
 // picture, so what is checked is what a picture costs and what it is drawn
 // from. The crowd's shape is set through the act's rims (a slot set to 9 is
 // a member already gone, with no walk), the setup these checks are not about.
-import { group, ok, run, yard } from './helpers.mjs';
+import { bestMs, group, ok, run, yard } from './helpers.mjs';
 import { STRIKE_SHARE, GOD_RATE, GOD_STAGE, CROWD_X0, CROWD_PITCH, P, UNION_CROWD } from '../src/config.js';
 import { afterFloor, afterOpenX, soulX, soulY, unionX1, campEdges, podiumMid, unionHalf } from '../src/after/place.js';
 // The window's middle at the camera's last window: God in it.
@@ -62,17 +62,22 @@ group('a crowd of any size costs the frame the same bounded fills', async () => 
   ];
 });
 
-group('a 24,000-soul crowd steps and draws in a couple of milliseconds a frame', async () => {
+// Timed against a crowd a twentieth the size on the same machine: the claim is
+// that a soul costs the frame nothing, and a runner's speed is not the code's.
+group('a 24,000-soul crowd steps and draws as fast as a crowd of 1,200', async () => {
   up();
-  crowd(24000, i => (i % 9 === 0 ? 9 : i % 4 === 0 ? 1 : 0));
   lookAt(afterEnd());
-  run(1); draw();
-  const FR = 300;
-  const t0 = performance.now();
-  for (let k = 0; k < FR; k++) { stepAfter({ now: 0, dt: 1000 / 60 }); draw(); }
-  const ms = (performance.now() - t0) / FR;
+  const frame = n => {
+    crowd(n, i => (i % 9 === 0 ? 9 : i % 4 === 0 ? 1 : 0));
+    run(1); draw();
+    return bestMs(() => { stepAfter({ now: 0, dt: 1000 / 60 }); draw(); });
+  };
+  const small = frame(1200), big = frame(24000);
   window.__actsOn(null);
-  return [ok(ms < 2, 'the afterlife\'s step and the whole sky\'s drawing with 24000 souls stay within two milliseconds a frame', `${ms.toFixed(3)} ms`)];
+  return [
+    ok(big < small * 1.5 + 0.1, 'the step and the whole sky\'s drawing cost no more with 24000 souls', `${small.toFixed(3)} -> ${big.toFixed(3)} ms`),
+    ok(big < 8, 'and a frame stays a few milliseconds', `${big.toFixed(3)} ms`)
+  ];
 });
 
 // God's crowd empties from the front as support rises (DESIGN.md, "God's
