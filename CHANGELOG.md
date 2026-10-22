@@ -202,6 +202,9 @@ this section; the release that switches it on moves these under Unreleased.
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 
 - In a narrow window a board uses the whole width under the purse instead of squeezing into a sliver beside where the purse would be, so its cards keep their words inside them and several tiles share a plank (src/selftest/boards.js, "no row on any board sits on top of itself").
+- In a narrow window a board stands where it really is, its width under the purse rather than beside it, so it no longer opens off to one side of where it is drawn (src/selftest/house.js, "a board that changes under you is seated by its new size").
+- In a narrow window a board taller than the window scrolls inside it instead of running past its foot by the height of the purse (src/selftest/boards.js, "a board taller than the window scrolls to its last row").
+- A sheet going away no longer catches the click meant for what it uncovers, so the call to build the bench works the moment the pause sheet is shut (src/selftest/input.js, "the board does not shut on the way to it"; src/selftest/boards.js, "shop opens at the bench and is not buried").
 - The tick and the glyph over a station that finished something are crisp at every window size in the deep, instead of a faint seam along their edges on a large window (src/selftest/deeppalette.js).
 - What crosses behind the rift, or the serpent's glimpse, no longer stays up for a frame as the camera leaves for heaven or the deep through a portal (src/verify.js, rules 17 and 18; src/selftest/playcheck.js).
 - A board's list of options, opened while the board is still sliding over to its station, now stays hung under the control that opened it instead of being left behind where the control had been (src/selftest/boards.js).

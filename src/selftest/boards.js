@@ -950,6 +950,14 @@ export const TESTS = [
     window.__board('bench');
     await settle();
     const holds = board().closest('.sheet').scrollHeight;
+    const columns = () => [...new Set([...shop().querySelectorAll('[data-key]')]
+      .map(el => Math.round(el.getBoundingClientRect().left)))].length;
+    // The columns the shelf has with no bar at all, in a window taller than
+    // the bench: how many fit is the window's width, not this check's to guess.
+    const roomy = await asScreen(state().W, holds * 2, devicePixelRatio, async () => {
+      await settle();
+      return columns();
+    });
     const out = await asScreen(state().W, Math.round(holds * 3 / 4), devicePixelRatio, async () => {
       await settle();
       const H = state().H;
@@ -959,8 +967,7 @@ export const TESTS = [
       sheet.scrollTop = sheet.scrollHeight;
       await raf();
       const last = [...shop().querySelectorAll('[data-key]')].pop().getBoundingClientRect();
-      const cols = [...new Set([...shop().querySelectorAll('[data-key]')]
-        .map(el => Math.round(el.getBoundingClientRect().left)))].length;
+      const cols = columns();
       return { H, tall, r, last, cols, held: sheet.scrollHeight };
     });
     const { H, tall, r, last, cols, held } = out;
@@ -976,7 +983,8 @@ export const TESTS = [
       ok(last.top >= r.top && last.bottom <= r.bottom, 'and its last row scrolls into view',
          `${Math.round(last.top)}..${Math.round(last.bottom)} in ${Math.round(r.top)}..${Math.round(r.bottom)}`),
       // the scrollbar comes out of the words' width unless it is given back
-      ok(cols >= 3, 'and the scrollbar costs the shelf no column', `${cols} columns`)
+      ok(cols >= roomy, 'and the scrollbar costs the shelf no column',
+         `${cols} columns, ${roomy} with no bar`)
     ];
   }],
 

@@ -1122,6 +1122,9 @@ body.still #scroller { scroll-behavior: auto; }
    `hidden` alone. */
 #held, #scrim, #modal, #modalwash { opacity: 0; transition: opacity .18s linear; }   /* SHEET_FADE_MS in config/view.js */
 #held.on, #scrim.on, #modal.on, #modalwash.on { opacity: 1; }
+/* A sheet on its way down is already put away: the click meant for what it
+   uncovers goes through it, not into its last frames. */
+#held:not(.on), #scrim:not(.on), #modal:not(.on), #modalwash:not(.on) { pointer-events: none; }
 body.still #modal, body.still #modalwash { transition: none; }
 /* A page turned, on the sheet or the landing page's column, comes in as a
    short fade: an element going from hidden to shown restarts its animation,
@@ -2173,8 +2176,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
     /* The ceiling is the glass, less the panel's margins. */
     max-width: var(--sheet-w);
     /* in landscape there may be less room above the bench than the board wants:
-       it scrolls inside itself rather than running off the top */
-    max-height: calc(100dvh - 16px);
+       it scrolls inside itself rather than running off the top, under the
+       same height board.js measured the window by (`--sheet-tall`) */
+    max-height: var(--sheet-tall, calc(100dvh - 16px));
     overflow-y: auto;
   }
   /* The same air between cards as on a desk. It was a single pixel between

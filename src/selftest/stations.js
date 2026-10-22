@@ -170,9 +170,11 @@ export const TESTS = [
     const shown = [...purse.querySelectorAll('.coin b')].map(b => b.textContent);
     const s = state();
 
-    // beside the board, and on the left of it
+    // beside the board, and on the left of it -- or, where the window is too
+    // narrow for a column beside it, along its top (style.css's phone rule)
     const box = purse.getBoundingClientRect();
     const sheet = document.querySelector('.panel .sheet').getBoundingClientRect();
+    const stacked = getComputedStyle(purse.parentElement).flexDirection.startsWith('column');
     await hoverAway();
     return [
       ok(early.join(',') === want.join(','),
@@ -182,8 +184,11 @@ export const TESTS = [
          'and one you have appears', later.join(',')),
       ok(shown[0] === fmt(s.stored), 'the numbers are what you actually hold',
          `${shown[0]} vs ${s.stored}`),
-      ok(box.right <= sheet.left + 1, 'it floats off the left of the board',
-         `purse ends ${Math.round(box.right)}, board starts ${Math.round(sheet.left)}`),
+      stacked
+        ? ok(box.bottom <= sheet.top + 1, 'it lies along the top of the board',
+             `purse ends ${Math.round(box.bottom)}, board starts ${Math.round(sheet.top)}`)
+        : ok(box.right <= sheet.left + 1, 'it floats off the left of the board',
+             `purse ends ${Math.round(box.right)}, board starts ${Math.round(sheet.left)}`),
       ok(box.width > 0 && box.height > 0, 'and it is actually on screen',
          `${Math.round(box.width)}x${Math.round(box.height)}`)
     ];
