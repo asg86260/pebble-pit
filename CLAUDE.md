@@ -348,6 +348,13 @@ work up front; do not survey every option.
   (PLAYWRIGHT_BROWSERS_PATH, else playwright's cache) and starts it itself;
   `look.mjs` and `headless.mjs` need only a dev server up. No environment
   shims, no browser started by hand.
+- **The Playwright MCP (`.mcp.json`, tools/playwright-mcp.mjs) is for playing
+  the game the way a player does**: open `http://localhost:5184/play.html`,
+  click through a board, a menu or a first-run page, read the accessibility
+  tree, and see what a real pointer gets. It is not the way to stand up a
+  scene (that is `look.mjs`, faster and repeatable) or to check anything (a
+  check belongs in a test tier). Shots go in `.playwright-mcp/`, ignored; a
+  bare filename lands in the working directory, so give it that folder.
 - **Your own worktree, always.** Never enter or `cd` into an existing worktree
   another agent created. If cwd is already under `.claude/worktrees/` but the
   tree holds uncommitted changes you did not make, do not build on it — say so
