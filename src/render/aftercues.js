@@ -21,7 +21,7 @@ import { msg, FACE } from '../lang.js';
 import { smoothstep, lerp } from '../motion.js';
 import { crispText } from './crisptext.js';
 import { gestureView, partsOf, lowestBubble, groveIcons, HANDWORK_KEYS } from '../after/gestures.js';
-import { stationParts, stationBox, afterFloor } from '../after/place.js';
+import { stationParts, stationBox, groundOf } from '../after/place.js';
 import { drawGroveIcons } from './after/pine.js';
 import { grips } from './after/stations.js';
 import { K, W, PALE, MID, FOUR } from './after/kit.js';
@@ -92,7 +92,7 @@ const mid = b => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
 function drawLoad(ld, t) {
   const edge = stationParts('heap').edge;
   let x = ld.x, y = ld.y, a = 1;
-  if (ld.mode === 'gone') { x = edge; y = afterFloor() + (t - ld.at) * P * 12; a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S); }
+  if (ld.mode === 'gone') { x = edge; y = groundOf('chipper') + (t - ld.at) * P * 12; a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S); }
   else if (ld.mode === 'back') a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S);
   ctx.globalAlpha = a;
   for (let k = 0; k < Math.min(4, ld.n * 2); k++) cell(x + (k % 2) * P, y - Math.floor(k / 2) * P, k % 3 ? PALE : MID);
@@ -235,7 +235,7 @@ function unitOf(key, r, t) {
 }
 const TAG_TONES = FOUR.map(i => GREY[i]);
 function drawStrip(key, r, u) {
-  const b = stationBox(key), y = afterFloor() + HANDWORK_STRIP_DROP, H = HANDWORK_STRIP_H;
+  const b = stationBox(key), y = groundOf(key) + HANDWORK_STRIP_DROP, H = HANDWORK_STRIP_H;
   ctx.globalAlpha = r.stripA;
   ctx.fillStyle = GREY[W]; ctx.fillRect(b.x - P, y - P, b.w + P * 2, H + P * 2);
   const sw = Math.floor((b.w - (u.of - 1) * P) / u.of / P) * P, x0 = b.x + Math.floor((b.w - (u.of * sw + (u.of - 1) * P)) / 2 / P) * P;

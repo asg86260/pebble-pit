@@ -43,12 +43,13 @@ export const AFTER_FLOOR_MARGIN = P * 9;   // the cloud floor stands this far up
 export const AFTER_BILLOW_SEED = 3;        // which run of puffs (the mock's layout strip)
 export const AFTER_BILLOW_BIG = 0.55;      // the share of puffs two cells high, the rest one
 export const AFTER_PUFF_LEAST = 4;        // cells: a run of billow narrower than this between two flats is pressed flat too
-// Rolling swells (the owner, 2026-10-22, voted off the path mock): the open
-// floor between the flats rises in long low hills, the puffs above kept
-// only under God's crowd, whose front row's lip is drawn off them.
-export const AFTER_SWELL_W = 36;          // cells: about this wide a hill; a longer run holds more than one
-export const AFTER_SWELL_RUN = 3;         // cells of a hill's width to each cell of its height: about a cell up a cell across at its steepest
-export const AFTER_SWELL_TOP = 6;         // cells: the tallest a hill stands
+// Shelves of cloud (the owner, 2026-10-22: the rolling swells tried and
+// dropped, "i dont want the hills to go up then down"): each station's whole
+// ground raised this many cells off the floor line, its own shelf, and an
+// eased ramp of cloud between two shelves at different heights. The grove,
+// the pedestal and God's crowd stand on the line itself; the sawdust heap
+// and its notch are the chipper's.
+export const AFTER_SHELF = { forestry: 0, mill: 3, chipper: 5, papermill: 2, workshop: 6, press: 3, shack: 2, pedestal: 0 };
 
 // --- the click: the pair's speech, and rebel ------------------------------------
 // The act's coin is rebel (the owner, 2026-10-18; a working name, the label
@@ -146,11 +147,12 @@ export const AFTER_COUNT_PAD = 2;
 // grounds (the owner, 2026-10-20: "a bit closer together", then "too far
 // apart ... and inconsistently placed": six, the grove's end to the
 // forestry shack the same; ten once each stood a shop sign at its end,
-// 2026-10-21, "they run together a bit"; each ground running from its first
+// 2026-10-21, "they run together a bit"; sixteen for room to ramp between
+// the shelves, 2026-10-22, "lets space em a part a bit"; each ground running from its first
 // drawn column to its last, after/art.js). Each is the
 // left edge of its ground in cells off the place's left (`at`); its piles
 // and its drawing are laid off that.
-export const AFTER_STATION_GAP = 10;
+export const AFTER_STATION_GAP = 16;
 const CAMP = campLayout(GROVE_END, AFTER_STATION_GAP, AFTER_ART_SCALE);
 // The level's three zones (DESIGN.md, "The level, the two crowds and the
 // flags"): the workshops -- the grove and every station but the pedestal --

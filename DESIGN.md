@@ -23213,23 +23213,26 @@ unchanged (the recruit row, above).
   reaches timber with no further assignment beyond what it already has
   plus one woodcutter.
 
-### Act 3: the path rolls (built; the owner, 2026-10-22)
+### Act 3: shelves of cloud (built; the owner, 2026-10-22)
 
 The owner, looking at the path with the clouds cleared away: "lets add some
 rise and fall to give the path a bit more variety. it should appear like
-its on a cloud." Voted off four mocks (rolling swells, a billow top, a shelf
-a station, a level path over a billowing underside): **rolling swells**.
+its on a cloud." Voted off four mocks; rolling swells were built first and
+dropped ("i dont want the hills to go up then down"); then **shelves of
+cloud**, with the stations spaced further apart ("lets space em a part a
+bit").
 
-- The open floor between the flats rises in long low hills, eased to the
-  line at both ends (`swell`, after/place.js; AFTER_SWELL_*). Everything
-  built still stands on flat ground: the flats are unchanged.
-- God's crowd keeps its one- and two-cell puffs, since its front row's lip
-  is drawn off them.
+- Each station's whole ground stands on its own shelf, AFTER_SHELF cells off
+  the floor line: its drawing, piles, door, sign and roster all read
+  `groundOf(key)` (after/place.js). The sawdust heap and its notch are the
+  chipper's. The grove, the pedestal, God's crowd and the stair stay on the
+  line itself.
+- Between two flats at different heights, an eased ramp of cloud across the
+  open floor; between two at the same height, flat. No hills.
+- AFTER_STATION_GAP widened from ten art cells to sixteen, so every two
+  stations have open floor for a ramp; with the old gap two grounds met and
+  the shelf dropped as a sheer step.
 - Every body walks the ground, not the line: a spot asked for on the floor
   is the ground under it, a body walking along keeps its feet on it
   (`floorAt`, joined straight between column middles so the climb is
   smooth), and the pair's legs up there ride it too (ghosts.js).
-- The swells are only as big as the gaps the camp leaves: most of the floor
-  is a station, its piles, its door or its sign, so the hills stand where
-  the camp is open (before the grove, between stations). Bigger hills would
-  need wider gaps between stations.

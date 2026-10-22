@@ -12,7 +12,7 @@
 import { P, GREY, AFTER_BUILD_FADE_S, GROUND_PATH } from '../../config.js';
 import { darkPage } from '../../ink.js';
 import { S } from '../../state.js';
-import { afterX0, afterFloor, floorProfile, notchX, crowdLip, sitesKey, sited } from '../../after/place.js';
+import { afterX0, afterFloor, groundOf, floorProfile, notchX, crowdLip, sitesKey, sited } from '../../after/place.js';
 import { ctx } from '../ctx.js';
 import { fillOnPixels } from '../frame.js';
 import { K, W, PALE, MID, now, clamp01 } from './kit.js';
@@ -71,9 +71,9 @@ export function drawFloor() {
   // The notch's walls: the line turned down a cell, then the cloud's depth in
   // pale steps either side, the gap left white.
   if (!sited('mill')) return;
-  const nx = notchX();
-  fr(nx - 2, top, 2, P + 2, K); fr(nx + 2 * P, top, 2, P + 2, K);
-  for (let r = 1; r < 4; r++) { fr(nx - 2, top + r * P, 2, P, PALE); fr(nx + 2 * P, top + r * P, 2, P, PALE); }
+  const nx = notchX(), nt = groundOf('chipper');
+  fr(nx - 2, nt, 2, P + 2, K); fr(nx + 2 * P, nt, 2, P + 2, K);
+  for (let r = 1; r < 4; r++) { fr(nx - 2, nt + r * P, 2, P, PALE); fr(nx + 2 * P, nt + r * P, 2, P, PALE); }
 }
 
 // The puffs again over God's crowd, drawn after its front row (render/
