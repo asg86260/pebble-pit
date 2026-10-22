@@ -172,6 +172,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The deep no longer hitches every few seconds during a fight (test/deep-alloc.test.mjs).
 - The game no longer stops in the deep when a station's crew climbs a rung (test/reexport-local.test.mjs).
 - The counter in the deep stands at the left edge again and the furnace stands further in, so the card no longer covers it (src/selftest/deep.js).
+- The deep's build button shows up again with a fang held, and an open station's board fills in its tree on its own (src/selftest/deep.js).
 
 ## Unreleased
 
