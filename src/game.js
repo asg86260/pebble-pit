@@ -264,12 +264,6 @@ export const STEPS = [
   // (`swallow` in pit.js): the one thing that empties the hole and leaves the
   // counter where it was.
   { name: 'rift',      step: c => stepRift(c.dt) },
-  // and now and then the serpent showing at the drowned pit's surface: a
-  // picture, stepped here so its rules are the yard's (glimpse.js)
-  { name: 'glimpse',   step: c => stepGlimpse(c.now) },
-  // and before that, while the hole is only torn, what crosses behind the
-  // disc: the same kind of picture, under the same rules (riftlife.js)
-  { name: 'riftlife',  step: c => stepRiftLife(c.now) },
   // The deep, whether or not it is on screen: the serpent heals, the
   // weapons in the water land, the scales sink (docs/wave-serpent.md).
   { name: 'serpent',   step: c => stepSerpent(c) },
@@ -284,6 +278,16 @@ export const STEPS = [
   { name: 'hell',      step: c => stepHell(c) },
   // ...and what joins them: the portals, the pair on the road, the mansion (actbeats.js).
   { name: 'acts',      step: c => stepActs(c) },
+  // And now and then the serpent showing at the drowned pit's surface: a
+  // picture, stepped here so its rules are the yard's (glimpse.js); and
+  // before that, while the hole is only torn, what crosses behind the disc,
+  // the same kind of picture under the same rules (riftlife.js). Both after
+  // the acts, whose portals can start a glide this frame: each lets go of
+  // its picture on the frame a glide begins, not the one after, or the end
+  // of the frame finds it up with the camera leaving (verify.js, rules 17
+  // and 18).
+  { name: 'glimpse',   step: c => stepGlimpse(c.now) },
+  { name: 'riftlife',  step: c => stepRiftLife(c.now) },
   { name: 'smog',      step: c => stepSmog(ambientMs(c.dt)) },       // and the sky, which is filling up
   { name: 'balloons',  step: c => stepBalloons(c.dt) },              // and the craft crossing it
   { name: 'craftair',  step: c => stepCraftAir(c.dt) },   // and the haze they are drawing in

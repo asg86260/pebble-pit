@@ -202,6 +202,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 
 - The tick and the glyph over a station that finished something are crisp at every window size in the deep, instead of a faint seam along their edges on a large window (src/selftest/deeppalette.js).
+- What crosses behind the rift, or the serpent's glimpse, no longer stays up for a frame as the camera leaves for heaven or the deep through a portal (src/verify.js, rules 17 and 18; src/selftest/playcheck.js).
 - A board's list of options, opened while the board is still sliding over to its station, now stays hung under the control that opened it instead of being left behind where the control had been (src/selftest/boards.js).
 - A yard with a big crew in the deep no longer lags: its gatherers stopped re-reading the whole floor and the whole crew every frame (`node tools/node/break-perf.mjs`, test/crusher.test.mjs).
 - A card's long name, its gain and its cancel / another strip are no longer cut short at the card's edge; the board widens to fit them (src/selftest/boardwords.js).
