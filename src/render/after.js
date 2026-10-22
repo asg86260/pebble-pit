@@ -23,7 +23,7 @@ import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { buildPileAt, stationBox, signBox, stationX0, heapMid, notchX, fileAt, rankAtY, afterFloor, ART, AP } from '../after/place.js';
+import { buildPileAt, stationBox, signBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
 import { airMotes } from '../after/rebel.js';
 import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
 import { heapFull, airSpills } from '../after/mill.js';
@@ -33,7 +33,6 @@ import { signUp } from '../after/stations.js';
 import { frame, now, inView, clamp01, pileState, pileAlpha, countAt, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
-import { drawForeground } from './after/ground.js';
 import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
@@ -91,7 +90,7 @@ function working(key) {
   if (since < AFTER_ART_WORK_S) return { work: true, at: since / AFTER_ART_WORK_S, ink: clamp01(Math.min(since, AFTER_ART_WORK_S - since) / AFTER_PILE_FADE_S) };
   return { work: false, at: 0, ink: 0 };
 }
-const frameOf = key => frame(stationX0(key), afterFloor(), ART[key].flip || 0, null, AFTER_ART_SCALE);
+const frameOf = key => frame(stationX0(key), groundOf(key), ART[key].flip || 0, null, AFTER_ART_SCALE);
 // The hand's motion at each station this frame (after/gestures.js), by key.
 let hands = {};
 const readHands = () => { hands = {}; for (const r of gestureView() || []) hands[r.key] = r; };
@@ -112,7 +111,7 @@ const ramp = (t, t0, dur) => (t0 == null ? 0 : clamp01((t - t0) / dur));
 function drawSite(key) {
   const r = siteOf(key);
   if (!r) return;
-  const t = now(), d = frame(0, afterFloor(), 0, null, AFTER_ART_SCALE);
+  const t = now(), d = frame(0, groundOf(key), 0, null, AFTER_ART_SCALE);
   buildPile(d, buildPileAt(key) / AP, i => ramp(t, r.drop[i], AFTER_BUILD_DROP_S) * (1 - ramp(t, r.pick[i], AFTER_PILE_FADE_S)));
 }
 // The glyph over a station, `at` of it built, faded in and out at the ends
@@ -182,7 +181,7 @@ function closedStation(key, draw, opened) {
   for (let k = 0; r && k < r.n; k++) {
     const top = Math.round(rows * (k + 1) / AFTER_BUILD_PIECES), bot = Math.round(rows * k / AFTER_BUILD_PIECES);
     ctx.save();
-    ctx.beginPath(); ctx.rect(b.x - AP * 4, afterFloor() - top * P, b.w + AP * 10, (top - bot) * P + (k ? 0 : P)); ctx.clip();
+    ctx.beginPath(); ctx.rect(b.x - AP * 4, groundOf(key) - top * P, b.w + AP * 10, (top - bot) * P + (k ? 0 : P)); ctx.clip();
     ctx.globalAlpha = fadeIn(r.at[k]);
     draw(d, false, 0);
     ctx.restore();
@@ -222,7 +221,7 @@ function drawShackOrder() {
 // tip; a tip's grains falling through the notch and fading; its pile-full
 // mark under it while it stands at the brim with nowhere to go.
 function drawSawdust() {
-  const a = A(), fl = afterFloor(), d = frame(heapMid(), fl, 0, null, AFTER_ART_SCALE);
+  const a = A(), fl = groundOf('chipper'), d = frame(heapMid(), fl, 0, null, AFTER_ART_SCALE);
   const cells = heapCells(AFTER_HEAP_R).length;
   const n = Math.round(Math.min(1, a.stock.sawdust / heapBrim()) * cells);
   const tipped = a.tipAt != null && a.t - a.tipAt < AFTER_TIP_HOLD_S;
@@ -266,11 +265,10 @@ export function drawAfterCamp() {
   const a = A();
   if (!a) return;
   readHands();
-  // The main plane's path and the foreground clouds under it, then the
-  // union's crowd behind everything of the camp's: the pair's podium stands
-  // in front of it.
+  // The main plane's path, then the union's crowd behind everything of the
+  // camp's: the pair's podium stands in front of it. The lip of billows
+  // along the path's front is drawn after the members (render.js).
   drawFloor();
-  drawForeground();
   drawUnionCrowd();
   // the forestry shack, the grove's, then the cards' stations
   for (const key of Object.keys(AFTER_STATIONS)) { drawStation(key); shopSign(key); }

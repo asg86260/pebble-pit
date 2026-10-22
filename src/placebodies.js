@@ -32,7 +32,15 @@
 // is not in the place; a body let go falls before anything else; then the
 // place's own stage, then the job.
 
-import { GRAV, HURL, HURL_MAX, HURL_DRAG } from './config.js';
+import { GRAV, HURL, HURL_MAX, HURL_DRAG, HOVER_SLOW } from './config.js';
+import { now } from './clock.js';
+
+// A body under the cursor with the right button held walks slow, as the
+// yard's do (crew/step.js): it moves on HOVER_SLOW of the frames and stands
+// through the rest. Kept off the body, since a place saves its bodies whole
+// and a wall-clock stamp read back after a reload would hold one for ever.
+const slow = new WeakMap();
+export const slowBody = (w, until) => { slow.set(w, { until, owed: slow.get(w)?.owed || 0 }); };
 
 // A frame's seconds, clamped: a background tab's long frame is not a long
 // stride for every body.
@@ -106,6 +114,8 @@ export function stepCrew(crew, c) {
     crew.tick?.(w, f);
     if (w.lifted) continue;
     if (w.falling) { fall(crew, w, dt); continue; }
+    const s = slow.get(w);
+    if (s && s.until > now()) { s.owed += HOVER_SLOW; if (s.owed < 1) continue; s.owed -= 1; }
     if (crew.stage?.(w, f, k)) continue;
     const row = crew.jobs[w.job];
     if (row) row.step(w, dt, f); else crew.idle(w, dt, f);

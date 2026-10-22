@@ -176,6 +176,8 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- In heaven each station stands on its own shelf of cloud, further apart, with ramps between, and everybody walks up and down them (test/after-floor.test.mjs).
+- In heaven a lip of cloud billows runs along the path's front in place of the clouds drawn below it (scene after-camp-art).
 - In heaven each station has one job, its worker fetching its own logs and taking its own signs and posters out, and hovering a roster says what the job does or why it is stuck (test/after-roster.test.mjs).
 - Heaven's gates stand left of the house, appear only once it is smashed, swing open smoothly, and show the pointer when they can be clicked (test/acts-travel.test.mjs).
 - The rise into heaven rides up with them: one shot from the ruined house up the road through the clouds to the cloud floor, about eight seconds (test/shot.test.mjs).
@@ -216,6 +218,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A big casino win with the tray full no longer drops on a hauler down the torn hole in one lump; the pay streams out of the hatch and is counted as each grain lands (test/hauler-in-hole.test.mjs).
 - In heaven, members holding posters when the fence is full put them back at the press and come free for work again (test/after-full-fence.test.mjs).
 - In heaven, an idle member's first sign, poster or log picked up no longer counts as two (test/after-gather.test.mjs).
+- In heaven, holding the right button now veils the camp and rings each member, and the one under the cursor slows so it can be picked up (src/selftest/afterboards.js).
 
 ## v0.6.1 — 2026-10-19
 

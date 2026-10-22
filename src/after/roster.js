@@ -15,7 +15,7 @@ import { msg } from '../lang.js';
 import { rosterPlace } from '../roster.js';
 import { afterlifeOn } from '../acts.js';
 import { built, seatsOf, stumpsOn } from './levels.js';
-import { stationBox, afterFloor, closed } from './place.js';
+import { stationBox, groundOf, closed } from './place.js';
 import { crewAt, bodiesOf, spareMembers, putOn, walkLeft, holds } from './bodies.js';
 import { standing, stumped } from './grove.js';
 import { heapFull } from './mill.js';
@@ -62,7 +62,7 @@ const POSTS = AFTER_JOBS.map(job => {
     key: `after-${job}`, job, place: 'after', group: `after-${key}`, kit: false, fixed: false, src: SRC,
     show: () => live() && built(card) && !closed(card),
     at: () => { const b = stationBox(key); return b.x + b.w / 2; },
-    y: () => afterFloor() + AFTER_ROSTER_DOWN,
+    y: () => groundOf(key) + AFTER_ROSTER_DOWN,
     deep: false,
     says: () => jobSays(job)
   };

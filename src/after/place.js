@@ -14,7 +14,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, UNION_CROWD, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
-         AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, ACT_GATES_CELL, AFTER_ART_SCALE, AFTER_IDLE_STEP,
+         AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, AFTER_SHELF, ACT_GATES_CELL, AFTER_ART_SCALE, AFTER_IDLE_STEP,
          AFTER_SIGN_BOARD } from '../config.js';
 
 import { S } from '../state.js';
@@ -28,6 +28,10 @@ export const AP = P * AFTER_ART_SCALE;
 // The cloud floor's top: the yard's top is world y 0, so the afterlife's floor
 // stands AFTER_GAP above it and its own top AFTER_H above that.
 export const afterFloor = () => snap(-AFTER_GAP);
+// A station's shelf, in cells over the floor line, and the top of it: where
+// its drawing, piles, sign, door and roster stand (config, AFTER_SHELF).
+export const shelfOf = key => AFTER_SHELF[key] || 0;
+export const groundOf = key => afterFloor() - shelfOf(key) * P;
 export const afterTop = () => afterFloor() - AFTER_H;
 export const afterX0 = () => 0;
 export const afterX1 = () => afterX0() + AFTER_W;
@@ -60,7 +64,7 @@ export const stationBox = key => {
   const s = AFTER_STATIONS[key], art = ART[key];
   if (!s || !art) return null;
   const [x, w, h] = art.box;
-  return { x: stationX0(key) + x * AP, y: afterFloor() - h * AP, w: w * AP, h: h * AP };
+  return { x: stationX0(key) + x * AP, y: groundOf(key) - h * AP, w: w * AP, h: h * AP };
 };
 // Where a carrier takes a sign off the workshop's pile, and the sign march's
 // length from there to God's crowd's near edge, px: what the throne's
@@ -76,7 +80,7 @@ export const stationMid = key => { const b = stationBox(key); return b ? b.x + b
 // the post.
 export const signBox = key => {
   const C = AFTER_SIGN_BOARD;
-  return ART[key] && { x: stationX0(key) + ART[key].sign * AP, y: afterFloor() - (C.post + C.h) * AP, w: C.w * AP, h: (C.post + C.h) * AP };
+  return ART[key] && { x: stationX0(key) + ART[key].sign * AP, y: groundOf(key) - (C.post + C.h) * AP, w: C.w * AP, h: (C.post + C.h) * AP };
 };
 export const signBoard = key => { const b = signBox(key); return b && { ...b, h: AFTER_SIGN_BOARD.h * AP }; };
 // A station's pile of `what`, its left edge in the world. A pile's place in
@@ -212,15 +216,15 @@ export const stairFoot = () => AFTER_STAIR_X - AFTER_STAIR_W;
 export const throneAt = () => ({ x: AFTER_STAIR_X, y: afterFloor() - AFTER_STAIR_RISE });
 
 // --- the cloud floor's billow (floor A) -----------------------------------------------
-// A cell column's height over the floor line, in cells: puffs a few cells
-// wide, one or two cells high, their edges a step lower than their middles,
-// butting so the valleys are where their low edges meet. Pressed flat only
-// where something built stands on the line -- a station's drawing, its piles
-// and its door, the heap and the notch, a tree's foot, the pillar's pile,
-// the stair -- so it stands where the sim stands it. Everywhere else
-// billows, God's crowd's front row on the puffs too (render/aftercrowd.js),
-// and a body walks up and over them (`floorAt`). Worked out again only when
-// a station is ordered.
+// A cell column's height over the floor line, in cells. Flat where something
+// built stands -- a station's drawing, its piles and its door, the heap and
+// the notch, a tree's foot, the pillar's pile, the stair -- at its shelf's
+// height, so it stands where the sim stands it. Between two flats, an eased
+// ramp from the one's height to the other's, flat where they match; under
+// God's crowd, puffs a few cells wide and one or two high (`billow`), its
+// front row standing on them (render/aftercrowd.js). A body walks up and
+// over all of it (`floorAt`). Worked out again only when a station is
+// ordered.
 const hsh = (a, b = 0, c = 0) => {
   let h = (a * 374761393 + b * 668265263 + c * 2246822519) | 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296;
@@ -238,8 +242,9 @@ export function billow(cols, seed, maxK = 2, big = AFTER_BILLOW_BIG) {
 }
 // God's crowd's columns, [from, to) in cells: where its lip is drawn.
 export const crowdLip = () => [Math.round((CROWD_X0 - CROWD_PITCH - afterX0()) / P), Math.round((CROWD_X0 + (CROWD_FILES + 1) * CROWD_PITCH - afterX0()) / P)];
-// The flats, in cells off the place's left: [from, to), each a cell wider
-// either side than what stands on it, so a puff never butts a wall.
+// The flats, in cells off the place's left: [from, to, height], each a cell
+// wider either side than what stands on it, so a puff never butts a wall,
+// and as high as the shelf it is part of.
 export function floorFlats() {
   const c = x => Math.round((x - afterX0()) / P);
   const span = (x, w) => [c(x) - 1, c(x) + w + 1];
@@ -251,13 +256,13 @@ export function floorFlats() {
   // spot is open floor like any other (the owner, 2026-10-18).
   for (const key of Object.keys(AFTER_STATIONS)) {
     if (!sited(key)) continue;
-    const b = stationBox(key);
-    out.push(span(b.x, b.w / P), span(stationX0(key), ART[key].ground * AFTER_ART_SCALE));
-    for (const what of Object.keys(ART[key].pile)) out.push(span(pileAt(key, what), PILE_W * AFTER_ART_SCALE));
-    out.push(span(stationDoor(key) - P, 3));
-    out.push(span(signBox(key).x, AFTER_SIGN_BOARD.w * AFTER_ART_SCALE));
+    const b = stationBox(key), h = shelfOf(key), on = s => out.push([...s, h]);
+    on(span(b.x, b.w / P)); on(span(stationX0(key), ART[key].ground * AFTER_ART_SCALE));
+    for (const what of Object.keys(ART[key].pile)) on(span(pileAt(key, what), PILE_W * AFTER_ART_SCALE));
+    on(span(stationDoor(key) - P, 3));
+    on(span(signBox(key).x, AFTER_SIGN_BOARD.w * AFTER_ART_SCALE));
   }
-  if (sited('chipper')) out.push(span(heapX(), (AFTER_HEAP_R * 2 + 1) * AFTER_ART_SCALE), span(notchX(), 2 * AFTER_ART_SCALE));
+  if (sited('chipper')) out.push([...span(heapX(), (AFTER_HEAP_R * 2 + 1) * AFTER_ART_SCALE), shelfOf('chipper')], [...span(notchX(), 2 * AFTER_ART_SCALE), shelfOf('chipper')]);
   // The rebel pile at the pillar's foot.
   out.push(span(pileX(), 8));
   // Where a body steps from the floor into God's crowd's rows (`overCrowd`),
@@ -286,25 +291,29 @@ export function floorProfile() {
   const key = sitesKey();
   if (profile && key === profileKey) return profile;
   profileKey = key;
-  const cols = Math.ceil(AFTER_W / P);
-  profile = billow(cols, AFTER_BILLOW_SEED);
-  for (const [a, b] of floorFlats()) for (let j = Math.max(0, a); j < Math.min(cols, b); j++) profile[j] = 0;
-  // A gap between two flats too narrow for a puff would stand a lone post
-  // of cloud: pressed flat too.
+  const cols = Math.ceil(AFTER_W / P), lvl = new Array(cols).fill(-1);
+  for (const [a, b, h = 0] of floorFlats()) for (let j = Math.max(0, a); j < Math.min(cols, b); j++) lvl[j] = Math.max(lvl[j], h);
+  const [l0, l1] = crowdLip(), puffs = billow(cols, AFTER_BILLOW_SEED);
+  profile = lvl.map(h => Math.max(0, h));
   for (let j = 0; j < cols;) {
-    if (!profile[j]) { j++; continue; }
+    if (lvl[j] >= 0) { j++; continue; }
     let k = j;
-    while (k < cols && profile[k]) k++;
-    if (k - j < AFTER_PUFF_LEAST) profile.fill(0, j, k);
+    while (k < cols && lvl[k] < 0) k++;
+    const from = j > 0 ? lvl[j - 1] : 0, to = k < cols ? lvl[k] : 0;
+    // A gap between two flats too narrow for a puff would stand a lone post
+    // of cloud: left flat.
+    if (j >= l0 && k <= l1) { if (k - j >= AFTER_PUFF_LEAST) for (let q = j; q < k; q++) profile[q] = puffs[q]; }
+    else for (let q = j; q < k; q++) { const u = (q - j + 0.5) / (k - j); profile[q] = Math.round(from + (to - from) * u * u * (3 - 2 * u)); }
     j = k;
   }
   return profile;
 }
-// The floor's top under a body standing with its middle at world x: the
-// highest cell under its three columns, so its feet land on the puff.
+// The floor's top under world x, where a body standing there has its feet:
+// the columns' heights joined straight between their middles, so a body
+// walking a swell rises and falls with it rather than a cell at a time.
 export const floorAt = x => {
-  const el = floorProfile(), j = Math.floor((x - afterX0()) / P);
-  return afterFloor() - Math.max(el[j - 1] || 0, el[j] || 0, el[j + 1] || 0) * P;
+  const el = floorProfile(), u = (x - afterX0()) / P - 0.5, j = Math.floor(u), f = u - j;
+  return afterFloor() - ((el[j] || 0) * (1 - f) + (el[j + 1] || 0) * f) * P;
 };
 
 // --- the pine, as drawn ------------------------------------------------------------
@@ -359,7 +368,7 @@ export const ICON = { saw: [13, 8], shovel: [5, 13] };
 // (the middle of its cut) and a stump's `at` {x, y} (its foot) for plot `i`;
 // and the rest of each moving part for the cues to point at.
 export function stationParts(key, i = 0) {
-  const fl = afterFloor();
+  const fl = groundOf(key === 'heap' ? 'chipper' : key);
   const at = (x0, x, y) => ({ x: x0 + x * AP, y: fl + y * AP });
   const box = (x0, x, y, w, h) => ({ x: x0 + x * AP, y: fl + y * AP, w: w * AP, h: h * AP });
   if (key === 'tree') {

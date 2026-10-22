@@ -23212,3 +23212,36 @@ unchanged (the recruit row, above).
   stall note shown. The owner's save (`test/fixtures/act3-full-fence.json`)
   reaches timber with no further assignment beyond what it already has
   plus one woodcutter.
+
+### Act 3: shelves of cloud (built; the owner, 2026-10-22)
+
+The owner, looking at the path with the clouds cleared away: "lets add some
+rise and fall to give the path a bit more variety. it should appear like
+its on a cloud." Voted off four mocks; rolling swells were built first and
+dropped ("i dont want the hills to go up then down"); then **shelves of
+cloud**, with the stations spaced further apart ("lets space em a part a
+bit").
+
+- Each station's whole ground stands on its own shelf, AFTER_SHELF cells off
+  the floor line: its drawing, piles, door, sign and roster all read
+  `groundOf(key)` (after/place.js). The sawdust heap and its notch are the
+  chipper's. The grove, the pedestal, God's crowd and the stair stay on the
+  line itself.
+- Between two flats at different heights, an eased ramp of cloud across the
+  open floor; between two at the same height, flat. No hills.
+- AFTER_STATION_GAP widened from ten art cells to sixteen, so every two
+  stations have open floor for a ramp; with the old gap two grounds met and
+  the shelf dropped as a sheer step.
+- Every body walks the ground, not the line: a spot asked for on the floor
+  is the ground under it, a body walking along keeps its feet on it
+  (`floorAt`, joined straight between column middles so the climb is
+  smooth), and the pair's legs up there ride it too (ghosts.js).
+- **The path's front is a lip of billows** (the owner, 2026-10-22: "a little
+  cloud edge that comes up off the path a bit in the front, to paint cloud
+  billows. insetad of the foreground drawn clouds"; mock A, the low lip,
+  voted over a taller bank and a whole hanging cloud). Overlapping round
+  billows stand just in front of the path, following its shelves and ramps,
+  lit along each crest and pale through the body, drawn after the members
+  so feet and station feet tuck behind them (render/after/ground.js,
+  AFTER_LIP). The ground clouds that lapped the path's edge and rolled
+  below it are gone from the cloud renderer; below the lip is the page.

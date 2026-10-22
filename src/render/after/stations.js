@@ -25,7 +25,7 @@ const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 import { P, GREY, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT, AFTER_SAW_TEETH, AFTER_STIR_TURN_S, AFTER_STIR_SPAN,
          AFTER_ART_SCALE } from '../../config.js';
 import { K, W, PALE, MID, DUST, toward, hash, clamp01, silhouette } from './kit.js';
-import { stationX0, afterFloor } from '../../after/place.js';
+import { stationX0, groundOf } from '../../after/place.js';
 import { signsJoined } from '../../after/press.js';
 import { paperPulls } from '../../after/mill.js';
 import { ctx } from '../ctx.js';
@@ -600,7 +600,7 @@ export const DRAW = { mill, chipper, papermill, workshop, press, shack, forestry
 export function grips(key) {
   const q = posed[key];
   if (!q) return null;
-  const x0 = stationX0(key), fl = afterFloor(), A = AFTER_ART_SCALE, w = (x, y) => ({ x: x0 + x * P * A, y: fl + y * P * A });
+  const x0 = stationX0(key), fl = groundOf(key), A = AFTER_ART_SCALE, w = (x, y) => ({ x: x0 + x * P * A, y: fl + y * P * A });
   if (key === 'mill') { const k = wheelAt(q.a); return { hub: w(MW.cx, MW.cy), reach: KNOB * P * A, knob: w(k.kx, k.ky) }; }
   if (key === 'chipper') return { pivot: w(CH.pivot.x + 0.5, CH.pivot.y + 0.5), up: w(CH.knob[0].x + 0.5, CH.knob[0].y + 0.5), down: w(CH.knob[2].x + 0.5, CH.knob[2].y + 0.5) };
   if (key === 'papermill') return { grip: { x: x0 + (q.sx + 2) * A, y: fl + (PADDLE_TOP * P + 3) * A } };

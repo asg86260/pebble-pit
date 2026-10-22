@@ -15,7 +15,7 @@ import { earn } from '../notices.js';
 import { crewView, coarse } from '../prefs.js';
 import { inOrb, breakOrb, orbLiftOf } from '../deep/phases.js';
 import { PLACES, actPlace, isActView, crewHolding } from '../acts.js';
-import { bodyAt, liftBody, dropBody } from '../placebodies.js';
+import { bodyAt, liftBody, dropBody, slowBody } from '../placebodies.js';
 
 // --- picking somebody up ------------------------------------------------------
 export function workerAt(x, y) {
@@ -71,8 +71,9 @@ export function holdBody(w, x, y) {
 // slow, so it can be caught. The stamp is refreshed on every pointermove, so
 // the slow outlives the hover by HOVER_SLOW_MS and no more.
 export function hoverAt(x, y) {
-  const w = workerAt(x, y);
-  if (w && !w.lifted && S.crewSight != null) w.slowUntil = now() + HOVER_SLOW_MS;
+  const act = isActView(S.view), w = act ? grabAt(x, y) : workerAt(x, y);
+  if (!w || w.lifted || S.crewSight == null) return w;
+  if (act) slowBody(w, now() + HOVER_SLOW_MS); else w.slowUntil = now() + HOVER_SLOW_MS;
   return w;
 }
 

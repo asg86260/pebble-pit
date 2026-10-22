@@ -51,7 +51,7 @@ import { smoothstep } from '../motion.js';
 import { afterlifeOn } from '../acts.js';
 import { secs } from './util.js';
 import { built } from './levels.js';
-import { stationParts, afterFloor } from './place.js';
+import { stationParts, groundOf } from './place.js';
 import { standing, stumped, chopTree, digStump, trees, treeAt } from './grove.js';
 import { tipSawdust } from './mill.js';
 import { pairBuilding } from './build.js';
@@ -327,14 +327,14 @@ const DEFS = {
     grab(g, x, y) { return g.load && g.load.mode !== 'gone' ? null : inBox(x, y, stationParts('heap').heap, G_S) ? true : null; },
     down(g, h, x, y) {
       g.grab = true; g.pts = [{ t: T(), x }];
-      g.load = { mode: 'held', x, x0: x, y: Math.min(y, afterFloor() - P), n: 1, at: T() };
+      g.load = { mode: 'held', x, x0: x, y: Math.min(y, groundOf('chipper') - P), n: 1, at: T() };
       return true;
     },
     move(g, x, y) {
       const t = T();
       g.pts.push({ t, x });
       while (g.pts.length > 2 && t - g.pts[0].t > GESTURE_FLING_WINDOW_S) g.pts.shift();
-      if (g.load) { g.load.x = x; g.load.y = Math.min(y, afterFloor() - P); }
+      if (g.load) { g.load.x = x; g.load.y = Math.min(y, groundOf('chipper') - P); }
     },
     up(g) {
       g.grab = false;
@@ -351,7 +351,7 @@ const DEFS = {
       if (ld.mode === 'fling') {
         ld.vy += GESTURE_FLING_GRAV * dt;
         ld.x += ld.vx * dt;
-        ld.y = Math.min(ld.y + ld.vy * dt, afterFloor() - P);
+        ld.y = Math.min(ld.y + ld.vy * dt, groundOf('chipper') - P);
         // Over the notch, it tips there: the loads go through.
         if (ld.x >= stationParts('heap').edge) { tip(g, ld.n); Object.assign(ld, { mode: 'gone', at: T() }); }
       } else if (ld.mode !== 'held' && T() - ld.at > GESTURE_LOAD_FADE_S) g.load = null;

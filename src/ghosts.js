@@ -25,7 +25,7 @@ import { P, WORKER, FINALE_HOUSE_W, GHOST_PX_S, GHOST_LOAD, GHOST_GAP, HELL_TIER
          ACT_GATES_NEAR, ACT_STAIR_TREAD, ACT_STAIR_RISE, ACT_STAIR_FLIGHTS, ACT_STAIR_LANDING, ACT_STAIR_SIDE, MANSION_SOULS } from './config.js';
 import { houseX } from './home.js';
 import { feetOn, ways } from './route.js';
-import { afterFloor, afterTop, stationBox, stationX0, speakerAt } from './after/place.js';
+import { afterFloor, floorAt, afterTop, stationBox, stationX0, speakerAt } from './after/place.js';
 import { hellTop, chamberFloor, chamberAtX, chamberFocusX, storeX as hellStoreX } from './hell/place.js';
 import { deepTop, deepFloor } from './deep/place.js';
 import { portalEnd } from './portals.js';
@@ -130,7 +130,7 @@ function tearX() { return snap(tear().x - WORKER / 2); }
 // camp's own column (portals.js), not over the yard's.
 const afterGateX = () => snap(portalEnd('heaven', 'after').x - WORKER / 2);
 export const yardFeet = x => feetOn(ways().yard, x);
-const afterFeet = () => afterFloor() - WORKER;
+const afterFeet = x => (x == null ? afterFloor() : floorAt(x)) - WORKER;
 const deepFeet = () => deepFloor() - WORKER;
 // The floor of the chamber a body is over (each lower than the last), the
 // landing's off the run.
