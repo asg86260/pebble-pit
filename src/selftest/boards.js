@@ -2,8 +2,7 @@
 // where a board seats itself.
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, panel, shop, point, onScreen, runUntil,
-  haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows, asScreen } from './kit.js';
-import { until as untilFrames } from '../check.js';
+  haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows, asScreen, onPage, landed } from './kit.js';
 import { objective } from '../objectives.js';
 import { TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
 import { offered, STATIONS, here, station } from '../stations.js';
@@ -44,22 +43,6 @@ const textInk = cell => {
   }
   return { right };
 };
-
-// Waits drawn frames for `fact()`, the yard held where it is: what is waited
-// for here is the page (a board fading up, a list dropping open, a fill
-// sliding), and turning the yard under it, as `until` does, would change the
-// purse or the crew a check is about to read. True when the fact came.
-const onPage = (fact, frames = 180) => untilFrames(fact, raf, frames);
-
-// Nothing in `within` in the middle of a move: a board sliding in, a list
-// dropping, a plate easing up. Only what is being read is waited for (the
-// story's card fading in over a new yard is not the board's business), and
-// the shelf's tiles sway under the cursor forever, so an endless animation is
-// not a move still going.
-const moving = within => document.getAnimations().some(a =>
-  a.playState === 'running' && a.effect?.getComputedTiming().iterations !== Infinity &&
-  !!a.effect.target && within.contains(a.effect.target));
-const landed = (within = panel()) => onPage(() => !moving(within));
 
 // A board asked for and come to rest, so what is read off it is the board and
 // not the board half-way in. A station with no board (the casino, whose
@@ -1757,7 +1740,7 @@ export const TESTS = [
     await settle(0.5);
     window.__finish();
     await settle(0.1);
-    const landed = read('carry');
+    const done = read('carry');
     for (let i = 0; i < SHELF_HAND_FADE + 10; i++) await raf();
     const after = read('carry');
     await settle(1);
@@ -1771,7 +1754,7 @@ export const TESTS = [
       ok(leaving.hand > 0 && leaving.w > 28, 'when the body steps off, the hand is still fading on the tile', `${leaving.hand} pixels, ${leaving.w}px`),
       ok(alone.hand === 0 && alone.w === 28, 'and with nobody at the site there is nobody on the tile', `${alone.hand} pixels, ${alone.w}px`),
       ok(alone.ink === stillAlone.ink && alone.ink > 0, 'and the built cells hold', `${alone.ink} -> ${stillAlone.ink}`),
-      ok(landed.hand > 0 && landed.w > 28, 'when the work lands the hand is still fading on the finished tile', `${landed.hand} pixels, ${landed.w}px`),
+      ok(done.hand > 0 && done.w > 28, 'when the work lands the hand is still fading on the finished tile', `${done.hand} pixels, ${done.w}px`),
       ok(after.hand === 0 && after.w === 28, 'and is gone once it has faded', `${after.hand} pixels, ${after.w}px`),
     ];
   }],

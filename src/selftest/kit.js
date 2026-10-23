@@ -69,6 +69,14 @@ export const frames = async (n = 1) => { for (let i = 0; i < n; i++) { run(1 / 6
 const moving = a => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity;
 export const quiet = (frames = 180, on = [document]) =>
   until(() => !on.some(el => el && (el === document ? el.getAnimations() : el.getAnimations({ subtree: true })).some(moving)), frames);
+// Waits drawn frames for `fact()`, the yard held where it is: for what is the
+// page's own (a board fading up, a list dropping open, a fill sliding), where
+// turning the yard under it, as `until` does, would change the purse or the
+// crew a check is about to read. True when the fact came.
+export const onPage = (fact, frames = 180) => untilEvery(fact, raf, frames);
+// Nothing inside `within` in the middle of a move, the yard held: only what is
+// being read is waited for, and an endless sway is not a move still going.
+export const landed = (within = panel()) => onPage(() => !within.getAnimations({ subtree: true }).some(moving));
 // the board and the tip beside it: what a walk to a station puts up
 const boardAndTip = () => [panel(), document.getElementById('tip')];
 

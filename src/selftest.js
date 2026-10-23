@@ -121,8 +121,9 @@ export async function runTests(filter = '', shard = null, opts = {}) {
   // Cut into blocks in file order rather than dealt out round-robin: the
   // opening is the only group that can watch the game open, and a block
   // keeps every group next to the one it was written next to.
-  const all = TESTS.filter(([name]) =>
-    !filter || name.toLowerCase().includes(filter.toLowerCase()));
+  // A list of names is those groups exactly (`--file` in headless.mjs).
+  const all = TESTS.filter(([name]) => Array.isArray(filter) ? filter.includes(name)
+    : !filter || name.toLowerCase().includes(filter.toLowerCase()));
   const wanted = shard ? all.slice(...cuts(all, shard)) : all;
   for (const [name, fn] of wanted) {
     let checks;

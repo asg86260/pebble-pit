@@ -2,6 +2,7 @@
 //
 //   node tools/headless.mjs                       # the whole suite
 //   node tools/headless.mjs --only casino         # just the groups matching that
+//   node tools/headless.mjs --file boards,sheet   # every group in those selftest files
 //   node tools/headless.mjs --shard 2/6           # the second sixth of the groups
 //   node tools/test.mjs                           # all of them, in parallel
 //   node tools/headless.mjs "__state().gw"        # one expression
@@ -23,6 +24,12 @@ const shot = process.argv[2] === '--shot' ? process.argv[3] : null;
 // `--only casino` runs just the groups whose name contains that, which is how
 // you check one corner without paying for the whole suite
 const only = process.argv[2] === '--only' ? process.argv[3] : null;
+// `--file boards,sheet` runs every group written in src/selftest/boards.js and
+// sheet.js, read off the files' own group names: what a change to one file is
+// checked by. (A name built at run time, `${...}`, is --only's.)
+const groupsIn = f => [...readFileSync(`src/selftest/${f}.js`, 'utf8')
+  .matchAll(/^(?:  \[|TESTS\.push\(\[)(['"`])((?:\\.|(?!\1).)*)\1,/gm)].map(m => m[2].replace(/\\'/g, "'"));
+const fileGroups = process.argv[2] === '--file' ? process.argv[3].split(',').flatMap(groupsIn) : null;
 
 // `--shard 2/6` runs the second sixth of the groups. A sixth of the groups is
 // about a sixth of the wall clock, and the suite is one long serial list pinned
@@ -52,6 +59,7 @@ const expr = serial ? `window.__test(${JSON.stringify(process.argv[3] || '')}, n
            : shot ? (process.argv[4] || 'true')
            : shard ? `window.__test('', ${JSON.stringify(shard)})`
            : only ? `window.__test(${JSON.stringify(only)})`
+           : fileGroups ? `window.__test(${JSON.stringify(fileGroups)})`
            : (process.argv[2] || 'window.__test()');
 
 const { own } = await browser({ port: PORT });
