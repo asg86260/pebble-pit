@@ -9,9 +9,8 @@ src/selftest/cloud.js 2
 src/selftest/contrast.js 2
 src/selftest/crew.js 2
 src/selftest/cutbench.js 1
-src/selftest/deep.js 9
-src/selftest/dust.js 7
-src/selftest/feedback.js 7
+src/selftest/deep.js 1
+src/selftest/feedback.js 2
 src/selftest/index.js 1
 src/selftest/input.js 6
 src/selftest/kit.js 1
@@ -19,11 +18,10 @@ src/selftest/language.js 5
 src/selftest/opening.js 4
 src/selftest/pad.js 1
 src/selftest/scenes.js 1
-src/selftest/settings.js 14
-src/selftest/sheet.js 8
+src/selftest/sheet.js 2
 src/selftest/sheetwidth.js 1
 src/selftest/sky.js 2
 src/selftest/stations.js 3
 src/selftest/textaa.js 1
-src/selftest/touch.js 9
+src/selftest/touch.js 2
 src/selftest/work.js 1
