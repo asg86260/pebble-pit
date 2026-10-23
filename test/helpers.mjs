@@ -128,6 +128,17 @@ export const runUntil = (done, limit = 60) => {
 // A check: what it is called, and what to say when it is not true. The same
 // shape the browser suite uses, so a group carries its words across unchanged.
 export const ok = (cond, what, detail = '') => ({ pass: !!cond, what, detail });
+// Wall time a call of `fn` costs, the minimum of `passes` runs of `n` (PERF.md,
+// section 0): the quietest pass is the code, the others are the machine.
+export function bestMs(fn, n = 300, passes = 3) {
+  let best = Infinity;
+  for (let p = 0; p < passes; p++) {
+    const t0 = performance.now();
+    for (let k = 0; k < n; k++) fn();
+    best = Math.min(best, (performance.now() - t0) / n);
+  }
+  return best;
+}
 
 // The seed every group in a file starts from.
 //

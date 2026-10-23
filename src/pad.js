@@ -63,7 +63,10 @@ wardrobeNav({ focus: focusEl, toward: pickToward });
 const mid = r => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
 const half = () => S.view;
 const onScreen = r => !!r && r.x + r.w > S.camX && r.x < S.camX + S.viewW && r.y + r.h > S.camY && r.y < S.camY + S.viewH;
-const onGlassX = r => !!r && r.x + r.w > S.camX && r.x < S.camX + S.viewW;
+// Along the yard, judged where the view is headed: a hop's own pan is still
+// under way when the next press comes, and the thing it is panning to is the
+// one being looked at, not off the glass.
+const onGlassX = r => { const x = S.camTo ?? S.camX; return !!r && r.x + r.w > x && r.x < x + S.viewW; };
 
 // --- the stops, and what stands inside each ------------------------------------
 // The build call (raise.js) stands over the yard as a button of its own until

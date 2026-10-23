@@ -761,7 +761,9 @@ function gridStep(el, d) {
   const g = built.gridOf[slot];
   if (!el?.classList?.contains('wardtile') || !g.contains(el)) return false;
   const to = nav.toward(boxOf(el), d, [...g.children].filter(b => b !== el).map(mid));
-  if (!to) return false;
+  // a row's end is the grid's edge: across it is nothing, never a key
+  // across the page level with some other row
+  if (!to) return d === 'left' || d === 'right';
   nav.focus(to.b);
   to.b.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   return true;

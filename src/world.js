@@ -685,11 +685,16 @@ export const following = t => (S.follow && S.follow.pointed > t ? S.follow : nul
 // right-hand edge of a game about a rock. The fit is measured against the
 // widest rock the yard makes, not the one standing: the view stays where it
 // opened while the rocks grow under it, and a seat that only fit the first
-// rock cut the later ones off at the edge.
+// rock cut the later ones off at the edge. Seated left of center, the widest
+// rock's near side is still on the glass, or the seat slides right toward
+// centering the rock until it is: a phone is too narrow to seat a rock off
+// center without cutting it.
 export const openingCamX = () => {
   const withBench = bench.x - OPENING_MARGIN;
   const rockFar = S.cx + (ROCK_W_MAX / 2) * P + OPENING_MARGIN;
-  return rockFar - withBench <= S.viewW ? withBench : S.cx - S.viewW * OPENING_ROCK_AT;
+  if (rockFar - withBench <= S.viewW) return withBench;
+  const rockNear = S.cx - (ROCK_W_MAX / 2) * P;
+  return Math.max(S.cx - S.viewW / 2, Math.min(S.cx - S.viewW * OPENING_ROCK_AT, rockNear));
 };
 
 // The seat, on the save (persist.js, `SAVERS`). Read before the yard knows

@@ -410,6 +410,7 @@ TESTS.push(['rails: the first station stands from the snatch, and its Recruit tr
 // board says whose it is -- the fighter's, not the old building's.
 TESTS.push(['rails: the pointer on a station\'s prop or its fighter opens the board, titled by the fighter', async () => {
   window.__fullSites();
+  window.__snatch({ played: true });
   window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }, { kind: 'armory', cls: 'ranger', rung: 8 }] });
   window.__view('deep');
   run(VIEW_GLIDE_S + 0.5);
@@ -571,15 +572,45 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
   };
   const covered = (w, [x, y, bw, bh]) => S.workers.some(o => o !== w && !o.lifted &&
     o.x < x + bw && o.x + WORKER > x && o.y - P * 14 < y + bh && o.y + WORKER > y);
-  const look = (half, w) => {
+  const inkOf = w => Math.min(...tones([w.x + 1, w.y + WORKER / 2, w.x + WORKER - 1, w.y + WORKER / 2]));
+  // In the yard the ring is the body's own ink, so it can only be seen going
+  // over where the frame without it is far from that ink: a rockhand on the
+  // rock's dark face (the middle of a phone's glass) has none of that round
+  // it. Read in the frame the sight is read in, with it let go (a climbing
+  // body has moved since the press): the first free side with paper under
+  // every point of the ring, or -1.
+  const paperSide = w => {
+    draw();
+    const ink = inkOf(w);
+    // the pixels wholly under the ring at a point, or the one it is centered on
+    const under = ([x0, y0, x1, y1]) => {
+      const [ax, ay] = onScreen(x0, y0), [bx, by] = onScreen(x1, y1);
+      const l = Math.ceil(ax * k), t = Math.ceil(ay * k);
+      const w0 = Math.max(1, Math.floor(bx * k) - l), h0 = Math.max(1, Math.floor(by * k) - t);
+      const d = g.getImageData(l, t, w0, h0).data, o = [];
+      for (let i = 0; i < d.length; i += 4) o.push(d[i]);
+      return o;
+    };
+    return ringSides(w).findIndex(o => !covered(w, o.box) &&
+      o.pts.every(pt => under(pt).every(f => Math.abs(f - ink) > 128)));
+  };
+  const look = (half, w, paper = false) => {
     const [x, y] = onScreen(w.x + WORKER / 2, w.y + WORKER / 2);
     point('pointerdown', x, y, 2, 2);
     const held = S.crewSight != null;
     run(SIGHT_IN_MS / 1000 + 0.2);
+    let pick = -1;
+    if (paper) {
+      const keep = S.crewSight;
+      S.crewSight = null;
+      pick = paperSide(w);
+      S.crewSight = keep;
+      if (pick < 0) { point('pointerup', x, y, 0, 2); return null; }
+    }
     const read = () => {
       draw();
-      const ink = Math.min(...tones([w.x + 1, w.y + WORKER / 2, w.x + WORKER - 1, w.y + WORKER / 2]));
-      const sides = ringSides(w), use = sides.find(o => !covered(w, o.box)) || sides[0];
+      const ink = inkOf(w);
+      const sides = ringSides(w), use = sides[pick] || sides.find(o => !covered(w, o.box)) || sides[0];
       const side = use.pts.map(tones);
       return { ink, side, all: g.getImageData(0, 0, c.width, c.height).data };
     };
@@ -616,14 +647,20 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
   // Wherever the yard's crew are, the camera goes to one of them.
   const pick = S.workers.find(w => !w.lifted && !w.inside && !inTheDeep(w) && !w.aloft);
   if (pick) { window.__look(pick.x - S.viewW / 2); run(0.1); }
-  const up = S.workers.find(w => !w.lifted && !w.inside && !inTheDeep(w) && onGlass(w));
-  const yard = up ? look('yard', up) : [ok(false, 'yard: a body on the glass')];
+  // The body nearest the middle of the glass: on a narrow window the first
+  // one found can stand under the counter in the corner, which hides a ring.
+  const near = list => list.sort((a, b) => Math.abs(a.x + WORKER / 2 - S.camX - S.viewW / 2) -
+                                           Math.abs(b.x + WORKER / 2 - S.camX - S.viewW / 2));
+  let yard = null;
+  for (const w of near(S.workers.filter(w => !w.lifted && !w.inside && !inTheDeep(w) && onGlass(w))))
+    if ((yard = look('yard', w, true))) break;
+  yard ||= [ok(false, 'yard: a body on the glass with paper round its ring')];
   window.__view('deep');
   run(VIEW_GLIDE_S + 1);
   const below = S.workers.find(w => !w.lifted && inTheDeep(w) && !isFighter(w) && w.y > deepTop() + DEEP_SURFACE + P * 4);
   if (below) { window.__look(below.x - S.viewW / 2); run(0.1); }
-  const down = S.workers.find(w => !w.lifted && inTheDeep(w) && !isFighter(w) &&
-                                   w.y > deepTop() + DEEP_SURFACE + P * 4 && onGlass(w));
+  const down = near(S.workers.filter(w => !w.lifted && inTheDeep(w) && !isFighter(w) &&
+                                             w.y > deepTop() + DEEP_SURFACE + P * 4 && onGlass(w)))[0];
   const deep = down ? look('deep', down)
                     : [ok(false, 'deep: a body on the glass', String(S.workers.filter(inTheDeep).length))];
   // The rest of the pointer's crew controls down there: with the right button

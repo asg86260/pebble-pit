@@ -41,10 +41,11 @@ export function shellExe() {
 }
 // A shell's own profile folder, by name: in the machine's temp folder.
 export const profileDir = name => `${tmpdir()}/boulder-${name}`;
-// The flags every shell starts with: no first-run sheet, and, run as root (a
-// container), no sandbox, which Chrome refuses to start without otherwise.
+// The flags every shell starts with: no first-run sheet, and no sandbox run as
+// root (a container), where Chrome refuses one, or on CI, where the runner's
+// AppArmor forbids the namespaces it is built from.
 export const shellFlags = port => [`--remote-debugging-port=${port}`, '--no-first-run',
-  ...(process.getuid?.() === 0 ? ['--no-sandbox'] : [])];
+  ...(process.getuid?.() === 0 || process.env.CI ? ['--no-sandbox'] : [])];
 
 const alive = async port => {
   try { await fetch(`http://127.0.0.1:${port}/json/version`); return true; }
@@ -77,8 +78,12 @@ export async function browser({ port }) {
     const win = process.env.WINDOW ? [`--window-size=${process.env.WINDOW}`] : [];
     // Muted: a headless shell still plays the game's sound out of the speakers
     // of whoever is sitting at this machine.
-    own = spawn(shellExe(), [...shellFlags(port), '--mute-audio', ...win, `--user-data-dir=${profile}`], { stdio: 'ignore' });
+    own = spawn(shellExe(), [...shellFlags(port), '--mute-audio', ...win, `--user-data-dir=${profile}`], { stdio: ['ignore', 'ignore', 'pipe'] });
+    let said = '';
+    own.stderr.on('data', d => { said = (said + d).slice(-4000); });
     for (let i = 0; i < 40 && !await alive(port); i++) await new Promise(r => setTimeout(r, 250));
+    // A shell that never answered says why on its stderr, and nowhere else.
+    if (!await alive(port)) { own.kill(); throw new Error(`the headless shell never answered on ${port}:\n${said}`); }
   }
   return { port, own };
 }

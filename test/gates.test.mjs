@@ -129,11 +129,19 @@ group('the pointer finds every standing station by its ground, and nothing else'
   const kinds = ['altar', 'armory', 'altar', 'spire'];
   window.__party({ stations: PARTY_IDS.map((_, i) => ({ kind: kinds[i % kinds.length] })) });
   run(1);
+  // Each from its own half, and none from the other: the deep's view draws
+  // nothing of the yard, though a tall window reaches up over its ground.
+  const other = { yard: 'deep', deep: 'yard' };
   for (const r of doors) {
     const g = standRect(r.key);
     if (!g) { out.push(ok(false, `${r.key} stands`)); continue; }
+    S().view = r.place || 'yard';
     const at = stationAt(g.x + g.w / 2, g.y + g.h / 2);
+    S().view = other[S().view];
+    const across = stationAt(g.x + g.w / 2, g.y + g.h / 2);
+    S().view = 'yard';
     out.push(ok(at === r.key, `the middle of ${r.key}'s ground is ${r.key}`, `${at} ${JSON.stringify(g)}`));
+    out.push(ok(across !== r.key, `and not from the ${other[r.place || 'yard']}`, String(across)));
   }
   out.push(ok(stationAt(S().cx, -5000) === null, 'the sky is nowhere'));
   return out;

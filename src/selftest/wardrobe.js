@@ -79,6 +79,11 @@ const gridHead = () => document.querySelector('.wardslot.on .wardsw')?.textConte
 const openCount = () => document.querySelector('.wardopen')?.textContent || '';
 const tileOf = el => (el?.classList?.contains('wardtile') ? `${el.dataset.slot}:${el.dataset.item}` : null);
 const slotOf = el => (el?.classList?.contains('wardslot') ? el.dataset.slot : null);
+// The slots stand three a side of the close-up on a desk and in two rows of
+// three under it on a phone (style.css, `--ward-side`): what stands under
+// the face's slot is the neck's on one and the pattern's on the other.
+const slotsBeside = () => getComputedStyle(document.querySelector('.wardstage')).getPropertyValue('--ward-side').trim() !== '0';
+const underFace = () => (slotsBeside() ? 'neck' : 'pattern');
 // The guide lines seen, once their fade is over: the slots whose line stands.
 const seenLines = (d = document) => [...d.querySelectorAll('.wardlead g')]
   .filter(g => +d.defaultView.getComputedStyle(g).opacity > 0.5).map(g => g.dataset.slot);
@@ -200,7 +205,12 @@ export const TESTS = [
     const at = k => slotBtn(k).getBoundingClientRect();
     const side = (ks, left) => ks.every((k, i) => (left ? at(k).right <= big.left : at(k).left >= big.right)
       && (!i || at(k).top > at(ks[i - 1]).top));
-    const placed = side(['head', 'back', 'aura'], true) && side(['face', 'neck', 'pattern'], false);
+    const row = ks => ks.every((k, i) => at(k).top >= big.bottom - 1
+      && (!i || (Math.abs(at(k).top - at(ks[i - 1]).top) < 2 && at(k).left > at(ks[i - 1]).left)));
+    const beside = slotsBeside();
+    const placed = beside
+      ? side(['head', 'back', 'aura'], true) && side(['face', 'neck', 'pattern'], false)
+      : row(['head', 'face', 'neck']) && row(['back', 'pattern', 'aura']) && at('back').top > at('head').top;
     const named = SLOTS.every(sl => up(slotBtn(sl.key)) && slotBtn(sl.key).querySelector('.wardsw').textContent
       === msg(sl.items.find(it => it.key === outfitOf('you')[sl.key]).name));
     // the strip of slot tabs and the heading over the grid are gone; the
@@ -258,7 +268,8 @@ export const TESTS = [
     return [
       ok(shown, "the house board's row opens the picker"),
       ok(headFirst && wornOn, 'the head slot shows a tile an item, the one worn inverted'),
-      ok(placed, 'the slots stand round the close-up, head, back and aura down the left, face, neck and pattern down the right'),
+      ok(placed, beside ? 'the slots stand round the close-up, head, back and aura down the left, face, neck and pattern down the right'
+        : 'the slots stand under the close-up, head, face and neck a row, back, pattern and aura the row under'),
       ok(named, 'each slot names what it wears'),
       ok(gone && asOne, 'no slot tabs and no heading: the grid\'s tab is the chosen slot, inverted as its button is', `${gone} "${tab.textContent}"`),
       ok(eared && earsOn && said.includes('ears'), 'a click on a tile wears it, and its slot says it', `${outfitOf('you').head} "${said}"`),
@@ -320,11 +331,12 @@ export const TESTS = [
     const escaped = slotOf(document.activeElement) === 'head' && up(byId('wardrobe'));
     key(']');
     const slotTurn = slotOf(document.activeElement) === 'face' && slotBtn('face').classList.contains('on');
+    const underSlot = underFace();
     await closePicker();
     await hoverAway();
     fresh();
     return [
-      ok(across === 'face' && under === 'neck', 'the arrows go from slot to slot, the nearest that way', `${across} ${under}`),
+      ok(across === 'face' && under === underSlot, 'the arrows go from slot to slot, the nearest that way', `${across} ${under}`),
       ok(notIn, 'and never into the grid from beside it', document.activeElement?.id),
       ok(opened, 'Enter on a slot puts the focus on its worn tile', tileOf(document.activeElement)),
       ok(along, 'right is the next tile along', tileOf(right)),
@@ -587,7 +599,7 @@ export const TESTS = [
       await press('right');
       const across = slotOf(at());
       await press('down');
-      const under = slotOf(at());
+      const under = slotOf(at()), underSlot = underFace();
       await press('down');
       await press('down');
       const notIn = !tileOf(at());
@@ -637,7 +649,7 @@ export const TESTS = [
       await hoverAway();
       return [
         ok(!!reached && onHead, 'the d-pad reaches the slots', `${reached} ${slotOf(at())}`),
-        ok(across === 'face' && under === 'neck', 'the d-pad goes from slot to slot, the nearest that way', `${across} ${under}`),
+        ok(across === 'face' && under === underSlot, 'the d-pad goes from slot to slot, the nearest that way', `${across} ${under}`),
         ok(notIn, 'and never into the grid from beside it'),
         ok(opened, 'A on a slot opens its grid, the focus on the tile worn', tileOf(at())),
         ok(along, 'right is the next tile along', tileOf(nextTile)),
@@ -825,8 +837,7 @@ export const TESTS = [
       run(0.5);
       window.__self('sqouse', self);
       S.rescued = true; S.buried = false; S.buriedMs = 600000;
-      run(1 / 60);
-      await raf();
+      for (let i = 0; i < 120 && byId('saved').hidden; i++) { run(1 / 60); await raf(); }
       const line = byId('savedwhy').textContent, time = byId('savedin').textContent;
       window.__skipBeat('sheet');
       run(1 / 60);

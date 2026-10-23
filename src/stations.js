@@ -122,7 +122,9 @@ for (const id of PARTY_IDS) {
 // Which place a row stands in (`place`: 'yard', 'deep', 'after' or 'hell';
 // 'yard' unless it says): the pointer asks only the rows of the place on
 // screen (`here`). The yard and the deep are one world, the deep under the
-// yard, so their rows answer in either; an act's place is a world of its own.
+// yard, but each half draws only its own rows: a window taller than the deep
+// reaches up over the yard's ground with nothing of it drawn there, so a row
+// answers only in its own half.
 //
 // The rows, in the order the pointer asks them (`stationAt`), which is the
 // order that settles which wins where two patches overlap: the hut before the
@@ -267,8 +269,8 @@ export const BOARDS = STATIONS.filter(r => r.board).map(r => r.key);
 
 // The world a place is in: the yard and the deep are one, each act its own.
 const worldOf = place => (place === 'after' || place === 'hell' ? place : 'yard');
-// Whether a row stands in the world on screen, the one the pointer asks.
-export const here = row => !!row && worldOf(row.place) === worldOf(S.view);
+// Whether a row stands in the place on screen, the one the pointer asks.
+export const here = row => !!row && (row.place || 'yard') === S.view;
 // The boards of the yard's world, for what is drawn or counted over its
 // stations alone (their flags, the snapshot's offers).
 export const YARD_BOARDS = STATIONS.filter(r => r.board && worldOf(r.place) === 'yard').map(r => r.key);

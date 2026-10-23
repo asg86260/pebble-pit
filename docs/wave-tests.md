@@ -1,0 +1,192 @@
+# Wave: every part of the game stands on its own (design, not built)
+
+**Status: written 2026-10-23 for the owner's approval. Nothing here is built.**
+Once approved this document is canon for the tracks that build it: do not
+redesign; implement. Where a name is given, use it.
+
+## Why
+
+The owner, 2026-10-23: "we should be able to isolate each station/feature/chunk
+of the game into tests, without needing the whole game. That should be how
+we're building our game."
+
+What the suites cost today, measured, not guessed:
+
+- The node tier is ~3,500 test-seconds (1,248 groups in 307 files). One
+  typical file (`sky-fan`, 33 s): ~70% is the game simulating, ~18% the
+  reload every five game seconds, ~11% the rules every frame. A profile of
+  the slowest file (`scenes-stand-acts`, 203 s) has nothing but game code at
+  the top: the deep's coil walked (`deep/place.js`, ~15%), `surveyFloor`
+  (10%), `countTick` (7%). A check about a ladder simulates the weather, the
+  wildlife, the rain and the serpent, because there is no way not to.
+- The browser tier is ~790 s a window, a third of it `await sleep()` (229
+  calls; the contrast check alone sleeps 1,871 times, 104 s). It is cut into
+  shards by count, so they run 29 s to 251 s.
+- CI setup installs system packages through apt, which stalled four jobs of
+  one run for 5 to 10 minutes on a slow mirror.
+- Two of the day's bugs were state held in a module rather than on `S`
+  (`riseIn` in `after/union.js`, `wheelOwed` in `input.js`): a new game and a
+  reload left it behind, and the checks went red only in some orders. Game
+  code holds 352 module-level `let`s in 130 files; each leak found so far got
+  its own hand-written reset (`forgetSerpent`, `forgetOwed`, `coldSky`,
+  `stopWheel`).
+
+What is kept, because it is right: the game clock (`run(s)`), the rules in
+`verify.js` on every frame, the reload check, "buy it like a player", the
+save as the fixture. This wave makes them cheap enough to keep everywhere.
+
+## The bargain
+
+A part of the game -- a station, a system, a place -- is built and checked
+alone: its own steps, its own facts, its own setup, with the rest of the
+yard inert. The whole game is still checked whole, but by a few playthroughs
+on a budget, not by every one of 1,248 groups.
+
+What it costs: one declaration a system (the `SYSTEMS` row below), a reset
+for any state a module keeps, and moving checks into the tier that fits them.
+What it must not break: nothing teleports, every rule watched on every frame
+a check runs, reload checked against whatever a check builds.
+
+## The pieces
+
+### 1. A system is a row (`src/systems.js`)
+
+`STEPS` in `game.js` becomes `SYSTEMS`: the same one list in the same order,
+each row a part of the game.
+
+```js
+{ name: 'crew', step: c => ..., owns: ['workers', 'crew*'], needs: ['piles', 'survey'] }
+```
+
+- `owns`: the `S` fields it is the writer of (globs allowed). Every field on
+  `S` is owned by exactly one system, or by `core` (the clock, the camera,
+  the view).
+- `needs`: the systems whose per-frame work it reads. **Derived, not
+  guessed**: `tools/node/systems-trace.mjs` plays the scripted playthroughs
+  with `S` behind a Proxy, records which step reads and writes which field,
+  and prints the graph. `test/systems.test.mjs` holds each row's `needs` to be
+  at least what the trace finds, and every `S` field to have one owner.
+- `step` is today's step, unchanged. `game.js`'s `step()` walks `SYSTEMS`
+  exactly as it walks `STEPS`; the frame order does not move.
+
+### 2. Module state is registered (`src/reset.js`)
+
+```js
+export const held = (name, reset) => ...   // a module's state, and how to clear it
+export const resetHeld = () => ...         // called by newGame and restore
+```
+
+A module that keeps state between frames registers its reset with `held`;
+`newGame` and `restore` call `resetHeld()`. The four hand-written resets
+fold into it. A pure cache (a path per zoom, a profile keyed by its inputs)
+is not state and says so with `// cache:` on its line.
+`test/held-state.test.mjs` lists every module-level `let` in `src/` that is
+neither registered nor marked: an allowlist that only shrinks, like the
+polish bar's gates, starting at whatever is unclassified on the day it lands.
+
+### 3. A part of the game stands alone (`test/sim.mjs`)
+
+```js
+const yard = await sim({ systems: ['crew', 'rock'], from: 'bench' });
+```
+
+Stands the world (the layout is cheap: ~0.4 s a file), loads a fixture, and
+steps only the named systems, their `needs` closed over, and `core`, in
+`SYSTEMS` order. `run`, `runUntil`, the `__` handles, `verify` and the
+reload check work as in `helpers.mjs` today; a rule about a system not
+running is not asked. A part that cannot be stood this way has a `needs` the
+trace has not seen, and that is the defect to fix, not a reason to stand
+the whole yard.
+
+### 4. Fixtures are saves, built once (`test/fixtures/`)
+
+A named starting yard (`bench`, `quarry`, `deep`, `after-camp`, ...) is
+built from its scene in `src/scenes.js` once, saved, and loaded by every
+check that starts there. The generated blobs are cached under
+`test/fixtures/.gen/` (ignored), keyed by a hash of `src/`, and rebuilt on a
+miss; a player's save that a bug came in on stays a committed fixture as
+today. The scenes stay the one description of every state, for the shot tool
+and the checks alike. A fixture is setup a check is not about: the thing a
+check *is* about is still bought, clicked and walked the player's way.
+
+### 5. Four tiers, by what they need
+
+| tier | stands | where | for |
+|---|---|---|---|
+| unit | nothing: pure functions | `test/unit/` | a ladder's table, a layout, a codec |
+| system | one part alone (`sim`) | `test/<part>/` | a station's loop, its board's rows, its save |
+| whole | the full game | `test/whole/` | the playthroughs, scenes standing, reload sweeps -- on a budget |
+| browser | a page | `src/selftest/` | pointer, DOM, board, canvas only |
+
+`test/` is laid out by part, matching `SYSTEMS` names: `test/crew/`,
+`test/after/`, `test/deep/`. A new station arrives with its `SYSTEMS` row and
+its `test/<station>/` folder, and the whole tier does not grow to cover it.
+The whole tier has a written budget (`test/whole/BUDGET`, seconds on CI) and
+a check that goes red past it.
+
+### 6. One way to write a check, both tiers (`src/check/`)
+
+`ok`, `group`, `run`, `runUntil` and a new `until(fn, frames)` -- poll a fact
+a frame at a time -- shared by `test/helpers.mjs` and `src/selftest/kit.js`,
+which today each write their own. In the browser `until` waits on frames, so
+a board opening is waited for, not slept past. `sleep` stays only where real
+wall time is the thing checked (a hold, a double-click), on an allowlist
+that only shrinks.
+
+### 7. The handles split by part
+
+`src/hooks.js` (1,635 lines) becomes `src/hooks/<part>.js`, each part's setup
+handles beside its system; `hooks.js` keeps the frame (`fast`, `verify`,
+`newGame`) and re-exports. No handle changes name.
+
+### 8. CI by measured time
+
+- Both tiers write each file's or group's time; `test/times.json` is
+  refreshed from main's CI run and the shards are dealt by it (longest first
+  into the emptiest shard), the browser's opening group pinned first.
+- The browser jobs run in Playwright's own image
+  (`mcr.microsoft.com/playwright:v1.55.0-noble`): browser and system packages
+  baked in, no apt, no download.
+- The contrast checks are split one group a page, so no group is the floor.
+
+### 9. The hot paths
+
+The profile's top three are fixed in the game, which the player gets too:
+the coil walk asked again within a frame, `surveyFloor` walking every column
+four times a second, `countTick`. Each is profiled before and after on the
+same seeded yard (PERF.md, section 0).
+
+## Order, and what each step can be checked by
+
+Each is its own pull request, green before the next starts. Tracks inside a
+step run in parallel where their files are disjoint.
+
+1. **CI by measured time** (8). Measured: shard spread and run wall time.
+2. **Module state registered** (2). The allowlist lands with every current
+   `let` classified; the known leaks fold in; the pad sheet leak in TODO.md
+   gets its reset here.
+3. **One check API, frame waits** (6). The browser tier's sleep total, from
+   the run summary's `cost`, falls; the sleep allowlist lands.
+4. **Systems as rows, the trace, `sim`** (1, 3). `SYSTEMS` replaces `STEPS`
+   with no change of order (the full suites identical before and after); the
+   trace and its check land; `sim` lands with three parts moved onto it as
+   the proof: the bench and its ladders, act 3's mill, the deep's pods.
+5. **Fixtures** (4), then **the move** (5): files moved into tiers part by
+   part, the slowest first, each part's move its own track. A part's move is
+   done when its checks run on `sim` and its old files are gone.
+6. **Handles split** (7) and **hot paths** (9).
+
+ARCHITECTURE.md and CLAUDE.md are updated as each lands: "adding a station"
+becomes "a `SYSTEMS` row, its facts, its config, its `test/<station>/`".
+
+## Calls for the owner
+
+1. **Isolation by choosing systems, on the one `S`.** A part runs alone
+   because only its systems step, not because it has its own state object.
+   The alternative -- `S` passed into every system as an instance -- is the
+   purer shape and a rewrite of every module. Recommended: choose systems.
+2. **`test/` reorganized by part.** 307 files move into folders over step 5.
+   Big diffs, but each part's move is one pull request. Recommended: yes.
+3. **The whole tier on a budget.** Proposed: 6 minutes of CI time, split
+   across its shards. The playthroughs and scene sweeps stay; new whole-game
+   checks need room made for them.

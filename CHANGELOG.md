@@ -201,6 +201,11 @@ this section; the release that switches it on moves these under Unreleased.
 - The recruit row, greyed while nobody is won, says so and how to win one instead of reading like a price you cannot pay (test/after-recruit.test.mjs).
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 
+- In a narrow window a board uses the whole width under the purse instead of squeezing into a sliver beside where the purse would be, so its cards keep their words inside them and several tiles share a plank (src/selftest/boards.js, "no row on any board sits on top of itself").
+- In a narrow window a board stands where it really is, its width under the purse rather than beside it, so it no longer opens off to one side of where it is drawn (src/selftest/house.js, "a board that changes under you is seated by its new size").
+- In a narrow window a board taller than the window scrolls inside it instead of running past its foot by the height of the purse (src/selftest/boards.js, "a board taller than the window scrolls to its last row").
+- In a narrow window every board, in the yard and in heaven, fits inside the glass, its purse going on to a second line rather than off the edge (src/selftest/boards.js, "an open board lies inside the window, popover or sheet").
+- A sheet going away no longer catches the click meant for what it uncovers, so the call to build the bench works the moment the pause sheet is shut (src/selftest/input.js, "the board does not shut on the way to it"; src/selftest/boards.js, "shop opens at the bench and is not buried").
 - The tick and the glyph over a station that finished something are crisp at every window size in the deep, instead of a faint seam along their edges on a large window (src/selftest/deeppalette.js).
 - What crosses behind the rift, or the serpent's glimpse, no longer stays up for a frame as the camera leaves for heaven or the deep through a portal (src/verify.js, rules 17 and 18; src/selftest/playcheck.js).
 - A board's list of options, opened while the board is still sliding over to its station, now stays hung under the control that opened it instead of being left behind where the control had been (src/selftest/boards.js).
@@ -223,6 +228,11 @@ this section; the release that switches it on moves these under Unreleased.
 - In heaven, members holding posters when the fence is full put them back at the press and come free for work again (test/after-full-fence.test.mjs).
 - In heaven, an idle member's first sign, poster or log picked up no longer counts as two (test/after-gather.test.mjs).
 - In heaven, holding the right button now veils the camp and rings each member, and the one under the cursor slows so it can be picked up (src/selftest/afterboards.js).
+- In heaven, a new soul joins God's crowd and the signs ink on the act's own clock, so a reload or a new game no longer shifts when either happens (test/after-crowd.test.mjs).
+- On a gamepad, pressing along the stops faster than the camera can pan to each no longer throws the focus back to the middle of the window on a wide screen (src/selftest/pad.js).
+- In the deep on a tall window, the pointer near the top of the glass no longer opens the board of a yard station that is not drawn there (test/gates.test.mjs).
+- On a phone the opening view shows the whole rock instead of cutting off its left side (src/selftest/view.js).
+- On the appearance page, right from the last tile in a row of the grid stays on it instead of jumping the focus to a key at the top of the page (src/selftest/wardrobe.js, the picker by a pad, at 390x844).
 
 ## v0.6.1 — 2026-10-19
 

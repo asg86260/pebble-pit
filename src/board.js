@@ -131,12 +131,21 @@ const measured = () => ({ w: (panelEl.hidden ? 0 : mainWidth()) || sized.w,
 // The whole panel, for the safe-zone wedge and the tip's dodge.
 let full = { w: 0, h: 0 };
 
-// The main board's own width: the open page and the purse.
+// The main board's own width: the open page and the purse, side by side or
+// one over the other.
 function mainWidth() {
   const sheet = panelEl.querySelector(':scope > .sheet');
-  const purseW = purseEl.offsetWidth;
-  return (sheet ? sheet.offsetWidth : 0) + (purseW ? purseW + panelGap() : 0);
+  const sheetW = sheet ? sheet.offsetWidth : 0, purseW = purseEl.offsetWidth;
+  if (!purseW) return sheetW;
+  return purseBeside() ? sheetW + purseW + panelGap() : Math.max(sheetW, purseW);
 }
+
+// Whether the purse stands beside the sheet or lies along its top. The
+// stylesheet decides that by the window (a narrow desk window stacks them as a
+// phone does), so it is read off the panel rather than guessed from the pointer
+// alone; the sheet from the bottom stacks them whatever the window.
+const purseBeside = () => !coarse() && typeof getComputedStyle === 'function'
+  && getComputedStyle(panelEl).flexDirection === 'row';
 
 // The panel's flex gap, read off the element. The node yard has elements but
 // no layout engine, so zero there rather than a crash.
@@ -154,18 +163,25 @@ function panelGap() {
 function pinWidth() {
   const sheet = panelEl.querySelector(':scope > .sheet');
   if (!sheet) return;
-  // The room the sheet may take, written onto it so a stylesheet that sizes it
-  // by content (the shelf) can cap itself without knowing the purse.
+  // The room the sheet may take, written onto the panel so a stylesheet that
+  // sizes the sheet by content (the shelf) can cap it without knowing the
+  // purse, and so the purse lying along its top is held to the same room.
   // On a phone the sheet is the window's width and the purse lies inside it,
-  // so the room is the glass (DESIGN.md, "Boards as bottom sheets").
-  const purseW = coarse() ? 0 : purseEl.offsetWidth;
-  sheet.style.setProperty('--sheet-room', `${S.W - (purseW ? purseW + panelGap() : 0) - 2 * GAP}px`);
+  // so the room is the glass (DESIGN.md, "Boards as bottom sheets"); in a
+  // narrow window the purse stands above the sheet, not beside it, and takes
+  // none of its width. Read off the panel, so the stylesheet says which.
+  const beside = !coarse() && typeof getComputedStyle === 'function'
+    && getComputedStyle(panelEl).flexDirection === 'row';
+  const purseW = beside ? purseEl.offsetWidth : 0;
+  panelEl.style.setProperty('--sheet-room', `${S.W - (purseW ? purseW + panelGap() : 0) - 2 * GAP}px`);
   // And the height it may take, off the same measured window `place` clamps
   // it against. The stylesheet's own `dvh` was a second reading of the window
   // that `place` never saw, so the two could disagree about where the glass
   // ends -- and a check standing the yard in a smaller window moved one
-  // reading and not the other.
-  sheet.style.setProperty('--sheet-tall', `${S.H - 2 * GAP}px`);
+  // reading and not the other. A purse lying along the top of the sheet comes
+  // out of that height, as one standing beside it comes out of the width.
+  const purseH = beside || coarse() ? 0 : purseEl.offsetHeight;
+  sheet.style.setProperty('--sheet-tall', `${S.H - (purseH ? purseH + panelGap() : 0) - 2 * GAP}px`);
   // A shelf is as many slots wide as its fullest plank or its longest sign,
   // capped. It cannot size itself: `auto-fill` needs a definite width to count
   // against. Signs are measured as a range, not as the box, since a sign's box

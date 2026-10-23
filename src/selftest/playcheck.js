@@ -18,7 +18,7 @@
 import { S } from '../state.js';
 import { newRun, settle, raf, ok, point, canvas, panel, run, runUntil, haveBench, pressRaise, haveRock,
          boulderWorld } from './kit.js';
-import { STATIONS, here, stationAt, hitRect } from '../stations.js';
+import { STATIONS, here, stationAt, hitRect, standRect } from '../stations.js';
 import { openBoard, inSafeZone } from '../board.js';
 import { toScreen } from '../world.js';
 import { portalEnd } from '../portals.js';
@@ -214,10 +214,17 @@ async function buyCheck(name, rows) {
 }
 
 // Scrolling away from the open board shuts it.
+// Where a place is barely wider than the window (the deep on a wide one) the
+// station cannot be panned off the glass, and its board rightly stays: the
+// rule is the board up exactly while its station is on the glass.
 async function scrollCloses(name) {
-  const was = openBoard();
+  const was = openBoard(), from = S.camX;
   await until(() => { wheel(1500); return openBoard() === null; }, 200);
-  return [ok(was !== null && openBoard() === null, `${name}: panning away from the open board closes it`, `${was} -> ${openBoard()}`)];
+  const r = was && standRect(was);
+  const seen = !!r && r.x + r.w >= S.camX && r.x <= S.camX + S.viewW;
+  return [ok(was !== null && openBoard() === (seen ? was : null),
+             `${name}: panning away from the open board closes it`,
+             `${was} -> ${openBoard()}, panned ${Math.round(S.camX - from)}, station ${seen ? 'still' : 'not'} on the glass`)];
 }
 
 // The camera come to rest in `view` after a way through (the ripple has run
