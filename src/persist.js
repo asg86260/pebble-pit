@@ -9,6 +9,7 @@ import { P, SHADES, LOO_POSTS, SAVE_V } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, SAVE as SMOG } from './smog.js';
+import { resetHeld } from './reset.js';
 import { resetWeather } from './weather.js';
 import { now } from './clock.js';
 import { resetFauna, settleFauna } from './deep/fauna.js';
@@ -541,6 +542,8 @@ function newYardName() {
 }
 
 export function restore() {
+  // A load is a page opened fresh: what modules keep for the yard goes first.
+  resetHeld();
   yardReads++;
   // The ground was laid for the yard that was here: a save brings its own
   // noticeboard rect, from whatever layout wrote it, and the lay is cached
@@ -589,6 +592,7 @@ export function restore() {
 // a run started from a seed on purpose (`seedGame` in hooks.js) keeps the
 // number it was given.
 export function reset(fresh = true) {
+  resetHeld();
   // A staged yard is nobody's (scenesheet.js, the demo): clearing the slot
   // under it would erase the player's yard to make room for a picture.
   if (!S.staged) clear();

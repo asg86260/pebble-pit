@@ -13,9 +13,15 @@ import axe from 'axe-core';
 import { SCENES } from '../scenes.js';
 import { YARD_BOARDS as BOARDS } from '../stations.js';
 
-// The yards to read: every page scene as it stands, then the boards.
-const PAGES = Object.keys(SCENES).filter(k => SCENES[k].page);
+// What to read: every page scene as it stands, then each board at its
+// fullest, a stop each. The stops are dealt into a few groups a theme, so no
+// one group is the floor of the shard it lands in.
 const BOARD_SCENES = [['boards', BOARDS], ['queuerepeat', ['bench', 'house']], ['shieldbuilding', ['bench']]];
+const STOPS = [
+  ...Object.keys(SCENES).filter(k => SCENES[k].page).map(scene => ({ where: scene, scene })),
+  ...BOARD_SCENES.flatMap(([scene, boards]) => boards.map(board => ({ where: `${scene}/${board}`, scene, board })))
+];
+const PARTS = 4;
 
 // A page or a board fades in on the wall clock (fade.js), a card's step
 // strikes and fades away, a tag eases in: a word read mid-fade is a pale
@@ -52,48 +58,39 @@ async function read(w, where) {
   return out;
 }
 
-export const TESTS = [
-  ['every word on a page or a board meets AA contrast, light and dark', async () => {
-    const checks = [];
-    for (const theme of ['light', 'dark']) {
-      const f = document.createElement('iframe');
-      f.src = `./play.html?bench${theme === 'dark' ? '&dark' : ''}`;
-      f.style.cssText = 'position:fixed;left:0;top:0;width:1000px;height:700px;border:0;opacity:0;pointer-events:none;z-index:-1';
-      document.body.appendChild(f);
-      try {
-        const t0 = performance.now();
-        const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast); };
-        while (!booted() && performance.now() - t0 < 20000) await sleep(50);
-        const w = f.contentWindow;
-        if (!booted()) { checks.push(ok(false, `${theme}: the game boots in a frame`)); continue; }
-        w.eval(axe.source);
-        await w.document.fonts.ready;
-        const step = () => new Promise(r => { w.__fast(1 / 60); w.requestAnimationFrame(() => r()); });
-        const found = [];
-        for (const scene of PAGES) {
-          w.__scene(scene);
-          w.__fast(1);
-          for (let i = 0; i < 4; i++) await step();
-          await still(w);
-          found.push(...await failing(w, scene));
-        }
-        for (const [scene, boards] of BOARD_SCENES) {
-          w.__scene(scene);
-          w.__fast(1);
-          for (const b of boards) {
-            try { w.__board(b); } catch { continue; }
-            for (let i = 0; i < 4; i++) await step();
-            await still(w);
-            found.push(...await failing(w, `${scene}/${b}`));
-          }
-          w.__board(null);
-        }
-        const uniq = [...new Set(found)];
-        if (uniq.length) console.log(`[contrast ${theme}]\n` + uniq.join('\n'));
-        checks.push(ok(uniq.length === 0, `${theme}: every word meets AA`,
-                       uniq.slice(0, 8).join('; ') + (uniq.length > 8 ? ` (+${uniq.length - 8})` : '')));
-      } finally { f.remove(); }
+// One theme's share of the stops, read in a frame of its own (the dark
+// palette is fixed at boot, so a theme is a frame).
+async function readStops(theme, stops) {
+  const f = document.createElement('iframe');
+  f.src = `./play.html?bench${theme === 'dark' ? '&dark' : ''}`;
+  f.style.cssText = 'position:fixed;left:0;top:0;width:1000px;height:700px;border:0;opacity:0;pointer-events:none;z-index:-1';
+  document.body.appendChild(f);
+  try {
+    const t0 = performance.now();
+    const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast); };
+    while (!booted() && performance.now() - t0 < 20000) await sleep(50);
+    const w = f.contentWindow;
+    if (!booted()) return [ok(false, `${theme}: the game boots in a frame`)];
+    w.eval(axe.source);
+    await w.document.fonts.ready;
+    const step = () => new Promise(r => { w.__fast(1 / 60); w.requestAnimationFrame(() => r()); });
+    const found = [];
+    for (const { where, scene, board } of stops) {
+      w.__scene(scene);
+      w.__fast(1);
+      if (board) { try { w.__board(board); } catch { continue; } }
+      for (let i = 0; i < 4; i++) await step();
+      await still(w);
+      found.push(...await failing(w, where));
+      if (board) w.__board(null);
     }
-    return checks;
-  }],
-];
+    const uniq = [...new Set(found)];
+    if (uniq.length) console.log(`[contrast ${theme}]\n` + uniq.join('\n'));
+    return [ok(uniq.length === 0, `${theme}: every word meets AA`,
+               uniq.slice(0, 8).join('; ') + (uniq.length > 8 ? ` (+${uniq.length - 8})` : ''))];
+  } finally { f.remove(); }
+}
+
+export const TESTS = ['light', 'dark'].flatMap(theme => Array.from({ length: PARTS }, (_, k) =>
+  [`every word on a page or a board meets AA contrast, ${theme} (${k + 1} of ${PARTS})`,
+   () => readStops(theme, STOPS.filter((_, i) => i % PARTS === k))]));

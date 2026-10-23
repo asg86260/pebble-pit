@@ -14,6 +14,7 @@
 // below until it is decided.
 
 import { AFTERLIFE_ON, HELL_ON, ACT_ROAD_UNDER } from './config.js';
+import { held } from './reset.js';
 import { demoOn } from './demo.js';
 import { AFTER_PLACE } from './after/place.js';
 import { godFront, restW } from './after/sky.js';
@@ -82,3 +83,4 @@ export const owe = key => { OWED.add(key); };
 export const owed = key => OWED.has(key);
 export const paid = key => { OWED.delete(key); };
 export const forgetOwed = () => { OWED.clear(); };
+held('owed', forgetOwed);
