@@ -66,7 +66,7 @@ function postOf(row) {
   };
   return post;
 }
-let POSTS = null;
+let POSTS = null;               // cache: built from the station table, which never changes; each post reads the yard live
 // The yard's posts are the station rows'; a row whose job is the deep's is
 // not one of them, since the deep's stations are the player's and stand
 // where they were put down.
@@ -139,7 +139,7 @@ const seatsOf = p => {
 // A pass over every post asks this of each several times over, so the pass
 // sorts the crew by type once (`overPosts`) and reads the sort; asked
 // outside a pass, it is a walk of the crew as ever.
-let byType = null;
+let byType = null;              // cache: the crew by type for the length of one pass, null outside it
 const NOBODY = [];
 const bodiesOf = p => p.src ? p.src.bodies(p)
   : byType ? byType.get(TYPE_OF[p.job]) || NOBODY

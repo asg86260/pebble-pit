@@ -167,7 +167,7 @@ export const feetOn = (way, leftX) =>
 // for every body after it), so a second build on the same frame is counted
 // only when it is for an outline already built that frame: the cache
 // thrashing between two outlines, which is what the counter is for.
-let last = null, lastKey = '', builtTick = -1;
+let last = null, lastKey = '', builtTick = -1; // cache: keyed by the eight numbers the outline is built from
 const builtKeys = new Set();
 // What the outline was built from, as numbers: every body asks for the ways
 // many times a frame, and the answer is nearly always the one it had, so the

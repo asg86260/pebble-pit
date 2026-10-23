@@ -24,10 +24,10 @@ import { reducedMotion } from './prefs.js';
 
 // `from` is a box on the glass with its cell (`u`), frozen at the press;
 // `to` the box aimed at, in its own space, read on the glass every frame.
-let from = null, to = null, at = 0, dur = 0, id = null, space = null;
+let from = null, to = null, at = 0, dur = 0, id = null, space = null; // page: the marker's glide, on the glass and the wall clock; pad.js aims it every frame
 // When the marker came up from nothing (it fades in from there), and the
 // last pose it stood in once it was put away (it fades out in that pose).
-let shownAt = 0, ghost = null;
+let shownAt = 0, ghost = null;  // page: the marker's fade, on the wall clock
 
 const unitOf = sp => (sp === 'page' ? PAD_PAGE_CELL : P);
 // Smooth at both ends: no first frame that leaps most of the way.

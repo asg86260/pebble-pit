@@ -59,7 +59,7 @@ import { pairBody, namePair, whoIs } from './wardrobe.js';
 // fight -- is the paid game's (SERPENT_ON), and a dev build's and the node
 // yard's (no `import.meta.env`). A check can say either way for itself.
 const DEV_BUILD = !import.meta.env || !!import.meta.env.DEV;
-let forced = null, forcedDeep = null;
+let forced = null, forcedDeep = null; // page: a check's say on the build's switches, set before it loads, so a load must not clear it
 export function serpentOn() { return !demoOn() && (forced ?? true); }
 export function forceSerpent(on) { forced = on; }
 export function deepOn() { return serpentOn() && (forcedDeep ?? (SERPENT_ON || DEV_BUILD)); }

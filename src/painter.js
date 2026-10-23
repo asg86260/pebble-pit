@@ -34,7 +34,7 @@ function tablesFor(m) {
 // Cells rewritten since the last reset, the same handle `settleWork` in grid.js
 // keeps: a count of cells rather than a stopwatch reading that would mean
 // something different on every machine.
-let work = 0;
+let work = 0;                   // page: a perf reading, cells rewritten; its reader resets it
 export const paintWork = () => work;
 export const resetPaintWork = () => { work = 0; };
 

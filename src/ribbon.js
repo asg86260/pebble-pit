@@ -15,7 +15,7 @@ import {
 import { flagRip } from './flagwave.js';
 
 const cards = new Set();
-let raf = 0;
+let raf = 0;                    // page: the animation frame asked for
 
 const token = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const still = () => document.body.classList.contains('still');

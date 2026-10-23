@@ -29,6 +29,7 @@ import { JOB, TYPE } from './jobs.js';
 import { sfx } from './audio.js';
 import { refitShield, domeSquash } from './shield.js';
 import { skyCam } from './view.js';
+import { held } from './reset.js';
 
 // --- boulder ----------------------------------------------------------------
 // Thickness comes on every other rock: with the rock also growing wider and
@@ -457,7 +458,7 @@ export const rockShape = () => {
 // rock into exactly these cells (shield.js). Worked out once a fall: a cell
 // is a root, an arctangent and three sines, and a late rock is two thousand
 // of them.
-let lump = null;
+let lump = null;                // cache: keyed by the boulder's number, width and depth, all it is worked from
 export function lumpCells() {
   const deep = depthOf();
   const key = `${S.boulderNo},${S.gw},${deep}`;
@@ -717,7 +718,8 @@ const ramTargetX = () => {
   const parked = rockFaceX() - P * (RAM_REACH + spriteW(RAM));
   return Math.round(Math.max(flankX() + RAM_CLEAR, parked) / P) * P;
 };
-let ramNowX = null, ramMovedAt = 0;
+let ramNowX = null, ramMovedAt = 0; // held: where the ram has driven to, and when it last moved
+held('rock-ram', () => { ramNowX = null; ramMovedAt = 0; });
 export function ramX() {
   const target = ramTargetX();
   const t = now();

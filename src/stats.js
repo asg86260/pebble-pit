@@ -16,6 +16,7 @@ import { JOB, JOB_OF, jobSaid } from './jobs.js';
 import { showWindow } from './modal.js';
 import { registerBoard } from './boardrows.js';
 import { storyLine } from './wardrobe.js';
+import { held } from './reset.js';
 
 // What the books show, in board order. A currency appears once you have seen
 // one.
@@ -257,13 +258,14 @@ const WATCH = ['banked', 'shards', 'spores'];
 const EASE = 0.25;                         // how fast the reading follows reality
 
 export const rates = { banked: 0, shards: 0, spores: 0 };
-let lastBooks = null, lastBooksAt = 0;
+let lastBooks = null, lastBooksAt = 0; // held: the last reading the rates are eased from (resetRates)
 
 // A counter going to zero on a reset is not a negative rate.
 export function resetRates() {
   lastBooks = null;
   for (const k of WATCH) rates[k] = 0;
 }
+held('stats-rates', resetRates);
 
 export function sampleRates(now) {
   if (!lastBooks) { lastBooks = snapshot(); lastBooksAt = now; return; }
