@@ -33,9 +33,9 @@ const pending = () =>
     .sort((a, b) => a[1] - b[1])
     .map(([key]) => key);
 
-let up = null;      // the key on the card now, or null
-let upAt = 0;       // when it went up
-let downAt = 0;     // when the last one came down, for the gap between two
+let up = null;      // page: the DOM card, read off S.wonAt every frame -- the key on the card now, or null
+let upAt = 0;       // page: the DOM card's timing -- when it went up
+let downAt = 0;     // page: the DOM card's timing -- when the last one came down, for the gap between two
 
 // Pressing the card opens the held sheet on the record page. `hold` opens the
 // front and marks the record read; the page is turned after.
@@ -85,7 +85,7 @@ el.addEventListener('transitionend', () => {
 // corner card it would still land on -- the story's, on a phone -- as the mess
 // tags do (dodge.js), gliding there if the card grows under it. Asked every
 // frame the card is up; written only when the answer changes.
-let seat = null;
+let seat = null;  // page: where the DOM card stands, written only when it changes
 function seatToast() {
   const w = el.offsetWidth, h = el.offsetHeight;
   if (!w) return;

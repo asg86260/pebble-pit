@@ -813,3 +813,20 @@ TESTS.push(['deep: a click on a creature startles it, and it shakes loose a hand
   ];
 }]);
 
+
+// A status's tile answers the pointer only while it is drawn: the bar gone
+// (a yard with no serpent up), the tile it stood in is no tooltip. The tiles
+// used to stand where they were last drawn until a layer drew them again.
+import { statusAt } from '../render/statusicons.js';
+TESTS.push(['a status tile answers the pointer only while it is drawn', async () => {
+  window.__scene('party-statuses');
+  for (let i = 0; i < 4; i++) { run(1 / 60); await raf(); }
+  let at = null;
+  for (let y = 0; y < innerHeight && !at; y += 4) for (let x = 0; x < innerWidth && !at; x += 4) if (statusAt(x, y)) at = [x, y];
+  window.__scene('bench');
+  for (let i = 0; i < 4; i++) { run(1 / 60); await raf(); }
+  return [
+    ok(!!at, 'the serpent wearing statuses puts a tile under the pointer somewhere'),
+    ok(at && !statusAt(...at), 'and with the bar gone that spot answers nothing', String(at))
+  ];
+}]);

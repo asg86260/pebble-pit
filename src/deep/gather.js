@@ -10,6 +10,7 @@
 // fields a yard body's load is already saved in (`KEEPS`), so a reload finds
 // it with the same handful.
 
+import { held } from '../reset.js';
 import { S, deepBed } from '../state.js';
 import { P, WORKER, GATHER_SCOOP } from '../config.js';
 import { haulCap, haulSpeed } from '../levels.js';
@@ -33,7 +34,8 @@ const APART = 2 * REACH / P;
 // The gatherers among the crew and their places in it, found once a frame:
 // each of forty asking the whole crew about every other, every frame, was most
 // of the endgame's step.
-let crewAt = -1, gang = [], order = new Map();
+let crewAt = -1, gang = [], order = new Map(); // held: the gatherers found this grid frame; the grid's frame is not the yard's, so a new game drops them
+held('deep-gang', () => { crewAt = -1; gang = []; order = new Map(); });
 function gangNow() {
   if (crewAt !== gridFrame()) {
     gang = []; order = new Map();

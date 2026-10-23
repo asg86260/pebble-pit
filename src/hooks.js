@@ -322,7 +322,7 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
 // door every check runs the yard through, and a rule only checked where
 // somebody remembered to wrap the call is checked in the files that never
 // broke it.
-let verifying = false;
+let verifying = false;  // page: whether the checks watch the rules; a test-harness switch
 export const setVerify = (on = true) => { verifying = !!on; resetVerify(); return verifying; };
 
 // Run the yard forward without waiting for it: the same game with the handle
@@ -333,7 +333,7 @@ export const setVerify = (on = true) => { verifying = !!on; resetVerify(); retur
 // the shot tool runs a second of the yard after every scene, and a moment
 // shorter than that is gone before the picture is taken. Wall clock, so it
 // lets go on its own.
-let heldUntil = 0;
+let heldUntil = 0;  // page: the shot tool's hold, on the wall clock, which lets go on its own
 export const fast = (seconds = 1, hz = 60) => {
   const frames = Math.max(1, Math.round(seconds * hz));
   const ms = 1000 / hz;
@@ -442,7 +442,7 @@ export const coldSky = () => clearSky();
 export const front = (heft = 1) => { S.rainDue = 0; pinHeft(heft); };
 
 // Come back to the game the way a page refresh does.
-export const reload = () => { persist(); restore(); buildShop(); };
+export const reload = () => { persist(); restore({ warm: true }); buildShop(); };
 
 // A reload that is actually cold. `reload` is `persist()` then `restore()`
 // in one process, so anything still standing in `S` survives into the load,
@@ -573,7 +573,7 @@ export const upgrades = () => UPGRADES;
 
 // Take one row's key out of every section, to prove a board still draws it.
 // `null` puts them all back.
-let unsectioned = null;
+let unsectioned = null;  // page: a dev handle's edit to the section lists, which are code, not the yard
 export const unsection = key => {
   const all = [SECTIONS, TOWER_SECTIONS,
                FILTER_SECTIONS, QUARRY_SECTIONS, FARM_SECTIONS, OUTHOUSE_SECTIONS,

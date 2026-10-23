@@ -104,7 +104,7 @@ export function drawSilt() {
 // back from it at the grain's alpha. A cell two grains share is drawn once,
 // at the alpha the two fills in turn come to (`a + b - 2ab`: two whole
 // grains on one cell turn it back), so it comes out as the fills did.
-let patch = null, patchCtx = null;
+let patch = null, patchCtx = null;   // cache: a scratch canvas, written before each read
 const cells = new Map();
 const fade = g => Math.max(0, 1 - (g.t / g.life) ** 2);
 

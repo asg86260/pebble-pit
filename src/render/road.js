@@ -68,7 +68,7 @@ function clouds(tones) {
 // thin line in the sky's shaded tone with each convex corner cut by a step,
 // and the row over that line in the shade, cell by cell.
 const EDGE = 2;     // the outline's thickness, in world px, as the floor's top line is
-let under = null;
+let under = null;   // cache: made once from the fixed seed
 function underside(tones) {
   const line = afterUnder();
   if (line + P * (ACT_ROAD_BILLOW + 2) < S.camY || line > S.camY + S.viewH) return;

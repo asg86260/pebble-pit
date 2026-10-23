@@ -135,6 +135,9 @@ export function resetVerify() {
   playedWas = 0; playedReads = -1;
   forgetSerpent();
 }
+// The rules' memory is the checker's, not the yard's: `setVerify` clears it
+// for each group, and a load -- a refresh -- must not, or the kit worn
+// before it reads as kit never owned.
 
 // The story's table, read for its keys and owners only.
 const BEAT_OWNS = new Map(BEATS.map(r => [r.key, r.owns]));
@@ -746,21 +749,21 @@ export function verifyParty() {
   droppedWas = dropped;
   droppedReads = yardReads;
 }
-let droppedWas = 0, droppedReads = -1;
+let droppedWas = 0, droppedReads = -1;  // cache: keyed by yardReads
 const kitWalkers = new Set();
-let kitReads = -1;
+let kitReads = -1;  // cache: keyed by yardReads
 
 // What the party holds past the first station and the fangs that have
 // dropped, and what a setup or a save was let start with.
 const fangSurplus = () => (S.stations || []).length + (S.fangs | 0) + (S.fangsLoose || []).length
   - 1 - (S.fangsDropped | 0) - (S.killFangs | 0);
-let fangsGiven = 0, fangReads = -1;
+let fangsGiven = 0, fangReads = -1;  // cache: keyed by yardReads
 export function forgetFangs() { fangsGiven = Math.max(0, fangSurplus()); fangReads = yardReads; }
 
 // The last stage seen, for the rule that it never goes back. A new game, or a
 // setup that sets the fight outright (`__serpent`), is a new start.
-let serpentWas = -1, woundWas = 0, stunWas = false, mealWas = 0;
+let serpentWas = -1, woundWas = 0, stunWas = false, mealWas = 0;  // page: the rules' memory, cleared by `resetVerify`
 // The length on the frame before, and which reading of the yard it was of.
-let playedWas = 0, playedReads = -1;
-let levelWas = -1, levelReads = -1;
+let playedWas = 0, playedReads = -1;  // cache: keyed by yardReads
+let levelWas = -1, levelReads = -1;  // cache: keyed by yardReads
 export function forgetSerpent() { serpentWas = -1; levelWas = -1; stunWas = false; mealWas = S.meal; forgetFangs(); }

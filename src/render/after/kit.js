@@ -131,7 +131,7 @@ export function pileAlpha(i, st) {
 // Each pile's count, where it hangs in the world, written in screen pixels
 // once the world is drawn (render/after.js, `drawAfterCounts`) so its digits
 // stay sharp, like the yard's.
-let counts = [];
+let counts = [];   // cache: this frame's counts, emptied by clearCounts at each draw
 export const clearCounts = () => { counts = []; };
 export const countAt = (x, y, n) => { counts.push({ x, y, n: Math.round(n) }); };
 export const pendingCounts = () => counts;

@@ -396,7 +396,7 @@ function spendBrew(key) {
 
 // `take` is upgrades.js's, but importing it at the top makes a ring
 // (upgrades -> works -> apothecary -> upgrades).
-let take = () => {};
+let take = () => {}; // page: upgrades.js's `take`, handed in at load to break an import ring
 export const setTake = fn => { take = fn; };
 
 // Whether a pot is mid-batch, for its fire: up while the batch cooks and the

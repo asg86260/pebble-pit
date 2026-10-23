@@ -24,6 +24,7 @@
 // stays on the event and the yard comes back around it over CUT_OUT_S.
 // The player scrolls away when they are done looking.
 
+import { held } from './reset.js';
 import { CUT_TEAR_S, CUT_DROWN_S, CUT_SHIELD_TAIL_S, CUT_SHIELD_MAX_S, CUT_OUT_S,
          CUT_SNATCH_MAX_S, CUT_SNATCH_TAIL_S, CUT_SETTLE_S,
          CUT_MUCK_MAX_S, CUT_MUCK_TAIL_S, ABYSS_MAX_S, CUT_PAN_PX_S,
@@ -122,8 +123,8 @@ export function frontLayers() {
 // reload replays nothing. For a shield it is the rock *leaving the sky*: the
 // timber breaks on the frame the rock reaches it, so a camera that went on
 // the answer would see a wreck.
-let sawGulp = 0;
-let sawFall = false;
+let sawGulp = 0; // held: the rift's gulp as last read, for its edge
+let sawFall = false; // held: the rock falling as last read, for its edge
 export function cameraCues() {
   const gulp = (S.riftGulp || 0) > sawGulp;
   sawGulp = S.riftGulp || 0;
@@ -169,7 +170,7 @@ function shotHolds() {
 // A yard beat's frame, asked this frame (`shoot`), and asked last frame: the
 // shot is the beat's for as long as it goes on asking. Read once a frame by
 // `stepHush`, which lets an aim nobody asked for go.
-let shotNow = false, shotLive = false;
+let shotNow = false, shotLive = false; // held: a beat asked for the shot this frame and last
 
 // A scene on its way out has let go as far as the player is concerned: the
 // click that would have skipped it lands in the yard instead.
@@ -353,7 +354,7 @@ function subjects() {
 // serpent back under with him -- is still about where it was for the tail it
 // holds on the wreck: the last box it named is kept for as long as the same
 // scene holds the same half.
-let kept = null;
+let kept = null; // held: the last box the scene named
 export function subject() {
   if (!holding() || gliding()) return null;
   const key = S.finale ? 'finale' : S.beat.camera || S.beat.yard || S.beat.sheet;
@@ -389,7 +390,8 @@ function need(camY, box) {
 // way through the portal) is a glide and never a jump. A scene letting go
 // keeps the last box's move and gives it back with the bands. Ephemeral: a
 // reload takes it again from the scene.
-let want = 0, lift = 0;
+let want = 0, lift = 0; // held: the bands' move, wanted and come
+held('cutscene', () => { sawGulp = 0; sawFall = false; shotNow = false; shotLive = false; kept = null; want = 0; lift = 0; });
 // While the shot is aiming the lift is the shot's own (`aimAt`), held as it
 // set it.
 export function frameHeight(camY) {

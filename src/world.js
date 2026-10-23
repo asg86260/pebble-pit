@@ -31,6 +31,7 @@ import { deepX1 } from './deep/place.js';
 import { actPlace } from './acts.js';
 import { frameHeight } from './cutscene.js';
 import { clampX, clampY, restY, bandWorld, easeInOut, zoomHeld } from './shot.js';
+import { held } from './reset.js';
 
 const canvas = document.getElementById('c');
 
@@ -129,7 +130,7 @@ export const liftX = () => {
 // lay them again, what they depend on is written here as one key and the
 // ground is laid again when it changes: a new site gets its strip by
 // existing.
-let laid = null;
+let laid = null;  // held: keyed by the ground's key, which a loaded save does not change
 export const unlay = () => { laid = null; };
 // Anything that can move a site has to be in here, or the yard keeps a
 // layout that was true a purchase ago. `buildOrder` because the sites are
@@ -661,7 +662,7 @@ export function lookAt(x) {
 
 // Whether the view was sent somewhere since anybody last asked: read once,
 // right after a press, since a door sends the view and a rung does not.
-let sent = false;
+let sent = false;  // held: a look sent and not yet asked about
 export const tookLook = () => { const was = sent; sent = false; return was; };
 
 // Keeping up with somebody rather than with where they were standing: the
@@ -726,12 +727,12 @@ export const SAVE = {
 // scroller, and `stepCamera` reads it back once a frame, so a fling and a
 // glide cannot disagree for longer than a frame. The node yard binds no
 // scroller and the camera is the same fact without one.
-let scroller = null, spacer = null;
-let wroteLeft = -1, spacerW = -1;
+let scroller = null, spacer = null;  // page: the scroller's DOM
+let wroteLeft = -1, spacerW = -1;  // page: what the scroller's DOM was last given
 // What to do when the platform has moved the view: input.js hangs the
 // board's rule here, since a board follows its station out of the window
 // the same whether a finger or a wheel took it there.
-let taken = null;
+let taken = null;  // page: wiring input.js hands in with the scroller
 export function bindScroller(el, sp, onTaken) {
   scroller = el; spacer = sp; taken = onTaken;
   wroteLeft = -1; spacerW = -1;
@@ -807,7 +808,7 @@ export function stepCamera(t) {
 // clock, eased in and out (the pad's hops: the owner, 2026-10-16, "it should
 // also ease-in-out"). The end is the one the camera can reach, so the ease is
 // never cut short against the world's edge.
-let pan = null;
+let pan = null;  // held: the camera's eased pan under way
 export function panTo(x, ms) {
   const was = S.camX;
   S.camX = x - S.viewW / 2;
@@ -843,7 +844,8 @@ function showZoom(z) {
 }
 // The glide under way: from the zoom on the glass when it was asked for, to
 // the target, over ZOOM_GLIDE_S on the yard's clock. Never saved.
-let zoomGlide = null;
+let zoomGlide = null;  // held: the zoom's glide under way
+held('world', () => { laid = null; sent = false; pan = null; zoomGlide = null; });
 export const zoomTarget = () => (zoomGlide ? zoomGlide.to : S.zoomShow);
 export const zoomGliding = () => !!zoomGlide;
 // A new zoom: a target the glass eases to, about the middle of the window.
@@ -904,7 +906,7 @@ export const toScreen = (wx, wy) => ({ x: (wx - S.camX) * S.zoomShow, y: (wy - S
 
 // The safe area at the foot of the glass (the home indicator, in landscape),
 // read off the page when it is laid out: the counter stands above it.
-let safeFoot = 0;
+let safeFoot = 0;  // page: the page's safe area
 export function measureSafeArea() {
   if (typeof getComputedStyle !== 'function') return;
   safeFoot = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom')) || 0;

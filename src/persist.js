@@ -9,7 +9,7 @@ import { P, SHADES, LOO_POSTS, SAVE_V } from './config.js';
 import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
          claimTab, tabOwner, TAB, setSlot } from './save.js';
 import { seedSmog, SAVE as SMOG } from './smog.js';
-import { resetHeld } from './reset.js';
+import { resetHeld, held } from './reset.js';
 import { resetWeather } from './weather.js';
 import { now } from './clock.js';
 import { resetFauna, settleFauna } from './deep/fauna.js';
@@ -236,7 +236,8 @@ function blankEphemeral() {
 
 // The last blob this page built, written or not: SAVE A COPY hands this over
 // when the store would not take it, rather than the store's stale copy.
-let lastBlob = null;
+let lastBlob = null;            // held: this yard's last blob; after a new game or a load the store's copy is the one to hand over
+held('persist-blob', () => { lastBlob = null; });
 
 export function persist() {
   // The loop stops on a throw but the interval that calls this does not, and
@@ -263,7 +264,7 @@ export function persist() {
 // boot. A claim that could not be written is no claim: the name left there
 // is some earlier page's, and a page that treated it as another tab's would
 // stand aside for nobody, reload, and stand aside again.
-let claimed = false;
+let claimed = false;            // page: whether this tab put its name beside the save, once at boot
 export function claimSave() { claimed = claimTab(); }
 
 // Reading a saved plot into one whose left-hand end has moved. The world only
@@ -541,9 +542,13 @@ function newYardName() {
   S.playedS = 0;
 }
 
-export function restore() {
-  // A load is a page opened fresh: what modules keep for the yard goes first.
-  resetHeld();
+// `warm` is the checks' reload (`__reload`, every five game seconds of every
+// node group): the yard written and read back in place, what modules keep
+// left standing, so a group can watch a rate or a glide across it. Every
+// other load -- a boot, a slot, an import, the cloud -- is a page opened
+// fresh, and what modules keep for the yard goes first.
+export function restore({ warm = false } = {}) {
+  if (!warm) resetHeld();
   yardReads++;
   // The ground was laid for the yard that was here: a save brings its own
   // noticeboard rect, from whatever layout wrote it, and the lay is cached

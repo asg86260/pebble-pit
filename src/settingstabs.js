@@ -18,7 +18,7 @@ function recall() {
   try { const t = sessionStorage.getItem(KEY); if (TABS.includes(t)) return t; } catch {}
   return TABS[0];
 }
-let now = recall();
+let now = recall();             // page: the tab in force, remembered for the session
 export const tabNow = () => now;
 
 const mounted = [];

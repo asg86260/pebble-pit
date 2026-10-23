@@ -20,6 +20,7 @@ import { COLS, ROWS, faunaOut, unit, unit2, schoolAt, frameOf, reachOf, addScare
          clearScares, SCARES, bolting, faunaPose, poseInset, heightOf, zoneHere, waterTop, glideWaterTop, eatenNow } from '../deep/fauna.js';
 import { coilAt, bellyAt } from '../deep/place.js';
 import { lashK, breaking } from '../deep/phases.js';
+import { held } from '../reset.js';
 
 // Never under the faintest mark the water shows: a smear a few rungs down a
 // dark creature is still a mark in the water, not a hole in it.
@@ -32,7 +33,7 @@ const purple = purpleAt;
 // not a margin guessed round it: the deep's zoom tops out at the yard's, so a
 // tall window reaches as far over the ceiling as it is tall, and one wider
 // than the deep past its far end.
-let glidedAt = 0;
+let glidedAt = 0;   // page: the wall clock at the last frame drawn
 export function drawDeepZones() {
   const wall = performance.now();
   glideWaterTop(glidedAt ? (wall - glidedAt) / 1000 : 1);
@@ -178,7 +179,8 @@ function silt(x, y, age) {
 // The frights the fight raises, seen from the drawing: the tip of a lash as
 // it sweeps the coil, and the belly as a defense breaks. Read off the
 // phases, so the sim never hears of them.
-let wasBreaking = false, lastLash = -1;
+let wasBreaking = false, lastLash = -1;   // held: the fight's edges last seen
+held('fauna-fight', () => { wasBreaking = false; lastLash = -1; });
 function watchFight(t) {
   if (t < lastLash) { lastLash = -1; clearScares(); }          // the clock went back (a scene stood again)
   const cell = p => [(p.x - deepX0()) / P, (p.y - deepTop()) / P];

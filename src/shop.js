@@ -95,8 +95,8 @@ const built = new WeakMap();
 // block for anything `position: fixed` inside it, so a list built into the
 // row took its coordinates from the board rather than the window. `#tip` lives
 // outside the board for the same reason.
-let openList = null;
-let leaving = 0;                 // the wander-off timer, if one is running
+let openList = null;            // page: the option list standing over the board
+let leaving = 0;                // page: the wander-off timer, if one is running
 
 // Says whether there was one to shut: escape in input.js shuts a list before
 // it holds the yard, and only holds it when there was nothing to shut.
@@ -230,13 +230,13 @@ const STEPPER = '<span class="name"><i class="what"></i><i class="ladder"></i></
 // something else), read once by the board after it has filled its rows in: the
 // measurement has to be of a board with its words already in, which is the
 // frame loop's business.
-let moved = false;
+let moved = false;              // page: the board changed shape, read once by the board
 export const boardMoved = () => { const was = moved; moved = false; return was; };
 
 // The softer word for a cell whose TEXT changed while the set of rows did not.
 // The board measures after one of these but keeps its seat when the width
 // comes back unchanged (`hud` in board.js), so reading a board cannot walk it.
-let reworded = false;
+let reworded = false;           // page: a cell's words changed, read once by the board
 export const boardReworded = () => { const was = reworded; reworded = false; return was; };
 
 // One row per available upgrade, under a heading. Rebuilt only when the set of
@@ -886,7 +886,7 @@ windowFor('books', {
 // in `ch` was a guess, and every new station's name was a chance to outgrow
 // it. Where each body is changes every frame, so the column is fitted to the
 // vocabulary rather than to whatever is being said right now.
-let crewFit = false;
+let crewFit = false;            // page: the crew window's column measured this showing
 function fitCrewColumn() {
   const cell = crewListEl.querySelector('button .cost');
   if (!cell) return;

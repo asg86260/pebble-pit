@@ -28,7 +28,7 @@ const way = document.getElementById('way');
 // browser's, so it reads like every other note in the game.
 const next = () => CREW_VIEWS[(CREW_VIEWS.indexOf(crewView()) + 1) % CREW_VIEWS.length];
 const NOTE = { show: msg('other-corner-show'), fade: msg('other-corner-fade'), hide: msg('other-corner-hide') };
-let noting = false;
+let noting = false; // page: the pointer is over the crew switch
 function note() {
   if (!noting) return;
   const r = crew.getBoundingClientRect();
@@ -52,7 +52,7 @@ dress();
 // is between the halves.
 onTap(way, () => { if (gliding()) return; if (S.view === 'deep') goUp(); else goDeep(); });
 // Its note the yard's own, as the crew switch's is.
-let wayNoting = false;
+let wayNoting = false; // page: the pointer is over the way through
 function wayNote() {
   if (!wayNoting) return;
   const r = way.getBoundingClientRect();

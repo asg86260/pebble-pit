@@ -99,12 +99,12 @@ export function beginAfter() {
 
 // How many frames the afterlife has been stepped this session: the check
 // that the place keeps running off screen reads it (test/acts-scaffold.test.mjs).
-let frames = 0;
+let frames = 0; // page: frames stepped this page, a counter for the checks (`__actFrames`)
 export const afterFrames = () => frames;
 
 // What the session keeps beside the act (a tip's falling grains) belongs to
 // one `S.after`: a new game or a read save drops it.
-let seen = null;
+let seen = null; // cache: keyed by the `S.after` it was seen with
 
 // One frame of the afterlife, called every frame with the act on, on screen
 // or not. Its parts in the order the place hands its work along: the sky and

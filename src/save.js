@@ -10,7 +10,7 @@ import { SLOTS } from './config/saves.js';
 export { SLOTS };
 const SLOT_KEY = 'boulder-clicker/slot';
 const BASE = 'boulder-clicker/v4';
-let slot = 1;
+let slot = 1;                   // page: which slot is open, a fact about the page, never the yard's
 export const openSlot = () => slot;
 export function setSlot(n) {
   if (!(n >= 1 && n <= SLOTS)) return;
@@ -28,10 +28,10 @@ const KEY = () => keyOf(slot);
 // the answer the *next* write gives, one write behind but never silent. A key
 // localStorage has and the database has not is carried across once. A page
 // that never calls `primeStore` (a check, the node yard) is on localStorage.
-let kv = null;              // the database, or null for localStorage
+let kv = null;                  // page: the database, or null for localStorage
 const cache = new Map();    // every key of ours, as the database has them
-let dbTook = true;          // what the database said about the last write that has answered
-let pending = Promise.resolve();
+let dbTook = true;              // page: what the database said about the last write that has answered
+let pending = Promise.resolve(); // page: the database write behind the last set
 // The cloud's own facts (cloud.js): the secret and what each slot last agreed
 // with the cloud. Kept beside the slots, so it is read at boot as they are.
 const CLOUD_KEY = 'boulder-clicker/cloud';
@@ -71,7 +71,7 @@ export const storeSettled = () => pending;
 // What went wrong the last time the store refused, so the sheet can say which
 // (settings.js): `blocked` is the browser denying the page any storage,
 // `full` the origin's quota.
-let trouble = null;
+let trouble = null;             // page: what the store said the last time it refused
 function refused(err) {
   const name = err?.name || String(err);
   const kind = name === 'SecurityError' ? 'blocked'
@@ -132,9 +132,9 @@ const web = {
 // (an import writes the blob and reads it straight back), so the adapter
 // answers with the last blob it wrote and reads the disk only before the
 // first write. This page is the only writer, so the copy in hand is the truth.
-let held = {};        // per slot: the last blob written this session, or '' for none; absent before the first write
-let heldFor = null;   // ...and which desk it was written through: a new desk is a new store
-let diskTook = true;  // what the disk said about the last write that has answered
+let held = {};                  // page: per slot: the last blob written this session, or '' for none; absent before the first write
+let heldFor = null;             // page: ...and which desk it was written through: a new desk is a new store
+let diskTook = true;            // page: what the disk said about the last write that has answered
 function desk() {
   const d = (typeof window !== 'undefined' && window.desk) || null;
   if (d !== heldFor) { heldFor = d; held = {}; diskTook = true; }

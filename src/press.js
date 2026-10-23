@@ -23,7 +23,7 @@ const amount = PRESS_MIX.scanlines || 0;
 
 // Black at an alpha over the top is `col * (1 - k)`: the ink under it is
 // multiplied by what is left of the light.
-let stripe = null, stripeInk = -1;
+let stripe = null, stripeInk = -1; // cache: the scanline pattern, keyed by its ink
 function scanlines(ctx, w, h, a) {
   const ink = a * 0.28;
   if (stripeInk !== ink) {
@@ -50,7 +50,7 @@ function scanlines(ctx, w, h, a) {
 // pattern over the whole canvas every frame. `DEVICE_PIXELS` in config.js caps
 // the canvas, so that cap is the worst this ever has to do.
 //
-let sheet = null, sheetKey = '';
+let sheet = null, sheetKey = ''; // cache: the finished look, keyed by the canvas size
 
 export function press(src, ctx) {
   if (!(amount > 0)) return;

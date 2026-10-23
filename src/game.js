@@ -320,13 +320,13 @@ export function step() {
 }
 
 // Everything in the air, one frame further along, and whatever it lands on.
-let dead = new Uint8Array(0);
+let dead = new Uint8Array(0);  // cache: scratch flags sized to the chip list, cleared each frame
 // The floor's column tops, read once a frame a column as chips ask: an
 // endgame yard has thousands of grains in the air, and each one walking its
 // column down from the top of the grid every frame was most of this step.
 // Only this step's own landings write the floor while it runs, and each is
 // put into the reading as it lands (`landed`).
-let tops = new Int16Array(0), topsAt = new Uint32Array(0), topsGen = 0;
+let tops = new Int16Array(0), topsAt = new Uint32Array(0), topsGen = 0;  // cache: keyed by the frame (`topsGen`) and the floor's width
 function floorTop(c) {
   if (topsAt[c] !== topsGen) { tops[c] = topRow(floor, c); topsAt[c] = topsGen; }
   return tops[c];

@@ -47,7 +47,7 @@ function showTab(name) {
   localStorage.setItem(TAB_KEY, name);
 }
 
-let into = null;                      // the pane the lines below go on
+let into = null;                      // page: the pane the lines below go on
 const line = (label, build) => {
   const row = document.createElement('div');
   row.className = 'devrow';

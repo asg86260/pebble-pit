@@ -9,6 +9,7 @@
 // them clickable (`bubbleAt`, `takeBubble`). This session's only, like the
 // heap's falling grains: a bubble is a moment, not a holding.
 
+import { held } from '../reset.js';
 import { P, AFTER_BUBBLE_EVERY_S, AFTER_BUBBLE_LIFE_S, AFTER_BUBBLE_RISE, AFTER_BUBBLE_HOLD,
          AFTER_BUBBLE_BIG_EVERY, AFTER_BUBBLE_BIG_RISE, AFTER_BUBBLE_POP_S, AFTER_BUBBLE_GAP, AFTER_BUBBLE_MID_SHARE,
          AFTER_BUBBLE_MID, WORKER } from '../config.js';
@@ -23,7 +24,8 @@ const W = 36, H = 20, BIG = 2;
 // How far over a speaker's head one starts.
 const LIFT = 30;
 
-let list = [], made = 0, clock = 0, nextId = 1;
+let list = [], made = 0, clock = 0, nextId = 1; // held: the bubbles in the air and the run of them, this session's
+held('after-bubbles', () => { list = []; made = 0; clock = 0; nextId = 1; });
 export const forgetBubbles = () => { list = []; made = 0; clock = 0; };
 // A fixed number in [0, 1) for the n-th bubble and a salt: its size, its
 // symbol and the gap before the next all read off it, so the run of them is
@@ -86,7 +88,7 @@ export function takeBubble(id) {
 // pop that takes one -- what it pays is the gesture's to say. Handed over on
 // the first frame rather than at load, since gestures.js reaches this file
 // back round the act's imports.
-let handed = false;
+let handed = false; // page: the hand's wiring, handed over once a page
 // One frame: a bubble sent on the clock while the pair can speak, and the
 // faded ones let go.
 export function stepBubbles(c) {

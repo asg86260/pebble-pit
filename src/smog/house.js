@@ -4,6 +4,7 @@ import { windAt } from '../wind.js';
 import { GOING, SKY } from './band.js';
 import { swallow } from './craft.js';
 import { dropped, moteX, moteY } from './sky.js';
+import { held } from '../reset.js';
 
 // --- a mouth on the sky ------------------------------------------------------------
 // What takes the sky down: a balloon's mouth (`pullCraft` in craft.js). The
@@ -13,7 +14,8 @@ import { dropped, moteX, moteY } from './sky.js';
 // Where the walk starts, kept between frames: starting at nought every frame
 // would take the same few hundred specks over and over and leave the far end
 // of the sky untouched for ever.
-let sweep = 0;
+let sweep = 0;  // held: where the mouths' walk of the sky starts
+held('smog-sweep', () => { sweep = 0; });
 
 // One mouth, taking what it is owed out of the sky, from anywhere: a mouth
 // with a reach takes only what happens to float near it, so the same craft

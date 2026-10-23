@@ -21,7 +21,7 @@ const el = document.getElementById('skip');
 const bar = el.querySelector('.bar');
 const say = el.querySelector('.say');
 
-let said = null;
+let said = null;                // cache: the hint's words, keyed by themselves
 export function stepSkipHint() {
   const up = skippable() && !S.paused;
   (up ? fadeIn : fadeOut)(el);

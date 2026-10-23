@@ -27,6 +27,7 @@ import { flagRip } from '../flagwave.js';
 import { cell } from './marks.js';
 import { groundOf } from '../deep/place.js';
 import { smoothstep as ease } from '../motion.js';
+import { held } from '../reset.js';
 
 // Whether a station is offering is `hasOffer`, one rule for every station, the
 // bench included: `benchMark()` counts an unread heading as well and would fly
@@ -234,7 +235,8 @@ function drawNewWaves(rect, which, t) {
 // it got to.
 const raised = new Map();
 const RAISE_TOTAL = FLAG_RAISE_MS + FLAG_HOIST_MS;
-let lastFrame = 0;
+let lastFrame = 0;   // held: the clock at the last flag frame
+held('aura-flags', () => { lastFrame = 0; raised.clear(); openedAt.clear(); });
 
 // Smoothstep, so the mast eases out of the roof and settles at the top.
 

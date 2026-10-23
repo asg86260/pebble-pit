@@ -45,9 +45,9 @@ const sells = u => revealed(u) && forSale(u) && canPay(u);
 const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; } };
 const sayHTML = (el, html) => { if (el._said !== html) { el._said = html; el.innerHTML = html; } };
 
-let shown = '';            // `${key}:${mode}` drawn now, '' for nothing
-let swapUntil = 0;         // the fade out in progress, when it ends
-let parts = null;          // the drawn block's live cells
+let shown = '';            // page: what the DOM card shows, compared against the yard every frame -- `${key}:${mode}` drawn now, '' for nothing
+let swapUntil = 0;         // page: the DOM card's fade -- the fade out in progress, when it ends
+let parts = null;          // page: the DOM card's live cells -- the drawn block's live cells
 
 export function seatBarrier(step, t) {
   if (!box) return;

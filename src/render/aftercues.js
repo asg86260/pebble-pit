@@ -251,7 +251,7 @@ function drawStrip(key, r, u) {
 }
 // What the hand work showed last frame, by station: read by the browser
 // check (src/selftest/aftergestures.js) so it is a fact about the drawing.
-let shown = {};
+let shown = {};   // cache: what the last frame drew, rewritten whole each draw
 export const handworkShown = () => shown;
 function drawHandwork(view, t) {
   shown = {};

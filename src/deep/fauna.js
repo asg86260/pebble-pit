@@ -16,6 +16,7 @@
 // In cells: x along from the deep's left end, y down from its ceiling, the
 // drawing's top-left.
 
+import { held } from '../reset.js';
 import { DEEP_W, DEEP_H, P, FAUNA, FAUNA_ZONES, FAUNA_SPRITES, FAUNA_MOTION, FAUNA_GULPER,
          FAUNA_SIPHON, FAUNA_SCARE, FAUNA_STARTLE, FAUNA_SCALES, FAUNA_REACT, FAUNA_POSES,
          FAUNA_REACT_MOTION, FAUNA_WANDER, FAUNA_TURNS, FAUNA_REFILL } from '../config.js';
@@ -129,7 +130,7 @@ function bandOf(kind) {
 // `glideWaterTop` once a frame; nothing that does not draw (the node tier)
 // does, and reads the top itself. Drawing-side, never saved; the path stays
 // a pure function of the seed and the clock.
-let easedTop = null;
+let easedTop = null; // page: the drawing's eased water top, the window's
 export function glideWaterTop(dt) {
   const to = deepRestTop();
   easedTop = easedTop == null ? to : easedTop + (to - easedTop) * (1 - Math.exp(-Math.min(dt, 0.1) / FAUNA_MOTION.topGlide));
@@ -246,13 +247,14 @@ function turnsStep(w, n) {
 // for days holds a few dozen moments rather than one every `keep` seconds of
 // it; a moment asked for before them is walked again from the start, which
 // comes out the same.
-let WALK = null;
+let WALK = null; // held: the walk so far (`forgetWalk`)
 // The meal's holds on the slots, by the step they fall on: `eat` takes the
 // slot's swimmer out of the walk, the other lets its next kind in. They are
 // the walk's only input besides the seeds, kept and dropped with it.
 const EATS = new Map();
 // A new page, as far as the walk goes: nothing walked yet (for the checks).
 export const forgetWalk = () => { WALK = null; EATS.clear(); };
+held('deep-walk', forgetWalk);
 // The meal takes slot `slot`'s swimmer at `t` seconds (`eat`), or lets the
 // slot's next kind in: from the next step on, from just off the `side` (-1
 // left, 1 right) of the glass `at` ({ l, r }, the deep's cells it spans).

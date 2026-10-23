@@ -5,6 +5,7 @@ import { S } from '../state.js';
 import { gust } from '../wind.js';
 import { ACTIVE, DROPS, SKY, bandLow, bandTop, creep, drift } from './band.js';
 import { motesWanted, reckon, skyMote } from './vents.js';
+import { held } from '../reset.js';
 
 // --- how the sky is arranged -------------------------------------------------
 // Nothing is ever pushed anywhere. Each mote is given a place in the band when
@@ -24,7 +25,7 @@ const ACROSS = 0.6180339887498949;      // one turn less the golden ratio
 // Handed out, never reused while the sky that holds them stands. Back to
 // nought only with an empty sky (`clearSky`), where no mote is left to share a
 // place with, so the same seed lays the same sky whatever ran before it.
-let slots = 0;
+let slots = 0;  // held: cleared with the sky (`clearSky`)
 
 // Worked out once when the slot is handed over and carried on the mote: a
 // mote's slot never changes, and re-deriving it per mote per frame was a
@@ -62,7 +63,7 @@ function swayNow(t) {
 // and `moteY`: an evaluation later in the frame (the drawing, a readout) has
 // to be the very number this frame would have written on the mote, not a
 // second reading of a camera that has moved since.
-let fSpan = P, fTop = 0, fDeep = 0, fGust = 0;
+let fSpan = P, fTop = 0, fDeep = 0, fGust = 0;  // cache: the frame's numbers, written by `place` every frame
 
 // This mote's share of the band's creep since the reading it started from.
 const roamOf = m => m.give * (drift - m.roam0);
@@ -107,6 +108,9 @@ export function clearSky() {
   ACTIVE.length = 0;
   slots = 0;
 }
+// The sky goes with its slots: a load rebuilds it (`skyFromSave`), a new
+// game seeds it (`seedSmog`).
+held('smog-sky', clearSky);
 
 // One frame of the sky. A settled mote has no state to step, so it is not
 // stepped: its place is its anchor plus numbers fixed for its life or shared

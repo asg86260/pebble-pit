@@ -2,6 +2,6 @@
 // turn it on in a dev build (`__demoOn`).
 import { DEMO_ON } from './config.js';
 
-let forced = null;
+let forced = null; // page: a check's switch; play never sets it
 export const demoOn = () => forced ?? DEMO_ON;
 export function forceDemo(on) { forced = on; }

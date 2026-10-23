@@ -34,6 +34,7 @@
 // `takeCarry`, `cageBroken`), falling back to the scaffold's own facts (the
 // gate reached, each barrier's blows) and to `__actOwe`.
 
+import { held } from './reset.js';
 import { S } from './state.js';
 import { P, WORKER, FINALE_HOUSE_W, AFTER_GATES, HELL_TIERS, ACT_HURRY, ACT_CAPTION_S, ACT_CAPTION_FADE_S,
          ACT_ROCK_FALL_S, ACT_ROCK_DUST_S, ACT_SOUL_LIFT_S, ACT_RIM_PIECES, ACT_RIM_STEP_S,
@@ -114,7 +115,7 @@ function pairForAct4(there = null) {
 // After the finale's sheet is down, the house standing, the pair at home: a
 // card over the house, faded in after ACT_GOON_WAIT_S. Pressing it is the
 // player's say that act 3 begins.
-let goOnFor = 0;
+let goOnFor = 0; // cache: seconds `goOnDue()` has held, zeroed on any frame it does not and by a new game (`blank`)
 export const goOnDue = () => afterlifeOn() && !!S.retired && beatDone('freedsheet') && !(S.acts && S.acts.goOn)
   && !S.beat.sheet && !S.beat.camera && !S.beat.yard;
 export const goOnAlpha = () => Math.max(0, Math.min(1, (goOnFor - ACT_GOON_WAIT_S) / ACT_GOON_FADE_S));
@@ -281,9 +282,10 @@ export const ACT_BEAT_KEYS = Object.keys(BODIES);
 // its scene was last framed in, and whether it is on its way out. This
 // session's: a reload plays the beat again from its first phase, and the
 // phases skip what has landed.
-let run = null;
-let box = null, moving = 'glide';
-let caption = null;
+let run = null; // held: the beat playing, this session's
+let box = null, moving = 'glide'; // held: the phase's frame, and how it moves
+let caption = null; // held: the line in the band
+held('actbeats', () => { run = null; box = null; moving = 'glide'; caption = null; });
 export const actCaption = () => caption;
 // The beat playing and its phase, for the readout (`__shot`): null with none.
 export const actPhase = () => (run && !run.out ? run.i : null);

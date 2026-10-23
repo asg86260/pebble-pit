@@ -38,7 +38,7 @@ export const sphereRising = () => sphereBought() && !sphereUp() && meteorAlive()
 // for where the star is; which of them are seams is worked out once a frame.
 export const shellR = () => sky.r + SPHERE_OUT * P;
 
-let cached = null, cachedAt = '', turnedAt = -1;
+let cached = null, cachedAt = '', turnedAt = -1; // cache: the disc keyed by where the star is; its turn keyed by the angle
 function discCells(R) {
   const n = Math.ceil(R / P);
   // The top-left of the middle cell, on the lattice: a cell centered on the
@@ -137,7 +137,7 @@ export function shellCells() {
 // `SPHERE_SPIN`; with nobody up there it runs down and stops. Where it has got
 // to is a picture, not a fact about the yard, so it is not saved: a reload
 // finds it where it started, which no body walks across.
-let angle = 0, spin = 0, swirl = 0;
+let angle = 0, spin = 0, swirl = 0; // page: a picture's turn, not the yard's: any angle is as good as another, and the spin runs down by itself with no sphere up
 export const spinShare = () => spin / SPHERE_SPIN;
 // Where the aura's streaks have got to: turned on the same axis as the plates,
 // `SPHERE_SWIRL` times as fast.

@@ -14,8 +14,8 @@ const say = el?.querySelector?.('.say') ?? null;
 const list = el?.querySelector?.('.quest') ?? null;
 const STRIKE_MS = 1000;
 
-let shown = null, leaving = 0, listed = '';
-let cornerAt = null;
+let shown = null, leaving = 0, listed = '';  // page: what the DOM line shows, compared against the yard every frame
+let cornerAt = null;  // page: the DOM card's room, written only when it changes
 
 // Up in the afterlife or down in hell the card is about that place: only a
 // step of the acts' own (objectives.js, `ACT_STEPS`), and never the yard's

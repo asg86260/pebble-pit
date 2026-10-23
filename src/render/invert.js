@@ -21,7 +21,7 @@
 import { INVERT_PROBE, INVERT_PROBE_SIDE } from '../config.js';
 import { raw } from '../ink.js';
 
-let exact = null, asked = false;
+let exact = null, asked = false;   // page: whether this browser's invert filter is exact
 
 function filterIsExact() {
   try {

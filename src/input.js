@@ -69,10 +69,10 @@ const canvas = document.getElementById('c');
 // Every finger currently down, so a second one can mean something different
 // from the first.
 const down = new Map();
-let panning = null;                        // where the fingers were last frame
+let panning = null;                        // page: fingers down on the glass -- where the fingers were last frame
 // The middle button's pan. Apart from `panning` because it is one pointer, and
 // must not be cancelled by the "fewer than two fingers" rule.
-let wheelPan = null;
+let wheelPan = null;  // page: the middle button down
 // One finger on the yard scrolls it, with the platform's own momentum
 // (DESIGN.md, "Momentum scrolling"): the canvas sits inside a scroller, a
 // finger the game did not claim at `touchstart` scrolls it natively, coast
@@ -102,8 +102,8 @@ function startPan() {
 
 // Where the pointer was on the glass last time it moved, for the draught it
 // leaves in the air; and in the yard's own coordinates, for the smoke.
-let lastSx = null, lastSy = null;
-let lastWx = null, lastWy = null;
+let lastSx = null, lastSy = null;  // page: where the pointer is on the glass
+let lastWx = null, lastWy = null;  // page: where the pointer is, in the yard's coordinates
 
 export function pos(e) {
   const r = canvas.getBoundingClientRect();
@@ -558,7 +558,8 @@ export function whatIsAt(x, y) {
 // kept on the call count alone it answered "the farm" over bare sky after the
 // camera glided or a new game started. Within a cell it stands; a cell is the
 // yard's own unit of "the same place".
-let tipTick = 0, tipWas = null, tipAt = null;
+let tipTick = 0, tipWas = null, tipAt = null;  // held: the hover's answer about a spot, which a new yard makes stale within the cell
+heldState('hover-tip', () => { tipTick = 0; tipWas = null; tipAt = null; });
 function polledWhatIsAt(x, y) {
   const same = tipAt && Math.abs(x - tipAt[0]) < P && Math.abs(y - tipAt[1]) < P;
   if (same && ++tipTick % 4 !== 0) return tipWas;
@@ -681,7 +682,7 @@ function overAnyMark(x, y) {
   return !!overDoneMark(x, y);
 }
 
-let wearing = '';
+let wearing = '';  // page: the canvas's cursor, written only when it changes
 function setCursor(x, y) {
   let want = 'crosshair';
   for (const [is, name] of CURSORS) if (is(x, y)) { want = name; break; }
@@ -739,7 +740,7 @@ const fingerReach = () => Math.max(BRUSH, Math.ceil(THUMB / (S.zoomShow * P)));
 // platform to commit to -- and opened again when the last finger lifts. A
 // finger the game did not claim never shuts it, so the platform's own
 // scroll is untouched.
-let claimed = false;
+let claimed = false;  // page: a finger on the glass the game has claimed
 function claim(e) {
   e.preventDefault();
   if (claimed) return;
@@ -853,7 +854,7 @@ const WHEEL_GAIN = 1.0;                       // world units a pixel of wheel de
 let wheelOwed = 0;                            // held: world units the wheel has asked for and not yet had
 const WHEEL_EASE = 80;                        // ms for the owed distance to fall to 1/e
 heldState('wheel', () => { wheelOwed = 0; });
-let panAt = 0;
+let panAt = 0;  // page: the wall clock's last pan frame
 // One frame of the keys and the wheel: the view slides at KEY_PAN while
 // either key is down (still when both are), and eases through whatever the
 // wheel is owed. On the wall clock, not the yard's: a held yard pans too

@@ -22,7 +22,7 @@ import { seed, stream } from './rng.js';
 export const AIR = [];
 
 const MARGIN = 24;                 // how far past the edge a mote may sit before it wraps
-let camWasX = 0, camWasY = 0;      // last frame's camera, for how far the field has to slide
+let camWasX = 0, camWasY = 0;      // cache: last frame's camera, for how far the field has to slide
 
 // The air draws from a stream of its own, the way the clean rain does
 // (`waterRand` in smog/rain.js). A mote lives on the glass, so how many draws
@@ -30,7 +30,7 @@ let camWasX = 0, camWasY = 0;      // last frame's camera, for how far the field
 // skipped and another rolled -- and taken from the yard's `rand()` every roll
 // after it would be a different number for a different view. Seeded off the
 // run's seed, so a seeded run's air is still the same air twice.
-let air = stream(0);
+let air = stream(0); // page: the glass's own stream, reseeded with the motes at every layout (`seedAir`)
 const airRand = () => air();
 
 export function seedAir() {

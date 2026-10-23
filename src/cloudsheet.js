@@ -80,7 +80,7 @@ export const refreshCloud = redrawAll;
 
 // A pairing code put away with *done* stays away though it still has
 // minutes on it.
-let doneWith = null;
+let doneWith = null; // page: a pairing code put away
 function livePair(st, now) {
   const p = st.pair;
   return p && p.expires > now && p.pair !== doneWith ? p : null;
@@ -90,8 +90,8 @@ function livePair(st, now) {
 // The status alone: every verb is in the section. The one link it keeps is to
 // the rows that ask which yard a slot keeps, since nothing syncs until the
 // player has answered them.
-let foot = null;
-let footTimer = 0;
+let foot = null; // page: the title page's foot bar
+let footTimer = 0; // page: its redraw timer
 
 export function showFoot(el, say, opts = {}) {
   foot = { el, say, opts };
@@ -121,10 +121,10 @@ function drawFoot() {
 // down; `revealed` one asked for with *show recovery code*; `typing` which
 // code a box is open for ('link' or 'recovery'). All last until the page is
 // turned: the exported call is a page turned, a redraw after a verb is not.
-let fresh = null;
-let revealed = null;
-let typing = null;
-let armed = 0;
+let fresh = null; // page: the section's new code, until the page is turned
+let revealed = null; // page: the code asked to be shown
+let typing = null; // page: which code box is open
+let armed = 0; // page: a confirm armed on the sheet
 const tickers = new Map();   // el -> the countdown's timer, while a pairing code is up
 
 // The section's own reply line, under its heading: what a cloud button

@@ -201,6 +201,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The recruit row, greyed while nobody is won, says so and how to win one instead of reading like a price you cannot pay (test/after-recruit.test.mjs).
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 
+- Loading a save that was left in the deep no longer lays its sky, clouds and rain out against the window of the yard you were in before (test/held-state.test.mjs).
 - In a narrow window a board uses the whole width under the purse instead of squeezing into a sliver beside where the purse would be, so its cards keep their words inside them and several tiles share a plank (src/selftest/boards.js, "no row on any board sits on top of itself").
 - In a narrow window a board stands where it really is, its width under the purse rather than beside it, so it no longer opens off to one side of where it is drawn (src/selftest/house.js, "a board that changes under you is seated by its new size").
 - In a narrow window a board taller than the window scrolls inside it instead of running past its foot by the height of the purse (src/selftest/boards.js, "a board taller than the window scrolls to its last row").
@@ -233,6 +234,9 @@ this section; the release that switches it on moves these under Unreleased.
 - In the deep on a tall window, the pointer near the top of the glass no longer opens the board of a yard station that is not drawn there (test/gates.test.mjs).
 - On a phone the opening view shows the whole rock instead of cutting off its left side (src/selftest/view.js).
 - On the appearance page, right from the last tile in a row of the grid stays on it instead of jumping the focus to a key at the top of the page (src/selftest/wardrobe.js, the picker by a pad, at 390x844).
+- After a load or a new game the stations' offer flags stand as the new yard has them, and heaven's ground, the serpent's bar and the fang plate start from it, instead of the last yard's raising, fading or breaking off (test/held-state.test.mjs).
+- Leaving the deep, or the serpent's bar going down, no longer leaves a status's tooltip waiting on that spot of the screen (src/selftest/deep.js).
+- Loading a save no longer shows the last yard's income rates and air trend in the books until they age out (test/held-state.test.mjs).
 
 ## v0.6.1 — 2026-10-19
 

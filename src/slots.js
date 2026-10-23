@@ -78,8 +78,8 @@ export const slotsLabel = () => msg('held-slotsbtn-label', { n: slotLabels(Date.
 // deleting the open slot means there (the reset on the held sheet, the blob
 // cleared on the landing page). Any other slot is cleared here, through the
 // same `writeSlot` the reset's clear goes through, so the cloud hears of it.
-let armed = 0;
-let armedRow = null;
+let armed = 0;                  // page: the empty row's arm timer
+let armedRow = null;            // page: the row armed
 function disarm() {
   clearTimeout(armed);
   armed = 0;
@@ -201,7 +201,7 @@ export function showSlots(el, say, pick, playing = true, wipeOpen = () => {}) {
 // when and playtime, the ✕ staying inside the card. Read off the rows as laid out, not a width guessed
 // for them, so a longer row (a three-figure rock, a long playtime) stacks at
 // the width it actually needs.
-let shown = null;
+let shown = null;               // page: the slot list last laid out, refit on resize
 function fit(el) {
   if (el.hidden || !el.isConnected) return;
   el.classList.remove('stacked');

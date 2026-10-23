@@ -15,6 +15,7 @@ import { P, FANG_MARK, FANG_PLATE, NUM_FONT, NUM_FONT_PX } from '../config.js';
 import { CRUSHER_SPRITES } from '../deep/sprites.js';
 import { PURPLES, TONE, breathAt } from './deeptones.js';
 import { drawable, widthOf, GH } from './numfont.js';
+import { held as onReset } from '../reset.js';
 
 // Where the plate may go, read off the furnace's drawing: the brick face
 // between the top ledge and the door's arch, centered on the door.
@@ -35,7 +36,8 @@ const lit = n => (n > 0 ? TONE.pale : TONE.ground);
 // their ink, and how lit its frame is. Kept here and never saved: a yard
 // loaded with fangs in hand simply shows them. The first fang seen while the
 // page watches fades the plate in, its count coming up from none.
-let seenWas = null, held = 0, was = null, at = -Infinity, firstAt = -Infinity;
+let seenWas = null, held = 0, was = null, at = -Infinity, firstAt = -Infinity;   // held: the plate's count and fade
+onReset('fangplate-plate', () => { seenWas = null; held = 0; was = null; at = -Infinity; firstAt = -Infinity; });
 export function fangPlate(t = now()) {
   const n = S.fangs | 0, seen = !!S.seenFang;
   if (seenWas === null || !seen) { seenWas = seen; held = n; was = null; }

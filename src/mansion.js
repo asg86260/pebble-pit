@@ -60,7 +60,7 @@ const BLOCKS = [
   { x: MANSION_WING_W - MANSION_TOWER_W / 2, w: MANSION_TOWER_W, floors: MANSION_TOWER_FLOORS, tower: true },
   { x: MANSION_WING_W + MANSION_MAIN_W - MANSION_TOWER_W / 2, w: MANSION_TOWER_W, floors: MANSION_TOWER_FLOORS, tower: true }
 ];
-let LAYOUT = null;
+let LAYOUT = null;  // cache: worked out from config alone
 export function mansionPieces() {
   if (LAYOUT) return LAYOUT;
   const out = [];

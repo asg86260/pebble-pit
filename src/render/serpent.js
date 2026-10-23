@@ -51,6 +51,7 @@ import { cellImage } from './cellimage.js';
 import { dentsNow } from './arms.js';
 import { drawHand, handSize, handTip } from './hand.js';
 import { breakOff, liveChips, drawChips } from './barchips.js';
+import { held } from '../reset.js';
 
 // Him, wherever the serpent has him: a key to read his walk off (`motionOf`).
 const HIM = {};
@@ -128,9 +129,9 @@ function dentAt(cx, t, dents) {
 // in world cells: what a fist, a blade or an arrow is aimed at, so it meets
 // the hide the picture shows, give and bites and all. A column the coil was
 // not drawn over this frame is read off the centerline instead.
-let hide = { c0: 0, top: new Int32Array(0), bot: new Int32Array(0) };
+let hide = { c0: 0, top: new Int32Array(0), bot: new Int32Array(0) };   // held: the hide as last drawn
 // The eye's cell off the snout's tip, held between frames (`drawCoil`).
-let eyeHeld = null;
+let eyeHeld = null;   // held: the eye's held cell
 function laidAt(c) {
   const t = now(), x = (c + 0.5) * P;
   let best = null, bd = Infinity, bu = 0;
@@ -583,7 +584,7 @@ function drawVeil(t, pts) {
 // --- the constrict's orb --------------------------------------------------------------
 // How much of the comb is lit, head first, 0..1: through the orb's warning,
 // and held while the bolts fly.
-let crestTips = [];
+let crestTips = [];   // held: the crest as last drawn
 // The meal's timer fills it the same way over the whole window (deep/meals.js, `mealComb`).
 function combLit(t) {
   const meal = S.view === 'deep' && bellyWhole() ? mealComb() : 0;
@@ -700,7 +701,11 @@ export function drawBarrier() {
 // how much had been cut off it then, the chips in the air, and where the bar
 // stood, for chips still falling once the orb has gone.
 const ORB_BAR_W = (ORB_R * 2 + 2) * P, ORB_CHIP_K = P / BAR_H;
-let orbSeen = null, orbCutSeen = 0, orbChips = [], orbBar = null;
+let orbSeen = null, orbCutSeen = 0, orbChips = [], orbBar = null;   // held: the orb's bar as last drawn
+held('serpent-drawn', () => {
+  hide = { c0: 0, top: new Int32Array(0), bot: new Int32Array(0) }; eyeHeld = null; crestTips = [];
+  orbSeen = null; orbCutSeen = 0; orbChips = []; orbBar = null;
+});
 export const orbChipsNow = () => orbChips;     // for the browser check
 const orbFill = (c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
 function stepOrbBar(o, s) {

@@ -23,7 +23,7 @@ export const BUTTON = {
 const NAMES = Object.keys(BUTTON);
 
 // A pad a check holds: the same shape a reading is, written by hand.
-let fake = null;
+let fake = null;                // page: the pad a check holds, plugged in until it says off
 export const fakePad = p => { fake = p; };
 
 // Every pad's reading, folded into one: a button is down if it is down on
@@ -62,7 +62,7 @@ const FACES = {
   xbox: { a: 'A', b: 'B', x: 'X', y: 'Y' },
   ps: { a: '✕', b: '○', x: '□', y: '△' }
 };
-let family = 'xbox';
+let family = 'xbox';            // page: which maker's pad is in the hand, for its glyphs
 export function seeFamily(id = '') {
   family = /054c|playstation|dualshock|dualsense/i.test(id) ? 'ps' : 'xbox';
   return family;

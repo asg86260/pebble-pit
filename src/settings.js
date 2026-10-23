@@ -51,7 +51,7 @@ const fbBtn = document.getElementById('fbbtn');
 // page turns back to the front: the thing to do next is resume it. `hold` in
 // input.js opens the sheet on a front every time, or the resume button is
 // sometimes not there.
-let paneNow = 'main';
+let paneNow = 'main';           // page: the page the sheet is on
 // The page the sheet is on, for the `i` key: pressed on the index it closes.
 export const pane = () => paneNow;
 export function showPane(name) {
@@ -107,7 +107,7 @@ fillLanguages(document.getElementById('langlist'), { reload: () => leave(locatio
 // by the house board's row (crewboard.js). Its way back is the yard again.
 wardrobeOpener(() => { hold(true); showPane('wardrobe'); });
 document.getElementById('wardrobeback').addEventListener('click', () => leaveWardrobe());
-let dressing = false;
+let dressing = false;           // page: the wardrobe offered at a new yard, read by the showPane it precedes
 // Once, at a new yard: the sheet up on the page's steps (who you are, your
 // square, your sqouse, the two of you) before the opening walks out, the
 // yard held under it. Done or skip lets it go, and only then is it offered;
@@ -127,7 +127,7 @@ document.getElementById('titlebtn').addEventListener('click', () => leave('index
 // Leaving the page, for the landing page or the desk's exit: the veil goes up
 // and the store takes the last write, and only then does the page go. A
 // navigation that did not wait could lose the last second of play.
-let leaving = false;
+let leaving = false;            // page: the page is on its way out
 async function leave(to) {
   if (leaving) return;
   leaving = true;
@@ -357,7 +357,7 @@ cloudNote.hidden = true;
 cloudNote.appendChild(Object.assign(document.createElement('div'), { className: 'name', textContent: msg('note-cloud-name') }));
 cloudNote.appendChild(Object.assign(document.createElement('div'), { className: 'note', textContent: msg('note-cloud-note') }));
 document.body.appendChild(cloudNote);
-let noteDown = 0;
+let noteDown = 0;               // page: the cloud note's timer
 function dropCloudNote() {
   clearTimeout(noteDown);
   cloudNote.classList.remove('up');

@@ -63,22 +63,22 @@ const KEY_ROWS = [
   { keys: [...'zxcvbnm', '-', "'"], at: 2 },
 ];
 
-let who = 'you';
-let slot = SLOTS[0].key;        // the slot whose tiles are shown
-let step = -1;                  // the new yard's step, or -1 for the settings page
-let gridAsked = false;          // Steam could not show its keyboard: the grid instead
-let built = null;               // the page's parts, made once into its element
+let who = 'you';  // page: the wardrobe page's own state, set afresh by `showWardrobe`
+let slot = SLOTS[0].key;        // page: the wardrobe page's own state, set afresh by `showWardrobe` -- the slot whose tiles are shown
+let step = -1;                  // page: the wardrobe page's own state, set afresh by `showWardrobe` -- the new yard's step, or -1 for the settings page
+let gridAsked = false;          // page: the wardrobe page's own state, set afresh by `showWardrobe` -- Steam could not show its keyboard: the grid instead
+let built = null;               // page: the page's DOM -- the page's parts, made once into its element
 // A locked item picked: worn on the close-up, faint, by the one it was
 // picked for, and never kept. Anything else picked, or a turn to another
 // slot, square or step, takes it off.
-let tried = null;               // { who, slot, key }
+let tried = null;               // page: the wardrobe page's own state, set afresh by `showWardrobe` -- { who, slot, key }
 // The tiles walking in place: under the pointer, or holding the focus.
 const hot = new Set();
 
 // The pad's own focus and its nearest-that-way, handed in by pad.js at load
 // (padpage.js sits behind the boards in the import ring, and this page is
 // on one of them).
-let nav = { focus: el => el.focus(), toward: () => null };
+let nav = { focus: el => el.focus(), toward: () => null };  // page: wiring pad.js hands in at load
 export function wardrobeNav(given) { nav = { ...nav, ...given }; }
 
 const button = (text, ...cls) => {
@@ -134,11 +134,11 @@ const open = (s, k) => (testLocks ? !testLocks(s, k) : isOpen(s, k));
 const itemName = (s, k) => msg(itemOf(s, k)?.name || bareOf(s).name);
 // The checks' own locks, standing in for the wardrobe's while one is
 // asked about (`lockForCheck`); never set in play.
-let testLocks = null;
+let testLocks = null;  // page: a check's stand-in locks, never set in play
 export function lockForCheck(fn) { testLocks = fn; if (built) say(); }
 // The desk's way to Steam's own keyboard, when this is the Steam build: the
 // other desk builds have the call too, and it answers null there.
-let steamKeys;
+let steamKeys;  // page: whether this build has Steam's keyboard
 function steamAsk() {
   if (steamKeys !== undefined) return steamKeys;
   const d = globalThis.desk;
@@ -669,7 +669,7 @@ async function askSteam() {
 // The grid's name as it is being typed, a space at its end kept until the
 // next letter (the name the game keeps is trimmed); null once anything else
 // has changed the name.
-let typing = null;
+let typing = null;  // page: the wardrobe page's own state, set afresh by `showWardrobe`
 function typeKey(k) {
   const now = typing ?? nameOf(who), t = typedName(now + k);
   if (t === now) return;
@@ -693,7 +693,7 @@ function go(by) {
   say();
 }
 
-let onClose = null;
+let onClose = null;  // page: the sheet's way out, handed in by `showWardrobe`
 // Done, or skip: the yard has been offered its steps, and the names and roles
 // stay open to change from the house's board.
 const close = () => {
@@ -726,7 +726,7 @@ export const leaveWardrobe = () => close();
 // The house board's row opens the page (crewboard.js), but the sheet is
 // settings.js's to bring up, and settings.js sits behind the board in the
 // import ring: it hands its way in here at load, and the row asks for it.
-let opener = null;
+let opener = null;  // page: wiring settings.js hands in at load
 export function wardrobeOpener(fn) { opener = fn; }
 export function openWardrobe() { opener?.(); }
 
@@ -893,7 +893,7 @@ function paintSquare(c, k, h, foot, outfit, chosen, key, moving, t) {
 const CLOSE = [{}, {}];
 const TRY = {};
 // The try-on's own sheet, the close-up's size, cleared for each frame.
-let trySheet = null;
+let trySheet = null;  // cache: a scratch canvas, resized to each frame's need
 function tryOn(w, h) {
   if (!trySheet) trySheet = document.createElement('canvas').getContext('2d');
   const c = trySheet.canvas;

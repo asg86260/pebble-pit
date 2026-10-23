@@ -83,10 +83,14 @@ function envLeft(t, len) {
 // Seeded off the storm's number, so it is still a seeded run doing the same
 // thing twice, and derived rather than saved: the drops are ephemeral, so
 // there is nothing here for a reload to carry.
-let water = stream(0);
-let wateredAt = -1;
+// Keyed by the run's seed as well as the shower: a save read in is another
+// run, whose first shower is `S.rains` 1 again.
+let water = stream(0);  // cache: keyed by the run's seed and the shower's number
+let wateredAt = -1, wateredFor = 0;  // cache: the key `water` was drawn for
 const waterRand = () => {
-  if (wateredAt !== S.rains) { water = stream((S.runSeed ^ (S.rains * 0x9E3779B1)) >>> 0); wateredAt = S.rains; }
+  if (wateredAt !== S.rains || wateredFor !== S.runSeed) {
+    water = stream((S.runSeed ^ (S.rains * 0x9E3779B1)) >>> 0); wateredAt = S.rains; wateredFor = S.runSeed;
+  }
   return water();
 };
 
@@ -97,10 +101,12 @@ const waterRand = () => {
 // one. The roll for whether a bolt comes is in it as well: a bolt that found
 // nowhere to run leaves the next frame rolling again, which is the camera
 // again. It changes nothing in the yard, so nothing is lost by it.
-let flash = stream(0);
-let boltedAt = -1;
+let flash = stream(0);  // cache: keyed by the run's seed and the shower's number, as `water`
+let boltedAt = -1, boltedFor = 0;  // cache: the key `flash` was drawn for
 const boltRand = () => {
-  if (boltedAt !== S.rains) { flash = stream((S.runSeed ^ (S.rains * 0x85EBCA6B) ^ 0xB017) >>> 0); boltedAt = S.rains; }
+  if (boltedAt !== S.rains || boltedFor !== S.runSeed) {
+    flash = stream((S.runSeed ^ (S.rains * 0x85EBCA6B) ^ 0xB017) >>> 0); boltedAt = S.rains; boltedFor = S.runSeed;
+  }
   return flash();
 };
 
@@ -341,7 +347,7 @@ export function stepBolt(secs) {
 }
 
 
-let dead = new Uint8Array(0);
+let dead = new Uint8Array(0);  // cache: scratch flags sized to the drop list, cleared each frame
 export function stepDrops() {
   const m = muckCols();
   // the background's clock, with the rest of the weather (`stepSmog`)
@@ -411,7 +417,7 @@ export const nextDue = () =>
 // How big the front rolled now is. The first of a save is a full storm, so
 // the lightning is seen early over a sky too clean to mark; a check may pin
 // the next one (`__front`).
-let pinned = null;
+let pinned = null;  // page: a check's pin on the next front (`__front`), spent by the front it pins
 export const pinHeft = h => { pinned = h; };
 export function rollHeft() {
   const h = pinned ?? (S.rains === 1 ? 1 : rand());

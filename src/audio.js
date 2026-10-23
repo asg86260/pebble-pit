@@ -35,8 +35,8 @@ import { rand, seed, stream } from './rng.js';
 
 // --- the decision half ---------------------------------------------------------
 
-let awake = false;
-let muted = false;
+let awake = false; // page: the first gesture has woken the sound
+let muted = false; // page: the player's mute
 
 // What has been decided since wake. `byClass` is what the yard asked for,
 // `firedBy` what got through, `pending` the open fold windows (nought a
@@ -65,7 +65,7 @@ const recent = { fold: new Map(), punct: new Map(), each: new Map() };
 // Every one-shot still sounding, for the cap. `env` is the context half's
 // handle, or null on a yard with no context.
 const active = [];
-let lastT = -Infinity;
+let lastT = -Infinity; // cache: the clock's last reading; a clock run back clears everything timed on it
 
 // A new game or a reseeded yard turns the clock back, and everything here is
 // a time on that clock, so it all goes with the old yard.
@@ -260,7 +260,7 @@ export function muteAudio(on) {
 // The slider is a share of SND_MASTER, not a second absolute: all the way up
 // is the designed level, not louder. Ramped, so a dragged slider is not a
 // run of clicks.
-let volume = 1;
+let volume = 1; // page: the player's volume
 export function setVolume(v) {
   volume = Math.max(0, Math.min(1, +v || 0));
   if (!ctx) return;
@@ -292,7 +292,7 @@ export function applySounds(map) {
 // --- the context half ------------------------------------------------------------
 // Nothing below runs without a context, and nothing above depends on it.
 
-let ctx = null;
+let ctx = null; // page: the audio context
 const nodes = {};
 
 // Master chain, in order: yard bus -> the lowpass that is the palette -> the
@@ -355,7 +355,7 @@ export function panOf(x) {
 // draws thousands of numbers and taking them from the yard's word would put
 // the browser's run off the node yard's (`stream` in rng.js). Seeded from
 // the run.
-let noise = null;
+let noise = null; // page: the grit's stream, seeded on the first strike
 
 // A recipe rendered to samples at SND_RATE: the bench's `render` with the
 // yard's meanings laid over it. `hard` moves the body and the grit down and

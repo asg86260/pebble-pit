@@ -30,6 +30,7 @@ import { signsJoined } from '../../after/press.js';
 import { paperPulls } from '../../after/mill.js';
 import { ctx } from '../ctx.js';
 import { onDevice } from '../wardrobe.js';
+import { held } from '../../reset.js';
 
 // `posed` is the pose each station drew its hand-worked part in this frame,
 // which the ghost of its motion takes hold of (`grips`, render/aftercues.js).
@@ -238,7 +239,7 @@ const PT = { slide: 0.1, lift: 0.09, hang: 0.35, peg: 0.25, lower: 0.05, peelUp:
 const DRY_S = 16, WET = MID;
 export const lineOf = slots => { const LAST = SLOT0 + SLOT_W * (slots - 1); return { LAST, stackX: LAST, peelX: LAST + 4, loftX: LAST + 5, postR: LAST + 9, lineX1: LAST + 10 }; };
 // The line's record: the pull and the loft hand, each on its held steps.
-let line = null;
+let line = null;   // held: the drying line's sheets, played out
 function lineRec(t) {
   if (!line || t < line.t) line = { t, seen: -Infinity, pul: { st: 'stir', k: 0, tm: 0 }, sheets: [], loft: { st: 'rest', y: 0, tm: 0, carry: null, target: null }, queue: 0 };
   return line;
@@ -340,7 +341,7 @@ function crest(d, x, dir) {
   if (tr >= 13 && tr + 2 <= 25) d.r(tr, SURFACE, 2, 1, W);
 }
 // The pulper's lean, off what the pull is doing.
-let pulperLean = 0;
+let pulperLean = 0;   // held: the pulper's lean as last drawn
 function papermill(d, work, t, h, body = false, at = {}) {
   const moulds = at.moulds || 1, slots = at.slots || AFTER_LINE_SHORT, G = lineOf(slots);
   const hand = turning(h);
@@ -491,7 +492,8 @@ function workshop(d, work, t, h, body = false, at = {}) {
   const blanks = Math.min(PILE_CAP, at.blanks || 0);
   for (let i = 0; i < blanks; i++) wsBoard(d, BLANKS_X, (-2 - 2 * i) * P);
 }
-let wsLastJx = REST_X;
+let wsLastJx = REST_X;   // held: the hammer's column as last drawn
+held('after-stations-drawn', () => { line = null; pulperLean = 0; wsLastJx = REST_X; });
 
 // --- the press: a screw and a platen in a frame -----------------------------------
 // The platen, the screw, the bar and its handle all ride one number, the drop

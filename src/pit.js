@@ -18,6 +18,7 @@ import { rand } from './rng.js';
 import { bell } from './dust.js';
 import { sfx } from './audio.js';
 import { earned } from './income.js';
+import { held as heldState } from './reset.js';
 
 // --- how big the hole is -----------------------------------------------------
 // One hole, the whole thing, from the first frame. The hole is scenery with a
@@ -135,7 +136,7 @@ export function wirePit() {
 // when the hole fills or empties. That is a rule change, not a cell change,
 // so the grain that filled the hole wakes only its own column; this wakes
 // the rest.
-let wasFull = false;
+let wasFull = false;            // held: whether the hole was full last frame, so the change wakes every column
 
 export function settlePit() {
   const full = pit.n >= pit.holeCap;
@@ -352,7 +353,8 @@ const SHOWN = 200;
 // Where paid grains fly to. Null is the bench; `payTo` sets it for the length
 // of one purchase so the grains arc to the station that sold the row (`buy`
 // in upgrades.js, `fly` in game.js).
-let payX = null, payY = null;
+let payX = null, payY = null;   // held: where the purchase under way sends its grains
+heldState('pit', () => { wasFull = false; payX = null; payY = null; });
 export const payTo = (x = null, y = null) => { payX = x; payY = y; };
 
 // Lift `n` grains off the top of the pile, handing each to `leaving` to be

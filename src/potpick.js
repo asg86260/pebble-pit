@@ -26,13 +26,13 @@ const canvas = document.getElementById('c');
 
 // The one list, built once and kept: rebuilt content would drop the pointer
 // handlers that keep it open while the cursor is crossing it.
-let opts = null;
-let onPot = -1;                      // which pot it is currently set for
+let opts = null;                // page: the one list element, built once
+let onPot = -1;                 // page: which pot it is currently set for, set each time it opens
 // The pot the cursor was last over, so a hover opens the list once per pot
 // ENTERED rather than once per pointermove: otherwise every move over the
 // same cauldron tears the list down and stands it up again, and every move
 // over bare ground restarts the wander-off grace so it never closes.
-let over = -1;
+let over = -1;                  // page: the pot the cursor was last over
 
 // Every job a brew can favor, in the picker's order; built once, shown per pot.
 const FOR_JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.PURIFY, JOB.HAUL, JOB.WIZARD];

@@ -457,7 +457,7 @@ export const rockShape = () => {
 // rock into exactly these cells (shield.js). Worked out once a fall: a cell
 // is a root, an arctangent and three sines, and a late rock is two thousand
 // of them.
-let lump = null;
+let lump = null;                // cache: keyed by the boulder's number, width and depth, all it is worked from
 export function lumpCells() {
   const deep = depthOf();
   const key = `${S.boulderNo},${S.gw},${deep}`;
@@ -717,7 +717,10 @@ const ramTargetX = () => {
   const parked = rockFaceX() - P * (RAM_REACH + spriteW(RAM));
   return Math.round(Math.max(flankX() + RAM_CLEAR, parked) / P) * P;
 };
-let ramNowX = null, ramMovedAt = 0;
+// Not cleared with the yard: cleared at the top of a new game, the next ask
+// (the footprints, while the yard is still being laid) parks it against the
+// old rock, and a body was left standing on nothing (scenes-stand-acts).
+let ramNowX = null, ramMovedAt = 0; // cache: the picture's memory of the drive (render/machines.js), chasing its target
 export function ramX() {
   const target = ramTargetX();
   const t = now();

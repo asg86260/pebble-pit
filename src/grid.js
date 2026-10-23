@@ -93,7 +93,7 @@ export function wakeGrid(b) {
 
 // How many columns `settle` has looked at, so "an untouched yard does no
 // work" is a fact about the code and not a stopwatch reading.
-let work = 0;
+let work = 0;  // page: a measurement for the checks, zeroed by `resetSettleWork` when one asks
 export const settleWork = () => work;
 export const resetSettleWork = () => { work = 0; };
 
@@ -110,7 +110,7 @@ export const resetSettleWork = () => { work = 0; };
 // age is how long it has lain *there*. Read by the carters' pick: the ground
 // whose oldest grain has lain longest breaks a tie (`firstPick` in
 // crew/hauler.js).
-let clock = 0;
+let clock = 0;  // page: a frame count for the page's life, only ever forward, so the per-frame keys read off it never repeat
 export const tickGrid = () => { clock++; };
 // The frame's count, for a reader that may take one walk of a grid a frame.
 export const gridFrame = () => clock;

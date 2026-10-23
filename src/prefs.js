@@ -17,7 +17,7 @@ const DEFAULTS = {
   feedbackDraft: '', // the feedback form's words, kept until they are sent (feedback.js); never the save
 };
 
-let prefs = { ...DEFAULTS };
+let prefs = { ...DEFAULTS };    // page: the player's preferences, which outlive a new game by design
 try {
   const raw = localStorage.getItem(KEY);
   if (raw) {
@@ -68,7 +68,7 @@ export const crewView = () => CREW_VIEWS.includes(prefs.crew) ? prefs.crew : 'sh
 // and a wide tablet gets the hop, because it is the finger these are for.
 // Asked once of the platform and kept: a pointer does not change kind
 // mid-game, and every seat in the frame asks this.
-let coarsePointer = null;
+let coarsePointer = null;       // page: what the platform says its pointer is
 export function coarse() {
   if (forced != null) return forced;
   if (prefs.touch != null) return prefs.touch;
@@ -77,7 +77,7 @@ export function coarse() {
 }
 // A phone stood up for a scene or a check, without writing the player's
 // preference: in memory only, cleared with null.
-let forced = null;
+let forced = null;              // page: a phone stood up by a scene or a check
 export const forceCoarse = v => { forced = v; };
 
 // The page's look (DESIGN.md, "Dark mode: black stays black"): the light

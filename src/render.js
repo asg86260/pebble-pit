@@ -12,6 +12,7 @@ import { ctx, canvas, paintOn } from './render/ctx.js';
 import { inkMode } from './ink.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
+import { held as heldState } from './reset.js';
 
 import { drawApothecary, drawBrewSteam, drawPotLabels } from './render/apothecary.js';
 import { drawBalloonPosts } from './render/balloon.js';
@@ -55,7 +56,7 @@ import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb, drawBarrier, drawFocusLines, drawMeal, drawMealUnder } from './render/serpent.js';
 import { drawDeepZones, drawDeepFauna } from './render/fauna.js';
 import { drawFightNumbers } from './render/fightnums.js';
-import { drawStationStatuses } from './render/statusicons.js';
+import { drawStationStatuses, clearStatusTiles } from './render/statusicons.js';
 import { drawSerpentBar, barShown } from './render/serpentbar.js';
 import { drawCharge } from './render/charge.js';
 import { drawFighters, drawShots } from './render/arms.js';
@@ -388,7 +389,7 @@ const MIXED = new Set(['workers', 'says', 'swimmers', 'party']);
 const READING = new Set(['pad focus', 'offer flags', 'paid', 'pile marks', 'auras', 'work bars', 'done marks',
                          'casino mark', 'roster', 'after roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
                          'stock count', 'after counts', 'pot labels', 'counter', 'fight numbers', 'status posts', 'serpent bar']);
-let picture = false;
+let picture = false;            // page: the landing page draws the yard as a picture
 export const asPicture = on => { picture = on; };
 
 // Which places a layer draws in is its `in` (see LAYERS): a name, or a list
@@ -502,6 +503,7 @@ function drawLayer(layer, i, place) {
 // the bands, as they were.
 const GLASS = new Set(['letterbox', 'acts-caption', 'flash', 'press']);
 export function draw() {
+  clearStatusTiles();
   if (Math.abs(S.zoomShow - S.zoom) > 1e-9) scaledWorld(drawWorld);
   else drawWorld();
   onGlass(() => drawHalf(S.view, SCREEN_FROM, LAYERS.length, GLASS));
@@ -570,7 +572,7 @@ function onGlass(fn) {
 // glass in one nearest-neighbor blit. Nothing is drawn at a fractional size,
 // so no seam opens between two cells; the moment the zoom lands this is
 // skipped and the frame is drawn straight, pin sharp.
-let sheet = null;
+let sheet = null;               // cache: a scratch canvas, sized to the glass on every use
 function scaledWorld(fn) {
   if (!sheet) sheet = document.createElement('canvas');
   if (sheet.width !== canvas.width || sheet.height !== canvas.height) {
@@ -591,7 +593,8 @@ function scaledWorld(fn) {
 
 // The far place's picture for glide `rip.no`, painted once. The yard's knock
 // is the yard's (world.js, `stepShake`): the far place is drawn still.
-let frozen = null;
+let frozen = null;              // held: the far place painted for glide `no`; the glide count is no key across yards
+heldState('render-frozen', () => { frozen = null; });
 function farPicture(rip) {
   const c = frozen ? frozen.c : document.createElement('canvas');
   if (frozen && frozen.no === rip.no && c.width === canvas.width && c.height === canvas.height) return c;
