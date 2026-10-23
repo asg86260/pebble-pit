@@ -15,8 +15,9 @@ export const TESTS = [
     let deskFits = false, deskShowsBench = false;
     await asScreen(1440, 900, 1, () => {
       const d = state();
-      deskFits = (d.rockX - d.rockW / 2 - d.camX) * d.zoom >= 0 &&
-                 (d.pitX - d.camX) * d.zoom < 1440;
+      // Where a desk opens, not where the narrow window's camera was left.
+      deskFits = (d.rockX - d.rockW / 2 - d.openCamX) * d.zoom >= 0 &&
+                 (d.pitX - d.openCamX) * d.zoom < 1440;
       deskShowsBench = d.benchX >= d.openCamX;
     });
     window.__jump(1);

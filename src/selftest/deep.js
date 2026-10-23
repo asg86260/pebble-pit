@@ -616,14 +616,18 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
   // Wherever the yard's crew are, the camera goes to one of them.
   const pick = S.workers.find(w => !w.lifted && !w.inside && !inTheDeep(w) && !w.aloft);
   if (pick) { window.__look(pick.x - S.viewW / 2); run(0.1); }
-  const up = S.workers.find(w => !w.lifted && !w.inside && !inTheDeep(w) && onGlass(w));
+  // The body nearest the middle of the glass: on a narrow window the first
+  // one found can stand under the counter in the corner, which hides a ring.
+  const central = list => list.sort((a, b) => Math.abs(a.x + WORKER / 2 - S.camX - S.viewW / 2) -
+                                              Math.abs(b.x + WORKER / 2 - S.camX - S.viewW / 2))[0];
+  const up = central(S.workers.filter(w => !w.lifted && !w.inside && !inTheDeep(w) && onGlass(w)));
   const yard = up ? look('yard', up) : [ok(false, 'yard: a body on the glass')];
   window.__view('deep');
   run(VIEW_GLIDE_S + 1);
   const below = S.workers.find(w => !w.lifted && inTheDeep(w) && !isFighter(w) && w.y > deepTop() + DEEP_SURFACE + P * 4);
   if (below) { window.__look(below.x - S.viewW / 2); run(0.1); }
-  const down = S.workers.find(w => !w.lifted && inTheDeep(w) && !isFighter(w) &&
-                                   w.y > deepTop() + DEEP_SURFACE + P * 4 && onGlass(w));
+  const down = central(S.workers.filter(w => !w.lifted && inTheDeep(w) && !isFighter(w) &&
+                                             w.y > deepTop() + DEEP_SURFACE + P * 4 && onGlass(w)));
   const deep = down ? look('deep', down)
                     : [ok(false, 'deep: a body on the glass', String(S.workers.filter(inTheDeep).length))];
   // The rest of the pointer's crew controls down there: with the right button

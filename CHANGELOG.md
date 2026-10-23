@@ -224,6 +224,9 @@ this section; the release that switches it on moves these under Unreleased.
 - In heaven, an idle member's first sign, poster or log picked up no longer counts as two (test/after-gather.test.mjs).
 - In heaven, holding the right button now veils the camp and rings each member, and the one under the cursor slows so it can be picked up (src/selftest/afterboards.js).
 - In heaven, a new soul joins God's crowd and the signs ink on the act's own clock, so a reload or a new game no longer shifts when either happens (test/after-crowd.test.mjs).
+- On a gamepad, pressing along the stops faster than the camera can pan to each no longer throws the focus back to the middle of the window on a wide screen (src/selftest/pad.js).
+- In the deep on a tall window, the pointer near the top of the glass no longer opens the board of a yard station that is not drawn there (test/gates.test.mjs).
+- On a phone the opening view shows the whole rock instead of cutting off its left side (src/selftest/view.js).
 
 ## v0.6.1 — 2026-10-19
 

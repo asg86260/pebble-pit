@@ -158,7 +158,15 @@ export const TESTS = [
 
     const s = state();
 
-    const LEFT = 200, RIGHT = 560, HIGH = 42, LOW = 300;
+    // The circuit's legs on the band where this window shows it: a tall
+    // window has more sky over the yard and the band lower on the glass,
+    // so the 800x600 window's heights would run along its thin top edge.
+    // The bottom leg goes through the band's middle on the glass, no
+    // higher than it sits in that small window.
+    const ys = window.__skyXY().map(([x, yy]) => [(x - s.camX) * s.zoom, yy * s.zoom])
+      .filter(([x]) => x >= 0 && x < innerWidth).map(([, yy]) => yy).sort((a, b) => a - b);
+    const LEFT = 200, RIGHT = 560, SPAN = 258;
+    const LOW = Math.max(300, Math.round(ys[ys.length >> 1] || 0)), HIGH = LOW - SPAN;
     for (let lap = 0; lap < 3; lap++) {
       for (let x = LEFT; x <= RIGHT; x += 20) point('pointermove', x, HIGH, 0);
       for (let y = HIGH; y <= LOW; y += 20) point('pointermove', RIGHT, y, 0);

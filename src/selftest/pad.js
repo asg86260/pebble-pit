@@ -324,6 +324,9 @@ export const TESTS = [
     run(1);
     plugIn();
     window.__motion(null);           // the glide is a motion; this check is about it
+    // The reunion is not what this is about, and the crew mine the first rock
+    // out while a wide window's pans run: its scene would take the presses.
+    S.beatsDone.push('meet', 'part');
     const mid = s => ({ x: s.x + s.w / 2, y: s.y + s.h / 2 });
     const limit = PAD_GLIDE_SPEED / 60 * 2;
     // One press, and the marker on the glass each frame the page draws until
@@ -359,6 +362,9 @@ export const TESTS = [
     try {
       await press('b');
       await hopTo('st:farm');
+      // The camera's pan to the farm done first, however far a wide window
+      // had it to go: a pan under way carries the marker along with it.
+      for (let i = 0; i < 300 && S.camTo !== null; i++) await raf();
       await frames(30);
       let up = null;
       for (let i = 0; i < 6 && window.__pad.scope() !== 'corner'; i++) up = await follow('up');
