@@ -442,7 +442,7 @@ export const coldSky = () => clearSky();
 export const front = (heft = 1) => { S.rainDue = 0; pinHeft(heft); };
 
 // Come back to the game the way a page refresh does.
-export const reload = () => { persist(); restore(); buildShop(); };
+export const reload = () => { persist(); restore({ warm: true }); buildShop(); };
 
 // A reload that is actually cold. `reload` is `persist()` then `restore()`
 // in one process, so anything still standing in `S` survives into the load,

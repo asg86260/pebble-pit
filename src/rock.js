@@ -29,7 +29,6 @@ import { JOB, TYPE } from './jobs.js';
 import { sfx } from './audio.js';
 import { refitShield, domeSquash } from './shield.js';
 import { skyCam } from './view.js';
-import { held } from './reset.js';
 
 // --- boulder ----------------------------------------------------------------
 // Thickness comes on every other rock: with the rock also growing wider and
@@ -718,8 +717,10 @@ const ramTargetX = () => {
   const parked = rockFaceX() - P * (RAM_REACH + spriteW(RAM));
   return Math.round(Math.max(flankX() + RAM_CLEAR, parked) / P) * P;
 };
-let ramNowX = null, ramMovedAt = 0; // held: where the ram has driven to, and when it last moved
-held('rock-ram', () => { ramNowX = null; ramMovedAt = 0; });
+// Not cleared with the yard: cleared at the top of a new game, the next ask
+// (the footprints, while the yard is still being laid) parks it against the
+// old rock, and a body was left standing on nothing (scenes-stand-acts).
+let ramNowX = null, ramMovedAt = 0; // cache: the picture's memory of the drive (render/machines.js), chasing its target
 export function ramX() {
   const target = ramTargetX();
   const t = now();

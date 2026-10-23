@@ -542,9 +542,13 @@ function newYardName() {
   S.playedS = 0;
 }
 
-export function restore() {
-  // A load is a page opened fresh: what modules keep for the yard goes first.
-  resetHeld();
+// `warm` is the checks' reload (`__reload`, every five game seconds of every
+// node group): the yard written and read back in place, what modules keep
+// left standing, so a group can watch a rate or a glide across it. Every
+// other load -- a boot, a slot, an import, the cloud -- is a page opened
+// fresh, and what modules keep for the yard goes first.
+export function restore({ warm = false } = {}) {
+  if (!warm) resetHeld();
   yardReads++;
   // The ground was laid for the yard that was here: a save brings its own
   // noticeboard rect, from whatever layout wrote it, and the lay is cached

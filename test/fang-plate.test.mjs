@@ -56,10 +56,7 @@ group('the plate counts the fangs held and dims at none', async () => {
     ok(pressed && none.shown === 1 && none.faces.length === 1 && none.faces[0].n === 0 && !none.faces[0].pale,
        'spent: the plate stays at none, its words in the mortar\'s grey', JSON.stringify(none))
   ];
-  // The fade is the page's watching: a load clears it (render/fangplate.js
-  // registers it with reset.js) and shows the count whole, so a mid-run
-  // reload would land the plate already in.
-}, { reload: false });
+});
 
 group('the plate is cut round its words and kept to the brick over the door', async () => {
   const rows = [0.4, 0.6, 1, 2].map(z => ({ z, ...plateCells(6, z) }));
