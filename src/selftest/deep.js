@@ -410,6 +410,7 @@ TESTS.push(['rails: the first station stands from the snatch, and its Recruit tr
 // board says whose it is -- the fighter's, not the old building's.
 TESTS.push(['rails: the pointer on a station\'s prop or its fighter opens the board, titled by the fighter', async () => {
   window.__fullSites();
+  window.__snatch({ played: true });
   window.__party({ stations: [{ kind: 'altar', cls: null, rung: 0 }, { kind: 'armory', cls: 'ranger', rung: 8 }] });
   window.__view('deep');
   run(VIEW_GLIDE_S + 0.5);
