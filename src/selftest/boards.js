@@ -2,7 +2,7 @@
 // where a board seats itself.
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, panel, shop, point, onScreen, runUntil,
-  haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows, asScreen, onPage, landed } from './kit.js';
+  haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows, asScreen, onPage, landed, until } from './kit.js';
 import { objective } from '../objectives.js';
 import { TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
 import { offered, STATIONS, here, station } from '../stations.js';
@@ -1202,7 +1202,9 @@ export const TESTS = [
     await settle();
     window.__crew(3, 3);
     window.__fast(40);                       // so there is a rate to read
-    await raf();
+    // The noticeboard is laid on the page's next frame after a new yard
+    // (`unlay` in persist.js): until then it stands nowhere.
+    await until(() => state().stands.stats);
 
     const stand = state().stands.stats;
     await hoverStation('stats');
