@@ -56,7 +56,7 @@ import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb, drawBarrier, drawFocusLines, drawMeal, drawMealUnder } from './render/serpent.js';
 import { drawDeepZones, drawDeepFauna } from './render/fauna.js';
 import { drawFightNumbers } from './render/fightnums.js';
-import { drawStationStatuses } from './render/statusicons.js';
+import { drawStationStatuses, clearStatusTiles } from './render/statusicons.js';
 import { drawSerpentBar, barShown } from './render/serpentbar.js';
 import { drawCharge } from './render/charge.js';
 import { drawFighters, drawShots } from './render/arms.js';
@@ -503,6 +503,7 @@ function drawLayer(layer, i, place) {
 // the bands, as they were.
 const GLASS = new Set(['letterbox', 'acts-caption', 'flash', 'press']);
 export function draw() {
+  clearStatusTiles();
   if (Math.abs(S.zoomShow - S.zoom) > 1e-9) scaledWorld(drawWorld);
   else drawWorld();
   onGlass(() => drawHalf(S.view, SCREEN_FROM, LAYERS.length, GLASS));

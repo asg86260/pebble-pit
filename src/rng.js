@@ -13,8 +13,8 @@
 
 // The seed after however many draws have been taken since; `seed()` reports
 // the seed it was set to, not this.
-let state = 0;
-let current = 0;
+let state = 0;      // saved: the run's chance, set by persist.js's reset and restore
+let current = 0;    // saved: the seed it began from, likewise
 
 // The clock alone gives two tabs opened in the same millisecond the same yard.
 const entropy = () =>

@@ -32,8 +32,6 @@ src/objbarrier.js:shown
 src/objbarrier.js:swapUntil
 src/objline.js:cornerAt
 src/objline.js:shown
-src/rng.js:current
-src/rng.js:state
 src/smog/books.js:drew
 src/smog/books.js:filled
 src/smog/books.js:made

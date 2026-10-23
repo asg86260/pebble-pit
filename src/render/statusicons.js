@@ -21,13 +21,15 @@ import { statusLine, statusLineOf, statusName } from '../deep/rails.js';
 import { STATUS_ICONS, STATUS_PX, STATUS_GAP, STATUS_STEPS, STATUS_RENEW_MS, STATUS_TILE, STATUS_RIM,
          STATUS_FOE, STATUS_FACE, STATUS_TIMER, STATUS_SPENT, STATUS_POST, STATUS_POST_OUT, STATUS_POST_FOOT,
          STATUS_COUNT, STATUS_WARN_HZ, RESIST_TURN_S, STATUS_WARN_RIM, STATUS_STRUCK, STATUS_SAYS, STATUS_NAMES, MECHANICS, STATUS_BAR_PX, STATUS_LABEL_PX, STATUS_LABEL_GAP, STATUS_LABEL_GROUND } from '../config.js';
-import { held } from '../reset.js';
 
 
 // Where each tile stood this frame, in screen pixels, and what its hover says:
 // the pointer asks `statusAt` (input.js). The bar's row and the posts, apart.
-let barTiles = [], postTiles = [];   // held: where the tiles last stood
-held('statusicons-tiles', () => { barTiles = []; postTiles = []; });
+let barTiles = [], postTiles = [];   // cache: where this frame drew the tiles, cleared by every frame
+// Cleared before every frame is drawn (render.js `draw`): a layer that stops
+// drawing -- the posts leaving the deep, the bar going down -- takes its
+// tiles off the pointer with it, not leaves them where they last stood.
+export const clearStatusTiles = () => { barTiles = []; postTiles = []; };
 export function statusAt(cx, cy) {
   for (const r of [...barTiles, ...postTiles]) if (cx >= r.x - 1 && cx <= r.x + r.w + 1 && cy >= r.y - 1 && cy <= r.y + r.h + 4) return r;
   return null;

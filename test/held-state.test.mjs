@@ -7,6 +7,8 @@
 //               impossible, so nothing clears it
 //   // page:     the page's, not the game's: the audio context, a pad
 //               plugged in, the dev panel; it outlives games on purpose
+//   // saved:    the yard's, written and read by the save itself: persist.js
+//               sets it on a new game and a load, after the clears run
 //
 // A `let` that says none of them is the bug two checks found on 2026-10-22:
 // state no new game cleared, red only after some other check. The ones
@@ -18,7 +20,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const MARK = /\/\/ (held\b|cache:|page:)/;
+const MARK = /\/\/ (held\b|cache:|page:|saved:)/;
 const SKIP = /^src\/(selftest|cutbench|music)\//;
 const walk = d => readdirSync(d).flatMap(f => {
   const p = join(d, f).replaceAll('\\', '/');
@@ -39,7 +41,7 @@ for (const file of walk('src').filter(f => !SKIP.test(f) && f !== 'src/selftest.
 }
 
 test('every module-level let says whether a new game clears it', () => {
-  assert.deepEqual(unmarked, [], `unmarked (add // held, // cache: or // page:): ${unmarked.join(', ')}`);
+  assert.deepEqual(unmarked, [], `unmarked (add // held, // cache:, // page: or // saved:): ${unmarked.join(', ')}`);
   assert.deepEqual(unregistered, [], `marked // held in a file that does not import src/reset.js: ${unregistered.join(', ')}`);
 });
 
