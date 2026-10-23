@@ -1,5 +1,6 @@
 import { P, RAIN_FIRST_S, SMOG_CAP, SMOG_PER_MOTE, SMOG_RAIN_AT } from '../config.js';
 import { S } from '../state.js';
+import { held } from '../reset.js';
 import { CLODS, DROPS, SKY, STACK, climbing, raining, resetDrift } from './band.js';
 import { cols, muckCols, messCounts, muckLeft, plotMuck, poopLeft, quarryMuck, rockMuck, yardMuck } from './layer.js';
 import { EMBERS, LEDGER, dryFor, resetRain, stormLen } from './rain.js';
@@ -11,16 +12,16 @@ import { spread } from './vents.js';
 // Inferred from the change in the haze it reads equal to the filtering the
 // moment the balloons start winning, and the net sits at nought however many
 // bodies you move. Rain and the balloons are not production and are not counted.
-let made = 0;
+let made = 0;                      // held: the haze put up since the last reading
 // An imported `let` is read-only, so the tally has a door of its own.
 export const countMade = add => { made += add; };
-let mark = { at: 0, rate: 0, drew: 0 };
+let mark = { at: 0, rate: 0, drew: 0 };   // held: the last reading
 
 // What the balloons have actually taken, counted at the mouth as motes go
 // in. Not a rating: a rating is in motes a second against a fouling in haze a
 // second, and it goes on quoting the full figure while the sky is too thin to
 // reach.
-let drew = 0;
+let drew = 0;                      // held: motes taken at the mouths since then
 export const countDrew = () => { drew += 1; };
 
 // A minute of them, kept as a ring and averaged: a direction taken off one
@@ -31,7 +32,13 @@ const net = new Array(WINDOW).fill(0);
 // and the two sides of it, so the books can say why the arrow points
 const up = new Array(WINDOW).fill(0);
 const down = new Array(WINDOW).fill(0);
-let filled = 0, oldest = 0;
+let filled = 0, oldest = 0;        // held: how much of the minute's ring is real
+// The air's books, cleared: a new yard and a load start the trend afresh.
+const clearAir = () => {
+  made = 0; drew = 0; mark = { at: 0, rate: 0, drew: 0 };
+  net.fill(0); up.fill(0); down.fill(0); filled = 0; oldest = 0;
+};
+held('smog-books', clearAir);
 
 export function sampleAir(t) {
   if (t - mark.at < 1000) { return; }
@@ -149,7 +156,7 @@ export function smogReport() {
 }
 
 export function seedSmog() {
-  made = 0;
+  clearAir();
   // A new yard has been dry for ever. Each file puts its own counter back,
   // because each owns the `let` behind it.
   resetRain();
@@ -157,11 +164,6 @@ export function seedSmog() {
   // The first front of a new yard is on the clock from the start.
   S.rainDue = RAIN_FIRST_S;
   S.stormHeft = 1;
-  net.fill(0); up.fill(0); down.fill(0);
-  filled = 0;
-  oldest = 0;
-  mark = { at: 0, rate: 0, drew: 0 };
-  drew = 0;
   clearSky();
   resetDrift();
   DROPS.length = 0;

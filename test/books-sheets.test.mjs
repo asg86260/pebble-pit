@@ -16,6 +16,9 @@ const row = key => BOOK_ROWS.find(u => u.key === key);
 const text = v => String(v).replace(/<[^>]+>/g, '').trim();
 
 // --- income ---------------------------------------------------------------------
+// The rates are read over a minute of the yard, and a load starts them again
+// as a fresh page does (income.js, smog/books.js), so the two groups that
+// watch a trend form run without the harness's reload in the middle.
 // A steady yard reads level, and one that has doubled reads up. The level half
 // is the one that went wrong in the building: a relative change on eight ore a
 // minute is a lump either side of the edge, and it flipped between two arrows.
@@ -35,7 +38,7 @@ group('a rate wears an arrow that says which way it is going', async () => {
     ok(faster > 0, 'and one that took on hands reads up', String(faster)),
     ok(/▲/.test(said), 'on the board, as the air board draws it', said)
   ];
-});
+}, { reload: false });
 
 // Lifetime income is the rate's sum over the whole game: a refund is kept out of
 // it for the same reason it is kept out of the rate, and it survives a reload.
@@ -89,7 +92,7 @@ group('the sky sheet agrees with itself', async () => {
     ok(shares.length >= 1 && Math.abs(sum - 100) <= shares.length, 'and what dirtied it adds up to the sky',
        shares.join(' + '))
   ];
-});
+}, { reload: false });
 
 // --- the crew ---------------------------------------------------------------------
 // Heads by what they are doing count every body once; heads by job count every

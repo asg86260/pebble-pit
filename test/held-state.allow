@@ -1,9 +1,2 @@
 # Module-level lets standing unmarked when test/held-state.test.mjs landed.
 # This list only shrinks: mark a let // held, // cache: or // page: and strike it.
-src/income.js:lastAt
-src/income.js:lastBanked
-src/income.js:open
-src/smog/books.js:drew
-src/smog/books.js:filled
-src/smog/books.js:made
-src/smog/books.js:mark

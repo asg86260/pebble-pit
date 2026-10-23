@@ -14,14 +14,15 @@
 
 import { STATS_SAMPLE_S, STATS_FLOOR, STATS_OVER_S, STATS_OVER_DEFAULT } from './config.js';
 import { S } from './state.js';
+import { held } from './reset.js';
 
 export const COINS = ['dust', 'shard', 'spore', 'spark', 'scale'];
 
 const KEEP_S = Math.max(...STATS_OVER_S);
 const ring = [];                   // { at, dt, got: { coin: n } }, oldest first
-let open = {};                     // what has come in since the last bucket closed
-let lastAt = null;
-let lastBanked = 0;
+let open = {};                     // held: what has come in since the last bucket closed
+let lastAt = null;                 // held: when the open bucket began
+let lastBanked = 0;                // held: the bank at the last reading
 
 export function resetBooks() {
   ring.length = 0;
@@ -29,6 +30,9 @@ export function resetBooks() {
   lastAt = null;
   lastBanked = S.banked || 0;
 }
+// A load is a page opened fresh: the rates start again from it, not from
+// whatever yard was standing before.
+held('income', resetBooks);
 
 // A coin into the hole. Called by the pit and nobody else, so every way a
 // coin can come in is counted once.
