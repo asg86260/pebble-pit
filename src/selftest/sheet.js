@@ -400,8 +400,10 @@ export const TESTS = [
     phone(true);
     window.__board('shack');
     await settled();
-    // the rows alone: the list's foot is padded by what the seat hides below the glass
-    const rows = list().scrollHeight - parseFloat(getComputedStyle(list()).paddingBottom);
+    // the rows alone, off the open page: the list's foot is padded by what the
+    // seat hides below the glass, and a list that fits its box scrolls nothing,
+    // so its scroll height is the box's and says nothing of the rows
+    const rows = list().querySelector(':scope > .page:not([hidden])').offsetHeight;
     const short = Math.round(rows * 3 / 4 / (1 - SHEET_H));
     const out = await asScreen(state().W, short, devicePixelRatio, async () => {
       await settled();
