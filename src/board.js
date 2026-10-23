@@ -163,8 +163,9 @@ function panelGap() {
 function pinWidth() {
   const sheet = panelEl.querySelector(':scope > .sheet');
   if (!sheet) return;
-  // The room the sheet may take, written onto it so a stylesheet that sizes it
-  // by content (the shelf) can cap itself without knowing the purse.
+  // The room the sheet may take, written onto the panel so a stylesheet that
+  // sizes the sheet by content (the shelf) can cap it without knowing the
+  // purse, and so the purse lying along its top is held to the same room.
   // On a phone the sheet is the window's width and the purse lies inside it,
   // so the room is the glass (DESIGN.md, "Boards as bottom sheets"); in a
   // narrow window the purse stands above the sheet, not beside it, and takes
@@ -172,7 +173,7 @@ function pinWidth() {
   const beside = !coarse() && typeof getComputedStyle === 'function'
     && getComputedStyle(panelEl).flexDirection === 'row';
   const purseW = beside ? purseEl.offsetWidth : 0;
-  sheet.style.setProperty('--sheet-room', `${S.W - (purseW ? purseW + panelGap() : 0) - 2 * GAP}px`);
+  panelEl.style.setProperty('--sheet-room', `${S.W - (purseW ? purseW + panelGap() : 0) - 2 * GAP}px`);
   // And the height it may take, off the same measured window `place` clamps
   // it against. The stylesheet's own `dvh` was a second reading of the window
   // that `place` never saw, so the two could disagree about where the glass

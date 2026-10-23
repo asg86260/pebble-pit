@@ -2021,7 +2021,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
      A phone overrides the ceiling with the width of the glass -- see the
      media rule. */
   width: fit-content;
-  max-width: var(--sheet-w);
+  max-width: min(var(--sheet-w), var(--sheet-room, 100vw));
   /* No taller than the window. `place` stands a board that will not fit with
      its top at the window's edge, so without a ceiling the rows past the
      bottom of the glass were rows nobody could reach -- a full bench on a
@@ -2164,8 +2164,13 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
      lies along it: four marks in a row is one line, and one line is cheaper than
      the width of a column the screen has not got. */
   .panel { flex-direction: column; align-items: flex-start; gap: 4px; }
+  /* and as wide as the room the board has, a row too many coins for it
+     going on to a second line rather than off the glass */
   .purse {
     flex-direction: row;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+    max-width: var(--sheet-room, none);
     gap: 10px;
     padding: 4px 8px;
     transform-origin: 0 100%;
@@ -2174,7 +2179,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   .panel .sheet {
     padding: 8px var(--sheet-pad-x);
     /* The ceiling is the glass, less the panel's margins. */
-    max-width: var(--sheet-w);
+    max-width: min(var(--sheet-w), var(--sheet-room, 100vw));
     /* in landscape there may be less room above the bench than the board wants:
        it scrolls inside itself rather than running off the top, under the
        same height board.js measured the window by (`--sheet-tall`) */

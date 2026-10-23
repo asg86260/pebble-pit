@@ -4,7 +4,7 @@
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows, asScreen } from './kit.js';
 import { TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
-import { offered } from '../stations.js';
+import { offered, STATIONS, here } from '../stations.js';
 import { handsOf } from '../levels.js';
 import { JOB } from '../jobs.js';
 
@@ -985,6 +985,45 @@ export const TESTS = [
       // the scrollbar comes out of the words' width unless it is given back
       ok(cols >= roomy, 'and the scrollbar costs the shelf no column',
          `${cols} columns, ${roomy} with no bar`)
+    ];
+  }],
+
+  // Every board there is, in the yard and in act 3, opened in whatever window
+  // the suite runs in: a popover lies wholly inside the glass, purse and all,
+  // and a sheet from the bottom is the glass's width with its top on it (its
+  // foot stands below the window by design, `placeSheet`).
+  ['an open board lies inside the window, popover or sheet', async () => {
+    const out = [];
+    const inside = (k, sheet) => {
+      const p = document.getElementById('panel');
+      if (p.hidden) return;
+      const r = p.getBoundingClientRect();
+      if (r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || (!sheet && r.bottom > innerHeight + 1))
+        out.push(`${sheet ? 'sheet' : 'popover'} ${k} ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)}`);
+    };
+    let opened = 0;
+    for (const scene of ['bench', 'after-chain']) {
+      window.__scene(scene);
+      await settle();
+      const keys = [...new Set([...window.__boards().map(b => b.name),
+        ...STATIONS.filter(r => r.board && r.stand && here(r) && r.open()).map(r => r.key)])];
+      for (const sheet of [false, true]) {
+        window.__coarse(sheet ? true : null);
+        for (const k of keys) {
+          window.__board(null);
+          window.__board(k);
+          await raf(); await raf();
+          if (!document.getElementById('panel').hidden) opened++;
+          inside(k, sheet);
+        }
+      }
+      window.__board(null);
+      window.__coarse(null);
+    }
+    newRun();
+    return [
+      ok(opened > 20, 'boards were opened in the yard and in act 3', `${opened}`),
+      ok(out.length === 0, 'and every one lies inside the window', `${innerWidth}x${innerHeight}: ${out.join(' | ')}`)
     ];
   }],
 

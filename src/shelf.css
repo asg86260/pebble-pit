@@ -62,7 +62,7 @@
 .sheet:has(> .page:not([hidden]) .rows.shelves) {
   width: min(calc(var(--shelf-slots, 5) * var(--shelf-slot, 140px) + 2 * var(--sheet-pad-x) + 2 * var(--sheet-border)), var(--sheet-room, 100vw));
   min-width: fit-content;
-  max-width: none;
+  max-width: var(--sheet-room, none);
 }
 .sheet:has(> .page:not([hidden]) .rows.shelves) .page { width: auto; }
 
