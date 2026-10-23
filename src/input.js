@@ -4,6 +4,7 @@
 // else's module.
 
 import { msg } from './lang.js';
+import { held as heldState } from './reset.js';
 import { closeWindow } from './modal.js';
 import { P, MINE_DELAY, WORKER, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H, TOSS_DELAY, THUMB, BRUSH } from './config.js';
@@ -849,9 +850,9 @@ function panDir(e, key) {
 const keysHeld = new Set();
 const KEY_PAN = 0.5;                          // views a second, held: the same feel at any zoom
 const WHEEL_GAIN = 1.0;                       // world units a pixel of wheel delta is worth
-let wheelOwed = 0;                            // world units the wheel has asked for and not yet had
+let wheelOwed = 0;                            // held: world units the wheel has asked for and not yet had
 const WHEEL_EASE = 80;                        // ms for the owed distance to fall to 1/e
-export const stopWheel = () => { wheelOwed = 0; };
+heldState('wheel', () => { wheelOwed = 0; });
 let panAt = 0;
 // One frame of the keys and the wheel: the view slides at KEY_PAN while
 // either key is down (still when both are), and eases through whatever the
