@@ -4,6 +4,15 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## Every part of the game stands on its own -- DESIGNED, AWAITING APPROVAL (2026-10-23)
+
+docs/wave-tests.md: each station and system as a `SYSTEMS` row that can be
+stepped alone (`test/sim.mjs`) from a fixture save, module state registered
+so a new game or a reload clears it, one check API with frame waits instead of
+sleeps, `test/` by part in four tiers, CI shards dealt by measured time. Built
+in six steps, each its own pull request. Blocked on the owner's three calls at
+the end of the document.
+
 ## A pad check leaks in behind the sheet groups -- FOUND, NOT FIXED (2026-10-22)
 
 `src/selftest/pad.js`, "pad: Menu holds the yard, the sheet is walked, B
