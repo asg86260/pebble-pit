@@ -353,10 +353,7 @@ export const TESTS = [
     await settle();
     window.__crew(2, 2);
     run(5);
-    persist();
-    const blob = exportSave();
-    await storeSettled();
-    const fromDb = await new Promise((ok, no) => {
+    const readDb = () => new Promise((ok, no) => {
       const req = indexedDB.open('boulder-clicker', 1);
       req.onsuccess = () => {
         const g = req.result.transaction('kv', 'readonly').objectStore('kv').get('boulder-clicker/v4');
@@ -365,6 +362,14 @@ export const TESTS = [
       };
       req.onerror = () => no(req.error);
     });
+    // The page's own autosave can land a write between ours and the read, so
+    // the read is taken again until no write crossed it.
+    let blob = '', fromDb = null;
+    for (let i = 0; i < 5 && fromDb !== blob; i++) {
+      blob = exportSave();
+      await storeSettled();
+      fromDb = await readDb();
+    }
     // fill localStorage until it refuses, as a shared origin does
     const junk = 'x'.repeat(1 << 18);
     let n = 0, threw = null;
