@@ -38,6 +38,7 @@ import { potBox } from './apothecary.js';
 import { potPick } from './potpick.js';
 import { clickDeep } from './deep/serpent.js';
 import { coilAt, coilThick } from './deep/place.js';
+import { held as heldState } from './reset.js';
 import { goDeep, goUp, gliding } from './view.js';
 import { throughPortal } from './portals.js';
 import { skippable, holdSkip } from './skip.js';
@@ -136,8 +137,8 @@ function innerRows(stop) {
 // coil's (`coil|<stop>`), or 'body'. A body and the coil's segment are kept
 // here, as the pointer's hand is in input.js: they are what the focus is on,
 // not facts about the yard.
-let body = null;           // the body under crew sight
-let seg = 0;               // the coil's segment, fractional, under the stick
+let body = null;                // held: the body under crew sight
+let seg = 0;                    // held: the coil's segment, fractional, under the stick
 const parentOf = id => (id && id.includes('|') ? id.split('|')[id.startsWith('coil|') ? 1 : 0] : id);
 
 function controlOf(id) {
@@ -295,9 +296,9 @@ function focusBody(w) {
 // A point in the world the stick moves at the hand's speed, for RT held and
 // for a body carried. Where a d-pad press sends a carried body, it goes at
 // the same speed: a carry, never a placement.
-let carryTo = null;       // where a d-pad hop is carrying the body, or null
-let carried = null;       // the body the pad is carrying
-let sweeping = false;     // A down with the hand out
+let carryTo = null;             // held: where a d-pad hop is carrying the body, or null
+let carried = null;             // held: the body the pad is carrying
+let sweeping = false;           // held: A down with the hand out
 
 function startHand(r) {
   const c = r ? mid(r) : { x: S.camX + S.viewW / 2, y: S.groundY - P * 6 };
@@ -348,19 +349,22 @@ function letGo(throwIt) {
 }
 
 // --- reading the pad, a frame -------------------------------------------------
-let was = null;                 // last frame's reading
-let lastT = null;
-let flickArmed = true;
+let was = null;                 // page: last frame's reading of the pad in the hand
+let lastT = null;               // page: the wall clock at the last reading
+let flickArmed = true;          // page: whether the stick has come back to rest since its last flick
 const repeatAt = { up: 0, down: 0, left: 0, right: 0 };
-let focusAt = 0, tipAsked = false;
-let held = null;                // the control A is holding (the arm), or 'rock'
-let skipping = false;
+let focusAt = 0, tipAsked = false; // page: when the focus arrived, and whether its tip was raised, on the wall clock
+let held = null;                // held: the control A is holding (the arm), or 'rock'
+let skipping = false;           // page: A is down as the skip key; only A coming up lets it go, or skip.js is left held
+// What the pad was doing in the yard that was here: the body and the hand
+// are that yard's, so a new game or a load lets go of them as a fresh page has.
+heldState('pad', () => { body = null; seg = 0; carryTo = null; carried = null; sweeping = false; held = null; });
 
 const DIRS = ['up', 'down', 'left', 'right'];
 
 // Any input at all from the pad: the marker and the glyphs come up, and the
 // first time, the controls page gains its pad column.
-let seen = false;
+let seen = false;               // page: a pad has been touched on this page, and the controls page has its column
 function wake() {
   if (!seen) {
     seen = true;
@@ -706,7 +710,7 @@ function sayTip(box) {
 // frame by hand, as `__fast` turns the yard's.
 const fake = { id: 'check pad', connected: true, buttons: Object.values(BUTTON).map(() => ({ pressed: false, value: 0 })),
                axes: [0, 0, 0, 0] };
-let fakeT = 0;
+let fakeT = 0;                  // page: the checks' pad's own wall clock
 // On the wall clock where it is ahead, so a check's frames and the page's
 // own (main.js) agree about when a glide began.
 const fakeStep = (dt = 1 / 60) => { fakeT = Math.max(fakeT + dt * 1000, performance.now()); stepPad(fakeT); paintPad(fakeT); };

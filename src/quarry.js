@@ -100,11 +100,11 @@ export function newQuarrier() {
 // is laid out again, and `quarryFloor` is asked once per quarrier per frame.
 // The benches are scenery, but the floor is not: the same numbers that draw
 // it put the crew's feet down.
-let shape = null, shapeKey = '';
+let shape = null, shapeKey = ''; // cache: keyed by the quarry's x, w, h and the ground line
 
 // Four numbers compared, not a string built: building the key string here
 // was a twentieth of the driven yard's whole frame.
-let keyX = NaN, keyW = NaN, keyH = NaN, keyG = NaN;
+let keyX = NaN, keyW = NaN, keyH = NaN, keyG = NaN; // cache: the four numbers `shape` is keyed by
 
 export function quarryShape() {
   if (shape && keyX === quarry.x && keyW === quarry.w && keyH === quarry.h && keyG === S.groundY) return shape;

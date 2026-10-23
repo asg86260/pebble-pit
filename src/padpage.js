@@ -28,7 +28,7 @@ const shown = el => !!el && !el.hidden && typeof el.getClientRects === 'function
 // Whether the pad has gone into the open board, or up to the corner cards.
 // Both are the pad's own say: a board the mouse opened by walking up to a
 // station is the mouse's until the pad presses A there.
-let inBoard = false, inCorner = false;
+let inBoard = false, inCorner = false; // page: whether the pad has gone into the open board or up to the corner
 export const enterBoard = on => { inBoard = on; if (on) inCorner = false; };
 // `near`, a point on the page, puts the focus on the corner's row nearest it,
 // the one over the thing the d-pad came up from.
@@ -86,11 +86,11 @@ export function focusables(sc) {
 // A greyed card is a disabled button and cannot, so the pad keeps its own
 // note of the row (`on`), the marker stands on it, and A on it does what a
 // click on it does, which is nothing.
-let on = null;          // the row with the focus
-let onKey = null;       // and what it was, to find it again after a rebuild
-let onRect = null;
-let since = 0;          // when it arrived, for the tip
-let asked = false;      // whether its hover has been raised yet
+let on = null;                  // page: the row with the focus
+let onKey = null;               // page: and what it was, to find it again after a rebuild
+let onRect = null;              // page: where that row was last seen
+let since = 0;                  // page: when it arrived, for the tip
+let asked = false;              // page: whether its hover has been raised yet
 
 const keyOf = el => el && (el.id ? `#${el.id}` : el.dataset?.key ? `k:${el.dataset.key}`
   : el.dataset?.opt ? `o:${el.dataset.opt}` : null);
@@ -228,7 +228,7 @@ export function pressX() {
 }
 
 // --- the marker over a row, and its tip ---------------------------------------
-let sheet = null, sheetCtx = null;
+let sheet = null, sheetCtx = null; // page: the canvas the row marker is painted on
 function mount() {
   if (sheet || typeof document.createElement !== 'function' || !document.body?.appendChild) return;
   sheet = document.createElement('canvas');
@@ -238,7 +238,7 @@ function mount() {
   sheetCtx = sheet.getContext('2d');
 }
 
-let wiped = true;
+let wiped = true;               // page: whether that canvas is clear
 // Once a frame: aim the marker at the row with the focus, paint it, and once
 // it has landed raise the row's hover for its words.
 export function paintPage(t, live) {

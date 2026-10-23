@@ -30,6 +30,7 @@ import { frameMs } from './clock.js';
 import { reducedMotion } from './prefs.js';
 import { setZoomFree, zoomOn } from './world.js';
 import { restZoom } from './view.js';
+import { held } from './reset.js';
 
 // The one easing every move in a cutscene rides: slow off the mark, slow onto
 // the end, quickest halfway.
@@ -64,7 +65,7 @@ const ROAD = {
   top: () => PLACE_LIMITS.after.top(),
   lo: h => PLACE_LIMITS.after.foot() - h
 };
-let riding = false;
+let riding = false;             // held: the road up is being ridden
 export const rideRoad = on => { riding = !!on; };
 export const ridingRoad = () => riding;
 export const limitsOf = (place = S.view) =>
@@ -129,8 +130,9 @@ export function union(at) {
 // window's middle set off from and how wide it was, the zoom it ends on (null:
 // the scene leaves the zoom alone), and for a follow the spring's own middle
 // and speed. Ephemeral: a reload takes the shot again from its scene.
-let aim = null;
-let lastBox = null;
+let aim = null;                 // held: the move under way
+let lastBox = null;             // held: what the shot holds the window on
+held('shot', () => { aim = null; lastBox = null; riding = false; });
 
 // A new move from wherever the camera stands now: the scene's first frame, or
 // a box that has changed hands (a beat's next phase). `key` names the move,

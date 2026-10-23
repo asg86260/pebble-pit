@@ -62,7 +62,7 @@ const runsOf = list => {
 
 // Rebuilt only when the set of works changes; a card rebuilt every frame
 // would lose the hover under the cursor.
-let built = '';
+let built = '';                 // cache: the card's rows, keyed by what each line says
 
 export function fillQueue() {
   const lines = [];
