@@ -279,8 +279,8 @@ import { showPanel } from '../board.js';
 import { seatRails } from '../deep/rails.js';
 import { stationById, levelingUp } from '../deep/party.js';
 import { chooseMarkAt } from '../render/deep.js';
-import { RAIL_FOLD_MS, FORK_RUNG } from '../config.js';
-import { tap, sleep, raf } from './kit.js';
+import { FORK_RUNG } from '../config.js';
+import { tap, sleep, raf, until, quiet } from './kit.js';
 
 const rails = id => document.querySelector(`.rails[data-station="${id || 's1'}"]`);
 const seat = async () => { seatRails(); await raf(); await raf(); seatRails(); };
@@ -327,7 +327,7 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
   const bold = stun && getComputedStyle(stun).fontWeight >= 700;
   await tap(rowNamed('s1', 'Become a Swordsman'));
   await reopen('s1');
-  await sleep(RAIL_FOLD_MS + 100);
+  await quiet();                                   // the other branch's fold, down
   const took = st.cls === 'sword' && st.rung === FORK_RUNG && st.paid.some(([m, n]) => m === 'scale' && n > 0);
   const gone = [...rails().querySelectorAll('.rl-arm')].map(a => a.classList.contains('gone'));
   const lit = rails().querySelectorAll('.rl-tree i.on').length;
@@ -367,11 +367,11 @@ TESTS.push(['rails: the first station stands from the snatch, and its Recruit tr
   const gone = !btn || !btn.classList.contains('on');
   run(VIEW_GLIDE_S + 0.5);
   window.__look(stationById('s1') && chooseMarkAt(stationById('s1')).x - 300);
-  await sleep(120);
+  await raf(); await raf();
   const m = chooseMarkAt(stationById('s1'));
   point('pointermove', ...onScreen(m.x + m.w / 2, m.y + m.h / 2), 0);
-  await sleep(250);
   const tipEl = document.getElementById('tip');
+  await until(() => !tipEl.hidden && tipEl.textContent);
   const asks = !tipEl.hidden && tipEl.textContent;
   await hoverAway();
   window.__scales(99999);
@@ -419,10 +419,10 @@ TESTS.push(['rails: the pointer on a station\'s prop or its fighter opens the bo
     const p = propRect(st), post = postX(st);
     for (const [name, wx] of [['prop', p.x + p.w / 2], ['post', post + P]]) {
       window.__look(wx - 400);
-      await sleep(120);
+      await raf(); await raf();
       const [x, y] = onScreen(wx, deepFloor() - P * 2);
       point('pointermove', x, y, 0);
-      await sleep(250);
+      await until(() => S.stationBoardOpen === st.id);
       await seat();
       seen.push({ id: st.id, name, open: S.stationBoardOpen === st.id,
                   title: document.querySelector(`#${st.id}board .title`)?.textContent.trim() });
@@ -727,18 +727,24 @@ TESTS.push(['deep: a press on the constrict\'s orb hits the orb and opens no boa
     clientX: x, clientY: y, pointerId: kind === 'touch' ? 7 : 1, isPrimary: true,
     pointerType: kind, button: 0, buttons, bubbles: true }));
   const seen = [];
+  // Drawn frames only, the game's clock left where it is: turned, the party
+  // moves and the orb with it, and the pointer stands on the station instead.
+  const drawn = async (fact, n) => { for (let i = 0; i < n && !fact(); i++) await raf(); };
+  // the board come to rest, up or down: a board the ground opened on the way
+  // has its close (a timer, board.js) to land before `open` is read
+  const rest = async () => { await settle(0); await raf(); await drawn(() => panel().hidden === !panel().classList.contains('open'), 30); };
   const press = async (kind, hold) => {
     const cut = o.cut;
     if (kind === 'mouse') {
       // up from the feet, across the station's ground, onto the orb
-      for (const k of [0, 0.25, 0.5, 0.75, 1]) { ev(kind, 'pointermove', at(k), 0); await sleep(120); }
-      await sleep(200);
+      for (const k of [0, 0.25, 0.5, 0.75, 1]) { ev(kind, 'pointermove', at(k), 0); await raf(); await raf(); }
+      await rest();
     }
     const over = open();
     ev(kind, 'pointerdown', at(), 1);
-    if (hold) await sleep(400);
+    if (hold) await sleep(400);                    // a held press: its length is the point
     ev(kind, 'pointerup', at(), 0);
-    await sleep(250); await raf();
+    await drawn(() => o.cut > cut, 30); await raf(); await rest();
     seen.push({ kind, hold, hit: o.cut > cut, over, open: open() });
     await hoverAway();
   };

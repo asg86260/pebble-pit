@@ -125,9 +125,11 @@ export const runUntil = (done, limit = 60) => {
   return false;
 };
 
-// A check: what it is called, and what to say when it is not true. The same
-// shape the browser suite uses, so a group carries its words across unchanged.
-export const ok = (cond, what, detail = '') => ({ pass: !!cond, what, detail });
+// A check, and a wait a game frame at a time: the same as the browser suite's
+// (src/check.js), so a group carries its words across unchanged.
+export { ok } from '../src/check.js';
+import { until as untilEvery } from '../src/check.js';
+export const until = (fact, frames = 120) => untilEvery(fact, () => run(1 / 60), frames);
 // Wall time a call of `fn` costs, the minimum of `passes` runs of `n` (PERF.md,
 // section 0): the quietest pass is the code, the others are the machine.
 export function bestMs(fn, n = 300, passes = 3) {

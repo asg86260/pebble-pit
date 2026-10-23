@@ -26,10 +26,10 @@ const WORDS = 'the crew all stand still by the quarry';
 // It is a ceiling for a wait that never ends, not a guess at how fast the
 // machine is: three seconds was a guess, and a machine running the other
 // shards beside this one gzipped the save after the walk had pressed a grey
-// tick and sent without it.
+// tick and sent without it. Asked a drawn frame at a time.
 const until = async (fn, ms = 20000) => {
   const t0 = performance.now();
-  while (performance.now() - t0 < ms) { if (fn()) return true; await sleep(50); }
+  while (performance.now() - t0 < ms) { if (fn()) return true; await raf(); }
   return !!fn();
 };
 
@@ -102,10 +102,15 @@ async function pullUp(d, handle) {
   const ev = (type, buttons = 1) => handle.dispatchEvent(new win.PointerEvent(type, {
     clientX: x, clientY: y, pointerId: 12, isPrimary: true, pointerType: 'touch', button: 0, buttons, bubbles: true }));
   ev('pointerdown');
+  // Wall time by design: the sheet reads the finger's speed off the clock, a
+  // steady pull and then a still moment before the lift.
   for (let i = 0; i < 12; i++) { await sleep(60); y -= 30; ev('pointermove'); }
   await sleep(150);
   ev('pointerup', 0);
-  await sleep(400);
+  // the release is written on the next frame, and then it eases to its stop
+  const sheet = handle.parentElement;
+  await raf(); await raf();
+  await until(() => !sheet.getAnimations().some(a => a.playState === 'running'));
   return handle.parentElement.getBoundingClientRect().top < top0 - 20;
 }
 
@@ -403,10 +408,14 @@ export const TESTS = [
       // to the preferences the pages share.
       w.__coarse(true);
       w.dispatchEvent(new w.Event('resize'));
-      await sleep(50);
+      await raf(); await raf();
       w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
-      await sleep(150);
-      reached.held = !d.getElementById('held').hidden;
+      // up, and come to rest at its seat before the thumb takes it
+      const heldEl = d.getElementById('held');
+      await until(() => !heldEl.hidden && heldEl.classList.contains('on'), 3000);
+      await raf(); await raf();
+      await until(() => !heldEl.getAnimations().some(a => a.playState === 'running'), 3000);
+      reached.held = !heldEl.hidden;
       // A thumb pulls the sheet up to its tall stop, and the rows under the
       // fold scroll into reach inside it.
       reached.tall = await pullUp(d, d.getElementById('heldhandle'));
@@ -418,7 +427,7 @@ export const TESTS = [
         reached.at = `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)} under ${d.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.id || d.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.className}`;
         return [ok(false, 'phone: the button can be pressed', JSON.stringify(reached))];
       }
-      await sleep(50);
+      await until(() => !d.getElementById('fbform').hidden, 3000);
       const form = d.getElementById('fbform');
       // send is under the box; the sheet scrolls to it as a thumb would
       form.querySelector('.send').scrollIntoView({ block: 'nearest' });

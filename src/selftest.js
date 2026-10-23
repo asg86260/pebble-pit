@@ -11,7 +11,7 @@
 // second sixth of this list to a browser, so a subject moved here moves in
 // every shard with it.
 
-import { newRun, settle, sleep, cost } from './selftest/kit.js';
+import { newRun, settle, quiet, cost } from './selftest/kit.js';
 import { TESTS as opening } from './selftest/opening.js';
 import { TESTS as boards } from './selftest/boards.js';
 import { TESTS as boardwords } from './selftest/boardwords.js';
@@ -114,15 +114,16 @@ export async function runTests(filter = '', shard = null, opts = {}) {
   addEventListener('error', onErr);
 
   newRun();                                            // known state
-  await sleep(600);
+  await quiet();                                       // and the page at rest after it
 
   const results = [];
   const timing = [];
   // Cut into blocks in file order rather than dealt out round-robin: the
   // opening is the only group that can watch the game open, and a block
   // keeps every group next to the one it was written next to.
-  const all = TESTS.filter(([name]) =>
-    !filter || name.toLowerCase().includes(filter.toLowerCase()));
+  // A list of names is those groups exactly (`--file` in headless.mjs).
+  const all = TESTS.filter(([name]) => Array.isArray(filter) ? filter.includes(name)
+    : !filter || name.toLowerCase().includes(filter.toLowerCase()));
   const wanted = shard ? all.slice(...cuts(all, shard)) : all;
   for (const [name, fn] of wanted) {
     let checks;
@@ -149,7 +150,7 @@ export async function runTests(filter = '', shard = null, opts = {}) {
     passed: results.length - failed.length,
     total: results.length,
     seconds: Math.round(timing.reduce((n, t) => n + t[1], 0) / 1000),
-    cost: cost(),                                      // kept by kit.js, which does the sleeping
+    cost: cost(),                                      // kept by kit.js, which does the waiting
     slowest: timing.slice(0, 8).map(([n, ms]) => `${(ms / 1000).toFixed(1)}s ${n}`),
     times: Object.fromEntries(timing),
     failures: failed.map(f => `${f.group}: ${f.what}${f.detail ? ` — ${f.detail}` : ''}`),

@@ -5,8 +5,7 @@
 // the yard back. All DOM, which is why it is in this tier; the list itself is
 // checked in test/scenes.test.mjs.
 
-import { raf, sleep, newRun, settle, state, ok, run } from './kit.js';
-import { SHEET_FADE_MS } from '../config.js';
+import { raf, until, newRun, settle, state, ok, run } from './kit.js';
 import { ABOUT, SCENES } from '../scenes.js';
 import { S } from '../state.js';
 import { persist } from '../persist.js';
@@ -54,7 +53,7 @@ export const TESTS = [
     // The sheet fades on the wall clock (fade.js), so it is hidden once the
     // fade has run -- at once only under `motion: less`, which a group before
     // this one may or may not have left set.
-    await sleep(SHEET_FADE_MS + 50);
+    await until(() => held().hidden);
     const down = held().hidden;
     const quarry = state().quarryOpen;
     run(3);                                  // long enough for the save clock to want to write

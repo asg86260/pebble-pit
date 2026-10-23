@@ -8,7 +8,7 @@
 // is a picture, not text, and axe does not see it. The dev panel is not the
 // game's and is left out.
 
-import { sleep, ok } from './kit.js';
+import { sleep, raf, ok, until } from './kit.js';
 import axe from 'axe-core';
 import { SCENES } from '../scenes.js';
 import { YARD_BOARDS as BOARDS } from '../stations.js';
@@ -28,13 +28,7 @@ const PARTS = 4;
 // word. So the reading waits until nothing on the page is animating, asked
 // of the page itself rather than of a list of durations (capped, in case
 // something loops).
-async function still(w) {
-  const t0 = performance.now();
-  while (performance.now() - t0 < 3000) {
-    if (!w.document.getAnimations().some(a => a.playState === 'running')) return;
-    await sleep(50);
-  }
-}
+const still = w => until(() => !w.document.getAnimations().some(a => a.playState === 'running'), 180);
 
 // Every failing node on the frame's page, as lines: the words, the ratio and
 // the two colors, so a failure names the token to move. A line between two
@@ -43,7 +37,7 @@ async function still(w) {
 async function failing(w, where) {
   const first = await read(w, where);
   if (!first.length) return first;
-  await sleep(1000);
+  await sleep(1000);                     // wall time is the point: a line between two steps, read again a second on
   await still(w);
   const again = new Set(await read(w, where));
   return first.filter(l => again.has(l));
@@ -68,7 +62,7 @@ async function readStops(theme, stops) {
   try {
     const t0 = performance.now();
     const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast); };
-    while (!booted() && performance.now() - t0 < 20000) await sleep(50);
+    while (!booted() && performance.now() - t0 < 20000) await raf();   // the frame's boot, not the yard's: no turning
     const w = f.contentWindow;
     if (!booted()) return [ok(false, `${theme}: the game boots in a frame`)];
     w.eval(axe.source);

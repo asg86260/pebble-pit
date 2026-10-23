@@ -10,7 +10,7 @@
 // since the language is read once, as lang.js loads, and the preference is
 // shared by every tab on the origin.
 
-import { sleep, ok } from './kit.js';
+import { raf, ok } from './kit.js';
 import { LANGS } from '../lang.js';
 import { YARD_BOARDS as BOARDS } from '../stations.js';
 import { UNFOLDING, overOf } from '../slotfit.js';
@@ -124,7 +124,7 @@ export const TESTS = [
         const t0 = performance.now();
         // the dev handles come in by dynamic import, a moment after the page
         const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast); };
-        while (!booted() && performance.now() - t0 < 20000) await sleep(50);
+        while (!booted() && performance.now() - t0 < 20000) await raf();   // the frame's boot, not the yard's: no turning
         const w = f.contentWindow;
         if (!booted()) { checks.push(ok(false, `${lang}: the game boots in a frame`)); continue; }
         const said = w.document.documentElement.lang;
@@ -168,7 +168,7 @@ export const TESTS = [
       try {
         const t0 = performance.now();
         const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast); };
-        while (!booted() && performance.now() - t0 < 20000) await sleep(50);
+        while (!booted() && performance.now() - t0 < 20000) await raf();   // the frame's boot, not the yard's: no turning
         const w = f.contentWindow;
         if (!booted()) { checks.push(ok(false, `${mode}: the game boots in a frame`)); continue; }
         await w.document.fonts.ready;

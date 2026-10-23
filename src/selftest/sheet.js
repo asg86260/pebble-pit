@@ -6,9 +6,9 @@
 // did. The pips on every board are boxes at a fixed pitch, so at a phone's
 // width no two of them can land on each other.
 
-import { sleep, state, ok, run, raf, haveBench, settle, asScreen, openCrewList, hoverStation, touch, tap } from './kit.js';
+import { sleep, state, ok, run, raf, until, quiet, haveBench, settle, asScreen, openCrewList, hoverStation, touch, tap } from './kit.js';
 import { workOn } from '../works.js';
-import { SHEET_H, SHEET_TALL, SHEET_MS, SHEET_RAIL_W, TWEEN_MAX_MS } from '../config.js';
+import { SHEET_H, SHEET_TALL, SHEET_RAIL_W, TWEEN_MAX_MS } from '../config.js';
 import { S } from '../state.js';
 import { sheetRail, sheetStop } from '../board.js';
 
@@ -34,7 +34,23 @@ const phone = on => window.__coarse(on ? true : null);
 const panel = () => document.getElementById('panel');
 const handle = () => document.getElementById('handle');
 const frames = async n => { for (let i = 0; i < n; i++) { run(1 / 60); await raf(); } };
-const settled = async () => { await sleep(SHEET_MS + 60); await frames(2); };
+// Both sheets at rest: neither sliding, each one's `hidden` caught up with
+// its open class (the hide is a timer that lands once the slide is down,
+// board.js and fade.js), and both standing where they stood the frame before
+// -- a sheet just asked up has its transform written by a later frame's
+// `place`, so "nothing running" alone can be read before the slide begins.
+const held = () => document.getElementById('held');
+const sliding = el => el.getAnimations().some(a => a.playState === 'running');
+const where = () => [panel(), held()].map(el => `${el.hidden}${el.className}${el.style.transform}${Math.round(el.getBoundingClientRect().top)}`).join('|');
+// Read once a frame by `until`; at rest is three frames alike.
+let was = '', alike = 0;
+const atRest = () => {
+  const now = where();
+  alike = now === was ? alike + 1 : 0;
+  was = now;
+  return alike >= 2 && [[panel(), 'open'], [held(), 'on']].every(([el, cls]) => !sliding(el) && el.hidden === !el.classList.contains(cls));
+};
+const settled = async () => { was = ''; alike = 0; await frames(1); await until(atRest, 180); };
 
 // The handle in hand: a press at its middle, moved `dy` down (up when
 // negative) over a few moves, and let go.
@@ -80,6 +96,7 @@ function finger(el = handle()) {
   return {
     async move(dy, ms) {
       const n = Math.max(3, Math.round(ms / 16)), y0 = y;
+      // wall time by design: the sheet reads the finger's speed off the clock
       for (let i = 1; i <= n; i++) { await sleep(ms / n); y = y0 + dy * i / n; ev('pointermove'); }
     },
     async up() { ev('pointerup', 0); await settled(); },
@@ -88,6 +105,7 @@ function finger(el = handle()) {
 // A flick: quick, lifted while still moving. A slow drag: slow, and the
 // finger still a moment before it lifts, as a thumb that has placed the sheet.
 const flick = async (dy, el) => { const f = finger(el); await f.move(dy, 48); await f.up(); };
+// (the still moment is wall time: the speed at the lift is read off the clock)
 const slow = async (dy, el) => { const f = finger(el); await f.move(dy, 800); await sleep(150); await f.up(); };
 const shownNow = () => sheetStop()?.height ?? 0;
 // How much shows at the seat; and the way down from tall to just past it.
@@ -199,8 +217,7 @@ export const TESTS = [
     // a tap outside, on the yard above it, closes it
     const sky = { x: state().W / 2, y: r.top - 120 };
     await stroke(sky, sky);
-    await frames(2);
-    await sleep(300);
+    await until(() => panel().hidden || !state().boardOpen);
     const closed = panel().hidden || !state().boardOpen;
     // a drag that begins on the yard and ends on a row buys nothing
     window.__board('bench');
@@ -266,7 +283,7 @@ export const TESTS = [
     // the settings sheet, the very same gestures on its own handle
     const held = document.getElementById('held'), hh = document.getElementById('heldhandle');
     const heldIn = await enterOf(held, () => tap(document.getElementById('pause')));
-    await sleep(SHEET_MS + 60);
+    await settled();
     const seatHeld = held.style.transform;
     // the same way in: from below the foot -- the whole box off it -- up to
     // the seat, step for step
@@ -300,17 +317,17 @@ export const TESTS = [
     await frames(2);
     dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     document.getElementById('settingsbtn').click();
-    await frames(2); await sleep(220);
+    await frames(2); await quiet();
     const desk = pitchOf();
     document.getElementById('resume').hidden = false;
     dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    await frames(2); await sleep(220);
+    await frames(2); await quiet();
     // the phone: the pause button, then the settings page
     phone(true);
     await frames(2);
     await tap(document.getElementById('pause'));
     document.getElementById('settingsbtn').click();
-    await frames(2); await sleep(SHEET_MS + 60);
+    await settled();
     const phonePitch = pitchOf();
     const heldGap = getComputedStyle(document.getElementById('held')).rowGap;
     await flick(120, document.getElementById('heldhandle'));

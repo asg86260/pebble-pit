@@ -7,11 +7,13 @@
 
 import { S } from '../state.js';
 import { claimSave } from '../persist.js';
+import { until as untilEvery } from '../check.js';
+import { openBoard, inSafeZone } from '../board.js';
 
-// Real wall time, and the only thing in the suite that costs any. Dust in
-// flight, the counter tween, the board sliding and the save's debounce are
-// all hung off real frames, and a check that reads them early reads them
-// mid-animation.
+// Real wall time, and the only thing in the suite that costs any. Kept for
+// the few checks where wall time is the thing checked (a hold, a gap between
+// presses); everything else waits on the fact it needs (`until`, `quiet`),
+// and test/sleeps.test.mjs counts what is left.
 let SLEPT = 0, SLEEPS = 0, STEPPED = 0, FRAMES = 0, RUNS = 0;
 export const sleep = ms => { SLEPT += ms; SLEEPS++; return new Promise(r => setTimeout(r, ms)); };
 
@@ -51,6 +53,42 @@ export const raf = () => new Promise(r => {
   setTimeout(go, 50);
 });
 
+// Waits for `fact()` a drawn frame at a time, the game turning a frame with
+// each, up to `frames`: true when it came. What a sleep should have been.
+export const until = (fact, frames = 120) => untilEvery(fact, async () => { run(1 / 60); await raf(); }, frames);
+// `n` frames of the yard and the page together, for a gesture that is made
+// over frames (a drag's moves, one a frame, as a hand's arrive) or a check
+// that nothing happens in the frames after a press.
+export const frames = async (n = 1) => { for (let i = 0; i < n; i++) { run(1 / 60); await raf(); } };
+// Until nothing on the page is animating: a board sliding, a fade, a tag
+// easing in. Read mid-animation, a word is pale and a box is half its size.
+// An endless animation (a hovered tile's sway) never finishes, so it is not
+// waited for. `on`, the elements whose animations are the ones waited for
+// (and everything inside them): a toast's ring somewhere else on the glass
+// is no reason a board is not seated.
+const moving = a => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity;
+export const quiet = (frames = 180, on = [document]) =>
+  until(() => !on.some(el => el && (el === document ? el.getAnimations() : el.getAnimations({ subtree: true })).some(moving)), frames);
+// Waits drawn frames for `fact()`, the yard held where it is: for what is the
+// page's own (a board fading up, a list dropping open, a fill sliding), where
+// turning the yard under it, as `until` does, would change the purse or the
+// crew a check is about to read. True when the fact came.
+export const onPage = (fact, frames = 180) => untilEvery(fact, raf, frames);
+// Nothing inside `within` in the middle of a move, the yard held: only what is
+// being read is waited for, and an endless sway is not a move still going.
+export const landed = (within = panel()) => onPage(() => !within.getAnimations({ subtree: true }).some(moving));
+// the board and the tip beside it: what a walk to a station puts up
+const boardAndTip = () => [panel(), document.getElementById('tip')];
+
+// The board the pointer just asked for, come to rest: `open` is put on it the
+// frame after it is asked for (board.js, `settle`), and its fade and slide
+// run from there. With no board up there is nothing to seat, only the tip's
+// fade to wait out.
+export async function seated() {
+  if (openBoard()) await until(() => panel().classList.contains('open'), 30);
+  return quiet(180, boardAndTip());
+}
+
 // The yard and the page, both brought up to date. The seconds are game seconds
 // and cost nothing; the frames are real and cost two of them.
 export async function settle(seconds = 0.4) {
@@ -86,10 +124,7 @@ export const buildShopFromTest = () => window.__build();
 // never walked up to
 export const refreshShopFromTest = () => window.__fill();
 
-export function ok(cond, what, detail = '') {
-  if (cond) return { pass: true, what };
-  return { pass: false, what, detail };
-}
+export { ok } from '../check.js';
 
 export const P = 6;                                   // a cell, for the piles
 export const canvas = () => document.getElementById('c');
@@ -144,7 +179,7 @@ export async function pressRaise() {
 export async function haveBench() {
   if (state().seenBench) return;
   window.__give(100);
-  for (let i = 0; i < 30 && !state().benchCall; i++) await sleep(40);
+  await until(() => state().benchCall, 75);
   await pressRaise();
   runUntil(() => state().seenBench, 90);
 }
@@ -154,7 +189,7 @@ export async function hoverBench() {
   const b = benchWorld();
   const [x, y] = onScreen(b.x + 20, b.y - 30);
   point('pointermove', x, y, 0);
-  await sleep(250);
+  await seated();
 }
 
 // Standing at a station. Where that is comes from the game: a check that did
@@ -166,32 +201,38 @@ export async function hoverStation(which, look = true) {
   // Every station's stand is an ordinary rectangle, so the middle of the
   // thing is the thing everywhere.
   const wx = r.x + r.w / 2, wy = r.y + r.h / 2;
-  if (look) { window.__look(wx - 400); await sleep(120); }
+  // the camera is placed at once; a frame lets the scroller follow it
+  if (look) { window.__look(wx - 400); await raf(); await raf(); }
   const [x, y] = onScreen(wx, wy);
   point('pointermove', x, y, 0);
-  await sleep(250);
+  await seated();
   return { x, y };
 }
 
 export const hoverHouse = () => hoverStation('house');
 
-// The crew is a submenu: the names come out beside the board when the cursor
-// reaches that row. Two frames, because opening it measures and re-seats the
-// panel and a rectangle read before that is the one the board had without it.
-// The crew list is a window (modal.js), opened by pressing the door.
+// The crew list is a window (modal.js), opened by pressing the door. Back
+// when the window is up and its fade in is done, so a rectangle read after
+// is the one the player sees.
 export async function openCrewList() {
   const door = document.querySelector('#crewshop button[data-key="crewlist"]');
   if (!door) return null;
   door.click();
-  await raf();
-  await raf();
+  // `S.modal` is set on the press and the window shown on the frame after,
+  // with its fade starting there
+  const win = document.getElementById('modal');
+  await until(() => S.modal === 'crew' && !win.hidden, 30);
+  await quiet(180, [win, document.getElementById('modalwash')]);
   return door;
 }
 
-// the cursor standing at no station at all, so the board closes
+// the cursor standing at no station at all, so the board closes: after the
+// linger and the fade (board.js, `showPanel`), unless the corner is in the
+// board's own wedge, where it holds itself up
 export async function hoverAway() {
   point('pointermove', 4, 4, 0);
-  await sleep(250);
+  if (openBoard() && !inSafeZone(4, 4)) await until(() => !openBoard() && panel().hidden, 30);
+  await quiet(180, boardAndTip());
 }
 
 // Run the yard forward without waiting for it: `__fast(20)` is twenty seconds
@@ -233,7 +274,8 @@ export const put = async (key, which) => {
   const [x, y] = onScreen(...p[which]);
   point('pointerdown', x, y);
   point('pointerup', x, y);
-  await sleep(150);
+  await until(() => state()[p.job] !== was, 10);
+  await raf();
   return state()[p.job] !== was;
 };
 
@@ -245,7 +287,9 @@ export const buy = async key => {
   // page, not the yard, so the work is finished on the spot rather than
   // staffed and waited for.
   window.__finish();
-  await sleep(150);
+  // and the boards rebuilt for it, by the frame loop (main.js)
+  await until(() => !S.shopStale, 30);
+  await raf();
   return true;
 };
 
@@ -265,7 +309,8 @@ export async function asScreen(w, h, dpr, fn) {
   set(el, 'clientWidth', w);
   set(el, 'clientHeight', h);
   dispatchEvent(new Event('resize'));
-  await sleep(80);
+  // the resize is laid out at once (main.js, `relayout`); a frame draws it
+  await raf();
   try {
     return await fn();
   } finally {
@@ -273,7 +318,7 @@ export async function asScreen(w, h, dpr, fn) {
       if (d) Object.defineProperty(o, k, d); else delete o[k];
     }
     dispatchEvent(new Event('resize'));
-    await sleep(80);
+    await raf();
   }
 }
 
@@ -313,7 +358,7 @@ export async function tap(el, { hold = 30, move = 0 } = {}) {
   touch('touchstart', el, x, y, 7);
   ev('pointerdown');
   if (move) ev('pointermove', move);
-  await sleep(hold);
+  await sleep(hold);                  // wall time: how long the finger is down is what a hold check is about
   ev('pointerup', move, 0);
   touch('touchend', el, x + move, y, 7);
   // The platform raises no click for a press that moved: it was a scroll.

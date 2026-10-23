@@ -3,7 +3,7 @@
 // is a button, the save goes through a textarea; the preference store itself
 // is checked in test/settings.test.mjs.
 
-import { sleep, raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
+import { raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
          boulderWorld, onScreen, point } from './kit.js';
 import { pref, setPref, reducedMotion, coarse, dark, theme, readable } from '../prefs.js';
 import { setSlot, storeSettled, clear, slotRaw, writeSlot } from '../save.js';
@@ -12,7 +12,7 @@ import { version } from '../version.js';
 import { persist, exportSave, claimSave } from '../persist.js';
 import { earn, noticeFor } from '../notices.js';
 import { toastUp, toastWaiting } from '../toast.js';
-import { TOAST_MS, TOAST_GAP_MS, SHEET_FADE_MS } from '../config.js';
+import { TOAST_MS, TOAST_GAP_MS } from '../config.js';
 import { msg } from '../lang.js';
 import { feedbackReady } from '../feedback.js';
 import { offered } from '../langpage.js';
@@ -21,6 +21,16 @@ import { fullscreenAble } from '../fullscreen.js';
 import { TABS, turnTab, tabNow } from '../settingstabs.js';
 
 const held = () => document.getElementById('held');
+// Waits for `fact` a drawn frame at a time, with the game's clock left where
+// it is: what is waited for here is the page's own work (a fade, a frame
+// booting, the store answering), not the yard's. `ms` is a ceiling for a
+// wait that never ends, not a guess at how long one takes.
+const drawnUntil = async (fact, ms = 20000) => {
+  const t0 = performance.now();
+  while (!fact() && performance.now() - t0 < ms) await raf();
+  return !!fact();
+};
+const running = el => el.getAnimations({ subtree: true }).some(a => a.playState === 'running');
 // escape, and then a frame: the sheet puts itself in order when it sees itself
 // come up, which is a microtask after the key, not the same tick
 const press = async () => {
@@ -199,7 +209,7 @@ export const TESTS = [
       await loaded();
       const d = f.contentDocument;
       // the page's own boot is a prime of the store, awaited at its top level
-      for (let i = 0; i < 40 && !d.getElementById('playlabel').textContent; i++) await sleep(50);
+      await drawnUntil(() => d.getElementById('playlabel').textContent);
       landed = !!d.getElementById('play');
       label = d.getElementById('playlabel').textContent;
       record = d.getElementById('recordbtn').textContent;
@@ -223,7 +233,7 @@ export const TESTS = [
       d.getElementById('play').click();
       await loaded();
       arrived = /play\.html$/.test(f.contentWindow.location.pathname);
-      for (let i = 0; i < 60 && !f.contentWindow.__state; i++) await sleep(50);
+      await drawnUntil(() => f.contentWindow.__state);
       crewThere = f.contentWindow.__state ? f.contentWindow.__state().crew : -1;
     } finally {
       f.remove();
@@ -259,7 +269,7 @@ export const TESTS = [
       f.src = 'index.html';
       await loaded;
       const d = f.contentDocument;
-      for (let i = 0; i < 40 && !d.getElementById('playlabel').textContent; i++) await sleep(50);
+      await drawnUntil(() => d.getElementById('playlabel').textContent);
       d.getElementById('settingsbtn').click();
       const col = d.querySelector('.col');
       walk = walkTabs(col, true);
@@ -422,7 +432,7 @@ export const TESTS = [
     document.getElementById('settingsback').click();
     const before = state();
     resume();
-    await sleep(SHEET_FADE_MS + 60);            // it goes down as a fade (fade.js)
+    await drawnUntil(() => held().hidden);      // it goes down as a fade (fade.js)
     const down = held().hidden;
     run(2);
     const after = state();
@@ -452,14 +462,14 @@ export const TESTS = [
     document.getElementById('settingsback').click();
     const front = onFront();
     resume();
-    await sleep(SHEET_FADE_MS + 60);
+    await drawnUntil(() => held().hidden);
     await press();
     settingsPage();
     const kept = held().querySelector('.settabs button.on')?.dataset.tab;
     const keptRows = tabRows(held());
     document.getElementById('settingsback').click();
     resume();
-    await sleep(SHEET_FADE_MS + 60);
+    await drawnUntil(() => held().hidden);
     turnTab('graphics');
     return [
       ...tabChecks(walk, 'held sheet'),
@@ -544,7 +554,7 @@ export const TESTS = [
     const still = S.camX === camX;
     document.getElementById('settingsback').click();
     resume();
-    await sleep(SHEET_FADE_MS + 60);
+    await drawnUntil(() => held().hidden);
     turnTab('graphics');
     const want = ['Down>graphics:dark', 'Up>graphics:motion', 'Up>graphics:tab:graphics', 'Right>audio:tab:audio',
                   'Right>controls:tab:controls', 'Left>audio:tab:audio', 'Down>audio:sound'];
@@ -571,11 +581,14 @@ export const TESTS = [
       try {
         const t0 = performance.now();
         const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__reset && x.__fast); };
-        while (!booted() && performance.now() - t0 < 20000) await sleep(50);
+        while (!booted() && performance.now() - t0 < 20000) await raf();
         if (!booted()) { out.push(ok(false, `the game boots in a ${width}px frame (${lang})`)); continue; }
         f.contentWindow.__scene('controlspad');
-        await sleep(400);
         const d = f.contentDocument;
+        // the table filled and the frame's sheet come to rest
+        await drawnUntil(() => d.querySelector('#controlslist > .do'), 5000);
+        await raf(); await raf();
+        await drawnUntil(() => !running(d.documentElement), 5000);
         const words = [...d.querySelectorAll('#controlslist > .do')].map(el => el.textContent);
         const { out: bad, rows, width: w } = tableFaults(f.contentWindow);
         out.push(ok(rows === want && new Set(words).size === rows, `${lang} at ${width}px: every action once`, `${rows} rows of ${want}`),
@@ -629,8 +642,9 @@ export const TESTS = [
     persist();                                  // so there is a save to copy
     await press();
     savesPage();
+    const was = said();
     document.getElementById('savecopy').click();
-    await sleep(100);
+    await drawnUntil(() => said() !== was, 5000);
     const copied = said();
     // the blob itself, off the seam the button used: what the clipboard holds
     // is the browser's business, and headless pages do not always have one
@@ -694,7 +708,7 @@ export const TESTS = [
     const ask = n => list.querySelector(`.confirm[data-slot="${n}"]`);
     const open = n => { const c = ask(n); return getComputedStyle(c).opacity === '1' && c.getBoundingClientRect().height > 0; };
     const shut = n => { const c = ask(n); return getComputedStyle(c).opacity === '0' && c.getBoundingClientRect().height === 0; };
-    const fade = () => sleep(reducedMotion() ? 50 : 450);
+    const fade = async () => { await raf(); await drawnUntil(() => !running(list), 5000); };
     const played = [1, 2, 3].map(n => row(n).querySelector('.played').textContent);
     const rights = [1, 2].map(n => Math.round(row(n).querySelector('.played').getBoundingClientRect().right));
     const deletes = [1, 2, 3].map(n => getComputedStyle(del(n)).visibility);
@@ -762,11 +776,14 @@ export const TESTS = [
     try {
       const t0 = performance.now();
       const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__reset && x.__fast && x.__crew); };
-      while (!booted() && performance.now() - t0 < 20000) await sleep(50);
+      while (!booted() && performance.now() - t0 < 20000) await raf();
       if (!booted()) return [ok(false, 'the game boots in a 390px frame')];
       const w = f.contentWindow, d = f.contentDocument;
       w.__scene('savespage');
-      await sleep(600);
+      // the rows written and the frame's sheet come to rest
+      await drawnUntil(() => d.querySelector('#slots .saverow'), 5000);
+      await raf(); await raf();
+      await drawnUntil(() => !running(d.documentElement), 5000);
       const list = d.getElementById('slots');
       const cards = [...list.querySelectorAll('.saverow')];
       const bad = cards.filter(c => {
@@ -905,8 +922,9 @@ export const TESTS = [
     await press();
     document.getElementById('loadsave').click();
     document.getElementById('pastebox').value = blob;
+    const was = said();
     document.getElementById('loadit').click();
-    await sleep(100);
+    await drawnUntil(() => said() !== was, 5000);
     const loaded = said();
     resume();
     run(1);

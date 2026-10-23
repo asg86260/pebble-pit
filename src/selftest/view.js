@@ -1,14 +1,15 @@
 // The view: where the game opens, what a screen fits, and the ways it is
 // dragged about.
 
-import { sleep, state, ok, canvas, board, panel, point, onScreen, haveBench, hoverBench,
-  hoverStation, run, runUntil, buy, asScreen, finger, touch, newRun, settle, haveRock } from './kit.js';
+import { state, ok, canvas, board, panel, point, onScreen, haveBench, hoverBench,
+  hoverStation, run, runUntil, buy, asScreen, finger, touch, newRun, settle, haveRock,
+  raf, frames, until } from './kit.js';
 import { PICTURE_UP, PICTURE_WAIT_MS } from '../config.js';
 
 export const TESTS = [
   ['the opening view is looking at the rock', async () => {
     window.__jump(12);
-    await sleep(300);
+    await settle();
     const s = state();
     const left = (s.rockX - s.rockW / 2 - s.camX) * s.zoom;
     const right = (s.rockX + s.rockW / 2 - s.camX) * s.zoom;
@@ -52,13 +53,13 @@ export const TESTS = [
 
     const [sx, sy] = onScreen(mine[0][0], s0.groundY - mine[0][1]);
     point('pointerdown', sx, sy);
-    for (let i = 0; i < 4; i++) { point('pointermove', sx, sy); await sleep(20); }
+    for (let i = 0; i < 4; i++) { point('pointermove', sx, sy); await raf(); }
     const inHand = state();
 
     const [px, py] = onScreen(s0.pitX + 40, s0.groundY - 120);
     for (let i = 1; i <= 6; i++) {
       point('pointermove', sx + (px - sx) * i / 6, sy + (py - sy) * i / 6);
-      await sleep(16);
+      await raf();                       // a hand's moves come a frame apart
     }
     point('pointerup', px, py);
     run(4);
@@ -90,7 +91,7 @@ export const TESTS = [
     // `buy` reads the bench, so the bite is pressed where it is.
     const bite = document.querySelector('#shackshop button[data-key="rockhandpick"]');
     const gotBite = !!bite && !bite.disabled;
-    if (gotBite) { bite.click(); window.__finish(); await sleep(150); }
+    if (gotBite) { bite.click(); window.__finish(); await until(() => state().rockhandPickLevel !== before.rockhandPickLevel, 30); }
     const mid = state();
     await hoverBench();
     // Your pick waits on the swing being automatic (rows-bench.js), so the
@@ -167,28 +168,28 @@ export const TESTS = [
     const [x, y] = [(spot - s.camX) * s.zoom, (s.groundY - 6 - s.camY) * s.zoom];
     const before = state();
     finger('pointerdown', 1, x, y);
-    finger('pointermove', 1, x - 6, y); await sleep(16);
+    finger('pointermove', 1, x - 6, y); await raf();
     const sweeping = state().dragging;
     const second = touch('touchstart', canvas(), x + 100, y - 100, 2);   // refused: the pair are the game's
     finger('pointerdown', 2, x + 100, y - 100);
     for (let i = 1; i <= 8; i++) {
       finger('pointermove', 1, x - 6 - i * 12, y);
       finger('pointermove', 2, x + 100 - i * 12, y - 100);
-      await sleep(16);
+      await raf();
     }
     finger('pointerup', 1, x - 102, y);
     finger('pointerup', 2, x + 4, y - 100);
-    await sleep(100);
+    await until(() => !state().dragging, 30);
     const after = state();
     // and two fingers on bare sky are not the game's at all
     const skyY = (s.groundY - 300 - s.camY) * s.zoom;
     const bare = touch('touchstart', canvas(), 300, skyY, 3);
     const cam = state().camX;
     finger('pointerdown', 3, 300, skyY); finger('pointerdown', 4, 400, skyY);
-    for (let i = 1; i <= 4; i++) { finger('pointermove', 3, 300 - i * 12, skyY); finger('pointermove', 4, 400 - i * 12, skyY); await sleep(16); }
+    for (let i = 1; i <= 4; i++) { finger('pointermove', 3, 300 - i * 12, skyY); finger('pointermove', 4, 400 - i * 12, skyY); await raf(); }
     finger('pointerup', 3, 252, skyY); finger('pointerup', 4, 352, skyY);
     touch('touchend', canvas(), 252, skyY, 3);
-    await sleep(50);
+    await frames(3);                     // and the frames after, in which nothing should move
     return [
       ok(spot != null && sweeping, 'the first finger is sweeping', `spot ${spot && Math.round(spot)} at ${Math.round(x)},${Math.round(y)} under ${document.elementFromPoint(x, y)?.id || document.elementFromPoint(x, y)?.tagName} cam ${Math.round(s.camX)}+${Math.round(s.viewW)} zoom ${s.zoom}`),
       ok(second === true, 'the second finger is claimed from the platform too'),
@@ -207,11 +208,11 @@ export const TESTS = [
     const drag = async (x, y, dx) => {
       const said = touch('touchstart', canvas(), x, y);
       finger('pointerdown', 1, x, y);
-      for (let i = 1; i <= 8; i++) { finger('pointermove', 1, x + dx * i / 8, y); await sleep(16); }
+      for (let i = 1; i <= 8; i++) { finger('pointermove', 1, x + dx * i / 8, y); await raf(); }
       const mid = state();
       finger('pointerup', 1, x + dx, y);
       touch('touchend', canvas(), x + dx, y);
-      await sleep(50);
+      await frames(3);
       return { said, mid };
     };
     // No scene on: a press while one runs skips it and does nothing else.
@@ -223,8 +224,8 @@ export const TESTS = [
     const sky = await drag(400, skyY, -120);
     const panned = state();
     // a tap is a tap: the view does not move under a finger inside the slop
-    finger('pointerdown', 1, 400, skyY); await sleep(30); finger('pointerup', 1, 404, skyY);
-    await sleep(50);
+    finger('pointerdown', 1, 400, skyY); await raf(); finger('pointerup', 1, 404, skyY);
+    await frames(3);
     const tapped = state();
     // the dust: mine some off the rock and let it land, then find a spot the
     // brush would take something from and drag there instead
@@ -272,13 +273,13 @@ export const TESTS = [
       }));
     const before = state();
     mouse('pointerdown', 600, 1);
-    for (let i = 1; i <= 8; i++) { mouse('pointermove', 600 - i * 20, 1); await sleep(16); }
+    for (let i = 1; i <= 8; i++) { mouse('pointermove', 600 - i * 20, 1); await raf(); }
     const dragged = state();
     mouse('pointerup', 440, 1);
-    await sleep(50);
+    await frames(3);
     // and nothing after the button is up
     mouse('pointermove', 900, 0);
-    await sleep(50);
+    await frames(3);
     const after = state();
     return [
       ok(dragged.camX > before.camX, 'the view moves with the button held',
@@ -299,7 +300,7 @@ export const TESTS = [
     canvas().dispatchEvent(new PointerEvent('pointermove', {
       clientX: away.W - 4, clientY: away.H - 4,
       pointerId: 1, isPrimary: true, buttons: 0, bubbles: true }));
-    await sleep(150);
+    await until(() => board().hidden, 60);
     const startedClosed = board().hidden;
 
     await haveBench();
@@ -307,13 +308,13 @@ export const TESTS = [
     const at = (wx, wy) => [(wx - s.camX) * s.zoom, (wy - s.camY) * s.zoom];
 
     const [bx, by] = at(s.benchX + 20, s.groundY - 24);
-    finger('pointerdown', 9, bx, by); await sleep(40); finger('pointerup', 9, bx, by);
-    await sleep(150);
+    finger('pointerdown', 9, bx, by); await raf(); finger('pointerup', 9, bx, by);
+    await until(() => !board().hidden, 30);
     const opened = !board().hidden;
 
     const [ax, ay] = at(s.benchX + 420, s.groundY - 200);
-    finger('pointerdown', 9, ax, ay); await sleep(40); finger('pointerup', 9, ax, ay);
-    await sleep(150);
+    finger('pointerdown', 9, ax, ay); await raf(); finger('pointerup', 9, ax, ay);
+    await until(() => board().hidden, 60);
     const closed = board().hidden;
 
     return [
@@ -326,7 +327,7 @@ export const TESTS = [
   ['the board stays on screen, however small it is', async () => {
     await haveBench();
     window.__crew(4, 3);                     // every row showing: the tallest it gets
-    await sleep(250);
+    await settle();
     const checks = [];
     for (const [w, h, dpr, name] of [[390, 844, 3, 'portrait'], [844, 390, 3, 'landscape'],
                                      [320, 568, 2, 'a small old phone']]) {
@@ -335,7 +336,7 @@ export const TESTS = [
         el.hidden = false;
         board().hidden = false;
         window.__placeBoard();
-        await sleep(60);
+        await raf();
         // The window is not really this size, so read what placeBoard wrote
         // rather than where the browser drew it. The board is pinned to the
         // foot of the window, so the transform carries how far its bottom

@@ -1,10 +1,10 @@
 // The keyboard and the cursor: holding the yard still, and what a shape says a
 // press will do.
 
-import { sleep, newRun, settle, state, ok, canvas, panel, point, hoverAway, run,
+import { until, quiet, raf, newRun, settle, state, ok, canvas, panel, point, hoverAway, run,
          runUntil, haveBench } from './kit.js';
 import { S } from '../state.js';
-import { SHEET_FADE_MS, SKIP_HOLD_MS } from '../config.js';
+import { SKIP_HOLD_MS } from '../config.js';
 import { fatal } from '../crash.js';
 
 export const TESTS = [
@@ -23,7 +23,7 @@ export const TESTS = [
     run(30);
     const still = state();
     document.getElementById('resume').click();
-    await sleep(SHEET_FADE_MS + 60);            // it goes down as a fade (fade.js)
+    await until(() => document.getElementById('held').hidden);   // it goes down as a fade (fade.js)
     const sheetGone = document.getElementById('held').hidden;
     run(20);
     const after = state();
@@ -48,7 +48,7 @@ export const TESTS = [
     window.__reset(true);                      // the opening, playing
     run(1);
     const key = type => dispatchEvent(new KeyboardEvent(type, { key: ' ', code: 'Space', bubbles: true }));
-    await sleep(SHEET_FADE_MS + 60);
+    await until(() => document.getElementById('skip').classList.contains('on'));
     const hintUp = document.getElementById('skip').classList.contains('on');
     key('keydown');
     run(SKIP_HOLD_MS / 2000);
@@ -60,7 +60,7 @@ export const TESTS = [
     run(SKIP_HOLD_MS / 1000 + 0.1);
     key('keyup');
     const cut = state();
-    await sleep(SHEET_FADE_MS + 60);
+    await until(() => !document.getElementById('skip').classList.contains('on'));
     const hintDown = !document.getElementById('skip').classList.contains('on');
     window.__reset();
     return [
@@ -131,6 +131,9 @@ export const TESTS = [
 
     const bx = (s.benchX + 20 - s.camX) * s.zoom, by = (s.groundY - 30 - s.camY) * s.zoom;
     const opened = move(bx, by);
+    // Measured where the board comes to rest, not mid-slide from wherever the
+    // last board stood (board.js slides it between stations).
+    await quiet();
     const r = panel.getBoundingClientRect();
 
     // the whole diagonal from the station to the far bottom corner of the sheet
@@ -147,7 +150,10 @@ export const TESTS = [
     // walking off is answered a moment late.
     const leave = async (cx, cy) => {
       point('pointermove', cx, cy, 0);
-      await sleep(220);
+      // LINGER is a wall timer (board.js), the page's and not the yard's, so
+      // this waits drawn frames for the board to shut without turning the
+      // game, the ceiling only when to give up.
+      for (const t0 = performance.now(); state().boardOpen && performance.now() - t0 < 2000;) await raf();
       return state().boardOpen;
     };
     move(bx, by);
@@ -207,7 +213,6 @@ export const TESTS = [
     const between = at((r2.less[0] + r2.more[0]) / 2, r2.less[1]);
     window.__crew(0, 0);
     newRun();
-    await sleep(300);
     return [
       ok(sky === 'crosshair' && rock === 'crosshair',
          'the ground state is aiming at a rock', `${sky} / ${rock}`),
@@ -244,7 +249,7 @@ export const TESTS = [
     const why = sheet.querySelector('.why').textContent;
     const known = window.__state().fatal;
     document.getElementById('copysave').click();
-    await sleep(100);
+    await until(() => sheet.querySelector('.said').textContent);
     const said = sheet.querySelector('.said').textContent;
     // and put back, so the groups after this one have a live page
     S.fatal = '';

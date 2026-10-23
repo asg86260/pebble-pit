@@ -1,6 +1,6 @@
 // The sky: the air filter and the reading that is not a button.
 
-import { newRun, settle, state, buildShopFromTest, ok, shop, run, runUntil, buy, sleep, point, onScreen, hoverAway, raf } from './kit.js';
+import { newRun, settle, state, buildShopFromTest, ok, shop, run, runUntil, buy, point, onScreen, hoverAway, raf } from './kit.js';
 import { LOO_EVERY, MESS_TAG_CAP } from '../config.js';
 import { S } from '../state.js';
 
@@ -75,10 +75,10 @@ export const TESTS = [
     const tip = document.getElementById('tip');
     const hover = async (wx, wy) => {
       window.__look(wx - 380);
-      await sleep(60);
+      await raf();                             // the view drawn where it now looks
       const [x, y] = onScreen(wx, wy);
-      point('pointermove', x, y, 0);
-      await sleep(140);
+      point('pointermove', x, y, 0);          // the tip is asked on the move itself (input.js)
+      await raf();
       return tip.hidden ? null : tip.textContent;
     };
     const r = window.__dialRect();

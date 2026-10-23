@@ -8,8 +8,8 @@
 // A phone is stood up with `__coarse(true)`, which forces `coarse()` without
 // writing the preference, and every group puts it back.
 
-import { sleep, state, ok, canvas, run, runUntil, raf, tap, touch, finger, haveBench, newRun, settle, cardShows } from './kit.js';
-import { TAP_SLOP, TAP_TIME, HOP_Y, HOP_SIZE, SKIP_HOLD_MS, SHEET_H, SHEET_MS, PROP_FROM, THUMB, BRUSH, P, HOUSE_CUBE, HOUSE_COLS } from '../config.js';
+import { sleep, state, ok, canvas, run, runUntil, raf, until, quiet, tap, touch, finger, haveBench, newRun, settle, cardShows } from './kit.js';
+import { TAP_SLOP, TAP_TIME, HOP_Y, HOP_SIZE, SKIP_HOLD_MS, SHEET_H, PROP_FROM, THUMB, BRUSH, P, HOUSE_CUBE, HOUSE_COLS } from '../config.js';
 import { S } from '../state.js';
 import { purse } from '../words.js';
 import { workOn } from '../works.js';
@@ -55,7 +55,7 @@ export const TESTS = [
     const skySaid = touch('touchstart', canvas(), 300, skyY);
     finger('pointerdown', 1, 300, skyY);
     const skyMoveSaid = touch('touchmove', canvas(), 280, skyY);   // a move on the sky is the platform's too
-    for (let i = 1; i <= 6; i++) { finger('pointermove', 1, 300 - i * 20, skyY); await sleep(16); }
+    for (let i = 1; i <= 6; i++) { finger('pointermove', 1, 300 - i * 20, skyY); await raf(); }
     finger('pointerup', 1, 180, skyY);
     touch('touchend', canvas(), 180, skyY);
     await frames(1);
@@ -73,7 +73,7 @@ export const TESTS = [
       const [dx, dy] = [(spot - s3.camX) * s3.zoom, (s3.groundY - 6 - s3.camY) * s3.zoom];
       dustSaid = touch('touchstart', canvas(), dx, dy);
       finger('pointerdown', 1, dx, dy);
-      for (let i = 1; i <= 6; i++) { finger('pointermove', 1, dx - i * 12, dy); await sleep(16); }
+      for (let i = 1; i <= 6; i++) { finger('pointermove', 1, dx - i * 12, dy); await raf(); }
       moveSaid = touch('touchmove', canvas(), dx - 72, dy);   // and every move of a held sweep is refused too (itch on an iPhone)
       shutHeld = scroller().style.overflowX;                  // ...and the scroller is shut under it, so a platform that ignored the refusal has nothing to pan
       const mid = state();
@@ -150,7 +150,7 @@ export const TESTS = [
     const tipBefore = document.getElementById('tip').hidden;
     let tipDuring = null;
     const p = tap(shack, { hold: TAP_TIME + 150 });
-    await sleep(TAP_TIME + 60);
+    await sleep(TAP_TIME + 60);             // wall time is the point: read mid-hold, past TAP_TIME
     tipDuring = !document.getElementById('tip').hidden;
     await p;
     await settle(0.2);
@@ -176,7 +176,7 @@ export const TESTS = [
     let low = had;
     await tap(auto);
     low = Math.min(low, purse('dust'));
-    await sleep(150);
+    await sleep(150);                       // the double tap's gap, wall time by design
     await tap(auto);
     await settle(0.2);
     low = Math.min(low, purse('dust'));
@@ -222,7 +222,7 @@ export const TESTS = [
     window.__look(h.x + h.w / 2 - state().viewW / 2);
     await frames(3);
     for (let i = 0; i < 40 && document.getElementById('toast').hidden; i++) await frames(1);
-    await sleep(450);                       // the card's slide is a real transition
+    await quiet();                          // the card's slide is a real transition
     const s = state();
     const toastEl = document.getElementById('toast');
     const t = toastEl.getBoundingClientRect();
@@ -253,9 +253,11 @@ export const TESTS = [
     const r = pause.getBoundingClientRect();
     const corner = r.top < 80 && r.right > state().W - 120 && r.width >= 44;
     await tap(pause);
-    await frames(2);
-    await sleep(SHEET_MS + 60);
     const held = document.getElementById('held');
+    // up, and slid all the way to its seat
+    await until(() => held.classList.contains('on') && !held.hidden);
+    await frames(2);
+    await until(() => !held.getAnimations().some(a => a.playState === 'running'));
     const open = state().paused && !held.hidden && held.classList.contains('bottom');
     // the front page, as escape brings up: resume and the way to the settings
     const front = ['resume', 'settingsbtn'].every(id => { const el = document.getElementById(id); return !el.hidden && el.getBoundingClientRect().height > 0; });
@@ -269,7 +271,7 @@ export const TESTS = [
     for (let i = 1; i <= 5; i++) { ev('pointermove', gr.top + 5 + hr.height * 0.5 * i / 5); await raf(); }
     ev('pointerup', gr.top + 5 + hr.height * 0.5, 0);
     await frames(2);
-    await sleep(SHEET_MS + 60);
+    await until(() => held.hidden, 180);    // slid off, and hidden once it is down
     const closed = !state().paused && held.hidden;
     phone(false);
     await frames(2);
@@ -452,7 +454,7 @@ export const TESTS = [
       const t0 = performance.now();
       // the dev handles come in by dynamic import, a moment after the page
       const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__reset && x.__fast && x.__crew); };
-      while (!booted() && performance.now() - t0 < 20000) await sleep(50);
+      while (!booted() && performance.now() - t0 < 20000) await raf();
       const w = f.contentWindow, d = f.contentDocument;
       if (!booted()) return [ok(false, 'the game boots in a 390px frame')];
       w.__scene('propstoast');
@@ -463,7 +465,8 @@ export const TESTS = [
       const step = () => new Promise(r => { w.__fast(1 / 60); w.requestAnimationFrame(() => r()); });
       for (let i = 0; i < 240 && !(toast.classList.contains('up') && !card.hidden && card.querySelector('.barrier:not([hidden])')); i++) await step();
       for (let i = 0; i < 30; i++) await step();
-      await sleep(400);
+      // and the frame's own slides and fades done, read off its document
+      for (let i = 0; i < 180 && d.getAnimations().some(a => a.playState === 'running'); i++) await raf();
       const cr = card.getBoundingClientRect(), tr = toast.getBoundingClientRect();
       const edge = parseFloat(w.getComputedStyle(d.documentElement).getPropertyValue('--edge')) || 0;
       const meet = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;

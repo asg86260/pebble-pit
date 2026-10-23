@@ -1,6 +1,7 @@
 // The house board and the crew window opened off it.
 
-import { sleep, newRun, raf, settle, state, buildShopFromTest, ok, board, panel, shop, point, hoverBench, hoverHouse, openCrewList, hoverAway, run, buy } from './kit.js';
+import { newRun, raf, settle, state, buildShopFromTest, ok, board, panel, shop, point, hoverBench, hoverHouse, openCrewList, hoverAway, run, buy,
+  until, quiet, seated } from './kit.js';
 
 export const TESTS = [
   ['another house is bought where the houses are', async () => {
@@ -17,7 +18,7 @@ export const TESTS = [
     const before = state();
     const row = document.querySelector('#crewshop button[data-key="house"]');
     row?.click();
-    await sleep(60);
+    await until(() => state().stored < before.stored, 30);
     run(1);
     // Paid, but not built: the dust goes at the press, the body and the room
     // arrive when the build lands. Waited for rather than timed, because how
@@ -112,11 +113,10 @@ export const TESTS = [
     run(60);
     await hoverHouse();
     await openCrewList();
-    await sleep(120);
     const rows = [...document.querySelectorAll('#crewlistrows button')];
     const before = state();
     rows[rows.length - 1].click();
-    await sleep(120);
+    await until(() => state().modal === null && !!state().follows, 30);
     const after = state();
     await hoverAway();
     window.__crew(0, 0);
@@ -141,13 +141,12 @@ export const TESTS = [
     // Each press reports what it cost as well as what the board did, because
     // the rule is about the pair.
     const press = async (key, part = '') => {
-      await hoverBench();                    // stand at the bench (still there after a press)
-      await sleep(250);
+      await hoverBench();                    // stand at the bench (still there after a press), the board seated
       const b = document.querySelector(`#shop button[data-key="${key}"]${part}`);
       if (!b) return null;
       const before = state().stored;
       b.click();
-      await sleep(200);
+      await quiet(180, [panel()]);           // whatever the press set moving on the board, done
       return { open: state().boardOpen, spent: before - state().stored };
     };
 
@@ -195,8 +194,7 @@ export const TESTS = [
     window.__crew(6, 3);
     run(20);
     // the walk has to start from where a hand actually starts
-    const from = await hoverHouse();
-    await sleep(400);
+    const from = await hoverHouse();         // the board up and seated
     const buy = document.querySelector('#crewshop button[data-key="house"]');
     const rows = [...document.querySelectorAll('#crewshop button')];
     const box = buy.getBoundingClientRect();
@@ -221,7 +219,7 @@ export const TESTS = [
         was = el;
       }
       el.dispatchEvent(new PointerEvent('pointermove', at));
-      await sleep(16);
+      await raf();                           // a hand's moves come a frame apart
       if (state().modal) opened = true;
     }
     const arrived = state();
@@ -244,15 +242,14 @@ export const TESTS = [
     run(30);
     await hoverHouse();
     await openCrewList();
-    await sleep(120);
     const rows = [...document.querySelectorAll('#crewlistrows button')];
     let stayed = true;
     for (const b of rows.slice(0, 4)) {
       const r = b.getBoundingClientRect();
       b.dispatchEvent(new PointerEvent('pointerenter',
         { clientX: r.left + 8, clientY: r.top + 4, bubbles: true }));
-      await sleep(40);
-      if (state().modal !== 'crew') stayed = false;
+      // a few frames for the window to go, if a hover were going to take it
+      if (await until(() => state().modal !== 'crew', 3)) stayed = false;
     }
     const at = state();
     window.__window(null);
@@ -280,7 +277,7 @@ export const TESTS = [
     window.__crew(4, 2);
     run(30);
     window.__board('bench');
-    await sleep(200);
+    await seated();
 
     const tip = document.getElementById('tip');
     let told = 0, untold = [], goalInPlace = 0, goalTipped = 0;
@@ -289,7 +286,7 @@ export const TESTS = [
       const r = b.getBoundingClientRect();
       b.dispatchEvent(new PointerEvent('pointerenter',
         { clientX: r.left + r.width / 2, clientY: r.top + 4, bubbles: true }));
-      await sleep(30);
+      await raf();
       if (b.classList.contains('goal')) {
         if (note && note.textContent.trim() && note.offsetParent) goalInPlace++;
         if (!tip.hidden) goalTipped++;
@@ -298,7 +295,7 @@ export const TESTS = [
         else untold.push(b.dataset.key);
       }
       b.dispatchEvent(new PointerEvent('pointerleave', { bubbles: false }));
-      await sleep(10);
+      await raf();
     }
     window.__board(null);
     window.__crew(0, 0);
@@ -324,9 +321,8 @@ export const TESTS = [
     const opened = [];
     const openIt = async () => {
       window.__board('house');
-      await sleep(120);
-      await openCrewList();
-      await sleep(260);                          // past the fade in
+      await seated();
+      await openCrewList();                      // back past the fade in
       const r = win.getBoundingClientRect();
       opened.push(state().modal === 'crew' && !win.hidden && !wash.hidden);
       return r;
@@ -338,24 +334,24 @@ export const TESTS = [
     const ran = !state().paused;
     // the pointer off to the corner, as a hand leaving the list would
     point('pointermove', 4, 4, 0);
-    await sleep(250);
-    const stayed = state().modal === 'crew';
+    // past the board's linger (LINGER in board.js), in which it would go
+    const stayed = !await until(() => state().modal !== 'crew', 30);
 
     document.getElementById('modalclose').click();
-    await sleep(40);
+    await until(() => state().modal === null, 30);
     const byCross = state().modal === null;
     await openIt();
     dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    await sleep(40);
+    await until(() => state().modal === null, 30);
     const byKey = state().modal === null && !state().paused;
     await openIt();
     const wr = wash.getBoundingClientRect();
     wash.dispatchEvent(new PointerEvent('pointerdown', { clientX: wr.left + 6, clientY: wr.top + 6, bubbles: true, isPrimary: true }));
     wash.dispatchEvent(new PointerEvent('pointerup', { clientX: wr.left + 6, clientY: wr.top + 6, bubbles: true, isPrimary: true }));
     wash.click();
-    await sleep(40);
+    await until(() => state().modal === null, 30);
     const byWash = state().modal === null;
-    await sleep(260);
+    await until(() => win.hidden && wash.hidden, 60);
     const gone = win.hidden && wash.hidden;
     await hoverAway();
     window.__crew(0, 0);
@@ -380,8 +376,7 @@ export const TESTS = [
     await hoverHouse();
     const shut = state();
     const inlineNames = document.querySelectorAll('#crewshop [data-key^="who"]').length;
-    await openCrewList();
-    await sleep(260);
+    await openCrewList();                    // back with the window up and its fade done
     const open = state();
     const win = document.getElementById('modal');
     const inWindow = win.contains(document.getElementById('crewlistrows'));
@@ -419,7 +414,10 @@ export const TESTS = [
     await hoverBench();
     window.__give(400);
     run(0.5);
-    await sleep(80);
+    // the boards rebuilt for the dust by the frame loop (main.js), and the
+    // board seated by what they came to
+    await settle(0);
+    await quiet(180, [panel()]);
 
     // What is drawn, against what the yard says it is offering, with nothing
     // pressed.
@@ -436,9 +434,8 @@ export const TESTS = [
     const row = shop().querySelector('[data-key="auto"]');
     row?.click();
     run(0.5);
-    await sleep(80);
-    await hoverBench();
-    await sleep(250);
+    await settle(0);
+    await hoverBench();                      // the board seated again
     const again = shop().querySelector('[data-key="auto"]');
     const said = again?.querySelector('.gain')?.textContent || '';
     const fit = window.__boardFit();

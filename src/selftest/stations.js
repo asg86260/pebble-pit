@@ -1,7 +1,7 @@
 // The stations: bought where they stand, the kit on them, whose board is
 // whose, and why one has stopped.
 
-import { sleep, newRun, settle, state, fmt, buildShopFromTest, ok, P, board, shop, point,
+import { until, raf, newRun, settle, state, fmt, buildShopFromTest, ok, P, board, shop, point,
   onScreen, hoverBench, hoverStation, hoverAway, run, runUntil } from './kit.js';
 
 export const TESTS = [
@@ -107,10 +107,10 @@ export const TESTS = [
     const tip = document.getElementById('tip');
     const hover = async (wx, wy) => {
       window.__look(wx - 380);
-      await sleep(60);
+      await raf();                             // the view drawn where it now looks
       const [x, y] = onScreen(wx, wy);
-      point('pointermove', x, y, 0);
-      await sleep(140);
+      point('pointermove', x, y, 0);          // the tip is asked on the move itself (input.js)
+      await raf();
       return tip.hidden ? null : tip.textContent;
     };
 
@@ -165,7 +165,7 @@ export const TESTS = [
                   s0.seenSpore && 'spore'].filter(Boolean);
     const early = marks();
     window.__grant({ shards: 5, spores: 2 });
-    await sleep(80);
+    await until(() => marks().includes('shard') && marks().includes('spore'));
     const later = marks();
     const shown = [...purse.querySelectorAll('.coin b')].map(b => b.textContent);
     const s = state();

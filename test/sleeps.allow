@@ -1,0 +1,9 @@
+# Each browser selftest file's sleep(ms) calls when test/sleeps.test.mjs landed.
+# This list only shrinks: wait on a fact (until, quiet in kit.js) and lower the count.
+src/selftest/boards.js 2
+src/selftest/contrast.js 1
+src/selftest/deep.js 1
+src/selftest/feedback.js 2
+src/selftest/kit.js 1
+src/selftest/sheet.js 2
+src/selftest/touch.js 2

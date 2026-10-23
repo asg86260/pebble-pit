@@ -8,7 +8,10 @@
 import { runChecks, DT } from '../cutbench/checks.js';
 
 const ok = (cond, what, detail = '') => cond ? { pass: true, what } : { pass: false, what, detail };
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+// A drawn frame, or a fiftieth of a second if the page has stopped painting
+// (kit.js's `raf`, written again here so the bench loads none of the kit).
+const raf = () => new Promise(r => { let done = false; const go = () => { if (!done) { done = true; r(); } };
+  requestAnimationFrame(go); setTimeout(go, 50); });
 
 async function bench() {
   if (window.__cutbench) return { cb: window.__cutbench, doc: document, done() {} };
@@ -17,7 +20,7 @@ async function bench() {
   f.style.cssText = 'position:fixed;left:0;top:0;width:1100px;height:700px;border:0;opacity:0;pointer-events:none;z-index:-1';
   document.body.appendChild(f);
   const t0 = performance.now();
-  while (!f.contentWindow?.__cutbench && performance.now() - t0 < 20000) await sleep(50);
+  while (!f.contentWindow?.__cutbench && performance.now() - t0 < 20000) await raf();   // the frame's boot: no turning
   return { cb: f.contentWindow.__cutbench, doc: f.contentDocument, done: () => f.remove() };
 }
 

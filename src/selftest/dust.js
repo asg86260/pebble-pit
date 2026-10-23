@@ -1,7 +1,7 @@
 // Dust as money: mined, thrown in, spent and counted.
 
 import { rungDust } from '../config.js';
-import { sleep, state, ok, point, onScreen, boulderWorld, hoverBench, run, runUntil, haveRock,
+import { raf, until, state, ok, point, onScreen, boulderWorld, hoverBench, run, runUntil, haveRock,
   buy, P } from './kit.js';
 import { S } from '../state.js';
 import { importSave } from '../persist.js';
@@ -43,11 +43,11 @@ export const TESTS = [
   ['dust thrown in the pit counts, and spending takes it back', async () => {
     const start = state();
     window.__give(500);
-    await sleep(300);
+    await until(() => state().pitGrains > start.pitGrains);
     const filled = state();
     const cost = rungDust('carry', 0);       // your strength's first rung
     const bought = await buy('carry');
-    await sleep(300);
+    await until(() => state().pitGrains < filled.pitGrains);
     const spent = state();
     return [
       ok(filled.stored === start.stored + 500, 'the hole counts what goes in',
@@ -63,13 +63,13 @@ export const TESTS = [
 
   ['paying flies the dust to the bench', async () => {
     window.__give(600);
-    await sleep(300);
+    await raf();
     await hoverBench();
     const before = state();
     await buy('carry');
-    await sleep(120);
+    await raf();
     const mid = state();
-    await sleep(2000);
+    await until(() => state().paid === 0, 300);
     const after = state();
     return [
       ok(mid.paid > 0, 'dust leaves the pit when you pay', `${mid.paid} in flight`),
@@ -81,9 +81,9 @@ export const TESTS = [
   ['the counter runs to its value', async () => {
     const before = state().shown;
     window.__give(2000);
-    await sleep(80);
+    await until(() => state().shown > before);
     const mid = state().shown;
-    await sleep(1500);
+    await until(() => state().shown === state().stored, 300);
     const settled = state();
     return [
       ok(mid > before && mid < settled.stored, 'it eases rather than snapping',

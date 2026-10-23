@@ -1,10 +1,11 @@
 // The boards: what a row is, how wide a column goes, what a price says, and
 // where a board seats itself.
 
-import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen, runUntil,
-  haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows, asScreen } from './kit.js';
+import { sleep, newRun, raf, settle, state, ok, canvas, board, panel, shop, point, onScreen, runUntil,
+  haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows, asScreen, onPage, landed, until } from './kit.js';
+import { objective } from '../objectives.js';
 import { TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
-import { offered, STATIONS, here } from '../stations.js';
+import { offered, STATIONS, here, station } from '../stations.js';
 import { handsOf } from '../levels.js';
 import { JOB } from '../jobs.js';
 
@@ -43,6 +44,40 @@ const textInk = cell => {
   return { right };
 };
 
+// A board asked for and come to rest, so what is read off it is the board and
+// not the board half-way in. A station with no board (the casino, whose
+// decisions are levers on the building) is asked for as nothing (`showPanel`),
+// so the board that was up goes, and what is waited for is it gone. A board
+// that is there and never settles fails the group here, where the wait is,
+// rather than as a wrong measurement further down.
+async function openBoard(name) {
+  window.__board(name);
+  if (!station(name)?.board) { await onPage(() => panel().hidden); return false; }
+  if (!await onPage(() => panel().classList.contains('open')) || !await landed())
+    throw new Error(`the ${name} board never came to rest`);
+  return true;
+}
+// The canvas painted with what the yard now holds, for a check that reads its
+// pixels: the yard is drawn every frame, so two drawn frames is the whole wait.
+const painted = () => settle(0);
+
+// The open board written again after something changed under it: it is rebuilt
+// on the spot (a purchase, the hide switch) but its rows are filled with words
+// and prices on its next frame (`fill` in board.js), and it may re-seat for
+// them.
+const refilled = async () => { await settle(0); await landed(); };
+
+// and put away: gone from the page, its fade done
+const shutBoard = () => { window.__board(null); return onPage(() => panel().hidden); };
+
+// The story's card at rest on the step the yard is on: no strike running,
+// its line the step's own.
+const storyRests = () => {
+  const card = document.getElementById('objective');
+  return !card.classList.contains('going') &&
+    (card.querySelector('.say')?.textContent || '') === (objective()?.say || '');
+};
+
 export const TESTS = [
   // Read off the sheets themselves rather than the row list, because what is
   // claimed is where a player finds the row.
@@ -60,8 +95,7 @@ export const TESTS = [
     const after = {};
     for (const [name, sel] of Object.entries({ shack: '#shackshop', quarry: '#quarryshop',
                                                farm: '#farmshop', bench: '#shop' })) {
-      window.__board(name);
-      await sleep(120);
+      await openBoard(name);
       after[name] = [...document.querySelector(sel).querySelectorAll('[data-key]')]
         .filter(b => b.offsetParent).map(r => r.dataset.key);
     }
@@ -85,8 +119,7 @@ export const TESTS = [
     window.__grant({ sparks: 999, shards: 9999, spores: 9999 });
     window.__tip(90000);
     const read = async (name, key) => {
-      window.__board(name);
-      await sleep(160);
+      await openBoard(name);
       const t = document.querySelector(`#${name}shop [data-key="${key}"]`);
       const g = t && t.querySelector('.gain');
       return t && { shown: !!t.offsetParent, off: t.disabled, gain: g.textContent,
@@ -132,8 +165,7 @@ export const TESTS = [
     const seen = new Set();
     for (const name of ['bench', 'house', 'quarry', 'farm', 'filter',
                         'tower', 'casino', 'outhouse']) {
-      window.__board(name);
-      await sleep(320);                        // the sheet scales in; let it land
+      await openBoard(name);
       for (const card of document.querySelectorAll(
         '.page:not([hidden]) .rows button[data-key]')) {
         const g = card.querySelector('.gain');
@@ -185,9 +217,8 @@ export const TESTS = [
     const bad = [];
     let seen = 0;
     for (const name of boards) {
-      window.__board(name);
-      await sleep(320);                        // the sheet scales in; let it land
-      if (name === 'house') { await openCrewList(); await sleep(200); }
+      await openBoard(name);
+      if (name === 'house') { await openCrewList(); await landed(document.getElementById('modal')); }
       const rows = [...document.querySelectorAll(
         '.page:not([hidden]) .rows button, .page:not([hidden]) .rows .job, #crewlistrows button')]
         .filter(e => e.offsetParent && !e.closest('.step') && !e.classList.contains('tile'));
@@ -247,8 +278,7 @@ export const TESTS = [
     window.__give(3000);
     window.__crew(2, 2);
     run(20);
-    window.__board('bench');
-    await sleep(400);
+    await openBoard('bench');
     // The clock's count went unread on the dark page (2026-09-17): a rule in
     // shelf.css named black outright rather than a palette step, so the
     // swap to the dark ink never reached it. Measured off the computed
@@ -281,8 +311,7 @@ export const TESTS = [
     window.__give(3000);
     window.__crew(2, 2);
     run(20);
-    window.__board('bench');
-    await sleep(400);
+    await openBoard('bench');
     // The tag is the coins alone (the owner, 2026-10-10); the .time cell is
     // the countdown of a row being built, and nothing is building here.
     const tags = [...document.querySelectorAll('#shop button[data-key] .tag')];
@@ -306,8 +335,7 @@ export const TESTS = [
     window.__grant({ shards: 2 });
     window.__crew(2, 2);
     run(20);
-    window.__board('bench');
-    await sleep(400);
+    await openBoard('bench');
     const rows = [...document.querySelectorAll('#shop button[data-key]')]
       .filter(b => b.offsetParent && b.querySelectorAll('.cost span').length > 1);
     const ink = el => getComputedStyle(el).color;
@@ -355,8 +383,7 @@ export const TESTS = [
     window.__buy('unlocktower');
     window.__finish();  // the page's business, not the yard's
     window.__build();
-    window.__board('tower');
-    await sleep(500);
+    await openBoard('tower');
     const row = document.querySelector('#towershop button[data-key="wizard"]');
     const coins = row && [...row.querySelectorAll('.cost i, .time i')].map(i => i.className);
     const tall = row && Math.round(row.getBoundingClientRect().height);
@@ -393,9 +420,10 @@ export const TESTS = [
     window.__kit({ learned: true });
     run(20);
     window.__look(state().stands.shack.x - 400);   // it has to be on the screen
-    await sleep(200);
+    await painted();
     await hoverAway();
-    await sleep(200);
+    await onPage(() => panel().hidden);
+    await painted();
 
     // nothing in the purse: the shack sells gear and kit and cannot sell you any
     const broke = { has: state().offers.includes('shack'), ink: flagInk('shack') };
@@ -406,15 +434,17 @@ export const TESTS = [
     // and under headless rAF the sim does not advance on its own: turn the
     // clock past the whole raise, then give the page a beat to paint it.
     run(2);
-    await sleep(300);
+    await painted();
     const rich = { has: state().offers.includes('shack'), ink: flagInk('shack') };
 
     // and standing at it changes nothing: what the arrow says is still true
     await hoverStation('shack');
-    await sleep(300);
+    await onPage(() => state().shackBoardOpen);
+    await landed();
+    await painted();
     const there = flagInk('shack');
     await hoverAway();
-    await sleep(300);
+    await onPage(() => panel().hidden);
 
     window.__crew(0, 0);
     newRun();
@@ -447,7 +477,7 @@ export const TESTS = [
     run(2);
     await haveBench();
     window.__look(state().stands.bench.x - 400);
-    await sleep(300);
+    await painted();
     const rich = { has: state().offers.includes('bench'), ink: flagInk('bench') };
 
     // Spend it back down through the rows themselves; nothing here opens a
@@ -459,7 +489,7 @@ export const TESTS = [
       run(1);
     }
     run(2);
-    await sleep(300);
+    await painted();
     const broke = { has: state().offers.includes('bench'), ink: flagInk('bench') };
     const unread = state().benchMark;
 
@@ -494,12 +524,14 @@ export const TESTS = [
     const shed = s0.stands.quarry;
     const rampY = s0.deckWalk[2];             // groundAt(quarryX - 10)
     window.__look(qx - 400);
-    await sleep(300);
+    await painted();
     const g = state().groundY;
+    // A hover opens a board on the move itself (`showPanel` from input.js);
+    // a frame or two after it, the answer is in either way.
     const at = async (wx, wy) => {
       const [x, y] = onScreen(wx, wy);
       point('pointermove', x, y, 0);
-      await sleep(300);
+      await painted();
       return state().quarryBoardOpen;
     };
     const deck = await at(qx + qw / 2, g - 30);              // straight over the mouth
@@ -535,7 +567,7 @@ export const TESTS = [
     canvas().dispatchEvent(new PointerEvent('pointerdown',
       { clientX: x, clientY: y, pointerId: 1, isPrimary: true, button: 0,
         buttons: 1, bubbles: true }));
-    await sleep(300);
+    await onPage(() => !state().shackBoardOpen);
     const shut = state().shackBoardOpen;
 
     // and standing at it again still opens it: this closes boards, it does not
@@ -572,18 +604,17 @@ export const TESTS = [
       for (const key of ['carry', 'pick']) { window.__buy(key); window.__finish(); }
     }
     window.__build();
-    window.__board('bench');
-    await sleep(400);
+    await openBoard('bench');
     const rows = () => [...document.querySelectorAll('#shop button[data-key]')]
       .filter(b => b.offsetParent).map(b => b.dataset.key);
     const hide = document.getElementById('hidedone');
 
     const before = rows();
     hide.click();
-    await sleep(400);
+    await refilled();
     const hidden = rows();
     hide.click();
-    await sleep(400);
+    await refilled();
     const back = rows();
 
     window.__board(null);
@@ -607,8 +638,7 @@ export const TESTS = [
     window.__grant({ shards: 9000, dust: 60000 });
     window.__shack();
     window.__kit({ learned: true });
-    window.__board('shack');
-    await sleep(400);
+    await openBoard('shack');
 
     // Pressed until it will not be pressed again: what goes wrong is what the
     // board does on the purchase, which a hook would not exercise. The board
@@ -617,8 +647,7 @@ export const TESTS = [
       .filter(b => b.offsetParent).find(b => b.dataset.key === 'breaker');
     let presses = 0;
     for (let i = 0; i < 6; i++) {
-      window.__board('shack');
-      await sleep(120);
+      await openBoard('shack');
       const b = row();
       if (!b || b.disabled) break;
       b.click();
@@ -626,15 +655,15 @@ export const TESTS = [
       // about what the *board* does with a finished row.
       window.__finish();
       presses++;
-      await sleep(120);
+      await onPage(() => state().breakers >= presses);
+      await refilled();
     }
     const bought = state().breakers;
-    window.__board('shack');                  // and back up to read the finished row
-    await sleep(200);
+    await openBoard('shack');                  // and back up to read the finished row
 
     const hide = document.getElementById('hidedone');
     hide.click();
-    await sleep(400);
+    await refilled();
     const still = row();
     const says = still && still.textContent.includes('done');
     // Broke, so the top rung's bill (a done row's bill clamps there) is one
@@ -643,14 +672,14 @@ export const TESTS = [
     const St = (await import('/src/state.js')).S;
     window.__pay('shard', St.shards); window.__pay('dust', St.stored);
     run(1);
-    await sleep(200);
+    await refilled();
     const ink = still ? getComputedStyle(still).color : '';
     const tag = still && still.querySelector('.tag');
     const edge = tag ? getComputedStyle(tag).borderTopStyle : (still ? getComputedStyle(still).borderTopStyle : '');
     const pic = still && still.querySelector('.pic');
     const glyphInk = pic ? pic.dataset.tint.split('/')[1] : '#000';
     hide.click();
-    await sleep(400);
+    await refilled();
     window.__board(null);
 
     return [
@@ -677,7 +706,7 @@ export const TESTS = [
     window.__tune('LOO_EVERY', 3000);
     window.__air({ haze: 0, muck: 0 });         // no weather: all of it is theirs
     run(90);
-    await sleep(200);
+    await painted();
 
     // the band of ground just above the line, across the middle of the yard
     const s = state();
@@ -714,8 +743,7 @@ export const TESTS = [
     window.__give(400);
     run(20);
     window.__build();
-    window.__board('bench');
-    await sleep(500);
+    await openBoard('bench');
     const row = document.querySelector('#shop button.new');
     const what = row && row.querySelector('.what');
     const corner = row && getComputedStyle(row, '::before');
@@ -759,8 +787,7 @@ export const TESTS = [
     window.__give(400);
     run(20);
     window.__build();
-    window.__board('bench');
-    await sleep(500);
+    await openBoard('bench');
     const newOnes = () => [...document.querySelectorAll('#shop button.new')];
     const before = newOnes().length;
     const mark = newOnes()[0];
@@ -776,10 +803,8 @@ export const TESTS = [
     const leftAlone = newOnes().length;
 
     // Shut the board and open it again. What was never hovered is still new.
-    window.__board(null);
-    await sleep(300);
-    window.__board('bench');
-    await sleep(500);
+    await shutBoard();
+    await openBoard('bench');
     const after = newOnes().length;
     const cameBack = newOnes().some(b => b.dataset.key === key);
     window.__board(null);
@@ -899,7 +924,7 @@ export const TESTS = [
     const b = board();
     const first = document.getElementById('panel').getBoundingClientRect();
     await hoverAway();
-    await sleep(220);
+    await onPage(() => panel().hidden);
     await hoverBench();
     const again = document.getElementById('panel').getBoundingClientRect();
 
@@ -1041,8 +1066,7 @@ export const TESTS = [
     // batches, or it is not on the board and the measurement reads NaN -> NaN,
     // which passes as "did not move".
     window.__brews(5);
-    window.__board('apothecary');
-    await sleep(120);
+    await openBoard('apothecary');
 
     const row = document.querySelector('[data-dial="potkeep"]');
     const chosen = row?.querySelector('.chosen');
@@ -1055,7 +1079,8 @@ export const TESTS = [
     const wasAt = below();
 
     chosen?.click();
-    await sleep(40);
+    await onPage(() => !opts?.hidden);
+    if (opts) await landed(opts);
     const dropped = !opts?.hidden;
     const listed = opts ? opts.querySelectorAll('.opt').length : 0;
     // The list is laid over the board, so the rows under it do not budge past
@@ -1065,7 +1090,8 @@ export const TESTS = [
     const placed = !!c && !!o && o.top >= c.bottom - 1 && Math.abs(o.right - c.right) <= 2;
 
     opts?.querySelector('.opt[data-opt="off"]')?.click();
-    await sleep(40);
+    await onPage(() => !opts || opts.hidden);
+    await refilled();                              // the control says the choice on the board's next frame
     const said = (chosen?.textContent || '').trim();
     const shutAfter = !!opts?.hidden;
 
@@ -1073,9 +1099,11 @@ export const TESTS = [
     // list does not shut it under you.
     chosen?.click();
     opts?.dispatchEvent(new PointerEvent('pointerleave', { bubbles: false }));
+    // Wall time is the thing checked: the grace is a timer (`leaveSoon` in
+    // shop.js), and "not on the spot" means still up a moment of it later.
     await sleep(120);
     const heldOn = !opts?.hidden;                // still there a moment later
-    await sleep(600);
+    await onPage(() => !opts || opts.hidden);
     const wanderedOff = !!opts?.hidden;
 
     // It hangs off the body, so the board closing does not take it with it
@@ -1083,7 +1111,7 @@ export const TESTS = [
     chosen?.click();
     const upAgain = !opts?.hidden;
     window.__board(null);
-    await sleep(40);
+    await onPage(() => !!opts?.hidden);
     const wentWithBoard = !!opts?.hidden;
 
     window.__crew(0, 0);
@@ -1115,8 +1143,7 @@ export const TESTS = [
     window.__grant({ dust: 8000, spores: 3000, shards: 300 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
-    window.__board('apothecary');
-    await sleep(120);
+    await openBoard('apothecary');
 
     const rows = ['potkeep'].map(k => document.querySelector(`.rows.shelves > [data-dial="${k}"]`));
     const fits = rows.map(r => {
@@ -1175,7 +1202,9 @@ export const TESTS = [
     await settle();
     window.__crew(3, 3);
     window.__fast(40);                       // so there is a rate to read
-    await raf();
+    // The noticeboard is laid on the page's next frame after a new yard
+    // (`unlay` in persist.js): until then it stands nowhere.
+    await until(() => state().stands.stats);
 
     const stand = state().stands.stats;
     await hoverStation('stats');
@@ -1197,7 +1226,7 @@ export const TESTS = [
     // `hoverAway` points at is squarely inside the safe wedge on the way to
     // their sheet (input.js). The other corner is the one that means away.
     point('pointermove', canvas().clientWidth - 4, 4, 0);
-    await sleep(250);
+    await onPage(() => !state().statsBoardOpen);   // after the linger off a station (`LINGER`, board.js)
     const shut = !state().statsBoardOpen;
     window.__crew(0, 0);
 
@@ -1245,7 +1274,10 @@ export const TESTS = [
 
     // Standing at the second cauldron is enough: no press.
     point('pointermove', ...two(), 0);
-    await sleep(40);
+    // The picker answers a move or a press on the spot (`potHover`, `potPick`
+    // in potpick.js): a drawn frame lays it out, and where it opens or shuts
+    // that is the fact waited for.
+    await onPage(() => !!pop() && !pop().hidden);
     const open = !!pop() && !pop().hidden;
     const swatches = pop() ? pop().querySelectorAll('.opt .swatch').length : 0;
     const marked = pop()?.querySelector('.opt.on')?.dataset.opt;
@@ -1266,26 +1298,28 @@ export const TESTS = [
     // Crossing to the other cauldron moves the list with the cursor rather than
     // leaving it standing over the one you have left.
     point('pointermove', ...one(), 0);
-    await sleep(40);
+    await raf();
     const movedOn = pop()?.querySelector('.opt.on')?.dataset.opt;
 
     // ...and back, to set the one this check is about.
     point('pointermove', ...two(), 0);
-    await sleep(40);
+    await raf();
     pop()?.querySelector('.opt[data-opt="brace"]')?.click();
-    await sleep(40);
+    await onPage(() => !pop() || pop().hidden);
     const after = state();
     const shut = !!pop() && pop().hidden;
 
     // After a breath, not on the instant: the gap between a control and its
     // list is a place the pointer is briefly outside both.
     point('pointermove', ...two(), 0);
-    await sleep(40);
+    await onPage(() => !!pop() && !pop().hidden);
     const upAgain = !!pop() && !pop().hidden;
     point('pointermove', two()[0], two()[1] + 260, 0);   // bare ground below the yard
+    // Wall time is the thing checked: the grace is a timer (`leaveSoon` in
+    // shop.js), and "not on the instant" means still up a moment of it later.
     await sleep(80);
     const heldOn = !!pop() && !pop().hidden;
-    await sleep(700);
+    await onPage(() => !pop() || pop().hidden);
     const wanderedOff = !!pop() && pop().hidden;
 
     // A press, the only way in on a touchscreen. With no scene running: the
@@ -1294,7 +1328,7 @@ export const TESTS = [
     window.__nocine();
     point('pointerdown', ...two());
     point('pointerup', ...two());
-    await sleep(60);
+    await onPage(() => !!pop() && !pop().hidden);
     const pressed = !!pop() && !pop().hidden;
 
     // A potency rung bought on one recipe is a deeper stew and nothing else,
@@ -1306,18 +1340,16 @@ export const TESTS = [
     const before = linesNow();
     const allSaid = priced.every(k => (before[k] || '').length > 0);
 
-    window.__board('apothecary');
-    await sleep(140);
+    await openBoard('apothecary');
     const rung = document.querySelector('[data-key="potency-stew"]');
     rung?.click();
     window.__finish();                           // the yard builds what you buy
-    window.__board(null);
-    await sleep(40);
+    await shutBoard();
 
     point('pointermove', two()[0], two()[1] + 260, 0);   // off every pot, so that...
-    await sleep(40);
+    await raf();
     point('pointermove', ...two(), 0);                 // ...moving back reopens it
-    await sleep(60);
+    await raf();
     const deeper = linesNow();
     const moved = priced.filter(k => before[k] !== deeper[k]);
 
@@ -1331,9 +1363,9 @@ export const TESTS = [
     const shownBefore = shown();
     window.__pay('spore', state().spores);
     point('pointermove', two()[0], two()[1] + 260, 0);
-    await sleep(40);
+    await raf();
     point('pointermove', ...two(), 0);
-    await sleep(60);
+    await raf();
     const shownAfter = shown();
     const wantCrop = k => window.__brewCost(k).some(([m]) => m === 'spore');
     const setTo = state().potTonics[1];
@@ -1398,31 +1430,31 @@ export const TESTS = [
     const countOf = job => pop().querySelector(`.for[data-for="${job}"] .count`)?.textContent;
 
     point('pointermove', ...one(), 0);           // the stew pot
-    await sleep(40);
+    await onPage(() => !!pop() && !pop().hidden);
     const stewOffers = offered();
     const diggers = countOf('rockhands');
     const nearestFirst = pop()?.querySelector('.for.on')?.dataset.for;
     pop()?.querySelector('.for[data-for="rockhands"]')?.click();
-    await sleep(40);
+    await raf();
     const setStew = state().potPrefers?.[0];
     // the list stays up: who it is for is a tweak, not the end of the errand
     const stillUp = !!pop() && !pop().hidden;
     const markedNow = pop()?.querySelector('.for.on')?.dataset.for;
 
     point('pointermove', ...two(), 0);           // the strong pot
-    await sleep(40);
+    await raf();
     const strongOffers = offered();
     const strongOn = pop()?.querySelector('.for.on')?.dataset.for;
     pop()?.querySelector('.for[data-for="haulers"]')?.click();
-    await sleep(40);
+    await raf();
     const after = state();
 
     // Back on the stew pot, its own choice is the one marked.
     point('pointermove', ...one(), 0);
-    await sleep(40);
+    await raf();
     const stewOn = pop()?.querySelector('.for.on')?.dataset.for;
     point('pointermove', one()[0], one()[1] + 260, 0);
-    await sleep(800);
+    await onPage(() => !pop() || pop().hidden);
     window.__crew(0, 0);
     return [
       ok(nearestFirst === '', 'a pot starts out for whoever is nearest', String(nearestFirst)),
@@ -1582,8 +1614,8 @@ export const TESTS = [
     const lift = () => (tile() ? getComputedStyle(tile()).getPropertyValue('--lift').trim() : '');
     // The plate goes up on a wall-clock transition too, and the tile says
     // queued until the spare hand has walked to the site, so twenty game
-    // seconds can pass inside the transition.
-    await sleep(300);
+    // seconds can pass inside the transition: waited out, not slept past.
+    await landed();
     const liftGoing = lift();
     const secs = t => t.split(':').reduce((a, b) => a * 60 + +b, 0);
     // Nobody at the site: the fill and the clock both hold.
@@ -1591,7 +1623,7 @@ export const TESTS = [
     await settle(3);
     const held = inked(), clockHeld = clock();
     const stalledSaid = tile()?.querySelector('.gain')?.textContent || '';
-    await sleep(300);                  // the plate comes down on a wall-clock transition (SHELF_HOVER_MS)
+    await landed();                    // the plate comes down on a wall-clock transition (SHELF_HOVER_MS)
     const liftStalled = lift();
     await settle(5);
     const stillHeld = inked(), clockStillHeld = clock();
@@ -1710,7 +1742,7 @@ export const TESTS = [
     await settle(0.5);
     window.__finish();
     await settle(0.1);
-    const landed = read('carry');
+    const done = read('carry');
     for (let i = 0; i < SHELF_HAND_FADE + 10; i++) await raf();
     const after = read('carry');
     await settle(1);
@@ -1724,7 +1756,7 @@ export const TESTS = [
       ok(leaving.hand > 0 && leaving.w > 28, 'when the body steps off, the hand is still fading on the tile', `${leaving.hand} pixels, ${leaving.w}px`),
       ok(alone.hand === 0 && alone.w === 28, 'and with nobody at the site there is nobody on the tile', `${alone.hand} pixels, ${alone.w}px`),
       ok(alone.ink === stillAlone.ink && alone.ink > 0, 'and the built cells hold', `${alone.ink} -> ${stillAlone.ink}`),
-      ok(landed.hand > 0 && landed.w > 28, 'when the work lands the hand is still fading on the finished tile', `${landed.hand} pixels, ${landed.w}px`),
+      ok(done.hand > 0 && done.w > 28, 'when the work lands the hand is still fading on the finished tile', `${done.hand} pixels, ${done.w}px`),
       ok(after.hand === 0 && after.w === 28, 'and is gone once it has faded', `${after.hand} pixels, ${after.w}px`),
     ];
   }],
@@ -2066,11 +2098,13 @@ export const TESTS = [
       window.__crew(0, 4);
       window.__snatch({ played: true, portal: false });
       window.__answered('props', 'net', 'arch'); window.__meteor();
-      await settle(0.6); await sleep(1500);
+      // The card strikes the step it leaves and fades the next in on the
+      // page's clock (objline.js), so it is waited for at rest on the step.
       const card = document.getElementById('objective');
+      await settle(0.6); await onPage(storyRests); await landed(card);
       const said = card.querySelector('.say')?.textContent || '';
       window.__board('tower');
-      await settle(0.6); await sleep(1500);
+      await settle(0.6); await onPage(storyRests); await landed(card);
       const after = card.querySelector('.say')?.textContent || '';
       window.__board(null);
       return [
@@ -2235,12 +2269,18 @@ export const TESTS = [
       document.body.classList.remove('still');
       for (let i = 0; i < 3; i++) await raf();
       const a = snap();
-      for (let i = 0; i < 12 && !moves; i++) { await sleep(150); moves = snap() !== a; }
+      moves = await onPage(() => snap() !== a, 120);
+      // Stilled, the cloth is drawn once more at rest (ribbon.js, `dirty`) and
+      // its loop parks: waited for as a run of frames that all drew the same.
+      // A run, not a pair: restyling the whole body can hold a frame back past
+      // `raf`'s timer, and two readings with no frame between them agree.
       document.body.classList.add('still');
-      await sleep(100); for (let i = 0; i < 3; i++) await raf();
+      let last = null, same = 0;
+      await onPage(() => { const now = snap(); same = now === last ? same + 1 : 0; last = now; return same >= 5; }, 90);
       const b = snap();
-      await sleep(900); for (let i = 0; i < 3; i++) await raf();
-      held = snap() === b;
+      // and then given as many drawn frames to move as a second of them, and
+      // it must not
+      held = !await onPage(() => snap() !== b, 60);
       document.body.classList.toggle('still', wasStill);
     }
     window.__board(null);
@@ -2331,13 +2371,18 @@ export const TESTS = [
     window.__answered('props', 'net');
     window.__grant({ dust: 6000 });
     run(2);
-    window.__board('bench');
-    await sleep(400);
+    await openBoard('bench');
     // The tile is offered once the purse can buy it and stays; spend the
-    // purse back to half the shack's bill.
+    // purse back to half the shack's bill. The board writes the share on its
+    // next frame and the line slides to it on the page's clock (`.fill` in
+    // style.css): waited for written, then for the slide to land.
+    const shackFill = () => document.querySelector('#shop button[data-key="unlockshack"] .tag .fill');
+    const fillP = () => shackFill()?.style.getPropertyValue('--p') ?? null;
+    const p0 = fillP();
     window.__spend(state().stored - 75);
     run(1);
-    await sleep(900);
+    await onPage(() => fillP() !== p0);
+    await landed();
     const lines = () => [...document.querySelectorAll('#shop button[data-key^="unlock"] .tag .fill')];
     const share = el => parseFloat(getComputedStyle(el, '::before').width) / el.getBoundingClientRect().width;
     const seen = `${state().stored} ${lines().length}`;
@@ -2346,7 +2391,8 @@ export const TESTS = [
     const wide = half ? half.getBoundingClientRect().width : 0;
     window.__grant({ dust: 6000 });
     run(2);
-    await sleep(900);
+    await onPage(() => fillP() === '1');
+    await landed();
     const met = half;
     const full = met ? share(met) : -1;
     const done = !!met?.classList.contains('done');
