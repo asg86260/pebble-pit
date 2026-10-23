@@ -10,8 +10,8 @@
 // timer in the future, which looks exactly like the game having seized up.
 import { CLOCK_LEAP_MS } from './config.js';
 
-let t = performance.now();
-let wall = performance.now();
+let t = performance.now(); // page: the clock only goes forward; a new game keeps it (`restart` is the seeded run's)
+let wall = performance.now(); // page: the wall at the last frame
 
 export const now = () => t;
 
@@ -47,7 +47,7 @@ export function advance(ms) { t += ms; }
 // exactly one, so the checks, which run at a fixed sixtieth, test the same
 // numbers they always did.
 const TUNED = 1000 / 60;
-let scale = 1;
+let scale = 1; // cache: this frame's length, set every frame
 
 // Capped: everything that moves does so in whole steps that check where they
 // are going, and a body that moved six frames' worth in one go would step
@@ -69,7 +69,7 @@ export function setFrames(dt) {
 // less every stretch the background was held, so it runs at `1 - still` of
 // the game's pace and never goes back. Outside a scene it is the game's clock
 // a fixed stretch behind, which nothing reading phases off it can tell.
-let still = 0, lag = 0;
+let still = 0, lag = 0; // page: the background's hold and lag; the ambient clock never goes back
 export const setStill = k => { still = Math.max(0, Math.min(1, k)); };
 export const ambient = () => t - lag;
 // And a frame's length on it, in the sixtieths `frames` counts in.

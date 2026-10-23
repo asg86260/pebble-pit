@@ -119,7 +119,7 @@ export const nearHouse = (x, y) => nearStation('house', x, y);
 
 // The board's size, measured when it opens, changes page or the window changes,
 // never every frame: reading `offsetWidth` forces a layout.
-let sized = { w: 0, h: 0 };
+let sized = { w: 0, h: 0 }; // page: measured off the DOM
 
 // How big the sheet is *now*. `sized` is a cache, not a second opinion: it
 // holds the *last* board's height, which belongs to a different sheet, so the
@@ -129,7 +129,7 @@ const measured = () => ({ w: (panelEl.hidden ? 0 : mainWidth()) || sized.w,
                           h: panelEl.offsetHeight || sized.h });
 
 // The whole panel, for the safe-zone wedge and the tip's dodge.
-let full = { w: 0, h: 0 };
+let full = { w: 0, h: 0 }; // page: measured off the DOM
 
 // The main board's own width: the open page and the purse, side by side or
 // one over the other.
@@ -245,7 +245,7 @@ export function remeasure(repin = true) {
 // The transform is written only when it moves: assigning the same one every
 // frame invalidates the menu's layer over a canvas that is also repainting,
 // and the menu flickers.
-let putX = null, putY = null;
+let putX = null, putY = null; // cache: the transform last written, keyed by itself
 
 function place(el, at) {
   // The second seat (DESIGN.md, "Boards as bottom sheets"): on a phone the
@@ -342,9 +342,9 @@ const raiseEl = document.getElementById('raise');
 raiseEl.addEventListener('click', raiseBench);
 
 // Measured when it appears and not again: its words change only for the arrow.
-let callSize = { w: 0, h: 0 };
+let callSize = { w: 0, h: 0 }; // page: measured off the DOM
 const CALL_TEXT = msg('other-raise');
-let callAt = { x: null, y: null };
+let callAt = { x: null, y: null }; // page: where the call stands on the window
 
 // Hidden while a board is up (its z-index assumes that never overlaps) and
 // while the view is in the deep, where there is no bench to point at; faded
@@ -500,12 +500,12 @@ export const boardFit = () => ({ w: sized.w, h: sized.h,
 // The one bit of writing in the yard: words are cheap in a tooltip because it
 // is not on screen until asked for.
 const tipEl = document.getElementById('tip');
-let tipFor = null;
+let tipFor = null; // page: the tip element's words
 // Where the view was when the tip was seated. A tip is seated in screen space
 // once, off a pointer event, and the view can move under it without the
 // pointer moving (arrow keys, the opening's camera, a glide). A tip whose view
 // has moved is taken down; the next pointer move seats a fresh one.
-let tipCam = null;
+let tipCam = null; // page: the view the tip was seated on
 export function tipFollowsView() {
   if (tipFor === null || !tipCam) return;
   if (tipCam[0] !== S.camX || tipCam[1] !== S.camY || tipCam[2] !== S.zoomShow) showTipAt(null);
@@ -559,13 +559,13 @@ export function showTipAt(text, sx, sy, centred, over = false, lead = null) {
 // One menu for every station: it fades up where you are and walks with you.
 // The slide class is on only while it is moving between stations; the menu is
 // re-seated every frame, and a standing transition would lag every scroll.
-let at = null;
-let slide = 0;
-let closing = 0;
+let at = null; // page: the board up, a DOM sheet; a new game shuts it (`showPanel(null, true)`)
+let slide = 0; // page: the sheet's slide
+let closing = 0; // page: the sheet's fade
 // The pointer has left a station but the board has not been given up on yet:
 // leaving is decided a moment later, so crossing bare ground to the next
 // station is one slide rather than a fade, a jump and a fade.
-let leaving = 0;
+let leaving = 0; // page: the pointer's linger off a station
 const LINGER = 130;                    // and how long the moment is
 
 
@@ -705,7 +705,7 @@ export const purseCoins = () => PURSE.filter(([, seen]) => seen()).map(([mark, ,
 
 // Written only when it changes: this runs every frame a board is open, and
 // `innerHTML` is a parse.
-let purseWas = null;
+let purseWas = null; // cache: keyed by the purse's html
 function fillPurse() {
   let html = '';
   for (const [mark, n] of purseCoins())
@@ -726,7 +726,7 @@ function fillPurse() {
 const hideEl = document.getElementById('hidedone');
 
 // Written only when it changes; `hud` asks every frame.
-let said = null;
+let said = null; // cache: keyed by `S.hideDone`
 export function sayHideDone() {
   if (S.hideDone === said) return;
   said = S.hideDone;
@@ -751,7 +751,7 @@ hideEl.addEventListener('click', () => {
 // the hopper is the front half of the same gesture, and a board that stayed up
 // through it would be a board offering rows for a bet already made. It comes
 // back when the tray is standing.
-let hushed = false;
+let hushed = false; // cache: keyed by `busy()`
 function hush() {
   const want = busy();
   if (want === hushed) return;

@@ -66,7 +66,7 @@ const G_S = GESTURE_GRAB_SLACK;
 // The pedestal's bubbles are the pair's speech rising (bubbles.js): `list()`
 // the bubbles in the air, each { x, y, w, h, big } a world box, and `pop(b)`
 // true if it took the pop. Until they rise, none.
-let BUBBLES = { list: () => [], pop: () => false };
+let BUBBLES = { list: () => [], pop: () => false }; // page: bubbles.js's wiring, handed over once a page
 export const useBubbles = api => { BUBBLES = api || { list: () => [], pop: () => false }; };
 const bubbleAt = (x, y) => {
   const list = BUBBLES.list() || [], s = GESTURE_BUBBLE_SLACK;
@@ -372,11 +372,11 @@ export const GESTURE_KEYS = Object.keys(DEFS);
 // held. An act is known by the seed it began with (`S.after.begun`), carried
 // in its save, so the session's motion is kept across the act's state being
 // read back (a reload of the page starts the session itself afresh).
-let G = null, seen = null, held = null, heldWhat = null, lastPress = null, pressAt = null, hovered = null;
+let G = null, seen = null, held = null, heldWhat = null, lastPress = null, pressAt = null, hovered = null; // cache: keyed by the act (`S.after.begun`) and its clock; a new act or a clock run back stands them still
 const actId = () => (S.after ? S.after.begun : null);
 // An act begun afresh in the same session (a new game) may share a seed with
 // the last, but its clock starts again: that stands everything still too.
-let lastT = 0;
+let lastT = 0; // cache: the act's clock last frame, half of the key above
 function recs() {
   const back = S.after && S.after.t < lastT;
   lastT = S.after ? S.after.t : 0;
@@ -532,7 +532,7 @@ function showing(key, r, d, dt, t) {
 // A frame of the pad on the station under its focus: `{ a, pressed,
 // released, lx, ly }`, A down, pressed and let go this frame, and the left
 // stick, each turned into the motion the pointer makes on the part.
-let flick = 0;
+let flick = 0; // page: the pad's stick mid-flick
 export function padGesture(key, p) {
   if (!live() || !DEFS[key] || !DEFS[key].open()) return;
   const g = recs(), r = g[key], d = DEFS[key];

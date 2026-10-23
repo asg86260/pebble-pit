@@ -22,6 +22,6 @@ export const boardOf = key => BOARD[key] || null;
 // cannot be imported into (the sim's, loaded by the node checks too): the
 // boards hand in the opener when the page loads (board.js). With no page
 // there is nothing to open, and the ask answers false.
-let opener = null;
+let opener = null; // page: board.js's opener, handed in at load
 export const setBoardOpener = fn => { opener = fn; };
 export const openBoardByKey = key => (opener ? opener(key) : false);

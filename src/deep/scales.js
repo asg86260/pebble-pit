@@ -10,6 +10,7 @@
 // its way down, into the hopper, or up to a station that paid with it, is this
 // session's, and a reload finds it landed or gone.
 
+import { held } from '../reset.js';
 import { S, deepBed } from '../state.js';
 import { P, SHADES, DEEP_W, DEEP_BED_ROWS, DEEP_GRAV, DEEP_DRAG, DEEP_CURRENT,
          DEEP_CURRENT_MS, SCALE_KICK, SCALE_SHADE, SCALE_SPREAD, LIFT_PACE, LIFT_FLECKS,
@@ -31,7 +32,7 @@ export const current = t => DEEP_CURRENT * Math.sin(2 * Math.PI * t / DEEP_CURRE
 // and spits its own sparks, so each keeps its moment (and a number for its
 // sparks' throw), forgotten once it has burned out or been crowded off.
 // A refund coming home is the player's own, not income.
-let crushed = 0;
+let crushed = 0; // held: the crushes' ids, counted from nought on a fresh page
 export function crush(n, income = true) {
   if (!(n > 0)) return;
   S.scales += n;
@@ -123,7 +124,8 @@ export function scoop(x, n, reach) {
 // bed each was the endgame's largest cost. A scoop later in the frame leaves a
 // column a grain lower than this says; the stretch it picks is found bare and
 // picked again on the next frame.
-let lyingAt = -1, lyingCols = null;
+let lyingAt = -1, lyingCols = null; // held: the bed's columns this grid frame; a new bed under the same frame would read the old one
+held('deep-scales', () => { crushed = 0; lyingAt = -1; lyingCols = null; });
 function lyingNow() {
   if (lyingAt !== gridFrame() || !lyingCols || lyingCols.length !== deepBed.cols) {
     lyingCols = new Array(deepBed.cols);

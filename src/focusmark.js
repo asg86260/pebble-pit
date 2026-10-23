@@ -16,10 +16,10 @@ import './ink.js';   // the dark page's map, on this context as on the yard's
 import { bracketCells, haloCells, breathOut } from './padglide.js';
 import { PAD_ACCENT, PAD_HALO, PAD_ARM_MIN, PAD_ARM_MAX, PAD_PAGE_CELL } from './config.js';
 
-let canvas = null, ctx = null, looping = false;
+let canvas = null, ctx = null, looping = false; // page: the mark's own canvas and loop
 // The control the mark is on and when it got there: it breathes from rest on
 // each arrival, as the pad's marker does (padglide.js, `breathOut`).
-let markedEl = null, markedAt = 0;
+let markedEl = null, markedAt = 0; // page: the control it is on
 
 function mount() {
   if (canvas || !document.body) return;

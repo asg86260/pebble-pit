@@ -382,7 +382,7 @@ function sinkFangs() {
 // listener to. game.js calls this as it is read, which is before the first
 // frame -- a save's first frame can be a rise, whose fang is owed -- and the
 // frame asks again for a yard stood up without it.
-let listening = false;
+let listening = false; // page: the listeners are hung once a page
 export function listenFangs() {
   if (listening) return;
   onBreak(stage => { dropFangs(stage); if (stage >= SERPENT_PHASES) dropKillFang(); });

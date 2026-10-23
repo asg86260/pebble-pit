@@ -62,11 +62,11 @@ export function ring(g, cx, cy, r, tone, every = 1) {
 // One of the two of them is dressed (render/wardrobe.js): the fighters'
 // layer says which body the kit is drawn on (`dressAs`) before it draws it.
 export const body = (cx, cy) => { if (!bare) drawBody(Math.round(cx * P), Math.round(cy * P), dressed); };
-let dressed = null;
+let dressed = null; // cache: set by the drawing before each body it draws
 export const dressAs = look => { dressed = look; };
 // A kit drawn with no body in it: the gear hung on a station, or on its way
 // there or back (render/finale.js). `REST` as ever, for the length of `fn`.
-let bare = false;
+let bare = false; // cache: true only inside `kitOnly`
 export function kitOnly(fn) {
   bare = true;
   try { fn(); } finally { bare = false; }
@@ -111,7 +111,7 @@ export function sprite(key, wCells, hCells, ax, ay, paint) {
   }
   return s;
 }
-let TURN = null, TURN_G = null;
+let TURN = null, TURN_G = null; // cache: a scratch canvas, sized for each turn
 // Put the sprite's anchor at world pixel (x, y), turned `ang` radians
 // clockwise. Turned by hand, nearest pixel, so no edge is blended.
 export function blit(g, s, x, y, ang = 0) {

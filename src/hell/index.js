@@ -10,6 +10,7 @@
 // `S.hell` is null until the act begins -- the first descent, once that is
 // built -- so a yard that never reaches it saves `hell: null`.
 
+import { held } from '../reset.js';
 import { S } from '../state.js';
 import { HELL_TIERS } from '../config.js';
 import { hellOn } from '../acts.js';
@@ -94,7 +95,7 @@ export function beginHell() {
 }
 
 // How many frames hell has been stepped this session (test/acts-scaffold.test.mjs).
-let frames = 0;
+let frames = 0; // page: frames stepped this page, a counter for the checks (`__actFrames`)
 export const hellFrames = () => frames;
 
 // One frame of hell, called every frame with the act on, on screen or not:
@@ -115,7 +116,8 @@ export function stepHell(c) {
 // --- the hand (the boards are hell/stations.js's rows) ------------------------------------
 // The last click's swing, for the drawing: where, when on hell's clock, and
 // what the blow did. Not saved: a held pose a quarter of a second long.
-let lastSwing = null;
+let lastSwing = null; // held: the last click's swing, on hell's clock
+held('hell-swing', () => { lastSwing = null; });
 export const hellSwing = () => lastSwing;
 
 // A click in hell, in world pixels: a blow at a face or a barrier with the

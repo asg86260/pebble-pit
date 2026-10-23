@@ -28,8 +28,8 @@ import { gzip } from './gzip.js';
 // --- where the worker is ------------------------------------------------------
 // A build's answer is the constant; the checks point the form at the real
 // worker's `handle` (the node tier) or a scripted one (the browser tier).
-let url = FEEDBACK_URL;
-let fetchFn = null;
+let url = FEEDBACK_URL; // page: the worker, a check's handle
+let fetchFn = null; // page: a check's handle
 export const setFeedbackUrl = u => { url = u || ''; };
 export const setFeedbackFetch = fn => { fetchFn = typeof fn === 'function' ? fn : null; };
 // Whether there is a form at all: no address is no button, no pane and no

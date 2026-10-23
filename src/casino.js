@@ -31,6 +31,7 @@
 // first and the wheel aimed at it, so you watched a picture of a decision that
 // had already been made. Here nothing is decided until a grain is on a peg.
 
+import { held } from './reset.js';
 import { CASINO_HANDFUL, CASINO_BINS, CASINO_PEG_ROWS, POUR_SHARE, POUR_MIN, ARM_DEAD, shownFor,
          HOPPER_H, HOPPER_PROFILE, GATE_H, GATE_W, CASINO_SIGN_H, BOARD_AIR, PEG_ROW_H, BIN_W, EDGE_BIN_W, BIN_H, LABEL_H, FOOT_H,
          TRAY_H, TRAY_HOLD_MS, TRAY_OUT_MS, TRAY_STEP_MS,
@@ -1097,7 +1098,8 @@ const topGrain = (plot, c) => {
 // The tallest column with a grain in it, so a heap comes apart from the top
 // rather than being eaten from one end. Where it starts looking walks, so the
 // same side is not always the one that goes first.
-let drainAt = 0;
+let drainAt = 0; // held: the column the next drain starts looking from
+held('casino-drain', () => { drainAt = 0; });
 function topmostColumn(plot) {
   let best = -1, high = -1;
   for (let i = 0; i < plot.cols; i++) {
