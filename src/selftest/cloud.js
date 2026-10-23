@@ -9,7 +9,7 @@
 // cloud.js: the frame's module is reached by importing it inside the frame
 // under the URL the page itself loaded it by, so it is the same instance.
 
-import { sleep, newRun, settle, ok, run } from './kit.js';
+import { raf, newRun, settle, ok, run } from './kit.js';
 import { S } from '../state.js';
 import { persist, exportSave } from '../persist.js';
 import { storeSettled } from '../save.js';
@@ -18,8 +18,12 @@ const WORKER = 'http://cloud.test';
 const SECRET = '7F3KQ9WM2HXD';
 const PAIR = 'K7Q94M';
 
-const until = async (fn, tries = 60) => {
-  for (let i = 0; i < tries; i++) { if (fn()) return true; await sleep(50); }
+// The landing page in a frame and the worker's answers are promises on the
+// page's own clock, not the yard's, so this turns nothing: a drawn frame at a
+// time, up to `ms`, the ceiling only how long to give up after.
+const until = async (fn, ms = 3000) => {
+  const t0 = performance.now();
+  while (!fn() && performance.now() - t0 < ms) await raf();
   return !!fn();
 };
 const json = (status, body) =>
@@ -203,7 +207,8 @@ export const TESTS = [
       code = block(d).querySelector('.pair-code')?.textContent || '';
       t0 = (block(d).querySelector('.count')?.textContent || '').replace(' left', '');
       spill = overflowing(block(d));
-      await sleep(1100);
+      const count = () => (block(d).querySelector('.count')?.textContent || '').replace(' left', '');
+      await until(() => count() !== t0, 2500);   // the code's clock is the wall's: a second, ticked
       t1 = (block(d).querySelector('.count')?.textContent || '').replace(' left', '');
       buttonIn(block(d), 'done')?.click();
       away = !block(d).querySelector('.pair-code') && !!buttonIn(block(d), 'link a device');

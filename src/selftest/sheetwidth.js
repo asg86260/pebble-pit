@@ -11,7 +11,7 @@
 // The saves page is read with three yards in it, long enough to stack on a
 // phone; the two slots written are put back as they were.
 
-import { sleep, ok } from './kit.js';
+import { raf, ok } from './kit.js';
 import { S } from '../state.js';
 import { writeSlot, storeSettled } from '../save.js';
 
@@ -22,9 +22,11 @@ import { writeSlot, storeSettled } from '../save.js';
 const WORDS = '.word, .gamename, .line, .sub, .said, .small, .why, .rule, .handle';
 const SIZES = [['desk', 800, 600], ['phone', 390, 844]];
 
+// A frame's own fact, a drawn frame at a time up to `ms` (the ceiling only
+// when to give up): the frame boots on its own clock, so nothing is turned.
 const until = async (fn, ms = 20000) => {
   const t0 = performance.now();
-  while (!fn() && performance.now() - t0 < ms) await sleep(50);
+  while (!fn() && performance.now() - t0 < ms) await raf();
   return fn();
 };
 

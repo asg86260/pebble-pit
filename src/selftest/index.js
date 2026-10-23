@@ -3,7 +3,7 @@
 // showing its words, and on a 390px phone the entry pushed over the list.
 // What counts as met is test/index.test.mjs's.
 
-import { sleep, raf, newRun, settle, ok, run } from './kit.js';
+import { raf, newRun, settle, ok, run } from './kit.js';
 import { S } from '../state.js';
 import { INDEX } from '../config/index.js';
 import { metEntries } from '../met.js';
@@ -83,7 +83,7 @@ export const TESTS = [
     try {
       const t0 = performance.now();
       const booted = () => { const x = f.contentWindow; return !!(x?.__reset && x.__fast && x.__crew); };
-      while (!booted() && performance.now() - t0 < 20000) await sleep(50);
+      while (!booted() && performance.now() - t0 < 20000) await raf();   // the frame's boot, not the yard's: no turning
       const w = f.contentWindow, d = f.contentDocument;
       if (!booted()) return [ok(false, 'the game boots in a 390px frame')];
       w.__reset();

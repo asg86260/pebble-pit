@@ -6,7 +6,7 @@
 // page that comes back is asked what language it is in. The choice is put
 // back as it was afterward: the frames share this page's store.
 
-import { ok, raf, sleep, newRun, settle } from './kit.js';
+import { ok, raf, newRun, settle } from './kit.js';
 import { S } from '../state.js';
 import { pref, setPref } from '../prefs.js';
 import { offered } from '../langpage.js';
@@ -21,6 +21,16 @@ function frame(src) {
   const first = loaded();
   f.src = src;
   return { f, first, loaded };
+}
+
+// A fact about the frame, waited for a drawn frame at a time up to `ms`: true
+// when it came. The frame boots and reloads on its own clock, not the top
+// page's game, so this turns nothing; the ceiling is only how long to give up
+// after, never how long to wait.
+async function within(fact, ms) {
+  const t0 = performance.now();
+  while (!fact() && performance.now() - t0 < ms) await raf();
+  return !!fact();
 }
 
 // What the page offers, read as a player reads it: the names in order, the
@@ -52,13 +62,14 @@ async function walk(d, f, loaded) {
   tab(d, 'language').click();
   const pick = other(here);
   out.pick = pick;
-  const again = loaded();
+  let back = false;
+  loaded().then(() => { back = true; });
   [...d.querySelectorAll('#langlist button')].find(b => b.getAttribute('lang') === pick)?.click();
   out.chosen = pref('language') === pick || JSON.parse(localStorage.getItem('boulder-clicker/prefs') || '{}').language === pick;
-  out.reloaded = await Promise.race([again.then(() => true), sleep(6000).then(() => false)]);
+  out.reloaded = await within(() => back, 6000);
   // The page's `load` does not wait for its modules' top-level awaits, and
   // lang.js awaits the language's file before it writes the page's tag.
-  for (let i = 0; i < 60 && f.contentDocument?.documentElement.lang !== pick; i++) await sleep(50);
+  await within(() => f.contentDocument?.documentElement.lang === pick, 3000);
   out.after = f.contentDocument?.documentElement.lang;
   return out;
 }
@@ -90,9 +101,9 @@ export const TESTS = [
     try {
       await first;
       const w = f.contentWindow, d = f.contentDocument;
-      for (let i = 0; i < 80 && !w.__state; i++) await sleep(50);
+      await within(() => w.__state, 4000);
       w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
-      await sleep(100);
+      await within(() => seen(d.getElementById('held')), 2000);
       o = await walk(d, f, loaded);
     } finally {
       f.remove();
@@ -113,7 +124,7 @@ export const TESTS = [
     try {
       await first;
       const d = f.contentDocument;
-      for (let i = 0; i < 40 && !d.getElementById('playlabel').textContent; i++) await sleep(50);
+      await within(() => d.getElementById('playlabel').textContent, 2000);
       const here = d.documentElement.lang;
       const link = d.getElementById('langfoot');
       foot = `${link.textContent} ${link.getAttribute('lang')}`;

@@ -7,7 +7,7 @@
 // sim, are the node tier's (test/after-boards.test.mjs).
 
 import { S } from '../state.js';
-import { newRun, settle, sleep, raf, ok, panel, point, canvas } from './kit.js';
+import { newRun, settle, until, raf, ok, panel, point, canvas } from './kit.js';
 import { AFTER_CARDS, P } from '../config.js';
 import { shopOf } from '../pages.js';
 import { support } from '../after/union.js';
@@ -52,7 +52,7 @@ export const TESTS = [
     for (const key of ['after-build-mill', 'after-build-chipper']) {
       const was = { rows: rowsNow() };
       tiles('shack').find(b => b.dataset.key === key)?.click();
-      await sleep(60);
+      await until(() => bought(key, was));
       if (!bought(key, was)) missed.push(key);
     }
     // Every station standing (the setup the rest is not about), then each
@@ -72,7 +72,7 @@ export const TESTS = [
         const key = b.dataset.key;
         const was = { rows: rowsNow() };
         b.click();
-        await sleep(40);
+        await until(() => bought(key, was));
         if (!bought(key, was)) missed.push(key);
       }
     }
@@ -116,7 +116,7 @@ export const TESTS = [
     await settle(0.2);
     const s = toScreen(b.x + b.w / 2, b.y + b.h / 2);
     point('pointermove', r.left + s.x, r.top + s.y, 0);
-    await sleep(250);
+    await until(() => openBoard() === 'after-shack' && canvas().style.cursor === 'pointer');
     const open = openBoard(), cursor = canvas().style.cursor;
     // The wheel pans the shack out of the window: its board goes, as the yard's do.
     for (let k = 0; k < 6; k++) { canvas().dispatchEvent(new WheelEvent('wheel', { deltaY: 1200, bubbles: true, cancelable: true })); await raf(); }
@@ -141,13 +141,13 @@ export const TESTS = [
     window.__look(b.x + b.w / 2 - S.viewW / 2);
     await settle(0.3);
     const press = async at => {
-      const s = toScreen(at[0], at[1]);
+      const s = toScreen(at[0], at[1]), n = saw().n;
       point('pointermove', r.left + s.x, r.top + s.y, 0);
       await raf();
       const cursor = canvas().style.cursor;
       point('pointerdown', r.left + s.x, r.top + s.y);
       point('pointerup', r.left + s.x, r.top + s.y);
-      await sleep(60);
+      await until(() => saw().n !== n);
       return cursor;
     };
     const saw = () => window.__afterRoster().find(q => q.job === 'sawyer');
@@ -170,8 +170,9 @@ export const TESTS = [
     const obj = document.getElementById('objective'), raise = document.getElementById('raise');
     const below = { obj: obj.classList.contains('away'), raise: raise.classList.contains('away') };
     await upThere();
-    // The fade is the stylesheet's, on the wall's clock, not the game's.
-    await sleep(800);
+    // The fade is the stylesheet's, on the wall's clock, not the game's: wait
+    // for both to have gone all the way out.
+    await until(() => +getComputedStyle(obj).opacity === 0 && (raise.hidden || +getComputedStyle(raise).opacity === 0));
     const up = { obj: obj.classList.contains('away'), raise: raise.classList.contains('away'),
                  seen: +getComputedStyle(obj).opacity, raiseSeen: raise.hidden ? 0 : +getComputedStyle(raise).opacity };
     window.__view('yard');
@@ -197,14 +198,14 @@ export const TESTS = [
       const q = window.__afterRoster().find(o => o.job === 'sawyer');
       const s = toScreen((q.less[0] + q.more[0]) / 2, q.less[1]);
       point('pointermove', r.left + s.x, r.top + s.y, 0);
-      await sleep(250);
       const t = document.getElementById('tip');
+      await until(() => t && !t.hidden && t.textContent.trim());
       return t && !t.hidden ? t.textContent.trim() : '';
     };
     const stalled = await hover();
     window.__afterGrant({ grovelogs: 3 });
     point('pointermove', r.left + 4, r.top + 4, 0);
-    await sleep(100);
+    await until(() => { const t = document.getElementById('tip'); return !t || t.hidden; });
     const working = await hover();
     window.__actsOn(null);
     return [

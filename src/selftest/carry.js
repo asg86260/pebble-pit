@@ -1,6 +1,6 @@
 // Picking a body up and putting it down again.
 
-import { sleep, newRun, settle, state, ok, point, run, runUntil, put } from './kit.js';
+import { newRun, settle, state, ok, point, run, runUntil, put } from './kit.js';
 
 export const TESTS = [
 
@@ -124,10 +124,13 @@ export const TESTS = [
       const w = state().workerPos.find(p => p[0] === tag).split(':')[1].split(',').map(Number);
       point('pointerdown', ...scr(w[0] + 9, w[1] + 9), 2, 2);
       point('pointermove', ...scr(w[0] + 9, w[1] + 9), 3, 0);
+      // A beat on the game's clock, which the hand's trail is timed by
+      // (hands.js, throwVel): the second move, and the let-go after it, read
+      // as a hand come to rest.
       point('pointermove', ...scr(wx, sky), 3, -1);
-      await sleep(180);
+      await settle(0.18);
       point('pointermove', ...scr(wx, sky), 3, -1);
-      await sleep(180);
+      await settle(0.18);
       point('pointerup', ...scr(wx, sky), 0, 2);
       for (let i = 0; i < 80; i++) {
         run(0.1);

@@ -7,7 +7,7 @@
 // this is the pointer and the page. 3 groups, in the order they have always
 // run in -- see src/selftest.js, which is where the order lives.
 
-import { sleep, newRun, settle, state, buildShopFromTest, ok, run, runUntil, raf, canvas, point, touch, finger, P } from './kit.js';
+import { newRun, settle, state, buildShopFromTest, ok, run, runUntil, raf, canvas, point, touch, finger, P } from './kit.js';
 import { ARM_LENGTH, ARM_SWING } from '../config.js';
 
 const phone = on => window.__coarse(on ? true : null);
@@ -81,7 +81,6 @@ export const TESTS = [
     played();
     const paid = state();
     newRun();
-    await sleep(300);
     return [
       ok(s.casinoOpen, 'the bench row builds it', `casino at ${s.casinoX}`),
       ok(rows.length === 0, 'and it has no rows on any board', rows.map(r => r.key).join(',')),
@@ -135,7 +134,6 @@ export const TESTS = [
     touch('touchend', canvas(), ax, ay - 400);
     phone(false);
     newRun();
-    await sleep(300);
     return [
       ok(said, 'the touch on the arm is claimed at touchstart, so the platform never scrolls it'),
       ok(holding.holding && holding.throttle > 0.9 && holding.pot && holding.pot.stake > 0, 'the finger dragging the arm down pours', `throttle ${holding.throttle}, ${holding.pot && holding.pot.stake}`),
@@ -159,7 +157,6 @@ export const TESTS = [
     touch('touchend', canvas(), sx, sy);
     phone(false);
     newRun();
-    await sleep(300);
     return [
       ok(!idle.letting && !idle.pot, 'a click on the empty sign does nothing'),
       ok(!signSaid, 'and a finger on it is the platform\'s to scroll')
