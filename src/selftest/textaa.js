@@ -16,7 +16,7 @@
 // same frame with its root's `dark` turned: the palette is CSS tokens, so a
 // class is the whole of the change for the words.
 
-import { ok, sleep } from './kit.js';
+import { ok, raf } from './kit.js';
 import { S } from '../state.js';
 import { TEXT_FLOOR, TEXT_AA, TEXT_AA_LARGE, TEXT_LARGE, TEXT_LARGE_BOLD } from '../config.js';
 import { LANGS } from '../lang.js';
@@ -31,9 +31,11 @@ const SCENES = ['boards', 'bench', 'benchdeep', 'quarryboard', 'farmboard', 'hou
 // The dev panel and the scene bench never ship.
 const NOT_SHIPPED = '#dev, #scenes, .devonly, script, style, noscript, canvas, svg, textarea, option';
 
+// A frame's own fact, a drawn frame at a time up to `ms` (the ceiling only
+// when to give up): the frame boots on its own clock, so nothing is turned.
 const until = async (fn, ms = 20000) => {
   const t0 = performance.now();
-  while (!fn() && performance.now() - t0 < ms) await sleep(50);
+  while (!fn() && performance.now() - t0 < ms) await raf();
   return fn();
 };
 async function frame(src, w, h) {

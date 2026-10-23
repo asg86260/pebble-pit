@@ -1,6 +1,6 @@
 // Putting people to work, taking them off again, and startling a bird.
 
-import { sleep, state, ok, point, onScreen, hoverBench, run, haveRock, put } from './kit.js';
+import { until, state, ok, point, onScreen, hoverBench, run, haveRock, put } from './kit.js';
 
 export const TESTS = [
   ['a worker put on the rock works it', async () => {
@@ -40,7 +40,7 @@ export const TESTS = [
     await hoverBench();
     const on = state();
     const back = await put('mine', 'less');
-    await sleep(200);
+    await until(() => { const s = state(); return s.rockhands === 0 && s.haulers === 1; });
     const off = state();
     const tooMany = await put('mine', 'more') && await put('mine', 'more');
     const capped = state();

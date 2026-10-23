@@ -1,7 +1,7 @@
 // The crew at work: carried and shaken, the cut, the stops, the shovelling,
 // the dance, and the headcount badge.
 
-import { sleep, newRun, settle, state, buildShopFromTest, refreshShopFromTest, ok, shop,
+import { until, newRun, settle, state, buildShopFromTest, refreshShopFromTest, ok, shop,
   point, onScreen, hoverBench, hoverStation, hoverAway, run, runUntil, canvas, put } from './kit.js';
 import { P, WORKER, SEAT_PIP, GARAGE_W, CART_W, CART_H, COUNTER_TOP_DROP, COUNTER_PAIR_GAP, COUNTER_ROW, COUNTER_ROWS } from '../config.js';
 import { S } from '../state.js';
@@ -291,7 +291,7 @@ export const TESTS = [
     // under it, and the section with nobody is "build".
     window.__give(600);                      // the price of the plots
     window.__build();
-    await sleep(50);
+    await until(() => [...shop().children].some(el => el.dataset.sect === 'build'));
     const idle = [...shop().children].find(el => el.dataset.sect === 'build');
     const idleBadge = idle && idle.querySelector('.badge');
     // The hut's sheet has one group, so there is no heading for the count to
@@ -441,10 +441,10 @@ export const TESTS = [
     const arrived = pip(3);
 
     const click = async i => {
-      const [x, y] = onScreen(...q().pips[i]);
+      const [x, y] = onScreen(...q().pips[i]), n = state().quarriers;
       point('pointerdown', x, y);
       point('pointerup', x, y);
-      await sleep(150);
+      await until(() => state().quarriers !== n);
     };
     await click(4);
     const five = state().quarriers;

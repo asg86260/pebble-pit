@@ -7,7 +7,7 @@
 // with a pad this file holds, and the page's own frame (main.js) reads it
 // exactly as it reads a real one. Nothing here sets the focus by hand.
 
-import { ok, raf, run, runUntil, sleep, haveBench, state } from './kit.js';
+import { ok, raf, run, runUntil, until, haveBench, state } from './kit.js';
 import { S } from '../state.js';
 import { P, PAD_PAGE_CELL, PAD_GLIDE_SPEED } from '../config.js';
 
@@ -103,7 +103,7 @@ export const TESTS = [
       const before = S.stored;
       await press('a');
       window.__finish();
-      await sleep(100);
+      await until(() => S.stored < before);
       const spent = S.stored < before;
       await press('b');
       return [

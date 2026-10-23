@@ -1,7 +1,7 @@
 // The game opening: the bench arriving, the canvas, the ground line, and a
 // rock coming in over the top of the window.
 
-import { sleep, state, ok, canvas, point, onScreen, hoverBench, run, runUntil, raf,
+import { until, state, ok, canvas, point, onScreen, hoverBench, run, runUntil, raf,
          pressRaise, raiseEl, haveRock, asScreen, shop } from './kit.js';
 
 export const TESTS = [
@@ -26,7 +26,7 @@ export const TESTS = [
   ['the bench arrives when there is something to buy', async () => {
     const bare = state();
     window.__give(100);
-    for (let i = 0; i < 30 && !state().benchCall; i++) await sleep(40);
+    await until(() => state().benchCall, 30);
     await raf();
     const called = state();
     const hit = await pressRaise();
@@ -34,13 +34,13 @@ export const TESTS = [
     const built = runUntil(() => state().seenBench, 90);
     const earned = state();
     await hoverBench();                       // reading the board marks it read
-    await sleep(150);
+    await until(() => [...shop().children].some(el => el.dataset.sect));
     // Taken off the board while it is open rather than typed in here: a named
     // heading turns a check about reading into a check about one word.
     const shown = [...shop().children].filter(el => el.dataset.sect)
       .map(el => el.dataset.sect);
     point('pointermove', 4, 4, 0);
-    await sleep(250);
+    await until(() => { const s = state(); return !s.boardOpen && s.benchMark !== 'flag'; });
     const read = state();
     return [
       ok(!bare.seenBench, 'no bench on a game that cannot afford anything'),
@@ -76,7 +76,7 @@ export const TESTS = [
     };
     window.__snatch({ played: true });       // the portal down, for the view
     window.__give(100);
-    for (let i = 0; i < 30 && !state().benchCall; i++) await sleep(40);
+    await until(() => state().benchCall, 30);
     const yardShown = await settle(true);
     const went = window.__view('deep');
     const deepShown = await settle(false);
