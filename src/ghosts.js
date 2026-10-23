@@ -49,7 +49,7 @@ export const ruinX = () => snap(houseX() + FINALE_HOUSE_W * P / 2 - WORKER / 2);
 // flight back, and so on up ACT_STAIR_FLIGHTS to the bank, then along the
 // bank into the gateway, the threshold. The drawing's treads are the cells
 // under it (render/gates.js, `stairTreads`), so a body walks on cloud.
-let walkMemo = null, walkFor = null;
+let walkMemo = null, walkFor = null;  // cache: keyed by the stair's foot and the ground line (`walkFor`)
 export function stairWalk() {
   const x0 = tearX(), g = snap(S.groundY);
   if (walkMemo && walkFor === `${x0},${g}`) return walkMemo;

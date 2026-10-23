@@ -107,7 +107,7 @@ for (const id of ['slotsback', 'recordback', 'settingsback', 'conflictback']) do
 // Play waits for the store to take every write made here, and for the veil to
 // reach white: play.html comes up out of the same white (main.js), so the load
 // between the two documents is the middle of one fade.
-let leaving = false;
+let leaving = false;  // page: the title page on its way out
 async function play() {
   if (leaving) return;
   leaving = true;

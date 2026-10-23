@@ -35,6 +35,7 @@ import { dropLift } from './cutscene.js';
 import { smoothstep as ease } from './motion.js';
 import { actPlace, placeOpen, isActView } from './acts.js';
 import { portalEnd } from './portals.js';
+import { held as heldState } from './reset.js';
 
 // Each farther place and the nearer one it is reached from: the deep and the
 // afterlife off the yard, hell off the deep.
@@ -66,7 +67,7 @@ function deepZoom(rest = false) {
 // one thing (`__deepZoom`): the deep re-takes its zoom every frame, so a
 // setZoom from outside lasts one frame.
 // Null lets go. Never saved, and nothing in the game sets it.
-let held = null;
+let held = null;  // page: a dev look's hold on the deep's zoom (`__deepZoom`)
 export const holdDeepZoom = k => { held = k; if (S.view === 'deep') setZoomNow(deepZoom()); };
 // The hold on the deep's zoom let go, for a scene stood up afresh
 // (scenesheet.js): one stood in the middle of a held look otherwise kept it,
@@ -154,13 +155,13 @@ export const deepRestTop = () => deepFloor() + DEEP_FLOOR_MARGIN - S.H / (yardZo
 // framed. An edge, read once by `arrived` (cutscene.js, `cameraCues`): the
 // first trip down's scene waits on it, and a straight cut there (`setView`,
 // for scenes and checks) is not a trip.
-let landed = false;
+let landed = false;  // held: an arrival not yet read
 export function arrived() { const was = landed; landed = false; return was; }
 
 // A glide held where it is, for a scene that wants a shot of its middle
 // (scenes.js, `glideAt`): the yard runs on, the glide's own clock does not.
 // Let go by the next glide or the next framing.
-let posed = false;
+let posed = false;  // held: a glide held for a shot
 export const poseGlide = () => { posed = true; };
 
 // The way down is the wizards' portal (DESIGN.md, "Two crews and a
@@ -175,7 +176,7 @@ export const canGoDown = () => !!S.portalOpen;
 // The rise that rides up the road (actbeats.js) holds the yard's sky where
 // the yard was left too, while the camera is still in the yard: the yard's
 // clouds drop away below with its ground rather than ride up the glass.
-let yardCam = null, skyHeld = false;
+let yardCam = null, skyHeld = false;  // held: the yard's window, kept while the deep is on screen
 const keepYard = () => { yardCam = { x: S.camX, y: S.camY, w: S.viewW, h: S.viewH }; };
 export function holdSky(on) {
   if (on && !skyHeld && S.view === 'yard') keepYard();
@@ -199,7 +200,7 @@ function backToYard() {
 // glides, so the picture frozen for one (render.js) is never another's. This
 // session's only: a reload mid-glide lands in the nearer place, where
 // `S.view` already is.
-let through = null, via = null, glides = 0, landX = null;
+let through = null, via = null, glides = 0, landX = null;  // held: the glide under way; `glides` only counts up, so a frozen picture is never another's
 export const glideNo = () => glides;
 // The act portal the glide under way goes by, or null (heaven's gates stand
 // open for it, portals.js).
@@ -262,8 +263,17 @@ export const goUp = () => { if (S.view === 'deep') start('yard'); };
 // the glide started.
 export const travel = (v, key, x = null) => start(v, key, x);
 // The last arrival by an act portal, read once: the place and the portal.
-let arrivedVia = null;
+let arrivedVia = null;  // held: an arrival not yet read
 export function arrivedThrough() { const was = arrivedVia; arrivedVia = null; return was; }
+// What a page opened fresh has: no glide, no arrival waiting to be read and
+// no yard window kept. `glides` is left counting up, so a frozen picture is
+// never taken for a later glide's.
+heldState('view', () => {
+  landed = false; posed = false;
+  through = null; via = null; landX = null;
+  yardCam = null; skyHeld = false;
+  arrivedVia = null;
+});
 
 // Over into the place next to this one with the camera left exactly where it
 // is: the rise riding up the road out of the yard into the afterlife, where

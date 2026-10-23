@@ -58,7 +58,7 @@ for (const dir of [-1, 1]) if (arrows[dir]) onTap(arrows[dir], () => hop(dir));
 
 // Seated every frame from the view, written only when something changes:
 // which way there is more, which station it is, where the sky sits.
-let wore = { [-1]: null, [1]: null }, shown = null, putY = null;
+let wore = { [-1]: null, [1]: null }, shown = null, putY = null;  // page: what the hop arrows' DOM shows, compared against the yard every frame
 export function refreshHop() {
   const want = coarse() && !S.paused;
   if (want !== shown) { shown = want; hopEl.hidden = !want; }

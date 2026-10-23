@@ -52,7 +52,7 @@ export const SITES = Object.keys(SITE_JOB);
 // The stations that are sites, and the ground each stands on, from their rows
 // in stations.js: works.js is imported by every board and cannot import the
 // station table back, so the table hands itself in.
-let stationBox = () => null;
+let stationBox = () => null;  // page: wiring stations.js hands in at load
 export function registerSites(sites, box) {
   for (const [key, job] of sites) {
     if (!(key in SITE_JOB)) SITES.push(key);
@@ -101,7 +101,7 @@ export const DOWN_THERE = new Set(['pods', 'deep', ...PARTY_IDS]);
 // Where a station itself stands, for a body walking to a work that is not a
 // building going up somewhere new. Wired in game.js to the same `stationFoot`
 // the boards use, so there is no second answer to disagree with it.
-let footHook = () => null;
+let footHook = () => null;  // page: wiring game.js hands in at load
 export const setFoot = fn => { footHook = fn; };
 
 export const siteX = site => {
@@ -119,7 +119,7 @@ export const siteX = site => {
 // How many pairs of hands are at a site this frame. crew.js sets it; until it
 // does, nothing is anywhere, which is right for a check that has not built a
 // yard.
-let handsHook = () => 0;
+let handsHook = () => 0;  // page: wiring crew.js hands in at load
 export const setHands = fn => { handsHook = fn; };
 export const handsAt = site => Math.max(0, handsHook(site) | 0);
 
@@ -127,7 +127,7 @@ export const handsAt = site => Math.max(0, handsHook(site) | 0);
 // a work, not just a site, and named by the work's `id`, since a row queued
 // twice is two works under one key. Null until crew.js wires it, in which
 // case the site total is shared out.
-let handsOnHook = null;
+let handsOnHook = null;  // page: wiring crew.js hands in at load
 export const setHandsOn = fn => { handsOnHook = fn; };
 export const handsOn = (site, id) =>
   handsOnHook ? Math.max(0, handsOnHook(site, id) | 0) : null;
@@ -135,17 +135,17 @@ export const handsOn = (site, id) =>
 // A build starting makes spare hands into builders and a build landing makes
 // them spare again; both have to happen on the frame it changes or the site
 // stands there with nobody at it.
-let staffHook = () => {};
+let staffHook = () => {};  // page: wiring crew.js hands in at load
 export const setStaff = fn => { staffHook = fn; };
 
 // Who lays the ground when the order the yard was bought in changes: this file
 // knows what happened and nothing about where anything stands. Wired in
 // game.js, the one file that imports both.
-let groundHook = () => {};
+let groundHook = () => {};  // page: wiring game.js hands in at load
 export const setGround = fn => { groundHook = fn; };
 
 // Who says so when one lands. Wired in game.js.
-let doneHook = () => {};
+let doneHook = () => {};  // page: wiring game.js hands in at load
 export const setDone = fn => { doneHook = fn; };
 
 // --- the rows themselves ------------------------------------------------------
@@ -154,7 +154,7 @@ export const setDone = fn => { doneHook = fn; };
 // to do when it finishes. Each board hands its own list in at the bottom of
 // its own file: works.js is imported *by* the boards, so it cannot import
 // them back.
-let ROWS = [];
+let ROWS = [];  // page: wiring each board hands in at load; code, not the yard
 export const registerRows = list => { ROWS = ROWS.concat(list); };
 export const rowFor = key => ROWS.find(u => u.key === key) || null;
 
@@ -248,7 +248,7 @@ const SITE_BOX = { lab: () => lab };
 // house.js, handed in). `ahead` is how many houses are in the line before
 // it: a second house queued behind the first stands on the room after the
 // first's, not on the same one.
-let risingRooms = () => [];
+let risingRooms = () => [];  // page: wiring house.js hands in at load
 export const setRooms = fn => { risingRooms = fn; };
 
 // `which` names one particular work on a yard holding several: the fence, the

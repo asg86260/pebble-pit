@@ -28,6 +28,7 @@ import { HATS } from './sprites.js';
 import { JOB } from './jobs.js';
 import { stockOf } from './kit.js';
 import { CATALOG } from './catalog.js';
+import { held } from './reset.js';
 
 // --- the items ---------------------------------------------------------------------
 // Every item a row: `key` (what the save holds), `name` (its message), and
@@ -246,12 +247,13 @@ export function latchOpened() {
   }
   if (got.length) S.wardOpened = [...had, ...got];
 }
-let latched = -Infinity;
+let latched = -Infinity;  // held: when the locks were last read
 export function stepWardrobe(t) {
   if (t >= latched && t - latched < NOTICE_TICK_S * 1000) return;
   latched = t;
   latchOpened();
 }
+held('wardrobe-latch', () => { latched = -Infinity; });
 
 // --- the outfits -------------------------------------------------------------------
 // The two of them by the part each plays: `you`, the survivor who digs and
