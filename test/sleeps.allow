@@ -2,7 +2,7 @@
 # This list only shrinks: wait on a fact (until, quiet in kit.js) and lower the count.
 src/selftest.js 1
 src/selftest/afterboards.js 7
-src/selftest/boards.js 73
+src/selftest/boards.js 2
 src/selftest/boardwords.js 2
 src/selftest/carry.js 2
 src/selftest/casino.js 3
