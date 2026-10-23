@@ -58,7 +58,7 @@ export const houseStands = () => !!S.retired || !!(S.finale && S.finale.house);
 // from the left wall and up from the ground line; `up` pieces are set from
 // the scaffold's plank; `off` pieces are the scaffold taken down, naming the
 // piece they take away.
-let LAYOUT = null;
+let LAYOUT = null;  // cache: worked out from config alone
 export function pieces() {
   if (LAYOUT) return LAYOUT;
   const out = [];

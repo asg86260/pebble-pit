@@ -7,6 +7,7 @@ import { SOLID, footing, solidNear } from '../route.js';
 import { S, farm, floor, pit, quarry } from '../state.js';
 import { DROPS, raining } from './band.js';
 import { overPitMouth, rockLeft } from '../world.js';
+import { held } from '../reset.js';
 
 // --- the layer -----------------------------------------------------------------------
 // One layer, one depth per column, and each column's mess knows what kind it
@@ -75,7 +76,7 @@ export const poopCols = () => cols('poop');
 // One question, asked by every claimant through `mayShift`, so a hauler, a
 // shovel and a roomba cannot disagree about it. Memoized on the frame: the
 // drops are thousands and every body asks.
-let openAt = -1, openWas = true;
+let openAt = -1, openWas = true;  // held: a memo keyed by S.tick alone, which a new yard starts again
 export function muckOpen() {
   if (openAt === S.tick) return openWas;
   openAt = S.tick;
@@ -297,7 +298,7 @@ const loose = { owed: 0 };
 // Frame-grained on purpose. The crew are stepped before the sky is, so every
 // body in a pass sees the same figure; a number that moved mid-pass would
 // mean the first body to ask cleared the mess out from under the sixth.
-let tallied = null;
+let tallied = null;  // held: a memo keyed by S.tick, which a new yard starts again
 
 // A cell written in place changes the world without changing either key, and
 // every reader until the next tick gets the old answer. The frame lets go of
@@ -305,6 +306,7 @@ let tallied = null;
 // tags, a snapshot -- counts what the rain and the shovels left after the
 // crew asked; the __muckSet/__poopSet hooks call it for the same reason.
 export const retally = () => { tallied = null; };
+held('smog-memos', () => { openAt = -1; openWas = true; tallied = null; });
 
 function tally() {
   const stacks = KINDS.map(k => cols(k));

@@ -33,7 +33,7 @@ const BIRD_TAIL = P * 90;    // how far off either side of the view a lot may st
 
 export const CLOUDS = [];
 export const BIRDS = [];
-let nextBirds = 0;
+let nextBirds = 0;  // held: when the next birds come
 
 // The band of sky worth putting anything in: below the top of the view and
 // above the height the rock is allowed to reach, so nothing up here ever
@@ -92,6 +92,7 @@ export function swell() {
 import { murk } from './smog/band.js';
 import { GUESTS } from './skyguests.js';
 import { skyCam } from './view.js';   // the yard's window, even with the deep on screen
+import { held } from './reset.js';
 export { murk };
 // One cloud's murk: the sky's, less what a balloon drawing it in has paled it
 // (`drawn`, eased by balloon.js). Picture only; the count is the sky's.
@@ -307,11 +308,12 @@ function acrossView(s) {
 // that is nowhere near the new one, and every cloud in it is wound back into
 // the strip on the first frame -- which is the whole sky visibly rearranging
 // itself a moment after the page comes up.
-let toSpread = true;
+let toSpread = true;  // held: a sky to fill on the next frame
 export function seedWeather() {
   if (!CLOUDS_ON) { CLOUDS.length = 0; return; }
   toSpread = true;
 }
+held('weather-timers', () => { nextBirds = 0; toSpread = true; });
 
 // A new run is a new sky. Only from the yard's own reset, never from the
 // layout: the layout runs on every resize, and a sky cleared there is a

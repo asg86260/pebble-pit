@@ -22,6 +22,7 @@ import { pitCapacity } from './pit.js';
 import { now } from './clock.js';
 import { YARD_JOBS } from './jobs.js';
 import { tellSteam } from './achievements.js';
+import { held } from './reset.js';
 
 // --- the catalog ---------------------------------------------------------------
 // The names and notes are catalog.js's; here is how each is earned, a
@@ -133,7 +134,7 @@ export function hushNotices() { S.wonShown = S.wonSeq | 0; }
 
 // --- the sampler ----------------------------------------------------------------
 
-let asked = 0;
+let asked = 0;  // held: when the sampler last asked
 
 // Asked twice a second, not sixty times.
 export function stepNotices(t) {
@@ -209,7 +210,8 @@ export function noteCatch(ch) {
 // and nothing is saved -- so it stands outside the catalog. Due once each
 // time the yard falls behind, and due again only after it has caught up or
 // been answered, so a yard that stays behind is not told every beat.
-let cloudBehind = false;
+let cloudBehind = false;  // held: whether this yard has been told it is behind on another device
+held('notices', () => { asked = 0; cloudBehind = false; });
 export function cloudNoticeDue(state) {
   const due = state === 'behind' && !cloudBehind;
   cloudBehind = state === 'behind';

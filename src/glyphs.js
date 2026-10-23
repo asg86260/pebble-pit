@@ -189,7 +189,7 @@ export const GLYPH_OF = {
 // A row's drawing: its own, else the drawing of the station that sells it
 // (`inheritGlyph`, wired by the shop, which knows the rows and the stations),
 // else the crate.
-let inherited = () => null;
+let inherited = () => null;  // page: wiring the shop hands in at load; code, not the yard
 export const inheritGlyph = fn => { inherited = fn; };
 export const glyphNameOf = key => (GLYPH_OF[key] || [])[0] || inherited(key) || 'crate';
 export const glyphFor = key => GLYPHS[glyphNameOf(key)] || GLYPHS.crate;

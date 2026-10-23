@@ -111,7 +111,7 @@ function afterLight(l) {
   return AFTER_KNOTS[AFTER_KNOTS.length - 1][1];
 }
 
-let mode = 'yard';
+let mode = 'yard';  // cache: the layer being drawn, set by render.js each frame and put back to 'yard'
 // Which map the next fills go through (render.js, a layer at a time).
 export function inkMode(m) { if (m) mode = m; return mode; }
 // Whether black is being drawn light: the turned maps, where a `darken`

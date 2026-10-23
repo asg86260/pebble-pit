@@ -17,7 +17,7 @@ import { msg } from './lang.js';
 const listed = () => metEntries(deepOn());
 // The entry open on the right, kept across openings so the page comes back
 // where it was left.
-let chosen = null;
+let chosen = null;  // page: the index page's entry picked
 
 // The front's button carries a dot while any entry met has never been opened.
 export const indexFresh = () => listed().some(unread);
