@@ -42,7 +42,7 @@ const seeth = (c, r) => Math.abs((c * HASH_C) ^ (r * HASH_R)) % 997;
 // each ramp's rungs packed once (`packed`): the byte order is the machine's,
 // and every machine a browser runs on is little-endian, so the word's low
 // byte is red.
-let img = null, octx = null, buf = null, words = null;
+let img = null, octx = null, buf = null, words = null;   // cache: a scratch canvas, sized up as needed and written whole each paint
 const packsIn = new Map();   // a WeakMap of ramps for each map (ink.js)
 function packed(ramp) {
   let packs = packsIn.get(inkMode());
@@ -76,7 +76,7 @@ function surface(cols, rows) {
 // hash and its patch's (`seeth` is the xor of a column's part and a row's),
 // and the column and lift its stars are carried to and their brightening
 // (`shift`), kept between frames.
-let cols4 = null;
+let cols4 = null;   // cache: scratch columns, every one written by each paint before it is read
 function colScratch(n) {
   if (!cols4 || cols4.s.length < n)
     cols4 = { s: new Float64Array(n), c: new Float64Array(n), s2: new Float64Array(n), c2: new Float64Array(n),
@@ -121,7 +121,7 @@ const THIN_OF = byHash(h => (h >> 5) % 16);
 // `globalThis.__pinInk` is the palette check's read frame: the stars are
 // stepped up their ramp, not breathed, so the cap is asked of what is drawn.
 // Set by `paintAbyssField` for one paint, and by `rungOf` for one star.
-let FADE = false, STAR_A = 1;
+let FADE = false, STAR_A = 1;   // cache: set from its arguments by every paint, before it is read
 const VEIL_OF = byHash(h => h % ABYSS_VEIL_EVERY);
 const JITTER_OF = byHash(h => h % 3 - 1);
 const PATCH_OF = byHash(h => h % 10);

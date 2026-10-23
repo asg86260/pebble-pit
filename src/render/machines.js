@@ -18,6 +18,7 @@ import { walkY } from '../world.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
 import { smoothstep as ease } from '../motion.js';
+import { held } from '../reset.js';
 
 // --- the machines ---------------------------------------------------------------
 // Each machine moves differently, which is what makes three black blocks read
@@ -85,7 +86,8 @@ const seg = (v, a, b) => Math.min(1, Math.max(0, (v - a) / (b - a)));
 const cycleIn = ph => RAM_BORE_IN * (ph < RAM_BORE_PUSH ? ease(seg(ph, 0, RAM_BORE_PUSH))
                                    : ph < RAM_BORE_BACK ? 1
                                    : 1 - ease(seg(ph, RAM_BORE_BACK, 1)));
-let boreFrom = null, boreStop = 0, boreLeft = 0, boreLast = 0;
+let boreFrom = null, boreStop = 0, boreLeft = 0, boreLast = 0;   // held: the ram's bore
+held('machines-bore', () => { boreFrom = null; boreStop = 0; boreLeft = 0; boreLast = 0; });
 function bore() {
   const m = machine('ram'), t = now();
   if (m && m.bought && t - (m.workedAt || 0) <= MACHINE_IDLE_MS) {

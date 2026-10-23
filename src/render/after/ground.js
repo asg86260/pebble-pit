@@ -22,7 +22,7 @@ const hsh = (a, b) => {
 
 // Each column's billow over the lip's foot, and how far its underside hangs,
 // in cells: fixed by the seed, so the lip never moves but with the camera.
-let tops = null, hangs = null;
+let tops = null, hangs = null;   // cache: keyed by the column count, from the fixed seed
 function shape(cols) {
   if (tops && tops.length === cols) return;
   const L = AFTER_LIP;

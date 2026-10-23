@@ -27,6 +27,7 @@ import { ctx } from './ctx.js';
 import { drawCoin, rule } from './marks.js';
 import { drawGrid } from './ground.js';
 import { rising as risingAt, withRise } from './rise.js';
+import { held } from '../reset.js';
 
 // --- the sign -----------------------------------------------------------------
 // The one place in this yard with writing on it, and it has earned it: every
@@ -193,7 +194,7 @@ const chaseDir = () => S.holding && pourRate() < 0 ? -1 : 1;
 
 // The chase's step is counted, not read off the clock, so a step that
 // changes length with the dust runs on rather than jumping.
-let chaseAt = 0, chaseN = 0;
+let chaseAt = 0, chaseN = 0;   // held: the chase's count
 function chaseStep(t, ms) {
   if (t - chaseAt >= ms) { chaseN += Math.floor((t - chaseAt) / ms); chaseAt = t; }
   return chaseN;
@@ -201,7 +202,8 @@ function chaseStep(t, ms) {
 // How fast the dust is moving through the funnel: grains landing in the
 // bowl a second while pouring, grains leaving it a second while draining,
 // read off the bowl's count between frames and smoothed a little.
-let rateAt = 0, rateN = 0, rate = 0;
+let rateAt = 0, rateN = 0, rate = 0;   // held: the funnel's eased rate
+held('casino-lights', () => { chaseAt = 0; chaseN = 0; rateAt = 0; rateN = 0; rate = 0; });
 function grainsASecond(t) {
   const n = hopperN();
   if (rateAt && t > rateAt) {
@@ -220,7 +222,7 @@ const PEG_HIT = 'plain';          // how a peg shows a hit: 'ring' or 'plain'
 
 // every cell round the border of the sign, in order, so a light walking the
 // list walks the edge
-let ring = null, ringKey = '';
+let ring = null, ringKey = '';   // cache: keyed by the sign's width and height
 function ringCells(w, h) {
   const key = `${w}x${h}`;
   if (ring && ringKey === key) return ring;

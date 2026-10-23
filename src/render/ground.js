@@ -23,8 +23,8 @@ export function drawGroundLine() {
 // either side of the hole. Built once per setting and cached: a fillRect with
 // a pattern is one call a frame, where a mark a cell would be a hundred
 // thousand.
-let tileKey = '';
-let tilePat = null;
+let tileKey = '';   // cache: the key of tilePat
+let tilePat = null;   // cache: keyed by tileKey (the ground's texture settings)
 const hash = (c, r) => {
   let h = (Math.imul(c, 374761393) + Math.imul(r, 668265263)) >>> 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177);

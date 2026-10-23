@@ -44,7 +44,7 @@ function eachCell(p, fn) {
 
 // The sheet of finished pieces: how many it holds and whether lit, so it is
 // remade only when either changes.
-let sheet = null, sheetKey = '';
+let sheet = null, sheetKey = '';   // cache: keyed by the finished pieces and whether lit
 function sheetOf(done) {
   const key = `${done.join(',')}|${lit()}`;
   if (sheet && key === sheetKey) return sheet;

@@ -15,7 +15,7 @@ import { S } from '../state.js';
 import { skyGL } from './cloudgl.js';
 import { layerAt } from './frame.js';
 
-let card;   // the card's passes, null with no WebGL2; undefined until asked
+let card;   // page: the WebGL card, the browser's; the card's passes, null with no WebGL2; undefined until asked
 export function cloudCard() {
   if (card === undefined) { try { card = skyGL(); } catch { card = null; } }
   return card;
@@ -41,7 +41,7 @@ export function layerSpan(rate, at, cw, drift = 0) {
 // Every window this frame, worked in one pass on the card: `views` as
 // render/cloudgl.js's `render` takes them. Returns key -> where its cells are
 // in the card's canvas, or null with no card.
-let frameN = 0;
+let frameN = 0;   // page: the page's frame count, only staggers which windows idle
 export function workClouds(views, t, dt) {
   const gl = cloudCard();
   if (!gl || !views.length) return null;

@@ -17,6 +17,7 @@ import { ctx } from '../ctx.js';
 import { fillOnPixels } from '../frame.js';
 import { K, W, PALE, MID, now, clamp01 } from './kit.js';
 import { pathTone } from './cloudsky.js';
+import { held } from '../../reset.js';
 
 // Every fill on whole device pixels, so a thin line never blends into a
 // tone between the four.
@@ -45,7 +46,8 @@ function edge(el, j0, j1, x0, yTop, tone, fill, yBot, skip) {
 // The profile as it stood before a station was ordered, and since when: the
 // puffs under a newly taken ground fade out as its flat line fades in, never
 // popped. Drawing state only.
-let was = null, wasKey = null, changedAt = -1e9;
+let was = null, wasKey = null, changedAt = -1e9;   // held: the profile as the last frame saw it, and since when
+held('floor-was', () => { was = null; wasKey = null; changedAt = -1e9; });
 export function drawFloor() {
   const el = floorProfile(), top = afterFloor(), bot = top + GROUND_PATH.depth * P;
   const j0 = Math.floor((S.camX - afterX0()) / P) - 1;

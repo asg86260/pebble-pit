@@ -233,6 +233,7 @@ this section; the release that switches it on moves these under Unreleased.
 - In the deep on a tall window, the pointer near the top of the glass no longer opens the board of a yard station that is not drawn there (test/gates.test.mjs).
 - On a phone the opening view shows the whole rock instead of cutting off its left side (src/selftest/view.js).
 - On the appearance page, right from the last tile in a row of the grid stays on it instead of jumping the focus to a key at the top of the page (src/selftest/wardrobe.js, the picker by a pad, at 390x844).
+- After a load or a new game the stations' offer flags stand as the new yard has them, and heaven's ground, the serpent's bar and the fang plate start from it, instead of the last yard's raising, fading or breaking off (test/held-state.test.mjs).
 
 ## v0.6.1 — 2026-10-19
 

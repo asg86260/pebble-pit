@@ -34,7 +34,7 @@ const EDGE = 10;         // and how close to the glass it will stand
 const CLEAR = 8;         // the air it keeps between itself and an open board
 
 // the marks down the left of the counter, kept rather than redrawn
-let markCan = null, markKey = '';
+let markCan = null, markKey = '';   // cache: keyed by markKey (the ink, the box and the marks)
 
 // The counter's numbers, remembered: `fmt` is `toLocaleString`, eight
 // microseconds a call, and once the marks are kept it is the entire remaining
@@ -60,7 +60,7 @@ function drawScale(g, x, y) {
 }
 
 // Where the card was last drawn, in screen pixels, for the tip over it.
-let countBox = null;
+let countBox = null;   // cache: where the counter was drawn, set by every frame's drawCount
 export const countRect = () => countBox;
 export const overCount = (sx, sy) => !!countBox && sx >= countBox.x && sx < countBox.x + countBox.w
                                      && sy >= countBox.y && sy < countBox.y + countBox.h;

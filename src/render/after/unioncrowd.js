@@ -46,7 +46,7 @@ const due = (s, r, i) => s * C.rows * C.fill - r - hsh(i, r + 3) * C.luck > 0;
 // When each soul started walking in (or leaving), by row and spot: drawing
 // state only.
 const since = new Map();
-let seenAct = null, lastT = null;
+let seenAct = null, lastT = null;   // cache: keyed by the act (S.after, a new object on a new game or a load) and its clock
 const key = (r, i) => r * 1000 + i;
 function catchUp(s) {
   since.clear();

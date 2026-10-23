@@ -37,7 +37,7 @@ const LIFE = (DEEP_W / P * 2 + W.span) / slowest + W.tailS;
 // nought. Two times' lists are kept, the frame's and the one before it, which
 // the motes ask of in turn.
 const kept = [{ at: NaN, list: [] }, { at: NaN, list: [] }];
-let older = 0;
+let older = 0;   // cache: which of the two time-keyed slots goes next
 export function wavesAt(tS) {
   if (kept[0].at === tS) return kept[0].list;
   if (kept[1].at === tS) return kept[1].list;

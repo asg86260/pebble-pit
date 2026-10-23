@@ -14,7 +14,7 @@ export const GH = NUM_FONT['0'].length;
 // Each glyph's width and where it starts on a sheet, in font pixels: worked
 // out once, so a number written a frame reads two lookups a glyph.
 const GLYPH_W = {}, GLYPH_AT = {};
-let sheetW = 0;
+let sheetW = 0;   // cache: summed once from the fixed font
 for (const ch of CHARS) { GLYPH_W[ch] = NUM_FONT[ch][0].length; GLYPH_AT[ch] = sheetW; sheetW += GLYPH_W[ch]; }
 // The gap before glyph `i` of `str`, in font pixels.
 const gapBefore = (str, i) => (i > 0 && !NUM_FONT_TIGHT.includes(str[i]) ? 1 : 0);
@@ -37,7 +37,7 @@ export const drawable = str => [...String(str)].filter(ch => ch in NUM_FONT).joi
 // at more than one size -- a big blow's number beside the small ones -- so
 // they are let go on the pixel ratio, never on the size: a canvas made
 // afresh a frame is a pause for the collector every few seconds.
-let sheets = new Map(), sheetsDpr = 0;
+let sheets = new Map(), sheetsDpr = 0;   // cache: keyed by size, face and drop, let go on the pixel ratio
 export let sheetsMade = 0;                // test/deep-alloc.test.mjs
 export function sheetOf(px, face, drop) {
   if (sheetsDpr !== S.dpr) { sheets = new Map(); sheetsDpr = S.dpr; }
