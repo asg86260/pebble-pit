@@ -10,6 +10,7 @@
 // has no sign, its `hit` his camp on its stage. Their boards' rows are
 // after/rows.js's (`registerBoard`).
 
+import { held } from '../reset.js';
 import { S } from '../state.js';
 import { P } from '../config.js';
 import { msg } from '../lang.js';
@@ -25,7 +26,7 @@ const mid = () => S.camX + S.viewW / 2;
 // Which act board is up: one at a time, as the yard's own flags are, each
 // row reading and writing its share through an accessor of its own name.
 // This session's, never saved: a reload finds the boards shut.
-let openKey = null;
+let openKey = null; // held: the act board that is up, never saved
 const flag = key => {
   const name = `${key.replace(/-(\w)/g, (_, c) => c.toUpperCase())}BoardOpen`;
   Object.defineProperty(S, name, {
@@ -54,7 +55,8 @@ export const signUp = key => !!openKey && ground(openKey.slice('after-'.length))
 // Held only while that board is up (`flag` lets go of it when it shuts), so a
 // later opening by the hand stands over God again.
 const CROWD = 'after-crowd';
-let crowdAt = null;
+let crowdAt = null; // held: the point the crowd's board was asked over
+held('after-boards', () => { openKey = null; crowdAt = null; });
 export const setCrowdAt = at => { crowdAt = at; };
 
 const NAMES = {

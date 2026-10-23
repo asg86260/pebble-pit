@@ -76,7 +76,7 @@ export const faceY = () => { const f = skyFrame(); return f.gy0 + 9 * f.gc; };
 // (`campMid`), so a row slides as one piece and nothing on it skates. Its top
 // runs from behind his foot forward to the main plane's line. A point on it
 // is { dx, y }: world px across from the middle at y, and world y.
-let stageMemo = null, stageKey = '';
+let stageMemo = null, stageKey = ''; // cache: keyed by the sky frame (horizon, cell, floor)
 export function stage() {
   const f = skyFrame(), G = GOD_STAGE, key = `${f.hor}|${f.h}|${f.floor}`;
   if (stageMemo && key === stageKey) return stageMemo;

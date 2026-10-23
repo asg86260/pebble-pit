@@ -286,7 +286,7 @@ export const closed = key => !!S.after && !AFTER_START_BUILT.includes(key) && !S
 // Which grounds are taken, as a key: the profile is worked out again only
 // when that changes.
 export const sitesKey = () => Object.keys(AFTER_STATIONS).filter(sited).join(',') + (longLine() ? '|line' : '');
-let profile = null, profileKey = null;
+let profile = null, profileKey = null; // cache: keyed by `sitesKey()`
 export function floorProfile() {
   const key = sitesKey();
   if (profile && key === profileKey) return profile;

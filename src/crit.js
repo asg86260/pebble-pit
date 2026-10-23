@@ -30,7 +30,7 @@ export const critEV = () => 1 + critChance() * (critMult() - 1);
 
 // A check forces the roll: null rolls for real, true is always a crit, false
 // never one. Play never touches this (the `__crit` handle in hooks.js).
-let forced = null;
+let forced = null; // page: a check's switch (`__crit`); play never sets it, and a load mid-check must not undo it
 export const forceCrit = v => { forced = v; };
 
 // The one roll: `mult` on a crit, 1 otherwise. `bonus` is extra chance in

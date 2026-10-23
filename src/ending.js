@@ -29,7 +29,7 @@ const endOnly = [...sheet.querySelectorAll('.endonly')];
 const keepPlaying = document.getElementById('keepplaying');
 // With the half on the sheet has no button and floats away as its beat ends
 // (beats.js): it stays up, leaving, for RESCUE_SHEET_LEAVE_S after.
-let leavingUntil = 0, wasUp = false;
+let leavingUntil = 0, wasUp = false; // page: the sheet's float away, on the wall clock
 
 const due = () => beatRunning('ending') && !S.paused && !S.fatal;
 

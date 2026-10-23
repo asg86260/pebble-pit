@@ -30,7 +30,7 @@ import { S } from './state.js';
 // rule `deepOn` keeps; the demo never. A check says either way for itself
 // (`__actsOn`).
 const DEV_BUILD = !import.meta.env || !!import.meta.env.DEV;
-let forcedAfter = null, forcedHell = null;
+let forcedAfter = null, forcedHell = null; // page: a check's switch (`__actsOn`); play never sets it, and a load mid-check must not undo it
 export function afterlifeOn() { return !demoOn() && (forcedAfter ?? (AFTERLIFE_ON || DEV_BUILD)); }
 // Hell is reached by the afterlife's ghost road, so it is never on without it.
 export function hellOn() { return afterlifeOn() && (forcedHell ?? (HELL_ON || DEV_BUILD)); }

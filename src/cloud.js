@@ -33,8 +33,8 @@ import { gzip, gunzip } from './gzip.js';
 // --- where the worker is ------------------------------------------------------
 // The checks point the yard at the real worker's `handle`, in-process, with
 // these two (`__cloudUrl`, `__cloudFetch`); a build's answer is the constant.
-let url = CLOUD_URL;
-let fetchFn = null;
+let url = CLOUD_URL; // page: the worker, a check's handle (`__cloudUrl`)
+let fetchFn = null; // page: a check's handle (`__cloudFetch`)
 export const setCloudUrl = u => { url = u || ''; };
 export const setCloudFetch = fn => { fetchFn = typeof fn === 'function' ? fn : null; };
 
@@ -93,14 +93,14 @@ function fresh(playing = false) {
     pair: null
   };
 }
-let session = fresh();
+let session = fresh(); // page: this device's sync, across every slot and yard
 onSaved(n => { session.dirty.add(n); });
 
 // One thing at a time: the pump, the boot and the buttons all read the facts,
 // wait on the network and write the facts back, and two of them interleaved
 // would each write back a copy the other had not seen.
-let chain = Promise.resolve();
-let queued = 0;
+let chain = Promise.resolve(); // page: the device's one-at-a-time queue
+let queued = 0; // page: calls waiting on it
 function serial(fn) {
   queued++;
   const p = chain.then(fn).catch(() => null).finally(() => { queued--; });
@@ -114,7 +114,7 @@ function serial(fn) {
 // `retryS`, whichever is longer.
 // The last refusal a button's call met, for the line that says why it did
 // not work (`cloudWhy`). Cleared as each button's call begins.
-let refusedLast = null;
+let refusedLast = null; // page: the last button's refusal, for its line
 async function call(method, path, { secret, body, headers = {}, keepalive = false, bytes = false } = {}) {
   const ctl = typeof AbortController === 'function' ? new AbortController() : null;
   let timer = null;

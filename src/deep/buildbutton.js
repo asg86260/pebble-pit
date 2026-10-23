@@ -41,7 +41,7 @@ export function press() {
 }
 
 // --- the page -----------------------------------------------------------------------
-let btn = null;
+let btn = null; // page: the button element
 function make() {
   btn = document.createElement('button');
   btn.type = 'button';
@@ -54,7 +54,7 @@ function make() {
 // Every frame (a layer in render.js): shown or not, and where. A fade, not a
 // pop: `on` is the class the stylesheet fades on, and the element is never
 // hidden outright, so it can fade out from where it stood.
-let at = { x: null, y: null };
+let at = { x: null, y: null }; // page: where it stands on the window
 const EDGE = 4;                          // px kept clear of the window's edge, as board.js keeps
 export function seatBuildButton() {
   if (!btn) make();

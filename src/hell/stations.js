@@ -11,6 +11,7 @@
 // barrier is the hand's (hell/index.js, `clickHell`), asked before the board
 // on a press; the boards' rows are upgrades/rows-hell.js's.
 
+import { held } from '../reset.js';
 import { S } from '../state.js';
 import { P } from '../config.js';
 import { msg } from '../lang.js';
@@ -23,7 +24,8 @@ const chambers = () => { const out = []; for (let i = 0; i <= S.hell.chamber; i+
 const mid = () => S.camX + S.viewW / 2;
 
 // The same one-at-a-time flag as act 3's rows: this session's, never saved.
-let openKey = null;
+let openKey = null; // held: the hell board that is up, never saved
+held('hell-boards', () => { openKey = null; });
 const flag = key => {
   const name = `${key.replace(/-(\w)/g, (_, c) => c.toUpperCase())}BoardOpen`;
   Object.defineProperty(S, name, {
