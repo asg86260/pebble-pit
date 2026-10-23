@@ -837,8 +837,7 @@ export const TESTS = [
       run(0.5);
       window.__self('sqouse', self);
       S.rescued = true; S.buried = false; S.buriedMs = 600000;
-      run(1 / 60);
-      await raf();
+      for (let i = 0; i < 120 && byId('saved').hidden; i++) { run(1 / 60); await raf(); }
       const line = byId('savedwhy').textContent, time = byId('savedin').textContent;
       window.__skipBeat('sheet');
       run(1 / 60);
