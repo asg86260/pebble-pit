@@ -48,7 +48,6 @@ import { afterlifeOn, hellOn } from './acts.js';
 import { AFTER_STORY } from './after/story.js';
 import { HELL_STORY } from './hell/story.js';
 import { allOverlaps } from './footprints.js';
-import { held } from './reset.js';
 
 // The pairs allowed to share ground, each with what it is: none. The list is
 // kept as the guard: test/no-overlap.test.mjs is red for an entry that no
@@ -136,7 +135,9 @@ export function resetVerify() {
   playedWas = 0; playedReads = -1;
   forgetSerpent();
 }
-held('verify', resetVerify);
+// The rules' memory is the checker's, not the yard's: `setVerify` clears it
+// for each group, and a load -- a refresh -- must not, or the kit worn
+// before it reads as kit never owned.
 
 // The story's table, read for its keys and owners only.
 const BEAT_OWNS = new Map(BEATS.map(r => [r.key, r.owns]));
@@ -761,7 +762,7 @@ export function forgetFangs() { fangsGiven = Math.max(0, fangSurplus()); fangRea
 
 // The last stage seen, for the rule that it never goes back. A new game, or a
 // setup that sets the fight outright (`__serpent`), is a new start.
-let serpentWas = -1, woundWas = 0, stunWas = false, mealWas = 0;  // held: cleared by `resetVerify`
+let serpentWas = -1, woundWas = 0, stunWas = false, mealWas = 0;  // page: the rules' memory, cleared by `resetVerify`
 // The length on the frame before, and which reading of the yard it was of.
 let playedWas = 0, playedReads = -1;  // cache: keyed by yardReads
 let levelWas = -1, levelReads = -1;  // cache: keyed by yardReads
