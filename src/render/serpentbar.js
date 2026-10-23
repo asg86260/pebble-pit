@@ -28,16 +28,20 @@ import { P, BAR_W, BAR_H, BAR_TOP, BAR_PAD, BAR_HAND_GAP, BAR_ALONG, BAR_PIP, BA
          BAR_CHIP,
          BAR_KNOCK, BAR_KNOCK_BIG, BAR_KNOCK_S, NUM_KICK_BIG, STATUS_GAP,
          SERPENT_PHASES, BREAK_DIVE, BREAK_ROAR, BAR_LEVEL_GAP, NUM_FONT_PX, NUM_DROP, LEVEL_KNOCK_S } from '../config.js';
+import { held } from '../reset.js';
 
 
 // The picture's memory. `shown` is the fill as drawn, 0..1; `healLo` where the purple starts (null for none), `healIn` when
 // the heal finished flowing in (null while it still is); `refilling` while a
 // break's refill is coming up, which is the new defense or the next level and
 // not a heal, so it has no purple; `level` the level it was last drawn at.
-let level = -1, stage = -1, then = 0, shown = 1,
+let level = -1, stage = -1, then = 0, shown = 1,   // held: the bar as last drawn
     healLo = null, healIn = null, refilling = false, tickedAt = -Infinity;
 // The chips in the air, in screen pixels off the bar's resting top-left.
-let chips = [];
+let chips = [];   // held: the bar's chips in the air
+held('serpentbar-bar', () => {
+  level = -1; stage = -1; then = 0; shown = 1; healLo = null; healIn = null; refilling = false; tickedAt = -Infinity; chips = [];
+});
 
 // Not while the first trip down has the camera, and faded back in as it lets
 // go (abyssintro.js).

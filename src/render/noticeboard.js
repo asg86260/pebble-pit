@@ -8,6 +8,7 @@ import { BOARD_LEG, NOTICEBOARD_IN_MS, P, PAPER, SHACK_EAVE } from '../config.js
 import { now } from '../clock.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
+import { held } from '../reset.js';
 
 // The sheets, in cells off the panel's top-left, of unequal widths so the board
 // reads as somebody's rather than as a spreadsheet. The writing is lines, not
@@ -30,7 +31,8 @@ const toneOf = i => PAPER[(i * 3 + 1) % PAPER.length];
 // When the board was first seen to come up: null while the yard has banked
 // nothing, the moment it banks its first grain, and -Infinity for a yard that
 // had already banked when it was loaded, so a reload does not fade it in.
-let upAt;
+let upAt;   // held: when the board came up
+held('noticeboard-up', () => { upAt = undefined; });
 
 export function drawNoticeboard() {
   // The board goes up with the first grain banked, when its sheet opens too,

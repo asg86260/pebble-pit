@@ -85,7 +85,7 @@ function drawRoundRock(deep, squash) {
 
 // The lump's cells, a path to each thickness, built once a fall: two thousand
 // rects a frame was the frame's biggest cost for as long as a rock fell.
-let lump = null;
+let lump = null;   // cache: keyed by the boulder, its width and the depth
 function roundBands(deep) {
   const key = `${S.boulderNo},${S.gw},${deep}`;
   if (lump?.key === key) return lump.bands;

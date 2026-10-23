@@ -55,7 +55,7 @@ export function drawHellBackdrop() {
 // The rock and its hollows as one picture a cell a pixel, made again only
 // when what is cut changes (a seam moving back, a chamber opening): fifty
 // thousand cells a frame would be the frame.
-let rock = null, rockKey = '';
+let rock = null, rockKey = '';   // cache: keyed by the chamber and the seams cut
 const RGB = GREY.map(h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16)));
 function cutRock() {
   const h = S.hell;

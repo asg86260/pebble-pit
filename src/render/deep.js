@@ -54,6 +54,7 @@ import { doneAt } from '../works.js';
 import { TYPE } from '../jobs.js';
 import { GREYS, PURPLES, TONE, LIGHT, breathAt } from './deeptones.js';
 import { drawFangPlate } from './fangplate.js';
+import { held } from '../reset.js';
 
 const isFighter = w => w.type === TYPE.FIGHTER;
 
@@ -117,7 +118,7 @@ const GROUND_ROWS = 40;
 // and laid as a pattern from the floor's top, so a cell is the same cell
 // whatever the camera does: the tile's x origin is the world's, and four
 // cells divide it. Below the band the floor is flat.
-let floorPat = null, floorBand = 0;
+let floorPat = null, floorBand = 0;   // cache: baked once from fixed config
 function floorPattern() {
   if (floorPat) return floorPat;
   const top = DEEP_FLOOR_TOP_RUNG, bottom = DEEP_FLOOR_BOTTOM_RUNG, rows = DEEP_FLOOR_FADE_ROWS;
@@ -184,7 +185,7 @@ const FURNACE = CRUSHER_SPRITES.rest;
 // A cell of the frame or the brick with open water over it: the edge the light catches.
 const isBrick = ch => ch === '#' || ch === '+' || ch === '-';
 const topEdge = (r, col) => isBrick(FURNACE[r][col]) && !isBrick(FURNACE[r - 1]?.[col]);
-let furnace = null;
+let furnace = null;   // cache: keyed by the crusher's place and its lit tone
 function crusherImage(c, t) {
   const lit = breath(t), id = `${c.x}|${c.y}|${lit}`;
   if (furnace && furnace.id === id) return furnace;
@@ -454,7 +455,8 @@ export function drawDeepStations() {
 // Silt hanging in the water, and flecks shed off the coil.
 // Drawing only: they are stepped here, on the frame's own clock, never by the
 // sim, and live on `S.deepMotes` so a reload starts the water afresh.
-let motesAt = 0, fleckOwed = 0;
+let motesAt = 0, fleckOwed = 0;   // held: the motes' clock and the flecks owed
+held('deep-motes', () => { motesAt = 0; fleckOwed = 0; });
 const SWELL_NOW = new Float64Array(3), SWELL_WAS = new Float64Array(3);
 
 const current = (y, t) => DEEP_CURRENT * Math.sin(t / DEEP_CURRENT_MS * Math.PI * 2 + y / (P * 40));

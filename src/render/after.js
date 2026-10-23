@@ -92,7 +92,7 @@ function working(key) {
 }
 const frameOf = key => frame(stationX0(key), groundOf(key), ART[key].flip || 0, null, AFTER_ART_SCALE);
 // The hand's motion at each station this frame (after/gestures.js), by key.
-let hands = {};
+let hands = {};   // cache: this frame's gestures, read afresh at the top of each draw
 const readHands = () => { hands = {}; for (const r of gestureView() || []) hands[r.key] = r; };
 
 // What a station's drawing reads besides its pose: the paper mill's vat as

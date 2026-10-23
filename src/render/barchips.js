@@ -8,8 +8,10 @@
 import { BAR_BITE, BAR_BITE_MIN, BAR_BITE_HOLD_S, BAR_BITE_LIFT, BAR_BITE_GRAV, BAR_BITE_KICK, BAR_BITE_TUMBLE_S,
          BAR_BITE_FALL_S, BAR_BITE_FADE_S } from '../config.js';
 import { ctx } from './ctx.js';
+import { held } from '../reset.js';
 
-let thrown = 0;
+let thrown = 0;   // held: the chips thrown so far, their hash
+held('barchips-thrown', () => { thrown = 0; });
 const hash = n => { const v = Math.sin(n * 127.1 + 3.7) * 43758.5453; return v - Math.floor(v); };
 const lift = k => Math.max(1, Math.round(BAR_BITE_LIFT * k));
 

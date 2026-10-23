@@ -237,7 +237,7 @@ function rimPath(cx, cy, rad, t, grow) {
 // box is sampled.
 // One offscreen sheet, kept, so the warp reads from a still copy of the frame
 // rather than from the frame it is drawing into.
-let bendCan = null, bendCtx = null;
+let bendCan = null, bendCtx = null;   // cache: a scratch canvas, cleared and copied into before each read
 
 function drawBend(cx, cy, rad) {
   const sx = (cx - S.camX + S.shakeX) * S.zoom;

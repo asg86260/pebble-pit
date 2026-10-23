@@ -39,6 +39,7 @@ import { GREYS, PURPLES, WHITE, BODY, R4, R8, hash, lerp, ease, cell, ring, body
 import { ATTACKS, SEGMENTS, REST, liftOf, loopOf, sauceOf, dentsOf, sparksOf, starAt, speedLines,
          streakAt, MOTE_TONES } from './attacks.js';
 import { hideBot } from './serpent.js';
+import { held } from '../reset.js';
 
 // The deep's bodies that fight: a pod resident seated at a station.
 export const isFighter = w => w.type === TYPE.FIGHTER;
@@ -140,7 +141,7 @@ function loopClock(w, c, t) {
   return (t + hash(idOf(w)) * loop) % loop;
 }
 
-let frame = { t: -1, list: [] };
+let frame = { t: -1, list: [] };   // held: the fighters as last worked out
 // Every fighter worked out once a frame: the serpent's give and the
 // fighters' drawing read the same clock.
 function fighters(t) {
@@ -175,7 +176,8 @@ function fighters(t) {
 // way home. A shot gone from the list between two frames has landed where
 // it last was.
 const inWater = () => (Array.isArray(fight.shots) ? fight.shots : []);
-let seen = new Map(), landed = [], seenAt = -Infinity;
+let seen = new Map(), landed = [], seenAt = -Infinity;   // held: the shots last seen and their landings
+held('arms-fighters', () => { frame = { t: -1, list: [] }; seen = new Map(); landed = []; seenAt = -Infinity; });
 function landings(T) {
   const next = new Map();
   for (const s of inWater()) next.set(s, { kind: s.kind, x: s.x, y: s.y, by: s.by, stuck: s.stuck });
@@ -233,7 +235,7 @@ function buffsOf(f, list, t) {
 }
 
 // --- the layers --------------------------------------------------------------------
-let queued = [];
+let queued = [];   // cache: this draw's queue, emptied at the top of drawFighters
 export function drawFighters() {
   // A scene holding the deep stands its fighters still in the pose they had
   // when it took hold (stage.js), while the one it is about moves on: the

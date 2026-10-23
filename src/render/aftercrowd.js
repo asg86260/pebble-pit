@@ -97,7 +97,7 @@ const UNION_TONE = darkPage ? AFTER_LINE_DARK : INK;
 // The device pixels a world pixel takes, the window's middle, the sky's
 // frame, its cell and the tick, read once a frame. A rect's edges are each
 // put on a whole device pixel, so a stroke stays whole at any zoom.
-let K = 1, CX = 0, F = null, H = 1, TK = 0;
+let K = 1, CX = 0, F = null, H = 1, TK = 0;   // cache: this frame's camera, read by camFrame at each draw
 function camFrame() {
   K = (S.zoomShow || S.zoom) * S.dpr; CX = S.camX + S.viewW / 2; F = skyFrame();
   H = F.h;
@@ -216,7 +216,7 @@ function eventsNow() {
   if (sp && sp.target && t >= bigAt(sp.next) && t < sp.next) out.roars.push({ at: bigAt(sp.next), kind: 'roar', g: ROARS[4], big: true });
   return out;
 }
-let EV = { rallies: [], roars: [] }, RINGS = [], WORDS = [];
+let EV = { rallies: [], roars: [] }, RINGS = [], WORDS = [];   // cache: this frame's, worked out at the top of each drawSkyCrowd
 function ringsNow() {
   const t = now(), out = [];
   for (const r of EV.rallies) {
@@ -289,7 +289,7 @@ function waveAmp(w, d) {
 // is now back to where it was a hop ago: the bands, laid out once a frame,
 // so a soul out of all of them is passed over on one distance.
 const HOP = { lift: 0, lit: 0 };
-let HOPS = [];
+let HOPS = [];   // cache: this frame's bands, laid out by hopBands each draw
 function hopBands() {
   const t = now(), out = [];
   for (const w of WORDS) {
@@ -370,7 +370,7 @@ function drawStage() {
 // front's, a gap between souls, each row stepping back a little more than
 // its soul so the stage shows between rows; the throne's foot kept clear.
 // A fact of the window.
-let ROWS = [], rowsKey = '';
+let ROWS = [], rowsKey = '';   // cache: keyed by the stage's geometry
 function crowdRows() {
   const st = stage(), G = GOD_CROWD, key = `${st.yb}|${st.yf}|${st.mx}`;
   if (key === rowsKey) return ROWS;
@@ -988,7 +988,7 @@ function carriedSign(x, y, u) {
 // planted it, and the sign it carried fades out where it was, on the stage,
 // over the span the planted flag fades in over (`drawFlag`). Drawing state.
 const carrying = new Map();
-let setDown = [];
+let setDown = [];   // cache: keyed by the act, emptied by seeAllSigns when S.after changes
 function watchSigns() {
   const t = now();
   for (const w of S.after.bodies) {
@@ -1024,7 +1024,7 @@ function drawDrift() {
 // front with what stands on the stage among them by where its foot is --
 // the flags, the posters on its front edge, the won souls, the bodies out on
 // the way -- his words' fronts over them, and the gaze over them all.
-let GZ = null;
+let GZ = null;   // cache: this frame's gaze, worked out at the top of each drawSkyCrowd
 export function drawSkyCrowd() {
   if (!S.after) return;
   camFrame();

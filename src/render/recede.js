@@ -20,7 +20,7 @@ import { canvas, ctx } from './ctx.js';
 
 // Which half of the picture is being painted: the receding yard ('back') or
 // the scene's own layers over the wash ('front').
-let pass = 'back';
+let pass = 'back';   // cache: the pass being drawn, set by render.js before each
 export const setPass = p => { pass = p; };
 export const inFront = () => pass === 'front';
 

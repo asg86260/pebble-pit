@@ -125,7 +125,7 @@ function drawRuin() {
 // A white card with a black edge over the house, its one line the player's
 // say; drawn in screen pixels over its world place, so the words are the
 // size every card's are. Its box is kept in the world for the click.
-let goOnBox = null;
+let goOnBox = null;   // cache: where the frame drew it, set or emptied every frame
 export const onGoOn = (x, y) => !!goOnBox && goOnDue() && goOnAlpha() >= 1
   && x >= goOnBox.x && x < goOnBox.x + goOnBox.w && y >= goOnBox.y && y < goOnBox.y + goOnBox.h;
 export const goOnRect = () => goOnBox;

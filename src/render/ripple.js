@@ -28,7 +28,7 @@ import { canvas, ctx, paintOn } from './ctx.js';
 // The sheet, the window's size, and remade only when the window is: a canvas
 // made or resized in the middle of the ripple is a fresh allocation on the
 // card a frame.
-let sheet = null;
+let sheet = null;   // page: a canvas the window's size
 function sheetOf() {
   sheet ??= document.createElement('canvas');
   if (sheet.width !== canvas.width) sheet.width = canvas.width;
@@ -81,7 +81,7 @@ export function drawThrough(rip, dpr, drawFar) {
 // portal stands, no glide is under way) and a pass of the far half to draw
 // unseen. Asks the probe at the first idle moment, then draws the passes one
 // idle moment apart, once for each size the window has been.
-let probed = false, warmFor = '', passes = 0, waiting = false;
+let probed = false, warmFor = '', passes = 0, waiting = false;   // page: the browser's warm-up, done once a window size
 export function warmRipple(ready, pass) {
   if (waiting) return;
   const key = `${canvas.width}x${canvas.height}`;

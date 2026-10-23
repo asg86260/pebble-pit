@@ -332,7 +332,7 @@ export function drawRain() {
 // The crowns, one fill per frame of the crown per kind: every splash on the
 // same frame is the same tone, so a pour is six fills however hard it comes.
 // Worked out on the first draw: weather.js is still loading when this file is.
-let SPLASH_TONES = null;
+let SPLASH_TONES = null;   // cache: worked out once from fixed tones
 function drawSplashes() {
   SPLASH_TONES ??= [RAIN_WATER_TONE, MUCK_GREY].map(tone =>
     RAIN_SPLASH.map(([, , pale]) => towardPage(tone, pale)));

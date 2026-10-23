@@ -23,6 +23,7 @@ import { skyLayer, layerLook, layerParams, stillSheet, drawBand } from '../cloud
 import { cellOnPage, layerSpan, workClouds, putCells } from '../cloudpage.js';
 import { now } from './kit.js';
 import { restY } from '../../shot.js';
+import { held } from '../../reset.js';
 
 const page = darkPage ? 'dark' : 'light';
 // The path's surface: the paper by day, by night the cloud palette's role
@@ -31,7 +32,7 @@ export const pathTone = () => (darkPage ? CLOUDS_PALETTE.dark[A.path.dark] : CLO
 
 // The layers, made once: their puffs are fixed by the seed, and only where
 // they are drawn changes.
-let L = null;
+let L = null;   // cache: made once from the act's fixed seed and width
 function layers() {
   if (L) return L;
   // a layer's round: the act's width as the layer slides past it, and a pad
@@ -57,7 +58,8 @@ function placeOf(name, l, T, cw) {
 }
 
 // The frame's picture: every window worked once, at the backdrop.
-let pic = null, lastT = null, spans = new Map();
+let pic = null, lastT = null, spans = new Map();   // held: the last frame's picture, its clock and its spans
+held('cloudsky-picture', () => { pic = null; lastT = null; spans = new Map(); });
 function work() {
   const T = now(), dt = lastT === null ? 0 : Math.max(0, Math.min(0.1, T - lastT));
   lastT = T;
@@ -76,7 +78,7 @@ function work() {
 
 // --- with no card: baked sheets, held still --------------------------------------------
 // The sky as bands of the baked kinds, each where its liquid layer stands.
-let still = null;
+let still = null;   // cache: baked once from the act's fixed seed
 function stills() {
   if (still) return still;
   const look = { page, treat: 'C' };
