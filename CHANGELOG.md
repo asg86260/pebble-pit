@@ -227,6 +227,7 @@ this section; the release that switches it on moves these under Unreleased.
 - On a gamepad, pressing along the stops faster than the camera can pan to each no longer throws the focus back to the middle of the window on a wide screen (src/selftest/pad.js).
 - In the deep on a tall window, the pointer near the top of the glass no longer opens the board of a yard station that is not drawn there (test/gates.test.mjs).
 - On a phone the opening view shows the whole rock instead of cutting off its left side (src/selftest/view.js).
+- On the appearance page, right from the last tile in a row of the grid stays on it instead of jumping the focus to a key at the top of the page (src/selftest/wardrobe.js, the picker by a pad, at 390x844).
 
 ## v0.6.1 — 2026-10-19
 
