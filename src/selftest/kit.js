@@ -7,6 +7,7 @@
 
 import { S } from '../state.js';
 import { claimSave } from '../persist.js';
+import { until as untilEvery } from '../check.js';
 
 // Real wall time, and the only thing in the suite that costs any. Dust in
 // flight, the counter tween, the board sliding and the save's debounce are
@@ -51,6 +52,13 @@ export const raf = () => new Promise(r => {
   setTimeout(go, 50);
 });
 
+// Waits for `fact()` a drawn frame at a time, the game turning a frame with
+// each, up to `frames`: true when it came. What a sleep should have been.
+export const until = (fact, frames = 120) => untilEvery(fact, async () => { run(1 / 60); await raf(); }, frames);
+// Until nothing on the page is animating: a board sliding, a fade, a tag
+// easing in. Read mid-animation, a word is pale and a box is half its size.
+export const quiet = (frames = 180) => until(() => !document.getAnimations().some(a => a.playState === 'running'), frames);
+
 // The yard and the page, both brought up to date. The seconds are game seconds
 // and cost nothing; the frames are real and cost two of them.
 export async function settle(seconds = 0.4) {
@@ -86,10 +94,7 @@ export const buildShopFromTest = () => window.__build();
 // never walked up to
 export const refreshShopFromTest = () => window.__fill();
 
-export function ok(cond, what, detail = '') {
-  if (cond) return { pass: true, what };
-  return { pass: false, what, detail };
-}
+export { ok } from '../check.js';
 
 export const P = 6;                                   // a cell, for the piles
 export const canvas = () => document.getElementById('c');

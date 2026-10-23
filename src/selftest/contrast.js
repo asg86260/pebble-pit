@@ -8,7 +8,7 @@
 // is a picture, not text, and axe does not see it. The dev panel is not the
 // game's and is left out.
 
-import { sleep, ok } from './kit.js';
+import { sleep, ok, until } from './kit.js';
 import axe from 'axe-core';
 import { SCENES } from '../scenes.js';
 import { YARD_BOARDS as BOARDS } from '../stations.js';
@@ -28,13 +28,7 @@ const PARTS = 4;
 // word. So the reading waits until nothing on the page is animating, asked
 // of the page itself rather than of a list of durations (capped, in case
 // something loops).
-async function still(w) {
-  const t0 = performance.now();
-  while (performance.now() - t0 < 3000) {
-    if (!w.document.getAnimations().some(a => a.playState === 'running')) return;
-    await sleep(50);
-  }
-}
+const still = w => until(() => !w.document.getAnimations().some(a => a.playState === 'running'), 180);
 
 // Every failing node on the frame's page, as lines: the words, the ratio and
 // the two colors, so a failure names the token to move. A line between two
