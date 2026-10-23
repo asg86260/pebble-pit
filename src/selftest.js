@@ -95,6 +95,18 @@ const TESTS = [
 // a new game, so any one can run on its own and a failure belongs to the
 // group that reports it; `{ solo: false }` is kept only to watch the old
 // narrative order.
+// A shard's block, [from, to): cut at equal measured time where `shard.times`
+// has the groups' last times (test/times.json), at equal counts where it has
+// none. A group nobody has timed counts the median. Blocks, not dealt, so a
+// group still runs after the one written before it.
+function cuts(all, { i, n, times }) {
+  if (!times) { const per = Math.ceil(all.length / n); return [i * per, (i + 1) * per]; }
+  const known = Object.values(times).sort((a, b) => a - b), mid = known[known.length >> 1] || 1;
+  const t = all.map(([name]) => times[name] ?? mid), total = t.reduce((a, b) => a + b, 0);
+  const at = k => { let acc = 0, j = 0; while (j < all.length && acc + t[j] / 2 < total * k / n) acc += t[j++]; return j; };
+  return [at(i), at(i + 1)];
+}
+
 export async function runTests(filter = '', shard = null, opts = {}) {
   const solo = opts.solo !== false;
   const errs = [];
@@ -111,8 +123,7 @@ export async function runTests(filter = '', shard = null, opts = {}) {
   // keeps every group next to the one it was written next to.
   const all = TESTS.filter(([name]) =>
     !filter || name.toLowerCase().includes(filter.toLowerCase()));
-  const per = shard ? Math.ceil(all.length / shard.n) : all.length;
-  const wanted = shard ? all.slice(shard.i * per, (shard.i + 1) * per) : all;
+  const wanted = shard ? all.slice(...cuts(all, shard)) : all;
   for (const [name, fn] of wanted) {
     let checks;
     if (solo) { newRun(); await settle(0.5); }
@@ -140,6 +151,7 @@ export async function runTests(filter = '', shard = null, opts = {}) {
     seconds: Math.round(timing.reduce((n, t) => n + t[1], 0) / 1000),
     cost: cost(),                                      // kept by kit.js, which does the sleeping
     slowest: timing.slice(0, 8).map(([n, ms]) => `${(ms / 1000).toFixed(1)}s ${n}`),
+    times: Object.fromEntries(timing),
     failures: failed.map(f => `${f.group}: ${f.what}${f.detail ? ` — ${f.detail}` : ''}`),
     errors: errs
   };

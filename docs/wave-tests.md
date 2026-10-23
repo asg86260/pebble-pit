@@ -1,6 +1,6 @@
-# Wave: every part of the game stands on its own (design, not built)
+# Wave: every part of the game stands on its own
 
-**Status: written 2026-10-23 for the owner's approval. Nothing here is built.**
+**Status: approved by the owner 2026-10-23 (all three calls as recommended). Building in order.**
 Once approved this document is canon for the tracks that build it: do not
 redesign; implement. Where a name is given, use it.
 

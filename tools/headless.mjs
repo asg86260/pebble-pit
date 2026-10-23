@@ -16,7 +16,7 @@
 // save, and a second live one writes over it every second, which fails the save
 // checks for reasons that have nothing to do with the code.
 
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { browser, closeOtherTabs, openTab } from './cdp.mjs';
 
 const shot = process.argv[2] === '--shot' ? process.argv[3] : null;
@@ -28,15 +28,17 @@ const only = process.argv[2] === '--only' ? process.argv[3] : null;
 // about a sixth of the wall clock, and the suite is one long serial list pinned
 // to one core -- which is the only reason it takes three minutes.
 //
-// A block of the file, in file order. Dealing the groups out round-robin balances
-// the slow ones better and breaks the suite: the order is not decoration -- see
-// `runTests`.
+// A block of the file, in file order, cut at equal measured time off
+// test/times.json (`cuts` in selftest.js). Dealing the groups out round-robin
+// would balance better and breaks the suite: the order is not decoration.
 const shardArg = process.argv[2] === '--shard' ? process.argv[3] : null;
 // `--serial` runs the groups one after another without the reset between them,
 // which is how the suite used to run. It is here to look at, not to trust.
 const serial = process.argv[2] === '--serial';
 const profile = process.argv[2] === '--profile' ? process.argv[3] : null;
-const shard = shardArg ? (([i, n]) => ({ i: +i - 1, n: +n }))(shardArg.split('/')) : null;
+const TIMES = 'test/times.json';
+const times = existsSync(TIMES) ? JSON.parse(readFileSync(TIMES, 'utf8')).browser : null;
+const shard = shardArg ? (([i, n]) => ({ i: +i - 1, n: +n, times }))(shardArg.split('/')) : null;
 
 // A shard gets its own browser on its own port (and so, in `cdp.mjs`, its own
 // profile). Sharing one would be worse than serial: this script closes every
@@ -69,7 +71,11 @@ if (shot) {
   await tab.shot(shot);
   console.log(`wrote ${shot}`);
 } else {
-  console.log(JSON.stringify(out.result?.result?.value ?? out.result, null, 1));
+  // Every group's time on one line, for test/times.json (`tools/times.mjs`),
+  // rather than two hundred in the summary.
+  const v = out.result?.result?.value;
+  if (v?.times) { console.log(`TIMES browser ${JSON.stringify(v.times)}`); delete v.times; }
+  console.log(JSON.stringify(v ?? out.result, null, 1));
 }
 if (tab.logs.length) console.log(['--- console ---', ...tab.logs].join(String.fromCharCode(10)));
 await tab.close();
