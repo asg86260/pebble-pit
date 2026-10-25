@@ -1,6 +1,9 @@
 # Wave: every part of the game stands on its own
 
-**Status: approved by the owner 2026-10-23 (all three calls as recommended). Building in order.**
+**Status: approved by the owner 2026-10-23 (all three calls as recommended).
+Steps 1-4 merged. Re-sequenced 2026-10-25 after the trace (owner: both,
+speed first) into phase A and phase B below -- awaiting approval of that
+order.**
 Once approved this document is canon for the tracks that build it: do not
 redesign; implement. Where a name is given, use it.
 
@@ -158,11 +161,26 @@ same seeded yard (PERF.md, section 0).
 
 ## Step 4, measured (2026-10-25)
 
-The trace (`tools/node/systems-trace.mjs`, `test/systems.json`) found the
-frame one knot: every system but six closes over 46-47 of the 66, through
-`S.workers` (25 writers, 25 readers), the beats writing into other systems'
-facts, the rock and the camera. Choosing systems cannot isolate a part until
-those hubs are untangled; see TODO.md for the call put to the owner.
+The trace (`tools/node/systems-trace.mjs`, `test/systems.json`, 479 scenes)
+found the frame one knot: every system but six closes over 46-47 of the 66.
+Choosing systems cannot isolate a part until the knot comes apart.
+
+It is a long tail, not a few hubs. Cutting a field's edges outright (more
+generous than any untangling: a `workers` view still needs every station
+that writes into it), the greedy best thirty cuts, measured on the graph:
+
+| cut | median closure | crew / casino / apothecary / rift | afterlife (act 3) |
+|---|---|---|---|
+| none | 46 | 46 | 46 |
+| `workers` | 37 | 37 | 37 |
+| + 19 more (`acts`, `after`, `shake`, `grit`, `strips`, ...) | 27 | 27 | 0 |
+| + 29 more | 26 | 26 | 0 |
+
+Act 3 comes apart after about twenty cuts. The yard's stations are one
+component that thirty cuts leave at 26 of 66. The owner's call (2026-10-25):
+**both, speed first** -- phase A takes the speed without isolation; phase B
+untangles, measured slice by slice, and stops for the owner if the yard's
+parts do not move.
 
 ## Order, and what each step can be checked by
 
@@ -170,22 +188,67 @@ Each is its own pull request, green before the next starts. Tracks inside a
 step run in parallel where their files are disjoint.
 
 1. **CI by measured time** (8). Measured: shard spread and run wall time.
+   *Merged, #11.*
 2. **Module state registered** (2). The allowlist lands with every current
    `let` classified; the known leaks fold in; the pad sheet leak in TODO.md
-   gets its reset here.
+   gets its reset here. *Merged, #12.*
 3. **One check API, frame waits** (6). The browser tier's sleep total, from
-   the run summary's `cost`, falls; the sleep allowlist lands.
-4. **Systems as rows, the trace, `sim`** (1, 3). `SYSTEMS` replaces `STEPS`
-   with no change of order (the full suites identical before and after); the
-   trace and its check land; `sim` lands with three parts moved onto it as
-   the proof: the bench and its ladders, act 3's mill, the deep's pods.
-5. **Fixtures** (4), then **the move** (5): files moved into tiers part by
-   part, the slowest first, each part's move its own track. A part's move is
-   done when its checks run on `sim` and its old files are gone.
-6. **Handles split** (7) and **hot paths** (9).
+   the run summary's `cost`, falls; the sleep allowlist lands. *Merged, #13.*
+4. **The trace** (1, measured). `systems-trace.mjs` and `test/systems.json`.
+   *Merged, #14.* `SYSTEMS` rows and `sim` move to phase B.
+
+### Phase A: speed without isolation
+
+The target, checked on main's `tests` run: **the slowest node shard from
+7.4 min to under 4**, and the whole run from ~7.5 min to under 5. Every
+group still stands the whole game; the tiers in phase A are unit, whole and
+browser (piece 5's system tier and `test/<part>/` folders are phase B's).
+
+5. **Hot paths** (9). The deep's coil walk asked again within a frame
+   (`deep/place.js`), `surveyFloor` walking every column four times a
+   second, `countTick` (`game.js`). Each profiled before and after on the
+   same seeded yard (PERF.md, section 0); the player gets the frames too.
+   First, because every later step is measured against the game's own cost.
+6. **Fixtures** (4). A named starting yard is built from its scene in
+   `src/scenes.js`, saved, cached under `test/fixtures/.gen/` keyed by a hash
+   of `src/`, and loaded by every check that starts there. Files move onto
+   fixtures slowest first by `test/times.json`: a file that plays twenty game
+   minutes to reach the deep loads `deep` instead. The thing a check is about
+   is still bought, clicked and walked.
+7. **The unit tier** (5, its first row). Checks whose subject is a pure
+   function -- a ladder's table, a layout, a codec, a placement -- move to
+   `test/unit/` and stand nothing. Found by reading the slowest files for
+   checks that never call `run`.
+8. **Handles split** (7). `src/hooks.js` into `src/hooks/<part>.js`; no
+   handle changes name.
+
+Phase A is done when main's run meets the target, or when step 8 lands and
+it does not -- then the measured shard times go to the owner before phase B.
+
+### Phase B: untangling, a slice at a time
+
+9. **`SYSTEMS` rows** (1). `STEPS` becomes `SYSTEMS`, same order, with
+   `owns`; `test/systems.test.mjs` lands as a **ratchet**: each system's
+   closure, from the committed `test/systems.json`, may only shrink, like
+   the polish bar's gates.
+10. **The first slice: bodies and beats.** Each station keeps its own bodies
+    and `S.workers` becomes a view read by the systems that want everybody
+    (draw, the reload check, the roster); the beats ask the rock, camera,
+    crew and works through an interface instead of writing their fields.
+    Re-traced after (the full trace is ~33 min: a scene subset while
+    working, the whole trace once on CI or overnight).
+11. **`sim` and act 3.** `test/sim.mjs` (piece 3) lands with act 3's mill as
+    its first part, the one the graph says comes apart.
+12. **The stop rule.** After slice 10, the closures of crew, casino,
+    apothecary and rift go to the owner. If they are not under 15 of 66,
+    phase B stops there: the ratchet and act 3's `sim` stay, and the yard is
+    checked whole, on fixtures. If they are, the bench and the deep's pods
+    move onto `sim` and the move by part (5) goes on, each part its own
+    track, with the whole tier's 6-minute budget (call 3) its target.
 
 ARCHITECTURE.md and CLAUDE.md are updated as each lands: "adding a station"
-becomes "a `SYSTEMS` row, its facts, its config, its `test/<station>/`".
+becomes "a `SYSTEMS` row, its facts, its config, its `test/<station>/`" when
+phase B reaches it.
 
 ## Calls for the owner
 
