@@ -4,23 +4,24 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Every part of the game stands on its own -- STEPS 1-3 MERGED, STEP 4 BLOCKED ON A CALL (2026-10-25)
+## Every part of the game stands on its own -- PHASE A DESIGNED, AWAITING APPROVAL (2026-10-25)
 
 docs/wave-tests.md. Merged: step 1 (CI shards by measured time, #11), step 2
 (every module-level let held/cache/page/saved, src/reset.js, #12), step 3
-(src/check.js, frame waits, 232 sleeps to 11, #13).
+(src/check.js, frame waits, 232 sleeps to 11, #13), step 4's trace
+(`tools/node/systems-trace.mjs`, `test/systems.json`, #14).
 
-Step 4 measured and stopped. `tools/node/systems-trace.mjs` (~33 min, every
-scene) wrote `test/systems.json`: every system but six trivial ones closes
-over 46-47 of the 66, so stepping a chosen few (`sim`) would step most of the
-frame. The hubs: `S.workers` (25 writers, 25 readers: every station's bodies
-in one list), the beats writing straight into the rock, camera, crew and
-works, then the rock (`rockTops`, `boulder`, `rockFall`) and the camera. The
-owner's call, put 2026-10-23: (1) untangle the hubs so a station owns its
-bodies and the beats ask rather than write, the trace proving each apart;
-(2) skip isolation, take the speed from fixtures, hot paths and pure tests;
-(3) both, 2 first. Recommended 3. Not built: `SYSTEMS` rows, `test/sim.mjs`,
-`test/systems.test.mjs`, fixtures, the tier move, hooks split, hot paths.
+The trace found the frame one knot (every system but six closes over 46-47
+of 66), and a long tail rather than a few hubs: cutting the best thirty
+fields' edges outright leaves crew, casino, apothecary and rift at 26; only
+act 3 comes apart. The owner chose "both, speed first" (2026-10-25). Phase A,
+speed without isolation, target the slowest node shard from 7.4 min to under
+4: hot paths (coil walk, `surveyFloor`, `countTick`), fixtures from
+`src/scenes.js`, a unit tier for pure checks, hooks split. Phase B: `SYSTEMS`
+rows with a closure ratchet, each station owning its bodies and the beats
+asking through an interface, `sim` with act 3 first, and a stop rule (the
+yard's parts under 15 of 66 after that slice, or back to the owner). Blocked
+on: the owner's approval of that order. Nothing of phase A or B is built.
 
 ## A pad check leaks in behind the sheet groups -- FOUND, NOT FIXED (2026-10-22)
 
