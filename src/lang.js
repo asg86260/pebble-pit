@@ -9,7 +9,7 @@
 // preference (prefs.js) if the player chose one, else what Steam, the system
 // or the browser asks for, else English (languages.js, `pickLanguage`). A
 // module may look a message up at its own top level and get the player's
-// language, and changing it reloads the page, as the dark switch does. The
+// language, and changing it reloads the page. The
 // node yard has no vite and reads the files off disk; it follows nothing, so
 // a check reads English wherever it runs unless it chooses.
 

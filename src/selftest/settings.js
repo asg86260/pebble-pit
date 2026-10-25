@@ -4,7 +4,7 @@
 // is checked in test/settings.test.mjs.
 
 import { raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
-         boulderWorld, onScreen, point, SEED, onPage, landed } from './kit.js';
+         boulderWorld, onScreen, point, SEED, onPage, landed, P } from './kit.js';
 import { pref, setPref, reducedMotion, coarse, dark, theme, readable } from '../prefs.js';
 import { setSlot, storeSettled, clear, slotRaw, writeSlot } from '../save.js';
 import { S } from '../state.js';
@@ -980,22 +980,35 @@ export const TESTS = [
   // dim to dark; then the same seeded yard stood in both this page and a
   // fresh `?dark` frame, held, and read at spots across the window.
   ['the dark switch turns the page in place, and it draws as a page booted dark', async () => {
+    const STRAY_SHARE = 0.01;
     const before = pref('theme');
     const veil = document.getElementById('veil');
     const f = document.createElement('iframe');
     // the fresh page, the window's size, staged so it never touches the save
     f.src = './play.html?bench&dark';
     f.style.cssText = `position:fixed;left:0;top:0;width:${innerWidth}px;height:${innerHeight}px;border:0;opacity:0;pointer-events:none;z-index:-1`;
-    // one yard, the whole works, stood the same in each and held there: the
-    // sky in flight let go and the seed sown, so two pages agree to the pixel
-    const stand = x => { x.__coldSky(); x.__seed(SEED); x.__scene('yard'); x.__fast(1); x.__still(true); };
+    // a scene stood the same in each and held there: the sky in flight let
+    // go and the seed sown, so two pages agree to the pixel
+    const stand = (x, scene) => { x.__coldSky(); x.__seed(SEED); x.__scene(scene); x.__fast(1); x.__still(true); };
     const frames = x => new Promise(r => x.requestAnimationFrame(() => x.requestAnimationFrame(() => x.requestAnimationFrame(r))));
     try {
+      // booted first, while the preference is still the player's: the frame
+      // keeps the blob it read and writes it back whole, so it must never
+      // read the dark one this check writes
+      document.body.appendChild(f);
+      const t0 = performance.now();
+      const booted = () => { const x = f.contentWindow; return !!(x?.__seed && x.__fast && x.__scene && x.__coldSky); };
+      while (!booted() && performance.now() - t0 < 20000) await raf();   // the frame's boot, not the yard's: no turning
+      if (!booted()) return [ok(false, 'the fresh dark page boots in a frame')];
+      const w = f.contentWindow;
       setPref('theme', 'light');
       setTheme('light');
-      // stood in the light, so every cache of it is filled in the light
-      // before the turn, and held through it
-      stand(window);
+      // stood in the light, so every cache of them is filled in the light
+      // before the turn: the deep, whose sprites and tones are the most the
+      // game keeps, and then the whole works, held through the turn
+      stand(window, 'deep');
+      await frames(window);
+      stand(window, 'yard');
       await frames(window);
       const mark = Symbol('this page');
       window.__themeMark = mark;
@@ -1018,26 +1031,29 @@ export const TESTS = [
       resume();
       await frames(window);
 
-      document.body.appendChild(f);
-      const t0 = performance.now();
-      const booted = () => { const x = f.contentWindow; return !!(x?.__seed && x.__fast && x.__scene && x.__coldSky); };
-      while (!booted() && performance.now() - t0 < 20000) await raf();   // the frame's boot, not the yard's: no turning
-      if (!booted()) return [ok(false, 'the fresh dark page boots in a frame')];
-      const w = f.contentWindow;
-      stand(w);
+      stand(w, 'yard');
       await frames(w);
       const read = x => { const c = x.document.getElementById('c'); return { w: c.width, h: c.height, d: c.getContext('2d').getImageData(0, 0, c.width, c.height).data }; };
       const a = read(window), b = read(w);
+      // and the deep stood again in each: a scene with motion of its own
+      // under the hold, so read as which tones are on the glass, not where.
+      // A sprite kept from the light page is a tone the fresh page has nowhere.
+      stand(window, 'deep'); stand(w, 'deep');
+      await Promise.all([frames(window), frames(w)]);
+      const da = read(window), db = read(w);
+      const tones = img => { const m = new Map(); for (let k = 0; k < img.d.length; k += 4) { const t = (img.d[k] << 16) | (img.d[k + 1] << 8) | img.d[k + 2]; m.set(t, (m.get(t) || 0) + 1); } return m; };
+      const ta = tones(da), tb = tones(db);
+      const stray = [...ta].filter(([t]) => !tb.has(t)).reduce((n, [, c]) => n + c, 0);
       window.__still(false);
       run(1);
       const ran = now() > clockWas;
       // spots on what holds still between two pages: the ground across the
       // window, the rock and the bench, in device pixels
-      const st = window.__state(), k = devicePixelRatio || 1, P6 = 6;
+      const st = window.__state(), k = devicePixelRatio || 1;
       const at = (wx, wy) => [Math.floor((wx - st.camX) * st.zoom * k), Math.floor((wy - st.camY) * st.zoom * k)];
       const spots = [];
-      for (let i = 1; i <= 5; i++) for (const down of [2, 6, 12]) spots.push(at(st.camX + st.viewW * i / 6, st.groundY + down * P6));
-      spots.push(at(st.rockX, st.rockY), at(st.benchX, st.groundY - 2 * P6));
+      for (let i = 1; i <= 5; i++) for (const down of [2, 6, 12]) spots.push(at(st.camX + st.viewW * i / 6, st.groundY + down * P));
+      spots.push(at(st.rockX, st.rockY), at(st.benchX, st.groundY - 2 * P));
       const rgb = (img, x, y) => { const k = (y * img.w + x) * 4; return [img.d[k], img.d[k + 1], img.d[k + 2]]; };
       const off = spots.filter(([x, y]) => { const p = rgb(a, x, y), q = rgb(b, x, y); return p.some((v, i) => Math.abs(v - q[i]) > 2); });
       let differ = 0;
@@ -1051,6 +1067,11 @@ export const TESTS = [
         ok(a.w === b.w && a.h === b.h, 'the two glasses are one size', `${a.w}x${a.h} ${b.w}x${b.h}`),
         ok(off.length === 0, `every one of ${spots.length} spots is the fresh dark page's color`,
            off.map(([x, y]) => `${x},${y} ${rgb(a, x, y)} vs ${rgb(b, x, y)}`).join('; ') + ` (${differ} px differ in all)`),
+        // a fresh page against another fresh page leaves about a tenth of a
+        // percent of the deep in tones the other lacks, its motion's edges;
+        // a page that kept its light sprites, more than a tenth of the glass
+        ok(stray < da.w * da.h * STRAY_SHARE, 'the deep after the turn draws in the fresh dark page\'s tones',
+           `${stray} px of ${da.w * da.h} in tones the fresh page has nowhere`),
       ];
     } finally {
       f.remove();

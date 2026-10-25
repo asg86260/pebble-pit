@@ -1,0 +1,158 @@
+[
+ {
+  "scene": "yard",
+  "turned": "{\"cls\":\"dark\",\"same\":true}",
+  "inPlaceVsFresh": {
+   "px": 480000,
+   "diff": 0,
+   "diff24": 0,
+   "onlyFirst": 0,
+   "onlySecond": 0,
+   "topFirst": [],
+   "topSecond": []
+  },
+  "floorFreshVsFresh": {
+   "px": 480000,
+   "diff": 58575,
+   "diff24": 10285,
+   "onlyFirst": 45778,
+   "onlySecond": 45065,
+   "topFirst": [
+    "#272625:9586",
+    "#2a2928:9571",
+    "#232221:8194",
+    "#21201f:8182",
+    "#1c1b1b:1783"
+   ],
+   "topSecond": [
+    "#262625:9538",
+    "#292928:9525",
+    "#232220:8202",
+    "#21201e:8190",
+    "#1a1a19:1820"
+   ]
+  },
+  "controlSameStepsNoTurn": {
+   "px": 480000,
+   "diff": 2,
+   "diff24": 0,
+   "onlyFirst": 0,
+   "onlySecond": 0,
+   "topFirst": [],
+   "topSecond": []
+  },
+  "gl": true
+ },
+ {
+  "scene": "deep",
+  "turned": "{\"cls\":\"dark\",\"same\":true}",
+  "inPlaceVsFresh": {
+   "px": 480000,
+   "diff": 26674,
+   "diff24": 23831,
+   "onlyFirst": 1006,
+   "onlySecond": 1794,
+   "topFirst": [
+    "#030402:248",
+    "#020301:248",
+    "#020200:220",
+    "#030301:216",
+    "#131313:25"
+   ],
+   "topSecond": [
+    "#080808:541",
+    "#0a0a0a:537",
+    "#010101:220",
+    "#060606:108",
+    "#0d0d0d:108"
+   ]
+  },
+  "floorFreshVsFresh": {
+   "px": 480000,
+   "diff": 5116,
+   "diff24": 832,
+   "onlyFirst": 136,
+   "onlySecond": 408,
+   "topFirst": [
+    "#28124a:32",
+    "#0d0517:24",
+    "#020004:16",
+    "#170d23:16",
+    "#2c1451:16"
+   ],
+   "topSecond": [
+    "#2d1553:32",
+    "#020104:32",
+    "#010003:32",
+    "#2a134e:24",
+    "#0c0516:24"
+   ]
+  },
+  "controlSameStepsNoTurn": {
+   "px": 480000,
+   "diff": 28798,
+   "diff24": 24331,
+   "onlyFirst": 170,
+   "onlySecond": 1962,
+   "topFirst": [
+    "#131313:25",
+    "#4d4d52:24",
+    "#28124a:24",
+    "#0d0517:24",
+    "#170d23:16"
+   ],
+   "topSecond": [
+    "#080808:541",
+    "#0a0a0a:537",
+    "#060606:108",
+    "#0d0d0d:108",
+    "#0c0c0c:104"
+   ]
+  },
+  "gl": true
+ },
+ {
+  "scene": "after-pedestal",
+  "turned": "{\"cls\":\"dark\",\"same\":true}",
+  "inPlaceVsFresh": {
+   "px": 480000,
+   "diff": 36992,
+   "diff24": 29022,
+   "onlyFirst": 0,
+   "onlySecond": 306,
+   "topFirst": [],
+   "topSecond": [
+    "#797979:198",
+    "#eaeaea:47",
+    "#d2d2d2:18",
+    "#b2b2b2:16",
+    "#e5e5e5:15"
+   ]
+  },
+  "floorFreshVsFresh": {
+   "px": 480000,
+   "diff": 20034,
+   "diff24": 2652,
+   "onlyFirst": 0,
+   "onlySecond": 0,
+   "topFirst": [],
+   "topSecond": []
+  },
+  "controlSameStepsNoTurn": {
+   "px": 480000,
+   "diff": 36892,
+   "diff24": 28920,
+   "onlyFirst": 0,
+   "onlySecond": 306,
+   "topFirst": [],
+   "topSecond": [
+    "#797979:198",
+    "#eaeaea:47",
+    "#d2d2d2:18",
+    "#b2b2b2:16",
+    "#e5e5e5:15"
+   ]
+  },
+  "gl": true
+ }
+]

@@ -177,6 +177,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- Switching between light, dim and dark fades the game over in place, without reloading the page (src/selftest/settings.js, "the dark switch turns the page in place").
 - In heaven each station stands on its own shelf of cloud, further apart, with ramps between, and everybody walks up and down them (test/after-floor.test.mjs).
 - In heaven a lip of cloud billows runs along the path's front in place of the clouds drawn below it (scene after-camp-art).
 - In heaven each station has one job, its worker fetching its own logs and taking its own signs and posters out, and hovering a roster says what the job does or why it is stuck (test/after-roster.test.mjs).

@@ -38,8 +38,8 @@
 // cached on a scratch canvas was drawn in the palette of the moment, so
 // every holder of a drawn or mapped color says so once, with `onTheme` (or
 // `themed` for a Map), and is dropped when the palette changes; the next
-// frame draws it again in the new one. The holders are listed in
-// docs/reviews/2026-10-21-theme-in-place/README.md.
+// frame draws it again in the new one. The holders are the callers of
+// `onTheme`, `themed` and `perPage`, and the keys that fold in `themeGen`.
 
 import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, DEEP_PAPER, DEEP_INK, GREY, AFTER_TONES, AFTER_DARK } from './config.js';
 import { theme } from './prefs.js';

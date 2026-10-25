@@ -88,16 +88,20 @@ boards' stylesheet carries the same four inks and its five grays as
 variables on `:root`, with the dark values computed by the same formula;
 scrims stay dark on both pages.
 
-The palette is fixed at boot. A sprite cached on a scratch canvas was drawn
-in the palette of the moment, and there are a dozen such caches with a dozen
-owners; re-inking them all under a live switch is the kind of work that
-leaves one of them stale in one mode. So the switch is a reload, made to
-read as a fade rather than a cut: the veil goes up in the color of the page
-that is *coming*, the page reloads under it -- each page's head reads the
-store before the first paint, so it opens in the right inks -- and the veil
-lifts. The title page does the same over its column and reloads the framed
-picture, lifting the veil when the frame has loaded, with the boot's own
-ceiling. Under reduced motion both are instant. The desk's window is still
+The page turns in place (2026-10-21; it was a reload until then). A sprite
+cached on a scratch canvas was drawn in the palette of the moment, and there
+are some forty such holders with their own owners, so none of them is
+re-inked by hand: each says once that it holds the page's colors (ink.js,
+`onTheme`, `themed`, `perPage`, or a key with `themeGen` in it), and
+`setTheme` remaps the ink, flips the root classes and lets every one of them
+go; the next frame draws them again. The switch reads as a fade rather than
+a cut: the veil goes up in the color of the page that is *coming*, the page
+turns under it while the yard runs on, and the veil lifts once a frame has
+been drawn in the new palette. The title page does the same over its column
+and tells its framed picture to turn (`THEME_TURN`; the frame keeps prefs of
+its own), lifting the veil once the frame has drawn, with the boot's own
+ceiling. Under reduced motion both are instant. Each page's head still reads
+the store before the first paint, so a page opens in the right inks. The desk's window is still
 opened white (`electron/main.cjs`), so on the desk the first frame flashes;
 the fix is a window color read from the store, and it is not done.
 
@@ -18876,7 +18880,7 @@ JavaScript writes them, so an English line reads byte for byte as the
 template it replaced; there are no isolation marks round a placeable. The
 language is settled once at boot (phase two retired the `lang` preference
 for `language`; see its As-built note), so a module may look a message up at its own top level; changing it
-reloads, as the dark switch does. `<html lang>` is set from it.
+reloads (the dark switch, which once did too, turns the page in place). `<html lang>` is set from it.
 
 **The pages.** Every element in play.html and index.html that says
 something carries a `data-l10n-id`, and lang.js writes the message over it
