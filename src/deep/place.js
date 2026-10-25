@@ -19,7 +19,7 @@ import { P, PLINTH_H, PLINTH_OVER, DEEP_GAP, DEEP_H, DEEP_SURFACE, DEEP_LEFT, DE
          WORKER, PROP_GAP, PROP_GAP_OF, LASH_TAUT, LASH_LIFT, LASH_H, LASH_W ,
          BREAK_DIVE_OVER, BREAK_ROAR_H,
          PORTAL_LIP_TO, PORTAL_TEAR_LOBE, PORTAL_TEAR_JITTER, NEARDEATH } from '../config.js';
-import { tautK, lashK, diveK, roarK, renewed, killSway, killDrop, killA, recoilPose, rearPose } from './phases.js';
+import { tautK, lashK, diveK, roarK, renewedBelow, killSway, killDrop, killA, recoilPose, rearPose } from './phases.js';
 import { PROPS, propKey } from './props.js';
 import { abyssLine, pitDepth } from '../pit.js';
 
@@ -188,7 +188,8 @@ export const tossX = () => crusherRect().x + CRUSHER_W + GATHER_TOSS_FROM;
 // cut and its tail lifted, then a bump run down it head to tail.
 const waveLine = t => {
   const x0 = coilX0(), span = coilSpan(), base = deepTop() + COIL_Y * DEEP_H;
-  const split = S.serpentStage === 2 && !S.serpentFreed;
+  // The split lengths writhe where the hide is the new phase's: below this k.
+  const below = S.serpentStage === 2 && !S.serpentFreed ? renewedBelow() : -Infinity;
   // The dive takes his highest edge past the floor, out of sight.
   const dive = diveK(), drop = dive ? dive * (deepFloor() - coilCeiling() + BREAK_DIVE_OVER) : 0, roar = roarK();
   const taut = tautK(), lash = lashK();
@@ -203,7 +204,7 @@ const waveLine = t => {
   const wave = x => {
     const k = (x - x0) / span;
     let y = base + amp * Math.sin(2 * Math.PI * (k * waves - t / COIL_SWAY_MS));
-    if (split && renewed(k)) y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
+    if (k < below) y += SPLIT_WRITHE * Math.sin(2 * Math.PI * (k * SPLIT_LENGTHS - t / SPLIT_WRITHE_MS));
     if (taut && k > COIL_TAIL_FROM) y -= taut * LASH_LIFT * (k - COIL_TAIL_FROM) / (1 - COIL_TAIL_FROM);
     if (lash != null) y += LASH_H * Math.exp(-((k - lash) ** 2) / (LASH_W * LASH_W));
     if (roar != null) y -= BREAK_ROAR_H * Math.exp(-((k - roar) ** 2) / (LASH_W * LASH_W));
@@ -218,7 +219,7 @@ const waveLine = t => {
   wave.low = x => {
     const k = (x - x0) / span;
     let y = base + Math.abs(amp);
-    if (split && renewed(k)) y += SPLIT_WRITHE;
+    if (k < below) y += SPLIT_WRITHE;
     if (lash != null) y += LASH_H * Math.exp(-((k - lash) ** 2) / (LASH_W * LASH_W));
     if (sag) y += sag * (1 - NEAR_SAG_TAIL * Math.max(0, k));
     return y + drop + lie;
@@ -227,6 +228,9 @@ const waveLine = t => {
   // slope in this pose, taken all along it.
   const slope = 2 * Math.PI * amp * waves / span;
   wave.stretch = Math.sqrt(1 + slope * slope);
+  // Everything the line is made of, so a line rebuilt for a fact it does not
+  // bend on (the phase's turn ticks every frame) keeps the walk of the last.
+  wave.key = [t, x0, span, base, below, drop, lie, roar, amp, waves, taut, lash, rk, bump && bump.at, bump && bump.lift, bump && bump.w, sag];
   return wave;
 };
 const waveY = (x, t) => lineAt(t).wave(x);
@@ -247,8 +251,9 @@ export const coilK = x => (x - coilX0()) / coilSpan();
 // pause every few seconds. Anything `waveLine` comes to read belongs in
 // this row.
 const line = { t: NaN, now: NaN, snatched: false, stage: 0, freed: false, mechAt: 0, mechSkip: false, breakT: null, recoilT: null,
-               freedAt: null, reformAt: null, top: NaN, x0: NaN, wave: null, xs: null };
+               freedAt: null, reformAt: null, top: NaN, x0: NaN, wave: null, xs: null, wx: 0, wy: 0, acc: 0, walked: false, segX: null };
 export let lineBuilds = 0;                // how often the line was worked out afresh (test/deep-alloc.test.mjs)
+export let lineWalks = 0;                 // and how often it was walked: the dear part
 function lineAt(t) {
   const L = line, at = now(), top = deepTop(), x0 = coilX0();
   if (L.t === t && L.now === at && L.snatched === S.snatched && L.stage === S.serpentStage
@@ -257,20 +262,29 @@ function lineAt(t) {
   L.t = t; L.now = at; L.snatched = S.snatched; L.stage = S.serpentStage; L.freed = S.serpentFreed;
   L.mechAt = S.mechAt; L.mechSkip = S.mechSkip; L.breakT = S.breakT; L.recoilT = S.recoilT; L.freedAt = S.freedAt; L.reformAt = S.reformAt;
   L.top = top; L.x0 = x0;
-  L.wave = waveLine(t); L.xs = null;
+  const wave = waveLine(t), was = L.wave && L.wave.key;
+  if (!was || wave.key.some((v, i) => v !== was[i])) { L.xs = null; L.segX = null; }
+  L.wave = wave;
   lineBuilds++;
   return L;
 }
 
 // The line walked once: x at every step of arc length along it, so a
-// segment's place is a lookup.
+// segment's place is a lookup. Walked only as far as it has been asked
+// (`need` entries), and carried on from there the next time: the clock moves
+// the line every frame, and a frame whose fighters stand at the head need
+// not walk to the tail. Stopped and carried on, it takes the same steps.
 const STEP = 2;                           // px of arc a table entry
-function walk(t) {
+function walk(t, need = Infinity) {
   const L = lineAt(t);
-  if (L.xs) return L.xs;
-  const xs = [L.x0];
+  if (!L.xs) {
+    L.xs = [L.x0]; L.wx = L.x0; L.wy = L.wave(L.x0); L.acc = 0; L.walked = false;
+    lineWalks++;
+  }
+  const xs = L.xs;
+  if (L.walked || xs.length >= need) return xs;
   const wave = L.wave;
-  let x = xs[0], y = wave(x), acc = 0;
+  let x = L.wx, y = L.wy, acc = L.acc;
   const end = coilSpan() * 1.02;          // the body's length, and a little over
   // Small x steps, arc summed, a table entry every STEP of arc. A step's
   // length is a square root rather than `Math.hypot`, whose overflow guard
@@ -280,8 +294,9 @@ function walk(t) {
     acc += Math.sqrt((nx - x) * (nx - x) + (ny - y) * (ny - y));
     x = nx; y = ny;
     while (xs.length * STEP <= acc) xs.push(x);
+    if (xs.length >= need) break;
   }
-  L.xs = xs;
+  L.wx = x; L.wy = y; L.acc = acc; L.walked = !(acc < end);
   return xs;
 }
 // The sway runs on the clock less what the stuns have held back, so a
@@ -296,16 +311,18 @@ function coilClock(t) {
 }
 export function coilLine(u, t) {
   t = coilClock(t);
-  const s = u / (COIL_SEGS - 1) * coilSpan();   // arc from the head
-  if (s <= 0) {
-    // The snout, run on past the head along the same wave.
-    const x = coilX0() + s;
-    return { x, y: waveY(x, t) };
-  }
-  const xs = walk(t);
-  const i = Math.min(xs.length - 2, Math.floor(s / STEP)), f = s / STEP - i;
-  const x = xs[i] + (xs[i + 1] - xs[i]) * f;
+  const x = coilX(u, t);
   return { x, y: waveY(x, t) };
+}
+// Where along x the point `u` segments from the head lies, on the coil's own clock.
+function coilX(u, t) {
+  const s = u / (COIL_SEGS - 1) * coilSpan();   // arc from the head
+  // The snout, run on past the head along the same wave.
+  if (s <= 0) return coilX0() + s;
+  // Two entries past the one it falls in, or the whole walk where it runs off the end.
+  const k = Math.floor(s / STEP), xs = walk(t, k + 2);
+  const i = Math.min(xs.length - 2, k), f = s / STEP - i;
+  return xs[i] + (xs[i + 1] - xs[i]) * f;
 }
 // The highest the body's top edge ever reaches as it sways: the line's highest
 // swing, the writhe of the split lengths on top of it, and the thickest half.
@@ -361,10 +378,20 @@ export const bellyAt = t => coilAt(bellySeg(), t);
 // lance and a grenade all ask of the body.
 // The segment straight over x: the coil is laid along x, so it crosses a
 // column once, and the segment nearest in x is the one there.
+// Every fighter asks it every frame, so the segments' columns are kept with
+// the walk they are read off, each worked out the first time it is asked.
+// Head to tail they only move on along x, so once one past x is no nearer,
+// none further can be, and the walk need go no further than that.
 export function segAbove(x, t) {
+  t = coilClock(t);
+  const L = lineAt(t);
+  if (!L.segX) L.segX = new Float64Array(COIL_SEGS).fill(NaN);
+  const at = L.segX;
   let best = 0, d = Infinity;
   for (let i = 0; i < COIL_SEGS; i++) {
-    const e = Math.abs(coilAt(i, t).x - x);
+    if (Number.isNaN(at[i])) at[i] = snap(coilX(i, t));
+    const e = Math.abs(at[i] - x);
+    if (e >= d && at[i] >= x) break;
     if (e < d) { d = e; best = i; }
   }
   return best;

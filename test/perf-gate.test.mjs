@@ -50,7 +50,8 @@
 
 import { group, ok, state, yard, P } from './helpers.mjs';
 import { LADDER } from '../src/config.js';
-import { BARRED_REACH } from '../src/grid.js';
+import { BARRED_REACH, isDust } from '../src/grid.js';
+import { floor } from '../src/state.js';
 
 const { S } = yard;
 const FRAMES = 300;
@@ -75,15 +76,34 @@ const widestStripCols = () =>
   Math.max(0, ...(S.piles || []).map(p => Math.ceil((p.to - p.from) / P)));
 const perGrainCeiling = () => Math.max(widestStripCols(), 2 * BARRED_REACH + 1);
 
+// The columns holding a cell that is not dust, read off the cells themselves.
+const SURVEY_SLACK = 4;
+function oddColumns() {
+  let n = 0;
+  for (let c = 0; c < floor.cols; c++)
+    for (let r = 0; r < floor.rows; r++) { const v = floor.grid[r * floor.cols + c]; if (v && !isDust(v)) { n++; break; } }
+  return n;
+}
+
 // Three hundred frames, one at a time, and what the counters said on each.
 function watch() {
   const perf = globalThis.__perf;
-  const worst = { ways: 0, waysAt: -1, cols: 0, colsAt: -1, grains: 0, perGrain: 0, perGrainAt: -1 };
+  const worst = { ways: 0, waysAt: -1, cols: 0, colsAt: -1, grains: 0, perGrain: 0, perGrainAt: -1, surveys: 0, survey: 0, surveyAt: -1, surveyOdd: 0 };
   const ceiling = perGrainCeiling();
-  const over = [];
+  const over = [], slow = [];
   for (let i = 0; i < FRAMES; i++) {
-    perf.ways = 0; perf.grainCols = 0; perf.grains = 0;
+    perf.ways = 0; perf.grainCols = 0; perf.grains = 0; perf.surveys = 0; perf.surveyCells = 0;
     window.__fast(1 / 60);
+    // The survey reads a column only where something that is not dust lies
+    // in it, off the column ledger, never the whole floor. The columns are
+    // counted off the cells after the frame, so a few landed or carried
+    // after the survey are given room.
+    if (perf.surveys) {
+      worst.surveys += perf.surveys;
+      const odd = oddColumns(), each = perf.surveyCells / perf.surveys;
+      if (each > floor.rows * (odd + SURVEY_SLACK)) slow.push(`${i}:${each}/${odd}`);
+      if (each > worst.survey) { worst.survey = each; worst.surveyAt = i; worst.surveyOdd = odd; }
+    }
     if (perf.ways > worst.ways) { worst.ways = perf.ways; worst.waysAt = i; }
     if (perf.grainCols > worst.cols) { worst.cols = perf.grainCols; worst.colsAt = i; worst.grains = perf.grains; }
     // The per-frame rule: every grain this frame stayed inside its ground. As a
@@ -93,15 +113,19 @@ function watch() {
     const each = perf.grains ? perf.grainCols / perf.grains : 0;
     if (each > worst.perGrain) { worst.perGrain = each; worst.perGrainAt = i; }
   }
-  return { worst, ceiling, over };
+  return { worst, ceiling, over, slow };
 }
 
 // The numbers are printed even when they pass: the gate is a record of where the
 // two counts stand, and a green run that says nothing is a record of nothing.
-const verdict = (label, { worst, ceiling, over }) => (console.log(
+const verdict = (label, { worst, ceiling, over, slow }) => (console.log(
   `# perf-gate ${label}: ways max ${worst.ways} (frame ${worst.waysAt}); ` +
   `grainCols max ${worst.cols} over ${worst.grains} grains (frame ${worst.colsAt}), ` +
-  `worst per grain ${worst.perGrain.toFixed(1)} (frame ${worst.perGrainAt}), ceiling ${ceiling}`), [
+  `worst per grain ${worst.perGrain.toFixed(1)} (frame ${worst.perGrainAt}), ceiling ${ceiling}; ` +
+  `survey max ${worst.survey} cells (frame ${worst.surveyAt}, ${worst.surveyOdd} columns not all dust) of ${floor.cols * floor.rows}`), [
+  ok(worst.surveys > 0 && slow.length === 0, 'the floor survey reads only the columns holding something that is not dust',
+     `${worst.surveys} surveys; worst ${worst.survey} cells on frame ${worst.surveyAt} over ${worst.surveyOdd} such columns; ` +
+     `over on ${slow.length}: ${slow.slice(0, 5).join(' ')}`),
   ok(worst.ways <= 1, 'ways() is built at most once a frame',
      `built ${worst.ways} times on frame ${worst.waysAt} (max over ${FRAMES} frames)`),
   ok(over.length === 0, 'a grain never searches past the ground it landed on',

@@ -261,12 +261,15 @@ export function roarGape() {
 }
 // Whether the hide at `k` along the body (head 0) is the new phase's yet: under
 // the dive it changes at the bottom, under the roar behind the bump.
-export function renewed(k) {
+export const renewed = k => k < renewedBelow();
+// The same, as the k it holds below: the coil's walk asks thousands of points
+// a frame and takes this once.
+export function renewedBelow() {
   const kind = breakKind();
-  if (!kind) return true;
-  if (kind === 'dive') return S.breakT >= BREAK_DIVE.in;
+  if (!kind) return Infinity;
+  if (kind === 'dive') return S.breakT >= BREAK_DIVE.in ? Infinity : -Infinity;
   const at = roarK();
-  return at == null ? S.breakT >= BREAK_ROAR.gape + BREAK_ROAR.run : k < at;
+  return at != null ? at : S.breakT >= BREAK_ROAR.gape + BREAK_ROAR.run ? Infinity : -Infinity;
 }
 // How full the bar is let stand, 0..1: it fills as he rises, or as the bump
 // runs. In `steps` held steps when asked for (the phase boxes), smooth when

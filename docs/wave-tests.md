@@ -2,8 +2,8 @@
 
 **Status: approved by the owner 2026-10-23 (all three calls as recommended).
 Steps 1-4 merged. Re-sequenced 2026-10-25 after the trace (owner: both,
-speed first) into phase A and phase B below -- awaiting approval of that
-order.**
+speed first) into phase A and phase B below; that order approved
+2026-10-25. Step 5 (hot paths) built; step 6 (fixtures) next.**
 Once approved this document is canon for the tracks that build it: do not
 redesign; implement. Where a name is given, use it.
 
@@ -209,6 +209,15 @@ browser (piece 5's system tier and `test/<part>/` folders are phase B's).
    second, `countTick` (`game.js`). Each profiled before and after on the
    same seeded yard (PERF.md, section 0); the player gets the frames too.
    First, because every later step is measured against the game's own cost.
+   *Built 2026-10-25:* the coil walked once a frame, not once a rebuild, and
+   only as far as a fighter asks; `surveyFloor` off a column ledger
+   (`columnsOf`, rule 7); the deep bed's brim read off its top rows. Every
+   answer identical to before, checked side by side over 2.5M asks. A frame
+   of act 3 with the deep fighting 0.48 to 0.22 ms; `scenes-stand-acts`
+   185 to 119 s, each run alone on this machine. Rule 7 walks a grid once
+   for all its ledgers. (`countTick` was `surveyFloor` inlined.) Checks:
+   `lineWalks` in test/deep-alloc.test.mjs, the survey's cells in
+   test/perf-gate.test.mjs.
 6. **Fixtures** (4). A named starting yard is built from its scene in
    `src/scenes.js`, saved, cached under `test/fixtures/.gen/` keyed by a hash
    of `src/`, and loaded by every check that starts there. Files move onto

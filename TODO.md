@@ -4,7 +4,7 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Every part of the game stands on its own -- PHASE A DESIGNED, AWAITING APPROVAL (2026-10-25)
+## Every part of the game stands on its own -- PHASE A APPROVED, BUILDING (2026-10-25)
 
 docs/wave-tests.md. Merged: step 1 (CI shards by measured time, #11), step 2
 (every module-level let held/cache/page/saved, src/reset.js, #12), step 3
@@ -20,8 +20,9 @@ speed without isolation, target the slowest node shard from 7.4 min to under
 `src/scenes.js`, a unit tier for pure checks, hooks split. Phase B: `SYSTEMS`
 rows with a closure ratchet, each station owning its bodies and the beats
 asking through an interface, `sim` with act 3 first, and a stop rule (the
-yard's parts under 15 of 66 after that slice, or back to the owner). Blocked
-on: the owner's approval of that order. Nothing of phase A or B is built.
+yard's parts under 15 of 66 after that slice, or back to the owner). The
+owner approved that order 2026-10-25. Phase A step 5 (hot paths) is built;
+step 6 (fixtures) is next. Nothing of phase B is built.
 
 ## A pad check leaks in behind the sheet groups -- FOUND, NOT FIXED (2026-10-22)
 

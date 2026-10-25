@@ -155,9 +155,12 @@ export const bedX = c => deepBed.x + c * P + P / 2;
 
 // The floor at its brim: some stretch of the bed within DEEP_BED_BRIM rows of
 // its top, so the gathering has fallen behind. The deep's pile-full mark.
+// A column's top is that high when any cell that high is taken, so only those
+// rows are read: the survey asks four times a second.
 export function bedAtBrim() {
   if (!deepBed.grid || !deepBed.n) return false;
-  for (let c = 0; c < deepBed.cols; c++) if (topRow(deepBed, c) >= deepBed.rows - DEEP_BED_BRIM) return true;
+  const from = Math.max(0, deepBed.rows - DEEP_BED_BRIM) * deepBed.cols;
+  for (let i = from; i < deepBed.rows * deepBed.cols; i++) if (deepBed.grid[i]) return true;
   return false;
 }
 

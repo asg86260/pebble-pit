@@ -46,7 +46,7 @@ group("the owner's deep, a minute of its fight drawn: the numbers' sheets and th
     readFileSync(new URL('./fixtures/deep-spikes.json', import.meta.url), 'utf8'));
   yard.restore();
   window.__view('deep');
-  const sheets = numfont.sheetsMade, lines = place.lineBuilds;
+  const sheets = numfont.sheetsMade, lines = place.lineBuilds, walks = place.lineWalks;
   let hits = 0;
   const FRAMES = 60 * 60;
   for (let f = 0; f < FRAMES; f++) {
@@ -58,7 +58,7 @@ group("the owner's deep, a minute of its fight drawn: the numbers' sheets and th
   // Every face a number is drawn in (the blow's, the bar's and the heal's
   // fading ones), at the two sizes a blow's number comes in.
   const most = (2 + NUM_HEAL_FACES.length) * 2;
-  const made = numfont.sheetsMade - sheets, built = place.lineBuilds - lines;
+  const made = numfont.sheetsMade - sheets, built = place.lineBuilds - lines, walked = place.lineWalks - walks;
   return [
     ok(hits > 0, 'the fight put numbers up', `${hits} at most at once`),
     ok(made <= most, `the numbers' sheets are made once each, ${most} at most`, `${made} made over ${FRAMES} frames`),
@@ -66,6 +66,11 @@ group("the owner's deep, a minute of its fight drawn: the numbers' sheets and th
     // moved its turn on, and the drawing now and then after a stun: about
     // two a frame, where a line a point was thousands.
     ok(built <= 3 * FRAMES, "the coil's line is worked out a few times a frame, not a point at a time",
-       `${built} over ${FRAMES} frames`)
+       `${built} over ${FRAMES} frames`),
+    // The walk is the dear part, and only the clock moves the line every
+    // frame: a line rebuilt because the phase's turn ticked on keeps the walk.
+    // A stun holding the sway mid-frame is the odd second one.
+    ok(walked <= 1.5 * FRAMES, "the coil is walked about once a frame, not once a rebuild",
+       `${walked} walks, ${built} builds, over ${FRAMES} frames`)
   ];
 });
