@@ -3,6 +3,7 @@
 // input.js's.
 
 import { pref, setPref, reducedMotion, coarse, theme, nextTheme } from './prefs.js';
+import { setTheme } from './ink.js';
 import { version } from './version.js';
 import { exportSave, importSave, persist, switchSlot, restore, bootYard, reset } from './persist.js';
 import { S } from './state.js';
@@ -99,9 +100,8 @@ fillControls(document.getElementById('controlslist'));
 // The settings' tabs (settingstabs.js): graphics, audio, controls and the
 // languages, each a tab's rows on the one page.
 mountTabs(sheet);
-// A pick of another language is a reload, as the dark switch's is, since
-// every module reads its words at load; the one in force is a pick of
-// nothing.
+// A pick of another language is a reload, since every module reads its
+// words at load; the one in force is a pick of nothing.
 fillLanguages(document.getElementById('langlist'), { reload: () => leave(location.href), stay: () => {} });
 // The two of them, a page of the sheet of its own, brought up over the yard
 // by the house board's row (crewboard.js). Its way back is the yard again.
@@ -165,9 +165,10 @@ touchEl.addEventListener('click', () => {
 
 // And the dark switch, stepping light, dim, dark (prefs.js, `theme`): a desk
 // that asked its system for dark reads "on" before the switch is ever
-// touched. Pressing it is a reload, since the page's palette is fixed at boot
-// (ink.js): the veil goes up in the color of the page that is coming, the
-// page comes back under it and the veil lifts, so the change is one fade and
+// touched. Pressing it turns the page in place (ink.js, `setTheme`) behind
+// the veil: the veil goes up in the color of the page that is coming, the
+// page turns under it while the yard runs on, and the veil lifts once a
+// frame has been drawn in the new palette, so the change is one fade and
 // not a cut.
 const darkEl = document.getElementById('dark');
 const THEME_WORD = { light: 'set-dark-off', dim: 'set-dark-dim', dark: 'set-dark-on' };
@@ -175,11 +176,20 @@ const THEME_PAPER = { light: LIGHT_PAPER, dim: DEEP_PAPER, dark: DARK_PAPER };
 function sayDark() {
   darkEl.textContent = msg(THEME_WORD[theme()]);
 }
-darkEl.addEventListener('click', () => {
+let turning = false;   // page: the dark switch's veil is up and the page is turning
+darkEl.addEventListener('click', async () => {
+  if (turning || leaving) return;
+  turning = true;
   setPref('theme', nextTheme());
   sayDark();
-  document.getElementById('veil').style.background = THEME_PAPER[theme()];
-  leave(location.href);
+  const veil = document.getElementById('veil');
+  veil.style.background = THEME_PAPER[theme()];
+  veil.classList.add('up');
+  await new Promise(r => setTimeout(r, reducedMotion() ? 0 : VEIL_MS));
+  setTheme(theme());
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  veil.classList.remove('up');
+  turning = false;
 });
 
 // The readable-text switch turns the page in place (readable.js).

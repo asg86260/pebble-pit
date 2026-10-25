@@ -10,7 +10,7 @@ import { CLOUD_LAYERS } from '../config.js';
 import { paled, towardPage } from '../weather.js';
 import { S, floor } from '../state.js';
 import { ctx } from './ctx.js';
-import { light, line } from '../ink.js';
+import { light, line, perPage } from '../ink.js';
 import { screenAt } from './frame.js';
 
 // What the rain left, drawn where it landed, one column at a time, stacked on
@@ -361,7 +361,8 @@ function drawSplashes() {
 // (`drawFlash`).
 // The bolt and its embers are the ink's on the light page and a light on the
 // dark one, where a black strike would be lost in the storm's own dark.
-const BOLT_INK = line('#000');
+let BOLT_INK;   // cache: the page's tones, worked out again at each turn (ink.js, perPage)
+perPage(() => { BOLT_INK = line('#000'); });
 export function drawBolt() {
   const b = S.bolt;
   if (b) {

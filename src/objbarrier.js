@@ -22,6 +22,7 @@ import { tagOf, pressRow, revealed, COIN_ORDER } from './shop.js';
 import { onTap } from './tap.js';
 import { setFill } from './billfill.js';
 import { msg } from './lang.js';
+import { themeGen } from './ink.js';
 
 const box = document.getElementById('objective')?.querySelector?.('.barrier') ?? null;
 
@@ -48,6 +49,7 @@ const sayHTML = (el, html) => { if (el._said !== html) { el._said = html; el.inn
 let shown = '';            // page: what the DOM card shows, compared against the yard every frame -- `${key}:${mode}` drawn now, '' for nothing
 let swapUntil = 0;         // page: the DOM card's fade -- the fade out in progress, when it ends
 let parts = null;          // page: the DOM card's live cells -- the drawn block's live cells
+let drawnOn = 0;           // cache: the turn of the page the card was drawn on (ink.js): its glyph is in the inks
 
 export function seatBarrier(step, t) {
   if (!box) return;
@@ -61,8 +63,9 @@ export function seatBarrier(step, t) {
     shown = want;
     box.hidden = !want;
     parts = want ? draw(u, mode, step) : null;
+    drawnOn = themeGen;
     if (want) { box.classList.add('swap'); requestAnimationFrame(() => box.classList.remove('swap')); }
-  }
+  } else if (want && drawnOn !== themeGen) { parts = draw(u, mode, step); drawnOn = themeGen; }
   if (parts) update(u, mode);
 }
 

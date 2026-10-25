@@ -6,9 +6,9 @@
 // comes out the color it would have been drawn.
 
 import { P } from '../config.js';
-import { inkOf, inkMode } from '../ink.js';
+import { inkOf, inkMode, themed } from '../ink.js';
 
-const rgbOf = new Map();
+const rgbOf = themed(new Map());
 function rgba(c) {
   const key = inkMode() + c;
   let v = rgbOf.get(key);

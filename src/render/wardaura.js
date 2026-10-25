@@ -22,25 +22,33 @@ import { WORKER, WARD_UNIT as U, GREY, PURPLE, GOLD, ABYSS_TONES, ABYSS_MAGIC_TO
          WARD_AURA_SEED, WARD_AURA_TURN, WARD_AURAS as A, WARD_AURA_EMBERS } from '../config.js';
 import { GREYS, PURPLES, seen } from './deeptones.js';
 import { fill, headHeight } from './wardrobe.js';
+import { perPage } from '../ink.js';
 
 const MID = WORKER / 2;
 const lum = h => parseInt(h.slice(1, 3), 16);
 
 // A yard grey as the deep shows it: the yard's rung turned over, the nearest
 // rung of the abyss's ramp to that, folded onto the ones the deep keeps.
-const DEEP_GREY = GREY.map(c => {
+// Which abyss rung each is, worked out once; the tone itself is read off
+// the deep's ramp, which turns with the page.
+const DEEP_RUNG = GREY.map(c => {
   const v = 255 - lum(c);
   let best = 0;
   ABYSS_TONES.forEach((t, i) => { if (Math.abs(lum(t) - v) < Math.abs(lum(ABYSS_TONES[best]) - v)) best = i; });
-  return GREYS[best];
+  return best;
 });
+const DEEP_GREY = [];
 const deepPurple = r => PURPLES[Math.max(0, ABYSS_MAGIC_TONES.indexOf(PURPLE[r]))];
 const INKS = {
   yard: { grey: r => GREY[r], gold: GOLD.yard,
           ember: WARD_AURA_EMBERS.yard.map(([k, r]) => (k === 'grey' ? GREY[r] : PURPLE[r])) },
-  deep: { grey: r => DEEP_GREY[r], gold: seen(GOLD.deep),
-          ember: WARD_AURA_EMBERS.deep.map(([k, r]) => (k === 'grey' ? DEEP_GREY[r] : deepPurple(r))) },
+  deep: { grey: r => DEEP_GREY[r] },
 };
+perPage(() => {
+  DEEP_GREY.splice(0, DEEP_GREY.length, ...DEEP_RUNG.map(i => GREYS[i]));
+  INKS.deep.gold = seen(GOLD.deep);
+  INKS.deep.ember = WARD_AURA_EMBERS.deep.map(([k, r]) => (k === 'grey' ? DEEP_GREY[r] : deepPurple(r)));
+});
 // A look's grey ramp, rung by rung, in the yard's or the deep's: for the
 // head pieces drawn in more than the two greys an outfit carries
 // (render/wardheads.js).

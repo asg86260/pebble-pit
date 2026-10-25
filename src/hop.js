@@ -20,6 +20,7 @@ import { GLYPHS, drawGlyph } from './glyphs.js';
 import { onTap } from './tap.js';
 import { inDeep } from './view.js';
 import { stops, stopMid } from './stops.js';
+import { themeGen } from './ink.js';
 
 
 // Every standing station with a board in the half on screen, by where it
@@ -59,6 +60,8 @@ for (const dir of [-1, 1]) if (arrows[dir]) onTap(arrows[dir], () => hop(dir));
 // Seated every frame from the view, written only when something changes:
 // which way there is more, which station it is, where the sky sits.
 let wore = { [-1]: null, [1]: null }, shown = null, putY = null;  // page: what the hop arrows' DOM shows, compared against the yard every frame
+// cache: the turn of the page each arrow's glyph was drawn on (ink.js), its inks' key
+const woreOn = { [-1]: 0, [1]: 0 };
 export function refreshHop() {
   const want = coarse() && !S.paused;
   if (want !== shown) { shown = want; hopEl.hidden = !want; }
@@ -74,8 +77,9 @@ export function refreshHop() {
     const el = arrows[dir];
     const to = hopTarget(dir);
     const key = to ? to.key : null;
-    if (key === wore[dir]) continue;
+    if (key === wore[dir] && woreOn[dir] === themeGen) continue;
     wore[dir] = key;
+    woreOn[dir] = themeGen;
     el.hidden = !key;
     if (!key) continue;
     el.dataset.to = key;

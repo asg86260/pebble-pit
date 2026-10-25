@@ -1,6 +1,7 @@
 // The ground line, the hole in it and what is lying in the hole.
 
 import { GROUND_INK, GROUND_TEXTURE, GROUND_TILE, P } from '../config.js';
+import { themeGen } from '../ink.js';
 import { pitDepth } from '../pit.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
@@ -31,7 +32,7 @@ const hash = (c, r) => {
   return (h ^ (h >>> 16)) >>> 0;
 };
 function groundPattern() {
-  const key = `${GROUND_TEXTURE}/${GROUND_TILE}/${GROUND_INK}`;
+  const key = `${GROUND_TEXTURE}/${GROUND_TILE}/${GROUND_INK}/${themeGen}`;
   if (key === tileKey) return tilePat;
   tileKey = key;
   const n = GROUND_TILE;

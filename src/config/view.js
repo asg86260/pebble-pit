@@ -114,6 +114,9 @@ export const FLOAT_SHADOW_ALPHA = 0.2;
 export const PICTURE_WAIT_MS = 4000;
 // What the demo frame calls out, and sets on itself, once it has drawn.
 export const PICTURE_UP = 'boulder-picture-up';
+// What the landing page sends its demo frame to turn its page (title.js's
+// dark switch): the frame keeps its own prefs, so it is told the look.
+export const THEME_TURN = 'boulder-theme-turn';
 
 // The dev panel's rows for the knobs above, beside the bindings because an
 // imported `let` is read-only; config.js gathers every file's rows into TUNABLE.

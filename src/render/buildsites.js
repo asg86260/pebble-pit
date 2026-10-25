@@ -82,9 +82,9 @@ export function drawGrit() { paintGrit(false); }
 // frame turned over at an alpha, as in the yard: that is a tone the deep's
 // palette does not hold. A chip is the deep's light, one kept purple
 // (DEEP_GRIT_RUNG), fading out by opacity as it goes.
-const SILT = PURPLES[DEEP_GRIT_RUNG];
+const silt = () => PURPLES[DEEP_GRIT_RUNG];   // read at the fill: the ramp turns with the page
 export function drawSilt() {
-  ctx.fillStyle = SILT;
+  ctx.fillStyle = silt();
   for (const g of S.grit) {
     if (!g.sea) continue;
     const a = fade(g);

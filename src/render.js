@@ -9,7 +9,7 @@
 import { CREW_FADE, P, MAGIC_TONES, RIPPLE_RINGS, RIPPLE_GAP, GREY, AFTER_TONES } from './config.js';
 import { crewView } from './prefs.js';
 import { ctx, canvas, paintOn } from './render/ctx.js';
-import { inkMode } from './ink.js';
+import { inkMode, onTheme } from './ink.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
 import { held as heldState } from './reset.js';
@@ -595,6 +595,7 @@ function scaledWorld(fn) {
 // is the yard's (world.js, `stepShake`): the far place is drawn still.
 let frozen = null;              // held: the far place painted for glide `no`; the glide count is no key across yards
 heldState('render-frozen', () => { frozen = null; });
+onTheme(() => { frozen = null; });   // and painted in the page's inks
 function farPicture(rip) {
   const c = frozen ? frozen.c : document.createElement('canvas');
   if (frozen && frozen.no === rip.no && c.width === canvas.width && c.height === canvas.height) return c;

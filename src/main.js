@@ -24,7 +24,8 @@ import { buildShop } from './shop.js';
 import { persist, restore, claimSave, reset } from './persist.js';
 import { crew as hire, fast } from './hooks.js';
 import { reducedMotion } from './prefs.js';
-import { TITLE_COLUMN, DEMO_HEAD_START_S, PICTURE_UP } from './config.js';
+import { TITLE_COLUMN, DEMO_HEAD_START_S, PICTURE_UP, THEME_TURN } from './config.js';
+import { setTheme } from './ink.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { refreshHop } from './hop.js';                     // and the two arrows in its mid sky
 import { refreshFullscreen } from './fullscreen.js';        // and the whole screen, where there is one to be had
@@ -212,10 +213,18 @@ if (import.meta.env.DEV) {
 requestAnimationFrame(frame);
 // The landing page holds its veil until its picture is there: the frame after
 // the first, so the first is painted (title.js, `pictureUp`).
-if (demo) requestAnimationFrame(() => requestAnimationFrame(() => {
+const pictureUp = () => requestAnimationFrame(() => requestAnimationFrame(() => {
   window[PICTURE_UP] = true;
   parent.postMessage(PICTURE_UP, location.origin);
 }));
+if (demo) pictureUp();
+// The landing page's dark switch turns this frame's page in place, the yard
+// running on under its veil, and is told once a frame is drawn in the new one.
+if (demo) addEventListener('message', e => {
+  if (e.source !== parent || e.origin !== location.origin || e.data?.[THEME_TURN] == null) return;
+  setTheme(e.data[THEME_TURN]);
+  pictureUp();
+});
 if (!demo) unveil();
 
 // --- wave-cloud SYNC ---------------------------------------------------------

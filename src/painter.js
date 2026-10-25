@@ -7,7 +7,7 @@
 // draw them itself, on top.
 
 import { SHADES, FIND_COLOR } from './config.js';
-import { inkOf, inkMode } from './ink.js';   // the bytes go straight in, past the context's setter
+import { inkOf, inkMode, themed, themeGen } from './ink.js';   // the bytes go straight in, past the context's setter
 
 const rgb = h => {
   const n = parseInt(h.slice(1), 16);
@@ -19,7 +19,7 @@ const rgb = h => {
 // pass as the dust around it. Anything with no color here is left clear for
 // its owner to draw on top. One table a map (ink.js): the deep's bed is drawn
 // in the deep's, a heap in the yard's.
-const TABLES = new Map();
+const TABLES = themed(new Map());
 function tablesFor(m) {
   let t = TABLES.get(m);
   if (t) return t;
@@ -96,8 +96,10 @@ export function makePainter(b) {
 
   const paint = (into, x, y, w, h) => {
     if (!b.grid) return;
-    // A grid painted in another map than last time is painted afresh.
-    if (inkedIn !== inkMode()) { inkedIn = inkMode(); inks = tablesFor(inkedIn); all = true; }
+    // A grid painted in another map than last time, or on another turn of
+    // the page (ink.js, `themeGen`), is painted afresh.
+    const inkKey = inkMode() + themeGen;
+    if (inkedIn !== inkKey) { inkedIn = inkKey; inks = tablesFor(inkMode()); all = true; }
     if (canvas.width !== b.cols || canvas.height !== b.rows) {
       canvas.width = b.cols;
       canvas.height = b.rows;

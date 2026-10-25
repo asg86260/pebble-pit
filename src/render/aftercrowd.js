@@ -54,7 +54,7 @@ import { P, GREY, GOD_BACK, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AF
          AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S } from '../config.js';
 import { ctx } from './ctx.js';
 import { layerAt } from './frame.js';
-import { raw, darkPage } from '../ink.js';
+import { raw, darkPage, perPage, themeGen } from '../ink.js';
 import { afterX0, slotX, stationBox, unionJoinAt, afterFloor } from '../after/place.js';
 import { support, union, souls, OUT_RIM, speechTarget } from '../after/union.js';
 import { signReach } from '../after/levels.js';
@@ -75,23 +75,27 @@ function hsh(a, b = 0, c = 0) {
 // The sky's own tones outside the four, raw: God and his light white, his
 // features and outline black, on either page.
 const WHITE = '#ffffff', BLACK = '#000000';
-const SEAT_TONE = darkPage ? AFTER_SEAT_DARK : INK;
-const CROWN_TONE = darkPage ? WHITE : BLACK;
-// His rays and his voice's rings: white on the dark page; on the light one
-// mid, since the day's sky and its clouds are paper and pale.
-const RAY_TONE = darkPage ? WHITE : MID;
-// A soul his word lights (take b): his light on the dark page; on the light
-// one the ink, since a paper soul lit white would not show.
-const LIT_TONE = darkPage ? WHITE : INK;
-// The stage's top: paper on the light page, the light ink on the dark, never
-// the cloud's pale; its risers mid. His souls alternate mid and pale by row
-// (the mock's second grey is a fifth tone; the act has four).
-const TOP_TONE = darkPage ? INK : W;
+// Each is the page's, worked out again when it turns (ink.js, `perPage`).
+let SEAT_TONE, CROWN_TONE, RAY_TONE, LIT_TONE, TOP_TONE, UNION_TONE;   // cache: the page's tones, worked out again at each turn (ink.js, perPage)
+perPage(() => {
+  SEAT_TONE = darkPage ? AFTER_SEAT_DARK : INK;
+  CROWN_TONE = darkPage ? WHITE : BLACK;
+  // His rays and his voice's rings: white on the dark page; on the light one
+  // mid, since the day's sky and its clouds are paper and pale.
+  RAY_TONE = darkPage ? WHITE : MID;
+  // A soul his word lights (take b): his light on the dark page; on the light
+  // one the ink, since a paper soul lit white would not show.
+  LIT_TONE = darkPage ? WHITE : INK;
+  // The stage's top: paper on the light page, the light ink on the dark, never
+  // the cloud's pale; its risers mid. His souls alternate mid and pale by row
+  // (the mock's second grey is a fifth tone; the act has four).
+  TOP_TONE = darkPage ? INK : W;
+  // The union's ink: the flags, the auras and a won soul's darkening; on the
+  // dark page a light grey (AFTER_LINE_DARK), as the mocks have it.
+  UNION_TONE = darkPage ? AFTER_LINE_DARK : INK;
+});
 const RISE_TONE = MID;
 const SOUL_TONES = [MID, PALE];
-// The union's ink: the flags, the auras and a won soul's darkening; on the
-// dark page a light grey (AFTER_LINE_DARK), as the mocks have it.
-const UNION_TONE = darkPage ? AFTER_LINE_DARK : INK;
 
 // --- the frame's camera ---------------------------------------------------------------
 // The device pixels a world pixel takes, the window's middle, the sky's
@@ -554,7 +558,7 @@ const gx = () => gxAt(-Infinity);
 const godFoot = () => ({ x: gx(), y: F.gy0 + (SEAT + GOD_THRONE.seatH) * H });
 const cache = { key: '', throne: null, poses: new Map(), signs: new Map() };
 function freshCaches() {
-  const key = `${K}|${H}|${F.top}|${F.W}`;
+  const key = `${themeGen}|${K}|${H}|${F.top}|${F.W}`;
   if (key === cache.key) return;
   cache.key = key; cache.throne = null;
   cache.poses.clear(); cache.signs.clear();

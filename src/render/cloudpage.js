@@ -14,8 +14,10 @@
 import { S } from '../state.js';
 import { skyGL } from './cloudgl.js';
 import { layerAt } from './frame.js';
+import { onTheme } from '../ink.js';
 
 let card;   // page: the WebGL card, the browser's; the card's passes, null with no WebGL2; undefined until asked
+onTheme(() => card?.afresh());   // its windows ease from the old page's tones otherwise
 export function cloudCard() {
   if (card === undefined) { try { card = skyGL(); } catch { card = null; } }
   return card;

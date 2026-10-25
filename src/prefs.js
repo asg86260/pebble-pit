@@ -84,9 +84,8 @@ export const forceCoarse = v => { forced = v; };
 // page; dim, the first dark page, light gray on charcoal turned by
 // lightness; or dark, the graphite page where black stays black. `?dim` or
 // `?dark` in the address for a shot, else the sheet's switch, else what the
-// system asks for, which is the dark one. Asked once, at boot: the palette
-// is fixed for the life of the page (ink.js says why), so the switch reloads
-// rather than repainting. The node yard has no `matchMedia` and reads light,
+// system asks for, which is the dark one. Asked at boot and at the switch,
+// which turns the page in place (ink.js, `setTheme`). The node yard has no `matchMedia` and reads light,
 // which is what every check is written against. The head of each page asks
 // the same question of the store directly, before the first paint
 // (play.html, index.html).

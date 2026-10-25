@@ -35,6 +35,7 @@ import { boardOf } from './boardrows.js';
 import { shopOf } from './pages.js';
 import { BOARDS as BOARD_KEYS } from './stations.js';
 import { msg } from './lang.js';
+import { themeGen } from './ink.js';
 
 // A row with no drawing of its own wears the drawing of the station whose
 // board sells it, or of the site it is built at.
@@ -516,7 +517,7 @@ function wearGlyph(row, key, tint, ink, built = null, hands = []) {
   const pic = row.querySelector('.pic');
   if (!pic) return;
   const pose = hands.map(h => `${Math.round(h.dy)}@${h.on.toFixed(2)}:${h.chips.map(c => `${Math.round(c.x)},${Math.round(c.y)},${c.a.toFixed(1)}`).join(';')}`).join('|');
-  const drawn = `${tint}/${ink}/${built}/${pose}`;
+  const drawn = `${tint}/${ink}/${built}/${pose}/${themeGen}`;   // drawn in the page's inks
   if (pic.dataset.tint !== drawn) { pic.dataset.tint = drawn; pic.replaceChildren(drawGlyph(glyphFor(key), tint, ink, badgeFor(key), built, hands)); }
 }
 

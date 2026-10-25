@@ -40,7 +40,7 @@ import { CRUSHER_SPRITES } from '../deep/sprites.js';
 import { PROPS, propCells, brewCells, flameCells, clothCells } from '../deep/props.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
-import { raw, turnedOver } from '../ink.js';
+import { raw, turnedOver, perPage, onTheme, themed } from '../ink.js';
 import { ctx } from './ctx.js';
 import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
@@ -62,8 +62,10 @@ const isFighter = w => w.type === TYPE.FIGHTER;
 // A tone as it is to be seen, turned into what is drawn to get it
 // (render/deeptones.js): six greys and five purples, and white.
 export { GREYS, PURPLES };
-const MOTE_TONES = Object.fromEntries(Object.entries(DEEP_MOTE_TINTS)
-  .map(([k, v]) => [k, v.tones.map(i => (v.purple ? PURPLES : GREYS)[i])]));
+// Copies of the ramps, made again when the page turns (ink.js, `perPage`).
+const MOTE_TONES = {};
+perPage(() => Object.assign(MOTE_TONES, Object.fromEntries(Object.entries(DEEP_MOTE_TINTS)
+  .map(([k, v]) => [k, v.tones.map(i => (v.purple ? PURPLES : GREYS)[i])]))));
 // The breathing light along a top edge, as drawn, at `ms`.
 const breath = ms => PURPLES[breathAt(ms)];
 
@@ -83,7 +85,8 @@ export function deepWindow() {
 // the kept purples a held step at a time; under the dimmest it is not drawn,
 // since the water is the one grey over black and a darker star is a hole.
 const STAR_SHARE = 7;   // stars in seven that are purple: all of them
-const STARS = PURPLES.map((c, i) => (i < DEEP_PURPLE.dim ? null : c));
+const STARS = [];
+perPage(() => { STARS.length = 0; STARS.push(...PURPLES.map((c, i) => (i < DEEP_PURPLE.dim ? null : c))); });
 export function drawDeepWater() {
   const { x0, y0, x1, y1 } = deepWindow();
   // The whole window, top edge to floor: the deep has no surface on screen
@@ -118,7 +121,8 @@ const GROUND_ROWS = 40;
 // and laid as a pattern from the floor's top, so a cell is the same cell
 // whatever the camera does: the tile's x origin is the world's, and four
 // cells divide it. Below the band the floor is flat.
-let floorPat = null, floorBand = 0;   // cache: baked once from fixed config
+let floorPat = null, floorBand = 0;   // cache: baked from fixed config, in the page's inks
+onTheme(() => { floorPat = null; });
 function floorPattern() {
   if (floorPat) return floorPat;
   const top = DEEP_FLOOR_TOP_RUNG, bottom = DEEP_FLOOR_BOTTOM_RUNG, rows = DEEP_FLOOR_FADE_ROWS;
@@ -172,7 +176,8 @@ export function bedTop(x) {
 // the tones its characters are seen in: frame and brick one flat stone, the
 // mortar a rung under it so it still reads as brick, its door the hole, and
 // every cell with nothing over it the breathing light (`TOP`).
-const SPRITE_INK = { '#': TONE.stone, '+': TONE.stone, '-': TONE.ground, 'o': TONE.hole, '*': LIGHT.bright };
+const SPRITE_INK = {};
+perPage(() => Object.assign(SPRITE_INK, { '#': TONE.stone, '+': TONE.stone, '-': TONE.ground, 'o': TONE.hole, '*': LIGHT.bright }));
 const TOP = 'top';
 
 // The crusher, a brick furnace (deep/sprites.js), painted at crusherRect():
@@ -185,7 +190,8 @@ const FURNACE = CRUSHER_SPRITES.rest;
 // A cell of the frame or the brick with open water over it: the edge the light catches.
 const isBrick = ch => ch === '#' || ch === '+' || ch === '-';
 const topEdge = (r, col) => isBrick(FURNACE[r][col]) && !isBrick(FURNACE[r - 1]?.[col]);
-let furnace = null;   // cache: keyed by the crusher's place and its lit tone
+let furnace = null;   // cache: keyed by the crusher's place and its lit tone, in the page's inks
+onTheme(() => { furnace = null; });
 function crusherImage(c, t) {
   const lit = breath(t), id = `${c.x}|${c.y}|${lit}`;
   if (furnace && furnace.id === id) return furnace;
@@ -214,7 +220,8 @@ FURNACE.forEach((row, r) => {
 });
 const DOOR_FOOT = Math.max(...DOOR.map(([r]) => r));
 const DOOR_MID = DOOR.reduce((sum, [, c]) => sum + c, 0) / DOOR.length;
-const FIRE_WHITE = TONE.white, FIRE_GREY = TONE.pale;
+let FIRE_WHITE, FIRE_GREY;   // cache: the page's tones, worked out again at each turn (ink.js, perPage)
+perPage(() => { FIRE_WHITE = TONE.white; FIRE_GREY = TONE.pale; });
 const rung = k => PURPLES[Math.max(0, Math.min(PURPLES.length - 1, Math.round(k)))];
 
 // How warm the scales going in have made it, 0..1: each swells in and eases
@@ -321,7 +328,7 @@ const toneOf = (ramp, i) => (ramp === 'p' ? PURPLES : GREYS)[i];
 // A prop never changes but at the fork and at rung 8, so each is painted
 // once into an image of its own, a cell a cell, and drawn from there. Kept by
 // the prop and whether it is lit; it is drawn at wherever its station stands.
-const painted = new Map();
+const painted = themed(new Map());
 function propImage(key, lit) {
   const id = `${key}|${lit ? 8 : 0}`;
   let img = painted.get(id);
@@ -341,7 +348,7 @@ function propImage(key, lit) {
 // one, each a cell further out than the one over it, and both under the
 // prop's grey (PLINTH_TONES). The same for
 // every station of one width, so painted once a width.
-const plinths = new Map();
+const plinths = themed(new Map());
 function plinthImage(b) {
   const cols = b.w / P, steps = b.step / P, id = `${cols}|${steps}`;
   let img = plinths.get(id);

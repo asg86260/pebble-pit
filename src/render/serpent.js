@@ -52,6 +52,7 @@ import { dentsNow } from './arms.js';
 import { drawHand, handSize, handTip } from './hand.js';
 import { breakOff, liveChips, drawChips } from './barchips.js';
 import { held } from '../reset.js';
+import { perPage } from '../ink.js';
 
 // Him, wherever the serpent has him: a key to read his walk off (`motionOf`).
 const HIM = {};
@@ -484,7 +485,8 @@ function drawMealCrosses(t, pts, bellyA) {
 // place on the hide in held steps with a dim smear a step behind and a cell
 // of it halfway, then a spark there, ringed on its first frames. Purple, and
 // every third the water's own grey flecks.
-const FLECKS = DEEP_MOTE_TINTS.fleck.tones.map(i => GREYS[i]);
+const FLECKS = [];
+perPage(() => FLECKS.splice(0, FLECKS.length, ...DEEP_MOTE_TINTS.fleck.tones.map(i => GREYS[i])));   // the deep's ramp turns with the page
 const BLOB = [[0, 0], [1, 0], [0, 1], [1, 1]];
 const MOTE_OFF = 1 / COIL_SEGS;
 const RING = [[2, 0], [-1, 0], [0, 2], [0, -1], [3, 1], [-2, 1], [1, 3], [1, -2]];

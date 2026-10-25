@@ -5,11 +5,17 @@
 
 import { GREYS, PURPLES } from './deeptones.js';
 import { FLOW_KINDS, FLOW_LENGTHS } from '../config.js';
+import { perPage } from '../ink.js';
 
 // The mock's tones, on the deep's own ramps.
-const G = [4, 6, 8, 9, 10, 11].map(i => GREYS[i]);
-const Pu = [2, 3, 4, 5, 7, 9, 10, 11, 11].map(i => PURPLES[i]);
-const BLACK = GREYS[0];
+// Copies of the deep's ramps, which turn with the page (ink.js, `perPage`).
+const G = [], Pu = [];
+let BLACK;   // cache: the page's tones, worked out again at each turn (ink.js, perPage)
+perPage(() => {
+  G.splice(0, G.length, ...[4, 6, 8, 9, 10, 11].map(i => GREYS[i]));
+  Pu.splice(0, Pu.length, ...[2, 3, 4, 5, 7, 9, 10, 11, 11].map(i => PURPLES[i]));
+  BLACK = GREYS[0];
+});
 const unit = n => { const x = Math.sin(n * 127.1 + 3.7) * 43758.5453; return x - Math.floor(x); };
 
 const ell = (put, cx, cy, rx, ry, tone) => {

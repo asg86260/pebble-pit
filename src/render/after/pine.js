@@ -29,6 +29,7 @@ import { trees, groundLogs } from '../../after/grove.js';
 import { frame, K, W, PALE, MID, SOIL, DUST, toneOf, now, inView, clamp01, hash } from './kit.js';
 import { gestureView, groveIcons } from '../../after/gestures.js';
 import { ctx } from '../ctx.js';
+import { themed } from '../../ink.js';
 import { GREY } from '../../config.js';
 
 // The pine's shape is place.js's (`PINE`), where the hand reads it too.
@@ -65,7 +66,7 @@ const paper = () => (typeof document === 'undefined' ? null : document.createEle
 // the trunk above the stump (`trunk`) and the tiers on it (`crown`), in its
 // cells, each a sprite with the pivot it turns about, the near corner of the
 // cut (the trunk's right edge at the stump's top), in its own px.
-const PIECES = new Map();
+const PIECES = themed(new Map());
 function piece(stage, part) {
   const id = `${stage.trunk}|${stage.tiers.length}|${part}|${GREY[K]}`;
   if (PIECES.has(id)) return PIECES.get(id);
@@ -109,7 +110,7 @@ function fallPose(p, t) {
 }
 // A log on the ground, end on: a round of bark, its pale cut face and a
 // grey heart off its middle, so its turn shows as it rolls. Cached.
-const LOG = new Map();
+const LOG = themed(new Map());
 function logSprite() {
   const id = `${GREY[K]}|${GREY[PALE]}|${GREY[MID]}`;
   if (LOG.has(id)) return LOG.get(id);

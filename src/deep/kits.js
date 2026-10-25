@@ -22,12 +22,14 @@
 
 import { P, WORKER, KIT_BOX, MOTE_PERIOD, MOTE_RISE, PIP_PX, PIP_RING, PIP_GAP } from '../config.js';
 import { GREYS, PURPLES } from '../render/deeptones.js';
+import { perPage, themed } from '../ink.js';
 import { drawBody } from '../render/crew.js';
 import { fillOnPixels } from '../render/frame.js';
 import { MOVE_RUNG, CAPSTONE_RUNG } from '../config/classes.js';
 
 export { GREYS, PURPLES };
-export const WHITE = GREYS[11], INK = GREYS[0];
+export let WHITE, INK;   // cache: the page's tones, worked out again at each turn (ink.js, perPage)
+perPage(() => { WHITE = GREYS[11]; INK = GREYS[0]; });
 export const BODY = WORKER / P;          // the body's side, in cells
 export const R4 = R => R >= MOVE_RUNG, R8 = R => R >= CAPSTONE_RUNG;
 
@@ -98,7 +100,7 @@ export function pips(g, x, y, n, of, flash = 0) {
 // only moved by whole pixels or turned whole about its anchor. (ax, ay) is
 // the anchor, in the sprite's pixels. Made on first use: nothing here may
 // touch the document while the node yard imports the drawing.
-const SPRITES = new Map();
+const SPRITES = themed(new Map());
 export function sprite(key, wCells, hCells, ax, ay, paint) {
   let s = SPRITES.get(key);
   if (!s) {
@@ -147,8 +149,11 @@ const restKit = (g, key, R, x, y, paint) => blit(g, kitSprite(key, R, paint), Ma
 
 // Motes: single cells drifting up off a point, stepping down the tones as
 // they rise, slow, so a rung-8 fighter reads as more and not busy.
-export const DRIFT = [GREYS[10], GREYS[8], GREYS[6], GREYS[4]];
-export const MOTES_P = [PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]];
+export const DRIFT = [], MOTES_P = [];
+perPage(() => {
+  DRIFT.splice(0, 4, GREYS[10], GREYS[8], GREYS[6], GREYS[4]);
+  MOTES_P.splice(0, 4, PURPLES[11], PURPLES[9], PURPLES[7], PURPLES[5]);
+});
 export const MOTE_TONES = MOTES_P;
 export function drift(g, cx, cy, t, n = 1, seed = 0, rise = MOTE_RISE, period = MOTE_PERIOD, tones = DRIFT) {
   for (let i = 0; i < n; i++) {

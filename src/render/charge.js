@@ -7,8 +7,10 @@ import { P, WORKER } from '../config.js';
 import { GREYS, cell } from '../deep/kits.js';
 import { charging } from '../abyssintro.js';
 import { ctx } from './ctx.js';
+import { perPage } from '../ink.js';
 
-const TONES = [GREYS[11], GREYS[10], GREYS[8], GREYS[6]];
+const TONES = [];
+perPage(() => TONES.splice(0, 4, GREYS[11], GREYS[10], GREYS[8], GREYS[6]));   // the deep's ramp turns with the page
 const LINES = [-1, 1, 0];          // cells off her way, either side and down its middle
 const LEN = 6;                     // cells a line trails
 

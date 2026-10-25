@@ -21,6 +21,7 @@ import { crusherRect } from '../deep/place.js';
 import { ctx } from './ctx.js';
 import { fillOnPixels } from './frame.js';
 import { GREYS } from './deeptones.js';
+import { perPage } from '../ink.js';
 
 const EDGE = Math.max(1, Math.round(P / 3));   // a scale seen edge-on
 const FLUTTER_MS = 520;
@@ -51,7 +52,8 @@ function drawFlutter(list, behind) {
 // (`S.fangsLoose`, deep/party.js: (x, y) its foot's middle). Heavier than a
 // scale, it does not flutter: it goes down whole, a rigid few cells at
 // whole pixels, and lying still it is on the cell grid.
-const FANG_TONE = { '#': GREYS[GREYS.length - 1], '+': GREYS[GREYS.length - 3] };
+const FANG_TONE = {};
+perPage(() => Object.assign(FANG_TONE, { '#': GREYS[GREYS.length - 1], '+': GREYS[GREYS.length - 3] }));   // the deep's ramp turns with the page
 const FANG_W = FANG_SPRITE[0].length * P, FANG_H = FANG_SPRITE.length * P;
 export function drawFang(f) {
   let x = f.x - FANG_W / 2, y = f.y - FANG_H;

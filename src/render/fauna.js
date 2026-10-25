@@ -14,6 +14,7 @@ import { P, FAUNA_SPRITES, FAUNA_BASE, FAUNA_INK, FAUNA_BLINK, FAUNA_SIPHON, FAU
          FAUNA_POSES, FAUNA_REACT_INK, FAUNA_SMEAR, FAUNA_SILT } from '../config.js';
 import { ctx } from './ctx.js';
 import { TONE, greyAt, purpleAt } from './deeptones.js';
+import { themed } from '../ink.js';
 import { deepTop, deepX0 } from '../deep/place.js';
 import { deepWindow } from './deep.js';
 import { COLS, ROWS, faunaOut, unit, unit2, schoolAt, frameOf, reachOf, addScare, scareOffset,
@@ -70,7 +71,7 @@ function rowsOf(key, f, pose) {
 
 // A drawing's frame, painted once a pixel a cell, facing its way, and where
 // its lights are. Kept by creature (its seed), frame, pose and way.
-const frames = new Map();
+const frames = themed(new Map());
 function frameImage(key, f, dir, seed, dim, pose = null, vflip = false) {
   const id = `${key}|${f}|${dir}|${seed}|${dim}|${pose}|${vflip}`;
   let got = frames.get(id);

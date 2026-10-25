@@ -32,19 +32,24 @@
 // It is installed on the canvas context's prototype rather than threaded
 // through every draw: every context on the page -- the yard's, the painters'
 // scratch canvases, the press's pattern -- goes through the one setter, and
-// a fill nobody has written yet is covered the day it is written. The page
-// is inked at boot and reinked by a reload (settings.js, `dark`): a sprite
-// cached on a scratch canvas was drawn in the palette of the moment, and
-// the palette cannot be changed under it.
+// a fill nobody has written yet is covered the day it is written.
+//
+// The page turns in place (`setTheme`, under the settings' veil). A sprite
+// cached on a scratch canvas was drawn in the palette of the moment, so
+// every holder of a drawn or mapped color says so once, with `onTheme` (or
+// `themed` for a Map), and is dropped when the palette changes; the next
+// frame draws it again in the new one. The holders are listed in
+// docs/reviews/2026-10-21-theme-in-place/README.md.
 
 import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, DEEP_PAPER, DEEP_INK, GREY, AFTER_TONES, AFTER_DARK } from './config.js';
 import { theme } from './prefs.js';
 
-const look = theme();
-const on = look !== 'light', dim = look === 'dim';
-export const darkPage = on;
-export const paper = dim ? DEEP_PAPER : on ? DARK_PAPER : LIGHT_PAPER;
-export const ink = dim ? DEEP_INK : on ? DARK_INK : LIGHT_INK;
+// The page in force, and what follows from it. Live bindings: a module that
+// reads `darkPage` at a draw reads the page of the moment.
+let look = 'light', on = false, dim = false;   // page: the page's look, set by setTheme
+export let darkPage = false;
+export let paper = LIGHT_PAPER;
+export let ink = LIGHT_INK;
 
 // A color that must reach the canvas as written: for a `difference` fill,
 // where the mapped ink would be the wrong answer (buildsites.js, drawGrit).
@@ -82,12 +87,13 @@ function fromHsl(h, s, l) {
 
 // The ends of each map: where white lands and where black lands.
 const DEEP_ENDS = [lightOf(DEEP_PAPER), lightOf(DEEP_INK)];
-const ENDS = dim ? { yard: DEEP_ENDS, line: DEEP_ENDS, deep: DEEP_ENDS, after: DEEP_ENDS } : {
+const endsOf = d => (d ? { yard: DEEP_ENDS, line: DEEP_ENDS, deep: DEEP_ENDS, after: DEEP_ENDS } : {
   yard: [lightOf(DARK_PAPER), lightOf(DARK_INK)],
   after: [lightOf(AFTER_DARK.paper), lightOf(AFTER_DARK.ink)],
   line: [lightOf(DARK_PAPER), lightOf(DARK_INK)],
   deep: DEEP_ENDS,
-};
+});
+let ENDS = endsOf(false);   // page: the look's ends, set by setTheme
 // How far a color has to be from gray for act 3 to keep it as written:
 // the spread of its channels, faded in between the two so no hue jumps.
 const DULL = 0.22, KEPT = 0.42;
@@ -204,29 +210,81 @@ export function inkOf(c, m = mode) {
 // as on the light page, the fill is white.
 const sum = (p, i) => { const [a, b, c] = hex(p), [d, e, f] = hex(i);
   return raw('#' + [a + d, b + e, c + f].map(v => Math.min(255, v).toString(16).padStart(2, '0')).join('')); };
-const XOR = dim ? { yard: sum(DEEP_PAPER, DEEP_INK), line: sum(DEEP_PAPER, DEEP_INK), deep: sum(DEEP_PAPER, DEEP_INK), after: sum(DEEP_PAPER, DEEP_INK) }
-  : { yard: sum(DARK_PAPER, DARK_INK), line: sum(DARK_PAPER, DARK_INK), deep: sum(DEEP_PAPER, DEEP_INK), after: raw('#ffffff') };
+const xorOf = d => (d ? { yard: sum(DEEP_PAPER, DEEP_INK), line: sum(DEEP_PAPER, DEEP_INK), deep: sum(DEEP_PAPER, DEEP_INK), after: sum(DEEP_PAPER, DEEP_INK) }
+  : { yard: sum(DARK_PAPER, DARK_INK), line: sum(DARK_PAPER, DARK_INK), deep: sum(DEEP_PAPER, DEEP_INK), after: raw('#ffffff') });
+let XOR = xorOf(false);   // page: the look's difference inks, set by setTheme
 export const xorInk = () => (on ? XOR[mode] : raw('#ffffff'));
 
-// The setters, on the prototype, so every context is covered. Only on the
+// The setters, on the prototype, so every context is covered. Only on a
 // dark page: on the light one the map is the identity and costs a lookup a
-// fill for nothing.
-function hook(proto, key) {
-  const d = Object.getOwnPropertyDescriptor(proto, key);
-  if (!d) return;
-  Object.defineProperty(proto, key, {
-    configurable: true,
-    get: d.get,
-    set(v) { d.set.call(this, v instanceof String ? v.valueOf() : inkOf(v)); },
-  });
-}
-if (on && typeof CanvasRenderingContext2D !== 'undefined') {
-  for (const proto of [CanvasRenderingContext2D.prototype,
-                       typeof OffscreenCanvasRenderingContext2D !== 'undefined' ? OffscreenCanvasRenderingContext2D.prototype : null]) {
-    if (!proto) continue;
-    hook(proto, 'fillStyle');
-    hook(proto, 'strokeStyle');
+// fill for nothing, so turning back to it puts the plain setters back.
+const PROTOS = () => [typeof CanvasRenderingContext2D !== 'undefined' ? CanvasRenderingContext2D.prototype : null,
+                      typeof OffscreenCanvasRenderingContext2D !== 'undefined' ? OffscreenCanvasRenderingContext2D.prototype : null]
+  .filter(Boolean);
+let plain = null;   // page: the setters as the browser made them, while ours stand in
+function hookAll(want) {
+  if (want === !!plain || typeof CanvasRenderingContext2D === 'undefined') return;
+  if (!want) {
+    for (const [proto, key, d] of plain) Object.defineProperty(proto, key, d);
+    plain = null;
+    return;
+  }
+  plain = [];
+  for (const proto of PROTOS()) for (const key of ['fillStyle', 'strokeStyle']) {
+    const d = Object.getOwnPropertyDescriptor(proto, key);
+    if (!d) continue;
+    plain.push([proto, key, d]);
+    Object.defineProperty(proto, key, {
+      configurable: true,
+      get: d.get,
+      set(v) { d.set.call(this, v instanceof String ? v.valueOf() : inkOf(v)); },
+    });
   }
   const stop = CanvasGradient.prototype.addColorStop;
+  plain.push([CanvasGradient.prototype, 'addColorStop', Object.getOwnPropertyDescriptor(CanvasGradient.prototype, 'addColorStop')]);
   CanvasGradient.prototype.addColorStop = function (o, c) { return stop.call(this, o, inkOf(c)); };
 }
+
+// Everything that holds a color drawn or mapped in the palette of the
+// moment, as a way to let it go: a sprite set back to null, a table
+// cleared. Called after the palette has changed, so a holder that keeps a
+// value rather than dropping it can compute the new one at once.
+const holders = new Set();
+export function onTheme(drop) { holders.add(drop); return drop; }
+// A Map of drawn or mapped colors, emptied when the page turns.
+export function themed(m) { onTheme(() => m.clear()); return m; }
+// Tones worked out from the page: `fill` run now and again at every turn.
+// A table filled where it stands keeps its identity, so a module that holds
+// the array itself, or names it as a default, needs nothing of its own.
+export function perPage(fill) { fill(look); return onTheme(fill); }
+
+// Which turn of the page this is, for a cache that would rather compare a
+// number than be told.
+export let themeGen = 0;
+
+// The page turned to `to` ('light', 'dim' or 'dark'), in place: the map, its
+// ends and its tables, the setters, the stylesheet's two root classes
+// (play.html's head sets the same at boot), and then every holder let go.
+// The yard itself is not touched; the next frame draws it in the new page.
+export function setTheme(to) {
+  look = to;
+  on = look !== 'light'; dim = look === 'dim';
+  darkPage = on;
+  paper = dim ? DEEP_PAPER : on ? DARK_PAPER : LIGHT_PAPER;
+  ink = dim ? DEEP_INK : on ? DARK_INK : LIGHT_INK;
+  ENDS = endsOf(dim);
+  XOR = xorOf(dim);
+  for (const c of Object.values(caches)) c.clear();
+  hookAll(on);
+  if (typeof document !== 'undefined') {
+    document.documentElement.classList.toggle('dark', on);
+    document.documentElement.classList.toggle('dim', dim);
+  }
+  themeGen++;
+  // in the yard's map, as at load, where every holder first worked out its tones
+  const was = mode;
+  mode = 'yard';
+  try { for (const drop of holders) drop(look); } finally { mode = was; }
+}
+export const themeNow = () => look;
+setTheme(theme());

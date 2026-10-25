@@ -17,14 +17,17 @@ import { GREYS, seen } from './deeptones.js';
 import { dressAura } from './wardaura.js';
 import { HEADS } from './wardheads.js';
 import { lampCone } from './lamplight.js';
+import { perPage } from '../ink.js';
 
 // The yard's inks, and the deep's: the deep is drawn as the yard is and
 // turned over after (render/deep.js), so its black and white are the yard's
 // and only its greys are its own capped ramp's. The gold is the one hue,
 // for what is earned (GOLD), drawn so the deep's turning over shows its own.
 export const YARD_INKS = { ink: '#000', paper: '#fff', grey: GREY[WARD_GREY], pale: GREY[WARD_PALE], gold: GOLD.yard };
-export const DEEP_INKS = { ink: '#000', paper: '#fff', grey: GREYS[WARD_DEEP_GREY], pale: GREYS[WARD_DEEP_PALE],
-                           gold: seen(GOLD.deep) };
+// the deep's, filled where it stands each time the page turns (ink.js, `perPage`)
+export const DEEP_INKS = {};
+perPage(() => Object.assign(DEEP_INKS, { ink: '#000', paper: '#fff', grey: GREYS[WARD_DEEP_GREY], pale: GREYS[WARD_DEEP_PALE],
+                                         gold: seen(GOLD.deep) }));
 
 // A world coordinate put on the nearest whole device pixel, under a scale `k`
 // and offset `e`. At a zoom like 1.25 a unit is two and a half device

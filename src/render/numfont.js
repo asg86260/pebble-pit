@@ -5,7 +5,7 @@
 
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
-import { seen } from '../ink.js';
+import { seen, onTheme } from '../ink.js';
 import { NUM_FONT, NUM_FONT_TIGHT, NUM_FONT_PX } from '../config.js';
 import { fmt } from '../words.js';
 
@@ -37,7 +37,8 @@ export const drawable = str => [...String(str)].filter(ch => ch in NUM_FONT).joi
 // at more than one size -- a big blow's number beside the small ones -- so
 // they are let go on the pixel ratio, never on the size: a canvas made
 // afresh a frame is a pause for the collector every few seconds.
-let sheets = new Map(), sheetsDpr = 0;   // cache: keyed by size, face and drop, let go on the pixel ratio
+let sheets = new Map(), sheetsDpr = 0;   // cache: keyed by size, face and drop, let go on the pixel ratio and the page's turn
+onTheme(() => { sheetsDpr = 0; });   // drawn in the page's inks
 export let sheetsMade = 0;                // test/deep-alloc.test.mjs
 export function sheetOf(px, face, drop) {
   if (sheetsDpr !== S.dpr) { sheets = new Map(); sheetsDpr = S.dpr; }

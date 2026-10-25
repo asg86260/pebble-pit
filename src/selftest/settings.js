@@ -4,7 +4,7 @@
 // is checked in test/settings.test.mjs.
 
 import { raf, newRun, settle, state, ok, run, runUntil, board, haveRock,
-         boulderWorld, onScreen, point } from './kit.js';
+         boulderWorld, onScreen, point, SEED, onPage, landed } from './kit.js';
 import { pref, setPref, reducedMotion, coarse, dark, theme, readable } from '../prefs.js';
 import { setSlot, storeSettled, clear, slotRaw, writeSlot } from '../save.js';
 import { S } from '../state.js';
@@ -19,6 +19,8 @@ import { offered } from '../langpage.js';
 import { controlGroups } from '../controls.js';
 import { fullscreenAble } from '../fullscreen.js';
 import { TABS, turnTab, tabNow } from '../settingstabs.js';
+import { setTheme, themeNow } from '../ink.js';
+import { now } from '../clock.js';
 
 const held = () => document.getElementById('held');
 // Waits for `fact` a drawn frame at a time, with the game's clock left where
@@ -969,6 +971,94 @@ export const TESTS = [
       setPref('readable', false);
       document.documentElement.classList.remove('readable');
       resume();
+    }
+  }],
+
+  // The dark switch turns the page where it stands (ink.js, `setTheme`): no
+  // navigation, the yard and its clock carried on, and the glass afterwards
+  // the glass a page booted dark draws. Pressed as a player does, light to
+  // dim to dark; then the same seeded yard stood in both this page and a
+  // fresh `?dark` frame, held, and read at spots across the window.
+  ['the dark switch turns the page in place, and it draws as a page booted dark', async () => {
+    const before = pref('theme');
+    const veil = document.getElementById('veil');
+    const f = document.createElement('iframe');
+    // the fresh page, the window's size, staged so it never touches the save
+    f.src = './play.html?bench&dark';
+    f.style.cssText = `position:fixed;left:0;top:0;width:${innerWidth}px;height:${innerHeight}px;border:0;opacity:0;pointer-events:none;z-index:-1`;
+    // one yard, the whole works, stood the same in each and held there: the
+    // sky in flight let go and the seed sown, so two pages agree to the pixel
+    const stand = x => { x.__coldSky(); x.__seed(SEED); x.__scene('yard'); x.__fast(1); x.__still(true); };
+    const frames = x => new Promise(r => x.requestAnimationFrame(() => x.requestAnimationFrame(() => x.requestAnimationFrame(r))));
+    try {
+      setPref('theme', 'light');
+      setTheme('light');
+      // stood in the light, so every cache of it is filled in the light
+      // before the turn, and held through it
+      stand(window);
+      await frames(window);
+      const mark = Symbol('this page');
+      window.__themeMark = mark;
+      const navs = performance.getEntriesByType('navigation').length;
+      const storedWas = S.stored, clockWas = now();
+      await press();
+      settingsPage();
+      document.querySelector('#held .settabs button[data-tab="graphics"]').click();
+      const looks = [];
+      for (const want of ['dim', 'dark']) {
+        document.getElementById('dark').click();
+        // the veil up, the page turned under it, and the veil lifted again
+        await onPage(() => themeNow() === want && !veil.classList.contains('up'));
+        await landed(veil);
+        looks.push(themeNow());
+      }
+      const stayed = window.__themeMark === mark && performance.getEntriesByType('navigation').length === navs;
+      const carried = S.stored === storedWas && now() >= clockWas;
+      const cls = document.documentElement.className;
+      resume();
+      await frames(window);
+
+      document.body.appendChild(f);
+      const t0 = performance.now();
+      const booted = () => { const x = f.contentWindow; return !!(x?.__seed && x.__fast && x.__scene && x.__coldSky); };
+      while (!booted() && performance.now() - t0 < 20000) await raf();   // the frame's boot, not the yard's: no turning
+      if (!booted()) return [ok(false, 'the fresh dark page boots in a frame')];
+      const w = f.contentWindow;
+      stand(w);
+      await frames(w);
+      const read = x => { const c = x.document.getElementById('c'); return { w: c.width, h: c.height, d: c.getContext('2d').getImageData(0, 0, c.width, c.height).data }; };
+      const a = read(window), b = read(w);
+      window.__still(false);
+      run(1);
+      const ran = now() > clockWas;
+      // spots on what holds still between two pages: the ground across the
+      // window, the rock and the bench, in device pixels
+      const st = window.__state(), k = devicePixelRatio || 1, P6 = 6;
+      const at = (wx, wy) => [Math.floor((wx - st.camX) * st.zoom * k), Math.floor((wy - st.camY) * st.zoom * k)];
+      const spots = [];
+      for (let i = 1; i <= 5; i++) for (const down of [2, 6, 12]) spots.push(at(st.camX + st.viewW * i / 6, st.groundY + down * P6));
+      spots.push(at(st.rockX, st.rockY), at(st.benchX, st.groundY - 2 * P6));
+      const rgb = (img, x, y) => { const k = (y * img.w + x) * 4; return [img.d[k], img.d[k + 1], img.d[k + 2]]; };
+      const off = spots.filter(([x, y]) => { const p = rgb(a, x, y), q = rgb(b, x, y); return p.some((v, i) => Math.abs(v - q[i]) > 2); });
+      let differ = 0;
+      for (let k = 0; k < Math.min(a.d.length, b.d.length); k += 4)
+        if (Math.abs(a.d[k] - b.d[k]) + Math.abs(a.d[k + 1] - b.d[k + 1]) + Math.abs(a.d[k + 2] - b.d[k + 2]) > 6) differ++;
+      return [
+        ok(looks.join() === 'dim,dark' && /\bdark\b/.test(cls) && !/\bdim\b/.test(cls),
+           'the switch steps light, dim, dark, and the root class follows', `${looks.join()} ${cls}`),
+        ok(stayed, 'nothing navigated: the page that pressed it is the page that came back'),
+        ok(carried && ran, 'the yard and its clock carried on through the turn', `stored ${storedWas} -> ${S.stored}`),
+        ok(a.w === b.w && a.h === b.h, 'the two glasses are one size', `${a.w}x${a.h} ${b.w}x${b.h}`),
+        ok(off.length === 0, `every one of ${spots.length} spots is the fresh dark page's color`,
+           off.map(([x, y]) => `${x},${y} ${rgb(a, x, y)} vs ${rgb(b, x, y)}`).join('; ') + ` (${differ} px differ in all)`),
+      ];
+    } finally {
+      f.remove();
+      window.__still(false);
+      delete window.__themeMark;
+      setPref('theme', before);
+      setTheme(theme());
+      if (!document.getElementById('held').hidden) resume();
     }
   }],
 ];

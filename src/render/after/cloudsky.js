@@ -16,7 +16,7 @@ import { P, CLOUDS_ACT3 as A, CLOUDS_SKY, CLOUDS_PALETTE } from '../../config.js
 import { S } from '../../state.js';
 import { ctx } from '../ctx.js';
 import { onPixel } from '../frame.js';
-import { darkPage } from '../../ink.js';
+import { darkPage, onTheme } from '../../ink.js';
 import { horizonY } from '../../after/sky.js';
 import { afterOpenX, afterX0, afterX1 } from '../../after/place.js';
 import { skyLayer, layerLook, layerParams, stillSheet, drawBand } from '../clouds.js';
@@ -25,7 +25,7 @@ import { now } from './kit.js';
 import { restY } from '../../shot.js';
 import { held } from '../../reset.js';
 
-const page = darkPage ? 'dark' : 'light';
+const page = () => (darkPage ? 'dark' : 'light');
 // The path's surface: the paper by day, by night the cloud palette's role
 // CLOUDS_ACT3.path names (render/after/floor.js draws the path in it too).
 export const pathTone = () => (darkPage ? CLOUDS_PALETTE.dark[A.path.dark] : CLOUDS_PALETTE.light.sky);
@@ -38,7 +38,7 @@ function layers() {
   // a layer's round: the act's width as the layer slides past it, and a pad
   const round = rate => Math.ceil((afterX1() - afterX0()) * rate / P) + A.pad;
   L = { sky: Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: A.seed, W: round(layerParams(i).parallax * A.sky.rate), sky: A.sky.rows, lane: A.sky.lanes[i] })) };
-  for (const l of L.sky) l.look = layerLook(l, { page });
+  for (const l of L.sky) l.look = layerLook(l, { page: page() });
   return L;
 }
 const NAMES = () => layers().sky.map((_, i) => 'sky' + i);
@@ -78,10 +78,12 @@ function work() {
 
 // --- with no card: baked sheets, held still --------------------------------------------
 // The sky as bands of the baked kinds, each where its liquid layer stands.
-let still = null;   // cache: baked once from the act's fixed seed
+let still = null;   // cache: baked from the act's fixed seed, in the page's tones
+// The layers' looks and the still sheets are the page's: made again when it turns.
+onTheme(() => { L = null; still = null; });
 function stills() {
   if (still) return still;
-  const look = { page, treat: 'C' };
+  const look = { page: page(), treat: 'C' };
   still = { sky0: stillSheet({ kind: 'far', seed: A.seed, w: 512 }, look), sky2: stillSheet({ kind: 'mid', seed: A.seed + 1, w: 512 }, look) };
   return still;
 }

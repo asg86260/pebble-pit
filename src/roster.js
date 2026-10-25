@@ -20,7 +20,7 @@ import { JOB, DEEP_JOBS, TYPE_OF } from './jobs.js';
 import { shown, onSnap } from './tween.js';
 import { garage, hasGarage } from './crew/lifts.js';
 import { HATS, HATS_TIGHT, spriteW, spriteH } from './sprites.js';
-import { turnedOver } from './ink.js';
+import { turnedOver, themed } from './ink.js';
 import { now } from './clock.js';
 import { reducedMotion } from './prefs.js';
 import { writeCount } from './render/numfont.js';
@@ -697,7 +697,7 @@ function button(ctx, b, kind, live) {
 // filled from the bottom. The mask is cut in the screen's own pixels, not the
 // world's: the yard is drawn at five sixths, and a world pixel's row lands
 // between two screen rows and leaves a pale seam through the disc.
-const masks = new Map();
+const masks = themed(new Map());
 function maskOf(d, ring, fill, color) {
   const key = `${d}:${ring}:${fill}:${color}`;
   let c = masks.get(key);

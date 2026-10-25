@@ -474,5 +474,8 @@ export function skyGL() {
     for (let i = 0; i < out.length; i++) out[i] = buf[i * 4] ? tone[buf[i * 4]] : 0;
     return { w: s.w, h: s.h, tones: out };
   }
-  return { render, canvas, gl, tonesOf, tiersOf, forget: key => windows.delete(key) };
+  // `afresh`: every window's next pass takes its tones at once, as a new
+  // window's does, rather than easing from a page that has turned (ink.js)
+  const afresh = () => { for (const s of windows.values()) s.fresh = true; };
+  return { render, canvas, gl, tonesOf, tiersOf, afresh, forget: key => windows.delete(key) };
 }

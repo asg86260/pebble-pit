@@ -4,7 +4,7 @@
 import { openBoardRect } from '../board.js';
 import { fmt } from '../words.js';
 import { NUM_FONT_PX, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FLOAT_SHADOW, FLOAT_SHADOW_ALPHA } from '../config.js';
-import { inkMode } from '../ink.js';
+import { inkMode, themeGen } from '../ink.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawCoin, drawMark } from './marks.js';
@@ -172,7 +172,7 @@ export function drawCount() {
   const cw = Math.ceil(MARK * 2 * d), ch = Math.ceil((box.h - 8) * d);
   // A card with nothing on it but a grain of dust has nothing worth keeping.
   const key = lines.length > 1 &&
-              `${inkMode()},${cx0},${cy0},${cw},${ch},${x},${y},${lines.map(l => l.cell).join('.')}`;
+              `${inkMode()}${themeGen},${cx0},${cy0},${cw},${ch},${x},${y},${lines.map(l => l.cell).join('.')}`;
   if (!key) {
     markKey = '';
     ctx.fillStyle = '#000';

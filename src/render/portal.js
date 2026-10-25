@@ -29,6 +29,7 @@ import { GREYS, PURPLES } from './deep.js';
 import { TONE } from './deeptones.js';
 import { abyssRung } from './abyssfield.js';
 import { smoothstep as ease } from '../motion.js';
+import { perPage } from '../ink.js';
 
 const snap = v => Math.round(v / P) * P;
 const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
@@ -77,8 +78,11 @@ export function drawPortal() {
 // black, so the black mouth reads as a hole in it; the lip's rungs under the
 // ground's grey are left unpainted, so the lip frays into the water rather
 // than into black specks round the hole.
-const LIP_GREYS = GREYS.map((c, i) => (i < DEEP_GREY.ground ? null : c));
-const LIP_PURPLES = PURPLES.map((c, i) => (i < DEEP_PURPLE.dim ? null : c));
+const LIP_GREYS = [], LIP_PURPLES = [];
+perPage(() => {   // the deep's ramps turn with the page (ink.js)
+  LIP_GREYS.splice(0, LIP_GREYS.length, ...GREYS.map((c, i) => (i < DEEP_GREY.ground ? null : c)));
+  LIP_PURPLES.splice(0, LIP_PURPLES.length, ...PURPLES.map((c, i) => (i < DEEP_PURPLE.dim ? null : c)));
+});
 export function drawDeepPortal() {
   if (!S.portalOpen) return;
   drawHole(deepPortal(), 1, { tones: LIP_GREYS, magic: LIP_PURPLES, mouth: TONE.hole,

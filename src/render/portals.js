@@ -16,7 +16,7 @@ import { now } from '../clock.js';
 import { ctx } from './ctx.js';
 import { hash } from './flicker.js';
 import { msg, FACE } from '../lang.js';
-import { raw, light } from '../ink.js';
+import { raw, light, perPage } from '../ink.js';
 import { bandCells } from '../cutscene.js';
 import { CELL } from '../config.js';
 import { drawBody, lookFor } from './crew.js';
@@ -34,7 +34,8 @@ import { deepFloor } from '../deep/place.js';
 const snap = v => Math.round(v / P) * P;
 const cellAt = (x, y, tone) => { if (!tone) return; ctx.fillStyle = tone; ctx.fillRect(x, y, P, P); };
 const WHO = ['sqouse', 'you'];
-const WHITE_SEEN = GREYS[ABYSS_TONES.length - 1];
+let WHITE_SEEN;   // cache: the page's tones, worked out again at each turn (ink.js, perPage)
+perPage(() => { WHITE_SEEN = GREYS[ABYSS_TONES.length - 1]; });
 
 // Opacity, never a cut.
 function faded(k, draw) {
@@ -187,7 +188,9 @@ export function drawActsAfter() {
 // hand beside them, in the act's ink and paper (render/gates.js): its paper
 // lit, as the souls' is, so on the dark page it is a white hand drawn in ink
 // rather than ink on graphite.
-const HAND_LINE = GREY[AFTER_TONES.ink], HAND_FILL = light(GREY[AFTER_TONES.paper]);
+const HAND_LINE = GREY[AFTER_TONES.ink];
+let HAND_FILL;   // cache: the page's tones, worked out again at each turn (ink.js, perPage)
+perPage(() => { HAND_FILL = light(GREY[AFTER_TONES.paper]); });
 export function drawActsGates() {
   if (!S.acts) return;
   drawGatesFront();
@@ -214,8 +217,12 @@ export function drawActsHell() {
 // and read as ink. The middle stays paper and an inked piece ink, as a
 // body's are in the yard.
 const seen = light;
-const SOUL_RIM = seen(ACT_SOUL_RIM);
-const SOUL_INKS = { ink: SOUL_RIM, paper: ACT_SOUL_PAPER, grey: seen(GREY[2]), pale: seen(GREY[1]) };
+let SOUL_RIM;   // cache: the page's tones, worked out again at each turn (ink.js, perPage)
+const SOUL_INKS = {};
+perPage(() => {
+  SOUL_RIM = seen(ACT_SOUL_RIM);
+  Object.assign(SOUL_INKS, { ink: SOUL_RIM, paper: ACT_SOUL_PAPER, grey: seen(GREY[2]), pale: seen(GREY[1]) });
+});
 const RIM = [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2], [1, 2], [0, 2], [0, 1]];
 function drawSoul(x, y, inked, look) {
   if (look) dressBehind(ctx, x, y, look);

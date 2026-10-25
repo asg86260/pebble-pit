@@ -11,7 +11,7 @@ import { version } from './version.js';
 import { fillControls } from './controls.js';
 import { copyOut } from './copyout.js';
 import { showCloud, showFoot, showConflicts } from './cloudsheet.js';
-import { VEIL_MS, PICTURE_WAIT_MS, PICTURE_UP, LIGHT_PAPER, DARK_PAPER, DEEP_PAPER } from './config.js';
+import { VEIL_MS, PICTURE_WAIT_MS, PICTURE_UP, THEME_TURN, LIGHT_PAPER, DARK_PAPER, DEEP_PAPER } from './config.js';
 import { msg } from './lang.js';
 import { mountReadable, sayReadable } from './readable.js';
 import { fillLanguages, inForce } from './langpage.js';
@@ -143,9 +143,10 @@ motionEl.addEventListener('click', () => {
   yard.contentWindow?.location.reload();
 });
 // The dark switch is a fade, not a cut: the veil goes up in the color of the
-// page that is coming, the column changes under it and the picture is
-// reloaded in the new palette (ink.js says why a reload), and the veil lifts
-// once the picture is there, with the same ceiling the boot's wait has.
+// page that is coming, the column changes under it and the picture is told
+// to turn its own page in place (main.js, `THEME_TURN`; it keeps prefs of
+// its own, so it is told the look), and the veil lifts once the picture has
+// drawn a frame in it, with the same ceiling the boot's wait has.
 darkEl.addEventListener('click', async () => {
   setPref('theme', nextTheme());
   const veil = document.getElementById('veil');
@@ -156,7 +157,7 @@ darkEl.addEventListener('click', async () => {
   document.documentElement.classList.toggle('dim', theme() === 'dim');
   sayDark();
   const up = pictureDrawn(true);
-  yard.contentWindow?.location.reload();
+  yard.contentWindow?.postMessage({ [THEME_TURN]: theme() }, location.origin);
   await up;
   requestAnimationFrame(() => veil.classList.remove('up'));
 });
@@ -210,7 +211,8 @@ const yard = document.getElementById('yard');
 // after and a message for one already waiting: the frame is in the HTML and
 // loads beside this script, usually ahead of it, so a listener for its `load`
 // was nearly always too late and the page stood white for the whole ceiling.
-// `fresh` is for a frame about to reload, whose old flag still stands. A
+// `fresh` is for a frame about to draw again (a reload, a turned page),
+// whose old flag still stands. A
 // frame that never comes must not hold the page white, so the wait has a
 // ceiling.
 function pictureDrawn(fresh = false) {

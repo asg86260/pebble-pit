@@ -14,6 +14,7 @@ import { S } from '../state.js';
 import { P, MANSION_GREYS, MANSION_LIT, MANSION_WINDOW, MANSION_WINDOW_EVERY, MANSION_FLOOR_ROWS, MANSION_POLES,
          MANSION_FLOORS, MANSION_BLOCKS_AT, MANSION_BLOCK_CELLS, MANSION_BLOCKS_W, MANSION_TOWER_FLOORS, FINALE_PILE_W, FINALE_GREYS, ACT_ROCK_TONES } from '../config.js';
 import { ctx } from './ctx.js';
+import { themeGen } from '../ink.js';
 import { pieces } from '../home.js';
 import { hash } from './flicker.js';
 import { mansionPieces, mansionStands, mansionX, MANSION_W, pieceIn, poleUp, blocksLeft, woodLeft, woodX } from '../mansion.js';
@@ -46,7 +47,7 @@ function eachCell(p, fn) {
 // remade only when either changes.
 let sheet = null, sheetKey = '';   // cache: keyed by the finished pieces and whether lit
 function sheetOf(done) {
-  const key = `${done.join(',')}|${lit()}`;
+  const key = `${done.join(',')}|${lit()}|${themeGen}`;
   if (sheet && key === sheetKey) return sheet;
   const W = MANSION_W + 4, H = TOP;
   sheet = sheet || document.createElement('canvas');

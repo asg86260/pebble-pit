@@ -35,6 +35,7 @@ import {
   stone, mStaff, flute, REST, liftOf,
 } from '../deep/kits.js';
 import { hideTop, hideBot, hideMid, onHide } from './serpent.js';
+import { perPage } from '../ink.js';
 
 const POSE = DRAW_POSE, EX = DRAW_KEY_EX;
 const cTop = cx => hideTop(Math.round(cx));
@@ -57,8 +58,12 @@ const trip = (a, up, back, len) => a < up ? ease(a / up) : a < back ? 1 : 1 - ea
 const swum = (api, hover, k) => (api.placed ? api.restY : lerp(api.restY, hover, k));
 
 // --- the classic pass's drawings -----------------------------------------------
-const PAL_GREY = { lead: WHITE, body: GREYS[9], line: GREYS[10], ramp: [WHITE, GREYS[10], GREYS[9], GREYS[7], GREYS[5]] };
-const PAL_PURPLE = { lead: PURPLES[11], body: PURPLES[8], line: PURPLES[10], ramp: [PURPLES[11], PURPLES[10], PURPLES[9], PURPLES[7], PURPLES[5]] };
+// The deep's ramps turn with the page (ink.js, `perPage`), so these are filled where they stand.
+const PAL_GREY = {}, PAL_PURPLE = {};
+perPage(() => {
+  Object.assign(PAL_GREY, { lead: WHITE, body: GREYS[9], line: GREYS[10], ramp: [WHITE, GREYS[10], GREYS[9], GREYS[7], GREYS[5]] });
+  Object.assign(PAL_PURPLE, { lead: PURPLES[11], body: PURPLES[8], line: PURPLES[10], ramp: [PURPLES[11], PURPLES[10], PURPLES[9], PURPLES[7], PURPLES[5]] });
+});
 // A held smear: the cells a turning weapon sweeps from `from` to `to` about
 // the pivot cell (px, py), radius r0 to r1 -- solid, the leading edge white,
 // a step of grey inside; where the leading edge crosses the white hide, a
