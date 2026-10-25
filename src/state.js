@@ -946,7 +946,7 @@ export const EPHEMERAL = [
 // `n` is the live count of occupied cells, kept by `put`, repaired by
 // `recount` after anything that writes the cells wholesale, and watched by
 // rule 7 in verify.js.
-export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null, n: 0, colsOf: null, colN: null, colOdd: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The deep's floor: the scales lying on it, a plot of sand like the pit's,
 // laid under the deep by `wireBed` in deep/scales.js. Every cell is a scale.
 export const deepBed = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };

@@ -209,6 +209,12 @@ browser (piece 5's system tier and `test/<part>/` folders are phase B's).
    second, `countTick` (`game.js`). Each profiled before and after on the
    same seeded yard (PERF.md, section 0); the player gets the frames too.
    First, because every later step is measured against the game's own cost.
+   *Built 2026-10-25:* the coil walked once a frame, not once a rebuild, and
+   only as far as a fighter asks; `surveyFloor` off a column ledger
+   (`columnsOf`, rule 7); the deep bed's brim read off its top rows. Every
+   answer identical to before, checked side by side over 2.5M asks. A frame
+   of act 3 with the deep fighting 0.48 to 0.22 ms; `scenes-stand-acts` 157
+   to 128 s on this machine. (`countTick` was `surveyFloor` inlined.)
 6. **Fixtures** (4). A named starting yard is built from its scene in
    `src/scenes.js`, saved, cached under `test/fixtures/.gen/` keyed by a hash
    of `src/`, and loaded by every check that starts there. Files move onto

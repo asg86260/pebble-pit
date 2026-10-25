@@ -116,8 +116,35 @@ export const tickGrid = () => { clock++; };
 export const gridFrame = () => clock;
 export const ageAt = (b, c, r) => b.age ? b.age[r * b.cols + c] : 0;
 
+// And a ledger a column (`colsOf` the cells it was taken of, `colN` its
+// grains, `colOdd` its cells that are not dust), for a grid whose reader asks
+// about every column and would otherwise walk every cell: the floor's survey,
+// four times a second. Taken from the cells the first time it is asked and
+// again whenever the cells are not the ones it was taken of, the way the
+// awake flags are, so a grid swapped or refilled behind `put`'s back is
+// re-ledgered rather than believed (`recount`, `fillFlat` drop it).
+// verify.js rule 7 watches it like the others.
+export function columnsOf(b) {
+  if (b.colsOf !== b.grid) {
+    b.colN = new Int32Array(b.cols);
+    b.colOdd = new Int32Array(b.cols);
+    for (let i = 0, c = 0; i < b.grid.length; i++) {
+      const v = b.grid[i];
+      if (v) { b.colN[c]++; if (!isDust(v)) b.colOdd[c]++; }
+      if (++c === b.cols) c = 0;
+    }
+    b.colsOf = b.grid;
+  }
+  return { n: b.colN, odd: b.colOdd };
+}
+
 export const put = (b, c, r, v) => {
   const i = r * b.cols + c;
+  if (b.colsOf === b.grid) {
+    const was = b.grid[i];
+    b.colN[c] += (v ? 1 : 0) - (was ? 1 : 0);
+    b.colOdd[c] += (v && !isDust(v) ? 1 : 0) - (was && !isDust(was) ? 1 : 0);
+  }
   if (b.age) b.age[i] = v ? clock : 0;
   if (b.n != null) b.n += (v ? 1 : 0) - (b.grid[i] ? 1 : 0);
   // The rift asks how much dust is in the hole every frame it swallows, and
@@ -134,7 +161,7 @@ export const colOf = (b, x) => Math.floor((x - b.x) / b.p);
 
 export const count = b => { let n = 0; for (const v of b.grid) if (v) n++; return n; };
 // after anything that writes the cells wholesale rather than through `put`
-export const recount = b => { b.n = count(b); b.d = countDust(b); wakeGrid(b); };
+export const recount = b => { b.n = count(b); b.d = countDust(b); b.colsOf = null; wakeGrid(b); };
 export const countDust = b => {
   let n = 0;
   for (const v of b.grid) if (isDust(v)) n++;
@@ -311,6 +338,7 @@ export function settleSome(b, budget) {
 // re-pack n grains into a grid from the bottom up, ignoring shape
 export function fillFlat(b, n) {
   b.grid.fill(0);
+  b.colsOf = null;
   if (b.n != null) b.n = 0;                // and the ledgers went with them
   if (b.d != null) b.d = 0;
   wakeGrid(b);                             // the cells went, and not through `put`

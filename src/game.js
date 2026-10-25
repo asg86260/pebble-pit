@@ -13,7 +13,7 @@ import { noteMet } from './met.js';
 import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
-import { at, addGrain, colOf, surfaceY, topRow, landed, settleSome, resizeGrid, isDust, bottomY, tickGrid } from './grid.js';
+import { at, addGrain, colOf, surfaceY, topRow, landed, settleSome, resizeGrid, isDust, bottomY, tickGrid, columnsOf } from './grid.js';
 import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, stepShack, quarryShed, farmShed } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine, landRefund } from './pit.js';
@@ -466,34 +466,35 @@ function stepChips(now) {
   chips.length = w;
 }
 
-// One walk of the ground, four times a second: how much lies on each strip,
-// and where anything that is not dust has come to rest.
+// Four times a second, off the floor's column ledger (`columnsOf`): how much
+// lies on each strip, and where anything that is not dust has come to rest.
+// Only a column holding something that is not dust is walked.
 export function surveyFloor() {
   const marks = [];
   const count = {};
   for (const p of S.piles) count[p.key] = 0;
-  for (let c = 0; c < floor.cols; c++) {
+  const { cols, rows } = floor;
+  const { n: per, odd } = columnsOf(floor);
+  for (let c = 0; c < cols; c++) {
+    const n = per[c];
+    if (!n) continue;
     const x = floor.x + c * P;
-    const pile = pileAt(x);
-    let n = 0;
-    for (let r = 0; r < floor.rows; r++) {
-      const v = at(floor, c, r);
-      if (!v) continue;
-      n++;
-      // The painter has no color for anything that is not dust and leaves
-      // that cell clear, so the mark is drawn over it. Every one, not just
-      // the top of a column: a cell left clear and unmarked is a hole in
-      // the pile.
-      if (!isDust(v)) {
-        marks.push({ v, x: x + P / 2, y: bottomY(floor) - (r + 1) * P + P / 2 });
+    // The painter has no color for anything that is not dust and leaves
+    // that cell clear, so the mark is drawn over it. Every one, not just
+    // the top of a column: a cell left clear and unmarked is a hole in
+    // the pile.
+    if (odd[c]) {
+      for (let r = 0; r < rows; r++) {
+        const v = at(floor, c, r);
+        if (v && !isDust(v)) marks.push({ v, x: x + P / 2, y: bottomY(floor) - (r + 1) * P + P / 2 });
       }
     }
+    const pile = pileAt(x);
     if (pile) count[pile.key] += n;
   }
   S.floorMarks = marks;
   // The total is the floor's own ledger (`put` keeps it, verify.js rule 7
-  // watches it), not re-derived from the walk. The walk stays for what a
-  // ledger cannot answer: which strip each grain stands on, and the marks.
+  // watches it), not re-derived from the walk.
   S.floorGrains = floor.n;
   S.pileCount = count;
 

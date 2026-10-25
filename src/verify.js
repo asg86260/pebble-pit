@@ -20,7 +20,7 @@ import { ways, wayAt, standTop, WORKINGS, belowYard } from './route.js';
 import { cutTop } from './quarry.js';
 import { rockDown } from './rock.js';
 import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf, liftsOf } from './kit.js';
-import { count, countDust } from './grid.js';
+import { count, countDust, isDust } from './grid.js';
 import { SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind } from './config.js';
 
 // The same table `HELD` in pit.js is built from, written here rather than
@@ -450,6 +450,18 @@ export function verifyWorld() {
         const dust = countDust(b);
         if (b.d !== dust)
           fail(`${name} has lost count of its dust`, `ledger says ${b.d}, the cells say ${dust}`);
+      }
+      // And a column at a time, where the grid keeps that too.
+      if (b.colsOf === b.grid) {
+        const n = new Int32Array(b.cols), odd = new Int32Array(b.cols);
+        for (let i = 0, c = 0; i < b.grid.length; i++) {
+          const v = b.grid[i];
+          if (v) { n[c]++; if (!isDust(v)) odd[c]++; }
+          if (++c === b.cols) c = 0;
+        }
+        const c = n.findIndex((k, i) => k !== b.colN[i] || odd[i] !== b.colOdd[i]);
+        if (c >= 0)
+          fail(`${name} has lost count of a column`, `column ${c}: ledger says ${b.colN[c]} (${b.colOdd[c]} not dust), the cells say ${n[c]} (${odd[c]})`);
       }
     }
 

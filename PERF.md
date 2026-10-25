@@ -34,10 +34,12 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   reads. That is the whole of the empty yard's cost above.
 - **4, `unpull()`** — done. A flag set by `pull` and the plume half of
   `stirSmoke`, cleared by the pass that zeroes the offsets.
-- **5, `surveyFloor()`** — half done. The total comes off the ledger. The walk
-  stays, because the other two things it works out — which strip each grain
-  stands on, and where the cells that are not dust are — are genuinely per
-  column and no ledger answers them.
+- **5, `surveyFloor()`** — done (2026-10-25). The total comes off the ledger,
+  and the rest off a ledger a column (`columnsOf` in grid.js: grains and
+  cells that are not dust, kept by `put`, watched by rule 7), so only a
+  column holding something that is not dust is walked. The deep's coil is
+  walked once a frame and only as far as a fighter asks (`walk` in
+  deep/place.js, `lineWalks` in test/deep-alloc.test.mjs).
 - **2, settled sky motes** — done, and the diagnosis in section 3 was wrong.
   The per-mote arithmetic was never the cost. `settleHere` finished a mote's
   climb with `delete m.lean; delete m.y0`, and a `delete` puts an object into
