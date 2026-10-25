@@ -24,7 +24,7 @@ import { P, AFTER_ART_SCALE as A, AFTER_FALL_S, AFTER_CROWN_FADE_S, AFTER_BUILD_
          STUMP_ROPE_W, STUMP_ROPE_SLACK, STUMP_ROPE_POSES, STUMP_ROPE_FADE_S, STUMP_ROCK_DEG, STUMP_GIVE, STUMP_RISE_S,
          STUMP_RIP_UP, STUMP_RIP_S, STUMP_THROW_DEG, STUMP_HANG_S, STUMP_GONE_FADE_S,
          STUMP_CLODS, STUMP_CLOD_V, STUMP_CLOD_SPREAD, STUMP_CLOD_GRAV, STUMP_CLOD_S, STUMP_HOLE_S, STUMP_SAPLING_WAIT_S } from '../../config.js';
-import { plotX, afterFloor, pineOf, inPine, PINE_GROWN, STUMP, SAW_ROWS, ICON_DOT, AP } from '../../after/place.js';
+import { plotX, afterFloor, floorAt, pineOf, inPine, PINE_GROWN, STUMP, SAW_ROWS, ICON_DOT, AP } from '../../after/place.js';
 import { trees, groundLogs } from '../../after/grove.js';
 import { frame, K, W, PALE, MID, SOIL, DUST, toneOf, now, inView, clamp01, hash } from './kit.js';
 import { gestureView, groveIcons } from '../../after/gestures.js';
@@ -153,12 +153,14 @@ function drawGroundLogs(t) {
 // The whole good moves as one piece by its true height; its cells are the
 // piles' own (render/after/piles.js), at the art's scale.
 export function drawLaidGoods(t) {
-  const fl = afterFloor(), cv = logSprite();
+  const cv = logSprite();
   for (const q of groundLogs()) {
     if (q.fall == null) continue;
     const kind = q.kind || 'log', u = q.fall > 0 ? clamp01((t - q.at) / q.fall) : 1;
     if (!inView(q.x - AP * 2, AP * 10)) continue;
-    const y = Math.round((q.y0 ?? fl) + (fl - (q.y0 ?? fl)) * u * u);
+    // the floor rises and falls (after/place.js, `floorAt`): it lands where
+    // it stands, as layGood reckoned its fall
+    const fl = floorAt(q.x + AP), y = Math.round((q.y0 ?? fl) + (fl - (q.y0 ?? fl)) * u * u);
     if (kind === 'log') { if (cv) { ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(cv, Math.round(q.x), y - 2 * AP); ctx.restore(); } continue; }
     const d = frame(Math.round(q.x), y, 0, null, A);
     if (kind === 'plank') { d.px(0, -P, 6 * P, P, K); d.px(2, -P + 2, 6 * P - 4, P - 4, PALE); }

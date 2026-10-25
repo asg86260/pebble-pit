@@ -15,7 +15,7 @@
 import { group, ok, run, runUntil, yard, restartReloadClock } from './helpers.mjs';
 import { AFTER_PUT_S, AFTER_CARRY_SLOTS, AFTER_PILE_REACH, RIM_PIECES } from '../src/config.js';
 import { haulCap } from '../src/levels.js';
-import { pileBox, afterFloor, stationBox, AP } from '../src/after/place.js';
+import { pileBox, floorAt, stationBox, AP } from '../src/after/place.js';
 import { grabAt, lift, holdBody, drop, inHand } from '../src/crew/pointer.js';
 
 const S = yard.S;
@@ -111,9 +111,9 @@ group('two logs taken off the forestry shack\'s pile by hand and let go on the s
 group('let go off any pile, the load falls to the floor, and an idle member carries it back to the shack\'s pile', async () => {
   up(4);
   const from = over('forestry', 'grovelogs');
-  const mill = stationBox('mill'), floor = afterFloor();
+  const mill = stationBox('mill');
   // Open floor past the mill's right end, well up off it.
-  const spot = { x: mill.x + mill.w + AP * 12, y: floor - AP * 8 };
+  const spot = { x: mill.x + mill.w + AP * 12, y: floorAt(mill.x + mill.w + AP * 12) - AP * 8 };
   const total = () => stock().grovelogs + stock().logs + S.after.groundLogs.length
     + S.after.bodies.reduce((n, b) => n + (b.load === 'log' ? b.carry || 0 : 0), 0) + (S.after.hand ? S.after.hand.n : 0);
   const t0 = total(), pile0 = stock().grovelogs;
@@ -125,7 +125,7 @@ group('let go off any pile, the load falls to the floor, and an idle member carr
   drop(inHand());
   const down = laid(), empty = !S.after.hand;
   run(1);
-  const lying = laid().length === held && laid().every(q => q.kind === 'log' && q.y0 < floor && q.x > mill.x + mill.w);
+  const lying = laid().length === held && laid().every(q => q.kind === 'log' && q.y0 < floorAt(q.x + AP) && q.x > mill.x + mill.w);
   // The members idle at the podium gather what lies loose as an errand
   // (bodies.js, ERRANDS), walking out to it and carrying it home.
   let carried = false;

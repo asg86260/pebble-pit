@@ -32,7 +32,7 @@ import { P, TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_LOGS_BIG_TREE, AFTER_FALL_S, AF
          AFTER_PLOTS0, AFTER_FALL_BOUNCE_S, AFTER_LOG_ROLL, AFTER_LOG_ROLL_S, AFTER_LOG_SPAN, GRAV } from '../config.js';
 import { secs, nextId } from './util.js';
 import { growS, bigTrees } from './levels.js';
-import { PINE_GROWN, stationParts, plotX, afterFloor, AP } from './place.js';
+import { PINE_GROWN, stationParts, plotX, floorAt, AP } from './place.js';
 
 export const GROWN = PINE_GROWN;
 
@@ -121,8 +121,8 @@ export const kindOf = q => q.kind || 'log';
 // x, and lies there as a felled log does until a gatherer or the hand takes
 // it up.
 export function layGood(kind, x, y) {
-  const a = S.after, h = Math.max(0, afterFloor() - y);
-  a.groundLogs.push({ id: nextId(), i: null, kind, x0: x, x, y0: Math.min(y, afterFloor()), at: a.t, fall: Math.sqrt(2 * h / GRAV) / 60 });
+  const a = S.after, fl = floorAt(x + AP), h = Math.max(0, fl - y);
+  a.groundLogs.push({ id: nextId(), i: null, kind, x0: x, x, y0: Math.min(y, fl), at: a.t, fall: Math.sqrt(2 * h / GRAV) / 60 });
 }
 // A gatherer taking log `id` up off the ground.
 export function takeGroundLog(id) {

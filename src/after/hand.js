@@ -26,7 +26,7 @@ import { P, AFTER_PUT_S, AFTER_PILE_GOODS, AFTER_PILE_REACH, AFTER_GOODS_FOOT, A
 import { holds } from './bodies.js';
 import { built } from './levels.js';
 import { groundLogs, settled, takeGroundLog, kindOf, layGood } from './grove.js';
-import { pileOwner, pileBox, afterFloor, afterX0, afterX1, AP } from './place.js';
+import { pileOwner, pileBox, floorAt, afterX0, afterX1, AP } from './place.js';
 import { secs } from './util.js';
 
 const PLACE = 'after';
@@ -47,11 +47,10 @@ function pileUnder(x, y, pad, kind = null) {
 }
 // A good lying still on the floor under (x, y), of `kind` (any, for null).
 function lyingUnder(x, y, pad, kind = null) {
-  const fl = afterFloor();
   for (let i = groundLogs().length - 1; i >= 0; i--) {
     const q = groundLogs()[i];
     if (!settled(q) || (kind && kindOf(q) !== kind)) continue;
-    if (inBox({ x: q.x, y: fl - 2 * AP, w: AFTER_GOODS_FOOT[kindOf(q)] * AP, h: 2 * AP }, x, y, pad)) return q;
+    if (inBox({ x: q.x, y: floorAt(q.x + AP) - 2 * AP, w: AFTER_GOODS_FOOT[kindOf(q)] * AP, h: 2 * AP }, x, y, pad)) return q;
   }
   return null;
 }

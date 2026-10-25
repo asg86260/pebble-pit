@@ -23144,7 +23144,15 @@ be able to pick up and move resources themselves between stations"
   a sheet, a sign) the way a worker is picked up, through the shared grab,
   and drops them on another station's pile. A load in the hand is the
   yard's carry, its weight in slots (the bullet above). Built after the crew's
-  carry lands, on that same carry.
+  carry lands, on that same carry. **Built 2026-10-25** (after/hand.js): the
+  right button held and the left pressed over a pile takes one good; held
+  there, one more a beat (AFTER_PUT_S) up to `holds(kind)`; let go over a pile
+  that takes it (AFTER_PILE_GOODS), set down on it a good a beat; let go
+  anywhere else, it falls to the floor and lies with the felled logs, where
+  a woodcutter or an idle member's errand carries it to its home pile
+  (AFTER_GOODS_HOME). A load on the cursor when the game is saved is laid on
+  the floor when read back. Only a log has a second pile to go to (the saw
+  mill's and the chipper's); a plank, a sheet and a sign each have one.
 
 ### Act 3: one job a station (built; the owner, 2026-10-21)
 
