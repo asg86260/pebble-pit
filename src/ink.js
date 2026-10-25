@@ -276,9 +276,11 @@ export function setTheme(to) {
   XOR = xorOf(dim);
   for (const c of Object.values(caches)) c.clear();
   hookAll(on);
-  if (typeof document !== 'undefined') {
-    document.documentElement.classList.toggle('dark', on);
-    document.documentElement.classList.toggle('dim', dim);
+  // The node yard's document has no stylesheet to turn.
+  const root = typeof document !== 'undefined' ? document.documentElement : null;
+  if (root && root.classList) {
+    root.classList.toggle('dark', on);
+    root.classList.toggle('dim', dim);
   }
   themeGen++;
   // in the yard's map, as at load, where every holder first worked out its tones
