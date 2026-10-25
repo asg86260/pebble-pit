@@ -448,14 +448,22 @@ export function verifyWorld() {
       const cols = b.colsOf === b.grid;
       const n = cols ? new Int32Array(b.cols) : null, odd = cols ? new Int32Array(b.cols) : null;
       let real = 0, dust = 0;
-      for (let i = 0, c = 0; i < b.grid.length; i++) {
-        const v = b.grid[i];
+      // Four cells a read where they are all empty, which most of a grid is.
+      const g = b.grid, quads = g.byteOffset % 4 ? null : new Uint32Array(g.buffer, g.byteOffset, g.length >> 2);
+      for (let i = 0, c = 0; i < g.length;) {
+        if (quads && i % 4 === 0 && i + 4 <= g.length && !quads[i >> 2]) {
+          i += 4; c += 4;
+          while (c >= b.cols) c -= b.cols;
+          continue;
+        }
+        const v = g[i];
         if (v) {
           real++;
           if (isDust(v)) dust++;
           else if (cols) odd[c]++;
           if (cols) n[c]++;
         }
+        i++;
         if (++c === b.cols) c = 0;
       }
       if (b.n !== real)
