@@ -12,17 +12,17 @@
 // (the motion rule, the owner 2026-10-20), hitting the ground with the dust
 // coming up and rocking back once; then its trunk splitting into the logs,
 // which roll off a little and lie, and its crown fading; the stump, a
-// three-by-two block with a grey cut face, lifted by the hand with its roots
-// showing. Over a grown
+// three-by-two block with a grey cut face, rigid: pulled on a rope by the
+// hand it rocks in its hole under the strain, then rips out whole with its
+// roots, clods thrown and the hole left fading. Over a grown
 // tree the saw icon, over a stump the shovel, each a pointer's mark drawn in
 // its own finer dots, no plate under it.
 
-import { P, AFTER_ART_SCALE as A, AFTER_FALL_S, AFTER_CROWN_FADE_S, AFTER_BUILD_FADE_S, AFTER_DIG_CLICKS,
+import { P, AFTER_ART_SCALE as A, AFTER_FALL_S, AFTER_CROWN_FADE_S, AFTER_BUILD_FADE_S,
          TREE_CHOPS, AFTER_ART_WORK_S, AFTER_PILE_FADE_S, AFTER_FALL_BOUNCE_S, AFTER_FALL_BOUNCE, AFTER_LOG_ROLL_S,
-         AFTER_STUMP_LOOK, GESTURE_STRAIN_LIFT, GESTURE_STRAIN_S, GESTURE_STUMP_DRAG,
+         GESTURE_STRAIN_LIFT, GESTURE_STRAIN_S, GESTURE_STUMP_DRAG,
          STUMP_ROPE_W, STUMP_ROPE_SLACK, STUMP_ROPE_POSES, STUMP_ROPE_FADE_S, STUMP_ROCK_DEG, STUMP_GIVE, STUMP_RISE_S,
          STUMP_RIP_UP, STUMP_RIP_S, STUMP_THROW_DEG, STUMP_HANG_S, STUMP_GONE_FADE_S,
-         STUMP_CREEP_UP, STUMP_CREEP_S, STUMP_BREAK_UP, STUMP_BREAK_S, STUMP_BITS,
          STUMP_CLODS, STUMP_CLOD_V, STUMP_CLOD_SPREAD, STUMP_CLOD_GRAV, STUMP_CLOD_S, STUMP_HOLE_S, STUMP_SAPLING_WAIT_S } from '../../config.js';
 import { plotX, afterFloor, pineOf, inPine, PINE_GROWN, STUMP, SAW_ROWS, ICON_DOT, AP } from '../../after/place.js';
 import { trees, groundLogs } from '../../after/grove.js';
@@ -149,20 +149,7 @@ function pine(d, stage, a = 1) {
   if (!stage || a <= 0) return;
   d.fade(a, () => { const [w, h] = stage.trunk; d.r(-(w - 1) / 2, -h, w, h, K); tiers(d, stage); });
 }
-// The stump, lifted `up` px out of the ground by the hand, its roots
-// showing under it as it comes.
-function stump(d, a, dug, up = 0) {
-  d.fade(a, () => {
-    const [x0, w, h] = STUMP.map(v => v * P);
-    up = Math.round(up / 2) * 2;
-    d.px(x0, -h - up, w, h, K); d.px(x0 + 2, -h + 2 - up, w - 4, 2, PALE);
-    if (up) { d.px(x0 + 2, -up, w - 4, up, MID); d.px(x0 - 2, -2, 2, 2, MID); d.px(x0 + w, -2, 2, 2, MID); }
-    // a root given takes a cell off its top
-    for (let k = 0; k < Math.min(dug, AFTER_DIG_CLICKS); k++) d.px((-1 + k) * P, -2 * P - up, P, P, W);
-  });
-}
-
-// The stump pulled (AFTER_STUMP_LOOK 1 and 2): the block and its roots one
+// The stump: the block and its roots one
 // cached drawing, placed at its true lift and turned by its true angle, so it
 // comes up out of the ground whole and never stretches. Roots, in art px off
 // the block's foot (its left corner), 2 by 2 each: hidden under the ground
@@ -177,6 +164,8 @@ function stumpParts(put, under = Infinity) {
   put(0, -h, w, h, K); put(2, -h + 2, w - 4, 2, PALE);
   for (const [x, y] of ROOTS) { const hh = Math.min(2, under - y); if (hh > 0) put(x, y, 2, hh, K); }
 }
+// The stump standing in the ground under a tree going over.
+const standingStump = d => stumpParts((x, y, w, h, tone) => d.px(STUMP[0] * P + x, y, w, h, tone), 0);
 const STUMP_SPRITE = new Map();
 function stumpSprite() {
   const id = `${GREY[K]}|${GREY[PALE]}`;
@@ -197,16 +186,14 @@ const ease = u => u * u * (3 - 2 * u);
 // Where the stump stands: `up` px out of the ground, turned `th` about the
 // foot corner it leans on; read off the sim's own lift, strain and roots.
 function pullPose(p, i, s, rec, t) {
-  const look = AFTER_STUMP_LOOK, deg = Math.PI / 180;
+  const deg = Math.PI / 180;
   if (s.dug == null) { s.dug = s.shownDug = s.dugFrom = p.dug || 0; s.dugAt = -1e9; }
   if (s.dug !== (p.dug || 0)) { s.dugFrom = s.shownDug; s.dug = p.dug || 0; s.dugAt = t; }
-  const riseS = look === 1 ? STUMP_RISE_S : STUMP_CREEP_S;
-  const k = ease(clamp01((t - s.dugAt) / riseS));
+  const k = ease(clamp01((t - s.dugAt) / STUMP_RISE_S));
   s.shownDug = s.dugFrom + (s.dug - s.dugFrom) * k;
-  const step = look === 1 ? STUMP_GIVE * A : STUMP_CREEP_UP * AP;
-  let up = s.shownDug * step, th = 0;
+  let up = s.shownDug * STUMP_GIVE * A, th = 0;
   const mine = rec && rec.i === i && rec.grab;
-  if (look === 1 && mine && rec.lift >= GESTURE_STRAIN_LIFT) {
+  if (mine && rec.lift >= GESTURE_STRAIN_LIFT) {
     const n = STUMP_ROCK_DEG.length;
     th = STUMP_ROCK_DEG[Math.min(n - 1, Math.floor(rec.strain / GESTURE_STRAIN_S * n))] * deg;
   }
@@ -245,7 +232,7 @@ function flung(x, y, since, n, seed, v0, life, tone) {
 // The stump at plot i, in the ground or coming out of it: drawn while it
 // stands, and on after it is out until it has gone.
 function pulledStump(d, p, i, s, rec, t, bx) {
-  const fl = afterFloor(), sp = stumpSprite(), look = AFTER_STUMP_LOOK, deg = Math.PI / 180;
+  const fl = afterFloor(), sp = stumpSprite(), deg = Math.PI / 180;
   const x0 = bx + STUMP[0] * AP;
   let up, th, a = 1;
   if (p.stump) {
@@ -255,14 +242,14 @@ function pulledStump(d, p, i, s, rec, t, bx) {
   } else {
     // Out: up in one eased lift from where it stood, held, faded.
     if (s.ripAt !== s.gone) { s.ripAt = s.gone; s.up0 = s.up || 0; s.th0 = s.th || 0; }
-    const since = t - s.gone, ripS = look === 1 ? STUMP_RIP_S : STUMP_BREAK_S;
+    const since = t - s.gone, ripS = STUMP_RIP_S;
     const e = easeOut(clamp01(since / ripS));
-    up = s.up0 + (look === 1 ? STUMP_RIP_UP : STUMP_BREAK_UP) * AP * e;
-    th = s.th0 + ((look === 1 ? STUMP_THROW_DEG : 0) * deg - s.th0) * e;
+    up = s.up0 + STUMP_RIP_UP * AP * e;
+    th = s.th0 + (STUMP_THROW_DEG * deg - s.th0) * e;
     a = 1 - clamp01((since - ripS - STUMP_HANG_S) / STUMP_GONE_FADE_S);
     // the hole it leaves, fading back to soil
     d.fade(1 - since / STUMP_HOLE_S, () => { for (let c = STUMP[0]; c < STUMP[0] + STUMP[1]; c++) d.c(c, -1, W); });
-    flung(x0 + STUMP[1] * AP / 2, fl - AP, since, STUMP_CLODS[look - 1], i * 17 + 1, STUMP_CLOD_V, STUMP_CLOD_S, SOIL);
+    flung(x0 + STUMP[1] * AP / 2, fl - AP, since, STUMP_CLODS, i * 17 + 1, STUMP_CLOD_V, STUMP_CLOD_S, SOIL);
     if (since < STUMP_CLOD_S) d.fade(1 - since / STUMP_CLOD_S, () => {
       const rise = Math.floor(since / STUMP_CLOD_S * 3);
       for (let k = 0; k < 8; k++) d.c(STUMP[0] - 2 + k * 1, -1 - rise - (k % 2), toneOf(DUST, k, 5));
@@ -270,8 +257,6 @@ function pulledStump(d, p, i, s, rec, t, bx) {
   }
   // The hole under a stump already lifted clear of its row.
   if (p.stump && up >= 2 * A) for (let c = STUMP[0]; c < STUMP[0] + STUMP[1]; c++) d.c(c, -1, W);
-  // B: bits of root torn off the foot at each root given.
-  if (look === 2 && p.stump) flung(x0 + STUMP[1] * AP / 2, fl - AP / 2, t - s.dugAt, STUMP_BITS, i * 31 + s.dug, [60, 110], 0.45, K);
   // The rope, faded in on the grab and out let go or once the stump is out.
   const held = !!(rec && rec.i === i && rec.grab && p.stump);
   if (held !== s.held) { s.held = held; s.heldAt = t; }
@@ -367,7 +352,7 @@ function plotSeen(i, p) {
   if (s.stump && !p.stump) {
     s.gone = t;
     // the sapling set in the hole only once the stump pulled has gone
-    if (AFTER_STUMP_LOOK && s.at === t) s.wait = STUMP_SAPLING_WAIT_S;
+    if (s.at === t) s.wait = STUMP_SAPLING_WAIT_S;
   }
   s.stump = p.stump;
   return s;
@@ -387,7 +372,7 @@ export function drawGrove() {
       // Going over, or down and rocking back; once it has settled its trunk
       // goes to its logs (faded out as they fade in over it) and its crown
       // fades off where it lies.
-      if (p.fall != null) stump(d, 1, 0);
+      if (p.fall != null) standingStump(d);
       const st = stageOf(GROWN, big), { th, drop } = fallPose(p, t);
       const down = p.fell == null ? 0 : t - p.fell - AFTER_FALL_BOUNCE_S;
       turned(piece(st, 'trunk'), bx, th, drop, p.fell == null ? 1 : clamp01(-down / SPLIT_S));
@@ -398,9 +383,7 @@ export function drawGrove() {
         for (let k = 0; k < 12; k++) d.c(2 + k * 2, -1 - up - (k % 2), toneOf(DUST, k, 3));
       });
     }
-    if (AFTER_STUMP_LOOK) { if ((p.stump && p.fall == null) || (!p.stump && t - s.gone < STUMP_HOLE_S)) pulledStump(d, p, i, s, lift, t, bx); }
-    else if (p.stump && p.fall == null) stump(d, 1, p.dug || 0, lift && lift.i === i ? lift.lift : 0);
-    else if (!p.stump && t - s.gone < AFTER_BUILD_FADE_S) stump(d, 1 - (t - s.gone) / AFTER_BUILD_FADE_S, AFTER_DIG_CLICKS);
+    if ((p.stump && p.fall == null) || (!p.stump && t - s.gone < STUMP_HOLE_S)) pulledStump(d, p, i, s, lift, t, bx);
     if (p.fall == null && p.stage) {
       // A stage coming in, faded over the one it grew from.
       const a = clamp01((t - s.at - (s.wait || 0)) / AFTER_BUILD_FADE_S) * cleared;

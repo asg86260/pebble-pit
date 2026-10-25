@@ -60,7 +60,7 @@ export const STUMP_ROPE_W = 4;
 export const STUMP_ROPE_SLACK = 1.5;
 export const STUMP_ROPE_POSES = 3;
 export const STUMP_ROPE_FADE_S = 0.15;
-// Take A, strain and rip: under strain the stump rocks in its hole, a held
+// Under strain the stump rocks in its hole, a held
 // tilt (degrees) per share of each strain, tipped on the corner it leans to;
 // a root given lifts it this many art px, risen over STUMP_RISE_S. Out, it
 // rips up this many art cells over STUMP_RIP_S, eased, turned to the throw
@@ -73,20 +73,11 @@ export const STUMP_RIP_S = 0.18;
 export const STUMP_THROW_DEG = 6;
 export const STUMP_HANG_S = 0.2;
 export const STUMP_GONE_FADE_S = 0.5;
-// Take B, the creep: each root given lifts it this many art cells, risen
-// over STUMP_CREEP_S; the last breaks it free STUMP_BREAK_UP more over
-// STUMP_BREAK_S, then it hangs and fades as A's does. Each tear flicks
-// STUMP_BITS bits of root off its foot.
-export const STUMP_CREEP_UP = 0.5;
-export const STUMP_CREEP_S = 0.25;
-export const STUMP_BREAK_UP = 2;
-export const STUMP_BREAK_S = 0.3;
-export const STUMP_BITS = 2;
-// What comes up with it: clods of soil thrown (A's rip, B's break), up at
+// What comes up with it: clods of soil thrown as it rips, up at
 // these speeds (px a second) under this gravity, fading over STUMP_CLOD_S;
 // the hole left, fading over STUMP_HOLE_S; the sapling set in the hole only
 // once the stump has gone, STUMP_SAPLING_WAIT_S after it came out.
-export const STUMP_CLODS = [6, 3];
+export const STUMP_CLODS = 6;
 export const STUMP_CLOD_V = [90, 170];
 export const STUMP_CLOD_SPREAD = 70;
 export const STUMP_CLOD_GRAV = 600;

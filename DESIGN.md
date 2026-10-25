@@ -20727,7 +20727,7 @@ same day; where this and the paragraph above differ, this is what runs.
   call later. The grove the same: with the axe a click chops, a stump blocks
   its plot until dug (a few clicks), digging replants a sapling free;
   **woodcutter** posts chop but leave stumps until **stump removal** is
-  bought.
+  bought. A stump pulled is drawn rigid, strain and rip: a taut rope, the stump rocking in its hole in held tilts, then ripping out whole with clods thrown (the owner's vote, 2026-10-25; render/after/pine.js).
 - **The grove** starts at one plot holding a grown tree (call 10); its card
   clears plots (to `AFTER_PLOT_MAX`), quickens growth, grows bigger trees
   (more logs a fall, planted big from then on) and buys stump removal.
