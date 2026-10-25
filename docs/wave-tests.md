@@ -156,6 +156,14 @@ the coil walk asked again within a frame, `surveyFloor` walking every column
 four times a second, `countTick`. Each is profiled before and after on the
 same seeded yard (PERF.md, section 0).
 
+## Step 4, measured (2026-10-25)
+
+The trace (`tools/node/systems-trace.mjs`, `test/systems.json`) found the
+frame one knot: every system but six closes over 46-47 of the 66, through
+`S.workers` (25 writers, 25 readers), the beats writing into other systems'
+facts, the rock and the camera. Choosing systems cannot isolate a part until
+those hubs are untangled; see TODO.md for the call put to the owner.
+
 ## Order, and what each step can be checked by
 
 Each is its own pull request, green before the next starts. Tracks inside a
