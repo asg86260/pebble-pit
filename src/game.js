@@ -475,6 +475,7 @@ export function surveyFloor() {
   for (const p of S.piles) count[p.key] = 0;
   const { cols, rows } = floor;
   const { n: per, odd } = columnsOf(floor);
+  globalThis.__perf.surveys++;               // the perf gate's: a survey, and the cells it read
   for (let c = 0; c < cols; c++) {
     const n = per[c];
     if (!n) continue;
@@ -484,6 +485,7 @@ export function surveyFloor() {
     // the top of a column: a cell left clear and unmarked is a hole in
     // the pile.
     if (odd[c]) {
+      globalThis.__perf.surveyCells += rows;
       for (let r = 0; r < rows; r++) {
         const v = at(floor, c, r);
         if (v && !isDust(v)) marks.push({ v, x: x + P / 2, y: bottomY(floor) - (r + 1) * P + P / 2 });
