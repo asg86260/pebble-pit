@@ -4,14 +4,23 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Every part of the game stands on its own -- APPROVED, BUILDING IN ORDER (2026-10-23)
+## Every part of the game stands on its own -- STEPS 1-3 MERGED, STEP 4 BLOCKED ON A CALL (2026-10-25)
 
-docs/wave-tests.md: each station and system as a `SYSTEMS` row that can be
-stepped alone (`test/sim.mjs`) from a fixture save, module state registered
-so a new game or a reload clears it, one check API with frame waits instead of
-sleeps, `test/` by part in four tiers, CI shards dealt by measured time. Built
-in six steps, each its own pull request. The owner took all three calls as
-recommended (2026-10-23). Step 1 (CI by measured time) is under way.
+docs/wave-tests.md. Merged: step 1 (CI shards by measured time, #11), step 2
+(every module-level let held/cache/page/saved, src/reset.js, #12), step 3
+(src/check.js, frame waits, 232 sleeps to 11, #13).
+
+Step 4 measured and stopped. `tools/node/systems-trace.mjs` (~33 min, every
+scene) wrote `test/systems.json`: every system but six trivial ones closes
+over 46-47 of the 66, so stepping a chosen few (`sim`) would step most of the
+frame. The hubs: `S.workers` (25 writers, 25 readers: every station's bodies
+in one list), the beats writing straight into the rock, camera, crew and
+works, then the rock (`rockTops`, `boulder`, `rockFall`) and the camera. The
+owner's call, put 2026-10-23: (1) untangle the hubs so a station owns its
+bodies and the beats ask rather than write, the trace proving each apart;
+(2) skip isolation, take the speed from fixtures, hot paths and pure tests;
+(3) both, 2 first. Recommended 3. Not built: `SYSTEMS` rows, `test/sim.mjs`,
+`test/systems.test.mjs`, fixtures, the tier move, hooks split, hot paths.
 
 ## A pad check leaks in behind the sheet groups -- FOUND, NOT FIXED (2026-10-22)
 
