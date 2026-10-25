@@ -3,7 +3,7 @@
 // the shared grab, the press and hold that picks up a member, one at once and
 // one more a beat while it is held over the pile, up to the yard's carry at
 // a log's weight; let go over the saw mill's pile, set down on it a log a
-// beat; let go anywhere else, fallen to the floor, where a gatherer carries
+// beat; let go anywhere else, fallen to the floor, where a member carries
 // it home. Nothing vanishes and nothing jumps.
 //
 // Driven through the very calls a worker pickup goes through
@@ -108,7 +108,7 @@ group('two logs taken off the forestry shack\'s pile by hand and let go on the s
   ];
 });
 
-group('let go off any pile, the load falls to the floor, and a gatherer carries it back to the shack\'s pile', async () => {
+group('let go off any pile, the load falls to the floor, and an idle member carries it back to the shack\'s pile', async () => {
   up(4);
   const from = over('forestry', 'grovelogs');
   const mill = stationBox('mill'), floor = afterFloor();
@@ -126,20 +126,21 @@ group('let go off any pile, the load falls to the floor, and a gatherer carries 
   const down = laid(), empty = !S.after.hand;
   run(1);
   const lying = laid().length === held && laid().every(q => q.kind === 'log' && q.y0 < floor && q.x > mill.x + mill.w);
-  // Nothing comes off the floor with nobody on the job.
-  run(10);
-  const untouched = laid().length === held;
-  window.__afterGrant({ rebel: 5000 });
-  const post = window.__afterPress('gatherer');
-  const home = runUntil(() => laid().length === 0 && stock().grovelogs === pile0 && !S.after.bodies.some(b => b.load === 'log'), 400);
+  // The members idle at the podium gather what lies loose as an errand
+  // (bodies.js, ERRANDS), walking out to it and carrying it home.
+  let carried = false;
+  const home = runUntil(() => {
+    carried = carried || S.after.bodies.some(b => b.load === 'log' && b.carry > 0);
+    return laid().length === 0 && stock().grovelogs === pile0 && !S.after.bodies.some(b => b.load === 'log');
+  }, 400);
   const kept = total() === t0;
   S.haulCarryLevel = 0;
   window.__actsOn(null);
   return [
     ok(held === 2 && empty && down.length === held, 'let go over open floor, the hand empties onto it', `${down.length} of ${held}`),
     ok(down.every(q => q.fall > 0), 'each falls from the hand\'s height', down.map(q => q.fall.toFixed(2)).join(' ')),
-    ok(lying && untouched, 'and lies on the floor where it fell, until somebody takes it up', `${laid().length}`),
-    ok(post && home, 'a gatherer carries every one back to the forestry shack\'s pile', `post ${post}, pile ${stock().grovelogs}`),
+    ok(lying, 'and lies on the floor where it fell', `${laid().length}`),
+    ok(carried && home, 'an idle member takes them up and carries every one back to the forestry shack\'s pile', `pile ${stock().grovelogs}`),
     ok(kept, 'not one lost on the way', `${t0} -> ${total()}`)
   ];
 });
