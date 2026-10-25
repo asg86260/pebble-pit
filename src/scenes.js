@@ -39,12 +39,12 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, stationBox, signBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt, campEdges } from './after/place.js';
+import { stationX0, stationBox, signBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt, campEdges, AP } from './after/place.js';
 import { godFront } from './after/sky.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
 const godView = () => godFront();
-import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S } from './config.js';
+import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PUT_S } from './config.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
@@ -3006,6 +3006,37 @@ export const SCENES = {
       window.__fast(1 / 60);
       window.__holdShot();
     } },
+  // Goods by hand (after/hand.js): the act-3-mid camp framed on the forestry
+  // shack and the saw mill, logs on the shack's pile and the yard's carry
+  // holding two; with `at` (0 over the shack's pile, 1 over the mill's; null
+  // for nothing in the hand) two logs taken by the shared grab
+  // (`__afterHand`) and carried that far along, up over the shack's roof as
+  // a cursor carries them (`handPath`), and with `letGo` let go there, a
+  // moment into setting them down.
+  'after-hand-carry': { about: 'the acts', say: "act 3's goods by hand: two logs taken off the forestry shack's pile, carried over the shack toward the saw mill's",
+    run: (at = 0.5, letGo = false) => {
+      act3Mid();
+      S.haulCarryLevel = 1;
+      window.__afterGrant({ grovelogs: 6 });
+      const from = window.__afterPile('forestry', 'grovelogs'), to = window.__afterPile('mill', 'logs');
+      pinCamera((from.x + to.x) / 2 - S.viewW / 2);
+      window.__look((from.x + to.x) / 2 - S.viewW / 2);
+      if (at != null) {
+        window.__afterHand(from.x, from.y, 'press');
+        for (let f = 0; f < AFTER_PUT_S * 60 * 3; f++) { window.__afterHand(from.x, from.y); window.__fast(1 / 60); }
+        const p = handPath(from, to, at);
+        window.__afterHand(p.x, p.y, letGo ? 'drop' : 'move');
+        if (letGo) window.__fast(AFTER_PUT_S * 1.5);
+      }
+      window.__fast(1 / 60);
+      window.__holdShot();
+    } },
+  'after-hand-piles': { about: 'the acts', say: "act 3's goods by hand: the forestry shack's and the saw mill's log piles, nothing in the hand yet",
+    run: () => SCENES['after-hand-carry'].run(null) },
+  'after-hand-take': { about: 'the acts', say: "act 3's goods by hand: two logs held over the forestry shack's pile they came off",
+    run: () => SCENES['after-hand-carry'].run(0) },
+  'after-hand-set': { about: 'the acts', say: "act 3's goods by hand: let go over the saw mill's pile, the logs set down on it one at a time",
+    run: () => SCENES['after-hand-carry'].run(1, true) },
   'after-pedestal': { about: 'the acts', say: 'the pair on the pedestal mid-speech, rebel falling to the pile, idle members behind them agitating',
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
@@ -3350,6 +3381,12 @@ function actsYard(point, pieces = 0) {
 // fifth of the crowd made members and walked out to the camp (the setup the
 // scene is not about), the yard rich for the bills still to come. The paper
 // mill and the press are left to buy.
+// The way a cursor carries goods by hand from pile a to pile b, `t` of the
+// way along: up over whatever stands between, `HAND_ARC` art cells at its
+// height. The scenes' and the shots' path only; the hand in play goes
+// wherever the pointer does.
+const HAND_ARC = 16;
+const handPath = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t - Math.sin(Math.PI * t) * HAND_ARC * AP });
 function act3Mid() {
   actsYard('fallen');
   if (!S.beatsDone.includes('axe')) S.beatsDone.push('axe');

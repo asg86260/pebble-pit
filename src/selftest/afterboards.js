@@ -8,12 +8,12 @@
 
 import { S } from '../state.js';
 import { newRun, settle, until, raf, ok, panel, point, canvas } from './kit.js';
-import { AFTER_CARDS, P } from '../config.js';
+import { AFTER_CARDS, P, AFTER_PUT_S, AFTER_PILE_REACH } from '../config.js';
 import { shopOf } from '../pages.js';
 import { support } from '../after/union.js';
 import { msg } from '../lang.js';
 import { openBoard } from '../board.js';
-import { stationBox, signBoard } from '../after/place.js';
+import { stationBox, signBoard, pileBox } from '../after/place.js';
 import { toScreen } from '../world.js';
 
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -245,6 +245,53 @@ export const TESTS = [
       ok(sight, 'the right button looks at the crew up here too'),
       ok(free > 0 && slowed < free * 0.7, 'the member under the cursor walks slow', `${slowed.toFixed(1)} px held, ${free.toFixed(1)} px free`),
       ok(taken, 'and the left button takes it up')
+    ];
+  }],
+  // Goods by hand (after/hand.js) through the real pointer: the right button
+  // held and the left pressed over the forestry shack's log pile, the chord
+  // that picks up a member; held there, a second log; carried along to the
+  // saw mill's pile and let go, set down there a log at a time.
+  ['act 3: two logs taken off the forestry shack\'s pile by the pointer\'s grab and let go on the saw mill\'s', async () => {
+    newRun();
+    await settle();
+    await upThere();
+    // The setup it is not about: the saw mill standing, logs on the shack's
+    // pile, the yard's carry holding two.
+    if (!S.after.built.includes('mill')) S.after.built.push('mill');
+    S.haulCarryLevel = 1;
+    window.__afterGrant({ grovelogs: 5 });
+    const mid = (key, what) => { const b = pileBox(key, what, AFTER_PILE_REACH); return { x: b.x + b.w / 2, y: b.y + b.h * 0.75 }; };
+    const from = mid('forestry', 'grovelogs'), to = mid('mill', 'logs');
+    window.__look((from.x + to.x) / 2 - S.viewW / 2);
+    await settle(0.3);
+    const r = canvas().getBoundingClientRect();
+    const at = p => { const s = toScreen(p.x, p.y); return [r.left + s.x, r.top + s.y]; };
+    const pile0 = S.after.stock.grovelogs, mill0 = S.after.stock.logs;
+    point('pointermove', ...at(from), 0);
+    await raf();
+    const hover = canvas().style.cursor;
+    point('pointerdown', ...at(from), 2, 2);
+    point('pointermove', ...at(from), 3, 0);
+    await raf();
+    const holding = canvas().style.cursor, one = S.after.hand?.n;
+    // Held still over the pile: a frame of the sim at a time.
+    for (let f = 0; f < AFTER_PUT_S * 60 * 4; f++) { point('pointermove', ...at(from), 3, -1); window.__fast(1 / 60); await raf(); }
+    const two = S.after.hand?.n;
+    for (let k = 1; k <= 30; k++) {
+      point('pointermove', ...at({ x: from.x + (to.x - from.x) * k / 30, y: from.y + (to.y - from.y) * k / 30 }), 3, -1);
+      window.__fast(1 / 60);
+      await raf();
+    }
+    point('pointerup', ...at(to), 0, 0);
+    for (let f = 0; f < 120 && S.after.hand; f++) { window.__fast(1 / 60); await raf(); }
+    const counts = { pile: S.after.stock.grovelogs, mill: S.after.stock.logs, hand: S.after.hand };
+    S.haulCarryLevel = 0;
+    window.__actsOn(null);
+    return [
+      ok(hover === 'grab', 'the cursor over a pile with logs on it is the open hand', hover),
+      ok(one === 1 && holding === 'grabbing', 'the right button held and the left pressed takes a log, the hand closed', `${one} ${holding}`),
+      ok(two === 2, 'held over the pile, a second log, the carry full', `${two}`),
+      ok(counts.pile === pile0 - 2 && counts.mill === mill0 + 2 && counts.hand === null, 'let go on the saw mill\'s pile, both are set down there', JSON.stringify(counts))
     ];
   }]
 ];

@@ -1498,7 +1498,9 @@ import { setCrowd, hireAll, support as afterSupport, union as afterUnion, ready 
 import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut, idleBodies } from './after/bodies.js';
 import { rosterReport, rosterHit } from './roster.js';
-import { plotX, afterFloor } from './after/place.js';
+import { plotX, afterFloor, pileBox } from './after/place.js';
+import { grabAt, inHand, holdBody } from './crew/pointer.js';
+import { AFTER_PILE_REACH } from './config.js';
 import { afterGate, strikeDue } from './after/strike.js';
 import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, groveIcons } from './after/gestures.js';
 // A click up there as input.js makes it: the hand work's first (a part, a
@@ -1546,6 +1548,21 @@ HANDLES.__afterAxe = () => { if (S.after) S.after.axe = true; return !!S.after?.
 // with the camera up there while it lands (a click is only ever the view's).
 // True when the count moved.
 HANDLES.__afterRoster = () => rosterReport('after');
+// Goods by hand (after/hand.js) at a world point, through the shared hand's
+// own calls (crew/pointer.js), with the camera up there as a press is:
+// 'press' the grab there, 'move' the held load to it, 'drop' let go there.
+// What the hand holds after, or null. The world points of a pile's middle
+// are `__afterPile(key, what)`.
+HANDLES.__afterHand = (x, y, act = 'move') => {
+  const was = S.view;
+  S.view = 'after';
+  try {
+    if (act === 'press') liftHeld(grabAt(x, y));
+    else if (inHand()) { holdBody(inHand(), x, y); if (act === 'drop') dropHeld(inHand()); }
+  } finally { S.view = was; }
+  return S.after?.hand ? { ...S.after.hand } : null;
+};
+HANDLES.__afterPile = (key, what) => { const b = pileBox(key, what, AFTER_PILE_REACH); return { x: b.x + b.w / 2, y: b.y + b.h * 0.6 }; };
 HANDLES.__afterPress = (job, d = 1) => {
   const was = S.view;
   S.view = 'after';
