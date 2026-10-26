@@ -10,7 +10,7 @@
 // own buy (`__buy`). The setup it is not about: the act on and its opening
 // played, members walked out of God's yard (`__afterCrowd`), coins granted.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { RIM_PIECES, AFTER_WALK, AFTER_AGITATE_S, AFTER_AGITATE_REBEL, AFTER_CARRY_SLOTS } from '../src/config.js';
+import { RIM_PIECES, AFTER_WALK, AFTER_AGITATE_S, AFTER_AGITATE_REBEL, AFTER_CARRY_SLOTS, AFTER_LOG_TIMBER } from '../src/config.js';
 import { haulCap } from '../src/levels.js';
 import { stationBox, stationDoor, idleX, idleSpots } from '../src/after/place.js';
 import { jobSays } from '../src/after/roster.js';
@@ -146,12 +146,19 @@ group('logs are carried the yard\'s way: as many as the yard\'s carry holds, a l
   const want = Math.floor(haulCap() / AFTER_CARRY_SLOTS.log);
   window.__afterGrant({ grovelogs: 20 });
   const pressed = window.__afterPress('sawyer', 1);
-  let most = 0, stepped = true, last = 0;
-  const total = () => S.after.stock.grovelogs + S.after.stock.logs + S.after.bodies.reduce((n, b) => n + (b.load === 'log' ? b.carry || 0 : 0), 0);
+  let most = 0, stepped = true, last = 0, who = null;
+  // Every log: on a pile, in a hand, or sawn (the sawyer stays at the saw
+  // while a hauler brings them, so some are cut before the count is taken).
+  const timber0 = S.after.stock.timber;
+  const total = () => S.after.stock.grovelogs + S.after.stock.logs + S.after.bodies.reduce((n, b) => n + (b.load === 'log' ? b.carry || 0 : 0), 0)
+    + Math.round((S.after.stock.timber - timber0) / AFTER_LOG_TIMBER);
   const t0 = total();
+  // The first body to take logs up for the mill: the sawyer, or an idle
+  // member hauling them over for it (bodies.js, the haul), followed by its id.
   for (let t = 0; t < 240 && !(most && !last); t += 1 / 60) {
     run(1 / 60);
-    const w = S.after.bodies.find(b => b.job === 'sawyer');
+    if (who == null) who = S.after.bodies.find(b => b.load === 'log' && (b.job === 'sawyer' || b.errand === 'hauler'))?.id ?? null;
+    const w = S.after.bodies.find(b => b.id === who);
     const n = w && w.load === 'log' ? w.carry : 0;
     if (Math.abs(n - last) > 1) stepped = false;
     last = n; most = Math.max(most, n);
@@ -163,7 +170,7 @@ group('logs are carried the yard\'s way: as many as the yard\'s carry holds, a l
     ok(pressed && want > 1, 'a sawyer put on, the yard\'s carry holding more than one log', `${want}`),
     ok(most === want, 'it takes as many logs as its load holds', `${most} of ${want}`),
     ok(stepped, 'picked up and set down a log at a time'),
-    ok(S.after.stock.logs === want && kept, 'and fetches them to the mill\'s own pile, none lost', `${S.after.stock.logs} at the mill`)
+    ok(S.after.stock.logs + Math.round((S.after.stock.timber - timber0) / AFTER_LOG_TIMBER) >= want && kept, 'and fetches them to the mill\'s own pile, none lost', `${S.after.stock.logs} at the mill`)
   ];
 });
 

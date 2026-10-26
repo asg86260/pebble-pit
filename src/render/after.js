@@ -38,6 +38,7 @@ import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, logPile, plankPile, sheetPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt, countOver } from './after/piles.js';
 import { drawBody } from './crew.js';
+import { drawSawDrops } from './after/drop.js';
 import { onDevice } from './wardrobe.js';
 import { siteOf } from '../after/build.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
@@ -270,6 +271,7 @@ export function drawAfterPiles() {
   pile('forestry', 'grovelogs', logPile, st.grovelogs);
   pile('mill', 'logs', logPile, st.logs);
   pile('mill', 'timber', plankPile, Math.floor(st.timber));
+  drawSawDrops();
   pile('chipper', 'chiplogs', logPile, st.chiplogs);
   pile('papermill', 'paper', sheetPile, Math.floor(st.paper));
   pile('press', 'posters', (d, x, s) => sheetPile(d, x, s, 6, true), Math.floor(st.posters));
