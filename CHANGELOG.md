@@ -208,6 +208,8 @@ this section; the release that switches it on moves these under Unreleased.
 - The yard takes less of every frame to count what lies on its floor (test/perf-gate.test.mjs).
 - Muck and rain lying on the ground no longer slow the yard down (test/perf-gate.test.mjs).
 - A yard started with the same seed plays out the same whether or not the page has been clicked: the sounds no longer spend the yard's chance (src/selftest/settings.js, "the dark switch turns the page in place").
+- A stirrer at its pot no longer stays hanging in the air when the ground it arrived on moves away (test/scenes-stand-acts.test.mjs).
+- In act 3 the sawdust heap's pile-full mark has a name, "sawdust heap", like every other station (test/deep-works.test.mjs).
 - In a narrow window a board uses the whole width under the purse instead of squeezing into a sliver beside where the purse would be, so its cards keep their words inside them and several tiles share a plank (src/selftest/boards.js, "no row on any board sits on top of itself").
 - In a narrow window a board stands where it really is, its width under the purse rather than beside it, so it no longer opens off to one side of where it is drawn (src/selftest/house.js, "a board that changes under you is seated by its new size").
 - In a narrow window a board taller than the window scrolls inside it instead of running past its foot by the height of the purse (src/selftest/boards.js, "a board taller than the window scrolls to its last row").
