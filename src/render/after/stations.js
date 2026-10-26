@@ -54,7 +54,7 @@ const MW = { cx: 19, cy: -9, r: 6 }, CRANK = 1.5, KNOB = MW.r + 2, MILL_TURN = M
 const MILL = { L: 32, R: 47, head: -21, bed: -6, bx: 40, logX0: 27, logLen: 14, body: 7 };
 const BARK = [MID, MID, PALE, MID], WOOD = [PALE, W, PALE, PALE];
 // The teeth's reach out of the blade, in the drawing's cells: the log's kerf.
-const BITE = Math.ceil(Math.max(...AFTER_SAW_TEETH) / 2);
+const BITE = Math.ceil(Math.max(...AFTER_SAW_TEETH) / AFTER_ART_SCALE);
 // The wheel at angle `a`.
 const wheelAt = a => { const { cx, cy } = MW; return { kx: cx + Math.cos(a) * KNOB, ky: cy + Math.sin(a) * KNOB, pin: { x: cx + Math.cos(a) * CRANK, y: cy + Math.sin(a) * CRANK } }; };
 function flywheel(d, a) {
@@ -72,15 +72,16 @@ function flywheel(d, a) {
 const crankPin = (d, pin) => { d.px(Math.round(pin.x * P) - 3, Math.round(pin.y * P) - 3, 6, 6, K); d.px(Math.round(pin.x * P) - 1, Math.round(pin.y * P) - 1, 2, 2, W); };
 // The blade, plumb: its spine of ink, a grey plate, the rip teeth facing the
 // log, riding the stroke so they move with it. The teeth are laid on the
-// world's grid, half a drawing cell a row (config, AFTER_SAW_TEETH), so they
-// stay fine against a blade two drawing cells wide.
+// world's grid, a grid cell a row (config, AFTER_SAW_TEETH): `per` rows to a
+// drawing cell, each `g` of the drawing's px, so they stay as fine as the
+// grid allows at any scale of the art.
 function millBlade(d, x, y0, y1, o) {
-  const g = P / 2, n = AFTER_SAW_TEETH.length;
+  const per = AFTER_ART_SCALE, g = P / per, n = AFTER_SAW_TEETH.length;
   for (let y = y0; y <= y1; y++) {
     d.c(x, y, PALE); d.c(x + 1, y, K);
-    for (let half = 0; half < 2; half++) {
-      const k = AFTER_SAW_TEETH[(((2 * (y - o) + half) % n) + n) % n];
-      if (k) d.px(x * P - k * g, y * P + half * g, k * g, g, K);
+    for (let q = 0; q < per; q++) {
+      const k = AFTER_SAW_TEETH[(((per * (y - o) + q) % n) + n) % n];
+      if (k) d.px(x * P - k * g, y * P + q * g, k * g, g, K);
     }
   }
 }

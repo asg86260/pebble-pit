@@ -108,6 +108,32 @@ m/a3audit) found, most severe first:
 - **Still true or refined:** item 4 (boards closing) appears fixed, and item 14
   (the paddle) appears fixed.
 
-In progress as four tracks (a3-placement, a3-piles, a3-bodies, a3-shared).
-Mocks for the owner: body vs machine scale, the crowd (items 9 and 10), floor
-hills (item 12).
+Round 1 (a3-placement, a3-piles, a3-bodies, a3-shared) landed as PR 20 and
+the owner approved it.
+
+## Station polish round 2, 2026-10-26: the votes
+
+The owner's answers on the board, verbatim, each a track:
+
+- **a3-scale** (act3-bodyscale): "A. machines at 1". `AFTER_ART_SCALE` goes
+  from 2 to 1 and every station's drawing is halved, while bodies stay the
+  yard's 18 px. The teeth can't halve, so each is one cell. Placement, reach,
+  footprints, signs and pile stands follow the drawing, since they are already
+  derived from it.
+- **a3-hills** (act3-hills): "C. shelves and slopes". `AFTER_SHELF` rises
+  about three times higher, so each station has a flat shelf with gentle slopes
+  between. No riser is taller than a step a body can walk. It is built on
+  a3-scale, since the shelves sit under the halved stations.
+- **a3-logs** (act3-log-supply): "lets have the logs fall out of the saw on
+  the right side and pile up. and also get moved by idle members. so the saw
+  always stays clear". The mill's cut drops out of its right side onto a pile
+  on the floor, so the saw is never blocked by its own output. Members with
+  nothing to do carry goods where a station is short, from the forestry pile
+  and from the out-piles, each one walking it there.
+- **a3-crowd** (act3-crowd): "lets do packed mass, but no heads, just squares".
+  God's crowd is a rippling shoulder-to-shoulder mass of plain squares, with no
+  head squares and none of the figures in front.
+
+Also on main: the heap row's name and a bare job name (the tests run after
+PR 20), and the home-end stirrer, which stands 20 px over the apothecary floor
+in scenes-stand-acts.

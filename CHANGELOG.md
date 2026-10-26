@@ -204,11 +204,11 @@ this section; the release that switches it on moves these under Unreleased.
 - The recruit row, greyed while nobody is won, says so and how to win one instead of reading like a price you cannot pay (test/after-recruit.test.mjs).
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 
+- A stirrer at its pot no longer stays hanging in the air when a dance is cut off mid-jump (test/dance-cut-at-pot.test.mjs).
 - Loading a save that was left in the deep no longer lays its sky, clouds and rain out against the window of the yard you were in before (test/held-state.test.mjs).
 - The yard takes less of every frame to count what lies on its floor (test/perf-gate.test.mjs).
 - Muck and rain lying on the ground no longer slow the yard down (test/perf-gate.test.mjs).
 - A yard started with the same seed plays out the same whether or not the page has been clicked: the sounds no longer spend the yard's chance (src/selftest/settings.js, "the dark switch turns the page in place").
-- A stirrer at its pot no longer stays hanging in the air when the ground it arrived on moves away (test/scenes-stand-acts.test.mjs).
 - In act 3 the sawdust heap's pile-full mark has a name, "sawdust heap", like every other station (test/deep-works.test.mjs).
 - In a narrow window a board uses the whole width under the purse instead of squeezing into a sliver beside where the purse would be, so its cards keep their words inside them and several tiles share a plank (src/selftest/boards.js, "no row on any board sits on top of itself").
 - In a narrow window a board stands where it really is, its width under the purse rather than beside it, so it no longer opens off to one side of where it is drawn (src/selftest/house.js, "a board that changes under you is seated by its new size").

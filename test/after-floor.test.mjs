@@ -10,8 +10,8 @@
 // both read; how it looks is the shot (`after-site-empty`, `after-site-pile`,
 // `after-crowd-mass`).
 import { group, ok, run, yard } from './helpers.mjs';
-import { P, AFTER_W, AFTER_STATIONS, AFTER_CAMP_GAP, AFTER_SHELF } from '../src/config.js';
-import { floorProfile, floorAt, groundOf, shelfOf, afterFloor, afterX0, stationBox, stationDoor, stationX0, crowdLip, ART, sited } from '../src/after/place.js';
+import { P, AFTER_W, AFTER_STATIONS, AFTER_STATION_GAP, AFTER_SHELF } from '../src/config.js';
+import { floorProfile, floorAt, groundOf, shelfOf, afterFloor, afterX0, stationBox, stationDoor, stationX0, crowdLip, ART, sited, AP } from '../src/after/place.js';
 
 const S = yard.S;
 const col = x => Math.floor((x - afterX0()) / P);
@@ -43,6 +43,32 @@ group('the cloud floor billows everywhere but under what stands on it', async ()
   ];
 });
 
+// The owner, 2026-10-26, "C. shelves and slopes": each station on a flat
+// shelf, the camp rising about twenty cells, eased slopes between that a
+// body walks, no riser taller than a cell, and no hill that goes up then
+// down (2026-10-22) -- a slope turns only on a shelf.
+group('the camp climbs in shelves and slopes: a cell a column at most, turning only on a shelf', async () => {
+  window.__actsOn(true);
+  S.after = null;
+  window.__goPlace('after');
+  run(1);
+  const el = floorProfile(), [c0] = crowdLip(), camp = el.slice(0, c0);
+  let steep = 0, turns = [], last = 0, flat = 0;
+  for (let j = 1; j < camp.length; j++) {
+    const d = camp[j] - camp[j - 1];
+    steep = Math.max(steep, Math.abs(d));
+    if (!d) { flat++; continue; }
+    if (last && Math.sign(d) !== last && flat < 3) turns.push(j);
+    last = Math.sign(d); flat = 0;
+  }
+  window.__actsOn(null);
+  return [
+    ok(Math.max(...camp) - Math.min(...camp) >= 18, 'the camp rises about twenty cells', `${Math.min(...camp)} to ${Math.max(...camp)}`),
+    ok(steep <= 1, 'no column of the floor a cell over its neighbor', `steepest ${steep}`),
+    ok(turns.length === 0, 'a slope turns from up to down only on a shelf', turns.join(' '))
+  ];
+});
+
 group('an unbuilt station stands closed on flat ground; bought on the shack, its ground stays flat', async () => {
   window.__actsOn(true);
   S.after = null;
@@ -62,16 +88,18 @@ group('an unbuilt station stands closed on flat ground; bought on the shack, its
   ];
 });
 
-group('the stations stand about a station\'s width apart, never closer than the least gap', async () => {
-  const keys = Object.keys(AFTER_STATIONS);
+// One gap between every two neighbors (the owner, 2026-10-20: "too far apart
+// ... and inconsistently placed"), from the one's ground's end to the next's
+// first drawn column, in art cells (after/art.js, `campLayout`). The
+// pedestal's ground is the union's camp, its sign laid off the workshops'
+// end by AFTER_PEDESTAL_SIGN_GAP instead.
+group('the stations stand at least the one station gap apart', async () => {
+  const keys = Object.keys(AFTER_STATIONS).filter(k => k !== 'pedestal');
   const gaps = keys.slice(1).map((k, i) => {
-    const a = keys[i], end = stationX0(a) + ART[a].ground * P;
-    return { a, b: k, gap: (stationX0(k) - end) / P, wide: Math.round((ART[a].box[1] + ART[k].box[1]) / 2) };
+    const a = keys[i], end = stationX0(a) + ART[a].ground * AP;
+    return { a, b: k, gap: (stationX0(k) + ART[k].lead * AP - end) / AP };
   });
-  return [
-    ok(gaps.every(g => g.gap >= AFTER_CAMP_GAP), `at least ${AFTER_CAMP_GAP} cells of open floor between neighbors`, JSON.stringify(gaps)),
-    ok(gaps.every(g => g.gap >= Math.min(g.wide, AFTER_CAMP_GAP * 3) - 1), 'about one station\'s width', JSON.stringify(gaps))
-  ];
+  return [ok(gaps.every(g => g.gap >= AFTER_STATION_GAP), `at least ${AFTER_STATION_GAP} art cells of open floor between neighbors`, JSON.stringify(gaps))];
 });
 
 group('a member walking the camp keeps its feet on the shelves and the ramps between them', async () => {

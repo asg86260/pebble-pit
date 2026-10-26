@@ -17,15 +17,16 @@ import { ACT_GATES_CELL, ACT_GATES_REACH } from './acts.js';
 // this says, the way they play the deep (acts.js, `afterlifeOn`), so work on
 // it goes on; `__actsOn(false)` plays a released build's yard.
 const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {};
-// Act 3's art is drawn at this many grid cells a cell of its own (the owner,
-// 2026-10-20: "if they need to be interacted with they should be larger"):
-// every station, the shack, the grove's pines at every stage, the stumps and
-// the felled trees, the pedestal and its podiums, and the piles, each cell of
-// the mocks' drawings this many cells across, so the art stays on the grid
-// and stands as tall as the yard's tallest. Everything laid off the art --
-// the camp's ground, the grove's plots, the doors, the piles, the parts the
-// hand works -- is laid off it times this. The bodies keep the yard's size.
-export const AFTER_ART_SCALE = 2;
+// Act 3's art is drawn at this many grid cells a cell of its own: every
+// station, the shack, the grove's pines at every stage, the stumps and the
+// felled trees, the pedestal and its podiums, and the piles, each cell of the
+// mocks' drawings this many cells across, so the art stays on the grid.
+// One, the grid's own size, so a machine stands to the yard's bodies as the
+// yard's own stations do (the owner, 2026-10-26: "machines at 1", after two
+// read as a mill seventeen bodies tall). Everything laid off the art -- the
+// camp's ground, the grove's plots, the doors, the piles, the parts the hand
+// works -- is laid off it times this. The bodies keep the yard's size.
+export const AFTER_ART_SCALE = 1;
 export const AFTERLIFE_ON = env.VITE_AFTERLIFE === '1';
 
 // --- where it is -----------------------------------------------------------------
@@ -48,14 +49,17 @@ export const AFTER_PUFF_LEAST = 4;        // cells: a run of billow narrower tha
 // ground raised this many cells off the floor line, its own shelf, and an
 // eased ramp of cloud between two shelves at different heights. The grove,
 // the pedestal and God's crowd stand on the line itself; the sawdust heap
-// and its notch are the chipper's.
+// and its notch are the chipper's. Three times the first shelves (the
+// owner, 2026-10-26: "C. shelves and slopes", the camp rising about twenty
+// cells), each ramp a cell a column at its steepest, the stations laid as
+// far apart as their ramp needs (after/art.js, `rampRun`).
 // The lip of billows along the path's front (render/after/ground.js; the
 // owner, 2026-10-22, mock A): billows of radius r cells, as tall as `round`
 // of that, `step` of a diameter apart so they overlap; their foot `drop`
 // cells under the path's edge, a lit crest `crest` cells deep, the body
 // hanging `hang` cells and a half-height billow more under that.
 export const AFTER_LIP = { seed: 17, r: [5, 8], round: 0.45, step: 0.8, drop: 2, crest: 2, hang: 2 };
-export const AFTER_SHELF = { forestry: 0, mill: 3, chipper: 5, papermill: 2, workshop: 6, press: 3, shack: 2, pedestal: 0 };
+export const AFTER_SHELF = { forestry: 0, mill: 9, chipper: 15, papermill: 6, workshop: 18, press: 9, shack: 6, pedestal: 0 };
 
 // --- the click: the pair's speech, and rebel ------------------------------------
 // The act's coin is rebel (the owner, 2026-10-18; a working name, the label
@@ -159,7 +163,7 @@ export const AFTER_COUNT_PAD = 2;
 // left edge of its ground in cells off the place's left (`at`); its piles
 // and its drawing are laid off that.
 export const AFTER_STATION_GAP = 16;
-const CAMP = campLayout(GROVE_END, AFTER_STATION_GAP, AFTER_ART_SCALE);
+const CAMP = campLayout(GROVE_END, AFTER_STATION_GAP, AFTER_ART_SCALE, AFTER_SHELF);
 // The level's three zones (DESIGN.md, "The level, the two crowds and the
 // flags"): the workshops -- the grove and every station but the pedestal --
 // then AFTER_ZONE_GAP cells of open floor, the union's camp AFTER_UNION_W
@@ -632,3 +636,12 @@ export const AFTER_PEDESTAL_SIGN_GAP = { shack: 8, crowd: 3 };
 // `drawAfterCounts`), so a count never drifts up off its pile into the
 // station behind it.
 export const AFTER_COUNT_LIFT = P;
+
+// track a3-logs
+// The saw's cut drops out of its right side onto its timber pile (the owner,
+// 2026-10-26: "lets have the logs fall out of the saw on the right side and
+// pile up"): a plank sliding off the bed past the right post and falling onto
+// the pile, over this long (render/after/drop.js), `from` art cells over the
+// mill's ground where it leaves the bed (the mill's drawing, MILL.bed less the
+// plank), and `back` art cells in from the frame's right edge.
+export const AFTER_DROP = { s: 0.5, from: 8, back: 6 };

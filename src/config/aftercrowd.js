@@ -191,7 +191,7 @@ export const GOD_FOOT = 19;
 // standing on the plane; his stage's front edge `front` cells over the line,
 // up among the far cloud's rows. His crowd stands on it in straight rows and
 // files, every soul the yard's square (render/after/kit.js, `square`) `soul`
-// cells across with `gap` cells between files and between rows -- on the
+// cells across with `gap` cells between files and between rows (none now: GOD_MASS packs them) -- on the
 // cell grid at every window -- across the stage and `beyond` stage
 // cells out over the cloud either side of it, thinning raggedly out there
 // (`fringe`: how much less a soul at the crowd's end stands than one on the
@@ -199,7 +199,7 @@ export const GOD_FOOT = 19;
 // its vastness"). It empties from the front as support rises a row at a time
 // (GOD_CROWD's rule with these `keep`, `fore`, `luck` and `base`: the front
 // row gone early, the back row standing to the strike).
-export const GOD_BACK = { foot: AFTER_HORIZON, size: 0.85, front: 5, soul: 2, gap: 1, beyond: 70, fringe: 0.9,
+export const GOD_BACK = { foot: AFTER_HORIZON, size: 0.85, front: 5, soul: 2, gap: 0, beyond: 70, fringe: 0.9,
                           keep: 1.1, fore: 1, luck: 0.12, base: 0.2 };
 
 // --- the ground (render/after/ground.js, render/after/floor.js) ----------------------
@@ -269,3 +269,12 @@ export const UNION_CROWD = { rows: 7, n: [20, 12], gap: 0.6, rise: 132, half: [1
                              jit: 3, short: 0.35,
                              fill: 1.1, luck: 0.6, walk: 80, walkS: 3, fadeIn: 0.3, fadeOut: 1,
                              hop: 0.7, hopRows: 2, hopS: 0.5 };
+
+// --- God's crowd, packed (the owner, 2026-10-26: "lets do packed mass, but no heads, just squares") ---
+// Souls stand shoulder to shoulder, a flat square each, no outline, one tone a
+// square from the page's mid or pale (a share `pale` of them, the back rows
+// `deepPale` more pale), so the mass reads as bodies and not a slab. It
+// ripples: each square rises up to `rise` px and sets down over a period
+// between `period`'s seconds, its phase the wave across the mass (`wave` px a
+// turn, drifting `drift` of a turn over a row) plus its own `own` of a turn.
+export const GOD_MASS = { pale: 0.4, deepPale: 0.3, rise: 4, period: [2.4, 3.6], wave: 160, drift: 0.07, own: 0.35 };

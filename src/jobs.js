@@ -101,6 +101,9 @@ export const AFTER_JOB = Object.freeze({
   CARRY:   'carrier',
   PRINT:   'printer',
   PASTE:   'paster',
+  // An idle member tipping the sawdust heap at its notch: an errand, bought
+  // by no post.
+  SWEEP:   'sweeper',
   // A member raising a station off the shack, or the pair down off the
   // pedestal: bought by no post of its own.
   BUILD:   'builder'

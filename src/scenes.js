@@ -44,7 +44,8 @@ import { godFront } from './after/sky.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
 const godView = () => godFront();
-import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PUT_S } from './config.js';
+import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PUT_S, AFTER_DROP } from './config.js';
+import { sawDrops } from './after/mill.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
@@ -3115,6 +3116,23 @@ export const SCENES = {
   // pile-full mark under it (render/pilemarks.js).
   'after-heap-full': { about: 'the acts', say: "the sawdust heap at its brim, no paper mill built, its pile-full mark under it",
     run: () => { handChip('spring'); S.after.stock.sawdust = 1e6; window.__fast(0.5); } },
+  // Track a3-logs: the chain staffed, the forestry shack's pile stocked, run
+  // until an idle member is carrying logs to the saw mill and a cut is
+  // falling out of the saw's right side onto its timber pile; framed on the
+  // mill from its log pile to its timber pile.
+  'after-log-flow': { about: 'the acts', say: "the saw mill kept fed: an idle member carrying logs to its pile, a cut falling out of the saw's right side onto the timber",
+    run: () => {
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60 });
+      const b = stationBox('mill');
+      const near = w => w.errand === AFTER_JOB.HAUL && w.load === 'log' && w.target === 'mill' && w.x > b.x - P * 40 && w.x < b.x;
+      const falling = () => sawDrops().length > 0 && S.after.t - sawDrops().at(-1) > AFTER_DROP.s * 0.15 && S.after.t - sawDrops().at(-1) < AFTER_DROP.s * 0.3;
+      for (let k = 0; k < 6000 && !(S.after.bodies.some(near) && falling()); k++) window.__fast(1 / 30);
+      const mid = b.x + b.w / 2 - P * 10;
+      pinCamera(mid - S.viewW / 2);
+      window.__look(mid - S.viewW / 2);
+      window.__still(true); window.__holdShot();
+    } },
 
   // The paper mill (docs/mocks/act3-papermill-2026-10-18): batches stirred by
   // hand and pegged on the line, drying grey to white, the dry ones fading

@@ -49,7 +49,7 @@ import { S } from '../state.js';
 import { P, GREY, GOD_BACK, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AFTER_SPEECH_WARN_S,
          SKY_TICK_S, GOD_CROWD, GOD_STAGE, GOD_FLAG,
          SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
-         GOD_N, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, GOD_TALK, GAZE,
+         GOD_N, GOD_MASS, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, GOD_TALK, GAZE,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_POSTER, SKY_DRIFT,
          AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S } from '../config.js';
 import { ctx } from './ctx.js';
@@ -59,7 +59,7 @@ import { afterX0, slotX, stationBox, unionJoinAt, afterFloor } from '../after/pl
 import { support, union, souls, OUT_RIM, speechTarget } from '../after/union.js';
 import { signReach } from '../after/levels.js';
 import { skyFrame, campX0, rateAt, stage, stageHalf, crowdHalf, campHalf, stageFore, stageSpot, stageSoul, stageGap, walkSeen, deepAt } from '../after/sky.js';
-import { K as INK, W, PALE, MID, square } from './after/kit.js';
+import { K as INK, W, PALE, MID } from './after/kit.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -380,7 +380,7 @@ function crowdRows() {
   if (key === rowsKey) return ROWS;
   const out = [];
   // Straight rows a soul and a row's gap apart, every soul one size.
-  const step = n => n + stageGap();
+  const step = n => n + stageGap() - GOD_MASS.rise;   // a row tucked under the next by a rise, so no square lifting shows the stage
   for (let y = st.yf - P, r = 0; y > st.yb + P; r++) {
     const n = stageSoul(st, y);
     out.push({ y, n, k: stageFore(st, y), r });
@@ -400,6 +400,15 @@ function standing(r, n, i, out = 0) {
   return clamp(v / G.soft, 0, 1);
 }
 const drawn = { souls: 0 };
+// A soul's rise, world px (0 to -rise, on a whole device pixel): a smooth sine
+// on the soul's own period, its phase the wave across the mass plus its own,
+// so the mass rolls and no two squares keep step.
+function rippleAt(x, i, r) {
+  const M = GOD_MASS, own = hsh(i, r, 11), per = lerp(M.period[0], M.period[1], hsh(i, r, 17));
+  const ph = x / M.wave + r * M.drift + own * M.own;
+  const u = 0.5 + 0.5 * Math.sin(2 * Math.PI * (now() / per + ph));
+  return Math.round(-M.rise * u * K) / K;
+}
 export const crowdDrawn = () => ({ ...drawn, won: shown.won.length });
 // The souls of row r in view, each { r, i, x, y, w, a }: x its left, y its
 // foot. Straight files, every row's souls on the same columns either side of
@@ -427,19 +436,21 @@ function rowSouls(r, R, n, out) {
 // function and what it reads.
 function drawGodsCrowd(rows, between) {
   let count = 0;
+  const M = GOD_MASS;
   rows.forEach((R, r) => {
     between(R.y);
     const souls = [];
     rowSouls(r, R, rows.length, souls);
-    ctx.fillStyle = style(SOUL_TONES[R.r & 1]);
+    const back = 1 - (rows.length > 1 ? r / (rows.length - 1) : 1);
     for (const s of souls) {
       if (s.a > 0.5) count++;
       const hop = hopAt(s.x + s.w / 2, s.y), lift = Math.min(ringsAt(s.x + s.w / 2, s.y, 1), hop.lift);
       const was = ctx.globalAlpha;
       if (s.a < 1) ctx.globalAlpha = was * s.a;
-      // each soul the yard's square (render/after/kit.js)
-      const y = s.y - s.w + lift;
-      square(rect, s.x, y, s.w, s.w);
+      // a flat square, one of the page's two greys, up and down on its own
+      // phase of the wave across the mass
+      const y = s.y - s.w + lift + rippleAt(s.x, s.i, r);
+      rect(s.x, y, s.w, s.w, hsh(s.i, r, 5) < M.pale + M.deepPale * back ? PALE : MID);
       // lit in his light as his word reaches it
       if (hop.lit > 0.01) {
         ctx.globalAlpha = was * s.a * hop.lit;

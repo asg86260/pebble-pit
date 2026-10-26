@@ -43,8 +43,14 @@ export function sawLog() {
   st.logs -= n;
   st.timber += AFTER_LOG_TIMBER * n;
   st.sawdust += AFTER_LOG_SAWDUST * n;
+  drops.push(S.after.t);
+  if (drops.length > DROPS_KEPT) drops.shift();
   return true;
 }
+// When each of the last cuts came out of the saw's right side onto its timber
+// pile: this session's, for the plank drawn falling there (render/after/drop.js).
+const DROPS_KEPT = 4, drops = [];
+export const sawDrops = () => drops;
 
 // A feed through the chipper, a log a drum: all of it sawdust.
 export function chipLog() {
@@ -86,7 +92,7 @@ export function vatOf(w) {
 // was last held tipped: this session's drawing only, a load already gone.
 const spills = [];
 export const airSpills = () => spills;
-export const forgetSpills = () => { spills.length = 0; pulls.length = 0; };
+export const forgetSpills = () => { spills.length = 0; pulls.length = 0; drops.length = 0; };
 // A load off the heap through the notch: what was taken. While there is a
 // paper mill the heap has somewhere better to go, and is never tipped.
 export function tipSawdust() {
