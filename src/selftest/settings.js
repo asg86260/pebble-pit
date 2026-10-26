@@ -1035,6 +1035,8 @@ export const TESTS = [
       await frames(w);
       const read = x => { const c = x.document.getElementById('c'); return { w: c.width, h: c.height, d: c.getContext('2d').getImageData(0, 0, c.width, c.height).data }; };
       const a = read(window), b = read(w);
+      // the camera the two yards were read under, before the deep moves it
+      const st = window.__state(), k = devicePixelRatio || 1;
       // and the deep stood again in each: a scene with motion of its own
       // under the hold, so read as which tones are on the glass, not where.
       // A sprite kept from the light page is a tone the fresh page has nowhere.
@@ -1049,7 +1051,6 @@ export const TESTS = [
       const ran = now() > clockWas;
       // spots on what holds still between two pages: the ground across the
       // window, the rock and the bench, in device pixels
-      const st = window.__state(), k = devicePixelRatio || 1;
       const at = (wx, wy) => [Math.floor((wx - st.camX) * st.zoom * k), Math.floor((wy - st.camY) * st.zoom * k)];
       const spots = [];
       for (let i = 1; i <= 5; i++) for (const down of [2, 6, 12]) spots.push(at(st.camX + st.viewW * i / 6, st.groundY + down * P));
