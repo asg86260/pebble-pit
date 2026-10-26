@@ -21,8 +21,12 @@ speed without isolation, target the slowest node shard from 7.4 min to under
 rows with a closure ratchet, each station owning its bodies and the beats
 asking through an interface, `sim` with act 3 first, and a stop rule (the
 yard's parts under 15 of 66 after that slice, or back to the owner). The
-owner approved that order 2026-10-25. Phase A step 5 (hot paths) is built;
-step 6 (fixtures) is next. Nothing of phase B is built.
+owner approved that order 2026-10-25. Phase A step 5 (hot paths) is built,
+and carried on 2026-10-26 (a column's top off a ledger, the deep's creatures
+walked on from a kept moment). Step 6 (fixtures) was measured and buys almost
+nothing as written: the setup is cheap and the time is in the frames a check
+is about (docs/wave-tests.md, step 6). Its new shape waits on the owner.
+Nothing of phase B is built.
 
 ## A pad check leaks in behind the sheet groups -- FOUND, NOT FIXED (2026-10-22)
 

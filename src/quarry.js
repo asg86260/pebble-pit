@@ -15,7 +15,7 @@ import { throughQuarryMuck, yardMuckFor } from './smog.js';
 import { spriteW, spriteH, stackCol, roofRow, seatCol, DRILL } from './sprites.js';
 import { S, quarry, cut, floor } from './state.js';
 import { groundAt, benches, resite, pileOf, bridgeSpan } from './world.js';
-import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
+import { at, put, rewritten, isDust, surfaceY, topRow, colOf } from './grid.js';
 import { makePainter } from './painter.js';
 import { ROCK_CELL } from './config.js';
 import { tierRows, tierLevel } from './upgrades/tiers.js';
@@ -325,7 +325,7 @@ export function resetCut() {
   // (`recount` in persist.js). Left standing, a new game after a load carried
   // the last yard's count over an empty grid, and rule 7 in verify.js said so.
   if (cut.d != null) cut.d = 0;
-  wakeGrid(cut);
+  rewritten(cut);                          // the cells went, and not through `put`
   layCut();
 }
 

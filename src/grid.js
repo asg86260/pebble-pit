@@ -29,8 +29,9 @@ export const shadeOf = v => SHADES[Math.min(SHADES.length, Math.max(1, v)) - 1];
 // timed, because a count is the same on a loaded machine. Published on
 // `globalThis` so the check reads the live module's count and not a second
 // instance's. `route.js` adds to `ways` and `stances`; `addGrain` adds to the
-// other two; `surveyFloor` (game.js) to `surveys` and the cells it read.
-globalThis.__perf = { ways: 0, grainCols: 0, grains: 0, stances: 0, surveys: 0, surveyCells: 0 };
+// other two; `surveyFloor` (game.js) to `surveys` and the cells it read;
+// `topRow` to `tops` and the cells it read finding them.
+globalThis.__perf = { ways: 0, grainCols: 0, grains: 0, stances: 0, surveys: 0, surveyCells: 0, tops: 0, topCells: 0 };
 
 // A cell holds a shade of dust, or something that is not dust at all (a spark,
 // a shard, a spore). They move the same way; they are not worth one dust.
@@ -138,8 +139,35 @@ export function columnsOf(b) {
   return { n: b.colN, odd: b.colOdd };
 }
 
+// And the top of every column (`topsOf` the cells it was taken of, `tops` the
+// row, `topSure` whether that is the row or only a row nothing stands above),
+// because a grain landing, a body standing and a heap measured all ask where
+// a column's top is, and the walk down to it through the empty rows over a
+// low heap was half of a storm's frame. Taking the top off a column only
+// unsettles it (the old row is still a ceiling), and the next asker walks
+// down from there; a grain put above the top is the top. Taken from the
+// cells the way the column counts are, and dropped with them (`rewritten`).
+// verify.js rule 7 watches it like the others.
+function topsOf(b) {
+  if (b.topsOf !== b.grid || b.tops.length !== b.cols) {
+    b.tops = new Int32Array(b.cols).fill(-1);
+    b.topSure = new Uint8Array(b.cols).fill(1);
+    globalThis.__perf.topCells += b.grid.length;     // the perf gate's: cells read for a top
+    for (let i = 0, c = 0, r = 0; i < b.grid.length; i++) {
+      if (b.grid[i]) b.tops[c] = r;
+      if (++c === b.cols) { c = 0; r++; }
+    }
+    b.topsOf = b.grid;
+  }
+  return b.tops;
+}
+
 export const put = (b, c, r, v) => {
   const i = r * b.cols + c;
+  if (b.topsOf === b.grid) {
+    if (v) { if (r >= b.tops[c]) { b.tops[c] = r; b.topSure[c] = 1; } }
+    else if (r === b.tops[c]) b.topSure[c] = 0;
+  }
   if (b.colsOf === b.grid) {
     const was = b.grid[i];
     b.colN[c] += (v ? 1 : 0) - (was ? 1 : 0);
@@ -161,7 +189,11 @@ export const colOf = (b, x) => Math.floor((x - b.x) / b.p);
 
 export const count = b => { let n = 0; for (const v of b.grid) if (v) n++; return n; };
 // after anything that writes the cells wholesale rather than through `put`
-export const recount = b => { b.n = count(b); b.d = countDust(b); b.colsOf = null; wakeGrid(b); };
+export const recount = b => { b.n = count(b); b.d = countDust(b); rewritten(b); };
+// After cells were written behind `put`'s back: the ledgers kept a column at
+// a time are taken again from the cells when next asked, and every column
+// gets another look.
+export const rewritten = b => { b.colsOf = null; b.topsOf = null; wakeGrid(b); };
 export const countDust = b => {
   let n = 0;
   for (const v of b.grid) if (isDust(v)) n++;
@@ -173,15 +205,24 @@ export const dustIn = b => b.d != null ? b.d : countDust(b);
 export const grainsIn = b => b.n != null ? b.n : count(b);
 
 // world y where a grain falling down column c would come to rest
-export function surfaceY(b, c) {
-  for (let r = b.rows - 1; r >= 0; r--) {
-    if (at(b, c, r)) return bottomY(b) - (r + 2) * b.p;
-  }
-  return bottomY(b) - b.p;
-}
+export const surfaceY = (b, c) => bottomY(b) - (topRow(b, c) + 2) * b.p;
 
 // the topmost grain in a column, or -1
 export function topRow(b, c) {
+  globalThis.__perf.tops++;                  // the perf gate's: one top asked for
+  if (!(c >= 0 && c < b.cols)) return scanTop(b, c);
+  const t = topsOf(b);
+  if (!b.topSure[c]) {
+    let r = t[c];
+    while (r >= 0 && !at(b, c, r)) r--;
+    globalThis.__perf.topCells += t[c] - r + 1;
+    t[c] = r;
+    b.topSure[c] = 1;
+  }
+  return t[c];
+}
+// The walk itself, for a column off the grid, which has no ledger to keep.
+function scanTop(b, c) {
   for (let r = b.rows - 1; r >= 0; r--) if (at(b, c, r)) return r;
   return -1;
 }
@@ -338,10 +379,9 @@ export function settleSome(b, budget) {
 // re-pack n grains into a grid from the bottom up, ignoring shape
 export function fillFlat(b, n) {
   b.grid.fill(0);
-  b.colsOf = null;
   if (b.n != null) b.n = 0;                // and the ledgers went with them
   if (b.d != null) b.d = 0;
-  wakeGrid(b);                             // the cells went, and not through `put`
+  rewritten(b);                            // the cells went, and not through `put`
   if (b.painter) b.painter.repaint();
   n = Math.min(n, b.cols * b.rows);
   const shade = 4;                         // repacked dust, middling gray

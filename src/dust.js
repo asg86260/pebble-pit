@@ -432,6 +432,11 @@ export function stepBelt(now, f) {
       band.grid[row] = 0;
     }
     band.high.copyWithin(1, 0, last); band.high[0] = 0;
+    // and its tops (`topRow` in grid.js), which move with their columns
+    if (band.topsOf === band.grid) {
+      band.tops.copyWithin(1, 0, last); band.tops[0] = -1;
+      band.topSure.copyWithin(1, 0, last); band.topSure[0] = 1;
+    }
     // The load keeps its shape as it runs, so what was settled still is: the
     // columns still moving move with their cells, and the two ends, one
     // emptied and one cut off, are the only new edges.

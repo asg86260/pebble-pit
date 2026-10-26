@@ -444,16 +444,18 @@ export function verifyWorld() {
       if (!b.grid || b.n == null) continue;
       // One walk of the cells answers every ledger the grid keeps: the
       // grains, the dust the rift swallows against, and a column at a time
-      // where the grid keeps that too (`columnsOf`).
-      const cols = b.colsOf === b.grid;
+      // where the grid keeps that too (`columnsOf`), and the columns' tops
+      // where it keeps those (`topRow`).
+      const cols = b.colsOf === b.grid, keepsTops = b.topsOf === b.grid;
       const n = cols ? new Int32Array(b.cols) : null, odd = cols ? new Int32Array(b.cols) : null;
-      let real = 0, dust = 0;
+      const top = keepsTops ? new Int32Array(b.cols).fill(-1) : null;
+      let real = 0, dust = 0, r = 0;
       // Four cells a read where they are all empty, which most of a grid is.
       const g = b.grid, quads = g.byteOffset % 4 ? null : new Uint32Array(g.buffer, g.byteOffset, g.length >> 2);
       for (let i = 0, c = 0; i < g.length;) {
         if (quads && i % 4 === 0 && i + 4 <= g.length && !quads[i >> 2]) {
           i += 4; c += 4;
-          while (c >= b.cols) c -= b.cols;
+          while (c >= b.cols) { c -= b.cols; r++; }
           continue;
         }
         const v = g[i];
@@ -462,9 +464,10 @@ export function verifyWorld() {
           if (isDust(v)) dust++;
           else if (cols) odd[c]++;
           if (cols) n[c]++;
+          if (keepsTops) top[c] = r;
         }
         i++;
-        if (++c === b.cols) c = 0;
+        if (++c === b.cols) { c = 0; r++; }
       }
       if (b.n !== real)
         fail(`${name} has lost count of itself`, `ledger says ${b.n}, the cells say ${real}`);
@@ -473,6 +476,11 @@ export function verifyWorld() {
       const c = cols ? n.findIndex((k, i) => k !== b.colN[i] || odd[i] !== b.colOdd[i]) : -1;
       if (c >= 0)
         fail(`${name} has lost count of a column`, `column ${c}: ledger says ${b.colN[c]} (${b.colOdd[c]} not dust), the cells say ${n[c]} (${odd[c]})`);
+      // A top the ledger is sure of is the top; one it is not is still a row
+      // nothing stands above.
+      const t = keepsTops ? top.findIndex((k, i) => b.topSure[i] ? b.tops[i] !== k : b.tops[i] < k) : -1;
+      if (t >= 0)
+        fail(`${name} has lost the top of a column`, `column ${t}: ledger says row ${b.tops[t]}${b.topSure[t] ? '' : ' or under'}, the cells say ${top[t]}`);
     }
 
     // --- rule 16: the mess tags say what lies on the ground --------------------
@@ -539,6 +547,8 @@ export function verifyWorld() {
         const d = deep(c);
         if (band.high && band.high[c] !== d)
           fail('the belt has lost count of a column', `column ${c} of the band stands ${d} deep, the belt says ${band.high[c]}`);
+        if (band.topsOf === band.grid && (band.topSure[c] ? band.tops[c] !== d - 1 : band.tops[c] < d - 1))
+          fail('the belt has lost the top of a column', `column ${c} of the band stands ${d} deep, its top says row ${band.tops[c]}`);
         if (Math.abs(d - prev) > 2)
           fail('the load on the belt stands as a needle',
                `columns ${c - 1} and ${c} of the band stand ${prev} and ${d} deep`);

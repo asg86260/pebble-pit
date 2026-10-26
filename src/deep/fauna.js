@@ -252,9 +252,25 @@ let WALK = null; // held: the walk so far (`forgetWalk`)
 // slot's swimmer out of the walk, the other lets its next kind in. They are
 // the walk's only input besides the seeds, kept and dropped with it.
 const EATS = new Map();
+// The moments walked with no hold at or before them, kept across a load or a
+// new game: the walk is a function of the step and the holds alone, so one of
+// these is the same on any page, and a fresh walk starts from the last of them
+// before its first hold rather than from the clock's start, which a new game
+// keeps going. Thinned like the walk's own.
+const PURE = new Map(); // cache: moments that are the same on every page, keyed by the step over `keep`
+export let walkSteps = 0; // the steps walked, for test/deep-fauna.test.mjs
 // A new page, as far as the walk goes: nothing walked yet (for the checks).
 export const forgetWalk = () => { WALK = null; EATS.clear(); };
 held('deep-walk', forgetWalk);
+// The first step a hold falls on, or Infinity.
+const firstEat = () => { let m = Infinity; for (const k of EATS.keys()) if (k < m) m = k; return m; };
+// Keep at most `held` moments past the start, dropping the oldest.
+function thin(kept) {
+  if (kept.size <= FAUNA_WANDER.held + 1) return;
+  let oldest = Infinity;
+  for (const key of kept.keys()) if (key > 0 && key < oldest) oldest = key;
+  kept.delete(oldest);
+}
 // The meal takes slot `slot`'s swimmer at `t` seconds (`eat`), or lets the
 // slot's next kind in: from the next step on, from just off the `side` (-1
 // left, 1 right) of the glass `at` ({ l, r }, the deep's cells it spans).
@@ -277,22 +293,25 @@ export const slotGone = (slot, t) => wanderAt(SLOTS[slot], t).gone;
 function turnsState(n) {
   const per = Math.round(FAUNA_WANDER.keep / FAUNA_WANDER.step);
   let w = WALK;
-  if (!w) { const s0 = turnsStart(); w = WALK = { kept: new Map([[0, s0]]), n: 0, s: s0 }; }
+  if (!w) {
+    const m = firstEat(), kept = new Map([[0, turnsStart()]]);
+    for (const [key, at] of PURE) if (key * per < m) kept.set(key, at);
+    w = WALK = { kept, n: Infinity, s: null };   // and taken up below from the last kept before `n`
+  }
   if (n < w.n) {
     let k = 0;
     for (const key of w.kept.keys()) if (key * per <= n && key > k) k = key;
     w.n = k * per; w.s = w.kept.get(k);
   }
+  const m = firstEat();
   while (w.n < n) {
     w.s = turnsStep(w.s, w.n);
     w.n++;
+    walkSteps++;
     if (w.n % per === 0 && !w.kept.has(w.n / per)) {
       w.kept.set(w.n / per, w.s);
-      if (w.kept.size > FAUNA_WANDER.held + 1) {
-        let oldest = Infinity;
-        for (const key of w.kept.keys()) if (key > 0 && key < oldest) oldest = key;
-        w.kept.delete(oldest);
-      }
+      thin(w.kept);
+      if (w.n < m && !PURE.has(w.n / per)) { PURE.set(w.n / per, w.s); thin(PURE); }
     }
   }
   return w.s;

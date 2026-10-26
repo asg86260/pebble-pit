@@ -3,7 +3,9 @@
 **Status: approved by the owner 2026-10-23 (all three calls as recommended).
 Steps 1-4 merged. Re-sequenced 2026-10-25 after the trace (owner: both,
 speed first) into phase A and phase B below; that order approved
-2026-10-25. Step 5 (hot paths) built; step 6 (fixtures) next.**
+2026-10-25. Step 5 (hot paths) built, and carried on 2026-10-26 by what
+step 6's measuring found; step 6 as written buys almost nothing (below),
+and its new shape waits on the owner.**
 Once approved this document is canon for the tracks that build it: do not
 redesign; implement. Where a name is given, use it.
 
@@ -218,12 +220,38 @@ browser (piece 5's system tier and `test/<part>/` folders are phase B's).
    for all its ledgers. (`countTick` was `surveyFloor` inlined.) Checks:
    `lineWalks` in test/deep-alloc.test.mjs, the survey's cells in
    test/perf-gate.test.mjs.
+   *Carried on 2026-10-26,* found measuring step 6: a column's top off a
+   ledger (`topRow` in grid.js, dropped with the column counts by
+   `rewritten`, watched by rule 7): the muck tally asked every dirty
+   column's footing every frame, each a walk down the empty rows over the
+   floor's heap and the hole's, which was half of a storm's frame. And the
+   deep's creatures walked on from a kept moment (`PURE` in deep/fauna.js):
+   every load walked them from the clock's start, and a new game keeps the
+   clock, so in a file of scenes each load cost more than the last (act 3's
+   restore 4 ms in a fresh process, about a second ninety scenes in).
+   Identical answers, side by side: 156M tops and 465 fresh walks, 0
+   mismatches. Each file run alone, before and after: muck-after-storm 54 to
+   21 s, scenes-stand-acts 119 to 79, scenes-stand-d 167 to 45,
+   scenes-stand-deep-c 109 to 25. Checks: the tops' cells in
+   test/perf-gate.test.mjs, `walkSteps` in test/deep-fauna.test.mjs.
 6. **Fixtures** (4). A named starting yard is built from its scene in
    `src/scenes.js`, saved, cached under `test/fixtures/.gen/` keyed by a hash
    of `src/`, and loaded by every check that starts there. Files move onto
    fixtures slowest first by `test/times.json`: a file that plays twenty game
    minutes to reach the deep loads `deep` instead. The thing a check is about
    is still bought, clicked and walked.
+   *Measured 2026-10-26, not built:* the time is not in the setup. The two
+   slowest files spend about a second of 54 and 64 in their handles; the
+   rest is the frames their checks are about, a played act and a storm. The
+   top fifteen files stand their yards with handles (`__crew`,
+   `__fullSites`, `openSites`), none plays to reach a scene. Most scenes
+   stand in 20 to 100 ms, no dearer than loading their save (bench 25 ms
+   built, 46 loaded); three take seconds (`deep-slit` and `late` 4 to 5 s,
+   `manabrew` 20 s of four played minutes), each stood once, by one file.
+   And a cache keyed by `src/` misses on every push to main, on four
+   machines. Proposed: no cache; step 6 shrinks to moving a file onto a
+   scene where one is found playing to reach it, and the effort goes on the
+   frames (step 5's way). The owner's call.
 7. **The unit tier** (5, its first row). Checks whose subject is a pure
    function -- a ladder's table, a layout, a codec, a placement -- move to
    `test/unit/` and stand nothing. Found by reading the slowest files for
