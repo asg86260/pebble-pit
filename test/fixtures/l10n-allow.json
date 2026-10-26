@@ -118,7 +118,9 @@
    "hell seams",
    "hell forge",
    "hell barriers",
-   "hell cage"
+   "hell cage",
+   "after piles",
+   "after pile marks"
   ],
   "src/render/fish.js": [
    "Lantern angler",
@@ -156,6 +158,9 @@
    "saving your sqwife",
    "lucky swings",
    "the haulers"
+  ],
+  "src/footprints.js": [
+   "${}: ${} ${} art cells past its ground"
   ]
  },
  "why": {
@@ -173,6 +178,7 @@
   "src/slotfit.js": "a CSS selector list (the words on a tile that cannot fold), not words",
   "src/slots.js": "class names",
   "src/tower.js": "a time helper nothing calls",
-  "src/upgrades.js": "the bench sections' keys: S.seenSects keeps them, so they stay as the saves have them"
+  "src/upgrades.js": "the bench sections' keys: S.seenSects keeps them, so they stay as the saves have them",
+  "src/footprints.js": "the rules' messages about footprints, read by verify.js and the checks"
  }
 }
