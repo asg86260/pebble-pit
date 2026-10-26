@@ -31,12 +31,20 @@ import { SND_MASTER, SND_LOWPASS_HZ, SND_LOWPASS_Q, SND_LIMIT_DB, SND_LIMIT_RATI
          SND_FOLD_PER_S, SND_PUNCT_PER_S, SND_EACH_PER_S, SND_SAMPLE_DIR, SND_ONSCREEN_PAD } from './config.js';
 import { S } from './state.js';
 import { now } from './clock.js';
-import { rand, seed, stream } from './rng.js';
+import { seed, stream } from './rng.js';
+import { held } from './reset.js';
 
 // --- the decision half ---------------------------------------------------------
 
 let awake = false; // page: the first gesture has woken the sound
 let muted = false; // page: the player's mute
+
+// The strikes' jitter, a stream of its own: the sound wakes only on a
+// gesture, so drawn from the yard's `rand()` it would make a clicked page and
+// an untouched one run the same seed into different yards. Seeded off the
+// run's seed, so a seeded run still strikes the same sounds twice.
+let jitter = stream(0); // held
+held('sound-jitter', () => { jitter = stream((seed() ^ 0x50D1E7) >>> 0); });
 
 // What has been decided since wake. `byClass` is what the yard asked for,
 // `firedBy` what got through, `pending` the open fold windows (nought a
@@ -139,25 +147,25 @@ function ringOf(spec, o) {
 }
 
 // One decided strike. `n` is how many events it stands for; a folded strike
-// was counted when its window opened. The jitter is drawn here from the
-// yard's own word, so the node yard and the browser draw the same numbers
-// whether or not anything is rendered.
+// was counted when its window opened. The jitter is drawn here whether or
+// not anything is rendered, so the node yard and the browser draw the same
+// numbers.
 function fire(event, o, cls, t, n = 1, counted = false) {
   if (!counted) { decisions.fired++; decisions.firedBy[cls]++; }
   const spec = recipeOf(event);
   if (!spec) return;                        // an unmapped event: decided, counted, silent
   const foldDb = Math.min(SND_FOLD_GAIN_MAX_DB, SND_FOLD_GAIN_DB * Math.log2(n));
-  const level = spec.gain * db(foldDb + (rand() * 2 - 1) * SND_JITTER_DB * spec.vary);
+  const level = spec.gain * db(foldDb + (jitter() * 2 - 1) * SND_JITTER_DB * spec.vary);
   const widen = 1 + SND_FOLD_WIDEN * Math.log2(n);
-  const delay = rand() * SND_JITTER_MS;
+  const delay = jitter() * SND_JITTER_MS;
   // and the event's own step, if it asked for one: the pegs climb a row at a time
-  const detune = (rand() * 2 - 1) * SND_JITTER_CENTS * spec.vary + (o.cents || 0);
+  const detune = (jitter() * 2 - 1) * SND_JITTER_CENTS * spec.vary + (o.cents || 0);
   const ring = ringOf(spec, o);
   makeRoom();
   const v = { at: t, level, cls, until: t + delay + ring * 1000, env: null };
   active.push(v);
   // a recorded strike picks one of its takes, so no two in a row need match
-  const take = spec.sample ? spec.sample[Math.floor(rand() * spec.sample.length)] : null;
+  const take = spec.sample ? spec.sample[Math.floor(jitter() * spec.sample.length)] : null;
   for (const fn of struck) fn({ event, t, spec, o, level, widen, delay, detune, take, ring });
   if (ctx) v.env = take ? playTake(take, o, { level, delay, detune }) : play(spec, o, { level, widen, delay, detune, ring });
 }
