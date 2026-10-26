@@ -301,8 +301,11 @@ const inbound = key => haulers().reduce((n, o) => n + (o.target === key ? carrie
 // Whether a hauler is bound for `key`, or still fetching a load it has not
 // yet given a station: the worker there waits for it rather than walk too.
 const hauledTo = key => haulers().some(o => o.target === key || !carried(o));
-// How far short a standing station's pile is, counting the logs on their way.
-const shortOf = key => (built(key) ? Math.max(0, haulWant(key) - S.after.stock[PILE[key]] - inbound(key)) : 0);
+// How far short a standing, worked station's pile is, counting the logs on
+// their way. One with nobody on its job is worked by the hand alone, and its
+// logs are left on the forestry pile for the hand to take where it likes.
+const WORKER = { mill: AFTER_JOB.SAW, chipper: AFTER_JOB.CHIP };
+const shortOf = key => (built(key) && bodiesOf(WORKER[key]).length > 0 ? Math.max(0, haulWant(key) - S.after.stock[PILE[key]] - inbound(key)) : 0);
 // The station most short for its want, the saw mill on a tie: null when none is.
 function haulTarget() {
   let best = null, most = 0;
@@ -406,8 +409,8 @@ const JOB_STEP = {
       if (go(w, pileMid('forestry', 'grovelogs'), floorY(), dt)) w.pick = !pickUp(w, dt, 'log', () => a.stock.grovelogs, () => { a.stock.grovelogs -= 1; });
       return;
     }
-    if (w.target == null || !built(w.target)) w.target = haulTarget() || HAULED.find(built) || null;
-    // Nowhere standing to take them: back on the forestry shack's pile.
+    if (w.target == null || !built(w.target)) w.target = haulTarget();
+    // No station short of them any more: back on the forestry shack's pile.
     const key = w.target, what = key ? PILE[key] : 'grovelogs';
     if (go(w, pileMid(key || 'forestry', what), floorY(), dt) && putDown(w, dt, () => { a.stock[what] += 1; })) w.target = null;
   },

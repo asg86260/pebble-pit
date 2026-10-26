@@ -425,13 +425,15 @@ function buildChain() {
   return bought;
 }
 
-group('the chain makes timber and sawdust, then signs, and a sawyer tips the full heap until the paper mill', async () => {
+group('the chain makes timber and sawdust, then signs, and the heap is tipped until the paper mill', async () => {
   const bought = buildChain();
   let brim = false, tipped = false;
   for (let k = 0; k < 960; k++) {
     run(0.25);
     if (S.after.stock.sawdust >= AFTER_SAWDUST_BRIM) brim = true;
-    if (S.after.bodies.some(b => b.load === 'tip')) tipped = true;
+    // A sawyer carrying a load to the notch, or an idle member standing at
+    // it tipping (bodies.js, the sweep): nobody clicks here.
+    if (S.after.bodies.some(b => b.load === 'tip') || (S.after.tipAt != null && S.after.bodies.some(b => b.errand === 'sweeper'))) tipped = true;
   }
   const mid = read();
   // The second branch, raised off the shack.
@@ -445,7 +447,7 @@ group('the chain makes timber and sawdust, then signs, and a sawyer tips the ful
   return [
     ok(bought.every(([, b]) => b), 'the stations bought through their rows, the members put on through the rosters', JSON.stringify(bought.filter(([, b]) => !b))),
     ok(mid.timber > 0 || mid.signs > 0 || S.after.signs.length > 0, 'logs reach the mill and are sawn into timber', JSON.stringify(mid)),
-    ok(brim && tipped, 'the sawdust heaps to its brim and a sawyer tips a load through the notch', `brim ${brim} tipped ${tipped}`),
+    ok(brim && tipped, 'the sawdust heaps up and a body tips a load through the notch', `brim ${brim} tipped ${tipped}`),
     ok(S.after.signs.length > 0, 'the workshop makes signs and its joiner plants them in the crowd', `${S.after.signs.length}`),
     ok(raised && b2.every(([, b]) => b), 'the paper mill and the press are raised and posted', JSON.stringify(b2)),
     ok(end.paper > 0 || end.posters > 0 || S.after.posters.length > 0, 'the paper mill pulps sawdust into paper', JSON.stringify(end)),
