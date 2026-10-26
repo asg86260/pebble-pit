@@ -15,10 +15,10 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
          AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, AFTER_SHELF, ACT_GATES_CELL, AFTER_ART_SCALE, AFTER_IDLE_STEP,
-         AFTER_SIGN_BOARD } from '../config.js';
+         AFTER_SIGN_BOARD, AFTER_PEDESTAL_SIGN_GAP } from '../config.js';
 
 import { S } from '../state.js';
-import { ART as BASE_ART } from './art.js';
+import { ART as BASE_ART, standCol } from './art.js';
 
 const snap = v => Math.round(v / P) * P;
 // An art cell, world px: a cell of act 3's drawings, AFTER_ART_SCALE grid
@@ -43,8 +43,16 @@ export const inAfter = (x, y) => y >= afterTop() && y <= afterFloor() && x >= af
 // where the config lays the camp out off them; the pedestal stands as high
 // as the config says.
 // The pedestal is the pair's podium (render/after/pedestal.js), its box as
-// tall as the podium they stand on.
-export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal, get box() { return [1, 10, Math.ceil(podiumTop() / AP)]; } } };
+// tall as the podium they stand on. Its shop sign stands on the open floor
+// between the workshops and the union's crowd, AFTER_PEDESTAL_SIGN_GAP.shack art
+// cells past the last workshop's ground (the shack's sign ends it), and its
+// ground runs from the sign; the crowd stops `crowd` art cells short of
+// the sign (`unionHalf`).
+const pedSign = () => (workshopsX1() + AFTER_PEDESTAL_SIGN_GAP.shack * AP - stationX0('pedestal')) / AP;
+export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal,
+  get box() { return [1, 10, Math.ceil(podiumTop() / AP)]; },
+  get sign() { return pedSign(); },
+  get lead() { return Math.min(BASE_ART.pedestal.box[0], pedSign()); } } };
 // The paper mill's stack stands at its line's far end, which its drying
 // line carries four sheets further along (render/after/stations.js).
 const longLine = () => !!S.after && (S.after.ups['after-dry'] || 0) > 0;
@@ -95,7 +103,8 @@ export const pileAt = (key, what) => {
 // the hand finds it in: its six cells across, `reach` art cells up off the
 // floor under it (its station's shelf, `floorAt`).
 export const pileOwner = what => Object.keys(ART).find(k => what in ART[k].pile) || null;
-export const pileBox = (key, what, reach) => ({ x: pileAt(key, what), y: floorAt(pileMid(key, what)) - reach * AP, w: PILE_W * AP, h: reach * AP });
+const pileCenter = (key, what) => pileAt(key, what) + (PILE_W / 2) * AP;
+export const pileBox = (key, what, reach) => ({ x: pileAt(key, what), y: floorAt(pileCenter(key, what)) - reach * AP, w: PILE_W * AP, h: reach * AP });
 // Where a station's loads are piled while it is raised (after/build.js): on
 // its ground beside its drawing, where its own product pile will stand,
 // BUILD_PILE_W art cells across and kept on the ground. Its left edge.
@@ -109,8 +118,14 @@ export const buildPileAt = key => {
 // Where a builder stands to lay a load into a band: either side of the
 // drawing (`side` 0 its left, 1 its right), a cell off it.
 export const buildLayAt = (key, side) => { const b = stationBox(key); return side ? b.x + b.w + P * 2 : b.x - P * 2; };
-// Its middle column, where a body puts a thing down on it.
-export const pileMid = (key, what) => pileAt(key, what) + (PILE_W / 2) * AP;
+// Where a body stands to put a thing down on a pile or take one off it, its
+// middle column: beside the pile on the side away from its station's
+// drawing (after/art.js, `standCol`), so the load stacked over its head
+// stands clear of the pile; the floor it stands on is the station's ground.
+export const pileMid = (key, what) => {
+  const art = ART[key], s = standCol(art, art.pile[what]);
+  return stationX0(key) + (art.flip ? art.flip - s : s) * AP;
+};
 // The sawdust heap under the chipper's chute, at its ground's end (ART's
 // `heap`), where the saw mill's sawdust joins the chips, `heapMid` its middle
 // column; the notch in the cloud floor just past its foot, where a load is
@@ -134,16 +149,20 @@ export const podiumTopOf = n => AFTER_PODIUM_TOPS[n] * AFTER_PODIUM_U;
 export const podiumTop = () => podiumTopOf(podiumStood());
 export const podiumMid = () => stationX0('pedestal') + ART.pedestal.ground * AP / 2;
 // The union's crowd (render/after/unioncrowd.js) across the half at most:
-// its back rows kept a cell short of the workshops' end.
-export const unionHalf = () => Math.min(UNION_CROWD.half[1], podiumMid() - workshopsX1() - P);
+// its back rows kept AFTER_PEDESTAL_SIGN_GAP.crowd art cells short of the
+// pedestal's sign, which stands between it and the workshops.
+export const unionHalf = () => {
+  const s = signBox('pedestal');
+  return Math.min(UNION_CROWD.half[1], podiumMid() - (s.x + s.w) - AFTER_PEDESTAL_SIGN_GAP.crowd * AP);
+};
 export const speakerAt = k => ({ x: podiumMid() + AFTER_PODIUM_PAIR[k ? 1 : 0], y: afterFloor() - podiumTop() });
 // The rebel pile at the pedestal's foot, on God's-yard side, where the motes land.
 export const pileX = () => snap(podiumMid() + AFTER_PODIUM_PILE * AP);
 // Where an idle member stands, agitating: in a row behind the pedestal, a
-// spot each, as many spots as the floor holds between the pedestal and the
-// last workshop (one at the least); the rest wait in the crowd.
+// spot each, as many spots as the floor holds between the pedestal and
+// its sign (one at the least); the rest wait in the crowd.
 export const idleX = k => { const b = stationBox('pedestal'); return b.x - P * 3 - k * AFTER_IDLE_STEP; };
-export const idleSpots = () => Math.max(1, Math.floor((idleX(0) - P * 3 - workshopsX1()) / AFTER_IDLE_STEP) + 1);
+export const idleSpots = () => { const s = signBox('pedestal'); return Math.max(1, Math.floor((idleX(0) - P * 3 - (s.x + s.w)) / AFTER_IDLE_STEP) + 1); };
 // The members waiting are counted, not stood anywhere (the owner, 2026-10-18:
 // our crowd behind the camp is dropped). A member comes into the camp, and
 // goes back out of it, at one of its two edges, fading as it crosses: the
@@ -262,7 +281,7 @@ export function floorFlats() {
   for (const key of Object.keys(AFTER_STATIONS)) {
     if (!sited(key)) continue;
     const b = stationBox(key), h = shelfOf(key), on = s => out.push([...s, h]);
-    on(span(b.x, b.w / P)); on(span(stationX0(key), ART[key].ground * AFTER_ART_SCALE));
+    on(span(b.x, b.w / P)); on(span(stationX0(key) + ART[key].lead * AP, (ART[key].ground - ART[key].lead) * AFTER_ART_SCALE));
     for (const what of Object.keys(ART[key].pile)) on(span(pileAt(key, what), PILE_W * AFTER_ART_SCALE));
     on(span(stationDoor(key) - P, 3));
     on(span(signBox(key).x, AFTER_SIGN_BOARD.w * AFTER_ART_SCALE));

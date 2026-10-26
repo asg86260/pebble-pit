@@ -26,7 +26,6 @@ import { P, GREY, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LI
          AFTER_ART_SCALE } from '../../config.js';
 import { K, W, PALE, MID, DUST, toward, hash, clamp01, silhouette } from './kit.js';
 import { stationX0, groundOf } from '../../after/place.js';
-import { signsJoined } from '../../after/press.js';
 import { paperPulls } from '../../after/mill.js';
 import { ctx } from '../ctx.js';
 import { onDevice } from '../wardrobe.js';
@@ -225,8 +224,7 @@ const CHIP_T = 4.2;
 // it is stirred; a full batch, the pulper hauls the mould up out of the vat
 // on its cord and the wet sheet is pegged on the line; it dries from the wet
 // grey to paper a held step at a time, swaying in the gusts down the line; a
-// second worker at the far end lifts each dry sheet off on a peel and lays it
-// on the stack. With the bigger vat the mould lifts two sheets; with the
+// dry sheet at the far end fades off onto the stack. With the bigger vat the mould lifts two sheets; with the
 // drying line the line runs eight sheets long instead of four.
 //
 // What is on the line is this session's drawing: the batch is the sim's (a
@@ -234,14 +232,15 @@ const CHIP_T = 4.2;
 // the moment it was made (mill.js, `paperPulls`). A sheet is on the line a
 // few seconds after its count.
 const PADDLE_MID = (AFTER_STIR_SPAN[0] + AFTER_STIR_SPAN[1]) / 2, PADDLE_REACH = (AFTER_STIR_SPAN[1] - AFTER_STIR_SPAN[0]) / 2, SURFACE = -7, LINE_Y = -18, SHEET_TOP = -16, MOULD_REST = -6;
-const LIFT_N = MOULD_REST - SHEET_TOP, SLOT0 = 14, SLOT_W = 5, PEEL_UNDER = (SHEET_TOP + 3) * P;
-const PT = { slide: 0.1, lift: 0.09, hang: 0.35, peg: 0.25, lower: 0.05, peelUp: 0.06, unpeg: 0.25, peelDown: 0.06, land: 0.3, sway: 0.3 };
+const LIFT_N = MOULD_REST - SHEET_TOP, SLOT0 = 14, SLOT_W = 5;
+const PT = { slide: 0.1, lift: 0.09, hang: 0.35, peg: 0.25, lower: 0.05, land: 0.3, sway: 0.3 };
 const DRY_S = 16, WET = MID;
-export const lineOf = slots => { const LAST = SLOT0 + SLOT_W * (slots - 1); return { LAST, stackX: LAST, peelX: LAST + 4, loftX: LAST + 5, postR: LAST + 9, lineX1: LAST + 10 }; };
-// The line's record: the pull and the loft hand, each on its held steps.
+export const lineOf = slots => { const LAST = SLOT0 + SLOT_W * (slots - 1); return { LAST, postR: LAST + 9, lineX1: LAST + 10 }; };
+// The line's record: the pull on its held steps, and the dry sheet fading
+// off the line's end.
 let line = null;   // held: the drying line's sheets, played out
 function lineRec(t) {
-  if (!line || t < line.t) line = { t, seen: -Infinity, pul: { st: 'stir', k: 0, tm: 0 }, sheets: [], loft: { st: 'rest', y: 0, tm: 0, carry: null, target: null }, queue: 0 };
+  if (!line || t < line.t) line = { t, seen: -Infinity, pul: { st: 'stir', k: 0, tm: 0 }, sheets: [], loft: { tm: 0, target: null }, queue: 0 };
   return line;
 }
 // Played on in steps of a twentieth of a second, however long since the
@@ -277,22 +276,16 @@ function stepLineTo(L, t, moulds, slots) {
     while (pu.tm >= PT.lower && pu.st === 'lower') { pu.tm -= PT.lower; if (--pu.k === 0) { pu.st = 'stir'; pu.tm = 0; } }
   }
   L.sheets = L.sheets.filter(q => q.x <= G.LAST);              // a line shortened drops nothing it never had
-  const rest = -2 - 3 * 3 - 3;
+  // A dry sheet at the line's end fades off it: the stack under it (the
+  // paper pile, piles.js) is the good it became. No hand is posted at the
+  // far end to peel it, so nothing is drawn carrying it down.
   lo.tm += dt;
-  if (lo.st === 'rest') {
-    lo.y = rest;
+  if (!lo.target) {
     const q = L.sheets.find(z => z.x === G.LAST && !z.fresh && dryOf(z) >= 1);
-    if (q && pu.st !== 'slide') { lo.st = 'up'; lo.tm = 0; lo.target = q; }
-  } else if (lo.st === 'up') {
-    while (lo.tm >= PT.peelUp && lo.st === 'up') { lo.tm -= PT.peelUp; lo.y = Math.max(PEEL_UNDER, lo.y - P); if (lo.y === PEEL_UNDER) { lo.st = 'unpeg'; lo.tm = 0; } }
-  } else if (lo.st === 'unpeg') {
-    lo.target.peg = 1 - clamp01(lo.tm / PT.unpeg);
-    if (lo.tm >= PT.unpeg) { L.sheets = L.sheets.filter(z => z !== lo.target); lo.target = null; lo.carry = { a: 1 }; lo.st = 'down'; lo.tm = 0; }
-  } else if (lo.st === 'down') {
-    while (lo.tm >= PT.peelDown && lo.st === 'down') { lo.tm -= PT.peelDown; lo.y = Math.min(rest, lo.y + P); if (lo.y === rest) { lo.st = 'land'; lo.tm = 0; } }
-  } else if (lo.st === 'land') {
-    lo.carry.a = 1 - clamp01(lo.tm / PT.land);
-    if (lo.tm >= PT.land) { lo.carry = null; lo.st = 'rest'; lo.tm = 0; }
+    if (q && pu.st !== 'slide') { lo.target = q; lo.tm = 0; }
+  } else {
+    lo.target.ink = 1 - clamp01(lo.tm / PT.land);
+    if (lo.tm >= PT.land) { L.sheets = L.sheets.filter(z => z !== lo.target); lo.target = null; lo.tm = 0; }
   }
   return { L, G, dryOf };
 }
@@ -345,7 +338,7 @@ let pulperLean = 0;   // held: the pulper's lean as last drawn
 function papermill(d, work, t, h, body = false, at = {}) {
   const moulds = at.moulds || 1, slots = at.slots || AFTER_LINE_SHORT, G = lineOf(slots);
   const hand = turning(h);
-  const st = d.sinking ? { L: { pul: { st: 'stir', k: 0 }, sheets: [], loft: { y: -14, carry: null } }, dryOf: () => 1 } : stepLine(t, moulds, slots);
+  const st = d.sinking ? { L: { pul: { st: 'stir', k: 0 }, sheets: [], loft: { target: null } }, dryOf: () => 1 } : stepLine(t, moulds, slots);
   const { L } = st, pu = L.pul, lo = L.loft;
   d.r(5, -9, 4, 9, K);                                      // the step
   for (let y = -8; y < 0; y += 2) d.px(5 * P + 3, y * P + 1, 4 * P - 6, 2, W);
@@ -372,18 +365,12 @@ function papermill(d, work, t, h, body = false, at = {}) {
   posed.papermill = { sx };
   paddle(d, sx);
   const mt = MOULD_REST - pu.k, front = pu.st === 'lift' || pu.st === 'hang';
-  for (const q of L.sheets) {
-    const dry = q === lo.target && lo.st === 'unpeg' ? 1 : st.dryOf(q);
+  for (const q of L.sheets) d.fade(q.ink == null ? 1 : q.ink, () => {
+    const dry = st.dryOf(q);
     wetSheet(d, q.x, SHEET_TOP, dry, q === lo.target ? 0 : leanOf(q, t, dry)); pegs(d, q.x, SHEET_TOP, q.peg);
-  }
+  });
   if (front) mould(d, mt, moulds, pu.st === 'lift');
   else { const ex = d.px; d.px = (x, y, w, h, tone) => { const top = Math.min(y + h, SURFACE * P); if (top > y) ex(x, y, w, top - y, tone); }; mould(d, mt, moulds, false); d.px = ex; }
-  // The far end: the peel's head and its pole to the loft hand, a dry sheet
-  // carried down on it to the stack (the stack is the paper pile, piles.js).
-  d.px(G.stackX * P, lo.y, 5 * P, 3, K);
-  d.px(G.peelX * P + 1, lo.y, 4, -2 * P - lo.y, K);
-  if (lo.carry) d.fade(lo.carry.a, () => wetSheet(d, G.stackX, (lo.y - 3 * P) / P, 1));
-  d.body(G.loftX, -3, lo.st === 'up' || lo.st === 'down' ? -1 : 0);
 }
 // The paddle, its shaft's left edge at `sx` (the frame's px): the grip
 // across its top, the shaft, the blade at its foot, every part laid off `sx`
@@ -409,10 +396,10 @@ function paddle(d, sx) {
 // (a ring raised, half filled half in, solid flush). Inside, the joiner on a
 // pale stand behind the bench, the blank edge-on with its four nails, and
 // the hammer in held poses: up, a smear for the swing, and plumb on the nail
-// struck. A finished sign is slid onto the carrier's head and walked out to
-// the pile of signs, and a blank fetched back from the blanks.
+// struck. A finished sign is a good on the rack outside (render/after.js,
+// `signRack`), fading on there: no body is posted to walk it out.
 const NAILS = [9, 12, 15, 18], BOARD = { x: 8, w: 12, row: -6, h: 2 }, JY = -11, REST_X = 12, SHANK = [9, 4, 0];
-const SIGNS_X = 27, BLANKS_X = 40, PILE_CAP = 4, CAR = { wait: 25, at: 20 };
+const BLANKS_X = 40, PILE_CAP = 4;
 const SW_T = 0.06, ST_T = 0.14;
 const nailHeadY = (ypx, n) => ypx - SHANK[n] - 3;
 function roofA(d) {
@@ -443,28 +430,6 @@ function wsHammer(d, pose, bx, hy, by = JY * P) {
   else if (pose === 'swing') { d.px(hand - 7, by - 6, 10, 6, PALE); d.px(hand - 12, by + 2, 8, 8, PALE); d.px(hand - 6, by + 8, 6, 4, PALE); }
   else { const top = hy - 10; d.px(hand - 2 * P, top, P, 10, K); d.px(hand - P, top + 3, P, 4, K); }
 }
-// The carrier's walk with a sign, by seconds since it was joined: in from
-// its spot to the bench, the board slid onto its head, out to the signs and
-// laid on, on to the blanks and one lifted, back, slid onto the bench, home.
-// Keyframes [t, carrier x, board x, board row, where the board is].
-const CARRY = (() => {
-  const k = [], step = 0.06; let t = 0.35, x = CAR.wait;
-  const walk = (to, board) => { while (x !== to) { x += Math.sign(to - x); t += step; k.push([t, x, board === 'head' ? x - 4 : null, -5, board]); } };
-  k.push([0, x, BOARD.x, BOARD.row, 'bench'], [t, x, BOARD.x, BOARD.row, 'bench']);
-  walk(CAR.at, 'bench');
-  for (let bx = BOARD.x; bx < x - 4; bx++) { t += step; k.push([t, x, bx + 1, BOARD.row, 'bench']); }
-  t += step; k.push([t, x, x - 4, -5, 'head']);
-  walk(SIGNS_X + 4, 'head');
-  t += step * 3; k.push([t, x, null, null, 'laid']);
-  walk(BLANKS_X + 4, null);
-  t += step * 3; k.push([t, x, x - 4, -5, 'head']);
-  walk(CAR.at, 'head');
-  for (let bx = x - 4; bx > BOARD.x; bx--) { t += step; k.push([t, x, bx - 1, BOARD.row, 'bench']); }
-  walk(CAR.wait, null);
-  return k;
-})();
-const carryAt = since => CARRY.reduce((a, f) => (f[0] <= since ? f : a), CARRY[0]);
-const CARRY_S = CARRY[CARRY.length - 1][0];
 function workshop(d, work, t, h, body = false, at = {}) {
   const nails = h ? h.nails : [0, 0, 0, 0];
   roofA(d);
@@ -472,11 +437,7 @@ function workshop(d, work, t, h, body = false, at = {}) {
   d.r(9, -8, 14, 8, W);                                       // the stand, paper and edgeless, read by its pale slats
   for (const y of [-7, -5, -3]) d.px(9 * P + 2, y * P + 2, 14 * P - 4, 2, PALE);
   d.r(8, -4, 13, 2, K); d.r(9, -2, 2, 2, K); d.r(17, -2, 2, 2, K);   // the bench
-  // The carrier, while it walks a sign out: the board where it has it.
-  const joined = signsJoined(), last = joined.length ? joined[joined.length - 1] : -1e9, since = t - last;
-  const f = since >= 0 && since < CARRY_S ? carryAt(since) : null;
-  if (!f || f[4] === 'bench' && f[2] === BOARD.x) nailed(d, BOARD.x, BOARD.row * P, f && since > 0.35 && f[0] < CARRY_S / 2 ? [2, 2, 2, 2] : nails);
-  else if (f[4] === 'bench') nailed(d, f[2], BOARD.row * P, f[0] < CARRY_S / 2 ? [2, 2, 2, 2] : [0, 0, 0, 0]);
+  nailed(d, BOARD.x, BOARD.row * P, nails);                  // the blank on the bench, its nails as driven
   // The hammer, on the nail last struck.
   const k = h && h.hit != null ? h.hit : null, s2 = h ? t - h.strike : 9;
   const jx = k != null && s2 < 2 ? NAILS[k] + 2 : REST_X;
@@ -484,10 +445,6 @@ function workshop(d, work, t, h, body = false, at = {}) {
   wsHammer(d, pose, jx + 1, pose === 'strike' ? nailHeadY(BOARD.row * P, nails[k] || 2) : 0);
   if (pose === 'strike') d.fade(1 - (s2 - SW_T) / ST_T, () => { const c = NAILS[k], hy = nailHeadY(BOARD.row * P, nails[k] || 2); d.px(c * P - 5, hy - 4, 3, 2, K); d.px(c * P - 4, hy - 9, 2, 3, K); d.px(c * P + P + 2, hy - 4, 3, 2, K); });
   wsLastJx = jx;
-  // The carrier and what it carries, over the walls once it is outside.
-  const cx = f ? f[1] : CAR.wait;
-  d.body(cx, -3);
-  if (f && f[4] === 'head') nailed(d, f[2], f[3] * P, f[0] < CARRY_S / 2 ? [2, 2, 2, 2] : [0, 0, 0, 0]);
   // The blanks, as many as there is timber for, edge-on.
   const blanks = Math.min(PILE_CAP, at.blanks || 0);
   for (let i = 0; i < blanks; i++) wsBoard(d, BLANKS_X, (-2 - 2 * i) * P);

@@ -6,7 +6,7 @@
 import { msg } from './lang.js';
 import { held as heldState } from './reset.js';
 import { closeWindow } from './modal.js';
-import { P, MINE_DELAY, WORKER, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
+import { P, MINE_DELAY, WORKER, AFTER_PILE_REACH, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H, TOSS_DELAY, THUMB, BRUSH } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow, bindScroller, lookAt, lockScroller, toWorld, toScreen } from './world.js';
@@ -25,7 +25,7 @@ import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js'
 import { statusAt } from './render/statusicons.js';
 import { overChooseMark, chooseMarkAt } from './render/deep.js';
 const CHOOSE_SAYS = msg('hover-choose');
-import { markedPiles, fullSays } from './render/pilemarks.js';
+import { shownPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { rosterHit, overRoster, rosterSays } from './roster.js';
@@ -56,6 +56,9 @@ import { sayGoOn } from './actbeats.js';
 import { onGoOn } from './render/portals.js';
 import * as AFTER_PLACE from './after/index.js';
 import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, gestureHover, pressTaken } from './after/gestures.js';
+import { stationParts, pileOwner, pileBox } from './after/place.js';
+import { built } from './after/levels.js';
+import { JOB_NAMES } from './after/rows.js';
 import * as HELL_PLACE from './hell/index.js';
 import { onShaftArrow } from './render/shaftway.js';
 import { onPortal } from './render/portal.js';
@@ -520,10 +523,38 @@ const TYPE_SAID = {
   delver: msg('hover-delver'),
 };
 
+// Act 3's counted piles and what each is called: the goods the hand takes
+// off them (after/hand.js) and the posters on the fence's rack.
+const AFTER_PILE_SAYS = {
+  grovelogs: 'hover-pile-logs', logs: 'hover-pile-logs', chiplogs: 'hover-pile-logs', timber: 'hover-pile-planks',
+  paper: 'hover-pile-sheets', signs: 'hover-pile-signs', posters: 'hover-pile-posters'
+};
+const AFTER_GOOD_SAYS = { log: 'hover-log', plank: 'hover-plank', sheet: 'hover-sheet', sign: 'hover-sign' };
+
+// What is at a spot up in act 3, in a word, asked in the yard's order: a body,
+// or a good lying on the floor or on a pile, before the pile and the heap,
+// before the station they stand beside.
+function afterAt(x, y) {
+  const o = S.after && grabAt(x, y);
+  if (o && o.goods) return msg(AFTER_GOOD_SAYS[o.kind] || 'hover-log');
+  if (o) return o.job && JOB_NAMES[o.job] ? JOB_NAMES[o.job]() : o.job === 'builder' ? msg('hover-builder') : msg('hover-member');
+  for (const [what, key] of Object.entries(AFTER_PILE_SAYS)) {
+    const owner = pileOwner(what);
+    if (owner && built(owner) && inRect(pileBox(owner, what, AFTER_PILE_REACH), x, y)) return msg(key);
+  }
+  if (S.after && built('chipper') && inRect(stationParts('heap').heap, x, y)) return msg('hover-heap');
+  for (const r of STATIONS) {
+    if (r.place !== 'after' || !r.name || !r.stand || !r.open()) continue;
+    if (nearStation(r.key, x, y) || inRect(standRect(r.key), x, y)) return r.name;
+  }
+  return null;
+}
+
 // What is at a spot, in a word, or nothing. Asked in the order a thing would
 // catch your eye: somebody moving before the ground under them, a grain before
 // the building the pile stands beside.
 export function whatIsAt(x, y) {
+  if (S.view === 'after') return afterAt(x, y);
   const w = lifted() || workerAt(x, y);
   if (w) return TYPE_SAID[w.type] || w.type;
   // Down there nothing of the yard is under the pointer: the way up, and the
@@ -569,6 +600,7 @@ function polledWhatIsAt(x, y) {
   return tipWas;
 }
 
+
 const panelEl = document.getElementById('panel');
 // The sheet is in screen space, so this is a question about the page.
 function overOpenBoard(cx, cy) {
@@ -589,7 +621,7 @@ function askedAbout(x, y, cx, cy) {
     showTipAt(card(w), at.x, at.y);
     return true;
   }
-  for (const p of markedPiles()) {
+  for (const p of shownPiles()) {
     if (!S.pileFull[p.key] || !overPileMark(p.key, x, y)) continue;
     showTip(fullSays(p.key), pileMarkAt(p.key));
     return true;
@@ -680,7 +712,7 @@ const CURSORS = [
 // The marks `askedAbout` shows a tooltip for, asked without showing one: the
 // cursor changes on the way *toward* the mark.
 function overAnyMark(x, y) {
-  for (const p of S.piles) if (S.pileFull[p.key] && overPileMark(p.key, x, y)) return true;
+  for (const p of shownPiles()) if (S.pileFull[p.key] && overPileMark(p.key, x, y)) return true;
   return !!overDoneMark(x, y);
 }
 

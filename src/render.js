@@ -67,7 +67,7 @@ import { drawHome } from './render/home.js';
 import { drawActsYard, drawActsDeep, drawActsAfter, drawActsHell, drawActBodies, drawActCaption, drawActsGates } from './render/portals.js';
 import { drawMansion } from './render/mansion.js';
 import { drawRoadSky, roadUp } from './render/road.js';
-import { drawAfterBackdrop, drawAfterGrove, drawAfterCamp, drawAfterMembers, drawAfterSky, drawAfterCounts, drawAfterRoster } from './render/after.js';
+import { drawAfterBackdrop, drawAfterGrove, drawAfterCamp, drawAfterPiles, drawAfterMembers, drawAfterSky, drawAfterCounts, drawAfterRoster } from './render/after.js';
 import { drawFrontLip } from './render/after/ground.js';
 import { drawAfterCrowd, drawSkyCrowd } from './render/aftercrowd.js';
 import { drawAfterCues } from './render/aftercues.js';
@@ -226,10 +226,15 @@ const LAYERS = [
   { name: 'after grove', in: 'after', draw: drawAfterGrove },
   { name: 'after camp', in: 'after', draw: drawAfterCamp },
   { name: 'after crowd', in: 'after', draw: drawAfterCrowd },
+  // The billows along the path's front (render/after/ground.js): over the
+  // stations' feet, under the piles and the members, so a pile and a body
+  // stand on the floor.
+  { name: 'after lip', in: 'after', draw: drawFrontLip },
+  { name: 'after piles', in: 'after', draw: drawAfterPiles },   // each station's counted pile, and the workshop's sign rack
   { name: 'after sight', in: 'after', draw: drawPlaceSight },   // the right button held: the camp behind its members veiled, each ringed
   { name: 'after members', in: 'after', draw: drawAfterMembers },
-  { name: 'after lip', in: 'after', draw: drawFrontLip },       // the billows along the path's front, over the members' feet (render/after/ground.js)
   { name: 'after roster', in: 'after', draw: drawAfterRoster },   // who is on each job, under its station, on the yard's roster
+  { name: 'after pile marks', in: 'after', draw: drawPileMarks }, // the yard's pile-full mark over an act 3 row's full pile (render/pilemarks.js)
   { name: 'after coins', in: 'after', draw: drawAfterCoins },  // the yard's coins out of the thin patch to the station bought (render/aftercoins.js)
   { name: 'after cues', in: 'after', draw: drawAfterCues },     // the hand work's ghost hands, gauges and crit marks (render/aftercues.js)
   // The acts' connective tissue up there (render/portals.js): heaven's tear in
@@ -379,14 +384,14 @@ const FISH = new Set(['deep fauna', 'meal gulped', 'meal']);
 const AFTER_WASH = new Set(['fight numbers', 'status posts', 'air near', 'pot labels']);
 // The yard's reading, which is in no scene: faded right out while one holds,
 // on the recede's own number (render/recede.js, `hudInk`).
-const HUD = new Set(['pile marks', 'roster', 'after roster', 'roster counts', 'kit counts', 'stock count', 'after counts', 'counter']);
+const HUD = new Set(['pile marks', 'after pile marks','roster', 'after roster', 'roster counts', 'kit counts', 'stock count', 'after counts', 'counter']);
 // Bodies of either kind in one layer: drawn behind the wash and again over
 // it, each body sorted by `bodyInk`.
 const MIXED = new Set(['workers', 'says', 'swimmers', 'party']);
 
 // The landing page's picture (main.js, `demo`) is the yard to be looked at
 // and not read: the layers a player reads off the picture are left out of it.
-const READING = new Set(['pad focus', 'offer flags', 'paid', 'pile marks', 'auras', 'work bars', 'done marks',
+const READING = new Set(['pad focus', 'offer flags', 'paid', 'pile marks', 'after pile marks', 'auras', 'work bars', 'done marks',
                          'casino mark', 'roster', 'after roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
                          'stock count', 'after counts', 'pot labels', 'counter', 'fight numbers', 'status posts', 'serpent bar']);
 let picture = false;            // page: the landing page draws the yard as a picture

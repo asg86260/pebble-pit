@@ -610,3 +610,25 @@ export const AFTER_ACT_COINS = ['rebel', 'timber', 'paper'];
 // shack's five stations and the grove's five upgrades in two rows, the yard's
 // own wrapping (board.js `pinWidth`), against the yard's SHELF_SLOTS.
 export const AFTER_BOARD_SLOTS = 3;
+
+// track a3-bodies: the slot a member is dealt among those bound for one place
+// (after/bodies.js, `slotted`): a body's width, so none stands in another.
+export const AFTER_SLOT_GAP = P * 3;
+
+// track a3-placement
+// The rebel pile at the podium's foot at its widest, [across, high] in art
+// cells: as drawn (render/after/pedestal.js, `drawRebelPile`), for the
+// pedestal's footprint (footprints.js).
+export const AFTER_REBEL_PILE_CELLS = [8, 2];
+// The pedestal's shop sign stands on the open floor between the workshops and
+// the union's crowd (after/place.js), in art cells: `shack` past the last
+// workshop's ground, which the shack's sign ends, so the two signs do not
+// read as a pair, and `crowd` short of the crowd's widest row (`unionHalf`).
+export const AFTER_PEDESTAL_SIGN_GAP = { shack: 8, crowd: 3 };
+
+// track a3-piles
+// A pile's count stands on its pile: the foot of its paper plate this far
+// over the pile's top, in world px, whatever the zoom (render/after.js,
+// `drawAfterCounts`), so a count never drifts up off its pile into the
+// station behind it.
+export const AFTER_COUNT_LIFT = P;

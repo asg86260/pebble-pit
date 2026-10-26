@@ -3,14 +3,26 @@
 // and the pile's state (`pileState`: what it shows, what it showed, since
 // when), so a log coming on or going off fades. Cells off the frame's ground.
 
-import { P } from '../../config.js';
-import { K, W, PALE, MID, DUST, hash, pileAlpha, countAt } from './kit.js';
+import { P, AFTER_COUNT_LIFT } from '../../config.js';
+import { K, W, PALE, MID, DUST, hash, pileAlpha, pileState, countAt, pendingCounts } from './kit.js';
 import { shown } from '../../tween.js';
 
-// The count two cells over a pile's top, at a frame cell (cx, cy), in world px.
-// Through the shared counts tween (tween.js, `shown`) by the pile's name, so a
-// count taken from or added to runs a good at a time rather than jumping.
-function count(d, n, cx, cy, key) { const at = d.world(cx, cy); countAt(at.x, at.y, key ? shown(`after-pile:${key}`, n) : n); }
+// A pile's count, standing on the pile: its plate's foot AFTER_COUNT_LIFT
+// over the pile's top `top` (world px), across from `x`. Through the shared
+// counts tween (tween.js, `shown`) by the pile's name, so a count taken from
+// or added to runs a good at a time rather than jumping. An empty pile has no
+// count, as an empty kit stand in the yard has none (roster.js, `kitStands`):
+// the count fades on with the pile's first good and off with its last, never
+// a zero standing over bare floor.
+export function countOver(x, top, n, key) {
+  const a = pileAlpha(0, pileState(`count:${key}`, Math.round(n) > 0 ? 1 : 0));
+  if (a <= 0) return;
+  countAt(x, top - AFTER_COUNT_LIFT, shown(`after-pile:${key}`, n));
+  const c = pendingCounts()[pendingCounts().length - 1];
+  c.a = a; c.foot = true;
+}
+// The same off a frame: across from cell cx, over the pile's top at row `top`.
+function count(d, n, cx, top, key) { const at = d.world(cx, top); countOver(at.x, at.y, n, key); }
 
 // A log seen end on: a two-cell square, black rim, a pale cut face, a mid heart.
 export function logEnd(d, x, y) { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, PALE); d.px(x * P + 5, y * P + 5, 2, 2, MID); }
@@ -20,7 +32,7 @@ export function logPile(d, x, st, cap = SPOTS.length) {
   const m = Math.min(Math.max(st.n, st.prev), cap);
   for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => logEnd(d, x + SPOTS[i][0], -2 - SPOTS[i][1] * 2));
   const shown = Math.min(st.n, cap), top = shown <= 3 ? 1 : shown <= 5 ? 2 : 3;
-  count(d, st.n, x + 3, -top * 2 - 2.5, st.key);
+  count(d, st.n, x + 3, -top * 2, st.key);
 }
 // Timber: planks six cells long and a cell deep, every other one set in half a cell.
 export function plankPile(d, x, st, cap = 6) {
@@ -29,7 +41,7 @@ export function plankPile(d, x, st, cap = 6) {
     const y = -1 - i, dx = i % 2 ? 0.5 : 0;
     d.px((x + dx) * P, y * P, 6 * P, P, K); d.px((x + dx) * P + 2, y * P + 2, 6 * P - 4, P - 4, PALE);
   });
-  count(d, st.n, x + 3.25, -Math.max(1, Math.min(st.n, cap)) - 2.5, st.key);
+  count(d, st.n, x + 3.25, -Math.max(1, Math.min(st.n, cap)), st.key);
 }
 // A heap of grains, in the sawdust's tones a cell, growing as a triangle from
 // its middle column `cx`, `R` cells high at its brim. `st` counts cells.
@@ -41,7 +53,7 @@ export function heapCells(R) {
   cells.sort((a, b) => (Math.abs(a[0]) + a[1]) - (Math.abs(b[0]) + b[1]) || a[1] - b[1] || a[0] - b[0]);
   return (HEAPS[R] = cells);
 }
-export function heap(d, cx, R, st, n, tipped = false, pal = DUST) {
+export function heap(d, cx, R, st, n, tipped = false, pal = DUST, key = st.key) {
   const cells = heapCells(R);
   const full = Math.min(st.n, st.prev), to = Math.min(cells.length, Math.max(st.n, st.prev));
   let top = 0;
@@ -52,7 +64,7 @@ export function heap(d, cx, R, st, n, tipped = false, pal = DUST) {
     if (i < full) { d.c(cx + dx + shift, -1 - j, tone); top = Math.max(top, j); }
     else d.fade(pileAlpha(i, st), () => d.c(cx + dx + shift, -1 - j, tone));
   }
-  count(d, n, cx + 0.5, -1 - top - 3);
+  count(d, n, cx + 0.5, -1 - top, key);
 }
 // Paper: a white stack, a sheet three pixels, every other one ruled pale;
 // posters the same with the top one's print showing.
@@ -72,7 +84,7 @@ export function sheetPile(d, x, st, cap = 6, print = false) {
     });
   }
   const top = print && shown > 0 ? topY - 4 * P : topY;
-  count(d, st.n, x + 2, top / P - 2.5, st.key);
+  count(d, st.n, x + 2, top / P, st.key);
 }
 // Signs: a board on a post, stood in a row.
 export function sign(d, x, y) {
@@ -83,7 +95,7 @@ export function sign(d, x, y) {
 export function signPile(d, x, st, cap = 3) {
   const m = Math.min(Math.max(st.n, st.prev), cap);
   for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => sign(d, x + i * 2, -6 - (i % 2)));
-  count(d, st.n, x + 2 + (Math.max(1, Math.min(st.n, cap)) - 1), -9.5, st.key);
+  count(d, st.n, x + 2 + (Math.max(1, Math.min(st.n, cap)) - 1), -7, st.key);
 }
 
 // --- a station's loads, while it is raised (pile a, docs/mocks/act3-unbuilt-2026-10-18)

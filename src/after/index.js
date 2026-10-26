@@ -12,14 +12,12 @@
 // else (DESIGN.md, "Rules and consequences to check", the save shape).
 
 import { S } from '../state.js';
-import { AFTER_STOCK, AFTER_START_BUILT, AFTER_JOBS, AFTER_JOB_FOLD, AFTER_SEAT_BILLS } from '../config.js';
-import { AFTER_JOB } from '../jobs.js';
-import { seatKey } from './levels.js';
+import { AFTER_STOCK, AFTER_START_BUILT } from '../config.js';
 import { afterlifeOn } from '../acts.js';
 import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
 import { stepMill, forgetSpills } from './mill.js';
-import { stepPress, forgetSigns } from './press.js';
+import { stepPress } from './press.js';
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
 import { stepBodies } from './bodies.js';
@@ -117,7 +115,7 @@ export function stepAfter(c) {
   if (!afterlifeOn()) return;
   frames++;
   if (!S.after) return;
-  if (seen !== S.after) { forgetSpills(); forgetBubbles(); forgetSigns(); seen = S.after; }
+  if (seen !== S.after) { forgetSpills(); forgetBubbles(); seen = S.after; }
   S.after.t += secs(c);
   stepRebel(c);
   stepGrove(c);
@@ -138,50 +136,6 @@ export function clickAfter(wx, wy) {
   return clickPlace(wx, wy);
 }
 
-// A save from when a station's jobs were posts bought (`posts`, by job): the
-// agitators' posts are gone, every agitator standing at the podium idle as
-// any member with no job; each other job's posts become what its roster
-// wants, filled from the members the save has as far as they go, in the
-// rosters' order, the rest idle; and a job's posts past its one seat become
-// seats bought, so nothing paid for is lost.
-function fromPosts(a, posts) {
-  let left = a.camp + a.bodies.filter(b => b.state === 'work' && b.pair == null).length;
-  for (const job of AFTER_JOBS) {
-    const bought = Math.max(0, Math.floor(posts[job] || 0));
-    if (bought > 1) a.ups[seatKey(job)] = Math.min(AFTER_SEAT_BILLS.length, Math.max(a.ups[seatKey(job)] || 0, bought - 1));
-    const n = Math.min(bought, left);
-    if (n > 0) { a.crew[job] = n; left -= n; }
-  }
-  for (const b of a.bodies) {
-    if (b.job != null && b.job !== AFTER_JOB.BUILD && !AFTER_JOBS.includes(b.job)) b.job = null;
-    // A body at its post in the old save has got there.
-    if (b.job && b.state === 'work') b.on = true;
-  }
-}
-
-// A save from when a station had several jobs (DESIGN.md, "Act 3: one job
-// a station"): a folded job's seats go to its station's one, the larger
-// kept, and its crew too, as far as those seats go; its bodies take that
-// job, a gatherer's log still the one walked to and a carrier or a paster
-// with anything in hand out on its round until it is empty.
-function foldJobs(a) {
-  for (const [from, to] of Object.entries(AFTER_JOB_FOLD)) {
-    const seats = a.ups[seatKey(from)];
-    if (seats != null) { a.ups[seatKey(to)] = Math.max(a.ups[seatKey(to)] || 0, seats); delete a.ups[seatKey(from)]; }
-    if (!a.crew[from]) continue;
-    a.crew[to] = Math.min(1 + Math.min(AFTER_SEAT_BILLS.length, a.ups[seatKey(to)] || 0), (a.crew[to] || 0) + a.crew[from]);
-    delete a.crew[from];
-  }
-  for (const b of a.bodies) {
-    const to = AFTER_JOB_FOLD[b.job];
-    if (!to) continue;
-    if (b.job === AFTER_JOB.GATHER) { b.log = b.target; b.target = null; }
-    else if (b.job === AFTER_JOB.HAUL) { b.to = b.load ? 'pile' : null; b.target = null; }
-    else b.out = !!(b.load || b.pick || b.target != null);
-    b.job = to;
-  }
-}
-
 // The save (persist.js, `SAVERS`): written whole, null before the act
 // begins, and read over a blank so a save from before a field was added
 // comes back with that field empty rather than missing. The crowd's rims are
@@ -192,10 +146,9 @@ export const SAVE = {
   read(s) {
     const a = s.after;
     // An older save's wardens, which nothing reads, fall away with every key
-    // the blank lacks (placesave.js).
+    // the blank lacks (placesave.js); its older job shapes were brought to
+    // today's before this, on the raw save (src/migrations/).
     S.after = a && typeof a === 'object' ? readOver(blankAfter(), a) : null;
-    if (S.after) foldJobs(S.after);
-    if (S.after && a.posts && typeof a.posts === 'object' && !a.crew) fromPosts(S.after, a.posts);
     if (S.after) { settleHeld(S.after.bodies); settleHand(); }
   },
   blank() { S.after = null; }

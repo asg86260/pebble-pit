@@ -23,19 +23,24 @@
 // What a station draws past its box and piles, in its own cells: the
 // chipper's heap and the notch past it, the workshop's blanks, the paper
 // mill's drying line at its longest (`reach`, the column past its right end).
+// This table cannot read the drawing (the config lays the camp off it), so
+// the drawing is read against it instead: footprints.js takes each
+// station's ground as what it inks at its fullest, and rule 22 in verify.js
+// is red for a part past the ground laid here.
 const DRAWN = {
   mill:      { box: [11, 39, 26], door: 8, pile: { logs: 0, timber: 53 } },
   chipper:   { box: [8, 27, 24], door: 10, pile: { chiplogs: 0 }, heap: 39, reach: 46 },
-  papermill: { box: [5, 54, 19], door: 7, pile: { paper: 29 }, reach: 55 },
-  workshop:  { box: [5, 21, 22], door: 13, pile: { signs: 27 }, reach: 46 },
+  papermill: { box: [5, 54, 19], door: 7, pile: { paper: 29 }, reach: 60 },
+  workshop:  { box: [5, 21, 22], door: 13, pile: { signs: 27 }, reach: 52 },
   press:     { box: [9, 20, 19], door: 27, pile: { posters: 33 } },
   shack:     { box: [0, 14, 14], door: 7, pile: {} },
   // The forestry shack in front of the grove (the owner, 2026-10-20): the
   // grove's board, and the pile its gatherers bring the fallen logs to,
   // on its grove side, where the haulers fetch them from.
   forestry:  { box: [8, 16, 13], door: 10, pile: { grovelogs: 0 } },
-  // Its sign on the workshops' side, clear of the widest podium's overhang
-  // (config/after.js, AFTER_PODIUM_HALF): God's side holds the rebel pile.
+  // Its sign on the workshops' side, between the last workshop and the
+  // union's crowd: laid there off both by after/place.js, which overrides
+  // this column (God's side holds the rebel pile).
   pedestal:  { box: [1, 10, 4], door: 6, pile: {}, ground: 16, sign: -8 }
 };
 // Every station's shop is a sign on a post on its own ground (the owner,
@@ -46,15 +51,23 @@ const DRAWN = {
 export const SIGN = { w: 6, h: 4, post: 3 };
 // A pile is six cells across, and a body stands three wide on its door.
 const PILE_CELLS = 6;
+// A body loading or unloading a pile stands beside it, on the side away from
+// its station's drawing, its middle `stand` cells off the pile's edge, so
+// the load over its head clears the pile: the widest load (a plank,
+// render/after.js `drawLoad`) runs `load` cells past the body's middle.
+export const PILE_STAND = { stand: 2.5, load: 2 };
+// The column a body loading pile column `x` of drawing `a` stands on (its middle).
+export const standCol = (a, x) => (x + PILE_CELLS / 2 < a.box[0] + a.box[1] / 2 ? x - PILE_STAND.stand : x + PILE_CELLS + PILE_STAND.stand);
 // Each station's ground, derived from what it draws: from its first drawn
-// column (`lead`) to the column past its last (`ground`), its box, its piles,
-// its door, its `reach` and its sign all inside, so every two neighbors stand the one
-// gap apart however each is drawn. The pedestal's ground is the union's
-// camp's (config/after.js lays it at the camp's middle).
+// column (`lead`) to the column past its last (`ground`), its box, its piles
+// and the floor a body loads each from, its door, its `reach` and its sign
+// all inside, so every two neighbors stand the one gap apart however each is
+// drawn. The pedestal's ground is the union's camp's (config/after.js lays
+// it at the camp's middle).
 const span = a => {
-  const piles = Object.values(a.pile);
-  const lead = Math.min(a.box[0], a.door - 1, ...piles);
-  const end = Math.max(a.box[0] + a.box[1], a.door + 2, ...piles.map(x => x + PILE_CELLS), a.reach || 0);
+  const piles = Object.values(a.pile), stands = piles.map(x => standCol(a, x));
+  const lead = Math.min(a.box[0], a.door - 1, ...piles, ...stands.map(s => Math.floor(s - PILE_STAND.load)));
+  const end = Math.max(a.box[0] + a.box[1], a.door + 2, ...piles.map(x => x + PILE_CELLS), ...stands.map(s => Math.ceil(s + PILE_STAND.load)), a.reach || 0);
   const sign = a.sign ?? end + 1;
   return { sign, lead: Math.min(lead, sign), ground: a.ground ?? Math.max(end, sign + SIGN.w) };
 };

@@ -26,7 +26,7 @@
 
 import { S } from '../state.js';
 import { AFTER_JOB } from '../jobs.js';
-import { P, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S, AFTER_PASTE_S,
+import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S, AFTER_PASTE_S,
          AFTER_CARRY_SLOTS, AFTER_PUT_S, AFTER_PRESS_S, AFTER_SAW_S, AFTER_CHIP_S, AFTER_SIGN_S, AFTER_PULP_S, AFTER_CHOP_HOLD_S,
          AFTER_JOIN_FADE_S, AFTER_GOODS_HOME } from '../config.js';
 import { secs, walk, nextId } from './util.js';
@@ -55,7 +55,7 @@ function along(w, tx, dt) {
   w.y = floorAt(w.x);
   return there;
 }
-function go(w, tx, ty, dt) {
+function walkTo(w, tx, ty, dt) {
   const toFloor = Math.abs(ty - floorY()) < 0.5, gy = toFloor ? floorAt(tx) : ty;
   const onFloor = Math.abs(w.y - floorAt(w.x)) < 0.5;
   if (onFloor && toFloor) return along(w, tx, dt);
@@ -72,12 +72,28 @@ function go(w, tx, ty, dt) {
   if (Math.abs(w.x - ex) >= 0.5) { along(w, ex, dt); return false; }
   return walk(w, tx, gy, dt);
 }
+// Each member its own spot (polish bar, own spots; the yard's `elbowIdle`
+// nudges two idlers apart, but a nudge fights a walk to a shared pile, so here
+// the spot is given up front): bodies on the floor bound for the same place
+// are dealt slots by id, the first on the place itself, the rest alternately
+// right and left of it a body's width apart. The place a body asked for is
+// kept on it (`dest`), and so is the slot, as the others read it.
+function slotted(w, tx, ty) {
+  if (w.state !== 'work' || w.pair != null || Math.abs(ty - floorY()) >= 0.5) { w.dest = null; return tx; }
+  w.dest = tx;
+  let r = 0;
+  for (const o of S.after.bodies) {
+    if (o !== w && o.id < w.id && o.state === 'work' && o.pair == null && o.dest != null && Math.abs(o.dest - tx) < AFTER_SLOT_GAP) r++;
+  }
+  return tx + (r % 2 ? 1 : -1) * Math.ceil(r / 2) * AFTER_SLOT_GAP * (r ? 1 : 0);
+}
+const go = (w, tx, ty, dt) => walkTo(w, slotted(w, tx, ty), ty, dt);
 // Where a member waits for work at its post: its station's door, or the
 // grove's edge.
 const postX = w => {
   const post = AFTER_JOB_POST[w.job];
   if (post === 'grove') return groveX1() - P * 4;
-  return stationDoor(post) + (w.id % 3) * P;
+  return stationDoor(post);
 };
 // A body with nothing to do at its job waits at its station; one with no job
 // at all is at the podium (`agitating`).
@@ -244,7 +260,7 @@ export const bodyInk = w => {
 // clock holds full while the station's input is short.
 function stationWork(w, key, period, dt) {
   if (!built(key)) { w.at = null; idle(w, dt); return; }
-  if (!go(w, stationDoor(key) + (w.id % 3) * P, floorY(), dt)) { w.at = null; return; }
+  if (!go(w, stationDoor(key), floorY(), dt)) { w.at = null; return; }
   w.at = key;
   w.t = Math.min(period, w.t + dt);
   if (w.t >= period && workAfter(key, 1)) w.t = 0;
@@ -360,7 +376,7 @@ const JOB_STEP = {
   },
   pulper(w, dt) {
     // A vat its own, or at the door its clock held until one is (mill.js, `vatOf`).
-    if (vatOf(w) == null && built('papermill')) { if (go(w, stationDoor('papermill') + (w.id % 3) * P, floorY(), dt)) w.at = null; return; }
+    if (vatOf(w) == null && built('papermill')) { if (go(w, stationDoor('papermill'), floorY(), dt)) w.at = null; return; }
     stationWork(w, 'papermill', AFTER_PULP_S, dt);
   },
   // The joiner stands at its bench; its blows are the nails' (gestures.js,
@@ -372,12 +388,18 @@ const JOB_STEP = {
     w.at = go(w, stationDoor('workshop'), floorY(), dt) ? 'workshop' : null;
   },
   printer(w, dt) {
-    if (built('press') && takeOut(w, dt, 'posters', 'posters', () => freeSlot() != null, JOB_STEP.paster)) return;
+    // The press is not left for the fence while a free hand could carry the
+    // stack (DESIGN.md, "Act 3: one job a station": the printer takes its
+    // output out when a full load waits; "idle errands stay": a free hand
+    // always helps). The idle run the paster's errand; the printer goes
+    // only when nobody else is spare, and finishes a round it has begun.
+    const handFree = a => a.bodies.some(o => o !== w && isIdle(o));
+    if (built('press') && (w.out || !handFree(S.after)) && takeOut(w, dt, 'posters', 'posters', () => freeSlot() != null, JOB_STEP.paster)) return;
     stationWork(w, 'press', AFTER_PRESS_S, dt);
   },
   builder(w, dt) {
     // Carrying the station's loads in and raising it off them (build.js).
-    stepBuilder(w, dt, go);
+    stepBuilder(w, dt, walkTo);
   },
   carrier(w, dt) {
     const a = S.after;
@@ -495,7 +517,7 @@ export const AFTER_JOB_ROWS = {
 const BODY_H = 3 * P;
 export const AFTER_CREW = {
   list: () => (S.after ? S.after.bodies : null),
-  route: go,
+  route: walkTo,
   jobs: AFTER_JOB_ROWS,
   dt: secs,
   begin: () => ({ arrived: 0, idle: idleBodies() }),

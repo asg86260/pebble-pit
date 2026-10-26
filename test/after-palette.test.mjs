@@ -19,7 +19,7 @@ import { setPref } from '../src/prefs.js';
 import { inkOf } from '../src/ink.js';
 import { SCENES } from '../src/scenes.js';
 import { paintOn } from '../src/render/ctx.js';
-import { drawAfterBackdrop, drawAfterSky, drawAfterGrove, drawAfterCamp, drawAfterMembers, drawAfterCounts } from '../src/render/after.js';
+import { drawAfterBackdrop, drawAfterSky, drawAfterGrove, drawAfterCamp, drawAfterPiles, drawAfterMembers, drawAfterCounts } from '../src/render/after.js';
 import { drawSkyCrowd, drawAfterCrowd } from '../src/render/aftercrowd.js';
 import { drawAfterCues } from '../src/render/aftercues.js';
 import { drawAfterCoins } from '../src/render/aftercoins.js';
@@ -27,7 +27,7 @@ import { drawActsAfter } from '../src/render/portals.js';
 
 const S = yard.S;
 const LAYERS = [drawAfterBackdrop, drawSkyCrowd, drawAfterSky, drawAfterGrove, drawAfterCamp, drawAfterCrowd,
-                drawAfterMembers, drawAfterCoins, drawAfterCues, drawAfterCounts, drawActsAfter];
+                drawAfterPiles, drawAfterMembers, drawAfterCoins, drawAfterCues, drawAfterCounts, drawActsAfter];
 const SCENE_NAMES = ['after-camp-art', 'after-camp-art-2', 'after-paper-line', 'after-nails', 'after-grove', 'after-saw',
                      'after-dig', 'after-chip-held', 'after-site-carry', 'after-coins', 'after-bubbles', 'after-pedestal',
                      'after-crowd', 'heaven-10', 'heaven-50', 'heaven-zoom', 'heaven-rally', 'heaven-roar', 'portal-heaven-up'];
