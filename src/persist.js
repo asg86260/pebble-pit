@@ -23,7 +23,7 @@ import { resetCut, squareCut, SAVE as QUARRY } from './quarry.js';
 import { SAVE as MACHINES } from './machines.js';
 import { SAVE as METEOR } from './meteor.js';
 import { BUILD } from './version.js';
-import { at, fillFlat, isDust, recount, wakeGrid } from './grid.js';
+import { at, fillFlat, isDust, recount, rewritten } from './grid.js';
 import { openingCamX, clampCam, unlay, SAVE as VIEW } from './world.js';
 import { SAVE as CASINO } from './casino.js';
 import { SAVE as INTRO } from './intro.js';
@@ -84,7 +84,7 @@ export function gridFill(b, str) {
   }
   // A pile written straight into the cells is a pile the sand knows nothing
   // about, so the whole plot gets looked at once.
-  wakeGrid(b);
+  rewritten(b);
   return i === b.grid.length;
 }
 
@@ -408,7 +408,7 @@ const FLOOR = {
 const PIT_CELLS = {
   fields: ['pit'],
   write(out) { out.pit = pitToSave(); },
-  read(s) { if (!pitFromSave(s.pit)) pit.grid.fill(0); },
+  read(s) { if (!pitFromSave(s.pit)) { pit.grid.fill(0); recount(pit); } },
   blank() {
     pit.grid.fill(0);
     recount(pit);
