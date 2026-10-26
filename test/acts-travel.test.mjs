@@ -4,18 +4,18 @@
 // press on its ring or its gates, which is what the pointer and the pad both
 // call (input.js, pad.js: `portalAt` then `throughPortal`) -- and each goes by
 // the ripple, never a cut: the place left stays on screen while the ring grows
-// or closes, and the camera lands framed on the far end. Heaven's gates swing
-// open smoothly before the ripple, stand open a beat, and swing shut the same
+// or closes, and the camera lands framed on the far end. Heaven's gates sink
+// open smoothly before the ripple, stand open a beat, and rise shut the same
 // way after the camera has come through. The hands beside each fade after the round trip.
 // A reload in the middle of a glide lands in the nearer place, never between.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
 
 const S = yard.S;
 const KEY = 'boulder-clicker/v4';
-const { VIEW_GLIDE_S, ACT_HAND_FADE_S, ACT_GATES_SWING_S, ACT_GATES_STAND_S, ACT_GATES_HOLD_S } = await import('../src/config.js');
+const { VIEW_GLIDE_S, ACT_HAND_FADE_S, ACT_GATES_SINK_S, ACT_GATES_STAND_S, ACT_GATES_HOLD_S } = await import('../src/config.js');
 const { portalAt, portalEnd, throughPortal, handShown, portalFree, gatesOpen } = await import('../src/portals.js');
-// The most of the swing one frame may make: a share more is a jump.
-const MOST = 1 / 60 / ACT_GATES_SWING_S + 1e-9;
+// The most of the sink one frame may make: a share more is a jump.
+const MOST = 1 / 60 / ACT_GATES_SINK_S + 1e-9;
 const { ripple, gliding } = await import('../src/view.js');
 const { stopById } = await import('../src/stops.js');
 
@@ -36,7 +36,7 @@ group("heaven's portal: the yard and the afterlife, by the ripple, both ways", a
   const before = { free: portalFree('heaven'), hand: handShown('heaven'), stop: !!stopById('act:heaven:yard'), shut: gatesOpen() };
   const went = press('heaven');
   // the leaves, a frame at a time until the ripple starts: never back, never
-  // more than a frame's share of the swing at once (no held steps, no jump),
+  // more than a frame's share of the sink at once (no held steps, no jump),
   // and no ripple before they have stood open ACT_GATES_STAND_S
   const opens = [gatesOpen()];
   let early = false, open = 0;
@@ -56,9 +56,9 @@ group("heaven's portal: the yard and the afterlife, by the ripple, both ways", a
   const midBack = { view: S.view, gliding: gliding(), rip: ripple() };
   run(VIEW_GLIDE_S + 0.1);
   const down = { view: S.view, centered: centered('heaven', 'yard'), open: gatesOpen() };
-  // and shut behind the camera, the same swing the other way
+  // and shut behind the camera, the same sink the other way
   const closing = [gatesOpen()];
-  for (let i = 0; i < 60 * (ACT_GATES_HOLD_S + ACT_GATES_SWING_S + 1); i++) { run(1 / 60); closing.push(gatesOpen()); }
+  for (let i = 0; i < 60 * (ACT_GATES_HOLD_S + ACT_GATES_SINK_S + 1); i++) { run(1 / 60); closing.push(gatesOpen()); }
   const shut = { end: gatesOpen(), up: closing.some((v, i) => i && v > closing[i - 1]),
                  jumps: closing.some((v, i) => i && closing[i - 1] - v > MOST), between: closing.filter(v => v > 0 && v < 1).length };
   run(ACT_HAND_FADE_S + 1);
@@ -66,15 +66,15 @@ group("heaven's portal: the yard and the afterlife, by the ripple, both ways", a
   window.__actsOn(null);
   return [
     ok(before.free && before.hand && before.stop, 'with the road open the portal is the player\'s: a ring, a hand, a stop', JSON.stringify(before)),
-    ok(before.shut === 0 && opening.went && !opening.early && !opening.back && !opening.jumps && opening.between >= ACT_GATES_SWING_S * 60 - 2,
-       'a press swings the gates open smoothly, a frame\'s share at a time, and nothing goes through before they have stood open', JSON.stringify(opening)),
+    ok(before.shut === 0 && opening.went && !opening.early && !opening.back && !opening.jumps && opening.between >= ACT_GATES_SINK_S * 60 - 2,
+       'a press sinks the gates open smoothly, a frame\'s share at a time, and nothing goes through before they have stood open', JSON.stringify(opening)),
     ok(mid.view === 'yard' && mid.gliding && mid.rip && mid.rip.inner === 'after' && mid.rip.r > 0 && mid.open === 1,
        'then the ripple: the yard stays on screen and the afterlife shows through it out of the open gates', JSON.stringify(mid)),
     ok(up.view === 'after' && up.centered && up.stop, 'and the camera lands up there, on the portal\'s far end', JSON.stringify(up)),
     ok(back && midBack.view === 'yard' && midBack.gliding && midBack.rip && midBack.rip.inner === 'after',
        'back down: the yard put back first, the afterlife closing over it onto the ring', JSON.stringify({ back, ...midBack })),
     ok(down.view === 'yard' && down.centered && down.open === 1, 'and the camera is on the gates in the yard, still open', JSON.stringify(down)),
-    ok(shut.end === 0 && !shut.up && !shut.jumps && shut.between >= ACT_GATES_SWING_S * 60 - 2, 'which then swing shut the same way', JSON.stringify(shut)),
+    ok(shut.end === 0 && !shut.up && !shut.jumps && shut.between >= ACT_GATES_SINK_S * 60 - 2, 'which then rise shut the same way', JSON.stringify(shut)),
     ok(!hand.shown && hand.hand === 0, 'the round trip made, the hand has faded and stays gone', JSON.stringify(hand))
   ];
 });

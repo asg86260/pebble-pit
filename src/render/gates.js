@@ -14,12 +14,15 @@
 // and the posts over it, the light spilling across the bank's pale top, and
 // rays of pale cells fanned out
 // from the gateway across the cloud behind the posts -- broken rays, a cell in
-// every other, never a filled disc -- lengthening as the leaves swing open.
+// every other, never a filled disc -- lengthening as the leaves open.
 //
-// The leaves swing by true angle (portals.js, `gatesTurn`, eased): each is
-// one rigid piece, its bars and rails placed off the one foreshortening at
-// whole world pixels, so the leaf narrows smoothly toward edge-on and its
-// insides never shear. Shut and open, every bar is back on the cell grid.
+// The leaves open by sinking into the cloud they stand in, a bar at a time,
+// the meeting stiles first and then outward (portals.js, `gatesOpen`; each
+// bar eases its own share of it): every bar, with its rail cells and its
+// pearl, is one piece lowered by its true position at whole world pixels,
+// and goes out of sight under the cloud's top, never popped. Down, a rally
+// runs out along the cloud's top, a cell faded up over each column it
+// passes, on the grid (`rally`).
 //
 // The yard's end is two layers: what stands behind the bodies (the cloud
 // behind the posts and its rays, the stair, the bank, the light in the
@@ -27,18 +30,18 @@
 // the two of them walk into the gateway behind the posts and the leaves.
 
 import { S } from '../state.js';
-import { P, GREY, AFTER_TONES, ACT_GATES_LEAF, ACT_GATES_H, ACT_STAIR_TREAD, ACT_STAIR_RISE, ACT_STAIR_FLIGHTS,
+import { P, GREY, AFTER_TONES, ACT_GATES_LEAF, ACT_GATES_H, ACT_GATES_BAR, ACT_GATES_RALLY, ACT_GATES_LIGHT, ACT_STAIR_TREAD, ACT_STAIR_RISE, ACT_STAIR_FLIGHTS,
          ACT_STAIR_LANDING, ACT_STAIR_SIDE, ACT_STAIR_FOOT, ACT_GATES_BANK_CELLS } from '../config.js';
 import { ctx } from './ctx.js';
 import { raw } from '../ink.js';
-import { lerp } from '../motion.js';
-import { portalOpenK, portalEnd, gatesTurn } from '../portals.js';
+import { clamp01, smoothstep } from '../motion.js';
+import { portalOpenK, portalEnd, gatesOpen, gatesLit, gatesStood } from '../portals.js';
 
 // The four, as the page draws them, and the light.
 const TONE = [GREY[AFTER_TONES.paper], GREY[AFTER_TONES.pale], GREY[AFTER_TONES.mid], GREY[AFTER_TONES.ink]];
 const T = i => TONE[i];
 const LIGHT = raw('#ffffff');
-const GW = ACT_GATES_LEAF[0], GH = ACT_GATES_H;
+const GW = ACT_GATES_LEAF, GH = ACT_GATES_H;
 
 const C = (x, y, tone) => { ctx.fillStyle = tone; ctx.fillRect(x * P, y * P, P, P); };
 const fill = (x, y, w, h, tone) => { ctx.fillStyle = tone; ctx.fillRect(x * P, y * P, w * P, h * P); };
@@ -81,50 +84,71 @@ function paint(m, seed) {
     C(x, y, T(tone));
   }
 }
+// The rally over a cloud, once the leaves are down: its front runs out both
+// ways from column `cx` over ACT_GATES_RALLY.s of their standing open, and
+// each column within its band has its pale top lifted a cell, the paper of
+// the cloud's inside showing where it was, faded over the
+// band's last cell as the front comes and goes, the whole of it swelling
+// fast, while the ripple is still to come, and dying away slowly.
+function rally(m, cx) {
+  const R = ACT_GATES_RALLY, s = gatesStood() / R.s;
+  if (s <= 0 || s >= 1) return;
+  const front = s * R.reach, swell = Math.sin(Math.PI * Math.sqrt(s)), tops = new Map();
+  for (const [x, y] of m.values()) if (!tops.has(x) || y < tops.get(x)) tops.set(x, y);
+  for (const [x, y] of tops) {
+    const a = swell * clamp01(R.band - Math.abs(Math.abs(x + 0.5 - cx) - front));
+    const lit = Math.abs(x + 0.5 - cx) < GW + 1;          // under the gateway's light, which stays lit
+    faded(a, () => { C(x, y - 1, T(1)); if (!lit && has(m, x, y + 1)) C(x, y, T(0)); });
+  }
+}
 
 // --- the gates ---------------------------------------------------------------------------
 // In cells: `cx` the column line down the gates' middle, `ty` the row they
-// stand on (the feet line), `t` the leaves' turn (0 shut, 1 edge-on), `back`
+// stand on (the feet line), `open` the opening's share made (0 shut, 1 down), `back`
 // for the afterlife's side, where they are seen from behind, braced.
 function pearl(x, y, big) {
   if (big) { fill(x, y - 1, 2, 4, T(1)); fill(x - 1, y, 4, 2, T(1)); fill(x, y, 2, 2, LIGHT); return; }
   C(x - 1, y, T(1)); C(x + 1, y, T(1)); C(x, y - 1, T(1)); C(x, y + 1, T(1)); C(x, y, LIGHT);
 }
-// A run of cells `h` tall from row `y`, a cell wide, its left edge at world
-// pixel `px` (whole pixels: the leaf's own grid, foreshortened).
-const strip = (px, y, h, tone) => { ctx.fillStyle = tone; ctx.fillRect(px, y * P, P, h * P); };
 // Two leaves of GW cells, GH tall, open bars over the light, hinged at the
-// posts and swinging toward the one looking in. A leaf turned by `t` is seen
-// foreshortened by the cosine of its angle: bar `j` stands `j` cells out
-// from the hinge times that, down to ACT_GATES_LEAF[1] cells across edge-on,
-// the bars closing up into one solid leaf as they come together.
-const EDGE = (ACT_GATES_LEAF[1] - 1) / (GW - 1);
-function leaves(cx, ty, t, back) {
-  const top = ty - GH, bot = ty - 1, mid = ty - GH / 2;
-  const k = lerp(EDGE, 1, Math.cos(t * Math.PI / 2));
-  const bars = [...new Set([...Array(GW).keys()].filter(j => j % 2 === 0).concat([GW - 1]))];
+// posts: bar `j` of a leaf, 0 at the hinge and GW - 1 the meeting stile,
+// sinks ACT_GATES_BAR.deep cells over its own share of the opening, the
+// stiles' share first; `open` is the opening's share made, 0 shut, 1 down.
+// Everything under the feet line `ty` is cut away, so a bar goes out of
+// sight into the cloud.
+const B = ACT_GATES_BAR, STAGGER = (1 - B.lead - B.run) / (GW - 1);
+const sunk = (j, open) => Math.round(smoothstep((open - B.lead - (GW - 1 - j) * STAGGER) / B.run) * B.deep * P);
+// From behind, a brace up each half, the hinge's foot to the free head, in
+// the mid grey, so the shut pair's inked stiles stay one line: the rows of
+// it in each bar.
+function braceRows(ty) {
+  const top = ty - GH, bot = ty - 1, mid = ty - GH / 2, out = [...Array(GW)].map(() => []);
+  for (let y = mid + 1; y < bot; y++) out[Math.round((bot - 1 - y) * (GW - 1) / (bot - mid - 2))].push(y);
+  for (let y = top + 1; y < mid; y++) out[Math.round((mid - 1 - y) * (GW - 1) / (mid - top - 2))].push(y);
+  return out;
+}
+function leaves(cx, ty, open, back) {
+  const top = ty - GH, bot = ty - 1, mid = ty - GH / 2, braces = back ? braceRows(ty) : null;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect((cx - GW) * P, (top - 1) * P, 2 * GW * P, (GH + 1) * P);
+  ctx.clip();
   for (const s of [-1, 1]) {
-    // the hinge cell's left edge, and the left edge of the cell `j` out from it
-    const hinge = (s < 0 ? cx - GW : cx + GW - 1) * P;
-    const at = j => Math.round(hinge - s * j * P * k);
-    const x0 = Math.min(at(0), at(GW - 1)), x1 = Math.max(at(0), at(GW - 1)) + P;
-    const rail = y => { ctx.fillStyle = T(2); ctx.fillRect(x0, y * P, x1 - x0, P); };
-    rail(top); rail(bot); rail(mid);
-    for (const j of bars) strip(at(j), top, GH, T(2));
-    if (back) {
-      // from behind: a brace up each half, the hinge's foot to the free head,
-      // in the mid grey, so the shut pair's inked stiles stay one line
-      for (let y = mid + 1; y < bot; y++) strip(at(Math.round((bot - 1 - y) * (GW - 1) / (bot - mid - 2))), y, 1, T(2));
-      for (let y = top + 1; y < mid; y++) strip(at(Math.round((mid - 1 - y) * (GW - 1) / (mid - top - 2))), y, 1, T(2));
+    for (let j = 0; j < GW; j++) {
+      const px = (s < 0 ? cx - GW + j : cx + GW - 1 - j) * P, dy = sunk(j, open);
+      const run = (y, h, tone) => { ctx.fillStyle = tone; ctx.fillRect(px, y * P + dy, P, h * P); };
+      if (braces) for (const y of braces[j]) run(y, 1, T(2));
+      if (j === GW - 1) run(top, GH, T(3));                              // the meeting stile, inked
+      else if (j % 2 === 0) run(top, GH, T(2));
+      else { run(top, 1, T(2)); run(mid, 1, T(2)); run(bot, 1, T(2)); }  // the rails
+      run(top - 1, 1, j % 2 === 0 || j === GW - 1 ? LIGHT : T(1));       // a pearl on every bar
     }
-    strip(at(GW - 1), top, GH, T(3));                                   // the meeting stile, inked
-    for (let j = 1; j < GW - 1; j += 2) strip(at(j), top - 1, 1, T(1));
-    for (const j of bars) strip(at(j), top - 1, 1, LIGHT);              // a pearl on every bar
   }
+  ctx.restore();
 }
 // The posts, the scrolled crest over the leaves with the light under it and
 // pearls along it, and the leaves.
-function gate(cx, ty, t, back) {
+function gate(cx, ty, open, back) {
   const base = ty - GH - 2, arcY = x => base - Math.round(6 * (1 - Math.pow((x + 0.5 - cx) / 7.5, 2)));
   for (let x = cx - 7; x < cx + 7; x++) {
     const a = arcY(x);
@@ -141,13 +165,13 @@ function gate(cx, ty, t, back) {
     fill(x0, ty - GH - 3, 2, 1, T(3));
     pearl(x0, ty - GH - 6, true);
   }
-  leaves(cx, ty, t, back);
+  leaves(cx, ty, open, back);
 }
 // The light in the gateway, behind the leaves.
 const gateway = (cx, ty) => fill(cx - GW - 1, ty - GH - 1, 2 * GW + 2, GH + 1, LIGHT);
 // The light spilling out of the open gates onto what they stand on, coming
-// up as the leaves swing open.
-const OPEN_ROWS = GW - ACT_GATES_LEAF[1];
+// up as the leaves go down.
+const OPEN_ROWS = ACT_GATES_LIGHT;
 function spill(cx, ty, t, rows) {
   if (t <= 0) return;
   faded(t, () => {
@@ -158,7 +182,7 @@ function spill(cx, ty, t, rows) {
   });
 }
 // The rays: broken lines of pale cells out from the gateway's middle across
-// the cloud behind the posts, the longer the wider the leaves stand open, the
+// the cloud behind the posts, the longer the further the leaves are down, the
 // cell at a ray's growing tip faded in by how far it has come.
 const RAYS = [-0.95, -0.62, -0.3, 0.3, 0.62, 0.95];
 function rays(cx, ty, t) {
@@ -213,13 +237,13 @@ export function drawGatesBehind() {
   if (k <= 0) return;
   const e = yardEnd(), cx = Math.round(e.x / P), ty = Math.round(e.feet / P), g = Math.round(S.groundY / P);
   const on = d => cx + ACT_STAIR_SIDE * d;
-  const turn = gatesTurn(), a = gatesIn(k);
+  const lit = gatesLit(), a = gatesIn(k);
   faded(a, () => {
     const m = mask();
     puff(m, on(-10), ty - 4, 2.8); puff(m, on(12), ty - 4, 5); puff(m, on(18), ty - 1, 3.5);
     puff(m, on(-9), ty - 9, 3); puff(m, on(9), ty - 9, 3.2);
     paint(m, 21);
-    rays(cx, ty, turn);
+    rays(cx, ty, lit);
   });
   // the stair, from the foot under the gates (a body's left, ghosts.js)
   const pieces = stairPieces(cx, g);
@@ -240,14 +264,15 @@ export function drawGatesBehind() {
     puff(m, on(-8), ty + 2, 2.6); puff(m, on(13), ty + 2.5, 3.5); puff(m, on(-1), ty + 3, 3);
     paint(m, 41);
     gateway(cx, ty);
-    spill(cx, ty, turn, 3);
+    spill(cx, ty, lit, 3);
+    rally(m, cx);
   });
 }
 export function drawGatesFront() {
   const k = portalOpenK('heaven');
   if (k <= 0) return;
   const e = yardEnd();
-  faded(gatesIn(k), () => gate(Math.round(e.x / P), Math.round(e.feet / P), gatesTurn(), false));
+  faded(gatesIn(k), () => gate(Math.round(e.x / P), Math.round(e.feet / P), gatesOpen(), false));
 }
 
 // --- in the afterlife -----------------------------------------------------------------------
@@ -259,11 +284,12 @@ export function drawGatesAfter() {
   const e = portalEnd('heaven', 'after'), cx = Math.round(e.x / P), fy = Math.round(e.feet / P);
   faded(k, () => {
     gateway(cx, fy);
-    rays(cx, fy, gatesTurn());
-    gate(cx, fy, gatesTurn(), true);
+    rays(cx, fy, gatesLit());
+    gate(cx, fy, gatesOpen(), true);
     const m = mask();
     for (let x = cx - 18; x <= cx + 18; x++) { add(m, x, fy); add(m, x, fy + 1); }
     puff(m, cx - 12, fy - 2, 4); puff(m, cx + 12, fy - 2, 4); puff(m, cx - 17, fy, 3); puff(m, cx + 17, fy, 3);
     paint(m, 51);
+    rally(m, cx);
   });
 }

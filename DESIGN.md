@@ -21836,9 +21836,12 @@ a plain label in locales/en.ftl for the owner to rewrite.
   landing stays right of the mansion. **The gates are the portal**: nothing
   stands over them -- no light going up, no ladder, none coming up through
   heaven's floor -- and going through the open gates is the trip. A press
-  swings the leaves open in four held steps (5 cells to 1, `ACT_GATES_LEAF`),
-  holds the last a step, then ripples, in the act's tones, out of the
-  gateway; after the camera has come through they shut the same way. Anyone
+  sinks the leaves into the cloud bar by bar, the meeting stiles first and
+  then outward, so their top steps down like a crowd band sinking
+  (`ACT_GATES_BAR`; the owner, 2026-10-26, take D); a rally then runs out
+  along the cloud's top (`ACT_GATES_RALLY`), and once it is past the posts
+  the ripple opens, in the act's tones, out of the gateway; after the camera
+  has come through the bars rise shut the same way. Anyone
   at the gateway has them open. A body going through fades into the gateway
   at one end and out of it at the other (`ACT_GATES_PASS` cells of walk
   each), the one move it makes unseen, and the camera follows by the ripple:
