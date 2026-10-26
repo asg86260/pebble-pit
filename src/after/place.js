@@ -18,7 +18,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_SIGN_BOARD } from '../config.js';
 
 import { S } from '../state.js';
-import { ART as BASE_ART } from './art.js';
+import { ART as BASE_ART, standCol } from './art.js';
 
 const snap = v => Math.round(v / P) * P;
 // An art cell, world px: a cell of act 3's drawings, AFTER_ART_SCALE grid
@@ -95,7 +95,8 @@ export const pileAt = (key, what) => {
 // the hand finds it in: its six cells across, `reach` art cells up off the
 // floor under it (its station's shelf, `floorAt`).
 export const pileOwner = what => Object.keys(ART).find(k => what in ART[k].pile) || null;
-export const pileBox = (key, what, reach) => ({ x: pileAt(key, what), y: floorAt(pileMid(key, what)) - reach * AP, w: PILE_W * AP, h: reach * AP });
+const pileCenter = (key, what) => pileAt(key, what) + (PILE_W / 2) * AP;
+export const pileBox = (key, what, reach) => ({ x: pileAt(key, what), y: floorAt(pileCenter(key, what)) - reach * AP, w: PILE_W * AP, h: reach * AP });
 // Where a station's loads are piled while it is raised (after/build.js): on
 // its ground beside its drawing, where its own product pile will stand,
 // BUILD_PILE_W art cells across and kept on the ground. Its left edge.
@@ -109,8 +110,14 @@ export const buildPileAt = key => {
 // Where a builder stands to lay a load into a band: either side of the
 // drawing (`side` 0 its left, 1 its right), a cell off it.
 export const buildLayAt = (key, side) => { const b = stationBox(key); return side ? b.x + b.w + P * 2 : b.x - P * 2; };
-// Its middle column, where a body puts a thing down on it.
-export const pileMid = (key, what) => pileAt(key, what) + (PILE_W / 2) * AP;
+// Where a body stands to put a thing down on a pile or take one off it, its
+// middle column: beside the pile on the side away from its station's
+// drawing (after/art.js, `standCol`), so the load stacked over its head
+// stands clear of the pile; the floor it stands on is the station's ground.
+export const pileMid = (key, what) => {
+  const art = ART[key], s = standCol(art, art.pile[what]);
+  return stationX0(key) + (art.flip ? art.flip - s : s) * AP;
+};
 // The sawdust heap under the chipper's chute, at its ground's end (ART's
 // `heap`), where the saw mill's sawdust joins the chips, `heapMid` its middle
 // column; the notch in the cloud floor just past its foot, where a load is
@@ -262,7 +269,7 @@ export function floorFlats() {
   for (const key of Object.keys(AFTER_STATIONS)) {
     if (!sited(key)) continue;
     const b = stationBox(key), h = shelfOf(key), on = s => out.push([...s, h]);
-    on(span(b.x, b.w / P)); on(span(stationX0(key), ART[key].ground * AFTER_ART_SCALE));
+    on(span(b.x, b.w / P)); on(span(stationX0(key) + ART[key].lead * AP, (ART[key].ground - ART[key].lead) * AFTER_ART_SCALE));
     for (const what of Object.keys(ART[key].pile)) on(span(pileAt(key, what), PILE_W * AFTER_ART_SCALE));
     on(span(stationDoor(key) - P, 3));
     on(span(signBox(key).x, AFTER_SIGN_BOARD.w * AFTER_ART_SCALE));

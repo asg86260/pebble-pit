@@ -610,3 +610,9 @@ export const AFTER_ACT_COINS = ['rebel', 'timber', 'paper'];
 // shack's five stations and the grove's five upgrades in two rows, the yard's
 // own wrapping (board.js `pinWidth`), against the yard's SHELF_SLOTS.
 export const AFTER_BOARD_SLOTS = 3;
+
+// track a3-placement
+// The rebel pile at the podium's foot at its widest, [across, high] in art
+// cells: as drawn (render/after/pedestal.js, `drawRebelPile`), for the
+// pedestal's footprint (footprints.js).
+export const AFTER_REBEL_PILE_CELLS = [8, 2];

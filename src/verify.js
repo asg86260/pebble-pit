@@ -47,7 +47,7 @@ import { yardReads } from './persist.js';
 import { afterlifeOn, hellOn } from './acts.js';
 import { AFTER_STORY } from './after/story.js';
 import { HELL_STORY } from './hell/story.js';
-import { allOverlaps } from './footprints.js';
+import { allOverlaps, offGround } from './footprints.js';
 
 // The pairs allowed to share ground, each with what it is: none. The list is
 // kept as the guard: test/no-overlap.test.mjs is red for an entry that no
@@ -680,6 +680,17 @@ export function verifyWorld() {
     if (fresh.length)
       fail('two objects stand on the same ground',
            fresh.map(o => `${o.place}: ${o.a} and ${o.b} share ${o.w} by ${o.h} cells`).join('; '));
+  }
+
+  // --- rule 22: an act 3 station stands inside its own ground ------------------
+  // The camp is laid out ground by ground (after/art.js, `campLayout`), each
+  // ground off the reach and piles its row types; the drawing is read off
+  // itself (footprints.js, `offGround`). A part past its ground is a row
+  // that has stopped telling the layout the truth, and the next station's
+  // gap is spent under it. Asked with rule 21.
+  if (S.tick % LEDGER_EVERY === 0) {
+    const off = offGround();
+    if (off.length) fail('an act 3 station stands off its own ground', off.join('; '));
   }
 
   verifyParty();
