@@ -305,6 +305,10 @@ export function stepStirrer(w) {
     // Stirring: a lean toward the pot on its own slow rhythm, the same
     // `lunge` a farmhand stoops with.
     w.face = 1;
+    // Standing, every frame, as the air filter's keeper does: this body is
+    // behind the door and never walks, so a dance cut off mid-hop would
+    // otherwise leave it up in the air over its pot for good.
+    w.y = climbTo(w, walkY(w.x + WORKER / 2));
     if (now() >= (w.stirAt || 0)) { w.lunge = 1; w.stirAt = now() + 520 + rand() * 260; }
     const key = potTonicOf(idx);
     if (idx >= 0 && idx < S.apothPots && key && doseStock(key) > 0) {
