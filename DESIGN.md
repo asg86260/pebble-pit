@@ -23260,3 +23260,113 @@ bit").
   so feet and station feet tuck behind them (render/after/ground.js,
   AFTER_LIP). The ground clouds that lapped the path's edge and rolled
   below it are gone from the cloud renderer; below the lip is the page.
+
+### A unit is followed through its station (design, not built; the owner, 2026-10-26)
+
+The owner, verbatim: "i want to be able to follow a log all the way through
+the machine. i dont want things to appear/change/dissapear through the
+machine. i dont like the "spin" tag on the manual work. the hover state
+showing the example work conflicts with the already existing ghoat hand
+showing the spin. so lets reconcile and get a good pattern we can apply to
+all the stations." Voted off three calls on the board's millflow-pattern
+card (mock at the board's m/millflow): **1A, 2C, 3B**.
+
+**What was wrong at the saw mill** (main dd981b3d, read off a frame-exact
+capture). The log fades in already on the bed inside the frame while the
+pile's count drops: nothing carries it, because the flywheel stands in its
+way. The pile draws logs end-on and the bed side-on. On the bed the log
+steps a cell at a time on its own clock (`SAW_T`), not the work's, and
+fades out at the end. Two planks are drawn and the timber pile gains six.
+The sawdust is never seen leaving the saw; the heap is past the chipper.
+And two ghost hands answer the same question: the first-uses cue on the
+wheel, and the hover's bigger hand with a dotted arc, a strip and a verb
+tag ("spin").
+
+**The pattern, for every station.**
+
+1. A unit is one drawing from the pile it is taken off to the pile it
+   lands on. It leaves a count when a body or the hand takes it, and joins
+   one when it is set down: nothing fades in or out inside a machine.
+2. It changes shape only at a visible tool (the blade, the jaws, the vat),
+   into pieces that add up: what the counts gain is what was seen come out.
+3. The material is the progress. How far the log is through the blade is
+   how far the work is; no strip, no word tag.
+4. One ghost hand, the same at every station, and it never moves
+   material. Only real work moves a unit.
+
+**The saw mill, built to it.**
+
+- **The log pile is drawn side-on**, the same drawing as the log on the
+  bed, so the log lifted off it is visibly the one that goes through. It
+  needs a log's length of floor beside the wheel; the mill's footprint
+  grows by that and its neighbors move with it (placement is derived from
+  the gap, so nothing is hand-moved).
+- **1A: the sawyer carries the log on.** With the bed empty, the sawyer
+  steps off the wheel to the mill's own pile, lifts the top log, walks it
+  round the wheel and lays it on the bed, then goes back and turns. This
+  takes back one piece of the polish-2 call that the sawyer stays at the
+  saw: it still never leaves the station (idle members carry logs in from
+  the forestry, as on main), but it walks between its pile, the bed and
+  the wheel. A sawyer saws slower for the walk; the seat rows buy the pace
+  back, as for every station.
+- **By hand it is two moves, as at the chipper:** drag a log off the pile
+  onto the bed, then spin. The wheel turned with nothing on the bed turns
+  free and makes nothing.
+- **A log is a fact on the bed, not a timer.** The bed holds what is laid
+  on it (up to `bladeLogs()`: with the second blade, two logs, laid one on
+  the other, both cut by the one stroke) and how far through the teeth
+  they are. The wheel, whoever turns it, moves them by their true position;
+  the drawing reads that one fact for the hand and the member alike, and
+  `SAW_T` goes. The pile's count drops when the log is lifted, not when the
+  cut ends; a log in the sawyer's arms is a held load like any other.
+  Saved mid-carry, the log is read back on the pile it came off.
+- **Out the right side:** the planks slide off the bed's end and fall onto
+  the timber pile, and the plank that lands is from then on the pile's top
+  plank (no crossfade). At the pile's drawn cap the plank lands on the top
+  slot and the count over the stack ticks as it lands, the yard's way.
+- **2C: the saw keeps its own heap.** The grains fall out under the blade,
+  through the bed, onto a heap at the saw's own foot between its legs,
+  inside its footprint. It is its own stock with its own brim: full, the
+  saw stops and the shared pile-full mark shows under it (`pileMarkAt`
+  derives the spot from the station table, as for every pile). With no
+  paper mill it is tipped through the floor at the saw's foot the way the
+  chipper's heap is, by a click or by the sawyer once it has stood full a
+  while. With the paper mill, idle members carry it a load at a time on
+  the shared carry to the paper mill's heap (the chipper's): the paper
+  mill pulps only what has reached it. The chipper's heap is unchanged.
+  This bears on the polish-2 question about the heap's mark rarely
+  showing: the saw's own mark will show whenever the saw outruns its
+  carriers.
+- **3B: one hand.** The first-uses cue hand, at its fine pointer's pixel,
+  is the only one. It plays the motion on the part until it has been done
+  a few times, and plays again, faint, whenever the pointer is over the
+  part; it gives way the moment you take hold. The hover's bigger hand,
+  its dotted path, the strip and the verb tag go, with their five
+  `handwork-*` messages and the `HANDWORK_*` knobs nothing else reads.
+  This is shared code (render/aftercues.js), so it lands for all four
+  hand-worked stations at once. The chipper's hover no longer carries a
+  ghost log into the jaws: the hand mimes the drag empty-handed.
+
+**The other stations** each get the same audit after the saw mill lands,
+one at a time, each a mock before code: where a unit appears, changes or
+vanishes, and where a count moves without a body. The chipper, the paper
+mill, the workshop and the press.
+
+**Checks.**
+
+- Node tier, its own file (`test/after-mill-flow.test.mjs`), bought the
+  player's way: buy the mill, press its +, and follow one log. The pile's
+  count drops by one when the sawyer lifts, the bed holds it, the timber
+  pile gains what the cut makes and the saw's heap gains its sawdust, and
+  the count of logs (pile, arms, bed) never changes on a frame where no
+  body or hand moved one. A reload mid-carry puts the log back on its pile.
+- A rule in `src/verify.js`: logs are conserved across a frame outside a
+  lift, a lay, a cut and a delivery, so every group watches it.
+- The browser check (src/selftest/aftergestures.js) reads one hand shown,
+  never a strip or a tag.
+
+**Open, the owner's call.** A log is drawn sawing into two planks, but
+the timber pile gains six (`AFTER_LOG_TIMBER`). Either a log draws six
+boards, or a log is two timber and every timber bill is divided by three
+(timber is act 3's money, so the second is a rebalance). Recommended: two
+timber a log and the bills divided, so a plank on the pile is one count.

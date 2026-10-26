@@ -4,6 +4,15 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## A unit is followed through its station -- VOTED 1A 2C 3B, DESIGN AWAITING APPROVAL (2026-10-26)
+
+The saw mill first: the log is carried onto the bed by the sawyer, sawn by
+its true position, its sawdust on the saw's own heap, one ghost hand for all
+hand work (DESIGN.md, "A unit is followed through its station"). Blocked on
+the owner's approval of the design and the planks call (six boards a log, or
+two timber a log with the bills divided). Then the chipper, paper mill,
+workshop and press, each audited and mocked in turn.
+
 ## Every part of the game stands on its own -- PHASE A APPROVED, BUILDING (2026-10-25)
 
 docs/wave-tests.md. Merged: step 1 (CI shards by measured time, #11), step 2
