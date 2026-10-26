@@ -74,10 +74,11 @@ export const stationBox = key => {
   const [x, w, h] = art.box;
   return { x: stationX0(key) + x * AP, y: groundOf(key) - h * AP, w: w * AP, h: h * AP };
 };
-// Where a carrier takes a sign off the workshop's pile, and the sign march's
-// length from there to God's crowd's near edge, px: what the throne's
-// speech is paced against (config/after.js, AFTER_BURN_MARCHES).
-export const signFetchX = () => stationDoor('workshop') + AP * 4;
+// Where a carrier takes a sign off the workshop's pile (beside it, `pileMid`),
+// and the sign march's length from there to God's crowd's near edge, px:
+// what the throne's speech is paced against (config/after.js,
+// AFTER_BURN_MARCHES).
+export const signFetchX = () => pileMid('workshop', 'signs');
 export const signMarch = () => CROWD_X0 - signFetchX();
 // Where a body stands to work a station: the middle column of the worker the
 // mock draws there.

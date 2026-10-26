@@ -34,7 +34,7 @@ import { stepCrew } from '../placebodies.js';
 import { haulCap } from '../levels.js';
 import { deepAt } from './sky.js';
 import { built, stumpsOn, seatsOf } from './levels.js';
-import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, notchX, soulX, soulY, slotX, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
+import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, notchX, soulX, soulY, slotX, wallSlots, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, settled, takeGroundLog, kindOf } from './grove.js';
 import { sweepDue, tipSawdust, vatOf } from './mill.js';
@@ -357,7 +357,7 @@ const JOB_STEP = {
     else if (w.t >= AFTER_FELL_S) { chopTree(w.target); w.t = 0; w.swing = a.t; }
   },
   // An idle member's errand only: a woodcutter gathers as part of its own.
-  gatherer(w, dt) { gather(w, dt); },
+  gatherer(w, dt) { return gather(w, dt); },
   sawyer(w, dt) {
     // Off the saw while the heap has stood at its brim: to the notch beside
     // it, a load tipped through, and back.
@@ -442,8 +442,9 @@ const JOB_STEP = {
   paster(w, dt) {
     const a = S.after;
     if (!built('press')) { idle(w, dt); return; }
-    // At the press: posters taken up a sheet a beat, as many as the load holds.
-    const door = stationDoor('press') + AP * 4;
+    // At the press's pile: posters taken up a sheet a beat, as many as the
+    // load holds, from beside it (`pileMid`), clear of the printers' door.
+    const door = pileMid('press', 'posters');
     if (!carried(w) || w.pick) {
       if (!go(w, door, floorY(), dt)) return;
       if (!carried(w) && (a.stock.posters <= 0 || freeSlot() == null)) return true;
@@ -487,7 +488,9 @@ const JOB_STEP = {
 const ERRANDS = [
   { job: AFTER_JOB.GATHER, kind: 'log', left: () => looseLogs().length },
   { job: AFTER_JOB.CARRY, kind: 'sign', left: () => (built('workshop') ? S.after.stock.signs : 0) },
-  { job: AFTER_JOB.PASTE, kind: 'posters', left: () => (built('press') && freeSlot() != null ? S.after.stock.posters : 0) }
+  // Posters only as many as the fence has room for: past that a paster takes
+  // one up, finds no slot and puts it back, round and round.
+  { job: AFTER_JOB.PASTE, kind: 'posters', left: () => (built('press') ? Math.min(S.after.stock.posters, wallSlots() - S.after.posters.length) : 0) }
 ];
 const fetching = job => S.after.bodies.filter(o => onRound(o, job) && !carried(o)).length;
 const errandFor = () => ERRANDS.find(e => e.left() > fetching(e.job) * holds(e.kind))?.job || null;
@@ -495,7 +498,10 @@ function runErrand(w, dt) {
   if (w.errand && !carried(w) && w.target == null && w.log == null && !ERRANDS.find(e => e.job === w.errand).left()) w.errand = null;
   if (!w.errand && !carried(w)) w.errand = errandFor();
   if (!w.errand) return false;
-  JOB_STEP[w.errand](w, dt);
+  // A gatherer with every loose log claimed by another and nothing in hand
+  // has no errand after all: back to its spot at the podium, not stood
+  // where it was while the spot is dealt to someone else.
+  if (JOB_STEP[w.errand](w, dt) === false && w.errand === AFTER_JOB.GATHER && !carried(w)) { w.errand = null; return false; }
   return true;
 }
 

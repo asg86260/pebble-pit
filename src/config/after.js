@@ -17,15 +17,16 @@ import { ACT_GATES_CELL, ACT_GATES_REACH } from './acts.js';
 // this says, the way they play the deep (acts.js, `afterlifeOn`), so work on
 // it goes on; `__actsOn(false)` plays a released build's yard.
 const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {};
-// Act 3's art is drawn at this many grid cells a cell of its own (the owner,
-// 2026-10-20: "if they need to be interacted with they should be larger"):
-// every station, the shack, the grove's pines at every stage, the stumps and
-// the felled trees, the pedestal and its podiums, and the piles, each cell of
-// the mocks' drawings this many cells across, so the art stays on the grid
-// and stands as tall as the yard's tallest. Everything laid off the art --
-// the camp's ground, the grove's plots, the doors, the piles, the parts the
-// hand works -- is laid off it times this. The bodies keep the yard's size.
-export const AFTER_ART_SCALE = 2;
+// Act 3's art is drawn at this many grid cells a cell of its own: every
+// station, the shack, the grove's pines at every stage, the stumps and the
+// felled trees, the pedestal and its podiums, and the piles, each cell of the
+// mocks' drawings this many cells across, so the art stays on the grid.
+// One, the grid's own size, so a machine stands to the yard's bodies as the
+// yard's own stations do (the owner, 2026-10-26: "machines at 1", after two
+// read as a mill seventeen bodies tall). Everything laid off the art -- the
+// camp's ground, the grove's plots, the doors, the piles, the parts the hand
+// works -- is laid off it times this. The bodies keep the yard's size.
+export const AFTER_ART_SCALE = 1;
 export const AFTERLIFE_ON = env.VITE_AFTERLIFE === '1';
 
 // --- where it is -----------------------------------------------------------------
