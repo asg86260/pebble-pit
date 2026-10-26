@@ -38,8 +38,9 @@ const DRAWN = {
   // grove's board, and the pile its gatherers bring the fallen logs to,
   // on its grove side, where the haulers fetch them from.
   forestry:  { box: [8, 16, 13], door: 10, pile: { grovelogs: 0 } },
-  // Its sign on the workshops' side, clear of the widest podium's overhang
-  // (config/after.js, AFTER_PODIUM_HALF): God's side holds the rebel pile.
+  // Its sign on the workshops' side, between the last workshop and the
+  // union's crowd: laid there off both by after/place.js, which overrides
+  // this column (God's side holds the rebel pile).
   pedestal:  { box: [1, 10, 4], door: 6, pile: {}, ground: 16, sign: -8 }
 };
 // Every station's shop is a sign on a post on its own ground (the owner,

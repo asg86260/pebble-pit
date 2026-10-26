@@ -16,7 +16,13 @@ export const OURS_X0 = P * 14;
 // the act's pace as much as its picture: at 40 cells the strike no longer
 // comes inside test/after-playthrough's stretch, and at 120 the speech burns
 // each sign before it wins anyone. Wider wants the pace moved with it.
-export const AFTER_ZONE_GAP = 24;
+// 53, not 24 (2026-10-26): the pedestal's sign stands between the workshops
+// and the union's crowd (config/after.js, AFTER_PEDESTAL_SIGN_GAP, 8 and 3
+// art cells), and the crowd's rows that stand as low as the sign keep their
+// width: the podium's middle, 6 * 53 + 96 px past the workshops, clears
+// 96 + 36 px of gap, the 72 px sign and the fourth row's 210 px half
+// (UNION_CROWD).
+export const AFTER_ZONE_GAP = 53;
 // The union's camp's floor, in cells, the pedestal at its middle: room for
 // its crowd round and behind the pair (the crowd itself is not built yet).
 export const AFTER_UNION_W = 32;
