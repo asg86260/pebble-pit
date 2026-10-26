@@ -259,9 +259,10 @@ const EATS = new Map();
 // keeps going. Thinned like the walk's own.
 const PURE = new Map(); // cache: moments that are the same on every page, keyed by the step over `keep`
 export let walkSteps = 0; // the steps walked, for test/deep-fauna.test.mjs
-// A new page, as far as the walk goes: nothing walked yet (for the checks).
-export const forgetWalk = () => { WALK = null; EATS.clear(); };
-held('deep-walk', forgetWalk);
+// A load or a new game, as far as the walk goes: nothing walked yet, and no
+// holds. `page` is a fresh page, with nothing kept either (for the checks).
+export const forgetWalk = (page = false) => { WALK = null; EATS.clear(); if (page) PURE.clear(); };
+held('deep-walk', () => forgetWalk());
 // The first step a hold falls on, or Infinity.
 const firstEat = () => { let m = Infinity; for (const k of EATS.keys()) if (k < m) m = k; return m; };
 // Keep at most `held` moments past the start, dropping the oldest.

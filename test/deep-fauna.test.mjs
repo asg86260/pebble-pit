@@ -31,7 +31,7 @@ test('where a creature is depends only on the clock, however it is asked', () =>
   const T = [0, 3.2, 47.9, 48, 12.25, 300.5, 299.9, 5, 1000.01, 60, 1800.5];
   const ask = (c, t) => ({ ...faunaAt(c, t), kind: kindAt(c, t) });
   const asked = POPULATION.map(c => T.map(t => ask(c, t)));
-  forgetWalk();                                     // a new page: nothing walked yet
+  forgetWalk(true);                                 // a new page: nothing walked yet
   const sorted = [...T].sort((a, b) => a - b);
   const fresh = POPULATION.map(c => { const m = new Map(sorted.map(t => [t, ask(c, t)])); return T.map(t => m.get(t)); });
   assert.deepEqual(asked, fresh);
@@ -41,9 +41,9 @@ test('where a creature is depends only on the clock, however it is asked', () =>
 // from the last moment kept before any meal's hold, not from the clock's
 // start: an hour in, a reload is a few steps, not two hundred thousand.
 test("a reload walks the creatures on from where it was, not from the clock's start", () => {
-  forgetWalk();
+  forgetWalk(true);                                 // a fresh page
   const t = 3600, c = SLOTS[0];
-  const before = faunaAt(c, t);
+  const before = faunaAt(c, t);                     // walked from the clock's start
   forgetWalk();                                     // a load
   const from = fauna.walkSteps;
   const after = faunaAt(c, t);
