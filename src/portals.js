@@ -22,7 +22,7 @@
 
 import { S } from './state.js';
 import { P, ACT_PORTAL_R, ACT_HELL_HANG, ACT_PORTAL_OPEN_S, ACT_HAND_FADE_S, ACT_GATES_SKY, ACT_GATES_CELL,
-         ACT_GATES_YARD_CELL, ACT_GATES_H, ACT_GATES_REACH, ACT_GATES_SWING_S, ACT_GATES_STAND_S, ACT_GATES_HOLD_S } from './config.js';
+         ACT_GATES_YARD_CELL, ACT_GATES_H, ACT_GATES_REACH, ACT_GATES_SINK_S, ACT_GATES_STAND_S, ACT_GATES_HOLD_S } from './config.js';
 import { smoothstep } from './motion.js';
 import { afterX0, afterFloor } from './after/place.js';
 import { roadX, chamberFloor } from './hell/place.js';
@@ -67,17 +67,19 @@ export const GATES_TALL = ACT_GATES_H + 10;           // the leaves, the crest o
 function gatesEnd(x, feet) {
   return { x, y: feet - (ACT_GATES_H / 2) * P, r: ACT_GATES_REACH, feet, top: feet - GATES_TALL * P };
 }
-// How far open they stand: `open` the share of the swing made, 0 shut and
-// 1 open, run on at an even pace over ACT_GATES_SWING_S either way, so a
-// swing turned back partway goes back from where it is. This session's
+// How far open they stand: `open` the share of the sink made, 0 shut and
+// 1 open, run on at an even pace over ACT_GATES_SINK_S either way, so a
+// sink turned back partway rises from where it is; `stood`, how long they
+// have stood all the way down (the rally runs off it). This session's
 // (`S.gates`): a reload finds them shut.
 const gates = () => (S.gates ||= { open: 0, stood: 0, held: 0, go: null });
 export const gatesOpen = () => (S.gates ? S.gates.open : 0);
-// The leaves' turn, 0 shut to 1 edge-on, eased at both ends of the swing
-// (render/gates.js draws them by it).
-export const gatesTurn = () => smoothstep(gatesOpen());
+export const gatesStood = () => (S.gates ? S.gates.stood : 0);
+// The open share eased at both ends, for the light in the gateway
+// (render/gates.js; each bar eases its own share of the sink).
+export const gatesLit = () => smoothstep(gatesOpen());
 export const gatesBusy = () => !!(S.gates && S.gates.go);
-// One frame of them, swinging toward open while anything wants them open --
+// One frame of them, sinking toward open while anything wants them open --
 // a press waiting to go through, the camera going through, a hold after it
 // has, or a body at the gateway (`near`, actbeats.js) -- and shut otherwise.
 // A press waiting goes through once they have stood open ACT_GATES_STAND_S,
@@ -87,7 +89,7 @@ function stepGates(dt, near) {
   if (glidingBy() === 'heaven') g.held = ACT_GATES_HOLD_S;
   else g.held = Math.max(0, g.held - dt);
   const want = g.go || g.held > 0 || near ? 1 : 0;
-  const d = dt / ACT_GATES_SWING_S;
+  const d = dt / ACT_GATES_SINK_S;
   g.open = want > g.open ? Math.min(want, g.open + d) : Math.max(want, g.open - d);
   g.stood = g.open >= 1 ? g.stood + dt : 0;
   if (g.go && g.stood >= ACT_GATES_STAND_S && !gliding()) {

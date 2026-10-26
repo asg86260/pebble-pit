@@ -90,12 +90,20 @@ export const ACT_RIM_STEP_S = 0.5;
 // through the open gates is the trip (the ripple plays as the camera goes
 // through), a body fading into the gateway at one end and out of it at the
 // other over ACT_GATES_PASS cells of walk.
-// Two leaves, each ACT_GATES_LEAF[0] cells wide and ACT_GATES_H tall, swing
-// open about their hinges by true angle, eased, over ACT_GATES_SWING_S, a
-// leaf narrowing to ACT_GATES_LEAF[1] cells as it turns edge-on; a press
-// waits ACT_GATES_STAND_S with them standing open before the ripple, and they
-// stand open ACT_GATES_HOLD_S after the camera has come through before they
-// swing shut the same way.
+// Two leaves, each ACT_GATES_LEAF cells wide and ACT_GATES_H tall, open by
+// sinking into the bank a bar at a time over ACT_GATES_SINK_S, the meeting
+// stiles first and then outward, so the top edge steps down like a crowd band
+// sinking (the owner, 2026-10-26: "sinking like the crowd"): each
+// bar starts ACT_GATES_BAR.lead into the opening plus an even share of the
+// rest, runs ACT_GATES_BAR.run of it, and goes ACT_GATES_BAR.deep cells down,
+// clear of its pearl. Once they are down, a rally runs out along the bank's
+// top over ACT_GATES_RALLY.s: a cell on each column it passes, ACT_GATES_RALLY
+// .band cells either side of its front, faded up and down by opacity, out to
+// ACT_GATES_RALLY.reach cells. A press waits ACT_GATES_STAND_S with them
+// standing open before the ripple, the rally's front run out past the posts
+// by then so it is seen, and they stand open ACT_GATES_HOLD_S after
+// the camera has come through before they rise shut the same way. The light
+// in the gateway reaches ACT_GATES_LIGHT cells further out at its fullest.
 export const ACT_STAIR_TREAD = 3;
 export const ACT_STAIR_RISE = 2;
 export const ACT_STAIR_FLIGHTS = [5, 5, 5, 5];
@@ -104,11 +112,14 @@ export const ACT_STAIR_SIDE = -1;
 export const ACT_GATES_SKY = P * ACT_STAIR_RISE * ACT_STAIR_FLIGHTS.reduce((a, n) => a + n, 0);
 export const ACT_GATES_PASS = 6;
 export const ACT_GATES_CLEAR = 4;
-export const ACT_GATES_LEAF = [5, 1];        // a leaf's width, cells: shut, and edge-on
+export const ACT_GATES_LEAF = 5;             // a leaf's width, cells
 export const ACT_GATES_H = 16;
 export const ACT_GATES_REACH = P * 8;        // the middle to a post's outside
-export const ACT_GATES_SWING_S = 1.2;
-export const ACT_GATES_STAND_S = 0.3;
+export const ACT_GATES_SINK_S = 1.6;
+export const ACT_GATES_BAR = { lead: 0.04, run: 0.44, deep: ACT_GATES_H + 2 };
+export const ACT_GATES_RALLY = { s: 1.1, reach: 16, band: 2 };
+export const ACT_GATES_LIGHT = 4;
+export const ACT_GATES_STAND_S = ACT_GATES_RALLY.s * (ACT_GATES_REACH / P) / ACT_GATES_RALLY.reach;
 export const ACT_GATES_HOLD_S = 1.5;
 export const ACT_GATES_NEAR = P * 6;         // a body this near the gateway has them open
 // The cloud bank the gates stand in, in cells: its reach on the stair's side

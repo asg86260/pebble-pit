@@ -3242,9 +3242,9 @@ export const SCENES = {
   'portal-heaven-up': { about: 'the acts', say: 'heaven\'s gates from behind, standing on the cloud floor',
     run: () => { actsYard('road'); S.beatsDone.push('haunt'); S.acts.pair.mode = 'ghost'; window.__goPlace('after'); window.__fast(2); window.__holdShot(); } },
   // Heaven's gates at work (portals.js, render/gates.js): pressed and half
-  // swung open, before the ripple; the two of them walking up the
+  // sunk, before the ripple; the two of them walking up the
   // stair as souls at the house's fall; the two coming down it as ghosts.
-  'gates-opening': { about: 'the acts', say: 'heaven\'s gates pressed: the leaves half swung open, the ripple still to come',
+  'gates-opening': { about: 'the acts', say: 'heaven\'s gates pressed: the leaves sinking into the cloud from the middle out, the ripple still to come',
     run: () => { actsYard('act4'); window.__fast(2); pinCamera(0); window.__pressPortal('heaven'); window.__fast(0.65); window.__still(true); window.__holdShot(); } },
   'gates-climb': { about: 'the acts', say: 'the house\'s fall: the two of them as souls walking up the cloud stair to the gates, the gates opening as they come',
     run: () => {
