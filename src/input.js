@@ -59,6 +59,7 @@ import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, gesture
 import { stationParts, pileOwner, pileBox } from './after/place.js';
 import { built } from './after/levels.js';
 import { JOB_NAMES } from './after/rows.js';
+import { AFTER_JOB } from './jobs.js';
 import * as HELL_PLACE from './hell/index.js';
 import { onShaftArrow } from './render/shaftway.js';
 import { onPortal } from './render/portal.js';
@@ -537,7 +538,7 @@ const AFTER_GOOD_SAYS = { log: 'hover-log', plank: 'hover-plank', sheet: 'hover-
 function afterAt(x, y) {
   const o = S.after && grabAt(x, y);
   if (o && o.goods) return msg(AFTER_GOOD_SAYS[o.kind] || 'hover-log');
-  if (o) return o.job && JOB_NAMES[o.job] ? JOB_NAMES[o.job]() : o.job === 'builder' ? msg('hover-builder') : msg('hover-member');
+  if (o) return o.job && JOB_NAMES[o.job] ? JOB_NAMES[o.job]() : o.job === AFTER_JOB.BUILD ? msg('hover-builder') : msg('hover-member');
   for (const [what, key] of Object.entries(AFTER_PILE_SAYS)) {
     const owner = pileOwner(what);
     if (owner && built(owner) && inRect(pileBox(owner, what, AFTER_PILE_REACH), x, y)) return msg(key);

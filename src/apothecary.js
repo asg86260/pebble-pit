@@ -305,6 +305,9 @@ export function stepStirrer(w) {
     // Stirring: a lean toward the pot on its own slow rhythm, the same
     // `lunge` a farmhand stoops with.
     w.face = 1;
+    // Standing still is no reason to stop following the ground: what was
+    // under the stirrer when it got here can move out from under it.
+    w.y = climbTo(w, walkY(w.x + WORKER / 2));
     if (now() >= (w.stirAt || 0)) { w.lunge = 1; w.stirAt = now() + 520 + rand() * 260; }
     const key = potTonicOf(idx);
     if (idx >= 0 && idx < S.apothPots && key && doseStock(key) > 0) {
