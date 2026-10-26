@@ -632,3 +632,12 @@ export const AFTER_PEDESTAL_SIGN_GAP = { shack: 8, crowd: 3 };
 // `drawAfterCounts`), so a count never drifts up off its pile into the
 // station behind it.
 export const AFTER_COUNT_LIFT = P;
+
+// track a3-logs
+// The saw's cut drops out of its right side onto its timber pile (the owner,
+// 2026-10-26: "lets have the logs fall out of the saw on the right side and
+// pile up"): a plank sliding off the bed past the right post and falling onto
+// the pile, over this long (render/after/drop.js), `from` art cells over the
+// mill's ground where it leaves the bed (the mill's drawing, MILL.bed less the
+// plank), and `back` art cells in from the frame's right edge.
+export const AFTER_DROP = { s: 0.5, from: 8, back: 6 };
