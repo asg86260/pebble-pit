@@ -18,7 +18,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_SIGN_BOARD, AFTER_PEDESTAL_SIGN_GAP } from '../config.js';
 
 import { S } from '../state.js';
-import { ART as BASE_ART, standCol } from './art.js';
+import { ART as BASE_ART, standCol, rampRun } from './art.js';
 
 const snap = v => Math.round(v / P) * P;
 // An art cell, world px: a cell of act 3's drawings, AFTER_ART_SCALE grid
@@ -47,8 +47,11 @@ export const inAfter = (x, y) => y >= afterTop() && y <= afterFloor() && x >= af
 // between the workshops and the union's crowd, AFTER_PEDESTAL_SIGN_GAP.shack art
 // cells past the last workshop's ground (the shack's sign ends it), and its
 // ground runs from the sign; the crowd stops `crowd` art cells short of
-// the sign (`unionHalf`).
-const pedSign = () => (workshopsX1() + AFTER_PEDESTAL_SIGN_GAP.shack * AP - stationX0('pedestal')) / AP;
+// the sign (`unionHalf`). Farther when the last workshop's shelf stands higher
+// than its ramp down to the pedestal's floor has room for (after/art.js, `rampRun`).
+const lastWorks = () => Object.keys(AFTER_STATIONS).filter(k => k !== 'pedestal').reduce((a, k) => (worksEnd(k) > worksEnd(a) ? k : a));
+const worksEnd = k => stationX0(k) + ART[k].ground * AP;
+const pedSign = () => (workshopsX1() + Math.max(AFTER_PEDESTAL_SIGN_GAP.shack * AP, rampRun(shelfOf(lastWorks()) - shelfOf('pedestal')) * P) - stationX0('pedestal')) / AP;
 export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal,
   get box() { return [1, 10, Math.ceil(podiumTop() / AP)]; },
   get sign() { return pedSign(); },

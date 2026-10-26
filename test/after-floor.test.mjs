@@ -43,6 +43,32 @@ group('the cloud floor billows everywhere but under what stands on it', async ()
   ];
 });
 
+// The owner, 2026-10-26, "C. shelves and slopes": each station on a flat
+// shelf, the camp rising about twenty cells, eased slopes between that a
+// body walks, no riser taller than a cell, and no hill that goes up then
+// down (2026-10-22) -- a slope turns only on a shelf.
+group('the camp climbs in shelves and slopes: a cell a column at most, turning only on a shelf', async () => {
+  window.__actsOn(true);
+  S.after = null;
+  window.__goPlace('after');
+  run(1);
+  const el = floorProfile(), [c0] = crowdLip(), camp = el.slice(0, c0);
+  let steep = 0, turns = [], last = 0, flat = 0;
+  for (let j = 1; j < camp.length; j++) {
+    const d = camp[j] - camp[j - 1];
+    steep = Math.max(steep, Math.abs(d));
+    if (!d) { flat++; continue; }
+    if (last && Math.sign(d) !== last && flat < 3) turns.push(j);
+    last = Math.sign(d); flat = 0;
+  }
+  window.__actsOn(null);
+  return [
+    ok(Math.max(...camp) - Math.min(...camp) >= 18, 'the camp rises about twenty cells', `${Math.min(...camp)} to ${Math.max(...camp)}`),
+    ok(steep <= 1, 'no column of the floor a cell over its neighbor', `steepest ${steep}`),
+    ok(turns.length === 0, 'a slope turns from up to down only on a shelf', turns.join(' '))
+  ];
+});
+
 group('an unbuilt station stands closed on flat ground; bought on the shack, its ground stays flat', async () => {
   window.__actsOn(true);
   S.after = null;
