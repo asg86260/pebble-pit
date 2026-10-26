@@ -430,7 +430,9 @@ group('the chain makes timber and sawdust, then signs, and the heap is tipped un
   let brim = false, tipped = false;
   for (let k = 0; k < 960; k++) {
     run(0.25);
-    if (S.after.stock.sawdust >= AFTER_SAWDUST_BRIM) brim = true;
+    // A sweeper tips a load short of the brim (bodies.js `tipReady`), so the
+    // heap only has to come within a load of it.
+    if (S.after.stock.sawdust >= AFTER_SAWDUST_BRIM - AFTER_TIP_LOAD) brim = true;
     // A sawyer carrying a load to the notch, or an idle member standing at
     // it tipping (bodies.js, the sweep): nobody clicks here.
     if (S.after.bodies.some(b => b.load === 'tip') || (S.after.tipAt != null && S.after.bodies.some(b => b.errand === 'sweeper'))) tipped = true;
