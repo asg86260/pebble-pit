@@ -620,3 +620,10 @@ export const AFTER_SLOT_GAP = P * 3;
 // cells: as drawn (render/after/pedestal.js, `drawRebelPile`), for the
 // pedestal's footprint (footprints.js).
 export const AFTER_REBEL_PILE_CELLS = [8, 2];
+
+// track a3-piles
+// A pile's count stands on its pile: the foot of its paper plate this far
+// over the pile's top, in world px, whatever the zoom (render/after.js,
+// `drawAfterCounts`), so a count never drifts up off its pile into the
+// station behind it.
+export const AFTER_COUNT_LIFT = P;

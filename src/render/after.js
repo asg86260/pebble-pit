@@ -19,7 +19,6 @@ import { P, GREY, AFTER_CARRY_SHOWN, AFTER_SIGN_BOARD, AFTER_SIGN_MARK, AFTER_ST
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
-import { shown } from '../tween.js';
 import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
@@ -31,14 +30,16 @@ import { heapFull, airSpills } from '../after/mill.js';
 import { atStation, bodyInk, carried as carryOf } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
 import { signUp } from '../after/stations.js';
-import { frame, now, inView, clamp01, pileState, pileAlpha, countAt, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
+import { frame, now, inView, clamp01, pileState, pileAlpha, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
 import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove, drawLaidGoods } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
-import { heap, heapCells, logPile, plankPile, sheetPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
+import { heap, heapCells, logPile, plankPile, sheetPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt, countOver } from './after/piles.js';
+import { drawBody } from './crew.js';
+import { onDevice } from './wardrobe.js';
 import { siteOf } from '../after/build.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
 import { drawUnionCrowd } from './after/unioncrowd.js';
@@ -47,6 +48,15 @@ import { drawRoster } from '../roster.js';
 const A = () => S.after;
 const snap = v => Math.round(v / P) * P;
 const cell = (x, y, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(x, y, P, P); };
+// A drawing laid with its origin at a world point put on a whole device
+// pixel (render/crew.js, `rigid`), drawn off (0, 0) in whole pixels: a thing
+// that moves goes by its true position, and its insides never shear.
+function onPixel(x, y, draw) {
+  const m = ctx.getTransform ? ctx.getTransform() : null;
+  const tx = m ? onDevice(x, m.a, m.e) : Math.round(x), ty = m ? onDevice(y, m.d, m.f) : Math.round(y);
+  ctx.translate(tx, ty);
+  try { draw(); } finally { ctx.translate(-tx, -ty); }
+}
 const fadeIn = at => (at == null ? 1 : Math.min(1, (now() - at) / AFTER_BUILD_FADE_S));
 
 // The crowd's files and ranks in view: God's crowd draws only these
@@ -69,10 +79,11 @@ export function drawAfterBackdrop() {
 // cloud renderer's, drawn with the backdrop (render/after/cloudsky.js).
 export function drawAfterSky() {
   if (!A()) return;
-  for (const m of airMotes()) {
-    ctx.fillStyle = GREY[K]; ctx.fillRect(snap(m.x), snap(m.y), P, P);
-    ctx.fillStyle = GREY[W]; ctx.fillRect(snap(m.x) + 1, snap(m.y) + 1, P - 2, P - 2);
-  }
+  // Each a cell's drawing laid at its true position, moving as one piece.
+  for (const m of airMotes()) onPixel(m.x, m.y, () => {
+    ctx.fillStyle = GREY[K]; ctx.fillRect(0, 0, P, P);
+    ctx.fillStyle = GREY[W]; ctx.fillRect(1, 1, P - 2, P - 2);
+  });
 }
 
 // --- the grove -------------------------------------------------------------------------
@@ -231,7 +242,7 @@ function drawSawdust() {
   for (const sp of airSpills()) {
     const k = sp.age / AFTER_SPILL_S;
     ctx.globalAlpha = Math.max(0, 1 - k);
-    for (let g = 0; g < Math.min(6, sp.n); g++) cell(nx + (g % 2) * P, snap(fl - P * 2 + k * P * 5 + g * P), g % 2 ? PALE : MID);
+    onPixel(nx, fl - P * 2 + k * P * 5, () => { for (let g = 0; g < Math.min(6, sp.n); g++) cell((g % 2) * P, g * P, g % 2 ? PALE : MID); });
     ctx.globalAlpha = 1;
   }
   if (heapFull()) warning(heapMid() + P / 2, fl + P * 5);   // under the heap, clear of the window's foot
@@ -248,18 +259,22 @@ function signRack(d, x, st) {
   // blow: as far along as its nails are driven, by the hand or the joiner.
   const h = hands.workshop, done = h && h.nails ? h.nails.reduce((a, k) => a + k, 0) / (h.nails.length * GESTURE_NAIL_TAPS) : 0;
   if (done > 0 && st.n < 3) drawFistFlag(at.x + st.n * step, at.y - P, U, done);
-  countAt(at.x + step * 1.5, at.y - (SKY_FLAG.h + SKY_FLAG.up + 3) * U - P * 2, shown(`after-pile:${st.key}`, st.n));
+  countOver(at.x + step * 1.5, at.y - P - (SKY_FLAG.h + SKY_FLAG.up) * U, st.n, st.key);
 }
-// Each station's counted pile, on its own ground.
-function drawPiles() {
+// Each station's counted pile, on its own ground: drawn over the lip of
+// billows along the path's front (render.js), so a pile stands on the floor
+// as a body does, its bottom row and the sign rack's low rail whole rather
+// than cut into dashes between the puffs.
+const pile = (key, what, fn, n) => { if (built(key)) fn(frameOf(key), ART[key].pile[what], pileState(what, n)); };
+export function drawAfterPiles() {
+  if (!A()) return;
   const st = A().stock;
-  const pile = (key, what, fn, n) => { if (built(key)) fn(frameOf(key), ART[key].pile[what], pileState(what, n)); };
+  pile('workshop', 'signs', signRack, Math.floor(st.signs));
   pile('forestry', 'grovelogs', logPile, st.grovelogs);
   pile('mill', 'logs', logPile, st.logs);
   pile('mill', 'timber', plankPile, Math.floor(st.timber));
   pile('chipper', 'chiplogs', logPile, st.chiplogs);
   pile('papermill', 'paper', sheetPile, Math.floor(st.paper));
-  pile('workshop', 'signs', signRack, Math.floor(st.signs));
   pile('press', 'posters', (d, x, s) => sheetPile(d, x, s, 6, true), Math.floor(st.posters));
 }
 export function drawAfterCamp() {
@@ -268,14 +283,14 @@ export function drawAfterCamp() {
   readHands();
   // The main plane's path, then the union's crowd behind everything of the
   // camp's: the pair's podium stands in front of it. The lip of billows
-  // along the path's front is drawn after the members (render.js).
+  // along the path's front is drawn over the camp and under the members
+  // (render.js), so a station's foot tucks behind it and a body stands on it.
   drawFloor();
   drawUnionCrowd();
   // the forestry shack, the grove's, then the cards' stations
   for (const key of Object.keys(AFTER_STATIONS)) { drawStation(key); shopSign(key); }
   drawShackOrder();
   if (built('mill') || built('chipper')) drawSawdust();
-  drawPiles();
   drawLaidGoods(a.t);
   drawRebelPile();
   drawPair();
@@ -284,15 +299,10 @@ export function drawAfterCamp() {
 }
 
 // --- the members ---------------------------------------------------------------------
-// A body, the yard's square (the mocks'): 18 px, a black rim 2 px round a
-// white middle, its feet at (x, y), x its middle column; a load carried
-// overhead, an arm out held on the blow, the shout mark while it gives a line.
-function body(x, y, dx = 0, h = 3 * P) {
-  const bx = snap(x) - P + dx, by = Math.round(y) - h;
-  ctx.fillStyle = GREY[K]; ctx.fillRect(bx, by, 3 * P, h);
-  ctx.fillStyle = GREY[W]; ctx.fillRect(bx + 2, by + 2, 3 * P - 4, h - 4);
-  return { x: bx, y: by };
-}
+// A body is the yard's (render/crew.js, `drawBody`): its square, its top
+// left at (x, y). A member walking is laid at its true position, and its load
+// overhead, an arm out held on the blow and the shout mark while it gives a
+// line are drawn off the same origin, so the whole of it moves as one piece.
 function shoutMark(x, y) { ctx.fillStyle = GREY[K]; ctx.fillRect(x + 8, y - 12, 2, 6); ctx.fillRect(x + 1, y - 9, 2, 2); ctx.fillRect(x + 3, y - 7, 2, 2); ctx.fillRect(x + 15, y - 9, 2, 2); ctx.fillRect(x + 13, y - 7, 2, 2); }
 // A station's load on a head, a paper rim round it so it stands clear of
 // the black station rising behind it: a plank across, or a block.
@@ -343,19 +353,18 @@ function drawMember(w) {
     const s = working(w.at), pose = workerPose(w.at, s.work, A().t);
     if (pose) { frameOf(w.at).body(pose.x, pose.y, pose.dx, 0, pose.squat); return; }
   }
-  // On the floor a body stands on the line, which is drawn flat (render/
-  // after/floor.js): it walks level over the cloud.
-  const ground = w.y;
-  const at = body(w.x, ground);
-  const x = at.x, y = at.y;
-  ctx.fillStyle = GREY[K];
-  drawLoad(x, y, w.load, carryOf(w));
-  if (w.load === 'carry' || w.load === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
-  else if (w.load === 'tip') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
-  if (w.swing != null) {
-    if (w.job == null) shoutMark(x, y);
-    else for (let k = 1; k <= 2; k++) cell(x + (w.face > 0 ? 2 + k : -k) * P, y - k * P, K);
-  }
+  onPixel(w.x - P, w.y - 3 * P, () => {
+    const x = 0, y = 0;
+    drawBody(x, y);
+    ctx.fillStyle = GREY[K];
+    drawLoad(x, y, w.load, carryOf(w));
+    if (w.load === 'carry' || w.load === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
+    else if (w.load === 'tip') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
+    if (w.swing != null) {
+      if (w.job == null) shoutMark(x, y);
+      else for (let k = 1; k <= 2; k++) cell(x + (w.face > 0 ? 2 + k : -k) * P, y - k * P, K);
+    }
+  });
 }
 export function drawAfterMembers() {
   const a = A();
@@ -391,20 +400,25 @@ function onWorld(wx, wy) {
 export function drawAfterCounts() {
   if (S.view !== 'after' || !A()) return;
   for (const c of pendingCounts()) {
-    const at = onWorld(c.x, c.y), str = String(c.n);
+    // faded on and off with its pile (render/after/piles.js, `countOver`)
+    const at = onWorld(c.x, c.y), str = String(c.n), was = ctx.globalAlpha;
+    ctx.globalAlpha = was * (c.a == null ? 1 : c.a);
     const w = widthOf(drawable(str), NUM_FONT_PX), h = GH * NUM_FONT_PX, pad = AFTER_COUNT_PAD;
+    // a pile's count stood on its foot, its plate's bottom at the spot
+    if (c.foot) at.y -= h / 2 + pad;
     ctx.fillStyle = GREY[W];
     ctx.fillRect(Math.round(at.x - w / 2) - pad, Math.round(at.y - h / 2) - pad, w + pad * 2, h + pad * 2);
     writeCount(ctx, str, at.x, at.y);
+    ctx.globalAlpha = was;
   }
   clearCounts();
 }
 
 // --- the rosters ---------------------------------------------------------------------
 // Under each station, the yard's roster (roster.js; after/roster.js hands it
-// the act's posts): its counter's sprite a member as drawn up here, x its
-// middle column and y its feet off the box the roster hands over.
+// the act's posts): its counter's sprite the yard's own body, as every
+// member up here is drawn.
 export function drawAfterRoster() {
   if (!A()) return;
-  drawRoster(ctx, (x, y) => body(x + P, y + 3 * P), () => {}, null, null);
+  drawRoster(ctx, drawBody, () => {}, null, null);
 }
