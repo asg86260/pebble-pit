@@ -610,3 +610,10 @@ export const AFTER_ACT_COINS = ['rebel', 'timber', 'paper'];
 // shack's five stations and the grove's five upgrades in two rows, the yard's
 // own wrapping (board.js `pinWidth`), against the yard's SHELF_SLOTS.
 export const AFTER_BOARD_SLOTS = 3;
+
+// track a3-piles
+// A pile's count stands on its pile: the foot of its paper plate this far
+// over the pile's top, in world px, whatever the zoom (render/after.js,
+// `drawAfterCounts`), so a count never drifts up off its pile into the
+// station behind it.
+export const AFTER_COUNT_LIFT = P;

@@ -383,7 +383,6 @@ function papermill(d, work, t, h, body = false, at = {}) {
   d.px(G.stackX * P, lo.y, 5 * P, 3, K);
   d.px(G.peelX * P + 1, lo.y, 4, -2 * P - lo.y, K);
   if (lo.carry) d.fade(lo.carry.a, () => wetSheet(d, G.stackX, (lo.y - 3 * P) / P, 1));
-  d.body(G.loftX, -3, lo.st === 'up' || lo.st === 'down' ? -1 : 0);
 }
 // The paddle, its shaft's left edge at `sx` (the frame's px): the grip
 // across its top, the shaft, the blade at its foot, every part laid off `sx`
@@ -484,9 +483,7 @@ function workshop(d, work, t, h, body = false, at = {}) {
   wsHammer(d, pose, jx + 1, pose === 'strike' ? nailHeadY(BOARD.row * P, nails[k] || 2) : 0);
   if (pose === 'strike') d.fade(1 - (s2 - SW_T) / ST_T, () => { const c = NAILS[k], hy = nailHeadY(BOARD.row * P, nails[k] || 2); d.px(c * P - 5, hy - 4, 3, 2, K); d.px(c * P - 4, hy - 9, 2, 3, K); d.px(c * P + P + 2, hy - 4, 3, 2, K); });
   wsLastJx = jx;
-  // The carrier and what it carries, over the walls once it is outside.
-  const cx = f ? f[1] : CAR.wait;
-  d.body(cx, -3);
+  // What the carrier carries, over the walls once it is outside.
   if (f && f[4] === 'head') nailed(d, f[2], f[3] * P, f[0] < CARRY_S / 2 ? [2, 2, 2, 2] : [0, 0, 0, 0]);
   // The blanks, as many as there is timber for, edge-on.
   const blanks = Math.min(PILE_CAP, at.blanks || 0);

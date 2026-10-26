@@ -3,8 +3,8 @@
 // insetad of the foreground drawn clouds"; mock A, a low lip): a row of
 // round billows standing just in front of the path, overlapping so their
 // tops scallop, following the path's shelves and ramps (after/place.js,
-// `floorProfile`). Drawn after the members, so a body's feet and a
-// station's foot tuck behind it. Lit along each crest, pale through its
+// `floorProfile`). Drawn over the camp and under the members, so a
+// station's foot tucks behind it and a body's feet stand on it. Lit along each crest, pale through its
 // body, the path's own grey across the top; under it, the page.
 
 import { P, GREY, AFTER_LIP } from '../../config.js';
