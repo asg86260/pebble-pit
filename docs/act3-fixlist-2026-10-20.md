@@ -82,3 +82,32 @@ Status: **open** / **in progress** / **fixed (commit)**.
   board and move the mouse into it; watch a station work a unit end to end.
 - Then the act 3 playthrough checks, and the yard's own suite on main, which
   must stay green: act 3 work never breaks act 1.
+
+## Station polish, 2026-10-26
+
+The owner: "each station needs polish. we have prototypes that work right
+now. but the logistics, clean up, polish, all needs attention. placement."
+An audit at the owner's window (shots in the session's board folder,
+m/a3audit) found, most severe first:
+
+- **Broken:** the workshop's blanks and its sign overlap by 60 px, unseen by the
+  no-overlap rule, which claims only boxes, not drawn extents. Two phantom
+  bodies are drawn at the workshop and the paper mill. The stations idle most
+  of the time: the sawyer and the feeder each walk about 600 px for one log
+  (item 5's root; the owner's call is on the board, act3-log-supply).
+- **Reads wrong:** bodies are specks beside machines drawn at twice the scale
+  (the teeth and the handsaw are this too). Bodies sink into the floor's lip.
+  Idle members stack. Zero counts float over bare floor. The press goes
+  unattended. The pedestal's sign stands beside the shack's. A cloud band sits
+  behind the stations (item 11). The work glyph is a placeholder.
+- **Polish:** moving things snap to the grid. Dark-page contrast. The pines
+  are smaller than the shack. Woodcutters drop their loads on the forestry pile.
+- **Cleanup:** a migration outside migrations/, scenes staffing jobs that no
+  longer exist, a second body drawer, the heap's brim outside S.piles, and
+  whatIsAt with no act 3 branch.
+- **Still true or refined:** item 4 (boards closing) appears fixed, and item 14
+  (the paddle) appears fixed.
+
+In progress as four tracks (a3-placement, a3-piles, a3-bodies, a3-shared).
+Mocks for the owner: body vs machine scale, the crowd (items 9 and 10), floor
+hills (item 12).
