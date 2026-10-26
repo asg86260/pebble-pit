@@ -5817,6 +5817,83 @@
   "text": "delver"
  },
  {
+  "id": "hover-member",
+  "group": "Hover",
+  "where": "src/input.js",
+  "context": "the hover over a member of act 3 with no job: the idle at the podium or in the crowd",
+  "text": "member"
+ },
+ {
+  "id": "hover-pile-logs",
+  "group": "Hover",
+  "where": "src/input.js",
+  "context": "the hover over a counted pile in act 3 (the logs of the saw mill, chipper and grove)",
+  "text": "log pile"
+ },
+ {
+  "id": "hover-pile-planks",
+  "group": "Hover",
+  "where": "src/input.js",
+  "context": "the hover over a counted pile in act 3 (the timber at the saw mill)",
+  "text": "plank pile"
+ },
+ {
+  "id": "hover-pile-sheets",
+  "group": "Hover",
+  "where": "src/input.js",
+  "context": "the hover over a counted pile in act 3 (the paper mill's sheets)",
+  "text": "sheet pile"
+ },
+ {
+  "id": "hover-pile-signs",
+  "group": "Hover",
+  "where": "src/input.js",
+  "context": "the hover over a counted pile in act 3 (the workshop's signs)",
+  "text": "sign pile"
+ },
+ {
+  "id": "hover-pile-posters",
+  "group": "Hover",
+  "where": "src/input.js",
+  "context": "the hover over a counted pile in act 3 (the press's posters)",
+  "text": "poster pile"
+ },
+ {
+  "id": "hover-log",
+  "group": "Hover",
+  "where": "src/input.js",
+  "context": "the hover over a log in the hand's reach in act 3, lying on the floor",
+  "text": "log"
+ },
+ {
+  "id": "hover-plank",
+  "group": "Hover",
+  "where": "src/input.js",
+  "context": "the hover over a plank in the hand's reach in act 3, lying on the floor",
+  "text": "plank"
+ },
+ {
+  "id": "hover-sheet",
+  "group": "Hover",
+  "where": "src/input.js",
+  "context": "the hover over a sheet of paper in the hand's reach in act 3, lying on the floor",
+  "text": "sheet"
+ },
+ {
+  "id": "hover-sign",
+  "group": "Hover",
+  "where": "src/input.js",
+  "context": "the hover over a sign in the hand's reach in act 3, lying on the floor",
+  "text": "sign"
+ },
+ {
+  "id": "hover-heap",
+  "group": "Hover",
+  "where": "src/input.js",
+  "context": "the hover over the sawdust heap under the chipper",
+  "text": "sawdust heap"
+ },
+ {
   "id": "hover-portal-up",
   "group": "Hover",
   "where": "src/input.js",
@@ -8234,7 +8311,7 @@
  {
   "id": "after-stall-heap",
   "group": "Act 4 (placeholder)",
-  "where": "src/after/roster.js",
+  "where": "src/after/stations.js",
   "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
   "text": "the sawdust heap is full: build the paper mill"
  },

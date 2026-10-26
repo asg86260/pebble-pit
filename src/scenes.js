@@ -520,8 +520,8 @@ function afterChain(slow) {
     for (let k = 0; k < 300 && wave.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
   }
   const A = AFTER_JOB;
-  staffAfter([A.CUT, A.CUT, A.GATHER, A.HAUL, A.HAUL, A.HAUL, A.SAW, A.CHIP, A.JOIN, A.CARRY, A.CARRY,
-              ...(slow ? [A.PULP, A.PRINT, A.PASTE, A.PASTE] : [])]);
+  staffAfter([A.CUT, A.CUT, A.CUT, A.SAW, A.CHIP, A.JOIN, A.JOIN,
+              ...(slow ? [A.PULP, A.PRINT, A.PRINT] : [])]);
   for (const u of ['after-plot', 'after-plot', 'after-stumps', 'after-blade', 'after-bench',
                    ...(slow ? ['after-vat', 'after-stack'] : [])]) window.__buy(u);
 }

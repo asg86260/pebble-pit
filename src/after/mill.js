@@ -14,15 +14,25 @@
 // here, the same whoever does it.
 
 import { S } from '../state.js';
-import { AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_TIP_LOAD, AFTER_SWEEP_WAIT_S, AFTER_PULP_SAWDUST,
+import { P, AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_TIP_LOAD, AFTER_SWEEP_WAIT_S, AFTER_PULP_SAWDUST,
          AFTER_SPILL_S } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { built, bladeLogs, vatSheets, vats, heapBrim, chipLogs, chipSawdust } from './levels.js';
 import { secs } from './util.js';
+import { heapMid, groundOf } from './place.js';
 
 // The heap is at its brim while nothing takes sawdust away: the saw and the
-// chipper stop (the pile-full mark, render/after.js).
+// chipper stop. The brim is the heap's `pile` on the one station table
+// (after/stations.js), so the pile-full mark, its hover and its cursor are
+// the yard's (render/pilemarks.js, input.js).
 export const heapFull = () => !!S.after && !built('papermill') && S.after.stock.sawdust >= heapBrim();
+
+// The row's key, and the box the shared mark is placed from: `pileMarkAt`
+// hangs a pile row's mark five cells above its ground's top, so the box's top
+// is ten cells under the chipper's floor to hang it five under the heap, clear
+// of the window's foot, in the middle of the heap.
+export const HEAP_PILE = 'after-sawdust';
+export const heapMarkBox = () => ({ x: heapMid() - P, y: groundOf('chipper') + P * 10, w: P * 2, h: P * 2 });
 
 // A cut through the saw, a log a blade: false with no log on its pile or the
 // heap full.

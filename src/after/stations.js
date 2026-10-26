@@ -18,6 +18,7 @@ import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
 import { stationBox, signBoard, closed } from './place.js';
 import { godCampAt, godMid, faceY } from './sky.js';
+import { heapFull, heapMarkBox, HEAP_PILE } from './mill.js';
 
 const live = () => afterlifeOn() && !!S.after;
 // The window's middle, which God's camp is drawn against (after/sky.js).
@@ -88,6 +89,15 @@ export const AFTER_STATION_ROWS = [
   })),
   // A press on a tree is the saw's (after/gestures.js).
   row('grove', { open: live }),
+  // The sawdust heap at its brim is a pile that can fill: the shared mark
+  // hangs under it and its hover says why the saw stopped. It is no place to
+  // press (`hit` answers nothing) and has no name to be labeled by.
+  {
+    key: HEAP_PILE, place: 'after', glyph: 'crate', after: [], needs: () => false,
+    open: live, stand: heapMarkBox, hit: () => false,
+    pile: heapFull,
+    get full() { return msg('after-stall-heap'); }
+  },
   row('crowd', {
     sign: null,
     open: live,
