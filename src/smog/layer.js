@@ -3,7 +3,7 @@ import { TYPE } from '../jobs.js';
 import { pitTop } from '../pit.js';
 import { dugTopY } from '../quarry.js';
 import { boulderAlive, rockTopY } from '../rock.js';
-import { SOLID, footing, solidNear } from '../route.js';
+import { SOLID, footing, solidNear, ways } from '../route.js';
 import { S, farm, floor, pit, quarry } from '../state.js';
 import { DROPS, raining } from './band.js';
 import { overPitMouth, rockLeft } from '../world.js';
@@ -227,13 +227,14 @@ export function slumpMess() {
 // cells, and a walk over the whole yard for every dirty column would be the
 // most expensive thing in the file.
 function slideOffLoose() {
+  const outline = ways();           // a slide moves mess, never the rock, the cut or the hole
   for (const kind of KINDS) {
     const m = cols(kind);
     for (let c = 0; c < m.length; c++) {
       if (!m[c]) continue;
       const x = c * P + P / 2;
-      if (footing(x) === SOLID) continue;
-      const to = solidNear(x, MESS_SLIDE);
+      if (footing(x, outline) === SOLID) continue;
+      const to = solidNear(x, MESS_SLIDE, outline);
       if (to == null) continue;
       const k = colAt(to);
       if (k === c || k < 0 || k >= m.length || (m[k] || 0) >= MUCK_MAX) continue;
@@ -316,11 +317,12 @@ function tally() {
   const by = {}, yardBy = {};
   for (const k of KINDS) by[k] = yardBy[k] = 0;
   let all = 0, yard = 0;
+  const outline = ways();          // once: it walks the rock's columns to be asked
   for (let c = 0; c < stacks[0].length; c++) {
     let v = 0;
     for (const s of stacks) v += s[c] || 0;
     if (!v) continue;              // and `onSite` is never asked about bare ground
-    const off = !onSite(c);
+    const off = !onSite(c, outline);
     for (let i = 0; i < KINDS.length; i++) {
       const n = stacks[i][c] || 0;
       by[KINDS[i]] += n;
@@ -341,9 +343,9 @@ function tally() {
 // two mouths, and the plots (you would be treading on the crop). Asked of the
 // footing, not of a list of buildings. The rock is solid ground that happens
 // to be uphill, so it is not held out.
-function onSite(c) {
+function onSite(c, outline = ways()) {
   const x = c * P + P / 2;
-  if (footing(x) !== SOLID) return true;
+  if (footing(x, outline) !== SOLID) return true;
   const p = plotCols();
   return !!p && inRange(c, p.from, p.to);
 }

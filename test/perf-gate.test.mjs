@@ -88,11 +88,11 @@ function oddColumns() {
 // Three hundred frames, one at a time, and what the counters said on each.
 function watch() {
   const perf = globalThis.__perf;
-  const worst = { ways: 0, waysAt: -1, cols: 0, colsAt: -1, grains: 0, perGrain: 0, perGrainAt: -1, surveys: 0, survey: 0, surveyAt: -1, surveyOdd: 0 };
+  const worst = { ways: 0, waysAt: -1, cols: 0, colsAt: -1, grains: 0, perGrain: 0, perGrainAt: -1, surveys: 0, survey: 0, surveyAt: -1, surveyOdd: 0, tops: 0, topCells: 0, topAt: -1 };
   const ceiling = perGrainCeiling();
-  const over = [], slow = [];
+  const over = [], slow = [], deep = [];
   for (let i = 0; i < FRAMES; i++) {
-    perf.ways = 0; perf.grainCols = 0; perf.grains = 0; perf.surveys = 0; perf.surveyCells = 0;
+    perf.ways = 0; perf.grainCols = 0; perf.grains = 0; perf.surveys = 0; perf.surveyCells = 0; perf.tops = 0; perf.topCells = 0;
     window.__fast(1 / 60);
     // The survey reads a column only where something that is not dust lies
     // in it, off the column ledger, never the whole floor. The columns are
@@ -104,6 +104,12 @@ function watch() {
       if (each > floor.rows * (odd + SURVEY_SLACK)) slow.push(`${i}:${each}/${odd}`);
       if (each > worst.survey) { worst.survey = each; worst.surveyAt = i; worst.surveyOdd = odd; }
     }
+    // A column's top is read off its ledger: a cell a top asked for, and a
+    // walk down only from a top taken off, never the empty rows over a heap
+    // and never the whole grid again. A column's height of slack, for a top
+    // taken off a tall stack.
+    if (perf.topCells > perf.tops + floor.rows) deep.push(`${i}:${perf.topCells}/${perf.tops}`);
+    if (perf.topCells > worst.topCells) { worst.topCells = perf.topCells; worst.tops = perf.tops; worst.topAt = i; }
     if (perf.ways > worst.ways) { worst.ways = perf.ways; worst.waysAt = i; }
     if (perf.grainCols > worst.cols) { worst.cols = perf.grainCols; worst.colsAt = i; worst.grains = perf.grains; }
     // The per-frame rule: every grain this frame stayed inside its ground. As a
@@ -113,19 +119,22 @@ function watch() {
     const each = perf.grains ? perf.grainCols / perf.grains : 0;
     if (each > worst.perGrain) { worst.perGrain = each; worst.perGrainAt = i; }
   }
-  return { worst, ceiling, over, slow };
+  return { worst, ceiling, over, slow, deep };
 }
 
 // The numbers are printed even when they pass: the gate is a record of where the
 // two counts stand, and a green run that says nothing is a record of nothing.
-const verdict = (label, { worst, ceiling, over, slow }) => (console.log(
+const verdict = (label, { worst, ceiling, over, slow, deep }) => (console.log(
   `# perf-gate ${label}: ways max ${worst.ways} (frame ${worst.waysAt}); ` +
   `grainCols max ${worst.cols} over ${worst.grains} grains (frame ${worst.colsAt}), ` +
   `worst per grain ${worst.perGrain.toFixed(1)} (frame ${worst.perGrainAt}), ceiling ${ceiling}; ` +
-  `survey max ${worst.survey} cells (frame ${worst.surveyAt}, ${worst.surveyOdd} columns not all dust) of ${floor.cols * floor.rows}`), [
+  `survey max ${worst.survey} cells (frame ${worst.surveyAt}, ${worst.surveyOdd} columns not all dust) of ${floor.cols * floor.rows}; ` +
+  `tops max ${worst.topCells} cells over ${worst.tops} asks (frame ${worst.topAt})`), [
   ok(worst.surveys > 0 && slow.length === 0, 'the floor survey reads only the columns holding something that is not dust',
      `${worst.surveys} surveys; worst ${worst.survey} cells on frame ${worst.surveyAt} over ${worst.surveyOdd} such columns; ` +
      `over on ${slow.length}: ${slow.slice(0, 5).join(' ')}`),
+  ok(worst.tops > 0 && deep.length === 0, "a column's top is read off its ledger, not walked down to",
+     `worst ${worst.topCells} cells over ${worst.tops} asks on frame ${worst.topAt}; over on ${deep.length}: ${deep.slice(0, 5).join(' ')}`),
   ok(worst.ways <= 1, 'ways() is built at most once a frame',
      `built ${worst.ways} times on frame ${worst.waysAt} (max over ${FRAMES} frames)`),
   ok(over.length === 0, 'a grain never searches past the ground it landed on',
