@@ -89,16 +89,30 @@ export const CAMP_ORDER = ['forestry', 'mill', 'chipper', 'papermill', 'workshop
 // floor between the shack and the pedestal, where the yard's coins come up.
 // `u` is the art's grid cells a cell of its own (config/after.js,
 // AFTER_ART_SCALE): the grounds and the gap are the art's, so they grow with it.
-export function campLayout(x0, gap, u = 1) {
+// `shelf` is each station's shelf in grid cells (config/after.js,
+// AFTER_SHELF; the grove stands on the floor line): two neighbors on shelves
+// further apart than the gap can ramp between stand as far apart as the ramp
+// needs instead (`rampRun`).
+export function campLayout(x0, gap, u = 1, shelf = {}) {
   const stations = {};
-  let x = x0 + gap * u, patch = x0;
+  const apart = (a, b) => Math.max(gap * u, rampRun((shelf[a] || 0) - (shelf[b] || 0)));
+  let x = x0 + apart(null, CAMP_ORDER[0]), patch = x0;
   CAMP_ORDER.forEach((key, k) => {
     if (k) {
-      if (key === 'pedestal') patch = x + Math.round(gap * u / 2);
-      x += gap * u;
+      const g = apart(CAMP_ORDER[k - 1], key);
+      if (key === 'pedestal') patch = x + Math.round(g / 2);
+      x += g;
     }
     stations[key] = { at: x - ART[key].lead * u };
     x = stations[key].at + ART[key].ground * u;
   });
   return { stations, end: x, patch };
 }
+// The open floor, in grid cells, that an eased ramp of cloud between two
+// shelves `dh` cells apart needs so that no column of it stands more than a
+// cell over the next (the owner, 2026-10-26: no riser taller than a body can
+// step, and the floor reads as slopes, not stairs): the ease's steepest is
+// three halves of its mean, and each shelf's flat runs a cell past its
+// ground (after/place.js, `floorFlats`).
+export const RAMP_STEEP = 3 / 2;
+export const rampRun = dh => Math.ceil(RAMP_STEEP * Math.abs(dh)) + 2;

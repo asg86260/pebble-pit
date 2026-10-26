@@ -497,13 +497,13 @@ group('a reload mid-chain stands the afterlife back as it was', async () => {
   const bodies = S.after.bodies.map(b => ({ x: b.x, y: b.y, job: b.job }));
   window.__reload();
   const back = JSON.stringify(S.after);
-  const moved = S.after.bodies.filter((b, i) => Math.hypot(b.x - bodies[i].x, b.y - bodies[i].y) > P || b.job !== bodies[i].job);
+  const count = S.after.bodies.length, moved = S.after.bodies.filter((b, i) => Math.hypot(b.x - bodies[i].x, b.y - bodies[i].y) > P || b.job !== bodies[i].job);
   run(10);
   const still = read();
   window.__actsOn(null);
   return [
     ok(back === want, 'every fact of the act comes back from the save', back.length + ' vs ' + want.length),
-    ok(S.after.bodies.length === bodies.length && moved.length === 0, 'and every member stands where it stood', `${moved.length} moved`),
+    ok(count === bodies.length && moved.length === 0, 'and every member stands where it stood', `${moved.length} moved`),
     ok(still.posted === bodies.filter(b => b.job).length, 'and the loop runs on after it')
   ];
 });

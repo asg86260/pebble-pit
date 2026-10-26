@@ -40,7 +40,7 @@ import { upCount, built, raising, seatKey, seatsBought } from './levels.js';
 import { crewAt, spareMembers } from './bodies.js';
 import { clearPlot } from './grove.js';
 import { raiseStation } from './build.js';
-import { stationBox, plotX, groveX1, afterFloor, afterX0, AP, closed } from './place.js';
+import { stationBox, plotX, groveX1, afterFloor, afterX0, floorAt, AP, closed } from './place.js';
 import { union, won, ready, hire, support } from './union.js';
 import { setCrowdAt } from './stations.js';
 
@@ -53,8 +53,9 @@ export const afterPurse = coin => purse(coin);
 export const rebelSaid = () => msg('after-coin-rebel');
 
 // --- the yard's coins coming up ---------------------------------------------------------
-// The thin patch in the cloud floor the yard's coins come up through.
-export const patchAt = () => ({ x: afterX0() + AFTER_PATCH_AT * P, y: afterFloor() });
+// The thin patch in the cloud floor the yard's coins come up through, on the
+// ground there (it may lie on a ramp between two shelves).
+export const patchAt = () => { const x = afterX0() + AFTER_PATCH_AT * P; return { x, y: floorAt(x) }; };
 // Where a bought row's coins land: over the station's roof, or over the
 // middle of the grove's ground.
 const landAt = key => {
