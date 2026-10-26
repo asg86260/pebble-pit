@@ -91,7 +91,7 @@ export const AFTER_STATION_ROWS = [
   row('grove', { open: live }),
   // The sawdust heap at its brim is a pile that can fill: the shared mark
   // hangs under it and its hover says why the saw stopped. It is no place to
-  // press (`hit` answers nothing); its name is its hover's word.
+  // press (`hit` answers nothing); its name is the one its hover gives it.
   {
     key: HEAP_PILE, place: 'after', glyph: 'crate', after: [], needs: () => false,
     get name() { return msg('hover-heap'); },

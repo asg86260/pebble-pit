@@ -305,9 +305,8 @@ export function stepStirrer(w) {
     // Stirring: a lean toward the pot on its own slow rhythm, the same
     // `lunge` a farmhand stoops with.
     w.face = 1;
-    // Standing, every frame, as the air filter's keeper does: this body is
-    // behind the door and never walks, so a dance cut off mid-hop would
-    // otherwise leave it up in the air over its pot for good.
+    // Standing still is no reason to stop following the ground: what was
+    // under the stirrer when it got here can move out from under it.
     w.y = climbTo(w, walkY(w.x + WORKER / 2));
     if (now() >= (w.stirAt || 0)) { w.lunge = 1; w.stirAt = now() + 520 + rand() * 260; }
     const key = potTonicOf(idx);
