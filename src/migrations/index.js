@@ -53,8 +53,9 @@ import whoYouAre from './2026-10-16-who-you-are.js';
 import wardrobeCuts from './2026-10-16-wardrobe-cuts.js';
 import auraSlot from './2026-10-16-aura-slot.js';
 import gatesLeft from './2026-10-20-gates-left.js';
+import afterJobs from './2026-10-26-after-jobs.js';
 
-export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores, noPin, firstMuckSeen, filterBalloon, dropFourthPot, abyssIntro, smallerPit, finale, noTimes, endlessSerpent, endlessLevels, mealOrb, orbTimer, thePair, whoYouAre, wardrobeCuts, auraSlot, gatesLeft];
+export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores, noPin, firstMuckSeen, filterBalloon, dropFourthPot, abyssIntro, smallerPit, finale, noTimes, endlessSerpent, endlessLevels, mealOrb, orbTimer, thePair, whoYouAre, wardrobeCuts, auraSlot, gatesLeft, afterJobs];
 
 // The raw save, brought up to today's shape in place. Answers with the
 // migrations it ran, for a check.

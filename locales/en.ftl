@@ -2699,6 +2699,39 @@ hover-gatherer = gatherer
 # the hover over a body, as the job it does (its type, delver)
 hover-delver = delver
 
+# the hover over a member of act 3 with no job: the idle at the podium or in the crowd
+hover-member = member
+
+# the hover over a counted pile in act 3 (the logs of the saw mill, chipper and grove)
+hover-pile-logs = log pile
+
+# the hover over a counted pile in act 3 (the timber at the saw mill)
+hover-pile-planks = plank pile
+
+# the hover over a counted pile in act 3 (the paper mill's sheets)
+hover-pile-sheets = sheet pile
+
+# the hover over a counted pile in act 3 (the workshop's signs)
+hover-pile-signs = sign pile
+
+# the hover over a counted pile in act 3 (the press's posters)
+hover-pile-posters = poster pile
+
+# the hover over a log in the hand's reach in act 3, lying on the floor
+hover-log = log
+
+# the hover over a plank in the hand's reach in act 3, lying on the floor
+hover-plank = plank
+
+# the hover over a sheet of paper in the hand's reach in act 3, lying on the floor
+hover-sheet = sheet
+
+# the hover over a sign in the hand's reach in act 3, lying on the floor
+hover-sign = sign
+
+# the hover over the sawdust heap under the chipper
+hover-heap = sawdust heap
+
 # the hover over the portal, from the deep
 hover-portal-up = the portal — up to the yard
 

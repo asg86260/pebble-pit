@@ -178,7 +178,12 @@ group('a save from when posts were bought: its posts become what the rosters wan
   S.after.posts = { agitator: 30, woodcutter: 2, feeder: 3, sawyer: 8 };
   delete S.after.crew;
   const SETTLE = 0.1;
-  yard.persist(); window.__reload(); run(SETTLE);
+  yard.persist();
+  // Such a save is below the shape that dropped the posts (src/migrations/2026-10-26-after-jobs.js).
+  const raw = JSON.parse(localStorage.getItem('boulder-clicker/v4'));
+  raw.saveV = 27;
+  localStorage.setItem('boulder-clicker/v4', JSON.stringify(raw));
+  yard.restore(); run(SETTLE);
   const crew = { ...S.after.crew }, on = Object.values(crew).reduce((a, b) => a + b, 0);
   const seats = ['woodcutter', 'feeder', 'sawyer'].map(j => roster(j)?.cap);
   run(5);
