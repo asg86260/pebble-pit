@@ -25,7 +25,7 @@ import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js'
 import { statusAt } from './render/statusicons.js';
 import { overChooseMark, chooseMarkAt } from './render/deep.js';
 const CHOOSE_SAYS = msg('hover-choose');
-import { markedPiles, fullSays } from './render/pilemarks.js';
+import { shownPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { rosterHit, overRoster, rosterSays } from './roster.js';
@@ -600,10 +600,6 @@ function polledWhatIsAt(x, y) {
   return tipWas;
 }
 
-// The piles whose mark is in the place on screen: act 3's rows stand in act 3
-// and the yard's strips and the deep's rows do not (render/pilemarks.js lists
-// them all, in their own coordinates).
-const shownPiles = () => markedPiles().filter(p => (station(p.key)?.place === 'after') === (S.view === 'after'));
 
 const panelEl = document.getElementById('panel');
 // The sheet is in screen space, so this is a question about the page.

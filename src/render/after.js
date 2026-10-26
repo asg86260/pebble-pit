@@ -19,14 +19,13 @@ import { P, GREY, AFTER_CARRY_SHOWN, AFTER_SIGN_BOARD, AFTER_SIGN_MARK, AFTER_ST
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
-import { warning } from './pilemarks.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
 import { buildPileAt, stationBox, signBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
 import { airMotes } from '../after/rebel.js';
 import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
-import { heapFull, airSpills } from '../after/mill.js';
+import { airSpills } from '../after/mill.js';
 import { atStation, bodyInk, carried as carryOf } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
 import { signUp } from '../after/stations.js';
@@ -230,8 +229,7 @@ function drawShackOrder() {
 }
 // The sawdust heap under the chipper's chute: its grains a cell
 // each, its share of the brim, held tipped toward the notch a moment after a
-// tip; a tip's grains falling through the notch and fading; its pile-full
-// mark under it while it stands at the brim with nowhere to go.
+// tip; a tip's grains falling through the notch and fading.
 function drawSawdust() {
   const a = A(), fl = groundOf('chipper'), d = frame(heapMid(), fl, 0, null, AFTER_ART_SCALE);
   const cells = heapCells(AFTER_HEAP_R).length;
@@ -245,7 +243,6 @@ function drawSawdust() {
     onPixel(nx, fl - P * 2 + k * P * 5, () => { for (let g = 0; g < Math.min(6, sp.n); g++) cell((g % 2) * P, g * P, g % 2 ? PALE : MID); });
     ctx.globalAlpha = 1;
   }
-  if (heapFull()) warning(heapMid() + P / 2, fl + P * 5);   // under the heap, clear of the window's foot
 }
 // The finished signs as the fist flags they will be planted as (config,
 // AFTER_SIGN_FLAG_U), stood in a rack on a low rail outside the workshop, each

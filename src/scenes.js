@@ -3111,22 +3111,26 @@ export const SCENES = {
     run: () => handChip('held') },
   'after-chip-spring': { about: 'the acts', say: "the chipper's arm let go, springing back up a pose at a time, the jaws stopped",
     run: () => handChip('spring') },
+  // The sawdust heap at its brim with no paper mill to take it: the shared
+  // pile-full mark under it (render/pilemarks.js).
+  'after-heap-full': { about: 'the acts', say: "the sawdust heap at its brim, no paper mill built, its pile-full mark under it",
+    run: () => { handChip('spring'); S.after.stock.sawdust = 1e6; window.__fast(0.5); } },
 
   // The paper mill (docs/mocks/act3-papermill-2026-10-18): batches stirred by
-  // hand and pegged on the line, drying grey to white, the loft hand peeling
-  // the dry ones to the stack; and the same with the bigger vat and the
-  // drying line bought.
-  'after-paper': { about: 'the acts', say: "the paper mill's vat stirred by hand, wet sheets on the line drying grey to white, the loft hand at the stack",
+  // hand and pegged on the line, drying grey to white, the dry ones fading
+  // off the line's end onto the stack; and the same with the bigger vat and
+  // the drying line bought.
+  'after-paper': { about: 'the acts', say: "the paper mill's vat stirred by hand, wet sheets on the line drying grey to white, a dry one fading off the end onto the stack",
     run: () => handPaper(false) },
   'after-paper-line': { about: 'the acts', say: "the paper mill with its bigger vat and drying line: two sheets a pull on a line eight sheets long",
     run: () => handPaper(true) },
 
   // The workshop (docs/mocks/act3-workshop-2026-10-18, roof A): nails tapped
-  // by hand, two driven flush, one half in; and a sign just done, the
-  // carrier walking it out to the pile.
+  // by hand, two driven flush, one half in; and a sign just done, standing
+  // in the rack outside.
   'after-nails': { about: 'the acts', say: "the workshop's sign blank on the bench, two nails tapped flush and one half in, the pips over the door to match",
     run: () => handNails(5, 0.2) },
-  'after-sign-carry': { about: 'the acts', say: "a sign just nailed, the workshop's carrier walking it out to the pile of signs",
+  'after-sign-carry': { about: 'the acts', say: "a sign just nailed, standing in the rack outside the workshop",
     run: () => handNails(8, 0.9) },
 
   // The pair's bubbles: sent up at uneven gaps in mixed sizes, a symbol in each.

@@ -23,7 +23,7 @@ export function drawPileMarks() {
   // grain it will not take tears it open and the rest goes through the rift
   // (`throughRift` in pit.js). A warning about a thing that no longer happens
   // teaches you to ignore warnings.
-  for (const p of markedPiles()) {
+  for (const p of shownPiles()) {
     if (!S.pileFull[p.key]) continue;
     const at = pileMarkAt(p.key);
     warning(at.x, at.y);
@@ -33,6 +33,10 @@ export function drawPileMarks() {
 // Every pile that can be full: the yard's strips, and every standing station
 // whose row has a pile of its own, its mark over the station.
 export const markedPiles = () => [...S.piles, ...STATIONS.filter(r => r.pile && r.open()).map(r => ({ key: r.key }))];
+// Those in the place the camera is in: a place's own rows up there (their
+// row's `place`), the yard's down here. What is drawn and what the hover
+// asks about (input.js) are this one list.
+export const shownPiles = () => markedPiles().filter(p => (station(p.key)?.place === 'after') === (S.view === 'after'));
 // What the hover says over one: the row's own words, or the yard's.
 export const fullSays = key => station(key)?.full || msg('hover-pile-full');
 

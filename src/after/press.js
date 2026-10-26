@@ -31,15 +31,8 @@ export function joinSign() {
   if (n < 1) return false;
   st.timber -= AFTER_SIGN_TIMBER * n;
   st.signs += n;
-  joined.push(S.after.t);
-  if (joined.length > 8) joined.shift();
   return true;
 }
-// When each of the last signs was joined: this session's, for the workshop's
-// carrier the drawing walks to the pile with it (render/after/stations.js).
-const joined = [];
-export const signsJoined = () => joined;
-export const forgetSigns = () => { joined.length = 0; };
 
 // One stack off the press: false while paper is short.
 export function printStack() {
