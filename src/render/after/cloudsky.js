@@ -3,10 +3,13 @@
 // owner, 2026-10-20: "wire them in. They're better than what we have now ...
 // use those clouds as the ground clouds. Clouds around the main path"):
 //
-// the sky's layers standing on the horizon, far to near, each sliding at its
-// own parallax. The ground clouds that lapped the path and rolled below it
-// are gone (the owner, 2026-10-22): the path's front is its own lip of
-// billows now (render/after/ground.js).
+// the sky's layers in their lanes at the top of the sky, far to near, each
+// sliding at its own parallax. The ground clouds that lapped the path and
+// rolled below it are gone (the owner, 2026-10-22): the path's front is its
+// own lip of billows now (render/after/ground.js). So is the bank that stood
+// on the horizon, a flat pale band behind the stations' middles (the owner,
+// 2026-10-26: "remove the clouds behind the main plane that arent a part of
+// the sky clouds"): only a layer with a lane (CLOUDS_ACT3.sky.lanes) is drawn.
 //
 // Every layer's windows are worked in one pass on the card at the backdrop.
 // The flow runs on the act's own clock, so a held scene holds its clouds.
@@ -17,7 +20,6 @@ import { S } from '../../state.js';
 import { ctx } from '../ctx.js';
 import { onPixel } from '../frame.js';
 import { darkPage, onTheme } from '../../ink.js';
-import { horizonY } from '../../after/sky.js';
 import { afterOpenX, afterX0, afterX1 } from '../../after/place.js';
 import { skyLayer, layerLook, layerParams, stillSheet, drawBand } from '../clouds.js';
 import { cellOnPage, layerSpan, workClouds, putCells } from '../cloudpage.js';
@@ -41,20 +43,17 @@ function layers() {
   for (const l of L.sky) l.look = layerLook(l, { page: page() });
   return L;
 }
-const NAMES = () => layers().sky.map((_, i) => 'sky' + i);
+const NAMES = () => layers().sky.map((_, i) => 'sky' + i).filter((_, i) => A.sky.lanes[i]);
 const layerOf = name => layers().sky[+name.slice(3)];
 
 // Where a layer stands this frame: its rate against the camera, the world y
 // of its first row and its drift in cells.
 function placeOf(name, l, T, cw) {
-  const hz = onPixel(horizonY());
-  // a sky layer, blowing on its wind: the bank's horizon row on the horizon
-  // (its lobes stand over it, render/clouds.js); a laned layer's top row at
-  // the top of the act's resting window, so its clouds keep to the top of
-  // the sky (CLOUDS_ACT3.sky) and still slide with the world as the camera
-  // lifts off its rest
-  const ref = A.sky.lanes[l.i] ? onPixel(restY()) : hz;
-  return { rate: l.P.parallax * A.sky.rate, y: ref - l.baseRow * cw, drift: l.P.wind * T };
+  // a sky layer, blowing on its wind: its top row at the top of the act's
+  // resting window, so its clouds keep to the top of the sky
+  // (CLOUDS_ACT3.sky) and still slide with the world as the camera lifts
+  // off its rest
+  return { rate: l.P.parallax * A.sky.rate, y: onPixel(restY()) - l.baseRow * cw, drift: l.P.wind * T };
 }
 
 // The frame's picture: every window worked once, at the backdrop.
@@ -84,17 +83,15 @@ onTheme(() => { L = null; still = null; });
 function stills() {
   if (still) return still;
   const look = { page: page(), treat: 'C' };
-  still = { sky0: stillSheet({ kind: 'far', seed: A.seed, w: 512 }, look), sky2: stillSheet({ kind: 'mid', seed: A.seed + 1, w: 512 }, look) };
+  still = { sky2: stillSheet({ kind: 'mid', seed: A.seed + 1, w: 512 }, look) };
   return still;
 }
 function putStill(name, sp) {
   const st = stills(), sh = st[name];
   if (!sh) return;
-  // the bank stands on the horizon, the sky's band in its layer's lane at the
-  // top of the sky
+  // the sky's band in its layer's lane at the top of the sky
   const lane = A.sky.lanes[+name.slice(3)];
-  const y = name === 'sky0' ? onPixel(horizonY()) - sh.h * sp.cw * 1.6
-    : onPixel(restY()) + lane[1] * sp.cw - sh.h * sp.cw;
+  const y = onPixel(restY()) + lane[1] * sp.cw - sh.h * sp.cw;
   const k = S.zoom * S.dpr, was = ctx.getTransform();
   // drawBand lays its copies from x 0 across a width: from the window's left edge
   ctx.translate(S.camX, 0);
@@ -116,5 +113,5 @@ function putAfterCloud(name) {
 export function drawCloudSky() {
   if (!ctx) return;
   work();
-  for (let i = 0; i < layers().sky.length; i++) putAfterCloud('sky' + i);
+  for (const name of NAMES()) putAfterCloud(name);
 }

@@ -26,7 +26,8 @@ import { P, FARM_H, FARM_GAP, FINALE_WALL_ROWS, FINALE_ROOF, FINALE_CHIMNEY,
          FINALE_BENCH, FINALE_BENCH_W, FINALE_PILE_CELL, FINALE_PILE_W, FINALE_PILE_ROWS,
          MANSION_AT, MANSION_FLOORS, MANSION_FLOOR_ROWS, MANSION_WING_W, MANSION_WING_FLOORS, MANSION_MAIN_W,
          MANSION_TOWER_FLOORS, MANSION_TOWER_W, MANSION_BLOCKS_AT, MANSION_BLOCKS_W,
-         ACT_GATES_REACH, ACT_GATES_BANK_CELLS, ACT_GATES_BANK, AFTER_PLOT_MAX, AFTER_STAIR_W, AFTER_STAIR_RISE, HELL_TIERS } from './config.js';
+         ACT_GATES_REACH, ACT_GATES_BANK_CELLS, ACT_GATES_BANK, AFTER_PLOT_MAX, AFTER_STAIR_W, AFTER_STAIR_RISE, HELL_TIERS,
+         AFTER_LINE_LONG, AFTER_VAT_SHEETS, AFTER_PILE_REACH, AFTER_PODIUM_HALF, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_REBEL_PILE_CELLS } from './config.js';
 import { STATIONS } from './stations.js';
 import { plotSlots, rockLeft, shackSpot } from './world.js';
 import { rockFootY, rockTopY, ramX } from './rock.js';
@@ -40,7 +41,9 @@ import { afterlifeOn, hellOn } from './acts.js';
 import { deepPortal, standOfStation, deepFloor } from './deep/place.js';
 import { stationById } from './deep/party.js';
 import { PROPS } from './deep/props.js';
-import { afterFloor, groundOf, stationBox, signBox, plotX, pineRows, PINE_GROWN, ART, pileAt, stairFoot, heapX, notchX, AP } from './after/place.js';
+import { afterFloor, groundOf, stationBox, stationX0, signBox, plotX, pineRows, PINE_GROWN, ART, pileBox, stairFoot, stationParts, podiumMid, pileX, AP } from './after/place.js';
+import { DRAW } from './render/after/stations.js';
+import { silhouette } from './render/after/kit.js';
 import { furnaceBox, barrierBox } from './hell/place.js';
 import { riftOpen } from './rift.js';
 
@@ -179,27 +182,90 @@ function deepParts() {
 }
 
 // --- the afterlife ----------------------------------------------------------
+// A station stands on what its drawing inks at its fullest, read off the
+// drawing itself (render/after/kit.js, `silhouette`) rather than off a box
+// or a reach typed beside it: the workshop with every blank it can stack,
+// the paper mill with its long drying line. The silhouette fills each row
+// from its first inked cell to its last, so a row is one rect. Worked out
+// once a station: the drawing does not move, and running it writes the pose
+// its moving parts were drawn in.
+const FULLEST = { workshop: { blanks: Infinity }, papermill: { slots: AFTER_LINE_LONG, moulds: AFTER_VAT_SHEETS } };
+const SHAPES = new Map();   // cache: each station's fullest silhouette, by key
+function drawnRows(key) {
+  if (!SHAPES.has(key)) SHAPES.set(key, DRAW[key] ? silhouette(d => DRAW[key](d, false, 0, null, false, FULLEST[key] || {})) : null);
+  return SHAPES.get(key);
+}
+// Those rows in the world, turned with the drawing (`flip`).
+export function drawnRects(key) {
+  const rows = drawnRows(key);
+  if (!rows) return null;
+  const x0 = stationX0(key), fl = groundOf(key), flip = ART[key].flip || 0;
+  return rows.map(([r, a, b]) => rect(x0 + (flip ? flip - 1 - b : a) * AP, fl + r * AP, (b - a + 1) * AP, AP));
+}
+// The pedestal draws no one shape: the podium bought stands on it, so it
+// stands on the widest of them, as tall as the tallest (config/after.js,
+// AFTER_PODIUM_HALF and AFTER_PODIUM_TOPS), and the rebel pile at its foot
+// at its widest. The pile's size is a literal in its drawing
+// (render/after/pedestal.js, `drawRebelPile`), read here off the config's
+// copy of it.
+function podiumRects() {
+  const half = Math.max(...AFTER_PODIUM_HALF) * AFTER_PODIUM_U, h = Math.max(...AFTER_PODIUM_TOPS) * AFTER_PODIUM_U;
+  const [w, ph] = AFTER_REBEL_PILE_CELLS;
+  return [rect(podiumMid() - half, afterFloor() - h, half * 2, h), rect(pileX(), afterFloor() - ph * AP, w * AP, ph * AP)];
+}
+// What a station takes up but its sign: its drawing (or the podium), and its
+// piles as high as the hand finds them, their counts over them.
+export function stationRects(key) {
+  const b = stationBox(key);
+  if (!b) return null;
+  const rs = key === 'pedestal' ? [b, ...podiumRects()] : drawnRects(key) || [b];
+  for (const what of Object.keys(ART[key].pile || {})) rs.push(pileBox(key, what, AFTER_PILE_REACH));
+  return rs;
+}
+
+// The parts of a drawn station standing off its own ground: its drawing,
+// piles and sign each inside the ground after/art.js lays for it (`lead` to
+// `ground`, off the reach and piles typed there), or the camp's layout,
+// which spaces the grounds and not the drawings, has put it on its
+// neighbor's floor. Each as `key: what` with the cells it runs over. The
+// pedestal is laid by the config round the podium's middle, not off its
+// drawing, so it is not asked here (rule 21 still is).
+export function offGround() {
+  if (!afterlifeOn() || !S.after) return [];
+  const out = [];
+  for (const key of Object.keys(DRAW)) {
+    if (!ART[key] || !stationBox(key)) continue;
+    const x0 = stationX0(key) + ART[key].lead * AP, x1 = stationX0(key) + ART[key].ground * AP;
+    const parts = [...stationRects(key).map(r => ['drawn', r]), ['sign', signBox(key)]];
+    for (const [what, r] of parts) {
+      const over = Math.max(0, x0 - r.x, r.x + r.w - x1);
+      if (over > 0) out.push(`${key}: ${what} ${over / AP} art cells past its ground`);
+    }
+  }
+  return out;
+}
+
 function afterParts() {
   const out = [];
   if (!afterlifeOn() || !S.after) return out;
   const fl = afterFloor();
   // Every station of the camp, built or not: its ground is the camp's layout,
-  // laid out in the config before anything is raised.
+  // laid out in the config before anything is raised. Its shop sign is an
+  // object of its own, so nothing the station draws may stand on it.
   for (const key of Object.keys(ART)) {
-    const b = stationBox(key);
-    if (!b) continue;
-    const rs = [b];
-    // A station's piles lie on its own ground (after/place.js, `pileAt`).
-    for (const what of Object.keys(ART[key].pile || {})) rs.push(rect(pileAt(key, what), groundOf(key) - AP, 6 * AP, AP));
-    rs.push(signBox(key));
+    const rs = stationRects(key);
+    if (!rs) continue;
     out.push({ id: key, rects: rs });
+    out.push({ id: `sign:${key}`, rects: [signBox(key)] });
   }
   // The grove at its fullest: every plot a big pine (the box the hand reads).
   const rows = pineRows(PINE_GROWN, true);
   const a = Math.min(...rows.map(r => r[1])), z = Math.max(...rows.map(r => r[2])), top = Math.min(...rows.map(r => r[0]));
   for (let i = 0; i < AFTER_PLOT_MAX; i++)
     out.push({ id: `pine:${i}`, rects: [rect(plotX(i) + a * AP, fl + top * AP, (z - a + 1) * AP, -top * AP)] });
-  out.push({ id: 'heap:sawdust', rects: [rect(heapX(), groundOf('chipper') - AP, notchX() + AP * 2 - heapX(), AP)] });
+  // The sawdust heap at its brim with its count, and the notch it is tipped
+  // through: the box the hand works it in.
+  out.push({ id: 'heap:sawdust', rects: [stationParts('heap').box] });
   out.push({ id: 'throne-stair', rects: [rect(stairFoot(), fl - AFTER_STAIR_RISE, AFTER_STAIR_W, AFTER_STAIR_RISE)] });
   if (portalStands('heaven')) {
     const e = portalEnd('heaven', 'after');

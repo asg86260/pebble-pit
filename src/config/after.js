@@ -614,3 +614,9 @@ export const AFTER_BOARD_SLOTS = 3;
 // track a3-bodies: the slot a member is dealt among those bound for one place
 // (after/bodies.js, `slotted`): a body's width, so none stands in another.
 export const AFTER_SLOT_GAP = P * 3;
+
+// track a3-placement
+// The rebel pile at the podium's foot at its widest, [across, high] in art
+// cells: as drawn (render/after/pedestal.js, `drawRebelPile`), for the
+// pedestal's footprint (footprints.js).
+export const AFTER_REBEL_PILE_CELLS = [8, 2];
