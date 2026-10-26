@@ -610,3 +610,7 @@ export const AFTER_ACT_COINS = ['rebel', 'timber', 'paper'];
 // shack's five stations and the grove's five upgrades in two rows, the yard's
 // own wrapping (board.js `pinWidth`), against the yard's SHELF_SLOTS.
 export const AFTER_BOARD_SLOTS = 3;
+
+// track a3-bodies: the slot a member is dealt among those bound for one place
+// (after/bodies.js, `slotted`): a body's width, so none stands in another.
+export const AFTER_SLOT_GAP = P * 3;
