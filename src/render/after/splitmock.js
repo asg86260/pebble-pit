@@ -177,9 +177,28 @@ export function linkage(style, a, MW, head, bx) {
   const top = (kind === 'B' ? head - 8 : head - 5) + o;          // the crosshead's top row
   const lk = { kind, r, pin, o, top, MW, head, bx };
   if (kind === 'C') {
-    // the beam: pivoted on a post over the frame, its short end on the crosshead, its long end on the rod
-    const pv = { x: bx - 5, y: head - 4 }, end = { x: bx, y: top }, th = Math.atan2(end.y - pv.y, end.x - pv.x);
-    lk.pv = pv; lk.end = end; lk.q = { x: pv.x - Math.cos(th) * 8, y: pv.y - Math.sin(th) * 8 };
+    // round 6, the beam as a true linkage: the rod keeps one length, so the
+    // beam takes whatever angle puts its long end that far from the crank pin,
+    // and its short end, on the crosshead, sets how far down the blade is.
+    const pv = { x: bx - 5, y: head - 4 }, LONG = 8, SHORT = 5;
+    const rod = Math.hypot(pv.x - LONG - MW.cx, pv.y - MW.cy);       // its length with the beam level
+    // Two angles fit at most points of the turn; the one nearest level is the
+    // beam's, so it never flips between them.
+    const f = t => Math.hypot(pv.x - LONG * Math.cos(t) - pin.x, pv.y - LONG * Math.sin(t) - pin.y) - rod;
+    let th = 0, near = Infinity;
+    for (let i = 0; i < 480; i++) {
+      let lo = -1.2 + 2.4 * i / 480, hi = lo + 2.4 / 480;
+      if (f(lo) * f(hi) > 0) continue;
+      for (let j = 0; j < 30; j++) { const m = (lo + hi) / 2; if (f(lo) * f(m) <= 0) hi = m; else lo = m; }
+      const r = (lo + hi) / 2;
+      if (Math.abs(r) < near) { near = Math.abs(r); th = r; }
+    }
+    lk.pv = pv;
+    lk.q = { x: pv.x - Math.cos(th) * LONG, y: pv.y - Math.sin(th) * LONG };
+    lk.end = { x: pv.x + Math.cos(th) * SHORT, y: pv.y + Math.sin(th) * SHORT };
+    lk.top = lk.end.y;
+    // the blade's three rows of stroke over the beam's own travel (-1.7 to 2.9 cells about the crosshead's rest)
+    lk.o = Math.max(0, Math.min(3, Math.round((lk.end.y - (head - 5) + 1.7) * 3 / 4.6)));
   }
   return lk;
 }
