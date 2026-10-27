@@ -1,9 +1,15 @@
 // The camp's piles, yard style (docs/mocks/act3-stations-2026-10-18): the
-// things themselves, stacked, and a count over each. Each takes a frame (kit.js)
-// and the pile's state (`pileState`: what it shows, what it showed, since
-// when), so a log coming on or going off fades. Cells off the frame's ground.
+// things themselves, stacked; the counted piles as plots of blocks, the
+// sign rack with a count over it. The sign rack and the heap each take a
+// frame (kit.js) and the pile's state (`pileState`: what it shows, what it
+// showed, since when), so a sign coming on or going off fades. Cells off the
+// frame's ground.
 
-import { P, AFTER_COUNT_LIFT } from '../../config.js';
+import { P, GREY, AFTER_COUNT_LIFT, AFTER_BLOCK, AFTER_PILES } from '../../config.js';
+import { ctx } from '../ctx.js';
+import { at, bottomY } from '../../grid.js';
+import { plotOf } from '../../after/piles.js';
+import { AP } from '../../after/place.js';
 import { K, W, PALE, MID, DUST, hash, pileAlpha, pileState, countAt, pendingCounts } from './kit.js';
 import { shown } from '../../tween.js';
 
@@ -24,24 +30,25 @@ export function countOver(x, top, n, key) {
 // The same off a frame: across from cell cx, over the pile's top at row `top`.
 function count(d, n, cx, top, key) { const at = d.world(cx, top); countOver(at.x, at.y, n, key); }
 
-// A log seen end on: a two-cell square, black rim, a pale cut face, a mid heart.
-export function logEnd(d, x, y) { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, PALE); d.px(x * P + 5, y * P + 5, 2, 2, MID); }
-// Logs, bricked: three on the floor, two on them, one on top.
-const SPOTS = [[0, 0], [2, 0], [4, 0], [1, 1], [3, 1], [2, 2]];
-export function logPile(d, x, st, cap = SPOTS.length) {
-  const m = Math.min(Math.max(st.n, st.prev), cap);
-  for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => logEnd(d, x + SPOTS[i][0], -2 - SPOTS[i][1] * 2));
-  const shown = Math.min(st.n, cap), top = shown <= 3 ? 1 : shown <= 5 ? 2 : 3;
-  count(d, st.n, x + 3, -top * 2, st.key);
+// --- the counted piles as blocks (DESIGN.md, "Act 3's goods are blocks, and
+// bodies carry every one"; the voted mock, mock-log-split round 28) ---------
+// A good's block: one flat tone, the darkest good's the log's and timber
+// pale, a pixel short of its square on its right and bottom so its seam tone
+// shows there. Laid on a pile, the pile's shape is that seam tone filled
+// solid behind its blocks, so the pixel between two is a seam, not a hole.
+// The block's size is the good's (config/afterpiles.js); x, y its top left
+// in world px, free (a carried or falling block is laid where it truly is).
+export const BLOCK_TONES = { log: { tone: MID, seam: K }, plank: { tone: PALE, seam: MID } };
+export function goodBlock(x, y, kind) {
+  const t = BLOCK_TONES[kind], z = AFTER_BLOCK[kind] * AP;
+  ctx.fillStyle = GREY[t.seam]; ctx.fillRect(x, y, z, z);
+  ctx.fillStyle = GREY[t.tone]; ctx.fillRect(x, y, z - 1, z - 1);
 }
-// Timber: planks six cells long and a cell deep, every other one set in half a cell.
-export function plankPile(d, x, st, cap = 6) {
-  const m = Math.min(Math.max(st.n, st.prev), cap);
-  for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => {
-    const y = -1 - i, dx = i % 2 ? 0.5 : 0;
-    d.px((x + dx) * P, y * P, 6 * P, P, K); d.px((x + dx) * P + 2, y * P + 2, 6 * P - 4, P - 4, PALE);
-  });
-  count(d, st.n, x + 3.25, -Math.max(1, Math.min(st.n, cap)), st.key);
+// A counted pile, as its plot holds it (after/piles.js): each block where
+// the sand rules have it. No count: the pile is the count.
+export function blockPile(what) {
+  const b = plotOf(what), kind = AFTER_PILES[what].good, foot = bottomY(b);
+  for (let c = 0; c < b.cols; c++) for (let r = 0; r < b.rows; r++) if (at(b, c, r)) goodBlock(b.x + c * b.p, foot - (r + 1) * b.p, kind);
 }
 // A heap of grains, in the sawdust's tones a cell, growing as a triangle from
 // its middle column `cx`, `R` cells high at its brim. `st` counts cells.

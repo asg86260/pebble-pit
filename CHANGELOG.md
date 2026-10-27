@@ -179,6 +179,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- Act 3's log and timber piles are heaps of blocks you can see, a log a 4x4 and three 2x2 timber blocks a log; each pile holds only so many, shows the pile-full mark at its brim and stops what fills it, and timber bills and a save's timber are halved to match (test/after-pile-plots.test.mjs).
 - Act 3 is one chain now: trees, the saw mill, the workshop, signs; paper, posters, the chipper, the paper mill and the press are gone, and the sawdust heap stands on the saw mill's own ground (test/after-cut-paper.test.mjs).
 - Switching between light, dim and dark fades the game over in place, without reloading the page (src/selftest/settings.js, "the dark switch turns the page in place").
 - In heaven each station stands on its own shelf of cloud, further apart, with ramps between, and everybody walks up and down them (test/after-floor.test.mjs).
