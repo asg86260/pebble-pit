@@ -23099,7 +23099,7 @@ pedestal's board walks the front won soul out to the podium; the + then puts
 it on a station; the row is dead with nobody won; `support` counts won souls
 hired or not; the gates open on won souls.
 
-### Act 3's shops are signs (built; the owner, 2026-10-21)
+### Act 3's shops are signs (built, then replaced 2026-10-27 by the station as its own shop: "Act 3's goods are blocks", rule 4; the owner, 2026-10-21)
 
 The owner: "i dont like how on hover they pop open a slightly bigger version
 of the same thing, as well as open the shop menu. we should create a smaller
@@ -23146,7 +23146,10 @@ be able to pick up and move resources themselves between stations"
   hand, and a strip under the station fills with the unit's progress and a
   short verb tag. The chipper's ghost arcs from the log pile into the jaws,
   then down the arm. The part grew a cell on hover too until 2026-10-21,
-  when the owner cut it with the shop's move to a sign (below).
+  when the owner cut it with the shop's move to a sign (below). The dotted
+  ghost, the strip and the verb tag were built, then replaced 2026-10-27 by
+  one ghost hand, faint while the part is hovered ("Act 3's goods are
+  blocks", rule 3).
 - **Goods by hand.** The player picks up a station's goods (a log, a plank,
   a sheet, a sign) the way a worker is picked up, through the shared grab,
   and drops them on another station's pile. A load in the hand is the

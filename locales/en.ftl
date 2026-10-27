@@ -3641,6 +3641,3 @@ after-crowd-pct = { $n }%
 
 # act 3 crowd board value (placeholder): no speech set yet
 after-crowd-none = none due
-
-# act 3 hand work (placeholder): the tag under the saw mill while its wheel is worked
-handwork-spin = spin

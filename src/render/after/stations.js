@@ -22,12 +22,7 @@ const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
 import { P, GESTURE_WHEEL_LOG, AFTER_SAW_TEETH, AFTER_ART_SCALE } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette } from './kit.js';
-import { stationX0, groundOf } from '../../after/place.js';
 import { held } from '../../reset.js';
-
-// `posed` is the pose each station drew its hand-worked part in this frame,
-// which the ghost of its motion takes hold of (`grips`, render/aftercues.js).
-const posed = {};
 
 const cyc = (t, T) => { const u = Math.max(0, t), k = Math.floor(u / T); return { ph: u / T - k, since: u - k * T }; };
 const FADE = 0.4;
@@ -105,7 +100,6 @@ function mill(d, work, t, h, body = false) {
   const hand = turning(h);
   const a = hand ? Math.round(h.ang / MILL_TURN) * MILL_TURN : work ? Math.floor(t / 0.1) * MILL_TURN : 0;
   const o = Math.round(1.5 + 1.5 * Math.sin(a)), { L, R, head, bed, bx } = MILL;
-  posed.mill = { a };
   const k = wheelAt(a);
   flywheel(d, a);
   // The rod, in a paper rim, off the crank pin.
@@ -250,17 +244,6 @@ function forestry(d) {
 }
 
 export const DRAW = { mill, workshop, shack, forestry };
-
-// Where the hand takes each hand-worked part, world px, in the pose its
-// station drew it in this frame (`posed`), for the ghost of its motion
-// (render/aftercues.js): the wheel's hub, its knob and the knob's reach.
-export function grips(key) {
-  const q = posed[key];
-  if (!q) return null;
-  const x0 = stationX0(key), fl = groundOf(key), A = AFTER_ART_SCALE, w = (x, y) => ({ x: x0 + x * P * A, y: fl + y * P * A });
-  if (key === 'mill') { const k = wheelAt(q.a); return { hub: w(MW.cx, MW.cy), reach: KNOB * P * A, knob: w(k.kx, k.ky) }; }
-  return null;
-}
 
 // Each station's paper backing (kit.js, `silhouette`), read off its idle
 // drawing once: the moving parts swing inside it, and what they carry is

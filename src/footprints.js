@@ -213,7 +213,7 @@ function podiumRects() {
   const [w, ph] = AFTER_REBEL_PILE_CELLS;
   return [rect(podiumMid() - half, afterFloor() - h, half * 2, h), rect(pileX(), afterFloor() - ph * AP, w * AP, ph * AP)];
 }
-// What a station takes up but its sign: its drawing (or the podium), and its
+// What a station takes up but its board's spot: its drawing (or the podium), and its
 // piles as high as the hand finds them, their counts over them.
 export function stationRects(key) {
   const b = stationBox(key);
@@ -224,7 +224,7 @@ export function stationRects(key) {
 }
 
 // The parts of a drawn station standing off its own ground: its drawing,
-// piles and sign each inside the ground after/art.js lays for it (`lead` to
+// piles and board's spot each inside the ground after/art.js lays for it (`lead` to
 // `ground`, off the reach and piles typed there), or the camp's layout,
 // which spaces the grounds and not the drawings, has put it on its
 // neighbor's floor. Each as `key: what` with the cells it runs over. The
@@ -236,7 +236,7 @@ export function offGround() {
   for (const key of Object.keys(DRAW)) {
     if (!ART[key] || !stationBox(key)) continue;
     const x0 = stationX0(key) + ART[key].lead * AP, x1 = stationX0(key) + ART[key].ground * AP;
-    const parts = [...stationRects(key).map(r => ['drawn', r]), ['sign', signBox(key)]];
+    const parts = [...stationRects(key).map(r => ['drawn', r]), ['board', signBox(key)]];
     for (const [what, r] of parts) {
       const over = Math.max(0, x0 - r.x, r.x + r.w - x1);
       if (over > 0) out.push(`${key}: ${what} ${over / AP} art cells past its ground`);
@@ -250,13 +250,13 @@ function afterParts() {
   if (!afterlifeOn() || !S.after) return out;
   const fl = afterFloor();
   // Every station of the camp, built or not: its ground is the camp's layout,
-  // laid out in the config before anything is raised. Its shop sign is an
-  // object of its own, so nothing the station draws may stand on it.
+  // laid out in the config before anything is raised. Its board's spot is
+  // claimed too, so nothing drawn stands where its board goes up.
   for (const key of Object.keys(ART)) {
     const rs = stationRects(key);
     if (!rs) continue;
     out.push({ id: key, rects: rs });
-    out.push({ id: `sign:${key}`, rects: [signBox(key)] });
+    out.push({ id: `board:${key}`, rects: [signBox(key)] });
   }
   // The grove at its fullest: every plot a big pine (the box the hand reads).
   const rows = pineRows(PINE_GROWN, true);

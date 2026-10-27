@@ -63,11 +63,11 @@ for (const [coin, rows] of Object.entries(AFTER_COIN_MARKS)) {
   document.documentElement.style.setProperty?.(`--${coin}-mark`,
     `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${rows[0].length}" height="${rows.length}" shape-rendering="crispEdges">${ink.join('')}</svg>`)}")`);
 }
-// Where you stand to open each board, and where the board goes up: the same
-// place, its sign where it has one, read off the table in stations.js. The
+// Where each board goes up: where you stand to open it, or beside it where
+// its row says (`boardAnchor`), read off the table in stations.js. The
 // house grows a room per body and the sheds move with the grounds, so a
 // rectangle is read live, never gathered.
-const anchor = which => { const s = station(which); return (s?.sign || s?.stand)?.(); };
+const anchor = which => { const s = station(which); return s?.boardAnchor?.() || s?.stand?.(); };
 const pageKeys = () => BOARDS;
 // Read inside a function, not gathered at load: the imports come round in a
 // ring, and a table built while the ring is still closing gets `undefined` for
@@ -256,8 +256,13 @@ function place(el, at) {
   const { w, h } = measured();
   // Centered over the station: the farm is a row as wide as its furrows, and a
   // board pinned to its left edge read as belonging to whatever was next along.
+  // A board anchored beside its station (`side`, stations.js `boardAnchor`)
+  // runs away from it off the anchor's near edge instead, so however wide it
+  // is it never covers the station.
   const mid = at.x + (at.w || 0) / 2;
-  const want = toScreen(mid, 0).x - w / 2;
+  const want = at.side === 'right' ? toScreen(at.x, 0).x
+             : at.side === 'left' ? toScreen(at.x + at.w, 0).x - w
+             : toScreen(mid, 0).x - w / 2;
   const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
 
   const stands = S.H - toScreen(0, at.y).y + P * 3;

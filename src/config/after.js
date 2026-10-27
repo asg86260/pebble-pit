@@ -195,17 +195,12 @@ export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0
 // speak from and the construction shack that sells every other.
 export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry'];
 // The camp's other stations stand whole from the start, closed until they are
-// built (the owner, 2026-10-20: "lets just add a closed sign in front of
-// them"): its shop sign is crossed through, symbols only, and its board
-// offers its rebuild, the shack's build row for it. The rebuild takes the
-// cross down a piece at a time, faded out as each piece of the build lands,
-// and the station works once it is built. The sign, in the act's art cells
-// (AP): a board `w` by `h` (the owner's pick of two, 2026-10-20), on a post
+// built: its board offers its rebuild, the shack's build row for it, and the
+// station works once it is built. The ground each station's board stands
+// over, beside it where its shop sign stood until 2026-10-27 (the station is
+// its own shop now), in the act's art cells (AP): `w` by `h` over a gap
 // `post` high, where after/art.js lays it.
 export const AFTER_SIGN_BOARD = CAMP_SIGN;
-// The shop's mark on an open station's sign, in the sign's stroke (the
-// owner, 2026-10-21: a dollar).
-export const AFTER_SIGN_MARK = ['..##..', '.#####', '##....', '.####.', '....##', '#####.', '..##..'];
 // A closed station reads as not open yet (the owner, 2026-10-20: "seeing
 // them in game doesnt read as closed"; the pick of three, an outline): a
 // dotted plan of the station on the grid, its board at the door, filled in a
@@ -567,10 +562,10 @@ export const AFTER_SLOT_GAP = P * 3;
 // cells: as drawn (render/after/pedestal.js, `drawRebelPile`), for the
 // pedestal's footprint (footprints.js).
 export const AFTER_REBEL_PILE_CELLS = [8, 2];
-// The pedestal's shop sign stands on the open floor between the workshops and
-// the union's crowd (after/place.js), in art cells: `shack` past the last
-// workshop's ground, which the shack's sign ends, so the two signs do not
-// read as a pair, and `crowd` short of the crowd's widest row (`unionHalf`).
+// The pedestal's board's spot (where its shop sign stood) is on the open
+// floor between the workshops and the union's crowd (after/place.js), in art
+// cells: `shack` past the last workshop's ground, which the shack's spot
+// ends, and `crowd` short of the crowd's widest row (`unionHalf`).
 export const AFTER_PEDESTAL_SIGN_GAP = { shack: 8, crowd: 3 };
 
 // track a3-piles

@@ -133,33 +133,9 @@ export const GESTURE_CUE_DOT = 2;
 export const GESTURE_CUE_LOOP_S = 1.4;
 export const GESTURE_CUE_TAP_S = 0.4;
 
-// --- act 3's hand work, shown in the world (DESIGN.md, "Act 3's hand work and
-// hand carrying", take B, the owner's vote 2026-10-20) ----------------------
-// The ghost of the motion: a dotted path round the part, a dot a game cell,
-// HANDWORK_DOTS of them, a cell of ink running along them HANDWORK_DOT_RUN
-// dots a second, the path HANDWORK_PATH_OUT outside the part's own reach;
-// one loop of the hand every HANDWORK_HINT_LOOP_S, pointing for the first
-// HANDWORK_HINT_POINT of it, then grabbing and playing the motion. It fades
-// over HANDWORK_HINT_S, out once the part is being worked and back once it
-// stands still: below HANDWORK_IDLE_SPEED of its cap it is not.
-export const HANDWORK_DOTS = 28;
-export const HANDWORK_DOT_RUN = 12;
-export const HANDWORK_PATH_OUT = P * 2;
-export const HANDWORK_HINT_LOOP_S = 2.6;
-export const HANDWORK_HINT_POINT = 0.3;
-export const HANDWORK_HINT_S = 0.4;
-export const HANDWORK_IDLE_SPEED = 0.05;
-// The hint's hand, the cue's own drawing (render/aftercues.js, HAND) at a
-// game cell a pixel, as the mock drew it.
-export const HANDWORK_HAND_DOT = P;
-
-// The strip under the station: HANDWORK_STRIP_DROP under the floor line,
-// HANDWORK_STRIP_H deep, its segments a game cell apart, on a paper rim; the
-// verb's tag under it, its type HANDWORK_TAG_PX, padded a cell. It fades over
-// HANDWORK_STRIP_S, and a finished unit holds full for HANDWORK_DONE_S.
-export const HANDWORK_STRIP_DROP = P * 2;
-export const HANDWORK_STRIP_H = P * 2;
-export const HANDWORK_TAG_PX = 18;
-export const HANDWORK_TAG_PAD = P;
-export const HANDWORK_STRIP_S = 0.3;
-export const HANDWORK_DONE_S = 0.8;
+// The same hand again while the pointer is over a part (DESIGN.md, "Act 3's
+// goods are blocks", rule 3): at GESTURE_CUE_HOVER of the cue's own ink, so it
+// reads as a reminder rather than the first lesson, faded in and out over
+// GESTURE_HOVER_S; gone the moment the part is taken hold of.
+export const GESTURE_CUE_HOVER = 0.6;
+export const GESTURE_HOVER_S = 0.4;

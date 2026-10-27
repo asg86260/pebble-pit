@@ -13,7 +13,7 @@
 // where the cell stands (no flat fills, no random draw, so it holds still
 // frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_CARRY_SHOWN, AFTER_SIGN_BOARD, AFTER_SIGN_MARK, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
+import { P, GREY, AFTER_CARRY_SHOWN, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_SIGN_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
@@ -22,13 +22,12 @@ import { ctx } from './ctx.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { buildPileAt, stationBox, signBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
+import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
 import { airMotes } from '../after/rebel.js';
 import { built, heapBrim } from '../after/levels.js';
 import { airSpills } from '../after/mill.js';
 import { atStation, bodyInk, carried as carryOf } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
-import { signUp } from '../after/stations.js';
 import { frame, now, inView, clamp01, pileState, pileAlpha, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
@@ -90,17 +89,17 @@ export function drawAfterSky() {
 export function drawAfterGrove() { if (A()) drawGrove(); }
 
 // --- the camp ------------------------------------------------------------------------
-// Whether a station is working now, and how far through its unit: a member at
-// its door with the work coming (its clock held full means its input is
-// short), or the hand's last unit within AFTER_ART_WORK_S.
+// Whether a station is working now: a member at its door with the work
+// coming (its clock held full means its input is short), or the hand's last
+// unit within AFTER_ART_WORK_S. The material shows how far along it is
+// (DESIGN.md, "Act 3's goods are blocks", rule 3), so nothing hangs over it.
 const PERIOD = { mill: AFTER_SAW_S, workshop: AFTER_SIGN_S };
 function working(key) {
   const a = A();
   const w = atStation(key)[0];
-  if (w && PERIOD[key] && w.t < PERIOD[key]) return { work: true, at: w.t / PERIOD[key], ink: 1 };
-  const h = a.workAt[key], since = h == null ? Infinity : a.t - h;
-  if (since < AFTER_ART_WORK_S) return { work: true, at: since / AFTER_ART_WORK_S, ink: clamp01(Math.min(since, AFTER_ART_WORK_S - since) / AFTER_PILE_FADE_S) };
-  return { work: false, at: 0, ink: 0 };
+  if (w && PERIOD[key] && w.t < PERIOD[key]) return { work: true };
+  const h = a.workAt[key];
+  return { work: h != null && a.t - h < AFTER_ART_WORK_S };
 }
 const frameOf = key => frame(stationX0(key), groundOf(key), ART[key].flip || 0, null, AFTER_ART_SCALE);
 // The hand's motion at each station this frame (after/gestures.js), by key.
@@ -122,49 +121,17 @@ function drawSite(key) {
   const t = now(), d = frame(0, groundOf(key), 0, null, AFTER_ART_SCALE);
   buildPile(d, buildPileAt(key) / AP, i => ramp(t, r.drop[i], AFTER_BUILD_DROP_S) * (1 - ramp(t, r.pick[i], AFTER_PILE_FADE_S)));
 }
-// The glyph over a station, `at` of it built, faded in and out at the ends
-// of its window: hung where the yard hangs one, seven cells over the top.
-function glyphOver(b, rows, at, alpha = 1) {
-  if (!rows || alpha <= 0) return;
-  const was = ctx.globalAlpha;
-  ctx.globalAlpha = was * alpha;
+// The glyph over a station, `at` of it built: hung where the yard hangs one,
+// seven cells over the top.
+function glyphOver(b, rows, at) {
+  if (!rows) return;
   buildingGlyph(snap(b.x + b.w / 2), b.y - P * 7 - (SHELF_GLYPH_CELLS / 2 - 1.5) * P, rows, clamp01(at));
-  ctx.globalAlpha = was;
 }
 // How far a station's build has taken its closed look down, 0 to 1: each
 // piece landed, faded in over AFTER_BUILD_FADE_S, its share.
 const openedBy = r => (r ? r.at.slice(0, r.n).reduce((s, at) => s + fadeIn(at), 0) / AFTER_BUILD_PIECES : 0);
 const openedOf = key => { const r = A().raising[key]; return built(key) ? (r ? openedBy(r) : 1) : openedBy(r); };
 const alphaDo = (a, fn) => { if (a <= 0) return; const was = ctx.globalAlpha; ctx.globalAlpha = was * Math.min(1, a); fn(); ctx.globalAlpha = was; };
-// A station's shop sign (place.js, `signBox`), its foot on the floor: a board
-// on a post, symbols only, drawn on the act's art cell (AP) with its rim the
-// art's stroke and everything on it laid on the rim's grid. Closed, crossed
-// through corner to corner, the cross fading off as its build lands and the
-// shop's mark (config, AFTER_SIGN_MARK) on; with its board up, in ink, the
-// mark cut out of it.
-function shopSign(key) {
-  const C = AFTER_SIGN_BOARD, b = signBox(key), r = 2 * AFTER_ART_SCALE, opened = openedOf(key);
-  if (!inView(b.x, b.w)) return;
-  const w = b.w, h = C.h * AP, x0 = b.x, top = b.y, up = signUp(key);
-  ctx.fillStyle = GREY[K];
-  ctx.fillRect(x0 + w / 2 - r, top + h, 2 * r, C.post * AP);
-  ctx.fillRect(x0, top, w, h);
-  ctx.fillStyle = GREY[up ? K : W];
-  ctx.fillRect(x0 + r, top + r, w - 2 * r, h - 2 * r);
-  ctx.fillStyle = GREY[up ? W : K];
-  // the cross, a stroke two rims thick laid in steps of a rim
-  alphaDo(1 - opened, () => {
-    const cx = x0 + 2 * r, cy = top + 2 * r, cw = w - 4 * r, ch = h - 4 * r, s = 2 * r, n = Math.round((cw - s) / r) + 1;
-    for (let i = 0; i < n; i++) {
-      const y = cy + Math.round((ch - s) * i / (n - 1) / r) * r;
-      ctx.fillRect(cx + i * r, y, s, s); ctx.fillRect(cx + cw - s - i * r, y, s, s);
-    }
-  });
-  alphaDo(opened, () => {
-    const M = AFTER_SIGN_MARK, mx = x0 + Math.round((w - M[0].length * r) / 2 / r) * r, my = top + Math.round((h - M.length * r) / 2 / r) * r;
-    M.forEach((row, j) => [...row].forEach((c, i) => { if (c === '#') ctx.fillRect(mx + i * r, my + j * r, r, r); }));
-  });
-}
 // Its outline: the drawing's own cells (its silhouette) at its edge, every
 // other one, in the mid grey: a plan of what will stand.
 const OUTLINES = {};
@@ -210,9 +177,7 @@ function drawStation(key) {
     if (!built(key)) { if (r) drawSite(key); return; }
     return;
   }
-  const s = working(key);
-  draw(frameOf(key), s.work, a.t);
-  if (s.work) glyphOver(b, GLYPHS[key], s.at, s.ink);
+  draw(frameOf(key), working(key).work, a.t);
 }
 // The shack, ordering: the glyph of the station going up filling over it a
 // piece at a time, each fading in as it lands.
@@ -280,7 +245,7 @@ export function drawAfterCamp() {
   drawFloor();
   drawUnionCrowd();
   // the forestry shack, the grove's, then the cards' stations
-  for (const key of Object.keys(AFTER_STATIONS)) { drawStation(key); shopSign(key); }
+  for (const key of Object.keys(AFTER_STATIONS)) drawStation(key);
   drawShackOrder();
   if (built('mill')) drawSawdust();
   drawLaidGoods(a.t);
