@@ -21060,7 +21060,7 @@ a hand for good.
   ladder. So faith stays the coin the player is always short of, from the
   first cloud to the strike.
 
-##### The chain: trees to signs and posters
+##### The chain: trees to signs and posters (the paper mill, the press, posters and the chipper built, then cut 2026-10-26)
 
 | station | job | takes | gives | by-product |
 |---|---|---|---|---|
