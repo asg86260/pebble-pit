@@ -115,9 +115,10 @@ for (const id of PARTY_IDS) {
 // yard's builders on its ground (`stand`) unless it says otherwise
 // (`builtBy`). A row with a `pile` has a pile that can fill: the mark over it
 // and its hover come from that. A row with a `boardAnchor` says where its
-// board stands, a rectangle read live as `stand` is: beside the station
-// rather than over it, where the board would hide the parts a hand works
-// (act 3's stations, after/stations.js); without one, the board stands on
+// board stands, a rectangle read live as `stand` is, with the `side` the
+// board runs out to from it ('right' or 'left'): beside the station rather
+// than over it, where the board would hide the parts a hand works (act 3's
+// stations, after/stations.js); without one, the board stands centered over
 // its ground. So a new place is one row, and every system
 // that shows or staffs a place reads it off here.
 //

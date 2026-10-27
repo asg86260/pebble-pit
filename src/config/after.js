@@ -562,10 +562,10 @@ export const AFTER_SLOT_GAP = P * 3;
 // cells: as drawn (render/after/pedestal.js, `drawRebelPile`), for the
 // pedestal's footprint (footprints.js).
 export const AFTER_REBEL_PILE_CELLS = [8, 2];
-// The pedestal's shop sign stands on the open floor between the workshops and
-// the union's crowd (after/place.js), in art cells: `shack` past the last
-// workshop's ground, which the shack's sign ends, so the two signs do not
-// read as a pair, and `crowd` short of the crowd's widest row (`unionHalf`).
+// The pedestal's board's spot (where its shop sign stood) is on the open
+// floor between the workshops and the union's crowd (after/place.js), in art
+// cells: `shack` past the last workshop's ground, which the shack's spot
+// ends, and `crowd` short of the crowd's widest row (`unionHalf`).
 export const AFTER_PEDESTAL_SIGN_GAP = { shack: 8, crowd: 3 };
 
 // track a3-piles

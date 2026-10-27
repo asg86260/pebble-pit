@@ -74,8 +74,13 @@ const row = (card, more) => {
     // its hit box is its ground, never padded past it
     reach: { left: 0, right: 0, up: 0, down: 0 },
     stand: () => stationBox(ground(card)),
-    // beside it: over the station it would hide the parts the hand works
-    boardAnchor: () => signBoard(ground(card)),
+    // beside it: over the station it would hide the parts the hand works.
+    // It runs away from the station on whichever side its spot stands (the
+    // pedestal's is on its left, every other's on its right).
+    boardAnchor: () => {
+      const a = signBoard(ground(card)), s = stationBox(ground(card));
+      return a && s && { ...a, side: a.x + a.w / 2 >= s.x + s.w / 2 ? 'right' : 'left' };
+    },
     ...more
   };
 };

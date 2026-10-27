@@ -256,8 +256,13 @@ function place(el, at) {
   const { w, h } = measured();
   // Centered over the station: the farm is a row as wide as its furrows, and a
   // board pinned to its left edge read as belonging to whatever was next along.
+  // A board anchored beside its station (`side`, stations.js `boardAnchor`)
+  // runs away from it off the anchor's near edge instead, so however wide it
+  // is it never covers the station.
   const mid = at.x + (at.w || 0) / 2;
-  const want = toScreen(mid, 0).x - w / 2;
+  const want = at.side === 'right' ? toScreen(at.x, 0).x
+             : at.side === 'left' ? toScreen(at.x + at.w, 0).x - w
+             : toScreen(mid, 0).x - w / 2;
   const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
 
   const stands = S.H - toScreen(0, at.y).y + P * 3;

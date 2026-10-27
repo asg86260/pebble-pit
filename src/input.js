@@ -215,8 +215,10 @@ canvas.addEventListener('pointerdown', e => {
     // press on a button never a swing at what stands behind it.
     if (rosterHit(p.x, p.y)) return;
     if (S.view === 'after' && gestureDown(p.x, p.y)) {
-      // taking hold of the work shuts the shop, pointer or finger alike
+      // taking hold of the work shuts the shop, pointer or finger alike, and
+      // nothing is said while it is worked (the moves go to the work)
       showPanel(null, true);
+      showTipAt(null);
       if (gestureHeld()) try { canvas.setPointerCapture(e.pointerId); } catch {}
       return;
     }
