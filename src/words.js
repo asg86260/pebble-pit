@@ -52,7 +52,6 @@ export const MARK = {
   // yard's on the camp's bills.
   rebel: '<i class="rebel"></i>',
   timber: '<i class="timber"></i>',
-  paper: '<i class="paper"></i>',
   time: '<i class="clock"></i>'
 };
 
@@ -67,9 +66,9 @@ export const purse = money =>
   money === 'scale' ? S.scales :
   // Hell's, off its store and its anvil (hell/coins.js).
   isHellCoin(money) ? hellPurse(money) :
-  // Act 3's: rebel on the act, timber and paper the chain's stock.
+  // Act 3's: rebel on the act, timber the chain's stock.
   money === 'rebel' ? (S.after ? S.after.rebel : 0) :
-  money === 'timber' || money === 'paper' ? (S.after ? S.after.stock[money] || 0 : 0) :
+  money === 'timber' ? (S.after ? S.after.stock.timber || 0 : 0) :
   S.stored;
 
 // What a unit is *drawn* as, for the units the yard has a coin for. A unit not

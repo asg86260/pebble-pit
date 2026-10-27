@@ -1,5 +1,5 @@
 // The grove: heaven's trees (DESIGN.md, "Acts 3 and 4", act 3, "The chain:
-// trees to signs and posters", the grove; call 10, settled 2026-10-18).
+// trees to signs", the grove; call 10, settled 2026-10-18).
 // Placeholder drawing.
 //
 // The grove starts at one plot with a grown tree in it, and its card clears

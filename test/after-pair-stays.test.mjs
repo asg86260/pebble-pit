@@ -38,7 +38,7 @@ group('an owner who buys early: every member put on a job, the stations still ra
   window.__actsAt('fallen');
   window.__goPlace('after');
   const ROWS = ['after-axe', 'after-seat-sawyer', 'after-seat-woodcutter', 'after-seat-joiner',
-                'after-build-mill', 'after-build-chipper', 'after-build-workshop'];
+                'after-build-mill', 'after-build-workshop'];
   const JOBS = ['sawyer', 'woodcutter', 'joiner'];
   const idle = () => S.after.camp + S.after.bodies.filter(b => b.job == null && b.state === 'work' && b.pair == null).length;
   const s = share(run);
@@ -47,7 +47,7 @@ group('an owner who buys early: every member put on a job, the stations still ra
     // The coins are the setup this check is not about; the yard's topped up
     // a half minute at a time, since every grant lays its coins in the hole.
     if (t % 30 === 0) window.__grant({ dust: 5e5, spores: 2e5, shards: 2e5, scales: 2e4, sparks: 2e4 });
-    window.__afterGrant({ rebel: 2000, timber: 200, paper: 100 });
+    window.__afterGrant({ rebel: 2000, timber: 200 });
     // Every member put on a job the moment one is idle, a seat bought
     // whenever a job's are full.
     for (const j of JOBS) window.__afterPress(j);
@@ -57,7 +57,7 @@ group('an owner who buys early: every member put on a job, the stations still ra
     }
     s.tick(0.5);
   }
-  const raised = ['mill', 'chipper'].filter(k => S.after.built.includes(k));
+  const raised = ['mill', 'workshop'].filter(k => S.after.built.includes(k));
   window.__actsOn(null);
   return [
     ok(emptied, 'a station is ordered with nobody idle'),

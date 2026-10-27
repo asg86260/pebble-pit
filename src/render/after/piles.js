@@ -66,26 +66,7 @@ export function heap(d, cx, R, st, n, tipped = false, pal = DUST, key = st.key) 
   }
   count(d, n, cx + 0.5, -1 - top, key);
 }
-// Paper: a white stack, a sheet three pixels, every other one ruled pale;
-// posters the same with the top one's print showing.
-export function sheetPile(d, x, st, cap = 6, print = false) {
-  const m = Math.min(Math.max(st.n, st.prev), cap), w = 4 * P;
-  for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => {
-    const y = -2 - (i + 1) * 3;
-    d.px(x * P, y, w, 3, K); d.px(x * P + 2, y, w - 4, 2, i === m - 1 || i % 2 ? W : PALE);
-  });
-  const shown = Math.min(st.n, cap), topY = -2 - shown * 3;
-  if (print && shown > 0) {
-    d.fade(pileAlpha(shown - 1, st), () => {
-      const y = topY - 4 * P + 3;
-      d.px(x * P, y, w, 4 * P, K); d.px(x * P + 2, y + 2, w - 4, 4 * P - 4, W);
-      d.px(x * P + 5, y + 5, w - 10, 7, K);
-      d.px(x * P + 5, y + 15, w - 10, 2, K); d.px(x * P + 5, y + 19, w - 14, 2, K);
-    });
-  }
-  const top = print && shown > 0 ? topY - 4 * P : topY;
-  count(d, st.n, x + 2, top / P, st.key);
-}
+
 // Signs: a board on a post, stood in a row.
 export function sign(d, x, y) {
   d.r(x, y, 4, 3, K); d.px(x * P + 2, y * P + 2, 4 * P - 4, 3 * P - 4, W);

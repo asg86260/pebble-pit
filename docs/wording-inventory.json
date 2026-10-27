@@ -5827,7 +5827,7 @@
   "id": "hover-pile-logs",
   "group": "Hover",
   "where": "src/input.js",
-  "context": "the hover over a counted pile in act 3 (the logs of the saw mill, chipper and grove)",
+  "context": "the hover over a counted pile in act 3 (the logs of the saw mill and grove)",
   "text": "log pile"
  },
  {
@@ -5838,25 +5838,11 @@
   "text": "plank pile"
  },
  {
-  "id": "hover-pile-sheets",
-  "group": "Hover",
-  "where": "src/input.js",
-  "context": "the hover over a counted pile in act 3 (the paper mill's sheets)",
-  "text": "sheet pile"
- },
- {
   "id": "hover-pile-signs",
   "group": "Hover",
   "where": "src/input.js",
   "context": "the hover over a counted pile in act 3 (the workshop's signs)",
   "text": "sign pile"
- },
- {
-  "id": "hover-pile-posters",
-  "group": "Hover",
-  "where": "src/input.js",
-  "context": "the hover over a counted pile in act 3 (the press's posters)",
-  "text": "poster pile"
  },
  {
   "id": "hover-log",
@@ -5873,13 +5859,6 @@
   "text": "plank"
  },
  {
-  "id": "hover-sheet",
-  "group": "Hover",
-  "where": "src/input.js",
-  "context": "the hover over a sheet of paper in the hand's reach in act 3, lying on the floor",
-  "text": "sheet"
- },
- {
   "id": "hover-sign",
   "group": "Hover",
   "where": "src/input.js",
@@ -5890,7 +5869,7 @@
   "id": "hover-heap",
   "group": "Hover",
   "where": "src/after/stations.js",
-  "context": "the hover over the sawdust heap under the chipper",
+  "context": "the hover over the sawdust heap on the saw mill's ground",
   "text": "sawdust heap"
  },
  {
@@ -8155,48 +8134,6 @@
   "text": "bigger sign"
  },
  {
-  "id": "after-row-vat",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the paper mill's bigger vat, more paper a batch",
-  "text": "bigger vat"
- },
- {
-  "id": "after-row-dry",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the paper mill's drying line, a second sheet at once",
-  "text": "drying line"
- },
- {
-  "id": "after-row-drum",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the chipper's second drum, two logs a feed",
-  "text": "second drum"
- },
- {
-  "id": "after-row-spout",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the chipper's wider spout, more sawdust a log",
-  "text": "wider spout"
- },
- {
-  "id": "after-row-stack",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the press's bigger stack, more posters a stack",
-  "text": "bigger stack"
- },
- {
-  "id": "after-row-posterreach",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the press's bigger poster, a further reach",
-  "text": "bigger poster"
- },
- {
   "id": "after-row-seat",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
@@ -8232,34 +8169,6 @@
   "text": "fetches logs from the forestry shack and saws them into timber and sawdust"
  },
  {
-  "id": "after-job-feeder",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): a post for a feeder at the chipper, held by a member from the camp",
-  "text": "feeder"
- },
- {
-  "id": "after-job-feeder.says",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/roster.js",
-  "context": "act 3 card row (placeholder): a post for a feeder at the chipper, held by a member from the camp",
-  "text": "fetches logs from the forestry shack and chips them into sawdust"
- },
- {
-  "id": "after-job-pulper",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 job name (placeholder): a pulper, named on its seat row",
-  "text": "pulper"
- },
- {
-  "id": "after-job-pulper.says",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/roster.js",
-  "context": "act 3 job name (placeholder): a pulper, named on its seat row",
-  "text": "pulps sawdust into paper"
- },
- {
   "id": "after-job-joiner",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
@@ -8272,20 +8181,6 @@
   "where": "src/after/roster.js",
   "context": "act 3 job name (placeholder): a joiner, named on its seat row",
   "text": "nails timber into signs and plants them in God's crowd"
- },
- {
-  "id": "after-job-printer",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 job name (placeholder): a printer, named on its seat row",
-  "text": "printer"
- },
- {
-  "id": "after-job-printer.says",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/roster.js",
-  "context": "act 3 job name (placeholder): a printer, named on its seat row",
-  "text": "prints posters on paper and pastes them on the fence"
  },
  {
   "id": "after-roster-tip",
@@ -8313,14 +8208,7 @@
   "group": "Act 4 (placeholder)",
   "where": "src/after/stations.js",
   "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
-  "text": "the sawdust heap is full: build the paper mill"
- },
- {
-  "id": "after-stall-sawdust",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/roster.js",
-  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
-  "text": "waiting on sawdust"
+  "text": "the sawdust heap is full"
  },
  {
   "id": "after-stall-timber",
@@ -8330,32 +8218,11 @@
   "text": "waiting on timber"
  },
  {
-  "id": "after-stall-paper",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/roster.js",
-  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
-  "text": "waiting on paper"
- },
- {
-  "id": "after-stall-fence",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/roster.js",
-  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
-  "text": "the fence is full"
- },
- {
   "id": "after-build-mill",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
   "context": "act 3 shack row (placeholder): build the saw mill",
   "text": "saw mill"
- },
- {
-  "id": "after-build-chipper",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 shack row (placeholder): build the chipper",
-  "text": "chipper"
  },
  {
   "id": "after-build-workshop",
@@ -8365,39 +8232,11 @@
   "text": "workshop"
  },
  {
-  "id": "after-build-papermill",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 shack row (placeholder): build the paper mill",
-  "text": "paper mill"
- },
- {
-  "id": "after-build-press",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 shack row (placeholder): build the press",
-  "text": "press"
- },
- {
   "id": "after-wait-mill",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
   "context": "act 3 shack row's wait (placeholder): the saw mill must stand first",
   "text": "needs the saw mill"
- },
- {
-  "id": "after-wait-sawdust",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 shack row's wait (placeholder): the saw mill or the chipper must stand first",
-  "text": "needs the saw mill or the chipper"
- },
- {
-  "id": "after-wait-papermill",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 shack row's wait (placeholder): the paper mill must stand first",
-  "text": "needs the paper mill"
  },
  {
   "id": "after-wait-support",
@@ -8552,33 +8391,5 @@
   "where": "src/render/aftercues.js",
   "context": "act 3 hand work (placeholder): the tag under the saw mill while its wheel is worked",
   "text": "spin"
- },
- {
-  "id": "handwork-drag",
-  "group": "Act 3 boards (track C, placeholder)",
-  "where": "src/render/aftercues.js",
-  "context": "act 3 hand work (placeholder): the tag under the chipper before a log is in its jaws",
-  "text": "drag"
- },
- {
-  "id": "handwork-hold",
-  "group": "Act 3 boards (track C, placeholder)",
-  "where": "src/render/aftercues.js",
-  "context": "act 3 hand work (placeholder): the tag under the chipper while its arm is to be held down",
-  "text": "hold"
- },
- {
-  "id": "handwork-stir",
-  "group": "Act 3 boards (track C, placeholder)",
-  "where": "src/render/aftercues.js",
-  "context": "act 3 hand work (placeholder): the tag under the paper mill while its vat is stirred",
-  "text": "stir"
- },
- {
-  "id": "handwork-pull",
-  "group": "Act 3 boards (track C, placeholder)",
-  "where": "src/render/aftercues.js",
-  "context": "act 3 hand work (placeholder): the tag under the press while its bar is pulled",
-  "text": "pull"
  }
 ]

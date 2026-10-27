@@ -7,12 +7,12 @@
 
 import { S } from '../state.js';
 import { built } from './levels.js';
-import { sawLog, chipLog, pulpSheet } from './mill.js';
-import { joinSign, printStack } from './press.js';
+import { sawLog } from './mill.js';
+import { joinSign } from './press.js';
 import { shout } from './rebel.js';
 
 // Each station's one unit of work: true if it made something.
-const WORK = { mill: sawLog, chipper: chipLog, papermill: pulpSheet, workshop: joinSign, press: printStack };
+const WORK = { mill: sawLog, workshop: joinSign };
 export const WORKED = Object.keys(WORK);
 // The pedestal is worked by the hand alone (a bubble popped, gestures.js), a
 // line of the pair's speech a unit, its rebel let go from the bubble: not a

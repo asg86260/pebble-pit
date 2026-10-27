@@ -370,7 +370,7 @@ export const TESTS = [
     window.__goPlace('after');
     window.__fast(1);
     window.__grant({ dust: 5e6, spores: 2e6, shards: 2e6, scales: 2e5, sparks: 2e5 });
-    window.__afterGrant({ rebel: 1e5, timber: 1e4, paper: 1e4 });
+    window.__afterGrant({ rebel: 1e5, timber: 1e4 });
     await settle(0.3);
     out.push(ok(S.view === 'after', 'afterlife: the camera is up there', S.view));
     out.push(...await panChecks('afterlife'));

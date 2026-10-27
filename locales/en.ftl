@@ -2702,20 +2702,14 @@ hover-delver = delver
 # the hover over a member of act 3 with no job: the idle at the podium or in the crowd
 hover-member = member
 
-# the hover over a counted pile in act 3 (the logs of the saw mill, chipper and grove)
+# the hover over a counted pile in act 3 (the logs of the saw mill and grove)
 hover-pile-logs = log pile
 
 # the hover over a counted pile in act 3 (the timber at the saw mill)
 hover-pile-planks = plank pile
 
-# the hover over a counted pile in act 3 (the paper mill's sheets)
-hover-pile-sheets = sheet pile
-
 # the hover over a counted pile in act 3 (the workshop's signs)
 hover-pile-signs = sign pile
-
-# the hover over a counted pile in act 3 (the press's posters)
-hover-pile-posters = poster pile
 
 # the hover over a log in the hand's reach in act 3, lying on the floor
 hover-log = log
@@ -2723,13 +2717,10 @@ hover-log = log
 # the hover over a plank in the hand's reach in act 3, lying on the floor
 hover-plank = plank
 
-# the hover over a sheet of paper in the hand's reach in act 3, lying on the floor
-hover-sheet = sheet
-
 # the hover over a sign in the hand's reach in act 3, lying on the floor
 hover-sign = sign
 
-# the hover over the sawdust heap under the chipper
+# the hover over the sawdust heap on the saw mill's ground
 hover-heap = sawdust heap
 
 # the hover over the portal, from the deep
@@ -3547,24 +3538,6 @@ after-row-bench = second bench
 # act 3 card row (placeholder): the workshop's bigger sign, a further reach
 after-row-signreach = bigger sign
 
-# act 3 card row (placeholder): the paper mill's bigger vat, more paper a batch
-after-row-vat = bigger vat
-
-# act 3 card row (placeholder): the paper mill's drying line, a second sheet at once
-after-row-dry = drying line
-
-# act 3 card row (placeholder): the chipper's second drum, two logs a feed
-after-row-drum = second drum
-
-# act 3 card row (placeholder): the chipper's wider spout, more sawdust a log
-after-row-spout = wider spout
-
-# act 3 card row (placeholder): the press's bigger stack, more posters a stack
-after-row-stack = bigger stack
-
-# act 3 card row (placeholder): the press's bigger poster, a further reach
-after-row-posterreach = bigger poster
-
 # act 3 card row (placeholder): one more seat for a job at its station, the job named
 after-row-seat = { $job } seat
 
@@ -3576,21 +3549,9 @@ after-job-woodcutter = woodcutter
 after-job-sawyer = sawyer
     .says = fetches logs from the forestry shack and saws them into timber and sawdust
 
-# act 3 card row (placeholder): a post for a feeder at the chipper, held by a member from the camp
-after-job-feeder = feeder
-    .says = fetches logs from the forestry shack and chips them into sawdust
-
-# act 3 job name (placeholder): a pulper, named on its seat row
-after-job-pulper = pulper
-    .says = pulps sawdust into paper
-
 # act 3 job name (placeholder): a joiner, named on its seat row
 after-job-joiner = joiner
     .says = nails timber into signs and plants them in God's crowd
-
-# act 3 job name (placeholder): a printer, named on its seat row
-after-job-printer = printer
-    .says = prints posters on paper and pastes them on the fence
 
 # act 3 roster hover (placeholder): a job's name and what it does, or why it is standing still
 after-roster-tip = { $job }: { $line }
@@ -3602,43 +3563,19 @@ after-stall-trees = waiting on a tree to grow
 after-stall-logs = waiting on logs
 
 # act 3 roster hover (placeholder): why a station's worker is standing still
-after-stall-heap = the sawdust heap is full: build the paper mill
-
-# act 3 roster hover (placeholder): why a station's worker is standing still
-after-stall-sawdust = waiting on sawdust
+after-stall-heap = the sawdust heap is full
 
 # act 3 roster hover (placeholder): why a station's worker is standing still
 after-stall-timber = waiting on timber
 
-# act 3 roster hover (placeholder): why a station's worker is standing still
-after-stall-paper = waiting on paper
-
-# act 3 roster hover (placeholder): why a station's worker is standing still
-after-stall-fence = the fence is full
-
 # act 3 shack row (placeholder): build the saw mill
 after-build-mill = saw mill
-
-# act 3 shack row (placeholder): build the chipper
-after-build-chipper = chipper
 
 # act 3 shack row (placeholder): build the workshop
 after-build-workshop = workshop
 
-# act 3 shack row (placeholder): build the paper mill
-after-build-papermill = paper mill
-
-# act 3 shack row (placeholder): build the press
-after-build-press = press
-
 # act 3 shack row's wait (placeholder): the saw mill must stand first
 after-wait-mill = needs the saw mill
-
-# act 3 shack row's wait (placeholder): the saw mill or the chipper must stand first
-after-wait-sawdust = needs the saw mill or the chipper
-
-# act 3 shack row's wait (placeholder): the paper mill must stand first
-after-wait-papermill = needs the paper mill
 
 # act 3 podium row's wait (placeholder): the union's support must reach the rung's mark, a share of the strike's
 after-wait-support = needs { $share }% support
@@ -3707,15 +3644,3 @@ after-crowd-none = none due
 
 # act 3 hand work (placeholder): the tag under the saw mill while its wheel is worked
 handwork-spin = spin
-
-# act 3 hand work (placeholder): the tag under the chipper before a log is in its jaws
-handwork-drag = drag
-
-# act 3 hand work (placeholder): the tag under the chipper while its arm is to be held down
-handwork-hold = hold
-
-# act 3 hand work (placeholder): the tag under the paper mill while its vat is stirred
-handwork-stir = stir
-
-# act 3 hand work (placeholder): the tag under the press while its bar is pulled
-handwork-pull = pull

@@ -82,7 +82,7 @@ export const SKY_WON = { lift: 6, orbit: 24, step: 2, drift: 80, top: 0.2, down:
 export const SIGN_FADE_S = 0.6;
 
 // --- the crowd's life: the rings ----------------------------------------------------------
-// A rally: a sign or poster lifts a cell and a ring runs out from it through
+// A rally: a sign lifts a cell and a ring runs out from it through
 // the crowd, lifting the squares it passes. Its width and jump scale by the
 // band's parallax rate.
 export const SKY_RALLY = { every: [6, 9], speed: 320, life: 8, lift: 1.2 };
@@ -157,10 +157,7 @@ export const AFTER_BURN_S = 4;
 // flag cells at most.
 export const SKY_FLAG = { w: 13, h: 11, x: 2, y: 1, up: 3, phases: 12, amp: 0.6,
   fist: ['..X.X.X..', '.XXXXXXX.', 'XXXXXXXXX', 'XXXXXXXXX', 'XXXXXXXX.', '.XXXXXX..', '..XXXX...', '..XXXX...', '..XXXX...'] };
-// A poster on the fence at the crowd's front: the flag turned, a paper sheet
-// `w` by `h` sky cells with the fist in ink on it, flat, on a pole down to
-// the bank, its foot `up` cells over the near plane's top.
-export const SKY_POSTER = { w: 11, h: 13, x: 1, y: 2, up: 2 };
+
 // A sign's aura: a faint disc of the union's ink, `r` of the flag's width
 // across the half and `pad` cells more, breathing a cell every `breath`
 // ticks, at `disc` opacity (`discDark` on the dark page), and a ring of ink

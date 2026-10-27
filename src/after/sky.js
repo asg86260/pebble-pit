@@ -164,7 +164,7 @@ export const campX0 = r => campMid(afterOpenX(), r);
 export const godMid = cx => campMid(cx, GOD_RATE);
 // A soul of the sim's field (file `f`, rank `r`, either fractional) as a spot
 // on the top: its file across the top, its rank from the front row back,
-// kept off the edge and out of the throne's foot. Signs, posters and the
+// kept off the edge and out of the throne's foot. Signs and the
 // bodies among them stand there.
 export function stageSpot(f, r) {
   const st = stage(), m = GOD_CROWD.margin * st.mx;

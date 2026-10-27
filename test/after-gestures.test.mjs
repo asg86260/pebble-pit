@@ -13,13 +13,13 @@
 // so the reload harness is kept out: `{ reload: false }`.
 import { group, ok, run, yard, P } from './helpers.mjs';
 import { AFTER_PODIUM_REBEL, AFTER_TIP_LOAD, AFTER_DIG_CLICKS, TREE_CHOPS, GESTURE_BUBBLE_CRIT, GESTURE_CUE_USES,
-         GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_STRAIN_S, GESTURE_ARM_POSES, GESTURE_ARM_SPRING_S,
-         GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS, AFTER_CHIP_SAWDUST } from '../src/config.js';
+         GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_STRAIN_S,
+         GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, gestureView, gestureHover, partsOf, useBubbles, groveIcons } from '../src/after/gestures.js';
 import { stationBox, signBoard } from '../src/after/place.js';
 import { HANDWORK_HINT_S } from '../src/config.js';
 import { godMid, faceY } from '../src/after/sky.js';
-import { FRAME, frame, click, asks, timeTo, sawOn, saw, lift, spin, feedLog, pullArm, nailSign, pullBar } from './after-hands.mjs';
+import { FRAME, frame, click, asks, timeTo, sawOn, saw, lift, spin, nailSign } from './after-hands.mjs';
 
 const S = yard.S;
 const read = () => window.__afterRead();
@@ -48,40 +48,6 @@ group('the saw mill: its flywheel spun faster where it stands cuts a log sooner,
     ok(fast < slow, 'spun four times as fast, the log is cut sooner', `${slow.toFixed(2)} s -> ${fast.toFixed(2)} s`),
     ok(Number.isFinite(slow), 'spun slowly it is still cut', `${slow}`),
     ok(Math.abs(past - fast) < 0.5, 'past the wheel\'s cap, no sooner', `${fast.toFixed(2)} s at the cap, ${past.toFixed(2)} s past it`)
-  ];
-}, NO_RELOAD);
-
-group('the paper mill: its vat stirred faster fills the batch sooner', async () => {
-  const trial = rev => { up(['mill', 'papermill'], { sawdust: 10 }); const p0 = read().paper; return spin('papermill', rev, () => read().paper > p0, 40); };
-  const slow = trial(0.4), fast = trial(1.2);
-  window.__actsOn(null);
-  return [ok(fast < slow && Number.isFinite(slow), 'stirred three times as fast, the sheet comes sooner', `${slow.toFixed(2)} s -> ${fast.toFixed(2)} s`)];
-}, NO_RELOAD);
-
-group('the chipper: a log dragged into the jaws, then the arm pulled down and held, chips it; let go, the arm springs back a pose at a time', async () => {
-  up(['chipper'], { chiplogs: 3 });
-  const d0 = read().sawdust;
-  // The arm pulled with nothing in the jaws chips nothing.
-  pullArm(6);
-  const empty = read().sawdust === d0;
-  const laid = feedLog() && rec('chipper').log === 'in';
-  // Pulled, then let go at once: the arm comes back up in held steps and the jaws stop.
-  const a = mid(partsOf('chipper').arm);
-  gestureDown(a.x, a.y); gestureMove(a.x, a.y + 200); frame(); gestureUp(a.x, a.y + 200);
-  const poses = new Set();
-  for (let f = 0; f < 30; f++) { frame(); poses.add(Math.round(rec('chipper').k * (GESTURE_ARM_POSES - 1))); }
-  const sprang = rec('chipper').k === 0 && poses.size >= GESTURE_ARM_POSES - 1;
-  const stopped = read().sawdust === d0;
-  // Held down: a steady feed, and the log goes through.
-  pullArm(6);
-  const chipped = read().sawdust - d0;
-  window.__actsOn(null);
-  return [
-    ok(empty, 'the arm pulled with no log in the jaws chips nothing'),
-    ok(laid, 'a log dragged off the pile into the jaws is laid in them'),
-    ok(sprang, 'let go, the arm springs back up a held pose at a time', [...poses].join(' ')),
-    ok(stopped, 'and the jaws stop: nothing chipped'),
-    ok(chipped === AFTER_CHIP_SAWDUST, 'pulled down and held, the log is chipped', `${chipped} sawdust`)
   ];
 }, NO_RELOAD);
 
@@ -116,20 +82,6 @@ group('the workshop: four nails a sign, two taps each; a miss does nothing; the 
     ok(one === 1, 'four nails flush: a sign', `${one}`),
     ok(Number.isFinite(joined) && joined > GESTURE_JOINER_WAIT_S, 'the joiner taps the rest on its own once the hand has stopped', `${joined}`)
   ];
-}, NO_RELOAD);
-
-group('the press: its bar dragged down to its stop prints, a quicker pull sooner', async () => {
-  const trial = secs => {
-    up(['mill', 'papermill', 'press'], { paper: 4 });
-    const s0 = S.after.stock.posters, h = mid(partsOf('press').handle);
-    gestureDown(h.x, h.y);
-    const t = timeTo(t => gestureMove(h.x, h.y + Math.min(1, t / secs) * 80), () => S.after.stock.posters > s0, 20);
-    gestureUp(h.x, h.y);
-    return t;
-  };
-  const slow = trial(1.5), fast = trial(0.1);
-  window.__actsOn(null);
-  return [ok(fast < slow && Number.isFinite(slow), 'pulled quickly, the poster prints sooner', `${slow.toFixed(2)} s -> ${fast.toFixed(2)} s`)];
 }, NO_RELOAD);
 
 group('a tree: its saw icon clicked puts the handsaw on it; dragged back and forth, a stroke a chop, faster fells it sooner', async () => {
@@ -253,9 +205,9 @@ group('a stump: its shovel shows; dragged up and held, a root gives at a time un
 }, NO_RELOAD);
 
 // The drawing is the hand's and the sign the shop's (the owner, 2026-10-21).
-const CARDS = { mill: 'mill', chipper: 'chipper', papermill: 'papermill', workshop: 'workshop', press: 'press', shack: 'shack', pedestal: 'pedestal', forestry: 'grove' };
+const CARDS = { mill: 'mill', workshop: 'workshop', shack: 'shack', pedestal: 'pedestal', forestry: 'grove' };
 group('a plain click on a station\'s sign asks for its board, on its drawing for none; a click on open floor asks for nothing', async () => {
-  up(['mill', 'chipper', 'papermill', 'workshop', 'press']);
+  up(['mill', 'workshop']);
   const signs = {}, drawings = {};
   for (const k of Object.keys(CARDS)) {
     signs[k] = asks(mid(signBoard(k)));

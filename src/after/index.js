@@ -17,7 +17,7 @@ import { afterlifeOn } from '../acts.js';
 import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
 import { stepMill, forgetSpills } from './mill.js';
-import { stepPress } from './press.js';
+
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
 import { stepBodies } from './bodies.js';
@@ -34,8 +34,8 @@ import { readOver } from '../placesave.js';
 // (union.js); the idle members waiting in the crowd past the podium's spots
 // (`camp`, a count), the share of their next line owed (`lines`) and the
 // spot it was last said at (`said`), and how many of each job the rosters
-// want (`crew`); the grove's plots and each tree's growth; the signs planted
-// and posters pasted; the camp's stations built and those going up a piece
+// want (`crew`); the grove's plots and each tree's growth; the signs
+// planted; the camp's stations built and those going up a piece
 // at a time (`raising`), and how many times each named upgrade and each
 // job's seat is bought (`ups`); the gate reached. When each upgrade was
 // bought (`upAt`), so what it puts on screen fades in. And what the loop
@@ -58,7 +58,6 @@ export const blankAfter = () => ({
   said: 0,
   plots: [],
   signs: [],
-  posters: [],
   built: [],
   raising: {},
   ups: {},
@@ -110,7 +109,7 @@ let seen = null; // cache: keyed by the `S.after` it was seen with
 // One frame of the afterlife, called every frame with the act on, on screen
 // or not. Its parts in the order the place hands its work along: the sky and
 // the rebel coming down, the grove, the members walking and at their posts,
-// the mills, the workshop and the press, the crowd, the gates.
+// the saw mill, the crowd, the gates.
 export function stepAfter(c) {
   if (!afterlifeOn()) return;
   frames++;
@@ -122,7 +121,6 @@ export function stepAfter(c) {
   stepBodies(c);
   stepHand(c);
   stepMill(c);
-  stepPress(c);
   stepUnion(c);
   stepStrike(c);
   stepBubbles(c);

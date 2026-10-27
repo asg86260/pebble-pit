@@ -95,12 +95,8 @@ export const AFTER_JOB = Object.freeze({
   HAUL:    TYPE.HAUL,
   GATHER:  'gatherer',
   SAW:     'sawyer',
-  CHIP:    'feeder',
-  PULP:    'pulper',
   JOIN:    'joiner',
   CARRY:   'carrier',
-  PRINT:   'printer',
-  PASTE:   'paster',
   // An idle member tipping the sawdust heap at its notch: an errand, bought
   // by no post.
   SWEEP:   'sweeper',

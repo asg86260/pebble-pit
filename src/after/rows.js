@@ -3,8 +3,8 @@
 //
 // No bands and no ladders up here (call 12, settled: act 3 is outside the
 // eight-rungs rule). A card sells its jobs' seats and two or three short
-// named upgrades, each a change on screen, paid in rebel, timber and paper
-// and the yard's coins (AFTER_UPGRADES): bought once, but for the grove's
+// named upgrades, each a change on screen, paid in rebel, timber and the
+// yard's coins (AFTER_UPGRADES): bought once, but for the grove's
 // plots, a plot a press. A worker is bought on the pedestal's recruit row
 // out of the souls won; a station's members are put on
 // through the roster under it (after/roster.js), each job holding one to
@@ -13,7 +13,7 @@
 // every station, all of them on its board and priced from the start, each
 // raised a piece at a time once bought (build.js).
 //
-// A bill names the act's coins (rebel, timber, paper: `S.after`) and the
+// A bill names the act's coins (rebel, timber: `S.after`) and the
 // yard's (dust, crops, ore, sparks: DESIGN.md, "The yard pays too"), so a
 // row here is bought through the one `buy` (upgrades.js), each coin paid
 // through `take` and its place's purse (words.js): the act's coins come off
@@ -47,7 +47,7 @@ import { setCrowdAt } from './stations.js';
 // --- the purse ---------------------------------------------------------------------------
 const isYardCoin = coin => AFTER_YARD_COINS.includes(coin);
 // What the camp holds of a coin: the yard's purse knows the act's coins
-// (words.js `purse`: rebel on the act, timber and paper the chain's stock).
+// (words.js `purse`: rebel on the act, timber the chain's stock).
 export const afterPurse = coin => purse(coin);
 // The act's coin's name, a plain label until the owner words it.
 export const rebelSaid = () => msg('after-coin-rebel');
@@ -104,11 +104,7 @@ const UP_NAMES = {
   'after-plot': () => msg('after-row-plot'), 'after-grow': () => msg('after-row-grow'),
   'after-tree': () => msg('after-row-tree'), 'after-stumps': () => msg('after-row-stumps'),
   'after-blade': () => msg('after-row-blade'), 'after-heap': () => msg('after-row-heap'),
-  'after-drum': () => msg('after-row-drum'), 'after-spout': () => msg('after-row-spout'),
-  'after-dry': () => msg('after-row-dry'),
-  'after-bench': () => msg('after-row-bench'), 'after-signreach': () => msg('after-row-signreach'),
-  'after-vat': () => msg('after-row-vat'), 'after-stack': () => msg('after-row-stack'),
-  'after-posterreach': () => msg('after-row-posterreach')
+  'after-bench': () => msg('after-row-bench'), 'after-signreach': () => msg('after-row-signreach')
 };
 // What a purchase does beyond counting itself: a plot cleared and a sapling
 // set in it; the axe owed to its beat (rebel.js, `axeDue`).
@@ -138,8 +134,7 @@ const upRow = key => {
 // A row a job: a seat more at its station, a bill a seat (AFTER_SEAT_BILLS),
 // the roster under the station drawing the seats and its + stopping at them.
 export const JOB_NAMES = {
-  woodcutter: () => msg('after-job-woodcutter'), sawyer: () => msg('after-job-sawyer'), feeder: () => msg('after-job-feeder'),
-  pulper: () => msg('after-job-pulper'), joiner: () => msg('after-job-joiner'), printer: () => msg('after-job-printer')
+  woodcutter: () => msg('after-job-woodcutter'), sawyer: () => msg('after-job-sawyer'), joiner: () => msg('after-job-joiner')
 };
 const seatRow = job => ({
   key: seatKey(job), name: msg('after-row-seat', { job: JOB_NAMES[job]() }), card: AFTER_JOB_POST[job], seat: job, ...ACT_ROW,
@@ -153,12 +148,9 @@ const seatRow = job => ({
 // On the board from the act's first frame, each with its price; one that
 // needs another standing first is dead until then, saying which.
 const BUILD_NAMES = {
-  mill: () => msg('after-build-mill'), chipper: () => msg('after-build-chipper'),
-  workshop: () => msg('after-build-workshop'), papermill: () => msg('after-build-papermill'),
-  press: () => msg('after-build-press')
+  mill: () => msg('after-build-mill'), workshop: () => msg('after-build-workshop')
 };
-const WAITS = { workshop: () => msg('after-wait-mill'), papermill: () => msg('after-wait-sawdust'),
-                press: () => msg('after-wait-papermill') };
+const WAITS = { workshop: () => msg('after-wait-mill') };
 const needsMet = st => { const n = AFTER_BUILDS[st].needs; return !n.length || n.some(k => built(k)); };
 const buildRow = st => ({
   key: `after-build-${st}`, name: BUILD_NAMES[st](), card: 'shack', lands: st, ...ACT_ROW,
