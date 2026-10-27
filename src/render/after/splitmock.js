@@ -34,11 +34,24 @@ const FOOT_MAX = 9;
 let footN = 5;
 const landedKeys = new Set();
 const plotTop = c => { const r = topRow(plot, c); return -(r + 2) * 2; };   // the top of column c's stack, as a block's y
-const dropIn = () => addGrain(plot, plot.x + DROP_COL * 2, undefined, 1, true);
+// Each block keeps an identity as it rolls (its value, 1..9), so the loose
+// pile's nudge off the lattice goes with the block rather than the cell.
+let nextId = 0;
+const dropIn = () => addGrain(plot, plot.x + DROP_COL * 2, undefined, 1 + (nextId++ % 9), true);
+// round 19, the pile three ways (globalThis.__pileStyle): 'A' the even mound,
+// 'B' the same mound loose (each block a fixed nudge of its own, in cells'
+// sizes but free positions), 'C' a tall heap that stands up.
+const pileStyle = () => globalThis.__pileStyle || 'A';
+const nudge = v => (pileStyle() === 'B' ? { x: (hash(v * 7.31) - 0.5) * 0.8, y: hash(v * 3.17) * 0.4 } : { x: 0, y: 0 });
+// Blocks taken off the top when timber is spent fade out where they lay.
+const ghosts = [];
+const GHOST_S = 0.4;
 export function blockPile(d) {
   const a = S.after, t = a ? a.t : 0, stock = a ? Math.floor(a.stock.timber) : 0;
   if (plotT == null || t < plotT) {                     // a fresh scene: the pile stands as the stock says
-    plot.grid.fill(0); landedKeys.clear(); wakeGrid(plot); footN = 5;
+    plot.repose = pileStyle() === 'C'; plot.cols = pileStyle() === 'C' ? 5 : PLOT_COLS;
+    plot.grid = new Uint8Array(plot.cols * plot.rows); plot.awake = null; ghosts.length = 0;
+    landedKeys.clear(); wakeGrid(plot); footN = 5;
     for (let i = 0; i < Math.min(stock, PILE_CAP); i++) { dropIn(); for (let k = 0; k < 12; k++) settle(plot); }
     plotT = t; plotStock = stock;
   }
@@ -46,11 +59,17 @@ export function blockPile(d) {
   if (stock < plotStock) for (let i = 0; i < plotStock - stock; i++) {
     let best = -1, hi = -1;
     for (let c = 0; c < plot.cols; c++) { const r = topRow(plot, c); if (r > hi) { hi = r; best = c; } }
-    if (best >= 0 && hi >= 0) put(plot, best, hi, 0);
+    if (best >= 0 && hi >= 0) { ghosts.push({ c: best, r: hi, v: at(plot, best, hi), at: t }); put(plot, best, hi, 0); }
   }
   plotStock = stock;
   while (t - plotT >= SETTLE_S) { settle(plot); plotT += SETTLE_S; }
-  for (let c = 0; c < plot.cols; c++) for (let r = 0; r < plot.rows; r++) if (at(plot, c, r)) block(d, TIMBER, plot.x + c * 2, -(r + 1) * 2, 2);
+  const put2 = (c, r, v) => { const n = nudge(v); block(d, TIMBER, plot.x + c * 2 + n.x, -(r + 1) * 2 + n.y, 2); };
+  for (let c = 0; c < plot.cols; c++) for (let r = 0; r < plot.rows; r++) { const v = at(plot, c, r); if (v) put2(c, r, v); }
+  for (let i = ghosts.length - 1; i >= 0; i--) {
+    const g = ghosts[i], k = (t - g.at) / GHOST_S;
+    if (k >= 1) { ghosts.splice(i, 1); continue; }
+    d.fade(1 - k, () => put2(g.c, g.r, g.v));
+  }
 }
 
 // Grains puffed out under the bed, one a down-stroke, falling to the heap at the saw's foot.

@@ -3110,7 +3110,7 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w / 2 - P * 10;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-split-ca': { about: 'the acts', review: 'saw mill: the bar from the wheel to the blade', option: 'A a real con-rod', say: "Bite and punch together. The bar is a proper connecting rod: round eyes around visible pins at both ends, a small crank disc on the hub; the same throw as today.",
+  'after-split-ca': { about: 'the acts', say: "Bite and punch together. The bar is a proper connecting rod: round eyes around visible pins at both ends, a small crank disc on the hub; the same throw as today.",
     run: () => {
       globalThis.__splitStyle = 'CA';
       afterChain(false);
@@ -3119,7 +3119,7 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w / 2 - P * 10;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-split-cb': { about: 'the acts', review: 'saw mill: the bar from the wheel to the blade', option: 'B a bigger crank', say: "Bite and punch together. The crank pin moves out to half the wheel's radius, so you see it swing a real circle, and the blade's stroke doubles.",
+  'after-split-cb': { about: 'the acts', say: "Bite and punch together. The crank pin moves out to half the wheel's radius, so you see it swing a real circle, and the blade's stroke doubles.",
     run: () => {
       globalThis.__splitStyle = 'CB';
       afterChain(false);
@@ -3128,13 +3128,40 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w / 2 - P * 10;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-split-cc': { about: 'the acts', review: 'saw mill: the bar from the wheel to the blade', option: 'C a rocker beam', say: "Bite and punch together. The rod drives a beam pivoted on a post over the frame; the beam's short end pushes the crosshead down.",
+  'after-split-cc': { about: 'the acts', say: "Bite and punch together. The rod drives a beam pivoted on a post over the frame; the beam's short end pushes the crosshead down.",
     run: () => {
       globalThis.__splitStyle = 'CC';
       afterChain(false);
       window.__afterGrant({ grovelogs: 60, timber: 4 });
       window.__fast(20);
       const b = stationBox('mill'), mid = b.x + b.w / 2 - P * 10;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-pile-a': { about: 'the acts', review: 'saw mill: the timber pile', option: 'A mound', say: "The even mound: blocks drop off the end table, roll down whichever side has room and rest on the lattice, as act 1's dust does. A block spent off the top fades where it lay.",
+    run: () => {
+      globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 12 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-pile-b': { about: 'the acts', review: 'saw mill: the timber pile', option: 'B loose', say: "The same mound, but each block sits a little off the lattice by a nudge of its own that rolls with it, so the pile reads tumbled rather than stacked. Sizes stay whole cells.",
+    run: () => {
+      globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'B';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 12 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-pile-c': { about: 'the acts', review: 'saw mill: the timber pile', option: 'C tall heap', say: "A steeper, narrower heap: a block only rolls on where the drop beside it is two deep, so the pile stands up instead of spreading.",
+    run: () => {
+      globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'C';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 12 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
   'after-log-flow': { about: 'the acts', say: "the saw mill kept fed: an idle member carrying logs to its pile, a cut falling out of the saw's right side onto the timber",
