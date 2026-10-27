@@ -3191,7 +3191,7 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w * 0.8;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-work-w1': { about: 'the acts', review: 'saw mill: the sawyer at work', option: 'W1 heave', say: "The sawyer leans with the crank and squats hard on each slam, holding the squat through the blade's hit at the bottom, then rises on the up-stroke. One arm on the knob.",
+  'after-work-w1': { about: 'the acts', say: "The sawyer leans with the crank and squats hard on each slam, holding the squat through the blade's hit at the bottom, then rises on the up-stroke. One arm on the knob.",
     run: () => {
       globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T1'; globalThis.__workStyle = 'W1';
       afterChain(false);
@@ -3200,7 +3200,7 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w * 0.6;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-work-w2': { about: 'the acts', review: 'saw mill: the sawyer at work', option: 'W2 both hands', say: "The sawyer stands closer with both arms on the knob, the body bobbing up and down as the knob goes round, like working a pump.",
+  'after-work-w2': { about: 'the acts', say: "The sawyer stands closer with both arms on the knob, the body bobbing up and down as the knob goes round, like working a pump.",
     run: () => {
       globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T1'; globalThis.__workStyle = 'W2';
       afterChain(false);
@@ -3209,13 +3209,40 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w * 0.6;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-work-w3': { about: 'the acts', review: 'saw mill: the sawyer at work', option: 'W3 treadwheel', say: "The sawyer walks inside the flywheel at its foot, stepping as it turns: the walking is what drives the saw. No arms, no crank handle.",
+  'after-work-w3': { about: 'the acts', say: "The sawyer walks inside the flywheel at its foot, stepping as it turns: the walking is what drives the saw. No arms, no crank handle.",
     run: () => {
       globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T1'; globalThis.__workStyle = 'W3';
       afterChain(false);
       window.__afterGrant({ grovelogs: 60, timber: 12 });
       window.__fast(20);
       const b = stationBox('mill'), mid = b.x + b.w * 0.6;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-sign-s1': { about: 'the acts', review: 'act 3: the shop sign', option: 'S1 big post sign', say: "Today's board and $ mark, one game cell to a dot: a board about eight cells by nine on a post a cell wide.",
+    run: () => {
+      globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T1'; globalThis.__workStyle = 'W3'; globalThis.__signStyle = 'S1';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 12 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w + P * 6;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-sign-s2': { about: 'the acts', review: 'act 3: the shop sign', option: 'S2 small tag', say: "A small board five cells wide with a simpler $ three cells by seven, on a short post.",
+    run: () => {
+      globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T1'; globalThis.__workStyle = 'W3'; globalThis.__signStyle = 'S2';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 12 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w + P * 6;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-sign-s3': { about: 'the acts', review: 'act 3: the shop sign', option: 'S3 ink tag', say: "S2's size in ink: a black board with the $ in paper, reading at a glance against the cloud; while its shop is open it turns paper.",
+    run: () => {
+      globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T1'; globalThis.__workStyle = 'W3'; globalThis.__signStyle = 'S3';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 12 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w + P * 6;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
   'after-log-flow': { about: 'the acts', say: "the saw mill kept fed: an idle member carrying logs to its pile, a cut falling out of the saw's right side onto the timber",

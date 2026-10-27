@@ -142,7 +142,27 @@ const alphaDo = (a, fn) => { if (a <= 0) return; const was = ctx.globalAlpha; ct
 // through corner to corner, the cross fading off as its build lands and the
 // shop's mark (config, AFTER_SIGN_MARK) on; with its board up, in ink, the
 // mark cut out of it.
+// MOCK, round 24: the shop sign three ways in whole cells (globalThis.__signStyle):
+// 'S1' today's board and mark, a cell a dot; 'S2' a small tag, a 3x7 mark;
+// 'S3' S2 in ink, the mark in paper. Its post's foot and middle stay where the
+// sign stands; the hit box is today's.
+const MARK_S2 = ['.#.', '###', '#..', '###', '..#', '###', '.#.'];
+function cellSign(key, st) {
+  const C = AFTER_SIGN_BOARD, b = signBox(key), up = signUp(key);
+  const foot = b.y + C.h * AP + C.post * AP, mid = b.x + b.w / 2;
+  const M = st === 'S1' ? AFTER_SIGN_MARK : MARK_S2, bw = M[0].length + 4, bh = M.length + 4, post = st === 'S1' ? 3 : 2;   // a cell of rim and a cell of margin round the mark
+  const x0 = Math.round(mid - bw * AP / 2), top = foot - (bh + post) * AP;
+  const ink = st === 'S3' ? !up : up;
+  ctx.fillStyle = GREY[K];
+  ctx.fillRect(Math.round(mid - AP / 2), top + bh * AP, AP, post * AP);         // the post, a cell wide
+  ctx.fillRect(x0, top, bw * AP, bh * AP);                                      // the board's rim, a cell
+  ctx.fillStyle = GREY[ink ? K : W];
+  ctx.fillRect(x0 + AP, top + AP, (bw - 2) * AP, (bh - 2) * AP);
+  ctx.fillStyle = GREY[ink ? W : K];
+  M.forEach((row, j) => [...row].forEach((c, i) => { if (c === '#') ctx.fillRect(x0 + (i + 2) * AP, top + (j + 2) * AP, AP, AP); }));
+}
 function shopSign(key) {
+  if (globalThis.__signStyle) { if (inView(signBox(key).x - AP * 4, signBox(key).w + AP * 8)) cellSign(key, globalThis.__signStyle); return; }   // MOCK
   const C = AFTER_SIGN_BOARD, b = signBox(key), r = 2 * AFTER_ART_SCALE, opened = openedOf(key);
   if (!inView(b.x, b.w)) return;
   const w = b.w, h = C.h * AP, x0 = b.x, top = b.y, up = signUp(key);
