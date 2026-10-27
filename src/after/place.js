@@ -104,7 +104,7 @@ export const pileAt = (key, what) => {
 // floor under it (its station's shelf, `floorAt`).
 export const pileOwner = what => Object.keys(ART).find(k => what in ART[k].pile) || null;
 const pileCenter = (key, what) => pileAt(key, what) + (PILE_W / 2) * AP;
-export const pileBox = (key, what, reach) => ({ x: pileAt(key, what), y: floorAt(pileCenter(key, what)) - reach * AP, w: PILE_W * AP, h: reach * AP });
+export const pileBox = (key, what, reach) => globalThis.__plotBox?.(what) || ({ x: pileAt(key, what), y: floorAt(pileCenter(key, what)) - reach * AP, w: PILE_W * AP, h: reach * AP });
 // Where a station's loads are piled while it is raised (after/build.js): on
 // its ground beside its drawing, where its own product pile will stand,
 // BUILD_PILE_W art cells across and kept on the ground. Its left edge.

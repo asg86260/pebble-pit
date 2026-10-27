@@ -30,6 +30,7 @@ export function logEnd(d, x, y) { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2,
 // Logs, bricked: three on the floor, two on them, one on top.
 const SPOTS = [[0, 0], [2, 0], [4, 0], [1, 1], [3, 1], [2, 2]];
 export function logPile(d, x, st, cap = SPOTS.length) {
+  if (globalThis.__splitStyle) { blockPile(d, st.key); return; }   // MOCK: a pile of blocks on the sand rules
   const m = Math.min(Math.max(st.n, st.prev), cap);
   for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => logEnd(d, x + SPOTS[i][0], -2 - SPOTS[i][1] * 2));
   const shown = Math.min(st.n, cap), top = shown <= 3 ? 1 : shown <= 5 ? 2 : 3;
@@ -37,7 +38,7 @@ export function logPile(d, x, st, cap = SPOTS.length) {
 }
 // Timber: planks six cells long and a cell deep, every other one set in half a cell.
 export function plankPile(d, x, st, cap = 6) {
-  if (globalThis.__splitStyle) { blockPile(d); return; }   // MOCK: the timber pile is a sand plot
+  if (globalThis.__splitStyle) { blockPile(d, 'timber'); return; }   // MOCK: the timber pile is a sand plot
   const m = Math.min(Math.max(st.n, st.prev), cap);
   for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => {
     const y = -1 - i, dx = i % 2 ? 0.5 : 0;

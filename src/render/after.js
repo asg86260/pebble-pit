@@ -331,6 +331,12 @@ function carried(x, y, s) {
 // top left is (x, y), or in the hand at the cursor (`drawHand`).
 function drawLoad(x, y, kind, n) {
   n = Math.min(AFTER_CARRY_SHOWN, n);
+  // MOCK, round 28: carried goods are the same blocks the piles hold -- a log 4x4, a plank 2x2 -- stacked
+  if (globalThis.__splitStyle && (kind === 'log' || kind === 'plank')) {
+    const z = (kind === 'log' ? 4 : 2) * AP, tone = kind === 'log' ? MID : PALE, seam = kind === 'log' ? K : MID;
+    for (let k = 0; k < n; k++) { const bx = x + P * 1.5 - z / 2, by = y - z - k * z; ctx.fillStyle = GREY[seam]; ctx.fillRect(bx, by, z, z); ctx.fillStyle = GREY[tone]; ctx.fillRect(bx, by, z - 1, z - 1); }
+    return;
+  }
   if (kind === 'log') for (let k = 0; k < n; k++) { const ly = y - P - k * 2 * P; ctx.fillStyle = GREY[K]; ctx.fillRect(x - P, ly, 5 * P, P); cell(x + P, ly, PALE); }
   else if (kind === 'plank') for (let k = 0; k < n; k++) {
     const ly = y - P - k * 2 * P;

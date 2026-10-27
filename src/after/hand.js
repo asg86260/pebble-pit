@@ -60,6 +60,7 @@ function takeOne(from, kind, x, y, pad) {
   if (from === 'floor') { const q = lyingUnder(x, y, pad, kind); return !!q && takeGroundLog(q.id); }
   if (whole(from) < 1) return false;
   S.after.stock[from] -= 1;
+  globalThis.__plotTake?.(from, x);   // MOCK: the block under the hand comes off, the pile slumps
   return true;
 }
 
@@ -132,6 +133,7 @@ export function stepHand(c) {
   if (h.t < AFTER_PUT_S) return;
   h.t = 0;
   a.stock[h.put] += 1;
+  globalThis.__plotPut?.(h.put, h.x);   // MOCK: set down where the hand lets go
   h.n -= 1;
   if (h.n <= 0) a.hand = null;
 }

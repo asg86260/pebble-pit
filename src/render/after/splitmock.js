@@ -10,6 +10,7 @@ import { K, W, PALE, MID, hash, clamp01 } from './kit.js';
 import { ctx } from '../ctx.js';
 import { GREY, AFTER_ART_SCALE } from '../../config.js';
 import { addGrain, settle, at, put, topRow, wakeGrid } from '../../grid.js';
+import { stationX0, groundOf, AP, ART } from '../../after/place.js';
 
 const LOG = MID, TIMBER = PALE;
 const TIMBER_X = 53, PER_ROW = 3, CAP = 9;
@@ -40,7 +41,6 @@ const GEOM = {
 const geom = () => GEOM[flow()] || GEOM.T0;
 const plot = { x: BED_END, y: 0, ceiling: c => (c === 0 ? 2 : PLOT_ROWS), cols: PLOT_COLS, rows: PLOT_ROWS, p: 2, grid: new Uint8Array(PLOT_COLS * PLOT_ROWS),
                n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: false };
-let plotT = null, plotStock = null;
 // The saw's own heap under the blade: grains kept, not counted afresh each cut, so none pops out.
 const FOOT_MAX = 9;
 let footN = 5;
@@ -55,36 +55,76 @@ const dropIn = () => addGrain(plot, plot.x + geom().dropCol * 2, undefined, 1 + 
 // sizes but free positions), 'C' a tall heap that stands up.
 const pileStyle = () => globalThis.__pileStyle || 'A';
 const nudge = v => (pileStyle() === 'B' ? { x: (hash(v * 7.31) - 0.5) * 0.8, y: hash(v * 3.17) * 0.4 } : { x: 0, y: 0 });
-// Blocks taken off the top when timber is spent fade out where they lay.
-const ghosts = [];
+// --- round 28: every counted pile is a plot of blocks on the shared sand
+// rules, from one function (the casino's bins the precedent): logs 4x4 at the
+// forestry shack and the saw mill, timber 2x2. The act's own hand (hand.js,
+// the shared grab) takes the block under it and sets blocks down where it
+// lets go, through __plotTake / __plotPut; timber spent at a distance on a
+// bill comes off the top and fades.
+const SPECS = {
+  timber:    { station: 'mill', size: 2, rows: PLOT_ROWS, cap: PILE_CAP, tone: TIMBER, seam: MID, grows: false,
+               cols: () => (pileStyle() === 'C' ? 5 : PLOT_COLS), x: () => geom().plotX, drop: () => geom().dropCol, low0: () => !!geom().low0 },
+  logs:      { station: 'mill', size: 4, rows: 3, cap: 6, tone: LOG, seam: K, grows: true, cols: () => 2, x: () => ART.mill.pile.logs, drop: () => 0, low0: () => false },
+  grovelogs: { station: 'forestry', size: 4, rows: 3, cap: 6, tone: LOG, seam: K, grows: true, cols: () => 2, x: () => ART.forestry.pile.grovelogs, drop: () => 0, low0: () => false }
+};
+const PILES = {};
+const pileOf = key => PILES[key] || (PILES[key] = {
+  plot: key === 'timber' ? plot : { x: 0, y: 0, cols: 2, rows: 3, p: SPECS[key].size, grid: new Uint8Array(6), n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: false },
+  t: null, stock: null, ghosts: []
+});
 const GHOST_S = 0.4;
-export function blockPile(d) {
-  const a = S.after, t = a ? a.t : 0, stock = a ? Math.floor(a.stock.timber) : 0;
-  if (plotT == null || t < plotT) {                     // a fresh scene: the pile stands as the stock says
-    plot.repose = pileStyle() === 'C'; plot.cols = pileStyle() === 'C' ? 5 : PLOT_COLS;
-    plot.x = geom().plotX; plot.ceiling = geom().low0 ? (c => (c === 0 ? 2 : PLOT_ROWS)) : null;
-    plot.grid = new Uint8Array(plot.cols * plot.rows); plot.awake = null; ghosts.length = 0;
-    landedKeys.clear(); wakeGrid(plot); footN = 5;
-    for (let i = 0; i < Math.min(stock, PILE_CAP); i++) { dropIn(); for (let k = 0; k < 12; k++) settle(plot); }
-    plotT = t; plotStock = stock;
+const ghosts = pileOf('timber').ghosts;
+const dropAt = (key, col) => { const sp = SPECS[key], pl = pileOf(key).plot; return addGrain(pl, pl.x + col * sp.size, undefined, 1 + (nextId++ % 9), true); };
+// A world point's column in pile `key`'s plot, kept inside it.
+const colAt = (key, wx) => { const sp = SPECS[key], pl = pileOf(key).plot, lx = (wx - stationX0(sp.station)) / AP; return Math.max(0, Math.min(pl.cols - 1, Math.floor((lx - pl.x) / sp.size))); };
+globalThis.__plotTake = (key, wx) => {
+  const pt = PILES[key]; if (!pt || pt.stock == null) return;
+  const pl = pt.plot; let c = colAt(key, wx);
+  if (topRow(pl, c) < 0) { let best = -1, dist = 1e9; for (let k = 0; k < pl.cols; k++) if (topRow(pl, k) >= 0 && Math.abs(k - c) < dist) { dist = Math.abs(k - c); best = k; } c = best; }
+  if (c >= 0) put(pl, c, topRow(pl, c), 0);
+  pt.stock -= 1;
+};
+globalThis.__plotPut = (key, wx) => {
+  const pt = PILES[key]; if (!pt || pt.stock == null) return;
+  dropAt(key, colAt(key, wx));
+  pt.stock += 1;
+};
+// The hand finds a pile by the plot's own extent (place.js pileBox asks).
+globalThis.__plotBox = what => {
+  const sp = SPECS[what], pt = PILES[what]; if (!sp || !pt) return null;
+  const pl = pt.plot, x0 = stationX0(sp.station) + pl.x * AP, fl = groundOf(sp.station);
+  return { x: x0, y: fl - (pl.rows * sp.size + 2) * AP, w: pl.cols * sp.size * AP, h: (pl.rows * sp.size + 2) * AP };
+};
+export function blockPile(d, key = 'timber') {
+  const sp = SPECS[key], pt = pileOf(key), pl = pt.plot;
+  const a = S.after, t = a ? a.t : 0, stock = a ? Math.floor(a.stock[key] || 0) : 0;
+  if (pt.t == null || t < pt.t) {                       // a fresh scene: the pile stands as the stock says
+    pl.cols = sp.cols(); pl.x = sp.x(); pl.repose = key === 'timber' && pileStyle() === 'C';
+    pl.ceiling = sp.low0() ? (c => (c === 0 ? 2 : sp.rows)) : null;
+    pl.grid = new Uint8Array(pl.cols * pl.rows); pl.awake = null; pt.ghosts.length = 0;
+    if (key === 'timber') { landedKeys.clear(); footN = 5; }
+    wakeGrid(pl);
+    for (let i = 0; i < Math.min(stock, sp.cap); i++) { dropAt(key, sp.drop()); for (let k = 0; k < 12; k++) settle(pl); }
+    pt.t = t; pt.stock = stock;
   }
-  // timber spent: as many blocks off the top, and the heap slumps into the gap
-  if (stock < plotStock) for (let i = 0; i < plotStock - stock; i++) {
+  // spent at a distance (a bill): off the top, fading where it lay
+  if (stock < pt.stock) for (let i = 0; i < pt.stock - stock; i++) {
     let best = -1, hi = -1;
-    for (let c = 0; c < plot.cols; c++) { const r = topRow(plot, c); if (r > hi) { hi = r; best = c; } }
-    if (best >= 0 && hi >= 0) { ghosts.push({ c: best, r: hi, v: at(plot, best, hi), at: t }); put(plot, best, hi, 0); }
+    for (let c = 0; c < pl.cols; c++) { const r = topRow(pl, c); if (r > hi) { hi = r; best = c; } }
+    if (best >= 0 && hi >= 0) { pt.ghosts.push({ c: best, r: hi, v: at(pl, best, hi), at: t }); put(pl, best, hi, 0); }
   }
-  plotStock = stock;
-  while (t - plotT >= SETTLE_S) { settle(plot); plotT += SETTLE_S; }
-  // round 20: the pile's shape filled solid behind its blocks, so the pixel
-  // between two blocks is a seam of mid tone, not a hole the sky shows through
-  const back = (c, r, v) => { const n = nudge(v); d.px((plot.x + c * 2 + n.x) * P, (-(r + 1) * 2 + n.y) * P, 2 * P, 2 * P, MID); };
-  const put2 = (c, r, v) => { const n = nudge(v); block(d, TIMBER, plot.x + c * 2 + n.x, -(r + 1) * 2 + n.y, 2); };
-  for (let c = 0; c < plot.cols; c++) for (let r = 0; r < plot.rows; r++) { const v = at(plot, c, r); if (v) back(c, r, v); }
-  for (let c = 0; c < plot.cols; c++) for (let r = 0; r < plot.rows; r++) { const v = at(plot, c, r); if (v) put2(c, r, v); }
-  for (let i = ghosts.length - 1; i >= 0; i--) {
-    const g = ghosts[i], k = (t - g.at) / GHOST_S;
-    if (k >= 1) { ghosts.splice(i, 1); continue; }
+  // carried in by a body (logs): set down on the pile's drop column
+  if (sp.grows && stock > pt.stock) for (let i = 0; i < stock - pt.stock; i++) dropAt(key, sp.drop());
+  pt.stock = stock;
+  while (t - pt.t >= SETTLE_S) { settle(pl); pt.t += SETTLE_S; }
+  const z = sp.size, nud = v => (key === 'timber' ? nudge(v) : { x: 0, y: 0 });
+  const back = (c, r, v) => { const n = nud(v); d.px((pl.x + c * z + n.x) * P, (-(r + 1) * z + n.y) * P, z * P, z * P, sp.seam); };
+  const put2 = (c, r, v) => { const n = nud(v); block(d, sp.tone, pl.x + c * z + n.x, -(r + 1) * z + n.y, z); };
+  for (let c = 0; c < pl.cols; c++) for (let r = 0; r < pl.rows; r++) { const v = at(pl, c, r); if (v) back(c, r, v); }
+  for (let c = 0; c < pl.cols; c++) for (let r = 0; r < pl.rows; r++) { const v = at(pl, c, r); if (v) put2(c, r, v); }
+  for (let i = pt.ghosts.length - 1; i >= 0; i--) {
+    const g = pt.ghosts[i], k = (t - g.at) / GHOST_S;
+    if (k >= 1) { pt.ghosts.splice(i, 1); continue; }
     d.fade(1 - k, () => { back(g.c, g.r, g.v); put2(g.c, g.r, g.v); });
   }
 }
