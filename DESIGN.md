@@ -23382,10 +23382,15 @@ before the first frame, so a save carries no grid. Timber is halved on read
   the hand, a flick lands them on the mound or the ground; a click on the
   mill's frame opens its board and a press on the treadwheel shuts it.
 
-**Open, the owner's call.** *A bill paid in timber.* Rule 2 says no block
-leaves the mound without a body. Recommended: a row bought with timber is an
-order, as a build is (after/build.js): its blocks are reserved on the
-mound, idle members carry them to the station it is for, and the row's effect
-lands when the last one arrives. The alternative keeps bills instant and
-takes the blocks off the top of the mound as a carrier's load already on its
-way (a body walks off with them).
+**Settled, the owner's calls (2026-10-27).**
+
+- **A pile has a brim.** The pile being the stock, its size is the most it
+  holds: timber 20 blocks, the saw mill's logs 6, the forestry shack's logs 8.
+  At its brim a pile wears the shared pile-full mark and its supply stops (the
+  saw, the haulers), as act 1's station strips do, and the economy is rescaled
+  to run under the brims (`tools/node/act3-pace.mjs` before and after; a played
+  run peaked at 175 timber, 21 forestry logs).
+- **A bill paid in timber is an order, carried.** Buying a row reserves its
+  blocks on the mound; idle members carry them to the station it is for, and
+  the row's effect lands when the last block arrives, as a build's loads
+  already are (after/build.js).
