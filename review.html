@@ -6,6 +6,9 @@
   body { margin: 0; padding: 12px 16px; background: #fff; color: #000; font: 13px ui-monospace, Menlo, monospace; }
   .top { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
   h1 { font-size: 14px; margin: 0; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+  .tabs button.on { background: #000; color: #fff; }
+  .tabs .hint { align-self: center; color: #555; }
   select, button { font: inherit; border: 2px solid #000; background: #fff; color: #000; padding: 2px 10px; cursor: pointer; }
   button.on { background: #000; color: #fff; }
   .bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
@@ -29,7 +32,8 @@
      screen, or keep going with what to change. It posts to the dev server
      (tools/review-server.mjs), which writes it where an agent waits for it
      (tools/review-wait.mjs). -->
-<div class="top"><h1 id="title">Review</h1><select id="pick" hidden aria-label="review"></select></div>
+<div class="tabs" id="tabs" role="tablist" aria-label="reviews"></div>
+<div class="top"><h1 id="title">Review</h1></div>
 <div class="bar" id="bar"></div>
 <p id="say"></p>
 <form class="note" id="note"><textarea id="words" placeholder="what to change (or why this one)"></textarea><button type="button" id="stop">stop: pick this one</button><button type="button" id="keep">keep iterating</button><span id="sent" aria-live="polite"></span></form>
@@ -50,7 +54,7 @@ const parse = () => { const [r, s] = decodeURIComponent(location.hash.slice(1)).
 function show(r, scene) {
   rev = reviews.find(x => slug(x.name) === r) || reviews[reviews.length - 1];
   $('title').textContent = rev.name;
-  $('pick').value = slug(rev.name);
+  for (const b of $('tabs').querySelectorAll('button')) b.classList.toggle('on', b.dataset.rev === slug(rev.name));
   $('bar').innerHTML = '';
   rev.options.forEach((o, i) => {
     const b = document.createElement('button'); b.textContent = `${i + 1} ${o.label}`; b.dataset.scene = o.scene;
@@ -74,20 +78,21 @@ f.addEventListener('load', () => {
     const st = f.contentDocument.createElement('style'); st.textContent = '.toast{display:none!important}'; f.contentDocument.head.append(st);
     reviews = f.contentWindow.__reviews();
     if (!reviews.length) { $('note').hidden = true; stage.outerHTML = '<p class="empty">No review is open. File scenes under one in src/scenes.js: <code>review: \'the question\', option: \'A name\'</code>.</p>'; return; }
-    const sel = $('pick');
-    sel.innerHTML = reviews.map(x => `<option value="${slug(x.name)}">${x.name}</option>`).join('');
-    sel.hidden = reviews.length < 2;
-    sel.onchange = () => show(sel.value);
+    // every open review a tab, so moving between them is a click (or [ and ])
+    $('tabs').innerHTML = '';
+    reviews.forEach(x => { const b = document.createElement('button'); b.textContent = x.name; b.dataset.rev = slug(x.name); b.setAttribute('role', 'tab'); b.onclick = () => show(slug(x.name)); $('tabs').append(b); });
+    if (reviews.length > 1) { const h = document.createElement('span'); h.className = 'hint'; h.textContent = '[ ] between reviews, 1-9 options, r restart'; $('tabs').append(h); }
     const { r, s } = parse();
     show(r, s);
   };
   go();
 });
 addEventListener('keydown', e => {
-  if (!rev || /SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if (!rev || /TEXTAREA/.test(e.target.tagName)) return;
   const i = Number(e.key) - 1;
   if (i >= 0 && i < rev.options.length) stand(rev.options[i].scene);
   if (e.key === 'r') stand(cur);
+  if (e.key === '[' || e.key === ']') { const k = reviews.indexOf(rev), n = reviews.length; show(slug(reviews[(k + (e.key === ']' ? 1 : n - 1)) % n].name)); }
 });
 // The decision, posted to the dev server; the agent waiting on it wakes when it lands.
 async function decide(verdict) {
