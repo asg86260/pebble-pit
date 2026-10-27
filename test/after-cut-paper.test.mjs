@@ -24,6 +24,7 @@ group('a save from before the cut loads as one chain: the chipper\'s logs at the
   localStorage.setItem(KEY, JSON.stringify(s));
   yard.restore();
   const a = yard.S.after;
+  const lying = kind => a.groundLogs.filter(q => q.kind === kind).length;
   const seat = j => was.ups[`after-seat-${j}`] || 0;
   const carried = Math.max(...['sawyer', ...CUT_JOBS].map(seat));
   const left = a.bodies.filter(b => CUT_JOBS.includes(b.job) || CUT_JOBS.includes(b.errand) || ['posters', 'sheet'].includes(b.load) || CUT.includes(b.site) || CUT.includes(b.at));
@@ -31,8 +32,12 @@ group('a save from before the cut loads as one chain: the chipper\'s logs at the
     ok(old.saveV < 29 && CUT.every(k => was.built.includes(k)) && was.stock.paper > 0 && was.stock.posters > 0 && was.stock.chiplogs > 0,
        'the fixture is a save from before the cut, all three built, paper, posters and the chipper\'s logs on hand', `${old.saveV} ${was.built}`),
     ok(!('paper' in a.stock) && !('posters' in a.stock) && !('chiplogs' in a.stock), 'paper, posters and the chipper\'s logs are gone from the stock', JSON.stringify(a.stock)),
-    ok(a.stock.logs === was.stock.logs + was.stock.chiplogs, 'the chipper\'s logs are laid on the saw mill\'s pile', `${was.stock.logs} + ${was.stock.chiplogs} -> ${a.stock.logs}`),
-    ok(a.stock.timber === was.stock.timber, 'timber is untouched', `${was.stock.timber} -> ${a.stock.timber}`),
+    // The saw mill's pile holds its brim and the rest lie beside it
+    // (after/piles.js); timber is halved a step later, counted in blocks
+    // (test/after-pile-plots.test.mjs).
+    ok(a.stock.logs + lying('log') === was.stock.logs + was.stock.chiplogs, 'the chipper\'s logs are laid on the saw mill\'s pile',
+       `${was.stock.logs} + ${was.stock.chiplogs} -> ${a.stock.logs} + ${lying('log')} lying`),
+    ok(a.stock.timber + lying('plank') === Math.floor(was.stock.timber / 2), 'timber is only halved into blocks', `${was.stock.timber} -> ${a.stock.timber} + ${lying('plank')} lying`),
     ok(!CUT.some(k => a.built.includes(k)) && !CUT.some(k => k in a.raising), 'the three stations are neither built nor going up', JSON.stringify(a.built)),
     ok(!('posters' in a), 'no posters are left on the fence'),
     ok(a.ups['after-seat-sawyer'] === carried && !CUT_JOBS.some(j => `after-seat-${j}` in a.ups) && !CUT_UPS.some(k => k in a.ups),

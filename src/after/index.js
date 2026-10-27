@@ -17,6 +17,7 @@ import { afterlifeOn } from '../acts.js';
 import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
 import { stepMill, forgetSpills } from './mill.js';
+import { stepPiles, standPiles } from './piles.js';
 
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
@@ -93,6 +94,7 @@ export function beginAfter() {
   S.after.begun = S.after.seed;
   S.after.plots = blankPlots();
   S.after.built = [...AFTER_START_BUILT];
+  standPiles();
   seedCrowd();
   return S.after;
 }
@@ -121,6 +123,7 @@ export function stepAfter(c) {
   stepBodies(c);
   stepHand(c);
   stepMill(c);
+  stepPiles(c);
   stepUnion(c);
   stepStrike(c);
   stepBubbles(c);
@@ -147,7 +150,8 @@ export const SAVE = {
     // the blank lacks (placesave.js); its older job shapes were brought to
     // today's before this, on the raw save (src/migrations/).
     S.after = a && typeof a === 'object' ? readOver(blankAfter(), a) : null;
-    if (S.after) { settleHeld(S.after.bodies); settleHand(); }
+    // A save keeps no grid: each pile is stood up from its count (piles.js).
+    if (S.after) { standPiles(); settleHeld(S.after.bodies); settleHand(); }
   },
   blank() { S.after = null; }
 };

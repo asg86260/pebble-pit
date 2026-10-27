@@ -28,6 +28,7 @@ import { built } from './levels.js';
 import { groundLogs, settled, takeGroundLog, kindOf, layGood } from './grove.js';
 import { pileOwner, pileBox, floorAt, afterX0, afterX1, AP } from './place.js';
 import { secs } from './util.js';
+import { isPiled, takeBlock, setBlock, pileRoom } from './piles.js';
 
 const PLACE = 'after';
 const inBox = (b, x, y, pad) => x >= b.x - pad && x <= b.x + b.w + pad && y >= b.y - pad && y <= b.y + b.h + pad;
@@ -36,10 +37,13 @@ const inBox = (b, x, y, pad) => x >= b.x - pad && x <= b.x + b.w + pad && y >= b
 const whole = what => Math.floor(S.after.stock[what] || 0);
 
 // The counted pile under (x, y) whose good is `kind` (any, for null), its
-// station standing: its stock key, or null.
-function pileUnder(x, y, pad, kind = null) {
+// station standing: its stock key, or null. With `room`, only one with room
+// for another (a pile at its brim takes nothing: the load goes on the floor).
+const hasRoom = what => !isPiled(what) || pileRoom(what) > 0;
+function pileUnder(x, y, pad, kind = null, room = false) {
   for (const [what, k] of Object.entries(AFTER_PILE_GOODS)) {
     if (kind && k !== kind) continue;
+    if (room && !hasRoom(what)) continue;
     const key = pileOwner(what);
     if (key && built(key) && inBox(pileBox(key, what, AFTER_PILE_REACH), x, y, pad)) return what;
   }
@@ -50,7 +54,8 @@ function lyingUnder(x, y, pad, kind = null) {
   for (let i = groundLogs().length - 1; i >= 0; i--) {
     const q = groundLogs()[i];
     if (!settled(q) || (kind && kindOf(q) !== kind)) continue;
-    if (inBox({ x: q.x, y: floorAt(q.x + AP) - 2 * AP, w: AFTER_GOODS_FOOT[kindOf(q)] * AP, h: 2 * AP }, x, y, pad)) return q;
+    const k = kindOf(q), h = (k === 'sign' ? 2 : AFTER_GOODS_FOOT[k]) * AP;   // a block stands as high as it is wide
+    if (inBox({ x: q.x, y: floorAt(q.x + AP) - h, w: AFTER_GOODS_FOOT[k] * AP, h }, x, y, pad)) return q;
   }
   return null;
 }
@@ -59,6 +64,7 @@ function lyingUnder(x, y, pad, kind = null) {
 function takeOne(from, kind, x, y, pad) {
   if (from === 'floor') { const q = lyingUnder(x, y, pad, kind); return !!q && takeGroundLog(q.id); }
   if (whole(from) < 1) return false;
+  if (isPiled(from)) return takeBlock(from, x);
   S.after.stock[from] -= 1;
   return true;
 }
@@ -105,7 +111,7 @@ export const AFTER_GOODS = {
     if (!h || !h.held) return;
     h.held = false;
     h.t = 0;
-    const what = pileUnder(h.x, h.y, h.pad || 0, h.kind);
+    const what = pileUnder(h.x, h.y, h.pad || 0, h.kind, true);
     if (what) h.put = what;
     else lay(h);
   }
@@ -131,7 +137,9 @@ export function stepHand(c) {
   h.t += dt;
   if (h.t < AFTER_PUT_S) return;
   h.t = 0;
-  a.stock[h.put] += 1;
+  // Filled to its brim while the load went down: the rest onto the floor.
+  if (!hasRoom(h.put)) { lay(h); return; }
+  if (isPiled(h.put)) setBlock(h.put, h.x); else a.stock[h.put] += 1;
   h.n -= 1;
   if (h.n <= 0) a.hand = null;
 }

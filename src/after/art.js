@@ -1,21 +1,25 @@
 // The camp's ground plan: each station's drawing as ground, and the camp laid
 // out left to right off it (the owner, 2026-10-20: "the stations are a bit
 // too far apart": one gap of open floor between every two neighbors). A pure
-// table and one function over it, with no import but the grid, so the config
-// can lay God's yard and the stair off the camp's end (config/after.js) and
-// place.js reads the same numbers for everything that stands.
+// table and one function over it, with no import but the piles' sizes
+// (config/afterpiles.js, which imports nothing), so the config can lay God's
+// yard and the stair off the camp's end (config/after.js) and place.js reads
+// the same numbers for everything that stands.
 //
 // Each station's drawing (render/after/stations.js) laid off the left edge of
 // its ground, in cells: `box` the drawing itself, as it stands (turned), as
 // [left, width, height up off the floor] (what a click works and a board
 // opens on); `door` the column a worker's middle stands on (where the mock
 // draws its body); `pile` where each counted pile lies, in the drawing's own
-// cells; `ground` how far its ground runs, piles and all, pressed flat under
-// it once it is ordered. A drawing may be turned about its own ground
+// cells, as the column of its edge toward the drawing (it grows away from
+// the drawing, as wide as `pileGrid` makes it); `ground` how far its ground
+// runs, piles and all, pressed flat under it once it is ordered. A drawing may be turned about its own ground
 // (`flip`, its width), its box, door and piles turned with it. The saw
 // mill keeps its sawdust heap on its own ground (`heap`, laid by `span`
 // below): past its timber pile and the body loading it, the notch in the
 // floor just past the heap's foot.
+
+import { AFTER_PILES, AFTER_BLOCK } from '../config/afterpiles.js';
 
 // What a station draws past its box and piles, in its own cells: the
 // workshop's blanks (`reach`, the column past its right end).
@@ -24,13 +28,13 @@
 // station's ground as what it inks at its fullest, and rule 22 in verify.js
 // is red for a part past the ground laid here.
 const DRAWN = {
-  mill:      { box: [11, 39, 26], door: 8, pile: { logs: 0, timber: 53 }, heap: true },
+  mill:      { box: [11, 39, 26], door: 8, pile: { logs: 6, timber: 53 }, heap: true },
   workshop:  { box: [5, 21, 22], door: 13, pile: { signs: 27 }, reach: 52 },
   shack:     { box: [0, 14, 14], door: 7, pile: {} },
   // The forestry shack in front of the grove (the owner, 2026-10-20): the
   // grove's board, and the pile its gatherers bring the fallen logs to,
   // on its grove side, where the haulers fetch them from.
-  forestry:  { box: [8, 16, 13], door: 10, pile: { grovelogs: 0 } },
+  forestry:  { box: [8, 16, 13], door: 10, pile: { grovelogs: 6 } },
   // Its board's ground on the workshops' side, between the last workshop and
   // the union's crowd: laid there off both by after/place.js, which overrides
   // this column (God's side holds the rebel pile).
@@ -43,8 +47,30 @@ const DRAWN = {
 // the spot the board stands over, `post` the floor under it, in cells; a
 // cell past the rest of the ground unless the row says where (`sign`).
 export const SIGN = { w: 6, h: 4, post: 3 };
-// A pile is six cells across, and a body stands three wide on its door.
+// A pile that is not a plot of blocks (the workshop's signs) is six cells
+// across, and a body stands three wide on its door.
 const PILE_CELLS = 6;
+// A counted pile's plot (config/afterpiles.js), in blocks: as wide as the
+// heap its brim stands in at the dust's slope -- grid.js with no repose
+// lets a block roll off any drop of two, so a heap of blocks set down on its
+// middle column is a stair a block a column, h high on 2h - 1 columns,
+// holding h * h -- and as many rows as that, the smallest h that holds the
+// brim. A pile the design names a width for keeps it and stacks as high as
+// its brim needs. Null for a pile that is not a plot.
+export function pileGrid(what) {
+  const pl = AFTER_PILES[what];
+  if (!pl) return null;
+  const h = Math.ceil(Math.sqrt(pl.brim)), cols = pl.cols ?? 2 * h - 1;
+  return { size: AFTER_BLOCK[pl.good], cols, rows: pl.cols ? Math.ceil(pl.brim / cols) : h };
+}
+// A pile's width and height in cells.
+export const pileCells = what => { const g = pileGrid(what); return g ? g.cols * g.size : PILE_CELLS; };
+export const pileHigh = what => { const g = pileGrid(what); return g ? g.rows * g.size : 0; };
+// Which side of its drawing a pile of drawing `a` lies on, and its left
+// column: a pile left of the drawing's middle ends at its column, one right
+// of it starts there.
+const leftOf = (a, edge) => edge < a.box[0] + a.box[1] / 2;
+export const pileLeft = (a, what) => (leftOf(a, a.pile[what]) ? a.pile[what] - pileCells(what) : a.pile[what]);
 // A body loading or unloading a pile stands beside it, on the side away from
 // its station's drawing, its middle `stand` cells off the pile's edge, so
 // the load over its head clears the pile: the widest load (a plank,
@@ -55,8 +81,8 @@ export const PILE_STAND = { stand: 2.5, load: 2 };
 // cells of floor between the heap's foot and whatever stands before it on
 // its station's ground (the body loading the timber pile).
 export const HEAP = { r: 4, notch: 5, gap: 1 };
-// The column a body loading pile column `x` of drawing `a` stands on (its middle).
-export const standCol = (a, x) => (x + PILE_CELLS / 2 < a.box[0] + a.box[1] / 2 ? x - PILE_STAND.stand : x + PILE_CELLS + PILE_STAND.stand);
+// The column a body loading pile `what` of drawing `a` stands on (its middle).
+export const standCol = (a, what) => (leftOf(a, a.pile[what]) ? pileLeft(a, what) - PILE_STAND.stand : pileLeft(a, what) + pileCells(what) + PILE_STAND.stand);
 // Each station's ground, derived from what it draws: from its first drawn
 // column (`lead`) to the column past its last (`ground`), its box, its piles
 // and the floor a body loads each from, its door, its `reach` and its
@@ -66,9 +92,9 @@ export const standCol = (a, x) => (x + PILE_CELLS / 2 < a.box[0] + a.box[1] / 2 
 // A station with a heap stands it past everything else on its ground, `gap`
 // cells clear, its notch past its foot: `heap` its middle column.
 const span = a => {
-  const piles = Object.values(a.pile), stands = piles.map(x => standCol(a, x));
+  const keys = Object.keys(a.pile), piles = keys.map(k => pileLeft(a, k)), stands = keys.map(k => standCol(a, k));
   const lead = Math.min(a.box[0], a.door - 1, ...piles, ...stands.map(s => Math.floor(s - PILE_STAND.load)));
-  let end = Math.max(a.box[0] + a.box[1], a.door + 2, ...piles.map(x => x + PILE_CELLS), ...stands.map(s => Math.ceil(s + PILE_STAND.load)), a.reach || 0);
+  let end = Math.max(a.box[0] + a.box[1], a.door + 2, ...keys.map((k, i) => piles[i] + pileCells(k)), ...stands.map(s => Math.ceil(s + PILE_STAND.load)), a.reach || 0);
   const heap = a.heap ? end + HEAP.gap + HEAP.r : undefined;
   if (a.heap) end = heap + HEAP.notch + 2;
   const sign = a.sign ?? end + 1;

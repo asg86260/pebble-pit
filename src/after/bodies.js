@@ -28,7 +28,7 @@ import { S } from '../state.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S,
          AFTER_CARRY_SLOTS, AFTER_PUT_S, AFTER_SAW_S, AFTER_CHOP_HOLD_S,
-         AFTER_JOIN_FADE_S, AFTER_GOODS_HOME, AFTER_WALK, AFTER_TIP_LOAD } from '../config.js';
+         AFTER_JOIN_FADE_S, AFTER_GOODS_HOME, AFTER_GOODS_FOOT, AFTER_WALK, AFTER_TIP_LOAD } from '../config.js';
 import { secs, walk, nextId } from './util.js';
 import { stepCrew } from '../placebodies.js';
 import { haulCap } from '../levels.js';
@@ -36,7 +36,8 @@ import { deepAt } from './sky.js';
 import { built, stumpsOn, seatsOf, bladeLogs, heapBrim } from './levels.js';
 import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, notchX, soulX, soulY, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
-import { standing, stumped, chopTree, digStump, settled, takeGroundLog, kindOf } from './grove.js';
+import { standing, stumped, chopTree, digStump, settled, takeGroundLog, kindOf, layGood } from './grove.js';
+import { isPiled, takeBlock, setBlock, pileRoom, pileBrim } from './piles.js';
 import { sweepDue, tipSawdust } from './mill.js';
 import { signSpot, plantSign } from './press.js';
 import { workAfter } from './work.js';
@@ -183,6 +184,19 @@ function putDown(w, dt, add) {
   w.carry = 0; w.load = null;
   return true;
 }
+// Set down on counted pile `what` (piles.js) the same way, a block a beat
+// onto its middle; a pile at its brim takes no more, and what is still in
+// hand is laid on the floor at the body's feet, as a felled log lies, for a
+// gatherer to carry home once the pile has room (`looseLogs`). True once the
+// hands are empty.
+function toPile(w, dt, what) {
+  if (carried(w) && pileRoom(what) <= 0) {
+    for (let k = 0; k < carried(w); k++) layGood(w.load, w.x + (k - (carried(w) - 1) / 2) * AFTER_GOODS_FOOT[w.load] * AP, floorAt(w.x));
+    w.carry = 0; w.load = null; w.t = 0;
+    return true;
+  }
+  return putDown(w, dt, () => setBlock(what));
+}
 
 // A body put on a job, from where it stands: it forgets what it was doing
 // and walks to the job (the job's own frame takes it there).
@@ -274,10 +288,10 @@ function fetchLogs(w, key, dt) {
   if (!carried(w) && !w.pick && (a.stock[mine] > 0 || a.stock.grovelogs <= 0 || hauledTo(key))) return false;
   w.at = null;
   if (!carried(w) || w.pick) {
-    if (go(w, pileMid('forestry', 'grovelogs'), floorY(), dt)) w.pick = !pickUp(w, dt, 'log', () => a.stock.grovelogs, () => { a.stock.grovelogs -= 1; });
+    if (go(w, pileMid('forestry', 'grovelogs'), floorY(), dt)) w.pick = !pickUp(w, dt, 'log', () => a.stock.grovelogs, () => takeBlock('grovelogs', w.x));
     return true;
   }
-  if (go(w, pileMid(key, mine), floorY(), dt)) putDown(w, dt, () => { a.stock[mine] += 1; });
+  if (go(w, pileMid(key, mine), floorY(), dt)) toPile(w, dt, mine);
   return true;
 }
 
@@ -304,7 +318,8 @@ const hauledTo = key => haulers().some(o => o.target === key || !carried(o));
 // their way. One with nobody on its job is worked by the hand alone, and its
 // logs are left on the forestry pile for the hand to take where it likes.
 const WORKER = { mill: AFTER_JOB.SAW };
-const shortOf = key => (built(key) && bodiesOf(WORKER[key]).length > 0 ? Math.max(0, haulWant(key) - S.after.stock[PILE[key]] - inbound(key)) : 0);
+// Never past the pile's brim: a hauler sets no log on a full pile.
+const shortOf = key => (built(key) && bodiesOf(WORKER[key]).length > 0 ? Math.max(0, Math.min(haulWant(key), pileBrim(PILE[key])) - S.after.stock[PILE[key]] - inbound(key)) : 0);
 // The station most short for its want, the saw mill on a tie: null when none is.
 function haulTarget() {
   let best = null, most = 0;
@@ -329,13 +344,15 @@ const sweeping = () => S.after.bodies.some(o => o.errand === AFTER_JOB.SWEEP);
 // to, so no two go for the same. A good whose pile's station is not
 // standing is left lying. False with nothing in hand and nothing lying free.
 const homeOf = kind => AFTER_GOODS_HOME[kind] || AFTER_GOODS_HOME.log;
+// A good whose pile is at its brim is left lying too, until it has room.
+const roomAt = what => !isPiled(what) || pileRoom(what) > 0;
 const looseLogs = (kind = null) => S.after.groundLogs.filter(o => settled(o)
-  && (kind ? kindOf(o) === kind : built(pileOwner(homeOf(kindOf(o))))));
+  && (kind ? kindOf(o) === kind : built(pileOwner(homeOf(kindOf(o)))) && roomAt(homeOf(kindOf(o)))));
 function gather(w, dt) {
   const a = S.after;
   if (w.to === 'pile') {
     const what = homeOf(w.load);
-    if (go(w, pileMid(pileOwner(what), what), floorY(), dt) && putDown(w, dt, () => { a.stock[what] += 1; })) w.to = null;
+    if (go(w, pileMid(pileOwner(what), what), floorY(), dt) && (isPiled(what) ? toPile(w, dt, what) : putDown(w, dt, () => { a.stock[what] += 1; }))) w.to = null;
     return true;
   }
   const kind = carried(w) ? w.load : null;
@@ -405,13 +422,13 @@ const JOB_STEP = {
     if (!carried(w) || w.pick) {
       w.target = null;
       if (!carried(w) && a.stock.grovelogs <= 0) return;
-      if (go(w, pileMid('forestry', 'grovelogs'), floorY(), dt)) w.pick = !pickUp(w, dt, 'log', () => a.stock.grovelogs, () => { a.stock.grovelogs -= 1; });
+      if (go(w, pileMid('forestry', 'grovelogs'), floorY(), dt)) w.pick = !pickUp(w, dt, 'log', () => a.stock.grovelogs, () => takeBlock('grovelogs', w.x));
       return;
     }
-    if (w.target == null || !built(w.target)) w.target = haulTarget();
+    if (w.target == null || !built(w.target) || pileRoom(PILE[w.target]) <= 0) w.target = haulTarget();
     // No station short of them any more: back on the forestry shack's pile.
     const key = w.target, what = key ? PILE[key] : 'grovelogs';
-    if (go(w, pileMid(key || 'forestry', what), floorY(), dt) && putDown(w, dt, () => { a.stock[what] += 1; })) w.target = null;
+    if (go(w, pileMid(key || 'forestry', what), floorY(), dt) && toPile(w, dt, what)) w.target = null;
   },
   // An idle member's errand only: at the notch, a load tipped through each
   // time the heap comes within a load of its brim.

@@ -12,7 +12,7 @@ import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIE
          AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL, AFTER_AGITATE_S,
          AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_SAW_S, AFTER_TIP_LOAD,
          AFTER_BUILDS, AFTER_SEAT_BILLS, AFTER_WALK, AFTER_SIGN_INK_S, AFTER_BURN_S,
-         GESTURE_STRAIN_S } from '../src/config.js';
+         GESTURE_STRAIN_S, AFTER_PILES } from '../src/config.js';
 import { speechTarget } from '../src/after/union.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
@@ -50,7 +50,11 @@ const inked = (n = Infinity) => rims().slice(0, n).split('').reduce((t, c) => t 
 const settle = () => runUntil(() => read().walking === 0, 120);
 // A member put on `job` as a player puts one: the + on its roster, and with
 // its seats full a seat bought on its station's board first.
-const putOn = job => window.__afterPress(job) || (!!window.__buy(`after-seat-${job}`) && window.__afterPress(job));
+// The timber pile topped up to its brim before a bill that names timber: a
+// pile holds no more than its brim (after/piles.js), so a check buying
+// several rows grants it again between them.
+const topUp = () => window.__afterGrant({ timber: AFTER_PILES.timber.brim });
+const putOn = job => window.__afterPress(job) || (topUp(), !!window.__buy(`after-seat-${job}`) && window.__afterPress(job));
 const line = () => { const at = window.__afterPair(); return window.__afterClick(at.x, at.y); };
 // The camp given members, as the signs would send them: the front of the crowd
 // made members, and the clock turned until they have walked out and stand on
@@ -103,7 +107,7 @@ group("the podium is a ladder bought on the pedestal's card, a rung at each supp
   const paid = S.after.motes.slice(m0).reduce((s, m) => s + m.v, 0);
   run(10);
   const rungs = [];
-  for (let k = 1; k < marks.length; k++) { toMark(k); run(0.1); rungs.push(window.__buy('after-podium')); run(AFTER_PODIUM_CLIMB.s); }
+  for (let k = 1; k < marks.length; k++) { toMark(k); run(0.1); topUp(); rungs.push(window.__buy('after-podium')); run(AFTER_PODIUM_CLIMB.s); }
   const done = window.__buy('after-podium');
   const top = afterFloor() - speakerAt(0).y;
   yard.persist(); window.__reload(); run(0.1);
@@ -238,9 +242,12 @@ group('the grove\'s card clears plots, each with its sapling, to its most', asyn
   up();
   window.__afterGrant({ rebel: 3000, timber: 400 });
   const bought = [];
-  for (let k = 0; k < AFTER_PLOT_MAX; k++) bought.push(window.__buy('after-plot'));
+  for (let k = 0; k < AFTER_PLOT_MAX; k++) { topUp(); bought.push(window.__buy('after-plot')); }
   const plots = S.after.plots;
-  const grow = window.__buy('after-grow'), big = window.__buy('after-tree');
+  topUp();
+  const grow = window.__buy('after-grow');
+  topUp();
+  const big = window.__buy('after-tree');
   window.__actsOn(null);
   return [
     ok(bought.filter(Boolean).length === AFTER_PLOT_MAX - AFTER_PLOTS0 && !bought.at(-1), 'a plot a press, to the most it clears',
@@ -362,7 +369,7 @@ group('a station is worked by hand before any member, and a post works it slower
 
 group('the heap at its brim stops the saw, and a load dragged off it tips through the notch', async () => {
   up();
-  window.__afterGrant({ rebel: 2000, logs: 4, timber: 40 });
+  window.__afterGrant({ rebel: 2000, logs: 4 });
   raise('mill');
   window.__afterGrant({ sawdust: AFTER_SAWDUST_BRIM });
   spin('mill', 2, () => false, 4);
@@ -500,7 +507,8 @@ group('the mill\'s second blade saws two logs a cut, at the fixed split', async 
   raise('mill');
   putOn('sawyer');
   const blade = window.__buy('after-blade');
-  window.__afterGrant({ logs: 6 });
+  // The pile emptied, so all six logs' timber has room on it.
+  window.__afterGrant({ logs: 6, timber: -S.after.stock.timber });
   const t0 = read().timber, d0 = read().sawdust;
   runUntil(() => S.after.bodies.some(b => b.at === 'mill'), 90);
   const cuts = [];

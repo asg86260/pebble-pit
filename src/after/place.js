@@ -18,7 +18,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_SIGN_BOARD, AFTER_PEDESTAL_SIGN_GAP } from '../config.js';
 
 import { S } from '../state.js';
-import { ART as BASE_ART, standCol, rampRun } from './art.js';
+import { ART as BASE_ART, standCol, rampRun, pileLeft, pileCells, pileHigh, pileGrid } from './art.js';
 
 const snap = v => Math.round(v / P) * P;
 // An art cell, world px: a cell of act 3's drawings, AFTER_ART_SCALE grid
@@ -94,19 +94,32 @@ export const signBox = key => {
 };
 export const signBoard = key => { const b = signBox(key); return b && { ...b, h: AFTER_SIGN_BOARD.h * AP }; };
 // A station's pile of `what`, its left edge in the world. A pile's place in
-// ART is in the drawing's own cells, so a turned drawing turns its piles too
-// (a pile is six cells across).
-const PILE_W = 6;
+// ART is in the drawing's own cells (after/art.js, `pileLeft`), so a turned
+// drawing turns its piles too.
 export const pileAt = (key, what) => {
-  const art = ART[key], x = art.pile[what];
-  return stationX0(key) + (art.flip ? art.flip - x - PILE_W : x) * AP;
+  const art = ART[key], x = pileLeft(art, what);
+  return stationX0(key) + (art.flip ? art.flip - x - pileCells(what) : x) * AP;
 };
 // The station a counted pile lies on, by the pile's stock key, and the box
-// the hand finds it in: its six cells across, `reach` art cells up off the
-// floor under it (its station's shelf, `floorAt`).
+// the hand finds it in: across the pile, `reach` art cells up off the floor
+// under it (its station's shelf, `floorAt`), or a cell over the pile's plot
+// at its fullest where that stands taller.
 export const pileOwner = what => Object.keys(ART).find(k => what in ART[k].pile) || null;
-const pileCenter = (key, what) => pileAt(key, what) + (PILE_W / 2) * AP;
-export const pileBox = (key, what, reach) => ({ x: pileAt(key, what), y: floorAt(pileCenter(key, what)) - reach * AP, w: PILE_W * AP, h: reach * AP });
+const pileCenter = (key, what) => pileAt(key, what) + (pileCells(what) / 2) * AP;
+export const pileBox = (key, what, reach) => {
+  const h = Math.max(reach, pileHigh(what) + 1) * AP;
+  return { x: pileAt(key, what), y: floorAt(pileCenter(key, what)) - h, w: pileCells(what) * AP, h };
+};
+// A counted pile's plot in the world (after/art.js, `pileGrid`), shaped as
+// grid.js reads a grid and the yard's floor is laid: `x` its left edge, `p`
+// a block's width, its bottom row on its station's ground. Null for a pile
+// that is not a plot of blocks.
+export const pilePlace = what => {
+  const g = pileGrid(what), key = pileOwner(what);
+  if (!g || !key) return null;
+  const p = g.size * AP;
+  return { x: pileAt(key, what), y: groundOf(key) - g.rows * p, cols: g.cols, rows: g.rows, p };
+};
 // Where a station's loads are piled while it is raised (after/build.js): on
 // its ground beside its drawing, where its own product pile will stand,
 // BUILD_PILE_W art cells across and kept on the ground. Its left edge.
@@ -125,7 +138,7 @@ export const buildLayAt = (key, side) => { const b = stationBox(key); return sid
 // drawing (after/art.js, `standCol`), so the load stacked over its head
 // stands clear of the pile; the floor it stands on is the station's ground.
 export const pileMid = (key, what) => {
-  const art = ART[key], s = standCol(art, art.pile[what]);
+  const art = ART[key], s = standCol(art, what);
   return stationX0(key) + (art.flip ? art.flip - s : s) * AP;
 };
 // The saw mill's sawdust heap on its own ground, past its timber pile (ART's
@@ -280,7 +293,7 @@ export function floorFlats() {
     if (!sited(key)) continue;
     const b = stationBox(key), h = shelfOf(key), on = s => out.push([...s, h]);
     on(span(b.x, b.w / P)); on(span(stationX0(key) + ART[key].lead * AP, (ART[key].ground - ART[key].lead) * AFTER_ART_SCALE));
-    for (const what of Object.keys(ART[key].pile)) on(span(pileAt(key, what), PILE_W * AFTER_ART_SCALE));
+    for (const what of Object.keys(ART[key].pile)) on(span(pileAt(key, what), pileCells(what) * AFTER_ART_SCALE));
     on(span(stationDoor(key) - P, 3));
     on(span(signBox(key).x, AFTER_SIGN_BOARD.w * AFTER_ART_SCALE));
   }

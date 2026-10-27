@@ -46,6 +46,7 @@ import { deepTop, deepFloor, deepX1, coilLine, coilThick, standOfStation } from 
 import { yardReads } from './persist.js';
 import { afterlifeOn, hellOn } from './acts.js';
 import { AFTER_STORY } from './after/story.js';
+import { PILED, plotOf } from './after/piles.js';
 import { HELL_STORY } from './hell/story.js';
 import { allOverlaps, offGround } from './footprints.js';
 
@@ -701,6 +702,18 @@ export function verifyWorld() {
   if (S.tick % LEDGER_EVERY === 0) {
     const off = offGround();
     if (off.length) fail('an act 3 station stands off its own ground', off.join('; '));
+  }
+
+  // --- rule 23: an act 3 pile is its stock -------------------------------------
+  // A counted pile is a plot of blocks and its count is the plot's cells
+  // (after/piles.js): every write to the count goes through the one door that
+  // writes the plot too. A count its cells disagree with is a write that went
+  // round it. The cells are walked, not read off the plot's own ledger.
+  if (afterlifeOn() && S.after) {
+    for (const what of PILED) {
+      const n = count(plotOf(what));
+      if (n !== S.after.stock[what]) fail('an act 3 pile does not hold its stock', `${what}: ${S.after.stock[what]} counted, ${n} blocks on its plot`);
+    }
   }
 
   verifyParty();

@@ -44,7 +44,7 @@ import { godFront } from './after/sky.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
 const godView = () => godFront();
-import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PUT_S, AFTER_DROP } from './config.js';
+import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PUT_S, AFTER_DROP, AFTER_PILES } from './config.js';
 import { sawDrops } from './after/mill.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
@@ -479,7 +479,7 @@ const yardPurse = () => window.__grant({ dust: 2e6, spores: 5e5, shards: 5e5, sc
 // job's roster, a seat bought on the station's board first where the job's
 // seats are full. A job named twice is two members.
 const staffAfter = jobs => {
-  for (const j of jobs) if (!window.__afterPress(j, 1)) { window.__buy(`after-seat-${j}`); window.__afterPress(j, 1); }
+  for (const j of jobs) if (!window.__afterPress(j, 1)) { buyAfter(`after-seat-${j}`); window.__afterPress(j, 1); }
 };
 // Station `key`'s round part (`ring`, the saw mill's wheel) taken hold of
 // where it stands and turned at `rev` turns a second for `frames` frames,
@@ -504,6 +504,12 @@ function handSaw(strokes, per = 0.5) {
   for (let f = 1; f <= frames; f++) { window.__gesture('move', x0 + Math.sin(f / 60 / per * Math.PI) * P * 6, y); window.__fast(1 / 60); }
   window.__look(0); window.__holdShot();
 }
+// The timber pile topped up to its brim, before each act 3 bill that names
+// timber: it holds no more (after/piles.js), so a setup buying several rows
+// grants it again between them.
+const timberUp = () => window.__afterGrant({ timber: AFTER_PILES.timber.brim });
+// An act 3 row bought with the timber for it.
+const buyAfter = key => { timberUp(); return window.__buy(key); };
 function afterChain(slow) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
   // Won in blocks of files rather than from the front back, so the shot
@@ -522,7 +528,7 @@ function afterChain(slow) {
   }
   const A = AFTER_JOB;
   staffAfter([A.CUT, A.CUT, A.CUT, A.SAW, A.JOIN, A.JOIN]);
-  for (const u of ['after-plot', 'after-plot', 'after-stumps', 'after-blade', 'after-bench']) window.__buy(u);
+  for (const u of ['after-plot', 'after-plot', 'after-stumps', 'after-blade', 'after-bench']) buyAfter(u);
 }
 
 // Track A: the workshop standing with timber for its blanks, `taps` nails
@@ -2858,8 +2864,8 @@ export const SCENES = {
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       window.__afterGrant({ rebel: 2000, timber: 300 }); yardPurse();
-      for (let k = 0; k < 3; k++) window.__buy('after-plot');
-      window.__buy('after-tree');
+      for (let k = 0; k < 3; k++) buyAfter('after-plot');
+      buyAfter('after-tree');
       window.__afterAxe();
       // The plots stood at their stages, the setup the shot is not about:
       // a grown tree, a big one, a pole, and a stump with its logs.
@@ -3357,7 +3363,7 @@ function act3Mid() {
   }
   const A = AFTER_JOB;
   staffAfter([A.CUT, A.CUT, A.CUT, A.SAW, A.JOIN, A.JOIN]);
-  for (const u of ['after-plot', 'after-plot']) window.__buy(u);
+  for (const u of ['after-plot', 'after-plot']) buyAfter(u);
   window.__goPlace('after');
   window.__fast(20);
   // between the workshop and the pedestal, the camp's middle

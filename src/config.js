@@ -57,6 +57,7 @@ export * from './config/glimpse.js';
 export * from './config/riftlife.js';
 // Acts 3 and 4, the scaffold (DESIGN.md, "Acts 3 and 4").
 export * from './config/after.js';
+export * from './config/afterpiles.js';
 // act 3's crowds, God and the camera's zoom up there (track C)
 export * from './config/aftercrowd.js';
 export * from './config/hell.js';

@@ -9,6 +9,7 @@ import { AFTER_JOB as J } from '../jobs.js';
 import { campLayout, ART as CAMP_ART, CAMP_ORDER, SIGN as CAMP_SIGN, HEAP as CAMP_HEAP } from '../after/art.js';
 import { AFTER_ZONE_GAP, AFTER_UNION_W } from './aftercrowd.js';
 import { ACT_GATES_CELL, ACT_GATES_REACH } from './acts.js';
+import { AFTER_BLOCK } from './afterpiles.js';
 
 // The switch for the act (DESIGN.md, "Held-back flags"), set by the build:
 // `VITE_AFTERLIFE=1`, which no build sets yet, so the free itch build, the
@@ -305,9 +306,7 @@ export const AFTER_DIG_S = 4;              // a woodcutter digging a stump out
 // a moment.
 // A post bought on its card then works it on the worker's clock, slower.
 export const AFTER_WORK_HOLD_S = 0.3;
-export const AFTER_LOG_TIMBER = 6;         // what a log saws into: timber (the fence is cut, a fixed split)
-export const AFTER_LOG_SAWDUST = 2;        // ...and sawdust
-export const AFTER_BLADE_LOGS = 2;         // logs a cut takes with the mill's second blade
+export const AFTER_LOG_SAWDUST = 2;        // what a log saws into besides its timber (config/afterpiles.js): sawdust
 export const AFTER_SAWDUST_BRIM = 24;      // the heap's brim
 export const AFTER_SAWDUST_BRIM_UP = 48;   // ...with the mill's bigger heap
 // The saw never stops for good: a click on the heap tips
@@ -321,7 +320,7 @@ export const AFTER_NOTCH_AT = CAMP_HEAP.notch;   // the notch, cells right of th
 export const AFTER_HEAP_R = CAMP_HEAP.r;         // the sawdust heap at its brim, a triangle this many cells high (after/art.js)
 export const AFTER_SWEEP_WAIT_S = 8;       // the heap stands at its brim, its mark up, this long before a sawyer tips
 export const AFTER_SAW_S = 3;              // a sawyer's cut
-export const AFTER_SIGN_TIMBER = 8;        // timber a sign: signs are timber alone (call 11)
+export const AFTER_SIGN_TIMBER = 4;        // timber blocks a sign: signs are timber alone (call 11), a 4x4 of four 2x2s
 export const AFTER_SIGN_S = 25;             // a joiner's sign
 export const AFTER_BENCH_SIGNS = 2;        // signs a joining with the workshop's second bench
 export const AFTER_PLANT_S = 1.5;          // a carrier planting a sign
@@ -345,9 +344,9 @@ export const AFTER_GOODS_HOME = { log: 'grovelogs', plank: 'timber', sign: 'sign
 // stack (a sign on its post) and a cell over.
 export const AFTER_PILE_REACH = 10;
 // A good lying on the floor, art cells across where the hand finds it (a
-// log lies end on, two cells; a plank its length), and the art cells
+// log and a plank their blocks, config/afterpiles.js), and the art cells
 // between two let go from one load.
-export const AFTER_GOODS_FOOT = { log: 2, plank: 6, sign: 4 };
+export const AFTER_GOODS_FOOT = { log: AFTER_BLOCK.log, plank: AFTER_BLOCK.plank, sign: 4 };
 export const AFTER_LAY_GAP = 1;
 // The most of a load drawn stacked over a head: past it the stack would
 // stand taller than the camp's stations.
@@ -402,12 +401,12 @@ export const AFTER_SEAT_BILLS = [
   [['rebel', 15], ['dust', 2000]],
   [['rebel', 30], ['dust', 4000]],
   [['rebel', 50], ['dust', 8000], ['spore', 2000]],
-  [['rebel', 80], ['timber', 5], ['dust', 12000], ['spore', 4000]],
-  [['rebel', 120], ['timber', 10], ['dust', 20000], ['spore', 6000]],
-  [['rebel', 180], ['timber', 20], ['dust', 30000], ['spore', 9000], ['shard', 8000]],
-  [['rebel', 260], ['timber', 30], ['dust', 45000], ['spore', 12000], ['shard', 12000]],
-  [['rebel', 360], ['timber', 45], ['dust', 60000], ['spore', 16000], ['shard', 16000]],
-  [['rebel', 500], ['timber', 60], ['dust', 80000], ['spore', 20000], ['shard', 20000], ['scale', 800]]
+  [['rebel', 80], ['timber', 3], ['dust', 12000], ['spore', 4000]],
+  [['rebel', 120], ['timber', 5], ['dust', 20000], ['spore', 6000]],
+  [['rebel', 180], ['timber', 10], ['dust', 30000], ['spore', 9000], ['shard', 8000]],
+  [['rebel', 260], ['timber', 14], ['dust', 45000], ['spore', 12000], ['shard', 12000]],
+  [['rebel', 360], ['timber', 16], ['dust', 60000], ['spore', 16000], ['shard', 16000]],
+  [['rebel', 500], ['timber', 18], ['dust', 80000], ['spore', 20000], ['shard', 20000], ['scale', 800]]
 ];
 
 // --- the cards ---
@@ -451,23 +450,23 @@ export const AFTER_BUILDS = {
 export const AFTER_UPGRADES = {
   // The podium ladder: a rung a bill, each opening when support reaches its
   // mark, a share of the strike's (`marks`).
-  'after-podium':      { card: 'pedestal',  bills: [[['rebel', 30], ['timber', 4]], [['rebel', 80], ['timber', 12]],
-                                                    [['rebel', 200], ['timber', 30]], [['rebel', 500], ['timber', 80]]],
+  'after-podium':      { card: 'pedestal',  bills: [[['rebel', 30], ['timber', 2]], [['rebel', 80], ['timber', 6]],
+                                                    [['rebel', 200], ['timber', 15]], [['rebel', 500], ['timber', 18]]],
                          marks: [0.1, 0.25, 0.45, 0.7] },
   'after-axe':         { card: 'grove',     bills: [[['rebel', 50], ['dust', 8000]]] },                  // the axe (call 15)
   'after-plot':        { card: 'grove',     bills: [[['rebel', 60], ['dust', 15000]],
-                                                    [['rebel', 200], ['timber', 10], ['dust', 40000], ['spore', 10000]],
-                                                    [['rebel', 400], ['timber', 60], ['dust', 80000], ['spore', 20000], ['shard', 20000], ['scale', 800]]] },   // a plot cleared, AFTER_PLOT_MAX in all
-  'after-grow':        { card: 'grove',     bills: [[['rebel', 150], ['timber', 10], ['dust', 30000], ['spore', 8000]]] },                    // faster growth
-  'after-tree':        { card: 'grove',     bills: [[['rebel', 450], ['timber', 120], ['dust', 100000], ['spore', 35000], ['shard', 40000], ['scale', 2000], ['spark', 8000]]] },  // bigger trees
+                                                    [['rebel', 200], ['timber', 5], ['dust', 40000], ['spore', 10000]],
+                                                    [['rebel', 400], ['timber', 18], ['dust', 80000], ['spore', 20000], ['shard', 20000], ['scale', 800]]] },   // a plot cleared, AFTER_PLOT_MAX in all
+  'after-grow':        { card: 'grove',     bills: [[['rebel', 150], ['timber', 5], ['dust', 30000], ['spore', 8000]]] },                    // faster growth
+  'after-tree':        { card: 'grove',     bills: [[['rebel', 450], ['timber', 18], ['dust', 100000], ['spore', 35000], ['shard', 40000], ['scale', 2000], ['spark', 8000]]] },  // bigger trees
   // Stump removal names no timber: the first trees are the only timber until
   // it is had, and a player who never digs a stump by hand fells them, spends
   // the timber on signs and has no way to the next tree.
   'after-stumps':      { card: 'grove',     bills: [[['rebel', 200], ['dust', 40000], ['spore', 10000]]] },                                   // stump removal: woodcutters dig stumps too
-  'after-blade':       { card: 'mill',      bills: [[['rebel', 180], ['timber', 30], ['dust', 35000], ['spore', 8000]]] },                    // a second blade
-  'after-heap':        { card: 'mill',      bills: [[['rebel', 80], ['timber', 15], ['dust', 15000]]] },                                      // a bigger heap
-  'after-bench':       { card: 'workshop',  bills: [[['rebel', 300], ['timber', 60], ['dust', 70000], ['spore', 18000], ['shard', 18000], ['scale', 1000]]] },  // a second bench
-  'after-signreach':   { card: 'workshop',  bills: [[['rebel', 600], ['timber', 150], ['dust', 120000], ['spore', 45000], ['shard', 50000], ['scale', 2500], ['spark', 10000]]] }   // a bigger sign
+  'after-blade':       { card: 'mill',      bills: [[['rebel', 180], ['timber', 15], ['dust', 35000], ['spore', 8000]]] },                    // a second blade
+  'after-heap':        { card: 'mill',      bills: [[['rebel', 80], ['timber', 8], ['dust', 15000]]] },                                      // a bigger heap
+  'after-bench':       { card: 'workshop',  bills: [[['rebel', 300], ['timber', 18], ['dust', 70000], ['spore', 18000], ['shard', 18000], ['scale', 1000]]] },  // a second bench
+  'after-signreach':   { card: 'workshop',  bills: [[['rebel', 600], ['timber', 18], ['dust', 120000], ['spore', 45000], ['shard', 50000], ['scale', 2500], ['spark', 10000]]] }   // a bigger sign
 };
 // The yard's coins a bill can name, in the order the yard hands them out
 // (shop.js `COIN_ORDER`), and the order a card writes a bill in: the act's

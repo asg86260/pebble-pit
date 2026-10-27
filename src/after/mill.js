@@ -16,6 +16,7 @@ import { P, AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_TIP_LOAD, AFTER_SWEEP_WAI
 import { bladeLogs, heapBrim } from './levels.js';
 import { secs } from './util.js';
 import { heapMid, groundOf } from './place.js';
+import { takeBlock, setBlock, pileFull, pileRoom } from './piles.js';
 
 // The heap is at its brim while nobody has tipped it: the saw stops. The
 // brim is the heap's `pile` on the one station table (after/stations.js), so
@@ -30,14 +31,18 @@ export const heapFull = () => !!S.after && S.after.stock.sawdust >= heapBrim();
 export const HEAP_PILE = 'after-sawdust';
 export const heapMarkBox = () => ({ x: heapMid() - P, y: groundOf('mill') + P * 10, w: P * 2, h: P * 2 });
 
-// A cut through the saw, a log a blade: false with no log on its pile or the
-// heap full.
+// A cut through the saw, a log a blade, as many as the timber pile has room
+// for: false with no log on its pile, the heap full or the timber pile at
+// its brim. Each log comes off the top of the log pile and its timber is set
+// down on the timber pile, block by block (piles.js).
 export function sawLog() {
   const st = S.after.stock;
-  if (st.logs <= 0 || heapFull()) return false;
-  const n = Math.min(bladeLogs(), st.logs);
-  st.logs -= n;
-  st.timber += AFTER_LOG_TIMBER * n;
+  if (st.logs <= 0 || heapFull() || pileFull('timber')) return false;
+  const n = Math.min(bladeLogs(), st.logs, Math.floor(pileRoom('timber') / AFTER_LOG_TIMBER));
+  for (let k = 0; k < n; k++) {
+    takeBlock('logs');
+    for (let j = 0; j < AFTER_LOG_TIMBER; j++) setBlock('timber');
+  }
   st.sawdust += AFTER_LOG_SAWDUST * n;
   drops.push(S.after.t);
   if (drops.length > DROPS_KEPT) drops.shift();

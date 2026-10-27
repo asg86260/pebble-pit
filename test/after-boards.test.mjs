@@ -7,7 +7,7 @@
 // (src/selftest/afterboards.js). The setup a check is not about goes through
 // the hooks: the dev travel up with the opening marked played, coins granted.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { AFTER_BUILDS, AFTER_CARDS, MEET_MEMBERS, SLOW_SHARE, AFTER_SEAT_BILLS } from '../src/config.js';
+import { AFTER_BUILDS, AFTER_CARDS, MEET_MEMBERS, SLOW_SHARE, AFTER_SEAT_BILLS, AFTER_PILES } from '../src/config.js';
 import { boardOf } from '../src/boardrows.js';
 import { afterRow, openAfterBoard, speechIn } from '../src/after/rows.js';
 import { buy } from '../src/upgrades.js';
@@ -82,7 +82,8 @@ group('a job\'s seats climb a written table, each no cheaper than the last, and 
   const row = afterRow('after-seat-sawyer');
   window.__afterGrant({ rebel: 1e5, timber: 1e4 });
   const bills = [];
-  for (let k = 0; k < AFTER_SEAT_BILLS.length + 2; k++) { bills.push(row.bill()[0][1]); if (!buy(row)) break; }
+  // The timber pile topped up to its brim before each: it holds no more (after/piles.js).
+  for (let k = 0; k < AFTER_SEAT_BILLS.length + 2; k++) { window.__afterGrant({ timber: AFTER_PILES.timber.brim }); bills.push(row.bill()[0][1]); if (!buy(row)) break; }
   const seats = window.__afterRoster().find(r => r.job === 'sawyer')?.cap;
   window.__actsOn(null);
   return [

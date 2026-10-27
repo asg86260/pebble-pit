@@ -249,7 +249,7 @@ group('a lone joiner plants its own signs', async () => {
 group('a roster says what its job does, or why it is standing still', async () => {
   up(1);
   S.after.built.push('mill');
-  S.after.stock.logs = 0; S.after.stock.grovelogs = 0;
+  window.__afterGrant({ logs: -S.after.stock.logs, grovelogs: -S.after.stock.grovelogs });
   const p = window.__afterRoster().find(r => r.job === 'sawyer');
   const stalled = jobSays('sawyer');
   window.__afterGrant({ grovelogs: 3 });

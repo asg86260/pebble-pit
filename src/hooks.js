@@ -1501,6 +1501,7 @@ import { rosterReport, rosterHit } from './roster.js';
 import { plotX, afterFloor, pileBox } from './after/place.js';
 import { grabAt, inHand, holdBody } from './crew/pointer.js';
 import { AFTER_PILE_REACH } from './config.js';
+import { isPiled, setBlock, takeBlock } from './after/piles.js';
 import { afterGate, strikeDue } from './after/strike.js';
 import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, groveIcons } from './after/gestures.js';
 // A click up there as input.js makes it: the hand work's first (a part, a
@@ -1513,8 +1514,13 @@ HANDLES.__afterClick = (x, y) => { if (gestureDown(x, y)) { gestureUp(x, y); ret
 HANDLES.__afterGrant = (coins = {}) => {
   const a = S.after;
   if (!a) return null;
+  // A counted pile's blocks are set down on it, or taken off it for a
+  // negative grant, through its one door (after/piles.js): never past its
+  // brim, so a grant over it lands what fits and the rest is not made.
   for (const [c, n] of Object.entries(coins)) {
-    if (c === 'rebel') a.rebel += n; else a.stock[c] = (a.stock[c] || 0) + n;
+    if (c === 'rebel') a.rebel += n;
+    else if (isPiled(c)) { for (let k = 0; k < n && setBlock(c); k++); for (let k = 0; k < -n && takeBlock(c); k++); }
+    else a.stock[c] = (a.stock[c] || 0) + n;
   }
   return { rebel: a.rebel, ...a.stock };
 };

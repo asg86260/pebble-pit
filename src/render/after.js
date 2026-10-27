@@ -13,7 +13,7 @@
 // where the cell stands (no flat fills, no random draw, so it holds still
 // frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_CARRY_SHOWN, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
+import { P, GREY, AFTER_BLOCK, AFTER_CARRY_SHOWN, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
          AFTER_SAW_S, AFTER_SIGN_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
@@ -22,7 +22,7 @@ import { ctx } from './ctx.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
+import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, pileOwner, ART, AP } from '../after/place.js';
 import { airMotes } from '../after/rebel.js';
 import { built, heapBrim } from '../after/levels.js';
 import { airSpills } from '../after/mill.js';
@@ -35,7 +35,8 @@ import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove, drawLaidGoods } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
-import { heap, heapCells, logPile, plankPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt, countOver } from './after/piles.js';
+import { heap, heapCells, blockPile, goodBlock, buildPile, BUILD_SLOTS, plankAt, blockAt, countOver } from './after/piles.js';
+import { PILED } from '../after/piles.js';
 import { drawBody } from './crew.js';
 import { drawSawDrops } from './after/drop.js';
 import { onDevice } from './wardrobe.js';
@@ -229,9 +230,7 @@ export function drawAfterPiles() {
   if (!A()) return;
   const st = A().stock;
   pile('workshop', 'signs', signRack, Math.floor(st.signs));
-  pile('forestry', 'grovelogs', logPile, st.grovelogs);
-  pile('mill', 'logs', logPile, st.logs);
-  pile('mill', 'timber', plankPile, Math.floor(st.timber));
+  for (const what of PILED) if (built(pileOwner(what))) blockPile(what);
   drawSawDrops();
 }
 export function drawAfterCamp() {
@@ -275,10 +274,12 @@ function carried(x, y, s) {
 // top left is (x, y), or in the hand at the cursor (`drawHand`).
 function drawLoad(x, y, kind, n) {
   n = Math.min(AFTER_CARRY_SHOWN, n);
-  if (kind === 'log') for (let k = 0; k < n; k++) { const ly = y - P - k * 2 * P; ctx.fillStyle = GREY[K]; ctx.fillRect(x - P, ly, 5 * P, P); cell(x + P, ly, PALE); }
-  else if (kind === 'plank') for (let k = 0; k < n; k++) {
-    const ly = y - P - k * 2 * P;
-    ctx.fillStyle = GREY[K]; ctx.fillRect(x - P * 2, ly, 7 * P, P); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x - P * 2 + 2, ly + 2, 7 * P - 4, P - 4);
+  // Logs and timber as the blocks they lie on their piles as
+  // (render/after/piles.js, `goodBlock`), stacked a block on a block over the
+  // body's middle column.
+  if (kind === 'log' || kind === 'plank') {
+    const z = AFTER_BLOCK[kind] * AP, lx = x + 1.5 * P - z / 2;
+    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind);
   } else if (kind === 'sign') {
     // The one in front held up on its post; the rest boards on the shoulder.
     drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
