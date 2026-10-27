@@ -52,7 +52,7 @@ const AFTER_AT_YARD = {
   get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; },
   get crew() { return AFTER_CREW; },
   // The goods the hand takes up off its piles and floor (after/hand.js).
-  get goods() { return AFTER_GOODS; }
+  get goods() { return globalThis.__splitStyle ? null : AFTER_GOODS; }   // MOCK: goods are the yard's sweep, not the workers' grab
 };
 // Each place's crew (placebodies.js): its own body list, its JOBS registry,
 // its walk and how the hand takes one of its bodies up. Read through a

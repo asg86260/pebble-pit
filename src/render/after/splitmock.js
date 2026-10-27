@@ -10,7 +10,8 @@ import { K, W, PALE, MID, hash, clamp01 } from './kit.js';
 import { ctx } from '../ctx.js';
 import { GREY, AFTER_ART_SCALE } from '../../config.js';
 import { addGrain, settle, at, put, topRow, wakeGrid } from '../../grid.js';
-import { stationX0, groundOf, AP, ART } from '../../after/place.js';
+import { stationX0, groundOf, AP, ART, floorAt } from '../../after/place.js';
+import { layGood } from '../../after/grove.js';
 
 const LOG = MID, TIMBER = PALE;
 const TIMBER_X = 53, PER_ROW = 3, CAP = 9;
@@ -49,7 +50,7 @@ const plotTop = c => { const r = topRow(plot, c); return -(r + 2) * 2; };   // t
 // Each block keeps an identity as it rolls (its value, 1..9), so the loose
 // pile's nudge off the lattice goes with the block rather than the cell.
 let nextId = 0;
-const dropIn = () => addGrain(plot, plot.x + geom().dropCol * 2, undefined, 1 + (nextId++ % 9), true);
+const dropIn = () => addGrain(plot, plot.x + geom().dropCol * plot.p + 1, undefined, 1 + (nextId++ % 9), true);
 // round 19, the pile three ways (globalThis.__pileStyle): 'A' the even mound,
 // 'B' the same mound loose (each block a fixed nudge of its own, in cells'
 // sizes but free positions), 'C' a tall heap that stands up.
@@ -74,9 +75,14 @@ const pileOf = key => PILES[key] || (PILES[key] = {
 });
 const GHOST_S = 0.4;
 const ghosts = pileOf('timber').ghosts;
-const dropAt = (key, col) => { const sp = SPECS[key], pl = pileOf(key).plot; return addGrain(pl, pl.x + col * sp.size, undefined, 1 + (nextId++ % 9), true); };
+// round 29: a plot is in world pixels, as the yard's floor is -- x its left
+// edge, p a block's width, its bottom row on its station's ground -- so act
+// 1's hand (hands.js) and grid.js read it exactly as they read the floor.
+const lx0 = key => (pileOf(key).plot.x - stationX0(SPECS[key].station)) / AP;   // its left edge in its station's frame
+const place = key => { const sp = SPECS[key], pl = pileOf(key).plot; pl.p = sp.size * AP; pl.x = stationX0(sp.station) + sp.x() * AP; pl.y = groundOf(sp.station) - pl.rows * pl.p; };
+const dropAt = (key, col) => { const pl = pileOf(key).plot; return addGrain(pl, pl.x + col * pl.p + 1, undefined, 1 + (nextId++ % 9), true); };
 // A world point's column in pile `key`'s plot, kept inside it.
-const colAt = (key, wx) => { const sp = SPECS[key], pl = pileOf(key).plot, lx = (wx - stationX0(sp.station)) / AP; return Math.max(0, Math.min(pl.cols - 1, Math.floor((lx - pl.x) / sp.size))); };
+const colAt = (key, wx) => { const pl = pileOf(key).plot; return Math.max(0, Math.min(pl.cols - 1, Math.floor((wx - pl.x) / pl.p))); };
 globalThis.__plotTake = (key, wx) => {
   const pt = PILES[key]; if (!pt || pt.stock == null) return;
   const pl = pt.plot; let c = colAt(key, wx);
@@ -92,14 +98,49 @@ globalThis.__plotPut = (key, wx) => {
 // The hand finds a pile by the plot's own extent (place.js pileBox asks).
 globalThis.__plotBox = what => {
   const sp = SPECS[what], pt = PILES[what]; if (!sp || !pt) return null;
-  const pl = pt.plot, x0 = stationX0(sp.station) + pl.x * AP, fl = groundOf(sp.station);
-  return { x: x0, y: fl - (pl.rows * sp.size + 2) * AP, w: pl.cols * sp.size * AP, h: (pl.rows * sp.size + 2) * AP };
+  const pl = pt.plot;
+  return { x: pl.x, y: pl.y - 2 * AP, w: pl.cols * pl.p, h: pl.rows * pl.p + 2 * AP };
 };
+// --- the yard's hand on the act's piles (round 29). hands.js asks which
+// plot is under the pointer; a sweep's blocks come off the act's stock; a
+// thrown block lands on a pile of its kind under it, or lies on the act's
+// ground where a member will carry it home (grove.js, layGood).
+const KIND = { timber: 'plank', logs: 'log', grovelogs: 'log' };
+globalThis.__handPlotAt = (x, y) => {
+  if (!globalThis.__splitStyle) return null;
+  for (const key of Object.keys(PILES)) {
+    const b = globalThis.__plotBox(key);
+    if (b && x >= b.x - AP && x < b.x + b.w + AP && y >= b.y - AP * 4 && y <= b.y + b.h + AP) return { b: PILES[key].plot, key, kind: KIND[key] };
+  }
+  return null;
+};
+globalThis.__goodsTaken = (key, n) => { const pt = PILES[key]; if (!pt || !S.after) return; pt.stock -= n; S.after.stock[key] -= n; };
+globalThis.__goodsLand = ch => {
+  for (const key of Object.keys(PILES)) {
+    if (KIND[key] !== ch.goods) continue;
+    const pl = PILES[key].plot;
+    if (ch.x < pl.x || ch.x >= pl.x + pl.cols * pl.p) continue;
+    const c = Math.floor((ch.x - pl.x) / pl.p), top = pl.y + (pl.rows - topRow(pl, c) - 1) * pl.p;
+    if (ch.vy > 0 && ch.y + pl.p >= top) { addGrain(pl, ch.x, undefined, 1 + (nextId++ % 9), true); PILES[key].stock += 1; S.after.stock[key] += 1; return true; }
+    return false;
+  }
+  const fl = floorAt(ch.x);
+  if (ch.vy > 0 && ch.y >= fl - P) { layGood(ch.goods, ch.x, fl); return true; }
+  return false;
+};
+// The act's blocks in the air (S.chips, the yard's list) and on the cursor, drawn as the blocks they are.
+export function drawGoodsChips() {
+  for (const ch of S.chips) if (ch.goods) {
+    const z = (ch.goods === 'log' ? 4 : 2) * AP;
+    ctx.fillStyle = GREY[ch.goods === 'log' ? K : MID]; ctx.fillRect(ch.x - z / 2, ch.y - z / 2, z, z);
+    ctx.fillStyle = GREY[ch.goods === 'log' ? LOG : TIMBER]; ctx.fillRect(ch.x - z / 2, ch.y - z / 2, z - 1, z - 1);
+  }
+}
 export function blockPile(d, key = 'timber') {
   const sp = SPECS[key], pt = pileOf(key), pl = pt.plot;
   const a = S.after, t = a ? a.t : 0, stock = a ? Math.floor(a.stock[key] || 0) : 0;
   if (pt.t == null || t < pt.t) {                       // a fresh scene: the pile stands as the stock says
-    pl.cols = sp.cols(); pl.x = sp.x(); pl.repose = key === 'timber' && pileStyle() === 'C';
+    pl.cols = sp.cols(); place(key); pl.repose = key === 'timber' && pileStyle() === 'C';
     pl.ceiling = sp.low0() ? (c => (c === 0 ? 2 : sp.rows)) : null;
     pl.grid = new Uint8Array(pl.cols * pl.rows); pl.awake = null; pt.ghosts.length = 0;
     if (key === 'timber') { landedKeys.clear(); footN = 5; }
@@ -117,9 +158,9 @@ export function blockPile(d, key = 'timber') {
   if (sp.grows && stock > pt.stock) for (let i = 0; i < stock - pt.stock; i++) dropAt(key, sp.drop());
   pt.stock = stock;
   while (t - pt.t >= SETTLE_S) { settle(pl); pt.t += SETTLE_S; }
-  const z = sp.size, nud = v => (key === 'timber' ? nudge(v) : { x: 0, y: 0 });
-  const back = (c, r, v) => { const n = nud(v); d.px((pl.x + c * z + n.x) * P, (-(r + 1) * z + n.y) * P, z * P, z * P, sp.seam); };
-  const put2 = (c, r, v) => { const n = nud(v); block(d, sp.tone, pl.x + c * z + n.x, -(r + 1) * z + n.y, z); };
+  const z = sp.size, X = lx0(key), nud = v => (key === 'timber' ? nudge(v) : { x: 0, y: 0 });
+  const back = (c, r, v) => { const n = nud(v); d.px((X + c * z + n.x) * P, (-(r + 1) * z + n.y) * P, z * P, z * P, sp.seam); };
+  const put2 = (c, r, v) => { const n = nud(v); block(d, sp.tone, X + c * z + n.x, -(r + 1) * z + n.y, z); };
   for (let c = 0; c < pl.cols; c++) for (let r = 0; r < pl.rows; r++) { const v = at(pl, c, r); if (v) back(c, r, v); }
   for (let c = 0; c < pl.cols; c++) for (let r = 0; r < pl.rows; r++) { const v = at(pl, c, r); if (v) put2(c, r, v); }
   for (let i = pt.ghosts.length - 1; i >= 0; i--) {
@@ -150,7 +191,7 @@ function slideOff(d, from, out, b, puff = false) {
   const raw = out * 1.5 - b * 0.25, kk = clamp01(raw), slide = clamp01(kk * 2), drop = clamp01(kk * 2 - 1);
   const key = `${Math.floor(((S.after && S.after.t) || 0) / 6.4)}-${b}`;
   if (kk >= 1) { if (!landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 256) landedKeys.clear(); } return; }
-  const to = { x: plot.x + DROP_COL * 2, y: plotTop(DROP_COL) };
+  const to = { x: lx0('timber') + DROP_COL * 2, y: plotTop(DROP_COL) };
   if (puff && raw >= 0.9 && raw < 1) d.fade(1 - (raw - 0.9) / 0.1, () => { for (const sx of [-1, 2]) d.px((to.x + sx) * P, (to.y + 1.5) * P, P, P, MID); });
   block(d, TIMBER, lerp(from[0], to.x, slide), lerp(from[1], to.y, drop * drop), 2);
 }
@@ -381,7 +422,7 @@ function outflow(d, bed, bx, ph, T) {
       if (u < TIP_S) { turned(d, edge, bed, (Math.PI / 2) * (u / TIP_S) ** 1.6); continue; }
       u -= TIP_S;
     }
-    const f = u / FALL_S, landX = plot.x + g.dropCol * 2;
+    const f = u / FALL_S, landX = lx0('timber') + g.dropCol * 2;
     if (f < 1) { block(d, TIMBER, lerp(fromX, landX, f), lerp(fromY, plotTop(g.dropCol), f * f), 2); continue; }
     // it joins the pile once, in the half second after it lands
     if (f < 1 + 0.5 / FALL_S && !landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 256) landedKeys.clear(); }

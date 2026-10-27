@@ -355,6 +355,8 @@ function stepChips(now) {
     ch.x += ch.vx * f;
     ch.y += ch.vy * f;
     if (ch.dome) slideOnDome(ch, f);
+    // MOCK, round 29: a place's goods (act 3's blocks) land on its piles or its ground, never the yard's
+    if (ch.goods) { if (globalThis.__goodsLand?.(ch)) dead[i] = 1; continue; }
 
     // The far wall of the hole is a wall at every height, not only below the
     // ground line: everything is thrown at the pit from the near lip, so a

@@ -44,12 +44,15 @@ export function catchAir(mx, my) {
     // not what the held hand itself just let go, or the toss would come
     // straight back off the cursor it left from
     if (ch.auto) continue;
+    // one kind in the hand: goods catch into a hand of the same goods, dust into a hand of dust
+    if ((ch.goods || null) !== heldKind && S.held) continue;
     if (Math.abs(ch.x + P / 2 - mx) > reach || Math.abs(ch.y + P / 2 - my) > reach) continue;
     S.chips.splice(i, 1);
     S.held++;
     room--;
     noteCatch(ch);
-    S.motes.push(mote(ch.s));
+    heldKind = ch.goods || null;
+    S.motes.push(mote(ch.s, heldKind));
   }
 }
 
@@ -78,18 +81,26 @@ function catchSinking(mx, my) {
   sink.length = keep;
 }
 
+// MOCK, round 29: the hand works whichever plot is under it -- the yard's
+// floor, or a place's pile (act 3's, through __handPlotAt) -- with one kind
+// in it at a time; what it holds remembers its kind, so a throw lands as it.
+const actPlot = (x, y) => globalThis.__handPlotAt?.(x, y) || null;
+let heldKind = null;
+export const handKind = () => heldKind;
 // One grain on the cursor.
-const mote = s => ({ s, a: rand() * Math.PI * 2, d: P * (1 + rand() * 2.6), spin: (rand() - 0.5) * 0.03, bob: rand() * Math.PI * 2 });
+const mote = (s, kind = null) => ({ s, kind, a: rand() * Math.PI * 2, d: P * (1 + rand() * 2.6), spin: (rand() - 0.5) * 0.03, bob: rand() * Math.PI * 2 });
 
 // The ground's cells within the brush, in the order the brush walks them.
-function* brushCells(mx, my, radius = BRUSH) {
-  const c0 = colOf(floor, mx);
-  const r0 = Math.floor((bottomY(floor) - my) / P);
+function* brushCells(mx, my, radius = BRUSH, b = floor) {
+  // the brush's reach is a distance, so a plot of bigger cells takes fewer of them
+  if (b !== floor) radius = Math.max(0, Math.round(radius * P / b.p));
+  const c0 = colOf(b, mx);
+  const r0 = Math.floor((bottomY(b) - my) / b.p);
   for (let dr = -radius; dr <= radius; dr++) {
     for (let dc = -radius; dc <= radius; dc++) {
       if (dc * dc + dr * dr > radius * radius) continue;
       const c = c0 + dc, r = r0 + dr;
-      if (inside(floor, c, r) && at(floor, c, r)) yield [c, r];
+      if (inside(b, c, r) && at(b, c, r)) yield [c, r];
     }
   }
 }
@@ -101,6 +112,8 @@ function* brushCells(mx, my, radius = BRUSH) {
 // default, or a finger's reach (input.js, `fingerReach`).
 export function dustUnder(mx, my, radius = BRUSH) {
   if (inDeep(mx, my)) return bedNear(mx, my, radius * P);
+  const ap = actPlot(mx, my);
+  if (ap) { for (const _ of brushCells(mx, my, radius, ap.b)) return true; return false; }
   for (const _ of brushCells(mx, my, radius)) return true;
   return false;
 }
@@ -110,6 +123,21 @@ export function sweep(mx, my) {
   // throws is thrown into the water (DESIGN.md, "The crusher"). Where the
   // pointer is in the world decides it, not which half is on the screen.
   if (inDeep(mx, my)) { sweepScales(mx, my); return; }
+  const ap = actPlot(mx, my);
+  if (ap || heldKind) {
+    // one kind in the hand at a time: a hand of planks sweeps no logs
+    if (!ap || (S.held && heldKind !== ap.kind)) return;
+    let room = capacity() - S.held, taken = 0;
+    for (const [c, r] of brushCells(mx, my, BRUSH, ap.b)) {
+      if (room <= 0) break;
+      const v = at(ap.b, c, r);
+      put(ap.b, c, r, 0);
+      S.motes.push(mote(v, ap.kind));
+      taken++; room--;
+    }
+    if (taken) { S.held += taken; heldKind = ap.kind; globalThis.__goodsTaken?.(ap.key, taken); }
+    return;
+  }
   let room = capacity() - S.held;
   if (room <= 0) return;
 
@@ -164,6 +192,15 @@ export function release(x, y) {
     return;
   }
   if (!S.held) return;
+  // a place's goods are thrown as themselves, and land on its piles (game.js stepChips)
+  if (heldKind) {
+    for (let i = 0; i < S.held; i++) {
+      spawnChip(x + (rand() - 0.5) * P * 6, y + (rand() - 0.5) * P * 6, vx + (rand() - 0.5) * 1.4, vy + (rand() - 0.5) * 1.4, S.motes[i]?.s || 1);
+      S.chips[S.chips.length - 1].goods = heldKind;
+    }
+    S.held = 0; S.motes = []; heldKind = null;
+    return;
+  }
   // The juggling notice is for the biggest hand there is: a level-0 hand is
   // one grain, and throwing one grain is not juggling.
   const full = S.carryLevel >= LADDER && S.held >= capacity();

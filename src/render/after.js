@@ -35,6 +35,7 @@ import { deepAt } from '../after/sky.js';
 import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove, drawLaidGoods } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
+import { drawGoodsChips } from './after/splitmock.js';   // MOCK
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, logPile, plankPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt, countOver } from './after/piles.js';
 import { drawBody } from './crew.js';
@@ -288,6 +289,7 @@ export function drawAfterPiles() {
   pile('forestry', 'grovelogs', logPile, st.grovelogs);
   pile('mill', 'logs', logPile, st.logs);
   pile('mill', 'timber', plankPile, Math.floor(st.timber));
+  if (globalThis.__splitStyle) drawGoodsChips();   // MOCK: the act's blocks in the air
   drawSawDrops();
 }
 export function drawAfterCamp() {

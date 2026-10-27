@@ -16,6 +16,7 @@ export function drawCursor() {
     const a = m.a + m.spin * MOTE_SPIN_FPS * t;
     const x = S.mouse.x + Math.cos(a) * m.d + Math.sin(t * 1.7 + m.bob) * 2;
     const y = S.mouse.y + Math.sin(a) * m.d + Math.cos(t * 1.3 + m.bob) * 2;
+    if (m.kind) { const z = (m.kind === 'log' ? 4 : 2) * P; ctx.fillStyle = m.kind === 'log' ? '#8c8c8c' : '#d9d9d9'; ctx.fillRect(x - z / 2, y - z / 2, z - 1, z - 1); continue; }   // MOCK: a place's block, as it lay
     drawMark(m.s, Math.round(x / P) * P + P / 2, Math.round(y / P) * P + P / 2);   // what it is, not a grain of dust
   }
   ctx.fillStyle = '#000';

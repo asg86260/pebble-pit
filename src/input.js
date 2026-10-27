@@ -215,6 +215,13 @@ canvas.addEventListener('pointerdown', e => {
       if (gestureHeld()) try { canvas.setPointerCapture(e.pointerId); } catch {}
       return;
     }
+    // MOCK, round 29: a press and hold on a pile is the yard's sweep, as on the yard's dust
+    if (S.view === 'after' && globalThis.__handPlotAt?.(p.x, p.y) && dustUnder(p.x, p.y)) {
+      S.dragging = true; S.trail = []; track(p.x, p.y);
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+      sweep(p.x, p.y);
+      return;
+    }
     // Down there the pick's blow on a face or a barrier is the hand's, asked
     // before the station's board, which a walk-up has opened already.
     if (S.view === 'hell' && HELL_PLACE.clickHell(p.x, p.y)) return;
