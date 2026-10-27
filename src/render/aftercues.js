@@ -12,8 +12,8 @@
 
 import { P, GREY, GESTURE_CUE_ALPHA, GESTURE_CUE_DOT, GESTURE_CUE_TAP_S, GESTURE_CUE_LOOP_S, GESTURE_STAR_HOLD_S, GESTURE_STAR_FADE_S,
          GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S, GESTURE_LOAD_FADE_S, GESTURE_SAW_AMP,
-         GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_STIR_TURNS, GESTURE_BAR_DRAG, GESTURE_BAR_PRINT,
-         HANDWORK_DOTS, HANDWORK_DOT_RUN, HANDWORK_PATH_OUT, HANDWORK_HINT_LOOP_S, HANDWORK_HINT_POINT, HANDWORK_LOG_ARC, HANDWORK_LOG_SHARE,
+         GESTURE_WHEEL_LOG,
+         HANDWORK_DOTS, HANDWORK_DOT_RUN, HANDWORK_PATH_OUT, HANDWORK_HINT_LOOP_S, HANDWORK_HINT_POINT,
          HANDWORK_HAND_DOT, HANDWORK_STRIP_DROP, HANDWORK_STRIP_H, HANDWORK_TAG_PX, HANDWORK_TAG_PAD, HANDWORK_DONE_S } from '../config.js';
 import { ctx } from './ctx.js';
 import { S } from '../state.js';
@@ -92,21 +92,12 @@ const mid = b => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
 function drawLoad(ld, t) {
   const edge = stationParts('heap').edge;
   let x = ld.x, y = ld.y, a = 1;
-  if (ld.mode === 'gone') { x = edge; y = groundOf('chipper') + (t - ld.at) * P * 12; a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S); }
+  if (ld.mode === 'gone') { x = edge; y = groundOf('mill') + (t - ld.at) * P * 12; a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S); }
   else if (ld.mode === 'back') a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S);
   ctx.globalAlpha = a;
   for (let k = 0; k < Math.min(4, ld.n * 2); k++) cell(x + (k % 2) * P, y - Math.floor(k / 2) * P, k % 3 ? PALE : MID);
 }
 
-// A log off the chipper's pile in the hand, on its way to the jaws: six
-// cells side on, its end grain pale, in a paper rim so it reads over ink.
-function heldLog(x, y, a = 1) {
-  const x0 = snap(x - P * 3), y0 = snap(y - P);
-  ctx.globalAlpha = a;
-  ctx.fillStyle = GREY[W]; ctx.fillRect(x0 - 2, y0 - 2, P * 6 + 4, P * 2 + 4);
-  ctx.fillStyle = GREY[K]; ctx.fillRect(x0, y0, P * 6, P * 2);
-  ctx.fillStyle = GREY[PALE]; ctx.fillRect(x0 + 2, y0 + 2, P - 2, P * 2 - 4);
-}
 
 // Where each station's ghost hand is now and how it is held, acting its
 // motion out on the part; null where there is nothing to show it on.
@@ -129,18 +120,11 @@ function cueAt(key, r) {
     return { x: b.x + b.w / 2, y: b.y - Math.round(u * 3) * P, pose: 'grab' };
   }
   if (key === 'mill') { const w = partsOf('mill').wheel; return { x: w.x + Math.cos(turn) * w.r, y: w.y + Math.sin(turn) * w.r, pose: 'grab' }; }
-  if (key === 'papermill') { const v = partsOf('papermill').vat; return { x: v.x + Math.cos(turn) * v.rx, y: v.y + Math.sin(turn) * v.ry, pose: 'grab' }; }
-  if (key === 'chipper') {
-    const p = partsOf('chipper');
-    if (r.log !== 'in') { const a = mid(p.pile), b = mid(p.mouth); return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u, pose: 'grab' }; }
-    return { x: p.arm.x + p.arm.w / 2, y: p.arm.y + Math.round(u * 3) * P, pose: 'grab' };
-  }
   if (key === 'workshop') {
     const nails = partsOf('workshop').nails, k = r.nails.findIndex(n => n < 2);
     const n = nails[Math.max(0, k)];
     return { x: n.x + n.w / 2, y: n.y + (tapDown() ? D * 2 : 0), pose: 'point' };
   }
-  if (key === 'press') { const h = partsOf('press').handle; return { x: h.x + h.w / 2, y: h.y + P + Math.round(u * 3) * P, pose: 'grab' }; }
   if (key === 'heap') {
     const p = partsOf('heap'), a = mid(p.heap);
     return { x: a.x + (p.edge - a.x) * u, y: p.heap.y, pose: 'grab' };
@@ -158,32 +142,13 @@ function cueAt(key, r) {
 // The motion's path, world points: `legs` the grab's way, each a list of
 // points, the dotted ghost laid along them, and where the hand points first.
 const arcPts = (c, rx, ry, a0, a1, n) => Array.from({ length: n }, (_, i) => { const a = lerp(a0, a1, i / (n - 1)); return { x: c.x + Math.cos(a) * rx, y: c.y + Math.sin(a) * ry }; });
-const hopPts = (a, b, lift, n) => Array.from({ length: n }, (_, i) => { const k = i / (n - 1); return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k) - Math.sin(k * Math.PI) * lift }; });
 const TURN_SPAN = Math.PI * 5 / 3;                      // a turn's ghost: most of the way round, so its head shows
-function motionOf(key, r) {
+function motionOf(key) {
   const g = grips(key), N = HANDWORK_DOTS;
   if (!g) return null;
   if (key === 'mill') {
     const a0 = Math.atan2(g.knob.y - g.hub.y, g.knob.x - g.hub.x);
     return { point: g.knob, legs: [{ hand: arcPts(g.hub, g.reach, g.reach, a0, a0 + TURN_SPAN, N), dots: arcPts(g.hub, g.reach + HANDWORK_PATH_OUT, g.reach + HANDWORK_PATH_OUT, a0, a0 + TURN_SPAN, N) }] };
-  }
-  if (key === 'papermill') {
-    const v = stationParts('papermill').vat, a0 = Math.PI / 2;
-    return { point: arcPts(v, v.rx, v.ry, a0, a0, 2)[0], legs: [{ hand: arcPts(v, v.rx, v.ry, a0, a0 + TURN_SPAN, N), dots: arcPts(v, v.rx + HANDWORK_PATH_OUT, v.ry + HANDWORK_PATH_OUT, a0, a0 + TURN_SPAN, N) }] };
-  }
-  if (key === 'press') {
-    const line = n => Array.from({ length: n }, (_, i) => ({ x: g.knob.x, y: g.knob.y + GESTURE_BAR_DRAG * i / (n - 1) }));
-    const dots = Math.round(GESTURE_BAR_DRAG / P) + 1;
-    return { point: g.knob, legs: [{ hand: line(dots), dots: line(dots).map(q => ({ x: q.x + HANDWORK_PATH_OUT * 2, y: q.y })) }] };
-  }
-  if (key === 'chipper') {
-    // a log off the pile into the jaws, then the arm down; with a log in, the arm alone
-    const p = stationParts('chipper'), a0 = Math.atan2(g.up.y - g.pivot.y, g.up.x - g.pivot.x), a1 = Math.atan2(g.down.y - g.pivot.y, g.down.x - g.pivot.x);
-    const reach = Math.hypot(g.up.x - g.pivot.x, g.up.y - g.pivot.y), turn = a1 > a0 ? a1 - 2 * Math.PI : a1;
-    const arm = { hand: arcPts(g.pivot, reach, reach, a0, turn, N / 2), dots: arcPts(g.pivot, reach + HANDWORK_PATH_OUT, reach + HANDWORK_PATH_OUT, a0, turn, N / 2) };
-    if (r.log === 'in') return { point: g.up, legs: [arm] };
-    const from = { x: p.pile.x + p.pile.w / 2, y: p.pile.y }, to = mid(p.mouth);
-    return { point: from, log: true, legs: [{ hand: hopPts(from, to, HANDWORK_LOG_ARC, N), dots: hopPts(from, to, HANDWORK_LOG_ARC, N) }, arm] };
   }
   return null;
 }
@@ -205,7 +170,7 @@ function dotted(pts, t) {
     cell(a.x + dx * (3 - k) * P + (dy ? j * P : 0) - P / 2, a.y + dy * (3 - k) * P + (dx ? j * P : 0) - P / 2, K);
 }
 function drawGhost(key, r, t) {
-  const m = motionOf(key, r);
+  const m = motionOf(key);
   if (!m) return;
   ctx.globalAlpha = r.hintA;
   for (const leg of m.legs) dotted(leg.dots, t);
@@ -214,22 +179,16 @@ function drawGhost(key, r, t) {
   const u = (t % HANDWORK_HINT_LOOP_S) / HANDWORK_HINT_LOOP_S;
   if (u < HANDWORK_HINT_POINT) { ctx.globalAlpha = r.hintA; handOn(ctx, m.point.x, m.point.y, 'point', HANDWORK_HAND_DOT); return; }
   const k = (u - HANDWORK_HINT_POINT) / (1 - HANDWORK_HINT_POINT);
-  const split = m.legs.length > 1 ? HANDWORK_LOG_SHARE : 1;
-  const leg = k < split ? 0 : 1, kk = leg === 0 ? k / split : (k - split) / (1 - split);
-  const at = along(m.legs[leg].hand, smoothstep(kk));
-  if (m.log && leg === 0) heldLog(at.x, at.y, r.hintA);
+  const at = along(m.legs[0].hand, smoothstep(k));
   ctx.globalAlpha = r.hintA;
   handOn(ctx, at.x, at.y, 'grab', HANDWORK_HAND_DOT);
 }
-// The unit so far, in the gesture's own units: the log fed cell by cell, the
-// chipper's load and then its feed, the vat's turns, the bar's pull a drag
-// cell a segment; full a moment after a unit is made.
+// The unit so far, in the gesture's own units: the log fed cell by cell;
+// full a moment after a unit is made.
 function unitOf(key, r, t) {
-  let n = 0, of = 1, verb = 'handwork-spin';
+  let n = 0, of = 1;
+  const verb = 'handwork-spin';
   if (key === 'mill') { n = Math.floor(r.prog); of = GESTURE_WHEEL_LOG; }
-  if (key === 'chipper') { of = GESTURE_ARM_LOG; n = Math.floor(r.prog); verb = r.log === 'in' ? 'handwork-hold' : 'handwork-drag'; }
-  if (key === 'papermill') { n = Math.floor(r.prog); of = GESTURE_STIR_TURNS; verb = 'handwork-stir'; }
-  if (key === 'press') { of = Math.round(GESTURE_BAR_DRAG / P); n = r.printed ? of : Math.floor(Math.min(1, r.k / GESTURE_BAR_PRINT) * of + 1e-6); verb = 'handwork-pull'; }
   if (r.lastUse != null && t - r.lastUse < HANDWORK_DONE_S) n = of;
   return { n: Math.min(n, of), of, verb };
 }
@@ -280,7 +239,6 @@ export function drawAfterCues() {
     }
     for (const m of r.marks) markOn(ctx, m, t, P);
     if (r.key === 'heap' && r.load) drawLoad(r.load, t);
-    if (r.key === 'chipper' && r.log === 'held') heldLog(r.lx, r.ly);
   }
   ctx.globalAlpha = 1;
 }

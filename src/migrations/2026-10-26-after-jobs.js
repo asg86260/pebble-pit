@@ -15,9 +15,16 @@
 // seats go; its bodies take that job, a gatherer's log still the one walked
 // to and a carrier or a paster with anything in hand out on its round until
 // it is empty.
-import { AFTER_JOBS, AFTER_JOB_FOLD, AFTER_SEAT_BILLS } from '../config.js';
+import { AFTER_SEAT_BILLS } from '../config.js';
 import { AFTER_JOB } from '../jobs.js';
 import { seatKey as seat } from '../after/levels.js';
+
+// The jobs as they stood the day this was written, spelled out here: the
+// chipper, the paper mill and the press were cut after it (the next
+// migration, 2026-10-26-cut-paper.js, carries their jobs to the saw mill's).
+const AFTER_JOBS = ['woodcutter', 'sawyer', 'feeder', 'pulper', 'joiner', 'printer'];
+// The jobs folded away, each into its station's one.
+const AFTER_JOB_FOLD = { gatherer: 'woodcutter', hauler: 'woodcutter', carrier: 'joiner', paster: 'printer' };
 
 function fromPosts(a, posts) {
   a.ups ||= {}; a.crew = {}; a.bodies ||= [];

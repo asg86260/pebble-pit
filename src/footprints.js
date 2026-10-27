@@ -27,7 +27,7 @@ import { P, FARM_H, FARM_GAP, FINALE_WALL_ROWS, FINALE_ROOF, FINALE_CHIMNEY,
          MANSION_AT, MANSION_FLOORS, MANSION_FLOOR_ROWS, MANSION_WING_W, MANSION_WING_FLOORS, MANSION_MAIN_W,
          MANSION_TOWER_FLOORS, MANSION_TOWER_W, MANSION_BLOCKS_AT, MANSION_BLOCKS_W,
          ACT_GATES_REACH, ACT_GATES_BANK_CELLS, ACT_GATES_BANK, AFTER_PLOT_MAX, AFTER_STAIR_W, AFTER_STAIR_RISE, HELL_TIERS,
-         AFTER_LINE_LONG, AFTER_VAT_SHEETS, AFTER_PILE_REACH, AFTER_PODIUM_HALF, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_REBEL_PILE_CELLS } from './config.js';
+         AFTER_PILE_REACH, AFTER_PODIUM_HALF, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_REBEL_PILE_CELLS } from './config.js';
 import { STATIONS } from './stations.js';
 import { plotSlots, rockLeft, shackSpot } from './world.js';
 import { rockFootY, rockTopY, ramX } from './rock.js';
@@ -184,12 +184,12 @@ function deepParts() {
 // --- the afterlife ----------------------------------------------------------
 // A station stands on what its drawing inks at its fullest, read off the
 // drawing itself (render/after/kit.js, `silhouette`) rather than off a box
-// or a reach typed beside it: the workshop with every blank it can stack,
-// the paper mill with its long drying line. The silhouette fills each row
+// or a reach typed beside it: the workshop with every blank it can stack.
+// The silhouette fills each row
 // from its first inked cell to its last, so a row is one rect. Worked out
 // once a station: the drawing does not move, and running it writes the pose
 // its moving parts were drawn in.
-const FULLEST = { workshop: { blanks: Infinity }, papermill: { slots: AFTER_LINE_LONG, moulds: AFTER_VAT_SHEETS } };
+const FULLEST = { workshop: { blanks: Infinity } };
 const SHAPES = new Map();   // cache: each station's fullest silhouette, by key
 function drawnRows(key) {
   if (!SHAPES.has(key)) SHAPES.set(key, DRAW[key] ? silhouette(d => DRAW[key](d, false, 0, null, false, FULLEST[key] || {})) : null);

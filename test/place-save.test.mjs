@@ -41,7 +41,7 @@ group('an old-shaped act blob is filled from the blank', async () => {
   yard.persist();
   const blob = saved();
   const stockKeys = Object.keys(blob.after.stock);
-  delete blob.after.posters; delete blob.after.stock[stockKeys[0]]; delete blob.after.begun;
+  delete blob.after.signs; delete blob.after.stock[stockKeys[0]]; delete blob.after.begun;
   blob.after.wardens = [1];
   blob.after.gone = 'retired';
   delete blob.hell.flights; delete blob.hell.faces[0].crust; delete blob.hell.furnaces[1].hopper;
@@ -50,7 +50,7 @@ group('an old-shaped act blob is filled from the blank', async () => {
   put(blob);
   const a = S.after, h = S.hell;
   const out = [
-    ok(Array.isArray(a.posters) && a.begun !== undefined, 'a top-level field the act 3 save lacks comes back'),
+    ok(Array.isArray(a.signs) && a.begun !== undefined, 'a top-level field the act 3 save lacks comes back'),
     ok(a.stock[stockKeys[0]] === 0, 'and a missing stock count comes back zero'),
     ok(!('wardens' in a) && !('gone' in a), 'and a key the blank lacks is dropped'),
     ok(h.flights === 0, 'a top-level field hell\'s save lacks comes back'),

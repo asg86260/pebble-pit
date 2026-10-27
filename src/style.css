@@ -702,11 +702,10 @@ body.still #scroller { scroll-behavior: auto; }
   -webkit-mask: var(--scale-mark) 0 0 / 100% 100% no-repeat;
   mask: var(--scale-mark) 0 0 / 100% 100% no-repeat;
 }
-/* Act 3's coins: a flag for rebel, two planks for timber, a sheet with its
-   corner turned for paper, at the scale's size and drawn its way, from
-   AFTER_COIN_MARKS in config/after.js, handed over by board.js. Ink only:
-   red stays the machines'. */
-.rebel, .timber, .paper {
+/* Act 3's coins: a flag for rebel, two planks for timber, at the scale's
+   size and drawn its way, from AFTER_COIN_MARKS in config/after.js, handed
+   over by board.js. Ink only: red stays the machines'. */
+.rebel, .timber {
   display: inline-block;
   vertical-align: baseline;
   width: 9px; height: 9px;
@@ -714,7 +713,6 @@ body.still #scroller { scroll-behavior: auto; }
 }
 .rebel { -webkit-mask: var(--rebel-mark) 0 0 / 100% 100% no-repeat; mask: var(--rebel-mark) 0 0 / 100% 100% no-repeat; }
 .timber { -webkit-mask: var(--timber-mark) 0 0 / 100% 100% no-repeat; mask: var(--timber-mark) 0 0 / 100% 100% no-repeat; }
-.paper { -webkit-mask: var(--paper-mark) 0 0 / 100% 100% no-repeat; mask: var(--paper-mark) 0 0 / 100% 100% no-repeat; }
 
 /* What the row gives you. It sits left in its own column rather than right
    against the price, because every one of them starts with a plus and a column

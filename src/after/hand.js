@@ -1,7 +1,7 @@
 // Goods by hand (DESIGN.md, "Act 3's hand work and hand carrying", goods by
 // hand; the owner, 2026-10-20: "players should be able to pick up and move
-// resources themselves between stations"): a log, a plank, a sheet of paper
-// or a sign taken off a station's pile by the shared grab, the same press
+// resources themselves between stations"): a log, a plank or a sign taken
+// off a station's pile by the shared grab, the same press
 // and hold that picks up a member (crew/pointer.js), and let go over another
 // pile that takes it, or anywhere else onto the floor.
 //
@@ -31,8 +31,8 @@ import { secs } from './util.js';
 
 const PLACE = 'after';
 const inBox = (b, x, y, pad) => x >= b.x - pad && x <= b.x + b.w + pad && y >= b.y - pad && y <= b.y + b.h + pad;
-// A pile's whole goods: timber and paper are counted in fractions as they
-// are made, and only a whole plank or sheet can be picked up.
+// A pile's whole goods: timber is counted in fractions as it is made, and
+// only a whole plank can be picked up.
 const whole = what => Math.floor(S.after.stock[what] || 0);
 
 // The counted pile under (x, y) whose good is `kind` (any, for null), its

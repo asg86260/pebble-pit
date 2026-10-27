@@ -176,7 +176,7 @@ group('logs are carried the yard\'s way: as many as the yard\'s carry holds, a l
 
 group('a save from when posts were bought: its posts become what the rosters want, as far as its members go, the rest seats', async () => {
   up(0);
-  S.after.built.push('mill', 'chipper');
+  S.after.built.push('mill');
   S.after.camp = 0;
   // The old shape, written as that save wrote it: agitator bodies on posts
   // bought, more posts bought than members, no rosters.
@@ -186,61 +186,62 @@ group('a save from when posts were bought: its posts become what the rosters wan
   delete S.after.crew;
   const SETTLE = 0.1;
   yard.persist();
-  // Such a save is below the shape that dropped the posts (src/migrations/2026-10-26-after-jobs.js).
+  // Such a save is below the shape that dropped the posts (src/migrations/2026-10-26-after-jobs.js),
+  // and below the cut of the chipper, whose feeder's seats go to the sawyer (2026-10-26-cut-paper.js).
   const raw = JSON.parse(localStorage.getItem('boulder-clicker/v4'));
   raw.saveV = 27;
   localStorage.setItem('boulder-clicker/v4', JSON.stringify(raw));
   yard.restore(); run(SETTLE);
   const crew = { ...S.after.crew }, on = Object.values(crew).reduce((a, b) => a + b, 0);
-  const seats = ['woodcutter', 'feeder', 'sawyer'].map(j => roster(j)?.cap);
+  const seats = ['woodcutter', 'sawyer'].map(j => roster(j)?.cap);
   run(5);
   const agitators = S.after.bodies.filter(b => b.job === 'agitator').length;
   window.__actsOn(null);
   return [
-    ok(!('posts' in S.after) && on === Math.min(members, 13) && crew.woodcutter === 2, 'the posts become the rosters, filled in order as far as the members go',
+    ok(!('posts' in S.after) && on === Math.min(members, 10) && crew.woodcutter === 2 && !crew.feeder, 'the posts become the rosters, filled in order as far as the members go',
        `${members} members: ${JSON.stringify(crew)}`),
-    ok(JSON.stringify(seats) === '[2,3,8]', 'posts bought past a job\'s one seat become seats bought', JSON.stringify(seats)),
+    ok(JSON.stringify(seats) === '[2,8]', 'posts bought past a job\'s one seat become seats bought', JSON.stringify(seats)),
     ok(agitators === 0, 'and nobody stands on the agitators\' old post', `${agitators}`)
   ];
 });
 
-// Idle hands take signs and posters out themselves (the owner, 2026-10-21:
-// made, "but nobody is using them"): with nobody on the workshop or the
-// press, a member with no job runs the round as an errand,
-// keeping no job, and goes back to the podium once the pile is gone.
-group('idle members plant the signs and paste the posters nobody is on, then go back to the podium', async () => {
+// Idle hands take signs out themselves (the owner, 2026-10-21: made, "but
+// nobody is using them"): with nobody on the workshop, a member with no job
+// runs the round as an errand, keeping no job, and goes back to the podium
+// once the pile is gone.
+group('idle members plant the signs nobody is on, then go back to the podium', async () => {
   up(4);
-  for (const st of ['workshop', 'press']) S.after.built.push(st);
-  window.__afterGrant({ signs: 2, posters: 2 });
+  for (const st of ['workshop']) S.after.built.push(st);
+  window.__afterGrant({ signs: 2 });
   const errands = new Set();
   const done = runUntil(() => {
     for (const b of S.after.bodies) if (b.errand) errands.add(b.errand);
-    return S.after.signs.length >= 2 && S.after.posters.length >= 2;
+    return S.after.signs.length >= 2;
   }, 240);
   const back = runUntil(() => !S.after.bodies.some(b => b.errand || b.load), 120);
   const jobs = Object.values(S.after.crew).reduce((n, k) => n + k, 0);
   window.__actsOn(null);
   return [
-    ok(done, 'the signs are planted and the posters pasted', `${S.after.signs.length} signs, ${S.after.posters.length} posters, stock ${JSON.stringify(S.after.stock)}`),
-    ok(errands.has('carrier') && errands.has('paster') && jobs === 0, 'by members on errands, nobody put on a job', `${[...errands]} ${jobs}`),
+    ok(done, 'the signs are planted', `${S.after.signs.length} signs, stock ${JSON.stringify(S.after.stock)}`),
+    ok(errands.has('carrier') && jobs === 0, 'by members on errands, nobody put on a job', `${[...errands]} ${jobs}`),
     ok(back && idle().length >= Math.min(4, idleSpots()), 'and they go back to the podium empty-handed', `${back} ${idle().length}`)
   ];
 });
 
 // One job a station (DESIGN.md, "Act 3: one job a station"): a maker takes
 // its own goods out, so the chain runs with nobody idle to run errands.
-group('a lone joiner plants its own signs and a lone printer pastes its own posters', async () => {
-  up(2);
-  S.after.built.push('workshop', 'press');
-  S.after.bodies = idle().slice(0, 2); S.after.camp = 0;
-  window.__afterGrant({ timber: 40, paper: 20 });
-  const pressed = [window.__afterPress('joiner', 1), window.__afterPress('printer', 1)];
-  const out = runUntil(() => S.after.signs.length > 0 && S.after.posters.length > 0, 300);
+group('a lone joiner plants its own signs', async () => {
+  up(1);
+  S.after.built.push('workshop');
+  S.after.bodies = idle().slice(0, 1); S.after.camp = 0;
+  window.__afterGrant({ timber: 40 });
+  const pressed = [window.__afterPress('joiner', 1)];
+  const out = runUntil(() => S.after.signs.length > 0, 300);
   const back = runUntil(() => S.after.bodies.some(b => b.job === 'joiner' && b.at === 'workshop'), 120);
   window.__actsOn(null);
   return [
-    ok(pressed.every(Boolean), 'a joiner and a printer put on, nobody else in the camp'),
-    ok(out, 'the joiner plants a sign and the printer pastes a poster', `${S.after.signs.length} signs, ${S.after.posters.length} posters`),
+    ok(pressed.every(Boolean), 'a joiner put on, nobody else in the camp'),
+    ok(out, 'the joiner plants a sign', `${S.after.signs.length} signs`),
     ok(back, 'and the joiner goes back to its bench')
   ];
 });

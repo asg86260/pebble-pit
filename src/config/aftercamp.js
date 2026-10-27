@@ -17,10 +17,6 @@ export const AFTER_BUILD_DROP_S = 0.5;     // a load set down on the pile
 export const AFTER_BUILD_LAY_S = 0.4;      // a load laid into a band
 export const AFTER_BUILD_HOLD_S = 1;       // the pile stands complete this long before the first band
 
-// The paper mill's line (docs/mocks/act3-papermill-2026-10-18): sheets it
-// holds drying, and with its drying line (a second batch at once).
-export const AFTER_LINE_SHORT = 4;
-export const AFTER_LINE_LONG = 8;
 
 // The pair's speech bubbles (after/bubbles.js; the owner, 2026-10-18): sent
 // up at uneven intervals, between these shares of AFTER_BUBBLE_EVERY_S, and
@@ -41,7 +37,3 @@ export const AFTER_BUBBLE_MID = 1.5;
 // cell out, a third of a body, every other row, and a stroke of one cell
 // shows in the teeth.
 export const AFTER_SAW_TEETH = [0, 1];
-// The paper mill's paddle: one turn round the vat this many seconds while
-// the pulper stirs, its shaft between these columns of the drawing (cells).
-export const AFTER_STIR_TURN_S = 1.2;
-export const AFTER_STIR_SPAN = [15, 21];

@@ -70,7 +70,7 @@ export function drawFloor() {
   // The notch's walls: the line turned down a cell, then the cloud's depth in
   // pale steps either side, the gap left white.
   if (!sited('mill')) return;
-  const nx = notchX(), nt = groundOf('chipper');
+  const nx = notchX(), nt = groundOf('mill');
   fr(nx - 2, nt, 2, P + 2, K); fr(nx + 2 * P, nt, 2, P + 2, K);
   for (let r = 1; r < 4; r++) { fr(nx - 2, nt + r * P, 2, P, PALE); fr(nx + 2 * P, nt + r * P, 2, P, PALE); }
 }

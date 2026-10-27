@@ -28,8 +28,8 @@ import { drawActsAfter } from '../src/render/portals.js';
 const S = yard.S;
 const LAYERS = [drawAfterBackdrop, drawSkyCrowd, drawAfterSky, drawAfterGrove, drawAfterCamp, drawAfterCrowd,
                 drawAfterPiles, drawAfterMembers, drawAfterCoins, drawAfterCues, drawAfterCounts, drawActsAfter];
-const SCENE_NAMES = ['after-camp-art', 'after-camp-art-2', 'after-paper-line', 'after-nails', 'after-grove', 'after-saw',
-                     'after-dig', 'after-chip-held', 'after-site-carry', 'after-coins', 'after-bubbles', 'after-pedestal',
+const SCENE_NAMES = ['after-camp-art', 'after-camp-art-2', 'after-heap-full', 'after-nails', 'after-grove', 'after-saw',
+                     'after-dig', 'after-site-carry', 'after-coins', 'after-bubbles', 'after-pedestal',
                      'after-crowd', 'heaven-10', 'heaven-50', 'heaven-zoom', 'heaven-rally', 'heaven-roar', 'portal-heaven-up'];
 
 const hex6 = c => {

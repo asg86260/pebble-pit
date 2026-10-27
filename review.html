@@ -13,6 +13,9 @@
   .stage { border: 2px solid #000; overflow: hidden; }
   iframe { border: 0; display: block; background: #fff; width: 800px; height: 600px; transform-origin: 0 0; }
   .empty { border: 2px dashed #000; padding: 16px; max-width: 700px; }
+  .note { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; margin-bottom: 8px; max-width: 1100px; }
+  .note textarea { flex: 1 1 320px; font: inherit; border: 2px solid #000; padding: 4px 8px; min-height: 2.6em; resize: vertical; }
+  #sent { align-self: center; min-width: 12em; }
 </style></head><body>
 <!-- The review bench: the change under review, live in the real game, an
      option a button. A review is the scenes in src/scenes.js that carry a
@@ -21,10 +24,15 @@
      review lives in this file, so the next review is a few scenes, not a
      page. The frame is play.html?bench: the dev build, staged from boot, so
      it never touches the save. The address is the review and the option
-     (#<review>/<scene>), so a link stands the same option up again. -->
+     (#<review>/<scene>), so a link stands the same option up again.
+     The box under the buttons is the owner's decision: stop on the option on
+     screen, or keep going with what to change. It posts to the dev server
+     (tools/review-server.mjs), which writes it where an agent waits for it
+     (tools/review-wait.mjs). -->
 <div class="top"><h1 id="title">Review</h1><select id="pick" hidden aria-label="review"></select></div>
 <div class="bar" id="bar"></div>
 <p id="say"></p>
+<form class="note" id="note"><textarea id="words" placeholder="what to change (or why this one)"></textarea><button type="button" id="stop">stop: pick this one</button><button type="button" id="keep">keep iterating</button><span id="sent" aria-live="polite"></span></form>
 <div class="stage" id="stage"><iframe id="yard" src="./play.html?bench" title="the change under review"></iframe></div>
 <script>
 const $ = id => document.getElementById(id);
@@ -32,7 +40,7 @@ const f = $('yard'), stage = $('stage');
 const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 // The game at the scene shots' 800x600, so the camera frames a scene as
 // look.mjs does, scaled to the window.
-const fit = () => { const w = Math.min(innerWidth - 36, (innerHeight - 140) * 4 / 3), k = w / 800; f.style.transform = `scale(${k})`; stage.style.width = w + 'px'; stage.style.height = 600 * k + 'px'; };
+const fit = () => { const w = Math.min(innerWidth - 36, (innerHeight - 200) * 4 / 3), k = w / 800; f.style.transform = `scale(${k})`; stage.style.width = w + 'px'; stage.style.height = 600 * k + 'px'; };
 addEventListener('resize', fit); fit();
 
 let reviews = [], rev = null, cur = null;
@@ -65,7 +73,7 @@ f.addEventListener('load', () => {
     // a scene marks old story beats done, and their notices would cover the picture
     const st = f.contentDocument.createElement('style'); st.textContent = '.toast{display:none!important}'; f.contentDocument.head.append(st);
     reviews = f.contentWindow.__reviews();
-    if (!reviews.length) { stage.outerHTML = '<p class="empty">No review is open. File scenes under one in src/scenes.js: <code>review: \'the question\', option: \'A name\'</code>.</p>'; return; }
+    if (!reviews.length) { $('note').hidden = true; stage.outerHTML = '<p class="empty">No review is open. File scenes under one in src/scenes.js: <code>review: \'the question\', option: \'A name\'</code>.</p>'; return; }
     const sel = $('pick');
     sel.innerHTML = reviews.map(x => `<option value="${slug(x.name)}">${x.name}</option>`).join('');
     sel.hidden = reviews.length < 2;
@@ -76,9 +84,24 @@ f.addEventListener('load', () => {
   go();
 });
 addEventListener('keydown', e => {
-  if (!rev || e.target.tagName === 'SELECT') return;
+  if (!rev || /SELECT|TEXTAREA/.test(e.target.tagName)) return;
   const i = Number(e.key) - 1;
   if (i >= 0 && i < rev.options.length) stand(rev.options[i].scene);
   if (e.key === 'r') stand(cur);
 });
+// The decision, posted to the dev server; the agent waiting on it wakes when it lands.
+async function decide(verdict) {
+  if (!rev) return;
+  const o = rev.options.find(x => x.scene === cur), words = $('words').value.trim();
+  if (verdict === 'keep' && !words) { $('sent').textContent = 'say what to change first'; return; }
+  try {
+    const r = await fetch('/__review', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ review: rev.name, option: o ? `${o.label} (${o.scene})` : cur, verdict, say: words }) });
+    if (!r.ok) throw new Error(r.status);
+    $('words').value = '';
+    $('sent').textContent = verdict === 'stop' ? `sent: stop on ${o ? o.label : cur}` : 'sent: keep iterating';
+  } catch (e) { $('sent').textContent = `not sent (${e.message}): is this the dev server?`; }
+}
+$('stop').onclick = () => decide('stop');
+$('keep').onclick = () => decide('keep');
 </script></body></html>

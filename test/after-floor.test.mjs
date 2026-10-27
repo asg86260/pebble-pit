@@ -76,7 +76,7 @@ group('an unbuilt station stands closed on flat ground; bought on the shack, its
   run(1);
   window.__grant({ dust: 40000, spores: 5000, shards: 2000, sparks: 400 });
   window.__afterGrant({ rebel: 400 });
-  const five = ['mill', 'chipper', 'papermill', 'workshop', 'press'];
+  const five = ['mill', 'workshop'];
   const standing = five.filter(k => sited(k) && flatUnder(k));
   const bought = window.__buy('after-build-mill');
   run(0.5);

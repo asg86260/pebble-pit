@@ -48,6 +48,22 @@ to step through them, `r` to stand one again, and the scene in the address
 (`/scenes.html#endgame`). The frame is staged from boot, so it never touches
 the save in the game's own tab.
 
+For **a change the owner is choosing between**, `review.html` is the review
+bench: the real game at the scene shots' 800x600, scaled to the window, an
+option a button (`1`-`9`, `r` to stand it again), and nothing else on the
+page. A review is scenes, not a page: give each option's scene a
+`review: 'the question'` and an `option: 'A its name'`, and its `say` is
+the line under the buttons. The address is the review and the option
+(`/review.html#<review>/<scene>`). Serve it from a dev server on a spare
+port and hand the owner the link; an edit to the drawing reaches their open
+tab on the next hot reload. The owner decides on the page itself -- "stop:
+pick this one" or "keep iterating" with what to change -- and the note lands
+in `shots/review/notes.jsonl`; wait for it with `node tools/review-wait.mjs
+<checkout>` run in the background, which exits (and so wakes you) the moment
+a note lands (`--all` prints the notes already there).
+Options drawn only to be judged live on a throwaway branch, marked
+`// MOCK`, never merged.
+
 For anything on a **board**, `cards.html` is the card bench: it draws rows
 from plain objects through the real builder and stylesheet, no yard behind
 them, so a card at its worst bill is a five-second shot

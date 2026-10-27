@@ -13,9 +13,9 @@
 // where the cell stands (no flat fills, no random draw, so it holds still
 // frame to frame). Everything that comes or goes fades.
 
-import { P, GREY, AFTER_CARRY_SHOWN, AFTER_SIGN_BOARD, AFTER_SIGN_MARK, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, GESTURE_STIR_TURNS, AFTER_LINE_SHORT, AFTER_LINE_LONG, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
+import { P, GREY, AFTER_CARRY_SHOWN, AFTER_SIGN_BOARD, AFTER_SIGN_MARK, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
          AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
-         AFTER_SAW_S, AFTER_CHIP_S, AFTER_PULP_S, AFTER_SIGN_S, AFTER_PRESS_S, SHELF_GLYPH_CELLS,
+         AFTER_SAW_S, AFTER_SIGN_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
@@ -24,7 +24,7 @@ import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
 import { buildPileAt, stationBox, signBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
 import { airMotes } from '../after/rebel.js';
-import { built, heapBrim, vatSheets, vats } from '../after/levels.js';
+import { built, heapBrim } from '../after/levels.js';
 import { airSpills } from '../after/mill.js';
 import { atStation, bodyInk, carried as carryOf } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
@@ -36,7 +36,7 @@ import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove, drawLaidGoods } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
-import { heap, heapCells, logPile, plankPile, sheetPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt, countOver } from './after/piles.js';
+import { heap, heapCells, logPile, plankPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt, countOver } from './after/piles.js';
 import { drawBody } from './crew.js';
 import { drawSawDrops } from './after/drop.js';
 import { onDevice } from './wardrobe.js';
@@ -93,7 +93,7 @@ export function drawAfterGrove() { if (A()) drawGrove(); }
 // Whether a station is working now, and how far through its unit: a member at
 // its door with the work coming (its clock held full means its input is
 // short), or the hand's last unit within AFTER_ART_WORK_S.
-const PERIOD = { mill: AFTER_SAW_S, chipper: AFTER_CHIP_S, papermill: AFTER_PULP_S, workshop: AFTER_SIGN_S, press: AFTER_PRESS_S };
+const PERIOD = { mill: AFTER_SAW_S, workshop: AFTER_SIGN_S };
 function working(key) {
   const a = A();
   const w = atStation(key)[0];
@@ -107,15 +107,11 @@ const frameOf = key => frame(stationX0(key), groundOf(key), ART[key].flip || 0, 
 let hands = {};   // cache: this frame's gestures, read afresh at the top of each draw
 const readHands = () => { hands = {}; for (const r of gestureView() || []) hands[r.key] = r; };
 
-// What a station's drawing reads besides its pose: the paper mill's vat as
-// full as the batch is stirred (by the hand, or the pulper's clock), its
-// count, and how many sheets the mould lifts and the line holds.
+// What a station's drawing reads besides its pose: the workshop's blanks,
+// as many as there is timber for.
 function extras(key) {
   if (key === 'workshop') return { blanks: Math.floor(A().stock.timber / AFTER_SIGN_TIMBER) };
-  if (key !== 'papermill') return {};
-  const h = hands.papermill, w = atStation('papermill')[0];
-  const fill = h && h.prog ? h.prog / GESTURE_STIR_TURNS : w ? w.t / AFTER_PULP_S : 0;
-  return { paper: A().stock.paper, moulds: vatSheets(), slots: vats() > 1 ? AFTER_LINE_LONG : AFTER_LINE_SHORT, fill };
+  return {};
 }
 // A station's loads on its spot while it is raised (after/build.js): each
 // fading on as it is set down and off as a builder takes it.
@@ -228,11 +224,11 @@ function drawShackOrder() {
   const last = r.at.length ? fadeIn(r.at[r.at.length - 1]) : 1;
   glyphOver(b, GLYPHS[key], (r.n - 1 + last) / AFTER_BUILD_PIECES);
 }
-// The sawdust heap under the chipper's chute: its grains a cell
-// each, its share of the brim, held tipped toward the notch a moment after a
-// tip; a tip's grains falling through the notch and fading.
+// The saw mill's sawdust heap on its ground: its grains a cell each, its
+// share of the brim, held tipped toward the notch a moment after a tip; a
+// tip's grains falling through the notch and fading.
 function drawSawdust() {
-  const a = A(), fl = groundOf('chipper'), d = frame(heapMid(), fl, 0, null, AFTER_ART_SCALE);
+  const a = A(), fl = groundOf('mill'), d = frame(heapMid(), fl, 0, null, AFTER_ART_SCALE);
   const cells = heapCells(AFTER_HEAP_R).length;
   const n = Math.round(Math.min(1, a.stock.sawdust / heapBrim()) * cells);
   const tipped = a.tipAt != null && a.t - a.tipAt < AFTER_TIP_HOLD_S;
@@ -272,9 +268,6 @@ export function drawAfterPiles() {
   pile('mill', 'logs', logPile, st.logs);
   pile('mill', 'timber', plankPile, Math.floor(st.timber));
   drawSawDrops();
-  pile('chipper', 'chiplogs', logPile, st.chiplogs);
-  pile('papermill', 'paper', sheetPile, Math.floor(st.paper));
-  pile('press', 'posters', (d, x, s) => sheetPile(d, x, s, 6, true), Math.floor(st.posters));
 }
 export function drawAfterCamp() {
   const a = A();
@@ -289,7 +282,7 @@ export function drawAfterCamp() {
   // the forestry shack, the grove's, then the cards' stations
   for (const key of Object.keys(AFTER_STATIONS)) { drawStation(key); shopSign(key); }
   drawShackOrder();
-  if (built('mill') || built('chipper')) drawSawdust();
+  if (built('mill')) drawSawdust();
   drawLaidGoods(a.t);
   drawRebelPile();
   drawPair();
@@ -321,17 +314,11 @@ function drawLoad(x, y, kind, n) {
   else if (kind === 'plank') for (let k = 0; k < n; k++) {
     const ly = y - P - k * 2 * P;
     ctx.fillStyle = GREY[K]; ctx.fillRect(x - P * 2, ly, 7 * P, P); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x - P * 2 + 2, ly + 2, 7 * P - 4, P - 4);
-  } else if (kind === 'sheet') for (let k = 0; k < n; k++) {
-    const sy = y - 6 - k * P;
-    ctx.fillStyle = GREY[K]; ctx.fillRect(x + 2, sy, 14, 6); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 4, sy + 2, 10, 2);
   } else if (kind === 'sign') {
     // The one in front held up on its post; the rest boards on the shoulder.
     drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
     ctx.fillStyle = GREY[K];
     for (let k = 1; k < n; k++) ctx.fillRect(x - P, y - k * 2 * P, 3 * P, P);
-  } else if (kind === 'posters') for (let k = 0; k < n; k++) {
-    const sy = y - 10 - k * 2 * P;
-    ctx.fillStyle = GREY[K]; ctx.fillRect(x + 2, sy, 14, 10); ctx.fillStyle = GREY[W]; ctx.fillRect(x + 4, sy + 2, 10, 6);
   }
 }
 // The goods in the player's hand (after/hand.js): the load a member would

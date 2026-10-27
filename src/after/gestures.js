@@ -11,11 +11,7 @@
 //   stump      the shovel icon shows it can be dug; dragged up out of the
 //              ground and held there, a root a strain
 //   saw mill   the flywheel spun: its speed feeds the log, capped
-//   chipper    a log dragged off the pile into the jaws, then the arm pulled
-//              down and held: a steady feed while it is held
-//   paper mill the vat stirred round: its speed fills the batch, capped
 //   workshop   a tap on a nail a blow: two drive it, four nail a sign
-//   press      the bar dragged down: a poster at the stop
 //   heap       a load dragged to the notch, or flung: the faster, the more
 //
 // The parts stand where the drawing draws them (place.js, `stationParts`),
@@ -40,10 +36,7 @@ import { P, AFTER_SIGN_TIMBER, AFTER_SIGN_S, GESTURE_CUE_USES, GESTURE_CUE_FADE_
          GESTURE_SAW_AMP, GESTURE_SAW_VMAX, GESTURE_SAW_FOLLOW, GESTURE_SAW_END, GESTURE_SAW_EASE,
          GESTURE_STUMP_DRAG, GESTURE_STUMP_MAX, GESTURE_STUMP_FOLLOW, GESTURE_STUMP_SINK, GESTURE_STRAIN_LIFT, GESTURE_STRAIN_S,
          GESTURE_WHEEL_MAX_REV, GESTURE_WHEEL_FEED, GESTURE_WHEEL_LOG, GESTURE_WHEEL_EASE, GESTURE_WHEEL_COAST, GESTURE_WHEEL_MIN_REV,
-         GESTURE_ARM_FEED, GESTURE_ARM_LOG, GESTURE_ARM_PULL, GESTURE_ARM_HOLD, GESTURE_ARM_POSES, GESTURE_ARM_SPRING_S,
-         GESTURE_STIR_MAX_REV, GESTURE_STIR_TURNS, GESTURE_STIR_EASE, GESTURE_STIR_COAST,
          GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S, GESTURE_JOINER_WAIT_S,
-         GESTURE_BAR_DRAG, GESTURE_BAR_RATE, GESTURE_BAR_RETURN, GESTURE_BAR_PRINT, GESTURE_BAR_RESET, GESTURE_BAR_EASE,
          GESTURE_FLING_MIN, GESTURE_FLING_MAX, GESTURE_FLING_LOADS, GESTURE_FLING_WINDOW_S, GESTURE_FLING_GRAV,
          GESTURE_FLING_LIFT, GESTURE_LOAD_FADE_S, GESTURE_PAD_PULL, GESTURE_PAD_TURN,
          HANDWORK_HINT_S, HANDWORK_STRIP_S, HANDWORK_IDLE_SPEED, HANDWORK_DONE_S } from '../config.js';
@@ -103,8 +96,6 @@ function flingSpeed(g) {
   if (!a || b.t - a.t < 1e-3 || T() - b.t > GESTURE_FLING_WINDOW_S) return 0;
   return (b.x - a.x) / (b.t - a.t);
 }
-// The arm's pose off its pull: a whole step of GESTURE_ARM_POSES.
-const armPose = k => Math.round(clamp(k, 0, 1) * (GESTURE_ARM_POSES - 1));
 
 // The saw on plot i's trunk, drawn at offset `s` px along: the box a press
 // takes it by.
@@ -203,71 +194,6 @@ const DEFS = {
     },
     speed: g => revOf(g) / GESTURE_WHEEL_MAX_REV
   },
-  chipper: {
-    // `log` the log in hand: null, 'held' (dragged from the pile, at x, y)
-    // or 'in' (laid in the jaws); `k` the arm's pull, `hold` whether the
-    // arm is held down, `prog` the log fed through, `spring` when the arm
-    // was let go (it comes back a pose at a time).
-    init: () => ({ log: null, lx: 0, ly: 0, k: 0, kw: 0, ky: 0, k0: 0, arm: false, hold: false, prog: 0, spring: null }),
-    open: () => built('chipper'),
-    grab(g, x, y) {
-      const p = stationParts('chipper');
-      if (inBox(x, y, p.arm, G_S)) return 'arm';
-      if (g.log !== 'in' && S.after.stock.chiplogs > 0 && inBox(x, y, p.pile, G_S)) return 'log';
-      return null;
-    },
-    down(g, what, x, y) {
-      if (what === 'arm') { g.arm = true; g.ky = y; g.k0 = g.k; g.spring = null; return true; }
-      g.log = 'held'; g.lx = x; g.ly = y; return true;
-    },
-    move(g, x, y) {
-      if (g.arm) g.kw = clamp(g.k0 + (y - g.ky) / GESTURE_ARM_PULL, 0, 1);
-      else if (g.log === 'held') { g.lx = x; g.ly = y; }
-    },
-    up(g) {
-      if (g.arm) { g.arm = false; g.spring = T(); return; }
-      // Let go over the jaws, the log is laid in them; anywhere else it goes
-      // back onto the pile.
-      if (g.log === 'held') g.log = inBox(g.lx, g.ly, stationParts('chipper').mouth, G_S) ? 'in' : null;
-    },
-    step(g, dt) {
-      // Held, the arm follows the hand; let go, it springs back a held pose at a time.
-      if (g.arm) g.k = g.kw;
-      else if (g.spring != null) {
-        const n = Math.floor((T() - g.spring) / GESTURE_ARM_SPRING_S);
-        g.k = Math.max(0, g.kw - n / (GESTURE_ARM_POSES - 1));
-        if (g.k <= 0) { g.spring = null; g.kw = 0; }
-      }
-      g.hold = g.arm && g.k >= GESTURE_ARM_HOLD;
-      if (!g.hold || g.log !== 'in') return;
-      // Down and held with a log in the jaws: the feed at its one steady speed.
-      g.prog = Math.min(GESTURE_ARM_LOG, g.prog + GESTURE_ARM_FEED * dt);
-      if (g.prog >= GESTURE_ARM_LOG) {
-        g.prog = 0;
-        if (workAfter('chipper', 1, true)) { used(g); g.log = null; }
-      }
-    },
-    speed: g => (g.hold ? 1 : 0)
-  },
-  papermill: {
-    init: () => ({ ang: 0, w: 0, grab: false, pa: 0, acc: 0, prog: 0 }),
-    open: () => built('papermill'),
-    angle(x, y) { const v = stationParts('papermill').vat; return Math.atan2((y - v.y) / v.ry, (x - v.x) / v.rx); },
-    grab(g, x, y) {
-      const v = stationParts('papermill').vat, dx = (x - v.x) / (v.rx + G_S * 2), dy = (y - v.y) / (v.ry + G_S * 2);
-      return dx * dx + dy * dy <= 1 ? true : null;
-    },
-    down(g, h, x, y) { g.grab = true; g.pa = this.angle(x, y); return true; },
-    move(g, x, y) { const na = this.angle(x, y), d = wrap(na - g.pa); g.ang += d; g.acc += d; g.pa = na; },
-    up(g) { g.grab = false; },
-    step(g, dt) {
-      if (g.grab) { g.w += (g.acc / dt - g.w) * Math.min(1, dt * GESTURE_STIR_EASE); g.acc = 0; }
-      else { g.w *= Math.exp(-GESTURE_STIR_COAST * dt); g.ang += g.w * dt; return; }
-      g.prog = Math.min(GESTURE_STIR_TURNS, g.prog + Math.min(revOf(g), GESTURE_STIR_MAX_REV) * dt);
-      if (g.prog >= GESTURE_STIR_TURNS && workAfter('papermill', 1, true)) { g.prog = 0; used(g); }
-    },
-    speed: g => revOf(g) / GESTURE_STIR_MAX_REV
-  },
   workshop: {
     // `nails` the taps each nail of the sign on the bench has taken (two
     // drive it: half, then flush); `strike` the last blow, `hit` which nail.
@@ -303,38 +229,21 @@ const DEFS = {
     },
     speed: g => g.nails.reduce((a, n) => a + n, 0) / (GESTURE_NAILS * GESTURE_NAIL_TAPS)
   },
-  press: {
-    init: () => ({ k: 0, want: 0, grab: false, gy: 0, k0: 0, printed: false, w: 0 }),
-    open: () => built('press'),
-    grab(g, x, y) { const p = stationParts('press'); return inBox(x, y, p.handle, G_S) ? true : null; },
-    down(g, h, x, y) { g.grab = true; g.gy = y; g.k0 = g.k; g.want = g.k; return true; },
-    move(g, x, y) { g.want = clamp(g.k0 + (y - g.gy) / GESTURE_BAR_DRAG, 0, 1); },
-    up(g) { g.grab = false; },
-    step(g, dt) {
-      const before = g.k;
-      if (g.grab) g.k += clamp(g.want - g.k, -GESTURE_BAR_RATE * dt, GESTURE_BAR_RATE * dt);
-      else g.k = Math.max(0, g.k - GESTURE_BAR_RETURN * dt);
-      g.w += (Math.max(0, g.k - before) / dt - g.w) * Math.min(1, dt * GESTURE_BAR_EASE);
-      if (g.k < GESTURE_BAR_RESET) g.printed = false;
-      if (g.k >= GESTURE_BAR_PRINT && !g.printed) { g.printed = true; if (workAfter('press', 1, true)) used(g); }
-    },
-    speed: g => g.w / GESTURE_BAR_RATE
-  },
   heap: {
     // A load off the heap: { mode: 'held' | 'fling' | 'gone' | 'back', x, y, n, at }.
     init: () => ({ grab: false, pts: [], v: 0, load: null }),
-    open: () => built('mill') && !built('papermill') && S.after.stock.sawdust > 0,
+    open: () => built('mill') && S.after.stock.sawdust > 0,
     grab(g, x, y) { return g.load && g.load.mode !== 'gone' ? null : inBox(x, y, stationParts('heap').heap, G_S) ? true : null; },
     down(g, h, x, y) {
       g.grab = true; g.pts = [{ t: T(), x }];
-      g.load = { mode: 'held', x, x0: x, y: Math.min(y, groundOf('chipper') - P), n: 1, at: T() };
+      g.load = { mode: 'held', x, x0: x, y: Math.min(y, groundOf('mill') - P), n: 1, at: T() };
       return true;
     },
     move(g, x, y) {
       const t = T();
       g.pts.push({ t, x });
       while (g.pts.length > 2 && t - g.pts[0].t > GESTURE_FLING_WINDOW_S) g.pts.shift();
-      if (g.load) { g.load.x = x; g.load.y = Math.min(y, groundOf('chipper') - P); }
+      if (g.load) { g.load.x = x; g.load.y = Math.min(y, groundOf('mill') - P); }
     },
     up(g) {
       g.grab = false;
@@ -351,7 +260,7 @@ const DEFS = {
       if (ld.mode === 'fling') {
         ld.vy += GESTURE_FLING_GRAV * dt;
         ld.x += ld.vx * dt;
-        ld.y = Math.min(ld.y + ld.vy * dt, groundOf('chipper') - P);
+        ld.y = Math.min(ld.y + ld.vy * dt, groundOf('mill') - P);
         // Over the notch, it tips there: the loads go through.
         if (ld.x >= stationParts('heap').edge) { tip(g, ld.n); Object.assign(ld, { mode: 'gone', at: T() }); }
       } else if (ld.mode !== 'held' && T() - ld.at > GESTURE_LOAD_FADE_S) g.load = null;
@@ -480,7 +389,7 @@ export function gestureUp(x, y) {
 // The hand-worked stations shown in the world on a hover (DESIGN.md, "Act
 // 3's hand work and hand carrying", take B): the ghost of its motion, the
 // strip of the unit.
-export const HANDWORK_KEYS = ['mill', 'chipper', 'papermill', 'press'];
+export const HANDWORK_KEYS = ['mill'];
 // The pointer over the place, no button needed (input.js, on every move of a
 // mouse; null when it leaves): which hand-worked station it is on. On a part
 // it is that part's; once on, the rest of its station keeps it, so the ghost
@@ -551,22 +460,14 @@ export function padGesture(key, p) {
     if (r.i !== i) Object.assign(r, { i, lift: 0, target: 0, strain: 0 });
     if (p.a) { r.grab = true; if (p.pressed) r.target = Math.min(GESTURE_STUMP_MAX, Math.max(r.target, r.lift) + GESTURE_PAD_PULL); }
     else { r.grab = false; r.target = 0; }
-  } else if (key === 'mill' || key === 'papermill') {   // the stick's turn spins the wheel, stirs the vat
+  } else if (key === 'mill') {                // the stick's turn spins the wheel
     const m = Math.hypot(p.lx, p.ly);
     if (m < GESTURE_PAD_TURN) { if (held === key) gestureUp(); else r.grab = false; return; }
-    const pt = key === 'mill' ? stationParts('mill').wheel : stationParts('papermill').vat;
-    const x = pt.x + p.lx / m * (pt.r || pt.rx), y = pt.y + p.ly / m * (pt.r || pt.ry);
+    const pt = stationParts('mill').wheel;
+    const x = pt.x + p.lx / m * pt.r, y = pt.y + p.ly / m * pt.r;
     if (!r.grab) { d.down(r, true, x, y); held = key; } else d.move(r, x, y);
-  } else if (key === 'chipper') {             // A lays a log in, then held pulls the arm down
-    if (p.pressed && r.log !== 'in' && S.after.stock.chiplogs > 0) { r.log = 'in'; return; }
-    if (p.pressed) { r.arm = true; r.spring = null; }
-    if (r.arm) r.kw = p.a ? 1 : r.kw;
-    if (p.released && r.arm) { r.arm = false; r.spring = T(); }
   } else if (key === 'workshop') {            // A taps the next nail
     if (p.pressed) d.down(r, r.nails.findIndex(n => n < GESTURE_NAIL_TAPS));
-  } else if (key === 'press') {               // the stick down pulls the bar
-    r.grab = p.ly > 0;
-    r.want = clamp(p.ly, 0, 1);
   } else if (key === 'heap') {                // a flick toward the notch; harder tips more
     const push = p.lx;
     if (push > flick) flick = push;

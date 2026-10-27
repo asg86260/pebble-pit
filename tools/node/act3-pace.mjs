@@ -15,8 +15,8 @@
 //     chance `--pop`, through the hand's own press (`__gesture`).
 //   - Works the stations by hand `--hand` of the time, at `--human` of each
 //     motion's top speed, read off config/gestures.js: the furthest station
-//     down the chain that has its input first (the press, the workshop, the
-//     paper mill, the saws), else a tree, a stump, the heap. The work goes
+//     down the chain that has its input first (the workshop, the saw mill),
+//     else a tree, a stump, the heap. The work goes
 //     through the doors the hand's motions go through (`workAfter`,
 //     `chopTree`, `digStump`, `tipSawdust`).
 //   - Buys through `__buy`, greedily in PLAN's order: the first row on it
@@ -76,6 +76,6 @@ console.log(`the plan's next row waited ${mm(blocked.act)} short of the act's co
 console.log(`the yard paid up: ${YARD_COINS.map(c => `${c} ${Math.round(yardPaid[c])} (${(yardPaid[c] / (LATE_YARD[c] * YARD) / 60).toFixed(1)} min of it)`).join(', ')}`);
 console.log(`the hand: ${Object.entries(handDid).map(([k, n]) => `${k} ${n}`).join(', ')}`);
 console.log(`at the end: rebel ${Math.round(a.rebel)}, stock ${JSON.stringify(a.stock)}, camp ${a.camp}, union ${union()}, ` +
-            `signs ${a.signs.length}, posters ${a.posters.length}`);
+            `signs ${a.signs.length}`);
 console.log(`rosters: ${JSON.stringify(a.crew)}, seats bought: ${JSON.stringify(Object.fromEntries(Object.entries(a.ups).filter(([k]) => k.startsWith('after-seat-'))))}, the yard's carry ${haulCap()} a load`);
 console.log(`bought ${bought.length}: ` + bought.map(b => `${mm(b.t)} ${b.key.replace('after-', '')}`).join(', '));

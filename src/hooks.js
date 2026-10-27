@@ -1536,7 +1536,7 @@ HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, sho
   bill: afterBill(u), rung: u.rung ? u.rung() : u.from ? u.from() : 0, done: afterMaxed(u) }));
 HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...S.after.stock, gate: S.after.gate,
   axe: S.after.axe, support: afterSupport(), union: afterUnion(), ready: afterReady(), camp: campCount() + idleBodies().length, walking: walkingOut(),
-  size: crowdSize(), signs: S.after.signs.length, posters: S.after.posters.length, bodies: S.after.bodies.length,
+  size: crowdSize(), signs: S.after.signs.length, bodies: S.after.bodies.length,
   posted: S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD).length, motes: S.after.motes.length,
   built: [...S.after.built], camped: S.after.camp,
   due: afterGate(), strike: strikeDue() } : null);
