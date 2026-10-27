@@ -190,7 +190,7 @@ export const TESTS = [
     await settle();
     await upThere();
     S.after.built.push('mill');
-    S.after.stock.logs = 0; S.after.stock.grovelogs = 0;
+    window.__afterGrant({ logs: -S.after.stock.logs, grovelogs: -S.after.stock.grovelogs });
     const b = stationBox('mill'), r = canvas().getBoundingClientRect();
     window.__look(b.x + b.w / 2 - S.viewW / 2);
     await settle(0.2);

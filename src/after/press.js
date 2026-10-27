@@ -17,13 +17,15 @@ import { CROWD_FILES, AFTER_SIGN_TIMBER, AFTER_SIGN_GAP } from '../config.js';
 import { arand, nextId } from './util.js';
 import { benchSigns, bigSigns } from './levels.js';
 import { crowdRanks, inkAround } from './union.js';
+import { takeBlocks } from './piles.js';
 
-// A joining at the workshop, a sign a bench: false while timber is short of one.
+// A joining at the workshop, a sign a bench: false while timber is short of
+// one. Its blocks come off the top of the timber pile (piles.js).
 export function joinSign() {
   const st = S.after.stock;
   const n = Math.min(benchSigns(), Math.floor(st.timber / AFTER_SIGN_TIMBER));
   if (n < 1) return false;
-  st.timber -= AFTER_SIGN_TIMBER * n;
+  takeBlocks('timber', AFTER_SIGN_TIMBER * n);
   st.signs += n;
   return true;
 }

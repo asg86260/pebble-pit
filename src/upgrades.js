@@ -21,6 +21,7 @@ import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HO
 import { spelled } from './tower.js';
 import { spendScales, refundScales } from './deep/scales.js';
 import { isHellCoin, takeHell } from './hell/coins.js';
+import { takeBlocks } from './after/piles.js';
 
 import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut,
          ahead, newestWaiting, waitingCount, worksOf } from './works.js';
@@ -181,9 +182,9 @@ export function take(money, n, to = null) {
   else if (money === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
   else if (money === 'spore') { S.spores -= n; spendHeld(n, SPORE_CELL); }
   else if (money === 'spark') { S.sparks -= n; spendHeld(n, SPARK_CELL); }
-  // Act 3's: rebel on the act, timber the chain's stock.
+  // Act 3's: rebel on the act, timber off the top of the saw mill's pile.
   else if (money === 'rebel') S.after.rebel -= n;
-  else if (money === 'timber') S.after.stock.timber -= n;
+  else if (money === 'timber') takeBlocks('timber', n);
 }
 
 // What a row costs, as [currency, amount] pairs. A row says `cost` and

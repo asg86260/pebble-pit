@@ -16,11 +16,17 @@ import { P } from '../config.js';
 import { msg } from '../lang.js';
 import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
-import { stationBox, signBoard, closed } from './place.js';
+import { stationBox, signBoard, closed, pilePlace, pileOwner } from './place.js';
+import { PILED, pileFull } from './piles.js';
 import { godCampAt, godMid, faceY } from './sky.js';
 import { heapFull, heapMarkBox, HEAP_PILE } from './mill.js';
 
 const live = () => afterlifeOn() && !!S.after;
+// A counted pile's name, and the box its mark hangs from: `pileMarkAt` hangs
+// a pile row's mark five cells over its box's top, so the box's top is the
+// plot's at its fullest.
+const PILE_NAMES = { logs: 'hover-pile-logs', grovelogs: 'hover-pile-logs', timber: 'hover-pile-planks' };
+const pileTop = what => { const g = pilePlace(what); return { x: g.x, y: g.y, w: g.cols * g.p, h: g.rows * g.p }; };
 // The window's middle, which God's camp is drawn against (after/sky.js).
 const mid = () => S.camX + S.viewW / 2;
 
@@ -98,6 +104,14 @@ export const AFTER_STATION_ROWS = [
     pile: heapFull,
     get full() { return msg('after-stall-heap'); }
   },
+  // The counted piles at their brims (after/piles.js): each wears the same
+  // mark over its plot, and its hover is the yard's own "pile is full".
+  ...PILED.map(what => ({
+    key: `after-pile-${what}`, place: 'after', glyph: 'crate', after: [], needs: () => false,
+    get name() { return msg(PILE_NAMES[what]); },
+    open: () => live() && built(pileOwner(what)), stand: () => pileTop(what), hit: () => false,
+    pile: () => pileFull(what)
+  })),
   row('crowd', {
     sign: null,
     open: live,
