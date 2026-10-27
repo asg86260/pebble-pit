@@ -218,6 +218,7 @@ function drawHandwork(view, t) {
     if (!HANDWORK_KEYS.includes(r.key) || !r.open) continue;
     const u = unitOf(r.key, r, t);
     shown[r.key] = { hintA: r.hintA, stripA: r.stripA, n: u.n, of: u.of, verb: u.verb };
+    if (globalThis.__splitStyle) continue;   // MOCK (3B): no strip, no tag, no hover ghost
     if (r.stripA > 0.001) drawStrip(r.key, r, u);
     if (r.hintA > 0.001) drawGhost(r.key, r, t);
   }
@@ -233,9 +234,11 @@ export function drawAfterCues() {
   for (const r of view) {
     // the first-uses ghost hand gives way to the hover's
     const over = r.hintA || 0;
-    if (r.open && r.cueA > 0.01 && !r.held && over < 1) {
+    // MOCK (3B): the one hand -- the first-uses cue, and the same hand again, faint, while hovered
+    const cue = globalThis.__splitStyle ? Math.max(r.cueA || 0, over * 0.6) : r.cueA;
+    if (r.open && cue > 0.01 && !r.held && (globalThis.__splitStyle || over < 1)) {
       const at = cueAt(r.key, r);
-      if (at && at.x >= S.camX - P * 4 && at.x <= S.camX + S.viewW + P * 4) { ctx.globalAlpha = r.cueA * GESTURE_CUE_ALPHA * (1 - over); handOn(ctx, at.x, at.y, at.pose); }
+      if (at && at.x >= S.camX - P * 4 && at.x <= S.camX + S.viewW + P * 4) { ctx.globalAlpha = cue * GESTURE_CUE_ALPHA * (globalThis.__splitStyle ? 1 : 1 - over); handOn(ctx, at.x, at.y, at.pose); }
     }
     for (const m of r.marks) markOn(ctx, m, t, P);
     if (r.key === 'heap' && r.load) drawLoad(r.load, t);

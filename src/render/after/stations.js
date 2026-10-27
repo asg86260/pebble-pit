@@ -107,7 +107,7 @@ function mill(d, work, t, h, body = false) {
   const sp = globalThis.__splitStyle, mb = sp && sp[0] === 'C' && !hand && work ? biteOf(cyc(t, SAW_T).ph, sp) : null;   // MOCK: the bite drives the wheel
   const a = mb ? mb.a : hand ? Math.round(h.ang / MILL_TURN) * MILL_TURN : work ? Math.floor(t / 0.1) * MILL_TURN : 0;
   const { L, R, head, bed, bx } = MILL;
-  const lk = mb && sp.length === 2 && 'ABC'.includes(sp[1]) ? linkage(sp, a, MW, head, bx) : null;   // MOCK: the bar, three ways
+  const lk = sp && sp.length === 2 && 'ABC'.includes(sp[1]) ? linkage(sp, a, MW, head, bx) : null;   // MOCK: the bar, three ways -- by hand, by the sawyer, or standing still
   const o = lk ? Math.min(3, lk.o) : Math.round(1.5 + 1.5 * Math.sin(a));
   posed.mill = { a };
   const k = wheelAt(a);
