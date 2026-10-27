@@ -15,9 +15,20 @@ export const notesPath = root => join(root, 'shots', 'review', 'notes.jsonl');
 
 export function reviewPlugin(root) {
   const file = notesPath(root);
+  const src = join(root, 'src').replace(/\\/g, '/').toLowerCase();
   return {
     name: 'boulder-review-notes',
     apply: 'serve',
+    // A review server (REVIEW_RELOAD=1) reloads the page on every source
+    // edit: Vite can see the change and still decide no update is needed (it
+    // did, in a worktree), and the owner's open review then never shows it.
+    // The review page stands its option up again on the reload.
+    hotUpdate({ file }) {
+      if (!process.env.REVIEW_RELOAD || this.environment.name !== 'client') return;
+      if (!file.replace(/\\/g, '/').toLowerCase().startsWith(src)) return;
+      this.environment.hot.send({ type: 'full-reload' });
+      return [];
+    },
     configureServer(server) {
       server.middlewares.use('/__review', (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }

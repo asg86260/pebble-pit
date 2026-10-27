@@ -55,7 +55,8 @@ page. A review is scenes, not a page: give each option's scene a
 `review: 'the question'` and an `option: 'A its name'`, and its `say` is
 the line under the buttons. The address is the review and the option
 (`/review.html#<review>/<scene>`). Serve it from a dev server on a spare
-port and hand the owner the link; an edit to the drawing reaches their open
+port started with `REVIEW_RELOAD=1` (every source edit reloads the page,
+which a worktree's server otherwise can miss) and hand the owner the link; an edit to the drawing reaches their open
 tab on the next hot reload. The owner decides on the page itself -- "stop:
 pick this one" or "keep iterating" with what to change -- and the note lands
 in `shots/review/notes.jsonl`; wait for it with `node tools/review-wait.mjs
