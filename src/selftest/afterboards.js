@@ -8,7 +8,7 @@
 
 import { S } from '../state.js';
 import { newRun, settle, until, raf, ok, panel, point, canvas } from './kit.js';
-import { AFTER_CARDS, P, AFTER_PUT_S, AFTER_PILE_REACH } from '../config.js';
+import { AFTER_CARDS, P, AFTER_PUT_S, AFTER_PILE_REACH, AFTER_PILES } from '../config.js';
 import { shopOf } from '../pages.js';
 import { support } from '../after/union.js';
 import { msg } from '../lang.js';
@@ -71,6 +71,10 @@ export const TESTS = [
       for (const b of drawn) {
         const key = b.dataset.key;
         const was = { rows: rowsNow() };
+        // The timber pile topped up to its brim: it holds no more
+        // (after/piles.js), and the tile redrawn affordable before its press.
+        window.__afterGrant({ timber: AFTER_PILES.timber.brim });
+        await settle(0.05);
         b.click();
         await until(() => bought(key, was));
         if (!bought(key, was)) missed.push(key);
@@ -190,7 +194,7 @@ export const TESTS = [
     await settle();
     await upThere();
     S.after.built.push('mill');
-    window.__afterGrant({ logs: -S.after.stock.logs, grovelogs: -S.after.stock.grovelogs });
+    window.__afterGrant({ logs: -S.after.stock.logs, grovelogs: -S.after.stock.grovelogs, timber: -S.after.stock.timber });
     const b = stationBox('mill'), r = canvas().getBoundingClientRect();
     window.__look(b.x + b.w / 2 - S.viewW / 2);
     await settle(0.2);
