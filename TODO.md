@@ -4,14 +4,15 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Act 3's goods are blocks; the chain is cut to signs -- VOTED, DESIGN AWAITING APPROVAL (2026-10-26)
+## Act 3's goods are blocks, carried by bodies -- APPROVED, BUILDING (2026-10-27)
 
-Logs 4x4, timber 2x2, sawdust grains, signs 4x4, every block a pile holds
-drawn; paper, posters, the chipper, the paper mill and the press cut; the
-saw mill rebuilt so a log is followed from pile to blade to pile, with one
-ghost hand (DESIGN.md, "Act 3's goods are blocks"). Blocked on the owner's
-approval, then a mock of how the log divides at the blade, and the open
-call on walking timber to the workshop.
+The saw mill as reviewed live (DESIGN.md, "Act 3's goods are blocks, and
+bodies carry every one"): piles as block plots that are the stock, act 1's
+sweep for goods, the station as its shop, the treadwheel and rocker beam, the
+column-at-a-time cut, the chute and mound, and every block moved by a body.
+Building the shared parts and the saw mill first; every other station gets
+its own live review rounds before its own build. Open: how a bill paid in timber moves
+its blocks (an order carried, recommended, or a carrier walking off).
 
 ## Every part of the game stands on its own -- PHASE A APPROVED, BUILDING (2026-10-25)
 
