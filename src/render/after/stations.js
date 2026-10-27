@@ -28,6 +28,7 @@ import { K, W, PALE, MID, DUST, toward, hash, clamp01, silhouette } from './kit.
 import { stationX0, groundOf } from '../../after/place.js';
 import { paperPulls } from '../../after/mill.js';
 import { ctx } from '../ctx.js';
+import { splitLog } from './splitmock.js';   // MOCK
 import { onDevice } from '../wardrobe.js';
 import { held } from '../../reset.js';
 
@@ -121,7 +122,8 @@ function mill(d, work, t, h, body = false) {
   d.r(L - 1, bed, R - L + 4, 4, K);                                       // the bed, on legs
   d.r(L, -2, 2, 2, K); d.r(R, -2, 2, 2, K); d.r(L - 1, -1, 3, 1, K); d.r(R, -1, 3, 1, K);
   const ly = bed - 3;
-  if (hand && (h.prog || 0) > 0) { const lg = millLogAt((h.prog || 0) / GESTURE_WHEEL_LOG * 0.92, 1); millLog(d, lg.x, ly, bx); }
+  if (globalThis.__splitStyle) splitLog(d, globalThis.__splitStyle, hand ? (h.prog || 0) / GESTURE_WHEEL_LOG * 0.78 : work ? cyc(t, SAW_T).ph : 0, bed, bx, SAW_T);   // MOCK
+  else if (hand && (h.prog || 0) > 0) { const lg = millLogAt((h.prog || 0) / GESTURE_WHEEL_LOG * 0.92, 1); millLog(d, lg.x, ly, bx); }
   else if (work) { const c = cyc(t, SAW_T), lg = millLogAt(c.ph, c.since); d.fade(lg.a, () => millLog(d, lg.x, ly, bx)); }
   millBlade(d, bx, head + 3, bed - 1, o);
   d.r(bx, head - 3 + o, 2, 3 - o, K);                                     // its strap up out of the head

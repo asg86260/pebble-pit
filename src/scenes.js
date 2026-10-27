@@ -3120,6 +3120,33 @@ export const SCENES = {
   // until an idle member is carrying logs to the saw mill and a cut is
   // falling out of the saw's right side onto its timber pile; framed on the
   // mill from its log pile to its timber pile.
+  'after-split-a': { about: 'the acts', review: 'saw mill: the log split at the blade', option: 'A quarters', say: "Two columns through the blade and they are two blocks, one over the other; the next two are one more block; the last quarter puffs out under the blade as four grains.",
+    run: () => {
+      globalThis.__splitStyle = 'A';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 4 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w / 2 - P * 10;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-split-b': { about: 'the acts', review: 'saw mill: the log split at the blade', option: 'B seams open', say: "The log crosses whole and turns to timber past the blade, its seams opening; at the bed's end three blocks slide off and the fourth crumbles into grains.",
+    run: () => {
+      globalThis.__splitStyle = 'B';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 4 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w / 2 - P * 10;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-split-c': { about: 'the acts', review: 'saw mill: the log split at the blade', option: 'C a column at a time', say: "The log shortens into the blade; each column it eats comes out as one block, pushing the last along; the fourth column is four grains, one a stroke.",
+    run: () => {
+      globalThis.__splitStyle = 'C';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 4 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w / 2 - P * 10;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
   'after-log-flow': { about: 'the acts', say: "the saw mill kept fed: an idle member carrying logs to its pile, a cut falling out of the saw's right side onto the timber",
     run: () => {
       afterChain(false);

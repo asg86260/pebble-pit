@@ -6,6 +6,7 @@
 import { P, AFTER_COUNT_LIFT } from '../../config.js';
 import { K, W, PALE, MID, DUST, hash, pileAlpha, pileState, countAt, pendingCounts } from './kit.js';
 import { shown } from '../../tween.js';
+import { blockPile } from './splitmock.js';   // MOCK
 
 // A pile's count, standing on the pile: its plate's foot AFTER_COUNT_LIFT
 // over the pile's top `top` (world px), across from `x`. Through the shared
@@ -36,6 +37,7 @@ export function logPile(d, x, st, cap = SPOTS.length) {
 }
 // Timber: planks six cells long and a cell deep, every other one set in half a cell.
 export function plankPile(d, x, st, cap = 6) {
+  if (globalThis.__splitStyle) { blockPile(d, st.n); return; }   // MOCK
   const m = Math.min(Math.max(st.n, st.prev), cap);
   for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => {
     const y = -1 - i, dx = i % 2 ? 0.5 : 0;

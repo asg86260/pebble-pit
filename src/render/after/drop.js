@@ -22,7 +22,7 @@ const PILE_CAP = 6;
 
 export function drawSawDrops() {
   const a = S.after;
-  if (!a || !built('mill')) return;
+  if (!a || !built('mill') || globalThis.__splitStyle) return;   // MOCK: the split draws its own
   const b = stationBox('mill'), fl = groundOf('mill');
   const x0 = b.x + b.w - AFTER_DROP.back * AP, y0 = fl - AFTER_DROP.from * AP;
   const x1 = pileAt('mill', 'timber');

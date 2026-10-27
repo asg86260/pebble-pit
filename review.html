@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Review Bench</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; padding: 12px 16px; background: #fff; color: #000; font: 13px ui-monospace, Menlo, monospace; }
+  .top { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
+  h1 { font-size: 14px; margin: 0; }
+  select, button { font: inherit; border: 2px solid #000; background: #fff; color: #000; padding: 2px 10px; cursor: pointer; }
+  button.on { background: #000; color: #fff; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  #say { margin: 0 0 8px; max-width: 900px; min-height: 2.8em; line-height: 1.4; }
+  .stage { border: 2px solid #000; overflow: hidden; }
+  iframe { border: 0; display: block; background: #fff; width: 800px; height: 600px; transform-origin: 0 0; }
+  .empty { border: 2px dashed #000; padding: 16px; max-width: 700px; }
+</style></head><body>
+<!-- The review bench: the change under review, live in the real game, an
+     option a button. A review is the scenes in src/scenes.js that carry a
+     `review` (the question) and an `option` (the button's label, "A quarters");
+     the option's `say` is the line under the buttons. Nothing about any one
+     review lives in this file, so the next review is a few scenes, not a
+     page. The frame is play.html?bench: the dev build, staged from boot, so
+     it never touches the save. The address is the review and the option
+     (#<review>/<scene>), so a link stands the same option up again. -->
+<div class="top"><h1 id="title">Review</h1><select id="pick" hidden aria-label="review"></select></div>
+<div class="bar" id="bar"></div>
+<p id="say"></p>
+<div class="stage" id="stage"><iframe id="yard" src="./play.html?bench" title="the change under review"></iframe></div>
+<script>
+const $ = id => document.getElementById(id);
+const f = $('yard'), stage = $('stage');
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+// The game at the scene shots' 800x600, so the camera frames a scene as
+// look.mjs does, scaled to the window.
+const fit = () => { const w = Math.min(innerWidth - 36, (innerHeight - 140) * 4 / 3), k = w / 800; f.style.transform = `scale(${k})`; stage.style.width = w + 'px'; stage.style.height = 600 * k + 'px'; };
+addEventListener('resize', fit); fit();
+
+let reviews = [], rev = null, cur = null;
+const ready = () => f.contentWindow && f.contentWindow.__reviews && f.contentWindow.__reset;
+const parse = () => { const [r, s] = decodeURIComponent(location.hash.slice(1)).split('/'); return { r, s }; };
+
+function show(r, scene) {
+  rev = reviews.find(x => slug(x.name) === r) || reviews[reviews.length - 1];
+  $('title').textContent = rev.name;
+  $('pick').value = slug(rev.name);
+  $('bar').innerHTML = '';
+  rev.options.forEach((o, i) => {
+    const b = document.createElement('button'); b.textContent = `${i + 1} ${o.label}`; b.dataset.scene = o.scene;
+    b.onclick = () => stand(o.scene); $('bar').append(b);
+  });
+  const again = document.createElement('button'); again.textContent = 'r restart'; again.onclick = () => stand(cur); $('bar').append(again);
+  stand(rev.options.some(o => o.scene === scene) ? scene : rev.options[0].scene);
+}
+function stand(scene) {
+  cur = scene;
+  const o = rev.options.find(x => x.scene === scene);
+  history.replaceState(null, '', `#${slug(rev.name)}/${scene}`);
+  for (const b of $('bar').children) b.classList.toggle('on', b.dataset.scene === scene);
+  $('say').textContent = o ? o.say : '';
+  f.contentWindow.__scene(scene);
+}
+f.addEventListener('load', () => {
+  const go = () => {
+    if (!ready()) return setTimeout(go, 50);
+    // a scene marks old story beats done, and their notices would cover the picture
+    const st = f.contentDocument.createElement('style'); st.textContent = '.toast{display:none!important}'; f.contentDocument.head.append(st);
+    reviews = f.contentWindow.__reviews();
+    if (!reviews.length) { stage.outerHTML = '<p class="empty">No review is open. File scenes under one in src/scenes.js: <code>review: \'the question\', option: \'A name\'</code>.</p>'; return; }
+    const sel = $('pick');
+    sel.innerHTML = reviews.map(x => `<option value="${slug(x.name)}">${x.name}</option>`).join('');
+    sel.hidden = reviews.length < 2;
+    sel.onchange = () => show(sel.value);
+    const { r, s } = parse();
+    show(r, s);
+  };
+  go();
+});
+addEventListener('keydown', e => {
+  if (!rev || e.target.tagName === 'SELECT') return;
+  const i = Number(e.key) - 1;
+  if (i >= 0 && i < rev.options.length) stand(rev.options[i].scene);
+  if (e.key === 'r') stand(cur);
+});
+</script></body></html>
