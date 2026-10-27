@@ -23,7 +23,7 @@ const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 import { P, GESTURE_WHEEL_LOG, AFTER_SAW_TEETH, AFTER_ART_SCALE } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette } from './kit.js';
 import { stationX0, groundOf } from '../../after/place.js';
-import { splitLog, biteOf, linkage, drawRod, drawHead } from './splitmock.js';   // MOCK
+import { splitLog, biteOf, linkage, drawRod, drawHead, cellLine } from './splitmock.js';   // MOCK
 import { held } from '../../reset.js';
 
 // `posed` is the pose each station drew its hand-worked part in this frame,
@@ -112,7 +112,7 @@ function mill(d, work, t, h, body = false) {
   posed.mill = { a };
   const k = wheelAt(a);
   // MOCK: a smear trailing the knob through the down-stroke, fading behind it
-  if (mb && mb.smear) for (let s = 1; s <= 3; s++) { const q0 = wheelAt(a - s * MILL_TURN), q1 = wheelAt(a - (s - 1) * MILL_TURN); d.fade(0.75 - s * 0.2, () => d.line(q0.kx, q0.ky, q1.kx, q1.ky, 4, PALE)); }
+  if (mb && mb.smear) for (let s = 1; s <= 3; s++) { const q0 = wheelAt(a - s * MILL_TURN), q1 = wheelAt(a - (s - 1) * MILL_TURN); d.fade(0.75 - s * 0.2, () => cellLine(d, q0.kx, q0.ky, q1.kx, q1.ky, PALE)); }
   flywheel(d, a);
   // The rod, in a paper rim, off the crank pin.
   if (lk) drawRod(d, lk);   // MOCK
