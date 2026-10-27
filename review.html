@@ -98,10 +98,14 @@ async function decide(verdict) {
     const r = await fetch('/__review', { method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ review: rev.name, option: o ? `${o.label} (${o.scene})` : cur, verdict, say: words }) });
     if (!r.ok) throw new Error(r.status);
-    $('words').value = '';
+    $('words').value = ''; try { sessionStorage.removeItem(DRAFT); } catch {}
     $('sent').textContent = verdict === 'stop' ? `sent: stop on ${o ? o.label : cur}` : 'sent: keep iterating';
   } catch (e) { $('sent').textContent = `not sent (${e.message}): is this the dev server?`; }
 }
+// An unsent note outlives the reload an edit brings (per tab, in the browser only).
+const DRAFT = 'review-draft';
+try { $('words').value = sessionStorage.getItem(DRAFT) || ''; } catch {}
+$('words').addEventListener('input', () => { try { sessionStorage.setItem(DRAFT, $('words').value); } catch {} });
 $('stop').onclick = () => decide('stop');
 $('keep').onclick = () => decide('keep');
 </script></body></html>
