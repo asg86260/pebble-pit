@@ -110,10 +110,9 @@ function fallPose(p, t) {
   return { th: Math.PI / 2 - AFTER_FALL_BOUNCE * Math.sin(Math.PI * v) * (1 - v), drop: sh };
 }
 // A log on the ground: the log's block (render/after/piles.js, `goodBlock`),
-// faded in over the trunk as it splits, then off along the ground, slowing
-// to rest over AFTER_LOG_ROLL_S, tumbling as it goes: turned about its
-// middle by how far it has rolled, a quarter turn a side's length, so it
-// comes to rest square on the floor. One drawing, turned whole.
+// faded in over the trunk as it splits, then sliding off along the ground,
+// slowing to rest over AFTER_LOG_ROLL_S, square on the floor: a block does
+// not roll. One drawing, laid at its true position.
 const SPLIT_S = 0.15;
 function drawGroundLogs(t) {
   const fl = afterFloor(), z = AFTER_BLOCK.log * AP;
@@ -122,13 +121,10 @@ function drawGroundLogs(t) {
     if (q.fall != null) continue;            // the hand's, drawn over the camp (`drawLaidGoods`)
     if (since < -SPLIT_S || !inView(q.x0 - z, q.x - q.x0 + z * 3)) continue;
     const r = clamp01(since / AFTER_LOG_ROLL_S), e = 1 - (1 - r) * (1 - r);
-    const x = q.x0 + (q.x - q.x0) * e, turn = (x - q.x0) / z * (Math.PI / 2);
-    ctx.save();
-    ctx.globalAlpha *= clamp01((since + SPLIT_S) / SPLIT_S);
-    ctx.translate(x + z / 2, fl - z / 2);
-    ctx.rotate(turn);
-    goodBlock(-z / 2, -z / 2, 'log');
-    ctx.restore();
+    const was = ctx.globalAlpha;
+    ctx.globalAlpha = was * clamp01((since + SPLIT_S) / SPLIT_S);
+    goodBlock(q.x0 + (q.x - q.x0) * e, fl - z, 'log');
+    ctx.globalAlpha = was;
   }
 }
 // The goods the hand let go of off any pile (after/hand.js), and those a body

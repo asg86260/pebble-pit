@@ -26,7 +26,10 @@ const live = () => afterlifeOn() && !!S.after;
 // a pile row's mark five cells over its box's top, so the box's top is the
 // plot's at its fullest.
 const PILE_NAMES = { logs: 'hover-pile-logs', grovelogs: 'hover-pile-logs', timber: 'hover-pile-planks' };
-const pileTop = what => { const g = pilePlace(what); return { x: g.x, y: g.y, w: g.cols * g.p, h: g.rows * g.p }; };
+function pileTop(what) {
+  const g = pilePlace(what);
+  return { x: g.x, y: g.y, w: g.cols * g.p, h: g.rows * g.p };
+}
 // The window's middle, which God's camp is drawn against (after/sky.js).
 const mid = () => S.camX + S.viewW / 2;
 
