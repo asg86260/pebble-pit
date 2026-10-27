@@ -267,14 +267,7 @@ const ROLL_V = 3, TIP_S = 0.4, FALL_S = 0.25, BED_L = 31;
 function rollerBed(d, bed, travel) {
   d.r(BED_END, bed, END - BED_END, 2, K);                            // the table off the bed's end
   d.r(BED_END, bed + 2, 1, -bed - 2, K);                             // and its leg
-  // round 15: a belt, not rollers -- one row of cells alternating paper and
-  // ink along the bed's top, sliding right at the pace the blocks ride, a cell
-  // a step in size but moving by its true position, clipped at both ends.
-  const off = ((travel % 2) + 2) % 2;
-  for (let x = BED_L - 2 + off; x < END; x += 2) {
-    const from = Math.max(x, BED_L), to = Math.min(x + 1, END);
-    if (to > from) d.px(from * P, bed * P, (to - from) * P, P, W);
-  }
+  // round 16: the bed stays plain black; the blocks slide out along it (the owner: "revert to the plain black cells").
 }
 // A block turned `ang` about the pivot (px, py), in the frame's cells, drawn as one piece.
 function turned(d, px0, py0, ang) {
