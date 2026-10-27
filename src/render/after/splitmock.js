@@ -205,7 +205,8 @@ export function splitLog(d, style, ph, bed, bx, T) {
 // down the blade is (`o`).
 const eye = (d, x, y, tone = K) => { d.px(Math.round(x * P) - 5, Math.round(y * P) - 5, 10, 10, tone); d.px(Math.round(x * P) - 3, Math.round(y * P) - 3, 6, 6, W); d.px(Math.round(x * P) - 1, Math.round(y * P) - 1, 2, 2, K); };
 const disc = (d, cx, cy, r) => { for (let y = Math.floor(cy - r - 1); y <= cy + r + 1; y++) for (let x = Math.floor(cx - r - 1); x <= cx + r + 1; x++) if (Math.hypot(x + 0.5 - cx, y + 0.5 - cy) <= r) d.c(x, y, K); };
-const rodLine = (d, x0, y0, x1, y1) => { d.line(x0, y0, x1, y1, 8, W); d.line(x0, y0, x1, y1, 4, K); };
+// A bar exactly one cell thick, laid at its true position so it moves smoothly, in a paper rim.
+const rodLine = (d, x0, y0, x1, y1) => { d.line(x0, y0, x1, y1, P + 4, W); d.line(x0, y0, x1, y1, P, K); };
 export function linkage(style, a, MW, head, bx) {
   const kind = style[1], r = kind === 'A' ? 1.5 : 3, stroke = kind === 'B' ? 6 : 3;
   const pin = { x: MW.cx + Math.cos(a) * r, y: MW.cy + Math.sin(a) * r };
@@ -239,12 +240,12 @@ export function linkage(style, a, MW, head, bx) {
   return lk;
 }
 export function drawRod(d, lk) {
-  d.line(lk.MW.cx, lk.MW.cy, lk.pin.x, lk.pin.y, 7, K);             // the crank arm off the hub
+  d.line(lk.MW.cx, lk.MW.cy, lk.pin.x, lk.pin.y, P, K);             // the crank arm off the hub, a cell thick
   const to = lk.kind === 'C' ? lk.q : { x: lk.bx - 2.5, y: lk.top + 1 };
   rodLine(d, lk.pin.x, lk.pin.y, to.x, to.y);
   if (lk.kind === 'C') {
     d.r(lk.pv.x - 0.5, lk.pv.y, 1, lk.head - lk.pv.y, K);          // the beam's post, off the frame's head
-    d.line(lk.q.x, lk.q.y, lk.end.x, lk.end.y, 9, W); d.line(lk.q.x, lk.q.y, lk.end.x, lk.end.y, 6, K);
+    rodLine(d, lk.q.x, lk.q.y, lk.end.x, lk.end.y);                  // the beam, a cell thick
     eye(d, lk.pv.x, lk.pv.y); eye(d, lk.q.x, lk.q.y);
   }
   eye(d, lk.pin.x, lk.pin.y);
