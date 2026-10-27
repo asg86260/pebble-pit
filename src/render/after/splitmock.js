@@ -7,6 +7,8 @@
 import { P } from '../../config.js';
 import { S } from '../../state.js';
 import { K, W, PALE, MID, hash, clamp01 } from './kit.js';
+import { ctx } from '../ctx.js';
+import { GREY, AFTER_ART_SCALE } from '../../config.js';
 import { addGrain, settle, at, put, topRow, wakeGrid } from '../../grid.js';
 
 const LOG = MID, TIMBER = PALE;
@@ -70,7 +72,7 @@ function slideOff(d, from, out, b, puff = false) {
   const key = `${Math.floor(((S.after && S.after.t) || 0) / 6.4)}-${b}`;
   if (kk >= 1) { if (!landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 64) landedKeys.clear(); } return; }
   const to = { x: plot.x + DROP_COL * 2, y: plotTop(DROP_COL) };
-  if (puff && raw >= 0.9 && raw < 1) d.fade(1 - (raw - 0.9) / 0.1, () => { for (const sx of [-1, 2]) d.px((to.x + sx) * P, (to.y + 1.5) * P, P, P, MID); });
+  if (puff && raw >= 0.9 && raw < 1) d.fade(1 - (raw - 0.9) / 0.1, () => { for (const sx of [-1, 2]) d.px((to.x + sx) * P, (to.y + 1.5) * P, P / 2, P / 2, MID); });
   block(d, TIMBER, lerp(from[0], to.x, slide), lerp(from[1], to.y, drop * drop), 2);
 }
 
@@ -81,14 +83,6 @@ function slideOff(d, from, out, b, puff = false) {
 // keep one beat.
 export const BITES = 8;
 const HOLD = 0.12;   // the share of a bite the blade holds at the bottom
-
-// Whole cells only (the owner, 2026-10-27): a line one cell thick, laid cell by cell.
-export function cellLine(d, x0, y0, x1, y1, tone = K) {
-  const n = Math.max(1, Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0))));
-  for (let i = 0; i <= n; i++) d.c(Math.round(x0 + (x1 - x0) * i / n - 0.5), Math.round(y0 + (y1 - y0) * i / n - 0.5), tone);
-}
-// A pin: a three-cell square of ink round a cell of paper.
-const pin3 = (d, x, y) => { const cx = Math.round(x - 0.5), cy = Math.round(y - 0.5); d.r(cx - 1, cy - 1, 3, 3, K); d.c(cx, cy, W); };
 // Three feels of the same bite, by the style's second letter ('C1' bite, 'C2' labor, 'C3' punch).
 const turnAt = g => Math.round((-Math.PI / 2 + g * 2 * Math.PI) / (Math.PI / 8)) * (Math.PI / 8);
 export function biteOf(ph, mode = 'C1') {
@@ -132,7 +126,7 @@ function chips(d, bx, LY, b, T) {
     if (b.cutting < 0) return;
     for (let i = 0; i < 6; i++) {
       const u = (b.cutting * 3 + i / 6) % 1, side = i % 2 ? 1 : -1;
-      d.fade(1 - u, () => d.px((bx + 1 + side * (0.6 + u * 2.2)) * P, (LY + 2 + u * 3.5) * P, P, P, i < 2 ? MID : PALE));
+      d.fade(1 - u, () => d.px((bx + 1 + side * (0.6 + u * 2.2)) * P, (LY + 2 + u * 3.5) * P, P / 2, P / 2, i < 2 ? MID : PALE));
     }
     return;
   }
@@ -143,14 +137,15 @@ function chips(d, bx, LY, b, T) {
     for (let i = 0; i < n; i++) {
       const side = i % 2 ? 1 : -1, sp = (big ? 6 : 4) + hash(b.bite * 9.1 + i) * (big ? 12 : 8), up = (big ? 9 : 6) + hash(b.bite * 3.7 + i) * 8;
       const x = bx + 1 + side * (1 + age * sp), y = LY + 1 + (i % 4) * 0.6 - age * up + age * age * 45;
-      d.px(x * P, y * P, P, P, i < (big ? 5 : 3) ? MID : PALE);
+      const fat = i < (big ? 5 : 3);
+      d.px(x * P, y * P, fat ? P : P / 2, fat ? P : P / 2, fat ? MID : PALE);
     }
   });
 }
 // Punch: speed lines either side of the blade while it is slammed down.
 function speedLines(d, bx, LY, b) {
   if (b.mode !== 'C3' || !b.smear) return;
-  d.fade(0.8, () => { for (const sx of [-2, 3]) d.r(bx + sx, LY - 7, 1, 6, PALE); });
+  d.fade(0.8, () => { for (const sx of [-1.5, 2.5]) d.px((bx + sx) * P, (LY - 7) * P, 2, 6 * P, PALE); });
 }
 
 // `ph` the cut's phase, 0..1: the feed, then the blocks off the end.
@@ -208,6 +203,9 @@ export function splitLog(d, style, ph, bed, bx, T) {
 // mill hands over the wheel's angle and its own numbers; this draws the rod
 // (behind the frame) and the crosshead (after the blade), and says how far
 // down the blade is (`o`).
+const eye = (d, x, y, tone = K) => { d.px(Math.round(x * P) - 5, Math.round(y * P) - 5, 10, 10, tone); d.px(Math.round(x * P) - 3, Math.round(y * P) - 3, 6, 6, W); d.px(Math.round(x * P) - 1, Math.round(y * P) - 1, 2, 2, K); };
+const disc = (d, cx, cy, r) => { for (let y = Math.floor(cy - r - 1); y <= cy + r + 1; y++) for (let x = Math.floor(cx - r - 1); x <= cx + r + 1; x++) if (Math.hypot(x + 0.5 - cx, y + 0.5 - cy) <= r) d.c(x, y, K); };
+const rodLine = (d, x0, y0, x1, y1) => { d.line(x0, y0, x1, y1, 8, W); d.line(x0, y0, x1, y1, 4, K); };
 export function linkage(style, a, MW, head, bx) {
   const kind = style[1], r = kind === 'A' ? 1.5 : 3, stroke = kind === 'B' ? 6 : 3;
   const pin = { x: MW.cx + Math.cos(a) * r, y: MW.cy + Math.sin(a) * r };
@@ -241,22 +239,22 @@ export function linkage(style, a, MW, head, bx) {
   return lk;
 }
 export function drawRod(d, lk) {
-  cellLine(d, lk.MW.cx, lk.MW.cy, lk.pin.x, lk.pin.y);              // the crank arm off the hub
+  d.line(lk.MW.cx, lk.MW.cy, lk.pin.x, lk.pin.y, 7, K);             // the crank arm off the hub
   const to = lk.kind === 'C' ? lk.q : { x: lk.bx - 2.5, y: lk.top + 1 };
-  cellLine(d, lk.pin.x, lk.pin.y, to.x, to.y);                       // the rod
+  rodLine(d, lk.pin.x, lk.pin.y, to.x, to.y);
   if (lk.kind === 'C') {
-    d.r(Math.round(lk.pv.x - 0.5), lk.pv.y, 1, lk.head - lk.pv.y, K);  // the beam's post, off the frame's head
-    cellLine(d, lk.q.x, lk.q.y, lk.end.x, lk.end.y);                 // the beam
-    pin3(d, lk.pv.x, lk.pv.y); pin3(d, lk.q.x, lk.q.y);
+    d.r(lk.pv.x - 0.5, lk.pv.y, 1, lk.head - lk.pv.y, K);          // the beam's post, off the frame's head
+    d.line(lk.q.x, lk.q.y, lk.end.x, lk.end.y, 9, W); d.line(lk.q.x, lk.q.y, lk.end.x, lk.end.y, 6, K);
+    eye(d, lk.pv.x, lk.pv.y); eye(d, lk.q.x, lk.q.y);
   }
-  pin3(d, lk.pin.x, lk.pin.y);
+  eye(d, lk.pin.x, lk.pin.y);
 }
 export function drawHead(d, lk) {
-  const { bx, head } = lk, top = Math.round(lk.top);
+  const { bx, top, head } = lk;
   d.r(bx, top + 2, 2, Math.max(0, head - top - 2), K);              // the strap down into the head
   d.r(bx - 3, top, 6, 2, K);                                         // the crosshead
-  if (lk.kind === 'C') pin3(d, lk.end.x, lk.end.y);
-  else pin3(d, bx - 2.5, top + 1);
+  if (lk.kind === 'C') eye(d, lk.end.x, lk.end.y);
+  else eye(d, bx - 2.5, top + 1);
 }
 
 // --- round 9: the outfeed. The bed's top is rollers end to end, from the
@@ -277,9 +275,13 @@ function rollerBed(d, bed, travel) {
     d.c(x + ARM[q][0], bed + ARM[q][1], K);
   }
 }
-// Tipping over the table's edge, in held poses of whole cells: the block
-// leans, its front column a cell down past the edge, then drops.
-function leaning(d, x, top) { block(d, TIMBER, x, top, 2, 1); block(d, TIMBER, x + 1, top + 1, 2, 1); }
+// A block turned `ang` about the pivot (px, py), in the frame's cells, drawn as one piece.
+function turned(d, px0, py0, ang) {
+  const s = P * AFTER_ART_SCALE, at0 = d.world(px0, py0);
+  ctx.save(); ctx.translate(at0.x, at0.y); ctx.rotate(ang);
+  ctx.fillStyle = GREY[TIMBER]; ctx.fillRect(-2 * s, -2 * s, 2 * s - 1, 2 * s - 1);
+  ctx.restore();
+}
 // When block j of a cut is whole and starts to ride: the end of the bite that finishes its column.
 const doneAt = j => 0.05 + 0.7 * ((2 * j + 1) + 0.3) / BITES;
 function outflow(d, bed, bx, ph, T) {
@@ -290,7 +292,7 @@ function outflow(d, bed, bx, ph, T) {
     const key = `${Math.round(now - age)}-${j}`;
     if (age < travel) { block(d, TIMBER, bx + 2 + ROLL_V * age, top, 2); continue; }
     const u = age - travel;
-    if (u < TIP_S) { if (u < TIP_S / 2) block(d, TIMBER, END - 1, top, 2); else leaning(d, END - 1, top); continue; }
+    if (u < TIP_S) { turned(d, END, bed, (Math.PI / 2) * (u / TIP_S) ** 1.6); continue; }
     const f = (u - TIP_S) / FALL_S;
     if (f < 1) { block(d, TIMBER, END, lerp(top, plotTop(DROP_COL), f * f), 2); continue; }
     // it joins the pile once, in the half second after it lands
