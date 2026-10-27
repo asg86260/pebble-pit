@@ -95,25 +95,6 @@ export const GESTURE_WHEEL_EASE = 8;
 export const GESTURE_WHEEL_COAST = 0.5;
 export const GESTURE_WHEEL_MIN_REV = 0.1;
 
-// The chipper (docs/mocks/act3-chipper-2026-10-18, the chosen control): a
-// log dragged into the jaws, then the slot-machine arm pulled down this far
-// and held past the share given; while it is held the log feeds at one
-// steady speed, cells a second, a log this many cells. Let go, the arm comes
-// back up a held pose at a time, a pose every GESTURE_ARM_SPRING_S, and the
-// jaws stop.
-export const GESTURE_ARM_PULL = P * 6;
-export const GESTURE_ARM_HOLD = 0.85;
-export const GESTURE_ARM_FEED = 1.4;
-export const GESTURE_ARM_LOG = 6;
-export const GESTURE_ARM_POSES = 3;
-export const GESTURE_ARM_SPRING_S = 0.06;
-
-// The paper mill's vat, stirred: turns a second it counts to at most, turns
-// a batch, how fast its speed follows the hand, how fast it stops let go.
-export const GESTURE_STIR_MAX_REV = 1.2;
-export const GESTURE_STIR_TURNS = 6;
-export const GESTURE_STIR_EASE = 6;
-export const GESTURE_STIR_COAST = 2;
 
 // The workshop (docs/mocks/act3-workshop-2026-10-18): four nails a sign, two
 // taps each (half, then flush), a tap no closer than the swing; a tap off a
@@ -124,15 +105,6 @@ export const GESTURE_NAIL_TAPS = 2;
 export const GESTURE_SWING_S = 0.12;
 export const GESTURE_JOINER_WAIT_S = 1.5;
 
-// The press: the bar pulled down by a drag this long, its pull a share a
-// second at most, sprung back up at this rate let go; it prints past the
-// first share and is set again below the second.
-export const GESTURE_BAR_DRAG = P * 8;
-export const GESTURE_BAR_RATE = 5;
-export const GESTURE_BAR_RETURN = 2.2;
-export const GESTURE_BAR_PRINT = 0.97;
-export const GESTURE_BAR_RESET = 0.15;
-export const GESTURE_BAR_EASE = 8;
 
 // The sawdust heap: a load dragged to the edge tips there; flung toward it
 // at least GESTURE_FLING_MIN px a second it flies, and the faster up to
@@ -180,10 +152,7 @@ export const HANDWORK_IDLE_SPEED = 0.05;
 // The hint's hand, the cue's own drawing (render/aftercues.js, HAND) at a
 // game cell a pixel, as the mock drew it.
 export const HANDWORK_HAND_DOT = P;
-// The chipper's ghost: the log's arc off the pile into the jaws this high
-// over the straight line, and its share of the loop's grab before the arm.
-export const HANDWORK_LOG_ARC = P * 8;
-export const HANDWORK_LOG_SHARE = 0.5;
+
 // The strip under the station: HANDWORK_STRIP_DROP under the floor line,
 // HANDWORK_STRIP_H deep, its segments a game cell apart, on a paper rim; the
 // verb's tag under it, its type HANDWORK_TAG_PX, padded a cell. It fades over

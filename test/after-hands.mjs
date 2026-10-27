@@ -4,8 +4,7 @@
 // Shared by the checks that need a station worked by hand; the rules of
 // each motion are test/after-gestures.test.mjs's.
 import { run, yard, P } from './helpers.mjs';
-import { GESTURE_SAW_AMP, GESTURE_STUMP_DRAG, GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S, GESTURE_ARM_PULL,
-         GESTURE_BAR_DRAG } from '../src/config.js';
+import { GESTURE_SAW_AMP, GESTURE_STUMP_DRAG, GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, groveIcons, partsOf } from '../src/after/gestures.js';
 import { stationAt } from '../src/stations.js';
 
@@ -53,33 +52,18 @@ export function lift(i, cells, secs) {
   run(secs);
   gestureUp(g.x, g.y);
 }
-// Station `key`'s round part (the saw mill's wheel, the paper mill's vat)
-// turned at `rev` turns a second until `done`; the seconds it took.
+// Station `key`'s round part (the saw mill's wheel) turned at `rev` turns a
+// second until `done`; the seconds it took.
 export function spin(key, rev, done, limit = 40) {
-  const part = key === 'mill' ? partsOf('mill').wheel : partsOf('papermill').vat;
-  const at = a => ({ x: part.x + Math.cos(a) * (part.r || part.rx), y: part.y + Math.sin(a) * (part.r || part.ry) });
+  const part = partsOf(key).wheel;
+  const at = a => ({ x: part.x + Math.cos(a) * part.r, y: part.y + Math.sin(a) * part.r });
   const p0 = at(0);
   gestureDown(p0.x, p0.y);
   const secs = timeTo(t => { const p = at(t * rev * 2 * Math.PI); gestureMove(p.x, p.y); }, done, limit);
   gestureUp(p0.x, p0.y);
   return secs;
 }
-// A log dragged off the chipper's pile into its jaws: true if one was laid in.
-export function feedLog() {
-  const p = partsOf('chipper'), a = mid(p.pile), b = mid(p.mouth);
-  if (!gestureDown(a.x, a.y)) return false;
-  for (let k = 1; k <= 10; k++) { gestureMove(a.x + (b.x - a.x) * k / 10, a.y + (b.y - a.y) * k / 10); frame(); }
-  gestureUp(b.x, b.y);
-  return true;
-}
-// The chipper's arm pulled down and held `secs`, then let go.
-export function pullArm(secs) {
-  const a = mid(partsOf('chipper').arm);
-  gestureDown(a.x, a.y);
-  gestureMove(a.x, a.y + GESTURE_ARM_PULL * 1.2);
-  run(secs);
-  gestureUp(a.x, a.y + GESTURE_ARM_PULL * 1.2);
-}
+
 // Every nail of the sign on the workshop's bench tapped flush, a tap every
 // `every` seconds; the taps made.
 export function nailSign(every = GESTURE_SWING_S * 2) {
@@ -89,13 +73,7 @@ export function nailSign(every = GESTURE_SWING_S * 2) {
   }
   return taps;
 }
-// The press's bar dragged down to its stop over `secs` and let go.
-export function pullBar(secs = 0.4) {
-  const h = mid(partsOf('press').handle);
-  gestureDown(h.x, h.y);
-  timeTo(t => gestureMove(h.x, h.y + Math.min(1, t / secs) * GESTURE_BAR_DRAG * 1.2), () => false, secs + 0.3);
-  gestureUp(h.x, h.y);
-}
+
 // A load off the heap carried slowly to the notch and let go there.
 export function tipHeap() {
   const p = partsOf('heap'), a = mid(p.heap), to = p.edge + P;

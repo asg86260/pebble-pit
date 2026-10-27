@@ -1,14 +1,13 @@
-// The camp's six stations: the saw mill, the chipper, the paper mill and the
-// workshop as voted in the second redesign (docs/mocks/act3-stations-r2-2026-10-18:
-// the frame saw, the jaws, the vat and line, the shed), matched to the press
-// (docs/mocks/act3-stations-2026-10-18, polish-workshop-press.html), and the
-// construction shack (docs/mocks/act3-place-2026-10-18/shack.html). Each
-// holds to what makes the press read: a closed outline, one moving part the
+// The camp's stations: the saw mill and the workshop as voted in the second
+// redesign (docs/mocks/act3-stations-r2-2026-10-18: the frame saw, the shed),
+// matched to the press (docs/mocks/act3-stations-2026-10-18,
+// polish-workshop-press.html, the press since cut), the construction shack
+// (docs/mocks/act3-place-2026-10-18/shack.html) and the forestry shack. Each
+// holds to what made the press read: a closed outline, one moving part the
 // eye follows, white cut out of black rather than outlines, level and plumb
 // edges (one rod may slant), the body joined to the part, and the product in
 // view. Each is drawn on its own frame (kit.js) in the mock's own cells, so
-// the numbers below are the mock's: the frame's ground is the mock's `G`, and
-// the chipper's frame is turned to face the saw mill.
+// the numbers below are the mock's: the frame's ground is the mock's `G`.
 //
 // A station draws its idle pose, or with `work` its working pose at time
 // `t`; the worker's body is not drawn here but by the members' layer at the
@@ -16,19 +15,14 @@
 // doing the work. With the hand on it (`h`, the station's record in
 // after/gestures.js, `gestureView`) the moving part goes where the hand put
 // it instead: the wheel at the angle it was spun to and the blade at the
-// stroke that angle gives, the jaw chewing while the log is held in, the
-// paddle across the vat as far round as it is stirred, the bar as far down
-// as it is pulled. Every pose is held: a part moves a whole step at a time.
+// stroke that angle gives, the hammer on the nail it struck. Every pose is
+// held: a part moves a whole step at a time.
 const TURN = Math.PI / 16;                                 // a held step of a turning part
 const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 
-import { P, GREY, GESTURE_WHEEL_LOG, GESTURE_ARM_LOG, GESTURE_ARM_HOLD, AFTER_LINE_SHORT, AFTER_SAW_TEETH, AFTER_STIR_TURN_S, AFTER_STIR_SPAN,
-         AFTER_ART_SCALE } from '../../config.js';
-import { K, W, PALE, MID, DUST, toward, hash, clamp01, silhouette } from './kit.js';
+import { P, GESTURE_WHEEL_LOG, AFTER_SAW_TEETH, AFTER_ART_SCALE } from '../../config.js';
+import { K, W, PALE, MID, hash, silhouette } from './kit.js';
 import { stationX0, groundOf } from '../../after/place.js';
-import { paperPulls } from '../../after/mill.js';
-import { ctx } from '../ctx.js';
-import { onDevice } from '../wardrobe.js';
 import { held } from '../../reset.js';
 
 // `posed` is the pose each station drew its hand-worked part in this frame,
@@ -135,261 +129,6 @@ function mill(d, work, t, h, body = false) {
   }
 }
 
-// --- the chipper: the jaws and the arm ---------------------------------------------
-// docs/mocks/act3-chipper-2026-10-18, the chosen control: the jaws on a tall
-// back block with a chute off its top, and a slot-machine arm on a pivot box
-// on top of the block, clear of the jaws' mouth (the owner, 2026-10-20: "on
-// top of the chipper, not right in front of the mouth"), swinging down over
-// the top jaw toward the pile. A log is dragged off the pile into the jaws; the arm is
-// pulled down and held, and the top jaw bites at a steady pace, a cell of
-// log a bite, its teeth sinking into the wood; let go, the arm springs back
-// up a held pose at a time (plumb, half way, level) and the jaws stop. Drawn
-// facing right, in the mock's cells laid four to the left; its frame turns
-// it to face the saw mill.
-const CH = { slot: 22, slotY: -4, log: 6, block: 28, pivot: { x: 29, y: -16 },
-             knob: [{ x: 29, y: -22 }, { x: 25, y: -20 }, { x: 23, y: -16 }], body: 10 };
-const ARM_BITE = [0, 1, 2, 4, 4, 4, 2, 1], BITE_S = 0.7, ARM_KERF = 3, ARM_CUT = 6;
-// The arm's held pose off how far it is pulled.
-const armPose = k => (k >= GESTURE_ARM_HOLD ? 2 : k >= 0.3 ? 1 : 0);
-function chTooth(d, x, row, dir) {
-  const steps = [[0, 6], [1, 4], [2, 2]], y0 = row * P, yOf = i => (dir > 0 ? y0 + i * 2 : y0 + P - (i + 1) * 2);
-  steps.forEach(([o, w], i) => d.px(x * P + o - 2, yOf(i) - (dir > 0 ? 0 : 2), w + 4, 4, W));
-  steps.forEach(([o, w], i) => d.px(x * P + o, yOf(i), w, 2, K));
-}
-function chLog(d, x, len) {
-  const y = CH.slotY * P;
-  d.px(x * P - 2, y - 2, len * P + 4, 2 * P + 4, W);
-  d.px(x * P, y, len * P, 2 * P, K); d.px(x * P + 2, y + 2, P - 2, 2 * P - 4, PALE);
-}
-function chArm(d, p) {
-  const pv = CH.pivot, k = CH.knob[p];
-  if (p === 0) d.r(pv.x, k.y + 1, 1, pv.y - k.y, K);
-  else if (p === 2) d.r(k.x + 1, pv.y, pv.x - k.x, 1, K);
-  else { const x0 = (pv.x + 0.5) * P, y0 = (pv.y + 0.5) * P, y1 = (k.y + 0.5) * P; for (let y = y1; y < y0; y++) d.px(x0 - (y0 - y) - 4, y, 8, 1, K); }
-  const x = (k.x - 1) * P, y = (k.y - 1) * P;                 // the ball, its corners cut, a glint
-  d.px(x, y, 3 * P, 3 * P, K);
-  [[0, 0], [3 * P - 3, 0], [0, 3 * P - 3], [3 * P - 3, 3 * P - 3]].filter((c, i) => !(p === 1 && i === 3)).forEach(([cx, cy]) => d.px(x + cx, y + cy, 3, 3, W));
-  d.px(x + 4, y + 4, 4, 2, W); d.px(x + 4, y + 6, 2, 2, W);
-  d.r(pv.x - 2, pv.y + 1, 5, 1, K);                           // its mount on the block's top
-  d.r(pv.x - 1, pv.y - 1, 3, 3, K);                           // the pivot box, a white ring round its pin
-  d.px(pv.x * P - 2, pv.y * P - 2, P + 4, P + 4, W); d.px(pv.x * P, pv.y * P, P, P, K);
-}
-function chipper(d, work, t, h) {
-  // By hand: the arm where it is pulled, the log in the jaws as far as it
-  // is fed, the jaws biting while it is held down. At a post: the arm held
-  // level and the jaws biting through the log on the feeder's clock.
-  const hand = !!h && (h.log === 'in' || h.arm || h.k > 0);
-  const pose = hand ? armPose(h.k) : work ? 2 : 0;
-  const biting = hand ? h.hold && h.log === 'in' : work;
-  const logIn = hand ? h.log === 'in' : work;
-  const fed = hand ? (h.prog || 0) / GESTURE_ARM_LOG : work ? cyc(t, CHIP_T).ph : 0;
-  const cuts = Math.min(CH.log - 1, Math.floor(fed * CH.log));
-  const idx = biting ? Math.floor((t % BITE_S) / BITE_S * ARM_BITE.length) : -1, jy = -13 + (idx >= 0 ? ARM_BITE[idx] : 0);
-  d.r(CH.block, -15, 6, 15, K);                               // the back block
-  d.px((CH.block + 1) * P + 2, -6 * P, 4 * P - 4, 2, W); d.px((CH.block + 1) * P + 2, -4 * P, 4 * P - 4, 2, W);
-  d.r(18, -1, 10, 1, K);                                      // the bottom jaw
-  d.r(19, jy, 9, 4, K); d.r(18, jy - 1, 1, 3, K);             // the top jaw and its lip
-  d.px(20 * P, (jy + 1) * P + 2, 6 * P, 2, W);                // its band, cut white
-  d.px(CH.block * P - 2, (jy + 2) * P - 2, 4, 4, W);          // the hinge pin
-  if (logIn) {
-    chLog(d, CH.slot + cuts, CH.log - cuts);
-    d.px(CH.block * P, CH.slotY * P - 2, 2, 2 * P + 4, K);
-    if (idx > ARM_KERF && idx < ARM_CUT) {                    // the cell at the mouth breaking up
-      d.px((CH.block - 1) * P, CH.slotY * P, P, 2 * P, W);
-      for (let j = 0; j < 6; j++) for (let i = 0; i < 3; i++) {
-        const q = hash(i * 7 + j * 13 + cuts * 31 + idx);
-        if (q > 0.3) d.px((CH.block - 1) * P + i * 2, CH.slotY * P + j * 2, 2, 2, q > 0.75 ? K : q > 0.5 ? MID : PALE);
-      }
-    }
-  }
-  for (let i = 0; i < 5; i++) chTooth(d, 18 + i * 2, -2, -1);
-  for (let i = 0; i < 5; i++) chTooth(d, 19 + i * 2, jy + 4, 1);
-  d.px(CH.block * P, -6 * P, 2, 5 * P, K);
-  d.r(31, -18, 2, 3, K); d.r(31, -19, 7, 2, K); d.r(36, -17, 2, 2, K); d.r(35, -15, 4, 1, K);   // the chute
-  posed.chipper = { pose };
-  chArm(d, pose);
-  // The chips: dashes falling a cell every tenth of a second from the chute
-  // while the jaws bite.
-  if (!biting) return;
-  const step = Math.floor(t * 10) % 12;
-  for (let j = 0; j < 8; j++) {
-    const y = -14 + step - j * 2;
-    if (y < -14 || y > -3) continue;
-    d.r(36 + (j % 2), y, 1, 2, DUST[j % DUST.length]);
-  }
-}
-const CHIP_T = 4.2;
-
-// --- the paper mill: the vat and the line -------------------------------------------
-// docs/mocks/act3-papermill-2026-10-18, all five steps: the pulp thickens as
-// it is stirred; a full batch, the pulper hauls the mould up out of the vat
-// on its cord and the wet sheet is pegged on the line; it dries from the wet
-// grey to paper a held step at a time, swaying in the gusts down the line; a
-// dry sheet at the far end fades off onto the stack. With the bigger vat the mould lifts two sheets; with the
-// drying line the line runs eight sheets long instead of four.
-//
-// What is on the line is this session's drawing: the batch is the sim's (a
-// sheet counted on the pull, mill.js), and the line plays each pull out from
-// the moment it was made (mill.js, `paperPulls`). A sheet is on the line a
-// few seconds after its count.
-const PADDLE_MID = (AFTER_STIR_SPAN[0] + AFTER_STIR_SPAN[1]) / 2, PADDLE_REACH = (AFTER_STIR_SPAN[1] - AFTER_STIR_SPAN[0]) / 2, SURFACE = -7, LINE_Y = -18, SHEET_TOP = -16, MOULD_REST = -6;
-const LIFT_N = MOULD_REST - SHEET_TOP, SLOT0 = 14, SLOT_W = 5;
-const PT = { slide: 0.1, lift: 0.09, hang: 0.35, peg: 0.25, lower: 0.05, land: 0.3, sway: 0.3 };
-const DRY_S = 16, WET = MID;
-export const lineOf = slots => { const LAST = SLOT0 + SLOT_W * (slots - 1); return { LAST, postR: LAST + 9, lineX1: LAST + 10 }; };
-// The line's record: the pull on its held steps, and the dry sheet fading
-// off the line's end.
-let line = null;   // held: the drying line's sheets, played out
-function lineRec(t) {
-  if (!line || t < line.t) line = { t, seen: -Infinity, pul: { st: 'stir', k: 0, tm: 0 }, sheets: [], loft: { tm: 0, target: null }, queue: 0 };
-  return line;
-}
-// Played on in steps of a twentieth of a second, however long since the
-// last frame, so a clock turned fast plays it out the same.
-function stepLine(t, moulds, slots) {
-  const L = lineRec(t);
-  for (const at of paperPulls()) if (at > L.seen) { L.queue += 1; L.seen = at; }   // a pull made: its sheet to go on the line
-  L.t = Math.max(L.t, t - 30);                                 // a long while off screen: the last half minute of it
-  let out = null;
-  for (let u = Math.min(t, L.t + 0.05); ; u = Math.min(t, u + 0.05)) { out = stepLineTo(L, u, moulds, slots); if (u >= t) break; }
-  return out;
-}
-function stepLineTo(L, t, moulds, slots) {
-  const dt = t - L.t, G = lineOf(slots), pu = L.pul, lo = L.loft;
-  L.t = t;
-  const hangEnd = SLOT0 + SLOT_W * moulds, dryOf = q => clamp01((t - q.born) / DRY_S);
-  pu.tm += dt;
-  if (pu.st === 'stir') {
-    const taken = L.sheets.some(q => q.x < hangEnd), endFree = !L.sheets.some(q => q.x >= G.LAST);
-    if (taken && endFree) { pu.st = 'slide'; pu.k = 0; pu.tm = 0; }
-    else if (L.queue > 0 && !taken) { pu.st = 'lift'; pu.k = 0; pu.tm = 0; L.queue -= 1; }
-  } else if (pu.st === 'slide') {
-    while (pu.tm >= PT.slide && pu.st === 'slide') { pu.tm -= PT.slide; for (const q of L.sheets) q.x++; if (++pu.k === SLOT_W) { pu.st = 'stir'; pu.tm = 0; } }
-  } else if (pu.st === 'lift') {
-    while (pu.tm >= PT.lift && pu.st === 'lift') {
-      pu.tm -= PT.lift;
-      if (++pu.k === LIFT_N) { pu.st = 'hang'; pu.tm = 0; for (let i = 0; i < moulds; i++) L.sheets.push({ x: SLOT0 + SLOT_W * i, born: t, peg: 0, fresh: true }); }
-    }
-  } else if (pu.st === 'hang') {
-    for (const q of L.sheets) if (q.fresh) q.peg = clamp01(pu.tm / PT.peg);
-    if (pu.tm >= PT.hang) { pu.st = 'lower'; pu.k = LIFT_N; pu.tm = 0; for (const q of L.sheets) { q.fresh = false; q.peg = 1; } }
-  } else if (pu.st === 'lower') {
-    while (pu.tm >= PT.lower && pu.st === 'lower') { pu.tm -= PT.lower; if (--pu.k === 0) { pu.st = 'stir'; pu.tm = 0; } }
-  }
-  L.sheets = L.sheets.filter(q => q.x <= G.LAST);              // a line shortened drops nothing it never had
-  // A dry sheet at the line's end fades off it: the stack under it (the
-  // paper pile, piles.js) is the good it became. No hand is posted at the
-  // far end to peel it, so nothing is drawn carrying it down.
-  lo.tm += dt;
-  if (!lo.target) {
-    const q = L.sheets.find(z => z.x === G.LAST && !z.fresh && dryOf(z) >= 1);
-    if (q && pu.st !== 'slide') { lo.target = q; lo.tm = 0; }
-  } else {
-    lo.target.ink = 1 - clamp01(lo.tm / PT.land);
-    if (lo.tm >= PT.land) { L.sheets = L.sheets.filter(z => z !== lo.target); lo.target = null; lo.tm = 0; }
-  }
-  return { L, G, dryOf };
-}
-// A gust down the line on a held clock: a sheet's bottom row kicked a whole
-// cell, a wet one only at a gust's peak, a dry one at most gusts.
-function leanOf(q, t, dry) {
-  if (q.fresh || q.peg < 1) return 0;
-  const tq = Math.floor(t / PT.sway) * PT.sway;
-  const g = Math.sin(tq * 1.1 - q.x * 0.09) + 0.55 * Math.sin(tq * 2.7 + 1.3 - q.x * 0.05);
-  const v = g * (0.35 + 0.65 * dry);
-  return Math.abs(v) > 0.45 ? Math.sign(v) : 0;
-}
-// A sheet four cells by three, drying from the mid grey through the pale to
-// paper, its bottom row pooled and dry last; a lean kicks the bottom row a cell.
-function wetSheet(d, x, top, dry, bot = 0) {
-  const off = [0, 0, bot], w = 4 * P, fill = toward(WET, W, dry), pool = toward(WET, W, (dry - 0.4) / 0.6);
-  for (let r = 0; r < 3; r++) d.px((x + off[r]) * P, (top + r) * P, w, P, K);
-  for (let r = 0; r < 3; r++) d.px((x + off[r]) * P + 2, (top + r) * P + (r === 0 ? 2 : 0), w - 4, P - (r === 0 ? 2 : 0) - (r === 2 ? 2 : 0), r === 2 ? pool : fill);
-  if (bot) { const a0 = x * P + 2, b0 = (x + bot) * P + 2, Y = (top + 2) * P; d.px(Math.min(a0, b0), Y - 2, P, 2, K); d.px(Math.max(a0, b0) + w - 4 - P, Y, P, 2, K); }
-}
-const pegs = (d, x, top, a) => d.fade(a, () => { d.px(x * P + 3, (top - 1) * P, 3, P + 2, K); d.px((x + 4) * P - 6, (top - 1) * P, 3, P + 2, K); });
-// Its cord up to the line, then the mould.
-function mould(d, top, moulds, full) {
-  const x0 = SLOT0 - 1, x1 = SLOT0 + SLOT_W * moulds - 1, cx = (x0 + x1 + 1) / 2;
-  d.px(cx * P - 1, (LINE_Y + 1) * P, 2, (top - 1 - LINE_Y - 1) * P, K);
-  if (full) for (let i = 0; i < moulds; i++) wetSheet(d, SLOT0 + SLOT_W * i, top, 0);
-  for (let i = 0; i <= moulds; i++) d.px((x0 + SLOT_W * i) * P, (top - 1) * P, P, 4 * P + 2, K);
-  d.px(x0 * P, (top - 1) * P, (x1 - x0 + 1) * P, 3, K);
-  d.px(x0 * P, (top + 3) * P, (x1 - x0 + 1) * P, 2, K);
-}
-function vat(d, fill) {
-  d.r(10, -10, 4, 1, K); d.r(24, -10, 4, 1, K);             // the rim's lips
-  d.r(11, -9, 2, 8, K); d.r(25, -9, 2, 8, K);               // walls
-  d.r(12, -2, 14, 1, K);                                    // floor
-  d.r(11, -1, 3, 1, K); d.r(24, -1, 3, 1, K);               // feet
-  // The pulp: thin after a pull, paper flecked pale, each cell thickening on
-  // its own as the batch fills to pale flecked mid.
-  for (let j = 0; j < 5; j++) for (let i = 0; i < 12; i++) {
-    const hh = hash((13 + i) * 5.1 + j * 9.3), hh2 = hash((13 + i) * 2.7 + j * 4.1);
-    d.c(13 + i, SURFACE + j, toward(hh < 0.45 ? W : PALE, hh2 < 0.6 ? PALE : MID, (fill - hh * 0.6) / 0.4));
-  }
-}
-function crest(d, x, dir) {
-  const c = dir > 0 ? x + 2 : x - 3, tr = dir > 0 ? x - 3 : x + 2;
-  if (c >= 13 && c + 2 <= 25) d.r(c, SURFACE - 1, 2, 1, PALE);
-  if (tr >= 13 && tr + 2 <= 25) d.r(tr, SURFACE, 2, 1, W);
-}
-// The pulper's lean, off what the pull is doing.
-let pulperLean = 0;   // held: the pulper's lean as last drawn
-function papermill(d, work, t, h, body = false, at = {}) {
-  const moulds = at.moulds || 1, slots = at.slots || AFTER_LINE_SHORT, G = lineOf(slots);
-  const hand = turning(h);
-  const st = d.sinking ? { L: { pul: { st: 'stir', k: 0 }, sheets: [], loft: { target: null } }, dryOf: () => 1 } : stepLine(t, moulds, slots);
-  const { L } = st, pu = L.pul, lo = L.loft;
-  d.r(5, -9, 4, 9, K);                                      // the step
-  for (let y = -8; y < 0; y += 2) d.px(5 * P + 3, y * P + 1, 4 * P - 6, 2, W);
-  vat(d, at.fill || 0);
-  d.r(10, LINE_Y + 1, 1, -10 - LINE_Y - 1, K);              // the left post, off the vat's lip
-  d.r(G.postR, LINE_Y + 1, 1, -LINE_Y - 2, K); d.r(G.postR - 1, -1, 3, 1, K);   // the far post and its foot
-  d.r(9, LINE_Y, G.lineX1 - 9, 1, K);                       // the line
-  d.r(9, LINE_Y - 1, 2, 2, K); d.px(9 * P + 5, (LINE_Y - 1) * P + 5, 2, 2, W);  // the pulley
-  d.px(9 * P + 1, (LINE_Y + 1) * P, 2, (-11 - LINE_Y - 1) * P, K);              // its cord to the pulper's hand
-  // The paddle: on the hand's circle, round the vat on the pulper's turn, or
-  // stood by. It is one rigid drawing (`paddle`) at its shaft's true column,
-  // so it slides across the vat and never changes shape; the pulp's crest
-  // it pushes is the pulp's, on whole cells.
-  let px = 22, dir = 0, held = false;
-  if (hand) { px = PADDLE_MID + PADDLE_REACH * Math.cos(h.ang); dir = -Math.sin(h.ang) * h.w >= 0 ? 1 : -1; held = true; }
-  else if (work && pu.st === 'stir') { const a = 2 * Math.PI * t / AFTER_STIR_TURN_S; px = PADDLE_MID - PADDLE_REACH * Math.cos(a); dir = Math.sin(a) >= 0 ? 1 : -1; held = true; }
-  px = Math.max(AFTER_STIR_SPAN[0], Math.min(held ? AFTER_STIR_SPAN[1] : 22, px));
-  pulperLean = pu.st === 'lift' ? (pu.k % 2 ? -2 : -4) : pu.st === 'hang' ? -3 : pu.st === 'lower' ? -1 : held ? (px - AFTER_STIR_SPAN[0]) / 2 : 0;
-  if (held) crest(d, Math.round(px), dir);
-  const sx = Math.round(px * P * 2) / 2;               // the shaft's left edge, on a whole world pixel
-  // The pulper's arm out to the grip while it stirs: a thin line, its own
-  // and not the paddle's, from its shoulder wherever it leans.
-  if (held && body && pu.st === 'stir') { const ax = 9 * P + pulperLean * 2; d.px(ax, -12 * P + 2, sx - P + 2 - ax, 2, K); }
-  posed.papermill = { sx };
-  paddle(d, sx);
-  const mt = MOULD_REST - pu.k, front = pu.st === 'lift' || pu.st === 'hang';
-  for (const q of L.sheets) d.fade(q.ink == null ? 1 : q.ink, () => {
-    const dry = st.dryOf(q);
-    wetSheet(d, q.x, SHEET_TOP, dry, q === lo.target ? 0 : leanOf(q, t, dry)); pegs(d, q.x, SHEET_TOP, q.peg);
-  });
-  if (front) mould(d, mt, moulds, pu.st === 'lift');
-  else { const ex = d.px; d.px = (x, y, w, h, tone) => { const top = Math.min(y + h, SURFACE * P); if (top > y) ex(x, y, w, top - y, tone); }; mould(d, mt, moulds, false); d.px = ex; }
-}
-// The paddle, its shaft's left edge at `sx` (the frame's px): the grip
-// across its top, the shaft, the blade at its foot, every part laid off `sx`
-// by whole pixels, so it moves as one piece; and the piece put with its
-// shaft on a whole device pixel (render/crew.js, `rigid`), so at a zoom that
-// is not whole every edge in it rounds the same way at every column.
-const PADDLE_TOP = -12;
-function paddle(d, sx) {
-  const top = PADDLE_TOP;
-  const m = !d.sinking && ctx.getTransform ? ctx.getTransform() : null;
-  const ax = d.world(sx / P, 0).x, dx = m ? onDevice(ax, m.a, m.e) - ax : 0;
-  if (dx) ctx.translate(dx, 0);
-  d.px(sx - P + 2, top * P + 1, 2 * P, 4, K);
-  d.px(sx, top * P + 1, 4, (-5 - top) * P, K);
-  d.px(sx - P / 2, -5 * P, 2 * P, 3 * P, K);
-  if (dx) ctx.translate(-dx, 0);
-}
-
 // --- the workshop: the shed, roof A ------------------------------------------------
 // docs/mocks/act3-workshop-2026-10-18, roof A, the clean gable: one even
 // stair to a five-cell ridge, the eaves a cell past each wall with a white
@@ -451,47 +190,7 @@ function workshop(d, work, t, h, body = false, at = {}) {
   for (let i = 0; i < blanks; i++) wsBoard(d, BLANKS_X, (-2 - 2 * i) * P);
 }
 let wsLastJx = REST_X;   // held: the hammer's column as last drawn
-held('after-stations-drawn', () => { line = null; pulperLean = 0; wsLastJx = REST_X; });
-
-// --- the press: a screw and a platen in a frame -----------------------------------
-// The platen, the screw, the bar and its handle all ride one number, the drop
-// in whole cells: the bar comes down and the platen comes down with it.
-const PR = { postL: 10, postR: 22, headY: -14, scX: 15, scW: 3, plX: 12, plW: 9, sheetY: -4, bodyX: 26 };
-const PR_SEQ = [0, 0, 1, 2, 2, 2, 1, 0], PRESS_T = 2.8;
-const prDrop = (work, t) => (work ? PR_SEQ[Math.floor(cyc(t, PRESS_T).ph * 8)] : 0);
-function press(d, work, t, h) {
-  const drop = h && h.k > 0.01 ? Math.round(h.k * 2) : prDrop(work, t);
-  d.r(PR.postL, -3, PR.postR - PR.postL + 1, 2, K);                 // the bed,
-  d.r(PR.plX, PR.sheetY, PR.plW, 1, K); d.px(PR.plX * P + 2, PR.sheetY * P + 2, PR.plW * P - 4, P - 4, W);   // the sheet on it
-  const plY = -8 + drop, scTop = plY - 10;
-  d.r(PR.scX, scTop, PR.scW, 10, K);                                // the screw, its threads a white slant every cell and a half
-  for (let j = 1; j < 9; j += 1.5) {
-    const y0 = (scTop + j) * P;
-    for (let i = 2; i < PR.scW * P - 2; i++) d.px(PR.scX * P + i, Math.round(y0 - i / 3), 1, 2, W);
-  }
-  d.r(PR.scX - 1, scTop - 1, PR.scW + 2, 1, K);                     // its cap
-  d.r(PR.postL, PR.headY, 1, -3 - PR.headY, K); d.r(PR.postR, PR.headY, 1, -3 - PR.headY, K);
-  d.r(PR.postL - 1, -1, 2, 1, K); d.r(PR.postR, -1, 2, 1, K);
-  d.r(PR.postL - 1, PR.headY, PR.postR - PR.postL + 3, 2, K);       // the head
-  d.r(PR.plX, plY, PR.plW, 2, K);                                   // the platen, wide and two deep
-  // The bar through the screw out past the post, a white key where it
-  // crosses the post; the handle down from its end to a knob at the hand.
-  const barY = plY - 3, bx0 = PR.scX - 1;
-  d.px(PR.postR * P - 2, barY * P - 2, P + 4, P + 4, W);
-  d.r(bx0, barY, PR.postR + 1 - bx0, 1, K);
-  const knobY = drop === 2 ? -4 : -5;
-  posed.press = { barY, knobY };
-  pressHandle(d, barY, knobY);
-  d.r(PR.bodyX, -1, 3, 1, K);                                       // the step
-}
-// The bar's end out past the post, its handle down to the knob at `knob`:
-// the part the hand pulls.
-function pressHandle(d, bar, knob) {
-  const bx1 = PR.bodyX;
-  d.r(PR.postR + 1, bar, bx1 - PR.postR - 1, 1, K);
-  d.line(bx1 - 1.25, bar + 1, bx1 - 1.25, knob, 3, K, false);
-  d.r(bx1 - 2, knob, 2, 2, K);
-}
+held('after-stations-drawn', () => { wsLastJx = REST_X; });
 
 // --- the construction shack: B's cut-out with C's mallet --------------------------
 // One black mass, a lid a cell proud each side, the mallet cut white out of
@@ -550,21 +249,16 @@ function forestry(d) {
   }));
 }
 
-export const DRAW = { mill, chipper, papermill, workshop, press, shack, forestry };
+export const DRAW = { mill, workshop, shack, forestry };
 
 // Where the hand takes each hand-worked part, world px, in the pose its
 // station drew it in this frame (`posed`), for the ghost of its motion
-// (render/aftercues.js): the wheel's hub, its knob and the knob's reach; the
-// arm's pivot and its ball upright and down; the paddle's grip; the press's
-// knob.
+// (render/aftercues.js): the wheel's hub, its knob and the knob's reach.
 export function grips(key) {
   const q = posed[key];
   if (!q) return null;
   const x0 = stationX0(key), fl = groundOf(key), A = AFTER_ART_SCALE, w = (x, y) => ({ x: x0 + x * P * A, y: fl + y * P * A });
   if (key === 'mill') { const k = wheelAt(q.a); return { hub: w(MW.cx, MW.cy), reach: KNOB * P * A, knob: w(k.kx, k.ky) }; }
-  if (key === 'chipper') return { pivot: w(CH.pivot.x + 0.5, CH.pivot.y + 0.5), up: w(CH.knob[0].x + 0.5, CH.knob[0].y + 0.5), down: w(CH.knob[2].x + 0.5, CH.knob[2].y + 0.5) };
-  if (key === 'papermill') return { grip: { x: x0 + (q.sx + 2) * A, y: fl + (PADDLE_TOP * P + 3) * A } };
-  if (key === 'press') return { knob: w(PR.bodyX - 1, q.knobY + 1) };
   return null;
 }
 
@@ -579,10 +273,7 @@ export const backOf = key => BACKS[key] || (BACKS[key] = silhouette(d => DRAW[ke
 // Idle, it stands at the same spot unleaning.
 export function workerPose(key, work, t) {
   if (key === 'mill') return { x: MILL.body, y: -3, dx: 0 };
-  if (key === 'chipper') return { x: CH.body - 1, y: -3, dx: 0 };
-  if (key === 'papermill') return { x: 6, y: -12, dx: pulperLean * 2 };
   if (key === 'workshop') return { x: wsLastJx - 1, y: JY, dx: 0 };
-  if (key === 'press') return { x: PR.bodyX, y: -4, dx: 0, squat: prDrop(work, t) === 2 };
   return null;
 }
 
@@ -591,8 +282,5 @@ export function workerPose(key, work, t) {
 export const GLYPHS = {
   grove:     ['...##...', '..####..', '.######.', '.######.', '..####..', '...##...', '...##...', '..####..'],
   mill:      ['..#..#..', '.######.', '########', '###..###', '###..###', '########', '.######.', '..#..#..'],
-  chipper:   ['########', '#......#', '.#....#.', '..#..#..', '..####..', '..####..', '..#..#..', '..#..#..'],
-  papermill: ['........', '#......#', '#......#', '#.####.#', '########', '########', '.######.', '.#....#.'],
-  workshop:  ['########', '#......#', '#.####.#', '#......#', '########', '...##...', '...##...', '...##...'],
-  press:     ['########', '.#....#.', '.#.##.#.', '.#.##.#.', '.#.##.#.', '.######.', '.#....#.', '########']
+  workshop:  ['########', '#......#', '#.####.#', '#......#', '########', '...##...', '...##...', '...##...']
 };

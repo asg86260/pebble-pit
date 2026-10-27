@@ -4,6 +4,15 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## Act 3's goods are blocks; the chain is cut to signs -- VOTED, DESIGN AWAITING APPROVAL (2026-10-26)
+
+Logs 4x4, timber 2x2, sawdust grains, signs 4x4, every block a pile holds
+drawn; paper, posters, the chipper, the paper mill and the press cut; the
+saw mill rebuilt so a log is followed from pile to blade to pile, with one
+ghost hand (DESIGN.md, "Act 3's goods are blocks"). Blocked on the owner's
+approval, then a mock of how the log divides at the blade, and the open
+call on walking timber to the workshop.
+
 ## Every part of the game stands on its own -- PHASE A APPROVED, BUILDING (2026-10-25)
 
 docs/wave-tests.md. Merged: step 1 (CI shards by measured time, #11), step 2

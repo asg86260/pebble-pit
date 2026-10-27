@@ -13,7 +13,7 @@
 import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, UNION_CROWD, AFTER_NOTCH_AT, AFTER_HEAP_R, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
-         AFTER_WALL_STEP, AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
+         AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
          AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, AFTER_SHELF, ACT_GATES_CELL, AFTER_ART_SCALE, AFTER_IDLE_STEP,
          AFTER_SIGN_BOARD, AFTER_PEDESTAL_SIGN_GAP } from '../config.js';
 
@@ -56,10 +56,6 @@ export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal,
   get box() { return [1, 10, Math.ceil(podiumTop() / AP)]; },
   get sign() { return pedSign(); },
   get lead() { return Math.min(BASE_ART.pedestal.box[0], pedSign()); } } };
-// The paper mill's stack stands at its line's far end, which its drying
-// line carries four sheets further along (render/after/stations.js).
-const longLine = () => !!S.after && (S.after.ups['after-dry'] || 0) > 0;
-ART.papermill = { ...BASE_ART.papermill, pile: { get paper() { return longLine() ? 49 : 29; } } };
 export const stationX0 = key => afterX0() + AFTER_STATIONS[key].at * P;
 
 // --- the grove ---------------------------------------------------------------------
@@ -130,11 +126,10 @@ export const pileMid = (key, what) => {
   const art = ART[key], s = standCol(art, art.pile[what]);
   return stationX0(key) + (art.flip ? art.flip - s : s) * AP;
 };
-// The sawdust heap under the chipper's chute, at its ground's end (ART's
-// `heap`), where the saw mill's sawdust joins the chips, `heapMid` its middle
-// column; the notch in the cloud floor just past its foot, where a load is
-// tipped through.
-export const heapMid = () => stationX0('chipper') + ART.chipper.heap * AP;
+// The saw mill's sawdust heap on its own ground, past its timber pile (ART's
+// `heap`), `heapMid` its middle column; the notch in the cloud floor just
+// past its foot, where a load is tipped through.
+export const heapMid = () => stationX0('mill') + ART.mill.heap * AP;
 export const heapX = () => heapMid() - AFTER_HEAP_R * AP;
 export const notchX = () => heapMid() + AFTER_NOTCH_AT * AP;
 // Where the pair stand to speak: on the pillar's top, their feet on it, two
@@ -235,9 +230,6 @@ export const overCrowd = x => x >= CROWD_X0 - CROWD_PITCH && x <= CROWD_X0 + (CR
 export const crowdEdge = x => Math.max(CROWD_X0 - CROWD_PITCH, Math.min(CROWD_X0 + (CROWD_FILES + 1) * CROWD_PITCH, x));
 // The file under a world x, clamped to the field.
 export const fileAt = x => Math.max(0, Math.min(CROWD_FILES - 1, Math.floor((x - CROWD_X0) / CROWD_PITCH)));
-// The fence at the crowd's front: a poster's slot a step along it.
-export const wallSlots = () => Math.floor((crowdX1() - CROWD_X0) / AFTER_WALL_STEP);
-export const slotX = s => CROWD_X0 + s * AFTER_WALL_STEP + P;
 
 // --- the stair ------------------------------------------------------------------------
 export const stairFoot = () => AFTER_STAIR_X - AFTER_STAIR_W;
@@ -290,7 +282,7 @@ export function floorFlats() {
     on(span(stationDoor(key) - P, 3));
     on(span(signBox(key).x, AFTER_SIGN_BOARD.w * AFTER_ART_SCALE));
   }
-  if (sited('chipper')) out.push([...span(heapX(), (AFTER_HEAP_R * 2 + 1) * AFTER_ART_SCALE), shelfOf('chipper')], [...span(notchX(), 2 * AFTER_ART_SCALE), shelfOf('chipper')]);
+  if (sited('mill')) out.push([...span(heapX(), (AFTER_HEAP_R * 2 + 1) * AFTER_ART_SCALE), shelfOf('mill')], [...span(notchX(), 2 * AFTER_ART_SCALE), shelfOf('mill')]);
   // The rebel pile at the pillar's foot.
   out.push(span(pileX(), 8));
   // Where a body steps from the floor into God's crowd's rows (`overCrowd`),
@@ -313,7 +305,7 @@ export const sited = key => (S.after ? S.after.built.includes(key) || !!S.after.
 export const closed = key => !!S.after && !AFTER_START_BUILT.includes(key) && !S.after.built.includes(key) && key in AFTER_STATIONS;
 // Which grounds are taken, as a key: the profile is worked out again only
 // when that changes.
-export const sitesKey = () => Object.keys(AFTER_STATIONS).filter(sited).join(',') + (longLine() ? '|line' : '');
+export const sitesKey = () => Object.keys(AFTER_STATIONS).filter(sited).join(',');
 let profile = null, profileKey = null; // cache: keyed by `sitesKey()`
 export function floorProfile() {
   const key = sitesKey();
@@ -390,13 +382,12 @@ export const ICON = { saw: [13, 8], shovel: [5, 13] };
 // `partsOf`), in world px, read off the numbers the drawing uses
 // (render/after/stations.js, pine.js, pedestal.js). Every key has `box`, the
 // area a press works;
-// besides it: the mill's `wheel` {x, y, r}, the paper mill's `vat` {x, y, rx,
-// ry}, the press's `bar` {x, y, len} (its pivot at the screw, level when
-// idle, pulled down), the heap's `edge` (the notch's x), a tree's `saw` {x, y}
+// besides it: the mill's `wheel` {x, y, r}, the heap's `edge` (the notch's
+// x), a tree's `saw` {x, y}
 // (the middle of its cut) and a stump's `at` {x, y} (its foot) for plot `i`;
 // and the rest of each moving part for the cues to point at.
 export function stationParts(key, i = 0) {
-  const fl = groundOf(key === 'heap' ? 'chipper' : key);
+  const fl = groundOf(key === 'heap' ? 'mill' : key);
   const at = (x0, x, y) => ({ x: x0 + x * AP, y: fl + y * AP });
   const box = (x0, x, y, w, h) => ({ x: x0 + x * AP, y: fl + y * AP, w: w * AP, h: h * AP });
   if (key === 'tree') {
@@ -436,15 +427,8 @@ export function stationParts(key, i = 0) {
   if (!b) return null;
   const x0 = stationX0(key);
   if (key === 'mill') return { box: b, wheel: { ...at(x0, 19, -9), r: 6 * AP }, knob: 8 * AP, frame: box(x0, 31, -26, 19, 26) };
-  if (key === 'chipper') {
-    return { box: b, mouth: box(x0, 16, -13, 14, 14), jaw: box(x0, 18, -14, 10, 5), block: box(x0, 28, -15, 6, 15), chute: box(x0, 31, -19, 7, 5),
-             arm: box(x0, 21, -24, 11, 10), pile: { x: pileAt('chipper', 'chiplogs'), y: fl - AP * 6, w: PILE_W * AP, h: AP * 6 } };
-  }
-  if (key === 'papermill') return { box: b, vat: { ...at(x0, 19, -4.5), rx: 6 * AP, ry: 2.5 * AP }, line: box(x0, 9, -18, 30, 1), step: box(x0, 5, -9, 4, 9) };
   if (key === 'workshop') return { box: b, sign: box(x0, 8, -6, 12, 2), hammer: box(x0, 8, -14, 14, 6), hand: at(x0, 13, -9),
                                     nails: [9, 12, 15, 18].map(c => box(x0, c - 0.5, -8.5, 2, 3)) };   // a nail's head and a half cell round it: the gaps between are misses
-  if (key === 'press') return { box: b, bar: { ...at(x0, 14, -11), len: 12 * AP }, knob: box(x0, 24, -6, 2, 2), platen: box(x0, 12, -8, 9, 2),
-                                handle: box(x0, 23, -12, 4, 8) };
   return { box: b };
 }
 // Whether plot i's tree was planted big (the grove's bigger trees).

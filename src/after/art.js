@@ -12,27 +12,20 @@
 // draws its body); `pile` where each counted pile lies, in the drawing's own
 // cells; `ground` how far its ground runs, piles and all, pressed flat under
 // it once it is ordered. A drawing may be turned about its own ground
-// (`flip`, its width), its box, door and piles turned with it. The chipper
-// stands as drawn (the owner, 2026-10-20: "flip the chipper around, so logs go
-// in from the left"): its log pile on its left, the jaws, and its chute
-// pouring right onto the sawdust heap at the end of its ground, `heap` the
-// heap's middle column, which the saw mill's sawdust joins. Its box ends at
-// its block: the chute's spout reaches out over the heap, which stands on
-// its own ground past the box.
+// (`flip`, its width), its box, door and piles turned with it. The saw
+// mill keeps its sawdust heap on its own ground (`heap`, laid by `span`
+// below): past its timber pile and the body loading it, the notch in the
+// floor just past the heap's foot.
 
 // What a station draws past its box and piles, in its own cells: the
-// chipper's heap and the notch past it, the workshop's blanks, the paper
-// mill's drying line at its longest (`reach`, the column past its right end).
+// workshop's blanks (`reach`, the column past its right end).
 // This table cannot read the drawing (the config lays the camp off it), so
 // the drawing is read against it instead: footprints.js takes each
 // station's ground as what it inks at its fullest, and rule 22 in verify.js
 // is red for a part past the ground laid here.
 const DRAWN = {
-  mill:      { box: [11, 39, 26], door: 8, pile: { logs: 0, timber: 53 } },
-  chipper:   { box: [8, 27, 24], door: 10, pile: { chiplogs: 0 }, heap: 39, reach: 46 },
-  papermill: { box: [5, 54, 19], door: 7, pile: { paper: 29 }, reach: 60 },
+  mill:      { box: [11, 39, 26], door: 8, pile: { logs: 0, timber: 53 }, heap: true },
   workshop:  { box: [5, 21, 22], door: 13, pile: { signs: 27 }, reach: 52 },
-  press:     { box: [9, 20, 19], door: 27, pile: { posters: 33 } },
   shack:     { box: [0, 14, 14], door: 7, pile: {} },
   // The forestry shack in front of the grove (the owner, 2026-10-20): the
   // grove's board, and the pile its gatherers bring the fallen logs to,
@@ -56,6 +49,11 @@ const PILE_CELLS = 6;
 // the load over its head clears the pile: the widest load (a plank,
 // render/after.js `drawLoad`) runs `load` cells past the body's middle.
 export const PILE_STAND = { stand: 2.5, load: 2 };
+// The sawdust heap, in cells: a triangle `r` high at its brim (2r + 1
+// across), the notch `notch` right of its middle and two wide, and `gap`
+// cells of floor between the heap's foot and whatever stands before it on
+// its station's ground (the body loading the timber pile).
+export const HEAP = { r: 4, notch: 5, gap: 1 };
 // The column a body loading pile column `x` of drawing `a` stands on (its middle).
 export const standCol = (a, x) => (x + PILE_CELLS / 2 < a.box[0] + a.box[1] / 2 ? x - PILE_STAND.stand : x + PILE_CELLS + PILE_STAND.stand);
 // Each station's ground, derived from what it draws: from its first drawn
@@ -64,20 +62,23 @@ export const standCol = (a, x) => (x + PILE_CELLS / 2 < a.box[0] + a.box[1] / 2 
 // all inside, so every two neighbors stand the one gap apart however each is
 // drawn. The pedestal's ground is the union's camp's (config/after.js lays
 // it at the camp's middle).
+// A station with a heap stands it past everything else on its ground, `gap`
+// cells clear, its notch past its foot: `heap` its middle column.
 const span = a => {
   const piles = Object.values(a.pile), stands = piles.map(x => standCol(a, x));
   const lead = Math.min(a.box[0], a.door - 1, ...piles, ...stands.map(s => Math.floor(s - PILE_STAND.load)));
-  const end = Math.max(a.box[0] + a.box[1], a.door + 2, ...piles.map(x => x + PILE_CELLS), ...stands.map(s => Math.ceil(s + PILE_STAND.load)), a.reach || 0);
+  let end = Math.max(a.box[0] + a.box[1], a.door + 2, ...piles.map(x => x + PILE_CELLS), ...stands.map(s => Math.ceil(s + PILE_STAND.load)), a.reach || 0);
+  const heap = a.heap ? end + HEAP.gap + HEAP.r : undefined;
+  if (a.heap) end = heap + HEAP.notch + 2;
   const sign = a.sign ?? end + 1;
-  return { sign, lead: Math.min(lead, sign), ground: a.ground ?? Math.max(end, sign + SIGN.w) };
+  return { sign, heap, lead: Math.min(lead, sign), ground: a.ground ?? Math.max(end, sign + SIGN.w) };
 };
 export const ART = Object.fromEntries(Object.entries(DRAWN).map(([k, a]) => [k, { ...a, ...span(a) }]));
 
 // The camp's order, left to right off the grove: the forestry shack in front
-// of the trees, the saw mill, the chipper, the paper mill, the workshop and
-// the press, then the shack that sells them, and the pedestal nearest God's
-// yard.
-export const CAMP_ORDER = ['forestry', 'mill', 'chipper', 'papermill', 'workshop', 'press', 'shack', 'pedestal'];
+// of the trees, the saw mill and the workshop, then the shack that sells
+// them, and the pedestal nearest God's yard.
+export const CAMP_ORDER = ['forestry', 'mill', 'workshop', 'shack', 'pedestal'];
 
 
 // The camp laid off cell `x0` (the grove's end): each station's ground's left

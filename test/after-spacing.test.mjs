@@ -1,9 +1,6 @@
 // Act 3's members keep their own spots (polish bar, own spots; the yard's
 // `elbowIdle`): bodies standing about the camp -- at the podium, at a
-// station's door, on an errand -- are never stood inside one another, and
-// the printer does not leave an unattended press to walk its posters out
-// while another hand could (DESIGN.md, "Act 3: one job a station", the
-// printer "takes its own output out when a full load is waiting").
+// station's door, on an errand -- are never stood inside one another.
 // The yard is the `after-crowd` scene, the setup these checks are not about.
 import { group, ok, run, yard } from './helpers.mjs';
 import { SCENES } from '../src/scenes.js';
@@ -29,20 +26,16 @@ group('members of the crowd scene do not stand inside one another', async () => 
   window.__board = () => {}; window.__holdShot = () => {};
   SCENES['after-crowd'].run();
   const prev = {};
-  let sum = 0, peak = 0, frames = 0, away = 0, press = 0;
+  let sum = 0, peak = 0, frames = 0;
   for (let s = 0; s < 120 * 4; s++) {
     run(0.25);
     const n = overlaps(prev);
     sum += n; peak = Math.max(peak, n); frames++;
-    const pr = S.after.bodies.find(w => w.job === 'printer');
-    if (pr && pr.out) away++;
-    press++;
   }
   const mean = sum / frames;
-  console.log(`overlap mean ${mean.toFixed(2)} peak ${peak}; printer out ${away}/${press}`);
+  console.log(`overlap mean ${mean.toFixed(2)} peak ${peak}`);
   return [
     ok(mean < 0.5, 'on average under half a pair of standing members stacked', mean.toFixed(2)),
-    ok(peak <= 3, 'never more than a few pairs at once', String(peak)),
-    ok(away === 0, 'the printer stays at its press while other hands are free', `${away}/${press}`)
+    ok(peak <= 3, 'never more than a few pairs at once', String(peak))
   ];
 });

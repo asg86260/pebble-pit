@@ -62,8 +62,7 @@ export const setCrowdAt = at => { crowdAt = at; };
 
 const NAMES = {
   pedestal: () => msg('after-board-pedestal'), shack: () => msg('after-board-shack'), grove: () => msg('after-board-grove'),
-  mill: () => msg('after-build-mill'), chipper: () => msg('after-build-chipper'), workshop: () => msg('after-build-workshop'),
-  papermill: () => msg('after-build-papermill'), press: () => msg('after-build-press'), crowd: () => msg('after-board-crowd')
+  mill: () => msg('after-build-mill'), workshop: () => msg('after-build-workshop'), crowd: () => msg('after-board-crowd')
 };
 
 const row = (card, more) => {
@@ -81,7 +80,7 @@ const row = (card, more) => {
 };
 
 // In the order a press asks them: the standing stations, the grove, God's camp.
-const STATION_CARDS = ['mill', 'chipper', 'papermill', 'workshop', 'press', 'shack', 'pedestal'];
+const STATION_CARDS = ['mill', 'workshop', 'shack', 'pedestal'];
 export const AFTER_STATION_ROWS = [
   ...STATION_CARDS.map(card => row(card, {
     // closed too: its board offers its rebuild

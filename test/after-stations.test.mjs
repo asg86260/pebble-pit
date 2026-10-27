@@ -25,8 +25,8 @@ function up(stand = []) {
 const mid = b => ({ x: b.x + b.w / 2, y: b.y + b.h - P });
 
 group('act 3\'s stations answer the pointer\'s one hit test at their signs, and only up there', async () => {
-  up(['mill', 'chipper', 'papermill', 'workshop', 'press']);
-  const cards = ['mill', 'chipper', 'papermill', 'workshop', 'press', 'shack'];
+  up(['mill', 'workshop']);
+  const cards = ['mill', 'workshop', 'shack'];
   const at = {};
   for (const k of [...cards, 'pedestal']) at[k] = asks(mid(signBoard(k)));
   at.heap = asks(mid(stationParts('heap').heap));

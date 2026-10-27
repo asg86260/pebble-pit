@@ -15,7 +15,7 @@ async function upThere() {
   window.__goPlace('after');
   for (const k of OPENING) if (!S.beatsDone.includes(k)) S.beatsDone.push(k);
   window.__fast(1);
-  S.after.built.push('mill', 'chipper');
+  S.after.built.push('mill');
   await settle(0.2);
 }
 const hoverAt = async (wx, wy) => {

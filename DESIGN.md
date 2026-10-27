@@ -21060,7 +21060,7 @@ a hand for good.
   ladder. So faith stays the coin the player is always short of, from the
   first cloud to the strike.
 
-##### The chain: trees to signs and posters
+##### The chain: trees to signs and posters (the paper mill, the press, posters and the chipper built, then cut 2026-10-26)
 
 | station | job | takes | gives | by-product |
 |---|---|---|---|---|
@@ -23260,3 +23260,160 @@ bit").
   so feet and station feet tuck behind them (render/after/ground.js,
   AFTER_LIP). The ground clouds that lapped the path's edge and rolled
   below it are gone from the cloud renderer; below the lip is the page.
+
+### Act 3's goods are blocks, and a unit is followed through the saw mill (design, not built; the owner, 2026-10-26)
+
+The owner, verbatim: "i want to be able to follow a log all the way through
+the machine. i dont want things to appear/change/dissapear through the
+machine. i dont like the "spin" tag on the manual work. the hover state
+showing the example work conflicts with the already existing ghoat hand
+showing the spin. so lets reconcile and get a good pattern we can apply to
+all the stations." Then, on the vision: "im wondering if we're losing our
+initial vision of the game. the surface is basically perfect. clean
+palette, simple resources, clear designs." And: "im lost at the resources
+and how they play/store. im wondering if a bigger resource could work,
+instead of 1x1 particles, it could be repped by a larger 2x2 or 4x4
+resource." Voted on the board (millflow-pattern, millio-polish,
+resource-blocks), and in chat:
+
+- **The flow:** 1A the sawyer carries the log onto the bed; 2C the saw keeps
+  its own sawdust heap; 3B one ghost hand, shown on hover too.
+- **The polish:** 1B the log is set down with weight; 3C the sawdust comes
+  out in a puff on each down-stroke.
+- **The goods:** "4x4 for the logs, and 2x2 for timber, saw dust 1x1 ...
+  lets actually remove paper completely. just signs. and ahve them be 4x4."
+- **The cut:** with paper gone, the chipper, the paper mill and the press go
+  too, and posters with them. Polish round 2 stays on main.
+
+**What was wrong.** At the saw mill (main dd981b3d, read off a frame-exact
+capture) the log fades in already on the bed, because nothing can carry it
+past the flywheel; the pile draws logs end-on and the bed side-on; the log
+steps a cell at a time on its own clock (`SAW_T`) and fades out; two planks
+are drawn and the timber pile gains six; the sawdust is never seen leaving
+the saw; and two ghost hands answer one question. Across the act, a pile
+draws a few small pieces, capped, with its count written over it: what you
+see and what you have are two different things, and the goods are specks.
+
+**The chain, after the cut.** Trees, logs, the saw mill, timber, the
+workshop, signs. Sawdust is the saw's waste. Signs are the one thing that
+goes out to the crowd: where posters did work there (the crowd's turning,
+the fence), signs carry it alone, and the crowd's numbers are retuned with
+`tools/node/act3-pace.mjs`. Gone: paper, posters, the chipper's log pile
+(`chiplogs`), the chipper, the paper mill and the press, their jobs (the
+feeder, the pulper, the printer), their rows and seats, their scenes,
+their messages and their checks. The removal is a survey and a delete, not
+a rework.
+
+**The pattern, for every station.**
+
+1. A unit is one drawing from the pile it is taken off to the pile it
+   lands on. It leaves a count when a body or the hand takes it, and joins
+   one when it is set down: nothing fades in or out inside a machine.
+2. It changes shape only at a visible tool, into pieces that add up.
+3. The material is the progress: no strip, no word tag.
+4. One ghost hand, the same at every station, and it never moves material.
+5. **A good is a block of one flat tone, and a pile draws every block it
+   holds.** The pile is the count; the number over it goes. A pile has a
+   brim, and a full pile wears the shared pile-full mark.
+
+**The goods.**
+
+| good | block | tone | moves as |
+|---|---|---|---|
+| log | 4x4 cells | the darkest good | one to a body, on its head |
+| timber | 2x2 cells | mid | as the carry holds |
+| sawdust | 1x1 grains | the heap's mixed tones | never carried: a heap, as act 1's dust |
+| sign | 4x4 cells on a post | pale | one to a body |
+
+The blocks are act 3's flat squares (DESIGN.md, "The sky, redrawn flat"):
+one tone each, no outline, no mark, a pixel of page between neighbors so a
+pile reads block by block. Each tone has its own job, so the palette check
+(`test/after-palette.test.mjs`) lists it with that job.
+
+**The pieces add up by area.** A log is 16 cells; the blade turns it into
+three timber blocks (12 cells) and four grains of sawdust (the kerf). A
+sign is 16 cells; the workshop makes one from four timber blocks. Today a
+log makes 6 timber and a sign takes 8, a sign a log and a third; with
+blocks a log makes 3 and a sign takes 4, the same ratio. So only the timber
+unit changes: it halves. Every timber bill and `AFTER_SIGN_TIMBER` halve
+with it (a sign takes 4), and a save's timber is halved when read.
+
+**The saw mill, built to it.**
+
+- **The log pile** stands beside the wheel, its blocks laid two wide and
+  growing up, every one drawn, a brim at the top. Idle members carry logs
+  in from the forestry, one block each, as polish round 2 built.
+- **1A, 1B: the sawyer carries the log on.** With the bed empty, the sawyer
+  steps off the wheel, lifts the top block onto its head, walks it round in
+  front of the wheel and sets it on the bed's end with weight: a held
+  set-down and a small puff of dust off both sides that fades. Then it goes
+  back and turns. The sawyer never leaves the station. By hand it is two
+  moves, as at the old chipper: drag a log block onto the bed, then spin.
+  A wheel turned with nothing on the bed turns free.
+- **A log is a fact on the bed, not a timer.** The bed holds the block laid
+  on it and how far through the blade it is; the wheel, whoever turns it,
+  moves it by its true position, and the drawing reads that one fact for
+  the hand and the member alike. `SAW_T` goes. The pile's count drops when
+  the block is lifted; a block in the sawyer's arms is a held load. Saved
+  mid-carry, it is read back on the pile it came off. The second blade
+  (`after-blade`) cuts two logs a pass: two blocks laid one behind the
+  other on the bed.
+- **The cut.** Past the blade the log block is three timber blocks and the
+  kerf: what has gone through is drawn as timber, what has not as log, the
+  line between them at the blade. How the 4x4 reads as it divides into
+  2x2s is a drawing call, mocked before code.
+- **Out the right side:** the timber blocks slide off the bed's end onto the
+  timber pile, and each one that lands is the pile's block from then on.
+- **2C, 3C: the saw's own heap.** Each down-stroke of the blade puffs a few
+  grains out under the bed; they fall onto a heap at the saw's own foot,
+  between its legs, inside its footprint. Four grains a log. The heap has a
+  brim: full, the saw stops and the shared mark shows under it. It is
+  tipped through the floor at the saw's foot by a click, or by the sawyer
+  once it has stood full a while. Nothing else takes it.
+- **3B: one hand.** The first-uses cue hand, at its fine pointer's pixel,
+  is the only one: it plays the motion until it has been done a few times
+  and again, faint, whenever the pointer is over the part, and gives way
+  the moment you take hold. The hover's bigger hand, its dotted path, the
+  strip, the verb tag, their `handwork-*` messages and the `HANDWORK_*`
+  knobs go (render/aftercues.js, shared by every hand-worked part).
+
+**The workshop and signs.** The workshop takes four timber blocks and makes
+one 4x4 sign; signs stand in its rack, every one drawn, and go out to the
+crowd as today. Whether timber is walked from its pile to the workshop or
+paid at a distance (timber is also act 3's money) is polish round 2's
+first question, still open.
+
+**Saves.** Read once, an old save: drops `paper`, `posters` and `chiplogs`
+(the chipper's logs are laid on the saw mill's pile); drops the three cut
+stations from what is built; stands their bodies down to idle members;
+carries their bought seats to the saw mill's job, the larger of the two,
+so nothing paid for is lost (the seat-carry precedent in
+`after/index.js`); halves the timber. Built with the save-shape-change
+steps: a migration file, the save floor, the cloud check.
+
+**Checks.**
+
+- Node tier, `test/after-mill-flow.test.mjs`, bought the player's way:
+  buy the mill, press its +, follow one log. The log pile drops by one
+  block when the sawyer lifts, the bed holds it, the timber pile gains
+  three and the saw's heap four grains, and nothing changes on a frame
+  where no body or hand moved a block. A reload mid-carry puts the block
+  back on its pile.
+- A rule in `src/verify.js`: logs are conserved across a frame outside a
+  lift, a lay, a cut and a delivery; and a pile never draws fewer blocks
+  than it holds (below its brim).
+- The cut stations leave nothing behind: `node tools/unresolved.mjs` is
+  clean, the shop-rows coverage table loses their rows, and the l10n check
+  passes with their messages gone.
+- An old save with all three cut stations built, seats bought and paper
+  on hand, kept as `test/fixtures/act3-before-blocks.json`, loads to the
+  saw mill's seats carried and half the timber.
+- The browser check (src/selftest/aftergestures.js) reads one hand shown,
+  never a strip or a tag.
+
+**Open, the owner's calls.**
+
+1. How the 4x4 log reads as it divides into three 2x2 timber blocks and
+   four grains at the blade: a mock, next.
+2. Timber to the workshop: walked, or paid at a distance (polish round 2,
+   question 1).

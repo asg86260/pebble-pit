@@ -50,12 +50,12 @@ import { P, GREY, GOD_BACK, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AF
          SKY_TICK_S, GOD_CROWD, GOD_STAGE, GOD_FLAG,
          SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
          GOD_N, GOD_MASS, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, GOD_TALK, GAZE,
-         AFTER_GAZE_SETTLE_S, AFTER_BURN_S, AFTER_POSTER_FADE_S, SKY_POSTER, SKY_DRIFT,
+         AFTER_GAZE_SETTLE_S, AFTER_BURN_S, SKY_DRIFT,
          AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S } from '../config.js';
 import { ctx } from './ctx.js';
 import { layerAt } from './frame.js';
 import { raw, darkPage, perPage, themeGen } from '../ink.js';
-import { afterX0, slotX, stationBox, unionJoinAt, afterFloor } from '../after/place.js';
+import { afterX0, stationBox, unionJoinAt, afterFloor } from '../after/place.js';
 import { support, union, souls, OUT_RIM, speechTarget } from '../after/union.js';
 import { signReach } from '../after/levels.js';
 import { skyFrame, campX0, rateAt, stage, stageHalf, crowdHalf, campHalf, stageFore, stageSpot, stageSoul, stageGap, walkSeen, deepAt } from '../after/sky.js';
@@ -186,9 +186,8 @@ const quiet = at => {
   const sp = S.after?.speech;
   return !!sp && !!sp.target && at >= sp.next - AFTER_SPEECH_WARN_S && at < sp.next;
 };
-// What stands for a rally to start at: the signs and posters not burning, by id.
-const standingThings = () => [...S.after.signs.filter(q => q.burnt == null).map(q => ({ kind: 'sign', q })),
-                              ...S.after.posters.filter(q => q.burnt == null && q.torn == null).map(q => ({ kind: 'poster', q }))]
+// What stands for a rally to start at: the signs not burning, by id.
+const standingThings = () => S.after.signs.filter(q => q.burnt == null).map(q => ({ kind: 'sign', q }))
   .sort((a, b) => a.q.id - b.q.id);
 // A phrase's syllables, and how long it runs from its first.
 const BEAT_S = GOD_TALK.beat * SKY_TICK_S;
@@ -740,14 +739,14 @@ function gazeNow() {
   const target = speechTarget();
   const onThing = (kind, q) => { const b = thingAt(kind, q); return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; };
   if (target && sp) {
-    const kind = A.signs.includes(target) ? 'sign' : 'poster', m = onThing(kind, target);
+    const m = onThing('sign', target);
     const tau = Tq - (sp.next - AFTER_SPEECH_WARN_S), span = (AFTER_SPEECH_WARN_S - AFTER_GAZE_SETTLE_S) / GAZE.narrow.length;
     if (tau < AFTER_GAZE_SETTLE_S) { const e = eio(clamp(tau / AFTER_GAZE_SETTLE_S, 0, 1)); x = lerp(x, m.x, e); yy = lerp(y, m.y, e); }
     else { x = m.x; yy = m.y; w = GAZE.narrow[Math.min(GAZE.narrow.length - 1, Math.floor((tau - AFTER_GAZE_SETTLE_S) / span))]; }
     on = target;
   } else if (sp?.burnt && t >= sp.burnt.at && t - sp.burnt.at < AFTER_BURN_S + 1) {
     // held on the ash, then back to the sweep
-    const q = (sp.burnt.kind === 'sign' ? A.signs : A.posters).find(o => o.id === sp.burnt.id);
+    const q = A.signs.find(o => o.id === sp.burnt.id);
     const m = q ? onThing(sp.burnt.kind, q) : null;
     if (m) {
       const e = eio(clamp((Tq - sp.burnt.at - AFTER_BURN_S) / 1, 0, 1));
@@ -830,11 +829,10 @@ function drawBubbles() {
   }
 }
 
-// --- signs and posters --------------------------------------------------------------------------------
+// --- signs --------------------------------------------------------------------------------------------
 // A sign is a flag (docs/mocks/act3-level-2026-10-19, a3flag, the fist):
 // planted at its spot on the stage (after/sky.js, `stageSpot`), at a readable
 // size, bigger toward the front, among the souls in front of and behind it.
-// A poster is on the stage's front edge.
 const rallied = q => EV.rallies.some(r => r.thing.q === q && now() - r.at < SKY_RALLY.lift);
 // A flag's cell, world px, for a flag `n` stage cells tall: the cloth about
 // as wide as the flag is tall.
@@ -848,19 +846,10 @@ function flagBox(q) {
   const y = foot - stageSoul(st, foot) - FL.up * U - h - (q.id != null && rallied(q) ? U : 0);
   return { foot, U, px, x: px + U, y, w, h, cx: px + U + w / 2, cy: y + h / 2 };
 }
-// A poster on the stage's front edge, at its slot along it.
-function posterBox(q) {
-  const st = stage(), f = (slotX(q.slot) - CROWD_X0 - P) / CROWD_PITCH, sp = stageSpot(f, 0), foot = snap(st.yf - P, P);
-  const U = flagU(GOD_FLAG.n[0]), PO = SKY_POSTER, w = PO.w * U, h = PO.h * U;
-  const x = snap(gxAt(foot) + sp.dx - w / 2, 1);
-  const y = foot - PO.up * U - h - (rallied(q) ? U : 0);
-  return { foot, U, x, y, w, h };
-}
-// Where a sign or poster is drawn (its flag's or its sheet's box), for the
-// rings and the gaze.
+// Where a sign is drawn (its flag's box), for the rings and the gaze.
 function thingAt(kind, q) {
-  const g = kind === 'poster' ? posterBox(q) : flagBox(q);
-  return { x: g.x, y: g.y, w: g.w, h: g.h, poster: kind === 'poster' };
+  const g = flagBox(q);
+  return { x: g.x, y: g.y, w: g.w, h: g.h };
 }
 // The flag in one of its ripple's poses (a3flag's): columns a third of a
 // flag cell (`U` world px) wide, each dropped by a sine along the flag in
@@ -883,19 +872,7 @@ function flagSprite(U, phase, fist) {
   cache.signs.set(key, pic);
   return pic;
 }
-// The poster's sheet: paper, the fist in ink on it, flat.
-function posterSprite(U, sheet, fist) {
-  const key = `p${U}|${sheet}|${fist}`;
-  let pic = cache.signs.get(key);
-  if (pic) return pic;
-  const PO = SKY_POSTER;
-  pic = sprite(PO.w * U, PO.h * U, fill => {
-    fill(0, 0, PO.w * U, PO.h * U, sheet);
-    SKY_FLAG.fist.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === 'X') fill((PO.x + i) * U, (PO.y + j) * U, U, U, fist); }));
-  });
-  cache.signs.set(key, pic);
-  return pic;
-}
+
 // A sign's aura, in flag cells across the half: breathing a cell.
 const auraR = (g, breath) => Math.round(SKY_AURA.r * SKY_FLAG.w) + SKY_AURA.pad + breath;
 function discSprite(R, U) {
@@ -947,16 +924,6 @@ function drawFlag(q) {
     blit(flagSprite(g.U, (phase + q.f) % SKY_FLAG.phases, fist), g.x, g.y - A);
   });
 }
-function drawPoster(q) {
-  const t = now(), g = posterBox(q);
-  if (!inView(g.x - 20, g.w + 40)) return;
-  const fading = q.torn != null ? clamp(1 - (t - q.torn) / AFTER_POSTER_FADE_S, 0, 1) : 1;
-  const u = q.burnt == null ? null : clamp((t - q.burnt) / AFTER_BURN_S, 0, 1), st = u == null ? -1 : Math.floor(u * 4);
-  alpha(fading * (u == null || u < 0.5 ? 1 : 1 - (u - 0.5) / 0.5), () => {
-    rect(snap(g.x + g.w / 2 - g.U / 2, 1), g.y + g.h, g.U, g.foot - g.y - g.h, UNION_TONE);
-    blit(posterSprite(g.U, st < 0 ? W : st === 0 ? PALE : UNION_TONE, UNION_TONE), g.x, g.y);
-  });
-}
 
 // --- bodies out on the way, and on the stage ---------------------------------------------------------
 // The sim's walk past the union's camp is short; the eye's crosses the cloud,
@@ -981,7 +948,7 @@ function body(w) {
     rect(x, y, s, Math.max(2, Math.round(s / 5)), UNION_TONE);
     if (w.load === 'log') rect(x - u, y - u, u * 5, u, PALE);
     else if (w.load === 'sign') carriedSign(x, y, u);
-    else if (w.load === 'posters') rect(x, y - u, u * 3, u, PALE);
+
     else if (w.load === 'tip') rect(x, y - u, u * 2, u, PALE);
     if (w.swing != null) {
       if (w.job == null) { rect(x + u, y - u * 5, u, u * 2, INK); rect(x + u, y - u * 2, u, u, INK); }
@@ -1037,7 +1004,7 @@ function drawDrift() {
 // God's camp, back to front: his rays, the stage, the throne on it,
 // the rings off his head, God and his hands, then his crowd's rows back to
 // front with what stands on the stage among them by where its foot is --
-// the flags, the posters on its front edge, the won souls, the bodies out on
+// the flags, the won souls, the bodies out on
 // the way -- his words' fronts over them, and the gaze over them all.
 let GZ = null;   // cache: this frame's gaze, worked out at the top of each drawSkyCrowd
 export function drawSkyCrowd() {
@@ -1063,7 +1030,7 @@ export function drawSkyCrowd() {
   // What stands among the crowd, by its foot, drawn as the rows pass it.
   const items = [];
   for (const q of S.after.signs) items.push({ y: flagBox(q).foot, draw: () => drawFlag(q) });
-  for (const q of S.after.posters) items.push({ y: posterBox(q).foot + 0.5, draw: () => drawPoster(q) });
+
   for (const w of S.after.bodies) if (!w.lifted && deepAt(w.x) > 0) items.push({ y: seenAt(w.x, w.y).ord + 0.25, draw: () => body(w) });
   watchSigns();
   for (const g of setDown) items.push({ y: g.ord, draw: () => drawSetDown(g) });

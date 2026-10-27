@@ -37,14 +37,11 @@ group('each board lists its rows on its shelves: seats, then upgrades; the shack
   const all = Object.fromEntries([...AFTER_CARDS, 'crowd'].map(k => [k, shelves(k)]));
   const seats = msg('after-sect-seats'), ups = msg('after-sect-card');
   const want = {
-    shack: [[msg('after-sect-build'), ['mill', 'chipper', 'papermill', 'workshop', 'press'].map(s => `after-build-${s}`)]],
+    shack: [[msg('after-sect-build'), ['mill', 'workshop'].map(s => `after-build-${s}`)]],
     pedestal: [[ups, ['after-recruit', 'after-podium']]],
     grove: [[seats, ['after-seat-woodcutter']], [ups, ['after-axe', 'after-plot', 'after-grow', 'after-tree', 'after-stumps']]],
     mill: [[seats, ['after-seat-sawyer']], [ups, ['after-blade', 'after-heap']]],
-    chipper: [[seats, ['after-seat-feeder']], [ups, ['after-drum', 'after-spout']]],
-    papermill: [[seats, ['after-seat-pulper']], [ups, ['after-vat', 'after-dry']]],
-    workshop: [[seats, ['after-seat-joiner']], [ups, ['after-bench', 'after-signreach']]],
-    press: [[seats, ['after-seat-printer']], [ups, ['after-stack', 'after-posterreach']]]
+    workshop: [[seats, ['after-seat-joiner']], [ups, ['after-bench', 'after-signreach']]]
   };
   const off = Object.entries(want).filter(([k, v]) => JSON.stringify(all[k]) !== JSON.stringify(v)).map(([k]) => k);
   const crowdBuys = boardOf('after-crowd').rows().filter(u => !u.read);
@@ -53,14 +50,14 @@ group('each board lists its rows on its shelves: seats, then upgrades; the shack
     ok(closedOff.length === 0, 'a closed station offers its rebuild on its board', closedOff.join(' ')),
     ok(off.length === 0, 'every station\'s board is the spec\'s rows, in its order, on its shelves', off.map(k => `${k}: ${JSON.stringify(all[k])}`).join(' | ')),
     ok(boardOf('after-crowd').ledger && crowdBuys.length === 0, 'the crowd\'s board is readings, nothing to buy', crowdBuys.map(u => u.key).join(' ')),
-    ok(Object.keys(AFTER_BUILDS).join() === 'mill,chipper,papermill,workshop,press', 'the stations are listed in camp order', Object.keys(AFTER_BUILDS).join())
+    ok(Object.keys(AFTER_BUILDS).join() === 'mill,workshop', 'the stations are listed in camp order', Object.keys(AFTER_BUILDS).join())
   ];
 });
 
 group('the shack locks a station behind the one it needs, saying which, and a built one stays listed, done', async () => {
   up();
   const say = k => afterRow(`after-build-${k}`).waits();
-  const locked0 = { workshop: say('workshop'), papermill: say('papermill'), press: say('press') };
+  const locked0 = { workshop: say('workshop') };
   window.__afterGrant({ rebel: 1000 });
   const deadFirst = !buy(afterRow('after-build-workshop'));
   const bought = buy(afterRow('after-build-mill'));
@@ -70,8 +67,7 @@ group('the shack locks a station behind the one it needs, saying which, and a bu
   const open = say('workshop');
   window.__actsOn(null);
   return [
-    ok(locked0.workshop === msg('after-wait-mill') && locked0.papermill === msg('after-wait-sawdust') && locked0.press === msg('after-wait-papermill'),
-      'each locked station says what it waits on', JSON.stringify(locked0)),
+    ok(locked0.workshop === msg('after-wait-mill'), 'a locked station says what it waits on', JSON.stringify(locked0)),
     ok(deadFirst, 'the workshop is refused before the saw mill stands'),
     ok(bought, 'the saw mill is bought through the yard\'s press, its own act\'s purse paying'),
     ok(mill.rung() === mill.rungs() && mill.keep && boardOf('after-shack').rows().includes(mill), 'and stays on the shack\'s board, done, kept past the finished-rows switch'),

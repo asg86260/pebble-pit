@@ -525,12 +525,11 @@ const TYPE_SAID = {
 };
 
 // Act 3's counted piles and what each is called: the goods the hand takes
-// off them (after/hand.js) and the posters on the fence's rack.
+// off them (after/hand.js).
 const AFTER_PILE_SAYS = {
-  grovelogs: 'hover-pile-logs', logs: 'hover-pile-logs', chiplogs: 'hover-pile-logs', timber: 'hover-pile-planks',
-  paper: 'hover-pile-sheets', signs: 'hover-pile-signs', posters: 'hover-pile-posters'
+  grovelogs: 'hover-pile-logs', logs: 'hover-pile-logs', timber: 'hover-pile-planks', signs: 'hover-pile-signs'
 };
-const AFTER_GOOD_SAYS = { log: 'hover-log', plank: 'hover-plank', sheet: 'hover-sheet', sign: 'hover-sign' };
+const AFTER_GOOD_SAYS = { log: 'hover-log', plank: 'hover-plank', sign: 'hover-sign' };
 
 // What is at a spot up in act 3, in a word, asked in the yard's order: a body,
 // or a good lying on the floor or on a pile, before the pile and the heap,
@@ -543,7 +542,7 @@ function afterAt(x, y) {
     const owner = pileOwner(what);
     if (owner && built(owner) && inRect(pileBox(owner, what, AFTER_PILE_REACH), x, y)) return msg(key);
   }
-  if (S.after && built('chipper') && inRect(stationParts('heap').heap, x, y)) return msg('hover-heap');
+  if (S.after && built('mill') && inRect(stationParts('heap').heap, x, y)) return msg('hover-heap');
   for (const r of STATIONS) {
     if (r.place !== 'after' || !r.name || !r.stand || !r.open()) continue;
     if (nearStation(r.key, x, y) || inRect(standRect(r.key), x, y)) return r.name;

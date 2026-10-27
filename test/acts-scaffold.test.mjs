@@ -98,10 +98,10 @@ group('each act\'s facts round-trip a save', async () => {
   const back = JSON.stringify([S.after, S.hell]);
   // A save from before a field was added comes back with it blank.
   const blob = saved();
-  delete blob.after.posters; delete blob.hell.flights;
+  delete blob.after.signs; delete blob.hell.flights;
   localStorage.setItem(KEY, JSON.stringify(blob));
   yard.restore();
-  const mended = Array.isArray(S.after.posters) && S.hell.flights === 0;
+  const mended = Array.isArray(S.after.signs) && S.hell.flights === 0;
   run(6);                              // and across the harness's own reloads, in hell
   const view = S.view;
   window.__view('yard');

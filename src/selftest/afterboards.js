@@ -24,7 +24,7 @@ async function upThere() {
   for (const k of OPENING) if (!S.beatsDone.includes(k)) S.beatsDone.push(k);
   window.__fast(1);
   window.__grant({ dust: 5e6, spores: 2e6, shards: 2e6, scales: 2e5, sparks: 2e5 });
-  window.__afterGrant({ rebel: 1e5, timber: 1e4, paper: 1e4 });
+  window.__afterGrant({ rebel: 1e5, timber: 1e4 });
   await settle(0.2);
 }
 // The open board's tiles, by key, as drawn.
@@ -42,14 +42,14 @@ export const TESTS = [
     await settle();
     await upThere();
     const missed = [], opened = [];
-    // The shack first, from nothing standing: the saw mill and the chipper
-    // need nothing; the press waits on the paper mill and says so.
+    // The shack first, from nothing standing: the saw mill needs nothing;
+    // the workshop waits on the saw mill and says so.
     window.__openAfterBoard('shack');
     await settle(0.3);
     const shackUp = !panel().hidden && !document.getElementById('after-shackboard').hidden;
-    const press = tiles('shack').find(b => b.dataset.key === 'after-build-press');
-    const pressLocked = !!press && press.classList.contains('locked') && press.textContent.includes(msg('after-wait-papermill'));
-    for (const key of ['after-build-mill', 'after-build-chipper']) {
+    const shop = tiles('shack').find(b => b.dataset.key === 'after-build-workshop');
+    const shopLocked = !!shop && shop.classList.contains('locked') && shop.textContent.includes(msg('after-wait-mill'));
+    for (const key of ['after-build-mill']) {
       const was = { rows: rowsNow() };
       tiles('shack').find(b => b.dataset.key === key)?.click();
       await until(() => bought(key, was));
@@ -57,7 +57,7 @@ export const TESTS = [
     }
     // Every station standing (the setup the rest is not about), then each
     // station's board, every tile on it pressed once.
-    for (const st of ['mill', 'chipper', 'papermill', 'workshop', 'press']) if (!S.after.built.includes(st)) S.after.built.push(st);
+    for (const st of ['mill', 'workshop']) if (!S.after.built.includes(st)) S.after.built.push(st);
     // ...and the union's support past the podium ladder's first mark, which
     // its first rung waits on (after/rows.js `waitsOn`), the souls won left
     // waiting for the recruit row.
@@ -81,7 +81,7 @@ export const TESTS = [
     window.__actsOn(null);
     return [
       ok(shackUp, 'the shack\'s board opens on the yard\'s sheet'),
-      ok(pressLocked, 'the press\'s tile is locked, saying what it waits on', press?.textContent),
+      ok(shopLocked, 'the workshop\'s tile is locked, saying what it waits on', shop?.textContent),
       ok(pressed === want, 'every station\'s board draws every row it sells as a tile', `${pressed} of ${want}: ${opened.join(' ')}`),
       ok(missed.length === 0, 'and a press on each tile buys it', missed.join(' '))
     ];

@@ -175,15 +175,12 @@ export const GLYPH_OF = {
   // act 3's boards (after/rows.js): borrowed drawings until the owner draws
   // the camp's own. A seat is room for one more at a job, the yard's post drawing.
   'after-seat-woodcutter': ['cap', 'plus'], 'after-seat-gatherer': ['cap', 'plus'], 'after-seat-hauler': ['cart', 'plus'],
-  'after-seat-sawyer': ['cap', 'plus'], 'after-seat-feeder': ['cap', 'plus'], 'after-seat-pulper': ['cap', 'plus'],
-  'after-seat-joiner': ['cap', 'plus'], 'after-seat-carrier': ['cart', 'plus'], 'after-seat-printer': ['cap', 'plus'],
-  'after-seat-paster': ['cap', 'plus'],
+  'after-seat-sawyer': ['cap', 'plus'],
+  'after-seat-joiner': ['cap', 'plus'], 'after-seat-carrier': ['cart', 'plus'],
   'after-podium': ['bell', 'up'], 'after-axe': ['blade'], 'after-plot': ['furrow', 'plus'], 'after-grow': ['ear', 'up'],
   'after-tree': ['ear', 'plus'], 'after-stumps': ['shovel'], 'after-blade': ['blade', 'plus'], 'after-heap': ['sack', 'plus'],
-  'after-drum': ['jaw', 'plus'], 'after-spout': ['bucket', 'plus'], 'after-vat': ['pot', 'plus'], 'after-dry': ['ledger', 'plus'],
-  'after-bench': ['bench', 'plus'], 'after-signreach': ['planks', 'up'], 'after-stack': ['ledger', 'up'], 'after-posterreach': ['bell', 'plus'],
-  'after-build-mill': ['blade'], 'after-build-chipper': ['jaw'], 'after-build-papermill': ['pot'],
-  'after-build-workshop': ['bench'], 'after-build-press': ['ram'],
+  'after-bench': ['bench', 'plus'], 'after-signreach': ['planks', 'up'],
+  'after-build-mill': ['blade'], 'after-build-workshop': ['bench'],
 };
 
 // A row's drawing: its own, else the drawing of the station that sells it

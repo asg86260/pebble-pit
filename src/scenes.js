@@ -39,7 +39,7 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, stationBox, signBox, soulX, slotX as wallSlotX, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt, campEdges, AP } from './after/place.js';
+import { stationX0, stationBox, signBox, soulX, heapMid, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt, campEdges, AP } from './after/place.js';
 import { godFront } from './after/sky.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
@@ -481,9 +481,9 @@ const yardPurse = () => window.__grant({ dust: 2e6, spores: 5e5, shards: 5e5, sc
 const staffAfter = jobs => {
   for (const j of jobs) if (!window.__afterPress(j, 1)) { window.__buy(`after-seat-${j}`); window.__afterPress(j, 1); }
 };
-// Station `key`'s round part (`ring`, the saw mill's wheel or the paper
-// mill's vat) taken hold of where it stands and turned at `rev` turns a
-// second for `frames` frames, the press held (after/gestures.js).
+// Station `key`'s round part (`ring`, the saw mill's wheel) taken hold of
+// where it stands and turned at `rev` turns a second for `frames` frames,
+// the press held (after/gestures.js).
 function handTurn(key, ring, rev, frames) {
   const w = window.__gestureParts(key)[ring], rx = w.r || w.rx, ry = w.r || w.ry;
   const at = a => [w.x + Math.cos(a) * rx, w.y + Math.sin(a) * ry];
@@ -512,62 +512,17 @@ function afterChain(slow) {
                            : (i, v) => (i < 40 ? 8 : v));
   for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
   S.after.camp += slow ? 30 : 0;   // the members a patchy field sent out, without their walk
-  window.__afterGrant({ rebel: 9000, timber: slow ? 160 : 40, paper: slow ? 40 : 0, logs: 12 }); yardPurse();
-  // In waves, each needing the one before: the saw mill and the chipper,
-  // then what stands on the saw mill, then the press on the paper mill.
-  const waves = [['mill', 'chipper'], ['workshop', ...(slow ? ['papermill'] : [])], slow ? ['press'] : []];
+  window.__afterGrant({ rebel: 9000, timber: slow ? 160 : 40, logs: 12 }); yardPurse();
+  // In waves, each needing the one before: the saw mill, then the workshop
+  // that stands on it.
+  const waves = [['mill'], ['workshop']];
   for (const wave of waves) {
     for (const st of wave) window.__buy(`after-build-${st}`);
     for (let k = 0; k < 300 && wave.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
   }
   const A = AFTER_JOB;
-  staffAfter([A.CUT, A.CUT, A.CUT, A.SAW, A.CHIP, A.JOIN, A.JOIN,
-              ...(slow ? [A.PULP, A.PRINT, A.PRINT] : [])]);
-  for (const u of ['after-plot', 'after-plot', 'after-stumps', 'after-blade', 'after-bench',
-                   ...(slow ? ['after-vat', 'after-stack'] : [])]) window.__buy(u);
-}
-
-// Track A: the chipper standing with logs on its pile, worked by hand to
-// `phase`: 'carry' a log half way to the jaws; 'held' laid in and the arm
-// held down a second and a half; 'spring' the arm just let go. Framed on it.
-function handChip(phase) {
-  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  for (const k of ['mill', 'chipper']) if (!S.after.built.includes(k)) S.after.built.push(k);
-  window.__afterGrant({ chiplogs: 4 });
-  const b = stationBox('chipper');
-  window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(0.5);
-  const p = window.__gestureParts('chipper'), mid = q => [q.x + q.w / 2, q.y + q.h / 2];
-  const [ax, ay] = mid(p.pile), [bx, by] = mid(p.mouth);
-  window.__gesture('down', ax, ay);
-  const steps = phase === 'carry' ? 6 : 12;
-  for (let k = 1; k <= steps; k++) { window.__gesture('move', ax + (bx - ax) * k / 12, ay + (by - ay) * k / 12); window.__fast(1 / 60); }
-  if (phase === 'carry') { window.__holdShot(); return; }
-  window.__gesture('up', bx, by);
-  const [kx, ky] = mid(p.arm);
-  window.__gesture('down', kx, ky - P * 3); window.__gesture('move', kx, ky + P * 6);
-  window.__fast(1.5);
-  if (phase === 'spring') { window.__gesture('up', kx, ky + P * 6); window.__fast(0.07); }
-  window.__holdShot();
-}
-
-// Track A: the paper mill standing with sawdust in its heap, stirred by
-// hand through batch after batch, the line filling as they come; `up` buys
-// the bigger vat and the drying line first. Framed on the station.
-function handPaper(up) {
-  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  for (const k of ['mill', 'chipper', 'papermill']) if (!S.after.built.includes(k)) S.after.built.push(k);
-  window.__afterGrant({ sawdust: 200, rebel: 5000, timber: 200, paper: 50 }); yardPurse();
-  if (up) { window.__buy('after-vat'); window.__buy('after-dry'); }
-  const b = stationBox('papermill');
-  window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(2);
-  const v = window.__gestureParts('papermill').vat, at = a => [v.x + Math.cos(a) * v.rx, v.y + Math.sin(a) * v.ry];
-  for (let n = 0; n < (up ? 5 : 4); n++) {
-    window.__gesture('down', ...at(0));
-    for (let f = 1; f <= 300; f++) { window.__gesture('move', ...at(f / 60 * 1.2 * 2 * Math.PI)); window.__fast(1 / 60); }
-    window.__gesture('up');
-    window.__fast(1.5);
-  }
-  window.__holdShot();
+  staffAfter([A.CUT, A.CUT, A.CUT, A.SAW, A.JOIN, A.JOIN]);
+  for (const u of ['after-plot', 'after-plot', 'after-stumps', 'after-blade', 'after-bench']) window.__buy(u);
 }
 
 // Track A: the workshop standing with timber for its blanks, `taps` nails
@@ -584,12 +539,12 @@ function handNails(taps, after) {
   window.__holdShot();
 }
 
-// Track A: the workshop ordered with the saw mill and the press standing
-// either side of its spot, four members in the camp to carry it, run on
-// until `until(site)` holds (null: never ordered), framed on the spot.
+// Track A: the workshop ordered with the saw mill standing beside its spot,
+// four members in the camp to carry it, run on until `until(site)` holds
+// (null: never ordered), framed on the spot.
 function afterSite(until) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  for (const k of ['mill', 'chipper', 'papermill', 'press']) if (!S.after.built.includes(k)) S.after.built.push(k);
+  for (const k of ['mill']) if (!S.after.built.includes(k)) S.after.built.push(k);
   for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
   S.after.camp = 4;
   window.__afterGrant({ rebel: 400, timber: 40 }); yardPurse();
@@ -623,7 +578,7 @@ function afterMass(pan) {
 }
 
 // Track B: the sky at `share` of the way to the strike (a crowd of 4,000,
-// that many walked out with no walk), signs and posters standing along God's
+// that many walked out with no walk), signs standing along God's
 // yard, the camera `pan` of the way along the dive. `what` stands a rally or
 // a roar going on: the clock turned to the moment one is out across the sky.
 function heavenAt(share, pan = 0, what = null) {
@@ -632,7 +587,6 @@ function heavenAt(share, pan = 0, what = null) {
   S.after.rims = Array.from({ length: n }, (_, i) => (i < gone ? '9' : '0')).join('');
   S.after.speech = { next: S.after.t + 1e6, target: null, burnt: null };
   for (const [f, r] of [[4, 1], [14, 3], [24, 0], [34, 2]]) S.after.signs.push({ id: 94000 + f, f, r, askew: false, pull: null, big: false, age: 0 });
-  for (const slot of [8, 22, 36]) S.after.posters.push({ id: 95000 + slot, slot, age: 0, torn: null, big: false });
   const t = S.after.t;
   // A rally falls every 7.5 s or so, a roar every 6.5 (render/aftercrowd.js).
   const wait = what === 'rally' ? 7.5 - (t % 7.5) + 1.2 : what === 'roar' ? 6.5 - ((t - 2.5) % 6.5) + 0.8 : 2;
@@ -652,8 +606,8 @@ function heavenTurn(want) {
 
 // Act 3's level in its three zones (DESIGN.md, "The level, the two crowds and
 // the flags"): a crowd of 4,000 `share` of the way to the strike, signs in
-// both planes of God's crowd (a plane's ranks: SKY_SIGN_RANKS) and posters on
-// the fence, the camera on `at` -- 'works' the workshops' end, 'union' the
+// both planes of God's crowd (a plane's ranks: SKY_SIGN_RANKS), the camera
+// on `at` -- 'works' the workshops' end, 'union' the
 // pedestal where the act opens, 'god' God's crowd, or a world x. With `won`,
 // a member beside the first sign walks out and the clock runs on `won`
 // seconds into its soul's way round the sign and across to the union's camp.
@@ -664,9 +618,8 @@ function levelAt(share, at, won = null) {
   S.after.rims = Array.from({ length: n }, (_, i) => (i < gone ? '9' : '0')).join('');
   S.after.speech = { next: S.after.t + 1e6, target: null, burnt: null };
   for (const [f, r] of LEVEL_SIGNS) S.after.signs.push({ id: 96000 + f, f, r, askew: false, pull: null, big: false, age: 0 });
-  for (const slot of [8, 22, 36]) S.after.posters.push({ id: 95000 + slot, slot, age: 0, torn: null, big: false });
   // The workshops standing, so their zone is seen with its stations.
-  for (const k of ['mill', 'chipper', 'papermill', 'workshop', 'press']) if (!S.after.built.includes(k)) S.after.built.push(k);
+  for (const k of ['mill', 'workshop']) if (!S.after.built.includes(k)) S.after.built.push(k);
   window.__fast(2);
   const cx = () => (at === 'works' ? workshopsX1() - S.viewW * 0.3 : at === 'union' ? afterOpenX() : at === 'god' ? godView() : at);
   window.__look(cx() - S.viewW / 2); window.__fast(1 / 30);
@@ -2897,9 +2850,9 @@ export const SCENES = {
   // Act 3's loop on its placeholder drawings (after/; track A): the chain
   // bought row by row and run, framed on the camp; the crowd half won, framed
   // on God's yard; the grove with a tree coming down.
-  'after-chain': { about: 'the acts', say: "the afterlife's chain running: logs to the saw mill and the chipper, timber and sawdust, signs going out",
+  'after-chain': { about: 'the acts', say: "the afterlife's chain running: logs to the saw mill, timber and sawdust, signs going out",
     run: () => { afterChain(false); window.__fast(90); window.__look(stationX0('mill') - P * 4); window.__holdShot(); } },
-  'after-crowd': { about: 'the acts', say: "the afterlife's crowd half walked out: signs and posters out, the rims inking round them",
+  'after-crowd': { about: 'the acts', say: "the afterlife's crowd half walked out: signs out, the rims inking round them",
     run: () => { afterChain(true); window.__fast(120); window.__look(soulX(0) - P * 20); window.__holdShot(); } },
   'after-grove': { about: 'the acts', say: "the afterlife's grove: four plots, a tree coming down, a stump half dug, a sapling, logs lying",
     run: () => {
@@ -2927,17 +2880,15 @@ export const SCENES = {
   'after-hands': { about: 'the acts', say: "the afterlife's hand work: the saw mill's flywheel spun by hand where it stands, a log going through",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-      for (const k of ['mill', 'chipper', 'workshop', 'papermill', 'press']) if (!S.after.built.includes(k)) S.after.built.push(k);
-      window.__afterGrant({ logs: 6, timber: 8, sawdust: 6, paper: 4 });
+      for (const k of ['mill', 'workshop']) if (!S.after.built.includes(k)) S.after.built.push(k);
+      window.__afterGrant({ logs: 6, timber: 8, sawdust: 6 });
       window.__afterAxe();
       window.__look(stationX0('mill') - P * 20);
       window.__fast(0.5);
       handTurn('mill', 'wheel', 1.6, 90);
       window.__holdShot();
     } },
-  'after-stir': { about: 'the acts', say: "the camp's stations working, the paper mill's vat stirred by hand where it stands",
-    run: () => { afterChain(true); window.__afterGrant({ timber: 12, sawdust: 12 }); window.__fast(60); window.__look(stationX0('papermill') - P * 40);
-                 window.__fast(0.2); handTurn('papermill', 'vat', 1, 90); window.__holdShot(); } },
+
   // The grove's hand work: the saw icon over a grown tree; the handsaw put
   // on it and mid-cut, its kerf half open; a stump lifted half out by hand,
   // its shovel faded under the hand.
@@ -2978,8 +2929,6 @@ export const SCENES = {
   'after-roster': { about: 'the acts', say: "act 3's rosters: under each station its jobs' sprite, pips, minus and plus; the idle at the podium",
     run: (at = 'workshop') => {
       act3Mid();
-      for (const st of ['papermill', 'press']) if (!S.after.built.includes(st)) S.after.built.push(st);
-      staffAfter([AFTER_JOB.PULP, AFTER_JOB.PRINT]);
       window.__fast(30);
       const b = stationBox(at);
       pinCamera(b.x + b.w / 2 - S.viewW / 2);
@@ -3049,22 +2998,21 @@ export const SCENES = {
     } },
   // The camp: a block of the crowd walking out across God's yard to the
   // camp's ground, the first already standing on their spots, empty posts.
-  'after-camp': { about: 'the acts', say: "members walking out of God's yard to the camp, the first on their spots, two builders raising the saw mill and the chipper",
+  'after-camp': { about: 'the acts', say: "members walking out of God's yard to the camp, the first on their spots, builders raising the saw mill",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       window.__afterCrowd((i, v) => (i < 80 ? 8 : v));
       window.__afterGrant({ rebel: 400 }); yardPurse();
       window.__buy('after-build-mill');
-      window.__buy('after-build-chipper');
       window.__fast(14); window.__look(stationX0('mill') - P * 4); window.__holdShot();
     } },
   // Act 3's place and station art (track A, 2026-10-18; the mocks in
   // docs/mocks/act3-place-2026-10-18 and act3-stations-2026-10-18): every
   // station standing and worked at its post, its piles counted, framed on
   // the left of the camp and then on the right.
-  'after-camp-art': { about: 'the acts', say: "the camp's stations polished and working: the grove's pines, the saw mill's wheel, the chipper's jaw, the paper mill's vat, piles counted",
+  'after-camp-art': { about: 'the acts', say: "the camp's stations polished and working: the grove's pines, the saw mill's wheel and its sawdust heap, piles counted",
     run: () => { afterChain(true); window.__afterGrant({ logs: 4, timber: 6 }); window.__fast(60); window.__look(stationX0('mill') - P * 30); window.__holdShot(); } },
-  'after-camp-art-2': { about: 'the acts', say: "the camp's right half: the workshop's hammer, the press's screw, the shack, the cloud pillar and the pair's bubbles",
+  'after-camp-art-2': { about: 'the acts', say: "the camp's right half: the workshop's hammer, the shack, the cloud pillar and the pair's bubbles",
     run: () => { afterChain(true); window.__afterGrant({ timber: 12 }); window.__fast(60); window.__look(stationX0('workshop') - P * 4); window.__holdShot(); } },
   // The shack ordering: the saw mill bought, its glyph filling over the shack
   // as the builders raise it a piece at a time.
@@ -3103,19 +3051,16 @@ export const SCENES = {
   'after-site-band': { about: 'the acts', say: 'the workshop going up a band at a time, the pile shrinking',
     run: () => afterSite(r => r.n >= 2) },
 
-  // The chipper's hand work (docs/mocks/act3-chipper-2026-10-18, the arm): a
-  // log carried off the pile toward the jaws; the arm pulled down and held,
-  // the jaws biting; and the arm let go, springing back up.
-  'after-chip-carry': { about: 'the acts', say: "a log dragged off the chipper's pile toward its jaws",
-    run: () => handChip('carry') },
-  'after-chip-held': { about: 'the acts', say: "the chipper's arm pulled down and held, the jaws biting through the log",
-    run: () => handChip('held') },
-  'after-chip-spring': { about: 'the acts', say: "the chipper's arm let go, springing back up a pose at a time, the jaws stopped",
-    run: () => handChip('spring') },
-  // The sawdust heap at its brim with no paper mill to take it: the shared
-  // pile-full mark under it (render/pilemarks.js).
-  'after-heap-full': { about: 'the acts', say: "the sawdust heap at its brim, no paper mill built, its pile-full mark under it",
-    run: () => { handChip('spring'); S.after.stock.sawdust = 1e6; window.__fast(0.5); } },
+  // The saw mill's sawdust heap at its brim: the shared pile-full mark under
+  // it (render/pilemarks.js), framed on the heap on the saw mill's ground.
+  'after-heap-full': { about: 'the acts', say: "the saw mill's sawdust heap at its brim, its pile-full mark under it",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      if (!S.after.built.includes('mill')) S.after.built.push('mill');
+      window.__afterGrant({ logs: 4 });
+      S.after.stock.sawdust = 1e6;
+      window.__look(heapMid() - S.viewW / 2); window.__fast(0.5); window.__holdShot();
+    } },
   // Track a3-logs: the chain staffed, the forestry shack's pile stocked, run
   // until an idle member is carrying logs to the saw mill and a cut is
   // falling out of the saw's right side onto its timber pile; framed on the
@@ -3134,14 +3079,6 @@ export const SCENES = {
       window.__still(true); window.__holdShot();
     } },
 
-  // The paper mill (docs/mocks/act3-papermill-2026-10-18): batches stirred by
-  // hand and pegged on the line, drying grey to white, the dry ones fading
-  // off the line's end onto the stack; and the same with the bigger vat and
-  // the drying line bought.
-  'after-paper': { about: 'the acts', say: "the paper mill's vat stirred by hand, wet sheets on the line drying grey to white, a dry one fading off the end onto the stack",
-    run: () => handPaper(false) },
-  'after-paper-line': { about: 'the acts', say: "the paper mill with its bigger vat and drying line: two sheets a pull on a line eight sheets long",
-    run: () => handPaper(true) },
 
   // The workshop (docs/mocks/act3-workshop-2026-10-18, roof A): nails tapped
   // by hand, two driven flush, one half in; and a sign just done, standing
@@ -3341,17 +3278,16 @@ export const SCENES = {
       window.__fast(0.6);
       window.__holdShot();
     } },
-  'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp half built (saw mill, chipper, workshop, posts filled), a fifth of God\'s yard walked out, the axe in hand',
+  'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp built (saw mill, workshop, posts filled), a fifth of God\'s yard walked out, the axe in hand',
     run: act3Mid },
   // Track C: each of act 3's boards open in the yard's sheet over the act-3-mid
   // camp, as a plain click on its station's sign opens it, the camera on the
-  // sign the board stands by (after/rows.js `openAfterBoard`); the paper mill
-  // and the press stood up for their own.
+  // sign the board stands by (after/rows.js `openAfterBoard`).
   // The pedestal's recruit row live: souls won in God's yard waiting to be
   // hired (DESIGN.md, "Act 3's workers are bought with rebel").
   'act3-recruit': { about: 'the acts', say: "act 3's pedestal board with souls won and waiting: the recruit row's count of ready and idle",
     run: () => { act3Board('pedestal'); window.__afterCrowd((i, v) => (i >= CROWD_FILES * 2 && i < CROWD_FILES * 2 + 12 ? 8 : v), true); window.__holdShot(); } },
-  ...Object.fromEntries(['shack', 'grove', 'pedestal', 'mill', 'chipper', 'papermill', 'workshop', 'press', 'crowd'].map(key =>
+  ...Object.fromEntries(['shack', 'grove', 'pedestal', 'mill', 'workshop', 'crowd'].map(key =>
     [`act3-board-${key}`, { about: 'the acts', say: `act 3's ${key} board open in the yard's sheet, its shelves, bills in the act's marks`,
       run: () => act3Board(key) }])),
   // God's pushback as drawn (render/aftercrowd.js): the throne's speech
@@ -3398,11 +3334,10 @@ function actsYard(point, pieces = 0) {
 }
 
 // Act 3 half way: the opening played (`__actsAt('fallen')`, the two of them
-// up on the pedestal), the axe in hand and its beat had, the saw mill, the
-// chipper and the workshop raised off the shack, posts bought and filled, a
-// fifth of the crowd made members and walked out to the camp (the setup the
-// scene is not about), the yard rich for the bills still to come. The paper
-// mill and the press are left to buy.
+// up on the pedestal), the axe in hand and its beat had, the saw mill and
+// the workshop raised off the shack, posts bought and filled, a fifth of the
+// crowd made members and walked out to the camp (the setup the scene is not
+// about), the yard rich for the bills still to come.
 // The way a cursor carries goods by hand from pile a to pile b, `t` of the
 // way along: up over whatever stands between, `HAND_ARC` art cells at its
 // height. The scenes' and the shots' path only; the hand in play goes
@@ -3416,12 +3351,12 @@ function act3Mid() {
   window.__afterCrowd((i, v) => (i % CROWD_FILES < 8 && i < CROWD_FILES * 30 ? 8 : v));
   for (let k = 0; k < 120 && window.__afterRead().walking > 0; k++) window.__fast(1);
   window.__afterGrant({ rebel: 600, timber: 20, logs: 6 });
-  for (const wave of [['mill', 'chipper'], ['workshop']]) {
+  for (const wave of [['mill'], ['workshop']]) {
     for (const st of wave) window.__buy(`after-build-${st}`);
     for (let k = 0; k < 300 && wave.some(st => !window.__afterRead().built.includes(st)); k++) window.__fast(1);
   }
   const A = AFTER_JOB;
-  staffAfter([A.CUT, A.CUT, A.CUT, A.SAW, A.CHIP, A.JOIN, A.JOIN]);
+  staffAfter([A.CUT, A.CUT, A.CUT, A.SAW, A.JOIN, A.JOIN]);
   for (const u of ['after-plot', 'after-plot']) window.__buy(u);
   window.__goPlace('after');
   window.__fast(20);
@@ -3430,12 +3365,10 @@ function act3Mid() {
 }
 
 // Track C: the act-3-mid camp, framed on one station (the crowd's front for
-// the crowd), and that station's board opened as its click opens it. The
-// paper mill and the press are stood up for their own boards; rebel and
-// timber enough for some tiles and short of others, so both edges show.
+// the crowd), and that station's board opened as its click opens it. Rebel
+// and timber enough for some tiles and short of others, so both edges show.
 function act3Board(key) {
   act3Mid();
-  for (const st of ['papermill', 'press']) if ((key === st || key === 'press') && !S.after.built.includes(st)) S.after.built.push(st);
   window.__afterGrant({ rebel: 200, timber: 40 });
   window.__fast(1);
   const b = key === 'crowd' ? null : key === 'grove' ? { x: plotX(0), w: groveX1() - plotX(0) } : signBox(key);
@@ -3448,15 +3381,14 @@ function act3Board(key) {
 }
 
 // God's pushback at a moment (`what`: 'warned', 'burn'): the opening
-// played, the crowd half won in its front files, posters along the fence and
-// a sign among the files, the speech aimed at the sign, the camera where
+// played, the crowd half won in its front files, a sign among the files,
+// the speech aimed at the sign, the camera where
 // the act opens.
 function pushback(what) {
   actsYard('fallen');
   window.__goPlace('after');
   const A = S.after;
   window.__afterCrowd((i, v) => (i % CROWD_FILES < 24 ? 3 + (i * 7) % 4 : v));
-  for (const s of [1, 8]) A.posters.push({ id: 91000 + s, slot: s, age: 0, torn: null, big: false });
   A.signs.push({ id: 92000, f: 4, r: 1, askew: false, pull: null, big: false, age: 0 });
   A.speech = { next: A.t + 1e6, target: null, burnt: null };
   window.__fast(0.5);

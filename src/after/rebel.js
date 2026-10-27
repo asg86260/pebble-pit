@@ -7,8 +7,8 @@
 // pedestal's foot and are counted where they land, never on the click
 // (nothing teleports). An agitator at a post beside the pedestal gives a
 // line of their own on a slow clock, worth less than the pair's. Rebel is all
-// either makes: a speech wins nobody (signs and posters do, union.js, and
-// each soul they win pays rebel of its own).
+// either makes: a speech wins nobody (signs do, union.js, and each
+// soul they win pays rebel of its own).
 //
 // The stations, the trees and the heap are worked by the hand's own motions
 // where they stand (after/gestures.js), not by this click.

@@ -46,10 +46,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     chop: (2 * C.GESTURE_SAW_END * C.GESTURE_SAW_AMP) / C.GESTURE_SAW_VMAX,   // a stroke end to end, a chop
     dig: C.GESTURE_STRAIN_S,                                                   // a root snapping, held up
     mill: C.GESTURE_WHEEL_LOG / (C.GESTURE_WHEEL_FEED * C.GESTURE_WHEEL_MAX_REV),
-    chipper: C.GESTURE_ARM_LOG / C.GESTURE_ARM_FEED + C.GESTURE_ARM_POSES * C.GESTURE_ARM_SPRING_S,
-    papermill: C.GESTURE_STIR_TURNS / C.GESTURE_STIR_MAX_REV,
     workshop: C.GESTURE_NAILS * C.GESTURE_NAIL_TAPS * C.GESTURE_SWING_S,
-    press: 1 / C.GESTURE_BAR_RATE + 1 / C.GESTURE_BAR_RETURN,
     tip: C.GESTURE_FLING_WINDOW_S * 4
   };
   // A person is slower than the cap, and no motion is quicker than a quarter second.
@@ -61,24 +58,23 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   // --- the plan: what a sensible player buys, in order -------------------------------
   // The axe and the saw mill first, a woodcutter carrying the felled logs to
   // the forestry shack and a sawyer fetching them on, the workshop and its
-  // joiner to get signs into the crowd, then the chain's other stations and
-  // a post at each, then the upgrades. A post is a member put on that job
+  // joiner to get signs into the crowd, then more posts and the upgrades.
+  // A post is a member put on that job
   // through the roster under its station (`row`, below), its seat bought
   // first where the job's seats are full; a post named twice is two members.
   const PLAN = [
     'after-axe', 'after-build-mill', 'after-post-woodcutter', 'after-post-sawyer', 'after-build-workshop',
     'after-post-joiner', 'after-podium', 'after-post-woodcutter', 'after-plot',
-    'after-build-chipper', 'after-post-feeder', 'after-post-joiner', 'after-heap', 'after-blade', 'after-plot',
-    'after-build-papermill', 'after-post-pulper', 'after-build-press', 'after-post-printer',
-    'after-stumps', 'after-grow', 'after-drum', 'after-vat', 'after-post-sawyer', 'after-post-woodcutter',
-    'after-bench', 'after-stack', 'after-spout', 'after-plot', 'after-dry', 'after-post-pulper',
-    'after-post-joiner', 'after-post-printer', 'after-tree', 'after-signreach', 'after-posterreach'
+    'after-post-joiner', 'after-heap', 'after-blade', 'after-plot',
+    'after-stumps', 'after-grow', 'after-post-sawyer', 'after-post-woodcutter',
+    'after-bench', 'after-plot',
+    'after-post-joiner', 'after-tree', 'after-signreach'
   ];
   // Past the plan, a post where the chain is short, as a player watching the
   // piles would put one: a joiner while carriers wait on signs with timber in,
-  // a hauler while logs lie in the grove, a woodcutter while grown trees
-  // stand, a printer or a paster likewise at the press; else a carrier, the
-  // post that wins members. Whoever is left idle agitates at the podium.
+  // a sawyer while logs lie in the grove, a woodcutter while grown trees
+  // stand; else a joiner, whose signs win members. Whoever is left idle
+  // agitates at the podium.
   let laterN = 0, laterKey = null;
   // A post on the plan, read as a row: shown with its seat row (its station
   // standing), free while a seat is free and the seat's bill once they are
@@ -101,7 +97,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   // none while one is free.
   const nextRebel = () => { const k = nextLater(); return k ? (afterBill(row(k)).find(([c]) => c === 'rebel') || [0, 0])[1] : 0; };
   // The most of an act's coin any row still on the plan asks: a post that would
-  // eat it (a joiner the timber, a printer the paper) waits until that is in.
+  // eat it (a joiner the timber) waits until that is in.
   function planNeeds(coin) {
     const count = {};
     let most = 0;
@@ -121,7 +117,6 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     const pick = (st.timber >= 8 * C.AFTER_SIGN_TIMBER + planNeeds('timber') && open('joiner') ? 'joiner'
       : st.timber < 10 * C.AFTER_SIGN_TIMBER && logs > 3 * C.AFTER_LOGS_A_TREE * Math.max(1, n('sawyer')) ? 'sawyer'
       : st.timber < 10 * C.AFTER_SIGN_TIMBER && a.plots.filter(standing).length > n('woodcutter') ? 'woodcutter'
-      : st.paper >= 8 * C.AFTER_POSTER_PAPER + planNeeds('paper') && open('printer') ? 'printer'
       : 'joiner');
     return open(pick) ? `after-post-${pick}` : null;
   }
@@ -187,7 +182,6 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     if (raised.length) mark('first', `first station (${raised[0]})`);
     for (const k of Object.keys(C.AFTER_BUILDS)) if (built(k)) mark(`b-${k}`, `${k} stands`);
     if (a.signs.length) mark('sign', 'first sign planted');
-    if (a.posters.length) mark('poster', 'first poster pasted');
     if (won() > C.AFTER_FIRST_MEMBERS) mark('member', 'first soul won');
     if (union() > C.AFTER_FIRST_MEMBERS) mark('hired', 'first worker hired');
     for (let k = 0; k < a.gate; k++) mark(`g-${k}`, `gate: ${C.AFTER_GATES[k]}`);
@@ -200,15 +194,12 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   // then the grove. Null with nothing to work.
   function handJob() {
     const a = S.after, st = a.stock;
-    // Signs and posters piling up at the door are the carriers' wait, not the
-    // hand's: it makes more only while there are few, and leaves the timber
-    // and paper alone while the next thing on the plan is short of them.
+    // Signs piling up at the door are the carriers' wait, not the hand's: it
+    // makes more only while there are few, and leaves the timber alone while
+    // the next thing on the plan is short of it.
     const want = wanted()[0], short = want ? shortOf(afterBill(row(want))) : [];
-    if (built('press') && st.paper >= C.AFTER_POSTER_PAPER && st.posters < 8 && !short.includes('paper')) return 'press';
     if (built('workshop') && st.timber >= C.AFTER_SIGN_TIMBER && st.signs < 3 && !short.includes('timber')) return 'workshop';
-    if (built('papermill') && st.sawdust >= C.AFTER_PULP_SAWDUST) return 'papermill';
     if (built('mill') && st.logs > 0 && !heapFull()) return 'mill';
-    if (built('chipper') && st.chiplogs > 0 && !heapFull()) return 'chipper';
     if (heapFull()) return 'tip';
     if (a.axe && a.plots.some(standing)) return 'chop';
     if (a.plots.some(stumped)) return 'dig';
