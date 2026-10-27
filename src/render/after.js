@@ -212,7 +212,7 @@ function drawStation(key) {
   }
   const s = working(key);
   draw(frameOf(key), s.work, a.t);
-  if (s.work) glyphOver(b, GLYPHS[key], s.at, s.ink);
+  if (s.work && !globalThis.__splitStyle) glyphOver(b, GLYPHS[key], s.at, s.ink);   // MOCK: the cog goes
 }
 // The shack, ordering: the glyph of the station going up filling over it a
 // piece at a time, each fading in as it lands.

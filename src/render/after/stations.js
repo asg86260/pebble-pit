@@ -23,7 +23,7 @@ const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 import { P, GESTURE_WHEEL_LOG, AFTER_SAW_TEETH, AFTER_ART_SCALE } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette } from './kit.js';
 import { stationX0, groundOf } from '../../after/place.js';
-import { splitLog, biteOf } from './splitmock.js';   // MOCK
+import { splitLog, biteOf, linkage, drawRod, drawHead } from './splitmock.js';   // MOCK
 import { held } from '../../reset.js';
 
 // `posed` is the pose each station drew its hand-worked part in this frame,
@@ -106,14 +106,17 @@ function mill(d, work, t, h, body = false) {
   const hand = turning(h);
   const sp = globalThis.__splitStyle, mb = sp && sp[0] === 'C' && !hand && work ? biteOf(cyc(t, SAW_T).ph, sp) : null;   // MOCK: the bite drives the wheel
   const a = mb ? mb.a : hand ? Math.round(h.ang / MILL_TURN) * MILL_TURN : work ? Math.floor(t / 0.1) * MILL_TURN : 0;
-  const o = Math.round(1.5 + 1.5 * Math.sin(a)), { L, R, head, bed, bx } = MILL;
+  const { L, R, head, bed, bx } = MILL;
+  const lk = mb && sp.length === 2 && 'ABC'.includes(sp[1]) ? linkage(sp, a, MW, head, bx) : null;   // MOCK: the bar, three ways
+  const o = lk ? Math.min(3, lk.o) : Math.round(1.5 + 1.5 * Math.sin(a));
   posed.mill = { a };
   const k = wheelAt(a);
   // MOCK: a smear trailing the knob through the down-stroke, fading behind it
   if (mb && mb.smear) for (let s = 1; s <= 3; s++) { const q0 = wheelAt(a - s * MILL_TURN), q1 = wheelAt(a - (s - 1) * MILL_TURN); d.fade(0.75 - s * 0.2, () => d.line(q0.kx, q0.ky, q1.kx, q1.ky, 4, PALE)); }
   flywheel(d, a);
   // The rod, in a paper rim, off the crank pin.
-  d.line(k.pin.x, k.pin.y, bx - 2.5, head - 4 + o, 7, W); d.line(k.pin.x, k.pin.y, bx - 2.5, head - 4 + o, 3);
+  if (lk) drawRod(d, lk);   // MOCK
+  else { d.line(k.pin.x, k.pin.y, bx - 2.5, head - 4 + o, 7, W); d.line(k.pin.x, k.pin.y, bx - 2.5, head - 4 + o, 3); }
   d.r(L, head, 2, bed - head, K); d.r(R, head, 2, bed - head, K);         // posts
   d.r(L - 1, head, R - L + 4, 3, K);                                      // the head
   d.r(L - 1, bed, R - L + 4, 4, K);                                       // the bed, on legs
@@ -123,9 +126,12 @@ function mill(d, work, t, h, body = false) {
   else if (hand && (h.prog || 0) > 0) { const lg = millLogAt((h.prog || 0) / GESTURE_WHEEL_LOG * 0.92, 1); millLog(d, lg.x, ly, bx); }
   else if (work) { const c = cyc(t, SAW_T), lg = millLogAt(c.ph, c.since); d.fade(lg.a, () => millLog(d, lg.x, ly, bx)); }
   millBlade(d, bx, head + 3, bed - 1, o);
+  if (lk) drawHead(d, lk);   // MOCK
+  else {
   d.r(bx, head - 3 + o, 2, 3 - o, K);                                     // its strap up out of the head
   d.r(bx - 3, head - 5 + o, 6, 2, K); d.px((bx) * P - 2, (head - 4 + o) * P - 2, 4, 4, W);   // the crosshead
   crankPin(d, k.pin);
+  }
   // A body at the wheel: its arm to its fist round the knob.
   if (body) {
     const fx = Math.round(k.kx * P) - 7, fy = Math.round(k.ky * P) - 7;

@@ -52,11 +52,19 @@ const HOLD = 0.12;   // the share of a bite the blade holds at the bottom
 // Three feels of the same bite, by the style's second letter ('C1' bite, 'C2' labor, 'C3' punch).
 const turnAt = g => Math.round((-Math.PI / 2 + g * 2 * Math.PI) / (Math.PI / 8)) * (Math.PI / 8);
 export function biteOf(ph, mode = 'C1') {
+  const asked = mode;
   const k = clamp01((ph - 0.05) / 0.7);
   if (k <= 0 || k >= 1) return { mode, k, bite: k >= 1 ? BITES : 0, f: 0, a: -Math.PI / 2, smear: false, impact: -1, cutting: -1, eaten: k >= 1 ? 4 : 0 };
   const x = k * BITES, bite = Math.floor(x), f = x - bite;
   let g, feed, smear, impact = -1, cutting = -1;
-  if (mode === 'C2') {
+  if (mode[1] && 'ABC'.includes(mode[1])) {
+    // round 5, bite and punch: still while the blade rises, then slammed down
+    // fast, held long at the bottom with the big burst, then drawn back up
+    g = f < 0.15 ? 0.08 * (f / 0.15) : f < 0.3 ? 0.08 + 0.42 * ((f - 0.15) / 0.15) ** 2 : f < 0.55 ? 0.5 : 0.5 + 0.5 * ((f - 0.55) / 0.45);
+    feed = f < 0.15 ? 0 : f < 0.3 ? ((f - 0.15) / 0.15) ** 2 : 1;
+    smear = f >= 0.15 && f < 0.3; impact = f >= 0.3 ? f - 0.3 : -1;
+    mode = 'C3';   // its chips and speed lines are the punch's
+  } else if (mode === 'C2') {
     // labor: a slow heavy cut through most of the turn, the log creeping in with it; a quick snap back
     const c = 0.72;
     g = f < c ? 0.5 * (f / c) : 0.5 + 0.5 * ((f - c) / (1 - c));
@@ -74,7 +82,7 @@ export function biteOf(ph, mode = 'C1') {
     feed = f < 0.15 ? 0 : f < 0.5 ? ((f - 0.15) / 0.35) ** 2 : 1;
     smear = f < 0.5; impact = f >= 0.5 ? f - 0.5 : -1;
   }
-  return { mode, k, bite, f, a: turnAt(g), smear, impact, cutting, eaten: (bite + feed) * 4 / BITES };
+  return { mode, asked, k, bite, f, a: turnAt(g), smear, impact, cutting, eaten: (bite + feed) * 4 / BITES };
 }
 // What comes off the kerf: a spit of chips at the impact (bite), a bigger
 // burst (punch), or a steady trickle of fine dust while the blade cuts (labor).
@@ -152,4 +160,44 @@ export function splitLog(d, style, ph, bed, bx, T) {
   }
   grains(d, bx, kerf, ph, T);
   footHeap(d, bx, 5 + kerf.filter(g => ph > g + 0.06).length);
+}
+
+// --- round 5: the bar from the wheel to the blade, three ways ('CA' a real
+// con-rod, 'CB' a bigger crank and a longer stroke, 'CC' a rocker beam). The
+// mill hands over the wheel's angle and its own numbers; this draws the rod
+// (behind the frame) and the crosshead (after the blade), and says how far
+// down the blade is (`o`).
+const eye = (d, x, y, tone = K) => { d.px(Math.round(x * P) - 5, Math.round(y * P) - 5, 10, 10, tone); d.px(Math.round(x * P) - 3, Math.round(y * P) - 3, 6, 6, W); d.px(Math.round(x * P) - 1, Math.round(y * P) - 1, 2, 2, K); };
+const disc = (d, cx, cy, r) => { for (let y = Math.floor(cy - r - 1); y <= cy + r + 1; y++) for (let x = Math.floor(cx - r - 1); x <= cx + r + 1; x++) if (Math.hypot(x + 0.5 - cx, y + 0.5 - cy) <= r) d.c(x, y, K); };
+const rodLine = (d, x0, y0, x1, y1) => { d.line(x0, y0, x1, y1, 8, W); d.line(x0, y0, x1, y1, 4, K); };
+export function linkage(style, a, MW, head, bx) {
+  const kind = style[1], r = kind === 'A' ? 1.5 : 3, stroke = kind === 'B' ? 6 : 3;
+  const pin = { x: MW.cx + Math.cos(a) * r, y: MW.cy + Math.sin(a) * r };
+  const o = Math.round(stroke / 2 + (stroke / 2) * Math.sin(a));
+  const top = (kind === 'B' ? head - 8 : head - 5) + o;          // the crosshead's top row
+  const lk = { kind, r, pin, o, top, MW, head, bx };
+  if (kind === 'C') {
+    // the beam: pivoted on a post over the frame, its short end on the crosshead, its long end on the rod
+    const pv = { x: bx - 5, y: head - 4 }, end = { x: bx, y: top }, th = Math.atan2(end.y - pv.y, end.x - pv.x);
+    lk.pv = pv; lk.end = end; lk.q = { x: pv.x - Math.cos(th) * 8, y: pv.y - Math.sin(th) * 8 };
+  }
+  return lk;
+}
+export function drawRod(d, lk) {
+  d.line(lk.MW.cx, lk.MW.cy, lk.pin.x, lk.pin.y, 7, K);             // the crank arm off the hub
+  const to = lk.kind === 'C' ? lk.q : { x: lk.bx - 2.5, y: lk.top + 1 };
+  rodLine(d, lk.pin.x, lk.pin.y, to.x, to.y);
+  if (lk.kind === 'C') {
+    d.r(lk.pv.x - 0.5, lk.pv.y, 1, lk.head - lk.pv.y, K);          // the beam's post, off the frame's head
+    d.line(lk.q.x, lk.q.y, lk.end.x, lk.end.y, 9, W); d.line(lk.q.x, lk.q.y, lk.end.x, lk.end.y, 6, K);
+    eye(d, lk.pv.x, lk.pv.y); eye(d, lk.q.x, lk.q.y);
+  }
+  eye(d, lk.pin.x, lk.pin.y);
+}
+export function drawHead(d, lk) {
+  const { bx, top, head } = lk;
+  d.r(bx, top + 2, 2, Math.max(0, head - top - 2), K);              // the strap down into the head
+  d.r(bx - 3, top, 6, 2, K);                                         // the crosshead
+  if (lk.kind === 'C') eye(d, lk.end.x, lk.end.y);
+  else eye(d, bx - 2.5, top + 1);
 }
