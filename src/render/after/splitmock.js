@@ -178,21 +178,18 @@ export function splitLog(d, style, ph, bed, bx, T) {
       for (let g = 0; g < 4; g++) { const age = out * 1.2 - g * 0.06, y = LY + 2 + (g >> 1) + age * age * 40; if (age > 0 && y < -1) d.px((bx + 8 + (g & 1)) * P, y * P, P, P, MID); }
     }
   } else {
-    // A column at a time, round 8: the blocks ride rollers off the bed's end and tip onto the pile.
-    const OUT = 0.75, WRAP = 0.25;
+    // A column at a time, round 9: the bed is a roller conveyor end to end, and each block rides out the
+    // moment its column is cut, tipping off the end one after another.
+    const OUT = 0.75;
     const b = biteOf(ph, style), cutting = ph >= 0.05 && ph < OUT, eaten = cutting ? b.eaten : 0, left = 4 - eaten;
+    rollerBed(d, bed, ((S.after && S.after.t) || 0) * ROLL_V);
     if (cutting && left > 0) d.px((bx - left) * P, LY * P, left * P, 4 * P, LOG);
-    const n = Math.min(3, Math.floor(eaten)), w = eaten < 3 ? 2 * (eaten % 1) : 0;
-    // the train: the last cut's three blocks rolled out, a slow push, from the feed's end on into the next cut's start
-    const trainT = ph >= OUT ? (ph - OUT) * T : ph < WRAP ? (ph + 1 - OUT) * T : -1;
-    rollers(d, bed, bx, trainT >= 0 ? trainT * ROLL_V : eaten * 2);
-    if (cutting) {
-      if (w > 0) block(d, TIMBER, bx + 2, LY + 2, 2, w);
-      for (let j = 0; j < n; j++) block(d, TIMBER, bx + 2 + w + (n - 1 - j) * 2, LY + 2, 2);
-      chips(d, bx, LY, b, T);
-      speedLines(d, bx, LY, b);
-    }
-    if (trainT >= 0) train(d, bed, bx, trainT);
+    // the block being cut, growing out of the blade
+    const w = cutting && eaten < 3 ? 2 * (eaten % 1) : 0;
+    if (w > 0) block(d, TIMBER, bx + 2, LY + 2, 2, w);
+    if (cutting) { chips(d, bx, LY, b, T); speedLines(d, bx, LY, b); }
+    // the cut blocks riding out: this cut's and the last cut's still on their way
+    outflow(d, bed, bx, ph, T);
     // the kerf: the last two bites spit two grains each at their impact
     const at = bite => 0.05 + 0.7 * ((bite + 0.5) / BITES);
     kerf = [at(6), at(6) + 0.004, at(7), at(7) + 0.004];
@@ -260,19 +257,20 @@ export function drawHead(d, lk) {
   else eye(d, bx - 2.5, top + 1);
 }
 
-// --- round 8: the outfeed. Rollers set in the bed past the blade and on a
-// short table off its end, turning with whatever rides them; the cut's three
-// blocks are pushed out along them slowly, and each tips over the table's
-// edge -- a quarter turn about the corner, drawn whole -- and drops onto the
-// pile, where it becomes a grain of the plot.
-const ROLL_V = 4.5, TIP_S = 0.4, FALL_S = 0.25;
-function rollers(d, bed, bx, travel) {
-  d.r(BED_END, bed, END - BED_END, 1, K);                            // the table off the bed's end
-  d.r(BED_END, bed + 1, 0.5, -bed - 1, K);                           // and its leg
-  const a = travel / 0.5;                                            // a roller's turn for the distance ridden
-  for (let x = bx + 3; x < END; x += 2) {
-    d.px(x * P - 3, bed * P + 1, 6, 4, W);
-    d.px(x * P - 1 + Math.round(Math.cos(a) * 2), bed * P + 2 + Math.round(Math.sin(a) * 1), 2, 2, K);
+// --- round 9: the outfeed. The bed's top is rollers end to end, from the
+// infeed past the blade and onto a short table off its end, all turning while
+// the saw runs. A block rides out the moment its column is cut, at the
+// rollers' pace, tips over the table's edge -- a quarter turn about the
+// corner, drawn whole -- and drops onto the pile, where it becomes a grain.
+const ROLL_V = 3, TIP_S = 0.4, FALL_S = 0.25, BED_L = 31;
+function rollerBed(d, bed, travel) {
+  d.r(BED_END, bed, END - BED_END, 2, K);                            // the table off the bed's end
+  d.r(BED_END, bed + 2, 0.5, -bed - 2, K);                           // and its leg
+  const a = travel;                                                  // a roller of radius one cell turns a radian a cell ridden
+  for (let x = BED_L + 1; x < END; x += 2) {
+    d.px((x - 1) * P + 1, bed * P + 1, 2 * P - 2, 2 * P - 2, W);
+    d.line(x, bed + 1, x + Math.cos(a + x) * 0.75, bed + 1 + Math.sin(a + x) * 0.75, 2, K);
+    d.px(x * P - 1, (bed + 1) * P - 1, 2, 2, K);
   }
 }
 // A block turned `ang` about the pivot (px, py), in the frame's cells, drawn as one piece.
@@ -282,16 +280,20 @@ function turned(d, px0, py0, ang) {
   ctx.fillStyle = GREY[TIMBER]; ctx.fillRect(-2 * s, -2 * s, 2 * s - 1, 2 * s - 1);
   ctx.restore();
 }
-function train(d, bed, bx, tt) {
-  const top = bed - 2, start = Math.round(((S.after && S.after.t) || 0) - tt);
-  [bx + 6, bx + 4, bx + 2].forEach((x0, i) => {
-    const reach = (END - 2 - x0) / ROLL_V;                           // when its front edge meets the table's edge
-    if (tt < reach) { block(d, TIMBER, x0 + ROLL_V * tt, top, 2); return; }
-    const u = tt - reach;
-    if (u < TIP_S) { turned(d, END, bed, (Math.PI / 2) * (u / TIP_S) ** 1.6); return; }
-    const f = (u - TIP_S) / FALL_S, to = plotTop(DROP_COL);
-    if (f < 1) { block(d, TIMBER, END, lerp(top, to, f * f), 2); return; }
-    const key = `${start}-${i}`;
-    if (!landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 64) landedKeys.clear(); }
-  });
+// When block j of a cut is whole and starts to ride: the end of the bite that finishes its column.
+const doneAt = j => 0.05 + 0.7 * ((2 * j + 1) + 0.3) / BITES;
+function outflow(d, bed, bx, ph, T) {
+  const top = bed - 2, now = (S.after && S.after.t) || 0, travel = (END - 2 - (bx + 2)) / ROLL_V;
+  for (const back of [1, 0]) for (let j = 0; j < 3; j++) {
+    const age = (ph + back - doneAt(j)) * T;
+    if (age < 0) continue;
+    const key = `${Math.round(now - age)}-${j}`;
+    if (age < travel) { block(d, TIMBER, bx + 2 + ROLL_V * age, top, 2); continue; }
+    const u = age - travel;
+    if (u < TIP_S) { turned(d, END, bed, (Math.PI / 2) * (u / TIP_S) ** 1.6); continue; }
+    const f = (u - TIP_S) / FALL_S;
+    if (f < 1) { block(d, TIMBER, END, lerp(top, plotTop(DROP_COL), f * f), 2); continue; }
+    // it joins the pile once, in the half second after it lands
+    if (f < 1 + 0.5 / FALL_S && !landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 64) landedKeys.clear(); }
+  }
 }
