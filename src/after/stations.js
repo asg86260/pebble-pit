@@ -4,10 +4,12 @@
 // the hover, the cursor and a board's close on scroll serve them as they
 // serve the yard's. `place: 'after'` keeps them to the afterlife's view.
 //
-// Every station sells from its sign (the owner, 2026-10-21): the drawing is
-// the hand's, worked where it stands (after/gestures.js), and opens no board.
-// The grove's sign is the forestry shack's; God's crowd sells nothing and
-// has no sign, its `hit` his camp on its stage. Their boards' rows are
+// Every station is its own shop (DESIGN.md, "Act 3's goods are blocks",
+// rule 4): a click on it anywhere its hand work does not take opens its
+// board (input.js asks the hand work first), and the board stands beside it
+// (`boardAnchor`), on the ground its sign stood on, so it never covers the
+// parts the hand works. The grove's board is the forestry shack's; God's
+// crowd is asked over his camp on its stage (`hit`). Their boards' rows are
 // after/rows.js's (`registerBoard`).
 
 import { held } from '../reset.js';
@@ -45,11 +47,9 @@ const flag = key => {
   return name;
 };
 
-// The station a card's sign and ground are: the grove's are the forestry
-// shack's, in front of its trees (the owner, 2026-10-20).
+// The station a card's ground is: the grove's is the forestry shack's, in
+// front of its trees (the owner, 2026-10-20).
 const ground = card => (card === 'grove' ? 'forestry' : card);
-// Whether the board sold from station `key`'s sign is up: the sign shows it.
-export const signUp = key => !!openKey && ground(openKey.slice('after-'.length)) === key;
 
 // The point God's crowd's board was asked over (after/rows.js
 // `openAfterBoard`), or null: over God as drawn.
@@ -74,7 +74,8 @@ const row = (card, more) => {
     // its hit box is its ground, never padded past it
     reach: { left: 0, right: 0, up: 0, down: 0 },
     stand: () => stationBox(ground(card)),
-    sign: () => signBoard(ground(card)),
+    // beside it: over the station it would hide the parts the hand works
+    boardAnchor: () => signBoard(ground(card)),
     ...more
   };
 };
@@ -99,7 +100,7 @@ export const AFTER_STATION_ROWS = [
     get full() { return msg('after-stall-heap'); }
   },
   row('crowd', {
-    sign: null,
+    boardAnchor: null,
     open: live,
     stand: () => (crowdAt ? { x: crowdAt.x - P, y: crowdAt.y - P, w: P * 2, h: P * 2 }
                           : { x: godMid(mid()) - P, y: faceY() - P, w: P * 2, h: P * 2 }),

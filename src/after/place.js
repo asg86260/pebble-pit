@@ -29,7 +29,7 @@ export const AP = P * AFTER_ART_SCALE;
 // stands AFTER_GAP above it and its own top AFTER_H above that.
 export const afterFloor = () => snap(-AFTER_GAP);
 // A station's shelf, in cells over the floor line, and the top of it: where
-// its drawing, piles, sign, door and roster stand (config, AFTER_SHELF).
+// its drawing, piles, board's spot, door and roster stand (config, AFTER_SHELF).
 export const shelfOf = key => AFTER_SHELF[key] || 0;
 export const groundOf = key => afterFloor() - shelfOf(key) * P;
 export const afterTop = () => afterFloor() - AFTER_H;
@@ -43,11 +43,12 @@ export const inAfter = (x, y) => y >= afterTop() && y <= afterFloor() && x >= af
 // where the config lays the camp out off them; the pedestal stands as high
 // as the config says.
 // The pedestal is the pair's podium (render/after/pedestal.js), its box as
-// tall as the podium they stand on. Its shop sign stands on the open floor
-// between the workshops and the union's crowd, AFTER_PEDESTAL_SIGN_GAP.shack art
-// cells past the last workshop's ground (the shack's sign ends it), and its
-// ground runs from the sign; the crowd stops `crowd` art cells short of
-// the sign (`unionHalf`). Farther when the last workshop's shelf stands higher
+// tall as the podium they stand on. Its board's spot (`signBox`) stands on
+// the open floor between the workshops and the union's crowd,
+// AFTER_PEDESTAL_SIGN_GAP.shack art cells past the last workshop's ground
+// (the shack's board's spot ends it), and its ground runs from that spot;
+// the crowd stops `crowd` art cells short of
+// that spot (`unionHalf`). Farther when the last workshop's shelf stands higher
 // than its ramp down to the pedestal's floor has room for (after/art.js, `rampRun`).
 const lastWorks = () => Object.keys(AFTER_STATIONS).filter(k => k !== 'pedestal').reduce((a, k) => (worksEnd(k) > worksEnd(a) ? k : a));
 const worksEnd = k => stationX0(k) + ART[k].ground * AP;
@@ -83,9 +84,10 @@ export const signMarch = () => CROWD_X0 - signFetchX();
 // mock draws there.
 export const stationDoor = key => (ART[key] ? stationX0(key) + ART[key].door * AP : 0);
 export const stationMid = key => { const b = stationBox(key); return b ? b.x + b.w / 2 : 0; };
-// A station's shop sign (after/art.js, SIGN), post and board, and the board
-// alone: where its board is asked for, over the heads of anyone standing at
-// the post.
+// The column of a station's ground its board stands over (after/art.js,
+// SIGN), from the floor up, and its upper part alone, the board's anchor
+// (after/stations.js, `boardAnchor`): beside the station, so the board
+// covers none of the parts the hand works.
 export const signBox = key => {
   const C = AFTER_SIGN_BOARD;
   return ART[key] && { x: stationX0(key) + ART[key].sign * AP, y: groundOf(key) - (C.post + C.h) * AP, w: C.w * AP, h: (C.post + C.h) * AP };
@@ -149,7 +151,7 @@ export const podiumTop = () => podiumTopOf(podiumStood());
 export const podiumMid = () => stationX0('pedestal') + ART.pedestal.ground * AP / 2;
 // The union's crowd (render/after/unioncrowd.js) across the half at most:
 // its back rows kept AFTER_PEDESTAL_SIGN_GAP.crowd art cells short of the
-// pedestal's sign, which stands between it and the workshops.
+// pedestal's board's spot, which stands between it and the workshops.
 export const unionHalf = () => {
   const s = signBox('pedestal');
   return Math.min(UNION_CROWD.half[1], podiumMid() - (s.x + s.w) - AFTER_PEDESTAL_SIGN_GAP.crowd * AP);
@@ -159,7 +161,7 @@ export const speakerAt = k => ({ x: podiumMid() + AFTER_PODIUM_PAIR[k ? 1 : 0], 
 export const pileX = () => snap(podiumMid() + AFTER_PODIUM_PILE * AP);
 // Where an idle member stands, agitating: in a row behind the pedestal, a
 // spot each, as many spots as the floor holds between the pedestal and
-// its sign (one at the least); the rest wait in the crowd.
+// its board's spot (one at the least); the rest wait in the crowd.
 export const idleX = k => { const b = stationBox('pedestal'); return b.x - P * 3 - k * AFTER_IDLE_STEP; };
 export const idleSpots = () => { const s = signBox('pedestal'); return Math.max(1, Math.floor((idleX(0) - P * 3 - (s.x + s.w)) / AFTER_IDLE_STEP) + 1); };
 // The members waiting are counted, not stood anywhere (the owner, 2026-10-18:
@@ -298,10 +300,10 @@ export function floorFlats() {
 // Whether a station's ground is taken: standing, or ordered and going up.
 // Before the act begins, the two that stand from its first frame.
 // Every station of the camp stands on its ground from the start, closed until
-// it is built, its sign crossed through (render/after.js).
+// it is built, drawn as its dotted plan (render/after.js).
 export const sited = key => (S.after ? S.after.built.includes(key) || !!S.after.raising[key] || key in AFTER_STATIONS : AFTER_START_BUILT.includes(key));
 // Whether a station stands closed: standing whole but not built yet, its
-// closed sign in front of it until its rebuild takes it down.
+// dotted plan until its rebuild fills it in.
 export const closed = key => !!S.after && !AFTER_START_BUILT.includes(key) && !S.after.built.includes(key) && key in AFTER_STATIONS;
 // Which grounds are taken, as a key: the profile is worked out again only
 // when that changes.

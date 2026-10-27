@@ -125,9 +125,13 @@ canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(
 // The constrict's orb hangs inside its fighter's station ground, and is the
 // thing to press there: a board opened under it would cover it and its bar.
 const overOrb = (x, y) => S.view === 'deep' && !!onOrb(x, y);
+// Up there a station's moving parts stand inside its ground, and are the hand
+// work's: the shop opens on the rest of the station, never on what a press
+// would take hold of (DESIGN.md, "Act 3's goods are blocks", rule 4).
+const overWork = (x, y) => S.view === 'after' && gestureUnder(x, y);
 // The station whose board the pointer asks for: the hover, the click and the
 // tap all ask this one.
-const boardAt = (x, y) => (overOrb(x, y) ? null : stationAt(x, y));
+const boardAt = (x, y) => (overOrb(x, y) || overWork(x, y) ? null : stationAt(x, y));
 // Standing at any station at all; the click and move handlers ask the same
 // table.
 const atStation = (x, y) => boardAt(x, y) !== null;
@@ -211,6 +215,8 @@ canvas.addEventListener('pointerdown', e => {
     // press on a button never a swing at what stands behind it.
     if (rosterHit(p.x, p.y)) return;
     if (S.view === 'after' && gestureDown(p.x, p.y)) {
+      // taking hold of the work shuts the shop, pointer or finger alike
+      showPanel(null, true);
       if (gestureHeld()) try { canvas.setPointerCapture(e.pointerId); } catch {}
       return;
     }
@@ -440,10 +446,6 @@ function buildingAt(x, y) {
   // Every standing place by its own row's name (`STATIONS`).
   for (const r of STATIONS) {
     if (!r.name || !r.stand || !here(r) || !r.open()) continue;
-    // A station that sells from a sign is worked by hand where it stands, and
-    // a label over it there is in the way of the work (the owner,
-    // 2026-10-21); its board says its name.
-    if (r.sign) continue;
     // a row that says its hit is named over what is drawn there
     if (r.hit) { if (nearStation(r.key, x, y)) return r.name; continue; }
     const rect = standRect(r.key);
@@ -612,6 +614,9 @@ function overOpenBoard(cx, cy) {
 // The tooltip: what the cursor went and looked at. Not the board, which opens
 // because you walked up to a station; two questions, asked separately.
 function askedAbout(x, y, cx, cy) {
+  // Up there nothing is said over a part the hand works, or while it works
+  // one: a label there is in the way of the work.
+  if (S.view === 'after' && (gestureHeld() || gestureUnder(x, y))) { showTipAt(null); return false; }
   // Somebody first: they are the only thing that moves, so a mark they are
   // over can still be read a moment later. In your hand before under the
   // cursor: a body being carried is the one you are asking about.

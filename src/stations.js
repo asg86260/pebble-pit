@@ -114,9 +114,11 @@ for (const id of PARTY_IDS) {
 // works it is a site for (every row with a board, or `site`), built by the
 // yard's builders on its ground (`stand`) unless it says otherwise
 // (`builtBy`). A row with a `pile` has a pile that can fill: the mark over it
-// and its hover come from that. A row with a `sign` sells from it: the sign,
-// not the ground, is where the pointer asks for its board and where the
-// board stands, so the station itself is left to the hand. So a new place is one row, and every system
+// and its hover come from that. A row with a `boardAnchor` says where its
+// board stands, a rectangle read live as `stand` is: beside the station
+// rather than over it, where the board would hide the parts a hand works
+// (act 3's stations, after/stations.js); without one, the board stands on
+// its ground. So a new place is one row, and every system
 // that shows or staffs a place reads it off here.
 //
 // Which place a row stands in (`place`: 'yard', 'deep', 'after' or 'hell';
@@ -310,11 +312,10 @@ export function standRect(key) {
 }
 
 // A station's hit box: its ground padded by its reach, where the pointer
-// opens its board; for a row that sells from a sign, the sign.
+// opens its board.
 export function hitRect(key) {
   const s = station(key);
   if (!s || !s.stand || !s.open()) return null;
-  if (s.sign) return s.sign();
   const r = s.stand();
   if (!r) return null;
   const c = { ...REACH, ...(s.reach || {}) };
@@ -323,11 +324,9 @@ export function hitRect(key) {
 }
 
 // Near enough to a station's ground to be interested in it: inside its hit
-// box, or, for a row that says its `sign` or its `hit`, on that.
-const inBox = (b, x, y) => !!b && x >= b.x && x < b.x + b.w && y >= b.y && y <= b.y + b.h;
+// box, or, for a row that says its `hit`, on that.
 export function nearStation(key, x, y) {
   const s = station(key);
-  if (s?.sign) return !!s.open() && inBox(s.sign(), x, y);
   if (s?.hit) return !!s.open() && !!s.hit(x, y);
   const r = hitRect(key);
   return !!r && x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h;

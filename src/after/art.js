@@ -31,16 +31,17 @@ const DRAWN = {
   // grove's board, and the pile its gatherers bring the fallen logs to,
   // on its grove side, where the haulers fetch them from.
   forestry:  { box: [8, 16, 13], door: 10, pile: { grovelogs: 0 } },
-  // Its sign on the workshops' side, between the last workshop and the
-  // union's crowd: laid there off both by after/place.js, which overrides
+  // Its board's ground on the workshops' side, between the last workshop and
+  // the union's crowd: laid there off both by after/place.js, which overrides
   // this column (God's side holds the rebel pile).
   pedestal:  { box: [1, 10, 4], door: 6, pile: {}, ground: 16, sign: -8 }
 };
-// Every station's shop is a sign on a post on its own ground (the owner,
-// 2026-10-21: the drawing is the hand work's, the sign the board's): `w`
-// and `h` its board, `post` its post, in cells; it stands a cell past the
-// rest of its ground unless the row says where (`sign`). A closed station's
-// sign is crossed through; open, it carries the shop's mark.
+// Every station's board stands beside it, over a column of its own ground
+// where its shop sign stood until the station became its own shop
+// (2026-10-27): kept, and nothing drawn on it, so the board never stands
+// over the parts the hand works and the camp kept its layout. `w` and `h`
+// the spot the board stands over, `post` the floor under it, in cells; a
+// cell past the rest of the ground unless the row says where (`sign`).
 export const SIGN = { w: 6, h: 4, post: 3 };
 // A pile is six cells across, and a body stands three wide on its door.
 const PILE_CELLS = 6;
@@ -58,8 +59,8 @@ export const HEAP = { r: 4, notch: 5, gap: 1 };
 export const standCol = (a, x) => (x + PILE_CELLS / 2 < a.box[0] + a.box[1] / 2 ? x - PILE_STAND.stand : x + PILE_CELLS + PILE_STAND.stand);
 // Each station's ground, derived from what it draws: from its first drawn
 // column (`lead`) to the column past its last (`ground`), its box, its piles
-// and the floor a body loads each from, its door, its `reach` and its sign
-// all inside, so every two neighbors stand the one gap apart however each is
+// and the floor a body loads each from, its door, its `reach` and its
+// board's spot all inside, so every two neighbors stand the one gap apart however each is
 // drawn. The pedestal's ground is the union's camp's (config/after.js lays
 // it at the camp's middle).
 // A station with a heap stands it past everything else on its ground, `gap`
