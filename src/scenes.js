@@ -3065,7 +3065,7 @@ export const SCENES = {
   // until an idle member is carrying logs to the saw mill and a cut is
   // falling out of the saw's right side onto its timber pile; framed on the
   // mill from its log pile to its timber pile.
-  'after-split-a': { about: 'the acts', review: 'saw mill: the log split at the blade', option: 'A quarters', say: "Two columns through the blade and they are two blocks, one over the other; the next two are one more block; the last quarter puffs out under the blade as four grains.",
+  'after-split-a': { about: 'the acts', say: "Two columns through the blade and they are two blocks, one over the other; the next two are one more block; the last quarter puffs out under the blade as four grains.",
     run: () => {
       globalThis.__splitStyle = 'A';
       afterChain(false);
@@ -3074,7 +3074,7 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w / 2 - P * 10;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-split-b': { about: 'the acts', review: 'saw mill: the log split at the blade', option: 'B seams open', say: "The log crosses whole and turns to timber past the blade, its seams opening; at the bed's end three blocks slide off and the fourth crumbles into grains.",
+  'after-split-b': { about: 'the acts', say: "The log crosses whole and turns to timber past the blade, its seams opening; at the bed's end three blocks slide off and the fourth crumbles into grains.",
     run: () => {
       globalThis.__splitStyle = 'B';
       afterChain(false);
@@ -3083,9 +3083,27 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w / 2 - P * 10;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-split-c': { about: 'the acts', review: 'saw mill: the log split at the blade', option: 'C a column at a time', say: "The log shortens into the blade; each column it eats comes out as one block, pushing the last along; the fourth column is four grains, one a stroke.",
+  'after-split-c': { about: 'the acts', review: 'saw mill: the heft of the bite (option C)', option: 'C1 bite', say: "Each turn is one stroke: the log holds, then is driven in as the blade comes down; the blade holds a beat at the bottom and chips spit out both sides.",
     run: () => {
-      globalThis.__splitStyle = 'C';
+      globalThis.__splitStyle = 'C1';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 4 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w / 2 - P * 10;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-split-c2': { about: 'the acts', review: 'saw mill: the heft of the bite (option C)', option: 'C2 labor', say: "A slow heavy down-stroke through most of the turn, the log creeping in as it is cut and fine dust trickling out the whole time; then a quick snap back, the smear on the return.",
+    run: () => {
+      globalThis.__splitStyle = 'C2';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 4 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w / 2 - P * 10;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-split-c3': { about: 'the acts', review: 'saw mill: the heft of the bite (option C)', option: 'C3 punch', say: "Slammed down fast with speed lines beside the blade, held long at the bottom, a bigger burst of chips; then drawn back.",
+    run: () => {
+      globalThis.__splitStyle = 'C3';
       afterChain(false);
       window.__afterGrant({ grovelogs: 60, timber: 4 });
       window.__fast(20);

@@ -104,13 +104,13 @@ function millLogAt(ph, since) {
 }
 function mill(d, work, t, h, body = false) {
   const hand = turning(h);
-  const mb = globalThis.__splitStyle === 'C' && !hand && work ? biteOf(cyc(t, SAW_T).ph) : null;   // MOCK: the bite drives the wheel
+  const sp = globalThis.__splitStyle, mb = sp && sp[0] === 'C' && !hand && work ? biteOf(cyc(t, SAW_T).ph, sp) : null;   // MOCK: the bite drives the wheel
   const a = mb ? mb.a : hand ? Math.round(h.ang / MILL_TURN) * MILL_TURN : work ? Math.floor(t / 0.1) * MILL_TURN : 0;
   const o = Math.round(1.5 + 1.5 * Math.sin(a)), { L, R, head, bed, bx } = MILL;
   posed.mill = { a };
   const k = wheelAt(a);
   // MOCK: a smear trailing the knob through the down-stroke, fading behind it
-  if (mb && mb.down) for (let s = 1; s <= 3; s++) { const q0 = wheelAt(a - s * MILL_TURN), q1 = wheelAt(a - (s - 1) * MILL_TURN); d.fade(0.75 - s * 0.2, () => d.line(q0.kx, q0.ky, q1.kx, q1.ky, 4, PALE)); }
+  if (mb && mb.smear) for (let s = 1; s <= 3; s++) { const q0 = wheelAt(a - s * MILL_TURN), q1 = wheelAt(a - (s - 1) * MILL_TURN); d.fade(0.75 - s * 0.2, () => d.line(q0.kx, q0.ky, q1.kx, q1.ky, 4, PALE)); }
   flywheel(d, a);
   // The rod, in a paper rim, off the crank pin.
   d.line(k.pin.x, k.pin.y, bx - 2.5, head - 4 + o, 7, W); d.line(k.pin.x, k.pin.y, bx - 2.5, head - 4 + o, 3);

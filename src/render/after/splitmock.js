@@ -49,30 +49,61 @@ function slideOff(d, from, out, b, puff = false) {
 // keep one beat.
 export const BITES = 8;
 const HOLD = 0.12;   // the share of a bite the blade holds at the bottom
-export function biteOf(ph) {
+// Three feels of the same bite, by the style's second letter ('C1' bite, 'C2' labor, 'C3' punch).
+const turnAt = g => Math.round((-Math.PI / 2 + g * 2 * Math.PI) / (Math.PI / 8)) * (Math.PI / 8);
+export function biteOf(ph, mode = 'C1') {
   const k = clamp01((ph - 0.05) / 0.7);
-  if (k <= 0 || k >= 1) return { k, bite: k >= 1 ? BITES : 0, f: 0, a: -Math.PI / 2, down: false, impact: -1 };
+  if (k <= 0 || k >= 1) return { mode, k, bite: k >= 1 ? BITES : 0, f: 0, a: -Math.PI / 2, smear: false, impact: -1, cutting: -1, eaten: k >= 1 ? 4 : 0 };
   const x = k * BITES, bite = Math.floor(x), f = x - bite;
-  // the turn, held at the bottom (a = pi/2) for HOLD of the bite
-  const g = f < 0.5 ? f : f < 0.5 + HOLD ? 0.5 : 0.5 + (f - 0.5 - HOLD) / (0.5 - HOLD) * 0.5;
-  const a = Math.round((-Math.PI / 2 + g * 2 * Math.PI) / (Math.PI / 8)) * (Math.PI / 8);
-  // the feed: still, then driven in hard as the blade comes down, done at the bottom
-  const feed = f < 0.15 ? 0 : f < 0.5 ? ((f - 0.15) / 0.35) ** 2 : 1;
-  return { k, bite, f, a, down: f < 0.5, impact: f >= 0.5 ? (f - 0.5) : -1, eaten: (bite + feed) * 4 / BITES };
+  let g, feed, smear, impact = -1, cutting = -1;
+  if (mode === 'C2') {
+    // labor: a slow heavy cut through most of the turn, the log creeping in with it; a quick snap back
+    const c = 0.72;
+    g = f < c ? 0.5 * (f / c) : 0.5 + 0.5 * ((f - c) / (1 - c));
+    feed = f < c ? f / c : 1;
+    smear = f >= c; cutting = f < c ? f / c : -1;
+  } else if (mode === 'C3') {
+    // punch: slammed down fast, held long at the bottom, then drawn back
+    const hit = 0.22, hold = 0.5;
+    g = f < hit ? 0.5 * (f / hit) ** 2 : f < hold ? 0.5 : 0.5 + 0.5 * ((f - hold) / (1 - hold));
+    feed = f < hit ? (f / hit) ** 2 : 1;
+    smear = f < hit; impact = f >= hit ? f - hit : -1;
+  } else {
+    // bite: still, driven in as the blade comes down, held a beat at the bottom
+    g = f < 0.5 ? f : f < 0.5 + HOLD ? 0.5 : 0.5 + (f - 0.5 - HOLD) / (0.5 - HOLD) * 0.5;
+    feed = f < 0.15 ? 0 : f < 0.5 ? ((f - 0.15) / 0.35) ** 2 : 1;
+    smear = f < 0.5; impact = f >= 0.5 ? f - 0.5 : -1;
+  }
+  return { mode, k, bite, f, a: turnAt(g), smear, impact, cutting, eaten: (bite + feed) * 4 / BITES };
 }
-// Chips spat out of the kerf at the impact, both sides, falling and fading.
+// What comes off the kerf: a spit of chips at the impact (bite), a bigger
+// burst (punch), or a steady trickle of fine dust while the blade cuts (labor).
 function chips(d, bx, LY, b, T) {
+  const sec = 0.7 * T / BITES;
+  if (b.mode === 'C2') {
+    if (b.cutting < 0) return;
+    for (let i = 0; i < 6; i++) {
+      const u = (b.cutting * 3 + i / 6) % 1, side = i % 2 ? 1 : -1;
+      d.fade(1 - u, () => d.px((bx + 1 + side * (0.6 + u * 2.2)) * P, (LY + 2 + u * 3.5) * P, P / 2, P / 2, i < 2 ? MID : PALE));
+    }
+    return;
+  }
   if (b.impact < 0) return;
-  const age = b.impact * 0.7 * T / BITES;   // seconds since the bottom
-  if (age > 0.5) return;
-  d.fade(1 - age / 0.5, () => {
-    for (let i = 0; i < 8; i++) {
-      const side = i % 2 ? 1 : -1, sp = 4 + hash(b.bite * 9.1 + i) * 8, up = 6 + hash(b.bite * 3.7 + i) * 8;
+  const big = b.mode === 'C3', age = b.impact * sec, life = big ? 0.6 : 0.5, n = big ? 14 : 8;
+  if (age > life) return;
+  d.fade(1 - age / life, () => {
+    for (let i = 0; i < n; i++) {
+      const side = i % 2 ? 1 : -1, sp = (big ? 6 : 4) + hash(b.bite * 9.1 + i) * (big ? 12 : 8), up = (big ? 9 : 6) + hash(b.bite * 3.7 + i) * 8;
       const x = bx + 1 + side * (1 + age * sp), y = LY + 1 + (i % 4) * 0.6 - age * up + age * age * 45;
-      const big = i < 3;
-      d.px(x * P, y * P, big ? P : P / 2, big ? P : P / 2, big ? MID : PALE);
+      const fat = i < (big ? 5 : 3);
+      d.px(x * P, y * P, fat ? P : P / 2, fat ? P : P / 2, fat ? MID : PALE);
     }
   });
+}
+// Punch: speed lines either side of the blade while it is slammed down.
+function speedLines(d, bx, LY, b) {
+  if (b.mode !== 'C3' || !b.smear) return;
+  d.fade(0.8, () => { for (const sx of [-1.5, 2.5]) d.px((bx + sx) * P, (LY - 7) * P, 2, 6 * P, PALE); });
 }
 
 // `ph` the cut's phase, 0..1: the feed, then the blocks off the end.
@@ -105,14 +136,15 @@ export function splitLog(d, style, ph, bed, bx, T) {
       for (let g = 0; g < 4; g++) { const age = out * 1.2 - g * 0.06, y = LY + 2 + (g >> 1) + age * age * 40; if (age > 0 && y < -1) d.px((bx + 8 + (g & 1)) * P, y * P, P, P, MID); }
     }
   } else {
-    // A column at a time, round 3: driven a bite at a time; each column out the far side as one block; the fourth is the kerf.
-    const b = biteOf(ph), eaten = done ? 4 : b.eaten, left = 4 - eaten;
+    // A column at a time, round 4: three feels of the bite (C1 bite, C2 labor, C3 punch). driven a bite at a time; each column out the far side as one block; the fourth is the kerf.
+    const b = biteOf(ph, style), eaten = done ? 4 : b.eaten, left = 4 - eaten;
     if (left > 0 && !done) d.px((bx - left) * P, LY * P, left * P, 4 * P, LOG);
     const n = Math.min(3, Math.floor(eaten)), w = eaten < 3 ? 2 * (eaten % 1) : 0;
     if (!done) {
       if (w > 0) block(d, TIMBER, bx + 2, LY + 2, 2, w);
       for (let j = 0; j < n; j++) block(d, TIMBER, bx + 2 + w + (n - 1 - j) * 2, LY + 2, 2);
       chips(d, bx, LY, b, T);
+      speedLines(d, bx, LY, b);
     } else for (let q = 0; q < 3; q++) slideOff(d, [bx + 2 + (2 - q) * 2, LY + 2], out, q, true);
     // the kerf: the last two bites spit two grains each at their impact
     const at = bite => 0.05 + 0.7 * ((bite + 0.5) / BITES);
