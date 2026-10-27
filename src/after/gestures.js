@@ -39,7 +39,7 @@ import { P, AFTER_SIGN_TIMBER, AFTER_SIGN_S, GESTURE_CUE_USES, GESTURE_CUE_FADE_
          GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S, GESTURE_JOINER_WAIT_S,
          GESTURE_FLING_MIN, GESTURE_FLING_MAX, GESTURE_FLING_LOADS, GESTURE_FLING_WINDOW_S, GESTURE_FLING_GRAV,
          GESTURE_FLING_LIFT, GESTURE_LOAD_FADE_S, GESTURE_PAD_PULL, GESTURE_PAD_TURN,
-         HANDWORK_HINT_S, HANDWORK_STRIP_S, HANDWORK_IDLE_SPEED, HANDWORK_DONE_S } from '../config.js';
+         GESTURE_HOVER_S } from '../config.js';
 import { smoothstep } from '../motion.js';
 import { afterlifeOn } from '../acts.js';
 import { secs } from './util.js';
@@ -75,10 +75,9 @@ export const lowestBubble = () => (BUBBLES.list() || []).reduce((a, b) => (!a ||
 // --- the hand's state, a station a record ----------------------------------------------
 // `uses` the motions done since the ghost hand last showed, `cueA` its ink,
 // `marks` the crit's (in the world).
-// `hint` and `strip` the hand work's showing in the world, each 0..1 linear
-// (gestureView eases them): the ghost of its motion, the strip of the unit's
-// progress.
-const fresh = () => ({ uses: 0, lastUse: null, cueA: 1, marks: [], hint: 0, strip: 0 });
+// `hint` the same hand's ink while the pointer is over the part, 0..1 linear
+// (gestureView eases it).
+const fresh = () => ({ uses: 0, lastUse: null, cueA: 1, marks: [], hint: 0 });
 function used(g) { g.uses++; g.lastUse = T(); }
 function crit(g, x, y, n) { g.marks.push({ x, y, n, at: T() }); }
 
@@ -103,8 +102,7 @@ const sawBox = (i, s) => { const b = stationParts('tree', i).sawBox; return { ..
 
 // Each station's motion: `grab(g, x, y)` the part under a world point, if
 // any; `down` taking it ('tap' when nothing is held after), `move`, `up`,
-// `step(g, dt)` a frame, `speed(g)` how fast it goes as a share of its cap,
-// and `open()` whether it can be worked now at all.
+// `step(g, dt)` a frame, and `open()` whether it can be worked now at all.
 const DEFS = {
   pedestal: {
     init: () => ({}),
@@ -138,7 +136,6 @@ const DEFS = {
       // A stroke is end to end: the first end reached only sets the saw going.
       if (end && end !== g.from) { if (g.from && chopTree(g.i, true)) used(g); g.from = end; }
     },
-    speed: g => g.v / GESTURE_SAW_VMAX
   },
   stump: {
     init: () => ({ i: null, lift: 0, target: 0, y0: 0, grab: false, strain: 0 }),
@@ -167,7 +164,6 @@ const DEFS = {
         if (g.strain >= GESTURE_STRAIN_S) { g.strain = 0; if (digStump(g.i, true)) used(g); }
       } else g.strain = 0;
     },
-    speed: g => g.lift / GESTURE_STUMP_MAX
   },
   mill: {
     init: () => ({ ang: 0, w: 0, grab: false, pa: 0, acc: 0, prog: 0 }),
@@ -192,7 +188,6 @@ const DEFS = {
       g.prog = Math.min(GESTURE_WHEEL_LOG, g.prog + GESTURE_WHEEL_FEED * r * dt);
       if (g.prog >= GESTURE_WHEEL_LOG && workAfter('mill', 1, true)) { g.prog = 0; used(g); }
     },
-    speed: g => revOf(g) / GESTURE_WHEEL_MAX_REV
   },
   workshop: {
     // `nails` the taps each nail of the sign on the bench has taken (two
@@ -227,7 +222,6 @@ const DEFS = {
       g.auto = t; g.strike = t; g.hit = k; g.nails[k] += 1;
       settleSign(g);
     },
-    speed: g => g.nails.reduce((a, n) => a + n, 0) / (GESTURE_NAILS * GESTURE_NAIL_TAPS)
   },
   heap: {
     // A load off the heap: { mode: 'held' | 'fling' | 'gone' | 'back', x, y, n, at }.
@@ -265,7 +259,6 @@ const DEFS = {
         if (ld.x >= stationParts('heap').edge) { tip(g, ld.n); Object.assign(ld, { mode: 'gone', at: T() }); }
       } else if (ld.mode !== 'held' && T() - ld.at > GESTURE_LOAD_FADE_S) g.load = null;
     },
-    speed: g => Math.max(0, g.v) / GESTURE_FLING_MAX
   }
 };
 // Four nails driven flush: the sign is done, joined off the timber, and a new
@@ -386,20 +379,17 @@ export function gestureUp(x, y) {
   if (d.up) d.up(g[held], x, y);
   held = null; heldWhat = null;
 }
-// The hand-worked stations shown in the world on a hover (DESIGN.md, "Act
-// 3's hand work and hand carrying", take B): the ghost of its motion, the
-// strip of the unit.
-export const HANDWORK_KEYS = ['mill'];
 // The pointer over the place, no button needed (input.js, on every move of a
-// mouse; null when it leaves): which hand-worked station it is on. On a part
-// it is that part's; once on, the rest of its station keeps it, so the ghost
-// stays up while the pointer follows it round.
+// mouse; null when it leaves): whose work it is on, by what a press there
+// would take hold of (`gestureDown`), so the ghost hand comes back, faint,
+// over the very thing it points at (DESIGN.md, "Act 3's goods are blocks",
+// rule 3).
 export function gestureHover(x, y) {
   if (!live() || x == null) { hovered = null; return; }
   recs();
-  const p = partAt(x, y);
-  if (p && HANDWORK_KEYS.includes(p.key)) hovered = p.key;
-  else if (!(hovered && DEFS[hovered].open() && inBox(x, y, stationParts(hovered).box, G_S))) hovered = null;
+  if (DEFS.pedestal.open() && bubbleAt(x, y)) hovered = 'pedestal';
+  else if (iconAt(x, y) || treeUnder(x, y)) hovered = 'tree';
+  else hovered = partAt(x, y)?.key ?? null;
 }
 // The station a press is holding now, or null.
 export const gestureHeld = () => (S.after && seen === actId() ? held : null);
@@ -420,21 +410,11 @@ export function stepGestures(c) {
     const want = r.uses < GESTURE_CUE_USES ? 1 : 0;
     r.cueA = clamp(r.cueA + clamp(want - r.cueA, -dt / GESTURE_CUE_FADE_S, dt / GESTURE_CUE_FADE_S), 0, 1);
     if (r.marks.length) r.marks = r.marks.filter(m => t - m.at < GESTURE_MARK_HOLD_S + GESTURE_MARK_FADE_S);
-    if (HANDWORK_KEYS.includes(key)) showing(key, r, d, dt, t);
+    // the hover's ink: in while the pointer is on the part, out once it is
+    // taken hold of, back in when it is let go with the pointer still there
+    const over = d.open() && hovered === key && held !== key ? 1 : 0;
+    r.hint = clamp(r.hint + clamp(over - r.hint, -dt / GESTURE_HOVER_S, dt / GESTURE_HOVER_S), 0, 1);
   }
-}
-
-// The hand work's showing, a frame along: the ghost while the pointer is on
-// it and the part stands still, gone once it is worked and back when it
-// stops; the strip while the pointer is on it or has it, and after, while
-// the part is going or a unit has just been made.
-const ease = (v, want, s, dt) => clamp(v + clamp(want - v, -dt / s, dt / s), 0, 1);
-function showing(key, r, d, dt, t) {
-  const open = d.open(), on = open && (hovered === key || held === key);
-  const busy = held === key || d.speed(r) > HANDWORK_IDLE_SPEED;
-  const done = r.lastUse != null && t - r.lastUse < HANDWORK_DONE_S;
-  r.hint = ease(r.hint, open && hovered === key && !busy ? 1 : 0, HANDWORK_HINT_S, dt);
-  r.strip = ease(r.strip, on || (open && (busy || done) && r.strip > 0) ? 1 : 0, HANDWORK_STRIP_S, dt);
 }
 
 // --- the pad ---------------------------------------------------------------------------
@@ -504,7 +484,7 @@ export function gestureView() {
   if (!live()) return null;
   const g = recs();
   return GESTURE_KEYS.map(key => ({ key, open: DEFS[key].open(), held: held === key, ...g[key],
-                                    hintA: smoothstep(g[key].hint), stripA: smoothstep(g[key].strip) }));
+                                    hintA: smoothstep(g[key].hint) }));
 }
 // Where each station's parts stand, in the world (place.js).
 export const partsOf = (key, i = 0) => stationParts(key, i);
