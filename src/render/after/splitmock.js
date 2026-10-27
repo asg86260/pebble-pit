@@ -265,12 +265,14 @@ export function drawHead(d, lk) {
 const ROLL_V = 3, TIP_S = 0.4, FALL_S = 0.25, BED_L = 31;
 function rollerBed(d, bed, travel) {
   d.r(BED_END, bed, END - BED_END, 2, K);                            // the table off the bed's end
-  d.r(BED_END, bed + 2, 0.5, -bed - 2, K);                           // and its leg
-  const a = travel;                                                  // a roller of radius one cell turns a radian a cell ridden
-  for (let x = BED_L + 1; x < END; x += 2) {
-    d.px((x - 1) * P + 1, bed * P + 1, 2 * P - 2, 2 * P - 2, W);
-    d.line(x, bed + 1, x + Math.cos(a + x) * 0.75, bed + 1 + Math.sin(a + x) * 0.75, 2, K);
-    d.px(x * P - 1, (bed + 1) * P - 1, 2, 2, K);
+  d.r(BED_END, bed + 2, 1, -bed - 2, K);                             // and its leg
+  // Whole cells only: each roller a plus of paper three cells across -- round
+  // enough at this size -- with one arm of ink that steps round a quarter
+  // turn for each quarter of its rim ridden.
+  const q = Math.floor(travel / (Math.PI / 2)) % 4, ARM = [[1, 0], [2, 1], [1, 2], [0, 1]];
+  for (let x = BED_L + 1; x + 3 <= END; x += 3) {
+    for (const [i, j] of [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]]) d.c(x + i, bed + j, W);
+    d.c(x + ARM[q][0], bed + ARM[q][1], K);
   }
 }
 // A block turned `ang` about the pivot (px, py), in the frame's cells, drawn as one piece.
