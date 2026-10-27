@@ -7,6 +7,8 @@
 import { P } from '../../config.js';
 import { S } from '../../state.js';
 import { K, W, PALE, MID, hash, clamp01 } from './kit.js';
+import { ctx } from '../ctx.js';
+import { GREY, AFTER_ART_SCALE } from '../../config.js';
 import { addGrain, settle, at, put, topRow, wakeGrid } from '../../grid.js';
 
 const LOG = MID, TIMBER = PALE;
@@ -21,8 +23,10 @@ const block = (d, tone, x, y, s, w = s) => d.px(x * P, y * P, w * P - 1, s * P -
 // and a block taken off the top lets the heap slump. The plot is in the mill
 // frame's own cells, starting under the bed's end; the blocks drop onto its
 // third column and roll off either side into a mound. Drawing-only state for the mock.
-const PLOT_COLS = 9, PLOT_ROWS = 5, PILE_CAP = 20, SETTLE_S = 0.07, DROP_COL = 2;
-const plot = { x: TIMBER_X - 3, y: 0, cols: PLOT_COLS, rows: PLOT_ROWS, p: 2, grid: new Uint8Array(PLOT_COLS * PLOT_ROWS),
+const PLOT_COLS = 7, PLOT_ROWS = 5, PILE_CAP = 20, SETTLE_S = 0.07, DROP_COL = 1;
+// round 8: the outfeed -- rollers from the blade to a short table past the bed's end (END)
+const BED_END = 50, END = 52;
+const plot = { x: BED_END, y: 0, ceiling: c => (c === 0 ? 2 : PLOT_ROWS), cols: PLOT_COLS, rows: PLOT_ROWS, p: 2, grid: new Uint8Array(PLOT_COLS * PLOT_ROWS),
                n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: false };
 let plotT = null, plotStock = null;
 const landedKeys = new Set();
@@ -174,16 +178,21 @@ export function splitLog(d, style, ph, bed, bx, T) {
       for (let g = 0; g < 4; g++) { const age = out * 1.2 - g * 0.06, y = LY + 2 + (g >> 1) + age * age * 40; if (age > 0 && y < -1) d.px((bx + 8 + (g & 1)) * P, y * P, P, P, MID); }
     }
   } else {
-    // A column at a time, round 4: three feels of the bite (C1 bite, C2 labor, C3 punch). driven a bite at a time; each column out the far side as one block; the fourth is the kerf.
-    const b = biteOf(ph, style), eaten = done ? 4 : b.eaten, left = 4 - eaten;
-    if (left > 0 && !done) d.px((bx - left) * P, LY * P, left * P, 4 * P, LOG);
+    // A column at a time, round 8: the blocks ride rollers off the bed's end and tip onto the pile.
+    const OUT = 0.75, WRAP = 0.25;
+    const b = biteOf(ph, style), cutting = ph >= 0.05 && ph < OUT, eaten = cutting ? b.eaten : 0, left = 4 - eaten;
+    if (cutting && left > 0) d.px((bx - left) * P, LY * P, left * P, 4 * P, LOG);
     const n = Math.min(3, Math.floor(eaten)), w = eaten < 3 ? 2 * (eaten % 1) : 0;
-    if (!done) {
+    // the train: the last cut's three blocks rolled out, a slow push, from the feed's end on into the next cut's start
+    const trainT = ph >= OUT ? (ph - OUT) * T : ph < WRAP ? (ph + 1 - OUT) * T : -1;
+    rollers(d, bed, bx, trainT >= 0 ? trainT * ROLL_V : eaten * 2);
+    if (cutting) {
       if (w > 0) block(d, TIMBER, bx + 2, LY + 2, 2, w);
       for (let j = 0; j < n; j++) block(d, TIMBER, bx + 2 + w + (n - 1 - j) * 2, LY + 2, 2);
       chips(d, bx, LY, b, T);
       speedLines(d, bx, LY, b);
-    } else for (let q = 0; q < 3; q++) slideOff(d, [bx + 2 + (2 - q) * 2, LY + 2], out, q, true);
+    }
+    if (trainT >= 0) train(d, bed, bx, trainT);
     // the kerf: the last two bites spit two grains each at their impact
     const at = bite => 0.05 + 0.7 * ((bite + 0.5) / BITES);
     kerf = [at(6), at(6) + 0.004, at(7), at(7) + 0.004];
@@ -249,4 +258,40 @@ export function drawHead(d, lk) {
   d.r(bx - 3, top, 6, 2, K);                                         // the crosshead
   if (lk.kind === 'C') eye(d, lk.end.x, lk.end.y);
   else eye(d, bx - 2.5, top + 1);
+}
+
+// --- round 8: the outfeed. Rollers set in the bed past the blade and on a
+// short table off its end, turning with whatever rides them; the cut's three
+// blocks are pushed out along them slowly, and each tips over the table's
+// edge -- a quarter turn about the corner, drawn whole -- and drops onto the
+// pile, where it becomes a grain of the plot.
+const ROLL_V = 4.5, TIP_S = 0.4, FALL_S = 0.25;
+function rollers(d, bed, bx, travel) {
+  d.r(BED_END, bed, END - BED_END, 1, K);                            // the table off the bed's end
+  d.r(BED_END, bed + 1, 0.5, -bed - 1, K);                           // and its leg
+  const a = travel / 0.5;                                            // a roller's turn for the distance ridden
+  for (let x = bx + 3; x < END; x += 2) {
+    d.px(x * P - 3, bed * P + 1, 6, 4, W);
+    d.px(x * P - 1 + Math.round(Math.cos(a) * 2), bed * P + 2 + Math.round(Math.sin(a) * 1), 2, 2, K);
+  }
+}
+// A block turned `ang` about the pivot (px, py), in the frame's cells, drawn as one piece.
+function turned(d, px0, py0, ang) {
+  const s = P * AFTER_ART_SCALE, at0 = d.world(px0, py0);
+  ctx.save(); ctx.translate(at0.x, at0.y); ctx.rotate(ang);
+  ctx.fillStyle = GREY[TIMBER]; ctx.fillRect(-2 * s, -2 * s, 2 * s - 1, 2 * s - 1);
+  ctx.restore();
+}
+function train(d, bed, bx, tt) {
+  const top = bed - 2, start = Math.round(((S.after && S.after.t) || 0) - tt);
+  [bx + 6, bx + 4, bx + 2].forEach((x0, i) => {
+    const reach = (END - 2 - x0) / ROLL_V;                           // when its front edge meets the table's edge
+    if (tt < reach) { block(d, TIMBER, x0 + ROLL_V * tt, top, 2); return; }
+    const u = tt - reach;
+    if (u < TIP_S) { turned(d, END, bed, (Math.PI / 2) * (u / TIP_S) ** 1.6); return; }
+    const f = (u - TIP_S) / FALL_S, to = plotTop(DROP_COL);
+    if (f < 1) { block(d, TIMBER, END, lerp(top, to, f * f), 2); return; }
+    const key = `${start}-${i}`;
+    if (!landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 64) landedKeys.clear(); }
+  });
 }
