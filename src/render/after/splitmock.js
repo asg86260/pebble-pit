@@ -26,6 +26,18 @@ const block = (d, tone, x, y, s, w = s) => d.px(x * P, y * P, w * P - 1, s * P -
 const PLOT_COLS = 7, PLOT_ROWS = 5, PILE_CAP = 20, SETTLE_S = 0.07, DROP_COL = 1;
 // round 8: the outfeed -- rollers from the blade to a short table past the bed's end (END)
 const BED_END = 50, END = 52;
+// round 21, the hand-off from the machine to the pile (globalThis.__flowStyle):
+// 'T1' a chute slanting down off the bed's end to a pile standing clear;
+// 'T2' a longer table, tipped off its far end onto a pile just past it;
+// 'T3' no table, spilled off the bed's end onto a pile mounded against it.
+const flow = () => globalThis.__flowStyle || 'T0';
+const GEOM = {
+  T0: { table: END, plotX: BED_END, dropCol: 1, low0: true },
+  T1: { table: BED_END, plotX: BED_END + 6, dropCol: 1, chute: { x1: BED_END + 8, y1: -4 } },
+  T2: { table: BED_END + 8, plotX: BED_END + 8, dropCol: 0 },
+  T3: { table: BED_END, plotX: BED_END, dropCol: 0 }
+};
+const geom = () => GEOM[flow()] || GEOM.T0;
 const plot = { x: BED_END, y: 0, ceiling: c => (c === 0 ? 2 : PLOT_ROWS), cols: PLOT_COLS, rows: PLOT_ROWS, p: 2, grid: new Uint8Array(PLOT_COLS * PLOT_ROWS),
                n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: false };
 let plotT = null, plotStock = null;
@@ -37,7 +49,7 @@ const plotTop = c => { const r = topRow(plot, c); return -(r + 2) * 2; };   // t
 // Each block keeps an identity as it rolls (its value, 1..9), so the loose
 // pile's nudge off the lattice goes with the block rather than the cell.
 let nextId = 0;
-const dropIn = () => addGrain(plot, plot.x + DROP_COL * 2, undefined, 1 + (nextId++ % 9), true);
+const dropIn = () => addGrain(plot, plot.x + geom().dropCol * 2, undefined, 1 + (nextId++ % 9), true);
 // round 19, the pile three ways (globalThis.__pileStyle): 'A' the even mound,
 // 'B' the same mound loose (each block a fixed nudge of its own, in cells'
 // sizes but free positions), 'C' a tall heap that stands up.
@@ -50,6 +62,7 @@ export function blockPile(d) {
   const a = S.after, t = a ? a.t : 0, stock = a ? Math.floor(a.stock.timber) : 0;
   if (plotT == null || t < plotT) {                     // a fresh scene: the pile stands as the stock says
     plot.repose = pileStyle() === 'C'; plot.cols = pileStyle() === 'C' ? 5 : PLOT_COLS;
+    plot.x = geom().plotX; plot.ceiling = geom().low0 ? (c => (c === 0 ? 2 : PLOT_ROWS)) : null;
     plot.grid = new Uint8Array(plot.cols * plot.rows); plot.awake = null; ghosts.length = 0;
     landedKeys.clear(); wakeGrid(plot); footN = 5;
     for (let i = 0; i < Math.min(stock, PILE_CAP); i++) { dropIn(); for (let k = 0; k < 12; k++) settle(plot); }
@@ -294,8 +307,12 @@ export function drawHead(d, lk) {
 // corner, drawn whole -- and drops onto the pile, where it becomes a grain.
 const ROLL_V = 3, TIP_S = 0.4, FALL_S = 0.25, BED_L = 31;
 function rollerBed(d, bed, travel) {
-  d.r(BED_END, bed, END - BED_END, 2, K);                            // the table off the bed's end
-  d.r(BED_END, bed + 2, 1, -bed - 2, K);                             // and its leg
+  const g = geom();
+  if (g.table > BED_END) {
+    d.r(BED_END, bed, g.table - BED_END, 2, K);                      // the table off the bed's end
+    d.r(g.table - 1, bed + 2, 1, -bed - 2, K);                       // and its leg, under its far end
+  }
+  if (g.chute) d.line(BED_END, bed + 0.5, g.chute.x1 + 1, g.chute.y1 + 2.5, P, K);   // the chute, a cell thick
   // round 16: the bed stays plain black; the blocks slide out along it (the owner: "revert to the plain black cells").
 }
 // A block turned `ang` about the pivot (px, py), in the frame's cells, drawn as one piece.
@@ -308,16 +325,24 @@ function turned(d, px0, py0, ang) {
 // When block j of a cut is whole and starts to ride: the end of the bite that finishes its column.
 const doneAt = j => 0.05 + 0.7 * ((2 * j + 1) + 0.3) / BITES;
 function outflow(d, bed, bx, ph, T) {
-  const top = bed - 2, now = (S.after && S.after.t) || 0, travel = (END - 2 - (bx + 2)) / ROLL_V;
+  const g = geom(), edge = g.table, top = bed - 2, now = (S.after && S.after.t) || 0, travel = (edge - 2 - (bx + 2)) / ROLL_V;
+  const CHUTE_S = 0.9;
   for (const back of [1, 0]) for (let j = 0; j < 3; j++) {
     const age = (ph + back - doneAt(j)) * T;
     if (age < 0) continue;
     const key = `${Math.round(now - age)}-${j}`;
     if (age < travel) { block(d, TIMBER, bx + 2 + ROLL_V * age, top, 2); continue; }
-    const u = age - travel;
-    if (u < TIP_S) { turned(d, END, bed, (Math.PI / 2) * (u / TIP_S) ** 1.6); continue; }
-    const f = (u - TIP_S) / FALL_S;
-    if (f < 1) { block(d, TIMBER, END, lerp(top, plotTop(DROP_COL), f * f), 2); continue; }
+    let u = age - travel, fromX = edge, fromY = top;
+    if (g.chute) {
+      // down the chute, sliding its length, quickening
+      if (u < CHUTE_S) { const k = (u / CHUTE_S) ** 1.5; block(d, TIMBER, lerp(edge - 2, g.chute.x1, k), lerp(top, g.chute.y1, k), 2); continue; }
+      u -= CHUTE_S; fromX = g.chute.x1; fromY = g.chute.y1;
+    } else {
+      if (u < TIP_S) { turned(d, edge, bed, (Math.PI / 2) * (u / TIP_S) ** 1.6); continue; }
+      u -= TIP_S;
+    }
+    const f = u / FALL_S, landX = plot.x + g.dropCol * 2;
+    if (f < 1) { block(d, TIMBER, lerp(fromX, landX, f), lerp(fromY, plotTop(g.dropCol), f * f), 2); continue; }
     // it joins the pile once, in the half second after it lands
     if (f < 1 + 0.5 / FALL_S && !landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 256) landedKeys.clear(); }
   }

@@ -3137,7 +3137,7 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w / 2 - P * 10;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-pile-a': { about: 'the acts', review: 'saw mill: the timber pile', option: 'A mound', say: "The even mound: blocks drop off the end table, roll down whichever side has room and rest on the lattice, as act 1's dust does. A block spent off the top fades where it lay.",
+  'after-pile-a': { about: 'the acts', say: "The even mound: blocks drop off the end table, roll down whichever side has room and rest on the lattice, as act 1's dust does. A block spent off the top fades where it lay.",
     run: () => {
       globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A';
       afterChain(false);
@@ -3146,7 +3146,7 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w * 0.8;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-pile-b': { about: 'the acts', review: 'saw mill: the timber pile', option: 'B loose', say: "The same mound, but each block sits a little off the lattice by a nudge of its own that rolls with it, so the pile reads tumbled rather than stacked. Sizes stay whole cells.",
+  'after-pile-b': { about: 'the acts', say: "The same mound, but each block sits a little off the lattice by a nudge of its own that rolls with it, so the pile reads tumbled rather than stacked. Sizes stay whole cells.",
     run: () => {
       globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'B';
       afterChain(false);
@@ -3155,9 +3155,36 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w * 0.8;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-pile-c': { about: 'the acts', review: 'saw mill: the timber pile', option: 'C tall heap', say: "A steeper, narrower heap: a block only rolls on where the drop beside it is two deep, so the pile stands up instead of spreading.",
+  'after-pile-c': { about: 'the acts', say: "A steeper, narrower heap: a block only rolls on where the drop beside it is two deep, so the pile stands up instead of spreading.",
     run: () => {
       globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'C';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 12 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-flow-t1': { about: 'the acts', review: 'saw mill: from the machine to the pile', option: 'T1 chute', say: "No end table: a chute a cell thick slants down off the bed's end, the blocks slide down it, and the mound stands a few cells clear of the frame.",
+    run: () => {
+      globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T1';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 12 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-flow-t2': { about: 'the acts', review: 'saw mill: from the machine to the pile', option: 'T2 long table', say: "The end table runs further out, its leg under the far end; the blocks ride to its edge, tip off, and the mound builds just past it, clear of the machine.",
+    run: () => {
+      globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T2';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 12 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-flow-t3': { about: 'the acts', review: 'saw mill: from the machine to the pile', option: 'T3 straight spill', say: "No table: the blocks slide off the bed's end and drop onto a mound that builds against the machine, as if poured out of it.",
+    run: () => {
+      globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T3';
       afterChain(false);
       window.__afterGrant({ grovelogs: 60, timber: 12 });
       window.__fast(20);
