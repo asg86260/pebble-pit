@@ -112,7 +112,7 @@ function mill(d, work, t, h, body = false) {
   posed.mill = { a };
   const k = wheelAt(a);
   // MOCK: a smear trailing the knob through the down-stroke, fading behind it
-  if (mb && mb.smear) for (let s = 1; s <= 3; s++) { const q0 = wheelAt(a - s * MILL_TURN), q1 = wheelAt(a - (s - 1) * MILL_TURN); d.fade(0.75 - s * 0.2, () => d.line(q0.kx, q0.ky, q1.kx, q1.ky, 4, PALE)); }
+  if (mb && mb.smear) for (let s = 1; s <= 3; s++) { const q0 = wheelAt(a - s * MILL_TURN), q1 = wheelAt(a - (s - 1) * MILL_TURN); d.fade(0.75 - s * 0.2, () => d.line(q0.kx, q0.ky, q1.kx, q1.ky, P, PALE)); }
   flywheel(d, a);
   // The rod, in a paper rim, off the crank pin.
   if (lk) drawRod(d, lk);   // MOCK

@@ -72,7 +72,7 @@ function slideOff(d, from, out, b, puff = false) {
   const key = `${Math.floor(((S.after && S.after.t) || 0) / 6.4)}-${b}`;
   if (kk >= 1) { if (!landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 64) landedKeys.clear(); } return; }
   const to = { x: plot.x + DROP_COL * 2, y: plotTop(DROP_COL) };
-  if (puff && raw >= 0.9 && raw < 1) d.fade(1 - (raw - 0.9) / 0.1, () => { for (const sx of [-1, 2]) d.px((to.x + sx) * P, (to.y + 1.5) * P, P / 2, P / 2, MID); });
+  if (puff && raw >= 0.9 && raw < 1) d.fade(1 - (raw - 0.9) / 0.1, () => { for (const sx of [-1, 2]) d.px((to.x + sx) * P, (to.y + 1.5) * P, P, P, MID); });
   block(d, TIMBER, lerp(from[0], to.x, slide), lerp(from[1], to.y, drop * drop), 2);
 }
 
@@ -126,7 +126,7 @@ function chips(d, bx, LY, b, T) {
     if (b.cutting < 0) return;
     for (let i = 0; i < 6; i++) {
       const u = (b.cutting * 3 + i / 6) % 1, side = i % 2 ? 1 : -1;
-      d.fade(1 - u, () => d.px((bx + 1 + side * (0.6 + u * 2.2)) * P, (LY + 2 + u * 3.5) * P, P / 2, P / 2, i < 2 ? MID : PALE));
+      d.fade(1 - u, () => d.px((bx + 1 + side * (0.6 + u * 2.2)) * P, (LY + 2 + u * 3.5) * P, P, P, i < 2 ? MID : PALE));
     }
     return;
   }
@@ -137,15 +137,14 @@ function chips(d, bx, LY, b, T) {
     for (let i = 0; i < n; i++) {
       const side = i % 2 ? 1 : -1, sp = (big ? 6 : 4) + hash(b.bite * 9.1 + i) * (big ? 12 : 8), up = (big ? 9 : 6) + hash(b.bite * 3.7 + i) * 8;
       const x = bx + 1 + side * (1 + age * sp), y = LY + 1 + (i % 4) * 0.6 - age * up + age * age * 45;
-      const fat = i < (big ? 5 : 3);
-      d.px(x * P, y * P, fat ? P : P / 2, fat ? P : P / 2, fat ? MID : PALE);
+      d.px(x * P, y * P, P, P, i < (big ? 5 : 3) ? MID : PALE);
     }
   });
 }
 // Punch: speed lines either side of the blade while it is slammed down.
 function speedLines(d, bx, LY, b) {
   if (b.mode !== 'C3' || !b.smear) return;
-  d.fade(0.8, () => { for (const sx of [-1.5, 2.5]) d.px((bx + sx) * P, (LY - 7) * P, 2, 6 * P, PALE); });
+  d.fade(0.8, () => { for (const sx of [-2, 3]) d.px((bx + sx) * P, (LY - 7) * P, P, 6 * P, PALE); });
 }
 
 // `ph` the cut's phase, 0..1: the feed, then the blocks off the end.
@@ -203,7 +202,8 @@ export function splitLog(d, style, ph, bed, bx, T) {
 // mill hands over the wheel's angle and its own numbers; this draws the rod
 // (behind the frame) and the crosshead (after the blade), and says how far
 // down the blade is (`o`).
-const eye = (d, x, y, tone = K) => { d.px(Math.round(x * P) - 5, Math.round(y * P) - 5, 10, 10, tone); d.px(Math.round(x * P) - 3, Math.round(y * P) - 3, 6, 6, W); d.px(Math.round(x * P) - 1, Math.round(y * P) - 1, 2, 2, K); };
+// A pin: two cells of ink round one of paper, centered on the joint wherever it is.
+const eye = (d, x, y) => { d.px(x * P - P, y * P - P, 2 * P, 2 * P, K); d.px(x * P - P / 2, y * P - P / 2, P, P, W); };
 const disc = (d, cx, cy, r) => { for (let y = Math.floor(cy - r - 1); y <= cy + r + 1; y++) for (let x = Math.floor(cx - r - 1); x <= cx + r + 1; x++) if (Math.hypot(x + 0.5 - cx, y + 0.5 - cy) <= r) d.c(x, y, K); };
 // A bar exactly one cell thick, laid at its true position so it moves smoothly, in a paper rim.
 const rodLine = (d, x0, y0, x1, y1) => { d.line(x0, y0, x1, y1, P + 4, W); d.line(x0, y0, x1, y1, P, K); };
