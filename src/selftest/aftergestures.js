@@ -13,6 +13,7 @@ import { AFTER_PODIUM_REBEL, GESTURE_BUBBLE_CRIT, GESTURE_CUE_ALPHA, GESTURE_CUE
 import { partsOf, useBubbles, gestureUnder } from '../after/gestures.js';
 import { cueShown } from '../render/aftercues.js';
 import { openBoard } from '../board.js';
+import { station } from '../stations.js';
 import { stationBox } from '../after/place.js';
 import { toScreen } from '../world.js';
 
@@ -93,6 +94,36 @@ export const TESTS = [
       ok(asked === 'after-mill', 'a plain click on its frame opens its board', JSON.stringify(asked)),
       ok(beside, 'and the board stands beside the station, never over it', JSON.stringify({ board: [pr.left, pr.top, pr.right, pr.bottom].map(Math.round), station: Object.values(sr).map(Math.round) })),
       ok(held === null, 'taking hold of the flywheel shuts it', JSON.stringify(held))
+    ];
+  }],
+  // Every station's board, not only the mill's: each opened by a click on
+  // its drawing with the station framed at the window's far side from its
+  // board's spot, and measured clear of the station. What else it stands
+  // over is said in the detail, for the reader, not asserted.
+  ['act 3: every station\'s board, opened by a click on it, stands clear of the station', async () => {
+    newRun();
+    await settle();
+    await upThere(['mill', 'workshop']);
+    const CARDS = { forestry: 'grove', mill: 'mill', workshop: 'workshop', shack: 'shack', pedestal: 'pedestal' };
+    const res = {};
+    for (const [k, card] of Object.entries(CARDS)) {
+      const b = stationBox(k), right = station(`after-${card}`).boardAnchor().side === 'right';
+      window.__look(right ? b.x - P * 4 : b.x + b.w + P * 4 - S.viewW);
+      await settle(0.2);
+      const spot = onFrame(k), at = glass(spot.x, spot.y);
+      point('pointerdown', ...at); point('pointerup', ...at);
+      await settle(0.4);
+      const pr = panel().getBoundingClientRect(), pb = { left: pr.left, top: pr.top, right: pr.right, bottom: pr.bottom };
+      const over = Object.keys(CARDS).filter(o => meets(pb, onGlass(stationBox(o))));
+      res[k] = { open: openBoard(), own: over.includes(k), over: over.filter(o => o !== k) };
+      const off = glass(b.x + b.w / 2, b.y - P * 40);
+      point('pointerdown', ...off); point('pointerup', ...off);
+      await settle(0.2);
+    }
+    window.__actsOn(null);
+    return [
+      ok(Object.entries(CARDS).every(([k, c]) => res[k].open === `after-${c}`), 'a click on each station opens its own board', JSON.stringify(res)),
+      ok(Object.values(res).every(r => !r.own), 'and each board stands clear of its station', JSON.stringify(res))
     ];
   }],
   ['act 3: a bubble clicked by the pointer pops where it rises, and the big one pays five lines', async () => {
