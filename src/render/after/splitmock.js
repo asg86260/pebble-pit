@@ -189,7 +189,7 @@ export function splitLog(d, style, ph, bed, bx, T) {
     // the block being cut, growing out of the blade
     const w = cutting && eaten < 3 ? 2 * (eaten % 1) : 0;
     if (w > 0) block(d, TIMBER, bx + 2, LY + 2, 2, w);
-    if (cutting) { chips(d, bx, LY, b, T); speedLines(d, bx, LY, b); }
+    if (cutting) { chips(d, bx, LY, b, T); }
     // the cut blocks riding out: this cut's and the last cut's still on their way
     outflow(d, bed, bx, ph, T);
     // the kerf: the last two bites spit two grains each at their impact
