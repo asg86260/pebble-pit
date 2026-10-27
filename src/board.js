@@ -67,7 +67,7 @@ for (const [coin, rows] of Object.entries(AFTER_COIN_MARKS)) {
 // place, its sign where it has one, read off the table in stations.js. The
 // house grows a room per body and the sheds move with the grounds, so a
 // rectangle is read live, never gathered.
-const anchor = which => { const s = station(which); return (s?.sign || s?.stand)?.(); };
+const anchor = which => { const s = station(which); return (s?.boardAnchor || s?.sign || s?.stand)?.(); };   // MOCK: boardAnchor
 const pageKeys = () => BOARDS;
 // Read inside a function, not gathered at load: the imports come round in a
 // ring, and a table built while the ring is still closing gets `undefined` for

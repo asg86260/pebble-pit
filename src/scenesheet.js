@@ -42,7 +42,7 @@ export function scene(name) {
   if (!sc) return false;
   if (!S.staged) { keep(loadRaw()); S.staged = true; }
   hold(false);          // the clock runs from the first frame of the scene
-  globalThis.__splitStyle = null; globalThis.__pileStyle = null; globalThis.__flowStyle = null; globalThis.__workStyle = null; globalThis.__signStyle = null;   // MOCK
+  globalThis.__splitStyle = null; globalThis.__pileStyle = null; globalThis.__flowStyle = null; globalThis.__workStyle = null; globalThis.__signStyle = null; globalThis.__shopStyle = null;   // MOCK
   // A scene that stood the page up as a phone does not leave it one.
   forceCoarse(null);
   letGoDeepFrame();

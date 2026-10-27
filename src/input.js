@@ -211,6 +211,7 @@ canvas.addEventListener('pointerdown', e => {
     // press on a button never a swing at what stands behind it.
     if (rosterHit(p.x, p.y)) return;
     if (S.view === 'after' && gestureDown(p.x, p.y)) {
+      if (globalThis.__shopStyle) showPanel(null, true);   // MOCK: taking hold of the work shuts the shop
       if (gestureHeld()) try { canvas.setPointerCapture(e.pointerId); } catch {}
       return;
     }

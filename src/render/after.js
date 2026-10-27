@@ -162,6 +162,7 @@ function cellSign(key, st) {
   M.forEach((row, j) => [...row].forEach((c, i) => { if (c === '#') ctx.fillRect(x0 + (i + 2) * AP, top + (j + 2) * AP, AP, AP); }));
 }
 function shopSign(key) {
+  if (globalThis.__shopStyle) return;   // MOCK: no sign; the station is the shop
   if (globalThis.__signStyle) { if (inView(signBox(key).x - AP * 4, signBox(key).w + AP * 8)) cellSign(key, globalThis.__signStyle); return; }   // MOCK
   const C = AFTER_SIGN_BOARD, b = signBox(key), r = 2 * AFTER_ART_SCALE, opened = openedOf(key);
   if (!inView(b.x, b.w)) return;

@@ -74,7 +74,10 @@ const row = (card, more) => {
     // its hit box is its ground, never padded past it
     reach: { left: 0, right: 0, up: 0, down: 0 },
     stand: () => stationBox(ground(card)),
-    sign: () => signBoard(ground(card)),
+    // MOCK, round 25: with __shopStyle the station is its own shop target, as the yard's are
+    get sign() { return globalThis.__shopStyle ? null : () => signBoard(ground(card)); },
+    // ...and its shop stands beside it, where the sign's board stood, never over the station's parts
+    get boardAnchor() { return globalThis.__shopStyle ? () => signBoard(ground(card)) : null; },
     ...more
   };
 };

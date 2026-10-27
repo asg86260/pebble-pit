@@ -3218,7 +3218,7 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w * 0.6;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-sign-s1': { about: 'the acts', review: 'act 3: the shop sign', option: 'S1 big post sign', say: "Today's board and $ mark, one game cell to a dot: a board about eight cells by nine on a post a cell wide.",
+  'after-sign-s1': { about: 'the acts', say: "Today's board and $ mark, one game cell to a dot: a board about eight cells by nine on a post a cell wide.",
     run: () => {
       globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T1'; globalThis.__workStyle = 'W3'; globalThis.__signStyle = 'S1';
       afterChain(false);
@@ -3227,7 +3227,7 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w + P * 6;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-sign-s2': { about: 'the acts', review: 'act 3: the shop sign', option: 'S2 small tag', say: "A small board five cells wide with a simpler $ three cells by seven, on a short post.",
+  'after-sign-s2': { about: 'the acts', say: "A small board five cells wide with a simpler $ three cells by seven, on a short post.",
     run: () => {
       globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T1'; globalThis.__workStyle = 'W3'; globalThis.__signStyle = 'S2';
       afterChain(false);
@@ -3236,13 +3236,22 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w + P * 6;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-sign-s3': { about: 'the acts', review: 'act 3: the shop sign', option: 'S3 ink tag', say: "S2's size in ink: a black board with the $ in paper, reading at a glance against the cloud; while its shop is open it turns paper.",
+  'after-sign-s3': { about: 'the acts', say: "S2's size in ink: a black board with the $ in paper, reading at a glance against the cloud; while its shop is open it turns paper.",
     run: () => {
       globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T1'; globalThis.__workStyle = 'W3'; globalThis.__signStyle = 'S3';
       afterChain(false);
       window.__afterGrant({ grovelogs: 60, timber: 12 });
       window.__fast(20);
       const b = stationBox('mill'), mid = b.x + b.w + P * 6;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-shop-p1': { about: 'the acts', review: 'act 3: the station is the shop', option: 'P1 click the station, work to close', say: "No sign. Click anywhere on the saw mill that is not a working part and its shop opens beside it, as the yard's stations do; take hold of the treadwheel or any hand-worked part and the shop closes as the work begins.",
+    run: () => {
+      globalThis.__splitStyle = 'CC'; globalThis.__pileStyle = 'A'; globalThis.__flowStyle = 'T1'; globalThis.__workStyle = 'W3'; globalThis.__shopStyle = 'P1';
+      afterChain(false);
+      window.__afterGrant({ grovelogs: 60, timber: 12 });
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w * 0.6;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
   'after-log-flow': { about: 'the acts', say: "the saw mill kept fed: an idle member carrying logs to its pile, a cut falling out of the saw's right side onto the timber",
