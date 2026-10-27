@@ -56,7 +56,11 @@ page. A review is scenes, not a page: give each option's scene a
 the line under the buttons. The address is the review and the option
 (`/review.html#<review>/<scene>`). Serve it from a dev server on a spare
 port and hand the owner the link; an edit to the drawing reaches their open
-tab on the next hot reload, so a round of feedback is a sentence in chat.
+tab on the next hot reload. The owner decides on the page itself -- "stop:
+pick this one" or "keep iterating" with what to change -- and the note lands
+in `shots/review/notes.jsonl`; wait for it with `node tools/review-wait.mjs
+<checkout>` run in the background, which exits (and so wakes you) the moment
+a note lands (`--all` prints the notes already there).
 Options drawn only to be judged live on a throwaway branch, marked
 `// MOCK`, never merged.
 
