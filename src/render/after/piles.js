@@ -37,7 +37,7 @@ export function logPile(d, x, st, cap = SPOTS.length) {
 }
 // Timber: planks six cells long and a cell deep, every other one set in half a cell.
 export function plankPile(d, x, st, cap = 6) {
-  if (globalThis.__splitStyle) { blockPile(d, st.n); return; }   // MOCK
+  if (globalThis.__splitStyle) { blockPile(d); return; }   // MOCK: the timber pile is a sand plot
   const m = Math.min(Math.max(st.n, st.prev), cap);
   for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => {
     const y = -1 - i, dx = i % 2 ? 0.5 : 0;

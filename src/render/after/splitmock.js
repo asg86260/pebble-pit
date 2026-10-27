@@ -7,6 +7,7 @@
 import { P } from '../../config.js';
 import { S } from '../../state.js';
 import { K, W, PALE, MID, hash, clamp01 } from './kit.js';
+import { addGrain, settle, at, put, topRow, wakeGrid } from '../../grid.js';
 
 const LOG = MID, TIMBER = PALE;
 const TIMBER_X = 53, PER_ROW = 3, CAP = 9;
@@ -14,9 +15,36 @@ const lerp = (a, b, k) => a + (b - a) * k;
 // A block of one flat tone, `s` cells square, a pixel of page short of its neighbors.
 const block = (d, tone, x, y, s, w = s) => d.px(x * P, y * P, w * P - 1, s * P - 1, tone);
 // Where the timber pile's next block goes, and the pile itself: 2x2 blocks three wide, growing up.
-const slotAt = i => ({ x: TIMBER_X + (i % PER_ROW) * 2, y: -2 - Math.floor(i / PER_ROW) * 2 });
-export function blockPile(d, n) { for (let i = 0; i < Math.min(n, CAP); i++) { const s = slotAt(i); block(d, TIMBER, s.x, s.y, 2); } }
-const shownTimber = () => Math.min(CAP - 1, Math.floor((S.after && S.after.stock.timber) || 0));
+// --- round 7: the timber pile is a plot on the shared sand rules (grid.js),
+// as the casino's bins are: a grain is one 2x2 block, heaps stand up
+// at the dust's own slope, a block that lands rolls down the heap's side until it rests,
+// and a block taken off the top lets the heap slump. The plot is in the mill
+// frame's own cells, starting under the bed's end; the blocks drop onto its
+// third column and roll off either side into a mound. Drawing-only state for the mock.
+const PLOT_COLS = 9, PLOT_ROWS = 5, PILE_CAP = 20, SETTLE_S = 0.07, DROP_COL = 2;
+const plot = { x: TIMBER_X - 3, y: 0, cols: PLOT_COLS, rows: PLOT_ROWS, p: 2, grid: new Uint8Array(PLOT_COLS * PLOT_ROWS),
+               n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: false };
+let plotT = null, plotStock = null;
+const landedKeys = new Set();
+const plotTop = c => { const r = topRow(plot, c); return -(r + 2) * 2; };   // the top of column c's stack, as a block's y
+const dropIn = () => addGrain(plot, plot.x + DROP_COL * 2, undefined, 1, true);
+export function blockPile(d) {
+  const a = S.after, t = a ? a.t : 0, stock = a ? Math.floor(a.stock.timber) : 0;
+  if (plotT == null || t < plotT) {                     // a fresh scene: the pile stands as the stock says
+    plot.grid.fill(0); landedKeys.clear(); wakeGrid(plot);
+    for (let i = 0; i < Math.min(stock, PILE_CAP); i++) { dropIn(); for (let k = 0; k < 12; k++) settle(plot); }
+    plotT = t; plotStock = stock;
+  }
+  // timber spent: as many blocks off the top, and the heap slumps into the gap
+  if (stock < plotStock) for (let i = 0; i < plotStock - stock; i++) {
+    let best = -1, hi = -1;
+    for (let c = 0; c < plot.cols; c++) { const r = topRow(plot, c); if (r > hi) { hi = r; best = c; } }
+    if (best >= 0 && hi >= 0) put(plot, best, hi, 0);
+  }
+  plotStock = stock;
+  while (t - plotT >= SETTLE_S) { settle(plot); plotT += SETTLE_S; }
+  for (let c = 0; c < plot.cols; c++) for (let r = 0; r < plot.rows; r++) if (at(plot, c, r)) block(d, TIMBER, plot.x + c * 2, -(r + 1) * 2, 2);
+}
 
 // Grains puffed out under the bed, one a down-stroke, falling to the heap at the saw's foot.
 function grains(d, bx, times, ph, T) {
@@ -34,11 +62,13 @@ function footHeap(d, bx, n) {
 }
 // Off the bed's end onto the pile: block `b` of three, from where it sits.
 function slideOff(d, from, out, b, puff = false) {
+  // off the bed's end, then dropped onto the top of the plot's first column,
+  // where it becomes a grain of the pile and the sand rules roll it on
   const raw = out * 1.5 - b * 0.25, kk = clamp01(raw), slide = clamp01(kk * 2), drop = clamp01(kk * 2 - 1);
-  const to = slotAt(shownTimber() + b);
-  // round 3: a block that lands kicks a little dust off the pile, fading as it rises
-  if (puff && raw >= 1 && raw < 1.4) { const u = (raw - 1) / 0.4; d.fade(1 - u, () => { for (const sx of [-1, 2]) d.px((to.x + sx + (sx < 0 ? -u : u)) * P, (to.y + 1.5 - u * 1.5) * P, P / 2, P / 2, MID); }); }
-  if (kk >= 1) return;
+  const key = `${Math.floor(((S.after && S.after.t) || 0) / 6.4)}-${b}`;
+  if (kk >= 1) { if (!landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 64) landedKeys.clear(); } return; }
+  const to = { x: plot.x + DROP_COL * 2, y: plotTop(DROP_COL) };
+  if (puff && raw >= 0.9 && raw < 1) d.fade(1 - (raw - 0.9) / 0.1, () => { for (const sx of [-1, 2]) d.px((to.x + sx) * P, (to.y + 1.5) * P, P / 2, P / 2, MID); });
   block(d, TIMBER, lerp(from[0], to.x, slide), lerp(from[1], to.y, drop * drop), 2);
 }
 
