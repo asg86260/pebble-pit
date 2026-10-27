@@ -23,7 +23,7 @@ const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
 import { P, GESTURE_WHEEL_LOG, AFTER_SAW_TEETH, AFTER_ART_SCALE } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette } from './kit.js';
 import { stationX0, groundOf } from '../../after/place.js';
-import { splitLog, biteOf, linkage, drawRod, drawHead } from './splitmock.js';   // MOCK
+import { splitLog, biteOf, linkage, drawRod, drawHead, workPose, drawWork } from './splitmock.js';   // MOCK
 import { held } from '../../reset.js';
 
 // `posed` is the pose each station drew its hand-worked part in this frame,
@@ -131,7 +131,9 @@ function mill(d, work, t, h, body = false) {
   crankPin(d, k.pin);
   }
   // A body at the wheel: its arm to its fist round the knob.
-  if (body) {
+  const wp = body && globalThis.__workStyle ? workPose(a, MILL.body, { x: MW.cx, y: MW.cy }) : null;   // MOCK
+  if (wp) drawWork(d, wp, { x: k.kx, y: k.ky });
+  else if (body) {
     const fx = Math.round(k.kx * P) - 7, fy = Math.round(k.ky * P) - 7;
     d.line(MILL.body + 3, -2, k.kx, k.ky, 2);
     d.px(fx, fy, 14, 14, K); d.px(fx + 2, fy + 2, 10, 10, W); d.px(fx + 5, fy + 5, 4, 4, K);
@@ -281,6 +283,7 @@ export const backOf = key => BACKS[key] || (BACKS[key] = silhouette(d => DRAW[ke
 // cells: its left column and top row, a lean in px, and whether it squats.
 // Idle, it stands at the same spot unleaning.
 export function workerPose(key, work, t) {
+  if (key === 'mill' && globalThis.__workStyle && posed.mill) return workPose(posed.mill.a, MILL.body, { x: MW.cx, y: MW.cy });   // MOCK
   if (key === 'mill') return { x: MILL.body, y: -3, dx: 0 };
   if (key === 'workshop') return { x: wsLastJx - 1, y: JY, dx: 0 };
   return null;

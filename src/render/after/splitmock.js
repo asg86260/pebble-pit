@@ -347,3 +347,32 @@ function outflow(d, bed, bx, ph, T) {
     if (f < 1 + 0.5 / FALL_S && !landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 256) landedKeys.clear(); }
   }
 }
+
+// --- round 23: the sawyer at work, three ways (globalThis.__workStyle).
+// 'W1' heave: leans with the crank and squats hard on the slam, held through
+// the hit; 'W2' both hands: closer, both arms on the knob, the body bobbing
+// with it like a pump; 'W3' treadwheel: walks inside the flywheel's foot, the
+// walking turning it, no arms. `a` is the wheel's angle (the bite's), `base`
+// the mill's spot for the body, `hub` the wheel's middle.
+export function workPose(a, base, hub) {
+  const st = globalThis.__workStyle;
+  if (st === 'W1') {
+    const low = Math.sin(a) > 0.4;
+    return { x: base, y: -3, dx: Math.cos(a) * P * 0.6, dy: 0, squat: low, arms: [{ x: base + 2.5, y: low ? -1.2 : -2.2 }] };
+  }
+  if (st === 'W2') {
+    const bob = -Math.sin(a) * 0.6;
+    return { x: base + 2, y: -3, dx: 0, dy: bob * P, squat: false, arms: [{ x: base + 4.5, y: -2.4 + bob }, { x: base + 4.5, y: -1.4 + bob }] };
+  }
+  if (st === 'W3') {
+    const step = Math.floor(a / (Math.PI / 4)) & 1;
+    return { x: hub.x - 1.5, y: -7, dx: 0, dy: step ? -2 : 0, squat: false, arms: [], feet: step };
+  }
+  return null;
+}
+// The arms to the knob, a cell thick, and a fist of two cells round it; or the treadwheel's feet.
+export function drawWork(d, pose, knob) {
+  for (const arm of pose.arms) d.line(arm.x, arm.y, knob.x, knob.y, P, K);
+  if (pose.arms.length) { d.px(knob.x * P - P, knob.y * P - P, 2 * P, 2 * P, K); d.px(knob.x * P - P / 2, knob.y * P - P / 2, P, P, W); }
+  if (pose.feet != null) { const fx = pose.x + (pose.feet ? 0 : 1); d.r(fx, -4, 1, 1, K); d.r(fx + 1 + (pose.feet ? 0 : -1), -4, 1, 1, K); }
+}

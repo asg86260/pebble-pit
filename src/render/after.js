@@ -337,7 +337,7 @@ function drawMember(w) {
   // The first worker through a working station's door stands in its pose.
   if (w.at && DRAW[w.at] && atStation(w.at)[0] === w) {
     const s = working(w.at), pose = workerPose(w.at, s.work, A().t);
-    if (pose) { frameOf(w.at).body(pose.x, pose.y, pose.dx, 0, pose.squat); return; }
+    if (pose) { frameOf(w.at).body(pose.x, pose.y, pose.dx, pose.dy || 0, pose.squat); return; }   // MOCK: dy
   }
   onPixel(w.x - P, w.y - 3 * P, () => {
     const x = 0, y = 0;
