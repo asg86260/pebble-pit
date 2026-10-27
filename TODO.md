@@ -11,8 +11,8 @@ bodies carry every one"): piles as block plots that are the stock, act 1's
 sweep for goods, the station as its shop, the treadwheel and rocker beam, the
 column-at-a-time cut, the chute and mound, and every block moved by a body.
 Building the shared parts and the saw mill first; every other station gets
-its own live review rounds before its own build. Open: how a bill paid in timber moves
-its blocks (an order carried, recommended, or a carrier walking off).
+its own live review rounds before its own build. Settled: piles have brims and the economy rescales;
+a bill paid in timber is an order, carried.
 
 ## Every part of the game stands on its own -- PHASE A APPROVED, BUILDING (2026-10-25)
 
