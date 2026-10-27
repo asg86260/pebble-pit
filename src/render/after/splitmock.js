@@ -63,12 +63,16 @@ export function blockPile(d) {
   }
   plotStock = stock;
   while (t - plotT >= SETTLE_S) { settle(plot); plotT += SETTLE_S; }
+  // round 20: the pile's shape filled solid behind its blocks, so the pixel
+  // between two blocks is a seam of mid tone, not a hole the sky shows through
+  const back = (c, r, v) => { const n = nudge(v); d.px((plot.x + c * 2 + n.x) * P, (-(r + 1) * 2 + n.y) * P, 2 * P, 2 * P, MID); };
   const put2 = (c, r, v) => { const n = nudge(v); block(d, TIMBER, plot.x + c * 2 + n.x, -(r + 1) * 2 + n.y, 2); };
+  for (let c = 0; c < plot.cols; c++) for (let r = 0; r < plot.rows; r++) { const v = at(plot, c, r); if (v) back(c, r, v); }
   for (let c = 0; c < plot.cols; c++) for (let r = 0; r < plot.rows; r++) { const v = at(plot, c, r); if (v) put2(c, r, v); }
   for (let i = ghosts.length - 1; i >= 0; i--) {
     const g = ghosts[i], k = (t - g.at) / GHOST_S;
     if (k >= 1) { ghosts.splice(i, 1); continue; }
-    d.fade(1 - k, () => put2(g.c, g.r, g.v));
+    d.fade(1 - k, () => { back(g.c, g.r, g.v); put2(g.c, g.r, g.v); });
   }
 }
 
