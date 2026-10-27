@@ -29,13 +29,16 @@ const BED_END = 50, END = 52;
 const plot = { x: BED_END, y: 0, ceiling: c => (c === 0 ? 2 : PLOT_ROWS), cols: PLOT_COLS, rows: PLOT_ROWS, p: 2, grid: new Uint8Array(PLOT_COLS * PLOT_ROWS),
                n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: false };
 let plotT = null, plotStock = null;
+// The saw's own heap under the blade: grains kept, not counted afresh each cut, so none pops out.
+const FOOT_MAX = 9;
+let footN = 5;
 const landedKeys = new Set();
 const plotTop = c => { const r = topRow(plot, c); return -(r + 2) * 2; };   // the top of column c's stack, as a block's y
 const dropIn = () => addGrain(plot, plot.x + DROP_COL * 2, undefined, 1, true);
 export function blockPile(d) {
   const a = S.after, t = a ? a.t : 0, stock = a ? Math.floor(a.stock.timber) : 0;
   if (plotT == null || t < plotT) {                     // a fresh scene: the pile stands as the stock says
-    plot.grid.fill(0); landedKeys.clear(); wakeGrid(plot);
+    plot.grid.fill(0); landedKeys.clear(); wakeGrid(plot); footN = 5;
     for (let i = 0; i < Math.min(stock, PILE_CAP); i++) { dropIn(); for (let k = 0; k < 12; k++) settle(plot); }
     plotT = t; plotStock = stock;
   }
@@ -70,7 +73,7 @@ function slideOff(d, from, out, b, puff = false) {
   // where it becomes a grain of the pile and the sand rules roll it on
   const raw = out * 1.5 - b * 0.25, kk = clamp01(raw), slide = clamp01(kk * 2), drop = clamp01(kk * 2 - 1);
   const key = `${Math.floor(((S.after && S.after.t) || 0) / 6.4)}-${b}`;
-  if (kk >= 1) { if (!landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 64) landedKeys.clear(); } return; }
+  if (kk >= 1) { if (!landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 256) landedKeys.clear(); } return; }
   const to = { x: plot.x + DROP_COL * 2, y: plotTop(DROP_COL) };
   if (puff && raw >= 0.9 && raw < 1) d.fade(1 - (raw - 0.9) / 0.1, () => { for (const sx of [-1, 2]) d.px((to.x + sx) * P, (to.y + 1.5) * P, P, P, MID); });
   block(d, TIMBER, lerp(from[0], to.x, slide), lerp(from[1], to.y, drop * drop), 2);
@@ -194,7 +197,10 @@ export function splitLog(d, style, ph, bed, bx, T) {
     kerf = [at(6), at(6) + 0.004, at(7), at(7) + 0.004];
   }
   grains(d, bx, kerf, ph, T);
-  footHeap(d, bx, 5 + kerf.filter(g => ph > g + 0.06).length);
+  // the saw's heap keeps every grain that reached it: each joins once, when it lands, and stays
+  const start = Math.round(((S.after && S.after.t) || 0) - ph * T);
+  kerf.forEach((g, i) => { const key = `${start}-k${i}`; if (ph > g + 0.06 && !landedKeys.has(key)) { landedKeys.add(key); footN = Math.min(FOOT_MAX, footN + 1); } });
+  footHeap(d, bx, footN);
 }
 
 // --- round 5: the bar from the wheel to the blade, three ways ('CA' a real
@@ -290,6 +296,6 @@ function outflow(d, bed, bx, ph, T) {
     const f = (u - TIP_S) / FALL_S;
     if (f < 1) { block(d, TIMBER, END, lerp(top, plotTop(DROP_COL), f * f), 2); continue; }
     // it joins the pile once, in the half second after it lands
-    if (f < 1 + 0.5 / FALL_S && !landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 64) landedKeys.clear(); }
+    if (f < 1 + 0.5 / FALL_S && !landedKeys.has(key)) { landedKeys.add(key); dropIn(); if (landedKeys.size > 256) landedKeys.clear(); }
   }
 }
