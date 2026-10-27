@@ -613,6 +613,8 @@ function overOpenBoard(cx, cy) {
 // The tooltip: what the cursor went and looked at. Not the board, which opens
 // because you walked up to a station; two questions, asked separately.
 function askedAbout(x, y, cx, cy) {
+  // MOCK, round 26: no tooltip while working a part, or over one about to be worked
+  if (globalThis.__shopStyle && S.view === 'after' && (gestureHeld() || gestureUnder(x, y))) { showTipAt(null); return false; }
   // Somebody first: they are the only thing that moves, so a mark they are
   // over can still be read a moment later. In your hand before under the
   // cursor: a body being carried is the one you are asking about.
