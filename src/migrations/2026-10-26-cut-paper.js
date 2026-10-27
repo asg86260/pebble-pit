@@ -44,6 +44,7 @@ export default {
       if (!obj(b)) continue;
       if (CUT_JOBS.includes(b.job)) Object.assign(b, { job: null, on: false, at: null, target: null, out: false, t: 0, pick: false });
       if (CUT_JOBS.includes(b.errand)) Object.assign(b, { errand: null, target: null, pick: false });
+      if (CUT.includes(b.site)) Object.assign(b, { job: null, site: null, on: false, load: null, target: null, t: 0 });
       if (CUT.includes(b.at)) b.at = null;
       if (CUT.includes(b.target)) b.target = null;
       if (CUT_LOADS.includes(b.load)) Object.assign(b, { load: null, carry: 0, n: 0, target: null });
