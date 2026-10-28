@@ -272,7 +272,7 @@ function drawHandGoods() {
     for (const m of S.motes) {
       if (m.place !== 'after' || !AFTER_BLOCK[m.kind]) continue;
       const z = AFTER_BLOCK[m.kind] * AP, at = motePos(m, t);
-      goodBlock(Math.round(at.x - z / 2), Math.round(at.y - z / 2), m.kind, m.s); // MOCK: m.s
+      onPixel(at.x - z / 2, at.y - z / 2, () => goodBlock(0, 0, m.kind, m.s)); // MOCK: m.s
     }
   }
   for (const ch of S.chips) {

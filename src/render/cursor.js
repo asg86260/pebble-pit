@@ -5,6 +5,7 @@ import { P, MOTE_SPIN_FPS } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
+import { onPixel } from './frame.js';
 
 // Where mote `m` drifts at clock `t` (seconds): turned on the clock, not a
 // step a drawn frame, so a place that draws its own goods on the cursor
@@ -25,8 +26,13 @@ export function drawCursor() {
   const t = now() / 1000;
   for (const m of S.motes) {
     if (m.kind) continue;
-    const { x, y } = motePos(m, t);
-    drawMark(m.s, Math.round(x / P) * P + P / 2, Math.round(y / P) * P + P / 2);   // what it is, not a grain of dust, laid on the lattice
+    // At its true position, on the nearest device pixel, the mark laid whole
+    // off that origin: a held thing moves smoothly, never a cell at a time
+    // (CLAUDE.md, "Art is drawn on the P = 6 cell grid; motion is smooth").
+    const { x, y } = motePos(m, t), ox = onPixel(x), oy = onPixel(y);
+    ctx.translate(ox, oy);
+    drawMark(m.s, P / 2, P / 2);   // what it is, not a grain of dust
+    ctx.translate(-ox, -oy);
   }
   ctx.fillStyle = '#000';
 }
