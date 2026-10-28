@@ -179,7 +179,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
-- Every card stands on the boards' dot ground: the stock beside a board, the story card, the held sheet, notes, the build queue, the counter, act 3's upgrades plate and the notices (test/ui-tokens.test.mjs).
+- Every box stands on the boards' dot ground: the cards, notices, buttons, signs, tabs and fields, the counter and the canvas's own cards, the black ones in the paper's dots (test/ui-tokens.test.mjs).
 - Act 3's UPGRADES button lifts and sways under the pointer as a shop tile does, and pressed again puts its shop away; clicking or hovering its station opens nothing, and a shop tile pressed now sinks halfway (test/after-gestures.test.mjs).
 - Act 3's stations are their own shops: open one from the UPGRADES button above its worker count, or click a station with no workers' count (the shack, the pedestal), take hold of its work to close it; the $ signs, the strip under a worked station and the glyph over a working one are gone, and one ghost hand shows how (test/after-gestures.test.mjs).
 - In act 3 you pick up logs and timber as you do dust, a left press and hold on a pile, and flick them onto another pile or the floor, where a worker carries them home (test/after-goods-sweep.test.mjs).
