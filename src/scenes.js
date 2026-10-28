@@ -40,13 +40,15 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, stationBox, signBox, soulX, heapMid, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, AP } from './after/place.js';
+import { floorAt, stationX0, stationBox, signBox, soulX, heapMid, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, AP } from './after/place.js';
 import { godFront } from './after/sky.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
 const godView = () => godFront();
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_DROP, AFTER_PILES } from './config.js';
 import { sawDrops } from './after/mill.js';
+import { stripOf as groundStrip, units as groundUnits, counted as groundCounted } from './after/ground.js';
+import { afterGround } from './state.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
@@ -3001,6 +3003,37 @@ export const SCENES = {
     run: () => SCENES['after-hand-carry'].run(0) },
   'after-hand-set': { about: 'the acts', review: 'act 3: picking up goods', stage: 'built: the real build on branches a3-goods-sweep and a3-hand-weight -- not on main yet; lands when you sign it off', option: 'C let go over the mill pile', say: "act 3's goods by hand: let go over the saw mill's pile, the logs falling onto it",
     run: () => SCENES['after-hand-carry'].run(1, true) },
+  // Act 3's one ground (DESIGN.md, "One resource system for every act"):
+  // eight logs taken off the forestry shack's pile one at a time and let go
+  // on one spot of open floor past the camp, each landing on the
+  // heap the last ones made and rolling off it by the heap rule -- a mound a
+  // log a step, never a tower, and no log drawn through another.
+  'after-ground-heap': { about: 'the acts', say: 'eight logs let go on one spot of open floor past the pedestal, heaped as a mound by the one rule a pile heaps by',
+    run: () => {
+      act3Mid();
+      S.carryLevel = Math.max(S.carryLevel, 2);
+      S.after.crew = {};
+      window.__afterGrant({ grovelogs: 8 });
+      // nobody idle to carry them home while they are watched
+      S.after.bodies = S.after.bodies.filter(w => w.job); S.after.camp = 0;
+      // the first flat stretch of open floor past the camp's far edge
+      const flat = x => [-1, 1].every(k => Math.abs(floorAt(x + k * AP * 16) - floorAt(x)) < 1);
+      let x = campEdges()[1] + AP * 48;
+      while (!flat(x) && x < afterGround.x + afterGround.cols * AP) x += AP;
+      const spot = { x, y: floorAt(x) - P * 30 };
+      for (let k = 0; k < 8; k++) {
+        const from = topBlock('grovelogs');
+        S.trail = []; S.mouse = { ...from };
+        window.__afterHand(from.x, from.y, 'press');
+        S.trail = []; S.mouse = { ...spot };
+        window.__afterHand(spot.x, spot.y, 'drop');
+        window.__fast(1.2);
+      }
+      window.__fast(2);
+      pinCamera(x - S.viewW / 2);
+      window.__look(x - S.viewW / 2);
+      window.__still(true); window.__holdShot();
+    } },
   // A held hand's weight by size (hands.js, `handHolds`, HAND_SWAY): a full
   // carry swept off each pile and held still over it, so the drift is all
   // there is to see.
@@ -3429,6 +3462,13 @@ function handWeight(what) {
   window.__afterHand(S.mouse.x, S.mouse.y, 'move');
   window.__fast(1 / 60);
   window.__holdShot();
+}
+// The middle of pile `what`'s highest block on act 3's ground: where a
+// player presses to take one off it.
+function topBlock(what) {
+  const s = groundStrip(what), us = groundUnits().filter(u => u.c0 >= s.c0 && u.c0 < s.c1 && groundCounted(u));
+  const u = us.reduce((b, q) => (q.r0 > b.r0 ? q : b));
+  return { x: afterGround.x + (u.c0 + u.z / 2) * AP, y: afterGround.y + (afterGround.rows - u.r0 - u.z / 2) * AP };
 }
 function act3Mid() {
   actsYard('fallen');

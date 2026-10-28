@@ -18,7 +18,7 @@ import { afterX0, afterX1, stationDoor, AP } from './place.js';
 import { pileGrid } from './art.js';
 import { bedLand } from './mill.js';
 import { PILED, stripOf, slotTop, slotNear, colX, rowY, units, counted, uncovered, takeAt, takeTopOf, putIn, putSomewhere, putBeside,
-         standGround, settleGround, ledger, lying, groundVersion } from './ground.js';
+         standGround, settleGround, ledger, lying, groundVersion, fallTag } from './ground.js';
 import { secs } from './util.js';
 
 export { PILED };
@@ -219,21 +219,23 @@ export const AFTER_PLOTS = {
     const slot = slotNear(colOf(G, ch.x - half + AP / 2), k.size);
     const top = slot >= 0 ? rowY(slotTop(slot, k.size)) : rowY(0);
     if (ch.y + half < top) return false;
-    landUnit(ch.kind, ch.x);
+    // a good let go of, come down where its foot is (ground.js, `fallTag`)
+    fallTag(landUnit(ch.kind, ch.x), ch.y + half);
     return true;
   }
 };
 // A unit of `kind` come down at world x (its middle): into the pile under it
 // if that is its good's and has room, else beside it, else where it fell.
+// Its bottom-left cell, or -1 with nowhere to lie.
 export function landUnit(kind, x) {
   const c = Math.max(0, Math.min(G.cols - 1, colOf(G, x))), v = cellOf(kind);
   for (const what of PILED) {
     const s = stripOf(what);
     if (!s || c < s.c0 || c >= s.c1) continue;
-    if (s.kind === kind && setBlock(what, x)) return true;
-    return putBeside(v, x) >= 0;
+    if (s.kind === kind && pileRoom(what) > 0) { const ai = putIn(v, Math.max(colX(s.c0), Math.min(colX(s.c1) - 1, x))); if (ai >= 0) return ai; }
+    return putBeside(v, x);
   }
-  return putSomewhere(v, x) >= 0;
+  return putSomewhere(v, x);
 }
 
 // Every hand-off through the doors since the act was stood up: each pile's
