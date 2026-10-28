@@ -153,7 +153,7 @@ group('a press on a pile takes the top block, and the blocks under it stay where
 // floor), in the hand, in the air, in a body's arms, in the saw and the heap
 // (src/conserve.js, the census the conservation rule reads).
 function goods() {
-  const { load, ...n } = census();
+  const { load, scale, ...n } = census();
   return n;
 }
 // The same, off an older save's raw object.

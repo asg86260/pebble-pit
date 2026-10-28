@@ -90,7 +90,7 @@ export function looseScales(n) {
     if (!addGrain(deepBed, x, null, shadeNear(SCALE_SHADE, SCALE_SPREAD), true)) break;
     laid++;
   }
-  source('scale', laid, 'loose scales');
+  source('scale', laid, 'loose');
   return laid;
 }
 
@@ -268,7 +268,7 @@ export const DEEP_LANDING = {
       if (!deepBed.grid) return 0;
       const col = Math.max(0, Math.min(deepBed.cols - 1, colOf(deepBed, ch.x)));
       if (ch.y < surfaceY(deepBed, col)) return 0;
-      if (!addGrain(deepBed, ch.x, null, ch.s, true)) unmade('scale', 1, 'lost to the dark');
+      if (!addGrain(deepBed, ch.x, null, ch.s, true)) unmade('scale', 1, 'dark');
       return 1;
     }
   ]

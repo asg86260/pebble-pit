@@ -177,7 +177,7 @@ group('a station\'s loads come out of the shack\'s door', async () => {
   return [
     ok(bought, 'the station bought off the shack'),
     ok(took.length > 0 && took.every(t => Math.abs(t.x - door) < P * 4), 'every load was taken up at the shack\'s door', JSON.stringify(took.slice(0, 3)) + ' door ' + door),
-    ok(took.every(t => t.load.length === 1 && t.load[0] === AFTER_SITE_LOAD), 'as a unit in the arms'),
+    ok(took.every(t => t.load.length === 1 && kindOf(t.load[0]) && kindOf(t.load[0]).key === 'load'), 'as a load unit of its own kind in the arms'),
     ok(window.__afterRead().built.includes('mill'), 'and the station stands off them')
   ];
 });

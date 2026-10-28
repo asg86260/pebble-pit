@@ -82,7 +82,7 @@ function sink(w) {
     // what it still held goes into the water where it lies, as scales
     for (let i = 0; i < (w.spill || 0); i++)
       dropScale(w.x + WORKER / 2, w.y, 0, 0, 1);
-    source('scale', w.spill || 0, 'a fall');
+    source('scale', w.spill || 0, 'fall');
     w.spill = 0;
     return;
   }
