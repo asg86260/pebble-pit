@@ -141,7 +141,8 @@ export function drawLaidGoods(t) {
     // the floor rises and falls (after/place.js, `floorAt`): it lands where
     // it stands, as layGood reckoned its fall
     const fl = floorAt(q.x + AP), y = Math.round((q.y0 ?? fl) + (fl - (q.y0 ?? fl)) * u * u);
-    if (kind === 'log' || kind === 'plank') { goodBlock(Math.round(q.x), y - AFTER_BLOCK[kind] * AP, kind); continue; }
+    if (kind === 'log' || kind === 'plank' || (kind === 'sign' && globalThis.__goodsLook)) { // MOCK: || sign
+      goodBlock(Math.round(q.x), y - AFTER_BLOCK[kind] * AP, kind); continue; }
     const d = frame(Math.round(q.x), y, 0, null, A);
     if (kind === 'sign') { d.px(0, -P, 4 * P, P, K); d.px(2, -P + 2, 4 * P - 4, P - 4, W); d.px(4 * P, -P / 2 - 1, 2 * P, 2, K); }
   }

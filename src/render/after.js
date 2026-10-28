@@ -36,6 +36,7 @@ import { drawGrove, drawLaidGoods } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, blockPile, goodBlock, buildPile, BUILD_SLOTS, plankAt, blockAt, countOver } from './after/piles.js';
+import { goodsLook, MOCK_DUST } from './after/piles.js'; // MOCK
 import { PILED } from '../after/piles.js';
 import { drawBody } from './crew.js';
 import { drawSawDrops } from './after/drop.js';
@@ -200,7 +201,7 @@ function drawSawdust() {
   const cells = heapCells(AFTER_HEAP_R).length;
   const n = Math.round(Math.min(1, a.stock.sawdust / heapBrim()) * cells);
   const tipped = a.tipAt != null && a.t - a.tipAt < AFTER_TIP_HOLD_S;
-  heap(d, 0, AFTER_HEAP_R, pileState('sawdust', n), a.stock.sawdust, tipped);
+  heap(d, 0, AFTER_HEAP_R, pileState('sawdust', n), a.stock.sawdust, tipped, goodsLook() ? MOCK_DUST[goodsLook()] : undefined); // MOCK
   const nx = notchX();
   for (const sp of airSpills()) {
     const k = sp.age / AFTER_SPILL_S;
@@ -216,6 +217,10 @@ function drawSawdust() {
 function signRack(d, x, st) {
   const FU = AFTER_SIGN_FLAG_U, at = d.world(x, 0), U = FU.rack, step = FU.apart * P, n = Math.min(Math.max(st.n, st.prev), 3);
   ctx.fillStyle = GREY[K]; ctx.fillRect(at.x - P, at.y - P, step * 3 + P, P);
+  // MOCK: a sign as the 4x4 block it is to be, stood on the rack's rail
+  const z = AFTER_BLOCK.sign * AP; // MOCK
+  if (goodsLook()) { for (let i = 0; i < n; i++) d.fade(pileAlpha(i, st), () => goodBlock(at.x + i * (z + AP), at.y - P - z, 'sign')); // MOCK
+    countOver(at.x + (z + AP) * 1.5, at.y - P - z, st.n, st.key); return; } // MOCK
   for (let i = 0; i < n; i++) d.fade(pileAlpha(i, st), () => drawFistFlag(at.x + i * step, at.y - P, U));
   // The sign on the bench, lettered in the next slot a row of the fist a
   // blow: as far along as its nails are driven, by the hand or the joiner.
@@ -282,6 +287,9 @@ function drawLoad(x, y, kind, n) {
   if (kind === 'log' || kind === 'plank') {
     const z = AFTER_BLOCK[kind] * AP, lx = x + 1.5 * P - z / 2;
     for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind);
+  } else if (kind === 'sign' && goodsLook()) { // MOCK
+    const z = AFTER_BLOCK.sign * AP, lx = x + 1.5 * P - z / 2; // MOCK
+    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind); // MOCK
   } else if (kind === 'sign') {
     // The one in front held up on its post; the rest boards on the shoulder.
     drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
