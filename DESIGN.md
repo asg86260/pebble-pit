@@ -23412,7 +23412,7 @@ before the first frame, so a save carries no grid. Timber is halved on read
   the row's effect lands when the last block arrives, as a build's loads
   already are (after/build.js).
 
-### One resource system for every act (design, not built; the owner, 2026-10-28)
+### One resource system for every act (designed and approved, building; the owner, 2026-10-28)
 
 The owner, verbatim: "again im not sure how the grabbing logic just doesnt
 work by default, it should inherit the same shit as act 1. something is
@@ -23697,21 +23697,12 @@ config/after.js, acts.js and verify.js are additive-only for every track
 but the one that owns a named piece of them, one block each, under the
 track's name.
 
-#### 9. The owner's calls
+#### 9. The owner's calls (decided, 2026-10-28)
 
-1. **One fine ground plot with blocks as multi-cell units, or one plot a
-   block size?** Recommended: one fine plot. It stacks with no gaps, follows
-   the swells exactly and cannot draw two things through each other; it
-   costs a block rule in grid.js. A plot a size needs no new rule, but
-   leaves gaps under blocks, rounds the floor to the block, and needs every
-   plot to read the others' cells as walls.
-2. **Does a big block take a share of the hand by weight, as dust does, or
-   stay one log a hand?** Recommended: by weight, never fewer than one. A
-   drag across the log pile then takes as many as a strong hand holds, and
-   the bench's strength ladder means the same in every act. One log a hand
-   (today's `HAND_ONE`) keeps a log feeling heavy, but the drag takes one.
-3. **The deep in this wave, or after?** Recommended: in it, for the hand and
-   the landing only: its scales become chips with the water as data, the
-   hopper a surface, `S.heldScales` gone; its toss arc and payment flecks
-   stay. Left out, the hand keeps a deep branch, which is the thing asked to
-   be gone.
+1. **One fine ground plot a place, blocks as multi-cell units**, not a plot a
+   size.
+2. **A big block takes a share of the hand by weight, never fewer than
+   one**, replacing today's one-log `HAND_ONE`: a drag across the log pile
+   takes as many logs as the hand can hold, and the strength ladder means
+   the same in every act.
+3. **The deep joins this wave**, for its hand and landing.
