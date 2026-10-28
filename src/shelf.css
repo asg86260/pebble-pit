@@ -498,10 +498,11 @@
 @keyframes shelf-sway-y  { 0% { --sway-y: 0px; }  25% { --sway-y: -1px; }  50% { --sway-y: 0px; }  75% { --sway-y: 1px; }  100% { --sway-y: 0px; } }
 @keyframes shelf-sway-x2 { 0% { --sway-x2: 0px; } 25% { --sway-x2: -1px; } 50% { --sway-x2: 0px; } 75% { --sway-x2: 1px; } 100% { --sway-x2: 0px; } }
 @keyframes shelf-sway-y2 { 0% { --sway-y2: 0px; } 25% { --sway-y2: -1px; } 50% { --sway-y2: 0px; } 75% { --sway-y2: 1px; } 100% { --sway-y2: 0px; } }
-/* Pressed, it stands up as the hover does: the same plate, at once -- the
-   one answer a tap on glass gets, since glass has no hover. */
+/* Pressed, it sinks halfway back toward its shadow: the same plate, half
+   the lift, so the press reads as pushing the tile down. On glass, which has
+   no hover, it is the one answer a tap gets. */
 .rows.shelves > button.tile:active:not(:disabled):not(.off):not(.stat) {
-  --lift: -2px; border-color: var(--ink); background-color: var(--paper); color: var(--ink);
+  --lift: -1px; border-color: var(--ink); background-color: var(--paper); color: var(--ink);
 }
 body.still .rows.shelves > button.tile { transition: none; animation: none; }
 
@@ -677,7 +678,8 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
    Option D of docs/mocks/branch-2026-09-28.html: the ladder as a tree of
    pips, looked at, never pressed; under it the rows, the only things that
    are. A row is a bordered box that fills on hover, as every card does. */
-.rails { position: relative; padding: 4px 0 6px; min-width: 34ch; }
+.rails { position: relative; padding: 4px 0 6px; min-width: 34ch;
+ }
 .rails .rl-body { display: grid; gap: 8px; }
 .rails .rl-who { font-size: var(--fs-body); color: var(--ink); }
 .rails .rl-ask { font-size: var(--fs-body); letter-spacing: calc(var(--track-s) * var(--track)); text-transform: uppercase; color: var(--accent); }

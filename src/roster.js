@@ -721,22 +721,30 @@ const boardUp = key => !!S[`${key.replace(/-(\w)/g, (_, c) => c.toUpperCase())}B
 // the tile's own SHELF_HOVER_MS, and drifts on the tile's own loop (bars.js).
 const SHOP_LIFT = P * 0.4;                 // the tile's 2px lift at the yard's five-sixths
 const lifting = new Map();                 // post -> { to, from, at }
-function lifted(key, up) {
+// Pressed, the plate sinks halfway back toward its shadow, as a tile does (shelf.css `:active`).
+const SHOP_PRESSED = 0.5;
+let pressing = false;
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointerdown', () => { pressing = true; }, true);
+  window.addEventListener('pointerup', () => { pressing = false; }, true);
+  window.addEventListener('pointercancel', () => { pressing = false; }, true);
+}
+function lifted(key, to) {
   const t0 = now(); let r = lifting.get(key);
-  if (!r) lifting.set(key, r = { to: up ? 1 : 0, from: up ? 1 : 0, at: t0 });
+  if (!r) lifting.set(key, r = { to, from: to, at: t0 });
   const k = Math.min(1, (t0 - r.at) / SHELF_HOVER_MS), at = r.from + (r.to - r.from) * (1 - Math.pow(1 - k, 3));
-  if (r.to !== (up ? 1 : 0)) { r.from = at; r.to = up ? 1 : 0; r.at = t0; }
+  if (r.to !== to) { r.from = at; r.to = to; r.at = t0; }
   return reducedMotion() ? r.to : at;
 }
 function shopButton(ctx, b, p) {
-  const up = boardUp(p.board) || !!(S.mouse && inside(hit(b), S.mouse.x, S.mouse.y));
-  const t = lifted(p.key, up), paper = GREY[0], ink = GREY[GREY.length - 1];
+  const over = !!(S.mouse && inside(hit(b), S.mouse.x, S.mouse.y));
+  const t = lifted(p.key, over && pressing ? SHOP_PRESSED : over || boardUp(p.board) ? 1 : 0), paper = GREY[0], ink = GREY[GREY.length - 1];
   const [dx, dy] = reducedMotion() ? [0, 0] : drift('upgrades' + p.key);
   const x = b.x + (dx - SHOP_LIFT) * t, y = b.y + (dy - SHOP_LIFT) * t;
   if (t > 0) {
     ctx.fillStyle = ink; ctx.fillRect(b.x, b.y, b.w, b.h);        // the shadow, where the plate stood
     ctx.fillStyle = paper; ctx.fillRect(x, y, b.w, b.h);
-    ctx.globalAlpha = t; ctx.fillStyle = ink;
+    ctx.globalAlpha = Math.min(1, t / SHOP_PRESSED); ctx.fillStyle = ink;
     ctx.fillRect(x, y, b.w, THIN); ctx.fillRect(x, y + b.h - THIN, b.w, THIN); ctx.fillRect(x, y, THIN, b.h); ctx.fillRect(x + b.w - THIN, y, THIN, b.h);
     ctx.globalAlpha = 1;
   }
