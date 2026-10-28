@@ -84,12 +84,31 @@ const BASES = kind => LADDER_OF[kind].length - 1; // MOCK after-goods  how many 
 // How each option paints a block: `off` the share of cells a step off the // MOCK after-goods
 // base (half lighter, half darker), `band` the lit top and left, `apart` // MOCK after-goods
 // whether a pile's blocks take base tones differing from their neighbors'. // MOCK after-goods
+// Round 4 (the owner: "lets go away from using gray tones and textures, and // MOCK after-goods
+// more different shades, like act 1"): `flat` paints each block one flat // MOCK after-goods
+// square in one shade of its good's family and nothing inside it, as act 1 // MOCK after-goods
+// paints a grain (render/marks.js, `drawMark`): `hue` the goods' own color // MOCK after-goods
+// families (HUES), `page` act 3's greys (PAGE). // MOCK after-goods
 const LOOK = { // MOCK after-goods
   a: { off: 0.24, band: false, apart: false }, // MOCK after-goods-a  round 2's A, as it was
-  d: { off: 0.05, band: false, apart: true }, // MOCK after-goods-d
-  e: { off: 0.06, band: true, apart: false, same: true }, // MOCK after-goods-e  one base for every block: the band alone tells them
-  f: { off: 0.04, band: true, apart: true } // MOCK after-goods-f
+  b1: { flat: 'hue', apart: true }, // MOCK after-goods-b1
+  b2: { flat: 'hue', apart: false }, // MOCK after-goods-b2  each block its stored shade alone, as a grain's
+  b3: { flat: 'page', apart: true } // MOCK after-goods-b3
 }; // MOCK after-goods
+// Each good's family, four shades light to dark, as each of act 1's coins is // MOCK after-goods
+// a run of four (COIN_TONES): its own hue, flat and strong, apart from // MOCK after-goods
+// act 1's (ore blue, crop green, spark red, the earned gold, the deep's // MOCK after-goods
+// purple). New tones, a role each (listed in the report): // MOCK after-goods
+const HUES = { // MOCK after-goods
+  log:   ['#9c6a3c', '#8a5c33', '#764e2b', '#634123'], // MOCK after-goods  the log: a warm bark brown
+  plank: ['#e6c896', '#d9b782', '#cca770', '#be975e'], // MOCK after-goods  timber: sawn pale wood
+  sign:  ['#57606b', '#4a525c', '#3e454e', '#323840'] // MOCK after-goods  the sign: a painted slate board
+}; // MOCK after-goods
+// sawdust: the timber's wood a step paler, a grain each (stations.js `heapOn`) // MOCK after-goods
+export const SAWDUST_HUES = ['#f0dcb6', '#e6cc9e', '#dcbd88']; // MOCK after-goods
+// within act 3's black and white: rungs of GREY, flat per block // MOCK after-goods
+const PAGE = { log: [5, 6, 7, 8], plank: [2, 3, 4, 5], sign: [8, 9, 10] }; // MOCK after-goods
+const familyOf = (L, kind) => (L.flat === 'hue' ? HUES[kind] : PAGE[kind].map(i => GREY[i])); // MOCK after-goods
 const KIND_SEED = { log: 11.3, plank: 23.9, sign: 37.1 }; // MOCK after-goods
 // a block's base rung (1..BASES) off its own shade, when nothing asks // MOCK after-goods
 // otherwise: carried, thrown, laid, or an option that does not keep apart // MOCK after-goods
@@ -103,6 +122,13 @@ const cell = (x, y, i, j, g) => { into.fillStyle = GREY[g]; into.fillRect(x + i 
 // between each. Dropped when the page turns (ink.js, `themed`). // MOCK after-goods
 const SHEETS = themed(new Map()); // MOCK after-goods
 function mockBlock(x, y, kind, seed, base = null) { // MOCK after-goods
+  const F = LOOK[goodsLook()]; // MOCK after-goods
+  if (F && F.flat) { // MOCK after-goods
+    // one flat square in one shade of the family, a grain's way // MOCK after-goods
+    const fam = familyOf(F, kind), z = AFTER_BLOCK[kind] * AP; // MOCK after-goods
+    ctx.fillStyle = fam[((base ?? shadeOfSeed(seed)) - 1) % fam.length]; ctx.fillRect(x, y, z, z); // MOCK after-goods
+    return; // MOCK after-goods
+  } // MOCK after-goods
   const s = shadeOfSeed(seed), bse = base ?? (LOOK[goodsLook()]?.same ? 2 : ownBase(kind, s)), key = `${goodsLook()}|${kind}|${s}|${bse}`; // MOCK after-goods
   let sheet = SHEETS.get(key); // MOCK after-goods
   if (!sheet) { // MOCK after-goods
@@ -133,14 +159,19 @@ function paintBlock(kind, s, base) { // MOCK after-goods
 // then the next rung that neither has. Every touching pair is one of those // MOCK after-goods
 // two, so none match; a block keeps its tone until a neighbor of it moves. // MOCK after-goods
 function mockPile(b, kind, foot) { // MOCK after-goods
-  const L = LOOK[goodsLook()] || LOOK.a, nb = BASES(kind), got = new Int8Array(b.cols * b.rows); // MOCK after-goods
+  const L = LOOK[goodsLook()] || LOOK.a, nb = L.flat ? familyOf(L, kind).length : BASES(kind), got = new Int8Array(b.cols * b.rows); // MOCK after-goods
   for (let r = 0; r < b.rows; r++) for (let c = 0; c < b.cols; c++) { // MOCK after-goods
     const v = at(b, c, r); // MOCK after-goods
     if (!v) continue; // MOCK after-goods
-    let base = L.same ? 2 : ownBase(kind, shadeOfSeed(v)); // MOCK after-goods
+    // flat: the shade the block was set down with, read along its family // MOCK after-goods
+    let base = L.flat ? (shadeOfSeed(v) - 1) % nb + 1 : L.same ? 2 : ownBase(kind, shadeOfSeed(v)); // MOCK after-goods
     if (L.apart) { // MOCK after-goods
       const left = c > 0 ? got[r * b.cols + c - 1] : 0, under = r > 0 ? got[(r - 1) * b.cols + c] : 0; // MOCK after-goods
-      for (let t = 0; t < nb && (base === left || base === under); t++) base = base % nb + 1; // MOCK after-goods
+      if (L.flat) { // MOCK after-goods  flat: its own shade if it stands two steps from both, else the nearest that does, else one step
+        const gap = k => Math.min(left ? Math.abs(k - left) : 9, under ? Math.abs(k - under) : 9); // MOCK after-goods
+        const near = [...Array(nb)].map((_, i) => i + 1).sort((p, q) => Math.abs(p - base) - Math.abs(q - base)); // MOCK after-goods
+        base = near.find(k => gap(k) >= 2) ?? near.find(k => gap(k) >= 1) ?? base; // MOCK after-goods
+      } else for (let t = 0; t < nb && (base === left || base === under); t++) base = base % nb + 1; // MOCK after-goods
     } // MOCK after-goods
     got[r * b.cols + c] = base; // MOCK after-goods
     mockBlock(b.x + c * b.p, foot - (r + 1) * b.p, kind, v, base); // MOCK after-goods

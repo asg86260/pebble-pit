@@ -3121,15 +3121,15 @@ export const SCENES = {
       window.__look(mid - S.viewW / 2);
       window.__still(true); window.__holdShot();
     } },
-  // MOCK after-goods: what act 3's goods look like (mock-goods-look3, never merged). The
+  // MOCK after-goods: what act 3's goods look like (mock-goods-look4, never merged). The
   // chain run and every pile topped up, framed from the forestry shack's log
   // pile to the workshop's signs, a member carrying while it holds; `look`
   // the drawing mode (render/after/piles.js, `__goodsLook`), null the real one.
   ...Object.fromEntries([[null, 'current', "the goods as they are drawn now: each block a flat tone with a one-pixel seam on its right and bottom only"],
     ['a', 'A subtle mottle (last round)', "round 2's pick to iterate on: every block keeps its own shade, as act 1's grains do, and a cell in four is a step off it"],
-    ['d', 'D neighbors apart', "quieter: a cell in twenty a step off, and every block's base tone differs from each block it touches, so each 4x4 log and 2x2 timber reads as its own"],
-    ['e', 'E lit top and left', "every block one base tone, a cell in sixteen a step off, and a step lighter along its own top row and left column (a 2x2 timber, its top-left cell): one lit edge a block to count"],
-    ['f', 'F both, quietest', "a cell in twenty-five a step off, every block's base apart from its neighbors', and its own top and left a step lighter (a 2x2 timber, its top-left cell)"]]
+    ['b1', 'B1 colors, neighbors apart', "act 1's way with color: each good its own family of four shades (logs bark brown, timber pale wood, signs slate, sawdust pale wood grains), each block one flat shade, its own shade unless that sits within a step of a block it touches; no texture"],
+    ['b2', 'B2 colors, a shade each', "the same families, each block keeping the one shade it was set down with, as each of act 1's grains keeps its own; a pile reads as a heap of shades, and two the same can sit side by side"],
+    ['b3', 'B3 greys, neighbors apart', "B1 inside act 3's black and white: each block one flat grey of its good's own range, its own unless that sits within a step of a block it touches; no texture, no color"]]
     .map(([look, option, say]) => [`after-goods-${look || 'now'}`, { about: 'the acts', review: 'act 3: what the goods look like', // MOCK
       stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option, say, // MOCK
       swap: () => { globalThis.__goodsLook = look; }, // MOCK

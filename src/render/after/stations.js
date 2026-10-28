@@ -22,6 +22,9 @@ import { K, W, PALE, MID, DUST, hash, silhouette } from './kit.js';
 import { held } from '../../reset.js';
 import { ctx } from '../ctx.js';
 import { goodBlock } from './piles.js';
+import { goodsLook, SAWDUST_HUES } from './piles.js'; // MOCK after-goods
+// MOCK after-goods: each option's sawdust, a grain each: the wood family's paler shades in b1/b2, the heap's own greys otherwise
+const LOOK_DUST = () => (goodsLook() === 'b1' || goodsLook() === 'b2' ? SAWDUST_HUES : null); // MOCK after-goods
 import { wheelAngle, millView, sawyerPose } from '../../after/mill.js';
 import { at } from '../../grid.js';
 
@@ -122,7 +125,7 @@ function heapOn(d, b) {
   const x0 = AFTER_MILL.heap.x;
   for (let c = 0; c < b.cols; c++) for (let r = 0; r < b.rows; r++) {
     const v = at(b, c, r);
-    if (v) d.c(x0 + c, -1 - r, DUST[(v - 1) % DUST.length]);
+    if (v) d.c(x0 + c, -1 - r, LOOK_DUST() ? LOOK_DUST()[(v - 1) % LOOK_DUST().length] : DUST[(v - 1) % DUST.length]); // MOCK after-goods
   }
 }
 // The heap and a tip's grains dropping out through the hatch, gone under

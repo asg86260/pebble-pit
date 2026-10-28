@@ -58,7 +58,7 @@ export function frame(ox, oy, flip = 0, sink = null, s = 1) {
   // a rect already in the frame's scaled px
   const put = (x, y, w, h, tone) => {
     if (sink) { sink(x, y, w, h); return; }
-    ctx.fillStyle = GREY[tone];
+    ctx.fillStyle = typeof tone === 'string' ? tone : GREY[tone]; // MOCK after-goods  a hex as itself
     ctx.fillRect(Math.round(X(x, w)), Math.round(oy + y), Math.round(w), Math.round(h));
   };
   const d = {
