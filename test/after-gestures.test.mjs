@@ -19,7 +19,9 @@ import { gestureDown, gestureMove, gestureUp, gestureView, gestureHover, gesture
 import { stationBox } from '../src/after/place.js';
 import { GESTURE_HOVER_S } from '../src/config.js';
 import { godMid, faceY } from '../src/after/sky.js';
-import { FRAME, frame, click, asks, timeTo, sawOn, saw, lift, spin, nailSign } from './after-hands.mjs';
+import { FRAME, frame, click, asks, opens, pressShop, timeTo, sawOn, saw, lift, spin, nailSign } from './after-hands.mjs';
+import { shopBoxOf, rosterHit, rosterUp } from '../src/roster.js';
+import { station } from '../src/stations.js';
 
 const S = yard.S;
 const read = () => window.__afterRead();
@@ -40,8 +42,8 @@ function up(stand = [], stock = {}) {
 }
 const rec = key => gestureView().find(r => r.key === key);
 // A click on every point of a station's drawing, a cell apart, that its hand
-// work would not take (the station is its own shop anywhere but its working
-// parts): how many such points, and every board they asked for.
+// work would not take: how many such points, and every board they opened
+// (none where the station's board has its UPGRADES button).
 function frameAsks(key) {
   const b = stationBox(key), got = new Set();
   let spots = 0;
@@ -49,7 +51,7 @@ function frameAsks(key) {
     for (let y = b.y + P / 2; y < b.y + b.h; y += P) {
       if (gestureUnder(x, y)) continue;
       spots++;
-      got.add(asks({ x, y }));
+      got.add(opens({ x, y }));
     }
   return { spots, asks: [...got] };
 }
@@ -110,18 +112,20 @@ group('a tree: its saw icon clicked puts the handsaw on it; dragged back and for
   const slow = trial(3), fast = trial(0.6);
   // A plain click on the trunk puts the saw on it, as the icon does (the
   // owner, 2026-10-20: "clicking a tree starts the sawing"); the grove's
-  // board is the forestry shack's.
+  // board is the forestry shack's, opened from the UPGRADES button over the
+  // woodcutters' roster and not from the shack's drawing.
   up();
   window.__afterAxe();
   const t = window.__afterTrees()[0];
   const asked = asks({ x: t.x, y: t.y }), sawing = rec('tree').i === 0;
-  const board = frameAsks('forestry');
+  const board = frameAsks('forestry'), button = pressShop('after-grove');
   window.__actsOn(null);
   return [
     ok(slow.icon && slow.on, 'the saw icon shows over the grown tree, and a click on it puts the saw on'),
     ok(fast.secs < slow.secs && Number.isFinite(slow.secs), `sawn faster, it falls sooner (${TREE_CHOPS} strokes)`, `${slow.secs.toFixed(2)} s -> ${fast.secs.toFixed(2)} s`),
     ok(asked === null && sawing, 'a plain click on the tree puts the saw on it, no board asked for', JSON.stringify([asked, sawing])),
-    ok(board.spots > 0 && board.asks.join() === 'after-grove', 'a click on the forestry shack asks for the grove\'s board', JSON.stringify(board))
+    ok(board.spots > 0 && JSON.stringify(board.asks) === '[null]', 'a click on the forestry shack opens no board', JSON.stringify(board)),
+    ok(button === 'after-grove', 'the UPGRADES button over its roster asks for the grove\'s', String(button))
   ];
 }, NO_RELOAD);
 
@@ -218,10 +222,13 @@ group('a stump: its shovel shows; dragged up and held, a root gives at a time un
   ];
 }, NO_RELOAD);
 
-// The station is its own shop: anywhere on it but its working parts (DESIGN.md,
-// "Act 3's goods are blocks", rule 4).
+// The station is its own shop (DESIGN.md, "Act 3's goods are blocks", rule
+// 4): a station with a roster opens from the UPGRADES button over it (the
+// owner, 2026-10-28), one with none -- the shack, the pedestal -- from a
+// click anywhere on it but its working parts.
 const CARDS = { mill: 'mill', workshop: 'workshop', shack: 'shack', pedestal: 'pedestal', forestry: 'grove' };
-group('a plain click anywhere on a station but its working parts asks for its board, on a part for none; a click on open floor asks for nothing', async () => {
+const BUTTONED = ['mill', 'workshop', 'forestry'];
+group('a plain click on a station with no roster opens its board, on one with its UPGRADES button none, on a part none; a click on open floor asks for nothing', async () => {
   up(['mill', 'workshop'], { logs: 4, timber: 20 });
   const drawings = {};
   for (const k of Object.keys(CARDS)) drawings[k] = frameAsks(k);
@@ -234,13 +241,45 @@ group('a plain click anywhere on a station but its working parts asks for its bo
   const floorTook = click(floor), after = asks(floor);
   window.__actsOn(null);
   return [
-    ok(Object.entries(CARDS).every(([k, c]) => drawings[k].spots > 0 && drawings[k].asks.join() === `after-${c}`),
-       'each station\'s board, by a click anywhere on its drawing off its parts', JSON.stringify(drawings)),
+    ok(Object.entries(CARDS).every(([k, c]) => drawings[k].spots > 0 && JSON.stringify(drawings[k].asks) === JSON.stringify([BUTTONED.includes(k) ? null : `after-${c}`])),
+       'the shack\'s and the pedestal\'s boards by a click anywhere on their drawings off their parts; a station with its button opens none', JSON.stringify(drawings)),
     ok(parts.wheel == null && parts.nail == null, 'and none by a click on a working part', JSON.stringify(parts)),
     ok(crowd === 'after-crowd', 'a click on the crowd of God asks for its status board', JSON.stringify(crowd)),
     ok(!floorTook && after === null, 'the open floor asks for none, and the click is still the place\'s', `${floorTook}`)
   ];
 }, NO_RELOAD);
+
+// Every roster up here carries its station's UPGRADES button, pressed the way
+// a click presses it (roster.js `rosterHit`, the call input.js makes), and
+// standing clear of every station and every other button. A station not yet
+// standing has no roster, so no button: its drawing opens its board, which
+// is where it is built.
+const meets = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+group('each standing station\'s UPGRADES button asks for its own board and stands clear of every station; a station not built opens from its drawing', async () => {
+  up(['mill', 'workshop'], { logs: 4, timber: 20 });
+  const keys = BUTTONED.map(k => `after-${CARDS[k]}`);
+  const pressed = Object.fromEntries(keys.map(k => [k, pressShop(k)]));
+  const boxes = keys.map(shopBoxOf);
+  const grounds = Object.keys(CARDS).map(stationBox);
+  const clear = boxes.every((b, i) => b && grounds.every(g => !meets(b, g)) && boxes.every((o, j) => j === i || !meets(b, o)));
+  // Hung off its button, the board's anchor is the button's, so the board stands beside it.
+  const hung = keys.every((k, i) => { const a = station(k).boardAnchor(); return a && a.x <= boxes[i].x && a.x + a.w >= boxes[i].x + boxes[i].w; });
+  // Off the button, a cell past its hit margin, the press is nobody's button.
+  const b = boxes[0], beside = rosterHitAt(b.x + b.w / 2, b.y - P * 4);
+  // The workshop taken down: no roster, no button, and its drawing is its board again.
+  S.after.built = S.after.built.filter(k => k !== 'workshop');
+  run(0.5);
+  const gone = shopBoxOf('after-workshop'), down = frameAsks('workshop');
+  window.__actsOn(null);
+  return [
+    ok(keys.every(k => pressed[k] === k), 'each button asks for its own station\'s board', JSON.stringify(pressed)),
+    ok(clear, 'each stands clear of every station and every other button', JSON.stringify(boxes)),
+    ok(hung, 'and each board hangs off its button', ''),
+    ok(beside === false, 'a press off the button is no press on it', String(beside)),
+    ok(gone === null && JSON.stringify(down.asks) === '["after-workshop"]', 'a station not standing has no button, and a click on it opens its board', JSON.stringify([gone, down]))
+  ];
+}, NO_RELOAD);
+const rosterHitAt = (x, y) => { const r = rosterHit(x, y); rosterUp(); return r; };
 
 group('the ghost hand shows until the motion is done three times, then fades, and comes back after a long idle', async () => {
   up(['mill', 'workshop'], { timber: 20 });

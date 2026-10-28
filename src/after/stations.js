@@ -5,10 +5,11 @@
 // serve the yard's. `place: 'after'` keeps them to the afterlife's view.
 //
 // Every station is its own shop (DESIGN.md, "Act 3's goods are blocks",
-// rule 4): a click on it anywhere its hand work does not take opens its
-// board (input.js asks the hand work first), and the board stands beside it
-// (`boardAnchor`), on the ground its sign stood on, so it never covers the
-// parts the hand works. The grove's board is the forestry shack's; God's
+// rule 4): its board opens from the UPGRADES button over its roster
+// (roster.js), or, for a station with no roster, from a click on it anywhere
+// its hand work does not take (input.js asks the hand work first). The board
+// stands beside it (`boardAnchor`), off the button or on the ground its sign
+// stood on, so it never covers the parts the hand works. The grove's board is the forestry shack's; God's
 // crowd is asked over his camp on its stage (`hit`). Their boards' rows are
 // after/rows.js's (`registerBoard`).
 
@@ -22,6 +23,7 @@ import { stationBox, signBoard, closed, pilePlace, pileOwner } from './place.js'
 import { PILED, pileFull } from './piles.js';
 import { godCampAt, godMid, faceY } from './sky.js';
 import { heapFull, heapMarkBox, HEAP_PILE } from './mill.js';
+import { shopBoxOf } from '../roster.js';
 
 const live = () => afterlifeOn() && !!S.after;
 // A counted pile's name, and the box its mark hangs from: `pileMarkAt` hangs
@@ -86,7 +88,12 @@ const row = (card, more) => {
     // beside it: over the station it would hide the parts the hand works.
     // It runs away from the station on whichever side its spot stands (the
     // pedestal's is on its left, every other's on its right).
+    // A station with its UPGRADES button standing hangs the board off the
+    // button instead, a gap past it, so the board covers neither the button
+    // that put it up (and puts it away) nor the station.
     boardAnchor: () => {
+      const k = shopBoxOf(key);
+      if (k) return { x: k.x - P * 4, y: k.y, w: k.w + P * 8, h: k.h, side: 'right' };
       const a = signBoard(ground(card)), s = stationBox(ground(card));
       return a && s && { ...a, side: a.x + a.w / 2 >= s.x + s.w / 2 ? 'right' : 'left' };
     },

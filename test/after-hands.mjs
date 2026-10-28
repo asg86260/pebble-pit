@@ -7,6 +7,7 @@ import { run, yard, P } from './helpers.mjs';
 import { GESTURE_SAW_AMP, GESTURE_STUMP_DRAG, GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, groveIcons, partsOf } from '../src/after/gestures.js';
 import { stationAt } from '../src/stations.js';
+import { shopBoxOf, rosterHit, rosterUp } from '../src/roster.js';
 
 const S = yard.S;
 export const FRAME = 1 / 60;
@@ -14,9 +15,22 @@ export const frame = () => run(FRAME);
 const mid = b => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
 export const click = p => { const took = gestureDown(p.x, p.y); gestureUp(p.x, p.y); return took; };
 // A plain press as input.js answers it up there: the hand work's first, else
-// the board of the station under it (the one station table, stations.js
-// `stationAt`), its key; null for neither.
+// the station under it (the one station table, stations.js `stationAt`), its
+// board's key; null for neither.
 export const asks = p => (click(p) ? null : stationAt(p.x, p.y));
+// ...and the board that press opens (input.js `clickBoard`): none on a
+// station whose board has its UPGRADES button standing, the button being
+// the one way in there.
+export const opens = p => { const k = asks(p); return k && !shopBoxOf(k) ? k : null; };
+// A press on a board's UPGRADES button, through the roster's own hit test
+// (the call input.js makes): the board it asks for, or null off every one.
+export const pressShop = key => {
+  const b = shopBoxOf(key);
+  if (!b) return null;
+  const r = rosterHit(b.x + b.w / 2, b.y + b.h / 2);
+  rosterUp();
+  return typeof r === 'string' ? r : null;
+};
 
 // Frames until `done`, each first moved by `motion(t)` (t the seconds since
 // it began); the seconds it took, or Infinity past `limit`.

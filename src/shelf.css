@@ -498,10 +498,11 @@
 @keyframes shelf-sway-y  { 0% { --sway-y: 0px; }  25% { --sway-y: -1px; }  50% { --sway-y: 0px; }  75% { --sway-y: 1px; }  100% { --sway-y: 0px; } }
 @keyframes shelf-sway-x2 { 0% { --sway-x2: 0px; } 25% { --sway-x2: -1px; } 50% { --sway-x2: 0px; } 75% { --sway-x2: 1px; } 100% { --sway-x2: 0px; } }
 @keyframes shelf-sway-y2 { 0% { --sway-y2: 0px; } 25% { --sway-y2: -1px; } 50% { --sway-y2: 0px; } 75% { --sway-y2: 1px; } 100% { --sway-y2: 0px; } }
-/* Pressed, it stands up as the hover does: the same plate, at once -- the
-   one answer a tap on glass gets, since glass has no hover. */
+/* Pressed, it sinks halfway back toward its shadow: the same plate, half
+   the lift, so the press reads as pushing the tile down. On glass, which has
+   no hover, it is the one answer a tap gets. */
 .rows.shelves > button.tile:active:not(:disabled):not(.off):not(.stat) {
-  --lift: -2px; border-color: var(--ink); background-color: var(--paper); color: var(--ink);
+  --lift: -1px; border-color: var(--ink); background-color: var(--paper); color: var(--ink);
 }
 body.still .rows.shelves > button.tile { transition: none; animation: none; }
 

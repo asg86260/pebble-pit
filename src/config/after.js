@@ -388,6 +388,9 @@ export const AFTER_IDLE_STEP = P * 4;
 // its ground line (roster.js, `postAt`): its sprite clear of the floor and
 // of what lies on it.
 export const AFTER_ROSTER_DOWN = P * 10;
+// ...and this much further: a post with a board carries its UPGRADES button
+// over its count (roster.js), and the button must clear the cloud's lip.
+export const AFTER_ROSTER_SHOP_DROP = P * 6;
 // A job's seats past the first, the bill for each in turn (the owner,
 // 2026-10-20: "Each station should be locked to one worker, and more slots
 // can be purchased per station"): rebel and dust first, then timber and

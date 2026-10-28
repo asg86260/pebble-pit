@@ -233,3 +233,22 @@ export const COUNTER_TOP_DROP = SEAT_PIP / 2;
 export const COUNTER_PLUS_DOWN = P + 3;
 export const COUNTER_PLUS_ROOM = P * 3;
 export const COUNTER_GAP = P * 4;
+// A post whose station has a board (act 3's) carries the board's way in over
+// its count: the word UPGRADES, behaving as a shop tile does (shelf.css,
+// `.tile`). Its type is the boards' body size (12px on the glass) in the
+// world's pixels at the yard's five-sixths; two cells of padding each side of
+// the word, so it reads as a control and not a label, and two cells of air
+// between it and the count's sprite.
+export const SHOP_BTN_PX = 14;
+export const SHOP_BTN_H = P * 4;
+export const SHOP_BTN_PAD = P * 2;
+export const SHOP_BTN_AIR = P * 2;
+// The face's advance a pixel of type (Courier's is 0.6 of an em): the
+// button's width is worked out without measuring, so the node tier, which
+// has no canvas to measure with, hit-tests the same box the page draws.
+export const SHOP_BTN_ADVANCE = 0.62;
+// The tile's 2px lift at the yard's five-sixths, and how much of it a press
+// keeps: pressed, the plate sinks halfway back toward its shadow, as the
+// tile does under `:active`.
+export const SHOP_BTN_LIFT = P * 0.4;
+export const SHOP_BTN_PRESSED = 0.5;

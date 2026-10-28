@@ -28,7 +28,7 @@ const CHOOSE_SAYS = msg('hover-choose');
 import { shownPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { fadeIn, fadeOut } from './fade.js';
-import { rosterHit, overRoster, rosterSays } from './roster.js';
+import { rosterHit, overRoster, rosterSays, shopAt, shopBoxOf, rosterUp } from './roster.js';
 import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
@@ -136,6 +136,19 @@ const boardAt = (x, y) => (overOrb(x, y) || overWork(x, y) ? null : stationAt(x,
 // Standing at any station at all; the click and move handlers ask the same
 // table.
 const atStation = (x, y) => boardAt(x, y) !== null;
+// The board a click on a station opens: none where the board has an UPGRADES
+// button standing over its roster (act 3's stations), which is then the one
+// way in (the owner, 2026-10-28). A station with no roster under it (act 3's
+// shack, the pedestal, God's crowd, a station closed for its rebuild) has no
+// button, so its drawing stays the way in.
+const clickBoard = (x, y) => { const k = boardAt(x, y); return k && !shopBoxOf(k) ? k : null; };
+// A press on a roster; on an UPGRADES button it opens that board or, up
+// already, puts it away.
+const rosterPress = (x, y) => {
+  const r = rosterHit(x, y);
+  if (typeof r === 'string') showPanel(S[station(r).board] ? null : r, true);
+  return !!r;
+};
 
 const onCoil = (x, y) => {
   if (S.view !== 'deep') return false;
@@ -190,7 +203,8 @@ canvas.addEventListener('pointerdown', e => {
   // happens whether or not the click lands on anything. A finger is judged
   // at the release instead (`endDrag`): a press that turns into a scroll is
   // not a decision to stop reading.
-  if (!atStation(p.x, p.y) && e.pointerType !== 'touch') showPanel(null, true);
+  // A press on a board's own button is the button's to answer.
+  if (!atStation(p.x, p.y) && !shopAt(p.x, p.y) && e.pointerType !== 'touch') showPanel(null, true);
   // The camera between the halves answers nothing until it is in one. Then
   // the way through the surface, the arrow at the shaft (the corner's square
   // is the other way; the surface and the sky themselves take no click);
@@ -209,12 +223,13 @@ canvas.addEventListener('pointerdown', e => {
   if (isActView(S.view)) {
     // Up there a press on a station's moving part works it where it stands
     // (after/gestures.js) and is held until the release, wherever that is;
-    // a plain click on a station opens its board, as the yard's do. A finger
-    // opens a board at its tap's release (`endDrag`), since a press may be
+    // a station's shop opens from the UPGRADES button over its roster, and
+    // only a station with no roster opens on a plain click. A finger opens
+    // such a board at its tap's release (`endDrag`), since a press may be
     // the start of a swipe. Anything else is the place's click.
     // The rosters under the stations first: the yard's own (roster.js), a
     // press on a button never a swing at what stands behind it.
-    if (rosterHit(p.x, p.y)) return;
+    if (rosterPress(p.x, p.y)) return;
     if (S.view === 'after' && gestureDown(p.x, p.y)) {
       // taking hold of the work shuts the shop, pointer or finger alike, and
       // nothing is said while it is worked (the moves go to the work)
@@ -237,7 +252,7 @@ canvas.addEventListener('pointerdown', e => {
     // Down there the pick's blow on a face or a barrier is the hand's, asked
     // before the station's board, which a walk-up has opened already.
     if (S.view === 'hell' && HELL_PLACE.clickHell(p.x, p.y)) return;
-    const at = boardAt(p.x, p.y);
+    const at = clickBoard(p.x, p.y);
     if (at) { if (e.pointerType !== 'touch') showPanel(at, true); return; }
     if (S.view === 'after' && typeof AFTER_PLACE.clickAfter === 'function') AFTER_PLACE.clickAfter(p.x, p.y);
     return;
@@ -253,7 +268,7 @@ canvas.addEventListener('pointerdown', e => {
   if (startle(p.x, p.y)) return;
   // then the controls that stand in the yard, before the ground behind them:
   // the rosters and the machine levers, then the cauldrons' pickers
-  if (rosterHit(p.x, p.y)) return;
+  if (rosterPress(p.x, p.y)) return;
   // The casino's arm: a press on it, pointer or finger, grabs it, the drag
   // works it and the release lets it go, wherever that is. The sign: a click drops
   // the stake at once; a finger is judged at the release, through the
@@ -340,8 +355,12 @@ canvas.addEventListener('pointermove', e => {
     hoverAt(S.mouse.x, S.mouse.y);
     potHover(S.mouse.x, S.mouse.y);
     gestureHover(S.mouse.x, S.mouse.y);
-    // The table's order settles which wins where two patches overlap.
-    const want = boardAt(S.mouse.x, S.mouse.y);
+    // The table's order settles which wins where two patches overlap. Up in
+    // act 3 the pointer passing over a station neither opens nor shuts a
+    // board: they are asked for there (a button or a click) and put away
+    // the same way, so a board stays while its station is being worked.
+    const asked = S.view === 'after';
+    const want = asked ? null : boardAt(S.mouse.x, S.mouse.y);
     // Standing at a station outranks being on the way to the open board: a
     // station under the pointer is an arrival, and the wedge is for the ground
     // *between* things, so it only has a say when the answer would otherwise
@@ -352,7 +371,7 @@ canvas.addEventListener('pointermove', e => {
     // The orb is reached across its station's ground, which opened the board
     // over it: it goes at once, not after the linger or the wedge.
     else if (overOrb(S.mouse.x, S.mouse.y)) showPanel(null, true);
-    else if (!inSafeZone(e.clientX, e.clientY)) showPanel(null);
+    else if (!asked && !inSafeZone(e.clientX, e.clientY)) showPanel(null);
     // a board opens because you walked up to a station, a tooltip because you
     // went and looked at a mark
     askedAbout(S.mouse.x, S.mouse.y, e.clientX, e.clientY);
@@ -373,6 +392,7 @@ canvas.addEventListener('pointermove', e => {
 });
 
 export function endDrag(e) {
+  rosterUp();
   if (wheelPan !== null && (e.button === 1 || e.type !== 'pointerup')) wheelPan = null;
   if (!(e.buttons & 2) && S.crewSight != null) {  // the right button let go
     S.crewSight = null;
@@ -397,8 +417,11 @@ export function endDrag(e) {
     if (tapAt(p.x, p.y)) { S.mining = false; return; }
     // Up there a tap the hand work took is no tap on a station.
     const which = S.view === 'after' && pressTaken() ? null : boardAt(p.x, p.y);
-    // A second tap on the station whose board is up puts it away.
-    showPanel(which && !S[station(which).board] ? which : null, true);
+    // An UPGRADES button answered at the press (`rosterPress`), and a station
+    // whose board has one answers a tap on its drawing as a click: nothing
+    // opens and nothing shuts. A second tap on the station whose board is up
+    // puts it away.
+    if (!shopAt(p.x, p.y) && !(which && shopBoxOf(which))) showPanel(which && !S[station(which).board] ? which : null, true);
   }
 
   S.mining = false;
@@ -418,6 +441,7 @@ for (const type of ['pointerdown', 'pointerup'])
 addEventListener('blur', () => {
   S.crewSight = null;
   down.clear();
+  rosterUp();
   panning = null;
   wheelPan = null;
   S.mining = false;
@@ -719,7 +743,8 @@ const CURSORS = [
   // up in act 3, a part the hand works: open on it, closed while it is held
   [() => gestureHeld(), 'grabbing'],
   [(x, y) => S.view === 'after' && gestureUnder(x, y), 'grab'],
-  [(x, y) => atStation(x, y), 'pointer'],
+  // a station a click opens: one whose board has its button promises nothing
+  [(x, y) => !!clickBoard(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],
   [(x, y) => inRect(dialRect(), x, y), 'help'],
