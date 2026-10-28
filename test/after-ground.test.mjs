@@ -85,8 +85,8 @@ group('a log let go on open ground and one let go over a pile land by the one ru
   let apart = true;
   // one off the forestry pile onto open floor, one over the saw mill's logs, three times over
   for (let k = 0; k < 3; k++) {
-    press(on('grovelogs')); letGo(spot); landed(); run(0.5); apart = apart && sound();
-    press(on('grovelogs')); letGo(over('logs')); landed(); run(0.5); apart = apart && sound();
+    press(onTop('grovelogs')); letGo(spot); landed(); run(0.5); apart = apart && sound();
+    press(onTop('grovelogs')); letGo(over('logs')); landed(); run(0.5); apart = apart && sound();
   }
   run(2);
   const loose = mound(Math.floor((spot.x - afterGround.x) / AP));
@@ -198,7 +198,7 @@ group('a reload stands every block on the ground back on its own cells', async (
   run(1);
   restartReloadClock();
   const spot = openSpot();
-  for (let k = 0; k < 3; k++) { press(on('grovelogs')); letGo(spot); landed(); }
+  for (let k = 0; k < 3; k++) { press(onTop('grovelogs')); letGo(spot); landed(); }
   run(3);
   const before = JSON.stringify(units().map(u => [u.ai, u.v]).sort((a, b) => a[0] - b[0]));
   window.__reload();

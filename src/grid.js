@@ -670,10 +670,16 @@ function stepBlock(b, ai, skip) {
   const open = (dir, lowest) => {
     const n0 = c0 + dir * z;
     if (n0 < 0 || n0 + z > cols || slotOf(b, n0, z) !== n0 || !sameRegion(b, c0, n0)) return false;
+    // Whether that strip may hold it where it will come to rest, the top of
+    // what lies there, not where the block is now: a column over a lower
+    // ceiling is still a place to roll down to (a spike three blocks tall
+    // beside a pile's lower flank rolls into it).
+    let rest = 0;
     for (let c = n0; c < n0 + z; c++) {
       if (skip && skip(c)) return false;
-      if (!roomFor(b, c, r0 + z - 2)) return false;    // that column may not stand that high
+      rest = Math.max(rest, topRow(b, c) + 1);
     }
+    for (let c = n0; c < n0 + z; c++) if (!roomFor(b, c, Math.min(r0 + z - 2, rest + z - 1))) return false;
     return emptyRect(b, n0, lowest, z, r0 + z - lowest);
   };
   const first = (Math.floor(c0 / z) + r0) & 1 ? -1 : 1;

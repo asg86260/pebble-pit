@@ -210,7 +210,14 @@ test('eight logs dropped on one column end as a stable stepped mound', () => {
   }
   const stack = Array(10).fill(0);
   for (const ai of b.blockSet) stack[slotOf(ai % b.cols)]++;
-  assert.deepEqual(stack, [0, 0, 0, 1, 2, 3, 2, 0, 0, 0], 'a mound, tallest where they were dropped, a step less each slot out');
+  // a mound under the brim's heap, never a spike: no slot stands two blocks over
+  // both its neighbors while there is room beside it (the repose rule, whatever
+  // order the rolls came in)
+  assert.equal(stack.reduce((n, k) => n + k, 0), 8, 'all eight stand');
+  stack.forEach((k, i) => {
+    assert.ok(k <= Math.max(0, 3 - Math.abs(i - 5)), `slot ${i} is under the brim's heap`);
+    assert.ok(!(k - (stack[i - 1] ?? 0) >= 2 && k - (stack[i + 1] ?? 0) >= 2), `slot ${i} is no spike: ${stack}`);
+  });
   assert.deepEqual(blockProblems(b), []);
   for (const ai of b.blockSet) {
     const c0 = ai % b.cols, r0 = (ai - c0) / b.cols;
