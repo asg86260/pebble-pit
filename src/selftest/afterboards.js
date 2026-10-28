@@ -19,6 +19,8 @@ import { toScreen } from '../world.js';
 import { shopBoxOf } from '../roster.js';
 import { layGood } from '../after/grove.js';
 import { handHolds } from '../hands.js';
+import { source } from '../flow.js';
+import { goodsRead } from '../after/piles.js';
 
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 async function upThere() {
@@ -328,22 +330,23 @@ export const TESTS = [
     await upThere();
     if (!S.after.built.includes('mill')) S.after.built.push('mill');
     S.carryLevel = LADDER;
-    window.__afterGrant({ timber: 12 - S.after.stock.timber });
+    window.__afterGrant({ timber: 12 - goodsRead().timber });
     await settle(0.3);
-    const b = plotOf('timber'), y = b.y + b.rows * b.p - b.p / 2;
-    const right = b.x + (b.cols + 2) * b.p;
+    const b = stripBox('timber'), y = b.bottom - AP / 2;
+    const right = b.x + b.w + 2 * AP;
+    source('plank', 2, 'test setup');
     layGood('plank', right, floorAt(right) - P * 2);
     layGood('plank', right + P * 4, floorAt(right) - P * 2);
     await settle(0.6);
-    const lying = () => S.after.groundLogs.filter(q => q.kind === 'plank').length;
+    const lyingN = () => lying().filter(q => q.kind === 'plank').length;
     let sx = right + P * 14;
-    while (AFTER_PLOTS.at(sx, y, P * 6)) sx += P * 2;
-    const from = { x: sx, y }, to = { x: b.x + b.p, y };
+    while (unitNear(sx, y, P * 6)) sx += P * 2;
+    const from = { x: sx, y }, to = { x: b.x + AP, y };
     window.__look((from.x + to.x) / 2 - S.viewW / 2);
     await settle(0.3);
     const r = canvas().getBoundingClientRect();
     const at = p => { const s = toScreen(p.x, p.y); return [r.left + s.x, r.top + s.y]; };
-    const lying0 = lying(), t0 = S.after.stock.timber, holds = handHolds('plank');
+    const lying0 = lyingN(), t0 = goodsRead().timber, holds = handHolds('plank');
     S.held = 0; S.motes = [];
     point('pointermove', ...at(from), 0);
     await raf();
@@ -356,9 +359,9 @@ export const TESTS = [
       point('pointermove', ...at(p), 1, -1);
       window.__fast(1 / 60);
       await raf();
-      if (afterLying == null && p.x < b.x + (b.cols + 1) * b.p) afterLying = { held: S.held, lying: lying() };
+      if (afterLying == null && p.x < b.x + b.w + AP) afterLying = { held: S.held, lying: lyingN() };
     }
-    const held = S.held, kind = S.motes[0]?.kind, offMound = t0 - S.after.stock.timber, left = lying();
+    const held = S.held, kind = S.motes[0]?.kind, offMound = t0 - goodsRead().timber, left = lyingN();
     point('pointerup', ...at(to), 0, 0);
     for (let f = 0; f < 240 && S.chips.some(c => c.place); f++) { window.__fast(1 / 60); await raf(); }
     S.carryLevel = 0;

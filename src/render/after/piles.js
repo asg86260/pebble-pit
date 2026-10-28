@@ -138,7 +138,7 @@ const KIND_SEED = { log: 11.3, plank: 23.9, sign: 37.1 }; // MOCK after-goods
 // otherwise: carried, thrown, laid, or an option that does not keep apart // MOCK after-goods
 const ownBase = (kind, s) => 1 + Math.round((s - 1) / 5 * (BASES(kind) - 1)); // MOCK after-goods
 const shadeOfSeed = seed => Math.max(1, Math.min(6, Math.round(seed) || 1)); // MOCK after-goods
-let into = null; // MOCK after-goods  the block's own sheet while it is painted
+let into = null; // cache: (MOCK after-goods) the block's own sheet while it is painted
 const cell = (x, y, i, j, g) => { into.fillStyle = GREY[g]; into.fillRect(x + i * AP, y + j * AP, AP, AP); }; // MOCK after-goods
 // A block is painted once on its own sheet, a pixel a world px, and laid at // MOCK after-goods
 // its true position whole (CLAUDE.md, "Art on the grid, motion smooth"): // MOCK after-goods

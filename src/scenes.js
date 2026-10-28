@@ -3000,6 +3000,8 @@ export const SCENES = {
       window.__fast(1 / 60);
       window.__holdShot();
     } },
+  'after-hand-drag': { about: 'the acts', review: 'act 3: one resource system', stage: 'built: the real build on branch res-step4 -- not on main yet; lands when you sign it off', branch: 'res-step4', option: 'D one hand, dragged and caught', say: "the one hand dragging logs off the forestry shack's pile, carried over the shack, held by weight as dust is",
+    run: () => SCENES['after-hand-carry'].run(0.5) },
   'after-hand-piles': { about: 'the acts', review: 'act 3: picking up goods', stage: 'built: the real build on branches a3-goods-sweep and a3-hand-weight -- not on main yet; lands when you sign it off', option: 'A try it: press and hold on a pile', say: "act 3's goods by hand: the forestry shack's and the saw mill's log piles, nothing in the hand yet",
     run: () => SCENES['after-hand-carry'].run(null) },
   'after-hand-take': { about: 'the acts', review: 'act 3: picking up goods', stage: 'built: the real build on branches a3-goods-sweep and a3-hand-weight -- not on main yet; lands when you sign it off', option: 'B held over the shack', say: "act 3's goods by hand: logs swept off the forestry shack's pile, held over it",
@@ -3011,7 +3013,7 @@ export const SCENES = {
   // on one spot of open floor past the camp, each landing on the
   // heap the last ones made and rolling off it by the heap rule -- a mound a
   // log a step, never a tower, and no log drawn through another.
-  'after-ground-heap': { about: 'the acts', say: 'eight logs let go on one spot of open floor past the pedestal, heaped as a mound by the one rule a pile heaps by',
+  'after-ground-heap': { about: 'the acts', review: 'act 3: one resource system', stage: 'built: the real build on branch res-step4 -- not on main yet; lands when you sign it off', branch: 'res-step4', option: 'A one ground, one heap rule', say: 'eight logs let go on one spot of open floor past the pedestal, heaped as a mound by the one rule a pile heaps by',
     run: () => {
       act3Mid();
       S.carryLevel = Math.max(S.carryLevel, 2);
@@ -3110,7 +3112,7 @@ export const SCENES = {
   // timber mound: it lies on the mound among the planks as a log, counted for
   // no pile, until a member carries it home (DESIGN.md, "One resource system
   // for every act", section 1).
-  'after-offkind': { about: 'the acts', say: 'a log let go over the timber mound lies on the mound among the planks, not beside it',
+  'after-offkind': { about: 'the acts', review: 'act 3: one resource system', stage: 'built: the real build on branch res-step4 -- not on main yet; lands when you sign it off', branch: 'res-step4', option: 'B a log over the wrong pile', say: 'a log let go over the timber mound lies on the mound among the planks, not beside it',
     run: () => {
       act3Mid();
       S.carryLevel = Math.max(S.carryLevel, 2);
@@ -3137,7 +3139,7 @@ export const SCENES = {
     run: () => afterSite(null) },
   'after-site-carry': { about: 'the acts', say: 'the workshop ordered: members carrying its planks and blocks onto its spot',
     run: () => afterSite(() => siteLoads('workshop') >= 3) },
-  'after-site-pile': { about: 'the acts', say: "the workshop's pile whole on its spot, the two builders beside it",
+  'after-site-pile': { about: 'the acts', review: 'act 3: one resource system', stage: 'built: the real build on branch res-step4 -- not on main yet; lands when you sign it off', branch: 'res-step4', option: 'C a station going up is a strip', say: "the workshop's pile whole on its spot, the two builders beside it",
     run: () => afterSite(r => r.whole != null) },
   'after-site-band': { about: 'the acts', say: 'the workshop going up a band at a time, the pile shrinking',
     run: () => afterSite(r => r.n >= 2) },

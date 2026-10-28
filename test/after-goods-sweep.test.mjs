@@ -17,6 +17,7 @@ import { P, RIM_PIECES, AFTER_BLOCK, LADDER } from '../src/config.js';
 import { capacity } from '../src/levels.js';
 import { track, sweep, release, heldGoods, handTakes, handDown, handHolds } from '../src/hands.js';
 import { layGood } from '../src/after/grove.js';
+import { source } from '../src/flow.js';
 import { stripBox, unitNear } from '../src/after/ground.js';
 import { floorAt, afterX0, afterX1, AP } from '../src/after/place.js';
 import { bottomY, addGrain, grainsIn } from '../src/grid.js';
@@ -414,6 +415,7 @@ function mound() {
   return { b, y, right, end: b.x + b.w + AP };
 }
 function layTwo(m) {
+  source('plank', 2, 'test setup');
   layGood('plank', m.right, floorAt(m.right) - P * 2);
   layGood('plank', m.right + P * 4, floorAt(m.right) - P * 2);
   run(0.6);
