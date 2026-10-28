@@ -1764,6 +1764,34 @@
   "text": "down to the deep"
  },
  {
+  "id": "other-corner-down-yard",
+  "group": "Other",
+  "where": "src/corner.js",
+  "context": "way corner button tip, in heaven",
+  "text": "down to the yard"
+ },
+ {
+  "id": "other-corner-up-after",
+  "group": "Other",
+  "where": "src/corner.js",
+  "context": "way corner button tip, in the yard once heaven is open",
+  "text": "up to the afterlife"
+ },
+ {
+  "id": "other-corner-down-hell",
+  "group": "Other",
+  "where": "src/corner.js",
+  "context": "way corner button tip, in the deep once hell is open",
+  "text": "down to hell"
+ },
+ {
+  "id": "other-corner-up-deep",
+  "group": "Other",
+  "where": "src/corner.js",
+  "context": "way corner button tip, in hell",
+  "text": "up to the deep"
+ },
+ {
   "id": "other-queue-site-yard",
   "group": "Other",
   "where": "src/queue.js",

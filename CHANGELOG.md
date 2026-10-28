@@ -179,6 +179,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The corner's way square works from every place: from heaven down to the yard, from the yard down to the deep and up to heaven once its gates are open, and from the deep down to hell once it is open, each on the ripple (src/selftest/deep.js, "the corner squares go from heaven down to the yard").
 - Act 3 is one chain now: trees, the saw mill, the workshop, signs; paper, posters, the chipper, the paper mill and the press are gone, and the sawdust heap stands on the saw mill's own ground (test/after-cut-paper.test.mjs).
 - Switching between light, dim and dark fades the game over in place, without reloading the page (src/selftest/settings.js, "the dark switch turns the page in place").
 - In heaven each station stands on its own shelf of cloud, further apart, with ramps between, and everybody walks up and down them (test/after-floor.test.mjs).
@@ -205,6 +206,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The recruit row, greyed while nobody is won, says so and how to win one instead of reading like a price you cannot pay (test/after-recruit.test.mjs).
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 
+- Going back up by the corner square after looking along the deep, or down from heaven, no longer jumps to the portal before the ring closes: the ring closes on what you were looking at (src/selftest/deep.js, "going up from anywhere in the deep").
 - Going between the surface and the deep plays its ripple again after a reduced-motion scene was looked at, instead of cutting straight across for good (src/selftest/deep.js, "a reduced-motion scene leaves the player's full motion").
 - A stirrer at its pot no longer stays hanging in the air when a dance is cut off mid-jump (test/dance-cut-at-pot.test.mjs).
 - Loading a save that was left in the deep no longer lays its sky, clouds and rain out against the window of the yard you were in before (test/held-state.test.mjs).

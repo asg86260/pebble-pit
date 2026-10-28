@@ -830,6 +830,18 @@ other-corner-up = up to the yard
 # way corner button tip
 other-corner-down = down to the deep
 
+# way corner button tip, in heaven
+other-corner-down-yard = down to the yard
+
+# way corner button tip, in the yard once heaven is open
+other-corner-up-after = up to the afterlife
+
+# way corner button tip, in the deep once hell is open
+other-corner-down-hell = down to hell
+
+# way corner button tip, in hell
+other-corner-up-deep = up to the deep
+
 # queue card line hover
 other-queue-site-yard = the yard
 
