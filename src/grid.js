@@ -10,6 +10,9 @@
 //   fixed(c, r)                          optional: a cell that never moves
 //   onPut(c, r)                          optional: told about every cell written
 //   repose                               optional: heaps stand up instead of spreading flat
+//   region(c)                            optional: which ground a column is; a heap keeps to its own
+//   lattice(c, z)                        optional: the left column of the size-z slot holding c, or -1
+//   onMove(from, to)                     optional: told when a block's bottom-left cell moves
 //   awake, awakeOf, awakeN, awakeList    which columns are still moving; see below
 //
 // The four `awake*` fields are this file's own, but a new grid should still
@@ -443,6 +446,19 @@ export function resizeGrid(b) {
 // a whole block at a time. Its row moves by the cell, so it comes to rest on
 // anything, a grain, a plank, fixed ground, with no gap under it. It is held up
 // when any cell under its bottom row is full and never tips.
+//
+// A grid with regions may lay the lattice off each region's own first column
+// (`lattice`): act 3's piles stand where the camp's layout puts them, at no
+// common multiple of a log's width, and a pile's blocks must line up with
+// its own edges or its last slot hangs half outside it. A slot is then whole
+// inside one region, and a block never rolls out of the region it is in, so
+// a heap keeps to its strip as a heap of grains does (`addGrain`).
+
+// The left column of the size-z slot that holds column c, or -1 where no
+// whole slot does (the odd columns at a region's end).
+const slotOf = (b, c, z) => (b.lattice ? b.lattice(c, z) : c - c % z);
+// Whether two columns are on one ground, for a grid that has more than one.
+const sameRegion = (b, c, n) => !b.region || b.region(c) === b.region(n);
 
 const KIND_OF = new Array(256).fill(null);
 for (const k of Object.values(KINDS)) for (let i = 0; i < k.tones; i++) KIND_OF[k.first + i] = k;
@@ -452,7 +468,8 @@ export const kindOf = v => KIND_OF[v] || null;
 // which of its kind's palette a value is, 0 up; -1 for a value of no kind
 export const toneOf = v => (KIND_OF[v] ? v - KIND_OF[v].first : -1);
 // the cell value of a kind (by key) in one of its tones
-export const cellOf = (kind, tone = 0) => KINDS[kind].first + tone;
+// (clamped to its palette, so a tone past it never spills into the next kind's run)
+export const cellOf = (kind, tone = 0) => KINDS[kind].first + Math.max(0, Math.min(KINDS[kind].tones - 1, tone | 0));
 // cells a side of whatever a value is: one for everything that is not a block
 export const sizeOfCell = v => (KIND_OF[v] ? KIND_OF[v].size : 1);
 
@@ -519,21 +536,22 @@ export function putBlock(b, c0, r0, v) {
     put(b, c0, r0, v);
     return true;
   }
-  if (c0 % z || r0 + z > b.rows || !emptyRect(b, c0, r0, z, z)) return false;
+  if (c0 < 0 || slotOf(b, c0, z) !== c0 || r0 < 0 || r0 + z > b.rows || !emptyRect(b, c0, r0, z, z)) return false;
   writeBlock(b, c0, r0, z, v);
   return true;
 }
 
 // Take whatever occupies (c, r): the whole block if a cell of one, the grain
-// if a grain. Returns its value, 0 if the cell was empty or the block has
-// anything resting on it: a block is only ever taken off the top of a heap
-// (the owner, 2026-10-28), so nothing under another is ever pulled out and
-// nothing above an emptied cell is left floating. This is the door for a hand
-// or a body; `put(.., 0)` on one cell of a block would leave the rest standing.
+// if a grain. Returns its value, 0 if the cell was empty, never moves (ground
+// is not a thing to take), or is a block with anything resting on it: a block
+// is only ever taken off the top of a heap (the owner, 2026-10-28), so nothing
+// under another is ever pulled out and nothing above an emptied cell is left
+// floating. This is the door for a hand or a body; `put(.., 0)` on one cell of
+// a block would leave the rest standing.
 export function takeUnit(b, c, r) {
   if (!inside(b, c, r)) return 0;
   const v = at(b, c, r);
-  if (!v) return 0;
+  if (!v || (b.fixed && b.fixed(c, r))) return 0;
   const a = b.blockN && liveBlocks(b) ? b.block[r * b.cols + c] : 0;
   if (!a) { put(b, c, r, 0); return v; }
   const c0 = (a - 1) % b.cols, r0 = Math.floor((a - 1) / b.cols), z = sizeOfCell(v);
@@ -566,33 +584,47 @@ export function blockAt(b, c, r) {
 export function addBlock(b, x, v, skip = b.blocked, free = false) {
   const z = sizeOfCell(v);
   if (z === 1) return addGrain(b, x, skip, v, free);
-  const slots = Math.floor(b.cols / z);
-  if (!slots) return false;
-  const slot = Math.max(0, Math.min(slots - 1, Math.floor(Math.max(0, Math.min(b.cols - 1, colOf(b, x))) / z)));
-  // the row it would rest at in a slot, or -1 when it cannot go there
+  if (b.cols < z) return false;
+  const col = Math.max(0, Math.min(b.cols - 1, colOf(b, x)));
+  // The slot x falls in, or the nearest whole one beside it where x falls in
+  // the odd columns at a region's end.
+  let slot = slotOf(b, col, z);
+  for (let d = 1; slot < 0 && d < z; d++) {
+    for (const c of [col - d, col + d]) {
+      const s = c >= 0 && c < b.cols ? slotOf(b, c, z) : -1;
+      if (s >= 0) { slot = s; break; }
+    }
+  }
+  if (slot < 0) return false;
+  // the row it would rest at in the slot starting at column s, or -1 when it cannot go there
   const restAt = s => {
     let r0 = 0;
-    for (let c = s * z; c < s * z + z; c++) {
+    for (let c = s; c < s + z; c++) {
       if (skip && skip(c)) return -1;
       r0 = Math.max(r0, topRow(b, c) + 1);
     }
     if (r0 + z > b.rows) return -1;
-    if (!free && b.ceiling) for (let c = s * z; c < s * z + z; c++) if (!roomFor(b, c, r0 + z - 1)) return -1;
+    if (!free && b.ceiling) for (let c = s; c < s + z; c++) if (!roomFor(b, c, r0 + z - 1)) return -1;
     return r0;
   };
   let use = slot, r0 = restAt(slot);
   if (r0 < 0) {
-    const out = skip && skip(slot * z);
-    const from = out || !b.region ? ANYWHERE : b.region(slot * z);
-    const reach = out ? Math.ceil(BARRED_REACH / z) : slots;
-    const inRegion = s => from === ANYWHERE || (b.region(s * z) === from && b.region(s * z + z - 1) === from);
+    const out = skip && skip(slot);
+    const from = out || !b.region ? ANYWHERE : b.region(slot);
+    const reach = out ? Math.ceil(BARRED_REACH / z) : Math.ceil(b.cols / z);
+    // A step of a block's width keeps to the lattice inside a region; across
+    // regions (a barred column's search, which may go anywhere) each step is
+    // put on the lattice of the region it lands in.
     let left = true, right = true;
     use = -1;
-    for (let d = 1; d <= reach && d < slots && (left || right); d++) {
-      for (const s of [slot - d, slot + d]) {
-        const isLeft = s < slot;
+    for (let d = 1; d <= reach && (left || right); d++) {
+      for (const c of [slot - d * z, slot + d * z]) {
+        const isLeft = c < slot;
         if (isLeft ? !left : !right) continue;
-        if (s < 0 || s >= slots || !inRegion(s)) { if (isLeft) left = false; else right = false; continue; }
+        const stop = () => { if (isLeft) left = false; else right = false; };
+        if (c < 0 || c + z > b.cols || (from !== ANYWHERE && b.region(c) !== from)) { stop(); continue; }
+        const s = slotOf(b, c, z);
+        if (s < 0) { if (from !== ANYWHERE) stop(); continue; }
         const r = restAt(s);
         if (r >= 0) { use = s; r0 = r; break; }
       }
@@ -600,8 +632,8 @@ export function addBlock(b, x, v, skip = b.blocked, free = false) {
     }
     if (use < 0) return false;
   }
-  landed.c = use * z; landed.r = r0;
-  writeBlock(b, use * z, r0, z, v);
+  landed.c = use; landed.r = r0;
+  writeBlock(b, use, r0, z, v);
   return true;
 }
 
@@ -612,10 +644,19 @@ export function addBlock(b, x, v, skip = b.blocked, free = false) {
 //   - supported under less than half (it overhangs): it rolls a whole block's
 //     width toward the side with less under it, a cell down, if that strip is
 //     open (not barred, not too tall for the ceiling, clear through the rows
-//     it passes), else it rests where it is.
-// Every move goes down a cell, so a heap only ever settles: nothing moves
-// sideways at the same height, nothing levels out once it has come to rest, and
-// nothing can oscillate.
+//     it passes), else it rests where it is;
+//   - supported, with nothing on it, but standing a whole block's height or
+//     more over the slot beside it (its bottom at or above that slot's top
+//     plus its size): it rolls into that slot the same way. This is the
+//     block's repose, as REPOSE_DROP is a grain's: a column of blocks never
+//     stands more than a block over its neighbor, so logs dropped on one spot
+//     make a mound a block a step, on a pile or on open ground alike, and
+//     never a tower (the owner, 2026-10-28: "the way logs pile up and level
+//     out is weird").
+// A roll never leaves the block's region nor its lattice, so a pile's heap
+// keeps to its strip. Every move goes down a cell, so a heap only ever
+// settles: nothing moves sideways at the same height, nothing levels out once
+// it has come to rest, and nothing can oscillate.
 function stepBlock(b, ai, skip) {
   globalThis.__perf.blocks++;
   const cols = b.cols, c0 = ai % cols, r0 = (ai - c0) / cols, v = b.grid[ai], z = sizeOfCell(v);
@@ -623,19 +664,31 @@ function stepBlock(b, ai, skip) {
   let left = 0, right = 0;
   for (let i = 0; i < z; i++) if (b.grid[(r0 - 1) * cols + c0 + i]) { if (i < z / 2) left++; else right++; }
   if (left + right === 0) { moveBlock(b, c0, r0, c0, r0 - 1, z, v); return; }
-  if ((left + right) * 2 >= z) return;
-  const dir = left < right ? -1 : right < left ? 1 : ((c0 / z + r0) & 1 ? -1 : 1);
-  const n0 = c0 + dir * z;
-  if (n0 < 0 || n0 + z > cols) return;
-  for (let c = n0; c < n0 + z; c++) {
-    if (skip && skip(c)) return;
-    if (!roomFor(b, c, r0 + z - 2)) return;       // that column may not stand that high
+  // Whether it may roll into the slot beside it on side `dir`, from `lowest`
+  // up: on the plot, on the lattice and in its region, not barred, not too
+  // tall for the ceiling, and clear from `lowest` through the rows it passes.
+  const open = (dir, lowest) => {
+    const n0 = c0 + dir * z;
+    if (n0 < 0 || n0 + z > cols || slotOf(b, n0, z) !== n0 || !sameRegion(b, c0, n0)) return false;
+    for (let c = n0; c < n0 + z; c++) {
+      if (skip && skip(c)) return false;
+      if (!roomFor(b, c, r0 + z - 2)) return false;    // that column may not stand that high
+    }
+    return emptyRect(b, n0, lowest, z, r0 + z - lowest);
+  };
+  const first = (Math.floor(c0 / z) + r0) & 1 ? -1 : 1;
+  if ((left + right) * 2 >= z) {
+    if (r0 < z || !emptyRect(b, c0, r0 + z, z, 1)) return;
+    for (const dir of [first, -first]) if (open(dir, r0 - z)) { moveBlock(b, c0, r0, c0 + dir * z, r0 - 1, z, v); return; }
+    return;
   }
-  if (emptyRect(b, n0, r0 - 1, z, z + 1)) moveBlock(b, c0, r0, n0, r0 - 1, z, v);
+  const dir = left < right ? -1 : right < left ? 1 : first;
+  if (open(dir, r0 - 1)) moveBlock(b, c0, r0, c0 + dir * z, r0 - 1, z, v);
 }
 function moveBlock(b, c0, r0, n0, nr, z, v) {
   eraseBlock(b, c0, r0, z);
   writeBlock(b, n0, nr, z, v);
+  if (b.onMove) b.onMove(r0 * b.cols + c0, nr * b.cols + n0);
 }
 
 // What must hold of a grid's blocks, for a check or a verify rule: every block
@@ -650,7 +703,7 @@ export function blockProblems(b) {
   for (const ai of b.blockSet) {
     const c0 = ai % b.cols, r0 = (ai - c0) / b.cols, v = b.grid[ai], z = sizeOfCell(v);
     if (z === 1) { bad.push(`the block at ${c0},${r0} is not a block's value (${v})`); continue; }
-    if (c0 % z) bad.push(`the block at ${c0},${r0} is off its lattice (${z})`);
+    if (slotOf(b, c0, z) !== c0) bad.push(`the block at ${c0},${r0} is off its lattice (${z})`);
     for (let j = 0; j < z; j++) for (let i = 0; i < z; i++) {
       const k = (r0 + j) * b.cols + c0 + i;
       if (b.grid[k] !== v || lay[k] !== ai + 1) bad.push(`the block at ${c0},${r0} is missing its cell ${c0 + i},${r0 + j}`);

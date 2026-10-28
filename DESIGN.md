@@ -23496,7 +23496,30 @@ and unmade only at a named sink, and verify.js holds every act to it.
   under less than half (it overhangs) rolls a whole block's width toward
   the side with less under it, a cell down, if that strip is open, else
   rests. Every move goes down, so a heap only settles: it never levels out
-  once at rest and cannot oscillate. **A block is taken only off the top**:
+  once at rest and cannot oscillate.
+  **A block's repose** (decided in step 2, the owner's notes of 2026-10-28:
+  "logs will pile up only in specific places, and stack and overlap else
+  where"): a block resting with nothing on it whose bottom stands a whole
+  block's height or more over the top of the slot beside it rolls into that
+  slot, a cell down, as a grain slides off a drop deeper than `REPOSE_DROP`.
+  So no column of blocks stands more than one block over its neighbor: logs
+  dropped on one spot make a mound a block a step, at the slope a pile's brim
+  is laid at, on open ground exactly as on a pile, and never a tower. One
+  rule, in `stepBlock`, for every plot; a lone block on the steepest ramp
+  (a cell a column) slides down it, as it would. A roll never crosses into
+  another region, so a pile's heap keeps to its strip, a rack named two
+  wide (the saw mill's logs, the workshop's timber and signs) stands as
+  high as its brim inside its strip, and a pile's count only moves at a
+  door. A block past a pile's brim is set down beside the strip by the door
+  that brought it, not rolled out of it.
+  **The lattice is laid off each region** (`lattice(c, z)` on the plot):
+  the camp puts each pile where its station's drawing lays it, and no two
+  piles agree on a log's width (measured: the strips start 2, 3 and 1
+  columns off a multiple of four), so a pile's slots start at its own first
+  column and open ground's at the first column past the strip before it.
+  A slot is whole inside one region; the odd columns at an open stretch's
+  end hold grains, never a block.
+  **A block is taken only off the top**:
   `takeTop(c)` takes the top block of the column under the pointer (a body
   the top of the pile's highest column), and `takeUnit` refuses any block
   with another resting on it, so nothing under a block is ever pulled out

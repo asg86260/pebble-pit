@@ -78,6 +78,9 @@ test('a block dropped on a peak rolls off a block-width, toward the lower side, 
 test('a block held up under half its width or more rests, however uneven the ground', () => {
   const ground = Array(16).fill(0);
   ground[4] = 4; ground[5] = 4;                // two of four columns under a log
+  // and the slots beside it under a block's height lower, so it does not
+  // roll off by its repose (a block's height or more over its neighbor)
+  for (const c of [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]) ground[c] = 1;
   const b = plot(16, 40, { ground });
   assert.ok(addBlock(b, 4 * b.p, LOG));
   passes(b, 100);
@@ -162,7 +165,10 @@ test('KINDS sizes and weights read from config', () => {
 });
 
 test('taking from the top of a three-high heap leaves the rest as it was', () => {
+  // its slot a region of its own, as a pile's rack is, so the three stand in
+  // it rather than rolling off into a mound
   const b = plot(16, 40);
+  b.region = c => Math.floor(c / LZ);
   for (let i = 0; i < 3; i++) assert.ok(addBlock(b, 5 * b.p, LOG));
   passes(b, 20);
   assert.deepEqual(blockAt(b, 4, 8), { c: 4, r: 8 });
@@ -212,6 +218,41 @@ test('eight logs dropped on one column end as a stable stepped mound', () => {
   const was = [...b.grid];
   passes(b, 600);                               // ten game seconds at sixty a second
   assert.deepEqual([...b.grid], was, 'a heap at rest does not shuffle or level out');
+});
+
+test('eight logs dropped on one spot of open ground, with no ceiling, make a mound and not a tower', () => {
+  const b = plot(64, 60);
+  for (let i = 0; i < 8; i++) {
+    assert.ok(addBlock(b, 33 * b.p, LOG), `log ${i} found room`);
+    passes(b, 40);
+  }
+  const height = Array(16).fill(0);
+  for (let s = 0; s < 16; s++) for (let c = s * LZ; c < s * LZ + LZ; c++) height[s] = Math.max(height[s], topRow(b, c) + 1);
+  for (let s = 1; s < 16; s++) assert.ok(Math.abs(height[s] - height[s - 1]) <= LZ, `no slot stands over the next by more than a log: ${height}`);
+  assert.ok(Math.max(...height) <= 3 * LZ, `three logs high at most: ${height}`);
+  assert.deepEqual(blockProblems(b), []);
+  const was = [...b.grid];
+  passes(b, 600);
+  assert.deepEqual([...b.grid], was, 'and it stays');
+});
+
+test('a region laying its own lattice keeps its blocks whole inside it, and none rolls out', () => {
+  // a strip from column 6 to 14 laying logs off its own first column, open ground either side
+  const b = plot(40, 60);
+  b.region = c => (c >= 6 && c < 14 ? 'strip' : null);
+  b.lattice = (c, z) => {
+    const s0 = b.region(c) ? 6 : 0, s1 = b.region(c) ? 14 : (c < 6 ? 6 : 40), from = c < 6 || b.region(c) ? s0 : 14;
+    const s = c - ((c - from) % z);
+    return s + z <= s1 ? s : -1;
+  };
+  for (let i = 0; i < 6; i++) { assert.ok(addBlock(b, 9 * b.p, LOG)); passes(b, 40); }
+  assert.deepEqual(blockProblems(b), []);
+  for (const ai of b.blockSet) {
+    const c0 = ai % b.cols;
+    assert.ok(c0 === 6 || c0 === 10, `the strip's blocks stand on its slots: ${c0}`);
+  }
+  assert.equal(b.blockSet.size, 6, 'six in the strip, stood three high in its two slots');
+  assert.equal(putBlock(b, 4, 30, LOG), false, 'a slot across the strip\'s edge is no slot');
 });
 
 test('a plot of grains never asks the block rule anything', () => {
