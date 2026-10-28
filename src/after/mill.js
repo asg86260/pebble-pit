@@ -201,7 +201,14 @@ const handTurning = s => s.handAt != null && S.after.t - s.handAt < 0.15;
 export function bedLand(ch) {
   if (ch.kind !== 'log' || !S.after || !built('mill')) return false;
   const s = saw(), x = cx(ch.x), foot = cy(ch.y) + LOG / 2;
-  if (s.bed || held(s) || x < M.seat.land[0] || x > M.seat.land[1] || foot < F.bed || ch.vy <= 0) return false;
+  if (foot < F.bed || foot > F.bed + F.bedRows || ch.vy <= 0 || x < F.L - 1 || x > F.end) return false;
+  // Anywhere else on the bed's top, or onto a log already there, it knocks
+  // off it rather than falling through, and comes down off an end.
+  if (s.bed || held(s) || x < M.seat.land[0] || x > M.seat.land[1]) {
+    ch.y = wy(F.bed - LOG / 2); ch.vy = -Math.abs(ch.vy) * 0.3;
+    ch.vx = (x < F.bx ? -1 : 1) * Math.max(Math.abs(ch.vx), 1);
+    return false;
+  }
   s.bed = newBed(x - LOG / 2, s.hi);
   s.setAt = S.after.t;
   return true;
@@ -235,6 +242,16 @@ const NEXT = { out: 'lift', lift: 'carry', carry: 'set', set: 'back', back: null
 // the bed and not yet down on it.
 const held = s => !!s.trip && (s.trip.ph === 'carry' || (s.trip.ph === 'lift' && s.trip.log) || (s.trip.ph === 'set' && !s.trip.down));
 export const sawyerHolds = () => !!S.after && held(saw());
+// Where a log goes by hand, while nobody is at the saw to carry one and its
+// bed is bare with logs on the pile: the world point over the bed's seat a
+// log let go there lands on (the ghost hand shows the sweep before the
+// wheel: render/aftercues.js). Null otherwise.
+export function bedWants() {
+  if (!S.after || !built('mill') || S.after.stock.logs <= 0) return null;
+  const s = saw();
+  if (s.bed || s.trip || S.after.bodies.some(b => b.at === 'mill')) return null;
+  return { x: wx(M.seat.x + LOG / 2), y: wy(F.bed - LOG / 2) };
+}
 // Over the sawyer's head: the log's top left, the body's at (x, y).
 const overhead = (x, y) => ({ x: x + 1.5 - LOG / 2, y: y - LOG });
 const SEAT = { x: M.seat.x, y: F.bed - LOG };

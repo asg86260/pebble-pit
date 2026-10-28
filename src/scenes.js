@@ -3473,6 +3473,16 @@ Object.assign(SCENES, {
     run: () => millStage(() => { const s = millSaw(); return s.dust.length > 0 && s.dust[0].a > 0.1; }) },
   'after-mill-chute': { about: 'the acts', say: "cut blocks riding the bed out and down the chute onto the timber mound",
     run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x0 + 2 && p.x < AFTER_MILL.chute.x1; })) },
+  'after-mill-hand': { about: 'the acts', say: "the saw mill with nobody at it and its bed bare: the ghost hand shows a log swept off the pile onto the bed, then the wheel",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      if (!S.after.built.includes('mill')) S.after.built.push('mill');
+      window.__afterGrant({ logs: 4, timber: 6, sawdust: 9 });
+      window.__fast(1.5);
+      const b = stationBox('mill'), x = b.x + b.w / 2 + P * 4 - S.viewW / 2;
+      pinCamera(x); window.__look(x);
+      window.__still(true); window.__holdShot();
+    } },
   'after-mill-full': { about: 'the acts', say: "the saw mill's heap at its brim: the saw stopped with a log on its bed, the pile-full mark up",
     run: () => millStage(() => !!millSaw().bed && window.__afterRead().sawdust >= 24 && !millSaw().out.length && !millSaw().dust.length, { sawdust: 15, timber: 14 }) }
 });

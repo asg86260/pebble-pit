@@ -178,7 +178,7 @@ const DEFS = {
     up(g) { g.grab = false; },
     step(g, dt) {
       let d;
-      if (g.grab) { g.w += (g.acc / dt - g.w) * Math.min(1, dt * GESTURE_WHEEL_EASE); d = g.acc; g.acc = 0; }
+      if (g.grab) { g.w += (g.acc / dt - g.w) * Math.min(1, dt * GESTURE_WHEEL_EASE); d = g.acc; }
       else {
         g.w *= Math.exp(-GESTURE_WHEEL_COAST * dt);
         if (revOf(g) <= GESTURE_WHEEL_MIN_REV) g.w = 0;
@@ -188,6 +188,10 @@ const DEFS = {
       // turn lands is a motion of the hand's; a stopped saw with a log on its
       // bed holds the wheel at its top, and the spin dies there.
       const cap = GESTURE_WHEEL_MAX_REV * 2 * Math.PI * dt, want = clamp(d, -cap, cap);
+      // what the pointer turned past the cap waits for the next step (a long
+      // frame is several), but never more than a step's worth: the wheel lags
+      // a hand spinning it too fast, it does not run on after it
+      if (g.grab) g.acc = clamp(g.acc - want, -cap, cap);
       if (!want) return;
       const n0 = strokesLanded(), went = turnWheel(want / (2 * Math.PI), true) * 2 * Math.PI;
       g.prog += Math.abs(went) / (2 * Math.PI);

@@ -18,6 +18,8 @@ import { ctx } from './ctx.js';
 import { S } from '../state.js';
 import { gestureView, partsOf, lowestBubble, groveIcons } from '../after/gestures.js';
 import { stationParts, groundOf } from '../after/place.js';
+import { bedWants } from '../after/mill.js';
+import { plotOf } from '../after/piles.js';
 import { drawGroveIcons } from './after/pine.js';
 import { K, W, PALE, MID } from './after/kit.js';
 
@@ -113,7 +115,18 @@ function cueAt(key, r) {
     const b = partsOf('stump', c.i).stump;
     return { x: b.x + b.w / 2, y: b.y - Math.round(u * 3) * P, pose: 'grab' };
   }
-  if (key === 'mill') { const w = partsOf('mill').wheel; return { x: w.x + Math.cos(turn) * w.r, y: w.y + Math.sin(turn) * w.r, pose: 'grab' }; }
+  if (key === 'mill') {
+    // With the bed bare and nobody at the saw, a log first: the hand pressed
+    // on the log pile, carried over and let go on the bed (after/mill.js);
+    // then the wheel turned.
+    const bed = bedWants();
+    if (bed) {
+      const b = plotOf('logs'), k = Math.min(1, u * 1.4), x0 = b.x + b.p / 2, y0 = b.y + b.rows * b.p - b.p / 2;
+      return { x: x0 + (bed.x - x0) * k, y: y0 + (bed.y - y0) * k - Math.sin(k * Math.PI) * P * 4, pose: 'grab' };
+    }
+    const w = partsOf('mill').wheel;
+    return { x: w.x + Math.cos(turn) * w.r, y: w.y + Math.sin(turn) * w.r, pose: 'grab' };
+  }
   if (key === 'workshop') {
     const nails = partsOf('workshop').nails, k = r.nails.findIndex(n => n < 2);
     const n = nails[Math.max(0, k)];
