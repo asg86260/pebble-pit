@@ -3483,6 +3483,8 @@ Object.assign(SCENES, {
       pinCamera(x); window.__look(x);
       window.__still(true); window.__holdShot();
     } },
+  'after-mill-brim': { about: 'the acts', say: "a cut block tossed off the chute's foot onto a timber mound nearly at its brim",
+    run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x1 - 0.5; }), { timber: 15 }) },
   'after-mill-full': { about: 'the acts', say: "the saw mill's heap at its brim: the saw stopped with a log on its bed, the pile-full mark up",
     run: () => millStage(() => !!millSaw().bed && window.__afterRead().sawdust >= 24 && !millSaw().out.length && !millSaw().dust.length, { sawdust: 15, timber: 14 }) }
 });
