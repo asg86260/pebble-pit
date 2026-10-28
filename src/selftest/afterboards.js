@@ -8,12 +8,13 @@
 
 import { S } from '../state.js';
 import { newRun, settle, until, raf, ok, panel, point, canvas } from './kit.js';
-import { AFTER_CARDS, P, AFTER_PUT_S, AFTER_PILE_REACH, AFTER_PILES } from '../config.js';
+import { AFTER_CARDS, P, AFTER_PILES } from '../config.js';
 import { shopOf } from '../pages.js';
 import { support } from '../after/union.js';
 import { msg } from '../lang.js';
 import { openBoard } from '../board.js';
-import { stationBox, pileBox } from '../after/place.js';
+import { stationBox } from '../after/place.js';
+import { plotOf } from '../after/piles.js';
 import { toScreen } from '../world.js';
 
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -252,51 +253,49 @@ export const TESTS = [
       ok(taken, 'and the left button takes it up')
     ];
   }],
-  // Goods by hand (after/hand.js) through the real pointer: the right button
-  // held and the left pressed over the forestry shack's log pile, the chord
-  // that picks up a member; held there, a second log; carried along to the
-  // saw mill's pile and let go, set down there a log at a time.
-  ['act 3: two logs taken off the forestry shack\'s pile by the pointer\'s grab and let go on the saw mill\'s', async () => {
+  // Goods by hand (hands.js, the yard's sweep) through the real pointer: a
+  // plain left press and hold on the forestry shack's log pile takes logs
+  // into the hand, as a press on the yard's dust takes dust; carried along to
+  // the saw mill's log pile, held still there and let go, they fall onto it.
+  ['act 3: a left press and hold on the forestry shack\'s pile takes logs, and a let-go over the saw mill\'s drops them on it', async () => {
     newRun();
     await settle();
     await upThere();
     // The setup it is not about: the saw mill standing, logs on the shack's
-    // pile, the yard's carry holding two.
+    // pile, the yard's carry bought a rung.
     if (!S.after.built.includes('mill')) S.after.built.push('mill');
-    S.haulCarryLevel = 1;
-    window.__afterGrant({ grovelogs: 5 });
-    const mid = (key, what) => { const b = pileBox(key, what, AFTER_PILE_REACH); return { x: b.x + b.w / 2, y: b.y + b.h * 0.75 }; };
-    const from = mid('forestry', 'grovelogs'), to = mid('mill', 'logs');
+    S.carryLevel = 2;
+    window.__afterGrant({ grovelogs: 6 });
+    await settle(0.3);
+    const from = window.__afterPile('forestry', 'grovelogs');
+    const mill = plotOf('logs'), to = { x: mill.x + mill.cols * mill.p / 2, y: mill.y - mill.p * 2 };
     window.__look((from.x + to.x) / 2 - S.viewW / 2);
     await settle(0.3);
     const r = canvas().getBoundingClientRect();
     const at = p => { const s = toScreen(p.x, p.y); return [r.left + s.x, r.top + s.y]; };
-    const pile0 = S.after.stock.grovelogs, mill0 = S.after.stock.logs;
+    const pile0 = S.after.stock.grovelogs, mill0 = S.after.stock.logs, lying0 = S.after.groundLogs.length;
     point('pointermove', ...at(from), 0);
     await raf();
-    const hover = canvas().style.cursor;
-    point('pointerdown', ...at(from), 2, 2);
-    point('pointermove', ...at(from), 3, 0);
+    point('pointerdown', ...at(from), 1, 0);
     await raf();
-    const holding = canvas().style.cursor, one = S.after.hand?.n;
-    // Held still over the pile: a frame of the sim at a time.
-    for (let f = 0; f < AFTER_PUT_S * 60 * 4; f++) { point('pointermove', ...at(from), 3, -1); window.__fast(1 / 60); await raf(); }
-    const two = S.after.hand?.n;
+    const took = S.held, kind = S.motes[0]?.kind, off = pile0 - S.after.stock.grovelogs;
     for (let k = 1; k <= 30; k++) {
-      point('pointermove', ...at({ x: from.x + (to.x - from.x) * k / 30, y: from.y + (to.y - from.y) * k / 30 }), 3, -1);
+      point('pointermove', ...at({ x: from.x + (to.x - from.x) * k / 30, y: from.y + (to.y - from.y) * k / 30 }), 1, -1);
       window.__fast(1 / 60);
       await raf();
     }
+    // held still a moment over the pile, so the let-go is a drop, not a flick
+    for (let f = 0; f < 12; f++) { point('pointermove', ...at(to), 1, -1); await raf(); }
     point('pointerup', ...at(to), 0, 0);
-    for (let f = 0; f < 120 && S.after.hand; f++) { window.__fast(1 / 60); await raf(); }
-    const counts = { pile: S.after.stock.grovelogs, mill: S.after.stock.logs, hand: S.after.hand };
-    S.haulCarryLevel = 0;
+    const thrown = S.chips.filter(c => c.place === 'after').length, empty = S.held === 0;
+    for (let f = 0; f < 240 && S.chips.some(c => c.place); f++) { window.__fast(1 / 60); await raf(); }
+    const counts = { pile: S.after.stock.grovelogs, mill: S.after.stock.logs, lying: S.after.groundLogs.length - lying0 };
+    S.carryLevel = 0;
     window.__actsOn(null);
     return [
-      ok(hover === 'grab', 'the cursor over a pile with logs on it is the open hand', hover),
-      ok(one === 1 && holding === 'grabbing', 'the right button held and the left pressed takes a log, the hand closed', `${one} ${holding}`),
-      ok(two === 2, 'held over the pile, a second log, the carry full', `${two}`),
-      ok(counts.pile === pile0 - 2 && counts.mill === mill0 + 2 && counts.hand === null, 'let go on the saw mill\'s pile, both are set down there', JSON.stringify(counts))
+      ok(took > 0 && kind === 'log' && off === took, 'a left press and hold on the pile takes logs into the hand and off the pile', `${took} held, ${off} off, ${kind}`),
+      ok(empty && thrown === took, 'let go, every log leaves the hand', `${thrown} in the air`),
+      ok(counts.mill > mill0 && counts.mill - mill0 + counts.lying === took, 'they fall onto the saw mill\'s pile, any it has no room for on the floor', JSON.stringify(counts))
     ];
   }]
 ];

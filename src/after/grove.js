@@ -29,7 +29,7 @@
 
 import { S } from '../state.js';
 import { P, TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_LOGS_BIG_TREE, AFTER_FALL_S, AFTER_CROWN_FADE_S, AFTER_DIG_CLICKS,
-         AFTER_PLOTS0, AFTER_FALL_BOUNCE_S, AFTER_LOG_ROLL, AFTER_LOG_ROLL_S, AFTER_LOG_SPAN, GRAV } from '../config.js';
+         AFTER_PLOTS0, AFTER_FALL_BOUNCE_S, AFTER_LOG_ROLL, AFTER_LOG_ROLL_S, AFTER_LOG_SPAN, GRAV, AFTER_GOODS_FOOT } from '../config.js';
 import { secs, nextId } from './util.js';
 import { growS, bigTrees } from './levels.js';
 import { PINE_GROWN, stationParts, plotX, floorAt, AP } from './place.js';
@@ -114,12 +114,25 @@ function dropLogs(i, n, at) {
 // come down (`fall`, its seconds): a gatherer takes it up only then.
 export const settled = q => S.after.t >= q.at + (q.fall ?? AFTER_LOG_ROLL_S);
 // What a thing lying on the floor is: a felled tree's log, or whatever the
-// hand let go of there (after/hand.js, `kind`).
+// hand threw there (after/piles.js, AFTER_PLOTS `land`; `kind`).
 export const kindOf = q => q.kind || 'log';
-// A good let go of by the hand at (x, y), off any pile: it falls under the
-// yard's gravity (GRAV, px a frame a frame) straight down to the floor at
-// x, and lies there as a felled log does until a gatherer or the hand takes
-// it up.
+// A good lying still on the floor under (x, y), `pad` px of slack round it,
+// for the hover to name: the last laid first, as it is drawn over the rest.
+export function lyingAt(x, y, pad = 0) {
+  const list = groundLogs();
+  for (let i = list.length - 1; i >= 0; i--) {
+    const q = list[i];
+    if (!settled(q)) continue;
+    const k = kindOf(q), w = AFTER_GOODS_FOOT[k] * AP, h = (k === 'sign' ? 2 : AFTER_GOODS_FOOT[k]) * AP;   // a block stands as high as it is wide
+    const top = floorAt(q.x + AP) - h;
+    if (x >= q.x - pad && x <= q.x + w + pad && y >= top - pad && y <= top + h + pad) return q;
+  }
+  return null;
+}
+// A good let go of at (x, y), off any pile: x its left edge, y the height it
+// falls from under the yard's gravity (GRAV, px a frame a frame) straight
+// down to the floor at x, where it lies as a felled log does until a
+// gatherer takes it up.
 export function layGood(kind, x, y) {
   const a = S.after, fl = floorAt(x + AP), h = Math.max(0, fl - y);
   a.groundLogs.push({ id: nextId(), i: null, kind, x0: x, x, y0: Math.min(y, fl), at: a.t, fall: Math.sqrt(2 * h / GRAV) / 60 });

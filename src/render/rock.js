@@ -112,6 +112,7 @@ export function drawChips() {
   const y0 = S.camY - P * 4, y1 = S.camY + S.viewH + P * 4;
   const t = now(), calm = reducedMotion();
   for (const ch of S.chips) {
+    if (ch.place) continue;      // a place's block, drawn by that place (render/after.js)
     if (ch.x < x0 || ch.x > x1 || ch.y < y0 || ch.y > y1) continue;
     let size = MARK_SIZE;
     if (ch.crit) {

@@ -337,7 +337,7 @@ const tipReady = () => S.after.stock.sawdust >= heapBrim() - AFTER_TIP_LOAD;
 const chainRuns = () => atStation('mill').length > 0;
 const sweeping = () => S.after.bodies.some(o => o.errand === AFTER_JOB.SWEEP);
 // Goods lying still on the floor -- the grove's felled logs, and whatever the
-// hand let go of off a pile (after/hand.js) -- taken up nearest first, the
+// hand threw there (after/piles.js, AFTER_PLOTS) -- taken up nearest first, the
 // next of the same kind while the load has room (the yard's carter), and
 // carried to that kind's pile (AFTER_GOODS_HOME: a log the forestry shack's,
 // a plank the saw mill's timber) a good a beat; `w.log` is the one walked

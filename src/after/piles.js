@@ -14,10 +14,11 @@
 // the first frame (`standPiles`), so a save carries no grid.
 
 import { S } from '../state.js';
-import { AFTER_PILES, AFTER_PILE_SETTLE_S, AFTER_LOG_TIMBER, AFTER_GOODS_FOOT, AFTER_LAY_GAP } from '../config.js';
-import { addGrain, put, topRow, settle, settleSome, colOf } from '../grid.js';
-import { pilePlace, pileOwner, pileMid, pileAt, groundOf, AP } from './place.js';
+import { P, AFTER_PILES, AFTER_PILE_SETTLE_S, AFTER_LOG_TIMBER, AFTER_GOODS_FOOT, AFTER_LAY_GAP, AFTER_BLOCK } from '../config.js';
+import { addGrain, put, at, inside, topRow, bottomY, settle, settleSome, colOf } from '../grid.js';
+import { pilePlace, pileOwner, pileMid, pileAt, groundOf, floorAt, afterX0, afterX1, AP } from './place.js';
 import { layGood } from './grove.js';
+import { built } from './levels.js';
 import { secs } from './util.js';
 
 // The stock keys that are plots.
@@ -111,6 +112,16 @@ export function setBlock(what, x = null) {
   S.after.stock[what] += 1;
   return true;
 }
+// The block in cell (c, r) of pile `what`'s plot, taken by the player's hand
+// wherever in the heap the brush found it (hands.js, `sweep`): the blocks
+// over it slump into the gap by the sand rules. False with no block there.
+export function takeCell(what, c, r) {
+  const b = plotOf(what);
+  if (!inside(b, c, r) || !at(b, c, r)) return false;
+  put(b, c, r, 0);
+  S.after.stock[what] -= 1;
+  return true;
+}
 // `n` blocks off the top of pile `what` (a bill, a joining): how many came.
 export function takeBlocks(what, n) {
   let k = 0;
@@ -128,3 +139,50 @@ export function stepPiles(c) {
     for (b.t += dt; b.t >= AFTER_PILE_SETTLE_S; b.t -= AFTER_PILE_SETTLE_S) settleSome(b, b.cols * b.rows);
   }
 }
+
+// --- the yard's hand on the piles ---------------------------------------------------
+// Act 3's piles as the yard's hand asks a place for them (acts.js, `plots`;
+// hands.js): goods are picked up as act 1's dust is, a press and hold on a
+// pile, and thrown the same way (DESIGN.md, "Act 3's goods are blocks, and
+// bodies carry every one", rule 5). The hand never writes a plot itself:
+// what it takes and what lands go through `takeCell` and `setBlock`, so the
+// pile stays its stock.
+export const AFTER_PLOTS = {
+  // The pile whose plot is under (x, y), a block's width of slack round it,
+  // its station standing: { b, what, kind }, or null.
+  at(x, y) {
+    if (!S.after) return null;
+    for (const what of PILED) {
+      const key = pileOwner(what);
+      if (!key || !built(key)) continue;
+      const b = plotOf(what);
+      if (x >= b.x - b.p && x < b.x + (b.cols + 1) * b.p && y >= b.y - b.p && y <= bottomY(b)) return { b, what, kind: AFTER_PILES[what].good };
+    }
+    return null;
+  },
+  take: (spot, c, r) => takeCell(spot.what, c, r),
+  // A thrown block, `ch` a chip of S.chips whose x, y are the block's middle,
+  // one frame on: kept inside the place, set down on a pile of its kind its
+  // foot has come down on (one at its brim lets it fall past), else laid on
+  // the place's floor where it comes down, for a gatherer to carry home
+  // (bodies.js, AFTER_GOODS_HOME). True once it is down.
+  land(ch) {
+    if (!S.after) return true;               // the act begun again under it: nowhere left to land
+    const half = AFTER_BLOCK[ch.kind] * AP / 2, lo = afterX0() + half, hi = afterX1() - half;
+    if (ch.x < lo) { ch.x = lo; ch.vx = Math.abs(ch.vx) * 0.6; }
+    if (ch.x > hi) { ch.x = hi; ch.vx = -Math.abs(ch.vx) * 0.3; }
+    if (ch.vy <= 0) return false;
+    const foot = ch.y + half;
+    for (const what of PILED) {
+      if (AFTER_PILES[what].good !== ch.kind || pileRoom(what) <= 0 || !built(pileOwner(what))) continue;
+      const b = plotOf(what), c = colOf(b, ch.x);
+      if (c < 0 || c >= b.cols || foot < bottomY(b) - (topRow(b, c) + 1) * b.p) continue;
+      if (setBlock(what, ch.x)) return true;
+    }
+    // layGood takes a block's left edge and reads the floor a cell in from it
+    const left = Math.round((ch.x - half) / P) * P, fl = floorAt(left + AP);
+    if (foot < fl) return false;
+    layGood(ch.kind, left, fl);
+    return true;
+  }
+};

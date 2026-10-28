@@ -34,7 +34,7 @@ import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
 import { holdAt, dragArm, releaseArm, tapAt, leverUnder, signUnder } from './levers.js';
-import { hoverAt, grabAt, inHand, holdBody, goodsUnder } from './crew/pointer.js';
+import { hoverAt, grabAt, inHand, holdBody } from './crew/pointer.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
 import { houseRect } from './house.js';
@@ -58,6 +58,7 @@ import * as AFTER_PLACE from './after/index.js';
 import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, gestureHover, pressTaken } from './after/gestures.js';
 import { stationParts, pileOwner, pileBox } from './after/place.js';
 import { built } from './after/levels.js';
+import { lyingAt, kindOf } from './after/grove.js';
 import { JOB_NAMES } from './after/rows.js';
 import { AFTER_JOB } from './jobs.js';
 import * as HELL_PLACE from './hell/index.js';
@@ -220,6 +221,17 @@ canvas.addEventListener('pointerdown', e => {
       showPanel(null, true);
       showTipAt(null);
       if (gestureHeld()) try { canvas.setPointerCapture(e.pointerId); } catch {}
+      return;
+    }
+    // A press and hold on a pile is the yard's sweep, on its blocks as on
+    // the yard's dust (hands.js): what it takes floats on the cursor and
+    // the release throws it, the move and the release the yard's own below.
+    if (S.view === 'after' && dustUnder(p.x, p.y, e.pointerType === 'touch' ? fingerReach() : undefined)) {
+      S.dragging = true;
+      S.trail = [];
+      track(p.x, p.y);
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+      sweep(p.x, p.y);
       return;
     }
     // Down there the pick's blow on a face or a barrier is the hand's, asked
@@ -530,19 +542,20 @@ const TYPE_SAID = {
   delver: msg('hover-delver'),
 };
 
-// Act 3's counted piles and what each is called: the goods the hand takes
-// off them (after/hand.js).
+// Act 3's counted piles and what each is called, and the goods lying on its
+// floor.
 const AFTER_PILE_SAYS = {
   grovelogs: 'hover-pile-logs', logs: 'hover-pile-logs', timber: 'hover-pile-planks', signs: 'hover-pile-signs'
 };
 const AFTER_GOOD_SAYS = { log: 'hover-log', plank: 'hover-plank', sign: 'hover-sign' };
 
 // What is at a spot up in act 3, in a word, asked in the yard's order: a body,
-// or a good lying on the floor or on a pile, before the pile and the heap,
-// before the station they stand beside.
+// or a good lying on the floor, before the pile and the heap, before the
+// station they stand beside.
 function afterAt(x, y) {
   const o = S.after && grabAt(x, y);
-  if (o && o.goods) return msg(AFTER_GOOD_SAYS[o.kind] || 'hover-log');
+  const q = S.after && !o ? lyingAt(x, y, P) : null;
+  if (q) return msg(AFTER_GOOD_SAYS[kindOf(q)] || 'hover-log');
   if (o) return o.job && JOB_NAMES[o.job] ? JOB_NAMES[o.job]() : o.job === AFTER_JOB.BUILD ? msg('hover-builder') : msg('hover-member');
   for (const [what, key] of Object.entries(AFTER_PILE_SAYS)) {
     const owner = pileOwner(what);
@@ -708,8 +721,6 @@ const CURSORS = [
   // up in act 3, a part the hand works: open on it, closed while it is held
   [() => gestureHeld(), 'grabbing'],
   [(x, y) => S.view === 'after' && gestureUnder(x, y), 'grab'],
-  // a pile or the floor with goods the hand can take up (after/hand.js)
-  [(x, y) => goodsUnder(x, y), 'grab'],
   [(x, y) => atStation(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],

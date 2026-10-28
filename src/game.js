@@ -56,6 +56,7 @@ setRooms(roomsAfter);
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
 import { catchAir, tossFromPile } from './hands.js';
+import { PLACES } from './acts.js';
 import { seedAir, stepAir } from './air.js';
 import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
@@ -189,7 +190,7 @@ function holdToMine(now) {
 function holdToToss(now) {
   if (!S.dragging || !S.autoToss) return;
   if (now < S.nextToss) return;
-  tossFromPile(S.mouse.x);
+  tossFromPile(S.mouse.x, S.mouse.y);
   S.nextToss = now + tossMs();
 }
 
@@ -355,6 +356,11 @@ function stepChips(now) {
     ch.x += ch.vx * f;
     ch.y += ch.vy * f;
     if (ch.dome) slideOnDome(ch, f);
+    // A place's goods thrown by the hand (hands.js, `release`) come down in
+    // that place, on its piles or its ground, by its own rules (acts.js, a
+    // place's `plots.land`): asked before every rule of the yard's, whose
+    // walls, edges and hole stand on the same x under it.
+    if (ch.place) { const pl = PLACES[ch.place]; if (!pl || !pl.plots || pl.plots.land(ch)) dead[i] = 1; continue; }
 
     // The far wall of the hole is a wall at every height, not only below the
     // ground line: everything is thrown at the pit from the near lip, so a

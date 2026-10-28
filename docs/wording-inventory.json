@@ -5826,14 +5826,14 @@
  {
   "id": "hover-pile-logs",
   "group": "Hover",
-  "where": "src/input.js",
+  "where": "src/after/stations.js",
   "context": "the hover over a counted pile in act 3 (the logs of the saw mill and grove)",
   "text": "log pile"
  },
  {
   "id": "hover-pile-planks",
   "group": "Hover",
-  "where": "src/input.js",
+  "where": "src/after/stations.js",
   "context": "the hover over a counted pile in act 3 (the timber at the saw mill)",
   "text": "plank pile"
  },
