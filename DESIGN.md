@@ -23642,39 +23642,60 @@ disjoint files.
    value. Nothing in the game calls it yet. Check: the node file drops,
    rolls and takes logs, timber and grains together on one plot over fixed
    terrain; the perf gate unchanged.
-2. **Act 3's ground** (owns after/piles.js, after/grove.js, after/art.js's
-   strips). One ground plot, piles as strips, lying goods as cells.
+2. **Act 3's ground, and its save** (owns after/piles.js, after/grove.js,
+   after/art.js's strips, after/index.js, after/levels.js, render/after/piles.js,
+   render/after/drop.js, render/after/pine.js, render/aftercues.js, the pile
+   reads in input.js's hover and words.js, the migration, act 3's saver and
+   state.js's lists). One ground plot, piles as strips, lying goods as
+   cells, drawn with the piles' solid-behind-the-seams fill across the whole
+   ground. The save change of section 6 lands here, not later: a lying good
+   is a cell from this step on, and `run()` saves and reads every five game
+   seconds, so a ground nothing saves would lose it on the first reload.
    `S.after.stock` stays for this step only, as a mirror the survey writes,
-   so nothing that reads it breaks, and `AFTER_PLOTS` keeps its shape over
-   the new ground for one step. Check: a rule in verify.js that no two blocks
-   share a cell and none stands in terrain; `after-pile-plots`,
-   `after-gather` and `after-logflow` stay green.
+   so every reader of it keeps working, and `AFTER_PLOTS` keeps its shape
+   over the new ground for one step. Check: a rule in verify.js that no two
+   blocks share a cell and none stands in terrain; a fixture save of today's
+   shape (stock, lying logs, a held load, a log on the bed) reads back with
+   every unit where it was; `after-pile-plots`, `after-gather` and
+   `after-logflow` stay green.
 3. **Three tracks at once**, once step 2 is in:
-   - **One hand** (owns hands.js). The branches go and the deep's hand joins.
+   - **One hand** (owns hands.js, after/hand.js, after/gestures.js,
+     after/press.js). The branches go and the deep's hand joins.
      Check, bought the player's way: a press dragged across the log pile
      takes as many logs as the hand holds, thrown on the ground they are
      dragged up again, and the same for timber on the mound and sawdust on
      the heap (node `after-goods-sweep`, and a browser group with a real
      pointer).
-   - **One landing** (owns the divert in game.js's `stepChips`, the falling
-     half of deep/scales.js, the places' surface lists). `AFTER_PLOTS.land`
+   - **One landing** (owns the divert in game.js's `stepChips`, deep/scales.js,
+     after/mill.js's `bedLand`, the places' surface lists in acts.js). `AFTER_PLOTS.land`
      and `S.sinking`'s free fall go. Check: a scale knocked off the serpent
      lands on the bed and a thrown one in the hopper; a block thrown on a
      full pile rolls off to the ground; the perf gate.
    - **One carry** (owns carry.js, crew/hauler.js's load calls,
-     deep/gather.js, after/bodies.js, after/build.js). Check: buy the mill
+     deep/gather.js, after/bodies.js, after/build.js, after/roster.js). Check: buy the mill
      and follow one log from a felled tree to timber on the mound, every
      hand-off a body's; buy a station and its loads come out of the shack's
      door and are laid into its bands.
-4. **The save** (owns the migration, act 3's saver, state.js's lists).
-   `S.after.stock`'s piled keys go and rules 23 and 24 become **one
-   conservation rule in verify.js**: in every place, each kind's units on the
-   ground, in hands, in the air, in arms and in a machine change only at a
-   named source or sink. That is "nothing teleports", watched every frame by
-   every group. Check: a fixture save of today's shape (stock, lying logs, a
-   held load, a log on the bed) reads back with every unit where it was.
+4. **The mirror retired** (owns verify.js's rules 23 and 24, and the last
+   readers of `S.after.stock`: board.js, hooks.js, scenes.js, the selftest
+   groups, tools/node/act3-player.mjs, the act 3 node files). `S.after.stock`'s
+   piled keys go and rules 23 and 24 become **one conservation rule in
+   verify.js**: each kind's units on the ground, in hands, in the air, in
+   arms and in a machine change only at a named source or sink. That is
+   "nothing teleports", watched every frame by every group. In this wave it
+   covers act 3 and the deep, the places whose sources and sinks are listed;
+   the yard joins once its own are (rock spoil, the rind, the farm, the
+   meteor, finds), or it would go red across the node tier on day one.
 5. **The deep's hand and water**, if call 3 says after; otherwise it rides
    step 3.
+
+Every file that reads the old shapes today (`S.after.stock`, `groundLogs`,
+`lyingAt`, `plotOf`, `AFTER_PLOTS`, `pileCount`: 41 files across src, test
+and tools) is named in exactly one step above, except the old cut-paper
+migration, which reads a raw save of its own day and is left alone.
+config/after.js, acts.js and verify.js are additive-only for every track
+but the one that owns a named piece of them, one block each, under the
+track's name.
 
 #### 9. The owner's calls
 
