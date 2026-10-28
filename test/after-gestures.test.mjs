@@ -69,7 +69,7 @@ group('the saw mill: its flywheel spun faster where it stands cuts a log sooner,
 }, NO_RELOAD);
 
 group('the workshop: four nails a sign, two taps each; a miss does nothing; the joiner taps on once the hand stops', async () => {
-  up(['mill', 'workshop'], { timber: 10, rebel: 500 });
+  up(['mill', 'workshop'], { timber: 10, benchtimber: 8, rebel: 500 });
   window.__grant({ dust: 40000, spores: 5000, shards: 2000, scales: 3000, sparks: 400 });
   const s0 = S.after.stock.signs;
   // Off the nails, on the blank between two of them: nothing.
@@ -86,7 +86,7 @@ group('the workshop: four nails a sign, two taps each; a miss does nothing; the 
   for (let k = 1; k < 4; k++) for (let n = 0; n < GESTURE_NAIL_TAPS; n++) { click(mid(partsOf('workshop').nails[k])); run(0.3); }
   const one = S.after.stock.signs - s0;
   // A nail half in, then a joiner at the bench: it drives the rest alone.
-  window.__afterGrant({ timber: 20 });
+  window.__afterGrant({ timber: 20, benchtimber: 8 });
   click(mid(partsOf('workshop').nails[2])); run(0.3);
   const t0 = S.after.t;
   S.after.camp += 1;
@@ -276,7 +276,7 @@ group('the ghost hand shows until the motion is done three times, then fades, an
 
 group('the pad: A on the workshop taps nails into a sign, the stick turned round spins the saw mill', async () => {
   const pad = window.__pad;
-  up(['mill', 'workshop'], { timber: 10, logs: 5 });
+  up(['mill', 'workshop'], { timber: 10, benchtimber: 8, logs: 5 });
   pad.on();
   pad.press('b');
   // The focus put on the station: the check is about what A and the stick do there.
