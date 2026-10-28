@@ -178,3 +178,6 @@ export * from './config/aftercamp.js';
 
 // the clouds: the one way a cloud is drawn, its tones, field, clock and kinds
 export * from './config/clouds.js';
+
+// the kinds of unit on a ground plot: size, weight, palette, home, and the cell values each takes
+export * from './config/blocks.js';

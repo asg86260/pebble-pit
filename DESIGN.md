@@ -23488,6 +23488,19 @@ and unmade only at a named sink, and verify.js holds every act to it.
   block is held up when any cell under its bottom row is full; it never
   tips. Size 1 is today's grain, so the yard's and the deep's plots run
   exactly the rule they run now.
+  **The heap rule** (the owner, 2026-10-28: "right now grabbing from a pile
+  always grabs the bottom one, which leads to jank. the way logs pile up and
+  level out is weird"; built in step 1, grid.js `stepBlock`, `takeUnit`):
+  a block with nothing under any column falls a cell; one held up under
+  half its width or more rests, however uneven the ground; one held up
+  under less than half (it overhangs) rolls a whole block's width toward
+  the side with less under it, a cell down, if that strip is open, else
+  rests. Every move goes down, so a heap only settles: it never levels out
+  once at rest and cannot oscillate. **A block is taken only off the top**:
+  `takeTop(c)` takes the top block of the column under the pointer (a body
+  the top of the pile's highest column), and `takeUnit` refuses any block
+  with another resting on it, so nothing under a block is ever pulled out
+  and nothing above an emptied cell is left floating.
 - **The uneven floor is cells.** The cloud's swells and each station's shelf
   are `fixed` cells (grid.js already has the hook: "a cell that never
   moves"), filled up to `floorAt` in every column. The plot's bottom is the
