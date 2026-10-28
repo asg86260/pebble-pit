@@ -30,6 +30,19 @@ export const BRUSH = 3;          // sweep radius, in cells
 export const MINE_DELAY = 260;   // pause before a held click starts auto-mining
 export const TOSS_DELAY = 260;   // and before a held hand starts throwing (hold to toss)
 export const TOSS_NEAR = P * 20;  // how far either side a held hand reaches for a grain, and how far off a pile's end it still works the pile
+// A held thing's weight goes by its size, in art cells a side (a grain is
+// one; act 3's blocks, AFTER_BLOCK), so a good of a new size needs nothing
+// but its size. A block as big as a log is held alone. A smaller block
+// takes its share of the hand by area, but never fewer than HAND_FLOOR, so
+// a hand at the foot of its ladder still lifts a pair of planks. A grain is
+// the hand's own count (the owner, 2026-10-27).
+export const HAND_ONE = 4;       // a block this many cells a side or more: one in the hand
+export const HAND_FLOOR = 2;     // the fewest of a smaller block the hand takes
+// How far a held thing drifts, swings round and bobs about the pointer, and
+// so how far out it is flung as it is picked up: a share of a grain's, by
+// size. A log hangs nearly still under the pointer, a plank swings less than
+// dust. A size between two rows takes the smaller one's share.
+export const HAND_SWAY = { 1: 1, 2: 0.5, 4: 0.25 };
 // How many rungs there are on every ladder in the game: one number, so "how
 // far along is this" has one answer wherever it is asked. What changes between
 // ladders is what a rung costs and is bought with (config/rungs.js; "The

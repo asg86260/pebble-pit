@@ -9,10 +9,11 @@ import { drawMark } from './marks.js';
 // Where mote `m` drifts at clock `t` (seconds): turned on the clock, not a
 // step a drawn frame, so a place that draws its own goods on the cursor
 // (render/after.js) puts them where the dust would be.
+// A heavy one (`sway`, hands.js) bobs as little as it swings.
 export function motePos(m, t) {
-  const a = m.a + m.spin * MOTE_SPIN_FPS * t;
-  return { x: S.mouse.x + Math.cos(a) * m.d + Math.sin(t * 1.7 + m.bob) * 2,
-           y: S.mouse.y + Math.sin(a) * m.d + Math.cos(t * 1.3 + m.bob) * 2 };
+  const a = m.a + m.spin * MOTE_SPIN_FPS * t, bob = 2 * (m.sway ?? 1);
+  return { x: S.mouse.x + Math.cos(a) * m.d + Math.sin(t * 1.7 + m.bob) * bob,
+           y: S.mouse.y + Math.sin(a) * m.d + Math.cos(t * 1.3 + m.bob) * bob };
 }
 
 // the carried dust drifts loosely around the cursor, and in the deep the
