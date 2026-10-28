@@ -13,7 +13,9 @@
 import { group, ok, run, runUntil, yard, restartReloadClock } from './helpers.mjs';
 import { P, RIM_PIECES, AFTER_BLOCK } from '../src/config.js';
 import { capacity } from '../src/levels.js';
-import { track, sweep, release, heldGoods, handTakes } from '../src/hands.js';
+import { track, sweep, release, heldGoods, handTakes, handDown, handHolds } from '../src/hands.js';
+import { layGood } from '../src/after/grove.js';
+import { LADDER } from '../src/config.js';
 import { plotOf, AFTER_PLOTS } from '../src/after/piles.js';
 import { floorAt, afterX0, afterX1, AP } from '../src/after/place.js';
 import { bottomY, addGrain, grainsIn } from '../src/grid.js';
@@ -381,5 +383,101 @@ group('blocks lying on the floor are still there after a reload, and still the h
   return [
     ok(took >= 2 && before === after, 'read back, every plank lies where it lay', `${before} / ${after}`),
     ok(pressed && held === took, 'and a press and hold picks them up', `${held} of ${took}`)
+  ];
+});
+
+// A held drag sweeps as act 1's does: the press takes the hand down wherever
+// it lands (hands.js `handDown`, input.js's press on goods or on bare ground
+// up there and anywhere in the yard), and every move while it is held sweeps
+// under the pointer (input.js's pointermove), a frame of the game apart, so
+// everything of the hand's kind the brush passes over joins the hand until
+// it is full. Let go at the end.
+function drag(from, to, n = 40) {
+  handDown(from.x, from.y);
+  S.mouse = { ...from };
+  const seen = [];
+  for (let k = 1; k <= n; k++) {
+    const p = { x: from.x + (to.x - from.x) * k / n, y: from.y + (to.y - from.y) * k / n };
+    S.mouse = p; track(p.x, p.y); sweep(p.x, p.y);
+    run(1 / 60);
+    seen.push({ x: p.x, held: S.held });
+  }
+  return seen;
+}
+const release0 = p => { S.dragging = false; letGo(p); down(); };
+// Two planks laid on the floor just past the timber mound's far side, a
+// plank's width apart, and let settle; the row the drag runs along.
+function mound() {
+  const b = plotOf('timber'), y = bottomY(b) - b.p / 2, right = b.x + (b.cols + 2) * b.p;
+  return { b, y, right, end: b.x + (b.cols + 1) * b.p };
+}
+function layTwo(m) {
+  layGood('plank', m.right, floorAt(m.right) - P * 2);
+  layGood('plank', m.right + P * 4, floorAt(m.right) - P * 2);
+  run(0.6);
+}
+// Bare ground past the planks: nothing of any pile's or the floor's within a
+// brush of it.
+function bareRightOf(m, y) {
+  let x = m.right + P * 14;
+  while (AFTER_PLOTS.at(x, y, P * 6)) x += P * 2;
+  return x;
+}
+
+group('a drag begun on a lying plank goes on over the timber mound, sweeping planks the whole way to a full hand', async () => {
+  up();
+  S.carryLevel = LADDER;
+  restartReloadClock();
+  const m = mound();
+  layTwo(m);
+  const t0 = stock().timber, holds = handHolds('plank'), lying0 = laid('plank').length;
+  const first = laid('plank').sort((a, b) => b.x - a.x)[0];
+  const from = { x: first.x + AP, y: m.y }, to = { x: m.b.x + m.b.p, y: m.y };
+  const seen = drag(from, to);
+  const atMound = seen.find(q => q.x < m.end);
+  const held = S.held, g = heldGoods(), off = t0 - stock().timber, left = laid('plank').length;
+  release0(to);
+  done();
+  return [
+    ok(lying0 === 2 && holds > 2, 'two planks lie past the mound, and the hand holds more than two', JSON.stringify({ lying0, holds })),
+    ok(atMound && atMound.held <= 2 && left === 0, 'the press on one and the drag over the other take both', JSON.stringify({ atMound, left })),
+    ok(held === holds && g && g.kind === 'plank' && off === holds - 2, 'and on over the mound the hand fills with its planks, and no more', JSON.stringify({ held, holds, off }))
+  ];
+});
+
+group('a drag begun on bare ground up there sweeps the planks and the mound it crosses', async () => {
+  up();
+  S.carryLevel = LADDER;
+  restartReloadClock();
+  const m = mound();
+  layTwo(m);
+  const x = bareRightOf(m, m.y);
+  const bare = !handTakes(x, m.y);
+  const t0 = stock().timber, holds = handHolds('plank');
+  const from = { x, y: m.y }, to = { x: m.b.x + m.b.p, y: m.y };
+  const seen = drag(from, to, 60);
+  const atFirst = seen[0].held;
+  const held = S.held, off = t0 - stock().timber, left = laid('plank').length;
+  release0(to);
+  done();
+  return [
+    ok(bare && atFirst === 0, 'the press is on bare ground, and takes nothing there', JSON.stringify({ bare, atFirst })),
+    ok(left === 0 && held === holds && off === holds - 2, 'dragged across, it sweeps up the planks lying there and fills from the mound', JSON.stringify({ held, holds, off, left }))
+  ];
+});
+
+// The control: the yard's dust, a heap on the floor, the drag begun off it
+// on bare floor and run across it, as it always was.
+group('the yard\'s dust is swept by a drag across it begun on bare floor, to a full hand', async () => {
+  restartReloadClock();
+  S.carryLevel = 3;
+  const gx = floor.x + floor.cols * P / 2, gy = bottomY(floor) - P / 2;
+  for (let i = 0; i < capacity() * 3; i++) addGrain(floor, gx);
+  S.held = 0; S.motes = [];
+  const seen = drag({ x: gx + P * 60, y: gy }, { x: gx - P * 20, y: gy }, 60);
+  const atFirst = seen[0].held, held = S.held, cap = capacity();
+  S.dragging = false; S.held = 0; S.motes = []; S.carryLevel = 0;
+  return [
+    ok(atFirst === 0 && held === cap, 'nothing at the press, and a full hand of dust by the end', JSON.stringify({ atFirst, held, cap }))
   ];
 });

@@ -7,11 +7,11 @@ import { msg } from './lang.js';
 import { held as heldState } from './reset.js';
 import { closeWindow } from './modal.js';
 import { P, MINE_DELAY, WORKER, AFTER_PILE_REACH, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
-         FARM_H, TOSS_DELAY, THUMB, BRUSH } from './config.js';
+         FARM_H, THUMB, BRUSH } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow, bindScroller, lookAt, lockScroller, toWorld, toScreen } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
-import { sweep, release, track, handTakes } from './hands.js';
+import { sweep, release, track, handTakes, handDown } from './hands.js';
 import { startle, overBird } from './weather.js';
 import { stirAir } from './air.js';
 import { stirSmoke, airReadout } from './smog.js';
@@ -239,11 +239,8 @@ canvas.addEventListener('pointerdown', e => {
     // the release throws it, the move and the release the yard's own below.
     // A press on a block still in the air is the hand's too, to catch it.
     if (S.view === 'after' && handTakes(p.x, p.y, e.pointerType === 'touch' ? fingerReach() : undefined)) {
-      S.dragging = true;
-      S.trail = [];
-      track(p.x, p.y);
+      handDown(p.x, p.y);
       try { canvas.setPointerCapture(e.pointerId); } catch {}
-      sweep(p.x, p.y);
       return;
     }
     // Down there the pick's blow on a face or a barrier is the hand's, asked
@@ -251,7 +248,15 @@ canvas.addEventListener('pointerdown', e => {
     if (S.view === 'hell' && HELL_PLACE.clickHell(p.x, p.y)) return;
     const at = clickBoard(p.x, p.y);
     if (at) { if (e.pointerType !== 'touch') showPanel(at, true); return; }
-    if (S.view === 'after' && typeof AFTER_PLACE.clickAfter === 'function') AFTER_PLACE.clickAfter(p.x, p.y);
+    if (S.view === 'after' && typeof AFTER_PLACE.clickAfter === 'function' && AFTER_PLACE.clickAfter(p.x, p.y)) return;
+    // A mouse press that nothing up there answered takes the hand down on
+    // bare ground, as one does anywhere in the yard: dragged onto a pile or
+    // the goods lying about, it sweeps them up. A finger there is the
+    // platform's scroll, as off the yard's dust.
+    if (S.view === 'after' && e.pointerType !== 'touch') {
+      handDown(p.x, p.y);
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+    }
     return;
   }
   if (onShaftArrow(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }
@@ -290,12 +295,8 @@ canvas.addEventListener('pointerdown', e => {
   // for the sweep everywhere. The same reach as the touchstart gate, so
   // the two never disagree about one finger.
   if (e.pointerType === 'touch' && !handTakes(p.x, p.y, fingerReach())) return;
-  S.dragging = true;
-  S.nextToss = now() + TOSS_DELAY;         // a held sweep throws by itself once unlocked
-  S.trail = [];
-  track(p.x, p.y);
+  handDown(p.x, p.y);
   try { canvas.setPointerCapture(e.pointerId); } catch {}
-  sweep(p.x, p.y);
 });
 
 canvas.addEventListener('pointermove', e => {

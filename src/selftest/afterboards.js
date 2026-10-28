@@ -8,7 +8,7 @@
 
 import { S } from '../state.js';
 import { newRun, settle, until, raf, ok, panel, point, canvas } from './kit.js';
-import { AFTER_CARDS, P, AFTER_PILES } from '../config.js';
+import { AFTER_CARDS, P, AFTER_PILES, LADDER } from '../config.js';
 import { shopOf } from '../pages.js';
 import { support } from '../after/union.js';
 import { msg } from '../lang.js';
@@ -17,6 +17,8 @@ import { stationBox, floorAt } from '../after/place.js';
 import { plotOf, AFTER_PLOTS } from '../after/piles.js';
 import { toScreen } from '../world.js';
 import { shopBoxOf } from '../roster.js';
+import { layGood } from '../after/grove.js';
+import { handHolds } from '../hands.js';
 
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 async function upThere() {
@@ -314,6 +316,57 @@ export const TESTS = [
       ok(took > 0 && kind === 'log' && off === took, 'a left press and hold on the pile takes logs into the hand and off the pile', `${took} held, ${off} off, ${kind}`),
       ok(empty && thrown === took, 'let go, every log leaves the hand', `${thrown} in the air`),
       ok(counts.mill > mill0 && counts.mill - mill0 + counts.lying === took, 'they fall onto the saw mill\'s pile, any it has no room for on the floor', JSON.stringify(counts))
+    ];
+  }],
+  // A held drag sweeps as act 1's does (hands.js): pressed on bare ground
+  // off every pile, the hold dragged across two planks lying on the floor
+  // and on over the timber mound, everything of the hand's kind the brush
+  // passes over joins the hand, up to what the hand holds of planks.
+  ['act 3: a press on bare ground dragged across lying planks and the timber mound sweeps up planks the whole way, to a full hand', async () => {
+    newRun();
+    await settle();
+    await upThere();
+    if (!S.after.built.includes('mill')) S.after.built.push('mill');
+    S.carryLevel = LADDER;
+    window.__afterGrant({ timber: 12 - S.after.stock.timber });
+    await settle(0.3);
+    const b = plotOf('timber'), y = b.y + b.rows * b.p - b.p / 2;
+    const right = b.x + (b.cols + 2) * b.p;
+    layGood('plank', right, floorAt(right) - P * 2);
+    layGood('plank', right + P * 4, floorAt(right) - P * 2);
+    await settle(0.6);
+    const lying = () => S.after.groundLogs.filter(q => q.kind === 'plank').length;
+    let sx = right + P * 14;
+    while (AFTER_PLOTS.at(sx, y, P * 6)) sx += P * 2;
+    const from = { x: sx, y }, to = { x: b.x + b.p, y };
+    window.__look((from.x + to.x) / 2 - S.viewW / 2);
+    await settle(0.3);
+    const r = canvas().getBoundingClientRect();
+    const at = p => { const s = toScreen(p.x, p.y); return [r.left + s.x, r.top + s.y]; };
+    const lying0 = lying(), t0 = S.after.stock.timber, holds = handHolds('plank');
+    S.held = 0; S.motes = [];
+    point('pointermove', ...at(from), 0);
+    await raf();
+    point('pointerdown', ...at(from), 1, 0);
+    await raf();
+    const pressed = S.dragging, empty0 = S.held === 0;
+    let afterLying = null;
+    for (let k = 1; k <= 40; k++) {
+      const p = { x: from.x + (to.x - from.x) * k / 40, y };
+      point('pointermove', ...at(p), 1, -1);
+      window.__fast(1 / 60);
+      await raf();
+      if (afterLying == null && p.x < b.x + (b.cols + 1) * b.p) afterLying = { held: S.held, lying: lying() };
+    }
+    const held = S.held, kind = S.motes[0]?.kind, offMound = t0 - S.after.stock.timber, left = lying();
+    point('pointerup', ...at(to), 0, 0);
+    for (let f = 0; f < 240 && S.chips.some(c => c.place); f++) { window.__fast(1 / 60); await raf(); }
+    S.carryLevel = 0;
+    window.__actsOn(null);
+    return [
+      ok(lying0 === 2 && empty0 && pressed, 'the press on bare ground takes the hand down, empty', JSON.stringify({ lying0, empty0, pressed })),
+      ok(afterLying && afterLying.lying === 0 && afterLying.held === 2, 'dragged over the planks lying there, both join the hand', JSON.stringify(afterLying)),
+      ok(held === holds && kind === 'plank' && offMound === holds - 2 && left === 0, 'dragged on over the mound, it fills the hand with planks and no more', JSON.stringify({ held, holds, kind, offMound, left }))
     ];
   }],
   // A thrown log is the hand's again, as thrown dust is: a press on it in

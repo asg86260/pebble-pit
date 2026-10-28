@@ -214,6 +214,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 
 - In act 3 a log or timber you throw can be caught in the air again with a press on it, as dust can (test/after-goods-sweep.test.mjs, src/selftest/afterboards.js).
+- In act 3 a press and hold dragged across piles and the logs or timber lying about picks them up the whole way, begun on bare ground or on goods, as dragging across dust does (src/selftest/afterboards.js).
 - In act 3 a log or timber you throw onto the floor, or a felled tree's log, can be picked up again with a press and hold on it, as dust can (test/after-goods-sweep.test.mjs).
 - A stirrer at its pot no longer stays hanging in the air when a dance is cut off mid-jump (test/dance-cut-at-pot.test.mjs).
 - Loading a save that was left in the deep no longer lays its sky, clouds and rain out against the window of the yard you were in before (test/held-state.test.mjs).

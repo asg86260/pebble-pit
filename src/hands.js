@@ -12,7 +12,7 @@
 // hand at a time: each mote remembers what it is, a place's goods (`kind`,
 // `place`) or the yard's dust, and a let-go lands as that.
 
-import { P, BRUSH, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR, DEEP_THROW, AFTER_BLOCK, HAND_ONE, HAND_FLOOR, HAND_SWAY } from './config.js';
+import { P, BRUSH, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR, DEEP_THROW, AFTER_BLOCK, HAND_ONE, HAND_FLOOR, HAND_SWAY, TOSS_DELAY } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY, topRow } from './grid.js';
 import { spawnChip, aim, bell } from './dust.js';
@@ -184,6 +184,18 @@ export function dustUnder(mx, my, radius = BRUSH) {
   if (spot.lying) return true;
   for (const _ of brushCells(mx, my, radius, spot.b)) return true;
   return false;
+}
+
+// The hand taken down by a press, in the yard or an act's place alike
+// (input.js): the sweep begins under it and goes on at every move while it
+// is held, so a press on bare ground dragged onto goods takes them as one
+// begun on them does.
+export function handDown(mx, my) {
+  S.dragging = true;
+  S.nextToss = now() + TOSS_DELAY;         // a held sweep throws by itself once unlocked
+  S.trail = [];
+  track(mx, my);
+  sweep(mx, my);
 }
 
 export function sweep(mx, my) {
