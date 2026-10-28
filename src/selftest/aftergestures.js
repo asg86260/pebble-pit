@@ -92,7 +92,7 @@ export const TESTS = [
     await pressShop('after-mill');
     const asked = openBoard();
     // Off the button that put it up: the board's box on the glass clear of it.
-    const pr = panel().getBoundingClientRect(), kr = onGlass(shopBoxOf('after-mill')), sr = onGlass(b);
+    const pr = panel().getBoundingClientRect(), kr = onGlass(shopBoxOf('after-mill'));
     const pb = { left: pr.left, top: pr.top, right: pr.right, bottom: pr.bottom };
     const beside = !panel().hidden && !meets(pb, kr);
     // A press on the wheel takes hold of the work, and the board goes.
@@ -106,47 +106,34 @@ export const TESTS = [
       ok(cut > 0, 'spun round by the pointer for six seconds, the flywheel cuts a log', `${cut} timber`),
       ok(framed === null, 'a plain click on its frame opens nothing', JSON.stringify(framed)),
       ok(asked === 'after-mill', 'its UPGRADES button opens its board', JSON.stringify(asked)),
-      ok(beside, 'and the board stands clear of the button', JSON.stringify({ board: [pr.left, pr.top, pr.right, pr.bottom].map(Math.round), button: Object.values(kr).map(Math.round), station: Object.values(sr).map(Math.round), overStation: meets(pb, sr) })),
+      ok(beside, 'and the board stands clear of the button', JSON.stringify({ board: [pr.left, pr.top, pr.right, pr.bottom].map(Math.round), button: Object.values(kr).map(Math.round) })),
       ok(held === null, 'taking hold of the flywheel shuts it', JSON.stringify(held))
     ];
   }],
-  // Every station's board, not only the mill's: a station with a roster
-  // opened by its UPGRADES button, one without (the shack, the pedestal) by a
-  // click on its drawing, with the station framed at the window's far side
-  // from its board's spot. A board hung off a button is measured clear of
-  // that button; one hung off a sign, clear of its station. What else it
-  // stands over is said in the detail, for the reader, not asserted.
-  ['act 3: every station\'s board, opened by its UPGRADES button or, with no roster, a click on it, stands clear of the button or the station', async () => {
+  // Every station's board, not only the mill's, God's crowd's too: each
+  // opened by its UPGRADES button with the button framed in the window's
+  // middle, and put away by it again. Whether the board covers the button
+  // is said in the detail: with the button mid-window there may be no room
+  // beside it, and covering after a press is allowed (the owner, 2026-10-28).
+  ['act 3: every station\'s board, God\'s crowd\'s too, opens from its UPGRADES button, and the button puts it away', async () => {
     newRun();
     await settle();
     await upThere(['mill', 'workshop']);
-    const CARDS = { forestry: 'grove', mill: 'mill', workshop: 'workshop', shack: 'shack', pedestal: 'pedestal' };
+    const KEYS = ['after-grove', 'after-mill', 'after-workshop', 'after-shack', 'after-pedestal', 'after-crowd'];
     const res = {};
-    for (const [k, card] of Object.entries(CARDS)) {
-      const key = `after-${card}`, b = stationBox(k), right = station(key).boardAnchor().side === 'right';
-      window.__look(right ? b.x - P * 4 : b.x + b.w + P * 4 - S.viewW);
-      await settle(0.2);
-      const buttoned = !!shopBoxOf(key);
-      if (buttoned) await pressShop(key);
-      else {
-        const spot = onFrame(k), at = glass(spot.x, spot.y);
-        point('pointerdown', ...at); point('pointerup', ...at);
-        await settle(0.4);
-      }
+    for (const key of KEYS) {
+      // God's camp slides at its own rate, so the look is asked twice to settle on his button.
+      for (let k = 0; k < 2; k++) { const b = shopBoxOf(key); window.__look(b.x + b.w / 2 - S.viewW / 2); await settle(0.2); }
+      await pressShop(key);
       const pr = panel().getBoundingClientRect(), pb = { left: pr.left, top: pr.top, right: pr.right, bottom: pr.bottom };
-      const over = Object.keys(CARDS).filter(o => meets(pb, onGlass(stationBox(o))));
-      const buttons = Object.values(CARDS).filter(c => shopBoxOf(`after-${c}`) && meets(pb, onGlass(shopBoxOf(`after-${c}`))));
-      res[k] = { buttoned, open: openBoard(), own: over.includes(k), over: over.filter(o => o !== k), buttons };
-      const off = glass(b.x + b.w / 2, b.y - P * 40);
-      point('pointerdown', ...off); point('pointerup', ...off);
-      await settle(0.2);
+      const open = openBoard(), covers = meets(pb, onGlass(shopBoxOf(key)));
+      await pressShop(key);
+      res[key] = { open, covers, shut: openBoard() };
     }
     window.__actsOn(null);
     return [
-      ok(Object.entries(CARDS).every(([k, c]) => res[k].open === `after-${c}`), 'each station\'s way in opens its own board', JSON.stringify(res)),
-      ok(res.forestry.buttoned && res.mill.buttoned && res.workshop.buttoned && !res.shack.buttoned && !res.pedestal.buttoned,
-         'the stations with a roster open by their button, the shack and the pedestal by a click', JSON.stringify(res)),
-      ok(Object.entries(res).every(([k, r]) => (r.buttoned ? !r.buttons.includes(CARDS[k]) : !r.own)), 'and each board stands clear of its own button, or of its station', JSON.stringify(res))
+      ok(KEYS.every(k => res[k].open === k), 'each button opens its own station\'s board', JSON.stringify(res)),
+      ok(KEYS.every(k => res[k].shut === null), 'pressed again, the button puts it away', JSON.stringify(res))
     ];
   }],
   ['act 3: a bubble clicked by the pointer pops where it rises, and the big one pays five lines', async () => {

@@ -3097,7 +3097,7 @@ export const SCENES = {
   // review that chose them was: the chain bought, the saw mill four-fifths
   // across the window, the workshop's and the forestry shack's buttons in
   // view beside its own.
-  'after-shopbtn': { about: 'the acts', review: 'act 3: a shop button by the worker count', stage: 'built: the real build on branch a3-shop-button -- not on main yet; lands when you sign it off', option: 'the built button', say: "The real UPGRADES button: press it to open the station's shop, again to put it away; clicking or hovering the station opens nothing.",
+  'after-shopbtn': { about: 'the acts', branch: 'a3-shop-button', review: 'act 3: a shop button by the worker count', stage: 'built: the real build on branch a3-shop-button -- not on main yet; lands when you sign it off', option: 'the built button', say: "The real UPGRADES button: press it to open the station's shop, again to put it away; clicking or hovering the station opens nothing.",
     run: () => {
       afterChain(false);
       window.__fast(20);

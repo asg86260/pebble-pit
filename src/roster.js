@@ -107,9 +107,7 @@ const allPosts = () => [...yardPosts(), GARAGE_POST];
 //
 // A place's post also says `place` (the view it stands in), its `at` and
 // `y`, and a `group`: posts of one group stand side by side under one
-// building, centered there as one, in the order handed over. A post that
-// names a `board` (a station's key) carries that board's UPGRADES button
-// over its count, and the board opens from there and nowhere else.
+// building, centered there as one, in the order handed over.
 // The places are kept on the function itself: a place's module registers
 // while this one may still be loading (the act's modules and the yard's
 // import each other round a ring), and a function declaration is the one
@@ -485,16 +483,32 @@ function boxes(p) {
     // The machine's mark, on the roster: "is this station worked by hands or
     // by the machine" is the same question the counter above answers about
     // *how many* hands.
-    run: runBox(p, left, y, set),
-    // Over the count rather than under it: the pips grow downward as seats
-    // are bought, and a button under them would be pushed about by every
-    // purchase.
-    shop: p.board ? { x: Math.round((left + wide / 2 - shopW() / 2) / P) * P,
-                      y: y - WORKER / 2 - WORKER - SHOP_BTN_AIR - SHOP_BTN_H, w: shopW(), h: SHOP_BTN_H } : null
+    run: runBox(p, left, y, set)
   };
 }
+
+// --- the UPGRADES buttons ------------------------------------------------------
+// A place's station with a board carries the board's one way in, the
+// UPGRADES button (the owner, 2026-10-28: a board asked for by a press, so
+// none opens by accident under a passing pointer). Every one stands at one
+// spot derived from its station: centered on the line a roster would stand
+// on under it, over where that roster's count stands -- over rather than
+// under, since the pips grow downward as seats are bought -- whether or not
+// a roster stands there. A place hands its buttons over (`rosterShops`),
+// each { board, place, show(), line() }, `line` the point a post of the
+// station would stand at (`postAt`'s, before the snap).
+export function rosterShops(place, list) { (rosterShops.places ||= new Map()).set(place, list); }
 const shopWord = () => msg('roster-upgrades').toUpperCase();
 const shopW = () => Math.ceil((shopWord().length * SHOP_BTN_PX * SHOP_BTN_ADVANCE + SHOP_BTN_PAD * 2) / P) * P;
+function shopBox(s) {
+  const at = s.line();
+  if (!at) return null;
+  const w = shopW(), y = Math.round(at.y / P) * P;
+  return { x: Math.round((at.x - w / 2) / P) * P, y: y - WORKER / 2 - WORKER - SHOP_BTN_AIR - SHOP_BTN_H, w, h: SHOP_BTN_H };
+}
+// The buttons standing in the view the camera is in, each with its box.
+const shops = () => [...(rosterShops.places || new Map()).values()].flatMap(f => f())
+  .filter(s => s.place === S.view && s.show()).map(s => ({ board: s.board, box: shopBox(s) })).filter(s => s.box);
 
 export const posts = () => allPosts().filter(p => p.show());
 // The posts a click or the pointer can be on: those standing in the view the
@@ -536,24 +550,22 @@ const hit = b => ({ x: b.x - HIT_X, y: b.y - HIT_Y,
 
 // The yard is one canvas, so nothing in it carries a cursor of its own;
 // somebody has to ask every time the mouse moves.
-export const overRoster = (x, y) => live().some(p => {
+export const overRoster = (x, y) => !!shopAt(x, y) || live().some(p => {
   if (p.fixed) return false;
   const b = boxes(p);
-  return inside(hit(b.less), x, y) || inside(hit(b.more), x, y) || !!pipAt(p, b, x, y) || (!!b.shop && inside(hit(b.shop), x, y));
+  return inside(hit(b.less), x, y) || inside(hit(b.more), x, y) || !!pipAt(p, b, x, y);
 });
 
 // The board whose UPGRADES button a point is on, or null: a press there is
 // the button's, so input.js keeps it from closing the board it is opening.
 export function shopAt(x, y) {
-  for (const p of live()) { const b = boxes(p); if (b.shop && inside(hit(b.shop), x, y)) return p.board; }
-  return null;
+  return shops().find(s => inside(hit(s.box), x, y))?.board ?? null;
 }
 // A board's button where it stands, or null where none does: a station with
 // one opens from it and not from a click on its drawing, and the board
 // stands off it (after/stations.js, `boardAnchor`).
 export function shopBoxOf(key) {
-  const p = live().find(q => q.board === key);
-  return p ? boxes(p).shop : null;
+  return shops().find(s => s.board === key)?.box ?? null;
 }
 
 // What a post says with the cursor on it, for a place that gives its posts
@@ -588,13 +600,14 @@ function pipAt(p, b, x, y) {
 // board's key instead, for the page to open or put away: the board is the
 // page's, and this file stands in the node tier too.
 export function rosterHit(x, y) {
+  const shop = shopAt(x, y);
+  if (shop) { pressedShop = shop; return shop; }
   for (const p of live()) {
     if (p.fixed) continue;
     const b = boxes(p);
     // a near miss on either button still counts as that button rather than as a
     // swing at the ground: they are small, and the ground behind them does
     // something else entirely
-    if (b.shop && inside(hit(b.shop), x, y)) { pressedShop = p.key; return p.board; }
     const hold = (side, edge) => { const f = held.get(p.key); if (f) f.anchor = { side, x: edge }; };
     if (inside(hit(b.less), x, y)) { hold('l', b.less.x); press(p, -1); S.shopStale = true; return true; }
     if (inside(hit(b.more), x, y)) { hold('r', b.more.x + b.more.w); press(p, 1); S.shopStale = true; return true; }
@@ -641,6 +654,11 @@ export function rosterButtons(key) {
 export function drawRoster(ctx, drawBody, drawHat, drawRun, sprites) {
   overPosts(() => drawRosterPass(ctx, drawBody, drawHat, drawRun, sprites));
 }
+// The UPGRADES buttons of the place the camera is in, painted by that place's
+// layer (render/after.js), with its rosters.
+export function drawShops(ctx) {
+  for (const s of shops()) shopButton(ctx, s.box, s.board);
+}
 // The roster is cut to the half it stands in (frame.js, `clipToHalf`), so a
 // post in the other half is never seen and is not worked out.
 const inHalf = p => (p.place ? S.view === p.place : !PLACE_VIEWS.has(S.view) && !!p.deep === (S.view === 'deep'));
@@ -649,7 +667,6 @@ function drawRosterPass(ctx, drawBody, drawHat, drawRun, sprites) {
     if (!p.show() || !inHalf(p)) continue;
     const b = boxes(p);
     const n = count(p), spare = spareOf(p);
-    if (b.shop) shopButton(ctx, b.shop, p);
 
     // Only on the stations that have a machine standing.
     if (machineOn(p) && drawRun) drawRun(b.run, JOB_MACHINE[p.job]);
@@ -730,8 +747,8 @@ function button(ctx, b, kind, live) {
 // is up, the plate lifts up and left off a hard shadow left where it stood,
 // its edge easing in over the tile's own SHELF_HOVER_MS, and drifts on the
 // tile's own loop (bars.js); pressed, it sinks halfway back.
-const lifting = new Map();       // the post's key -> { to, from, at }, the lift easing toward `to`
-let pressedShop = null;          // page: the post whose button the pointer went down on, until it comes up
+const lifting = new Map();       // the board's key -> { to, from, at }, the lift easing toward `to`
+let pressedShop = null;          // page: the board whose button the pointer went down on, until it comes up
 // The pointer came up, wherever it was (input.js `endDrag`, and a blur).
 export const rosterUp = () => { pressedShop = null; };
 const boardUp = key => !!S[station(key)?.board];
@@ -743,11 +760,11 @@ function lifted(key, to) {
   if (r.to !== to) { r.from = at; r.to = to; r.at = t0; }
   return reducedMotion() ? r.to : at;
 }
-function shopButton(ctx, b, p) {
+function shopButton(ctx, b, key) {
   const over = !!S.mouse && inside(hit(b), S.mouse.x, S.mouse.y);
-  const t = lifted(p.key, over && pressedShop === p.key ? SHOP_BTN_PRESSED : over || boardUp(p.board) ? 1 : 0);
+  const t = lifted(key, over && pressedShop === key ? SHOP_BTN_PRESSED : over || boardUp(key) ? 1 : 0);
   const paper = GREY[0], ink = GREY[GREY.length - 1];
-  const [dx, dy] = reducedMotion() ? [0, 0] : drift(`upgrades${p.key}`);
+  const [dx, dy] = reducedMotion() ? [0, 0] : drift(`upgrades${key}`);
   const x = b.x + (dx - SHOP_BTN_LIFT) * t, y = b.y + (dy - SHOP_BTN_LIFT) * t;
   if (t > 0) {
     ctx.fillStyle = ink; ctx.fillRect(b.x, b.y, b.w, b.h);

@@ -16,6 +16,7 @@ import { openBoard } from '../board.js';
 import { stationBox } from '../after/place.js';
 import { plotOf } from '../after/piles.js';
 import { toScreen } from '../world.js';
+import { shopBoxOf } from '../roster.js';
 
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 async function upThere() {
@@ -115,10 +116,10 @@ export const TESTS = [
     ];
   }],
   // The station is its own shop (DESIGN.md, "Act 3's goods are blocks", rule 4).
-  // A station with no roster (the shack) opens on a click, not on the
-  // pointer passing over it: up here a board is asked for (the owner,
-  // 2026-10-28, when the rosters' UPGRADES buttons took the others).
-  ['act 3: a click on the shack\'s drawing opens its board, the cursor says so, and a pan off it closes it', async () => {
+  // Even the shack, with no roster under it, opens only from its UPGRADES
+  // button: up here a board is asked for, never come upon (the owner,
+  // 2026-10-28).
+  ['act 3: the shack opens neither on the pointer nor a click on it, its UPGRADES button opens its board, and a pan off it closes it', async () => {
     newRun();
     await settle();
     await upThere();
@@ -132,6 +133,12 @@ export const TESTS = [
     const hovered = openBoard(), cursor = canvas().style.cursor;
     point('pointerdown', r.left + s.x, r.top + s.y);
     point('pointerup', r.left + s.x, r.top + s.y);
+    await settle(0.3);
+    const clicked = openBoard();
+    const k = shopBoxOf('after-shack'), ks = toScreen(k.x + k.w / 2, k.y + k.h / 2);
+    point('pointermove', r.left + ks.x, r.top + ks.y, 0);
+    point('pointerdown', r.left + ks.x, r.top + ks.y);
+    point('pointerup', r.left + ks.x, r.top + ks.y);
     await until(() => openBoard() === 'after-shack');
     const open = openBoard();
     // The wheel pans the shack out of the window: its board goes, as the yard's do.
@@ -140,9 +147,9 @@ export const TESTS = [
     const gone = openBoard(), off = b.x + b.w < S.camX || b.x > S.camX + S.viewW;
     window.__actsOn(null);
     return [
-      ok(hovered === null, 'the pointer over the shack opens nothing by itself', String(hovered)),
-      ok(cursor === 'pointer', 'but the cursor over it is the pointing hand', cursor),
-      ok(open === 'after-shack', 'and a click on it opens its board', String(open)),
+      ok(hovered === null && clicked === null, 'the pointer over the shack and a click on it open nothing', JSON.stringify([hovered, clicked])),
+      ok(cursor !== 'pointer', 'and the cursor over it promises nothing', cursor),
+      ok(open === 'after-shack', 'its UPGRADES button opens its board', String(open)),
       ok(off && gone === null, 'panned off it, the board closes', `${off} ${gone}`)
     ];
   }],
