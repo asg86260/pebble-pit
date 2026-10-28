@@ -13,8 +13,8 @@ import { shopOf } from '../pages.js';
 import { support } from '../after/union.js';
 import { msg } from '../lang.js';
 import { openBoard } from '../board.js';
-import { stationBox } from '../after/place.js';
-import { plotOf } from '../after/piles.js';
+import { stationBox, floorAt } from '../after/place.js';
+import { plotOf, AFTER_PLOTS } from '../after/piles.js';
 import { toScreen } from '../world.js';
 
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -296,6 +296,63 @@ export const TESTS = [
       ok(took > 0 && kind === 'log' && off === took, 'a left press and hold on the pile takes logs into the hand and off the pile', `${took} held, ${off} off, ${kind}`),
       ok(empty && thrown === took, 'let go, every log leaves the hand', `${thrown} in the air`),
       ok(counts.mill > mill0 && counts.mill - mill0 + counts.lying === took, 'they fall onto the saw mill\'s pile, any it has no room for on the floor', JSON.stringify(counts))
+    ];
+  }],
+  // A thrown log is the hand's again, as thrown dust is: a press on it in
+  // the air catches it, and one let go onto open floor is picked up by a
+  // press on it where it lies. The press is the page's own pointerdown, so
+  // the gate that decides a press up there is the hand's is the one checked.
+  ['act 3: a log thrown up is caught by a press on it in the air, and one let go on the floor picked up again', async () => {
+    newRun();
+    await settle();
+    await upThere();
+    S.carryLevel = 2;
+    window.__afterGrant({ grovelogs: 6 });
+    await settle(0.3);
+    const from = window.__afterPile('forestry', 'grovelogs');
+    window.__look(from.x - S.viewW / 2);
+    await settle(0.3);
+    const r = canvas().getBoundingClientRect();
+    const at = p => { const s = toScreen(p.x, p.y); return [r.left + s.x, r.top + s.y]; };
+    const frame = async () => { window.__fast(1 / 60); await raf(); };
+    const flying = () => S.chips.filter(c => c.place === 'after' && c.kind === 'log');
+    point('pointermove', ...at(from), 0);
+    await raf();
+    point('pointerdown', ...at(from), 1, 0);
+    await raf();
+    const took = S.held;
+    // the flick: up and to the right, a frame a step, let go on the move
+    let p = from;
+    for (let k = 1; k <= 3; k++) { p = { x: p.x + 18, y: p.y - 26 }; point('pointermove', ...at(p), 1, -1); await frame(); }
+    point('pointerup', ...at(p), 0, 0);
+    const thrown = flying().length;
+    for (let f = 0; f < 5; f++) await frame();
+    const c0 = flying()[0];
+    if (c0) { point('pointermove', ...at(c0), 0); point('pointerdown', ...at(c0), 1, 0); }
+    for (let f = 0; f < 40 && flying().length; f++) { const c = flying()[0]; point('pointermove', ...at(c), 1, -1); await frame(); }
+    const caught = S.held === 1 && S.motes[0]?.kind === 'log' && !flying().length;
+    // carried off to open floor, held still, let go: it comes down there
+    const clear = x => [-24, 0, 24].every(k => !AFTER_PLOTS.at(x + k, floorAt(x) - P * 2, P * 6));
+    let x = from.x - P * 20;
+    while (x > from.x - P * 200 && !clear(x)) x -= P * 2;
+    const spot = { x, y: floorAt(x) - P * 6 };
+    for (let k = 0; k < 12; k++) { point('pointermove', ...at(spot), 1, -1); await frame(); }
+    point('pointerup', ...at(spot), 0, 0);
+    const laid = () => S.after.groundLogs.filter(q => q.kind === 'log' && q.fall != null);
+    for (let f = 0; f < 120 && !laid().length; f++) await frame();
+    const q = laid()[0];
+    const lay = q ? { x: q.x + P * 2, y: floorAt(q.x + P) - P * 2 } : spot;
+    point('pointermove', ...at(lay), 0);
+    point('pointerdown', ...at(lay), 1, 0);
+    await raf();
+    const repicked = S.held === 1 && S.motes[0]?.kind === 'log' && !laid().length;
+    point('pointerup', ...at(from), 0, 0);
+    S.carryLevel = 0;
+    window.__actsOn(null);
+    return [
+      ok(took === 1 && thrown === 1, 'the log is taken off the pile and thrown', `${took} held, ${thrown} in the air`),
+      ok(caught, 'a press on it in the air catches it back into the hand', `${S.held} held`),
+      ok(!!q && repicked, 'let go on open floor, a press on it where it lies picks it up again', JSON.stringify({ lying: !!q, repicked }))
     ];
   }]
 ];

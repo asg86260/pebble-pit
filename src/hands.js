@@ -67,19 +67,20 @@ const inReach = (ch, mx, my) => {
   const off = ch.kind ? 0 : P / 2;
   return Math.abs(ch.x + off - mx) <= REACH && Math.abs(ch.y + off - my) <= REACH;
 };
-// Whether a press here has anything to catch in the air, at the reach
-// `catchAir` catches at: something thrown and not yet down, or a scale
-// sinking free in the deep.
+// Whether a press here has a place's goods to catch in the air, at the
+// reach `catchAir` catches at. Only a place's: in the yard a mouse press
+// anywhere is the hand's already, and a finger near the yard's own traffic
+// (a hauler's toss, a stream over the hole) is still the platform's scroll.
 function airUnder(mx, my) {
-  for (const ch of S.chips) if (!ch.auto && inReach(ch, mx, my)) return true;
-  for (const g of S.sinking) if (g.arc == null && Math.abs(g.x - mx) <= REACH && Math.abs(g.y - my) <= REACH) return true;
+  for (const ch of S.chips) if (ch.place && !ch.auto && inReach(ch, mx, my)) return true;
   return false;
 }
 // Whether a press here is the hand's: dust (or a place's goods) to sweep
-// under it, or a throw to catch on the way past. Asked by every press that
-// is not the hand's everywhere it lands (input.js: a finger anywhere, a
-// press in an act's place): a gate that asked only for dust on the ground
-// let a thrown block fall through a press on it to whatever stood behind.
+// under it, or a place's goods thrown to catch on the way past. Asked by
+// every press that is not the hand's wherever it lands (input.js: a finger
+// anywhere, a press in an act's place): a gate that asked only for what
+// lies on the ground let a press on a thrown block fall through to whatever
+// stood behind it.
 export const handTakes = (mx, my, radius = BRUSH) => dustUnder(mx, my, radius) || airUnder(mx, my);
 
 // pixels still in flight are caught if they pass the cursor while it is held
