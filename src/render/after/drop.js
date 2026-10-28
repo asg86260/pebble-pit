@@ -18,6 +18,7 @@ import { topRow, bottomY } from '../../grid.js';
 import { clamp01 } from './kit.js';
 import { ctx } from '../ctx.js';
 import { goodBlock } from './piles.js';
+import { seedOf } from './piles.js'; // MOCK
 
 export function drawSawDrops() {
   const a = S.after;
@@ -34,7 +35,7 @@ export function drawSawDrops() {
     const x = x0 + (x1 - x0) * slide, y = y0 + (y1 - z - y0) * fall * fall;
     const was = ctx.globalAlpha;
     ctx.globalAlpha = was * Math.min(clamp01(k / 0.15), clamp01((1 - k) / 0.3));
-    goodBlock(x, y, 'plank');
+    goodBlock(x, y, 'plank', seedOf(Math.round(t * 60))); // MOCK: seed
     ctx.globalAlpha = was;
   }
 }

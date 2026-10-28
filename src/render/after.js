@@ -36,7 +36,7 @@ import { drawGrove, drawLaidGoods } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, blockPile, goodBlock, buildPile, BUILD_SLOTS, plankAt, blockAt, countOver } from './after/piles.js';
-import { goodsLook, MOCK_DUST } from './after/piles.js'; // MOCK
+import { goodsLook, MOCK_DUST, seedOf } from './after/piles.js'; // MOCK
 import { PILED } from '../after/piles.js';
 import { drawBody } from './crew.js';
 import { drawSawDrops } from './after/drop.js';
@@ -219,7 +219,7 @@ function signRack(d, x, st) {
   ctx.fillStyle = GREY[K]; ctx.fillRect(at.x - P, at.y - P, step * 3 + P, P);
   // MOCK: a sign as the 4x4 block it is to be, stood on the rack's rail
   const z = AFTER_BLOCK.sign * AP; // MOCK
-  if (goodsLook()) { for (let i = 0; i < n; i++) d.fade(pileAlpha(i, st), () => goodBlock(at.x + i * (z + AP), at.y - P - z, 'sign')); // MOCK
+  if (goodsLook()) { for (let i = 0; i < n; i++) d.fade(pileAlpha(i, st), () => goodBlock(at.x + i * (z + AP), at.y - P - z, 'sign', seedOf(0, i))); // MOCK
     countOver(at.x + (z + AP) * 1.5, at.y - P - z, st.n, st.key); return; } // MOCK
   for (let i = 0; i < n; i++) d.fade(pileAlpha(i, st), () => drawFistFlag(at.x + i * step, at.y - P, U));
   // The sign on the bench, lettered in the next slot a row of the fist a
@@ -279,17 +279,17 @@ function carried(x, y, s) {
 // A load of `n` of a good stacked the yard's way (render/crew.js), a thing a
 // row, as many rows as it carries, up to AFTER_CARRY_SHOWN: over a head whose
 // top left is (x, y).
-function drawLoad(x, y, kind, n) {
+function drawLoad(x, y, kind, n, id = 0) { // MOCK: id
   n = Math.min(AFTER_CARRY_SHOWN, n);
   // Logs and timber as the blocks they lie on their piles as
   // (render/after/piles.js, `goodBlock`), stacked a block on a block over the
   // body's middle column.
   if (kind === 'log' || kind === 'plank') {
     const z = AFTER_BLOCK[kind] * AP, lx = x + 1.5 * P - z / 2;
-    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind);
+    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, seedOf(id, k)); // MOCK: seed
   } else if (kind === 'sign' && goodsLook()) { // MOCK
     const z = AFTER_BLOCK.sign * AP, lx = x + 1.5 * P - z / 2; // MOCK
-    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind); // MOCK
+    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, seedOf(id, k)); // MOCK
   } else if (kind === 'sign') {
     // The one in front held up on its post; the rest boards on the shoulder.
     drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
@@ -309,14 +309,14 @@ function drawHandGoods() {
     for (const m of S.motes) {
       if (m.place !== 'after' || !AFTER_BLOCK[m.kind]) continue;
       const z = AFTER_BLOCK[m.kind] * AP, at = motePos(m, t);
-      goodBlock(Math.round(at.x - z / 2), Math.round(at.y - z / 2), m.kind);
+      goodBlock(Math.round(at.x - z / 2), Math.round(at.y - z / 2), m.kind, m.s); // MOCK: m.s
     }
   }
   for (const ch of S.chips) {
     if (ch.place !== 'after' || !AFTER_BLOCK[ch.kind]) continue;
     const z = AFTER_BLOCK[ch.kind] * AP;
     if (!inView(ch.x - z, z * 2)) continue;
-    goodBlock(Math.round(ch.x - z / 2), Math.round(ch.y - z / 2), ch.kind);
+    goodBlock(Math.round(ch.x - z / 2), Math.round(ch.y - z / 2), ch.kind, ch.s); // MOCK: ch.s
   }
 }
 function drawMember(w) {
@@ -329,7 +329,7 @@ function drawMember(w) {
     const x = 0, y = 0;
     drawBody(x, y);
     ctx.fillStyle = GREY[K];
-    drawLoad(x, y, w.load, carryOf(w));
+    drawLoad(x, y, w.load, carryOf(w), w.id); // MOCK: w.id
     if (w.load === 'carry' || w.load === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
     else if (w.load === 'tip') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
     if (w.swing != null) {
