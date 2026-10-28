@@ -43,7 +43,7 @@ import { onDevice } from './wardrobe.js';
 import { siteOf } from '../after/build.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
 import { drawUnionCrowd } from './after/unioncrowd.js';
-import { drawRoster } from '../roster.js';
+import { drawRoster, drawShops } from '../roster.js';
 import { now as wallNow } from '../clock.js';
 import { motePos } from './cursor.js';
 
@@ -386,4 +386,5 @@ export function drawAfterCounts() {
 export function drawAfterRoster() {
   if (!A()) return;
   drawRoster(ctx, drawBody, () => {}, null, null);
+  drawShops(ctx);
 }

@@ -127,9 +127,8 @@ canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(
 // thing to press there: a board opened under it would cover it and its bar.
 const overOrb = (x, y) => S.view === 'deep' && !!onOrb(x, y);
 // Up there a station's moving parts stand inside its ground, and are the hand
-// work's: a station with no roster opens its shop on the rest of it, never
-// on what a press would take hold of (DESIGN.md, "Act 3's goods are blocks",
-// rule 4).
+// work's: what a press would take hold of is never the station's, for its
+// hover label or its cursor (DESIGN.md, "Act 3's goods are blocks", rule 4).
 const overWork = (x, y) => S.view === 'after' && gestureUnder(x, y);
 // The station whose board the pointer asks for: the hover, the click and the
 // tap all ask this one.
@@ -137,11 +136,9 @@ const boardAt = (x, y) => (overOrb(x, y) || overWork(x, y) ? null : stationAt(x,
 // Standing at any station at all; the click and move handlers ask the same
 // table.
 const atStation = (x, y) => boardAt(x, y) !== null;
-// The board a click on a station opens: none where the board has an UPGRADES
-// button standing over its roster (act 3's stations), which is then the one
-// way in (the owner, 2026-10-28). A station with no roster under it (act 3's
-// shack, the pedestal, God's crowd, a station closed for its rebuild) has no
-// button, so its drawing stays the way in.
+// The board a click on a station opens: none where the board has its UPGRADES
+// button standing (every act 3 station's), which is then the one way in (the
+// owner, 2026-10-28: a board is asked for, never come upon).
 const clickBoard = (x, y) => { const k = boardAt(x, y); return k && !shopBoxOf(k) ? k : null; };
 // A press on a roster; on an UPGRADES button it opens that board or, up
 // already, puts it away.
@@ -224,10 +221,8 @@ canvas.addEventListener('pointerdown', e => {
   if (isActView(S.view)) {
     // Up there a press on a station's moving part works it where it stands
     // (after/gestures.js) and is held until the release, wherever that is;
-    // a station's shop opens from the UPGRADES button over its roster, and
-    // only a station with no roster opens on a plain click. A finger opens
-    // such a board at its tap's release (`endDrag`), since a press may be
-    // the start of a swipe. Anything else is the place's click.
+    // a station's shop opens from the UPGRADES button under it, and a plain
+    // click on the station opens nothing. Anything else is the place's click.
     // The rosters under the stations first: the yard's own (roster.js), a
     // press on a button never a swing at what stands behind it.
     if (rosterPress(p.x, p.y)) return;

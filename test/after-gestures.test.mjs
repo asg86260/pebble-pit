@@ -224,12 +224,11 @@ group('a stump: its shovel shows; dragged up and held, a root gives at a time un
 }, NO_RELOAD);
 
 // The station is its own shop (DESIGN.md, "Act 3's goods are blocks", rule
-// 4): a station with a roster opens from the UPGRADES button over it (the
-// owner, 2026-10-28), one with none -- the shack, the pedestal -- from a
-// click anywhere on it but its working parts.
+// 4), opened from the UPGRADES button under it and from nothing else (the
+// owner, 2026-10-28): a click anywhere on a station, God's camp too, opens
+// nothing.
 const CARDS = { mill: 'mill', workshop: 'workshop', shack: 'shack', pedestal: 'pedestal', forestry: 'grove' };
-const BUTTONED = ['mill', 'workshop', 'forestry'];
-group('a plain click on a station with no roster opens its board, on one with its UPGRADES button none, on a part none; a click on open floor asks for nothing', async () => {
+group('a plain click on a station or on God\'s camp opens no board, on a part none; a click on open floor asks for nothing', async () => {
   up(['mill', 'workshop'], { logs: 4, timber: 20 });
   const drawings = {};
   for (const k of Object.keys(CARDS)) drawings[k] = frameAsks(k);
@@ -237,15 +236,15 @@ group('a plain click on a station with no roster opens its board, on one with it
   const w = partsOf('mill').wheel, nail = mid(partsOf('workshop').nails[0]);
   const parts = { wheel: asks({ x: w.x + w.r, y: w.y }), nail: asks(nail) };
   // God's camp where it is drawn, far back on the cloud: a click on him.
-  const crowd = asks({ x: godMid(S.camX + S.viewW / 2), y: faceY() });
+  const god = { x: godMid(S.camX + S.viewW / 2), y: faceY() }, crowd = [asks(god), opens(god)];
   const b = stationBox('workshop'), floor = { x: b.x + b.w + P * 8, y: b.y + b.h - P };
   const floorTook = click(floor), after = asks(floor);
   window.__actsOn(null);
   return [
-    ok(Object.entries(CARDS).every(([k, c]) => drawings[k].spots > 0 && JSON.stringify(drawings[k].asks) === JSON.stringify([BUTTONED.includes(k) ? null : `after-${c}`])),
-       'the shack\'s and the pedestal\'s boards by a click anywhere on their drawings off their parts; a station with its button opens none', JSON.stringify(drawings)),
+    ok(Object.keys(CARDS).every(k => drawings[k].spots > 0 && JSON.stringify(drawings[k].asks) === '[null]'),
+       'a click anywhere on a station\'s drawing off its parts opens no board', JSON.stringify(drawings)),
     ok(parts.wheel == null && parts.nail == null, 'and none by a click on a working part', JSON.stringify(parts)),
-    ok(crowd === 'after-crowd', 'a click on the crowd of God asks for its status board', JSON.stringify(crowd)),
+    ok(crowd[0] === 'after-crowd' && crowd[1] === null, 'a click on the crowd of God lands on his camp and opens nothing', JSON.stringify(crowd)),
     ok(!floorTook && after === null, 'the open floor asks for none, and the click is still the place\'s', `${floorTook}`)
   ];
 }, NO_RELOAD);
@@ -339,34 +338,46 @@ group('hovered, a part brings its ghost hand back; taken hold of, the hand goes;
   ];
 }, NO_RELOAD);
 
-// Every roster up here carries its station's UPGRADES button, pressed the way
-// a click presses it (roster.js `rosterHit`, the call input.js makes), and
-// standing clear of every station and every other button. A station not yet
-// standing has no roster, so no button: its drawing opens its board, which
-// is where it is built.
+// Every station up here with a board carries its UPGRADES button, God's crowd
+// and a station not yet built (its board is where it is built) too, pressed
+// the way a click presses it (roster.js `rosterHit`, the call input.js
+// makes). Each stands at the one spot its station gives it, under the
+// station: centered on it, and where a roster stands, over its count.
 const meets = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-group('each standing station\'s UPGRADES button asks for its own board and stands clear of every station; a station not built opens from its drawing', async () => {
+const BOARDS = ['after-grove', 'after-mill', 'after-workshop', 'after-shack', 'after-pedestal', 'after-crowd'];
+const GROUND = { 'after-grove': 'forestry', 'after-mill': 'mill', 'after-workshop': 'workshop', 'after-shack': 'shack', 'after-pedestal': 'pedestal' };
+group('every station\'s UPGRADES button asks for its own board, centered under its station and over its roster; a station not built has one too', async () => {
   up(['mill', 'workshop'], { logs: 4, timber: 20 });
-  const keys = BUTTONED.map(k => `after-${CARDS[k]}`);
-  const pressed = Object.fromEntries(keys.map(k => [k, pressShop(k)]));
-  const boxes = keys.map(shopBoxOf);
-  const grounds = Object.keys(CARDS).map(stationBox);
-  const clear = boxes.every((b, i) => b && grounds.every(g => !meets(b, g)) && boxes.every((o, j) => j === i || !meets(b, o)));
-  // Hung off its button, the board's anchor is the button's, so the board stands beside it.
-  const hung = keys.every((k, i) => { const a = station(k).boardAnchor(); return a && a.x <= boxes[i].x && a.x + a.w >= boxes[i].x + boxes[i].w; });
+  const pressed = Object.fromEntries(BOARDS.map(k => [k, pressShop(k)]));
+  const boxes = Object.fromEntries(BOARDS.map(k => [k, shopBoxOf(k)]));
+  // Under its station, centered on it to a cell.
+  const under = Object.entries(GROUND).every(([k, g]) => {
+    const s = stationBox(g), b = boxes[k];
+    return b && b.y >= s.y + s.h && Math.abs(b.x + b.w / 2 - (s.x + s.w / 2)) <= P;
+  });
+  // Over the count of the roster standing under it, and no two buttons touching.
+  const roster = window.__afterRoster(), over = ['sawyer', 'joiner', 'woodcutter'].every(job => {
+    const r = roster.find(q => q.job === job), k = { sawyer: 'after-mill', joiner: 'after-workshop', woodcutter: 'after-grove' }[job];
+    return r && boxes[k].y + boxes[k].h < Math.min(r.less[1], r.more[1]) && boxes[k].x < r.more[0] && boxes[k].x + boxes[k].w > r.less[0];
+  });
+  const apart = BOARDS.every(a => BOARDS.every(b => a === b || !meets(boxes[a], boxes[b])));
+  // Hung off its button, the board's anchor is the button's.
+  const hung = BOARDS.every(k => { const a = station(k).boardAnchor(); return !!a && !!a.keep && a.x <= boxes[k].x && a.x + a.w >= boxes[k].x + boxes[k].w; });
   // Off the button, a cell past its hit margin, the press is nobody's button.
-  const b = boxes[0], beside = rosterHitAt(b.x + b.w / 2, b.y - P * 4);
-  // The workshop taken down: no roster, no button, and its drawing is its board again.
+  const b = boxes['after-mill'], beside = rosterHitAt(b.x + b.w / 2, b.y - P * 4);
+  // The workshop taken down: no roster, still its button, and its drawing opens nothing.
   S.after.built = S.after.built.filter(k => k !== 'workshop');
   run(0.5);
-  const gone = shopBoxOf('after-workshop'), down = frameAsks('workshop');
+  const down = { button: pressShop('after-workshop'), drawing: frameAsks('workshop').asks };
   window.__actsOn(null);
   return [
-    ok(keys.every(k => pressed[k] === k), 'each button asks for its own station\'s board', JSON.stringify(pressed)),
-    ok(clear, 'each stands clear of every station and every other button', JSON.stringify(boxes)),
+    ok(BOARDS.every(k => pressed[k] === k), 'each button asks for its own station\'s board', JSON.stringify(pressed)),
+    ok(under, 'each stands under its station, centered on it', JSON.stringify(boxes)),
+    ok(over, 'where a roster stands, the button is over its count', JSON.stringify(roster.map(r => [r.job, r.less, r.more]))),
+    ok(apart, 'no two buttons touch', JSON.stringify(boxes)),
     ok(hung, 'and each board hangs off its button', ''),
     ok(beside === false, 'a press off the button is no press on it', String(beside)),
-    ok(gone === null && JSON.stringify(down.asks) === '["after-workshop"]', 'a station not standing has no button, and a click on it opens its board', JSON.stringify([gone, down]))
+    ok(down.button === 'after-workshop' && JSON.stringify(down.drawing) === '[null]', 'a station not standing keeps its button for its rebuild, and a click on it opens nothing', JSON.stringify(down))
   ];
 }, NO_RELOAD);
 const rosterHitAt = (x, y) => { const r = rosterHit(x, y); rosterUp(); return r; };

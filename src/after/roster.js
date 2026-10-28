@@ -7,9 +7,9 @@
 //
 // A station's one job stands under it, the woodcutter's under the forestry
 // shack in front of its trees, and says what it does with the cursor on it,
-// or why it is standing still. Each names its station's board, so the
-// roster stands the board's UPGRADES button over its count: up here that
-// button is the one way into a station's shop (the owner, 2026-10-28).
+// or why it is standing still. It stands on the line its station's UPGRADES
+// button is placed from (after/stations.js `line`), so the button is over
+// its count.
 
 import { S } from '../state.js';
 import { AFTER_JOBS, AFTER_JOB_POST, AFTER_ROSTER_DOWN, AFTER_ROSTER_SHOP_DROP, AFTER_SIGN_TIMBER } from '../config.js';
@@ -56,7 +56,7 @@ export const jobSays = job => { const k = STALL[job](); return msg('after-roster
 const POSTS = AFTER_JOBS.map(job => {
   const card = AFTER_JOB_POST[job], key = stationOf(card);
   return {
-    key: `after-${job}`, job, place: 'after', group: `after-${key}`, board: `after-${card}`, kit: false, fixed: false, src: SRC,
+    key: `after-${job}`, job, place: 'after', group: `after-${key}`, kit: false, fixed: false, src: SRC,
     show: () => live() && built(card) && !closed(card),
     at: () => { const b = stationBox(key); return b.x + b.w / 2; },
     y: () => groundOf(key) + AFTER_ROSTER_DOWN + AFTER_ROSTER_SHOP_DROP,

@@ -5,25 +5,24 @@
 // serve the yard's. `place: 'after'` keeps them to the afterlife's view.
 //
 // Every station is its own shop (DESIGN.md, "Act 3's goods are blocks",
-// rule 4): its board opens from the UPGRADES button over its roster
-// (roster.js), or, for a station with no roster, from a click on it anywhere
-// its hand work does not take (input.js asks the hand work first). The board
-// stands beside it (`boardAnchor`), off the button or on the ground its sign
-// stood on, so it never covers the parts the hand works. The grove's board is the forestry shack's; God's
-// crowd is asked over his camp on its stage (`hit`). Their boards' rows are
-// after/rows.js's (`registerBoard`).
+// rule 4): its board opens from the UPGRADES button under it (roster.js
+// `rosterShops`), and from nothing else, so no board comes up under a
+// passing pointer. The board hangs off the button (`boardAnchor`). The
+// grove's board is the forestry shack's; God's crowd's button stands under
+// his camp on its stage. Their boards' rows are after/rows.js's
+// (`registerBoard`).
 
 import { held } from '../reset.js';
 import { S } from '../state.js';
-import { P } from '../config.js';
+import { P, AFTER_ROSTER_DOWN, AFTER_ROSTER_SHOP_DROP } from '../config.js';
 import { msg } from '../lang.js';
 import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
-import { stationBox, signBoard, closed, pilePlace, pileOwner } from './place.js';
+import { stationBox, groundOf, afterFloor, closed, pilePlace, pileOwner } from './place.js';
 import { PILED, pileFull } from './piles.js';
 import { godCampAt, godMid, faceY } from './sky.js';
 import { heapFull, heapMarkBox, HEAP_PILE } from './mill.js';
-import { shopBoxOf } from '../roster.js';
+import { shopBoxOf, rosterShops } from '../roster.js';
 
 const live = () => afterlifeOn() && !!S.after;
 // A counted pile's name, and the box its mark hangs from: `pileMarkAt` hangs
@@ -85,20 +84,18 @@ const row = (card, more) => {
     // its hit box is its ground, never padded past it
     reach: { left: 0, right: 0, up: 0, down: 0 },
     stand: () => stationBox(ground(card)),
-    // beside it: over the station it would hide the parts the hand works.
-    // It runs away from the station on whichever side its spot stands (the
-    // pedestal's is on its left, every other's on its right).
-    // A station with its UPGRADES button standing hangs the board off the
-    // button instead, over the button's top, near enough to read as the
-    // button's; and it never covers the button, which puts it away again
-    // (`keep`: a window too short to stand it over the button sets it
-    // beside it, board.js). Run out past the station instead, it lands on
-    // the next station and its button in a camp this close-set.
+    // Where a roster under the station stands, so its UPGRADES button stands
+    // there whether or not one does (roster.js `rosterShops`): its middle,
+    // as far under its ground as the act's rosters stand.
+    line: () => { const s = stationBox(ground(card)); return s && { x: s.x + s.w / 2, y: groundOf(ground(card)) + AFTER_ROSTER_DOWN + AFTER_ROSTER_SHOP_DROP }; },
+    // Off the button that asked for it, over the button's top, near enough
+    // to read as the button's. Asked for by a press, it may stand over the
+    // station and its neighbors (the owner, 2026-10-28), but never over the
+    // button, which puts it away again (`keep`: a window too short to stand
+    // it over the button sets it beside it, board.js).
     boardAnchor: () => {
-      const k = shopBoxOf(key), s = stationBox(ground(card));
-      if (k) return { x: k.x - P * 4, y: k.y, w: k.w + P * 8, h: k.h, side: 'right', keep: k };
-      const a = signBoard(ground(card));
-      return a && s && { ...a, side: a.x + a.w / 2 >= s.x + s.w / 2 ? 'right' : 'left' };
+      const k = shopBoxOf(key);
+      return k && { x: k.x - P * 4, y: k.y, w: k.w + P * 8, h: k.h, side: 'right', keep: k };
     },
     ...more
   };
@@ -132,10 +129,17 @@ export const AFTER_STATION_ROWS = [
     pile: () => pileFull(what)
   })),
   row('crowd', {
-    boardAnchor: null,
     open: live,
+    // God's camp: his middle, sliding at his layer's rate, and the main
+    // plane's line, which his stage's front stands on
+    line: () => ({ x: godMid(mid()), y: afterFloor() + AFTER_ROSTER_DOWN + AFTER_ROSTER_SHOP_DROP }),
     stand: () => (crowdAt ? { x: crowdAt.x - P, y: crowdAt.y - P, w: P * 2, h: P * 2 }
                           : { x: godMid(mid()) - P, y: faceY() - P, w: P * 2, h: P * 2 }),
     hit: (x, y) => godCampAt(x, y, mid())
   })
 ];
+// Every station with a board hands its button to the roster, shown while the
+// station's board can be asked for (a station closed for its rebuild too).
+const SHOP_ROWS = AFTER_STATION_ROWS.filter(r => r.board && r.line)
+  .map(r => ({ board: r.key, place: 'after', show: () => r.open(), line: r.line }));
+rosterShops('after', () => SHOP_ROWS);
