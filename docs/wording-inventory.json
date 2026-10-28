@@ -5840,7 +5840,7 @@
  {
   "id": "hover-pile-signs",
   "group": "Hover",
-  "where": "src/input.js",
+  "where": "src/after/stations.js",
   "context": "the hover over a counted pile in act 3 (the workshop's signs)",
   "text": "sign pile"
  },

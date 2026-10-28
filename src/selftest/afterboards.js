@@ -77,6 +77,9 @@ export const TESTS = [
         window.__afterGrant({ timber: AFTER_PILES.timber.brim });
         await settle(0.05);
         b.click();
+        // A row billed in timber is an order: it lands once members have
+        // carried its blocks to its station (after/build.js).
+        for (let k = 0; k < 240 && S.after.orders.length; k++) window.__fast(1);
         await until(() => bought(key, was));
         if (!bought(key, was)) missed.push(key);
       }
