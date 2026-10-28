@@ -78,10 +78,13 @@ export function heapPlot() {
   // it, settled at once: nothing of the machine's own moves it so.
   const want = Math.min(Math.max(0, Math.floor(+a.stock.sawdust || 0)), b.cols * b.rows);
   let have = count(b);
-  while (have < want && addGrain(b, wx(F.bx) + AP / 2, undefined, 1, true)) { have++; while (settleSome(b, b.cols * b.rows)) { /* to rest */ } }
+  while (have < want && addGrain(b, wx(F.bx) + AP / 2, undefined, grainTone(b), true)) { have++; while (settleSome(b, b.cols * b.rows)) { /* to rest */ } }
   while (have > want && takeTop(b)) have--;
   return b;
 }
+// A grain's value names it, a byte's worth (the grid's cells): the drawing
+// picks its tone off it (render/after/stations.js), so it keeps it as it rolls.
+const grainTone = b => 1 + ((b.seq = (b.seq || 0) + 1) % 255);
 function takeTop(b) {
   let col = -1, hi = -1;
   for (let c = 0; c < b.cols; c++) { const r = topRow(b, c); if (r > hi) { hi = r; col = c; } }
@@ -373,7 +376,7 @@ function stepOut(s, dt) {
     const g = s.dust[i];
     g.a += dt;
     if (!grainAt(g.a).down) continue;
-    addGrain(b, wx(F.bx) + AP / 2, undefined, 1, true);
+    addGrain(b, wx(F.bx) + AP / 2, undefined, grainTone(b), true);
     S.after.stock.sawdust += 1;
     s.dust.splice(i--, 1);
   }
