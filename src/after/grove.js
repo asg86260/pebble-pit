@@ -113,7 +113,7 @@ const hsh = n => { let h = Math.imul(n ^ 0x9e3779b9, 2654435761); h ^= h >>> 15;
 // and sets off rolling there at `at`, the drawing's (render/after/piles.js).
 function dropLogs(i, n, at) {
   const [a, b] = AFTER_LOG_SPAN, mid = plotX(i) + ((a + b) / 2 + KINDS.log.size / 2) * AP;
-  for (const ai of heapAt(cellOf('log'), mid, n)) {
+  for (const ai of heapAt(() => cellOf('log'), mid, n)) {
     if (ai < 0) continue;
     source('log', 1, 'tree');
     const roll = (AFTER_LOG_ROLL[0] + (AFTER_LOG_ROLL[1] - AFTER_LOG_ROLL[0]) * hsh(nextId())) * AP;
@@ -138,8 +138,8 @@ const under = (q, x, y, pad) => x >= q.x - pad && x <= q.x + q.w + pad && y >= q
 // falls from under the yard's gravity, down onto whatever stands under it on
 // the ground, where it lies until a gatherer takes it up. Its fall is drawn
 // from y to where it came to rest (ground.js, `fallTag`).
-export function layGood(kind, x, y) {
-  const ai = putSomewhere(cellOf(kind), x + KINDS[kind].size * AP / 2);
+export function layGood(kind, x, y, v) {
+  const ai = putSomewhere(v || cellOf(kind), x + KINDS[kind].size * AP / 2);
   fallTag(ai, y);
 }
 // One frame of the grove: the trees growing, and those coming down landing.
