@@ -12,7 +12,7 @@ import { plotOf } from '../../after/piles.js';
 import { AP } from '../../after/place.js';
 import { K, W, PALE, MID, DUST, hash, pileAlpha, pileState, countAt, pendingCounts } from './kit.js';
 import { shown } from '../../tween.js';
-import { themed } from '../../ink.js'; // MOCK
+import { themed } from '../../ink.js'; // MOCK after-goods
 
 // A pile's count, standing on the pile: its plate's foot AFTER_COUNT_LIFT
 // over the pile's top `top` (world px), across from `x`. Through the shared
@@ -43,7 +43,7 @@ function count(d, n, cx, top, key) { const at = d.world(cx, top); countOver(at.x
 // between two in the rack.
 export const BLOCK_TONES = { log: { tone: MID, seam: K }, plank: { tone: PALE, seam: MID }, sign: { tone: K, seam: W } };
 export function goodBlock(x, y, kind, seed = 1) {
-  if (goodsLook()) { mockBlock(x, y, kind, seed); return; } // MOCK
+  if (goodsLook()) { mockBlock(x, y, kind, seed); return; } // MOCK after-goods
   const t = BLOCK_TONES[kind], z = AFTER_BLOCK[kind] * AP;
   ctx.fillStyle = GREY[t.seam]; ctx.fillRect(x, y, z, z);
   ctx.fillStyle = GREY[t.tone]; ctx.fillRect(x, y, z - 1, z - 1);
@@ -52,84 +52,107 @@ export function goodBlock(x, y, kind, seed = 1) {
 // the sand rules have it. No count: the pile is the count.
 export function blockPile(what) {
   const b = plotOf(what), kind = AFTER_PILES[what].good, foot = bottomY(b);
-  for (let c = 0; c < b.cols; c++) for (let r = 0; r < b.rows; r++) if (at(b, c, r)) goodBlock(b.x + c * b.p, foot - (r + 1) * b.p, kind,
-    at(b, c, r)); // MOCK  the block's own shade, which it carries as act 1's grain does
+  if (goodsLook()) { mockPile(b, kind, foot); return; } // MOCK after-goods
+  for (let c = 0; c < b.cols; c++) for (let r = 0; r < b.rows; r++) if (at(b, c, r)) goodBlock(b.x + c * b.p, foot - (r + 1) * b.p, kind);
 }
 
-// --- MOCK: what the goods look like (mock-goods-look2, never merged) --------
-// The owner, 2026-10-27: "lets add some variety to each resource instead of a
-// border. similar to act 1". No seam: each block is mottled cell by cell as
+// --- MOCK after-goods: what the goods look like (mock-goods-look3, never merged)
+// Round 2 (the owner: "lets add some variety to each resource instead of a
+// border. similar to act 1"): no seam, each block mottled cell by cell as
 // act 1's dust is. Act 1's mechanism, reused: a grain carries its shade in
 // its cell (grid.js; picked by `shadeNear` as it is made) and keeps it
-// through every slump, sweep, throw and landing. Here a block carries its
-// shade (1..6) the same way (after/piles.js `setBlock`, the hand's motes and
-// chips `s`), and its cells pick their tones off it with act 3's own per-cell
-// hash (kit.js `hash`, as the sawdust heap and the soil pick theirs). Seeded
-// off the block, never its place, so it keeps its pattern as it moves.
+// through every slump, sweep, throw and landing; a block carries its shade
+// (1..6) the same way (after/piles.js `setBlock`, the hand's motes and chips
+// `s`), and its cells pick their tones off it with act 3's per-cell hash
+// (kit.js `hash`, as the sawdust heap and the soil pick theirs).
+// Round 3 (the owner: "lets go even more subtle, right now its hard to tell
+// how many are in the pile ... i want to be able to distinguish the
+// individual resources"): quieter cells, and each block told from the next
+// by itself, never by a seam drawn between two -- its base tone differing
+// from every block it touches (d), a one-cell band of its own cells along its
+// top and left a step lighter (e), or both, quieter still (f).
 // `globalThis.__goodsLook` picks the option; unset, the real drawing above.
-export const goodsLook = () => globalThis.__goodsLook || null; // MOCK
-// Each good's own palette, rungs of GREY light to dark. The act's four are // MOCK
-// 0 paper, 3 pale, 6 mid, 10 ink; the rest are added, each with one role: // MOCK
-// 2 sawdust's light grain, 4 timber's shade, 5 timber's dark grain, 7 the // MOCK
-// log's shade, 8 the log's bark, 9 the sign's board; 1 (b only) sawdust's // MOCK
-// palest grain. A sign is the dark good, as the flag it becomes is ink. // MOCK
-const PAL = { // MOCK
-  a: { log: [6, 7, 8], plank: [3, 4, 5], sign: [9, 10] }, // MOCK
-  b: { log: [6, 7, 8], plank: [3, 4, 5], sign: [8, 9, 10] }, // MOCK
-  c: { log: [6, 7, 8], plank: [3, 4, 5], sign: [9, 10] } // MOCK
-}; // MOCK
-const KIND_SEED = { log: 11.3, plank: 23.9, sign: 37.1 }; // MOCK
-let into = null; // MOCK  the block's own sheet while it is painted
-const cell = (x, y, i, j, g) => { into.fillStyle = GREY[g]; into.fillRect(x + i * AP, y + j * AP, AP, AP); }; // MOCK
-// A block is painted once on its own sheet, a pixel a world px, and laid at // MOCK
-// its true position whole (CLAUDE.md, "Art on the grid, motion smooth"): // MOCK
-// cells laid one by one at a carried block's fractional x leave a // MOCK
-// hairline between each. Dropped when the page turns (ink.js, `themed`). // MOCK
-const SHEETS = themed(new Map()); // MOCK
-function mockBlock(x, y, kind, seed) { // MOCK
-  const s = Math.max(1, Math.min(6, Math.round(seed) || 1)), key = `${goodsLook()}|${kind}|${s}`; // MOCK
-  let sheet = SHEETS.get(key); // MOCK
-  if (!sheet) { // MOCK
-    const z = AFTER_BLOCK[kind] * AP; // MOCK
-    sheet = document.createElement('canvas'); sheet.width = sheet.height = z; // MOCK
-    into = sheet.getContext('2d'); paintBlock(0, 0, kind, s); into = null; // MOCK
-    SHEETS.set(key, sheet); // MOCK
-  } // MOCK
-  const was = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; // MOCK
-  ctx.drawImage(sheet, x, y); ctx.imageSmoothingEnabled = was; // MOCK
-} // MOCK
-function paintBlock(x, y, kind, s) { // MOCK
-  const L = goodsLook(), pal = PAL[L][kind], n = AFTER_BLOCK[kind], last = pal.length - 1; // MOCK
-  // the block's own base, its shade read along its good's palette: two // MOCK
-  // blocks side by side mostly differ in tone, and that is their edge // MOCK
-  const base = Math.round((s - 1) / 5 * last); // MOCK
-  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { // MOCK
-    const h = hash(s * 7.31 + KIND_SEED[kind] + i * 13.1 + j * 7.7); // MOCK
-    let k = base; // MOCK
-    if (L === 'b') { // MOCK
-      // strong: a cell in two a step off, and the block leaning a step // MOCK
-      // darker toward its bottom right // MOCK
-      k += h < 0.25 ? -1 : h > 0.75 ? 1 : 0; // MOCK
-      if (i + j >= n) k += hash(s * 3.7 + i * 5.3 + j * 9.1) < 0.6 ? 1 : 0; // MOCK
-    } else k += h < 0.12 ? -1 : h > 0.88 ? 1 : 0; // MOCK  subtle: a cell in four off
-    cell(x, y, i, j, pal[Math.max(0, Math.min(last, k))]); // MOCK
-  } // MOCK
-  if (L !== 'c') return; // MOCK
-  // c: the mottle and a mark of what the good is, a step off the block's // MOCK
-  // base: a log's end-grain, timber's grain along its top row, a sign's // MOCK
-  // lettering in ink // MOCK
-  const off = base > 0 ? pal[base - 1] : pal[Math.min(last, base + 1)]; // MOCK
-  if (kind === 'log') { cell(x, y, 1, 1, off); cell(x, y, 2, 2, off); } // MOCK
-  else if (kind === 'plank') { cell(x, y, 0, 0, off); cell(x, y, 1, 0, off); } // MOCK
-  else { cell(x, y, 1, 1, W); cell(x, y, 2, 1, W); cell(x, y, 1, 2, W); } // MOCK  paper lettering on the dark board
-} // MOCK
-// Each option's sawdust: the heap's grain tones, a cell each (kit.js DUST is // MOCK
-// pale flecked mid); here lighter than timber, 2 flecked pale and 4, and // MOCK
-// b's speckled wider, down to 1. // MOCK
-export const MOCK_DUST = { a: [2, PALE, 2, 2, 4], b: [1, 2, PALE, 2, 4, 1], c: [2, PALE, 2, 2, 4] }; // MOCK
-// A block a body carries or lays has no cell to keep a shade in: seeded off // MOCK
-// what holds it (its id, its place in the load), so it holds while held. // MOCK
-export const seedOf = (id, k = 0) => 1 + ((((Number(id) || 0) * 3 + k * 5) % 6) + 6) % 6; // MOCK
+export const goodsLook = () => globalThis.__goodsLook || null; // MOCK after-goods
+// Each good's ladder, rungs of GREY light to dark; its base tones are all // MOCK after-goods
+// but the lightest, which only the lit band (e, f) and a cell off reach. The // MOCK after-goods
+// act's four are 0 paper, 3 pale, 6 mid, 10 ink; added, each with one role: // MOCK after-goods
+// 2 timber's lit band, 4 timber's second base, 5 timber's third base and the // MOCK after-goods
+// log's lit band, 7 the log's second base, 8 the log's third base and the // MOCK after-goods
+// sign's lit band, 9 the sign's board. // MOCK after-goods
+const LADDER_OF = { log: [5, 6, 7, 8], plank: [2, 3, 4, 5], sign: [8, 9, 10] }; // MOCK after-goods
+const BASES = kind => LADDER_OF[kind].length - 1; // MOCK after-goods  how many base tones (rungs 1..)
+// How each option paints a block: `off` the share of cells a step off the // MOCK after-goods
+// base (half lighter, half darker), `band` the lit top and left, `apart` // MOCK after-goods
+// whether a pile's blocks take base tones differing from their neighbors'. // MOCK after-goods
+const LOOK = { // MOCK after-goods
+  a: { off: 0.24, band: false, apart: false }, // MOCK after-goods-a  round 2's A, as it was
+  d: { off: 0.05, band: false, apart: true }, // MOCK after-goods-d
+  e: { off: 0.06, band: true, apart: false, same: true }, // MOCK after-goods-e  one base for every block: the band alone tells them
+  f: { off: 0.04, band: true, apart: true } // MOCK after-goods-f
+}; // MOCK after-goods
+const KIND_SEED = { log: 11.3, plank: 23.9, sign: 37.1 }; // MOCK after-goods
+// a block's base rung (1..BASES) off its own shade, when nothing asks // MOCK after-goods
+// otherwise: carried, thrown, laid, or an option that does not keep apart // MOCK after-goods
+const ownBase = (kind, s) => 1 + Math.round((s - 1) / 5 * (BASES(kind) - 1)); // MOCK after-goods
+const shadeOfSeed = seed => Math.max(1, Math.min(6, Math.round(seed) || 1)); // MOCK after-goods
+let into = null; // MOCK after-goods  the block's own sheet while it is painted
+const cell = (x, y, i, j, g) => { into.fillStyle = GREY[g]; into.fillRect(x + i * AP, y + j * AP, AP, AP); }; // MOCK after-goods
+// A block is painted once on its own sheet, a pixel a world px, and laid at // MOCK after-goods
+// its true position whole (CLAUDE.md, "Art on the grid, motion smooth"): // MOCK after-goods
+// cells laid one by one at a carried block's fractional x leave a hairline // MOCK after-goods
+// between each. Dropped when the page turns (ink.js, `themed`). // MOCK after-goods
+const SHEETS = themed(new Map()); // MOCK after-goods
+function mockBlock(x, y, kind, seed, base = null) { // MOCK after-goods
+  const s = shadeOfSeed(seed), bse = base ?? (LOOK[goodsLook()]?.same ? 2 : ownBase(kind, s)), key = `${goodsLook()}|${kind}|${s}|${bse}`; // MOCK after-goods
+  let sheet = SHEETS.get(key); // MOCK after-goods
+  if (!sheet) { // MOCK after-goods
+    const z = AFTER_BLOCK[kind] * AP; // MOCK after-goods
+    sheet = document.createElement('canvas'); sheet.width = sheet.height = z; // MOCK after-goods
+    into = sheet.getContext('2d'); paintBlock(kind, s, bse); into = null; // MOCK after-goods
+    SHEETS.set(key, sheet); // MOCK after-goods
+  } // MOCK after-goods
+  const was = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; // MOCK after-goods
+  ctx.drawImage(sheet, x, y); ctx.imageSmoothingEnabled = was; // MOCK after-goods
+} // MOCK after-goods
+function paintBlock(kind, s, base) { // MOCK after-goods
+  const L = LOOK[goodsLook()] || LOOK.a, lad = LADDER_OF[kind], n = AFTER_BLOCK[kind], last = lad.length - 1; // MOCK after-goods
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { // MOCK after-goods
+    const h = hash(s * 7.31 + KIND_SEED[kind] + i * 13.1 + j * 7.7); // MOCK after-goods
+    // a 2x2 has no cells to spare for scatter where a lit corner marks it // MOCK after-goods
+    const off = L.band && n === 2 ? 0 : L.off; // MOCK after-goods
+    let k = base + (h < off / 2 ? -1 : h > 1 - off / 2 ? 1 : 0); // MOCK after-goods
+    // the lit band, the block's own cells: its top row and left column, or // MOCK after-goods
+    // on a 2x2, its top left cell alone (three of four lit would be the block) // MOCK after-goods
+    if (L.band && (n === 2 ? i === 0 && j === 0 : i === 0 || j === 0)) k = base - 1; // MOCK after-goods
+    cell(0, 0, i, j, lad[Math.max(0, Math.min(last, k))]); // MOCK after-goods
+  } // MOCK after-goods
+} // MOCK after-goods
+// A pile with each block's base apart from every block it touches: the // MOCK after-goods
+// plot read from the bottom row up and left to right, each block taking // MOCK after-goods
+// its own base unless the block left of it or under it already has it, // MOCK after-goods
+// then the next rung that neither has. Every touching pair is one of those // MOCK after-goods
+// two, so none match; a block keeps its tone until a neighbor of it moves. // MOCK after-goods
+function mockPile(b, kind, foot) { // MOCK after-goods
+  const L = LOOK[goodsLook()] || LOOK.a, nb = BASES(kind), got = new Int8Array(b.cols * b.rows); // MOCK after-goods
+  for (let r = 0; r < b.rows; r++) for (let c = 0; c < b.cols; c++) { // MOCK after-goods
+    const v = at(b, c, r); // MOCK after-goods
+    if (!v) continue; // MOCK after-goods
+    let base = L.same ? 2 : ownBase(kind, shadeOfSeed(v)); // MOCK after-goods
+    if (L.apart) { // MOCK after-goods
+      const left = c > 0 ? got[r * b.cols + c - 1] : 0, under = r > 0 ? got[(r - 1) * b.cols + c] : 0; // MOCK after-goods
+      for (let t = 0; t < nb && (base === left || base === under); t++) base = base % nb + 1; // MOCK after-goods
+    } // MOCK after-goods
+    got[r * b.cols + c] = base; // MOCK after-goods
+    mockBlock(b.x + c * b.p, foot - (r + 1) * b.p, kind, v, base); // MOCK after-goods
+  } // MOCK after-goods
+} // MOCK after-goods
+// Each option's sawdust: the heap's grain tones, a cell each (kit.js DUST is // MOCK after-goods
+// pale flecked mid); here lighter than timber, 2 flecked pale and 4, and // MOCK after-goods
+// b's speckled wider, down to 1. // MOCK after-goods
+export const MOCK_DUST = { a: [2, PALE, 2, 2, 4], d: [2, PALE, 2, 2, 4], e: [2, PALE, 2, 2, 4], f: [2, PALE, 2, 2, 4] }; // MOCK after-goods
+// A block a body carries or lays has no cell to keep a shade in: seeded off // MOCK after-goods
+// what holds it (its id, its place in the load), so it holds while held. // MOCK after-goods
+export const seedOf = (id, k = 0) => 1 + ((((Number(id) || 0) * 3 + k * 5) % 6) + 6) % 6; // MOCK after-goods
 // A heap of grains, in the sawdust's tones a cell, growing as a triangle from
 // its middle column `cx`, `R` cells high at its brim. `st` counts cells.
 const HEAPS = {};

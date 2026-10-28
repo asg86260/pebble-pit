@@ -16,7 +16,7 @@
 import { S } from '../state.js';
 import { P, AFTER_PILES, AFTER_PILE_SETTLE_S, AFTER_LOG_TIMBER, AFTER_GOODS_FOOT, AFTER_LAY_GAP, AFTER_BLOCK } from '../config.js';
 import { addGrain, put, at, inside, topRow, bottomY, settle, settleSome, colOf } from '../grid.js';
-import { shadeNear } from '../grid.js'; // MOCK
+import { shadeNear } from '../grid.js'; // MOCK after-goods
 import { pilePlace, pileOwner, pileMid, pileAt, groundOf, floorAt, afterX0, afterX1, AP } from './place.js';
 import { layGood, lyingNear, takeGroundLog, kindOf } from './grove.js';
 import { bedLand } from './mill.js';
@@ -132,10 +132,10 @@ export function takeBlock(what, x = null) {
 // A block set down on pile `what` at world x (its middle column with no x):
 // it falls there and rolls where the sand rules take it. False with the pile
 // at its brim.
-export function setBlock(what, x = null, shade = shadeNear(3.5, 3)) { // MOCK: shade, the block's own, as act 1's grain carries
+export function setBlock(what, x = null, shade = shadeNear(3.5, 3)) { // MOCK after-goods -- shade, the block's own, as act 1's grain carries
   if (pileRoom(what) <= 0) return false;
   const b = plotOf(what);
-  if (!addGrain(b, x ?? dropX(b), undefined, shade, true)) return false; // MOCK: shade, was 1
+  if (!addGrain(b, x ?? dropX(b), undefined, shade, true)) return false; // MOCK after-goods -- shade, was 1
   S.after.stock[what] += 1; handed(what, 1);
   return true;
 }
@@ -216,7 +216,7 @@ export const AFTER_PLOTS = {
       if (AFTER_PILES[what].good !== ch.kind || pileRoom(what) <= 0 || !built(pileOwner(what))) continue;
       const b = plotOf(what), c = colOf(b, ch.x);
       if (c < 0 || c >= b.cols || foot < bottomY(b) - (topRow(b, c) + 1) * b.p) continue;
-      if (setBlock(what, ch.x, ch.s || undefined)) return true; // MOCK: ch.s, the block's shade kept through the throw
+      if (setBlock(what, ch.x, ch.s || undefined)) return true; // MOCK after-goods -- ch.s, the block's shade kept through the throw
     }
     // layGood takes a block's left edge and reads the floor a cell in from it
     const left = Math.round((ch.x - half) / P) * P, fl = floorAt(left + AP);
