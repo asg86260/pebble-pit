@@ -58,6 +58,7 @@ import { raw, darkPage, perPage, themeGen } from '../ink.js';
 import { afterX0, stationBox, unionJoinAt, afterFloor } from '../after/place.js';
 import { support, union, souls, OUT_RIM, speechTarget } from '../after/union.js';
 import { signReach } from '../after/levels.js';
+import { loadKind } from '../carry.js';
 import { skyFrame, campX0, rateAt, stage, stageHalf, crowdHalf, campHalf, stageFore, stageSpot, stageSoul, stageGap, walkSeen, deepAt } from '../after/sky.js';
 import { K as INK, W, PALE, MID } from './after/kit.js';
 
@@ -946,10 +947,10 @@ function body(w) {
   alpha(deepAt(w.x), () => {
     rect(x, y, s, s, MID);
     rect(x, y, s, Math.max(2, Math.round(s / 5)), UNION_TONE);
-    if (w.load === 'log') rect(x - u, y - u, u * 5, u, PALE);
-    else if (w.load === 'sign') carriedSign(x, y, u);
-
-    else if (w.load === 'tip') rect(x, y - u, u * 2, u, PALE);
+    const kind = loadKind(w);
+    if (kind === 'log') rect(x - u, y - u, u * 5, u, PALE);
+    else if (kind === 'sign') carriedSign(x, y, u);
+    else if (w.tipping) rect(x, y - u, u * 2, u, PALE);
     if (w.swing != null) {
       if (w.job == null) { rect(x + u, y - u * 5, u, u * 2, INK); rect(x + u, y - u * 2, u, u, INK); }
       else for (let k = 1; k <= 2; k++) rect(x + (w.face > 0 ? 2 + k : -k) * u, y - k * u, u, u, INK);
@@ -975,11 +976,11 @@ function watchSigns() {
   const t = now();
   for (const w of S.after.bodies) {
     const was = carrying.get(w.id);
-    if (was === 'sign' && w.load !== 'sign') {
+    if (was === 'sign' && loadKind(w) !== 'sign') {
       const v = seenAt(w.x, w.y), u = P * v.k, s = u * 3;
       setDown.push({ at: t, dx: v.x - s / 2 - gxAt(v.y), foot: v.y, y: v.y - s, u, ord: v.ord + 0.3 });
     }
-    carrying.set(w.id, w.load);
+    carrying.set(w.id, loadKind(w));
   }
   setDown = setDown.filter(g => t - g.at < SIGN_FADE_S && t >= g.at);
 }

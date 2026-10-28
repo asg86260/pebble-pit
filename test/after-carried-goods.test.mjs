@@ -12,6 +12,7 @@
 // opening played, members walked out of God's yard, the yard's and the
 // act's coins granted, timber granted on the mound.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
+import { loadKind } from '../src/carry.js';
 import { RIM_PIECES, AFTER_SIGN_TIMBER, AFTER_UPGRADES, AFTER_PILES } from '../src/config.js';
 import { AFTER_JOB } from '../src/jobs.js';
 import { putBlock, cellOf, count } from '../src/grid.js';
@@ -52,7 +53,7 @@ function camp(n) {
 // overhead, walking them over.
 const between = (w, kind) => {
   const a = pileMid('mill', 'timber'), b = stationBox('workshop').x;
-  return w.load === kind && !w.pick && w.x > Math.min(a, b) + 1 && w.x < Math.max(a, b) - 1;
+  return loadKind(w) === kind && !w.pick && w.x > Math.min(a, b) + 1 && w.x < Math.max(a, b) - 1;
 };
 
 group("the workshop's sign is made of four timber blocks a body walked to it off the mound", async () => {
@@ -66,7 +67,7 @@ group("the workshop's sign is made of four timber blocks a body walked to it off
     run(1 / 60);
     walked = walked || S.after.bodies.some(w => between(w, 'plank'));
     benchTop = Math.max(benchTop, stock().benchtimber);
-    sign = stock().signs > 0 || S.after.signs.length > 0 || S.after.bodies.some(w => w.load === 'sign');
+    sign = stock().signs > 0 || S.after.signs.length > 0 || S.after.bodies.some(w => loadKind(w) === 'sign');
   }
   window.__actsOn(null);
   return [
@@ -117,9 +118,9 @@ group('a sign is carried out of the rack to the crowd and planted there', async 
   for (let f = 0; f < 60 * 120 && S.after.signs.length === planted0; f++) {
     run(1 / 60);
     // The rack a block short only as a body takes one up.
-    if (stock().signs < prev && !S.after.bodies.some(w => w.load === 'sign')) fell = true;
+    if (stock().signs < prev && !S.after.bodies.some(w => loadKind(w) === 'sign')) fell = true;
     prev = stock().signs;
-    inHands = inHands || S.after.bodies.some(w => w.load === 'sign' && w.x > stationBox('workshop').x + stationBox('workshop').w);
+    inHands = inHands || S.after.bodies.some(w => loadKind(w) === 'sign' && w.x > stationBox('workshop').x + stationBox('workshop').w);
   }
   window.__actsOn(null);
   return [
@@ -167,7 +168,7 @@ group('with every member on a job, a timber bill still lands: one is lent to car
   const bought = window.__buy(REACH);
   let wasLent = false;
   const landed = runUntil(() => {
-    wasLent = wasLent || S.after.bodies.some(b => b.job && b.errand === AFTER_JOB.ORDER && b.load === 'plank');
+    wasLent = wasLent || S.after.bodies.some(b => b.job && b.errand === AFTER_JOB.ORDER && loadKind(b) === 'plank');
     return !S.after.orders.length;
   }, 300);
   const back = runUntil(() => !S.after.bodies.some(b => b.errand === AFTER_JOB.ORDER), 60);

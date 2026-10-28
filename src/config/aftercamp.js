@@ -37,3 +37,9 @@ export const AFTER_BUBBLE_MID = 1.5;
 // cell out, a third of a body, every other row, and a stroke of one cell
 // shows in the teeth.
 export const AFTER_SAW_TEETH = [0, 1];
+
+// --- track C: one carry (DESIGN.md, "One resource system for every act", section 4) ---
+// A load the construction shack hands out at its door, as a cell value in a
+// member's arms: the lightest shade, a unit of no kind, so it is counted by
+// no pile and carried home by no gatherer. The shack's door is its one source.
+export const AFTER_SITE_LOAD = 1;

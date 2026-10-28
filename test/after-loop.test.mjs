@@ -311,7 +311,7 @@ group('a station bought on the shack is carried in as a pile and raised off it a
     if (bands.at(-1) !== r.n) bands.push(r.n);
     const on = r.brought - r.taken;
     if (piles.at(-1) !== on) piles.push(on);
-    carried ||= S.after.bodies.some(b => b.load === 'carry');
+    carried ||= S.after.bodies.some(b => b.phase === 'carry');
   }
   const n = S.after.raising.mill.at.length;
   run(60);
@@ -427,7 +427,7 @@ group('the chain makes timber and sawdust, then signs, and the heap is tipped', 
     if (S.after.stock.sawdust >= AFTER_SAWDUST_BRIM - AFTER_TIP_LOAD) brim = true;
     // A sawyer carrying a load to the notch, or an idle member standing at
     // it tipping (bodies.js, the sweep): nobody clicks here.
-    if (S.after.bodies.some(b => b.load === 'tip') || (S.after.tipAt != null && S.after.bodies.some(b => b.errand === 'sweeper'))) tipped = true;
+    if (S.after.bodies.some(b => b.tipping) || (S.after.tipAt != null && S.after.bodies.some(b => b.errand === 'sweeper'))) tipped = true;
   }
   const mid = read();
   window.__actsOn(null);

@@ -64,6 +64,7 @@ import { lockForCheck } from './wardrobepage.js';
 import { freedBody } from './snatch.js';
 import { fillControls } from './controls.js';
 import { setFeedbackUrl } from './feedback.js';
+import { loadKind } from './carry.js';
 
 // The held sheet up on settings, turned to a tab by its button.
 const settingsTab = t => {
@@ -2957,7 +2958,7 @@ export const SCENES = {
       window.__afterGrant({ grovelogs: 40 });
       window.__fast(90);              // the walk from the podium
       // Held on a body walking a stack of logs.
-      const under = () => S.after.bodies.find(w => w.load === 'log' && w.carry >= 2);
+      const under = () => S.after.bodies.find(w => loadKind(w) === 'log' && w.carry >= 1);
       for (let k = 0; k < 600 && !under(); k++) window.__fast(0.1);
       window.__fast(1);
       const h = under(), mid = h ? h.x : stationBox('forestry').x;
@@ -3146,7 +3147,7 @@ export const SCENES = {
       afterChain(false);
       window.__afterGrant({ grovelogs: 60 });
       const b = stationBox('mill');
-      const near = w => w.errand === AFTER_JOB.HAUL && w.load === 'log' && w.target === 'mill' && w.x > b.x - P * 40 && w.x < b.x;
+      const near = w => w.errand === AFTER_JOB.HAUL && loadKind(w) === 'log' && w.target === 'mill' && w.x > b.x - P * 40 && w.x < b.x;
       const falling = () => sawDrops().length > 0 && S.after.t - sawDrops().at(-1) > AFTER_DROP.s * 0.15 && S.after.t - sawDrops().at(-1) < AFTER_DROP.s * 0.3;
       for (let k = 0; k < 6000 && !(S.after.bodies.some(near) && falling()); k++) window.__fast(1 / 30);
       const mid = b.x + b.w / 2 - P * 10;
@@ -3173,7 +3174,7 @@ export const SCENES = {
         window.__fast(2); // MOCK
         // a member under a load of logs, between the shack and the mill // MOCK
         const lo = window.__afterPile('forestry', 'grovelogs').x, hi = window.__afterPile('mill', 'timber').x; // MOCK
-        const carrying = () => S.after.bodies.some(w => w.load === 'log' && w.x > lo + P * 12 && w.x < hi - P * 30); // MOCK
+        const carrying = () => S.after.bodies.some(w => loadKind(w) === 'log' && w.x > lo + P * 12 && w.x < hi - P * 30); // MOCK
         for (let k = 0; k < 1800 && !carrying(); k++) window.__fast(1 / 30); // MOCK
         window.__afterGrant({ grovelogs: 20, logs: 4, timber: 40, sawdust: 30, signs: 3 }); // MOCK  room left for the load on its way
         window.__fast(1 / 60); // MOCK
@@ -3277,7 +3278,7 @@ export const SCENES = {
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
       afterChain(true);
-      const a = campEdges()[1], on = w => w.load === 'sign' && w.x > a + (CROWD_X0 - a) * 0.5;
+      const a = campEdges()[1], on = w => loadKind(w) === 'sign' && w.x > a + (CROWD_X0 - a) * 0.5;
       for (let k = 0; k < 2400 && !S.after.bodies.some(on); k++) window.__fast(0.25);
       window.__look((afterOpenX() + godView()) / 2 - S.viewW / 2); window.__fast(1 / 30); window.__holdShot();
     } },
@@ -3286,7 +3287,7 @@ export const SCENES = {
       afterChain(true);
       // a carrier at its spot, a moment short of planting; the shot comes a
       // second on, the planting drawn as it happens
-      const at = w => w.load === 'sign' && w.target && typeof w.target === 'object' && w.t >= AFTER_PLANT_S - 0.7;
+      const at = w => loadKind(w) === 'sign' && w.target && typeof w.target === 'object' && w.t >= AFTER_PLANT_S - 0.7;
       for (let k = 0; k < 24000 && !S.after.bodies.some(at); k++) window.__fast(0.05);
       window.__look(godView() - S.viewW / 2); window.__fast(1 / 30);
     } },
@@ -3582,20 +3583,20 @@ function carriedScenes() {
       run: () => {
         afterChain(false);
         window.__afterGrant({ benchtimber: -S.after.stock.benchtimber, signs: -S.after.stock.signs }); timberUp();
-        carryShot(w => w.load === 'plank' && !w.pick && (w.target === 'workshop' || w.job === AFTER_JOB.JOIN) && pastMill(w));
+        carryShot(w => loadKind(w) === 'plank' && !w.pick && (w.target === 'workshop' || w.job === AFTER_JOB.JOIN) && pastMill(w));
       } },
     'after-sign-out': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'B a sign carried out', say: 'a sign carried out of the workshop\'s rack toward the crowd, the rack a block short',
       run: () => {
         afterChain(false);
         window.__afterGrant({ signs: 3 });
         const ws = stationBox('workshop');
-        carryShot(w => w.load === 'sign' && w.x > ws.x + ws.w + P * 12 && w.x < ws.x + ws.w + P * 40);
+        carryShot(w => loadKind(w) === 'sign' && w.x > ws.x + ws.w + P * 12 && w.x < ws.x + ws.w + P * 40);
       } },
     'after-order-carry': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'C a bill carried', say: "a timber bill bought: its blocks carried off the timber mound to the workshop, the row waiting on them",
       run: () => {
         afterChain(false);
         yardPurse(); timberUp(); window.__buy('after-signreach');
-        carryShot(w => w.errand === AFTER_JOB.ORDER && w.load === 'plank' && !w.pick && pastMill(w));
+        carryShot(w => w.errand === AFTER_JOB.ORDER && loadKind(w) === 'plank' && !w.pick && pastMill(w));
       } },
     'after-order-board': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'D the board waiting', say: "the workshop's board with a timber row ordered: the row waiting on its blocks, saying it is going up",
       run: () => {

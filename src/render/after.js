@@ -30,6 +30,7 @@ import { built, heapBrim } from '../after/levels.js';
 import { airSpills } from '../after/mill.js';
 import { atStation, bodyInk, carried as carryOf } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
+import { loadKind } from '../carry.js';
 import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
@@ -291,9 +292,9 @@ function drawMember(w) {
     const x = 0, y = 0;
     drawBody(x, y);
     ctx.fillStyle = GREY[K];
-    drawLoad(x, y, w.load, carryOf(w), w.id); // MOCK: w.id
-    if (w.load === 'carry' || w.load === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
-    else if (w.load === 'tip') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
+    drawLoad(x, y, loadKind(w), carryOf(w), w.id); // MOCK: w.id
+    if (w.phase === 'carry' || w.phase === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
+    else if (w.tipping) { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
     if (w.swing != null) {
       if (w.job == null) shoutMark(x, y);
       else for (let k = 1; k <= 2; k++) cell(x + (w.face > 0 ? 2 + k : -k) * P, y - k * P, K);
