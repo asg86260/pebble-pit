@@ -4,6 +4,19 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## One resource system for every act -- DESIGNED, AWAITING THE OWNER (2026-10-28)
+
+DESIGN.md, "One resource system for every act". The yard, the deep and act 3
+keep goods three ways: act 3's lying goods are an object list, not cells, so
+a thrown block cannot be dragged up again, and its hand, landing, carry and
+counts are copies of the yard's. The design: a unit is a cell value (kind
+and shade), one ground plot a place with blocks as multi-cell units and the
+floor as fixed cells, piles as strips, one hand, one landing chain, one
+carry, counts surveyed off cells, one conservation rule. Blocked on the
+owner's three calls (one fine plot or a plot a size; hand by weight or one
+log a hand; the deep now or after). Nothing built. It is the resource step
+of "One place engine" below.
+
 ## Act 3's goods are blocks, carried by bodies -- APPROVED, BUILDING (2026-10-27)
 
 The saw mill as reviewed live (DESIGN.md, "Act 3's goods are blocks, and
