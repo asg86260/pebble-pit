@@ -102,7 +102,7 @@ group('the deep with hell\'s slit open over it', async () => {
 group('act 3, the camp, the grove and the gates from behind', async () => {
   SCENES['after-chain'].run();
   run(2);
-  return stage('after', ['mill', 'heap:sawdust', 'workshop', 'shack', 'pedestal', 'pine:0', 'throne-stair']);
+  return stage('after', ['mill', 'workshop', 'shack', 'pedestal', 'pine:0', 'throne-stair']);
 });
 
 group('act 3 with heaven gates standing on the cloud floor', async () => {

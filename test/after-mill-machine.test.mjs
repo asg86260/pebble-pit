@@ -98,6 +98,12 @@ group('by hand: a log swept off the pile and let go over the bed, the wheel drag
   window.__afterGrant({ logs: 2 });
   S.carryLevel = 0;
   restartReloadClock();
+  // nobody at the saw and the bed bare: the wheel turned a good many strokes
+  // turns the saw and cuts nothing, nothing feeding it
+  const turn0 = saw().turn, bare0 = st().timber + st().sawdust;
+  spin('mill', 1.5, () => false, 4);
+  run(3);
+  const bareTurns = saw().turn - turn0, bareCut = st().timber + st().sawdust - bare0, bareLogs = st().logs;
   const total = cells();
   // the log pile's top block under the hand, then let go over the bed's seat
   const b = plotOf('logs');
@@ -117,6 +123,7 @@ group('by hand: a log swept off the pile and let go over the bed, the wheel drag
   run(3);
   window.__actsOn(null);
   return [
+    ok(bareTurns >= 5 && bareCut === 0 && bareLogs === 2, 'with nobody at the saw, the wheel turned with the bed bare cuts nothing and takes no log', `${bareTurns.toFixed(1)} turns, ${bareCut} made, ${bareLogs} logs on the pile`),
     ok(took === 1 && landed, 'the swept log lands on the bed', `${took} held, on the bed ${landed}`),
     ok(secs < 30, 'turned by hand, the log is cut into three timber blocks and four grains', `${secs.toFixed(1)} s`),
     ok(kept, 'not a cell made or lost on the way', `${cells()} of ${total} ${bad}`),

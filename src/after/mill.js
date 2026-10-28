@@ -46,7 +46,7 @@ const cy = y => (y - groundOf('mill')) / AP;
 // The machine's state, made the first time it is asked (a save from before
 // it reads back as none).
 const blankSaw = () => ({ turn: 0, hi: 0, sk: 0, sf: 0, driving: false, handAt: null, bed: null, out: [], dust: [], trip: null,
-                          hitAt: null, setAt: null, n: 0, landed: 0, busyAt: null });
+                          hitAt: null, setAt: null, n: 0, landed: 0, grains: 0, busyAt: null });
 export const saw = () => S.after.saw || (S.after.saw = blankSaw());
 
 // --- the heap ----------------------------------------------------------------------------
@@ -189,8 +189,9 @@ export function turnWheel(d, hand = false) {
 export const wheelAngle = () => (S.after ? Math.PI / 2 + saw().turn * 2 * Math.PI : Math.PI / 2);
 // How many strokes have landed, ever: the hand work counts its motions by it.
 export const strokesLanded = () => (S.after ? saw().n : 0);
-// Timber blocks landed on the mound off the chute, ever.
+// Timber blocks landed on the mound off the chute, and grains on the heap, ever.
 export const millLanded = () => (S.after ? saw().landed : 0);
+export const grainsLanded = () => (S.after ? saw().grains || 0 : 0);
 const handTurning = s => s.handAt != null && S.after.t - s.handAt < 0.15;
 
 // --- the log onto the bed ----------------------------------------------------------------
@@ -378,6 +379,7 @@ function stepOut(s, dt) {
     if (!grainAt(g.a).down) continue;
     addGrain(b, wx(F.bx) + AP / 2, undefined, grainTone(b), true);
     S.after.stock.sawdust += 1;
+    s.grains = (s.grains || 0) + 1;
     s.dust.splice(i--, 1);
   }
 }

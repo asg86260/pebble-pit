@@ -596,7 +596,8 @@ export const AFTER_DROP = { s: 0.5, from: 8, back: 6 };
 //             beam's whole travel
 //   seat      where the sawyer sets a log down on the bed (its left column), and
 //             the span of log middles a log thrown by hand lands on the bed in
-//   approach  cells a stroke the bed carries a log up to the blade
+//   approach  cells a stroke the bed carries a log up to the blade: more than the
+//             seat's span, so a log anywhere on it reaches the blade in one stroke
 //   strokes   down-strokes a column of the log takes, column by column: three
 //             columns of timber, a 2x2 block each, then the kerf, four grains,
 //             one a down-stroke
@@ -620,7 +621,7 @@ export const AFTER_MILL = {
   frame: { L: 32, R: 47, head: -21, bed: -6, bedRows: 2, bx: 40, end: 50 },
   beam: { x: 35, y: -25, long: 8, short: 5, stroke: 3 },
   seat: { x: 34, land: [33, 38] },
-  approach: 2,
+  approach: 6,
   strokes: [2, 2, 2, 4],
   stroke_s: 0.56,
   pose: { wheel: { x: 17.5, y: -7 }, side: 10, pile: 6, bed: 28 },

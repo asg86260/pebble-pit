@@ -17,7 +17,7 @@ import { group, ok, run, runUntil, yard } from './helpers.mjs';
 import { RIM_PIECES, AFTER_SAW_S, AFTER_PILES } from '../src/config.js';
 import { AFTER_JOB } from '../src/jobs.js';
 import { stationBox, pileAt } from '../src/after/place.js';
-import { sawDrops, heapFull } from '../src/after/mill.js';
+import { millLanded, heapFull } from '../src/after/mill.js';
 import { pileFull } from '../src/after/piles.js';
 
 const S = yard.S;
@@ -52,7 +52,7 @@ group('idle members haul logs to the saw, which stays worked, its cuts piling on
   const working = k => { const w = S.after.bodies.find(b => b.at === k); return !!w && w.t < AFTER_SAW_S; };
   const sawyer = () => S.after.bodies.find(b => b.job === AFTER_JOB.SAW);
   const t0 = Math.floor(S.after.stock.timber);
-  let n = 0, saw = 0, brim = 0, swept = false, hauled = false, fetched = false, drops = 0, last = sawDrops().at(-1);
+  let n = 0, saw = 0, brim = 0, swept = false, hauled = false, fetched = false, drops = 0, last = millLanded();
   let made = 0, was = S.after.stock.timber;
   for (let f = 0; f < 90 * 4; f++) {
     felled();
@@ -68,7 +68,8 @@ group('idle members haul logs to the saw, which stays worked, its cuts piling on
     swept = swept || S.after.bodies.some(b => b.job == null && b.errand === AFTER_JOB.SWEEP);
     hauled = hauled || S.after.bodies.some(b => b.job == null && b.errand === AFTER_JOB.HAUL && b.load === 'log' && b.target === 'mill');
     fetched = fetched || !!(sawyer() && sawyer().load === 'log');
-    if (sawDrops().at(-1) !== last) { drops++; last = sawDrops().at(-1); }
+    // a block off the saw's chute onto the mound on its right (after/mill.js)
+    if (millLanded() !== last) { drops += millLanded() - last; last = millLanded(); }
   }
   const b = stationBox('mill'), out = pileAt('mill', 'timber');
   window.__actsOn(null);

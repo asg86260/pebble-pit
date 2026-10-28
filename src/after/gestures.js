@@ -161,15 +161,16 @@ const DEFS = {
   },
   mill: {
     // `w` the wheel's spin by the hand, radians a second, and `acc` how far
-    // the pointer turned it since the last frame; the wheel itself is the
-    // machine's (mill.js), turned only through `turnWheel`.
-    init: () => ({ w: 0, grab: false, pa: 0, acc: 0 }),
+    // the pointer turned it since the last frame, `prog` the turns the hand
+    // has given it since it took hold; the wheel itself is the machine's
+    // (mill.js), turned only through `turnWheel`.
+    init: () => ({ w: 0, grab: false, pa: 0, acc: 0, prog: 0 }),
     open: () => built('mill'),
     grab(g, x, y) {
       const c = stationParts('mill').wheel;
       return Math.hypot(x - c.x, y - c.y) <= c.r + G_S * 2 ? true : null;
     },
-    down(g, h, x, y) { const c = stationParts('mill').wheel; g.grab = true; g.pa = Math.atan2(y - c.y, x - c.x); return true; },
+    down(g, h, x, y) { const c = stationParts('mill').wheel; g.grab = true; g.prog = 0; g.pa = Math.atan2(y - c.y, x - c.x); return true; },
     move(g, x, y) {
       const c = stationParts('mill').wheel, na = Math.atan2(y - c.y, x - c.x), d = wrap(na - g.pa);
       g.acc += d; g.pa = na;
@@ -189,6 +190,7 @@ const DEFS = {
       const cap = GESTURE_WHEEL_MAX_REV * 2 * Math.PI * dt, want = clamp(d, -cap, cap);
       if (!want) return;
       const n0 = strokesLanded(), went = turnWheel(want / (2 * Math.PI), true) * 2 * Math.PI;
+      g.prog += Math.abs(went) / (2 * Math.PI);
       if (want > 0 && went < want - 1e-9) g.w = 0;
       if (strokesLanded() > n0) used(g);
     },
@@ -230,9 +232,10 @@ const DEFS = {
   heap: {
     // The heap under the saw mill's bed (mill.js): a click on it tips a load
     // through the hatch under it, the grains over the hatch dropping out and
-    // the heap slumping into the gap.
+    // the heap slumping into the gap. Its room under the bed is the hand's
+    // even bare, so a click there never opens the board.
     init: () => ({}),
-    open: () => built('mill') && S.after.stock.sawdust > 0,
+    open: () => built('mill'),
     grab: (g, x, y) => (inBox(x, y, stationParts('heap').heap, G_S) ? true : null),
     down(g) { tip(g, 1); return 'tap'; },
   }

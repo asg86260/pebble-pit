@@ -179,6 +179,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- Act 3's saw mill is a machine you can follow a log through: the sawyer walks the treadwheel, carries each log to the bed, and the blade cuts it a column a stroke into timber that rides down a chute onto the mound and sawdust that falls on the heap under the saw (test/after-mill-machine.test.mjs).
 - Act 3's stations are their own shops: click one to open its board beside it, take hold of its work to close it; the $ signs, the strip under a worked station and the glyph over a working one are gone, and one ghost hand shows how (test/after-gestures.test.mjs).
 - In act 3 you pick up logs and timber as you do dust, a left press and hold on a pile, and flick them onto another pile or the floor, where a worker carries them home (test/after-goods-sweep.test.mjs).
 - Act 3's log and timber piles are heaps of blocks you can see, a log a 4x4 and three 2x2 timber blocks a log; each pile holds only so many, shows the pile-full mark at its brim and stops what fills it, and timber bills and a save's timber are halved to match (test/after-pile-plots.test.mjs).

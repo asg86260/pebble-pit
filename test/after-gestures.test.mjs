@@ -19,7 +19,7 @@ import { gestureDown, gestureMove, gestureUp, gestureView, gestureHover, gesture
 import { stationBox } from '../src/after/place.js';
 import { GESTURE_HOVER_S } from '../src/config.js';
 import { godMid, faceY } from '../src/after/sky.js';
-import { FRAME, frame, click, asks, timeTo, sawOn, saw, lift, spin, nailSign } from './after-hands.mjs';
+import { FRAME, frame, click, asks, timeTo, sawOn, saw, lift, spin, nailSign, loadBed } from './after-hands.mjs';
 
 const S = yard.S;
 const read = () => window.__afterRead();
@@ -55,7 +55,8 @@ function frameAsks(key) {
 }
 
 group('the saw mill: its flywheel spun faster where it stands cuts a log sooner, up to its cap', async () => {
-  const trial = rev => { up(['mill'], { logs: 5 }); const t0 = read().timber; return spin('mill', rev, () => read().timber > t0, 40); };
+  // a log by hand onto the bed first (after-hands.mjs, `loadBed`): the wheel cuts what is on it
+  const trial = rev => { up(['mill'], { logs: 5 }); loadBed(); const t0 = read().timber; return spin('mill', rev, () => read().timber > t0, 40); };
   const slow = trial(0.5), fast = trial(2), past = trial(4);
   window.__actsOn(null);
   return [
@@ -125,21 +126,17 @@ group('a tree: its saw icon clicked puts the handsaw on it; dragged back and for
   ];
 }, NO_RELOAD);
 
-group('the sawdust heap: a load dragged to the notch tips one, a fling tips up to three', async () => {
-  const trial = secs => {
-    up(['mill'], { sawdust: 24 });
-    const p = partsOf('heap'), a = mid(p.heap), d0 = read().sawdust, dist = p.edge - a.x + P * 2;
-    gestureDown(a.x, a.y);
-    timeTo(t => gestureMove(a.x + Math.min(1, t / secs) * dist, a.y), () => false, secs + FRAME);
-    gestureUp(a.x + dist, a.y);
-    run(1);
-    return (d0 - read().sawdust) / AFTER_TIP_LOAD;
-  };
-  const carried = trial(2), flung = trial(0.05);
+group('the sawdust heap under the saw: a click on it tips one load through the hatch', async () => {
+  up(['mill'], { sawdust: 24 });
+  const p = partsOf('heap'), a = mid(p.heap), d0 = read().sawdust;
+  const took = click(a);
+  const one = (d0 - read().sawdust) / AFTER_TIP_LOAD;
+  click(a);
+  const two = (d0 - read().sawdust) / AFTER_TIP_LOAD;
   window.__actsOn(null);
   return [
-    ok(carried === 1, 'carried slowly to the notch, one load tips', `${carried}`),
-    ok(flung === 3, 'flung hard, three go', `${flung}`)
+    ok(took && one === 1, 'a click tips one load', `${one}`),
+    ok(two === 2, 'and the next another', `${two}`)
   ];
 }, NO_RELOAD);
 
@@ -278,6 +275,7 @@ group('the pad: A on the workshop taps nails into a sign, the stick turned round
   for (let k = 0; k < 10; k++) { pad.press('a'); run(0.2); }
   const signs = S.after.stock.signs - s0;
   S.padFocus = 'ag:mill';
+  loadBed();
   const t0 = read().timber;
   for (let f = 0; f < 60 * 6; f++) {
     const a = f / 60 * 1.5 * 2 * Math.PI;

@@ -47,6 +47,8 @@ import { yardReads } from './persist.js';
 import { afterlifeOn, hellOn } from './acts.js';
 import { AFTER_STORY } from './after/story.js';
 import { PILED, plotOf } from './after/piles.js';
+import { millView } from './after/mill.js';   // track A: saw mill
+import { AFTER_BLOCK } from './config.js';   // track A: saw mill
 import { HELL_STORY } from './hell/story.js';
 import { allOverlaps, offGround } from './footprints.js';
 
@@ -714,6 +716,19 @@ export function verifyWorld() {
       const n = count(plotOf(what));
       if (n !== S.after.stock[what]) fail('an act 3 pile does not hold its stock', `${what}: ${S.after.stock[what]} counted, ${n} blocks on its plot`);
     }
+  }
+
+  // track A: saw mill
+  // --- rule 24: the log on the saw's bed adds up -------------------------------
+  // A log only changes shape at the blade, into pieces that add up (DESIGN.md,
+  // "Act 3's goods are blocks", rule 2): what is left of it, the block growing
+  // past the blade, the kerf in the teeth, and the blocks and grains its
+  // strokes counted out as they made them are its sixteen cells, every frame.
+  if (afterlifeOn() && S.after && S.after.saw && S.after.saw.bed) {
+    const v = millView(), bed = S.after.saw.bed, Z = AFTER_BLOCK.log, z = AFTER_BLOCK.plank;
+    const cells = v.log.left * Z + v.grow * z * z + v.teeth + bed.cut * z * z + bed.dust;
+    if (Math.abs(cells - Z * Z) > 1e-6 || v.log.eaten < 0 || v.log.eaten > Z)
+      fail("the log on the saw mill's bed does not add up", `${cells} cells of ${Z * Z}: ${JSON.stringify(bed)}`);
   }
 
   verifyParty();
