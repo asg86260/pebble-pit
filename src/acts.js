@@ -20,7 +20,7 @@ import { AFTER_PLACE } from './after/place.js';
 import { godFront, restW } from './after/sky.js';
 import { HELL_PLACE } from './hell/place.js';
 import { AFTER_CREW } from './after/bodies.js';
-import { AFTER_GOODS } from './after/hand.js';
+import { AFTER_PLOTS } from './after/piles.js';
 import { HELL_CREW } from './hell/bodies.js';
 import { S } from './state.js';
 
@@ -51,8 +51,9 @@ const AFTER_AT_YARD = {
   x1: () => godFront() + restW() / 2,
   get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; },
   get crew() { return AFTER_CREW; },
-  // The goods the hand takes up off its piles and floor (after/hand.js).
-  get goods() { return AFTER_GOODS; }
+  // Its piles as plots the yard's hand sweeps and throws onto (hands.js;
+  // after/piles.js, AFTER_PLOTS).
+  get plots() { return AFTER_PLOTS; }
 };
 // Each place's crew (placebodies.js): its own body list, its JOBS registry,
 // its walk and how the hand takes one of its bodies up. Read through a
@@ -69,6 +70,13 @@ export const crewHolding = w => {
 // floor, so only the rise riding up the road sees it.
 export const afterUnder = () => AFTER_AT_YARD.floor() + AFTER_AT_YARD.margin + ACT_ROAD_UNDER;
 export const actPlace = v => PLACES[v] || null;
+// The act place a world point is in, or null for the yard and the deep: the
+// places stand over the yard on the same x, so where a pointer is is asked of
+// both coordinates (hands.js keeps the yard's floor out of an act's sweep).
+export function placeAt(x, y) {
+  for (const pl of Object.values(PLACES)) if (x >= pl.x0() && x <= pl.x1() && y >= pl.top() && y <= pl.floor() + pl.margin) return pl;
+  return null;
+}
 // Whether a place's act is on: a view into one whose act is off is sent back
 // to the yard (view.js, `stepView`).
 export const placeOpen = v => (v === 'after' ? afterlifeOn() : v === 'hell' ? hellOn() : false);

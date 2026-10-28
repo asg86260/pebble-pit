@@ -127,7 +127,7 @@ function drawGroundLogs(t) {
     ctx.globalAlpha = was;
   }
 }
-// The goods the hand let go of off any pile (after/hand.js), and those a body
+// The goods the hand threw onto the floor (after/piles.js), and those a body
 // laid at a full pile's foot, each falling straight down under the yard's
 // gravity from where it was let go and lying where it lands, drawn over the
 // camp's stations so one let go in front of a station is seen: a log and a

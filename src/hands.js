@@ -4,8 +4,15 @@
 // held hand throws handfuls off the pile it is near at the hole by itself
 // (once that is bought), and anything still in the air can be caught on the
 // way past.
+//
+// The ground is whichever plot is under the hand: the yard's floor, or an act
+// place's pile (acts.js, a place's `plots`; act 3's in after/piles.js), so
+// act 3's goods are picked up and thrown as act 1's dust is (DESIGN.md, "Act
+// 3's goods are blocks, and bodies carry every one", rule 5). One kind in the
+// hand at a time: each mote remembers what it is, a place's goods (`kind`,
+// `place`) or the yard's dust, and a let-go lands as that.
 
-import { P, BRUSH, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR, DEEP_THROW } from './config.js';
+import { P, BRUSH, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR, DEEP_THROW, AFTER_BLOCK } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY, topRow } from './grid.js';
 import { spawnChip, aim, bell } from './dust.js';
@@ -16,6 +23,7 @@ import { rand } from './rng.js';
 import { noteThrow, noteCatch } from './notices.js';
 import { inDeep, crusherRect } from './deep/place.js';
 import { scoop, bedNear, tossIn } from './deep/scales.js';
+import { PLACES, placeAt } from './acts.js';
 
 export function track(x, y) {
   S.trail.push({ x, y, t: now() });
@@ -39,17 +47,24 @@ export function catchAir(mx, my) {
   if (room <= 0) return;
 
   const reach = (BRUSH + 2) * P;      // forgiving: dust falls quickly
+  let had = S.held ? S.motes[0] : null;
   for (let i = S.chips.length - 1; i >= 0 && room > 0; i--) {
     const ch = S.chips[i];
     // not what the held hand itself just let go, or the toss would come
     // straight back off the cursor it left from
     if (ch.auto) continue;
-    if (Math.abs(ch.x + P / 2 - mx) > reach || Math.abs(ch.y + P / 2 - my) > reach) continue;
+    // one kind in the hand: a grain into a hand of dust, a block into a hand
+    // of its own goods
+    if (had && (had.kind || null) !== (ch.kind || null)) continue;
+    // a block's x, y is its middle; a grain's, its cell's top left
+    const off = ch.kind ? 0 : P / 2;
+    if (Math.abs(ch.x + off - mx) > reach || Math.abs(ch.y + off - my) > reach) continue;
     S.chips.splice(i, 1);
     S.held++;
     room--;
-    noteCatch(ch);
-    S.motes.push(mote(ch.s));
+    if (ch.kind) S.motes.push(mote(ch.s, ch));
+    else { noteCatch(ch); S.motes.push(mote(ch.s)); }
+    had = S.motes[0];
   }
 }
 
@@ -78,18 +93,40 @@ function catchSinking(mx, my) {
   sink.length = keep;
 }
 
-// One grain on the cursor.
-const mote = s => ({ s, a: rand() * Math.PI * 2, d: P * (1 + rand() * 2.6), spin: (rand() - 0.5) * 0.03, bob: rand() * Math.PI * 2 });
+// One grain on the cursor, or one of a place's blocks (`goods`: its `kind`
+// and `place`), which drifts out as far as its own size takes it.
+const mote = (s, goods = null) => {
+  const z = goods ? AFTER_BLOCK[goods.kind] * P / 2 : P;
+  const m = { s, a: rand() * Math.PI * 2, d: z * (1 + rand() * 2.6), spin: (rand() - 0.5) * 0.03, bob: rand() * Math.PI * 2 };
+  if (goods) { m.kind = goods.kind; m.place = goods.place; }
+  return m;
+};
+// What the hand holds when it is a place's goods: its first mote (every mote
+// in a hand is one kind), or null for the yard's dust or an empty hand.
+export const heldGoods = () => (S.held && S.motes[0] && S.motes[0].kind ? S.motes[0] : null);
 
-// The ground's cells within the brush, in the order the brush walks them.
-function* brushCells(mx, my, radius = BRUSH) {
-  const c0 = colOf(floor, mx);
-  const r0 = Math.floor((bottomY(floor) - my) / P);
+// The plot under a point: an act place's pile there ({ b, what, kind,
+// place }), the yard's floor ({ b }), or null over an act place's open
+// ground, which is no floor of the yard's though it lies on the same x.
+function plotAt(x, y) {
+  const pl = placeAt(x, y);
+  if (!pl) return { b: floor };
+  const spot = pl.plots ? pl.plots.at(x, y) : null;
+  if (spot) spot.place = Object.keys(PLACES).find(k => PLACES[k] === pl);
+  return spot;
+}
+
+// A plot's cells within the brush, in the order the brush walks them. The
+// brush's reach is a distance, so a plot of bigger cells takes fewer.
+function* brushCells(mx, my, radius = BRUSH, b = floor) {
+  if (b.p !== P) radius = Math.round(radius * P / b.p);
+  const c0 = colOf(b, mx);
+  const r0 = Math.floor((bottomY(b) - my) / b.p);
   for (let dr = -radius; dr <= radius; dr++) {
     for (let dc = -radius; dc <= radius; dc++) {
       if (dc * dc + dr * dr > radius * radius) continue;
       const c = c0 + dc, r = r0 + dr;
-      if (inside(floor, c, r) && at(floor, c, r)) yield [c, r];
+      if (inside(b, c, r) && at(b, c, r)) yield [c, r];
     }
   }
 }
@@ -101,7 +138,9 @@ function* brushCells(mx, my, radius = BRUSH) {
 // default, or a finger's reach (input.js, `fingerReach`).
 export function dustUnder(mx, my, radius = BRUSH) {
   if (inDeep(mx, my)) return bedNear(mx, my, radius * P);
-  for (const _ of brushCells(mx, my, radius)) return true;
+  const spot = plotAt(mx, my);
+  if (!spot) return false;
+  for (const _ of brushCells(mx, my, radius, spot.b)) return true;
   return false;
 }
 
@@ -110,6 +149,11 @@ export function sweep(mx, my) {
   // throws is thrown into the water (DESIGN.md, "The crusher"). Where the
   // pointer is in the world decides it, not which half is on the screen.
   if (inDeep(mx, my)) { sweepScales(mx, my); return; }
+  const spot = plotAt(mx, my);
+  if (!spot) return;
+  if (spot.kind) { sweepGoods(mx, my, spot); return; }
+  // a hand of a place's goods sweeps no dust
+  if (heldGoods()) return;
   let room = capacity() - S.held;
   if (room <= 0) return;
 
@@ -126,6 +170,29 @@ export function sweep(mx, my) {
     S.held += taken;
     // The bench's 'strength' row appears the first time this happens.
     if (!S.seenDrag) { S.seenDrag = true; S.shopStale = true; }
+  }
+}
+
+// A place's blocks off the pile under the hand, through the place's own door
+// (its `plots.take`), so the pile and its stock stay one. Only into an empty
+// hand or one of the same goods: a hand of planks sweeps no logs, and a hand
+// of dust no blocks.
+function sweepGoods(mx, my, spot) {
+  const had = S.held ? S.motes[0] : null;
+  if (had && (had.kind !== spot.kind || had.place !== spot.place)) return;
+  let room = capacity() - S.held;
+  if (room <= 0) return;
+  const plots = PLACES[spot.place].plots;
+  // gathered first: a take lets the blocks over it slump, and the brush
+  // takes the heap as it stood when the hand came down on it
+  const cells = [...brushCells(mx, my, BRUSH, spot.b)];
+  for (const [c, r] of cells) {
+    if (room <= 0) break;
+    const v = at(spot.b, c, r);
+    if (!v || !plots.take(spot, c, r)) continue;
+    S.motes.push(mote(v, spot));
+    S.held++;
+    room--;
   }
 }
 
@@ -164,6 +231,23 @@ export function release(x, y) {
     return;
   }
   if (!S.held) return;
+  // A place's goods are thrown as themselves, a block a mote with the
+  // flick's velocity, and land on its piles or its ground (game.js,
+  // `stepChips`). Not the yard's juggling: no dust was thrown.
+  const goods = heldGoods();
+  if (goods) {
+    const spread = AFTER_BLOCK[goods.kind] * P;
+    for (let i = 0; i < S.held; i++) {
+      spawnChip(x + (rand() - 0.5) * spread, y + (rand() - 0.5) * spread,
+                vx + (rand() - 0.5) * 1.4, vy + (rand() - 0.5) * 1.4, S.motes[i]?.s || 1);
+      const ch = S.chips[S.chips.length - 1];
+      ch.kind = goods.kind;
+      ch.place = goods.place;
+    }
+    S.held = 0;
+    S.motes = [];
+    return;
+  }
   // The juggling notice is for the biggest hand there is: a level-0 hand is
   // one grain, and throwing one grain is not juggling.
   const full = S.carryLevel >= LADDER && S.held >= capacity();
@@ -202,7 +286,10 @@ export function pileNear(mx) {
 // on the ground and be picked up again from there. The peak grows with the
 // distance, so a throw from the far side of the rock clears it. Not a
 // juggle: nothing here is thrown to be caught. Returns how many grains went.
-export function tossFromPile(mx) {
+export function tossFromPile(mx, my = S.groundY) {
+  // the yard's floor only: a hand held over an act place, on the same x, is
+  // over none of it
+  if (placeAt(mx, my)) return 0;
   const p = pileNear(mx);
   const from = S.chips.length;
   const c0 = colOf(floor, mx);
