@@ -1197,6 +1197,17 @@ export const TESTS = [
     ];
   }],
 
+  // A scene holds its moment against `__fast` for four wall seconds; a group
+  // begun inside the hold turned nothing and read an empty yard.
+  ['a new run turns the yard even straight after a scene held its moment', async () => {
+    window.__holdShot(4000);
+    newRun();
+    window.__crew(3, 3);
+    window.__fast(40);
+    await until(() => state().stands.stats);
+    return [ok(!!state().stands.stats, 'the books stand once the crew have banked, inside the old hold')];
+  }],
+
   ['the books hang on the noticeboard, and walking up opens them', async () => {
     newRun();
     await settle();
