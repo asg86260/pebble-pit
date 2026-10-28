@@ -49,7 +49,7 @@ import { sawDrops } from './after/mill.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
-import { pref, setPref } from './prefs.js';
+import { forceMotion, motionForcedNow } from './prefs.js';
 import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
 import { ABYSS_AT, RIFTLIFE_SPEED, RIFTLIFE_COIL, DEEP_W } from './config.js';
@@ -749,10 +749,10 @@ function firstTrip() {
   for (let i = 0; i < 60 * 30 && S.workers.some(w => w.falling); i++) window.__fast(1 / 60);
   window.__view('yard');
   window.__look(portalX() - S.viewW / 2);
-  const was = pref('motion');
-  setPref('motion', false);
+  const was = motionForcedNow();
+  forceMotion(false);
   goDeep();
-  setPref('motion', was);
+  forceMotion(was);
   for (let i = 0; i < 60 * 3 && S.viewFade < 0.75 && S.viewTo; i++) window.__fast(1 / 60);
 }
 
@@ -764,10 +764,10 @@ const glideAt = (to, k) => () => {
   // A glide under reduced motion is a cut, and a headless browser asks for
   // reduced motion: full motion for the one call that starts it, and the
   // preference as it was straight after.
-  const was = pref('motion');
-  setPref('motion', false);
+  const was = motionForcedNow();
+  forceMotion(false);
   if (to === 'deep') goDeep(); else goUp();
-  setPref('motion', was);
+  forceMotion(was);
   S.viewFade = k;
   poseGlide();
 };
@@ -3403,8 +3403,8 @@ function pushback(what) {
 // The hops are made under reduced motion, so the camera is there at once and
 // no yard time passes for a beat to start in; the preference is put back.
 function padTo(id) {
-  const pad = window.__pad, was = pref('motion');
-  setPref('motion', true);
+  const pad = window.__pad, was = motionForcedNow();
+  forceMotion(true);
   pad.on();
   pad.press('b');
   // A press toward it along whichever way it lies further, the other way if
@@ -3420,7 +3420,7 @@ function padTo(id) {
     pad.press(first);
     if (pad.focus() === f) pad.press(then);
   }
-  setPref('motion', was);
+  forceMotion(was);
 }
 
 // The names under each part, in ABOUT's order.

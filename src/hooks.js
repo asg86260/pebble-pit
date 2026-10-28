@@ -1112,10 +1112,11 @@ export const HANDLES = {
   __route: routeOf, __surface: surfaceAt, __ways: waysNow
 };
 
-// The motion preference: `true` asks for less, `false` for the full picture,
-// `null` to follow the system. Answers with what the camera will actually do.
-import { setPref, reducedMotion } from './prefs.js';
-HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
+// Motion for a scene or a check: `true` asks for less, `false` for the full
+// picture, `null` to go back to the player's own setting. Never written down
+// (prefs.js, `forceMotion`). Answers with what the camera will actually do.
+import { forceMotion, reducedMotion } from './prefs.js';
+HANDLES.__motion = v => { forceMotion(v); return reducedMotion(); };
 
 // --- wave serpent: SERPENT ---
 // The fight set for a setup (`stage`, `wound`), the bed laid with scales, and

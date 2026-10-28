@@ -51,9 +51,17 @@ export function setPref(name, value) {
 // the system's answer. The node yard has no `matchMedia`, so it gets the full
 // picture, which is what the checks are written against.
 export function reducedMotion() {
+  if (motionForced != null) return motionForced;
   if (prefs.motion != null) return prefs.motion;
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
+// Less or full motion asked for by a scene or a check, without writing the
+// player's preference: in memory only, cleared with null. Written down, one
+// press of a reduced-motion scene on the scenes tab turned every trip through
+// the portal into a cut in that game for good.
+let motionForced = null;        // page: motion asked for by a scene or a check
+export const forceMotion = v => { motionForced = v; };
+export const motionForcedNow = () => motionForced;
 
 // How the crew is drawn (render.js, a `dim` layer): at full ink, faint, or
 // not at all -- the corner's switch (corner.js). A late yard is a crowd, and
