@@ -27,6 +27,8 @@ import { writeCount } from './render/numfont.js';
 import { msg, FACE } from './lang.js';   // REVIEW
 import { crispText } from './render/crisptext.js';   // REVIEW
 import { GREY } from './config/palette.js';   // REVIEW
+import { SHELF_HOVER_MS } from './config.js';   // REVIEW
+import { drift } from './render/bars.js';   // REVIEW
 
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
@@ -713,14 +715,32 @@ function button(ctx, b, kind, live) {
 const SHOP_PX = 14, SHOP_H = P * 4, SHOP_PAD = P * 2;
 const shopW = () => Math.ceil((msg('roster-upgrades').length * SHOP_PX * 0.62 + SHOP_PAD * 2) / P) * P;
 const boardUp = key => !!S[`${key.replace(/-(\w)/g, (_, c) => c.toUpperCase())}BoardOpen`];
+// The shop tile's hover (shelf.css), on the canvas: at rest only the word on
+// the ground; under the pointer, or while its board is open, the plate lifts
+// up and left off a hard shadow left where it stood, its edge easing in over
+// the tile's own SHELF_HOVER_MS, and drifts on the tile's own loop (bars.js).
+const SHOP_LIFT = P * 0.4;                 // the tile's 2px lift at the yard's five-sixths
+const lifting = new Map();                 // post -> { to, from, at }
+function lifted(key, up) {
+  const t0 = now(); let r = lifting.get(key);
+  if (!r) lifting.set(key, r = { to: up ? 1 : 0, from: up ? 1 : 0, at: t0 });
+  const k = Math.min(1, (t0 - r.at) / SHELF_HOVER_MS), at = r.from + (r.to - r.from) * (1 - Math.pow(1 - k, 3));
+  if (r.to !== (up ? 1 : 0)) { r.from = at; r.to = up ? 1 : 0; r.at = t0; }
+  return reducedMotion() ? r.to : at;
+}
 function shopButton(ctx, b, p) {
-  const lit = boardUp(p.board) || (S.mouse && inside(hit(b), S.mouse.x, S.mouse.y));
-  const ink = lit ? GREY[GREY.length - 1] : GREY[0], paper = lit ? GREY[0] : GREY[GREY.length - 1];
-  ctx.fillStyle = ink;
-  ctx.fillRect(b.x, b.y, b.w, b.h);
-  if (!lit) { ctx.fillStyle = paper; ctx.fillRect(b.x, b.y, b.w, THIN); ctx.fillRect(b.x, b.y + b.h - THIN, b.w, THIN); ctx.fillRect(b.x, b.y, THIN, b.h); ctx.fillRect(b.x + b.w - THIN, b.y, THIN, b.h); }
-  // the game's own crisp type, the tone of the board's text on its ground
-  crispText(ctx, msg('roster-upgrades').toUpperCase(), b.x + b.w / 2, b.y + (b.h - SHOP_PX) / 2, `${SHOP_PX}px ${FACE}`, paper, 'center', ink, GREY);
+  const up = boardUp(p.board) || !!(S.mouse && inside(hit(b), S.mouse.x, S.mouse.y));
+  const t = lifted(p.key, up), paper = GREY[0], ink = GREY[GREY.length - 1];
+  const [dx, dy] = reducedMotion() ? [0, 0] : drift('upgrades' + p.key);
+  const x = b.x + (dx - SHOP_LIFT) * t, y = b.y + (dy - SHOP_LIFT) * t;
+  if (t > 0) {
+    ctx.fillStyle = ink; ctx.fillRect(b.x, b.y, b.w, b.h);        // the shadow, where the plate stood
+    ctx.fillStyle = paper; ctx.fillRect(x, y, b.w, b.h);
+    ctx.globalAlpha = t; ctx.fillStyle = ink;
+    ctx.fillRect(x, y, b.w, THIN); ctx.fillRect(x, y + b.h - THIN, b.w, THIN); ctx.fillRect(x, y, THIN, b.h); ctx.fillRect(x + b.w - THIN, y, THIN, b.h);
+    ctx.globalAlpha = 1;
+  }
+  crispText(ctx, msg('roster-upgrades').toUpperCase(), x + b.w / 2, y + (b.h - SHOP_PX) / 2, `${SHOP_PX}px ${FACE}`, ink, 'center', paper, GREY);
 }
 
 // A pip is a pixel mask, never an arc: an arc's edge is a grey smear, and a

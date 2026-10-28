@@ -3086,7 +3086,7 @@ export const SCENES = {
       const b = stationBox('mill'), mid = b.x + b.w * 0.8;
       pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
-  'after-shopbtn-b': { about: 'the acts', review: 'act 3: a shop button by the worker count', stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option: 'B above the count', say: "A button saying UPGRADES above each station's worker count (the counts can grow below), drawn as the shop's own cards are: a hairline border, inverted under the pointer and while its shop is open. Clicking or hovering the station opens nothing.",
+  'after-shopbtn-b': { about: 'the acts', review: 'act 3: a shop button by the worker count', stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option: 'B above the count', say: "UPGRADES above each station's worker count, behaving as the shop's tiles do: no border at rest; under the pointer (or while its shop is open) it lifts off a hard shadow, its border easing in, and drifts. Press it to open the shop, again to put it away.",
     swap: () => { globalThis.__shopBtn = 'below'; },
     run: () => {
       globalThis.__shopBtn = 'below';
