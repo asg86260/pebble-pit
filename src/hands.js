@@ -60,13 +60,35 @@ function swayOf(kind) {
   return HAND_SWAY[at];
 }
 
+// How near the held cursor a thing in flight is caught: forgiving, since dust
+// falls quickly. A block's x, y is its middle; a grain's, its cell's top left.
+const REACH = (BRUSH + 2) * P;
+const inReach = (ch, mx, my) => {
+  const off = ch.kind ? 0 : P / 2;
+  return Math.abs(ch.x + off - mx) <= REACH && Math.abs(ch.y + off - my) <= REACH;
+};
+// Whether a press here has a place's goods to catch in the air, at the
+// reach `catchAir` catches at. Only a place's: in the yard a mouse press
+// anywhere is the hand's already, and a finger near the yard's own traffic
+// (a hauler's toss, a stream over the hole) is still the platform's scroll.
+function airUnder(mx, my) {
+  for (const ch of S.chips) if (ch.place && !ch.auto && inReach(ch, mx, my)) return true;
+  return false;
+}
+// Whether a press here is the hand's: dust (or a place's goods) to sweep
+// under it, or a place's goods thrown to catch on the way past. Asked by
+// every press that is not the hand's wherever it lands (input.js: a finger
+// anywhere, a press in an act's place): a gate that asked only for what
+// lies on the ground let a press on a thrown block fall through to whatever
+// stood behind it.
+export const handTakes = (mx, my, radius = BRUSH) => dustUnder(mx, my, radius) || airUnder(mx, my);
+
 // pixels still in flight are caught if they pass the cursor while it is held
 export function catchAir(mx, my) {
   catchSinking(mx, my);
   let had = S.held ? S.motes[0] : null;
   if (had && S.held >= handHolds(had.kind)) return;
 
-  const reach = (BRUSH + 2) * P;      // forgiving: dust falls quickly
   for (let i = S.chips.length - 1; i >= 0; i--) {
     const ch = S.chips[i];
     // not what the held hand itself just let go, or the toss would come
@@ -77,9 +99,7 @@ export function catchAir(mx, my) {
     if (had && (had.kind || null) !== (ch.kind || null)) continue;
     // full of the held kind (an empty hand has room for anything)
     if (S.held >= handHolds(ch.kind)) break;
-    // a block's x, y is its middle; a grain's, its cell's top left
-    const off = ch.kind ? 0 : P / 2;
-    if (Math.abs(ch.x + off - mx) > reach || Math.abs(ch.y + off - my) > reach) continue;
+    if (!inReach(ch, mx, my)) continue;
     S.chips.splice(i, 1);
     S.held++;
     if (ch.kind) S.motes.push(mote(ch.s, ch));
@@ -97,12 +117,11 @@ function catchSinking(mx, my) {
   if (S.held || !S.sinking.length) return;
   let room = capacity() - S.heldScales;
   if (room <= 0) return;
-  const reach = (BRUSH + 2) * P;
   const sink = S.sinking;
   let keep = 0;
   for (let i = 0; i < sink.length; i++) {
     const g = sink[i];
-    if (room > 0 && g.arc == null && Math.abs(g.x - mx) <= reach && Math.abs(g.y - my) <= reach) {
+    if (room > 0 && g.arc == null && Math.abs(g.x - mx) <= REACH && Math.abs(g.y - my) <= REACH) {
       S.motes.push(mote(g.s));
       S.heldScales++;
       room--;
@@ -127,12 +146,13 @@ const mote = (s, goods = null) => {
 export const heldGoods = () => (S.held && S.motes[0] && S.motes[0].kind ? S.motes[0] : null);
 
 // The plot under a point: an act place's pile there ({ b, what, kind,
-// place }), the yard's floor ({ b }), or null over an act place's open
+// place }), its floor where goods lie within `reach` px ({ lying, kind,
+// place }), the yard's floor ({ b }), or null over an act place's bare
 // ground, which is no floor of the yard's though it lies on the same x.
-function plotAt(x, y) {
+function plotAt(x, y, reach = BRUSH * P) {
   const pl = placeAt(x, y);
   if (!pl) return { b: floor };
-  const spot = pl.plots ? pl.plots.at(x, y) : null;
+  const spot = pl.plots ? pl.plots.at(x, y, reach) : null;
   if (spot) spot.place = Object.keys(PLACES).find(k => PLACES[k] === pl);
   return spot;
 }
@@ -159,8 +179,9 @@ function* brushCells(mx, my, radius = BRUSH, b = floor) {
 // default, or a finger's reach (input.js, `fingerReach`).
 export function dustUnder(mx, my, radius = BRUSH) {
   if (inDeep(mx, my)) return bedNear(mx, my, radius * P);
-  const spot = plotAt(mx, my);
+  const spot = plotAt(mx, my, radius * P);
   if (!spot) return false;
+  if (spot.lying) return true;
   for (const _ of brushCells(mx, my, radius, spot.b)) return true;
   return false;
 }
@@ -200,7 +221,9 @@ export function sweep(mx, my) {
 // of dust no blocks.
 function sweepGoods(mx, my, spot) {
   const had = S.held ? S.motes[0] : null;
-  if (had && (had.kind !== spot.kind || had.place !== spot.place)) return;
+  if (had && (!had.kind || had.place !== spot.place)) return;
+  if (spot.lying) { liftGoods(mx, my, spot, had); return; }
+  if (had && had.kind !== spot.kind) return;
   let room = handHolds(spot.kind) - S.held;
   if (room <= 0) return;
   const plots = PLACES[spot.place].plots;
@@ -212,6 +235,24 @@ function sweepGoods(mx, my, spot) {
     const v = at(spot.b, c, r);
     if (!v || !plots.take(spot, c, r)) continue;
     S.motes.push(mote(v, spot));
+    S.held++;
+    room--;
+  }
+}
+
+// A place's goods lying on its floor within the brush, nearest first, into
+// the hand through the place's door (`plots.lift`): one kind, the held
+// one's or else the nearest's, so a hand of planks passed over a log takes
+// the planks beside it.
+function liftGoods(mx, my, spot, had) {
+  const kind = had ? had.kind : spot.kind;
+  let room = handHolds(kind) - S.held;
+  if (room <= 0) return;
+  const plots = PLACES[spot.place].plots;
+  for (const q of plots.lyingNear(mx, my, BRUSH * P, kind)) {
+    if (room <= 0) break;
+    if (!plots.lift(q)) continue;
+    S.motes.push(mote(1, { kind, place: spot.place }));
     S.held++;
     room--;
   }

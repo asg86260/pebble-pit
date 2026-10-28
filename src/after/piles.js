@@ -18,7 +18,7 @@ import { P, AFTER_PILES, AFTER_PILE_SETTLE_S, AFTER_LOG_TIMBER, AFTER_GOODS_FOOT
 import { addGrain, put, at, inside, topRow, bottomY, settle, settleSome, colOf } from '../grid.js';
 import { shadeNear } from '../grid.js'; // MOCK
 import { pilePlace, pileOwner, pileMid, pileAt, groundOf, floorAt, afterX0, afterX1, AP } from './place.js';
-import { layGood } from './grove.js';
+import { layGood, lyingNear, takeGroundLog, kindOf } from './grove.js';
 import { bedLand } from './mill.js';
 import { built } from './levels.js';
 import { secs } from './util.js';
@@ -161,8 +161,12 @@ export function stepPiles(c) {
 // pile stays its stock.
 export const AFTER_PLOTS = {
   // The pile whose plot is under (x, y), a block's width of slack round it,
-  // its station standing: { b, what, kind }, or null.
-  at(x, y) {
+  // its station standing: { b, what, kind }; else the floor where goods lie
+  // within `reach` px, a felled log or a block thrown there: { lying, kind },
+  // the nearest's kind; or null. The floor's goods are the hand's as a
+  // pile's are, as act 1's dust is the hand's wherever it lies: a block
+  // thrown off a pile is picked up again where it came down.
+  at(x, y, reach = 0) {
     if (!S.after) return null;
     for (const what of PILED) {
       const key = pileOwner(what);
@@ -170,9 +174,15 @@ export const AFTER_PLOTS = {
       const b = plotOf(what);
       if (x >= b.x - b.p && x < b.x + (b.cols + 1) * b.p && y >= b.y - b.p && y <= bottomY(b)) return { b, what, kind: AFTER_PILES[what].good };
     }
-    return null;
+    const near = lyingNear(x, y, reach);
+    return near.length ? { lying: true, kind: kindOf(near[0]) } : null;
   },
   take: (spot, c, r) => takeCell(spot.what, c, r),
+  // The goods of `kind` lying within `reach` px of (x, y), nearest first, and
+  // one taken up off the floor through the gatherers' own door (grove.js), so
+  // a block the hand has taken is one no gatherer walks to.
+  lyingNear: (x, y, reach, kind) => lyingNear(x, y, reach).filter(q => kindOf(q) === kind),
+  lift: q => takeGroundLog(q.id),
   // A thrown block, `ch` a chip of S.chips whose x, y are the block's middle,
   // one frame on: kept inside the place, set down on a pile of its kind its
   // foot has come down on (one at its brim lets it fall past), else laid on

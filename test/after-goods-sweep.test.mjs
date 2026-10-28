@@ -13,7 +13,7 @@
 import { group, ok, run, runUntil, yard, restartReloadClock } from './helpers.mjs';
 import { P, RIM_PIECES, AFTER_BLOCK } from '../src/config.js';
 import { capacity } from '../src/levels.js';
-import { track, sweep, release, heldGoods } from '../src/hands.js';
+import { track, sweep, release, heldGoods, handTakes } from '../src/hands.js';
 import { plotOf, AFTER_PLOTS } from '../src/after/piles.js';
 import { floorAt, afterX0, afterX1, AP } from '../src/after/place.js';
 import { bottomY, addGrain, grainsIn } from '../src/grid.js';
@@ -48,6 +48,14 @@ function up(members = 0) {
 }
 // A let-go held still (no flick): the trail is the one point.
 function letGo(p) { S.trail = []; track(p.x, p.y); release(p.x, p.y); }
+// Open floor: a spot no pile's plot nor anything lying is near, well up off
+// the floor.
+function openSpot() {
+  let x = afterX0() + AP * 20;
+  const clear = x0 => [-3, 0, 3].every(k => !AFTER_PLOTS.at(x0 + k * AFTER_BLOCK.plank * AP, floorAt(x0) - P * 2, AP * 6));
+  while (x < afterX1() - AP * 20 && !clear(x)) x += P * 4;
+  return { x, y: floorAt(x) - AP * 10 };
+}
 function down() { return runUntil(() => !S.chips.some(c => c.place), 10); }
 const done = () => { S.held = 0; S.motes = []; S.carryLevel = 0; window.__actsOn(null); };
 
@@ -125,11 +133,7 @@ group('let go over open ground, the blocks lie on the floor and a member carries
   S.trail = []; track(p.x, p.y);
   sweep(p.x, p.y);
   const took = S.held;
-  // open floor: a spot no pile's plot is near, well up off the floor
-  let x = afterX0() + AP * 20;
-  const clear = x0 => [-3, 0, 3].every(k => !AFTER_PLOTS.at(x0 + k * AFTER_BLOCK.plank * AP, floorAt(x0) - P * 2));
-  while (x < afterX1() - AP * 20 && !clear(x)) x += P * 4;
-  const spot = { x, y: floorAt(x) - AP * 10 };
+  const spot = openSpot();
   letGo(spot);
   const landed = down();
   const lying = laid('plank');
@@ -203,5 +207,179 @@ group('the hand holds one log, a share of planks by size, and a full hand of dus
     ok(all(c => c.logs.held === 1 && c.logs.most === 1 && c.logs.off === 1), 'swept for a second, the hand holds exactly one log, at any carry', JSON.stringify(counts)),
     ok(all(c => c.planks.held === c.planks.want && c.planks.off === c.planks.want), 'and planks: a quarter of the carry, never fewer than two', JSON.stringify(counts)),
     ok(all(c => c.dust.held === c.dust.cap), 'the yard\'s dust still fills the hand to its carry', JSON.stringify(counts))
+  ];
+});
+
+// Caught on the way past (hands.js, `catchAir`): a block thrown up off a pile
+// is taken back into the hand by a press on it in the air, as act 1's dust
+// is. The press goes as input.js's pointerdown has it up there: the hand
+// goes down only where the hand's own gate says there is something to take
+// (`handTakes`), and the catch is the yard's step that runs every frame the hand is down
+// (game.js, 'catch').
+function press(p) {
+  if (!handTakes(p.x, p.y)) return false;
+  S.dragging = true;
+  S.trail = []; track(p.x, p.y);
+  S.mouse = { ...p };
+  sweep(p.x, p.y);
+  return true;
+}
+// A flick up and to the right off `p`, three frames of the drag, let go.
+function flick(p) {
+  S.dragging = true;
+  S.trail = []; track(p.x, p.y); S.mouse = { ...p };
+  for (let k = 1; k <= 3; k++) { run(1 / 60); const q = { x: p.x + k * 20, y: p.y - k * 30 }; S.mouse = q; track(q.x, q.y); }
+  S.dragging = false;
+  release(S.mouse.x, S.mouse.y);
+}
+// The middle of what is in the air.
+const midOf = cs => ({ x: cs.reduce((a, c) => a + c.x, 0) / cs.length, y: cs.reduce((a, c) => a + c.y, 0) / cs.length });
+// Six frames after the throw, a press (`down`) where the thrown things are,
+// and the hand kept on them while it is held, until none is left in the air
+// or a second has gone.
+function catchBack(air, down = press) {
+  run(6 / 60);
+  const thrown = air().length;
+  const pressed = thrown > 0 && down(midOf(air()));
+  for (let k = 0; k < 60 && S.dragging && air().length; k++) { S.mouse = midOf(air()); track(S.mouse.x, S.mouse.y); run(1 / 60); }
+  return { thrown, pressed, left: air().length };
+}
+const airOf = kind => () => S.chips.filter(c => c.place === 'after' && c.kind === kind);
+
+group('a log thrown up off the forestry pile is caught back into the hand by a press on it in the air', async () => {
+  up();
+  window.__afterGrant({ grovelogs: 6 });
+  run(1);
+  restartReloadClock();
+  const g0 = stock().grovelogs, p = on('grovelogs');
+  press(p);
+  const took = S.held;
+  flick(p);
+  const c = catchBack(airOf('log'));
+  const g = heldGoods(), held = S.held, off = g0 - stock().grovelogs, lying = laid('log').length;
+  S.dragging = false;
+  done();
+  return [
+    ok(took === 1 && c.thrown === 1, 'the log is swept up and thrown', JSON.stringify({ took, ...c })),
+    ok(c.pressed && held === 1 && g && g.kind === 'log' && c.left === 0, 'a press on it in the air catches it back into the hand', JSON.stringify({ held, kind: g && g.kind, ...c })),
+    ok(off === 1 && lying === 0, 'still off the pile and nowhere else', JSON.stringify({ off, lying }))
+  ];
+});
+
+group('planks thrown up off the timber pile are caught back, every one', async () => {
+  up();
+  restartReloadClock();
+  const t0 = stock().timber, p = on('timber');
+  press(p);
+  const took = S.held;
+  flick(p);
+  const c = catchBack(airOf('plank'));
+  const g = heldGoods(), held = S.held, off = t0 - stock().timber, lying = laid('plank').length;
+  S.dragging = false;
+  done();
+  return [
+    ok(took >= 2 && c.thrown === took, 'the planks are swept up and thrown', JSON.stringify({ took, ...c })),
+    ok(c.pressed && held === took && g && g.kind === 'plank' && c.left === 0, 'a press on them in the air catches every one back', JSON.stringify({ held, ...c })),
+    ok(off === took && lying === 0, 'still off the pile and nowhere else', JSON.stringify({ off, lying }))
+  ];
+});
+
+// The control: the yard's dust, which a mouse press anywhere in the yard
+// takes the hand down for (input.js, the press's last line), caught as it
+// always was.
+group('the yard\'s dust thrown up is still caught back by a press on it', async () => {
+  restartReloadClock();
+  S.carryLevel = 3;
+  const gx = floor.x + floor.cols * P / 2, gy = bottomY(floor) - P / 2;
+  for (let i = 0; i < capacity() * 2; i++) addGrain(floor, gx);
+  S.held = 0; S.motes = [];
+  S.dragging = true; S.trail = []; track(gx, gy); S.mouse = { x: gx, y: gy };
+  for (let k = 0; k < 6 && S.held < capacity(); k++) sweep(gx, gy);
+  const took = S.held;
+  flick({ x: gx, y: gy - P * 4 });
+  const air = () => S.chips.filter(c => !c.place && c.y < gy - P * 4);
+  const yardPress = p => { S.dragging = true; S.trail = []; track(p.x, p.y); S.mouse = { ...p }; sweep(p.x, p.y); return true; };
+  const c = catchBack(air, yardPress);
+  const held = S.held;
+  S.dragging = false; S.held = 0; S.motes = []; S.carryLevel = 0;
+  return [
+    ok(took > 0 && c.thrown === took && held === took && c.left === 0, 'every grain thrown is caught back', JSON.stringify({ took, held, ...c }))
+  ];
+});
+
+// Picked up again where it came down: a block thrown onto open floor is the
+// hand's as a pile's blocks are (after/piles.js, AFTER_PLOTS `at`), as act
+// 1's dust is the hand's wherever it lies. A press on it, then the hold
+// dragged over each block lying there (input.js's pointermove sweeps).
+function repick(kind) {
+  const lying = laid(kind);
+  const mid = q => ({ x: q.x + AFTER_BLOCK[kind] * AP / 2, y: floorAt(q.x + AP) - AFTER_BLOCK[kind] * AP / 2 });
+  const pressed = lying.length > 0 && press(mid(lying[0]));
+  for (const q of lying) { const m = mid(q); S.mouse = m; track(m.x, m.y); sweep(m.x, m.y); run(1 / 60); }
+  return pressed;
+}
+// Thrown off `what` onto open floor and let come down and settle.
+function throwDown(what) {
+  const p = on(what);
+  press(p);
+  const took = S.held;
+  S.dragging = false;
+  letGo(openSpot());
+  down();
+  run(0.5);
+  return took;
+}
+
+group('a log thrown onto open floor is picked up again by a press and hold on it', async () => {
+  up();
+  window.__afterGrant({ grovelogs: 6 });
+  run(1);
+  restartReloadClock();
+  const g0 = stock().grovelogs;
+  const took = throwDown('grovelogs');
+  const lying = laid('log').length;
+  const pressed = repick('log');
+  const g = heldGoods(), held = S.held;
+  S.dragging = false;
+  done();
+  return [
+    ok(took === 1 && lying === 1, 'the log comes down on the floor', JSON.stringify({ took, lying })),
+    ok(pressed && held === 1 && g && g.kind === 'log' && laid('log').length === 0, 'a press on it takes it back into the hand', JSON.stringify({ pressed, held, kind: g && g.kind, left: laid('log').length })),
+    ok(g0 - stock().grovelogs === 1, 'and the forestry pile is one short, not two', `${g0} -> ${stock().grovelogs}`)
+  ];
+});
+
+group('planks thrown onto open floor are picked up again, every one', async () => {
+  up();
+  restartReloadClock();
+  const t0 = stock().timber;
+  const took = throwDown('timber');
+  const lying = laid('plank').length;
+  const pressed = repick('plank');
+  const g = heldGoods(), held = S.held;
+  S.dragging = false;
+  done();
+  return [
+    ok(took >= 2 && lying === took, 'the planks come down on the floor', JSON.stringify({ took, lying })),
+    ok(pressed && held === took && g && g.kind === 'plank' && laid('plank').length === 0, 'a press and hold over them takes every one back', JSON.stringify({ pressed, held, left: laid('plank').length })),
+    ok(t0 - stock().timber === took, 'and the timber pile is short by just those', `${t0} -> ${stock().timber}`)
+  ];
+});
+
+group('blocks lying on the floor are still there after a reload, and still the hand\'s', async () => {
+  up();
+  restartReloadClock();
+  const took = throwDown('timber');
+  const before = laid('plank').map(q => Math.round(q.x)).sort((a, b) => a - b).join(' ');
+  window.__reload();
+  run(0.5);
+  const after = laid('plank').map(q => Math.round(q.x)).sort((a, b) => a - b).join(' ');
+  const pressed = repick('plank');
+  const held = S.held;
+  S.dragging = false;
+  done();
+  return [
+    ok(took >= 2 && before === after, 'read back, every plank lies where it lay', `${before} / ${after}`),
+    ok(pressed && held === took, 'and a press and hold picks them up', `${held} of ${took}`)
   ];
 });
