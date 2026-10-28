@@ -572,13 +572,16 @@ const ERRANDS = [
 const fetching = job => S.after.bodies.filter(o => onRound(o, job) && !carried(o)).length;
 const errandFor = () => ERRANDS.find(e => e.left() > fetching(e.job) * (e.per ?? holds(e.kind)))?.job || null;
 function runErrand(w, dt) {
-  if (w.errand && !carried(w) && w.target == null && w.log == null) {
+  // A hauler names the station it fetches for before it has a block in hand
+  // (each station is fed off its own pile), so empty-handed it is as free as
+  // any other errand.
+  if (w.errand && !carried(w) && (w.target == null || w.errand === AFTER_JOB.HAUL) && w.log == null) {
     const e = ERRANDS.find(q => q.job === w.errand);
-    if (!e || (!e.left() && !(e.hold && e.hold()))) w.errand = null;
+    if (!e || (!e.left() && !(e.hold && e.hold()))) { w.errand = null; w.target = null; }
     // The notch first: with nobody there, the first empty hands on any other
     // errand go to it, or every idle member can be out hauling while the
     // heap stands at its brim and the saw stops.
-    else if (w.errand !== AFTER_JOB.SWEEP && !w.pick && chainRuns() && !sweeping()) w.errand = AFTER_JOB.SWEEP;
+    else if (w.errand !== AFTER_JOB.SWEEP && !w.pick && chainRuns() && !sweeping()) { w.errand = AFTER_JOB.SWEEP; w.target = null; }
   }
   if (!w.errand && !carried(w)) w.errand = errandFor();
   if (!w.errand) return false;

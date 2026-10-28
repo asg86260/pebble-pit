@@ -584,3 +584,8 @@ export const AFTER_DROP = { s: 0.5, from: 8, back: 6 };
 // (config/afterpiles.js, `benchtimber`): a stock key like every pile's, so a
 // save from before it reads back with none.
 AFTER_STOCK.push('benchtimber');
+// A timber block is half the timber unit it was before the units halved
+// (DESIGN.md, "The numbers": "only the timber unit changes"), so a load holds
+// twice as many of them for the same timber a trip: a block takes one of the
+// yard's carry slots where the plank it halved took two.
+AFTER_CARRY_SLOTS.plank = 1;
