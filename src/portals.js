@@ -28,7 +28,7 @@ import { afterX0, afterFloor } from './after/place.js';
 import { roadX, chamberFloor } from './hell/place.js';
 import { deepFloor } from './deep/place.js';
 import { afterlifeOn, hellOn } from './acts.js';
-import { travel, gliding, glidingBy } from './view.js';
+import { travel, gliding, glidingBy, goDeep, goUp, canGoDown } from './view.js';
 
 const snap = v => Math.round(v / P) * P;
 
@@ -206,4 +206,33 @@ export function handAt(x, y) {
     if (b && x >= b.x - P && x < b.x + b.w + P && y >= b.y - P && y < b.y + b.h + P) return key;
   }
   return null;
+}
+
+// --- every way out --------------------------------------------------------------
+// Every way the player can take out of the place on screen, for the screen's
+// own squares (corner.js): the wizards' portal between the yard and the deep
+// first, then each act portal that is the player's (`portalFree`), so a way
+// shows only once the story has opened it to them. `dir` is which way the
+// camera goes, off the places' order top to bottom; `to` the place it lands
+// in; `via` the act portal (null: the wizards').
+const PLACE_ORDER = ['after', 'yard', 'deep', 'hell'];
+export function waysOut(from = S.view) {
+  const out = [];
+  if ((from === 'yard' || from === 'deep') && canGoDown()) out.push({ to: from === 'yard' ? 'deep' : 'yard', via: null });
+  for (const key of PORTAL_KEYS) {
+    const row = PORTALS[key];
+    if (!portalFree(key)) continue;
+    if (from === row.outer) out.push({ to: row.inner, via: key });
+    else if (from === row.inner) out.push({ to: row.outer, via: key });
+  }
+  return out.map(w => ({ ...w, dir: PLACE_ORDER.indexOf(w.to) < PLACE_ORDER.indexOf(from) ? 'up' : 'down' }));
+}
+// A way out taken by the player's own press: the same as a press on the
+// portal's end, ripple and all (heaven's gates opening first). False if it
+// cannot be taken from here now.
+export function takeWay(w) {
+  if (!w || gliding()) return false;
+  if (w.via) return throughPortal(w.via, true);
+  if (S.view === 'yard') goDeep(); else if (S.view === 'deep') goUp();
+  return gliding() || S.view === w.to;
 }

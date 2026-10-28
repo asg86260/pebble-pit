@@ -15882,6 +15882,18 @@ the snatch on:
   water line in the deep -- not in the light itself, where a white arrow is
   white on white. A click on it goes through.
 
+**A square for every way out (built, 2026-10-27).** *(The owner: "i also
+want transition buttons to work between all the acts. act 3 into 1 and then
+1 into 2.")* The corner's square is one per way out of the place on screen
+(portals.js, `waysOut`): the wizards' portal from the yard and the deep, and
+each act portal once the story has opened it to the player (`portalFree`) --
+so from heaven a chevron down to the yard, in the yard a chevron down to the
+deep and, once heaven is open, a second square pointing up to it; in the
+deep up to the yard and, once hell is open, down to it. A press is the same
+as a press on that portal's end (heaven's gates open first, then the
+ripple), so there is one way through each portal and the squares only point
+at it. Nothing new is drawn: the same chevron, turned for up.
+
 **A ripple out of the portal.** *(Voted the same day, C of three mocked
 full-screen transitions, after a camera glide through the abyss was built
 and read as choppy: a zoom that steps a whole cell size at a time, and two
