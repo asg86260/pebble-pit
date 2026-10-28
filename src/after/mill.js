@@ -34,7 +34,7 @@ import { heapMid, groundOf, stationX0, floorAt, AP } from './place.js';
 import { takeBlock, setBlock, pileRoom, pileCount, topBlock, dropSpot } from './piles.js';
 import { colX, rowY, runsOf, cellsOfRuns } from './ground.js';
 import { layGood } from './grove.js';
-import { addGrain, put, at, topRow, settleSome, count, colOf, recount, wakeGrid } from '../grid.js';
+import { addGrain, put, at, topRow, settleSome, count, colOf, recount, wakeGrid, cellOf, kindOf } from '../grid.js';
 
 const M = AFTER_MILL, F = M.frame, LOG = AFTER_BLOCK.log, PLANK = AFTER_BLOCK.plank;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -110,7 +110,7 @@ export function takeSawdust(n) {
 }
 // A grain's value names it, a byte's worth (the grid's cells): the drawing
 // picks its tone off it (render/after/stations.js), so it keeps it as it rolls.
-const grainTone = b => 1 + ((b.seq = (b.seq || 0) + 1) % 255);
+const grainTone = b => (globalThis.__goodsLook === 'c' ? 1 + Math.floor(((Math.sin(((b.seq = (b.seq || 0) + 1) + 7) * 78.233) * 43758.5453) % 1 + 1) % 1 * 6) : 1 + ((b.seq = (b.seq || 0) + 1) % 255)); // MOCK after-goods  C: a random shade of six, once, per grain
 function takeTop(b) {
   let col = -1, hi = -1;
   for (let c = 0; c < b.cols; c++) { const r = topRow(b, c); if (r > hi) { hi = r; col = c; } }
@@ -139,7 +139,8 @@ const walkF = g => (g < G0 ? 0.15 * g / G0 : g < G1 ? 0.15 + 0.15 * Math.sqrt((g
 const eatenOf = bed => clamp(bed.at + LOG - F.bx, 0, LOG);
 const colAt = bed => Math.min(LOG - 1, Math.floor(eatenOf(bed) + EPS));
 const kerf = col => col >= AFTER_LOG_TIMBER;
-function newBed(at, hi) { return { at, k: Math.floor(hi - G0) + 1, f: 0, d: 0, from: at, to: at, cut: 0, dust: 0 }; }
+function newBed(at, hi, v) { return { at, k: Math.floor(hi - G0) + 1, f: 0, d: 0, from: at, to: at, cut: 0, dust: 0, v: kindOf(v) && kindOf(v).key === 'log' ? v : cellOf('log') }; } // MOCK after-goods  the log keeps its own shade onto the bed
+const plankV = (bed, col) => ((bed.pv = bed.pv || [])[col] ??= cellOf('plank')); // MOCK after-goods  each column's timber block takes its shade once, as the blade starts it
 
 // Whether the stroke about to begin can go: the heap full stops the saw, a
 // new column of timber waits for room on the mound for a whole cut (as the
@@ -170,8 +171,8 @@ function land(s, bed, hand) {
     s.hitAt = S.after.t;
     if (hand) S.after.workAt.mill = S.after.t;
     const col = Math.min(LOG - 1, Math.floor(e0 + EPS));
-    if (!kerf(col)) { if (e >= col + 1 - EPS) { s.out.push({ a: 0 }); bed.cut++; source('plank', 1, 'saw'); } }
-    else for (let k = Math.round((e - e0) * AFTER_KERF_GRAINS); k > 0; k--) { s.dust.push({ a: 0 }); bed.dust++; source('sawdust', 1, 'saw'); }
+    if (!kerf(col)) { if (e >= col + 1 - EPS) { s.out.push({ a: 0, v: plankV(bed, col) }); bed.cut++; source('plank', 1, 'saw'); } }
+    else for (let k = Math.round((e - e0) * AFTER_KERF_GRAINS); k > 0; k--) { s.dust.push({ a: 0, v: grainTone(heapPlot()) }); bed.dust++; source('sawdust', 1, 'saw'); }
   }
   if (e >= LOG - EPS) { s.bed = null; sink('log', 1, 'saw'); }
 }
@@ -235,7 +236,7 @@ export function bedLand(ch) {
     ch.vx = (x < F.bx ? -1 : 1) * Math.max(Math.abs(ch.vx), 1);
     return false;
   }
-  s.bed = newBed(x - LOG / 2, s.hi);
+  s.bed = newBed(x - LOG / 2, s.hi, ch.s); // MOCK after-goods
   s.setAt = S.after.t;
   return true;
 }
@@ -344,17 +345,18 @@ function stepSawyer(s, dt) {
   tr.t += dt;
   if (tr.ph === 'lift' && tr.log == null && tr.t >= 0) {
     const top = topLog();
-    tr.log = top && takeBlock('logs', top.at) ? { x: top.x, y: top.y } : false;
+    const got = top && takeBlock('logs', top.at); // MOCK after-goods
+    tr.log = got ? { x: top.x, y: top.y } : false; tr.v = got; // MOCK after-goods
     if (!tr.log) { s.trip = { ph: 'back', t: 0 }; return; }
   }
   if (tr.ph === 'set' && !tr.down && tr.t >= DUR.set - M.held) {
     tr.down = true;
-    s.bed = newBed(SEAT.x, s.hi);
+    s.bed = newBed(SEAT.x, s.hi, tr.v); // MOCK after-goods
     s.setAt = S.after.t;
   }
   if (tr.t >= DUR[tr.ph]) {
     const next = NEXT[tr.ph];
-    s.trip = next ? { ph: next, t: tr.t - DUR[tr.ph], log: next === 'lift' ? null : undefined } : null;
+    s.trip = next ? { ph: next, t: tr.t - DUR[tr.ph], log: next === 'lift' ? null : undefined, v: next === 'lift' ? undefined : tr.v } : null; // MOCK after-goods
   }
 }
 // The sawyer in the wheel walks it a stroke at a time while there is a log
@@ -410,7 +412,7 @@ function stepOut(s, dt) {
     // On the mound's middle column; a mound filled meanwhile (by the hand)
     // lets it fall past onto the floor beside it.
     const t = moundTop();
-    if (!setBlock('timber', t.at)) layGood('plank', Math.round((t.at - PLANK * AP / 2) / P) * P, floorAt(t.at));
+    if (!setBlock('timber', t.at, o.v)) layGood('plank', Math.round((t.at - PLANK * AP / 2) / P) * P, floorAt(t.at), o.v); // MOCK after-goods
     s.landed++;
     s.out.splice(i--, 1);
   }
@@ -419,7 +421,7 @@ function stepOut(s, dt) {
     const g = s.dust[i];
     g.a += dt;
     if (!grainAt(g.a).down) continue;
-    addGrain(b, wx(F.bx) + AP / 2, undefined, grainTone(b), true);
+    addGrain(b, wx(F.bx) + AP / 2, undefined, g.v || grainTone(b), true); // MOCK after-goods
     s.grains = (s.grains || 0) + 1;
     s.dust.splice(i--, 1);
   }
@@ -486,10 +488,12 @@ export function millView() {
   let log = null, grow = 0, teeth = 0;
   if (bed) {
     const e = eatenOf(bed), col = Math.min(LOG - 1, Math.floor(e + EPS));
-    log = { x: bed.at, left: LOG - e, eaten: e };
+    log = { x: bed.at, left: LOG - e, eaten: e, v: bed.v, pv: kerf(col) ? undefined : plankV(bed, col) }; // MOCK after-goods
     if (!kerf(col) && e > col + EPS) grow = e - col;
     if (kerf(col)) teeth = (e - AFTER_LOG_TIMBER) * AFTER_KERF_GRAINS - bed.dust;
   }
-  return { log, grow, teeth, out: s.out.map(o => blockAt(o.a)), dust: s.dust.map(g => grainAt(g.a)), hitAt: s.hitAt, setAt: s.setAt,
+  return { log, grow, teeth, out: s.out.map(o => ({ ...blockAt(o.a), v: o.v })), // MOCK after-goods
+           dust: s.dust.map(g => ({ ...grainAt(g.a), v: g.v })), // MOCK after-goods
+           hitAt: s.hitAt, setAt: s.setAt, hv: s.trip ? s.trip.v : undefined, // MOCK after-goods
            heap: heapPlot(), spills };
 }

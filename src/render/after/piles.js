@@ -44,7 +44,7 @@ function count(d, n, cx, top, key) { const at = d.world(cx, top); countOver(at.x
 // between two in the rack.
 export const BLOCK_TONES = { log: { tone: MID, seam: K }, plank: { tone: PALE, seam: MID }, sign: { tone: K, seam: W }, load: { tone: MID, seam: K } };
 export function goodBlock(x, y, kind, seed = 1, base = null) {
-  if (goodsLook()) { mockBlock(x, y, kind, seed, base); return; } // MOCK after-goods
+  if (goodsLook() && HUES[kind]) { mockBlock(x, y, kind, seed, base); return; } // MOCK after-goods
   const t = BLOCK_TONES[kind], z = AFTER_BLOCK[kind] * AP;
   ctx.fillStyle = GREY[t.seam]; ctx.fillRect(x, y, z, z);
   ctx.fillStyle = GREY[t.tone]; ctx.fillRect(x, y, z - 1, z - 1);
@@ -75,7 +75,7 @@ export function drawGround(t) {
     if (!inView(x - z, z * 3)) continue;
     const was = ctx.globalAlpha;
     ctx.globalAlpha = was * a;
-    goodBlock(Math.round(x), Math.round(y), u.kind, seedOf(u.ai), bases && bases.get(u.ai)); // MOCK after-goods -- seed, base
+    goodBlock(Math.round(x), Math.round(y), u.kind, goodsLook() === 'c' ? u.v : seedOf(u.ai), bases && bases.get(u.ai)); // MOCK after-goods -- seed, base
     ctx.globalAlpha = was;
   }
 }
@@ -96,6 +96,7 @@ export function drawGround(t) {
 // from every block it touches (d), a one-cell band of its own cells along its
 // top and left a step lighter (e), or both, quieter still (f).
 // `globalThis.__goodsLook` picks the option; unset, the real drawing above.
+import { kindOf, toneOf } from '../../grid.js'; // MOCK after-goods
 export const goodsLook = () => globalThis.__goodsLook || null; // MOCK after-goods
 // Each good's ladder, rungs of GREY light to dark; its base tones are all // MOCK after-goods
 // but the lightest, which only the lit band (e, f) and a cell off reach. The // MOCK after-goods
@@ -117,7 +118,8 @@ const LOOK = { // MOCK after-goods
   a: { off: 0.24, band: false, apart: false }, // MOCK after-goods-a  round 2's A, as it was
   b1: { flat: 'hue', apart: true }, // MOCK after-goods-b1
   b2: { flat: 'hue', apart: false }, // MOCK after-goods-b2  each block its stored shade alone, as a grain's
-  b3: { flat: 'page', apart: true } // MOCK after-goods-b3
+  b3: { flat: 'page', apart: true }, // MOCK after-goods-b3
+  c: { flat: 'hue', rand: true } // MOCK after-goods-c  six shades a family, one drawn at random when the unit is made, kept in its tone (grid.js `cellOf`)
 }; // MOCK after-goods
 // Each good's family, four shades light to dark, as each of act 1's coins is // MOCK after-goods
 // a run of four (COIN_TONES): its own hue, flat and strong, apart from // MOCK after-goods
@@ -132,7 +134,15 @@ const HUES = { // MOCK after-goods
 export const SAWDUST_HUES = ['#f0dcb6', '#e6cc9e', '#dcbd88']; // MOCK after-goods
 // within act 3's black and white: rungs of GREY, flat per block // MOCK after-goods
 const PAGE = { log: [5, 6, 7, 8], plank: [2, 3, 4, 5], sign: [8, 9, 10] }; // MOCK after-goods
-const familyOf = (L, kind) => (L.flat === 'hue' ? HUES[kind] : PAGE[kind].map(i => GREY[i])); // MOCK after-goods
+export const HUES6 = { // MOCK after-goods  option C: B1's range widened half a step each end, six even steps
+  log:   ['#a67140', '#96663a', '#875b33', '#78502c', '#694526', '#5a3a1f'],
+  plank: ['#edd09f', '#e2c390', '#d7b681', '#cda973', '#c29c64', '#b78f55'],
+  sign:  ['#5d6772', '#535c67', '#49515b', '#404750', '#363c44', '#2c3139']
+};
+export const SAWDUST_C = ['#f5e4c2', '#efdab4', '#e9d1a6', '#e3c898', '#ddbf8a', '#d7b57d'];
+// a unit's shade (0..5): its stored tone when its value is one (a block's, a body's load, a thrown chip), else a seed's
+export const toneIdx = (kind, seed) => (kindOf(seed) && kindOf(seed).key === kind ? toneOf(seed) : shadeOfSeed(seed) - 1);
+const familyOf = (L, kind) => (L.rand ? HUES6[kind] : L.flat === 'hue' ? HUES[kind] : PAGE[kind].map(i => GREY[i])); // MOCK after-goods
 const KIND_SEED = { log: 11.3, plank: 23.9, sign: 37.1 }; // MOCK after-goods
 // a block's base rung (1..BASES) off its own shade, when nothing asks // MOCK after-goods
 // otherwise: carried, thrown, laid, or an option that does not keep apart // MOCK after-goods
@@ -150,7 +160,7 @@ function mockBlock(x, y, kind, seed, base = null) { // MOCK after-goods
   if (F && F.flat) { // MOCK after-goods
     // one flat square in one shade of the family, a grain's way // MOCK after-goods
     const fam = familyOf(F, kind), z = AFTER_BLOCK[kind] * AP; // MOCK after-goods
-    ctx.fillStyle = fam[((base ?? shadeOfSeed(seed)) - 1) % fam.length]; ctx.fillRect(x, y, z, z); // MOCK after-goods
+    ctx.fillStyle = F.rand ? fam[toneIdx(kind, seed) % fam.length] : fam[((base ?? shadeOfSeed(seed)) - 1) % fam.length]; ctx.fillRect(x, y, z, z); // MOCK after-goods
     return; // MOCK after-goods
   } // MOCK after-goods
   const s = shadeOfSeed(seed), bse = base ?? (LOOK[goodsLook()]?.same ? 2 : ownBase(kind, s)), key = `${goodsLook()}|${kind}|${s}|${bse}`; // MOCK after-goods
