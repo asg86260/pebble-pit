@@ -1,6 +1,6 @@
 // Act 3's boards through the page (docs/wave-act3-build.md, track C): each
-// station's board opened as its plain click opens it (`__openAfterBoard`, what
-// Track A's click calls), drawn by the yard's own board builder in the yard's
+// station's board opened as its way in opens it (`__openAfterBoard`, the
+// board its UPGRADES button or, with no roster, its click asks for), drawn by the yard's own board builder in the yard's
 // sheet, and every row on it bought by a press on its tile, the way a player
 // buys it. The yard's objective line and its call to build the bench fade
 // out up there. What each board lists, and the crowd's readings against the
@@ -112,7 +112,10 @@ export const TESTS = [
     ];
   }],
   // The station is its own shop (DESIGN.md, "Act 3's goods are blocks", rule 4).
-  ['act 3: the pointer on a station\'s drawing opens its board, the cursor says so, and a pan off it closes it', async () => {
+  // A station with no roster (the shack) opens on a click, not on the
+  // pointer passing over it: up here a board is asked for (the owner,
+  // 2026-10-28, when the rosters' UPGRADES buttons took the others).
+  ['act 3: a click on the shack\'s drawing opens its board, the cursor says so, and a pan off it closes it', async () => {
     newRun();
     await settle();
     await upThere();
@@ -122,16 +125,21 @@ export const TESTS = [
     await settle(0.2);
     const s = toScreen(b.x + b.w / 2, b.y + b.h / 2);
     point('pointermove', r.left + s.x, r.top + s.y, 0);
-    await until(() => openBoard() === 'after-shack' && canvas().style.cursor === 'pointer');
-    const open = openBoard(), cursor = canvas().style.cursor;
+    await settle(0.3);
+    const hovered = openBoard(), cursor = canvas().style.cursor;
+    point('pointerdown', r.left + s.x, r.top + s.y);
+    point('pointerup', r.left + s.x, r.top + s.y);
+    await until(() => openBoard() === 'after-shack');
+    const open = openBoard();
     // The wheel pans the shack out of the window: its board goes, as the yard's do.
     for (let k = 0; k < 6; k++) { canvas().dispatchEvent(new WheelEvent('wheel', { deltaY: 1200, bubbles: true, cancelable: true })); await raf(); }
     for (let k = 0; k < 40 && openBoard(); k++) await raf();
     const gone = openBoard(), off = b.x + b.w < S.camX || b.x > S.camX + S.viewW;
     window.__actsOn(null);
     return [
-      ok(open === 'after-shack', 'the pointer over the shack opens its board', String(open)),
-      ok(cursor === 'pointer', 'and the cursor turns to the pointing hand', cursor),
+      ok(hovered === null, 'the pointer over the shack opens nothing by itself', String(hovered)),
+      ok(cursor === 'pointer', 'but the cursor over it is the pointing hand', cursor),
+      ok(open === 'after-shack', 'and a click on it opens its board', String(open)),
       ok(off && gone === null, 'panned off it, the board closes', `${off} ${gone}`)
     ];
   }],

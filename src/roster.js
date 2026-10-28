@@ -8,7 +8,7 @@ import { P, WORKER, DEEP_POST_DOWN, SEAT_PIP, SEAT_GAP, SEAT_RING, SEAT_EMPTY_IN
          COUNTER_PLUS_DOWN, COUNTER_PLUS_ROOM, GARAGE_W, CART_W, LIFT_W, LIFT_FORK, LIFT_SEAT,
          LIFT_ANTENNA } from './config.js';
 import { deepFloor, deepTop } from './deep/place.js';
-import { STATIONS } from './stations.js';
+import { STATIONS, station } from './stations.js';
 import { S, quarry } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { siteBox } from './works.js';
@@ -24,12 +24,13 @@ import { turnedOver, themed } from './ink.js';
 import { now } from './clock.js';
 import { reducedMotion } from './prefs.js';
 import { writeCount } from './render/numfont.js';
-import { msg, FACE } from './lang.js';   // REVIEW
-import { crispText } from './render/crisptext.js';   // REVIEW
-import { GREY } from './config/palette.js';   // REVIEW
-import { SHELF_HOVER_MS } from './config.js';   // REVIEW
-import { drift } from './render/bars.js';   // REVIEW
-import { fillDots } from './render/dots.js';   // REVIEW
+import { msg, FACE } from './lang.js';
+import { crispText } from './render/crisptext.js';
+import { drift } from './render/bars.js';
+import { GREY } from './config/palette.js';
+import { fillDots } from './render/dots.js';
+import { SHELF_HOVER_MS, SHOP_BTN_PX, SHOP_BTN_H, SHOP_BTN_PAD, SHOP_BTN_AIR, SHOP_BTN_ADVANCE,
+         SHOP_BTN_LIFT, SHOP_BTN_PRESSED } from './config.js';
 
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
@@ -106,7 +107,9 @@ const allPosts = () => [...yardPosts(), GARAGE_POST];
 //
 // A place's post also says `place` (the view it stands in), its `at` and
 // `y`, and a `group`: posts of one group stand side by side under one
-// building, centered there as one, in the order handed over.
+// building, centered there as one, in the order handed over. A post that
+// names a `board` (a station's key) carries that board's UPGRADES button
+// over its count, and the board opens from there and nowhere else.
 // The places are kept on the function itself: a place's module registers
 // while this one may still be loading (the act's modules and the yard's
 // import each other round a ring), and a function declaration is the one
@@ -483,12 +486,15 @@ function boxes(p) {
     // by the machine" is the same question the counter above answers about
     // *how many* hands.
     run: runBox(p, left, y, set),
-    // REVIEW (globalThis.__shopBtn): the button that opens the post's station's
-    // board, beside the count ('side') or under it ('below')
-    shop: p.board && globalThis.__shopBtn === 'side' ? { x: left + wide + GAP * 2, y: y - BTN / 2, w: BTN, h: BTN }
-        : p.board && globalThis.__shopBtn === 'below' ? { x: Math.round((left + wide / 2 - shopW() / 2) / P) * P, y: y - WORKER / 2 - WORKER - GAP * 2 - SHOP_H, w: shopW(), h: SHOP_H } : null
+    // Over the count rather than under it: the pips grow downward as seats
+    // are bought, and a button under them would be pushed about by every
+    // purchase.
+    shop: p.board ? { x: Math.round((left + wide / 2 - shopW() / 2) / P) * P,
+                      y: y - WORKER / 2 - WORKER - SHOP_BTN_AIR - SHOP_BTN_H, w: shopW(), h: SHOP_BTN_H } : null
   };
 }
+const shopWord = () => msg('roster-upgrades').toUpperCase();
+const shopW = () => Math.ceil((shopWord().length * SHOP_BTN_PX * SHOP_BTN_ADVANCE + SHOP_BTN_PAD * 2) / P) * P;
 
 export const posts = () => allPosts().filter(p => p.show());
 // The posts a click or the pointer can be on: those standing in the view the
@@ -535,9 +541,20 @@ export const overRoster = (x, y) => live().some(p => {
   const b = boxes(p);
   return inside(hit(b.less), x, y) || inside(hit(b.more), x, y) || !!pipAt(p, b, x, y) || (!!b.shop && inside(hit(b.shop), x, y));
 });
-// REVIEW: the shop button a point is on (its post's board key), and a board's button box, for the board's anchor
-globalThis.__shopBtnAt = (x, y) => { for (const p of live()) { const b = boxes(p); if (b.shop && inside(hit(b.shop), x, y)) return p.board; } return null; };
-globalThis.__shopBoxOf = key => { const p = live().find(q => q.board === key); return p ? boxes(p).shop : null; };
+
+// The board whose UPGRADES button a point is on, or null: a press there is
+// the button's, so input.js keeps it from closing the board it is opening.
+export function shopAt(x, y) {
+  for (const p of live()) { const b = boxes(p); if (b.shop && inside(hit(b.shop), x, y)) return p.board; }
+  return null;
+}
+// A board's button where it stands, or null where none does: a station with
+// one opens from it and not from a click on its drawing, and the board
+// stands off it (after/stations.js, `boardAnchor`).
+export function shopBoxOf(key) {
+  const p = live().find(q => q.board === key);
+  return p ? boxes(p).shop : null;
+}
 
 // What a post says with the cursor on it, for a place that gives its posts
 // words (`says`; the yard's have none): the text and the world point under
@@ -567,7 +584,9 @@ function pipAt(p, b, x, y) {
 }
 
 // A click on a roster, in world units: true if it was one, so the yard knows
-// not to treat it as a swing at the ground.
+// not to treat it as a swing at the ground. On an UPGRADES button it is the
+// board's key instead, for the page to open or put away: the board is the
+// page's, and this file stands in the node tier too.
 export function rosterHit(x, y) {
   for (const p of live()) {
     if (p.fixed) continue;
@@ -575,7 +594,7 @@ export function rosterHit(x, y) {
     // a near miss on either button still counts as that button rather than as a
     // swing at the ground: they are small, and the ground behind them does
     // something else entirely
-    if (b.shop && inside(hit(b.shop), x, y)) { globalThis.__toggleBoard?.(p.board); return true; }   // REVIEW
+    if (b.shop && inside(hit(b.shop), x, y)) { pressedShop = p.key; return p.board; }
     const hold = (side, edge) => { const f = held.get(p.key); if (f) f.anchor = { side, x: edge }; };
     if (inside(hit(b.less), x, y)) { hold('l', b.less.x); press(p, -1); S.shopStale = true; return true; }
     if (inside(hit(b.more), x, y)) { hold('r', b.more.x + b.more.w); press(p, 1); S.shopStale = true; return true; }
@@ -630,7 +649,7 @@ function drawRosterPass(ctx, drawBody, drawHat, drawRun, sprites) {
     if (!p.show() || !inHalf(p)) continue;
     const b = boxes(p);
     const n = count(p), spare = spareOf(p);
-    if (b.shop) shopButton(ctx, b.shop, p);   // REVIEW
+    if (b.shop) shopButton(ctx, b.shop, p);
 
     // Only on the stations that have a machine standing.
     if (machineOn(p) && drawRun) drawRun(b.run, JOB_MACHINE[p.job]);
@@ -705,52 +724,42 @@ function button(ctx, b, kind, live) {
   }
 }
 
-// REVIEW: the shop button, the roster's own hairline mark: three bars, a menu.
-// Drawn as the board's own cards are (style.css, `.rows button`): a hairline
-// border round paper, the mark in ink; under the pointer, or while its board
-// is up, inverted -- filled with ink, the mark in paper -- as a hovered or
-// chosen card reads.
-// The board's own type size (style.css --fs-body, 12px on the glass), in the
-// world's pixels at the yard's five-sixths; the box a cell and a half of
-// padding round it, on the cell grid, so it reads as a button and not a label.
-const SHOP_PX = 14, SHOP_H = P * 4, SHOP_PAD = P * 2;
-const shopW = () => Math.ceil((msg('roster-upgrades').length * SHOP_PX * 0.62 + SHOP_PAD * 2) / P) * P;
-const boardUp = key => !!S[`${key.replace(/-(\w)/g, (_, c) => c.toUpperCase())}BoardOpen`];
-// The shop tile's hover (shelf.css), on the canvas: at rest only the word on
-// the ground; under the pointer, or while its board is open, the plate lifts
-// up and left off a hard shadow left where it stood, its edge easing in over
-// the tile's own SHELF_HOVER_MS, and drifts on the tile's own loop (bars.js).
-const SHOP_LIFT = P * 0.4;                 // the tile's 2px lift at the yard's five-sixths
-const lifting = new Map();                 // post -> { to, from, at }
-// Pressed, the plate sinks halfway back toward its shadow, as a tile does (shelf.css `:active`).
-const SHOP_PRESSED = 0.5;
-let pressing = false;
-if (typeof window !== 'undefined') {
-  window.addEventListener('pointerdown', () => { pressing = true; }, true);
-  window.addEventListener('pointerup', () => { pressing = false; }, true);
-  window.addEventListener('pointercancel', () => { pressing = false; }, true);
-}
+// The UPGRADES button is a shop tile on the canvas (shelf.css, `.tile`), so
+// it answers the pointer the way the tiles a player has already learned do:
+// at rest only the word on the ground; under the pointer, or while its board
+// is up, the plate lifts up and left off a hard shadow left where it stood,
+// its edge easing in over the tile's own SHELF_HOVER_MS, and drifts on the
+// tile's own loop (bars.js); pressed, it sinks halfway back.
+const lifting = new Map();       // the post's key -> { to, from, at }, the lift easing toward `to`
+let pressedShop = null;          // page: the post whose button the pointer went down on, until it comes up
+// The pointer came up, wherever it was (input.js `endDrag`, and a blur).
+export const rosterUp = () => { pressedShop = null; };
+const boardUp = key => !!S[station(key)?.board];
 function lifted(key, to) {
-  const t0 = now(); let r = lifting.get(key);
+  const t0 = now();
+  let r = lifting.get(key);
   if (!r) lifting.set(key, r = { to, from: to, at: t0 });
   const k = Math.min(1, (t0 - r.at) / SHELF_HOVER_MS), at = r.from + (r.to - r.from) * (1 - Math.pow(1 - k, 3));
   if (r.to !== to) { r.from = at; r.to = to; r.at = t0; }
   return reducedMotion() ? r.to : at;
 }
 function shopButton(ctx, b, p) {
-  const over = !!(S.mouse && inside(hit(b), S.mouse.x, S.mouse.y));
-  const t = lifted(p.key, over && pressing ? SHOP_PRESSED : over || boardUp(p.board) ? 1 : 0), paper = GREY[0], ink = GREY[GREY.length - 1];
-  const [dx, dy] = reducedMotion() ? [0, 0] : drift('upgrades' + p.key);
-  const x = b.x + (dx - SHOP_LIFT) * t, y = b.y + (dy - SHOP_LIFT) * t;
+  const over = !!S.mouse && inside(hit(b), S.mouse.x, S.mouse.y);
+  const t = lifted(p.key, over && pressedShop === p.key ? SHOP_BTN_PRESSED : over || boardUp(p.board) ? 1 : 0);
+  const paper = GREY[0], ink = GREY[GREY.length - 1];
+  const [dx, dy] = reducedMotion() ? [0, 0] : drift(`upgrades${p.key}`);
+  const x = b.x + (dx - SHOP_BTN_LIFT) * t, y = b.y + (dy - SHOP_BTN_LIFT) * t;
   if (t > 0) {
-    ctx.fillStyle = ink; ctx.fillRect(b.x, b.y, b.w, b.h);        // the shadow, where the plate stood
+    ctx.fillStyle = ink; ctx.fillRect(b.x, b.y, b.w, b.h);
     ctx.fillStyle = paper; ctx.fillRect(x, y, b.w, b.h);
     fillDots(ctx, x + THIN, y + THIN, b.w - 2 * THIN, b.h - 2 * THIN);   // the board's dots, on the plate and going with it
-    ctx.globalAlpha = Math.min(1, t / SHOP_PRESSED); ctx.fillStyle = ink;
-    ctx.fillRect(x, y, b.w, THIN); ctx.fillRect(x, y + b.h - THIN, b.w, THIN); ctx.fillRect(x, y, THIN, b.h); ctx.fillRect(x + b.w - THIN, y, THIN, b.h);
+    // the border is all there by the time a press has sunk the plate
+    ctx.globalAlpha = Math.min(1, t / SHOP_BTN_PRESSED); ctx.fillStyle = ink;
+    ctx.fillRect(x, y, b.w, THIN); ctx.fillRect(x, y + b.h - THIN, b.w, THIN);
+    ctx.fillRect(x, y, THIN, b.h); ctx.fillRect(x + b.w - THIN, y, THIN, b.h);
     ctx.globalAlpha = 1;
   }
-  crispText(ctx, msg('roster-upgrades').toUpperCase(), x + b.w / 2, y + (b.h - SHOP_PX) / 2, `${SHOP_PX}px ${FACE}`, ink, 'center', paper, GREY);
+  crispText(ctx, shopWord(), x + b.w / 2, y + (b.h - SHOP_BTN_PX) / 2, `${SHOP_BTN_PX}px ${FACE}`, ink, 'center', paper, GREY);
 }
 
 // A pip is a pixel mask, never an arc: an arc's edge is a grey smear, and a

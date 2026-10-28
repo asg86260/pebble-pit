@@ -32,6 +32,11 @@ export const TESTS = [
     newRun();
     await settle();
     await upThere();
+    // Sawdust on the heap, so it is a part the hand works: an empty heap is
+    // only named. (This held only while the pointer over the mill opened
+    // its board, which up here it no longer does.)
+    window.__afterGrant({ sawdust: 8 });
+    await settle(0.1);
     const m = stationBox('mill'), h = stationParts('heap').heap, w = stationParts('mill').wheel;
     window.__look((m.x + h.x) / 2 - S.viewW / 2);
     await settle(0.2);

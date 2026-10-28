@@ -3092,28 +3092,21 @@ export const SCENES = {
       S.after.stock.sawdust = 1e6;
       window.__look(heapMid() - S.viewW / 2); window.__fast(0.5); window.__holdShot();
     } },
+  // The UPGRADES buttons over the camp's rosters (roster.js), framed as the
+  // review that chose them was: the chain bought, the saw mill four-fifths
+  // across the window, the workshop's and the forestry shack's buttons in
+  // view beside its own.
+  'after-shopbtn': { about: 'the acts', review: 'act 3: a shop button by the worker count', stage: 'built: the real build on branch a3-shop-button -- not on main yet; lands when you sign it off', option: 'the built button', say: "The real UPGRADES button: press it to open the station's shop, again to put it away; clicking or hovering the station opens nothing.",
+    run: () => {
+      afterChain(false);
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
   // Track a3-logs: the chain staffed, the forestry shack's pile stocked, run
   // until an idle member is carrying logs to the saw mill and a cut is
   // falling out of the saw's right side onto its timber pile; framed on the
   // mill from its log pile to its timber pile.
-  'after-shopbtn-a': { about: 'the acts', review: 'act 3: a shop button by the worker count', stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option: 'A beside the count', say: "A menu button, the roster's own hairline mark, to the right of each station's worker count; press it to open the station's shop beside it, press again (or click elsewhere) to put it away. Clicking or hovering the station opens nothing.",
-    swap: () => { globalThis.__shopBtn = 'side'; },
-    run: () => {
-      globalThis.__shopBtn = 'side';
-      afterChain(false);
-      window.__fast(20);
-      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
-      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
-    } },
-  'after-shopbtn-b': { about: 'the acts', review: 'act 3: a shop button by the worker count', stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option: 'B above the count', say: "UPGRADES above each station's worker count, behaving as the shop's tiles do: no border at rest; under the pointer (or while its shop is open) it lifts off a hard shadow, its border easing in, and drifts. Press it to open the shop, again to put it away.",
-    swap: () => { globalThis.__shopBtn = 'below'; },
-    run: () => {
-      globalThis.__shopBtn = 'below';
-      afterChain(false);
-      window.__fast(20);
-      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
-      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
-    } },
   'after-log-flow': { about: 'the acts', review: 'act 3: shops and block piles', stage: 'built: the real build on branches a3-station-shop and a3-pile-plots -- not on main yet; lands when you sign it off', option: 'saw mill piles', say: "the saw mill kept fed: an idle member carrying logs to its pile, a cut falling out of the saw's right side onto the timber",
     run: () => {
       afterChain(false);

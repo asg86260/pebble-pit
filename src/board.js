@@ -263,7 +263,7 @@ function place(el, at) {
   const want = at.side === 'right' ? toScreen(at.x, 0).x
              : at.side === 'left' ? toScreen(at.x + at.w, 0).x - w
              : toScreen(mid, 0).x - w / 2;
-  const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
+  const x0 = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
 
   const stands = S.H - toScreen(0, at.y).y + P * 3;
 
@@ -281,6 +281,12 @@ function place(el, at) {
   const highest = S.H - h - (under + h + GAP <= S.H ? Math.max(GAP, under) : GAP);
   const bottom = Math.round(highest < lowest ? highest      // a window too short for both
                                              : Math.max(lowest, Math.min(stands, highest)));
+  // An anchor may name a box the board must never cover (`keep`: act 3's
+  // UPGRADES button, which puts the board away again). Where the window is
+  // too short to stand the board over it, the clamps above bring the board
+  // down across it, so the board goes beside it instead: past its far side
+  // where the window has room, else before it.
+  const x = at.keep ? clearOf(at.keep, x0, bottom, w, h) : x0;
 
   // Moved by its *bottom* edge: the height changes the instant a board swaps
   // pages, mid-glide, and a sheet moved by its top corner hangs its bottom
@@ -290,6 +296,15 @@ function place(el, at) {
   putX = x;
   putY = bottom;
   el.style.transform = `translate3d(${x}px, ${-bottom}px, 0)`;
+}
+// The board's left edge, moved off `keep` (a world box) if the board standing
+// at `x` with its foot `bottom` up from the glass's would cover it.
+function clearOf(keep, x, bottom, w, h) {
+  const a = toScreen(keep.x, keep.y), b = toScreen(keep.x + keep.w, keep.y + keep.h);
+  const top = S.H - bottom - h, foot = S.H - bottom;
+  if (!(x < b.x + GAP && a.x - GAP < x + w && top < b.y + GAP && a.y - GAP < foot)) return x;
+  const past = Math.round(b.x + GAP * 2);
+  return past + w <= S.W - GAP ? past : Math.max(GAP, Math.round(a.x - GAP * 2 - w));
 }
 
 const GAP = 4;                             // never flush against the edge
@@ -578,8 +593,6 @@ const LINGER = 130;                    // and how long the moment is
 // on bare ground, a new game, the floor opening. Those are answers, and an
 // answer that takes a tenth of a second to arrive reads as a control that did
 // not take. Only the pointer drifting off a station gets the benefit of LINGER.
-// REVIEW: a shop button opens its board or puts it away.
-globalThis.__toggleBoard = key => showPanel(at === key ? null : key, true);
 export function showPanel(want, now = false) {
   // A key that is not a station (the lab that was), or a station with no
   // board (the casino, whose decisions are levers on the building), is

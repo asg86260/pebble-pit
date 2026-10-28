@@ -5,10 +5,11 @@
 // serve the yard's. `place: 'after'` keeps them to the afterlife's view.
 //
 // Every station is its own shop (DESIGN.md, "Act 3's goods are blocks",
-// rule 4): a click on it anywhere its hand work does not take opens its
-// board (input.js asks the hand work first), and the board stands beside it
-// (`boardAnchor`), on the ground its sign stood on, so it never covers the
-// parts the hand works. The grove's board is the forestry shack's; God's
+// rule 4): its board opens from the UPGRADES button over its roster
+// (roster.js), or, for a station with no roster, from a click on it anywhere
+// its hand work does not take (input.js asks the hand work first). The board
+// stands beside it (`boardAnchor`), off the button or on the ground its sign
+// stood on, so it never covers the parts the hand works. The grove's board is the forestry shack's; God's
 // crowd is asked over his camp on its stage (`hit`). Their boards' rows are
 // after/rows.js's (`registerBoard`).
 
@@ -22,6 +23,7 @@ import { stationBox, signBoard, closed, pilePlace, pileOwner } from './place.js'
 import { PILED, pileFull } from './piles.js';
 import { godCampAt, godMid, faceY } from './sky.js';
 import { heapFull, heapMarkBox, HEAP_PILE } from './mill.js';
+import { shopBoxOf } from '../roster.js';
 
 const live = () => afterlifeOn() && !!S.after;
 // A counted pile's name, and the box its mark hangs from: `pileMarkAt` hangs
@@ -86,13 +88,16 @@ const row = (card, more) => {
     // beside it: over the station it would hide the parts the hand works.
     // It runs away from the station on whichever side its spot stands (the
     // pedestal's is on its left, every other's on its right).
+    // A station with its UPGRADES button standing hangs the board off the
+    // button instead, over the button's top, near enough to read as the
+    // button's; and it never covers the button, which puts it away again
+    // (`keep`: a window too short to stand it over the button sets it
+    // beside it, board.js). Run out past the station instead, it lands on
+    // the next station and its button in a camp this close-set.
     boardAnchor: () => {
-      // REVIEW: with the shop button, the board stands off the button
-      if (globalThis.__shopBtn) { const k = globalThis.__shopBoxOf?.(`after-${card}`); if (k) {
-        // a gap past the button so the board never covers it, on the side of the view with room for it
-        return { x: k.x - P * 4, y: k.y, w: k.w + P * 8, h: k.h, side: 'right' };   // the board flips sides itself when the window has no room
-      } }
-      const a = signBoard(ground(card)), s = stationBox(ground(card));
+      const k = shopBoxOf(key), s = stationBox(ground(card));
+      if (k) return { x: k.x - P * 4, y: k.y, w: k.w + P * 8, h: k.h, side: 'right', keep: k };
+      const a = signBoard(ground(card));
       return a && s && { ...a, side: a.x + a.w / 2 >= s.x + s.w / 2 ? 'right' : 'left' };
     },
     ...more

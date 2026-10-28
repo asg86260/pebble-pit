@@ -42,7 +42,6 @@ export function scene(name) {
   if (!sc) return false;
   if (!S.staged) { keep(loadRaw()); S.staged = true; }
   hold(false);          // the clock runs from the first frame of the scene
-  globalThis.__shopBtn = null;   // REVIEW
   // A scene that stood the page up as a phone does not leave it one.
   forceCoarse(null);
   letGoDeepFrame();

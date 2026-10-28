@@ -7,13 +7,14 @@
 //
 // A station's one job stands under it, the woodcutter's under the forestry
 // shack in front of its trees, and says what it does with the cursor on it,
-// or why it is standing still.
+// or why it is standing still. Each names its station's board, so the
+// roster stands the board's UPGRADES button over its count: up here that
+// button is the one way into a station's shop (the owner, 2026-10-28).
 
 import { S } from '../state.js';
-import { AFTER_JOBS, AFTER_JOB_POST, AFTER_ROSTER_DOWN, AFTER_SIGN_TIMBER } from '../config.js';
+import { AFTER_JOBS, AFTER_JOB_POST, AFTER_ROSTER_DOWN, AFTER_ROSTER_SHOP_DROP, AFTER_SIGN_TIMBER } from '../config.js';
 import { msg } from '../lang.js';
 import { rosterPlace } from '../roster.js';
-import { P } from '../config.js';   // REVIEW
 import { afterlifeOn } from '../acts.js';
 import { built, seatsOf, stumpsOn } from './levels.js';
 import { stationBox, groundOf, closed } from './place.js';
@@ -58,8 +59,7 @@ const POSTS = AFTER_JOBS.map(job => {
     key: `after-${job}`, job, place: 'after', group: `after-${key}`, board: `after-${card}`, kit: false, fixed: false, src: SRC,
     show: () => live() && built(card) && !closed(card),
     at: () => { const b = stationBox(key); return b.x + b.w / 2; },
-    // REVIEW: with the upgrades button above the count, the roster stands six cells lower, the button clear of the cloud's lip
-    y: () => groundOf(key) + AFTER_ROSTER_DOWN + (globalThis.__shopBtn === 'below' ? P * 6 : 0),
+    y: () => groundOf(key) + AFTER_ROSTER_DOWN + AFTER_ROSTER_SHOP_DROP,
     deep: false,
     says: () => jobSays(job)
   };
