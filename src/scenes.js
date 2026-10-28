@@ -3121,14 +3121,15 @@ export const SCENES = {
       window.__look(mid - S.viewW / 2);
       window.__still(true); window.__holdShot();
     } },
-  // MOCK: what act 3's goods look like (mock-goods-look2, never merged). The
+  // MOCK after-goods: what act 3's goods look like (mock-goods-look3, never merged). The
   // chain run and every pile topped up, framed from the forestry shack's log
   // pile to the workshop's signs, a member carrying while it holds; `look`
   // the drawing mode (render/after/piles.js, `__goodsLook`), null the real one.
   ...Object.fromEntries([[null, 'current', "the goods as they are drawn now: each block a flat tone with a one-pixel seam on its right and bottom only"],
-    ['a', 'A subtle mottle', "no border: every block keeps its own shade, as act 1's grains do, and a cell in four is a step off it; logs in three mid-to-dark greys, timber three pale greys, signs dark boards, sawdust a light speckle"],
-    ['b', 'B strong mottle', "no border: every block keeps its own shade, a cell in two a step off and its bottom right leaning a step darker; logs mid to bark, timber three pale greys, signs three dark greys, sawdust speckled wider"],
-    ['c', 'C mottle and a mark', "A's subtle mottle, and each good marked as what it is, a step off its own shade: a log's end-grain on the diagonal, timber's grain along its top row, a sign's lettering in paper, sawdust a light speckle"]]
+    ['a', 'A subtle mottle (last round)', "round 2's pick to iterate on: every block keeps its own shade, as act 1's grains do, and a cell in four is a step off it"],
+    ['d', 'D neighbors apart', "quieter: a cell in twenty a step off, and every block's base tone differs from each block it touches, so each 4x4 log and 2x2 timber reads as its own"],
+    ['e', 'E lit top and left', "every block one base tone, a cell in sixteen a step off, and a step lighter along its own top row and left column (a 2x2 timber, its top-left cell): one lit edge a block to count"],
+    ['f', 'F both, quietest', "a cell in twenty-five a step off, every block's base apart from its neighbors', and its own top and left a step lighter (a 2x2 timber, its top-left cell)"]]
     .map(([look, option, say]) => [`after-goods-${look || 'now'}`, { about: 'the acts', review: 'act 3: what the goods look like', // MOCK
       stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option, say, // MOCK
       swap: () => { globalThis.__goodsLook = look; }, // MOCK
@@ -3142,7 +3143,8 @@ export const SCENES = {
         const lo = window.__afterPile('forestry', 'grovelogs').x, hi = window.__afterPile('mill', 'timber').x; // MOCK
         const carrying = () => S.after.bodies.some(w => w.load === 'log' && w.x > lo + P * 12 && w.x < hi - P * 30); // MOCK
         for (let k = 0; k < 1800 && !carrying(); k++) window.__fast(1 / 30); // MOCK
-        window.__afterGrant({ grovelogs: 20, logs: 4, timber: 40, sawdust: 30, signs: 3 }); // MOCK  room left for the load on its way
+        window.__afterGrant({ grovelogs: 20, logs: 4, timber: 40, sawdust: 30, signs: 4, benchtimber: 8 }); // MOCK after-goods  room left for the load on its way
+        globalThis.__goodsStock = () => ({ ...S.after.stock }); // MOCK after-goods  each pile's stock, for the shot's count
         window.__fast(1 / 60); // MOCK
         const x = lo - P * 30; // MOCK
         pinCamera(x); window.__look(x); // MOCK
