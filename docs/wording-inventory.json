@@ -4160,7 +4160,7 @@
  {
   "id": "card-building",
   "group": "Boards",
-  "where": "src/shop.js",
+  "where": "src/after/rows.js",
   "context": "a card the yard is at: somebody is building it (the strip's word with nothing to hand back; the gain line's word)",
   "text": "building"
  },

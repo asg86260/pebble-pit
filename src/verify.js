@@ -46,7 +46,7 @@ import { deepTop, deepFloor, deepX1, coilLine, coilThick, standOfStation } from 
 import { yardReads } from './persist.js';
 import { afterlifeOn, hellOn } from './acts.js';
 import { AFTER_STORY } from './after/story.js';
-import { PILED, plotOf } from './after/piles.js';
+import { PILED, plotOf, pileLedger } from './after/piles.js';
 import { HELL_STORY } from './hell/story.js';
 import { allOverlaps, offGround } from './footprints.js';
 
@@ -714,6 +714,7 @@ export function verifyWorld() {
       const n = count(plotOf(what));
       if (n !== S.after.stock[what]) fail('an act 3 pile does not hold its stock', `${what}: ${S.after.stock[what]} counted, ${n} blocks on its plot`);
     }
+    handOffs();
   }
 
   verifyParty();
@@ -823,3 +824,29 @@ let serpentWas = -1, woundWas = 0, stunWas = false, mealWas = 0;  // page: the r
 let playedWas = 0, playedReads = -1;  // cache: keyed by yardReads
 let levelWas = -1, levelReads = -1;  // cache: keyed by yardReads
 export function forgetSerpent() { serpentWas = -1; levelWas = -1; stunWas = false; mealWas = S.meal; forgetFangs(); }
+
+// track B: carried goods
+// --- rule 24: no act 3 pile's count moves but by a hand-off ------------------------
+// Every block that joins or leaves a pile is moved by a body, the player's
+// hand or a tool (DESIGN.md, "Act 3's goods are blocks, and bodies carry
+// every one", rule 2 and its check): a body setting down or taking up, the
+// hand sweeping or landing, the saw's cut or the bench's joining -- each of
+// which goes through a pile's single-block doors (after/piles.js), which
+// tally it. So between two frames a pile's count moves by exactly its tally,
+// and nothing takes blocks off in bulk, the door a bill once lifted timber
+// through with no hands behind it. Read against the frame before, and
+// started over whenever the piles are stood up again (a save read, the act
+// begun), which sets counts from the save rather than by hand-offs.
+let pilesWas = null;   // cache: the act, its plots and each pile's count and tally on the frame before
+function handOffs() {
+  const a = S.after, led = pileLedger();
+  const now = { a, plots: PILED.map(plotOf), stock: PILED.map(w => a.stock[w]), net: PILED.map(w => led.net[w] || 0), bulk: led.bulk };
+  const was = pilesWas;
+  pilesWas = now;
+  if (!was || was.a !== a || was.plots.some((p, i) => p !== now.plots[i])) return;
+  PILED.forEach((what, i) => {
+    const moved = now.stock[i] - was.stock[i], handed = now.net[i] - was.net[i];
+    if (moved !== handed) fail('an act 3 pile moved with nobody handing a block', `${what}: ${was.stock[i]} -> ${now.stock[i]}, ${handed} handed`);
+  });
+  if (now.bulk !== was.bulk) fail('an act 3 pile had blocks lifted with no hands behind them', `${now.bulk - was.bulk} taken in bulk`);
+}

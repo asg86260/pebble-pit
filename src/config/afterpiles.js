@@ -25,3 +25,14 @@ export const AFTER_PILES = {
 // the heap's side a cell a pass, slow enough to be seen rolling (the voted
 // mock's, mock-log-split round 7).
 export const AFTER_PILE_SETTLE_S = 0.07;
+
+// track B: carried goods
+// The workshop's two piles (DESIGN.md, "Act 3's goods are blocks, and bodies
+// carry every one", the other stations): its timber, walked to it off the
+// timber mound a block at a time, two signs' worth on its rack, two blocks
+// wide; and the signs it nails, 4x4 blocks stood two wide in its rack until
+// a body carries each out to the crowd.
+Object.assign(AFTER_PILES, {
+  benchtimber: { good: 'plank', brim: 8, cols: 2 },
+  signs:       { good: 'sign', brim: 4, cols: 2 }
+});

@@ -33,6 +33,15 @@ function plots() {
   if (!Object.prototype.hasOwnProperty.call(a, 'piles')) Object.defineProperty(a, 'piles', { value: {}, writable: true, configurable: true, enumerable: false });
   return a.piles;
 }
+// Every block through the doors below, a pile's net and the blocks taken in
+// bulk with nobody's hands behind them (`takeBlocks`), kept as the plots are:
+// on the act's state, out of its save. verify.js reads it (`pileLedger`).
+function ledger() {
+  const a = S.after;
+  if (!Object.prototype.hasOwnProperty.call(a, 'handoffs')) Object.defineProperty(a, 'handoffs', { value: { net: {}, bulk: 0 }, writable: true, configurable: true, enumerable: false });
+  return a.handoffs;
+}
+const handed = (what, d) => { const l = ledger().net; l[what] = (l[what] || 0) + d; };
 // Where a block is set down when nobody says where: the plot's middle
 // column, so a pile set down on by its bodies stands as one heap, not
 // against a side.
@@ -99,7 +108,7 @@ export function takeBlock(what, x = null) {
   }
   if (col < 0) return false;
   put(b, col, topRow(b, col), 0);
-  S.after.stock[what] -= 1;
+  S.after.stock[what] -= 1; handed(what, -1);
   return true;
 }
 // A block set down on pile `what` at world x (its middle column with no x):
@@ -109,7 +118,7 @@ export function setBlock(what, x = null) {
   if (pileRoom(what) <= 0) return false;
   const b = plotOf(what);
   if (!addGrain(b, x ?? dropX(b), undefined, 1, true)) return false;
-  S.after.stock[what] += 1;
+  S.after.stock[what] += 1; handed(what, 1);
   return true;
 }
 // The block in cell (c, r) of pile `what`'s plot, taken by the player's hand
@@ -119,13 +128,14 @@ export function takeCell(what, c, r) {
   const b = plotOf(what);
   if (!inside(b, c, r) || !at(b, c, r)) return false;
   put(b, c, r, 0);
-  S.after.stock[what] -= 1;
+  S.after.stock[what] -= 1; handed(what, -1);
   return true;
 }
 // `n` blocks off the top of pile `what` (a bill, a joining): how many came.
 export function takeBlocks(what, n) {
   let k = 0;
   while (k < n && takeBlock(what)) k++;
+  ledger().bulk += k;
   return k;
 }
 
@@ -186,3 +196,10 @@ export const AFTER_PLOTS = {
     return true;
   }
 };
+
+// track B: carried goods
+// Every hand-off through the doors since the act was stood up: each pile's
+// net, and the blocks lifted off in bulk (a bill once was). Read by the rule
+// that no pile's count moves but through a body, a hand or a tool
+// (verify.js, rule 24).
+export const pileLedger = () => (S.after ? ledger() : null);

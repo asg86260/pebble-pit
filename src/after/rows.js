@@ -39,7 +39,7 @@ import { payTo } from '../pit.js';
 import { upCount, built, raising, seatKey, seatsBought } from './levels.js';
 import { crewAt, spareMembers } from './bodies.js';
 import { clearPlot } from './grove.js';
-import { raiseStation } from './build.js';
+import { raiseStation, placeOrder, orderedOf, onOrderLanded } from './build.js';
 import { stationBox, plotX, groveX1, afterFloor, afterX0, floorAt, AP, closed } from './place.js';
 import { union, won, ready, hire, support } from './union.js';
 import { setCrowdAt } from './stations.js';
@@ -117,16 +117,35 @@ const UP_DOES = {
 // the share it waits on.
 const markOf = key => AFTER_UPGRADES[key].marks?.[upCount(key)];
 const waitsOn = key => { const m = markOf(key); return m != null && support() < m * STRIKE_SHARE; };
+
+// --- orders ----------------------------------------------------------------------------
+// A bill paid in timber is an order, carried (DESIGN.md, "Act 3's goods are
+// blocks, and bodies carry every one", settled 2026-10-27): bought, its
+// blocks are spoken for on the mound and carried to the station it is for
+// (build.js), and its effect lands when the last is set down there. Until
+// then the row waits on its carrying, greyed with the board's own word for a
+// thing going up, so no rung is bought twice. A bill with no timber lands at
+// once, as before.
+const timberOn = bill => bill.reduce((n, [c, k]) => n + (c === 'timber' ? k : 0), 0);
+const LAND = {};   // each row's effect, by key: what a landed order runs
+onOrderLanded(key => LAND[key]?.());
+const carrying = key => orderedOf(key) > 0;
+function orderOr(key, card, bill) {
+  const n = timberOn(bill);
+  if (n > 0) placeOrder(key, card, n); else LAND[key]();
+}
+
 const upRow = key => {
   const { card, bills } = AFTER_UPGRADES[key];
+  const bill = () => bills[Math.min(upCount(key), bills.length - 1)].map(([c, n]) => [c, n]);
+  LAND[key] = () => { S.after.ups[key] = upCount(key) + 1; S.after.upAt[key] = S.after.t; UP_DOES[key]?.(); };
   return {
     key, name: UP_NAMES[key](), card, ...ACT_ROW,
-    rung: () => upCount(key), rungs: () => bills.length,
-    bill: () => bills[Math.min(upCount(key), bills.length - 1)].map(([c, n]) => [c, n]),
+    rung: () => upCount(key), rungs: () => bills.length, bill,
     show: () => cardOpen(card),
-    dead: () => waitsOn(key),
-    waits: () => (waitsOn(key) ? msg('after-wait-support', { share: Math.round(markOf(key) * 100) }) : null),
-    buy: () => { S.after.ups[key] = upCount(key) + 1; S.after.upAt[key] = S.after.t; UP_DOES[key]?.(); }
+    dead: () => waitsOn(key) || carrying(key),
+    waits: () => (carrying(key) ? msg('card-building') : waitsOn(key) ? msg('after-wait-support', { share: Math.round(markOf(key) * 100) }) : null),
+    buy: () => orderOr(key, card, bill())
   };
 };
 
@@ -136,13 +155,19 @@ const upRow = key => {
 export const JOB_NAMES = {
   woodcutter: () => msg('after-job-woodcutter'), sawyer: () => msg('after-job-sawyer'), joiner: () => msg('after-job-joiner')
 };
-const seatRow = job => ({
-  key: seatKey(job), name: msg('after-row-seat', { job: JOB_NAMES[job]() }), card: AFTER_JOB_POST[job], seat: job, ...ACT_ROW,
-  rung: () => seatsBought(job), rungs: () => AFTER_SEAT_BILLS.length,
-  bill: () => AFTER_SEAT_BILLS[Math.min(seatsBought(job), AFTER_SEAT_BILLS.length - 1)].map(([c, n]) => [c, n]),
-  show: () => cardOpen(AFTER_JOB_POST[job]),
-  buy: () => { S.after.ups[seatKey(job)] = seatsBought(job) + 1; S.after.upAt[seatKey(job)] = S.after.t; }
-});
+const seatRow = job => {
+  const key = seatKey(job), card = AFTER_JOB_POST[job];
+  const bill = () => AFTER_SEAT_BILLS[Math.min(seatsBought(job), AFTER_SEAT_BILLS.length - 1)].map(([c, n]) => [c, n]);
+  LAND[key] = () => { S.after.ups[key] = seatsBought(job) + 1; S.after.upAt[key] = S.after.t; };
+  return {
+    key, name: msg('after-row-seat', { job: JOB_NAMES[job]() }), card, seat: job, ...ACT_ROW,
+    rung: () => seatsBought(job), rungs: () => AFTER_SEAT_BILLS.length, bill,
+    show: () => cardOpen(card),
+    dead: () => carrying(key),
+    waits: () => (carrying(key) ? msg('card-building') : null),
+    buy: () => orderOr(key, card, bill())
+  };
+};
 
 // --- the shack: every station ------------------------------------------------------------
 // On the board from the act's first frame, each with its price; one that

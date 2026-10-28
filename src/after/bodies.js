@@ -28,12 +28,13 @@ import { S } from '../state.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S,
          AFTER_CARRY_SLOTS, AFTER_PUT_S, AFTER_SAW_S, AFTER_CHOP_HOLD_S,
-         AFTER_JOIN_FADE_S, AFTER_GOODS_HOME, AFTER_GOODS_FOOT, AFTER_WALK, AFTER_TIP_LOAD } from '../config.js';
+         AFTER_JOIN_FADE_S, AFTER_GOODS_HOME, AFTER_GOODS_FOOT, AFTER_WALK, AFTER_TIP_LOAD,
+         AFTER_PILES, AFTER_SIGN_TIMBER, AFTER_SIGN_S } from '../config.js';
 import { secs, walk, nextId } from './util.js';
 import { stepCrew } from '../placebodies.js';
 import { haulCap } from '../levels.js';
 import { deepAt } from './sky.js';
-import { built, stumpsOn, seatsOf, bladeLogs, heapBrim } from './levels.js';
+import { built, stumpsOn, seatsOf, bladeLogs, heapBrim, benchSigns } from './levels.js';
 import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, notchX, soulX, soulY, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, settled, takeGroundLog, kindOf, layGood } from './grove.js';
@@ -41,7 +42,7 @@ import { isPiled, takeBlock, setBlock, pileRoom, pileBrim } from './piles.js';
 import { sweepDue, tipSawdust } from './mill.js';
 import { signSpot, plantSign } from './press.js';
 import { workAfter } from './work.js';
-import { fillBuilders, stepBuilder, isIdle } from './build.js';
+import { fillBuilders, stepBuilder, isIdle, timberReserved, nextOrder, orderOf, orderAt, orderBrought } from './build.js';
 
 const floorY = () => afterFloor();
 // A walk that keeps to the floor: the rows of God's crowd stand up the
@@ -201,7 +202,7 @@ function toPile(w, dt, what) {
 // A body put on a job, from where it stands: it forgets what it was doing
 // and walks to the job (the job's own frame takes it there).
 function takeJob(w, job) {
-  Object.assign(w, { job, errand: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, load: null, carry: 0, pick: false });
+  Object.assign(w, { job, errand: null, order: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, load: null, carry: 0, pick: false });
 }
 // A body taken off its job, back to the podium on foot.
 function dropJob(w) {
@@ -278,17 +279,30 @@ function stationWork(w, key, period, dt) {
   w.t = Math.min(period, w.t + dt);
   if (w.t >= period && workAfter(key, 1)) w.t = 0;
 }
-// The saw mill's worker fetches its own logs off the forestry shack's pile
-// when its own is bare and no idle hand is hauling to it (the haul, below):
-// taken up a log a beat until the load is full or the forestry pile bare,
-// carried over and set down the same way. True while on that trip.
-const PILE = { mill: 'logs' };
+// A station's worker fetches its own input when its pile cannot feed a unit
+// of work and no idle hand is hauling to it (the haul, below): the saw
+// mill's sawyer its logs off the forestry shack's pile, the workshop's
+// joiner its timber off the timber mound (DESIGN.md, "Act 3's goods are
+// blocks, and bodies carry every one": "walked to it ... by its joiner or an
+// idle member"), taken up a block a beat until the load is full or the pile
+// it is fed from bare, carried over and set down the same way. True while
+// on that trip.
+// `PILE` is the pile each station keeps, `FROM` the pile it is fed from and
+// `UNIT` the blocks one unit of its work eats.
+const PILE = { mill: 'logs', workshop: 'benchtimber' };
+const FROM = { mill: 'grovelogs', workshop: 'timber' };
+const UNIT = { mill: 1, workshop: AFTER_SIGN_TIMBER };
+const goodOf = what => AFTER_PILES[what].good;
+const fedAt = what => pileMid(pileOwner(what), what);
+// What a pile can give up: the timber mound less the blocks a carried order
+// has spoken for (build.js), every other pile all it holds.
+const spareOf = what => S.after.stock[what] - (what === 'timber' ? timberReserved() : 0);
 function fetchLogs(w, key, dt) {
-  const a = S.after, mine = PILE[key];
-  if (!carried(w) && !w.pick && (a.stock[mine] > 0 || a.stock.grovelogs <= 0 || hauledTo(key))) return false;
+  const a = S.after, mine = PILE[key], from = FROM[key];
+  if (!carried(w) && !w.pick && (a.stock[mine] >= UNIT[key] || spareOf(from) <= 0 || hauledTo(key))) return false;
   w.at = null;
   if (!carried(w) || w.pick) {
-    if (go(w, pileMid('forestry', 'grovelogs'), floorY(), dt)) w.pick = !pickUp(w, dt, 'log', () => a.stock.grovelogs, () => takeBlock('grovelogs', w.x));
+    if (go(w, fedAt(from), floorY(), dt)) w.pick = !pickUp(w, dt, goodOf(from), () => spareOf(from), () => takeBlock(from, w.x));
     return true;
   }
   if (go(w, pileMid(key, mine), floorY(), dt)) toPile(w, dt, mine);
@@ -298,35 +312,46 @@ function fetchLogs(w, key, dt) {
 // --- the haul (the owner, 2026-10-26: logs "get moved by idle members. so
 // the saw always stays clear") -------------------------------------------------------
 // An idle member carries logs from the forestry shack's pile to the saw
-// mill's, so its worker never leaves the station to fetch. A station's pile
+// mill's, so its worker never leaves the station to fetch, and timber off
+// the mound to the workshop's rack. A station's pile
 // is kept to what its worker eats while a hauler
 // walks over and back, a load on top, so the next load lands before the pile
 // is bare: read off the walk and the station's pace, not tuned.
-const EATS = { mill: () => bladeLogs() / AFTER_SAW_S };
+const EATS = { mill: () => bladeLogs() / AFTER_SAW_S, workshop: () => benchSigns() * AFTER_SIGN_TIMBER / AFTER_SIGN_S };
 const HAULED = Object.keys(PILE);
 export function haulWant(key) {
-  const trip = 2 * Math.abs(pileMid('forestry', 'grovelogs') - pileMid(key, PILE[key])) / AFTER_WALK + 2 * holds('log') * AFTER_PUT_S;
-  return Math.ceil(trip * EATS[key]()) + holds('log');
+  const kind = goodOf(FROM[key]);
+  const trip = 2 * Math.abs(fedAt(FROM[key]) - pileMid(key, PILE[key])) / AFTER_WALK + 2 * holds(kind) * AFTER_PUT_S;
+  return Math.ceil(trip * EATS[key]()) + holds(kind);
 }
 const haulers = () => S.after.bodies.filter(o => o.errand === AFTER_JOB.HAUL);
-// Logs in a hauler's hands bound for station `key`.
+// Blocks in a hauler's hands bound for station `key`.
 const inbound = key => haulers().reduce((n, o) => n + (o.target === key ? carried(o) : 0), 0);
-// Whether a hauler is bound for `key`, or still fetching a load it has not
-// yet given a station: the worker there waits for it rather than walk too.
-const hauledTo = key => haulers().some(o => o.target === key || !carried(o));
-// How far short a standing, worked station's pile is, counting the logs on
-// their way. One with nobody on its job is worked by the hand alone, and its
-// logs are left on the forestry pile for the hand to take where it likes.
+// Whether a hauler is bound for `key`, fetching or carrying: the worker
+// there waits for it rather than walk too.
+const hauledTo = key => haulers().some(o => o.target === key);
+// How far short a standing, worked station's pile is, counting the blocks on
+// their way. A saw mill with nobody on its job is worked by the hand alone,
+// and its logs are left on the forestry pile for the hand to take where it
+// likes; the workshop's rack is kept fed whoever drives its nails, as the
+// design has its timber walked to it.
 const WORKER = { mill: AFTER_JOB.SAW };
-// Never past the pile's brim: a hauler sets no log on a full pile.
-const shortOf = key => (built(key) && bodiesOf(WORKER[key]).length > 0 ? Math.max(0, Math.min(haulWant(key), pileBrim(PILE[key])) - S.after.stock[PILE[key]] - inbound(key)) : 0);
-// The station most short for its want, the saw mill on a tie: null when none is.
-function haulTarget() {
+const worked = key => !WORKER[key] || bodiesOf(WORKER[key]).length > 0;
+// Never past the pile's brim: a hauler sets no block on a full pile.
+const shortOf = key => (built(key) && worked(key) ? Math.max(0, Math.min(haulWant(key), pileBrim(PILE[key])) - S.after.stock[PILE[key]] - inbound(key)) : 0);
+// The station most short for its want, the saw mill on a tie, among those
+// fed with `kind` (any, with none) and whose feed has a block to give: null
+// when none is.
+function haulTarget(kind = null) {
   let best = null, most = 0;
-  for (const key of HAULED) { const f = shortOf(key) / haulWant(key); if (f > most) { most = f; best = key; } }
+  for (const key of HAULED) {
+    if ((kind && goodOf(FROM[key]) !== kind) || (!kind && spareOf(FROM[key]) <= 0)) continue;
+    const f = shortOf(key) / haulWant(key);
+    if (f > most) { most = f; best = key; }
+  }
   return best;
 }
-const haulNeed = () => Math.min(S.after.stock.grovelogs, HAULED.reduce((n, key) => n + shortOf(key), 0));
+const haulNeed = () => HAULED.reduce((n, key) => n + Math.min(Math.max(0, spareOf(FROM[key])), shortOf(key)), 0);
 
 // --- the sweep ----------------------------------------------------------------------
 // The heap is tipped a load at a time (mill.js): an idle member stands at
@@ -415,20 +440,22 @@ const JOB_STEP = {
   },
   // An idle member's errand only: a woodcutter gathers as part of its own.
   gatherer(w, dt) { return gather(w, dt); },
-  // An idle member's errand only: logs from the forestry shack's pile to the
-  // station most short of them (`haulTarget`), chosen once the load is up.
+  // An idle member's errand only: blocks to the station most short of them
+  // (`haulTarget`), chosen before the fetch since each station is fed off its
+  // own pile -- logs off the forestry shack's, timber off the mound.
   hauler(w, dt) {
-    const a = S.after;
     if (!carried(w) || w.pick) {
-      w.target = null;
-      if (!carried(w) && a.stock.grovelogs <= 0) return;
-      if (go(w, pileMid('forestry', 'grovelogs'), floorY(), dt)) w.pick = !pickUp(w, dt, 'log', () => a.stock.grovelogs, () => takeBlock('grovelogs', w.x));
-      return;
+      if (w.target == null || !HAULED.includes(w.target)) w.target = haulTarget();
+      const from = w.target ? FROM[w.target] : null;
+      if (!carried(w) && (!from || spareOf(from) <= 0)) { w.target = null; w.pick = false; return; }
+      if (from && go(w, fedAt(from), floorY(), dt)) w.pick = !pickUp(w, dt, goodOf(from), () => spareOf(from), () => takeBlock(from, w.x));
+      if (from || !w.pick) return;
+      w.pick = false;
     }
-    if (w.target == null || !built(w.target) || pileRoom(PILE[w.target]) <= 0) w.target = haulTarget();
-    // No station short of them any more: back on the forestry shack's pile.
-    const key = w.target, what = key ? PILE[key] : 'grovelogs';
-    if (go(w, pileMid(key || 'forestry', what), floorY(), dt) && toPile(w, dt, what)) w.target = null;
+    if (w.target == null || !built(w.target) || pileRoom(PILE[w.target]) <= 0) w.target = haulTarget(w.load);
+    // No station short of them any more: back on the pile they came off.
+    const key = w.target, what = key ? PILE[key] : AFTER_GOODS_HOME[w.load];
+    if (go(w, key ? pileMid(key, what) : fedAt(what), floorY(), dt) && toPile(w, dt, what)) w.target = null;
   },
   // An idle member's errand only: at the notch, a load tipped through each
   // time the heap comes within a load of its brim.
@@ -437,6 +464,26 @@ const JOB_STEP = {
     if (!tipReady()) { w.t = 0; return; }
     w.t += dt;
     if (w.t >= AFTER_PUT_S) { tipSawdust(); w.t = 0; w.swing = S.after.t; }
+  },
+  // An idle member's errand only: a bought row's timber (build.js, the
+  // orders), taken up off the mound a block a beat, the oldest order first,
+  // and carried to the station it is for, where each block set down brings
+  // the order a block nearer landing. An order gone from under a load (a new
+  // game read over it) sends the load back onto the mound.
+  orderer(w, dt) {
+    const a = S.after, mound = fedAt('timber');
+    let o = w.order != null ? orderOf(w.order) : null;
+    if (carried(w) && !w.pick) {
+      if (!o) { if (go(w, mound, floorY(), dt) && toPile(w, dt, 'timber')) w.order = null; return; }
+      if (go(w, orderAt(o), floorY(), dt) && putDown(w, dt, () => orderBrought(o))) w.order = null;
+      return;
+    }
+    if (!o || o.claimed >= o.n) {
+      if (carried(w)) { w.pick = false; return; }
+      o = nextOrder(); w.order = o ? o.id : null;
+    }
+    if (!o) return;
+    if (go(w, mound, floorY(), dt)) w.pick = !pickUp(w, dt, 'plank', () => Math.min(o.n - o.claimed, a.stock.timber), () => { takeBlock('timber', w.x); o.claimed += 1; });
   },
   sawyer(w, dt) {
     // Off the saw while the heap has stood at its brim: to the notch beside
@@ -456,6 +503,7 @@ const JOB_STEP = {
   joiner(w, dt) {
     if (!built('workshop')) { w.at = null; idle(w, dt); return; }
     if (takeOut(w, dt, 'sign', 'signs', () => !!signSpot(), JOB_STEP.carrier)) return;
+    if (fetchLogs(w, 'workshop', dt)) return;
     w.at = go(w, stationDoor('workshop'), floorY(), dt) ? 'workshop' : null;
   },
   builder(w, dt) {
@@ -482,8 +530,8 @@ const JOB_STEP = {
     // load holds; with nowhere left to plant one, those in hand put back.
     if (!carried(w) || w.target == null) {
       if (!go(w, signFetchX(), floorY(), dt)) return;
-      if (!signSpot()) { while (carried(w)) putDown(w, AFTER_PUT_S, () => { a.stock.signs += 1; }); return true; }
-      if (!pickUp(w, dt, 'sign', () => a.stock.signs, () => { a.stock.signs -= 1; })) return false;
+      if (!signSpot()) return toPile(w, dt, 'signs');
+      if (!pickUp(w, dt, 'sign', () => a.stock.signs, () => takeBlock('signs', w.x))) return false;
       if (!carried(w)) return true;
       w.target = signSpot(); w.t = 0;
       if (!w.target) return false;
@@ -505,7 +553,8 @@ const JOB_STEP = {
 // Idle hands take the camp's signs out themselves while they wait at the
 // stations (the owner, 2026-10-21: made, "but nobody is using them"): a
 // member with no job gathers the grove's loose logs, stands at the heap's
-// notch tipping it, hauls logs to the saw mill, or runs the carrier's
+// notch tipping it, carries a bought row's timber, hauls logs to the saw
+// mill and timber to the workshop, or runs the carrier's
 // round, as an errand (`w.errand`),
 // keeping no job, while more lie waiting than the hands
 // already on their way to them will take, and goes back to the podium once
@@ -515,6 +564,8 @@ const ERRANDS = [
   { job: AFTER_JOB.GATHER, kind: 'log', left: () => looseLogs().length },
   // One sweeper, kept at the notch while the chain runs (`hold`).
   { job: AFTER_JOB.SWEEP, per: 1, left: () => (chainRuns() && !sweeping() ? 1 : 0), hold: chainRuns },
+  // A bought row's timber, while any of it waits on the mound (build.js).
+  { job: AFTER_JOB.ORDER, kind: 'plank', left: () => Math.min(timberReserved(), S.after.stock.timber) },
   { job: AFTER_JOB.HAUL, kind: 'log', left: haulNeed },
   { job: AFTER_JOB.CARRY, kind: 'sign', left: () => (built('workshop') ? S.after.stock.signs : 0) }
 ];

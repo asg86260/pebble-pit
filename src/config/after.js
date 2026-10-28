@@ -578,3 +578,9 @@ export const AFTER_COUNT_LIFT = P;
 // mill's ground where it leaves the bed (the mill's drawing, MILL.bed less the
 // plank), and `back` art cells in from the frame's right edge.
 export const AFTER_DROP = { s: 0.5, from: 8, back: 6 };
+
+// track B: carried goods
+// The workshop's own timber, carried to it off the timber mound
+// (config/afterpiles.js, `benchtimber`): a stock key like every pile's, so a
+// save from before it reads back with none.
+AFTER_STOCK.push('benchtimber');

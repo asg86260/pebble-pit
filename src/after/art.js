@@ -29,7 +29,9 @@ import { AFTER_PILES, AFTER_BLOCK } from '../config/afterpiles.js';
 // is red for a part past the ground laid here.
 const DRAWN = {
   mill:      { box: [11, 39, 26], door: 8, pile: { logs: 6, timber: 53 }, heap: true },
-  workshop:  { box: [5, 21, 22], door: 13, pile: { signs: 27 }, reach: 52 },
+  // The workshop's signs in its rack, and past them the timber walked to it
+  // off the timber mound, where its blanks were drawn (`reach`).
+  workshop:  { box: [5, 21, 22], door: 13, pile: { signs: 27, benchtimber: 40 }, reach: 52 },
   shack:     { box: [0, 14, 14], door: 7, pile: {} },
   // The forestry shack in front of the grove (the owner, 2026-10-20): the
   // grove's board, and the pile its gatherers bring the fallen logs to,
@@ -47,8 +49,8 @@ const DRAWN = {
 // the spot the board stands over, `post` the floor under it, in cells; a
 // cell past the rest of the ground unless the row says where (`sign`).
 export const SIGN = { w: 6, h: 4, post: 3 };
-// A pile that is not a plot of blocks (the workshop's signs) is six cells
-// across, and a body stands three wide on its door.
+// A pile that is not a plot of blocks is six cells across, and a body
+// stands three wide on its door.
 const PILE_CELLS = 6;
 // A counted pile's plot (config/afterpiles.js), in blocks: as wide as the
 // heap its brim stands in at the dust's slope -- grid.js with no repose
