@@ -12,6 +12,7 @@ import { COIN, COIN_DARK, PURPLE, GREY } from '../src/config/palette.js';
 import { LIGHT_PAPER, LIGHT_INK, DARK_PAPER, DARK_INK, DEEP_PAPER, DEEP_INK, FLOAT_SHADOW_ALPHA } from '../src/config/view.js';
 import { PAD_ACCENT } from '../src/config/pad.js';
 import { TEXT_FLOOR, TEXT_AA } from '../src/config/view.js';
+import { SHELF_DOT, SHELF_DOT_AT, SHELF_DOT_ALPHA } from '../src/config/boards.js';
 
 const css = readFileSync('src/style.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 const block = sel => css.match(new RegExp(`(?:^|\\n)${sel}\\s*\\{([^}]*)\\}`))?.[1] || '';
@@ -42,6 +43,28 @@ test('the dim page draws the first dark page\'s ends, its fills in the light gra
   assert.equal(token(dim, 'c-ink'), DEEP_INK);
   assert.equal(token(dim, 'c-fill'), DEEP_INK);
   assert.equal(token(dim, 'c-on-fill'), DEEP_PAPER);
+});
+
+// The dots are drawn twice, by the stylesheet on the cards and by
+// render/dots.js on the canvas's cards, so the page's tile is held to the
+// constants the canvas builds its own from: the pitch, the dot's place in the
+// cell, its ink (the page's own) and its weight.
+test("every page's dots are the canvas's: the pitch, the place, the ink and the weight", () => {
+  for (const [page, body] of [['light', light], ['dark', dark], ['dim', dim]]) {
+    const svg = decodeURIComponent(token(body, 'dots') || '');
+    const at = k => svg.match(new RegExp(`<svg[^>]* ${k}='([^']+)'`))?.[1];
+    const dot = k => svg.match(new RegExp(`<rect[^>]* ${k}='([^']+)'`))?.[1];
+    assert.equal(+at('width'), SHELF_DOT, `${page} --dots is ${SHELF_DOT} wide`);
+    assert.equal(+at('height'), SHELF_DOT, `${page} --dots is ${SHELF_DOT} tall`);
+    assert.equal(+dot('x'), SHELF_DOT_AT, `${page} dot x`);
+    assert.equal(+dot('y'), SHELF_DOT_AT, `${page} dot y`);
+    assert.equal(+dot('width'), 1, `${page} dot is one pixel`);
+    assert.equal(dot('fill'), token(body, 'c-ink'), `${page} dots in the page's ink`);
+    assert.equal(+dot('fill-opacity'), SHELF_DOT_ALPHA, `${page} dot weight`);
+    // the toast's, inked the other way round: the same tile in the paper
+    const turned = decodeURIComponent(token(body, 'dots-on-fill') || '');
+    assert.equal(turned, svg.replace(`fill='${token(body, 'c-ink')}'`, `fill='${token(body, 'c-paper')}'`), `${page} --dots-on-fill is --dots in the paper`);
+  }
 });
 
 test('no coin or purple is written outside the tokens', () => {

@@ -7,6 +7,7 @@ import { NUM_FONT_PX, P, SHARD_CELL, SPARK_CELL, SPORE_CELL, SCALE_MARK, FLOAT_S
 import { inkMode, themeGen } from '../ink.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
+import { fillDots } from './dots.js';
 import { drawCoin, drawMark } from './marks.js';
 import { shown } from '../tween.js';
 import { safeBottom } from '../world.js';
@@ -151,6 +152,7 @@ export function drawCount() {
   ctx.fillStyle = '#fff';
   countBox = box;
   ctx.fillRect(box.x, box.y, box.w, box.h);
+  fillDots(ctx, box.x + 2, box.y + 2, box.w - 4, box.h - 4);   // inside the two-wide edge, as a card's dots start
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2;
   // on the half pixel, so a two-wide edge lands on two whole ones

@@ -69,8 +69,10 @@ html, body {
      yard draws them from too (test/ui-tokens.test.mjs holds the two equal). */
   --coin-ore: #2f5fd0; --coin-crop: #2e9e4b; --coin-spark: #d93a25;
   /* The page's dot texture -- one cell in six, in the ink at a seventh -- as
-     one value a mode, since a data URI cannot read a variable. */
+     one value a mode, since a data URI cannot read a variable; and the same
+     in the paper, for a card inked the other way round (the toast). */
   --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
+  --dots-on-fill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23fff' fill-opacity='.14'/%3E%3C/svg%3E");
   /* The type scale: six sizes and four trackings. A tracking is always
      multiplied by --track, the knob a language or a phone turns:
      `letter-spacing: calc(var(--track-m) * var(--track))`. Two line heights:
@@ -168,6 +170,7 @@ html.dark {
   --coin-ore: #7d9cf0; --coin-crop: #6fd08a; --coin-spark: #f06a55;
   --shadow-c: #ececec; --shadow-ink: 20%;
   --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23ececec' fill-opacity='.14'/%3E%3C/svg%3E");
+  --dots-on-fill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23121212' fill-opacity='.14'/%3E%3C/svg%3E");
 }
 /* The dim page (prefs.js, `theme`): the dark page's turn on charcoal, light
    gray on charcoal (DEEP_PAPER, DEEP_INK). */
@@ -178,6 +181,23 @@ html.dark.dim {
   --accent: #9b5de5;
   --shadow-c: #e0e0e0; --shadow-ink: 20%;
   --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
+  --dots-on-fill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%231f1f1f' fill-opacity='.14'/%3E%3C/svg%3E");
+}
+/* Every card on the page stands on the dots: the boards, the stock beside
+   them, the story card, the held sheet, a window, a picker, the build queue
+   and a note. Each rule keeps its own paper as a background-color, so this
+   is the one place the dots are laid, and a mode's --dots turns them all.
+   The dots start at each box's own padding edge (the default origin), so a
+   whole cell meets the border on every side whatever the box's place on the
+   glass; a viewport-pinned grid would cut a part cell at any edge not on a
+   multiple of six. `local` carries them with the content where a card
+   scrolls inside itself, so the board's ground stays under the tiles that
+   `phaseDots` lines up with it at any scroll. (shelf.css lays the same dots
+   on a bare `.sheet` for the shelf and card benches.) */
+.panel .sheet, .purse, #panel.bottom, #held.bottom, .held, .modal,
+#objective, .optspop, .queue, #tip {
+  background-image: var(--dots);
+  background-attachment: local;
 }
 body :not(canvas):not(#scroller):not(#spacer):not(.handle) { touch-action: manipulation; }
 /* The scroller: the window, scrolled sideways by the platform (DESIGN.md,
@@ -965,7 +985,7 @@ body.still #scroller { scroll-behavior: auto; }
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  background: var(--paper);
+  background-color: var(--paper);
   border: 2px solid var(--ink);
   padding: 0;
   max-height: 60vh;
@@ -1156,7 +1176,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   max-height: calc(100vh - 2 * var(--edge) - 2 * var(--pad-l-y) - 2px);
   overflow-y: auto; scrollbar-width: thin;
   padding: var(--pad-l);
-  background: var(--paper);
+  background-color: var(--paper);
   border: 1px solid var(--ink);
   font: inherit;
   letter-spacing: calc(var(--track-m) * var(--track));
@@ -1207,7 +1227,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   gap: 4px;
   padding: var(--pad-m);
   max-width: 80vw;
-  background: var(--fill);
+  background-color: var(--fill);
+  background-image: var(--dots-on-fill);
   box-shadow: var(--float-shadow);
   border: 1px solid var(--on-fill);
   outline: 1px solid var(--fill);
@@ -1223,7 +1244,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
             transition: opacity .16s linear, transform .3s cubic-bezier(.22, .61, .36, 1); }
 .toast.still { transition: none; transform: translate(calc(-50% + var(--toast-dx, 0px)), var(--toast-dy, 0px)); }
 @media (hover: hover) {
-  .toast:hover { color: var(--ink); background: var(--paper); border-color: var(--ink); outline-color: var(--paper); }
+  .toast:hover { color: var(--ink); background-color: var(--paper); background-image: var(--dots); border-color: var(--ink); outline-color: var(--paper); }
 
   .toast:hover .note { color: var(--ink); }
 }
@@ -1708,7 +1729,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
      inverts edge to edge; less the row's own pixel, so the words stand
      --pad-m in from the edge */
   padding: calc(var(--pad-m-y) - 1px) 0;
-  background: var(--paper);
+  background-color: var(--paper);
   border: 2px solid var(--ink);
   box-shadow: var(--float-shadow);
   font: inherit;
@@ -1760,7 +1781,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
      with nowhere to stand did not overlap the menu, it disappeared into it. */
   z-index: 20;
   padding: var(--pad-s);
-  background: var(--paper);
+  background-color: var(--paper);
   border: 1px solid var(--ink);
   font: inherit;
   letter-spacing: calc(var(--track-s) * var(--track));
@@ -1980,7 +2001,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   flex-direction: column;
   gap: 3px;
   padding: 8px 10px;
-  background: var(--paper);
+  background-color: var(--paper);
   border: 2px solid var(--ink);
   box-shadow: var(--float-shadow);
   letter-spacing: calc(var(--track-s) * var(--track));
@@ -2033,7 +2054,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   scrollbar-color: var(--ink) var(--paper);
   display: flex; flex-direction: column; gap: var(--gap-m);
   padding: 10px var(--sheet-pad-x);
-  background: var(--paper);
+  background-color: var(--paper);
   border: var(--sheet-border) solid var(--ink);
   box-shadow: var(--float-shadow);
   letter-spacing: calc(var(--track-s) * var(--track));
@@ -2140,6 +2161,8 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   color: var(--on-fill); background: var(--fill);
 }
 .col button.play:active, #raise:active, .toast:active { color: var(--ink); background: var(--paper); }
+/* pressed, the toast is paper, so it takes the paper's dots back */
+.toast:active { background-image: var(--dots); }
 
 /* LAST ON PURPOSE. Everything in here overrides a rule above by the same
    selector, and two rules of one specificity are settled by order alone --
@@ -2217,7 +2240,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   flex-direction: column;
   /* the seat positions a sheet; what is inside keeps its own spacing (the
      panel sets its own gap below, the held sheet keeps the desk's) */
-  background: var(--paper);
+  background-color: var(--paper);
   border: 0;
   border-top: 2px solid var(--ink);
   /* One transition, on the move to a stop: the box never changes size, so
@@ -2256,6 +2279,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   flex-direction: row; justify-content: space-between;
   gap: 8px; padding: 4px 12px 6px;
   border: 0; border-bottom: 2px solid var(--ink);
+  /* no border above it, so it shows the sheet's own dots rather than a grid
+     of its own meeting the handle's off phase */
+  background: none;
 }
 #panel.bottom > .sheet {
   flex: 1 1 auto; min-height: 0;
@@ -2386,7 +2412,6 @@ body.still .messtag { transition: none; }
   max-width: calc(100vw - 24px); max-height: calc(100vh - 24px);
   padding: var(--pad-m);
   background-color: var(--paper);
-  background-image: var(--dots);
   border: 2px solid var(--ink);
   box-shadow: var(--float-shadow);
   color: var(--ink);
@@ -2427,7 +2452,7 @@ body.still .messtag { transition: none; }
   --tab-h: 14px;
   font: inherit;
   color: var(--ink);
-  background: var(--paper);
+  background-color: var(--paper);
   border: 2px solid var(--ink);
   box-shadow: var(--float-shadow);
   pointer-events: none;
@@ -2452,7 +2477,8 @@ body.still .messtag { transition: none; }
 #objective .say.in { opacity: 0; }
 /* the step done: the strike stands a beat, then the card goes */
 #objective.going { opacity: 0; translate: 0 -8px; transition: opacity .35s ease .55s, translate .35s ease .55s; }
-#objective.deep { --paper: var(--c-fill); --ink: var(--c-on-fill); --fill: var(--c-on-fill); --on-fill: var(--c-fill); }
+#objective.deep { --paper: var(--c-fill); --ink: var(--c-on-fill); --fill: var(--c-on-fill); --on-fill: var(--c-fill);
+                  --dots: var(--dots-on-fill); }   /* its paper is the fill, so its dots are the toast's */
 /* A scene holding the yard: the card fades out where it stands and back in
    after (objline.js), as the letterbox steps in and out. */
 #objective.scened { opacity: 0; transition: opacity .6s ease; }

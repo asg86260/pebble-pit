@@ -91,6 +91,12 @@ export const SHELF_BADGE_CELLS = 5; // cells a badge is square
 export const SHELF_PLANK = 5;       // px, the plank's thickness
 export const SHELF_REFUND = 18;     // px, the refund strip along a tile's foot: the tag's height, so it reads as one of the card's boxes
 export const SHELF_DOT = 6;         // px between dots: the held sheet's tile, one dot in six
+// Where in its cell the dot sits, and how much ink it carries: style.css's
+// --dots writes the same out (a data URI reads no variable), and
+// test/ui-tokens.test.mjs holds the two equal, so a canvas card's dots
+// (render/dots.js) are the page's.
+export const SHELF_DOT_AT = 2;      // px in from the cell's top-left
+export const SHELF_DOT_ALPHA = 0.14;
 export const SHELF_HOVER_MS = 120;  // the plate and the lift easing in under the cursor
 export const SHELF_FLOAT_MS = 2400; // one turn of a lifted tile's drift, a one-pixel circle in eight stops
 export const SHELF_FLOAT_SPREAD = 0.35; // how far a tile's own rate strays from that, either way

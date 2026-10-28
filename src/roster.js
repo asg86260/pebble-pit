@@ -29,6 +29,7 @@ import { crispText } from './render/crisptext.js';   // REVIEW
 import { GREY } from './config/palette.js';   // REVIEW
 import { SHELF_HOVER_MS } from './config.js';   // REVIEW
 import { drift } from './render/bars.js';   // REVIEW
+import { fillDots } from './render/dots.js';   // REVIEW
 
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
@@ -744,6 +745,7 @@ function shopButton(ctx, b, p) {
   if (t > 0) {
     ctx.fillStyle = ink; ctx.fillRect(b.x, b.y, b.w, b.h);        // the shadow, where the plate stood
     ctx.fillStyle = paper; ctx.fillRect(x, y, b.w, b.h);
+    fillDots(ctx, x + THIN, y + THIN, b.w - 2 * THIN, b.h - 2 * THIN);   // the board's dots, on the plate and going with it
     ctx.globalAlpha = Math.min(1, t / SHOP_PRESSED); ctx.fillStyle = ink;
     ctx.fillRect(x, y, b.w, THIN); ctx.fillRect(x, y + b.h - THIN, b.w, THIN); ctx.fillRect(x, y, THIN, b.h); ctx.fillRect(x + b.w - THIN, y, THIN, b.h);
     ctx.globalAlpha = 1;
