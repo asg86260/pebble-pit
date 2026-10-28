@@ -78,6 +78,9 @@ export const blankAfter = () => ({
   speech: null,
   gateAt: null,
   brimAt: null,
+  // the saw mill's machine (mill.js): its wheel, the log on its bed, the
+  // blocks and grains on their way out, the sawyer's trip; null until it turns
+  saw: null,
   groundLogs: [],
   hand: null,
   ids: 0

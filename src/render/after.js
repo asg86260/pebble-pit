@@ -192,23 +192,8 @@ function drawShackOrder() {
   const last = r.at.length ? fadeIn(r.at[r.at.length - 1]) : 1;
   glyphOver(b, GLYPHS[key], (r.n - 1 + last) / AFTER_BUILD_PIECES);
 }
-// The saw mill's sawdust heap on its ground: its grains a cell each, its
-// share of the brim, held tipped toward the notch a moment after a tip; a
-// tip's grains falling through the notch and fading.
-function drawSawdust() {
-  const a = A(), fl = groundOf('mill'), d = frame(heapMid(), fl, 0, null, AFTER_ART_SCALE);
-  const cells = heapCells(AFTER_HEAP_R).length;
-  const n = Math.round(Math.min(1, a.stock.sawdust / heapBrim()) * cells);
-  const tipped = a.tipAt != null && a.t - a.tipAt < AFTER_TIP_HOLD_S;
-  heap(d, 0, AFTER_HEAP_R, pileState('sawdust', n), a.stock.sawdust, tipped);
-  const nx = notchX();
-  for (const sp of airSpills()) {
-    const k = sp.age / AFTER_SPILL_S;
-    ctx.globalAlpha = Math.max(0, 1 - k);
-    onPixel(nx, fl - P * 2 + k * P * 5, () => { for (let g = 0; g < Math.min(6, sp.n); g++) cell((g % 2) * P, g * P, g % 2 ? PALE : MID); });
-    ctx.globalAlpha = 1;
-  }
-}
+// The saw mill's sawdust heap is its machine's, drawn with it under its bed
+// (render/after/stations.js), a grain a cell.
 // The finished signs as the fist flags they will be planted as (config,
 // AFTER_SIGN_FLAG_U), stood in a rack on a low rail outside the workshop, each
 // fading in as it is laid; and while the joiner works, the next one standing
@@ -248,7 +233,6 @@ export function drawAfterCamp() {
   // the forestry shack, the grove's, then the cards' stations
   for (const key of Object.keys(AFTER_STATIONS)) drawStation(key);
   drawShackOrder();
-  if (built('mill')) drawSawdust();
   drawLaidGoods(a.t);
   drawRebelPile();
   drawPair();

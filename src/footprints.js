@@ -263,9 +263,8 @@ function afterParts() {
   const a = Math.min(...rows.map(r => r[1])), z = Math.max(...rows.map(r => r[2])), top = Math.min(...rows.map(r => r[0]));
   for (let i = 0; i < AFTER_PLOT_MAX; i++)
     out.push({ id: `pine:${i}`, rects: [rect(plotX(i) + a * AP, fl + top * AP, (z - a + 1) * AP, -top * AP)] });
-  // The sawdust heap at its brim with its count, and the notch it is tipped
-  // through: the box the hand works it in.
-  out.push({ id: 'heap:sawdust', rects: [stationParts('heap').box] });
+  // The sawdust heap stands under the saw mill's bed, inside its drawing
+  // (after/mill.js), so it is the mill's footprint and claims none of its own.
   out.push({ id: 'throne-stair', rects: [rect(stairFoot(), fl - AFTER_STAIR_RISE, AFTER_STAIR_W, AFTER_STAIR_RISE)] });
   if (portalStands('heaven')) {
     const e = portalEnd('heaven', 'after');
