@@ -15,9 +15,10 @@ import { S } from '../state.js';
 import { AFTER_JOBS, AFTER_JOB_POST, AFTER_ROSTER_DOWN, AFTER_ROSTER_SHOP_DROP, AFTER_SIGN_TIMBER } from '../config.js';
 import { msg } from '../lang.js';
 import { rosterPlace } from '../roster.js';
+import { drawnMid } from '../footprints.js';
 import { afterlifeOn } from '../acts.js';
 import { built, seatsOf, stumpsOn } from './levels.js';
-import { stationBox, groundOf, closed } from './place.js';
+import { groundOf, closed } from './place.js';
 import { crewAt, bodiesOf, spareMembers, putOn, walkLeft, holds } from './bodies.js';
 import { standing, stumped } from './grove.js';
 import { heapFull } from './mill.js';
@@ -58,7 +59,7 @@ const POSTS = AFTER_JOBS.map(job => {
   return {
     key: `after-${job}`, job, place: 'after', group: `after-${key}`, kit: false, fixed: false, src: SRC,
     show: () => live() && built(card) && !closed(card),
-    at: () => { const b = stationBox(key); return b.x + b.w / 2; },
+    at: () => drawnMid(key),
     y: () => groundOf(key) + AFTER_ROSTER_DOWN + AFTER_ROSTER_SHOP_DROP,
     deep: false,
     says: () => jobSays(job)

@@ -213,6 +213,23 @@ function podiumRects() {
   const [w, ph] = AFTER_REBEL_PILE_CELLS;
   return [rect(podiumMid() - half, afterFloor() - h, half * 2, h), rect(pileX(), afterFloor() - ph * AP, w * AP, ph * AP)];
 }
+// The middle of what a station draws, across: the span of its drawing at its
+// fullest (the pedestal's, the podium at its widest), its piles left out,
+// since they are objects of their own. What stands centered on a station --
+// its UPGRADES button and its roster -- stands centered on this, the
+// station as the eye sees it, which its box (`stationBox`) is not where a
+// part reaches past it (the saw mill's chute).
+export function drawnMid(key) {
+  const s = drawnSpan(key);
+  return s && (s[0] + s[1]) / 2;
+}
+// ...and that span, [left, right] in world px, or null for no station.
+export function drawnSpan(key) {
+  if (key === 'pedestal') { const half = Math.max(...AFTER_PODIUM_HALF) * AFTER_PODIUM_U; return [podiumMid() - half, podiumMid() + half]; }
+  const rs = drawnRects(key);
+  if (!rs || !rs.length) { const b = stationBox(key); return b ? [b.x, b.x + b.w] : null; }
+  return [Math.min(...rs.map(r => r.x)), Math.max(...rs.map(r => r.x + r.w))];
+}
 // What a station takes up but its board's spot: its drawing (or the podium), and its
 // piles as high as the hand finds them, their counts over them (`piles`).
 export function stationRects(key, piles = true) {

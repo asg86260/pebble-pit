@@ -23,6 +23,7 @@ import { godMid, faceY } from '../src/after/sky.js';
 import { FRAME, frame, click, asks, opens, pressShop, timeTo, sawOn, saw, lift, spin, nailSign, loadBed } from './after-hands.mjs';
 import { shopBoxOf, rosterHit, rosterUp } from '../src/roster.js';
 import { station } from '../src/stations.js';
+import { drawnMid } from '../src/footprints.js';
 
 const S = yard.S;
 const read = () => window.__afterRead();
@@ -348,18 +349,18 @@ group('every station\'s UPGRADES button asks for its own board, centered under i
   up(['mill', 'workshop'], { logs: 4, timber: 20 });
   const pressed = Object.fromEntries(BOARDS.map(k => [k, pressShop(k)]));
   const boxes = Object.fromEntries(BOARDS.map(k => [k, shopBoxOf(k)]));
-  // Under its station, centered on it exactly, its edges on the grid (the
+  // Under its station, centered exactly on what the station draws (its
+  // drawing's span, footprints.js `drawnMid`), its edges on the grid (the
   // owner, 2026-10-28: "each should be centered to the station").
   const under = Object.entries(GROUND).every(([k, g]) => {
     const s = stationBox(g), b = boxes[k];
-    return b && b.y >= s.y + s.h && b.x + b.w / 2 === s.x + s.w / 2 && b.x % P === 0 && b.w % P === 0;
+    return b && b.y >= s.y + s.h && b.x + b.w / 2 === drawnMid(g) && b.x % P === 0 && b.w % P === 0;
   });
-  // The roster under it centered on it too, to within the half cell its grid allows.
+  // The roster under it centered exactly on the drawing too, and inside it
+  // each counter's sprite exactly over its pips.
   const ROSTER_AT = { sawyer: 'mill', joiner: 'workshop', woodcutter: 'forestry' };
-  const centered = window.__afterRoster().every(r => {
-    const s = stationBox(ROSTER_AT[r.job]);
-    return Math.abs((r.span[0] + r.span[1]) / 2 - (s.x + s.w / 2)) <= P / 2;
-  });
+  const centered = window.__afterRoster().every(r => (r.span[0] + r.span[1]) / 2 === drawnMid(ROSTER_AT[r.job]));
+  const stacked = window.__afterRoster().every(r => r.marks.every(m => m.pips == null || m.sprite === m.pips));
   // Over the count of the roster standing under it, and no two buttons touching.
   const roster = window.__afterRoster(), over = ['sawyer', 'joiner', 'woodcutter'].every(job => {
     const r = roster.find(q => q.job === job), k = { sawyer: 'after-mill', joiner: 'after-workshop', woodcutter: 'after-grove' }[job];
@@ -378,7 +379,8 @@ group('every station\'s UPGRADES button asks for its own board, centered under i
   return [
     ok(BOARDS.every(k => pressed[k] === k), 'each button asks for its own station\'s board', JSON.stringify(pressed)),
     ok(under, 'each stands under its station, centered on it exactly, on the grid', JSON.stringify(boxes)),
-    ok(centered, 'and each roster is centered on its station to half a cell', JSON.stringify(roster.map(r => [r.job, r.span]))),
+    ok(centered, 'and each roster is centered exactly on what its station draws', JSON.stringify(roster.map(r => [r.job, r.span]))),
+    ok(stacked, 'and in each roster the worker sprite stands exactly over its pips', JSON.stringify(roster.map(r => [r.job, r.marks]))),
     ok(over, 'where a roster stands, the button is over its count', JSON.stringify(roster.map(r => [r.job, r.less, r.more]))),
     ok(apart, 'no two buttons touch', JSON.stringify(boxes)),
     ok(hung, 'and each board hangs off its button', ''),

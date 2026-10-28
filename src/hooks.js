@@ -1502,6 +1502,7 @@ import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut, idleBodies } from './after/bodies.js';
 import { rosterReport, rosterHit, shopBoxOf } from './roster.js';
 import { plotX, afterFloor, stationBox as afterStationBox } from './after/place.js';
+import { drawnSpan } from './footprints.js';
 import { isPiled, setBlock, takeBlock, plotOf } from './after/piles.js';
 import { track, heldGoods } from './hands.js';
 import { bottomY } from './grid.js';
@@ -1591,6 +1592,9 @@ HANDLES.__shopBox = key => shopBoxOf(key);
 // An act 3 station's drawn footprint (after/place.js `stationBox`), in world
 // units, for a check or a shot to measure what stands centered on it.
 HANDLES.__afterStationBox = key => afterStationBox(key);
+// ...and the span its drawing inks across at its fullest (footprints.js
+// `drawnSpan`), what its button and roster are centered on.
+HANDLES.__afterDrawnSpan = key => drawnSpan(key);
 // The hand's motions up there (after/gestures.js), made as input.js makes
 // them: 'down', 'move' and 'up' at a world point; where a station's parts
 // stand; each station's record; the icons over the grove.

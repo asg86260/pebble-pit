@@ -374,14 +374,18 @@ const widthOf = p => {
 // world units, the rows left-aligned on a strip centered under the counter.
 // The block hangs from its first row, whose middle is the post's line, so the
 // buttons stand level with that row and stay put as rows are added under it.
+// The sprite and the strip are each centered exactly on the counter's
+// middle, not snapped to a whole cell: a three-cell body over a two-cell pip
+// cannot share a middle on whole cells, and one half a cell off the other
+// reads as lopsided. Both are drawn on whole device pixels (the body's
+// `square`, the pip's mask), so a half-cell corner is still crisp.
 function placeCounters(cs, x0, line) {
   const y0 = line - COUNTER_TOP_DROP;
-  const snap = v => Math.round(v / P) * P;
   let x = x0;
   for (const c of cs) {
     c.box = { x, y: y0, w: c.w, h: c.h };
-    c.spriteAt = { x: x + snap((c.w - c.sprite.w) / 2), y: y0 - COUNTER_SPRITE_GAP - c.sprite.h };
-    const px = x + snap((c.w - c.strip) / 2);
+    c.spriteAt = { x: x + (c.w - c.sprite.w) / 2, y: y0 - COUNTER_SPRITE_GAP - c.sprite.h };
+    const px = x + (c.w - c.strip) / 2;
     c.boxes = c.pips.slice(0, c.n).map((q, i) => ({
       ...q, top: c.top, brim: KIT_NAME[c.sprite.kind],
       x: px + (i % COUNTER_ROW) * (SEAT_PIP + SEAT_GAP),
@@ -464,10 +468,12 @@ function boxes(p) {
   const { x, y } = postAt(p);
   const cs = countersOf(p);
   const wide = cs ? innerOf(cs) + sideOf(p) * 2 : WIDE;
-  // Back on the grid, once: exactly centered where the post's width and its
-  // middle agree (an odd number of cells on a half-cell middle), else half a
-  // cell off.
-  let left = Math.round((x - wide / 2) / P) * P;
+  // On the half-cell grid, once: a station's drawing is whole cells, so its
+  // middle is on a whole or a half cell and the post stands exactly centered
+  // on it whatever its own width. Every mark of a post is drawn on whole
+  // device pixels (`button`, the body's square, the pip's mask), so a
+  // half-cell edge stays crisp.
+  let left = Math.round((x - wide / 2) * 2 / P) * P / 2;
   const f = held.get(p.key);
   if (f && f.anchor && pointerOn(f)) left = f.anchor.side === 'l' ? f.anchor.x : f.anchor.x - wide;
   else if (f) f.anchor = null;
@@ -743,13 +749,24 @@ const THIN = 2;
 // yard is black and white.
 function button(ctx, b, kind, live) {
   ctx.fillStyle = '#000';
-  const x = b.x + b.w / 2, y = b.y + b.h / 2;
-  if (live) ctx.fillRect(x - BAR / 2, y - THIN / 2, BAR, THIN);
-  else for (let i = 0; i < BAR; i += P * 2) ctx.fillRect(x - BAR / 2 + i, y - THIN / 2, P, THIN);
+  const x = b.x + b.w / 2, y = b.y + b.h / 2, r = (rx, ry, w, h) => devRect(ctx, rx, ry, w, h);
+  if (live) r(x - BAR / 2, y - THIN / 2, BAR, THIN);
+  else for (let i = 0; i < BAR; i += P * 2) r(x - BAR / 2 + i, y - THIN / 2, P, THIN);
   if (kind === '+') {
-    if (live) ctx.fillRect(x - THIN / 2, y - BAR / 2, THIN, BAR);
-    else for (let i = 0; i < BAR; i += P * 2) ctx.fillRect(x - THIN / 2, y - BAR / 2 + i, THIN, P);
+    if (live) r(x - THIN / 2, y - BAR / 2, THIN, BAR);
+    else for (let i = 0; i < BAR; i += P * 2) r(x - THIN / 2, y - BAR / 2 + i, THIN, P);
   }
+}
+// A rect with its corners on whole device pixels, as the body's square is
+// (render/crew.js, `square`): a post may stand on a half cell, which is not a
+// whole device pixel at the yard's five-sixths, and a bar between pixels
+// comes out a grey blur.
+function devRect(ctx, x, y, w, h) {
+  const m = ctx.getTransform ? ctx.getTransform() : null;
+  if (!m) { ctx.fillRect(x, y, w, h); return; }
+  const sx = v => (Math.round(v * m.a + m.e) - m.e) / m.a, sy = v => (Math.round(v * m.d + m.f) - m.f) / m.d;
+  const x0 = sx(x), y0 = sy(y);
+  ctx.fillRect(x0, y0, Math.max(1 / m.a, sx(x + w) - x0), Math.max(1 / m.d, sy(y + h) - y0));
 }
 
 // The UPGRADES button is a shop tile on the canvas (shelf.css, `.tile`), so
@@ -933,6 +950,10 @@ function postReport(p) {
              pips: set && b.seated ? all.map(mid) : null,
              block: set && b.seated ? { ...set.block } : null,
              less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],
-             more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2] };
+             more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2],
+             // Each counter's sprite and the first row of its pips, by their
+             // middles across, for the check that keeps the two over each other.
+             marks: set ? set.list.map(c => ({ sprite: c.spriteAt.x + c.sprite.w / 2,
+               pips: c.boxes.length ? (c.boxes[0].x + Math.max(...c.boxes.map(q => q.x + q.w))) / 2 : null })) : null };
   }
 }

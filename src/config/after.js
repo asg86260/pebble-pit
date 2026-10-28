@@ -389,6 +389,11 @@ export const AFTER_ROSTER_DOWN = P * 10;
 // ...and this much further: a post with a board carries its UPGRADES button
 // over its count (roster.js), and the button must clear the cloud's lip.
 export const AFTER_ROSTER_SHOP_DROP = P * 6;
+// The sawdust heap's pile-full mark hangs under the heap, in the strip the
+// saw mill's UPGRADES button stands in; where the two would meet, the mark
+// stands this far past the button's right edge (its middle), clear of the
+// button's hit and its own hover's half-slot (render/pilemarks.js).
+export const AFTER_HEAP_MARK_OFF = P * 5;
 // A job's seats past the first, the bill for each in turn (the owner,
 // 2026-10-20: "Each station should be locked to one worker, and more slots
 // can be purchased per station"): rebel and dust first, then timber and
