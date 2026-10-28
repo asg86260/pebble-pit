@@ -746,6 +746,20 @@ export function verifyWorld() {
     if (bad.length) fail("act 3's ground holds a unit wrong", bad.slice(0, 6).join('; '));
   }
 
+  // track C: one carry
+  // --- rule 27: an act 3 body's arms hold cells, counted ---------------------
+  // A member's load is an array of cell values and its count their number
+  // (src/carry.js), as a yard hauler's is: a name or a number standing in for
+  // goods is a unit that is not anywhere, and an empty cell is a phantom.
+  if (afterlifeOn() && S.after) {
+    for (const w of S.after.bodies) {
+      if (w.load == null) continue;
+      if (!Array.isArray(w.load)) fail('an act 3 body\'s load is not cells', `body ${w.id} holds ${JSON.stringify(w.load)}`);
+      else if ((w.carry || 0) !== w.load.length) fail('an act 3 body\'s load and its count disagree', `body ${w.id} carries ${w.carry} with ${w.load.length} in the load`);
+      else if (w.load.some(v => !(v > 0))) fail('an act 3 body holds a unit that is not there', `body ${w.id}: ${JSON.stringify(w.load)}`);
+    }
+  }
+
   // track A: saw mill
   // --- rule 25: the log on the saw's bed adds up -------------------------------
   // A log only changes shape at the blade, into pieces that add up (DESIGN.md,

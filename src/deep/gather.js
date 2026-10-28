@@ -21,6 +21,7 @@ import { scoop, nextStretch, bedX, tossIn } from './scales.js';
 import { mid, feet, working, swim } from './arms.js';
 import { rest } from './rest.js';
 import { TYPE } from '../jobs.js';
+import { loadOf, count, push, clear } from '../carry.js';
 
 // How far either side of where it stands a gatherer reaches for scales.
 const REACH = P * 3;
@@ -74,8 +75,8 @@ export const stepGatherer = (w, c) => {
   if (!working(w)) return;
   const cap = haulCap();
   const pace = haulSpeed();
-  w.load = Array.isArray(w.load) ? w.load : [];
-  w.carry = w.load.length;
+  loadOf(w);
+  w.carry = count(w);
   // Full, or on its way with what it has, or nothing left to pick up: to the
   // crusher, and the load goes over the lip.
   if (w.carry >= cap || (w.carry > 0 && (w.goal === 'haul' || !deepBed.n))) {
@@ -83,8 +84,7 @@ export const stepGatherer = (w, c) => {
     w.col = -1;
     if (!go(w, tossX() - WORKER / 2, feet(), pace)) return;
     tossIn(mid(w), w.y, w.load);
-    w.load = [];
-    w.carry = 0;
+    clear(w);
     w.goal = 'seek';
     return;
   }
@@ -115,7 +115,6 @@ export const stepGatherer = (w, c) => {
   if (n <= 0) return;
   w.owed -= n;
   const got = scoop(mid(w), n, REACH);
-  w.load = w.load.concat(got);
-  w.carry = w.load.length;
+  for (const v of got) push(w, v);
   if (got.length < n) w.col = -1;
 };

@@ -14,6 +14,7 @@
 // played, members walked out of God's yard (`__afterCrowd`), coins and the
 // forestry shack's logs granted.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
+import { loadKind } from '../src/carry.js';
 import { RIM_PIECES, AFTER_SAW_S, AFTER_PILES } from '../src/config.js';
 import { AFTER_JOB } from '../src/jobs.js';
 import { stationBox, pileAt } from '../src/after/place.js';
@@ -66,8 +67,8 @@ group('idle members haul logs to the saw, which stays worked, its cuts piling on
     if (working('mill')) saw++;
     if (heapFull()) brim++;
     swept = swept || S.after.bodies.some(b => b.job == null && b.errand === AFTER_JOB.SWEEP);
-    hauled = hauled || S.after.bodies.some(b => b.job == null && b.errand === AFTER_JOB.HAUL && b.load === 'log' && b.target === 'mill');
-    fetched = fetched || !!(sawyer() && sawyer().load === 'log');
+    hauled = hauled || S.after.bodies.some(b => b.job == null && b.errand === AFTER_JOB.HAUL && loadKind(b) === 'log' && b.target === 'mill');
+    fetched = fetched || !!(sawyer() && loadKind(sawyer()) === 'log');
     // a block off the saw's chute onto the mound on its right (after/mill.js)
     if (millLanded() !== last) { drops += millLanded() - last; last = millLanded(); }
   }

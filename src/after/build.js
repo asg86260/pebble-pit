@@ -29,6 +29,8 @@ import { S } from '../state.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_BUILD_PIECES, AFTER_BUILD_A_BAND, AFTER_BUILD_CARRIERS, AFTER_BUILD_BUILDERS, AFTER_BUILD_DROP_S,
          AFTER_BUILD_LAY_S, AFTER_BUILD_HOLD_S } from '../config.js';
+import { AFTER_SITE_LOAD } from '../config.js';
+import { isEmpty, push, pop, clear } from '../carry.js';
 import { nextId } from './util.js';
 import { built } from './levels.js';
 import { campSpot, speakerAt, stationDoor, buildPileAt, buildLayAt } from './place.js';
@@ -38,7 +40,10 @@ import { campSpot, speakerAt, stationDoor, buildPileAt, buildLayAt } from './pla
 // still built, and is never idle.
 // One out on an errand with its hands full (bodies.js) is not idle until it
 // has put them down: put on a job then, what it carries would go with it.
-export const isIdle = w => w.job == null && w.state === 'work' && w.pair == null && !(w.errand && w.load);
+export const isIdle = w => w.job == null && w.state === 'work' && w.pair == null && !(w.errand && !isEmpty(w));
+// Nothing in the arms and nothing under way with them: a load carried, laid
+// or a heap being tipped. A body may be taken off its job only like this.
+export const handsFree = w => isEmpty(w) && !w.tipping && !w.phase;
 
 // Every load a station takes: two a band.
 export const BUILD_LOADS = AFTER_BUILD_PIECES * AFTER_BUILD_A_BAND;
@@ -77,7 +82,7 @@ const crewOf = key => S.after.bodies.filter(b => b.job === AFTER_JOB.BUILD && b.
 // while they still built: it finishes and climbs back up.)
 function offPosts(key, n) {
   const pile = buildPileAt(key);
-  const free = S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD && b.state === 'work' && b.load == null)
+  const free = S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD && b.state === 'work' && handsFree(b))
     .sort((p, q) => Math.abs(p.x - pile) - Math.abs(q.x - pile));
   return free.slice(0, n);
 }
@@ -97,7 +102,7 @@ export function fillBuilders() {
       let builders = crew.filter(b => b.builds).length, n = AFTER_BUILD_CARRIERS - crew.length;
       for (const w of free.slice(0, n)) {
         Object.assign(w, { job: AFTER_JOB.BUILD, site: key, pair: null, builds: builders++ < AFTER_BUILD_BUILDERS, at: null, to: null,
-                           swing: null, on: true, t: 0, load: null, slot: null, target: null, n: 0 });
+                           swing: null, on: true, t: 0, load: [], carry: 0, phase: null, slot: null, target: null, n: 0 });
         n--;
       }
       n = Math.min(n, a.camp);
@@ -105,19 +110,21 @@ export function fillBuilders() {
       const at = campSpot(pile);
       for (let k = 0; k < n; k++)
         a.bodies.push({ id: nextId(), job: AFTER_JOB.BUILD, site: key, pair: null, builds: builders + k < AFTER_BUILD_BUILDERS, x: at.x, y: at.y,
-                        face: 1, state: 'work', t: 0, load: null, slot: null, target: null, n: 0, born: a.t + k * 0.6 });
+                        face: 1, state: 'work', t: 0, load: [], carry: 0, phase: null, slot: null, target: null, n: 0, born: a.t + k * 0.6 });
     } else if (!crew.length) {
       for (const w of offPosts(key, AFTER_BUILD_BUILDERS))
         Object.assign(w, { job: AFTER_JOB.BUILD, site: key, pair: null, builds: true, at: null, to: null, swing: null,
-                           t: 0, load: null, slot: null, target: null, n: 0 });
+                           t: 0, load: [], carry: 0, phase: null, slot: null, target: null, n: 0 });
     }
     if (r.brought >= BUILD_LOADS && r.whole == null) r.whole = a.t;
   }
 }
 
-// Where a site's loads are fetched: the shack's door or the camp's edge,
-// whichever is nearer its pile.
-const fetchAt = key => { const p = buildPileAt(key), a = stationDoor('shack'), b = campSpot(p).x; return Math.abs(a - p) <= Math.abs(b - p) ? a : b; };
+// Where a site's loads are made: the construction shack's door, the one
+// named source of every load (DESIGN.md, "One resource system for every act",
+// section 4), however far the site stands from it. The unit is made as a
+// member's hands close on it (`AFTER_SITE_LOAD`) and unmade when a band is laid.
+const fetchAt = () => stationDoor('shack');
 // A band laid at `key`: true when that was the last, the station standing.
 export function layPiece(key) {
   const a = S.after, r = siteOf(key);
@@ -142,33 +149,33 @@ export function stepBuilder(w, dt, go) {
   const r = siteOf(w.site);
   if (!r || built(w.site)) {
     if (w.pair != null) { w.state = 'home'; return; }
-    w.job = null; w.on = false; w.site = null; w.load = null; return;
+    w.job = null; w.on = false; w.site = null; clear(w); w.phase = null; return;
   }
   if (w.born != null && a.t < w.born) return;                  // still to come in at the edge
   const fl = campSpot().y;
   // Carrying a load to the pile.
-  if (w.load === 'carry') {
+  if (w.phase === 'carry') {
     if (!go(w, buildPileAt(w.site) + (w.slot % 3) * P, fl, dt)) return;
     w.t += dt;
     if (w.t < AFTER_BUILD_DROP_S) return;
-    r.brought += 1; r.drop[w.slot] = a.t; w.load = null; w.slot = null; w.t = 0;
+    pop(w); r.brought += 1; r.drop[w.slot] = a.t; w.phase = null; w.slot = null; w.t = 0;
     if (r.brought >= BUILD_LOADS && r.whole == null) r.whole = a.t;
     return;
   }
   // Laying a load into the band going up.
-  if (w.load === 'lay') {
+  if (w.phase === 'lay') {
     if (!go(w, buildLayAt(w.site, w.side), fl, dt)) return;
     w.t += dt;
     if (w.t < AFTER_BUILD_LAY_S) return;
-    r.laid += 1; w.load = null; w.slot = null; w.t = 0;
+    pop(w); r.laid += 1; w.phase = null; w.slot = null; w.t = 0;
     if (r.laid >= (r.n + 1) * AFTER_BUILD_A_BAND) layPiece(w.site);
     return;
   }
   // Empty-handed: a load still to fetch, fetched where it is nearest the
   // site -- the shack's door, or the camp's edge it comes in at.
   if (r.claimed < BUILD_LOADS) {
-    if (!go(w, fetchAt(w.site), fl, dt)) return;
-    w.load = 'carry'; w.slot = r.claimed++; w.t = 0;
+    if (!go(w, fetchAt(), fl, dt)) return;
+    push(w, AFTER_SITE_LOAD); w.phase = 'carry'; w.slot = r.claimed++; w.t = 0;
     return;
   }
   if (!w.builds) { w.job = null; w.on = false; w.site = null; return; }
@@ -178,7 +185,7 @@ export function stepBuilder(w, dt, go) {
   if (r.brought < BUILD_LOADS || r.whole == null || a.t - r.whole < AFTER_BUILD_HOLD_S) { go(w, buildPileAt(w.site) - P * 2 + w.side * P * 14, fl, dt); return; }
   if (r.taken >= BUILD_LOADS) return;
   if (!go(w, buildPileAt(w.site) + P * 2, fl, dt)) return;
-  w.slot = BUILD_LOADS - 1 - r.taken; r.taken += 1; r.pick[w.slot] = a.t; w.load = 'lay'; w.t = 0;
+  w.slot = BUILD_LOADS - 1 - r.taken; r.taken += 1; r.pick[w.slot] = a.t; push(w, AFTER_SITE_LOAD); w.phase = 'lay'; w.t = 0;
 }
 
 // --- orders: a bill paid in timber, carried (DESIGN.md, "Act 3's goods are

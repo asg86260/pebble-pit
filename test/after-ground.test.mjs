@@ -15,6 +15,7 @@
 // mill standing, goods granted on its piles.
 import { readFileSync } from 'node:fs';
 import { group, ok, run, runUntil, yard, restartReloadClock } from './helpers.mjs';
+import { loadKind } from '../src/carry.js';
 import { P, AFTER_BLOCK, KINDS } from '../src/config.js';
 import { track, sweep, release } from '../src/hands.js';
 import { plotOf } from '../src/after/piles.js';
@@ -155,7 +156,7 @@ function goods() {
   for (const u of units()) n[u.kind]++;
   if (S.held && S.motes[0] && S.motes[0].kind) n[S.motes[0].kind] += S.held;
   for (const ch of S.chips) if (ch.place === 'after' && ch.kind) n[ch.kind]++;
-  for (const b of a.bodies) if (b.load in n) n[b.load] += b.carry ?? 1;
+  for (const b of a.bodies) if (loadKind(b) in n) n[loadKind(b)] += b.carry;
   if (saw.bed) n.log++;
   const tr = saw.trip;
   if (tr && (tr.ph === 'carry' || (tr.ph === 'lift' && tr.log) || (tr.ph === 'set' && !tr.down))) n.log++;
