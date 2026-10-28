@@ -3482,8 +3482,14 @@ function carriedScenes() {
     'after-order-carry': { about: 'the acts', say: "a timber bill bought: its blocks carried off the timber mound to the workshop, the row waiting on them",
       run: () => {
         afterChain(false);
-        timberUp(); window.__buy('after-signreach');
+        yardPurse(); timberUp(); window.__buy('after-signreach');
         carryShot(w => w.errand === AFTER_JOB.ORDER && w.load === 'plank' && !w.pick && pastMill(w));
+      } },
+    'after-order-board': { about: 'the acts', say: "the workshop's board with a timber row ordered: the row waiting on its blocks, saying it is going up",
+      run: () => {
+        act3Board('workshop');
+        yardPurse(); timberUp(); window.__buy('after-signreach');
+        window.__fast(0.2); window.__openAfterBoard('workshop'); window.__holdShot();
       } }
   };
 }
