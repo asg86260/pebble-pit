@@ -12,17 +12,18 @@
 // opens on); `door` the column a worker's middle stands on (where the mock
 // draws its body); `pile` where each counted pile lies, in the drawing's own
 // cells, as the column of its edge toward the drawing (it grows away from
-// the drawing, as wide as `pileGrid` makes it); `ground` how far its ground
-// runs, piles and all, pressed flat under it once it is ordered. A drawing may be turned about its own ground
+// the drawing, as wide as `pileGrid` makes it; or none, laid off the
+// drawing by `layPiles`); `ground` how far its ground runs, piles and all, pressed flat under it once it is ordered. A drawing may be turned about its own ground
 // (`flip`, its width), its box, door and piles turned with it. The saw
 // mill keeps its sawdust heap on its own ground (`heap`, laid by `span`
 // below): past its timber pile and the body loading it, the notch in the
 // floor just past the heap's foot.
 
-import { AFTER_PILES, AFTER_BLOCK } from '../config/afterpiles.js';
+import { AFTER_PILES, AFTER_BLOCK, AFTER_PILE_GAP } from '../config/afterpiles.js';
 
-// What a station draws past its box and piles, in its own cells: the
-// workshop's blanks (`reach`, the column past its right end).
+// What a station draws past its box and piles, in its own cells, it names
+// as `reach`, the column past its right end (none does now: the workshop's
+// blanks became the timber pile carried to it).
 // This table cannot read the drawing (the config lays the camp off it), so
 // the drawing is read against it instead: footprints.js takes each
 // station's ground as what it inks at its fullest, and rule 22 in verify.js
@@ -30,13 +31,13 @@ import { AFTER_PILES, AFTER_BLOCK } from '../config/afterpiles.js';
 const DRAWN = {
   mill:      { box: [11, 39, 26], door: 8, pile: { logs: 6, timber: 53 }, heap: true },
   // The workshop's signs in its rack, and past them the timber walked to it
-  // off the timber mound, where its blanks were drawn (`reach`).
-  workshop:  { box: [5, 21, 22], door: 13, pile: { signs: 27, benchtimber: 40 }, reach: 52 },
+  // off the timber mound: laid off the shed and each other (`layPiles`).
+  workshop:  { box: [5, 21, 22], door: 13, pile: { signs: null, benchtimber: null } },
   shack:     { box: [0, 14, 14], door: 7, pile: {} },
   // The forestry shack in front of the grove (the owner, 2026-10-20): the
   // grove's board, and the pile its gatherers bring the fallen logs to,
   // on its grove side, where the haulers fetch them from.
-  forestry:  { box: [8, 16, 13], door: 10, pile: { grovelogs: 6 } },
+  forestry:  { box: [8, 16, 13], door: 10, pile: { grovelogs: 'left' } },
   // Its board's ground on the workshops' side, between the last workshop and
   // the union's crowd: laid there off both by after/place.js, which overrides
   // this column (God's side holds the rebel pile).
@@ -102,7 +103,26 @@ const span = a => {
   const sign = a.sign ?? end + 1;
   return { sign, heap, lead: Math.min(lead, sign), ground: a.ground ?? Math.max(end, sign + SIGN.w) };
 };
-export const ART = Object.fromEntries(Object.entries(DRAWN).map(([k, a]) => [k, { ...a, ...span(a) }]));
+// A drawing's piles that name no column are laid off it rather than placed
+// by hand: right of its box (null), or left of it ('left'), in the order
+// named, each AFTER_PILE_GAP cells of floor past what stands before it --
+// the drawing's edge, or the floor the body loading the pile before it
+// reaches over.
+function layPiles(a) {
+  const pile = { ...a.pile };
+  let right = a.box[0] + a.box[1] + AFTER_PILE_GAP, left = a.box[0] - AFTER_PILE_GAP;
+  for (const k of Object.keys(pile)) {
+    if (pile[k] === 'left') {
+      pile[k] = left;
+      left = Math.floor(standCol({ ...a, pile }, k) - PILE_STAND.load) - AFTER_PILE_GAP;
+    } else if (pile[k] == null) {
+      pile[k] = right;
+      right = Math.ceil(standCol({ ...a, pile }, k) + PILE_STAND.load) + AFTER_PILE_GAP;
+    }
+  }
+  return { ...a, pile };
+}
+export const ART = Object.fromEntries(Object.entries(DRAWN).map(([k, a]) => { const b = layPiles(a); return [k, { ...b, ...span(b) }]; }));
 
 // The camp's order, left to right off the grove: the forestry shack in front
 // of the trees, the saw mill and the workshop, then the shack that sells

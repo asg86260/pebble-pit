@@ -36,3 +36,8 @@ Object.assign(AFTER_PILES, {
   benchtimber: { good: 'plank', brim: 8, cols: 2 },
   signs:       { good: 'sign', brim: 4, cols: 2 }
 });
+// The floor a pile keeps clear round it, in art cells: a station's piles that
+// name no column are laid this far past what stands before them (after/art.js,
+// `layPiles`), and each pile's footprint claims it, so nothing placed may
+// stand in it (footprints.js; verify.js rule 21).
+export const AFTER_PILE_GAP = 3;

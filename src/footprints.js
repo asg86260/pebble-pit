@@ -27,7 +27,7 @@ import { P, FARM_H, FARM_GAP, FINALE_WALL_ROWS, FINALE_ROOF, FINALE_CHIMNEY,
          MANSION_AT, MANSION_FLOORS, MANSION_FLOOR_ROWS, MANSION_WING_W, MANSION_WING_FLOORS, MANSION_MAIN_W,
          MANSION_TOWER_FLOORS, MANSION_TOWER_W, MANSION_BLOCKS_AT, MANSION_BLOCKS_W,
          ACT_GATES_REACH, ACT_GATES_BANK_CELLS, ACT_GATES_BANK, AFTER_PLOT_MAX, AFTER_STAIR_W, AFTER_STAIR_RISE, HELL_TIERS,
-         AFTER_PILE_REACH, AFTER_PODIUM_HALF, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_REBEL_PILE_CELLS } from './config.js';
+         AFTER_PILE_REACH, AFTER_PILE_GAP, AFTER_PODIUM_HALF, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_REBEL_PILE_CELLS } from './config.js';
 import { STATIONS } from './stations.js';
 import { plotSlots, rockLeft, shackSpot } from './world.js';
 import { rockFootY, rockTopY, ramX } from './rock.js';
@@ -184,12 +184,12 @@ function deepParts() {
 // --- the afterlife ----------------------------------------------------------
 // A station stands on what its drawing inks at its fullest, read off the
 // drawing itself (render/after/kit.js, `silhouette`) rather than off a box
-// or a reach typed beside it: the workshop with every blank it can stack.
+// or a reach typed beside it.
 // The silhouette fills each row
 // from its first inked cell to its last, so a row is one rect. Worked out
 // once a station: the drawing does not move, and running it writes the pose
 // its moving parts were drawn in.
-const FULLEST = { workshop: { blanks: Infinity } };
+const FULLEST = {};
 const SHAPES = new Map();   // cache: each station's fullest silhouette, by key
 function drawnRows(key) {
   if (!SHAPES.has(key)) SHAPES.set(key, DRAW[key] ? silhouette(d => DRAW[key](d, false, 0, null, false, FULLEST[key] || {})) : null);
@@ -214,14 +214,22 @@ function podiumRects() {
   return [rect(podiumMid() - half, afterFloor() - h, half * 2, h), rect(pileX(), afterFloor() - ph * AP, w * AP, ph * AP)];
 }
 // What a station takes up but its board's spot: its drawing (or the podium), and its
-// piles as high as the hand finds them, their counts over them.
-export function stationRects(key) {
+// piles as high as the hand finds them, their counts over them (`piles`).
+export function stationRects(key, piles = true) {
   const b = stationBox(key);
   if (!b) return null;
   const rs = key === 'pedestal' ? [b, ...podiumRects()] : drawnRects(key) || [b];
-  for (const what of Object.keys(ART[key].pile || {})) rs.push(pileBox(key, what, AFTER_PILE_REACH));
+  if (piles) for (const what of Object.keys(ART[key].pile || {})) rs.push(pileBox(key, what, AFTER_PILE_REACH));
   return rs;
 }
+// A station's pile as an object of its own on the map, not a part of its
+// station, so it may not touch its own station's drawing either: as high as
+// the hand finds it, and AFTER_PILE_GAP cells of floor either side, the gap
+// it is laid with (after/art.js, `layPiles`), which nothing else may stand in.
+const pileRect = (key, what) => {
+  const r = pileBox(key, what, AFTER_PILE_REACH), g = AFTER_PILE_GAP * AP;
+  return rect(r.x - g, r.y, r.w + g * 2, r.h);
+};
 
 // The parts of a drawn station standing off its own ground: its drawing,
 // piles and board's spot each inside the ground after/art.js lays for it (`lead` to
@@ -253,10 +261,11 @@ function afterParts() {
   // laid out in the config before anything is raised. Its board's spot is
   // claimed too, so nothing drawn stands where its board goes up.
   for (const key of Object.keys(ART)) {
-    const rs = stationRects(key);
+    const rs = stationRects(key, false);
     if (!rs) continue;
     out.push({ id: key, rects: rs });
     out.push({ id: `board:${key}`, rects: [signBox(key)] });
+    for (const what of Object.keys(ART[key].pile || {})) out.push({ id: `pile:${what}`, rects: [pileRect(key, what)] });
   }
   // The grove at its fullest: every plot a big pine (the box the hand reads).
   const rows = pineRows(PINE_GROWN, true);
