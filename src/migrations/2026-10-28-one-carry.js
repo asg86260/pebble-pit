@@ -21,14 +21,14 @@ export default {
     if (!obj(a) || !Array.isArray(a.bodies)) return;
     for (const b of a.bodies) {
       if (!obj(b)) continue;
-      const was = b.load;
+      const was = b.load, had = b.carry;
       if (Array.isArray(was)) { b.carry = was.length; continue; }
       b.load = [];
       b.carry = 0;
       if (was === 'tip') b.tipping = true;
       else if (was === 'carry' || was === 'lay') { b.phase = was; b.load = [AFTER_SITE_LOAD]; b.carry = 1; }
       else if (typeof was === 'string' && KINDS[was]) {
-        const n = Math.max(1, Math.floor(+b.carry || 1));
+        const n = Math.max(1, Math.floor(+had || 1));
         b.load = Array(n).fill(KINDS[was].first);
         b.carry = n;
       }
