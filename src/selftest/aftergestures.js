@@ -57,6 +57,19 @@ async function spinWheel(secs) {
   }
   point('pointerup', ...at(0));
 }
+// A log off the saw mill's pile let go over its bed through the yard's hand
+// (the setup the wheel's groups are not about; the sweep's own group drives
+// the pointer): the wheel cuts only what is on its bed.
+async function logOnBed() {
+  const p = window.__afterPile('mill', 'logs'), bed = partsOf('mill').frame;
+  const x = bed.x + 4.5 * P, y = bed.y + bed.h - 14 * P;
+  window.__afterHand(p.x - P * 3, p.y, 'press');
+  for (let k = 0; k < 3; k++) { window.__afterHand(x, y, 'move'); window.__fast(0.05); }
+  S.trail = [];                                  // let go held still, no flick
+  window.__afterHand(x, y, 'drop');
+  for (let k = 0; k < 60; k++) window.__fast(1 / 60);
+  await raf();
+}
 
 export const TESTS = [
   ['act 3: the saw mill\'s flywheel dragged round where it stands cuts a log; a click on its frame opens its board beside it, and taking hold of the wheel shuts it', async () => {
@@ -66,6 +79,7 @@ export const TESTS = [
     const b = stationBox('mill');
     window.__look(b.x + b.w / 2 - S.viewW / 2);
     await settle(0.1);
+    await logOnBed();
     const t0 = S.after.stock.timber;
     await spinWheel(6);
     const cut = S.after.stock.timber - t0;
@@ -163,6 +177,7 @@ export const TESTS = [
     const b = stationBox('mill');
     window.__look(b.x + b.w / 2 - S.viewW / 2);
     await settle(0.1);
+    await logOnBed();
     // The lesson done: the wheel worked GESTURE_CUE_USES logs through, then
     // the pointer taken away and the first uses' hand let fade.
     await spinWheel(GESTURE_CUE_USES * 5);

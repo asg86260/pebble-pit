@@ -5,6 +5,7 @@
 import { S } from '../state.js';
 import { newRun, settle, until, ok, point, canvas } from './kit.js';
 import { msg } from '../lang.js';
+import { P } from '../config.js';
 import { stationBox, stationParts } from '../after/place.js';
 import { toScreen } from '../world.js';
 
@@ -33,7 +34,8 @@ export const TESTS = [
     await settle();
     await upThere();
     const m = stationBox('mill'), h = stationParts('heap').heap, w = stationParts('mill').wheel;
-    window.__look((m.x + h.x) / 2 - S.viewW / 2);
+    // the mill at the window's left, the heap under its bed, its board's room on its right
+    window.__look(m.x - P * 2);
     await settle(0.2);
     await hoverAt(m.x + m.w / 2, m.y + m.h / 2);
     await until(() => tipText());
