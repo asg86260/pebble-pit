@@ -20,7 +20,8 @@ import { AFTER_PLACE } from './after/place.js';
 import { godFront, restW } from './after/sky.js';
 import { HELL_PLACE } from './hell/place.js';
 import { AFTER_CREW } from './after/bodies.js';
-import { AFTER_PLOTS } from './after/piles.js';
+import { AFTER_PLOTS, AFTER_LANDING } from './after/piles.js';
+import { DEEP_LANDING } from './deep/scales.js';
 import { HELL_CREW } from './hell/bodies.js';
 import { S } from './state.js';
 
@@ -53,13 +54,20 @@ const AFTER_AT_YARD = {
   get crew() { return AFTER_CREW; },
   // Its piles as plots the yard's hand sweeps and throws onto (hands.js;
   // after/piles.js, AFTER_PLOTS).
-  get plots() { return AFTER_PLOTS; }
+  get plots() { return AFTER_PLOTS; },
+  // Where a good of its own, thrown into the air, comes down (game.js, `stepChips`).
+  get landing() { return AFTER_LANDING; }
 };
 // Each place's crew (placebodies.js): its own body list, its JOBS registry,
 // its walk and how the hand takes one of its bodies up. Read through a
 // getter, since the bodies' modules import the places.
 const HELL_AT = { ...HELL_PLACE, get crew() { return HELL_CREW; } };
 export const PLACES = { after: AFTER_AT_YARD, hell: HELL_AT };
+// What a chip of a place comes down on, in the place's order (game.js,
+// `stepChips`): { air?, clamp?, surfaces }. The deep is no place the camera
+// stands in beside the yard, but its water is a place's air all the same;
+// hell has no goods yet, so nothing of its lands.
+export const landingOf = p => (p === 'deep' ? DEEP_LANDING : PLACES[p]?.landing || null);
 // The crew whose list holds `w`, or null for one of the yard's.
 export const crewHolding = w => {
   for (const pl of Object.values(PLACES)) { const list = pl.crew.list(); if (list && list.includes(w)) return pl.crew; }

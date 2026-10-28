@@ -9,7 +9,7 @@ import { rosterHit } from '../src/roster.js';
 import { haulCap } from '../src/levels.js';
 import { deepBed } from '../src/state.js';
 import { hopperRect, crusherRect, deepTop, deepFloor } from '../src/deep/place.js';
-import { spendScales, refundScales, bedNear } from '../src/deep/scales.js';
+import { spendScales, refundScales, bedNear, afloat } from '../src/deep/scales.js';
 import { sweep, release } from '../src/hands.js';
 import crusherMigration from '../src/migrations/2026-09-23-crusher.js';
 
@@ -50,7 +50,7 @@ group('hands sent down the shaft gather the floor, with their own load, and it c
   // water or in a gatherer's arms. One counted before it had crossed the
   // water, or one lost on the way, is a frame where the sum is not 300.
   const arms = () => gatherers().reduce((n, g) => n + (g.carry || 0), 0);
-  const where = () => S.scales + deepBed.n + S.sinking.length + arms();
+  const where = () => S.scales + deepBed.n + afloat() + arms();
   const early = [];
   let most = 0, carried = 0, over = 0, arcs = 0, down = false;
   for (let f = 0; f < 60 * 120; f++) {
@@ -67,7 +67,7 @@ group('hands sent down the shaft gather the floor, with their own load, and it c
   // Two hands take longer than two minutes over three hundred: let them
   // finish. The floor cleared, they stay down there, waiting by the crusher,
   // until they are called up.
-  runUntil(() => deepBed.n === 0 && S.sinking.length === 0 && arms() === 0, 600);
+  runUntil(() => deepBed.n === 0 && afloat() === 0 && arms() === 0, 600);
   run(5);
   const cleared = deepBed.n === 0;
   const stayed = S.gatherers === 2 && gatherers().every(g => g.y + WORKER > deepTop());
@@ -96,8 +96,8 @@ group('a handful thrown in by hand is crushed', async () => {
   const h = hopperRect();
   release(h.x + h.w / 2, h.y - P * 6);
   S.dragging = false;
-  const inWater = S.sinking.length;
-  runUntil(() => S.sinking.length === 0, 30);
+  const inWater = afloat();
+  runUntil(() => afloat() === 0, 30);
   return [
     ok(held > 0, 'the hand took scales off the floor', `${held}`),
     ok(inWater === held && S.heldScales === 0, 'and let them all go into the water', `${inWater}`),

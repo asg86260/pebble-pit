@@ -13,7 +13,7 @@
 
 import { S, afterGround as G } from '../state.js';
 import { AFTER_PILES, AFTER_LOG_TIMBER, AFTER_PILE_SETTLE_S, KINDS } from '../config.js';
-import { colOf, cellOf } from '../grid.js';
+import { colOf, cellOf, kindOf } from '../grid.js';
 import { afterX0, afterX1, stationDoor, AP } from './place.js';
 import { pileGrid } from './art.js';
 import { bedLand } from './mill.js';
@@ -201,34 +201,46 @@ export const AFTER_PLOTS = {
   lyingNear: (x, y, reach, kind) => lying().filter(q => q.kind === kind && q.free && Math.abs(q.x + q.w / 2 - x) <= reach + q.w)
     .sort((a, b) => Math.abs(a.x - x) - Math.abs(b.x - x)),
   lift: q => !!takeAt(q.id),
-  // A thrown block, `ch` a chip of S.chips whose x, y are the block's middle,
-  // one frame on: kept inside the place; let go over the saw's bed, set down
-  // there (mill.js); else, once its foot comes down on the ground's top under
-  // it, set down there -- on a pile of its kind with room, into it; on a pile
-  // full or of another good, beside it; on open ground, where it falls, to
-  // roll by the heap rule. True once it is down.
-  land(ch) {
-    if (!S.after || !G.grid) return true;    // the act begun again under it: nowhere left to land
-    const k = KINDS[ch.kind];
-    if (!k) return true;
-    const half = k.size * AP / 2, lo = afterX0() + half, hi = afterX1() - half;
+};
+// Act 3's landing, as data the place hands the one chain (game.js,
+// `stepChips`): its bounds and its surfaces in order -- the saw's bed, then
+// the ground, a pile being only a strip of it. `ch` is a chip of S.chips
+// whose x, y are a block's middle, one frame on.
+const half = ch => KINDS[ch.kind].size * AP / 2;
+export const AFTER_LANDING = {
+  // kept inside the place
+  clamp(ch) {
+    if (!KINDS[ch.kind]) return;
+    const h = half(ch), lo = afterX0() + h, hi = afterX1() - h;
     if (ch.x < lo) { ch.x = lo; ch.vx = Math.abs(ch.vx) * 0.6; }
     if (ch.x > hi) { ch.x = hi; ch.vx = -Math.abs(ch.vx) * 0.3; }
-    if (ch.vy <= 0) return false;
-    if (bedLand(ch)) return true;           // a log let go over the saw mill's bed (mill.js)
-    const slot = slotNear(colOf(G, ch.x - half + AP / 2), k.size);
-    const top = slot >= 0 ? rowY(slotTop(slot, k.size)) : rowY(0);
-    if (ch.y + half < top) return false;
-    // a good let go of, come down where its foot is (ground.js, `fallTag`)
-    fallTag(landUnit(ch.kind, ch.x), ch.y + half);
-    return true;
-  }
+  },
+  surfaces: [
+    // the act begun again under it: nowhere left to land
+    ch => (!S.after || !G.grid || !KINDS[ch.kind] ? 1 : 0),
+    // a log let go over the saw mill's bed, set down there (mill.js)
+    ch => (ch.vy > 0 && bedLand(ch) ? 1 : 0),
+    // once its foot comes down on the ground's top under it, set down there --
+    // on a pile of its kind with room, into it; on a pile full or of another
+    // good, beside it; on open ground, where it falls, to roll by the heap
+    // rule. It keeps its own cell value (kind and shade) down.
+    ch => {
+      if (ch.vy <= 0) return 0;
+      const k = KINDS[ch.kind], h = half(ch);
+      const slot = slotNear(colOf(G, ch.x - h + AP / 2), k.size);
+      const top = slot >= 0 ? rowY(slotTop(slot, k.size)) : rowY(0);
+      if (ch.y + h < top) return 0;
+      // a good let go of, come down where its foot is (ground.js, `fallTag`)
+      fallTag(landUnit(ch.kind, ch.x, kindOf(ch.s) === ch.kind ? ch.s : cellOf(ch.kind)), ch.y + h);
+      return 1;
+    }
+  ]
 };
 // A unit of `kind` come down at world x (its middle): into the pile under it
 // if that is its good's and has room, else beside it, else where it fell.
 // Its bottom-left cell, or -1 with nowhere to lie.
-export function landUnit(kind, x) {
-  const c = Math.max(0, Math.min(G.cols - 1, colOf(G, x))), v = cellOf(kind);
+export function landUnit(kind, x, v = cellOf(kind)) {
+  const c = Math.max(0, Math.min(G.cols - 1, colOf(G, x)));
   for (const what of PILED) {
     const s = stripOf(what);
     if (!s || c < s.c0 || c >= s.c1) continue;
