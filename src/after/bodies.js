@@ -163,7 +163,7 @@ export function walkLeft(w) {
 // kind as the hand's, so `holds` is how many of a kind its `haulCap()` grains
 // take, one at the least. A unit is in the arms only when a take returned it.
 export { holds };
-export const carried = count;
+export const carried = w => count(w);
 // A block off the top of counted pile `what`, the slot nearest world x (the
 // highest top with no x): its cell value, or 0 with the pile bare. Nothing
 // under another block is ever taken (ground.js, `takeAt`).
