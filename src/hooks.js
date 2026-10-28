@@ -1122,7 +1122,7 @@ HANDLES.__motion = v => { setPref('motion', v); return reducedMotion(); };
 // the deep read back in one object. The fight is set outright only for a check
 // that is not about getting there, and the rule that the stage never goes
 // back is told the setup is a new starting point.
-import { layScales, looseScales } from './deep/scales.js';
+import { layScales, looseScales, afloat } from './deep/scales.js';
 import { faunaReport } from './deep/fauna.js';
 import { woundK } from './deep/serpent.js';
 import { shots } from './deep/arms.js';
@@ -1190,7 +1190,7 @@ HANDLES.__setScales = n => { S.scales = Math.max(0, Math.floor(n || 0)); return 
 HANDLES.__deepState = () => ({
   stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(),
   meal: { n: S.meal, t: S.mealT, go: S.mealGo && { ...S.mealGo } },
-  freed: S.serpentFreed, scales: S.scales, sinking: S.sinking.length, lifting: S.lifting.length,
+  freed: S.serpentFreed, scales: S.scales, sinking: afloat(), lifting: S.lifting.length,
   mech: { at: S.mechAt, skip: S.mechSkip, ...phasePart() },
   statuses: JSON.parse(JSON.stringify(S.statuses)),
   stations: S.stations.map(st => ({ ...st, paid: (st.paid || []).map(p => p.slice()) })),

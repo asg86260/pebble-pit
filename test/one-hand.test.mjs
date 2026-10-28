@@ -124,19 +124,19 @@ group('the deep: its scales are lifted, caught and lifted again by the same hand
   // thrown into the water well clear of the furnace and caught as it sinks
   const up = { x: spot.x, y: deepFloor() - P * 40 };
   flick(up);
-  const air = () => [...S.chips, ...S.sinking].filter(g => g.arc == null);
+  const air = () => S.chips.filter(g => g.place === 'deep');
   const c = catchBack(air);
   const caught = S.held;
   // let go and left to sink: they lie on the bed, and a drag takes them
   letGo({ x: spot.x, y: deepFloor() - P * 30 });
-  runUntil(() => S.sinking.length === 0 && !S.chips.some(h => h.place === 'deep'), 30);
+  runUntil(() => !S.chips.some(h => h.place === 'deep'), 30);
   const second = (() => { empty(); drag([bedSpot()]); return S.held; })();
   empty();
   S.carryLevel = 0;
   return [
     ok(noCounter, 'the deep has no hand of its own on the state'),
     ok(pressed && took === cap && off === cap, 'a drag along the bed takes the hand\'s weight in scales, the same as dust', JSON.stringify({ took, cap, off })),
-    ok(caught === took && c.left === 0, 'thrown into the water, they are caught back in the air', JSON.stringify({ caught, ...c })),
+    ok(c.pressed && caught === took && c.left === 0, 'thrown into the water, they are caught back in the air', JSON.stringify({ caught, ...c })),
     ok(second > 0, 'and scales that came to lie on the bed are lifted again', `${second}`)
   ];
 }, { reload: false });

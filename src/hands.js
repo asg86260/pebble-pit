@@ -25,7 +25,7 @@ import { now } from './clock.js';
 import { rand } from './rng.js';
 import { noteThrow, noteCatch } from './notices.js';
 import { inDeep, crusherRect } from './deep/place.js';
-import { tossIn } from './deep/scales.js';
+import { tossIn, dropScale } from './deep/scales.js';
 import { placeAt } from './acts.js';
 
 export function track(x, y) {
@@ -49,17 +49,14 @@ export function throwVel() {
 // optionally `take(c, r)`, the place's own door for a unit it keeps a count
 // of (act 3's piles, acts.js).
 const YARD = { b: floor, place: null };
-// TEMP (track B's one landing retires `letGo`, and the sinking list with it):
-// a unit let go in the deep still goes into the water on the deep's own
-// gravity, and over the furnace is tossed in on the gatherers' arc.
+// The deep's let-go: over the furnace the scales are tossed in on the
+// gatherers' arc, else they enter the water as chips on the deep's own pull.
 const DEEP = {
   b: deepBed, place: 'deep',
   letGo(x, y, vx, vy, vals) {
     const c = crusherRect();
     if (x >= c.x && x < c.x + c.w && y >= c.y && y < c.y + c.h) { tossIn(x, y, vals); return true; }
-    for (const s of vals) {
-      S.sinking.push({ x: x + (rand() - 0.5) * P * 4, y: y + (rand() - 0.5) * P * 4, vx: vx * DEEP_THROW, vy: vy * DEEP_THROW, s });
-    }
+    for (const s of vals) dropScale(x + (rand() - 0.5) * P * 4, y + (rand() - 0.5) * P * 4, vx * DEEP_THROW, vy * DEEP_THROW, s);
     return true;
   }
 };
@@ -109,16 +106,14 @@ export const handTakes = (mx, my, radius = BRUSH) => dustUnder(mx, my, radius) |
 export function catchAir(mx, my) {
   let had = S.held ? S.motes[0] : null;
   if (had && S.held >= handHolds(had.kind || null)) return;
-  // TEMP (track B's one landing): the deep's free-falling scales are still
-  // their own list, and a scale in it is a unit of the deep's.
-  for (const list of [S.chips, S.sinking]) {
+  {
+    const list = S.chips;
     for (let i = list.length - 1; i >= 0; i--) {
       const ch = list[i];
-      const place = ch.place || (list === S.sinking ? 'deep' : null);
+      const place = ch.place || null;
       // not what the held hand itself just let go, or the toss would come
-      // straight back off the cursor it left from; nor a scale already on
-      // its arc to the crusher
-      if (ch.auto || ch.arc != null) continue;
+      // straight back off the cursor it left from
+      if (ch.auto) continue;
       if (had && ((had.kind || null) !== (ch.kind || null) || (had.place || null) !== place)) continue;
       // full of the held kind (an empty hand has room for anything)
       if (S.held >= handHolds(ch.kind || null)) break;
