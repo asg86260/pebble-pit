@@ -617,7 +617,7 @@ function runErrand(w, dt) {
 const lent = w => w.job && w.errand === AFTER_JOB.ORDER;
 function lendHands() {
   const a = S.after;
-  if (!timberReserved() || a.stock.timber <= 0 || a.camp > 0 || idleBodies().length || a.bodies.some(o => o.errand === AFTER_JOB.ORDER)) return;
+  if (!timberReserved() || a.stock.timber <= 0 || a.camp > 0 || idleBodies().some(o => !o.errand) || a.bodies.some(o => o.errand === AFTER_JOB.ORDER)) return;
   const mound = fedAt('timber');
   const free = a.bodies.filter(o => o.job && o.job !== AFTER_JOB.BUILD && o.state === 'work' && handsFree(o) && !o.out && !o.pick)
     .sort((p, q) => Math.abs(p.x - mound) - Math.abs(q.x - mound));
