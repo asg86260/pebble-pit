@@ -10,6 +10,7 @@
 
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { prints } from './review-prints.mjs';
 
 export const notesPath = root => join(root, 'shots', 'review', 'notes.jsonl');
 
@@ -30,6 +31,30 @@ export function reviewPlugin(root) {
       return [];
     },
     configureServer(server) {
+      // The page posts its open reviews (each option's scene fields and
+      // source, the branches the review names, what it supersedes) and gets
+      // back each option's print and when it first appeared, and which
+      // reviews have landed (tools/review-prints.mjs), so it can mark what
+      // changed since the owner last looked and put away what is done. Registered before /__review, which would take
+      // this path as its own prefix.
+      server.middlewares.use('/__review/prints', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
+        let s = '';
+        req.on('data', c => { s += c; if (s.length > 4e6) req.destroy(); });
+        req.on('end', () => {
+          let out;
+          try {
+            // branch names go to git as arguments, so only a branch's characters pass
+            const names = a => (Array.isArray(a) ? a : []).map(String);
+            const reviews = JSON.parse(s).reviews.map(r => ({ slug: String(r.slug), name: String(r.name || r.slug),
+              branches: names(r.branches).filter(b => /^[\w][\w./-]*$/.test(b)), supersedes: names(r.supersedes),
+              options: r.options.map(o => ({ scene: String(o.scene), text: String(o.text) })) }));
+            out = prints(root, reviews);
+          } catch (e) { res.statusCode = 400; res.end(String(e.message)); return; }
+          res.setHeader('content-type', 'application/json');
+          res.end(JSON.stringify(out));
+        });
+      });
       server.middlewares.use('/__review', (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
         let s = '';

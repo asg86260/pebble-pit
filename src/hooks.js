@@ -407,6 +407,9 @@ export const newGame = (intro = false, fresh = false) => {
   // A yard the last group left held would stall this one: `fast` does
   // nothing held.
   S.paused = false;
+  // And a held moment from a scene: wall clock, so a yard begun inside its four
+  // seconds would not turn at all (`fast` above).
+  heldUntil = 0;
   // The boards as the frame would have them by now (main.js drains the flag).
   buildShop();
 };
@@ -984,7 +987,7 @@ export const HANDLES = {
   // (crit.js).
   __crit: forceCrit,
   __toss: toss, __take: takeFromPile, __place: placeBody,
-  __abandon: abandon, __reset: (...a) => { heldUntil = 0; return newGame(...a); }, __seed: seedGame, __reload: reload,
+  __abandon: abandon, __reset: newGame, __seed: seedGame, __reload: reload,
   __slot: switchSlot,
   __machine: machineSet, __fullSites: fullSites, __machineGates: machineGates,
   __swing: swing, __cold: coldReload,
