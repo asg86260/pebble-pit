@@ -712,15 +712,17 @@ export function verifyWorld() {
 
   // --- rule 23: a unit appears or vanishes only at a named door -------------
   // The units of act 3 -- on its ground, in the hand, in the air, in its
-  // bodies' arms, inside the saw mill -- change in number only where a door
-  // says so (src/flow.js): a tree felled, a cut at the saw, a sign joined, a
-  // tip through the hatch, a sign planted, an order laid, a band laid. A
+  // bodies' arms, inside the saw mill -- and the deep's scales -- on its bed,
+  // in its water, on the cursor, in the gatherers' arms -- change in number
+  // only where a door says so (src/flow.js): a tree felled, a cut at the saw,
+  // a sign joined, a tip through the hatch, a sign planted, an order laid, a
+  // band laid, a blow that sheds scales, the crusher. A
   // pile's count is no number but its cells, so there is nothing for it to
   // disagree with; what can go wrong is a unit written or erased round the
   // doors, and that is the frame this fails on. Read against the frame
   // before, and started over whenever the act's state is replaced (a save
   // read, the act begun), which sets the units from the save and not by a door.
-  if (afterlifeOn() && S.after) conserved(); else unitsWas = null;
+  conserved();
 
   // one ground
   // --- rule 26: act 3's ground holds every unit whole, apart, and held up ----
@@ -880,12 +882,12 @@ let playedWas = 0, playedReads = -1;  // cache: keyed by yardReads
 let levelWas = -1, levelReads = -1;  // cache: keyed by yardReads
 export function forgetSerpent() { serpentWas = -1; levelWas = -1; stunWas = false; mealWas = S.meal; forgetFangs(); }
 
-let unitsWas = null;   // cache: the act, its census and the doors' net on the frame before
+let unitsWas = null;   // cache: the act, the reading of the yard, its census and the doors' net on the frame before
 function conserved() {
-  const now = { a: S.after, n: census(), net: { ...flowNet() } };
+  const now = { a: S.after, reads: yardReads, n: census(), net: { ...flowNet() } };
   const was = unitsWas;
   unitsWas = now;
-  if (!was || was.a !== now.a) return;
+  if (!was || was.a !== now.a || was.reads !== now.reads) return;
   for (const kind of CENSUS_KINDS) {
     const moved = now.n[kind] - was.n[kind], made = (now.net[kind] || 0) - (was.net[kind] || 0);
     if (moved !== made) {

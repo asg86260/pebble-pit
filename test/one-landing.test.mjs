@@ -20,6 +20,7 @@ import { millView } from '../src/after/mill.js';
 import { units, counted, stripOf } from '../src/after/ground.js';
 import { floorAt, afterX0, afterX1, stationX0, groundOf, AP } from '../src/after/place.js';
 import { shed, dropScale, afloat, inWater } from '../src/deep/scales.js';
+import { source } from '../src/flow.js';
 import { hopperRect, deepFloor } from '../src/deep/place.js';
 import { rockEdge } from '../src/world.js';
 
@@ -136,6 +137,7 @@ group('scales let go in the deep sink under drag and land on the bed or in the h
   const x = lefts.find(v => v + P * 12 < h.x || v > h.x + h.w) ?? lefts[0];
   const y0 = deepFloor() - P * 60;
   for (let i = 0; i < 10; i++) dropScale(x + i * P, y0, 0, 0, 3);
+  source('scale', 10, 'test setup');
   const inAir = inWater();
   run(1);
   const drop = S.chips.filter(c => c.place === 'deep').map(c => c.y - y0);
@@ -145,6 +147,7 @@ group('scales let go in the deep sink under drag and land on the bed or in the h
   const onBed = deepBed.n - bed0;
   // over the hopper: crushed as it enters, and counted
   dropScale(h.x + h.w / 2, h.y - P * 4, 0, 0, 3);
+  source('scale', 1, 'test setup');
   runUntil(() => afloat() === 0, 20);
   return [
     ok(inAir === 10 && S.chips.every(c => c.place !== 'deep'), 'they are chips of the one air while they fall, and none after', `${inAir} in the water`),

@@ -22,6 +22,7 @@ import { FACTORY, TYPES, wanted, newUid } from './jobs.js';
 import { syncLifts } from './lifts.js';
 import { syncRoombas } from './roomba.js';
 import { dropScale } from '../deep/scales.js';
+import { source } from '../flow.js';
 
 // A builder with no work on the go to its name: just made, or its work has
 // landed and it has not been given the next. Kept here, not in builders.js:
@@ -117,6 +118,7 @@ export function syncWorkers() {
     if (w.y + WORKER > deepTop()) {
       for (let i = 0; i < (w.carry || 0); i++)
         dropScale(w.x + WORKER / 2, w.y, 0, 0, w.load?.[i] || 1);
+      if (!isDeepType(w.type)) source('scale', w.carry || 0, 'a yard load in the water');
     } else {
       for (let i = 0; i < (w.carry || 0); i++)
         spawnChip(w.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, w.load?.[i] || 1);

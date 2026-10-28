@@ -158,9 +158,10 @@ test('KINDS sizes and weights read from config', () => {
   assert.equal(KINDS.plank.size, AFTER_BLOCK.plank);
   assert.equal(KINDS.sign.size, AFTER_BLOCK.sign);
   assert.equal(KINDS.sawdust.size, 1);
+  assert.equal(KINDS.load.size, AFTER_BLOCK.load);
   for (const k of Object.values(KINDS)) {
     assert.equal(k.weight, k.size * k.size, `${k.key} weighs its area`);
-    assert.ok(k.palette.length === k.tones && k.palette.length >= 1 && k.home);
+    assert.ok(k.palette.length === k.tones && k.palette.length >= 1 && (k.home || k.key === 'load'));          // a site's load is no good's to carry home
   }
 });
 

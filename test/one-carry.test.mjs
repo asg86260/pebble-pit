@@ -78,7 +78,7 @@ group('a yard hauler\'s load keeps each grain\'s shade to the toss', async () =>
 group('a deep gatherer\'s load is cells', async () => {
   window.__crew(0, 4);
   window.__deepCrew({ spare: 1 });
-  for (let i = 0; i < 6; i++) addGrain(deepBed, tossX() + P * 30 + i * P, null, 3, true);
+  for (let i = 0; i < 6; i++) if (addGrain(deepBed, tossX() + P * 30 + i * P, null, 3, true)) source('scale', 1, 'test setup');
   let seen = null;
   for (let f = 0; f < 60 * 60 && !seen; f++) {
     run(1 / 60);

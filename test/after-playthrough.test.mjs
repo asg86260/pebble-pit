@@ -170,10 +170,14 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   // A woodcutter's post and a sawyer's: a member walks out of the camp to
   // each, the one carrying the fallen logs to the forestry shack and the
   // other fetching them on to the mill; the flywheel spun by hand saws one.
-  const camp0 = read().camp;
+  // Members with no post, whoever is out on an errand with their hands full: the
+  // camp's own count (`read().camp`) gives a member back the moment it sets a log
+  // down, which falls where it falls.
+  const unposted = () => S.after.bodies.filter(b => b.job == null && b.state === 'work').length;
+  const camp0 = unposted();
   const post = buyRow('post-woodcutter') && buyRow('post-sawyer');
   run(0.25);
-  const left = read().camp, onJobs = S.after.bodies.filter(b => (b.job === 'woodcutter' || b.job === 'sawyer') && b.state === 'work').length;
+  const left = unposted(), onJobs = S.after.bodies.filter(b => (b.job === 'woodcutter' || b.job === 'sawyer') && b.state === 'work').length;
   const fed = until(() => read().logs > 0, 180);
   const t0 = read().timber;
   const spun = spinMill(1);
@@ -212,7 +216,6 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
     peakCamp = Math.max(peakCamp, read().camp);
     if (read().gate > gates.length) { gates.push(read().gate); note(`gate ${read().gate} at support ${read().support.toFixed(3)}`); }
     due = due || read().strike;
-    if (t % 600 === 0) console.log('PT', t, JSON.stringify(window.__afterRead()), JSON.stringify(S.after.crew), 'errands', JSON.stringify(S.after.bodies.reduce((m, b) => { const k = (b.job || '-') + '/' + (b.errand || '-'); m[k] = (m[k] || 0) + 1; return m; }, {})), 'want', want.join(','));
     run(5);
   }
   const struck = beatDone('strike');

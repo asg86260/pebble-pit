@@ -48,6 +48,7 @@ const godView = () => godFront();
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PILES } from './config.js';
 import { millView } from './after/mill.js';
 import { siteLoads } from './after/build.js';
+import { dropSpot } from './after/piles.js';
 import { stripOf as groundStrip, units as groundUnits, counted as groundCounted } from './after/ground.js';
 import { afterGround } from './state.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
@@ -3103,6 +3104,29 @@ export const SCENES = {
       window.__buy('after-axe');
       window.__fast(AFTER_COIN_UNDER_S + 0.5);
       window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot();
+    } },
+
+  // A log swept off the forestry shack's pile and let go over the saw mill's
+  // timber mound: it lies on the mound among the planks as a log, counted for
+  // no pile, until a member carries it home (DESIGN.md, "One resource system
+  // for every act", section 1).
+  'after-offkind': { about: 'the acts', say: 'a log let go over the timber mound lies on the mound among the planks, not beside it',
+    run: () => {
+      act3Mid();
+      S.carryLevel = Math.max(S.carryLevel, 2);
+      window.__afterGrant({ grovelogs: 6, timber: 8 });
+      const from = window.__afterPile('forestry', 'grovelogs'), to = window.__afterPile('mill', 'timber');
+      to.x = dropSpot('timber').at;                  // over the mound's peak, where its blocks are set down
+      to.y -= P * 12;
+      pinCamera((from.x + to.x) / 2 - S.viewW / 2);
+      window.__look((from.x + to.x) / 2 - S.viewW / 2);
+      S.mouse = { ...from };
+      window.__afterHand(from.x, from.y, 'press');
+      S.mouse = { ...to };
+      S.trail = [];
+      window.__afterHand(to.x, to.y, 'drop');
+      window.__fast(1.5);
+      window.__holdShot();
     } },
 
   // --- track A of the act-3 build: the camp (docs/wave-act3-build.md) ---------------

@@ -218,6 +218,11 @@ this section; the release that switches it on moves these under Unreleased.
 - In act 3 every member carries cells the way the yard's haulers do, by the hand's weights (a log sixteen grains, timber four), a station's loads come out of the shack's door, and a unit is held only if it was really taken (test/one-carry.test.mjs).
 - In act 3 a log or timber you throw can be caught in the air again with a press on it, as dust can (test/after-goods-sweep.test.mjs, src/selftest/afterboards.js).
 - In act 3 a log or timber you throw onto the floor, or a felled tree's log, can be picked up again with a press and hold on it, as dust can (test/after-goods-sweep.test.mjs).
+- Act 3 keeps no stock numbers: a pile is what lies on its strip and the sawdust heap is its grains, saved as cells, and a unit appears or vanishes only at a tree felled, a cut at the saw, a sign joined, a tip through the hatch, a sign planted, an order laid, a band laid or a blow in the deep -- every frame of every check asks it (test/no-stock.test.mjs; test/conservation.test.mjs).
+- A station going up is a strip of the ground: its loads are real blocks made at the shack's door, set down on the strip by members and taken off its top by the builders, and the drawing is the ground's (test/build-site.test.mjs).
+- A log or plank let go over a pile of another kind lies on its mound and is carried home from the top, instead of landing beside the pile (test/off-kind-landing.test.mjs).
+- A joiner carrying timber to the bench no longer sets it down as a sign or plants it in the crowd (test/conservation.test.mjs).
+- In act 3, workers no longer stand waiting at a station for a hauler still on its way to the far pile, so the saw mill and the workshop keep working while one hauler does the rounds (test/after-playthrough.test.mjs).
 - A stirrer at its pot no longer stays hanging in the air when a dance is cut off mid-jump (test/dance-cut-at-pot.test.mjs).
 - Loading a save that was left in the deep no longer lays its sky, clouds and rain out against the window of the yard you were in before (test/held-state.test.mjs).
 - The yard takes less of every frame to count what lies on its floor (test/perf-gate.test.mjs).

@@ -10,8 +10,11 @@
 // Reached the way a player reaches it: both stations ordered off the shack
 // (`__buy`), the posts put on through the roster's + (`__afterPress`), a tree
 // sawn through the grove's own door. The deliberate strays are the point.
-import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { RIM_PIECES } from '../src/config.js';
+import { group, ok, run, runUntil, yard, restartReloadClock } from './helpers.mjs';
+import { P, RIM_PIECES } from '../src/config.js';
+import { shed } from '../src/deep/scales.js';
+import { deepFloor } from '../src/deep/place.js';
+import { deepBed } from '../src/state.js';
 import { putBlock, takeUnit, addGrain, cellOf } from '../src/grid.js';
 import { afterGround } from '../src/state.js';
 import { stripOf, slotTop } from '../src/after/ground.js';
@@ -62,6 +65,8 @@ group('a unit written or erased round the doors turns the rule red', async () =>
   camp(2);
   window.__afterGrant({ timber: 4, logs: 2 });
   run(1);
+  restartReloadClock();                     // no save read between the books and the strays
+  run(0.1);
   const s = stripOf('timber'), c = s.c0 + Math.floor((s.c1 - s.c0) / s.z / 2) * s.z;
   const out = [];
   // a block written onto the ground
@@ -84,4 +89,30 @@ group('a unit written or erased round the doors turns the rule red', async () =>
   window.__emptyHand();
   window.__actsOn(null);
   return out.map(([what, msg]) => ok(red(msg), `${what} is red`, msg.slice(0, 120)));
+});
+
+// --- the deep: the same rule over the scales ---------------------------------------
+function deepYard() {
+  window.__snatch({ played: true });
+  window.__scales(50);
+  window.__deepCrew();
+  S.portalOpen = true;
+}
+
+group('the deep\'s scales are conserved: a blow sheds them, gatherers carry them to the crusher, a stray one is red', async () => {
+  deepYard();
+  shed(deepBed.x + deepBed.cols * P / 2, deepFloor() - P * 50, 12);
+  let quiet = true;
+  try { for (let k = 0; k < 40; k++) run(1); } catch (e) { quiet = false; console.log(e.message); }
+  const by = flowBy();
+  // a grain written on the bed round every door (no save read between: that starts the books over)
+  restartReloadClock();
+  run(0.1);                                 // a frame of its own, so the books are taken after the last save read
+  addGrain(deepBed, deepBed.x + P * 30, null, 3, true);
+  const stray = says();
+  window.__actsOn(null);
+  return [
+    ok(quiet && (by['scale:blow'] || 0) >= 12, 'twelve scales shed by a blow fall, lie and are gathered with the rule quiet', JSON.stringify(by)),
+    ok(red(stray), 'and a scale written onto the bed round the doors is red', stray.slice(0, 120))
+  ];
 });

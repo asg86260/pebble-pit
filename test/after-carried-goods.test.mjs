@@ -11,7 +11,7 @@
 // bill bought (`__buy`). The setup it is not about: the act on and its
 // opening played, members walked out of God's yard, the yard's and the
 // act's coins granted, timber granted on the mound.
-import { group, ok, run, runUntil, yard } from './helpers.mjs';
+import { group, ok, run, runUntil, yard, restartReloadClock } from './helpers.mjs';
 import { goodsRead } from '../src/after/piles.js';
 import { loadKind } from '../src/carry.js';
 import { RIM_PIECES, AFTER_SIGN_TIMBER, AFTER_UPGRADES, AFTER_PILES } from '../src/config.js';
@@ -93,11 +93,12 @@ group('a timber bill is an order: its blocks spoken for on the mound, carried to
   const door = orderAt(S.after.orders[0]);
   let carriedBy = false, early = false, onLast = false;
   for (let f = 0; f < 60 * 240 && S.after.orders.length; f++) {
-    const o = S.after.orders[0], last = o.brought === o.n - 1;
+    const o = S.after.orders[0];
     run(1 / 60);
     carriedBy = carriedBy || S.after.bodies.some(w => w.errand === AFTER_JOB.ORDER && between(w, 'plank'));
     if (S.after.orders.length && S.after.ups[REACH] > 0) early = true;
-    if (!S.after.orders.length) onLast = last && S.after.ups[REACH] === 1;
+    // (bodies set blocks down on the same frame, so the last is no single one's: the order has all its blocks when it lands)
+    if (!S.after.orders.length) onLast = o.brought === o.n && S.after.ups[REACH] === 1;
   }
   window.__actsOn(null);
   return [
@@ -134,6 +135,8 @@ group('a unit written round the doors is caught by the rules', async () => {
   camp(2);
   window.__afterGrant({ timber: 4 });
   run(1);
+  restartReloadClock();                       // no save read between the books and the stray
+  run(0.1);
   // A block written straight onto the mound's strip of the ground, round the
   // doors: no body, hand, tool or named source made it.
   const t0 = stock().timber;

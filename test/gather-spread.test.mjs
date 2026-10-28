@@ -3,6 +3,7 @@
 // When every one read the same best stretch they swam to it together and
 // scooped it side by side, stacked into what looked like one body.
 
+import { source } from '../src/flow.js';
 import { group, ok, yard, runUntil } from './helpers.mjs';
 import { P, WORKER } from '../src/config.js';
 import { deepBed } from '../src/state.js';
@@ -12,7 +13,7 @@ import { afloat } from '../src/deep/scales.js';
 
 const S = yard.S;
 const gatherers = () => S.workers.filter(w => w.type === 'gatherer');
-const lay = (x, n) => { for (let i = 0; i < n; i++) addGrain(deepBed, x, null, 3, true); };
+const lay = (x, n) => { for (let i = 0; i < n; i++) if (addGrain(deepBed, x, null, 3, true)) source('scale', 1, 'test setup'); };
 const CREW = 4;
 
 group('gatherers spread over the scales rather than stacking on one heap', async () => {

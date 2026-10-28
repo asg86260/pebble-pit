@@ -198,7 +198,7 @@ function layAll(w) {
 function toPile(w, dt, what) {
   if (!isEmpty(w) && pileRoom(what) <= 0) { layAll(w); return true; }
   return putDown(w, dt, v => {
-    if (setBlock(what)) return true;
+    if (setBlock(what, null, v)) return true;
     const kind = cellKind(v).key;
     layGood(kind, w.x - KINDS[kind].size * AP / 2, floorAt(w.x));
     return true;
@@ -337,9 +337,13 @@ export function haulWant(key) {
 const haulers = () => S.after.bodies.filter(o => o.errand === AFTER_JOB.HAUL);
 // Blocks in a hauler's hands bound for station `key`.
 const inbound = key => haulers().reduce((n, o) => n + (o.target === key ? carried(o) : 0), 0);
-// Whether a hauler is bound for `key`, fetching or carrying: the worker
-// there waits for it rather than walk too.
-const hauledTo = key => haulers().some(o => o.target === key);
+// Whether what haulers are carrying to `key` already, with what the pile
+// holds, makes a unit of its work: the worker there waits for it rather than
+// walk too. A hauler still on its way to the far pile is no reason to stand
+// idle (four sawyers waited on the one hauler while the logs lay), and one
+// carrying a plank of the four a sign takes is none for a joiner to wait on
+// the other three.
+const hauledTo = key => pileCount(PILE[key]) + inbound(key) >= UNIT[key];
 // How far short a standing, worked station's pile is, counting the blocks on
 // their way. A saw mill with nobody on its job is worked by the hand alone,
 // and its logs are left on the forestry pile for the hand to take where it
@@ -413,7 +417,10 @@ function gather(w, dt) {
 // once its hands are empty again) and goes back to its bench.
 function takeOut(w, dt, kind, stock, room, round) {
   if (!w.out) {
-    if (pileCount(stock) < holds(kind) || !room()) return false;
+    // Not with other goods in the arms (the bench's timber still being walked
+    // in): the round is for the maker's own goods, and a plank carried out as a
+    // sign is a unit turned into another.
+    if (!isEmpty(w) || pileCount(stock) < holds(kind) || !room()) return false;
     Object.assign(w, { out: true, at: null, target: null, t: 0, pick: false });
   }
   if (round(w, dt)) w.out = false;

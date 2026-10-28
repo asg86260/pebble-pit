@@ -90,14 +90,15 @@ export function takeBlock(what, x = null) {
     : t.reduce((b, u) => (Math.abs(mid(u) - x) < Math.abs(mid(b) - x) ? u : b));
   return !!takeAt(pick.ai);
 }
-// A block set down on pile `what` at world x (where its drop is with no x):
-// it lands on the heap there and rolls where the heap rule takes it, inside
+// A block set down on pile `what` at world x (where its drop is with no x),
+// of value `v` (a body's, keeping its tone; the pile's good's default with
+// none): it lands on the heap there and rolls where the heap rule takes it, inside
 // the strip. False with the pile at its brim or its heap at its ceiling.
-export function setBlock(what, x = null) {
+export function setBlock(what, x = null, v = null) {
   if (!S.after || pileRoom(what) <= 0) return false;
   const s = stripOf(what);
   const at = x == null ? dropX(what) : Math.max(colX(s.c0), Math.min(colX(s.c1) - 1, x));
-  return putIn(cellOf(s.kind), at) >= 0;
+  return putIn(v || cellOf(s.kind), at) >= 0;
 }
 // A pile's count stood up from a number (an older save's, handed over by the
 // one-ground migration; a grant): set down a block at a time at its drop,

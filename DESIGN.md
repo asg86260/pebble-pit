@@ -23412,7 +23412,7 @@ before the first frame, so a save carries no grid. Timber is halved on read
   the row's effect lands when the last block arrives, as a build's loads
   already are (after/build.js).
 
-### One resource system for every act (designed and approved, building; the owner, 2026-10-28)
+### One resource system for every act (built; the owner, 2026-10-28)
 
 The owner, verbatim: "again im not sure how the grabbing logic just doesnt
 work by default, it should inherit the same shit as act 1. something is
@@ -23750,6 +23750,48 @@ disjoint files.
    covers act 3 and the deep, the places whose sources and sinks are listed;
    the yard joins once its own are (rock spoil, the rind, the farm, the
    meteor, finds), or it would go red across the node tier on day one.
+   *Built (res-step3, res-step4, 2026-10-28):* step 3's three tracks landed
+   as one hand (hands.js, no act branch; the deep's let-go is data), one
+   landing chain over `landingOf(place)` and one carry (src/carry.js,
+   src/cells.js), `S.sinking`'s free fall now chips. Step 4 retired the mirror
+   and the adapters and is what these notes cover; what the design left open
+   and was decided in the build:
+   - *The sawdust heap stayed the saw mill's own plot* ("a machine's surfaces
+     stay the machine's"), but its count is its cells and nothing else: it is
+     saved as the grains run-length (`after.heap`, `heapRecord`), read back
+     into the plot before anything is laid on it, and migration v33 turns an
+     older save's `stock.sawdust` into grains to lay. `S.after.stock`, `plotOf`,
+     `AFTER_PLOTS`, the `groundLogs` rows, `AFTER_STOCK`, `AFTER_CARRY_SLOTS`
+     and `render/after/drop.js` are gone; every reader asks the ground
+     (`countOf`, `goodCount`, `goodsRead`, `lying`, `unitNear`, `stripBox`).
+   - *Rules 23 and 24 are one rule* (verify.js 23): `census()` counts a kind
+     wherever it is -- ground, hand, air, arms, the saw's bed, chute and
+     grains, the heap, the deep's bed, water and gatherers' arms -- and each
+     frame's change must equal what the named doors made (`source` / `sink`,
+     src/flow.js: a tree felled, the saw's cut and the log it eats, a sign
+     joined and planted, the hatch, an order and a band laid, the shack's
+     door, a blow's scales, the crusher). A save read starts the books over.
+     It found two defects the first day: a joiner carrying timber was sent on
+     the sign round and set the plank down as a sign, and a body setting down
+     on a pile made a fresh unit instead of the one it carried (it now keeps
+     its tone). The yard joins when its doors are named (TODO.md).
+   - *A site is the loads on the ground*: a `load` kind (2x2, weight 4, no
+     home, so no gatherer carries it) made at the shack's door as a member's
+     hands close on it, set down on the site's span, which overlaps the
+     station's own pile strip, so it lies there as an off-kind unit on that
+     strip's mound; builders take the top one. The site keeps `n`, `at`, `whole`
+     and `laid` (the loads laid into bands, the account behind that sink);
+     what is to make, to carry and to lay is read off the cells and the arms.
+   - *An off-kind unit on a pile's strip lies on the mound* (`landUnit`) and a
+     body carries it home from the top; a pile full still sets a good beside it.
+   - *Pace*: carrying by weight halved a joiner's plank trips, and the workers
+     at a station waited on a hauler still walking to the far pile. They now
+     wait only for what is already in a hauler's arms (`hauledTo`). The act
+     runs within a few per cent of its pace before the weights
+     (`node tools/node/act3-pace.mjs`: first sign 2:16 against 2:07, first soul
+     5:29 against 6:37, the meeting 7:17 against 7:19, the slowdown 32:43
+     against 32:10, the strike 45:40 against 47:55), and the pace tool's player
+     now works the real mill (a log swept onto the bed, the wheel turned).
 5. **The deep's hand and water**, if call 3 says after; otherwise it rides
    step 3.
 

@@ -4,19 +4,20 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## One resource system for every act -- DESIGNED AND APPROVED; building (2026-10-28)
+## The yard joins the conservation rule (2026-10-28)
 
-DESIGN.md, "One resource system for every act". The yard, the deep and act 3
-keep goods three ways: act 3's lying goods are an object list, not cells, so
-a thrown block cannot be dragged up again, and its hand, landing, carry and
-counts are copies of the yard's. The design: a unit is a cell value (kind
-and shade), one ground plot a place with blocks as multi-cell units and the
-floor as fixed cells, piles as strips, one hand, one landing chain, one
-carry, counts surveyed off cells, one conservation rule. The owner's calls
-(2026-10-28): one fine plot; hand by weight, never fewer than one; the deep
-in this wave. Step 1 (grid.js's block rule, `KINDS`) and step 2 (act 3's
-one ground, migration v31; branch res-step2) built; steps 3-5 open, their
-adapters marked TEMP in after/piles.js, after/grove.js and after/index.js. It is the resource step of "One place engine" below.
+"One resource system for every act" is built (DESIGN.md, `(built)`). Its one
+rule (verify.js, rule 23: a unit appears or vanishes only at a named source or
+sink, src/flow.js and src/conserve.js) covers act 3 and the deep's scales. The
+yard does not yet: its units -- grains, finds, shards -- are made and unmade at
+doors nobody has named (rock spoil, the rind, the farm, the meteor, the casino's
+pay, the quarry's dig), so counting them against the rule would be red across the
+node tier on the first frame. Each door is one `source` or `sink` call and its
+kind one entry in `CENSUS_KINDS`; the grains are cells of `floor`, in the hand
+and in `S.chips` already, and a hauler's `w.load` is cells. Blocker: someone
+walks the yard's doors (`grep -rn "addGrain\|put(floor" src`) and names each, a
+kind at a time, starting with the finds. Hell has no goods yet and joins when it
+does.
 
 ## Act 3's goods are blocks, carried by bodies -- APPROVED, BUILDING (2026-10-27)
 

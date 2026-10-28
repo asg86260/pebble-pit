@@ -12,6 +12,7 @@
 // reload finds it landed or gone.
 
 import { held } from '../reset.js';
+import { source, sink as unmade } from '../flow.js';
 import { S, deepBed } from '../state.js';
 import { P, SHADES, DEEP_W, DEEP_BED_ROWS, DEEP_GRAV, DEEP_DRAG, DEEP_CURRENT,
          DEEP_CURRENT_MS, SCALE_KICK, SCALE_SHADE, SCALE_SPREAD, LIFT_PACE, LIFT_FLECKS,
@@ -75,6 +76,7 @@ export const shed = (x, y, n, spray = null) => {
     }
     dropScale(x, y, vx, vy, shadeNear(SCALE_SHADE, SCALE_SPREAD));
   }
+  source('scale', Math.max(0, n), 'blow');
 };
 
 // `n` scales laid loose on the bed, for a setup that is not about the fall.
@@ -88,6 +90,7 @@ export function looseScales(n) {
     if (!addGrain(deepBed, x, null, shadeNear(SCALE_SHADE, SCALE_SPREAD), true)) break;
     laid++;
   }
+  source('scale', laid, 'loose scales');
   return laid;
 }
 
@@ -260,12 +263,12 @@ export const DEEP_LANDING = {
   air: { g: DEEP_GRAV, drag: DEEP_DRAG, flow: () => current(now()) },
   clamp(ch) { ch.x = Math.max(deepX0(), Math.min(deepX1() - P, ch.x)); },
   surfaces: [
-    ch => (inHopper(ch.x, ch.y) ? (crush(1), 1) : 0),
+    ch => (inHopper(ch.x, ch.y) ? (crush(1), unmade('scale', 1, 'crusher'), 1) : 0),
     ch => {
       if (!deepBed.grid) return 0;
       const col = Math.max(0, Math.min(deepBed.cols - 1, colOf(deepBed, ch.x)));
       if (ch.y < surfaceY(deepBed, col)) return 0;
-      addGrain(deepBed, ch.x, null, ch.s, true);
+      if (!addGrain(deepBed, ch.x, null, ch.s, true)) unmade('scale', 1, 'lost to the dark');
       return 1;
     }
   ]
@@ -289,7 +292,7 @@ export const stepScales = c => {
     g.arc = Math.min(1, g.arc + f / GATHER_TOSS_FRAMES);
     g.x = g.x0 + (g.tx - g.x0) * g.arc;
     g.y = g.y0 + (g.ty - g.y0) * g.arc - Math.sin(Math.PI * g.arc) * (GATHER_TOSS_RISE + Math.max(0, g.y0 - g.ty));
-    if (g.arc >= 1) { crush(g.v || 1, !g.back); continue; }
+    if (g.arc >= 1) { crush(g.v || 1, !g.back); if (!g.back) unmade('scale', 1, 'crusher'); continue; }
     sink[keep++] = g;
   }
   sink.length = keep;
