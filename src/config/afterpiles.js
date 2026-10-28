@@ -19,7 +19,9 @@ export const AFTER_BLADE_LOGS = 2;
 export const AFTER_PILES = {
   logs:      { good: 'log', brim: 6, cols: 2 },
   grovelogs: { good: 'log', brim: 8 },
-  timber:    { good: 'plank', brim: 20 }
+  // the timber mound is fed off the saw mill's chute from its near side
+  // (after/piles.js, `dropCol`)
+  timber:    { good: 'plank', brim: 20, near: true }
 };
 // A pass of the sand rules over a pile, seconds: a block set down rolls off
 // the heap's side a cell a pass, slow enough to be seen rolling (the voted

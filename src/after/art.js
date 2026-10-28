@@ -15,9 +15,7 @@
 // the drawing, as wide as `pileGrid` makes it; or none, laid off the
 // drawing by `layPiles`); `ground` how far its ground runs, piles and all, pressed flat under it once it is ordered. A drawing may be turned about its own ground
 // (`flip`, its width), its box, door and piles turned with it. The saw
-// mill keeps its sawdust heap on its own ground (`heap`, laid by `span`
-// below): past its timber pile and the body loading it, the notch in the
-// floor just past the heap's foot.
+// mill keeps its sawdust heap under its bed, inside its own drawing.
 
 import { AFTER_PILES, AFTER_BLOCK, AFTER_PILE_GAP } from '../config/afterpiles.js';
 
@@ -29,9 +27,11 @@ import { AFTER_PILES, AFTER_BLOCK, AFTER_PILE_GAP } from '../config/afterpiles.j
 // is red for a part past the ground laid here.
 const DRAWN = {
   // The saw mill's chute reaches past its box to column 60 (AFTER_MILL.chute's
-  // foot and the block on it), and its timber mound is laid past that, so
-  // the mound the chute tosses onto never stands under the chute.
-  mill:      { box: [11, 39, 26], door: 8, reach: 60, pile: { logs: 6, timber: null }, heap: true },
+  // foot, x1 + 2, and the block on it), and its timber mound is laid past
+  // that, so the mound the chute drops onto never stands under the chute;
+  // test/after-mill-machine.test.mjs holds the two to that one rule. Its
+  // sawdust heap stands under its bed, inside its drawing (after/mill.js).
+  mill:      { box: [11, 39, 26], door: 8, reach: 60, pile: { logs: 6, timber: null } },
   // The workshop's signs in its rack, and past them the timber walked to it
   // off the timber mound: laid off the shed and each other (`layPiles`).
   workshop:  { box: [5, 21, 22], door: 13, pile: { signs: null, benchtimber: null } },
@@ -81,11 +81,6 @@ export const pileLeft = (a, what) => (leftOf(a, a.pile[what]) ? a.pile[what] - p
 // the load over its head clears the pile: the widest load (a plank,
 // render/after.js `drawLoad`) runs `load` cells past the body's middle.
 export const PILE_STAND = { stand: 2.5, load: 2 };
-// The sawdust heap, in cells: a triangle `r` high at its brim (2r + 1
-// across), the notch `notch` right of its middle and two wide, and `gap`
-// cells of floor between the heap's foot and whatever stands before it on
-// its station's ground (the body loading the timber pile).
-export const HEAP = { r: 4, notch: 5, gap: 1 };
 // The column a body loading pile `what` of drawing `a` stands on (its middle).
 export const standCol = (a, what) => (leftOf(a, a.pile[what]) ? pileLeft(a, what) - PILE_STAND.stand : pileLeft(a, what) + pileCells(what) + PILE_STAND.stand);
 // Each station's ground, derived from what it draws: from its first drawn
@@ -94,16 +89,12 @@ export const standCol = (a, what) => (leftOf(a, a.pile[what]) ? pileLeft(a, what
 // board's spot all inside, so every two neighbors stand the one gap apart however each is
 // drawn. The pedestal's ground is the union's camp's (config/after.js lays
 // it at the camp's middle).
-// A station with a heap stands it past everything else on its ground, `gap`
-// cells clear, its notch past its foot: `heap` its middle column.
 const span = a => {
   const keys = Object.keys(a.pile), piles = keys.map(k => pileLeft(a, k)), stands = keys.map(k => standCol(a, k));
   const lead = Math.min(a.box[0], a.door - 1, ...piles, ...stands.map(s => Math.floor(s - PILE_STAND.load)));
-  let end = Math.max(a.box[0] + a.box[1], a.door + 2, ...keys.map((k, i) => piles[i] + pileCells(k)), ...stands.map(s => Math.ceil(s + PILE_STAND.load)), a.reach || 0);
-  const heap = a.heap ? end + HEAP.gap + HEAP.r : undefined;
-  if (a.heap) end = heap + HEAP.notch + 2;
+  const end = Math.max(a.box[0] + a.box[1], a.door + 2, ...keys.map((k, i) => piles[i] + pileCells(k)), ...stands.map(s => Math.ceil(s + PILE_STAND.load)), a.reach || 0);
   const sign = a.sign ?? end + 1;
-  return { sign, heap, lead: Math.min(lead, sign), ground: a.ground ?? Math.max(end, sign + SIGN.w) };
+  return { sign, lead: Math.min(lead, sign), ground: a.ground ?? Math.max(end, sign + SIGN.w) };
 };
 // A drawing's piles that name no column are laid off it rather than placed
 // by hand: right of its box and its `reach` (null), or left of it ('left'), in the order

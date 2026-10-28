@@ -125,6 +125,16 @@ function heapOn(d, b) {
     if (v) d.c(x0 + c, -1 - r, DUST[(v - 1) % DUST.length]);
   }
 }
+// The heap and a tip's grains dropping out through the hatch, gone under
+// the floor: drawn with the counted piles, over the lip of billows along
+// the path's front (render/after.js, `drawAfterPiles`), so its bottom row
+// stands on the floor whole as every pile's does, not tucked behind a puff.
+export function drawMillHeap(d) {
+  const live = millView();
+  if (!live) return;
+  heapOn(d, live.heap);
+  for (const s of live.spills) d.fade(1 - s.age / AFTER_SPILL_S, () => d.px(s.c * P, (-1 - s.r + 0.5 * AFTER_MILL.fall * s.age * s.age) * P, P, P, MID));
+}
 function mill(d, work, t, h, body = false) {
   const live = !d.sinking && millView();
   const a = live ? wheelAngle() : Math.PI / 2, lk = rocker(a), o = strokeOf(lk);
@@ -148,9 +158,6 @@ function mill(d, work, t, h, body = false) {
   // the heap's whole room is the mill's, for its backing and footprint
   if (d.sinking) { const H = AFTER_MILL.heap; d.r(H.x, -H.rows, H.cols, H.rows, K); }
   if (live) {
-    heapOn(d, live.heap);
-    // a tip's grains dropping out through the hatch, gone under the floor
-    for (const s of live.spills) d.fade(1 - s.age / AFTER_SPILL_S, () => d.px(s.c * P, (-1 - s.r + 0.5 * AFTER_MILL.fall * s.age * s.age) * P, P, P, MID));
     // the log on the bed: up to the blade it lies whole; in it, it is eaten
     // from its right end and the block it is becoming grows past the blade
     if (live.log) {

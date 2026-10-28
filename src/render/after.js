@@ -15,7 +15,7 @@
 // block is brought and taken by a body or the hand, so none ever fades.
 
 import { P, GREY, AFTER_BLOCK, AFTER_CARRY_SHOWN, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, AFTER_ART_SCALE, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
-         AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S,
+         AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_ART_WORK_S,
          AFTER_SAW_S, AFTER_SIGN_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
 import { S } from '../state.js';
@@ -35,7 +35,7 @@ import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
 import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove, drawLaidGoods } from './after/pine.js';
-import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
+import { DRAW, workerPose, GLYPHS, backOf, drawMillHeap } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, blockPile, goodBlock, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
 import { goodsLook, MOCK_DUST, seedOf } from './after/piles.js'; // MOCK
@@ -201,6 +201,7 @@ function drawShackOrder() {
 export function drawAfterPiles() {
   if (!A()) return;
   for (const what of PILED) if (built(pileOwner(what))) blockPile(what);
+  if (built('mill')) drawMillHeap(frameOf('mill'));
   drawSawDrops();
 }
 export function drawAfterCamp() {

@@ -6,7 +6,7 @@
 // to stand the act up, marked so in its comment, for the pace tool to move.
 import { P } from './yard.js';
 import { AFTER_JOB as J } from '../jobs.js';
-import { campLayout, ART as CAMP_ART, CAMP_ORDER, SIGN as CAMP_SIGN, HEAP as CAMP_HEAP } from '../after/art.js';
+import { campLayout, ART as CAMP_ART, CAMP_ORDER, SIGN as CAMP_SIGN } from '../after/art.js';
 import { AFTER_ZONE_GAP, AFTER_UNION_W } from './aftercrowd.js';
 import { ACT_GATES_CELL, ACT_GATES_REACH } from './acts.js';
 import { AFTER_BLOCK } from './afterpiles.js';
@@ -316,8 +316,6 @@ export const AFTER_SAWDUST_BRIM_UP = 48;   // ...with the mill's bigger heap
 export const AFTER_TIP_LOAD = 8;           // sawdust a tip takes, by the click or a sawyer
 export const AFTER_TIP_HOLD_S = 0.4;       // the heap held tipped
 export const AFTER_SPILL_S = 1.2;          // the grains falling through the notch and fading
-export const AFTER_NOTCH_AT = CAMP_HEAP.notch;   // the notch, cells right of the heap's middle: just past its foot (after/art.js)
-export const AFTER_HEAP_R = CAMP_HEAP.r;         // the sawdust heap at its brim, a triangle this many cells high (after/art.js)
 export const AFTER_SWEEP_WAIT_S = 8;       // the heap stands at its brim, its mark up, this long before a sawyer tips
 export const AFTER_SAW_S = 3;              // a sawyer's cut
 export const AFTER_SIGN_TIMBER = 4;        // timber blocks a sign: signs are timber alone (call 11), a 4x4 of four 2x2s
@@ -619,8 +617,8 @@ AFTER_CARRY_SLOTS.plank = 1;
 //             wheel, where it climbs out at its side, at the log pile and at the bed
 //   chute     the chute off the bed's end, from its top to its foot, a block's
 //             bottom on it; `ride` cells a second a cut block rides the bed out,
-//             `slide` the seconds down the chute, `toss` the seconds from the
-//             chute's foot onto the mound's middle column
+//             `slide` the seconds down the chute; off its foot a block keeps
+//             its speed and falls onto the mound's near column (after/mill.js)
 //   heap      the sawdust heap under the bed between the legs, its left column,
 //             columns and rows (a grain a cell); `hatch` the two columns of the
 //             floor under it a load is tipped through, and `tipAt` the column a
@@ -638,7 +636,7 @@ export const AFTER_MILL = {
   strokes: [2, 2, 2, 4],
   stroke_s: 0.56,
   pose: { wheel: { x: 17.5, y: -7 }, side: 10, pile: 6, bed: 28 },
-  chute: { x0: 50, y0: -6, x1: 58, y1: -3, ride: 4, slide: 0.5, toss: 0.3 },
+  chute: { x0: 50, y0: -6, x1: 58, y1: -3, ride: 4, slide: 0.5 },
   heap: { x: 34, cols: 13, rows: 4, hatch: 44, tipAt: 51 },
   fall: 36,
   set_s: 0.6, held: 0.25, puff: 0.3,

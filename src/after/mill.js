@@ -30,7 +30,7 @@ import { P, AFTER_MILL, AFTER_LOG_TIMBER, AFTER_KERF_GRAINS, AFTER_BLOCK, AFTER_
 import { bladeLogs, heapBrim, built } from './levels.js';
 import { secs } from './util.js';
 import { heapMid, groundOf, stationX0, floorAt, AP } from './place.js';
-import { takeBlock, setBlock, pileRoom, plotOf } from './piles.js';
+import { takeBlock, setBlock, pileRoom, plotOf, dropCol } from './piles.js';
 import { layGood } from './grove.js';
 import { addGrain, put, at, topRow, bottomY, settleSome, count, colOf } from '../grid.js';
 
@@ -350,11 +350,15 @@ function walkWheel(s, dt) {
 // --- out of the machine ------------------------------------------------------------------
 // A cut block's way out, by its age: riding the bed from the blade to its
 // end, down the chute quickening, then off its foot onto the timber mound's
-// middle column, where the mound's sand rules take it (after/piles.js). Its
-// bottom middle, in the drawing's cells, and whether it is down.
+// near column (after/piles.js, `dropCol`), where the mound's sand rules take
+// it. Its bottom middle, in the drawing's cells, and whether it is down.
 const CH = M.chute, RIDE0 = F.bx + 2 + PLANK / 2, RIDE_S = (CH.x0 - RIDE0) / CH.ride;
+// Off the chute's foot it keeps the speed across it slid off with (the slide
+// quickens as k = u^1.5), falling under the grains' gravity: the time to the
+// mound's near column, and the drop the fall needs to come down on its top.
+const EXIT_VX = 1.5 * (CH.x1 - CH.x0) / CH.slide;
 function moundTop() {
-  const b = plotOf('timber'), c = b.cols >> 1;
+  const b = plotOf('timber'), c = dropCol('timber');
   return { x: cx(b.x + c * b.p + b.p / 2), y: cy(bottomY(b) - (topRow(b, c) + 1) * b.p), at: b.x + c * b.p + b.p / 2 };
 }
 export function blockAt(age) {
@@ -362,12 +366,9 @@ export function blockAt(age) {
   age -= RIDE_S;
   if (age < CH.slide) { const k = (age / CH.slide) ** 1.5; return { x: CH.x0 + (CH.x1 - CH.x0) * k, y: CH.y0 + (CH.y1 - CH.y0) * k }; }
   age -= CH.slide;
-  const u = clamp(age / CH.toss, 0, 1), t = moundTop();
-  // a toss off the chute's foot: over the higher of where it leaves and
-  // where it lands, so it never cuts through the mound's side
-  const peak = Math.min(CH.y1, t.y) - PLANK / 2, mx = (CH.x1 + t.x) / 2;
-  const x = (1 - u) ** 2 * CH.x1 + 2 * u * (1 - u) * mx + u * u * t.x, y = (1 - u) ** 2 * CH.y1 + 2 * u * (1 - u) * peak + u * u * t.y;
-  return { x, y, down: u >= 1 };
+  const t = moundTop(), T = (t.x - CH.x1) / EXIT_VX, a = Math.min(age, T);
+  const vy = (t.y - CH.y1 - 0.5 * M.fall * T * T) / T;
+  return { x: CH.x1 + EXIT_VX * a, y: CH.y1 + vy * a + 0.5 * M.fall * a * a, down: age >= T };
 }
 // A grain in the air under the blade, by its age: its top left, and whether
 // it has come down on the heap.

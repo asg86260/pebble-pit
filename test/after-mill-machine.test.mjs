@@ -165,3 +165,16 @@ group('a click on the heap tips a load through the hatch', async () => {
     ok(held, 'the heap\'s plot holds exactly its count after', `${count(b)} grains for ${d1}`)
   ];
 });
+
+// The chute and the mound it feeds are laid by one rule (after/art.js): the
+// mill's `reach` is the chute's foot and the block on it, and the mound is
+// laid the shared gap past that, so the chute never stands over the mound
+// and nothing but that gap lies between them.
+import { ART } from '../src/after/art.js';
+import { AFTER_PILE_GAP } from '../src/config.js';
+group('the saw mill\'s chute ends the shared gap short of its timber mound', async () => {
+  return [
+    ok(ART.mill.reach === AFTER_MILL.chute.x1 + 2, 'the mill\'s reach is the chute\'s foot and the block on it', `${ART.mill.reach} for a foot at ${AFTER_MILL.chute.x1}`),
+    ok(ART.mill.pile.timber === ART.mill.reach + AFTER_PILE_GAP, 'and its mound is laid the shared gap past it', `${ART.mill.pile.timber}`)
+  ];
+});

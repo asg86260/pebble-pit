@@ -46,8 +46,22 @@ function ledger() {
 const handed = (what, d) => { const l = ledger().net; l[what] = (l[what] || 0) + d; };
 // Where a block is set down when nobody says where: the plot's middle
 // column, so a pile set down on by its bodies stands as one heap, not
-// against a side.
-const dropX = b => b.x + Math.floor(b.cols / 2) * b.p + b.p / 2;
+// against a side. A pile fed from its near side (`near`, the timber mound off
+// the saw mill's chute) is set down on the column nearest that side whose
+// heap at the dust's slope still holds its brim, so a block slides off the
+// chute onto the mound rather than across it, and a read save stands the
+// mound up the same shape the chute heaped it.
+export function dropCol(what) {
+  const b = plotOf(what), pl = AFTER_PILES[what];
+  if (!pl.near) return Math.floor(b.cols / 2);
+  for (let c = 0; c < b.cols; c++) {
+    let holds = 0;
+    for (let j = 0; j < b.cols; j++) holds += Math.max(0, b.rows - Math.abs(j - c));
+    if (holds >= pl.brim) return c;
+  }
+  return Math.floor(b.cols / 2);
+}
+const dropX = b => b.x + (b.drop ?? Math.floor(b.cols / 2)) * b.p + b.p / 2;
 const rest = b => { while (settle(b)) { /* until nothing moves */ } };
 
 // A pile stood up from its count: each block set down on the middle column
@@ -59,6 +73,8 @@ const rest = b => { while (settle(b)) { /* until nothing moves */ } };
 function stand(what) {
   const g = pilePlace(what), a = S.after;
   const b = { ...g, grid: new Uint8Array(g.cols * g.rows), n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: false, settleAt: 0, t: 0 };
+  plots()[what] = b;
+  b.drop = dropCol(what);
   const had = Math.max(0, Math.floor(+a.stock[what] || 0)), keep = Math.min(had, AFTER_PILES[what].brim);
   for (let i = 0; i < keep; i++) { addGrain(b, dropX(b), undefined, 1, true); rest(b); }
   a.stock[what] = keep;
