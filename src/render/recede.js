@@ -17,6 +17,7 @@ import { recede, bandCells } from '../cutscene.js';
 import { roleOf } from '../stage.js';
 import { seen, raw } from '../ink.js';
 import { canvas, ctx } from './ctx.js';
+import { fillDots } from './dots.js';
 
 // Which half of the picture is being painted: the receding yard ('back') or
 // the scene's own layers over the wash ('front').
@@ -77,6 +78,7 @@ export { bandCells };
 // is written as seen (render/fightnums.js). The bands are a cinema's, not the
 // page's ink: black on the dark page too, past the palette's map.
 const BAND_BLACK = raw('#000');
+const BAND_DOTS = '#fff';
 export function drawLetterbox() {
   const n = Math.round(S.hush * bandCells());
   if (n <= 0) return;
@@ -84,6 +86,10 @@ export function drawLetterbox() {
   ctx.fillStyle = BAND_BLACK;
   ctx.fillRect(0, 0, S.W, h);
   ctx.fillRect(0, S.H - h, S.W, h);
+  // the inverse dots, in the light page's paper as the bands are the light
+  // page's black, each band's from its own edge
+  fillDots(ctx, 0, 0, S.W, h, BAND_DOTS);
+  fillDots(ctx, 0, S.H - h, S.W, h, BAND_DOTS);
   if (S.view !== 'deep') return;
   ctx.fillStyle = seen(ABYSS_TONES[CUT_BAND_RULE_TONE]);
   ctx.fillRect(0, h - CUT_BAND_RULE_PX, S.W, CUT_BAND_RULE_PX);

@@ -85,9 +85,10 @@
   /* the section sign of style.css's `.rows .sect`, said again past the
      firewall's revert */
   --paper: var(--c-fill); --ink: var(--c-on-fill); --fill: var(--c-on-fill); --on-fill: var(--c-fill);
+  --dots: var(--c-dots-on-fill); --dots-on-fill: var(--c-dots);
   padding: 3px 10px 4px;
   border: 0;
-  background: var(--paper);
+  background: var(--paper) var(--dots);
   color: var(--ink);
   font-size: var(--fs-body);
   line-height: var(--lh-chip);
@@ -258,7 +259,7 @@
      tag centers the two -- one box, one middle. */
   align-items: center;
   border: 1px solid var(--ink);
-  background: var(--paper);
+  background: var(--paper) var(--dots);
   line-height: 16px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -338,7 +339,7 @@
   box-sizing: border-box;
   display: flex;
   border-top: 1px solid var(--ink);
-  background: var(--paper);
+  background: var(--paper) var(--dots);
   color: var(--ink);
   font-style: normal;
   font-size: var(--fs-small);
@@ -358,7 +359,7 @@
 .rows.shelves > .tile .strip > i.dead { color: var(--ink-5); cursor: default; }
 .rows.shelves > .tile.stripped { cursor: default; padding-bottom: calc(var(--shelf-foot, 8px) + var(--shelf-refund, 18px)); }
 @media (hover: hover) {
-  .rows.shelves > .tile .strip > i:not(.dead):hover { background: var(--fill); color: var(--on-fill); }
+  .rows.shelves > .tile .strip > i:not(.dead):hover { background: var(--fill) var(--dots-on-fill); color: var(--on-fill); }
 }
 /* The new-corner is top-LEFT on a tile: the pips stand down the right edge,
    and a notch over them read as the top of the ladder. */
@@ -516,13 +517,13 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   align-items: center;
   height: 18px;
   border: 1px solid var(--ink);
-  background: var(--paper);
+  background: var(--paper) var(--dots);
   line-height: 16px;
   font: inherit;
   color: var(--ink);
 }
 .rows.shelves > .tile .step .less, .rows.shelves > .tile .step .more {
-  width: 18px; height: 16px; padding: 0; border: 0; background: var(--paper); color: var(--ink); font: inherit; cursor: pointer;
+  width: 18px; height: 16px; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; cursor: pointer;
 }
 .rows.shelves > .tile .step .less:disabled, .rows.shelves > .tile .step .more:disabled { color: var(--ink-5); cursor: default; }
 .rows.shelves > .tile .step .count { min-width: 2em; text-align: center; }
@@ -570,7 +571,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   padding: 14px 12px 10px 8px;
   border: 3px solid var(--ink);
   border-bottom-width: var(--shelf-plank, 5px);
-  background: var(--paper);
+  background-color: var(--paper);
   text-align: left;
 }
 /* The sign is a swallowtail ribbon (ribbon.js) wrapped round the frame's
@@ -632,10 +633,11 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 /* the section sign, as on a board (style.css, `.rows .sect`) */
 .rows.ledger > .sect {
   --paper: var(--c-fill); --ink: var(--c-on-fill); --fill: var(--c-on-fill); --on-fill: var(--c-fill);
+  --dots: var(--c-dots-on-fill); --dots-on-fill: var(--c-dots);
   display: table;
   margin: 12px 0 4px;
   padding: 3px 10px 4px;
-  background: var(--paper);
+  background: var(--paper) var(--dots);
   color: var(--ink);
   font-size: var(--fs-body);
   line-height: var(--lh-chip);
@@ -709,13 +711,13 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
    by deep/rails.js (`showTip`), in the board's face and size. */
 .rl-tip {
   position: fixed; z-index: 21; pointer-events: none;
-  background: var(--fill); color: var(--on-fill); padding: var(--pad-s); white-space: nowrap;
+  background: var(--fill) var(--dots-on-fill); color: var(--on-fill); padding: var(--pad-s); white-space: nowrap;
 }
 .rl-tip[hidden] { display: none; }
 /* A row: what it is, a line of what it does, its bill in the corner. */
 .rails .rl-row {
   display: grid; grid-template-columns: 1fr auto; gap: 1px 10px; text-align: left;
-  font: inherit; background: var(--paper); color: var(--ink); border: 1px solid var(--ink);
+  font: inherit; background: var(--paper) var(--dots); color: var(--ink); border: 1px solid var(--ink);
   padding: 6px 8px; cursor: pointer;
 }
 .rails .rl-row .rl-t { grid-column: 1; grid-row: 1; }
@@ -729,7 +731,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 .rails .rl-row .rl-tag .short { color: var(--ink-5); }
 .rails .rl-row:disabled { border-style: dashed; color: var(--ink-5); cursor: default; }
 @media (hover: hover) {
-  .rails .rl-row:hover:not(:disabled) { background: var(--fill); color: var(--on-fill); }
+  .rails .rl-row:hover:not(:disabled) { background: var(--fill) var(--dots-on-fill); color: var(--on-fill); }
   .rails .rl-row:hover:not(:disabled) .rl-s, .rails .rl-row:hover:not(:disabled) .rl-tag .short { color: var(--on-fill); }
 }
 .rails .rl-top { font-size: var(--fs-body); color: var(--ink); }
@@ -774,10 +776,10 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 .rails .rl-five { display: grid; grid-template-columns: repeat(var(--n), minmax(max-content, 1fr)); gap: 2px; }
 .rails .rl-node {
   display: grid; justify-items: center; gap: 2px; font: inherit; font-size: var(--fs-body); text-align: center;
-  background: var(--paper); color: var(--ink); border: 1px solid var(--ink); padding: 3px 4px; cursor: pointer;
+  background: var(--paper) var(--dots); color: var(--ink); border: 1px solid var(--ink); padding: 3px 4px; cursor: pointer;
 }
 .rails .rl-node .rl-ic { display: flex; gap: 1px; }
-.rails .rl-node.on { background: var(--fill); color: var(--on-fill); }
+.rails .rl-node.on { background: var(--fill) var(--dots-on-fill); color: var(--on-fill); }
 .rails .rl-node.locked { border-style: dashed; color: var(--ink-5); cursor: default; }
 .rails .rl-pick { display: grid; gap: 8px; border: 1px solid var(--ink); padding: 6px 8px; }
 /* The tree reads as the rows do, not as the board's headings. Its prose never
@@ -803,7 +805,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity var(--build-fade-ms, 200ms) steps(4, end), visibility 0s linear var(--build-fade-ms, 200ms);
   display: inline-flex; align-items: center; gap: 6px;
-  padding: var(--pad-m); background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
+  padding: var(--pad-m); background: var(--paper) var(--dots); color: var(--ink); border: 2px solid var(--ink);
   box-shadow: var(--float-shadow);
   font: inherit; letter-spacing: calc(var(--track-m) * var(--track)); text-transform: uppercase;
   cursor: pointer; white-space: nowrap;
@@ -818,7 +820,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 }
 #buildbtn .count { font-weight: normal; }
 @media (hover: hover) {
-  #buildbtn:hover { background: var(--fill); color: var(--on-fill); }
+  #buildbtn:hover { background: var(--fill) var(--dots-on-fill); color: var(--on-fill); }
 }
 @media (prefers-reduced-motion: reduce) {
   #buildbtn, #buildbtn.on { transition: none; }

@@ -51,7 +51,7 @@ test('the dim page draws the first dark page\'s ends, its fills in the light gra
 // cell, its ink (the page's own) and its weight.
 test("every page's dots are the canvas's: the pitch, the place, the ink and the weight", () => {
   for (const [page, body] of [['light', light], ['dark', dark], ['dim', dim]]) {
-    const svg = decodeURIComponent(token(body, 'dots') || '');
+    const svg = decodeURIComponent(token(body, 'c-dots') || '');
     const at = k => svg.match(new RegExp(`<svg[^>]* ${k}='([^']+)'`))?.[1];
     const dot = k => svg.match(new RegExp(`<rect[^>]* ${k}='([^']+)'`))?.[1];
     assert.equal(+at('width'), SHELF_DOT, `${page} --dots is ${SHELF_DOT} wide`);
@@ -62,9 +62,26 @@ test("every page's dots are the canvas's: the pitch, the place, the ink and the 
     assert.equal(dot('fill'), token(body, 'c-ink'), `${page} dots in the page's ink`);
     assert.equal(+dot('fill-opacity'), SHELF_DOT_ALPHA, `${page} dot weight`);
     // the toast's, inked the other way round: the same tile in the paper
-    const turned = decodeURIComponent(token(body, 'dots-on-fill') || '');
-    assert.equal(turned, svg.replace(`fill='${token(body, 'c-ink')}'`, `fill='${token(body, 'c-paper')}'`), `${page} --dots-on-fill is --dots in the paper`);
+    const turned = decodeURIComponent(token(body, 'c-dots-on-fill') || '');
+    assert.equal(turned, svg.replace(`fill='${token(body, 'c-ink')}'`, `fill='${token(body, 'c-paper')}'`), `${page} --c-dots-on-fill is --c-dots in the paper`);
   }
+});
+
+// A ground without its dots is a flat box on a dotted page. The few kept
+// flat are the page itself, the canvas under the yard, an overlay and the
+// parts of a drawing; one more is a new box that forgot its dots.
+const FLAT = ['html, body', 'canvas', '#fullscreen .frame::before', '#crewfade .body', '.controls .colhead', '.veil', '.yard'];
+test('every paper or fill ground carries its dots', () => {
+  const bare = [];
+  for (const f of ['src/style.css', 'src/shelf.css', 'src/title.css']) {
+    const text = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const m of text.matchAll(/([^{}]*)\{([^}]*)\}/g)) {
+      if (!/background:\s*var\(--(paper|fill)\)\s*;/.test(m[2])) continue;
+      const sel = m[1].trim();
+      if (!FLAT.some(s => sel.startsWith(s))) bare.push(`${f}: ${sel}`);
+    }
+  }
+  assert.deepEqual(bare, [], 'a ground laid without var(--dots) or var(--dots-on-fill)');
 });
 
 test('no coin or purple is written outside the tokens', () => {

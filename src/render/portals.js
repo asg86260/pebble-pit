@@ -14,6 +14,7 @@ import { P, WORKER, GREY, FINALE_GREYS, FINALE_HOUSE_W, ACT_PORTAL_SPIN_HZ, ACT_
          ACT_RIM_PIECES, MANSION_SOULS, ABYSS_TONES } from '../config.js';
 import { now } from '../clock.js';
 import { ctx } from './ctx.js';
+import { fillDots } from './dots.js';
 import { hash } from './flicker.js';
 import { msg, FACE } from '../lang.js';
 import { raw, light, perPage } from '../ink.js';
@@ -145,6 +146,7 @@ function drawGoOn() {
   ctx.globalAlpha = k;
   ctx.fillStyle = '#fff';
   ctx.fillRect(sx, sy, w, h);
+  fillDots(ctx, sx + 2, sy + 2, w - 4, h - 4);   // inside the two-wide edge, as a card's dots start
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2;
   ctx.strokeRect(sx + 1, sy + 1, w - 2, h - 2);

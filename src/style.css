@@ -70,9 +70,16 @@ html, body {
   --coin-ore: #2f5fd0; --coin-crop: #2e9e4b; --coin-spark: #d93a25;
   /* The page's dot texture -- one cell in six, in the ink at a seventh -- as
      one value a mode, since a data URI cannot read a variable; and the same
-     in the paper, for a card inked the other way round (the toast). */
-  --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
-  --dots-on-fill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23fff' fill-opacity='.14'/%3E%3C/svg%3E");
+     in the paper, for the fill. Named apart from what they are used as, as
+     the ends are, so a box inked the other way round swaps the two with its
+     other four. Every box with a ground lays the pair it stands on:
+     `background: var(--paper) var(--dots)`, `var(--fill) var(--dots-on-fill)`. */
+  --c-dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3C/svg%3E");
+  --c-dots-on-fill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23fff' fill-opacity='.14'/%3E%3C/svg%3E");
+  --dots: var(--c-dots); --dots-on-fill: var(--c-dots-on-fill);
+  /* A fixed box centered in the window with its corner on a whole pixel, so
+     its edge and its dots land on whole pixels whatever its size. */
+  --centered: translate(round(down, calc(50vw - 50%), 1px), round(down, calc(50vh - 50%), 1px));
   /* The type scale: six sizes and four trackings. A tracking is always
      multiplied by --track, the knob a language or a phone turns:
      `letter-spacing: calc(var(--track-m) * var(--track))`. Two line heights:
@@ -169,8 +176,9 @@ html.dark {
   --accent: #b79af2;
   --coin-ore: #7d9cf0; --coin-crop: #6fd08a; --coin-spark: #f06a55;
   --shadow-c: #ececec; --shadow-ink: 20%;
-  --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23ececec' fill-opacity='.14'/%3E%3C/svg%3E");
-  --dots-on-fill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23121212' fill-opacity='.14'/%3E%3C/svg%3E");
+  --c-dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23ececec' fill-opacity='.14'/%3E%3C/svg%3E");
+  --c-dots-on-fill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23121212' fill-opacity='.14'/%3E%3C/svg%3E");
+  --dots: var(--c-dots); --dots-on-fill: var(--c-dots-on-fill);
 }
 /* The dim page (prefs.js, `theme`): the dark page's turn on charcoal, light
    gray on charcoal (DEEP_PAPER, DEEP_INK). */
@@ -180,14 +188,13 @@ html.dark.dim {
   --ink-2: #b9b9b9; --ink-4: #939393; --ink-5: #878787; --ink-7: #5f5f5f; --ink-8: #434343;
   --accent: #9b5de5;
   --shadow-c: #e0e0e0; --shadow-ink: 20%;
-  --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
-  --dots-on-fill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%231f1f1f' fill-opacity='.14'/%3E%3C/svg%3E");
+  --c-dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%23e0e0e0' fill-opacity='.14'/%3E%3C/svg%3E");
+  --c-dots-on-fill: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='2' y='2' width='1' height='1' fill='%231f1f1f' fill-opacity='.14'/%3E%3C/svg%3E");
+  --dots: var(--c-dots); --dots-on-fill: var(--c-dots-on-fill);
 }
-/* Every card on the page stands on the dots: the boards, the stock beside
-   them, the story card, the held sheet, a window, a picker, the build queue
-   and a note. Each rule keeps its own paper as a background-color, so this
-   is the one place the dots are laid, and a mode's --dots turns them all.
-   The dots start at each box's own padding edge (the default origin), so a
+/* The cards, whose paper is a background-color of their own: the boards,
+   the stock beside them, the story card, the held sheet, a window, a
+   picker, the build queue and a note. The dots start at each box's own padding edge (the default origin), so a
    whole cell meets the border on every side whatever the box's place on the
    glass; a viewport-pinned grid would cut a part cell at any edge not on a
    multiple of six. `local` carries them with the content where a card
@@ -254,7 +261,7 @@ canvas {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: var(--paper);
+  background: var(--paper) var(--dots);
   color: var(--ink);
   border: 2px solid var(--ink);
   box-sizing: border-box;
@@ -278,7 +285,7 @@ canvas {
 #corner > button {
   width: var(--fs-size); height: var(--fs-size);
   display: flex; align-items: center; justify-content: center;
-  background: var(--paper); color: var(--ink);
+  background: var(--paper) var(--dots); color: var(--ink);
   border: 2px solid var(--ink);
   box-sizing: border-box;
   padding: 0;
@@ -430,10 +437,11 @@ body.still #scroller { scroll-behavior: auto; }
    same rules it follows on the page. */
 .rows .sect {
   --paper: var(--c-fill); --ink: var(--c-on-fill); --fill: var(--c-on-fill); --on-fill: var(--c-fill);
+  --dots: var(--c-dots-on-fill); --dots-on-fill: var(--c-dots);
   justify-self: start;
   margin-top: var(--gap-m);
   padding: 3px 10px 4px;
-  background: var(--paper);
+  background: var(--paper) var(--dots);
   color: var(--ink);
   font-weight: bold;
   line-height: var(--lh-chip);
@@ -509,7 +517,7 @@ body.still #scroller { scroll-behavior: auto; }
   margin-left: .5em;
   padding: 0 .33em;
   color: var(--on-fill);
-  background: var(--fill);
+  background: var(--fill) var(--dots-on-fill);
   font: inherit;
   letter-spacing: 0;
 }
@@ -552,12 +560,12 @@ body.still #scroller { scroll-behavior: auto; }
   cursor: pointer;
 }
 @media (hover: hover) {
-  .rows button:hover:not(:disabled) { color: var(--on-fill); background: var(--fill); }
+  .rows button:hover:not(:disabled) { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 }
 /* The tonic the pot is set to, marked on the menu: it reads inverted, the way a
    chosen thing does, so a glance at the board says what is on the boil. The word
    "brewing" sits where a price would, filled in by the board. */
-.rows button.pick.on { color: var(--on-fill); background: var(--fill); }
+.rows button.pick.on { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 .rows button.pick.on .gain { color: var(--on-fill); }
 /* A row you cannot press yet is dimmed by *colour* rather than by opacity, so
    that something inside it can still be darker than it is. Opacity on the row
@@ -1006,7 +1014,7 @@ body.still #scroller { scroll-behavior: auto; }
   cursor: pointer;
 }
 @media (hover: hover) {
-  .optspop .opt:hover { color: var(--on-fill); background: var(--fill); }
+  .optspop .opt:hover { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 }
 /* The picker at the pot lays its rows out like a board row rather than like a
    plain option: the name on the left, what a batch of it costs on the right, and
@@ -1077,7 +1085,7 @@ body.still #scroller { scroll-behavior: auto; }
 .optspop[data-potpick] .for .count { flex: 0 0 auto; padding-left: 18px; color: var(--ink-5); }
 .optspop[data-potpick] .for.on .count { color: var(--ink-8); }
 @media (hover: hover) {
-  .optspop[data-potpick] .for:hover { color: var(--on-fill); background: var(--fill); }
+  .optspop[data-potpick] .for:hover { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
   .optspop[data-potpick] .for:hover .count { color: var(--ink-8); }
 }
 /* The one trade a brew is for, when there is only one: a line, not a choice. */
@@ -1155,8 +1163,10 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .held {
   position: fixed;
   z-index: 12;                 /* over the boards: nothing else is clickable */
-  left: 50%; top: 50%;
-  transform: translate(-50%, -50%);
+  /* Centered, and floored to a whole pixel: half an odd or fractional size
+     put the edge, and every dot on the paper, across two pixels. */
+  left: 0; top: 0;
+  transform: var(--centered);
   display: flex;
   flex-direction: column;
   /* Every block on a page -- a row, a list, a button, a table, a form -- is
@@ -1386,7 +1396,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .wardrobe > .wardfields, .wardrobe > .wardstage, .wardrobe > .wardbox { margin-top: var(--gap-m); }
 .held .wardrobe .wardwho button { display: flex; align-items: center; justify-content: center; gap: var(--gap-m); padding: 2px 8px; }
 .held .wardrobe .wardwho button + button { border-left: 0; }
-.held .wardrobe .wardtab.on { color: var(--on-fill); background: var(--fill); }
+.held .wardrobe .wardtab.on { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 .wardrobe .wardfields { display: flex; flex-direction: column; gap: var(--gap-m); }
 .wardrobe .wardrow { display: grid; grid-template-columns: 5em auto 1fr auto auto; align-items: center; gap: var(--gap-m); text-align: left; }
 .held .wardrobe .wardarr { align-self: auto; min-width: 2.6em; padding: 2px 8px; }
@@ -1401,7 +1411,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .held .wardrobe .wardname input {
   box-sizing: border-box; min-width: 0; width: 100%;
   font-family: var(--face); font-size: inherit; text-transform: inherit;
-  color: var(--ink); background: var(--paper); border: 2px solid var(--ink); padding: 3px 6px; outline: none;
+  color: var(--ink); background: var(--paper) var(--dots); border: 2px solid var(--ink); padding: 3px 6px; outline: none;
 }
 .held .wardrobe .wardname input::placeholder { color: var(--ink-5); }
 .wardrobe .wardcount { color: var(--ink-5); font-size: var(--fs-small); min-width: 2ch; text-align: right; }
@@ -1442,12 +1452,12 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   display: grid; grid-template-columns: auto minmax(min-content, 1fr); align-items: center; gap: var(--gap-s);
   padding: 3px 4px 3px 3px; text-align: left; letter-spacing: normal;
 }
-.held .wardrobe .wardslot.on { color: var(--on-fill); background: var(--fill); }
+.held .wardrobe .wardslot.on { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 /* a slot's button never turns over under the pointer, its picture being drawn
    the right way up for it: the edge greys instead, as a tile's does */
 @media (hover: hover) {
-  .held .wardrobe .wardslot:hover:not(.on), .held .wardrobe .wardtab:hover:not(.on) { color: var(--ink); background: var(--paper); border-color: var(--ink-7); }
-  .held .wardrobe .wardslot.on:hover, .held .wardrobe .wardtab.on:hover { color: var(--on-fill); background: var(--fill); }
+  .held .wardrobe .wardslot:hover:not(.on), .held .wardrobe .wardtab:hover:not(.on) { color: var(--ink); background: var(--paper) var(--dots); border-color: var(--ink-7); }
+  .held .wardrobe .wardslot.on:hover, .held .wardrobe .wardtab.on:hover { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 }
 .held .wardrobe .wardslot:focus-visible:not(.on) { border-color: var(--ink-7); }
 .wardrobe .wardst { display: flex; flex-direction: column; min-width: 0; }
@@ -1478,7 +1488,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
    other end, how many of its items are open, and its die. */
 .wardrobe .wardbox { display: flex; flex-direction: column; }
 .wardrobe .wardgridhead { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--gap-m); }
-.wardrobe .wardgridtab { color: var(--on-fill); background: var(--fill); font-weight: bold; padding: 3px 10px 2px; }
+.wardrobe .wardgridtab { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); font-weight: bold; padding: 3px 10px 2px; }
 .wardrobe .wardr { display: inline-flex; align-items: center; gap: var(--gap-m); padding-bottom: var(--gap-s); }
 .wardrobe .wardopen { color: var(--ink-5); font-size: var(--fs-small); white-space: nowrap; }
 /* On a short window the grid alone gives way, scrolling inside itself, so the
@@ -1516,7 +1526,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 }
 .held .wardrobe .wardtile:focus-visible { border-color: var(--ink-7); }
 @media (hover: hover) { .held .wardrobe .wardtile:hover { border-color: var(--ink-7); } }
-.held .wardrobe .wardtile.on { color: var(--on-fill); background: var(--fill); border-color: var(--fill); }
+.held .wardrobe .wardtile.on { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); border-color: var(--fill); }
 .held .wardrobe .wardtile.tried { border-style: dashed; border-color: var(--ink); }
 .wardrobe .wardtn { font-size: var(--fs-small); hyphens: none; max-width: 100%; white-space: normal; overflow-wrap: normal; word-break: normal;
                     text-align: center; line-height: 1.15; min-height: var(--tn-h, 0); }
@@ -1560,7 +1570,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .cloudsheet input {
   align-self: stretch; box-sizing: border-box;
   font: inherit; letter-spacing: .3em; text-transform: uppercase; text-align: center;
-  color: var(--ink); background: var(--paper); border: 1px solid var(--ink); padding: 4px; outline: none;
+  color: var(--ink); background: var(--paper) var(--dots); border: 1px solid var(--ink); padding: 4px; outline: none;
 }
 /* Every text box a menu has: the paste, the cloud's, the feedback form's. The
    focus mark (focusmark.js) stands round it rather than a ring in it. */
@@ -1571,7 +1581,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   letter-spacing: 0;
   text-transform: none;
   color: var(--ink);
-  background: var(--paper);
+  background: var(--paper) var(--dots) local;
   border: 1px solid var(--ink);
   padding: 4px;
   resize: none;
@@ -1588,7 +1598,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   letter-spacing: calc(var(--track-m) * var(--track));
   text-transform: uppercase;
   color: var(--ink);
-  background: var(--paper);
+  background: var(--paper) var(--dots);
   border: 1px solid var(--ink);
   padding: var(--pad-btn);
   cursor: pointer;
@@ -1600,10 +1610,10 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 }
 /* The one that opens the game stands inverted on the landing page's front:
    the one thing the page is for. */
-.col button.play { color: var(--on-fill); background: var(--fill); }
+.col button.play { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 @media (hover: hover) {
-  .held button:hover:not(:disabled), .held a.store:hover, .col button:hover:not(:disabled) { color: var(--on-fill); background: var(--fill); }
-  .col button.play:hover { color: var(--ink); background: var(--paper); }
+  .held button:hover:not(:disabled), .held a.store:hover, .col button:hover:not(:disabled) { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
+  .col button.play:hover { color: var(--ink); background: var(--paper) var(--dots); }
 }
 /* One disabled look for every menu control: the disabled grey and a dashed
    edge, the outline of a button rather than a button. */
@@ -1621,11 +1631,11 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .held input[type=range]::-webkit-slider-thumb, .col input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
   width: 12px; height: 12px; margin-top: -6px;
-  background: var(--paper); border: 1px solid var(--ink); border-radius: 0;
+  background: var(--paper) var(--dots); border: 1px solid var(--ink); border-radius: 0;
 }
 .held input[type=range]::-moz-range-thumb, .col input[type=range]::-moz-range-thumb {
   width: 12px; height: 12px;
-  background: var(--paper); border: 1px solid var(--ink); border-radius: 0;
+  background: var(--paper) var(--dots); border: 1px solid var(--ink); border-radius: 0;
 }
 
 /* The crew board is the one list of rows that is not a shop. There is no price,
@@ -1771,7 +1781,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 }
 .queue button .pips { letter-spacing: .22em; opacity: var(--pip-tone, .78); flex: none; }
 @media (hover: hover) {
-  .queue button.wait:hover { color: var(--on-fill); background: var(--fill); }
+  .queue button.wait:hover { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 }
 
 #tip {
@@ -1801,13 +1811,13 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   letter-spacing: calc(var(--track-s) * var(--track));
   text-transform: uppercase;
   color: var(--ink);
-  background: var(--paper);
+  background: var(--paper) var(--dots);
   border: 1px solid var(--ink);
   padding: var(--pad-s);
   cursor: pointer;
 }
 @media (hover: hover) {
-  #hidedone:hover { color: var(--on-fill); background: var(--fill); }
+  #hidedone:hover { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 }
 /* The saves page (slots.js), on the held sheet and the landing page alike: a
    line a yard -- the row's button carrying its words and its playtime, a
@@ -1824,7 +1834,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; column-gap: 6px;
   border: 1px solid var(--ink); align-items: stretch;
 }
-.saves .saverow.open { color: var(--on-fill); background: var(--fill); }
+.saves .saverow.open { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 .saves .slot {
   grid-column: 1 / 6; display: grid; grid-template-columns: subgrid; column-gap: 3ch;
   align-items: baseline; text-align: left; white-space: nowrap; border: 0;
@@ -1832,7 +1842,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .saves .slot .what { display: contents; }
 .saves .slot .item.lone { grid-column: 2 / -1; }
 .saves .slot .played { text-align: right; font-variant-numeric: tabular-nums; }
-.saves .slot.armed { color: var(--on-fill); background: var(--fill); }
+.saves .slot.armed { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 /* At least 36px across and the card's height. A row with nothing to delete
    keeps its place unseen, so the card is as wide as the others. */
 .saves .del {
@@ -1842,8 +1852,8 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .saves .del .x { width: 15px; height: 15px; display: block; shape-rendering: crispEdges; }
 .saves .del .x rect { fill: currentColor; }
 @media (hover: hover) {
-  .saves .del:hover { color: var(--on-fill); background: var(--fill); }
-  .saves .saverow.open .del:hover { color: var(--ink); background: var(--paper); }
+  .saves .del:hover { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
+  .saves .saverow.open .del:hover { color: var(--ink); background: var(--paper) var(--dots); }
 }
 .saves .saverow.open .del { border-left-color: var(--paper); }
 .saves .del.none { visibility: hidden; }
@@ -1855,7 +1865,7 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
 .saves .confirm .fold { min-height: 0; overflow: hidden; }
 .saves .confirm .pair { display: flex; gap: var(--gap-m); }
 .saves .confirm .pair button { flex: 1; text-align: center; }
-.saves .confirm .yes { color: var(--on-fill); background: var(--fill); }
+.saves .confirm .yes { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 body.still .saves .confirm { transition: none; }
 /* Too wide for the window across (slots.js, `fit`), a row's words take two
    lines -- number, rock, crew, then when and playtime -- and the ✕ stays in the
@@ -1872,7 +1882,7 @@ body.still .saves .confirm { transition: none; }
 .saves.stacked .del { grid-column: 2; }
 /* The slot you are in is drawn inverted, not faded: inert, but plainly the
    page's subject. The disabled color is set too, or the browser greys it. */
-.saves .slot.open, .saves .slot.open:disabled { color: var(--on-fill); background: var(--fill); opacity: 1; }
+.saves .slot.open, .saves .slot.open:disabled { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); opacity: 1; }
 /* The veil: white over the whole page as it boots, and taken away once the
    yard is drawn (main.js). The landing page goes to the same white on play,
    so the two documents meet in it. Under motion: less it is taken away at
@@ -1911,7 +1921,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   max-height: calc(100dvh - 2 * var(--edge));
   overflow-y: auto;
   padding: 5px 7px;
-  background: var(--paper);
+  background: var(--paper) var(--dots) local;
   border: 1px solid var(--ink);
   font: 11px var(--face);
   letter-spacing: .04em;
@@ -1925,10 +1935,10 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   position: sticky; top: 0;
   display: flex; gap: 3px;
   padding-bottom: 4px; margin-bottom: 3px;
-  background: var(--paper);
+  background: var(--paper) var(--dots);
   border-bottom: 1px solid var(--ink);
 }
-#dev .devtabs button.on { color: var(--on-fill); background: var(--fill); }
+#dev .devtabs button.on { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 #dev .devrow {
   display: grid;
   grid-template-columns: 8em 1fr;
@@ -1942,7 +1952,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 #dev textarea {
   display: block; width: 100%; box-sizing: border-box;
   font: inherit; text-transform: none; letter-spacing: 0;
-  color: var(--ink); background: var(--paper); border: 1px solid var(--ink);
+  color: var(--ink); background: var(--paper) var(--dots) local; border: 1px solid var(--ink);
   margin: 2px 0 3px;
 }
 #dev button {
@@ -1955,7 +1965,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   cursor: pointer;
 }
 @media (hover: hover) {
-  #dev button:hover { color: var(--on-fill); background: var(--fill); }
+  #dev button:hover { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 }
 #dev b { min-width: 3.4em; font-weight: normal; }
 #dev input[type=range] { width: 8em; accent-color: var(--ink); }
@@ -1963,7 +1973,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   font: inherit;
   text-transform: inherit;
   color: var(--ink);
-  background: var(--paper);
+  background: var(--paper) var(--dots);
   border: 1px solid var(--ink);
   padding: 0 2px;
 }
@@ -2092,7 +2102,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   left: 0; top: auto; bottom: 0;
   z-index: 11;
   padding: var(--pad-m);
-  background: var(--fill);
+  background: var(--fill) var(--dots-on-fill);
   color: var(--on-fill);
   border: 2px solid var(--fill);
   box-shadow: var(--float-shadow);
@@ -2110,7 +2120,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 #raise.scened, #corner.scened { pointer-events: none; }
 /* Under the cursor it inverts, the same offer a board's row makes. */
 @media (hover: hover) {
-  #raise:hover { background: var(--paper); color: var(--ink); }
+  #raise:hover { background: var(--paper) var(--dots); color: var(--ink); }
 }
 
 /* --- the shared parts (docs/design-language/ui.md) ----------------------------- */
@@ -2126,7 +2136,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   text-transform: uppercase;
 }
 .langs button.on, .held .index .it.on, .optspop .opt.on, .optspop[data-potpick] .for.on {
-  color: var(--on-fill); background: var(--fill);
+  color: var(--on-fill); background: var(--fill) var(--dots-on-fill);
 }
 
 /* A tick box, in the type's own size so it rides the text beside it: a
@@ -2158,9 +2168,9 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 .rows button:not(.tile):active:not(:disabled):not(.stat), .optspop .opt:active, .optspop .for:active:not(.only),
 .queue button.wait:active, #hidedone:active, #modalclose:active, #objective .barrier button:active:not(:disabled),
 #corner > button:active, #hop button:active, #buildbtn:active, .saves .del:active {
-  color: var(--on-fill); background: var(--fill);
+  color: var(--on-fill); background: var(--fill) var(--dots-on-fill);
 }
-.col button.play:active, #raise:active, .toast:active { color: var(--ink); background: var(--paper); }
+.col button.play:active, #raise:active, .toast:active { color: var(--ink); background: var(--paper) var(--dots); }
 /* pressed, the toast is paper, so it takes the paper's dots back */
 .toast:active { background-image: var(--dots); }
 
@@ -2308,7 +2318,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   display: block; position: absolute;
   right: calc(var(--sheet-rail-inset, 4px) + env(safe-area-inset-right, 0px));
   width: var(--sheet-rail-w, 6px);
-  background: var(--paper); border: 1px solid var(--ink); box-sizing: border-box;
+  background: var(--paper) var(--dots); border: 1px solid var(--ink); box-sizing: border-box;
   pointer-events: none;
 }
 #panel.bottom .rail .thumb { position: absolute; left: 0; right: 0; top: 0; background: var(--ink); }
@@ -2339,7 +2349,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   transform: translateX(-50%);
   padding: var(--pad-m);
   box-shadow: var(--float-shadow);
-  background: var(--fill);
+  background: var(--fill) var(--dots-on-fill);
   border: 1px solid var(--on-fill);
   outline: 1px solid var(--fill);
   font: inherit;
@@ -2374,7 +2384,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
   padding: calc(var(--pad-m-y) - 2px) var(--pad-m-x);
   white-space: nowrap;
   box-shadow: var(--float-shadow);
-  background: var(--fill);
+  background: var(--fill) var(--dots-on-fill);
   border: 1px solid var(--on-fill);
   outline: 1px solid var(--fill);
   font: inherit;
@@ -2405,8 +2415,8 @@ body.still .messtag { transition: none; }
 .modalwash { z-index: 11; }
 .modal {
   position: fixed; z-index: 12;
-  left: 50%; top: 50%;
-  transform: translate(-50%, -50%);
+  left: 0; top: 0;
+  transform: var(--centered);   /* as the held sheet: on a whole pixel */
   display: flex; flex-direction: column;
   box-sizing: border-box;
   max-width: calc(100vw - 24px); max-height: calc(100vh - 24px);
@@ -2421,9 +2431,9 @@ body.still .messtag { transition: none; }
 .modalhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px;
              padding-bottom: 4px; border-bottom: 2px solid var(--ink); }
 .modalhead .title { letter-spacing: calc(var(--track-m) * var(--track)); text-transform: uppercase; }
-#modalclose { padding: 0 var(--pad-s-x); border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font: inherit; line-height: var(--lh-text); cursor: pointer; }
+#modalclose { padding: 0 var(--pad-s-x); border: 2px solid var(--ink); background: var(--paper) var(--dots); color: var(--ink); font: inherit; line-height: var(--lh-text); cursor: pointer; }
 @media (hover: hover) {
-  #modalclose:hover { background: var(--fill); color: var(--on-fill); }
+  #modalclose:hover { background: var(--fill) var(--dots-on-fill); color: var(--on-fill); }
 }
 .modalbody { overflow-y: auto; overscroll-behavior: contain; min-height: 0;
              scrollbar-width: thin; scrollbar-color: var(--ink) transparent; }   /* inked: no grey in the picture */
@@ -2471,14 +2481,14 @@ body.still .messtag { transition: none; }
 }
 #objective .next { position: absolute; top: calc(-1 * var(--tab-h)); left: -2px; padding: 0 8px; line-height: var(--tab-h);
                    font-size: var(--fs-small); letter-spacing: calc(var(--track-s) * var(--track)); text-transform: uppercase;
-                   background: var(--fill); color: var(--on-fill); }
+                   background: var(--fill) var(--dots-on-fill); color: var(--on-fill); }
 #objective .say { transition: opacity .35s ease; }
 #objective .say.done { text-decoration: line-through; text-decoration-thickness: 2px; }
 #objective .say.in { opacity: 0; }
 /* the step done: the strike stands a beat, then the card goes */
 #objective.going { opacity: 0; translate: 0 -8px; transition: opacity .35s ease .55s, translate .35s ease .55s; }
 #objective.deep { --paper: var(--c-fill); --ink: var(--c-on-fill); --fill: var(--c-on-fill); --on-fill: var(--c-fill);
-                  --dots: var(--dots-on-fill); }   /* its paper is the fill, so its dots are the toast's */
+  --dots: var(--c-dots-on-fill); --dots-on-fill: var(--c-dots); }
 /* A scene holding the yard: the card fades out where it stands and back in
    after (objline.js), as the letterbox steps in and out. */
 #objective.scened { opacity: 0; transition: opacity .6s ease; }
@@ -2546,7 +2556,7 @@ body.still .fill::before { transition: none; }
 #objective .barrier .bill li.done > * { opacity: .55; }
 #objective .barrier .bill .num { text-align: right; padding-left: 2px; font-variant-numeric: tabular-nums; }
 #objective .barrier .bill .tickbox { transition: background-color 1s ease; }
-#objective .barrier button { pointer-events: auto; font: inherit; color: var(--ink); background: var(--paper); cursor: pointer;
+#objective .barrier button { pointer-events: auto; font: inherit; color: var(--ink); background: var(--paper) var(--dots); cursor: pointer;
                              transition: opacity .35s ease, border-color 1s ease, color 1s ease; }
 #objective .barrier .buy { padding: var(--pad-s); border: 3px double var(--ink); max-width: 100%; }
 #objective .barrier .buy .cost { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 2px 8px; }
@@ -2557,7 +2567,7 @@ body.still .fill::before { transition: none; }
 #objective .barrier .cancel { flex: none; padding: var(--pad-s); border: 1px solid var(--ink); white-space: nowrap; }
 #objective .barrier .cancel:not(.on) { opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility 0s .35s; }
 @media (hover: hover) {
-  #objective .barrier button:hover:not(:disabled) { color: var(--on-fill); background: var(--fill); }
+  #objective .barrier button:hover:not(:disabled) { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
   #objective .barrier button:hover:not(:disabled) .short { color: var(--ink-8); }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -2573,12 +2583,12 @@ body.still .fill::before { transition: none; }
 .g { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
      min-width: 1.6em; height: 1.6em; padding: 0 .3em; vertical-align: middle;
      font: bold .78em var(--face); letter-spacing: 0; text-transform: none;
-     color: var(--on-fill); background: var(--fill); border: 1px solid var(--fill); }
+     color: var(--on-fill); background: var(--fill) var(--dots-on-fill); border: 1px solid var(--fill); }
 .g.face { border-radius: 50%; padding: 0; width: 1.6em; }
 .g.bump { border-radius: .35em; }
 .g.trig { border-radius: .35em .35em .15em .15em; height: 1.9em; }
-.g.pad { color: var(--ink); background: var(--paper); }
-.g.stick { color: var(--ink); background: var(--paper); border-radius: 50%; padding: 0; width: 1.6em; border-width: 2px; }
+.g.pad { color: var(--ink); background: var(--paper) var(--dots); }
+.g.stick { color: var(--ink); background: var(--paper) var(--dots); border-radius: 50%; padding: 0; width: 1.6em; border-width: 2px; }
 /* The skip hint's words are drawn by difference over its own fill, so its
    glyph is drawn the other way round to come out ink on paper there too. */
 .skip .g { color: var(--fill); background: var(--on-fill); border-color: var(--on-fill); }
@@ -2641,7 +2651,7 @@ body.still .fill::before { transition: none; }
   font-size: var(--fs-small); white-space: nowrap; overflow-wrap: normal;
 }
 .held .settabs button:first-child, .col .settabs button:first-child { border-left: 0; }
-.held .settabs button.on, .col .settabs button.on { color: var(--on-fill); background: var(--fill); }
+.held .settabs button.on, .col .settabs button.on { color: var(--on-fill); background: var(--fill) var(--dots-on-fill); }
 .tabbody { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); align-self: stretch; min-height: 0; }
 .tabpane { grid-area: 1 / 1; display: flex; flex-direction: column; gap: var(--gap-m); min-width: 0; min-height: 0; }
 .tabpane > * { flex-shrink: 0; }

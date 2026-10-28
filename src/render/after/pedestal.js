@@ -16,6 +16,7 @@ import { afterFloor, speakerAt, pileX, podiumMid, podiumTopOf } from '../../afte
 import { podiumRung } from '../../after/levels.js';
 import { bubbles, pairSpeaking } from '../../after/bubbles.js';
 import { ctx } from '../ctx.js';
+import { fillDots } from '../dots.js';
 import { frame, square, K, W, PALE, MID } from './kit.js';
 
 const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
@@ -145,6 +146,7 @@ export function drawBubbles() {
     ctx.globalAlpha = was * b.alpha;
     fr(x + 2 * s, y, 32 * s, 20 * s, K); fr(x, y + 2 * s, 36 * s, 16 * s, K);
     fr(x + 2 * s, y + 2 * s, 32 * s, 16 * s, W);
+    fillDots(ctx, x + 2 * s, y + 2 * s, 32 * s, 16 * s);   // the page's dots, inside the edge, rising with it
     fr(x + 6 * s, y + 18 * s, 6 * s, 4 * s, K); fr(x + 8 * s, y + 18 * s, 2 * s, 2 * s, W);
     const rows = SYM[b.sym] || SYM.shout, d = Math.max(2, Math.round(2 * s)), w = rows[0].length * d, h = rows.length * d;
     const sx = Math.round(x + (36 * s - w) / 2), sy = Math.round(y + (20 * s - h) / 2);

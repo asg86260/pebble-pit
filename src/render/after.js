@@ -20,6 +20,7 @@ import { P, GREY, AFTER_BLOCK, AFTER_CARRY_SHOWN, AFTER_STATIONS, AFTER_START_BU
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
+import { fillDots } from './dots.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
@@ -358,6 +359,7 @@ export function drawAfterCounts() {
     if (c.foot) at.y -= h / 2 + pad;
     ctx.fillStyle = GREY[W];
     ctx.fillRect(Math.round(at.x - w / 2) - pad, Math.round(at.y - h / 2) - pad, w + pad * 2, h + pad * 2);
+    fillDots(ctx, Math.round(at.x - w / 2) - pad, Math.round(at.y - h / 2) - pad, w + pad * 2, h + pad * 2);
     writeCount(ctx, str, at.x, at.y);
     ctx.globalAlpha = was;
   }
