@@ -120,14 +120,21 @@ export const kindOf = q => q.kind || 'log';
 // for the hover to name: the last laid first, as it is drawn over the rest.
 export function lyingAt(x, y, pad = 0) {
   const list = groundLogs();
-  for (let i = list.length - 1; i >= 0; i--) {
-    const q = list[i];
-    if (!settled(q)) continue;
-    const k = kindOf(q), w = AFTER_GOODS_FOOT[k] * AP, h = (k === 'sign' ? 2 : AFTER_GOODS_FOOT[k]) * AP;   // a block stands as high as it is wide
-    const top = floorAt(q.x + AP) - h;
-    if (x >= q.x - pad && x <= q.x + w + pad && y >= top - pad && y <= top + h + pad) return q;
-  }
+  for (let i = list.length - 1; i >= 0; i--) if (settled(list[i]) && under(list[i], x, y, pad)) return list[i];
   return null;
+}
+// Whether (x, y) is on a lying good, `pad` px of slack round it.
+function under(q, x, y, pad) {
+  const k = kindOf(q), w = AFTER_GOODS_FOOT[k] * AP, h = (k === 'sign' ? 2 : AFTER_GOODS_FOOT[k]) * AP;   // a block stands as high as it is wide
+  const top = floorAt(q.x + AP) - h;
+  return x >= q.x - pad && x <= q.x + w + pad && y >= top - pad && y <= top + h + pad;
+}
+// Every good lying still within `pad` px of (x, y), nearest first: what the
+// hand's brush finds on the floor (piles.js, AFTER_PLOTS), as it finds a
+// pile's blocks under it.
+export function lyingNear(x, y, pad) {
+  const mid = q => q.x + AFTER_GOODS_FOOT[kindOf(q)] * AP / 2;
+  return groundLogs().filter(q => settled(q) && under(q, x, y, pad)).sort((a, b) => Math.abs(mid(a) - x) - Math.abs(mid(b) - x));
 }
 // A good let go of at (x, y), off any pile: x its left edge, y the height it
 // falls from under the yard's gravity (GRAV, px a frame a frame) straight

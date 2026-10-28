@@ -11,7 +11,7 @@ import { P, MINE_DELAY, WORKER, AFTER_PILE_REACH, SHARD_CELL, SPORE_CELL, SPARK_
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow, bindScroller, lookAt, lockScroller, toWorld, toScreen } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
-import { sweep, release, track, dustUnder } from './hands.js';
+import { sweep, release, track, handTakes } from './hands.js';
 import { startle, overBird } from './weather.js';
 import { stirAir } from './air.js';
 import { stirSmoke, airReadout } from './smog.js';
@@ -226,7 +226,8 @@ canvas.addEventListener('pointerdown', e => {
     // A press and hold on a pile is the yard's sweep, on its blocks as on
     // the yard's dust (hands.js): what it takes floats on the cursor and
     // the release throws it, the move and the release the yard's own below.
-    if (S.view === 'after' && dustUnder(p.x, p.y, e.pointerType === 'touch' ? fingerReach() : undefined)) {
+    // A press on a block still in the air is the hand's too, to catch it.
+    if (S.view === 'after' && handTakes(p.x, p.y, e.pointerType === 'touch' ? fingerReach() : undefined)) {
       S.dragging = true;
       S.trail = [];
       track(p.x, p.y);
@@ -277,7 +278,7 @@ canvas.addEventListener('pointerdown', e => {
   // moves, and a tap is read at the release. A mouse keeps its left button
   // for the sweep everywhere. The same reach as the touchstart gate, so
   // the two never disagree about one finger.
-  if (e.pointerType === 'touch' && !dustUnder(p.x, p.y, fingerReach())) return;
+  if (e.pointerType === 'touch' && !handTakes(p.x, p.y, fingerReach())) return;
   S.dragging = true;
   S.nextToss = now() + TOSS_DELAY;         // a held sweep throws by itself once unlocked
   S.trail = [];
@@ -807,7 +808,7 @@ addEventListener('touchstart', e => {
     const p = pos(t);
     // ...and a finger on the casino's arm, or on its sign while it is a
     // button: a hold on the arm must never scroll the page
-    if (dustUnder(p.x, p.y, fingerReach()) || leverUnder(p.x, p.y) || signUnder(p.x, p.y)) { claim(e); return; }
+    if (handTakes(p.x, p.y, fingerReach()) || leverUnder(p.x, p.y) || signUnder(p.x, p.y)) { claim(e); return; }
     // ...and on a station up there worked by its motion: a drag on it is the motion
     if (S.view === 'after' && gestureUnder(p.x, p.y)) { claim(e); return; }
   }
