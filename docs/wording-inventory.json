@@ -8384,5 +8384,12 @@
   "where": "src/after/rows.js",
   "context": "act 3 crowd board value (placeholder): no speech set yet",
   "text": "none due"
+ },
+ {
+  "id": "roster-upgrades",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/roster.js",
+  "context": "The button above a station's worker count that opens its upgrades (act 3).",
+  "text": "upgrades"
  }
 ]

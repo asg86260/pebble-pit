@@ -179,6 +179,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- In act 3 a station's shop opens from the UPGRADES button above its worker count, which lifts and sways under the pointer as a shop tile does; clicking or hovering the station opens nothing, and a shop tile pressed now sinks halfway (test/after-gestures.test.mjs).
 - Act 3's stations are their own shops: click one to open its board beside it, take hold of its work to close it; the $ signs, the strip under a worked station and the glyph over a working one are gone, and one ghost hand shows how (test/after-gestures.test.mjs).
 - In act 3 you pick up logs and timber as you do dust, a left press and hold on a pile, and flick them onto another pile or the floor, where a worker carries them home (test/after-goods-sweep.test.mjs).
 - Act 3's log and timber piles are heaps of blocks you can see, a log a 4x4 and three 2x2 timber blocks a log; each pile holds only so many, shows the pile-full mark at its brim and stops what fills it, and timber bills and a save's timber are halved to match (test/after-pile-plots.test.mjs).

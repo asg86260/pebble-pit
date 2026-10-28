@@ -23301,11 +23301,20 @@ the press are already cut (PR #24); this is the rest.
    no work glyph over a station. One ghost hand: it plays a part's motion
    until it has been done a few times, comes back faint while the pointer is
    over the part, and gives way the moment the part is taken hold of.
-4. **The station is its own shop.** A click on a station anywhere that is not
-   a working part opens its board, standing beside it where its sign's board
-   stood; taking hold of a working part shuts it. The `$` signs go (this
-   reverses "Act 3's shops are signs", 2026-10-21). No tooltip shows over a
-   working part or while one is worked.
+4. **The station is its own shop.** Its board opens from the UPGRADES button
+   above the station's worker count (the owner, 2026-10-28): the word alone
+   at rest, and under the pointer, or while its board is up, the plate a
+   shop tile is -- it lifts off a hard shadow, its border easing in, and
+   drifts; pressed, it sinks to half the lift (the tiles' own `:active` does
+   the same since). Pressed again it puts the board away, as a click on open
+   ground does, and taking hold of a working part shuts it. The board stands
+   over the button, never across it. A click on the station, or the pointer
+   over it, opens nothing; nothing in act 3 opens or shuts on hover. A
+   station with no roster -- the shack, the pedestal, God's crowd, a station
+   not yet built -- has no button, so a click on it anywhere that is not a
+   working part still opens its board, beside it where its sign's board
+   stood. The `$` signs go (this reverses "Act 3's shops are signs",
+   2026-10-21). No tooltip shows over a working part or while one is worked.
 5. **Goods are picked up as act 1's dust is**: a plain left press and hold
    on a pile takes the blocks under the cursor (hands.js, `sweep`, `brushCells`,
    `capacity`), they float round the cursor drawn as the blocks they are, a
@@ -23382,8 +23391,9 @@ before the first frame, so a save carries no grid. Timber is halved on read
   log from the forestry pile to a timber block on the mound, every hand-off a
   body's; the workshop's sign made from four carried blocks.
 - Browser tier: a left press and hold on the timber mound takes blocks into
-  the hand, a flick lands them on the mound or the ground; a click on the
-  mill's frame opens its board and a press on the treadwheel shuts it.
+  the hand, a flick lands them on the mound or the ground; the mill's
+  UPGRADES button opens its board, a click on its frame opens nothing, and a
+  press on the treadwheel shuts it.
 
 **Settled, the owner's calls (2026-10-27).**
 

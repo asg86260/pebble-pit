@@ -3073,6 +3073,17 @@ export const SCENES = {
       S.after.stock.sawdust = 1e6;
       window.__look(heapMid() - S.viewW / 2); window.__fast(0.5); window.__holdShot();
     } },
+  // The UPGRADES buttons over the camp's rosters (roster.js), framed as the
+  // review that chose them was: the chain bought, the saw mill four-fifths
+  // across the window, the workshop's and the forestry shack's buttons in
+  // view beside its own.
+  'after-shopbtn': { about: 'the acts', say: "UPGRADES over each station's worker count: no border at rest; under the pointer, or while its shop is open, it lifts off a hard shadow and drifts; pressed, it sinks halfway",
+    run: () => {
+      afterChain(false);
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
   // Track a3-logs: the chain staffed, the forestry shack's pile stocked, run
   // until an idle member is carrying logs to the saw mill and a cut is
   // falling out of the saw's right side onto its timber pile; framed on the

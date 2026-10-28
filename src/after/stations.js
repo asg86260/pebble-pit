@@ -89,12 +89,15 @@ const row = (card, more) => {
     // It runs away from the station on whichever side its spot stands (the
     // pedestal's is on its left, every other's on its right).
     // A station with its UPGRADES button standing hangs the board off the
-    // button instead, a gap past it, so the board covers neither the button
-    // that put it up (and puts it away) nor the station.
+    // button instead, over the button's top, near enough to read as the
+    // button's; and it never covers the button, which puts it away again
+    // (`keep`: a window too short to stand it over the button sets it
+    // beside it, board.js). Run out past the station instead, it lands on
+    // the next station and its button in a camp this close-set.
     boardAnchor: () => {
-      const k = shopBoxOf(key);
-      if (k) return { x: k.x - P * 4, y: k.y, w: k.w + P * 8, h: k.h, side: 'right' };
-      const a = signBoard(ground(card)), s = stationBox(ground(card));
+      const k = shopBoxOf(key), s = stationBox(ground(card));
+      if (k) return { x: k.x - P * 4, y: k.y, w: k.w + P * 8, h: k.h, side: 'right', keep: k };
+      const a = signBoard(ground(card));
       return a && s && { ...a, side: a.x + a.w / 2 >= s.x + s.w / 2 ? 'right' : 'left' };
     },
     ...more
