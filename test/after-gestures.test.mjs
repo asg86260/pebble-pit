@@ -348,10 +348,17 @@ group('every station\'s UPGRADES button asks for its own board, centered under i
   up(['mill', 'workshop'], { logs: 4, timber: 20 });
   const pressed = Object.fromEntries(BOARDS.map(k => [k, pressShop(k)]));
   const boxes = Object.fromEntries(BOARDS.map(k => [k, shopBoxOf(k)]));
-  // Under its station, centered on it to a cell.
+  // Under its station, centered on it exactly, its edges on the grid (the
+  // owner, 2026-10-28: "each should be centered to the station").
   const under = Object.entries(GROUND).every(([k, g]) => {
     const s = stationBox(g), b = boxes[k];
-    return b && b.y >= s.y + s.h && Math.abs(b.x + b.w / 2 - (s.x + s.w / 2)) <= P;
+    return b && b.y >= s.y + s.h && b.x + b.w / 2 === s.x + s.w / 2 && b.x % P === 0 && b.w % P === 0;
+  });
+  // The roster under it centered on it too, to within the half cell its grid allows.
+  const ROSTER_AT = { sawyer: 'mill', joiner: 'workshop', woodcutter: 'forestry' };
+  const centered = window.__afterRoster().every(r => {
+    const s = stationBox(ROSTER_AT[r.job]);
+    return Math.abs((r.span[0] + r.span[1]) / 2 - (s.x + s.w / 2)) <= P / 2;
   });
   // Over the count of the roster standing under it, and no two buttons touching.
   const roster = window.__afterRoster(), over = ['sawyer', 'joiner', 'woodcutter'].every(job => {
@@ -370,7 +377,8 @@ group('every station\'s UPGRADES button asks for its own board, centered under i
   window.__actsOn(null);
   return [
     ok(BOARDS.every(k => pressed[k] === k), 'each button asks for its own station\'s board', JSON.stringify(pressed)),
-    ok(under, 'each stands under its station, centered on it', JSON.stringify(boxes)),
+    ok(under, 'each stands under its station, centered on it exactly, on the grid', JSON.stringify(boxes)),
+    ok(centered, 'and each roster is centered on its station to half a cell', JSON.stringify(roster.map(r => [r.job, r.span]))),
     ok(over, 'where a roster stands, the button is over its count', JSON.stringify(roster.map(r => [r.job, r.less, r.more]))),
     ok(apart, 'no two buttons touch', JSON.stringify(boxes)),
     ok(hung, 'and each board hangs off its button', ''),

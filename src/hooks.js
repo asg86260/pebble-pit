@@ -1501,7 +1501,7 @@ import { setCrowd, hireAll, support as afterSupport, union as afterUnion, ready 
 import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut, idleBodies } from './after/bodies.js';
 import { rosterReport, rosterHit, shopBoxOf } from './roster.js';
-import { plotX, afterFloor } from './after/place.js';
+import { plotX, afterFloor, stationBox as afterStationBox } from './after/place.js';
 import { isPiled, setBlock, takeBlock, plotOf } from './after/piles.js';
 import { track, heldGoods } from './hands.js';
 import { bottomY } from './grid.js';
@@ -1588,6 +1588,9 @@ HANDLES.__openAfterBoard = (key, at = null) => openAfterBoard(key, at);
 // A board's UPGRADES button where it stands (roster.js), in world units, or
 // null: for a check or a shot to press it where a player would.
 HANDLES.__shopBox = key => shopBoxOf(key);
+// An act 3 station's drawn footprint (after/place.js `stationBox`), in world
+// units, for a check or a shot to measure what stands centered on it.
+HANDLES.__afterStationBox = key => afterStationBox(key);
 // The hand's motions up there (after/gestures.js), made as input.js makes
 // them: 'down', 'move' and 'up' at a world point; where a station's parts
 // stand; each station's record; the icons over the grove.

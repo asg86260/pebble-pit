@@ -426,9 +426,13 @@ function setTo(p, want) {
 // Below the ground line, clear of the stopped-station triangle (seven cells
 // down and 2.6 tall) that hangs just under it. A post that says its own
 // height (the deep's) stands there instead.
+// Its `x` is the middle it stands centered on, not yet on the grid: the post
+// is put on the grid once, by its left edge (`boxes`), since snapping the
+// middle first and the edge again walked a post on a half-cell middle a
+// whole cell off its building.
 export function postAt(p) {
   const y = p.y?.() ?? S.groundY + P * 10;
-  return { x: Math.round((p.group ? groupAt(p) : p.at()) / P) * P, y: Math.round(y / P) * P };
+  return { x: p.group ? groupAt(p) : p.at(), y: Math.round(y / P) * P };
 }
 
 // A post of a group, side by side with the others under its building: the
@@ -460,7 +464,9 @@ function boxes(p) {
   const { x, y } = postAt(p);
   const cs = countersOf(p);
   const wide = cs ? innerOf(cs) + sideOf(p) * 2 : WIDE;
-  // Back on the grid: an even number of pips is half a cell off center.
+  // Back on the grid, once: exactly centered where the post's width and its
+  // middle agree (an odd number of cells on a half-cell middle), else half a
+  // cell off.
   let left = Math.round((x - wide / 2) / P) * P;
   const f = held.get(p.key);
   if (f && f.anchor && pointerOn(f)) left = f.anchor.side === 'l' ? f.anchor.x : f.anchor.x - wide;
@@ -500,11 +506,16 @@ function boxes(p) {
 export function rosterShops(place, list) { (rosterShops.places ||= new Map()).set(place, list); }
 const shopWord = () => msg('roster-upgrades').toUpperCase();
 const shopW = () => Math.ceil((shopWord().length * SHOP_BTN_PX * SHOP_BTN_ADVANCE + SHOP_BTN_PAD * 2) / P) * P;
+// Centered exactly on the station, its edges on the grid: a station whose
+// middle falls on a half cell takes a plate an odd number of cells wide, one
+// whose middle is on a whole cell an even one, a cell of padding added where
+// the word's own width has the other count.
 function shopBox(s) {
   const at = s.line();
   if (!at) return null;
-  const w = shopW(), y = Math.round(at.y / P) * P;
-  return { x: Math.round((at.x - w / 2) / P) * P, y: y - WORKER / 2 - WORKER - SHOP_BTN_AIR - SHOP_BTN_H, w, h: SHOP_BTN_H };
+  const halves = Math.round(at.x * 2 / P), base = shopW() / P;
+  const w = (base + ((halves - base) % 2 + 2) % 2) * P, y = Math.round(at.y / P) * P;
+  return { x: (halves * P / 2) - w / 2, y: y - WORKER / 2 - WORKER - SHOP_BTN_AIR - SHOP_BTN_H, w, h: SHOP_BTN_H };
 }
 // The buttons standing in the view the camera is in, each with its box.
 const shops = () => [...(rosterShops.places || new Map()).values()].flatMap(f => f())
