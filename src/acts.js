@@ -21,8 +21,10 @@ import { godFront, restW } from './after/sky.js';
 import { HELL_PLACE } from './hell/place.js';
 import { AFTER_CREW } from './after/bodies.js';
 import { AFTER_PLOTS } from './after/piles.js';
+import { takeAt, survey } from './after/ground.js';
+import { blockAt, takeUnit } from './grid.js';
 import { HELL_CREW } from './hell/bodies.js';
-import { S } from './state.js';
+import { S, afterGround } from './state.js';
 
 // --- whether -----------------------------------------------------------------
 // A released build plays an act only with its switch set (config/after.js,
@@ -36,6 +38,20 @@ export function afterlifeOn() { return !demoOn() && (forcedAfter ?? (AFTERLIFE_O
 // Hell is reached by the afterlife's ghost road, so it is never on without it.
 export function hellOn() { return afterlifeOn() && (forcedHell ?? (HELL_ON || DEV_BUILD)); }
 export function forceActs(after, hell = after) { forcedAfter = after; forcedHell = hell; }
+
+// Act 3's ground as the one hand reads it (hands.js, groundAt): the plot, the
+// tag its thrown units wear, and the door a take goes through, so a pile's
+// count follows its cells.
+const AFTER_GROUND = {
+  b: afterGround, place: 'after',
+  take(c, r) {
+    const a = blockAt(afterGround, c, r);
+    if (a) return takeAt(a.r * afterGround.cols + a.c);
+    const v = takeUnit(afterGround, c, r);
+    if (v) survey(true);
+    return v;
+  }
+};
 
 // --- the places ----------------------------------------------------------------
 // The two places, as the camera reads them (view.js, world.js `clampCam`):
@@ -53,7 +69,9 @@ const AFTER_AT_YARD = {
   get crew() { return AFTER_CREW; },
   // Its piles as plots the yard's hand sweeps and throws onto (hands.js;
   // after/piles.js, AFTER_PLOTS).
-  get plots() { return AFTER_PLOTS; }
+  get plots() { return AFTER_PLOTS; },
+  // Its ground, for the one hand (hands.js, groundAt).
+  get ground() { return AFTER_GROUND; }
 };
 // Each place's crew (placebodies.js): its own body list, its JOBS registry,
 // its walk and how the hand takes one of its bodies up. Read through a

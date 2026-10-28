@@ -458,7 +458,7 @@ TESTS.push(['deep: a handful swept off the floor shows on the pointer, and let g
   const bx = c.x + c.w + P * 10, by = deepFloor() - P;
   point('pointerdown', ...onScreen(bx, by));
   for (let i = 0; i < 4; i++) point('pointermove', ...onScreen(bx + i * P, by));
-  const held = S.heldScales;
+  const held = S.held;
   // Carried onto the furnace's door, still held: what the hand holds is drawn
   // round it. The same frame painted with the hand emptied for a moment is
   // the difference.
@@ -489,7 +489,7 @@ TESTS.push(['deep: a handful swept off the floor shows on the pointer, and let g
   return [
     ok(held > 0, 'the press took scales off the floor', `${held}`),
     ok(differ > 0, 'and they are drawn on the pointer while held', `${differ} pixels`),
-    ok(inWater >= held && S.heldScales === 0, 'let go, they all went into the water', `${inWater} of ${held}`),
+    ok(inWater >= held && S.held === 0, 'let go, they all went into the water', `${inWater} of ${held}`),
     ok(S.scales - purse === held, 'and every one fell into the crusher', `${S.scales - purse} of ${held}; one, off the crusher's corner: ${path.join(' ')}`)
   ];
 }]);
@@ -518,7 +518,7 @@ TESTS.push(['deep: a press held in the water catches the scales sinking past it'
   const one = S.sinking[0];
   point('pointerdown', ...onScreen(one.x, one.y));
   run(0.3);
-  const held = S.heldScales, left = S.sinking.length;
+  const held = S.held, left = S.sinking.length;
   point('pointerup', ...onScreen(one.x, one.y));
   return [
     ok(held > 0, 'the held press caught scales out of the water', `${held} held, ${left} of ${sank} still sinking`),

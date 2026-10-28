@@ -41,7 +41,7 @@ function up(members = 0) {
     runUntil(() => window.__afterRead().walking === 0, 240);
   }
   if (!S.after.built.includes('mill')) S.after.built.push('mill');
-  S.carryLevel = 3;
+  S.carryLevel = 8;     // twenty grains of weight: five planks to a hand, one log
   window.__afterGrant({ timber: 12, logs: 4 });
   run(1);
   S.held = 0; S.motes = []; S.trail = [];
@@ -170,7 +170,7 @@ group('goods in the hand when the game is saved are laid on the floor where they
 });
 
 // A held block's weight goes by its size (hands.js, `handHolds`): one log
-// however long the hand works the pile, planks a share of the hand by area
+// however long the hand works the pile, planks a share of the hand by weight
 // with a floor, and the yard's dust the hand's whole count as before.
 group('the hand holds one log, a share of planks by size, and a full hand of dust', async () => {
   up();
@@ -191,7 +191,7 @@ group('the hand holds one log, a share of planks by size, and a full hand of dus
     // and on the saw mill's timber
     const t0 = stock().timber, q = on('timber');
     for (let k = 0; k < 60; k++) { S.mouse = { ...q }; sweep(q.x, q.y); run(1 / 60); }
-    const planks = { held: S.held, off: t0 - stock().timber, want: Math.max(2, Math.floor(cap / 4)) };
+    const planks = { held: S.held, off: t0 - stock().timber, want: Math.max(1, Math.floor(cap / 4)) };
     window.__afterGrant({ timber: planks.held }); S.held = 0; S.motes = [];
     // and the yard's dust, a heap set down on its floor
     const gx = floor.x + floor.cols * P / 2;
@@ -205,7 +205,7 @@ group('the hand holds one log, a share of planks by size, and a full hand of dus
   const all = f => [3, 8].every(l => f(counts[l]));
   return [
     ok(all(c => c.logs.held === 1 && c.logs.most === 1 && c.logs.off === 1), 'swept for a second, the hand holds exactly one log, at any carry', JSON.stringify(counts)),
-    ok(all(c => c.planks.held === c.planks.want && c.planks.off === c.planks.want), 'and planks: a quarter of the carry, never fewer than two', JSON.stringify(counts)),
+    ok(all(c => c.planks.held === c.planks.want && c.planks.off === c.planks.want), 'and planks: a quarter of the carry, never fewer than one', JSON.stringify(counts)),
     ok(all(c => c.dust.held === c.dust.cap), 'the yard\'s dust still fills the hand to its carry', JSON.stringify(counts))
   ];
 });
@@ -289,7 +289,7 @@ group('planks thrown up off the timber pile are caught back, every one', async (
 // always was.
 group('the yard\'s dust thrown up is still caught back by a press on it', async () => {
   restartReloadClock();
-  S.carryLevel = 3;
+  S.carryLevel = 8;     // twenty grains of weight: five planks to a hand, one log
   const gx = floor.x + floor.cols * P / 2, gy = bottomY(floor) - P / 2;
   for (let i = 0; i < capacity() * 2; i++) addGrain(floor, gx);
   S.held = 0; S.motes = [];

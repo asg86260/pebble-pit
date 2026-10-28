@@ -16,12 +16,12 @@ export function motePos(m, t) {
            y: S.mouse.y + Math.sin(a) * m.d + Math.cos(t * 1.3 + m.bob) * bob };
 }
 
-// the carried dust drifts loosely around the cursor, and in the deep the
-// scales off its floor, which the hand holds on a count of their own. A
+// the carried units drift loosely around the cursor: dust, and in the deep
+// the scales off its floor, held as dust is. A
 // place's goods (a mote with a `kind`) are drawn by that place, in its own
 // tones (render/after.js, `drawHandGoods`).
 export function drawCursor() {
-  if (!S.held && !S.heldScales) return;
+  if (!S.held) return;
   const t = now() / 1000;
   for (const m of S.motes) {
     if (m.kind) continue;

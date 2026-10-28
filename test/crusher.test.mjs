@@ -92,7 +92,7 @@ group('a handful thrown in by hand is crushed', async () => {
   for (let i = 0; i < 400 && !bedNear(x, deepFloor() - P, P * 2); i++) x += P;
   S.dragging = true;
   for (let i = 0; i < 5; i++) sweep(x, deepFloor() - P);
-  const held = S.heldScales;
+  const held = S.held;
   const h = hopperRect();
   release(h.x + h.w / 2, h.y - P * 6);
   S.dragging = false;
@@ -100,7 +100,7 @@ group('a handful thrown in by hand is crushed', async () => {
   runUntil(() => S.sinking.length === 0, 30);
   return [
     ok(held > 0, 'the hand took scales off the floor', `${held}`),
-    ok(inWater === held && S.heldScales === 0, 'and let them all go into the water', `${inWater}`),
+    ok(inWater === held && S.held === 0, 'and let them all go into the water', `${inWater}`),
     ok(S.scales === held, 'where they fell into the hopper and were crushed', `${S.scales} of ${held}`)
   ];
 }, { reload: false });

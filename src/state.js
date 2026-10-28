@@ -575,7 +575,6 @@ export const S = {
   portalHand: 1,          // the hands' opacity, 1 until the round trip, then fading to 0
   portalPour: 0,          // how much of it the wizard has poured, 0..1, while it is being summoned
   crushes: [],            // the scales lately into the crusher, for its fire: { at, id }, newest last
-  heldScales: 0,          // scales in the hand, scooped off the deep's floor
   // In the water, and so this session's: a reload finds them landed or gone.
   sinking: [],            // scales falling to the floor: { x, y, vx, vy, s }
   lifting: [],            // scales paid, rising off the bed to the station that took them
@@ -930,7 +929,7 @@ export const EPHEMERAL = [
   // The deep's glide, the snatch mid-play, and everything in its water.
   'viewFade', 'viewTo', 'snatch', 'sinking', 'lifting',
   'hits', 'mealLandedAt', 'endingAt',
-  'deepMotes', 'crushes', 'heldScales', 'portalAt',
+  'deepMotes', 'crushes', 'portalAt',
   'podsBoardOpen',
   'statuses', 'stationBoardOpen',
 ];

@@ -1,20 +1,23 @@
 // Your hands: what a click, a drag and a flick do.
 //
-// Sweeping lifts dust off the ground onto the cursor, a flick throws it, a
-// held hand throws handfuls off the pile it is near at the hole by itself
-// (once that is bought), and anything still in the air can be caught on the
-// way past.
+// One hand for every place (DESIGN.md, "One resource system for every act",
+// section 2). Sweeping lifts units off the ground under the pointer onto the
+// cursor, a flick throws them, a held hand throws handfuls off the pile it is
+// near at the hole by itself (once that is bought), and anything still in the
+// air can be caught on the way past.
 //
-// The ground is whichever plot is under the hand: the yard's floor, or an act
-// place's pile (acts.js, a place's `plots`; act 3's in after/piles.js), so
-// act 3's goods are picked up and thrown as act 1's dust is (DESIGN.md, "Act
-// 3's goods are blocks, and bodies carry every one", rule 5). One kind in the
-// hand at a time: each mote remembers what it is, a place's goods (`kind`,
-// `place`) or the yard's dust, and a let-go lands as that.
+// A place supplies its ground, a plot of cells (`groundAt`): the yard's floor,
+// the deep's bed, act 3's ground. A unit is a cell value, a grain or a block
+// (grid.js, `takeUnit`), so a scale, a plank and a grain of dust are lifted,
+// held, thrown, caught and lifted again by the same calls. One kind in the
+// hand at a time: each mote remembers its value, and a let-go lands as that.
+// The hand holds `capacity()` grains of weight, and a unit weighs its kind's
+// `weight` (config/blocks.js): a grain one, a plank four, a log sixteen, and
+// never fewer than one unit in the hand.
 
-import { P, BRUSH, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR, DEEP_THROW, AFTER_BLOCK, HAND_ONE, HAND_FLOOR, HAND_SWAY } from './config.js';
-import { S, floor } from './state.js';
-import { at, put, inside, colOf, bottomY, topRow } from './grid.js';
+import { P, BRUSH, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR, DEEP_THROW, HAND_SWAY, KINDS } from './config.js';
+import { S, floor, deepBed } from './state.js';
+import { at, put, inside, colOf, bottomY, topRow, takeUnit, kindOf } from './grid.js';
 import { spawnChip, aim, bell } from './dust.js';
 import { holeLanding } from './pit.js';
 import { capacity, tossReach } from './levels.js';
@@ -22,8 +25,8 @@ import { now } from './clock.js';
 import { rand } from './rng.js';
 import { noteThrow, noteCatch } from './notices.js';
 import { inDeep, crusherRect } from './deep/place.js';
-import { scoop, bedNear, tossIn } from './deep/scales.js';
-import { PLACES, placeAt } from './acts.js';
+import { tossIn } from './deep/scales.js';
+import { placeAt } from './acts.js';
 
 export function track(x, y) {
   S.trail.push({ x, y, t: now() });
@@ -40,21 +43,40 @@ export function throwVel() {
   return { vx: clamp((b.x - a.x) / dt * THROW), vy: clamp((b.y - a.y) / dt * THROW) };
 }
 
-// A held thing's size in art cells a side: a place's block by its own size,
-// a grain (or a good drawn a grain big) one.
-const sizeOf = kind => (kind && AFTER_BLOCK[kind]) || 1;
-// How many of `kind` (null: the yard's dust) the hand holds, by size alone
-// (config, HAND_ONE): one log, a share of the hand of planks, a full hand of
-// dust.
-export function handHolds(kind = null) {
-  const z = sizeOf(kind);
-  if (z >= HAND_ONE) return 1;
-  if (z <= 1) return capacity();
-  return Math.max(HAND_FLOOR, Math.floor(capacity() / (z * z)));
+// --- the ground under the hand ---------------------------------------------------
+// What a place supplies: { b } its ground plot, `place` the key its thrown
+// units are tagged with (none for the yard, whose chain lands them), and
+// optionally `take(c, r)`, the place's own door for a unit it keeps a count
+// of (act 3's piles, acts.js).
+const YARD = { b: floor, place: null };
+// TEMP (track B's one landing retires `letGo`, and the sinking list with it):
+// a unit let go in the deep still goes into the water on the deep's own
+// gravity, and over the furnace is tossed in on the gatherers' arc.
+const DEEP = {
+  b: deepBed, place: 'deep',
+  letGo(x, y, vx, vy, vals) {
+    const c = crusherRect();
+    if (x >= c.x && x < c.x + c.w && y >= c.y && y < c.y + c.h) { tossIn(x, y, vals); return true; }
+    for (const s of vals) {
+      S.sinking.push({ x: x + (rand() - 0.5) * P * 4, y: y + (rand() - 0.5) * P * 4, vx: vx * DEEP_THROW, vy: vy * DEEP_THROW, s });
+    }
+    return true;
+  }
+};
+// The ground under a world point. Where the pointer is in the world decides
+// it, not which half is on the screen; null over a place with no ground.
+function groundAt(x, y) {
+  if (inDeep(x, y)) return DEEP;
+  const pl = placeAt(x, y);
+  return pl ? pl.ground || null : YARD;
 }
-// The share of a grain's drift a held thing of `kind` moves by (HAND_SWAY).
+
+// How many units of `kind` (null: a grain) the hand holds: its capacity in
+// grains of weight over the kind's weight, never fewer than one.
+export const handHolds = kind => (kind ? Math.max(1, Math.floor(capacity() / KINDS[kind].weight)) : capacity());
+// The share of a grain's drift a held unit of `kind` moves by (HAND_SWAY).
 function swayOf(kind) {
-  const z = sizeOf(kind);
+  const z = kind ? KINDS[kind].size : 1;
   let at = 1;
   for (const k of Object.keys(HAND_SWAY)) if (+k <= z && +k >= at) at = +k;
   return HAND_SWAY[at];
@@ -75,90 +97,58 @@ function airUnder(mx, my) {
   for (const ch of S.chips) if (ch.place && !ch.auto && inReach(ch, mx, my)) return true;
   return false;
 }
-// Whether a press here is the hand's: dust (or a place's goods) to sweep
-// under it, or a place's goods thrown to catch on the way past. Asked by
-// every press that is not the hand's wherever it lands (input.js: a finger
-// anywhere, a press in an act's place): a gate that asked only for what
-// lies on the ground let a press on a thrown block fall through to whatever
-// stood behind it.
+// Whether a press here is the hand's: units to sweep under it, or a place's
+// goods thrown to catch on the way past. Asked by every press that is not the
+// hand's wherever it lands (input.js: a finger anywhere, a press in an act's
+// place): a gate that asked only for what lies on the ground let a press on
+// a thrown block fall through to whatever stood behind it.
 export const handTakes = (mx, my, radius = BRUSH) => dustUnder(mx, my, radius) || airUnder(mx, my);
 
-// pixels still in flight are caught if they pass the cursor while it is held
+// Pixels still in flight are caught if they pass the cursor while it is held:
+// one kind, in one place, in the hand at a time, up to what it holds.
 export function catchAir(mx, my) {
-  catchSinking(mx, my);
   let had = S.held ? S.motes[0] : null;
-  if (had && S.held >= handHolds(had.kind)) return;
-
-  for (let i = S.chips.length - 1; i >= 0; i--) {
-    const ch = S.chips[i];
-    // not what the held hand itself just let go, or the toss would come
-    // straight back off the cursor it left from
-    if (ch.auto) continue;
-    // one kind in the hand: a grain into a hand of dust, a block into a hand
-    // of its own goods
-    if (had && (had.kind || null) !== (ch.kind || null)) continue;
-    // full of the held kind (an empty hand has room for anything)
-    if (S.held >= handHolds(ch.kind)) break;
-    if (!inReach(ch, mx, my)) continue;
-    S.chips.splice(i, 1);
-    S.held++;
-    if (ch.kind) S.motes.push(mote(ch.s, ch));
-    else { noteCatch(ch); S.motes.push(mote(ch.s)); }
-    had = S.motes[0];
-  }
-}
-
-// The deep's water is the same air to the hand: a scale sinking past the held
-// cursor is caught as a falling grain is, into the hand that sweeps the
-// floor. Only a free fall: one riding a toss's arc to the crusher (`arc`) is
-// already on its way in. A hand holding the yard's dust is not handed
-// scales on top of it: a let-go would drop only the one kind.
-function catchSinking(mx, my) {
-  if (S.held || !S.sinking.length) return;
-  let room = capacity() - S.heldScales;
-  if (room <= 0) return;
-  const sink = S.sinking;
-  let keep = 0;
-  for (let i = 0; i < sink.length; i++) {
-    const g = sink[i];
-    if (room > 0 && g.arc == null && Math.abs(g.x - mx) <= REACH && Math.abs(g.y - my) <= REACH) {
-      S.motes.push(mote(g.s));
-      S.heldScales++;
-      room--;
-      continue;
+  if (had && S.held >= handHolds(had.kind || null)) return;
+  // TEMP (track B's one landing): the deep's free-falling scales are still
+  // their own list, and a scale in it is a unit of the deep's.
+  for (const list of [S.chips, S.sinking]) {
+    for (let i = list.length - 1; i >= 0; i--) {
+      const ch = list[i];
+      const place = ch.place || (list === S.sinking ? 'deep' : null);
+      // not what the held hand itself just let go, or the toss would come
+      // straight back off the cursor it left from; nor a scale already on
+      // its arc to the crusher
+      if (ch.auto || ch.arc != null) continue;
+      if (had && ((had.kind || null) !== (ch.kind || null) || (had.place || null) !== place)) continue;
+      // full of the held kind (an empty hand has room for anything)
+      if (S.held >= handHolds(ch.kind || null)) break;
+      if (!inReach(ch, mx, my)) continue;
+      list.splice(i, 1);
+      S.held++;
+      if (!ch.kind && !place) noteCatch(ch);
+      S.motes.push(mote(ch.s, place));
+      had = S.motes[0];
     }
-    sink[keep++] = g;
   }
-  sink.length = keep;
 }
 
-// One grain on the cursor, or one of a place's blocks (`goods`: its `kind`
-// and `place`), which drifts out as far as its own size takes it, and swings
-// round and bobs by its weight (`sway`): a log hangs nearly still.
-const mote = (s, goods = null) => {
-  const z = goods ? sizeOf(goods.kind) * P / 2 : P, w = swayOf(goods && goods.kind);
-  const m = { s, a: rand() * Math.PI * 2, d: z * w * (1 + rand() * 2.6), spin: (rand() - 0.5) * 0.03 * w, bob: rand() * Math.PI * 2, sway: w };
-  if (goods) { m.kind = goods.kind; m.place = goods.place; }
+// One unit on the cursor, which drifts out as far as its own size takes it,
+// and swings round and bobs by its weight (`sway`): a log hangs nearly still.
+const mote = (v, place = null) => {
+  const k = kindOf(v), z = (k ? k.size : 1) * P / 2, w = swayOf(k && k.key);
+  const m = { s: v, a: rand() * Math.PI * 2, d: z * w * (1 + rand() * 2.6), spin: (rand() - 0.5) * 0.03 * w, bob: rand() * Math.PI * 2, sway: w };
+  if (k) m.kind = k.key;
+  if (place) m.place = place;
   return m;
 };
-// What the hand holds when it is a place's goods: its first mote (every mote
-// in a hand is one kind), or null for the yard's dust or an empty hand.
+// What the hand holds when it is a block of some kind (grid.js): its first
+// mote (every mote in a hand is one kind), or null for dust, scales or an
+// empty hand.
 export const heldGoods = () => (S.held && S.motes[0] && S.motes[0].kind ? S.motes[0] : null);
 
-// The plot under a point: an act place's pile there ({ b, what, kind,
-// place }), its floor where goods lie within `reach` px ({ lying, kind,
-// place }), the yard's floor ({ b }), or null over an act place's bare
-// ground, which is no floor of the yard's though it lies on the same x.
-function plotAt(x, y, reach = BRUSH * P) {
-  const pl = placeAt(x, y);
-  if (!pl) return { b: floor };
-  const spot = pl.plots ? pl.plots.at(x, y, reach) : null;
-  if (spot) spot.place = Object.keys(PLACES).find(k => PLACES[k] === pl);
-  return spot;
-}
-
 // A plot's cells within the brush, in the order the brush walks them. The
-// brush's reach is a distance, so a plot of bigger cells takes fewer.
+// brush's reach is a distance, so a plot of bigger cells takes fewer. A
+// terrain cell is part of the ground, never a unit.
 function* brushCells(mx, my, radius = BRUSH, b = floor) {
   if (b.p !== P) radius = Math.round(radius * P / b.p);
   const c0 = colOf(b, mx);
@@ -167,160 +157,76 @@ function* brushCells(mx, my, radius = BRUSH, b = floor) {
     for (let dc = -radius; dc <= radius; dc++) {
       if (dc * dc + dr * dr > radius * radius) continue;
       const c = c0 + dc, r = r0 + dr;
-      if (inside(b, c, r) && at(b, c, r)) yield [c, r];
+      if (inside(b, c, r) && at(b, c, r) && !(b.fixed && b.fixed(c, r))) yield [c, r];
     }
   }
 }
 
 // Whether a sweep here would find anything, at the same reach `sweep` uses,
 // without taking it. A finger on a phone asks it once, on the press, to tell
-// a sweep from a look about (DESIGN.md, "One finger looks about").
-// Is there dust to sweep within `radius` cells of a point: the brush by
-// default, or a finger's reach (input.js, `fingerReach`).
+// a sweep from a look about (DESIGN.md, "One finger looks about"); `radius`
+// is the brush by default or a finger's reach (input.js, `fingerReach`).
 export function dustUnder(mx, my, radius = BRUSH) {
-  if (inDeep(mx, my)) return bedNear(mx, my, radius * P);
-  const spot = plotAt(mx, my, radius * P);
-  if (!spot) return false;
-  if (spot.lying) return true;
-  for (const _ of brushCells(mx, my, radius, spot.b)) return true;
+  const g = groundAt(mx, my);
+  if (!g) return false;
+  for (const _ of brushCells(mx, my, radius, g.b)) return true;
   return false;
 }
 
+// Units off the ground under the hand, as far as it holds: the first it
+// takes says the kind, and the rest of the brush's cells that are another
+// kind are left. A block comes whole, and only off the top of a heap
+// (grid.js, `takeUnit`).
 export function sweep(mx, my) {
-  // In the deep the same hand works the floor's loose scales, and what it
-  // throws is thrown into the water (DESIGN.md, "The crusher"). Where the
-  // pointer is in the world decides it, not which half is on the screen.
-  if (inDeep(mx, my)) { sweepScales(mx, my); return; }
-  const spot = plotAt(mx, my);
-  if (!spot) return;
-  if (spot.kind) { sweepGoods(mx, my, spot); return; }
-  // a hand of a place's goods sweeps no dust
-  if (heldGoods()) return;
-  let room = capacity() - S.held;
-  if (room <= 0) return;
-
-  let taken = 0;
-  for (const [c, r] of brushCells(mx, my)) {
-    if (room <= 0) break;
-    const v = at(floor, c, r);
-    put(floor, c, r, 0);
-    S.motes.push(mote(v));
-    taken++;
-    room--;
-  }
-  if (taken) {
-    S.held += taken;
-    // The bench's 'strength' row appears the first time this happens.
-    if (!S.seenDrag) { S.seenDrag = true; S.shopStale = true; }
-  }
-}
-
-// A place's blocks off the pile under the hand, through the place's own door
-// (its `plots.take`), so the pile and its stock stay one. Only into an empty
-// hand or one of the same goods: a hand of planks sweeps no logs, and a hand
-// of dust no blocks.
-function sweepGoods(mx, my, spot) {
+  const g = groundAt(mx, my);
+  if (!g) return;
   const had = S.held ? S.motes[0] : null;
-  if (had && (!had.kind || had.place !== spot.place)) return;
-  if (spot.lying) { liftGoods(mx, my, spot, had); return; }
-  if (had && had.kind !== spot.kind) return;
-  let room = handHolds(spot.kind) - S.held;
-  if (room <= 0) return;
-  const plots = PLACES[spot.place].plots;
-  // gathered first: a take lets the blocks over it slump, and the brush
-  // takes the heap as it stood when the hand came down on it
-  const cells = [...brushCells(mx, my, BRUSH, spot.b)];
-  for (const [c, r] of cells) {
-    if (room <= 0) break;
-    const v = at(spot.b, c, r);
-    if (!v || !plots.take(spot, c, r)) continue;
-    S.motes.push(mote(v, spot));
+  // a hand of one place's goods sweeps no other's: dust and blocks do not mix
+  if (had && (had.place || null) !== (g.place || null)) return;
+  let kind = had ? had.kind || null : undefined;   // undefined: an empty hand, which the first unit decides
+  let taken = 0;
+  for (const [c, r] of brushCells(mx, my, BRUSH, g.b)) {
+    if (kind !== undefined && S.held >= handHolds(kind)) break;
+    const v = at(g.b, c, r);                 // a block taken whole has left its other cells empty
+    if (!v) continue;
+    const k = kindOf(v), key = k ? k.key : null;
+    if (kind !== undefined && key !== kind) continue;
+    const got = g.take ? g.take(c, r) : takeUnit(g.b, c, r);
+    if (!got) continue;
+    S.motes.push(mote(got, g.place));
     S.held++;
-    room--;
+    kind = key;
+    taken++;
   }
+  // The bench's 'strength' row appears the first time this happens.
+  if (taken && !S.seenDrag) { S.seenDrag = true; S.shopStale = true; }
 }
 
-// A place's goods lying on its floor within the brush, nearest first, into
-// the hand through the place's door (`plots.lift`): one kind, the held
-// one's or else the nearest's, so a hand of planks passed over a log takes
-// the planks beside it.
-function liftGoods(mx, my, spot, had) {
-  const kind = had ? had.kind : spot.kind;
-  let room = handHolds(kind) - S.held;
-  if (room <= 0) return;
-  const plots = PLACES[spot.place].plots;
-  for (const q of plots.lyingNear(mx, my, BRUSH * P, kind)) {
-    if (room <= 0) break;
-    if (!plots.lift(q)) continue;
-    S.motes.push(mote(1, { kind, place: spot.place }));
-    S.held++;
-    room--;
-  }
-}
-
-// Scales off the deep's bed onto the cursor, as far as the hand holds: the
-// same hand as the yard's, so the same `capacity`. Only near the bed's top:
-// a sweep up in the water is a sweep through nothing.
-function sweepScales(mx, my) {
-  const room = capacity() - S.heldScales;
-  if (room <= 0 || !bedNear(mx, my, BRUSH * P)) return;
-  const got = scoop(mx, room, BRUSH * P);
-  for (const v of got) S.motes.push(mote(v));
-  S.heldScales += got.length;
-}
-
+// A flick lets the hand go: a chip a unit, its value kept, thrown with the
+// flick's velocity and tagged with its place, which lands it on that place's
+// ground (game.js, `stepChips`).
 export function release(x, y) {
-  const { vx, vy } = throwVel();
-  // Scales in the hand go into the water where they are let go, on the
-  // deep's own gravity: over the hopper, they fall in and are crushed. Let go
-  // on the furnace itself, below its mouth, they would sink behind the brick
-  // to the floor, so the hand tosses them up over the lip on the gatherers'
-  // arc instead: the furnace is the thing a player drops them on.
-  if (S.heldScales) {
-    const c = crusherRect();
-    if (x >= c.x && x < c.x + c.w && y >= c.y && y < c.y + c.h) {
-      tossIn(x, y, Array.from({ length: S.heldScales }, (_, i) => S.motes[i]?.s || 1));
-      S.heldScales = 0;
-      S.motes = [];
-      return;
-    }
-    for (let i = 0; i < S.heldScales; i++) {
-      S.sinking.push({ x: x + (rand() - 0.5) * P * 4, y: y + (rand() - 0.5) * P * 4,
-                       vx: vx * DEEP_THROW, vy: vy * DEEP_THROW, s: S.motes[i]?.s || 1 });
-    }
-    S.heldScales = 0;
-    S.motes = [];
-    return;
-  }
   if (!S.held) return;
-  // A place's goods are thrown as themselves, a block a mote with the
-  // flick's velocity, and land on its piles or its ground (game.js,
-  // `stepChips`). Not the yard's juggling: no dust was thrown.
-  const goods = heldGoods();
-  if (goods) {
-    const spread = AFTER_BLOCK[goods.kind] * P;
-    for (let i = 0; i < S.held; i++) {
-      spawnChip(x + (rand() - 0.5) * spread, y + (rand() - 0.5) * spread,
-                vx + (rand() - 0.5) * 1.4, vy + (rand() - 0.5) * 1.4, S.motes[i]?.s || 1);
-      const ch = S.chips[S.chips.length - 1];
-      ch.kind = goods.kind;
-      ch.place = goods.place;
-    }
+  const { vx, vy } = throwVel();
+  const m0 = S.motes[0] || {}, kind = m0.kind || null, place = m0.place || null;
+  if (place === 'deep' && DEEP.letGo(x, y, vx, vy, S.motes.map(m => m.s || 1))) {
     S.held = 0;
     S.motes = [];
     return;
   }
   // The juggling notice is for the biggest hand there is: a level-0 hand is
   // one grain, and throwing one grain is not juggling.
-  const full = S.carryLevel >= LADDER && S.held >= capacity();
+  const full = !kind && S.carryLevel >= LADDER && S.held >= capacity();
+  const spread = kind ? KINDS[kind].size * P : P * 6;
   const from = S.chips.length;
   for (let i = 0; i < S.held; i++) {
-    spawnChip(x + (rand() - 0.5) * P * 6, y + (rand() - 0.5) * P * 6,
-              vx + (rand() - 0.5) * 1.4,
-              vy + (rand() - 0.5) * 1.4,
-              S.motes[i]?.s || 1);
+    spawnChip(x + (rand() - 0.5) * spread, y + (rand() - 0.5) * spread,
+              vx + (rand() - 0.5) * 1.4, vy + (rand() - 0.5) * 1.4, S.motes[i]?.s || 1);
+    const ch = S.chips[S.chips.length - 1];
+    if (kind) ch.kind = kind;
+    if (place) ch.place = place;
   }
-  noteThrow(S.chips.slice(from), full);
+  if (!place && !kind) noteThrow(S.chips.slice(from), full);
   S.held = 0;
   S.motes = [];
 }
