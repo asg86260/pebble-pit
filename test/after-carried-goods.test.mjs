@@ -3,19 +3,22 @@
 // timber walked to it off the timber mound, four blocks to a sign; a sign
 // carried out of its rack to the crowd; a bill paid in timber an order whose
 // blocks idle members carry to its station, the row landing on the last;
-// and the rule that no pile's count moves but by a hand-off (verify.js, rule
-// 24), which every group in the node tier asks on every frame.
+// and the rule that no unit appears or vanishes but at a named door
+// (verify.js, rule 23), which every group in the node tier asks on every frame.
 //
 // Reached the way a player reaches it: both stations ordered off the shack
 // (`__buy`), the joiner put on through the roster's + (`__afterPress`), the
 // bill bought (`__buy`). The setup it is not about: the act on and its
 // opening played, members walked out of God's yard, the yard's and the
 // act's coins granted, timber granted on the mound.
-import { group, ok, run, runUntil, yard } from './helpers.mjs';
+import { group, ok, run, runUntil, yard, restartReloadClock } from './helpers.mjs';
+import { goodsRead } from '../src/after/piles.js';
+import { loadKind } from '../src/carry.js';
 import { RIM_PIECES, AFTER_SIGN_TIMBER, AFTER_UPGRADES, AFTER_PILES } from '../src/config.js';
 import { AFTER_JOB } from '../src/jobs.js';
-import { put, topRow, count } from '../src/grid.js';
-import { plotOf } from '../src/after/piles.js';
+import { putBlock, cellOf } from '../src/grid.js';
+import { stripOf, slotTop } from '../src/after/ground.js';
+import { afterGround } from '../src/state.js';
 import { stationBox, stationDoor, pileMid } from '../src/after/place.js';
 import { orderAt } from '../src/after/build.js';
 import { afterRow } from '../src/after/rows.js';
@@ -24,7 +27,7 @@ import { msg } from '../src/lang.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
-const stock = () => S.after.stock;
+const stock = () => goodsRead();
 // The workshop's bigger sign, a bill paid in timber, carried to the workshop.
 const REACH = 'after-signreach';
 const REACH_TIMBER = AFTER_UPGRADES[REACH].bills[0].find(([c]) => c === 'timber')[1];
@@ -50,7 +53,7 @@ function camp(n) {
 // overhead, walking them over.
 const between = (w, kind) => {
   const a = pileMid('mill', 'timber'), b = stationBox('workshop').x;
-  return w.load === kind && !w.pick && w.x > Math.min(a, b) + 1 && w.x < Math.max(a, b) - 1;
+  return loadKind(w) === kind && !w.pick && w.x > Math.min(a, b) + 1 && w.x < Math.max(a, b) - 1;
 };
 
 group("the workshop's sign is made of four timber blocks a body walked to it off the mound", async () => {
@@ -64,7 +67,7 @@ group("the workshop's sign is made of four timber blocks a body walked to it off
     run(1 / 60);
     walked = walked || S.after.bodies.some(w => between(w, 'plank'));
     benchTop = Math.max(benchTop, stock().benchtimber);
-    sign = stock().signs > 0 || S.after.signs.length > 0 || S.after.bodies.some(w => w.load === 'sign');
+    sign = stock().signs > 0 || S.after.signs.length > 0 || S.after.bodies.some(w => loadKind(w) === 'sign');
   }
   window.__actsOn(null);
   return [
@@ -90,11 +93,12 @@ group('a timber bill is an order: its blocks spoken for on the mound, carried to
   const door = orderAt(S.after.orders[0]);
   let carriedBy = false, early = false, onLast = false;
   for (let f = 0; f < 60 * 240 && S.after.orders.length; f++) {
-    const o = S.after.orders[0], last = o.brought === o.n - 1;
+    const o = S.after.orders[0];
     run(1 / 60);
     carriedBy = carriedBy || S.after.bodies.some(w => w.errand === AFTER_JOB.ORDER && between(w, 'plank'));
     if (S.after.orders.length && S.after.ups[REACH] > 0) early = true;
-    if (!S.after.orders.length) onLast = last && S.after.ups[REACH] === 1;
+    // (bodies set blocks down on the same frame, so the last is no single one's: the order has all its blocks when it lands)
+    if (!S.after.orders.length) onLast = o.brought === o.n && S.after.ups[REACH] === 1;
   }
   window.__actsOn(null);
   return [
@@ -115,9 +119,9 @@ group('a sign is carried out of the rack to the crowd and planted there', async 
   for (let f = 0; f < 60 * 120 && S.after.signs.length === planted0; f++) {
     run(1 / 60);
     // The rack a block short only as a body takes one up.
-    if (stock().signs < prev && !S.after.bodies.some(w => w.load === 'sign')) fell = true;
+    if (stock().signs < prev && !S.after.bodies.some(w => loadKind(w) === 'sign')) fell = true;
     prev = stock().signs;
-    inHands = inHands || S.after.bodies.some(w => w.load === 'sign' && w.x > stationBox('workshop').x + stationBox('workshop').w);
+    inHands = inHands || S.after.bodies.some(w => loadKind(w) === 'sign' && w.x > stationBox('workshop').x + stationBox('workshop').w);
   }
   window.__actsOn(null);
   return [
@@ -127,23 +131,29 @@ group('a sign is carried out of the rack to the crowd and planted there', async 
   ];
 });
 
-group('a pile whose count moves with nobody handing a block is caught by the rules', async () => {
+group('a unit written round the doors is caught by the rules', async () => {
   camp(2);
   window.__afterGrant({ timber: 4 });
   run(1);
-  // A block written straight onto the mound and its count, round the doors:
-  // its plot still holds its stock (rule 23 is satisfied), but no body, hand
-  // or tool handed it.
-  const b = plotOf('timber'), c = Math.floor(b.cols / 2);
-  put(b, c, topRow(b, c) + 1, 1);
-  stock().timber += 1;
+  restartReloadClock();                       // no save read between the books and the stray
+  run(0.1);
+  // A block written straight onto the mound's strip of the ground, round the
+  // doors: no body, hand, tool or named source made it.
+  const t0 = stock().timber;
+  const s = stripOf('timber'), c = s.c0 + Math.floor((s.c1 - s.c0) / s.z / 2) * s.z;
+  putBlock(afterGround, c, slotTop(c, s.z), cellOf('plank'));
+  const there = stock().timber === t0 + 1;
   let caught = '';
   try { run(1 / 30); } catch (e) { caught = e.message; }
-  const matches = count(b) === stock().timber;
+  // And the same unit made at a named door is no complaint at all.
+  window.__afterGrant({ timber: 1 });
+  let quiet = true;
+  try { run(1 / 30); } catch (e) { quiet = false; }
   window.__actsOn(null);
   return [
-    ok(matches, 'the plot and the count agree, so only the hand-off rule can speak'),
-    ok(/nobody handing a block/.test(caught), 'rule 24 is red for it', caught.slice(0, 120))
+    ok(there, 'the stray block is on the mound, counted off the cells'),
+    ok(/appeared or vanished/.test(caught), 'rule 23 is red for it', caught.slice(0, 160)),
+    ok(quiet, 'a unit made at a door (a grant) is not')
   ];
 });
 
@@ -164,7 +174,7 @@ group('with every member on a job, a timber bill still lands: one is lent to car
   const bought = window.__buy(REACH);
   let wasLent = false;
   const landed = runUntil(() => {
-    wasLent = wasLent || S.after.bodies.some(b => b.job && b.errand === AFTER_JOB.ORDER && b.load === 'plank');
+    wasLent = wasLent || S.after.bodies.some(b => b.job && b.errand === AFTER_JOB.ORDER && loadKind(b) === 'plank');
     return !S.after.orders.length;
   }, 300);
   const back = runUntil(() => !S.after.bodies.some(b => b.errand === AFTER_JOB.ORDER), 60);

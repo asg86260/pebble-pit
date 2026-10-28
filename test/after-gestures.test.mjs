@@ -13,6 +13,7 @@
 // motion is this session's by design (a reload stands every station still),
 // so the reload harness is kept out: `{ reload: false }`.
 import { group, ok, run, yard, P } from './helpers.mjs';
+import { goodCount } from '../src/after/piles.js';
 import { AFTER_PODIUM_REBEL, AFTER_TIP_LOAD, AFTER_DIG_CLICKS, TREE_CHOPS, GESTURE_BUBBLE_CRIT, GESTURE_CUE_USES,
          GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_STRAIN_S,
          GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS } from '../src/config.js';
@@ -73,7 +74,7 @@ group('the saw mill: its flywheel spun faster where it stands cuts a log sooner,
 group('the workshop: four nails a sign, two taps each; a miss does nothing; the joiner taps on once the hand stops', async () => {
   up(['mill', 'workshop'], { timber: 10, benchtimber: 8, rebel: 500 });
   window.__grant({ dust: 40000, spores: 5000, shards: 2000, scales: 3000, sparks: 400 });
-  const s0 = S.after.stock.signs;
+  const s0 = goodCount('signs');
   // Off the nails, on the blank between two of them: nothing.
   const n0 = partsOf('workshop').nails[0];
   click({ x: n0.x + n0.w + P / 2, y: n0.y + n0.h / 2 }); run(0.3);
@@ -86,7 +87,7 @@ group('the workshop: four nails a sign, two taps each; a miss does nothing; the 
   click(mid(partsOf('workshop').nails[0])); run(0.3);
   const still = rec('workshop').nails[0] === GESTURE_NAIL_TAPS;
   for (let k = 1; k < 4; k++) for (let n = 0; n < GESTURE_NAIL_TAPS; n++) { click(mid(partsOf('workshop').nails[k])); run(0.3); }
-  const one = S.after.stock.signs - s0;
+  const one = goodCount('signs') - s0;
   // A nail half in, then a joiner at the bench: it drives the rest alone.
   window.__afterGrant({ timber: 20, benchtimber: 8 });
   click(mid(partsOf('workshop').nails[2])); run(0.3);
@@ -279,9 +280,9 @@ group('the pad: A on the workshop taps nails into a sign, the stick turned round
   pad.press('b');
   // The focus put on the station: the check is about what A and the stick do there.
   S.padFocus = 'ag:workshop';
-  const s0 = S.after.stock.signs;
+  const s0 = goodCount('signs');
   for (let k = 0; k < 10; k++) { pad.press('a'); run(0.2); }
-  const signs = S.after.stock.signs - s0;
+  const signs = goodCount('signs') - s0;
   S.padFocus = 'ag:mill';
   loadBed();
   const t0 = read().timber;

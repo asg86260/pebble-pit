@@ -16,6 +16,7 @@
 // can reach them.
 
 import { S } from '../state.js';
+import { goodsRead } from '../after/piles.js';
 import { newRun, settle, raf, ok, point, canvas, panel, run, runUntil, haveBench, pressRaise, haveRock,
          boulderWorld } from './kit.js';
 import { STATIONS, here, stationAt, hitRect, standRect } from '../stations.js';
@@ -189,7 +190,7 @@ const liveTiles = () => [...panel().querySelectorAll('button[data-key]')]
 const purse = () => {
   const v = { dust: S.stored, shards: S.shards, spores: S.spores, sparks: S.sparks, scales: S.scales };
   if (S.hell) v.brimstone = S.hell.brimstone;
-  if (S.after) { v.rebel = S.after.rebel; for (const [k, n] of Object.entries(S.after.stock || {})) v[`s.${k}`] = n; }
+  if (S.after) { v.rebel = S.after.rebel; for (const [k, n] of Object.entries(goodsRead())) v[`s.${k}`] = n; }
   return v;
 };
 const spent = (was, now) => Object.keys(was).filter(k => now[k] < was[k]);

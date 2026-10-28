@@ -7,6 +7,9 @@
 // (`__afterCrowd`), the dev travel up (`__goPlace`) with the act's opening
 // beats marked played, since the story before the loop is not what is checked.
 import { bestMs, group, ok, run, runUntil, yard, P } from './helpers.mjs';
+import { goodCount } from '../src/after/piles.js';
+import { siteLoads } from '../src/after/build.js';
+import { lying } from '../src/after/ground.js';
 import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
          ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_PODIUM_REBEL, AFTER_PODIUM_CLIMB, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_PLOTS0, AFTER_PLOT_MAX,
          AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL, AFTER_AGITATE_S,
@@ -208,7 +211,7 @@ group('a felled tree leaves a stump that blocks the plot until it is dug, and di
   // Read fresh each time: the harness reads the save back every five seconds.
   const plot = () => S.after.plots[0];
   const p0 = { ...plot() };
-  const down = S.after.groundLogs.filter(q => q.i === 0).length === AFTER_LOGS_A_TREE && p0.stump && p0.stage === 0;
+  const down = lying().filter(q => q.i === 0).length === AFTER_LOGS_A_TREE && p0.stump && p0.stage === 0;
   run(200);
   const blocked = plot().stump && plot().stage === 0;
   const r0 = read().rebel;
@@ -309,9 +312,9 @@ group('a station bought on the shack is carried in as a pile and raised off it a
     run(0.1);
     const r = S.after.raising.mill;
     if (bands.at(-1) !== r.n) bands.push(r.n);
-    const on = r.brought - r.taken;
+    const on = siteLoads('mill');
     if (piles.at(-1) !== on) piles.push(on);
-    carried ||= S.after.bodies.some(b => b.load === 'carry');
+    carried ||= S.after.bodies.some(b => b.phase === 'carry');
   }
   const n = S.after.raising.mill.at.length;
   run(60);
@@ -424,10 +427,10 @@ group('the chain makes timber and sawdust, then signs, and the heap is tipped', 
     run(0.25);
     // A sweeper tips a load short of the brim (bodies.js `tipReady`), so the
     // heap only has to come within a load of it.
-    if (S.after.stock.sawdust >= AFTER_SAWDUST_BRIM - AFTER_TIP_LOAD) brim = true;
+    if (goodCount('sawdust') >= AFTER_SAWDUST_BRIM - AFTER_TIP_LOAD) brim = true;
     // A sawyer carrying a load to the notch, or an idle member standing at
     // it tipping (bodies.js, the sweep): nobody clicks here.
-    if (S.after.bodies.some(b => b.load === 'tip') || (S.after.tipAt != null && S.after.bodies.some(b => b.errand === 'sweeper'))) tipped = true;
+    if (S.after.bodies.some(b => b.tipping) || (S.after.tipAt != null && S.after.bodies.some(b => b.errand === 'sweeper'))) tipped = true;
   }
   const mid = read();
   window.__actsOn(null);
@@ -522,7 +525,7 @@ group('the mill\'s second blade cuts a log in half the strokes, at the fixed spl
   const blade = window.__buy('after-blade');
   landed();
   // The pile emptied, so all six logs' timber has room on it.
-  window.__afterGrant({ logs: 6, timber: -S.after.stock.timber });
+  window.__afterGrant({ logs: 6, timber: -goodCount('timber') });
   const t0 = read().timber, d0 = read().sawdust;
   runUntil(() => S.after.bodies.some(b => b.at === 'mill'), 90);
   // the strokes each log takes on the bed, from set down to its last column

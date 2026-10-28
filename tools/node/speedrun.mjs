@@ -349,11 +349,11 @@ async function fight() {
       const h = hopperRect(), y = deepFloor() - P;
       for (let x = deepBed.x; x < deepBed.x + deepBed.cols * P; x += P * 2) {
         if (!bedNear(x, y, P * 3)) continue;
-        const was = S.heldScales || 0;
+        const was = S.held;
         sweep(x, y);
-        if ((S.heldScales || 0) === was && was > 0) break;
+        if (S.held === was && was > 0) break;
       }
-      if (S.heldScales) { swept += S.heldScales; release(h.x + h.w / 2, h.y - P * 6); }
+      if (S.held) { swept += S.held; release(h.x + h.w / 2, h.y - P * 6); }
     }
     // the meals
     windowPeak = Math.max(windowPeak, S.serpentWound);

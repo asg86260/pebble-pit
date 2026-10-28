@@ -33,6 +33,7 @@ import { coarse } from './prefs.js';
 import { sheetSeat } from './sheet.js';
 import { stepWindow } from './modal.js';
 import { boardOf, setBoardOpener } from './boardrows.js';
+import { goodCount } from './after/piles.js';
 import { pageOf, shopOf } from './pages.js';
 import { BOARDS } from './stations.js';
 import { msg } from './lang.js';
@@ -712,7 +713,7 @@ function fill(which) {
 // Up in act 3 the act's own coins head it, as its bills write them.
 const upThere = () => S.view === 'after' && !!S.after;
 const PURSE = [
-  ...AFTER_ACT_COINS.map(coin => [coin, upThere, () => (coin === 'rebel' ? S.after.rebel : S.after.stock[coin] || 0)]),
+  ...AFTER_ACT_COINS.map(coin => [coin, upThere, () => (coin === 'rebel' ? S.after.rebel : goodCount(coin))]),
   ['dust', () => true, () => S.stored],
   ['shard', () => S.seenShard, () => S.shards],
   ['spore', () => S.seenSpore, () => S.spores],

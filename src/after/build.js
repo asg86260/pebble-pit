@@ -17,28 +17,39 @@
 // act's leads and stay up on the pedestal, speaking (the owner, 2026-10-20:
 // "the Couple still arent rendered on the pedestal").
 //
-// `S.after.raising` is each bought station's site: { n, at, claimed, brought,
-// taken, laid, drop, pick } -- `n` the bands up and `at` when each landed
-// (kept after it stands, so its last band finishes fading in); `claimed` the
-// loads a carrier has set off with, `brought` those set down, `taken` those
-// a builder has picked up again and `laid` those laid into a band; `drop` and
-// `pick` when each load (by its place on the pile) was set down and taken,
-// so it fades rather than pops.
+// A site is a strip of the act's ground (after/ground.js, DESIGN.md, "One
+// resource system for every act", section 4): its loads are `load` units made
+// at one named source, the shack's door, carried in by members and set down on
+// the strip, and taken off its top by the builders to be laid in a band. How
+// many loads there are to make, to carry and to lay is read off the cells and
+// the arms, never counted beside them.
+//
+// `S.after.raising` is each bought station's site: { n, at, laid, whole } --
+// `n` the bands up and `at` when each landed (kept after it stands, so its last
+// band finishes fading in); `laid` the loads laid into bands, the account
+// behind that sink; `whole` when the strip first held every load not yet laid.
 
 import { S } from '../state.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_BUILD_PIECES, AFTER_BUILD_A_BAND, AFTER_BUILD_CARRIERS, AFTER_BUILD_BUILDERS, AFTER_BUILD_DROP_S,
          AFTER_BUILD_LAY_S, AFTER_BUILD_HOLD_S } from '../config.js';
+import { isEmpty, push, pop, unpop, count, clear } from '../cells.js';
+import { cellOf } from '../grid.js';
+import { source, sink } from '../flow.js';
+import { units, colX, takeAt, uncovered, putSomewhere, fallTag } from './ground.js';
 import { nextId } from './util.js';
 import { built } from './levels.js';
-import { campSpot, speakerAt, stationDoor, buildPileAt, buildLayAt } from './place.js';
+import { campSpot, speakerAt, stationDoor, buildPileAt, buildLayAt, floorAt, BUILD_PILE_W, AP } from './place.js';
 
 // A member with no job: at the podium, or walking there (bodies.js). A pair's
 // builder, `pair` 0 or 1, is only ever one read from a save made while they
 // still built, and is never idle.
 // One out on an errand with its hands full (bodies.js) is not idle until it
 // has put them down: put on a job then, what it carries would go with it.
-export const isIdle = w => w.job == null && w.state === 'work' && w.pair == null && !(w.errand && w.load);
+export const isIdle = w => w.job == null && w.state === 'work' && w.pair == null && !(w.errand && !isEmpty(w));
+// Nothing in the arms and nothing under way with them: a load carried, laid
+// or a heap being tipped. A body may be taken off its job only like this.
+export const handsFree = w => isEmpty(w) && !w.tipping && !w.phase;
 
 // Every load a station takes: two a band.
 export const BUILD_LOADS = AFTER_BUILD_PIECES * AFTER_BUILD_A_BAND;
@@ -47,20 +58,10 @@ export const BUILD_LOADS = AFTER_BUILD_PIECES * AFTER_BUILD_A_BAND;
 export function raiseStation(key) {
   const a = S.after;
   if (a.raising[key] || built(key)) return false;
-  a.raising[key] = { n: 0, at: [], claimed: 0, brought: 0, taken: 0, laid: 0, drop: [], pick: [], whole: null };
+  a.raising[key] = { n: 0, at: [], laid: 0, whole: null };
   return true;
 }
-// A site as it stands, read over a blank: a save from before the carry
-// stands its pile as if it had been brought whole and its bands built off it.
-export function siteOf(key) {
-  const r = S.after && S.after.raising[key];
-  if (!r) return null;
-  if (r.brought == null) {
-    const used = r.n * AFTER_BUILD_A_BAND;
-    Object.assign(r, { claimed: BUILD_LOADS, brought: BUILD_LOADS, taken: used, laid: used, drop: [], pick: [], whole: -1e9 });
-  }
-  return r;
-}
+export const siteOf = key => (S.after && S.after.raising[key]) || null;
 const sites = () => Object.keys(S.after.raising).filter(k => !built(k));
 export const pairBuilding = () => !!S.after && S.after.bodies.some(b => b.job === AFTER_JOB.BUILD && b.pair != null);
 const crewOf = key => S.after.bodies.filter(b => b.job === AFTER_JOB.BUILD && b.site === key && b.state === 'work');
@@ -77,7 +78,7 @@ const crewOf = key => S.after.bodies.filter(b => b.job === AFTER_JOB.BUILD && b.
 // while they still built: it finishes and climbs back up.)
 function offPosts(key, n) {
   const pile = buildPileAt(key);
-  const free = S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD && b.state === 'work' && b.load == null)
+  const free = S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD && b.state === 'work' && handsFree(b))
     .sort((p, q) => Math.abs(p.x - pile) - Math.abs(q.x - pile));
   return free.slice(0, n);
 }
@@ -92,12 +93,12 @@ export function fillBuilders() {
     // reached it first; the rest, arriving after, join it while loads are
     // still to carry rather than leaving that one body to haul them all.
     const free = a.bodies.filter(isIdle).sort((p, q) => Math.abs(p.x - pile) - Math.abs(q.x - pile));
-    if (crew.length && (r.claimed >= BUILD_LOADS || crew.length >= AFTER_BUILD_CARRIERS || (a.camp <= 0 && !free.length))) continue;
+    if (crew.length && (toMake(key) <= 0 || crew.length >= AFTER_BUILD_CARRIERS || (a.camp <= 0 && !free.length))) continue;
     if (free.length || a.camp > 0) {
       let builders = crew.filter(b => b.builds).length, n = AFTER_BUILD_CARRIERS - crew.length;
       for (const w of free.slice(0, n)) {
         Object.assign(w, { job: AFTER_JOB.BUILD, site: key, pair: null, builds: builders++ < AFTER_BUILD_BUILDERS, at: null, to: null,
-                           swing: null, on: true, t: 0, load: null, slot: null, target: null, n: 0 });
+                           swing: null, on: true, t: 0, load: [], carry: 0, phase: null, slot: null, target: null, n: 0 });
         n--;
       }
       n = Math.min(n, a.camp);
@@ -105,19 +106,49 @@ export function fillBuilders() {
       const at = campSpot(pile);
       for (let k = 0; k < n; k++)
         a.bodies.push({ id: nextId(), job: AFTER_JOB.BUILD, site: key, pair: null, builds: builders + k < AFTER_BUILD_BUILDERS, x: at.x, y: at.y,
-                        face: 1, state: 'work', t: 0, load: null, slot: null, target: null, n: 0, born: a.t + k * 0.6 });
+                        face: 1, state: 'work', t: 0, load: [], carry: 0, phase: null, slot: null, target: null, n: 0, born: a.t + k * 0.6 });
     } else if (!crew.length) {
       for (const w of offPosts(key, AFTER_BUILD_BUILDERS))
         Object.assign(w, { job: AFTER_JOB.BUILD, site: key, pair: null, builds: true, at: null, to: null, swing: null,
-                           t: 0, load: null, slot: null, target: null, n: 0 });
+                           t: 0, load: [], carry: 0, phase: null, slot: null, target: null, n: 0 });
     }
-    if (r.brought >= BUILD_LOADS && r.whole == null) r.whole = a.t;
+    markWhole(key);
   }
 }
 
-// Where a site's loads are fetched: the shack's door or the camp's edge,
-// whichever is nearer its pile.
-const fetchAt = key => { const p = buildPileAt(key), a = stationDoor('shack'), b = campSpot(p).x; return Math.abs(a - p) <= Math.abs(b - p) ? a : b; };
+// --- the site's loads, read off the cells ----------------------------------------------
+// A load lying on the ground belongs to the site nearest it that is going up.
+const nearestSite = x => {
+  let best = null, gap = Infinity;
+  for (const k of sites()) {
+    const d = Math.abs(buildPileAt(k) + BUILD_PILE_W * AP / 2 - x);
+    if (d < gap) { gap = d; best = k; }
+  }
+  return best;
+};
+// The site's loads lying on the ground, the top of the pile first.
+const loadsOf = key => units().filter(u => u.kind === 'load' && nearestSite(colX(u.c0) + u.z * AP / 2) === key).sort((p, q) => q.r0 - p.r0);
+// How many loads of the site members carry now.
+const armsOf = key => S.after.bodies.reduce((n, b) => n + (b.site === key ? count(b) : 0), 0);
+// Loads still to be made at the shack's door: every one of the bill that is
+// not laid, lying on the strip or in somebody's arms.
+const toMake = key => BUILD_LOADS - siteOf(key).laid - loadsOf(key).length - armsOf(key);
+// The strip holding every load not yet laid, stood a beat: the builders start.
+function markWhole(key) {
+  const r = siteOf(key);
+  if (r && r.whole == null && r.laid + loadsOf(key).length >= BUILD_LOADS) r.whole = S.after.t;
+}
+// The site's top load a hand can take now (nothing on it), nearest the pile's
+// middle: the one a builder walks to.
+const topLoad = key => loadsOf(key).find(u => uncovered(u.ai)) || null;
+// How many loads lie on a site's strip, for the checks.
+export const siteLoads = key => (siteOf(key) ? loadsOf(key).length : 0);
+
+// Where a site's loads are made: the construction shack's door, the one
+// named source of every load (DESIGN.md, "One resource system for every act",
+// section 4), however far the site stands from it. The unit is made as a
+// member's hands close on it and unmade when a band is laid.
+const fetchAt = () => stationDoor('shack');
 // A band laid at `key`: true when that was the last, the station standing.
 export function layPiece(key) {
   const a = S.after, r = siteOf(key);
@@ -128,9 +159,9 @@ export function layPiece(key) {
 }
 
 // One frame of a body raising a station, `go` its walk (bodies.js). A
-// carrier fetches a load at the shack's door and sets it down on the pile;
-// once every load is claimed a builder takes them off the pile two a band
-// and lays them in, and the rest walk back out of the camp. The station up,
+// carrier fetches a load at the shack's door and sets it down on the strip;
+// once every load is made a builder takes them off the top two a band and
+// lays them in, and the rest walk back out of the camp. The station up,
 // home: a member back out of the camp, the pair back up onto the pedestal.
 export function stepBuilder(w, dt, go) {
   const a = S.after;
@@ -142,43 +173,52 @@ export function stepBuilder(w, dt, go) {
   const r = siteOf(w.site);
   if (!r || built(w.site)) {
     if (w.pair != null) { w.state = 'home'; return; }
-    w.job = null; w.on = false; w.site = null; w.load = null; return;
+    w.job = null; w.on = false; w.site = null; clear(w); w.phase = null; return;
   }
   if (w.born != null && a.t < w.born) return;                  // still to come in at the edge
   const fl = campSpot().y;
-  // Carrying a load to the pile.
-  if (w.load === 'carry') {
-    if (!go(w, buildPileAt(w.site) + (w.slot % 3) * P, fl, dt)) return;
+  // Carrying a load to the strip: set down at its spot (`slot`, across the
+  // strip), where it lands on whatever lies there by the heap rule.
+  if (w.phase === 'carry') {
+    const x = buildPileAt(w.site) + ((w.slot % 6) * 2 + 1) * AP;
+    if (!go(w, x, fl, dt)) return;
     w.t += dt;
     if (w.t < AFTER_BUILD_DROP_S) return;
-    r.brought += 1; r.drop[w.slot] = a.t; w.load = null; w.slot = null; w.t = 0;
-    if (r.brought >= BUILD_LOADS && r.whole == null) r.whole = a.t;
+    const v = pop(w), ai = putSomewhere(v, x);
+    if (ai < 0) { unpop(w, v); return; }                       // nowhere to lie yet: held until there is
+    fallTag(ai, floorAt(w.x));
+    w.phase = null; w.slot = null; w.t = 0;
+    markWhole(w.site);
     return;
   }
   // Laying a load into the band going up.
-  if (w.load === 'lay') {
+  if (w.phase === 'lay') {
     if (!go(w, buildLayAt(w.site, w.side), fl, dt)) return;
     w.t += dt;
     if (w.t < AFTER_BUILD_LAY_S) return;
-    r.laid += 1; w.load = null; w.slot = null; w.t = 0;
+    pop(w); sink('load', 1, 'band'); r.laid += 1; w.phase = null; w.slot = null; w.t = 0;
     if (r.laid >= (r.n + 1) * AFTER_BUILD_A_BAND) layPiece(w.site);
     return;
   }
-  // Empty-handed: a load still to fetch, fetched where it is nearest the
-  // site -- the shack's door, or the camp's edge it comes in at.
-  if (r.claimed < BUILD_LOADS) {
-    if (!go(w, fetchAt(w.site), fl, dt)) return;
-    w.load = 'carry'; w.slot = r.claimed++; w.t = 0;
+  // Empty-handed: a load still to make, fetched where it is nearest the site
+  // -- the shack's door, or the camp's edge it comes in at.
+  if (toMake(w.site) > 0) {
+    if (!go(w, fetchAt(), fl, dt)) return;
+    w.slot = BUILD_LOADS - toMake(w.site);
+    source('load', 1, 'shack'); push(w, cellOf('load')); w.phase = 'carry'; w.t = 0;
     return;
   }
   if (!w.builds) { w.job = null; w.on = false; w.site = null; return; }
-  // A builder: the pile whole and stood a beat, a load off its top.
+  // A builder: the strip whole and stood a beat, a load off its top.
   const crew = S.after.bodies.filter(b => b.job === AFTER_JOB.BUILD && b.site === w.site && b.builds);
   w.side = Math.max(0, crew.indexOf(w)) % 2;
-  if (r.brought < BUILD_LOADS || r.whole == null || a.t - r.whole < AFTER_BUILD_HOLD_S) { go(w, buildPileAt(w.site) - P * 2 + w.side * P * 14, fl, dt); return; }
-  if (r.taken >= BUILD_LOADS) return;
-  if (!go(w, buildPileAt(w.site) + P * 2, fl, dt)) return;
-  w.slot = BUILD_LOADS - 1 - r.taken; r.taken += 1; r.pick[w.slot] = a.t; w.load = 'lay'; w.t = 0;
+  markWhole(w.site);
+  if (r.whole == null || a.t - r.whole < AFTER_BUILD_HOLD_S) { go(w, buildPileAt(w.site) - P * 2 + w.side * P * 14, fl, dt); return; }
+  const top = topLoad(w.site);
+  if (!top) { go(w, buildPileAt(w.site) - P * 2 + w.side * P * 14, fl, dt); return; }
+  if (!go(w, colX(top.c0) + top.z * AP / 2, fl, dt)) return;
+  // counted only if it came: another builder may have taken it this frame
+  if (push(w, takeAt(top.ai))) { w.phase = 'lay'; w.t = 0; }
 }
 
 // --- orders: a bill paid in timber, carried (DESIGN.md, "Act 3's goods are
@@ -211,7 +251,7 @@ export const orderOf = id => orders().find(o => o.id === id) || null;
 export const orderAt = o => stationDoor(o.card === 'grove' ? 'forestry' : o.card);
 // What lands a row when its order is in: the cards register it (rows.js), so
 // the sim never imports the cards that sell it.
-let landRow = null;   // the cards' landing, set once at load by rows.js
+let landRow = null;   // page: the cards' landing, set once at load by rows.js
 export const onOrderLanded = fn => { landRow = fn; };
 // A block of order `o` set down at its station: the last lands the row.
 export function orderBrought(o) {

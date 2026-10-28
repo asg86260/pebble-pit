@@ -19,6 +19,7 @@
 //  - rebel for the seats and the stations past the saw mill, granted in one
 //    block once the axe's and the mill's have been earned off the bubbles.
 import { group, ok, run, yard, P } from './helpers.mjs';
+import { lying } from '../src/after/ground.js';
 import { AFTER_GATES, AFTER_BUILDS, AFTER_UPGRADES, AFTER_SEAT_BILLS, GESTURE_STUMP_DRAG, AFTER_FIRST_MEMBERS, AFTER_LOG_TIMBER } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, partsOf } from '../src/after/gestures.js';
 import { sawOn, saw, spin } from './after-hands.mjs';
@@ -157,7 +158,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   // A tree sawn down by hand, and its stump pulled out on its own.
   const sawn = sawTree(0);
   run(3);
-  const logsDown = S.after.groundLogs.filter(q => q.i === 0).length;
+  const logsDown = lying().filter(q => q.i === 0).length;
   const pulled = pullStump(0);
   const replanted = S.after.plots[0].stage;
   note(`sawn ${JSON.stringify(sawn)} logs ${logsDown} pulled ${JSON.stringify(pulled)}`);
@@ -169,10 +170,14 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   // A woodcutter's post and a sawyer's: a member walks out of the camp to
   // each, the one carrying the fallen logs to the forestry shack and the
   // other fetching them on to the mill; the flywheel spun by hand saws one.
-  const camp0 = read().camp;
+  // Members with no post, whoever is out on an errand with their hands full: the
+  // camp's own count (`read().camp`) gives a member back the moment it sets a log
+  // down, which falls where it falls.
+  const unposted = () => S.after.bodies.filter(b => b.job == null && b.state === 'work').length;
+  const camp0 = unposted();
   const post = buyRow('post-woodcutter') && buyRow('post-sawyer');
   run(0.25);
-  const left = read().camp, onJobs = S.after.bodies.filter(b => (b.job === 'woodcutter' || b.job === 'sawyer') && b.state === 'work').length;
+  const left = unposted(), onJobs = S.after.bodies.filter(b => (b.job === 'woodcutter' || b.job === 'sawyer') && b.state === 'work').length;
   const fed = until(() => read().logs > 0, 180);
   const t0 = read().timber;
   const spun = spinMill(1);

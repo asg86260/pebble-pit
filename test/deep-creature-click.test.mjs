@@ -18,6 +18,7 @@ import { POPULATION, COLS, startleFauna, faunaUnder, faunaReport, faunaAt, floor
 import { poseAt } from '../src/deep/react.js';
 import { deepX0, deepTop, hopperRect } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
+import { afloat } from '../src/deep/scales.js';
 
 const S = yard.S;
 const gatherers = () => S.workers.filter(w => w.type === 'gatherer');
@@ -44,7 +45,7 @@ const targetSoon = (want = () => true) => { let f = null; runUntil(() => (f = ta
 const visitOf = i => visitAt(POPULATION[i], now() / 1000);
 // What a creature holds when it is not reacting, as the report writes it.
 const HOME = [undefined, false, 1, undefined, undefined, false, false].join();
-const shedBy = fn => { const n = S.sinking.length; const r = fn(); return { r, shaken: S.sinking.length - n }; };
+const shedBy = fn => { const n = afloat(); const r = fn(); return { r, shaken: afloat() - n }; };
 
 // A reaction off its table, frame by frame: where it starts, how far it ever
 // stands off home, and where it ends.
@@ -230,11 +231,11 @@ group('a click on a creature: its handful sinks to the floor and is carried to t
   deep();
   let f = null;
   runUntil(() => (f = target()), 120);
-  const scales = S.scales, lying = deepBed.n, sinking = S.sinking.length;
+  const scales = S.scales, lying = deepBed.n, sinking = afloat();
   const hit = startleFauna(f.x, f.y);
-  const shaken = S.sinking.length - sinking;
-  const from = S.sinking.slice(sinking).map(s => ({ x: s.x, y: s.y }));
-  const landed = runUntil(() => S.sinking.length === sinking, 30);
+  const shaken = afloat() - sinking;
+  const from = S.chips.filter(c => c.place === 'deep').slice(-shaken).map(s => ({ x: s.x, y: s.y }));
+  const landed = runUntil(() => afloat() === sinking, 30);
   const onFloor = deepBed.n - lying, banked = S.scales - scales;
   let carried = 0;
   for (let i = 0; i < 60 * 90 && S.scales - scales < shaken; i++) {
@@ -259,11 +260,11 @@ group('a click on empty water does nothing', async () => {
     const x = deepX0() + gx * P, y = deepTop() + gy * P;
     if (!faunaUnder(x, y)) spot = { x, y };
   }
-  const sinking = S.sinking.length, before = faunaReport().map(f => f.bolting || f.reacting);
+  const sinking = afloat(), before = faunaReport().map(f => f.bolting || f.reacting);
   const hit = startleFauna(spot.x, spot.y);
   return [
     ok(!hit, 'no creature there, nothing startled'),
-    ok(S.sinking.length === sinking, 'and no scales shaken loose', `${S.sinking.length - sinking}`),
+    ok(afloat() === sinking, 'and no scales shaken loose', `${afloat() - sinking}`),
     ok(faunaReport().every((f, i) => (f.bolting || f.reacting) === before[i]), 'and nobody reacts')
   ];
 });

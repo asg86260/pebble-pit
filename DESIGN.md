@@ -23423,3 +23423,404 @@ before the first frame, so a save carries no grid. Timber is halved on read
   blocks on the mound; idle members carry them to the station it is for, and
   the row's effect lands when the last block arrives, as a build's loads
   already are (after/build.js).
+
+### One resource system for every act (built; the owner, 2026-10-28)
+
+The owner, verbatim: "again im not sure how the grabbing logic just doesnt
+work by default, it should inherit the same shit as act 1. something is
+wrong with the architecture of the game if thats not how it works right
+now." "are the different resources across act 1, 2, and 3 using the same
+system? or are they built differently?" "i also cant re pick up things ive
+thrown, theres some major issues with the resources in act 3." "still not
+right. in act 1 i can click and hold and drag across a resource to pick it
+up." "you tend to make things more difficult and not reuse existing
+systems. these systems and patterns already exist. we should use em."
+
+**The answer is no: they are built three ways,** and that is the defect
+CLAUDE.md names ("if the shared one cannot serve the act, that is the
+defect"). This section carries rule 5 of "Act 3's goods are blocks" ("the
+floor stops being hard-wired in hands.js and in stepChips' landing") to its
+end, and is the resource step of "One place engine" (TODO.md).
+
+**What is three ways today.**
+
+- *The yard.* A grain is a cell of the one `floor` plot (grid.js). A station's
+  pile is only an x-strip of that floor (`S.piles`, world.js `refreshPiles`;
+  `floor.region` keeps a heap inside its strip). Counts are surveyed off the
+  cells (`surveyFloor`, game.js 478). The hand sweeps cells (hands.js `sweep`,
+  `brushCells`), throws chips, and every chip lands through one chain
+  (`stepChips`, game.js 341). A hauler carries `w.load`, an array of the cells
+  it scooped (crew/hauler.js `scoop`), and dumps them as chips. A grain keeps
+  its shade end to end.
+- *The deep.* The bed is a second plot on the same rules, but a sinking scale
+  is its own list (`S.sinking`), held scales are their own counter
+  (`S.heldScales`), and the hand, the catch and the landing each have a deep
+  branch (`sweepScales`, `catchSinking`, `stepScales`).
+- *Act 3.* Each pile is its own plot, beside a stored count (`S.after.stock`)
+  that two verify rules (23, 24) hold equal to it. Goods lying on the ground
+  are not cells at all but an object list (`S.after.groundLogs`), reached by
+  the hand through a side door (`lyingNear`, `plots.lift`). A thrown block
+  lands through a private copy of the chain (`AFTER_PLOTS.land`). Bodies
+  carry a number and a kind name through their own `pickUp`, `putDown`,
+  `toPile` and `gather`. Build sites count loads that come from nowhere.
+  This is why a thrown block cannot be dragged up again the way dust is: it
+  stops being a cell when it lands.
+- *Hell* has plain counters and no hand; it joins when it has goods.
+
+**The bargain.** One model, one hand, one landing, one carry. Every act
+then picks up, drags, throws, catches and re-picks the same way, because
+there is only one way, and every unit can be followed from where it is made
+to where it is spent, because it is always one thing in one place. The cost
+is a rebuild of act 3's goods under a look the owner has already approved, a
+block rule in grid.js, and one save migration. The player loses nothing they
+have: act 3's piles look the same and behave like the yard's. The rule it
+must not break: **nothing teleports.** A unit is made only at a named source
+and unmade only at a named sink, and verify.js holds every act to it.
+
+#### 1. The one model
+
+- **A resource is a unit in a plot.** A unit is a cell value, as the yard's
+  grain is: grid.js already leaves every value above the shades "for the
+  owner to mean what it likes by", and the yard floor already holds finds
+  that way. One table of kinds (`KINDS`, config) gives each kind its value
+  range, its size in cells, its weight, its palette and its home. A cell's
+  value says both its kind and its shade, so a block keeps its tone through
+  the hand, the air, a body's arms and a reload, as a grain does today.
+- **One ground plot a place, at the art cell** (`P`; act 3's `AP` is `P`).
+  The yard's is `floor`, the deep's is `deepBed`, and act 3 gets one plot
+  across its whole floor. No separate pile plots, no lying-goods list.
+- **A block is a multi-cell unit.** A log is a 4x4 block of log cells, timber
+  2x2, a sign 4x4, sawdust 1x1 (a grain). The plot keeps a second layer
+  naming each cell's block anchor, so a take that finds any cell of a block
+  takes the whole block. A block's x stands on its own lattice (a log on
+  every fourth column, timber on every second), so it falls straight down
+  its own columns and rolls off a heap's side a block's width at a time --
+  the look voted in mock-log-split round 7. Its y moves by the cell, so a
+  log comes to rest on a plank, on sawdust or on the cloud with no gap. A
+  block is held up when any cell under its bottom row is full; it never
+  tips. Size 1 is today's grain, so the yard's and the deep's plots run
+  exactly the rule they run now.
+  **The heap rule** (the owner, 2026-10-28: "right now grabbing from a pile
+  always grabs the bottom one, which leads to jank. the way logs pile up and
+  level out is weird"; built in step 1, grid.js `stepBlock`, `takeUnit`):
+  a block with nothing under any column falls a cell; one held up under
+  half its width or more rests, however uneven the ground; one held up
+  under less than half (it overhangs) rolls a whole block's width toward
+  the side with less under it, a cell down, if that strip is open, else
+  rests. Every move goes down, so a heap only settles: it never levels out
+  once at rest and cannot oscillate.
+  **A block's repose** (decided in step 2, the owner's notes of 2026-10-28:
+  "logs will pile up only in specific places, and stack and overlap else
+  where"): a block resting with nothing on it whose bottom stands a whole
+  block's height or more over the top of the slot beside it rolls into that
+  slot, a cell down, as a grain slides off a drop deeper than `REPOSE_DROP`.
+  So no column of blocks stands more than one block over its neighbor: logs
+  dropped on one spot make a mound a block a step, at the slope a pile's brim
+  is laid at, on open ground exactly as on a pile, and never a tower. One
+  rule, in `stepBlock`, for every plot; a lone block on the steepest ramp
+  (a cell a column) slides down it, as it would. A roll never crosses into
+  another region, so a pile's heap keeps to its strip, a rack named two
+  wide (the saw mill's logs, the workshop's timber and signs) stands as
+  high as its brim inside its strip, and a pile's count only moves at a
+  door. A block past a pile's brim is set down beside the strip by the door
+  that brought it, not rolled out of it.
+  **The lattice is laid off each region** (`lattice(c, z)` on the plot):
+  the camp puts each pile where its station's drawing lays it, and no two
+  piles agree on a log's width (measured: the strips start 2, 3 and 1
+  columns off a multiple of four), so a pile's slots start at its own first
+  column and open ground's at the first column past the strip before it.
+  A slot is whole inside one region; the odd columns at an open stretch's
+  end hold grains, never a block.
+  **A block is taken only off the top**:
+  `takeTop(c)` takes the top block of the column under the pointer (a body
+  the top of the pile's highest column), and `takeUnit` refuses any block
+  with another resting on it, so nothing under a block is ever pulled out
+  and nothing above an emptied cell is left floating.
+- **The uneven floor is cells.** The cloud's swells and each station's shelf
+  are `fixed` cells (grid.js already has the hook: "a cell that never
+  moves"), filled up to `floorAt` in every column. The plot's bottom is the
+  lowest floor. A block lands on the terrain exactly where a body's feet
+  stand, because `floorAt` and the plot read one profile. The hand never
+  takes a terrain cell and the painter never draws one (the cloud is drawn
+  by its own art). The yard's floor is flat (its rock is `blocked` columns
+  and `restOnRock`) and so is the deep's bed; both keep what they have.
+- **A pile is a strip of the ground,** as a yard station's pile is a strip of
+  the floor: an x-range with a kind, from the station table (after/art.js
+  already lays each pile's width). `region(c)` keeps a heap inside its strip
+  and `ceiling(c)` stands its brim as the heap the brim makes at the dust's
+  slope; a block past the brim rolls off onto the open ground beside it,
+  where a body carries it home once there is room -- the yard's own overflow,
+  and today's `layOver` without the list. A log thrown onto the timber mound
+  lies on the mound as a log; it is not counted as timber, and a gatherer
+  carries it to the log pile.
+- **A machine's surfaces stay the machine's.** The saw's bed holds the log
+  being cut, the chute carries the blocks it made, the yard's belt carries
+  grains: tools, not ground, each keeping its own state.
+
+*Why one fine plot and not one plot a size* (call 1 below): a plot whose
+cell is a log cannot rest a log on a plank without a gap of up to three
+cells under it, rounds a swell under a log column to four cells, and lets a
+log and a plank on the same x in two plots be drawn through each other,
+which the no-overlap rule forbids. The fine plot stacks honestly and follows
+the floor exactly. Its cost is the block rule in grid.js (take, set and
+settle a multi-cell unit), off the yard's hot path by size (a plot of grains
+never asks it) and watched by `test/perf-gate.test.mjs`.
+
+#### 2. One hand
+
+hands.js keeps one path, with no act branch in it.
+
+- **Where.** `plotAt(x, y)` asks the place under the pointer for its ground:
+  the yard's floor, the deep's bed, act 3's ground. `inDeep` stops being a
+  branch; to the hand the deep is a place like any other.
+- **Take.** `sweep` walks `brushCells` over that plot; a cell of a block takes
+  its whole block, once. A press held and dragged across goods takes every
+  block the brush passes until the hand is full, as dust is taken. A thrown
+  block is cells again the moment it lands, so it is re-picked the same
+  way. `sweepGoods`, `liftGoods` and `sweepScales` go.
+- **Hold.** `S.held` and `S.motes`, each mote a cell value; `S.heldScales`
+  goes. One kind in the hand at a time, as now.
+- **Weight and size.** The hand holds `capacity()` grains of weight, and a
+  unit weighs its kind's `weight` in `KINDS` (call 2). Sway and drift by size,
+  as `swayOf` and `mote` do now.
+- **Throw and catch.** `release` spawns a chip a unit, its value kept;
+  `catchAir` catches any chip in reach. `catchSinking` goes: a sinking scale
+  is a chip.
+- **What a place supplies, as data only:** its ground plot, its kinds, its
+  surfaces (below) and its air (gravity, drag, current). The yard's
+  hold-to-toss (`tossFromPile`) stays the yard's only because only the yard
+  names a toss target; a place that named one would get it with no new code.
+
+#### 3. One landing chain
+
+`stepChips` already sends a chip with a `place` off before the yard's rules.
+That split stays; what it calls becomes one walk over the surfaces its place
+supplies, in the place's order, ending on its ground plot's `addGrain`. The
+yard's list is today's chain, unreordered (its order is load-bearing: the
+belt before the pit, the far wall before the world's edge). Act 3's is the
+saw's bed (`bedLand`), then the ground: a pile is only ground, so the pile
+test in `AFTER_PLOTS.land` goes, and `AFTER_PLOTS` with it. The place's
+bounds replace its own clamp.
+
+**The deep** keeps its water as data on the chip, as the dome's grit already
+carries its own pull (`ch.g`): drag and current beside it. The hopper is one
+more surface (crushed on entry). Its free-falling scales move into `S.chips`
+and the falling half of `stepScales` goes. It keeps the gatherers' toss arc
+into the hopper and the payment flecks (`S.lifting`): those picture money
+already counted moving to its purse, not goods landing on ground (call 3).
+
+#### 4. One carry
+
+A body carries cells. `w.load` is an array of cell values in every act, as a
+yard hauler's is; `w.carry` is its length. One small module (`carry.js`)
+holds take, set down and dump: take a unit off a plot near the body's feet a
+unit a beat (act 3's `AFTER_PUT_S`, the yard's `scoopMs`), set one down onto
+a plot at x, or throw the load as chips. Yard haulers, the deep's gatherers
+and act 3's bodies all call it; act 3's `pickUp`, `putDown`, `toPile` and
+the take half of `gather` go. A body holds `haulCap()` grains of weight, by
+the same weights the hand reads.
+
+**Build sites take real units.** A site is a strip of the ground. Its loads
+are made at one named source, the construction shack's door, a load at a
+time as the bill is paid; members carry them in and set them down on the
+site's strip, and the builders take them off it band by band. A bill paid in
+timber reserves blocks on the mound and they are carried, as already
+settled. The bare counters `claimed`, `brought`, `taken`, `laid` become the
+site strip's surveyed cells and the loads in arms.
+
+#### 5. Counts come from cells
+
+A pile's count is its strip's units of its kind, read off the plot as
+`surveyFloor` reads the yard's strips and kept fresh by the plot's `onPut`
+(act 3's plot is small enough to survey on demand). `S.after.stock` goes for
+every piled good, the sawdust heap included, and rule 23 ("a pile is its
+stock") cannot fail any more and goes.
+
+Two kinds of stored number stay, and neither is a count of goods:
+
+- **Accounts behind a sink**: the yard's bank (`bankDust`, pit.js 276,
+  bumping `S.stored`), the deep's crushed scales (`S.scales`), faith and
+  rebel. A unit that went down the hole or into the crusher is money, not a
+  thing on the ground, and only its sink writes the account.
+- **Claims on cells**: `timberReserved`, an order's blocks. It says which
+  existing cells are spoken for, and a rule holds it at or under the units
+  it claims.
+
+#### 6. Saves
+
+- **What is saved:** each place's ground, as the yard's floor is (`gridStr`,
+  run-length cells), plus its block anchors, so position, kind and shade come
+  back exact. Terrain is not saved; it is laid from the profile. Act 3
+  bodies' `load` arrays are saved as the yard's are. A load in the hand is
+  saved as cells and laid where it was held (today's `S.after.hand`,
+  `settleHand`).
+- **The migration** (`src/migrations/<date>-one-ground.js`, `v: 31`,
+  `SAVE_V` to 31): on the raw save it turns `after.stock`'s piled keys,
+  `after.groundLogs` and `after.hand` into a one-time list to lay (a kind, a
+  number and a strip, or a kind and an x). The place's reader lays it onto
+  the ground once the place is laid out, settled before the first frame, as
+  `stand` and `layOver` do today. The log on the saw's bed and the blocks on
+  the chute stay the saw's saved state; its grains in the air and a log in
+  the sawyer's arms land at the read, on the heap and at the sawyer's feet.
+  Act 3 bodies' `carry` and `load` become a `load` array of that kind's value.
+- **The steps** (the save-shape-change skill): the ground is a field of the
+  place's own saver (`SAVED_BY_HAND`), the retired fields leave state.js's
+  lists, the migration is appended to `MIGRATIONS`, and then
+  `test/save-floor.test.mjs`, `test/persist-roundtrip.test.mjs`,
+  `test/cloud-sync.test.mjs` and `test/cloud-size.test.mjs` (the ground costs
+  bytes; act 3's is a few hundred columns, mostly empty, which runs short).
+  The save floor does not move.
+
+#### 7. What stays act-specific (data only)
+
+Each act supplies its kinds (values, sizes, weights, palettes, homes), its
+ground plot's extent and terrain, its surfaces in order, its air, its
+stations and their strips, and its named sources and sinks: a tree's fall,
+the saw's cut and the shack's door make units; the pit, the crusher, a sign
+walked into the crowd and a band laid unmake them. Act 3's kinds keep one
+flat tone a block (act 3 is the exception to per-cell variation).
+
+#### 8. The staged plan
+
+Each step lands on its own and leaves the game playable; the tracks own
+disjoint files.
+
+1. **Units and blocks** (owns grid.js's block rule, `KINDS` in config, one
+   new node file). Multi-cell take, set and settle; kind and shade in the
+   value. Nothing in the game calls it yet. Check: the node file drops,
+   rolls and takes logs, timber and grains together on one plot over fixed
+   terrain; the perf gate unchanged.
+2. **Act 3's ground, and its save** (owns after/piles.js, after/grove.js,
+   after/art.js's strips, after/index.js, after/levels.js, render/after/piles.js,
+   render/after/drop.js, render/after/pine.js, render/aftercues.js, the pile
+   reads in input.js's hover and words.js, the migration, act 3's saver and
+   state.js's lists). One ground plot, piles as strips, lying goods as
+   cells, drawn with the piles' solid-behind-the-seams fill across the whole
+   ground. The save change of section 6 lands here, not later: a lying good
+   is a cell from this step on, and `run()` saves and reads every five game
+   seconds, so a ground nothing saves would lose it on the first reload.
+   `S.after.stock` stays for this step only, as a mirror the survey writes,
+   so every reader of it keeps working, and `AFTER_PLOTS` keeps its shape
+   over the new ground for one step. Check: a rule in verify.js that no two
+   blocks share a cell and none stands in terrain; a fixture save of today's
+   shape (stock, lying logs, a held load, a log on the bed) reads back with
+   every unit where it was; `after-pile-plots`, `after-gather` and
+   `after-logflow` stay green.
+   *Built (res-step2, 2026-10-28):* after/ground.js holds the ground
+   (`afterGround` in state.js, saved as `after.ground`: runs, block anchors
+   and each unit's arrival); after/piles.js is the piles' interface over it;
+   migration v31 (`2026-10-28-one-ground.js`) hands an older save's pile
+   counts, lying goods and the sawyer's log to the reader as `after.lay`;
+   verify.js rule 26 holds every block whole, apart, out of the terrain and
+   held up. What the design left open and was decided in the build:
+   - *A good of another kind landing on a pile's strip is set down beside
+     the strip for now*, not on the mound: a body's `pickUp` (bodies.js,
+     step 3's) counts a take without asking whether it came, so a plank
+     buried under a log would be a phantom in its arms. Step 3's carry,
+     which takes real units, lets it lie on the mound as section 1 says.
+   - *A felled tree's logs land as the mound the heap rule would leave*
+     (ground.js, `heapAt`), each laid straight where it rests, its slide off
+     the trunk drawn from its arrival; a good let go of is likewise set
+     where it comes to rest and its fall drawn (`fallTag`). The data never
+     holds a unit in mid-air, so the 0.07 s settle pace is spent only on
+     rolls, which is the voted look.
+   - *The sawdust heap stays the mill's own plot* (mill.js is not this
+     step's file); its columns are `blocked` on the ground, so nothing comes
+     to rest drawn through it. It joins the ground with step 4's mirror.
+   - *Bodies keep `carry` and `load` as a count and a kind* until step 3's
+     carry; `after.hand` is still laid by `settleHand` as before.
+   - The thin adapters marked TEMP: `plotOf` (a pile as a coarse plot, one
+     cell a unit), `AFTER_PLOTS` (the hand's door: a press takes the top of
+     the column under it), and the `groundLogs` rows (a non-enumerable
+     getter on `S.after`) for bodies.js, input.js's hover, the hooks and
+     the checks.
+3. **Three tracks at once**, once step 2 is in:
+   - **One hand** (owns hands.js, after/hand.js, after/gestures.js,
+     after/press.js). The branches go and the deep's hand joins.
+     Check, bought the player's way: a press dragged across the log pile
+     takes as many logs as the hand holds, thrown on the ground they are
+     dragged up again, and the same for timber on the mound and sawdust on
+     the heap (node `after-goods-sweep`, and a browser group with a real
+     pointer).
+   - **One landing** (owns the divert in game.js's `stepChips`, deep/scales.js,
+     after/mill.js's `bedLand`, the places' surface lists in acts.js). `AFTER_PLOTS.land`
+     and `S.sinking`'s free fall go. Check: a scale knocked off the serpent
+     lands on the bed and a thrown one in the hopper; a block thrown on a
+     full pile rolls off to the ground; the perf gate.
+   - **One carry** (owns carry.js, crew/hauler.js's load calls,
+     deep/gather.js, after/bodies.js, after/build.js, after/roster.js). Check: buy the mill
+     and follow one log from a felled tree to timber on the mound, every
+     hand-off a body's; buy a station and its loads come out of the shack's
+     door and are laid into its bands.
+4. **The mirror retired** (owns verify.js's rules 23 and 24, and the last
+   readers of `S.after.stock`: board.js, hooks.js, scenes.js, the selftest
+   groups, tools/node/act3-player.mjs, the act 3 node files). `S.after.stock`'s
+   piled keys go and rules 23 and 24 become **one conservation rule in
+   verify.js**: each kind's units on the ground, in hands, in the air, in
+   arms and in a machine change only at a named source or sink. That is
+   "nothing teleports", watched every frame by every group. In this wave it
+   covers act 3 and the deep, the places whose sources and sinks are listed;
+   the yard joins once its own are (rock spoil, the rind, the farm, the
+   meteor, finds), or it would go red across the node tier on day one.
+   *Built (res-step3, res-step4, 2026-10-28):* step 3's three tracks landed
+   as one hand (hands.js, no act branch; the deep's let-go is data), one
+   landing chain over `landingOf(place)` and one carry (src/carry.js,
+   src/cells.js), `S.sinking`'s free fall now chips. Step 4 retired the mirror
+   and the adapters and is what these notes cover; what the design left open
+   and was decided in the build:
+   - *The sawdust heap stayed the saw mill's own plot* ("a machine's surfaces
+     stay the machine's"), but its count is its cells and nothing else: it is
+     saved as the grains run-length (`after.heap`, `heapRecord`), read back
+     into the plot before anything is laid on it, and migration v33 turns an
+     older save's `stock.sawdust` into grains to lay. `S.after.stock`, `plotOf`,
+     `AFTER_PLOTS`, the `groundLogs` rows, `AFTER_STOCK`, `AFTER_CARRY_SLOTS`
+     and `render/after/drop.js` are gone; every reader asks the ground
+     (`countOf`, `goodCount`, `goodsRead`, `lying`, `unitNear`, `stripBox`).
+   - *Rules 23 and 24 are one rule* (verify.js 23): `census()` counts a kind
+     wherever it is -- ground, hand, air, arms, the saw's bed, chute and
+     grains, the heap, the deep's bed, water and gatherers' arms -- and each
+     frame's change must equal what the named doors made (`source` / `sink`,
+     src/flow.js: a tree felled, the saw's cut and the log it eats, a sign
+     joined and planted, the hatch, an order and a band laid, the shack's
+     door, a blow's scales, the crusher). A save read starts the books over.
+     It found two defects the first day: a joiner carrying timber was sent on
+     the sign round and set the plank down as a sign, and a body setting down
+     on a pile made a fresh unit instead of the one it carried (it now keeps
+     its tone). The yard joins when its doors are named (TODO.md).
+   - *A site is the loads on the ground*: a `load` kind (2x2, weight 4, no
+     home, so no gatherer carries it) made at the shack's door as a member's
+     hands close on it, set down on the site's span, which overlaps the
+     station's own pile strip, so it lies there as an off-kind unit on that
+     strip's mound; builders take the top one. The site keeps `n`, `at`, `whole`
+     and `laid` (the loads laid into bands, the account behind that sink);
+     what is to make, to carry and to lay is read off the cells and the arms.
+   - *An off-kind unit on a pile's strip lies on the mound* (`landUnit`) and a
+     body carries it home from the top; a pile full still sets a good beside it.
+   - *Pace*: carrying by weight halved a joiner's plank trips, and the workers
+     at a station waited on a hauler still walking to the far pile. They now
+     wait only for what is already in a hauler's arms (`hauledTo`). The act
+     runs within a few per cent of its pace before the weights
+     (`node tools/node/act3-pace.mjs`: first sign 2:16 against 2:07, first soul
+     5:29 against 6:37, the meeting 7:17 against 7:19, the slowdown 32:43
+     against 32:10, the strike 45:40 against 47:55), and the pace tool's player
+     now works the real mill (a log swept onto the bed, the wheel turned).
+5. **The deep's hand and water**, if call 3 says after; otherwise it rides
+   step 3.
+
+Every file that reads the old shapes today (`S.after.stock`, `groundLogs`,
+`lyingAt`, `plotOf`, `AFTER_PLOTS`, `pileCount`: 41 files across src, test
+and tools) is named in exactly one step above, except the old cut-paper
+migration, which reads a raw save of its own day and is left alone.
+config/after.js, acts.js and verify.js are additive-only for every track
+but the one that owns a named piece of them, one block each, under the
+track's name.
+
+#### 9. The owner's calls (decided, 2026-10-28)
+
+1. **One fine ground plot a place, blocks as multi-cell units**, not a plot a
+   size.
+2. **A big block takes a share of the hand by weight, never fewer than
+   one**, replacing today's one-log `HAND_ONE`: a drag across the log pile
+   takes as many logs as the hand can hold, and the strength ladder means
+   the same in every act.
+3. **The deep joins this wave**, for its hand and landing.

@@ -13,6 +13,7 @@
 // The signs planted are `S.after.signs` ({ id, f, r, askew, pull, big }).
 
 import { S } from '../state.js';
+import { source, sink } from '../flow.js';
 import { CROWD_FILES, AFTER_SIGN_TIMBER, AFTER_SIGN_GAP } from '../config.js';
 import { arand, nextId } from './util.js';
 import { benchSigns, bigSigns } from './levels.js';
@@ -28,8 +29,10 @@ export function joinSign() {
   const n = Math.min(benchSigns(), Math.floor(pileCount('benchtimber') / AFTER_SIGN_TIMBER), pileRoom('signs'));
   if (n < 1) return false;
   for (let k = 0; k < n; k++) {
-    for (let j = 0; j < AFTER_SIGN_TIMBER; j++) takeBlock('benchtimber');
-    setBlock('signs');
+    let took = 0;
+    for (let j = 0; j < AFTER_SIGN_TIMBER; j++) if (takeBlock('benchtimber')) took++;
+    sink('plank', took, 'sign');
+    if (setBlock('signs')) source('sign', 1, 'workshop');
   }
   return true;
 }

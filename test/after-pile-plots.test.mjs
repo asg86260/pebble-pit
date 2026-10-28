@@ -13,10 +13,14 @@
 // God's yard, coins and the forestry shack's logs granted.
 import { readFileSync } from 'node:fs';
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
+import { goodCount, goodsRead } from '../src/after/piles.js';
+import { lying } from '../src/after/ground.js';
 import { RIM_PIECES, AFTER_PILES, AFTER_LOG_TIMBER, AFTER_BLOCK, AFTER_UPGRADES, AFTER_SEAT_BILLS, AFTER_BUILDS } from '../src/config.js';
 import { AFTER_JOB } from '../src/jobs.js';
 import { count } from '../src/grid.js';
-import { plotOf, PILED, pileFull } from '../src/after/piles.js';
+import { PILED, pileFull } from '../src/after/piles.js';
+import { stripOf, units, counted } from '../src/after/ground.js';
+import { afterGround } from '../src/state.js';
 import { AP } from '../src/after/place.js';
 import { jobSays } from '../src/after/roster.js';
 import { msg } from '../src/lang.js';
@@ -43,35 +47,37 @@ function chain(n) {
   runUntil(() => read().built.includes('mill'), 300);
   return window.__afterPress(AFTER_JOB.SAW);
 }
-const held = () => PILED.every(w => count(plotOf(w)) === S.after.stock[w]);
+// A pile's units walked off the cells, apart from the count it is asked for.
+const inStrip = w => { const s = stripOf(w); return units().filter(u => u.c0 >= s.c0 && u.c0 < s.c1 && counted(u)).length; };
+const held = () => PILED.every(w => inStrip(w) === goodCount(w));
 
 group('each pile holds exactly its stock in blocks through a played run, a timber bill carried off it', async () => {
   const staffed = chain(16);
   window.__afterGrant({ grovelogs: 99 });
-  const grove0 = S.after.stock.grovelogs;
+  const grove0 = goodCount('grovelogs');
   let always = true, sawn = false, top = 0;
   for (let f = 0; f < 60 * 4; f++) {
     run(0.25);
     always = always && held();
-    sawn = sawn || S.after.stock.timber > 0;
-    top = Math.max(top, S.after.stock.timber);
+    sawn = sawn || goodCount('timber') > 0;
+    top = Math.max(top, goodCount('timber'));
   }
   // A bill paid in timber, bought the player's way: an order, its blocks
   // spoken for on the pile and carried off it by bodies, a block at a time,
   // the row landing with the last (after/build.js).
-  const t0 = S.after.stock.timber, bill = HEAP_TIMBER;
+  const t0 = goodCount('timber'), bill = HEAP_TIMBER;
   const bought = window.__buy('after-heap');
-  const atOnce = S.after.stock.timber === t0;
+  const atOnce = goodCount('timber') === t0;
   const landed = runUntil(() => (S.after.ups['after-heap'] || 0) > 0, 120);
   run(5);
-  const sizes = PILED.every(w => plotOf(w).p === AFTER_BLOCK[AFTER_PILES[w].good] * AP);
+  const sizes = PILED.every(w => stripOf(w).z === AFTER_BLOCK[AFTER_PILES[w].good]);
   window.__actsOn(null);
   return [
     ok(staffed, 'a sawyer put on through the roster'),
     ok(grove0 === AFTER_PILES.grovelogs.brim, 'a grant past the forestry pile\'s brim lands only what it holds', `${grove0}`),
-    ok(sawn && always && held(), 'every frame, each pile\'s plot holds exactly its count', JSON.stringify(S.after.stock)),
+    ok(sawn && always && held(), 'every frame, each pile\'s plot holds exactly its count', JSON.stringify(goodsRead())),
     ok(top <= AFTER_PILES.timber.brim, 'the timber pile never stands past its brim', `${top}`),
-    ok(bought && atOnce && landed && !S.after.orders.length && held(), 'a timber bill is carried off the pile, not lifted, and lands', `${t0} -> ${S.after.stock.timber}, bill ${bill}`),
+    ok(bought && atOnce && landed && !S.after.orders.length && held(), 'a timber bill is carried off the pile, not lifted, and lands', `${t0} -> ${goodCount('timber')}, bill ${bill}`),
     ok(sizes, 'a log pile\'s cell is a 4x4 block, the timber pile\'s a 2x2')
   ];
 });
@@ -82,22 +88,22 @@ group('a timber pile at its brim stops the saw and wears the pile-full mark', as
   // Out to the post, the haul set going, and the saw cutting until the pile fills.
   const full = runUntil(() => pileFull('timber'), 240);
   run(2);
-  const logs0 = S.after.stock.logs + S.after.stock.grovelogs, t0 = S.after.stock.timber, mark = !!S.pileFull['after-pile-timber'];
+  const logs0 = goodCount('logs') + goodCount('grovelogs'), t0 = goodCount('timber'), mark = !!S.pileFull['after-pile-timber'];
   const sawyer = S.after.bodies.find(b => b.job === AFTER_JOB.SAW);
   run(30);
-  const stood = S.after.stock.timber === t0 && S.after.stock.logs + S.after.stock.grovelogs >= logs0;
+  const stood = goodCount('timber') === t0 && goodCount('logs') + goodCount('grovelogs') >= logs0;
   const says = jobSays('sawyer').includes(msg('hover-pile-full'));
   // Room made by a bill bought the player's way, its blocks carried off the
   // pile by bodies: the mark comes off and the saw cuts again.
-  const t1 = S.after.stock.timber, bought = window.__buy('after-heap');
+  const t1 = goodCount('timber'), bought = window.__buy('after-heap');
   const cleared = runUntil(() => !S.pileFull['after-pile-timber'], 60);
-  const cutAgain = runUntil(() => S.after.stock.timber > t1 - HEAP_TIMBER, 60);
+  const cutAgain = runUntil(() => goodCount('timber') > t1 - HEAP_TIMBER, 60);
   window.__actsOn(null);
   return [
     ok(staffed && !!sawyer, 'a sawyer put on through the roster'),
     ok(full && t0 > AFTER_PILES.timber.brim - AFTER_LOG_TIMBER && t0 <= AFTER_PILES.timber.brim, 'the timber pile fills to its brim', `${t0}`),
     ok(mark, 'it wears the shared pile-full mark'),
-    ok(stood, 'the saw stops: no log taken and no timber made while the pile is full', `timber ${t0} -> ${S.after.stock.timber}`),
+    ok(stood, 'the saw stops: no log taken and no timber made while the pile is full', `timber ${t0} -> ${goodCount('timber')}`),
     ok(!says || /full/.test(JSON.stringify(says)) || true, 'the sawyer\'s roster says why'),
     ok(cutAgain && cleared, 'room made, the saw cuts again and the mark comes off')
   ];
@@ -107,18 +113,18 @@ group('a reload stands every pile back up from its count, settled before the fir
   chain(4);
   window.__afterGrant({ grovelogs: 5, logs: 3, timber: 11 });
   run(1);
-  const before = PILED.map(w => S.after.stock[w]), plots = PILED.map(w => plotOf(w));
+  const before = PILED.map(w => goodCount(w)), grid = afterGround.grid;
   yard.persist();
   const blob = JSON.parse(localStorage.getItem(KEY));
   yard.restore();
-  const after = PILED.map(w => S.after.stock[w]);
-  const fresh = PILED.every((w, i) => plotOf(w) !== plots[i]);
-  const rested = PILED.every(w => !plotOf(w).awakeN);
+  const after = PILED.map(w => goodCount(w));
+  const fresh = afterGround.grid !== grid;
+  const rested = !afterGround.awakeN;
   window.__actsOn(null);
   return [
     ok(!('piles' in blob.after) && !JSON.stringify(blob.after).includes('awake'), 'the save keeps the counts and no grid'),
     ok(before.every((n, i) => n === after[i]) && held(), 'each pile comes back holding its count', `${before} -> ${after}`),
-    ok(fresh && rested, 'each plot is stood up afresh and at rest')
+    ok(fresh && rested, 'the ground is stood up afresh and at rest')
   ];
 });
 
@@ -127,11 +133,11 @@ group('an old save\'s timber is halved, and what a brim cannot hold lies on the 
   const was = raw.after.stock;
   localStorage.setItem(KEY, JSON.stringify(raw));
   yard.restore();
-  const a = S.after, lying = kind => a.groundLogs.filter(q => q.kind === kind).length;
+  const a = S.after, lyingOf = kind => lying().filter(q => q.kind === kind).length;
   const checks = [
     ok(raw.saveV < 30, 'the fixture is a save from before timber was counted in blocks', `${raw.saveV}`),
-    ok(a.stock.timber + lying('plank') === Math.floor(was.timber / 2), 'its timber is halved, none lost', `${was.timber} -> ${a.stock.timber} on the pile + ${lying('plank')} lying`),
-    ok(a.stock.timber === AFTER_PILES.timber.brim && a.stock.logs <= AFTER_PILES.logs.brim, 'each pile holds at most its brim', JSON.stringify(a.stock)),
+    ok(goodCount('timber') + lyingOf('plank') === Math.floor(was.timber / 2), 'its timber is halved, none lost', `${was.timber} -> ${goodCount('timber')} on the pile + ${lyingOf('plank')} lying`),
+    ok(goodCount('timber') === AFTER_PILES.timber.brim && goodCount('logs') <= AFTER_PILES.logs.brim, 'each pile holds at most its brim', JSON.stringify(goodsRead())),
     ok(held(), 'each pile\'s plot holds its count')
   ];
   run(10);

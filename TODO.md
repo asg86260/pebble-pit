@@ -4,6 +4,21 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## The yard joins the conservation rule (2026-10-28)
+
+"One resource system for every act" is built (DESIGN.md, `(built)`). Its one
+rule (verify.js, rule 23: a unit appears or vanishes only at a named source or
+sink, src/flow.js and src/conserve.js) covers act 3 and the deep's scales. The
+yard does not yet: its units -- grains, finds, shards -- are made and unmade at
+doors nobody has named (rock spoil, the rind, the farm, the meteor, the casino's
+pay, the quarry's dig), so counting them against the rule would be red across the
+node tier on the first frame. Each door is one `source` or `sink` call and its
+kind one entry in `CENSUS_KINDS`; the grains are cells of `floor`, in the hand
+and in `S.chips` already, and a hauler's `w.load` is cells. Blocker: someone
+walks the yard's doors (`grep -rn "addGrain\|put(floor" src`) and names each, a
+kind at a time, starting with the finds. Hell has no goods yet and joins when it
+does.
+
 ## Act 3's goods are blocks, carried by bodies -- APPROVED, BUILDING (2026-10-27)
 
 The saw mill as reviewed live (DESIGN.md, "Act 3's goods are blocks, and

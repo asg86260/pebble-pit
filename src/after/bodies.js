@@ -25,24 +25,27 @@
 // has walked out by the thousand costs the frame nothing while it waits.
 
 import { S } from '../state.js';
+import { sink } from '../flow.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S,
-         AFTER_CARRY_SLOTS, AFTER_PUT_S, AFTER_SAW_S, AFTER_CHOP_HOLD_S,
+         AFTER_PUT_S, AFTER_SAW_S, AFTER_CHOP_HOLD_S,
          AFTER_JOIN_FADE_S, AFTER_GOODS_HOME, AFTER_GOODS_FOOT, AFTER_WALK, AFTER_TIP_LOAD,
-         AFTER_PILES, AFTER_SIGN_TIMBER, AFTER_SIGN_S } from '../config.js';
+         AFTER_PILES, AFTER_SIGN_TIMBER, AFTER_SIGN_S, KINDS } from '../config.js';
 import { secs, walk, nextId } from './util.js';
 import { stepCrew } from '../placebodies.js';
-import { haulCap } from '../levels.js';
+import { kindOf as cellKind } from '../grid.js';
+import { count, push, isEmpty, loadKind, holds, clear, pop, pickUp as takeUp, putDown as setUp, dump } from '../carry.js';
 import { deepAt } from './sky.js';
 import { built, stumpsOn, seatsOf, bladeLogs, heapBrim, benchSigns } from './levels.js';
 import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, notchX, soulX, soulY, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
-import { standing, stumped, chopTree, digStump, settled, takeGroundLog, kindOf, layGood } from './grove.js';
-import { isPiled, takeBlock, setBlock, pileRoom, pileBrim } from './piles.js';
-import { sweepDue, tipSawdust, sawyerHolds } from './mill.js';
+import { standing, stumped, chopTree, digStump, settled, layGood } from './grove.js';
+import { isPiled, setBlock, pileCount, pileRoom, pileBrim } from './piles.js';
+import { stripOf, units, counted, uncovered, takeAt, colX, lying } from './ground.js';
+import { sweepDue, tipSawdust, sawyerHolds, sawdustCount } from './mill.js';
 import { signSpot, plantSign } from './press.js';
 import { workAfter } from './work.js';
-import { fillBuilders, stepBuilder, isIdle, timberReserved, nextOrder, orderOf, orderAt, orderBrought } from './build.js';
+import { fillBuilders, stepBuilder, isIdle, handsFree, timberReserved, nextOrder, orderOf, orderAt, orderBrought } from './build.js';
 
 const floorY = () => afterFloor();
 // A walk that keeps to the floor: the rows of God's crowd stand up the
@@ -156,53 +159,57 @@ export function walkLeft(w) {
   return z ? Math.max(0, z[0] - w.x, w.x - z[1]) : 0;
 }
 
-// --- the carry -----------------------------------------------------------------------
-// The yard's carry (levels.js, `haulCap`, grains a load), each thing up here
-// taking several of its slots (AFTER_CARRY_SLOTS): how many of `kind` a body
-// holds, one at the least. `carry` is how many it has; a body read from a
-// save from before the carry holds the one its `load` names.
-export const holds = kind => Math.max(1, Math.floor(haulCap() / AFTER_CARRY_SLOTS[kind]));
-export const carried = w => w.carry ?? (w.load ? 1 : 0);
-// Taken up the yard's way, one a beat (AFTER_PUT_S), until the load is full
-// or none is left: true once done, holding however many it got.
-function pickUp(w, dt, kind, left, take) {
-  if (carried(w) >= holds(kind) || left() <= 0) return true;
-  w.t += dt;
-  if (w.t < AFTER_PUT_S) return false;
-  w.t = 0; take();
-  w.carry = carried(w) + 1; w.load = kind;
-  return carried(w) >= holds(kind) || left() <= 0;
+// --- the carry ----------------------------------------------------------------------
+// The one carry (src/carry.js): a body holds cells, a unit's weight by its
+// kind as the hand's, so `holds` is how many of a kind its `haulCap()` grains
+// take, one at the least. A unit is in the arms only when a take returned it.
+export { holds };
+export const carried = w => count(w);
+// A block off the top of counted pile `what`, the slot nearest world x (the
+// highest top with no x): its cell value, or 0 with the pile bare. Nothing
+// under another block is ever taken (ground.js, `takeAt`).
+function takeFromPile(what, x = null) {
+  const s = stripOf(what);
+  if (!S.after || !s || pileCount(what) <= 0) return 0;
+  const t = units().filter(u => u.c0 >= s.c0 && u.c0 < s.c1 && counted(u) && uncovered(u.ai));
+  if (!t.length) return 0;
+  const mid = u => colX(u.c0) + u.z * AP / 2;
+  const pick = x == null ? t.reduce((b, u) => (u.r0 > b.r0 ? u : b)) : t.reduce((b, u) => (Math.abs(mid(u) - x) < Math.abs(mid(b) - x) ? u : b));
+  return takeAt(pick.ai);
 }
+// Taken up the yard's way, one a beat (AFTER_PUT_S), until the load is full
+// or none is left: true once done, holding however many it got. `take()`
+// returns the unit's value, or 0.
+const pickUp = (w, dt, kind, left, take) => takeUp(w, dt, kind, left, take, AFTER_PUT_S);
 // Set down the same way, the load shrinking as the pile grows: true once
 // the hands are empty.
-function putDown(w, dt, add) {
-  if (!carried(w)) { w.load = null; return true; }
-  w.t += dt;
-  if (w.t < AFTER_PUT_S) return false;
-  w.t = 0; add();
-  w.carry = carried(w) - 1;
-  if (w.carry > 0) return false;
-  w.carry = 0; w.load = null;
-  return true;
+const putDown = (w, dt, put) => setUp(w, dt, put, AFTER_PUT_S);
+// What is in the arms laid on the floor at the body's feet, as a felled log
+// lies, for a gatherer to carry home once the pile has room.
+function layAll(w) {
+  const n = count(w);
+  dump(w, (v, k) => { const kind = cellKind(v).key; layGood(kind, w.x + (k - (n - 1) / 2) * AFTER_GOODS_FOOT[kind] * AP, floorAt(w.x)); });
+  w.t = 0;
 }
-// Set down on counted pile `what` (piles.js) the same way, a block a beat
-// onto its middle; a pile at its brim takes no more, and what is still in
-// hand is laid on the floor at the body's feet, as a felled log lies, for a
-// gatherer to carry home once the pile has room (`looseLogs`). True once the
-// hands are empty.
+// Set down on counted pile `what` (piles.js) the same way, a block a beat onto
+// its middle; a pile at its brim takes no more, and what is still in hand is
+// laid on the floor (`layAll`); a block the heap has no room for under its
+// ceiling likewise. True once the hands are empty.
 function toPile(w, dt, what) {
-  if (carried(w) && pileRoom(what) <= 0) {
-    for (let k = 0; k < carried(w); k++) layGood(w.load, w.x + (k - (carried(w) - 1) / 2) * AFTER_GOODS_FOOT[w.load] * AP, floorAt(w.x));
-    w.carry = 0; w.load = null; w.t = 0;
+  if (!isEmpty(w) && pileRoom(what) <= 0) { layAll(w); return true; }
+  return putDown(w, dt, v => {
+    if (setBlock(what, null, v)) return true;
+    const kind = cellKind(v).key;
+    layGood(kind, w.x - KINDS[kind].size * AP / 2, floorAt(w.x));
     return true;
-  }
-  return putDown(w, dt, () => setBlock(what));
+  });
 }
 
 // A body put on a job, from where it stands: it forgets what it was doing
 // and walks to the job (the job's own frame takes it there).
 function takeJob(w, job) {
-  Object.assign(w, { job, errand: null, order: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, load: null, carry: 0, pick: false });
+  Object.assign(w, { job, errand: null, order: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, tipping: false, pick: false });
+  clear(w);
 }
 // A body taken off its job, back to the podium on foot.
 function dropJob(w) {
@@ -214,7 +221,7 @@ function fromCrowd(job) {
   const a = S.after;
   a.camp -= 1;
   const at = campSpot(podiumMid());
-  return { id: nextId(), job, on: false, x: at.x, y: at.y, face: 1, state: 'work', t: 0, load: null, target: null, n: 0, born: a.t };
+  return { id: nextId(), job, on: false, x: at.x, y: at.y, face: 1, state: 'work', t: 0, load: [], carry: 0, target: null, n: 0, born: a.t };
 }
 // Every job brought to what its roster wants: short, the idle member nearest
 // its station takes it (out of the crowd, with nobody at the podium); over,
@@ -231,7 +238,7 @@ function staff() {
       for (const w of free) { if (n >= want) break; takeJob(w, job); n++; }
       while (n < want && a.camp > 0) { a.bodies.push(fromCrowd(job)); n++; }
     }
-    for (const w of on) { if (n <= want) break; if (w.load == null) { dropJob(w); n--; } }
+    for (const w of on) { if (n <= want) break; if (handsFree(w)) { dropJob(w); n--; } }
   }
   // The podium kept stood: a spot empty and a member waiting in the crowd,
   // one steps out to it.
@@ -296,16 +303,16 @@ const goodOf = what => AFTER_PILES[what].good;
 const fedAt = what => pileMid(pileOwner(what), what);
 // What a pile can give up: the timber mound less the blocks a carried order
 // has spoken for (build.js), every other pile all it holds.
-const spareOf = what => S.after.stock[what] - (what === 'timber' ? timberReserved() : 0);
+const spareOf = what => pileCount(what) - (what === 'timber' ? timberReserved() : 0);
 function fetchLogs(w, key, dt) {
   const a = S.after, mine = PILE[key], from = FROM[key];
   // The sawyer with a log in its hands on the mill's own trip (mill.js) has
   // its log: fetching another would drop the one it carries.
   if (key === 'mill' && sawyerHolds()) return false;
-  if (!carried(w) && !w.pick && (a.stock[mine] >= UNIT[key] || spareOf(from) <= 0 || hauledTo(key))) return false;
+  if (!carried(w) && !w.pick && (pileCount(mine) >= UNIT[key] || spareOf(from) <= 0 || hauledTo(key))) return false;
   w.at = null;
   if (!carried(w) || w.pick) {
-    if (go(w, fedAt(from), floorY(), dt)) w.pick = !pickUp(w, dt, goodOf(from), () => spareOf(from), () => takeBlock(from, w.x));
+    if (go(w, fedAt(from), floorY(), dt)) w.pick = !pickUp(w, dt, goodOf(from), () => spareOf(from), () => takeFromPile(from, w.x));
     return true;
   }
   if (go(w, pileMid(key, mine), floorY(), dt)) toPile(w, dt, mine);
@@ -330,9 +337,13 @@ export function haulWant(key) {
 const haulers = () => S.after.bodies.filter(o => o.errand === AFTER_JOB.HAUL);
 // Blocks in a hauler's hands bound for station `key`.
 const inbound = key => haulers().reduce((n, o) => n + (o.target === key ? carried(o) : 0), 0);
-// Whether a hauler is bound for `key`, fetching or carrying: the worker
-// there waits for it rather than walk too.
-const hauledTo = key => haulers().some(o => o.target === key);
+// Whether what haulers are carrying to `key` already, with what the pile
+// holds, makes a unit of its work: the worker there waits for it rather than
+// walk too. A hauler still on its way to the far pile is no reason to stand
+// idle (four sawyers waited on the one hauler while the logs lay), and one
+// carrying a plank of the four a sign takes is none for a joiner to wait on
+// the other three.
+const hauledTo = key => pileCount(PILE[key]) + inbound(key) >= UNIT[key];
 // How far short a standing, worked station's pile is, counting the blocks on
 // their way. A saw mill with nobody on its job is worked by the hand alone,
 // and its logs are left on the forestry pile for the hand to take where it
@@ -341,7 +352,7 @@ const hauledTo = key => haulers().some(o => o.target === key);
 const WORKER = { mill: AFTER_JOB.SAW };
 const worked = key => !WORKER[key] || bodiesOf(WORKER[key]).length > 0;
 // Never past the pile's brim: a hauler sets no block on a full pile.
-const shortOf = key => (built(key) && worked(key) ? Math.max(0, Math.min(haulWant(key), pileBrim(PILE[key])) - S.after.stock[PILE[key]] - inbound(key)) : 0);
+const shortOf = key => (built(key) && worked(key) ? Math.max(0, Math.min(haulWant(key), pileBrim(PILE[key])) - pileCount(PILE[key]) - inbound(key)) : 0);
 // The station most short for its want, the saw mill on a tie, among those
 // fed with `kind` (any, with none) and whose feed has a block to give: null
 // when none is.
@@ -361,11 +372,11 @@ const haulNeed = () => HAULED.reduce((n, key) => n + Math.min(Math.max(0, spareO
 // the notch while the saw is worked and tips a load each time the heap
 // comes within a load of its brim, so the saw never stops on its own
 // sawdust.
-const tipReady = () => S.after.stock.sawdust >= heapBrim() - AFTER_TIP_LOAD;
+const tipReady = () => sawdustCount() >= heapBrim() - AFTER_TIP_LOAD;
 const chainRuns = () => atStation('mill').length > 0;
 const sweeping = () => S.after.bodies.some(o => o.errand === AFTER_JOB.SWEEP);
 // Goods lying still on the floor -- the grove's felled logs, and whatever the
-// hand threw there (after/piles.js, AFTER_PLOTS) -- taken up nearest first, the
+// hand threw there (after/ground.js) -- taken up nearest first, the
 // next of the same kind while the load has room (the yard's carter), and
 // carried to that kind's pile (AFTER_GOODS_HOME: a log the forestry shack's,
 // a plank the saw mill's timber) a good a beat; `w.log` is the one walked
@@ -374,27 +385,30 @@ const sweeping = () => S.after.bodies.some(o => o.errand === AFTER_JOB.SWEEP);
 const homeOf = kind => AFTER_GOODS_HOME[kind] || AFTER_GOODS_HOME.log;
 // A good whose pile is at its brim is left lying too, until it has room.
 const roomAt = what => !isPiled(what) || pileRoom(what) > 0;
-const looseLogs = (kind = null) => S.after.groundLogs.filter(o => settled(o)
-  && (kind ? kindOf(o) === kind : built(pileOwner(homeOf(kindOf(o)))) && roomAt(homeOf(kindOf(o)))));
+const looseLogs = (kind = null) => lying().filter(o => settled(o)
+  && (kind ? o.kind === kind : built(pileOwner(homeOf(o.kind))) && roomAt(homeOf(o.kind))));
 function gather(w, dt) {
   const a = S.after;
   if (w.to === 'pile') {
-    const what = homeOf(w.load);
-    if (go(w, pileMid(pileOwner(what), what), floorY(), dt) && (isPiled(what) ? toPile(w, dt, what) : putDown(w, dt, () => { a.stock[what] += 1; }))) w.to = null;
+    const what = homeOf(loadKind(w));
+    if (go(w, pileMid(pileOwner(what), what), floorY(), dt) && toPile(w, dt, what)) w.to = null;
     return true;
   }
-  const kind = carried(w) ? w.load : null;
-  let q = w.log != null ? a.groundLogs.find(o => o.id === w.log) : null;
-  if (!q || !settled(q) || (kind && kindOf(q) !== kind)) {
+  const kind = loadKind(w);
+  // A unit's id is its bottom-left cell, which moves when it rolls: a claim on
+  // one that is gone is let go, and the nearest free unit chosen again.
+  let q = w.log != null ? lying().find(o => o.id === w.log) : null;
+  if (!q || !settled(q) || (kind && q.kind !== kind)) {
     const claimed = new Set(a.bodies.filter(o => o !== w && o.log != null).map(o => o.log));
     const free = looseLogs(kind).filter(o => !claimed.has(o.id));
     q = free.length ? free.reduce((b, o) => (Math.abs(o.x - w.x) < Math.abs(b.x - w.x) ? o : b)) : null;
     w.log = q ? q.id : null;
   }
-  if (kind && (carried(w) >= holds(kind) || !q)) { w.to = 'pile'; w.log = null; w.t = 0; return true; }
+  if (kind && (count(w) >= holds(kind) || !q)) { w.to = 'pile'; w.log = null; w.t = 0; return true; }
   if (!q) return false;
   if (!go(w, q.x + AP, floorY(), dt)) return true;
-  if (takeGroundLog(q.id)) { w.carry = carried(w) + 1; w.load = kindOf(q); }
+  // Counted only if it came: a unit with another on it is not taken.
+  push(w, takeAt(q.id));
   w.log = null;
   return true;
 }
@@ -403,7 +417,10 @@ function gather(w, dt) {
 // once its hands are empty again) and goes back to its bench.
 function takeOut(w, dt, kind, stock, room, round) {
   if (!w.out) {
-    if (S.after.stock[stock] < holds(kind) || !room()) return false;
+    // Not with other goods in the arms (the bench's timber still being walked
+    // in): the round is for the maker's own goods, and a plank carried out as a
+    // sign is a unit turned into another.
+    if (!isEmpty(w) || pileCount(stock) < holds(kind) || !room()) return false;
     Object.assign(w, { out: true, at: null, target: null, t: 0, pick: false });
   }
   if (round(w, dt)) w.out = false;
@@ -451,13 +468,13 @@ const JOB_STEP = {
       if (w.target == null || !HAULED.includes(w.target)) w.target = haulTarget();
       const from = w.target ? FROM[w.target] : null;
       if (!carried(w) && (!from || spareOf(from) <= 0)) { w.target = null; w.pick = false; return; }
-      if (from && go(w, fedAt(from), floorY(), dt)) w.pick = !pickUp(w, dt, goodOf(from), () => spareOf(from), () => takeBlock(from, w.x));
+      if (from && go(w, fedAt(from), floorY(), dt)) w.pick = !pickUp(w, dt, goodOf(from), () => spareOf(from), () => takeFromPile(from, w.x));
       if (from || !w.pick) return;
       w.pick = false;
     }
-    if (w.target == null || !built(w.target) || pileRoom(PILE[w.target]) <= 0) w.target = haulTarget(w.load);
+    if (w.target == null || !built(w.target) || pileRoom(PILE[w.target]) <= 0) w.target = haulTarget(loadKind(w));
     // No station short of them any more: back on the pile they came off.
-    const key = w.target, what = key ? PILE[key] : AFTER_GOODS_HOME[w.load];
+    const key = w.target, what = key ? PILE[key] : AFTER_GOODS_HOME[loadKind(w)];
     if (go(w, key ? pileMid(key, what) : fedAt(what), floorY(), dt) && toPile(w, dt, what)) w.target = null;
   },
   // An idle member's errand only: at the notch, a load tipped through each
@@ -478,7 +495,7 @@ const JOB_STEP = {
     let o = w.order != null ? orderOf(w.order) : null;
     if (carried(w) && !w.pick) {
       if (!o) { if (go(w, mound, floorY(), dt) && toPile(w, dt, 'timber')) w.order = null; return; }
-      if (go(w, orderAt(o), floorY(), dt) && putDown(w, dt, () => orderBrought(o))) w.order = null;
+      if (go(w, orderAt(o), floorY(), dt) && putDown(w, dt, () => { sink('plank', 1, 'order'); orderBrought(o); return true; })) w.order = null;
       return;
     }
     if (!o || o.claimed >= o.n) {
@@ -486,17 +503,17 @@ const JOB_STEP = {
       o = nextOrder(); w.order = o ? o.id : null;
     }
     if (!o) return;
-    if (go(w, mound, floorY(), dt)) w.pick = !pickUp(w, dt, 'plank', () => Math.min(o.n - o.claimed, a.stock.timber), () => { takeBlock('timber', w.x); o.claimed += 1; });
+    if (go(w, mound, floorY(), dt)) w.pick = !pickUp(w, dt, 'plank', () => Math.min(o.n - o.claimed, pileCount('timber')), () => { const v = takeFromPile('timber', w.x); if (v) o.claimed += 1; return v; });
   },
   sawyer(w, dt) {
     // Off the saw while the heap has stood at its brim: to the notch beside
     // it, a load tipped through, and back.
-    if (w.load === 'tip') {
+    if (w.tipping) {
       w.at = null;
-      if (go(w, notchX(), floorY(), dt)) { tipSawdust(); w.load = null; }
+      if (go(w, notchX(), floorY(), dt)) { tipSawdust(); w.tipping = false; }
       return;
     }
-    if (built('mill') && sweepDue() && w.at === 'mill' && !sweeping() && !S.after.bodies.some(o => o.load === 'tip')) { w.load = 'tip'; w.at = null; return; }
+    if (built('mill') && sweepDue() && w.at === 'mill' && !sweeping() && !S.after.bodies.some(o => o.tipping)) { w.tipping = true; w.at = null; return; }
     if (built('mill') && fetchLogs(w, 'mill', dt)) return;
     stationWork(w, 'mill', AFTER_SAW_S, dt);
   },
@@ -517,7 +534,7 @@ const JOB_STEP = {
     const a = S.after;
     if (!built('workshop')) { idle(w, dt); return; }
     // A sign askew first: straightened where it stands.
-    if (!w.load) {
+    if (isEmpty(w)) {
       const bent = a.signs.find(s => s.askew && s.pull == null && !a.bodies.some(o => o !== w && o.target === `s${s.id}`));
       if (bent) w.target = `s${bent.id}`;
     }
@@ -534,7 +551,7 @@ const JOB_STEP = {
     if (!carried(w) || w.target == null) {
       if (!go(w, signFetchX(), floorY(), dt)) return;
       if (!signSpot()) return toPile(w, dt, 'signs');
-      if (!pickUp(w, dt, 'sign', () => a.stock.signs, () => takeBlock('signs', w.x))) return false;
+      if (!pickUp(w, dt, 'sign', () => pileCount('signs'), () => takeFromPile('signs', w.x))) return false;
       if (!carried(w)) return true;
       w.target = signSpot(); w.t = 0;
       if (!w.target) return false;
@@ -545,8 +562,8 @@ const JOB_STEP = {
     if (w.t >= AFTER_PLANT_S) {
       plantSign(s.f, s.r); w.t = 0;
       // The next in hand to the next spot free, or back to the door.
-      w.carry = carried(w) - 1;
-      if (w.carry <= 0) { w.carry = 0; w.load = null; w.target = null; return true; }
+      pop(w); sink('sign', 1, 'planted');
+      if (isEmpty(w)) { w.target = null; return true; }
       w.target = signSpot();
     }
     return false;
@@ -568,9 +585,9 @@ const ERRANDS = [
   // One sweeper, kept at the notch while the chain runs (`hold`).
   { job: AFTER_JOB.SWEEP, per: 1, left: () => (chainRuns() && !sweeping() ? 1 : 0), hold: chainRuns },
   // A bought row's timber, while any of it waits on the mound (build.js).
-  { job: AFTER_JOB.ORDER, kind: 'plank', left: () => Math.min(timberReserved(), S.after.stock.timber) },
+  { job: AFTER_JOB.ORDER, kind: 'plank', left: () => Math.min(timberReserved(), pileCount('timber')) },
   { job: AFTER_JOB.HAUL, kind: 'log', left: haulNeed },
-  { job: AFTER_JOB.CARRY, kind: 'sign', left: () => (built('workshop') ? S.after.stock.signs : 0) }
+  { job: AFTER_JOB.CARRY, kind: 'sign', left: () => (built('workshop') ? pileCount('signs') : 0) }
 ];
 const fetching = job => S.after.bodies.filter(o => onRound(o, job) && !carried(o)).length;
 const errandFor = () => ERRANDS.find(e => e.left() > fetching(e.job) * (e.per ?? holds(e.kind)))?.job || null;
@@ -608,14 +625,14 @@ function runErrand(w, dt) {
 const lent = w => w.job && w.errand === AFTER_JOB.ORDER;
 function lendHands() {
   const a = S.after;
-  if (!timberReserved() || a.stock.timber <= 0 || a.camp > 0 || idleBodies().length || a.bodies.some(o => o.errand === AFTER_JOB.ORDER)) return;
+  if (!timberReserved() || pileCount('timber') <= 0 || a.camp > 0 || idleBodies().some(o => !o.errand) || a.bodies.some(o => o.errand === AFTER_JOB.ORDER)) return;
   const mound = fedAt('timber');
-  const free = a.bodies.filter(o => o.job && o.job !== AFTER_JOB.BUILD && o.state === 'work' && o.load == null && !o.out && !o.pick)
+  const free = a.bodies.filter(o => o.job && o.job !== AFTER_JOB.BUILD && o.state === 'work' && handsFree(o) && !o.out && !o.pick)
     .sort((p, q) => Math.abs(p.x - mound) - Math.abs(q.x - mound));
   if (free[0]) Object.assign(free[0], { errand: AFTER_JOB.ORDER, order: null, at: null, t: 0 });
 }
 function lentStep(w, dt) {
-  if (!carried(w) && !w.pick && (!nextOrder() || S.after.stock.timber <= 0)) { w.errand = null; w.order = null; return; }
+  if (!carried(w) && !w.pick && (!nextOrder() || pileCount('timber') <= 0)) { w.errand = null; w.order = null; return; }
   JOB_STEP.orderer(w, dt);
 }
 const orLent = step => (w, dt) => (lent(w) ? lentStep(w, dt) : step(w, dt));

@@ -179,12 +179,13 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- A scale falling through the deep's water is a chip of the one air, and one still in it when the page reloads is where it was; act 3's thrown goods and the deep's scales come down on the same landing chain the yard's dust does (test/one-landing.test.mjs).
 - Every box stands on the boards' dot ground: the cards, notices, buttons, signs, tabs and fields, the counter and the canvas's own cards, the black ones in the paper's dots (test/ui-tokens.test.mjs).
 - Act 3's UPGRADES button lifts and sways under the pointer as a shop tile does, and pressed again puts its shop away; every station has one, God's crowd too, and clicking or hovering a station opens nothing; a shop tile pressed now sinks halfway (test/after-gestures.test.mjs).
 - Act 3's stations are their own shops: open one from the UPGRADES button under it, take hold of its work to close it; the $ signs, the strip under a worked station and the glyph over a working one are gone, and one ghost hand shows how (test/after-gestures.test.mjs).
 - Act 3's saw mill is a machine you can follow a log through: the sawyer walks the treadwheel, carries each log to the bed, and the blade cuts it a column a stroke into timber that rides down a chute onto the mound and sawdust that falls on the heap under the saw (test/after-mill-machine.test.mjs).
 - In act 3 you pick up logs and timber as you do dust, a left press and hold on a pile, and flick them onto another pile or the floor, where a worker carries them home (test/after-goods-sweep.test.mjs).
-- In act 3 the hand lifts one log at a time and a quarter as much timber as dust (never fewer than two), and a log hangs nearly still under the pointer while timber swings less than dust (test/after-goods-sweep.test.mjs).
+- One hand in the yard, the deep and act 3: a drag takes dust, scales, planks or logs up to what the hand can carry by weight (a plank four grains, a log sixteen, never fewer than one), and what you throw can be caught and swept up again anywhere (test/one-hand.test.mjs).
 - Act 3's log and timber piles are heaps of blocks you can see, a log a 4x4 and three 2x2 timber blocks a log; each pile holds only so many, shows the pile-full mark at its brim and stops what fills it, and timber bills and a save's timber are halved to match (test/after-pile-plots.test.mjs).
 - In act 3 nothing fades onto or off a pile: workers carry every block, the workshop's timber walked to it four blocks a sign, its signs standing in its rack as blocks until carried out, and a row billed in timber lands when its blocks have been carried to its station (test/after-carried-goods.test.mjs).
 - The corner's way square works from every place: from heaven down to the yard, from the yard down to the deep and up to heaven once its gates are open, and from the deep down to hell once it is open, each on the ripple (src/selftest/deep.js, "the corner squares go from heaven down to the yard").
@@ -214,12 +215,19 @@ this section; the release that switches it on moves these under Unreleased.
 - The recruit row, greyed while nobody is won, says so and how to win one instead of reading like a price you cannot pay (test/after-recruit.test.mjs).
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 
+- In act 3 logs and timber stack, roll and settle the same way wherever they land, on a pile or on open floor, never one drawn through another, heap into a mound rather than a tower, and a press on a pile takes the block on top (test/after-ground.test.mjs).
+- In act 3 every member carries cells the way the yard's haulers do, by the hand's weights (a log sixteen grains, timber four), a station's loads come out of the shack's door, and a unit is held only if it was really taken (test/one-carry.test.mjs).
 - In act 3 a log or timber you throw can be caught in the air again with a press on it, as dust can (test/after-goods-sweep.test.mjs, src/selftest/afterboards.js).
 - Dust, scales and act 3's logs and timber held on the cursor drift round it smoothly again instead of hopping a cell at a time (scenes hand-dust, after-hand-timber).
 - In act 3 a press and hold dragged across piles and the logs or timber lying about picks them up the whole way, begun on bare ground or on goods, as dragging across dust does (src/selftest/afterboards.js).
 - In act 3 a log or timber you throw onto the floor, or a felled tree's log, can be picked up again with a press and hold on it, as dust can (test/after-goods-sweep.test.mjs).
 - Going back up by the corner square after looking along the deep, or down from heaven, no longer jumps to the portal before the ring closes: the ring closes on what you were looking at (src/selftest/deep.js, "going up from anywhere in the deep").
 - Going between the surface and the deep plays its ripple again after a reduced-motion scene was looked at, instead of cutting straight across for good (src/selftest/deep.js, "a reduced-motion scene leaves the player's full motion").
+- Act 3 keeps no stock numbers: a pile is what lies on its strip and the sawdust heap is its grains, saved as cells, and a unit appears or vanishes only at a tree felled, a cut at the saw, a sign joined, a tip through the hatch, a sign planted, an order laid, a band laid or a blow in the deep -- every frame of every check asks it (test/no-stock.test.mjs; test/conservation.test.mjs).
+- A station going up is a strip of the ground: its loads are real blocks made at the shack's door, set down on the strip by members and taken off its top by the builders, and the drawing is the ground's (test/build-site.test.mjs).
+- A log or plank let go over a pile of another kind lies on its mound and is carried home from the top, instead of landing beside the pile (test/off-kind-landing.test.mjs).
+- A joiner carrying timber to the bench no longer sets it down as a sign or plants it in the crowd (test/conservation.test.mjs).
+- In act 3, workers no longer stand waiting at a station for a hauler still on its way to the far pile, so the saw mill and the workshop keep working while one hauler does the rounds (test/after-playthrough.test.mjs).
 - A stirrer at its pot no longer stays hanging in the air when a dance is cut off mid-jump (test/dance-cut-at-pot.test.mjs).
 - Loading a save that was left in the deep no longer lays its sky, clouds and rain out against the window of the yard you were in before (test/held-state.test.mjs).
 - The yard takes less of every frame to count what lies on its floor (test/perf-gate.test.mjs).

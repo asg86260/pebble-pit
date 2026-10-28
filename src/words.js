@@ -10,6 +10,7 @@ import { S } from './state.js';
 import { RUNGS } from './config.js';
 import { isHellCoin, hellPurse } from './hell/coins.js';
 import { timberReserved } from './after/build.js';
+import { pileCount } from './after/piles.js';
 
 // Every currency is a mark, never a word. Adding one is a line here and a line
 // in the stylesheet. Time is a price like the coins and reads the same way.
@@ -70,7 +71,7 @@ export const purse = money =>
   // Act 3's: rebel on the act; timber the mound less the blocks orders have
   // spoken for (after/build.js).
   money === 'rebel' ? (S.after ? S.after.rebel : 0) :
-  money === 'timber' ? (S.after ? Math.max(0, (S.after.stock.timber || 0) - timberReserved()) : 0) :
+  money === 'timber' ? (S.after ? Math.max(0, pileCount('timber') - timberReserved()) : 0) :
   S.stored;
 
 // What a unit is *drawn* as, for the units the yard has a coin for. A unit not

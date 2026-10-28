@@ -12,7 +12,12 @@ import { S } from '../../src/state.js';
 import * as C from '../../src/config.js';
 import { workAfter } from '../../src/after/work.js';
 import { chopTree, digStump, standing, stumped } from '../../src/after/grove.js';
-import { tipSawdust, heapFull } from '../../src/after/mill.js';
+import { tipSawdust, heapFull, turnWheel, millView } from '../../src/after/mill.js';
+import { goodsRead, takeBlock } from '../../src/after/piles.js';
+import { lying, stripBox, stripOf, units, counted } from '../../src/after/ground.js';
+import { track, sweep, release } from '../../src/hands.js';
+import { stationX0, groundOf, AP } from '../../src/after/place.js';
+import { afterGround } from '../../src/state.js';
 import { bubbles } from '../../src/after/bubbles.js';
 import { built } from '../../src/after/levels.js';
 import { afterRow, afterBill, afterMaxed } from '../../src/after/rows.js';
@@ -46,7 +51,11 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   const HAND_S = {
     chop: (2 * C.GESTURE_SAW_END * C.GESTURE_SAW_AMP) / C.GESTURE_SAW_VMAX,   // a stroke end to end, a chop
     dig: C.GESTURE_STRAIN_S,                                                   // a root snapping, held up
-    mill: C.GESTURE_WHEEL_LOG / (C.GESTURE_WHEEL_FEED * C.GESTURE_WHEEL_MAX_REV),
+    // The real mill (after/mill.js): a unit of hand work is half a second of
+    // turning the wheel at the hand's top speed, a stroke a turn; a log is first
+    // swept off the pile and let go over the bed (`load`, a second and a half).
+    mill: 0.5,
+    load: 1.5,
     workshop: C.GESTURE_NAILS * C.GESTURE_NAIL_TAPS * C.GESTURE_SWING_S,
     tip: C.GESTURE_FLING_WINDOW_S * 4
   };
@@ -110,10 +119,10 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     return most;
   }
   function nextLater() {
-    const a = S.after, st = a.stock, n = j => crewAt(j);
+    const a = S.after, st = goodsRead(), n = j => crewAt(j);
     // The logs waiting on the sawyers, lying in the grove or piled at the
     // forestry shack.
-    const logs = a.groundLogs.length + st.grovelogs;
+    const logs = lying().length + st.grovelogs;
     const open = j => row(`after-post-${j}`).show();
     const pick = (st.timber >= 8 * C.AFTER_SIGN_TIMBER + planNeeds('timber') && open('joiner') ? 'joiner'
       : st.timber < 10 * C.AFTER_SIGN_TIMBER && logs > 3 * C.AFTER_LOGS_A_TREE * Math.max(1, n('sawyer')) ? 'sawyer'
@@ -129,7 +138,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   const GRANT_KEY = { dust: 'dust', spore: 'spores', shard: 'shards', scale: 'scales', spark: 'sparks' };
   // Timber as the board reads it: the mound less what carried orders have
   // spoken for (after/build.js).
-  const actHave = c => (c === 'rebel' ? S.after.rebel : c === 'timber' ? purse('timber') : S.after.stock[c] || 0);
+  const actHave = c => (c === 'rebel' ? S.after.rebel : c === 'timber' ? purse('timber') : goodsRead()[c] || 0);
   const have = c => (YARD_COINS.includes(c) ? yardPurse[c] : actHave(c));
   const shortOf = bill => bill.filter(([c, n]) => have(c) < n).map(([c]) => c);
   // A row as the plan names it, the nth time: a post is had once n stand, the
@@ -196,13 +205,16 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   // Where the hand goes: the furthest station down the chain with its input in,
   // then the grove. Null with nothing to work.
   function handJob() {
-    const a = S.after, st = a.stock;
+    const a = S.after, st = goodsRead();
     // Signs piling up at the door are the carriers' wait, not the hand's: it
     // makes more only while there are few, and leaves the timber alone while
     // the next thing on the plan is short of it.
     const want = wanted()[0], short = want ? shortOf(afterBill(row(want))) : [];
     if (built('workshop') && st.benchtimber >= C.AFTER_SIGN_TIMBER && st.signs < 3 && !short.includes('timber')) return 'workshop';
-    if (built('mill') && st.logs > 0 && !heapFull()) return 'mill';
+    if (built('mill') && !heapFull()) {
+      if (millView().log) return 'mill';
+      if (st.logs > 0 && !a.bodies.some(b => b.at === 'mill') && !S.chips.some(c => c.place === 'after' && c.kind === 'log')) return 'load';
+    }
     if (heapFull()) return 'tip';
     if (a.axe && a.plots.some(standing)) return 'chop';
     if (a.plots.some(stumped)) return 'dig';
@@ -220,9 +232,27 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
       if (job === 'chop') chopTree(a.plots.findIndex(standing), true);
       else if (job === 'dig') digStump(a.plots.findIndex(stumped), true);
       else if (job === 'tip') tipSawdust();
+      else if (job === 'load') loadBed();
+      else if (job === 'mill') turnWheel(HAND_S.mill * C.GESTURE_WHEEL_MAX_REV * HUMAN, true);
       else workAfter(job, 1, true);
       handDid[job] = (handDid[job] || 0) + 1;
     }
+  }
+  // A log off the saw mill's pile onto its bed by hand, as a player does it
+  // (the yard's own hand: sweep the pile's top log, let it go held still over
+  // the bed's seat); a log let go is falling for a few frames and the hand waits for it.
+  function loadBed() {
+    const box = stripBox('logs'), z = C.AFTER_BLOCK.log, was = S.carryLevel;
+    const top = units().filter(u => u.kind === 'log' && counted(u)).reduce((b, u) => (!b || u.r0 > b.r0 ? u : b), null);
+    if (!top) return false;
+    S.carryLevel = 0;
+    const from = { x: afterGround.x + (top.c0 + top.z / 2) * AP, y: box.bottom - box.size * AP / 2 };
+    S.trail = []; track(from.x, from.y); sweep(from.x, from.y);
+    S.carryLevel = was;
+    if (!S.held) return false;
+    const to = { x: stationX0('mill') + (C.AFTER_MILL.seat.x + z / 2) * AP, y: groundOf('mill') + (C.AFTER_MILL.frame.bed - z * 2) * AP };
+    S.trail = []; track(to.x, to.y); release(to.x, to.y);
+    return true;                      // it falls onto the bed over the next frames
   }
   // The bubbles: each one popped once, or let go, as it first shows.
   const seen = new Set();
@@ -304,7 +334,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
       }
       bought.push({ t, key });
       if (LOG) console.log(`${mm(t).padStart(6)}  bought ${key}  (rebel ${Math.round(S.after.rebel)}, camp ${S.after.camp}, ` +
-                           `union ${union()}, stock ${JSON.stringify(S.after.stock)})`);
+                           `union ${union()}, stock ${JSON.stringify(goodsRead())})`);
       if (key === laterKey) laterN++;
       if (t - lastBuy > longest.s) longest = { s: t - lastBuy, from: lastBuy, by: key };
       lastBuy = t;

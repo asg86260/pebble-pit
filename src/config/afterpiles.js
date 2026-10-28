@@ -6,7 +6,9 @@
 // lays the camp off after/art.js: this file imports nothing, so both can read it.
 
 // A good's block, in art cells square: a log 4x4, a plank of timber 2x2.
-export const AFTER_BLOCK = { log: 4, plank: 2, sign: 4 };
+// ...and a construction site's load (after/build.js), two cells a side, the
+// shape the site's piled loads have always been drawn as.
+export const AFTER_BLOCK = { log: 4, plank: 2, sign: 4, load: 2 };
 // What a log saws into, in timber blocks (16 cells into 12 and the kerf's
 // four grains), and the logs a cut takes with the mill's second blade.
 export const AFTER_LOG_TIMBER = 3;

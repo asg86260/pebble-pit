@@ -7,10 +7,11 @@
 
 import { P, GREY, AFTER_COUNT_LIFT, AFTER_BLOCK, AFTER_PILES } from '../../config.js';
 import { ctx } from '../ctx.js';
-import { at, bottomY } from '../../grid.js';
-import { plotOf } from '../../after/piles.js';
+import { AFTER_LOG_ROLL_S } from '../../config.js';
+import { units, colX, rowY, tagOf } from '../../after/ground.js';
 import { AP } from '../../after/place.js';
-import { K, W, PALE, MID, DUST, hash, pileAlpha, pileState, countAt, pendingCounts } from './kit.js';
+import { SPLIT_S } from './pine.js';
+import { K, W, PALE, MID, DUST, hash, pileAlpha, pileState, countAt, pendingCounts, clamp01, inView } from './kit.js';
 import { shown } from '../../tween.js';
 import { themed } from '../../ink.js'; // MOCK after-goods
 
@@ -41,19 +42,42 @@ function count(d, n, cx, top, key) { const at = d.world(cx, top); countOver(at.x
 // in world px, free (a carried or falling block is laid where it truly is).
 // A sign is the camp's black board, as it is planted, its seam the paper
 // between two in the rack.
-export const BLOCK_TONES = { log: { tone: MID, seam: K }, plank: { tone: PALE, seam: MID }, sign: { tone: K, seam: W } };
-export function goodBlock(x, y, kind, seed = 1) {
-  if (goodsLook()) { mockBlock(x, y, kind, seed); return; } // MOCK after-goods
+export const BLOCK_TONES = { log: { tone: MID, seam: K }, plank: { tone: PALE, seam: MID }, sign: { tone: K, seam: W }, load: { tone: MID, seam: K } };
+export function goodBlock(x, y, kind, seed = 1, base = null) {
+  if (goodsLook()) { mockBlock(x, y, kind, seed, base); return; } // MOCK after-goods
   const t = BLOCK_TONES[kind], z = AFTER_BLOCK[kind] * AP;
   ctx.fillStyle = GREY[t.seam]; ctx.fillRect(x, y, z, z);
   ctx.fillStyle = GREY[t.tone]; ctx.fillRect(x, y, z - 1, z - 1);
 }
-// A counted pile, as its plot holds it (after/piles.js): each block where
-// the sand rules have it. No count: the pile is the count.
-export function blockPile(what) {
-  const b = plotOf(what), kind = AFTER_PILES[what].good, foot = bottomY(b);
-  if (goodsLook()) { mockPile(b, kind, foot); return; } // MOCK after-goods
-  for (let c = 0; c < b.cols; c++) for (let r = 0; r < b.rows; r++) if (at(b, c, r)) goodBlock(b.x + c * b.p, foot - (r + 1) * b.p, kind);
+// Every good on the act's ground (after/ground.js), piles and open floor
+// alike, each block where the heap rule has it: one drawing for all of them,
+// so a pile is only where its blocks stand. No count: the pile is the count.
+// A unit still arriving is drawn along its way there, whole, at its true
+// position: a felled log faded in over the trunk and sliding off to rest,
+// slowing, over AFTER_LOG_ROLL_S; a good let go of falling under the yard's
+// gravity from where it was let go (ground.js, `fallTag`).
+export function drawGround(t) {
+  const us = units(), bases = goodsLook() ? mockBases(us) : null; // MOCK after-goods
+  for (const u of us) {
+    const z = u.z * AP;
+    let x = colX(u.c0), y = rowY(u.r0 + u.z), a = 1;
+    const tg = tagOf(u.ai);
+    if (tg && tg.fall != null) {
+      const k = tg.fall > 0 ? clamp01((t - tg.at) / tg.fall) : 1, bot = rowY(u.r0);
+      y = (tg.y0 ?? bot) + (bot - (tg.y0 ?? bot)) * k * k - z;
+    } else if (tg && tg.x0 != null && tg.at != null) {
+      const since = t - tg.at;
+      if (since < -SPLIT_S) continue;
+      const r = clamp01(since / AFTER_LOG_ROLL_S), e = 1 - (1 - r) * (1 - r);
+      x = tg.x0 + (x - tg.x0) * e;
+      a = clamp01((since + SPLIT_S) / SPLIT_S);
+    }
+    if (!inView(x - z, z * 3)) continue;
+    const was = ctx.globalAlpha;
+    ctx.globalAlpha = was * a;
+    goodBlock(Math.round(x), Math.round(y), u.kind, seedOf(u.ai), bases && bases.get(u.ai)); // MOCK after-goods -- seed, base
+    ctx.globalAlpha = was;
+  }
 }
 
 // --- MOCK after-goods: what the goods look like (mock-goods-look3, never merged)
@@ -153,29 +177,30 @@ function paintBlock(kind, s, base) { // MOCK after-goods
     cell(0, 0, i, j, lad[Math.max(0, Math.min(last, k))]); // MOCK after-goods
   } // MOCK after-goods
 } // MOCK after-goods
-// A pile with each block's base apart from every block it touches: the // MOCK after-goods
-// plot read from the bottom row up and left to right, each block taking // MOCK after-goods
-// its own base unless the block left of it or under it already has it, // MOCK after-goods
-// then the next rung that neither has. Every touching pair is one of those // MOCK after-goods
-// two, so none match; a block keeps its tone until a neighbor of it moves. // MOCK after-goods
-function mockPile(b, kind, foot) { // MOCK after-goods
-  const L = LOOK[goodsLook()] || LOOK.a, nb = L.flat ? familyOf(L, kind).length : BASES(kind), got = new Int8Array(b.cols * b.rows); // MOCK after-goods
-  for (let r = 0; r < b.rows; r++) for (let c = 0; c < b.cols; c++) { // MOCK after-goods
-    const v = at(b, c, r); // MOCK after-goods
-    if (!v) continue; // MOCK after-goods
-    // flat: the shade the block was set down with, read along its family // MOCK after-goods
-    let base = L.flat ? (shadeOfSeed(v) - 1) % nb + 1 : L.same ? 2 : ownBase(kind, shadeOfSeed(v)); // MOCK after-goods
-    if (L.apart) { // MOCK after-goods
-      const left = c > 0 ? got[r * b.cols + c - 1] : 0, under = r > 0 ? got[(r - 1) * b.cols + c] : 0; // MOCK after-goods
-      if (L.flat) { // MOCK after-goods  flat: its own shade if it stands two steps from both, else the nearest that does, else one step
-        const gap = k => Math.min(left ? Math.abs(k - left) : 9, under ? Math.abs(k - under) : 9); // MOCK after-goods
-        const near = [...Array(nb)].map((_, i) => i + 1).sort((p, q) => Math.abs(p - base) - Math.abs(q - base)); // MOCK after-goods
-        base = near.find(k => gap(k) >= 2) ?? near.find(k => gap(k) >= 1) ?? base; // MOCK after-goods
-      } else for (let t = 0; t < nb && (base === left || base === under); t++) base = base % nb + 1; // MOCK after-goods
-    } // MOCK after-goods
-    got[r * b.cols + c] = base; // MOCK after-goods
-    mockBlock(b.x + c * b.p, foot - (r + 1) * b.p, kind, v, base); // MOCK after-goods
+// The ground's blocks with each one's base apart from every block it touches:
+// read from the bottom row up and left to right, each block taking its own
+// base unless the block left of it or under it already has it (flat: the
+// nearest rung two steps from both, else one). A block's own shade is its
+// cell's position (`seedOf`), since a block on act 3's ground is one flat
+// tone and keeps no shade of its own. // MOCK after-goods
+function mockBases(us) { // MOCK after-goods
+  const L = LOOK[goodsLook()], out = new Map(); // MOCK after-goods
+  if (!L || !L.apart) return out; // MOCK after-goods
+  const occ = new Map(), cols = 1 << 12; // MOCK after-goods
+  const key = (c, r) => r * cols + c; // MOCK after-goods
+  for (const u of us) for (let j = 0; j < u.z; j++) for (let i = 0; i < u.z; i++) occ.set(key(u.c0 + i, u.r0 + j), u.ai); // MOCK after-goods
+  for (const u of [...us].sort((p, q) => p.r0 - q.r0 || p.c0 - q.c0)) { // MOCK after-goods
+    const nb = L.flat ? familyOf(L, u.kind).length : BASES(u.kind); // MOCK after-goods
+    let base = L.flat ? (shadeOfSeed(seedOf(u.ai)) - 1) % nb + 1 : ownBase(u.kind, shadeOfSeed(seedOf(u.ai))); // MOCK after-goods
+    const left = out.get(occ.get(key(u.c0 - 1, u.r0))) || 0, under = out.get(occ.get(key(u.c0, u.r0 - 1))) || 0; // MOCK after-goods
+    if (L.flat) { // MOCK after-goods
+      const gap = k => Math.min(left ? Math.abs(k - left) : 9, under ? Math.abs(k - under) : 9); // MOCK after-goods
+      const near = [...Array(nb)].map((_, i) => i + 1).sort((p, q) => Math.abs(p - base) - Math.abs(q - base)); // MOCK after-goods
+      base = near.find(k => gap(k) >= 2) ?? near.find(k => gap(k) >= 1) ?? base; // MOCK after-goods
+    } else for (let t = 0; t < nb && (base === left || base === under); t++) base = base % nb + 1; // MOCK after-goods
+    out.set(u.ai, base); // MOCK after-goods
   } // MOCK after-goods
+  return out; // MOCK after-goods
 } // MOCK after-goods
 // Each option's sawdust: the heap's grain tones, a cell each (kit.js DUST is // MOCK after-goods
 // pale flecked mid); here lighter than timber, 2 flecked pale and 4, and // MOCK after-goods
@@ -208,22 +233,3 @@ export function heap(d, cx, R, st, n, tipped = false, pal = DUST, key = st.key) 
   count(d, n, cx + 0.5, -1 - top, key);
 }
 
-// --- a station's loads, while it is raised (pile a, docs/mocks/act3-unbuilt-2026-10-18)
-// Planks six cells long stacked staggered, as the timber pile stacks them,
-// and two-cell blocks beside and on top: a builder's heap that visibly loses
-// a load as each band goes up. Slots in the pile's cells, its left column at
-// x and row -1 standing on the floor; a block's y is its top row.
-export const BUILD_SLOTS = [
-  { x: 0, y: -1, k: 'plank' }, { x: 0.5, y: -2, k: 'plank' }, { x: 7, y: -2, k: 'block' }, { x: 9, y: -2, k: 'block' },
-  { x: 0, y: -3, k: 'plank' }, { x: 8, y: -4, k: 'block' }, { x: 0.5, y: -4, k: 'plank' }, { x: 2, y: -6, k: 'block' }
-];
-export const plankAt = (d, x, y, w = 6) => { d.px(x * P, y * P, w * P, P, K); d.px(x * P + 2, y * P + 2, w * P - 4, P - 4, PALE); };
-export const blockAt = (d, x, y) => { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, MID); d.px(x * P + 4, y * P + 4, 4, 4, W); };
-// The pile, each slot that `lies(i)` says is on it: whole from the moment a
-// carrier sets it down until a builder takes it up, never faded, since a
-// body's hands bring it and take it away.
-export function buildPile(d, x, lies) {
-  BUILD_SLOTS.forEach((s, i) => {
-    if (lies(i)) (s.k === 'plank' ? plankAt(d, x + s.x, s.y) : blockAt(d, x + s.x, s.y));
-  });
-}

@@ -11,7 +11,9 @@
 // played, members walked out of God's yard (`__afterCrowd`), coins granted.
 import { sawyerHolds } from '../src/after/mill.js';
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { RIM_PIECES, AFTER_WALK, AFTER_AGITATE_S, AFTER_AGITATE_REBEL, AFTER_CARRY_SLOTS, AFTER_LOG_TIMBER } from '../src/config.js';
+import { goodCount, goodsRead } from '../src/after/piles.js';
+import { loadKind, holds } from '../src/carry.js';
+import { RIM_PIECES, AFTER_WALK, AFTER_AGITATE_S, AFTER_AGITATE_REBEL, KINDS, AFTER_LOG_TIMBER } from '../src/config.js';
 import { haulCap } from '../src/levels.js';
 import { stationBox, stationDoor, idleX, idleSpots } from '../src/after/place.js';
 import { jobSays } from '../src/after/roster.js';
@@ -138,22 +140,22 @@ group('the - walks one back to the podium on foot, and the rosters stand through
   ];
 });
 
-group('logs are carried the yard\'s way: as many as the yard\'s carry holds, a log taking two of its slots', async () => {
+group('logs are carried by weight: a log takes sixteen grains of the yard\'s carry, one at the least', async () => {
   up(2);
   S.after.built.push('mill');
   // The setup this is not about: the yard's carry bought up (its own checks
   // are the yard's), and logs on the forestry shack's pile.
   S.haulCarryLevel = 4;
-  const want = Math.floor(haulCap() / AFTER_CARRY_SLOTS.log);
+  const want = holds('log');
   window.__afterGrant({ grovelogs: 20 });
   const pressed = window.__afterPress('sawyer', 1);
   let most = 0, stepped = true, last = 0, who = null;
   // Every log: on a pile, in a hand, in the sawyer's hands or on the saw's
   // bed (after/mill.js), or sawn through (the sawyer stays at the saw while a
   // hauler brings them, so some are cut before the count is taken).
-  const timber0 = S.after.stock.timber;
+  const timber0 = goodCount('timber');
   let sawn = 0, onBed = false;
-  const total = () => S.after.stock.grovelogs + S.after.stock.logs + S.after.bodies.reduce((n, b) => n + (b.load === 'log' ? b.carry || 0 : 0), 0)
+  const total = () => goodCount('grovelogs') + goodCount('logs') + S.after.bodies.reduce((n, b) => n + (loadKind(b) === 'log' ? b.carry || 0 : 0), 0)
     + (sawyerHolds() ? 1 : 0) + (S.after.saw && S.after.saw.bed ? 1 : 0) + sawn;
   const t0 = total();
   // The first body to take logs up for the mill: the sawyer, or an idle
@@ -163,9 +165,9 @@ group('logs are carried the yard\'s way: as many as the yard\'s carry holds, a l
     const bed = !!(S.after.saw && S.after.saw.bed);
     if (onBed && !bed) sawn++;
     onBed = bed;
-    if (who == null) who = S.after.bodies.find(b => b.load === 'log' && (b.job === 'sawyer' || b.errand === 'hauler'))?.id ?? null;
+    if (who == null) who = S.after.bodies.find(b => loadKind(b) === 'log' && (b.job === 'sawyer' || b.errand === 'hauler'))?.id ?? null;
     const w = S.after.bodies.find(b => b.id === who);
-    const n = w && w.load === 'log' ? w.carry : 0;
+    const n = w && loadKind(w) === 'log' ? w.carry : 0;
     if (Math.abs(n - last) > 1) stepped = false;
     last = n; most = Math.max(most, n);
   }
@@ -173,10 +175,10 @@ group('logs are carried the yard\'s way: as many as the yard\'s carry holds, a l
   S.haulCarryLevel = 0;
   window.__actsOn(null);
   return [
-    ok(pressed && want > 1, 'a sawyer put on, the yard\'s carry holding more than one log', `${want}`),
+    ok(pressed && want === Math.max(1, Math.floor(haulCap() / KINDS.log.weight)), 'a sawyer put on, a log weighing what the hand reads for it', `${want}`),
     ok(most === want, 'it takes as many logs as its load holds', `${most} of ${want}`),
     ok(stepped, 'picked up and set down a log at a time'),
-    ok(S.after.stock.logs + (sawyerHolds() ? 1 : 0) + (onBed ? 1 : 0) + sawn >= want && kept, 'and fetches them to the mill\'s own pile, none lost', `${S.after.stock.logs} at the mill`)
+    ok(goodCount('logs') + (sawyerHolds() ? 1 : 0) + (onBed ? 1 : 0) + sawn >= want && kept, 'and fetches them to the mill\'s own pile, none lost', `${goodCount('logs')} at the mill`)
   ];
 });
 
@@ -224,11 +226,11 @@ group('idle members plant the signs nobody is on, then go back to the podium', a
     for (const b of S.after.bodies) if (b.errand) errands.add(b.errand);
     return S.after.signs.length >= 2;
   }, 240);
-  const back = runUntil(() => !S.after.bodies.some(b => b.errand || b.load), 120);
+  const back = runUntil(() => !S.after.bodies.some(b => b.errand || b.carry), 120);
   const jobs = Object.values(S.after.crew).reduce((n, k) => n + k, 0);
   window.__actsOn(null);
   return [
-    ok(done, 'the signs are planted', `${S.after.signs.length} signs, stock ${JSON.stringify(S.after.stock)}`),
+    ok(done, 'the signs are planted', `${S.after.signs.length} signs, stock ${JSON.stringify(goodsRead())}`),
     ok(errands.has('carrier') && jobs === 0, 'by members on errands, nobody put on a job', `${[...errands]} ${jobs}`),
     ok(back && idle().length >= Math.min(4, idleSpots()), 'and they go back to the podium empty-handed', `${back} ${idle().length}`)
   ];
@@ -255,7 +257,7 @@ group('a lone joiner plants its own signs', async () => {
 group('a roster says what its job does, or why it is standing still', async () => {
   up(1);
   S.after.built.push('mill');
-  window.__afterGrant({ logs: -S.after.stock.logs, grovelogs: -S.after.stock.grovelogs });
+  window.__afterGrant({ logs: -goodCount('logs'), grovelogs: -goodCount('grovelogs') });
   const p = window.__afterRoster().find(r => r.job === 'sawyer');
   const stalled = jobSays('sawyer');
   window.__afterGrant({ grovelogs: 3 });

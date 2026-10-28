@@ -10,7 +10,8 @@ import { stationAt } from '../src/stations.js';
 import { shopBoxOf, rosterHit, rosterUp } from '../src/roster.js';
 import { AFTER_MILL, AFTER_BLOCK } from '../src/config.js';
 import { track, sweep, release } from '../src/hands.js';
-import { plotOf } from '../src/after/piles.js';
+import { stripBox, units, counted, stripOf } from '../src/after/ground.js';
+import { afterGround } from '../src/state.js';
 import { millView } from '../src/after/mill.js';
 import { stationX0, groundOf, AP } from '../src/after/place.js';
 import { bottomY } from '../src/grid.js';
@@ -108,10 +109,10 @@ export function tipHeap() {
 // the bed"): the yard's hand pressed on the pile's first column, then let go
 // held still over the bed's seat. True once it is down on the bed.
 export function loadBed() {
-  const b = plotOf('logs'), was = S.carryLevel, z = AFTER_BLOCK.log;
+  const b = stripBox('logs'), was = S.carryLevel, z = AFTER_BLOCK.log;
   S.carryLevel = 0;
-  const col = [...Array(b.cols).keys()].find(c => b.grid[c]) ?? 0;
-  const from = { x: b.x + col * b.p + b.p / 2, y: bottomY(b) - b.p / 2 };
+  const first = units().filter(u => u.kind === 'log' && counted(u)).sort((p, q) => p.c0 - q.c0)[0];
+  const from = first ? { x: afterGround.x + (first.c0 + first.z / 2) * AP, y: b.bottom - b.size * AP / 2 } : { x: b.x + b.size * AP / 2, y: b.bottom - b.size * AP / 2 };
   S.trail = []; track(from.x, from.y); sweep(from.x, from.y);
   S.carryLevel = was;
   if (!S.held) return false;

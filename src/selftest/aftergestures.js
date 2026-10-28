@@ -90,9 +90,9 @@ export const TESTS = [
     window.__look(b.x + b.w / 2 - S.viewW / 2);
     await settle(0.1);
     await logOnBed();
-    const t0 = S.after.stock.timber;
+    const t0 = window.__afterRead().timber;
     await spinWheel(6);
-    const cut = S.after.stock.timber - t0;
+    const cut = window.__afterRead().timber - t0;
     // The mill at the window's left, so there is room for the board on its
     // right (in a window too narrow for both, the window's edge wins).
     window.__look(b.x - P * 2);

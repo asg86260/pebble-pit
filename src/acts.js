@@ -20,9 +20,12 @@ import { AFTER_PLACE } from './after/place.js';
 import { godFront, restW } from './after/sky.js';
 import { HELL_PLACE } from './hell/place.js';
 import { AFTER_CREW } from './after/bodies.js';
-import { AFTER_PLOTS } from './after/piles.js';
+import { AFTER_LANDING } from './after/piles.js';
+import { DEEP_LANDING } from './deep/scales.js';
+import { takeAt, takeTopOf } from './after/ground.js';
+import { blockAt, takeUnit, kindOf } from './grid.js';
 import { HELL_CREW } from './hell/bodies.js';
-import { S } from './state.js';
+import { S, afterGround } from './state.js';
 
 // --- whether -----------------------------------------------------------------
 // A released build plays an act only with its switch set (config/after.js,
@@ -36,6 +39,20 @@ export function afterlifeOn() { return !demoOn() && (forcedAfter ?? (AFTERLIFE_O
 // Hell is reached by the afterlife's ghost road, so it is never on without it.
 export function hellOn() { return afterlifeOn() && (forcedHell ?? (HELL_ON || DEV_BUILD)); }
 export function forceActs(after, hell = after) { forcedAfter = after; forcedHell = hell; }
+
+// Act 3's ground as the one hand reads it (hands.js, groundAt): the plot, the
+// tag its thrown units wear, and the door a take goes through, so a pile's
+// count follows its cells.
+const AFTER_GROUND = {
+  b: afterGround, place: 'after',
+  take(c, r) {
+    const a = blockAt(afterGround, c, r);
+    // a block with another on it is not the one to take: the top of its column is
+    // (the owner, 2026-10-28: a pile is taken off the top)
+    if (a) return takeAt(a.r * afterGround.cols + a.c) || takeTopOf(c, kindOf(afterGround.grid[r * afterGround.cols + c]).key);
+    return takeUnit(afterGround, c, r);
+  }
+};
 
 // --- the places ----------------------------------------------------------------
 // The two places, as the camera reads them (view.js, world.js `clampCam`):
@@ -51,15 +68,22 @@ const AFTER_AT_YARD = {
   x1: () => godFront() + restW() / 2,
   get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; },
   get crew() { return AFTER_CREW; },
-  // Its piles as plots the yard's hand sweeps and throws onto (hands.js;
-  // after/piles.js, AFTER_PLOTS).
-  get plots() { return AFTER_PLOTS; }
+  // Its ground, for the one hand (hands.js, groundAt).
+  get ground() { return AFTER_GROUND; }
+,
+  // Where a good of its own, thrown into the air, comes down (game.js, `stepChips`).
+  get landing() { return AFTER_LANDING; }
 };
 // Each place's crew (placebodies.js): its own body list, its JOBS registry,
 // its walk and how the hand takes one of its bodies up. Read through a
 // getter, since the bodies' modules import the places.
 const HELL_AT = { ...HELL_PLACE, get crew() { return HELL_CREW; } };
 export const PLACES = { after: AFTER_AT_YARD, hell: HELL_AT };
+// What a chip of a place comes down on, in the place's order (game.js,
+// `stepChips`): { air?, clamp?, surfaces }. The deep is no place the camera
+// stands in beside the yard, but its water is a place's air all the same;
+// hell has no goods yet, so nothing of its lands.
+export const landingOf = p => (p === 'deep' ? DEEP_LANDING : PLACES[p]?.landing || null);
 // The crew whose list holds `w`, or null for one of the yard's.
 export const crewHolding = w => {
   for (const pl of Object.values(PLACES)) { const list = pl.crew.list(); if (list && list.includes(w)) return pl.crew; }
