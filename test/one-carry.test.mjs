@@ -145,7 +145,8 @@ group('a bought row\'s timber is carried block by block and the row lands on the
     ok(stood && bought && reserved === bill, 'the row bought, its blocks spoken for on the mound', `${reserved} of ${bill}`),
     ok(landed && S.after.ups[REACH] === 1, 'the blocks are carried and the row lands'),
     ok(carried > 0 && phantoms === 0, 'each claimed block was in someone\'s arms', `${carried}`),
-    ok(timberReserved() === 0, 'nothing is left spoken for')
+    ok(timberReserved() === 0, 'nothing is left spoken for'),
+    ok(S.after.bodies.every(b => b.errand !== AFTER_JOB.ORDER || b.carry === 0), 'and nobody on the order is left holding a block')
   ];
 });
 

@@ -487,7 +487,7 @@ const JOB_STEP = {
     let o = w.order != null ? orderOf(w.order) : null;
     if (carried(w) && !w.pick) {
       if (!o) { if (go(w, mound, floorY(), dt) && toPile(w, dt, 'timber')) w.order = null; return; }
-      if (go(w, orderAt(o), floorY(), dt) && putDown(w, dt, () => orderBrought(o))) w.order = null;
+      if (go(w, orderAt(o), floorY(), dt) && putDown(w, dt, () => { orderBrought(o); return true; })) w.order = null;
       return;
     }
     if (!o || o.claimed >= o.n) {
