@@ -2993,11 +2993,11 @@ export const SCENES = {
       window.__fast(1 / 60);
       window.__holdShot();
     } },
-  'after-hand-piles': { about: 'the acts', say: "act 3's goods by hand: the forestry shack's and the saw mill's log piles, nothing in the hand yet",
+  'after-hand-piles': { about: 'the acts', review: 'act 3: picking up goods', stage: 'built: the real build on branch a3-goods-sweep -- not on main yet; lands when you sign it off', option: 'A try it: press and hold on a pile', say: "act 3's goods by hand: the forestry shack's and the saw mill's log piles, nothing in the hand yet",
     run: () => SCENES['after-hand-carry'].run(null) },
-  'after-hand-take': { about: 'the acts', say: "act 3's goods by hand: logs swept off the forestry shack's pile, held over it",
+  'after-hand-take': { about: 'the acts', review: 'act 3: picking up goods', stage: 'built: the real build on branch a3-goods-sweep -- not on main yet; lands when you sign it off', option: 'B held over the shack', say: "act 3's goods by hand: logs swept off the forestry shack's pile, held over it",
     run: () => SCENES['after-hand-carry'].run(0) },
-  'after-hand-set': { about: 'the acts', say: "act 3's goods by hand: let go over the saw mill's pile, the logs falling onto it",
+  'after-hand-set': { about: 'the acts', review: 'act 3: picking up goods', stage: 'built: the real build on branch a3-goods-sweep -- not on main yet; lands when you sign it off', option: 'C let go over the mill pile', say: "act 3's goods by hand: let go over the saw mill's pile, the logs falling onto it",
     run: () => SCENES['after-hand-carry'].run(1, true) },
   'after-pedestal': { about: 'the acts', say: 'the pair on the pedestal mid-speech, rebel falling to the pile, idle members behind them agitating',
     run: () => {
