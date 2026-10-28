@@ -210,8 +210,8 @@ export function handAt(x, y) {
 
 // --- every way out --------------------------------------------------------------
 // Every way the player can take out of the place on screen, for the screen's
-// own squares (corner.js): the wizards' portal between the yard and the deep
-// first, then each act portal that is the player's (`portalFree`), so a way
+// own squares (corner.js): the wizards' portal between the yard and the
+// deep, and each act portal that is the player's (`portalFree`), so a way
 // shows only once the story has opened it to them. `dir` is which way the
 // camera goes, off the places' order top to bottom; `to` the place it lands
 // in; `via` the act portal (null: the wizards').
@@ -225,7 +225,10 @@ export function waysOut(from = S.view) {
     if (from === row.outer) out.push({ to: row.inner, via: key });
     else if (from === row.inner) out.push({ to: row.outer, via: key });
   }
-  return out.map(w => ({ ...w, dir: PLACE_ORDER.indexOf(w.to) < PLACE_ORDER.indexOf(from) ? 'up' : 'down' }));
+  // A way down before a way up, so with two the chevrons keep their seats
+  // in the row from place to place.
+  return out.map(w => ({ ...w, dir: PLACE_ORDER.indexOf(w.to) < PLACE_ORDER.indexOf(from) ? 'up' : 'down' }))
+    .sort((a, b) => (a.dir === 'down' ? 0 : 1) - (b.dir === 'down' ? 0 : 1));
 }
 // A way out taken by the player's own press: the same as a press on the
 // portal's end, ripple and all (heaven's gates opening first). False if it

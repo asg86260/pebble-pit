@@ -208,11 +208,33 @@ export const TESTS = [
     acts('act4');
     window.__view('deep');
     run(0.5);
-    const shut = way('way2');
-    const out = [ok(shut && !shut.hidden && shut.dataset.way === 'down', 'the deep has a second square, down', shut && shut.dataset.way)];
-    out.push(...trip('way2', 'hell', 'deep to hell'));
+    const down = way('way'), up = way('way2');
+    const out = [ok(!down.hidden && down.dataset.way === 'down' && !up.hidden && up.dataset.way === 'up',
+                    'the deep has two squares, down to hell and up to the yard', `${down.dataset.way} ${up.dataset.way}`)];
+    out.push(...trip('way', 'hell', 'deep to hell'));
     out.push(...trip('way', 'deep', 'hell to deep'));
     return out;
+  }],
+  // Coming back out, the ring closes the window the player was looking at,
+  // wherever in the deep that was: a square pressed away from the portal
+  // once cut to the deep framed on the portal before the ring had moved.
+  ['deep: going up from anywhere in the deep, the ring closes the window that was on screen', async () => {
+    deepYard();
+    window.__view('deep');
+    run(0.5);
+    window.__look(deepX0());
+    run(0.5);
+    const was = { camX: S.camX, camY: S.camY };
+    window.__motion(false);
+    let rip = null;
+    try {
+      pressWay('way');
+      run(1 / 60);
+      rip = ripple();
+    } finally { window.__motion(null); }
+    return [ok(rip && rip.inner === 'deep', 'the press starts the ripple up', rip && rip.inner),
+            ok(rip && Math.abs(rip.cam.camX - was.camX) < 1 && Math.abs(rip.cam.camY - was.camY) < 1,
+               'and the picture in the ring is the deep as it stood on screen', rip && `${rip.cam.camX},${rip.cam.camY} vs ${was.camX},${was.camY}`)];
   }],
   ['deep: no square to heaven before the story opens its gates', async () => {
     deepYard();

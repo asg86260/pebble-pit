@@ -201,6 +201,11 @@ function backToYard() {
 // session's only: a reload mid-glide lands in the nearer place, where
 // `S.view` already is.
 let through = null, via = null, glides = 0, landX = null;  // held: the glide under way; `glides` only counts up, so a frozen picture is never another's
+// The window the player was looking at in the place being left, coming back
+// out: the picture the ring closes is that window, not the place framed
+// afresh on its portal, which from a corner square pressed anywhere else
+// was a cut before the ring had moved.
+let leftCam = null;  // held: the camera of the place being left by an outward glide
 export const glideNo = () => glides;
 // The act portal the glide under way goes by, or null (heaven's gates stand
 // open for it, portals.js).
@@ -249,6 +254,7 @@ function start(v, how = null, x = null) {
     if (how) arrivedVia = { place: v, via: how };
     return true;
   }
+  leftCam = inward ? null : { camX: S.camX, camY: S.camY, zoom: S.zoom, viewW: S.viewW, viewH: S.viewH };
   if (!inward) { if (!how && outer === 'yard') backToYard(); else frameOn(outer, at(outer)); }
   S.viewTo = v;
   S.viewFade = 0;
@@ -270,7 +276,7 @@ export function arrivedThrough() { const was = arrivedVia; arrivedVia = null; re
 // never taken for a later glide's.
 heldState('view', () => {
   landed = false; posed = false;
-  through = null; via = null; landX = null;
+  through = null; via = null; landX = null; leftCam = null;
   yardCam = null; skyHeld = false;
   arrivedVia = null;
 });
@@ -337,6 +343,7 @@ function glide(dt) {
   if (S.viewTo === through) { frameOn(through, landOn(through)); landed = through === 'deep'; }
   else if (S.viewTo === 'yard') yardCam = null;
   if (via) arrivedVia = { place: S.viewTo, via };
+  leftCam = null;
   S.viewTo = null;
   S.viewFade = 0;
 }
@@ -357,7 +364,7 @@ export function ripple() {
   if (!through) { through = S.viewTo === 'yard' ? 'deep' : S.viewTo; via = null; }
   const down = S.viewTo === through;
   const c = ringIn(down ? OUTER[through] : through);
-  const inner = cameraOf(through, down ? landOn(through) : ringIn(through).x);
+  const inner = down ? cameraOf(through, landOn(through)) : leftCam || cameraOf(through, ringIn(through).x);
   const cam = down ? { camX: S.camX, camY: S.camY, zoom: S.zoom } : inner;
   const cx = (c.x - cam.camX) * cam.zoom, cy = (c.y - cam.camY) * cam.zoom;
   const far = Math.max(...[[0, 0], [S.W, 0], [0, S.H], [S.W, S.H]]
