@@ -39,7 +39,7 @@ import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFet
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, settled, takeGroundLog, kindOf, layGood } from './grove.js';
 import { isPiled, takeBlock, setBlock, pileRoom, pileBrim } from './piles.js';
-import { sweepDue, tipSawdust } from './mill.js';
+import { sweepDue, tipSawdust, sawyerHolds } from './mill.js';
 import { signSpot, plantSign } from './press.js';
 import { workAfter } from './work.js';
 import { fillBuilders, stepBuilder, isIdle, timberReserved, nextOrder, orderOf, orderAt, orderBrought } from './build.js';
@@ -299,6 +299,9 @@ const fedAt = what => pileMid(pileOwner(what), what);
 const spareOf = what => S.after.stock[what] - (what === 'timber' ? timberReserved() : 0);
 function fetchLogs(w, key, dt) {
   const a = S.after, mine = PILE[key], from = FROM[key];
+  // The sawyer with a log in its hands on the mill's own trip (mill.js) has
+  // its log: fetching another would drop the one it carries.
+  if (key === 'mill' && sawyerHolds()) return false;
   if (!carried(w) && !w.pick && (a.stock[mine] >= UNIT[key] || spareOf(from) <= 0 || hauledTo(key))) return false;
   w.at = null;
   if (!carried(w) || w.pick) {

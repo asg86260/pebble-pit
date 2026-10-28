@@ -592,3 +592,62 @@ AFTER_STOCK.push('benchtimber');
 // twice as many of them for the same timber a trip: a block takes one of the
 // yard's carry slots where the plank it halved took two.
 AFTER_CARRY_SLOTS.plank = 1;
+// track A: saw mill
+// The saw mill as a machine a log is followed through (DESIGN.md, "Act 3's
+// goods are blocks, and bodies carry every one", "The saw mill"; the voted
+// mock, branch mock-log-split, rounds 5 to 25). One table, read by the sim
+// (after/mill.js) and the drawing (render/after/stations.js) alike, in the
+// mill drawing's own cells: x across from its ground's left edge, y up from
+// the floor (row -1 stands on it).
+//   wheel     the flywheel the sawyer walks inside, its crank pin `crank` off the hub
+//   frame     the posts' columns `L` and `R`, the head's top row, the bed's top
+//             row and how many rows the bed is, the blade's column `bx`, and
+//             `end` the column past the bed's right end
+//   beam      the rocker's pivot over the head, its long arm (to the rod) and short
+//             arm (to the crosshead): the rod keeps the length it has with the
+//             beam level, and the blade's stroke is `stroke` rows over the
+//             beam's whole travel
+//   seat      where the sawyer sets a log down on the bed (its left column), and
+//             the span of log middles a log thrown by hand lands on the bed in
+//   approach  cells a stroke the bed carries a log up to the blade: more than the
+//             seat's span, so a log anywhere on it reaches the blade in one stroke
+//   strokes   down-strokes a column of the log takes, column by column: three
+//             columns of timber, a 2x2 block each, then the kerf, four grains,
+//             one a down-stroke
+//   stroke_s  a stroke at the sawyer's pace, seconds
+//   pose      where the sawyer's body stands (its left column, top row): in the
+//             wheel, where it climbs out at its side, at the log pile and at the bed
+//   chute     the chute off the bed's end, from its top to its foot, a block's
+//             bottom on it; `ride` cells a second a cut block rides the bed out,
+//             `slide` the seconds down the chute, `toss` the seconds from the
+//             chute's foot onto the mound's middle column
+//   heap      the sawdust heap under the bed between the legs, its left column,
+//             columns and rows (a grain a cell); `hatch` the two columns of the
+//             floor under it a load is tipped through, and `tipAt` the column a
+//             body stands on to tip it, clear of the frame's right foot
+//   fall      a grain's fall under the blade, cells a second squared
+//   set_s     a log set down on the bed: lifted and swung over, then held down;
+//             `held` of it the held set-down, `puff` the puff off its ends
+//   chips_s   the burst of chips at each stroke's bottom
+export const AFTER_MILL = {
+  wheel: { cx: 19, cy: -9, r: 6, crank: 3 },
+  frame: { L: 32, R: 47, head: -21, bed: -6, bedRows: 2, bx: 40, end: 50 },
+  beam: { x: 35, y: -25, long: 8, short: 5, stroke: 3 },
+  seat: { x: 34, land: [33, 38] },
+  approach: 6,
+  strokes: [2, 2, 2, 4],
+  stroke_s: 0.56,
+  pose: { wheel: { x: 17.5, y: -7 }, side: 10, pile: 6, bed: 28 },
+  chute: { x0: 50, y0: -6, x1: 58, y1: -3, ride: 4, slide: 0.5, toss: 0.3 },
+  heap: { x: 34, cols: 13, rows: 4, hatch: 44, tipAt: 51 },
+  fall: 36,
+  set_s: 0.6, held: 0.25, puff: 0.3,
+  chips_s: 0.6
+};
+// A pass of the sand rules over the sawdust heap, seconds: grains settle
+// quicker than blocks (AFTER_PILE_SETTLE_S), as act 1's dust does.
+export const AFTER_HEAP_SETTLE_S = 0.04;
+// What a log saws into besides its timber: the kerf, its last column, a grain
+// a cell (16 cells less the three 2x2 timber blocks).
+import { AFTER_LOG_TIMBER as LOG_TIMBER } from './afterpiles.js';
+export const AFTER_KERF_GRAINS = AFTER_BLOCK.log * AFTER_BLOCK.log - LOG_TIMBER * AFTER_BLOCK.plank * AFTER_BLOCK.plank;

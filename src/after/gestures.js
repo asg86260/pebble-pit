@@ -10,17 +10,18 @@
 //              trunk; dragged back and forth, a stroke a chop
 //   stump      the shovel icon shows it can be dug; dragged up out of the
 //              ground and held there, a root a strain
-//   saw mill   the flywheel spun: its speed feeds the log, capped
+//   saw mill   the flywheel spun: each turn a stroke of the blade, capped
 //   workshop   a tap on a nail a blow: two drive it, four nail a sign
-//   heap       a load dragged to the notch, or flung: the faster, the more
+//   heap       a click on it tips a load through the hatch under it
 //
 // The parts stand where the drawing draws them (place.js, `stationParts`),
 // and every grab zone is a cell or two wider than the part, so a part is
 // easy to take hold of at the yard's scale.
 //
 // The work itself is the sim's and is reached only the way the click reached
-// it: `workAfter` for the stations, the grove's own chop and dig, the heap's
-// tip. A member at a post works the same station alongside the hand. What is
+// it: `workAfter` for the stations, the saw mill's wheel (mill.js,
+// `turnWheel`, the one door its sawyer walks too), the grove's own chop and
+// dig, the heap's tip. A member at a post works the same station alongside the hand. What is
 // kept here is the hand's own motion -- where the saw is, how fast the wheel
 // turns, how far the stump is up -- and it is this session's: a reload
 // stands every station still, and the ghost hand shows again until the
@@ -31,22 +32,21 @@
 // clock with `run` and reads a fact about the game, not about the machine.
 
 import { S } from '../state.js';
-import { P, AFTER_SIGN_TIMBER, AFTER_SIGN_S, GESTURE_CUE_USES, GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S,
+import { P, AFTER_PILES, AFTER_SIGN_TIMBER, AFTER_SIGN_S, GESTURE_CUE_USES, GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S,
          GESTURE_BUBBLE_CRIT, GESTURE_BUBBLE_SLACK, GESTURE_GRAB_SLACK,
          GESTURE_SAW_AMP, GESTURE_SAW_VMAX, GESTURE_SAW_FOLLOW, GESTURE_SAW_END, GESTURE_SAW_EASE,
          GESTURE_STUMP_DRAG, GESTURE_STUMP_MAX, GESTURE_STUMP_FOLLOW, GESTURE_STUMP_SINK, GESTURE_STRAIN_LIFT, GESTURE_STRAIN_S,
-         GESTURE_WHEEL_MAX_REV, GESTURE_WHEEL_FEED, GESTURE_WHEEL_LOG, GESTURE_WHEEL_EASE, GESTURE_WHEEL_COAST, GESTURE_WHEEL_MIN_REV,
+         GESTURE_WHEEL_MAX_REV, GESTURE_WHEEL_EASE, GESTURE_WHEEL_COAST, GESTURE_WHEEL_MIN_REV,
          GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S, GESTURE_JOINER_WAIT_S,
-         GESTURE_FLING_MIN, GESTURE_FLING_MAX, GESTURE_FLING_LOADS, GESTURE_FLING_WINDOW_S, GESTURE_FLING_GRAV,
-         GESTURE_FLING_LIFT, GESTURE_LOAD_FADE_S, GESTURE_PAD_PULL, GESTURE_PAD_TURN,
+         GESTURE_PAD_PULL, GESTURE_PAD_TURN,
          GESTURE_HOVER_S } from '../config.js';
 import { smoothstep } from '../motion.js';
 import { afterlifeOn } from '../acts.js';
 import { secs } from './util.js';
 import { built } from './levels.js';
-import { stationParts, groundOf } from './place.js';
+import { stationParts } from './place.js';
 import { standing, stumped, chopTree, digStump, trees, treeAt } from './grove.js';
-import { tipSawdust } from './mill.js';
+import { tipSawdust, turnWheel, strokesLanded } from './mill.js';
 import { pairBuilding } from './build.js';
 import { workAfter } from './work.js';
 
@@ -81,7 +81,6 @@ const fresh = () => ({ uses: 0, lastUse: null, cueA: 1, marks: [], hint: 0 });
 function used(g) { g.uses++; g.lastUse = T(); }
 function crit(g, x, y, n) { g.marks.push({ x, y, n, at: T() }); }
 
-export const loadsAt = v => clamp(1 + Math.floor((v - GESTURE_FLING_MIN) / ((GESTURE_FLING_MAX - GESTURE_FLING_MIN) / GESTURE_FLING_LOADS)), 1, GESTURE_FLING_LOADS);
 const revOf = g => Math.abs(g.w) / (2 * Math.PI);
 // A load tipped through the notch, `n` of them: what went.
 function tip(g, n) {
@@ -89,11 +88,6 @@ function tip(g, n) {
   while (k < n && tipSawdust() > 0) k++;
   if (k) used(g);
   return k;
-}
-function flingSpeed(g) {
-  const a = g.pts[0], b = g.pts[g.pts.length - 1];
-  if (!a || b.t - a.t < 1e-3 || T() - b.t > GESTURE_FLING_WINDOW_S) return 0;
-  return (b.x - a.x) / (b.t - a.t);
 }
 
 // The saw on plot i's trunk, drawn at offset `s` px along: the box a press
@@ -166,27 +160,43 @@ const DEFS = {
     },
   },
   mill: {
-    init: () => ({ ang: 0, w: 0, grab: false, pa: 0, acc: 0, prog: 0 }),
+    // `w` the wheel's spin by the hand, radians a second, and `acc` how far
+    // the pointer turned it since the last frame, `prog` the turns the hand
+    // has given it since it took hold; the wheel itself is the machine's
+    // (mill.js), turned only through `turnWheel`.
+    init: () => ({ w: 0, grab: false, pa: 0, acc: 0, prog: 0 }),
     open: () => built('mill'),
     grab(g, x, y) {
       const c = stationParts('mill').wheel;
       return Math.hypot(x - c.x, y - c.y) <= c.r + G_S * 2 ? true : null;
     },
-    down(g, h, x, y) { const c = stationParts('mill').wheel; g.grab = true; g.pa = Math.atan2(y - c.y, x - c.x); return true; },
+    down(g, h, x, y) { const c = stationParts('mill').wheel; g.grab = true; g.prog = 0; g.pa = Math.atan2(y - c.y, x - c.x); return true; },
     move(g, x, y) {
       const c = stationParts('mill').wheel, na = Math.atan2(y - c.y, x - c.x), d = wrap(na - g.pa);
-      g.ang += d; g.acc += d; g.pa = na;
+      g.acc += d; g.pa = na;
     },
     up(g) { g.grab = false; },
     step(g, dt) {
-      if (g.grab) { g.w += (g.acc / dt - g.w) * Math.min(1, dt * GESTURE_WHEEL_EASE); g.acc = 0; }
-      else { g.w *= Math.exp(-GESTURE_WHEEL_COAST * dt); g.ang += g.w * dt; }
-      const r = Math.min(revOf(g), GESTURE_WHEEL_MAX_REV);
-      if (r <= GESTURE_WHEEL_MIN_REV) return;
-      // Fed to the end of the log, it is cut when there is a log to cut; with
-      // none on the pile (or the heap full) the blade runs on, waiting.
-      g.prog = Math.min(GESTURE_WHEEL_LOG, g.prog + GESTURE_WHEEL_FEED * r * dt);
-      if (g.prog >= GESTURE_WHEEL_LOG && workAfter('mill', 1, true)) { g.prog = 0; used(g); }
+      let d;
+      if (g.grab) { g.w += (g.acc / dt - g.w) * Math.min(1, dt * GESTURE_WHEEL_EASE); d = g.acc; }
+      else {
+        g.w *= Math.exp(-GESTURE_WHEEL_COAST * dt);
+        if (revOf(g) <= GESTURE_WHEEL_MIN_REV) g.w = 0;
+        d = g.w * dt;
+      }
+      // A heavy wheel: spun past its cap it turns no faster. Each stroke the
+      // turn lands is a motion of the hand's; a stopped saw with a log on its
+      // bed holds the wheel at its top, and the spin dies there.
+      const cap = GESTURE_WHEEL_MAX_REV * 2 * Math.PI * dt, want = clamp(d, -cap, cap);
+      // what the pointer turned past the cap waits for the next step (a long
+      // frame is several), but never more than a step's worth: the wheel lags
+      // a hand spinning it too fast, it does not run on after it
+      if (g.grab) g.acc = clamp(g.acc - want, -cap, cap);
+      if (!want) return;
+      const n0 = strokesLanded(), went = turnWheel(want / (2 * Math.PI), true) * 2 * Math.PI;
+      g.prog += Math.abs(went) / (2 * Math.PI);
+      if (want > 0 && went < want - 1e-9) g.w = 0;
+      if (strokesLanded() > n0) used(g);
     },
   },
   workshop: {
@@ -203,7 +213,8 @@ const DEFS = {
       const t = T();
       // A tap off a nail, or a nail already flush, is a miss: nothing.
       if (k == null || k < 0 || t - g.strike < GESTURE_SWING_S) return 'tap';
-      if (S.after.stock.timber < AFTER_SIGN_TIMBER && g.nails.every(n => n === 0)) return 'tap';   // no blank without timber
+      if (benchShort() && g.nails.every(n => n === 0)) return 'tap';   // no blank without timber
+      if (lastTap(g) && !signFits()) return 'tap';                      // the last blow waits for a sign it can make
       g.strike = t; g.hit = k; g.last = t;
       g.nails[k] += 1;
       used(g);
@@ -217,50 +228,37 @@ const DEFS = {
       const t = T(), joiner = S.after.bodies.some(b => b.at === 'workshop');
       const every = AFTER_SIGN_S / (GESTURE_NAILS * GESTURE_NAIL_TAPS);
       if (!joiner || t - g.last < GESTURE_JOINER_WAIT_S || t - g.auto < every) return;
-      if (g.nails.every(n => n === 0) && S.after.stock.timber < AFTER_SIGN_TIMBER) return;
+      if (g.nails.every(n => n === 0) && benchShort()) return;
+      if (lastTap(g) && !signFits()) return;
       const k = g.nails.findIndex(n => n < GESTURE_NAIL_TAPS);
       g.auto = t; g.strike = t; g.hit = k; g.nails[k] += 1;
       settleSign(g);
     },
   },
   heap: {
-    // A load off the heap: { mode: 'held' | 'fling' | 'gone' | 'back', x, y, n, at }.
-    init: () => ({ grab: false, pts: [], v: 0, load: null }),
-    open: () => built('mill') && S.after.stock.sawdust > 0,
-    grab(g, x, y) { return g.load && g.load.mode !== 'gone' ? null : inBox(x, y, stationParts('heap').heap, G_S) ? true : null; },
-    down(g, h, x, y) {
-      g.grab = true; g.pts = [{ t: T(), x }];
-      g.load = { mode: 'held', x, x0: x, y: Math.min(y, groundOf('mill') - P), n: 1, at: T() };
-      return true;
-    },
-    move(g, x, y) {
-      const t = T();
-      g.pts.push({ t, x });
-      while (g.pts.length > 2 && t - g.pts[0].t > GESTURE_FLING_WINDOW_S) g.pts.shift();
-      if (g.load) { g.load.x = x; g.load.y = Math.min(y, groundOf('mill') - P); }
-    },
-    up(g) {
-      g.grab = false;
-      const ld = g.load, v = flingSpeed(g), edge = stationParts('heap').edge;
-      if (!ld) return;
-      if (v >= GESTURE_FLING_MIN) Object.assign(ld, { mode: 'fling', n: loadsAt(v), vx: Math.max(v, GESTURE_FLING_MIN * 1.5), vy: -GESTURE_FLING_LIFT, at: T() });
-      else if (ld.x >= edge) { tip(g, 1); Object.assign(ld, { mode: 'gone', at: T() }); }
-      else Object.assign(ld, { mode: 'back', at: T() });
-    },
-    step(g, dt) {
-      g.v = g.grab ? flingSpeed(g) : g.v * Math.exp(-3 * dt);
-      const ld = g.load;
-      if (!ld) return;
-      if (ld.mode === 'fling') {
-        ld.vy += GESTURE_FLING_GRAV * dt;
-        ld.x += ld.vx * dt;
-        ld.y = Math.min(ld.y + ld.vy * dt, groundOf('mill') - P);
-        // Over the notch, it tips there: the loads go through.
-        if (ld.x >= stationParts('heap').edge) { tip(g, ld.n); Object.assign(ld, { mode: 'gone', at: T() }); }
-      } else if (ld.mode !== 'held' && T() - ld.at > GESTURE_LOAD_FADE_S) g.load = null;
-    },
+    // The heap under the saw mill's bed (mill.js): a click on it tips a load
+    // through the hatch under it, the grains over the hatch dropping out and
+    // the heap slumping into the gap. Its room under the bed is the hand's
+    // even bare, so a click there never opens the board.
+    init: () => ({}),
+    open: () => built('mill'),
+    grab: (g, x, y) => (inBox(x, y, stationParts('heap').heap, G_S) ? true : null),
+    down(g) { tip(g, 1); return 'tap'; },
   }
 };
+// The timber a blank is cut from: the workshop's own bench pile where it has
+// one (track B's `benchtimber`), else the timber mound.
+const benchTimber = () => S.after.stock.benchtimber ?? S.after.stock.timber;
+const benchShort = () => benchTimber() < AFTER_SIGN_TIMBER;
+// Whether the blow about to land is the one that drives the last nail flush.
+const lastTap = g => g.nails.reduce((n, k) => n + (GESTURE_NAIL_TAPS - k), 0) === 1;
+// Whether a sign could be made now: timber on the bench for it and room in
+// the rack (its brim, where the rack is a counted pile), so the last nail is
+// never driven only for the four to be pulled with no sign made.
+function signFits() {
+  const brim = AFTER_PILES.signs?.brim;
+  return !benchShort() && (brim == null || S.after.stock.signs < brim);
+}
 // Four nails driven flush: the sign is done, joined off the timber, and a new
 // blank stood in the bench.
 function settleSign(g) {
@@ -421,7 +419,6 @@ export function stepGestures(c) {
 // A frame of the pad on the station under its focus: `{ a, pressed,
 // released, lx, ly }`, A down, pressed and let go this frame, and the left
 // stick, each turned into the motion the pointer makes on the part.
-let flick = 0; // page: the pad's stick mid-flick
 export function padGesture(key, p) {
   if (!live() || !DEFS[key] || !DEFS[key].open()) return;
   const g = recs(), r = g[key], d = DEFS[key];
@@ -448,18 +445,8 @@ export function padGesture(key, p) {
     if (!r.grab) { d.down(r, true, x, y); held = key; } else d.move(r, x, y);
   } else if (key === 'workshop') {            // A taps the next nail
     if (p.pressed) d.down(r, r.nails.findIndex(n => n < GESTURE_NAIL_TAPS));
-  } else if (key === 'heap') {                // a flick toward the notch; harder tips more
-    const push = p.lx;
-    if (push > flick) flick = push;
-    if (push <= 0 && flick > 0) {
-      const v = flick * GESTURE_FLING_MAX;
-      flick = 0;
-      if (v >= GESTURE_FLING_MIN && !(r.load && r.load.mode !== 'gone')) {
-        const h = stationParts('heap').heap;
-        r.load = { mode: 'fling', x: h.x + P, x0: h.x + P, y: h.y, n: loadsAt(v), vx: Math.max(v, GESTURE_FLING_MIN * 1.5), vy: -GESTURE_FLING_LIFT, at: T() };
-        r.v = v;
-      }
-    }
+  } else if (key === 'heap') {                // A tips a load, as a click does
+    if (p.pressed) d.down(r);
   }
 }
 

@@ -19,7 +19,7 @@
 //  - rebel for the seats and the stations past the saw mill, granted in one
 //    block once the axe's and the mill's have been earned off the bubbles.
 import { group, ok, run, yard, P } from './helpers.mjs';
-import { AFTER_GATES, AFTER_BUILDS, AFTER_UPGRADES, AFTER_SEAT_BILLS, GESTURE_STUMP_DRAG, AFTER_FIRST_MEMBERS } from '../src/config.js';
+import { AFTER_GATES, AFTER_BUILDS, AFTER_UPGRADES, AFTER_SEAT_BILLS, GESTURE_STUMP_DRAG, AFTER_FIRST_MEMBERS, AFTER_LOG_TIMBER } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, partsOf } from '../src/after/gestures.js';
 import { sawOn, saw, spin } from './after-hands.mjs';
 import { bubbles } from '../src/after/bubbles.js';
@@ -84,11 +84,12 @@ function pullStump(i) {
   return { out: !S.after.plots[i].stump, secs: +(f * FRAME).toFixed(2) };
 }
 // The saw mill's flywheel spun where it stands, two turns a second, until
-// `n` logs are sawn.
+// `n` logs are sawn through and their timber is down the chute on the mound
+// (the sawyer sets each log on the bed: after/mill.js).
 function spinMill(n) {
-  const l0 = read().logs;
-  spin('mill', 2, () => l0 - read().logs >= n, 60);
-  return { cut: l0 - read().logs };
+  const t0 = read().timber;
+  spin('mill', 2, () => read().timber - t0 >= n * AFTER_LOG_TIMBER, 60);
+  return { cut: Math.floor((read().timber - t0) / AFTER_LOG_TIMBER) };
 }
 // The yard's coins on a bill, granted as the hooks name them; rebel and
 // timber are the act's own and are left to the check.

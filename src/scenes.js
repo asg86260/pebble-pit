@@ -3538,26 +3538,26 @@ function carryShot(see) {
 const pastMill = w => { const m = stationBox('mill'); return w.x > m.x + m.w + P * 6; };
 function carriedScenes() {
   return {
-    'after-bench-walk': { about: 'the acts', say: "the workshop's timber walked to it off the timber mound, a load of blocks overhead, its rack beside the shed",
+    'after-bench-walk': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'A timber to the bench', say: "the workshop's timber walked to it off the timber mound, a load of blocks overhead, its rack beside the shed",
       run: () => {
         afterChain(false);
         window.__afterGrant({ benchtimber: -S.after.stock.benchtimber, signs: -S.after.stock.signs }); timberUp();
         carryShot(w => w.load === 'plank' && !w.pick && (w.target === 'workshop' || w.job === AFTER_JOB.JOIN) && pastMill(w));
       } },
-    'after-sign-out': { about: 'the acts', say: 'a sign carried out of the workshop\'s rack toward the crowd, the rack a block short',
+    'after-sign-out': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'B a sign carried out', say: 'a sign carried out of the workshop\'s rack toward the crowd, the rack a block short',
       run: () => {
         afterChain(false);
         window.__afterGrant({ signs: 3 });
         const ws = stationBox('workshop');
         carryShot(w => w.load === 'sign' && w.x > ws.x + ws.w + P * 12 && w.x < ws.x + ws.w + P * 40);
       } },
-    'after-order-carry': { about: 'the acts', say: "a timber bill bought: its blocks carried off the timber mound to the workshop, the row waiting on them",
+    'after-order-carry': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'C a bill carried', say: "a timber bill bought: its blocks carried off the timber mound to the workshop, the row waiting on them",
       run: () => {
         afterChain(false);
         yardPurse(); timberUp(); window.__buy('after-signreach');
         carryShot(w => w.errand === AFTER_JOB.ORDER && w.load === 'plank' && !w.pick && pastMill(w));
       } },
-    'after-order-board': { about: 'the acts', say: "the workshop's board with a timber row ordered: the row waiting on its blocks, saying it is going up",
+    'after-order-board': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'D the board waiting', say: "the workshop's board with a timber row ordered: the row waiting on its blocks, saying it is going up",
       run: () => {
         act3Board('workshop');
         yardPurse(); timberUp(); window.__buy('after-signreach');
@@ -3565,3 +3565,48 @@ function carriedScenes() {
       } }
   };
 }
+// track A: saw mill
+// The saw mill's machine, a stage a scene (after/mill.js): a sawyer put on
+// through the roster, logs on its pile, run until `done`, then held there
+// and framed on the mill from its log pile to its timber mound.
+import { saw as millSaw, blockAt as millBlockAt } from './after/mill.js';
+import { AFTER_MILL } from './config.js';
+function millStage(done, grant = {}) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  window.__afterCrowd((i, v) => (i < 2 ? 8 : v));
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  if (!S.after.built.includes('mill')) S.after.built.push('mill');
+  window.__afterGrant({ logs: 4, timber: 6, sawdust: 9, ...grant });
+  window.__afterPress(AFTER_JOB.SAW);
+  for (let k = 0; k < 60 * 90 && !done(); k++) window.__fast(1 / 60);
+  const b = stationBox('mill'), x = b.x + b.w / 2 + P * 4 - S.viewW / 2;
+  pinCamera(x); window.__look(x);
+  window.__still(true); window.__holdShot();
+}
+const millTrip = (ph, k) => () => { const tr = millSaw().trip; return !!tr && tr.ph === ph && tr.t >= k; };
+Object.assign(SCENES, {
+  'after-mill-carry': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'A carry', say: "the sawyer out of the treadwheel, carrying the top log off the saw mill's pile round to the bed",
+    run: () => millStage(millTrip('carry', 0.4)) },
+  'after-mill-set': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'B set', say: "the log swung over and set down on the saw mill's bed, a puff off both ends",
+    run: () => millStage(() => { const tr = millSaw().trip; return !!tr && tr.ph === 'set' && tr.down && tr.t >= AFTER_MILL.set_s - AFTER_MILL.held + 0.05; }) },
+  'after-mill-cut': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'C cut', say: "the saw mid-cut: the blade at its foot, chips thrown, the log shortened into it and a timber block growing past it",
+    run: () => millStage(() => { const s = millSaw(); return !!s.bed && s.bed.cut === 1 && s.hitAt != null && S.after.t - s.hitAt > 0.08 && S.after.t - s.hitAt < 0.12; }) },
+  'after-mill-kerf': { about: 'the acts', say: "the kerf: the last column of the log falling a grain a stroke onto the heap under the bed",
+    run: () => millStage(() => { const s = millSaw(); return s.dust.length > 0 && s.dust[0].a > 0.1; }) },
+  'after-mill-chute': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'D chute', say: "cut blocks riding the bed out and down the chute onto the timber mound",
+    run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x0 + 2 && p.x < AFTER_MILL.chute.x1; })) },
+  'after-mill-full': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'E full', say: "the saw mill's heap at its brim: the saw stopped with a log on its bed, the pile-full mark up",
+    run: () => millStage(() => !!millSaw().bed && window.__afterRead().sawdust >= 24 && !millSaw().out.length && !millSaw().dust.length, { sawdust: 15, timber: 14 }) },
+  'after-mill-hand': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'F hand', say: "the saw mill with nobody at it and its bed bare: the ghost hand shows a log swept off the pile onto the bed, then the wheel",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      if (!S.after.built.includes('mill')) S.after.built.push('mill');
+      window.__afterGrant({ logs: 4, timber: 6, sawdust: 9 });
+      window.__fast(1.5);
+      const b = stationBox('mill'), x = b.x + b.w / 2 + P * 4 - S.viewW / 2;
+      pinCamera(x); window.__look(x);
+      window.__still(true); window.__holdShot();
+    } },
+  'after-mill-brim': { about: 'the acts', say: "a cut block tossed off the chute's foot onto a timber mound nearly at its brim",
+    run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x1 - 0.5; }), { timber: 15 }) }
+});

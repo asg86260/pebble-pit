@@ -14,38 +14,35 @@
 // pose `workerPose` gives, so the one body standing at the door is the one
 // doing the work. With the hand on it (`h`, the station's record in
 // after/gestures.js, `gestureView`) the moving part goes where the hand put
-// it instead: the wheel at the angle it was spun to and the blade at the
-// stroke that angle gives, the hammer on the nail it struck. Every pose is
-// held: a part moves a whole step at a time.
-const TURN = Math.PI / 16;                                 // a held step of a turning part
-const turning = h => !!h && (h.grab || Math.abs(h.w || 0) > 0.05);
+// it instead: the hammer on the nail it struck. The saw mill is drawn off
+// its machine (after/mill.js) alone, whoever turns it.
 
-import { P, GESTURE_WHEEL_LOG, AFTER_SAW_TEETH, AFTER_ART_SCALE } from '../../config.js';
-import { K, W, PALE, MID, hash, silhouette } from './kit.js';
+import { P, GREY, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_SPILL_S } from '../../config.js';
+import { K, W, PALE, MID, DUST, hash, silhouette } from './kit.js';
 import { held } from '../../reset.js';
+import { ctx } from '../ctx.js';
+import { goodBlock } from './piles.js';
+import { wheelAngle, millView, sawyerPose } from '../../after/mill.js';
+import { at } from '../../grid.js';
 
-const cyc = (t, T) => { const u = Math.max(0, t), k = Math.floor(u / T); return { ph: u / T - k, since: u - k * T }; };
-const FADE = 0.4;
 // White cut out of a mass a cell or more, 2 px in from its edge.
 const cut = (d, x, y, w, h, tone = W) => d.px(x * P + 2, y * P + 2, w * P - 4, h * P - 4, tone);
 
-// --- the saw mill: through the beams ----------------------------------------------
-// Take 2 of docs/mocks/act3-sawmill-2026-10-18: a closed frame like the
-// press's, its blade longer than the opening so its ends ride inside a
-// three-cell head and a four-cell bed and it fills the frame at every point
-// of its stroke; its crosshead rides over the head, and a rod slants up to it
-// off a crank by the flywheel's hub, so each turn of the fourteen-cell wheel
-// is a stroke. The log comes in from the wheel's side through the teeth and
-// leaves as two planks. The body at the wheel turns it by a knob on a stub
-// off the rim. Numbers are the mock's, laid ten cells in so the log pile
-// stands at the ground's foot.
-const MW = { cx: 19, cy: -9, r: 6 }, CRANK = 1.5, KNOB = MW.r + 2, MILL_TURN = Math.PI / 8;
-const MILL = { L: 32, R: 47, head: -21, bed: -6, bx: 40, logX0: 27, logLen: 14, body: 7 };
-const BARK = [MID, MID, PALE, MID], WOOD = [PALE, W, PALE, PALE];
-// The teeth's reach out of the blade, in the drawing's cells: the log's kerf.
-const BITE = Math.ceil(Math.max(...AFTER_SAW_TEETH) / AFTER_ART_SCALE);
-// The wheel at angle `a`.
-const wheelAt = a => { const { cx, cy } = MW; return { kx: cx + Math.cos(a) * KNOB, ky: cy + Math.sin(a) * KNOB, pin: { x: cx + Math.cos(a) * CRANK, y: cy + Math.sin(a) * CRANK } }; };
+// --- the saw mill: a log followed through the machine -----------------------------
+// The voted mock (branch mock-log-split): a closed frame, its blade longer
+// than the opening so its ends ride inside the head and the bed; a rocker
+// beam on a post over the head, its short end on the crosshead and its long
+// end on a rod off the flywheel's crank, so each turn of the wheel is a
+// stroke; the sawyer walking the wheel at its foot. Bars a cell thick, pins
+// a two-cell square round a cell of paper, and every moving part laid at its
+// true position. The numbers are the machine's (config, AFTER_MILL), the sim
+// and the drawing reading the one table.
+const MW = AFTER_MILL.wheel, FR = AFTER_MILL.frame, BM = AFTER_MILL.beam;
+const { L, R, head, bed, bx } = FR, LEGS = bed + FR.bedRows;
+const LOG = 4, PL = 2, S1 = P * AFTER_ART_SCALE;
+const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+// The treadwheel: its post and foot, its rim two cells deep, four spokes
+// and the hub; no handle, the sawyer's walking inside turns it.
 function flywheel(d, a) {
   const { cx, cy, r } = MW;
   d.px(cx * P - 3, cy * P, 6, -cy * P, K); d.r(cx - 3, -1, 6, 1, K);       // its post and foot
@@ -55,72 +52,128 @@ function flywheel(d, a) {
   }
   for (let k = 0; k < 4; k++) { const q = a + Math.PI / 4 + k * Math.PI / 2; d.line(cx, cy, cx + Math.cos(q) * (r - 0.5), cy + Math.sin(q) * (r - 0.5), 5); }
   d.r(cx - 1.5, cy - 1.5, 3, 3, K);
-  const kx = cx + Math.cos(a) * KNOB, ky = cy + Math.sin(a) * KNOB;
-  d.line(cx + Math.cos(a) * (r + 0.5), cy + Math.sin(a) * (r + 0.5), kx, ky, 4);   // the knob's stub
 }
-const crankPin = (d, pin) => { d.px(Math.round(pin.x * P) - 3, Math.round(pin.y * P) - 3, 6, 6, K); d.px(Math.round(pin.x * P) - 1, Math.round(pin.y * P) - 1, 2, 2, W); };
-// The blade, plumb: its spine of ink, a grey plate, the rip teeth facing the
-// log, riding the stroke so they move with it. The teeth are laid on the
-// world's grid, a grid cell a row (config, AFTER_SAW_TEETH): `per` rows to a
-// drawing cell, each `g` of the drawing's px, so they stay as fine as the
-// grid allows at any scale of the art.
+// A pin: two cells of ink round one of paper, centered on the joint.
+const eye = (d, x, y) => { d.px(x * P - P, y * P - P, 2 * P, 2 * P, K); d.px(x * P - P / 2, y * P - P / 2, P, P, W); };
+// A bar a cell thick in a paper rim, laid at its true position.
+const bar = (d, x0, y0, x1, y1) => { d.line(x0, y0, x1, y1, P + 4, W); d.line(x0, y0, x1, y1, P, K); };
+// The rocker at wheel angle `a`: the crank pin, the beam's long end `q` on the
+// rod and its short end `end` on the crosshead. The rod keeps the length it
+// has with the beam level and the pin at the hub, so the beam takes the
+// angle that puts `q` that far from the pin: of the two that do, the one
+// nearest level, so it never flips.
+const PV = { x: BM.x, y: BM.y }, ROD = Math.hypot(PV.x - BM.long - MW.cx, PV.y - MW.cy);
+function rocker(a) {
+  const pin = { x: MW.cx + Math.cos(a) * MW.crank, y: MW.cy + Math.sin(a) * MW.crank };
+  const Dx = PV.x - pin.x, Dy = PV.y - pin.y, Dl = Math.hypot(Dx, Dy);
+  const c = clampN((Dl * Dl + BM.long * BM.long - ROD * ROD) / (2 * BM.long * Dl), -1, 1), phi = Math.atan2(Dy, Dx);
+  const wrap = t => Math.atan2(Math.sin(t), Math.cos(t)), t1 = wrap(phi + Math.acos(c)), t2 = wrap(phi - Math.acos(c));
+  const th = Math.abs(t1) < Math.abs(t2) ? t1 : t2;
+  return { pin, q: { x: PV.x - Math.cos(th) * BM.long, y: PV.y - Math.sin(th) * BM.long }, end: { x: PV.x + Math.cos(th) * BM.short, y: PV.y + Math.sin(th) * BM.short } };
+}
+// The beam's short end's travel over a whole turn, read off the linkage once:
+// the blade's stroke is laid over it, so the teeth move as far as the beam does.
+const TRAVEL = (() => { let lo = Infinity, hi = -Infinity; for (let k = 0; k < 256; k++) { const y = rocker(k / 256 * 2 * Math.PI).end.y; lo = Math.min(lo, y); hi = Math.max(hi, y); } return { lo, hi }; })();
+const strokeOf = lk => (lk.end.y - TRAVEL.lo) / (TRAVEL.hi - TRAVEL.lo) * BM.stroke;
+// The blade, plumb: its spine of ink and a grey plate through the opening,
+// the rip teeth facing the log riding the stroke `o` (rows, at its true
+// position), every other row a tooth.
 function millBlade(d, x, y0, y1, o) {
-  const per = AFTER_ART_SCALE, g = P / per, n = AFTER_SAW_TEETH.length;
-  for (let y = y0; y <= y1; y++) {
-    d.c(x, y, PALE); d.c(x + 1, y, K);
-    for (let q = 0; q < per; q++) {
-      const k = AFTER_SAW_TEETH[(((per * (y - o) + q) % n) + n) % n];
-      if (k) d.px(x * P - k * g, y * P + q * g, k * g, g, K);
-    }
+  for (let y = y0; y <= y1; y++) { d.c(x, y, PALE); d.c(x + 1, y, K); }
+  const per = AFTER_SAW_TEETH.length, g = P / AFTER_ART_SCALE;
+  for (let k = -per; k <= y1 - y0 + per; k += per) for (let q = 0; q < per; q++) {
+    const w = AFTER_SAW_TEETH[q], ty = y0 + k + q + (o % per);
+    const a = Math.max(y0, ty), b = Math.min(y1 + 1, ty + 1);
+    if (w && b > a) d.px(x * P - w * g, a * P, w * g, (b - a) * P, K);
   }
 }
-// The log: grey bark in an ink rim, its grain cut white; open kerf where the
-// teeth stand in it, and two pale planks past the blade.
-function millLog(d, x, y, bx) {
-  for (let i = 0; i < MILL.logLen; i++) {
-    const c = x + i;
-    if (c >= bx - BITE && c < bx + 2) { if (c < bx) d.r(c, y, 1, 3, W); continue; }
-    if (c < bx) {
-      d.r(c, y, 1, 3, K); d.px(c * P, y * P + 2, P, 3 * P - 4, BARK[Math.floor(hash(c - x + 1.3) * BARK.length)]);
-      const h = hash(c - x + 0.5), row = h < 0.5 ? 6 : 10;
-      d.px(c * P + (h < 0.25 || h > 0.75 ? 0 : 2), y * P + row, h < 0.25 || h > 0.75 ? P : P - 2, 2, W);
-    } else {
-      d.px(c * P, y * P, P, 8, K); d.px(c * P, y * P + 2, P, 4, WOOD[Math.floor(hash(c - x + 3.1) * WOOD.length)]);
-      d.px(c * P, y * P + 10, P, 8, K); d.px(c * P, y * P + 12, P, 4, WOOD[Math.floor(hash(c - x + 4.7) * WOOD.length)]);
-    }
-  }
+// A block of one good laid at a point of the frame (its top left, cells),
+// on whole pixels at its true position.
+function blockOn(d, x, y, kind) { const p = d.world(x, y); goodBlock(Math.round(p.x), Math.round(p.y), kind); }
+// A good's block cut short, `w` cells of its width: the log in the blade,
+// the timber block growing out of it.
+function partBlock(d, x, y, w, z, tone, seam) {
+  if (w <= 0) return;
+  const p = d.world(x, y), X = Math.round(p.x), Y = Math.round(p.y), pw = Math.round(w * S1), pz = z * S1;
+  ctx.fillStyle = GREY[seam]; ctx.fillRect(X, Y, pw, pz);
+  ctx.fillStyle = GREY[tone]; ctx.fillRect(X, Y, pw - 1, pz - 1);
 }
-const SAW_T = 6.4;
-// The log's tail along its way at phase ph, a cell a step, and its ink.
-function millLogAt(ph, since) {
-  const steps = MILL.bx + 2 - MILL.logX0, i = Math.min(steps, Math.floor(ph * (steps + 2)));
-  return { x: MILL.logX0 + i, a: since < FADE ? since / FADE : ph > 0.92 ? 1 - (ph - 0.92) / 0.08 : 1 };
+// The burst of chips off the kerf at a stroke's foot, thrown either side and
+// falling, gone in AFTER_MILL.chips_s.
+function chips(d, age, seed) {
+  const life = AFTER_MILL.chips_s;
+  if (age < 0 || age > life) return;
+  d.fade(1 - age / life, () => {
+    for (let i = 0; i < 14; i++) {
+      const side = i % 2 ? 1 : -1, sp = 6 + hash(seed * 9.1 + i) * 12, up = 9 + hash(seed * 3.7 + i) * 8;
+      d.px((bx + 1 + side * (1 + age * sp)) * P, (bed - 3 + (i % 4) * 0.6 - age * up + age * age * 45) * P, P, P, i < 5 ? MID : PALE);
+    }
+  });
+}
+// The puff off both ends of a log set down on the bed.
+function puff(d, x, age) {
+  const k = age / AFTER_MILL.puff;
+  if (k < 0 || k >= 1) return;
+  d.fade(1 - k, () => { for (const sx of [-1 - k, LOG + k]) d.px((x + sx) * P, (bed - 1 - k) * P, P, P, MID); });
+}
+// The heap under the bed, a grain a cell where the sand rules have it, each
+// grain its own tone of the sawdust's (`v`, set as it lands).
+function heapOn(d, b) {
+  const x0 = AFTER_MILL.heap.x;
+  for (let c = 0; c < b.cols; c++) for (let r = 0; r < b.rows; r++) {
+    const v = at(b, c, r);
+    if (v) d.c(x0 + c, -1 - r, DUST[(v - 1) % DUST.length]);
+  }
 }
 function mill(d, work, t, h, body = false) {
-  const hand = turning(h);
-  const a = hand ? Math.round(h.ang / MILL_TURN) * MILL_TURN : work ? Math.floor(t / 0.1) * MILL_TURN : 0;
-  const o = Math.round(1.5 + 1.5 * Math.sin(a)), { L, R, head, bed, bx } = MILL;
-  const k = wheelAt(a);
+  const live = !d.sinking && millView();
+  const a = live ? wheelAngle() : Math.PI / 2, lk = rocker(a), o = strokeOf(lk);
   flywheel(d, a);
-  // The rod, in a paper rim, off the crank pin.
-  d.line(k.pin.x, k.pin.y, bx - 2.5, head - 4 + o, 7, W); d.line(k.pin.x, k.pin.y, bx - 2.5, head - 4 + o, 3);
+  // the crank arm off the hub, the rod up to the beam's long end, the beam
+  // on its post off the head
+  d.line(MW.cx, MW.cy, lk.pin.x, lk.pin.y, P, K);
+  bar(d, lk.pin.x, lk.pin.y, lk.q.x, lk.q.y);
+  d.r(PV.x - 0.5, PV.y, 1, head - PV.y, K);
+  bar(d, lk.q.x, lk.q.y, lk.end.x, lk.end.y);
+  eye(d, PV.x, PV.y); eye(d, lk.q.x, lk.q.y); eye(d, lk.pin.x, lk.pin.y);
   d.r(L, head, 2, bed - head, K); d.r(R, head, 2, bed - head, K);         // posts
   d.r(L - 1, head, R - L + 4, 3, K);                                      // the head
-  d.r(L - 1, bed, R - L + 4, 4, K);                                       // the bed, on legs
-  d.r(L, -2, 2, 2, K); d.r(R, -2, 2, 2, K); d.r(L - 1, -1, 3, 1, K); d.r(R, -1, 3, 1, K);
-  const ly = bed - 3;
-  if (hand && (h.prog || 0) > 0) { const lg = millLogAt((h.prog || 0) / GESTURE_WHEEL_LOG * 0.92, 1); millLog(d, lg.x, ly, bx); }
-  else if (work) { const c = cyc(t, SAW_T), lg = millLogAt(c.ph, c.since); d.fade(lg.a, () => millLog(d, lg.x, ly, bx)); }
-  millBlade(d, bx, head + 3, bed - 1, o);
-  d.r(bx, head - 3 + o, 2, 3 - o, K);                                     // its strap up out of the head
-  d.r(bx - 3, head - 5 + o, 6, 2, K); d.px((bx) * P - 2, (head - 4 + o) * P - 2, 4, 4, W);   // the crosshead
-  crankPin(d, k.pin);
-  // A body at the wheel: its arm to its fist round the knob.
-  if (body) {
-    const fx = Math.round(k.kx * P) - 7, fy = Math.round(k.ky * P) - 7;
-    d.line(MILL.body + 3, -2, k.kx, k.ky, 2);
-    d.px(fx, fy, 14, 14, K); d.px(fx + 2, fy + 2, 10, 10, W); d.px(fx + 5, fy + 5, 4, 4, K);
+  d.r(L - 1, bed, FR.end - L + 1, FR.bedRows, K);                         // the bed, plain black
+  d.r(bx, bed, 1, FR.bedRows, W);                                         // the kerf's slot under the blade
+  d.r(L, LEGS, 2, -1 - LEGS, K); d.r(R, LEGS, 2, -1 - LEGS, K);           // its legs
+  d.r(L - 1, -1, 3, 1, K); d.r(R, -1, 3, 1, K);
+  // the chute off the bed's end, a cell thick under the blocks' feet
+  const C = AFTER_MILL.chute, sl = (C.y1 - C.y0) / (C.x1 - C.x0);
+  d.line(C.x0, C.y0 + 0.5, C.x1 + 1, C.y1 + sl + 0.5, P, K);
+  // the heap's whole room is the mill's, for its backing and footprint
+  if (d.sinking) { const H = AFTER_MILL.heap; d.r(H.x, -H.rows, H.cols, H.rows, K); }
+  if (live) {
+    heapOn(d, live.heap);
+    // a tip's grains dropping out through the hatch, gone under the floor
+    for (const s of live.spills) d.fade(1 - s.age / AFTER_SPILL_S, () => d.px(s.c * P, (-1 - s.r + 0.5 * AFTER_MILL.fall * s.age * s.age) * P, P, P, MID));
+    // the log on the bed: up to the blade it lies whole; in it, it is eaten
+    // from its right end and the block it is becoming grows past the blade
+    if (live.log) {
+      const lg = live.log;
+      partBlock(d, lg.x, bed - LOG, Math.min(lg.x + LOG, bx) - lg.x, LOG, MID, K);
+      partBlock(d, bx + 2, bed - PL, PL * live.grow, PL, PALE, MID);
+    }
+    for (const b of live.out) blockOn(d, b.x - PL / 2, b.y - PL, 'plank');
+    for (const g of live.dust) d.px(g.x * P, g.y * P, P, P, MID);
+    if (live.hitAt != null) chips(d, t - live.hitAt, Math.floor(live.hitAt * 7));
+    if (live.setAt != null) puff(d, AFTER_MILL.seat.x, t - live.setAt);
   }
+  millBlade(d, bx, head + 3, bed - 1, o);
+  // the crosshead on the beam's short end, its strap down into the head
+  const top = lk.end.y;
+  d.r(bx, top + 2, 2, Math.max(0, head - top - 2), K);
+  d.r(bx - 3, top, 6, 2, K);
+  eye(d, lk.end.x, lk.end.y);
+  // the sawyer's feet on the wheel's rim as it walks, and the log in its
+  // hands on its way to the bed
+  const pose = live && body ? sawyerPose() : null;
+  if (pose && pose.wheel) { const fx = Math.floor(pose.x) + (pose.step ? 0 : 1); d.r(fx, -4, 1, 1, K); d.r(fx + 2, -4, 1, 1, K); }
+  if (pose && pose.log) blockOn(d, pose.log.x, pose.log.y, 'log');
 }
 
 // --- the workshop: the shed, roof A ------------------------------------------------
@@ -253,9 +306,11 @@ export const backOf = key => BACKS[key] || (BACKS[key] = silhouette(d => DRAW[ke
 
 // Where the worker at a working station stands and how, in its frame's
 // cells: its left column and top row, a lean in px, and whether it squats.
-// Idle, it stands at the same spot unleaning.
+// Idle, it stands at the same spot unleaning. The sawyer is wherever its
+// machine has it (after/mill.js, `sawyerPose`): stepping in the wheel, or out
+// fetching a log to the bed, at its true position.
 export function workerPose(key, work, t) {
-  if (key === 'mill') return { x: MILL.body, y: -3, dx: 0 };
+  if (key === 'mill') { const p = sawyerPose(); return p && { x: p.x, y: p.y, dx: 0 }; }
   if (key === 'workshop') return { x: wsLastJx - 1, y: JY, dx: 0 };
   return null;
 }

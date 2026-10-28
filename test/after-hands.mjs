@@ -8,6 +8,12 @@ import { GESTURE_SAW_AMP, GESTURE_STUMP_DRAG, GESTURE_NAILS, GESTURE_NAIL_TAPS, 
 import { gestureDown, gestureMove, gestureUp, groveIcons, partsOf } from '../src/after/gestures.js';
 import { stationAt } from '../src/stations.js';
 import { shopBoxOf, rosterHit, rosterUp } from '../src/roster.js';
+import { AFTER_MILL, AFTER_BLOCK } from '../src/config.js';
+import { track, sweep, release } from '../src/hands.js';
+import { plotOf } from '../src/after/piles.js';
+import { millView } from '../src/after/mill.js';
+import { stationX0, groundOf, AP } from '../src/after/place.js';
+import { bottomY } from '../src/grid.js';
 
 const S = yard.S;
 export const FRAME = 1 / 60;
@@ -96,5 +102,22 @@ export function tipHeap() {
   gestureUp(to, a.y);
   run(0.5);
   return true;
+}
+// A log off the saw mill's pile onto its bed by hand (DESIGN.md, "The saw
+// mill": "by hand the player sweeps a log off the pile and lets it go over
+// the bed"): the yard's hand pressed on the pile's first column, then let go
+// held still over the bed's seat. True once it is down on the bed.
+export function loadBed() {
+  const b = plotOf('logs'), was = S.carryLevel, z = AFTER_BLOCK.log;
+  S.carryLevel = 0;
+  const col = [...Array(b.cols).keys()].find(c => b.grid[c]) ?? 0;
+  const from = { x: b.x + col * b.p + b.p / 2, y: bottomY(b) - b.p / 2 };
+  S.trail = []; track(from.x, from.y); sweep(from.x, from.y);
+  S.carryLevel = was;
+  if (!S.held) return false;
+  const to = { x: stationX0('mill') + (AFTER_MILL.seat.x + z / 2) * AP, y: groundOf('mill') + (AFTER_MILL.frame.bed - z * 2) * AP };
+  S.trail = []; track(to.x, to.y); release(to.x, to.y);
+  for (let f = 0; f < 60 * 3 && !millView().log; f++) frame();
+  return !!millView().log;
 }
 export { S };

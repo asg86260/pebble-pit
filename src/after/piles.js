@@ -19,6 +19,7 @@ import { addGrain, put, at, inside, topRow, bottomY, settle, settleSome, colOf }
 import { shadeNear } from '../grid.js'; // MOCK
 import { pilePlace, pileOwner, pileMid, pileAt, groundOf, floorAt, afterX0, afterX1, AP } from './place.js';
 import { layGood } from './grove.js';
+import { bedLand } from './mill.js';
 import { built } from './levels.js';
 import { secs } from './util.js';
 
@@ -183,6 +184,7 @@ export const AFTER_PLOTS = {
     if (ch.x < lo) { ch.x = lo; ch.vx = Math.abs(ch.vx) * 0.6; }
     if (ch.x > hi) { ch.x = hi; ch.vx = -Math.abs(ch.vx) * 0.3; }
     if (ch.vy <= 0) return false;
+    if (bedLand(ch)) return true;           // a log let go over the saw mill's bed (mill.js)
     const foot = ch.y + half;
     for (const what of PILED) {
       if (AFTER_PILES[what].good !== ch.kind || pileRoom(what) <= 0 || !built(pileOwner(what))) continue;
