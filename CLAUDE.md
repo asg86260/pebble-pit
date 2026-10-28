@@ -53,7 +53,13 @@ bench: the real game at the scene shots' 800x600, scaled to the window, an
 option a button (`1`-`9`, `r` to stand it again), and nothing else on the
 page. A review is scenes, not a page: give each option's scene a
 `review: 'the question'` and an `option: 'A its name'`, and its `say` is
-the line under the buttons. The address is the review and the option
+the line under the buttons; a `stage` says what the owner is looking at --
+`'built: <branch>, not on main yet'` or `'mock: throwaway, never merged'` --
+and the page shows it as BUILT or MOCK on the review's tab (the owner
+could not tell them apart without it). An option that differs from its
+neighbours by a setting gives a `swap` (the setting alone), so moving
+between two such options flips it on the game standing instead of
+standing the scene again. The address is the review and the option
 (`/review.html#<review>/<scene>`). Serve it from a dev server on a spare
 port started with `REVIEW_RELOAD=1` (every source edit reloads the page,
 which a worktree's server otherwise can miss) and hand the owner the link; an edit to the drawing reaches their open

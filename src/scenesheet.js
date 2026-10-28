@@ -109,13 +109,18 @@ Object.assign(window, {
   // The bench (scenes.html) frames this page and reads the list through here
   // rather than importing scenes.js into a second window.
   __sceneSay: name => SCENES[name]?.say,
+  // A review option that differs from its neighbours by a setting only names
+  // a `swap`: moving between two such options of one review flips the setting
+  // on the game already standing, rather than standing the whole scene again.
+  // True when it swapped; false when the option has none (stand it instead).
+  __sceneSwap: name => { const sc = SCENES[name]; if (!sc?.swap) return false; sc.swap(); return true; },
   // The review page (review.html) shows the scenes filed under a `review`,
   // each a button labelled by its `option`, in the order they are written.
   __reviews: () => {
     const by = new Map();
     for (const [name, sc] of Object.entries(SCENES)) if (sc.review) {
       if (!by.has(sc.review)) by.set(sc.review, []);
-      by.get(sc.review).push({ scene: name, label: sc.option || name, say: sc.say });
+      by.get(sc.review).push({ scene: name, label: sc.option || name, say: sc.say, swap: !!sc.swap, stage: sc.stage || null });
     }
     return [...by].map(([name, options]) => ({ name, options }));
   },
