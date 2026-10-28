@@ -68,6 +68,24 @@ pick this one" or "keep iterating" with what to change -- and the note lands
 in `shots/review/notes.jsonl`; wait for it with `node tools/review-wait.mjs
 <checkout>` run in the background, which exits (and so wakes you) the moment
 a note lands (`--all` prints the notes already there).
+Every tab and option says NEW or UPDATED when it changed since that
+browser last looked, and each tab how long ago it changed, with nobody
+bumping anything: the dev server fingerprints each option from its scene
+(its fields and its `run`/`swap` source) plus every file tagged to it
+(`tools/review-prints.mjs`). So **tag the code a review draws with**: a
+`// MOCK <name>` or `// REVIEW <name>` line in each file the review's
+code lives in, mock or built, the name the review's slug (as in its
+address), one option's scene, or a prefix of its scenes' names
+(`after-shopbtn` for `after-shopbtn-a` and `-b`). The whole tagged file
+counts, so one tag line a file is enough. A bare `// MOCK` lights every
+open review; untagged code a scene depends on (a shared helper, the game
+itself) lights none, and a tag in `scenes.js` is ignored (the scene's own
+source counts already), so review setup goes in the scene's `run` or a
+tagged module. **A review puts itself away when it lands**: give its
+scenes `branch: '<branch>'` (or `branches: [...]`) naming where its build
+lives, and it drops off the tab row once every one is merged into main; a
+built review's `supersedes: ['<review name>']` puts away the mock it came
+from. "landed (n)" at the end of the row shows them again, greyed.
 Options drawn only to be judged live on a throwaway branch, marked
 `// MOCK`, never merged.
 

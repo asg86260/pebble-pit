@@ -12,6 +12,13 @@
   .tag { display: inline-block; padding: 0 6px; margin-right: 6px; border: 2px solid #000; font-weight: bold; }
   .tag.mock { border-style: dashed; }
   .tag.built { background: #000; color: #fff; }
+  /* NEW or UPDATED since this browser last looked: the tag's own box, in
+     the button's own ink so it reads on a pressed (black) button too */
+  .flag { display: inline-block; margin-left: 6px; padding: 0 4px; border: 2px solid currentColor; font-weight: bold; font-size: 11px; line-height: 1.3; }
+  .ago { margin-left: 6px; opacity: .65; }
+  /* a landed review, shown again on asking: greyed, the mock's dashed edge */
+  .tabs button.landed { color: #777; border-color: #777; border-style: dashed; }
+  .tabs button.landed.on { background: #777; color: #fff; }
   #stage-say { margin: 0 0 8px; }
   select, button { font: inherit; border: 2px solid #000; background: #fff; color: #000; padding: 2px 10px; cursor: pointer; }
   button.on { background: #000; color: #fff; }
@@ -35,7 +42,12 @@
      The box under the buttons is the owner's decision: stop on the option on
      screen, or keep going with what to change. It posts to the dev server
      (tools/review-server.mjs), which writes it where an agent waits for it
-     (tools/review-wait.mjs). -->
+     (tools/review-wait.mjs).
+     Each tab and option button says NEW or UPDATED when it changed since
+     this browser last looked at it, and each tab how long ago it last
+     changed. The dev server fingerprints every option from its scene and
+     its review's tagged code (tools/review-prints.mjs); what this browser
+     has seen is kept here, in localStorage. -->
 <div class="tabs" id="tabs" role="tablist" aria-label="reviews"></div>
 <div class="top"><h1 id="title">Review</h1></div>
 <p id="stage-say"></p>
@@ -58,16 +70,90 @@ const ready = () => f.contentWindow && f.contentWindow.__reviews && f.contentWin
 const kindOf = r => { const st = r.options[0].stage || ''; return /^built/i.test(st) ? 'built' : /^mock/i.test(st) ? 'mock' : null; };
 const parse = () => { const [r, s] = decodeURIComponent(location.hash.slice(1)).split('/'); return { r, s }; };
 
+// --- what changed since this browser last looked ---------------------------
+// `printed` is the dev server's answer: each option's and each review's
+// fingerprint and when it first appeared. `seen` is the print this browser
+// last looked at, per review and per option. Without a server answer (a
+// plain dev server, or an old one) there are no marks rather than wrong ones.
+const SEEN = 'review-seen';
+let printed = null, seen = { rev: {}, opt: {} };
+try { seen = { rev: {}, opt: {}, ...JSON.parse(localStorage.getItem(SEEN) || '{}') }; } catch {}
+const keepSeen = () => { try { localStorage.setItem(SEEN, JSON.stringify(seen)); } catch {} };
+// What stood when the page loaded keeps the mark it loaded with until the
+// owner moves off it: the reload an edit brings would otherwise clear the
+// very mark that says the picture in front of them is new.
+const held = { rev: null, opt: null };
+const flagOf = (was, p) => !p ? null : was == null ? 'new' : was !== p.fp ? 'updated' : null;
+const revFlag = r => held.rev?.key === slug(r.name) ? held.rev.flag : flagOf(seen.rev[slug(r.name)], printed?.reviews[slug(r.name)]);
+const optFlag = o => held.opt?.key === o.scene ? held.opt.flag : flagOf(seen.opt[o.scene], printed?.options[o.scene]);
+const flagHtml = f => f ? `<span class="flag">${f.toUpperCase()}</span>` : '';
+const ago = iso => {
+  const s = (Date.now() - Date.parse(iso)) / 1000;
+  return s < 60 ? 'just now' : s < 3600 ? `${Math.floor(s / 60)} min ago` : s < 86400 ? `${Math.floor(s / 3600)} h ago` : `${Math.floor(s / 86400)} d ago`;
+};
+// Marks one review or option seen at its current print, holding the mark on
+// screen when it is the one the page loaded on.
+function look(kind, key, p, first) {
+  if (!p) return;
+  if (kind === 'rev') held.rev = first ? { key, flag: flagOf(seen.rev[key], p) } : null;
+  else held.opt = first ? { key, flag: flagOf(seen.opt[key], p) } : null;
+  seen[kind][key] = p.fp; keepSeen();
+}
+async function fetchPrints() {
+  try {
+    const r = await fetch('/__review/prints', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ reviews: reviews.map(x => ({ slug: slug(x.name), name: x.name, branches: x.branches, supersedes: x.supersedes,
+        options: x.options.map(o => ({ scene: o.scene, text: o.text })) })) }) });
+    printed = r.ok ? await r.json() : null;
+  } catch { printed = null; }
+}
+// A review whose build is on main (or that a built review supersedes) has
+// put itself away: off the tab row unless the owner asks for the landed ones
+// back, greyed. The server says which (tools/review-prints.mjs).
+const LANDED = 'review-show-landed';
+let showLanded = false;
+try { showLanded = localStorage.getItem(LANDED) === '1'; } catch {}
+const landedOf = x => printed?.landed?.[slug(x.name)];
+const isLanded = x => !!landedOf(x)?.landed;
+// The reviews on the tab row, and the ones [ and ] step through. With every
+// review landed the row shows them all rather than nothing.
+const shown = () => { const open = reviews.filter(x => !isLanded(x)); return showLanded || !open.length ? reviews : open; };
+function drawTabs() {
+  $('tabs').innerHTML = '';
+  const row = shown();
+  reviews.filter(x => row.includes(x) || x === rev).forEach(x => {
+    const b = document.createElement('button'), k = kindOf(x), p = printed?.reviews[slug(x.name)];
+    b.innerHTML = `${k ? k.toUpperCase() + ' · ' : ''}${esc(x.name)}${flagHtml(revFlag(x))}${p ? `<span class="ago" data-at="${p.since}">updated ${ago(p.since)}</span>` : ''}`;
+    b.dataset.rev = slug(x.name); b.setAttribute('role', 'tab'); b.classList.toggle('on', x === rev);
+    if (isLanded(x)) { b.classList.add('landed'); b.title = `landed: ${landedOf(x).why}`; }
+    b.onclick = () => show(slug(x.name)); $('tabs').append(b);
+  });
+  const n = reviews.filter(isLanded).length;
+  if (n) {
+    const t = document.createElement('button'); t.className = 'shelf'; t.textContent = `landed (${n})`;
+    t.title = showLanded ? 'put the landed reviews away' : 'show the landed reviews';
+    t.classList.toggle('on', showLanded);
+    t.onclick = () => { showLanded = !showLanded; try { localStorage.setItem(LANDED, showLanded ? '1' : '0'); } catch {} drawTabs(); };
+    $('tabs').append(t);
+  }
+  if (row.length > 1) { const h = document.createElement('span'); h.className = 'hint'; h.textContent = '[ ] between reviews, 1-9 options, r restart'; $('tabs').append(h); }
+}
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+// "5 min ago" keeps counting while the page sits open.
+setInterval(() => { for (const a of document.querySelectorAll('.ago')) a.textContent = `updated ${ago(a.dataset.at)}`; }, 30e3);
+let loaded = true;   // true until the first review and option have stood
+
 function show(r, scene) {
-  rev = reviews.find(x => slug(x.name) === r) || reviews[reviews.length - 1];
+  rev = reviews.find(x => slug(x.name) === r) || shown()[shown().length - 1];
+  look('rev', slug(rev.name), printed?.reviews[slug(rev.name)], loaded);
+  drawTabs();
   $('title').textContent = rev.name;
   // BUILT or MOCK, said on the page (the owner, 2026-10-28: "im having a hard time distinguishing between the mocks and whats actually built")
   const st = rev.options[0].stage, k = kindOf(rev);
   $('stage-say').innerHTML = st ? `${k ? `<span class="tag ${k}">${k.toUpperCase()}</span>` : ''}${st.replace(/^(built|mock):\s*/i, '')}` : '';
-  for (const b of $('tabs').querySelectorAll('button')) b.classList.toggle('on', b.dataset.rev === slug(rev.name));
   $('bar').innerHTML = '';
   rev.options.forEach((o, i) => {
-    const b = document.createElement('button'); b.textContent = `${i + 1} ${o.label}`; b.dataset.scene = o.scene;
+    const b = document.createElement('button'); b.dataset.scene = o.scene; b.dataset.n = i;
     b.onclick = () => stand(o.scene); $('bar').append(b);
   });
   const again = document.createElement('button'); again.textContent = 'r restart'; again.onclick = () => stand(cur); $('bar').append(again);
@@ -79,22 +165,27 @@ function stand(scene) {
   cur = scene;
   const o = rev.options.find(x => x.scene === scene);
   history.replaceState(null, '', `#${slug(rev.name)}/${scene}`);
-  for (const b of $('bar').children) b.classList.toggle('on', b.dataset.scene === scene);
+  look('opt', scene, printed?.options[scene], loaded); loaded = false;
+  for (const b of $('bar').children) {
+    b.classList.toggle('on', b.dataset.scene === scene);
+    const ob = rev.options[b.dataset.n];
+    if (ob) b.innerHTML = `${+b.dataset.n + 1} ${esc(ob.label)}${flagHtml(optFlag(ob))}`;
+  }
   $('say').textContent = o ? o.say : '';
   const from = rev.options.find(x => x.scene === was);
   if (!(sameRev && was !== scene && from?.swap && o?.swap && f.contentWindow.__sceneSwap?.(scene))) f.contentWindow.__scene(scene);
 }
 f.addEventListener('load', () => {
-  const go = () => {
+  const go = async () => {
     if (!ready()) return setTimeout(go, 50);
     // a scene marks old story beats done, and their notices would cover the picture
     const st = f.contentDocument.createElement('style'); st.textContent = '.toast{display:none!important}'; f.contentDocument.head.append(st);
     reviews = f.contentWindow.__reviews();
     if (!reviews.length) { $('note').hidden = true; stage.outerHTML = '<p class="empty">No review is open. File scenes under one in src/scenes.js: <code>review: \'the question\', option: \'A name\'</code>.</p>'; return; }
-    // every open review a tab, so moving between them is a click (or [ and ])
-    $('tabs').innerHTML = '';
-    reviews.forEach(x => { const b = document.createElement('button'); b.textContent = `${kindOf(x) ? kindOf(x).toUpperCase() + ' · ' : ''}${x.name}`; b.dataset.rev = slug(x.name); b.setAttribute('role', 'tab'); b.onclick = () => show(slug(x.name)); $('tabs').append(b); });
-    if (reviews.length > 1) { const h = document.createElement('span'); h.className = 'hint'; h.textContent = '[ ] between reviews, 1-9 options, r restart'; $('tabs').append(h); }
+    // every open review a tab (drawTabs), so moving between them is a click
+    // (or [ and ]); the prints first, so the first drawing carries the marks
+    await fetchPrints();
+    loaded = true;   // the frame alone can reload too, and that is a fresh look
     const { r, s } = parse();
     show(r, s);
   };
@@ -105,7 +196,12 @@ addEventListener('keydown', e => {
   const i = Number(e.key) - 1;
   if (i >= 0 && i < rev.options.length) stand(rev.options[i].scene);
   if (e.key === 'r') stand(cur);
-  if (e.key === '[' || e.key === ']') { const k = reviews.indexOf(rev), n = reviews.length; show(slug(reviews[(k + (e.key === ']' ? 1 : n - 1)) % n].name)); }
+  if (e.key === '[' || e.key === ']') {
+    const row = shown(), n = row.length, k = row.indexOf(rev);
+    // off the row (a landed review stood by its address): ] goes to the first, [ to the last
+    const to = k < 0 ? (e.key === ']' ? 0 : n - 1) : (k + (e.key === ']' ? 1 : n - 1)) % n;
+    show(slug(row[to].name));
+  }
 });
 // The decision, posted to the dev server; the agent waiting on it wakes when it lands.
 async function decide(verdict) {
