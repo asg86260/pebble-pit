@@ -85,6 +85,38 @@ group('a sweep on the timber pile takes blocks into the hand, and a let-go over 
   ];
 });
 
+group('logs carried in the hand across the camp, frame by frame, and let go over the saw mill\'s pile land on it', async () => {
+  up();
+  window.__afterGrant({ grovelogs: 6, logs: -stock().logs });
+  run(1);
+  restartReloadClock();
+  const g0 = stock().grovelogs, m0 = stock().logs;
+  const from = on('grovelogs'), to = over('logs');
+  S.dragging = true;
+  S.trail = []; track(from.x, from.y);
+  S.mouse = { ...from };
+  sweep(from.x, from.y);
+  const took = S.held;
+  // a second of the sim with the load on the cursor as it crosses; the
+  // yard's catch runs every frame of it (game.js, 'catch')
+  let kept = true;
+  for (let k = 1; k <= 60; k++) {
+    const p = { x: from.x + (to.x - from.x) * k / 60, y: from.y + (to.y - from.y) * k / 60 };
+    S.mouse = p; track(p.x, p.y);
+    run(1 / 60);
+    kept = kept && S.held === took && stock().grovelogs === g0 - took;
+  }
+  S.dragging = false;
+  letGo(to);
+  const landed = down();
+  const counts = { shack: stock().grovelogs, mill: stock().logs, lying: laid('log').length };
+  done();
+  return [
+    ok(took > 0 && kept, 'held across the camp, the load stays in the hand and off the shack\'s pile', `${took} held`),
+    ok(landed && counts.mill - m0 + counts.lying === took && counts.mill > m0, 'let go over the saw mill\'s pile, they land on it', JSON.stringify(counts))
+  ];
+});
+
 group('let go over open ground, the blocks lie on the floor and a member carries them home', async () => {
   up(4);
   restartReloadClock();
