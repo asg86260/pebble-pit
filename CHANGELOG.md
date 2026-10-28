@@ -269,6 +269,7 @@ this section; the release that switches it on moves these under Unreleased.
 - After a load or a new game the stations' offer flags stand as the new yard has them, and heaven's ground, the serpent's bar and the fang plate start from it, instead of the last yard's raising, fading or breaking off (test/held-state.test.mjs).
 - Leaving the deep, or the serpent's bar going down, no longer leaves a status's tooltip waiting on that spot of the screen (src/selftest/deep.js).
 - Loading a save no longer shows the last yard's income rates and air trend in the books until they age out (test/held-state.test.mjs).
+- Dust and scales held on the cursor drift round it smoothly again instead of hopping a cell at a time (drawing; the shot is the check).
 
 ## v0.6.1 — 2026-10-19
 
