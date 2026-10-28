@@ -12,7 +12,7 @@
 // hand at a time: each mote remembers what it is, a place's goods (`kind`,
 // `place`) or the yard's dust, and a let-go lands as that.
 
-import { P, BRUSH, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR, DEEP_THROW, AFTER_BLOCK } from './config.js';
+import { P, BRUSH, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR, DEEP_THROW, AFTER_BLOCK, HAND_ONE, HAND_FLOOR, HAND_SWAY } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY, topRow } from './grid.js';
 import { spawnChip, aim, bell } from './dust.js';
@@ -40,15 +40,34 @@ export function throwVel() {
   return { vx: clamp((b.x - a.x) / dt * THROW), vy: clamp((b.y - a.y) / dt * THROW) };
 }
 
+// A held thing's size in art cells a side: a place's block by its own size,
+// a grain (or a good drawn a grain big) one.
+const sizeOf = kind => (kind && AFTER_BLOCK[kind]) || 1;
+// How many of `kind` (null: the yard's dust) the hand holds, by size alone
+// (config, HAND_ONE): one log, a share of the hand of planks, a full hand of
+// dust.
+export function handHolds(kind = null) {
+  const z = sizeOf(kind);
+  if (z >= HAND_ONE) return 1;
+  if (z <= 1) return capacity();
+  return Math.max(HAND_FLOOR, Math.floor(capacity() / (z * z)));
+}
+// The share of a grain's drift a held thing of `kind` moves by (HAND_SWAY).
+function swayOf(kind) {
+  const z = sizeOf(kind);
+  let at = 1;
+  for (const k of Object.keys(HAND_SWAY)) if (+k <= z && +k >= at) at = +k;
+  return HAND_SWAY[at];
+}
+
 // pixels still in flight are caught if they pass the cursor while it is held
 export function catchAir(mx, my) {
   catchSinking(mx, my);
-  let room = capacity() - S.held;
-  if (room <= 0) return;
+  let had = S.held ? S.motes[0] : null;
+  if (had && S.held >= handHolds(had.kind)) return;
 
   const reach = (BRUSH + 2) * P;      // forgiving: dust falls quickly
-  let had = S.held ? S.motes[0] : null;
-  for (let i = S.chips.length - 1; i >= 0 && room > 0; i--) {
+  for (let i = S.chips.length - 1; i >= 0; i--) {
     const ch = S.chips[i];
     // not what the held hand itself just let go, or the toss would come
     // straight back off the cursor it left from
@@ -56,12 +75,13 @@ export function catchAir(mx, my) {
     // one kind in the hand: a grain into a hand of dust, a block into a hand
     // of its own goods
     if (had && (had.kind || null) !== (ch.kind || null)) continue;
+    // full of the held kind (an empty hand has room for anything)
+    if (S.held >= handHolds(ch.kind)) break;
     // a block's x, y is its middle; a grain's, its cell's top left
     const off = ch.kind ? 0 : P / 2;
     if (Math.abs(ch.x + off - mx) > reach || Math.abs(ch.y + off - my) > reach) continue;
     S.chips.splice(i, 1);
     S.held++;
-    room--;
     if (ch.kind) S.motes.push(mote(ch.s, ch));
     else { noteCatch(ch); S.motes.push(mote(ch.s)); }
     had = S.motes[0];
@@ -94,10 +114,11 @@ function catchSinking(mx, my) {
 }
 
 // One grain on the cursor, or one of a place's blocks (`goods`: its `kind`
-// and `place`), which drifts out as far as its own size takes it.
+// and `place`), which drifts out as far as its own size takes it, and swings
+// round and bobs by its weight (`sway`): a log hangs nearly still.
 const mote = (s, goods = null) => {
-  const z = goods ? AFTER_BLOCK[goods.kind] * P / 2 : P;
-  const m = { s, a: rand() * Math.PI * 2, d: z * (1 + rand() * 2.6), spin: (rand() - 0.5) * 0.03, bob: rand() * Math.PI * 2 };
+  const z = goods ? sizeOf(goods.kind) * P / 2 : P, w = swayOf(goods && goods.kind);
+  const m = { s, a: rand() * Math.PI * 2, d: z * w * (1 + rand() * 2.6), spin: (rand() - 0.5) * 0.03 * w, bob: rand() * Math.PI * 2, sway: w };
   if (goods) { m.kind = goods.kind; m.place = goods.place; }
   return m;
 };
@@ -180,7 +201,7 @@ export function sweep(mx, my) {
 function sweepGoods(mx, my, spot) {
   const had = S.held ? S.motes[0] : null;
   if (had && (had.kind !== spot.kind || had.place !== spot.place)) return;
-  let room = capacity() - S.held;
+  let room = handHolds(spot.kind) - S.held;
   if (room <= 0) return;
   const plots = PLACES[spot.place].plots;
   // gathered first: a take lets the blocks over it slump, and the brush
