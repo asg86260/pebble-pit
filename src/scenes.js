@@ -3108,6 +3108,32 @@ export const SCENES = {
       window.__look(mid - S.viewW / 2);
       window.__still(true); window.__holdShot();
     } },
+  // MOCK: what act 3's goods look like (mock-goods-look, never merged). The
+  // chain run and every pile topped up, framed from the forestry shack's log
+  // pile to the workshop's signs, a member carrying while it holds; `look`
+  // the drawing mode (render/after/piles.js, `__goodsLook`), null the real one.
+  ...Object.fromEntries([[null, 'current', "the goods as they are drawn now: each block a flat tone with a one-pixel seam on its right and bottom only"],
+    ['a', 'A hairline all round', "each block's one-pixel seam now runs all the way round it, the pile's outer edge too: logs mid with a pale end-grain, timber pale seamed mid, a sign paper with ink lettering, sawdust pale flecked mid"],
+    ['b', 'B ground gaps', "a cell of bare ground between any two logs or signs and round the pile alike: logs mid with a pale heart, a sign pale with an ink top and letter, timber a plank edge-on (pale over mid), sawdust pale flecked paper"],
+    ['c', 'C shape is the edge', "no seams, each good's shape is its own edge: logs cut round (corners bare, pale heart), timber sawn square with a mid corner, a sign an ink board with a paper face on a post stub, sawdust mid flecked pale"]]
+    .map(([look, option, say]) => [`after-goods-${look || 'now'}`, { about: 'the acts', review: 'act 3: what the goods look like', // MOCK
+      stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option, say, // MOCK
+      swap: () => { globalThis.__goodsLook = look; }, // MOCK
+      run: () => { // MOCK
+        globalThis.__goodsLook = look; // MOCK
+        afterChain(false); // MOCK
+        window.__fast(20); // MOCK
+        window.__afterGrant({ grovelogs: 20, logs: -20 }); // MOCK  the mill's pile bare, so a member hauls
+        window.__fast(2); // MOCK
+        // a member under a load of logs, between the shack and the mill // MOCK
+        const lo = window.__afterPile('forestry', 'grovelogs').x, hi = window.__afterPile('mill', 'timber').x; // MOCK
+        const carrying = () => S.after.bodies.some(w => w.load === 'log' && w.x > lo + P * 12 && w.x < hi - P * 30); // MOCK
+        for (let k = 0; k < 1800 && !carrying(); k++) window.__fast(1 / 30); // MOCK
+        window.__afterGrant({ grovelogs: 20, logs: 4, timber: 40, sawdust: 30, signs: 3 }); // MOCK  room left for the load on its way
+        window.__fast(1 / 60); // MOCK
+        const x = lo - P * 30; // MOCK
+        pinCamera(x); window.__look(x); // MOCK
+      } }])), // MOCK
 
 
   // The workshop (docs/mocks/act3-workshop-2026-10-18, roof A): nails tapped
