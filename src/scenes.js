@@ -47,6 +47,7 @@ import { godFront } from './after/sky.js';
 const godView = () => godFront();
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PILES } from './config.js';
 import { millView } from './after/mill.js';
+import { siteLoads } from './after/build.js';
 import { stripOf as groundStrip, units as groundUnits, counted as groundCounted } from './after/ground.js';
 import { afterGround } from './state.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
@@ -3111,7 +3112,7 @@ export const SCENES = {
   'after-site-empty': { about: 'the acts', say: "an unbuilt station's spot: open floor between its neighbors, nothing drawn",
     run: () => afterSite(null) },
   'after-site-carry': { about: 'the acts', say: 'the workshop ordered: members carrying its planks and blocks onto its spot',
-    run: () => afterSite(r => r.brought >= 3) },
+    run: () => afterSite(() => siteLoads('workshop') >= 3) },
   'after-site-pile': { about: 'the acts', say: "the workshop's pile whole on its spot, the two builders beside it",
     run: () => afterSite(r => r.whole != null) },
   'after-site-band': { about: 'the acts', say: 'the workshop going up a band at a time, the pile shrinking',

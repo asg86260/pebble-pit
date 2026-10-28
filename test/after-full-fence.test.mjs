@@ -17,7 +17,7 @@ group('the yard\'s idle hands bring the grove\'s logs in and its sawyer saws the
   // Its timber stands past the timber pile's brim, which stops the saw
   // (after/piles.js): spent first, as a bill would spend it, so the saw has room.
   window.__afterGrant({ timber: -goodCount('timber') });
-  const S = yard.S, t0 = goodCount('timber'), lying = lying().filter(q => (q.kind || 'log') === 'log').length;
+  const S = yard.S, t0 = goodCount('timber'), nLying = lying().filter(q => (q.kind || 'log') === 'log').length;
   const sawn = runUntil(() => goodCount('timber') > t0, 300);
-  return [ok(lying > 0 && sawn, 'timber rises off the logs that lay in the grove', `${lying} lying, timber ${t0} -> ${goodCount('timber')}`)];
+  return [ok(nLying > 0 && sawn, 'timber rises off the logs that lay in the grove', `${nLying} lying, timber ${t0} -> ${goodCount('timber')}`)];
 });

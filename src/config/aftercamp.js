@@ -39,7 +39,7 @@ export const AFTER_BUBBLE_MID = 1.5;
 export const AFTER_SAW_TEETH = [0, 1];
 
 // --- track C: one carry (DESIGN.md, "One resource system for every act", section 4) ---
-// A load the construction shack hands out at its door, as a cell value in a
-// member's arms: the lightest shade, a unit of no kind, so it is counted by
-// no pile and carried home by no gatherer. The shack's door is its one source.
+// What a save of 2026-10-28 (v32) kept in a builder's arms for a site's load: a
+// grain. Since v33 a load is a unit of its own kind (config/blocks.js, `load`);
+// the migration that turns one into the other reads this.
 export const AFTER_SITE_LOAD = 1;

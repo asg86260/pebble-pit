@@ -11,6 +11,7 @@ import { shopBoxOf, rosterHit, rosterUp } from '../src/roster.js';
 import { AFTER_MILL, AFTER_BLOCK } from '../src/config.js';
 import { track, sweep, release } from '../src/hands.js';
 import { stripBox, units, counted, stripOf } from '../src/after/ground.js';
+import { afterGround } from '../src/state.js';
 import { millView } from '../src/after/mill.js';
 import { stationX0, groundOf, AP } from '../src/after/place.js';
 import { bottomY } from '../src/grid.js';

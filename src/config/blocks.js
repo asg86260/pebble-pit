@@ -17,12 +17,16 @@ import { AFTER_TONES } from './palette.js';
 //            every act (the owner, 2026-10-28)
 //   palette  its tones, rungs of GREY by AFTER_TONES; a block is one flat
 //            tone (act 3's rule), a heap of grains takes several
-//   home     the pile a body carries it back to
+//   home     the pile a body carries it back to (none: it is no good to carry
+//            home, and a gatherer leaves it lying)
 const KIND_DEFS = [
   { key: 'log',     size: AFTER_BLOCK.log,   palette: [AFTER_TONES.mid],                    home: 'grovelogs' },
   { key: 'plank',   size: AFTER_BLOCK.plank, palette: [AFTER_TONES.pale],                   home: 'timber' },
   { key: 'sign',    size: AFTER_BLOCK.sign,  palette: [AFTER_TONES.ink],                    home: 'signs' },
-  { key: 'sawdust', size: 1,                 palette: [AFTER_TONES.pale, AFTER_TONES.mid],  home: 'sawdust' }
+  { key: 'sawdust', size: 1,                 palette: [AFTER_TONES.pale, AFTER_TONES.mid],  home: 'sawdust' },
+  // a construction site's load (after/build.js): made at the shack's door,
+  // laid in a band, carried by nobody home, so no pile is its home
+  { key: 'load',    size: AFTER_BLOCK.load, palette: [AFTER_TONES.mid],                    home: null }
 ];
 
 // The first value a unit may take, the one after the rock's.

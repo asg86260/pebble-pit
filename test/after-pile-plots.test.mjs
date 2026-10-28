@@ -13,7 +13,7 @@
 // God's yard, coins and the forestry shack's logs granted.
 import { readFileSync } from 'node:fs';
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { goodCount } from '../src/after/piles.js';
+import { goodCount, goodsRead } from '../src/after/piles.js';
 import { lying } from '../src/after/ground.js';
 import { RIM_PIECES, AFTER_PILES, AFTER_LOG_TIMBER, AFTER_BLOCK, AFTER_UPGRADES, AFTER_SEAT_BILLS, AFTER_BUILDS } from '../src/config.js';
 import { AFTER_JOB } from '../src/jobs.js';
@@ -133,11 +133,11 @@ group('an old save\'s timber is halved, and what a brim cannot hold lies on the 
   const was = raw.after.stock;
   localStorage.setItem(KEY, JSON.stringify(raw));
   yard.restore();
-  const a = S.after, lying = kind => lying().filter(q => q.kind === kind).length;
+  const a = S.after, lyingOf = kind => lying().filter(q => q.kind === kind).length;
   const checks = [
     ok(raw.saveV < 30, 'the fixture is a save from before timber was counted in blocks', `${raw.saveV}`),
-    ok(goodCount('timber') + lying('plank') === Math.floor(was.timber / 2), 'its timber is halved, none lost', `${was.timber} -> ${goodCount('timber')} on the pile + ${lying('plank')} lying`),
-    ok(goodCount('timber') === AFTER_PILES.timber.brim && goodCount('logs') <= AFTER_PILES.logs.brim, 'each pile holds at most its brim', JSON.stringify(a.stock)),
+    ok(goodCount('timber') + lyingOf('plank') === Math.floor(was.timber / 2), 'its timber is halved, none lost', `${was.timber} -> ${goodCount('timber')} on the pile + ${lyingOf('plank')} lying`),
+    ok(goodCount('timber') === AFTER_PILES.timber.brim && goodCount('logs') <= AFTER_PILES.logs.brim, 'each pile holds at most its brim', JSON.stringify(goodsRead())),
     ok(held(), 'each pile\'s plot holds its count')
   ];
   run(10);

@@ -11,7 +11,7 @@
 // played, members walked out of God's yard (`__afterCrowd`), coins granted.
 import { sawyerHolds } from '../src/after/mill.js';
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { goodCount } from '../src/after/piles.js';
+import { goodCount, goodsRead } from '../src/after/piles.js';
 import { loadKind, holds } from '../src/carry.js';
 import { RIM_PIECES, AFTER_WALK, AFTER_AGITATE_S, AFTER_AGITATE_REBEL, KINDS, AFTER_LOG_TIMBER } from '../src/config.js';
 import { haulCap } from '../src/levels.js';
@@ -230,7 +230,7 @@ group('idle members plant the signs nobody is on, then go back to the podium', a
   const jobs = Object.values(S.after.crew).reduce((n, k) => n + k, 0);
   window.__actsOn(null);
   return [
-    ok(done, 'the signs are planted', `${S.after.signs.length} signs, stock ${JSON.stringify(S.after.stock)}`),
+    ok(done, 'the signs are planted', `${S.after.signs.length} signs, stock ${JSON.stringify(goodsRead())}`),
     ok(errands.has('carrier') && jobs === 0, 'by members on errands, nobody put on a job', `${[...errands]} ${jobs}`),
     ok(back && idle().length >= Math.min(4, idleSpots()), 'and they go back to the podium empty-handed', `${back} ${idle().length}`)
   ];

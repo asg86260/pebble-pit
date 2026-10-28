@@ -42,7 +42,7 @@ function count(d, n, cx, top, key) { const at = d.world(cx, top); countOver(at.x
 // in world px, free (a carried or falling block is laid where it truly is).
 // A sign is the camp's black board, as it is planted, its seam the paper
 // between two in the rack.
-export const BLOCK_TONES = { log: { tone: MID, seam: K }, plank: { tone: PALE, seam: MID }, sign: { tone: K, seam: W } };
+export const BLOCK_TONES = { log: { tone: MID, seam: K }, plank: { tone: PALE, seam: MID }, sign: { tone: K, seam: W }, load: { tone: MID, seam: K } };
 export function goodBlock(x, y, kind, seed = 1) {
   if (goodsLook()) { mockBlock(x, y, kind, seed); return; } // MOCK
   const t = BLOCK_TONES[kind], z = AFTER_BLOCK[kind] * AP;
@@ -177,22 +177,3 @@ export function heap(d, cx, R, st, n, tipped = false, pal = DUST, key = st.key) 
   count(d, n, cx + 0.5, -1 - top, key);
 }
 
-// --- a station's loads, while it is raised (pile a, docs/mocks/act3-unbuilt-2026-10-18)
-// Planks six cells long stacked staggered, as the timber pile stacks them,
-// and two-cell blocks beside and on top: a builder's heap that visibly loses
-// a load as each band goes up. Slots in the pile's cells, its left column at
-// x and row -1 standing on the floor; a block's y is its top row.
-export const BUILD_SLOTS = [
-  { x: 0, y: -1, k: 'plank' }, { x: 0.5, y: -2, k: 'plank' }, { x: 7, y: -2, k: 'block' }, { x: 9, y: -2, k: 'block' },
-  { x: 0, y: -3, k: 'plank' }, { x: 8, y: -4, k: 'block' }, { x: 0.5, y: -4, k: 'plank' }, { x: 2, y: -6, k: 'block' }
-];
-export const plankAt = (d, x, y, w = 6) => { d.px(x * P, y * P, w * P, P, K); d.px(x * P + 2, y * P + 2, w * P - 4, P - 4, PALE); };
-export const blockAt = (d, x, y) => { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, MID); d.px(x * P + 4, y * P + 4, 4, 4, W); };
-// The pile, each slot that `lies(i)` says is on it: whole from the moment a
-// carrier sets it down until a builder takes it up, never faded, since a
-// body's hands bring it and take it away.
-export function buildPile(d, x, lies) {
-  BUILD_SLOTS.forEach((s, i) => {
-    if (lies(i)) (s.k === 'plank' ? plankAt(d, x + s.x, s.y) : blockAt(d, x + s.x, s.y));
-  });
-}

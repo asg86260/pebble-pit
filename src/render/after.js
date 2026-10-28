@@ -24,7 +24,7 @@ import { fillDots } from './dots.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
+import { stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
 import { airMotes } from '../after/rebel.js';
 import { built, heapBrim } from '../after/levels.js';
 import { airSpills } from '../after/mill.js';
@@ -38,11 +38,10 @@ import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf, drawMillHeap } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
-import { heap, heapCells, drawGround, goodBlock, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
+import { heap, heapCells, drawGround, goodBlock } from './after/piles.js';
 import { goodsLook, MOCK_DUST, seedOf } from './after/piles.js'; // MOCK
 import { drawBody } from './crew.js';
 import { onDevice } from './wardrobe.js';
-import { siteOf } from '../after/build.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
 import { drawUnionCrowd } from './after/unioncrowd.js';
 import { drawRoster, drawShops } from '../roster.js';
@@ -115,14 +114,6 @@ const readHands = () => { hands = {}; for (const r of gestureView() || []) hands
 // none: its timber is the plot of blocks carried to its rack (after/piles.js,
 // `benchtimber`), drawn with the other piles, never a count of the mound.
 const extras = () => ({});
-// A station's loads on its spot while it is raised (after/build.js): each
-// there from the moment a carrier sets it down until a builder takes it up.
-function drawSite(key) {
-  const r = siteOf(key);
-  if (!r) return;
-  const d = frame(0, groundOf(key), 0, null, AFTER_ART_SCALE);
-  buildPile(d, buildPileAt(key) / AP, i => r.drop[i] != null && r.pick[i] == null);
-}
 // The glyph over a station, `at` of it built: hung where the yard hangs one,
 // seven cells over the top.
 function glyphOver(b, rows, at) {
@@ -176,7 +167,6 @@ function drawStation(key) {
   const opened = openedOf(key);
   if (opened < 1 && key !== 'pedestal' && !AFTER_START_BUILT.includes(key)) {
     closedStation(key, draw, opened);
-    if (!built(key)) { if (r) drawSite(key); return; }
     return;
   }
   draw(frameOf(key), working(key).work, a.t);
@@ -228,15 +218,6 @@ export function drawAfterCamp() {
 // overhead, an arm out held on the blow and the shout mark while it gives a
 // line are drawn off the same origin, so the whole of it moves as one piece.
 function shoutMark(x, y) { ctx.fillStyle = GREY[K]; ctx.fillRect(x + 8, y - 12, 2, 6); ctx.fillRect(x + 1, y - 9, 2, 2); ctx.fillRect(x + 3, y - 7, 2, 2); ctx.fillRect(x + 15, y - 9, 2, 2); ctx.fillRect(x + 13, y - 7, 2, 2); }
-// A station's load on a head, a paper rim round it so it stands clear of
-// the black station rising behind it: a plank across, or a block.
-function carried(x, y, s) {
-  const plank = s.k === 'plank', lx = plank ? x - P * 1.5 : x + P / 2, ly = plank ? y - P : y - P * 2;
-  const w = plank ? P * 6 : P * 2, h = plank ? P : P * 2;
-  ctx.fillStyle = GREY[W]; ctx.fillRect(lx - 2, ly - 2, w + 4, h + 4);
-  const d = frame(lx, ly);
-  if (plank) plankAt(d, 0, 0); else blockAt(d, 0, 0);
-}
 // A load of `n` of a good stacked the yard's way (render/crew.js), a thing a
 // row, as many rows as it carries, up to AFTER_CARRY_SHOWN: over a head whose
 // top left is (x, y).
@@ -245,7 +226,13 @@ function drawLoad(x, y, kind, n, id = 0) { // MOCK: id
   // Logs and timber as the blocks they lie on their piles as
   // (render/after/piles.js, `goodBlock`), stacked a block on a block over the
   // body's middle column.
-  if (kind === 'log' || kind === 'plank') {
+  if (kind === 'load') {
+    // A station's load on a head, a paper rim round it so it stands clear of
+    // the black station rising behind it.
+    const z = AFTER_BLOCK.load * AP, lx = x + 1.5 * P - z / 2, ly = y - z;
+    ctx.fillStyle = GREY[W]; ctx.fillRect(lx - 2, ly - 2, z + 4, z + 4);
+    goodBlock(lx, ly, kind);
+  } else if (kind === 'log' || kind === 'plank') {
     const z = AFTER_BLOCK[kind] * AP, lx = x + 1.5 * P - z / 2;
     for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, seedOf(id, k)); // MOCK: seed
   } else if (kind === 'sign' && goodsLook()) { // MOCK
@@ -291,8 +278,7 @@ function drawMember(w) {
     drawBody(x, y);
     ctx.fillStyle = GREY[K];
     drawLoad(x, y, loadKind(w), carryOf(w), w.id); // MOCK: w.id
-    if (w.phase === 'carry' || w.phase === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
-    else if (w.tipping) { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
+    if (w.tipping) { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
     if (w.swing != null) {
       if (w.job == null) shoutMark(x, y);
       else for (let k = 1; k <= 2; k++) cell(x + (w.face > 0 ? 2 + k : -k) * P, y - k * P, K);

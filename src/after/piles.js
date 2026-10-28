@@ -14,8 +14,8 @@
 import { S, afterGround as G } from '../state.js';
 import { AFTER_PILES, AFTER_LOG_TIMBER, AFTER_PILE_SETTLE_S, KINDS } from '../config.js';
 import { colOf, cellOf, kindOf } from '../grid.js';
-import { afterX0, afterX1, stationDoor, AP } from './place.js';
-import { bedLand, sawdustCount, pourSawdust } from './mill.js';
+import { afterX0, afterX1, stationDoor, buildPileAt, AP } from './place.js';
+import { bedLand, sawdustCount, pourSawdust, heapPlot } from './mill.js';
 import { PILED, stripOf, slotTop, slotNear, colX, rowY, units, counted, uncovered, takeAt, putIn, putSomewhere, putBeside,
          standGround, settleGround, countOf, fallTag } from './ground.js';
 import { secs } from './util.js';
@@ -117,16 +117,19 @@ function settleAll() { for (let i = 0; i < 400 && settleGround(); i++) { /* to r
 
 // Every pile stood up again: the act begun, or a save just read. `lay` the
 // list an older save handed over (after/index.js, `S.after.lay`): a pile's
-// count ({ what, n }), a good lying at an x ({ kind, x }), or the log the
-// sawyer held, laid at the saw mill's door ({ kind, near: 'mill' }).
+// count ({ what, n }), a good lying at an x ({ kind, x }), the log the
+// sawyer held, laid at the saw mill's door ({ kind, near: 'mill' }), or a
+// load on a site's strip ({ kind: 'load', site, at }, `at` its place across).
 export function standPiles() {
   if (!S.after) return;
   const lay = Array.isArray(S.after.lay) ? S.after.lay : [];
   S.after.lay = [];
+  heapPlot();                                  // the heap's saved grains read back now, before anything is laid on them
   standGround(lay.map(item => () => {
     if (!item || typeof item !== 'object') return;
     if (item.what === 'sawdust') pourSawdust(Math.max(0, Math.floor(+item.n || 0)));
     else if (isPiled(item.what)) standPile(item.what, Math.max(0, Math.floor(+item.n || 0)));
+    else if (item.kind === 'load' && item.site) putSomewhere(cellOf('load'), buildPileAt(item.site) + (((item.at | 0) % 6) * 2 + 1) * AP);
     else if (KINDS[item.kind] && Number.isFinite(item.x)) putSomewhere(cellOf(item.kind), item.x + KINDS[item.kind].size * AP / 2);
     else if (KINDS[item.kind] && item.near === 'mill') putSomewhere(cellOf(item.kind), stationDoor('mill'));
   }));

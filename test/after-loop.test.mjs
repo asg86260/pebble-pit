@@ -8,6 +8,7 @@
 // beats marked played, since the story before the loop is not what is checked.
 import { bestMs, group, ok, run, runUntil, yard, P } from './helpers.mjs';
 import { goodCount } from '../src/after/piles.js';
+import { siteLoads } from '../src/after/build.js';
 import { lying } from '../src/after/ground.js';
 import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
          ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_PODIUM_REBEL, AFTER_PODIUM_CLIMB, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_PLOTS0, AFTER_PLOT_MAX,
@@ -311,7 +312,7 @@ group('a station bought on the shack is carried in as a pile and raised off it a
     run(0.1);
     const r = S.after.raising.mill;
     if (bands.at(-1) !== r.n) bands.push(r.n);
-    const on = r.brought - r.taken;
+    const on = siteLoads('mill');
     if (piles.at(-1) !== on) piles.push(on);
     carried ||= S.after.bodies.some(b => b.phase === 'carry');
   }
