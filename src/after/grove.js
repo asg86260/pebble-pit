@@ -9,7 +9,7 @@
 // the hand with the axe, or a woodcutter, knocks a chip out a swing, and on
 // the last of TREE_CHOPS it tips over (render/after/pine.js turns it by its
 // true angle), hits, and its trunk splits into logs that roll off a little
-// and lie where they stop (`groundLogs`), its crown fading off (never a
+// and lie where they stop on the act's ground (after/ground.js), its crown fading off (never a
 // pop), until a gatherer carries each to the forestry shack's pile, where
 // the haulers fetch them. The stump blocks the plot until it is dug out -- by the hand, a
 // click a held swing, AFTER_DIG_CLICKS of them, or by a woodcutter once stump
@@ -20,19 +20,19 @@
 // fell, logs, stump, dug, big, at } -- `dug` the swings taken at its stump,
 // `big` a tree planted after "bigger trees", `at` when the plot was cleared
 // (it fades in); `logs` only a save's from before the logs lay where they
-// fell, laid on the ground on its first frame. A log on the ground is a row
-// of `S.after.groundLogs`: { id, i, x0, x, at } -- its plot, where it split
-// off the trunk and where it comes to rest (world px), and when it set off
-// rolling. A good the hand let go of lies in the same list, `kind` saying
-// what it is, `i` null, falling from `y0` for `fall` seconds instead of
-// rolling.
+// fell, laid on the ground on its first frame. A log on the ground is a
+// unit of the act's one ground, as is every good the hand or a body let go
+// of (`groundLogs`, below).
 
 import { S } from '../state.js';
 import { P, TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_LOGS_BIG_TREE, AFTER_FALL_S, AFTER_CROWN_FADE_S, AFTER_DIG_CLICKS,
-         AFTER_PLOTS0, AFTER_FALL_BOUNCE_S, AFTER_LOG_ROLL, AFTER_LOG_ROLL_S, AFTER_LOG_SPAN, GRAV, AFTER_GOODS_FOOT } from '../config.js';
+         AFTER_PLOTS0, AFTER_FALL_BOUNCE_S, AFTER_LOG_ROLL, AFTER_LOG_ROLL_S, AFTER_LOG_SPAN, KINDS } from '../config.js';
 import { secs, nextId } from './util.js';
 import { growS, bigTrees } from './levels.js';
-import { PINE_GROWN, stationParts, plotX, floorAt, AP } from './place.js';
+import { PINE_GROWN, stationParts, plotX, AP } from './place.js';
+import { putSomewhere, heapAt, takeAt, tag, fallTag, lying, colX } from './ground.js';
+import { afterGround as G } from '../state.js';
+import { cellOf } from '../grid.js';
 
 export const GROWN = PINE_GROWN;
 
@@ -97,62 +97,64 @@ export function digStump(i, hand = false) {
 }
 
 // --- the logs on the ground ---------------------------------------------------------
+// A log or any good lying on the act's floor is a unit of its one ground
+// (after/ground.js), wherever it came down: it stacks, rolls and rests by the
+// heap rule every block settles by, and is taken off the top. What follows
+// keeps the lying list's old shape over the ground (TEMP: step 3's carry and
+// hand read the cells): a row a loose unit, { id, kind, x, y, w, free } and
+// its arrival, `x0` and `at` a felled log's, `y0` and `fall` a good let go of.
 const snap = v => Math.round(v / P) * P;
 const hsh = n => { let h = Math.imul(n ^ 0x9e3779b9, 2654435761); h ^= h >>> 15; return (h >>> 0) / 4294967296; };
-// Plot i's trunk split into `n` logs across the fallen tree, each setting
-// off rolling at `at` a little way along the ground, to the far side the
-// tree fell to.
+// Plot i's trunk split into `n` logs across the fallen tree, which come to
+// rest as the heap logs make on the grove's floor (ground.js, `heapAt`: a
+// mound a block a step, never one log through another), leaning to the far
+// side the tree fell to: its middle half a log past the middle of the
+// trunk's span. Each splits off the trunk a little short of where it rests
+// and sets off rolling there at `at`, the drawing's (render/after/piles.js).
 function dropLogs(i, n, at) {
-  const x0 = plotX(i), [a, b] = AFTER_LOG_SPAN;
-  for (let k = 0; k < n; k++) {
-    const id = nextId(), from = snap(x0 + (a + (b - a) * (k + 0.5) / n) * AP);
-    const roll = (AFTER_LOG_ROLL[0] + (AFTER_LOG_ROLL[1] - AFTER_LOG_ROLL[0]) * hsh(id)) * AP;
-    S.after.groundLogs.push({ id, i, x0: from, x: snap(from + roll), at });
+  const [a, b] = AFTER_LOG_SPAN, mid = plotX(i) + ((a + b) / 2 + KINDS.log.size / 2) * AP;
+  for (const ai of heapAt(cellOf('log'), mid, n)) {
+    if (ai < 0) continue;
+    const roll = (AFTER_LOG_ROLL[0] + (AFTER_LOG_ROLL[1] - AFTER_LOG_ROLL[0]) * hsh(nextId())) * AP;
+    tag(ai, { i, x0: snap(colX(ai % G.cols) - roll), at });
   }
 }
-// Whether a log has stopped rolling, or a good let go of by the hand has
-// come down (`fall`, its seconds): a gatherer takes it up only then.
-export const settled = q => S.after.t >= q.at + (q.fall ?? AFTER_LOG_ROLL_S);
-// What a thing lying on the floor is: a felled tree's log, or whatever the
-// hand threw there (after/piles.js, AFTER_PLOTS `land`; `kind`).
+// Whether a good on the floor may be taken up now: nothing on it, not
+// falling, and done rolling off a felled trunk or coming down from the hand.
+export const settled = q => q.free !== false && S.after.t >= (q.at ?? -Infinity) + (q.fall ?? AFTER_LOG_ROLL_S);
+// What a thing lying on the floor is.
 export const kindOf = q => q.kind || 'log';
 // A good lying still on the floor under (x, y), `pad` px of slack round it,
-// for the hover to name: the last laid first, as it is drawn over the rest.
+// for the hover to name: the last in the list first.
 export function lyingAt(x, y, pad = 0) {
   const list = groundLogs();
   for (let i = list.length - 1; i >= 0; i--) if (settled(list[i]) && under(list[i], x, y, pad)) return list[i];
   return null;
 }
 // Whether (x, y) is on a lying good, `pad` px of slack round it.
-function under(q, x, y, pad) {
-  const k = kindOf(q), w = AFTER_GOODS_FOOT[k] * AP, h = (k === 'sign' ? 2 : AFTER_GOODS_FOOT[k]) * AP;   // a block stands as high as it is wide
-  const top = floorAt(q.x + AP) - h;
-  return x >= q.x - pad && x <= q.x + w + pad && y >= top - pad && y <= top + h + pad;
-}
-// Every good lying still within `pad` px of (x, y), nearest first: what the
-// hand's brush finds on the floor (piles.js, AFTER_PLOTS), as it finds a
-// pile's blocks under it.
+const under = (q, x, y, pad) => x >= q.x - pad && x <= q.x + q.w + pad && y >= q.y - pad && y <= q.y + q.w + pad;
+// Every good lying free within `pad` px of (x, y), nearest first.
 export function lyingNear(x, y, pad) {
-  const mid = q => q.x + AFTER_GOODS_FOOT[kindOf(q)] * AP / 2;
+  const mid = q => q.x + q.w / 2;
   return groundLogs().filter(q => settled(q) && under(q, x, y, pad)).sort((a, b) => Math.abs(mid(a) - x) - Math.abs(mid(b) - x));
 }
 // A good let go of at (x, y), off any pile: x its left edge, y the height it
-// falls from under the yard's gravity (GRAV, px a frame a frame) straight
-// down to the floor at x, where it lies as a felled log does until a
-// gatherer takes it up.
+// falls from under the yard's gravity, down onto whatever stands under it on
+// the ground, where it lies until a gatherer takes it up. Its fall is drawn
+// from y to where it came to rest (ground.js, `fallTag`).
 export function layGood(kind, x, y) {
-  const a = S.after, fl = floorAt(x + AP), h = Math.max(0, fl - y);
-  a.groundLogs.push({ id: nextId(), i: null, kind, x0: x, x, y0: Math.min(y, fl), at: a.t, fall: Math.sqrt(2 * h / GRAV) / 60 });
+  const ai = putSomewhere(cellOf(kind), x + KINDS[kind].size * AP / 2);
+  fallTag(ai, y);
 }
-// A gatherer taking log `id` up off the ground.
+// A gatherer taking good `id` up off the ground: only off the top, and only
+// once it is down.
 export function takeGroundLog(id) {
-  const a = S.after, k = a.groundLogs.findIndex(q => q.id === id);
-  if (k < 0 || !settled(a.groundLogs[k])) return false;
-  a.groundLogs.splice(k, 1);
-  return true;
+  const q = groundLogs().find(o => o.id === id);
+  if (!q || !settled(q)) return false;
+  return !!takeAt(id);
 }
-// The logs on the ground, for the drawing and the bodies.
-export const groundLogs = () => (S.after ? S.after.groundLogs : []);
+// The goods lying on the ground, for the drawing and the bodies.
+export const groundLogs = () => (S.after ? lying() : []);
 
 // One frame of the grove: the trees growing, and those coming down landing.
 export function stepGrove(c) {

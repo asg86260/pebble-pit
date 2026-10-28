@@ -47,6 +47,9 @@ import { yardReads } from './persist.js';
 import { afterlifeOn, hellOn } from './acts.js';
 import { AFTER_STORY } from './after/story.js';
 import { PILED, plotOf, pileLedger } from './after/piles.js';
+import { stripCount, units } from './after/ground.js';   // one ground
+import { afterGround } from './state.js';                // one ground
+import { blockProblems } from './grid.js';              // one ground
 import { millView } from './after/mill.js';   // track A: saw mill
 import { AFTER_BLOCK } from './config.js';   // track A: saw mill
 import { HELL_STORY } from './hell/story.js';
@@ -443,7 +446,7 @@ export function verifyWorld() {
   // copy drifts; this line is what makes the copy safe, not care taken at the
   // places that write the cells wholesale.
   if (S.tick % LEDGER_EVERY === 0) {
-    for (const [name, b] of [['the hole', pit], ['the yard', floor], ['the cut', cut]]) {
+    for (const [name, b] of [['the hole', pit], ['the yard', floor], ['the cut', cut], ["act 3's ground", afterGround]]) {
       if (!b.grid || b.n == null) continue;
       // One walk of the cells answers every ledger the grid keeps: the
       // grains, the dust the rift swallows against, and a column at a time
@@ -707,16 +710,40 @@ export function verifyWorld() {
   }
 
   // --- rule 23: an act 3 pile is its stock -------------------------------------
-  // A counted pile is a plot of blocks and its count is the plot's cells
-  // (after/piles.js): every write to the count goes through the one door that
-  // writes the plot too. A count its cells disagree with is a write that went
-  // round it. The cells are walked, not read off the plot's own ledger.
+  // A counted pile is a strip of the act's ground and its count is the
+  // strip's units of its good (after/ground.js), copied into the stock by the
+  // survey every door runs. A count its cells disagree with is a write that
+  // went round the doors. The cells are walked, not read off the copy, and
+  // the pile's plot as its old readers see it (`plotOf`) holds a cell a unit.
   if (afterlifeOn() && S.after) {
     for (const what of PILED) {
-      const n = count(plotOf(what));
-      if (n !== S.after.stock[what]) fail('an act 3 pile does not hold its stock', `${what}: ${S.after.stock[what]} counted, ${n} blocks on its plot`);
+      const n = stripCount(what), shown = count(plotOf(what));
+      if (n !== S.after.stock[what] || shown !== n) fail('an act 3 pile does not hold its stock', `${what}: ${S.after.stock[what]} counted, ${n} blocks in its strip, ${shown} on its plot`);
     }
     handOffs();
+  }
+
+  // one ground
+  // --- rule 26: act 3's ground holds every unit whole, apart, and held up ----
+  // Every good lying in act 3 is a unit of its one ground (DESIGN.md, "One
+  // resource system for every act"): no two blocks share a cell (the block
+  // layer names every cell of a block and no other), none stands in the
+  // terrain laid under it, and none is left in the air -- a block with
+  // nothing under any of its columns while those columns sleep is one the
+  // heap rule will never move again.
+  if (afterlifeOn() && S.after && afterGround.grid && S.tick % LEDGER_EVERY === 0) {
+    const g = afterGround, bad = blockProblems(g);
+    const awake = g.awakeOf === g.grid ? g.awake : null;
+    for (const u of units()) {
+      let under = u.r0 === 0, stirring = false;
+      for (let c = u.c0; c < u.c0 + u.z; c++) {
+        if (u.r0 > 0 && g.grid[(u.r0 - 1) * g.cols + c]) under = true;
+        if (awake && awake[c]) stirring = true;
+        for (let r = u.r0; r < u.r0 + u.z; r++) if (g.fixed && g.fixed(c, r)) { bad.push(`the ${u.kind} at ${u.c0},${u.r0} stands in the ground`); r = 1e9; c = 1e9; }
+      }
+      if (!under && !stirring) bad.push(`the ${u.kind} at ${u.c0},${u.r0} hangs in the air`);
+    }
+    if (bad.length) fail("act 3's ground holds a unit wrong", bad.slice(0, 6).join('; '));
   }
 
   // track A: saw mill

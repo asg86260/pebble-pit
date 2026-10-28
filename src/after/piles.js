@@ -1,100 +1,28 @@
-// Act 3's counted piles, each a grid.js plot whose cell is one block
-// (DESIGN.md, "Act 3's goods are blocks, and bodies carry every one"): the
-// saw mill's logs and timber, the forestry shack's logs. A block set down
-// falls, rolls off the heap's side and slumps into a gap by the sand rules
-// every grid in the game settles by (the casino's bins the precedent), and
-// a block taken off the top lets the heap slump.
+// Act 3's counted piles: strips of the act's one ground (after/ground.js;
+// DESIGN.md, "One resource system for every act"), as a yard station's pile
+// is a strip of its floor -- the saw mill's logs and timber, the forestry
+// shack's logs, the workshop's timber and signs. A block set down on one
+// falls, rolls off the heap's side and rests by the heap rule every block on
+// the ground settles by (grid.js, `stepBlock`), and a block is only ever
+// taken off the top.
 //
-// The pile is the stock. The save keeps the count (`S.after.stock`, a number
-// a pile) and nothing else; the plot holds exactly that many cells at all
-// times because every write to those three counts goes through this file --
-// a block taken here comes off the plot and the count together, and one set
-// down lands on both. verify.js holds it to that. The plots are never saved:
-// a read save stands each one back up from its count, settled to rest before
-// the first frame (`standPiles`), so a save carries no grid.
+// The pile's count is its strip's units of its good, read off the cells
+// after every write into `S.after.stock` (ground.js, `survey`): a copy, kept
+// until its last readers read the cells. Below is the pile's interface its
+// bodies, the saw and the bench use, and the hand's adapter over the ground.
 
-import { S } from '../state.js';
-import { P, AFTER_PILES, AFTER_PILE_SETTLE_S, AFTER_LOG_TIMBER, AFTER_GOODS_FOOT, AFTER_LAY_GAP, AFTER_BLOCK } from '../config.js';
-import { addGrain, put, at, inside, topRow, bottomY, settle, settleSome, colOf } from '../grid.js';
-import { shadeNear } from '../grid.js'; // MOCK
-import { pilePlace, pileOwner, pileMid, pileAt, groundOf, floorAt, afterX0, afterX1, AP } from './place.js';
-import { layGood, lyingNear, takeGroundLog, kindOf } from './grove.js';
+import { S, afterGround as G } from '../state.js';
+import { AFTER_PILES, AFTER_LOG_TIMBER, AFTER_PILE_SETTLE_S, KINDS } from '../config.js';
+import { colOf, cellOf } from '../grid.js';
+import { afterX0, afterX1, stationDoor, AP } from './place.js';
+import { pileGrid } from './art.js';
 import { bedLand } from './mill.js';
-import { built } from './levels.js';
+import { PILED, stripOf, slotTop, slotNear, colX, rowY, units, counted, uncovered, takeAt, takeTopOf, putIn, putSomewhere, putBeside,
+         standGround, settleGround, ledger, lying, groundVersion } from './ground.js';
 import { secs } from './util.js';
 
-// The stock keys that are plots.
-export const PILED = Object.keys(AFTER_PILES);
+export { PILED };
 export const isPiled = what => what in AFTER_PILES;
-
-// The plots, kept on the act's state but out of its save: not enumerable, so
-// the saver's JSON.stringify of `S.after` passes them by, and a save read
-// over a blank (placesave.js) comes back without them to be stood up again.
-function plots() {
-  const a = S.after;
-  if (!Object.prototype.hasOwnProperty.call(a, 'piles')) Object.defineProperty(a, 'piles', { value: {}, writable: true, configurable: true, enumerable: false });
-  return a.piles;
-}
-// Every block through the doors below, a pile's net and the blocks taken in
-// bulk with nobody's hands behind them (`takeBlocks`), kept as the plots are:
-// on the act's state, out of its save. verify.js reads it (`pileLedger`).
-function ledger() {
-  const a = S.after;
-  if (!Object.prototype.hasOwnProperty.call(a, 'handoffs')) Object.defineProperty(a, 'handoffs', { value: { net: {}, bulk: 0 }, writable: true, configurable: true, enumerable: false });
-  return a.handoffs;
-}
-const handed = (what, d) => { const l = ledger().net; l[what] = (l[what] || 0) + d; };
-// Where a block is set down when nobody says where: the plot's middle
-// column, so a pile set down on by its bodies stands as one heap, not
-// against a side. A pile fed from its near side (`near`, the timber mound off
-// the saw mill's chute) is set down on the column nearest that side whose
-// heap at the dust's slope still holds its brim, so a block slides off the
-// chute onto the mound rather than across it, and a read save stands the
-// mound up the same shape the chute heaped it.
-export function dropCol(what) {
-  const b = plotOf(what), pl = AFTER_PILES[what];
-  if (!pl.near) return Math.floor(b.cols / 2);
-  for (let c = 0; c < b.cols; c++) {
-    let holds = 0;
-    for (let j = 0; j < b.cols; j++) holds += Math.max(0, b.rows - Math.abs(j - c));
-    if (holds >= pl.brim) return c;
-  }
-  return Math.floor(b.cols / 2);
-}
-const dropX = b => b.x + (b.drop ?? Math.floor(b.cols / 2)) * b.p + b.p / 2;
-const rest = b => { while (settle(b)) { /* until nothing moves */ } };
-
-// A pile stood up from its count: each block set down on the middle column
-// and let come to rest before the next, so a read save's heap stands as the
-// same blocks set down one by one would have left it. A count past the brim
-// (a save from before the brims, or before timber halved) keeps the brim;
-// the rest are laid on the floor beside the pile, where a gatherer carries
-// them home as room comes (bodies.js, `gather`): nothing a player held is lost.
-function stand(what) {
-  const g = pilePlace(what), a = S.after;
-  const b = { ...g, grid: new Uint8Array(g.cols * g.rows), n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: false, settleAt: 0, t: 0 };
-  plots()[what] = b;
-  b.drop = dropCol(what);
-  const had = Math.max(0, Math.floor(+a.stock[what] || 0)), keep = Math.min(had, AFTER_PILES[what].brim);
-  for (let i = 0; i < keep; i++) { addGrain(b, dropX(b), undefined, 1, true); rest(b); }
-  a.stock[what] = keep;
-  if (had > keep) layOver(what, had - keep);
-  return b;
-}
-function layOver(what, n) {
-  const key = pileOwner(what), kind = AFTER_PILES[what].good, x0 = pileMid(key, what);
-  const away = x0 < pileAt(key, what) ? -1 : 1, step = (AFTER_GOODS_FOOT[kind] + AFTER_LAY_GAP) * AP;
-  for (let k = 0; k < n; k++) layGood(kind, x0 + away * (k % 4) * step, groundOf(key));
-}
-// Pile `what`'s plot, stood up from its count the first time it is asked.
-export const plotOf = what => plots()[what] || (plots()[what] = stand(what));
-// Every pile stood up again from its count: a save just read, or the act begun.
-export function standPiles() {
-  if (!S.after) return;
-  plots();
-  S.after.piles = {};
-  for (const what of PILED) plotOf(what);
-}
 
 // --- the one interface ---------------------------------------------------------------
 export const pileCount = what => S.after.stock[what];
@@ -108,46 +36,52 @@ const SUPPLY = { timber: AFTER_LOG_TIMBER };
 // stopped saw is never unmarked.
 export const pileFull = what => !!S.after && pileRoom(what) < (SUPPLY[what] || 1);
 
-// A block taken off pile `what`: the top of the column under world x, or of
-// the nearest column with one in it; with no x, off the top of the heap.
-// False with the pile bare.
-export function takeBlock(what, x = null) {
-  if (pileCount(what) <= 0) return false;
-  const b = plotOf(what);
-  let col = -1;
-  if (x == null) {
-    for (let c = 0, hi = -1; c < b.cols; c++) { const r = topRow(b, c); if (r > hi) { hi = r; col = c; } }
-  } else {
-    const at = Math.max(0, Math.min(b.cols - 1, colOf(b, x)));
-    for (let d = 0; d < b.cols && col < 0; d++) {
-      if (at - d >= 0 && topRow(b, at - d) >= 0) col = at - d;
-      else if (at + d < b.cols && topRow(b, at + d) >= 0) col = at + d;
-    }
+// Where on its strip a block is set down when nobody says where, as a slot of
+// the strip counted from its left: the slot nearest the strip's middle that
+// still has room under its ceiling, so a pile set down on by its bodies
+// stands as one heap; a pile fed from its near side (`near`, the timber mound
+// off the saw mill's chute) the first slot from that side with room, so a
+// block slides off the chute onto the mound rather than across it.
+export function dropCol(what) {
+  const s = stripOf(what);
+  if (!s || !G.grid) return 0;
+  const n = (s.c1 - s.c0) / s.z, mid = Math.floor(n / 2);
+  const order = AFTER_PILES[what].near ? [...Array(n).keys()]
+    : [...Array(n).keys()].sort((p, q) => Math.abs(p - mid) - Math.abs(q - mid) || p - q);
+  for (const j of order) {
+    const c = s.c0 + j * s.z, top = slotTop(c, s.z);
+    let room = true;
+    for (let i = c; i < c + s.z; i++) if (top + s.z > G.ceiling(i)) room = false;
+    if (room) return j;
   }
-  if (col < 0) return false;
-  put(b, col, topRow(b, col), 0);
-  S.after.stock[what] -= 1; handed(what, -1);
-  return true;
+  return order[0];
 }
-// A block set down on pile `what` at world x (its middle column with no x):
-// it falls there and rolls where the sand rules take it. False with the pile
-// at its brim.
-export function setBlock(what, x = null, shade = shadeNear(3.5, 3)) { // MOCK: shade, the block's own, as act 1's grain carries
-  if (pileRoom(what) <= 0) return false;
-  const b = plotOf(what);
-  if (!addGrain(b, x ?? dropX(b), undefined, shade, true)) return false; // MOCK: shade, was 1
-  S.after.stock[what] += 1; handed(what, 1);
-  return true;
+const dropX = what => { const s = stripOf(what); return colX(s.c0 + dropCol(what) * s.z) + s.z * AP / 2; };
+
+// The blocks of pile `what` that may be taken now: each slot's top, its good.
+function tops(what) {
+  const s = stripOf(what);
+  return units().filter(u => u.c0 >= s.c0 && u.c0 < s.c1 && counted(u) && uncovered(u.ai));
 }
-// The block in cell (c, r) of pile `what`'s plot, taken by the player's hand
-// wherever in the heap the brush found it (hands.js, `sweep`): the blocks
-// over it slump into the gap by the sand rules. False with no block there.
-export function takeCell(what, c, r) {
-  const b = plotOf(what);
-  if (!inside(b, c, r) || !at(b, c, r)) return false;
-  put(b, c, r, 0);
-  S.after.stock[what] -= 1; handed(what, -1);
-  return true;
+// A block taken off pile `what`: the top of the slot under world x, or of the
+// nearest slot with one; with no x, the highest top. False with the pile bare.
+export function takeBlock(what, x = null) {
+  if (!S.after || pileCount(what) <= 0) return false;
+  const t = tops(what);
+  if (!t.length) return false;
+  const mid = u => colX(u.c0) + u.z * AP / 2;
+  const pick = x == null ? t.reduce((b, u) => (u.r0 > b.r0 ? u : b))
+    : t.reduce((b, u) => (Math.abs(mid(u) - x) < Math.abs(mid(b) - x) ? u : b));
+  return !!takeAt(pick.ai);
+}
+// A block set down on pile `what` at world x (where its drop is with no x):
+// it lands on the heap there and rolls where the heap rule takes it, inside
+// the strip. False with the pile at its brim or its heap at its ceiling.
+export function setBlock(what, x = null) {
+  if (!S.after || pileRoom(what) <= 0) return false;
+  const s = stripOf(what);
+  const at = x == null ? dropX(what) : Math.max(colX(s.c0), Math.min(colX(s.c1) - 1, x));
+  return putIn(cellOf(s.kind), at) >= 0;
 }
 // `n` blocks off the top of pile `what` (a bill, a joining): how many came.
 export function takeBlocks(what, n) {
@@ -157,76 +91,151 @@ export function takeBlocks(what, n) {
   return k;
 }
 
-// One frame of the piles: a pass of the sand rules over each every
-// AFTER_PILE_SETTLE_S, so a block set down is seen rolling to rest.
-export function stepPiles(c) {
-  const dt = secs(c);
-  for (const what of PILED) {
-    const b = plotOf(what);
-    if (!b.awakeN) { b.t = 0; continue; }
-    for (b.t += dt; b.t >= AFTER_PILE_SETTLE_S; b.t -= AFTER_PILE_SETTLE_S) settleSome(b, b.cols * b.rows);
+// A pile's count stood up from a number (an older save's, handed over by the
+// one-ground migration; a grant): set down a block at a time at its drop,
+// let come to rest before the next, so the heap stands as blocks set down one
+// by one would leave it. Past the brim, or past the ceiling, the rest are
+// laid on the open ground beside the strip, where a gatherer carries them
+// home as room comes: nothing a player held is lost.
+export function standPile(what, n) {
+  const s = stripOf(what);
+  if (!s) return;
+  for (let k = 0; k < n; k++) {
+    if (!setBlock(what)) putBeside(cellOf(s.kind), dropX(what));
+    settleAll();
   }
 }
+function settleAll() { for (let i = 0; i < 400 && settleGround(); i++) { /* to rest */ } }
 
-// --- the yard's hand on the piles ---------------------------------------------------
-// Act 3's piles as the yard's hand asks a place for them (acts.js, `plots`;
-// hands.js): goods are picked up as act 1's dust is, a press and hold on a
-// pile, and thrown the same way (DESIGN.md, "Act 3's goods are blocks, and
-// bodies carry every one", rule 5). The hand never writes a plot itself:
-// what it takes and what lands go through `takeCell` and `setBlock`, so the
-// pile stays its stock.
-export const AFTER_PLOTS = {
-  // The pile whose plot is under (x, y), a block's width of slack round it,
-  // its station standing: { b, what, kind }; else the floor where goods lie
-  // within `reach` px, a felled log or a block thrown there: { lying, kind },
-  // the nearest's kind; or null. The floor's goods are the hand's as a
-  // pile's are, as act 1's dust is the hand's wherever it lies: a block
-  // thrown off a pile is picked up again where it came down.
-  at(x, y, reach = 0) {
-    if (!S.after) return null;
-    for (const what of PILED) {
-      const key = pileOwner(what);
-      if (!key || !built(key)) continue;
-      const b = plotOf(what);
-      if (x >= b.x - b.p && x < b.x + (b.cols + 1) * b.p && y >= b.y - b.p && y <= bottomY(b)) return { b, what, kind: AFTER_PILES[what].good };
+// Every pile stood up again: the act begun, or a save just read. `lay` the
+// list an older save handed over (after/index.js, `S.after.lay`): a pile's
+// count ({ what, n }), a good lying at an x ({ kind, x }), or the log the
+// sawyer held, laid at the saw mill's door ({ kind, near: 'mill' }).
+export function standPiles() {
+  if (!S.after) return;
+  const lay = Array.isArray(S.after.lay) ? S.after.lay : [];
+  S.after.lay = [];
+  standGround(lay.map(item => () => {
+    if (!item || typeof item !== 'object') return;
+    if (isPiled(item.what)) standPile(item.what, Math.max(0, Math.floor(+item.n || 0)));
+    else if (KINDS[item.kind] && Number.isFinite(item.x)) putSomewhere(cellOf(item.kind), item.x + KINDS[item.kind].size * AP / 2);
+    else if (KINDS[item.kind] && item.near === 'mill') putSomewhere(cellOf(item.kind), stationDoor('mill'));
+  }));
+}
+
+// One frame of the ground: a pass of the heap rule every AFTER_PILE_SETTLE_S,
+// so a block set down is seen rolling to rest.
+export function stepPiles(c) {
+  if (!G.grid) return;
+  if (!G.awakeN) { G.t = 0; return; }
+  for (G.t += secs(c); G.t >= AFTER_PILE_SETTLE_S; G.t -= AFTER_PILE_SETTLE_S) settleGround();
+}
+
+// --- each pile as a plot of blocks (TEMP: step 4 retires the readers) --------------
+// A counted pile as its old plot was shaped, a cell a block, `p` a block's
+// width, its bottom row on its strip's ground: the saw's lift and the
+// mound's drop (mill.js), the hand work's cue, the dev hooks and the checks
+// still read it. One object an act state, filled from the cells whenever
+// they have changed, a cell set for every block of its good in the strip.
+const VIEWS = new WeakMap(); // cache: each act state's pile views, filled off the ground's cells
+export function plotOf(what) {
+  let vs = VIEWS.get(S.after);
+  if (!vs) VIEWS.set(S.after, (vs = {}));
+  const s = stripOf(what);
+  if (!s) return null;
+  let v = vs[what];
+  if (!v) {
+    const cols = (s.c1 - s.c0) / s.z, rows = Math.max(pileGrid(what).rows, AFTER_PILES[what].brim), p = s.z * AP;
+    v = vs[what] = { x: colX(s.c0), y: 0, cols, rows, p, grid: new Uint8Array(cols * rows), n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, at: -1 };
+  }
+  if (v.at !== groundVersion() && G.grid) {
+    v.at = groundVersion();
+    v.y = rowY(G.fixed && G.grid ? groundRow(s.c0) : 0) - v.rows * v.p;
+    v.grid.fill(0);
+    for (const u of units()) {
+      if (u.c0 < s.c0 || u.c0 >= s.c1 || !counted(u)) continue;
+      const c = (u.c0 - s.c0) / s.z;
+      let r = Math.max(0, Math.min(v.rows - 1, Math.round((u.r0 - groundRow(u.c0)) / s.z)));
+      for (let k = 0; k < v.rows && v.grid[r * v.cols + c]; k++) r = (r + 1) % v.rows;
+      v.grid[r * v.cols + c] = 1;
     }
-    const near = lyingNear(x, y, reach);
-    return near.length ? { lying: true, kind: kindOf(near[0]) } : null;
+  }
+  return v;
+}
+// The row a column's terrain tops out at: the first a unit may stand in.
+const groundRow = c => { let r = 0; while (r < G.rows && G.fixed(c, r)) r++; return r; };
+
+// --- the yard's hand on the ground (TEMP: step 3's one hand replaces it) ------------
+// Act 3's goods as the yard's hand asks a place for them (acts.js, `plots`;
+// hands.js): picked up as act 1's dust is, a press and hold over them,
+// anywhere on the ground, a pile's strip or open floor alike, and thrown the
+// same way. The hand never writes a cell itself: what it takes and what
+// lands go through the ground's doors, so each pile stays its count.
+const nearOf = (u, x, y) => {
+  const w = u.z * AP, x0 = colX(u.c0), top = rowY(u.r0 + u.z);
+  const dx = Math.max(x0 - x, 0, x - (x0 + w)), dy = Math.max(top - y, 0, y - (top + w));
+  return Math.hypot(dx, dy);
+};
+export const AFTER_PLOTS = {
+  // The ground under (x, y) when a good lies within `reach` px of it: { b,
+  // kind }, the kind the hand holds if one of those is near, else the
+  // nearest's. Null over bare ground.
+  at(x, y, reach = 0) {
+    if (!S.after || !G.grid) return null;
+    const held = S.held && S.motes[0] ? S.motes[0].kind : null;
+    let best = null, d0 = Infinity;
+    for (const u of units()) {
+      const d = nearOf(u, x, y);
+      if (d > reach) continue;
+      const score = d + (held && u.kind !== held ? 1e6 : 0);
+      if (score < d0) { d0 = score; best = u; }
+    }
+    return best ? { b: G, kind: best.kind } : null;
   },
-  take: (spot, c, r) => takeCell(spot.what, c, r),
-  // The goods of `kind` lying within `reach` px of (x, y), nearest first, and
-  // one taken up off the floor through the gatherers' own door (grove.js), so
-  // a block the hand has taken is one no gatherer walks to.
-  lyingNear: (x, y, reach, kind) => lyingNear(x, y, reach).filter(q => kindOf(q) === kind),
-  lift: q => takeGroundLog(q.id),
+  // A press over a heap takes the top of the column under it, never a block
+  // with another resting on it (the owner, 2026-10-28: "grabbing from a pile
+  // always grabs the bottom one, which leads to jank").
+  take: (spot, c) => !!takeTopOf(c, spot.kind),
+  // The goods of `kind` lying free within `reach` px of (x, y), nearest first,
+  // and one taken up through the ground's door: the old lying list's shape.
+  lyingNear: (x, y, reach, kind) => lying().filter(q => q.kind === kind && q.free && Math.abs(q.x + q.w / 2 - x) <= reach + q.w)
+    .sort((a, b) => Math.abs(a.x - x) - Math.abs(b.x - x)),
+  lift: q => !!takeAt(q.id),
   // A thrown block, `ch` a chip of S.chips whose x, y are the block's middle,
-  // one frame on: kept inside the place, set down on a pile of its kind its
-  // foot has come down on (one at its brim lets it fall past), else laid on
-  // the place's floor where it comes down, for a gatherer to carry home
-  // (bodies.js, AFTER_GOODS_HOME). True once it is down.
+  // one frame on: kept inside the place; let go over the saw's bed, set down
+  // there (mill.js); else, once its foot comes down on the ground's top under
+  // it, set down there -- on a pile of its kind with room, into it; on a pile
+  // full or of another good, beside it; on open ground, where it falls, to
+  // roll by the heap rule. True once it is down.
   land(ch) {
-    if (!S.after) return true;               // the act begun again under it: nowhere left to land
-    const half = AFTER_BLOCK[ch.kind] * AP / 2, lo = afterX0() + half, hi = afterX1() - half;
+    if (!S.after || !G.grid) return true;    // the act begun again under it: nowhere left to land
+    const k = KINDS[ch.kind];
+    if (!k) return true;
+    const half = k.size * AP / 2, lo = afterX0() + half, hi = afterX1() - half;
     if (ch.x < lo) { ch.x = lo; ch.vx = Math.abs(ch.vx) * 0.6; }
     if (ch.x > hi) { ch.x = hi; ch.vx = -Math.abs(ch.vx) * 0.3; }
     if (ch.vy <= 0) return false;
     if (bedLand(ch)) return true;           // a log let go over the saw mill's bed (mill.js)
-    const foot = ch.y + half;
-    for (const what of PILED) {
-      if (AFTER_PILES[what].good !== ch.kind || pileRoom(what) <= 0 || !built(pileOwner(what))) continue;
-      const b = plotOf(what), c = colOf(b, ch.x);
-      if (c < 0 || c >= b.cols || foot < bottomY(b) - (topRow(b, c) + 1) * b.p) continue;
-      if (setBlock(what, ch.x, ch.s || undefined)) return true; // MOCK: ch.s, the block's shade kept through the throw
-    }
-    // layGood takes a block's left edge and reads the floor a cell in from it
-    const left = Math.round((ch.x - half) / P) * P, fl = floorAt(left + AP);
-    if (foot < fl) return false;
-    layGood(ch.kind, left, fl);
+    const slot = slotNear(colOf(G, ch.x - half + AP / 2), k.size);
+    const top = slot >= 0 ? rowY(slotTop(slot, k.size)) : rowY(0);
+    if (ch.y + half < top) return false;
+    landUnit(ch.kind, ch.x);
     return true;
   }
 };
+// A unit of `kind` come down at world x (its middle): into the pile under it
+// if that is its good's and has room, else beside it, else where it fell.
+export function landUnit(kind, x) {
+  const c = Math.max(0, Math.min(G.cols - 1, colOf(G, x))), v = cellOf(kind);
+  for (const what of PILED) {
+    const s = stripOf(what);
+    if (!s || c < s.c0 || c >= s.c1) continue;
+    if (s.kind === kind && setBlock(what, x)) return true;
+    return putBeside(v, x) >= 0;
+  }
+  return putSomewhere(v, x) >= 0;
+}
 
-// track B: carried goods
 // Every hand-off through the doors since the act was stood up: each pile's
 // net, and the blocks lifted off in bulk (a bill once was). Read by the rule
 // that no pile's count moves but through a body, a hand or a tool

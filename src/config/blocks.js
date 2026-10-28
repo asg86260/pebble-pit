@@ -27,6 +27,11 @@ const KIND_DEFS = [
 
 // The first value a unit may take, the one after the rock's.
 export const BLOCK_CELL = ROCK_CELL + 1;
+// A cell of a place's floor laid as ground that never moves (act 3's cloud
+// swells and station shelves, after/ground.js): the rock's value, as the
+// quarry's undug ground is, since it means the same thing -- not a unit,
+// held up and holding up, never taken and never drawn by the ground's painter.
+export const TERRAIN_CELL = ROCK_CELL;
 
 // `first` and `tones` are derived, never typed: a kind's run is its palette's
 // length, laid after the kind before it.

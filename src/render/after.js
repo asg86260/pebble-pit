@@ -24,7 +24,7 @@ import { fillDots } from './dots.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, pileOwner, ART, AP } from '../after/place.js';
+import { buildPileAt, stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
 import { airMotes } from '../after/rebel.js';
 import { built, heapBrim } from '../after/levels.js';
 import { airSpills } from '../after/mill.js';
@@ -34,12 +34,11 @@ import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, bac
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
 import { drawCloudSky } from './after/cloudsky.js';
-import { drawGrove, drawLaidGoods } from './after/pine.js';
+import { drawGrove } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf, drawMillHeap } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
-import { heap, heapCells, blockPile, goodBlock, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
+import { heap, heapCells, drawGround, goodBlock, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
 import { goodsLook, MOCK_DUST, seedOf } from './after/piles.js'; // MOCK
-import { PILED } from '../after/piles.js';
 import { drawBody } from './crew.js';
 import { drawSawDrops } from './after/drop.js';
 import { onDevice } from './wardrobe.js';
@@ -199,8 +198,9 @@ function drawShackOrder() {
 // (render.js), so a pile stands on the floor as a body does, its bottom row
 // whole rather than cut into dashes between the puffs.
 export function drawAfterPiles() {
-  if (!A()) return;
-  for (const what of PILED) if (built(pileOwner(what))) blockPile(what);
+  const a = A();
+  if (!a) return;
+  drawGround(a.t);
   if (built('mill')) drawMillHeap(frameOf('mill'));
   drawSawDrops();
 }
@@ -217,7 +217,6 @@ export function drawAfterCamp() {
   // the forestry shack, the grove's, then the cards' stations
   for (const key of Object.keys(AFTER_STATIONS)) drawStation(key);
   drawShackOrder();
-  drawLaidGoods(a.t);
   drawRebelPile();
   drawPair();
   drawBubbles();

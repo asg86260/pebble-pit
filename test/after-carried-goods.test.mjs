@@ -14,8 +14,10 @@
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
 import { RIM_PIECES, AFTER_SIGN_TIMBER, AFTER_UPGRADES, AFTER_PILES } from '../src/config.js';
 import { AFTER_JOB } from '../src/jobs.js';
-import { put, topRow, count } from '../src/grid.js';
+import { putBlock, cellOf, count } from '../src/grid.js';
 import { plotOf } from '../src/after/piles.js';
+import { stripOf, slotTop } from '../src/after/ground.js';
+import { afterGround } from '../src/state.js';
 import { stationBox, stationDoor, pileMid } from '../src/after/place.js';
 import { orderAt } from '../src/after/build.js';
 import { afterRow } from '../src/after/rows.js';
@@ -131,12 +133,13 @@ group('a pile whose count moves with nobody handing a block is caught by the rul
   camp(2);
   window.__afterGrant({ timber: 4 });
   run(1);
-  // A block written straight onto the mound and its count, round the doors:
-  // its plot still holds its stock (rule 23 is satisfied), but no body, hand
-  // or tool handed it.
-  const b = plotOf('timber'), c = Math.floor(b.cols / 2);
-  put(b, c, topRow(b, c) + 1, 1);
+  // A block written straight onto the mound's strip of the ground and its
+  // count, round the doors: its strip still holds its stock (rule 23 is
+  // satisfied), but no body, hand or tool handed it.
+  const s = stripOf('timber'), c = s.c0 + Math.floor((s.c1 - s.c0) / s.z / 2) * s.z;
+  putBlock(afterGround, c, slotTop(c, s.z), cellOf('plank'));
   stock().timber += 1;
+  const b = plotOf('timber');
   let caught = '';
   try { run(1 / 30); } catch (e) { caught = e.message; }
   const matches = count(b) === stock().timber;

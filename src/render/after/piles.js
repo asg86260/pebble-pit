@@ -7,10 +7,11 @@
 
 import { P, GREY, AFTER_COUNT_LIFT, AFTER_BLOCK, AFTER_PILES } from '../../config.js';
 import { ctx } from '../ctx.js';
-import { at, bottomY } from '../../grid.js';
-import { plotOf } from '../../after/piles.js';
+import { AFTER_LOG_ROLL_S } from '../../config.js';
+import { units, colX, rowY, tagOf } from '../../after/ground.js';
 import { AP } from '../../after/place.js';
-import { K, W, PALE, MID, DUST, hash, pileAlpha, pileState, countAt, pendingCounts } from './kit.js';
+import { SPLIT_S } from './pine.js';
+import { K, W, PALE, MID, DUST, hash, pileAlpha, pileState, countAt, pendingCounts, clamp01, inView } from './kit.js';
 import { shown } from '../../tween.js';
 import { themed } from '../../ink.js'; // MOCK
 
@@ -48,12 +49,34 @@ export function goodBlock(x, y, kind, seed = 1) {
   ctx.fillStyle = GREY[t.seam]; ctx.fillRect(x, y, z, z);
   ctx.fillStyle = GREY[t.tone]; ctx.fillRect(x, y, z - 1, z - 1);
 }
-// A counted pile, as its plot holds it (after/piles.js): each block where
-// the sand rules have it. No count: the pile is the count.
-export function blockPile(what) {
-  const b = plotOf(what), kind = AFTER_PILES[what].good, foot = bottomY(b);
-  for (let c = 0; c < b.cols; c++) for (let r = 0; r < b.rows; r++) if (at(b, c, r)) goodBlock(b.x + c * b.p, foot - (r + 1) * b.p, kind,
-    at(b, c, r)); // MOCK  the block's own shade, which it carries as act 1's grain does
+// Every good on the act's ground (after/ground.js), piles and open floor
+// alike, each block where the heap rule has it: one drawing for all of them,
+// so a pile is only where its blocks stand. No count: the pile is the count.
+// A unit still arriving is drawn along its way there, whole, at its true
+// position: a felled log faded in over the trunk and sliding off to rest,
+// slowing, over AFTER_LOG_ROLL_S; a good let go of falling under the yard's
+// gravity from where it was let go (ground.js, `fallTag`).
+export function drawGround(t) {
+  for (const u of units()) {
+    const z = u.z * AP;
+    let x = colX(u.c0), y = rowY(u.r0 + u.z), a = 1;
+    const tg = tagOf(u.ai);
+    if (tg && tg.fall != null) {
+      const k = tg.fall > 0 ? clamp01((t - tg.at) / tg.fall) : 1, bot = rowY(u.r0);
+      y = (tg.y0 ?? bot) + (bot - (tg.y0 ?? bot)) * k * k - z;
+    } else if (tg && tg.x0 != null && tg.at != null) {
+      const since = t - tg.at;
+      if (since < -SPLIT_S) continue;
+      const r = clamp01(since / AFTER_LOG_ROLL_S), e = 1 - (1 - r) * (1 - r);
+      x = tg.x0 + (x - tg.x0) * e;
+      a = clamp01((since + SPLIT_S) / SPLIT_S);
+    }
+    if (!inView(x - z, z * 3)) continue;
+    const was = ctx.globalAlpha;
+    ctx.globalAlpha = was * a;
+    goodBlock(Math.round(x), Math.round(y), u.kind, seedOf(u.ai)); // MOCK: seed
+    ctx.globalAlpha = was;
+  }
 }
 
 // --- MOCK: what the goods look like (mock-goods-look2, never merged) --------

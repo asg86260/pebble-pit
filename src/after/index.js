@@ -18,6 +18,7 @@ import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
 import { stepMill, forgetSpills } from './mill.js';
 import { stepPiles, standPiles } from './piles.js';
+import { groundRecord, lying } from './ground.js';
 
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
@@ -47,9 +48,11 @@ import { readOver } from '../placesave.js';
 // axe bought and in hand, the pair's last line (`shout`), the heap last
 // tipped and each station last worked by hand (`tipAt`, `workAt`), the
 // motes coming down, the bodies -- members walking out, at
-// the podium, at their jobs and building -- the throne's speech, the logs lying where
-// their trees fell (grove.js, `groundLogs`), the goods in the player's hand
-// (hand.js, `hand`), and the last id handed out.
+// the podium, at their jobs and building -- the throne's speech, the act's
+// ground with every good lying on it (ground.js, `ground`: written by the
+// saver, null between), what an older save handed over to lay on it (`lay`,
+// the one-ground migration), the goods in the player's hand (hand.js,
+// `hand`), and the last id handed out.
 export const blankAfter = () => ({
   rebel: 0,
   stock: Object.fromEntries(AFTER_STOCK.map(k => [k, 0])),
@@ -83,7 +86,8 @@ export const blankAfter = () => ({
   // the saw mill's machine (mill.js): its wheel, the log on its bed, the
   // blocks and grains on their way out, the sawyer's trip; null until it turns
   saw: null,
-  groundLogs: [],
+  ground: null,
+  lay: [],
   hand: null,
   ids: 0
 });
@@ -99,9 +103,17 @@ export function beginAfter() {
   S.after.begun = S.after.seed;
   S.after.plots = blankPlots();
   S.after.built = [...AFTER_START_BUILT];
+  wireAfter(S.after);
   standPiles();
   seedCrowd();
   return S.after;
+}
+
+// The goods lying loose on the act's ground as the old list's rows, on the
+// act's state where its readers look (TEMP: step 3's carry and step 4's
+// checks read the cells): not enumerable, so the saver passes it by.
+function wireAfter(a) {
+  Object.defineProperty(a, 'groundLogs', { get: () => (S.after === a ? lying() : []), enumerable: false, configurable: true });
 }
 
 // How many frames the afterlife has been stepped this session: the check
@@ -150,6 +162,8 @@ export const SAVE = {
   write(out) {
     if (S.after) syncRims();
     out.after = S.after ? JSON.parse(JSON.stringify(S.after)) : null;
+    // the ground's cells, run-length, as the yard's floor is written (ground.js)
+    if (out.after) out.after.ground = groundRecord();
     // goods in the hand are off their pile's stock and in no save of the
     // yard's: written out here, to be laid on the floor when read (hand.js)
     if (out.after) out.after.hand = handRecord();
@@ -160,8 +174,9 @@ export const SAVE = {
     // the blank lacks (placesave.js); its older job shapes were brought to
     // today's before this, on the raw save (src/migrations/).
     S.after = a && typeof a === 'object' ? readOver(blankAfter(), a) : null;
-    // A save keeps no grid: each pile is stood up from its count (piles.js).
-    if (S.after) { standPiles(); settleHeld(S.after.bodies); settleHand(); }
+    // The ground stood up from its cells, the terrain laid under them again
+    // (ground.js), and anything an older save handed over laid on it.
+    if (S.after) { wireAfter(S.after); standPiles(); settleHeld(S.after.bodies); settleHand(); }
   },
   blank() { S.after = null; }
 };

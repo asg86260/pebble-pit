@@ -950,6 +950,19 @@ export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter:
 // The deep's floor: the scales lying on it, a plot of sand like the pit's,
 // laid under the deep by `wireBed` in deep/scales.js. Every cell is a scale.
 export const deepBed = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+// Act 3's ground (DESIGN.md, "One resource system for every act"): one plot
+// across the whole place at the art cell, its cloud swells and station
+// shelves laid as cells that never move (`fixed`), its piles strips of it
+// (`region`, `lattice`, `ceiling`), and every good lying anywhere on it a
+// unit -- a log a 4x4 block -- in the block layer (`block`, `blockSet`,
+// `blockGrid`, `blockN`, grid.js). Laid by after/ground.js when the act
+// begins or a save is read; empty while there is no act.
+export const afterGround = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0,
+                             blocked: null, ceiling: null, region: null, lattice: null, fixed: null, onPut: null, onMove: null,
+                             repose: false, settleAt: 0, t: 0,
+                             colsOf: null, colN: null, colOdd: null, topsOf: null, tops: null, topSure: null,
+                             awake: null, awakeOf: null, awakeN: 0, awakeList: null,
+                             block: null, blockSet: null, blockGrid: null, blockN: 0 };
 export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The sand in the quarry: `y` is the ground line and the floor of the grid is
 // the deepest the cut will ever be dug. The ground nobody has taken out yet
