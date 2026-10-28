@@ -22,7 +22,7 @@ import { stepPiles, standPiles } from './piles.js';
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
 import { stepBodies } from './bodies.js';
-import { stepHand, settleHand } from './hand.js';
+import { handRecord, settleHand } from './hand.js';
 import './roster.js';                   // the act's posts, stood on the yard's roster
 import { stepBubbles, forgetBubbles } from './bubbles.js';
 import { secs } from './util.js';
@@ -121,7 +121,6 @@ export function stepAfter(c) {
   stepRebel(c);
   stepGrove(c);
   stepBodies(c);
-  stepHand(c);
   stepMill(c);
   stepPiles(c);
   stepUnion(c);
@@ -143,7 +142,13 @@ export function clickAfter(wx, wy) {
 // brought up to the field first (union.js keeps them as bytes between).
 export const SAVE = {
   fields: ['after'],
-  write(out) { if (S.after) syncRims(); out.after = S.after ? JSON.parse(JSON.stringify(S.after)) : null; },
+  write(out) {
+    if (S.after) syncRims();
+    out.after = S.after ? JSON.parse(JSON.stringify(S.after)) : null;
+    // goods in the hand are off their pile's stock and in no save of the
+    // yard's: written out here, to be laid on the floor when read (hand.js)
+    if (out.after) out.after.hand = handRecord();
+  },
   read(s) {
     const a = s.after;
     // An older save's wardens, which nothing reads, fall away with every key

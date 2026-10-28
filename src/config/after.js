@@ -337,18 +337,14 @@ export const AFTER_PLANT_S = 1.5;          // a carrier planting a sign
 // A plank is the hand's good's default: a log's weight.
 export const AFTER_CARRY_SLOTS = { log: 2, plank: 2, sign: 2 };
 export const AFTER_PUT_S = 0.3;
-// --- goods by hand (DESIGN.md, "Act 3's hand work and hand carrying") ---
-// What each counted pile holds, as a load names it (AFTER_CARRY_SLOTS): the
-// hand takes that good off it, and a load of that good let go over it is
-// set down on it.
-export const AFTER_PILE_GOODS = { grovelogs: 'log', logs: 'log', timber: 'plank', signs: 'sign' };
+// --- goods on the floor ---
 // The pile a good lying on the floor is carried back to by a gatherer: the
 // one its station makes it onto.
 export const AFTER_GOODS_HOME = { log: 'grovelogs', plank: 'timber', sign: 'signs' };
-// A pile's reach for the hand, art cells up off the floor: its tallest
-// stack (a sign on its post) and a cell over.
+// A pile's reach for the hover and its footprint, art cells up off the
+// floor: its tallest stack (a sign on its post) and a cell over.
 export const AFTER_PILE_REACH = 10;
-// A good lying on the floor, art cells across where the hand finds it (a
+// A good lying on the floor, art cells across where the hover finds it (a
 // log and a plank their blocks, config/afterpiles.js), and the art cells
 // between two let go from one load.
 export const AFTER_GOODS_FOOT = { log: AFTER_BLOCK.log, plank: AFTER_BLOCK.plank, sign: 4 };

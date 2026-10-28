@@ -44,7 +44,7 @@ import { godFront } from './after/sky.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
 const godView = () => godFront();
-import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PUT_S, AFTER_DROP, AFTER_PILES } from './config.js';
+import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_DROP, AFTER_PILES } from './config.js';
 import { sawDrops } from './after/mill.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
@@ -2962,36 +2962,37 @@ export const SCENES = {
       window.__fast(1 / 60);
       window.__holdShot();
     } },
-  // Goods by hand (after/hand.js): the act-3-mid camp framed on the forestry
-  // shack and the saw mill, logs on the shack's pile and the yard's carry
-  // holding two; with `at` (0 over the shack's pile, 1 over the mill's; null
-  // for nothing in the hand) two logs taken by the shared grab
-  // (`__afterHand`) and carried that far along, up over the shack's roof as
-  // a cursor carries them (`handPath`), and with `letGo` let go there, a
-  // moment into setting them down.
-  'after-hand-carry': { about: 'the acts', say: "act 3's goods by hand: two logs taken off the forestry shack's pile, carried over the shack toward the saw mill's",
+  // Goods by hand (hands.js, the yard's sweep): the act-3-mid camp framed on
+  // the forestry shack and the saw mill, logs on the shack's pile and the
+  // yard's carry bought a rung; with `at` (0 over the shack's pile, 1 over
+  // the mill's; null for nothing in the hand) logs swept off the shack's
+  // pile (`__afterHand`) and carried that far along, up over the shack's
+  // roof as a cursor carries them (`handPath`), and with `letGo` let go
+  // there, caught a moment into their fall.
+  'after-hand-carry': { about: 'the acts', say: "act 3's goods by hand: logs swept off the forestry shack's pile, carried over the shack toward the saw mill's",
     run: (at = 0.5, letGo = false) => {
       act3Mid();
-      S.haulCarryLevel = 1;
+      S.carryLevel = Math.max(S.carryLevel, 2);
       window.__afterGrant({ grovelogs: 6 });
       const from = window.__afterPile('forestry', 'grovelogs'), to = window.__afterPile('mill', 'logs');
       pinCamera((from.x + to.x) / 2 - S.viewW / 2);
       window.__look((from.x + to.x) / 2 - S.viewW / 2);
       if (at != null) {
+        S.mouse = { ...from };
         window.__afterHand(from.x, from.y, 'press');
-        for (let f = 0; f < AFTER_PUT_S * 60 * 3; f++) { window.__afterHand(from.x, from.y); window.__fast(1 / 60); }
         const p = handPath(from, to, at);
+        S.mouse = { ...p };
         window.__afterHand(p.x, p.y, letGo ? 'drop' : 'move');
-        if (letGo) window.__fast(AFTER_PUT_S * 1.5);
+        if (letGo) window.__fast(0.15);
       }
       window.__fast(1 / 60);
       window.__holdShot();
     } },
   'after-hand-piles': { about: 'the acts', say: "act 3's goods by hand: the forestry shack's and the saw mill's log piles, nothing in the hand yet",
     run: () => SCENES['after-hand-carry'].run(null) },
-  'after-hand-take': { about: 'the acts', say: "act 3's goods by hand: two logs held over the forestry shack's pile they came off",
+  'after-hand-take': { about: 'the acts', say: "act 3's goods by hand: logs swept off the forestry shack's pile, held over it",
     run: () => SCENES['after-hand-carry'].run(0) },
-  'after-hand-set': { about: 'the acts', say: "act 3's goods by hand: let go over the saw mill's pile, the logs set down on it one at a time",
+  'after-hand-set': { about: 'the acts', say: "act 3's goods by hand: let go over the saw mill's pile, the logs falling onto it",
     run: () => SCENES['after-hand-carry'].run(1, true) },
   'after-pedestal': { about: 'the acts', say: 'the pair on the pedestal mid-speech, rebel falling to the pile, idle members behind them agitating',
     run: () => {
