@@ -29,7 +29,7 @@ const live = () => afterlifeOn() && !!S.after;
 // A counted pile's name, and the box its mark hangs from: `pileMarkAt` hangs
 // a pile row's mark five cells over its box's top, so the box's top is the
 // plot's at its fullest.
-const PILE_NAMES = { logs: 'hover-pile-logs', grovelogs: 'hover-pile-logs', timber: 'hover-pile-planks' };
+const PILE_NAMES = { logs: 'hover-pile-logs', grovelogs: 'hover-pile-logs', timber: 'hover-pile-planks', benchtimber: 'hover-pile-planks', signs: 'hover-pile-signs' };
 function pileTop(what) {
   const g = pilePlace(what);
   return { x: g.x, y: g.y, w: g.cols * g.p, h: g.rows * g.p };

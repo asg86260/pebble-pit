@@ -8,9 +8,9 @@
 //
 // Reached the way a player reaches it: the saw mill ordered off the shack
 // (`__buy`), the sawyer put on through the roster's + (`__afterPress`), a
-// bill paid in timber bought (`__buy`). The setup it is not about: the act
-// on and its opening played, members walked out of God's yard, coins and
-// the forestry shack's logs granted.
+// bill paid in timber bought (`__buy`) and carried off by bodies. The setup
+// it is not about: the act on and its opening played, members walked out of
+// God's yard, coins and the forestry shack's logs granted.
 import { readFileSync } from 'node:fs';
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
 import { RIM_PIECES, AFTER_PILES, AFTER_LOG_TIMBER, AFTER_BLOCK, AFTER_UPGRADES, AFTER_SEAT_BILLS, AFTER_BUILDS } from '../src/config.js';
@@ -45,7 +45,7 @@ function chain(n) {
 }
 const held = () => PILED.every(w => count(plotOf(w)) === S.after.stock[w]);
 
-group('each pile holds exactly its stock in blocks through a played run, a bill taking its timber off the top', async () => {
+group('each pile holds exactly its stock in blocks through a played run, a timber bill carried off it', async () => {
   const staffed = chain(16);
   window.__afterGrant({ grovelogs: 99 });
   const grove0 = S.after.stock.grovelogs;
@@ -56,10 +56,13 @@ group('each pile holds exactly its stock in blocks through a played run, a bill 
     sawn = sawn || S.after.stock.timber > 0;
     top = Math.max(top, S.after.stock.timber);
   }
-  // A bill paid in timber, bought the player's way: the blocks come off the pile.
+  // A bill paid in timber, bought the player's way: an order, its blocks
+  // spoken for on the pile and carried off it by bodies, a block at a time,
+  // the row landing with the last (after/build.js).
   const t0 = S.after.stock.timber, bill = HEAP_TIMBER;
   const bought = window.__buy('after-heap');
-  const paid = t0 - S.after.stock.timber;
+  const atOnce = S.after.stock.timber === t0;
+  const landed = runUntil(() => (S.after.ups['after-heap'] || 0) > 0, 120);
   run(5);
   const sizes = PILED.every(w => plotOf(w).p === AFTER_BLOCK[AFTER_PILES[w].good] * AP);
   window.__actsOn(null);
@@ -68,7 +71,7 @@ group('each pile holds exactly its stock in blocks through a played run, a bill 
     ok(grove0 === AFTER_PILES.grovelogs.brim, 'a grant past the forestry pile\'s brim lands only what it holds', `${grove0}`),
     ok(sawn && always && held(), 'every frame, each pile\'s plot holds exactly its count', JSON.stringify(S.after.stock)),
     ok(top <= AFTER_PILES.timber.brim, 'the timber pile never stands past its brim', `${top}`),
-    ok(bought && paid === bill && held(), 'a timber bill takes its blocks off the pile', `${t0} -> ${S.after.stock.timber}, bill ${bill}`),
+    ok(bought && atOnce && landed && !S.after.orders.length && held(), 'a timber bill is carried off the pile, not lifted, and lands', `${t0} -> ${S.after.stock.timber}, bill ${bill}`),
     ok(sizes, 'a log pile\'s cell is a 4x4 block, the timber pile\'s a 2x2')
   ];
 });
@@ -84,10 +87,10 @@ group('a timber pile at its brim stops the saw and wears the pile-full mark', as
   run(30);
   const stood = S.after.stock.timber === t0 && S.after.stock.logs + S.after.stock.grovelogs >= logs0;
   const says = jobSays('sawyer').includes(msg('hover-pile-full'));
-  // Room made by a bill bought the player's way: the mark comes off and the saw cuts again.
+  // Room made by a bill bought the player's way, its blocks carried off the
+  // pile by bodies: the mark comes off and the saw cuts again.
   const t1 = S.after.stock.timber, bought = window.__buy('after-heap');
-  run(0.1);
-  const cleared = !S.pileFull['after-pile-timber'];
+  const cleared = runUntil(() => !S.pileFull['after-pile-timber'], 60);
   const cutAgain = runUntil(() => S.after.stock.timber > t1 - HEAP_TIMBER, 60);
   window.__actsOn(null);
   return [

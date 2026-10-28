@@ -509,8 +509,9 @@ function handSaw(strokes, per = 0.5) {
 // timber: it holds no more (after/piles.js), so a setup buying several rows
 // grants it again between them.
 const timberUp = () => window.__afterGrant({ timber: AFTER_PILES.timber.brim });
-// An act 3 row bought with the timber for it.
-const buyAfter = key => { timberUp(); return window.__buy(key); };
+// An act 3 row bought with the timber for it, and its timber carried to its
+// station, so the row has landed.
+const buyAfter = key => { timberUp(); const bought = window.__buy(key); carried(); return bought; };
 function afterChain(slow) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
   // Won in blocks of files rather than from the front back, so the shot
@@ -537,7 +538,7 @@ function afterChain(slow) {
 function handNails(taps, after) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
   for (const k of ['mill', 'workshop']) if (!S.after.built.includes(k)) S.after.built.push(k);
-  window.__afterGrant({ timber: 30, signs: 2 });
+  window.__afterGrant({ timber: 30, benchtimber: 8, signs: 2 });
   const b = stationBox('workshop');
   window.__look(b.x + b.w / 2 + P * 10 - S.viewW / 2); window.__fast(0.5);
   const nails = window.__gestureParts('workshop').nails;
@@ -3375,7 +3376,8 @@ export const SCENES = {
       S.acts.mansion.done = true;
       S.acts.mansion.G = 9;
       window.__fast(1); pinCamera(0); window.__holdShot();
-    } }
+    } },
+  ...carriedScenes()
 };
 
 // A yard for the acts' scenes: rich, past the snatch with the wizards'
@@ -3514,3 +3516,52 @@ function padTo(id) {
 // The names under each part, in ABOUT's order.
 export const byPart = () =>
   ABOUT.map(about => [about, Object.keys(SCENES).filter(k => SCENES[k].about === about)]);
+
+// track B: carried goods
+// Act 3's goods carried by bodies (DESIGN.md, "Act 3's goods are blocks, and
+// bodies carry every one"): the workshop's timber walked to it off the
+// mound, a sign carried out of its rack, a bought row's timber carried to
+// its station.
+// Every bought row's timber carried to its station, the clock turned until
+// none is still on its way (after/build.js, the orders).
+function carried() {
+  for (let k = 0; k < 2400 && S.after && S.after.orders.length; k++) window.__fast(0.25);
+}
+// The clock turned a frame at a time until a body is as `see` says, then
+// framed on it and held still, so the shot is that frame.
+function carryShot(see) {
+  for (let k = 0; k < 9000 && !S.after.bodies.some(see); k++) window.__fast(1 / 30);
+  const w = S.after.bodies.find(see), x = (w ? w.x : stationBox('workshop').x) - S.viewW / 2;
+  pinCamera(x); window.__look(x);
+  window.__still(true); window.__holdShot();
+}
+const pastMill = w => { const m = stationBox('mill'); return w.x > m.x + m.w + P * 6; };
+function carriedScenes() {
+  return {
+    'after-bench-walk': { about: 'the acts', say: "the workshop's timber walked to it off the timber mound, a load of blocks overhead, its rack beside the shed",
+      run: () => {
+        afterChain(false);
+        window.__afterGrant({ benchtimber: -S.after.stock.benchtimber, signs: -S.after.stock.signs }); timberUp();
+        carryShot(w => w.load === 'plank' && !w.pick && (w.target === 'workshop' || w.job === AFTER_JOB.JOIN) && pastMill(w));
+      } },
+    'after-sign-out': { about: 'the acts', say: 'a sign carried out of the workshop\'s rack toward the crowd, the rack a block short',
+      run: () => {
+        afterChain(false);
+        window.__afterGrant({ signs: 3 });
+        const ws = stationBox('workshop');
+        carryShot(w => w.load === 'sign' && w.x > ws.x + ws.w + P * 12 && w.x < ws.x + ws.w + P * 40);
+      } },
+    'after-order-carry': { about: 'the acts', say: "a timber bill bought: its blocks carried off the timber mound to the workshop, the row waiting on them",
+      run: () => {
+        afterChain(false);
+        yardPurse(); timberUp(); window.__buy('after-signreach');
+        carryShot(w => w.errand === AFTER_JOB.ORDER && w.load === 'plank' && !w.pick && pastMill(w));
+      } },
+    'after-order-board': { about: 'the acts', say: "the workshop's board with a timber row ordered: the row waiting on its blocks, saying it is going up",
+      run: () => {
+        act3Board('workshop');
+        yardPurse(); timberUp(); window.__buy('after-signreach');
+        window.__fast(0.2); window.__openAfterBoard('workshop'); window.__holdShot();
+      } }
+  };
+}

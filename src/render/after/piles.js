@@ -1,9 +1,9 @@
 // The camp's piles, yard style (docs/mocks/act3-stations-2026-10-18): the
-// things themselves, stacked; the counted piles as plots of blocks, the
-// sign rack with a count over it. The sign rack and the heap each take a
-// frame (kit.js) and the pile's state (`pileState`: what it shows, what it
-// showed, since when), so a sign coming on or going off fades. Cells off the
-// frame's ground.
+// things themselves, stacked; the counted piles, the workshop's sign rack
+// among them, as plots of blocks, each brought and taken by a body or the
+// hand and never faded. The sawdust heap takes a frame (kit.js) and the
+// pile's state (`pileState`: what it shows, what it showed, since when).
+// Cells off the frame's ground.
 
 import { P, GREY, AFTER_COUNT_LIFT, AFTER_BLOCK, AFTER_PILES } from '../../config.js';
 import { ctx } from '../ctx.js';
@@ -39,7 +39,9 @@ function count(d, n, cx, top, key) { const at = d.world(cx, top); countOver(at.x
 // solid behind its blocks, so the pixel between two is a seam, not a hole.
 // The block's size is the good's (config/afterpiles.js); x, y its top left
 // in world px, free (a carried or falling block is laid where it truly is).
-export const BLOCK_TONES = { log: { tone: MID, seam: K }, plank: { tone: PALE, seam: MID } };
+// A sign is the camp's black board, as it is planted, its seam the paper
+// between two in the rack.
+export const BLOCK_TONES = { log: { tone: MID, seam: K }, plank: { tone: PALE, seam: MID }, sign: { tone: K, seam: W } };
 export function goodBlock(x, y, kind, seed = 1) {
   if (goodsLook()) { mockBlock(x, y, kind, seed); return; } // MOCK
   const t = BLOCK_TONES[kind], z = AFTER_BLOCK[kind] * AP;
@@ -152,18 +154,6 @@ export function heap(d, cx, R, st, n, tipped = false, pal = DUST, key = st.key) 
   count(d, n, cx + 0.5, -1 - top, key);
 }
 
-// Signs: a board on a post, stood in a row.
-export function sign(d, x, y) {
-  d.r(x, y, 4, 3, K); d.px(x * P + 2, y * P + 2, 4 * P - 4, 3 * P - 4, W);
-  d.px(x * P + 6, y * P + 7, 12, 2, K); d.px(x * P + 6, y * P + 11, 8, 2, K);
-  d.r(x + 1.5, y + 3, 1, 3, K);
-}
-export function signPile(d, x, st, cap = 3) {
-  const m = Math.min(Math.max(st.n, st.prev), cap);
-  for (let i = 0; i < m; i++) d.fade(pileAlpha(i, st), () => sign(d, x + i * 2, -6 - (i % 2)));
-  count(d, st.n, x + 2 + (Math.max(1, Math.min(st.n, cap)) - 1), -7, st.key);
-}
-
 // --- a station's loads, while it is raised (pile a, docs/mocks/act3-unbuilt-2026-10-18)
 // Planks six cells long stacked staggered, as the timber pile stacks them,
 // and two-cell blocks beside and on top: a builder's heap that visibly loses
@@ -175,11 +165,11 @@ export const BUILD_SLOTS = [
 ];
 export const plankAt = (d, x, y, w = 6) => { d.px(x * P, y * P, w * P, P, K); d.px(x * P + 2, y * P + 2, w * P - 4, P - 4, PALE); };
 export const blockAt = (d, x, y) => { d.r(x, y, 2, 2, K); d.px(x * P + 2, y * P + 2, 2 * P - 4, 2 * P - 4, MID); d.px(x * P + 4, y * P + 4, 4, 4, W); };
-// The pile, each slot at the ink `alpha(i)` gives (fading on as it is set
-// down and off as it is taken).
-export function buildPile(d, x, alpha) {
+// The pile, each slot that `lies(i)` says is on it: whole from the moment a
+// carrier sets it down until a builder takes it up, never faded, since a
+// body's hands bring it and take it away.
+export function buildPile(d, x, lies) {
   BUILD_SLOTS.forEach((s, i) => {
-    const a = alpha(i);
-    if (a > 0) d.fade(a, () => (s.k === 'plank' ? plankAt(d, x + s.x, s.y) : blockAt(d, x + s.x, s.y)));
+    if (lies(i)) (s.k === 'plank' ? plankAt(d, x + s.x, s.y) : blockAt(d, x + s.x, s.y));
   });
 }

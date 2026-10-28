@@ -18,6 +18,7 @@ import { built } from '../../src/after/levels.js';
 import { afterRow, afterBill, afterMaxed } from '../../src/after/rows.js';
 import { crewAt, spareMembers, walkingOut } from '../../src/after/bodies.js';
 import { seatsOf, seatKey } from '../../src/after/levels.js';
+import { purse } from '../../src/words.js';
 import { union, won, support } from '../../src/after/union.js';
 
 export const mm = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -126,7 +127,9 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   const yardPurse = Object.fromEntries(YARD_COINS.map(c => [c, LATE_YARD[c] * YARD * BANK_S]));
   const yardPaid = Object.fromEntries(YARD_COINS.map(c => [c, 0]));
   const GRANT_KEY = { dust: 'dust', spore: 'spores', shard: 'shards', scale: 'scales', spark: 'sparks' };
-  const actHave = c => (c === 'rebel' ? S.after.rebel : S.after.stock[c] || 0);
+  // Timber as the board reads it: the mound less what carried orders have
+  // spoken for (after/build.js).
+  const actHave = c => (c === 'rebel' ? S.after.rebel : c === 'timber' ? purse('timber') : S.after.stock[c] || 0);
   const have = c => (YARD_COINS.includes(c) ? yardPurse[c] : actHave(c));
   const shortOf = bill => bill.filter(([c, n]) => have(c) < n).map(([c]) => c);
   // A row as the plan names it, the nth time: a post is had once n stand, the
@@ -198,7 +201,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     // makes more only while there are few, and leaves the timber alone while
     // the next thing on the plan is short of it.
     const want = wanted()[0], short = want ? shortOf(afterBill(row(want))) : [];
-    if (built('workshop') && st.timber >= C.AFTER_SIGN_TIMBER && st.signs < 3 && !short.includes('timber')) return 'workshop';
+    if (built('workshop') && st.benchtimber >= C.AFTER_SIGN_TIMBER && st.signs < 3 && !short.includes('timber')) return 'workshop';
     if (built('mill') && st.logs > 0 && !heapFull()) return 'mill';
     if (heapFull()) return 'tip';
     if (a.axe && a.plots.some(standing)) return 'chop';

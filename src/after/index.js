@@ -37,7 +37,8 @@ import { readOver } from '../placesave.js';
 // spot it was last said at (`said`), and how many of each job the rosters
 // want (`crew`); the grove's plots and each tree's growth; the signs
 // planted; the camp's stations built and those going up a piece
-// at a time (`raising`), and how many times each named upgrade and each
+// at a time (`raising`), the rows bought in timber whose blocks are still
+// being carried (`orders`, build.js), and how many times each named upgrade and each
 // job's seat is bought (`ups`); the gate reached. When each upgrade was
 // bought (`upAt`), so what it puts on screen fades in. And what the loop
 // added to stand it up: the act's clock (`t`) and its chance (`seed`) and
@@ -61,6 +62,7 @@ export const blankAfter = () => ({
   signs: [],
   built: [],
   raising: {},
+  orders: [],
   ups: {},
   upAt: {},
   gate: 0,

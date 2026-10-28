@@ -11,10 +11,11 @@
 // black for the masses and the rims, the pale and the mid grey only for
 // material, every material tone picked a cell at a time off a fixed hash of
 // where the cell stands (no flat fills, no random draw, so it holds still
-// frame to frame). Everything that comes or goes fades.
+// frame to frame). Everything that comes or goes fades, but the goods: every
+// block is brought and taken by a body or the hand, so none ever fades.
 
-import { P, GREY, AFTER_BLOCK, AFTER_CARRY_SHOWN, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
-         AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
+import { P, GREY, AFTER_BLOCK, AFTER_CARRY_SHOWN, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, AFTER_ART_SCALE, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
+         AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S,
          AFTER_SAW_S, AFTER_SIGN_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
 import { S } from '../state.js';
@@ -28,14 +29,14 @@ import { built, heapBrim } from '../after/levels.js';
 import { airSpills } from '../after/mill.js';
 import { atStation, bodyInk, carried as carryOf } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
-import { frame, now, inView, clamp01, pileState, pileAlpha, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
+import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
 import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove, drawLaidGoods } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
-import { heap, heapCells, blockPile, goodBlock, buildPile, BUILD_SLOTS, plankAt, blockAt, countOver } from './after/piles.js';
+import { heap, heapCells, blockPile, goodBlock, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
 import { goodsLook, MOCK_DUST, seedOf } from './after/piles.js'; // MOCK
 import { PILED } from '../after/piles.js';
 import { drawBody } from './crew.js';
@@ -110,20 +111,17 @@ const frameOf = key => frame(stationX0(key), groundOf(key), ART[key].flip || 0, 
 let hands = {};   // cache: this frame's gestures, read afresh at the top of each draw
 const readHands = () => { hands = {}; for (const r of gestureView() || []) hands[r.key] = r; };
 
-// What a station's drawing reads besides its pose: the workshop's blanks,
-// as many as there is timber for.
-function extras(key) {
-  if (key === 'workshop') return { blanks: Math.floor(A().stock.timber / AFTER_SIGN_TIMBER) };
-  return {};
-}
+// What a station's drawing reads besides its pose. The workshop's blanks are
+// none: its timber is the plot of blocks carried to its rack (after/piles.js,
+// `benchtimber`), drawn with the other piles, never a count of the mound.
+const extras = () => ({});
 // A station's loads on its spot while it is raised (after/build.js): each
-// fading on as it is set down and off as a builder takes it.
-const ramp = (t, t0, dur) => (t0 == null ? 0 : clamp01((t - t0) / dur));
+// there from the moment a carrier sets it down until a builder takes it up.
 function drawSite(key) {
   const r = siteOf(key);
   if (!r) return;
-  const t = now(), d = frame(0, groundOf(key), 0, null, AFTER_ART_SCALE);
-  buildPile(d, buildPileAt(key) / AP, i => ramp(t, r.drop[i], AFTER_BUILD_DROP_S) * (1 - ramp(t, r.pick[i], AFTER_PILE_FADE_S)));
+  const d = frame(0, groundOf(key), 0, null, AFTER_ART_SCALE);
+  buildPile(d, buildPileAt(key) / AP, i => r.drop[i] != null && r.pick[i] == null);
 }
 // The glyph over a station, `at` of it built: hung where the yard hangs one,
 // seven cells over the top.
@@ -210,33 +208,12 @@ function drawSawdust() {
     ctx.globalAlpha = 1;
   }
 }
-// The finished signs as the fist flags they will be planted as (config,
-// AFTER_SIGN_FLAG_U), stood in a rack on a low rail outside the workshop, each
-// fading in as it is laid; and while the joiner works, the next one standing
-// in the rack's next slot, its fist lettered on as the work goes.
-function signRack(d, x, st) {
-  const FU = AFTER_SIGN_FLAG_U, at = d.world(x, 0), U = FU.rack, step = FU.apart * P, n = Math.min(Math.max(st.n, st.prev), 3);
-  ctx.fillStyle = GREY[K]; ctx.fillRect(at.x - P, at.y - P, step * 3 + P, P);
-  // MOCK: a sign as the 4x4 block it is to be, stood on the rack's rail
-  const z = AFTER_BLOCK.sign * AP; // MOCK
-  if (goodsLook()) { for (let i = 0; i < n; i++) d.fade(pileAlpha(i, st), () => goodBlock(at.x + i * (z + AP), at.y - P - z, 'sign', seedOf(0, i))); // MOCK
-    countOver(at.x + (z + AP) * 1.5, at.y - P - z, st.n, st.key); return; } // MOCK
-  for (let i = 0; i < n; i++) d.fade(pileAlpha(i, st), () => drawFistFlag(at.x + i * step, at.y - P, U));
-  // The sign on the bench, lettered in the next slot a row of the fist a
-  // blow: as far along as its nails are driven, by the hand or the joiner.
-  const h = hands.workshop, done = h && h.nails ? h.nails.reduce((a, k) => a + k, 0) / (h.nails.length * GESTURE_NAIL_TAPS) : 0;
-  if (done > 0 && st.n < 3) drawFistFlag(at.x + st.n * step, at.y - P, U, done);
-  countOver(at.x + step * 1.5, at.y - P - (SKY_FLAG.h + SKY_FLAG.up) * U, st.n, st.key);
-}
-// Each station's counted pile, on its own ground: drawn over the lip of
-// billows along the path's front (render.js), so a pile stands on the floor
-// as a body does, its bottom row and the sign rack's low rail whole rather
-// than cut into dashes between the puffs.
-const pile = (key, what, fn, n) => { if (built(key)) fn(frameOf(key), ART[key].pile[what], pileState(what, n)); };
+// Each station's counted piles, on its own ground, the workshop's signs and
+// timber among them: drawn over the lip of billows along the path's front
+// (render.js), so a pile stands on the floor as a body does, its bottom row
+// whole rather than cut into dashes between the puffs.
 export function drawAfterPiles() {
   if (!A()) return;
-  const st = A().stock;
-  pile('workshop', 'signs', signRack, Math.floor(st.signs));
   for (const what of PILED) if (built(pileOwner(what))) blockPile(what);
   drawSawDrops();
 }

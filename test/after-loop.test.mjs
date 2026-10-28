@@ -54,7 +54,10 @@ const settle = () => runUntil(() => read().walking === 0, 120);
 // pile holds no more than its brim (after/piles.js), so a check buying
 // several rows grants it again between them.
 const topUp = () => window.__afterGrant({ timber: AFTER_PILES.timber.brim });
-const putOn = job => window.__afterPress(job) || (topUp(), !!window.__buy(`after-seat-${job}`) && window.__afterPress(job));
+// A bill paid in timber is an order (after/build.js): its row lands when idle
+// members have carried its last block to its station.
+const landed = () => runUntil(() => !S.after.orders.length, 240);
+const putOn = job => window.__afterPress(job) || (topUp(), !!window.__buy(`after-seat-${job}`) && (landed(), window.__afterPress(job)));
 const line = () => { const at = window.__afterPair(); return window.__afterClick(at.x, at.y); };
 // The camp given members, as the signs would send them: the front of the crowd
 // made members, and the clock turned until they have walked out and stand on
@@ -92,10 +95,13 @@ group("the podium is a ladder bought on the pedestal's card, a rung at each supp
   window.__afterGrant({ rebel: 5000, timber: 500 });
   const short = window.__buy('after-podium');
   const { marks } = AFTER_UPGRADES['after-podium'];
-  const n = rims().length, toMark = k => window.__afterCrowd((i, v) => (i < Math.ceil(n * marks[k] * STRIKE_SHARE) + 2 ? 9 : v));
+  // Read against the crowd as it stands: souls keep rising into its back while
+  // a rung's timber is carried.
+  const toMark = k => { const n = rims().length; return window.__afterCrowd((i, v) => (i < Math.ceil(n * marks[k] * STRIKE_SHARE) + 2 ? 9 : v)); };
   toMark(0); run(0.1);
   const y0 = speakerAt(0).y;
   const bought = window.__buy('after-podium'), early = window.__buy('after-podium');
+  landed();
   run(AFTER_PODIUM_CLIMB.s * AFTER_PODIUM_CLIMB.rise[1]);
   const yMid = speakerAt(0).y;
   run(AFTER_PODIUM_CLIMB.s);
@@ -107,7 +113,7 @@ group("the podium is a ladder bought on the pedestal's card, a rung at each supp
   const paid = S.after.motes.slice(m0).reduce((s, m) => s + m.v, 0);
   run(10);
   const rungs = [];
-  for (let k = 1; k < marks.length; k++) { toMark(k); run(0.1); topUp(); rungs.push(window.__buy('after-podium')); run(AFTER_PODIUM_CLIMB.s); }
+  for (let k = 1; k < marks.length; k++) { toMark(k); run(0.1); topUp(); rungs.push(window.__buy('after-podium')); landed(); run(AFTER_PODIUM_CLIMB.s); }
   const done = window.__buy('after-podium');
   const top = afterFloor() - speakerAt(0).y;
   yard.persist(); window.__reload(); run(0.1);
@@ -242,18 +248,18 @@ group('the grove\'s card clears plots, each with its sapling, to its most', asyn
   up();
   window.__afterGrant({ rebel: 3000, timber: 400 });
   const bought = [];
-  for (let k = 0; k < AFTER_PLOT_MAX; k++) { topUp(); bought.push(window.__buy('after-plot')); }
+  for (let k = 0; k < AFTER_PLOT_MAX; k++) { topUp(); bought.push(window.__buy('after-plot')); landed(); }
   const plots = S.after.plots;
   topUp();
   const grow = window.__buy('after-grow');
-  topUp();
+  landed(); topUp();
   const big = window.__buy('after-tree');
   window.__actsOn(null);
   return [
     ok(bought.filter(Boolean).length === AFTER_PLOT_MAX - AFTER_PLOTS0 && !bought.at(-1), 'a plot a press, to the most it clears',
        bought.join(' ')),
-    ok(plots.length === AFTER_PLOT_MAX && plots.slice(AFTER_PLOTS0).every(p => p.stage === 1),
-       'each new plot has its sapling set', plots.map(p => p.stage).join(' ')),
+    ok(plots.length === AFTER_PLOT_MAX && plots.slice(AFTER_PLOTS0).every(p => p.stage >= 1 && p.at != null),
+       'each new plot has its sapling set (growing since, while the next timber is carried)', plots.map(p => p.stage).join(' ')),
     ok(grow && big, 'faster growth and bigger trees are on the same card')
   ];
 });
@@ -507,6 +513,7 @@ group('the mill\'s second blade saws two logs a cut, at the fixed split', async 
   raise('mill');
   putOn('sawyer');
   const blade = window.__buy('after-blade');
+  landed();
   // The pile emptied, so all six logs' timber has room on it.
   window.__afterGrant({ logs: 6, timber: -S.after.stock.timber });
   const t0 = read().timber, d0 = read().sawdust;
