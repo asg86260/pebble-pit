@@ -9,6 +9,10 @@
   .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
   .tabs button.on { background: #000; color: #fff; }
   .tabs .hint { align-self: center; color: #555; }
+  .tag { display: inline-block; padding: 0 6px; margin-right: 6px; border: 2px solid #000; font-weight: bold; }
+  .tag.mock { border-style: dashed; }
+  .tag.built { background: #000; color: #fff; }
+  #stage-say { margin: 0 0 8px; }
   select, button { font: inherit; border: 2px solid #000; background: #fff; color: #000; padding: 2px 10px; cursor: pointer; }
   button.on { background: #000; color: #fff; }
   .bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
@@ -34,6 +38,7 @@
      (tools/review-wait.mjs). -->
 <div class="tabs" id="tabs" role="tablist" aria-label="reviews"></div>
 <div class="top"><h1 id="title">Review</h1></div>
+<p id="stage-say"></p>
 <div class="bar" id="bar"></div>
 <p id="say"></p>
 <form class="note" id="note"><textarea id="words" placeholder="what to change (or why this one)"></textarea><button type="button" id="stop">stop: pick this one</button><button type="button" id="keep">keep iterating</button><span id="sent" aria-live="polite"></span></form>
@@ -49,11 +54,16 @@ addEventListener('resize', fit); fit();
 
 let reviews = [], rev = null, cur = null;
 const ready = () => f.contentWindow && f.contentWindow.__reviews && f.contentWindow.__reset;
+// A review's stage, from its scenes' `stage` ("built: ..." or "mock: ..."): 'built', 'mock' or null.
+const kindOf = r => { const st = r.options[0].stage || ''; return /^built/i.test(st) ? 'built' : /^mock/i.test(st) ? 'mock' : null; };
 const parse = () => { const [r, s] = decodeURIComponent(location.hash.slice(1)).split('/'); return { r, s }; };
 
 function show(r, scene) {
   rev = reviews.find(x => slug(x.name) === r) || reviews[reviews.length - 1];
   $('title').textContent = rev.name;
+  // BUILT or MOCK, said on the page (the owner, 2026-10-28: "im having a hard time distinguishing between the mocks and whats actually built")
+  const st = rev.options[0].stage, k = kindOf(rev);
+  $('stage-say').innerHTML = st ? `${k ? `<span class="tag ${k}">${k.toUpperCase()}</span>` : ''}${st.replace(/^(built|mock):\s*/i, '')}` : '';
   for (const b of $('tabs').querySelectorAll('button')) b.classList.toggle('on', b.dataset.rev === slug(rev.name));
   $('bar').innerHTML = '';
   rev.options.forEach((o, i) => {
@@ -64,12 +74,15 @@ function show(r, scene) {
   stand(rev.options.some(o => o.scene === scene) ? scene : rev.options[0].scene);
 }
 function stand(scene) {
+  // between two options of one review that both swap, flip the setting on the game standing: instant
+  const was = cur, sameRev = was && rev.options.some(o => o.scene === was);
   cur = scene;
   const o = rev.options.find(x => x.scene === scene);
   history.replaceState(null, '', `#${slug(rev.name)}/${scene}`);
   for (const b of $('bar').children) b.classList.toggle('on', b.dataset.scene === scene);
   $('say').textContent = o ? o.say : '';
-  f.contentWindow.__scene(scene);
+  const from = rev.options.find(x => x.scene === was);
+  if (!(sameRev && was !== scene && from?.swap && o?.swap && f.contentWindow.__sceneSwap?.(scene))) f.contentWindow.__scene(scene);
 }
 f.addEventListener('load', () => {
   const go = () => {
@@ -80,7 +93,7 @@ f.addEventListener('load', () => {
     if (!reviews.length) { $('note').hidden = true; stage.outerHTML = '<p class="empty">No review is open. File scenes under one in src/scenes.js: <code>review: \'the question\', option: \'A name\'</code>.</p>'; return; }
     // every open review a tab, so moving between them is a click (or [ and ])
     $('tabs').innerHTML = '';
-    reviews.forEach(x => { const b = document.createElement('button'); b.textContent = x.name; b.dataset.rev = slug(x.name); b.setAttribute('role', 'tab'); b.onclick = () => show(slug(x.name)); $('tabs').append(b); });
+    reviews.forEach(x => { const b = document.createElement('button'); b.textContent = `${kindOf(x) ? kindOf(x).toUpperCase() + ' · ' : ''}${x.name}`; b.dataset.rev = slug(x.name); b.setAttribute('role', 'tab'); b.onclick = () => show(slug(x.name)); $('tabs').append(b); });
     if (reviews.length > 1) { const h = document.createElement('span'); h.className = 'hint'; h.textContent = '[ ] between reviews, 1-9 options, r restart'; $('tabs').append(h); }
     const { r, s } = parse();
     show(r, s);
