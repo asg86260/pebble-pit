@@ -29,6 +29,7 @@ import { trees, groundLogs } from '../../after/grove.js';
 import { frame, K, W, PALE, MID, SOIL, DUST, toneOf, now, inView, clamp01, hash } from './kit.js';
 import { gestureView, groveIcons } from '../../after/gestures.js';
 import { goodBlock } from './piles.js';
+import { seedOf } from './piles.js'; // MOCK
 import { ctx } from '../ctx.js';
 import { themed } from '../../ink.js';
 import { GREY } from '../../config.js';
@@ -123,7 +124,7 @@ function drawGroundLogs(t) {
     const r = clamp01(since / AFTER_LOG_ROLL_S), e = 1 - (1 - r) * (1 - r);
     const was = ctx.globalAlpha;
     ctx.globalAlpha = was * clamp01((since + SPLIT_S) / SPLIT_S);
-    goodBlock(q.x0 + (q.x - q.x0) * e, fl - z, 'log');
+    goodBlock(q.x0 + (q.x - q.x0) * e, fl - z, 'log', seedOf(q.id)); // MOCK: seed
     ctx.globalAlpha = was;
   }
 }
@@ -142,7 +143,7 @@ export function drawLaidGoods(t) {
     // it stands, as layGood reckoned its fall
     const fl = floorAt(q.x + AP), y = Math.round((q.y0 ?? fl) + (fl - (q.y0 ?? fl)) * u * u);
     if (kind === 'log' || kind === 'plank' || (kind === 'sign' && globalThis.__goodsLook)) { // MOCK: || sign
-      goodBlock(Math.round(q.x), y - AFTER_BLOCK[kind] * AP, kind); continue; }
+      goodBlock(Math.round(q.x), y - AFTER_BLOCK[kind] * AP, kind, seedOf(q.id)); continue; } // MOCK: seed
     const d = frame(Math.round(q.x), y, 0, null, A);
     if (kind === 'sign') { d.px(0, -P, 4 * P, P, K); d.px(2, -P + 2, 4 * P - 4, P - 4, W); d.px(4 * P, -P / 2 - 1, 2 * P, 2, K); }
   }

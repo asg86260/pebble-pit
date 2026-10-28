@@ -3120,14 +3120,14 @@ export const SCENES = {
       window.__look(mid - S.viewW / 2);
       window.__still(true); window.__holdShot();
     } },
-  // MOCK: what act 3's goods look like (mock-goods-look, never merged). The
+  // MOCK: what act 3's goods look like (mock-goods-look2, never merged). The
   // chain run and every pile topped up, framed from the forestry shack's log
   // pile to the workshop's signs, a member carrying while it holds; `look`
   // the drawing mode (render/after/piles.js, `__goodsLook`), null the real one.
   ...Object.fromEntries([[null, 'current', "the goods as they are drawn now: each block a flat tone with a one-pixel seam on its right and bottom only"],
-    ['a', 'A hairline all round', "each block's one-pixel seam now runs all the way round it, the pile's outer edge too: logs mid with a pale end-grain, timber pale seamed mid, a sign paper with ink lettering, sawdust pale flecked mid"],
-    ['b', 'B ground gaps', "a cell of bare ground between any two logs or signs and round the pile alike: logs mid with a pale heart, a sign pale with an ink top and letter, timber a plank edge-on (pale over mid), sawdust pale flecked paper"],
-    ['c', 'C shape is the edge', "no seams, each good's shape is its own edge: logs cut round (corners bare, pale heart), timber sawn square with a mid corner, a sign an ink board with a paper face on a post stub, sawdust mid flecked pale"]]
+    ['a', 'A subtle mottle', "no border: every block keeps its own shade, as act 1's grains do, and a cell in four is a step off it; logs in three mid-to-dark greys, timber three pale greys, signs dark boards, sawdust a light speckle"],
+    ['b', 'B strong mottle', "no border: every block keeps its own shade, a cell in two a step off and its bottom right leaning a step darker; logs mid to bark, timber three pale greys, signs three dark greys, sawdust speckled wider"],
+    ['c', 'C mottle and a mark', "A's subtle mottle, and each good marked as what it is, a step off its own shade: a log's end-grain on the diagonal, timber's grain along its top row, a sign's lettering in paper, sawdust a light speckle"]]
     .map(([look, option, say]) => [`after-goods-${look || 'now'}`, { about: 'the acts', review: 'act 3: what the goods look like', // MOCK
       stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option, say, // MOCK
       swap: () => { globalThis.__goodsLook = look; }, // MOCK
