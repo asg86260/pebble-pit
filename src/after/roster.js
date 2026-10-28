@@ -13,6 +13,7 @@ import { S } from '../state.js';
 import { AFTER_JOBS, AFTER_JOB_POST, AFTER_ROSTER_DOWN, AFTER_SIGN_TIMBER } from '../config.js';
 import { msg } from '../lang.js';
 import { rosterPlace } from '../roster.js';
+import { P } from '../config.js';   // REVIEW
 import { afterlifeOn } from '../acts.js';
 import { built, seatsOf, stumpsOn } from './levels.js';
 import { stationBox, groundOf, closed } from './place.js';
@@ -54,10 +55,11 @@ export const jobSays = job => { const k = STALL[job](); return msg('after-roster
 const POSTS = AFTER_JOBS.map(job => {
   const card = AFTER_JOB_POST[job], key = stationOf(card);
   return {
-    key: `after-${job}`, job, place: 'after', group: `after-${key}`, kit: false, fixed: false, src: SRC,
+    key: `after-${job}`, job, place: 'after', group: `after-${key}`, board: `after-${card}`, kit: false, fixed: false, src: SRC,
     show: () => live() && built(card) && !closed(card),
     at: () => { const b = stationBox(key); return b.x + b.w / 2; },
-    y: () => groundOf(key) + AFTER_ROSTER_DOWN,
+    // REVIEW: with the upgrades button above the count, the roster stands six cells lower, the button clear of the cloud's lip
+    y: () => groundOf(key) + AFTER_ROSTER_DOWN + (globalThis.__shopBtn === 'below' ? P * 6 : 0),
     deep: false,
     says: () => jobSays(job)
   };

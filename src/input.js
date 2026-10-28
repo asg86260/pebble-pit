@@ -189,7 +189,7 @@ canvas.addEventListener('pointerdown', e => {
   // happens whether or not the click lands on anything. A finger is judged
   // at the release instead (`endDrag`): a press that turns into a scroll is
   // not a decision to stop reading.
-  if (!atStation(p.x, p.y) && e.pointerType !== 'touch') showPanel(null, true);
+  if (!atStation(p.x, p.y) && e.pointerType !== 'touch' && !globalThis.__shopBtnAt?.(p.x, p.y)) showPanel(null, true);   // REVIEW: not off a shop button
   // The camera between the halves answers nothing until it is in one. Then
   // the way through the surface, the arrow at the shaft (the corner's square
   // is the other way; the surface and the sky themselves take no click);
@@ -226,7 +226,7 @@ canvas.addEventListener('pointerdown', e => {
     // before the station's board, which a walk-up has opened already.
     if (S.view === 'hell' && HELL_PLACE.clickHell(p.x, p.y)) return;
     const at = boardAt(p.x, p.y);
-    if (at) { if (e.pointerType !== 'touch') showPanel(at, true); return; }
+    if (at && !(S.view === 'after' && globalThis.__shopBtn)) { if (e.pointerType !== 'touch') showPanel(at, true); return; }   // REVIEW: with the button, a click on the station opens nothing
     if (S.view === 'after' && typeof AFTER_PLACE.clickAfter === 'function') AFTER_PLACE.clickAfter(p.x, p.y);
     return;
   }
@@ -329,7 +329,9 @@ canvas.addEventListener('pointermove', e => {
     potHover(S.mouse.x, S.mouse.y);
     gestureHover(S.mouse.x, S.mouse.y);
     // The table's order settles which wins where two patches overlap.
-    const want = boardAt(S.mouse.x, S.mouse.y);
+    // REVIEW: with the shop button, act 3's boards neither open on arrival nor close on leaving
+    const btnMode = S.view === 'after' && globalThis.__shopBtn;
+    const want = btnMode ? null : boardAt(S.mouse.x, S.mouse.y);
     // Standing at a station outranks being on the way to the open board: a
     // station under the pointer is an arrival, and the wedge is for the ground
     // *between* things, so it only has a say when the answer would otherwise
@@ -340,7 +342,7 @@ canvas.addEventListener('pointermove', e => {
     // The orb is reached across its station's ground, which opened the board
     // over it: it goes at once, not after the linger or the wedge.
     else if (overOrb(S.mouse.x, S.mouse.y)) showPanel(null, true);
-    else if (!inSafeZone(e.clientX, e.clientY)) showPanel(null);
+    else if (!btnMode && !inSafeZone(e.clientX, e.clientY)) showPanel(null);
     // a board opens because you walked up to a station, a tooltip because you
     // went and looked at a mark
     askedAbout(S.mouse.x, S.mouse.y, e.clientX, e.clientY);

@@ -2856,7 +2856,7 @@ export const SCENES = {
   // Act 3's loop on its placeholder drawings (after/; track A): the chain
   // bought row by row and run, framed on the camp; the crowd half won, framed
   // on God's yard; the grove with a tree coming down.
-  'after-chain': { about: 'the acts', say: "the afterlife's chain running: logs to the saw mill, timber and sawdust, signs going out",
+  'after-chain': { about: 'the acts', review: 'act 3: shops and block piles', stage: 'built: the real build on branches a3-station-shop and a3-pile-plots -- not on main yet; lands when you sign it off', option: 'the camp, nothing open: try it', say: "the afterlife's chain running: logs to the saw mill, timber and sawdust, signs going out",
     run: () => { afterChain(false); window.__fast(90); window.__look(stationX0('mill') - P * 4); window.__holdShot(); } },
   'after-crowd': { about: 'the acts', say: "the afterlife's crowd half walked out: signs out, the rims inking round them",
     run: () => { afterChain(true); window.__fast(120); window.__look(soulX(0) - P * 20); window.__holdShot(); } },
@@ -2946,7 +2946,7 @@ export const SCENES = {
     run: () => SCENES['after-roster'].run('forestry') },
   // The carry: the yard's carry bought well up, so the woodcutters and the
   // sawyer fetching walk under stacks of logs, a log taking two of its slots.
-  'after-carry': { about: 'the acts', say: "act 3's goods carried the yard's way: logs carried in a stack, as many as the yard's carry holds",
+  'after-carry': { about: 'the acts', review: 'act 3: shops and block piles', stage: 'built: the real build on branches a3-station-shop and a3-pile-plots -- not on main yet; lands when you sign it off', option: 'logs carried as blocks', say: "act 3's goods carried the yard's way: logs carried in a stack, as many as the yard's carry holds",
     run: () => {
       act3Mid();
       S.haulCarryLevel = 6;           // after the yard is stood up, which sets its own
@@ -3071,7 +3071,25 @@ export const SCENES = {
   // until an idle member is carrying logs to the saw mill and a cut is
   // falling out of the saw's right side onto its timber pile; framed on the
   // mill from its log pile to its timber pile.
-  'after-log-flow': { about: 'the acts', say: "the saw mill kept fed: an idle member carrying logs to its pile, a cut falling out of the saw's right side onto the timber",
+  'after-shopbtn-a': { about: 'the acts', review: 'act 3: a shop button by the worker count', stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option: 'A beside the count', say: "A menu button, the roster's own hairline mark, to the right of each station's worker count; press it to open the station's shop beside it, press again (or click elsewhere) to put it away. Clicking or hovering the station opens nothing.",
+    swap: () => { globalThis.__shopBtn = 'side'; },
+    run: () => {
+      globalThis.__shopBtn = 'side';
+      afterChain(false);
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-shopbtn-b': { about: 'the acts', review: 'act 3: a shop button by the worker count', stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option: 'B above the count', say: "A button saying UPGRADES above each station's worker count (the counts can grow below), drawn as the shop's own cards are: a hairline border, inverted under the pointer and while its shop is open. Clicking or hovering the station opens nothing.",
+    swap: () => { globalThis.__shopBtn = 'below'; },
+    run: () => {
+      globalThis.__shopBtn = 'below';
+      afterChain(false);
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
+    } },
+  'after-log-flow': { about: 'the acts', review: 'act 3: shops and block piles', stage: 'built: the real build on branches a3-station-shop and a3-pile-plots -- not on main yet; lands when you sign it off', option: 'saw mill piles', say: "the saw mill kept fed: an idle member carrying logs to its pile, a cut falling out of the saw's right side onto the timber",
     run: () => {
       afterChain(false);
       window.__afterGrant({ grovelogs: 60 });
@@ -3294,7 +3312,7 @@ export const SCENES = {
   'act3-recruit': { about: 'the acts', say: "act 3's pedestal board with souls won and waiting: the recruit row's count of ready and idle",
     run: () => { act3Board('pedestal'); window.__afterCrowd((i, v) => (i >= CROWD_FILES * 2 && i < CROWD_FILES * 2 + 12 ? 8 : v), true); window.__holdShot(); } },
   ...Object.fromEntries(['shack', 'grove', 'pedestal', 'mill', 'workshop', 'crowd'].map(key =>
-    [`act3-board-${key}`, { about: 'the acts', say: `act 3's ${key} board open in the yard's sheet, its shelves, bills in the act's marks`,
+    [`act3-board-${key}`, { about: 'the acts', ...(key === 'crowd' ? {} : { review: 'act 3: shops and block piles', stage: 'built: the real build on branches a3-station-shop and a3-pile-plots -- not on main yet; lands when you sign it off', option: `${key} board open` }), say: `act 3's ${key} board open in the yard's sheet, its shelves, bills in the act's marks`,
       run: () => act3Board(key) }])),
   // God's pushback as drawn (render/aftercrowd.js): the throne's speech
   // warned, his gaze settled on a sign with the corner marks closing in; then

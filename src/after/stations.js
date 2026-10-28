@@ -87,6 +87,11 @@ const row = (card, more) => {
     // It runs away from the station on whichever side its spot stands (the
     // pedestal's is on its left, every other's on its right).
     boardAnchor: () => {
+      // REVIEW: with the shop button, the board stands off the button
+      if (globalThis.__shopBtn) { const k = globalThis.__shopBoxOf?.(`after-${card}`); if (k) {
+        // a gap past the button so the board never covers it, on the side of the view with room for it
+        return { x: k.x - P * 4, y: k.y, w: k.w + P * 8, h: k.h, side: 'right' };   // the board flips sides itself when the window has no room
+      } }
       const a = signBoard(ground(card)), s = stationBox(ground(card));
       return a && s && { ...a, side: a.x + a.w / 2 >= s.x + s.w / 2 ? 'right' : 'left' };
     },

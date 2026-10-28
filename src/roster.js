@@ -24,6 +24,9 @@ import { turnedOver, themed } from './ink.js';
 import { now } from './clock.js';
 import { reducedMotion } from './prefs.js';
 import { writeCount } from './render/numfont.js';
+import { msg, FACE } from './lang.js';   // REVIEW
+import { crispText } from './render/crisptext.js';   // REVIEW
+import { GREY } from './config/palette.js';   // REVIEW
 
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
@@ -476,7 +479,11 @@ function boxes(p) {
     // The machine's mark, on the roster: "is this station worked by hands or
     // by the machine" is the same question the counter above answers about
     // *how many* hands.
-    run: runBox(p, left, y, set)
+    run: runBox(p, left, y, set),
+    // REVIEW (globalThis.__shopBtn): the button that opens the post's station's
+    // board, beside the count ('side') or under it ('below')
+    shop: p.board && globalThis.__shopBtn === 'side' ? { x: left + wide + GAP * 2, y: y - BTN / 2, w: BTN, h: BTN }
+        : p.board && globalThis.__shopBtn === 'below' ? { x: Math.round((left + wide / 2 - shopW() / 2) / P) * P, y: y - WORKER / 2 - WORKER - GAP * 2 - SHOP_H, w: shopW(), h: SHOP_H } : null
   };
 }
 
@@ -523,8 +530,11 @@ const hit = b => ({ x: b.x - HIT_X, y: b.y - HIT_Y,
 export const overRoster = (x, y) => live().some(p => {
   if (p.fixed) return false;
   const b = boxes(p);
-  return inside(hit(b.less), x, y) || inside(hit(b.more), x, y) || !!pipAt(p, b, x, y);
+  return inside(hit(b.less), x, y) || inside(hit(b.more), x, y) || !!pipAt(p, b, x, y) || (!!b.shop && inside(hit(b.shop), x, y));
 });
+// REVIEW: the shop button a point is on (its post's board key), and a board's button box, for the board's anchor
+globalThis.__shopBtnAt = (x, y) => { for (const p of live()) { const b = boxes(p); if (b.shop && inside(hit(b.shop), x, y)) return p.board; } return null; };
+globalThis.__shopBoxOf = key => { const p = live().find(q => q.board === key); return p ? boxes(p).shop : null; };
 
 // What a post says with the cursor on it, for a place that gives its posts
 // words (`says`; the yard's have none): the text and the world point under
@@ -562,6 +572,7 @@ export function rosterHit(x, y) {
     // a near miss on either button still counts as that button rather than as a
     // swing at the ground: they are small, and the ground behind them does
     // something else entirely
+    if (b.shop && inside(hit(b.shop), x, y)) { globalThis.__toggleBoard?.(p.board); return true; }   // REVIEW
     const hold = (side, edge) => { const f = held.get(p.key); if (f) f.anchor = { side, x: edge }; };
     if (inside(hit(b.less), x, y)) { hold('l', b.less.x); press(p, -1); S.shopStale = true; return true; }
     if (inside(hit(b.more), x, y)) { hold('r', b.more.x + b.more.w); press(p, 1); S.shopStale = true; return true; }
@@ -616,6 +627,7 @@ function drawRosterPass(ctx, drawBody, drawHat, drawRun, sprites) {
     if (!p.show() || !inHalf(p)) continue;
     const b = boxes(p);
     const n = count(p), spare = spareOf(p);
+    if (b.shop) shopButton(ctx, b.shop, p);   // REVIEW
 
     // Only on the stations that have a machine standing.
     if (machineOn(p) && drawRun) drawRun(b.run, JOB_MACHINE[p.job]);
@@ -688,6 +700,27 @@ function button(ctx, b, kind, live) {
     if (live) ctx.fillRect(x - THIN / 2, y - BAR / 2, THIN, BAR);
     else for (let i = 0; i < BAR; i += P * 2) ctx.fillRect(x - THIN / 2, y - BAR / 2 + i, THIN, P);
   }
+}
+
+// REVIEW: the shop button, the roster's own hairline mark: three bars, a menu.
+// Drawn as the board's own cards are (style.css, `.rows button`): a hairline
+// border round paper, the mark in ink; under the pointer, or while its board
+// is up, inverted -- filled with ink, the mark in paper -- as a hovered or
+// chosen card reads.
+// The board's own type size (style.css --fs-body, 12px on the glass), in the
+// world's pixels at the yard's five-sixths; the box a cell and a half of
+// padding round it, on the cell grid, so it reads as a button and not a label.
+const SHOP_PX = 14, SHOP_H = P * 4, SHOP_PAD = P * 2;
+const shopW = () => Math.ceil((msg('roster-upgrades').length * SHOP_PX * 0.62 + SHOP_PAD * 2) / P) * P;
+const boardUp = key => !!S[`${key.replace(/-(\w)/g, (_, c) => c.toUpperCase())}BoardOpen`];
+function shopButton(ctx, b, p) {
+  const lit = boardUp(p.board) || (S.mouse && inside(hit(b), S.mouse.x, S.mouse.y));
+  const ink = lit ? GREY[GREY.length - 1] : GREY[0], paper = lit ? GREY[0] : GREY[GREY.length - 1];
+  ctx.fillStyle = ink;
+  ctx.fillRect(b.x, b.y, b.w, b.h);
+  if (!lit) { ctx.fillStyle = paper; ctx.fillRect(b.x, b.y, b.w, THIN); ctx.fillRect(b.x, b.y + b.h - THIN, b.w, THIN); ctx.fillRect(b.x, b.y, THIN, b.h); ctx.fillRect(b.x + b.w - THIN, b.y, THIN, b.h); }
+  // the game's own crisp type, the tone of the board's text on its ground
+  crispText(ctx, msg('roster-upgrades').toUpperCase(), b.x + b.w / 2, b.y + (b.h - SHOP_PX) / 2, `${SHOP_PX}px ${FACE}`, paper, 'center', ink, GREY);
 }
 
 // A pip is a pixel mask, never an arc: an arc's edge is a grey smear, and a

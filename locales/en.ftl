@@ -3641,3 +3641,6 @@ after-crowd-pct = { $n }%
 
 # act 3 crowd board value (placeholder): no speech set yet
 after-crowd-none = none due
+
+# The button above a station's worker count that opens its upgrades (act 3).
+roster-upgrades = upgrades
