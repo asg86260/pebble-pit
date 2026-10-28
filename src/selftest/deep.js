@@ -15,6 +15,7 @@ import { arrowBox } from '../render/shaftway.js';
 import { refreshCorner } from '../corner.js';
 import { draw } from '../render.js';
 import { now } from '../clock.js';
+import { pref, setPref } from '../prefs.js';
 
 const click = (wx, wy) => {
   const [x, y] = onScreen(wx, wy);
@@ -81,6 +82,28 @@ export const TESTS = [
     run(VIEW_GLIDE_S + 0.5);
     return [ok(down === 'deep', 'the portal in the pit takes the view down', down),
             ok(S.view === 'yard', 'and its end in the deep brings it back up', S.view)];
+  }],
+  // The ripple is a motion, so a player who asked for the full picture gets
+  // it; a scene that asks for less (the opening's reduced-motion shots) asks
+  // for its own page and moment only, never for the player's setting -- one
+  // press of it once turned every trip through the portal into a cut for good.
+  ['deep: a reduced-motion scene leaves the player\'s full motion, and the portal ripples', async () => {
+    const was = pref('motion');
+    setPref('motion', false);
+    try {
+      window.__scene('introstill');
+      const kept = pref('motion');
+      window.__scene('deep');
+      window.__view('yard');
+      window.__look(portalX() - S.viewW / 2);
+      run(2);
+      click(portalCircle().x, portalCircle().y);
+      let rippled = 0;
+      for (let i = 0; i < 60 * (VIEW_GLIDE_S + 0.5); i++) { if (S.viewTo === 'deep' && S.viewFade > 0) rippled++; run(1 / 60); }
+      return [ok(kept === false, 'the scene leaves the player\'s full motion as it was', kept),
+              ok(rippled > 0, 'and the press on the portal plays the ripple rather than a cut', rippled),
+              ok(S.view === 'deep', 'which lands in the deep', S.view)];
+    } finally { setPref('motion', was); }
   }],
   ['deep: the counter card keeps to the ground left of the torn portal', async () => {
     deepYard();

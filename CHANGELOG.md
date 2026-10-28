@@ -205,6 +205,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The recruit row, greyed while nobody is won, says so and how to win one instead of reading like a price you cannot pay (test/after-recruit.test.mjs).
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 
+- Going between the surface and the deep plays its ripple again after a reduced-motion scene was looked at, instead of cutting straight across for good (src/selftest/deep.js, "a reduced-motion scene leaves the player's full motion").
 - A stirrer at its pot no longer stays hanging in the air when a dance is cut off mid-jump (test/dance-cut-at-pot.test.mjs).
 - Loading a save that was left in the deep no longer lays its sky, clouds and rain out against the window of the yard you were in before (test/held-state.test.mjs).
 - The yard takes less of every frame to count what lies on its floor (test/perf-gate.test.mjs).
