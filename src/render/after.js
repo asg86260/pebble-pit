@@ -45,6 +45,8 @@ import { siteOf } from '../after/build.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
 import { drawUnionCrowd } from './after/unioncrowd.js';
 import { drawRoster } from '../roster.js';
+import { now as wallNow } from '../clock.js';
+import { motePos } from './cursor.js';
 
 const A = () => S.after;
 const snap = v => Math.round(v / P) * P;
@@ -306,7 +308,7 @@ function carried(x, y, s) {
 }
 // A load of `n` of a good stacked the yard's way (render/crew.js), a thing a
 // row, as many rows as it carries, up to AFTER_CARRY_SHOWN: over a head whose
-// top left is (x, y), or in the hand at the cursor (`drawHand`).
+// top left is (x, y).
 function drawLoad(x, y, kind, n) {
   n = Math.min(AFTER_CARRY_SHOWN, n);
   // Logs and timber as the blocks they lie on their piles as
@@ -322,17 +324,27 @@ function drawLoad(x, y, kind, n) {
     for (let k = 1; k < n; k++) ctx.fillRect(x - P, y - k * 2 * P, 3 * P, P);
   }
 }
-// The goods in the player's hand (after/hand.js): the load a member would
-// carry over its head, its foot on the cursor's point, moved by the hand's
-// true position as one piece; let go over a pile, the same load standing
-// there and shrinking a good at a time as it is set down.
-function drawHand() {
-  const h = A().hand;
-  if (!h || !h.n) return;
-  ctx.save();
-  ctx.translate(Math.round(h.x - 1.5 * P), Math.round(h.y) + P);
-  drawLoad(0, 0, h.kind, h.n);
-  ctx.restore();
+// The goods the yard's hand holds and throws up here (hands.js): each block
+// swept off a pile drifting round the cursor where a grain of dust would
+// (render/cursor.js, `motePos`), and each one thrown still in the air
+// (S.chips, whose `x, y` is a block's middle), drawn as the block it is on
+// its pile, whole cells across and laid at its true position. Here, in the
+// act's own layer and tones, not the yard's cursor or chips.
+function drawHandGoods() {
+  const t = wallNow() / 1000;
+  if (S.held && S.mouse) {
+    for (const m of S.motes) {
+      if (m.place !== 'after' || !AFTER_BLOCK[m.kind]) continue;
+      const z = AFTER_BLOCK[m.kind] * AP, at = motePos(m, t);
+      goodBlock(Math.round(at.x - z / 2), Math.round(at.y - z / 2), m.kind);
+    }
+  }
+  for (const ch of S.chips) {
+    if (ch.place !== 'after' || !AFTER_BLOCK[ch.kind]) continue;
+    const z = AFTER_BLOCK[ch.kind] * AP;
+    if (!inView(ch.x - z, z * 2)) continue;
+    goodBlock(Math.round(ch.x - z / 2), Math.round(ch.y - z / 2), ch.kind);
+  }
 }
 function drawMember(w) {
   // The first worker through a working station's door stands in its pose.
@@ -367,8 +379,9 @@ export function drawAfterMembers() {
     drawMember(w);
     ctx.globalAlpha = 1;
   }
-  // and the goods in the hand, over every body, as a lifted one is
-  drawHand();
+  // and the goods in the hand and in the air, over every body, as a lifted
+  // one is
+  drawHandGoods();
 }
 
 // --- the counts ----------------------------------------------------------------------
