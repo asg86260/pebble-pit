@@ -2974,7 +2974,10 @@ export const SCENES = {
       act3Mid();
       S.carryLevel = Math.max(S.carryLevel, 2);
       window.__afterGrant({ grovelogs: 6 });
+      // let go over the saw mill's pile, it is bare, so they have room on it
+      if (letGo) window.__afterGrant({ logs: -S.after.stock.logs });
       const from = window.__afterPile('forestry', 'grovelogs'), to = window.__afterPile('mill', 'logs');
+      to.y -= P * 12;
       pinCamera((from.x + to.x) / 2 - S.viewW / 2);
       window.__look((from.x + to.x) / 2 - S.viewW / 2);
       if (at != null) {
@@ -2982,8 +2985,10 @@ export const SCENES = {
         window.__afterHand(from.x, from.y, 'press');
         const p = handPath(from, to, at);
         S.mouse = { ...p };
+        // held still there before the let-go: a drop, not a flick
+        if (letGo) S.trail = [];
         window.__afterHand(p.x, p.y, letGo ? 'drop' : 'move');
-        if (letGo) window.__fast(0.15);
+        if (letGo) window.__fast(0.25);
       }
       window.__fast(1 / 60);
       window.__holdShot();
