@@ -16,6 +16,7 @@ import { refreshCorner } from '../corner.js';
 import { draw } from '../render.js';
 import { now } from '../clock.js';
 import { pref, setPref } from '../prefs.js';
+import { ripple, gliding } from '../view.js';
 
 const click = (wx, wy) => {
   const [x, y] = onScreen(wx, wy);
@@ -25,10 +26,10 @@ const click = (wx, wy) => {
 const clickArrow = deep => { const b = arrowBox(deep); click(b.x + b.w / 2, b.y + b.h / 2); };
 // The corner is laid out by the page's frame, which the checks' clock does
 // not run: it is laid out here before it is read.
-const way = () => { refreshCorner(); return document.getElementById('way'); };
+const way = (id = 'way') => { refreshCorner(); return document.getElementById(id); };
 // The corner's square is a page button: pressed the way a pointer does.
-const pressWay = () => {
-  const b = way();
+const pressWay = (id = 'way') => {
+  const b = way(id);
   if (!b || b.hidden) return false;
   const r = b.getBoundingClientRect();
   const at = { clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, bubbles: true, pointerId: 1, pointerType: 'mouse', button: 0 };
@@ -46,6 +47,32 @@ function deepYard(snatched = true) {
   window.__view('yard');
   window.__look(mouthX() - S.viewW / 2);
   run(0.5);
+}
+
+// A yard past the snatch with the acts stood up to `point` (`__actsAt`),
+// the setup the corner's checks are not about.
+function acts(point) {
+  window.__reset();
+  window.__actsOn(null);
+  window.__crew(2, 4);
+  window.__snatch({ played: true });
+  window.__actsAt(point);
+  window.__view('yard');
+  run(0.5);
+}
+// A corner square pressed and the camera followed until it lands in `to`:
+// whether the ripple played on the way (full motion, for the press only)
+// and where it landed.
+function trip(id, to, label) {
+  window.__motion(false);
+  let pressed = false, rippled = 0;
+  try {
+    pressed = pressWay(id);
+    for (let i = 0; i < 60 * (VIEW_GLIDE_S + 4) && (S.view !== to || gliding()); i++) { if (ripple()) rippled++; run(1 / 60); }
+  } finally { window.__motion(null); }
+  run(0.2);
+  return [ok(pressed && rippled > 0, `${label}: the press plays the ripple`, `pressed ${pressed}, ${rippled} frames`),
+          ok(S.view === to, `${label}: and lands there`, S.view)];
 }
 
 export const TESTS = [
@@ -160,6 +187,42 @@ export const TESTS = [
       ok(pressed && down === 'deep', 'after it, the square takes the view down', down),
       ok(up === 'yard', 'and back up', up)
     ];
+  }],
+  // Every way between the places is a corner square once the story has
+  // opened it, each the same ripple a press on that portal plays: act 3 down
+  // into act 1, act 1 down into act 2 and back, and act 1 up into act 3.
+  ['deep: the corner squares go from heaven down to the yard, down to the deep, and back up, each on the ripple', async () => {
+    acts('fallen');
+    window.__goPlace('after');
+    run(0.5);
+    const out = [];
+    for (const [id, to, dir] of [['way', 'yard', 'down'], ['way', 'deep', 'down'], ['way', 'yard', 'up'], ['way2', 'after', 'up']]) {
+      const from = S.view, b = way(id);
+      const label = `${from} to ${to}`;
+      out.push(ok(b && !b.hidden && b.dataset.way === dir, `${label}: a square pointing ${dir}`, b && `${b.hidden ? 'hidden' : b.dataset.way}`));
+      out.push(...trip(id, to, label));
+    }
+    return out;
+  }],
+  ['deep: with hell open the deep has a square down to it, and hell one back up', async () => {
+    acts('act4');
+    window.__view('deep');
+    run(0.5);
+    const shut = way('way2');
+    const out = [ok(shut && !shut.hidden && shut.dataset.way === 'down', 'the deep has a second square, down', shut && shut.dataset.way)];
+    out.push(...trip('way2', 'hell', 'deep to hell'));
+    out.push(...trip('way', 'deep', 'hell to deep'));
+    return out;
+  }],
+  ['deep: no square to heaven before the story opens its gates', async () => {
+    deepYard();
+    run(0.1);
+    const yard = [way('way'), way('way2')].filter(b => !b.hidden).length;
+    acts('home');
+    run(0.1);
+    const home = [way('way'), way('way2')].filter(b => !b.hidden).length;
+    return [ok(yard === 1, 'a yard past the snatch has the one square, down', yard),
+            ok(home === 1, 'and still one before act 3 begins', home)];
   }],
   // The chevron is painted in the page's ink, so it turns with the theme
   // like the corner's other squares rather than staying black on dark paper.

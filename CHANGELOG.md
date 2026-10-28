@@ -179,6 +179,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The corner's way square works from every place: from heaven down to the yard, from the yard down to the deep and up to heaven once its gates are open, and from the deep down to hell once it is open, each on the ripple (src/selftest/deep.js, "the corner squares go from heaven down to the yard").
 - Act 3 is one chain now: trees, the saw mill, the workshop, signs; paper, posters, the chipper, the paper mill and the press are gone, and the sawdust heap stands on the saw mill's own ground (test/after-cut-paper.test.mjs).
 - Switching between light, dim and dark fades the game over in place, without reloading the page (src/selftest/settings.js, "the dark switch turns the page in place").
 - In heaven each station stands on its own shelf of cloud, further apart, with ramps between, and everybody walks up and down them (test/after-floor.test.mjs).

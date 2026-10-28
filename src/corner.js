@@ -14,13 +14,14 @@ import { S } from './state.js';
 import { CREW_VIEWS, crewView, setPref } from './prefs.js';
 import { onTap } from './tap.js';
 import { showTipAt } from './board.js';
-import { goDeep, goUp, gliding } from './view.js';
+import { gliding } from './view.js';
+import { waysOut, takeWay } from './portals.js';
 import { recede } from './cutscene.js';
 import { msg } from './lang.js';
 
 const corner = document.getElementById('corner');
 const crew = document.getElementById('crewfade');
-const way = document.getElementById('way');
+const ways = [document.getElementById('way'), document.getElementById('way2')];
 
 // The glyph is one body drawn the way the yard's bodies are, so it shows
 // where the switch stands; the note under it on a hover says what a press
@@ -46,29 +47,44 @@ crew.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') { no
 crew.addEventListener('pointerleave', () => { if (noting) { noting = false; showTipAt(null); } });
 dress();
 
-// The way through the surface: the same as a click on the drowned pit or the
-// deep's ceiling, and on the shaft's arrow, put where the hand already goes
-// for the screen's own buttons. From the snatch on; nothing while the camera
-// is between the halves.
-onTap(way, () => { if (gliding()) return; if (S.view === 'deep') goUp(); else goDeep(); });
-// Its note the yard's own, as the crew switch's is.
-let wayNoting = false; // page: the pointer is over the way through
+// The ways out of the place on screen (portals.js, `waysOut`), a square
+// each, put where the hand already goes for the screen's own buttons: from
+// the snatch on, the wizards' portal down from the yard and up from the
+// deep, the same as a press on the portal or the shaft's hand; in the acts,
+// each act portal the story has opened to the player, the same as a press
+// on its end. A chevron for which way the camera goes; nothing while it is
+// going.
+const WAY_NOTE = {
+  'yard:deep': msg('other-corner-down'), 'deep:yard': msg('other-corner-up'),
+  'after:yard': msg('other-corner-down-yard'), 'yard:after': msg('other-corner-up-after'),
+  'deep:hell': msg('other-corner-down-hell'), 'hell:deep': msg('other-corner-up-deep')
+};
+let shown = [];      // page: the way each square stands for, as last seated
+let wayNoting = -1;  // page: which square the pointer is over, or -1
 function wayNote() {
-  if (!wayNoting) return;
-  const r = way.getBoundingClientRect();
-  showTipAt(way.getAttribute('aria-label'), r.left + r.width / 2, r.bottom + 6, true);
+  if (wayNoting < 0) return;
+  const b = ways[wayNoting], r = b.getBoundingClientRect();
+  showTipAt(b.getAttribute('aria-label'), r.left + r.width / 2, r.bottom + 6, true);
 }
-way.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') { wayNoting = true; wayNote(); } });
-way.addEventListener('pointerleave', () => { if (wayNoting) { wayNoting = false; showTipAt(null); } });
+ways.forEach((b, i) => {
+  onTap(b, () => { if (!gliding()) takeWay(shown[i]); });
+  // Its note the yard's own, as the crew switch's is.
+  b.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') { wayNoting = i; wayNote(); } });
+  b.addEventListener('pointerleave', () => { if (wayNoting === i) { wayNoting = -1; showTipAt(null); } });
+});
 function seatWay() {
-  way.hidden = S.paused || !S.portalOpen;
-  const up = S.view === 'deep';
-  if (way.dataset.way !== (up ? 'up' : 'down')) {
-    way.dataset.way = up ? 'up' : 'down';
-    way.setAttribute('aria-label', up ? msg('other-corner-up') : msg('other-corner-down'));
-    wayNote();
-  }
-  if (way.hidden && wayNoting) { wayNoting = false; showTipAt(null); }
+  shown = S.paused ? [] : waysOut();
+  ways.forEach((b, i) => {
+    const w = shown[i];
+    b.hidden = !w;
+    if (!w) { if (wayNoting === i) { wayNoting = -1; showTipAt(null); } return; }
+    const note = WAY_NOTE[`${S.view}:${w.to}`] || '';
+    if (b.dataset.way !== w.dir || b.getAttribute('aria-label') !== note) {
+      b.dataset.way = w.dir;
+      b.setAttribute('aria-label', note);
+      if (wayNoting === i) wayNote();
+    }
+  });
 }
 
 // Seated every frame like the rest of the shell, after the squares that
