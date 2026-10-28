@@ -247,7 +247,7 @@ group('a plain click on a station or on God\'s camp opens no board, on a part no
 }, NO_RELOAD);
 
 group('the ghost hand shows until the motion is done three times, then fades, and comes back after a long idle', async () => {
-  up(['mill', 'workshop'], { timber: 20 });
+  up(['mill', 'workshop'], { timber: 20, benchtimber: 8 });
   let k = 0;
   const tap = () => { click(mid(partsOf('workshop').nails[k++ % 4])); run(0.3); };
   const a0 = rec('workshop').cueA;

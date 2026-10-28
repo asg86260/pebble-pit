@@ -22,14 +22,16 @@
 import { AFTER_PILES, AFTER_BLOCK, AFTER_PILE_GAP } from '../config/afterpiles.js';
 
 // What a station draws past its box and piles, in its own cells, it names
-// as `reach`, the column past its right end (none does now: the workshop's
-// blanks became the timber pile carried to it).
+// as `reach`, the column past its right end (the saw mill's chute).
 // This table cannot read the drawing (the config lays the camp off it), so
 // the drawing is read against it instead: footprints.js takes each
 // station's ground as what it inks at its fullest, and rule 22 in verify.js
 // is red for a part past the ground laid here.
 const DRAWN = {
-  mill:      { box: [11, 39, 26], door: 8, pile: { logs: 6, timber: 53 }, heap: true },
+  // The saw mill's chute reaches past its box to column 60 (AFTER_MILL.chute's
+  // foot and the block on it), and its timber mound is laid past that, so
+  // the mound the chute tosses onto never stands under the chute.
+  mill:      { box: [11, 39, 26], door: 8, reach: 60, pile: { logs: 6, timber: null }, heap: true },
   // The workshop's signs in its rack, and past them the timber walked to it
   // off the timber mound: laid off the shed and each other (`layPiles`).
   workshop:  { box: [5, 21, 22], door: 13, pile: { signs: null, benchtimber: null } },
@@ -104,13 +106,13 @@ const span = a => {
   return { sign, heap, lead: Math.min(lead, sign), ground: a.ground ?? Math.max(end, sign + SIGN.w) };
 };
 // A drawing's piles that name no column are laid off it rather than placed
-// by hand: right of its box (null), or left of it ('left'), in the order
+// by hand: right of its box and its `reach` (null), or left of it ('left'), in the order
 // named, each AFTER_PILE_GAP cells of floor past what stands before it --
 // the drawing's edge, or the floor the body loading the pile before it
 // reaches over.
 function layPiles(a) {
   const pile = { ...a.pile };
-  let right = a.box[0] + a.box[1] + AFTER_PILE_GAP, left = a.box[0] - AFTER_PILE_GAP;
+  let right = Math.max(a.box[0] + a.box[1], a.reach || 0) + AFTER_PILE_GAP, left = a.box[0] - AFTER_PILE_GAP;
   for (const k of Object.keys(pile)) {
     if (pile[k] === 'left') {
       pile[k] = left;
