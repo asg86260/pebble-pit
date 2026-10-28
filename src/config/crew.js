@@ -42,7 +42,7 @@ export const HAND_FLOOR = 2;     // the fewest of a smaller block the hand takes
 // so how far out it is flung as it is picked up: a share of a grain's, by
 // size. A log hangs nearly still under the pointer, a plank swings less than
 // dust. A size between two rows takes the smaller one's share.
-export const HAND_SWAY = { 1: 1, 2: 0.5, 4: 0.12 };
+export const HAND_SWAY = { 1: 1, 2: 0.5, 4: 0.25 };
 // How many rungs there are on every ladder in the game: one number, so "how
 // far along is this" has one answer wherever it is asked. What changes between
 // ladders is what a rung costs and is bought with (config/rungs.js; "The

@@ -15,7 +15,8 @@
 //
 // The comments over the scenes say why each is set up as it is.
 
-import { S } from './state.js';
+import { S, floor } from './state.js';
+import { addGrain, bottomY } from './grid.js';
 import { JOB, TYPE, AFTER_JOB } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs, ramX } from './rock.js';
@@ -2999,6 +3000,24 @@ export const SCENES = {
     run: () => SCENES['after-hand-carry'].run(0) },
   'after-hand-set': { about: 'the acts', say: "act 3's goods by hand: let go over the saw mill's pile, the logs falling onto it",
     run: () => SCENES['after-hand-carry'].run(1, true) },
+  // A held hand's weight by size (hands.js, `handHolds`, HAND_SWAY): a full
+  // carry swept off each pile and held still over it, so the drift is all
+  // there is to see.
+  'after-hand-log': { about: 'the acts', say: "a hand on the forestry shack's logs at a full carry: one log, hanging nearly still under the pointer",
+    run: () => handWeight('grovelogs') },
+  'after-hand-timber': { about: 'the acts', say: "a hand on the saw mill's timber at a full carry: a quarter-hand of planks, swinging less than dust",
+    run: () => handWeight('timber') },
+  'hand-dust': { about: 'the bench', say: 'a full hand of dust swept off the floor, drifting round the pointer',
+    run: () => {
+      window.__reset(); window.__fast(1);
+      S.carryLevel = LADDER;
+      const x = floor.x + floor.cols * P / 2, y = bottomY(floor) - P / 2;
+      for (let i = 0; i < 80; i++) addGrain(floor, x);
+      S.mouse = { x, y: y - P * 10 };
+      for (let k = 0; k < 6 && S.held < 20; k++) sweep(x, y);
+      window.__look(x - S.viewW / 2);
+      window.__holdShot();
+    } },
   'after-pedestal': { about: 'the acts', say: 'the pair on the pedestal mid-speech, rebel falling to the pile, idle members behind them agitating',
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
@@ -3356,6 +3375,22 @@ function actsYard(point, pieces = 0) {
 // wherever the pointer does.
 const HAND_ARC = 16;
 const handPath = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t - Math.sin(Math.PI * t) * HAND_ARC * AP });
+// A full carry swept off act 3's pile `what` and lifted a little over it.
+function handWeight(what) {
+  act3Mid();
+  S.carryLevel = LADDER;
+  window.__afterGrant(what === 'timber' ? { timber: 12 } : { grovelogs: 6 });
+  const p = window.__afterPile(null, what);
+  pinCamera(p.x - S.viewW / 2);
+  window.__look(p.x - S.viewW / 2);
+  S.mouse = { ...p };
+  for (let k = 0; k < 4; k++) window.__afterHand(p.x, p.y, 'press');
+  // off to the side, clear of the pile-full mark over a pile at its brim
+  S.mouse = { x: p.x + AP * 18, y: p.y - AP * 10 };
+  window.__afterHand(S.mouse.x, S.mouse.y, 'move');
+  window.__fast(1 / 60);
+  window.__holdShot();
+}
 function act3Mid() {
   actsYard('fallen');
   if (!S.beatsDone.includes('axe')) S.beatsDone.push('axe');
