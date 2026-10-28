@@ -14,7 +14,7 @@ const obj = v => v && typeof v === 'object' && !Array.isArray(v);
 
 export default {
   since: '2026-10-28',
-  v: 33,
+  v: 32,
   says: 'act 3\'s members carry cells like the yard\'s haulers: a load of "log" and a count becomes that many log cells',
   apply(s) {
     const a = s.after;

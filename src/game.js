@@ -348,7 +348,7 @@ const floorSurface = c => bottomY(floor) - (floorTop(c) + 2) * floor.p;
 // A place's (acts.js, `landingOf`: act 3's, the deep's) is its own list ending
 // on its ground, with its bounds (`clamp`) and its air (`air`) beside it.
 const LANDED = 1, STAYS = 2;
-let chipNow = 0, chipFrames = 1;       // this frame's, for the surfaces below
+let chipNow = 0, chipFrames = 1;       // cache: this frame's, for the surfaces below
 
 // The far wall of the hole is a wall at every height, not only below the
 // ground line: everything is thrown at the pit from the near lip, so a

@@ -18,6 +18,7 @@ import { plotOf, AFTER_PLOTS } from '../src/after/piles.js';
 import { floorAt, afterX0, afterX1, AP } from '../src/after/place.js';
 import { bottomY, addGrain, grainsIn } from '../src/grid.js';
 import { floor } from '../src/state.js';
+import { loadKind } from '../src/cells.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -140,7 +141,7 @@ group('let go over open ground, the blocks lie on the floor and a member carries
   const whole = lying.length === took && stock().timber === t0 - took;
   const near = lying.every(q => Math.abs(q.x - spot.x) <= AFTER_BLOCK.plank * AP * 3);   // a hand of five heaps and rolls a plank or two aside
   const total = () => stock().timber + laid('plank').length + inAir('plank')
-    + S.after.bodies.reduce((n, b) => n + (b.load === 'plank' ? b.carry || 0 : 0), 0);
+    + S.after.bodies.reduce((n, b) => n + (loadKind(b) === 'plank' ? b.carry || 0 : 0), 0);
   const home = runUntil(() => laid('plank').length === 0 && stock().timber === t0, 400);
   const kept = total() === t0;
   done();

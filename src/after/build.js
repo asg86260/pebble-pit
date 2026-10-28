@@ -218,7 +218,7 @@ export const orderOf = id => orders().find(o => o.id === id) || null;
 export const orderAt = o => stationDoor(o.card === 'grove' ? 'forestry' : o.card);
 // What lands a row when its order is in: the cards register it (rows.js), so
 // the sim never imports the cards that sell it.
-let landRow = null;   // the cards' landing, set once at load by rows.js
+let landRow = null;   // page: the cards' landing, set once at load by rows.js
 export const onOrderLanded = fn => { landRow = fn; };
 // A block of order `o` set down at its station: the last lands the row.
 export function orderBrought(o) {

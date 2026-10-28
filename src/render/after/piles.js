@@ -102,7 +102,7 @@ const PAL = { // MOCK
   c: { log: [6, 7, 8], plank: [3, 4, 5], sign: [9, 10] } // MOCK
 }; // MOCK
 const KIND_SEED = { log: 11.3, plank: 23.9, sign: 37.1 }; // MOCK
-let into = null; // MOCK  the block's own sheet while it is painted
+let into = null; // cache: (MOCK) the block's own sheet while it is painted
 const cell = (x, y, i, j, g) => { into.fillStyle = GREY[g]; into.fillRect(x + i * AP, y + j * AP, AP, AP); }; // MOCK
 // A block is painted once on its own sheet, a pixel a world px, and laid at // MOCK
 // its true position whole (CLAUDE.md, "Art on the grid, motion smooth"): // MOCK
