@@ -4,6 +4,18 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## Rethink the reduced-motion option -- PARKED BY THE OWNER (2026-10-28)
+
+The owner had the settings sheet's motion option on "limit" and saw the ram's
+cutter wheel stand still while the ram worked. The wheel is drawn to stop under
+reduced motion (`drawRam` / `bore` in `src/render/machines.js`, `RAM_SPIN_*` in
+`src/config/machines.js`), so the game looked broken. The owner: "we should re
+think our reduce motion option, cause it does not work well and is very
+unclear. thats for later though". What "limit" turns off is not said anywhere
+a player sees, and it freezes pieces that read as broken rather than calm.
+Blocker: needs a design (what each motion level keeps and drops, and how the
+option says so) and the owner's approval; parked by the owner for later.
+
 ## Act 3's goods are blocks, carried by bodies -- APPROVED, BUILDING (2026-10-27)
 
 The saw mill as reviewed live (DESIGN.md, "Act 3's goods are blocks, and
