@@ -14,8 +14,9 @@ and shade), one ground plot a place with blocks as multi-cell units and the
 floor as fixed cells, piles as strips, one hand, one landing chain, one
 carry, counts surveyed off cells, one conservation rule. The owner's calls
 (2026-10-28): one fine plot; hand by weight, never fewer than one; the deep
-in this wave. Step 1 (grid.js's block rule, `KINDS`) building; steps 2-5
-open. It is the resource step of "One place engine" below.
+in this wave. Step 1 (grid.js's block rule, `KINDS`) and step 2 (act 3's
+one ground, migration v31; branch res-step2) built; steps 3-5 open, their
+adapters marked TEMP in after/piles.js, after/grove.js and after/index.js. It is the resource step of "One place engine" below.
 
 ## Act 3's goods are blocks, carried by bodies -- APPROVED, BUILDING (2026-10-27)
 

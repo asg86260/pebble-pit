@@ -23694,6 +23694,34 @@ disjoint files.
    shape (stock, lying logs, a held load, a log on the bed) reads back with
    every unit where it was; `after-pile-plots`, `after-gather` and
    `after-logflow` stay green.
+   *Built (res-step2, 2026-10-28):* after/ground.js holds the ground
+   (`afterGround` in state.js, saved as `after.ground`: runs, block anchors
+   and each unit's arrival); after/piles.js is the piles' interface over it;
+   migration v31 (`2026-10-28-one-ground.js`) hands an older save's pile
+   counts, lying goods and the sawyer's log to the reader as `after.lay`;
+   verify.js rule 26 holds every block whole, apart, out of the terrain and
+   held up. What the design left open and was decided in the build:
+   - *A good of another kind landing on a pile's strip is set down beside
+     the strip for now*, not on the mound: a body's `pickUp` (bodies.js,
+     step 3's) counts a take without asking whether it came, so a plank
+     buried under a log would be a phantom in its arms. Step 3's carry,
+     which takes real units, lets it lie on the mound as section 1 says.
+   - *A felled tree's logs land as the mound the heap rule would leave*
+     (ground.js, `heapAt`), each laid straight where it rests, its slide off
+     the trunk drawn from its arrival; a good let go of is likewise set
+     where it comes to rest and its fall drawn (`fallTag`). The data never
+     holds a unit in mid-air, so the 0.07 s settle pace is spent only on
+     rolls, which is the voted look.
+   - *The sawdust heap stays the mill's own plot* (mill.js is not this
+     step's file); its columns are `blocked` on the ground, so nothing comes
+     to rest drawn through it. It joins the ground with step 4's mirror.
+   - *Bodies keep `carry` and `load` as a count and a kind* until step 3's
+     carry; `after.hand` is still laid by `settleHand` as before.
+   - The thin adapters marked TEMP: `plotOf` (a pile as a coarse plot, one
+     cell a unit), `AFTER_PLOTS` (the hand's door: a press takes the top of
+     the column under it), and the `groundLogs` rows (a non-enumerable
+     getter on `S.after`) for bodies.js, input.js's hover, the hooks and
+     the checks.
 3. **Three tracks at once**, once step 2 is in:
    - **One hand** (owns hands.js, after/hand.js, after/gestures.js,
      after/press.js). The branches go and the deep's hand joins.
